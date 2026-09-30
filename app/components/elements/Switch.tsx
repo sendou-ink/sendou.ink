@@ -1,22 +1,49 @@
 import clsx from "clsx";
-import {
-	Switch as ReactAriaSwitch,
-	type SwitchProps as ReactAriaSwitchProps,
-} from "react-aria-components";
+import type * as React from "react";
+import styles from "./Switch.module.css";
 
-interface SendouSwitchProps extends ReactAriaSwitchProps {
+interface SendouSwitchProps {
+	id?: string;
+	isSelected?: boolean;
+	defaultSelected?: boolean;
+	onChange?: (isSelected: boolean) => void;
+	isDisabled?: boolean;
+	size?: "small";
+	"aria-label"?: string;
+	"data-testid"?: string;
 	children?: React.ReactNode;
-	size?: "small" | "medium";
 }
 
-export function SendouSwitch({ children, size, ...rest }: SendouSwitchProps) {
+export function SendouSwitch({
+	id,
+	isSelected,
+	defaultSelected,
+	onChange,
+	isDisabled,
+	size,
+	"aria-label": ariaLabel,
+	"data-testid": testId,
+	children,
+}: SendouSwitchProps) {
 	return (
-		<ReactAriaSwitch
-			{...rest}
-			className={clsx("react-aria-Switch", { small: size === "small" })}
+		<label
+			className={clsx(styles.root, { [styles.small]: size === "small" })}
+			data-testid={testId}
 		>
-			<div className="indicator" />
+			<input
+				id={id}
+				type="checkbox"
+				// biome-ignore lint/a11y/useAriaPropsForRole: the native checked attribute supplies the switch state
+				role="switch"
+				className={styles.input}
+				checked={isSelected}
+				defaultChecked={isSelected === undefined ? defaultSelected : undefined}
+				disabled={isDisabled}
+				aria-label={ariaLabel}
+				onChange={(event) => onChange?.(event.currentTarget.checked)}
+			/>
+			<div className={styles.indicator} />
 			{children}
-		</ReactAriaSwitch>
+		</label>
 	);
 }

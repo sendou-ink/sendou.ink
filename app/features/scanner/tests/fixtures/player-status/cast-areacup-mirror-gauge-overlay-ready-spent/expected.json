@@ -1,0 +1,39 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-left",
+		"cast": true,
+		"time": 123,
+		"special": [
+			[
+				false,
+				false,
+				false,
+				false
+			],
+			[
+				false,
+				false,
+				false,
+				false
+			]
+		],
+		"dead": [
+			[
+				false,
+				false,
+				false,
+				false
+			],
+			[
+				false,
+				false,
+				true,
+				false
+			]
+		]
+	},
+	"options": {
+		"notes": "Same footage at 2:06:33 (clock 2:03), mirrored player-cam view: left team all alive with gauges 47/31/3 — slot 3's wash from one second earlier is gone (special spent), slot 1 (.52 Gal) alive at 31. Right slot 2 still splatted. Guards the mirror arrangement against false ★/✕ on a clean frame. Labels authored by Claude from pixel evidence."
+	}
+}

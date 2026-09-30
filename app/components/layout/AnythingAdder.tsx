@@ -1,30 +1,36 @@
-import { Button } from "react-aria-components";
+import clsx from "clsx";
+import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { newArtPage } from "~/features/art/art-urls";
 import { useUser } from "~/features/auth/core/user";
-import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
+import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
+import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
+import { plusSuggestionsNewPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
+import { userNewBuildPage } from "~/features/user-page/user-page-urls";
+import { newVodPage } from "~/features/vods/vods-urls";
 import {
 	CALENDAR_NEW_PAGE,
-	lfgNewPostPage,
 	NEW_TEAM_PAGE,
+	NEW_TROPHY_PAGE,
 	navIconUrl,
-	newArtPage,
 	newAssociationsPage,
 	newScrimPostPage,
-	newVodPage,
-	plusSuggestionsNewPage,
+	ORGANIZATION_NEW_PAGE,
 	TOURNAMENT_NEW_PAGE,
-	userNewBuildPage,
 } from "~/utils/urls";
+import { SendouButton } from "../elements/Button";
 import {
 	SendouMenu,
 	SendouMenuItem,
 	type SendouMenuItemProps,
 } from "../elements/Menu";
-import { PlusIcon } from "../icons/Plus";
+import styles from "./AnythingAdder.module.css";
 
 export function AnythingAdder() {
 	const { t } = useTranslation(["common"]);
 	const user = useUser();
+	const { status: globalStatus } = useGlobalStatus();
 
 	if (!user) {
 		return null;
@@ -36,6 +42,12 @@ export function AnythingAdder() {
 			children: t("header.adder.tournament"),
 			imagePath: navIconUrl("medal"),
 			href: TOURNAMENT_NEW_PAGE,
+		},
+		{
+			id: "organization",
+			children: t("header.adder.organization"),
+			imagePath: navIconUrl("medal"),
+			href: ORGANIZATION_NEW_PAGE,
 		},
 		{
 			id: "calendarEvent",
@@ -55,22 +67,18 @@ export function AnythingAdder() {
 			imagePath: navIconUrl("t"),
 			href: NEW_TEAM_PAGE,
 		},
-		FF_SCRIMS_ENABLED
-			? {
-					id: "scrimPost",
-					children: t("header.adder.scrimPost"),
-					imagePath: navIconUrl("scrims"),
-					href: newScrimPostPage(),
-				}
-			: null,
-		FF_SCRIMS_ENABLED
-			? {
-					id: "association",
-					children: t("header.adder.association"),
-					imagePath: navIconUrl("associations"),
-					href: newAssociationsPage(),
-				}
-			: null,
+		{
+			id: "scrimPost",
+			children: t("header.adder.scrimPost"),
+			imagePath: navIconUrl("scrims"),
+			href: newScrimPostPage(),
+		},
+		{
+			id: "association",
+			children: t("header.adder.association"),
+			imagePath: navIconUrl("associations"),
+			href: newAssociationsPage(),
+		},
 		{
 			id: "lfgPost",
 			children: t("header.adder.lfgPost"),
@@ -95,17 +103,33 @@ export function AnythingAdder() {
 			imagePath: navIconUrl("plus"),
 			href: plusSuggestionsNewPage(),
 		},
+		canAccessTrophies(user)
+			? {
+					id: "trophy",
+					children: t("header.adder.trophy"),
+					imagePath: navIconUrl("trophies"),
+					href: NEW_TROPHY_PAGE,
+				}
+			: null,
 	].filter((item) => item !== null);
 
 	return (
 		<SendouMenu
+			placement="bottom right"
+			eager
 			trigger={
-				<Button
-					className="layout__header__button"
+				<SendouButton
+					size="small"
+					icon={<Plus />}
+					className={clsx(
+						styles.button,
+						globalStatus ? styles.withStatus : null,
+					)}
+					aria-label={t("common:actions.addNew")}
 					data-testid="anything-adder-menu-button"
 				>
-					<PlusIcon className="layout__header__button__icon" />
-				</Button>
+					<span className={styles.label}>{t("common:actions.addNew")}</span>
+				</SendouButton>
 			}
 		>
 			{items.map((item) => (

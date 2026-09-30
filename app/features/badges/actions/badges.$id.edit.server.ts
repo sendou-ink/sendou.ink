@@ -1,33 +1,30 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { z } from "zod/v4";
-import { requireUser } from "~/features/auth/core/user.server";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
+import * as v from "valibot";
 import { notify } from "~/features/notifications/core/notify.server";
 import {
 	requirePermission,
 	requireRole,
 } from "~/modules/permissions/guards.server";
 import { diff } from "~/utils/arrays";
-import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { notFoundIfNullish, parseRequestPayload } from "~/utils/remix.server";
+import { actualNumber, preprocess } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
-import { actualNumber } from "~/utils/zod";
 import * as BadgeRepository from "../BadgeRepository.server";
-import { editBadgeActionSchema } from "../badges-schemas.server";
+import { editBadgeActionSchema } from "../badges-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const data = await parseRequestPayload({
 		request,
 		schema: editBadgeActionSchema,
 	});
-	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
-	const user = await requireUser(request);
-
-	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
+	const badgeId = v.parse(preprocess(actualNumber, v.number()), params.id);
+	const badge = notFoundIfNullish(await BadgeRepository.findById(badgeId));
 
 	switch (data._action) {
 		case "MANAGERS": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			const oldManagers = badge.managers;
 
@@ -54,7 +51,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "OWNERS": {
-			requirePermission(badge, "MANAGE", user);
+			requirePermission(badge, "MANAGE");
 
 			const oldOwners: number[] = badge.owners.flatMap((owner) =>
 				new Array(owner.count).fill(owner.id),

@@ -122,11 +122,25 @@ export const languagesUnified = [
 	},
 	{
 		code: "zh",
-		name: "中文",
+		name: "中文（普通话）",
+	},
+	{
+		code: "yue",
+		name: "中文（廣東話）",
 	},
 ] as const;
 
 export type LanguageCode = (typeof languages)[number]["code"];
+export type UnifiedLanguageCode = (typeof languagesUnified)[number]["code"];
+
+export const ALWAYS_LOADED_NAMESPACES = [
+	"common",
+	"forms",
+	"game-misc",
+	"weapons",
+	"front",
+	"friends",
+] as const;
 
 export const config = {
 	supportedLngs: languages.map((lang) => lang.code),

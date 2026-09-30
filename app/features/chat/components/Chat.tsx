@@ -1,127 +1,162 @@
-import { useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
 import { sub } from "date-fns";
-import { nanoid } from "nanoid";
-import { WebSocket } from "partysocket";
+import { SendHorizontal } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
-import { Button } from "react-aria-components";
+import { browser } from "react-dom";
 import { useTranslation } from "react-i18next";
-import type { Tables } from "~/db/tables";
-import { useUser } from "~/features/auth/core/user";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
-import { soundPath } from "~/utils/urls";
+import * as v from "valibot";
+import { useEventsReadyState } from "~/features/events/events-hooks";
+import { useDebounce } from "~/hooks/useDebounce";
+import { useVirtualizer } from "~/modules/virtualizer/react";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
-import { SubmitButton } from "../../../components/SubmitButton";
+import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
 import { MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
-import type { ChatMessage } from "../chat-types";
-import { messageTypeToSound, soundEnabled, soundVolume } from "../chat-utils";
+import { findRoomLinks } from "../chat-message-links";
+import { sendChatMessageSchema } from "../chat-schemas";
+import type { ChatMessageAuthor, ClientChatMessage } from "../chat-types";
+import styles from "./Chat.module.css";
 
-export type ChatUser = Pick<
-	Tables["User"],
-	"username" | "discordId" | "discordAvatar"
-> & {
-	chatNameColor: string | null;
-	title?: string;
-};
+const MESSAGE_GAP = 8;
+const ESTIMATED_MESSAGE_HEIGHT = 44;
+/** How long the stream may be down before the composer says so, so a connect right after page load never flashes it. */
+const CONNECTION_STATUS_GRACE_MS = 1_500;
 
 export interface ChatProps {
-	users: Record<number, ChatUser>;
-	rooms: { label: string; code: string }[];
+	messages: ClientChatMessage[];
+	/** Hands a validated composer send to the chat client (optimistic append + POST). */
+	onSend: (message: { publicId: string; contents: string }) => void;
+	/** Role labels (e.g. "TO") shown next to the author, keyed by user id. */
+	labelByUserId?: Record<number, string>;
 	className?: string;
 	messagesContainerClassName?: string;
-	hidden?: boolean;
-	onNewMessage?: (message: ChatMessage) => void;
-	onMount?: () => void;
-	onUnmount?: () => void;
+	/** Renders the room read-only with an expiry note, e.g. once it has expired. */
 	disabled?: boolean;
-	missingUserName?: string;
-	revalidates?: boolean;
-}
-
-export function ConnectedChat(props: ChatProps) {
-	const chat = useChat(props);
-
-	return <Chat {...props} chat={chat} />;
+	/** Renders the room read-only for a viewer who may never post in it (staff reading a private room). */
+	readOnly?: boolean;
 }
 
 export function Chat({
-	users,
-	rooms,
+	messages,
+	onSend,
+	labelByUserId,
 	className,
 	messagesContainerClassName,
-	hidden = false,
-	chat,
-	onMount,
-	onUnmount,
 	disabled,
-	missingUserName,
-}: Omit<ChatProps, "revalidates" | "onNewMessage"> & {
-	chat: ReturnType<typeof useChat>;
-}) {
+	readOnly,
+}: ChatProps) {
 	const { t } = useTranslation(["common"]);
-	const messagesContainerRef = React.useRef<HTMLOListElement>(null);
-	const inputRef = React.useRef<HTMLInputElement>(null);
-	const {
-		send,
+
+	return (
+		<section className={clsx(styles.container, className)}>
+			<div className={styles.inputContainer}>
+				<React.Suspense
+					fallback={
+						// the same role as the log so the sidebar sizes it the same
+						<div
+							role="log"
+							aria-label="Chat messages"
+							className={clsx(
+								styles.messages,
+								"scrollbar",
+								messagesContainerClassName,
+							)}
+						/>
+					}
+				>
+					<MessageLog
+						messages={messages}
+						labelByUserId={labelByUserId}
+						className={messagesContainerClassName}
+					/>
+				</React.Suspense>
+				{readOnly ? (
+					// only observers ever see this, so it stays English
+					<div className="text-xs text-lighter text-center my-4">Read-only</div>
+				) : disabled ? (
+					<div className="text-xs text-lighter text-center my-4">
+						{t("common:chat.expired")}
+					</div>
+				) : (
+					<Composer onSend={onSend} />
+				)}
+			</div>
+		</section>
+	);
+}
+
+function MessageLog({
+	messages,
+	labelByUserId,
+	className,
+}: Pick<ChatProps, "messages" | "labelByUserId"> & { className?: string }) {
+	// the server can't open the pane scrolled to its end, so it stays empty
+	// (the fallback holding its place) until the browser renders it
+	React.use(browser("the chat log opens scrolled to its end"));
+
+	const { t } = useTranslation(["common"]);
+	const messagesContainerRef = React.useRef<HTMLDivElement>(null);
+
+	const { unseenMessagesInTheRoom, scrollToBottom } = useChatAutoScroll(
 		messages,
-		currentRoom,
-		setCurrentRoom,
-		readyState,
-		unseenMessages,
-	} = chat;
-
-	const handleSubmit = React.useCallback(
-		(e: React.FormEvent<HTMLFormElement>) => {
-			e.preventDefault();
-
-			// can't send empty messages
-			if (inputRef.current!.value.trim().length === 0) {
-				return;
-			}
-
-			send(inputRef.current!.value);
-			inputRef.current!.value = "";
-		},
-		[send],
+		messagesContainerRef,
 	);
 
-	const { unseenMessagesInTheRoom, scrollToBottom, resetScroller } =
-		useChatAutoScroll(messages, messagesContainerRef);
-
-	React.useEffect(() => {
-		onMount?.();
-
-		return () => {
-			onUnmount?.();
-		};
-	}, [onMount, onUnmount]);
-
-	const sendingMessagesDisabled = disabled || readyState !== "CONNECTED";
-
-	const systemMessageText = (msg: ChatMessage) => {
-		const name = () => {
-			if (!msg.context) return "";
-			return msg.context.name;
-		};
+	const systemMessageText = (msg: ClientChatMessage) => {
+		const name = msg.author?.username ?? "";
 
 		switch (msg.type) {
 			case "SCORE_REPORTED": {
-				return t("common:chat.systemMsg.scoreReported", { name: name() });
+				return t("common:chat.systemMsg.scoreReported", { name });
 			}
 			case "SCORE_CONFIRMED": {
-				return t("common:chat.systemMsg.scoreConfirmed", { name: name() });
+				return t("common:chat.systemMsg.scoreConfirmed", { name });
+			}
+			case "SCORE_DISPUTED": {
+				return t("common:chat.systemMsg.scoreDisputed", { name });
 			}
 			case "CANCEL_REPORTED": {
-				return t("common:chat.systemMsg.cancelReported", { name: name() });
+				return t("common:chat.systemMsg.cancelReported", { name });
 			}
 			case "CANCEL_CONFIRMED": {
-				return t("common:chat.systemMsg.cancelConfirmed", { name: name() });
+				return t("common:chat.systemMsg.cancelConfirmed", { name });
+			}
+			case "CANCEL_REFUSED": {
+				return t("common:chat.systemMsg.cancelRefused", { name });
 			}
 			case "USER_LEFT": {
-				return t("common:chat.systemMsg.userLeft", { name: name() });
+				return t("common:chat.systemMsg.userLeft", { name });
+			}
+			case "MAP_REPLAYED": {
+				return t("common:chat.systemMsg.mapReplayed", { name });
+			}
+			case "MAP_PICKED": {
+				return t("common:chat.systemMsg.mapPicked", { name });
+			}
+			case "MAP_BANNED": {
+				return t("common:chat.systemMsg.mapBanned", { name });
+			}
+			case "MODE_PICKED": {
+				return t("common:chat.systemMsg.modePicked", { name });
+			}
+			case "MODE_BANNED": {
+				return t("common:chat.systemMsg.modeBanned", { name });
+			}
+			case "LEAGUE_TIMES_PROPOSED": {
+				return t("common:chat.systemMsg.leagueTimesProposed", { name });
+			}
+			case "LEAGUE_TIME_PICKED": {
+				return t("common:chat.systemMsg.leagueTimePicked", { name });
+			}
+			case "LEAGUE_RESCHEDULE_DECLINED": {
+				return t("common:chat.systemMsg.leagueRescheduleDeclined", { name });
+			}
+			case "LEAGUE_TIME_SET_BY_ORGANIZER": {
+				return t("common:chat.systemMsg.leagueTimeSetByOrganizer", { name });
 			}
 			default: {
 				return null;
@@ -129,152 +164,197 @@ export function Chat({
 		}
 	};
 
+	const virtualizer = useVirtualizer({
+		count: messages.length,
+		scrollRef: messagesContainerRef,
+		estimatedSize: ESTIMATED_MESSAGE_HEIGHT,
+		gap: MESSAGE_GAP,
+	});
+
 	return (
-		<section className={clsx("chat__container", className, { hidden })}>
-			{rooms.length > 1 ? (
-				<div className="stack horizontal">
-					{rooms.map((room) => {
-						const unseen = unseenMessages.get(room.code);
+		<>
+			<div
+				ref={messagesContainerRef}
+				role="log"
+				aria-label="Chat messages"
+				className={clsx(styles.messages, "scrollbar", className)}
+			>
+				<div
+					className={styles.messagesSizer}
+					style={{ height: virtualizer.totalSize }}
+				>
+					{virtualizer.items.map(({ index, start }) => {
+						const msg = messages[index];
+						const systemMessage = systemMessageText(msg);
 
 						return (
-							<Button
-								key={room.code}
-								className={clsx("chat__room-button", {
-									current: currentRoom === room.code,
-								})}
-								onPress={() => {
-									setCurrentRoom(room.code);
-									resetScroller();
-								}}
+							<div
+								key={msg.publicId}
+								ref={virtualizer.measureElement(index)}
+								className={styles.messageRow}
+								data-testid="chat-message-row"
+								style={{ transform: `translateY(${start}px)` }}
 							>
-								<span className="chat__room-button__unseen invisible" />
-								{room.label}
-								{unseen ? (
-									<span className="chat__room-button__unseen">{unseen}</span>
+								{systemMessage ? (
+									<SystemMessage message={msg} text={systemMessage} />
 								) : (
-									<span className="chat__room-button__unseen invisible" />
+									<Message
+										message={msg}
+										label={
+											msg.authorUserId != null
+												? labelByUserId?.[msg.authorUserId]
+												: undefined
+										}
+									/>
 								)}
-							</Button>
+							</div>
 						);
 					})}
 				</div>
-			) : null}
-			<div className="chat__input-container">
-				<ol
-					className={clsx("chat__messages", messagesContainerClassName)}
-					ref={messagesContainerRef}
-				>
-					{messages.map((msg) => {
-						const systemMessage = systemMessageText(msg);
-						if (systemMessage) {
-							return (
-								<SystemMessage
-									key={msg.id}
-									message={msg}
-									text={systemMessage}
-								/>
-							);
-						}
-
-						const user = msg.userId ? users[msg.userId] : null;
-						if (!user && !missingUserName) return null;
-
-						return (
-							<Message
-								key={msg.id}
-								user={user}
-								missingUserName={missingUserName}
-								message={msg}
-							/>
-						);
-					})}
-				</ol>
-				{unseenMessagesInTheRoom ? (
-					<SendouButton
-						className="chat__unseen-messages"
-						onPress={scrollToBottom}
-					>
-						{t("common:chat.newMessages")}
-					</SendouButton>
-				) : null}
-				<form onSubmit={handleSubmit} className="mt-4">
-					<input
-						className="w-full"
-						ref={inputRef}
-						placeholder={t("common:chat.input.placeholder")}
-						disabled={sendingMessagesDisabled}
-						maxLength={MESSAGE_MAX_LENGTH}
-					/>{" "}
-					<div className="chat__bottom-row">
-						{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
-							<div className="text-xxs font-semi-bold text-lighter">
-								{t(
-									readyState === "CONNECTED"
-										? "common:chat.connected"
-										: "common:chat.connecting",
-								)}
-							</div>
-						) : (
-							<div className="text-xxs font-semi-bold text-warning">
-								{t("common:chat.disconnected")}
-							</div>
-						)}
-						<SubmitButton
-							size="small"
-							variant="minimal"
-							isDisabled={sendingMessagesDisabled}
-						>
-							{t("common:chat.send")}
-						</SubmitButton>
-					</div>
-				</form>
 			</div>
-		</section>
+			{unseenMessagesInTheRoom ? (
+				<SendouButton
+					className={styles.unseenMessages}
+					onClick={scrollToBottom}
+				>
+					{t("common:chat.newMessages")}
+				</SendouButton>
+			) : null}
+		</>
+	);
+}
+
+/** A plain form on purpose: the chat client POSTs the message itself, so sending never touches the router or revalidates the page's loaders. */
+function Composer({ onSend }: { onSend: ChatProps["onSend"] }) {
+	const { t } = useTranslation(["common", "forms"]);
+	const readyState = useEventsReadyState();
+	const [contents, setContents] = React.useState("");
+	const inputRef = React.useRef<HTMLInputElement>(null);
+	const [connectionStatusShown, setConnectionStatusShown] =
+		React.useState(false);
+	useDebounce(
+		() => setConnectionStatusShown(readyState !== "CONNECTED"),
+		CONNECTION_STATUS_GRACE_MS,
+		[readyState],
+	);
+
+	const sendingDisabled = readyState !== "CONNECTED";
+	const showConnectionStatus = sendingDisabled && connectionStatusShown;
+	const isEmpty = contents.trim().length === 0;
+
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		if (sendingDisabled || isEmpty) return;
+
+		const parsed = v.safeParse(sendChatMessageSchema, {
+			publicId: shortNanoid(),
+			contents,
+		});
+		if (!parsed.success) return;
+
+		onSend(parsed.output);
+		setContents("");
+		inputRef.current?.focus();
+	};
+
+	return (
+		<form className={styles.composer} onSubmit={handleSubmit}>
+			{showConnectionStatus ? (
+				<div
+					className={clsx(
+						"text-xxs font-semi-bold",
+						readyState === "CONNECTING" ? "text-lighter" : "text-warning",
+					)}
+				>
+					{t(
+						readyState === "CONNECTING"
+							? "common:chat.connecting"
+							: "common:chat.disconnected",
+					)}
+				</div>
+			) : null}
+			<div className={styles.composerRow}>
+				<input
+					ref={inputRef}
+					value={contents}
+					onChange={(event) => setContents(event.target.value)}
+					placeholder={t("forms:placeholders.chatMessage")}
+					maxLength={MESSAGE_MAX_LENGTH}
+					disabled={sendingDisabled}
+				/>
+				<SendouButton
+					type="submit"
+					className={styles.sendButton}
+					size="small"
+					isDisabled={sendingDisabled || isEmpty}
+					aria-label={t("common:chat.send")}
+					icon={<SendHorizontal size={16} />}
+					data-testid="chat-submit-button"
+				/>
+			</div>
+		</form>
 	);
 }
 
 function Message({
-	user,
 	message,
-	missingUserName,
+	label,
 }: {
-	user?: ChatUser | null;
-	message: ChatMessage;
-	missingUserName?: string;
+	message: ClientChatMessage;
+	label?: string;
 }) {
+	const author = message.author;
+
 	return (
-		<li className="chat__message">
-			{user ? <Avatar user={user} size="xs" /> : null}
+		<div className={styles.message}>
+			{author ? (
+				<div
+					className={clsx(styles.avatarWrapper, {
+						[styles.avatarWrapperStaff]: label,
+					})}
+				>
+					<Avatar user={author} size="xs" />
+					{label ? <span className={styles.avatarBadge}>{label}</span> : null}
+				</div>
+			) : null}
 			<div>
-				<div className="stack horizontal sm items-center">
+				<div className={styles.messageInfo}>
 					<div
-						className="chat__message__user"
+						className={styles.messageUser}
 						style={
-							user?.chatNameColor
-								? { "--chat-user-color": user.chatNameColor }
+							author?.chatNameHue
+								? { "--chat-hue": author.chatNameHue }
 								: undefined
 						}
 					>
-						{user?.username ?? missingUserName}
+						{author?.username ?? "???"}
 					</div>
-					{user?.title ? (
-						<div className="text-xs text-theme-secondary font-semi-bold">
-							{user.title}
-						</div>
-					) : null}
+					<PronounsTag author={author} />
 					{!message.pending ? (
-						<MessageTimestamp timestamp={message.timestamp} />
+						<MessageTimestamp createdAt={message.createdAt} />
 					) : null}
 				</div>
 				<div
-					className={clsx("chat__message__contents", {
-						pending: message.pending,
+					className={clsx(styles.messageContents, {
+						[styles.messageContentsPending]: message.pending,
 					})}
 				>
-					{message.contents}
+					{message.contents ? (
+						<MessageContents text={message.contents} />
+					) : null}
 				</div>
 			</div>
-		</li>
+		</div>
+	);
+}
+
+function PronounsTag({ author }: { author: ChatMessageAuthor | null }) {
+	if (!author?.pronouns) return null;
+
+	return (
+		<span className={styles.pronounsTag}>
+			{author.pronouns.subject}/{author.pronouns.object}
+		</span>
 	);
 }
 
@@ -282,222 +362,82 @@ function SystemMessage({
 	message,
 	text,
 }: {
-	message: ChatMessage;
+	message: ClientChatMessage;
 	text: string;
 }) {
 	return (
-		<li className="chat__message">
+		<div className={styles.message}>
 			<div>
 				<div className="stack horizontal sm">
-					<MessageTimestamp timestamp={message.timestamp} />
+					<MessageTimestamp createdAt={message.createdAt} />
 				</div>
-				<div className="chat__message__contents text-xs text-lighter font-semi-bold">
+				<div
+					className={clsx(
+						styles.messageContents,
+						"text-xs text-lighter font-semi-bold",
+					)}
+				>
 					{text}
 				</div>
 			</div>
-		</li>
+		</div>
 	);
 }
 
-function MessageTimestamp({ timestamp }: { timestamp: number }) {
-	const { i18n } = useTranslation();
-	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
+function MessageContents({ text }: { text: string }) {
+	const matches = findRoomLinks(text);
+
+	if (matches.length === 0) return <>{text}</>;
+
+	const parts: React.ReactNode[] = [];
+	let lastIndex = 0;
+
+	for (const [i, match] of matches.entries()) {
+		if (match.index > lastIndex) {
+			parts.push(text.slice(lastIndex, match.index));
+		}
+		parts.push(
+			<span key={i} className={styles.roomLinkBlock}>
+				<QRCodeSVG value={match.url} size={120} className={styles.roomQrCode} />
+				<a
+					href={match.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					className={styles.roomLink}
+				>
+					{match.url}
+				</a>
+			</span>,
+		);
+		lastIndex = match.index + match.url.length;
+	}
+
+	if (lastIndex < text.length) {
+		parts.push(text.slice(lastIndex));
+	}
+
+	return <>{parts}</>;
+}
+
+function MessageTimestamp({ createdAt }: { createdAt: number }) {
+	const { formatter: dateTimeFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const date = databaseTimestampToDate(createdAt);
+	const moreThanDayAgo = sub(new Date(), { days: 1 }) > date;
 
 	return (
-		<time className="chat__message__time">
+		<time className={styles.messageTime}>
 			{moreThanDayAgo
-				? new Date(timestamp).toLocaleString(i18n.language, {
-						day: "numeric",
-						month: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					})
-				: new Date(timestamp).toLocaleTimeString(i18n.language)}
+				? dateTimeFormatter.format(date)
+				: timeFormatter.format(date)}
 		</time>
 	);
-}
-
-// TODO: should contain unseen messages logic, now it's duplicated
-export function useChat({
-	rooms,
-	onNewMessage,
-	revalidates = true,
-}: {
-	rooms: ChatProps["rooms"];
-	onNewMessage?: (message: ChatMessage) => void;
-	revalidates?: boolean;
-}) {
-	const { revalidate } = useRevalidator();
-	const shouldRevalidate = React.useRef<boolean>();
-	const user = useUser();
-
-	const [messages, setMessages] = React.useState<ChatMessage[]>([]);
-	const [readyState, setReadyState] = React.useState<
-		"CONNECTING" | "CONNECTED" | "CLOSED"
-	>("CONNECTING");
-	const [sentMessage, setSentMessage] = React.useState<ChatMessage>();
-	const [currentRoom, setCurrentRoom] = React.useState<string | undefined>(
-		rooms[0]?.code,
-	);
-
-	const ws = React.useRef<WebSocket>();
-	const lastSeenMessagesByRoomId = React.useRef<Map<string, string>>(new Map());
-
-	// same principal as here behind separating it into a ref: https://overreacted.io/making-setinterval-declarative-with-react-hooks/
-	React.useEffect(() => {
-		shouldRevalidate.current = revalidates;
-	}, [revalidates]);
-
-	React.useEffect(() => {
-		if (rooms.length === 0) return;
-		if (!import.meta.env.VITE_SKALOP_WS_URL) {
-			logger.warn("No WS URL provided");
-			return;
-		}
-
-		const url = `${import.meta.env.VITE_SKALOP_WS_URL}?${rooms
-			.map((room) => `room=${room.code}`)
-			.join("&")}`;
-		ws.current = new WebSocket(url, [], {
-			maxReconnectionDelay: 10000 * 2,
-			reconnectionDelayGrowFactor: 1.5,
-		});
-		ws.current.onopen = () => {
-			setCurrentRoom(rooms[0].code);
-			setReadyState("CONNECTED");
-		};
-		ws.current.onclose = () => setReadyState("CLOSED");
-		ws.current.onerror = () => setReadyState("CLOSED");
-
-		ws.current.onmessage = (e) => {
-			const message = JSON.parse(e.data);
-			const messageArr = (
-				Array.isArray(message) ? message : [message]
-			) as ChatMessage[];
-
-			// something interesting happened
-			// -> let's run data loaders so they can see it sooner
-			const isSystemMessage = Boolean(messageArr[0].type);
-			if (isSystemMessage && shouldRevalidate.current) {
-				revalidate();
-			}
-
-			const sound = messageTypeToSound(messageArr[0].type);
-			if (sound && soundEnabled(sound)) {
-				const audio = new Audio(soundPath(sound));
-				audio.volume = soundVolume() / 100;
-				void audio
-					.play()
-					.catch((e) => logger.error(`Couldn't play sound: ${e}`));
-			}
-
-			if (messageArr[0].revalidateOnly) {
-				return;
-			}
-
-			const isInitialLoad = Array.isArray(message);
-
-			if (isInitialLoad) {
-				lastSeenMessagesByRoomId.current = message.reduce((acc, cur) => {
-					acc.set(cur.room, cur.id);
-					return acc;
-				}, new Map<string, string>());
-			}
-
-			if (isInitialLoad) {
-				setMessages(messageArr);
-			} else {
-				if (!isSystemMessage) onNewMessage?.(message);
-				setMessages((messages) => [...messages, ...messageArr]);
-			}
-		};
-
-		const wsCurrent = ws.current;
-		return () => {
-			wsCurrent?.close();
-			setMessages([]);
-		};
-	}, [rooms, onNewMessage, revalidate]);
-
-	React.useEffect(() => {
-		// ping every minute to keep connection alive
-		const interval = setInterval(() => {
-			ws.current?.send("");
-		}, 1000 * 60);
-
-		return () => {
-			clearInterval(interval);
-		};
-	}, []);
-
-	const send = React.useCallback(
-		(contents: string) => {
-			invariant(currentRoom);
-
-			const id = nanoid();
-			setSentMessage({
-				id,
-				room: currentRoom,
-				contents,
-				timestamp: Date.now(),
-				userId: user!.id,
-			});
-			ws.current!.send(JSON.stringify({ id, contents, room: currentRoom }));
-		},
-		[user, currentRoom],
-	);
-
-	let allMessages = messages;
-	if (sentMessage && !messages.some((msg) => msg.id === sentMessage.id)) {
-		allMessages = [...messages, { ...sentMessage, pending: true }];
-	}
-
-	const roomsMessages = allMessages
-		.filter((msg) => msg.room === currentRoom)
-		.sort((a, b) => a.timestamp - b.timestamp);
-	if (roomsMessages.length > 0 && currentRoom) {
-		lastSeenMessagesByRoomId.current.set(
-			currentRoom,
-			roomsMessages[roomsMessages.length - 1].id,
-		);
-	}
-
-	const unseenMessages = unseenMessagesCountByRoomId({
-		messages,
-		lastSeenMessages: lastSeenMessagesByRoomId.current,
-	});
-
-	return {
-		messages: roomsMessages,
-		send,
-		currentRoom,
-		setCurrentRoom,
-		readyState,
-		unseenMessages,
-	};
-}
-
-function unseenMessagesCountByRoomId({
-	messages,
-	lastSeenMessages,
-}: {
-	messages: ChatMessage[];
-	lastSeenMessages: Map<string, string>;
-}) {
-	const lastUnseenEncountered = new Set<string>();
-
-	const unseenMessages = messages.filter((msg) => {
-		if (msg.id === lastSeenMessages.get(msg.room)) {
-			lastUnseenEncountered.add(msg.room);
-			return false;
-		}
-
-		return lastUnseenEncountered.has(msg.room);
-	});
-
-	return unseenMessages.reduce((acc, cur) => {
-		const count = acc.get(cur.room) ?? 0;
-		acc.set(cur.room, count + 1);
-		return acc;
-	}, new Map<string, number>());
 }

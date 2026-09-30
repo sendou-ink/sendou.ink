@@ -1,34 +1,32 @@
-import { useLocation, useMatches, useRevalidator } from "@remix-run/react";
 import clsx from "clsx";
+import { Bell, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
+import { SendouPopover } from "~/components/elements/Popover";
 import {
 	NotificationItem,
 	NotificationItemDivider,
 	NotificationsList,
 } from "~/features/notifications/components/NotificationList";
+import {
+	type NotificationsData,
+	useNotificationsData,
+} from "~/features/notifications/NotificationsProvider";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
-import type { RootLoaderData } from "~/root";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
-import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
-import { LinkButton, SendouButton } from "../elements/Button";
-import { SendouPopover } from "../elements/Popover";
-import { BellIcon } from "../icons/Bell";
-import { RefreshIcon } from "../icons/Refresh";
+import {
+	useMarkNotificationsAsSeen,
+	useShowUnseenDot,
+	useStickyUnseenIds,
+} from "../../features/notifications/notifications-hooks";
 
 import styles from "./NotificationPopover.module.css";
 
-export type LoaderNotification = NonNullable<
-	RootLoaderData["notifications"]
->[number];
+export type LoaderNotification = NonNullable<NotificationsData>[number];
 
-export function NotificationPopover() {
-	const location = useLocation();
-	const [root] = useMatches();
-
-	const notifications = (root.data as RootLoaderData | undefined)
-		?.notifications;
+export function useNotifications() {
+	const { notifications } = useNotificationsData();
 
 	const unseenIds = React.useMemo(
 		() =>
@@ -38,65 +36,79 @@ export function NotificationPopover() {
 		[notifications],
 	);
 
-	if (!notifications) {
-		return null;
-	}
+	const showUnseenDot = useShowUnseenDot(notifications);
+
+	return { notifications, unseenIds, showUnseenDot };
+}
+
+export function NotificationPopover({
+	notifications,
+	unseenIds,
+	triggerClassName,
+}: {
+	notifications: LoaderNotification[] | undefined;
+	unseenIds: number[];
+	triggerClassName?: string;
+}) {
+	const [isOpen, setIsOpen] = React.useState(false);
 
 	return (
-		<div className={styles.container} key={location.pathname}>
-			{unseenIds.length > 0 ? <div className={styles.unseenDot} /> : null}
-			<SendouPopover
-				trigger={
-					<Button
-						className="layout__header__button"
-						data-testid="notifications-button"
-					>
-						<BellIcon />
-					</Button>
-				}
-				popoverClassName={clsx(styles.popoverContainer, {
-					[styles.noNotificationsContainer]:
-						!notifications || notifications.length === 0,
-				})}
-			>
-				<NotificationContent
-					notifications={notifications ?? []}
-					unseenIds={unseenIds}
-				/>
-			</SendouPopover>
-		</div>
+		<SendouPopover
+			eager
+			onOpenChange={setIsOpen}
+			trigger={
+				<button
+					type="button"
+					className={triggerClassName}
+					data-testid="notifications-button"
+				>
+					<Bell />
+				</button>
+			}
+			popoverClassName={clsx(styles.popoverContainer, {
+				[styles.noNotificationsContainer]: !notifications?.length,
+			})}
+		>
+			<NotificationContent
+				notifications={notifications}
+				unseenIds={unseenIds}
+				isOpen={isOpen}
+			/>
+		</SendouPopover>
 	);
 }
 
-function NotificationContent({
+const NO_IDS: number[] = [];
+const NO_NOTIFICATIONS: LoaderNotification[] = [];
+
+/** The list of the bell popover and the mobile "You" panel, rendered while closed too so that both work before hydration. */
+export function NotificationContent({
 	notifications,
 	unseenIds,
+	isOpen,
 }: {
-	notifications: LoaderNotification[];
+	/** `undefined` until the peek fetch lands; the header & its space are held meanwhile. */
+	notifications: LoaderNotification[] | undefined;
 	unseenIds: number[];
+	isOpen: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
-	const { revalidate, state } = useRevalidator();
+	const stickyUnseenIds = useStickyUnseenIds(
+		notifications ?? NO_NOTIFICATIONS,
+		isOpen,
+	);
 
-	// TODO: for some reason this makes "adds a badge owner sending a notification" E2E test flaky, figure out why and fix
-	useMarkNotificationsAsSeen(unseenIds);
+	useMarkNotificationsAsSeen(isOpen ? unseenIds : NO_IDS);
 
 	return (
 		<>
-			<div className={styles.topContainer}>
-				<h2 className={styles.header}>
-					<BellIcon /> {t("common:notifications.title")}
-				</h2>
-				<SendouButton
-					icon={<RefreshIcon />}
-					variant="minimal"
-					className={styles.refreshButton}
-					onPress={revalidate}
-					isDisabled={state !== "idle"}
-				/>
-			</div>
+			<h2 className={styles.header}>
+				<Bell /> {t("common:notifications.title")}
+			</h2>
 			<hr className={styles.divider} />
-			{notifications.length === 0 ? (
+			{!notifications ? (
+				<div className={styles.pending} />
+			) : notifications.length === 0 ? (
 				<div className={styles.noNotifications}>
 					{t("common:notifications.empty")}
 				</div>
@@ -106,14 +118,19 @@ function NotificationContent({
 						<React.Fragment key={notification.id}>
 							<NotificationItem
 								key={notification.id}
-								notification={notification}
+								notification={{
+									...notification,
+									seen: Number(!stickyUnseenIds.has(notification.id)),
+								}}
 							/>
-							{i !== notifications.length - 1 && <NotificationItemDivider />}
+							{i !== notifications.length - 1 ? (
+								<NotificationItemDivider />
+							) : null}
 						</React.Fragment>
 					))}
 				</NotificationsList>
 			)}
-			{notifications.length === NOTIFICATIONS.PEEK_COUNT ? (
+			{notifications?.length === NOTIFICATIONS.PEEK_COUNT ? (
 				<NotificationsFooter />
 			) : null}
 		</>
@@ -126,15 +143,14 @@ function NotificationsFooter() {
 	return (
 		<div>
 			<hr className={styles.divider} />
-			<LinkButton
-				variant="minimal"
-				size="small"
+			<Link
 				to={NOTIFICATIONS_URL}
-				className="mt-1-5"
-				testId="notifications-see-all-button"
+				className={styles.viewAllLink}
+				data-testid="notifications-see-all-button"
 			>
-				{t("common:notifications.seeAll")}
-			</LinkButton>
+				{t("common:actions.viewAll")}
+				<ChevronRight size={14} />
+			</Link>
 		</div>
 	);
 }

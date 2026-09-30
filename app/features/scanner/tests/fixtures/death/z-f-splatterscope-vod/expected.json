@@ -1,0 +1,32 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 2021,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "SSU",
+        "RSU",
+        "RSU",
+        "SSU"
+      ],
+      [
+        "RP",
+        "SS",
+        "SS",
+        "RSU"
+      ],
+      [
+        "OS",
+        "ISM",
+        "ISM",
+        "ISM"
+      ]
+    ],
+    "name": "おもちっち",
+    "weaponLabel": "Z+F Splatterscope"
+  },
+  "options": {
+    "notes": "Compressed VoD capture. The Respawn Punisher main (middle row) is gray-dark at the circle center, which the old grayscale gate icon probe failed on — the probe reads per-pixel max RGB channel now."
+  }
+}

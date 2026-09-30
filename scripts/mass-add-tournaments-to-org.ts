@@ -1,6 +1,5 @@
-import "dotenv/config";
 import { db } from "~/db/sql";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
 async function main() {
@@ -40,4 +39,4 @@ async function main() {
 	logger.info(`Added ${filtered.length} tournaments to organization ${orgId}`);
 }
 
-main();
+await main();

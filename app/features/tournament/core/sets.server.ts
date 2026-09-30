@@ -1,18 +1,23 @@
 import type { Tables } from "~/db/tables";
+import type { FindByTournamentTeamIdItem } from "~/features/tournament-match/TournamentMatchRepository.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator";
-import { sourceTypes } from "~/modules/tournament-map-list-generator";
-import invariant from "~/utils/invariant";
+import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
+import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
-import { findRoundsByTournamentId } from "../queries/findRoundsByTournamentId.server";
-import {
-	type SetHistoryByTeamIdItem,
-	setHistoryByTeamId,
-} from "../queries/setHistoryByTeamId.server";
+
+export interface AllRoundsItem {
+	stageId: number;
+	stageName: string;
+	stageType: Tables["TournamentStage"]["type"];
+	roundNumber: number;
+	section: Tables["TournamentRound"]["section"];
+}
 
 export interface PlayedSet {
 	tournamentMatchId: number;
 	score: [teamBeingViewed: number, opponent: number];
+	/** Per the bracket; can disagree with the maps and score, e.g. an organizer overrode the winner after reports. */
+	result: "win" | "loss";
 	round: {
 		type: "winners" | "losers" | "single_elim" | "round_robin" | "swiss";
 		round: number | "finals" | "grand_finals" | "bracket_reset";
@@ -27,92 +32,57 @@ export interface PlayedSet {
 	opponent: {
 		id: number;
 		name: string;
-		/** Team's roster that played in this set */
 		roster: Array<
 			Pick<
 				Tables["User"],
-				"id" | "username" | "discordAvatar" | "discordId" | "customUrl"
-			>
+				| "id"
+				| "username"
+				| "discordAvatar"
+				| "discordId"
+				| "customUrl"
+				| "country"
+			> & { customAvatarUrl: string | null }
 		>;
 	};
 }
 
-export function winCounts(sets: PlayedSet[]) {
-	let setsWon = 0;
-	let totalSets = 0;
-	let mapsWon = 0;
-	let totalMaps = 0;
-
-	for (const set of sets) {
-		let mapsWonThisSet = 0;
-		let totalMapsThisSet = 0;
-
-		for (const map of set.maps) {
-			if (map.result === "win") {
-				mapsWonThisSet++;
-			}
-			totalMapsThisSet++;
-		}
-
-		totalSets++;
-		if (mapsWonThisSet > totalMapsThisSet / 2) {
-			setsWon++;
-		}
-
-		mapsWon += mapsWonThisSet;
-		totalMaps += totalMapsThisSet;
-	}
-
-	return {
-		sets: {
-			won: setsWon,
-			total: totalSets,
-			percentage: Math.round((setsWon / totalSets) * 100),
-		},
-		maps: {
-			won: mapsWon,
-			total: totalMaps,
-			percentage: Math.round((mapsWon / totalMaps) * 100),
-		},
-	};
-}
-
 export function tournamentTeamSets({
-	tournamentTeamId,
-	tournamentId,
+	sets,
+	allRounds,
 }: {
-	tournamentTeamId: number;
-	tournamentId: number;
+	sets: FindByTournamentTeamIdItem[];
+	allRounds: AllRoundsItem[];
 }): PlayedSet[] {
-	const sets = setHistoryByTeamId(tournamentTeamId);
-	const allRounds = findRoundsByTournamentId(tournamentId);
-
 	return sets.map((set) => {
 		const round =
-			allRounds.find((round) => round.stageId === set.stageId) ?? allRounds[0];
+			allRounds.find((candidate) => candidate.stageId === set.stageId) ??
+			allRounds[0];
 
 		const resolveRound = () => {
 			if (round.stageType === "round_robin" || round.stageType === "swiss") {
 				return set.roundNumber;
 			}
 
-			if (set.groupNumber === 3) {
+			if (
+				round.stageType === "double_elimination" &&
+				set.section === "finals"
+			) {
 				if (set.roundNumber === 2) return "bracket_reset";
 
 				return "grand_finals";
 			}
 
-			const maxRoundNumberOfGroup = Math.max(
+			const maxRoundNumberOfSection = Math.max(
 				...allRounds
 					.filter(
-						(round) =>
-							round.groupNumber === set.groupNumber &&
-							round.stageId === set.stageId,
+						(candidate) =>
+							candidate.section === set.section &&
+							candidate.stageId === set.stageId,
 					)
-					.map((round) => round.roundNumber),
+					.map((candidate) => candidate.roundNumber),
 			);
 
-			if (set.roundNumber === maxRoundNumberOfGroup) {
+			if (set.roundNumber === maxRoundNumberOfSection) {
 				return "finals";
 			}
 
@@ -125,7 +95,7 @@ export function tournamentTeamSets({
 			round: {
 				round: resolveRound(),
 				type: resolveRoundType({
-					groupNumber: set.groupNumber,
+					section: set.section,
 					stageType: round.stageType,
 				}),
 			},
@@ -133,9 +103,10 @@ export function tournamentTeamSets({
 				stageId: match.stageId,
 				modeShort: match.mode,
 				result: match.wasWinner ? "win" : "loss",
-				source: parseTournamentMaplistSource(match.source),
+				source: parseMaplistSource(match.source),
 			})),
-			score: flipScoreIfNeeded(set),
+			result: set.winnerSide === set.teamSide ? "win" : "loss",
+			score: scoreFromTeamPerspective(set),
 			opponent: {
 				id: set.otherTeamId,
 				name: set.otherTeamName,
@@ -145,43 +116,19 @@ export function tournamentTeamSets({
 	});
 }
 
-function parseTournamentMaplistSource(source: string): TournamentMaplistSource {
-	if (sourceTypes.includes(source as any)) {
-		return source as TournamentMaplistSource;
-	}
-
-	const parsed = Number(source);
-
-	invariant(!Number.isNaN(parsed), `Invalid source: ${source}`);
-
-	return parsed;
-}
-
-function flipScoreIfNeeded(set: SetHistoryByTeamIdItem): [number, number] {
-	const score: [number, number] = [
-		set.opponentOneScore ?? 0,
-		set.opponentTwoScore ?? 0,
-	];
-
-	const wonTheSet =
-		set.matches.reduce((acc, cur) => cur.wasWinner + acc, 0) >
-		set.matches.length / 2;
-
-	if (
-		(wonTheSet && score[0] < score[1]) ||
-		(!wonTheSet && score[0] > score[1])
-	) {
-		return [score[1], score[0]];
-	}
-
-	return score;
+function scoreFromTeamPerspective(
+	set: FindByTournamentTeamIdItem,
+): [number, number] {
+	return set.teamSide === "opponent1"
+		? [set.opponentOneScore ?? 0, set.opponentTwoScore ?? 0]
+		: [set.opponentTwoScore ?? 0, set.opponentOneScore ?? 0];
 }
 
 function resolveRoundType({
-	groupNumber,
+	section,
 	stageType,
 }: {
-	groupNumber: number;
+	section: Tables["TournamentRound"]["section"];
 	stageType: Tables["TournamentStage"]["type"];
 }) {
 	if (stageType === "single_elimination") {
@@ -196,16 +143,16 @@ function resolveRoundType({
 		return "swiss";
 	}
 
-	if (groupNumber === 1 || groupNumber === 3) {
+	if (section === "winners" || section === "finals") {
 		return "winners";
 	}
 
-	if (groupNumber === 2) {
+	if (section === "losers") {
 		return "losers";
 	}
 
 	logger.warn(
-		`resolveRoundType: groupNumber ${groupNumber} and stageType ${stageType} not handled`,
+		`resolveRoundType: section ${section} and stageType ${stageType} not handled`,
 	);
 	return "single_elim";
 }

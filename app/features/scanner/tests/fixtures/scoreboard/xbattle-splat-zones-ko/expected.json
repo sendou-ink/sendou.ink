@@ -1,0 +1,80 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "X",
+    "mode": "SZ",
+    "stage": 0,
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 0,
+    "players": [
+      {
+        "name": "Pinhole",
+        "weaponId": 211,
+        "paint": 842,
+        "ka": 12,
+        "d": 7,
+        "s": 2
+      },
+      {
+        "name": "Sunshield",
+        "weaponId": 20,
+        "paint": 1217,
+        "ka": 7,
+        "d": 6,
+        "s": 3
+      },
+      {
+        "name": "Headphones",
+        "weaponId": 3030,
+        "paint": 1768,
+        "ka": 4,
+        "d": 4,
+        "s": 5
+      },
+      {
+        "name": "Now or Never Seven",
+        "weaponId": 2030,
+        "paint": 693,
+        "ka": 4,
+        "d": 4,
+        "s": 2
+      },
+      {
+        "name": "Charms",
+        "weaponId": 60,
+        "paint": 1422,
+        "ka": 9,
+        "d": 6,
+        "s": 5
+      },
+      {
+        "name": "Teddy",
+        "weaponId": 3010,
+        "paint": 980,
+        "ka": 7,
+        "d": 7,
+        "s": 5
+      },
+      {
+        "name": "Circle",
+        "weaponId": 8002,
+        "paint": 1204,
+        "ka": 8,
+        "d": 6,
+        "s": 3
+      },
+      {
+        "name": "Fleece",
+        "weaponId": 2030,
+        "paint": 1053,
+        "ka": 5,
+        "d": 2,
+        "s": 4
+      }
+    ],
+    "stageLabel": "Scorch Gorge"
+  }
+}

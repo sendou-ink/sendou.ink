@@ -1,25 +1,20 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { requireUser } from "~/features/auth/core/user.server";
-import { notFoundIfFalsy } from "~/utils/remix.server";
-import { teamPage } from "~/utils/urls";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
+import { requirePermission } from "~/modules/permissions/guards.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import * as TeamRepository from "../TeamRepository.server";
 import { teamParamsSchema } from "../team-schemas.server";
-import { isTeamManager } from "../team-utils";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
-	const { customUrl } = teamParamsSchema.parse(params);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { customUrl } = v.parse(teamParamsSchema, params);
 
-	const team = notFoundIfFalsy(
+	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl, {
 			includeInviteCode: true,
 		}),
 	);
 
-	if (!isTeamManager({ team, user }) && !user.roles.includes("ADMIN")) {
-		throw redirect(teamPage(customUrl));
-	}
+	requirePermission(team, "MANAGE_ROSTER");
 
 	return {
 		team,

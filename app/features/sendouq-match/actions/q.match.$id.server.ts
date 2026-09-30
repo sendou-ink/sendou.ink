@@ -1,305 +1,537 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { sql } from "~/db/sql";
-import type { ReportedWeapon } from "~/db/tables";
+import type { ActionFunctionArgs } from "react-router";
+import * as R from "remeda";
+import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import type { ChatMessage } from "~/features/chat/chat-types";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import { findCurrentGroupByUserId } from "~/features/sendouq/queries/findCurrentGroupByUserId.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
+import {
+	refreshSendouQInstance,
+	SendouQ,
+} from "~/features/sendouq/core/SendouQ.server";
+import { SENDOUQ_LOOKING_CHANNEL } from "~/features/sendouq/q-constants";
+import { SendouQError } from "~/features/sendouq/q-utils.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
-import invariant from "~/utils/invariant";
+import { parseFormData } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
 import {
+	errorToast,
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
-	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { SENDOUQ_PREPARING_PAGE, sendouQMatchPage } from "~/utils/urls";
-import { compareMatchToReportedScores } from "../core/match.server";
-import { mergeReportedWeapons } from "../core/reported-weapons.server";
-import { calculateMatchSkills } from "../core/skills.server";
-import {
-	summarizeMaps,
-	summarizePlayerResults,
-} from "../core/summarizer.server";
+import { sendMatchCanceledWebhook } from "../core/discord-webhook.server";
+import * as RejoinVote from "../core/RejoinVote";
+import * as SendouQMatch from "../core/SendouQMatch";
 import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
-import { winnersArrayToWinner } from "../q-match-utils";
-import { addDummySkill } from "../queries/addDummySkill.server";
-import { addMapResults } from "../queries/addMapResults.server";
-import { addPlayerResults } from "../queries/addPlayerResults.server";
-import { addReportedWeapons } from "../queries/addReportedWeapons.server";
-import { addSkills } from "../queries/addSkills.server";
-import { deleteReporterWeaponsByMatchId } from "../queries/deleteReportedWeaponsByMatchId.server";
-import { findMatchById } from "../queries/findMatchById.server";
-import { reportedWeaponsByMatchId } from "../queries/reportedWeaponsByMatchId.server";
-import { reportScore } from "../queries/reportScore.server";
-import { setGroupAsInactive } from "../queries/setGroupAsInactive.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const matchId = parseParams({
 		params,
 		schema: qMatchPageParamsSchema,
 	}).id;
-	const user = await requireUser(request);
-	const data = await parseRequestPayload({
+	const user = requireUser();
+	const parsed = await parseFormData({
 		request,
 		schema: matchSchema,
 	});
+	if (!parsed.success) {
+		return { fieldErrors: parsed.fieldErrors };
+	}
+	const data = parsed.data;
 
-	switch (data._action) {
-		case "REPORT_SCORE": {
-			const reportWeapons = () => {
-				const oldReportedWeapons = reportedWeaponsByMatchId(matchId) ?? [];
+	const match = notFoundIfNullish(await SQMatchRepository.findById(matchId));
+	const isStaff = user.roles.includes("STAFF");
+	const isParticipant = SendouQMatch.allMembers(match).some(
+		(m) => m.id === user.id,
+	);
+	errorToastIfFalsy(
+		isParticipant || isStaff,
+		"Not a participant of this match",
+	);
 
-				const mergedWeapons = mergeReportedWeapons({
-					oldWeapons: oldReportedWeapons,
-					newWeapons: data.weapons as (ReportedWeapon & {
-						mapIndex: number;
-						groupMatchMapId: number;
-					})[],
-					newReportedMapsCount: data.winners.length,
+	const notifyMatchStatusChanged = () =>
+		ChatSystemMessage.notifyStatusChanged(
+			SendouQMatch.allMembers(match).map((m) => m.id),
+		);
+
+	try {
+		switch (data._action) {
+			case "REPORT_SCORE": {
+				const isStaffReport = !isParticipant && isStaff;
+
+				const result = await SQMatchRepository.reportMapWinner({
+					matchId,
+					winnerId: data.winnerId,
+					reportedByUserId: user.id,
+					reportedCount: data.reportedCount,
+					confirmingReportedAt: data.confirmingReportedAt,
+					isStaffReport,
 				});
 
-				sql.transaction(() => {
-					deleteReporterWeaponsByMatchId(matchId);
-					addReportedWeapons(mergedWeapons);
-				})();
-			};
-
-			const match = notFoundIfFalsy(findMatchById(matchId));
-			if (match.isLocked) {
-				reportWeapons();
-				return null;
-			}
-
-			errorToastIfFalsy(
-				!data.adminReport || user.roles.includes("STAFF"),
-				"Only mods can report scores as admin",
-			);
-			const members = [
-				...(await QMatchRepository.findGroupById({
-					groupId: match.alphaGroupId,
-				}))!.members.map((m) => ({
-					...m,
-					groupId: match.alphaGroupId,
-				})),
-				...(await QMatchRepository.findGroupById({
-					groupId: match.bravoGroupId,
-				}))!.members.map((m) => ({
-					...m,
-					groupId: match.bravoGroupId,
-				})),
-			];
-
-			const groupMemberOfId = members.find((m) => m.id === user.id)?.groupId;
-			invariant(
-				groupMemberOfId || data.adminReport,
-				"User is not a member of any group",
-			);
-
-			const winner = winnersArrayToWinner(data.winners);
-			const winnerGroupId =
-				winner === "ALPHA" ? match.alphaGroupId : match.bravoGroupId;
-			const loserGroupId =
-				winner === "ALPHA" ? match.bravoGroupId : match.alphaGroupId;
-
-			// when admin reports match gets locked right away
-			const compared = data.adminReport
-				? "SAME"
-				: compareMatchToReportedScores({
-						match,
-						winners: data.winners,
-						newReporterGroupId: groupMemberOfId!,
-						previousReporterGroupId: match.reportedByUserId
-							? members.find((m) => m.id === match.reportedByUserId)!.groupId
-							: undefined,
-					});
-
-			// same group reporting same score, probably by mistake
-			if (compared === "DUPLICATE") {
-				reportWeapons();
-				return null;
-			}
-
-			const matchIsBeingCanceled = data.winners.length === 0;
-
-			const { newSkills, differences } =
-				compared === "SAME" && !matchIsBeingCanceled
-					? calculateMatchSkills({
-							groupMatchId: match.id,
-							winner: (await QMatchRepository.findGroupById({
-								groupId: winnerGroupId,
-							}))!.members.map((m) => m.id),
-							loser: (await QMatchRepository.findGroupById({
-								groupId: loserGroupId,
-							}))!.members.map((m) => m.id),
-							winnerGroupId,
-							loserGroupId,
-						})
-					: { newSkills: null, differences: null };
-
-			const shouldLockMatchWithoutChangingRecords =
-				compared === "SAME" && matchIsBeingCanceled;
-
-			let clearCaches = false;
-			sql.transaction(() => {
-				if (
-					compared === "FIX_PREVIOUS" ||
-					compared === "FIRST_REPORT" ||
-					data.adminReport
-				) {
-					reportScore({
-						matchId,
-						reportedByUserId: user.id,
-						winners: data.winners,
-					});
+				if (result.status === "ALREADY_LOCKED" || result.status === "STALE") {
+					return null;
 				}
-				// own group gets set inactive
-				if (groupMemberOfId) setGroupAsInactive(groupMemberOfId);
-				// skills & map/player results only update after both teams have reported
-				if (newSkills) {
-					addMapResults(
-						summarizeMaps({ match, members, winners: data.winners }),
+
+				if (result.status === "INVALID_WINNER") {
+					return errorToast("Invalid winner id");
+				}
+
+				if (result.status === "SCORE_DISAGREEMENT") {
+					await refreshSendouQInstance();
+					return errorToast(
+						"Score does not match the other team's report. Contact the other team to adjust.",
 					);
-					addPlayerResults(
-						summarizePlayerResults({ match, members, winners: data.winners }),
-					);
-					addSkills({
-						skills: newSkills,
-						differences,
-						groupMatchId: match.id,
-						oldMatchMemento: match.memento,
+				}
+
+				if (result.status === "MATCH_FINALIZED") {
+					try {
+						await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+					} catch (error) {
+						logger.warn("Error refreshing user skills", error);
+					}
+					refreshStreamsCache();
+				}
+
+				await refreshSendouQInstance();
+
+				notifyMatchStatusChanged();
+
+				if (match.chatRoomId) {
+					if (result.status === "MATCH_FINALIZED") {
+						ChatSystemMessage.sendPersisted({
+							roomId: match.chatRoomId,
+							type: "SCORE_CONFIRMED",
+							authorUserId: user.id,
+						});
+					} else {
+						ChatSystemMessage.send({
+							channel: chatRoomChannel(match.chatRoomId),
+						});
+					}
+				}
+
+				break;
+			}
+			case "DISPUTE_SCORE": {
+				errorToastIfFalsy(!match.isLocked, "Match is already locked");
+				errorToastIfFalsy(
+					SendouQMatch.score(match).isDecisive,
+					"No reported score to dispute",
+				);
+
+				const decidingMap = match.mapList
+					.toReversed()
+					.find((m) => m.winnerGroupId !== null);
+				const reporterSide = SendouQMatch.resolveGroupMemberOf({
+					groupAlpha: match.groupAlpha,
+					groupBravo: match.groupBravo,
+					userId: decidingMap?.reportedByUserId,
+				});
+				const disputerSide = SendouQMatch.resolveGroupMemberOf({
+					groupAlpha: match.groupAlpha,
+					groupBravo: match.groupBravo,
+					userId: user.id,
+				});
+				errorToastIfFalsy(
+					disputerSide !== null && disputerSide !== reporterSide,
+					"Only the team asked to confirm can dispute the score",
+				);
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.sendPersisted({
+						roomId: match.chatRoomId,
+						type: "SCORE_DISPUTED",
+						authorUserId: user.id,
 					});
-					clearCaches = true;
-				}
-				if (shouldLockMatchWithoutChangingRecords) {
-					addDummySkill(match.id);
-					clearCaches = true;
-				}
-				// fix edge case where they 1) report score 2) report weapons 3) report score again, but with different amount of maps played
-				if (compared === "FIX_PREVIOUS") {
-					deleteReporterWeaponsByMatchId(matchId);
-				}
-				// admin reporting, just set both groups inactive
-				if (data.adminReport) {
-					setGroupAsInactive(match.alphaGroupId);
-					setGroupAsInactive(match.bravoGroupId);
-				}
-			})();
-
-			if (clearCaches) {
-				// this is kind of useless to do when admin reports since skills don't change
-				// but it's not the most common case so it's ok
-				try {
-					refreshUserSkills(Seasons.currentOrPrevious()!.nth);
-				} catch (error) {
-					logger.warn("Error refreshing user skills", error);
 				}
 
-				refreshStreamsCache();
+				break;
 			}
+			case "LOOK_AGAIN": {
+				const season = Seasons.current();
+				errorToastIfFalsy(season, "Season is not active");
 
-			if (compared === "DIFFERENT") {
-				return {
-					error: matchIsBeingCanceled
-						? ("cant-cancel" as const)
-						: ("different" as const),
-				};
+				const previousGroup =
+					match.groupAlpha.id === data.previousGroupId
+						? match.groupAlpha
+						: match.groupBravo.id === data.previousGroupId
+							? match.groupBravo
+							: null;
+				errorToastIfFalsy(
+					previousGroup,
+					"Previous group not found in this match",
+				);
+
+				errorToastIfFalsy(
+					!previousGroup.matchmade,
+					"This group must use the continue vote",
+				);
+
+				errorToastIfFalsy(
+					previousGroup.members.some((m) => m.id === user.id),
+					"Not a member of the group",
+				);
+
+				for (const member of previousGroup.members) {
+					const currentGroup = SendouQ.findOwnGroup(member.id);
+					errorToastIfFalsy(!currentGroup, "Member is already in a group");
+				}
+
+				await SQGroupRepository.insertFromPrevious({
+					previousGroupId: data.previousGroupId,
+					memberUserIds: previousGroup.members.map((m) => m.id),
+					status: "ACTIVE",
+				});
+
+				await refreshSendouQInstance();
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.send({
+						channel: chatRoomChannel(match.chatRoomId),
+					});
+				}
+
+				// the group re-enters the looking pool
+				ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
+
+				ChatSystemMessage.notifyStatusChanged(
+					previousGroup.members.map((m) => m.id),
+				);
+
+				break;
 			}
+			case "CAST_CONTINUE_VOTE": {
+				errorToastIfFalsy(Seasons.current(), "Season is not active");
 
-			// in a different transaction but it's okay
-			reportWeapons();
+				const viewerSide = SendouQMatch.resolveGroupMemberOf({
+					groupAlpha: match.groupAlpha,
+					groupBravo: match.groupBravo,
+					userId: user.id,
+				});
+				errorToastIfFalsy(viewerSide, "Not a participant");
 
-			if (match.chatCode) {
-				const type = (): NonNullable<ChatMessage["type"]> => {
-					if (compared === "SAME") {
-						return matchIsBeingCanceled
-							? "CANCEL_CONFIRMED"
-							: "SCORE_CONFIRMED";
+				const viewerGroup =
+					viewerSide === "ALPHA" ? match.groupAlpha : match.groupBravo;
+				errorToastIfFalsy(
+					viewerGroup.matchmade,
+					"This group uses the trusted rematch flow",
+				);
+
+				const votingResult = await db.transaction().execute(async (trx) => {
+					const existingVotes =
+						await GroupMatchContinueVoteRepository.findAllByGroupIds(
+							[viewerGroup.id],
+							trx,
+						);
+
+					if (
+						!RejoinVote.canCastVote(existingVotes, user.id, data.isContinuing)
+					) {
+						return null;
 					}
 
-					return matchIsBeingCanceled ? "CANCEL_REPORTED" : "SCORE_REPORTED";
-				};
-
-				ChatSystemMessage.send({
-					room: match.chatCode,
-					type: type(),
-					context: {
-						name: user.username,
-					},
-				});
-			}
-
-			break;
-		}
-		case "LOOK_AGAIN": {
-			const season = Seasons.current();
-			errorToastIfFalsy(season, "Season is not active");
-
-			const previousGroup = await QMatchRepository.findGroupById({
-				groupId: data.previousGroupId,
-			});
-			errorToastIfFalsy(previousGroup, "Previous group not found");
-
-			for (const member of previousGroup.members) {
-				const currentGroup = findCurrentGroupByUserId(member.id);
-				errorToastIfFalsy(!currentGroup, "Member is already in a group");
-				if (member.id === user.id) {
-					errorToastIfFalsy(
-						member.role === "OWNER",
-						"You are not the owner of the group",
+					await GroupMatchContinueVoteRepository.castOwnVote(
+						{
+							groupId: viewerGroup.id,
+							isContinuing: data.isContinuing,
+						},
+						trx,
 					);
+
+					return RejoinVote.result(
+						await GroupMatchContinueVoteRepository.findAllByGroupIds(
+							[viewerGroup.id],
+							trx,
+						),
+					);
+				});
+
+				if (votingResult?.type === "RESOLVED") {
+					const survivors = viewerGroup.members.filter((m) =>
+						votingResult.continuingUserIds.includes(m.id),
+					);
+
+					try {
+						await SQGroupRepository.insertFromPrevious({
+							previousGroupId: viewerGroup.id,
+							memberUserIds: survivors.map((m) => m.id),
+							status: "ACTIVE",
+						});
+					} catch (error) {
+						// a concurrent voter may have already created the successor
+						// group; the in-memory queue still needs to be refreshed below
+						if (!(error instanceof SendouQError)) throw error;
+					}
+
+					await refreshSendouQInstance();
+
+					// non-continuing members lose the group room
+					ChatSystemMessage.notifyRoomsChanged(
+						viewerGroup.members.map((member) => member.id),
+					);
+					ChatSystemMessage.notifyStatusChanged(
+						viewerGroup.members.map((member) => member.id),
+					);
+
+					// the continuing group re-enters the looking pool
+					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 				}
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.send({
+						channel: chatRoomChannel(match.chatRoomId),
+					});
+				}
+
+				break;
 			}
+			case "REPORT_WEAPON": {
+				await ReportedWeaponRepository.upsertOwn({
+					groupMatchId: matchId,
+					mapIndex: data.mapIndex,
+					weaponSplId: data.weaponSplId,
+				});
 
-			await QRepository.createGroupFromPrevious({
-				previousGroupId: data.previousGroupId,
-				members: previousGroup.members.map((m) => ({ id: m.id, role: m.role })),
-			});
+				break;
+			}
+			case "UNDO_WEAPON_REPORT": {
+				await ReportedWeaponRepository.deleteOwnByMapIndex({
+					matchId,
+					mapIndex: data.mapIndex,
+				});
 
-			throw redirect(SENDOUQ_PREPARING_PAGE);
+				break;
+			}
+			case "UNDO_MATCH_REPORT": {
+				const result = await SQMatchRepository.undoMatchReport({
+					matchId,
+					requestedByUserId: user.id,
+					isStaff,
+				});
+
+				if (result.status === "NOT_ALLOWED") {
+					return errorToast("Cannot undo report");
+				}
+				if (result.status === "ALREADY_LOCKED") {
+					return null;
+				}
+
+				await refreshSendouQInstance();
+
+				notifyMatchStatusChanged();
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.send({
+						channel: chatRoomChannel(match.chatRoomId),
+					});
+				}
+
+				break;
+			}
+			case "UNDO_MAP_REPORT": {
+				const result = await SQMatchRepository.undoMapReport({
+					matchId,
+					mapIndex: data.mapIndex,
+				});
+
+				if (result.status === "NOT_ALLOWED") {
+					return errorToast("Cannot undo map report");
+				}
+				if (result.status === "ALREADY_LOCKED") {
+					return null;
+				}
+
+				await refreshSendouQInstance();
+
+				notifyMatchStatusChanged();
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.send({
+						channel: chatRoomChannel(match.chatRoomId),
+					});
+				}
+
+				break;
+			}
+			case "REQUEST_CANCEL": {
+				const result = await SQMatchRepository.requestCancelMatch({
+					matchId,
+					requestedByUserId: user.id,
+					reason: data.reason,
+					nominatedUserIds: parseNominatedUserIds(data.nominatedUserIds, match),
+				});
+
+				if (result.status === "ALREADY_LOCKED") {
+					return null;
+				}
+				if (result.status === "ALREADY_REQUESTED") {
+					return null;
+				}
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.sendPersisted({
+						roomId: match.chatRoomId,
+						type: "CANCEL_REPORTED",
+						authorUserId: user.id,
+					});
+				}
+
+				await refreshSendouQInstance();
+				break;
+			}
+			case "ACCEPT_CANCEL": {
+				const result = await SQMatchRepository.acceptCancelMatch({
+					matchId,
+					acceptedByUserId: user.id,
+					reason: data.reason,
+					nominatedUserIds: parseNominatedUserIds(data.nominatedUserIds, match),
+				});
+
+				if (result.status === "ALREADY_LOCKED") {
+					return null;
+				}
+				if (result.status === "NO_CANCEL_REQUEST") {
+					return null;
+				}
+				if (result.status === "NOT_ALLOWED") {
+					return errorToast("Cannot accept own cancel request");
+				}
+
+				await notifyStaffOfCanceledMatch(match);
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.sendPersisted({
+						roomId: match.chatRoomId,
+						type: "CANCEL_CONFIRMED",
+						authorUserId: user.id,
+					});
+				}
+
+				await refreshSendouQInstance();
+
+				notifyMatchStatusChanged();
+				break;
+			}
+			case "ADMIN_CANCEL": {
+				errorToastIfFalsy(isStaff, "Only mods can admin cancel");
+
+				const result = await SQMatchRepository.cancelMatch({
+					matchId,
+					isAdminReport: true,
+				});
+
+				if (result.shouldRefreshCaches) {
+					try {
+						await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+					} catch (error) {
+						logger.warn("Error refreshing user skills", error);
+					}
+					refreshStreamsCache();
+				}
+
+				await refreshSendouQInstance();
+
+				notifyMatchStatusChanged();
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.send({
+						channel: chatRoomChannel(match.chatRoomId),
+					});
+					// no system message accompanies a staff cancel, so the rooms it
+					// just made inactive are announced on their own
+					ChatSystemMessage.notifyRoomsChangedByRoomIds([match.chatRoomId]);
+				}
+
+				break;
+			}
+			case "REFUSE_CANCEL": {
+				const result = await SQMatchRepository.refuseCancelMatch({
+					matchId,
+					refusedByUserId: user.id,
+				});
+
+				if (result.status === "ALREADY_LOCKED") {
+					return null;
+				}
+				if (result.status === "NO_CANCEL_REQUEST") {
+					return null;
+				}
+				if (result.status === "NOT_ALLOWED") {
+					return errorToast("Cannot refuse own cancel request");
+				}
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.sendPersisted({
+						roomId: match.chatRoomId,
+						type: "CANCEL_REFUSED",
+						authorUserId: user.id,
+					});
+				}
+
+				await refreshSendouQInstance();
+				break;
+			}
+			default: {
+				assertUnreachable(data);
+			}
 		}
-		case "REPORT_WEAPONS": {
-			const match = notFoundIfFalsy(findMatchById(matchId));
-			errorToastIfFalsy(match.reportedAt, "Match has not been reported yet");
-
-			const oldReportedWeapons = reportedWeaponsByMatchId(matchId) ?? [];
-
-			const mergedWeapons = mergeReportedWeapons({
-				oldWeapons: oldReportedWeapons,
-				newWeapons: data.weapons as (ReportedWeapon & {
-					mapIndex: number;
-					groupMatchMapId: number;
-				})[],
-			});
-
-			sql.transaction(() => {
-				deleteReporterWeaponsByMatchId(matchId);
-				addReportedWeapons(mergedWeapons);
-			})();
-
-			break;
+	} catch (error) {
+		// expected errors (two requests racing to create/join a group): return null so
+		// loaders re-run and the user sees the fresh state instead of an error page
+		if (error instanceof SendouQError) {
+			return null;
 		}
-		case "ADD_PRIVATE_USER_NOTE": {
-			await QRepository.upsertPrivateUserNote({
-				authorId: user.id,
-				sentiment: data.sentiment,
-				targetId: data.targetId,
-				text: data.comment,
-			});
 
-			throw redirect(sendouQMatchPage(matchId));
-		}
-		default: {
-			assertUnreachable(data);
-		}
+		throw error;
 	}
 
 	return null;
 };
+
+type MatchById = NonNullable<
+	Awaited<ReturnType<typeof SQMatchRepository.findById>>
+>;
+
+function parseNominatedUserIds(nominatedUserIds: string[], match: MatchById) {
+	const userIds = nominatedUserIds.map(Number);
+	const memberIds = SendouQMatch.allMembers(match).map((member) => member.id);
+	errorToastIfFalsy(
+		userIds.every((userId) => memberIds.includes(userId)),
+		"Nominated players must be participants of the match",
+	);
+
+	return userIds;
+}
+
+async function notifyStaffOfCanceledMatch(match: MatchById) {
+	try {
+		const reports = await SQMatchRepository.findCancelReportsByGroupMatchId(
+			match.id,
+		);
+		const nominatedUserIds = R.unique(
+			reports.flatMap((report) =>
+				report.nominatedPlayers.map((player) => player.userId),
+			),
+		);
+
+		sendMatchCanceledWebhook({
+			matchId: match.id,
+			members: SendouQMatch.allMembers(match),
+			reports,
+			nominationCounts:
+				await SQMatchRepository.findCancelNominationCountsByUserIds({
+					userIds: nominatedUserIds,
+					season: Seasons.currentOrPrevious()!.nth,
+				}),
+		});
+	} catch (error) {
+		logger.error("Failed to send match canceled webhook", error);
+	}
+}

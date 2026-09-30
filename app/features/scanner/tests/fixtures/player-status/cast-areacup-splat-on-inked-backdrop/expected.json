@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 248,
+		"special": [
+			[false, false, true, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, true]
+		]
+	},
+	"options": {
+		"notes": "AREA CUP spectator HUD with the camera-button badges visible. Right team's outermost slot is splatted with the arena behind it covered in that team's ink color — the ink bleeding around the translucent crossed-out icon previously read as an alive body. Left team's third slot holds special (pale wash behind the icon)."
+	}
+}

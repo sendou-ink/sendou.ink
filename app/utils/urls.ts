@@ -1,18 +1,17 @@
 import slugify from "slugify";
-import type { GearType, Preference, Tables } from "~/db/tables";
-import type { ArtSource } from "~/features/art/art-types";
+import { Config } from "~/config";
+import type { Tables } from "~/db/tables";
+import type { Preference } from "~/db/tables-json";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
-import { serializeBuild } from "~/features/build-analyzer";
-import type { CalendarFilters } from "~/features/calendar/calendar-types";
-import type { MapPool } from "~/features/map-list-generator/core/map-pool";
-import type { StageBackgroundStyle } from "~/features/map-planner";
-import type { TierName } from "~/features/mmr/mmr-constants";
-import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
 import type {
-	Ability,
+	StageBackgroundStyle,
+	StageWaterLevel,
+} from "~/features/map-planner/plans-types";
+import type { TierName } from "~/features/mmr/mmr-constants";
+import type {
 	AbilityWithUnknown,
 	BrandId,
-	BuildAbilitiesTupleWithUnknown,
+	GearType,
 	MainWeaponId,
 	ModeShort,
 	ModeShortWithSpecial,
@@ -21,16 +20,6 @@ import type {
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
 import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import type { DayMonthYear } from "~/utils/zod";
-
-const staticAssetsUrl = ({
-	folder,
-	fileName,
-}: {
-	folder: string;
-	fileName: string;
-}) =>
-	`https://raw.githubusercontent.com/sendou-ink/assets/main/${folder}/${fileName}`;
 
 export const discordAvatarUrl = ({
 	discordId,
@@ -45,10 +34,32 @@ export const discordAvatarUrl = ({
 		discordAvatar
 	}.webp${size === "lg" ? "?size=240" : "?size=80"}`;
 
+/** Avatar url preferring the custom avatar over the Discord one; undefined without either. */
+export const resolveAvatarUrl = ({
+	customAvatarUrl,
+	discordId,
+	discordAvatar,
+	size,
+}: {
+	customAvatarUrl?: string | null;
+	discordId: string;
+	discordAvatar?: string | null;
+	size: "lg" | "sm";
+}) => {
+	if (customAvatarUrl) return customAvatarUrl;
+	if (discordAvatar) {
+		return discordAvatarUrl({ discordId, discordAvatar, size });
+	}
+
+	return undefined;
+};
+
 export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
 export const BADGES_DOC_LINK =
 	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/badges.md";
+export const API_DOC_LINK =
+	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/dev/api.md";
 
 export const CREATING_TOURNAMENT_DOC_LINK =
 	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/tournament-creation.md";
@@ -70,191 +81,200 @@ export const RHODESMAS_FREESOUND_PROFILE_URL =
 	"https://freesound.org/people/rhodesmas/";
 export const SPR_INFO_URL =
 	"https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf";
+export const SPLATOON3_INK_SCHEDULES_URL =
+	"https://splatoon3.ink/data/schedules.json";
+export const PICOCAD2_WEB_VIEWER_URL =
+	"https://picocad2-web-viewer.hfcred.workers.dev/";
 
 export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
 export const twitchUrl = (accountName: string) =>
 	`https://twitch.tv/${accountName}`;
+export const youtubeUrl = (channelId: string) =>
+	`https://youtube.com/channel/${channelId}`;
 
 export const LOG_IN_URL = "/auth";
 export const LOG_OUT_URL = "/auth/logout";
 export const ADMIN_PAGE = "/admin";
+export const API_PAGE = "/api";
 export const ARTICLES_MAIN_PAGE = "/a";
 export const FAQ_PAGE = "/faq";
-export const PRIVACY_POLICY_PAGE = "/privacy-policy";
+export const WELCOME_PAGE = "/welcome";
 export const SUPPORT_PAGE = "/support";
 export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";
+export const TROPHIES_PAGE = "/trophies";
+export const NEW_TROPHY_PAGE = "/trophies/new";
 export const BUILDS_PAGE = "/builds";
-export const USER_SEARCH_PAGE = "/u";
 export const TEAM_SEARCH_PAGE = "/t";
-export const NEW_TEAM_PAGE = "/t?new=true";
+export const NEW_TEAM_PAGE = "/t/new";
 export const CALENDAR_PAGE = "/calendar";
 export const CALENDAR_NEW_PAGE = "/calendar/new";
 export const TOURNAMENT_NEW_PAGE = "/calendar/new?tournament=true";
-export const CALENDAR_TOURNAMENTS_PAGE = "/calendar?tournaments=true";
+export const ORGANIZATION_NEW_PAGE = "/org/new";
 export const STOP_IMPERSONATING_URL = "/auth/impersonate/stop";
 export const SEED_URL = "/seed";
 export const PLANNER_URL = "/plans";
 export const MAPS_URL = "/maps";
+export const TIER_LIST_MAKER_URL = "/tier-list-maker";
 export const ANALYZER_URL = "/analyzer";
+export const COMP_ANALYZER_URL = "/comp-analyzer";
 export const OBJECT_DAMAGE_CALCULATOR_URL = "/object-damage-calculator";
+export const SCANNER_PAGE = "/scanner";
 export const VODS_PAGE = "/vods";
+export const ART_PAGE = "/art";
+export const XSEARCH_PAGE = "/xsearch";
+export const ASSOCIATIONS_PAGE = "/associations";
 export const LEADERBOARDS_PAGE = "/leaderboards";
 export const LINKS_PAGE = "/links";
 export const SENDOUQ_PAGE = "/q";
 export const SENDOUQ_RULES_PAGE = "/q/rules";
 export const SENDOUQ_INFO_PAGE = "/q/info";
-export const SENDOUQ_SETTINGS_PAGE = "/q/settings";
+export const MATCH_PROFILE_PAGE = "/settings?tab=match-profile";
 export const SENDOUQ_PREPARING_PAGE = "/q/preparing";
 export const SENDOUQ_LOOKING_PAGE = "/q/looking";
+export const SENDOUQ_READY_PAGE = "/q/ready";
 export const SENDOUQ_LOOKING_PREVIEW_PAGE = "/q/looking?preview=true";
 export const SENDOUQ_STREAMS_PAGE = "/q/streams";
 export const TIERS_PAGE = "/tiers";
 export const SUSPENDED_PAGE = "/suspended";
 export const LFG_PAGE = "/lfg";
+export const EVENTS_PAGE = "/events";
+export const FRIENDS_PAGE = "/friends";
 export const SETTINGS_PAGE = "/settings";
 export const LUTI_PAGE = "/luti";
 export const PLUS_VOTING_PAGE = "/plus/voting";
+export const PLUS_VOTING_RESULTS_PAGE = "/plus/voting/results";
+export const PLUS_SUGGESTIONS_PAGE = "/plus/suggestions";
 
-export const BLANK_IMAGE_URL = "/static-assets/img/blank.gif";
-export const COMMON_PREVIEW_IMAGE =
-	"/static-assets/img/layout/common-preview.png";
-export const ERROR_GIRL_IMAGE_PATH = "/static-assets/img/layout/error-girl";
-export const LOGO_PATH = "/static-assets/img/layout/logo";
-export const SENDOU_LOVE_EMOJI_PATH = "/static-assets/img/layout/sendou_love";
-export const FIRST_PLACEMENT_ICON_PATH =
-	"/static-assets/svg/placements/first.svg";
-export const SECOND_PLACEMENT_ICON_PATH =
-	"/static-assets/svg/placements/second.svg";
-export const THIRD_PLACEMENT_ICON_PATH =
-	"/static-assets/svg/placements/third.svg";
+const STATIC_ASSETS_URL = Config.staticAssetsUrl;
+
+export const BLANK_IMAGE_URL = `${STATIC_ASSETS_URL}/img/blank.gif`;
+
+/** Pages with an OG image of their own (named after the nav item), rendered by `/admin/og-images`. */
+export const OG_IMAGE_PAGES = [
+	"settings",
+	"sendouq",
+	"analyzer",
+	"comp-analyzer",
+	"builds",
+	"object-damage-calculator",
+	"leaderboards",
+	"scrims",
+	"lfg",
+	"plans",
+	"trophies",
+	"calendar",
+	"plus",
+	"xsearch",
+	"articles",
+	"vods",
+	"art",
+	"tier-list-maker",
+	"links",
+	"maps",
+] as const;
+
+export type OgImagePage = (typeof OG_IMAGE_PAGES)[number];
+
+/** Icons that can stand in for a page or a feature, e.g. next to a changelog entry. */
+export const NAV_ICONS = [
+	...OG_IMAGE_PAGES,
+	"medal",
+	"t",
+	"u",
+	"associations",
+	"badges",
+	"luti",
+] as const;
+
+export type NavIcon = (typeof NAV_ICONS)[number];
+
+/** Preview image shown when a page is shared on Discord, Bluesky etc. */
+export const ogImageUrl = (page: OgImagePage | "default") =>
+	`${STATIC_ASSETS_URL}/img/og/${page}.png`;
+
+/** Preview image of the front page, also used by pages without one of their own. */
+export const DEFAULT_OG_IMAGE = ogImageUrl("default");
+
+export const ERROR_GIRL_IMAGE_PATH = `${STATIC_ASSETS_URL}/img/layout/error-girl`;
+export const SENDOU_LOVE_EMOJI_PATH = `${STATIC_ASSETS_URL}/img/layout/sendou_love`;
+export const FIRST_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/first.svg`;
+export const SECOND_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/second.svg`;
+export const THIRD_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/third.svg`;
+export const WELCOME_HERO_IMAGE_PATH = `${STATIC_ASSETS_URL}/img/welcome-hero.webp`;
+
+export const APP_ICON_URL = `${STATIC_ASSETS_URL}/img/app-icon.png`;
+export const pwaSplashScreenImageUrl = (fileName: string) =>
+	`${STATIC_ASSETS_URL}/img/splash-screens/${fileName}`;
 
 export const soundPath = (fileName: string) =>
-	`/static-assets/sounds/${fileName}.wav`;
+	`${STATIC_ASSETS_URL}/sounds/${fileName}.wav`;
 
-export const GET_TRUSTERS_ROUTE = "/trusters";
+export const GET_FRIENDS_FOR_ADDING_ROUTE = "/friends-for-adding";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
 
+export const LAYOUT_DATA_ROUTE = "/api/layout";
 export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
+export const NOTIFICATIONS_SUBSCRIBE_ROUTE = "/notifications/subscribe";
+export const NOTIFICATIONS_DATA_ROUTE = "/api/notifications";
+export const STATUS_DATA_ROUTE = "/api/status";
 
-interface UserLinkArgs {
+export const CHAT_ROOMS_DATA_ROUTE = "/api/chat/rooms";
+export const chatRoomDataRoute = (roomId: number) =>
+	`${CHAT_ROOMS_DATA_ROUTE}/${roomId}`;
+export const chatRoomMessagesRoute = (roomId: number) =>
+	`${chatRoomDataRoute(roomId)}/messages`;
+export const chatRoomReadRoute = (roomId: number) =>
+	`${chatRoomDataRoute(roomId)}/read`;
+
+export const userCardFriendshipPage = (userId: number) =>
+	`/user-card/${userId}/friendship`;
+
+export const userCardNotePage = (userId: number) => `/user-card/${userId}/note`;
+
+export const userReportPage = (userId: number) => `/user-report/${userId}`;
+
+export const trophyPage = (trophyId: number) => `${TROPHIES_PAGE}/${trophyId}`;
+
+export const trophyWinsPage = (args: { trophyId: number; userId: number }) =>
+	`${TROPHIES_PAGE}/${args.trophyId}/wins/${args.userId}`;
+
+export const trophyTournamentsPage = (trophyId: number) =>
+	`${TROPHIES_PAGE}/${trophyId}/tournaments`;
+
+export interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];
 	customUrl?: Tables["User"]["customUrl"];
 }
 
 export const userPage = (user: UserLinkArgs) =>
 	`/u/${user.customUrl ?? user.discordId}`;
-export const userSeasonsPage = ({
-	user,
-	season,
-}: {
-	user: UserLinkArgs;
-	season?: number;
-}) =>
-	`${userPage(user)}/seasons${
-		typeof season === "number" ? `?season=${season}` : ""
-	}`;
 export const userEditProfilePage = (user: UserLinkArgs) =>
 	`${userPage(user)}/edit`;
 export const userBuildsPage = (user: UserLinkArgs) =>
 	`${userPage(user)}/builds`;
-export const userResultsPage = (user: UserLinkArgs, showAll?: boolean) =>
-	`${userPage(user)}/results${showAll ? "?all=true" : ""}`;
+export const userResultsPage = (user: UserLinkArgs) =>
+	`${userPage(user)}/results`;
 export const userVodsPage = (user: UserLinkArgs) => `${userPage(user)}/vods`;
-export const newVodPage = (vodToEditId?: number) =>
-	`${VODS_PAGE}/new${vodToEditId ? `?vod=${vodToEditId}` : ""}`;
 export const userResultsEditHighlightsPage = (user: UserLinkArgs) =>
 	`${userResultsPage(user)}/highlights`;
 export const userAdminPage = (user: UserLinkArgs) => `${userPage(user)}/admin`;
-export const artPage = (tag?: string) => `/art${tag ? `?tag=${tag}` : ""}`;
-export const userArtPage = (
-	user: UserLinkArgs,
-	source?: ArtSource,
-	bigArtId?: number,
-) =>
-	`${userPage(user)}/art${source ? `?source=${source}` : ""}${bigArtId ? `?big=${bigArtId}` : ""}`;
-export const newArtPage = (artId?: Tables["Art"]["id"]) =>
-	`${artPage()}/new${artId ? `?art=${artId}` : ""}`;
-export const userNewBuildPage = (
-	user: UserLinkArgs,
-	params?: { weapon: MainWeaponId; build: BuildAbilitiesTupleWithUnknown },
-) =>
-	`${userBuildsPage(user)}/new${
-		params
-			? `?${String(
-					new URLSearchParams({
-						weapon: String(params.weapon),
-						build: serializeBuild(params.build),
-					}),
-				)}`
-			: ""
-	}`;
 
 export const teamPage = (customUrl: string) => `/t/${customUrl}`;
 export const editTeamPage = (customUrl: string) =>
 	`${teamPage(customUrl)}/edit`;
 export const manageTeamRosterPage = (customUrl: string) =>
 	`${teamPage(customUrl)}/roster`;
-export const joinTeamPage = ({
-	customUrl,
-	inviteCode,
-}: {
-	customUrl: string;
-	inviteCode: string;
-}) => `${teamPage(customUrl)}/join?code=${inviteCode}`;
-
-export const topSearchPage = (args?: {
-	month: number;
-	year: number;
-	mode: ModeShort;
-	region: Tables["XRankPlacement"]["region"];
-}) =>
-	args
-		? `/xsearch?month=${args.month}&year=${args.year}&mode=${args.mode}&region=${args.region}`
-		: "/xsearch";
-export const topSearchPlayerPage = (playerId: number) =>
-	`${topSearchPage()}/player/${playerId}`;
-
-export const leaderboardsPage = (args: {
-	season?: number;
-	type?: "USER" | "TEAM";
-}) => {
-	const params = new URLSearchParams();
-	if (args.season) {
-		params.set("season", String(args.season));
-	}
-	if (args.type) {
-		params.set("type", args.type);
-	}
-
-	return `${LEADERBOARDS_PAGE}${params.size > 0 ? `?${params.toString()}` : ""}`;
-};
+export const teamSchedulePage = (customUrl: string) =>
+	`${teamPage(customUrl)}/schedule`;
 
 export const authErrorUrl = (errorCode: AuthErrorCode) =>
 	`/?authError=${errorCode}`;
 export const impersonateUrl = (idToLogInAs: number) =>
 	`/auth/impersonate?id=${idToLogInAs}`;
 export const badgePage = (badgeId: number) => `${BADGES_PAGE}/${badgeId}`;
-export const plusSuggestionPage = ({
-	tier,
-	showAlert,
-}: {
-	tier?: string | number;
-	showAlert?: boolean;
-} = {}) => {
-	const params = new URLSearchParams();
-	if (tier) {
-		params.set("tier", String(tier));
-	}
-	if (showAlert) {
-		params.set("alert", "true");
-	}
-	return `/plus/suggestions${params.toString() ? `?${params.toString()}` : ""}`;
-};
-export const plusSuggestionsNewPage = (tier?: string | number) =>
-	`/plus/suggestions/new${tier ? `?tier=${tier}` : ""}`;
 
 export const weaponBuildPage = (weaponSlug: string) =>
 	`${BUILDS_PAGE}/${weaponSlug}`;
@@ -262,40 +282,14 @@ export const weaponBuildStatsPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/stats`;
 export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
-
-export const calendarPage = (args?: {
-	filters?: CalendarFilters;
-	dayMonthYear?: DayMonthYear;
-}) => {
-	const params = new URLSearchParams();
-	if (args?.filters) {
-		params.set("filters", JSON.stringify(args.filters));
-	}
-	if (args?.dayMonthYear) {
-		params.set("day", String(args.dayMonthYear.day));
-		params.set("month", String(args.dayMonthYear.month));
-		params.set("year", String(args.dayMonthYear.year));
-	}
-
-	return `${CALENDAR_PAGE}${params.toString() ? `?${params.toString()}` : ""}`;
-};
-
-export const calendarIcalFeed = (filters?: CalendarFilters) => {
-	const params = new URLSearchParams();
-	if (filters) {
-		params.set("filters", JSON.stringify(filters));
-	}
-	return `${SENDOU_INK_BASE_URL}/calendar.ics${params.toString() ? `?${params.toString()}` : ""}`;
-};
+export const weaponParamsPage = (weaponSlug: string) => `/params/${weaponSlug}`;
 
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;
-export const calendarEditPage = (eventId?: number) =>
-	`/calendar/new${eventId ? `?eventId=${eventId}` : ""}`;
-export const tournamentEditPage = (eventId: number) =>
-	`${calendarEditPage(eventId)}&tournament=true`;
 export const calendarReportWinnersPage = (eventId: number) =>
 	`/calendar/${eventId}/report-winners`;
 export const tournamentPage = (tournamentId: number) => `/to/${tournamentId}`;
+export const tournamentTeamsPage = (tournamentId: number) =>
+	`/to/${tournamentId}/teams`;
 export const tournamentTeamPage = ({
 	tournamentId,
 	tournamentTeamId,
@@ -303,39 +297,33 @@ export const tournamentTeamPage = ({
 	tournamentId: number;
 	tournamentTeamId: number;
 }) => `/to/${tournamentId}/teams/${tournamentTeamId}`;
-export const tournamentRegisterPage = (tournamentId: number) =>
-	`/to/${tournamentId}/register`;
-export const tournamentMapsPage = (tournamentId: number) =>
-	`/to/${tournamentId}/maps`;
-export const tournamentAdminPage = (tournamentId: number) =>
-	`/to/${tournamentId}/admin`;
-export const tournamentBracketsPage = ({
+export const tournamentTeamCompsPage = ({
 	tournamentId,
-	bracketIdx,
-	groupId,
+	tournamentTeamId,
 }: {
 	tournamentId: number;
-	bracketIdx?: number | null;
-	groupId?: number;
-}) => {
-	const query = new URLSearchParams();
-	if (typeof bracketIdx === "number") {
-		query.set("idx", String(bracketIdx));
-	}
-	if (typeof groupId === "number") {
-		query.set("group", String(groupId));
-	}
-
-	return `/to/${tournamentId}/brackets${
-		query.size > 0 ? `?${query.toString()}` : ""
-	}`;
-};
+	tournamentTeamId: number;
+}) => `${tournamentTeamPage({ tournamentId, tournamentTeamId })}/comps`;
+export const tournamentInfoPage = (tournamentId: number) =>
+	`/to/${tournamentId}/info`;
+export const tournamentRegisterPage = (tournamentId: number) =>
+	`/to/${tournamentId}/register`;
+export const tournamentRulesPage = (tournamentId: number) =>
+	`/to/${tournamentId}/rules`;
+export const tournamentAdminPage = (tournamentId: number) =>
+	`/to/${tournamentId}/admin`;
+export const tournamentAdminRegistrationPage = (tournamentId: number) =>
+	`${tournamentAdminPage(tournamentId)}/registration`;
+export const tournamentAdminRegistrationEditPage = (
+	tournamentId: number,
+	tournamentTeamId: number,
+) => `${tournamentAdminRegistrationPage(tournamentId)}/${tournamentTeamId}`;
 export const tournamentDivisionsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/divisions`;
 export const tournamentResultsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/results`;
-export const tournamentBracketsSubscribePage = (tournamentId: number) =>
-	`/to/${tournamentId}/brackets/subscribe`;
+export const tournamentMatchesPage = (tournamentId: number) =>
+	`/to/${tournamentId}/matches`;
 export const tournamentMatchPage = ({
 	tournamentId,
 	matchId,
@@ -343,40 +331,12 @@ export const tournamentMatchPage = ({
 	tournamentId: number;
 	matchId: number;
 }) => `/to/${tournamentId}/matches/${matchId}`;
-export const tournamentMatchSubscribePage = ({
-	tournamentId,
-	matchId,
-}: {
-	tournamentId: number;
-	matchId: number;
-}) => `/to/${tournamentId}/matches/${matchId}/subscribe`;
-export const tournamentJoinPage = ({
-	tournamentId,
-	inviteCode,
-}: {
-	tournamentId: number;
-	inviteCode: string;
-}) => `/to/${tournamentId}/join?code=${inviteCode}`;
 export const tournamentSubsPage = (tournamentId: number) => {
-	return `/to/${tournamentId}/subs`;
+	return `/to/${tournamentId}/looking`;
 };
 export const tournamentStreamsPage = (tournamentId: number) => {
 	return `/to/${tournamentId}/streams`;
 };
-
-export const tournamentOrganizationPage = ({
-	organizationSlug,
-	tournamentName,
-}: {
-	organizationSlug: string;
-	tournamentName?: string;
-}) =>
-	`/org/${organizationSlug}${tournamentName ? `?source=${decodeURIComponent(tournamentName)}` : ""}`;
-export const tournamentOrganizationEditPage = (organizationSlug: string) =>
-	`${tournamentOrganizationPage({ organizationSlug })}/edit`;
-
-export const sendouQInviteLink = (inviteCode: string) =>
-	`${SENDOUQ_PAGE}?${JOIN_CODE_SEARCH_PARAM_KEY}=${inviteCode}`;
 
 export const sendouQMatchPage = (id: Tables["GroupMatch"]["id"]) => {
 	return `${SENDOUQ_PAGE}/match/${id}`;
@@ -394,60 +354,13 @@ export const newScrimPostPage = () => {
 	return "/scrims/new";
 };
 
-export const associationsPage = (inviteCode?: string) => {
-	return `/associations${inviteCode ? `?inviteCode=${inviteCode}` : ""}`;
-};
-
 export const newAssociationsPage = () => {
 	return "/associations/new";
 };
 
-export const getWeaponUsage = ({
-	userId,
-	season,
-	modeShort,
-	stageId,
-}: {
-	userId: number;
-	season: number;
-	modeShort: ModeShort;
-	stageId: StageId;
-}) => {
-	return `/weapon-usage?userId=${userId}&season=${season}&modeShort=${modeShort}&stageId=${stageId}`;
-};
-
-export const mapsPageWithMapPool = (mapPool: MapPool) =>
-	`/maps?readonly&pool=${mapPool.serialized}`;
 export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
-export const analyzerPage = (args?: {
-	weaponId: MainWeaponId;
-	abilities: Ability[];
-}) =>
-	`/analyzer${
-		args
-			? `?weapon=${args.weaponId}&build=${encodeURIComponent(
-					args.abilities.join(","),
-				)}`
-			: ""
-	}`;
-export const objectDamageCalculatorPage = (weaponId?: MainWeaponId) =>
-	`/object-damage-calculator${
-		typeof weaponId === "number" ? `?weapon=${weaponId}` : ""
-	}`;
-
-export const uploadImagePage = (
-	args:
-		| { type: "team-pfp" | "team-banner"; teamCustomUrl: string }
-		| { type: "org-pfp"; slug: string },
-) =>
-	args.type === "org-pfp"
-		? `/upload?type=${args.type}&slug=${args.slug}`
-		: `/upload?type=${args.type}&team=${args.teamCustomUrl}`;
 
 export const vodVideoPage = (videoId: number) => `${VODS_PAGE}/${videoId}`;
-
-export const lfgNewPostPage = (postId?: number) =>
-	`${LFG_PAGE}/new${postId ? `?postId=${postId}` : ""}`;
 
 export const badgeUrl = ({
 	code,
@@ -455,47 +368,84 @@ export const badgeUrl = ({
 }: {
 	code: Tables["Badge"]["code"];
 	extension?: "gif";
-}) => `/static-assets/badges/${code}${extension ? `.${extension}` : ""}`;
+}) => `${STATIC_ASSETS_URL}/badges/${code}${extension ? `.${extension}` : ""}`;
+export const gameBadgeUrl = (id: string) =>
+	`${STATIC_ASSETS_URL}/img/badges/${id}.avif`;
 export const articlePreviewUrl = (slug: string) =>
-	`/static-assets/img/article-previews/${slug}.png`;
+	`${STATIC_ASSETS_URL}/img/article-previews/${slug}.png`;
 
 export const navIconUrl = (navItem: string) =>
-	`/static-assets/img/layout/${navItem}`;
+	`${STATIC_ASSETS_URL}/img/layout/${navItem}`;
 export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
-	`/static-assets/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
+	`${STATIC_ASSETS_URL}/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
 export const weaponCategoryUrl = (
 	category: (typeof weaponCategories)[number]["name"],
-) => `/static-assets/img/weapon-categories/${category}`;
+) => `${STATIC_ASSETS_URL}/img/weapon-categories/${category}`;
 export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-	`/static-assets/img/main-weapons/${mainWeaponSplId}`;
+	`${STATIC_ASSETS_URL}/img/main-weapons/${mainWeaponSplId}`;
 export const mainWeaponVariantImageUrl = (
 	mainWeaponSplId: MainWeaponId,
 	variant: "launched",
-) => `/static-assets/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
+) =>
+	`${STATIC_ASSETS_URL}/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
 export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-	`/static-assets/img/main-weapons-outlined/${mainWeaponSplId}`;
+	`${STATIC_ASSETS_URL}/img/main-weapons-outlined/${mainWeaponSplId}`;
 export const outlinedFiveStarMainWeaponImageUrl = (
 	mainWeaponSplId: MainWeaponId,
-) => `/static-assets/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+) => `${STATIC_ASSETS_URL}/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+export const outlinedTenStarMainWeaponImageUrl = (
+	mainWeaponSplId: MainWeaponId,
+) => `${STATIC_ASSETS_URL}/img/main-weapons-outlined-3/${mainWeaponSplId}`;
 export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
-	`/static-assets/img/sub-weapons/${subWeaponSplId}`;
-export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
-	`/static-assets/img/special-weapons/${specialWeaponSplId}`;
-export const specialWeaponVariantImageUrl = (
+	`${STATIC_ASSETS_URL}/img/sub-weapons/${subWeaponSplId}`;
+export const specialWeaponImageUrl = (
 	specialWeaponSplId: SpecialWeaponId,
-	variant: "weakpoints",
+	variant?: SpecialWeaponImageVariant,
 ) =>
-	`/static-assets/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
+	`${STATIC_ASSETS_URL}/img/special-weapons/${specialWeaponImagePath(specialWeaponSplId, variant)}`;
+/**
+ * Teal parts of a sub weapon icon, as an overlay laid on top of the accent
+ * colored silhouette. Generated by `scripts/create-ink-detail-images.ts`.
+ */
+export const subWeaponDetailImageUrl = (subWeaponSplId: SubWeaponId) =>
+	`${STATIC_ASSETS_URL}/img/sub-weapons-detail/${subWeaponSplId}`;
+/** Special weapon counterpart of {@link subWeaponDetailImageUrl}. */
+export const specialWeaponDetailImageUrl = (
+	specialWeaponSplId: SpecialWeaponId,
+	variant?: SpecialWeaponImageVariant,
+) =>
+	`${STATIC_ASSETS_URL}/img/special-weapons-detail/${specialWeaponImagePath(specialWeaponSplId, variant)}`;
+/** White parts of a sub weapon icon, as a mask so they can be painted separately. */
+export const subWeaponHighlightImageUrl = (subWeaponSplId: SubWeaponId) =>
+	`${STATIC_ASSETS_URL}/img/sub-weapons-highlight/${subWeaponSplId}`;
+/** Special weapon counterpart of {@link subWeaponHighlightImageUrl}. */
+export const specialWeaponHighlightImageUrl = (
+	specialWeaponSplId: SpecialWeaponId,
+	variant?: SpecialWeaponImageVariant,
+) =>
+	`${STATIC_ASSETS_URL}/img/special-weapons-highlight/${specialWeaponImagePath(specialWeaponSplId, variant)}`;
+export type SpecialWeaponImageVariant = "weakpoints";
+const specialWeaponImagePath = (
+	specialWeaponSplId: SpecialWeaponId,
+	variant?: SpecialWeaponImageVariant,
+) =>
+	variant
+		? `variants/${specialWeaponSplId}-${variant}`
+		: String(specialWeaponSplId);
 export const abilityImageUrl = (ability: AbilityWithUnknown) =>
-	`/static-assets/img/abilities/${ability}`;
+	`${STATIC_ASSETS_URL}/img/abilities/${ability}`;
 export const brandImageUrl = (brand: BrandId) =>
-	`/static-assets/img/brands/${brand}`;
+	`${STATIC_ASSETS_URL}/img/brands/${brand}`;
 export const modeImageUrl = (mode: ModeShortWithSpecial) =>
-	`/static-assets/img/modes/${mode}`;
+	`${STATIC_ASSETS_URL}/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
-	`/static-assets/img/stages/${stageId}`;
+	`${STATIC_ASSETS_URL}/img/stages/${stageId}`;
+export const stageBannerImageUrl = (stageId: StageId) =>
+	`${STATIC_ASSETS_URL}/img/stage-banners/${stageId}.avif`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
-	`/static-assets/img/tiers/${tier.toLowerCase()}`;
+	`${STATIC_ASSETS_URL}/img/tiers/${tier === "CALCULATING" ? "unranked" : tier.toLowerCase()}`;
+export const controllerImageUrl = (controller: string) =>
+	`${STATIC_ASSETS_URL}/img/controllers/${controller}.avif`;
 export const preferenceEmojiUrl = (preference?: Preference) => {
 	const emoji =
 		preference === "PREFER"
@@ -504,11 +454,9 @@ export const preferenceEmojiUrl = (preference?: Preference) => {
 				? "unamused"
 				: "no-mouth";
 
-	return `/static-assets/img/emoji/${emoji}.svg`;
+	return `${STATIC_ASSETS_URL}/img/emoji/${emoji}.svg`;
 };
-export const tournamentLogoUrl = (identifier: string) =>
-	`/static-assets/img/tournament-logos/${identifier}.png`;
-export const TIER_PLUS_URL = "/static-assets/img/tiers/plus";
+export const TIER_PLUS_URL = `${STATIC_ASSETS_URL}/img/tiers/plus`;
 
 export const winnersImageUrl = ({
 	season,
@@ -516,24 +464,25 @@ export const winnersImageUrl = ({
 }: {
 	season: number;
 	placement: number;
-}) => `/static-assets/img/winners/${season}/${placement}`;
+}) => `${STATIC_ASSETS_URL}/img/winners/${season}/${placement}`;
 
 export const sqHeaderGuyImageUrl = (season: number) =>
-	`/static-assets/img/sq-header/${season}`;
+	`${STATIC_ASSETS_URL}/img/sq-header/${season}`;
 
 export const stageMinimapImageUrlWithEnding = ({
 	stageId,
 	mode,
 	style,
+	waterLevel,
 }: {
 	stageId: StageId;
 	mode: ModeShort;
 	style: StageBackgroundStyle;
+	waterLevel?: StageWaterLevel;
 }) =>
-	staticAssetsUrl({
-		folder: "planner-maps",
-		fileName: `${stageId}-${mode}-${style}.png`,
-	});
+	`${STATIC_ASSETS_URL}/planner-maps/${stageId}-${mode}-${style}${
+		waterLevel === "down" ? "-DOWN" : ""
+	}.png`;
 
 export function resolveBaseUrl(url: string) {
 	return new URL(url).host;
@@ -549,3 +498,10 @@ export const mySlugify = (name: string) => {
 export const isCustomUrl = (value: string) => {
 	return Number.isNaN(Number(value));
 };
+
+export function vodUrl(vod: {
+	platformVideoId: string;
+	timestampSeconds: number;
+}) {
+	return `https://www.twitch.tv/videos/${vod.platformVideoId}?t=${vod.timestampSeconds}s`;
+}

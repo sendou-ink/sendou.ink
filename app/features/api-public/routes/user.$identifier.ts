@@ -1,84 +1,54 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { db } from "~/db/sql";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
+import { jsonArrayFrom, peakXpOverallSql } from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { badgeUrl } from "~/utils/urls";
 import type { GetUserResponse } from "../schema";
 
-const paramsSchema = z.object({
-	identifier: z.string(),
+const paramsSchema = v.object({
+	identifier: v.string(),
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
-	const t = await i18next.getFixedT("en", ["weapons"]);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const t = await getFixedTForLanguage("en", ["weapons"]);
 	const { identifier } = parseParams({ params, schema: paramsSchema });
 
-	const user = notFoundIfFalsy(
+	const user = notFoundIfNullish(
 		await db
 			.selectFrom("User")
 			.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+			.leftJoin("SplatoonPlayer", "SplatoonPlayer.userId", "User.id")
 			.select(({ eb }) => [
 				"User.id",
 				"User.country",
 				"User.discordName",
 				"User.twitch",
-				"User.battlefy",
 				"User.bsky",
 				"User.customUrl",
 				"User.discordId",
 				"User.discordAvatar",
+				"User.inGameName",
+				"User.pronouns",
 				"PlusTier.tier",
 				jsonArrayFrom(
 					eb
-						.selectFrom("UserWeapon")
-						.select(["UserWeapon.isFavorite", "UserWeapon.weaponSplId"])
-						.whereRef("UserWeapon.userId", "=", "User.id")
-						.orderBy("UserWeapon.order", "asc"),
+						.selectFrom("UserWeaponPool")
+						.select(["UserWeaponPool.isFavorite", "UserWeaponPool.weaponSplId"])
+						.whereRef("UserWeaponPool.userId", "=", "User.id")
+						.orderBy("UserWeaponPool.sortOrder", "asc"),
 				).as("weapons"),
-				jsonArrayFrom(
-					eb
-						.selectFrom("BadgeOwner")
-						.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-						.select(({ fn }) => [
-							"Badge.displayName",
-							"Badge.code",
-							fn.count<number>("BadgeOwner.badgeId").as("count"),
-						])
-						.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"])
-						.whereRef("BadgeOwner.userId", "=", "User.id"),
-				).as("badges"),
-				jsonArrayFrom(
-					eb
-						.selectFrom("SplatoonPlayer")
-						.innerJoin(
-							"XRankPlacement",
-							"XRankPlacement.playerId",
-							"SplatoonPlayer.id",
-						)
-						.select(["XRankPlacement.power"])
-						.whereRef("SplatoonPlayer.userId", "=", "User.id"),
-				).as("xRankPlacements"),
+				peakXpOverallSql().as("peakXp"),
 				jsonArrayFrom(
 					eb
 						.selectFrom("TeamMemberWithSecondary")
 						.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
-						.select([
-							"Team.name",
-							"Team.customUrl",
-							"TeamMemberWithSecondary.role",
-						])
+						.select(["Team.id", "TeamMemberWithSecondary.role"])
 						.whereRef("TeamMemberWithSecondary.userId", "=", "User.id")
 						.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
 						.orderBy("TeamMemberWithSecondary.createdAt", "asc"),
@@ -97,9 +67,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			.executeTakeFirst(),
 	);
 
+	const badges = await BadgeRepository.findByOwnerUserId(user.id, []);
+
 	const season = Seasons.currentOrPrevious(new Date())!.nth;
 
-	const { isAccurateTiers, userSkills } = _userSkills(season);
+	const { isAccurateTiers, userSkills } = await _userSkills(season);
 	const skill = isAccurateTiers ? userSkills[user.id] : null;
 
 	const result: GetUserResponse = {
@@ -111,10 +83,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			: null,
 		url: `https://sendou.ink/u/${user.customUrl ?? user.discordId}`,
 		country: user.country,
+		inGameName: user.inGameName,
+		pronouns: user.pronouns,
 		plusServerTier: user.tier as GetUserResponse["plusServerTier"],
 		socials: {
 			twitch: user.twitch,
-			battlefy: user.battlefy,
 			bsky: user.bsky,
 			twitter: null, // deprecated field
 		},
@@ -124,30 +97,23 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					tier: skill.tier,
 				}
 			: null,
-		peakXp:
-			user.xRankPlacements.length > 0
-				? user.xRankPlacements.reduce((acc, cur) => {
-						if (!cur.power) return acc;
-						return Math.max(acc, cur.power);
-					}, 0)
-				: null,
+		peakXp: user.peakXp,
 		weaponPool: user.weapons.map((weapon) => ({
 			id: weapon.weaponSplId,
 			name: t(`weapons:MAIN_${weapon.weaponSplId}`),
 			isFiveStar: Boolean(weapon.isFavorite),
 		})),
-		badges: user.badges.map((badge) => ({
+		badges: badges.map((badge) => ({
 			name: badge.displayName,
 			count: badge.count,
-			gifUrl: `https://sendou.ink/static-assets/badges/${badge.code}.gif`,
-			imageUrl: `https://sendou.ink/static-assets/badges/${badge.code}.png`,
+			gifUrl: badgeUrl({ code: badge.code, extension: "gif" }),
+			imageUrl: badgeUrl({ code: badge.code }),
 		})),
 		teams: user.teams.map((team) => ({
-			name: team.name,
+			id: team.id,
 			role: team.role,
-			teamPageUrl: `https://sendou.ink/t/${team.customUrl}`,
 		})),
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };

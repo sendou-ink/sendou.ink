@@ -1,0 +1,10 @@
+.userLink {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	color: var(--color-text);
+
+	&.vertical {
+		flex-direction: column;
+	}
+}

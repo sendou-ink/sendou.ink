@@ -1,33 +1,61 @@
-import type {
-	Editor,
-	TLAssetId,
-	TLComponents,
-	TLImageAsset,
-	TLShapeId,
-	TLUiStylePanelProps,
-} from "@tldraw/tldraw";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import {
+	DndContext,
+	DragOverlay,
+	PointerSensor,
+	TouchSensor,
+	useDraggable,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import {
 	AssetRecordType,
 	createShapeId,
-	DefaultQuickActions,
 	DefaultStylePanel,
-	DefaultZoomMenu,
+	type Editor,
+	type TLAssetId,
+	type TLComponents,
+	type TLImageAsset,
+	type TLShapeId,
+	type TLUiStylePanelProps,
 	Tldraw,
+	type TldrawOptions,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
+import {
+	ChevronDown,
+	ChevronLeft,
+	ChevronRight,
+	ChevronUp,
+	LogOut,
+	Radius,
+	Square,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import * as R from "remeda";
-import { usePlannerBg } from "~/hooks/usePlannerBg";
+import { getSpecialWeaponRange } from "~/features/comp-analyzer/core/special-weapon-range";
+import { getWeaponRange } from "~/features/comp-analyzer/core/weapon-range";
+import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { stageIds, stagesObj } from "~/modules/in-game-lists/stage-ids";
+import type {
+	MainWeaponId,
+	ModeShort,
+	SpecialWeaponId,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import {
+	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
+import {
+	useSearchParam,
+	useSearchParamsTyped,
+} from "~/modules/search-params/hooks";
 import { logger } from "~/utils/logger";
 import {
 	mainWeaponImageUrl,
@@ -38,25 +66,178 @@ import {
 	subWeaponImageUrl,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
+import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { Image } from "../../../components/Image";
-import type { StageBackgroundStyle } from "../plans-types";
+import {
+	PLANNER_BACKGROUND_STYLES,
+	PLANNER_PERSISTENCE_KEY,
+	STAGE_WATER_LEVELS,
+} from "../plans-constants";
+import { plansSearchParams } from "../plans-search-params";
+import type { StageWaterLevel } from "../plans-types";
+import styles from "./Planner.module.css";
 
-export default function Planner() {
-	const { i18n } = useTranslation();
-	const plannerBgParams = usePlannerBg();
+const DROPPED_IMAGE_SIZE_PX = 45;
+const BACKGROUND_WIDTH = 1127;
+const BACKGROUND_HEIGHT = 634;
+const GAME_UNITS_TO_PX: Record<"MINI" | "OVER", number> = {
+	MINI: 4.4,
+	OVER: 8.4,
+};
+// the menu panel that normally holds undo & redo is hidden, so they are moved to the toolbar
+const TLDRAW_OPTIONS: Partial<TldrawOptions> = {
+	actionShortcutsLocation: "toolbar",
+};
+const MAIN_WEAPON_URL_PATTERN = /main-weapons-outlined\/(\d+)/;
+const SPECIAL_WEAPON_URL_PATTERN = /special-weapons\/(\d+)/;
+
+export function Planner() {
+	const { t, i18n } = useTranslation(["common"]);
+	const { htmlThemeClass } = useTheme();
+
+	const isWide = i18n.language.startsWith("fr");
 
 	const [editor, setEditor] = React.useState<Editor | null>(null);
-	const [imgOutlined, setImgOutlined] = React.useState(false);
+	const [imgOutlined, setImgOutlined] = useSearchParam(
+		plansSearchParams,
+		"outlined",
+	);
+	const [topCollapsed, setTopCollapsed] = useSearchParam(
+		plansSearchParams,
+		"hideTop",
+	);
+	const [weaponsCollapsed, setWeaponsCollapsed] = useSearchParam(
+		plansSearchParams,
+		"hideWeapons",
+	);
+	const [rangesVisible, setRangesVisible] = useSearchParam(
+		plansSearchParams,
+		"ranges",
+	);
+	const rangeCleanupRef = React.useRef<(() => void) | null>(null);
+	const [activeDragItem, setActiveDragItem] = React.useState<{
+		src: string;
+		previewPath: string;
+	} | null>(null);
+
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 200,
+				tolerance: 5,
+			},
+		}),
+	);
+
+	const showRanges = React.useCallback((editorToUse: Editor) => {
+		const gameUnitsToPx = GAME_UNITS_TO_PX[canvasBackgroundStyle(editorToUse)];
+		removeRangeCircles(editorToUse);
+		for (const shape of editorToUse.getCurrentPageShapes()) {
+			createRangeCircleForShape(editorToUse, shape, gameUnitsToPx);
+		}
+
+		const unsubCreate = editorToUse.sideEffects.registerAfterCreateHandler(
+			"shape",
+			(shape) => {
+				if (shape.meta.isRangeCircle) return;
+				createRangeCircleForShape(editorToUse, shape, gameUnitsToPx);
+			},
+		);
+
+		const unsubChange = editorToUse.sideEffects.registerAfterChangeHandler(
+			"shape",
+			(_prev, next) => {
+				if (next.meta.isRangeCircle) return;
+
+				const rangeCircles = editorToUse
+					.getCurrentPageShapes()
+					.filter(
+						(s) =>
+							s.meta.isRangeCircle === true && s.meta.weaponShapeId === next.id,
+					);
+				if (rangeCircles.length === 0) return;
+
+				const centerX = next.x + (next.props as { w: number }).w / 2;
+				const centerY = next.y + (next.props as { h: number }).h / 2;
+
+				for (const rangeCircle of rangeCircles) {
+					const radiusPx = (rangeCircle.props as { w: number }).w / 2;
+					editorToUse.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
+						isLocked: false,
+					});
+					editorToUse.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
+						x: centerX - radiusPx,
+						y: centerY - radiusPx,
+						isLocked: true,
+					});
+				}
+			},
+		);
+
+		const unsubDelete = editorToUse.sideEffects.registerAfterDeleteHandler(
+			"shape",
+			(shape) => {
+				if (shape.meta.isRangeCircle) return;
+
+				const rangeCircles = editorToUse
+					.getCurrentPageShapes()
+					.filter(
+						(s) =>
+							s.meta.isRangeCircle === true &&
+							s.meta.weaponShapeId === shape.id,
+					);
+				if (rangeCircles.length === 0) return;
+
+				for (const rangeCircle of rangeCircles) {
+					editorToUse.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
+						isLocked: false,
+					});
+				}
+				editorToUse.deleteShapes(rangeCircles);
+			},
+		);
+
+		rangeCleanupRef.current = () => {
+			unsubCreate();
+			unsubChange();
+			unsubDelete();
+		};
+	}, []);
+
+	const hideRanges = React.useCallback((editorToUse: Editor) => {
+		rangeCleanupRef.current?.();
+		rangeCleanupRef.current = null;
+		removeRangeCircles(editorToUse);
+	}, []);
 
 	const handleMount = React.useCallback(
 		(mountedEditor: Editor) => {
 			setEditor(mountedEditor);
 			mountedEditor.user.updateUserPreferences({
 				locale: ourLanguageToTldrawLanguage(i18n.language),
+				colorScheme: htmlThemeClass === "dark" ? "dark" : "light",
 			});
+
+			// a restored plan can hold range circles that no side effect handler is watching anymore
+			mountedEditor.run(
+				() => {
+					if (rangesVisible) {
+						showRanges(mountedEditor);
+					} else {
+						removeRangeCircles(mountedEditor);
+					}
+				},
+				{ history: "ignore" },
+			);
 		},
-		[i18n],
+		[i18n, htmlThemeClass, rangesVisible, showRanges],
 	);
 
 	const handleAddImage = React.useCallback(
@@ -65,24 +246,24 @@ export default function Planner() {
 			size,
 			isLocked,
 			point,
+			meta,
 			cb,
 		}: {
 			src: string;
 			size: number[];
 			isLocked: boolean;
 			point: number[];
+			meta?: { backgroundStyle?: "MINI" | "OVER" };
 			cb?: () => void;
 		}) => {
 			if (!editor) return;
 
-			// tldraw creator:
-			// "So image shapes in tldraw work like this: we add an asset to the app.assets table, then we reference that asset in the shape object itself.
-			// This lets us have multiple copies of an image on the canvas without having all of those take up memory individually"
+			// image shapes reference an asset by id, so copies of the same image only take up memory once
 			const assetId: TLAssetId = AssetRecordType.createId();
 
 			const srcWithOutline = imgOutlined ? `${src}?outline=red` : src;
 
-			// idk if this is the best solution, but it was the example given and it seems to cope well with lots of shapes at once
+			// follows tldraw's own example, copes well with lots of shapes at once
 			const imageAsset: TLImageAsset = {
 				id: assetId,
 				type: "image",
@@ -106,10 +287,11 @@ export default function Planner() {
 				type: "image",
 				x: point[0],
 				y: point[1],
-				isLocked: isLocked,
+				isLocked,
 				id: shapeId,
+				meta: meta ?? {},
 				props: {
-					assetId: assetId,
+					assetId,
 					w: size[0],
 					h: size[1],
 				},
@@ -121,70 +303,75 @@ export default function Planner() {
 		[editor, imgOutlined],
 	);
 
-	const handleAddWeapon = React.useCallback(
-		(src: string) => {
-			// Adjustable parameters for image spawning
-			const imageSizePx = 45;
-			const imageSpawnBoxSizeFactorX = 0.15;
-			const imageSpawnBoxSizeFactorY = 0.3;
-			const imageSpawnBoxOffsetFactorX = 0;
-			const imageSpawnBoxOffsetFactorY = 0.2;
-
-			// Get positions of the background rectangle
-			const bgRectangleLeft = plannerBgParams.pointOffsetX;
-			const bgRectangleTop = plannerBgParams.pointOffsetY;
-
-			// Subtract the size of the image here to correct the image spawn location at the right-most & bottom-most boundaries
-			const bgRectangleRight =
-				bgRectangleLeft + plannerBgParams.bgWidth - imageSizePx;
-			const bgRectangleBottom =
-				plannerBgParams.pointOffsetY + plannerBgParams.bgHeight - imageSizePx;
-
-			// Derived values for image spawn box
-			const imageSpawnBoxLeft =
-				bgRectangleLeft + plannerBgParams.bgWidth * imageSpawnBoxOffsetFactorX;
-			const imageSpawnBoxRight =
-				imageSpawnBoxSizeFactorX * (bgRectangleRight - bgRectangleLeft) +
-				imageSpawnBoxLeft;
-			const imageSpawnBoxTop =
-				bgRectangleTop + plannerBgParams.bgHeight * imageSpawnBoxOffsetFactorY;
-			const imageSpawnBoxBottom =
-				imageSpawnBoxSizeFactorY * (bgRectangleBottom - bgRectangleTop) +
-				imageSpawnBoxTop;
+	const handleAddWeaponAtPosition = React.useCallback(
+		(src: string, point: [number, number]) => {
+			const centeredPoint: [number, number] = [
+				point[0] - DROPPED_IMAGE_SIZE_PX / 2,
+				point[1] - DROPPED_IMAGE_SIZE_PX / 2,
+			];
 
 			handleAddImage({
 				src,
-				size: [imageSizePx, imageSizePx],
+				size: [DROPPED_IMAGE_SIZE_PX, DROPPED_IMAGE_SIZE_PX],
 				isLocked: false,
-				point: [
-					R.randomInteger(imageSpawnBoxLeft, imageSpawnBoxRight),
-					R.randomInteger(imageSpawnBoxTop, imageSpawnBoxBottom),
-				],
+				point: centeredPoint,
 				cb: () => editor?.setCurrentTool("select"),
 			});
 		},
-		[
-			editor,
-			handleAddImage,
-			plannerBgParams.bgHeight,
-			plannerBgParams.bgWidth,
-			plannerBgParams.pointOffsetX,
-			plannerBgParams.pointOffsetY,
-		],
+		[editor, handleAddImage],
 	);
+
+	const handleDragStart = (event: DragStartEvent) => {
+		const { src, previewPath } = event.active.data.current as {
+			src: string;
+			previewPath: string;
+		};
+		setActiveDragItem({ src, previewPath });
+	};
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		setActiveDragItem(null);
+
+		if (!editor) return;
+
+		const { active } = event;
+		const { src } = active.data.current as { src: string };
+
+		const pointerPosition = event.activatorEvent as PointerEvent;
+		const dropX = pointerPosition.clientX + (event.delta?.x ?? 0);
+		const dropY = pointerPosition.clientY + (event.delta?.y ?? 0);
+
+		const pagePoint = editor.screenToPage({ x: dropX, y: dropY });
+		handleAddWeaponAtPosition(src, [pagePoint.x, pagePoint.y]);
+	};
+
+	const handleRangeToggle = () => {
+		if (!editor) return;
+
+		if (rangesVisible) {
+			hideRanges(editor);
+		} else {
+			showRanges(editor);
+		}
+		setRangesVisible(!rangesVisible);
+	};
 
 	const handleAddBackgroundImage = React.useCallback(
 		(urlArgs: {
 			stageId: StageId;
 			mode: ModeShort;
-			style: StageBackgroundStyle;
+			style: "MINI" | "OVER";
+			waterLevel: StageWaterLevel;
 		}) => {
 			if (!editor) return;
 
 			editor.mark("pre-background-change");
 
+			hideRanges(editor);
+			setRangesVisible(false);
+
 			const shapes = editor.getCurrentPageShapes();
-			// i dont think locked shapes can be deleted
+			// locked shapes can't be deleted
 			for (const value of shapes) {
 				editor.updateShape({ id: value.id, type: value.type, isLocked: false });
 			}
@@ -192,19 +379,15 @@ export default function Planner() {
 
 			handleAddImage({
 				src: stageMinimapImageUrlWithEnding(urlArgs),
-				size: [plannerBgParams.bgWidth, plannerBgParams.bgHeight],
+				size: [BACKGROUND_WIDTH, BACKGROUND_HEIGHT],
 				isLocked: true,
-				point: [plannerBgParams.pointOffsetX, plannerBgParams.pointOffsetY],
+				point: [0, 0],
+				meta: { backgroundStyle: urlArgs.style },
 			});
+
+			editor.zoomToFit();
 		},
-		[
-			editor,
-			handleAddImage,
-			plannerBgParams.bgHeight,
-			plannerBgParams.bgWidth,
-			plannerBgParams.pointOffsetX,
-			plannerBgParams.pointOffsetY,
-		],
+		[editor, handleAddImage, hideRanges, setRangesVisible],
 	);
 
 	// removes all tldraw ui that isnt needed
@@ -221,7 +404,6 @@ export default function Planner() {
 		Minimap: null,
 		NavigationPanel: null,
 		PageMenu: null,
-		QuickActions: null,
 		SharePanel: null,
 		StylePanel: CustomStylePanel,
 		TopPanel: null,
@@ -229,34 +411,97 @@ export default function Planner() {
 	};
 
 	return (
-		<>
-			<StageBackgroundSelector onAddBackground={handleAddBackgroundImage} />
-			<OutlineToggle outlined={imgOutlined} setImgOutlined={setImgOutlined} />
-			<WeaponImageSelector handleAddWeapon={handleAddWeapon} />
+		<DndContext
+			sensors={sensors}
+			onDragStart={handleDragStart}
+			onDragEnd={handleDragEnd}
+		>
+			<div
+				className={clsx(
+					styles.topWrapper,
+					topCollapsed && styles.topWrapperCollapsed,
+				)}
+			>
+				<StageBackgroundSelector onAddBackground={handleAddBackgroundImage} />
+				<button
+					type="button"
+					className={styles.topToggle}
+					onClick={() => setTopCollapsed(!topCollapsed)}
+					aria-label={
+						topCollapsed
+							? t("common:actions.showMore")
+							: t("common:actions.hide")
+					}
+				>
+					{topCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+				</button>
+			</div>
+			<div
+				className={clsx(
+					styles.weaponsWrapper,
+					weaponsCollapsed && styles.weaponsWrapperCollapsed,
+				)}
+			>
+				<div
+					className={clsx(
+						styles.weaponsSection,
+						"scrollbar",
+						isWide && styles.weaponsSectionWide,
+					)}
+				>
+					<OutlineToggle
+						outlined={imgOutlined}
+						setImgOutlined={setImgOutlined}
+					/>
+					<RangeToggle active={rangesVisible} onToggle={handleRangeToggle} />
+					<WeaponImageSelector />
+				</div>
+				<button
+					type="button"
+					className={styles.weaponsToggle}
+					onClick={() => setWeaponsCollapsed(!weaponsCollapsed)}
+					aria-label={
+						weaponsCollapsed
+							? t("common:actions.showMore")
+							: t("common:actions.hide")
+					}
+				>
+					{weaponsCollapsed ? (
+						<ChevronRight size={16} />
+					) : (
+						<ChevronLeft size={16} />
+					)}
+				</button>
+			</div>
 			<div style={{ position: "fixed", inset: 0 }}>
 				<Tldraw
+					persistenceKey={PLANNER_PERSISTENCE_KEY}
 					onMount={handleMount}
 					components={tldrawComponents}
-					inferDarkMode
+					options={TLDRAW_OPTIONS}
 				/>
 			</div>
-		</>
+			<DragOverlay dropAnimation={null} modifiers={[snapCenterToCursor]}>
+				{activeDragItem ? (
+					<Image
+						path={activeDragItem.previewPath}
+						width={DROPPED_IMAGE_SIZE_PX}
+						height={DROPPED_IMAGE_SIZE_PX}
+						alt=""
+						className={styles.dragPreview}
+						containerClassName={styles.dragPreviewContainer}
+					/>
+				) : null}
+			</DragOverlay>
+		</DndContext>
 	);
 }
 
-// Formats the style panel so it can have classnames, this is needed so it can be moved below the header bar which blocks clicks (idk why this is different to the old version), also needed to format the quick actions bar and zoom menu nicely
+// styled to sit below the header bar, which otherwise blocks clicks on it
 function CustomStylePanel(props: TLUiStylePanelProps) {
 	return (
-		<div className="plans__style-panel">
+		<div className={props.isMobile ? undefined : styles.stylePanel}>
 			<DefaultStylePanel {...props} />
-			<div className="plans__zoom-quick-actions">
-				<div className="plans__quick-actions">
-					<DefaultQuickActions />
-				</div>
-				<div className="plans__zoom-menu">
-					<DefaultZoomMenu />
-				</div>
-			</div>
 		</div>
 	);
 }
@@ -275,69 +520,120 @@ function OutlineToggle({
 	};
 
 	return (
-		<div className="plans__outline-toggle">
-			<SendouButton
-				variant="minimal"
-				onPress={handleClick}
-				className={clsx("plans__outline-toggle__button", {
-					"plans__outline-toggle__button__outlined": outlined,
-				})}
-			>
-				{outlined
-					? t("common:actions.outlined")
-					: t("common:actions.noOutline")}
-			</SendouButton>
-		</div>
+		<SendouButton
+			variant="minimal"
+			onClick={handleClick}
+			icon={<Square />}
+			className={clsx(
+				styles.outlineToggleButton,
+				outlined && styles.outlineToggleButtonOutlined,
+			)}
+		>
+			{outlined ? t("common:actions.outlined") : t("common:actions.noOutline")}
+		</SendouButton>
 	);
 }
 
-function WeaponImageSelector({
-	handleAddWeapon,
+function RangeToggle({
+	active,
+	onToggle,
 }: {
-	handleAddWeapon: (src: string) => void;
+	active: boolean;
+	onToggle: () => void;
 }) {
-	const { t, i18n } = useTranslation(["weapons", "common", "game-misc"]);
-
-	const isWide = i18n.language === "fr";
+	const { t } = useTranslation(["common"]);
 
 	return (
-		<div
-			className={clsx("plans__weapons-section", {
-				"plans__weapons-section__wide": isWide,
-			})}
+		<SendouButton
+			variant="minimal"
+			onClick={onToggle}
+			icon={<Radius />}
+			className={clsx(
+				styles.outlineToggleButton,
+				active && styles.outlineToggleButtonOutlined,
+			)}
 		>
+			{t("common:plans.ranges")}
+		</SendouButton>
+	);
+}
+
+function DraggableWeaponButton({
+	id,
+	src,
+	imgPath,
+	previewPath,
+	alt,
+	title,
+	size,
+}: {
+	id: string;
+	src: string;
+	imgPath: string;
+	previewPath: string;
+	alt: string;
+	title: string;
+	size: number;
+}) {
+	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+		id,
+		data: { src, previewPath },
+	});
+
+	return (
+		<button
+			type="button"
+			ref={setNodeRef}
+			className={clsx(
+				styles.draggableButton,
+				isDragging && styles.weaponDragging,
+			)}
+			{...listeners}
+			{...attributes}
+		>
+			<Image
+				alt={alt}
+				title={title}
+				path={imgPath}
+				width={size}
+				height={size}
+			/>
+		</button>
+	);
+}
+
+function WeaponImageSelector() {
+	const { t } = useTranslation(["weapons", "common", "game-misc"]);
+
+	return (
+		<>
 			{weaponCategories.map((category) => {
 				return (
 					<details key={category.name}>
-						<summary className="plans__weapons-summary">
+						<summary className={styles.weaponsSummary}>
 							<Image
 								path={weaponCategoryUrl(category.name)}
 								width={24}
 								height={24}
 								alt={t(`common:weapon.category.${category.name}`)}
 							/>
-							{t(`common:weapon.category.${category.name}`)}
+							<span className={styles.weaponsSummaryText}>
+								{t(`common:weapon.category.${category.name}`)}
+							</span>
 						</summary>
-						<div className="plans__weapons-container">
+						<div className={styles.weaponsContainer}>
 							{category.weaponIds.map((weaponId) => {
 								return (
-									<SendouButton
+									<DraggableWeaponButton
 										key={weaponId}
-										variant="minimal"
-										onPress={() =>
-											handleAddWeapon(
-												`${outlinedMainWeaponImageUrl(weaponId)}.png`,
-											)
-										}
-									>
-										<Image
-											alt={t(`weapons:MAIN_${weaponId}`)}
-											title={t(`weapons:MAIN_${weaponId}`)}
-											path={mainWeaponImageUrl(weaponId)}
-											width={36}
-											height={36}
-										/>
-									</SendouButton>
+										id={`main-${weaponId}`}
+										src={`${outlinedMainWeaponImageUrl(weaponId)}.avif`}
+										imgPath={mainWeaponImageUrl(weaponId)}
+										previewPath={outlinedMainWeaponImageUrl(weaponId)}
+										alt={t(`weapons:MAIN_${weaponId}`)}
+										title={t(`weapons:MAIN_${weaponId}`)}
+										size={36}
+									/>
 								);
 							})}
 						</div>
@@ -345,92 +641,83 @@ function WeaponImageSelector({
 				);
 			})}
 			<details>
-				<summary className="plans__weapons-summary">
+				<summary className={styles.weaponsSummary}>
 					<Image path={subWeaponImageUrl(0)} width={24} height={24} alt="" />
-					{t("common:weapon.category.subs")}
+					<span className={styles.weaponsSummaryText}>
+						{t("common:weapon.category.subs")}
+					</span>
 				</summary>
-				<div className="plans__weapons-container">
+				<div className={styles.weaponsContainer}>
 					{subWeaponIds.map((subWeaponId) => {
 						return (
-							<SendouButton
+							<DraggableWeaponButton
 								key={subWeaponId}
-								variant="minimal"
-								onPress={() =>
-									handleAddWeapon(`${subWeaponImageUrl(subWeaponId)}.png`)
-								}
-							>
-								<Image
-									alt={t(`weapons:SUB_${subWeaponId}`)}
-									title={t(`weapons:SUB_${subWeaponId}`)}
-									path={subWeaponImageUrl(subWeaponId)}
-									width={28}
-									height={28}
-								/>
-							</SendouButton>
+								id={`sub-${subWeaponId}`}
+								src={`${subWeaponImageUrl(subWeaponId)}.avif`}
+								imgPath={subWeaponImageUrl(subWeaponId)}
+								previewPath={subWeaponImageUrl(subWeaponId)}
+								alt={t(`weapons:SUB_${subWeaponId}`)}
+								title={t(`weapons:SUB_${subWeaponId}`)}
+								size={28}
+							/>
 						);
 					})}
 				</div>
 			</details>
 			<details>
-				<summary className="plans__weapons-summary">
+				<summary className={styles.weaponsSummary}>
 					<Image
 						path={specialWeaponImageUrl(1)}
 						width={24}
 						height={24}
 						alt=""
 					/>
-					{t("common:weapon.category.specials")}
+					<span className={styles.weaponsSummaryText}>
+						{t("common:weapon.category.specials")}
+					</span>
 				</summary>
-				<div className="plans__weapons-container">
+				<div className={styles.weaponsContainer}>
 					{specialWeaponIds.map((specialWeaponId) => {
 						return (
-							<SendouButton
+							<DraggableWeaponButton
 								key={specialWeaponId}
-								variant="minimal"
-								onPress={() =>
-									handleAddWeapon(
-										`${specialWeaponImageUrl(specialWeaponId)}.png`,
-									)
-								}
-							>
-								<Image
-									alt={t(`weapons:SPECIAL_${specialWeaponId}`)}
-									title={t(`weapons:SPECIAL_${specialWeaponId}`)}
-									path={specialWeaponImageUrl(specialWeaponId)}
-									width={28}
-									height={28}
-								/>
-							</SendouButton>
+								id={`special-${specialWeaponId}`}
+								src={`${specialWeaponImageUrl(specialWeaponId)}.avif`}
+								imgPath={specialWeaponImageUrl(specialWeaponId)}
+								previewPath={specialWeaponImageUrl(specialWeaponId)}
+								alt={t(`weapons:SPECIAL_${specialWeaponId}`)}
+								title={t(`weapons:SPECIAL_${specialWeaponId}`)}
+								size={28}
+							/>
 						);
 					})}
 				</div>
 			</details>
 			<details>
-				<summary className="plans__weapons-summary">
+				<summary className={styles.weaponsSummary}>
 					<Image path={modeImageUrl("RM")} width={24} height={24} alt="" />
-					{t("common:plans.adder.objective")}
+					<span className={styles.weaponsSummaryText}>
+						{t("common:plans.adder.objective")}
+					</span>
 				</summary>
-				<div className="plans__weapons-container">
+				<div className={styles.weaponsContainer}>
 					{(["TC", "RM", "CB"] as const).map((mode) => {
 						return (
-							<SendouButton
+							<DraggableWeaponButton
 								key={mode}
-								variant="minimal"
-								onPress={() => handleAddWeapon(`${modeImageUrl(mode)}.png`)}
-							>
-								<Image
-									alt={t(`game-misc:MODE_LONG_${mode}`)}
-									title={t(`game-misc:MODE_LONG_${mode}`)}
-									path={modeImageUrl(mode)}
-									width={28}
-									height={28}
-								/>
-							</SendouButton>
+								id={`mode-${mode}`}
+								src={`${modeImageUrl(mode)}.avif`}
+								imgPath={modeImageUrl(mode)}
+								previewPath={modeImageUrl(mode)}
+								alt={t(`game-misc:MODE_LONG_${mode}`)}
+								title={t(`game-misc:MODE_LONG_${mode}`)}
+								size={28}
+							/>
 						);
 					})}
 				</div>
 			</details>
-		</div>
+		</>
 	);
 }
 
@@ -441,21 +728,25 @@ function StageBackgroundSelector({
 	onAddBackground: (args: {
 		stageId: StageId;
 		mode: ModeShort;
-		style: StageBackgroundStyle;
+		style: "MINI" | "OVER";
+		waterLevel: StageWaterLevel;
 	}) => void;
 }) {
 	const { t } = useTranslation(["game-misc", "common"]);
-	const [stageId, setStageId] = React.useState<StageId>(stageIds[0]);
-	const [mode, setMode] = React.useState<ModeShort>("SZ");
-	const [backgroundStyle, setBackgroundStyle] =
-		React.useState<StageBackgroundStyle>("MINI");
+	const [
+		{ stage: stageId, mode, style: backgroundStyle, water: waterLevel },
+		setParams,
+	] = useSearchParamsTyped(plansSearchParams);
 
-	const handleStageIdChange = (stageId: StageId) => {
-		setStageId(stageId);
+	const handleStageIdChange = (newStageId: StageId) => {
+		setParams({
+			stage: newStageId,
+			water: newStageId === stagesObj.MAHI_MAHI_RESORT ? waterLevel : "up",
+		});
 	};
 
 	return (
-		<div className="plans__top-section">
+		<div className={clsx(styles.topSection, "scrollbar planner")}>
 			<select
 				className="w-max"
 				value={stageId}
@@ -464,10 +755,10 @@ function StageBackgroundSelector({
 			>
 				{stageIds
 					.filter((id) => id <= LAST_STAGE_ID_WITH_IMAGES)
-					.map((stageId) => {
+					.map((optionStageId) => {
 						return (
-							<option value={stageId} key={stageId}>
-								{t(`game-misc:STAGE_${stageId}`)}
+							<option value={optionStageId} key={optionStageId}>
+								{t(`game-misc:STAGE_${optionStageId}`)}
 							</option>
 						);
 					})}
@@ -475,12 +766,12 @@ function StageBackgroundSelector({
 			<select
 				className="w-max"
 				value={mode}
-				onChange={(e) => setMode(e.target.value as ModeShort)}
+				onChange={(e) => setParams({ mode: e.target.value as ModeShort })}
 			>
-				{modesShort.map((mode) => {
+				{modesShort.map((optionMode) => {
 					return (
-						<option key={mode} value={mode}>
-							{t(`game-misc:MODE_LONG_${mode}`)}
+						<option key={optionMode} value={optionMode}>
+							{t(`game-misc:MODE_LONG_${optionMode}`)}
 						</option>
 					);
 				})}
@@ -489,10 +780,10 @@ function StageBackgroundSelector({
 				className="w-max"
 				value={backgroundStyle}
 				onChange={(e) =>
-					setBackgroundStyle(e.target.value as StageBackgroundStyle)
+					setParams({ style: e.target.value as "MINI" | "OVER" })
 				}
 			>
-				{(["MINI", "OVER"] as const).map((style) => {
+				{PLANNER_BACKGROUND_STYLES.map((style) => {
 					return (
 						<option key={style} value={style}>
 							{t(`common:plans.bgStyle.${style}`)}
@@ -500,39 +791,55 @@ function StageBackgroundSelector({
 					);
 				})}
 			</select>
+			{stageId === stagesObj.MAHI_MAHI_RESORT ? (
+				<select
+					className="w-max"
+					value={waterLevel}
+					onChange={(e) =>
+						setParams({ water: e.target.value as StageWaterLevel })
+					}
+				>
+					{STAGE_WATER_LEVELS.map((level) => {
+						return (
+							<option key={level} value={level}>
+								{t(`common:plans.waterLevel.${level}`)}
+							</option>
+						);
+					})}
+				</select>
+			) : null}
 			<SendouButton
-				size="small"
-				onPress={() =>
-					onAddBackground({ style: backgroundStyle, stageId, mode })
+				onClick={() =>
+					onAddBackground({ style: backgroundStyle, stageId, mode, waterLevel })
 				}
 				className="w-max"
 			>
 				{t("common:actions.setBg")}
 			</SendouButton>
+			<LinkButton to="/" icon={<LogOut />} variant="outlined" shape="square" />
 		</div>
 	);
 }
 
-// when adding new language check from Tldraw codebase what is the matching
-// language in TRANSLATIONS constant, or default to english if none found
+// for a new language check tldraw's TRANSLATIONS constant for the matching one, default to english
 const ourLanguageToTldrawLanguageMap: Record<LanguageCode, string> = {
 	"es-US": "es",
 	"es-ES": "es",
 	ko: "ko-kr",
-	nl: "en",
-	zh: "zh-ch",
-	he: "he",
+	nl: "nl",
+	zh: "zh-cn",
+	"fr-CA": "fr",
+	"fr-EU": "fr",
+	"pt-BR": "pt-br",
 	// map to itself
 	da: "da",
 	de: "de",
 	en: "en",
-	"fr-CA": "fr-CA",
-	"fr-EU": "fr-EU",
+	he: "he",
 	it: "it",
 	ja: "ja",
 	ru: "ru",
 	pl: "pl",
-	"pt-BR": "pt-br",
 };
 function ourLanguageToTldrawLanguage(ourLanguageUserSelected: string) {
 	for (const [ourLanguage, tldrawLanguage] of Object.entries(
@@ -545,4 +852,147 @@ function ourLanguageToTldrawLanguage(ourLanguageUserSelected: string) {
 
 	logger.error(`No tldraw language found for: ${ourLanguageUserSelected}`);
 	return "en";
+}
+
+function extractMainWeaponIdFromSrc(src: string): MainWeaponId | null {
+	const match = src.match(MAIN_WEAPON_URL_PATTERN);
+	if (!match) return null;
+
+	const id = Number(match[1]);
+	if (!mainWeaponIds.includes(id as MainWeaponId)) return null;
+
+	return id as MainWeaponId;
+}
+
+function extractSpecialWeaponIdFromSrc(src: string): SpecialWeaponId | null {
+	const match = src.match(SPECIAL_WEAPON_URL_PATTERN);
+	if (!match) return null;
+
+	const id = Number(match[1]);
+	if (!specialWeaponIds.includes(id as SpecialWeaponId)) return null;
+
+	return id as SpecialWeaponId;
+}
+
+function rangeForSrc(
+	src: string,
+): { range: number; blastRadius?: number } | null {
+	const mainWeaponId = extractMainWeaponIdFromSrc(src);
+	if (mainWeaponId !== null) {
+		const result = getWeaponRange(mainWeaponId);
+		if (result.rangeType === "unsupported" || result.range <= 0) return null;
+		return { range: result.range, blastRadius: result.blastRadius };
+	}
+
+	const specialWeaponId = extractSpecialWeaponIdFromSrc(src);
+	if (specialWeaponId !== null) {
+		const result = getSpecialWeaponRange(specialWeaponId);
+		if (!result || result.range <= 0) return null;
+		return { range: result.range, blastRadius: result.blastRadius };
+	}
+
+	return null;
+}
+
+function createRangeCircleForShape(
+	editor: Editor,
+	shape: ReturnType<Editor["getCurrentPageShapes"]>[number],
+	gameUnitsToPx: number,
+) {
+	if (shape.type !== "image") return;
+
+	const assetId = (shape.props as { assetId?: string }).assetId;
+	if (!assetId) return;
+
+	const asset = editor.getAsset(assetId as TLAssetId);
+	if (asset?.type !== "image" || !asset.props.src) return;
+
+	const rangeResult = rangeForSrc(asset.props.src);
+	if (!rangeResult) return;
+
+	const centerX = shape.x + (shape.props as { w: number }).w / 2;
+	const centerY = shape.y + (shape.props as { h: number }).h / 2;
+
+	if (typeof rangeResult.blastRadius === "number") {
+		createCircle(editor, {
+			centerX,
+			centerY,
+			radiusPx: (rangeResult.range + rangeResult.blastRadius) * gameUnitsToPx,
+			color: "blue",
+			weaponShapeId: shape.id,
+		});
+	}
+
+	createCircle(editor, {
+		centerX,
+		centerY,
+		radiusPx: rangeResult.range * gameUnitsToPx,
+		color: "red",
+		weaponShapeId: shape.id,
+	});
+
+	editor.bringToFront([shape.id]);
+}
+
+function createCircle(
+	editor: Editor,
+	{
+		centerX,
+		centerY,
+		radiusPx,
+		color,
+		weaponShapeId,
+	}: {
+		centerX: number;
+		centerY: number;
+		radiusPx: number;
+		color: "red" | "blue";
+		weaponShapeId: TLShapeId;
+	},
+) {
+	const diameter = radiusPx * 2;
+	editor.createShape({
+		type: "geo",
+		x: centerX - radiusPx,
+		y: centerY - radiusPx,
+		isLocked: true,
+		opacity: 0.3,
+		props: {
+			geo: "ellipse",
+			w: diameter,
+			h: diameter,
+			color,
+			fill: "solid",
+			dash: "solid",
+			size: "s",
+		},
+		meta: { isRangeCircle: true, weaponShapeId },
+	});
+}
+
+function canvasBackgroundStyle(editor: Editor): "MINI" | "OVER" {
+	for (const shape of editor.getCurrentPageShapes()) {
+		const style = shape.meta.backgroundStyle;
+		if (style === "MINI" || style === "OVER") return style;
+	}
+
+	return "MINI";
+}
+
+function removeRangeCircles(editor: Editor) {
+	const shapes = editor.getCurrentPageShapes();
+	const rangeShapes = shapes.filter(
+		(shape) => shape.meta.isRangeCircle === true,
+	);
+
+	if (rangeShapes.length === 0) return;
+
+	for (const rangeShape of rangeShapes) {
+		editor.updateShape({
+			id: rangeShape.id,
+			type: rangeShape.type,
+			isLocked: false,
+		});
+	}
+	editor.deleteShapes(rangeShapes);
 }

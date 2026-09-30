@@ -1,5 +1,6 @@
 {
 	"q1": "Hvad er Plus Serveren?",
+	"a1": "",
 	"q2": "Hvordan får jeg et præmiemærke til min begivenhed?",
 	"a2": "",
 	"q3": "Hvordan opdaterer jeg min avatar eller brugernavn?",
@@ -15,5 +16,7 @@
 	"q8": "Hvordan kan jeg finde mine X-kampresultater på min profil?",
 	"a8": "",
 	"q9": "Hvordan kan jeg uploade kunst, som jeg har bestilt",
-	"a9": "Du kan kun uploade kunst, som du selv har lavet. Det skal også være Splatoon-relateret. For bestilte kunstværker, så henvend dig til kunstneren, så De kan uploade det til hjemmesiden. De kan også knytte kunstværket til din profil, så det bliver vist på din profil"
+	"a9": "Du kan kun uploade kunst, som du selv har lavet. Det skal også være Splatoon-relateret. For bestilte kunstværker, så henvend dig til kunstneren, så De kan uploade det til hjemmesiden. De kan også knytte kunstværket til din profil, så det bliver vist på din profil",
+	"q10": "",
+	"a10": ""
 }

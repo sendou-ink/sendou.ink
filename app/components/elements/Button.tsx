@@ -1,51 +1,72 @@
-import { Link, type LinkProps } from "@remix-run/react";
 import clsx from "clsx";
+import type { JSX } from "react";
 import * as React from "react";
-import {
-	Button as ReactAriaButton,
-	type ButtonProps as ReactAriaButtonProps,
-} from "react-aria-components";
+import { Link, type LinkProps } from "react-router";
 import { assertUnreachable } from "~/utils/types";
 import styles from "./Button.module.css";
 
 type ButtonVariant =
 	| "primary"
 	| "success"
+	| "destructive"
 	| "outlined"
 	| "outlined-success"
-	| "destructive"
+	| "outlined-destructive"
 	| "minimal"
 	| "minimal-success"
-	| "minimal-destructive";
+	| "minimal-destructive"
+	| "ghost";
 
 export interface SendouButtonProps
-	extends Omit<ReactAriaButtonProps, "onClick" | "className"> {
-	className?: string;
+	extends Omit<React.ComponentPropsWithRef<"button">, "disabled" | "children"> {
 	variant?: ButtonVariant;
 	size?: "miniscule" | "small" | "medium" | "big";
+	shape?: "circle" | "square";
 	icon?: JSX.Element;
 	children?: React.ReactNode;
+	testId?: string;
+	isDisabled?: boolean;
+	isPending?: boolean;
 }
 
 export function SendouButton({
 	children,
 	variant,
 	size,
+	shape,
 	className,
 	icon,
+	testId,
+	onClick,
+	isDisabled,
+	isPending,
+	type = "button",
 	...rest
 }: SendouButtonProps) {
 	return (
-		<ReactAriaButton
+		<button
+			data-testid={testId}
+			type={type}
 			{...rest}
-			className={buttonClassName({ className, variant, size })}
+			disabled={isDisabled}
+			aria-disabled={isPending || undefined}
+			data-pending={isPending || undefined}
+			onClick={(event) => {
+				if (isPending) {
+					event.preventDefault();
+					return;
+				}
+				onClick?.(event);
+			}}
+			className={buttonClassName({ className, variant, size, shape })}
 		>
-			{icon &&
-				React.cloneElement(icon, {
-					className: iconClassName(icon.props.className, children),
-				})}
+			{icon
+				? React.cloneElement(icon, {
+						className: iconClassName(icon.props.className, children, size),
+					})
+				: null}
 			{children}
-		</ReactAriaButton>
+		</button>
 	);
 }
 
@@ -53,43 +74,51 @@ export interface LinkButtonProps {
 	to: LinkProps["to"];
 	prefetch?: LinkProps["prefetch"];
 	preventScrollReset?: LinkProps["preventScrollReset"];
+	state?: LinkProps["state"];
 	isExternal?: boolean;
 	className?: string;
 	variant?: SendouButtonProps["variant"];
 	size?: SendouButtonProps["size"];
+	shape?: SendouButtonProps["shape"];
 	icon?: JSX.Element;
 	children?: React.ReactNode;
 	onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 	testId?: string;
+	"aria-label"?: string;
 }
 
 export function LinkButton({
 	to,
 	prefetch,
 	preventScrollReset,
+	state,
 	isExternal,
 	className,
 	variant,
 	size,
+	shape,
 	icon,
 	children,
 	onClick,
 	testId,
+	"aria-label": ariaLabel,
 }: LinkButtonProps) {
 	if (isExternal) {
 		return (
 			<a
-				className={buttonClassName({ className, variant, size })}
+				className={buttonClassName({ className, variant, size, shape })}
 				href={to as string}
 				target="_blank"
 				rel="noreferrer"
 				onClick={onClick}
 				data-testid={testId}
+				aria-label={ariaLabel}
 			>
-				{icon &&
-					React.cloneElement(icon, {
-						className: iconClassName(icon.props.className, children),
-					})}
+				{icon
+					? React.cloneElement(icon, {
+							className: iconClassName(icon.props.className, children, size),
+						})
+					: null}
 				{children}
 			</a>
 		);
@@ -97,16 +126,20 @@ export function LinkButton({
 
 	return (
 		<Link
-			className={buttonClassName({ className, variant, size })}
+			className={buttonClassName({ className, variant, size, shape })}
 			to={to}
 			data-testid={testId}
 			prefetch={prefetch}
 			preventScrollReset={preventScrollReset}
+			state={state}
+			onClick={onClick}
+			aria-label={ariaLabel}
 		>
-			{icon &&
-				React.cloneElement(icon, {
-					className: iconClassName(icon.props.className, children),
-				})}
+			{icon
+				? React.cloneElement(icon, {
+						className: iconClassName(icon.props.className, children, size),
+					})
+				: null}
 			{children}
 		</Link>
 	);
@@ -116,27 +149,33 @@ function buttonClassName({
 	className,
 	variant,
 	size,
-}: Pick<SendouButtonProps, "className" | "variant" | "size">) {
-	const variantToClassname = (variant: ButtonVariant) => {
-		switch (variant) {
+	shape,
+}: Pick<SendouButtonProps, "className" | "variant" | "size" | "shape">) {
+	const variantToClassname = (buttonVariant: ButtonVariant) => {
+		switch (buttonVariant) {
 			case "primary":
-				return styles.primary;
+				// the base look, no extra class needed
+				return null;
 			case "success":
 				return styles.success;
+			case "destructive":
+				return styles.destructive;
 			case "outlined":
 				return styles.outlined;
 			case "outlined-success":
 				return styles.outlinedSuccess;
-			case "destructive":
-				return styles.destructive;
+			case "outlined-destructive":
+				return styles.outlinedDestructive;
 			case "minimal":
 				return styles.minimal;
 			case "minimal-success":
 				return styles.minimalSuccess;
 			case "minimal-destructive":
 				return styles.minimalDestructive;
+			case "ghost":
+				return styles.ghost;
 			default:
-				return assertUnreachable(variant);
+				return assertUnreachable(buttonVariant);
 		}
 	};
 
@@ -149,14 +188,33 @@ function buttonClassName({
 			[styles.big]: size === "big",
 			[styles.miniscule]: size === "miniscule",
 		},
+		{
+			[styles.circle]: shape === "circle",
+			[styles.square]: shape === "square",
+		},
 	);
 }
 
 function iconClassName(
 	baseClassName: string | undefined,
 	children: React.ReactNode,
+	size: SendouButtonProps["size"],
 ) {
 	return clsx(baseClassName, styles.buttonIcon, {
 		[styles.lonely]: !children,
+		[styles.buttonIconSmall]: size === "small",
+		[styles.buttonIconMiniscule]: size === "miniscule",
+		[styles.buttonIconBig]: size === "big",
 	});
+}
+
+/** Button look on a plain element, for when the interactive element is elsewhere (e.g. the box inside a tab). */
+export function ButtonLook({
+	className,
+	children,
+}: {
+	className?: string;
+	children: React.ReactNode;
+}) {
+	return <div className={clsx(styles.button, className)}>{children}</div>;
 }

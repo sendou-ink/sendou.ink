@@ -1,45 +1,81 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod/v4";
-import { requireUserId } from "~/features/auth/core/user.server";
+import type { LoaderFunctionArgs } from "react-router";
+import type * as v from "valibot";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import type { Ability } from "~/modules/in-game-lists/types";
-import { actualNumber, id } from "~/utils/zod";
+import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
+import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
+import type { SearchParamsValues } from "~/modules/search-params/search-params";
+import type { newBuildBaseSchema } from "../user-page-schemas";
+import { userBuildsNewSearchParams } from "../user-page-search-params";
 
-const newBuildLoaderParamsSchema = z.object({
-	buildId: z.preprocess(actualNumber, id),
-});
+export const loader = async ({ url }: LoaderFunctionArgs) => {
+	const user = requireUser();
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
-	const url = new URL(request.url);
+	const params = userBuildsNewSearchParams.parse(url);
 
-	const params = newBuildLoaderParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
-
-	const usersBuilds = await BuildRepository.allByUserId({
-		userId: user.id,
+	const usersBuilds = await BuildRepository.findAllByUserId(user.id, {
 		showPrivate: true,
 	});
-	const buildToEdit = usersBuilds.find(
-		(b) => params.success && b.id === params.data.buildId,
-	);
+	const buildToEdit = usersBuilds.find((b) => b.id === params.buildId);
 
 	return {
-		buildToEdit,
+		defaultValues: resolveDefaultValues(params, buildToEdit),
 		gearIdToAbilities: resolveGearIdToAbilities(),
 	};
 
 	function resolveGearIdToAbilities() {
-		return usersBuilds.reduce(
-			(acc, build) => {
-				acc[`HEAD_${build.headGearSplId}`] = build.abilities[0];
-				acc[`CLOTHES_${build.clothesGearSplId}`] = build.abilities[1];
-				acc[`SHOES_${build.shoesGearSplId}`] = build.abilities[2];
+		return usersBuilds.reduce<
+			Record<string, [Ability, Ability, Ability, Ability]>
+		>((acc, build) => {
+			acc[`HEAD_${build.headGearSplId}`] = build.abilities[0];
+			acc[`CLOTHES_${build.clothesGearSplId}`] = build.abilities[1];
+			acc[`SHOES_${build.shoesGearSplId}`] = build.abilities[2];
 
-				return acc;
-			},
-			{} as Record<string, [Ability, Ability, Ability, Ability]>,
-		);
+			return acc;
+		}, {});
 	}
 };
+
+type NewBuildDefaultValues = Partial<v.InferOutput<typeof newBuildBaseSchema>>;
+
+function resolveDefaultValues(
+	params: SearchParamsValues<typeof userBuildsNewSearchParams.shape>,
+	buildToEdit:
+		| Awaited<ReturnType<typeof BuildRepository.findAllByUserId>>[number]
+		| undefined,
+): NewBuildDefaultValues | null {
+	const weapons = resolveDefaultWeapons();
+	const abilities = buildToEdit?.abilities ?? params.build;
+
+	if (!buildToEdit && weapons.length === 0 && !abilities) {
+		return null;
+	}
+
+	return {
+		buildToEditId: buildToEdit?.id,
+		weapons,
+		head: buildToEdit?.headGearSplId,
+		clothes: buildToEdit?.clothesGearSplId,
+		shoes: buildToEdit?.shoesGearSplId,
+		abilities,
+		title: buildToEdit?.title,
+		description: buildToEdit?.description ?? null,
+		modes: buildToEdit?.modes ?? [],
+		isPrivate: Boolean(buildToEdit?.isPrivate),
+	};
+
+	function resolveDefaultWeapons(): WeaponPoolItem[] {
+		if (buildToEdit) {
+			return buildToEdit.weapons.map((wpn) => ({
+				id: wpn.weaponSplId,
+				isFavorite: false,
+			}));
+		}
+
+		if (typeof params.weapon === "number") {
+			return [{ id: params.weapon as MainWeaponId, isFavorite: false }];
+		}
+
+		return [];
+	}
+}

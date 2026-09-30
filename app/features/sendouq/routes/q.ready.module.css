@@ -1,0 +1,27 @@
+.header {
+	font-size: var(--font-lg);
+	color: var(--color-text);
+}
+
+.countdown {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
+	color: var(--color-text);
+	font-variant-numeric: tabular-nums;
+}
+
+.countdownUrgent {
+	color: var(--color-error);
+}
+
+.groupsContainer {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--s-4);
+	width: 100%;
+	max-width: 600px;
+
+	@container (min-width: 500px) {
+		grid-template-columns: 1fr 1fr;
+	}
+}

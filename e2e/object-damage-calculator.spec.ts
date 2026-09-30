@@ -1,44 +1,40 @@
-import { expect, test } from "@playwright/test";
-import { navigate, selectWeapon } from "~/utils/playwright";
-import { OBJECT_DAMAGE_CALCULATOR_URL } from "~/utils/urls";
+import { expect, test } from "./helpers/playwright";
+import { ObjectDamageCalculatorPage } from "./pages/object-damage-calculator/object-damage-calculator-page";
 
 test.describe("Object Damage Calculator", () => {
-	test.beforeEach(async ({ page }) => {
-		await navigate({ page, url: OBJECT_DAMAGE_CALCULATOR_URL });
-	});
-
-	const cellId = (id: string, damageReceiver = "Chariot") =>
-		`${id}-${damageReceiver}`;
-
 	test("operates damage type select, max damage > min damage", async ({
 		page,
 	}) => {
-		const hp = page.getByTestId(cellId("hp"));
-		const dmg = page.getByTestId(cellId("dmg"));
-		const htd = page.getByTestId(cellId("htd"));
+		const calculator = new ObjectDamageCalculatorPage(page);
+		await calculator.goto();
+
+		const hp = calculator.hitPoints();
+		const dmg = calculator.damage();
+		const htd = calculator.hitsToDestroy();
 
 		const hpBefore = (await hp.textContent())!;
 		const dmgBefore = (await dmg.textContent())!;
 		const htdBefore = (await htd.textContent())!;
 
-		// test hits to destroy calculation
 		expect(Number(htdBefore)).toBe(
 			Math.ceil(Number(hpBefore) / Number(dmgBefore)),
 		);
 
-		await page.locator("text=Damage type").selectOption("NORMAL_MIN");
+		await calculator.selectDamageType("NORMAL_MIN");
 
-		// select did what we expect it to do
 		await expect(hp).toHaveText(hpBefore);
 		await expect(dmg).not.toHaveText(dmgBefore);
 		await expect(htd).not.toHaveText(htdBefore);
 	});
 
 	test("changes weapon and saves it to url", async ({ page }) => {
-		const dmg = page.getByTestId(cellId("dmg"));
+		const calculator = new ObjectDamageCalculatorPage(page);
+		await calculator.goto();
+
+		const dmg = calculator.damage();
 		const dmgBefore = (await dmg.textContent())!;
 
-		await selectWeapon({ page, name: "Luna Blaster" });
+		await calculator.selectWeapon("Luna Blaster");
 
 		await expect(dmg).not.toHaveText(dmgBefore);
 		await page.reload();
@@ -46,24 +42,30 @@ test.describe("Object Damage Calculator", () => {
 	});
 
 	test("multiplier switch increases damage", async ({ page }) => {
-		await selectWeapon({ page, name: "Tri-Stringer" });
+		const calculator = new ObjectDamageCalculatorPage(page);
+		await calculator.goto();
 
-		const dmg = page.getByTestId(cellId("dmg"));
+		await calculator.selectWeapon("Tri-Stringer");
+
+		const dmg = calculator.damage();
 		const dmgBefore = (await dmg.textContent())!;
-		await page.getByTestId("multi-switch").click();
+		await calculator.toggleMultiplier();
 
 		// Multiplier is on by default
 		await expect(dmg).not.toHaveText(dmgBefore);
 	});
 
 	test("object hp increases when ability points added", async ({ page }) => {
-		const crabTankHp = page.getByTestId(cellId("hp"));
+		const calculator = new ObjectDamageCalculatorPage(page);
+		await calculator.goto();
+
+		const crabTankHp = calculator.hitPoints();
 		const crabTankHpBefore = (await crabTankHp.textContent())!;
 
-		const splashWallHp = page.getByTestId(cellId("hp", "Wsb_Shield"));
+		const splashWallHp = calculator.hitPoints("Wsb_Shield");
 		const splashWallHpBefore = (await splashWallHp.textContent())!;
 
-		await page.locator("text=Amount of").selectOption("10");
+		await calculator.selectAbilityPoints(10);
 
 		// Crab Tank doesn't gain HP from ability points
 		await expect(crabTankHp).toHaveText(crabTankHpBefore);

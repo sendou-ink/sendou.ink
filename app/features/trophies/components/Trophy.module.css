@@ -1,0 +1,97 @@
+.container {
+	position: relative;
+	overflow: hidden;
+	border: var(--border-width) solid var(--tier-bg);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(var(--trophy-grid-columns, auto-fit), 100px);
+	justify-content: center;
+	gap: var(--s-2);
+
+	/* every tile sits in a link or a button that must fill its cell so the container has a size before the canvas exists */
+	> :is(a, button) {
+		all: unset;
+		display: block;
+		position: relative;
+		cursor: pointer;
+	}
+}
+
+.tierPill {
+	position: absolute;
+	top: -1px;
+	right: -1px;
+
+	> * {
+		border-radius: 0 var(--radius-field) 0 var(--radius-field);
+	}
+}
+
+.cornerPill {
+	position: absolute;
+	bottom: -1px;
+	left: -1px;
+	display: flex;
+	align-items: center;
+	height: var(--selector-size-sm);
+	padding: 0 var(--s-1-5);
+	border-radius: 0 var(--radius-field) 0 var(--radius-field);
+	background-color: var(--tier-bg, var(--color-bg-higher));
+	color: var(--tier-text, var(--color-text-high));
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.trophy {
+	width: 100% !important;
+	height: auto !important;
+	aspect-ratio: 1 / 1;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.visible {
+	opacity: 1;
+}
+
+.loading {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.spinner {
+	width: var(--s-6);
+	height: var(--s-6);
+	border: calc(var(--border-width) * 2) solid var(--color-bg-higher);
+	border-top-color: var(--color-text-high);
+	border-radius: 50%;
+	animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.interactive {
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+.error {
+	color: var(--color-text-high);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}

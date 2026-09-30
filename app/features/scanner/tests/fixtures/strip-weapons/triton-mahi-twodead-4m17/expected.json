@@ -1,0 +1,14 @@
+{
+  "event": "StripWeapons",
+  "data": {
+    "layout": "narrow-right",
+    "weapons": [
+      [2070, 10, null, 1010],
+      [1042, 50, 21, null]
+    ],
+    "weaponLabels": [
+      ["Snipewriter 5H", "Splattershot Jr.", "splatted (Custom Blaster)", "Splat Roller"],
+      ["Planetz Big Swig Roller", ".52 Gal", "Neo Splash-o-matic", "splatted (Snipewriter 5H)"]
+    ]
+  }
+}

@@ -5,89 +5,116 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1);
-	--tournament-card-icon-size: 13px;
+	--tournament-card-icon-size: 14px;
 }
 
 .containerTall {
 	height: 100%;
 }
 
+.avatarImg {
+	border-radius: var(--radius-avatar);
+}
+
 .card {
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded);
-	color: var(--text);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	color: var(--color-text);
 	padding: var(--s-1) var(--s-2) var(--s-2) var(--s-2);
 	height: 100%;
 	min-width: var(--card-width);
 	max-width: var(--card-width);
+
+	&:hover .avatarImg {
+		outline: 6px solid var(--color-bg-higher);
+	}
+}
+
+.cardRanked {
+	box-shadow: inset 0 -3px 0 var(--color-fg-accent);
 }
 
 .imgContainer {
-	background-color: var(--bg);
+	background-color: var(--color-bg);
 	padding: var(--s-1-5);
-	border-radius: 100%;
+	border-radius: var(--radius-avatar);
 	margin-left: -10px;
 	margin-top: -10px;
-}
-
-.avatarImg {
-	border-radius: 100%;
-}
-
-.card:hover .avatarImg {
-	outline: 6px solid var(--theme-transparent);
 }
 
 .org {
 	display: flex;
 	gap: var(--s-1);
-	font-size: var(--fonts-xxs);
-	color: var(--text-lighter);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+
+	& span {
+		max-width: 165px;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
 }
 
 .time {
-	font-size: var(--fonts-xs);
-	font-weight: var(--semi-bold);
-	color: var(--text-lighter);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
 	display: block;
+	text-align: center;
+}
+
+.nameRow {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-2);
 }
 
 .name {
 	text-align: center;
-	font-weight: var(--semi-bold);
-	font-size: var(--fonts-sm);
+	font-weight: var(--weight-semi);
+	font-size: var(--font-sm);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	max-width: 225px;
 	overflow: hidden;
 }
 
-.teamCount {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded-sm);
+.nameWithTier {
+	max-width: 165px;
+}
+
+.participantsPill {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size);
 	width: max-content;
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: 0 var(--s-1-5);
 	display: flex;
+	align-items: center;
 	gap: var(--s-1);
+	white-space: nowrap;
+
+	& svg {
+		width: var(--tournament-card-icon-size);
+		height: var(--tournament-card-icon-size);
+	}
 }
 
-.teamCount svg {
-	width: var(--tournament-card-icon-size);
+.participantsTeamsCount {
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
 }
 
-.modesPillContainer {
+.modesRow {
+	display: flex;
+	flex: none;
+	gap: var(--s-1);
+	align-items: center;
 	padding-inline-start: 12px;
-}
-
-.modesPill {
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded-sm);
-	width: max-content;
-	padding: var(--s-0-5) var(--s-1-5);
-	display: flex;
-	gap: var(--s-1);
 }
 
 .pillsContainer {
@@ -98,32 +125,11 @@
 	width: 100%;
 }
 
-.pillsContainer.lonely {
-	padding-inline-end: 0px;
-	padding-inline-start: 12px;
-}
-
-.pill {
-	font-size: var(--fonts-xxs);
-	font-weight: var(--bold);
-	border-radius: var(--rounded-sm);
-	padding: var(--s-0-5) var(--s-1-5);
-	display: grid;
-	place-items: center;
-}
-
-.pillRanked {
-	background-color: var(--theme-info-transparent);
-	color: var(--theme-info);
-}
-
-.pillRanked svg {
-	width: var(--tournament-card-icon-size);
-}
-
 .firstPlacers {
+	position: relative;
 	margin-inline: auto;
 	margin-top: var(--s-5);
+	margin-block-end: var(--s-4);
 	width: max-content;
 }
 
@@ -134,26 +140,29 @@
 	text-overflow: ellipsis;
 }
 
-.badgesContainer {
-	display: flex;
-	gap: var(--s-1);
-	justify-content: center;
-	background-color: black;
-	border-radius: var(--rounded-sm);
-	padding: var(--s-1);
-}
-
 .badgeNavIcon {
 	min-width: 16px;
 }
 
-.badgeDisplay {
-	min-width: initial;
-	min-height: initial;
+.vodIndicator {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size);
+	width: max-content;
+	padding: 0 var(--s-1-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	white-space: nowrap;
+
+	&:not(:first-child) {
+		margin-inline-start: var(--s-1);
+	}
 }
 
 .badgePill {
-	background-color: var(--bg-lightest);
-	border-radius: var(--rounded-sm);
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: 0 var(--s-1);
+	height: var(--selector-size);
 }

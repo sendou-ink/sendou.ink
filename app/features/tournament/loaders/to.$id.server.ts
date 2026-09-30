@@ -1,60 +1,75 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import { isAfter, subDays } from "date-fns";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import {
+	bracketsMetaCached,
+	canSeeTournamentFriendCodes,
+	requireTournamentVisible,
+	type TournamentLayoutData,
+	tournamentDataCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
+import { hasPermission } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
-import { streamsByTournamentId } from "../core/streams.server";
+import { idObject } from "~/utils/schema";
+import { serializeTournamentLoaderData } from "../core/layout-payload";
 
-export type TournamentLoaderData = SerializeFrom<typeof loader>;
+export type TournamentLoaderData = {
+	tournament: TournamentLayoutData;
+	/** Count for the streams tab badge; the streams view loads the actual streams itself. */
+	streamsCount: number;
+	friendCodes:
+		| Awaited<
+				ReturnType<typeof TournamentRepository.findFriendCodesByTournamentId>
+		  >
+		| undefined;
+	preparedMaps:
+		| Awaited<ReturnType<typeof TournamentRepository.findPreparedMapsById>>
+		| undefined;
+	vods: TournamentMatchVodRepository.VodsByTournamentId | undefined;
+};
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = getUser();
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
 	});
 
-	const tournament = await tournamentDataCached({ tournamentId, user });
+	const tournament = await tournamentDataCached(tournamentId);
+	requireTournamentVisible({ ctx: tournament.ctx, user });
 
-	const streams =
-		tournament.data.stage.length > 0 && !tournament.ctx.isFinalized
-			? await streamsByTournamentId(tournament.ctx)
-			: [];
+	const showFriendCodes = canSeeTournamentFriendCodes({
+		ctx: tournament.ctx,
+		user,
+	});
 
-	const tournamentStartedInTheLastMonth =
-		databaseTimestampToDate(tournament.ctx.startTime) >
-		new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-	const isTournamentAdmin =
-		tournament.ctx.author.id === user?.id ||
-		tournament.ctx.staff.some(
-			(s) => s.role === "ORGANIZER" && s.id === user?.id,
-		) ||
-		user?.roles.includes("ADMIN") ||
-		tournament.ctx.organization?.members.some(
-			(m) => m.userId === user?.id && m.role === "ADMIN",
+	const showVods =
+		tournament.ctx.isFinalized &&
+		isAfter(
+			databaseTimestampToDate(tournament.ctx.startsAt),
+			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
 		);
-	const isTournamentOrganizer =
-		isTournamentAdmin ||
-		tournament.ctx.staff.some(
-			(s) => s.role === "ORGANIZER" && s.id === user?.id,
-		) ||
-		tournament.ctx.organization?.members.some(
-			(m) => m.userId === user?.id && m.role === "ORGANIZER",
-		);
-	const showFriendCodes = tournamentStartedInTheLastMonth && isTournamentAdmin;
 
-	return {
-		tournament,
-		streamingParticipants: streams.flatMap((s) => (s.userId ? [s.userId] : [])),
-		streamsCount: streams.length,
+	return serializeTournamentLoaderData({
+		tournament: {
+			ctx: tournament.ctx,
+			bracketsMeta: await bracketsMetaCached(tournamentId),
+		},
+		streamsCount: tournament.streams.length,
 		friendCodes: showFriendCodes
-			? await TournamentRepository.friendCodesByTournamentId(tournamentId)
+			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
 			: undefined,
 		preparedMaps:
-			isTournamentOrganizer && !tournament.ctx.isFinalized
+			hasPermission(tournament.ctx, "ORGANIZE", user) &&
+			!tournament.ctx.isFinalized
 				? await TournamentRepository.findPreparedMapsById(tournamentId)
 				: undefined,
-	};
+		vods: showVods
+			? await TournamentMatchVodRepository.findVodsByTournamentId(tournamentId)
+			: undefined,
+	});
 };

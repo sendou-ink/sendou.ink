@@ -1,15 +1,24 @@
-import { z } from "zod/v4";
-import { id } from "~/utils/zod";
+import * as v from "valibot";
+import { id } from "~/utils/schema";
 import { NOTIFICATIONS } from "./notifications-contants";
 
-export const markAsSeenActionSchema = z.object({
-	notificationIds: z.array(id).min(1).max(NOTIFICATIONS.MAX_SHOWN),
+export const markAsSeenActionSchema = v.object({
+	notificationIds: v.pipe(
+		v.array(id),
+		v.minLength(1),
+		v.maxLength(NOTIFICATIONS.MAX_SHOWN),
+	),
 });
 
-export const subscribeSchema = z.object({
-	endpoint: z.string().url(),
-	keys: z.object({
-		auth: z.string(),
-		p256dh: z.string(),
+export const subscribeSchema = v.object({
+	endpoint: v.pipe(
+		v.string(),
+		v.url(),
+		v.startsWith("https://"),
+		v.maxLength(2048),
+	),
+	keys: v.object({
+		auth: v.pipe(v.string(), v.maxLength(1024)),
+		p256dh: v.pipe(v.string(), v.maxLength(1024)),
 	}),
 });

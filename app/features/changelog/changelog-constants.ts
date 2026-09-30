@@ -1,0 +1,37 @@
+import type { NavIcon } from "~/utils/urls";
+
+export const CHANGELOG_FOLDER_PATH = "changelog";
+
+/** Discord emoji shortcode per nav item (server-uploaded or built-in), so the generated post is copy-pasteable. */
+export const DISCORD_EMOJI_NAMES: Record<NavIcon, string> = {
+	settings: "settings",
+	sendouq: "sendouq",
+	analyzer: "analyzer",
+	"comp-analyzer": "comp_analyzer",
+	builds: "builds",
+	"object-damage-calculator": "object_damage_calculator",
+	leaderboards: "leaderboards",
+	scrims: "scrims",
+	lfg: "lfg",
+	plans: "plans",
+	trophies: "trophies",
+	// built-in 📆
+	calendar: "calendar~1",
+	plus: "plus",
+	xsearch: "xsearch",
+	articles: "articles",
+	vods: "vods",
+	art: "art",
+	"tier-list-maker": "tierlistmaker",
+	links: "links",
+	maps: "maps",
+	medal: "medal",
+	t: "t",
+	u: "user",
+	associations: "associations",
+	badges: "badges",
+	luti: "luti",
+};
+
+/** Stands in for the sendou.ink logo, used by entries without a nav item. */
+export const DISCORD_FALLBACK_EMOJI_NAME = "sendou";

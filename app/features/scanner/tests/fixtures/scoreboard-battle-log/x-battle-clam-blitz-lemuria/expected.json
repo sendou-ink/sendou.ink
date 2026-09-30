@@ -1,0 +1,87 @@
+{
+  "event": "ScoreboardBattleLog",
+  "data": {
+    "lobby": "X",
+    "mode": "CB",
+    "stage": 23,
+    "timestamp": "3/8/2026 18:11",
+    "matchScores": [
+      30,
+      23
+    ],
+    "povIndex": 5,
+    "players": [
+      {
+        "name": "Pony",
+        "paint": 1680,
+        "ka": 11,
+        "d": 6,
+        "s": 7,
+        "weaponId": 60
+      },
+      {
+        "name": "Charms",
+        "paint": 1367,
+        "ka": 9,
+        "d": 10,
+        "s": 6,
+        "weaponId": 0
+      },
+      {
+        "name": "Mesh Cap",
+        "paint": 857,
+        "ka": 4,
+        "d": 6,
+        "s": 2,
+        "weaponId": 2030
+      },
+      {
+        "name": "Retro",
+        "paint": 1034,
+        "ka": 9,
+        "d": 8,
+        "s": 4,
+        "weaponId": 251
+      },
+      {
+        "name": "Invisifloats",
+        "paint": 1762,
+        "ka": 14,
+        "d": 6,
+        "s": 5,
+        "weaponId": 60
+      },
+      {
+        "name": "Beanie",
+        "paint": 1194,
+        "ka": 11,
+        "d": 8,
+        "s": 2,
+        "weaponId": 252
+      },
+      {
+        "name": "Headphones",
+        "paint": 859,
+        "ka": 4,
+        "d": 5,
+        "s": 1,
+        "weaponId": 2030
+      },
+      {
+        "name": "Slugger",
+        "paint": 1023,
+        "ka": 11,
+        "d": 6,
+        "s": 3,
+        "weaponId": 1010
+      }
+    ],
+    "stageLabel": "Lemuria Hub"
+  },
+  "options": {
+    "skipFields": [
+      "players.4.name"
+    ],
+    "notes": "players.4.name (Invisifloats) reads lnvisifloats — I and l are pixel-identical bars in this face. Weapons row order: N-ZAP '85, Sploosh-o-matic, E-liter 4K, Rapid Blaster Pro Deco, N-ZAP '85, Rapid Blaster Pro WNT-R, E-liter 4K, Splat Roller (Big Bubbler special confirms the near-tied Flingza off)."
+  }
+}

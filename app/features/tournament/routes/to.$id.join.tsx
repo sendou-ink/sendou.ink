@@ -1,35 +1,43 @@
-import { Form, useLoaderData } from "@remix-run/react";
-import React from "react";
+import { ClipboardList, DoorOpen, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Form, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import invariant from "~/utils/invariant";
+import { useTournament } from "~/features/tournament/tournament-context";
+import { invariant } from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
-import { userEditProfilePage } from "~/utils/urls";
+import {
+	tournamentRegisterPage,
+	tournamentTeamPage,
+	userEditProfilePage,
+} from "~/utils/urls";
 import { action } from "../actions/to.$id.join.server";
 import { loader } from "../loaders/to.$id.join.server";
 import { validateCanJoinTeam } from "../tournament-utils";
-import { useTournament } from "./to.$id";
+import styles from "./to.$id.join.module.css";
+
 export { action, loader };
 
 export default function JoinTeamPage() {
 	const { t } = useTranslation(["tournament", "common"]);
-	const id = React.useId();
 	const user = useUser();
 	const tournament = useTournament();
 	const data = useLoaderData<typeof loader>();
 
 	const teamToJoin = data.teamId ? tournament.teamById(data.teamId) : undefined;
-	const captain = teamToJoin?.members.find((member) => member.isOwner);
+	const teamMemberOf = tournament.teamMemberOfByUser(user);
 	const validationStatus = validateCanJoinTeam({
 		inviteCode: data.inviteCode,
 		teamToJoin,
 		userId: user?.id,
-		maxTeamSize: tournament.maxTeamMemberCount,
+		maxTeamSize: tournament.maxMembersPerTeam,
 	});
+
+	const isAlreadyInAnotherTeam =
+		validationStatus === "VALID" && Boolean(teamMemberOf);
 
 	const textPrompt = () => {
 		switch (validationStatus) {
@@ -58,9 +66,9 @@ export default function JoinTeamPage() {
 		return (
 			<Alert variation="WARNING" alertClassName="w-max">
 				<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
-					This tournament requires you to have an in-game name set{" "}
+					{t("tournament:ign.required")}{" "}
 					<LinkButton to={userEditProfilePage(user)} size="small">
-						Edit profile
+						{t("tournament:ign.editProfile")}
 					</LinkButton>
 				</div>
 			</Alert>
@@ -68,36 +76,61 @@ export default function JoinTeamPage() {
 	}
 
 	return (
-		<div className="stack lg items-center">
-			<div className="text-center text-lg font-semi-bold">{textPrompt()}</div>
-			<div className="stack sm items-center">
-				{validationStatus === "VALID" ? (
+		<div className="stack md items-center">
+			{isAlreadyInAnotherTeam || validationStatus === "TEAM_FULL" ? (
+				<Alert variation="WARNING" alertClassName={styles.joinAlert}>
+					{isAlreadyInAnotherTeam
+						? t("tournament:join.alreadyInTeam")
+						: textPrompt()}
+				</Alert>
+			) : (
+				<div className="text-center font-semi-bold">{textPrompt()}</div>
+			)}
+			{isAlreadyInAnotherTeam ? (
+				<LinkButton
+					to={tournamentRegisterPage(tournament.ctx.id)}
+					size="small"
+					variant="outlined"
+					icon={<ClipboardList />}
+				>
+					{t("tournament:join.viewRegistration")}
+				</LinkButton>
+			) : teamMemberOf ? (
+				<LinkButton
+					to={tournamentTeamPage({
+						tournamentId: tournament.ctx.id,
+						tournamentTeamId: teamMemberOf.id,
+					})}
+					size="small"
+					variant="outlined"
+					icon={<Users />}
+				>
+					{t("tournament:join.viewTeam")}
+				</LinkButton>
+			) : null}
+			{validationStatus === "VALID" && !isAlreadyInAnotherTeam ? (
+				<div className="text-lighter text-center font-semi-bold text-sm">
 					<FriendCodeInput friendCode={user?.friendCode} />
-				) : null}
-				{user?.inGameName ? (
-					<div className="font-bold">
-						<span className="text-lighter">IGN</span> {user.inGameName}
-					</div>
-				) : null}
-			</div>
-			<Form method="post" className="tournament__invite-container">
-				{validationStatus === "VALID" ? (
+					{user?.inGameName ? (
+						<div className="font-bold">
+							{t("tournament:join.ign", { inGameName: user.inGameName })}
+						</div>
+					) : null}
+				</div>
+			) : null}
+			<Form method="post" className={styles.inviteContainer}>
+				{validationStatus === "VALID" && !isAlreadyInAnotherTeam ? (
 					<div className="stack md items-center">
-						<SubmitButton size="big" isDisabled={!user?.friendCode}>
+						<SubmitButton isDisabled={!user?.friendCode} icon={<DoorOpen />}>
 							{t("common:actions.join")}
 						</SubmitButton>
 						{!user?.friendCode ? (
 							<div className="text-warning">
-								Save friend code before joining the team
+								{t("tournament:join.noFriendCode")}
 							</div>
 						) : (
-							<div className="text-lighter text-sm stack horizontal sm items-center">
-								<input id={id} type="checkbox" name="trust" />{" "}
-								<label htmlFor={id} className="mb-0">
-									{t("tournament:join.giveTrust", {
-										name: captain ? captain.username : "",
-									})}
-								</label>
+							<div className="text-lighter text-xs text-center">
+								{t("tournament:join.friendSuggestion")}
 							</div>
 						)}
 					</div>

@@ -1,0 +1,13 @@
+.root {
+	width: 100%;
+
+	& input:not([type="radio"], [type="checkbox"]),
+	& textarea,
+	& select {
+		width: 100%;
+	}
+}
+
+.searchRoot {
+	width: 100%;
+}

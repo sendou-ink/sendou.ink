@@ -1,39 +1,82 @@
-import type { LoaderFunctionArgs, SerializeFrom } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
+import { getUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { notFoundIfFalsy, parseSafeSearchParams } from "~/utils/remix.server";
-import { userResultsPageSearchParamsSchema } from "../user-page-schemas";
+import { userPageUserId } from "~/features/user-page/user-page-context.server";
+import type { SerializeFrom } from "~/utils/remix";
+import { paginate } from "~/utils/remix.server";
+import {
+	HIGHLIGHTS_RESULTS_MAX,
+	RESULTS_PER_PAGE,
+} from "../user-page-constants";
+import { userResultsSearchParams } from "../user-page-search-params";
 
 export type UserResultsLoaderData = SerializeFrom<typeof loader>;
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const parsedSearchParams = parseSafeSearchParams({
-		request,
-		schema: userResultsPageSearchParamsSchema,
-	});
+export const loader = async ({ request, url }: LoaderFunctionArgs) => {
+	const {
+		highlightsOnly,
+		page,
+		tournament,
+		team,
+		mate,
+		minTier,
+		maxTier,
+		maxPlacement,
+		fromYear,
+		toYear,
+		source,
+		minParticipantCount,
+	} = userResultsSearchParams.parse(request);
 
-	const userId = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(params.identifier!),
-	).id;
+	const userId = userPageUserId();
 	const hasHighlightedResults =
 		await UserRepository.hasHighlightedResultsByUserId(userId);
 
-	let showHighlightsOnly = parsedSearchParams.success
-		? !parsedSearchParams.data.all
-		: true;
+	const isChoosingHighlights = url.pathname.includes("/results/highlights");
+	const canFilter = !isChoosingHighlights && Boolean(getUser());
 
-	if (!hasHighlightedResults) {
-		showHighlightsOnly = false;
-	}
+	/** Turning the highlights off is the one filter a logged out visitor gets. */
+	const showHighlightsOnly =
+		hasHighlightedResults && highlightsOnly && !isChoosingHighlights;
 
-	const isChoosingHighlights = request.url.includes("/results/highlights");
-	if (isChoosingHighlights) {
-		showHighlightsOnly = false;
-	}
+	const filters = canFilter
+		? {
+				tournamentName: tournament ?? undefined,
+				teamName: team ?? undefined,
+				mateUserId: mate ?? undefined,
+				minTier,
+				maxTier,
+				maxPlacement: maxPlacement ?? undefined,
+				fromYear: fromYear ?? undefined,
+				toYear: toYear ?? undefined,
+				source,
+				minParticipantCount,
+			}
+		: {};
+
+	const [results, totalCount, mateUsername] = await Promise.all([
+		UserRepository.findResultsByUserId(userId, {
+			showHighlightsOnly,
+			...filters,
+			...(isChoosingHighlights
+				? { limit: HIGHLIGHTS_RESULTS_MAX }
+				: { limit: RESULTS_PER_PAGE, offset: (page - 1) * RESULTS_PER_PAGE }),
+		}),
+		UserRepository.countResultsByUserId(userId, {
+			showHighlightsOnly,
+			...filters,
+		}),
+		filters.mateUserId
+			? UserRepository.findUsernameById(filters.mateUserId)
+			: null,
+	]);
 
 	return {
-		results: await UserRepository.findResultsByUserId(userId, {
-			showHighlightsOnly,
-		}),
+		results: {
+			value: results,
+			...paginate({ url, page, pageSize: RESULTS_PER_PAGE, totalCount }),
+		},
 		hasHighlightedResults,
+		mateUsername,
 	};
 };

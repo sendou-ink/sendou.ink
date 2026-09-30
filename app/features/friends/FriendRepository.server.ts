@@ -1,0 +1,500 @@
+import { sub } from "date-fns";
+import { type SelectQueryBuilder, sql } from "kysely";
+import { db } from "~/db/sql";
+import type { DB, DBBoolean } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { commonUserSelect } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
+import { FRIEND } from "./friends-constants";
+
+export async function findByUserIdWithActivity(userId: number) {
+	const [friendRows, teamMemberRows] = await Promise.all([
+		withLfgJoins(
+			db
+				.selectFrom("Friendship")
+				.innerJoin("User", (join) =>
+					join.on((eb) =>
+						eb.or([
+							eb.and([
+								eb("Friendship.userOneId", "=", userId),
+								eb("User.id", "=", eb.ref("Friendship.userTwoId")),
+							]),
+							eb.and([
+								eb("Friendship.userTwoId", "=", userId),
+								eb("User.id", "=", eb.ref("Friendship.userOneId")),
+							]),
+						]),
+					),
+				)
+				.where((eb) =>
+					eb.or([
+						eb("Friendship.userOneId", "=", userId),
+						eb("Friendship.userTwoId", "=", userId),
+					]),
+				),
+		)
+			.select((eb) => [
+				"Friendship.id as friendshipId",
+				"Friendship.createdAt as friendshipCreatedAt",
+				eb
+					.case()
+					.when("Friendship.userOneId", "=", userId)
+					.then(eb.ref("Friendship.isPinnedByUserOne"))
+					.else(eb.ref("Friendship.isPinnedByUserTwo"))
+					.end()
+					.as("isPinned"),
+			])
+			.orderBy("Friendship.createdAt", "desc")
+			.execute(),
+		withLfgJoins(
+			db
+				.selectFrom("TeamMemberWithSecondary as myMembership")
+				.innerJoin("TeamMemberWithSecondary as otherMembership", (join) =>
+					join
+						.onRef("otherMembership.teamId", "=", "myMembership.teamId")
+						.on("otherMembership.userId", "!=", userId),
+				)
+				.innerJoin("User", "User.id", "otherMembership.userId")
+				.where("myMembership.userId", "=", userId),
+		).execute(),
+	]);
+
+	return [
+		...friendRows,
+		...teamMemberRows.map((row) => ({
+			...row,
+			friendshipId: null as number | null,
+			friendshipCreatedAt: null as number | null,
+			isPinned: 0 as DBBoolean,
+		})),
+	];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
+	const nowTimestamp = dateToDatabaseTimestamp(new Date());
+
+	return (qb as SelectQueryBuilder<DB, keyof DB, Record<string, never>>)
+		.leftJoin("TournamentTeamMember", (join) =>
+			join
+				.onRef("TournamentTeamMember.userId", "=", "User.id")
+				.on("TournamentTeamMember.isLooking", "=", 1)
+				.on((eb) =>
+					eb.exists(
+						eb
+							.selectFrom("TournamentTeam as LookingTeam")
+							.innerJoin(
+								"Tournament as LookingTournament",
+								"LookingTournament.id",
+								"LookingTeam.tournamentId",
+							)
+							.select("LookingTeam.id")
+							.whereRef(
+								"LookingTeam.id",
+								"=",
+								"TournamentTeamMember.tournamentTeamId",
+							)
+							.where((innerEb) =>
+								innerEb.or([
+									innerEb(
+										sql`json_extract("LookingTournament"."settings", '$.regClosesAt')`,
+										"is",
+										null,
+									),
+									innerEb(
+										sql<number>`json_extract("LookingTournament"."settings", '$.regClosesAt')`,
+										">",
+										nowTimestamp,
+									),
+								]),
+							),
+					),
+				),
+		)
+		.leftJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.leftJoin("Tournament", "Tournament.id", "TournamentTeam.tournamentId")
+		.leftJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.leftJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select((eb) => [
+			...commonUserSelect(eb),
+			"CalendarEvent.name as tournamentName",
+			"TournamentTeam.tournamentId",
+			"CalendarEventDate.startsAt as tournamentStartTime",
+			sql<
+				number | null
+			>`(SELECT COUNT(*) FROM "TournamentTeamMember" "ttm" WHERE "ttm"."tournamentTeamId" = "TournamentTeam"."id")`.as(
+				"teamMemberCount",
+			),
+			sql<
+				number | null
+			>`json_extract("Tournament"."settings", '$.minMembersPerTeam')`.as(
+				"tournamentMinTeamSize",
+			),
+		]);
+}
+
+export async function findPendingSentRequests(senderId: number) {
+	return db
+		.selectFrom("FriendRequest")
+		.innerJoin("User", "User.id", "FriendRequest.receiverId")
+		.select((eb) => [
+			"FriendRequest.id",
+			"FriendRequest.createdAt",
+			...commonUserSelect(eb, { prefix: "receiver" }),
+		])
+		.where("FriendRequest.senderId", "=", senderId)
+		.orderBy("FriendRequest.createdAt", "desc")
+		.execute();
+}
+
+export async function insertFriendRequest({
+	senderId,
+	receiverId,
+}: {
+	senderId: number;
+	receiverId: number;
+}) {
+	return db
+		.insertInto("FriendRequest")
+		.values({ senderId, receiverId })
+		.returning("id")
+		.executeTakeFirstOrThrow();
+}
+
+export async function deleteFriendRequest({
+	id,
+	senderId,
+}: {
+	id: number;
+	senderId: number;
+}) {
+	return db
+		.deleteFrom("FriendRequest")
+		.where("FriendRequest.id", "=", id)
+		.where("FriendRequest.senderId", "=", senderId)
+		.returning("FriendRequest.receiverId")
+		.executeTakeFirst();
+}
+
+export function deleteOldPendingRequests() {
+	return db
+		.deleteFrom("FriendRequest")
+		.where(
+			"FriendRequest.createdAt",
+			"<",
+			dateToDatabaseTimestamp(
+				sub(new Date(), { months: FRIEND.PENDING_REQUEST_EXPIRES_IN_MONTHS }),
+			),
+		)
+		.executeTakeFirst();
+}
+
+export async function findFriendRequestBetween({
+	senderId,
+	receiverId,
+}: {
+	senderId: number;
+	receiverId: number;
+}) {
+	return db
+		.selectFrom("FriendRequest")
+		.select(["FriendRequest.id", "FriendRequest.senderId"])
+		.where((eb) =>
+			eb.or([
+				eb.and([
+					eb("FriendRequest.senderId", "=", senderId),
+					eb("FriendRequest.receiverId", "=", receiverId),
+				]),
+				eb.and([
+					eb("FriendRequest.senderId", "=", receiverId),
+					eb("FriendRequest.receiverId", "=", senderId),
+				]),
+			]),
+		)
+		.executeTakeFirst();
+}
+
+export async function deleteOwnFriendshipById(id: number) {
+	const userId = actorId();
+	return db
+		.deleteFrom("Friendship")
+		.where("Friendship.id", "=", id)
+		.where((eb) =>
+			eb.or([
+				eb("Friendship.userOneId", "=", userId),
+				eb("Friendship.userTwoId", "=", userId),
+			]),
+		)
+		.execute();
+}
+
+/** Pins or unpins the friendship for the acting user only, the other side keeps their own choice. */
+export async function updateOwnFriendshipPinned({
+	friendshipId,
+	isPinned,
+}: {
+	friendshipId: number;
+	isPinned: boolean;
+}) {
+	const userId = actorId();
+	const value = toDBBoolean(isPinned);
+
+	return db
+		.updateTable("Friendship")
+		.set((eb) => ({
+			isPinnedByUserOne: eb
+				.case()
+				.when("Friendship.userOneId", "=", userId)
+				.then(value)
+				.else(eb.ref("Friendship.isPinnedByUserOne"))
+				.end(),
+			isPinnedByUserTwo: eb
+				.case()
+				.when("Friendship.userTwoId", "=", userId)
+				.then(value)
+				.else(eb.ref("Friendship.isPinnedByUserTwo"))
+				.end(),
+		}))
+		.where("Friendship.id", "=", friendshipId)
+		.where((eb) =>
+			eb.or([
+				eb("Friendship.userOneId", "=", userId),
+				eb("Friendship.userTwoId", "=", userId),
+			]),
+		)
+		.execute();
+}
+
+export async function findPendingReceivedRequests(receiverId: number) {
+	return db
+		.selectFrom("FriendRequest")
+		.innerJoin("User", "User.id", "FriendRequest.senderId")
+		.select((eb) => [
+			"FriendRequest.id",
+			"FriendRequest.createdAt",
+			...commonUserSelect(eb, { prefix: "sender" }),
+		])
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.orderBy("FriendRequest.createdAt", "desc")
+		.execute();
+}
+
+export async function findPendingReceivedRequestIds(
+	receiverId: number,
+): Promise<number[]> {
+	const rows = await db
+		.selectFrom("FriendRequest")
+		.select("FriendRequest.id")
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.execute();
+
+	return rows.map((row) => row.id);
+}
+
+export async function insertFriendship({
+	userOneId,
+	userTwoId,
+	friendRequestId,
+}: {
+	userOneId: number;
+	userTwoId: number;
+	friendRequestId: number;
+}) {
+	const minId = Math.min(userOneId, userTwoId);
+	const maxId = Math.max(userOneId, userTwoId);
+
+	return db.transaction().execute(async (trx) => {
+		const friendship = await trx
+			.insertInto("Friendship")
+			.values({ userOneId: minId, userTwoId: maxId })
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.deleteFrom("FriendRequest")
+			.where("FriendRequest.id", "=", friendRequestId)
+			.execute();
+
+		return friendship;
+	});
+}
+
+export async function findFriendRequestByIdAndReceiver({
+	id,
+	receiverId,
+}: {
+	id: number;
+	receiverId: number;
+}) {
+	return db
+		.selectFrom("FriendRequest")
+		.innerJoin("User", "User.id", "FriendRequest.senderId")
+		.select(["FriendRequest.senderId", "User.username as senderUsername"])
+		.where("FriendRequest.id", "=", id)
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.executeTakeFirst();
+}
+
+export async function deleteFriendRequestByReceiver({
+	id,
+	receiverId,
+}: {
+	id: number;
+	receiverId: number;
+}) {
+	return db
+		.deleteFrom("FriendRequest")
+		.where("FriendRequest.id", "=", id)
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.execute();
+}
+
+export async function findMutualFriends({
+	loggedInUserId,
+	targetUserId,
+}: {
+	loggedInUserId: number;
+	targetUserId: number;
+}) {
+	return db
+		.selectFrom("Friendship as f1")
+		.innerJoin("Friendship as f2", (join) =>
+			join.on((eb) =>
+				eb.and([
+					eb(
+						eb
+							.case()
+							.when("f1.userOneId", "=", loggedInUserId)
+							.then(eb.ref("f1.userTwoId"))
+							.else(eb.ref("f1.userOneId"))
+							.end(),
+						"=",
+						eb
+							.case()
+							.when("f2.userOneId", "=", targetUserId)
+							.then(eb.ref("f2.userTwoId"))
+							.else(eb.ref("f2.userOneId"))
+							.end(),
+					),
+				]),
+			),
+		)
+		.innerJoin("User", (join) =>
+			join.on((eb) =>
+				eb(
+					"User.id",
+					"=",
+					eb
+						.case()
+						.when("f1.userOneId", "=", loggedInUserId)
+						.then(eb.ref("f1.userTwoId"))
+						.else(eb.ref("f1.userOneId"))
+						.end(),
+				),
+			),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("f1.userOneId", "=", loggedInUserId),
+				eb("f1.userTwoId", "=", loggedInUserId),
+			]),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("f2.userOneId", "=", targetUserId),
+				eb("f2.userTwoId", "=", targetUserId),
+			]),
+		)
+		.select((eb) => commonUserSelect(eb))
+		.execute();
+}
+
+export async function countPendingSentRequests(
+	senderId: number,
+): Promise<number> {
+	const result = await db
+		.selectFrom("FriendRequest")
+		.select((eb) => eb.fn.countAll<number>().as("count"))
+		.where("FriendRequest.senderId", "=", senderId)
+		.executeTakeFirstOrThrow();
+
+	return result.count;
+}
+
+export async function findFriendsByUserId(userId: number) {
+	return db
+		.selectFrom("Friendship")
+		.innerJoin("User", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb.and([
+						eb("Friendship.userOneId", "=", userId),
+						eb("User.id", "=", eb.ref("Friendship.userTwoId")),
+					]),
+					eb.and([
+						eb("Friendship.userTwoId", "=", userId),
+						eb("User.id", "=", eb.ref("Friendship.userOneId")),
+					]),
+				]),
+			),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("Friendship.userOneId", "=", userId),
+				eb("Friendship.userTwoId", "=", userId),
+			]),
+		)
+		.select((eb) => commonUserSelect(eb))
+		.orderBy("User.username", "asc")
+		.execute();
+}
+
+export async function findFriendIds(userId: number): Promise<number[]> {
+	const rows = await db
+		.selectFrom("Friendship")
+		.select((eb) =>
+			eb
+				.case()
+				.when("Friendship.userOneId", "=", userId)
+				.then(eb.ref("Friendship.userTwoId"))
+				.else(eb.ref("Friendship.userOneId"))
+				.end()
+				.as("friendId"),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("Friendship.userOneId", "=", userId),
+				eb("Friendship.userTwoId", "=", userId),
+			]),
+		)
+		.execute();
+
+	return rows.map((row) => row.friendId);
+}
+
+export async function findFriendship({
+	userOneId,
+	userTwoId,
+}: {
+	userOneId: number;
+	userTwoId: number;
+}) {
+	const minId = Math.min(userOneId, userTwoId);
+	const maxId = Math.max(userOneId, userTwoId);
+
+	return db
+		.selectFrom("Friendship")
+		.select("Friendship.id")
+		.where("Friendship.userOneId", "=", minId)
+		.where("Friendship.userTwoId", "=", maxId)
+		.executeTakeFirst();
+}

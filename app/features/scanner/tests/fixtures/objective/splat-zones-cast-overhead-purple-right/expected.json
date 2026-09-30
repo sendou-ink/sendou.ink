@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 243,
+		"score": [49, 98],
+		"penalty": [39, null],
+		"control": [false, true]
+	},
+	"options": {
+		"notes": "Casted stream (SWS26) overhead camera of the same game as the specced-purple-left fixture: default arrangement puts green left (black plate, green digits, +39 penalty pill) and purple right (in control, team-color fill)."
+	}
+}

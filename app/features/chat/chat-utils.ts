@@ -1,12 +1,5 @@
-import type { ChatMessage } from "./chat-types";
-
-export function messageTypeToSound(type: ChatMessage["type"]) {
-	if (type === "LIKE_RECEIVED") return "sq_like";
-	if (type === "MATCH_STARTED") return "sq_match";
-	if (type === "NEW_GROUP") return "sq_new-group";
-
-	return null;
-}
+import { logger } from "~/utils/logger";
+import { soundPath } from "~/utils/urls";
 
 export function soundCodeToLocalStorageKey(soundCode: string) {
 	return `settings__sound-enabled__${soundCode}`;
@@ -14,9 +7,22 @@ export function soundCodeToLocalStorageKey(soundCode: string) {
 
 export function soundEnabled(soundCode: string) {
 	const localStorageKey = soundCodeToLocalStorageKey(soundCode);
-	const soundEnabled = localStorage.getItem(localStorageKey);
+	const stored = localStorage.getItem(localStorageKey);
 
-	return !soundEnabled || soundEnabled === "true";
+	return !stored || stored === "true";
+}
+
+export function playSound(soundCode: string) {
+	if (!soundEnabled(soundCode)) return;
+
+	playSoundIgnoringSetting(soundCode);
+}
+
+/** Plays regardless of the user's setting for the sound, for previewing e.g. the volume. */
+export function playSoundIgnoringSetting(soundCode: string) {
+	const audio = new Audio(soundPath(soundCode));
+	audio.volume = soundVolume() / 100;
+	void audio.play().catch((err) => logger.error(`Couldn't play sound: ${err}`));
 }
 
 export function soundVolume() {

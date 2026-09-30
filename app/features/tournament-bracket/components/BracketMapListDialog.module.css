@@ -1,0 +1,159 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-5);
+}
+
+.pickBanSelect {
+	text-align: start;
+}
+
+.roundsGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: var(--s-8);
+}
+
+.playableAt {
+	max-width: 260px;
+	margin-block-start: var(--s-2);
+}
+
+.roundControls {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	margin-block-start: var(--s-2);
+	margin-block-end: var(--s-3);
+}
+
+.roundButton {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	border: 2px solid var(--color-bg-higher);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+
+	&:hover:not(:disabled):not(.roundButtonActive) {
+		background-color: var(--color-bg-higher);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+
+	& svg {
+		width: 1rem;
+		height: 1rem;
+	}
+}
+
+.roundButtonActive {
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
+	border-color: var(--color-fg-accent);
+}
+
+.roundButtonNumber {
+	cursor: default;
+	background-color: var(--color-bg-higher);
+}
+
+.roundControlsDivider {
+	width: 3px;
+	height: 2rem;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-higher);
+	margin-inline: var(--s-1);
+}
+
+.mapListRow {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	margin-block: var(--s-2);
+	list-style: none;
+	min-width: 275px;
+	text-align: start;
+}
+
+.mapRowSelect {
+	flex: 1;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+
+	& > button {
+		height: auto;
+		padding: 0;
+		border: none;
+		background-color: transparent;
+	}
+}
+
+.mapRowSelectPopover {
+	min-width: 18rem;
+}
+
+.mapSelectItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+/* stands in for the stage image of a map the teams pick later, same size as a 20px tall stage image */
+.stagePlaceholder {
+	display: grid;
+	place-items: center;
+	width: 36px;
+	height: 20px;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.infoPopover {
+	margin-block-start: -6px;
+}
+
+.patternInput {
+	max-width: 10rem;
+}
+
+.patternCode {
+	background-color: var(--color-bg-higher);
+	padding: 2px 6px;
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	display: inline-block;
+	min-width: 4.5rem;
+	text-align: center;
+}
+
+.patternExample {
+	display: flex;
+	gap: var(--s-2);
+	align-items: baseline;
+	font-size: var(--font-xs);
+	margin-block: var(--s-2);
+}
+
+.patternExplanation {
+	flex: 1;
+}

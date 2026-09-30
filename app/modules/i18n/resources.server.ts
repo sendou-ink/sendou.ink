@@ -6,18 +6,27 @@ import calendarDa from "../../../locales/da/calendar.json";
 import commonDa from "../../../locales/da/common.json";
 import contributionsDa from "../../../locales/da/contributions.json";
 import faqDa from "../../../locales/da/faq.json";
+import formsDa from "../../../locales/da/forms.json";
+import friendsDa from "../../../locales/da/friends.json";
 import frontDa from "../../../locales/da/front.json";
+import gameBadgesDa from "../../../locales/da/game-badges.json";
 import gameMiscDa from "../../../locales/da/game-misc.json";
 import gearDa from "../../../locales/da/gear.json";
 import lfgDa from "../../../locales/da/lfg.json";
 import orgDa from "../../../locales/da/org.json";
+import paramsDa from "../../../locales/da/params.json";
 import qDa from "../../../locales/da/q.json";
+import scheduleDa from "../../../locales/da/schedule.json";
 import scrimsDa from "../../../locales/da/scrims.json";
+import settingsDa from "../../../locales/da/settings.json";
 import teamDa from "../../../locales/da/team.json";
+import tierListMakerDa from "../../../locales/da/tier-list-maker.json";
 import tournamentDa from "../../../locales/da/tournament.json";
+import trophiesDa from "../../../locales/da/trophies.json";
 import userDa from "../../../locales/da/user.json";
 import vodsDa from "../../../locales/da/vods.json";
 import weaponsDa from "../../../locales/da/weapons.json";
+import welcomeDa from "../../../locales/da/welcome.json";
 import analyzerDe from "../../../locales/de/analyzer.json";
 import artDe from "../../../locales/de/art.json";
 import badgesDe from "../../../locales/de/badges.json";
@@ -26,18 +35,27 @@ import calendarDe from "../../../locales/de/calendar.json";
 import commonDe from "../../../locales/de/common.json";
 import contributionsDe from "../../../locales/de/contributions.json";
 import faqDe from "../../../locales/de/faq.json";
+import formsDe from "../../../locales/de/forms.json";
+import friendsDe from "../../../locales/de/friends.json";
 import frontDe from "../../../locales/de/front.json";
+import gameBadgesDe from "../../../locales/de/game-badges.json";
 import gameMiscDe from "../../../locales/de/game-misc.json";
 import gearDe from "../../../locales/de/gear.json";
 import lfgDe from "../../../locales/de/lfg.json";
 import orgDe from "../../../locales/de/org.json";
+import paramsDe from "../../../locales/de/params.json";
 import qDe from "../../../locales/de/q.json";
+import scheduleDe from "../../../locales/de/schedule.json";
 import scrimsDe from "../../../locales/de/scrims.json";
+import settingsDe from "../../../locales/de/settings.json";
 import teamDe from "../../../locales/de/team.json";
+import tierListMakerDe from "../../../locales/de/tier-list-maker.json";
 import tournamentDe from "../../../locales/de/tournament.json";
+import trophiesDe from "../../../locales/de/trophies.json";
 import userDe from "../../../locales/de/user.json";
 import vodsDe from "../../../locales/de/vods.json";
 import weaponsDe from "../../../locales/de/weapons.json";
+import welcomeDe from "../../../locales/de/welcome.json";
 import analyzer from "../../../locales/en/analyzer.json";
 import art from "../../../locales/en/art.json";
 import badges from "../../../locales/en/badges.json";
@@ -46,18 +64,27 @@ import calendar from "../../../locales/en/calendar.json";
 import common from "../../../locales/en/common.json";
 import contributions from "../../../locales/en/contributions.json";
 import faq from "../../../locales/en/faq.json";
+import forms from "../../../locales/en/forms.json";
+import friends from "../../../locales/en/friends.json";
 import front from "../../../locales/en/front.json";
+import gameBadges from "../../../locales/en/game-badges.json";
 import gameMisc from "../../../locales/en/game-misc.json";
 import gear from "../../../locales/en/gear.json";
 import lfg from "../../../locales/en/lfg.json";
 import org from "../../../locales/en/org.json";
+import params from "../../../locales/en/params.json";
 import q from "../../../locales/en/q.json";
+import scheduleEn from "../../../locales/en/schedule.json";
 import scrimsEn from "../../../locales/en/scrims.json";
+import settings from "../../../locales/en/settings.json";
 import team from "../../../locales/en/team.json";
+import tierListMaker from "../../../locales/en/tier-list-maker.json";
 import tournament from "../../../locales/en/tournament.json";
+import trophies from "../../../locales/en/trophies.json";
 import user from "../../../locales/en/user.json";
 import vods from "../../../locales/en/vods.json";
 import weapons from "../../../locales/en/weapons.json";
+import welcomeEn from "../../../locales/en/welcome.json";
 import analyzerEsEs from "../../../locales/es-ES/analyzer.json";
 import artEsEs from "../../../locales/es-ES/art.json";
 import badgesEsEs from "../../../locales/es-ES/badges.json";
@@ -66,18 +93,27 @@ import calendarEsEs from "../../../locales/es-ES/calendar.json";
 import commonEsEs from "../../../locales/es-ES/common.json";
 import contributionsEsEs from "../../../locales/es-ES/contributions.json";
 import faqEsEs from "../../../locales/es-ES/faq.json";
+import formsEsEs from "../../../locales/es-ES/forms.json";
+import friendsEsEs from "../../../locales/es-ES/friends.json";
 import frontEsEs from "../../../locales/es-ES/front.json";
+import gameBadgesEsEs from "../../../locales/es-ES/game-badges.json";
 import gameMiscEsEs from "../../../locales/es-ES/game-misc.json";
 import gearEsEs from "../../../locales/es-ES/gear.json";
 import lfgEsEs from "../../../locales/es-ES/lfg.json";
 import orgEsEs from "../../../locales/es-ES/org.json";
+import paramsEsEs from "../../../locales/es-ES/params.json";
 import qEsEs from "../../../locales/es-ES/q.json";
+import scheduleEsEs from "../../../locales/es-ES/schedule.json";
 import scrimsEsEs from "../../../locales/es-ES/scrims.json";
+import settingsEsEs from "../../../locales/es-ES/settings.json";
 import teamEsEs from "../../../locales/es-ES/team.json";
+import tierListMakerEsEs from "../../../locales/es-ES/tier-list-maker.json";
 import tournamentEsEs from "../../../locales/es-ES/tournament.json";
+import trophiesEsEs from "../../../locales/es-ES/trophies.json";
 import userEsEs from "../../../locales/es-ES/user.json";
 import vodsEsEs from "../../../locales/es-ES/vods.json";
 import weaponsEsEs from "../../../locales/es-ES/weapons.json";
+import welcomeEsEs from "../../../locales/es-ES/welcome.json";
 import analyzerEsUs from "../../../locales/es-US/analyzer.json";
 import artEsUs from "../../../locales/es-US/art.json";
 import badgesEsUs from "../../../locales/es-US/badges.json";
@@ -86,18 +122,27 @@ import calendarEsUs from "../../../locales/es-US/calendar.json";
 import commonEsUs from "../../../locales/es-US/common.json";
 import contributionsEsUs from "../../../locales/es-US/contributions.json";
 import faqEsUs from "../../../locales/es-US/faq.json";
+import formsEsUs from "../../../locales/es-US/forms.json";
+import friendsEsUs from "../../../locales/es-US/friends.json";
 import frontEsUs from "../../../locales/es-US/front.json";
+import gameBadgesEsUs from "../../../locales/es-US/game-badges.json";
 import gameMiscEsUs from "../../../locales/es-US/game-misc.json";
 import gearEsUs from "../../../locales/es-US/gear.json";
 import lfgEsUs from "../../../locales/es-US/lfg.json";
 import orgEsUs from "../../../locales/es-US/org.json";
+import paramsEsUs from "../../../locales/es-US/params.json";
 import qEsUs from "../../../locales/es-US/q.json";
+import scheduleEsUs from "../../../locales/es-US/schedule.json";
 import scrimsEsUs from "../../../locales/es-US/scrims.json";
+import settingsEsUs from "../../../locales/es-US/settings.json";
 import teamEsUs from "../../../locales/es-US/team.json";
+import tierListMakerEsUs from "../../../locales/es-US/tier-list-maker.json";
 import tournamentEsUs from "../../../locales/es-US/tournament.json";
+import trophiesEsUs from "../../../locales/es-US/trophies.json";
 import userEsUs from "../../../locales/es-US/user.json";
 import vodsEsUs from "../../../locales/es-US/vods.json";
 import weaponsEsUs from "../../../locales/es-US/weapons.json";
+import welcomeEsUs from "../../../locales/es-US/welcome.json";
 import analyzerFrCa from "../../../locales/fr-CA/analyzer.json";
 import artFrCa from "../../../locales/fr-CA/art.json";
 import badgesFrCa from "../../../locales/fr-CA/badges.json";
@@ -106,18 +151,27 @@ import calendarFrCa from "../../../locales/fr-CA/calendar.json";
 import commonFrCa from "../../../locales/fr-CA/common.json";
 import contributionsFrCa from "../../../locales/fr-CA/contributions.json";
 import faqFrCa from "../../../locales/fr-CA/faq.json";
+import formsFrCa from "../../../locales/fr-CA/forms.json";
+import friendsFrCa from "../../../locales/fr-CA/friends.json";
 import frontFrCa from "../../../locales/fr-CA/front.json";
+import gameBadgesFrCa from "../../../locales/fr-CA/game-badges.json";
 import gameMiscFrCa from "../../../locales/fr-CA/game-misc.json";
 import gearFrCa from "../../../locales/fr-CA/gear.json";
 import lfgFrCa from "../../../locales/fr-CA/lfg.json";
 import orgFrCa from "../../../locales/fr-CA/org.json";
+import paramsFrCa from "../../../locales/fr-CA/params.json";
 import qFrCa from "../../../locales/fr-CA/q.json";
+import scheduleFrCa from "../../../locales/fr-CA/schedule.json";
 import scrimsFrCa from "../../../locales/fr-CA/scrims.json";
+import settingsFrCa from "../../../locales/fr-CA/settings.json";
 import teamFrCa from "../../../locales/fr-CA/team.json";
+import tierListMakerFrCa from "../../../locales/fr-CA/tier-list-maker.json";
 import tournamentFrCa from "../../../locales/fr-CA/tournament.json";
+import trophiesFrCa from "../../../locales/fr-CA/trophies.json";
 import userFrCa from "../../../locales/fr-CA/user.json";
 import vodsFrCa from "../../../locales/fr-CA/vods.json";
 import weaponsFrCa from "../../../locales/fr-CA/weapons.json";
+import welcomeFrCa from "../../../locales/fr-CA/welcome.json";
 import analyzerFrEu from "../../../locales/fr-EU/analyzer.json";
 import artFrEu from "../../../locales/fr-EU/art.json";
 import badgesFrEu from "../../../locales/fr-EU/badges.json";
@@ -126,18 +180,27 @@ import calendarFrEu from "../../../locales/fr-EU/calendar.json";
 import commonFrEu from "../../../locales/fr-EU/common.json";
 import contributionsFrEu from "../../../locales/fr-EU/contributions.json";
 import faqFrEu from "../../../locales/fr-EU/faq.json";
+import formsFrEu from "../../../locales/fr-EU/forms.json";
+import friendsFrEu from "../../../locales/fr-EU/friends.json";
 import frontFrEu from "../../../locales/fr-EU/front.json";
+import gameBadgesFrEu from "../../../locales/fr-EU/game-badges.json";
 import gameMiscFrEu from "../../../locales/fr-EU/game-misc.json";
 import gearFrEu from "../../../locales/fr-EU/gear.json";
 import lfgFrEu from "../../../locales/fr-EU/lfg.json";
 import orgFrEu from "../../../locales/fr-EU/org.json";
+import paramsFrEu from "../../../locales/fr-EU/params.json";
 import qFrEu from "../../../locales/fr-EU/q.json";
+import scheduleFrEu from "../../../locales/fr-EU/schedule.json";
 import scrimsFrEu from "../../../locales/fr-EU/scrims.json";
+import settingsFrEu from "../../../locales/fr-EU/settings.json";
 import teamFrEu from "../../../locales/fr-EU/team.json";
+import tierListMakerFrEu from "../../../locales/fr-EU/tier-list-maker.json";
 import tournamentFrEu from "../../../locales/fr-EU/tournament.json";
+import trophiesFrEu from "../../../locales/fr-EU/trophies.json";
 import userFrEu from "../../../locales/fr-EU/user.json";
 import vodsFrEu from "../../../locales/fr-EU/vods.json";
 import weaponsFrEu from "../../../locales/fr-EU/weapons.json";
+import welcomeFrEu from "../../../locales/fr-EU/welcome.json";
 import analyzerHe from "../../../locales/he/analyzer.json";
 import artHe from "../../../locales/he/art.json";
 import badgesHe from "../../../locales/he/badges.json";
@@ -146,18 +209,27 @@ import calendarHe from "../../../locales/he/calendar.json";
 import commonHe from "../../../locales/he/common.json";
 import contributionsHe from "../../../locales/he/contributions.json";
 import faqHe from "../../../locales/he/faq.json";
+import formsHe from "../../../locales/he/forms.json";
+import friendsHe from "../../../locales/he/friends.json";
 import frontHe from "../../../locales/he/front.json";
+import gameBadgesHe from "../../../locales/he/game-badges.json";
 import gameMiscHe from "../../../locales/he/game-misc.json";
 import gearHe from "../../../locales/he/gear.json";
 import lfgHe from "../../../locales/he/lfg.json";
 import orgHe from "../../../locales/he/org.json";
+import paramsHe from "../../../locales/he/params.json";
 import qHe from "../../../locales/he/q.json";
+import scheduleHe from "../../../locales/he/schedule.json";
 import scrimsHe from "../../../locales/he/scrims.json";
+import settingsHe from "../../../locales/he/settings.json";
 import teamHe from "../../../locales/he/team.json";
+import tierListMakerHe from "../../../locales/he/tier-list-maker.json";
 import tournamentHe from "../../../locales/he/tournament.json";
+import trophiesHe from "../../../locales/he/trophies.json";
 import userHe from "../../../locales/he/user.json";
 import vodsHe from "../../../locales/he/vods.json";
 import weaponsHe from "../../../locales/he/weapons.json";
+import welcomeHe from "../../../locales/he/welcome.json";
 import analyzerIt from "../../../locales/it/analyzer.json";
 import artIt from "../../../locales/it/art.json";
 import badgesIt from "../../../locales/it/badges.json";
@@ -166,18 +238,27 @@ import calendarIt from "../../../locales/it/calendar.json";
 import commonIt from "../../../locales/it/common.json";
 import contributionsIt from "../../../locales/it/contributions.json";
 import faqIt from "../../../locales/it/faq.json";
+import formsIt from "../../../locales/it/forms.json";
+import friendsIt from "../../../locales/it/friends.json";
 import frontIt from "../../../locales/it/front.json";
+import gameBadgesIt from "../../../locales/it/game-badges.json";
 import gameMiscIt from "../../../locales/it/game-misc.json";
 import gearIt from "../../../locales/it/gear.json";
 import lfgIt from "../../../locales/it/lfg.json";
 import orgIt from "../../../locales/it/org.json";
+import paramsIt from "../../../locales/it/params.json";
 import qIt from "../../../locales/it/q.json";
+import scheduleIt from "../../../locales/it/schedule.json";
 import scrimsIt from "../../../locales/it/scrims.json";
+import settingsIt from "../../../locales/it/settings.json";
 import teamIt from "../../../locales/it/team.json";
+import tierListMakerIt from "../../../locales/it/tier-list-maker.json";
 import tournamentIt from "../../../locales/it/tournament.json";
+import trophiesIt from "../../../locales/it/trophies.json";
 import userIt from "../../../locales/it/user.json";
 import vodsIt from "../../../locales/it/vods.json";
 import weaponsIt from "../../../locales/it/weapons.json";
+import welcomeIt from "../../../locales/it/welcome.json";
 import analyzerJa from "../../../locales/ja/analyzer.json";
 import artJa from "../../../locales/ja/art.json";
 import badgesJa from "../../../locales/ja/badges.json";
@@ -186,18 +267,27 @@ import calendarJa from "../../../locales/ja/calendar.json";
 import commonJa from "../../../locales/ja/common.json";
 import contributionsJa from "../../../locales/ja/contributions.json";
 import faqJa from "../../../locales/ja/faq.json";
+import formsJa from "../../../locales/ja/forms.json";
+import friendsJa from "../../../locales/ja/friends.json";
 import frontJa from "../../../locales/ja/front.json";
+import gameBadgesJa from "../../../locales/ja/game-badges.json";
 import gameMiscJa from "../../../locales/ja/game-misc.json";
 import gearJa from "../../../locales/ja/gear.json";
 import lfgJa from "../../../locales/ja/lfg.json";
 import orgJa from "../../../locales/ja/org.json";
+import paramsJa from "../../../locales/ja/params.json";
 import qJa from "../../../locales/ja/q.json";
+import scheduleJa from "../../../locales/ja/schedule.json";
 import scrimsJa from "../../../locales/ja/scrims.json";
+import settingsJa from "../../../locales/ja/settings.json";
 import teamJa from "../../../locales/ja/team.json";
+import tierListMakerJa from "../../../locales/ja/tier-list-maker.json";
 import tournamentJa from "../../../locales/ja/tournament.json";
+import trophiesJa from "../../../locales/ja/trophies.json";
 import userJa from "../../../locales/ja/user.json";
 import vodsJa from "../../../locales/ja/vods.json";
 import weaponsJa from "../../../locales/ja/weapons.json";
+import welcomeJa from "../../../locales/ja/welcome.json";
 import analyzerKo from "../../../locales/ko/analyzer.json";
 import artKo from "../../../locales/ko/art.json";
 import badgesKo from "../../../locales/ko/badges.json";
@@ -206,18 +296,27 @@ import calendarKo from "../../../locales/ko/calendar.json";
 import commonKo from "../../../locales/ko/common.json";
 import contributionsKo from "../../../locales/ko/contributions.json";
 import faqKo from "../../../locales/ko/faq.json";
+import formsKo from "../../../locales/ko/forms.json";
+import friendsKo from "../../../locales/ko/friends.json";
 import frontKo from "../../../locales/ko/front.json";
+import gameBadgesKo from "../../../locales/ko/game-badges.json";
 import gameMiscKo from "../../../locales/ko/game-misc.json";
 import gearKo from "../../../locales/ko/gear.json";
 import lfgKo from "../../../locales/ko/lfg.json";
 import orgKo from "../../../locales/ko/org.json";
+import paramsKo from "../../../locales/ko/params.json";
 import qKo from "../../../locales/ko/q.json";
+import scheduleKo from "../../../locales/ko/schedule.json";
 import scrimsKo from "../../../locales/ko/scrims.json";
+import settingsKo from "../../../locales/ko/settings.json";
 import teamKo from "../../../locales/ko/team.json";
+import tierListMakerKo from "../../../locales/ko/tier-list-maker.json";
 import tournamentKo from "../../../locales/ko/tournament.json";
+import trophiesKo from "../../../locales/ko/trophies.json";
 import userKo from "../../../locales/ko/user.json";
 import vodsKo from "../../../locales/ko/vods.json";
 import weaponsKo from "../../../locales/ko/weapons.json";
+import welcomeKo from "../../../locales/ko/welcome.json";
 import analyzerNl from "../../../locales/nl/analyzer.json";
 import artNl from "../../../locales/nl/art.json";
 import badgesNl from "../../../locales/nl/badges.json";
@@ -226,18 +325,27 @@ import calendarNl from "../../../locales/nl/calendar.json";
 import commonNl from "../../../locales/nl/common.json";
 import contributionsNl from "../../../locales/nl/contributions.json";
 import faqNl from "../../../locales/nl/faq.json";
+import formsNl from "../../../locales/nl/forms.json";
+import friendsNl from "../../../locales/nl/friends.json";
 import frontNl from "../../../locales/nl/front.json";
+import gameBadgesNl from "../../../locales/nl/game-badges.json";
 import gameMiscNl from "../../../locales/nl/game-misc.json";
 import gearNl from "../../../locales/nl/gear.json";
 import lfgNl from "../../../locales/nl/lfg.json";
 import orgNl from "../../../locales/nl/org.json";
+import paramsNl from "../../../locales/nl/params.json";
 import qNl from "../../../locales/nl/q.json";
+import scheduleNl from "../../../locales/nl/schedule.json";
 import scrimsNl from "../../../locales/nl/scrims.json";
+import settingsNl from "../../../locales/nl/settings.json";
 import teamNl from "../../../locales/nl/team.json";
+import tierListMakerNl from "../../../locales/nl/tier-list-maker.json";
 import tournamentNl from "../../../locales/nl/tournament.json";
+import trophiesNl from "../../../locales/nl/trophies.json";
 import userNl from "../../../locales/nl/user.json";
 import vodsNl from "../../../locales/nl/vods.json";
 import weaponsNl from "../../../locales/nl/weapons.json";
+import welcomeNl from "../../../locales/nl/welcome.json";
 import analyzerPl from "../../../locales/pl/analyzer.json";
 import artPl from "../../../locales/pl/art.json";
 import badgesPl from "../../../locales/pl/badges.json";
@@ -246,18 +354,27 @@ import calendarPl from "../../../locales/pl/calendar.json";
 import commonPl from "../../../locales/pl/common.json";
 import contributionsPl from "../../../locales/pl/contributions.json";
 import faqPl from "../../../locales/pl/faq.json";
+import formsPl from "../../../locales/pl/forms.json";
+import friendsPl from "../../../locales/pl/friends.json";
 import frontPl from "../../../locales/pl/front.json";
+import gameBadgesPl from "../../../locales/pl/game-badges.json";
 import gameMiscPl from "../../../locales/pl/game-misc.json";
 import gearPl from "../../../locales/pl/gear.json";
 import lfgPl from "../../../locales/pl/lfg.json";
 import orgPl from "../../../locales/pl/org.json";
+import paramsPl from "../../../locales/pl/params.json";
 import qPl from "../../../locales/pl/q.json";
+import schedulePl from "../../../locales/pl/schedule.json";
 import scrimsPl from "../../../locales/pl/scrims.json";
+import settingsPl from "../../../locales/pl/settings.json";
 import teamPl from "../../../locales/pl/team.json";
+import tierListMakerPl from "../../../locales/pl/tier-list-maker.json";
 import tournamentPl from "../../../locales/pl/tournament.json";
+import trophiesPl from "../../../locales/pl/trophies.json";
 import userPl from "../../../locales/pl/user.json";
 import vodsPl from "../../../locales/pl/vods.json";
 import weaponsPl from "../../../locales/pl/weapons.json";
+import welcomePl from "../../../locales/pl/welcome.json";
 import analyzerPtBr from "../../../locales/pt-BR/analyzer.json";
 import artPtBr from "../../../locales/pt-BR/art.json";
 import badgesPtBr from "../../../locales/pt-BR/badges.json";
@@ -266,18 +383,27 @@ import calendarPtBr from "../../../locales/pt-BR/calendar.json";
 import commonPtBr from "../../../locales/pt-BR/common.json";
 import contributionsPtBr from "../../../locales/pt-BR/contributions.json";
 import faqPtBr from "../../../locales/pt-BR/faq.json";
+import formsPtBr from "../../../locales/pt-BR/forms.json";
+import friendsPtBr from "../../../locales/pt-BR/friends.json";
 import frontPtBr from "../../../locales/pt-BR/front.json";
+import gameBadgesPtBr from "../../../locales/pt-BR/game-badges.json";
 import gameMiscPtBr from "../../../locales/pt-BR/game-misc.json";
 import gearPtBr from "../../../locales/pt-BR/gear.json";
 import lfgPtBr from "../../../locales/pt-BR/lfg.json";
 import orgPtBr from "../../../locales/pt-BR/org.json";
+import paramsPtBr from "../../../locales/pt-BR/params.json";
 import qPtBr from "../../../locales/pt-BR/q.json";
+import schedulePtBr from "../../../locales/pt-BR/schedule.json";
 import scrimsPtBr from "../../../locales/pt-BR/scrims.json";
+import settingsPtBr from "../../../locales/pt-BR/settings.json";
 import teamPtBr from "../../../locales/pt-BR/team.json";
+import tierListMakerPtBr from "../../../locales/pt-BR/tier-list-maker.json";
 import tournamentPtBr from "../../../locales/pt-BR/tournament.json";
+import trophiesPtBr from "../../../locales/pt-BR/trophies.json";
 import userPtBr from "../../../locales/pt-BR/user.json";
 import vodsPtBr from "../../../locales/pt-BR/vods.json";
 import weaponsPtBr from "../../../locales/pt-BR/weapons.json";
+import welcomePtBr from "../../../locales/pt-BR/welcome.json";
 import analyzerRu from "../../../locales/ru/analyzer.json";
 import artRu from "../../../locales/ru/art.json";
 import badgesRu from "../../../locales/ru/badges.json";
@@ -286,18 +412,27 @@ import calendarRu from "../../../locales/ru/calendar.json";
 import commonRu from "../../../locales/ru/common.json";
 import contributionsRu from "../../../locales/ru/contributions.json";
 import faqRu from "../../../locales/ru/faq.json";
+import formsRu from "../../../locales/ru/forms.json";
+import friendsRu from "../../../locales/ru/friends.json";
 import frontRu from "../../../locales/ru/front.json";
+import gameBadgesRu from "../../../locales/ru/game-badges.json";
 import gameMiscRu from "../../../locales/ru/game-misc.json";
 import gearRu from "../../../locales/ru/gear.json";
 import lfgRu from "../../../locales/ru/lfg.json";
 import orgRu from "../../../locales/ru/org.json";
+import paramsRu from "../../../locales/ru/params.json";
 import qRu from "../../../locales/ru/q.json";
+import scheduleRu from "../../../locales/ru/schedule.json";
 import scrimsRu from "../../../locales/ru/scrims.json";
+import settingsRu from "../../../locales/ru/settings.json";
 import teamRu from "../../../locales/ru/team.json";
+import tierListMakerRu from "../../../locales/ru/tier-list-maker.json";
 import tournamentRu from "../../../locales/ru/tournament.json";
+import trophiesRu from "../../../locales/ru/trophies.json";
 import userRu from "../../../locales/ru/user.json";
 import vodsRu from "../../../locales/ru/vods.json";
 import weaponsRu from "../../../locales/ru/weapons.json";
+import welcomeRu from "../../../locales/ru/welcome.json";
 import analyzerZh from "../../../locales/zh/analyzer.json";
 import artZh from "../../../locales/zh/art.json";
 import badgesZh from "../../../locales/zh/badges.json";
@@ -306,26 +441,40 @@ import calendarZh from "../../../locales/zh/calendar.json";
 import commonZh from "../../../locales/zh/common.json";
 import contributionsZh from "../../../locales/zh/contributions.json";
 import faqZh from "../../../locales/zh/faq.json";
+import formsZh from "../../../locales/zh/forms.json";
+import friendsZh from "../../../locales/zh/friends.json";
 import frontZh from "../../../locales/zh/front.json";
+import gameBadgesZh from "../../../locales/zh/game-badges.json";
 import gameMiscZh from "../../../locales/zh/game-misc.json";
 import gearZh from "../../../locales/zh/gear.json";
 import lfgZh from "../../../locales/zh/lfg.json";
 import orgZh from "../../../locales/zh/org.json";
+import paramsZh from "../../../locales/zh/params.json";
 import qZh from "../../../locales/zh/q.json";
+import scheduleZh from "../../../locales/zh/schedule.json";
 import scrimsZh from "../../../locales/zh/scrims.json";
+import settingsZh from "../../../locales/zh/settings.json";
 import teamZh from "../../../locales/zh/team.json";
+import tierListMakerZh from "../../../locales/zh/tier-list-maker.json";
 import tournamentZh from "../../../locales/zh/tournament.json";
+import trophiesZh from "../../../locales/zh/trophies.json";
 import userZh from "../../../locales/zh/user.json";
 import vodsZh from "../../../locales/zh/vods.json";
 import weaponsZh from "../../../locales/zh/weapons.json";
+import welcomeZh from "../../../locales/zh/welcome.json";
 
 export const resources = {
 	"es-US": {
 		gear: gearEsUs,
 		faq: faqEsUs,
+		forms: formsEsUs,
+		friends: friendsEsUs,
 		weapons: weaponsEsUs,
+		schedule: scheduleEsUs,
 		scrims: scrimsEsUs,
+		settings: settingsEsUs,
 		common: commonEsUs,
+		"game-badges": gameBadgesEsUs,
 		"game-misc": gameMiscEsUs,
 		tournament: tournamentEsUs,
 		front: frontEsUs,
@@ -337,39 +486,57 @@ export const resources = {
 		vods: vodsEsUs,
 		calendar: calendarEsUs,
 		org: orgEsUs,
+		params: paramsEsUs,
 		badges: badgesEsUs,
 		contributions: contributionsEsUs,
 		team: teamEsUs,
+		trophies: trophiesEsUs,
+		"tier-list-maker": tierListMakerEsUs,
 		analyzer: analyzerEsUs,
+		welcome: welcomeEsUs,
 	},
 	en: {
-		gear: gear,
-		faq: faq,
-		weapons: weapons,
+		gear,
+		faq,
+		forms,
+		friends,
+		weapons,
+		schedule: scheduleEn,
 		scrims: scrimsEn,
-		common: common,
+		settings,
+		common,
+		"game-badges": gameBadges,
 		"game-misc": gameMisc,
-		tournament: tournament,
-		front: front,
-		user: user,
-		q: q,
-		art: art,
-		builds: builds,
-		lfg: lfg,
-		vods: vods,
-		calendar: calendar,
-		org: org,
-		badges: badges,
-		contributions: contributions,
-		team: team,
-		analyzer: analyzer,
+		tournament,
+		front,
+		user,
+		q,
+		art,
+		builds,
+		lfg,
+		vods,
+		calendar,
+		org,
+		params,
+		badges,
+		contributions,
+		team,
+		trophies,
+		"tier-list-maker": tierListMaker,
+		analyzer,
+		welcome: welcomeEn,
 	},
 	ko: {
 		gear: gearKo,
 		faq: faqKo,
+		forms: formsKo,
+		friends: friendsKo,
 		weapons: weaponsKo,
+		schedule: scheduleKo,
 		scrims: scrimsKo,
+		settings: settingsKo,
 		common: commonKo,
+		"game-badges": gameBadgesKo,
 		"game-misc": gameMiscKo,
 		tournament: tournamentKo,
 		front: frontKo,
@@ -381,17 +548,26 @@ export const resources = {
 		vods: vodsKo,
 		calendar: calendarKo,
 		org: orgKo,
+		params: paramsKo,
 		badges: badgesKo,
 		contributions: contributionsKo,
 		team: teamKo,
+		trophies: trophiesKo,
+		"tier-list-maker": tierListMakerKo,
 		analyzer: analyzerKo,
+		welcome: welcomeKo,
 	},
 	de: {
 		gear: gearDe,
 		faq: faqDe,
+		forms: formsDe,
+		friends: friendsDe,
 		weapons: weaponsDe,
+		schedule: scheduleDe,
 		scrims: scrimsDe,
+		settings: settingsDe,
 		common: commonDe,
+		"game-badges": gameBadgesDe,
 		"game-misc": gameMiscDe,
 		tournament: tournamentDe,
 		front: frontDe,
@@ -403,17 +579,26 @@ export const resources = {
 		vods: vodsDe,
 		calendar: calendarDe,
 		org: orgDe,
+		params: paramsDe,
 		badges: badgesDe,
 		contributions: contributionsDe,
 		team: teamDe,
+		trophies: trophiesDe,
+		"tier-list-maker": tierListMakerDe,
 		analyzer: analyzerDe,
+		welcome: welcomeDe,
 	},
 	nl: {
 		gear: gearNl,
 		faq: faqNl,
+		forms: formsNl,
+		friends: friendsNl,
 		weapons: weaponsNl,
+		schedule: scheduleNl,
 		scrims: scrimsNl,
+		settings: settingsNl,
 		common: commonNl,
+		"game-badges": gameBadgesNl,
 		"game-misc": gameMiscNl,
 		tournament: tournamentNl,
 		front: frontNl,
@@ -425,17 +610,26 @@ export const resources = {
 		vods: vodsNl,
 		calendar: calendarNl,
 		org: orgNl,
+		params: paramsNl,
 		badges: badgesNl,
 		contributions: contributionsNl,
 		team: teamNl,
+		trophies: trophiesNl,
+		"tier-list-maker": tierListMakerNl,
 		analyzer: analyzerNl,
+		welcome: welcomeNl,
 	},
 	"pt-BR": {
 		gear: gearPtBr,
 		faq: faqPtBr,
+		forms: formsPtBr,
+		friends: friendsPtBr,
 		weapons: weaponsPtBr,
+		schedule: schedulePtBr,
 		scrims: scrimsPtBr,
+		settings: settingsPtBr,
 		common: commonPtBr,
+		"game-badges": gameBadgesPtBr,
 		"game-misc": gameMiscPtBr,
 		tournament: tournamentPtBr,
 		front: frontPtBr,
@@ -447,17 +641,26 @@ export const resources = {
 		vods: vodsPtBr,
 		calendar: calendarPtBr,
 		org: orgPtBr,
+		params: paramsPtBr,
 		badges: badgesPtBr,
 		contributions: contributionsPtBr,
 		team: teamPtBr,
+		trophies: trophiesPtBr,
+		"tier-list-maker": tierListMakerPtBr,
 		analyzer: analyzerPtBr,
+		welcome: welcomePtBr,
 	},
 	zh: {
 		gear: gearZh,
 		faq: faqZh,
+		forms: formsZh,
+		friends: friendsZh,
 		weapons: weaponsZh,
+		schedule: scheduleZh,
 		scrims: scrimsZh,
+		settings: settingsZh,
 		common: commonZh,
+		"game-badges": gameBadgesZh,
 		"game-misc": gameMiscZh,
 		tournament: tournamentZh,
 		front: frontZh,
@@ -469,17 +672,26 @@ export const resources = {
 		vods: vodsZh,
 		calendar: calendarZh,
 		org: orgZh,
+		params: paramsZh,
 		badges: badgesZh,
 		contributions: contributionsZh,
 		team: teamZh,
+		trophies: trophiesZh,
+		"tier-list-maker": tierListMakerZh,
 		analyzer: analyzerZh,
+		welcome: welcomeZh,
 	},
 	"fr-CA": {
 		gear: gearFrCa,
 		faq: faqFrCa,
+		forms: formsFrCa,
+		friends: friendsFrCa,
 		weapons: weaponsFrCa,
+		schedule: scheduleFrCa,
 		scrims: scrimsFrCa,
+		settings: settingsFrCa,
 		common: commonFrCa,
+		"game-badges": gameBadgesFrCa,
 		"game-misc": gameMiscFrCa,
 		tournament: tournamentFrCa,
 		front: frontFrCa,
@@ -491,17 +703,26 @@ export const resources = {
 		vods: vodsFrCa,
 		calendar: calendarFrCa,
 		org: orgFrCa,
+		params: paramsFrCa,
 		badges: badgesFrCa,
 		contributions: contributionsFrCa,
 		team: teamFrCa,
+		trophies: trophiesFrCa,
+		"tier-list-maker": tierListMakerFrCa,
 		analyzer: analyzerFrCa,
+		welcome: welcomeFrCa,
 	},
 	ru: {
 		gear: gearRu,
 		faq: faqRu,
+		forms: formsRu,
+		friends: friendsRu,
 		weapons: weaponsRu,
+		schedule: scheduleRu,
 		scrims: scrimsRu,
+		settings: settingsRu,
 		common: commonRu,
+		"game-badges": gameBadgesRu,
 		"game-misc": gameMiscRu,
 		tournament: tournamentRu,
 		front: frontRu,
@@ -513,17 +734,26 @@ export const resources = {
 		vods: vodsRu,
 		calendar: calendarRu,
 		org: orgRu,
+		params: paramsRu,
 		badges: badgesRu,
 		contributions: contributionsRu,
 		team: teamRu,
+		trophies: trophiesRu,
+		"tier-list-maker": tierListMakerRu,
 		analyzer: analyzerRu,
+		welcome: welcomeRu,
 	},
 	it: {
 		gear: gearIt,
 		faq: faqIt,
+		forms: formsIt,
+		friends: friendsIt,
 		weapons: weaponsIt,
+		schedule: scheduleIt,
 		scrims: scrimsIt,
+		settings: settingsIt,
 		common: commonIt,
+		"game-badges": gameBadgesIt,
 		"game-misc": gameMiscIt,
 		tournament: tournamentIt,
 		front: frontIt,
@@ -535,17 +765,26 @@ export const resources = {
 		vods: vodsIt,
 		calendar: calendarIt,
 		org: orgIt,
+		params: paramsIt,
 		badges: badgesIt,
 		contributions: contributionsIt,
 		team: teamIt,
+		trophies: trophiesIt,
+		"tier-list-maker": tierListMakerIt,
 		analyzer: analyzerIt,
+		welcome: welcomeIt,
 	},
 	ja: {
 		gear: gearJa,
 		faq: faqJa,
+		forms: formsJa,
+		friends: friendsJa,
 		weapons: weaponsJa,
+		schedule: scheduleJa,
 		scrims: scrimsJa,
+		settings: settingsJa,
 		common: commonJa,
+		"game-badges": gameBadgesJa,
 		"game-misc": gameMiscJa,
 		tournament: tournamentJa,
 		front: frontJa,
@@ -557,17 +796,26 @@ export const resources = {
 		vods: vodsJa,
 		calendar: calendarJa,
 		org: orgJa,
+		params: paramsJa,
 		badges: badgesJa,
 		contributions: contributionsJa,
 		team: teamJa,
+		trophies: trophiesJa,
+		"tier-list-maker": tierListMakerJa,
 		analyzer: analyzerJa,
+		welcome: welcomeJa,
 	},
 	da: {
 		gear: gearDa,
 		faq: faqDa,
+		forms: formsDa,
+		friends: friendsDa,
 		weapons: weaponsDa,
+		schedule: scheduleDa,
 		scrims: scrimsDa,
+		settings: settingsDa,
 		common: commonDa,
+		"game-badges": gameBadgesDa,
 		"game-misc": gameMiscDa,
 		tournament: tournamentDa,
 		front: frontDa,
@@ -579,17 +827,26 @@ export const resources = {
 		vods: vodsDa,
 		calendar: calendarDa,
 		org: orgDa,
+		params: paramsDa,
 		badges: badgesDa,
 		contributions: contributionsDa,
 		team: teamDa,
+		trophies: trophiesDa,
+		"tier-list-maker": tierListMakerDa,
 		analyzer: analyzerDa,
+		welcome: welcomeDa,
 	},
 	"es-ES": {
 		gear: gearEsEs,
 		faq: faqEsEs,
+		forms: formsEsEs,
+		friends: friendsEsEs,
 		weapons: weaponsEsEs,
+		schedule: scheduleEsEs,
 		scrims: scrimsEsEs,
+		settings: settingsEsEs,
 		common: commonEsEs,
+		"game-badges": gameBadgesEsEs,
 		"game-misc": gameMiscEsEs,
 		tournament: tournamentEsEs,
 		front: frontEsEs,
@@ -601,17 +858,26 @@ export const resources = {
 		vods: vodsEsEs,
 		calendar: calendarEsEs,
 		org: orgEsEs,
+		params: paramsEsEs,
 		badges: badgesEsEs,
 		contributions: contributionsEsEs,
 		team: teamEsEs,
+		trophies: trophiesEsEs,
+		"tier-list-maker": tierListMakerEsEs,
 		analyzer: analyzerEsEs,
+		welcome: welcomeEsEs,
 	},
 	he: {
 		gear: gearHe,
 		faq: faqHe,
+		forms: formsHe,
+		friends: friendsHe,
 		weapons: weaponsHe,
+		schedule: scheduleHe,
 		scrims: scrimsHe,
+		settings: settingsHe,
 		common: commonHe,
+		"game-badges": gameBadgesHe,
 		"game-misc": gameMiscHe,
 		tournament: tournamentHe,
 		front: frontHe,
@@ -623,17 +889,26 @@ export const resources = {
 		vods: vodsHe,
 		calendar: calendarHe,
 		org: orgHe,
+		params: paramsHe,
 		badges: badgesHe,
 		contributions: contributionsHe,
 		team: teamHe,
+		trophies: trophiesHe,
+		"tier-list-maker": tierListMakerHe,
 		analyzer: analyzerHe,
+		welcome: welcomeHe,
 	},
 	"fr-EU": {
 		gear: gearFrEu,
 		faq: faqFrEu,
+		forms: formsFrEu,
+		friends: friendsFrEu,
 		weapons: weaponsFrEu,
+		schedule: scheduleFrEu,
 		scrims: scrimsFrEu,
+		settings: settingsFrEu,
 		common: commonFrEu,
+		"game-badges": gameBadgesFrEu,
 		"game-misc": gameMiscFrEu,
 		tournament: tournamentFrEu,
 		front: frontFrEu,
@@ -645,17 +920,26 @@ export const resources = {
 		vods: vodsFrEu,
 		calendar: calendarFrEu,
 		org: orgFrEu,
+		params: paramsFrEu,
 		badges: badgesFrEu,
 		contributions: contributionsFrEu,
 		team: teamFrEu,
+		trophies: trophiesFrEu,
+		"tier-list-maker": tierListMakerFrEu,
 		analyzer: analyzerFrEu,
+		welcome: welcomeFrEu,
 	},
 	pl: {
 		gear: gearPl,
 		faq: faqPl,
+		forms: formsPl,
+		friends: friendsPl,
 		weapons: weaponsPl,
+		schedule: schedulePl,
 		scrims: scrimsPl,
+		settings: settingsPl,
 		common: commonPl,
+		"game-badges": gameBadgesPl,
 		"game-misc": gameMiscPl,
 		tournament: tournamentPl,
 		front: frontPl,
@@ -667,10 +951,14 @@ export const resources = {
 		vods: vodsPl,
 		calendar: calendarPl,
 		org: orgPl,
+		params: paramsPl,
 		badges: badgesPl,
 		contributions: contributionsPl,
 		team: teamPl,
+		trophies: trophiesPl,
+		"tier-list-maker": tierListMakerPl,
 		analyzer: analyzerPl,
+		welcome: welcomePl,
 	},
 };
 

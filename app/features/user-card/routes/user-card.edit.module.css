@@ -1,0 +1,31 @@
+.swatchesLegend {
+	font-size: var(--font-sm);
+	margin-bottom: var(--s-1-5);
+}
+
+.swatches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+}
+
+.swatch {
+	width: 2rem;
+	height: 2rem;
+	border-radius: var(--radius-selector);
+	border: 2px solid transparent;
+	cursor: pointer;
+
+	&:hover {
+		border-color: var(--color-border-high);
+	}
+}
+
+.swatchSelected {
+	border-color: var(--color-text);
+}
+
+.supporterOnly {
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+}

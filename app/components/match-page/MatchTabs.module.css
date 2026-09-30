@@ -1,0 +1,7 @@
+.root {
+	& [class*="tabPanel"] {
+		background-color: var(--color-bg-high);
+		border-radius: 0 0 var(--radius-box) var(--radius-box);
+		padding: var(--s-6) var(--s-4);
+	}
+}

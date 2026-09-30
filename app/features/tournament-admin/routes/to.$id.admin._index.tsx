@@ -1,0 +1,596 @@
+import clsx from "clsx";
+import {
+	Check,
+	Download,
+	LogIn,
+	LogOut,
+	MoreHorizontal,
+	Pencil,
+	Plus,
+	RotateCcw,
+	Search,
+	Trash2,
+	X,
+} from "lucide-react";
+import * as React from "react";
+import { Link, useLoaderData } from "react-router";
+import { Avatar } from "~/components/Avatar";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { SendouPopover } from "~/components/elements/Popover";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { Input } from "~/components/Input";
+import {
+	SortableTableHeader,
+	type SortState,
+} from "~/components/SortableTableHeader";
+import { Table } from "~/components/Table";
+import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
+import { useTournament } from "~/features/tournament/tournament-context";
+import type {
+	BracketMeta,
+	Tournament,
+} from "~/features/tournament-bracket/core/Tournament";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
+import { SendouForm } from "~/form/SendouForm";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
+import {
+	tournamentAdminRegistrationEditPage,
+	tournamentAdminRegistrationPage,
+	tournamentSubsPage,
+	tournamentTeamPage,
+	userPage,
+} from "~/utils/urls";
+import { queryToUserIdentifier } from "~/utils/users";
+import { ExportDialog } from "../components/ExportDialog";
+import type { TournamentAdminTeamsLoaderData } from "../loaders/to.$id.admin.index.server";
+import { adminTeamsActionSchema } from "../tournament-admin-schemas";
+
+import styles from "./to.$id.admin._index.module.css";
+
+export { action } from "../actions/to.$id.admin.index.server";
+export { loader } from "../loaders/to.$id.admin.index.server";
+
+type SortKey = "name" | "checkIn";
+
+export default function TournamentAdminTeamsPage() {
+	const tournament = useTournament();
+	const { teams } = useLoaderData<TournamentAdminTeamsLoaderData>();
+
+	const [search, setSearch] = React.useState("");
+	const [sort, setSort] = React.useState<SortState<SortKey>>(null);
+	const [exportOpen, setExportOpen] = React.useState(false);
+
+	const maxRosterSize = Math.max(
+		1,
+		...teams.map((team) => team.members.length),
+	);
+
+	const filteredTeams = teams.filter((team) => teamMatchesQuery(team, search));
+	const sortedTeams = sortTeams(filteredTeams, sort);
+
+	return (
+		<div className="stack md">
+			<div className={styles.toolbar}>
+				<div className={styles.toolbarActions}>
+					<SendouButton
+						size="small"
+						variant="outlined"
+						icon={<Download />}
+						onClick={() => setExportOpen(true)}
+					>
+						Export
+					</SendouButton>
+					{!tournament.hasStarted ? (
+						<LinkButton
+							size="small"
+							icon={<Plus />}
+							to={tournamentAdminRegistrationPage(tournament.ctx.id)}
+						>
+							Add new team
+						</LinkButton>
+					) : null}
+					{tournament.canAddNewSubPostAsOrganizer ? <AddSubButton /> : null}
+				</div>
+				<Input
+					className={styles.searchInput}
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					aria-label="Search teams"
+					placeholder="Search teams"
+					icon={<Search aria-hidden />}
+				/>
+			</div>
+
+			<Table>
+				<thead>
+					<tr>
+						<SortableTableHeader
+							label="Team"
+							sortKey="name"
+							sort={sort}
+							onChange={setSort}
+						/>
+						{!tournament.ctx.isFinalized ? <th>Actions</th> : null}
+						<SortableTableHeader
+							label="Check-in"
+							sortKey="checkIn"
+							sort={sort}
+							onChange={setSort}
+						/>
+						{Array.from({ length: maxRosterSize }).map((_, i) => (
+							<th key={`player-${i}`}>Player {i + 1}</th>
+						))}
+					</tr>
+				</thead>
+				<tbody>
+					{sortedTeams.map((team) => (
+						<TeamRow
+							key={team.id}
+							team={team}
+							maxRosterSize={maxRosterSize}
+							editPage={tournamentAdminRegistrationEditPage(
+								tournament.ctx.id,
+								team.id,
+							)}
+						/>
+					))}
+					{sortedTeams.length === 0 ? (
+						<tr>
+							<td
+								colSpan={maxRosterSize + (tournament.ctx.isFinalized ? 2 : 3)}
+								className={styles.noResults}
+							>
+								{teams.length === 0
+									? "No registrations yet"
+									: "No registrations match your search"}
+							</td>
+						</tr>
+					) : null}
+				</tbody>
+			</Table>
+
+			{exportOpen ? (
+				<ExportDialog teams={teams} close={() => setExportOpen(false)} />
+			) : null}
+		</div>
+	);
+}
+
+function AddSubButton() {
+	const tournament = useTournament();
+	const [dialogOpen, setDialogOpen] = React.useState(false);
+
+	return (
+		<>
+			<SendouButton
+				size="small"
+				variant="outlined"
+				icon={<Plus />}
+				onClick={() => setDialogOpen(true)}
+			>
+				Add sub
+			</SendouButton>
+			{dialogOpen ? (
+				<SendouDialog
+					heading="Add sub post on behalf of a user"
+					onClose={() => setDialogOpen(false)}
+				>
+					<SendouForm
+						schema={addSubForUserFormSchema}
+						action={tournamentSubsPage(tournament.ctx.id)}
+						onSuccess={() => setDialogOpen(false)}
+					>
+						{({ FormField }) => (
+							<>
+								<FormField name="userId" />
+								<FormField name="message" />
+							</>
+						)}
+					</SendouForm>
+				</SendouDialog>
+			) : null}
+		</>
+	);
+}
+
+function TeamRow({
+	team,
+	maxRosterSize,
+	editPage,
+}: {
+	team: TournamentTeamFull;
+	maxRosterSize: number;
+	editPage: string;
+}) {
+	const tournament = useTournament();
+
+	const members = sortedMembers(team);
+	const logoSrc = team.logoUrl;
+
+	return (
+		<tr data-testid="team-row" data-team-id={team.id}>
+			<td>
+				<div className="stack horizontal sm items-center">
+					<Avatar size="xxs" url={logoSrc} identiconInput={team.name} />
+					<Link
+						to={tournamentTeamPage({
+							tournamentId: tournament.ctx.id,
+							tournamentTeamId: team.id,
+						})}
+						className={styles.teamName}
+						data-testid="team-name"
+					>
+						{team.name}
+					</Link>
+					{team.droppedOut ? <DroppedOutPopover /> : null}
+				</div>
+			</td>
+			{!tournament.ctx.isFinalized ? (
+				<td>
+					<TeamRowMenu team={team} editPage={editPage} />
+				</td>
+			) : null}
+			<td>
+				<CheckInCell team={team} />
+			</td>
+			{Array.from({ length: maxRosterSize }).map((_, i) => {
+				const member = members[i];
+				return (
+					<td key={`player-${i}`}>
+						{member ? (
+							<Link
+								to={userPage(member)}
+								className={clsx("stack horizontal xxs items-center", {
+									"font-bold": member.role === "OWNER",
+								})}
+							>
+								{member.role === "OWNER" ? "(C) " : null}
+								{member.username}
+							</Link>
+						) : null}
+					</td>
+				);
+			})}
+		</tr>
+	);
+}
+
+function CheckInCell({ team }: { team: TournamentTeamFull }) {
+	const tournament = useTournament();
+
+	const scopes = checkInScopes(tournament, team);
+
+	return (
+		<SendouPopover
+			placement="bottom start"
+			trigger={
+				<SendouButton
+					variant="minimal"
+					className={styles.checkInTrigger}
+					aria-label="Check-in status"
+				>
+					{scopes.map((scope) =>
+						scope.checkedIn ? (
+							<Check
+								key={scope.label}
+								className={styles.checkInMark}
+								aria-label={`${scope.label}: checked in`}
+							/>
+						) : (
+							<X
+								key={scope.label}
+								className={styles.checkInCross}
+								aria-label={`${scope.label}: not checked in`}
+							/>
+						),
+					)}
+				</SendouButton>
+			}
+		>
+			<ul className={styles.checkInScopes}>
+				{scopes.map((scope) => (
+					<li key={scope.label} className={styles.checkInScope}>
+						{scope.checkedIn ? (
+							<Check className={styles.checkInMark} aria-hidden />
+						) : (
+							<X className={styles.checkInCross} aria-hidden />
+						)}
+						<span className={styles.checkInScopeLabel}>{scope.label}</span>
+						<span className={styles.checkInScopeStatus}>
+							{scope.checkedIn ? "Checked in" : "Not checked in"}
+						</span>
+					</li>
+				))}
+			</ul>
+		</SendouPopover>
+	);
+}
+
+function TeamRowMenu({
+	team,
+	editPage,
+}: {
+	team: TournamentTeamFull;
+	editPage: string;
+}) {
+	const tournament = useTournament();
+	const [confirming, setConfirming] = React.useState<
+		"DELETE_TEAM" | "DROP_TEAM_OUT" | null
+	>(null);
+
+	const { submit } = useActionSubmit(adminTeamsActionSchema, {
+		encType: "application/json",
+	});
+
+	const checkInOpen = tournament.regularCheckInStartInThePast;
+	const checkedIn = isTournamentCheckedIn(team);
+	const bracketsRequiringCheckIn = checkInBracketsForTeam(tournament, team);
+	const eventLabelSuffix = tournament.bracketsMeta.some(isCheckInBracket)
+		? " (event)"
+		: "";
+
+	return (
+		<div className="stack horizontal xs items-center">
+			<LinkButton
+				size="miniscule"
+				icon={<Pencil />}
+				to={editPage}
+				aria-label="Edit registration"
+			/>
+			<SendouMenu
+				trigger={
+					<SendouButton
+						size="miniscule"
+						variant="outlined"
+						icon={<MoreHorizontal />}
+						aria-label="Actions"
+					/>
+				}
+			>
+				{checkInOpen && !tournament.hasStarted ? (
+					checkedIn ? (
+						<SendouMenuItem
+							icon={<LogOut />}
+							onAction={() =>
+								submit("CHECK_OUT", { teamId: team.id, bracketIdx: 0 })
+							}
+						>
+							{`Check out${eventLabelSuffix}`}
+						</SendouMenuItem>
+					) : (
+						<SendouMenuItem
+							icon={<LogIn />}
+							onAction={() =>
+								submit("CHECK_IN", { teamId: team.id, bracketIdx: 0 })
+							}
+						>
+							{`Check in${eventLabelSuffix}`}
+						</SendouMenuItem>
+					)
+				) : null}
+				{team.checkIns.length > 0
+					? bracketsRequiringCheckIn.map((bracket) => {
+							if (!bracket.preview) return null;
+
+							const bracketCheckedIn = isBracketCheckedIn(team, bracket.idx);
+
+							return bracketCheckedIn ? (
+								<SendouMenuItem
+									key={bracket.idx}
+									icon={<LogOut />}
+									onAction={() =>
+										submit("CHECK_OUT", {
+											teamId: team.id,
+											bracketIdx: bracket.idx,
+										})
+									}
+								>
+									{`Check out (${bracket.name})`}
+								</SendouMenuItem>
+							) : (
+								<SendouMenuItem
+									key={bracket.idx}
+									icon={<LogIn />}
+									onAction={() =>
+										submit("CHECK_IN", {
+											teamId: team.id,
+											bracketIdx: bracket.idx,
+										})
+									}
+								>
+									{`Check in (${bracket.name})`}
+								</SendouMenuItem>
+							);
+						})
+					: null}
+				{tournament.hasStarted ? (
+					team.droppedOut ? (
+						<SendouMenuItem
+							icon={<RotateCcw />}
+							onAction={() => submit("UNDO_DROP_TEAM_OUT", { teamId: team.id })}
+						>
+							Undo drop out
+						</SendouMenuItem>
+					) : (
+						<SendouMenuItem
+							icon={<LogOut />}
+							isDestructive
+							onAction={() => setConfirming("DROP_TEAM_OUT")}
+						>
+							Drop out
+						</SendouMenuItem>
+					)
+				) : (
+					<SendouMenuItem
+						icon={<Trash2 />}
+						isDestructive
+						onAction={() => setConfirming("DELETE_TEAM")}
+					>
+						Unregister
+					</SendouMenuItem>
+				)}
+			</SendouMenu>
+			<FormWithConfirm
+				isOpen={confirming === "DELETE_TEAM"}
+				onOpenChange={(isOpen) => !isOpen && setConfirming(null)}
+				fields={[
+					["_action", "DELETE_TEAM"],
+					["teamId", team.id],
+				]}
+				dialogHeading={`Unregister "${team.name}" and delete its registration info?`}
+				submitButtonText="Unregister"
+			/>
+			<FormWithConfirm
+				isOpen={confirming === "DROP_TEAM_OUT"}
+				onOpenChange={(isOpen) => !isOpen && setConfirming(null)}
+				fields={[
+					["_action", "DROP_TEAM_OUT"],
+					["teamId", team.id],
+				]}
+				dialogHeading={`Drop "${team.name}" out of the tournament?`}
+				submitButtonText="Drop out"
+			/>
+		</div>
+	);
+}
+
+function sortedMembers(team: TournamentTeamFull) {
+	return team.members.toSorted((a, b) => {
+		if (a.role === "OWNER" && b.role !== "OWNER") return -1;
+		if (b.role === "OWNER" && a.role !== "OWNER") return 1;
+		return a.createdAt - b.createdAt;
+	});
+}
+
+function isTournamentCheckedIn(team: TournamentTeamFull) {
+	const tournamentLevel = team.checkIns.filter(
+		(checkIn) => checkIn.bracketIdx === null,
+	);
+	return (
+		tournamentLevel.some((checkIn) => !checkIn.isCheckOut) &&
+		!tournamentLevel.some((checkIn) => checkIn.isCheckOut)
+	);
+}
+
+function isBracketCheckedIn(team: TournamentTeamFull, bracketIdx: number) {
+	return team.checkIns.some(
+		(checkIn) => checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
+	);
+}
+
+/** Does this bracket have its own opt-in check-in (besides the event check-in)? */
+function isCheckInBracket(bracket: BracketMeta) {
+	return bracket.requiresCheckIn;
+}
+
+/** Is the team going to play (or pending check-in) in this bracket? */
+function isTeamInBracket(bracket: BracketMeta, teamId: number) {
+	return Boolean(
+		bracket.seeding?.includes(teamId) ||
+			bracket.teamsPendingCheckIn?.includes(teamId),
+	);
+}
+
+/** Check-in brackets the given team is a participant of. */
+function checkInBracketsForTeam(
+	tournament: Tournament,
+	team: TournamentTeamFull,
+) {
+	return tournament.bracketsMeta.filter(
+		(bracket) => isCheckInBracket(bracket) && isTeamInBracket(bracket, team.id),
+	);
+}
+
+/** The event and the team's check-in brackets paired with its status in each. */
+function checkInScopes(tournament: Tournament, team: TournamentTeamFull) {
+	return [
+		{ label: "Event", checkedIn: isTournamentCheckedIn(team) },
+		...checkInBracketsForTeam(tournament, team).map((bracket) => ({
+			label: bracket.name,
+			checkedIn: isBracketCheckedIn(team, bracket.idx),
+		})),
+	];
+}
+
+function activeCheckInLabels(
+	team: TournamentTeamFull,
+	labelFor: (bracketIdx: number | null) => string,
+) {
+	const byBracket = new Map<number | null, { in: boolean; out: boolean }>();
+	for (const checkIn of team.checkIns) {
+		const entry = byBracket.get(checkIn.bracketIdx) ?? {
+			in: false,
+			out: false,
+		};
+		if (checkIn.isCheckOut) {
+			entry.out = true;
+		} else {
+			entry.in = true;
+		}
+		byBracket.set(checkIn.bracketIdx, entry);
+	}
+
+	const labels: string[] = [];
+	for (const [bracketIdx, entry] of byBracket) {
+		if (entry.in && !entry.out) {
+			labels.push(labelFor(bracketIdx));
+		}
+	}
+	return labels;
+}
+
+function activeCheckInCount(team: TournamentTeamFull) {
+	return activeCheckInLabels(team, () => "").length;
+}
+
+function teamMatchesQuery(team: TournamentTeamFull, search: string) {
+	const query = search.trim();
+	if (!query) return true;
+
+	const lowerQuery = query.toLowerCase();
+	if (team.name.toLowerCase().includes(lowerQuery)) return true;
+	if (
+		team.members.some((member) =>
+			member.username.toLowerCase().includes(lowerQuery),
+		)
+	) {
+		return true;
+	}
+
+	const identifier = queryToUserIdentifier(query);
+	if (identifier) {
+		return team.members.some((member) => {
+			if ("id" in identifier) return member.userId === identifier.id;
+			if ("discordId" in identifier) {
+				return member.discordId === identifier.discordId;
+			}
+			return (
+				member.customUrl?.toLowerCase() === identifier.customUrl.toLowerCase()
+			);
+		});
+	}
+
+	return false;
+}
+
+function sortTeams(teams: TournamentTeamFull[], sort: SortState<SortKey>) {
+	const bySeed = teams.toSorted((a, b) => {
+		const aSeed = a.seed ?? Number.POSITIVE_INFINITY;
+		const bSeed = b.seed ?? Number.POSITIVE_INFINITY;
+		if (aSeed !== bSeed) return aSeed - bSeed;
+		return a.createdAt - b.createdAt;
+	});
+
+	if (!sort) return bySeed;
+
+	const sorted = bySeed.toSorted((a, b) =>
+		sort.key === "name"
+			? a.name.localeCompare(b.name)
+			: activeCheckInCount(a) - activeCheckInCount(b),
+	);
+
+	return sort.dir === "asc" ? sorted : sorted.reverse();
+}

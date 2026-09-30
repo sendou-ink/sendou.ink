@@ -1,0 +1,652 @@
+import clsx from "clsx";
+import { formatDistance } from "date-fns";
+import {
+	Check,
+	Download,
+	EyeOff,
+	MessageCircleMore,
+	Trash,
+	Upload,
+	Users,
+} from "lucide-react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
+import { Avatar } from "~/components/Avatar";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouPopover } from "~/components/elements/Popover";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { ModeImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
+import { NoteAvatar } from "~/components/NoteAvatar";
+import { TimePopover } from "~/components/TimePopover";
+import { useUser } from "~/features/auth/core/user";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import type { ModeShort } from "~/modules/in-game-lists/types";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { scrimPage, tournamentRegisterPage } from "~/utils/urls";
+import { scrimsActionSchema } from "../scrims-schemas";
+import { scrimsSearchParams } from "../scrims-search-params";
+import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
+import { formatFlexTimeDisplay } from "../scrims-utils";
+import { ScrimFitStripe } from "./ScrimAvailability";
+import styles from "./ScrimCard.module.css";
+import { ScrimRequestModal } from "./ScrimRequestModal";
+
+interface ScrimPostCardProps {
+	post: ScrimPost;
+	action?: "DELETE" | "REQUEST" | "VIEW_REQUEST" | "CONTACT";
+	isFilteredOut?: boolean;
+	autoScrollIntoView?: boolean;
+}
+
+export function ScrimPostCard({
+	post,
+	action,
+	isFilteredOut,
+	autoScrollIntoView,
+}: ScrimPostCardProps) {
+	const { t } = useTranslation(["scrims"]);
+	const cardRef = useRef<HTMLDivElement>(null);
+	const [, setPendingRequestPostId] = useSearchParam(
+		scrimsSearchParams,
+		"pendingRequestPostId",
+	);
+
+	const owner = post.users.find((user) => user.isOwner) ?? post.users[0];
+	const isPickup = !post.team?.name;
+	const teamName = post.team?.name ?? owner.username;
+
+	const flexTimeDisplay = post.rangeEndsAt
+		? formatFlexTimeDisplay(post.startsAt, post.rangeEndsAt)
+		: null;
+
+	useEffect(() => {
+		if (!autoScrollIntoView) return;
+
+		// deferred so it runs after <ScrollRestoration />'s scroll to top
+		const timeout = setTimeout(() => {
+			cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+			setPendingRequestPostId(null);
+		}, 0);
+
+		return () => clearTimeout(timeout);
+	}, [autoScrollIntoView, setPendingRequestPostId]);
+
+	return (
+		<div className={styles.card} ref={cardRef}>
+			<div className={styles.header}>
+				<div className={styles.avatarContainer}>
+					<ScrimTeamAvatar
+						teamAvatarUrl={post.team?.avatarUrl}
+						teamName={teamName}
+						owner={owner}
+					/>
+				</div>
+				<h3 className={styles.teamName}>
+					{isPickup ? (
+						<>
+							<span className={styles.pickupLabel}>{t("scrims:pickupBy")}</span>
+							<span>{owner.username}</span>
+						</>
+					) : (
+						teamName
+					)}
+				</h3>
+				<div className={styles.rightIconsContainer}>
+					{post.isPrivate ? <ScrimVisibilityPopover /> : null}
+					<ScrimTeamMembersPopover users={post.users} />
+				</div>
+			</div>
+
+			<div className={styles.infoRow}>
+				<ScrimInfoItem label="Start">
+					<ScrimStartTimeDisplay
+						isScheduledForFuture={post.isScheduledForFuture}
+						startTimestamp={post.startsAt}
+						createdAtTimestamp={post.createdAt}
+						canceled={post.canceled}
+					/>
+				</ScrimInfoItem>
+
+				{flexTimeDisplay ? (
+					<ScrimInfoItem label="Flex">{flexTimeDisplay}</ScrimInfoItem>
+				) : null}
+				{post.divs ? (
+					<ScrimInfoItem label="Div">
+						{post.divs.max === post.divs.min
+							? post.divs.max
+							: `${post.divs.min}-${post.divs.max}`}
+					</ScrimInfoItem>
+				) : null}
+
+				{post.maps || post.mapsTournament ? (
+					<ScrimInfoItem label="Modes">
+						{post.mapsTournament ? (
+							<ScrimTournamentPopover tournament={post.mapsTournament} />
+						) : (
+							getModesList(post.maps!).map((mode) => (
+								<ModeImage key={mode} mode={mode} size={18} />
+							))
+						)}
+					</ScrimInfoItem>
+				) : null}
+			</div>
+
+			{post.text ? <ScrimExpandableText text={post.text} /> : null}
+
+			{action === "REQUEST" || action === "VIEW_REQUEST" ? (
+				<ScrimFitStripe post={post} />
+			) : null}
+
+			<div
+				className={clsx(styles.footer, isFilteredOut && styles.filteredFooter)}
+			>
+				<ScrimActionButtons action={action} post={post} key={action} />
+			</div>
+		</div>
+	);
+}
+
+function getModesList(maps: string): ModeShort[] {
+	if (maps === "SZ") {
+		return ["SZ"];
+	}
+	if (maps === "RANKED") {
+		return ["SZ", "TC", "RM", "CB"];
+	}
+	return ["TW", "SZ", "TC", "RM", "CB"];
+}
+
+function ScrimTeamAvatar({
+	teamAvatarUrl,
+	teamName,
+	owner,
+}: {
+	teamAvatarUrl: string | null | undefined;
+	teamName: string;
+	owner: ScrimPost["users"][number];
+}) {
+	const cardData = useUserCardData(owner.id);
+
+	if (teamAvatarUrl) {
+		return <Avatar size="xs" url={teamAvatarUrl} alt={teamName} />;
+	}
+
+	return (
+		<UserCard userId={owner.id} withMutualFriends>
+			<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
+				<Avatar size="xs" user={owner} alt={owner.username} />
+			</NoteAvatar>
+		</UserCard>
+	);
+}
+
+function ScrimVisibilityPopover() {
+	const { t } = useTranslation(["scrims"]);
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					icon={<EyeOff className={styles.usersIcon} />}
+					data-testid="limited-visibility-popover"
+				/>
+			}
+		>
+			{t("scrims:limitedVisibility")}
+		</SendouPopover>
+	);
+}
+
+function ScrimTeamMembersPopover({ users }: { users: ScrimPost["users"] }) {
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					icon={<Users className={styles.usersIcon} />}
+				/>
+			}
+		>
+			<div className="stack md">
+				{users.map((user) => (
+					<ScrimTeamMemberRow key={user.id} user={user} />
+				))}
+			</div>
+		</SendouPopover>
+	);
+}
+
+function ScrimTeamMemberRow({ user }: { user: ScrimPost["users"][number] }) {
+	const cardData = useUserCardData(user.id);
+
+	return (
+		<UserCard userId={user.id} withMutualFriends>
+			<span className="stack horizontal sm items-center">
+				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="xs">
+					<Avatar size="xxs" user={user} />
+				</NoteAvatar>
+				{user.username}
+			</span>
+		</UserCard>
+	);
+}
+
+function ScrimRequestMembersList({ users }: { users: ScrimPost["users"] }) {
+	const { t } = useTranslation(["scrims"]);
+
+	const sortedUsers = [...users].sort(
+		(a, b) => Number(b.isOwner) - Number(a.isOwner),
+	);
+
+	return (
+		<div className="stack md">
+			{sortedUsers.map((user) => (
+				<ScrimRequestMemberRow key={user.id} user={user}>
+					{user.isOwner ? (
+						<div className="text-lighter text-xs">
+							{t("scrims:cancelRequestModal.requester")}
+						</div>
+					) : null}
+				</ScrimRequestMemberRow>
+			))}
+		</div>
+	);
+}
+
+function ScrimRequestMemberRow({
+	user,
+	children,
+}: {
+	user: ScrimPost["users"][number];
+	children?: React.ReactNode;
+}) {
+	const cardData = useUserCardData(user.id);
+
+	return (
+		<UserCard userId={user.id} withMutualFriends>
+			<span className="stack horizontal sm items-center">
+				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
+					<Avatar size="xs" user={user} />
+				</NoteAvatar>
+				<span>
+					{user.username}
+					{children}
+				</span>
+			</span>
+		</UserCard>
+	);
+}
+
+function ScrimTournamentPopover({
+	tournament,
+}: {
+	tournament: NonNullable<ScrimPost["mapsTournament"]>;
+}) {
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					className={styles.tournamentPopoverTrigger}
+					data-testid="tournament-popover-trigger"
+				>
+					<Avatar
+						size="xxxsm"
+						url={tournament.avatarUrl}
+						alt={tournament.name}
+					/>
+				</SendouButton>
+			}
+		>
+			<div className="stack sm text-center">
+				<Link
+					to={`${tournamentRegisterPage(tournament.id)}?tab=description`}
+					className="text-theme text-xxs"
+				>
+					{tournament.name}
+				</Link>
+			</div>
+		</SendouPopover>
+	);
+}
+
+function ScrimStartTimeDisplay({
+	isScheduledForFuture,
+	startTimestamp,
+	createdAtTimestamp,
+	canceled,
+}: {
+	isScheduledForFuture: boolean;
+	startTimestamp: number;
+	createdAtTimestamp: number;
+	canceled: ScrimPost["canceled"];
+}) {
+	const { t } = useTranslation(["scrims"]);
+
+	if (!isScheduledForFuture) {
+		return canceled ? (
+			<div className={styles.canceledContainer}>
+				<span className={styles.strikethrough}>{t("scrims:now")}</span>
+				<span className={styles.canceledLabel}>Canceled</span>
+			</div>
+		) : (
+			t("scrims:now")
+		);
+	}
+
+	const startTime = databaseTimestampToDate(startTimestamp);
+	const timePopoverFooterText = t("scrims:postModal.footer", {
+		time: formatDistance(
+			databaseTimestampToDate(createdAtTimestamp),
+			new Date(),
+			{
+				addSuffix: true,
+			},
+		),
+	});
+
+	const timeDisplay = (
+		<TimePopover
+			date={startTime}
+			options={{
+				hour: "numeric",
+				minute: "numeric",
+			}}
+			underline={false}
+			footerText={timePopoverFooterText}
+		/>
+	);
+
+	return canceled ? (
+		<div className={styles.canceledContainer}>
+			<span className={styles.strikethrough}>{timeDisplay}</span>
+			<span className={styles.canceledLabel}>Canceled</span>
+		</div>
+	) : (
+		timeDisplay
+	);
+}
+
+function ScrimInfoItem({
+	label,
+	children,
+}: {
+	label: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<div className={styles.infoItem}>
+			<div className={styles.infoLabel}>{label}</div>
+			<div className={styles.infoValue}>{children}</div>
+		</div>
+	);
+}
+
+function ScrimExpandableText({ text }: { text: string }) {
+	const { t } = useTranslation(["common"]);
+	const [isExpanded, setIsExpanded] = useState(false);
+	const [isOverflowing, setIsOverflowing] = useState(false);
+
+	const measureRef = (node: HTMLDivElement | null) => {
+		if (!node) return;
+		if (node.scrollHeight - node.clientHeight > 1) {
+			setIsOverflowing(true);
+		}
+	};
+
+	return (
+		<div className={styles.textContent}>
+			<div ref={measureRef} className={clsx(!isExpanded && styles.clampedText)}>
+				{text}
+			</div>
+			{isOverflowing ? (
+				<button
+					type="button"
+					onClick={() => setIsExpanded(!isExpanded)}
+					className={styles.expandButton}
+				>
+					{isExpanded
+						? t("common:actions.showLess")
+						: t("common:actions.showMore")}
+				</button>
+			) : null}
+		</div>
+	);
+}
+
+function ScrimActionButtons({
+	action,
+	post,
+}: {
+	action: ScrimPostCardProps["action"];
+	post: ScrimPost;
+}) {
+	const { t } = useTranslation(["scrims", "common"]);
+	const user = useUser();
+	const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+	const [isViewRequestModalOpen, setIsViewRequestModalOpen] = useState(false);
+
+	if (!action) {
+		return null;
+	}
+
+	if (action === "REQUEST") {
+		return (
+			<>
+				<SendouButton
+					size="small"
+					onClick={() => setIsRequestModalOpen(true)}
+					icon={<Upload />}
+					data-testid="request-scrim-button"
+				>
+					{t("scrims:actions.request")}
+				</SendouButton>
+				{isRequestModalOpen ? (
+					<ScrimRequestModal
+						post={post}
+						close={() => setIsRequestModalOpen(false)}
+					/>
+				) : null}
+			</>
+		);
+	}
+
+	if (action === "VIEW_REQUEST") {
+		const userRequest = post.requests.find((request) =>
+			request.users.some((rUser) => user?.id === rUser.id),
+		);
+
+		return (
+			<>
+				<SendouButton
+					size="small"
+					onClick={() => setIsViewRequestModalOpen(true)}
+					variant="outlined"
+					icon={<Download />}
+					data-testid="view-request-button"
+				>
+					{t("scrims:actions.viewRequest")}
+				</SendouButton>
+				{isViewRequestModalOpen && userRequest ? (
+					<SendouDialog
+						heading={t("scrims:cancelRequestModal.title")}
+						onClose={() => setIsViewRequestModalOpen(false)}
+					>
+						<div className="stack md">
+							<ScrimRequestMembersList users={userRequest.users} />
+							{userRequest.message ? (
+								<div>
+									<div className="text-sm font-semi-bold mb-1">
+										{t("scrims:requestModal.message.label")}
+									</div>
+									<div className="text-lighter">{userRequest.message}</div>
+								</div>
+							) : null}
+							{userRequest.startsAt ? (
+								<div>
+									<div className="text-sm font-semi-bold mb-1">
+										{t("scrims:requestModal.at.label")}
+									</div>
+									<LocaleTime
+										date={userRequest.startsAt}
+										options={{
+											hour: "numeric",
+											minute: "2-digit",
+											day: "numeric",
+											month: "numeric",
+										}}
+										className="text-lighter"
+									/>
+								</div>
+							) : null}
+							<ActionButton
+								schema={scrimsActionSchema}
+								action="CANCEL_REQUEST"
+								fields={{ scrimPostRequestId: userRequest.id }}
+								variant="destructive"
+								icon={<Trash />}
+							>
+								{t("common:actions.cancel")}
+							</ActionButton>
+						</div>
+					</SendouDialog>
+				) : null}
+			</>
+		);
+	}
+
+	if (action === "CONTACT") {
+		return (
+			<LinkButton
+				to={scrimPage(post.id)}
+				size="small"
+				icon={<MessageCircleMore />}
+			>
+				{t("scrims:actions.contact")}
+			</LinkButton>
+		);
+	}
+
+	return (
+		<FormWithConfirm
+			dialogHeading={t("scrims:deleteModal.title")}
+			submitButtonText={t("common:actions.delete")}
+			fields={[
+				["scrimPostId", post.id],
+				["_action", "DELETE_POST"],
+			]}
+		>
+			<SendouButton size="small" variant="destructive" icon={<Trash />}>
+				{t("common:actions.delete")}
+			</SendouButton>
+		</FormWithConfirm>
+	);
+}
+
+interface ScrimRequestCardProps {
+	request: ScrimPostRequest;
+	postStartTime: number;
+	canAccept: boolean;
+	showFooter?: boolean;
+}
+
+export function ScrimRequestCard({
+	request,
+	postStartTime,
+	canAccept,
+	showFooter = true,
+}: ScrimRequestCardProps) {
+	const { t } = useTranslation(["scrims", "common"]);
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "2-digit",
+	});
+
+	const owner = request.users.find((user) => user.isOwner) ?? request.users[0];
+	const isPickup = !request.team?.name;
+	const teamName = request.team?.name ?? owner.username;
+
+	const confirmedTime = request.startsAt
+		? databaseTimestampToDate(request.startsAt)
+		: databaseTimestampToDate(postStartTime);
+
+	return (
+		<div className={clsx(styles.card, styles.requestCard)}>
+			<div className={styles.header}>
+				<div className={styles.avatarContainer}>
+					<ScrimTeamAvatar
+						teamAvatarUrl={request.team?.avatarUrl}
+						teamName={teamName}
+						owner={owner}
+					/>
+				</div>
+				<h3 className={styles.teamName}>
+					{isPickup ? (
+						<>
+							<span className={styles.pickupLabel}>{t("scrims:pickupBy")}</span>
+							<span>{owner.username}</span>
+						</>
+					) : (
+						teamName
+					)}
+				</h3>
+				<div className={styles.rightIconsContainer}>
+					<ScrimTeamMembersPopover users={request.users} />
+				</div>
+			</div>
+
+			{request.message ? <ScrimExpandableText text={request.message} /> : null}
+
+			{showFooter ? (
+				<div className={clsx(styles.footer, styles.requestFooter)}>
+					{canAccept ? (
+						<FormWithConfirm
+							dialogHeading={t("scrims:acceptModal.title", {
+								groupName: teamName,
+							})}
+							description={t("scrims:autoCancelInfo")}
+							fields={[
+								["scrimPostRequestId", request.id],
+								["_action", "ACCEPT_REQUEST"],
+							]}
+							submitButtonVariant="primary"
+							submitButtonText={t("common:actions.confirm")}
+						>
+							<SendouButton
+								size="small"
+								icon={<Check />}
+								data-testid="confirm-modal-trigger-button"
+							>
+								{t("scrims:acceptModal.confirmFor", {
+									time: timeFormatter.format(confirmedTime) ?? "",
+								})}
+							</SendouButton>
+						</FormWithConfirm>
+					) : (
+						<SendouPopover
+							trigger={
+								<SendouButton size="small">
+									{t("scrims:acceptModal.confirmFor", {
+										time: timeFormatter.format(confirmedTime) ?? "",
+									})}
+								</SendouButton>
+							}
+						>
+							{t("scrims:acceptModal.prevented")}
+						</SendouPopover>
+					)}
+				</div>
+			) : null}
+		</div>
+	);
+}

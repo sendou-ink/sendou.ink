@@ -1,7 +1,11 @@
+import type { Namespace, TFunction } from "i18next";
+import type {
+	AnyWeapon,
+	DamageType,
+} from "~/features/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type { AnyWeapon, DamageType } from "../build-analyzer";
-import type { CombineWith } from "./calculator-types";
-import type objectDamages from "./core/object-dmg.json";
+import type { CombineWith, DamageReceiver } from "./calculator-types";
+import type objectDamages from "./data/object-dmg.json";
 
 export const DAMAGE_RECEIVERS = [
 	"Chariot", // Crab Tank
@@ -26,6 +30,97 @@ export const DAMAGE_RECEIVERS = [
 	"BulletShelterCanopyFocus_Launched", // Recycled Brella Canopy launched
 ] as const;
 
+type ReceiverTranslation =
+	| { key: string }
+	| { weaponKey: string; suffixKey: string };
+
+/** i18n key(s) per damage receiver: a plain weapon/mode name or a weapon name plus a suffix ("<weapon> Canopy"). */
+const damageReceiverTranslations: Record<DamageReceiver, ReceiverTranslation> =
+	{
+		Chariot: { key: "weapons:SPECIAL_12" },
+		NiceBall_Armor: {
+			weaponKey: "weapons:SPECIAL_6",
+			suffixKey: "analyzer:damageReceiver.suffix.armor",
+		},
+		ShockSonar: { key: "weapons:SPECIAL_7" },
+		GreatBarrier_Barrier: {
+			weaponKey: "weapons:SPECIAL_2",
+			suffixKey: "analyzer:damageReceiver.suffix.shield",
+		},
+		GreatBarrier_WeakPoint: {
+			weaponKey: "weapons:SPECIAL_2",
+			suffixKey: "analyzer:damageReceiver.suffix.weakPoint",
+		},
+		BlowerInhale: {
+			weaponKey: "weapons:SPECIAL_8",
+			suffixKey: "analyzer:damageReceiver.suffix.inhale",
+		},
+		Decoy: { key: "weapons:SPECIAL_16" },
+		BulletPogo: { key: "weapons:SPECIAL_18" },
+		Gachihoko_Barrier: {
+			weaponKey: "game-misc:MODE_LONG_RM",
+			suffixKey: "analyzer:damageReceiver.suffix.shield",
+		},
+		Wsb_Flag: { key: "weapons:SUB_8" },
+		Wsb_Shield: { key: "weapons:SUB_4" },
+		Wsb_Sprinkler: { key: "weapons:SUB_3" },
+		Bomb_TorpedoBullet: { key: "weapons:SUB_13" },
+		BulletUmbrellaCanopyCompact: {
+			weaponKey: "weapons:MAIN_6020",
+			suffixKey: "analyzer:damageReceiver.suffix.canopy",
+		},
+		BulletUmbrellaCanopyNormal: {
+			weaponKey: "weapons:MAIN_6000",
+			suffixKey: "analyzer:damageReceiver.suffix.canopy",
+		},
+		BulletUmbrellaCanopyNormal_Launched: {
+			weaponKey: "weapons:MAIN_6000",
+			suffixKey: "analyzer:damageReceiver.suffix.canopyLaunched",
+		},
+		BulletUmbrellaCanopyWide: {
+			weaponKey: "weapons:MAIN_6010",
+			suffixKey: "analyzer:damageReceiver.suffix.canopy",
+		},
+		BulletUmbrellaCanopyWide_Launched: {
+			weaponKey: "weapons:MAIN_6010",
+			suffixKey: "analyzer:damageReceiver.suffix.canopyLaunched",
+		},
+		BulletShelterCanopyFocus: {
+			weaponKey: "weapons:MAIN_6030",
+			suffixKey: "analyzer:damageReceiver.suffix.canopy",
+		},
+		BulletShelterCanopyFocus_Launched: {
+			weaponKey: "weapons:MAIN_6030",
+			suffixKey: "analyzer:damageReceiver.suffix.canopyLaunched",
+		},
+	};
+
+/** Localized name of a damage receiver; needs the `weapons`, `analyzer` and `game-misc` namespaces. */
+export function translateDamageReceiver<Ns extends Namespace>(
+	t: TFunction<Ns>,
+	receiver: DamageReceiver,
+): string {
+	const config = damageReceiverTranslations[receiver];
+	if ("key" in config) {
+		return t(config.key as never);
+	}
+	return t(config.suffixKey as never, {
+		weapon: t(config.weaponKey as never),
+	});
+}
+
+/** Suffix-only label ("Shield", "Weak Point") to tell apart the parts of a multi-part object, or `null`. */
+export function damageReceiverSuffix<Ns extends Namespace>(
+	t: TFunction<Ns>,
+	receiver: DamageReceiver,
+): string | null {
+	const config = damageReceiverTranslations[receiver];
+	if ("key" in config) {
+		return null;
+	}
+	return String(t(config.suffixKey as never, { weapon: "" })).trim();
+}
+
 export const damagePriorities: Array<
 	[
 		AnyWeapon["type"],
@@ -36,6 +131,7 @@ export const damagePriorities: Array<
 > = [
 	["MAIN", [210, 220, 260], "DIRECT", "Blaster_KillOneShot"],
 	["MAIN", [210, 260], "DISTANCE", "Blaster_BlasterMiddle"],
+	["MAIN", [260], "DISTANCE_JUMP", "Blaster_BlasterMiddle"],
 	["MAIN", [220], "DISTANCE", "Blaster"],
 
 	["MAIN", [400], "NORMAL_MAX", "Shooter_Flash"],
@@ -96,7 +192,8 @@ export const damagePriorities: Array<
 	["MAIN", [8000, 8010, 8020], "SPLATANA_HORIZONTAL", "Saber_Shot"],
 	["MAIN", [8000, 8010, 8020], "SPLATANA_HORIZONTAL_DIRECT", "Saber_Slash"],
 
-	["SUB", [0, 2, 7], "BOMB_NORMAL", "Bomb"], // TODO: could also consider "Bomb_DirectHit" it is almost the same but has different ratio for Big Bubbler core: 0.5 vs. 1.5
+	["SUB", [0, 2, 7], "BOMB_NORMAL", "Bomb"],
+	["SUB", [2], "BOMB_DIRECT", "Bomb_DirectHit"],
 	["SUB", [6], "BOMB_DIRECT", "Bomb_CurlingBullet"],
 	["SUB", [6], "BOMB_NORMAL", "Bomb"],
 	["SUB", [13], "SPLASH", "Bomb_TorpedoSplashBurst"],
@@ -106,6 +203,7 @@ export const damagePriorities: Array<
 	["SPECIAL", [5], "SPECIAL_TICK", "InkStorm"],
 	["SPECIAL", [8], "SPECIAL_MAX_CHARGE", "BlowerExhale_BombCore"],
 	["SPECIAL", [8], "SPECIAL_MIN_CHARGE", "BlowerExhale_BombCore"],
+	["SPECIAL", [8], "SPECIAL_INHALE", "BlowerInhale"],
 	["SPECIAL", [10], "BOMB_DIRECT", "Jetpack_BombCore"],
 	["SPECIAL", [10], "BOMB_NORMAL", "Jetpack_Bullet"],
 	["SPECIAL", [11], "SPECIAL_THROW_DIRECT", "UltraStamp_Throw_BombCore"],

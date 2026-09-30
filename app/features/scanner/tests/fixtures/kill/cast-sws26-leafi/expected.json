@@ -1,0 +1,10 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 249,
+		"names": ["leafi !!"]
+	},
+	"options": {
+		"notes": "Frame shared with objective/splat-zones-cast-lime-control-blur-right (SWS26 broadcast), seconds after the two-row frame: only the leafi row is left. Its leading 'l' ranks an accented í first, with the bar glyphs next; the plain-tie rule hands it to the bar rule, which reads 'l' off the lowercase neighbor."
+	}
+}

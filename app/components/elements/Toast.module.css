@@ -1,34 +1,43 @@
 .toastRegion {
 	flex-direction: column;
 	gap: 8px;
-	display: flex;
 	position: fixed;
-	top: 10px;
-	right: 10px;
-	z-index: 10;
+	inset: unset;
+	top: calc(var(--layout-nav-height) + var(--s-2));
+	right: calc(10px + var(--scrollbar-width, 0px));
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--color-text);
+	overflow: visible;
+	outline: none;
+
+	&:popover-open {
+		display: flex;
+	}
 }
 
 .toast {
-	background: var(--bg-lighter-solid);
-	border-radius: var(--rounded);
+	background: var(--color-info-low);
+	border-radius: var(--radius-box);
 	padding: var(--s-1-5) var(--s-3);
 	align-items: center;
 	justify-content: center;
-	font-size: var(--fonts-xsm);
-	font-weight: var(--semi-bold);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
 	gap: var(--s-1);
-	border: 2px solid var(--border);
+	border: 2px solid var(--color-info);
 	width: 250px;
 	outline: none;
-	view-transition-class: toast;
 }
 
-::view-transition-new(.toast):only-child {
+::view-transition-new(:global(.toast)):only-child {
 	animation: appear 400ms;
 }
 
-::view-transition-old(.toast):only-child {
-	animation: disappear 400ms;
+::view-transition-old(:global(.toast)):only-child {
+	animation: disappear 400ms forwards;
 }
 
 @keyframes disappear {
@@ -43,42 +52,51 @@
 	}
 }
 
-.errorToast {
-	border-color: var(--theme-error);
-}
-
 .topRow {
 	display: flex;
 	text-transform: uppercase;
-	color: var(--text-lighter);
-	font-size: var(--fonts-xxsm);
+	color: var(--color-info-high);
+	font-size: var(--font-xs);
 	gap: var(--s-2);
 	align-items: center;
-	margin-block-end: var(--s-1-5);
+}
+
+.errorToast {
+	border-color: var(--color-error);
+	background-color: var(--color-error-low);
+
+	.topRow {
+		color: var(--color-error-high);
+	}
+}
+
+.successToast {
+	border-color: var(--color-success);
+	background-color: var(--color-success-low);
+
+	.topRow {
+		color: var(--color-success-high);
+	}
 }
 
 .closeButton {
 	margin-inline-start: auto;
-	outline-color: var(--text-lighter) !important;
-}
+	margin-inline-end: calc(var(--s-1) * -1);
+	height: auto;
+	padding: var(--s-1);
+	border-radius: var(--radius-box);
+	color: inherit;
+	opacity: 0.75;
 
-.closeButton svg {
-	width: 1rem;
-	fill: var(--text-lighter);
+	&:hover {
+		opacity: 1;
+	}
+
+	& svg {
+		width: 1rem;
+	}
 }
 
 .alertIcon {
 	width: 1.25rem;
-}
-
-.errorToast .alertIcon {
-	fill: var(--theme-error);
-}
-
-.infoToast .alertIcon {
-	fill: var(--theme-info);
-}
-
-.successToast .alertIcon {
-	fill: var(--theme-success);
 }

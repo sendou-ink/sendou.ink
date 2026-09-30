@@ -1,62 +1,37 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
-import i18next from "~/modules/i18n/i18next.server";
-import invariant from "~/utils/invariant";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
+import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { id } from "~/utils/schema";
 import type { GetSendouqMatchResponse, MapListMap } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	matchId: id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
+export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { matchId } = parseParams({
 		params,
 		schema: paramsSchema,
 	});
 
-	const match = notFoundIfFalsy(await QMatchRepository.findById(matchId));
+	const match = notFoundIfNullish(await SQMatchRepository.findById(matchId));
 
-	const [groupAlpha, groupBravo] = await Promise.all([
-		QMatchRepository.findGroupById({
-			groupId: match.alphaGroupId,
-		}),
-		QMatchRepository.findGroupById({
-			groupId: match.bravoGroupId,
-		}),
-	]);
+	const t = await getFixedTForLanguage("en", ["game-misc"]);
 
-	invariant(groupAlpha, "Group alpha not found");
-	invariant(groupBravo, "Group bravo not found");
+	const userIdToRank = (member: (typeof match.groupAlpha.members)[number]) => {
+		const tier = SendouQMatch.memberTier(member);
 
-	const t = await i18next.getFixedT("en", ["game-misc"]);
-
-	const userIdToRank = (userId: number) => {
-		const memento = match.memento;
-		if (!memento) return null;
-
-		const userMemento = memento.users[userId];
-
-		return userMemento.skill && userMemento.skill !== "CALCULATING"
-			? userMemento.skill.tier
-			: null;
+		return tier && tier !== "CALCULATING" ? tier : null;
 	};
 
 	const score = match.mapList.reduce(
 		(acc, cur) => {
 			if (!cur.winnerGroupId) return acc;
 
-			if (cur.winnerGroupId === match.alphaGroupId) {
+			if (cur.winnerGroupId === match.groupAlpha.id) {
 				return [acc[0] + 1, acc[1]];
 			}
 
@@ -79,23 +54,25 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				? (map.source as MapListMap["source"])
 				: Number(map.source),
 			participatedUserIds: null,
-			points: null,
+			ko: null,
 		})),
 		teamAlpha: {
+			id: match.groupAlpha.id,
 			score: score[0],
-			players: groupAlpha.members.map((member) => ({
+			players: match.groupAlpha.members.map((member) => ({
 				userId: member.id,
-				rank: userIdToRank(member.id),
+				rank: userIdToRank(member),
 			})),
 		},
 		teamBravo: {
+			id: match.groupBravo.id,
 			score: score[1],
-			players: groupBravo.members.map((member) => ({
+			players: match.groupBravo.members.map((member) => ({
 				userId: member.id,
-				rank: userIdToRank(member.id),
+				rank: userIdToRank(member),
 			})),
 		},
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };

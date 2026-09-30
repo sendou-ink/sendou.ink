@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 174,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, true, false],
+			[true, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "AREA CUP FINAL (grey-win VoD) spectator overhead map view: badge-less, digit-less strip whose left column sits a nudge right of the cast centers. The left team's yellow リード! lead banner clips the first slot's shoulder probe and the saturated yellow ink lights the glow class — previously a false special on an alive, ink-heavy body. One dead per side (left slot 3 crossed out, right slot 1 crossed out). Note the read side order: the overhead view keeps yellow on the left while the player-cam frames of the same footage put the specced purple team there."
+	}
+}

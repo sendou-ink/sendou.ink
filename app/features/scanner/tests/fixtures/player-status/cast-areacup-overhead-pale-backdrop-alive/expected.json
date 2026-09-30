@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 161,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, true],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Same AREA CUP overhead map view (grey-win VoD), 13s on. The first left slot's probes hang past the E-liter icon's edge onto pale sunlit buildings — bright AND unsaturated, so both the shoulder glow and the body pale class fired on an alive icon whose own body still reads ink-heavy; user-confirmed no special held here. Left slot 4 is splatted; everyone else alive."
+	}
+}

@@ -1,0 +1,82 @@
+import { sql } from "kysely";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
+import { db } from "~/db/sql";
+import { jsonArrayFrom } from "~/utils/kysely.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { id } from "~/utils/schema";
+import type { GetTournamentStreamsResponse } from "../schema";
+
+const paramsSchema = v.object({
+	id,
+});
+
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { id: tournamentId } = parseParams({
+		params,
+		schema: paramsSchema,
+	});
+
+	const tournament = notFoundIfNullish(
+		await db
+			.selectFrom("Tournament")
+			.select([
+				jsonArrayFrom(
+					db
+						.selectFrom("LiveStream")
+						.innerJoin("User", "User.twitch", "LiveStream.twitch")
+						.innerJoin(
+							"TournamentTeamMember",
+							"TournamentTeamMember.userId",
+							"User.id",
+						)
+						.innerJoin(
+							"TournamentTeam",
+							"TournamentTeam.id",
+							"TournamentTeamMember.tournamentTeamId",
+						)
+						.select([
+							"User.id as userId",
+							"LiveStream.twitch",
+							"LiveStream.viewerCount",
+						])
+						.where("TournamentTeam.tournamentId", "=", tournamentId)
+						.groupBy("LiveStream.twitch"),
+				).as("playerStreams"),
+				jsonArrayFrom(
+					db
+						.selectFrom("LiveStream")
+						.select(["LiveStream.twitch", "LiveStream.viewerCount"])
+						.where(
+							sql<boolean>`"LiveStream"."twitch" IN (SELECT value FROM json_each("Tournament"."castTwitchAccounts"))`,
+						),
+				).as("castStreams"),
+			])
+			.where("Tournament.id", "=", tournamentId)
+			.executeTakeFirst(),
+	);
+
+	const playerStreams: GetTournamentStreamsResponse =
+		tournament?.playerStreams.map((stream) => ({
+			type: "PLAYER",
+			userId: stream.userId!,
+			platform: "TWITCH",
+			channelId: stream.twitch!,
+			viewerCount: stream.viewerCount!,
+		})) ?? [];
+
+	const castStreams: GetTournamentStreamsResponse =
+		tournament?.castStreams.map((stream) => ({
+			type: "CAST",
+			platform: "TWITCH",
+			channelId: stream.twitch!,
+			viewerCount: stream.viewerCount!,
+		})) ?? [];
+
+	const result: GetTournamentStreamsResponse = [
+		...playerStreams,
+		...castStreams,
+	].sort((a, b) => b.viewerCount - a.viewerCount);
+
+	return Response.json(result);
+};

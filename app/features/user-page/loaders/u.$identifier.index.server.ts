@@ -1,13 +1,16 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { userPageUserId } from "~/features/user-page/user-page-context.server";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = notFoundIfFalsy(
-		await UserRepository.findProfileByIdentifier(params.identifier!),
-	);
+export const loader = async () => {
+	const userId = userPageUserId();
+
+	const userCards = await UserCardRepository.findAllByUserIds({
+		userIds: [userId],
+	});
 
 	return {
-		user,
+		widgets: await UserRepository.findWidgetsByUserId(userId),
+		...userCards,
 	};
 };

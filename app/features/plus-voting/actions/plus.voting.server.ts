@@ -1,38 +1,38 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import type { PlusVoteFromFE } from "~/features/plus-voting/core";
 import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import { isVotingActive } from "~/features/plus-voting/core/voting-time";
+import { isVotingOpen } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { badRequestIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { PLUS_UPVOTE } from "../plus-voting-constants";
 import { votingActionSchema } from "../plus-voting-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: votingActionSchema,
 	});
 
-	if (!isVotingActive()) {
+	if (!isVotingOpen()) {
 		throw new Response(null, { status: 400 });
 	}
 
 	invariant(user.plusTier, "User should have plusTier");
 
-	const usersForVoting = await PlusVotingRepository.usersForVoting({
+	const usersForVoting = await PlusVotingRepository.findAllUsersForVoting({
 		id: user.id,
 		plusTier: user.plusTier,
 	});
 
-	// this should not be needed but makes the voting a bit more resilient
-	// if there is a bug that causes some user to show up twice, or some user to show up who should not be included
+	// resilience against a bug listing a user twice or one who should not be included
 	const seen = new Set<number>();
 	const filteredVotes = data.votes.filter((vote) => {
 		if (seen.has(vote.votedId)) {
@@ -59,9 +59,14 @@ export const action: ActionFunction = async ({ request }) => {
 			month,
 			year,
 			tier: user.plusTier!, // no clue why i couldn't make narrowing the type down above work
-			validAfter: dateToDatabaseTimestamp(votingRange.endDate),
+			becomesValidAt: dateToDatabaseTimestamp(votingRange.endDate),
 		})),
 	);
+
+	await resolveNotifications({
+		userIds: [user.id],
+		type: "PLUS_VOTING_STARTED",
+	});
 
 	return null;
 };

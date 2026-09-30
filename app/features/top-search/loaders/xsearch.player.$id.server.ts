@@ -1,8 +1,8 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
-import { findPlacementsByPlayerId } from "../queries/findPlacements.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
+import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
 	const params = parseParams({
@@ -10,7 +10,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const placements = notFoundIfFalsy(findPlacementsByPlayerId(params.id));
+	const placements = notFoundIfNullish(
+		await XRankPlacementRepository.findPlacementsByPlayerId(params.id),
+	);
 
 	const primaryName = placements[0].name;
 	const aliases = R.unique(

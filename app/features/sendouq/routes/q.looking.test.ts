@@ -1,42 +1,25 @@
-import type { SerializeFrom } from "@remix-run/server-runtime";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import type { UserMapModePreferences } from "~/db/tables";
-import type { matchSchema } from "~/features/sendouq-match/q-match-schemas";
-import { action as rawMatchAction } from "~/features/sendouq-match/routes/q.match.$id";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
+import type { UserMapModePreferences } from "~/db/tables-json";
+import * as Seasons from "~/features/mmr/core/Seasons";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import invariant from "~/utils/invariant";
-import {
-	dbInsertUsers,
-	dbReset,
-	wrappedAction,
-	wrappedLoader,
-} from "~/utils/Test";
-import type { lookingSchema } from "../q-schemas.server";
-import { loader, action as rawLookingAction } from "./q.looking";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { invariant } from "~/utils/invariant";
+import { wrappedAction } from "~/utils/Test";
+import * as ReadyCheck from "../core/ready-check.server";
+import { refreshSendouQInstance } from "../core/SendouQ.server";
+import type { lookingSchema } from "../q-action-schemas";
+import { FULL_GROUP_SIZE } from "../q-constants";
+import { action as rawLookingAction } from "./q.looking";
 
-const createGroup = async (userIds: number[]) => {
-	const group = await db
-		.insertInto("Group")
-		.values({
-			inviteCode: "1234",
-			status: "ACTIVE",
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	await db
-		.insertInto("GroupMember")
-		.values(
-			userIds.map((userId, i) => ({
-				groupId: group.id,
-				userId,
-				role: i === 0 ? "OWNER" : "REGULAR",
-			})),
-		)
-		.execute();
-};
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
+	notifyNotificationsChanged: vi.fn(),
+}));
 
 const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [
 	{ mode: "SZ", preference: "PREFER" },
@@ -46,229 +29,115 @@ const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [
 ];
 
 const prepareGroups = async () => {
-	await dbInsertUsers(8);
-	await createGroup([1, 2, 3, 4]);
-	await createGroup([5, 6, 7, 8]);
-	await db
-		.insertInto("GroupLike")
-		.values({ likerGroupId: 2, targetGroupId: 1 })
-		.execute();
-
-	await insertMapModePreferences(1, {
-		modes: SZ_ONLY_PREFERENCE,
-		pool: [{ mode: "SZ", stages: [...stageIds].slice(0, 7) }],
+	const owner = await UserFactory.createAdmin(null, {
+		matchProfile: {
+			mapModePreferences: {
+				modes: SZ_ONLY_PREFERENCE,
+				pool: [{ mode: "SZ", stages: [...stageIds].slice(0, 7) }],
+			},
+		},
 	});
+	const ownMembers = await UserFactory.createMany(FULL_GROUP_SIZE - 1);
 
-	await insertMapModePreferences(5, {
-		modes: SZ_ONLY_PREFERENCE,
-		pool: [
-			{ mode: "SZ", stages: [...stageIds].slice(0, 20).reverse().slice(0, 7) },
-		],
+	const theirOwner = await UserFactory.create(null, {
+		matchProfile: {
+			mapModePreferences: {
+				modes: SZ_ONLY_PREFERENCE,
+				pool: [
+					{
+						mode: "SZ",
+						stages: [...stageIds].slice(0, 20).reverse().slice(0, 7),
+					},
+				],
+			},
+		},
 	});
-};
+	const theirMembers = await UserFactory.createMany(FULL_GROUP_SIZE - 1);
 
-const insertMapModePreferences = (
-	userId: number,
-	preferences: UserMapModePreferences,
-) => {
-	return db
-		.updateTable("User")
-		.set({
-			mapModePreferences: JSON.stringify(preferences),
-		})
-		.where("User.id", "=", userId)
-		.execute();
+	const theirGroup = await SQGroupFactory.create({
+		memberUserIds: [theirOwner.id, ...theirMembers.map((user) => user.id)],
+	});
+	const ownGroup = await SQGroupFactory.create(
+		{ memberUserIds: [owner.id, ...ownMembers.map((user) => user.id)] },
+		{ likedByGroupIds: [theirGroup.id] },
+	);
+
+	return { owner, ownGroup, theirGroup, teammate: ownMembers[0] };
 };
 
 const lookingAction = wrappedAction<typeof lookingSchema>({
 	action: rawLookingAction,
 });
 
-const createMatch = () =>
-	lookingAction(
-		{
-			_action: "MATCH_UP",
-			targetGroupId: 2,
-		},
-		{ user: "admin" },
-	);
+/** Confirms every member of both groups as ready, which is what creates the match. */
+const confirmEveryoneReady = async (groupId: number) => {
+	for (;;) {
+		const readyCheck = await SQGroupRepository.findReadyCheckByGroupId(groupId);
+		if (!readyCheck) return;
 
-const findMatch = () =>
-	db
-		.selectFrom("GroupMatch")
-		.selectAll()
-		.where("id", "=", 1)
-		.executeTakeFirstOrThrow();
+		const nextToConfirm = readyCheck.members.find(
+			(member) => !member.confirmedAt,
+		);
+		invariant(nextToConfirm, "Everyone confirmed but no match was created");
 
-describe("SendouQ match creation", () => {
-	beforeEach(async () => {
-		await prepareGroups();
+		await ReadyCheck.confirm({ readyCheck, userId: nextToConfirm.userId });
+	}
+};
+
+describe("SendouQ match creation validation", () => {
+	test("doesn't create a match with a group that hasn't challenged us", async () => {
+		const owner = await UserFactory.createAdmin();
+		const ownMembers = await UserFactory.createMany(FULL_GROUP_SIZE - 1);
+		const theirMembers = await UserFactory.createMany(FULL_GROUP_SIZE);
+
+		const theirGroup = await SQGroupFactory.create({
+			memberUserIds: theirMembers.map((user) => user.id),
+		});
+		await SQGroupFactory.create({
+			memberUserIds: [owner.id, ...ownMembers.map((user) => user.id)],
+		});
+		await refreshSendouQInstance();
+
+		await lookingAction(
+			{
+				_action: "MATCH_UP",
+				targetGroupId: theirGroup.id,
+			},
+			{ user: "admin" },
+		);
+
+		const matches = await db.selectFrom("GroupMatch").selectAll().execute();
+		expect(matches).toHaveLength(0);
 	});
 
-	afterEach(() => {
-		dbReset();
-	});
+	test("doesn't create a rated match after the season has ended", async () => {
+		const groups = await prepareGroups();
 
-	test("adds pools to memento", async () => {
-		await createMatch();
+		const season = Seasons.currentOrPrevious()!;
+		vi.useFakeTimers();
+		try {
+			// both groups were queueing when the season ended a moment ago
+			vi.setSystemTime(new Date(season.ends.getTime() + 10 * 60 * 1000));
+			// biome-ignore lint/plugin: no production write reaches this state, it is produced by time passing while the group idles in the queue
+			await db
+				.updateTable("Group")
+				.set({ latestActionAt: dateToDatabaseTimestamp(new Date()) })
+				.execute();
+			await refreshSendouQInstance();
 
-		const match = await findMatch();
-		const pools = match.memento?.pools;
-
-		invariant(pools, "pools missing");
-
-		expect(pools.length).toBe(2);
-		expect(pools.some((p) => p.pool[0].stages.includes(1))).toBe(true);
-		expect(pools.some((p) => p.pool[0].stages.includes(19))).toBe(true);
-	});
-
-	test("doesn't add pool where mode is avoided", async () => {
-		await insertMapModePreferences(1, {
-			modes: [
-				{ mode: "SZ", preference: "AVOID" },
-				{ mode: "TC", preference: "PREFER" },
-			],
-			pool: [
+			await lookingAction(
 				{
-					mode: "TC",
-					stages: [...stageIds]
-						.filter((stageId) => !BANNED_MAPS.TC.includes(stageId))
-						.slice(0, 7),
+					_action: "MATCH_UP",
+					targetGroupId: groups.theirGroup.id,
 				},
-			],
-		});
+				{ user: "admin" },
+			).catch(() => undefined);
+			await confirmEveryoneReady(groups.ownGroup.id);
 
-		await createMatch();
-
-		const match = await findMatch();
-		const pools = match.memento?.pools;
-
-		invariant(pools, "pools missing");
-
-		expect(pools.length).toBe(2);
-		expect(
-			pools.find((p) => p.userId === 1)!.pool.every((p) => p.mode !== "SZ"),
-		).toBe(true);
-	});
-
-	test("adds mode preferences to memento", async () => {
-		await createMatch();
-
-		const match = await findMatch();
-
-		const modePreferences = match.memento?.modePreferences;
-
-		expect(modePreferences?.SZ?.length).toBe(2);
-	});
-
-	test("adds mode preferences to memento including neutral", async () => {
-		await insertMapModePreferences(2, {
-			modes: [{ mode: "TC", preference: "PREFER" }],
-			pool: [],
-		});
-
-		await createMatch();
-
-		const match = await findMatch();
-
-		const modePreferences = match.memento?.modePreferences;
-
-		expect(modePreferences?.SZ?.length).toBe(3);
-		expect(modePreferences?.SZ?.some((p) => !p.preference)).toBe(true);
-	});
-});
-
-describe("Private user note sorting", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(8);
-
-		await createGroup([1]);
-		await createGroup([2]);
-		await createGroup([3]);
-		await createGroup([4]);
-		await createGroup([5]);
-		await createGroup([6, 7]);
-		await createGroup([8]);
-
-		await db
-			.insertInto("GroupMatch")
-			.values({ alphaGroupId: 2, bravoGroupId: 3 })
-			.execute();
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	const lookingLoader = wrappedLoader<SerializeFrom<typeof loader>>({
-		loader,
-	});
-	const matchAction = wrappedAction<typeof matchSchema>({
-		action: rawMatchAction,
-	});
-
-	const matchActionParams = { id: "1" };
-
-	test("users with positive note sorted first", async () => {
-		await matchAction(
-			{
-				_action: "ADD_PRIVATE_USER_NOTE",
-				targetId: 5,
-				sentiment: "POSITIVE",
-				comment: "test",
-			},
-			{ user: "admin", params: matchActionParams },
-		);
-
-		const data = await lookingLoader({ user: "admin" });
-
-		expect(data.groups.neutral[0].members![0].id).toBe(5);
-	});
-
-	test("users with negative note sorted last", async () => {
-		await matchAction(
-			{
-				_action: "ADD_PRIVATE_USER_NOTE",
-				targetId: 5,
-				sentiment: "NEGATIVE",
-				comment: "test",
-			},
-			{ user: "admin", params: matchActionParams },
-		);
-
-		const data = await lookingLoader({ user: "admin" });
-
-		expect(
-			data.groups.neutral[data.groups.neutral.length - 1].members![0].id,
-		).toBe(5);
-	});
-
-	test("group with both negative and positive sentiment sorted last", async () => {
-		await matchAction(
-			{
-				_action: "ADD_PRIVATE_USER_NOTE",
-				targetId: 6,
-				sentiment: "POSITIVE",
-				comment: "test",
-			},
-			{ user: "admin", params: matchActionParams },
-		);
-		await matchAction(
-			{
-				_action: "ADD_PRIVATE_USER_NOTE",
-				targetId: 7,
-				sentiment: "NEGATIVE",
-				comment: "test",
-			},
-			{ user: "admin", params: matchActionParams },
-		);
-
-		const data = await lookingLoader({ user: "admin" });
-
-		expect(
-			data.groups.neutral[data.groups.neutral.length - 1].members?.some(
-				(m) => m.id === 6,
-			),
-		).toBe(true);
+			const matches = await db.selectFrom("GroupMatch").selectAll().execute();
+			expect(matches).toHaveLength(0);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

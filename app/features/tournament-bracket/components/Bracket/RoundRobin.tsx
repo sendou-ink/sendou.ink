@@ -1,64 +1,62 @@
-import type { Match as MatchType } from "~/modules/brackets-model";
+import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
+import {
+	BracketColumn,
+	BracketColumnMatches,
+	BracketColumns,
+} from "./BracketColumns";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
+import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 
 export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
+	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
 	const groups = getGroups(bracket);
 
 	return (
 		<div className="stack xl">
 			{groups.map(({ groupName, groupId }) => {
-				const rounds = bracket.data.round.filter((r) => r.group_id === groupId);
+				const rounds = bracket.data.round.filter((r) => r.groupId === groupId);
 
 				const allMatchesFinished = rounds.every((round) => {
 					const matches = bracket.data.match.filter(
-						(match) => match.round_id === round.id,
+						(match) => match.roundId === round.id,
 					);
 
 					return matches.every(
-						(match) =>
-							!match.opponent1 ||
-							!match.opponent2 ||
-							match.opponent1?.result === "win" ||
-							match.opponent2?.result === "win",
+						(match) => !match.opponent1 || !match.opponent2 || match.winnerSide,
 					);
 				});
 
 				return (
-					<div key={groupName} className="stack lg">
+					<div key={groupName} className="stack lg ml-6">
 						<h2 className="text-lg">{groupName}</h2>
-						<div
-							className="elim-bracket__container"
-							style={{ "--round-count": rounds.length }}
-						>
+						<BracketColumns roundCount={rounds.length}>
 							{rounds.flatMap((round) => {
 								const bestOf = round.maps?.count;
 
 								const matches = bracket.data.match.filter(
-									(match) => match.round_id === round.id,
+									(match) => match.roundId === round.id,
 								);
 
 								const someMatchOngoing = matches.some(
 									(match) =>
-										match.opponent1 &&
-										match.opponent2 &&
-										match.opponent1.result !== "win" &&
-										match.opponent2.result !== "win",
+										match.opponent1 && match.opponent2 && !match.winnerSide,
 								);
 
 								return (
-									<div key={round.id} className="elim-bracket__round-column">
+									<BracketColumn key={round.id}>
 										<RoundHeader
 											roundId={round.id}
+											bracketIdx={bracket.idx}
 											name={`Round ${round.number}`}
 											bestOf={bestOf}
 											showInfos={someMatchOngoing}
 											maps={round.maps}
 										/>
-										<div className="elim-bracket__round-matches-container">
+										<BracketColumnMatches>
 											{matches.map((match) => {
 												if (!match.opponent1 || !match.opponent2) {
 													return null;
@@ -74,19 +72,27 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 														bracket={bracket}
 														type="groups"
 														group={groupName.split(" ")[1]}
+														spoilerCensor={matchCensorLevel({
+															bracketType: "round_robin",
+															roundNumber: round.number,
+															roundIdx: 0,
+															matchType: "groups",
+														})}
 													/>
 												);
 											})}
-										</div>
-									</div>
+										</BracketColumnMatches>
+									</BracketColumn>
 								);
 							})}
-						</div>
-						<PlacementsTable
-							bracket={bracket}
-							groupId={groupId}
-							allMatchesFinished={allMatchesFinished}
-						/>
+						</BracketColumns>
+						{censored ? null : (
+							<PlacementsTable
+								bracket={bracket}
+								groupId={groupId}
+								allMatchesFinished={allMatchesFinished}
+							/>
+						)}
 					</div>
 				);
 			})}
@@ -103,7 +109,7 @@ function getGroups(bracket: BracketType) {
 
 	for (const group of bracket.data.group) {
 		const matches = bracket.data.match.filter(
-			(match) => match.group_id === group.id,
+			(match) => match.groupId === group.id,
 		);
 
 		result.push({

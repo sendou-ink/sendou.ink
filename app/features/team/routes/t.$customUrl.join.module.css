@@ -1,0 +1,7 @@
+.inviteContainer {
+	margin-block-start: var(--s-16);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-12);
+	align-items: center;
+}

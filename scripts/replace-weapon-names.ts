@@ -1,13 +1,13 @@
-// @ts-nocheck
-
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { logger } from "~/utils/logger";
-import weapons from "./dicts/WeaponInfoMain.json";
+import { loadWeaponInfoMain } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const weapons = loadWeaponInfoMain();
 
 const DIR_PATH_1 = path.join(
 	__dirname,
@@ -36,8 +36,22 @@ const DIR_PATH_3 = path.join(
 	"main-weapons-outlined-2",
 );
 
+const DIR_PATH_4 = path.join(
+	__dirname,
+	"..",
+	"public",
+	"static-assets",
+	"img",
+	"main-weapons-outlined-3",
+);
+
 async function main() {
-	for (const [i, dir] of [DIR_PATH_1, DIR_PATH_2, DIR_PATH_3].entries()) {
+	for (const [i, dir] of [
+		DIR_PATH_1,
+		DIR_PATH_2,
+		DIR_PATH_3,
+		DIR_PATH_4,
+	].entries()) {
 		const files = await fs.promises.readdir(dir);
 
 		for (const file of files) {
@@ -47,13 +61,15 @@ async function main() {
 			const differentLevelBadge = (fileName: string) => {
 				if (i === 1 && fileName.includes("Lv01")) return true;
 				if (i === 2 && fileName.includes("Lv00")) return true;
+				if (i === 3 && fileName.includes("Lv00")) return true;
+				if (i === 3 && fileName.includes("Lv01")) return true;
 
 				// ver 10.0.0
 				if (fileName.includes("Lv02")) return true;
 				if (fileName.includes("Lv03")) return true;
 				if (fileName.includes("Lv04")) return true;
 				if (fileName.includes("Lv05")) return true;
-				if (fileName.includes("Lv06")) return true;
+				if (i !== 3 && fileName.includes("Lv06")) return true;
 
 				return false;
 			};
@@ -63,10 +79,10 @@ async function main() {
 				continue;
 			}
 
-			const weapon: any = weapons.find(
-				(weapon: any) =>
-					file.includes(`${weapon.__RowId}.`) ||
-					file.includes(`${weapon.__RowId}_`),
+			const weapon = (weapons as Array<{ __RowId: string; Id: number }>).find(
+				(candidate) =>
+					file.includes(`${candidate.__RowId}.`) ||
+					file.includes(`${candidate.__RowId}_`),
 			);
 
 			if (!weapon) {

@@ -1,0 +1,710 @@
+import clsx from "clsx";
+import {
+	BadgeCheck,
+	Flag,
+	Megaphone,
+	NotebookPen,
+	NotebookText,
+	Pencil,
+	Trash2,
+	UserPlus,
+	UserRoundCheck,
+	VenetianMask,
+} from "lucide-react";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { Form, useFetcher, useLocation, useMatches } from "react-router";
+import * as R from "remeda";
+import { Avatar } from "~/components/Avatar";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
+import { toastQueue } from "~/components/elements/Toast";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { Image, TierImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
+import { NoteAvatar } from "~/components/NoteAvatar";
+import { Placement } from "~/components/Placement";
+import { useUser } from "~/features/auth/core/user";
+import {
+	acceptFriendRequestSchema,
+	sendFriendRequestBaseSchema,
+} from "~/features/friends/friends-schemas";
+import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
+import { userCardEditPage } from "~/features/user-card/user-card-urls";
+import { MutualFriends } from "~/features/user-page/components/MutualFriends";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useLayoutSize } from "~/hooks/useLayoutSize";
+import type { BrandId } from "~/modules/in-game-lists/types";
+import { assertUnreachable } from "~/utils/types";
+import {
+	brandImageUrl,
+	FRIENDS_PAGE,
+	impersonateUrl,
+	LFG_PAGE,
+	navIconUrl,
+	stageBannerImageUrl,
+	userCardFriendshipPage,
+	userCardNotePage,
+	userPage,
+} from "~/utils/urls";
+import type { UserCardFriendshipLoaderData } from "../routes/user-card.$id.friendship";
+import { userCardFriendshipSearchParams } from "../user-card-search-params";
+import type {
+	UserCardData,
+	UserCardFriendship,
+	UserCardStat,
+} from "../user-card-types";
+import styles from "./UserCard.module.css";
+
+// lazy so the form stack (SendouForm, dnd-kit, search fields) stays out of every page that renders a user card
+const AddPrivateNoteDialog = React.lazy(() =>
+	import("./AddPrivateNoteDialog").then((module) => ({
+		default: module.AddPrivateNoteDialog,
+	})),
+);
+const ReportUserDialog = React.lazy(() =>
+	import("~/features/user-report/components/ReportUserDialog").then(
+		(module) => ({ default: module.ReportUserDialog }),
+	),
+);
+
+const TENTATEK_BRAND_ID: BrandId = "B10";
+
+const STAT_ORDER: Record<UserCardStat["type"], number> = {
+	XP: 0,
+	SEASON: 1,
+	PLUS: 2,
+	DIV: 3,
+};
+
+/**
+ * Popover trigger showing the user's card. Data is resolved from the route tree by `userId` (a
+ * parent loader spread `{ userCards }`) or passed as `data`; without data `children` render plain.
+ * Friendship data is lazy-loaded from `/user-card/:id/friendship` on first open.
+ */
+export function UserCard({
+	userId,
+	data: dataProp,
+	withMutualFriends = false,
+	children,
+}: {
+	userId?: number;
+	data?: UserCardData;
+	/** Fetch and show the mutual friends row. Off by default. */
+	withMutualFriends?: boolean;
+	children: React.ReactNode;
+}) {
+	const lookedUpData = useUserCardData(userId);
+	const data = dataProp ?? lookedUpData;
+
+	if (!data) return <>{children}</>;
+
+	// keyed so friendship state doesn't carry over to another user e.g. when navigating between user pages
+	return (
+		<UserCardPopover
+			key={data.id}
+			data={data}
+			withMutualFriends={withMutualFriends}
+		>
+			{children}
+		</UserCardPopover>
+	);
+}
+
+function UserCardPopover({
+	data,
+	withMutualFriends,
+	children,
+}: {
+	data: UserCardData;
+	withMutualFriends: boolean;
+	children: React.ReactNode;
+}) {
+	const { t } = useTranslation(["common", "q"]);
+
+	// on narrow viewports the card is placed vertically so React Aria can shift it to stay on-screen
+	const placement = useLayoutSize() === "mobile" ? "bottom" : "right";
+
+	const user = useUser();
+	const isOwnCard = user?.id === data.id;
+
+	const [isOpen, setIsOpen] = React.useState(false);
+	// outside the popover so the modals survive it closing when they take focus
+	const [isNoteDialogOpen, setIsNoteDialogOpen] = React.useState(false);
+	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
+	const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
+
+	const fetcher = useFetcher<UserCardFriendshipLoaderData>();
+	const friendshipLoadedRef = React.useRef(false);
+
+	const handleOpenChange = (nextIsOpen: boolean) => {
+		setIsOpen(nextIsOpen);
+
+		if (!nextIsOpen) return;
+		if (friendshipLoadedRef.current) return;
+		if (isOwnCard) return;
+
+		friendshipLoadedRef.current = true;
+		fetcher.load(
+			userCardFriendshipSearchParams.href(userCardFriendshipPage(data.id), {
+				mutuals: withMutualFriends,
+			}),
+		);
+	};
+
+	const friendship = fetcher.data;
+
+	// close the popover so only the modal is shown
+	const openNoteDialog = () => {
+		setIsOpen(false);
+		setIsNoteDialogOpen(true);
+	};
+
+	const openDeleteConfirm = () => {
+		setIsOpen(false);
+		setIsDeleteConfirmOpen(true);
+	};
+
+	const openReportDialog = () => {
+		setIsOpen(false);
+		setIsReportDialogOpen(true);
+	};
+
+	return (
+		<>
+			<SendouPopover
+				isOpen={isOpen}
+				onOpenChange={handleOpenChange}
+				placement={placement}
+				popoverClassName={styles.popover}
+				trigger={
+					<button type="button" className={styles.trigger}>
+						{children}
+					</button>
+				}
+			>
+				<CardContent
+					data={data}
+					friendship={friendship}
+					isOwnCard={isOwnCard}
+					withMutualFriends={withMutualFriends}
+					onEditNote={openNoteDialog}
+					onDeleteNote={openDeleteConfirm}
+					onReport={user ? openReportDialog : undefined}
+				/>
+			</SendouPopover>
+			{isNoteDialogOpen ? (
+				<React.Suspense>
+					<AddPrivateNoteDialog
+						userId={data.id}
+						username={data.username}
+						note={data.privateNote}
+						onClose={() => setIsNoteDialogOpen(false)}
+					/>
+				</React.Suspense>
+			) : null}
+			{isReportDialogOpen ? (
+				<React.Suspense>
+					<ReportUserDialog
+						userId={data.id}
+						username={data.username}
+						onClose={() => setIsReportDialogOpen(false)}
+					/>
+				</React.Suspense>
+			) : null}
+			<FormWithConfirm
+				isOpen={isDeleteConfirmOpen}
+				onOpenChange={setIsDeleteConfirmOpen}
+				action={userCardNotePage(data.id)}
+				fields={[["_action", "DELETE"]]}
+				dialogHeading={t("q:privateNote.delete.header", {
+					name: data.username,
+				})}
+				submitButtonText={t("common:actions.delete")}
+			/>
+		</>
+	);
+}
+
+/** `UserCardData` from any matched route loader that spread `{ userCards }`, or `undefined`. */
+export function useUserCardData(
+	userId: number | undefined,
+): UserCardData | undefined {
+	const matches = useMatches();
+
+	if (typeof userId !== "number") return undefined;
+
+	for (const match of matches) {
+		const data = match.loaderData as
+			| { userCards?: Map<number, UserCardData> }
+			| undefined;
+		const card = data?.userCards?.get(userId);
+		if (card) return card;
+	}
+
+	return undefined;
+}
+
+function CardContent({
+	data,
+	friendship,
+	isOwnCard,
+	withMutualFriends,
+	onEditNote,
+	onDeleteNote,
+	onReport,
+}: {
+	data: UserCardData;
+	/** Lazy-loaded; `undefined` while the friendship fetch is in flight. */
+	friendship: UserCardFriendship | undefined;
+	isOwnCard: boolean;
+	withMutualFriends: boolean;
+	onEditNote: () => void;
+	onDeleteNote: () => void;
+	/** Not passed for logged-out viewers, hiding the report button. */
+	onReport: (() => void) | undefined;
+}) {
+	const { t } = useTranslation(["common", "user"]);
+	const location = useLocation();
+
+	const [isNoteOpen, setIsNoteOpen] = React.useState(false);
+
+	const stats = data.stats.toSorted(
+		(a, b) => STAT_ORDER[a.type] - STAT_ORDER[b.type],
+	);
+
+	const editPageUrl = userCardEditPage({
+		returnTo: `${location.pathname}${location.search}`,
+	});
+
+	// an existing note shows in-place (toggled); with no note the button opens the add modal directly
+	const showNoteView = isNoteOpen && data.privateNote !== null;
+	const onNoteButtonPress = () => {
+		if (data.privateNote === null) {
+			onEditNote();
+			return;
+		}
+		setIsNoteOpen((prev) => !prev);
+	};
+
+	return (
+		<div
+			className={styles.card}
+			style={customThemeStyle(data.customTheme)}
+			data-custom-theme={data.customTheme ? true : undefined}
+		>
+			<Banner banner={data.banner} />
+			{data.freeAgentPostId !== null ? (
+				<LinkButton
+					to={`${lfgSearchParams.href(LFG_PAGE, { post: data.freeAgentPostId })}#${data.freeAgentPostId}`}
+					size="miniscule"
+					icon={<Megaphone />}
+					className={styles.freeAgentBadge}
+				>
+					{t("user:card.freeAgent")}
+				</LinkButton>
+			) : null}
+			<div className={styles.iconButtons}>
+				{isOwnCard ? (
+					<LinkButton to={editPageUrl} size="miniscule" icon={<Pencil />}>
+						{t("common:actions.edit")}
+					</LinkButton>
+				) : (
+					<>
+						{process.env.NODE_ENV === "development" ? (
+							<ImpersonateButton userId={data.id} />
+						) : null}
+						{friendship && !friendship.isFriend ? (
+							<FriendRequestButton
+								targetUserId={data.id}
+								sentFriendRequest={friendship.sentFriendRequest}
+								incomingFriendRequestId={friendship.incomingFriendRequestId}
+							/>
+						) : null}
+						<SendouButton
+							size="miniscule"
+							shape="circle"
+							icon={
+								data.privateNote !== null ? <NotebookText /> : <NotebookPen />
+							}
+							onClick={onNoteButtonPress}
+							aria-label={t("user:card.editPrivateNote")}
+						/>
+						{onReport ? (
+							<SendouButton
+								size="miniscule"
+								shape="circle"
+								icon={<Flag />}
+								onClick={onReport}
+								aria-label="Report user"
+								data-testid="report-user-button"
+							/>
+						) : null}
+					</>
+				)}
+			</div>
+			<div className={styles.identity}>
+				<NoteAvatar
+					sentiment={data.privateNote?.sentiment}
+					onClick={isOwnCard ? undefined : onNoteButtonPress}
+				>
+					<Avatar user={data} size="md" className={styles.avatar} />
+				</NoteAvatar>
+				<div className={styles.nameGroup}>
+					<h2 className={styles.username}>{data.username}</h2>
+					{data.customUrl ? (
+						<div className={styles.subtitle}>{data.customUrl}</div>
+					) : null}
+					{data.friendCode ? (
+						<span className={styles.friendCode}>SW-{data.friendCode}</span>
+					) : (
+						/** reserve space */
+						<span className={styles.friendCode}>{"\u200b"}</span>
+					)}
+				</div>
+			</div>
+			{showNoteView ? (
+				<NoteView
+					note={data.privateNote}
+					onEdit={onEditNote}
+					onDelete={onDeleteNote}
+				/>
+			) : (
+				<>
+					{stats.length > 0 ? (
+						<div className={styles.stats}>
+							{stats.map((stat, i) => (
+								<React.Fragment key={stat.type}>
+									{i > 0 ? <span className={styles.statDivider} /> : null}
+									<Stat stat={stat} />
+								</React.Fragment>
+							))}
+						</div>
+					) : null}
+					{isOwnCard || !withMutualFriends ? null : (
+						<CardMutualFriends friendship={friendship} />
+					)}
+					{data.shortBio ? <p className={styles.bio}>{data.shortBio}</p> : null}
+					<LinkButton
+						to={userPage(data)}
+						variant="outlined"
+						size="small"
+						className={styles.viewUserPage}
+					>
+						{t("user:card.viewUserPage")}
+					</LinkButton>
+				</>
+			)}
+		</div>
+	);
+}
+
+function NoteView({
+	note,
+	onEdit,
+	onDelete,
+}: {
+	note: UserCardData["privateNote"];
+	onEdit: () => void;
+	onDelete: () => void;
+}) {
+	const { t } = useTranslation(["common", "user"]);
+
+	return (
+		<div className={styles.noteView}>
+			<div className={styles.noteHeaderGroup}>
+				<span className={styles.noteHeader}>{t("user:card.privateNote")}</span>
+				{note ? (
+					<LocaleTime
+						date={note.updatedAt}
+						options={{ day: "numeric", month: "numeric", year: "numeric" }}
+						className={styles.noteDate}
+						inline
+					/>
+				) : null}
+			</div>
+			{note?.text ? <p className={styles.noteText}>{note.text}</p> : null}
+			<div className={styles.noteViewActions}>
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					icon={<Pencil />}
+					onClick={onEdit}
+				>
+					{t("common:actions.edit")}
+				</SendouButton>
+				<SendouButton
+					variant="minimal-destructive"
+					size="miniscule"
+					icon={<Trash2 />}
+					onClick={onDelete}
+				>
+					{t("common:actions.delete")}
+				</SendouButton>
+			</div>
+		</div>
+	);
+}
+
+/** Sends a friend request, or accepts one the shown user already sent; cancelling happens on `/friends`. */
+function FriendRequestButton({
+	targetUserId,
+	sentFriendRequest,
+	incomingFriendRequestId,
+}: {
+	targetUserId: number;
+	sentFriendRequest: boolean;
+	incomingFriendRequestId: number | null;
+}) {
+	const { t } = useTranslation(["user"]);
+	const fetcher = useFetcher();
+	const acceptRequest = useActionSubmit(acceptFriendRequestSchema, {
+		action: FRIENDS_PAGE,
+		fetcher,
+	});
+	const sendRequest = useActionSubmit(sendFriendRequestBaseSchema, {
+		action: FRIENDS_PAGE,
+		fetcher,
+	});
+	const previousStateRef = React.useRef(fetcher.state);
+	const acceptsIncomingRequest = incomingFriendRequestId !== null;
+
+	// the send toast waits for the round-trip (the action can still reject on the pending limit); the
+	// accept path unmounts this button on revalidation, so its toast fires from the press handler
+	React.useEffect(() => {
+		if (
+			!acceptsIncomingRequest &&
+			previousStateRef.current === "submitting" &&
+			fetcher.state !== "submitting" &&
+			fetcher.data === null
+		) {
+			toastQueue.add(
+				{ message: t("user:card.friendRequestSent"), variant: "success" },
+				{ timeout: 5000 },
+			);
+		}
+		previousStateRef.current = fetcher.state;
+	}, [fetcher.state, fetcher.data, acceptsIncomingRequest, t]);
+
+	if (acceptsIncomingRequest) {
+		return (
+			<SendouButton
+				size="miniscule"
+				shape="circle"
+				icon={<UserPlus />}
+				isDisabled={fetcher.state !== "idle" || fetcher.data === null}
+				aria-label="Accept friend request"
+				onClick={() => {
+					if (incomingFriendRequestId === null) return;
+					toastQueue.add(
+						{
+							message: t("user:card.friendRequestAccepted"),
+							variant: "success",
+						},
+						{ timeout: 5000 },
+					);
+					acceptRequest.submit("ACCEPT_REQUEST", {
+						friendRequestId: incomingFriendRequestId,
+					});
+				}}
+			/>
+		);
+	}
+
+	const requestPending =
+		sentFriendRequest || fetcher.state !== "idle" || fetcher.data === null;
+
+	if (requestPending) {
+		return (
+			<SendouButton
+				size="miniscule"
+				shape="circle"
+				icon={<UserRoundCheck />}
+				isDisabled
+				aria-label={t("user:card.friendRequestPending")}
+			/>
+		);
+	}
+
+	return (
+		<SendouButton
+			size="miniscule"
+			shape="circle"
+			icon={<UserPlus />}
+			aria-label={t("user:card.sendFriendRequest")}
+			onClick={() =>
+				sendRequest.submit("SEND_REQUEST", { userId: targetUserId })
+			}
+		/>
+	);
+}
+
+function ImpersonateButton({ userId }: { userId: number }) {
+	const location = useLocation();
+
+	return (
+		<Form method="post" action={impersonateUrl(userId)} reloadDocument>
+			<input
+				type="hidden"
+				name="returnTo"
+				value={`${location.pathname}${location.search}`}
+			/>
+			<SendouButton
+				type="submit"
+				size="miniscule"
+				shape="circle"
+				icon={<VenetianMask />}
+				aria-label="Impersonate user"
+			/>
+		</Form>
+	);
+}
+
+/** Has reserved height so the card does not shift when the lazy friendship fetch resolves. */
+function CardMutualFriends({
+	friendship,
+}: {
+	friendship: UserCardFriendship | undefined;
+}) {
+	const { t } = useTranslation(["user"]);
+
+	return (
+		<div className={styles.mutualFriends}>
+			{friendship === undefined ? null : friendship.mutualFriends.length ===
+				0 ? (
+				<span className={styles.noMutualFriends}>
+					{t("user:card.noMutualFriends")}
+				</span>
+			) : (
+				<MutualFriends
+					mutualFriends={friendship.mutualFriends}
+					withoutPopover
+				/>
+			)}
+		</div>
+	);
+}
+
+function Banner({ banner }: { banner: UserCardData["banner"] }) {
+	const style = (() => {
+		switch (banner.type) {
+			case "STAGE":
+				return {
+					backgroundImage: `url(${stageBannerImageUrl(banner.stageId)})`,
+				};
+			case "URL":
+				return { backgroundImage: `url(${banner.url})` };
+			case "COLOR":
+				return { backgroundColor: banner.hexCode };
+			default:
+				assertUnreachable(banner);
+		}
+	})();
+
+	return (
+		<div
+			className={styles.banner}
+			style={style}
+			data-testid="user-card-banner"
+		/>
+	);
+}
+
+function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
+	const { t } = useTranslation(["user"]);
+
+	switch (stat.type) {
+		case "XP": {
+			const unverified = stat.values.find((value) => !value.isVerified);
+			const verified = stat.values.find((value) => value.isVerified);
+			const primary = unverified ?? verified;
+			const secondary = unverified ? verified : undefined;
+
+			return (
+				<span className={clsx(styles.stat, styles.xpStat)}>
+					{primary ? (
+						<span className={styles.xpPrimary}>
+							<span className={styles.xpPrimaryIcons}>
+								{primary.isVerified ? (
+									<BadgeCheck
+										className={
+											primary.region === "WEST"
+												? styles.xpVerifiedIconSmall
+												: styles.xpVerifiedIconLarge
+										}
+									/>
+								) : null}
+								<DivImage region={primary.region} />
+							</span>
+							{primary.points}
+							{t("user:card.xp")}
+						</span>
+					) : null}
+					{secondary ? (
+						<span className={styles.xpVerified}>
+							<BadgeCheck className={styles.xpVerifiedIconSmall} />
+							<DivImage region={secondary.region} />
+							{secondary.points}
+							{t("user:card.xp")}
+						</span>
+					) : null}
+				</span>
+			);
+		}
+		case "DIV":
+			return <span className={styles.stat}>Div {stat.value}</span>;
+		case "PLUS":
+			return (
+				<span className={clsx(styles.stat, styles.plusStat)}>
+					<Image path={navIconUrl("plus")} alt="+" size={24} />
+					{stat.value}
+				</span>
+			);
+		case "SEASON":
+			return (
+				<span className={styles.seasonStat}>
+					<TierImage tier={stat.value} width={32} />
+					{typeof stat.top === "number" ? (
+						<span className={styles.seasonTop}>
+							<Placement
+								placement={stat.top}
+								size={14}
+								showAsSuperscript={false}
+								textOnly
+							/>
+						</span>
+					) : null}
+				</span>
+			);
+		default:
+			assertUnreachable(stat);
+	}
+}
+
+function DivImage({ region }: { region: XRankPlacementRegion }) {
+	const { t } = useTranslation(["common"]);
+
+	if (region !== "WEST") return null;
+
+	return (
+		<Image
+			path={brandImageUrl(TENTATEK_BRAND_ID)}
+			alt={t("common:divisions.WEST")}
+			width={18}
+			height={18}
+		/>
+	);
+}
+
+function customThemeStyle(
+	customTheme: UserCardData["customTheme"],
+): React.CSSProperties {
+	if (!customTheme) return {};
+
+	return R.pickBy(
+		customTheme,
+		(value, key) =>
+			value !== null && !key.includes("--_size") && !key.includes("--_border"),
+	) as React.CSSProperties;
+}

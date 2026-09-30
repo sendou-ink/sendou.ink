@@ -1,28 +1,30 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
 import {
-	type ShouldRevalidateFunction,
-	useLoaderData,
-	useSearchParams,
-} from "@remix-run/react";
-import { nanoid } from "nanoid";
-import * as React from "react";
+	Calendar,
+	ChartColumnBig,
+	Flame,
+	FlaskConical,
+	Map as MapIcon,
+	X,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
-import * as R from "remeda";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
+import { Ability } from "~/components/Ability";
 import { BuildCard } from "~/components/BuildCard";
+import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
-import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
-import { BeakerFilledIcon } from "~/components/icons/BeakerFilled";
-import { CalendarIcon } from "~/components/icons/Calendar";
-import { ChartBarIcon } from "~/components/icons/ChartBar";
-import { FilterIcon } from "~/components/icons/Filter";
-import { FireIcon } from "~/components/icons/Fire";
-import { MapIcon } from "~/components/icons/Map";
+import { FilterBar } from "~/components/filter-bar/FilterBar";
+import { ModeImage } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { useUser } from "~/features/auth/core/user";
-import { safeJSONParse } from "~/utils/json";
-import { isRevalidation, metaTags } from "~/utils/remix";
+import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { abilities } from "~/modules/in-game-lists/abilities";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { dateToYYYYMMDD, isValidDate } from "~/utils/dates";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import type { Unpacked } from "~/utils/types";
 import {
 	BUILDS_PAGE,
 	navIconUrl,
@@ -34,105 +36,26 @@ import {
 import {
 	BUILDS_PAGE_BATCH_SIZE,
 	BUILDS_PAGE_MAX_BUILDS,
-	FILTER_SEARCH_PARAM_KEY,
 	MAX_BUILD_FILTERS,
-	PATCHES,
+	RECENT_PATCHES,
 } from "../builds-constants";
-import type { BuildFiltersFromSearchParams } from "../builds-schemas.server";
-import type { AbilityBuildFilter, BuildFilter } from "../builds-types";
-import { FilterSection } from "../components/FilterSection";
-
+import { buildsSearchParams } from "../builds-search-params";
+import type { AbilityCondition } from "../builds-types";
 import { loader } from "../loaders/builds.$slug.server";
-export { loader };
-
 import styles from "./builds.$slug.module.css";
 
-const filterOutMeaninglessFilters = (
-	filter: Unpacked<BuildFiltersFromSearchParams>,
-) => {
-	if (filter.type !== "ability") return true;
+export { loader };
 
-	return (
-		filter.comparison !== "AT_LEAST" ||
-		typeof filter.value !== "number" ||
-		filter.value > 0
-	);
-};
-export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	if (isRevalidation(args)) return true;
-
-	const oldLimit = args.currentUrl.searchParams.get("limit");
-	const newLimit = args.nextUrl.searchParams.get("limit");
-
-	// limit was changed -> revalidate
-	if (oldLimit !== newLimit) {
-		return true;
-	}
-
-	const rawOldFilters = args.currentUrl.searchParams.get(
-		FILTER_SEARCH_PARAM_KEY,
-	);
-	const oldFilters = rawOldFilters
-		? safeJSONParse<BuildFiltersFromSearchParams>(rawOldFilters, []).filter(
-				filterOutMeaninglessFilters,
-			)
-		: null;
-	const rawNewFilters = args.nextUrl.searchParams.get(FILTER_SEARCH_PARAM_KEY);
-	const newFilters = rawNewFilters
-		? // no safeJSONParse as the value should be coming from app code and should be trustworthy
-			(JSON.parse(rawNewFilters) as BuildFiltersFromSearchParams).filter(
-				filterOutMeaninglessFilters,
-			)
-		: null;
-
-	// meaningful filter was added/removed -> revalidate
-	if (oldFilters && newFilters && oldFilters.length !== newFilters.length) {
-		return true;
-	}
-	// no meaningful filters were or going to be in use -> skip revalidation
-	if (
-		oldFilters &&
-		newFilters &&
-		oldFilters.length === 0 &&
-		newFilters.length === 0
-	) {
-		return false;
-	}
-	// all meaningful filters identical -> skip revalidation
-	if (
-		newFilters?.every((f1) =>
-			oldFilters?.some((f2) => {
-				if (f1.type !== f2.type) return false;
-
-				if (f1.type === "mode" && f2.type === "mode") {
-					return f1.mode === f2.mode;
-				}
-				if (f1.type === "date" && f2.type === "date") {
-					return f1.date === f2.date;
-				}
-				if (f1.type !== "ability" || f2.type !== "ability") return false;
-
-				return (
-					f1.ability === f2.ability &&
-					f1.comparison === f2.comparison &&
-					f1.value === f2.value
-				);
-			}),
-		)
-	) {
-		return false;
-	}
-
-	return args.defaultShouldRevalidate;
-};
+export const shouldRevalidate = buildsSearchParams.shouldRevalidate;
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: `${args.data.weaponName} builds`,
-		ogTitle: `${args.data.weaponName} Splatoon 3 builds`,
-		description: `Collection of ${args.data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
+		title: `${args.loaderData.weaponName} builds`,
+		ogTitle: `${args.loaderData.weaponName} Splatoon 3 builds`,
+		description: `Collection of ${args.loaderData.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
+		image: ogPageImage("builds"),
 		location: args.location,
 	});
 };
@@ -140,7 +63,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "gear", "analyzer"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -160,8 +83,6 @@ export const handle: SendouRouteHandle = {
 };
 
 export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
-	const user = useUser();
-
 	return (
 		<div className={styles.buildsContainer}>
 			{data.builds.map((build) => {
@@ -169,9 +90,8 @@ export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 					<BuildCard
 						key={build.id}
 						build={build}
-						owner={build}
+						owner={{ ...build.owner, plusTier: build.plusTier }}
 						canEdit={false}
-						withAbilitySorting={!user?.preferences.disableBuildAbilitySorting}
 					/>
 				);
 			})}
@@ -182,141 +102,29 @@ export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 export default function WeaponsBuildsPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "builds"]);
-	const [, setSearchParams] = useSearchParams();
-	const [filters, setFilters] = React.useState<BuildFilter[]>(
-		data.filters ? data.filters.map((f) => ({ ...f, id: nanoid() })) : [],
-	);
+	const [{ abilities: abilityConditions, mode, date }] =
+		useSearchParamsTyped(buildsSearchParams);
 
-	const filtersForSearchParams = (filters: BuildFilter[]) =>
-		JSON.stringify(
-			filters.map((f) => {
-				return R.omit(f, ["id"]);
-			}),
-		);
-	const syncSearchParams = (newFilters: BuildFilter[]) => {
-		setSearchParams(
-			filtersForSearchParams.length > 0
-				? {
-						[FILTER_SEARCH_PARAM_KEY]: filtersForSearchParams(newFilters),
-					}
-				: {},
-		);
-	};
+	const loadMoreLink = () =>
+		buildsSearchParams.href("", {
+			limit: data.limit + BUILDS_PAGE_BATCH_SIZE,
+			abilities: abilityConditions,
+			mode,
+			date,
+		});
 
-	const handleFilterAdd = (type: BuildFilter["type"]) => {
-		const newFilter: BuildFilter =
-			type === "ability"
-				? {
-						id: nanoid(),
-						type: "ability",
-						ability: "ISM",
-						comparison: "AT_LEAST",
-						value: 0,
-					}
-				: type === "date"
-					? {
-							id: nanoid(),
-							type: "date",
-							date: PATCHES[0].date,
-						}
-					: {
-							id: nanoid(),
-							type: "mode",
-							mode: "SZ",
-						};
-
-		const newFilters = [...filters, newFilter];
-		setFilters(newFilters);
-
-		// no need to sync new ability filter as this doesn't have effect till they make other choices
-		if (type !== "ability") {
-			syncSearchParams(newFilters);
-		}
-	};
-
-	const handleFilterChange = (i: number, newFilter: Partial<BuildFilter>) => {
-		const newFilters = structuredClone(filters);
-
-		newFilters[i] = {
-			...(filters[i] as AbilityBuildFilter),
-			...(newFilter as AbilityBuildFilter),
-		};
-
-		setFilters(newFilters);
-
-		syncSearchParams(newFilters);
-	};
-
-	const handleFilterDelete = (i: number) => {
-		const newFilters = filters.filter((_, index) => index !== i);
-		setFilters(newFilters);
-
-		syncSearchParams(newFilters);
-	};
-
-	const loadMoreLink = () => {
-		const params = new URLSearchParams();
-
-		params.set("limit", String(data.limit + BUILDS_PAGE_BATCH_SIZE));
-
-		if (filters.length > 0) {
-			params.set(FILTER_SEARCH_PARAM_KEY, filtersForSearchParams(filters));
-		}
-
-		return `?${params.toString()}`;
-	};
-
-	const nthOfSameFilter = (index: number) => {
-		const type = filters[index].type;
-
-		return filters.slice(0, index).filter((f) => f.type === type).length + 1;
-	};
+	const hasFilters =
+		abilityConditions.length > 0 || mode !== null || date !== null;
 
 	return (
 		<Main className="stack lg">
 			<div className={styles.buildsButtons}>
-				<SendouMenu
-					trigger={
-						<SendouButton
-							variant="outlined"
-							size="small"
-							icon={<FilterIcon />}
-							isDisabled={filters.length >= MAX_BUILD_FILTERS}
-							data-testid="add-filter-button"
-						>
-							{t("builds:addFilter")}
-						</SendouButton>
-					}
-				>
-					<SendouMenuItem
-						icon={<BeakerFilledIcon />}
-						isDisabled={filters.length >= MAX_BUILD_FILTERS}
-						onAction={() => handleFilterAdd("ability")}
-						data-testid="menu-item-ability"
-					>
-						{t("builds:filters.type.ability")}
-					</SendouMenuItem>
-					<SendouMenuItem
-						icon={<MapIcon />}
-						onAction={() => handleFilterAdd("mode")}
-						data-testid="menu-item-mode"
-					>
-						{t("builds:filters.type.mode")}
-					</SendouMenuItem>
-					<SendouMenuItem
-						icon={<CalendarIcon />}
-						isDisabled={filters.some((filter) => filter.type === "date")}
-						onAction={() => handleFilterAdd("date")}
-						data-testid="menu-item-date"
-					>
-						{t("builds:filters.type.date")}
-					</SendouMenuItem>
-				</SendouMenu>
+				<Filters />
 				<div className={styles.buildsButtonsLink}>
 					<LinkButton
 						to={weaponBuildStatsPage(data.slug)}
 						variant="outlined"
-						icon={<ChartBarIcon />}
+						icon={<ChartColumnBig />}
 						size="small"
 					>
 						{t("builds:linkButton.abilityStats")}
@@ -324,41 +132,361 @@ export default function WeaponsBuildsPage() {
 					<LinkButton
 						to={weaponBuildPopularPage(data.slug)}
 						variant="outlined"
-						icon={<FireIcon />}
+						icon={<Flame />}
 						size="small"
 					>
 						{t("builds:linkButton.popularBuilds")}
 					</LinkButton>
 				</div>
 			</div>
-			{filters.length > 0 ? (
-				<div className="stack md">
-					{filters.map((filter, i) => (
-						<FilterSection
-							key={filter.id}
-							number={i + 1}
-							filter={filter}
-							onChange={(newFilter) => handleFilterChange(i, newFilter)}
-							remove={() => handleFilterDelete(i)}
-							nthOfSame={nthOfSameFilter(i)}
-						/>
-					))}
-				</div>
+			{data.builds.length > 0 ? (
+				<BuildCards data={data} />
+			) : (
+				<EmptyState navItem="builds">
+					{hasFilters
+						? t("builds:noBuildsMatchingFilters")
+						: t("builds:noBuildsForWeapon")}
+				</EmptyState>
+			)}
+			{data.limit < BUILDS_PAGE_MAX_BUILDS && data.hasMoreBuilds ? (
+				<LinkButton
+					className="m-0-auto"
+					size="small"
+					to={loadMoreLink()}
+					preventScrollReset
+				>
+					{t("common:actions.loadMore")}
+				</LinkButton>
 			) : null}
-			<BuildCards data={data} />
-			{data.limit < BUILDS_PAGE_MAX_BUILDS &&
-				// not considering edge case where there are amount of builds equal to current limit
-				// TODO: this could be fixed by taking example from the vods page
-				data.builds.length === data.limit && (
-					<LinkButton
-						className="m-0-auto"
-						size="small"
-						to={loadMoreLink()}
-						preventScrollReset
-					>
-						{t("common:actions.loadMore")}
-					</LinkButton>
-				)}
 		</Main>
+	);
+}
+
+function Filters() {
+	const { t } = useTranslation(["builds", "game-misc"]);
+	const [{ abilities: abilityConditions, mode, date }, setParams] =
+		useSearchParamsTyped(buildsSearchParams);
+
+	return (
+		<FilterBar
+			pills={[
+				{
+					key: "abilities",
+					name: t("builds:filters.abilities"),
+					icon: <FlaskConical />,
+					formattedValue:
+						abilityConditions.length > 0
+							? formatAbilityConditions(abilityConditions)
+							: null,
+					onRemove: () => setParams({ abilities: [] }),
+					testId: "ability",
+					popover: (
+						<AbilityConditionsPopover
+							conditions={abilityConditions}
+							onChange={(newConditions, opts) =>
+								setParams({ abilities: newConditions }, opts)
+							}
+						/>
+					),
+				},
+				{
+					key: "mode",
+					name: t("builds:filters.mode"),
+					icon: <MapIcon />,
+					formattedValue:
+						mode !== null ? t(`game-misc:MODE_SHORT_${mode}`) : null,
+					onAdd: () => setParams({ mode: "SZ" }),
+					onRemove: () => setParams({ mode: null }),
+					testId: "mode",
+					popover: (
+						<div className="stack sm">
+							{modesShort.map((option) => (
+								<div
+									key={option}
+									className="stack horizontal xs items-center font-sm font-semi-bold"
+								>
+									<input
+										type="radio"
+										name="builds-mode"
+										id={`builds-mode-${option}`}
+										value={option}
+										checked={mode === option}
+										onChange={() => setParams({ mode: option })}
+									/>
+									<label
+										htmlFor={`builds-mode-${option}`}
+										className="stack horizontal xs mb-0"
+									>
+										<ModeImage mode={option} size={18} />
+										{t(`game-misc:MODE_LONG_${option}`)}
+									</label>
+								</div>
+							))}
+						</div>
+					),
+				},
+				{
+					key: "date",
+					name: t("builds:filters.date"),
+					icon: <Calendar />,
+					formattedValue: date !== null ? <FormattedDate date={date} /> : null,
+					onAdd: () => setParams({ date: RECENT_PATCHES[0].date }),
+					onRemove: () => setParams({ date: null }),
+					testId: "date",
+					popover: (
+						<DatePopover
+							date={date}
+							onChange={(newDate) => setParams({ date: newDate })}
+						/>
+					),
+				},
+			]}
+		/>
+	);
+}
+
+function formatAbilityConditions(conditions: AbilityCondition[]) {
+	const label = abilityConditionLabel(conditions[0]);
+
+	return conditions.length > 1 ? `${label} +${conditions.length - 1}` : label;
+}
+
+function abilityConditionLabel(condition: AbilityCondition) {
+	if (condition.value === true) return condition.ability;
+	if (condition.value === false) return `✗ ${condition.ability}`;
+
+	return `${condition.ability} ${
+		condition.comparison === "AT_MOST" ? "≤" : "≥"
+	} ${condition.value}`;
+}
+
+function AbilityConditionsPopover({
+	conditions,
+	onChange,
+}: {
+	conditions: AbilityCondition[];
+	onChange: (
+		conditions: AbilityCondition[],
+		opts?: { loader: boolean },
+	) => void;
+}) {
+	const { t } = useTranslation(["builds"]);
+
+	const addCondition = () => {
+		const newCondition: AbilityCondition = {
+			ability: "ISM",
+			comparison: "AT_LEAST",
+			value: 0,
+		};
+
+		// a fresh "at least 0" ability condition matches every build, so no need to refetch
+		onChange([...conditions, newCondition], { loader: false });
+	};
+
+	return (
+		<div className={styles.abilityConditions}>
+			{conditions.map((condition, i) => (
+				<AbilityConditionRow
+					key={i}
+					condition={condition}
+					onChange={(newCondition) =>
+						onChange(
+							conditions.map((c, index) => (index === i ? newCondition : c)),
+						)
+					}
+					remove={() => onChange(conditions.filter((_, index) => index !== i))}
+				/>
+			))}
+			<SendouButton
+				className="self-start"
+				size="small"
+				variant="minimal"
+				isDisabled={conditions.length >= MAX_BUILD_FILTERS}
+				onClick={addCondition}
+				data-testid="add-ability-condition"
+			>
+				{t("builds:filters.addAbility")}
+			</SendouButton>
+		</div>
+	);
+}
+
+function AbilityConditionRow({
+	condition,
+	onChange,
+	remove,
+}: {
+	condition: AbilityCondition;
+	onChange: (condition: AbilityCondition) => void;
+	remove: () => void;
+}) {
+	const { t } = useTranslation(["analyzer", "game-misc", "builds"]);
+	const abilityObject = abilities.find((a) => a.name === condition.ability)!;
+
+	return (
+		<div className={styles.abilityConditionRow}>
+			<Ability ability={condition.ability} size="TINY" />
+			<select
+				value={condition.ability}
+				onChange={(e) => {
+					const newAbility = e.target.value as AbilityType;
+					const stackable =
+						abilities.find((a) => a.name === newAbility)!.type === "STACKABLE";
+
+					onChange({
+						...condition,
+						ability: newAbility,
+						value: stackable ? 0 : true,
+					});
+				}}
+			>
+				{abilities.map((ability) => {
+					return (
+						<option key={ability.name} value={ability.name}>
+							{t(`game-misc:ABILITY_${ability.name}`)}
+						</option>
+					);
+				})}
+			</select>
+			<SendouButton
+				icon={<X />}
+				size="miniscule"
+				variant="minimal-destructive"
+				onClick={remove}
+				aria-label="Delete ability condition"
+				data-testid="delete-ability-condition"
+			/>
+			<div className={styles.abilityConditionValueRow}>
+				{abilityObject.type === "STACKABLE" ? (
+					<>
+						<select
+							value={condition.comparison}
+							onChange={(e) =>
+								onChange({
+									...condition,
+									comparison: e.target.value as AbilityCondition["comparison"],
+								})
+							}
+							data-testid="comparison-select"
+						>
+							<option value="AT_LEAST">{t("builds:filters.atLeast")}</option>
+							<option value="AT_MOST">{t("builds:filters.atMost")}</option>
+						</select>
+						<select
+							className={styles.abilityConditionApSelect}
+							value={
+								typeof condition.value === "number" ? condition.value : "0"
+							}
+							onChange={(e) =>
+								onChange({ ...condition, value: Number(e.target.value) })
+							}
+						>
+							{possibleApValues().map((value) => (
+								<option key={value} value={value}>
+									{value}
+								</option>
+							))}
+						</select>
+						<div className="text-sm">{t("analyzer:abilityPoints.short")}</div>
+					</>
+				) : (
+					<select
+						value={!condition.value ? "false" : "true"}
+						onChange={(e) =>
+							onChange({ ...condition, value: e.target.value === "true" })
+						}
+					>
+						<option value="true">{t("builds:filters.has")}</option>
+						<option value="false">{t("builds:filters.does.not.have")}</option>
+					</select>
+				)}
+			</div>
+		</div>
+	);
+}
+
+function FormattedDate({ date }: { date: string }) {
+	const { formatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		year: "numeric",
+	});
+
+	const patch = RECENT_PATCHES.find(
+		({ date: patchDate }) => patchDate === date,
+	);
+	if (patch) return <>{patch.patch}</>;
+
+	return <>{formatter.format(new Date(date))}</>;
+}
+
+function DatePopover({
+	date,
+	onChange,
+}: {
+	date: string | null;
+	onChange: (date: string) => void;
+}) {
+	const { t } = useTranslation(["builds"]);
+	const { formatter: patchDateFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		year: "numeric",
+	});
+
+	const selectValue = () =>
+		RECENT_PATCHES.some(({ date: patchDate }) => patchDate === date)
+			? date
+			: "CUSTOM";
+
+	// on Saturday so it doesn't overlap with actual path dates (no patches on Saturdays)
+	const oneMonthAgoOnSaturday = new Date();
+	oneMonthAgoOnSaturday.setUTCDate(oneMonthAgoOnSaturday.getUTCDate() - 30);
+	oneMonthAgoOnSaturday.setUTCDate(
+		oneMonthAgoOnSaturday.getUTCDate() - oneMonthAgoOnSaturday.getUTCDay() + 6,
+	);
+
+	const customDate =
+		date !== null && isValidDate(new Date(date))
+			? new Date(date)
+			: oneMonthAgoOnSaturday;
+
+	return (
+		<div className="stack sm">
+			<label className="mb-0">{t("builds:filters.date.since")}</label>
+			<select
+				className="w-full"
+				value={selectValue() ?? "CUSTOM"}
+				data-testid="date-select"
+				onChange={(e) =>
+					onChange(
+						e.target.value === "CUSTOM"
+							? dateToYYYYMMDD(oneMonthAgoOnSaturday)
+							: e.target.value,
+					)
+				}
+			>
+				{RECENT_PATCHES.map(({ patch, date: dateString }) => {
+					const patchDate = new Date(dateString);
+
+					return (
+						<option key={patch} value={dateString}>
+							{patch} ({patchDateFormatter.format(patchDate) ?? ""})
+						</option>
+					);
+				})}
+				<option value="CUSTOM">{t("builds:filters.date.custom")}</option>
+			</select>
+			{selectValue() === "CUSTOM" ? (
+				<input
+					className="w-full"
+					type="date"
+					value={dateToYYYYMMDD(customDate)}
+					onChange={(e) => onChange(e.target.value)}
+					max={dateToYYYYMMDD(new Date())}
+					data-testid="date-input"
+				/>
+			) : null}
+		</div>
 	);
 }

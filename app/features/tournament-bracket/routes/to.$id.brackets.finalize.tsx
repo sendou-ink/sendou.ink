@@ -1,7 +1,7 @@
-import { useFetcher, useLoaderData } from "@remix-run/react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-use";
+import { useLoaderData, useLocation } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
 import { Divider } from "~/components/Divider";
@@ -9,35 +9,72 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Placement } from "~/components/Placement";
-import { SubmitButton } from "~/components/SubmitButton";
-import { useTournament } from "~/features/tournament/routes/to.$id";
-import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
-import { validateBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useTournament } from "~/features/tournament/tournament-context";
+import {
+	finalizeTournamentActionSchema,
+	type TournamentBadgeReceivers,
+	type TournamentTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-schemas";
+import {
+	validateBadgeReceivers,
+	validateTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
+import { Trophy } from "~/features/trophies/components/Trophy";
 import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { action } from "../actions/to.$id.brackets.finalize.server";
 import {
 	type FinalizeTournamentLoaderData,
 	loader,
 } from "../loaders/to.$id.brackets.finalize.server";
+
 export { action, loader };
 
 export default function TournamentFinalizePage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["tournament"]);
 	const location = useLocation();
-	const [isAssignLaterSelected, setIsAssignLaterSelected] =
+	const tournament = useTournament();
+	const firstPlaceStanding = data.standings.find(
+		(standing) => standing.placement === 1,
+	);
+	const trophyDefaultUserIds =
+		data.trophy && firstPlaceStanding
+			? tournament.minMembersPerTeam === firstPlaceStanding.members.length
+				? firstPlaceStanding.members.map((m) => m.userId)
+				: []
+			: [];
+
+	const [isAssignBadgesLaterSelected, setIsAssignBadgesLaterSelected] =
 		React.useState(false);
 	const [badgeReceivers, setBadgeReceivers] =
 		React.useState<TournamentBadgeReceivers>([]);
+	const [trophyReceiverUserIds, setTrophyReceiverUserIds] =
+		React.useState<Array<number>>(trophyDefaultUserIds);
 
-	const bracketUrl = location.pathname?.replace(/\/finalize$/, "");
+	const bracketUrl = location.pathname.replace(/\/finalize$/, "");
 
 	const tournamentHasBadges = data.badges.length > 0;
+	const tournamentHasTrophy = Boolean(data.trophy);
 
-	const badgesError = !isAssignLaterSelected
-		? validateBadgeReceivers({ badgeReceivers, badges: data.badges })
+	const trophyReceiver: TournamentTrophyReceiver | null =
+		data.trophy && firstPlaceStanding
+			? { trophyId: data.trophy.id, userIds: trophyReceiverUserIds }
+			: null;
+
+	const badgesError =
+		!isAssignBadgesLaterSelected && !tournamentHasTrophy
+			? validateBadgeReceivers({ badgeReceivers, badges: data.badges })
+			: null;
+
+	const trophyError = tournamentHasTrophy
+		? validateTrophyReceiver({
+				trophyReceiver,
+				trophy: data.trophy ?? null,
+			})
 		: null;
+
+	const error = badgesError ?? trophyError;
 
 	return (
 		<SendouDialog
@@ -46,32 +83,42 @@ export default function TournamentFinalizePage() {
 			heading={t("tournament:actions.finalize")}
 		>
 			<FinalizeForm
-				error={badgesError}
-				isAssigningBadges={!isAssignLaterSelected && tournamentHasBadges}
+				error={error}
+				isAssigningBadges={
+					!isAssignBadgesLaterSelected &&
+					tournamentHasBadges &&
+					!tournamentHasTrophy
+				}
+				trophyReceiver={trophyReceiver}
+				badgeReceivers={
+					!trophyReceiver && tournamentHasBadges && !isAssignBadgesLaterSelected
+						? badgeReceivers
+						: null
+				}
 			>
-				{tournamentHasBadges ? (
+				{tournamentHasTrophy && data.trophy && firstPlaceStanding ? (
+					<NewTrophyReceiversSelector
+						trophy={data.trophy}
+						firstPlaceStanding={firstPlaceStanding}
+						trophyReceiverUserIds={trophyReceiverUserIds}
+						setTrophyReceiverUserIds={setTrophyReceiverUserIds}
+					/>
+				) : tournamentHasBadges ? (
 					<>
 						<SendouSwitch
-							isSelected={isAssignLaterSelected}
-							onChange={setIsAssignLaterSelected}
+							isSelected={isAssignBadgesLaterSelected}
+							onChange={setIsAssignBadgesLaterSelected}
 							data-testid="assign-badges-later-switch"
 						>
 							{t("tournament:actions.finalize.assignBadgesLater")}
 						</SendouSwitch>
-						{!isAssignLaterSelected ? (
-							<>
-								<input
-									type="hidden"
-									name="badgeReceivers"
-									value={JSON.stringify(badgeReceivers)}
-								/>
-								<NewBadgeReceiversSelector
-									badges={data.badges}
-									standings={data.standings}
-									badgeReceivers={badgeReceivers}
-									setBadgeReceivers={setBadgeReceivers}
-								/>
-							</>
+						{!isAssignBadgesLaterSelected ? (
+							<NewBadgeReceiversSelector
+								badges={data.badges}
+								standings={data.standings}
+								badgeReceivers={badgeReceivers}
+								setBadgeReceivers={setBadgeReceivers}
+							/>
 						) : null}
 					</>
 				) : null}
@@ -84,26 +131,36 @@ function FinalizeForm({
 	children,
 	error,
 	isAssigningBadges,
+	trophyReceiver,
+	badgeReceivers,
 }: {
 	children: React.ReactNode;
-	error: ReturnType<typeof validateBadgeReceivers>;
+	error:
+		| ReturnType<typeof validateBadgeReceivers>
+		| ReturnType<typeof validateTrophyReceiver>;
 	isAssigningBadges: boolean;
+	trophyReceiver: TournamentTrophyReceiver | null;
+	badgeReceivers: TournamentBadgeReceivers | null;
 }) {
-	const fetcher = useFetcher();
 	const { t } = useTranslation(["tournament"]);
 
 	return (
-		<fetcher.Form method="post" className="stack md">
-			<input type="hidden" name="_action" value="FINALIZE_TOURNAMENT" />
+		<div className="stack md">
 			<div className="stack md">{children}</div>
 			<div className="stack horizontal md justify-center mt-2">
-				<SubmitButton testId="confirm-button" isDisabled={Boolean(error)}>
+				<ActionButton
+					schema={finalizeTournamentActionSchema}
+					action="FINALIZE_TOURNAMENT"
+					fields={{ trophyReceiver, badgeReceivers }}
+					testId="confirm-button"
+					isDisabled={Boolean(error)}
+				>
 					{t(
 						isAssigningBadges
 							? "tournament:actions.finalize.action.withBadges"
 							: "tournament:actions.finalize.action",
 					)}
-				</SubmitButton>
+				</ActionButton>
 			</div>
 			{error ? (
 				<FormMessage type="error" className="text-center">
@@ -114,7 +171,7 @@ function FinalizeForm({
 					{t("tournament:actions.finalize.info")}
 				</FormMessage>
 			)}
-		</fetcher.Form>
+		</div>
 	);
 }
 
@@ -150,7 +207,7 @@ function NewBadgeReceiversSelector({
 					tournament.minMembersPerTeam === newOwnerStanding.members.length;
 
 				newReceivers.push({
-					badgeId: badgeId,
+					badgeId,
 					tournamentTeamId: newOwnerTournamentTeamId,
 					userIds: defaultSelected
 						? newOwnerStanding.members.map((m) => m.userId)
@@ -169,7 +226,9 @@ function NewBadgeReceiversSelector({
 
 				const newUserIds = isSelected
 					? [...receiver.userIds, userId]
-					: receiver.userIds.filter((id) => id !== userId);
+					: receiver.userIds.filter(
+							(receiverUserId) => receiverUserId !== userId,
+						);
 
 				return {
 					...receiver,
@@ -229,7 +288,6 @@ function NewBadgeReceiversSelector({
 												badgeId: badge.id,
 												userId: member.userId,
 											})}
-											size="small"
 										/>
 										<Avatar user={member} size="xxs" className="mr-2" />
 										{member.username}
@@ -237,12 +295,61 @@ function NewBadgeReceiversSelector({
 									<div className="stack horizontal sm items-end">
 										<ParticipationPill setResults={member.setResults} />
 									</div>
-									{i !== standingToReceive?.members.length - 1 && (
+									{i !== standingToReceive?.members.length - 1 ? (
 										<Divider className="mt-3" />
-									)}
+									) : null}
 								</div>
 							);
 						})}
+					</div>
+				);
+			})}
+		</div>
+	);
+}
+
+function NewTrophyReceiversSelector({
+	trophy,
+	firstPlaceStanding,
+	trophyReceiverUserIds,
+	setTrophyReceiverUserIds,
+}: {
+	trophy: NonNullable<FinalizeTournamentLoaderData["trophy"]>;
+	firstPlaceStanding: FinalizeTournamentLoaderData["standings"][number];
+	trophyReceiverUserIds: Array<number>;
+	setTrophyReceiverUserIds: (userIds: Array<number>) => void;
+}) {
+	const handleReceiverSelected = (userId: number) => (isSelected: boolean) => {
+		if (isSelected) {
+			setTrophyReceiverUserIds([...trophyReceiverUserIds, userId]);
+		} else {
+			setTrophyReceiverUserIds(
+				trophyReceiverUserIds.filter((id) => id !== userId),
+			);
+		}
+	};
+
+	return (
+		<div className="stack md">
+			<Trophy model={trophy.model} />
+			<Divider />
+			{firstPlaceStanding.members.map((member, i) => {
+				return (
+					<div key={member.userId} className="stack sm">
+						<div className="stack horizontal items-center">
+							<SendouSwitch
+								isSelected={trophyReceiverUserIds.includes(member.userId)}
+								onChange={handleReceiverSelected(member.userId)}
+							/>
+							<Avatar user={member} size="xxs" className="mr-2" />
+							{member.username}
+						</div>
+						<div className="stack horizontal sm items-end">
+							<ParticipationPill setResults={member.setResults} />
+						</div>
+						{i !== firstPlaceStanding.members.length - 1 ? (
+							<Divider className="mt-3" />
+						) : null}
 					</div>
 				);
 			})}

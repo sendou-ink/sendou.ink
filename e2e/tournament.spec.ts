@@ -1,240 +1,424 @@
-import { expect, test } from "@playwright/test";
-import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { addHours, addMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
-import type { TournamentLoaderData } from "~/features/tournament/loaders/to.$id.server";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { StageId } from "~/modules/in-game-lists/types";
-import invariant from "~/utils/invariant";
+import * as Availability from "~/features/availability/core/Availability";
 import {
-	fetchSendouInk,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
+import {
+	expect,
 	impersonate,
 	isNotVisible,
+	MACHINE_TIMEZONE,
 	navigate,
-	seed,
-	selectUser,
-	submit,
-} from "~/utils/playwright";
-import { tournamentBracketsPage, tournamentPage } from "~/utils/urls";
+	setTimezoneCookie,
+	test,
+} from "./helpers/playwright";
+import { NotificationPopover } from "./pages/layout/notification-popover";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
+import { TournamentPage } from "./pages/tournament/tournament-page";
+import { TournamentRegisterPage } from "./pages/tournament/tournament-register-page";
+import { TournamentSeedsPage } from "./pages/tournament/tournament-seeds-page";
+import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 
-const fetchTournamentLoaderData = () =>
-	fetchSendouInk<TournamentLoaderData>(
-		"/to/1/admin?_data=features%2Ftournament%2Froutes%2Fto.%24id",
-	);
+const TEAM_NAME = "Chimera";
+const ROSTER_SIZE = 4;
+const SEEDED_TEAM_COUNT = 8;
+const HOUR_SECONDS = 60 * 60;
 
-const getIsOwnerOfUser = ({
-	data,
-	userId,
-	teamId,
-}: {
-	data: TournamentLoaderData;
-	userId: number;
-	teamId: number;
-}) => {
-	const team = data.tournament.ctx.teams.find((t) => t.id === teamId);
-	invariant(team, "Team not found");
-
-	return team.members.find((m) => m.userId === userId)?.isOwner;
-};
-
-const getTeamCheckedInAt = ({
-	data,
-	teamId,
-}: {
-	data: TournamentLoaderData;
-	teamId: number;
-}) => {
-	const team = data.tournament.ctx.teams.find((t) => t.id === teamId);
-	invariant(team, "Team not found");
-	return team.checkIns.length > 0;
-};
+/** Views of a tournament whose loaders each ship some of its teams' data. */
+const TOURNAMENT_TEAM_VIEWS = ["teams", "results", "brackets", "admin/seeds"];
 
 test.describe("Tournament", () => {
-	test("registers for tournament", async ({ page }) => {
-		await seed(page, "REG_OPEN");
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: tournamentPage(1),
-		});
-
-		await page.getByRole("tab", { name: "Register" }).click();
-
-		await page.getByLabel("Pick-up name").fill("Chimera");
-		await page.getByTestId("save-team-button").click();
-
-		await page.getByTestId("add-player-button").click();
-		await expect(page.getByTestId("member-num-2")).toBeVisible();
-		await page.getByTestId("add-player-button").click();
-		await expect(page.getByTestId("member-num-3")).toBeVisible();
-		await page.getByTestId("add-player-button").click();
-		await expect(page.getByTestId("member-num-4")).toBeVisible();
-
-		let stage = 5;
-		for (const mode of rankedModesShort) {
-			for (let i = 0; i < 2; i++) {
-				while (BANNED_MAPS[mode].includes(stage as StageId)) {
-					stage++;
-				}
-
-				await page.getByTestId(`map-pool-${mode}-${stage}`).click();
-				stage++;
-			}
-		}
-		await page.getByTestId("save-map-list-button").click();
-
-		await expect(page.getByTestId("checkmark-icon-num-3")).toBeVisible();
-	});
-
-	test("checks in and appears on the bracket", async ({ page }) => {
-		await seed(page, "REG_OPEN");
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId: 3 }),
-		});
-
-		await isNotVisible(page.getByText("Chimera"));
-
-		await page.getByTestId("register-tab").click();
-		await page.getByTestId("check-in-button").click();
-
-		await page.getByTestId("brackets-tab").click();
-		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
-		await page.getByText("Chimera").nth(0).waitFor();
-	});
-
-	test("operates admin controls", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: tournamentPage(1),
-		});
-
-		await page.getByTestId("admin-tab").click();
-
-		const actionSelect = page.getByLabel("Action");
-		const teamSelect = page.getByLabel("Team", { exact: true });
-		const memberSelect = page.getByLabel("Member");
-
-		// Change team name
-		{
-			await actionSelect.selectOption("CHANGE_TEAM_NAME");
-			await teamSelect.selectOption("1");
-			await page.getByLabel("Team name").fill("NSTC");
-			await submit(page);
-
-			const data = await fetchTournamentLoaderData();
-			const firstTeam = data.tournament.ctx.teams.find((t) => t.id === 1);
-			invariant(firstTeam, "First team not found");
-			expect(firstTeam.name).toBe("NSTC");
+	test("registers for tournament", async ({ page, factories }) => {
+		const [captain, ...friends] =
+			await factories.UserFactory.createMany(ROSTER_SIZE);
+		for (const friend of friends) {
+			await factories.FriendshipFactory.create({
+				userOneId: captain.id,
+				userTwoId: friend.id,
+			});
 		}
 
-		// Change team owner
-		let data = await fetchTournamentLoaderData();
-		expect(getIsOwnerOfUser({ data, userId: ADMIN_ID, teamId: 1 })).toBe(1);
-
-		await actionSelect.selectOption("CHANGE_TEAM_OWNER");
-		await teamSelect.selectOption("1");
-		await memberSelect.selectOption("2");
-		await submit(page);
-
-		data = await fetchTournamentLoaderData();
-		expect(getIsOwnerOfUser({ data, userId: ADMIN_ID, teamId: 1 })).toBe(0);
-		expect(getIsOwnerOfUser({ data, userId: NZAP_TEST_ID, teamId: 1 })).toBe(1);
-
-		// Check in team
-		expect(getTeamCheckedInAt({ data, teamId: 1 })).toBeFalsy();
-
-		await actionSelect.selectOption("CHECK_IN");
-		await submit(page);
-
-		data = await fetchTournamentLoaderData();
-		expect(getTeamCheckedInAt({ data, teamId: 1 })).toBeTruthy();
-
-		// Check out team
-		await actionSelect.selectOption("CHECK_OUT");
-		await submit(page);
-
-		data = await fetchTournamentLoaderData();
-		expect(getTeamCheckedInAt({ data, teamId: 1 })).toBeFalsy();
-
-		// Remove member...
-		const firstTeam = data.tournament.ctx.teams.find((t) => t.id === 1);
-		invariant(firstTeam, "First team not found");
-		const firstNonOwnerMember = firstTeam.members.find(
-			(m) => m.userId !== 1 && !m.isOwner,
-		);
-		invariant(firstNonOwnerMember, "First non owner member not found");
-
-		await actionSelect.selectOption("REMOVE_MEMBER");
-		await memberSelect.selectOption(String(firstNonOwnerMember.userId));
-		await submit(page);
-
-		data = await fetchTournamentLoaderData();
-		const firstTeamAgain = data.tournament.ctx.teams.find((t) => t.id === 1);
-		invariant(firstTeamAgain, "First team again not found");
-		expect(firstTeamAgain.members.length).toBe(firstTeam.members.length - 1);
-
-		// ...and add to another team
-		const teamWithSpace = data.tournament.ctx.teams.find(
-			(t) => t.id !== 1 && t.members.length === 4,
-		);
-		invariant(teamWithSpace, "Team with space not found");
-
-		await actionSelect.selectOption("ADD_MEMBER");
-		await teamSelect.selectOption(String(teamWithSpace.id));
-		await selectUser({
-			labelName: "User",
-			userName: firstNonOwnerMember.username,
-			page,
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+			// teams pick their own counterpick maps
+			mapPickingStyle: "AUTO",
 		});
-		await submit(page);
 
-		data = await fetchTournamentLoaderData();
-		const teamWithSpaceAgain = data.tournament.ctx.teams.find(
-			(t) => t.id === teamWithSpace.id,
-		);
-		invariant(teamWithSpaceAgain, "Team with space again not found");
+		await impersonate(page, captain.id);
 
-		expect(teamWithSpaceAgain.members.length).toBe(
-			teamWithSpace.members.length + 1,
-		);
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
 
-		// Remove team
-		await actionSelect.selectOption("DELETE_TEAM");
-		await teamSelect.selectOption("1");
-		await submit(page);
+		const register = await tournamentPage.register();
 
-		data = await fetchTournamentLoaderData();
-		expect(data.tournament.ctx.teams.find((t) => t.id === 1)).toBeFalsy();
+		await register.form.fill("pickUpName", TEAM_NAME);
+		await register.form.submit();
+
+		await expect(register.member(1)).toBeVisible();
+
+		for (let memberNumber = 2; memberNumber <= ROSTER_SIZE; memberNumber++) {
+			await register.addPlayer();
+			await expect(register.member(memberNumber)).toBeVisible();
+		}
+
+		await register.pickCounterpickMaps();
+		await register.saveCounterpickMaps();
+
+		await expect(register.stepCheckmark(3)).toBeVisible();
+
+		// adding to the roster notified the added member
+		await impersonate(page, friends[0].id);
+		await navigate({ page, url: "/" });
+
+		const notifications = new NotificationPopover(page);
+		await notifications.open();
+
+		await expect(
+			notifications.notification(`Added to a team (${TEAM_NAME})`),
+		).toBeVisible();
 	});
 
-	test("adjusts seeds", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: `${tournamentPage(1)}/seeds`,
+	test("shows the estimated end time next to the start time", async ({
+		page,
+		factories,
+	}) => {
+		const startsAt = dateToDatabaseTimestamp(addHours(new Date(), 2));
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [startsAt],
 		});
 
-		await page.getByTestId("seed-team-1").hover();
-		await page.mouse.down();
-		// i think the drag & drop library might actually be a bit buggy
-		// so we have to do it in steps like this to allow for testing
-		await page.mouse.move(0, 500, { steps: 10 });
-		await page.mouse.up();
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
 
-		await submit(page);
-
-		await page.getByTestId("teams-tab").click();
-		await expect(page.getByTestId("team-name").first()).not.toHaveText(
-			"Chimera",
+		// a lone single elimination bracket is the estimator's two hour case
+		await expect(tournamentPage.locators.estimatedEnd).toHaveAttribute(
+			"datetime",
+			databaseTimestampToDate(startsAt + 2 * HOUR_SECONDS).toISOString(),
 		);
+	});
+
+	test("quick adds all of the team's players at once", async ({
+		page,
+		factories,
+	}) => {
+		const [captain, slayer, support, coach] =
+			await factories.UserFactory.createMany(4);
+		const team = await factories.TeamFactory.create(
+			{ memberUserIds: [captain.id, slayer.id, support.id, coach.id] },
+			{
+				roles: {
+					[slayer.id]: "SLAYER",
+					[support.id]: "SUPPORT",
+					[coach.id]: "COACH",
+				},
+			},
+		);
+
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
+
+		await impersonate(page, captain.id);
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
+
+		const register = await tournamentPage.register();
+		await register.form.fill("pickUpName", TEAM_NAME);
+		await register.form.submit();
+		await expect(register.member(1)).toBeVisible();
+
+		// teammates are offered in the quick add, grouped under the team
+		await register.openQuickAdd();
+		await expect(register.availabilityRow(slayer.id)).toBeVisible();
+		await expect(register.availabilityRow(coach.id)).toBeVisible();
+		await page.keyboard.press("Escape");
+
+		await register.addAllTeamPlayers(team.id);
+
+		await expect(register.member(2)).toBeVisible();
+		await expect(register.member(3)).toBeVisible();
+		// the coach is not part of the competitive lineup
+		await isNotVisible(register.member(4));
+	});
+
+	test("shows the roster's availability for the event window", async ({
+		page,
+		factories,
+	}) => {
+		const [captain, partialMember, unknownMember, stranger, friend] =
+			await factories.UserFactory.createMany(5);
+		await factories.TeamFactory.create({
+			memberUserIds: [captain.id, partialMember.id, unknownMember.id],
+		});
+		await factories.FriendshipFactory.create({
+			userOneId: captain.id,
+			userTwoId: friend.id,
+		});
+
+		const startsAt = addHours(new Date(), 2);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(startsAt)],
+		});
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [
+				captain.id,
+				partialMember.id,
+				unknownMember.id,
+				stranger.id,
+			],
+		});
+
+		const { startsAt: weekStartsAt } = Availability.weekRange(
+			startsAt,
+			MACHINE_TIMEZONE,
+		);
+		const coveringSlot = {
+			startsAt: dateToDatabaseTimestamp(startsAt),
+			endsAt: dateToDatabaseTimestamp(addHours(startsAt, 5)),
+		};
+		for (const userId of [captain.id, friend.id]) {
+			await factories.AvailabilityWeekFactory.create({
+				userId,
+				weekStartsAt,
+				timezone: MACHINE_TIMEZONE,
+				slots: [coveringSlot],
+			});
+		}
+		await factories.AvailabilityWeekFactory.create({
+			userId: partialMember.id,
+			weekStartsAt,
+			timezone: MACHINE_TIMEZONE,
+			slots: [
+				{
+					startsAt: dateToDatabaseTimestamp(addHours(startsAt, 1)),
+					endsAt: coveringSlot.endsAt,
+				},
+			],
+		});
+
+		await impersonate(page, captain.id);
+		await setTimezoneCookie(page);
+		const register = new TournamentRegisterPage(page);
+		await register.goto(tournament.id);
+
+		const row = (userId: number) => register.availabilityRow(userId);
+		await expect(row(captain.id)).toHaveAttribute("data-status", "available");
+		await expect(row(partialMember.id)).toHaveAttribute(
+			"data-status",
+			"partial",
+		);
+		await expect(row(unknownMember.id)).toHaveAttribute(
+			"data-status",
+			"unknown",
+		);
+		// on the tournament roster without being a teammate or a friend, so
+		// their schedule is not the viewer's to see
+		await expect(row(stranger.id)).toHaveAttribute("data-status", "hidden");
+		// the friend with an overlapping submitted range is offered in quick add
+		await register.openQuickAdd();
+		await expect(row(friend.id)).toHaveAttribute("data-status", "available");
+	});
+
+	test("registers a two player roster for a 2v2 tournament that takes no third member", async ({
+		page,
+		factories,
+	}) => {
+		const [captain, ...friends] = await factories.UserFactory.createMany(3);
+		for (const friend of friends) {
+			await factories.FriendshipFactory.create({
+				userOneId: captain.id,
+				userTwoId: friend.id,
+			});
+		}
+
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			// check-in opens an hour before the tournament starts
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+			minMembersPerTeam: 2,
+		});
+		// the bracket preview needs an opponent to have anything to show
+		const opponents = await factories.UserFactory.createMany(2);
+		await factories.TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				team: pickUpTeam("Opponent"),
+				memberUserIds: opponents.map((user) => user.id),
+			},
+			{ isCheckedIn: true },
+		);
+
+		await impersonate(page, captain.id);
+
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
+
+		const register = await tournamentPage.register();
+
+		await register.form.fill("pickUpName", TEAM_NAME);
+		await register.form.submit();
+
+		await expect(register.member(1)).toBeVisible();
+		await expect(register.noSubsFooter("2v2")).toBeVisible();
+
+		await register.addPlayer();
+		await expect(register.member(2)).toBeVisible();
+
+		// a 2v2 roster is full at two: no room for the second friend or anyone
+		// coming in through the invite link
+		await isNotVisible(register.locators.addPlayerButton);
+		await isNotVisible(register.locators.copyInviteLinkButton);
+
+		await register.checkIn();
+
+		const brackets = await register.openBrackets();
+		await expect(brackets.teamName(TEAM_NAME).first()).toBeVisible();
+	});
+
+	test("checks in and appears on the bracket", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			// check-in opens an hour before the tournament starts
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		});
+
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam(TEAM_NAME),
+			memberUserIds: roster.map((user) => user.id),
+		});
+		await factories.NotificationFactory.create({
+			notification: {
+				type: "TO_CHECK_IN_OPENED",
+				meta: { tournamentId: tournament.id, tournamentName: "In The Zone" },
+			},
+			users: roster.map((user) => ({ userId: user.id })),
+		});
+
+		const opponents = await factories.UserFactory.createMany(2);
+		for (const [i, opponent] of opponents.entries()) {
+			await factories.TournamentTeamFactory.create(
+				{
+					tournamentId: tournament.id,
+					team: pickUpTeam(`Opponent ${i + 1}`),
+					memberUserIds: [opponent.id],
+				},
+				{ isCheckedIn: true },
+			);
+		}
+
+		await impersonate(page, roster[0].id);
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+
+		await isNotVisible(brackets.teamName(TEAM_NAME));
+
+		const register = new TournamentRegisterPage(page);
+		await register.goto(tournament.id);
+
+		const notifications = new NotificationPopover(page);
+		await expect(notifications.locators.bellDot).toBeVisible();
+
+		await register.checkIn();
+
+		// checking in resolved the check-in notification without the bell
+		// having been opened
+		await expect(notifications.locators.bellDot).toBeHidden();
+
+		const bracketsAfterCheckIn = await register.openBrackets();
+
+		await expect(bracketsAfterCheckIn.locators.bracketsViewer).toBeVisible();
+		await expect(
+			bracketsAfterCheckIn.teamName(TEAM_NAME).first(),
+		).toBeVisible();
+	});
+
+	test("adjusts seeds", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
+
+		const captains = await factories.UserFactory.createMany(SEEDED_TEAM_COUNT);
+		const teams: Awaited<
+			ReturnType<typeof factories.TournamentTeamFactory.create>
+		>[] = [];
+		for (const [i, captain] of captains.entries()) {
+			teams.push(
+				await factories.TournamentTeamFactory.create({
+					tournamentId: tournament.id,
+					team: pickUpTeam(teamNameForSeed(i + 1)),
+					memberUserIds: [captain.id],
+				}),
+			);
+		}
+
+		await impersonate(page);
+
+		const seeds = new TournamentSeedsPage(page);
+		await seeds.goto(tournament.id);
+
+		await seeds.dragTeamDown(teams[0].id);
+		await seeds.save();
+
+		const teamsPage = new TournamentTeamsPage(page);
+		await teamsPage.goto(tournament.id);
+
+		await expect(teamsPage.locators.teamNames.first()).not.toHaveText(
+			teamNameForSeed(1),
+		);
+	});
+
+	test("hides a draft tournament from non-organizers, including its loaders", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			isDraft: true,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
+		const captain = await factories.UserFactory.create();
+		const team = await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam(TEAM_NAME),
+			memberUserIds: [captain.id],
+		});
+
+		// the draft's own pages never render, so flush the factory writes elsewhere
+		await navigate({ page, url: "/" });
+
+		for (const view of [...TOURNAMENT_TEAM_VIEWS, `teams/${team.id}`]) {
+			const url = `/to/${tournament.id}/${view}`;
+
+			const pageResponse = await page.request.fetch(url);
+			expect(pageResponse.status(), `${url} page`).toBe(404);
+
+			// each view's loader is also reachable on its own via single fetch
+			const dataResponse = await page.request.fetch(`${url}.data`);
+			expect(await dataResponse.text(), `${url}.data`).not.toContain(TEAM_NAME);
+		}
+
+		const scopedToTeamsLoader = await page.request.fetch(
+			`/to/${tournament.id}/teams.data?_routes=features/tournament/routes/to.$id.teams`,
+		);
+		expect(await scopedToTeamsLoader.text()).not.toContain(TEAM_NAME);
 	});
 });
+
+function pickUpTeam(name: string) {
+	return { name, prefersNotToHost: 0 as const, teamId: null };
+}
+
+function teamNameForSeed(seed: number) {
+	return `Team ${seed}`;
+}

@@ -2,20 +2,19 @@
 	width: var(--ability-size);
 	height: var(--ability-size);
 	padding: 0;
-	border: 2px solid var(--theme-transparent);
+	border: var(--border-style-high);
 	border-radius: 50%;
 	border-right: 0;
 	border-bottom: 0;
-	background: var(--bg-ability);
+	background: var(--color-bg-ability);
 	background-size: 100%;
-	box-shadow: 0 0 0 1px var(--bg-ability);
 	transform: scale(1);
 	transition: all 0.1s ease;
 	user-select: none;
 }
 
 .isDragTarget {
-	background: var(--abilities-button-bg);
+	background: var(--color-bg-ability);
 	transform: scale(1.15);
 }
 

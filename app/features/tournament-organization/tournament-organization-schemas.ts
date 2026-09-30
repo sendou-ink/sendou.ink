@@ -1,106 +1,150 @@
-import { z } from "zod/v4";
-import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
-import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
-import { mySlugify } from "~/utils/urls";
+import * as v from "valibot";
 import {
-	_action,
-	falsyToNull,
-	id,
-	safeNullableStringSchema,
-} from "~/utils/zod";
+	TOURNAMENT_ORGANIZATION,
+	TOURNAMENT_ORGANIZATION_ROLES,
+} from "~/features/tournament-organization/tournament-organization-constants";
+import {
+	array,
+	badges,
+	datetimeOptional,
+	fieldset,
+	image,
+	select,
+	stringConstant,
+	textAreaOptional,
+	textField,
+	textFieldOptional,
+	toggle,
+	userSearch,
+} from "~/form/fields";
+import { _action, id, superRefine } from "~/utils/schema";
+import { mySlugify } from "~/utils/urls";
 
-export const organizationEditSchema = z.object({
-	name: z
-		.string()
-		.trim()
-		.min(2)
-		.max(64)
-		.refine((val) => mySlugify(val).length >= 2, {
-			message: "Not enough non-special characters",
-		}),
-	description: z.preprocess(
-		falsyToNull,
-		z
-			.string()
-			.trim()
-			.max(TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH)
-			.nullable(),
-	),
-	members: z
-		.array(
-			z.object({
-				userId: z.number().int().positive(),
-				role: z.enum(TOURNAMENT_ORGANIZATION_ROLES),
-				roleDisplayName: z.preprocess(
-					falsyToNull,
-					z.string().trim().max(32).nullable(),
-				),
-			}),
-		)
-		.max(32)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.userId).length ===
-				new Set(arr.map((x) => x.userId)).size,
-			{
-				message: "Same member listed twice",
-			},
-		),
-	socials: z
-		.array(
-			z.object({
-				value: z.string().trim().url().max(100).optional().or(z.literal("")),
-			}),
-		)
-		.max(10)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.value).length ===
-				new Set(arr.map((x) => x.value)).size,
-			{
-				message: "Duplicate social links",
-			},
-		),
-	series: z
-		.array(
-			z.object({
-				name: z.string().trim().min(1).max(32),
-				description: z.preprocess(
-					falsyToNull,
-					z
-						.string()
-						.trim()
-						.max(TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH)
-						.nullable(),
-				),
-				showLeaderboard: z.boolean(),
-			}),
-		)
-		.max(10)
-		.refine(
-			(arr) =>
-				arr.map((x) => x.name).length === new Set(arr.map((x) => x.name)).size,
-			{
-				message: "Duplicate series",
-			},
-		),
-	badges: z.array(id).max(50),
+const orgNameField = textField({
+	label: "labels.name",
+	minLength: 2,
+	maxLength: 64,
+	validate: {
+		func: (val) => mySlugify(val).length > 0,
+		message: "forms:errors.noOnlySpecialCharacters",
+	},
 });
 
-export const banUserActionSchema = z.object({
-	_action: _action("BAN_USER"),
-	userId: id,
-	privateNote: safeNullableStringSchema({
-		max: TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH,
+export const newOrganizationSchema = v.object({
+	name: orgNameField,
+});
+
+export const organizationEditFormSchema = v.pipe(
+	v.object({
+		name: orgNameField,
+		logo: image({ label: "labels.logo", autoValidate: true }),
+		description: textAreaOptional({
+			label: "labels.description",
+			maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
+		}),
+		members: array({
+			label: "labels.members",
+			bottomText: "bottomTexts.orgMembersInfo",
+			max: 32,
+			field: fieldset({
+				fields: v.object({
+					userId: userSearch({ label: "labels.user" }),
+					role: select({
+						label: "labels.orgMemberRole",
+						items: TOURNAMENT_ORGANIZATION_ROLES.map((role) => ({
+							value: role,
+							label: `options.orgRole.${role}` as const,
+						})),
+					}),
+					roleDisplayName: textFieldOptional({
+						label: "labels.orgMemberRoleDisplayName",
+						maxLength: 32,
+					}),
+				}),
+			}),
+		}),
+		socials: array({
+			label: "labels.orgSocialLinks",
+			max: 10,
+			field: textField({ validate: "url", maxLength: 100 }),
+		}),
+		series: array({
+			label: "labels.orgSeries",
+			max: 10,
+			field: fieldset({
+				fields: v.object({
+					name: textField({
+						label: "labels.orgSeriesName",
+						minLength: 1,
+						maxLength: 32,
+					}),
+					description: textAreaOptional({
+						label: "labels.description",
+						maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
+					}),
+					showLeaderboard: toggle({ label: "labels.orgSeriesShowLeaderboard" }),
+				}),
+			}),
+		}),
+		badges: badges({ label: "labels.orgBadges", maxCount: 50 }),
+	}),
+	superRefine((data, ctx) => {
+		const seenUserIds = new Set<number>();
+
+		for (const [index, member] of data.members.entries()) {
+			if (seenUserIds.has(member.userId)) {
+				ctx.addIssue({
+					message: "forms:errors.duplicateOrgMember",
+					path: ["members", index, "userId"],
+				});
+				continue;
+			}
+
+			seenUserIds.add(member.userId);
+		}
+	}),
+);
+
+export const banUserActionSchema = v.object({
+	_action: stringConstant("BAN_USER"),
+	userId: userSearch({ label: "labels.player" }),
+	privateNote: textAreaOptional({
+		label: "labels.banUserNote",
+		bottomText: "bottomTexts.banUserNoteHelp",
+		maxLength: TOURNAMENT_ORGANIZATION.BAN_REASON_MAX_LENGTH,
+	}),
+	expiresAt: datetimeOptional({
+		label: "labels.banUserExpiresAt",
+		bottomText: "bottomTexts.banUserExpiresAtHelp",
+		min: () => new Date(),
+		minMessage: "errors.dateInPast",
 	}),
 });
 
-export const unbanUserActionSchema = z.object({
+const unbanUserActionSchema = v.object({
 	_action: _action("UNBAN_USER"),
 	userId: id,
 });
 
-export const orgPageActionSchema = z.union([
+export const updateIsEstablishedSchema = v.object({
+	_action: stringConstant("UPDATE_IS_ESTABLISHED"),
+	isEstablished: toggle({
+		label: "labels.isEstablished",
+	}),
+});
+
+const deleteOrganizationActionSchema = v.object({
+	_action: _action("DELETE_ORGANIZATION"),
+});
+
+const leaveOrganizationActionSchema = v.object({
+	_action: _action("LEAVE_ORGANIZATION"),
+});
+
+export const orgPageActionSchema = v.union([
 	banUserActionSchema,
 	unbanUserActionSchema,
+	updateIsEstablishedSchema,
+	deleteOrganizationActionSchema,
+	leaveOrganizationActionSchema,
 ]);

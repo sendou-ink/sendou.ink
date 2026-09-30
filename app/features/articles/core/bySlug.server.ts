@@ -1,35 +1,35 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { ZodError, type z } from "zod/v4";
+import * as v from "valibot";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
 
+const RESOLVED_ARTICLES_DIR = path.resolve(ARTICLES_FOLDER_PATH);
+
 export function articleBySlug(slug: string) {
+	const validFiles = fs.globSync("*.md", { cwd: RESOLVED_ARTICLES_DIR });
+	if (!validFiles.includes(`${slug}.md`)) return null;
+
 	try {
 		const rawMarkdown = fs.readFileSync(
-			path.join(ARTICLES_FOLDER_PATH, `${slug}.md`),
+			path.join(RESOLVED_ARTICLES_DIR, `${slug}.md`),
 			"utf8",
 		);
 		const { content, data } = matter(rawMarkdown);
 
-		const { date, ...restParsed } = articleDataSchema.parse(data);
+		const { date, ...restParsed } = v.parse(articleDataSchema, data);
 
 		return {
 			content,
 			date,
-			dateString: date.toLocaleDateString("en-US", {
-				day: "2-digit",
-				month: "long",
-				year: "numeric",
-			}),
 			authors: normalizeAuthors(restParsed.author),
 			title: restParsed.title,
 		};
 	} catch (e) {
 		if (!(e instanceof Error)) throw e;
 
-		if (e.message.includes("ENOENT") || e instanceof ZodError) {
+		if (e.message.includes("ENOENT") || e instanceof v.ValiError) {
 			return null;
 		}
 
@@ -38,7 +38,7 @@ export function articleBySlug(slug: string) {
 }
 
 export function normalizeAuthors(
-	authors: z.infer<typeof articleDataSchema>["author"],
+	authors: v.InferOutput<typeof articleDataSchema>["author"],
 ): Array<{ name: string; link: string | null }> {
 	if (Array.isArray(authors)) {
 		return authors.map((author) => {

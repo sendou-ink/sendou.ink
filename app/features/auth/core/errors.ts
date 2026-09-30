@@ -1,1 +1,6 @@
-export type AuthErrorCode = "aborted" | "unknown";
+export type AuthErrorCode =
+	| "aborted"
+	| "discordOverloaded"
+	| "unverifiedEmail"
+	| "browserPrivacy"
+	| "unknown";

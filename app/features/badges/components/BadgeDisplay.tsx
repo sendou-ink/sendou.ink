@@ -1,9 +1,10 @@
 import clsx from "clsx";
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
+import { DotPagination } from "~/components/DotPagination";
 import { SendouButton } from "~/components/elements/Button";
-import { TrashIcon } from "~/components/icons/Trash";
 import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import { usePagination } from "~/hooks/usePagination";
@@ -16,6 +17,8 @@ export interface BadgeDisplayProps {
 	onChange?: (badgeIds: number[]) => void;
 	children?: React.ReactNode;
 	showText?: boolean;
+	/** Fit inside tight containers (e.g. a popover) instead of the fixed 20rem box */
+	compact?: boolean;
 	className?: string;
 }
 
@@ -24,10 +27,20 @@ export function BadgeDisplay({
 	onChange,
 	children,
 	showText = true,
+	compact = false,
 	className,
 }: BadgeDisplayProps) {
 	const { t } = useTranslation("badges");
 	const [badges, setBadges] = React.useState(_badges);
+	const [shownBadgeIds, setShownBadgeIds] = React.useState(() =>
+		badgeIdsKey(_badges),
+	);
+
+	// props can change without a remount e.g. navigating between organization pages
+	if (shownBadgeIds !== badgeIdsKey(_badges)) {
+		setShownBadgeIds(badgeIdsKey(_badges));
+		setBadges(_badges);
+	}
 
 	const [bigBadge, ...smallBadges] = badges;
 
@@ -68,6 +81,7 @@ export function BadgeDisplay({
 			) : null}
 			<div
 				className={clsx(className, styles.badges, {
+					[styles.badgesCompact]: compact,
 					"justify-center": smallBadges.length === 0,
 				})}
 			>
@@ -96,9 +110,9 @@ export function BadgeDisplay({
 					{badgeExplanationText(t, bigBadge)}
 					{onChange ? (
 						<SendouButton
-							icon={<TrashIcon />}
+							icon={<Trash />}
 							variant="minimal-destructive"
-							onPress={() =>
+							onClick={() =>
 								onChange(
 									badges.filter((b) => b.id !== bigBadge.id).map((b) => b.id),
 								)
@@ -108,43 +122,19 @@ export function BadgeDisplay({
 				</div>
 			) : null}
 			{!everythingVisible ? (
-				<BadgePagination
+				<DotPagination
 					pagesCount={pagesCount}
 					currentPage={currentPage}
 					setPage={setPage}
+					ariaLabelPrefix="Badges"
+					data-testid="badge-pagination-button"
+					className={styles.pagination}
 				/>
 			) : null}
 		</div>
 	);
 }
 
-interface BadgePaginationProps {
-	pagesCount: number;
-	currentPage: number;
-	setPage: (page: number) => void;
-}
-
-function BadgePagination({
-	pagesCount,
-	currentPage,
-	setPage,
-}: BadgePaginationProps) {
-	return (
-		<div className={styles.pagination}>
-			{Array.from({ length: pagesCount }, (_, i) => (
-				<SendouButton
-					key={i}
-					variant="minimal"
-					aria-label={`Badges page ${i + 1}`}
-					onPress={() => setPage(i + 1)}
-					className={clsx(styles.paginationButton, {
-						[styles.paginationButtonActive]: currentPage === i + 1,
-					})}
-					data-testid="badge-pagination-button"
-				>
-					{i + 1}
-				</SendouButton>
-			))}
-		</div>
-	);
+function badgeIdsKey(badges: BadgeDisplayProps["badges"]) {
+	return badges.map((badge) => badge.id).join(",");
 }

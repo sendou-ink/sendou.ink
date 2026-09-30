@@ -1,3 +1,5 @@
+import styles from "./Section.module.css";
+
 export function Section({
 	title,
 	children,
@@ -8,8 +10,8 @@ export function Section({
 	className?: string;
 }) {
 	return (
-		<section className="section">
-			{title && <h2>{title}</h2>}
+		<section className={styles.section}>
+			{title ? <h2>{title}</h2> : null}
 			<div className={className}>{children}</div>
 		</section>
 	);

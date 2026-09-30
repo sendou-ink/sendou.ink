@@ -1,27 +1,36 @@
-import { Link, Outlet, useFetcher, useLoaderData } from "@remix-run/react";
+import { Check, Clipboard, Star, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
-import { AddNewButton } from "~/components/AddNewButton";
-import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
+import { type MetaFunction, Outlet, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { ClipboardIcon } from "~/components/icons/Clipboard";
-import { TrashIcon } from "~/components/icons/Trash";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
+import { UserLink } from "~/components/UserLink";
 import { action } from "~/features/associations/actions/associations.server";
+import { associationsPage } from "~/features/associations/associations-urls";
+import * as Association from "~/features/associations/core/Association";
 import {
 	type AssociationsLoaderData,
 	loader,
 } from "~/features/associations/loaders/associations.server";
 import { useUser } from "~/features/auth/core/user";
+import { scrimsByAssociationPage } from "~/features/scrims/scrims-urls";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage, newAssociationsPage, userPage } from "~/utils/urls";
-export { loader, action };
+import { associationsPageActionSchema } from "../associations-schemas";
+
+export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Associations",
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: "scrims",
@@ -34,14 +43,11 @@ export default function AssociationsPage() {
 		<Main className="stack lg">
 			<Outlet />
 			<div className="stack sm">
-				<div className="stack items-end">
-					<AddNewButton to={newAssociationsPage()} navIcon="associations" />
-				</div>
 				<Header />
 			</div>
 			<JoinForm />
 			{data.associations.map((association) => (
-				<Association key={association.id} association={association} />
+				<AssociationSection key={association.id} association={association} />
 			))}
 		</Main>
 	);
@@ -62,31 +68,30 @@ function Header() {
 
 function JoinForm() {
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
 	const { t } = useTranslation(["common", "scrims"]);
 
 	if (!data.toJoin) return null;
 
 	return (
-		<fetcher.Form method="post" className="stack horizontal md items-center">
-			<input type="hidden" name="inviteCode" value={data.toJoin.inviteCode} />
+		<div className="stack horizontal md items-center">
 			<Label spaced={false}>
 				{t("scrims:associations.join.title", {
 					name: data.toJoin.association.name,
 				})}
 			</Label>
-			<SubmitButton
+			<ActionButton
+				schema={associationsPageActionSchema}
+				action="JOIN_ASSOCIATION"
+				fields={{ inviteCode: data.toJoin.inviteCode }}
 				size="small"
-				_action="JOIN_ASSOCIATION"
-				state={fetcher.state}
 			>
 				{t("common:actions.join")}
-			</SubmitButton>
-		</fetcher.Form>
+			</ActionButton>
+		</div>
 	);
 }
 
-function Association({
+function AssociationSection({
 	association,
 }: {
 	association: AssociationsLoaderData["associations"][number];
@@ -94,10 +99,13 @@ function Association({
 	const { t } = useTranslation(["common", "scrims"]);
 	const user = useUser();
 	const canManage = useHasPermission(association, "MANAGE");
+	const newAdmin = canManage
+		? Association.resolveNewAdmin(association.members ?? [])
+		: null;
 
 	return (
 		<section>
-			<div className="stack horizontal sm">
+			<div className="stack horizontal sm items-center justify-between">
 				<h2 className="text-lg"> {association.name}</h2>
 				{canManage ? (
 					<FormWithConfirm
@@ -110,7 +118,8 @@ function Association({
 						]}
 					>
 						<SendouButton
-							icon={<TrashIcon className="small-icon" />}
+							shape="square"
+							icon={<Trash className="small-icon" />}
 							className="small-text"
 							variant="minimal-destructive"
 							type="submit"
@@ -125,38 +134,58 @@ function Association({
 						?.username,
 				})}
 			</div>
-			{!canManage ? (
-				<FormWithConfirm
-					dialogHeading={t("scrims:associations.leave.title", {
-						name: association.name,
-					})}
-					fields={[
-						["_action", "LEAVE_ASSOCIATION"],
-						["associationId", association.id],
-					]}
-					submitButtonText={t("scrims:associations.leave.action")}
+			<div className="stack horizontal sm items-center my-2">
+				<LinkButton
+					to={scrimsByAssociationPage(association.id)}
+					variant="outlined"
+					size="small"
 				>
-					<SendouButton
-						variant="minimal-destructive"
-						type="submit"
-						size="small"
-						className="my-2"
-						data-testid="leave-team-button"
+					{t("scrims:associations.viewScrims")}
+				</LinkButton>
+				{!canManage || newAdmin ? (
+					<FormWithConfirm
+						dialogHeading={
+							newAdmin
+								? t("scrims:associations.leave.titleWithNewAdmin", {
+										name: association.name,
+										username: newAdmin.username,
+									})
+								: t("scrims:associations.leave.title", {
+										name: association.name,
+									})
+						}
+						fields={[
+							["_action", "LEAVE_ASSOCIATION"],
+							["associationId", association.id],
+						]}
+						submitButtonText={t("scrims:associations.leave.action")}
 					>
-						{t("scrims:associations.leave.action")}
-					</SendouButton>
-				</FormWithConfirm>
-			) : null}
+						<SendouButton
+							variant="minimal-destructive"
+							type="submit"
+							size="small"
+							data-testid="leave-team-button"
+						>
+							{t("scrims:associations.leave.action")}
+						</SendouButton>
+					</FormWithConfirm>
+				) : null}
+			</div>
 			<div className="stack sm mt-4">
 				{association.members?.map((member) => (
 					<AssociationMember
 						key={member.id}
 						member={member}
 						associationId={association.id}
-						showControls={canManage && member.id !== user?.id}
+						canStar={canManage && member.id !== user?.id}
 					/>
 				))}
 			</div>
+			{canManage ? (
+				<div className="text-xs text-lighter mt-2">
+					{t("scrims:associations.manager.explanation")}
+				</div>
+			) : null}
 			{association.inviteCode ? (
 				<AssociationInviteCodeActions
 					associationId={association.id}
@@ -175,19 +204,8 @@ function AssociationInviteCodeActions({
 	inviteCode: string;
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
-	const [state, copyToClipboard] = useCopyToClipboard();
-	const [copySuccess, setCopySuccess] = React.useState(false);
-	const fetcher = useFetcher();
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const id = React.useId();
-
-	React.useEffect(() => {
-		if (!state.value) return;
-
-		setCopySuccess(true);
-		const timeout = setTimeout(() => setCopySuccess(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [state]);
 
 	const inviteLink = `https://sendou.ink${associationsPage(inviteCode)}`;
 
@@ -197,24 +215,22 @@ function AssociationInviteCodeActions({
 			<div className="stack horizontal sm items-center">
 				<input type="text" value={inviteLink} readOnly id={id} />
 				<SendouButton
+					shape="square"
 					variant={copySuccess ? "outlined-success" : "outlined"}
-					onPress={() => copyToClipboard(inviteLink)}
-					icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+					onClick={() => copyToClipboard(inviteLink)}
+					icon={copySuccess ? <Check /> : <Clipboard />}
 					aria-label="Copy to clipboard"
 				/>
 			</div>
-			<fetcher.Form method="post">
-				<input type="hidden" name="associationId" value={associationId} />
-				<SubmitButton
-					variant="minimal-destructive"
-					size="small"
-					className="mt-4"
-					_action="REFRESH_INVITE_CODE"
-					state={fetcher.state}
-				>
-					{t("scrims:associations.shareLink.reset")}
-				</SubmitButton>
-			</fetcher.Form>
+			<ActionButton
+				schema={associationsPageActionSchema}
+				action="REFRESH_INVITE_CODE"
+				fields={{ associationId }}
+				variant="minimal-destructive"
+				size="small"
+			>
+				{t("scrims:associations.shareLink.reset")}
+			</ActionButton>
 		</div>
 	);
 }
@@ -222,44 +238,80 @@ function AssociationInviteCodeActions({
 function AssociationMember({
 	member,
 	associationId,
-	showControls,
+	canStar,
 }: {
 	member: NonNullable<
 		AssociationsLoaderData["associations"][number]["members"]
 	>[number];
 	associationId: number;
-	showControls?: boolean;
+	canStar: boolean;
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
+	const canRemove = useHasPermission(member, "REMOVE");
 
 	return (
-		<div className="stack horizontal sm">
-			<Link
-				to={userPage(member)}
-				className="text-main-forced stack horizontal sm"
-			>
-				<Avatar size="xxs" user={member} />
-				{member.username}
-			</Link>
-			{showControls ? (
-				<FormWithConfirm
-					dialogHeading={t("scrims:associations.removeMember.title", {
-						username: member.username,
-					})}
-					submitButtonText={t("common:actions.remove")}
-					fields={[
-						["userId", member.id],
-						["associationId", associationId],
-						["_action", "REMOVE_MEMBER"],
-					]}
-				>
-					<SendouButton
-						icon={<TrashIcon className="small-icon" />}
-						className="small-text"
-						variant="minimal-destructive"
-						type="submit"
+		<div className="stack horizontal sm items-center justify-between">
+			<div className="stack horizontal sm items-center">
+				<UserLink user={member} />
+				{!canStar && member.role === "MANAGER" ? (
+					<Star
+						className="small-icon"
+						fill="currentColor"
+						role="img"
+						aria-label={t("scrims:associations.manager.label")}
 					/>
-				</FormWithConfirm>
+				) : null}
+			</div>
+			{canStar || canRemove ? (
+				<div className="stack horizontal sm items-center">
+					{canStar ? (
+						<ActionButton
+							schema={associationsPageActionSchema}
+							action={
+								member.role === "MANAGER" ? "REMOVE_MANAGER" : "ADD_MANAGER"
+							}
+							fields={{ userId: member.id, associationId }}
+							shape="square"
+							variant="minimal"
+							size="small"
+							className="small-text"
+							icon={
+								<Star
+									className="small-icon"
+									fill={member.role === "MANAGER" ? "currentColor" : "none"}
+								/>
+							}
+							aria-label={t(
+								member.role === "MANAGER"
+									? "scrims:associations.manager.remove"
+									: "scrims:associations.manager.add",
+								{ username: member.username },
+							)}
+						/>
+					) : null}
+					{canRemove ? (
+						<FormWithConfirm
+							dialogHeading={t("scrims:associations.removeMember.title", {
+								username: member.username,
+							})}
+							submitButtonText={t("common:actions.remove")}
+							fields={[
+								["userId", member.id],
+								["associationId", associationId],
+								["_action", "REMOVE_MEMBER"],
+							]}
+						>
+							<SendouButton
+								shape="square"
+								icon={<Trash className="small-icon" />}
+								className="small-text"
+								variant="minimal-destructive"
+								size="small"
+								type="submit"
+							/>
+						</FormWithConfirm>
+					) : null}
+				</div>
 			) : null}
 		</div>
 	);

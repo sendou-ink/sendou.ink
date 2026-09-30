@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 277,
+		"score": [97, 100],
+		"penalty": [null, null],
+		"control": [true, false]
+	},
+	"options": {
+		"notes": "Alpha (bright yellow-green ink) in control: their plate keeps the bright team-color fill (POV frame shows the We're in control! banner). Bravo still at the three-digit 100."
+	}
+}

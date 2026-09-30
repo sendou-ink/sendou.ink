@@ -1,0 +1,109 @@
+import type { Locator, Page } from "@playwright/test";
+import { sendFriendRequestBaseSchema } from "~/features/friends/friends-schemas";
+import { FRIENDS_PAGE } from "~/utils/urls";
+import {
+	navigate,
+	selectUser,
+	submit,
+	waitForPOSTResponse,
+} from "../../helpers/playwright";
+import { createFormHelpers } from "../../helpers/playwright-form";
+
+/** `/friends` */
+export class FriendsPage {
+	private readonly page: Page;
+	readonly form;
+	readonly locators;
+
+	constructor(page: Page) {
+		this.page = page;
+		this.form = createFormHelpers(page, sendFriendRequestBaseSchema);
+		this.locators = {
+			acceptButton: this.page.getByRole("button", { name: "Accept" }),
+			cancelRequestButton: this.page.getByRole("button", { name: "Cancel" }),
+			noFriendsText: this.page.getByText("No friends yet"),
+			scheduleDays: this.page.getByTestId("schedule-week-days"),
+			scheduleRanges: this.page.getByTestId("schedule-range"),
+			noScheduleText: this.page.getByTestId("schedule-no-week"),
+			// the chip radio input is visually hidden, so the label is what clicks
+			nextWeekToggle: this.page.locator(
+				'label[for="chip-radio-friend-schedule-week-next"]',
+			),
+		};
+	}
+
+	async goto() {
+		await navigate({ page: this.page, url: FRIENDS_PAGE });
+	}
+
+	async sendRequest(userName: string) {
+		await selectUser({
+			page: this.page,
+			userName,
+			labelName: this.form.getLabel("userId"),
+		});
+		await submit(this.page);
+	}
+
+	/** Accepts the first pending request, the newest one. */
+	async acceptRequest() {
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.acceptButton.first().click(),
+		);
+	}
+
+	/** Scoped to the page content: the mobile friends panel still shows the same name for a frame after navigating here from it. Exact, as the pin button's label names the friend too. */
+	friendButton(name: string) {
+		return this.page
+			.getByRole("main")
+			.getByRole("button", { name, exact: true });
+	}
+
+	friend(name: string) {
+		return new FriendMenu(this.page, name);
+	}
+
+	row(userId: number) {
+		return this.page.getByTestId(`friend-row-${userId}`);
+	}
+
+	scheduleButton(userId: number) {
+		return this.page.getByTestId(`friend-schedule-button-${userId}`);
+	}
+
+	pinButton(userId: number) {
+		return this.page.getByTestId(`friend-pin-button-${userId}`);
+	}
+
+	async togglePin(userId: number) {
+		await waitForPOSTResponse(this.page, () => this.pinButton(userId).click());
+	}
+
+	/** One day row of the open week modal, Monday being 0. */
+	day(dayIndex: number) {
+		return this.locators.scheduleDays.getByRole("listitem").nth(dayIndex);
+	}
+}
+
+class FriendMenu {
+	private readonly page: Page;
+	private readonly trigger: Locator;
+
+	constructor(page: Page, name: string) {
+		this.page = page;
+		// scoped to the page content because the sidebar's friends section shows
+		// a button with the same name once the friendship data refreshes, exact
+		// because the pin button's label names the friend too
+		this.trigger = page
+			.getByRole("main")
+			.getByRole("button", { name, exact: true });
+	}
+
+	async deleteFriend() {
+		await this.trigger.click();
+		await this.page.getByText("Delete friend").click();
+		await waitForPOSTResponse(this.page, () =>
+			this.page.getByRole("button", { name: "Delete" }).click(),
+		);
+	}
+}

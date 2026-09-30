@@ -1,0 +1,73 @@
+import type { TournamentRoundMaps } from "~/db/tables-json";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { ModeWithStage } from "~/modules/in-game-lists/types";
+import { invariant } from "~/utils/invariant";
+import { seededRandom } from "~/utils/random";
+import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
+import type { findResultsByMatchId } from "../TournamentMatchRepository.server";
+
+export async function executeRoll({
+	matchId,
+	maps,
+	pickBanEvents,
+	results,
+	teams,
+	toSetMapPool,
+}: {
+	matchId: number;
+	maps: TournamentRoundMaps;
+	pickBanEvents: Awaited<
+		ReturnType<typeof TournamentRepository.findPickBanEventsByMatchId>
+	>;
+	results: Awaited<ReturnType<typeof findResultsByMatchId>>;
+	teams: [PickBan.MapPoolTeam, PickBan.MapPoolTeam];
+	/** See `Tournament.organizerPickedMapPool`. */
+	toSetMapPool: ModeWithStage[];
+}): Promise<boolean> {
+	const customFlow = maps.customFlow;
+	if (!customFlow) return false;
+
+	const step = PickBan.resolveCurrentStep({
+		eventCount: pickBanEvents.length,
+		preSet: customFlow.preSet,
+		postGame: customFlow.postGame,
+		resultsCount: results.length,
+	});
+
+	if (step?.action !== "ROLL") return false;
+
+	const legalMaps = PickBan.mapsListWithLegality({
+		toSetMapPool,
+		maps,
+		mapList: null,
+		teams,
+		pickerTeamId: teams[0].id,
+		results,
+		pickBanEvents,
+	}).filter((m) => m.isLegal);
+
+	invariant(legalMaps.length > 0, "Unexpected no legal maps");
+
+	const eventNumber = pickBanEvents.length + 1;
+	const { randomInteger } = seededRandom(`roll-${matchId}-${eventNumber}`);
+	const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
+
+	try {
+		await TournamentRepository.insertPickBanEvent({
+			authorId: null,
+			matchId,
+			stageId: selectedMap.stageId,
+			mode: selectedMap.mode,
+			number: eventNumber,
+			type: "ROLL",
+		});
+	} catch (error) {
+		if (!errorIsSqliteUniqueConstraintFailure(error)) {
+			throw error;
+		}
+		// unique constraint violation — another request already handled this roll
+	}
+
+	return true;
+}

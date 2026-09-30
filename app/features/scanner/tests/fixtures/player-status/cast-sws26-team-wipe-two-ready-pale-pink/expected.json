@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 209,
+		"cast": true,
+		"special": [
+			[false, false, true, true],
+			[false, false, false, false]
+		],
+		"dead": [
+			[true, false, false, false],
+			[true, true, true, true]
+		]
+	},
+	"options": {
+		"notes": "Casted stream (Splat World Series 2026 playoffs, Day 1 Swiss) at 3:29 against a bright sky: the blue team on the right is fully wiped (four crossed-out icons, gauge numbers 14/57/42/50 kept on screen) while the orange team's two slots nearest the timer both wear the special-ready wash (pale pink bodies, no gauge number; the outer two slots show 3 on the dead icon and 7 on the alive one). The detector flagged only the third slot: the fourth's pale-pink body still measured enough orange ink (bodyInk 0.30) to trip the narrow-layout washed-body guard, so it read as not ready."
+	}
+}

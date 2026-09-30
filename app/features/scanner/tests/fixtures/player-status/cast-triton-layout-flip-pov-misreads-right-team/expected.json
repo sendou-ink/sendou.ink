@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 241,
+		"special": [
+			[false, false, false, true],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, true, false, false],
+			[false, false, false, true]
+		]
+	},
+	"options": {
+		"notes": "sendou-triton VoD (Hagglefish Market, match 12) spectator HUD at 4:01 (t=4822). The surrounding reads use cast geometry, but the live scan flipped this frame to pov (·✕·★ vs ··★★): the left column survives the flip (its pov centers nearly coincide), while the right column misreads — a false ★ on alive slot2 and slot3's grey crossed-out splat (still crossed a second later at 4:00) read as special ready, ending a real death span early. Left slot3 carries a genuine pale ready wash; right slot1 is a round octoling icon in saturated ink, alive."
+	}
+}

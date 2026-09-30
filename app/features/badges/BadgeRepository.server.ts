@@ -1,8 +1,16 @@
-import type { ExpressionBuilder } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import type { ExpressionBuilder, NotNull } from "kysely";
 import { db } from "~/db/sql";
-import type { DB } from "~/db/tables";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import type { DB, TablesInsertable } from "~/db/tables";
+import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
+import { invariant } from "~/utils/invariant";
+import {
+	commonUserSelect,
+	jsonArrayFrom,
+	jsonObjectFrom,
+	peakXpOverallSql,
+} from "~/utils/kysely.server";
+import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
+import { findSplatoon3XpBadgeValue } from "./badges-utils";
 
 const addPermissions = <T extends { managers: { userId: number }[] }>(
 	row: T,
@@ -17,7 +25,7 @@ const withAuthor = (eb: ExpressionBuilder<DB, "Badge">) => {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("User")
-			.select(COMMON_USER_FIELDS)
+			.select((userEb) => commonUserSelect(userEb))
 			.whereRef("User.id", "=", "Badge.authorId"),
 	).as("author");
 };
@@ -27,29 +35,44 @@ const withManagers = (eb: ExpressionBuilder<DB, "Badge">) => {
 		eb
 			.selectFrom("BadgeManager")
 			.innerJoin("User", "BadgeManager.userId", "User.id")
-			.select(["userId", ...COMMON_USER_FIELDS])
+			.select((managerEb) => ["userId", ...commonUserSelect(managerEb)])
 			.whereRef("BadgeManager.badgeId", "=", "Badge.id"),
 	).as("managers");
 };
 
-const withOwners = (eb: ExpressionBuilder<DB, "Badge">) => {
+// a constant badgeId (not correlated to "Badge"."id") lets SQLite push the predicate into both arms of the BadgeOwner view
+const withOwners = (eb: ExpressionBuilder<DB, "Badge">, badgeId: number) => {
 	return jsonArrayFrom(
 		eb
 			.selectFrom("BadgeOwner")
 			.innerJoin("User", "BadgeOwner.userId", "User.id")
 			.select(({ fn }) => [
-				fn.count<number>("BadgeOwner.badgeId").as("count"),
+				fn.sum<number>("BadgeOwner.count").as("count"),
 				"User.id",
 				"User.discordId",
 				"User.username",
 			])
-			.whereRef("BadgeOwner.badgeId", "=", "Badge.id")
+			.where("BadgeOwner.badgeId", "=", badgeId)
 			.groupBy("User.id")
 			.orderBy("count", "desc"),
 	).as("owners");
 };
 
-export async function all() {
+/** Adds a badge. `authorId` is who made it, `null` for a legacy badge. */
+export function insert(
+	args: Pick<
+		TablesInsertable["Badge"],
+		"code" | "displayName" | "hue" | "authorId"
+	>,
+) {
+	return db
+		.insertInto("Badge")
+		.values(args)
+		.returning("id")
+		.executeTakeFirstOrThrow();
+}
+
+export async function findAll() {
 	const rows = await db
 		.selectFrom("Badge")
 		.select(({ eb }) => [
@@ -75,7 +98,7 @@ export async function findById(badgeId: number) {
 			"Badge.hue",
 			withAuthor(eb),
 			withManagers(eb),
-			withOwners(eb),
+			withOwners(eb, badgeId),
 		])
 		.where("id", "=", badgeId)
 		.executeTakeFirst();
@@ -107,6 +130,48 @@ export function findManagedByUserId(userId: number) {
 		.execute();
 }
 
+/**
+ * Takes a constant userId on purpose: correlating to an outer "User"."id" would stop SQLite
+ * pushing the predicate into both arms of the BadgeOwner view, materializing the full view.
+ */
+export async function findByOwnerUserId(
+	userId: number,
+	favoriteBadgeIds: number[],
+) {
+	const rows = await db
+		.selectFrom("BadgeOwner")
+		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
+		.innerJoin("User", "User.id", "BadgeOwner.userId")
+		.select(({ fn }) => [
+			fn.sum<number>("BadgeOwner.count").as("count"),
+			"Badge.id",
+			"Badge.displayName",
+			"Badge.code",
+			"Badge.hue",
+			"User.patronTier",
+		])
+		.where("BadgeOwner.userId", "=", userId)
+		.groupBy("BadgeOwner.badgeId")
+		.execute();
+
+	if (rows.length === 0) return [];
+
+	return sortBadgesByFavorites({
+		favoriteBadgeIds,
+		badges: rows.map(({ patronTier: _, ...badge }) => badge),
+		patronTier: rows[0].patronTier,
+	});
+}
+
+export function findByAuthorUserId(userId: number) {
+	return db
+		.selectFrom("Badge")
+		.select(["Badge.id", "Badge.displayName", "Badge.code", "Badge.hue"])
+		.where("Badge.authorId", "=", userId)
+		.groupBy("Badge.id")
+		.execute();
+}
+
 export function replaceManagers({
 	badgeId,
 	managerIds,
@@ -120,17 +185,15 @@ export function replaceManagers({
 			.where("badgeId", "=", badgeId)
 			.execute();
 
-		if (managerIds.length > 0) {
-			await trx
-				.insertInto("BadgeManager")
-				.values(
-					managerIds.map((userId) => ({
-						badgeId,
-						userId,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("BadgeManager")
+			.values(
+				managerIds.map((userId) => ({
+					badgeId,
+					userId,
+				})),
+			)
+			.execute();
 	});
 }
 
@@ -147,16 +210,59 @@ export function replaceOwners({
 			.where("badgeId", "=", badgeId)
 			.execute();
 
-		if (ownerIds.length > 0) {
-			await trx
-				.insertInto("TournamentBadgeOwner")
-				.values(
-					ownerIds.map((userId) => ({
-						badgeId,
-						userId,
-					})),
-				)
-				.execute();
+		const counts = new Map<number, number>();
+		for (const userId of ownerIds) {
+			counts.set(userId, (counts.get(userId) ?? 0) + 1);
 		}
+
+		await trx
+			.insertInto("TournamentBadgeOwner")
+			.values(
+				Array.from(counts, ([userId, count]) => ({
+					badgeId,
+					userId,
+					count,
+				})),
+			)
+			.execute();
+	});
+}
+
+export async function syncXPBadges() {
+	return db.transaction().execute(async (trx) => {
+		const badgeIdByValue = new Map<number, number>();
+		for (const value of SPLATOON_3_XP_BADGE_VALUES) {
+			const badge = await trx
+				.selectFrom("Badge")
+				.select("id")
+				.where("code", "=", String(value))
+				.executeTakeFirst();
+
+			invariant(badge, `Badge ${value} not found`);
+
+			badgeIdByValue.set(value, badge.id);
+		}
+
+		await trx
+			.deleteFrom("TournamentBadgeOwner")
+			.where("badgeId", "in", [...badgeIdByValue.values()])
+			.execute();
+
+		const userTopXPowers = await trx
+			.selectFrom("SplatoonPlayer")
+			.select(["userId", peakXpOverallSql().as("peakXp")])
+			.where("userId", "is not", null)
+			.where("peakXp", "is not", null)
+			.$narrowType<{ userId: NotNull; peakXp: NotNull }>()
+			.execute();
+
+		const badgeOwners = userTopXPowers.flatMap(({ userId, peakXp }) => {
+			const badgeValue = findSplatoon3XpBadgeValue(peakXp!);
+			const badgeId = badgeValue ? badgeIdByValue.get(badgeValue) : undefined;
+
+			return badgeId ? [{ badgeId, userId }] : [];
+		});
+
+		await trx.insertInto("TournamentBadgeOwner").values(badgeOwners).execute();
 	});
 }

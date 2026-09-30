@@ -1,5 +1,6 @@
 import type { CacheEntry } from "@epic-web/cachified";
-import { LRUCache } from "lru-cache";
+import { ServerConfig } from "~/config.server";
+import { LRUCache } from "~/modules/cache";
 
 declare global {
 	// This preserves the LRU cache during development
@@ -9,10 +10,9 @@ declare global {
 // biome-ignore lint/suspicious/noAssignInExpressions: trick to only create one
 export const cache = (global.__lruCache = global.__lruCache
 	? global.__lruCache
-	: new LRUCache<string, CacheEntry<unknown>>({ max: 5000 }));
+	: new LRUCache<string, CacheEntry<unknown>>({ max: 6000 }));
 
-export const ttl = (ms: number) =>
-	process.env.DISABLE_CACHE === "true" ? 0 : ms;
+export const ttl = (ms: number) => (ServerConfig.disableCache ? 0 : ms);
 
 export function syncCached<T>(key: string, getFreshValue: () => T) {
 	if (cache.has(key)) {
@@ -29,4 +29,5 @@ export const IN_MILLISECONDS = {
 	HALF_HOUR: 30 * 60 * 1000,
 	ONE_HOUR: 60 * 60 * 1000,
 	TWO_HOURS: 2 * 60 * 60 * 1000,
+	TWO_DAYS: 2 * 24 * 60 * 60 * 1000,
 };

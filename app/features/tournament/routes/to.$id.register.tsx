@@ -1,179 +1,105 @@
-import { Form, Link, useFetcher, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import Compressor from "compressorjs";
-import Markdown from "markdown-to-jsx";
+import { Check, UserRound, UsersRound, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
+import { useFetcher, useLoaderData } from "react-router";
+import * as R from "remeda";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
-import { Avatar } from "~/components/Avatar";
-import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
-	SendouTab,
-	SendouTabList,
-	SendouTabPanel,
-	SendouTabs,
-} from "~/components/elements/Tabs";
+	SendouSelect,
+	SendouSelectItem,
+	SendouSelectItemSection,
+} from "~/components/elements/Select";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { FriendCodeInput } from "~/components/FriendCodeInput";
-import { Image, ModeImage } from "~/components/Image";
-import { Input } from "~/components/Input";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { ClockIcon } from "~/components/icons/Clock";
-import { CrossIcon } from "~/components/icons/Cross";
-import { DiscordIcon } from "~/components/icons/Discord";
-import { TrashIcon } from "~/components/icons/Trash";
-import { UserIcon } from "~/components/icons/User";
-import { Label } from "~/components/Label";
+import { FriendCodePopover } from "~/components/FriendCodePopover";
+import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { containerClassName } from "~/components/Main";
-import { MapPoolStages } from "~/components/MapPoolSelector";
-import { Section } from "~/components/Section";
 import { SubmitButton } from "~/components/SubmitButton";
-import TimePopover from "~/components/TimePopover";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
-import { imgTypeToDimensions } from "~/features/img-upload/upload-constants";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { ModeMapPoolPicker } from "~/features/sendouq-settings/components/ModeMapPoolPicker";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	AvailabilityMemberRow,
+	type AvailabilityPanelEntry,
+	AvailabilityRowDetail,
+	type AvailabilityRowStatus,
+	AvailabilityStatusDots,
+	AvailabilitySummary,
+	AvailabilityWindowText,
+	availabilityRowStatus,
+	RegistrationAvailabilityPanel,
+} from "~/features/availability/components/RegistrationAvailabilityPanel";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
+import { getMemberRoleType } from "~/features/team/team-utils";
+import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
+import {
+	type CounterPickMapPool,
+	CounterPickMapPoolPicker,
+	MapPoolValidationStatusMessage,
+	useCounterPickMapPoolValidationStatus,
+} from "~/features/tournament/components/CounterPickMapPoolPicker";
+import { useTournament } from "~/features/tournament/tournament-context";
+import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import { LUTI_ORGANIZATION_ID } from "~/features/tournament-organization/tournament-organization-constants";
+import { FormField } from "~/form/FormField";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useIsMounted } from "~/hooks/useIsMounted";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
+import { useHydrated } from "~/hooks/useHydrated";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LOG_IN_URL,
-	mapsPageWithMapPool,
-	navIconUrl,
 	SENDOU_INK_BASE_URL,
-	SENDOU_INK_DISCORD_URL,
-	tournamentJoinPage,
-	tournamentOrganizationPage,
-	tournamentSubsPage,
 	userEditProfilePage,
-	userPage,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
-import { AlertIcon } from "../../../components/icons/Alert";
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
-import { TOURNAMENT } from "../tournament-constants";
 import {
-	type CounterPickValidationStatus,
-	validateCounterPickMapPool,
-} from "../tournament-utils";
-import { useTournament } from "./to.$id";
-export { loader, action };
+	type RegisterTeamFormValues,
+	registerTeamFormSchema,
+} from "../tournament-register-schemas";
+import {
+	addPlayerSchema,
+	addTeamPlayersSchema,
+	checkInSchema,
+	updateMapPoolSchema,
+} from "../tournament-schemas";
+import type { Route } from "./+types/to.$id.register";
+import styles from "./to.$id.register.module.css";
 
-export default function TournamentRegisterPage() {
-	const user = useUser();
-	const isMounted = useIsMounted();
-	const tournament = useTournament();
+export { action, loader };
 
-	const startsAtEvenHour = tournament.ctx.startTime.getMinutes() === 0;
+const QUICK_ADD_STATUS_ORDER: Record<AvailabilityRowStatus, number> = {
+	available: 0,
+	partial: 1,
+	unknown: 2,
+	hidden: 3,
+	busy: 4,
+	unavailable: 5,
+};
 
-	const showAvatarPendingApprovalText =
-		tournament.ctx.logoUrl &&
-		!tournament.ctx.logoValidatedAt &&
-		tournament.isOrganizer(user);
-
-	return (
-		<div className={clsx("stack lg", containerClassName("normal"))}>
-			<div className="tournament__logo-container">
-				<img
-					src={tournament.ctx.logoSrc}
-					alt=""
-					className="tournament__logo"
-					width={124}
-					height={124}
-				/>
-				<div>
-					<div className="tournament__title">{tournament.ctx.name}</div>
-					<div>
-						{tournament.ctx.organization ? (
-							<Link
-								to={tournamentOrganizationPage({
-									organizationSlug: tournament.ctx.organization.slug,
-									tournamentName: tournament.ctx.name,
-								})}
-								className="stack horizontal sm items-center text-xs text-main-forced"
-							>
-								<Avatar
-									url={
-										tournament.ctx.organization.avatarUrl
-											? userSubmittedImage(
-													tournament.ctx.organization.avatarUrl,
-												)
-											: undefined
-									}
-									size="xxs"
-								/>
-								{tournament.ctx.organization.name}
-							</Link>
-						) : (
-							<Link
-								to={userPage(tournament.ctx.author)}
-								className="stack horizontal xs items-center text-lighter"
-							>
-								<UserIcon className="tournament__info__icon" />{" "}
-								{tournament.ctx.author.username}
-							</Link>
-						)}
-					</div>
-					{!tournament.isLeagueSignup ? (
-						<div className="tournament__by mt-2">
-							<div className="stack horizontal xs items-center">
-								<ClockIcon className="tournament__info__icon" />{" "}
-								{isMounted ? (
-									<TimePopover
-										time={tournament.ctx.startTime}
-										options={{
-											minute: startsAtEvenHour ? undefined : "numeric",
-											hour: "numeric",
-											day: "numeric",
-											month: "long",
-										}}
-									/>
-								) : null}
-							</div>
-						</div>
-					) : null}
-					<div className="stack horizontal sm mt-1">
-						{tournament.ranked ? (
-							<div className="tournament__badge tournament__badge__ranked">
-								Ranked
-							</div>
-						) : (
-							<div className="tournament__badge tournament__badge__unranked">
-								Unranked
-							</div>
-						)}
-						<div className="tournament__badge tournament__badge__modes">
-							{tournament.modesIncluded.map((mode) => (
-								<ModeImage key={mode} mode={mode} size={16} />
-							))}
-						</div>
-					</div>
-				</div>
-			</div>
-			{showAvatarPendingApprovalText ? (
-				<div className="text-warning text-sm font-semi-bold">
-					Tournament logo pending moderator review. Will be shown publicly once
-					approved.
-				</div>
-			) : null}
-			<TournamentRegisterInfoTabs />
-		</div>
-	);
+interface QuickAddPlayer {
+	id: number;
+	username: string;
+	teamId: number | null;
+	role: MemberRole | null;
+	roleType: MemberRoleType | null;
 }
 
-const TABS = ["description", "rules", "register"] as const;
-type RegisterPageTab = (typeof TABS)[number];
+export const middleware: Route.MiddlewareFunction[] = [timezoneMiddleware];
 
-function TournamentRegisterInfoTabs() {
+export const handle: SendouRouteHandle = {
+	i18n: ["schedule"],
+};
+
+export default function TournamentRegisterPage() {
 	const user = useUser();
 	const tournament = useTournament();
 	const { t } = useTranslation(["tournament"]);
@@ -181,18 +107,8 @@ function TournamentRegisterInfoTabs() {
 	const teamMemberOf = tournament.teamMemberOfByUser(user);
 	const teamOwned = tournament.ownedTeamByUser(user);
 	const isRegularMemberOfATeam = teamMemberOf && !teamOwned;
-
-	const defaultTab = (): RegisterPageTab => {
-		if (tournament.hasStarted || !teamOwned) return "description";
-
-		return "register";
-	};
-	const [tabKey, setTabKey] = useSearchParamState({
-		defaultValue: defaultTab(),
-		name: "tab",
-		revive: (val) =>
-			TABS.includes(val as RegisterPageTab) ? (val as RegisterPageTab) : null,
-	});
+	const registrationClosedForNonParticipant =
+		!tournament.registrationOpen && !teamMemberOf;
 
 	const showAddIGNAlert =
 		tournament.ctx.settings.requireInGameNames &&
@@ -201,112 +117,92 @@ function TournamentRegisterInfoTabs() {
 		!user?.inGameName;
 
 	return (
-		<div>
-			<SendouTabs
-				selectedKey={tabKey}
-				onSelectionChange={(key) => setTabKey(key as RegisterPageTab)}
-			>
-				<SendouTabList sticky>
-					<SendouTab id="description">Description</SendouTab>
-					{tournament.ctx.rules ? (
-						<SendouTab id="rules">Rules</SendouTab>
-					) : null}
-					{!tournament.hasStarted ? (
-						<SendouTab id="register" data-testid="register-tab">
-							Register
-						</SendouTab>
-					) : null}
-				</SendouTabList>
-
-				<SendouTabPanel id="description">
-					<div className="stack lg">
-						{tournament.ctx.discordUrl ? (
-							<div className="w-max">
-								<LinkButton
-									to={tournament.ctx.discordUrl}
-									variant="outlined"
-									size="small"
-									isExternal
-									icon={<DiscordIcon />}
-								>
-									Join the Discord
-								</LinkButton>
-							</div>
-						) : null}
-
-						<div className="tournament__info__description">
-							<Markdown options={{ wrapper: React.Fragment }}>
-								{tournament.ctx.description ?? ""}
-							</Markdown>
-						</div>
-						<TOPickedMapPoolInfo />
-						<TiebreakerMapPoolInfo />
+		<div className={clsx("stack lg", containerClassName("normal"))}>
+			{tournament.hasStarted && teamMemberOf ? (
+				<div className="stack md">
+					<Alert>{t("tournament:pre.startedNoEdit")}</Alert>
+					<RegistrationForms readOnly />
+				</div>
+			) : isRegularMemberOfATeam ? (
+				<div className="stack md">
+					<Alert>{t("tournament:pre.captainOnlyEdit")}</Alert>
+					<div className="stack md items-center">
+						<LeaveTeamControl />
 					</div>
-				</SendouTabPanel>
-
-				{tournament.ctx.rules ? (
-					<SendouTabPanel id="rules">
-						<div className="tournament__info__description">
-							<Markdown options={{ wrapper: React.Fragment }}>
-								{tournament.ctx.rules ?? ""}
-							</Markdown>
+					<RegistrationForms readOnly />
+				</div>
+			) : registrationClosedForNonParticipant ? (
+				<Alert>{t("tournament:pre.registrationClosed")}</Alert>
+			) : showAddIGNAlert ? (
+				<div>
+					<Alert variation="WARNING">
+						<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
+							{t("tournament:ign.required")}{" "}
+							<LinkButton to={userEditProfilePage(user)} size="small">
+								{t("tournament:ign.editProfile")}
+							</LinkButton>
 						</div>
-					</SendouTabPanel>
-				) : null}
-
-				{!tournament.hasStarted ? (
-					<SendouTabPanel id="register">
-						<div className="stack lg">
-							{isRegularMemberOfATeam ? (
-								<div className="stack md items-center">
-									<Alert>{t("tournament:pre.inATeam")}</Alert>
-									{teamMemberOf && teamMemberOf.checkIns.length === 0 ? (
-										<FormWithConfirm
-											dialogHeading={`Leave "${tournament.teamMemberOfByUser(user)?.name}"?`}
-											fields={[["_action", "LEAVE_TEAM"]]}
-											submitButtonText="Leave"
-										>
-											<SendouButton
-												className="small-text"
-												variant="minimal-destructive"
-												type="submit"
-											>
-												Leave the team
-											</SendouButton>
-										</FormWithConfirm>
-									) : null}
-								</div>
-							) : showAddIGNAlert ? (
-								<div>
-									<Alert variation="WARNING">
-										<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
-											This tournament requires you to have an in-game name set{" "}
-											<LinkButton to={userEditProfilePage(user)} size="small">
-												Edit profile
-											</LinkButton>
-										</div>
-									</Alert>
-								</div>
-							) : (
-								<RegistrationForms />
-							)}
-							{user &&
-							!tournament.teamMemberOfByUser(user) &&
-							tournament.canAddNewSubPost &&
-							!showAddIGNAlert &&
-							!tournament.hasStarted ? (
-								<Link
-									to={tournamentSubsPage(tournament.ctx.id)}
-									className="text-xs text-center"
-								>
-									{t("tournament:pre.sub.prompt")}
-								</Link>
-							) : null}
-						</div>
-					</SendouTabPanel>
-				) : null}
-			</SendouTabs>
+					</Alert>
+				</div>
+			) : (
+				<RegistrationForms />
+			)}
 		</div>
+	);
+}
+
+function LeaveTeamControl() {
+	const { t } = useTranslation(["tournament", "common"]);
+	const data = useLoaderData<TournamentRegisterPageLoader>();
+	const user = useUser();
+	const tournament = useTournament();
+
+	const teamMemberOf = tournament.teamMemberOfByUser(user);
+	if (!user || !teamMemberOf) return null;
+
+	const checkedIn = teamMemberOf.checkIns.length > 0;
+	const organizerAdded = Boolean(
+		data?.ownTeam?.members.some(
+			(member) => member.userId === user.id && member.isOrganizerAdded,
+		),
+	);
+	const cannotLeave =
+		organizerAdded || checkedIn || !tournament.registrationOpen;
+
+	if (cannotLeave) {
+		return (
+			<SendouPopover
+				trigger={
+					<SendouButton className="small-text" variant="minimal-destructive">
+						{t("tournament:pre.leave.button")}
+					</SendouButton>
+				}
+			>
+				{organizerAdded
+					? t("tournament:pre.leave.cant.organizerAdded")
+					: checkedIn
+						? t("tournament:pre.leave.cant.checkedIn")
+						: t("tournament:pre.leave.cant.registrationClosed")}
+			</SendouPopover>
+		);
+	}
+
+	return (
+		<FormWithConfirm
+			dialogHeading={t("tournament:pre.leave.confirm", {
+				teamName: teamMemberOf.name,
+			})}
+			fields={[["_action", "LEAVE_TEAM"]]}
+			submitButtonText={t("common:actions.leave")}
+		>
+			<SendouButton
+				className="small-text"
+				variant="minimal-destructive"
+				type="submit"
+			>
+				{t("tournament:pre.leave.button")}
+			</SendouButton>
+		</FormWithConfirm>
 	);
 }
 
@@ -322,27 +218,27 @@ function PleaseLogIn() {
 	);
 }
 
-function RegistrationForms() {
+function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const user = useUser();
 	const tournament = useTournament();
 
-	const ownTeam = tournament.ownedTeamByUser(user);
-	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
+	if (readOnly) {
+		return <ReadOnlyRegistrationForms />;
+	}
 
-	if (!user && !tournament.isInvitational) {
+	const ownTeam = tournament.ownedTeamByUser(user)
+		? (data?.ownTeam ?? null)
+		: null;
+	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
+	const hasFriendCodeSet = Boolean(user?.friendCode);
+
+	if (!user) {
 		return <PleaseLogIn />;
 	}
 
-	const showRegistrationProgress = () => {
-		if (ownTeam) return true;
-
-		return !tournament.isInvitational;
-	};
-
 	const showRegisterNewTeam = () => {
 		if (ownTeam) return true;
-		if (tournament.isInvitational) return false;
 		if (!tournament.registrationOpen) return false;
 
 		return !tournament.regularCheckInHasEnded;
@@ -350,35 +246,60 @@ function RegistrationForms() {
 
 	return (
 		<div className="stack lg">
-			{showRegistrationProgress() ? (
+			{showRegisterNewTeam() ? <FriendCode /> : null}
+			{hasFriendCodeSet ? (
 				<RegistrationProgress
 					checkedIn={ownTeamCheckedIn}
 					name={ownTeam?.name}
 					mapPool={data?.mapPool ?? undefined}
 					members={ownTeam?.members}
 				/>
-			) : (
-				<Alert>
-					This tournament is invitational. Tournament organizer adds all teams.
-				</Alert>
-			)}
-			{showRegisterNewTeam() ? (
+			) : null}
+			{showRegisterNewTeam() && hasFriendCodeSet ? (
+				<TeamInfo
+					ownTeam={ownTeam}
+					canUnregister={Boolean(
+						ownTeam && !ownTeamCheckedIn && !tournament.isInvitational,
+					)}
+				/>
+			) : null}
+			{tournament.isLeague &&
+			tournament.ctx.organization?.id === LUTI_ORGANIZATION_ID ? (
+				<GoogleFormsLink />
+			) : null}
+			{ownTeam && hasFriendCodeSet ? (
 				<>
-					<FriendCode />
-					{user?.friendCode ? (
-						<TeamInfo
-							ownTeam={ownTeam}
-							canUnregister={Boolean(ownTeam && !ownTeamCheckedIn)}
-						/>
+					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
+					{tournament.teamsPrePickMaps ? (
+						<TeamCounterPickMapPoolPicker key={tournament.ctx.id} />
 					) : null}
 				</>
 			) : null}
-			{tournament.isLeagueSignup ? <GoogleFormsLink /> : null}
-			{ownTeam ? (
-				<>
-					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
-					{tournament.teamsPrePickMaps ? <CounterPickMapPoolPicker /> : null}
-				</>
+		</div>
+	);
+}
+
+function ReadOnlyRegistrationForms() {
+	const data = useLoaderData<TournamentRegisterPageLoader>();
+	const tournament = useTournament();
+
+	const team = data?.ownTeam;
+	if (!team) return null;
+
+	const checkedIn = team.checkIns.length > 0;
+
+	return (
+		<div className="stack lg">
+			<RegistrationProgress
+				checkedIn={checkedIn}
+				name={team.name}
+				mapPool={team.mapPool ?? undefined}
+				members={team.members}
+			/>
+			<TeamInfo ownTeam={team} canUnregister={false} readOnly />
+			<FillRoster ownTeam={team} ownTeamCheckedIn={checkedIn} readOnly />
+			{tournament.teamsPrePickMaps ? (
+				<TeamCounterPickMapPoolPicker readOnly mapPool={team.mapPool ?? []} />
 			) : null}
 		</div>
 	);
@@ -395,9 +316,14 @@ function RegistrationProgress({
 	members?: unknown[];
 	mapPool?: unknown[];
 }) {
-	const { i18n, t } = useTranslation(["tournament"]);
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
-	const isMounted = useIsMounted();
+	const { formatter: registrationClosesFormatter } = useDateTimeFormat({
+		minute: "numeric",
+		hour: "numeric",
+		day: "numeric",
+		month: "numeric",
+	});
 
 	const completedIfTruthy = (condition: unknown) =>
 		condition ? "completed" : "incomplete";
@@ -419,42 +345,31 @@ function RegistrationProgress({
 					status: completedIfTruthy(mapPool && mapPool.length > 0),
 				}
 			: null,
-		!tournament.isLeagueSignup
+		!tournament.isLeague
 			? {
 					name: t("tournament:pre.steps.check-in"),
 					status: completedIfTruthy(checkedIn),
-				}
-			: null,
-		tournament.isLeagueSignup
-			? {
-					name: "Google Sheet",
-					status: "notice" as const,
 				}
 			: null,
 	].filter((step) => step !== null);
 
 	const regClosesBeforeStart =
 		tournament.registrationClosesAt.getTime() !==
-		tournament.ctx.startTime.getTime();
+		tournament.ctx.startsAt.getTime();
 
-	const registrationClosesAtString = isMounted
-		? (tournament.isLeagueSignup
-				? tournament.ctx.startTime
-				: tournament.registrationClosesAt
-			).toLocaleTimeString(i18n.language, {
-				minute: "numeric",
-				hour: "numeric",
-				day: "2-digit",
-				month: "2-digit",
-			})
-		: "";
+	const registrationClosesAtString =
+		registrationClosesFormatter.format(
+			tournament.isLeague
+				? tournament.ctx.startsAt
+				: tournament.registrationClosesAt,
+		) ?? "";
 
 	return (
 		<div>
-			<h3 className="tournament__section-header text-center">
+			<h3 className={clsx(styles.sectionHeader, "text-center")}>
 				{t("tournament:pre.steps.header")}
 			</h3>
-			<section className="tournament__section stack md">
+			<section className={clsx(styles.section, "stack md")}>
 				<div className="stack horizontal lg justify-center text-sm font-semi-bold">
 					{steps.map((step, i) => {
 						return (
@@ -464,30 +379,21 @@ function RegistrationProgress({
 							>
 								{step.name}
 								{step.status === "completed" ? (
-									<CheckmarkIcon
-										className="tournament__section__icon fill-success"
-										testId={`checkmark-icon-num-${i + 1}`}
+									<Check
+										className="color-success"
+										data-testid={`checkmark-icon-num-${i + 1}`}
 									/>
-								) : step.status === "notice" ? (
-									<AlertIcon className="tournament__section__icon fill-info p-1" />
 								) : (
-									<CrossIcon className="tournament__section__icon fill-error" />
+									<X className="color-error" />
 								)}
 							</div>
 						);
 					})}
 				</div>
-				{!tournament.isLeagueSignup ? (
+				{!tournament.isLeague ? (
 					<CheckIn
 						canCheckIn={
 							steps.filter((step) => step.status === "incomplete").length === 1
-						}
-						status={
-							tournament.regularCheckInIsOpen
-								? "OPEN"
-								: tournament.regularCheckInHasEnded
-									? "OVER"
-									: "UPCOMING"
 						}
 						startDate={tournament.regularCheckInStartsAt}
 						endDate={tournament.regularCheckInEndsAt}
@@ -495,10 +401,12 @@ function RegistrationProgress({
 					/>
 				) : null}
 			</section>
-			<div className="tournament__section__warning">
-				{regClosesBeforeStart || tournament.isLeagueSignup ? (
+			<div className={styles.sectionWarning}>
+				{regClosesBeforeStart || tournament.isLeague ? (
 					<span className="text-warning">
-						Registration closes at {registrationClosesAtString}
+						{t("tournament:pre.registrationClosesAt", {
+							time: registrationClosesAtString,
+						})}
 					</span>
 				) : (
 					t("tournament:pre.footer")
@@ -509,45 +417,35 @@ function RegistrationProgress({
 }
 
 function CheckIn({
-	status,
 	canCheckIn,
 	startDate,
 	endDate,
 	checkedIn,
 }: {
-	status: "OVER" | "OPEN" | "UPCOMING";
 	canCheckIn: boolean;
 	startDate: Date;
 	endDate: Date;
 	checkedIn?: boolean;
 }) {
-	const { t, i18n } = useTranslation(["tournament"]);
-	const isMounted = useIsMounted();
-	const fetcher = useFetcher();
+	const { t } = useTranslation(["tournament"]);
+	const isHydrated = useHydrated();
+	const { formatter: checkInFormatter } = useDateTimeFormat({
+		minute: "numeric",
+		hour: "numeric",
+		day: "2-digit",
+		month: "2-digit",
+	});
 
-	useAutoRerender();
+	const now = useAutoRerender();
+	const status: "OVER" | "OPEN" | "UPCOMING" =
+		now > endDate ? "OVER" : now >= startDate ? "OPEN" : "UPCOMING";
 
-	const checkInStartsString = isMounted
-		? startDate.toLocaleTimeString(i18n.language, {
-				minute: "numeric",
-				hour: "numeric",
-				day: "2-digit",
-				month: "2-digit",
-			})
-		: "";
-
-	const checkInEndsString = isMounted
-		? endDate.toLocaleTimeString(i18n.language, {
-				minute: "numeric",
-				hour: "numeric",
-				day: "2-digit",
-				month: "2-digit",
-			})
-		: "";
+	const checkInStartsString = checkInFormatter.format(startDate) ?? "";
+	const checkInEndsString = checkInFormatter.format(endDate) ?? "";
 
 	if (status === "UPCOMING") {
 		return (
-			<div className={clsx("text-center text-xs", { invisible: !isMounted })}>
+			<div className={clsx("text-center text-xs", { invisible: !isHydrated })}>
 				{t("tournament:pre.checkIn.range", {
 					start: checkInStartsString,
 					finish: checkInEndsString,
@@ -589,104 +487,58 @@ function CheckIn({
 	}
 
 	return (
-		<fetcher.Form method="post" className="stack items-center">
-			<SubmitButton
-				size="small"
-				_action="CHECK_IN"
-				state={fetcher.state}
-				testId="check-in-button"
-			>
-				{t("tournament:pre.checkIn.button")}
-			</SubmitButton>
-		</fetcher.Form>
+		<ActionButton
+			schema={checkInSchema}
+			action="CHECK_IN"
+			formClassName="stack items-center"
+			size="small"
+			testId="check-in-button"
+		>
+			{t("tournament:pre.checkIn.button")}
+		</ActionButton>
 	);
 }
 
 function TeamInfo({
 	ownTeam,
 	canUnregister,
+	readOnly = false,
 }: {
-	ownTeam?: TournamentDataTeam | null;
+	ownTeam?: TournamentTeamFull | null;
 	canUnregister: boolean;
+	readOnly?: boolean;
 }) {
-	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const { t } = useTranslation(["tournament", "common"]);
-	const fetcher = useFetcher();
 	const tournament = useTournament();
-	const [teamName, setTeamName] = React.useState(ownTeam?.name ?? "");
-	const user = useUser();
-	const ref = React.useRef<HTMLFormElement>(null);
-	const [signUpWithTeamId, setSignUpWithTeamId] = React.useState(
-		() => tournament.ownedTeamByUser(user)?.team?.id ?? null,
-	);
-	const [uploadedAvatar, setUploadedAvatar] = React.useState<File | null>(null);
 
-	const handleSignUpWithTeamChange = (teamId: number | null) => {
-		if (!teamId) {
-			setSignUpWithTeamId(null);
-		} else {
-			setSignUpWithTeamId(teamId);
-			const teamName = data?.teams.find((team) => team.id === teamId)?.name;
-			invariant(teamName, "team name should exist");
-
-			setTeamName(teamName);
-		}
+	const defaultValues: Partial<RegisterTeamFormValues> = {
+		teamId: readOnly ? null : ownTeam?.team ? String(ownTeam.team.id) : null,
+		pickUpName: readOnly
+			? (ownTeam?.name ?? "")
+			: ownTeam?.team
+				? null
+				: (ownTeam?.name ?? ""),
+		logo:
+			!ownTeam?.team &&
+			ownTeam?.pickupAvatarUrl &&
+			typeof ownTeam?.avatarImgId === "number"
+				? {
+						type: "EXISTING",
+						imgId: ownTeam.avatarImgId,
+						url: ownTeam.pickupAvatarUrl,
+					}
+				: null,
+		prefersNotToHost: Boolean(ownTeam?.prefersNotToHost),
 	};
-
-	const handleSubmit = () => {
-		const formData = new FormData(ref.current!);
-
-		if (uploadedAvatar) {
-			// replace with the compressed version
-			formData.delete("img");
-			formData.append("img", uploadedAvatar, uploadedAvatar.name);
-		}
-
-		fetcher.submit(formData, {
-			encType: uploadedAvatar ? "multipart/form-data" : undefined,
-			method: "post",
-		});
-	};
-
-	const submitButtonDisabled = () => {
-		if (fetcher.state !== "idle") return true;
-
-		return false;
-	};
-
-	const avatarUrl = (() => {
-		if (signUpWithTeamId) {
-			const teamToSignUpWith = data?.teams.find(
-				(team) => team.id === signUpWithTeamId,
-			);
-			return teamToSignUpWith?.logoUrl
-				? userSubmittedImage(teamToSignUpWith.logoUrl)
-				: null;
-		}
-		if (uploadedAvatar) return URL.createObjectURL(uploadedAvatar);
-		if (ownTeam?.pickupAvatarUrl) {
-			return userSubmittedImage(ownTeam.pickupAvatarUrl);
-		}
-
-		return null;
-	})();
-
-	const canEditAvatar =
-		tournament.registrationOpen &&
-		!signUpWithTeamId &&
-		uploadedAvatar &&
-		!ownTeam?.pickupAvatarUrl;
-
-	const canDeleteAvatar = ownTeam?.pickupAvatarUrl;
 
 	return (
 		<div>
 			<div className="stack horizontal justify-between">
-				<h3 className="tournament__section-header">
-					2. {t("tournament:pre.info.header")}
+				<h3 className={styles.sectionHeader}>
+					1. {t("tournament:pre.info.header")}
 				</h3>
 				{canUnregister &&
-				tournament.isLeagueSignup &&
+				tournament.isLeague &&
 				!tournament.registrationOpen ? (
 					<SendouPopover
 						trigger={
@@ -699,8 +551,7 @@ function TeamInfo({
 							</SendouButton>
 						}
 					>
-						Unregistration from a league after the registration has ended is
-						handled by the organizers
+						{t("tournament:pre.info.unregister.league")}
 					</SendouPopover>
 				) : canUnregister ? (
 					<FormWithConfirm
@@ -718,227 +569,124 @@ function TeamInfo({
 					</FormWithConfirm>
 				) : null}
 			</div>
-			<section className="tournament__section">
-				<Form method="post" className="stack md items-center" ref={ref}>
-					<input type="hidden" name="_action" value="UPSERT_TEAM" />
-					{signUpWithTeamId ? (
-						<input type="hidden" name="teamId" value={signUpWithTeamId} />
-					) : null}
-					<div className="stack sm-plus items-center">
-						{data && data.teams.length > 0 && tournament.registrationOpen ? (
-							<div className="tournament__section__input-container">
-								<Label htmlFor="signingUpAs">Team signing up as</Label>
-								<select
-									id="signingUpAs"
-									onChange={(e) => {
-										if (e.target.value === "") {
-											handleSignUpWithTeamChange(null);
-										} else {
-											handleSignUpWithTeamChange(Number(e.target.value));
-										}
-									}}
-								>
-									<option value="">Sign up with pick-up</option>
-									{data.teams.map((team) => {
-										return (
-											<option key={team.id} value={team.id}>
-												{team.name}
-											</option>
-										);
-									})}
-								</select>
-							</div>
-						) : null}
-
-						{!signUpWithTeamId ? (
-							<div className="tournament__section__input-container">
-								<Label htmlFor="teamName">
-									{data && data.teams.length > 0
-										? "Pick-up name"
-										: t("tournament:pre.steps.name")}
-								</Label>
-								<Input
-									name="teamName"
-									id="teamName"
-									required
-									maxLength={TOURNAMENT.TEAM_NAME_MAX_LENGTH}
-									value={teamName}
-									onChange={(e) => setTeamName(e.target.value)}
-									readOnly={
-										!tournament.registrationOpen || Boolean(signUpWithTeamId)
-									}
-								/>
-							</div>
-						) : (
-							<input type="hidden" name="teamName" value={teamName} />
-						)}
-						{tournament.registrationOpen || avatarUrl ? (
-							<div className="tournament__section__input-container">
-								<Label htmlFor="logo">Logo</Label>
-								{avatarUrl ? (
-									<div className="stack horizontal md items-center">
-										<Avatar size="xsm" url={avatarUrl} />
-										{canEditAvatar ? (
-											<SendouButton
-												variant="minimal"
-												size="small"
-												onPress={() => setUploadedAvatar(null)}
-											>
-												{t("common:actions.edit")}
-											</SendouButton>
-										) : null}
-										{canDeleteAvatar ? (
-											<FormWithConfirm
-												dialogHeading="Delete team logo?"
-												fields={[["_action", "DELETE_LOGO"]]}
-											>
-												<SendouButton
-													variant="minimal-destructive"
-													size="small"
-													type="submit"
-												>
-													<TrashIcon className="small-icon" />
-												</SendouButton>
-											</FormWithConfirm>
-										) : null}
-									</div>
-								) : (
-									<TournamentLogoUpload onChange={setUploadedAvatar} />
-								)}
-							</div>
-						) : null}
-						<div className="stack sm">
-							<div className="text-lighter text-sm stack horizontal sm items-center">
-								<input
-									id="no-host"
-									type="checkbox"
-									name="prefersNotToHost"
-									defaultChecked={Boolean(ownTeam?.prefersNotToHost)}
-								/>
-								<label htmlFor="no-host" className="mb-0">
-									{t("tournament:pre.info.noHost")}
-								</label>
-							</div>
-
-							{tournament.ctx.settings.enableNoScreenToggle ? (
-								<div className="text-lighter text-sm stack horizontal sm items-center">
-									<input
-										id="no-screen"
-										type="checkbox"
-										name="noScreen"
-										defaultChecked={Boolean(ownTeam?.noScreen)}
-										data-testid="no-screen-checkbox"
-									/>
-									<label htmlFor="no-screen" className="mb-0">
-										{t("tournament:pre.info.noScreen")}
-									</label>
-								</div>
-							) : null}
-						</div>
-					</div>
-					<SendouButton
-						data-testid="save-team-button"
-						isDisabled={submitButtonDisabled()}
-						onPress={handleSubmit}
-					>
-						{t("common:actions.save")}
-					</SendouButton>
-				</Form>
+			<section className={styles.section}>
+				<SendouForm
+					schema={registerTeamFormSchema}
+					defaultValues={defaultValues}
+					className={clsx("stack md", styles.sectionForm)}
+					submitButtonText={t("common:actions.save")}
+					submitButtonTestId="save-team-button"
+					readOnly={readOnly}
+				>
+					<RegisterTeamFields readOnly={readOnly} />
+				</SendouForm>
 			</section>
 		</div>
 	);
 }
 
-const logoDimensions = imgTypeToDimensions["team-pfp"];
-function TournamentLogoUpload({
-	onChange,
-}: {
-	onChange: (file: File | null) => void;
-}) {
-	return (
-		<input
-			id="img-field"
-			className="plain"
-			type="file"
-			name="img"
-			accept="image/png, image/jpeg, image/webp"
-			onChange={(e) => {
-				const uploadedFile = e.target.files?.[0];
-				if (!uploadedFile) {
-					onChange(null);
-					return;
-				}
+function RegisterTeamFields({ readOnly = false }: { readOnly?: boolean }) {
+	const data = useLoaderData<TournamentRegisterPageLoader>();
+	const tournament = useTournament();
+	const { values } = useFormFieldContext();
 
-				new Compressor(uploadedFile, {
-					height: logoDimensions.height,
-					width: logoDimensions.width,
-					maxHeight: logoDimensions.height,
-					maxWidth: logoDimensions.width,
-					// 0.5MB
-					convertSize: 500_000,
-					resize: "cover",
-					success(result) {
-						const file = new File([result], "img.webp", {
-							type: "image/webp",
-						});
-						onChange(file);
-					},
-					error(err) {
-						logger.error(err.message);
-					},
-				});
-			}}
-		/>
+	if (readOnly) {
+		return (
+			<>
+				<FormField name="pickUpName" />
+				<FormField name="logo" />
+				<FormField name="prefersNotToHost" />
+			</>
+		);
+	}
+
+	const isLinked = Boolean(values.teamId);
+
+	const entryByUserId = availabilityEntryByUserId(data);
+
+	const teamOptions = (data?.teams ?? []).map((team) => {
+		const statuses = (
+			entryByUserId
+				? teamMemberStatuses({ data, teamId: team.id, entryByUserId })
+				: []
+		).filter((status) => status === "available" || status === "partial");
+
+		return {
+			value: String(team.id),
+			label: team.name,
+			description:
+				statuses.length > 0 ? (
+					<span className={styles.teamOptionAvailability}>
+						<AvailabilityStatusDots statuses={statuses} />
+						<AvailabilitySummary statuses={statuses} />
+					</span>
+				) : undefined,
+		};
+	});
+	const showTeamSelect = teamOptions.length > 0 && tournament.registrationOpen;
+
+	return (
+		<>
+			{showTeamSelect ? (
+				<FormField name="teamId" options={teamOptions} />
+			) : null}
+			{!data?.ownTeam ? <SelectedTeamAvailability /> : null}
+			{!isLinked ? (
+				<>
+					<FormField
+						name="pickUpName"
+						disabled={!tournament.registrationOpen}
+					/>
+					<FormField name="logo" />
+				</>
+			) : null}
+			<FormField name="prefersNotToHost" />
+		</>
 	);
 }
 
 function FriendCode() {
+	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 
+	if (!user?.friendCode) {
+		return (
+			<div className="stack items-center">
+				<FriendCodePopover size="small" />
+				<div className={clsx(styles.sectionWarning, "mt-2")}>
+					{t("tournament:pre.friendCode.needed")}
+				</div>
+			</div>
+		);
+	}
+
 	return (
-		<div>
-			<h3 className="tournament__section-header">1. Friend code</h3>
-			<section className="tournament__section">
-				<div className="tournament__section__input-container mx-auto">
-					<FriendCodeInput friendCode={user?.friendCode} />
-				</div>
-			</section>
-			{user?.friendCode ? (
-				<div className="tournament__section__warning">
-					Is the friend code above wrong? Post a message on the{" "}
-					<a
-						href={SENDOU_INK_DISCORD_URL}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						sendou.ink Discord helpdesk
-					</a>{" "}
-					to change it.
-				</div>
-			) : null}
+		<div className="flex justify-end">
+			<FriendCodePopover size="small" />
 		</div>
 	);
 }
 
 function GoogleFormsLink() {
+	const { t } = useTranslation(["tournament"]);
+
 	return (
 		<div>
-			<h3 className="tournament__section-header">
-				Additional Requirement: Google Form
+			<h3 className={styles.sectionHeader}>
+				{t("tournament:pre.googleForm.header")}
 			</h3>
-			<section className="tournament__section stack lg items-center">
+			<section className={clsx(styles.section, "stack lg items-center")}>
 				<a
-					href={import.meta.env.VITE_LEAGUE_GOOGLE_FORM_URL}
+					href={Config.leagueGoogleFormUrl}
 					className="py-4 font-bold"
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					Answer survey hosted on Google Forms
+					{t("tournament:pre.googleForm.link")}
 				</a>
 			</section>
-			<div className="tournament__section__warning">
-				Answer to additional question about your team's preferred match time and
-				info to help with seeding
+			<div className={styles.sectionWarning}>
+				{t("tournament:pre.googleForm.footer")}
 			</div>
 		</div>
 	);
@@ -947,23 +695,26 @@ function GoogleFormsLink() {
 function FillRoster({
 	ownTeam,
 	ownTeamCheckedIn,
+	readOnly = false,
 }: {
-	ownTeam: TournamentDataTeam;
+	ownTeam: TournamentTeamFull;
 	ownTeamCheckedIn: boolean;
+	readOnly?: boolean;
 }) {
 	const data = useLoaderData<TournamentRegisterPageLoader>();
-	const user = useUser();
 	const tournament = useTournament();
-	const [, copyToClipboard] = useCopyToClipboard();
-	const { t } = useTranslation(["common", "tournament"]);
+	const { t } = useTranslation(["common", "tournament", "schedule"]);
+	const { formatter: dateFormatter } = useDateTimeFormat({
+		month: "long",
+		day: "numeric",
+	});
 
 	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
 		tournamentId: tournament.ctx.id,
 		inviteCode: ownTeam.inviteCode!,
 	})}`;
 
-	const { members: ownTeamMembers } = tournament.ownedTeamByUser(user) ?? {};
-	invariant(ownTeamMembers, "own team members should exist");
+	const ownTeamMembers = ownTeam.members;
 
 	const missingMembers = Math.max(
 		tournament.minMembersPerTeam - ownTeamMembers.length,
@@ -971,18 +722,22 @@ function FillRoster({
 	);
 
 	const optionalMembers = Math.max(
-		tournament.maxTeamMemberCount - ownTeamMembers.length - missingMembers,
+		tournament.maxMembersPerTeam - ownTeamMembers.length - missingMembers,
 		0,
 	);
 
-	const showDeleteMemberSection =
-		(!ownTeamCheckedIn && ownTeamMembers.length > 1) ||
-		(ownTeamCheckedIn && ownTeamMembers.length > tournament.minMembersPerTeam);
+	const canRemoveMembers =
+		!readOnly &&
+		!tournament.isInvitational &&
+		((!ownTeamCheckedIn && ownTeamMembers.length > 1) ||
+			(ownTeamCheckedIn &&
+				ownTeamMembers.length > tournament.minMembersPerTeam));
 
-	const playersAvailableToDirectlyAdd = (() => {
-		return (data!.trusterPlayers?.trusters ?? []).filter((user) => {
-			const isNotInTeam = tournament.ctx.teams.every((team) =>
-				team.members.every((member) => member.userId !== user.id),
+	const quickAddPlayers = (() => {
+		if (readOnly) return [];
+		return (data?.friendPlayers?.friends ?? []).filter((user) => {
+			const isNotInTeam = tournament.ctx.teams.every(
+				(team) => !team.memberUserIds.includes(user.id),
 			);
 
 			const hasInGameNameIfNeeded =
@@ -992,278 +747,371 @@ function FillRoster({
 		});
 	})();
 
-	const teamIsFull = ownTeamMembers.length >= tournament.maxTeamMemberCount;
-	const canAddMembers = !teamIsFull && tournament.registrationOpen;
+	const teamIsFull = ownTeamMembers.length >= tournament.maxMembersPerTeam;
+	const canAddMembers = !teamIsFull && tournament.registrationOpen && !readOnly;
+
+	const availability = data?.availability;
+	const entryByUserId = availabilityEntryByUserId(data);
+	const requireInGameNames = tournament.ctx.settings.requireInGameNames;
 
 	return (
 		<div>
-			<h3 className="tournament__section-header">
-				3. {t("tournament:pre.roster.header")}
-			</h3>
-			<section className="tournament__section stack lg items-center">
-				{playersAvailableToDirectlyAdd.length > 0 && canAddMembers ? (
-					<>
-						<DirectlyAddPlayerSelect
-							players={playersAvailableToDirectlyAdd}
-							teams={data!.trusterPlayers?.teams ?? []}
-						/>
-						<Divider className="text-uppercase">{t("common:or")}</Divider>
-					</>
+			<div className="stack xs horizontal justify-between items-end flex-wrap">
+				<h3 className={styles.sectionHeader}>
+					2. {t("tournament:pre.roster.header")}
+				</h3>
+				{availability?.window ? (
+					<AvailabilityWindowText window={availability.window} />
 				) : null}
-				{canAddMembers ? (
-					<div className="stack md items-center">
-						<div className="text-center text-sm">
-							{t("tournament:actions.shareLink", { inviteLink })}
-						</div>
-						<div>
-							<SendouButton
-								size="small"
-								onPress={() => copyToClipboard(inviteLink)}
-								variant="outlined"
-							>
-								{t("common:actions.copyToClipboard")}
-							</SendouButton>
-						</div>
+			</div>
+			<section className={clsx(styles.section, "stack sm")}>
+				{availability?.beyondHorizon ? (
+					<div className={styles.rosterMutedNote}>
+						{t("schedule:registration.beyondHorizon", {
+							date: dateFormatter.format(availability.beyondHorizon.opensAt),
+						})}
 					</div>
 				) : null}
-				<div className="stack lg horizontal mt-2 flex-wrap justify-center">
-					{ownTeamMembers.map((member, i) => {
-						return (
-							<div
-								key={member.userId}
-								className="stack sm items-center text-sm"
-								data-testid={`member-num-${i + 1}`}
-							>
-								<Avatar size="xsm" user={member} />
-								{tournament.ctx.settings.requireInGameNames ? (
-									<div>
-										<div className="text-center">
-											{member.inGameName ?? member.username}
-										</div>
-										{member.inGameName ? (
-											<div className="text-lighter text-xs font-bold text-center">
-												{member.username}
-											</div>
-										) : null}
-									</div>
-								) : (
-									member.username
+				<ul className={styles.rosterRows}>
+					{ownTeamMembers.map((member, i) => (
+						<AvailabilityMemberRow
+							key={member.userId}
+							user={{
+								id: member.userId,
+								username: member.username,
+								discordId: member.discordId,
+								discordAvatar: member.discordAvatar,
+								customAvatarUrl: member.customAvatarUrl,
+							}}
+							entry={entryByUserId?.get(member.userId)}
+							showAvailability={Boolean(entryByUserId)}
+							primaryName={
+								requireInGameNames
+									? (member.inGameName ?? member.username)
+									: member.username
+							}
+							secondaryName={
+								requireInGameNames && member.inGameName
+									? member.username
+									: undefined
+							}
+							nameTestId={`member-num-${i + 1}`}
+							trailing={
+								canRemoveMembers && member.role !== "OWNER" ? (
+									<RemoveMemberButton member={member} />
+								) : null
+							}
+						/>
+					))}
+					{Array.from({ length: missingMembers }).map((_, i) => (
+						<li key={`required-${i}`} className={styles.emptySlotRow}>
+							<span className={styles.emptySlotCircle}>
+								<UserRound size={14} strokeWidth={3} />
+							</span>
+							{t("tournament:pre.roster.emptySlot")}
+						</li>
+					))}
+					{Array.from({ length: optionalMembers }).map((_, i) => (
+						<li
+							key={`optional-${i}`}
+							className={clsx(styles.emptySlotRow, styles.emptySlotRowOptional)}
+						>
+							<span
+								className={clsx(
+									styles.emptySlotCircle,
+									styles.emptySlotCircleOptional,
 								)}
-							</div>
-						);
-					})}
-					{new Array(missingMembers).fill(null).map((_, i) => {
-						return (
-							<div key={i} className="tournament__missing-player">
-								?
-							</div>
-						);
-					})}
-					{new Array(optionalMembers).fill(null).map((_, i) => {
-						return (
-							<div
-								key={i}
-								className="tournament__missing-player tournament__missing-player__optional"
 							>
-								?
-							</div>
-						);
-					})}
-				</div>
-				{showDeleteMemberSection ? (
-					<DeleteMember members={ownTeamMembers} />
+								<UserRound size={14} strokeWidth={3} />
+							</span>
+							{t("tournament:pre.roster.emptySlot.optional")}
+						</li>
+					))}
+				</ul>
+				{entryByUserId ? (
+					<AvailabilitySummary
+						statuses={ownTeamMembers.map((member) =>
+							availabilityRowStatus(entryByUserId.get(member.userId)),
+						)}
+					/>
+				) : null}
+				{canAddMembers ? (
+					<div className={clsx(styles.addMembers, "stack md")}>
+						<h4 className={styles.addMembersHeading}>
+							{t("tournament:pre.roster.addMembers")}
+						</h4>
+						{quickAddPlayers.length > 0 ? (
+							<QuickAddPlayers
+								key={quickAddPlayers.map((player) => player.id).join(",")}
+								players={quickAddPlayers}
+								teams={data?.friendPlayers?.teams ?? []}
+								spotsLeft={tournament.maxMembersPerTeam - ownTeamMembers.length}
+								entryByUserId={entryByUserId}
+							/>
+						) : null}
+						<InviteLinkInput link={inviteLink} />
+					</div>
 				) : null}
 			</section>
 			{tournament.ctx.settings.requireInGameNames ? (
-				<div className="tournament__section__warning text-warning-important">
-					Note that you are expected to use the in-game names as listed above.
-					Playing in the event with a different name or using the alias feature
-					might result in disqualification.
+				<div className={clsx(styles.sectionWarning, "text-warning")}>
+					{t("tournament:pre.roster.ignWarning")}
 				</div>
 			) : (
-				// TODO: proper English for 1v1 "At least 1 members are required to participate. Max roster size is 1"
-				<div className="tournament__section__warning">
-					{t("tournament:pre.roster.footer", {
-						atLeastCount: tournament.minMembersPerTeam,
-						maxCount: tournament.maxTeamMemberCount,
-					})}
+				<div className={styles.sectionWarning}>
+					{tournament.minMembersPerTeam <= 3
+						? t("tournament:pre.roster.footer.noSubs", {
+								format: `${tournament.minMembersPerTeam}v${tournament.minMembersPerTeam}`,
+							})
+						: t("tournament:pre.roster.footer", {
+								atLeastCount: tournament.minMembersPerTeam,
+								maxCount: tournament.maxMembersPerTeam,
+							})}
 				</div>
 			)}
 		</div>
 	);
 }
 
-function DirectlyAddPlayerSelect({
+function QuickAddPlayers({
 	players,
 	teams,
+	spotsLeft,
+	entryByUserId,
 }: {
-	players: { id: number; username: string; teamId?: number }[];
-	teams: { id: number; name: string }[];
+	players: Array<QuickAddPlayer>;
+	teams: Array<{ id: number; name: string }>;
+	spotsLeft: number;
+	entryByUserId: Map<number, AvailabilityPanelEntry> | null;
 }) {
 	const { t } = useTranslation(["tournament", "common"]);
 	const fetcher = useFetcher();
-	const id = React.useId();
 
-	const othersOptions = players
-		.filter((player) => !player.teamId)
-		.map((player) => {
-			return (
-				<option key={player.id} value={player.id}>
-					{player.username}
-				</option>
-			);
-		});
+	const sortByAvailability = (toSort: Array<QuickAddPlayer>) =>
+		entryByUserId
+			? R.sortBy(
+					toSort,
+					(player) =>
+						QUICK_ADD_STATUS_ORDER[
+							availabilityRowStatus(entryByUserId.get(player.id))
+						],
+				)
+			: toSort;
+
+	const uniquePlayers = R.uniqueBy(players, (player) => player.id);
+
+	const teamGroups = teams
+		.map((team) => ({
+			team,
+			players: sortByAvailability(
+				uniquePlayers.filter((player) => player.teamId === team.id),
+			),
+		}))
+		.filter((group) => group.players.length > 0);
+
+	const pickupPlayers = sortByAvailability(
+		uniquePlayers.filter((player) => !player.teamId),
+	);
+
+	const sections = [
+		...teamGroups.map((group) => ({
+			key: `team-${group.team.id}`,
+			heading: group.team.name,
+			players: group.players,
+		})),
+		...(pickupPlayers.length > 0
+			? [
+					{
+						key: "pickup",
+						heading: t("tournament:pre.roster.quickAdd.pickup"),
+						players: pickupPlayers,
+					},
+				]
+			: []),
+	];
+
+	const [selectedUserId, setSelectedUserId] = React.useState<number | null>(
+		sections[0]?.players[0]?.id ?? null,
+	);
+
+	const addAllByTeam = teams
+		.map((team) => ({
+			team,
+			// in the loader's order so the list matches what the action adds when clamped
+			playersToAdd: players
+				.filter(
+					(player) =>
+						player.teamId === team.id && getMemberRoleType(player) !== "OTHER",
+				)
+				.slice(0, spotsLeft),
+		}))
+		.filter((entry) => entry.playersToAdd.length > 0);
+
+	const renderPlayerItem = (player: QuickAddPlayer) => (
+		<SendouSelectItem
+			key={player.id}
+			id={player.id}
+			textValue={player.username}
+			data-testid={`availability-row-${player.id}`}
+			data-status={
+				entryByUserId
+					? availabilityRowStatus(entryByUserId.get(player.id))
+					: undefined
+			}
+		>
+			{entryByUserId ? (
+				<span className={styles.quickAddItem}>
+					<span slot="label">{player.username}</span>
+					<span slot="description">
+						<span className={styles.quickAddItemAvailability}>
+							<AvailabilityStatusDots
+								statuses={[availabilityRowStatus(entryByUserId.get(player.id))]}
+							/>
+							<AvailabilityRowDetail entry={entryByUserId.get(player.id)} />
+						</span>
+					</span>
+				</span>
+			) : (
+				player.username
+			)}
+		</SendouSelectItem>
+	);
 
 	return (
-		<fetcher.Form method="post" className="stack horizontal sm items-end">
-			<div>
-				<Label htmlFor={id}>
-					{t("tournament:pre.roster.addTrusted.header")}
-				</Label>
-				<select id={id} name="userId">
-					{teams.map((team) => {
-						return (
-							<optgroup label={team.name} key={team.id}>
-								{players
-									.filter((player) => player.teamId === team.id)
-									.map((player) => {
-										return (
-											<option key={player.id} value={player.id}>
-												{player.username}
-											</option>
-										);
-									})}
-							</optgroup>
-						);
-					})}
-					{teams && teams.length > 0 ? (
-						<optgroup label="Others">{othersOptions}</optgroup>
-					) : (
-						othersOptions
-					)}
-				</select>
-			</div>
-			<SubmitButton
-				_action="ADD_PLAYER"
-				state={fetcher.state}
-				testId="add-player-button"
-			>
-				{t("common:actions.add")}
-			</SubmitButton>
-		</fetcher.Form>
+		<div className="stack sm">
+			<fetcher.Form method="post">
+				<div className={styles.quickAddRow}>
+					<SendouSelect
+						label={t("tournament:pre.roster.quickAdd")}
+						items={sections}
+						selectedKey={selectedUserId}
+						onSelectionChange={(key) => setSelectedUserId(key as number | null)}
+						className={styles.quickAddSelect}
+						data-testid="quick-add-select"
+					>
+						{(section) => (
+							<SendouSelectItemSection
+								key={section.key}
+								heading={section.heading}
+							>
+								{section.players.map(renderPlayerItem)}
+							</SendouSelectItemSection>
+						)}
+					</SendouSelect>
+					{selectedUserId ? (
+						<input type="hidden" name="userId" value={selectedUserId} />
+					) : null}
+					<SubmitButton
+						schema={addPlayerSchema}
+						_action="ADD_PLAYER"
+						state={fetcher.state}
+						testId="add-player-button"
+						isDisabled={!selectedUserId}
+					>
+						{t("common:actions.add")}
+					</SubmitButton>
+				</div>
+			</fetcher.Form>
+			{addAllByTeam.length > 0 ? (
+				<div className={styles.quickAddAllRow}>
+					{addAllByTeam.map(({ team, playersToAdd }) => (
+						<ActionButton
+							key={team.id}
+							schema={addTeamPlayersSchema}
+							action="ADD_TEAM_PLAYERS"
+							fields={{ teamId: team.id }}
+							size="small"
+							variant="outlined"
+							icon={<UsersRound />}
+							testId={`add-team-players-button-${team.id}`}
+							confirm={{
+								dialogHeading: t(
+									"tournament:pre.roster.quickAdd.addAll.confirm",
+									{ team: team.name },
+								),
+								description: playersToAdd
+									.map((player) => player.username)
+									.join(", "),
+								submitButtonText: t("common:actions.add"),
+								submitButtonVariant: "primary",
+							}}
+						>
+							{t("tournament:pre.roster.quickAdd.addAll", {
+								team: team.name,
+							})}
+						</ActionButton>
+					))}
+				</div>
+			) : null}
+		</div>
 	);
 }
 
-function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
+function RemoveMemberButton({
+	member,
+}: {
+	member: TournamentTeamFull["members"][number];
+}) {
 	const { t } = useTranslation(["tournament", "common"]);
-	const id = React.useId();
-	const fetcher = useFetcher();
-	const [expanded, setExpanded] = React.useState(false);
 
-	if (!expanded) {
-		return (
+	return (
+		<FormWithConfirm
+			dialogHeading={t("tournament:pre.roster.remove.confirm", {
+				name: member.username,
+			})}
+			submitButtonText={t("common:actions.remove")}
+			fields={[
+				["_action", "DELETE_TEAM_MEMBER"],
+				["userId", member.userId],
+			]}
+		>
 			<SendouButton
 				size="small"
 				variant="minimal-destructive"
-				onPress={() => setExpanded(true)}
-			>
-				{t("tournament:pre.roster.delete.button")}
-			</SendouButton>
-		);
-	}
-
-	return (
-		<fetcher.Form method="post">
-			<Label htmlFor={id}>{t("tournament:pre.roster.delete.header")}</Label>
-			<div className="stack md horizontal">
-				<select name="userId" id={id}>
-					{members
-						.filter((member) => !member.isOwner)
-						.map((member) => (
-							<option key={member.userId} value={member.userId}>
-								{member.username}
-							</option>
-						))}
-				</select>
-				<SubmitButton
-					state={fetcher.state}
-					_action="DELETE_TEAM_MEMBER"
-					variant="minimal-destructive"
-				>
-					{t("common:actions.delete")}
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+				icon={<X />}
+				aria-label={t("common:actions.remove")}
+				testId={`remove-member-${member.userId}`}
+			/>
+		</FormWithConfirm>
 	);
 }
 
-// TODO: useBlocker to prevent leaving page if made changes without saving
-function CounterPickMapPoolPicker() {
+function TeamCounterPickMapPoolPicker({
+	readOnly = false,
+	mapPool,
+}: {
+	readOnly?: boolean;
+	mapPool?: NonNullable<TournamentTeamFull["mapPool"]>;
+}) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
-	const tournament = useTournament();
 	const fetcher = useFetcher();
 	const data = useLoaderData<TournamentRegisterPageLoader>();
-	const [counterPickMaps, setCounterPickMaps] = React.useState(
-		data?.mapPool ?? [],
-	);
+	const [counterPickMaps, setCounterPickMaps] =
+		React.useState<CounterPickMapPool>(mapPool ?? data?.mapPool ?? []);
 
-	const counterPickMapPool = new MapPool(counterPickMaps);
-
-	const isOneModeTournamentOf =
-		tournament.modesIncluded.length === 1 ? tournament.modesIncluded[0] : null;
+	const validationStatus =
+		useCounterPickMapPoolValidationStatus(counterPickMaps);
 
 	return (
 		<div>
-			<h3 className="tournament__section-header">
-				4. {t("tournament:pre.pool.header")}
+			<h3 className={styles.sectionHeader}>
+				3. {t("tournament:pre.pool.header")}
 			</h3>
-			<section className="tournament__section">
+			<section className={styles.section}>
 				<fetcher.Form method="post" className="stack lg">
 					<input
 						type="hidden"
 						name="mapPool"
 						value={JSON.stringify(counterPickMaps)}
 					/>
-					{rankedModesShort
-						.filter(
-							(mode) =>
-								!isOneModeTournamentOf || isOneModeTournamentOf === mode,
-						)
-						.map((mode) => {
-							return (
-								<ModeMapPoolPicker
-									key={mode}
-									amountToPick={
-										isOneModeTournamentOf
-											? TOURNAMENT.COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE
-											: TOURNAMENT.COUNTERPICK_MAPS_PER_MODE
-									}
-									mode={mode}
-									tiebreaker={
-										tournament.ctx.tieBreakerMapPool.find(
-											(stage) => stage.mode === mode,
-										)?.stageId
-									}
-									pool={
-										counterPickMaps
-											.filter((m) => m.mode === mode)
-											.map((m) => m.stageId) ?? []
-									}
-									onChange={(stageIds) =>
-										setCounterPickMaps([
-											...counterPickMaps.filter((m) => m.mode !== mode),
-											...stageIds.map((stageId) => ({ mode, stageId })),
-										])
-									}
-								/>
-							);
-						})}
-					{validateCounterPickMapPool(
-						counterPickMapPool,
-						isOneModeTournamentOf,
-						tournament.ctx.tieBreakerMapPool,
-					) === "VALID" ? (
+					<CounterPickMapPoolPicker
+						mapPool={counterPickMaps}
+						onChange={setCounterPickMaps}
+						disabled={readOnly}
+					/>
+					{readOnly ? null : validationStatus === "VALID" ? (
 						<SubmitButton
+							schema={updateMapPoolSchema}
 							_action="UPDATE_MAP_POOL"
 							state={fetcher.state}
 							className="self-center mt-4"
@@ -1272,13 +1120,7 @@ function CounterPickMapPoolPicker() {
 							{t("common:actions.save")}
 						</SubmitButton>
 					) : (
-						<MapPoolValidationStatusMessage
-							status={validateCounterPickMapPool(
-								counterPickMapPool,
-								isOneModeTournamentOf,
-								tournament.ctx.tieBreakerMapPool,
-							)}
-						/>
+						<MapPoolValidationStatusMessage status={validationStatus} />
 					)}
 				</fetcher.Form>
 			</section>
@@ -1286,74 +1128,93 @@ function CounterPickMapPoolPicker() {
 	);
 }
 
-function MapPoolValidationStatusMessage({
-	status,
+function SelectedTeamAvailability() {
+	const data = useLoaderData<TournamentRegisterPageLoader>();
+	const tournament = useTournament();
+	const { values } = useFormFieldContext();
+
+	const availability = data?.availability;
+	if (!availability) return null;
+
+	const teamId = values.teamId ? Number(values.teamId) : null;
+
+	const inTournament = (userId: number) =>
+		tournament.ctx.teams.some((team) => team.memberUserIds.includes(userId));
+
+	const entryByUserId = availabilityEntryByUserId(data);
+	const isFree = (userId: number) => {
+		const status = availabilityRowStatus(entryByUserId?.get(userId));
+		return status === "available" || status === "partial";
+	};
+
+	// with a team selected the panel shows its full roster; as a pickup it lists everyone the viewer
+	// could recruit (all their teams' members and friends) that is free during the event
+	const roster = teamId
+		? (data?.friendPlayers?.friends ?? []).filter(
+				(friend) => friend.teamId === teamId,
+			)
+		: R.uniqueBy(
+				data?.friendPlayers?.friends ?? [],
+				(friend) => friend.id,
+			).filter((friend) => !inTournament(friend.id) && isFree(friend.id));
+	if (roster.length === 0 && !availability.beyondHorizon) return null;
+
+	return (
+		<RegistrationAvailabilityPanel
+			availability={availability}
+			roster={roster}
+			subCandidates={
+				teamId
+					? subCandidates({
+							data,
+							tournament,
+							rosterUserIds: roster.map((rosterUser) => rosterUser.id),
+						})
+					: []
+			}
+		/>
+	);
+}
+
+function availabilityEntryByUserId(
+	data: ReturnType<typeof useLoaderData<TournamentRegisterPageLoader>>,
+) {
+	const availability = data?.availability;
+	if (!availability || availability.beyondHorizon) return null;
+
+	return new Map(availability.entries.map((entry) => [entry.userId, entry]));
+}
+
+function teamMemberStatuses({
+	data,
+	teamId,
+	entryByUserId,
 }: {
-	status: CounterPickValidationStatus;
+	data: ReturnType<typeof useLoaderData<TournamentRegisterPageLoader>>;
+	teamId: number;
+	entryByUserId: Map<number, AvailabilityPanelEntry>;
+}): Array<AvailabilityRowStatus> {
+	return (data?.friendPlayers?.friends ?? [])
+		.filter((friend) => friend.teamId === teamId)
+		.map((friend) => availabilityRowStatus(entryByUserId.get(friend.id)));
+}
+
+function subCandidates({
+	data,
+	tournament,
+	rosterUserIds,
+}: {
+	data: ReturnType<typeof useLoaderData<TournamentRegisterPageLoader>>;
+	tournament: ReturnType<typeof useTournament>;
+	rosterUserIds: number[];
 }) {
-	const { t } = useTranslation(["common"]);
+	const inTournament = (userId: number) =>
+		tournament.ctx.teams.some((team) => team.memberUserIds.includes(userId));
 
-	if (
-		status !== "TOO_MUCH_STAGE_REPEAT" &&
-		status !== "STAGE_REPEAT_IN_SAME_MODE" &&
-		status !== "INCLUDES_BANNED" &&
-		status !== "INCLUDES_TIEBREAKER"
-	)
-		return null;
-
-	return (
-		<div className="mt-4">
-			<Alert alertClassName="w-max" variation="WARNING" tiny>
-				{t(`common:maps.validation.${status}`, {
-					maxStageRepeat: TOURNAMENT.COUNTERPICK_MAX_STAGE_REPEAT,
-				})}
-			</Alert>
-		</div>
-	);
-}
-
-function TOPickedMapPoolInfo() {
-	const { t } = useTranslation(["calendar"]);
-	const tournament = useTournament();
-
-	if (tournament.ctx.toSetMapPool.length === 0) return null;
-
-	const mapPool = new MapPool(tournament.ctx.toSetMapPool);
-
-	return (
-		<Section title={t("calendar:forms.mapPool")}>
-			<div className="event__map-pool-section">
-				<MapPoolStages mapPool={mapPool} />
-				<LinkButton
-					className="event__create-map-list-link"
-					to={mapsPageWithMapPool(mapPool)}
-					variant="outlined"
-					size="small"
-				>
-					<Image alt="" path={navIconUrl("maps")} width={22} height={22} />
-					{t("calendar:createMapList")}
-				</LinkButton>
-			</div>
-		</Section>
-	);
-}
-
-function TiebreakerMapPoolInfo() {
-	const { t } = useTranslation(["game-misc"]);
-	const tournament = useTournament();
-
-	if (tournament.ctx.tieBreakerMapPool.length === 0) return null;
-
-	return (
-		<div className="text-sm text-lighter text-semi-bold">
-			Tiebreaker map pool:{" "}
-			{tournament.ctx.tieBreakerMapPool
-				.sort((a, b) => modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode))
-				.map(
-					(map) =>
-						`${t(`game-misc:MODE_SHORT_${map.mode}`)} ${t(`game-misc:STAGE_${map.stageId}`)}`,
-				)
-				.join(", ")}
-		</div>
+	return R.uniqueBy(
+		data?.friendPlayers?.friends ?? [],
+		(friend) => friend.id,
+	).filter(
+		(friend) => !rosterUserIds.includes(friend.id) && !inTournament(friend.id),
 	);
 }

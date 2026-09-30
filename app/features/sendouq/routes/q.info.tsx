@@ -1,32 +1,34 @@
-import { Link } from "@remix-run/react";
+import type { MetaFunction } from "react-router";
+import { Link } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
+import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
+import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import {
 	CALENDAR_PAGE,
 	FAQ_PAGE,
+	MATCH_PROFILE_PAGE,
 	navIconUrl,
 	SENDOUQ_RULES_PAGE,
-	SENDOUQ_SETTINGS_PAGE,
 	TIERS_PAGE,
 } from "~/utils/urls";
-import "../q.css";
-import type { MetaFunction } from "@remix-run/node";
-import { SendouButton } from "~/components/elements/Button";
-import { Image } from "~/components/Image";
-import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
-import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
-import { metaTags } from "~/utils/remix";
+import { SENDOUQ } from "../q-constants";
+import styles from "./q.info.module.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Info",
 		description: "SendouQ guide and information.",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };
 
 export default function SendouQInfoPage() {
 	return (
-		<Main className="q-info__container">
+		<Main className={styles.container}>
 			<TableOfContents />
 			<GeneralInfo />
 			<BeforeJoining />
@@ -53,12 +55,12 @@ function TableOfContents() {
 	};
 
 	return (
-		<nav className="q-info__table-of-contents">
+		<nav className={styles.tableOfContents}>
 			<h2>Table of contents</h2>
 			<ul>
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("general-info")}
+						onClick={handleTitleClick("general-info")}
 						variant="minimal"
 					>
 						General info
@@ -67,7 +69,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("before-joining")}
+						onClick={handleTitleClick("before-joining")}
 						variant="minimal"
 					>
 						Before joining
@@ -84,7 +86,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("joining-the-queue")}
+						onClick={handleTitleClick("joining-the-queue")}
 						variant="minimal"
 					>
 						Joining the queue
@@ -95,7 +97,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("finding-a-group")}
+						onClick={handleTitleClick("finding-a-group")}
 						variant="minimal"
 					>
 						Finding a group
@@ -108,7 +110,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("finding-an-opponent")}
+						onClick={handleTitleClick("finding-an-opponent")}
 						variant="minimal"
 					>
 						Finding an opponent
@@ -118,7 +120,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("playing-the-match")}
+						onClick={handleTitleClick("playing-the-match")}
 						variant="minimal"
 					>
 						Playing the match
@@ -132,7 +134,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("other-topics")}
+						onClick={handleTitleClick("other-topics")}
 						variant="minimal"
 					>
 						Other topics
@@ -180,7 +182,7 @@ function BeforeJoining() {
 			<p>
 				Optional - if you don&apos;t have a preference then skip this step and
 				other players in the lobby get to choose. On the{" "}
-				<Link to={SENDOUQ_SETTINGS_PAGE}>settings page</Link> first select your
+				<Link to={MATCH_PROFILE_PAGE}>settings page</Link> first select your
 				preference of each of the five modes. Avoid means you&apos;d rather not
 				play the mode. Neutral means you don&apos;t have strong feelings either
 				way. Prefer means you like this mode over neutral modes. These choices
@@ -325,6 +327,14 @@ function FindingAnOpponent() {
 				result in the best match but you are free to challenge group of any
 				level (and they are free to not accept). You will also see the modes the
 				set would have before deciding on challenging/accepting.
+			</p>
+			<h3>Ready check</h3>
+			<p>
+				Accepting a challenge doesn&apos;t start the match right away. First
+				every member of both groups has {SENDOUQ.READY_CHECK_MINUTES} minutes to
+				confirm that they are ready to play. Once everyone has confirmed the
+				match starts. If the time runs out, both groups go back to looking and
+				have to challenge again.
 			</p>
 			<h3>Rechallenging</h3>
 			<p>

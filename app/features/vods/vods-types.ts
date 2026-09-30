@@ -1,25 +1,21 @@
-import type { z } from "zod/v4";
+import type * as v from "valibot";
 import type { Tables } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type { videoMatchSchema, videoSchema } from "./vods-schemas";
+import type { videoSchema } from "./vods-schemas";
 
-export type VideoBeingAddedPartial = Partial<VideoBeingAdded>;
-
-export type VideoBeingAdded = z.infer<typeof videoSchema>;
-
-export type VideoMatchBeingAdded = z.infer<typeof videoMatchSchema>;
+export type VideoBeingAdded = v.InferOutput<typeof videoSchema>;
 
 export interface Vod {
 	id: Tables["Video"]["id"];
 	pov?:
-		| Pick<
+		| (Pick<
 				Tables["User"],
 				"username" | "discordId" | "discordAvatar" | "customUrl" | "id"
-		  >
+		  > & { customAvatarUrl: string | null })
 		| string;
 	title: Tables["Video"]["title"];
 	type: Tables["Video"]["type"];
-	youtubeDate: Tables["Video"]["youtubeDate"];
+	youtubePublishedAt: Tables["Video"]["youtubePublishedAt"];
 	youtubeId: Tables["Video"]["youtubeId"];
 	matches: Array<VodMatch>;
 	submitterUserId: Tables["Video"]["submitterUserId"];
@@ -32,7 +28,7 @@ export type VodMatch = Pick<
 	weapons: Array<MainWeaponId>;
 };
 
-export type ListVod = Omit<Vod, "youtubeDate" | "matches"> & {
+export type ListVod = Omit<Vod, "youtubePublishedAt" | "matches"> & {
 	weapons: Array<MainWeaponId>;
 	type: Tables["Video"]["type"];
 };

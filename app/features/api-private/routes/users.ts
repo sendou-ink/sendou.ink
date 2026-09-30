@@ -1,4 +1,4 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionFunction } from "react-router";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { canAccessLohiEndpoint } from "~/utils/remix.server";
 
@@ -8,7 +8,7 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	// input untyped but we trust Lohi to give us correctly shaped request here
-	UserRepository.updateMany(await request.json());
+	await UserRepository.updateMany(await request.json());
 
 	return null;
 };

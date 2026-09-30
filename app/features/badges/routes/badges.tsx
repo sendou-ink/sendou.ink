@@ -1,21 +1,21 @@
-import type { MetaFunction } from "@remix-run/node";
-import { NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import { Search } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { NavLink, Outlet, useLoaderData } from "react-router";
 import { Badge } from "~/components/Badge";
 import { Divider } from "~/components/Divider";
+import { EmptyState } from "~/components/EmptyState";
 import { Input } from "~/components/Input";
-import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { BADGES_DOC_LINK, BADGES_PAGE, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
-
 import { type BadgesLoaderData, loader } from "../loaders/badges.server";
-export { loader };
+import styles from "./badges.module.css";
 
-import "~/styles/badges.css";
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: "badges",
@@ -32,7 +32,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon badges (tournament prizes list)",
 		location: args.location,
 		description:
-			"Over 400 badge tournament prizes and counting! Check out the full list including the owners.",
+			"Full list of Splatoon tournament prize badges. Check out every badge along with its owners.",
 	});
 };
 
@@ -61,24 +61,20 @@ export default function BadgesPageLayout() {
 
 	return (
 		<Main>
-			<div className="badges__container">
+			<div className={styles.container}>
 				<Outlet />
 				<Input
-					className="badges-search__input"
-					icon={<SearchIcon className="badges-search__icon" />}
+					className={styles.searchInput}
+					icon={<Search />}
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
 				/>
 				{ownBadges.length > 0 ? (
 					<div className="w-full">
 						<Divider smallText>{t("badges:own.divider")}</Divider>
-						<div className="badges__small-badges">
+						<div className={styles.smallBadges}>
 							{ownBadges.map((badge) => (
-								<NavLink
-									className="badges__nav-link"
-									key={badge.id}
-									to={String(badge.id)}
-								>
+								<NavLink key={badge.id} to={String(badge.id)}>
 									<Badge badge={badge} size={64} isAnimated={false} />
 								</NavLink>
 							))}
@@ -87,28 +83,22 @@ export default function BadgesPageLayout() {
 				) : null}
 				{ownBadges.length > 0 || otherBadges.length > 0 ? (
 					<div className="w-full">
-						<div className="badges__small-badges">
+						<div className={styles.smallBadges}>
 							{ownBadges.length > 0 ? (
 								<Divider smallText>{t("badges:other.divider")}</Divider>
 							) : null}
 							{otherBadges.map((badge) => (
-								<NavLink
-									className="badges__nav-link"
-									key={badge.id}
-									to={String(badge.id)}
-								>
+								<NavLink key={badge.id} to={String(badge.id)}>
 									<Badge badge={badge} size={64} isAnimated={false} />
 								</NavLink>
 							))}
 						</div>
 					</div>
 				) : (
-					<div className="text-lg font-bold my-24">
-						{t("badges:noBadgesFound")}
-					</div>
+					<EmptyState navItem="badges">{t("badges:noBadgesFound")}</EmptyState>
 				)}
 			</div>
-			<div className="badges__general-info-texts">
+			<div className={styles.generalInfoTexts}>
 				<p>
 					<a href={BADGES_DOC_LINK} target="_blank" rel="noopener noreferrer">
 						{t("forYourEvent")}

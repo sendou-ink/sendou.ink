@@ -1,65 +1,56 @@
-import type { ActionFunction } from "@remix-run/node";
-import {
-	unstable_composeUploadHandlers as composeUploadHandlers,
-	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
-	unstable_parseMultipartFormData as parseMultipartFormData,
-	redirect,
-} from "@remix-run/node";
-import { nanoid } from "nanoid";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
+import * as R from "remeda";
+import * as ArtRepository from "~/features/art/ArtRepository.server";
+import { userArtPage } from "~/features/art/art-urls";
 import { requireUser } from "~/features/auth/core/user.server";
-import { s3UploadHandler } from "~/features/img-upload";
 import { notify } from "~/features/notifications/core/notify.server";
-import { requireRole } from "~/modules/permissions/guards.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
+import { parseFormData } from "~/form/parse.server";
 import {
-	errorToastIfFalsy,
-	parseFormData,
-	parseRequestPayload,
-} from "~/utils/remix.server";
-import { userArtPage } from "~/utils/urls";
-import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
-import { editArtSchema, newArtSchema } from "../art-schemas.server";
-import { addNewArt, editArt } from "../queries/addNewArt.server";
-import { findArtById } from "../queries/findArtById.server";
+	requirePermission,
+	requireRole,
+} from "~/modules/permissions/guards.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
+import { ART_FORM_MAX_BODY_BYTES } from "../art-image";
+import { uploadArtImage } from "../art-image.server";
+import { artFormSchema } from "../art-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
-	requireRole(user, "ARTIST");
+	const user = requireUser();
+	requireRole("ARTIST");
 
-	const searchParams = new URL(request.url).searchParams;
-	const artIdRaw = searchParams.get(NEW_ART_EXISTING_SEARCH_PARAM_KEY);
+	const result = await parseFormData({
+		request,
+		schema: artFormSchema,
+		maxBodyBytes: ART_FORM_MAX_BODY_BYTES,
+	});
 
-	// updating logic
-	if (artIdRaw) {
-		const artId = Number(artIdRaw);
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
 
-		const existingArt = findArtById(artId);
-		errorToastIfFalsy(
-			existingArt?.authorId === user.id,
-			"Art author is someone else",
+	const data = result.data;
+	const linkedUsers = R.unique(
+		data.linkedUsers.filter((userId) => typeof userId === "number"),
+	);
+
+	if (data.artId) {
+		const existingArt = badRequestIfFalsy(
+			await ArtRepository.findById(data.artId),
 		);
+		requirePermission(existingArt, "EDIT");
 
-		const data = await parseRequestPayload({
-			request,
-			schema: editArtSchema,
-		});
-
-		const editedArtId = editArt({
-			authorId: user.id,
-			artId,
+		const editedArtId = await ArtRepository.update(data.artId, {
 			description: data.description,
-			isShowcase: data.isShowcase,
-			linkedUsers: data.linkedUsers,
+			isShowcase: toDBBoolean(data.isShowcase),
+			linkedUsers,
 			tags: data.tags,
 		});
 
-		const newLinkedUsers = data.linkedUsers.filter(
-			(userId) => !existingArt.linkedUsers.includes(userId),
-		);
-
 		notify({
-			userIds: newLinkedUsers,
+			userIds: R.difference(linkedUsers, existingArt.linkedUserIds),
 			notification: {
 				type: "TAGGED_TO_ART",
 				meta: {
@@ -70,40 +61,24 @@ export const action: ActionFunction = async ({ request }) => {
 			},
 		});
 	} else {
-		const uploadHandler = composeUploadHandlers(
-			s3UploadHandler(`art-${nanoid()}-${Date.now()}`),
-			createMemoryUploadHandler(),
-		);
-		const formData = await parseMultipartFormData(request, uploadHandler);
-		const imgSrc = formData.get("img") as string | null;
-		invariant(imgSrc);
+		errorToastIfFalsy(data.img?.type === "NEW", "Art image is missing");
 
-		const urlParts = imgSrc.split("/");
-		const fileName = urlParts[urlParts.length - 1];
-		invariant(fileName);
-
-		const data = await parseFormData({
-			formData,
-			schema: newArtSchema,
-		});
-
-		const addedArtId = addNewArt({
-			authorId: user.id,
+		const addedArt = await ArtRepository.insert({
 			description: data.description,
-			url: fileName,
+			url: await uploadArtImage(data.img),
 			validatedAt: user.patronTier ? dateToDatabaseTimestamp(new Date()) : null,
-			linkedUsers: data.linkedUsers,
+			linkedUsers,
 			tags: data.tags,
 		});
 
 		notify({
-			userIds: data.linkedUsers,
+			userIds: linkedUsers,
 			notification: {
 				type: "TAGGED_TO_ART",
 				meta: {
 					adderUsername: user.username,
 					adderDiscordId: user.discordId,
-					artId: addedArtId,
+					artId: addedArt.id,
 				},
 			},
 		});

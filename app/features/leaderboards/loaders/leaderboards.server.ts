@@ -1,5 +1,4 @@
-import { cachified } from "@epic-web/cachified";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -8,63 +7,37 @@ import type {
 	RankedModeShort,
 } from "~/modules/in-game-lists/types";
 import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	cachedFullUserLeaderboard,
+	cachedTeamLeaderboard,
 	filterByWeaponCategory,
 	ownEntryPeek,
+	shownUserLeaderboard,
 } from "../core/leaderboards.server";
-import {
-	DEFAULT_LEADERBOARD_MAX_SIZE,
-	LEADERBOARD_TYPES,
-	SEASON_SEARCH_PARAM_KEY,
-	TYPE_SEARCH_PARAM_KEY,
-	WEAPON_LEADERBOARD_MAX_SIZE,
-} from "../leaderboards-constants";
-import {
-	allXPLeaderboard,
-	modeXPLeaderboard,
-	weaponXPLeaderboard,
-} from "../queries/XPLeaderboard.server";
+import { WEAPON_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
+import { leaderboardsSearchParams } from "../leaderboards-search-params";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
-	const unvalidatedType = new URL(request.url).searchParams.get(
-		TYPE_SEARCH_PARAM_KEY,
-	);
-	const unvalidatedSeason = new URL(request.url).searchParams.get(
-		SEASON_SEARCH_PARAM_KEY,
-	);
+export const loader = async ({ url }: LoaderFunctionArgs) => {
+	const user = getUser();
+	const { type, season: seasonParam } = leaderboardsSearchParams.parse(url);
 
-	const type =
-		LEADERBOARD_TYPES.find((type) => type === unvalidatedType) ??
-		LEADERBOARD_TYPES[0];
 	const season =
-		Seasons.allStarted().find(
-			(s) => unvalidatedSeason && s === Number(unvalidatedSeason),
-		) ?? Seasons.currentOrPrevious()!.nth;
+		Seasons.allStarted().find((s) => s === seasonParam) ??
+		Seasons.currentOrPrevious()!.nth;
 
 	const fullUserLeaderboard = type.includes("USER")
 		? await cachedFullUserLeaderboard(season)
 		: null;
 
-	const userLeaderboard = fullUserLeaderboard?.slice(
-		0,
-		DEFAULT_LEADERBOARD_MAX_SIZE,
-	);
+	const userLeaderboard = fullUserLeaderboard
+		? shownUserLeaderboard(fullUserLeaderboard)
+		: undefined;
 
 	const teamLeaderboard =
 		type === "TEAM" || type === "TEAM-ALL"
-			? await cachified({
-					key: `team-leaderboard-season-${season}-${type}`,
-					cache,
-					ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
-					async getFreshValue() {
-						return LeaderboardRepository.teamLeaderboardBySeason({
-							season,
-							onlyOneEntryPerUser: type !== "TEAM-ALL",
-						});
-					},
+			? await cachedTeamLeaderboard({
+					season,
+					onlyOneEntryPerUser: type !== "TEAM-ALL",
 				})
 			: null;
 
@@ -79,24 +52,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const showOwnEntryPeek = fullUserLeaderboard && !isWeaponLeaderboard && user;
 
+	const xpLeaderboard =
+		type === "XP-ALL"
+			? await LeaderboardRepository.findAllXPLeaderboard()
+			: type.startsWith("XP-MODE")
+				? await LeaderboardRepository.findModeXPLeaderboard(
+						type.split("-")[2] as RankedModeShort,
+					)
+				: type.startsWith("XP-WEAPON")
+					? await LeaderboardRepository.findWeaponXPLeaderboard(
+							Number(type.split("-")[2]) as MainWeaponId,
+						)
+					: null;
+
 	return {
 		userLeaderboard: filteredLeaderboard ?? userLeaderboard,
 		ownEntryPeek: showOwnEntryPeek
-			? ownEntryPeek({
+			? await ownEntryPeek({
 					leaderboard: fullUserLeaderboard,
 					season,
 					userId: user.id,
 				})
 			: null,
 		teamLeaderboard,
-		xpLeaderboard:
-			type === "XP-ALL"
-				? allXPLeaderboard()
-				: type.startsWith("XP-MODE")
-					? modeXPLeaderboard(type.split("-")[2] as RankedModeShort)
-					: type.startsWith("XP-WEAPON")
-						? weaponXPLeaderboard(Number(type.split("-")[2]) as MainWeaponId)
-						: null,
+		xpLeaderboard,
 		season,
 	};
 };

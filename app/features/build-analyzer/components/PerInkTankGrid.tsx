@@ -6,9 +6,10 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { MAX_AP } from "../analyzer-constants";
-import type { FullInkTankOption } from "../analyzer-types";
+import type { FullInkTankOption, SpecialWeaponParams } from "../analyzer-types";
 import { fullInkTankOptions } from "../core/stats";
-import { weaponParams } from "../core/utils";
+import { mainWeaponParams, weaponParams } from "../core/utils";
+import styles from "./PerInkTankGrid.module.css";
 
 interface PerInkTankGridProps {
 	weaponSplId: MainWeaponId;
@@ -19,7 +20,7 @@ export function PerInkTankGrid(props: PerInkTankGridProps) {
 
 	return (
 		<SendouPopover
-			popoverClassName="analyzer__ink-grid__container"
+			popoverClassName={styles.inkGridContainer}
 			trigger={
 				<SendouButton variant="minimal" size="small">
 					{t("analyzer:button.showConsumptionGrid")}
@@ -31,7 +32,7 @@ export function PerInkTankGrid(props: PerInkTankGridProps) {
 	);
 }
 
-// if adding to this, also update analyzer.css
+// if adding to this, also update the column counts in PerInkTankGrid.module.css
 const AP_VALUES_TO_SHOW = [
 	0, 3, 6, 9, 10, 12, 13, 15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
 	29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 41, 42, 44, 45, 47, 48, 51, 54,
@@ -92,19 +93,20 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 			</div>
 			{/** biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration */}
 			<div className="stack horizontal sm" onMouseLeave={handleMouseLeaveGrid}>
-				<div className="analyzer__ink-grid__horizontal-ability">
+				<div className={styles.inkGridHorizontalAbility}>
 					<Ability ability="ISS" size="SUBTINY" />
 				</div>
-				<div className="analyzer__ink-grid">
-					<div className="analyzer__ink-grid__horizontal-ability">
+				<div className={styles.inkGrid}>
+					<div className={styles.inkGridHorizontalAbility}>
 						<Ability ability="ISM" size="SUBTINY" />
 					</div>
 					<div />
 					{AP_VALUES_TO_SHOW.map((ap) => (
 						<div
-							className={clsx("analyzer__ink-grid__ap", {
-								"analyzer__ink-grid__ap__focused": ismHovered === ap,
-							})}
+							className={clsx(
+								styles.inkGridAp,
+								ismHovered === ap && styles.inkGridApFocused,
+							)}
 							key={ap}
 						>
 							{ap}
@@ -113,10 +115,11 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 					{values.map((row, i) =>
 						[
 							<div
-								className={clsx("analyzer__ink-grid__ap", {
-									"analyzer__ink-grid__ap__focused":
-										issHovered === AP_VALUES_TO_SHOW[i],
-								})}
+								className={clsx(
+									styles.inkGridAp,
+									issHovered === AP_VALUES_TO_SHOW[i] &&
+										styles.inkGridApFocused,
+								)}
 								key={i}
 							>
 								{AP_VALUES_TO_SHOW[i]}
@@ -126,7 +129,7 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 								const key = `${i}-${j}`;
 
 								if (cell === "N/A") {
-									return <div className="analyzer__ink-grid__cell" key={key} />;
+									return <div className={styles.inkGridCell} key={key} />;
 								}
 
 								const title = `${cell.shots ?? "-"} (ISM: ${cell.ismAP}, ISS: ${
@@ -137,9 +140,9 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 									return (
 										// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 										<div
-											className="analyzer__ink-grid__cell"
+											className={styles.inkGridCell}
 											key={key}
-											style={{ "--cell-color": "var(--bg-lighter)" }}
+											style={{ "--cell-color": "var(--color-bg-high)" }}
 											title={title}
 											onMouseEnter={() =>
 												handleHover({ ismAP: cell.ismAP, issAP: cell.issAP })
@@ -154,7 +157,7 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 									// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 									<div
 										key={key}
-										className="analyzer__ink-grid__cell"
+										className={styles.inkGridCell}
 										style={{ "--cell-color": cell.hex }}
 										title={title}
 										onMouseEnter={() =>
@@ -188,21 +191,9 @@ function calculateGrid({
 	subsUsed: number;
 }) {
 	const result: ("N/A" | ShotCellData)[][] = [];
-	for (
-		let issAPIndex = 0;
-		issAPIndex < AP_VALUES_TO_SHOW.length;
-		issAPIndex++
-	) {
-		const issAP = AP_VALUES_TO_SHOW[issAPIndex];
-
+	for (const issAP of AP_VALUES_TO_SHOW) {
 		const row: ("N/A" | ShotCellData)[] = [];
-		for (
-			let ismAPIndex = 0;
-			ismAPIndex < AP_VALUES_TO_SHOW.length;
-			ismAPIndex++
-		) {
-			const ismAP = AP_VALUES_TO_SHOW[ismAPIndex];
-
+		for (const ismAP of AP_VALUES_TO_SHOW) {
 			if (!apsArePossible(issAP, ismAP)) {
 				row.push("N/A" as const);
 				continue;
@@ -230,8 +221,7 @@ function calculateGrid({
 	return withColors;
 }
 
-// this is a performance optimization over simply calling "buildStats"
-// as it would be doing a lot of unnecessary work
+// cheaper than calling "buildStats", which would do a lot of unnecessary work
 function inkTankOptionsWhenNSubsUsed({
 	issAP,
 	ismAP,
@@ -243,13 +233,13 @@ function inkTankOptionsWhenNSubsUsed({
 	subsUsed: number;
 	weaponSplId: MainWeaponId;
 }) {
-	const mainWeaponParams = weaponParams().mainWeapons[weaponSplId];
+	const mainParams = mainWeaponParams(weaponSplId);
 
-	const subWeaponParams =
-		weaponParams().subWeapons[mainWeaponParams.subWeaponId];
+	const subWeaponParams = weaponParams().subWeapons[mainParams.subWeaponId];
 
-	const specialWeaponParams =
-		weaponParams().specialWeapons[mainWeaponParams.specialWeaponId];
+	const specialWeaponParams = weaponParams().specialWeapons[
+		mainParams.specialWeaponId
+	] as SpecialWeaponParams;
 
 	const options = fullInkTankOptions({
 		abilityPoints: new Map([
@@ -259,7 +249,7 @@ function inkTankOptionsWhenNSubsUsed({
 		weaponSplId,
 		hasTacticooler: false,
 		mainOnlyAbilities: [],
-		mainWeaponParams,
+		mainWeaponParams: mainParams,
 		specialWeaponParams,
 		subWeaponParams,
 	});
@@ -327,9 +317,8 @@ function generateHexCode({
 	const clampedValue = Math.max(minValue, Math.min(value, maxValue));
 	const normalizedPosition = (clampedValue - minValue) / (maxValue - minValue);
 
-	// Adjust saturation and brightness to lighten the colors
-	const saturationFactor = 0.5; // Adjust this to control the saturation
-	const brightnessFactor = 0.8; // Adjust this to control the brightness
+	const saturationFactor = 0.5;
+	const brightnessFactor = 0.8;
 
 	const red =
 		Math.floor(255 * (1 - normalizedPosition) * saturationFactor) +

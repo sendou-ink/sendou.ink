@@ -1,30 +1,23 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { getUser } from "~/features/auth/core/user.server";
-import invariant from "~/utils/invariant";
-import { groupRedirectLocationByCurrentLocation } from "../q-utils";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { findPreparingGroup } from "../queries/findPreparingGroup.server";
+import { requireUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import { SendouQ, sqRedirectIfNeeded } from "../core/SendouQ.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser(request);
+export const loader = async () => {
+	const user = requireUser();
 
-	const currentGroup = user ? findCurrentGroupByUserId(user.id) : undefined;
-	const redirectLocation = groupRedirectLocationByCurrentLocation({
-		group: currentGroup,
+	const ownGroup = SendouQ.findOwnGroup(user.id);
+
+	await sqRedirectIfNeeded({
+		ownGroup,
 		currentLocation: "preparing",
 	});
 
-	if (redirectLocation) {
-		throw redirect(redirectLocation);
-	}
-
-	const ownGroup = findPreparingGroup(currentGroup!.id);
-	invariant(ownGroup, "No own group found");
+	await resolveNotifications({
+		userIds: [user.id],
+		type: "SQ_ADDED_TO_GROUP",
+	});
 
 	return {
-		lastUpdated: Date.now(),
-		group: ownGroup,
-		role: currentGroup!.role,
+		group: ownGroup!,
 	};
 };

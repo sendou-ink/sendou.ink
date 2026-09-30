@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 188,
+		"cast": true,
+		"special": [
+			[false, true, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[true, false, false, false],
+			[false, false, false, true]
+		]
+	},
+	"options": {
+		"notes": "Casted stream (SWS26 REWOUND, Rush vs Let's Go Brother, Hagglefish game 2) at 3:08, yellow team left vs purple right with the A/B/Y/X and D-pad camera badges drawn. Yellow's outer slot is crossed out (gauge 40 kept on screen) and its second slot wears the special-ready wash with the number hidden; both read fine. Purple's outer slot is also crossed out (gauge 41 kept) but sits on a blown-out white sky, and the read came back alive with special ready instead of splatted — the bright backdrop leaking around the grey X'd body fakes the ready wash. Gauge numbers 4/37 on yellow's inner slots, 29/57/15 on purple's alive slots."
+	}
+}

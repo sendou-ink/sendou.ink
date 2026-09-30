@@ -1,50 +1,48 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
-import clsx from "clsx";
+import { User, Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
-import { FriendCodeInput } from "~/components/FriendCodeInput";
+import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { Image } from "~/components/Image";
-import { UserIcon } from "~/components/icons/User";
-import { UsersIcon } from "~/components/icons/Users";
+import { LocaleTime } from "~/components/LocaleTime";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
-import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as Seasons from "~/features/mmr/core/Seasons";
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useIsMounted } from "~/hooks/useIsMounted";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { joinListToNaturalString } from "~/utils/arrays";
-import invariant from "~/utils/invariant";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
 	LOG_IN_URL,
+	MATCH_PROFILE_PAGE,
 	navIconUrl,
 	SENDOUQ_INFO_PAGE,
 	SENDOUQ_LOOKING_PREVIEW_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_RULES_PAGE,
-	SENDOUQ_SETTINGS_PAGE,
 	SENDOUQ_STREAMS_PAGE,
-	userSeasonsPage,
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/q.server";
 import { loader } from "../loaders/q.server";
+import { frontPageSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import { userCanJoinQueueAt } from "../q-utils";
-export { loader, action };
+import styles from "./q.module.css";
 
-import "../q.css";
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -60,6 +58,7 @@ export const meta: MetaFunction = (args) => {
 		title: "SendouQ",
 		description:
 			"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };
@@ -69,7 +68,12 @@ export default function QPage() {
 	const [dialogOpen, setDialogOpen] = React.useState(true);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
+	const { formatter: joinTimeFormatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	const queueJoinStatus =
 		user && data.friendCode ? userCanJoinQueueAt(user, data.friendCode) : null;
@@ -105,52 +109,46 @@ export default function QPage() {
 							members={data.groupInvitedTo.members}
 						/>
 					) : null}
-					{user ? (
-						<FriendCodeInput friendCode={data.friendCode?.friendCode} />
-					) : null}
-					{user ? (
-						<fetcher.Form className="stack md" method="post">
-							<input type="hidden" name="_action" value="JOIN_QUEUE" />
+					{user?.friendCode ? (
+						<div className="stack md">
 							<div className="stack horizontal md items-center mt-4 mx-auto">
-								<SubmitButton
-									icon={<UsersIcon />}
+								<ActionButton
+									schema={frontPageSchema}
+									action="JOIN_QUEUE"
+									icon={<Users />}
 									isDisabled={queueJoinStatus !== "NOW"}
 								>
 									{t("q:front.actions.joinWithGroup")}
-								</SubmitButton>
-								<SubmitButton
-									name="direct"
-									value="true"
-									state={fetcher.state}
-									icon={<UserIcon />}
+								</ActionButton>
+								<ActionButton
+									schema={frontPageSchema}
+									action="JOIN_QUEUE"
+									fields={{ direct: "true" }}
+									icon={<User />}
 									variant="outlined"
 									isDisabled={queueJoinStatus !== "NOW"}
+									testId="join-solo-button"
 								>
 									{t("q:front.actions.joinSolo")}
-								</SubmitButton>
+								</ActionButton>
 							</div>
 							{queueJoinStatus instanceof Date ? (
-								<div
-									className="text-lighter text-xs text-center text-warning"
-									suppressHydrationWarning
-								>
-									As a fresh account please wait before joining the queue. You
-									can join{" "}
-									{queueJoinStatus.toLocaleString("en-US", {
-										day: "numeric",
-										month: "long",
-										hour: "numeric",
-										minute: "numeric",
+								<div className="text-lighter text-xs text-center text-warning">
+									{t("q:front.freshAccountWait", {
+										time: joinTimeFormatter.format(queueJoinStatus) ?? "",
 									})}
-								</div>
-							) : !data.friendCode ? (
-								<div className="text-lighter text-xs text-center text-error">
-									Save your friend code to join the queue
 								</div>
 							) : (
 								<PreviewQueueButton />
 							)}
-						</fetcher.Form>
+						</div>
+					) : user ? (
+						<div className="stack md items-center">
+							<FriendCodePopover />
+							<div className="text-lighter text-xs text-center">
+								{t("q:front.noFriendCodeHelp")}
+							</div>
+						</div>
 					) : (
 						<form
 							className="stack md items-center"
@@ -163,6 +161,11 @@ export default function QPage() {
 						</form>
 					)}
 				</>
+			) : null}
+			{user?.friendCode ? (
+				<div className="stack items-center">
+					<FriendCodePopover size="small" />
+				</div>
 			) : null}
 			<QLinks />
 		</Main>
@@ -180,61 +183,34 @@ const countries = [
 	{ id: 3, countryCode: "FR", timeZone: "Europe/Paris", city: "paris" },
 	{ id: 4, countryCode: "JP", timeZone: "Asia/Tokyo", city: "tokyo" },
 ] as const;
-const weekdayFormatter = ({
-	timeZone,
-	locale,
-}: {
-	timeZone: string;
-	locale: string;
-}) =>
-	new Intl.DateTimeFormat([locale], {
-		timeZone,
-		weekday: "long",
-	});
-const clockFormatter = ({
-	timeZone,
-	locale,
-}: {
-	timeZone: string;
-	locale: string;
-}) =>
-	new Intl.DateTimeFormat([locale], {
-		timeZone,
-		hour: "numeric",
-		minute: "numeric",
-	});
 function Clocks() {
-	const isMounted = useIsMounted();
-	const { t, i18n } = useTranslation(["q"]);
-	useAutoRerender();
+	const { t } = useTranslation(["q"]);
+	const now = useAutoRerender();
 
 	return (
-		<div className="q__clocks-container">
+		<div className={styles.clocksContainer}>
 			{countries.map((country) => {
 				return (
-					<div key={country.id} className="q__clock">
-						<div className="q__clock-country">
+					<div key={country.id} className={styles.clock}>
+						<div className={styles.clockCountry}>
 							{t(`q:front.cities.${country.city}`)}
 						</div>
 						<Flag countryCode={country.countryCode} />
-						<div className={clsx({ invisible: !isMounted })}>
-							{isMounted
-								? weekdayFormatter({
-										timeZone: country.timeZone,
-										locale: i18n.language,
-									}).format(new Date())
-								: // take space
-									"Monday"}
-						</div>
-						<div className={clsx({ invisible: !isMounted })}>
-							{isMounted
-								? clockFormatter({
-										timeZone: country.timeZone,
-										locale: i18n.language,
-									}).format(new Date())
-								: // take space
-									"0:00 PM"}
-						</div>
+						<LocaleTime
+							date={now}
+							options={{
+								timeZone: country.timeZone,
+								weekday: "long",
+							}}
+						/>
+						<LocaleTime
+							date={now}
+							options={{
+								timeZone: country.timeZone,
+								hour: "numeric",
+								minute: "numeric",
+							}}
+						/>
 					</div>
 				);
 			})}
@@ -251,14 +227,9 @@ function JoinTeamDialog({
 	close: () => void;
 	members: {
 		username: string;
-		role: Tables["GroupMember"]["role"];
 	}[];
 }) {
-	const { t } = useTranslation(["q"]);
-	const fetcher = useFetcher();
-
-	const owner = members.find((m) => m.role === "OWNER");
-	invariant(owner, "Owner not found");
+	const { t, i18n } = useTranslation(["q"]);
 
 	return (
 		<SendouDialog
@@ -267,29 +238,19 @@ function JoinTeamDialog({
 			isDismissable
 			className="text-center"
 			heading={t("q:front.join.header", {
-				members: joinListToNaturalString(members.map((m) => m.username)),
+				members: new Intl.ListFormat(i18n.language).format(
+					members.map((m) => m.username),
+				),
 			})}
 		>
-			<fetcher.Form
-				className="stack horizontal justify-center md mt-6 flex-wrap"
-				method="post"
-			>
-				<SubmitButton _action="JOIN_TEAM" state={fetcher.state}>
+			<div className="stack horizontal justify-center md mt-6 flex-wrap">
+				<ActionButton schema={frontPageSchema} action="JOIN_TEAM">
 					{t("q:front.join.joinAction")}
-				</SubmitButton>
-				<SubmitButton
-					_action="JOIN_TEAM_WITH_TRUST"
-					state={fetcher.state}
-					variant="outlined"
-				>
-					{t("q:front.join.joinWithTrustAction", {
-						inviterName: owner.username,
-					})}
-				</SubmitButton>
+				</ActionButton>
 				<FormMessage type="info">
-					{t("q:front.join.joinWithTrustAction.explanation")}
+					{t("q:front.join.friendSuggestion")}
 				</FormMessage>
-			</fetcher.Form>
+			</div>
 		</SendouDialog>
 	);
 }
@@ -299,32 +260,26 @@ function ActiveSeasonInfo({
 }: {
 	season: SerializeFrom<Seasons.ListItem>;
 }) {
-	const { t, i18n } = useTranslation(["q"]);
-	const isMounted = useIsMounted();
+	const { t } = useTranslation(["q"]);
 
-	const starts = new Date(season.starts);
-	const ends = new Date(season.ends);
-
-	const dateToString = (date: Date) =>
-		date.toLocaleString(i18n.language, {
-			month: "short",
-			day: "numeric",
-			hour: "numeric",
-			minute: "numeric",
-		});
+	const dateOptions: Intl.DateTimeFormatOptions = {
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	};
 
 	return (
-		<div
-			className={clsx("text-lighter text-xs text-center", {
-				invisible: !isMounted,
-			})}
-		>
+		<div className="text-lighter text-xs text-center">
 			{t("q:front.seasonOpen", { nth: season.nth })}{" "}
-			{isMounted ? (
-				<b>
-					{dateToString(starts)} - {dateToString(ends)}
-				</b>
-			) : null}
+			<b>
+				<LocaleTimeRange
+					from={new Date(season.starts)}
+					to={new Date(season.ends)}
+					options={dateOptions}
+					inline
+				/>
+			</b>
 		</div>
 	);
 }
@@ -344,7 +299,7 @@ function QLinks() {
 			{user ? (
 				<QLink
 					navIcon="settings"
-					url={SENDOUQ_SETTINGS_PAGE}
+					url={MATCH_PROFILE_PAGE}
 					title={t("q:front.nav.settings.title")}
 					subText={t("q:front.nav.settings.description")}
 				/>
@@ -391,11 +346,11 @@ function QLink({
 	subText: string;
 }) {
 	return (
-		<Link to={url} className="q__front-page-link">
+		<Link to={url} className={styles.frontPageLink}>
 			<Image path={navIconUrl(navIcon)} alt="" width={32} />
 			<div>
 				{title}
-				<div className="q__front-page-link__sub-text">{subText}</div>
+				<div className={styles.linkSubText}>{subText}</div>
 			</div>
 		</Link>
 	);
@@ -407,17 +362,12 @@ function UpcomingSeasonInfo({
 	season: SerializeFrom<Seasons.ListItem>;
 }) {
 	const { t } = useTranslation(["q"]);
-	const isMounted = useIsMounted();
-	if (!isMounted) return null;
-
-	const starts = new Date(season.starts);
-
-	const dateToString = (date: Date) =>
-		date.toLocaleString("en-US", {
-			month: "long",
-			day: "numeric",
-			hour: "numeric",
-		});
+	const { formatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
 
 	return (
 		<div className="font-semi-bold text-center text-sm">
@@ -425,7 +375,7 @@ function UpcomingSeasonInfo({
 			<br />
 			{t("q:front.upcomingSeason.date", {
 				nth: season.nth,
-				date: dateToString(starts),
+				date: formatter.format(new Date(season.starts)) ?? "",
 			})}
 		</div>
 	);

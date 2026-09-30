@@ -1,0 +1,334 @@
+import { CalendarClock, Undo2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouTabPanel } from "~/components/elements/Tabs";
+import { MatchActionTab } from "~/components/match-page/MatchActionTab";
+import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { matchPageSearchParams } from "~/components/match-page/match-page-search-params";
+import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
+import { WeaponReporter } from "~/components/match-page/WeaponReporter";
+import { useUser } from "~/features/auth/core/user";
+import { useTournament } from "~/features/tournament/tournament-context";
+import { isSetOverByScore } from "~/features/tournament-bracket/core/engine";
+import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
+import type { CommonUser } from "~/utils/kysely.server";
+import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
+import { type MatchPageTeam, useMatch } from "../match-page-context";
+
+export function TournamentMatchActionTab({
+	data,
+	ownTeamId,
+}: {
+	data: TournamentMatchLoaderData;
+	ownTeamId: number | null;
+}) {
+	const tournament = useTournament();
+	const user = useUser();
+	const reportScore = useActionSubmit(matchSchema);
+	const {
+		teams: [teamOne, teamTwo],
+		scores,
+		scoreSum,
+		currentMap,
+	} = useMatch();
+
+	const weaponReport = useTournamentWeaponReport({
+		data,
+		viewerUserId: user?.id,
+		weaponReportingOpen: tournament.weaponReportingOpen,
+	});
+
+	// no current map to report during pick/ban, but a previous game's score can still be undone (not once the set is over)
+	if (!currentMap) {
+		const canUndo = scoreSum > 0 && !data.matchIsOver;
+		return (
+			<SendouTabPanel id={TAB_KEYS.ACTION}>
+				{canUndo ? <UndoReportButton scoreSum={scoreSum} /> : null}
+				{weaponReport ? (
+					<WeaponReporter {...weaponReport} standalone={!canUndo} />
+				) : null}
+			</SendouTabPanel>
+		);
+	}
+
+	if (!teamOne || !teamTwo) return null;
+
+	const withKo = data.bracketContext.collectsKos;
+
+	const count = data.match.roundMaps.count;
+	const countType = data.match.roundMaps.type;
+
+	const setEndingTeamIds: number[] = [];
+	if (
+		isSetOverByScore({
+			scores: [scores[0] + 1, scores[1]],
+			count,
+			countType,
+		})
+	) {
+		setEndingTeamIds.push(teamOne.id);
+	}
+	if (
+		isSetOverByScore({
+			scores: [scores[0], scores[1] + 1],
+			count,
+			countType,
+		})
+	) {
+		setEndingTeamIds.push(teamTwo.id);
+	}
+
+	const setEnding =
+		setEndingTeamIds.length > 0
+			? {
+					...buildSetEndingData({
+						teams: [teamOne, teamTwo],
+						scores,
+						results: data.results,
+						opponentOneId: teamOne.id,
+					}),
+					setEndingTeamIds,
+				}
+			: undefined;
+
+	return (
+		<MatchActionTab
+			key={scoreSum}
+			teams={[
+				{
+					id: teamOne.id,
+					name: teamOne.name,
+					avatar: teamOne.logoUrl ?? undefined,
+				},
+				{
+					id: teamTwo.id,
+					name: teamTwo.name,
+					avatar: teamTwo.logoUrl ?? undefined,
+				},
+			]}
+			ownTeamId={ownTeamId}
+			stageId={currentMap.stageId}
+			mode={currentMap.mode}
+			withKo={withKo}
+			setEnding={setEnding}
+			isSubmitting={reportScore.state !== "idle"}
+			onSubmit={({ winnerId, ko }) => {
+				reportScore.submit("REPORT_SCORE", {
+					winnerTeamId: winnerId,
+					position: scoreSum,
+					ko: typeof ko === "boolean" ? ko : undefined,
+				});
+			}}
+			actionButtons={
+				<>
+					<UndoReportButton scoreSum={scoreSum} />
+					{data.schedule.canSeeBoard ? <RescheduleButton /> : null}
+				</>
+			}
+			secondaryAction={
+				weaponReport ? <WeaponReporter {...weaponReport} /> : null
+			}
+		/>
+	);
+}
+
+/** Jumps to the schedule tab, where the set's agreed time can be moved. */
+function RescheduleButton() {
+	const { t } = useTranslation(["tournament"]);
+	const [, setTab] = useSearchParam(matchPageSearchParams, "tab");
+
+	return (
+		<SendouButton
+			variant="minimal"
+			size="miniscule"
+			icon={<CalendarClock size={16} />}
+			onClick={() => setTab(TAB_KEYS.SCHEDULE)}
+			data-testid="reschedule-button"
+		>
+			{t("tournament:match.schedule.reschedule")}
+		</SendouButton>
+	);
+}
+
+export function UndoReportButton({ scoreSum }: { scoreSum: number }) {
+	const { t } = useTranslation(["q"]);
+	const undoReport = useActionSubmit(matchSchema);
+
+	return (
+		<SendouButton
+			variant="minimal-destructive"
+			size="miniscule"
+			icon={<Undo2 size={16} />}
+			isPending={undoReport.state !== "idle"}
+			isDisabled={scoreSum === 0}
+			onClick={() => {
+				undoReport.submit("UNDO_REPORT_SCORE", { position: scoreSum - 1 });
+			}}
+			testId="undo-score-button"
+		>
+			{t("q:match.undoReport")}
+		</SendouButton>
+	);
+}
+
+function useTournamentWeaponReport({
+	data,
+	viewerUserId,
+	weaponReportingOpen,
+}: {
+	data: TournamentMatchLoaderData;
+	viewerUserId: number | undefined;
+	weaponReportingOpen: boolean;
+}) {
+	const tournament = useTournament();
+
+	const playOrderMaps = (data.mapList ?? []).filter(
+		(m) => !m.bannedByTournamentTeamId,
+	);
+	const reportedCount = data.results.length;
+	const weaponReportMaps = playOrderMaps
+		.slice(0, reportedCount + 1)
+		.map((m, mapIndex) => ({ mapIndex, stageId: m.stageId, mode: m.mode }))
+		.filter(({ mapIndex }) => viewerPlayedMap(mapIndex));
+
+	const pastReported =
+		data.reportedWeapons && viewerUserId !== undefined
+			? data.reportedWeapons
+					.filter((w) => w.userId === viewerUserId)
+					.map((w) => ({ mapIndex: w.mapIndex, weaponSplId: w.weaponSplId }))
+			: [];
+
+	const weaponReport = useMatchWeaponReport({
+		maps: weaponReportMaps,
+		pastReported,
+	});
+
+	if (viewerUserId === undefined) return null;
+	if (!weaponReportingOpen) return null;
+
+	const isParticipant = data.match.players.some((p) => p.id === viewerUserId);
+	if (!isParticipant) return null;
+
+	if (weaponReportMaps.length === 0) return null;
+
+	return weaponReport;
+
+	function viewerPlayedMap(mapIndex: number) {
+		if (viewerUserId === undefined) return false;
+
+		// a played map remembers its roster, the map still to be played goes by the roster as it stands now
+		const result = data.results[mapIndex];
+		if (result) {
+			return result.participants.some((p) => p.userId === viewerUserId);
+		}
+
+		const team = tournament.teamMemberOfByUser({ id: viewerUserId });
+		if (!team) return false;
+
+		const activeRoster =
+			tournamentTeamToActiveRosterUserIds(team, tournament.minMembersPerTeam) ??
+			team.memberUserIds;
+
+		return activeRoster.includes(viewerUserId);
+	}
+}
+
+function buildSetEndingData({
+	teams,
+	scores,
+	results,
+	opponentOneId,
+}: {
+	teams: [MatchPageTeam, MatchPageTeam];
+	scores: [number, number];
+	results: TournamentMatchLoaderData["results"];
+	opponentOneId: number;
+}) {
+	const [teamOne, teamTwo] = teams;
+
+	const memberToCommonUser = (m: {
+		userId: number;
+		username: string;
+		discordId: string;
+		discordAvatar: string | null;
+		customUrl: string | null;
+		customAvatarUrl: string | null;
+	}): CommonUser => ({
+		id: m.userId,
+		username: m.username,
+		discordId: m.discordId,
+		discordAvatar: m.discordAvatar,
+		customUrl: m.customUrl,
+		customAvatarUrl: m.customAvatarUrl,
+	});
+
+	const teamOneMembersMap = new Map(
+		teamOne.members.map((m) => [m.userId, memberToCommonUser(m)]),
+	);
+	const teamTwoMembersMap = new Map(
+		teamTwo.members.map((m) => [m.userId, memberToCommonUser(m)]),
+	);
+
+	const previousMaps = results.map((result) => {
+		const alphaParticipants: CommonUser[] = [];
+		const bravoParticipants: CommonUser[] = [];
+
+		for (const p of result.participants) {
+			const user =
+				teamOneMembersMap.get(p.userId) ?? teamTwoMembersMap.get(p.userId);
+			if (!user) continue;
+
+			if (p.tournamentTeamId === opponentOneId) {
+				alphaParticipants.push(user);
+			} else {
+				bravoParticipants.push(user);
+			}
+		}
+
+		return {
+			stageId: result.stageId,
+			mode: result.mode,
+			timestamp: databaseTimestampToJavascriptTimestamp(result.createdAt),
+			winner:
+				result.winnerTeamId === opponentOneId
+					? ("ALPHA" as const)
+					: ("BRAVO" as const),
+			rosters: {
+				alpha: alphaParticipants,
+				bravo: bravoParticipants,
+			},
+			ko: result.ko != null ? Boolean(result.ko) : undefined,
+		};
+	});
+
+	const activeRosterUsers = (team: MatchPageTeam): CommonUser[] => {
+		const activeIds = team.activeRosterUserIds;
+		const members = activeIds
+			? team.members.filter((m) => activeIds.includes(m.userId))
+			: team.members;
+		return members.map(memberToCommonUser);
+	};
+
+	return {
+		teams: {
+			alpha: {
+				name: teamOne.name,
+				avatar: teamOne.logoUrl ?? undefined,
+			},
+			bravo: {
+				name: teamTwo.name,
+				avatar: teamTwo.logoUrl ?? undefined,
+			},
+		},
+		score: { alpha: scores[0], bravo: scores[1] },
+		maps: previousMaps,
+		currentRosters: {
+			alpha: activeRosterUsers(teamOne),
+			bravo: activeRosterUsers(teamTwo),
+		},
+	};
+}

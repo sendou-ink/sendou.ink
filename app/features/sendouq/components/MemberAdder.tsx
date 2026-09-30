@@ -1,19 +1,15 @@
-import { useFetcher } from "@remix-run/react";
+import { Check, Clipboard, Plus } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
+import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { ClipboardIcon } from "~/components/icons/Clipboard";
-import { PlusIcon } from "~/components/icons/Plus";
 import { SubmitButton } from "~/components/SubmitButton";
-import { useTrusted } from "~/hooks/swr";
-import {
-	SENDOU_INK_BASE_URL,
-	SENDOUQ_PREPARING_PAGE,
-	sendouQInviteLink,
-} from "~/utils/urls";
+import { sendouQInviteLink } from "~/features/sendouq/q-urls";
+import { useFriendsForAdding } from "~/hooks/swr";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
+import { SENDOU_INK_BASE_URL, SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
 import type { SendouQPreparingAction } from "../actions/q.preparing.server";
+import { preparingSchema } from "../q-action-schemas";
 
 export function MemberAdder({
 	inviteCode,
@@ -23,61 +19,55 @@ export function MemberAdder({
 	groupMemberIds: number[];
 }) {
 	const { t } = useTranslation(["q"]);
-	const [truster, setTruster] = React.useState<number>();
-	const fetcher = useFetcher<SendouQPreparingAction>();
 	const inviteLink = `${SENDOU_INK_BASE_URL}${sendouQInviteLink(inviteCode)}`;
-	const [state, copyToClipboard] = useCopyToClipboard();
-	const [copySuccess, setCopySuccess] = React.useState(false);
-
-	const showMemberAddError = fetcher.data?.error === "taken";
-
-	const groupMembersJoined = groupMemberIds.join(",");
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
-	React.useEffect(() => {
-		setTruster(undefined);
-	}, [groupMembersJoined]);
-
-	React.useEffect(() => {
-		if (!state.value) return;
-
-		setCopySuccess(true);
-		const timeout = setTimeout(() => setCopySuccess(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [state]);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	return (
 		<div className="stack md flex-wrap justify-center">
 			<div>
 				<label htmlFor="invite">{t("q:looking.groups.adder.inviteLink")}</label>
 				<div className="stack horizontal sm items-center">
-					<input
-						type="text"
-						value={inviteLink}
-						readOnly
-						id="invite"
-						className="q__member-adder__input"
-					/>
+					<input type="text" value={inviteLink} readOnly id="invite" />
 					<SendouButton
+						shape="square"
 						variant={copySuccess ? "outlined-success" : "outlined"}
-						onPress={() => copyToClipboard(inviteLink)}
-						icon={copySuccess ? <CheckmarkIcon /> : <ClipboardIcon />}
+						onClick={() => copyToClipboard(inviteLink)}
+						icon={copySuccess ? <Check /> : <Clipboard />}
 						aria-label="Copy to clipboard"
 					/>
 				</div>
 			</div>
+			<AddFriendRow
+				key={groupMemberIds.join(",")}
+				groupMemberIds={groupMemberIds}
+			/>
+		</div>
+	);
+}
+
+function AddFriendRow({ groupMemberIds }: { groupMemberIds: number[] }) {
+	const { t } = useTranslation(["q"]);
+	const [friend, setFriend] = React.useState<number>();
+	const fetcher = useFetcher<SendouQPreparingAction>();
+
+	const showMemberAddError = fetcher.data?.error === "taken";
+
+	return (
+		<>
 			<fetcher.Form method="post" action={SENDOUQ_PREPARING_PAGE}>
 				<label htmlFor="players">{t("q:looking.groups.adder.quickAdd")}</label>
 				<div className="stack horizontal sm items-center">
-					<TrusterDropdown
-						setTruster={setTruster}
+					<FriendDropdown
+						setFriend={setFriend}
 						groupMemberIds={groupMemberIds}
 					/>
 					<SubmitButton
+						shape="square"
 						variant="outlined"
-						_action="ADD_TRUSTED"
-						isDisabled={!truster}
-						icon={<PlusIcon />}
+						schema={preparingSchema}
+						_action="ADD_FRIEND"
+						isDisabled={!friend}
+						icon={<Plus />}
 					/>
 				</div>
 			</fetcher.Form>
@@ -86,36 +76,29 @@ export function MemberAdder({
 					{t("q:looking.groups.adder.error")}
 				</div>
 			) : null}
-		</div>
+		</>
 	);
 }
 
-function TrusterDropdown({
-	setTruster,
+function FriendDropdown({
+	setFriend,
 	groupMemberIds,
 }: {
-	setTruster: (id: number | undefined) => void;
+	setFriend: (id: number | undefined) => void;
 	groupMemberIds: number[];
 }) {
 	const { t } = useTranslation(["q"]);
-	const { trusters, teams } = useTrusted();
+	const { friends, teams } = useFriendsForAdding();
 
-	if (!trusters || trusters.length === 0) {
-		return (
-			<select
-				name="id"
-				id="players"
-				disabled
-				className="q__member-adder__input"
-			/>
-		);
+	if (!friends || friends.length === 0) {
+		return <select name="id" id="players" disabled />;
 	}
 
-	const trustersNotInGroup = trusters.filter(
-		(truster) => !groupMemberIds.includes(truster.id),
+	const friendsNotInGroup = friends.filter(
+		(friend) => !groupMemberIds.includes(friend.id),
 	);
 
-	const othersOptions = trustersNotInGroup
+	const othersOptions = friendsNotInGroup
 		.filter((player) => !player.teamId)
 		.map((player) => {
 			return (
@@ -130,15 +113,14 @@ function TrusterDropdown({
 			name="id"
 			id="players"
 			onChange={(e) =>
-				setTruster(e.target.value ? Number(e.target.value) : undefined)
+				setFriend(e.target.value ? Number(e.target.value) : undefined)
 			}
-			className="q__member-adder__input"
 		>
 			<option value="">{t("q:looking.groups.adder.select")}</option>
 			{teams?.map((team) => {
 				return (
 					<optgroup label={team.name} key={team.id}>
-						{trustersNotInGroup
+						{friendsNotInGroup
 							.filter((player) => player.teamId === team.id)
 							.map((player) => {
 								return (

@@ -1,0 +1,427 @@
+import { Check, Clipboard, PencilLine } from "lucide-react";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import type { CustomTheme } from "~/db/tables-json";
+import * as ThemePalette from "~/features/theme/core/ThemePalette";
+import { CUSTOM_THEME_VARS } from "~/features/theme/theme-constants";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
+import { THEME_INPUT_LIMITS } from "~/utils/schema";
+import styles from "./CustomThemeSelector.module.css";
+import { Divider } from "./Divider";
+import { LinkButton, SendouButton } from "./elements/Button";
+import { SendouSwitch } from "./elements/Switch";
+import { Label } from "./Label";
+
+const COLOR_SLIDERS = [
+	{
+		id: "base-hue",
+		inputKey: "baseHue",
+		min: THEME_INPUT_LIMITS.BASE_HUE_MIN,
+		max: THEME_INPUT_LIMITS.BASE_HUE_MAX,
+		step: 1,
+		labelKey: "baseHue",
+		isHue: true,
+	},
+	{
+		id: "base-chroma",
+		inputKey: "baseChroma",
+		min: THEME_INPUT_LIMITS.BASE_CHROMA_MIN,
+		max: THEME_INPUT_LIMITS.BASE_CHROMA_MAX,
+		step: 0.001,
+		labelKey: "baseChroma",
+		isHue: false,
+	},
+	{
+		id: "accent-hue",
+		inputKey: "accentHue",
+		min: THEME_INPUT_LIMITS.ACCENT_HUE_MIN,
+		max: THEME_INPUT_LIMITS.ACCENT_HUE_MAX,
+		step: 1,
+		labelKey: "accentHue",
+		isHue: true,
+	},
+	{
+		id: "accent-chroma",
+		inputKey: "accentChroma",
+		min: THEME_INPUT_LIMITS.ACCENT_CHROMA_MIN,
+		max: THEME_INPUT_LIMITS.ACCENT_CHROMA_MAX,
+		step: 0.01,
+		labelKey: "accentChroma",
+		isHue: false,
+	},
+	{
+		id: "bg-lightness",
+		inputKey: "bgLightness",
+		min: THEME_INPUT_LIMITS.BG_LIGHTNESS_MIN,
+		max: THEME_INPUT_LIMITS.BG_LIGHTNESS_MAX,
+		step: THEME_INPUT_LIMITS.BG_LIGHTNESS_STEP,
+		labelKey: "bgLightness",
+		isHue: false,
+	},
+] as const;
+
+const RADIUS_SLIDERS = [
+	{
+		id: "radius-box",
+		inputKey: "radiusBox",
+		min: THEME_INPUT_LIMITS.RADIUS_MIN,
+		max: THEME_INPUT_LIMITS.RADIUS_MAX,
+		step: THEME_INPUT_LIMITS.RADIUS_STEP,
+		labelKey: "boxes",
+	},
+	{
+		id: "radius-field",
+		inputKey: "radiusField",
+		min: THEME_INPUT_LIMITS.RADIUS_MIN,
+		max: THEME_INPUT_LIMITS.RADIUS_MAX,
+		step: THEME_INPUT_LIMITS.RADIUS_STEP,
+		labelKey: "fields",
+	},
+	{
+		id: "radius-selector",
+		inputKey: "radiusSelector",
+		min: THEME_INPUT_LIMITS.RADIUS_MIN,
+		max: THEME_INPUT_LIMITS.RADIUS_MAX,
+		step: THEME_INPUT_LIMITS.RADIUS_STEP,
+		labelKey: "selectors",
+	},
+] as const;
+
+const BORDER_SLIDERS = [
+	{
+		id: "border-width",
+		inputKey: "borderWidth",
+		min: THEME_INPUT_LIMITS.BORDER_WIDTH_MIN,
+		max: THEME_INPUT_LIMITS.BORDER_WIDTH_MAX,
+		step: THEME_INPUT_LIMITS.BORDER_WIDTH_STEP,
+		labelKey: "borderWidth",
+	},
+] as const;
+
+const SIZE_SLIDERS = [
+	{
+		id: "size-field",
+		inputKey: "sizeField",
+		min: THEME_INPUT_LIMITS.SIZE_MIN,
+		max: THEME_INPUT_LIMITS.SIZE_MAX,
+		step: THEME_INPUT_LIMITS.SIZE_STEP,
+		labelKey: "fields",
+	},
+	{
+		id: "size-selector",
+		inputKey: "sizeSelector",
+		min: THEME_INPUT_LIMITS.SIZE_MIN,
+		max: THEME_INPUT_LIMITS.SIZE_MAX,
+		step: THEME_INPUT_LIMITS.SIZE_STEP,
+		labelKey: "selectors",
+	},
+	{
+		id: "size-spacing",
+		inputKey: "sizeSpacing",
+		min: THEME_INPUT_LIMITS.SIZE_MIN,
+		max: THEME_INPUT_LIMITS.SIZE_MAX,
+		step: THEME_INPUT_LIMITS.SIZE_STEP,
+		labelKey: "spacings",
+	},
+] as const;
+
+type ThemeInputKey =
+	| (typeof COLOR_SLIDERS)[number]["inputKey"]
+	| (typeof RADIUS_SLIDERS)[number]["inputKey"]
+	| (typeof BORDER_SLIDERS)[number]["inputKey"]
+	| (typeof SIZE_SLIDERS)[number]["inputKey"]
+	| "chatHue";
+
+function applyThemeInput(input: ThemePalette.ThemeInput) {
+	const theme = ThemePalette.build(input);
+
+	for (const [key, value] of Object.entries(theme)) {
+		document.documentElement.style.setProperty(key, String(value));
+	}
+}
+
+function ThemeSlider({
+	id,
+	inputKey,
+	min,
+	max,
+	step,
+	label,
+	isHue,
+	value,
+	onChange,
+}: {
+	id: string;
+	inputKey: ThemeInputKey;
+	min: number;
+	max: number;
+	step: number;
+	label: string;
+	isHue?: boolean;
+	value: number;
+	onChange: (inputKey: ThemeInputKey, value: number) => void;
+}) {
+	return (
+		<div className={styles.themeSliderRow}>
+			<Label htmlFor={id}>{label}</Label>
+			<input
+				id={id}
+				type="range"
+				min={min}
+				max={max}
+				step={step}
+				value={value}
+				onChange={(e) => onChange(inputKey, Number(e.target.value))}
+				className={isHue ? styles.hueSlider : undefined}
+			/>
+		</div>
+	);
+}
+
+export function CustomThemeSelector({
+	initialTheme,
+	isSupporter,
+	isPersonalTheme,
+	onSave,
+	onReset,
+	hidePatreonInfo,
+	fetcherState,
+}: {
+	initialTheme: CustomTheme | null | undefined;
+	isSupporter: boolean;
+	isPersonalTheme: boolean;
+	onSave: (themeInput: ThemePalette.ThemeInput) => void;
+	onReset: () => void;
+	hidePatreonInfo?: boolean;
+	fetcherState?: "idle" | "submitting" | "loading";
+}) {
+	const { t } = useTranslation(["common"]);
+
+	const initialThemeInput = initialTheme
+		? ThemePalette.toThemeInput(initialTheme)
+		: ThemePalette.DEFAULT_THEME_INPUT;
+
+	const [themeInput, setThemeInput] =
+		React.useState<ThemePalette.ThemeInput>(initialThemeInput);
+
+	const handleSliderChange = (inputKey: ThemeInputKey, value: number) => {
+		const updatedInput = { ...themeInput, [inputKey]: value };
+		setThemeInput(updatedInput);
+		applyThemeInput(updatedInput);
+	};
+
+	const chatHueEnabled = themeInput.chatHue !== null;
+
+	const handleChatHueToggle = (isSelected: boolean) => {
+		const updatedInput = {
+			...themeInput,
+			chatHue: isSelected ? 0 : null,
+		};
+		setThemeInput(updatedInput);
+		applyThemeInput(updatedInput);
+	};
+
+	const handleSave = () => {
+		onSave(themeInput);
+	};
+
+	const handleReset = () => {
+		setThemeInput(ThemePalette.DEFAULT_THEME_INPUT);
+		for (const varDef of CUSTOM_THEME_VARS) {
+			document.documentElement.style.removeProperty(varDef);
+		}
+		onReset();
+	};
+
+	return (
+		<div className={styles.customThemeSelector}>
+			{hidePatreonInfo ? null : (
+				<div
+					className={
+						isSupporter
+							? styles.customThemeSelectorSupporter
+							: styles.customThemeSelectorNoSupporter
+					}
+				>
+					<div className={styles.customThemeSelectorInfo}>
+						<p>{t("common:settings.customTheme.patreonText")}</p>
+						<LinkButton
+							to="https://www.patreon.com/sendou"
+							isExternal
+							size="small"
+						>
+							{t("common:settings.customTheme.joinPatreon")}
+						</LinkButton>
+					</div>
+				</div>
+			)}
+			<Divider smallText>{t("common:settings.customTheme.colors")}</Divider>
+			<div className={styles.themeSliders}>
+				{COLOR_SLIDERS.map((slider) => (
+					<ThemeSlider
+						key={slider.id}
+						id={slider.id}
+						inputKey={slider.inputKey}
+						min={slider.min}
+						max={slider.max}
+						step={slider.step}
+						label={t(`common:settings.customTheme.${slider.labelKey}`)}
+						isHue={slider.isHue}
+						value={themeInput[slider.inputKey]}
+						onChange={handleSliderChange}
+					/>
+				))}
+				{isPersonalTheme ? (
+					<div className="mt-2">
+						<SendouSwitch
+							isSelected={chatHueEnabled}
+							onChange={handleChatHueToggle}
+						>
+							{t("common:settings.customTheme.chatHueToggle")}
+						</SendouSwitch>
+					</div>
+				) : null}
+				{chatHueEnabled && isPersonalTheme ? (
+					<div className={styles.chatColorPreview}>
+						<ThemeSlider
+							id="chat-hue"
+							inputKey="chatHue"
+							min={THEME_INPUT_LIMITS.BASE_HUE_MIN}
+							max={THEME_INPUT_LIMITS.BASE_HUE_MAX}
+							step={1}
+							label={t("common:settings.customTheme.chatHue")}
+							isHue
+							value={themeInput.chatHue ?? 0}
+							onChange={handleSliderChange}
+						/>
+					</div>
+				) : null}
+			</div>
+			<Divider smallText>{t("common:settings.customTheme.radius")}</Divider>
+			<div className={styles.themeSliders}>
+				{RADIUS_SLIDERS.map((slider) => (
+					<ThemeSlider
+						key={slider.id}
+						id={slider.id}
+						inputKey={slider.inputKey}
+						min={slider.min}
+						max={slider.max}
+						step={slider.step}
+						label={t(`common:settings.customTheme.${slider.labelKey}`)}
+						value={themeInput[slider.inputKey]}
+						onChange={handleSliderChange}
+					/>
+				))}
+			</div>
+			{isPersonalTheme ? (
+				<>
+					<Divider smallText>{t("common:settings.customTheme.sizes")}</Divider>
+					<div className={styles.themeSliders}>
+						{SIZE_SLIDERS.map((slider) => (
+							<ThemeSlider
+								key={slider.id}
+								id={slider.id}
+								inputKey={slider.inputKey}
+								min={slider.min}
+								max={slider.max}
+								step={slider.step}
+								label={t(`common:settings.customTheme.${slider.labelKey}`)}
+								value={themeInput[slider.inputKey]}
+								onChange={handleSliderChange}
+							/>
+						))}
+					</div>
+					<Divider smallText>
+						{t("common:settings.customTheme.borders")}
+					</Divider>
+					<div className={styles.themeSliders}>
+						{BORDER_SLIDERS.map((slider) => (
+							<ThemeSlider
+								key={slider.id}
+								id={slider.id}
+								inputKey={slider.inputKey}
+								min={slider.min}
+								max={slider.max}
+								step={slider.step}
+								label={t(`common:settings.customTheme.${slider.labelKey}`)}
+								value={themeInput[slider.inputKey]}
+								onChange={handleSliderChange}
+							/>
+						))}
+					</div>
+				</>
+			) : null}
+			<Divider />
+			<ThemeShareInput
+				themeInput={themeInput}
+				onImport={(imported) => {
+					setThemeInput(imported);
+					applyThemeInput(imported);
+				}}
+			/>
+			<div className={styles.customThemeSelectorActions}>
+				<SendouButton
+					isDisabled={
+						!isSupporter || (fetcherState != null && fetcherState !== "idle")
+					}
+					onClick={handleSave}
+				>
+					{t("common:actions.save")}
+				</SendouButton>
+				<SendouButton
+					isDisabled={
+						!isSupporter || (fetcherState != null && fetcherState !== "idle")
+					}
+					variant="destructive"
+					onClick={handleReset}
+				>
+					{t("common:actions.reset")}
+				</SendouButton>
+			</div>
+		</div>
+	);
+}
+
+function ThemeShareInput({
+	themeInput,
+	onImport,
+}: {
+	themeInput: ThemePalette.ThemeInput;
+	onImport: (input: ThemePalette.ThemeInput) => void;
+}) {
+	const { t } = useTranslation(["common"]);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
+
+	const themeString = ThemePalette.toShareCode(themeInput);
+
+	const handlePaste = async () => {
+		const text = await navigator.clipboard.readText();
+		const parsed = ThemePalette.fromShareCode(text);
+		if (parsed) onImport(parsed);
+	};
+
+	return (
+		<div className={styles.themeShare}>
+			<Label htmlFor="theme-input">
+				{t("common:settings.customTheme.shareCode")}
+			</Label>
+			<div className={styles.themeShareActions}>
+				<input id="theme-input" type="text" value={themeString} readOnly />
+				<SendouButton
+					shape="square"
+					variant="outlined"
+					icon={copySuccess ? <Check /> : <Clipboard />}
+					onClick={() => copyToClipboard(themeString)}
+					aria-label={t("common:settings.customTheme.copy")}
+				/>
+				<SendouButton
+					shape="square"
+					variant="outlined"
+					icon={<PencilLine />}
+					onClick={handlePaste}
+					aria-label={t("common:settings.customTheme.paste")}
+				/>
+			</div>
+		</div>
+	);
+}

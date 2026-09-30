@@ -1,33 +1,25 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { coerceNumber, id } from "~/utils/schema";
 import type { GetTournamentBracketResponse } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
-	bidx: z.coerce.number().int(),
+	bidx: v.pipe(coerceNumber(), v.integer()),
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
-	const { id, bidx } = parseParams({ params, schema: paramsSchema });
-
-	const tournament = await tournamentFromDB({
-		user: undefined,
-		tournamentId: id,
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { id: tournamentId, bidx } = parseParams({
+		params,
+		schema: paramsSchema,
 	});
 
-	const bracket = notFoundIfFalsy(tournament.bracketByIdx(bidx));
+	const tournament = await tournamentFromDB(tournamentId);
+
+	const bracket = notFoundIfNullish(tournament.bracketByIdx(bidx));
 
 	const result: GetTournamentBracketResponse = {
 		data: bracket.data,
@@ -51,7 +43,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		},
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };
 
 function teams(bracket: Bracket) {

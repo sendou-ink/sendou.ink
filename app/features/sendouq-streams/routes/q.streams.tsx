@@ -1,22 +1,22 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { User } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Avatar } from "~/components/Avatar";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { EmptyState } from "~/components/EmptyState";
 import { TierImage, WeaponImage } from "~/components/Image";
-import { UserIcon } from "~/components/icons/User";
 import { Main } from "~/components/Main";
+import { UserLink } from "~/components/UserLink";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { FAQ_PAGE, sendouQMatchPage, twitchUrl, userPage } from "~/utils/urls";
-
+import { FAQ_PAGE, sendouQMatchPage, twitchUrl } from "~/utils/urls";
 import { loader } from "../loaders/q.streams.server";
-export { loader };
+import styles from "./q.streams.module.css";
 
-import "~/features/sendouq/q.css";
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q"],
@@ -26,6 +26,7 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Streams",
 		description: "Streams of SendouQ matches in progress.",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };
@@ -43,9 +44,11 @@ export default function SendouQStreamsPage() {
 
 	if (data.streams.length === 0) {
 		return (
-			<Main className="text-lighter text-lg font-bold text-center">
-				{t("q:streams.noStreams")}
-				{ownStreamNote}
+			<Main>
+				<EmptyState navItem="sendouq">
+					{t("q:streams.noStreams")}
+					{ownStreamNote}
+				</EmptyState>
 			</Main>
 		);
 	}
@@ -57,16 +60,13 @@ export default function SendouQStreamsPage() {
 					return (
 						<div key={streamedMatch.user.id} className="stack sm">
 							<div className="stack horizontal justify-between items-end">
-								<Link
-									to={userPage(streamedMatch.user)}
-									className="q-stream__stream__user-container"
-								>
-									<Avatar size="xxs" user={streamedMatch.user} />{" "}
-									{streamedMatch.user.username}
-								</Link>
+								<UserLink
+									user={streamedMatch.user}
+									className={styles.userContainer}
+								/>
 								<div className="stack horizontal sm">
 									{streamedMatch.weaponSplId ? (
-										<div className="q-stream__info-circle">
+										<div className={styles.infoCircle}>
 											<WeaponImage
 												weaponSplId={streamedMatch.weaponSplId}
 												size={24}
@@ -75,7 +75,7 @@ export default function SendouQStreamsPage() {
 										</div>
 									) : null}
 									{streamedMatch.tier ? (
-										<div className="q-stream__info-circle">
+										<div className={styles.infoCircle}>
 											<TierImage tier={streamedMatch.tier} width={24} />
 										</div>
 									) : null}
@@ -108,8 +108,8 @@ export default function SendouQStreamsPage() {
 										)}
 									/>
 								</div>
-								<div className="q-stream__stream__viewer-count">
-									<UserIcon />
+								<div className={styles.viewerCount}>
+									<User />
 									{streamedMatch.stream.viewerCount}
 								</div>
 							</div>
@@ -124,12 +124,14 @@ export default function SendouQStreamsPage() {
 
 function RelativeStartTime({ startedAt }: { startedAt: Date }) {
 	const { i18n } = useTranslation();
-	const isMounted = useIsMounted();
-	useAutoRerender();
+	const isHydrated = useHydrated();
+	const now = useAutoRerender();
 
-	if (!isMounted) return null;
+	if (!isHydrated) return null;
 
-	const minutesAgo = Math.floor((startedAt.getTime() - Date.now()) / 1000 / 60);
+	const minutesAgo = Math.floor(
+		(startedAt.getTime() - now.getTime()) / 1000 / 60,
+	);
 	const formatter = new Intl.RelativeTimeFormat(i18n.language, {
 		style: "short",
 	});

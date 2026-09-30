@@ -1,3 +1,4 @@
+import * as ChatSystemMessage from "../features/chat/ChatSystemMessage.server";
 import { notify } from "../features/notifications/core/notify.server";
 import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
 import { tournamentDataCached } from "../features/tournament-bracket/core/Tournament.server";
@@ -15,17 +16,17 @@ export const NotifyCheckInStartRoutine = new Routine({
 		});
 
 		for (const { tournamentId } of tournaments) {
-			const tournament = await tournamentDataCached({
-				tournamentId: tournamentId!,
-				user: undefined,
-			});
+			const tournament = await tournamentDataCached(tournamentId!);
 
-			if (tournament.ctx.settings.isTest) {
+			if (tournament.ctx.settings.isTest || tournament.ctx.settings.isDraft) {
 				continue;
 			}
 
 			logger.info(
 				`Notifying check-in start for tournament ${tournament.ctx.id}`,
+			);
+			const memberUserIds = tournament.ctx.teams.flatMap(
+				(team) => team.memberUserIds,
 			);
 			await notify({
 				notification: {
@@ -34,12 +35,14 @@ export const NotifyCheckInStartRoutine = new Routine({
 						tournamentId: tournament.ctx.id,
 						tournamentName: tournament.ctx.name,
 					},
-					pictureUrl: tournament.ctx.logoSrc,
+					pictureUrl: tournament.ctx.logoUrl,
 				},
-				userIds: tournament.ctx.teams
-					.flatMap((team) => team.members.map((member) => member.userId))
-					.concat(tournament.ctx.staff.map((staff) => staff.id)),
+				userIds: memberUserIds.concat(
+					tournament.ctx.staff.map((staff) => staff.id),
+				),
 			});
+			// so the header check-in reminder appears without waiting for a navigation
+			ChatSystemMessage.notifyStatusChanged(memberUserIds);
 		}
 	},
 });

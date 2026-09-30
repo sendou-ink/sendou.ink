@@ -1,5 +1,6 @@
 export const BADGE = {
 	SMALL_BADGES_PER_DISPLAY_PAGE: 9,
+	OWNERS_MAX_LENGTH: 10_000,
 };
 
 export const SPLATOON_3_XP_BADGE_VALUES = [

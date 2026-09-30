@@ -1,21 +1,35 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
-import { allArtTags } from "../queries/allArtTags.server";
-import {
-	showcaseArts,
-	showcaseArtsByTag,
-} from "../queries/showcaseArts.server";
+import cachified from "@epic-web/cachified";
+import type { LoaderFunctionArgs } from "react-router";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import * as ArtRepository from "../ArtRepository.server";
+import { artSearchParams } from "../art-search-params";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const allTags = allArtTags();
+export const loader = async ({ url }: LoaderFunctionArgs) => {
+	const cachedArts = await cachified({
+		key: "arts",
+		cache,
+		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
+		async getFreshValue() {
+			return {
+				showcaseArts: await ArtRepository.findShowcaseArts(),
+				recentlyUploadedArts: await ArtRepository.findRecentlyUploadedArts(),
+				allTags: await ArtRepository.findAllTags(),
+			};
+		},
+	});
 
-	const filteredTagName = new URL(request.url).searchParams.get(
-		FILTERED_TAG_KEY_SEARCH_PARAM_KEY,
-	);
-	const filteredTag = allTags.find((t) => t.name === filteredTagName);
+	const { tag: filteredTagName } = artSearchParams.parse(url);
+
+	const filteredTag = filteredTagName
+		? cachedArts.allTags.find((t) => t.name === filteredTagName)
+		: null;
+
+	if (!filteredTag) {
+		return filteredTagName ? { ...cachedArts, showcaseArts: [] } : cachedArts;
+	}
 
 	return {
-		arts: filteredTag ? showcaseArtsByTag(filteredTag.id) : showcaseArts(),
-		allTags,
+		...cachedArts,
+		showcaseArts: await ArtRepository.findShowcaseArtsByTag(filteredTag.id),
 	};
 };

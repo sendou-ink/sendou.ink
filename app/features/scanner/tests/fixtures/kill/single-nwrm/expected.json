@@ -1,0 +1,10 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 150,
+		"names": ["nwrm"]
+	},
+	"options": {
+		"notes": "1280x720 POV capture, Splat Zones (counter 88-18, timer 2:30). One feed row with no other overlay in the way."
+	}
+}

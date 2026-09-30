@@ -1,20 +1,29 @@
-import { type FetcherWithComponents, useNavigation } from "@remix-run/react";
+import { type FetcherWithComponents, useNavigation } from "react-router";
+import type { ActionsOf } from "~/utils/action-schemas";
+import type { AnySchema } from "~/utils/schema";
 import { SendouButton, type SendouButtonProps } from "./elements/Button";
 
-interface SubmitButtonProps extends SendouButtonProps {
-	/** If the page has multiple forms you can pass in fetcher.state to differentiate when this SubmitButton should be in submitting state */
+type SubmitButtonProps<TSchema extends AnySchema> = SendouButtonProps & {
+	/** fetcher.state, to tell apart submitting state between multiple forms */
 	state?: FetcherWithComponents<any>["state"];
-	_action?: string;
 	testId?: string;
-}
+} & (
+		| {
+				/** Route's action schema, only used for typing `_action`. */
+				schema: TSchema;
+				_action: ActionsOf<TSchema>;
+		  }
+		| { schema?: never; _action?: never }
+	);
 
-export function SubmitButton({
+export function SubmitButton<TSchema extends AnySchema>({
 	children,
 	state,
+	schema: _schema,
 	_action,
 	testId,
 	...rest
-}: SubmitButtonProps) {
+}: SubmitButtonProps<TSchema>) {
 	const navigation = useNavigation();
 
 	const isSubmitting = state ? state !== "idle" : navigation.state !== "idle";

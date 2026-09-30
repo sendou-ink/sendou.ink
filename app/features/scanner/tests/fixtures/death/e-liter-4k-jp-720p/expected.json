@@ -1,0 +1,32 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 2030,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "QSJ",
+        "SSU",
+        "ISS",
+        "UNKNOWN"
+      ],
+      [
+        "ISM",
+        "SSU",
+        "UNKNOWN",
+        "UNKNOWN"
+      ],
+      [
+        "ISS",
+        "SRU",
+        "SPU",
+        "SRU"
+      ]
+    ],
+    "name": "JINGIのヒト",
+    "weaponLabel": "E-liter 4K"
+  },
+  "options": {
+    "notes": "720p VoD capture (upscaled to canonical at ingest), JP death message 'リッター4K で / やられた！'. The read garbles below both the plain-snap threshold and the lattice margin ('4K' is unreadable); the weapon resolves only via burst-icon corroboration — icon top-1 (E-liter 4K) agrees with the plain text ranking's top. Streamer webcam bottom-left pixelated for privacy (region sits left of every parsed ROI)."
+  }
+}

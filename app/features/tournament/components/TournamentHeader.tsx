@@ -1,0 +1,183 @@
+import { Bookmark, BookmarkCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Link, useFetcher } from "react-router";
+import * as R from "remeda";
+import { ActionButton } from "~/components/ActionButton";
+import { Avatar } from "~/components/Avatar";
+import { LinkButton } from "~/components/elements/Button";
+import { DiscordIcon } from "~/components/icons/Discord";
+import { LocaleTime } from "~/components/LocaleTime";
+import { ShareUrlButton } from "~/components/ShareUrlButton";
+import { TimePopover } from "~/components/TimePopover";
+import { UserLink } from "~/components/UserLink";
+import { useUser } from "~/features/auth/core/user";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { SENDOU_INK_BASE_URL, tournamentPage } from "~/utils/urls";
+import { saveTournamentSchema } from "../tournament-schemas";
+import { tournamentNameParts } from "../tournament-utils";
+import styles from "./TournamentHeader.module.css";
+
+export function TournamentHeader({
+	tournament,
+	estimatedEndsAt,
+}: {
+	tournament: Tournament;
+	/** `null` when the tournament has no estimate. */
+	estimatedEndsAt: number | null;
+}) {
+	const { name, subtext } = tournamentNameParts(tournament);
+
+	const startTimes = R.uniqueBy(
+		[
+			tournament.ctx.startsAt,
+			...tournament.ctx.settings.bracketProgression
+				.filter((b) => b.startTime)
+				.map((b) => databaseTimestampToDate(b.startTime!)),
+		],
+		(date) => date.getTime(),
+	);
+
+	const currentYear = new Date().getFullYear();
+
+	return (
+		<header className={styles.header}>
+			<div className={styles.identity}>
+				<img
+					src={tournament.ctx.logoUrl}
+					alt=""
+					className={styles.logo}
+					width={125}
+					height={125}
+				/>
+				<div className={styles.titleBlock}>
+					<div className={styles.nameBlock}>
+						<h1 className={styles.name}>{name}</h1>
+						{subtext ? <div className={styles.subtext}>{subtext}</div> : null}
+					</div>
+					<OrganizerLink tournament={tournament} />
+				</div>
+			</div>
+			<div className={styles.dates}>
+				{startTimes.map((date) => (
+					<div key={date.getTime()} className={styles.date}>
+						<TimePopover
+							date={date}
+							options={{
+								weekday: "long",
+								day: "numeric",
+								month: "long",
+								year:
+									date.getFullYear() !== currentYear ? "numeric" : undefined,
+								hour: "numeric",
+								minute: "numeric",
+							}}
+						/>
+						{estimatedEndsAt ? (
+							<span className={styles.estimatedEnd}>
+								~
+								<LocaleTime
+									date={estimatedEndsAt}
+									options={{ hour: "numeric", minute: "numeric" }}
+									data-testid="estimated-end"
+									inline
+								/>
+							</span>
+						) : null}
+					</div>
+				))}
+			</div>
+		</header>
+	);
+}
+
+export function TournamentHeaderActions({
+	tournament,
+	isSaved,
+}: {
+	tournament: Tournament;
+	isSaved: boolean;
+}) {
+	return (
+		<div className={styles.actions}>
+			<SaveTournamentButton tournament={tournament} isSaved={isSaved} />
+			{tournament.ctx.discordUrl ? (
+				<LinkButton
+					to={tournament.ctx.discordUrl}
+					variant="outlined"
+					size="small"
+					shape="circle"
+					isExternal
+					icon={<DiscordIcon />}
+					aria-label="Discord"
+				/>
+			) : null}
+			<ShareUrlButton
+				url={`${SENDOU_INK_BASE_URL}${tournamentPage(tournament.ctx.id)}`}
+			/>
+		</div>
+	);
+}
+
+function SaveTournamentButton({
+	tournament,
+	isSaved,
+}: {
+	tournament: Tournament;
+	isSaved: boolean;
+}) {
+	const { t } = useTranslation(["common"]);
+	const user = useUser();
+	const fetcher = useFetcher();
+
+	const teamMemberOf = tournament.teamMemberOfByUser(user);
+	if (!user || tournament.hasStarted || teamMemberOf) return null;
+
+	const pending = fetcher.formData?.get("_action");
+	const displayedSaved =
+		pending === "SAVE_TOURNAMENT"
+			? true
+			: pending === "UNSAVE_TOURNAMENT"
+				? false
+				: isSaved;
+
+	return (
+		<ActionButton
+			schema={saveTournamentSchema}
+			action={displayedSaved ? "UNSAVE_TOURNAMENT" : "SAVE_TOURNAMENT"}
+			fetcher={fetcher}
+			variant="outlined"
+			size="small"
+			shape="circle"
+			icon={displayedSaved ? <BookmarkCheck /> : <Bookmark />}
+			aria-label={
+				displayedSaved ? t("common:actions.unsave") : t("common:actions.save")
+			}
+		/>
+	);
+}
+
+function OrganizerLink({ tournament }: { tournament: Tournament }) {
+	if (tournament.ctx.organization) {
+		return (
+			<Link
+				to={tournamentOrganizationPage({
+					organizationSlug: tournament.ctx.organization.slug,
+					tournamentName: tournament.ctx.name,
+				})}
+				className={styles.organizer}
+			>
+				<Avatar
+					url={tournament.ctx.organization.logoUrl ?? undefined}
+					size="xxs"
+				/>
+				{tournament.ctx.organization.name}
+			</Link>
+		);
+	}
+
+	return (
+		<UserLink user={tournament.ctx.author} className={styles.organizerUser} />
+	);
+}

@@ -1,39 +1,35 @@
-import { Link } from "@remix-run/react";
+import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Avatar } from "~/components/Avatar";
+import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { UsersIcon } from "~/components/icons/Users";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
-import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	calendarEventPage,
-	tournamentBracketsPage,
-	tournamentLogoUrl,
-	tournamentTeamPage,
-	userPage,
-} from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
+import { TierPill } from "~/components/TierPill";
+import { UserLink } from "~/components/UserLink";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { calendarEventPage, tournamentTeamPage } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
+import {
+	HIGHLIGHT_CHECKBOX_NAME,
+	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
+} from "../user-page-constants";
 import { ParticipationPill } from "./ParticipationPill";
+import styles from "./UserResultsTable.module.css";
 
 export type UserResultsTableProps = {
-	results: UserResultsLoaderData["results"];
+	results: UserResultsLoaderData["results"]["value"];
 	id: string;
 	hasHighlightCheckboxes?: boolean;
 };
-
-export const HIGHLIGHT_CHECKBOX_NAME = "highlightTeamIds";
-export const HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME = "highlightTournamentTeamIds";
 
 export function UserResultsTable({
 	results,
 	id,
 	hasHighlightCheckboxes,
 }: UserResultsTableProps) {
-	const { t, i18n } = useTranslation("user");
+	const { t } = useTranslation("user");
 
 	const placementHeaderId = `${id}-th-placement`;
 
@@ -41,31 +37,29 @@ export function UserResultsTable({
 		<Table>
 			<thead>
 				<tr>
-					{hasHighlightCheckboxes && <th />}
+					{hasHighlightCheckboxes ? <th /> : null}
 					<th id={placementHeaderId}>{t("results.placing")}</th>
-					<th>{t("results.date")}</th>
 					<th>{t("results.tournament")}</th>
+					<th>{t("results.date")}</th>
 					<th>{t("results.participation")}</th>
 					<th>{t("results.team")}</th>
 				</tr>
 			</thead>
 			<tbody>
 				{results.map((result, i) => {
-					// We are trying to construct a reasonable label for the checkbox
-					// which shouldn't contain the whole information of the table row as
-					// that can be also accessed when needed.
-					// e.g. "20xx Placing 2nd", "Big House 10 Placing 20th"
-					const placementCellId = `${id}-${result.teamId}-placement`;
-					const nameCellId = `${id}-${result.teamId}-name`;
+					// team ids of the two result types are from different tables and can collide
+					const rowId = result.tournamentId
+						? `tournament-${result.teamId}`
+						: `event-${result.teamId}`;
+
+					// short checkbox label e.g. "Big House 10 Placing 20th" rather than the whole row
+					const placementCellId = `${id}-${rowId}-placement`;
+					const nameCellId = `${id}-${rowId}-name`;
 					const checkboxLabelIds = `${nameCellId} ${placementHeaderId} ${placementCellId}`;
 
-					const logoUrl = result.logoUrl
-						? userSubmittedImage(result.logoUrl)
-						: HACKY_resolvePicture({ name: result.eventName });
-
 					return (
-						<tr key={result.teamId}>
-							{hasHighlightCheckboxes && (
+						<tr key={rowId}>
+							{hasHighlightCheckboxes ? (
 								<td>
 									<input
 										value={result.teamId}
@@ -79,7 +73,7 @@ export function UserResultsTable({
 										defaultChecked={Boolean(result.isHighlight)}
 									/>
 								</td>
-							)}
+							) : null}
 							<td className="pl-4 whitespace-nowrap" id={placementCellId}>
 								<div className="stack horizontal xs items-end">
 									<Placement placement={result.placement} />{" "}
@@ -88,17 +82,7 @@ export function UserResultsTable({
 									</div>
 								</div>
 							</td>
-							<td className="whitespace-nowrap">
-								{databaseTimestampToDate(result.startTime).toLocaleDateString(
-									i18n.language,
-									{
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									},
-								)}
-							</td>
-							<td id={nameCellId}>
+							<td id={nameCellId} className="whitespace-nowrap">
 								<div className="stack horizontal xs items-center">
 									{result.eventId ? (
 										<Link to={calendarEventPage(result.eventId)}>
@@ -107,15 +91,16 @@ export function UserResultsTable({
 									) : null}
 									{result.tournamentId ? (
 										<>
-											{logoUrl !== tournamentLogoUrl("default") ? (
+											{result.logoUrl ? (
 												<img
-													src={logoUrl}
+													src={result.logoUrl}
 													alt=""
-													width={18}
-													height={18}
+													width={24}
+													height={24}
 													className="rounded-full"
 												/>
 											) : null}
+											{result.tier ? <TierPill tier={result.tier} /> : null}
 											<Link
 												to={tournamentBracketsPage({
 													tournamentId: result.tournamentId,
@@ -124,19 +109,32 @@ export function UserResultsTable({
 											>
 												{result.eventName}
 											</Link>
+											{result.div ? (
+												<span className="text-lighter">({result.div})</span>
+											) : null}
 										</>
 									) : null}
 								</div>
 							</td>
+							<td className="whitespace-nowrap">
+								<LocaleTime
+									date={result.startsAt}
+									options={{
+										day: "numeric",
+										month: "numeric",
+										year: "2-digit",
+									}}
+								/>
+							</td>
 							<td>
 								<ParticipationPill setResults={result.setResults} />
 							</td>
-							<td>
+							<td className="whitespace-nowrap">
 								<div className="stack horizontal md items-center">
 									<SendouPopover
 										trigger={
 											<SendouButton
-												icon={<UsersIcon />}
+												icon={<Users />}
 												size="miniscule"
 												variant="minimal"
 												data-testid="mates-button"
@@ -144,7 +142,7 @@ export function UserResultsTable({
 										}
 									>
 										<ul
-											className="u__results-players"
+											className={styles.resultsPlayers}
 											data-testid={`mates-cell-placement-${i}`}
 										>
 											{result.mates.map((player) => (
@@ -152,18 +150,7 @@ export function UserResultsTable({
 													key={player.name ? player.name : player.id}
 													className="flex items-center"
 												>
-													{player.name ? (
-														player.name
-													) : (
-														// as any but we know it's a user since it doesn't have name
-														<Link
-															to={userPage(player as any)}
-															className="stack horizontal xs items-center"
-														>
-															<Avatar user={player as any} size="xxs" />
-															{player.username}
-														</Link>
-													)}
+													<UserLink user={player} />
 												</li>
 											))}
 										</ul>

@@ -1,0 +1,10 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 173,
+		"names": ["[K]yo!"]
+	},
+	"options": {
+		"notes": "Frame shared with objective/splat-zones-cast-penalty-pill-under-nameplate-badge (SWS26 broadcast). The name ends in its own '!', so the row shows two; only the message's is stripped. The opening bracket ranks the fullwidth 【 a hair over '[' (0.915 vs 0.900) — the plain-tie rule prefers the ASCII bracket."
+	}
+}

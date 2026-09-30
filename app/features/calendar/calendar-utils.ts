@@ -1,10 +1,7 @@
-import type { Tables } from "~/db/tables";
-import { isAdmin } from "~/modules/permissions/utils";
-import { allTruthy } from "~/utils/arrays";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { addDays, addWeeks, startOfWeek, subWeeks } from "date-fns";
 import { logger } from "~/utils/logger";
+import type { DayMonthYear } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
-import type { DayMonthYear } from "~/utils/zod";
 import {
 	DAYS_SHOWN_AT_A_TIME,
 	type RegClosesAtOption,
@@ -126,139 +123,31 @@ export function datesToRegClosesAt({
 	return "0";
 }
 
-export function closeByWeeks(args: { week: number; year: number }) {
-	if (args.week < 1 || args.week > 52) {
-		throw new Error("Invalid week number");
-	}
+export function daysForCalendar(currentDate?: DayMonthYear) {
+	const anchor = currentDate
+		? new Date(currentDate.year, currentDate.month, currentDate.day)
+		: new Date();
+	const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
 
-	return [-4, -3, -2, -1, 0, 1, 2, 3, 4].map((week) => {
-		let number = args.week + week;
-		let year = args.year;
-
-		if (number < 1) {
-			number = 52 + number;
-			year--;
-		} else if (number > 52) {
-			number = number - 52;
-			year++;
-		}
-
-		return {
-			number,
-			year,
-		};
-	});
+	return {
+		previous: weekDays(subWeeks(weekStart, 1)),
+		shown: weekDays(weekStart),
+		next: weekDays(addWeeks(weekStart, 1)),
+		current: dateToDayMonthYear(anchor),
+	};
 }
 
-interface CanEditCalendarEventArgs {
-	user?: Pick<Tables["User"], "id">;
-	event: Pick<Tables["CalendarEvent"], "authorId">;
-}
-export function canEditCalendarEvent({
-	user,
-	event,
-}: CanEditCalendarEventArgs) {
-	if (isAdmin(user)) return true;
-
-	return user?.id === event.authorId;
-}
-
-export function canDeleteCalendarEvent({
-	user,
-	event,
-	startTime,
-}: CanEditCalendarEventArgs & { startTime: Date }) {
-	if (isAdmin(user)) return true;
-
-	return user?.id === event.authorId && startTime > new Date();
-}
-
-interface CanReportCalendarEventWinnersArgs {
-	user?: Pick<Tables["User"], "id">;
-	event: Pick<Tables["CalendarEvent"], "authorId">;
-	startTimes: number[];
-}
-export function canReportCalendarEventWinners({
-	user,
-	event,
-	startTimes,
-}: CanReportCalendarEventWinnersArgs) {
-	return allTruthy([
-		canEditCalendarEvent({ user, event }),
-		eventStartedInThePast(startTimes),
-	]);
-}
-
-function eventStartedInThePast(
-	startTimes: CanReportCalendarEventWinnersArgs["startTimes"],
-) {
-	return startTimes.every(
-		(startTime) => databaseTimestampToDate(startTime).getTime() < Date.now(),
+function weekDays(weekStart: Date): Array<DayMonthYear> {
+	return Array.from({ length: DAYS_SHOWN_AT_A_TIME }, (_, i) =>
+		dateToDayMonthYear(addDays(weekStart, i)),
 	);
 }
 
-export function daysForCalendar(currentDate?: DayMonthYear) {
-	type DaysArray = Array<DayMonthYear>;
-
-	const previous: DaysArray = [];
-	const shown: DaysArray = [];
-	const next: DaysArray = [];
-
-	const startDate = () =>
-		currentDate
-			? new Date(currentDate.year, currentDate.month, currentDate.day)
-			: new Date();
-
-	const currentDayMonthYear = () => {
-		const now = startDate();
-
-		return {
-			day: now.getDate(),
-			month: now.getMonth(),
-			year: now.getFullYear(),
-		};
-	};
-
-	let now = startDate();
-
-	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
-		shown.push({
-			day: now.getDate(),
-			month: now.getMonth(),
-			year: now.getFullYear(),
-		});
-
-		now.setDate(now.getDate() + 1);
-	}
-
-	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
-		next.push({
-			day: now.getDate(),
-			month: now.getMonth(),
-			year: now.getFullYear(),
-		});
-
-		now.setDate(now.getDate() + 1);
-	}
-
-	now = startDate();
-
-	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
-		now.setDate(now.getDate() - 1);
-
-		previous.push({
-			day: now.getDate(),
-			month: now.getMonth(),
-			year: now.getFullYear(),
-		});
-	}
-	previous.reverse();
-
+function dateToDayMonthYear(date: Date): DayMonthYear {
 	return {
-		previous,
-		shown,
-		next,
-		current: currentDayMonthYear(),
+		day: date.getDate(),
+		month: date.getMonth(),
+		year: date.getFullYear(),
 	};
 }
 

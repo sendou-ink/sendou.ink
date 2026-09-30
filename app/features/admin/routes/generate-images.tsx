@@ -1,6 +1,7 @@
 import { Divider } from "~/components/Divider";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { Config } from "~/config";
 import { list } from "~/features/mmr/core/Seasons";
 import { navIconUrl, tierImageUrl } from "~/utils/urls";
 
@@ -106,11 +107,11 @@ function InfoSquare({
 				style={{
 					width: "12rem",
 					height: "12rem",
-					borderRadius: "var(--rounded)",
+					borderRadius: "var(--radius-box)",
 					marginTop: "1rem",
 					display: "grid",
 					placeItems: "center",
-					borderColor: "var(--border)",
+					borderColor: "var(--color-border)",
 					borderWidth: "2px",
 					borderStyle: "solid",
 				}}
@@ -134,7 +135,7 @@ function EventSchedule({
 		<div className="stack md horizontal items-center mx-auto">
 			<img
 				alt=""
-				src={`http://localhost:5173/static-assets/img/tournament-logos/${imgId}.png`}
+				src={`${Config.staticAssetsUrl}/img/tournament-logos/${imgId}.avif`}
 				style={{
 					width: "4rem",
 					height: "4rem",

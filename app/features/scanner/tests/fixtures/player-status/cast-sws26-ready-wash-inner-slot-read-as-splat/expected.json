@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "even",
+		"time": 161,
+		"cast": true,
+		"special": [
+			[false, false, false, false],
+			[true, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, true]
+		]
+	},
+	"options": {
+		"notes": "Casted stream (SWS26 REWOUND, Rush vs Let's Go Brother, Sturgeon game 1) at 2:41, yellow team left vs purple right, both strips at the even pitch with the camera badges drawn. All four yellow icons are alive (gauge 87/45/60/7). Purple's slot nearest the timer wears the special-ready wash (pale lavender body, number hidden) and its outer slot is crossed out (gauge 37 kept); the read flagged the ready slot as splatted and missed the special entirely — the washed body's grey charger silhouette on the pale plate scored like a crossed-out icon. Purple's third slot shows no gauge number while its special is active (normal purple body, not ready)."
+	}
+}

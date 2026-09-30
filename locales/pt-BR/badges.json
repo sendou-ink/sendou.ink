@@ -6,7 +6,7 @@
 	"tournament_many": "",
 	"tournament_other": "Premiado(a) por vencer o(a) {{tournament}} (×{{count}})",
 	"forYourEvent": "Quer insígnia(s) para o seu evento?",
-	"managedBy": "Gerenciado por/pela {{users}}",
+	"managedBy": "Gerenciado por/pela <0></0>",
 	"madeBy": "",
 	"own.divider": "Ingínias gerenciadas",
 	"other.divider": "Outras insígnias",

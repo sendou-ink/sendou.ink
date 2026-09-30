@@ -1,0 +1,165 @@
+.subHeading {
+	font-size: var(--font-md);
+	font-weight: var(--weight-semi);
+	margin: 0;
+}
+
+.days {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.dayHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.dayHeaderLine {
+	flex-grow: 1;
+	height: 1px;
+	background-color: var(--color-border);
+}
+
+.result {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto auto;
+	grid-template-areas: "outcome info players sp";
+	align-items: center;
+	gap: var(--s-2) var(--s-4);
+	padding: var(--s-3) var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	text-decoration: none;
+	transition: background-color 0.2s;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.tierTile {
+	display: inline-grid;
+	place-items: center;
+	padding: var(--s-1);
+	border: var(--border-width) solid transparent;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+
+	.result:hover & {
+		border-color: var(--color-border-high);
+	}
+}
+
+.outcome {
+	grid-area: outcome;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border-radius: var(--radius-field);
+	font-weight: var(--weight-bold);
+	background-color: var(--color-bg-higher);
+
+	&[data-outcome="W"] {
+		background-color: var(--color-success-low);
+		color: var(--color-success);
+	}
+
+	&[data-outcome="L"] {
+		background-color: var(--color-error-low);
+		color: var(--color-error);
+	}
+
+	&:not([data-outcome]),
+	&[data-outcome="tournament"] {
+		border: var(--border-width) solid transparent;
+
+		.result:hover & {
+			border-color: var(--color-border-high);
+		}
+	}
+
+	&[data-outcome="tournament"] {
+		font-size: var(--font-sm);
+	}
+}
+
+.resultInfo {
+	grid-area: info;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+}
+
+.resultTitle {
+	grid-area: title;
+}
+
+.resultSubtitle {
+	grid-area: subtitle;
+}
+
+.players {
+	grid-area: players;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.members {
+	display: flex;
+	gap: var(--s-1-5);
+}
+
+.sp {
+	grid-area: sp;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--s-0-5);
+	min-width: 5rem;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+@container (width < 48rem) {
+	.result {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas:
+			"outcome title title"
+			"outcome subtitle sp"
+			"players players players";
+		row-gap: var(--s-1-5);
+	}
+
+	.resultInfo {
+		display: contents;
+	}
+
+	.players {
+		margin-block-start: var(--s-2);
+	}
+}
+
+@container (width < 22rem) {
+	.members {
+		gap: 0;
+
+		& > * {
+			box-shadow: 0 0 0 2px var(--color-bg-high);
+			transition: box-shadow 0.2s;
+
+			.result:hover & {
+				box-shadow: 0 0 0 2px var(--color-bg-higher);
+			}
+		}
+
+		& > * + * {
+			margin-inline-start: calc(var(--s-1-5) * -1);
+		}
+	}
+}

@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "even",
+		"time": 23,
+		"special": [
+			[true, false, false, false],
+			[false, false, true, true]
+		],
+		"dead": [
+			[false, false, false, true],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "POV footage (720p), Wahoo World SZ. Slots left-to-right per side; left team's slot closest to the timer is splatted, its outermost slot holds special; right team holds special on its two outermost slots (icon bg below the weapon lights up in team color)."
+	}
+}

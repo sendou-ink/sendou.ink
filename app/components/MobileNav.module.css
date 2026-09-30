@@ -1,0 +1,422 @@
+.mobileNav {
+	display: block;
+	position: fixed;
+	/* captured on its own so animating content slides under it instead of over it */
+	view-transition-name: layout-mobile-nav;
+	inset: auto var(--scrollbar-width, 0px) 0 0;
+	width: auto;
+	height: auto;
+	margin: 0;
+	padding: 0;
+	border: none;
+	overflow: visible;
+	background: none;
+	color: inherit;
+	z-index: 19;
+
+	--mobile-nav-height: calc(
+		var(--layout-nav-height) +
+		env(safe-area-inset-bottom)
+	);
+
+	/* snapshots paint above the top layer, which would lift it over an open modal's backdrop */
+	:root:has(:modal) & {
+		view-transition-name: none;
+	}
+}
+
+@media screen and (min-width: 600px) {
+	.mobileNav {
+		display: none;
+	}
+}
+
+.tabBar {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	height: var(--mobile-nav-height);
+	background-color: var(--color-bg-nav);
+	border-top: 1.5px solid var(--color-border);
+	padding: 0 var(--s-4);
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	height: 100%;
+	aspect-ratio: 1 / 1;
+	background: none;
+	border: none;
+	border-radius: var(--radius-field);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
+	text-decoration: none;
+	transition: color 0.15s;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -1px;
+	}
+
+	&:hover,
+	&[data-active="true"] {
+		color: var(--color-fg-accent);
+	}
+}
+
+.tabIcon {
+	position: relative;
+	width: 24px;
+	height: 24px;
+
+	& svg {
+		width: 24px;
+		height: 24px;
+	}
+}
+
+.sideNavEmpty {
+	padding: var(--s-4);
+	text-align: center;
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.panelDialog {
+	outline: none;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.panel {
+	position: fixed;
+	inset: auto var(--scrollbar-width, 0px) var(--mobile-nav-height) 0;
+	margin: 0;
+	padding: 0;
+	border: none;
+	width: 100%;
+	max-width: none;
+	max-height: none;
+	height: calc((100% - var(--mobile-nav-height)) * 0.85);
+	background: none;
+	color: var(--color-text);
+	overflow: hidden;
+	flex-direction: column;
+	outline: none;
+
+	/* a display on the class itself would show the closed panels too */
+	&:popover-open {
+		display: flex;
+	}
+
+	/* the box sits above the tab bar and clips, so the sliding content comes up from behind the bar */
+	& > .panelDialog {
+		background-color: var(--color-bg);
+		border-radius: var(--radius-box) var(--radius-box) 0 0;
+		animation: slide-up 200ms ease-out;
+	}
+
+	&::backdrop {
+		inset: 0;
+		bottom: var(--mobile-nav-height);
+		background-color: rgba(0, 0, 0, 0.25);
+		backdrop-filter: blur(10px);
+		animation: fade-in 200ms ease-out;
+	}
+}
+
+@keyframes slide-up {
+	from {
+		transform: translateY(100%);
+	}
+	to {
+		transform: translateY(0);
+	}
+}
+
+.panelHeader {
+	position: sticky;
+	top: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-inline: var(--s-4);
+	background-color: var(--color-bg-high);
+	border-bottom: 1.5px solid var(--color-border);
+	z-index: 1;
+	flex-shrink: 0;
+	color: var(--color-text-high);
+	min-height: var(--layout-nav-height);
+}
+
+.panelTitle {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+}
+
+.panelContent {
+	flex: 1;
+	overflow-y: auto;
+	padding: var(--s-2);
+	display: flex;
+	flex-direction: column;
+}
+
+.menuOverlay {
+	position: fixed;
+	inset: 0 var(--scrollbar-width, 0px) var(--mobile-nav-height) 0;
+	margin: 0;
+	padding: 0;
+	border: none;
+	width: 100%;
+	max-width: none;
+	height: calc(100% - var(--mobile-nav-height));
+	max-height: none;
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	overflow-y: auto;
+	flex-direction: column;
+	outline: none;
+	animation: fade-in 200ms ease-out;
+
+	&:popover-open {
+		display: flex;
+	}
+
+	&::backdrop {
+		background: none;
+	}
+}
+
+.menuHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-inline: var(--s-4);
+	background-color: var(--color-bg-high);
+	border-bottom: 1.5px solid var(--color-border);
+	border-top: 1.5px solid var(--color-border);
+	flex-shrink: 0;
+	color: var(--color-text-high);
+	min-height: var(--layout-nav-height);
+
+	.panelDialog > &:first-child {
+		border-top: none;
+		padding-block-start: env(safe-area-inset-top);
+	}
+}
+
+.menuHeaderActions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin-inline-start: auto;
+}
+
+.panelCloseButton {
+	display: grid;
+	place-items: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--color-error);
+	padding: 0;
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-field);
+	margin-inline-start: auto;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.panelIconContainer {
+	border-radius: var(--radius-field);
+}
+
+.streamsList {
+	list-style: none;
+	margin: 0;
+	padding: var(--s-4);
+
+	& a:not(:first-child) {
+		padding-block: var(--s-2);
+	}
+
+	& a:first-child {
+		padding-block-start: 0;
+	}
+}
+
+.navGrid {
+	list-style: none;
+	margin: 0;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: var(--s-3);
+	padding: var(--s-4);
+}
+
+.navItem {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+	text-decoration: none;
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-align: center;
+
+	&:hover {
+		color: var(--color-fg-accent);
+	}
+}
+
+.navItemImage {
+	width: var(--field-size-lg);
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	display: grid;
+	place-items: center;
+}
+
+.youPanelUserRow {
+	display: flex;
+	align-items: center;
+	padding: var(--s-1) var(--s-2);
+}
+
+.youPanelUser {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2);
+	text-decoration: none;
+	color: var(--color-text);
+	border-radius: var(--radius-field);
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.youPanelUsername {
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.youPanelSettingsButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none;
+	color: var(--color-text-high);
+	border-radius: var(--radius-field);
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
+	}
+
+	& svg {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+.youPanelTeamAvatar {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.panelSectionLink {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	width: fit-content;
+	margin-top: auto;
+	margin-inline: auto;
+	margin-bottom: var(--s-4);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	text-decoration: none;
+	height: var(--selector-size);
+	padding: 0 var(--s-3);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-selector);
+
+	& svg {
+		stroke-width: 3;
+	}
+
+	&:hover {
+		color: var(--color-text);
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.tabBadge {
+	position: absolute;
+	top: -4px;
+	right: -8px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-fg-on-accent);
+	background-color: var(--color-fill-accent);
+	min-width: 16px;
+	height: 16px;
+	padding: 0 var(--s-0-5);
+	border-radius: 8px;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+	line-height: 1;
+
+	&.tabBadgeLeft {
+		right: auto;
+		left: -8px;
+	}
+}
+
+.noAnimation {
+	animation: none;
+
+	& > .panelDialog,
+	&::backdrop {
+		animation: none;
+	}
+}
+
+::view-transition-group(layout-mobile-nav) {
+	z-index: 1;
+}
+
+::view-transition-group(layout-mobile-nav),
+::view-transition-old(layout-mobile-nav),
+::view-transition-new(layout-mobile-nav) {
+	animation-duration: 0s;
+}

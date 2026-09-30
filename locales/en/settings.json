@@ -1,0 +1,15 @@
+{
+	"tabs.preferences": "Preferences",
+	"tabs.matchProfile": "Match profile",
+	"tabs.locale": "Locale",
+	"tabs.theme": "Theme",
+	"tabs.sounds": "Sounds",
+	"matchProfile.maps.teamPreferencesHint": "Looking for your team's map preferences? They are on the Edit Team page.",
+	"matchProfile.maps.avoid": "Avoid",
+	"matchProfile.maps.prefer": "Prefer",
+	"matchProfile.maps.neutral": "Neutral",
+	"sounds.likeReceived": "Group invitation received",
+	"sounds.readyCheckStarted": "SendouQ ready check started",
+	"sounds.matchStarted": "SendouQ match started",
+	"sounds.tournamentMatchStarted": "Tournament match started"
+}

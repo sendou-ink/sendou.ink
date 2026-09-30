@@ -1,5 +1,5 @@
-.selectWidthWider {
-	--select-width: 250px;
+.option {
+	--option-content-height: 24px;
 }
 
 .item {

@@ -1,15 +1,21 @@
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import { Trash } from "lucide-react";
 import * as React from "react";
-import { SendouButton } from "~/components/elements/Button";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { TrashIcon } from "~/components/icons/Trash";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
-import { userSubmittedImage } from "~/utils/urls-img";
-
+import { metaTags } from "~/utils/remix";
 import { action } from "../actions/upload.admin.server";
 import { loader } from "../loaders/upload.admin.server";
+import { validateImageSchema } from "../upload-schemas";
+
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Image upload",
+		location: args.location,
+	});
+};
 
 export default function ImageUploadAdminPage() {
 	return (
@@ -22,7 +28,6 @@ export default function ImageUploadAdminPage() {
 function ImageValidator() {
 	const data = useLoaderData<typeof loader>();
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: Biome v2 migration
 	React.useEffect(() => {
 		window.scrollTo(0, 0);
 	}, [data]);
@@ -40,28 +45,21 @@ function ImageValidator() {
 						<div key={image.id}>
 							<div className="text-lg font-bold stack horizontal md">
 								{i + 1}){" "}
-								<FormWithConfirm
-									dialogHeading={`Reject image submitted by ${image.username}?`}
-									submitButtonText="Reject"
-									fields={[
-										["imageId", image.id],
-										["_action", "REJECT"],
-									]}
-								>
-									<SendouButton
-										icon={<TrashIcon />}
-										variant="minimal-destructive"
-										size="medium"
-									/>
-								</FormWithConfirm>
+								<ActionButton
+									schema={validateImageSchema}
+									action="REJECT"
+									fields={{ imageId: image.id }}
+									confirm={{
+										dialogHeading: `Reject image submitted by ${image.username}?`,
+										submitButtonText: "Reject",
+									}}
+									icon={<Trash />}
+									variant="minimal-destructive"
+									size="medium"
+								/>
 							</div>
-							<img src={userSubmittedImage(image.url)} alt="" />
-							<Link
-								to={`/u/${image.submitterUserId}`}
-								className="text-xs"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
+							<img src={image.url} alt="" />
+							<Link to={`/u/${image.submitterUserId}`} className="text-xs">
 								From: {image.username}
 							</Link>
 						</div>
@@ -69,16 +67,16 @@ function ImageValidator() {
 				})}
 			</div>
 
-			<Form method="post" className="mt-12">
-				<input
-					type="hidden"
-					name="imageIds"
-					value={JSON.stringify(data.images.map((img) => img.id))}
-				/>
-				<SubmitButton size="big" className="mx-auto" _action="VALIDATE">
-					All {data.images.length} above ok
-				</SubmitButton>
-			</Form>
+			<ActionButton
+				schema={validateImageSchema}
+				action="VALIDATE"
+				fields={{ imageIds: data.images.map((img) => img.id) }}
+				formClassName="mt-12"
+				size="big"
+				className="mx-auto"
+			>
+				All {data.images.length} above ok
+			</ActionButton>
 		</>
 	);
 }

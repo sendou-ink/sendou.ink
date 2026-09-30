@@ -1,0 +1,74 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'content/**'
+      - 'public/**'
+      - 'locales/**'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'content/**'
+      - 'public/**'
+      - 'locales/**'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start SeaweedFS
+        run: docker compose up -d seaweedfs
+
+      # the marker object, not the port: SeaweedFS answers on its S3 port, and even lists the
+      # bucket, while its volume server is still registering, so a premature run would only
+      # surface much later as a 500 in the one test that uploads an image
+      - name: Wait for SeaweedFS to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -sf -o /dev/null http://127.0.0.1:9000/sendou/.ready; then
+              echo "SeaweedFS is ready"
+              exit 0
+            fi
+            echo "Waiting for SeaweedFS... ($i/30)"
+            sleep 2
+          done
+          echo "SeaweedFS failed to start"
+          exit 1
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run E2E tests
+        run: pnpm run test:e2e
+
+      - name: Stop SeaweedFS
+        if: always()
+        run: docker compose down
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 30

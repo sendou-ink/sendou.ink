@@ -1,161 +1,186 @@
+import type { TierName } from "~/features/mmr/mmr-constants";
 import { compareTwoTiers } from "~/features/mmr/mmr-utils";
+import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
-	altWeaponIdToId,
 	mainWeaponIds,
-	weaponIdToAltId,
+	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
-import { assertUnreachable } from "~/utils/types";
-import type { LFGFilter } from "../lfg-types";
-import type { LFGLoaderData, LFGLoaderPost, TiersMap } from "../routes/lfg";
-import { hourDifferenceBetweenTimezones } from "./timezone";
+import type { Unpacked } from "~/utils/types";
+import type * as LFGRepository from "../LFGRepository.server";
+import type { LFGFilterValues } from "../lfg-types";
+import { createTimezoneHourDifference } from "./timezone";
+
+export type FilterablePost = Unpacked<
+	Awaited<ReturnType<typeof LFGRepository.findAllPosts>>
+>;
+
+export type TiersMap = Map<
+	number,
+	{ latest?: TieredSkill["tier"]; previous?: TieredSkill["tier"] }
+>;
+
+export interface FilterContext {
+	tiersMap: TiersMap;
+	/** `null` when the viewer's timezone is unknown, which disables the timezone filter. */
+	viewerTimezone: string | null;
+}
+
+interface PostFilterContext extends FilterContext {
+	hourDifference: ReturnType<typeof createTimezoneHourDifference>;
+}
 
 export function filterPosts(
-	posts: LFGLoaderData["posts"],
-	filters: LFGFilter[],
+	posts: Array<FilterablePost>,
+	filters: LFGFilterValues,
+	context: FilterContext,
+) {
+	const hourDifference = createTimezoneHourDifference();
+
+	return posts.filter((post) =>
+		postMatchesFilters(post, filters, { ...context, hourDifference }),
+	);
+}
+
+function postMatchesFilters(
+	post: FilterablePost,
+	filters: LFGFilterValues,
+	context: PostFilterContext,
+) {
+	if (
+		post.type === "COACH_FOR_TEAM" &&
+		// not visible in the UI
+		(filters.weapons.length > 0 ||
+			filters.minTier !== null ||
+			filters.maxTier !== null)
+	) {
+		return false;
+	}
+
+	if (filters.weapons.length > 0 && !matchesWeapons(post, filters.weapons)) {
+		return false;
+	}
+	if (filters.type !== null && post.type !== filters.type) return false;
+	if (
+		filters.timezone !== null &&
+		!matchesTimezone(post, filters.timezone, context)
+	) {
+		return false;
+	}
+	if (
+		filters.language !== null &&
+		!post.languages?.includes(filters.language)
+	) {
+		return false;
+	}
+	if (filters.plusTier !== null && !matchesPlusTier(post, filters.plusTier)) {
+		return false;
+	}
+	if (
+		filters.maxTier !== null &&
+		!matchesMaxTier(post, filters.maxTier, context.tiersMap)
+	) {
+		return false;
+	}
+	if (
+		filters.minTier !== null &&
+		!matchesMinTier(post, filters.minTier, context.tiersMap)
+	) {
+		return false;
+	}
+
+	return true;
+}
+
+function matchesWeapons(post: FilterablePost, weapons: MainWeaponId[]) {
+	const weaponIdsWithRelated = weapons.flatMap(weaponIdToRelated);
+
+	return checkMatchesSomeUserInPost(post, (user) =>
+		user.weaponPool.some(({ weaponSplId }) =>
+			weaponIdsWithRelated.includes(weaponSplId),
+		),
+	);
+}
+
+function matchesTimezone(
+	post: FilterablePost,
+	maxHourDifference: number,
+	{ viewerTimezone, hourDifference }: PostFilterContext,
+) {
+	// nothing to compare against until the browser has reported its timezone
+	if (viewerTimezone === null) return true;
+
+	return (
+		Math.abs(hourDifference(post.timezone, viewerTimezone)) <= maxHourDifference
+	);
+}
+
+function matchesPlusTier(post: FilterablePost, plusTier: number) {
+	return checkMatchesSomeUserInPost(
+		post,
+		(user) => user.plusTier && user.plusTier <= plusTier,
+	);
+}
+
+function matchesMaxTier(
+	post: FilterablePost,
+	maxTier: TierName,
 	tiersMap: TiersMap,
 ) {
-	return posts.filter((post) => {
-		for (const filter of filters) {
-			if (!filterMatchesPost(post, filter, tiersMap)) return false;
+	return checkMatchesSomeUserInPost(post, (user) => {
+		const tiers = tiersMap.get(user.id);
+		if (!tiers) return false;
+
+		if (tiers.latest && compareTwoTiers(tiers.latest.name, maxTier) >= 0) {
+			return true;
 		}
 
-		return true;
+		if (tiers.previous && compareTwoTiers(tiers.previous.name, maxTier) >= 0) {
+			return true;
+		}
+
+		return false;
 	});
 }
 
-function filterMatchesPost(
-	post: LFGLoaderPost,
-	filter: LFGFilter,
+function matchesMinTier(
+	post: FilterablePost,
+	minTier: TierName,
 	tiersMap: TiersMap,
 ) {
-	if (post.type === "COACH_FOR_TEAM") {
-		// not visible in the UI
-		if (
-			filter._tag === "Weapon" ||
-			filter._tag === "MaxTier" ||
-			filter._tag === "MinTier"
-		) {
-			return false;
+	return checkMatchesSomeUserInPost(post, (user) => {
+		const tiers = tiersMap.get(user.id);
+		if (!tiers) return false;
+
+		if (tiers.latest && compareTwoTiers(tiers.latest.name, minTier) <= 0) {
+			return true;
 		}
-	}
 
-	switch (filter._tag) {
-		case "Weapon": {
-			if (filter.weaponSplIds.length === 0) return true;
-
-			const weaponIdsWithRelated =
-				filter.weaponSplIds.flatMap(weaponIdToRelated);
-
-			return checkMatchesSomeUserInPost(post, (user) =>
-				user.weaponPool.some(({ weaponSplId }) =>
-					weaponIdsWithRelated.includes(weaponSplId),
-				),
-			);
+		if (tiers.previous && compareTwoTiers(tiers.previous.name, minTier) <= 0) {
+			return true;
 		}
-		case "Type":
-			return post.type === filter.type;
-		case "Timezone": {
-			const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-			return (
-				Math.abs(hourDifferenceBetweenTimezones(post.timezone, userTimezone)) <=
-				filter.maxHourDifference
-			);
-		}
-		case "Language":
-			return checkMatchesSomeUserInPost(post, (user) =>
-				user.languages?.includes(filter.language),
-			);
-		case "PlusTier":
-			return checkMatchesSomeUserInPost(
-				post,
-				(user) => user.plusTier && user.plusTier <= filter.tier,
-			);
-		case "MaxTier":
-			return checkMatchesSomeUserInPost(post, (user) => {
-				const tiers = tiersMap.get(user.id);
-				if (!tiers) return false;
-
-				if (
-					tiers.latest &&
-					compareTwoTiers(tiers.latest.name, filter.tier) >= 0
-				) {
-					return true;
-				}
-
-				if (
-					tiers.previous &&
-					compareTwoTiers(tiers.previous.name, filter.tier) >= 0
-				) {
-					return true;
-				}
-
-				return false;
-			});
-		case "MinTier":
-			return checkMatchesSomeUserInPost(post, (user) => {
-				const tiers = tiersMap.get(user.id);
-				if (!tiers) return false;
-
-				if (
-					tiers.latest &&
-					compareTwoTiers(tiers.latest.name, filter.tier) <= 0
-				) {
-					return true;
-				}
-
-				if (
-					tiers.previous &&
-					compareTwoTiers(tiers.previous.name, filter.tier) <= 0
-				) {
-					return true;
-				}
-
-				return false;
-			});
-		default:
-			assertUnreachable(filter);
-	}
+		return false;
+	});
 }
 
 const checkMatchesSomeUserInPost = (
-	post: LFGLoaderPost,
-	check: (user: LFGLoaderPost["author"]) => boolean | undefined | null | 0,
+	post: FilterablePost,
+	check: (user: FilterablePost["author"]) => boolean | undefined | null | 0,
 ) => {
 	if (check(post.author)) return true;
 	if (post.team?.members.some(check)) return true;
 	return false;
 };
 
-// TODO: could be written more clearly, fails in some edge cases like if "Hero Shot" was selected it won't find "Octo Shot"
 const weaponIdToRelated = (weaponSplId: MainWeaponId) => {
-	const idsSet = new Set<MainWeaponId>([weaponSplId]);
+	const result: MainWeaponId[] = [];
 
-	const reg = altWeaponIdToId.get(weaponSplId);
-	if (reg) {
-		idsSet.add(reg);
-	}
-
-	const alt = weaponIdToAltId.get(weaponSplId);
-	if (alt) {
-		for (const id of Array.isArray(alt) ? alt : [alt]) {
-			idsSet.add(id);
+	for (const id of mainWeaponIds) {
+		if (weaponIdToBaseWeaponId(id) === weaponIdToBaseWeaponId(weaponSplId)) {
+			result.push(id);
 		}
 	}
 
-	const finalIdsSet = new Set<MainWeaponId>(idsSet);
-	for (const id of idsSet) {
-		// alt kits
-		const maybeId1 = id - 1;
-		const maybeId2 = id + 1;
-
-		for (const maybeId of [maybeId1, maybeId2]) {
-			if (mainWeaponIds.includes(maybeId as MainWeaponId)) {
-				finalIdsSet.add(maybeId as MainWeaponId);
-			}
-		}
-	}
-
-	return Array.from(finalIdsSet);
+	return result;
 };

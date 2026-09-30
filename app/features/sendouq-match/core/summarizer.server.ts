@@ -1,21 +1,24 @@
 import type { Tables } from "~/db/tables";
-import * as Seasons from "~/features/mmr/core/Seasons";
-import invariant from "~/utils/invariant";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { winnersArrayToWinner } from "../q-match-utils";
-import type { MatchById } from "../queries/findMatchById.server";
+
+type MatchForSummarizing = {
+	mapList: Array<{ mode: ModeShort; stageId: StageId }>;
+	groupAlpha: { id: number };
+	groupBravo: { id: number };
+};
 
 export function summarizeMaps({
 	match,
+	season,
 	winners,
 	members,
 }: {
-	match: MatchById;
+	match: MatchForSummarizing;
+	season: number;
 	winners: ("ALPHA" | "BRAVO")[];
 	members: { id: number; groupId: number }[];
 }) {
-	const season = Seasons.currentOrPrevious()?.nth;
-	invariant(typeof season === "number", "No ranked season for skills");
-
 	const result: Array<Tables["MapResult"]> = [];
 
 	const playedMaps = match.mapList.slice(0, winners.length);
@@ -23,7 +26,7 @@ export function summarizeMaps({
 	for (const [i, map] of playedMaps.entries()) {
 		const winnerSide = winners[i];
 		const winnerGroupId =
-			winnerSide === "ALPHA" ? match.alphaGroupId : match.bravoGroupId;
+			winnerSide === "ALPHA" ? match.groupAlpha.id : match.groupBravo.id;
 
 		const winnerPlayers = members.filter((p) => p.groupId === winnerGroupId);
 		const loserPlayers = members.filter((p) => p.groupId !== winnerGroupId);
@@ -56,16 +59,15 @@ export function summarizeMaps({
 
 export function summarizePlayerResults({
 	match,
+	season,
 	winners,
 	members,
 }: {
-	match: MatchById;
+	match: MatchForSummarizing;
+	season: number;
 	winners: ("ALPHA" | "BRAVO")[];
 	members: { id: number; groupId: number }[];
 }) {
-	const season = Seasons.currentOrPrevious()?.nth;
-	invariant(typeof season === "number", "No ranked season for skills");
-
 	const result: Array<Tables["PlayerResult"]> = [];
 
 	const addMapResult = ({
@@ -108,8 +110,8 @@ export function summarizePlayerResults({
 				const type = member.groupId === member2.groupId ? "MATE" : "ENEMY";
 				const won =
 					winner === "ALPHA"
-						? member.groupId === match.alphaGroupId
-						: member.groupId === match.bravoGroupId;
+						? member.groupId === match.groupAlpha.id
+						: member.groupId === match.groupBravo.id;
 
 				addMapResult({
 					ownerUserId: member.id,
@@ -130,8 +132,8 @@ export function summarizePlayerResults({
 			const type = member.groupId === member2.groupId ? "MATE" : "ENEMY";
 			const won =
 				winner === "ALPHA"
-					? member.groupId === match.alphaGroupId
-					: member.groupId === match.bravoGroupId;
+					? member.groupId === match.groupAlpha.id
+					: member.groupId === match.groupBravo.id;
 
 			result.push({
 				ownerUserId: member.id,

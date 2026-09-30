@@ -1,0 +1,275 @@
+/* zero specificity so the single-class variants below always win */
+:where(.box) {
+	padding: var(--s-2) var(--s-3);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+}
+
+.seasonBadge {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--graphic-accent);
+}
+
+.hero {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+	background:
+		linear-gradient(
+			to right,
+			color-mix(in oklch, var(--graphic-accent) 16%, transparent),
+			transparent 40%
+		),
+		var(--graphic-row-bg);
+	border-color: color-mix(in oklch, var(--graphic-accent) 35%, transparent);
+}
+
+.heroTierName {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+	line-height: 1.1;
+}
+
+.heroSp {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.heroPeak {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.rankBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	margin-inline-start: auto;
+	padding-inline-end: var(--s-2);
+}
+
+.rankValue {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	color: var(--graphic-accent);
+}
+
+.bestStageRow {
+	--stage-banner-fade: var(--graphic-row-bg);
+}
+
+.bestStageName {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+}
+
+.bestStageWinrate {
+	font-weight: var(--weight-extra);
+	color: var(--graphic-accent);
+}
+
+.middleGrid {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	gap: var(--s-2);
+}
+
+.sideStack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.activityCalendar {
+	margin-top: var(--s-2-5);
+}
+
+.weaponsRow {
+	display: flex;
+	justify-content: space-evenly;
+	gap: var(--s-3);
+	margin-top: var(--s-1-5);
+}
+
+.weaponUsage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.matesList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	margin-top: var(--s-1-5);
+}
+
+.matesBoxExpanded {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+
+	& .matesList {
+		flex: 1;
+		justify-content: space-evenly;
+	}
+}
+
+.mateRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.mateName {
+	display: flex;
+	/* the image export freezes each element's width, so a shrink-to-fit box would clip its own text */
+	flex: 1;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+}
+
+.mateNameText {
+	/* claims .mateName's free space, see .headerTitle */
+	flex: 1 1 auto;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.mateSets {
+	margin-inline-start: auto;
+	white-space: nowrap;
+}
+
+.teamRankRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+
+	/* the info column takes the free space here, so an auto margin would leave it nothing to grow into */
+	& .rankBlock {
+		margin-inline-start: 0;
+	}
+}
+
+.teamRankInfo {
+	/* the image export freezes each element's width, so a shrink-to-fit box would clip its own text */
+	flex: 1;
+	min-width: 0;
+}
+
+.teamRankTitle {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-2);
+}
+
+.teamRankName {
+	overflow: hidden;
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.teamRankSp {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+
+	&.teamRankSpSecondary {
+		font-size: var(--font-sm);
+		font-weight: var(--weight-semi);
+		color: var(--graphic-text-dim);
+	}
+}
+
+.playersInline {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: var(--s-0-5) var(--s-3);
+}
+
+.bestSetsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bestSetRow {
+	display: grid;
+	grid-template-columns: 3.25rem 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.playersInlineStart {
+	justify-content: flex-start;
+	margin-top: var(--s-1);
+}
+
+.setInfo {
+	min-width: 0;
+}
+
+.setContext {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.setSp {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding: 0 var(--s-2);
+}
+
+.setSpValue {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.tournamentRow {
+	display: grid;
+	grid-template-columns: 3.25rem 2.75rem 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.tournamentInfo {
+	min-width: 0;
+}
+
+.tournamentName {
+	overflow: hidden;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.tournamentMeta {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}

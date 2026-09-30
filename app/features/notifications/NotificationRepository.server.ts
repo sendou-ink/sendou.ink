@@ -1,9 +1,14 @@
 import { sub } from "date-fns";
+import { sql } from "kysely";
+import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { NotificationSubscription, TablesInsertable } from "~/db/tables";
+import type { TablesInsertable } from "~/db/tables";
+import type { NotificationSubscription } from "~/db/tables-json";
+import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import { NOTIFICATIONS } from "./notifications-contants";
 import type { Notification } from "./notifications-types";
+import { notificationMeta } from "./notifications-utils";
 
 export function insert(
 	notification: Notification,
@@ -15,7 +20,9 @@ export function insert(
 			.values({
 				type: notification.type,
 				pictureUrl: notification.pictureUrl,
-				meta: notification.meta ? JSON.stringify(notification.meta) : null,
+				meta: notificationMeta(notification)
+					? JSON.stringify(notificationMeta(notification))
+					: null,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -26,10 +33,12 @@ export function insert(
 				users.map(({ userId, seen }) => ({
 					userId,
 					notificationId: inserted.id,
-					seen,
+					seen: seen ?? 0,
 				})),
 			)
 			.execute();
+
+		return inserted;
 	});
 }
 
@@ -68,19 +77,66 @@ export function findAllByType<T extends Notification["type"]>(type: T) {
 		.execute() as Promise<Array<Extract<Notification, { type: T }>>>;
 }
 
-export function markAsSeen({
-	notificationIds,
-	userId,
+/**
+ * Marks the users' unseen notifications of the type (optionally only those whose meta matches
+ * every key/value) as seen, returning the user ids whose rows changed. The correlated `exists`
+ * keeps this proportional to the users' own notifications; `notificationId in (select ...)` makes
+ * SQLite materialize every notification of the type first, ~80x slower on a hot path.
+ */
+export async function markAsSeenByType({
+	userIds,
+	type,
+	meta,
 }: {
-	notificationIds: number[];
-	userId: number;
-}) {
-	return db
+	userIds: number[];
+	type: Notification["type"];
+	meta?: Record<string, number | string>;
+}): Promise<number[]> {
+	if (userIds.length === 0) return [];
+
+	const updated = await db
+		.updateTable("NotificationUser")
+		.set("seen", 1)
+		.where("NotificationUser.seen", "=", 0)
+		.where("NotificationUser.userId", "in", userIds)
+		.where(({ exists, selectFrom, ref }) => {
+			let matchingNotification = selectFrom("Notification")
+				.select("Notification.id")
+				.whereRef(
+					"Notification.id",
+					"=",
+					ref("NotificationUser.notificationId"),
+				)
+				.where("Notification.type", "=", type);
+
+			for (const [key, value] of Object.entries(meta ?? {})) {
+				matchingNotification = matchingNotification.where(
+					sql`json_extract("Notification"."meta", ${`$.${key}`})`,
+					"=",
+					value,
+				);
+			}
+
+			return exists(matchingNotification);
+		})
+		.returning("NotificationUser.userId")
+		.execute();
+
+	return R.unique(updated.map((row) => row.userId));
+}
+
+/** Marks the actor's notifications as seen. Returns `[actorId]` if any row changed, else `[]`, shaped for `ChatSystemMessage.notifyNotificationsChanged`. */
+export async function markOwnAsSeen(notificationIds: number[]) {
+	const updated = await db
 		.updateTable("NotificationUser")
 		.set("seen", 1)
 		.where("NotificationUser.notificationId", "in", notificationIds)
-		.where("NotificationUser.userId", "=", userId)
+		.where("NotificationUser.userId", "=", actorId())
+		.where("NotificationUser.seen", "=", 0)
+		.returning("NotificationUser.userId")
 		.execute();
+
+	return updated.length > 0 ? [updated[0].userId] : [];
 }
 
 export function deleteOld() {
@@ -94,20 +150,51 @@ export function deleteOld() {
 		.executeTakeFirst();
 }
 
-export function addSubscription(args: {
-	userId: number;
-	subscription: NotificationSubscription;
-}) {
+export function upsertOwnSubscription(subscription: NotificationSubscription) {
 	return db
 		.insertInto("NotificationUserSubscription")
 		.values({
-			userId: args.userId,
-			subscription: JSON.stringify(args.subscription),
+			userId: actorId(),
+			subscription: JSON.stringify(subscription),
 		})
+		.onConflict((oc) =>
+			// an endpoint identifies one browser; a resubscribe or another user
+			// logging in on the same browser takes the row over instead of
+			// duplicating deliveries to it
+			oc
+				.expression(sql`json_extract("subscription", '$.endpoint')`)
+				.doUpdateSet({
+					userId: actorId(),
+					subscription: JSON.stringify(subscription),
+				}),
+		)
 		.execute();
 }
 
-export function subscriptionsByUserIds(userIds: number[]) {
+/** Push subscriptions of the notification's recipients who have not seen it yet, so the push sender skips users who addressed it during the grace period. */
+export function findUnseenSubscriptionsByNotificationId(
+	notificationId: number,
+) {
+	return db
+		.selectFrom("NotificationUser")
+		.innerJoin(
+			"NotificationUserSubscription",
+			"NotificationUserSubscription.userId",
+			"NotificationUser.userId",
+		)
+		.innerJoin("User", "User.id", "NotificationUser.userId")
+		.select([
+			"NotificationUserSubscription.id",
+			"NotificationUserSubscription.subscription",
+			"User.discordId",
+			"User.customUrl",
+		])
+		.where("NotificationUser.notificationId", "=", notificationId)
+		.where("NotificationUser.seen", "=", 0)
+		.execute();
+}
+
+export function findAllSubscriptionsByUserIds(userIds: number[]) {
 	return db
 		.selectFrom("NotificationUserSubscription")
 		.select(["id", "subscription"])

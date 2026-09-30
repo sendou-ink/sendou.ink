@@ -1,16 +1,15 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
-import { joinListToNaturalString } from "../../../utils/arrays";
-import { metaTags } from "../../../utils/remix";
-
+import { metaTags, ogPageImage } from "../../../utils/remix";
 import { loader } from "../loaders/a.server";
-export { loader };
+import styles from "./a.module.css";
 
-import "~/styles/front.css";
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -26,33 +25,41 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon articles",
 		description:
 			"Articles about the competitive side of Splatoon. Written by various community members.",
+		image: ogPageImage("articles"),
 		location: args.location,
 	});
 };
 
 export default function ArticlesMainPage() {
-	const { t } = useTranslation(["common"]);
+	const { t, i18n } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
 
 	return (
 		<Main className="stack lg">
-			<ul className="articles-list">
+			<ul className={styles.list}>
 				{data.articles.map((article) => (
 					<li key={article.title}>
-						<Link
-							to={articlePage(article.slug)}
-							className="articles-list__title"
-						>
+						<Link to={articlePage(article.slug)} className={styles.title}>
 							{article.title}
 						</Link>
 						<div className="text-xs text-lighter">
 							{t("common:articles.by", {
-								author: joinListToNaturalString(
-									article.authors.map((a) => a.name),
-									"&",
-								),
+								author: new Intl.ListFormat(i18n.language, {
+									style: "short",
+								}).format(article.authors.map((a) => a.name)),
 							})}{" "}
-							• <time>{article.dateString}</time>
+							•{" "}
+							<LocaleTime
+								date={new Date(article.date)}
+								options={{
+									day: "numeric",
+									month: "numeric",
+									year: "numeric",
+									// article dates are calendar dates parsed as UTC midnight;
+									// formatting in the viewer's zone would shift the day west of UTC
+									timeZone: "UTC",
+								}}
+							/>
 						</div>
 					</li>
 				))}

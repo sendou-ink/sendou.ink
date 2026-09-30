@@ -1,61 +1,79 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { type ActionFunction, redirect } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { safeParseRequestFormData } from "~/utils/remix.server";
-import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
+import { parseFormDataWithImages } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
-import { userEditActionSchema } from "../user-page-schemas";
+import { userEditProfileBaseSchema } from "../user-page-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
-	const parsedInput = await safeParseRequestFormData({
+	const user = requireUser();
+
+	const result = await parseFormDataWithImages({
 		request,
-		schema: userEditActionSchema,
+		schema: userEditProfileBaseSchema,
 	});
 
-	if (!parsedInput.success) {
-		return {
-			errors: parsedInput.errors,
-		};
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
 	}
 
-	const { inGameNameText, inGameNameDiscriminator, ...data } = parsedInput.data;
+	const data = result.data;
 
-	const user = await requireUserId(request);
-	const inGameName =
-		inGameNameText && inGameNameDiscriminator
-			? `${inGameNameText}#${inGameNameDiscriminator}`
+	if (data.customUrl) {
+		const existingUser = await UserRepository.findByCustomUrl(data.customUrl);
+		if (existingUser && existingUser.id !== user.id) {
+			return {
+				fieldErrors: {
+					customUrl: "forms:errors.profileCustomUrlDuplicate",
+				},
+			};
+		}
+	}
+
+	const [subjectPronoun, objectPronoun] = data.pronouns ?? [null, null];
+	const pronouns =
+		subjectPronoun && objectPronoun
+			? JSON.stringify({ subject: subjectPronoun, object: objectPronoun })
 			: null;
 
-	try {
-		const editedUser = await UserRepository.updateProfile({
-			...data,
-			inGameName,
-			userId: user.id,
-		});
+	const isSupporter = user.roles?.includes("SUPPORTER");
+	const isArtist = user.roles?.includes("ARTIST");
 
-		// TODO: to transaction
-		if (inGameName) {
-			const tournamentIdsAffected =
-				await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
-					inGameName,
-					userId: user.id,
-				});
+	const hiddenTrophySet = new Set(data.hiddenTrophyIds);
+	const limitedTrophyIds = isSupporter
+		? data.favoriteTrophyIds
+				.filter((id) => !hiddenTrophySet.has(id))
+				.slice(0, SMALL_TROPHIES_PER_DISPLAY_PAGE)
+		: [];
 
-			for (const tournamentId of tournamentIdsAffected) {
-				clearTournamentDataCache(tournamentId);
-			}
+	const editedUser = await UserRepository.updateOwnProfile({
+		country: data.country,
+		customUrl: data.customUrl,
+		customName: data.customName,
+		pronouns,
+		inGameName: data.inGameName,
+		favoriteTrophyIds: limitedTrophyIds.length > 0 ? limitedTrophyIds : null,
+		hiddenTrophyIds:
+			data.hiddenTrophyIds.length > 0 ? data.hiddenTrophyIds : null,
+		commissionsOpen: isArtist && data.commissionsOpen ? 1 : 0,
+		commissionText: isArtist ? data.commissionText : null,
+		customAvatarImgId: isSupporter ? data.customAvatar : null,
+	});
+
+	// TODO: to transaction
+	if (data.inGameName) {
+		const tournamentIdsAffected =
+			await TournamentTeamRepository.updateOwnMemberInGameNameForNonStarted(
+				data.inGameName,
+			);
+
+		for (const tournamentId of tournamentIdsAffected) {
+			clearTournamentDataCache(tournamentId);
 		}
-
-		throw redirect(userPage(editedUser));
-	} catch (e) {
-		if (!errorIsSqliteUniqueConstraintFailure(e)) {
-			throw e;
-		}
-
-		return {
-			errors: ["forms.errors.invalidCustomUrl.duplicate"],
-		};
 	}
+
+	throw redirect(userPage(editedUser));
 };

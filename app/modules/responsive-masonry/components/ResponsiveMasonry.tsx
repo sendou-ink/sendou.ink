@@ -1,37 +1,30 @@
 // adapted from https://github.com/cedricdelpoux/react-responsive-masonry
 
 import React from "react";
-import { createBreakpoint } from "react-use";
-import Masonry from "./Masonry";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { Masonry } from "./Masonry";
 
-const COLUMN_COUNTS = {
-	L: 3,
-	M: 2,
-	S: 1,
-};
+const THREE_COLUMNS_QUERY = "(width >= 900px)";
+const TWO_COLUMNS_QUERY = "(width >= 750px)";
 
-const useBreakpoint = createBreakpoint({ L: 900, M: 750, S: 350 });
-
-const MasonryResponsive = ({
+function MasonryResponsive({
 	children,
 }: {
 	children: React.ReactNode | React.ReactNode[];
-}) => {
-	const breakpoint = useBreakpoint() as "L" | "M" | "S";
-
-	const columnsCount = COLUMN_COUNTS[breakpoint];
+}) {
+	const columnsCount = useColumnsCount();
 
 	return (
 		<div>
 			{React.Children.map(children, (child, index) =>
-				React.cloneElement(child as React.ReactElement, {
+				React.cloneElement(child as React.ReactElement<any>, {
 					key: index,
 					columnsCount,
 				}),
 			)}
 		</div>
 	);
-};
+}
 
 export function ResponsiveMasonry({ children }: { children: React.ReactNode }) {
 	return (
@@ -39,4 +32,13 @@ export function ResponsiveMasonry({ children }: { children: React.ReactNode }) {
 			<Masonry gutter="1rem">{children}</Masonry>
 		</MasonryResponsive>
 	);
+}
+
+function useColumnsCount() {
+	const threeColumns = useMediaQuery(THREE_COLUMNS_QUERY);
+	const twoColumns = useMediaQuery(TWO_COLUMNS_QUERY);
+
+	if (threeColumns) return 3;
+	if (twoColumns) return 2;
+	return 1;
 }

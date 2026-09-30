@@ -1,103 +1,118 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { getUser } from "~/features/auth/core/user.server";
+import type { LoaderFunctionArgs } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
+import * as SeasonSummary from "~/features/img-export/core/SeasonSummary";
+import { cachedTeamLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import { seasonAllMMRByUserId } from "~/features/mmr/queries/seasonAllMMRByUserId.server";
-import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
-import { seasonMapWinrateByUserId } from "~/features/sendouq/queries/seasonMapWinrateByUserId.server";
-import { seasonReportedWeaponsByUserId } from "~/features/sendouq/queries/seasonReportedWeaponsByUserId.server";
-import { seasonSetWinrateByUserId } from "~/features/sendouq/queries/seasonSetWinrateByUserId.server";
-import { seasonStagesByUserId } from "~/features/sendouq/queries/seasonStagesByUserId.server";
-import { seasonsMatesEnemiesByUserId } from "~/features/sendouq/queries/seasonsMatesEnemiesByUserId.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
+import * as SkillRepository from "~/features/mmr/SkillRepository.server";
+import { rankedUserSkill } from "~/features/mmr/tiered.server";
+import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
+import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { userPageUserId } from "~/features/user-page/user-page-context.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy } from "~/utils/remix.server";
-import {
-	seasonsSearchParamsSchema,
-	userParamsSchema,
-} from "../user-page-schemas";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export type UserSeasonsPageLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
 >;
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const loggedInUser = await getUser(request);
-	const { identifier } = userParamsSchema.parse(params);
-	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(new URL(request.url).searchParams),
-	);
+export const loader = async ({ url }: LoaderFunctionArgs) => {
+	const loggedInUser = requireUser();
+	const { season: seasonParam } = userSeasonsSearchParams.parse(url);
 
-	const user = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(identifier),
-	);
+	const userId = userPageUserId();
 	const seasonsParticipatedIn =
-		await LeaderboardRepository.seasonsParticipatedInByUserId(user.id);
+		await LeaderboardRepository.findSeasonsParticipatedInByUserId(userId);
 
 	if (seasonsParticipatedIn.length === 0) {
 		return null;
 	}
 
-	const {
-		info = "weapons",
-		page = 1,
-		season = seasonsParticipatedIn[0],
-	} = parsedSearchParams.success ? parsedSearchParams.data : {};
+	const season = seasonParam ?? seasonsParticipatedIn[0];
 
-	const { isAccurateTiers, userSkills } = _userSkills(season);
-	const { tier, ordinal, approximate } = userSkills[user.id] ?? {
-		approximate: false,
-		ordinal: 0,
-		tier: { isPlus: false, name: "IRON" },
-	};
+	const seasonOverviews = await Promise.all(
+		seasonsParticipatedIn.map(async (nth) => {
+			const skill = await rankedUserSkill({ season: nth, userId });
+
+			return {
+				season: nth,
+				tier: skill?.tier ?? null,
+				sp: skill ? ordinalToRoundedSp(skill.ordinal) : null,
+			};
+		}),
+	);
 
 	return {
+		season,
 		seasonsParticipatedIn,
-		currentOrdinal: !approximate ? ordinal : undefined,
-		winrates: {
-			maps: seasonMapWinrateByUserId({ season, userId: user.id }),
-			sets: seasonSetWinrateByUserId({ season, userId: user.id }),
-		},
-		skills: seasonAllMMRByUserId({ season, userId: user.id }),
-		tier,
-		isAccurateTiers,
-		results: {
-			value: await QMatchRepository.seasonResultsByUserId({
-				season,
-				userId: user.id,
-				page,
-			}),
-			currentPage: page,
-			pages: await QMatchRepository.seasonResultPagesByUserId({
-				season,
-				userId: user.id,
-			}),
-		},
-		canceled: loggedInUser?.roles.includes("STAFF")
-			? await QMatchRepository.seasonCanceledMatchesByUserId({
+		seasonOverviews,
+		hasCalculatedSkill: seasonOverviews.some(
+			(overview) => overview.season === season && overview.tier !== null,
+		),
+		activeDays: await SkillRepository.findSeasonActiveDaysByUserId({
+			season,
+			userId,
+		}),
+		statsPeek: await statsPeek({ season, userId }),
+		teamEntry: await teamEntry({ season, userId }),
+		canceled: loggedInUser.roles.includes("STAFF")
+			? await SQMatchRepository.findSeasonCanceledMatchesByUserId({
 					season,
-					userId: user.id,
+					userId,
 				})
 			: null,
-		season,
-		info: {
-			currentTab: info,
-			stages:
-				info === "stages"
-					? seasonStagesByUserId({ season, userId: user.id })
-					: null,
-			weapons:
-				info === "weapons"
-					? seasonReportedWeaponsByUserId({ season, userId: user.id })
-					: null,
-			players:
-				info === "enemies" || info === "mates"
-					? seasonsMatesEnemiesByUserId({
-							season,
-							userId: user.id,
-							type: info === "enemies" ? "ENEMY" : "MATE",
-						})
-					: null,
-		},
 	};
 };
+
+async function statsPeek(args: { season: number; userId: number }) {
+	const [stages, weapons, mates] = await Promise.all([
+		PlayerStatRepository.findSeasonStagesByUserId(args),
+		ReportedWeaponRepository.findSeasonReportedWeaponsByUserId(args),
+		PlayerStatRepository.findSeasonMatesEnemiesByUserId({
+			...args,
+			type: "MATE",
+		}),
+	]);
+
+	const topMate = mates.at(0);
+	const topWeapon = SeasonSummary.topWeaponUsages(weapons).at(0) ?? null;
+
+	return {
+		bestStage:
+			SeasonSummary.bestStage(stages) ??
+			SeasonSummary.mostPlayedStage(stages) ??
+			null,
+		topWeapon,
+		topMode: topWeapon ? null : SeasonSummary.topModeUsage(stages),
+		topMate: topMate
+			? {
+					user: topMate.user,
+					setsCount: topMate.setWins + topMate.setLosses,
+				}
+			: null,
+	};
+}
+
+/** The user's highest roster on the season's "all rosters" team leaderboard */
+async function teamEntry({
+	season,
+	userId,
+}: {
+	season: number;
+	userId: number;
+}) {
+	const entry = (
+		await cachedTeamLeaderboard({ season, onlyOneEntryPerUser: false })
+	).find((rosterEntry) =>
+		rosterEntry.members.some((member) => member.id === userId),
+	);
+	if (!entry) return null;
+
+	return {
+		placement: entry.placementRank,
+		sp: entry.power,
+		members: entry.members,
+		team: entry.team ?? null,
+	};
+}

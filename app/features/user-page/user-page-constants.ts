@@ -1,37 +1,99 @@
+export const HIGHLIGHT_CHECKBOX_NAME = "highlightTeamIds";
+export const HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME = "highlightTournamentTeamIds";
+
 export const USER = {
-	BIO_MAX_LENGTH: 2000,
+	BIO_MAX_LENGTH: 3000,
+	BIO_MD_MAX_LENGTH: 8000,
 	CUSTOM_URL_MAX_LENGTH: 32,
 	CUSTOM_NAME_MAX_LENGTH: 32,
-	BATTLEFY_MAX_LENGTH: 32,
-	IN_GAME_NAME_TEXT_MAX_LENGTH: 20,
-	IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH: 5,
-	WEAPON_POOL_MAX_SIZE: 5,
 	COMMISSION_TEXT_MAX_LENGTH: 1000,
 	MOD_NOTE_MAX_LENGTH: 2000,
+	MAX_MAIN_WIDGETS: 4,
+	MAX_SIDE_WIDGETS: 5,
+	MAX_MAIN_WIDGETS_SUPPORTER: 6,
+	MAX_SIDE_WIDGETS_SUPPORTER: 7,
+	GAME_BADGES_MAX: 8,
+	GAME_BADGES_SMALL_MAX: 4,
+	WEAPON_POOL_WIDGET_MAX: 7,
+	CUSTOM_KITS_MAX: 3,
+	COUNTDOWN_TITLE_MAX_LENGTH: 50,
+	MARKDOWN_WIDGET_MAX_LENGTH: 2000,
+	TIER_LIST_WIDGET_MAX_LENGTH: 4000,
+	PEAK_XP_MIN: 1000,
+	PEAK_XP_MAX: 6000,
 };
 
-export const MATCHES_PER_SEASONS_PAGE = 8;
-export const DEFAULT_BUILD_SORT = ["WEAPON_POOL", "UPDATED_AT"] as const;
-
-export const CUSTOM_CSS_VAR_COLORS = [
-	"bg",
-	"bg-darker",
-	"bg-lighter",
-	"bg-lightest",
-	"text",
-	"text-lighter",
-	"theme",
-	"theme-secondary",
-	"chat",
+/** In-game sensitivity values (-5.0 to +5.0 in 0.5 steps), stored multiplied by ten. */
+export const SENS_OPTIONS = [
+	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
+	40, 45, 50,
 ] as const;
 
-/**
- * An array of ISO 3166-1 alpha-2 country codes.
- * Each entry is a two-letter uppercase string representing a country or territory. Sorted alphabetically.
- *
- * @see {@link https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2}
- * @see {@link https://github.com/annexare/Countries}
- */
+export const SPL2_JOIN_ORDER_CUTOFF = 13_589;
+
+export const MATCHES_PER_SEASONS_PAGE = 8;
+
+export const SEASON_RESULT_SOURCES = ["ALL", "SENDOUQ", "TOURNAMENT"] as const;
+
+export type SeasonResultSource = (typeof SEASON_RESULT_SOURCES)[number];
+
+export const SEASON_STATS_TABS = [
+	"overview",
+	"stages",
+	"weapons",
+	"mates",
+	"enemies",
+] as const;
+
+export type SeasonStatsTab = (typeof SEASON_STATS_TABS)[number];
+export const RESULTS_PER_PAGE = 25;
+export const HIGHLIGHTS_RESULTS_MAX = 500;
+
+/** Year of the oldest event that can have results. */
+export const RESULTS_FIRST_YEAR = 2015;
+
+/** Placement thresholds that results can be filtered by e.g. 3 = top 3 only. */
+export const RESULT_PLACEMENT_FILTERS = [1, 3, 8, 16, 32] as const;
+
+export type ResultPlacementFilter = (typeof RESULT_PLACEMENT_FILTERS)[number];
+
+export const RESULT_SOURCES = ["ALL", "SENDOU", "EXTERNAL"] as const;
+
+export type ResultSource = (typeof RESULT_SOURCES)[number];
+export const BUILD_SORT_IDENTIFIERS = [
+	"UPDATED_AT",
+	"TOP_500",
+	"WEAPON_POOL",
+	"WEAPON_IN_GAME_ORDER",
+	"ALPHABETICAL_TITLE",
+	"MODE",
+	"HEADGEAR_ID",
+	"CLOTHES_ID",
+	"SHOES_ID",
+	"PUBLIC_BUILD",
+	"PRIVATE_BUILD",
+] as const;
+
+export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
+
+export const DEFAULT_BUILD_SORT = ["WEAPON_POOL", "UPDATED_AT"] as const;
+
+export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
+
+export type SubjectPronoun = (typeof SUBJECT_PRONOUNS)[number];
+
+export const OBJECT_PRONOUNS = [
+	"him",
+	"her",
+	"them",
+	"its",
+	"all",
+	...SUBJECT_PRONOUNS,
+] as const;
+
+export type ObjectPronoun = (typeof OBJECT_PRONOUNS)[number];
+
+/** ISO 3166-1 alpha-2 codes, sorted. @see {@link https://github.com/annexare/Countries} */
 export const COUNTRY_CODES = [
 	"AD",
 	"AE",
@@ -102,6 +164,7 @@ export const COUNTRY_CODES = [
 	"ER",
 	"ES",
 	"ET",
+	"EU",
 	"FI",
 	"FJ",
 	"FK",
@@ -110,6 +173,10 @@ export const COUNTRY_CODES = [
 	"FR",
 	"GA",
 	"GB",
+	"GB-ENG",
+	"GB-NIR",
+	"GB-SCT",
+	"GB-WLS",
 	"GD",
 	"GE",
 	"GF",

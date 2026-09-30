@@ -1,0 +1,37 @@
+.socialLink {
+	font-size: var(--font-sm);
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	max-width: max-content;
+
+	& svg {
+		width: 18px;
+	}
+}
+
+.socialLinkIconContainer {
+	background-color: var(--color-bg-higher);
+	display: grid;
+	place-items: center;
+	border-radius: var(--radius-box);
+	padding: var(--s-2);
+}
+
+.socialLinkTwitch {
+	& svg {
+		fill: #9146ff;
+	}
+}
+
+.socialLinkYoutube {
+	& svg {
+		fill: #f00;
+	}
+}
+
+.socialLinkBsky {
+	& path {
+		fill: #1285fe;
+	}
+}

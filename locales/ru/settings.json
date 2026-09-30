@@ -1,0 +1,15 @@
+{
+	"tabs.preferences": "",
+	"tabs.matchProfile": "",
+	"tabs.locale": "",
+	"tabs.theme": "",
+	"tabs.sounds": "Звуковые уведомления",
+	"matchProfile.maps.teamPreferencesHint": "",
+	"matchProfile.maps.avoid": "Избегаю",
+	"matchProfile.maps.prefer": "Предпочитаю",
+	"matchProfile.maps.neutral": "Нейтрально",
+	"sounds.likeReceived": "",
+	"sounds.readyCheckStarted": "",
+	"sounds.matchStarted": "",
+	"sounds.tournamentMatchStarted": ""
+}

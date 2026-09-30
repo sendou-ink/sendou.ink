@@ -1,0 +1,144 @@
+.container {
+	display: none;
+	align-items: center;
+
+	@media screen and (min-width: 600px) {
+		display: flex;
+	}
+}
+
+.menuWrapper {
+	position: relative;
+}
+
+.menuButton {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: 0 var(--s-1-5);
+	height: var(--field-size-sm);
+	border: none;
+	border-radius: var(--radius-field);
+	background: transparent;
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
+	white-space: nowrap;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.menuButtonChevron {
+	width: 14px;
+	height: 14px;
+	color: var(--color-text-high);
+	flex-shrink: 0;
+}
+
+.menuPopover {
+	background-color: var(--color-bg-high);
+}
+
+.menuContent {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-0-5);
+}
+
+.menuItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	border-radius: var(--radius-field);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-decoration: none;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.menuItemForm {
+	display: contents;
+}
+
+.menuItemButton {
+	width: 100%;
+	border: none;
+	background: transparent;
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.menuItemIcon {
+	flex-shrink: 0;
+}
+
+.preview {
+	position: absolute;
+	top: calc(100% + var(--floating-gap));
+	left: 0;
+	z-index: 1;
+	display: grid;
+	visibility: hidden;
+	width: max-content;
+	grid-auto-flow: column;
+	grid-template-rows: repeat(2, auto);
+	gap: var(--s-1);
+	padding: var(--s-1) var(--s-1-5);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+	transition: visibility 0s linear 0.3s;
+
+	.menuWrapper:hover & {
+		visibility: visible;
+		transition-delay: 0s;
+	}
+
+	/* a menu opened before hydration has no state to unmount the preview */
+	.menuWrapper:has(:popover-open) & {
+		display: none;
+	}
+
+	.container:hover .menuWrapper:not(:hover) & {
+		display: none;
+	}
+
+	&::before {
+		content: "";
+		position: absolute;
+		z-index: -1;
+		inset: calc(-1 * (var(--floating-gap) + var(--border-width)));
+	}
+}
+
+.previewIcon {
+	display: flex;
+	flex-shrink: 0;
+	padding: var(--s-1);
+	border-radius: var(--radius-full);
+	transition: background-color 0.15s;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.previewIconButton {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+}

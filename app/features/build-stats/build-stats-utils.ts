@@ -1,21 +1,22 @@
 import { abilities } from "~/modules/in-game-lists/abilities";
 import type { Ability } from "~/modules/in-game-lists/types";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { MAX_AP } from "../build-analyzer/analyzer-constants";
-import { isStackableAbility } from "../build-analyzer/core/utils";
-import type { AbilitiesByWeapon } from "./queries/abilitiesByWeaponId.server";
-import type { AverageAbilityPointsResult } from "./queries/averageAbilityPoints.server";
+import { isStackableAbility } from "../build-analyzer/core/ability-points";
+import type {
+	AverageAbilityPointsResult,
+	PopularBuildsRow,
+} from "../builds/BuildRepository.server";
 
 const toBuildsCount = (counts: AverageAbilityPointsResult[]) =>
 	counts.reduce((acc, cur) => acc + cur.abilityPointsSum, 0) / MAX_AP;
 
 const toAbilityPoints = (
-	abilities: AverageAbilityPointsResult[],
+	results: AverageAbilityPointsResult[],
 	ability: Ability,
 ) =>
-	abilities.find((current) => current.ability === ability)?.abilityPointsSum ??
-	0;
+	results.find((current) => current.ability === ability)?.abilityPointsSum ?? 0;
 
 export function abilityPointCountsToAverages({
 	allAbilities,
@@ -92,71 +93,29 @@ export function abilityPointCountsToAverages({
 	};
 }
 
-// ---
-
-type AbilityCountsMap = Map<Ability, number>;
-
-const POPULAR_BUILDS_TO_SHOW = 25;
-
-export function popularBuilds(builds: Array<AbilitiesByWeapon>) {
-	const counts = new Map<string, number>();
-	for (const build of builds) {
-		const summedUpAbilities = sumUpAbilities(build);
-		const serializedAbilities = serializeAbilityCountsMap(summedUpAbilities);
-
-		counts.set(serializedAbilities, (counts.get(serializedAbilities) ?? 0) + 1);
-	}
-
-	const serializedToShow = Array.from(counts.entries())
-		.sort((a, b) => b[1] - a[1])
-		.filter(([, count]) => count > 1)
-		.slice(0, POPULAR_BUILDS_TO_SHOW);
-
-	return serializedToShowToResultType(serializedToShow);
-}
-
-function sumUpAbilities(build: AbilitiesByWeapon) {
-	const result: AbilityCountsMap = new Map();
-	for (const { ability, abilityPoints } of build.abilities) {
-		result.set(ability, (result.get(ability) ?? 0) + abilityPoints);
-	}
-
-	return result;
-}
-
-function serializeAbilityCountsMap(abilityCountsMap: AbilityCountsMap) {
-	return Array.from(abilityCountsMap.entries())
-		.sort((a, b) => {
-			if (a[1] === b[1]) {
-				return a[0].localeCompare(b[0]);
-			}
-
-			return b[1] - a[1];
-		})
-		.map(([ability, count]) => `${ability}_${count}`)
-		.join(",");
-}
-
-function serializedToShowToResultType(serializedToShow: [string, number][]) {
+export function popularBuilds(rows: Array<PopularBuildsRow>) {
 	let previousCount: number;
-	return serializedToShow.map(([serialized, count]) => {
-		const abilities = serialized.split(",").map((serializedAbility) => {
-			const [ability, count] = serializedAbility.split("_");
-			invariant(ability, "ability is not defined");
-			invariant(count, "count is not defined");
-			return {
-				ability: ability as Ability,
-				count: isStackableAbility(ability as Ability)
-					? Number(count)
-					: undefined,
-			};
-		});
+	return rows.map(({ abilitiesSignature, count }) => {
+		const parsedAbilities = abilitiesSignature
+			.split(",")
+			.map((serializedAbility) => {
+				const [ability, points] = serializedAbility.split("_");
+				invariant(ability, "ability is not defined");
+				invariant(points, "count is not defined");
+				return {
+					ability: ability as Ability,
+					count: isStackableAbility(ability as Ability)
+						? Number(points)
+						: undefined,
+				};
+			});
 
-		if (previousCount === count) {
-			return { abilities, count: null, id: serialized };
-		}
-
+		const displayCount = previousCount === count ? null : count;
 		previousCount = count;
-		return { abilities, count, id: serialized };
+		return {
+			abilities: parsedAbilities,
+			count: displayCount,
+			id: abilitiesSignature,
+		};
 	});
 }

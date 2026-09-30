@@ -1,4 +1,4 @@
-import { MAX_AP } from "../analyzer-constants";
+import { LDE_START_POINTS, MAX_AP } from "../analyzer-constants";
 import type { AbilityPoints } from "../analyzer-types";
 
 export const SPECIAL_EFFECTS = [
@@ -74,6 +74,27 @@ export const SPECIAL_EFFECTS = [
 		],
 	},
 	{
+		type: "AURA",
+		values: [
+			{
+				type: "RSU",
+				ap: 30,
+			},
+			{
+				type: "SSU",
+				ap: 30,
+			},
+			{
+				type: "RES",
+				ap: 30,
+			},
+			{
+				type: "IA",
+				ap: 30,
+			},
+		],
+	},
+	{
 		type: "TACTICOOLER",
 		values: [
 			{
@@ -112,6 +133,11 @@ export const SPECIAL_EFFECTS = [
 
 export function lastDitchEffortIntensityToAp(intensity: number) {
 	return Math.floor((18 / 21) * intensity);
+}
+
+/** Opponent's remaining points in an Anarchy Battle that the given Last-Ditch Effort intensity corresponds to. */
+export function lastDitchEffortIntensityToOpponentPoints(intensity: number) {
+	return LDE_START_POINTS + 1 - intensity;
 }
 
 function lastDitchEffortValues(intensity: number) {

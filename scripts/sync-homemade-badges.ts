@@ -1,17 +1,23 @@
-import "dotenv/config";
-
 import { db } from "~/db/sql";
-import homemadeBadges from "~/features/badges/homemade.json";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import { logger } from "~/utils/logger";
 
+const HOMEMADE_BADGES_URL =
+	"https://raw.githubusercontent.com/sendou-ink/assets/main/homemade.json";
+
+interface HomemadeBadge {
+	displayName: string;
+	authorDiscordId: string;
+}
+
 async function main() {
+	const homemadeBadges = await fetchHomemadeBadges();
+
 	let deleted = 0;
 	let updated = 0;
 
-	// update existing
 	for (const existingBadge of await homemadeBadgesInDb()) {
-		const badge =
-			homemadeBadges[existingBadge.code as keyof typeof homemadeBadges];
+		const badge = homemadeBadges[existingBadge.code];
 
 		if (!badge) {
 			await deleteBadge(existingBadge.id);
@@ -44,7 +50,6 @@ async function main() {
 
 	let added = 0;
 
-	// add new
 	for (const [fileName, badge] of Object.entries(homemadeBadges)) {
 		const existing = homemadeAfterUpdates.find(
 			(existingBadge) => fileName === existingBadge.code,
@@ -76,6 +81,18 @@ async function main() {
 	);
 }
 
+async function fetchHomemadeBadges(): Promise<Record<string, HomemadeBadge>> {
+	const response = await fetch(HOMEMADE_BADGES_URL);
+
+	if (!response.ok) {
+		throw new Error(
+			`Failed to fetch homemade badges (${response.status} ${response.statusText})`,
+		);
+	}
+
+	return response.json() as Promise<Record<string, HomemadeBadge>>;
+}
+
 async function homemadeBadgesInDb() {
 	return db
 		.selectFrom("Badge")
@@ -95,6 +112,7 @@ async function findUserByDiscordId(discordId: string) {
 async function deleteBadge(badgeId: number) {
 	const owners = await db
 		.selectFrom("BadgeOwner")
+		.select("badgeId")
 		.where("badgeId", "=", badgeId)
 		.execute();
 
@@ -106,6 +124,18 @@ async function deleteBadge(badgeId: number) {
 	await db.transaction().execute(async (trx) => {
 		await trx
 			.deleteFrom("BadgeManager")
+			.where("badgeId", "=", badgeId)
+			.execute();
+		await trx
+			.deleteFrom("CalendarEventBadge")
+			.where("badgeId", "=", badgeId)
+			.execute();
+		await trx
+			.deleteFrom("TournamentBadgeOwner")
+			.where("badgeId", "=", badgeId)
+			.execute();
+		await trx
+			.deleteFrom("TournamentOrganizationBadge")
 			.where("badgeId", "=", badgeId)
 			.execute();
 		await trx.deleteFrom("Badge").where("id", "=", badgeId).execute();
@@ -131,14 +161,7 @@ async function addBadge(badge: {
 	displayName: string;
 	authorId: number;
 }) {
-	return db
-		.insertInto("Badge")
-		.values({
-			code: badge.code,
-			displayName: badge.displayName,
-			authorId: badge.authorId,
-		})
-		.execute();
+	return BadgeRepository.insert({ ...badge, hue: null });
 }
 
-main();
+await main();

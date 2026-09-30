@@ -1,26 +1,39 @@
 import { cachified } from "@epic-web/cachified";
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { i18next } from "~/modules/i18n/i18next.server";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import { notFoundIfNullLike } from "~/utils/remix.server";
+import type { LoaderFunctionArgs } from "react-router";
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import { getServerTFunction } from "~/modules/i18n/i18next.server";
+import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
+import { cache } from "~/utils/cache.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { abilityPointCountsToAverages } from "../build-stats-utils";
-import { averageAbilityPoints } from "../queries/averageAbilityPoints.server";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request, ["builds", "weapons"]);
-	const weaponId = notFoundIfNullLike(weaponNameSlugToId(params.slug));
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const t = getServerTFunction(["builds", "weapons"]);
+	const weaponId = notFoundIfNullish(weaponNameSlugToId(params.slug));
+
+	if (weaponIdToType(weaponId) === "ALT_SKIN") {
+		throw new Response(null, { status: 404 });
+	}
 
 	const weaponName = t(`weapons:MAIN_${weaponId}`);
+
+	const allAbilities = await cachified({
+		key: "all-ability-point-counts",
+		cache,
+		async getFreshValue() {
+			return BuildRepository.findAllAbilityPointAverages();
+		},
+	});
 
 	const cachedStats = await cachified({
 		key: `build-stats-${weaponId}`,
 		cache,
-		ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
 		async getFreshValue() {
 			return abilityPointCountsToAverages({
-				allAbilities: averageAbilityPoints(),
-				weaponAbilities: averageAbilityPoints(weaponId),
+				allAbilities,
+				weaponAbilities:
+					await BuildRepository.findAllAbilityPointAverages(weaponId),
 			});
 		},
 	});

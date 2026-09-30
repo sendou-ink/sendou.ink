@@ -1,22 +1,22 @@
-import type { MetaFunction } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
-import { useAutoRefresh } from "~/hooks/useAutoRefresh";
-import { metaTags } from "~/utils/remix";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
 import { action } from "../actions/q.preparing.server";
 import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
-import { hasGroupManagerPerms } from "../core/groups";
 import { loader } from "../loaders/q.preparing.server";
-import { FULL_GROUP_SIZE } from "../q-constants";
-export { loader, action };
+import { preparingSchema } from "../q-action-schemas";
+import { FULL_GROUP_SIZE, sqGroupChannel } from "../q-constants";
+import styles from "./q.preparing.module.css";
 
-import "../q.css";
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["q", "user"],
@@ -30,6 +30,7 @@ export const handle: SendouRouteHandle = {
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Preparing Group",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };
@@ -37,36 +38,23 @@ export const meta: MetaFunction = (args) => {
 export default function QPreparingPage() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
-	const joinQFetcher = useFetcher();
-	useAutoRefresh(data.lastUpdated);
+
+	useTopicRevalidation(sqGroupChannel(data.group.id));
 
 	return (
 		<Main className="stack lg items-center">
-			<div className="q-preparing__card-container">
-				<GroupCard
-					group={data.group}
-					ownRole={data.role}
-					ownGroup
-					hideNote
-					enableKicking={data.role === "OWNER"}
-				/>
+			<div className={styles.cardContainer}>
+				<GroupCard group={data.group} hideNote ownGroup={data.group} />
 			</div>
-			{data.group.members.length < FULL_GROUP_SIZE &&
-			hasGroupManagerPerms(data.role) ? (
+			{data.group.members.length < FULL_GROUP_SIZE ? (
 				<MemberAdder
 					inviteCode={data.group.inviteCode}
 					groupMemberIds={data.group.members.map((m) => m.id)}
 				/>
 			) : null}
-			<joinQFetcher.Form method="post">
-				<SubmitButton
-					size="big"
-					state={joinQFetcher.state}
-					_action="JOIN_QUEUE"
-				>
-					{t("q:preparing.joinQ")}
-				</SubmitButton>
-			</joinQFetcher.Form>
+			<ActionButton schema={preparingSchema} action="JOIN_QUEUE" size="big">
+				{t("q:preparing.joinQ")}
+			</ActionButton>
 			<GroupLeaver
 				type={data.group.members.length === 1 ? "GO_BACK" : "LEAVE_GROUP"}
 			/>

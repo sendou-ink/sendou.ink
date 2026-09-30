@@ -1,11 +1,12 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "react-router";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { Main } from "~/components/Main";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LINKS_PAGE, navIconUrl } from "~/utils/urls";
 import links from "../links.json";
+import styles from "./links.module.css";
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -21,6 +22,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon link collection",
 		description:
 			"Collection of useful Splatoon guides, Discord servers and other resources.",
+		image: ogPageImage("links"),
 		location: args.location,
 	});
 };
@@ -30,7 +32,7 @@ export default function LinksPage() {
 		<Main>
 			<div className="stack md">
 				{links
-					.sort((a, b) => a.title.localeCompare(b.title))
+					.toSorted((a, b) => a.title.localeCompare(b.title))
 					.map((link) => {
 						const isDiscord = link.url.includes("discord");
 						const isYoutube = link.url.includes("youtube");
@@ -46,10 +48,10 @@ export default function LinksPage() {
 									>
 										{link.title}
 										{isDiscord ? (
-											<DiscordIcon className="discord-icon" />
+											<DiscordIcon className={styles.discordIcon} />
 										) : null}
 										{isYoutube ? (
-											<YouTubeIcon className="youtube-icon" />
+											<YouTubeIcon className={styles.youtubeIcon} />
 										) : null}
 									</a>
 								</h2>

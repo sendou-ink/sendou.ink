@@ -1,0 +1,120 @@
+.root {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	/* horizontal touch drags scrub, vertical ones keep scrolling the page */
+	touch-action: pan-y;
+}
+
+/* pinned to the shared plot area: both cards pad horizontally by --s-3 and
+   keep their y-labels inside the same fixed gutter */
+.plotOverlay {
+	position: absolute;
+	inset: 0 var(--s-3) 0 calc(var(--s-3) + var(--plot-gutter));
+	pointer-events: none;
+}
+
+.scrubLine {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	border-left: 2px dotted var(--color-text-high);
+}
+
+.readout {
+	position: absolute;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	max-width: 16rem;
+	padding: var(--s-2) var(--s-2-5);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	font-size: var(--font-xs);
+	transform: translateY(-50%);
+	white-space: nowrap;
+}
+
+.readoutPinned {
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	max-width: calc(100% - var(--s-2));
+	white-space: normal;
+}
+
+.readoutTitle {
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.readoutTeam {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.readoutTeamHeader {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+}
+
+.readoutTeamName {
+	font-weight: var(--weight-semi);
+}
+
+.readoutScore {
+	font-variant-numeric: tabular-nums;
+}
+
+.readoutPenalty,
+.readoutControl {
+	color: var(--color-text-high);
+}
+
+.swatch {
+	flex-shrink: 0;
+	width: 8px;
+	height: 8px;
+	border-radius: 2px;
+
+	&.swatchAlpha {
+		background-color: var(--color-chart-alpha);
+	}
+
+	&.swatchBravo {
+		background-color: var(--color-chart-bravo);
+	}
+}
+
+.readoutStatusRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	padding-left: calc(8px + var(--s-1-5));
+}
+
+.readoutStatusLabel {
+	&.statusLabelDead {
+		color: var(--color-error);
+	}
+
+	&.statusLabelSpecial {
+		color: var(--color-info);
+	}
+}
+
+.readoutWeapons {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.unknownWeapon {
+	opacity: 0.5;
+}

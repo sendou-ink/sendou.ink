@@ -1,0 +1,701 @@
+import type { TFunction } from "i18next";
+import { Ban, Check, Undo2, X } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouTabPanel } from "~/components/elements/Tabs";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { MatchActionTab } from "~/components/match-page/MatchActionTab";
+import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { MatchTimeline } from "~/components/match-page/MatchTimeline";
+import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
+import { WeaponReporter } from "~/components/match-page/WeaponReporter";
+import { useUser } from "~/features/auth/core/user";
+import { FormField } from "~/form/FormField";
+import { SendouForm } from "~/form/SendouForm";
+import type { FormObjectSchema } from "~/form/types";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useCooldown } from "~/hooks/useCooldown";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import {
+	resolveGroupNames,
+	resolveTimelineMaps,
+	resolveTimelineTeams,
+} from "../core/match-timeline";
+import * as SendouQMatch from "../core/SendouQMatch";
+import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
+import {
+	acceptCancelSchema,
+	matchSchema,
+	requestCancelSchema,
+} from "../q-match-schemas";
+import {
+	MatchmadeRejoinSection,
+	OffSeasonRejoinSection,
+	TrustedRejoinSection,
+} from "./RejoinSections";
+import styles from "./SendouQMatchActionTab.module.css";
+
+const CONFIRM_COOLDOWN_MS = 5_000;
+const CONFIRM_LOSS_ARMED_MS = 5_000;
+/** Guards against an accidental double-click satisfying the loss "tap again". */
+const CONFIRM_LOSS_MIN_GAP_MS = 300;
+const MAP_CHANGED_COOLDOWN_MS = 10_000;
+
+export function SendouQMatchActionTab({
+	data,
+	currentMap,
+	ownTeamId,
+	reportedCount,
+	viewerSide,
+}: {
+	data: SendouQMatchLoaderData;
+	currentMap?: { stageId: StageId; mode: ModeShort };
+	ownTeamId: number | null;
+	reportedCount: number;
+	viewerSide: "ALPHA" | "BRAVO" | null;
+}) {
+	const user = useUser();
+	if (!user) return null;
+
+	const isStaffOnly = ownTeamId == null;
+
+	const { isDecisive } = SendouQMatch.score(data.match);
+	const awaitingConfirmation = !data.match.isLocked && isDecisive;
+	const isLocked = data.match.isLocked;
+
+	const cancelRequesterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: data.match.cancelRequestedByUserId,
+	});
+	const cancelRequestedByGroupId =
+		cancelRequesterSide === "ALPHA"
+			? data.match.groupAlpha.id
+			: cancelRequesterSide === "BRAVO"
+				? data.match.groupBravo.id
+				: undefined;
+
+	if (
+		!awaitingConfirmation &&
+		!isLocked &&
+		!isStaffOnly &&
+		cancelRequestedByGroupId === ownTeamId
+	) {
+		return <CancelPendingTab />;
+	}
+
+	if (
+		!awaitingConfirmation &&
+		!isLocked &&
+		!isStaffOnly &&
+		cancelRequestedByGroupId != null &&
+		cancelRequestedByGroupId !== ownTeamId
+	) {
+		return <CancelRespondTab data={data} />;
+	}
+
+	if (isLocked) {
+		return (
+			<RequeueTab
+				data={data}
+				viewerSide={viewerSide}
+				isStaffOnly={isStaffOnly}
+				awaitingConfirmation={false}
+			/>
+		);
+	}
+
+	if (awaitingConfirmation) {
+		return (
+			<RequeueTab
+				data={data}
+				viewerSide={viewerSide}
+				isStaffOnly={isStaffOnly}
+				awaitingConfirmation={true}
+			/>
+		);
+	}
+
+	if (currentMap) {
+		return (
+			<InProgressTab
+				data={data}
+				currentMap={currentMap}
+				ownTeamId={ownTeamId}
+				reportedCount={reportedCount}
+				user={user}
+			/>
+		);
+	}
+
+	return null;
+}
+
+function CancelPendingTab() {
+	const { t } = useTranslation(["q"]);
+	return (
+		<SendouTabPanel id={TAB_KEYS.ACTION}>
+			<div className={styles.cancelWaiting}>
+				{t("q:match.cancelPendingConfirmation")}
+			</div>
+		</SendouTabPanel>
+	);
+}
+
+function CancelRespondTab({ data }: { data: SendouQMatchLoaderData }) {
+	const { t } = useTranslation(["q", "common"]);
+	const refuseCancel = useActionSubmit(matchSchema);
+
+	return (
+		<SendouTabPanel id={TAB_KEYS.ACTION}>
+			<div className={styles.cancelRespondRoot}>
+				<div className={styles.cancelRespondHeader}>
+					{t("q:match.action.acceptCancelingSet")}
+				</div>
+				<div className={styles.cancelRespondButtons}>
+					<SendouButton
+						variant="outlined"
+						icon={<X />}
+						isDisabled={refuseCancel.state !== "idle"}
+						onClick={() => {
+							refuseCancel.submit("REFUSE_CANCEL");
+						}}
+					>
+						{t("common:actions.refuse")}
+					</SendouButton>
+					<SendouDialog
+						trigger={
+							<SendouButton variant="outlined" icon={<Check />}>
+								{t("common:actions.accept")}
+							</SendouButton>
+						}
+						heading={t("q:match.cancelMatch")}
+						showCloseButton
+					>
+						<CancelMatchForm match={data.match} action="ACCEPT_CANCEL" />
+					</SendouDialog>
+				</div>
+			</div>
+		</SendouTabPanel>
+	);
+}
+
+function CancelMatchForm({
+	match,
+	action,
+}: {
+	match: SendouQMatchLoaderData["match"];
+	action: "REQUEST_CANCEL" | "ACCEPT_CANCEL";
+}) {
+	const { t } = useTranslation(["q"]);
+
+	const playerOptions = SendouQMatch.allMembers(match).map((member) => ({
+		value: String(member.id),
+		label: () => member.username,
+	}));
+
+	const schema: FormObjectSchema =
+		action === "REQUEST_CANCEL" ? requestCancelSchema : acceptCancelSchema;
+
+	return (
+		<div className="stack md">
+			<p className="text-lighter text-sm">
+				{t("q:match.cancelMatch.explanation")}
+			</p>
+			<SendouForm schema={schema} submitButtonTestId="cancel-match-submit">
+				<FormField name="nominatedUserIds" options={playerOptions} />
+				<FormField name="reason" />
+			</SendouForm>
+		</div>
+	);
+}
+
+function RequeueTab({
+	data,
+	viewerSide,
+	isStaffOnly,
+	awaitingConfirmation,
+}: {
+	data: SendouQMatchLoaderData;
+	viewerSide: "ALPHA" | "BRAVO" | null;
+	isStaffOnly: boolean;
+	awaitingConfirmation: boolean;
+}) {
+	const { t } = useTranslation(["q"]);
+	const user = useUser();
+
+	const { alphaWins, bravoWins } = SendouQMatch.score(data.match);
+	const score = { alpha: alphaWins, bravo: bravoWins };
+	const teams = resolveTimelineTeams(data.match, t);
+	const maps = resolveTimelineMaps(
+		data.match,
+		data.reportedWeapons,
+		data.ingestedScoreboards,
+	);
+
+	const viewerGroup =
+		viewerSide === "ALPHA"
+			? data.match.groupAlpha
+			: viewerSide === "BRAVO"
+				? data.match.groupBravo
+				: null;
+
+	const decidingReportedByUserId = [...data.match.mapList]
+		.reverse()
+		.find((m) => m.winnerGroupId !== null)?.reportedByUserId;
+	const reporterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: decidingReportedByUserId,
+	});
+	const isOnReporterTeam = awaitingConfirmation && reporterSide === viewerSide;
+	const isOnConfirmerTeam =
+		awaitingConfirmation &&
+		reporterSide !== null &&
+		reporterSide !== viewerSide;
+
+	const showTimeline = !data.match.isLocked;
+
+	return (
+		<SendouTabPanel id={TAB_KEYS.ACTION}>
+			{isStaffOnly || !viewerGroup || !user ? (
+				<div className={styles.rematchContent}>
+					{showTimeline ? (
+						<MatchTimeline compact teams={teams} score={score} maps={maps} />
+					) : null}
+					{isStaffOnly && awaitingConfirmation ? (
+						<ScoreConfirmerSection data={data} viewerSide={null} />
+					) : null}
+				</div>
+			) : (
+				<div className={styles.rematchContent}>
+					{data.isOffSeason ? <OffSeasonRejoinSection /> : null}
+					{!data.isOffSeason && viewerGroup.matchmade ? (
+						<MatchmadeRejoinSection
+							data={data}
+							viewerGroup={viewerGroup}
+							viewerUserId={user.id}
+							awaitingConfirmation={awaitingConfirmation}
+							isOnReporterTeam={isOnReporterTeam}
+						/>
+					) : null}
+					{!data.isOffSeason &&
+					!viewerGroup.matchmade &&
+					(!awaitingConfirmation || isOnReporterTeam) ? (
+						<TrustedRejoinSection
+							viewerGroup={viewerGroup}
+							hasJoinedNewGroup={data.hasJoinedNewGroup}
+							someGroupMemberHasJoinedNewGroup={
+								data.someGroupMemberHasJoinedNewGroup
+							}
+						/>
+					) : null}
+					{isOnReporterTeam ? <hr className={styles.divider} /> : null}
+
+					{showTimeline ? (
+						<MatchTimeline compact teams={teams} score={score} maps={maps} />
+					) : null}
+					{isOnConfirmerTeam ? (
+						<ScoreConfirmerSection data={data} viewerSide={viewerSide} />
+					) : null}
+					{isOnReporterTeam ? <ReporterUndoSection /> : null}
+					{data.match.isCanceled ? null : (
+						<WeaponReportSection data={data} viewerUserId={user.id} />
+					)}
+				</div>
+			)}
+		</SendouTabPanel>
+	);
+}
+
+function WeaponReportSection({
+	data,
+	viewerUserId,
+}: {
+	data: SendouQMatchLoaderData;
+	viewerUserId: number;
+}) {
+	const completedMaps = data.match.mapList.filter(
+		(m) => m.winnerGroupId !== null,
+	);
+
+	const pastReported = data.reportedWeapons
+		? data.reportedWeapons
+				.filter((w) => w.userId === viewerUserId)
+				.map((w) => ({ mapIndex: w.mapIndex, weaponSplId: w.weaponSplId }))
+		: [];
+
+	const weaponReport = useMatchWeaponReport({
+		maps: completedMaps.map((m, mapIndex) => ({
+			mapIndex,
+			stageId: m.stageId,
+			mode: m.mode,
+		})),
+		pastReported,
+	});
+
+	if (completedMaps.length === 0) return null;
+
+	return <WeaponReporter {...weaponReport} />;
+}
+
+function ScoreConfirmerSection({
+	data,
+	viewerSide,
+}: {
+	data: SendouQMatchLoaderData;
+	/** `null` for staff confirming on a team's behalf, who get a neutral button. */
+	viewerSide: "ALPHA" | "BRAVO" | null;
+}) {
+	const { t } = useTranslation(["q"]);
+	const confirmScore = useActionSubmit(matchSchema);
+	const disputeScore = useActionSubmit(matchSchema);
+	const [cooldownUntil] = useState(() => Date.now() + CONFIRM_COOLDOWN_MS);
+	const cooldownSecondsLeft = useCooldown(cooldownUntil);
+	const [lossArmedAt, setLossArmedAt] = useState<number | null>(null);
+	const isLossArmed =
+		useCooldown(
+			typeof lossArmedAt === "number"
+				? lossArmedAt + CONFIRM_LOSS_ARMED_MS
+				: null,
+		) > 0;
+	const [hasDisputed, setHasDisputed] = useState(false);
+
+	const decidingMap = [...data.match.mapList]
+		.reverse()
+		.find((m) => m.winnerGroupId !== null);
+	const reportedCount = data.match.mapList.filter(
+		(m) => m.winnerGroupId !== null,
+	).length;
+
+	const { alphaWins, bravoWins } = SendouQMatch.score(data.match);
+	const winnerSide =
+		decidingMap?.winnerGroupId === data.match.groupAlpha.id ? "ALPHA" : "BRAVO";
+	const reporterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: decidingMap?.reportedByUserId,
+	});
+	const groupNames = resolveGroupNames(data.match, t);
+	const scoreFor = (side: "ALPHA" | "BRAVO") =>
+		side === "ALPHA"
+			? `${alphaWins}-${bravoWins}`
+			: `${bravoWins}-${alphaWins}`;
+
+	const outcome =
+		viewerSide === null ? null : viewerSide === winnerSide ? "win" : "loss";
+	const ownScore = viewerSide === null ? null : scoreFor(viewerSide);
+
+	const buttonLabel = () => {
+		if (outcome === "win") {
+			return t("q:match.confirmScore.win", { score: ownScore });
+		}
+		if (outcome === "loss") {
+			return isLossArmed
+				? t("q:match.confirmScore.lossAgain")
+				: t("q:match.confirmScore.loss", { score: ownScore });
+		}
+		return t("q:match.confirmScore");
+	};
+
+	const submitConfirmation = () => {
+		if (!decidingMap?.winnerGroupId) return;
+		confirmScore.submit("REPORT_SCORE", {
+			winnerId: decidingMap.winnerGroupId,
+			reportedCount,
+			confirmingReportedAt: decidingMap.reportedAt ?? undefined,
+		});
+	};
+
+	return (
+		<div className="stack md items-center">
+			{reporterSide ? (
+				<p className="text-sm text-center">
+					{reporterSide === winnerSide
+						? t("q:match.confirmScore.reportedWin", {
+								team: groupNames[reporterSide === "ALPHA" ? "alpha" : "bravo"],
+								score: scoreFor(reporterSide),
+							})
+						: t("q:match.confirmScore.reportedLoss", {
+								team: groupNames[reporterSide === "ALPHA" ? "alpha" : "bravo"],
+								score: scoreFor(reporterSide),
+							})}
+				</p>
+			) : null}
+			<p className="text-lighter text-xs text-center">
+				{t("q:match.confirmScore.check")}
+			</p>
+			<SendouButton
+				variant={
+					outcome === "win"
+						? "success"
+						: outcome === "loss"
+							? "destructive"
+							: "primary"
+				}
+				isDisabled={cooldownSecondsLeft > 0}
+				isPending={confirmScore.state !== "idle"}
+				onClick={() => {
+					if (outcome === "loss") {
+						if (!isLossArmed) {
+							setLossArmedAt(Date.now());
+							return;
+						}
+						if (
+							typeof lossArmedAt === "number" &&
+							Date.now() - lossArmedAt < CONFIRM_LOSS_MIN_GAP_MS
+						) {
+							return;
+						}
+					}
+					submitConfirmation();
+				}}
+				testId="confirm-score-button"
+			>
+				{cooldownSecondsLeft > 0
+					? `${buttonLabel()} (${cooldownSecondsLeft})`
+					: buttonLabel()}
+			</SendouButton>
+			{viewerSide === null ? null : hasDisputed ? (
+				<p className="text-lighter text-xs text-center">
+					{t("q:match.confirmScore.wrongSent")}
+				</p>
+			) : (
+				<SendouButton
+					variant="minimal-destructive"
+					size="small"
+					isPending={disputeScore.state !== "idle"}
+					onClick={() => {
+						setHasDisputed(true);
+						disputeScore.submit("DISPUTE_SCORE");
+					}}
+				>
+					{t("q:match.confirmScore.wrong")}
+				</SendouButton>
+			)}
+		</div>
+	);
+}
+
+function ReporterUndoSection() {
+	const { t } = useTranslation(["q"]);
+	const undoReport = useActionSubmit(matchSchema);
+
+	return (
+		<div className="stack md items-center">
+			<p className="text-lighter text-sm">
+				{t("q:match.waitingForConfirmation")}
+			</p>
+			<SendouButton
+				variant="outlined"
+				size="small"
+				isPending={undoReport.state !== "idle"}
+				onClick={() => {
+					undoReport.submit("UNDO_MATCH_REPORT");
+				}}
+			>
+				{t("q:match.undoReport")}
+			</SendouButton>
+		</div>
+	);
+}
+
+function InProgressTab({
+	data,
+	currentMap,
+	ownTeamId,
+	reportedCount,
+	user,
+}: {
+	data: SendouQMatchLoaderData;
+	currentMap: { stageId: StageId; mode: ModeShort };
+	ownTeamId: number | null;
+	reportedCount: number;
+	user: { id: number };
+}) {
+	const { t } = useTranslation(["q", "common"]);
+	const reportScore = useActionSubmit(matchSchema);
+	const undoReport = useActionSubmit(matchSchema);
+	const cancelFetcher = useFetcher();
+
+	// the reported count this viewer's own last report or undo would move the match
+	// to; a change to any other count came from someone else
+	const [expectedReportedCount, setExpectedReportedCount] = useState<
+		number | null
+	>(null);
+	const [mapChange, setMapChange] = useState({
+		reportedCount,
+		cooldownUntil: null as number | null,
+	});
+	if (mapChange.reportedCount !== reportedCount) {
+		const changedByOthers = expectedReportedCount !== reportedCount;
+		setMapChange({
+			reportedCount,
+			cooldownUntil: changedByOthers
+				? Date.now() + MAP_CHANGED_COOLDOWN_MS
+				: null,
+		});
+		setExpectedReportedCount(null);
+	}
+
+	const isStaffOnly = ownTeamId == null;
+
+	const {
+		mapsToWin,
+		alphaWins: alphaScore,
+		bravoWins: bravoScore,
+	} = SendouQMatch.score(data.match);
+
+	const scores: [number, number] = [alphaScore, bravoScore];
+
+	const setEndingTeamIds: number[] = [];
+	if (alphaScore + 1 === mapsToWin) {
+		setEndingTeamIds.push(data.match.groupAlpha.id);
+	}
+	if (bravoScore + 1 === mapsToWin) {
+		setEndingTeamIds.push(data.match.groupBravo.id);
+	}
+
+	const setEnding =
+		setEndingTeamIds.length > 0
+			? {
+					...buildSendouQSetEndingData({
+						match: data.match,
+						scores,
+						t,
+					}),
+					setEndingTeamIds,
+				}
+			: undefined;
+
+	const scoreIsNotZero = alphaScore > 0 || bravoScore > 0;
+
+	const weaponReport = useMatchWeaponReport({
+		maps: data.match.mapList
+			.slice(0, reportedCount + 1)
+			.map((m, mapIndex) => ({ mapIndex, stageId: m.stageId, mode: m.mode })),
+		pastReported: data.reportedWeapons
+			? data.reportedWeapons
+					.filter((w) => w.userId === user.id)
+					.map((w) => ({ mapIndex: w.mapIndex, weaponSplId: w.weaponSplId }))
+			: [],
+	});
+
+	const groupNames = resolveGroupNames(data.match, t);
+
+	return (
+		<MatchActionTab
+			key={reportedCount}
+			teams={[
+				{ id: data.match.groupAlpha.id, name: groupNames.alpha },
+				{ id: data.match.groupBravo.id, name: groupNames.bravo },
+			]}
+			ownTeamId={ownTeamId}
+			stageId={currentMap.stageId}
+			mode={currentMap.mode}
+			withKo={false}
+			isSubmitting={reportScore.state !== "idle"}
+			setEnding={setEnding}
+			submitCooldownUntil={mapChange.cooldownUntil}
+			onSubmit={({ winnerId }) => {
+				setExpectedReportedCount(reportedCount + 1);
+				reportScore.submit("REPORT_SCORE", { winnerId, reportedCount });
+			}}
+			secondaryAction={
+				isStaffOnly ? null : <WeaponReporter {...weaponReport} />
+			}
+			actionButtons={
+				<>
+					{isStaffOnly ? (
+						<FormWithConfirm
+							fields={[["_action", "ADMIN_CANCEL"]]}
+							dialogHeading={t("q:match.adminCancel.confirm")}
+							submitButtonText={t("common:actions.confirm")}
+							fetcher={cancelFetcher}
+						>
+							<SendouButton
+								variant="minimal-destructive"
+								size="miniscule"
+								icon={<Ban size={16} />}
+							>
+								{t("q:match.action.adminCancel")}
+							</SendouButton>
+						</FormWithConfirm>
+					) : (
+						<SendouDialog
+							trigger={
+								<SendouButton
+									variant="minimal-destructive"
+									size="miniscule"
+									icon={<Ban size={16} />}
+								>
+									{t("q:match.action.requestCancel")}
+								</SendouButton>
+							}
+							heading={t("q:match.cancelMatch")}
+							showCloseButton
+						>
+							<CancelMatchForm match={data.match} action="REQUEST_CANCEL" />
+						</SendouDialog>
+					)}
+					<SendouButton
+						variant="minimal-destructive"
+						size="miniscule"
+						icon={<Undo2 size={16} />}
+						isPending={undoReport.state !== "idle"}
+						isDisabled={!scoreIsNotZero}
+						onClick={() => {
+							const mapIndex = data.match.mapList.findLastIndex(
+								(m) => m.winnerGroupId !== null,
+							);
+							if (mapIndex < 0) return;
+							setExpectedReportedCount(reportedCount - 1);
+							undoReport.submit("UNDO_MAP_REPORT", { mapIndex });
+						}}
+					>
+						{t("q:match.undoReport")}
+					</SendouButton>
+				</>
+			}
+		/>
+	);
+}
+
+function buildSendouQSetEndingData({
+	match,
+	scores,
+	t,
+}: {
+	match: SendouQMatchLoaderData["match"];
+	scores: [number, number];
+	t: TFunction<["q"]>;
+}) {
+	const completedMaps = match.mapList.filter((m) => m.winnerGroupId !== null);
+
+	const previousMaps = completedMaps.map((map) => ({
+		stageId: map.stageId,
+		mode: map.mode,
+		timestamp: Date.now(),
+		winner:
+			map.winnerGroupId === match.groupAlpha.id
+				? ("ALPHA" as const)
+				: ("BRAVO" as const),
+		rosters: {
+			alpha: match.groupAlpha.members,
+			bravo: match.groupBravo.members,
+		},
+	}));
+
+	return {
+		teams: resolveTimelineTeams(match, t),
+		score: { alpha: scores[0], bravo: scores[1] },
+		maps: previousMaps,
+		currentRosters: {
+			alpha: match.groupAlpha.members,
+			bravo: match.groupBravo.members,
+		},
+	};
+}

@@ -1,0 +1,62 @@
+.banner {
+	/*  needed for firefox to have a valid output */
+	--l: 50%;
+
+	position: relative;
+	background: linear-gradient(
+		to right,
+		var(--color-bg),
+		var(--l),
+		var(--color-bg-higher)
+	);
+	border: var(--border-style-high);
+	border-radius: var(--radius-box);
+	padding: var(--s-4);
+	overflow: hidden;
+}
+
+.bannerContent {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--s-2);
+	padding-inline-end: min(130px, 30%);
+	line-height: 1.15;
+}
+
+.bannerTitle {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	margin: 0;
+}
+
+.homeScreenIcon {
+	position: absolute;
+	right: var(--s-6);
+	top: 50%;
+	translate: 0 -50%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.homeScreenIconImg {
+	width: 56px;
+	border-radius: 22.5%;
+	box-shadow: 0 2px 6px rgb(0 0 0 / 25%);
+}
+
+.homeScreenIconLabel {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+}
+
+.instructionsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding-inline-start: var(--s-6);
+}

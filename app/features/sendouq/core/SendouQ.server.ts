@@ -1,0 +1,652 @@
+import { isWithinInterval, sub } from "date-fns";
+import { redirect } from "react-router";
+import * as R from "remeda";
+import type { DBBoolean } from "~/db/tables";
+import type { AuthenticatedUser } from "~/features/auth/core/user.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
+import { defaultOrdinal } from "~/features/mmr/mmr-utils";
+import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
+import type * as SkillDifference from "~/features/sendouq-match/core/SkillDifference";
+import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort } from "~/modules/in-game-lists/types";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+import type { SerializeFrom } from "~/utils/remix";
+import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PAGE,
+	SENDOUQ_PREPARING_PAGE,
+	SENDOUQ_READY_PAGE,
+	sendouQMatchPage,
+} from "~/utils/urls";
+import { FULL_GROUP_SIZE } from "../q-constants";
+import type { TierRange } from "../q-types";
+import { getTierIndex } from "../q-utils.server";
+import { isInLookingPool } from "./groups";
+import { tierDifferenceToRangeOrExact } from "./groups.server";
+import * as ReadyCheck from "./ready-check.server";
+
+type DBGroupRow = Awaited<
+	ReturnType<typeof SQGroupRepository.findCurrentGroups>
+>[number];
+type DBRecentlyFinishedMatchRow = Awaited<
+	ReturnType<typeof SQGroupRepository.findRecentlyFinishedMatches>
+>[number];
+type DBMatch = NonNullable<
+	Awaited<ReturnType<typeof SQMatchRepository.findById>>
+>;
+
+export type SQUncensoredGroup = SerializeFrom<
+	(typeof SendouQClass.prototype.groups)[number]
+>;
+export type SQGroup = SerializeFrom<
+	ReturnType<SendouQClass["lookingGroups"]>[number]
+>;
+export type SQOwnGroup = SerializeFrom<
+	NonNullable<ReturnType<SendouQClass["findOwnGroup"]>>
+>;
+export type SQMatch = SerializeFrom<ReturnType<SendouQClass["mapMatch"]>>;
+export type SQGroupMember = NonNullable<SQGroup["members"]>[number];
+
+const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
+const SECONDS_TILL_STALE =
+	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
+
+class SendouQClass {
+	groups;
+	readonly #recentMatches;
+	readonly #isAccurateTiers;
+	readonly #userSkills;
+	readonly #intervals;
+	readonly #receivedLikeCounts;
+	usersInQueue;
+
+	constructor(
+		groups: DBGroupRow[],
+		recentMatches: DBRecentlyFinishedMatchRow[],
+		{
+			intervals,
+			userSkills: calculatedUserSkills,
+			isAccurateTiers,
+		}: Awaited<ReturnType<typeof userSkills>>,
+		receivedLikeCounts: Map<number, number>,
+	) {
+		this.#receivedLikeCounts = receivedLikeCounts;
+		this.#recentMatches = recentMatches;
+		this.#isAccurateTiers = isAccurateTiers;
+		this.#userSkills = calculatedUserSkills;
+		this.#intervals = intervals;
+		this.usersInQueue = groups.flatMap((group) =>
+			group.members.map((member) => member.id),
+		);
+		this.groups = groups.map((group) => ({
+			...group,
+			noScreen: this.#groupNoScreen(group),
+			modePreferences: this.#groupModePreferences(group),
+			teamMapModePreferences: undefined,
+			tier: this.#groupTier(group) as TieredSkill["tier"] | null,
+			tierRange: null as TierRange | null,
+			skillDifference: undefined as
+				| SkillDifference.GroupSkillDifference
+				| undefined,
+			isReplay: false,
+			members: group.members.map((member) => {
+				const skill = calculatedUserSkills[String(member.id)];
+
+				return {
+					...member,
+					languages: member.languages ?? [],
+					skill: !skill || skill.approximate ? ("CALCULATING" as const) : skill,
+					mapModePreferences: undefined,
+					noScreen: undefined,
+					friendCode: null as string | null,
+					inGameName: null as string | null,
+					skillDifference: undefined as
+						| SkillDifference.UserSkillDifference
+						| undefined,
+				};
+			}),
+		}));
+	}
+
+	/** The current view state for a user based on their group status. */
+	currentViewByUserId(userId: number) {
+		const ownGroup = this.findOwnGroup(userId);
+
+		if (!ownGroup) return "default";
+		if (ownGroup.status === "PREPARING") return "preparing";
+		if (ownGroup.matchId) return "match";
+		if (ownGroup.status === "READY_CHECK") return "ready";
+
+		return "looking";
+	}
+
+	/** The user's group, or undefined if not in one. */
+	findOwnGroup(userId: number) {
+		return this.groups.find((group) =>
+			group.members.some((member) => member.id === userId),
+		);
+	}
+
+	/** Pending likes/challenges the group has received, 0 when none. */
+	likesReceivedCount(groupId: number) {
+		return this.#receivedLikeCounts.get(groupId) ?? 0;
+	}
+
+	/** A group by id without censoring sensitive data. */
+	findUncensoredGroupById(groupId: number) {
+		return this.groups.find((group) => group.id === groupId);
+	}
+
+	/** A group by its invite code. */
+	findGroupByInviteCode(inviteCode: string) {
+		return this.groups.find((group) => group.inviteCode === inviteCode);
+	}
+
+	/** Maps a database match for the viewer: private notes for team members, sensitive data censored for non-participants. */
+	mapMatch(match: DBMatch, user?: AuthenticatedUser) {
+		const viewerSide = SendouQMatch.resolveGroupMemberOf({
+			groupAlpha: match.groupAlpha,
+			groupBravo: match.groupBravo,
+			userId: user?.id,
+		});
+		const isTeamAlphaMember = viewerSide === "ALPHA";
+		const isTeamBravoMember = viewerSide === "BRAVO";
+		const isMatchInsider = viewerSide !== null || user?.roles.includes("STAFF");
+		const happenedInLastMonth = isWithinInterval(
+			databaseTimestampToDate(match.createdAt),
+			{
+				start: sub(new Date(), { months: 1 }),
+				end: new Date(),
+			},
+		);
+
+		const matchGroupCensorer = (
+			group: DBMatch["groupAlpha"] | DBMatch["groupBravo"],
+			isTeamMember: boolean,
+		) => {
+			return {
+				...R.omit(group, ["tierName", "tierIsPlus"]),
+				chatRoomId: isTeamMember ? group.chatRoomId : undefined,
+				tier: SendouQMatch.groupTier(group),
+				skillDifference: match.skillDifferences.groups[group.id],
+				matchmade: Boolean(group.matchmade),
+				members: group.members.map((member) => {
+					return {
+						...R.omit(member, ["tierName", "tierIsPlus"]),
+						tier: SendouQMatch.memberTier(member),
+						skillDifference: match.skillDifferences.users[member.id],
+						noScreen: undefined,
+						isContinuing:
+							typeof member.isContinuing === "number"
+								? Boolean(member.isContinuing)
+								: null,
+						friendCode:
+							isMatchInsider && happenedInLastMonth
+								? member.friendCode
+								: undefined,
+					};
+				}),
+			};
+		};
+
+		const alphaCensored = matchGroupCensorer(
+			match.groupAlpha,
+			isTeamAlphaMember,
+		);
+		const bravoCensored = matchGroupCensorer(
+			match.groupBravo,
+			isTeamBravoMember,
+		);
+
+		const reportedMapsCount = match.mapList.filter(
+			(map) => map.winnerGroupId,
+		).length;
+		const currentMapRaw = match.mapList.at(reportedMapsCount);
+		const currentMap = currentMapRaw
+			? {
+					...currentMapRaw,
+					voters: this.#currentMapVoters({
+						currentMap: currentMapRaw,
+						groupAlpha: alphaCensored,
+						groupBravo: bravoCensored,
+						pools: matchMapPools(match),
+					}),
+				}
+			: undefined;
+
+		return {
+			...match,
+			chatRoomId: isMatchInsider ? match.chatRoomId : undefined,
+			noScreen: Boolean(match.noScreen),
+			currentMap,
+			groupAlpha: alphaCensored,
+			groupBravo: bravoCensored,
+		};
+	}
+
+	/** All groups with wide tier ranges for preview; full groups always show the full range (IRON-LEVIATHAN). */
+	previewGroups(userId: number) {
+		const usersTier = this.#getUserTier(userId);
+		return this.groups
+			.filter((group) => this.#isSuitableLookingGroup({ group }))
+			.sort(this.#getSkillSortComparator(usersTier))
+			.map((group) => this.#addPreviewTierRange(group))
+			.map((group) => this.#censorGroup(group));
+	}
+
+	/** Groups compatible with the user's own group's size, stale ones excluded, sorted by tier difference and activity. Empty if the user has no group. */
+	lookingGroups(userId: number) {
+		const ownGroup = this.findOwnGroup(userId);
+		if (!ownGroup) return [];
+
+		const currentMemberCountOptions =
+			ownGroup.members.length === 4
+				? [4]
+				: ownGroup.members.length === 3
+					? [1]
+					: ownGroup.members.length === 2
+						? [1, 2]
+						: [1, 2, 3];
+
+		return this.groups
+			.filter((group) =>
+				this.#isSuitableLookingGroup({
+					group,
+					ownGroupId: ownGroup.id,
+					currentMemberCountOptions,
+				}),
+			)
+			.map(this.#getGroupReplayMapper(userId))
+			.sort(this.#getSkillSortComparator(ownGroup.tier))
+			.map(this.#getAddTierRangeMapper(ownGroup.tier))
+			.map((group) => this.#censorGroup(group));
+	}
+
+	#getGroupReplayMapper(userId: number) {
+		const recentOpponents = this.#recentMatches.flatMap((match) => {
+			if (match.groupAlphaMemberIds.includes(userId)) {
+				return [match.groupBravoMemberIds];
+			}
+
+			if (match.groupBravoMemberIds.includes(userId)) {
+				return [match.groupAlphaMemberIds];
+			}
+
+			return [];
+		});
+
+		return <T extends (typeof this.groups)[number]>(group: T) => {
+			if (recentOpponents.length === 0) return group;
+			if (!this.#groupIsFull(group)) return group;
+
+			const isReplay = recentOpponents.some((opponentIds) => {
+				const duplicateCount =
+					R.countBy(opponentIds, (id) =>
+						group.members.some((m) => m.id === id) ? "match" : "no-match",
+					).match ?? 0;
+
+				return duplicateCount >= 3;
+			});
+
+			return {
+				...group,
+				isReplay,
+			};
+		};
+	}
+
+	#getAddTierRangeMapper(ownTier?: TieredSkill["tier"] | null) {
+		return <T extends (typeof this.groups)[number]>(group: T) => {
+			if (!this.#groupIsFull(group)) {
+				return group;
+			}
+
+			const tierRangeOrExact = tierDifferenceToRangeOrExact({
+				ourTier: ownTier ?? FALLBACK_TIER,
+				theirTier: group.tier ?? FALLBACK_TIER,
+				hasLeviathan: this.#isAccurateTiers,
+			});
+
+			if (tierRangeOrExact.type === "exact") {
+				return group;
+			}
+
+			return {
+				...group,
+				tierRange: R.omit(tierRangeOrExact, ["type"]),
+				tier: null,
+			};
+		};
+	}
+
+	#addPreviewTierRange<T extends (typeof this.groups)[number]>(group: T) {
+		if (!this.#groupIsFull(group)) {
+			return group;
+		}
+
+		return {
+			...group,
+			tierRange: {
+				type: "range" as const,
+				range: [
+					{ name: "IRON", isPlus: false } as TieredSkill["tier"],
+					{ name: "LEVIATHAN", isPlus: true } as TieredSkill["tier"],
+				],
+				diff: 0,
+			},
+			tier: null,
+		};
+	}
+
+	#censorGroup<T extends (typeof this.groups)[number]>(
+		group: T,
+	): Omit<T, "inviteCode" | "chatRoomId" | "members"> & {
+		members: T["members"] | undefined;
+	} {
+		const {
+			inviteCode: _inviteCode,
+			chatRoomId: _chatRoomId,
+			members,
+			...baseGroup
+		} = group;
+
+		if (this.#groupIsFull(group)) {
+			return {
+				...baseGroup,
+				members: undefined,
+			};
+		}
+
+		return {
+			...baseGroup,
+			members,
+		};
+	}
+
+	#getUserTier(userId: number): TieredSkill["tier"] | null {
+		const skill = this.#userSkills[String(userId)];
+		if (!skill || skill.approximate) {
+			return null;
+		}
+		return skill.tier;
+	}
+
+	#getSkillSortComparator(ownTier?: TieredSkill["tier"] | null) {
+		return <
+			T extends {
+				members: unknown[];
+				tier: TieredSkill["tier"] | null;
+				latestActionAt: number;
+			},
+		>(
+			a: T,
+			b: T,
+		) => {
+			const aIsFull = this.#groupIsFull(a);
+			const bIsFull = this.#groupIsFull(b);
+
+			if (aIsFull !== bIsFull) {
+				return aIsFull ? 1 : -1;
+			}
+
+			const ownTierIndex = getTierIndex(ownTier, this.#isAccurateTiers);
+			if (typeof ownTierIndex === "number") {
+				const diffA = Math.abs(
+					ownTierIndex - (getTierIndex(a.tier, this.#isAccurateTiers) ?? 999),
+				);
+				const diffB = Math.abs(
+					ownTierIndex - (getTierIndex(b.tier, this.#isAccurateTiers) ?? 999),
+				);
+				if (diffA !== diffB) {
+					return diffA - diffB;
+				}
+			}
+
+			return b.latestActionAt - a.latestActionAt;
+		};
+	}
+
+	#groupNoScreen(group: { members: { noScreen: DBBoolean }[] }) {
+		return this.#groupIsFull(group)
+			? group.members.some((member) => member.noScreen)
+			: null;
+	}
+
+	#groupModePreferences(group: DBGroupRow): ModeShort[] {
+		// a team's own preferences speak for its members, the way they do when the
+		// map list of the team's match is generated
+		const countedPreferences = group.teamMapModePreferences
+			? [group.teamMapModePreferences.modes]
+			: group.members.map((member) => member.mapModePreferences?.modes);
+
+		const modePreferences: ModeShort[] = [];
+
+		for (const mode of modesShort) {
+			let score = 0;
+			for (const preferences of countedPreferences) {
+				if (!preferences) continue;
+
+				if (
+					preferences.some((p) => p.mode === mode && p.preference === "PREFER")
+				) {
+					score += 1;
+				} else if (
+					preferences.some((p) => p.mode === mode && p.preference === "AVOID")
+				) {
+					score -= 1;
+				}
+			}
+
+			if (score > 0) {
+				modePreferences.push(mode);
+			}
+		}
+
+		if (modePreferences.length === 0) {
+			return ["SZ"];
+		}
+
+		return modePreferences;
+	}
+
+	#groupIsFull(group: { members: unknown[] }) {
+		return group.members.length === FULL_GROUP_SIZE;
+	}
+
+	#currentMapVoters({
+		currentMap,
+		groupAlpha,
+		groupBravo,
+		pools,
+	}: {
+		currentMap: DBMatch["mapList"][number];
+		groupAlpha: {
+			id: number;
+			members: Array<{
+				id: number;
+				username: string;
+				discordId: string;
+				discordAvatar: string | null;
+			}>;
+		};
+		groupBravo: {
+			id: number;
+			members: Array<{
+				id: number;
+				username: string;
+				discordId: string;
+				discordAvatar: string | null;
+			}>;
+		};
+		pools: ReturnType<typeof matchMapPools>;
+	}) {
+		const pickerGroups = [groupAlpha, groupBravo].filter(
+			(g) => currentMap.source === "BOTH" || String(g.id) === currentMap.source,
+		);
+		if (pickerGroups.length === 0) return [];
+
+		return pickerGroups.flatMap((pickerGroup) =>
+			pools.flatMap(({ userId, pool }) => {
+				const member = pickerGroup.members.find((m) => m.id === userId);
+				if (!member) return [];
+				const modePool = pool.find((p) => p.mode === currentMap.mode);
+				if (!modePool?.stages.includes(currentMap.stageId)) return [];
+				return [
+					{
+						id: member.id,
+						username: member.username,
+						discordId: member.discordId,
+						discordAvatar: member.discordAvatar,
+					},
+				];
+			}),
+		);
+	}
+
+	#groupTier(
+		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"],
+	): TieredSkill["tier"] | undefined {
+		if (!group.members) return;
+
+		const skills = group.members.map(
+			(m) => this.#userSkills[String(m.id)] ?? { ordinal: defaultOrdinal() },
+		);
+
+		const averageOrdinal =
+			skills.reduce((acc, s) => acc + s.ordinal, 0) / skills.length;
+
+		return (
+			this.#intervals.find(
+				(i) =>
+					typeof i.neededOrdinal === "number" &&
+					averageOrdinal >= i.neededOrdinal,
+			) ?? { isPlus: false, name: "IRON" }
+		);
+	}
+
+	#isSuitableLookingGroup({
+		group,
+		ownGroupId,
+		currentMemberCountOptions,
+	}: {
+		group: SendouQClass["groups"][number];
+		ownGroupId?: number;
+		currentMemberCountOptions?: number[];
+	}) {
+		if (!isInLookingPool(group)) return false;
+		if (group.id === ownGroupId) return false;
+		if (
+			currentMemberCountOptions &&
+			!currentMemberCountOptions.includes(group.members.length)
+		) {
+			return false;
+		}
+
+		const staleThreshold = sub(new Date(), { seconds: SECONDS_TILL_STALE });
+		const groupLastAction = databaseTimestampToDate(group.latestActionAt);
+		return groupLastAction >= staleThreshold;
+	}
+}
+
+/**
+ * Map pools of everyone in a match, which its current map's vote count is read from.
+ * A group queuing as a team plays on the team's pool rather than on its members' own,
+ * and modes a pool's owner avoids are no vote of theirs.
+ */
+function matchMapPools(match: DBMatch) {
+	return [match.groupAlpha, match.groupBravo].flatMap((group) =>
+		group.members.flatMap((member) => {
+			const preferences =
+				group.team?.mapModePreferences ?? member.mapModePreferences;
+			if (!preferences) return [];
+
+			const avoidedModes = preferences.modes
+				.filter((mode) => mode.preference === "AVOID")
+				.map((mode) => mode.mode);
+			const pool = preferences.pool.filter(
+				(candidate) => !avoidedModes.includes(candidate.mode),
+			);
+			if (pool.length === 0) return [];
+
+			return [{ userId: member.id, pool }];
+		}),
+	);
+}
+
+/** Global SendouQ manager: all active groups and matchmaking state. */
+export let SendouQ = await freshSendouQInstance();
+
+/** Reloads the global SendouQ instance from the database; call after any change to groups or matches. */
+export async function refreshSendouQInstance() {
+	SendouQ = await freshSendouQInstance();
+}
+
+async function freshSendouQInstance() {
+	const season = Seasons.currentOrPrevious();
+
+	const [groups, recentMatches, skills, receivedLikeCounts] = await Promise.all(
+		[
+			SQGroupRepository.findCurrentGroups(),
+			SQGroupRepository.findRecentlyFinishedMatches(),
+			userSkills(season!.nth),
+			SQGroupRepository.findCurrentReceivedLikeCounts(),
+		],
+	);
+
+	return new SendouQClass(groups, recentMatches, skills, receivedLikeCounts);
+}
+
+/** Throws a redirect when the user loads a page other than the one their SendouQ group status puts them on. */
+export async function sqRedirectIfNeeded({
+	ownGroup,
+	currentLocation,
+}: {
+	ownGroup?: SQOwnGroup;
+	currentLocation: "default" | "preparing" | "looking" | "ready" | "match";
+}) {
+	const newLocation = groupRedirectLocation(
+		await groupUnlessSeasonIsOver(ownGroup),
+	);
+
+	if (currentLocation === "default" && newLocation === SENDOUQ_PAGE) return;
+	if (currentLocation === "preparing" && newLocation === SENDOUQ_PREPARING_PAGE)
+		return;
+	if (currentLocation === "looking" && newLocation === SENDOUQ_LOOKING_PAGE)
+		return;
+	if (currentLocation === "ready" && newLocation === SENDOUQ_READY_PAGE) return;
+	if (currentLocation === "match" && newLocation.includes("match")) return;
+
+	throw redirect(newLocation);
+}
+
+/** Takes the group out of the queue if its season has ended (nowhere to redirect but the front page); a group in a match stays so it can be reported during the grace period. */
+async function groupUnlessSeasonIsOver(ownGroup?: SQOwnGroup) {
+	if (!ownGroup || ownGroup.matchId || Seasons.current()) return ownGroup;
+
+	// the ready check can't produce a rated match anymore; left behind, the expiry
+	// routine would mark its members as having missed a check they never could make
+	if (ownGroup.status === "READY_CHECK") {
+		const readyCheck = await SQGroupRepository.findReadyCheckByGroupId(
+			ownGroup.id,
+		);
+		if (readyCheck) await ReadyCheck.abort(readyCheck);
+	}
+
+	await SQGroupRepository.setAsInactive(ownGroup.id);
+	await refreshSendouQInstance();
+
+	return undefined;
+}
+
+function groupRedirectLocation(group?: SQOwnGroup) {
+	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
+	if (group?.matchId) return sendouQMatchPage(group.matchId);
+	if (group?.status === "READY_CHECK") return SENDOUQ_READY_PAGE;
+	if (group) return SENDOUQ_LOOKING_PAGE;
+
+	return SENDOUQ_PAGE;
+}

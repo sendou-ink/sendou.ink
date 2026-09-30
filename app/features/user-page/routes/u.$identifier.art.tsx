@@ -1,16 +1,14 @@
-import { useLoaderData, useMatches } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { AddNewButton } from "~/components/AddNewButton";
-import { ART_SOURCES, type ArtSource } from "~/features/art/art-types";
+import { useLoaderData } from "react-router";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
-import { useUser } from "~/features/auth/core/user";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import invariant from "~/utils/invariant";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { newArtPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.art.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.art.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
+import { userArtSearchParams } from "../user-page-search-params";
+
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
@@ -19,22 +17,13 @@ export const handle: SendouRouteHandle = {
 
 const ALL_TAGS_KEY = "ALL";
 export default function UserArtPage() {
-	const { t } = useTranslation(["art"]);
-	const user = useUser();
+	const { t } = useTranslation(["art", "common"]);
 	const data = useLoaderData<typeof loader>();
-	const [type, setType] = useSearchParamState<ArtSource>({
-		defaultValue: "ALL",
-		name: "source",
-		revive: (value) => ART_SOURCES.find((s) => s === value),
-	});
-	const [filteredTag, setFilteredTag] = useSearchParamState<string | null>({
-		defaultValue: null,
-		name: "tag",
-		revive: (value) => data.tagCounts?.find((t) => t[0] === value)?.[0],
-	});
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const [type, setType] = useSearchParam(userArtSearchParams, "source");
+	const [tagParam, setFilteredTag] = useSearchParam(userArtSearchParams, "tag");
+	const filteredTag =
+		data.tagCounts?.find((tagCount) => tagCount[0] === tagParam)?.[0] ?? null;
+	const layoutData = useUserPageLayoutData();
 
 	const hasBothArtMadeByAndMadeOf =
 		data.arts.some((a) => a.author) && data.arts.some((a) => !a.author);
@@ -47,14 +36,12 @@ export default function UserArtPage() {
 				: data.arts.filter((a) => a.author);
 
 	if (filteredTag) {
-		arts = arts.filter((a) => a.tags?.includes(filteredTag));
+		arts = arts.filter((a) => a.tags?.some((tag) => tag.name === filteredTag));
 	}
 
 	return (
 		<div className="stack md">
-			<div className="stack items-end">
-				<AddNewButton navIcon="art" to={newArtPage()} />
-			</div>
+			<SubPageHeader user={layoutData.user} title={t("common:pages.art")} />
 			<div className="stack horizontal justify-between items-start text-xs text-lighter">
 				<div>
 					{data.unvalidatedArtCount > 0
@@ -140,11 +127,7 @@ export default function UserArtPage() {
 				</div>
 			) : null}
 
-			<ArtGrid
-				arts={arts}
-				enablePreview
-				canEdit={layoutData.user.id === user?.id}
-			/>
+			<ArtGrid arts={arts} enablePreview />
 		</div>
 	);
 }

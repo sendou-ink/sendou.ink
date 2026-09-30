@@ -1,7 +1,14 @@
-import type { UserWithPlusTier } from "~/db/tables";
+import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { userDiscordIdIsAged } from "~/utils/users";
 import type { Role } from "./types";
-import { isAdmin, isStaff, isSupporter } from "./utils";
+import {
+	isAdmin,
+	isDev,
+	isQa,
+	isScannerTester,
+	isStaff,
+	isSupporter,
+} from "./utils";
 
 export function userRoles(
 	user: Pick<
@@ -12,6 +19,7 @@ export function userRoles(
 		| "isArtist"
 		| "isTournamentOrganizer"
 		| "isVideoAdder"
+		| "isApiAccesser"
 		| "patronTier"
 	>,
 ) {
@@ -23,6 +31,18 @@ export function userRoles(
 
 	if (isStaff(user) || isAdmin(user)) {
 		result.push("STAFF");
+	}
+
+	if (isDev(user)) {
+		result.push("DEV");
+	}
+
+	if (isQa(user)) {
+		result.push("QA");
+	}
+
+	if (isScannerTester(user)) {
+		result.push("SCANNER_TESTER");
 	}
 
 	if (typeof user.patronTier === "number") {
@@ -49,8 +69,12 @@ export function userRoles(
 		result.push("TOURNAMENT_ADDER");
 	}
 
-	if (userDiscordIdIsAged(user)) {
+	if (userDiscordIdIsAged(user) || isSupporter(user)) {
 		result.push("CALENDAR_EVENT_ADDER");
+	}
+
+	if (user.isTournamentOrganizer || user.isApiAccesser || isSupporter(user)) {
+		result.push("API_ACCESSER");
 	}
 
 	return result;

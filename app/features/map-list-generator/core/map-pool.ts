@@ -1,7 +1,6 @@
 import type { Tables } from "~/db/tables";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { mapPoolListToMapPoolObject } from "./map-list-generator/utils";
 import {
 	mapPoolToSerializedString,
 	serializedStringToMapPool,
@@ -16,12 +15,14 @@ export type DbMapPoolList = Array<
 >;
 
 export class MapPool {
-	private source: string | ReadonlyMapPoolObject;
+	private readonly source: string | ReadonlyMapPoolObject;
 	private asSerialized?: string;
 	private asObject?: ReadonlyMapPoolObject;
 
 	constructor(init: ReadonlyMapPoolObject | string | DbMapPoolList) {
-		this.source = Array.isArray(init) ? mapPoolListToMapPoolObject(init) : init;
+		this.source = Array.isArray(init)
+			? this.mapPoolListToMapPoolObject(init)
+			: init;
 	}
 
 	static serialize(init: ReadonlyMapPoolObject | string | DbMapPoolList) {
@@ -41,11 +42,12 @@ export class MapPool {
 			return this.asSerialized;
 		}
 
-		// biome-ignore lint/suspicious/noAssignInExpressions: biome migration
-		return (this.asSerialized =
+		this.asSerialized =
 			typeof this.source === "string"
 				? this.source
-				: mapPoolToSerializedString(this.source));
+				: mapPoolToSerializedString(this.source);
+
+		return this.asSerialized;
 	}
 
 	get parsed(): ReadonlyMapPoolObject {
@@ -53,11 +55,12 @@ export class MapPool {
 			return this.asObject;
 		}
 
-		// biome-ignore lint/suspicious/noAssignInExpressions: biome migration
-		return (this.asObject =
+		this.asObject =
 			typeof this.source === "string"
 				? serializedStringToMapPool(this.source)
-				: this.source);
+				: this.source;
+
+		return this.asObject;
 	}
 
 	get dbList(): DbMapPoolList {
@@ -68,6 +71,12 @@ export class MapPool {
 
 	get stages() {
 		return Object.values(this.parsed).flat();
+	}
+
+	get modes() {
+		return Object.keys(this.parsed).filter(
+			(key) => this.parsed[key as ModeShort].length > 0,
+		) as ModeShort[];
 	}
 
 	get stageModePairs() {
@@ -125,6 +134,24 @@ export class MapPool {
 		return {
 			next: () => ({ value: data[++index], done: !(index in data) }),
 		};
+	}
+
+	private mapPoolListToMapPoolObject(
+		mapPoolList: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">>,
+	) {
+		const result: MapPoolObject = {
+			TW: [],
+			SZ: [],
+			TC: [],
+			RM: [],
+			CB: [],
+		};
+
+		for (const { stageId, mode } of mapPoolList) {
+			result[mode].push(stageId);
+		}
+
+		return result;
 	}
 
 	static EMPTY = new MapPool({

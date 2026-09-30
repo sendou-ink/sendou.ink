@@ -10,7 +10,6 @@ Here is how the application architecture looks like in production.
 graph TD
     subgraph Render
         A[sendou.ink Server] -->|Reads/Writes| B[SQLite3 Database]
-        A -->|HTTP Requests| E[Skalop WebSocket Server]
         D[Lohi Discord Bot] -->|HTTP Requests| A
     end
 
@@ -18,9 +17,8 @@ graph TD
         C[S3-Compatible Image Hosting]
     end
 
-    F[User] -->|HTTP & WS| G[Cloudflare]
-    G -->|HTTP| A
-    G -->|WebSocket| E
+    F[User] -->|HTTP & SSE| G[Cloudflare]
+    G -->|HTTP & SSE| A
 
     A -->|S3 Upload| C
     F -->|Views images| C
@@ -29,13 +27,15 @@ graph TD
 
 List of the dependencies in production:
 
-- [Skalop](https://github.com/sendou-ink/skalop) - WebSocket server
 - [Lohi](https://github.com/sendou-ink/lohi) - Discord bot for profile updates, log-in links etc.
 - [Leanny/splat3](https://github.com/Leanny/splat3) - In-game data (manual update) 
-- [splatoon3.ink](https://github.com/misenhower/splatoon3.ink) - X Rank placement data (manual update)
+- [splatoon3.ink](https://github.com/misenhower/splatoon3.ink) - Rotation schedules (hourly routine) & X Rank placement data (manual update)
 - Discord - Auth  
 - Twitch - Streams  
-- Bluesky - Front page changelog
+- Patreon - Supporter status (hourly routine)  
+- Bluesky - Front page changelog  
+
+Configuration for these lives in `app/config.ts` (client, `VITE_*` variables, imported as `Config`) and `app/config.server.ts` (server only, imported as `ServerConfig`). Both validate their environment variables once on import.
 
 ## Folder structure
 
@@ -43,16 +43,20 @@ List of the dependencies in production:
 sendou.ink/
 ├── app/
 │   ├── components/ -- React components used by many features
-│   │   └── elements/ -- Wrappers providing styling etc. around React Aria Components
+│   │   └── elements/ -- The design system's own components (buttons, inputs, popovers, selects, dialogs...)
 │   ├── db/ -- Database seeds, types & connection
 │   ├── features/ -- See "feature folders" below
+│   ├── form/ -- SendouForm & shared form field builders (see `forms.md`)
 │   ├── hooks/ -- React hooks used by many features
 │   ├── modules/ -- "node_modules but part of the app"
+│   ├── routines/ -- Cron job definitions (see "Routines" below)
 │   ├── styles/ -- Global .css files
 │   ├── utils/ -- Helper functions grouped by domain used by many features
-│   ├── entry.client.tsx -- Client entry point (Remix concept)
-│   ├── entry.server.tsx -- Server entry point (Remix concept)
-│   ├── root.tsx -- Basic HTML structure, React context providers & root data loader
+│   ├── config.ts -- Validated client (`VITE_*`) configuration
+│   ├── config.server.ts -- Validated server-only configuration
+│   ├── entry.client.tsx -- Client entry point (React Router concept)
+│   ├── entry.server.tsx -- Server entry point (React Router concept)
+│   ├── root.tsx -- Basic HTML structure, middleware, React context providers & root data loader
 │   └── routes.ts -- Route manifest
 ├── content/ -- Markdown files containing articles
 ├── docs/ -- Documentation to developers and users
@@ -72,19 +76,19 @@ You should aim to colocate code that "changes together" as much as possible. Fea
 
 ### Feature folder files & folders
 
-- **actions/**: Remix actions per route
+- **actions/**: React Router actions per route
 - **components/**: React components
 - **core/**: "Core logic" meaning modules (see below) or other logic that is not typically rendering components or calling database
-- **queries/**: (deprecated) Database queries, should use repository instead
-- **loaders/**: Remix loaders per route
-- **routes/**: Remix actions per route
-- **FeatureRepository.server.ts**: Database queries & mappers
+- **data/**: Static generated data (e.g. JSON dumps of in-game values)
+- **loaders/**: React Router loaders per route
+- **routes/**: React Router route files (re-export the action/loader & default export the route component)
+- **FeatureRepository.server.ts**: Database queries & mappers (see `repositories.md`)
 - **feature-constants.ts**: Constant values
-- **feature-hooks**: React hooks
-- **feature-schemas.ts**: Zod schemas for validating form values, params, payloads
+- **feature-hooks.ts**: React hooks
+- **feature-schemas.ts**: valibot schemas for validating form values, params, payloads
 - **feature-types.ts**: Typescript types
 - **feature-utils.ts**: Utilities too small to make up for their own modules
-- **feature.css**: (deprecated) CSS, should use CSS modules instead
+- **Component.module.css**: CSS module matching the React file of the same root name
 
 Note: we are not using file-based routing. To add a new route `routes.ts` needs to be updated  
 Note: a route file needs to re-export the action/loader of that route
@@ -124,7 +128,9 @@ Testing is important part of every feature work. The approach the project takes 
 
 Unit testing "core logic" (i.e. no React, no DB calls) with Vitest is highly encouraged whenever feasible. Most tests are like this.
 
-Vitest can also be used to write "integration tests" that call mocked actions/loaders (see `admin.test.ts` for example). This uses in-memory SQLite3. In practice this is best sparingly as they are typically slower than pure unit tests with more dependencies but also don't test the true end to end flow.
+Vitest can also be used to write "integration tests" that call actions/loaders directly via the `wrappedAction` / `wrappedLoader` helpers from `~/utils/Test` (see `t.$customUrl.edit.test.ts` for example). These run against `db-test.sqlite3` and reset it between tests with `dbReset`. In practice this is best sparingly as they are typically slower than pure unit tests with more dependencies but also don't test the true end to end flow. Repository functions are tested the same way (`*Repository.server.test.ts`), wrapping calls in `withUser` / `withUserId` when the repository resolves an acting user.
+
+Components can be tested in a real browser with Vitest browser mode. These files are named `*.browser.test.tsx` and run together with the unit tests via `pnpm run test:unit:browser`. 
 
 Which brings us to E2E tests. For new features at least testing the happy path is encouraged. For more critical features (mainly tournament related stuff) it makes sense to test a bit more rigorously.
 
@@ -141,9 +147,11 @@ const user = useUser();
 Accessing logged in user in loaders/actions:
 
 ```ts
-const user = await requireUser(request); // get user or throw HTTP 401 if not logged in
-const user = await getUser(request); // get user (undefined if not logged in)
+const user = requireUser(); // get user or throw HTTP 401 if not logged in
+const user = getUser(); // get user (undefined if not logged in)
 ```
+
+These take no arguments. The logged in user is resolved once per request by `userMiddleware` (registered in `root.tsx` along with the other middleware) and stored in an `AsyncLocalStorage` that these functions read from. Outside of a request (e.g. in tests or scripts) the store has to be set up manually, see `withUser` in `~/utils/Test`.
 
 ### Permissions
 
@@ -157,17 +165,21 @@ User can also have global roles such as "staff" or "tournament adder". Set in th
 
 TODO (after React server actions in use)
 
+### Forms
+
+Forms are defined as valibot schemas built from the field builders in `~/form/fields` and rendered by `SendouForm`. The same schema validates the submission on the server. See `forms.md` for the full documentation.
+
 ### Performance
 
 Keeping server performance in mind is always necessary. Due to the monolithic nature of the server one badly optimized endpoint impacts all other routes.
 
-Use a load testing tool like `autocannon` to ensure new features scale.
+Use a load testing tool like `autocannon` to ensure new features scale. For database queries there is `pnpm run bench:db` which runs the repository read functions listed in `scripts/benchmark-db` against a copy of the production database.
 
 ### Database
 
 Sendou.ink uses SQLite3 for its database solution. See for example ["Consider SQLite"](https://blog.wesleyac.com/posts/consider-sqlite) for motivation why to pick SQLite for a web project over something like PostgreSQL. Tldr; for a project of this scale it gets you far, low latency when accessing data store & simplifies testing when your database is just a file on the filesystem. When writing code it should be kept in mind that writes to the database are not concurrent so abusing the database can lead to the whole web server process freezing essentially.
 
-Check `database-relations.md` for more information about the database relations. See `tables.ts` for documentation on tables and columns.
+Check `database-relations.md` for more information about the database relations and `database-schemas.md` for how columns should be typed. See `tables.ts` for documentation on tables and columns. All queries live in repositories, see `repositories.md` for the conventions they follow.
 
 ### React guidelines
 
@@ -177,13 +189,13 @@ Check `database-relations.md` for more information about the database relations.
 
 ### State management
 
-We are not using a state management library such as Redux. Instead use React Context for the few global state needed and Remix's data loading hooks to share the state loaded from server. See also "Search params" section below.
+We are not using a state management library such as Redux. Instead use React Context for the few global state needed and React Router's data loading hooks to share the state loaded from server. See also "Search params" section below.
 
 ### Search params
 
 Often it's convenient to store state in search params. This allows for nice features like users to deep link to the view they are seeing. You have two options to achieve this:
 
-1) Use Remix's built-in solution. Use this if data loaders should rerun once search params are changed.
+1) Use React Router's built-in solution. Use this if data loaders should rerun once search params are changed.
 2) `useSearchParamState` hook. Use this if it is not needed.
 
 ### Routines
@@ -192,9 +204,38 @@ Cron jobs to perform actions on the server at certain intervals. To add a new on
 
 ### Real time
 
-Webhooks via Skalop service (see logic in the Chat module).
+An in-process event bus (`app/features/events`) fans events out to the browser over a single Server-Sent Events connection per user (`/sse`). Every connection is subscribed to the user's own channel; further topics are subscribed by the client via `PUT /sse/:connectionId/topics`.
 
-Old way: server-sent events still in use for tournament bracket & match pages.
+A page opts into revalidation on a topic with `useTopicRevalidation`, and an action file publishes to that topic via the `ChatSystemMessage` module:
+
+```ts
+ChatSystemMessage.send([
+    {
+        channel: tournamentChannel(tournament.id),
+        revalidateOnly: true,
+    },
+]);
+```
+
+#### Global chat
+
+There is a single `ChatProvider` mounted near the root, glue over the framework-agnostic `chat-client` which shares the app's SSE connection.
+
+Two things drive which rooms the client cares about:
+
+1) **The user's own rooms.** Every room the user participates in, resolved from the owning entity (SendouQ group/match, tournament match/team, scrim). The root loader serves the list with the page (`chatRoomList`) and `GET /api/chat/rooms` refetches it on events and reconnects. These show up in the chat list regardless of which page the user is on.
+2) **Route-exposed `chatRooms`.** A loader can expose `chatRooms: RouteChatRoom[]` in its returned data, built with `RouteChatRooms.resolve()` so the page arrives with each room as the sidebar lists it and, for rooms opening on arrival, its latest messages (no fetch after mount, no content shift). The provider reads this out of `useMatches()` and surfaces those rooms for the duration of the route being active — used for rooms the user is viewing but is not a participant of (e.g. a tournament match chat viewed by a TO). An `autoOpen` room is opened for the viewer, the rest are only listed in the chat sidebar (e.g. the private group chats of a SendouQ match, which staff may read but not post in). The loader decides who gets which rooms; the helper drops any the user may not view.
+
+Example loader:
+
+```ts
+return {
+    // ...other loader data
+    chatRooms: await RouteChatRooms.resolve(user, [
+        { roomId: match.chatRoomId, autoOpen: true },
+    ]),
+};
+```
 
 ### Notifications
 

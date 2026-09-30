@@ -2,9 +2,9 @@ import type {
 	Location,
 	ShouldRevalidateFunctionArgs,
 	useLoaderData,
-} from "@remix-run/react";
+} from "react-router";
 import { truncateBySentence } from "./strings";
-import { COMMON_PREVIEW_IMAGE } from "./urls";
+import { DEFAULT_OG_IMAGE, type OgImagePage, ogImageUrl } from "./urls";
 
 export function isRevalidation(args: ShouldRevalidateFunctionArgs) {
 	return (
@@ -18,25 +18,38 @@ export function isRevalidation(args: ShouldRevalidateFunctionArgs) {
 export type SerializeFrom<T> = ReturnType<typeof useLoaderData<T>>;
 
 interface OpenGraphArgs {
-	/** Title as shown by the browser in the tab etc. Appended with "| sendou.ink"*/
+	/** Browser tab title, appended with "| sendou.ink" */
 	title: string;
-	/** Title as shown when shared on Bluesky, Discord etc. Also used in search results. If omitted, "title" is used instead. */
+	/** Title for link previews and search results, defaults to `title` */
 	ogTitle?: string;
-	/** Brief description of the page's contents used by search engines and social media sharing. If the description is over 300 characters long it is automatically truncated. */
+	/** Truncated past 300 characters */
 	description?: string;
 	location: Location;
-	/** Optionally override location pathname. */
+	/** overrides location pathname */
 	url?: string;
-	image?: {
-		url: string;
-		dimensions?: {
-			width: number;
-			height: number;
-		};
+	image?: OpenGraphImage;
+}
+
+interface OpenGraphImage {
+	/** absolute */
+	url: string;
+	dimensions?: {
+		width: number;
+		height: number;
 	};
 }
 
 const ROOT_URL = "https://sendou.ink";
+
+const OG_IMAGE_DIMENSIONS = { width: 1200, height: 630 };
+
+/** Wide enough that link previews show the image as a big card rather than a thumbnail. */
+const LARGE_IMAGE_MIN_WIDTH = 600;
+
+/** OG image of one of the site's own pages, see the `/admin/og-images` page. */
+export function ogPageImage(page: OgImagePage): OpenGraphImage {
+	return { url: ogImageUrl(page), dimensions: OG_IMAGE_DIMENSIONS };
+}
 
 export function metaTitle(args: Pick<OpenGraphArgs, "title" | "ogTitle">) {
 	return [
@@ -52,6 +65,11 @@ export function metaTitle(args: Pick<OpenGraphArgs, "title" | "ogTitle">) {
 }
 
 export function metaTags(args: OpenGraphArgs) {
+	const image = args.image ?? {
+		url: DEFAULT_OG_IMAGE,
+		dimensions: OG_IMAGE_DIMENSIONS,
+	};
+
 	const truncatedDescription = args.description
 		? truncateBySentence(args.description, 300)
 		: null;
@@ -80,45 +98,35 @@ export function metaTags(args: OpenGraphArgs) {
 		},
 		{
 			property: "og:url",
-			content: `${ROOT_URL}${args.location.pathname}`,
+			content: `${ROOT_URL}${args.url ?? args.location.pathname}`,
 		},
 		{
 			property: "og:image",
-			content: (() => {
-				if (args.image?.url.startsWith("http")) {
-					return args.image.url;
-				}
-
-				if (args.image) {
-					return `${ROOT_URL}${args.image.url}`;
-				}
-
-				return `${ROOT_URL}${COMMON_PREVIEW_IMAGE}`;
-			})(),
+			content: image.url,
+		},
+		{
+			name: "twitter:card",
+			content: isLargeImage(image) ? "summary_large_image" : "summary",
 		},
 	].filter((val) => val !== null);
 
-	if (!args.image) {
+	if (image.dimensions) {
 		result.push({
 			property: "og:image:width",
-			content: "1920",
+			content: String(image.dimensions.width),
 		});
 
 		result.push({
 			property: "og:image:height",
-			content: "1080",
-		});
-	} else if (args.image.dimensions) {
-		result.push({
-			property: "og:image:width",
-			content: String(args.image.dimensions.width),
-		});
-
-		result.push({
-			property: "og:image:height",
-			content: String(args.image.dimensions.height),
+			content: String(image.dimensions.height),
 		});
 	}
 
 	return result;
+}
+
+function isLargeImage(image: OpenGraphImage) {
+	if (!image.dimensions) return true;
+
+	return image.dimensions.width >= LARGE_IMAGE_MIN_WIDTH;
 }

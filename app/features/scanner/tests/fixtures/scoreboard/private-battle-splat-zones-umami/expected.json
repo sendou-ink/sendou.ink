@@ -1,0 +1,79 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 15,
+    "stageLabel": "Um'ami Ruins",
+    "matchScores": [
+      93,
+      69
+    ],
+    "players": [
+      {
+        "name": "sDpp",
+        "weaponId": 50,
+        "paint": 1037,
+        "ka": 18,
+        "d": 10,
+        "s": 3
+      },
+      {
+        "name": "Mathis♪・“",
+        "weaponId": 2070,
+        "paint": 1566,
+        "ka": 14,
+        "d": 5,
+        "s": 6
+      },
+      {
+        "name": "あ",
+        "weaponId": 2000,
+        "paint": 1254,
+        "ka": 15,
+        "d": 5,
+        "s": 5
+      },
+      {
+        "name": "YuNI",
+        "weaponId": 3005,
+        "paint": 1294,
+        "ka": 13,
+        "d": 11,
+        "s": 4
+      },
+      {
+        "name": "★Bønk★•PE•",
+        "weaponId": 1101,
+        "paint": 1428,
+        "ka": 19,
+        "d": 10,
+        "s": 6
+      },
+      {
+        "name": "Rιppιng_H",
+        "weaponId": 8020,
+        "paint": 1315,
+        "ka": 9,
+        "d": 13,
+        "s": 5
+      },
+      {
+        "name": "Sendou",
+        "weaponId": 6010,
+        "paint": 1028,
+        "ka": 7,
+        "d": 7,
+        "s": 4
+      },
+      {
+        "name": "Enamel",
+        "weaponId": 2070,
+        "paint": 1356,
+        "ka": 8,
+        "d": 6,
+        "s": 5
+      }
+    ]
+  }
+}

@@ -1,21 +1,22 @@
-import type { Rating, Team } from "node_modules/openskill/dist/types";
-import { rate as openskillRate, ordinal, rating } from "openskill";
-import invariant from "~/utils/invariant";
+import {
+	rate as openskillRate,
+	ordinal,
+	type Rating,
+	rating,
+	type Team,
+} from "openskill";
+import { invariant } from "~/utils/invariant";
 import type { TierName } from "./mmr-constants";
-import { TIERS } from "./mmr-constants";
+import { SP_BASE, SP_PER_ORDINAL, TIERS } from "./mmr-constants";
 
 const TAU = 0.3;
 
-export function ordinalToSp(ordinal: number) {
-	return toTwoDecimals(ordinal * 15 + 1000);
+export function ordinalToSp(ordinalValue: number) {
+	return toTwoDecimals(ordinalValue * SP_PER_ORDINAL + SP_BASE);
 }
 
-export function spToOrdinal(sp: number) {
-	return (sp - 1000) / 15;
-}
-
-export function ordinalToRoundedSp(ordinal: number) {
-	return Math.round(ordinalToSp(ordinal));
+export function ordinalToRoundedSp(ordinalValue: number) {
+	return Math.round(ordinalToSp(ordinalValue));
 }
 
 function toTwoDecimals(value: number) {
@@ -25,14 +26,12 @@ function toTwoDecimals(value: number) {
 export function rate(teams: Team[], secondaryTeams?: [[Rating], [Rating]]) {
 	if (secondaryTeams) return rateConservative(teams, secondaryTeams);
 
-	return openskillRate(teams, { tau: TAU, preventSigmaIncrease: true });
+	return openskillRate(teams, { tau: TAU, limitSigma: true });
 }
 
-// when ranking teams we rate the team against the actual team rating that it played against
-// as well as against the average ratings of the players on the team
-// then they get the bigger boost of the two (if won) or the smaller penalty of the two (if lost)
-// this is to avoid situations where teams might unexpectedly lose a huge amount of points
-// due to other team score not being accurate (not enough games played) to their perceived skill level
+// a team is rated against both the opposing team's rating and its players' average rating,
+// taking the bigger boost (won) or smaller penalty (lost), so an inaccurate team rating
+// (too few games) can't cost a huge amount of points
 function rateConservative(
 	teams: Team[],
 	secondaryTeams: [[Rating], [Rating]],
@@ -41,7 +40,7 @@ function rateConservative(
 		teams,
 		{
 			tau: TAU,
-			preventSigmaIncrease: true,
+			limitSigma: true,
 		},
 	);
 
@@ -49,7 +48,7 @@ function rateConservative(
 		[secondaryTeams[0], teams[1]],
 		{
 			tau: TAU,
-			preventSigmaIncrease: true,
+			limitSigma: true,
 		},
 	);
 
@@ -57,7 +56,7 @@ function rateConservative(
 		[teams[0], secondaryTeams[1]],
 		{
 			tau: TAU,
-			preventSigmaIncrease: true,
+			limitSigma: true,
 		},
 	);
 
@@ -74,12 +73,15 @@ function rateConservative(
 	return [[winnerRating], [loserRating]];
 }
 
-export function userIdsToIdentifier(userIds: number[]) {
+/** The four user ids of a full team, ascending and joined by `-`. Identifies a team across matches. */
+export type SkillTeamIdentifier = `${number}-${number}-${number}-${number}`;
+
+export function userIdsToIdentifier(userIds: number[]): SkillTeamIdentifier {
 	invariant(userIds.length === 4, "userIds for identifier must be length 4");
-	return [...userIds].sort((a, b) => a - b).join("-");
+	return [...userIds].sort((a, b) => a - b).join("-") as SkillTeamIdentifier;
 }
 
-export function identifierToUserIds(identifier: string) {
+export function identifierToUserIds(identifier: SkillTeamIdentifier) {
 	return identifier.split("-").map(Number);
 }
 

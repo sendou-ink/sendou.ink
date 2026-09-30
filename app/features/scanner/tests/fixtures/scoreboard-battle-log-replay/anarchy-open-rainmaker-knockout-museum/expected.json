@@ -1,0 +1,82 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "OPEN",
+    "mode": "RM",
+    "stage": 6,
+    "timestamp": "6/7/2026 19:04",
+    "replayCode": "RWYQ-4X37-M1EL-EGGQ",
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 0,
+    "players": [
+      {
+        "name": "8♪cloudy",
+        "paint": 849,
+        "ka": 10,
+        "d": 6,
+        "s": 4,
+        "weaponId": 82
+      },
+      {
+        "name": "8♪Lightboy",
+        "paint": 765,
+        "ka": 9,
+        "d": 4,
+        "s": 1,
+        "weaponId": 80
+      },
+      {
+        "name": "8♪Clubs◇",
+        "paint": 550,
+        "ka": 6,
+        "d": 6,
+        "s": 0,
+        "weaponId": 81
+      },
+      {
+        "name": "8♪Rose",
+        "paint": 536,
+        "ka": 4,
+        "d": 7,
+        "s": 1,
+        "weaponId": 6030
+      },
+      {
+        "name": "Léholienne",
+        "paint": 789,
+        "ka": 11,
+        "d": 4,
+        "s": 3,
+        "weaponId": 1022
+      },
+      {
+        "name": "Chill out",
+        "paint": 869,
+        "ka": 11,
+        "d": 5,
+        "s": 2,
+        "weaponId": 3012
+      },
+      {
+        "name": "KXR_SOL",
+        "paint": 724,
+        "ka": 6,
+        "d": 4,
+        "s": 1,
+        "weaponId": 1015
+      },
+      {
+        "name": "とまったゆづき",
+        "paint": 463,
+        "ka": 4,
+        "d": 4,
+        "s": 1,
+        "weaponId": 8010
+      }
+    ],
+    "stageLabel": "Museum d'Alfonsino"
+  }
+}

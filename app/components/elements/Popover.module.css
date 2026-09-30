@@ -1,0 +1,20 @@
+.triggerContainer {
+	display: contents;
+}
+
+.content {
+	position: absolute;
+	margin: 0;
+	max-width: min(20rem, var(--floating-available-width, 100vw));
+	max-height: var(--floating-available-height, none);
+	overflow: auto;
+	padding: var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	white-space: pre-wrap;
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	outline: none;
+}

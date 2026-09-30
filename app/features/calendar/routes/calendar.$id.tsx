@@ -1,53 +1,51 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import { Link } from "@remix-run/react/dist/components";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { MapPoolStages } from "~/components/MapPoolSelector";
 import { Placement } from "~/components/Placement";
 import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
-import { useUser } from "~/features/auth/core/user";
+import { UserLink } from "~/components/UserLink";
+import { calendarEditPage } from "~/features/calendar/calendar-urls";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { useIsMounted } from "~/hooks/useIsMounted";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	CALENDAR_PAGE,
-	calendarEditPage,
 	calendarEventPage,
 	calendarReportWinnersPage,
-	mapsPageWithMapPool,
 	navIconUrl,
 	resolveBaseUrl,
-	userPage,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
-import { action } from "../actions/calendar.$id.server";
 import {
-	canDeleteCalendarEvent,
-	canEditCalendarEvent,
-	canReportCalendarEventWinners,
-} from "../calendar-utils";
+	metaTags,
+	ogPageImage,
+	type SerializeFrom,
+} from "../../../utils/remix";
+import { action } from "../actions/calendar.$id.server";
+import styles from "../calendar-event.module.css";
 import { Tags } from "../components/Tags";
 import { loader } from "../loaders/calendar.$id.server";
-export { loader, action };
 
-import "~/styles/calendar-event.css";
+export { action, loader };
 
 export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader>;
+	const data = args.loaderData as SerializeFrom<typeof loader>;
 
 	if (!data) return [];
 
 	return metaTags({
 		title: data.event.name,
+		image: ogPageImage("calendar"),
 		location: args.location,
 		description:
 			data.event.description ??
@@ -58,7 +56,7 @@ export const meta: MetaFunction = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "game-misc"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -78,19 +76,20 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function CalendarEventPage() {
-	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const { i18n, t } = useTranslation(["common", "calendar"]);
-	const isMounted = useIsMounted();
+	const { t } = useTranslation(["common", "calendar"]);
+	const canEdit = useHasPermission(data.event, "EDIT");
+	const canReportWinners = useHasPermission(data.event, "REPORT_WINNERS");
+	const canDelete = useHasPermission(data.event, "DELETE");
 
 	return (
 		<Main className="stack lg">
 			<section className="stack sm">
-				<div className="event__times">
+				<div className={styles.times}>
 					{data.event.startTimes.map((startTime, i) => (
 						<React.Fragment key={startTime}>
 							<span
-								className={clsx("event__day", {
+								className={clsx(styles.day, {
 									hidden: data.event.startTimes.length === 1,
 								})}
 							>
@@ -98,21 +97,17 @@ export default function CalendarEventPage() {
 									number: i + 1,
 								})}
 							</span>
-							<time dateTime={databaseTimestampToDate(startTime).toISOString()}>
-								{isMounted
-									? databaseTimestampToDate(startTime).toLocaleDateString(
-											i18n.language,
-											{
-												hour: "numeric",
-												minute: "numeric",
-												day: "numeric",
-												month: "long",
-												weekday: "long",
-												year: "numeric",
-											},
-										)
-									: null}
-							</time>
+							<LocaleTime
+								date={startTime}
+								options={{
+									hour: "numeric",
+									minute: "numeric",
+									day: "numeric",
+									month: "numeric",
+									weekday: "long",
+									year: "numeric",
+								}}
+							/>
 						</React.Fragment>
 					))}
 				</div>
@@ -140,26 +135,22 @@ export default function CalendarEventPage() {
 						>
 							{resolveBaseUrl(data.event.bracketUrl)}
 						</LinkButton>
-						{canEditCalendarEvent({ user, event: data.event }) && (
+						{canEdit ? (
 							<LinkButton
 								size="small"
 								to={calendarEditPage(data.event.eventId)}
 							>
 								{t("common:actions.edit")}
 							</LinkButton>
-						)}
-						{canReportCalendarEventWinners({
-							user,
-							event: data.event,
-							startTimes: data.event.startTimes,
-						}) && (
+						) : null}
+						{canReportWinners ? (
 							<LinkButton
 								size="small"
 								to={calendarReportWinnersPage(data.event.eventId)}
 							>
 								{t("calendar:actions.reportWinners")}
 							</LinkButton>
-						)}
+						) : null}
 					</div>
 				</div>
 			</section>
@@ -167,11 +158,7 @@ export default function CalendarEventPage() {
 			<MapPoolInfo />
 			<div className="stack md">
 				<Description />
-				{canDeleteCalendarEvent({
-					user,
-					startTime: databaseTimestampToDate(data.event.startTimes[0]),
-					event: data.event,
-				}) ? (
+				{canDelete ? (
 					<FormWithConfirm
 						dialogHeading={t("calendar:actions.delete.confirm", {
 							name: data.event.name,
@@ -203,9 +190,9 @@ function Results() {
 	);
 
 	return (
-		<Section title={t("calendar:results")} className="event__results-section">
-			{data.event.participantCount && (
-				<div className="event__results-participant-count">
+		<Section title={t("calendar:results")} className={styles.resultsSection}>
+			{data.event.participantCount ? (
+				<div className={styles.resultsParticipantCount}>
 					{isTeamResults
 						? t("calendar:participatedCount", {
 								count: data.event.participantCount,
@@ -214,7 +201,7 @@ function Results() {
 								count: data.event.participantCount,
 							})}
 				</div>
-			)}
+			) : null}
 			<Table>
 				<thead>
 					<tr>
@@ -231,25 +218,14 @@ function Results() {
 							</td>
 							<td>{result.teamName}</td>
 							<td>
-								<ul className="event__results-players">
+								<ul className={styles.resultsPlayers}>
 									{result.players.map((player) => {
 										return (
 											<li
 												key={player.name ? player.name : player.id}
 												className="flex items-center"
 											>
-												{player.name ? (
-													player.name
-												) : (
-													// as any but we know it's a user since it doesn't have name
-													<Link
-														to={userPage(player as any)}
-														className="stack horizontal xs items-center"
-													>
-														<Avatar user={player as any} size="xxs" />{" "}
-														{player.username}
-													</Link>
-												)}
+												<UserLink user={player} />
 											</li>
 										);
 									})}
@@ -273,10 +249,10 @@ function MapPoolInfo() {
 
 	return (
 		<Section title={t("calendar:forms.mapPool")}>
-			<div className="event__map-pool-section">
+			<div className={styles.mapPoolSection}>
 				<MapPoolStages mapPool={mapPool} />
 				<LinkButton
-					className="event__create-map-list-link"
+					className={styles.createMapListLink}
 					to={mapsPageWithMapPool(mapPool)}
 					variant="outlined"
 					size="small"
@@ -296,13 +272,13 @@ function Description() {
 	return (
 		<Section title={t("forms.description")}>
 			<div className="stack sm">
-				<div className="event__author">
+				<div className={styles.author}>
 					<Avatar user={data.event} size="xs" />
 					{data.event.username}
 				</div>
-				{data.event.description && (
+				{data.event.description ? (
 					<div className="whitespace-pre-wrap">{data.event.description}</div>
-				)}
+				) : null}
 			</div>
 		</Section>
 	);

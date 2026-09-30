@@ -1,25 +1,41 @@
-import type { MetaFunction } from "@remix-run/node";
-import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
-import * as React from "react";
+import {
+	Globe,
+	LogOut,
+	Map as MapIcon,
+	Palette,
+	SlidersHorizontal,
+	Volume2,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { FormMessage } from "~/components/FormMessage";
-import { Label } from "~/components/Label";
+import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
-import { Theme, useTheme } from "~/features/theme/core/provider";
-import { languages } from "~/modules/i18n/config";
-import { metaTags } from "~/utils/remix";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
+import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
-import { SendouPopover } from "../../../components/elements/Popover";
-
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "../../../components/elements/Tabs";
 import { action } from "../actions/settings.server";
-export { action };
+import { LocaleTab } from "../components/LocaleTab";
+import { MatchProfileTab } from "../components/MatchProfileTab";
+import { PreferencesTab } from "../components/PreferencesTab";
+import { SoundsTab } from "../components/SoundsTab";
+import { ThemeTab } from "../components/ThemeTab";
+import { loader } from "../loaders/settings.server";
+import type { SettingsTabSlug } from "../settings-constants";
+import { settingsSearchParams } from "../settings-search-params";
+import { defaultTab, resolveActiveTab } from "../settings-utils";
+
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
+	i18n: ["settings", "user"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("settings"),
 		href: SETTINGS_PAGE,
@@ -27,249 +43,97 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-export default function SettingsPage() {
-	const user = useUser();
-	const { t } = useTranslation(["common"]);
-
-	return (
-		<Main halfWidth>
-			<div className="stack md">
-				<h2 className="text-lg">{t("common:pages.settings")}</h2>
-				<LanguageSelector />
-				<ThemeSelector />
-				{user ? (
-					<>
-						<PushNotificationsEnabler />
-						<div className="mt-6 stack md">
-							<PreferenceSelectorSwitch
-								_action="UPDATE_DISABLE_BUILD_ABILITY_SORTING"
-								defaultSelected={
-									user?.preferences.disableBuildAbilitySorting ?? false
-								}
-								label={t(
-									"common:settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.label",
-								)}
-								bottomText={t(
-									"common:settings.UPDATE_DISABLE_BUILD_ABILITY_SORTING.bottomText",
-								)}
-							/>
-							{FF_SCRIMS_ENABLED ? (
-								<PreferenceSelectorSwitch
-									_action="DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"
-									defaultSelected={
-										user?.preferences.disallowScrimPickupsFromUntrusted ?? false
-									}
-									label={t(
-										"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.label",
-									)}
-									bottomText={t(
-										"common:settings.DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED.bottomText",
-									)}
-								/>
-							) : null}
-						</div>
-					</>
-				) : null}
-			</div>
-		</Main>
-	);
-}
-
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Settings",
+		image: ogPageImage("settings"),
 		location: args.location,
 	});
 };
 
-function LanguageSelector() {
-	const { t } = useTranslation(["common"]);
-	const { i18n } = useTranslation();
-	const [searchParams] = useSearchParams();
-	const navigate = useNavigate();
+export default function SettingsPage() {
+	const user = useUser();
+	const { t } = useTranslation(["common", "settings"]);
+	const [tab, setTab] = useSearchParam(settingsSearchParams, "tab");
 
-	const handleLanguageChange = (
-		event: React.ChangeEvent<HTMLSelectElement>,
-	) => {
-		const newLang = event.target.value;
-		navigate(`?${addUniqueParam(searchParams, "lng", newLang).toString()}`);
+	const isLoggedIn = Boolean(user);
+	const activeTab = resolveActiveTab(tab, isLoggedIn);
+
+	const handleSelectionChange = (key: React.Key) => {
+		const slug = key as SettingsTabSlug;
+		setTab(slug === defaultTab(isLoggedIn) ? null : slug);
 	};
 
 	return (
-		<div>
-			<Label htmlFor="lang">{t("common:header.language")}</Label>
-			<select
-				id="lang"
-				defaultValue={i18n.language}
-				onChange={handleLanguageChange}
-			>
-				{languages.map((lang) => (
-					<option key={lang.code} value={lang.code}>
-						{lang.name}
-					</option>
-				))}
-			</select>
-		</div>
-	);
-}
-
-function addUniqueParam(
-	oldParams: URLSearchParams,
-	name: string,
-	value: string,
-): URLSearchParams {
-	const paramsCopy = new URLSearchParams(oldParams);
-	paramsCopy.delete(name);
-	paramsCopy.append(name, value);
-	return paramsCopy;
-}
-
-function ThemeSelector() {
-	const { t } = useTranslation(["common"]);
-	const { userTheme, setUserTheme } = useTheme();
-
-	return (
-		<div>
-			<Label htmlFor="theme">{t("common:header.theme")}</Label>
-			<select
-				id="theme"
-				defaultValue={userTheme ?? "auto"}
-				onChange={(e) => setUserTheme(e.target.value as Theme)}
-			>
-				{(["auto", Theme.DARK, Theme.LIGHT] as const).map((theme) => {
-					return (
-						<option key={theme} value={theme}>
-							{t(`common:theme.${theme}`)}
-						</option>
-					);
-				})}
-			</select>
-		</div>
-	);
-}
-
-// adapted from https://pqvst.com/2023/11/21/web-push-notifications/
-function PushNotificationsEnabler() {
-	const { t } = useTranslation(["common"]);
-	const [notificationsPermsGranted, setNotificationsPermsGranted] =
-		React.useState<NotificationPermission | "not-supported">("default");
-
-	React.useEffect(() => {
-		if (!("serviceWorker" in navigator)) {
-			// Service Worker isn't supported on this browser, disable or hide UI.
-			setNotificationsPermsGranted("not-supported");
-			return;
-		}
-
-		if (!("PushManager" in window)) {
-			// Push isn't supported on this browser, disable or hide UI.
-			setNotificationsPermsGranted("not-supported");
-			return;
-		}
-
-		setNotificationsPermsGranted(Notification.permission);
-	}, []);
-
-	function askPermission() {
-		Notification.requestPermission().then((permission) => {
-			setNotificationsPermsGranted(permission);
-			if (permission === "granted") {
-				initServiceWorker();
-			}
-		});
-	}
-
-	async function initServiceWorker() {
-		const swRegistration = await navigator.serviceWorker.register("sw-2.js");
-		const subscription = await swRegistration.pushManager.getSubscription();
-		if (subscription) {
-			sendSubscriptionToServer(subscription);
-		} else {
-			const subscription = await swRegistration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
-			});
-			sendSubscriptionToServer(subscription);
-		}
-	}
-
-	function sendSubscriptionToServer(subscription: PushSubscription) {
-		fetch("/notifications/subscribe", {
-			method: "post",
-			body: JSON.stringify(subscription),
-			headers: { "content-type": "application/json" },
-		});
-	}
-
-	return (
-		<div>
-			<Label>{t("common:settings.notifications.title")}</Label>
-			{notificationsPermsGranted === "granted" ? (
-				<SendouPopover
-					trigger={
-						<SendouButton size="small" variant="minimal">
-							{t("common:actions.disable")}
-						</SendouButton>
-					}
+		<Main>
+			<div className="stack md">
+				<div className="stack horizontal justify-between items-center">
+					<h2 className="text-lg">{t("common:pages.settings")}</h2>
+					{user ? (
+						<form method="post" action={LOG_OUT_URL}>
+							<SendouButton
+								size="small"
+								variant="outlined"
+								icon={<LogOut />}
+								type="submit"
+							>
+								{t("common:header.logout")}
+							</SendouButton>
+						</form>
+					) : null}
+				</div>
+				<SendouTabs
+					orientation="vertical"
+					horizontalBelow={720}
+					selectedKey={activeTab}
+					onSelectionChange={handleSelectionChange}
 				>
-					{t("common:settings.notifications.disableInfo")}
-				</SendouPopover>
-			) : notificationsPermsGranted === "not-supported" ||
-				notificationsPermsGranted === "denied" ? (
-				<SendouPopover
-					trigger={
-						<SendouButton size="small" variant="minimal">
-							{t("common:actions.enable")}
-						</SendouButton>
-					}
-				>
-					{notificationsPermsGranted === "not-supported"
-						? t("common:settings.notifications.browserNotSupported")
-						: t("common:settings.notifications.permissionDenied")}
-				</SendouPopover>
-			) : (
-				<SendouButton size="small" variant="minimal" onPress={askPermission}>
-					{t("common:actions.enable")}
-				</SendouButton>
-			)}
-			<FormMessage type="info">
-				{t("common:settings.notifications.description")}
-			</FormMessage>
-		</div>
-	);
-}
-
-function PreferenceSelectorSwitch({
-	_action,
-	label,
-	bottomText,
-	defaultSelected,
-}: {
-	_action: string;
-	label: string;
-	bottomText: string;
-	defaultSelected: boolean;
-}) {
-	const fetcher = useFetcher();
-
-	const onChange = (isSelected: boolean) => {
-		fetcher.submit(
-			{ _action, newValue: isSelected },
-			{ method: "post", encType: "application/json" },
-		);
-	};
-
-	return (
-		<div>
-			<SendouSwitch
-				defaultSelected={defaultSelected}
-				onChange={onChange}
-				isDisabled={fetcher.state !== "idle"}
-				data-testid={`${_action}-switch`}
-			>
-				{label}
-			</SendouSwitch>
-			<FormMessage type="info">{bottomText}</FormMessage>
-		</div>
+					<SendouTabList aria-label={t("common:pages.settings")}>
+						{user ? (
+							<SendouTab id="match-profile" icon={<MapIcon />}>
+								{t("settings:tabs.matchProfile")}
+							</SendouTab>
+						) : null}
+						{user ? (
+							<SendouTab id="preferences" icon={<SlidersHorizontal />}>
+								{t("settings:tabs.preferences")}
+							</SendouTab>
+						) : null}
+						<SendouTab id="locale" icon={<Globe />}>
+							{t("settings:tabs.locale")}
+						</SendouTab>
+						<SendouTab id="theme" icon={<Palette />}>
+							{t("settings:tabs.theme")}
+						</SendouTab>
+						{user ? (
+							<SendouTab id="sounds" icon={<Volume2 />}>
+								{t("settings:tabs.sounds")}
+							</SendouTab>
+						) : null}
+					</SendouTabList>
+					{user ? (
+						<SendouTabPanel id="preferences">
+							<PreferencesTab />
+						</SendouTabPanel>
+					) : null}
+					{user ? (
+						<SendouTabPanel id="match-profile">
+							<MatchProfileTab />
+						</SendouTabPanel>
+					) : null}
+					<SendouTabPanel id="locale">
+						<LocaleTab />
+					</SendouTabPanel>
+					<SendouTabPanel id="theme">
+						<ThemeTab />
+					</SendouTabPanel>
+					{user ? (
+						<SendouTabPanel id="sounds">
+							<SoundsTab />
+						</SendouTabPanel>
+					) : null}
+				</SendouTabs>
+			</div>
+		</Main>
 	);
 }

@@ -1,0 +1,23 @@
+.option {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-width: 0;
+	line-height: 1.25;
+}
+
+.optionUsers {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* the closed select has room for one line only */
+button .option {
+	flex-direction: row;
+	align-items: center;
+	gap: var(--s-2);
+}

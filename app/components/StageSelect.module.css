@@ -1,0 +1,16 @@
+.item {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.stageImg {
+	border-radius: var(--radius-field);
+}
+
+.stageLabel {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	min-width: 0;
+}

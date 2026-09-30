@@ -1,15 +1,20 @@
 import cachified from "@epic-web/cachified";
+import * as R from "remeda";
+import {
+	COMBINED_STREAMS_KEY,
+	type SidebarStream,
+} from "~/features/core/streams/streams.server";
 import {
 	cachedFullUserLeaderboard,
 	type UserLeaderboardWithAdditionsItem,
 } from "~/features/leaderboards/core/leaderboards.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { TIERS } from "~/features/mmr/mmr-constants";
+import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
+import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as QStreamsRepository from "~/features/sendouq-streams/QStreamsRepository.server";
-import { getStreams } from "~/modules/twitch";
-import type { MappedStream } from "~/modules/twitch/streams";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { logger } from "~/utils/logger";
+import { navIconUrl, SENDOUQ_STREAMS_PAGE, tierImageUrl } from "~/utils/urls";
 import { SENDOUQ_STREAMS_KEY } from "../q-streams-constants";
 
 export function cachedStreams() {
@@ -17,12 +22,11 @@ export function cachedStreams() {
 
 	return cachified({
 		key: SENDOUQ_STREAMS_KEY,
-		cache: cache,
+		cache,
 		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 		async getFreshValue() {
 			return streamedMatches({
-				matchPlayers: await QStreamsRepository.activeMatchPlayers(),
-				streams: await getStreams(),
+				matchPlayers: await QStreamsRepository.findAllActiveMatchPlayers(),
 				leaderboard: await cachedFullUserLeaderboard(season.nth),
 			}).sort((a, b) => {
 				const aTierIndex = TIERS.findIndex(
@@ -40,17 +44,14 @@ export function cachedStreams() {
 					return -1;
 				}
 
-				// sort by base tier
 				if (aTierIndex !== bTierIndex) {
 					return aTierIndex - bTierIndex;
 				}
 
-				// if base tier is the same, sort by plus
 				if (a.tier?.isPlus !== b.tier?.isPlus) {
 					return a.tier?.isPlus ? -1 : 1;
 				}
 
-				// if tier is the same, sort by viewer count
 				return b.stream.viewerCount - a.stream.viewerCount;
 			});
 		},
@@ -59,6 +60,7 @@ export function cachedStreams() {
 
 export function refreshStreamsCache() {
 	cache.delete(SENDOUQ_STREAMS_KEY);
+	cache.delete(COMBINED_STREAMS_KEY);
 	void cachedStreams().catch((err) =>
 		logger.error(`Failed to refresh cache: ${err}`),
 	);
@@ -66,38 +68,125 @@ export function refreshStreamsCache() {
 
 function streamedMatches({
 	matchPlayers,
-	streams,
 	leaderboard,
 }: {
 	matchPlayers: QStreamsRepository.ActiveMatchPlayersItem[];
-	streams: MappedStream[];
 	leaderboard: UserLeaderboardWithAdditionsItem[];
 }) {
 	return matchPlayers.flatMap((player) => {
-		const stream = streams.find(
-			(stream) => stream.twitchUserName === player.user?.twitch?.toLowerCase(),
-		);
-
-		if (!stream) {
+		if (!player.streamTwitch) {
 			return [];
 		}
 
 		const leaderboardEntry = leaderboard.find(
-			(entry) => entry.id === player.user?.id,
+			(entry) => entry.id === player.user.id,
 		);
 
 		return {
-			stream,
+			stream: {
+				thumbnailUrl: player.streamThumbnailUrl,
+				twitchUserName: player.streamTwitch,
+				viewerCount: player.streamViewerCount,
+			},
 			match: {
 				id: player.groupMatchId,
 				createdAt: player.groupMatchCreatedAt,
 			},
 			user: {
-				...player.user!,
-				twitch: player.user!.twitch!,
+				...player.user,
+				twitch: player.user.twitch!,
 			},
 			weaponSplId: leaderboardEntry?.weaponSplId,
 			tier: leaderboardEntry?.tier,
 		};
 	});
+}
+
+export type SendouQSidebarEntry = {
+	sidebarStream: SidebarStream;
+	tier: { name: TierName; isPlus: boolean } | null;
+	twitchUsernames: string[];
+};
+
+export async function getSendouQSidebarStreams(): Promise<
+	SendouQSidebarEntry[]
+> {
+	const streams = await cachedStreams();
+
+	const matchIdToStream = R.groupBy(streams, (s) => s.match.id);
+
+	const entries: SendouQSidebarEntry[] = [];
+
+	for (const [matchIdStr, matchStreams] of Object.entries(matchIdToStream)) {
+		const matchId = Number(matchIdStr);
+		const firstStream = matchStreams[0];
+
+		const matchGroups = SendouQ.groups.filter((g) => g.matchId === matchId);
+		const averageTier = calculateAverageTierForMatch(matchGroups);
+
+		const twitchUsernames = matchStreams
+			.map((s) => s.stream.twitchUserName)
+			.filter((t): t is string => t !== null);
+
+		entries.push({
+			sidebarStream: {
+				id: `sendouq-${matchId}`,
+				name: `Match #${matchId}`,
+				imageUrl: averageTier
+					? `${tierImageUrl(averageTier.name)}.avif`
+					: `${navIconUrl("sendouq")}.avif`,
+				overlayIconUrl: averageTier
+					? `${navIconUrl("sendouq")}.avif`
+					: undefined,
+				url: SENDOUQ_STREAMS_PAGE,
+				subtitle: averageTier
+					? `${averageTier.name}${averageTier.isPlus ? "+" : ""}`
+					: "",
+				startsAt: firstStream.match.createdAt,
+				tier: null,
+			},
+			tier: averageTier,
+			twitchUsernames,
+		});
+	}
+
+	return entries.sort((a, b) => {
+		const aTierIndex = getTierIndexFromSubtitle(a.sidebarStream.subtitle);
+		const bTierIndex = getTierIndexFromSubtitle(b.sidebarStream.subtitle);
+		return aTierIndex - bTierIndex;
+	});
+}
+
+function calculateAverageTierForMatch(
+	matchGroups: (typeof SendouQ.groups)[number][],
+): { name: TierName; isPlus: boolean } | null {
+	if (matchGroups.length !== 2) return null;
+
+	const allTiers = matchGroups
+		.map((g) => g.tier)
+		.filter((t): t is NonNullable<typeof t> => t !== null);
+
+	if (allTiers.length !== 2) return null;
+
+	const tierIndexSum = allTiers.reduce((sum, tier) => {
+		const baseIndex = TIERS.findIndex((t) => t.name === tier.name);
+		const indexWithPlus = baseIndex * 2 + (tier.isPlus ? 0 : 1);
+		return sum + indexWithPlus;
+	}, 0);
+
+	const averageIndex = tierIndexSum / 2;
+	const baseTierIndex = Math.floor(averageIndex / 2);
+	const isPlus = averageIndex % 2 < 1;
+
+	const tierName = TIERS[baseTierIndex]?.name ?? "IRON";
+
+	return { name: tierName, isPlus };
+}
+
+function getTierIndexFromSubtitle(subtitle: string): number {
+	const tierName = subtitle.replace("+", "");
+	const isPlus = subtitle.endsWith("+");
+	const baseIndex = TIERS.findIndex((t) => t.name === tierName);
+	if (baseIndex === -1) return 999;
+	return baseIndex * 2 + (isPlus ? 0 : 1);
 }

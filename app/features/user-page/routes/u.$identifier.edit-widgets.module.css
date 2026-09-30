@@ -1,0 +1,248 @@
+.container {
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	width: 100%;
+	max-width: 80rem;
+	margin: 0 auto;
+	padding: var(--s-4);
+}
+
+.actions {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--s-2);
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--s-6);
+}
+
+@container (min-width: 768px) {
+	.grid {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.selected {
+		position: sticky;
+		top: var(--layout-sticky-top);
+		align-self: start;
+		max-height: calc(100dvh - var(--layout-sticky-top) - var(--s-4));
+		overflow-y: auto;
+		scrollbar-gutter: stable;
+	}
+}
+
+.available,
+.selected {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.available h2,
+.selected h2 {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+}
+
+.searchInput {
+	height: 40px;
+}
+
+.searchIcon {
+	height: 20px;
+	margin: auto;
+	margin-right: 10px;
+}
+
+.categoryGroup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.categoryTitle {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-top: var(--s-4);
+}
+
+.widgetCard {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	padding: var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.widgetHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	width: 100%;
+}
+
+.widgetActions {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.widgetName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-weight: 500;
+	font-size: var(--font-sm);
+}
+
+.widgetIcon {
+	display: flex;
+	flex-shrink: 0;
+}
+
+.dragHandle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	color: var(--color-text-high);
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.widgetFooter {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.widgetSlot {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	flex-shrink: 0;
+}
+
+.widgetDescription {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.slotSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.slotHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.slotCount {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
+}
+
+.widgetList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	min-height: 3rem;
+}
+
+.draggableWidget {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	transition: opacity 0.2s;
+
+	& .widgetName {
+		cursor: grab;
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: none;
+
+		&:active {
+			cursor: grabbing;
+		}
+	}
+
+	&.isDragging {
+		opacity: 0.5;
+	}
+}
+
+.widgetSettings {
+	padding: var(--s-3);
+	margin-top: var(--s-1);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+}
+
+.selectedWidgetsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+
+	/** Narrow profiles show the side widgets above the main ones, so the editor lists them in that order too. */
+	& .sideSlotSection {
+		order: -1;
+	}
+
+	@container (min-width: 768px) {
+		& .sideSlotSection {
+			order: 0;
+		}
+	}
+}
+
+.empty {
+	padding: var(--s-4);
+	text-align: center;
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+}
+
+.supporterMax {
+	margin-left: var(--s-1);
+	color: var(--color-fg-accent);
+	font-weight: var(--weight-semi);
+}
+
+.supporterOnly {
+	color: var(--color-fg-accent);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+}

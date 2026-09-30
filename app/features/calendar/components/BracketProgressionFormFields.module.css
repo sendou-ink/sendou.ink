@@ -1,0 +1,22 @@
+.syntaxCode {
+	background-color: var(--color-bg-higher);
+	padding: 2px 6px;
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	display: inline-block;
+	min-width: 3.5rem;
+	text-align: center;
+}
+
+.syntaxExample {
+	display: flex;
+	gap: var(--s-2);
+	align-items: baseline;
+	font-size: var(--font-xs);
+	margin-block: var(--s-2);
+}
+
+.syntaxExplanation {
+	flex: 1;
+}

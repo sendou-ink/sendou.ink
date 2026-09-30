@@ -1,37 +1,31 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	assertResponseErrored,
-	dbInsertUsers,
-	dbReset,
-	wrappedAction,
-} from "~/utils/Test";
-import { action as teamIndexPageAction } from "../actions/t.server";
+import { beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { wrappedAction } from "~/utils/Test";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
-import type { createTeamSchema, editTeamSchema } from "../team-schemas.server";
+import type { editTeamFormSchema } from "../team-schemas";
+import { createTeamOwnedByRegular } from "../tests/fixtures";
 
-const createTeamAction = wrappedAction<typeof createTeamSchema>({
-	action: teamIndexPageAction,
-});
-
-const editTeamAction = wrappedAction<typeof editTeamSchema>({
+const editTeamAction = wrappedAction<typeof editTeamFormSchema>({
 	action: _editTeamAction,
+	isJsonSubmission: true,
 });
 
 const DEFAULT_FIELDS = {
+	tag: null,
+	bsky: null,
 	bio: null,
+	logo: null,
+	banner: null,
 } as any;
 
-describe("team creation", () => {
+describe("team name editing", () => {
 	beforeEach(async () => {
-		await dbInsertUsers();
-	});
-	afterEach(() => {
-		dbReset();
+		await UserFactory.createRegular();
 	});
 
-	it("can't take another team's name via editing", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-		await createTeamAction({ name: "Team 2" }, { user: "regular" });
+	test("can't take another team's name via editing", async () => {
+		const team = await createTeamOwnedByRegular("Team 1");
+		await createTeamOwnedByRegular("Team 2", false);
 
 		const res = await editTeamAction(
 			{
@@ -39,24 +33,24 @@ describe("team creation", () => {
 				name: "Team 2",
 				...DEFAULT_FIELDS,
 			},
-			{ user: "regular", params: { customUrl: "team-1" } },
+			{ user: "regular", params: { customUrl: team.customUrl } },
 		);
 
-		expect(res.errors[0]).toBe("forms.errors.duplicateName");
+		expect(res.fieldErrors.name).toBe("forms:errors.duplicateName");
 	});
 
-	it("prevents editing team name to only special characters", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
+	test("prevents editing team name to only special characters", async () => {
+		const team = await createTeamOwnedByRegular("Team 1");
 
-		const response = await editTeamAction(
+		const res = await editTeamAction(
 			{
 				_action: "EDIT",
 				name: "𝓢𝓲𝓵",
 				...DEFAULT_FIELDS,
 			},
-			{ user: "regular", params: { customUrl: "team-1" } },
+			{ user: "regular", params: { customUrl: team.customUrl } },
 		);
 
-		assertResponseErrored(response);
+		expect(res.fieldErrors.name).toBe("forms:errors.noOnlySpecialCharacters");
 	});
 });

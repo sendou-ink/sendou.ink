@@ -5,6 +5,7 @@ export type Notification =
 				adderUsername: string;
 			}
 	  >
+	| NotificationItem<"SQ_READY_CHECK">
 	| NotificationItem<
 			"SQ_NEW_MATCH",
 			{
@@ -50,6 +51,15 @@ export type Notification =
 			{ badgeName: string; badgeId: number }
 	  >
 	| NotificationItem<
+			"TROPHY_SUBMITTED",
+			{ trophyName: string; submitterUsername: string }
+	  >
+	| NotificationItem<
+			"TROPHY_SUBMISSION_ACCEPTED",
+			{ trophyName: string; trophyId: number }
+	  >
+	| NotificationItem<"TROPHY_SUBMISSION_DECLINED", { trophyName: string }>
+	| NotificationItem<
 			"PLUS_VOTING_STARTED",
 			{
 				seasonNth: number;
@@ -61,9 +71,63 @@ export type Notification =
 			{ adderUsername: string; adderDiscordId: string; artId: number }
 	  >
 	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>
-	| NotificationItem<"SCRIM_NEW_REQUEST", { fromUsername: string }>
-	| NotificationItem<"SCRIM_SCHEDULED", { id: number; at: number }>
-	| NotificationItem<"SCRIM_CANCELED", { id: number; at: number }>;
+	| NotificationItem<"SEASON_ENDED", { seasonNth: number }>
+	| NotificationItem<
+			"SCRIM_NEW_REQUEST",
+			{ fromUserId: number; fromUsername: string; scrimPostId: number }
+	  >
+	| NotificationItem<
+			"SCRIM_SCHEDULED",
+			{ id: number; opponentTeamName: string }
+	  >
+	| NotificationItem<"SCRIM_CANCELED", { id: number; opponentTeamName: string }>
+	| NotificationItem<
+			"SCRIM_STARTING_SOON",
+			{ id: number; opponentTeamName: string }
+	  >
+	| NotificationItem<
+			"TO_LEAGUE_TIMES_PROPOSED",
+			{ tournamentId: number; matchId: number; opponentTeamName: string }
+	  >
+	| NotificationItem<
+			"TO_LEAGUE_MATCH_SCHEDULED",
+			{ tournamentId: number; matchId: number; opponentTeamName: string }
+	  >
+	| NotificationItem<
+			"TO_LEAGUE_MATCH_STARTING_SOON",
+			{ tournamentId: number; matchId: number; opponentTeamName: string }
+	  >
+	| NotificationItem<"SCRIM_AUTO_DELETED", { at: number }>
+	| NotificationItem<"COMMISSIONS_CLOSED", { discordId: string }>
+	| NotificationItem<
+			"FRIEND_REQUEST_RECEIVED",
+			{ senderId: number; senderUsername: string }
+	  >
+	| NotificationItem<
+			"TO_LIKE_RECEIVED",
+			{
+				tournamentId: number;
+				tournamentName: string;
+				likerUsername: string;
+			}
+	  >
+	| NotificationItem<
+			"TO_LIKE_ACCEPTED",
+			{
+				tournamentId: number;
+				tournamentName: string;
+				accepterUsername: string;
+			}
+	  >
+	| NotificationItem<
+			"TEAM_EVENT_ADDED",
+			{
+				eventName: string;
+				teamName: string;
+				teamCustomUrl: string;
+			}
+	  >
+	| NotificationItem<"SCHEDULE_TEAM_REMINDER">;
 
 type NotificationItem<
 	T extends string,

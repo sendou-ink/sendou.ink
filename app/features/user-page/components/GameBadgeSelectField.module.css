@@ -1,0 +1,75 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.selectedBadges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.count {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
+.selectedBadge {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+	touch-action: none;
+
+	&.isDragging {
+		opacity: 0.5;
+		z-index: 1;
+	}
+}
+
+.badgeButton {
+	all: unset;
+	cursor: pointer;
+	border-radius: var(--radius-selector);
+	padding: var(--s-0-5);
+	transition: background-color 0.15s;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+	}
+}
+
+.dragButton {
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+.badgeImage {
+	display: block;
+	width: 48px;
+	height: 48px;
+	object-fit: contain;
+}
+
+.searchInput {
+	width: 100%;
+}
+
+.resultsGrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+	max-height: 300px;
+	overflow-y: auto;
+}

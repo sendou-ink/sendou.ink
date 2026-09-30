@@ -1,31 +1,34 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "react-router";
+import { redirect } from "react-router";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
+import { teamJoinSearchParams } from "../team-search-params";
 import { isTeamFull, isTeamMember } from "../team-utils";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
-	const { customUrl } = teamParamsSchema.parse(params);
+export const loader = async ({ params, url }: LoaderFunctionArgs) => {
+	const user = requireUser();
+	const { customUrl } = v.parse(teamParamsSchema, params);
 
-	const team = notFoundIfFalsy(
+	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl, {
 			includeInviteCode: true,
 		}),
 	);
 
-	const inviteCode = new URL(request.url).searchParams.get("code") ?? "";
+	const { code } = teamJoinSearchParams.parse(url);
 	const realInviteCode = team.inviteCode!;
 
-	const teamCount = (await TeamRepository.teamsByMemberUserId(user.id)).length;
+	const teamCount = (await TeamRepository.findAllByMemberUserId(user.id))
+		.length;
 
 	const validation = validateInviteCode({
-		inviteCode,
+		inviteCode: code ?? "",
 		realInviteCode,
 		team,
 		user,
@@ -55,7 +58,7 @@ export function validateInviteCode({
 	inviteCode: string;
 	realInviteCode: string;
 	team: TeamRepository.findByCustomUrl;
-	user?: { id: number; team?: { name: string } };
+	user?: { id: number };
 	reachedTeamCountLimit: boolean;
 }) {
 	if (inviteCode.length !== SHORT_NANOID_LENGTH) {

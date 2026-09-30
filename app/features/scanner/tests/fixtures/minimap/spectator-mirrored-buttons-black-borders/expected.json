@@ -1,0 +1,114 @@
+{
+	"event": "Minimap",
+	"data": {
+		"stage": 21,
+		"stageLabel": "Robo ROM-en",
+		"spectator": true,
+		"teammates": [
+			{
+				"name": "mukα",
+				"abilities": [
+					"LDE",
+					"SSU",
+					"SJ"
+				],
+				"weaponLabel": "Forge Splattershot Pro",
+				"weaponId": 71,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"name": "BoogasWife",
+				"abilities": [
+					"CB",
+					"RSU",
+					"SJ"
+				],
+				"weaponLabel": "Mint Decavitator",
+				"weaponId": 8020,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"name": "Waltsu",
+				"abilities": [
+					"CB",
+					"SSU",
+					"ISS"
+				],
+				"weaponLabel": "Order Splatana Replica",
+				"weaponId": 8005,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"name": "Patfromwii",
+				"abilities": [
+					"ISS",
+					"ISS",
+					"ISS"
+				],
+				"weaponLabel": "Custom Splattershot Jr.",
+				"weaponId": 11,
+				"dead": false,
+				"specialReady": false
+			}
+		],
+		"enemies": [
+			{
+				"name": "TUNAROLL",
+				"abilities": [
+					"CB",
+					"ISM",
+					"SJ"
+				],
+				"weaponLabel": "Gold Dynamo Roller",
+				"weaponId": 1021,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"name": "vaporeon ★",
+				"abilities": [
+					"OG",
+					"SSU",
+					"SJ"
+				],
+				"weaponLabel": ".52 Gal",
+				"weaponId": 50,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"name": ">_<",
+				"abilities": [
+					"ISM",
+					"RP",
+					"OS"
+				],
+				"weaponLabel": "E-liter 4K",
+				"weaponId": 2030,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"name": "ANGEL☆CARE",
+				"abilities": [
+					"SCU",
+					"SSU",
+					"SJ"
+				],
+				"weaponLabel": "Splash-o-matic",
+				"weaponId": 20,
+				"dead": false,
+				"specialReady": false
+			}
+		]
+	},
+	"options": {
+		"skipFields": [
+			"enemies.2.name"
+		],
+		"notes": "8-player spectator map screen, Robo ROM-en, captured as a 1920x1080 screenshot with the game drawn ~97% size inside a black frame (16px top/bottom, 29px left/right) — the case that added black-bar cropping to frame normalization: untouched, every ROI lands ~30px off and no gate fires. Also the first frame with the button glyphs mirrored: A/B/Y/X face buttons down the left column, D-pad down the right (every earlier spectator fixture has the reverse), so the spectator gate probes the X jump-button disc in either column. The card grid is unchanged and the left column is reported as teammates like the other spectator fixtures; whether the mirrored buttons say anything about which team is alpha is unverified. Labels transcribed from the visible cards. enemies.2.name skipped: >_< reads >ー< — the underscore is matched as a long dash at this name height."
+	}
+}

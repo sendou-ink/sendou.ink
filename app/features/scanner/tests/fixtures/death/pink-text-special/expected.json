@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 18,
+    "weaponType": "SPECIAL",
+    "abilities": [
+      [
+        "RSU",
+        "SPU",
+        "SPU",
+        "RSU"
+      ],
+      [
+        "RSU",
+        "RSU",
+        "SSU",
+        "RES"
+      ],
+      [
+        "SJ",
+        "SSU",
+        "SSU",
+        "QSJ"
+      ]
+    ],
+    "name": "Jrod_14",
+    "weaponLabel": "Triple Splashdown"
+  }
+}

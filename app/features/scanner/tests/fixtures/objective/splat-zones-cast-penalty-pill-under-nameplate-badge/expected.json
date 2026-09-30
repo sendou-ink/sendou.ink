@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 173,
+		"score": [35, 30],
+		"penalty": [17, 54],
+		"control": [false, false]
+	},
+	"options": {
+		"notes": "Casted stream (Splat World Series 2026 playoffs, Day 1 Swiss, King of Ham vs FTWIN on Eeltail Alley) with penalty pills under both neutral plates. A spectated player's in-world nameplate (biscuit, X camera badge) sits right under the blue plate, and its white round badge overlaps the left rounded end of the '+54' pill — the pill-presence probe there reads bright, so the whole right penalty came back null while the digits themselves are untouched."
+	}
+}

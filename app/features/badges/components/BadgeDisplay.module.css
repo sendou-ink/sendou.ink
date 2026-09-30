@@ -5,9 +5,17 @@
 	min-height: 12rem;
 	align-items: center;
 	padding: var(--s-2);
-	border-radius: var(--rounded);
-	background-color: var(--bg-badge);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-badge);
 	margin-inline: auto;
+}
+
+.badgesCompact {
+	min-width: 0;
+	max-width: 100%;
+	min-height: 0;
+	flex-wrap: wrap;
+	justify-content: center;
 }
 
 .smallBadges {
@@ -20,8 +28,8 @@
 }
 
 .badgeExplanation {
-	color: var(--text-lighter);
-	font-size: var(--fonts-xs);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -40,34 +48,11 @@
 	margin-top: -8px;
 	margin-right: auto;
 	margin-left: auto;
-	color: var(--theme-vibrant);
-	font-size: var(--fonts-xxxs);
-	font-weight: var(--bold);
+	color: var(--color-fg-accent);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
 }
 
 .pagination {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-2-5);
-	justify-content: center;
-	align-items: center;
-	max-width: 20rem;
-	margin: 0 auto;
 	margin-block-start: var(--s-2);
-}
-
-.paginationButton {
-	background-color: var(--bg-darker);
-	border-radius: 100%;
-	padding: var(--s-1);
-	height: 24px;
-	width: 24px;
-	border: 2px solid var(--border);
-	font-size: var(--fonts-xs);
-	color: var(--text-lighter);
-}
-
-.paginationButtonActive {
-	color: var(--theme);
-	background-color: var(--bg-lightest);
 }

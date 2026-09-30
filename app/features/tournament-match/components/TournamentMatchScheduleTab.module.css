@@ -1,0 +1,122 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	container-type: inline-size;
+}
+
+.agreedTime {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-sm);
+}
+
+.agreedTimeIcon {
+	color: var(--color-success);
+}
+
+.agreedTimeValue {
+	font-weight: var(--weight-semi);
+}
+
+.setByOrganizer {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.board {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--s-4);
+
+	@container (width < 560px) {
+		grid-template-columns: 1fr;
+	}
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	border: var(--border-style);
+}
+
+.columnHeading {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	margin: 0;
+}
+
+.candidates {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.candidate {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+}
+
+.candidatePassed {
+	opacity: 0.5;
+}
+
+.candidateDot {
+	display: inline-flex;
+	width: 0.75rem;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.candidateTime {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+	font-weight: var(--weight-semi);
+}
+
+.proposeSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.availability {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	border: var(--border-style);
+	font-size: var(--font-xs);
+}
+
+.windowText {
+	font-weight: var(--weight-body);
+	color: var(--color-text-high);
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2-5);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}

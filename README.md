@@ -1,4 +1,4 @@
-<center><img src="public/static-assets/img/app-icon.png" style="border-radius:100%" width="200" height="200"></center>
+<center><img src="https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/img/app-icon.png" style="border-radius:100%" width="200" height="200"></center>
 
 <a href="https://sendou.ink" target="_blank" rel="noreferrer">sendou.ink</a> - a Splatoon platform with competitive focus
 
@@ -9,9 +9,8 @@ Another key objective is to bridge the gap between casual and competitive player
 <details>
 <summary>Screenshots</summary>
 
-<img src="screenshot-1.png">
-<img src="screenshot-2.png">
-<img src="screenshot-3.png">
+<img src="desktop-bracket.png">
+<img src="mobile-analyzer.png">
 
 </details>
 
@@ -56,7 +55,8 @@ Another key objective is to bridge the gap between casual and competitive player
 ### Prerequisites
 
 - [Git](https://git-scm.com/)
-- [Node.js v22](https://nodejs.org/en)
+- [Node.js v24](https://nodejs.org/en) (see [.nvmrc](./.nvmrc) for the exact version)
+- [pnpm](https://pnpm.io/installation)
 
 Optionally [nvm](https://github.com/nvm-sh/nvm) can be convenient for managing multiple Node.js installs
 
@@ -67,13 +67,15 @@ First verify you have Node.js and git installed:
 ```bash
 node --version
 git --version
+pnpm --version
 ```
 
 You should see something like:
 
 ```
-v22.13.0
+v24.18.0
 git version 2.39.5 (Apple Git-154)
+10.33.0
 ```
 (if not then go back to "Prerequisites" and install what is missing)
 
@@ -82,23 +84,55 @@ Then there is a sequence of commands you need to run:
 ```bash
 git clone https://github.com/sendou-ink/sendou.ink.git # Clones repository
 cd sendou.ink # Change to the project's folder
-npm install # Install dependencies
-npm run dev # Setup the development environment and run the project
+pnpm install # Install dependencies
+pnpm dev # Setup the development environment and run the project
 ```
 
 You should then be able to access the application by visiting http://localhost:5173
 
 Use the admin panel at http://localhost:5173/admin to log in (impersonate) as the admin user "Sendou" or as a regular user "N-ZAP" as well as re-seed the database if needed.
 
+#### Environment variables
+
+You don't need a `.env` file to get started. Default values for every environment variable are defined in [`app/config.ts`](./app/config.ts) (client `VITE_*` variables) and [`app/config.server.ts`](./app/config.server.ts) (server variables), and the development defaults are enough to run the app.
+
+To override any of them, create a `.env` file in the project root — see [`.env.example`](./.env.example) for the available variables. Some features (Discord login, image upload, chat) need real values or local services to actually work; without them the app still runs with those features disabled.
+
+In production these variables are read from the host environment, and the ones marked as required will fail fast at startup with a clear error if they are missing.
+
+#### Static assets
+
+Static assets (weapon, gear and stage images, badges, sounds, etc.) are not stored in this repository. They live in [sendou-ink/assets](https://github.com/sendou-ink/assets) and are served from a CDN. The base URL is configurable via the `VITE_STATIC_ASSETS_URL` environment variable, which defaults to the production CDN so the app works out of the box without any local setup.
+
 #### Docker
 
-Optionally, if you want to develop image upload, real-time features or chat, you can use Docker to spin up the Skalop service and Minio for image hosting. You will need [Docker](https://www.docker.com/) up and running and then run the following command:
+Optionally, if you want to develop image upload, you can use Docker to spin up [SeaweedFS](https://github.com/seaweedfs/seaweedfs) for image hosting. You will need [Docker](https://www.docker.com/) up and running and then run the following command:
 
 ```
 docker compose up -d
 ```
 
-Minio admin UI to manage uploaded photos should be up and running at http://localhost:9001
+It serves an S3 compatible API at http://localhost:9000 and creates the `sendou` bucket on startup. Uploaded photos can be browsed in the SeaweedFS filer UI at http://localhost:8888/buckets/sendou/
+
+#### Windows performance tips
+
+The dev server does many small file operations which are slower on Windows by default. Two optional tweaks can improve performance:
+
+**Windows Defender exclusions**
+
+Excluding the project folder and the pnpm store from Windows Defender speeds up installs, dev server startup and first navigations. In a PowerShell ran as administrator:
+
+```powershell
+Add-MpPreference -ExclusionPath "C:\path\to\sendou.ink"
+Add-MpPreference -ExclusionPath "$(pnpm store path)"
+```
+
+Be aware that excluded folders are not scanned at all, and compromised npm packages can land in `node_modules`. This should not be much of an issue since pnpm does not allow running dependency lifecycle scripts unless explicitly allowed, and exact dependency versions are being pinned by the lockfile, but it should be kept in mind.  
+Undo at any time with `Remove-MpPreference -ExclusionPath "..."`.
+
+**Dev Drive**
+
+Alternatively, keep the repository on a [Dev Drive](https://learn.microsoft.com/en-us/windows/dev-drive/). On a Dev Drive, Defender scans files asynchronously instead of blocking, so you keep most of the speedup without giving up scanning entirely.
 
 ## Contributing
 
@@ -115,7 +149,7 @@ For developers reading the [architecture.md](./docs/dev/architecture.md) file is
 - **UI Library**: React Aria Components
 - **Database**: SQLite3 (via Kysely)
 - **Styling**: CSS Modules
-- **Validation**: Zod
+- **Validation**: Valibot
 - **Internationalization**: i18next
 - **Testing**:
    - End-to-End (E2E): Playwright

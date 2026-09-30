@@ -1,11 +1,10 @@
 /** biome-ignore-all lint/suspicious/noConsole: Biome v2 migration */
 import fs from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-import path from "node:path";
 
 function main() {
 	const dbProdPath = path.join(__dirname, "..", "db-prod.sqlite3");
@@ -18,22 +17,18 @@ function main() {
 		process.exit(1);
 	}
 
-	// delete db-prod.sqlite3-shm file if exists
 	if (fs.existsSync(dbProdShmPath)) {
 		fs.unlinkSync(dbProdShmPath);
 	}
 
-	// delete db-prod.sqlite3-wal file if exists
 	if (fs.existsSync(dbProdWalPath)) {
 		fs.unlinkSync(dbProdWalPath);
 	}
 
-	// delete db-prod.sqlite3 if exists
 	if (fs.existsSync(dbProdPath)) {
 		fs.unlinkSync(dbProdPath);
 	}
 
-	// copy db-copy.sqlite3 to db-prod.sqlite3
 	fs.copyFileSync(dbCopyPath, dbProdPath);
 }
 

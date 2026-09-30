@@ -1,99 +1,117 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import * as QMatchRepository from "~/features/sendouq-match/QMatchRepository.server";
-import invariant from "~/utils/invariant";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
-import { hasGroupManagerPerms } from "../core/groups";
-import { FULL_GROUP_SIZE } from "../q-constants";
-import { preparingSchema } from "../q-schemas.server";
-import { addMember } from "../queries/addMember.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { refreshGroup } from "../queries/refreshGroup.server";
-import { setGroupAsActive } from "../queries/setGroupAsActive.server";
+import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { preparingSchema } from "../q-action-schemas";
+import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
+import { SendouQError } from "../q-utils.server";
 
 export type SendouQPreparingAction = typeof action;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: preparingSchema,
 	});
 
-	const currentGroup = findCurrentGroupByUserId(user.id);
-	errorToastIfFalsy(currentGroup, "No group found");
-
-	if (!hasGroupManagerPerms(currentGroup.role)) {
-		return null;
-	}
+	const ownGroup = SendouQ.findOwnGroup(user.id);
+	errorToastIfFalsy(ownGroup, "No group found");
 
 	const season = Seasons.current();
 	errorToastIfFalsy(season, "Season is not active");
 
-	switch (data._action) {
-		case "JOIN_QUEUE": {
-			if (currentGroup.status !== "PREPARING") {
+	try {
+		switch (data._action) {
+			case "JOIN_QUEUE": {
+				await SQGroupRepository.setPreparingGroupAsActive(ownGroup.id);
+
+				await refreshSendouQInstance();
+
+				ChatSystemMessage.notifyStatusChanged(
+					ownGroup.members.map((member) => member.id),
+				);
+				ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
+
+				return redirect(SENDOUQ_LOOKING_PAGE);
+			}
+			case "ADD_FRIEND": {
+				const available = await SQGroupRepository.findActiveGroupMembers();
+				if (available.some(({ userId }) => userId === data.id)) {
+					return { error: "taken" } as const;
+				}
+
+				errorToastIfFalsy(
+					(
+						await SQGroupRepository.findFriendsAndTeammates(user.id)
+					).friends.some((friendUser) => friendUser.id === data.id),
+					"Not a friend",
+				);
+				errorToastIfFalsy(
+					(await UserRepository.findLeanById(data.id))?.friendCode,
+					"User you are trying to add has no friend code set",
+				);
+
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insertMember(
+					ownGroup.id,
+					{ userId: data.id },
+				);
+
+				if (chatRoomIdToRevalidate) {
+					ChatSystemMessage.send({
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
+					});
+				}
+
+				await refreshSendouQInstance();
+
+				const updatedGroup = SendouQ.findOwnGroup(user.id);
+
+				ChatSystemMessage.notifyRoomsChanged(
+					updatedGroup
+						? updatedGroup.members.map((member) => member.id)
+						: [data.id],
+				);
+				ChatSystemMessage.notifyStatusChanged(
+					updatedGroup
+						? updatedGroup.members.map((member) => member.id)
+						: [data.id],
+				);
+
+				ChatSystemMessage.send({ channel: sqGroupChannel(ownGroup.id) });
+
+				notify({
+					userIds: [data.id],
+					notification: {
+						type: "SQ_ADDED_TO_GROUP",
+						meta: {
+							adderUsername: user.username,
+						},
+					},
+				});
+
 				return null;
 			}
-
-			setGroupAsActive(currentGroup.id);
-			refreshGroup(currentGroup.id);
-
-			return redirect(SENDOUQ_LOOKING_PAGE);
-		}
-		case "ADD_TRUSTED": {
-			const available = await QRepository.findActiveGroupMembers();
-			if (available.some(({ userId }) => userId === data.id)) {
-				return { error: "taken" } as const;
+			default: {
+				assertUnreachable(data);
 			}
-
-			errorToastIfFalsy(
-				(await QRepository.usersThatTrusted(user.id)).trusters.some(
-					(trusterUser) => trusterUser.id === data.id,
-				),
-				"Not trusted",
-			);
-
-			const ownGroupWithMembers = await QMatchRepository.findGroupById({
-				groupId: currentGroup.id,
-			});
-			invariant(ownGroupWithMembers, "No own group found");
-			errorToastIfFalsy(
-				ownGroupWithMembers.members.length < FULL_GROUP_SIZE,
-				"Group is full",
-			);
-
-			addMember({
-				groupId: currentGroup.id,
-				userId: data.id,
-				role: "MANAGER",
-			});
-
-			await QRepository.refreshTrust({
-				trustGiverUserId: data.id,
-				trustReceiverUserId: user.id,
-			});
-
-			notify({
-				userIds: [data.id],
-				notification: {
-					type: "SQ_ADDED_TO_GROUP",
-					meta: {
-						adderUsername: user.username,
-					},
-				},
-			});
-
+		}
+	} catch (error) {
+		// expected errors (two requests racing to create/join a group): return null so
+		// loaders re-run and the user sees the fresh state instead of an error page
+		if (error instanceof SendouQError) {
 			return null;
 		}
-		default: {
-			assertUnreachable(data);
-		}
+
+		throw error;
 	}
 };

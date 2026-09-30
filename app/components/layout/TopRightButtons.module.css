@@ -1,0 +1,141 @@
+/* sized by the room the header has left, which the collapse thresholds below and in the children measure */
+.container {
+	container-type: inline-size;
+	flex: 1;
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--s-4);
+	min-width: 0;
+}
+
+.supportWrapper {
+	flex-shrink: 0;
+
+	@media screen and (max-width: 599px) {
+		display: none;
+	}
+}
+
+.supportWrapperCompact {
+	display: none;
+}
+
+@media screen and (min-width: 600px) {
+	@container (width < 360px) {
+		.supportWrapper {
+			display: none;
+		}
+
+		.supportWrapperCompact {
+			display: block;
+		}
+	}
+
+	@container (width < 540px) {
+		.withStatus .supportWrapper {
+			display: none;
+		}
+
+		.withStatus .supportWrapperCompact {
+			display: block;
+		}
+	}
+}
+
+.searchAndAddContainer {
+	display: flex;
+	gap: var(--s-2);
+	min-width: 0;
+}
+
+/* gives up its keyboard hint before the status text starts truncating, the thresholds below switch it to an icon */
+.searchWrapper {
+	container-type: inline-size;
+	width: 10rem;
+	min-width: 6rem;
+	flex-shrink: 999999;
+}
+
+/* attached to add new */
+.searchWrapper:not(:last-child) {
+	margin-inline-end: calc(-1 * var(--s-2));
+
+	& > a {
+		border-inline-end: none;
+		border-start-end-radius: 0;
+		border-end-end-radius: 0;
+	}
+}
+
+@media screen and (max-width: 599px) {
+	@container (width < 371px) {
+		.withStatus .searchWrapper {
+			width: var(--field-size-sm);
+			min-width: 0;
+			flex-shrink: 0;
+		}
+	}
+}
+
+@media screen and (min-width: 600px) {
+	@container (width < 296px) {
+		.searchWrapper {
+			width: var(--field-size-sm);
+			min-width: 0;
+			flex-shrink: 0;
+		}
+	}
+
+	@container (width < 470px) {
+		.withStatus .searchWrapper {
+			width: var(--field-size-sm);
+			min-width: 0;
+			flex-shrink: 0;
+		}
+	}
+}
+
+.chatButtonWrapperPersistent {
+	display: none;
+	flex-shrink: 0;
+	position: relative;
+
+	@media screen and (min-width: 1000px) {
+		display: block;
+	}
+
+	& > button {
+		width: 100%;
+	}
+}
+
+.chatButtonWrapperModal {
+	display: none;
+	flex-shrink: 0;
+	position: relative;
+
+	@media screen and (min-width: 600px) and (max-width: 999px) {
+		display: block;
+	}
+
+	& > button {
+		width: 100%;
+	}
+}
+
+.chatUnreadBadge {
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-fg-on-accent);
+	background-color: var(--color-fill-accent);
+	min-width: 18px;
+	height: 18px;
+	padding: 0 var(--s-1);
+	border-radius: 9px;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+}

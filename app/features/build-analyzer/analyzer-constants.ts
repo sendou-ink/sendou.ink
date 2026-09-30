@@ -1,6 +1,28 @@
-import type { DamageType } from "./analyzer-types";
+import type { DamageType, TenacityPlayerDeficit } from "./analyzer-types";
 
-export const MAX_LDE_INTENSITY = 21;
+/** Opponent's remaining points when Last-Ditch Effort starts ramping up in ranked modes. */
+export const LDE_START_POINTS = 50;
+
+/** Opponent's remaining points when Last-Ditch Effort reaches its maximum. */
+const LDE_MAX_POINTS = 30;
+
+const MAX_LDE_INTENSITY = LDE_START_POINTS - LDE_MAX_POINTS + 1;
+
+/** Intensity standing for the clock based activation, which always grants the maximum boost. */
+export const LDE_CLOCK_INTENSITY = MAX_LDE_INTENSITY + 1;
+
+/** Every ability point total reachable by some main/sub slot combination, ascending. */
+export function possibleApValues() {
+	const uniqueValues = new Set<number>();
+
+	for (let i = 0; i < 4; i++) {
+		for (let j = 0; j < 10; j++) {
+			uniqueValues.add(i * 10 + j * 3);
+		}
+	}
+
+	return Array.from(uniqueValues).sort((a, b) => a - b);
+}
 
 export const DAMAGE_TYPE = [
 	"TURRET_MAX",
@@ -17,6 +39,7 @@ export const DAMAGE_TYPE = [
 	"MAX_CHARGE",
 	"TAP_SHOT",
 	"DISTANCE",
+	"DISTANCE_JUMP",
 	"SPLASH",
 	"WAVE",
 	"BOMB_DIRECT",
@@ -34,17 +57,21 @@ export const DAMAGE_TYPE = [
 	"ROLL_OVER",
 	"SPECIAL_MAX_CHARGE",
 	"SPECIAL_MIN_CHARGE",
+	"SPECIAL_INHALE",
 	"SPECIAL_THROW_DIRECT",
 	"SPECIAL_THROW",
 	"SPECIAL_SWING",
 	"SPECIAL_CANNON",
 	"SPECIAL_BULLET_MAX",
 	"SPECIAL_BULLET_MIN",
+	"SPECIAL_SPLASH_MAX",
+	"SPECIAL_SPLASH_MIN",
 	"SPECIAL_BUMP",
 	"SPECIAL_JUMP",
 	"SPECIAL_TICK",
 	"SECONDARY_MODE_MAX",
 	"SECONDARY_MODE_MIN",
+	"COMBO",
 ] as const;
 
 export const damageTypeToWeaponType: Record<
@@ -67,6 +94,7 @@ export const damageTypeToWeaponType: Record<
 	MAX_CHARGE: "MAIN",
 	TAP_SHOT: "MAIN",
 	DISTANCE: "MAIN",
+	DISTANCE_JUMP: "MAIN",
 	SPLASH: "MAIN",
 	BOMB_NORMAL: "SUB",
 	BOMB_DIRECT: "SUB",
@@ -84,15 +112,19 @@ export const damageTypeToWeaponType: Record<
 	WAVE: "SPECIAL",
 	SPECIAL_MAX_CHARGE: "SPECIAL",
 	SPECIAL_MIN_CHARGE: "SPECIAL",
+	SPECIAL_INHALE: "SPECIAL",
 	SPECIAL_SWING: "SPECIAL",
 	SPECIAL_THROW: "SPECIAL",
 	SPECIAL_THROW_DIRECT: "SPECIAL",
 	SPECIAL_BULLET_MIN: "SPECIAL",
 	SPECIAL_BULLET_MAX: "SPECIAL",
+	SPECIAL_SPLASH_MAX: "SPECIAL",
+	SPECIAL_SPLASH_MIN: "SPECIAL",
 	SPECIAL_CANNON: "SPECIAL",
 	SPECIAL_BUMP: "SPECIAL",
 	SPECIAL_JUMP: "SPECIAL",
 	SPECIAL_TICK: "SPECIAL",
+	COMBO: "MAIN",
 };
 
 export const RAINMAKER_SPEED_PENALTY_MODIFIER = 0.8;
@@ -100,3 +132,19 @@ export const RAINMAKER_SPEED_PENALTY_MODIFIER = 0.8;
 export const UNKNOWN_SHORT = "U";
 
 export const MAX_AP = 57;
+
+export const MAIN_SLOT_AP = 10;
+export const SUB_SLOT_AP = 3;
+
+/** How many active players the opponent's team has more than the user's team */
+export const TENACITY_PLAYER_DEFICITS = [1, 2, 3] as const;
+
+/** Special points Tenacity passively grants per second. Unaffected by Special Charge Up. */
+export const TENACITY_SPECIAL_POINTS_PER_SECOND: Record<
+	TenacityPlayerDeficit,
+	number
+> = {
+	1: 3.26,
+	2: 5.44,
+	3: 7.59,
+};

@@ -32,7 +32,7 @@ Any badge to be added has to follow these rules. Badges that do not follow the r
 - Others can use the "[badges" Discord channel](https://discord.gg/sendou) to inquire about a commission
 - Read rules from above carefully at this point and ask if you do not understand something
 
-2. Use [the tool](https://sendou-badge-uploader.pages.dev/) to upload the badge you made (credits for making the tool go to hfcRed)
+2. Use [the tool](https://sendou-badge-uploader.hfcred.workers.dev/) to upload the badge you made (credits for making the tool go to hfcRed)
 - It will handle creating the assets for you and opening the pull request with the changes needed
 
 3. Wait for Sendou to look into the pull request

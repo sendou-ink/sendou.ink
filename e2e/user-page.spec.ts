@@ -1,43 +1,55 @@
-import { expect, type Page, test } from "@playwright/test";
+import { addDays } from "date-fns";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import {
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-	selectWeapon,
-	submit,
-} from "~/utils/playwright";
-import { userEditProfilePage, userPage } from "~/utils/urls";
+	FULL_GROUP_SIZE,
+	SENDOUQ_BEST_OF,
+} from "~/features/sendouq/q-constants";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type { Factories } from "./helpers/factories";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { SettingsPage } from "./pages/settings/settings-page";
+import { UserEditWidgetsPage } from "./pages/user/user-edit-widgets-page";
+import { UserPage } from "./pages/user/user-page";
+import { UserSeasonsPage } from "./pages/user/user-seasons-page";
 
-const goToEditPage = (page: Page) =>
-	page.getByText("Edit", { exact: true }).click();
-const submitEditForm = (page: Page) =>
-	page.getByText("Save", { exact: true }).click();
+/** The only season the e2e seasons list has finished, i.e. the exportable one. */
+const FINISHED_SEASON = 0;
+
+const LUNA_BLASTER: MainWeaponId = 200;
+const SCORCH_GORGE: StageId = 0;
+/** Maps of a seeded concluded match that get played: alpha wins them all straight. */
+const PLAYED_MAPS_COUNT = Math.ceil(SENDOUQ_BEST_OF / 2);
 
 test.describe("User page", () => {
-	test("uses badge pagination", async ({ page }) => {
-		await seed(page);
-		await navigate({
-			page,
-			url: userPage({ discordId: NZAP_TEST_DISCORD_ID }),
-		});
+	test("uses badge pagination", async ({ page, factories }) => {
+		await factories.BadgeFactory.create(
+			{ displayName: "Sunken Scroll" },
+			{ ownerIds: [NZAP_TEST_ID] },
+		);
+		// enough badges for two pages: 1 big + 9 small on the first page
+		await factories.BadgeFactory.createMany(
+			12,
+			(index) => ({ displayName: `Badge ${index + 1}` }),
+			{ ownerIds: [ADMIN_ID] },
+		);
 
-		await expect(page.getByTestId("badge-display")).toBeVisible();
-		await isNotVisible(page.getByTestId("badge-pagination-button"));
+		const userPage = new UserPage(page);
+		await userPage.goto(NZAP_TEST_DISCORD_ID);
 
-		await navigate({
-			page,
-			url: userPage({ discordId: ADMIN_DISCORD_ID, customUrl: "sendou" }),
-		});
+		await expect(userPage.locators.badgeDisplay).toBeVisible();
+		await isNotVisible(userPage.locators.badgePaginationButtons);
 
-		await expect(page.getByAltText("Paddling Pool Weekly")).toBeVisible();
-		await page.getByTestId("badge-pagination-button").nth(1).click();
+		await userPage.goto(ADMIN_DISCORD_ID);
 
-		// test changing the big badge
-		await page.getByAltText("Lobster Crossfire").click();
-		expect(page.getByAltText("Lobster Crossfire")).toHaveAttribute(
+		// badges are shown newest first, so the last created one is the big badge
+		await expect(userPage.badgeImage("Badge 12")).toBeVisible();
+		await userPage.locators.badgePaginationButtons.nth(1).click();
+
+		await userPage.badgeImage("Badge 1").click();
+		await expect(userPage.badgeImage("Badge 1")).toHaveAttribute(
 			"width",
 			"125",
 		);
@@ -45,147 +57,402 @@ test.describe("User page", () => {
 
 	test("customize which badge is shown as big by default as normal user", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
+		const [firstBadge] = await factories.BadgeFactory.createMany(
+			2,
+			(index) => ({ displayName: `Badge ${index + 1}` }),
+			{ ownerIds: [NZAP_TEST_ID] },
+		);
+
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: userEditProfilePage({ discordId: NZAP_TEST_DISCORD_ID }),
-		});
 
-		const badgeSelect = page.getByTestId("badges-selector");
-		await badgeSelect.selectOption("5");
-		await submit(page);
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(NZAP_TEST_DISCORD_ID);
 
-		await expect(
-			page.getByAltText("It's Dangerous to go Alone"),
-		).toHaveAttribute("width", "125");
+		await editWidgets.openWidgetSettings("badges-owned");
+		await editWidgets.selectFavoriteBadge(firstBadge.id);
+		await editWidgets.save();
+
+		const userPage = new UserPage(page);
+		await userPage.goto(NZAP_TEST_DISCORD_ID);
+		await expect(userPage.badgeImage("Badge 1")).toHaveAttribute(
+			"width",
+			"125",
+		);
 	});
 
 	test("customize big badge + small badge first page order as supporter", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
+		const badges = await factories.BadgeFactory.createMany(
+			3,
+			(index) => ({ displayName: `Badge ${index + 1}` }),
+			{ ownerIds: [ADMIN_ID] },
+		);
+		await factories.UserFactory.grant(ADMIN_ID, { patronTier: 2 });
+
 		await impersonate(page);
-		await navigate({
-			page,
-			url: userEditProfilePage({ discordId: ADMIN_DISCORD_ID }),
-		});
 
-		const badgeSelect = page.getByTestId("badges-selector");
-		await badgeSelect.selectOption("1");
-		await expect(page.getByTestId("badge-display")).toBeVisible();
-		await badgeSelect.selectOption("11");
-		await submit(page);
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(ADMIN_DISCORD_ID);
 
-		await expect(page.getByAltText("4v4 Sundaes")).toBeVisible();
-		await expect(page.getByAltText("Lobster Crossfire")).toBeVisible();
+		await editWidgets.openWidgetSettings("badges-owned");
+		await editWidgets.selectFavoriteBadge(badges[0].id);
+		await expect(editWidgets.locators.badgeDisplay).toBeVisible();
+		await editWidgets.selectFavoriteBadge(badges[1].id);
+		await editWidgets.save();
+
+		const userPage = new UserPage(page);
+		await userPage.goto(ADMIN_DISCORD_ID);
+		await expect(userPage.badgeImage("Badge 1")).toHaveAttribute(
+			"width",
+			"125",
+		);
+		await expect(userPage.badgeImage("Badge 2")).toBeVisible();
 	});
 
-	test("edits user profile", async ({ page }) => {
-		await seed(page);
+	test("edits user profile", async ({ page, factories }) => {
+		await factories.UserFactory.updateProfile(ADMIN_ID, { country: "FI" });
+
 		await impersonate(page);
-		await navigate({
-			page,
-			url: userPage({ discordId: ADMIN_DISCORD_ID, customUrl: "sendou" }),
-		});
 
-		await page.getByTestId("flag-FI").isVisible();
-		await goToEditPage(page);
+		const userPage = new UserPage(page);
+		await userPage.goto(ADMIN_DISCORD_ID);
 
-		await page
-			.getByRole("textbox", { name: "In game name", exact: true })
-			.fill("Lean");
-		await page
-			.getByRole("textbox", { name: "In game name discriminator" })
-			.fill("1234");
-		await page.getByLabel("R-stick sens").selectOption("0");
-		await page.getByLabel("Motion sens").selectOption("-50");
+		await expect(userPage.flag("FI")).toBeVisible();
+		const editProfile = await userPage.openEditProfile();
 
-		await page.getByLabel("Country").click();
-		await page.getByPlaceholder("Search countries").fill("Sweden");
-		await page.getByRole("option", { name: "Sweden" }).click();
+		await editProfile.form.fill("inGameName", "Lean#1234");
+		await editProfile.selectCountry("Sweden");
+		await editProfile.save();
 
-		await page.getByLabel("Bio").fill("My awesome bio");
-		await submitEditForm(page);
-
-		await page.getByTestId("flag-SV").isVisible();
-		await page.getByText("My awesome bio").isVisible();
-		await page.getByText("Lean#1234").isVisible();
-		await page.getByText("Stick 0 / Motion -5").isVisible();
+		await expect(userPage.flag("SE")).toBeVisible();
+		await expect(userPage.text("Lean#1234")).toBeVisible();
 	});
 
-	test("customizes user page colors and resets them", async ({ page }) => {
-		await seed(page);
+	test("customizes theme colors and resets them", async ({
+		page,
+		factories,
+	}) => {
+		// custom theme colors are a supporter perk
+		await factories.UserFactory.grant(ADMIN_ID, { patronTier: 2 });
+
 		await impersonate(page);
-		await navigate({
-			page,
-			url: userPage({ discordId: ADMIN_DISCORD_ID, customUrl: "sendou" }),
-		});
 
-		const body = page.locator("body");
-		const bodyColor = () =>
-			body.evaluate((element) =>
-				window.getComputedStyle(element).getPropertyValue("--bg").trim(),
-			);
+		const settings = new SettingsPage(page);
+		await settings.goto("theme");
 
-		await expect(bodyColor()).resolves.toMatch(/#ebebf0/);
+		await expect(settings.hasCustomTheme()).resolves.toBe(false);
 
-		await goToEditPage(page);
+		await settings.setBaseHue("120");
+		await settings.saveTheme();
+		await settings.reload();
 
-		await page.locator("span").filter({ hasText: "Custom colors" }).click();
+		await expect(settings.hasCustomTheme()).resolves.toBe(true);
 
-		await page.getByTestId("color-input-bg").fill("#4a412a");
+		await settings.resetTheme();
+		await settings.reload();
 
-		// also test filling this because it's a special case as it also changes bg-lightest
-		await page.getByTestId("color-input-bg-lighter").fill("#4a412a");
-
-		await submitEditForm(page);
-
-		// got redirected
-		await expect(page).not.toHaveURL(/edit/);
-		await page.reload();
-		await expect(bodyColor()).resolves.toMatch(/#4a412a/);
-
-		// then lets test resetting the colors is possible
-		await goToEditPage(page);
-		await page.locator("span").filter({ hasText: "Custom colors" }).click();
-
-		for (const button of await page
-			.getByRole("button", { name: "Reset" })
-			.all()) {
-			await button.click();
-		}
-
-		await submitEditForm(page);
-
-		// got redirected
-		await expect(page).not.toHaveURL(/edit/);
-		await page.reload();
-		await expect(bodyColor()).resolves.toMatch(/#ebebf0/);
+		await expect(settings.hasCustomTheme()).resolves.toBe(false);
 	});
 
-	test("edits weapon pool", async ({ page }) => {
-		await seed(page);
+	test("exports season summary image as a supporter", async ({
+		page,
+		factories,
+	}) => {
+		await factories.UserFactory.grant(ADMIN_ID, { patronTier: 2 });
+		await playFinishedSeason(factories, ADMIN_ID);
+
 		await impersonate(page);
-		await navigate({
-			page,
-			url: userPage({ discordId: ADMIN_DISCORD_ID, customUrl: "sendou" }),
+
+		const seasonsPage = new UserSeasonsPage(page);
+		await seasonsPage.goto(ADMIN_DISCORD_ID);
+		await seasonsPage.openExportDialog();
+
+		await expect(seasonsPage.exportDialogText("Best win streak")).toBeVisible();
+
+		const download = await seasonsPage.downloadExportedImage();
+		expect(download.suggestedFilename()).toBe(
+			`season-${FINISHED_SEASON}-summary.png`,
+		);
+	});
+
+	test("shows supporter perk explanation instead of exporting for non-supporter mid-season", async ({
+		page,
+		factories,
+	}) => {
+		await playFinishedSeason(factories, NZAP_TEST_ID);
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const seasonsPage = new UserSeasonsPage(page);
+		await seasonsPage.goto(NZAP_TEST_DISCORD_ID);
+		await seasonsPage.openExportDialog();
+
+		await expect(seasonsPage.locators.supporterPerkExplanation).toBeVisible();
+		await isNotVisible(seasonsPage.locators.downloadButton);
+	});
+
+	test("shows the match profile weapon pool", async ({ page, factories }) => {
+		await factories.UserFactory.grant(ADMIN_ID, {
+			matchProfile: {
+				weaponPool: ([200, 1100, 2000, 4000] as const).map((id) => ({
+					id,
+					isFavorite: false,
+				})),
+			},
 		});
+
+		await impersonate(page);
+
+		const userPage = new UserPage(page);
+		await userPage.goto(ADMIN_DISCORD_ID);
 
 		for (const [i, id] of [200, 1100, 2000, 4000].entries()) {
-			await expect(page.getByTestId(`${id}-${i + 1}`)).toBeVisible();
-		}
-
-		await goToEditPage(page);
-		await selectWeapon({ name: "Range Blaster", page });
-		await page.getByText("Max weapon count reached").isVisible();
-		await page.getByTestId("delete-weapon-1100").click();
-
-		await submitEditForm(page);
-
-		for (const [i, id] of [200, 2000, 4000, 220].entries()) {
-			await expect(page.getByTestId(`${id}-${i + 1}`)).toBeVisible();
+			await expect(userPage.weaponPoolImage(id, i + 1)).toBeVisible();
 		}
 	});
+
+	test("shows the weapon pool widget's own list over the match profile pool", async ({
+		page,
+		factories,
+	}) => {
+		await factories.UserFactory.grant(ADMIN_ID, {
+			matchProfile: {
+				weaponPool: [{ id: 1100, isFavorite: false }],
+			},
+		});
+
+		await impersonate(page);
+
+		const editWidgetsPage = new UserEditWidgetsPage(page);
+		await editWidgetsPage.goto(ADMIN_DISCORD_ID);
+		await editWidgetsPage.openWidgetSettings("weapon-pool");
+		await editWidgetsPage.selectWeaponPoolWeapon("Luna Blaster");
+		await editWidgetsPage.selectWeaponPoolWeapon("Splattershot");
+		await editWidgetsPage.save();
+
+		const userPage = new UserPage(page);
+		await userPage.goto(ADMIN_DISCORD_ID);
+
+		await expect(userPage.weaponPoolImage(200, 1)).toBeVisible();
+		await expect(userPage.weaponPoolImage(40, 2)).toBeVisible();
+		await isNotVisible(userPage.weaponPoolImage(1100, 1));
+	});
+
+	test("chooses result highlights which the results list then shows by default", async ({
+		page,
+		factories,
+	}) => {
+		const zonesEvent = await factories.CalendarEventFactory.create({
+			authorId: ADMIN_ID,
+			name: "In The Zone 30",
+		});
+		const poolEvent = await factories.CalendarEventFactory.create({
+			authorId: ADMIN_ID,
+			name: "Paddling Pool 253",
+		});
+		for (const [event, placement] of [
+			[zonesEvent, 2],
+			[poolEvent, 1],
+		] as const) {
+			await factories.CalendarEventResultFactory.create({
+				eventId: event.id,
+				participantCount: 16,
+				results: [
+					{
+						teamName: "Team Olive",
+						placement,
+						players: [
+							{ userId: ADMIN_ID, name: null },
+							{ userId: null, name: "Mako" },
+							{ userId: null, name: "Marie" },
+							{ userId: null, name: "Callie" },
+						],
+					},
+				],
+			});
+		}
+
+		await impersonate(page);
+
+		const userPage = new UserPage(page);
+		await userPage.goto(ADMIN_DISCORD_ID);
+
+		const resultsPage = await userPage.openResults();
+		await expect(resultsPage.eventName("In The Zone 30")).toBeVisible();
+		await expect(resultsPage.eventName("Paddling Pool 253")).toBeVisible();
+
+		const highlightsPage = await resultsPage.openChooseHighlights();
+		await highlightsPage.resultCheckbox(/In The Zone 30/).check();
+		await highlightsPage.save();
+
+		await expect(resultsPage.eventName("In The Zone 30")).toBeVisible();
+		await isNotVisible(resultsPage.eventName("Paddling Pool 253"));
+
+		await page.context().clearCookies();
+		await resultsPage.goto(ADMIN_DISCORD_ID);
+		await isNotVisible(resultsPage.eventName("Paddling Pool 253"));
+
+		await resultsPage.toggleHighlightsOnly();
+		await expect(resultsPage.eventName("Paddling Pool 253")).toBeVisible();
+
+		await resultsPage.toggleHighlightsOnly();
+		await isNotVisible(resultsPage.eventName("Paddling Pool 253"));
+	});
+
+	test("edits profile widgets, lists vods and shows season stats", async ({
+		page,
+		factories,
+	}) => {
+		await factories.VodFactory.createMany(2, (index) => ({
+			submitterUserId: ADMIN_ID,
+			pov: { type: "USER" as const, userId: ADMIN_ID },
+			title: `Ranked grind episode ${index + 1}`,
+		}));
+
+		const mates = await factories.UserFactory.createMany(FULL_GROUP_SIZE - 2);
+		const enemies = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const match = await factories.SQMatchFactory.create(
+			{
+				alphaUserIds: [ADMIN_ID, NZAP_TEST_ID, ...mates.map((mate) => mate.id)],
+				bravoUserIds: enemies.map((enemy) => enemy.id),
+				mapList: Array.from({ length: SENDOUQ_BEST_OF }, () => ({
+					mode: "SZ" as const,
+					stageId: SCORCH_GORGE,
+					source: "BOTH" as const,
+				})),
+			},
+			{ isConcluded: true },
+		);
+		await factories.SQReportedWeaponFactory.createMany(
+			PLAYED_MAPS_COUNT,
+			(index) => ({
+				groupMatchId: match.id,
+				mapIndex: index,
+				userId: ADMIN_ID,
+				weaponSplId: LUNA_BLASTER,
+			}),
+		);
+
+		await impersonate(page);
+
+		const userPage = new UserPage(page);
+		await userPage.goto(ADMIN_DISCORD_ID);
+
+		// no team, so the default layout's teams widget has nothing to show
+		await isNotVisible(userPage.widgetHeading("Teams"));
+
+		const editWidgets = await userPage.openEditWidgets();
+		// the default layout is what an untouched profile starts editing from
+		await editWidgets.openWidgetSettings("bio");
+		await editWidgets.fillBio("Reformed Hydra main");
+		await editWidgets.save();
+
+		await expect(userPage.widgetHeading("Bio")).toBeVisible();
+		await expect(userPage.text("Reformed Hydra main")).toBeVisible();
+		await expect(userPage.widgetHeading("Member #")).toBeVisible();
+		// admin is the first user created, so their join order is 1
+		await expect(userPage.exactText("#1")).toBeVisible();
+
+		const vodsPage = await userPage.openVods();
+		await expect(vodsPage.vodTitle("Ranked grind episode 1")).toBeVisible();
+		await expect(vodsPage.vodTitle("Ranked grind episode 2")).toBeVisible();
+
+		const seasonsPage = new UserSeasonsPage(page);
+		await seasonsPage.goto(ADMIN_DISCORD_ID);
+		await seasonsPage.openStats();
+
+		await seasonsPage.openStatsTab("Weapons");
+		await expect(seasonsPage.weaponUsageImage("Luna Blaster")).toBeVisible();
+		await expect(
+			seasonsPage.weaponUsageShare(`${PLAYED_MAPS_COUNT} maps · 100%`),
+		).toBeVisible();
+
+		await seasonsPage.openStatsTab("Stages");
+		await expect(
+			seasonsPage.stageRecord(`${PLAYED_MAPS_COUNT}–0`),
+		).toBeVisible();
+
+		await seasonsPage.openStatsTab("Teammates");
+		await expect(seasonsPage.playerLink("N-ZAP")).toBeVisible();
+	});
+
+	test("gates supporter only widgets behind supporter status", async ({
+		page,
+		factories,
+	}) => {
+		await impersonate(page);
+
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(ADMIN_DISCORD_ID);
+
+		await expect(editWidgets.supporterOnlyLabel("bio-md")).toBeVisible();
+		await isNotVisible(editWidgets.addWidgetButton("bio-md"));
+
+		await factories.UserFactory.grant(ADMIN_ID, { patronTier: 2 });
+		await editWidgets.goto(ADMIN_DISCORD_ID);
+
+		await isNotVisible(editWidgets.supporterOnlyLabel("bio-md"));
+		await editWidgets.removeWidget("bio");
+		await editWidgets.addWidget("bio-md");
+		await editWidgets.fillBio("**Reformed** Hydra main");
+		await editWidgets.save();
+
+		const userPage = new UserPage(page);
+		await expect(userPage.widget("bio-md").locator("strong")).toHaveText(
+			"Reformed",
+		);
+	});
+
+	test("redirects to the preferred identifier", async ({ page, factories }) => {
+		const customUrl = "zapfish";
+		await factories.UserFactory.updateProfile(NZAP_TEST_ID, { customUrl });
+
+		const userPage = new UserPage(page);
+
+		await userPage.gotoWithIdentifier(NZAP_TEST_ID);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		await userPage.gotoWithIdentifier(NZAP_TEST_DISCORD_ID);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		await userPage.gotoWithIdentifier(customUrl);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		// without a custom URL the Discord id is the preferred identifier
+		await userPage.gotoWithIdentifier(ADMIN_ID);
+		await expect(page).toHaveURL(`/u/${ADMIN_DISCORD_ID}`);
+	});
 });
+
+/**
+ * Plays the user through a whole season of SendouQ, ending it with a calculated
+ * (i.e. non-approximate) skill. The matches are spread over the days of the only
+ * finished season so that the season summary has something to show.
+ */
+async function playFinishedSeason(factories: Factories, userId: number) {
+	const mates = await factories.UserFactory.createMany(FULL_GROUP_SIZE - 1);
+	const enemies = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+
+	const ownGroup = [userId, ...mates.map((mate) => mate.id)];
+	const opposingGroup = enemies.map((enemy) => enemy.id);
+	const { starts } = Seasons.nthToDateRange(FINISHED_SEASON);
+
+	for (let index = 0; index < MATCHES_COUNT_NEEDED_FOR_LEADERBOARD; index++) {
+		// alpha wins every map, so which side the user is on decides the set
+		const userWon = index % 3 !== 0;
+
+		await factories.SQMatchFactory.create(
+			{
+				alphaUserIds: userWon ? ownGroup : opposingGroup,
+				bravoUserIds: userWon ? opposingGroup : ownGroup,
+			},
+			{ isConcluded: true, createdAt: addDays(starts, index) },
+		);
+	}
+
+	await factories.reseason(FINISHED_SEASON);
+}

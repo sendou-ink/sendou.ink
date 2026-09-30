@@ -1,98 +1,155 @@
-import { Outlet, useOutletContext, useRevalidator } from "@remix-run/react";
-import clsx from "clsx";
 import { sub } from "date-fns";
+import {
+	Check,
+	Eye,
+	EyeOff,
+	Map as MapIcon,
+	ShieldMinus,
+	ShieldPlus,
+	Stamp,
+} from "lucide-react";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
-import { useEventSource } from "remix-utils/sse/react";
-import { Alert } from "~/components/Alert";
-import { Divider } from "~/components/Divider";
-import { LinkButton, SendouButton } from "~/components/elements/Button";
-import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
-import { SendouPopover } from "~/components/elements/Popover";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
-import { EyeIcon } from "~/components/icons/Eye";
-import { EyeSlashIcon } from "~/components/icons/EyeSlash";
-import { MapIcon } from "~/components/icons/Map";
-import { useUser } from "~/features/auth/core/user";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { useIsMounted } from "~/hooks/useIsMounted";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { useVisibilityChange } from "~/hooks/useVisibilityChange";
 import {
-	SENDOU_INK_BASE_URL,
-	tournamentBracketsSubscribePage,
-	tournamentJoinPage,
-} from "~/utils/urls";
+	Outlet,
+	useLoaderData,
+	useLocation,
+	useOutletContext,
+} from "react-router";
+import { Alert } from "~/components/Alert";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { useUser } from "~/features/auth/core/user";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import {
+	TournamentProvider,
+	useTournament,
+} from "~/features/tournament/tournament-context";
+import { useHydrated } from "~/hooks/useHydrated";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	useBracketExpanded,
-	useTournament,
 	useTournamentPreparedMaps,
 } from "../../tournament/routes/to.$id";
 import { action } from "../actions/to.$id.brackets.server";
 import { Bracket } from "../components/Bracket";
+import { useBracketSpoilerCensor } from "../components/Bracket/useBracketSpoilerCensor";
+import { BracketCheckIn } from "../components/BracketCheckIn";
 import { BracketMapListDialog } from "../components/BracketMapListDialog";
-import { TournamentTeamActions } from "../components/TournamentTeamActions";
+import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
-import { bracketSubscriptionKey } from "../tournament-bracket-utils";
-export { action };
+import * as Progression from "../core/Progression";
+import type { Tournament } from "../core/Tournament";
+import {
+	loader,
+	type TournamentBracketsLoaderData,
+} from "../loaders/to.$id.brackets.server";
+import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
+import {
+	tournamentBracketChannel,
+	tournamentChannel,
+} from "../tournament-bracket-utils";
+import styles from "./to.$id.brackets.module.css";
 
-import "../components/Bracket/bracket.css";
-import "../tournament-bracket.css";
+export { action, loader };
+
+export const handle: SendouRouteHandle = {
+	mainBreakout: true,
+};
 
 export default function TournamentBracketsPage() {
-	const { t } = useTranslation(["tournament"]);
-	const visibility = useVisibilityChange();
-	const { revalidate } = useRevalidator();
-	const user = useUser();
-	const tournament = useTournament();
-	const isMounted = useIsMounted();
-	const ctx = useOutletContext();
+	const data = useLoaderData<TournamentBracketsLoaderData>();
+	const layoutTournament = useTournament();
 
-	const defaultBracketIdx = () => {
-		if (
-			tournament.brackets.length === 1 ||
-			tournament.brackets[1].isUnderground ||
-			!tournament.brackets[0].everyMatchOver
-		) {
-			return 0;
-		}
-
-		return 1;
-	};
-	const [bracketIdx, setBracketIdx] = useSearchParamState({
-		defaultValue: defaultBracketIdx(),
-		name: "idx",
-		revive: Number,
-	});
-
-	const bracket = React.useMemo(
-		() => tournament.bracketByIdxOrDefault(bracketIdx),
-		[tournament, bracketIdx],
+	const tournament = React.useMemo(
+		() =>
+			data.bracket
+				? layoutTournament.withBrackets([data.bracket], {
+						participatedUsers: data.participatedUserIds,
+						streams: data.streams,
+					})
+				: layoutTournament,
+		[layoutTournament, data.bracket, data.participatedUserIds, data.streams],
 	);
 
-	React.useEffect(() => {
-		if (visibility !== "visible" || tournament.everyBracketOver) return;
+	return (
+		<TournamentProvider tournament={tournament}>
+			<TournamentBracketsView />
+		</TournamentProvider>
+	);
+}
 
-		revalidate();
-	}, [visibility, revalidate, tournament.everyBracketOver]);
+function TournamentBracketsView() {
+	const { t } = useTranslation(["common", "tournament"]);
+	const user = useUser();
+	const tournament = useTournament();
+	const data = useLoaderData<TournamentBracketsLoaderData>();
+	const ctx = useOutletContext();
+	const location = useLocation();
 
-	const showAddSubsButton =
-		!tournament.canFinalize(user) &&
-		!tournament.everyBracketOver &&
-		tournament.hasStarted &&
-		tournament.autonomousSubs;
+	useScrollToMatchOnLoad();
 
-	const showPrepareMapsButton =
-		tournament.isOrganizer(user) &&
-		!bracket.canBeStarted &&
-		bracket.preview &&
-		isMounted;
+	const bracket = tournament.bracketByIdx(data.bracketIdx);
 
-	const waitingForTeamsText = () => {
-		if (bracketIdx > 0 || tournament.regularCheckInStartInThePast) {
+	useTopicRevalidation(
+		tournamentChannel(tournament.ctx.id),
+		!tournament.ctx.isFinalized,
+	);
+	// own room per bracket (and group) so another's live scores do not make this view refetch
+	useTopicRevalidation(
+		tournamentBracketChannel({
+			tournamentId: tournament.ctx.id,
+			bracketIdx: data.bracketIdx,
+			groupId: data.groupId,
+		}),
+		!tournament.ctx.isFinalized,
+	);
+
+	// "WAITING_FOR_BRACKET" so that the team is also told ahead of time when the check-in opens
+	const bracketCheckInIdx =
+		(data.teamProgressStatus?.type === "CHECKIN" ||
+			data.teamProgressStatus?.type === "WAITING_FOR_BRACKET") &&
+		typeof data.teamProgressStatus.bracketIdx === "number"
+			? data.teamProgressStatus.bracketIdx
+			: null;
+
+	const {
+		censored,
+		canToggle,
+		reveal: revealSpoiler,
+		hide: hideSpoiler,
+	} = useBracketSpoilerCensor();
+
+	const showSecondaryActionsRow =
+		tournament.canFinalize(user) || censored || canToggle;
+
+	const waitingForTeamsText = (
+		bracketToDescribe: BracketType,
+		bracketIdx: number,
+	) => {
+		if (bracketIdx > 0) {
+			return bracketToDescribe.requiresCheckIn
+				? t("tournament:bracket.waiting.checkin", {
+						count: TOURNAMENT.ENOUGH_TEAMS_TO_START,
+					})
+				: t("tournament:bracket.waiting.advanced", {
+						count: TOURNAMENT.ENOUGH_TEAMS_TO_START,
+					});
+		}
+
+		if (tournament.regularCheckInStartInThePast) {
 			return t("tournament:bracket.waiting.checkin", {
 				count: TOURNAMENT.ENOUGH_TEAMS_TO_START,
 			});
@@ -103,206 +160,165 @@ export default function TournamentBracketsPage() {
 		});
 	};
 
-	const teamsSourceText = () => {
-		if (
-			tournament.brackets[0].type === "round_robin" &&
-			!bracket.isUnderground
-		) {
-			return `Teams that place in the top ${Math.max(
-				...(bracket.sources ?? []).flatMap((s) => s.placements),
-			)} of their group will advance to this stage`;
-		}
+	const teamsSourceText = (bracketToDescribe: BracketType) => {
+		const progression = tournament.ctx.settings.bracketProgression;
+		const sources = progression[bracketToDescribe.idx].sources;
+		if (!sources || sources.length === 0) return null;
 
-		if (
-			tournament.brackets[0].type === "round_robin" &&
-			bracket.isUnderground
-		) {
-			const placements = (
-				bracket.sources?.flatMap((s) => s.placements) ?? []
-			).sort((a, b) => a - b);
+		const sourceDescriptions = Progression.sortedSourcesForSeeding(
+			sources,
+			progression,
+		).map((source) => {
+			const sourceBracket = progression[source.bracketIdx];
 
-			return `Teams that don't advance to the final stage can play in this bracket (placements: ${placements.join(", ")})`;
-		}
+			if (source.placements.length === 0) {
+				return t("tournament:bracket.sources.earlyAdvancers", {
+					bracket: sourceBracket.name,
+					count: sourceBracket.settings?.advanceThreshold,
+				});
+			}
 
-		if (
-			tournament.brackets[0].type === "double_elimination" &&
-			bracket.isUnderground
-		) {
-			return `Teams that get eliminated in the first ${Math.abs(
-				Math.min(...(bracket.sources ?? []).flatMap((s) => s.placements)),
-			)} rounds of the losers bracket can play in this bracket`;
-		}
+			if (source.placements.every((placement) => placement < 0)) {
+				return t("tournament:bracket.sources.eliminated", {
+					bracket: sourceBracket.name,
+					count: Math.abs(Math.min(...source.placements)),
+				});
+			}
 
-		return null;
+			const isTopN =
+				!source.rest &&
+				Math.min(...source.placements) === 1 &&
+				Math.max(...source.placements) === source.placements.length;
+			if (isTopN) {
+				return t("tournament:bracket.sources.top", {
+					bracket: sourceBracket.name,
+					count: Math.max(...source.placements),
+				});
+			}
+
+			return t("tournament:bracket.sources.placements", {
+				bracket: sourceBracket.name,
+				placements: Progression.placementsToString(
+					[...source.placements],
+					source.rest,
+				),
+			});
+		});
+
+		return t("tournament:bracket.sources.header", {
+			sources: sourceDescriptions.join(", "),
+		});
 	};
-
-	const totalTeamsAvailableForTheBracket = () => {
-		if (bracket.sources) {
-			return (
-				(bracket.teamsPendingCheckIn ?? []).length +
-				bracket.participantTournamentTeamIds.length
-			);
-		}
-
-		if (!tournament.isMultiStartingBracket) {
-			return tournament.ctx.teams.length;
-		}
-
-		return tournament.ctx.teams.filter(
-			(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
-		).length;
-	};
-
-	if (tournament.isLeagueSignup) {
-		return null;
-	}
 
 	return (
 		<div>
 			<Outlet context={ctx} />
-			{visibility !== "hidden" && !tournament.everyBracketOver ? (
-				<AutoRefresher />
-			) : null}
-			{tournament.canFinalize(user) ? (
-				<div className="tournament-bracket__finalize">
-					<LinkButton
-						variant="minimal"
-						testId="finalize-tournament-button"
-						to="finalize"
-					>
-						{t("tournament:actions.finalize.question")}
-					</LinkButton>
+			{bracketCheckInIdx !== null ? (
+				<div className="stack horizontal mb-4 items-center">
+					<BracketCheckIn bracketIdx={bracketCheckInIdx} />
 				</div>
 			) : null}
-			{bracket.preview &&
-			bracket.enoughTeams &&
-			tournament.isOrganizer(user) &&
-			tournament.regularCheckInStartInThePast ? (
-				<div className="stack items-center mb-4">
-					<div className="stack sm items-center">
-						<Alert
-							variation="INFO"
-							alertClassName="tournament-bracket__start-bracket-alert"
-							textClassName="stack horizontal md items-center"
+			{showSecondaryActionsRow ? (
+				<div className="stack horizontal sm mb-4">
+					{tournament.canFinalize(user) ? (
+						<LinkButton
+							// keeps the selected bracket, which the loader reads from the search params
+							to={{ pathname: "finalize", search: location.search }}
+							testId="finalize-tournament-button"
+							icon={<Stamp />}
 						>
-							{bracket.participantTournamentTeamIds.length}/
-							{totalTeamsAvailableForTheBracket()} teams checked in
-							{bracket.canBeStarted ? (
-								<BracketStarter bracket={bracket} bracketIdx={bracketIdx} />
-							) : null}
-						</Alert>
-						{!bracket.canBeStarted ? (
-							<div className="tournament-bracket__mini-alert">
-								⚠️{" "}
-								{bracketIdx === 0
-									? "Tournament start time is in the future"
-									: bracket.startTime && bracket.startTime > new Date()
-										? "Bracket start time is in the future"
-										: "Teams pending from the previous bracket"}{" "}
-								(blocks starting)
-							</div>
-						) : null}
-					</div>
-				</div>
-			) : null}
-			<div className="stack horizontal mb-4 sm justify-between items-center">
-				{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
-				{!tournament.isLeagueDivision ? <TournamentTeamActions /> : null}
-				{showAddSubsButton ? (
-					// TODO: could also hide this when team is not in any bracket anymore
-					<AddSubsPopOver />
-				) : null}
-			</div>
-			<div className="stack md">
-				<div className="stack horizontal sm">
-					<BracketNav bracketIdx={bracketIdx} setBracketIdx={setBracketIdx} />
-					{bracket.type !== "round_robin" && !bracket.preview ? (
-						<CompactifyButton />
+							{t("tournament:actions.finalize.button")}
+						</LinkButton>
 					) : null}
-					{showPrepareMapsButton ? (
-						// Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails
-						<ErrorBoundary fallback={null}>
-							<MapPreparer bracket={bracket} bracketIdx={bracketIdx} />
-						</ErrorBoundary>
-					) : null}
-				</div>
-				{bracket.enoughTeams ? (
-					<Bracket bracket={bracket} bracketIdx={bracketIdx} />
-				) : null}
-			</div>
-			{!bracket.enoughTeams ? (
-				<div>
-					<div className="text-center text-lg font-semi-bold text-lighter mt-6">
-						{waitingForTeamsText()}
-					</div>
-					{bracket.sources ? (
-						<div className="text-center text-sm font-semi-bold text-lighter mt-2">
-							{teamsSourceText()}
-						</div>
-					) : null}
-					{bracket.requiresCheckIn ? (
-						<div className="text-center text-sm font-semi-bold text-lighter mt-2 text-warning">
-							Bracket requires check-in{" "}
-							{bracket.startTime ? (
-								<span suppressHydrationWarning>
-									(open{" "}
-									{sub(bracket.startTime, { hours: 1 }).toLocaleString(
-										"en-US",
-										{
-											hour: "numeric",
-											minute: "numeric",
-											weekday: "long",
-										},
-									)}{" "}
-									-{" "}
-									{bracket.startTime.toLocaleTimeString("en-US", {
-										hour: "numeric",
-										minute: "numeric",
-									})}
-									)
-								</span>
-							) : null}
-						</div>
+					{censored ? (
+						<SendouButton onClick={revealSpoiler} icon={<ShieldMinus />}>
+							{t("common:spoilerFree.showResults")}
+						</SendouButton>
+					) : canToggle ? (
+						<SendouButton onClick={hideSpoiler} icon={<ShieldPlus />}>
+							{t("common:spoilerFree.hideResults")}
+						</SendouButton>
 					) : null}
 				</div>
 			) : null}
+			<BracketTabs
+				loadedBracket={bracket}
+				loadedBracketIdx={data.bracketIdx}
+				divisionIdx={data.divisionIdx}
+			>
+				{bracket ? (
+					<BracketTabContent
+						bracket={bracket}
+						bracketIdx={data.bracketIdx}
+						groupId={data.groupId}
+						waitingForTeamsText={waitingForTeamsText}
+						teamsSourceText={teamsSourceText}
+					/>
+				) : null}
+			</BracketTabs>
 		</div>
 	);
 }
 
-function AutoRefresher() {
-	useAutoRefresh();
-
-	return null;
+/** Location state accepted by the brackets page (e.g. from the match page's "Back to bracket" link). */
+export interface BracketsPageState {
+	/** If set, the referenced match is scrolled into view on load. */
+	scrollToMatchId?: number;
 }
 
-function useAutoRefresh() {
-	const { revalidate } = useRevalidator();
-	const tournament = useTournament();
-	const lastEvent = useEventSource(
-		tournamentBracketsSubscribePage(tournament.ctx.id),
-		{
-			event: bracketSubscriptionKey(tournament.ctx.id),
-		},
+/** Returning from a match page lands at that match's spot in the bracket instead of the top. */
+function useScrollToMatchOnLoad() {
+	const location = useLocation();
+	const scrollToMatchId = (location.state as BracketsPageState | null)
+		?.scrollToMatchId;
+
+	useIsomorphicLayoutEffect(() => {
+		if (typeof scrollToMatchId !== "number") return;
+
+		document
+			.querySelector(`[data-match-id="${scrollToMatchId}"]`)
+			?.scrollIntoView({ block: "center", inline: "center" });
+	}, [scrollToMatchId]);
+}
+
+function getAbDivisionsStartError(
+	bracket: BracketType,
+	tournament: Tournament,
+): string | null {
+	if (
+		bracket.type !== "round_robin" ||
+		!bracket.settings?.hasAbDivisions ||
+		!bracket.isStartingBracket ||
+		!bracket.seeding ||
+		bracket.seeding.length === 0
+	) {
+		return null;
+	}
+
+	const groupCount = new Set(bracket.data.round.map((r) => r.groupId)).size;
+	const abDivisionsBySeedOrder = bracket.seeding.map(
+		(teamId) => tournament.teamById(teamId)?.abDivision,
 	);
 
-	React.useEffect(() => {
-		if (!lastEvent) return;
+	const result = AbDivisions.validate({
+		abDivisionsBySeedOrder,
+		groupCount,
+	});
 
-		// TODO: maybe later could look into not revalidating unless bracket advanced but do something fancy in the tournament class instead
-		revalidate();
-	}, [lastEvent, revalidate]);
+	return result.ok ? null : result.error;
 }
 
 function BracketStarter({
 	bracket,
 	bracketIdx,
+	isDisabled,
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
+	isDisabled?: boolean;
 }) {
 	const [dialogOpen, setDialogOpen] = React.useState(false);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
 	const close = React.useCallback(() => {
 		setDialogOpen(false);
@@ -310,24 +326,44 @@ function BracketStarter({
 
 	return (
 		<>
-			{isMounted ? (
+			{isHydrated && dialogOpen ? (
 				<BracketMapListDialog
-					isOpen={dialogOpen}
 					close={close}
 					bracket={bracket}
 					bracketIdx={bracketIdx}
-					key={bracketIdx}
 				/>
 			) : null}
 			<SendouButton
 				variant="outlined"
 				size="small"
 				data-testid="finalize-bracket-button"
-				onPress={() => setDialogOpen(true)}
+				onClick={() => setDialogOpen(true)}
+				isDisabled={isDisabled}
 			>
 				Start the bracket
 			</SendouButton>
 		</>
+	);
+}
+
+function DraftBracketStartPopover() {
+	const { t } = useTranslation(["calendar"]);
+
+	return (
+		<SendouPopover
+			popoverClassName="text-xs"
+			trigger={
+				<SendouButton
+					variant="outlined"
+					size="small"
+					data-testid="finalize-bracket-button"
+				>
+					Start the bracket
+				</SendouButton>
+			}
+		>
+			{t("calendar:forms.draftBracketStartBlocked")}
+		</SendouPopover>
 	);
 }
 
@@ -339,7 +375,7 @@ function MapPreparer({
 	bracketIdx: number;
 }) {
 	const [dialogOpen, setDialogOpen] = React.useState(false);
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const prepared = useTournamentPreparedMaps();
 	const tournament = useTournament();
 
@@ -357,28 +393,26 @@ function MapPreparer({
 
 	return (
 		<>
-			{isMounted ? (
+			{isHydrated && dialogOpen ? (
 				<BracketMapListDialog
-					isOpen={dialogOpen}
 					close={close}
 					bracket={bracket}
 					bracketIdx={bracketIdx}
 					isPreparing
-					key={bracketIdx}
 				/>
 			) : null}
 			<div className="stack sm horizontal ml-auto">
 				{hasPreparedMaps ? (
-					<CheckmarkIcon
-						className="fill-success w-6"
-						testId="prepared-maps-check-icon"
+					<Check
+						className="color-success w-6"
+						data-testid="prepared-maps-check-icon"
 					/>
 				) : null}
 				<SendouButton
 					size="small"
 					variant="outlined"
 					icon={<MapIcon />}
-					onPress={() => setDialogOpen(true)}
+					onClick={() => setDialogOpen(true)}
 					data-testid="prepare-maps-button"
 				>
 					Prepare maps
@@ -388,148 +422,238 @@ function MapPreparer({
 	);
 }
 
-function AddSubsPopOver() {
-	const { t } = useTranslation(["common", "tournament"]);
-	const [, copyToClipboard] = useCopyToClipboard();
-	const tournament = useTournament();
-	const user = useUser();
-
-	const ownedTeam = tournament.ownedTeamByUser(user);
-	if (!ownedTeam) {
-		const teamMemberOf = tournament.teamMemberOfByUser(user);
-		if (!teamMemberOf) return null;
-
-		return <SubsPopover>Only team captain or a TO can add subs</SubsPopover>;
-	}
-
-	const subsAvailableToAdd =
-		tournament.maxTeamMemberCount - ownedTeam.members.length;
-
-	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
-		tournamentId: tournament.ctx.id,
-		inviteCode: ownedTeam.inviteCode,
-	})}`;
-
-	return (
-		<SubsPopover>
-			{t("tournament:actions.sub.prompt", { count: subsAvailableToAdd })}
-			{subsAvailableToAdd > 0 ? (
-				<>
-					<Divider className="my-2" />
-					<div>{t("tournament:actions.shareLink", { inviteLink })}</div>
-					<div className="my-2 flex justify-center">
-						<SendouButton
-							size="small"
-							onPress={() => copyToClipboard(inviteLink)}
-							variant="minimal"
-							className="tiny"
-							data-testid="copy-invite-link-button"
-						>
-							{t("common:actions.copyToClipboard")}
-						</SendouButton>
-					</div>
-				</>
-			) : null}
-		</SubsPopover>
-	);
-}
-
-function SubsPopover({ children }: { children: React.ReactNode }) {
-	const { t } = useTranslation(["tournament"]);
-
-	return (
-		<SendouPopover
-			popoverClassName="text-xs"
-			trigger={
-				<SendouButton
-					className="ml-auto"
-					variant="outlined"
-					size="small"
-					data-testid="add-sub-button"
-				>
-					{t("tournament:actions.addSub")}
-				</SendouButton>
-			}
-		>
-			{children}
-		</SendouPopover>
-	);
-}
-
-function BracketNav({
-	bracketIdx,
-	setBracketIdx,
+/**
+ * Only the bracket the loader shipped is rendered; switching navigates to load the new one, the previous
+ * staying up until it arrives. A league switches only within the loader's division.
+ */
+function BracketTabs({
+	loadedBracket,
+	loadedBracketIdx,
+	divisionIdx,
+	children,
 }: {
+	loadedBracket: BracketType | null;
+	loadedBracketIdx: number;
+	divisionIdx: number | null;
+	children: React.ReactNode;
+}) {
+	const tournament = useTournament();
+	const [, setIdxParam] = useSearchParam(tournamentBracketsSearchParams, "idx");
+
+	const visibleBrackets = tournament.visibleBracketsMetaOfDivision(divisionIdx);
+
+	const bracketNameForTab = (name: string) => name.replace("bracket", "");
+
+	const canCompactify =
+		loadedBracket &&
+		loadedBracket.type !== "round_robin" &&
+		!loadedBracket.preview &&
+		tournament.bracketsMeta[loadedBracketIdx].enoughTeams;
+
+	return (
+		<SendouTabs
+			selectedKey={String(loadedBracketIdx)}
+			onSelectionChange={(key) => setIdxParam(Number(key))}
+		>
+			<SendouTabList actions={canCompactify ? <CompactifyButton /> : null}>
+				{visibleBrackets.map((bracket) => (
+					<SendouTab
+						key={bracket.name}
+						id={String(bracket.idx)}
+						number={tournament.teamsCountOfBracket(bracket.idx)}
+					>
+						{bracketNameForTab(bracket.name)}
+					</SendouTab>
+				))}
+			</SendouTabList>
+			{visibleBrackets.map((bracket) => (
+				<SendouTabPanel key={bracket.idx} id={String(bracket.idx)}>
+					{children}
+				</SendouTabPanel>
+			))}
+		</SendouTabs>
+	);
+}
+
+function BracketTabContent({
+	bracket,
+	bracketIdx,
+	groupId,
+	waitingForTeamsText,
+	teamsSourceText,
+}: {
+	bracket: BracketType;
 	bracketIdx: number;
-	setBracketIdx: (bracketIdx: number) => void;
+	groupId: number | null;
+	waitingForTeamsText: (bracket: BracketType, bracketIdx: number) => string;
+	teamsSourceText: (bracket: BracketType) => string | null;
 }) {
 	const tournament = useTournament();
 
-	const shouldRender = () => {
-		const brackets = tournament.ctx.isFinalized
-			? tournament.brackets.filter((b) => !b.preview)
-			: tournament.ctx.settings.bracketProgression;
-
-		return brackets.length > 1;
-	};
-
-	if (!shouldRender()) return null;
-
-	const visibleBrackets = tournament.ctx.settings.bracketProgression.filter(
-		// an underground bracket was never played despite being in the format
-		(_, i) =>
-			!tournament.ctx.isFinalized ||
-			!tournament.bracketByIdxOrDefault(i).preview,
-	);
-
-	const bracketNameForButton = (name: string) => name.replace("bracket", "");
-
 	return (
 		<>
-			{/** MOBILE */}
-			<SendouMenu
-				trigger={
-					<SendouButton
-						className={clsx(
-							"tournament-bracket__bracket-nav__link",
-							"tournament-bracket__menu",
-						)}
-					>
-						{bracketNameForButton(
-							tournament.bracketByIdxOrDefault(bracketIdx).name,
-						)}
-						<span className="tournament-bracket__bracket-nav__chevron">▼</span>
-					</SendouButton>
-				}
-			>
-				{visibleBrackets.map((bracket, i) => (
-					<SendouMenuItem
-						key={bracket.name}
-						onAction={() => setBracketIdx(i)}
-						isActive={i === bracketIdx}
-					>
-						{bracketNameForButton(bracket.name)}
-					</SendouMenuItem>
-				))}
-			</SendouMenu>
-			{/** DESKTOP */}
-			<div className="tournament-bracket__bracket-nav tournament-bracket__button-row">
-				{visibleBrackets.map((bracket, i) => {
-					return (
-						<SendouButton
-							key={bracket.name}
-							onPress={() => setBracketIdx(i)}
-							className={clsx("tournament-bracket__bracket-nav__link", {
-								"tournament-bracket__bracket-nav__link__selected":
-									bracketIdx === i,
-							})}
-						>
-							{bracketNameForButton(bracket.name)}
-						</SendouButton>
-					);
-				})}
-			</div>
+			<AbDivisionsImbalanceAlert bracket={bracket} />
+			<PrepareMapsButton bracket={bracket} bracketIdx={bracketIdx} />
+			{tournament.bracketsMeta[bracketIdx].enoughTeams ? (
+				<>
+					<StartBracketAlert bracket={bracket} bracketIdx={bracketIdx} />
+					<Bracket
+						bracket={bracket}
+						bracketIdx={bracketIdx}
+						groupId={groupId}
+					/>
+				</>
+			) : (
+				<div>
+					<div className="text-center text-lg font-semi-bold text-lighter mt-6">
+						{waitingForTeamsText(bracket, bracketIdx)}
+					</div>
+					{bracket.sources ? (
+						<div className="text-center text-sm font-semi-bold text-lighter mt-2">
+							{teamsSourceText(bracket)}
+						</div>
+					) : null}
+					{bracket.requiresCheckIn ? (
+						<div className="text-center text-sm font-semi-bold text-lighter mt-2 text-warning">
+							Bracket requires check-in{" "}
+							{bracket.startTime ? (
+								<span>
+									(open{" "}
+									<LocaleTimeRange
+										from={sub(bracket.startTime, { hours: 1 })}
+										to={bracket.startTime}
+										options={{
+											hour: "numeric",
+											minute: "numeric",
+											weekday: "long",
+										}}
+										inline
+									/>
+									)
+								</span>
+							) : null}
+						</div>
+					) : null}
+				</div>
+			)}
 		</>
+	);
+}
+
+function PrepareMapsButton({
+	bracket,
+	bracketIdx,
+}: {
+	bracket: BracketType;
+	bracketIdx: number;
+}) {
+	const tournament = useTournament();
+	const user = useUser();
+	const isHydrated = useHydrated();
+
+	if (
+		!tournament.isOrganizer(user) ||
+		bracket.canBeStarted ||
+		!bracket.preview ||
+		!isHydrated
+	) {
+		return null;
+	}
+
+	return (
+		<div className="stack horizontal sm mb-4">
+			{/* Error Boundary because preparing maps is optional, so no need to make the whole page inaccessible if it fails */}
+			<ErrorBoundary fallback={null}>
+				<MapPreparer bracket={bracket} bracketIdx={bracketIdx} />
+			</ErrorBoundary>
+		</div>
+	);
+}
+
+function AbDivisionsImbalanceAlert({ bracket }: { bracket: BracketType }) {
+	const tournament = useTournament();
+	const user = useUser();
+
+	if (
+		!bracket.preview ||
+		!tournament.isOrganizer(user) ||
+		!tournament.regularCheckInHasEnded
+	) {
+		return null;
+	}
+
+	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
+	if (!abDivisionsStartError) {
+		return null;
+	}
+
+	return (
+		<div className="stack items-center mb-4">
+			<Alert variation="WARNING">
+				<div data-testid="ab-divisions-imbalance-alert">
+					{abDivisionsStartError}
+				</div>
+			</Alert>
+		</div>
+	);
+}
+
+function StartBracketAlert({
+	bracket,
+	bracketIdx,
+}: {
+	bracket: BracketType;
+	bracketIdx: number;
+}) {
+	const tournament = useTournament();
+	const user = useUser();
+
+	if (
+		!bracket.preview ||
+		!tournament.isOrganizer(user) ||
+		!tournament.regularCheckInStartInThePast
+	) {
+		return null;
+	}
+
+	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
+	const totalTeamsAvailableForTheBracket =
+		tournament.eligibleTeamsCountOfBracket(bracketIdx);
+
+	return (
+		<div className="stack items-center mb-4">
+			<div className="stack sm items-center">
+				<Alert
+					variation="INFO"
+					textClassName="stack horizontal md items-center"
+				>
+					{bracket.participantTournamentTeamIds.length}/
+					{totalTeamsAvailableForTheBracket} teams checked in
+					{bracket.canBeStarted ? (
+						tournament.isDraft ? (
+							<DraftBracketStartPopover />
+						) : (
+							<BracketStarter
+								bracket={bracket}
+								bracketIdx={bracketIdx}
+								isDisabled={Boolean(abDivisionsStartError)}
+							/>
+						)
+					) : null}
+				</Alert>
+				{!bracket.canBeStarted ? (
+					<div className={styles.miniAlert}>
+						⚠️{" "}
+						{bracket.isStartingBracket
+							? "Tournament start time is in the future"
+							: bracket.startTime && bracket.startTime > new Date()
+								? "Bracket start time is in the future"
+								: "Teams pending from the source brackets"}{" "}
+						(blocks starting)
+					</div>
+				) : null}
+			</div>
+		</div>
 	);
 }
 
@@ -538,11 +662,13 @@ function CompactifyButton() {
 
 	return (
 		<SendouButton
-			onPress={() => {
+			onClick={() => {
 				setBracketExpanded(!bracketExpanded);
 			}}
-			className="tournament-bracket__compactify-button"
-			icon={bracketExpanded ? <EyeSlashIcon /> : <EyeIcon />}
+			variant="minimal"
+			size="miniscule"
+			className={styles.compactifyButton}
+			icon={bracketExpanded ? <EyeOff /> : <Eye />}
 		>
 			{bracketExpanded ? "Compactify" : "Show all"}
 		</SendouButton>

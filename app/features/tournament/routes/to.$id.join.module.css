@@ -1,0 +1,10 @@
+.inviteContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-12);
+	align-items: center;
+}
+
+.joinAlert {
+	max-width: 22rem;
+}

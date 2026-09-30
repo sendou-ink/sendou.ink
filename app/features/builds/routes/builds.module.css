@@ -2,31 +2,25 @@
 	height: 20px;
 	margin: auto 0;
 	width: 4px;
-	border-radius: var(--rounded);
-	background-color: var(--bg-lightest);
-}
-
-.topContainer {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-higher);
 }
 
 .category {
 	display: flex;
 	flex-direction: column;
 	padding: var(--s-3);
-	border-radius: var(--rounded);
-	background-color: var(--bg-lighter);
-	font-size: var(--fonts-sm);
-	font-weight: 600;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
 	gap: var(--s-4);
 }
 
 .categoryHeader {
 	display: flex;
 	align-items: center;
-	gap: var(--s-2-5);
+	gap: var(--s-3);
 }
 
 .categoryWeapons {
@@ -38,13 +32,13 @@
 .categoryWeapon {
 	display: flex;
 	align-items: center;
-	color: var(--text);
-	font-size: var(--fonts-xs);
-	font-weight: var(--body);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-body);
 	gap: var(--s-1);
 }
 
 .categoryWeaponImg {
-	border-radius: var(--rounded);
-	background-color: var(--bg-darker);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
 }

@@ -1,6 +1,10 @@
 import type { Tables } from "~/db/tables";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
 import type * as TeamRepository from "./TeamRepository.server";
-import { TEAM } from "./team-constants";
+import { NON_PLAYER_TEAM_ROLES, TEAM } from "./team-constants";
 
 export function isTeamOwner({
 	team,
@@ -12,20 +16,6 @@ export function isTeamOwner({
 	if (!user) return false;
 
 	return team.members.some((member) => member.isOwner && member.id === user.id);
-}
-
-export function isTeamManager({
-	team,
-	user,
-}: {
-	team: TeamRepository.findByCustomUrl;
-	user?: { id: number };
-}) {
-	if (!user) return false;
-
-	return team.members.some(
-		(member) => (member.isManager || member.isOwner) && member.id === user.id,
-	);
 }
 
 export function isTeamMember({
@@ -52,7 +42,7 @@ export function canAddCustomizedColors(team: {
 	);
 }
 
-/** Returns the user who will become the new owner after old one leaves */
+/** Who becomes owner after the current one leaves. */
 export function resolveNewOwner(
 	members: Array<{
 		id: number;
@@ -75,15 +65,21 @@ export function resolveNewOwner(
 }
 
 /**
- * Returns a list of participant IDs who are considered "substitutes" for a given tournament result,
- * based on the team's member history and the result's participants.
- *
- * A participant is considered a substitute if both:
- * - They are not a current member (i.e., their `leftAt` is set).
- * - They are not a past member who was part of the team during the result's start time.
+ * Custom roles use their explicit `roleType`, predefined ones derive from {@link NON_PLAYER_TEAM_ROLES}.
+ * `null` without a role (callers treat as a player).
  */
+export function getMemberRoleType(member: {
+	role: MemberRole | null;
+	roleType: MemberRoleType | null;
+}): MemberRoleType | null {
+	if (member.roleType) return member.roleType;
+	if (!member.role) return null;
+	return NON_PLAYER_TEAM_ROLES.includes(member.role) ? "OTHER" : "PLAYER";
+}
+
+/** Participants of the result who were neither a current member nor a member at the time of the result. */
 export function subsOfResult<T extends { id: number }>(
-	result: { participants: Array<T>; startTime: number },
+	result: { participants: Array<T>; startsAt: number },
 	members: Array<Pick<Tables["TeamMember"], "userId" | "createdAt" | "leftAt">>,
 ) {
 	const currentMembers = members.filter((member) => !member.leftAt);
@@ -95,9 +91,9 @@ export function subsOfResult<T extends { id: number }>(
 			pastMembers.some(
 				(member) =>
 					member.userId === cur.id &&
-					member.createdAt < result.startTime &&
+					member.createdAt < result.startsAt &&
 					member.leftAt &&
-					member.leftAt > result.startTime,
+					member.leftAt > result.startsAt,
 			)
 		) {
 			return acc;

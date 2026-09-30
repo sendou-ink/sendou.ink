@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 40,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "CB",
+        "SCU",
+        "SCU",
+        "SS"
+      ],
+      [
+        "SSU",
+        "IA",
+        "IA",
+        "RES"
+      ],
+      [
+        "SJ",
+        "RES",
+        "SRU",
+        "QSJ"
+      ]
+    ],
+    "name": "てづか",
+    "weaponLabel": "Splattershot"
+  }
+}

@@ -1,42 +1,55 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { z } from "zod/v4";
+import type { ActionFunctionArgs } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
-import { makeArtist } from "~/features/art/queries/makeArtist.server";
+import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import {
 	errorToast,
-	parseRequestPayload,
+	notFoundIfNullish,
 	successToast,
 } from "~/utils/remix.server";
+import { normalizeFriendCode } from "~/utils/schema";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
-import { _action, actualNumber, friendCode } from "~/utils/zod";
+import { adminActionSchema } from "../admin-schemas";
+import {
+	sendUserBannedWebhook,
+	sendUserUnbannedWebhook,
+} from "../core/discord-webhook.server";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: adminActionSchema,
 	});
-	const user = await requireUser(request);
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
+	const user = requireUser();
 
 	let message: string;
 	switch (data._action) {
 		case "MIGRATE": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			try {
 				const errorMessage = await AdminRepository.migrate({
-					oldUserId: data["old-user"],
-					newUserId: data["new-user"],
+					oldUserId: data.oldUser,
+					newUserId: data.newUser,
 				});
 
 				if (errorMessage) {
 					errorToast(`Migration failed. Reason: ${errorMessage}`);
 				}
+
+				await refreshBannedCache();
 
 				message = "Account migrated";
 				break;
@@ -51,7 +64,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			}
 		}
 		case "REFRESH": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.replacePlusTiers(
 				await plusTiersFromVotingAndLeaderboard(),
@@ -61,37 +74,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "FORCE_PATRON": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.forcePatron({
 				id: data.user,
-				patronSince: new Date(),
-				patronTier: data.patronTier,
-				patronTill: new Date(data.patronTill),
+				patronStartedAt: new Date(),
+				patronTier: Number(data.patronTier),
+				patronExpiresAt: data.patronExpiresAt,
 			});
 
 			message = "Patron status updated";
 			break;
 		}
-		case "CLEAN_UP": {
-			requireRole(user, "ADMIN");
-
-			// on purpose sync
-			AdminRepository.cleanUp();
-
-			message = "Clean up done";
-			break;
-		}
 		case "ARTIST": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
-			makeArtist(data.user);
+			await AdminRepository.makeArtistByUserId(data.user);
 
 			message = "Artist permissions given";
 			break;
 		}
 		case "VIDEO_ADDER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.makeVideoAdderByUserId(data.user);
 
@@ -99,7 +103,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "TOURNAMENT_ORGANIZER": {
-			requireRole(user, "ADMIN");
+			requireRole("ADMIN");
 
 			await AdminRepository.makeTournamentOrganizerByUserId(data.user);
 
@@ -107,7 +111,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LINK_PLAYER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await AdminRepository.linkUserAndPlayer({
 				userId: data.user,
@@ -118,43 +122,73 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "BAN_USER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
+
+			const bannedUser = notFoundIfNullish(
+				await UserRepository.findLeanById(data.user),
+			);
+			const banExpiresAt = data.expiresAt ?? null;
 
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
 				userId: data.user,
-				banned: data.duration ? new Date(data.duration) : 1,
+				banned: banExpiresAt ?? 1,
 				bannedByUserId: user.id,
 			});
 
-			refreshBannedCache();
+			await refreshBannedCache();
+			await refreshApiTokensCache();
+
+			sendUserBannedWebhook({
+				bannedUser,
+				bannedBy: user,
+				reason: data.reason ?? null,
+				expiresAt: banExpiresAt,
+			});
 
 			message = "User banned";
 			break;
 		}
 		case "UNBAN_USER": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
+
+			const unbannedUser = notFoundIfNullish(
+				await UserRepository.findLeanById(data.user),
+			);
 
 			await AdminRepository.unbanUser({
 				userId: data.user,
 				unbannedByUserId: user.id,
 			});
 
-			refreshBannedCache();
+			await refreshBannedCache();
+
+			sendUserUnbannedWebhook({
+				unbannedUser,
+				unbannedBy: user,
+			});
 
 			message = "User unbanned";
 			break;
 		}
 		case "UPDATE_FRIEND_CODE": {
-			requireRole(user, "STAFF");
+			requireRole("STAFF");
 
 			await UserRepository.insertFriendCode({
-				friendCode: data.friendCode,
+				friendCode: normalizeFriendCode(data.friendCode),
 				submitterUserId: user.id,
 				userId: data.user,
 			});
 
 			message = "Friend code updated";
+			break;
+		}
+		case "API_ACCESS": {
+			requireRole("ADMIN");
+
+			await AdminRepository.makeApiAccesserByUserId(data.user);
+
+			message = "API access granted";
 			break;
 		}
 		default: {
@@ -164,55 +198,3 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	return successToast(message);
 };
-
-export const adminActionSchema = z.union([
-	z.object({
-		_action: _action("MIGRATE"),
-		"old-user": z.preprocess(actualNumber, z.number().positive()),
-		"new-user": z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("REFRESH"),
-	}),
-	z.object({
-		_action: _action("CLEAN_UP"),
-	}),
-	z.object({
-		_action: _action("FORCE_PATRON"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-		patronTier: z.preprocess(actualNumber, z.number()),
-		patronTill: z.string(),
-	}),
-	z.object({
-		_action: _action("VIDEO_ADDER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("TOURNAMENT_ORGANIZER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("ARTIST"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("LINK_PLAYER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-		playerId: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("BAN_USER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-		reason: z.string().nullish(),
-		duration: z.string().nullish(),
-	}),
-	z.object({
-		_action: _action("UNBAN_USER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("UPDATE_FRIEND_CODE"),
-		friendCode,
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-]);

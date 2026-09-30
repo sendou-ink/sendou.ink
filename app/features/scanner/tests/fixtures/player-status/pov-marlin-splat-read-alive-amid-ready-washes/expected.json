@@ -1,0 +1,38 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-left",
+		"time": 246,
+		"special": [
+			[
+				true,
+				false,
+				false,
+				false
+			],
+			[
+				true,
+				false,
+				false,
+				false
+			]
+		],
+		"dead": [
+			[
+				false,
+				false,
+				true,
+				false
+			],
+			[
+				false,
+				false,
+				false,
+				false
+			]
+		]
+	},
+	"options": {
+		"notes": "Sendou POV, Marlin Airport SZ at 4:06 (2026-08-22 VoD, t=104) — live gameplay with two genuine ready washes on screen at once: left slot 0 (Sendou's own N-ZAP, gauge full) and right slot 0 (.52 Gal) both wear the pale camo. Left slot 2 is crossed out. The scan read layout=pov special L[1.1.] R[1...] dead L[....]: both real washes were caught but the splatted left slot 2 read alive with a phantom star, and the badge-less POV strip flapped to the pov geometry (this stretch alternates pov/cast/cast-mirror read to read) instead of holding the established cast layout. Measured on the frame: icon centers sit on the cast-mirror pitches (same arrangement as the 4:48 frame of this match), so the layout to hold is cast-mirror, not cast — under the true centers both washes, the splat, and the five plain alive slots all read clean."
+	}
+}

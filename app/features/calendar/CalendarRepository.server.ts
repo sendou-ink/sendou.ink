@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import type {
 	Expression,
 	ExpressionBuilder,
@@ -5,44 +6,59 @@ import type {
 	Transaction,
 } from "kysely";
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type {
-	CalendarEventTag,
-	DB,
-	Tables,
-	TournamentSettings,
-} from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
+import type { TeamPickSettings, TournamentSettings } from "~/db/tables-json";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as Series from "~/features/tournament-organization/core/Series";
+import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
 	databaseTimestampToJavascriptTimestamp,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
-import type { Unwrapped } from "~/utils/types";
+import { invariant } from "~/utils/invariant";
+import {
+	commonUserSelect,
+	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
+	tournamentLogoWithDefault,
+	tournamentMembersCount,
+	tournamentTeamsCount,
+} from "~/utils/kysely.server";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
 	modesIncluded,
 	normalizedTeamCount,
 	tournamentIsRanked,
 } from "../tournament/tournament-utils";
-import type { CalendarEvent } from "./calendar-types";
+import type { CalendarEvent, CalendarEventTag } from "./calendar-types";
 import { calendarEventSorter } from "./calendar-utils";
 
-// TODO: convert from raw to using the "exists" function
-const hasBadge = sql<number> /* sql */`exists (
-  select
-    1
-  from
-    "CalendarEventBadge"
-  where
-    "CalendarEventBadge"."eventId" = "CalendarEventDate"."eventId"
-)`.as("hasBadge");
+const RECENT_TOURNAMENTS_SHOWN = 10;
+
+function hasBadge(eb: ExpressionBuilder<DB, "CalendarEventDate">) {
+	return eb
+		.exists(
+			eb
+				.selectFrom("CalendarEventBadge")
+				.select("CalendarEventBadge.eventId")
+				.whereRef(
+					"CalendarEventBadge.eventId",
+					"=",
+					"CalendarEventDate.eventId",
+				),
+		)
+		.as("hasBadge");
+}
 
 const withMapPool = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	return jsonArrayFrom(
@@ -51,19 +67,6 @@ const withMapPool = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 			.select(["MapPoolMap.stageId", "MapPoolMap.mode"])
 			.whereRef("MapPoolMap.calendarEventId", "=", "CalendarEvent.id"),
 	).as("mapPool");
-};
-
-const withTieBreakerMapPool = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("MapPoolMap")
-			.select(["MapPoolMap.stageId", "MapPoolMap.mode"])
-			.whereRef(
-				"MapPoolMap.tieBreakerCalendarEventId",
-				"=",
-				"CalendarEvent.id",
-			),
-	).as("tieBreakerMapPool");
 };
 
 const withBadgePrizes = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
@@ -76,6 +79,15 @@ const withBadgePrizes = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	).as("badgePrizes");
 };
 
+const withTrophy = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("Trophy")
+			.select(["Trophy.id", "Trophy.name", "Trophy.model"])
+			.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
+	).as("trophy");
+};
+
 function tournamentOrganization(organizationId: Expression<number | null>) {
 	return jsonObjectFrom(
 		db
@@ -85,11 +97,14 @@ function tournamentOrganization(organizationId: Expression<number | null>) {
 				"TournamentOrganization.avatarImgId",
 				"UserSubmittedImage.id",
 			)
-			.select([
+			.select((eb) => [
 				"TournamentOrganization.id",
 				"TournamentOrganization.name",
 				"TournamentOrganization.slug",
-				"UserSubmittedImage.url as avatarUrl",
+				"TournamentOrganization.isEstablished",
+				concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+					"logoUrl",
+				),
 			])
 			.whereRef("TournamentOrganization.id", "=", organizationId),
 	);
@@ -119,35 +134,6 @@ const withOrganization = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
 			),
 	);
 
-const withTeamsCount = (
-	eb: ExpressionBuilder<DB, "CalendarEventDate" | "Tournament">,
-) =>
-	eb
-		.selectFrom("TournamentTeam")
-		.leftJoin("TournamentTeamCheckIn", (join) =>
-			join
-				.on("TournamentTeamCheckIn.bracketIdx", "is", null)
-				.onRef(
-					"TournamentTeamCheckIn.tournamentTeamId",
-					"=",
-					"TournamentTeam.id",
-				),
-		)
-		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-		.where((eb) =>
-			eb.or([
-				eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-				eb("CalendarEventDate.startTime", ">", databaseTimestampNow()),
-			]),
-		)
-		.select(({ fn }) => [fn.countAll<number>().as("teamsCount")]);
-
-const withLogoUrl = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
-	eb
-		.selectFrom("UserSubmittedImage")
-		.select(["UserSubmittedImage.url"])
-		.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id");
-
 function findAllBetweenTwoTimestampsQuery({
 	startTime,
 	endTime,
@@ -163,19 +149,22 @@ function findAllBetweenTwoTimestampsQuery({
 		.select((eb) => [
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.authorId",
+			"CalendarEvent.organizationId",
 			"Tournament.id as tournamentId",
 			"Tournament.settings as tournamentSettings",
 			"Tournament.mapPickingStyle",
+			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEvent.tags",
-			"CalendarEventDate.startTime",
-			// events get grouped to their closest :00 or :30 so for example users can't make their event start at :59 to make it show at the top
-			sql<number>`(("CalendarEventDate"."startTime" + 900) / 1800) * 1800`.as(
-				"normalizedStartTime",
+			"CalendarEventDate.startsAt",
+			// grouped to the closest :00 or :30 so a :59 start can't game its way to the top
+			sql<number>`(("CalendarEventDate"."startsAt" + 900) / 1800) * 1800`.as(
+				"normalizedStartsAt",
 			),
 			withOrganization(eb).as("organization"),
-			withTeamsCount(eb).as("teamsCount"),
-			withLogoUrl(eb).as("logoUrl"),
+			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentMembersCount(eb).as("membersCount"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("MapPoolMap")
@@ -194,19 +183,21 @@ function findAllBetweenTwoTimestampsQuery({
 					)
 					.orderBy("Badge.id", "asc"),
 			).as("badges"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("Trophy")
+					.select(["Trophy.model"])
+					.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
+			).as("trophy"),
 		])
 		.where("CalendarEvent.hidden", "=", 0)
 		.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			">=",
 			dateToDatabaseTimestamp(startTime),
 		)
-		.where(
-			"CalendarEventDate.startTime",
-			"<=",
-			dateToDatabaseTimestamp(endTime),
-		)
-		.$narrowType<{ teamsCount: NotNull }>()
+		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
+		.$narrowType<{ teamsCount: NotNull; membersCount: NotNull }>()
 		.execute();
 }
 
@@ -216,14 +207,25 @@ function findAllBetweenTwoTimestampsMapped(
 	at: number;
 	events: Array<CalendarEvent>;
 }> {
-	const mapped: Array<CalendarEvent & { startTime: number }> = rows.map(
+	const mapped: Array<CalendarEvent & { startsAt: number }> = rows.map(
 		(row) => {
-			const tags = row.tags
-				? (row.tags.split(",") as CalendarEvent["tags"])
-				: [];
+			// a virtual tag: leagues are told apart by their setting, not by anything the organizer picks
+			const tags: Array<CalendarEventTag> = row.tournamentSettings?.isLeague
+				? ["LEAGUE", ...(row.tags ?? [])]
+				: (row.tags ?? []);
+
+			const isPastEvent =
+				databaseTimestampToDate(row.startsAt) < sub(new Date(), { days: 1 });
+			const tentativeTier =
+				row.tier === null &&
+				row.organizationId !== null &&
+				row.tournamentId !== null &&
+				!isPastEvent
+					? getTentativeTier(row.organizationId, row.name)
+					: null;
 
 			return {
-				at: databaseTimestampToJavascriptTimestamp(row.startTime),
+				at: databaseTimestampToJavascriptTimestamp(row.startsAt),
 				type: "calendar",
 				id: row.eventId,
 				url: row.tournamentId
@@ -234,6 +236,8 @@ function findAllBetweenTwoTimestampsMapped(
 				authorId: row.authorId,
 				tags: tags.filter((tag) => !EXCLUDED_TAGS.includes(tag)),
 				teamsCount: row.teamsCount,
+				membersCount: row.membersCount,
+				minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
 				normalizedTeamCount: normalizedTeamCount({
 					teamsCount: row.teamsCount,
 					minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
@@ -243,24 +247,30 @@ function findAllBetweenTwoTimestampsMapped(
 					: tags.includes("SR")
 						? ["SR"]
 						: row.mapPickingStyle
-							? modesIncluded(row.mapPickingStyle, row.toSetMapPool)
+							? modesIncluded(
+									row.tournamentSettings?.teamPick,
+									row.toSetMapPool,
+								)
 							: null,
 				badges: row.badges,
+				trophy: row.trophy,
 				logoUrl: row.logoUrl,
-				startTime: row.normalizedStartTime,
+				startsAt: row.normalizedStartsAt,
 				isRanked: row.tournamentSettings
 					? tournamentIsRanked({
 							isSetAsRanked: row.tournamentSettings.isRanked,
-							startTime: databaseTimestampToDate(row.startTime),
+							startsAt: databaseTimestampToDate(row.startsAt),
 							minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
 							isTest: row.tournamentSettings.isTest ?? false,
 						})
 					: null,
+				tier: row.tier ?? null,
+				tentativeTier,
 			};
 		},
 	);
 
-	const grouped = R.groupBy(mapped, (row) => row.startTime);
+	const grouped = R.groupBy(mapped, (row) => row.startsAt);
 	const dates = Object.keys(grouped)
 		.map((dbTimestamp) => ({
 			at: databaseTimestampToDate(Number(dbTimestamp)).getTime(),
@@ -271,89 +281,23 @@ function findAllBetweenTwoTimestampsMapped(
 	return dates;
 }
 
-export type ForShowcase = Unwrapped<typeof forShowcase>;
-
-export function forShowcase() {
-	return db
-		.selectFrom("Tournament")
-		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
-		.innerJoin(
-			"CalendarEventDate",
-			"CalendarEvent.id",
-			"CalendarEventDate.eventId",
-		)
-		.select((eb) => [
-			"Tournament.id",
-			"Tournament.settings",
-			"CalendarEvent.authorId",
-			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
-			withTeamsCount(eb).as("teamsCount"),
-			withLogoUrl(eb).as("logoUrl"),
-			withOrganization(eb).as("organization"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentResult")
-					.innerJoin("User", "TournamentResult.userId", "User.id")
-					.innerJoin(
-						"TournamentTeam",
-						"TournamentResult.tournamentTeamId",
-						"TournamentTeam.id",
-					)
-					.leftJoin("AllTeam", "TournamentTeam.teamId", "AllTeam.id")
-					.leftJoin(
-						"UserSubmittedImage as TeamAvatar",
-						"AllTeam.avatarImgId",
-						"TeamAvatar.id",
-					)
-					.leftJoin(
-						"UserSubmittedImage as TournamentTeamAvatar",
-						"TournamentTeam.avatarImgId",
-						"TournamentTeamAvatar.id",
-					)
-					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
-					.where("TournamentResult.placement", "=", 1)
-					.select([
-						...COMMON_USER_FIELDS,
-						"User.country",
-						"TournamentTeam.name as teamName",
-						"TeamAvatar.url as teamLogoUrl",
-						"TournamentTeamAvatar.url as pickupAvatarUrl",
-					]),
-			).as("firstPlacers"),
-		])
-		.where("CalendarEvent.hidden", "=", 0)
-		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
-		.orderBy("CalendarEventDate.startTime", "asc")
-		.$narrowType<{ teamsCount: NotNull }>()
-		.execute();
-}
-
-function databaseTimestampWeekAgo() {
-	const now = new Date();
-
-	now.setDate(now.getDate() - 7);
-
-	return dateToDatabaseTimestamp(now);
-}
-
 export async function findById(
 	id: number,
 	{
 		includeMapPool = false,
-		includeTieBreakerMapPool = false,
 		includeBadgePrizes = false,
+		includeTrophy = false,
 	}: {
 		includeMapPool?: boolean;
-		includeTieBreakerMapPool?: boolean;
 		includeBadgePrizes?: boolean;
+		includeTrophy?: boolean;
 	} = {},
 ) {
 	const [firstRow, ...rest] = await db
 		.selectFrom("CalendarEvent")
 		.$if(includeMapPool, (qb) => qb.select(withMapPool))
-		.$if(includeTieBreakerMapPool, (qb) => qb.select(withTieBreakerMapPool))
 		.$if(includeBadgePrizes, (qb) => qb.select(withBadgePrizes))
+		.$if(includeTrophy, (qb) => qb.select(withTrophy))
 		.innerJoin(
 			"CalendarEventDate",
 			"CalendarEvent.id",
@@ -361,7 +305,7 @@ export async function findById(
 		)
 		.innerJoin("User", "CalendarEvent.authorId", "User.id")
 		.leftJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
-		.select(({ ref }) => [
+		.select((eb) => [
 			"CalendarEvent.name",
 			"CalendarEvent.description",
 			"CalendarEvent.discordInviteCode",
@@ -372,33 +316,74 @@ export async function findById(
 			"CalendarEvent.participantCount",
 			"CalendarEvent.avatarImgId",
 			"Tournament.mapPickingStyle",
-			"User.id as authorId",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"CalendarEventDate.eventId",
-			"User.username",
-			"User.discordId",
-			"User.discordAvatar",
-			hasBadge,
-			tournamentOrganization(ref("CalendarEvent.organizationId")).as(
+			...commonUserSelect(eb, { idAs: "authorId" }),
+			hasBadge(eb),
+			tournamentOrganization(eb.ref("CalendarEvent.organizationId")).as(
 				"organization",
 			),
 		])
 		.where("CalendarEvent.id", "=", id)
-		.orderBy("CalendarEventDate.startTime", "asc")
+		.orderBy("CalendarEventDate.startsAt", "asc")
 		.execute();
 
 	if (!firstRow) return null;
 
+	const startTimes = [firstRow, ...rest].map((row) => row.startsAt);
+	const now = new Date();
+
 	return {
 		...firstRow,
-		tags: tagsArray(firstRow),
-		startTimes: [firstRow, ...rest].map((row) => row.startTime),
-		startTime: undefined,
+		tags: firstRow.tags ?? [],
+		startTimes,
+		startsAt: undefined,
+		permissions: {
+			EDIT: [firstRow.authorId],
+			DELETE:
+				databaseTimestampToDate(startTimes[0]) > now ? [firstRow.authorId] : [],
+			REPORT_WINNERS: startTimes.every(
+				(startTime) => databaseTimestampToDate(startTime) < now,
+			)
+				? [firstRow.authorId]
+				: [],
+		},
 	};
 }
 
-export async function findRecentTournamentsByAuthorId(authorId: number) {
-	return db
+/** Logo image ids of the given event and of the given tournament's event: what the new event form may keep when editing or copying. */
+export async function findAvatarImgIds({
+	eventId,
+	tournamentId,
+}: {
+	eventId?: number;
+	tournamentId?: number;
+}) {
+	if (!eventId && !tournamentId) return [];
+
+	const rows = await db
+		.selectFrom("CalendarEvent")
+		.select("CalendarEvent.avatarImgId")
+		.where((eb) =>
+			eb.or([
+				...(eventId ? [eb("CalendarEvent.id", "=", eventId)] : []),
+				...(tournamentId
+					? [eb("CalendarEvent.tournamentId", "=", tournamentId)]
+					: []),
+			]),
+		)
+		.where("CalendarEvent.avatarImgId", "is not", null)
+		.execute();
+
+	return rows.flatMap((row) => (row.avatarImgId ? [row.avatarImgId] : []));
+}
+
+/**
+ * Past year's tournaments the user organized (author, organization ADMIN/ORGANIZER or staff
+ * ORGANIZER), newest first. Latest event per series only, the next newest filling spare spots.
+ */
+export async function findRecentTournamentsByOrganizerUserId(userId: number) {
+	const tournaments = await db
 		.selectFrom("CalendarEvent")
 		.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
 		.innerJoin(
@@ -406,27 +391,82 @@ export async function findRecentTournamentsByAuthorId(authorId: number) {
 			"CalendarEvent.id",
 			"CalendarEventDate.eventId",
 		)
-		.select([
+		.select(({ fn }) => [
 			"CalendarEvent.id",
 			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
+			"CalendarEvent.organizationId",
+			fn.min("CalendarEventDate.startsAt").as("startsAt"),
 		])
-		.where("CalendarEvent.authorId", "=", authorId)
-		.orderBy("CalendarEvent.id", "desc")
-		.limit(10)
+		.where((eb) =>
+			eb.or([
+				eb("CalendarEvent.authorId", "=", userId),
+				eb.exists(
+					eb
+						.selectFrom("TournamentOrganizationMember")
+						.select("TournamentOrganizationMember.userId")
+						.whereRef(
+							"TournamentOrganizationMember.organizationId",
+							"=",
+							"CalendarEvent.organizationId",
+						)
+						.where("TournamentOrganizationMember.userId", "=", userId)
+						.where("TournamentOrganizationMember.role", "in", [
+							"ADMIN",
+							"ORGANIZER",
+						]),
+				),
+				eb.exists(
+					eb
+						.selectFrom("TournamentStaff")
+						.select("TournamentStaff.userId")
+						.whereRef(
+							"TournamentStaff.tournamentId",
+							"=",
+							"CalendarEvent.tournamentId",
+						)
+						.where("TournamentStaff.userId", "=", userId)
+						.where("TournamentStaff.role", "=", "ORGANIZER"),
+				),
+			]),
+		)
+		.where(
+			"CalendarEventDate.startsAt",
+			">=",
+			dateToDatabaseTimestamp(sub(new Date(), { years: 1 })),
+		)
+		.groupBy("CalendarEvent.id")
+		.orderBy("startsAt", "desc")
 		.execute();
-}
 
-function tagsArray(args: {
-	hasBadge: number;
-	tags?: Tables["CalendarEvent"]["tags"];
-	tournamentId: Tables["CalendarEvent"]["tournamentId"];
-}) {
-	const tags = (
-		args.tags ? args.tags.split(",") : []
-	) as Array<CalendarEventTag>;
+	const series =
+		await TournamentOrganizationRepository.findAllSeriesByOrganizationIds(
+			R.unique(
+				tournaments
+					.map((tournament) => tournament.organizationId)
+					.filter((organizationId) => organizationId !== null),
+			),
+		);
 
-	return tags;
+	const latestOfEachSeries = R.uniqueBy(tournaments, (tournament) => {
+		const tournamentSeries = Series.findByEventName({
+			series: series.filter(
+				(oneSeries) => oneSeries.organizationId === tournament.organizationId,
+			),
+			eventName: tournament.name,
+		});
+
+		return tournamentSeries
+			? `series-${tournamentSeries.id}`
+			: `event-${tournament.id}`;
+	});
+
+	return R.sortBy(
+		R.take(
+			R.unique([...latestOfEachSeries, ...tournaments]),
+			RECENT_TOURNAMENTS_SHOWN,
+		),
+		[(tournament) => tournament.startsAt, "desc"],
+	);
 }
 
 export async function findResultsByEventId(eventId: number) {
@@ -440,13 +480,9 @@ export async function findResultsByEventId(eventId: number) {
 				eb
 					.selectFrom("CalendarEventResultPlayer")
 					.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
-					.select([
-						"CalendarEventResultPlayer.userId as id",
+					.select((playerEb) => [
+						...commonUserSelect(playerEb),
 						"CalendarEventResultPlayer.name",
-						"User.username",
-						"User.discordId",
-						"User.discordAvatar",
-						"User.customUrl",
 					])
 					.whereRef(
 						"CalendarEventResultPlayer.teamId",
@@ -460,6 +496,28 @@ export async function findResultsByEventId(eventId: number) {
 		.execute();
 }
 
+/** Podium players of the events, one row each; players reported as plain text have a `null` id. */
+export async function findTopThreeResultsByEventIds(eventIds: number[]) {
+	if (eventIds.length === 0) return [];
+
+	return db
+		.selectFrom("CalendarEventResultTeam")
+		.innerJoin(
+			"CalendarEventResultPlayer",
+			"CalendarEventResultPlayer.teamId",
+			"CalendarEventResultTeam.id",
+		)
+		.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
+		.select((eb) => [
+			"CalendarEventResultTeam.id as teamId",
+			"CalendarEventResultTeam.placement",
+			...commonUserSelect(eb),
+		])
+		.where("CalendarEventResultTeam.eventId", "in", eventIds)
+		.where("CalendarEventResultTeam.placement", "<=", 3)
+		.execute();
+}
+
 type CreateArgs = Pick<
 	Tables["CalendarEvent"],
 	| "name"
@@ -470,20 +528,27 @@ type CreateArgs = Pick<
 	| "bracketUrl"
 	| "organizationId"
 > & {
-	startTimes: Array<Tables["CalendarEventDate"]["startTime"]>;
+	startTimes: Array<Tables["CalendarEventDate"]["startsAt"]>;
 	badges: Array<Tables["CalendarEventBadge"]["badgeId"]>;
+	trophyId?: Tables["CalendarEvent"]["trophyId"];
+	/** The organizer's map pool: the maps of a "TO" tournament or the custom pool of a team picked one. */
 	mapPoolMaps?: Array<Pick<Tables["MapPoolMap"], "mode" | "stageId">>;
 	isFullTournament: boolean;
 	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"];
+	/** Defaults to every ranked mode from the SendouQ pool for an "AUTO" tournament. */
+	teamPick?: TeamPickSettings;
 	bracketProgression: TournamentSettings["bracketProgression"] | null;
 	minMembersPerTeam?: number;
+	maxMembersPerTeam?: number;
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
 	requireInGameNames?: boolean;
+	requireSendouQParticipation?: boolean;
 	isRanked?: boolean;
 	isTest?: boolean;
+	isLeague?: boolean;
+	isDraft?: boolean;
 	isInvitational?: boolean;
-	deadlines: TournamentSettings["deadlines"];
 	enableNoScreenToggle?: boolean;
 	enableSubs?: boolean;
 	autonomousSubs?: boolean;
@@ -495,9 +560,8 @@ type CreateArgs = Pick<
 	avatarFileName?: string;
 	avatarImgId?: number;
 	autoValidateAvatar?: boolean;
-	parentTournamentId?: number;
 };
-export async function create(args: CreateArgs) {
+export async function insert(args: CreateArgs) {
 	const copiedStaff = args.tournamentToCopyId
 		? await db
 				.selectFrom("TournamentStaff")
@@ -517,14 +581,17 @@ export async function create(args: CreateArgs) {
 				thirdPlaceMatch: args.thirdPlaceMatch,
 				isRanked: args.isRanked,
 				isTest: args.isTest,
-				deadlines: args.deadlines,
+				isLeague: args.isLeague,
+				isDraft: args.isDraft,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
 				enableSubs: args.enableSubs,
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
 				requireInGameNames: args.requireInGameNames,
+				requireSendouQParticipation: args.requireSendouQParticipation,
 				minMembersPerTeam: args.minMembersPerTeam,
+				maxMembersPerTeam: args.maxMembersPerTeam,
 				swiss:
 					args.swissGroupCount && args.swissRoundCount
 						? {
@@ -532,6 +599,7 @@ export async function create(args: CreateArgs) {
 								roundCount: args.swissRoundCount,
 							}
 						: undefined,
+				teamPick: teamPickSettings(args),
 			};
 
 			tournamentId = (
@@ -540,35 +608,30 @@ export async function create(args: CreateArgs) {
 					.values({
 						mapPickingStyle: args.mapPickingStyle,
 						settings: JSON.stringify(settings),
-						parentTournamentId: args.parentTournamentId,
 						rules: args.rules,
 					})
 					.returning("id")
 					.executeTakeFirstOrThrow()
 			).id;
 
-			if (copiedStaff.length > 0) {
-				await trx
-					.insertInto("TournamentStaff")
-					.columns(["role", "userId", "tournamentId"])
-					.values(
-						copiedStaff.map((staff) => ({
-							role: staff.role,
-							userId: staff.userId,
-							tournamentId: tournamentId!,
-						})),
-					)
-					.execute();
-			}
+			await trx
+				.insertInto("TournamentStaff")
+				.columns(["role", "userId", "tournamentId"])
+				.values(
+					copiedStaff.map((staff) => ({
+						role: staff.role,
+						userId: staff.userId,
+						tournamentId: tournamentId!,
+					})),
+				)
+				.execute();
 		}
 
 		const avatarImgId = args.avatarFileName
-			? await createSubmittedImageInTrx({
+			? await insertSubmittedImage(
+					{ avatarFileName: args.avatarFileName, userId: args.authorId },
 					trx,
-					avatarFileName: args.avatarFileName,
-					autoValidateAvatar: args.autoValidateAvatar,
-					userId: args.authorId,
-				})
+				)
 			: null;
 
 		const { id: eventId } = await trx
@@ -576,51 +639,37 @@ export async function create(args: CreateArgs) {
 			.values({
 				name: args.name,
 				authorId: args.authorId,
-				tags: args.tags,
+				tags: args.tags ? JSON.stringify(args.tags) : null,
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
-				hidden: args.parentTournamentId || args.isTest ? 1 : 0,
+				hidden: args.isTest || args.isDraft ? 1 : 0,
 				tournamentId,
+				trophyId: args.trophyId ?? null,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
-		await createDatesInTrx({ eventId, startTimes: args.startTimes, trx });
-		await createBadgesInTrx({ eventId, badges: args.badges, trx });
+		await insertDates({ eventId, startTimes: args.startTimes }, trx);
+		await insertBadges({ eventId, badges: args.badges }, trx);
 
-		await upsertMapPoolInTrx({
-			trx,
-			eventId,
-			mapPoolMaps: args.mapPoolMaps ?? [],
-			column:
-				args.isFullTournament && args.mapPickingStyle !== "TO"
-					? "tieBreakerCalendarEventId"
-					: "calendarEventId",
-		});
+		await upsertMapPool({ eventId, mapPoolMaps: args.mapPoolMaps ?? [] }, trx);
 
 		return { eventId, tournamentId };
 	});
 }
 
-async function createSubmittedImageInTrx({
-	trx,
-	autoValidateAvatar,
-	avatarFileName,
-	userId,
-}: {
-	trx: Transaction<DB>;
-	avatarFileName: string;
-	autoValidateAvatar?: boolean;
-	userId: number;
-}) {
+async function insertSubmittedImage(
+	{ avatarFileName, userId }: { avatarFileName: string; userId: number },
+	trx: Transaction<DB>,
+) {
 	const result = await trx
 		.insertInto("UnvalidatedUserSubmittedImage")
 		.values({
 			url: avatarFileName,
-			validatedAt: autoValidateAvatar ? databaseTimestampNow() : null,
+			validatedAt: databaseTimestampNow(),
 			submitterUserId: userId,
 		})
 		.returning("id")
@@ -629,70 +678,72 @@ async function createSubmittedImageInTrx({
 	return result.id;
 }
 
-type UpdateArgs = Omit<
-	CreateArgs,
-	"createTournament" | "mapPickingStyle" | "isFullTournament"
-> & {
+type UpdateArgs = Omit<CreateArgs, "createTournament" | "isFullTournament"> & {
 	eventId: number;
 };
 export async function update(args: UpdateArgs) {
 	return db.transaction().execute(async (trx) => {
 		const avatarImgId = args.avatarFileName
-			? await createSubmittedImageInTrx({
+			? await insertSubmittedImage(
+					{ avatarFileName: args.avatarFileName, userId: args.authorId },
 					trx,
-					avatarFileName: args.avatarFileName,
-					autoValidateAvatar: args.autoValidateAvatar,
-					userId: args.authorId,
-				})
+				)
 			: null;
 
 		const { tournamentId } = await trx
 			.updateTable("CalendarEvent")
 			.set({
 				name: args.name,
-				tags: args.tags,
+				tags: args.tags ? JSON.stringify(args.tags) : null,
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
+				trophyId: args.trophyId ?? null,
 			})
 			.where("id", "=", args.eventId)
 			.returning("tournamentId")
 			.executeTakeFirstOrThrow();
 
-		const mapPickingStyle = tournamentId
-			? await updateTournamentTables(args, trx, tournamentId)
-			: null;
+		if (tournamentId) {
+			await updateTournamentTables(args, trx, tournamentId);
+		}
+
+		if (tournamentId) {
+			const { settings: existingSettings } = await trx
+				.selectFrom("Tournament")
+				.select(["settings"])
+				.where("id", "=", tournamentId)
+				.executeTakeFirstOrThrow();
+
+			const hidden = existingSettings.isTest || args.isDraft ? 1 : 0;
+			await trx
+				.updateTable("CalendarEvent")
+				.set({ hidden })
+				.where("id", "=", args.eventId)
+				.execute();
+		}
 
 		await trx
 			.deleteFrom("CalendarEventDate")
 			.where("eventId", "=", args.eventId)
 			.execute();
-		await createDatesInTrx({
-			eventId: args.eventId,
-			startTimes: args.startTimes,
+		await insertDates(
+			{ eventId: args.eventId, startTimes: args.startTimes },
 			trx,
-		});
+		);
 
 		await trx
 			.deleteFrom("CalendarEventBadge")
 			.where("eventId", "=", args.eventId)
 			.execute();
-		await createBadgesInTrx({
-			eventId: args.eventId,
-			badges: args.badges,
-			trx,
-		});
+		await insertBadges({ eventId: args.eventId, badges: args.badges }, trx);
 
-		if (!tournamentId || mapPickingStyle === "TO") {
-			await upsertMapPoolInTrx({
-				trx,
-				eventId: args.eventId,
-				mapPoolMaps: args.mapPoolMaps ?? [],
-				column: "calendarEventId",
-			});
-		}
+		await upsertMapPool(
+			{ eventId: args.eventId, mapPoolMaps: args.mapPoolMaps ?? [] },
+			trx,
+		);
 	});
 }
 
@@ -703,13 +754,14 @@ async function updateTournamentTables(
 ) {
 	invariant(args.bracketProgression, "Expected bracketProgression");
 
-	const existingSettings = (
+	const { settings: existingSettings, mapPickingStyle: existingStyle } =
 		await trx
 			.selectFrom("Tournament")
-			.select("settings")
+			.select(["settings", "mapPickingStyle"])
 			.where("id", "=", tournamentId)
-			.executeTakeFirstOrThrow()
-	).settings;
+			.executeTakeFirstOrThrow();
+
+	const teamPick = teamPickSettings({ ...args, isFullTournament: true });
 
 	const settings: Tables["Tournament"]["settings"] = {
 		bracketProgression: args.bracketProgression,
@@ -717,14 +769,17 @@ async function updateTournamentTables(
 		thirdPlaceMatch: args.thirdPlaceMatch,
 		isRanked: args.isRanked,
 		isTest: existingSettings.isTest, // this one is not editable after creation
-		deadlines: args.deadlines,
+		isLeague: args.isLeague,
+		isDraft: args.isDraft,
 		isInvitational: args.isInvitational,
 		enableNoScreenToggle: args.enableNoScreenToggle,
 		enableSubs: args.enableSubs,
 		autonomousSubs: args.autonomousSubs,
 		regClosesAt: args.regClosesAt,
 		requireInGameNames: args.requireInGameNames,
+		requireSendouQParticipation: args.requireSendouQParticipation,
 		minMembersPerTeam: args.minMembersPerTeam,
+		maxMembersPerTeam: args.maxMembersPerTeam,
 		swiss:
 			args.swissGroupCount && args.swissRoundCount
 				? {
@@ -732,26 +787,45 @@ async function updateTournamentTables(
 						roundCount: args.swissRoundCount,
 					}
 				: undefined,
+		teamPick,
 	};
 
-	const { mapPickingStyle } = await trx
+	const changedFormat = Progression.changedBracketProgressionFormat(
+		existingSettings.bracketProgression,
+		args.bracketProgression,
+	);
+	const changedMapPickingStyle =
+		existingStyle !== args.mapPickingStyle ||
+		!R.isDeepEqual(existingSettings.teamPick ?? null, teamPick ?? null);
+
+	await trx
 		.updateTable("Tournament")
 		.set({
+			mapPickingStyle: args.mapPickingStyle,
 			settings: JSON.stringify(settings),
 			rules: args.rules,
-			preparedMaps: Progression.changedBracketProgressionFormat(
-				existingSettings.bracketProgression,
-				args.bracketProgression,
-			)
-				? null
-				: undefined,
+			preparedMaps: changedFormat || changedMapPickingStyle ? null : undefined,
 		})
 		.where("id", "=", tournamentId)
-		.returning("mapPickingStyle")
-		.executeTakeFirstOrThrow();
+		.execute();
+
+	const existingMapPool = await trx
+		.selectFrom("MapPoolMap")
+		.select(["mode", "stageId"])
+		.where("calendarEventId", "=", args.eventId)
+		.execute();
+	const changedMapPool =
+		MapPool.serialize(existingMapPool) !==
+		MapPool.serialize(args.mapPoolMaps ?? []);
+
+	// the teams' picks were made against the old settings, so they pick again
+	if (changedMapPickingStyle || changedMapPool) {
+		await resetTeamMapPicks({ tournamentId, args }, trx);
+	}
 
 	if (
-		Progression.changedBracketProgressionFormat(
+		changedFormat ||
+		Progression.changedStartingBrackets(
 			existingSettings.bracketProgression,
 			args.bracketProgression,
 		)
@@ -762,36 +836,76 @@ async function updateTournamentTables(
 			.where("tournamentId", "=", tournamentId)
 			.execute();
 	}
-
-	return mapPickingStyle;
 }
 
-function createDatesInTrx({
-	eventId,
-	startTimes,
-	trx,
-}: {
-	eventId: number;
-	startTimes: CreateArgs["startTimes"];
-	trx: Transaction<DB>;
-}) {
-	return trx
-		.insertInto("CalendarEventDate")
-		.values(startTimes.map((startTime) => ({ startTime, eventId })))
+/**
+ * Deletes every team's map picks. Teams that had picked are also checked out when picks are still
+ * a check-in requirement, as otherwise they would enter the bracket without a pool.
+ */
+async function resetTeamMapPicks(
+	{
+		tournamentId,
+		args,
+	}: { tournamentId: number; args: Pick<UpdateArgs, "mapPickingStyle"> },
+	trx: Transaction<DB>,
+) {
+	// before the picks go, as the teams to check out are the ones that have them
+	if (args.mapPickingStyle !== "TO") {
+		await trx
+			.deleteFrom("TournamentTeamCheckIn")
+			.where("bracketIdx", "is", null)
+			.where("tournamentTeamId", "in", (eb) =>
+				eb
+					.selectFrom("MapPoolMap")
+					.innerJoin(
+						"TournamentTeam",
+						"TournamentTeam.id",
+						"MapPoolMap.tournamentTeamId",
+					)
+					.select("TournamentTeam.id")
+					.where("TournamentTeam.tournamentId", "=", tournamentId),
+			)
+			.execute();
+	}
+
+	await trx
+		.deleteFrom("MapPoolMap")
+		.where("tournamentTeamId", "in", (eb) =>
+			eb
+				.selectFrom("TournamentTeam")
+				.select("id")
+				.where("tournamentId", "=", tournamentId),
+		)
 		.execute();
 }
 
-function createBadgesInTrx({
-	eventId,
-	badges,
-	trx,
-}: {
-	eventId: number;
-	badges: CreateArgs["badges"];
-	trx: Transaction<DB>;
-}) {
-	if (!badges.length) return;
+function teamPickSettings(
+	args: Pick<CreateArgs, "mapPickingStyle" | "teamPick" | "isFullTournament">,
+) {
+	if (!args.isFullTournament || args.mapPickingStyle !== "AUTO") {
+		return undefined;
+	}
 
+	return args.teamPick ?? TeamPick.defaultSettings([...rankedModesShort]);
+}
+
+function insertDates(
+	{
+		eventId,
+		startTimes,
+	}: { eventId: number; startTimes: CreateArgs["startTimes"] },
+	trx: Transaction<DB>,
+) {
+	return trx
+		.insertInto("CalendarEventDate")
+		.values(startTimes.map((startsAt) => ({ startsAt, eventId })))
+		.execute();
+}
+
+function insertBadges(
+	{ eventId, badges }: { eventId: number; badges: CreateArgs["badges"] },
+	trx: Transaction<DB>,
+) {
 	return trx
 		.insertInto("CalendarEventBadge")
 		.values(
@@ -828,53 +942,46 @@ export function upsertReportedScores(args: {
 			.where("eventId", "=", args.eventId)
 			.execute();
 
-		for (const result of args.results) {
-			const insertedResultTeam = await trx
-				.insertInto("CalendarEventResultTeam")
-				.values({
+		const insertedTeams = await trx
+			.insertInto("CalendarEventResultTeam")
+			.values(
+				args.results.map((result) => ({
 					eventId: args.eventId,
 					name: result.teamName,
 					placement: result.placement,
-				})
-				.returning("CalendarEventResultTeam.id")
-				.executeTakeFirstOrThrow();
+				})),
+			)
+			.returning("CalendarEventResultTeam.id")
+			.execute();
 
-			await trx
-				.insertInto("CalendarEventResultPlayer")
-				.values(
-					result.players.map((player) => ({
-						teamId: insertedResultTeam.id,
-						name: player.name,
-						userId: player.userId,
-					})),
-				)
-				.execute();
-		}
+		const teamIds = insertedTeams.map((team) => team.id).sort((a, b) => a - b);
+
+		const players = args.results.flatMap((result, i) =>
+			result.players.map((player) => ({
+				teamId: teamIds[i],
+				name: player.name,
+				userId: player.userId,
+			})),
+		);
+
+		await trx.insertInto("CalendarEventResultPlayer").values(players).execute();
 	});
 }
 
-async function upsertMapPoolInTrx({
-	eventId,
-	mapPoolMaps,
-	column,
-	trx,
-}: {
-	eventId: number;
-	mapPoolMaps: NonNullable<CreateArgs["mapPoolMaps"]>;
-	column: "tieBreakerCalendarEventId" | "calendarEventId";
-	trx: Transaction<DB>;
-}) {
+async function upsertMapPool(
+	{
+		eventId,
+		mapPoolMaps,
+	}: {
+		eventId: number;
+		mapPoolMaps: NonNullable<CreateArgs["mapPoolMaps"]>;
+	},
+	trx: Transaction<DB>,
+) {
 	await trx
 		.deleteFrom("MapPoolMap")
-		.where((eb) =>
-			eb.or([
-				eb("calendarEventId", "=", eventId),
-				eb("tieBreakerCalendarEventId", "=", eventId),
-			]),
-		)
+		.where("calendarEventId", "=", eventId)
 		.execute();
-
-	if (!mapPoolMaps.length) return;
 
 	await trx
 		.insertInto("MapPoolMap")
@@ -882,26 +989,13 @@ async function upsertMapPoolInTrx({
 			mapPoolMaps.map((mapPoolMap) => ({
 				stageId: mapPoolMap.stageId,
 				mode: mapPoolMap.mode,
-				[column]: eventId,
+				calendarEventId: eventId,
 			})),
 		)
 		.execute();
 }
 
-export function deleteById({
-	eventId,
-	tournamentId,
-}: {
-	eventId: number;
-	tournamentId: number | null;
-}) {
-	return db.transaction().execute(async (trx) => {
-		await trx.deleteFrom("CalendarEvent").where("id", "=", eventId).execute();
-		if (tournamentId) {
-			await trx
-				.deleteFrom("Tournament")
-				.where("id", "=", tournamentId)
-				.execute();
-		}
-	});
+/** Deletes the event, and its tournament if it has one. */
+export function deleteById(eventId: number) {
+	return db.deleteFrom("CalendarEvent").where("id", "=", eventId).execute();
 }

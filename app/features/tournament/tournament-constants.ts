@@ -1,19 +1,24 @@
+import { TEAM } from "../team/team-constants";
+
 export const TOURNAMENT = {
-	TEAM_NAME_MAX_LENGTH: 32,
-	COUNTERPICK_MAPS_PER_MODE: 2,
-	COUNTERPICK_MAX_STAGE_REPEAT: 2,
-	COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE: 6,
+	TEAM_NAME_MAX_LENGTH: TEAM.NAME_MAX_LENGTH,
 	AVAILABLE_BEST_OF: [1, 3, 5, 7, 9] as const,
 	ENOUGH_TEAMS_TO_START: 2,
-	MIN_GROUP_SIZE: 3,
-	MAX_GROUP_SIZE: 6,
 	MAX_BRACKETS_PER_TOURNAMENT: 10,
 	BRACKET_NAME_MAX_LENGTH: 32,
-	// just a fallback, normally this should be set by user explicitly
+	PLACEMENT_MAX: 100,
+	// fallback, normally set by the user explicitly
 	RR_DEFAULT_TEAM_COUNT_PER_GROUP: 4,
+	RR_TEAMS_PER_GROUP_OPTIONS: [3, 4, 5, 6, 7, 8],
+	RR_AB_DIVISIONS_TEAMS_PER_GROUP_OPTIONS: [4, 6, 8, 10, 12],
 	SWISS_DEFAULT_GROUP_COUNT: 1,
 	SWISS_DEFAULT_ROUND_COUNT: 5,
 	SE_DEFAULT_HAS_THIRD_PLACE_MATCH: true,
+	MAX_SAVED_COUNT: 20,
+	/** How many days after a tournament ends VOD links are shown on the bracket */
+	VOD_VISIBILITY_DAYS: 7,
+	/** How long before the start regular check-in opens, closing when the tournament starts */
+	REGULAR_CHECK_IN_WINDOW_MS: 60 * 60 * 1000,
 	ROUND_NAMES: {
 		WB_FINALS: "WB Finals",
 		GRAND_FINALS: "Grand Finals",
@@ -26,56 +31,46 @@ export const TOURNAMENT = {
 	},
 } as const;
 
-export const LEAGUES =
-	process.env.NODE_ENV === "development" &&
-	import.meta.env.VITE_PROD_MODE !== "true"
-		? {
-				LUTI: [
-					{
-						tournamentId: 6,
-						weeks: [
-							{
-								weekNumber: 2,
-								year: 2025,
-							},
-							{
-								weekNumber: 3,
-								year: 2025,
-							},
-							{
-								weekNumber: 4,
-								year: 2025,
-							},
-						],
-					},
-				],
-			}
-		: {
-				LUTI: [
-					{
-						tournamentId: 1066,
-						weeks: [
-							{
-								weekNumber: 10,
-								year: 2025,
-							},
-							{
-								weekNumber: 11,
-								year: 2025,
-							},
-							{
-								weekNumber: 12,
-								year: 2025,
-							},
-							{
-								weekNumber: 13,
-								year: 2025,
-							},
-							{
-								weekNumber: 14,
-								year: 2025,
-							},
-						],
-					},
-				],
-			};
+export const TOURNAMENT_STAGE_TYPES = [
+	"single_elimination",
+	"double_elimination",
+	"round_robin",
+	"swiss",
+] as const;
+
+/** Parts of an elimination group that number their rounds separately: the (winners) bracket, the losers bracket and the finals (grand finals or a consolation final). */
+export const TOURNAMENT_ROUND_SECTIONS = [
+	"winners",
+	"losers",
+	"finals",
+] as const;
+
+export type TournamentRoundSection = (typeof TOURNAMENT_ROUND_SECTIONS)[number];
+
+/** AUTO = teams pick map pools ahead and each round's map list is made automatically, TO = the TO picks the maps. */
+export type TournamentMapPickingStyle = "TO" | "AUTO";
+
+/** Where team picked maps come from: SendouQ legal maps, every map or a pool the organizer builds. */
+export const TEAM_PICK_POOLS = ["SENDOUQ", "ALL", "CUSTOM"] as const;
+
+export type TeamPickPool = (typeof TEAM_PICK_POOLS)[number];
+
+export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
+
+export type TournamentStaffRole = (typeof TOURNAMENT_STAFF_ROLES)[number];
+
+export const TOURNAMENT_AUDIT_LOG_TYPES = [
+	"MEMBER_ADDED",
+	"MEMBER_REMOVED",
+	"TEAM_REGISTERED",
+	"TEAM_UNREGISTERED",
+	"TEAM_CHECKED_IN",
+	"TEAM_CHECKED_OUT",
+	"TEAM_DROPPED_OUT",
+	"TEAM_DROP_OUT_UNDONE",
+	"UPDATE_IN_GAME_NAME",
+	"UPDATE_TOURNAMENT_NAME",
+] as const;
+
+export type TournamentAuditLogType =
+	(typeof TOURNAMENT_AUDIT_LOG_TYPES)[number];

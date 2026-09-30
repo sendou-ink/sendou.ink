@@ -1,28 +1,30 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { findVods } from "../queries/findVods.server";
+import type { LoaderFunctionArgs } from "react-router";
+import { paginate } from "~/utils/remix.server";
+import * as VodRepository from "../VodRepository.server";
 import { VODS_PAGE_BATCH_SIZE } from "../vods-constants";
+import { vodsSearchParams } from "../vods-search-params";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const url = new URL(request.url);
+export const loader = async ({ request, url }: LoaderFunctionArgs) => {
+	const { page, weapon, mode, stageId, type } = vodsSearchParams.parse(request);
 
-	const limit = Number(url.searchParams.get("limit") ?? VODS_PAGE_BATCH_SIZE);
+	const filters = {
+		weapon: weapon ?? undefined,
+		mode: mode ?? undefined,
+		stageId: stageId ?? undefined,
+		type: type ?? undefined,
+	};
 
-	const vods = findVods({
-		...Object.fromEntries(
-			Array.from(url.searchParams.entries()).filter(([, value]) => value),
-		),
-		limit: limit + 1,
-	});
-
-	let hasMoreVods = false;
-	if (vods.length > limit) {
-		vods.pop();
-		hasMoreVods = true;
-	}
+	const [vods, totalCount] = await Promise.all([
+		VodRepository.findVods({
+			...filters,
+			limit: VODS_PAGE_BATCH_SIZE,
+			offset: (page - 1) * VODS_PAGE_BATCH_SIZE,
+		}),
+		VodRepository.countVods(filters),
+	]);
 
 	return {
 		vods,
-		limit,
-		hasMoreVods,
+		...paginate({ url, page, pageSize: VODS_PAGE_BATCH_SIZE, totalCount }),
 	};
 };

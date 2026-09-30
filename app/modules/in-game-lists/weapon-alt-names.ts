@@ -63,6 +63,7 @@ export const weaponAltNames = new Map<MainWeaponId, string[] | string>()
 	.set(5041, "letras")
 	.set(6010, "tent")
 	.set(6011, "tent")
+	.set(6012, "tent")
 	.set(6022, ["kcover", "emberz"])
 	.set(7010, "bow")
 	.set(7011, "bow")
@@ -76,9 +77,3 @@ export const weaponAltNames = new Map<MainWeaponId, string[] | string>()
 	.set(8010, ["sword", "vwiper"])
 	.set(8011, ["sword", "diper", "dwiper"])
 	.set(8012, ["rust", "kwiper", "barazushi"]);
-
-export const allWeaponAltNames = new Set(
-	Array.from(weaponAltNames.values()).flatMap((name) =>
-		typeof name === "string" ? [name] : name,
-	),
-);

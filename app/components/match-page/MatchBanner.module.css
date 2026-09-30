@@ -1,0 +1,264 @@
+.root {
+	--banner-height: 175px;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	container-type: inline-size;
+}
+
+.banner {
+	position: relative;
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	grid-template-areas: "map info";
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	width: 100%;
+	height: var(--banner-height);
+	border-radius: var(--radius-box);
+	padding: var(--s-2-5);
+	background-image:
+		linear-gradient(
+			to top,
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.2),
+			rgba(0, 0, 0, 0.2),
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.6)
+		),
+		var(--stage-img);
+	color: var(--color-text-on-dark);
+}
+
+.info {
+	grid-area: info;
+	justify-self: flex-end;
+}
+
+/* only the new image scales (from 1.05): a snapshot smaller than the frame shows its edge */
+::view-transition-group(:global(.stage-banner-swap)) {
+	animation-duration: 0s;
+}
+
+::view-transition-image-pair(:global(.stage-banner-swap)) {
+	clip-path: inset(0 round var(--radius-box));
+}
+
+::view-transition-old(:global(.stage-banner-swap)) {
+	mix-blend-mode: plus-lighter;
+	animation: fade-out 400ms ease both;
+}
+
+::view-transition-new(:global(.stage-banner-swap)) {
+	mix-blend-mode: plus-lighter;
+	animation: settle-in 400ms ease both;
+}
+
+/* map name and pick info: old fades out first, new rises in once the image has settled */
+::view-transition-group(:global(.stage-banner-text)) {
+	animation: none;
+}
+
+/* snapshots are stretched to the group's (new) width by default */
+::view-transition-old(:global(.stage-banner-text)),
+::view-transition-new(:global(.stage-banner-text)) {
+	inline-size: auto;
+	block-size: auto;
+}
+
+/* right-aligned, so a width change must keep the end edge in place */
+::view-transition-old(match-stage-banner-info),
+::view-transition-new(match-stage-banner-info) {
+	inset-inline-start: auto;
+	inset-inline-end: 0;
+}
+
+::view-transition-old(:global(.stage-banner-text)) {
+	animation: fade-out 150ms ease both;
+}
+
+::view-transition-new(:global(.stage-banner-text)) {
+	animation: rise-in 250ms cubic-bezier(0.22, 1, 0.36, 1) 400ms both;
+}
+
+/* unchanged parts; the old snapshot is hidden as stacking it would brighten the 70% opacity labels */
+::view-transition-group(:global(.stage-banner-static)),
+::view-transition-new(:global(.stage-banner-static)) {
+	animation: none;
+}
+
+::view-transition-old(:global(.stage-banner-static)) {
+	display: none;
+}
+
+@keyframes fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes settle-in {
+	from {
+		opacity: 0;
+		transform: scale(1.05);
+	}
+}
+
+@keyframes rise-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+.map {
+	grid-area: map;
+	display: flex;
+	gap: var(--s-1);
+}
+
+.notice {
+	position: absolute;
+	bottom: var(--s-2);
+	right: var(--s-2);
+	display: flex;
+	gap: var(--s-1);
+	align-items: center;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	height: auto;
+}
+
+.joinInfo {
+	position: absolute;
+	bottom: var(--s-2);
+	left: var(--s-2);
+	display: flex;
+	gap: var(--s-4);
+}
+
+.joinInfoItem {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.1;
+}
+
+.joinInfoLabel {
+	text-transform: uppercase;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	opacity: 0.7;
+}
+
+.joinInfoValue {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	letter-spacing: 1px;
+}
+
+.infoBadge {
+	display: flex;
+	gap: var(--s-1-5);
+	align-items: center;
+	height: auto;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+}
+
+.thickText {
+	font-size: var(--font-md);
+	font-weight: var(--weight-semi);
+}
+
+.legalIcon {
+	color: var(--color-success);
+}
+
+.illegalIcon {
+	color: var(--color-error);
+}
+
+.multiBanner {
+	display: flex;
+	padding: 0;
+	overflow: hidden;
+	background-image: none;
+}
+
+.segment {
+	--slant: 13px;
+
+	flex: 1 1 0;
+	min-width: 0;
+	height: 100%;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image:
+		linear-gradient(
+			to top,
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.2),
+			rgba(0, 0, 0, 0.2),
+			rgba(0, 0, 0, 0.6),
+			rgba(0, 0, 0, 0.6)
+		),
+		var(--stage-img);
+	clip-path: polygon(
+		var(--slant) 0,
+		100% 0,
+		calc(100% - var(--slant)) 100%,
+		0 100%
+	);
+	margin-inline-start: calc(var(--slant) * -1);
+
+	&:first-child {
+		clip-path: polygon(0 0, 100% 0, calc(100% - var(--slant)) 100%, 0 100%);
+		margin-inline-start: 0;
+	}
+
+	&:last-child {
+		clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
+	}
+
+	&:only-child {
+		clip-path: none;
+		margin-inline-start: 0;
+	}
+}
+
+.iconBanner {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-0-5);
+	line-height: 1.2;
+	width: 100%;
+	height: var(--banner-height);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-higher);
+}
+
+.iconBannerHeader {
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.iconBannerSubtitle {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.iconBannerBottomRight {
+	position: absolute;
+	top: var(--s-2);
+	right: var(--s-2);
+}

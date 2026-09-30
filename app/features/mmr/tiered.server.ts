@@ -1,5 +1,6 @@
+import { cachified } from "@epic-web/cachified";
 import type { Tables } from "~/db/tables";
-import { cache, syncCached } from "~/utils/cache.server";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import { USER_SKILLS_CACHE_KEY } from "../sendouq/q-constants";
 import {
@@ -9,7 +10,7 @@ import {
 	type TierName,
 	USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 } from "./mmr-constants";
-import { orderedMMRBySeason } from "./queries/orderedMMRBySeason.server";
+import * as SkillRepository from "./SkillRepository.server";
 
 export interface TieredSkill {
 	ordinal: number;
@@ -20,15 +21,14 @@ export interface TieredSkill {
 	approximate: boolean;
 }
 
-export function freshUserSkills(season: number): {
+export async function freshUserSkills(season: number): Promise<{
 	userSkills: Record<string, TieredSkill>;
+	/** SP leaderboard placement of each user with enough sets to be ranked */
+	leaderboardPlacements: Record<string, number>;
 	intervals: SkillTierInterval[];
 	isAccurateTiers: boolean;
-} {
-	const points = orderedMMRBySeason({
-		season,
-		type: "user",
-	});
+}> {
+	const points = await SkillRepository.findOrderedUserOrdinalsBySeason(season);
 
 	const { intervals, isAccurateTiers } = skillTierIntervals(points, "user");
 
@@ -50,20 +50,50 @@ export function freshUserSkills(season: number): {
 				];
 			}),
 		),
+		leaderboardPlacements: placementsByUserId(points),
 	};
 }
 
 const userSkillsCacheKey = (season: number) =>
 	`${USER_SKILLS_CACHE_KEY}-${season}`;
 
-export function userSkills(season: number) {
-	return syncCached(userSkillsCacheKey(season), () => freshUserSkills(season));
+export function userSkills(season: number, { forceFresh = false } = {}) {
+	return cachified({
+		key: userSkillsCacheKey(season),
+		cache,
+		forceFresh,
+		// no ttl once the season has skills: its tiers only go stale when a match
+		// of it is played, and those code paths refresh this themselves
+		getFreshValue: async (context) => {
+			const value = await freshUserSkills(season);
+
+			if (Object.keys(value.userSkills).length === 0) {
+				context.metadata.ttl = ttl(IN_MILLISECONDS.HALF_HOUR);
+			}
+
+			return value;
+		},
+	});
 }
 
-export function refreshUserSkills(season: number) {
-	cache.delete(userSkillsCacheKey(season));
+/** User's skill of the season with their SP leaderboard placement, `null` until they have played enough sets to be ranked. */
+export async function rankedUserSkill({
+	season,
+	userId,
+}: {
+	season: number;
+	userId: number;
+}) {
+	const { userSkills: skills, leaderboardPlacements } =
+		await userSkills(season);
+	const skill = skills[userId];
+	if (!skill || skill.approximate) return null;
 
-	userSkills(season);
+	return { ...skill, leaderboardPlacement: leaderboardPlacements[userId] };
+}
+
+export async function refreshUserSkills(season: number) {
+	await userSkills(season, { forceFresh: true });
 }
 
 export type SkillTierInterval = ReturnType<
@@ -83,8 +113,7 @@ function skillTierIntervals(
 	);
 	const hasLeviathan = points.length >= LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN;
 	if (!hasLeviathan) {
-		// using all entries, no matter if they have enough to be on the leaderboard
-		// to create the tiers
+		// tiers from all entries, whether or not they have enough to be on the leaderboard
 		points = orderedPoints;
 	}
 
@@ -125,7 +154,9 @@ function skillTierIntervals(
 		const accPercentile = previousPercentiles + currentTier.percentile;
 
 		if (currentPercentile > accPercentile) {
-			const previousPoints = points[i - 1];
+			// with few enough players the very first one already exceeds the top
+			// tier's share, and there is nobody below them to close the tier at
+			const previousPoints = points[i - 1] ?? points[i];
 			const thisTier = result[result.length - 1];
 			thisTier.neededOrdinal = previousPoints.ordinal;
 
@@ -139,4 +170,28 @@ function skillTierIntervals(
 	}
 
 	return { intervals: result, isAccurateTiers: hasLeviathan };
+}
+
+/** Tied ordinals share a placement, the next one skipping as many as tied ("1224") */
+function placementsByUserId(
+	orderedPoints: Array<
+		Pick<Tables["Skill"], "ordinal" | "matchesCount" | "userId">
+	>,
+) {
+	const result: Record<string, number> = {};
+
+	let rankedCount = 0;
+	let placement = 0;
+	let previousOrdinal: number | null = null;
+	for (const point of orderedPoints) {
+		if (point.matchesCount < MATCHES_COUNT_NEEDED_FOR_LEADERBOARD) continue;
+
+		rankedCount++;
+		if (point.ordinal !== previousOrdinal) placement = rankedCount;
+		previousOrdinal = point.ordinal;
+
+		result[point.userId as number] = placement;
+	}
+
+	return result;
 }

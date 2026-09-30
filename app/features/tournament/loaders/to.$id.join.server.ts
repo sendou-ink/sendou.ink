@@ -1,12 +1,16 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { findByInviteCode } from "../queries/findTeamByInviteCode.server";
+import type { LoaderFunctionArgs } from "react-router";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { tournamentJoinSearchParams } from "../tournament-search-params";
 
-export const loader = ({ request }: LoaderFunctionArgs) => {
-	const url = new URL(request.url);
-	const inviteCode = url.searchParams.get("code");
+export const loader = async ({ url }: LoaderFunctionArgs) => {
+	const { code: inviteCode } = tournamentJoinSearchParams.parse(url);
+
+	const team = inviteCode
+		? await TournamentTeamRepository.findByInviteCode(inviteCode)
+		: null;
 
 	return {
-		teamId: inviteCode ? findByInviteCode(inviteCode)?.id : null,
+		teamId: team?.id ?? null,
 		inviteCode,
 	};
 };

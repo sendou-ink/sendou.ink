@@ -1,50 +1,92 @@
-import { type ActionFunction, redirect } from "@remix-run/node";
-import type { Tables } from "~/db/tables";
+import { type ActionFunction, redirect } from "react-router";
+import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
+import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
+import { parseFormData } from "~/form/parse.server";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { vodVideoPage } from "~/utils/urls";
-import { createVod, updateVodByReplacing } from "../queries/createVod.server";
-import { findVodById } from "../queries/findVodById.server";
-import { videoInputSchema } from "../vods-schemas";
-import { canEditVideo } from "../vods-utils";
+import * as VodRepository from "../VodRepository.server";
+import { vodFormSchemaServer } from "../vods-schemas.server";
+import type { VideoBeingAdded } from "../vods-types";
 
 export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
-	requireRole(user, "VIDEO_ADDER");
+	const user = requireUser();
+	requireRole("VIDEO_ADDER");
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
-		schema: videoInputSchema,
+		schema: vodFormSchemaServer,
 	});
 
-	let video: Tables["Video"];
-	if (data.vodToEditId) {
-		const vod = notFoundIfFalsy(findVodById(data.vodToEditId));
-
-		if (
-			!canEditVideo({
-				userId: user.id,
-				submitterUserId: vod.submitterUserId,
-				povUserId: typeof vod.pov === "string" ? undefined : vod.pov?.id,
-			})
-		) {
-			throw new Response("no permissions to edit this vod", { status: 401 });
-		}
-
-		video = updateVodByReplacing({
-			...data.video,
-			submitterUserId: user.id,
-			isValidated: true,
-			id: data.vodToEditId,
-		});
-	} else {
-		video = createVod({
-			...data.video,
-			submitterUserId: user.id,
-			isValidated: true,
-		});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
 	}
 
-	throw redirect(vodVideoPage(video.id));
+	const formData = result.data;
+	const video = transformFormDataToVideo(formData);
+
+	const savedVideo = formData.vodToEditId
+		? await VodRepository.update({
+				...video,
+				isValidated: true,
+				id: formData.vodToEditId,
+			})
+		: await VodRepository.insert({
+				...video,
+				submitterUserId: user.id,
+				isValidated: true,
+			});
+
+	throw redirect(vodVideoPage(savedVideo.id));
 };
+
+type VodFormData = v.InferOutput<typeof vodFormSchemaServer>;
+
+function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
+	const teamSize = data.teamSize ? Number(data.teamSize) : 4;
+
+	return {
+		type: data.type,
+		youtubeUrl: data.youtubeUrl,
+		title: data.title,
+		date: data.date,
+		pov: transformPov(data.pov),
+		teamSize: data.type === "CAST" ? teamSize : undefined,
+		matches: data.matches.map((match) => ({
+			startsAt: match.startsAt,
+			mode: match.mode,
+			stageId: match.stageId as StageId,
+			weapons:
+				data.type === "CAST"
+					? [
+							...weaponPoolToIds(match.weaponsTeamOne ?? []),
+							...weaponPoolToIds(match.weaponsTeamTwo ?? []),
+						]
+					: typeof match.weapon === "number"
+						? [match.weapon as MainWeaponId]
+						: [],
+		})),
+	};
+}
+
+function weaponPoolToIds(pool: WeaponPoolItem[]): MainWeaponId[] {
+	return pool.map((item) => item.id as MainWeaponId);
+}
+
+function transformPov(
+	pov:
+		| { type: "USER"; userId?: number }
+		| { type: "NAME"; name: string }
+		| undefined,
+):
+	| { type: "USER"; userId: number }
+	| { type: "NAME"; name: string }
+	| undefined {
+	if (!pov) return undefined;
+	if (pov.type === "NAME") return pov;
+	if (pov.type === "USER" && pov.userId) {
+		return { type: "USER", userId: pov.userId };
+	}
+	return undefined;
+}

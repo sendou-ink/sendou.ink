@@ -1,0 +1,59 @@
+import type { ActionFunctionArgs } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
+import {
+	errorToastIfFalsy,
+	notFoundIfNullish,
+	parseParams,
+} from "~/utils/remix.server";
+import { sendUserReportWebhook } from "../core/discord-webhook.server";
+import * as UserReportRepository from "../UserReportRepository.server";
+import { reportUserParamsSchema } from "../user-report-schemas";
+import { reportUserSchemaServer } from "../user-report-schemas.server";
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+	const user = requireUser();
+
+	const reportedUserId = parseParams({
+		params,
+		schema: reportUserParamsSchema,
+	}).id;
+
+	errorToastIfFalsy(reportedUserId !== user.id, "Can't report yourself");
+
+	const reportedUser = notFoundIfNullish(
+		await UserRepository.findLeanById(reportedUserId),
+	);
+
+	const result = await parseFormData({
+		request,
+		schema: reportUserSchemaServer,
+	});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const { isUpdate } = await UserReportRepository.upsert({
+		reportedUserId,
+		reporterUserId: user.id,
+		category: result.data.category,
+		description: result.data.description,
+		matchId: result.data.matchId,
+	});
+
+	const reportCounts =
+		await UserReportRepository.countRecentByReportedUserId(reportedUserId);
+
+	sendUserReportWebhook({
+		reportedUser,
+		reporter: user,
+		category: result.data.category,
+		description: result.data.description,
+		matchId: result.data.matchId,
+		isUpdate,
+		reportCounts,
+	});
+
+	return null;
+};

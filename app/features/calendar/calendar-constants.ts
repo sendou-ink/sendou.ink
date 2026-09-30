@@ -1,4 +1,4 @@
-import type { CalendarEventTag } from "~/db/tables";
+import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 
 export const tags = {
 	SPECIAL: {
@@ -28,12 +28,6 @@ export const tags = {
 	QUALIFIER: {
 		color: "#FFC0CB",
 	},
-	SZ: {
-		color: "#F44336",
-	},
-	TW: {
-		color: "#D50000",
-	},
 	ONES: {
 		color: "#FAEC25",
 	},
@@ -58,19 +52,21 @@ export const tags = {
 	COLLEGIATE: {
 		color: "#FFC107",
 	},
+	LEAGUE: {
+		color: "#80DEEA",
+	},
 };
 
 export const CALENDAR_EVENT = {
 	NAME_MIN_LENGTH: 2,
 	NAME_MAX_LENGTH: 100,
-	DESCRIPTION_MAX_LENGTH: 3000,
-	RULES_MAX_LENGTH: 10_000,
+	DESCRIPTION_MAX_LENGTH: 6000,
+	RULES_MAX_LENGTH: 15_000,
 	DISCORD_INVITE_CODE_MAX_LENGTH: 50,
 	BRACKET_URL_MAX_LENGTH: 200,
 	MAX_AMOUNT_OF_DATES: 5,
-	/** Calendar event tag that is persisted in the database */
+	/** Tags persisted in the database */
 	TAGS: Object.keys(tags) as Array<CalendarEventTag>,
-	AVATAR_SIZE: 512,
 };
 
 export const REG_CLOSES_AT_OPTIONS = [
@@ -93,19 +89,16 @@ export const REG_CLOSES_AT_OPTIONS = [
 
 export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
 
-/** How many days are shown at the /calendar page at a time */
-export const DAYS_SHOWN_AT_A_TIME = 4;
+/** Days shown on /calendar at a time (Monday to Sunday) */
+export const DAYS_SHOWN_AT_A_TIME = 7;
 
 /** Tags not shown on the tournament cards */
-export const EXCLUDED_TAGS: Array<CalendarEventTag> = [
-	"CARDS",
-	"SR",
-	"SZ",
-	"TW",
-];
+export const EXCLUDED_TAGS: Array<CalendarEventTag> = ["CARDS", "SR"];
 
 export const CALENDAR_EVENT_RESULT = {
 	MAX_PARTICIPANTS_COUNT: 1000,
+	MAX_TEAMS_COUNT: 100,
+	DEFAULT_PLAYERS_LENGTH: 4,
 	MAX_PLAYERS_LENGTH: 8,
 	MAX_TEAM_NAME_LENGTH: 100,
 	MAX_TEAM_PLACEMENT: 256,

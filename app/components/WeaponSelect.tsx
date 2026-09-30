@@ -1,27 +1,31 @@
+import type { TFunction } from "i18next";
 import * as React from "react";
-import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import {
+	type SelectKey,
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
-import { Image, WeaponImage } from "~/components/Image";
-import type { AnyWeapon } from "~/features/build-analyzer";
+import {
+	Image,
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
+import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
+	mainWeaponIds,
+	nonDamagingSpecialWeaponIds,
 	SPLAT_BOMB_ID,
 	specialWeaponIds,
 	subWeaponIds,
 	TRIZOOKA_ID,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
-import {
-	specialWeaponImageUrl,
-	subWeaponImageUrl,
-	weaponCategoryUrl,
-} from "~/utils/urls";
+import { weaponCategoryUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";
 
@@ -39,14 +43,15 @@ interface WeaponSelectProps<
 	) => void;
 	clearable?: Clearable;
 	includeSubSpecial?: IncludeSubSpecial;
-	disabledWeaponIds?: Array<MainWeaponId>; // TODO: implement for `AnyWeapon` if needed
+	disabledWeaponIds?: Array<MainWeaponId>;
 	testId?: string;
 	isRequired?: boolean;
-	/** If set, selection of weapons that user sees when search input is empty allowing for quick select for e.g. previous selections */
+	/** Shown while the search input is empty, e.g. previous selections */
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
+	isDisabled?: boolean;
+	placeholder?: string;
 }
 
-// TODO: fix selected value disappears when filtered out. This is because `items` is filtered in a controlled manner and the selected key might not be included in the filtered items.
 export function WeaponSelect<
 	Clearable extends boolean | undefined = undefined,
 	IncludeSubSpecial extends boolean | undefined = undefined,
@@ -61,23 +66,26 @@ export function WeaponSelect<
 	testId = "weapon-select",
 	isRequired,
 	quickSelectWeaponsIds,
+	isDisabled,
+	placeholder,
 }: WeaponSelectProps<Clearable, IncludeSubSpecial>) {
 	const { t } = useTranslation(["common"]);
-	const { items, filterValue, setFilterValue } = useFilteredWeaponItems({
+	const isControlled = value !== undefined;
+	const [lastUncontrolledKey, setLastUncontrolledKey] = React.useState<
+		string | null
+	>(() => keyify(initialValue) ?? null);
+	const selectedKey = isControlled ? keyify(value) : lastUncontrolledKey;
+	const { items, filterValue, setFilterValue } = useWeaponItems({
 		includeSubSpecial,
 		quickSelectWeaponsIds,
+		selectedKey,
 	});
+	const filter = useWeaponFilter();
 
-	const isControlled = value !== undefined;
-
-	const keyify = (value?: MainWeaponId | AnyWeapon | null) => {
-		if (typeof value === "number") return `MAIN_${value}`;
-		if (!value) return value;
-
-		return `${value.type}_${value.id}`;
-	};
-
-	const handleOnChange = (key: Key | null) => {
+	const handleOnChange = (key: SelectKey | null) => {
+		if (!isControlled) {
+			setLastUncontrolledKey(key === null ? null : String(key));
+		}
 		if (key === null) return onChange?.(null as any);
 		const [type, id] = (key as string).split("_");
 		const weapon = {
@@ -95,45 +103,50 @@ export function WeaponSelect<
 			aria-label={
 				!label ? t("common:forms.weaponSearch.placeholder") : undefined
 			}
+			isDisabled={isDisabled}
 			items={items}
 			label={label}
-			placeholder={t("common:forms.weaponSearch.placeholder")}
+			placeholder={placeholder ?? t("common:forms.weaponSearch.placeholder")}
 			search={{
 				placeholder: t("common:forms.weaponSearch.search.placeholder"),
 			}}
-			className={styles.selectWidthWider}
-			popoverClassName={styles.selectWidthWider}
 			searchInputValue={filterValue}
 			onSearchInputChange={setFilterValue}
 			selectedKey={isControlled ? keyify(value) : undefined}
 			defaultSelectedKey={
-				isControlled ? undefined : (keyify(initialValue) as Key)
+				isControlled ? undefined : (keyify(initialValue) as SelectKey)
 			}
 			onSelectionChange={handleOnChange}
 			clearable={clearable}
 			data-testid={testId}
 			isRequired={isRequired}
+			filter={filter}
 		>
 			{({ key, items: weapons, name, idx }) => (
 				<SendouSelectItemSection
 					heading={name}
-					headingImgPath={
-						key === "quick-select"
-							? undefined
-							: name === "subs"
-								? subWeaponImageUrl(SPLAT_BOMB_ID)
-								: name === "specials"
-									? specialWeaponImageUrl(TRIZOOKA_ID)
-									: weaponCategoryUrl(name)
+					headingImg={
+						key === "quick-select" ? undefined : name === "subs" ? (
+							<SubWeaponImage subWeaponId={SPLAT_BOMB_ID} size={28} alt="" />
+						) : name === "specials" ? (
+							<SpecialWeaponImage
+								specialWeaponId={TRIZOOKA_ID}
+								size={28}
+								alt=""
+							/>
+						) : (
+							<Image path={weaponCategoryUrl(name)} size={28} alt="" />
+						)
 					}
-					className={idx === 0 ? "pt-0-5-forced" : undefined}
+					className={idx === 0 ? "pt-0-5" : undefined}
 					key={key}
 				>
-					{weapons.map(({ weapon, name }) => (
+					{weapons.map(({ weapon, name: weaponName }) => (
 						<SendouSelectItem
 							key={weapon.anyWeaponId}
 							id={weapon.anyWeaponId}
-							textValue={name}
+							textValue={weaponName}
+							className={styles.option}
 							isDisabled={
 								includeSubSpecial
 									? false
@@ -149,25 +162,23 @@ export function WeaponSelect<
 										className={styles.weaponImg}
 									/>
 								) : weapon.type === "SUB" ? (
-									<Image
-										path={subWeaponImageUrl(weapon.id)}
+									<SubWeaponImage
+										subWeaponId={weapon.id}
 										size={24}
-										alt=""
 										className={styles.weaponImg}
 									/>
 								) : (
-									<Image
-										path={specialWeaponImageUrl(weapon.id)}
+									<SpecialWeaponImage
+										specialWeaponId={weapon.id}
 										size={24}
-										alt=""
 										className={styles.weaponImg}
 									/>
 								)}
 								<span
 									className={styles.weaponLabel}
-									data-testid={`weapon-select-option-${name}`}
+									data-testid={`weapon-select-option-${weaponName}`}
 								>
-									{name}
+									{weaponName}
 								</span>
 							</div>
 						</SendouSelectItem>
@@ -178,12 +189,55 @@ export function WeaponSelect<
 	);
 }
 
-function useFilteredWeaponItems({
+const weaponNameToWeaponMapCache = new Map<string, Map<string, AnyWeapon>>();
+
+function useWeaponFilter() {
+	const { t, i18n } = useTranslation(["weapons"]);
+
+	const cached = weaponNameToWeaponMapCache.get(i18n.language);
+	const weaponNameToWeaponMap = cached ?? buildWeaponNameToWeaponMap(t);
+	if (!cached && i18n.hasLoadedNamespace("weapons")) {
+		weaponNameToWeaponMapCache.set(i18n.language, weaponNameToWeaponMap);
+	}
+
+	return (value: string, searchValue: string) => {
+		const weapon = weaponNameToWeaponMap.get(value);
+		if (!weapon) return false;
+
+		return filterWeapon({
+			weapon,
+			weaponName: value,
+			searchTerm: searchValue,
+		});
+	};
+}
+
+function buildWeaponNameToWeaponMap(t: TFunction<["weapons"]>) {
+	const map = new Map<string, AnyWeapon>();
+
+	for (const id of mainWeaponIds) {
+		map.set(t(`weapons:MAIN_${id}`), { id, type: "MAIN" });
+	}
+
+	for (const id of subWeaponIds) {
+		map.set(t(`weapons:SUB_${id}`), { id, type: "SUB" });
+	}
+
+	for (const id of specialWeaponIds) {
+		map.set(t(`weapons:SPECIAL_${id}`), { id, type: "SPECIAL" });
+	}
+
+	return map;
+}
+
+function useWeaponItems({
 	includeSubSpecial,
 	quickSelectWeaponsIds,
+	selectedKey,
 }: {
 	includeSubSpecial: boolean | undefined;
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
+	selectedKey: string | null | undefined;
 }) {
 	const items = useAllWeaponCategories(includeSubSpecial);
 	const [filterValue, setFilterValue] = React.useState("");
@@ -192,66 +246,76 @@ function useFilteredWeaponItems({
 	const showQuickSelectWeapons =
 		filterValue === "" && quickSelectWeaponsIds?.length;
 
-	const filteredItems = () => {
-		if (showQuickSelectWeapons) {
-			return [
-				{
-					idx: 0,
-					key: "quick-select" as const,
-					name: t("common:forms.weaponSearch.quickSelect"),
-					items: items
-						.flatMap((c) =>
-							c.items
-								.map((item) => (item.weapon.type === "MAIN" ? item : null))
-								.filter((val) => val !== null),
-						)
-						.filter((item) =>
-							quickSelectWeaponsIds.includes(item.weapon.id as MainWeaponId),
-						)
-						.sort((a, b) => {
-							const aIdx = quickSelectWeaponsIds.indexOf(
-								a.weapon.id as MainWeaponId,
-							);
-							const bIdx = quickSelectWeaponsIds.indexOf(
-								b.weapon.id as MainWeaponId,
-							);
-							return aIdx - bIdx;
-						}),
-				},
-			];
+	if (showQuickSelectWeapons) {
+		const weaponIdsToInclude = new Set(quickSelectWeaponsIds);
+		// the selected weapon stays in the list so the trigger can show it
+		if (selectedKey?.startsWith("MAIN_")) {
+			weaponIdsToInclude.add(
+				Number(selectedKey.slice("MAIN_".length)) as MainWeaponId,
+			);
 		}
 
-		return !filterValue
-			? items
-			: items
-					.map((category) => {
-						const filteredItems = category.items.filter((item) =>
-							filterWeapon({
-								weapon: item.weapon,
-								weaponName: item.name,
-								searchTerm: filterValue,
-							}),
-						);
+		const quickSelectCategory = {
+			idx: 0,
+			key: "quick-select" as const,
+			name: t("common:forms.weaponSearch.quickSelect"),
+			items: items
+				.flatMap((c) =>
+					c.items
+						.map((item) => (item.weapon.type === "MAIN" ? item : null))
+						.filter((val) => val !== null),
+				)
+				.filter((item) =>
+					weaponIdsToInclude.has(item.weapon.id as MainWeaponId),
+				)
+				.sort((a, b) => {
+					const aIdx = quickSelectWeaponsIds.indexOf(
+						a.weapon.id as MainWeaponId,
+					);
+					const bIdx = quickSelectWeaponsIds.indexOf(
+						b.weapon.id as MainWeaponId,
+					);
+					return aIdx - bIdx;
+				}),
+		};
 
-						return {
-							...category,
-							items: filteredItems,
-						};
-					})
-					.filter((category) => category.items.length > 0)
-					.map((category, idx) => ({ ...category, idx }));
-	};
+		return {
+			items: [quickSelectCategory] as typeof items,
+			filterValue,
+			setFilterValue,
+		};
+	}
 
 	return {
-		items: filteredItems(),
+		items,
 		filterValue,
 		setFilterValue,
 	};
 }
 
-function useAllWeaponCategories(withSubSpecial = false) {
-	const { t } = useTranslation(["weapons"]);
+const allWeaponCategoriesCache = new Map<
+	string,
+	ReturnType<typeof buildAllWeaponCategories>
+>();
 
+function useAllWeaponCategories(withSubSpecial = false) {
+	const { t, i18n } = useTranslation(["weapons"]);
+
+	const cacheKey = `${i18n.language}-${withSubSpecial}`;
+	const cached = allWeaponCategoriesCache.get(cacheKey);
+	if (cached) return cached;
+
+	const categories = buildAllWeaponCategories(t, withSubSpecial);
+	if (i18n.hasLoadedNamespace("weapons")) {
+		allWeaponCategoriesCache.set(cacheKey, categories);
+	}
+	return categories;
+}
+
+function buildAllWeaponCategories(
+	t: TFunction<["weapons"]>,
+	withSubSpecial: boolean,
+) {
 	const mainWeaponCategories = weaponCategories.map((category, idx) => ({
 		name: category.name,
 		key: category.name,
@@ -288,14 +352,17 @@ function useAllWeaponCategories(withSubSpecial = false) {
 		name: "specials" as const,
 		key: "specials",
 		idx: 1,
-		items: specialWeaponIds.map((id) => ({
-			name: t(`weapons:SPECIAL_${id}`),
-			weapon: {
-				anyWeaponId: `SPECIAL_${id}`,
-				id,
-				type: "SPECIAL" as const,
-			},
-		})),
+		items: specialWeaponIds
+			// currently no use-case exists to select big bubbler or tacticooler
+			.filter((id) => !nonDamagingSpecialWeaponIds.includes(id))
+			.map((id) => ({
+				name: t(`weapons:SPECIAL_${id}`),
+				weapon: {
+					anyWeaponId: `SPECIAL_${id}`,
+					id,
+					type: "SPECIAL" as const,
+				},
+			})),
 	};
 
 	return [
@@ -303,4 +370,11 @@ function useAllWeaponCategories(withSubSpecial = false) {
 		specialWeaponCategory,
 		...mainWeaponCategories.map((c) => ({ ...c, idx: c.idx + 2 })),
 	];
+}
+
+function keyify(value?: MainWeaponId | AnyWeapon | null) {
+	if (typeof value === "number") return `MAIN_${value}`;
+	if (!value) return value;
+
+	return `${value.type}_${value.id}`;
 }

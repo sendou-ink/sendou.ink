@@ -1,7 +1,6 @@
-import "dotenv/config";
-import { sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
 const discordId = process.argv[2]?.trim();
@@ -12,11 +11,11 @@ const currentSeasonNth = Seasons.currentOrPrevious()?.nth;
 
 invariant(currentSeasonNth, "current season nth is required");
 
-sql
-	.prepare(
-		'update "User" set plusSkippedForSeasonNth = @plusSkippedForSeasonNth where discordId = @discordId',
-	)
-	.run({ discordId, plusSkippedForSeasonNth: currentSeasonNth });
+await db
+	.updateTable("User")
+	.set({ plusSkippedForSeasonNth: currentSeasonNth })
+	.where("discordId", "=", discordId)
+	.execute();
 
 logger.info(
 	`Plus Server admission will be skipped for Discord ID: ${discordId} (season ${currentSeasonNth})`,

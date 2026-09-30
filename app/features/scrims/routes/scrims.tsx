@@ -1,68 +1,54 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
-import clsx from "clsx";
-import { formatDistance } from "date-fns";
+import { format } from "date-fns";
+import { Check, Download, Funnel, Megaphone, Star } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
 import * as R from "remeda";
-import type { z } from "zod/v4";
-import { AddNewButton } from "~/components/AddNewButton";
-import { Avatar } from "~/components/Avatar";
-import { Divider } from "~/components/Divider";
+import * as v from "valibot";
+import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
-import { SendouDialog } from "~/components/elements/Dialog";
-import { SendouPopover } from "~/components/elements/Popover";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { SendouForm } from "~/components/form/SendouForm";
-import { EyeSlashIcon } from "~/components/icons/EyeSlash";
-import { SpeechBubbleIcon } from "~/components/icons/SpeechBubble";
-import { UsersIcon } from "~/components/icons/Users";
-import { Table } from "~/components/Table";
-import TimePopover from "~/components/TimePopover";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import { FilterBar } from "~/components/filter-bar/FilterBar";
+import { LocaleTime } from "~/components/LocaleTime";
+import { associationsPage } from "~/features/associations/associations-urls";
 import { useUser } from "~/features/auth/core/user";
-import { useIsMounted } from "~/hooks/useIsMounted";
-import { joinListToNaturalString, nullFilledArray } from "~/utils/arrays";
-import { databaseTimestampToDate } from "~/utils/dates";
-import invariant from "~/utils/invariant";
-import { metaTags } from "~/utils/remix";
-import type { SendouRouteHandle } from "~/utils/remix.server";
+import { DualSelectFormField } from "~/form/fields/DualSelectFormField";
+import { TimeRangeFormField } from "~/form/fields/TimeRangeFormField";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useHydrated } from "~/hooks/useHydrated";
 import {
-	associationsPage,
-	navIconUrl,
-	newScrimPostPage,
-	scrimPage,
-	scrimsPage,
-	userPage,
-} from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
+	useSearchParam,
+	useSearchParamsTyped,
+} from "~/modules/search-params/hooks";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { metaTags, ogPageImage } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { timeString } from "~/utils/schema";
+import { navIconUrl, scrimsPage } from "~/utils/urls";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabPanel,
 	SendouTabs,
 } from "../../../components/elements/Tabs";
-import { ArrowDownOnSquareIcon } from "../../../components/icons/ArrowDownOnSquare";
-import { ArrowUpOnSquareIcon } from "../../../components/icons/ArrowUpOnSquare";
-import { CheckmarkIcon } from "../../../components/icons/Checkmark";
-import { ClockIcon } from "../../../components/icons/Clock";
-import { CrossIcon } from "../../../components/icons/Cross";
-import { MegaphoneIcon } from "../../../components/icons/MegaphoneIcon";
-import { SpeechBubbleFilledIcon } from "../../../components/icons/SpeechBubbleFilled";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.server";
-import { WithFormField } from "../components/WithFormField";
+import { ScrimPostCard, ScrimRequestCard } from "../components/ScrimCard";
+import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.server";
-import { SCRIM } from "../scrims-constants";
-import { newRequestSchema } from "../scrims-schemas";
-import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
-export { loader, action };
-
+import { LUTI_DIVS } from "../scrims-constants";
+import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
+import { scrimsSearchParams } from "../scrims-search-params";
+import type { LutiDiv, ScrimFilters, ScrimPost } from "../scrims-types";
 import styles from "./scrims.module.css";
 
-export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
+export { action, loader };
+
+export type NewRequestFormFields = v.InferOutput<typeof newRequestSchema>;
 
 export const handle: SendouRouteHandle = {
-	i18n: ["calendar", "scrims"],
+	i18n: ["calendar", "schedule", "scrims", "user", "q"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("scrims"),
 		href: scrimsPage(),
@@ -76,6 +62,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		ogTitle: "Splatoon scrim finder",
 		description:
 			"Schedule scrims against competitive teams. Make your own post or browse available scrims.",
+		image: ogPageImage("scrims"),
 		location: args.location,
 	});
 };
@@ -84,15 +71,23 @@ export default function ScrimsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["calendar", "scrims"]);
 	const data = useLoaderData<typeof loader>();
-	const isMounted = useIsMounted();
-	const [scrimToRequestId, setScrimToRequestId] = React.useState<number>();
+	const isHydrated = useHydrated();
+	const [autoScrollToPostId] = useSearchParam(
+		scrimsSearchParams,
+		"pendingRequestPostId",
+	);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: clear modal on submit
-	React.useEffect(() => {
-		setScrimToRequestId(undefined);
-	}, [data]);
+	// kept in state because the search param is cleared after the auto scroll
+	const [pendingRequestPostId, setPendingRequestPostId] =
+		React.useState(autoScrollToPostId);
+	if (
+		autoScrollToPostId !== null &&
+		autoScrollToPostId !== pendingRequestPostId
+	) {
+		setPendingRequestPostId(autoScrollToPostId);
+	}
 
-	if (!isMounted)
+	if (!isHydrated)
 		return (
 			<Main>
 				<div className={styles.placeholder} />
@@ -101,78 +96,83 @@ export default function ScrimsPage() {
 
 	return (
 		<Main className="stack lg">
-			<div className="stack horizontal justify-between items-center">
-				<LinkButton
-					size="small"
-					to={associationsPage()}
-					className={clsx("mr-auto", { invisible: !user })}
-					variant="outlined"
-				>
-					{t("scrims:associations.title")}
-				</LinkButton>
-				<AddNewButton to={newScrimPostPage()} navIcon="scrims" />
+			<div className="stack horizontal sm items-center flex-wrap">
+				{user ? (
+					<LinkButton size="small" to={associationsPage()} variant="outlined">
+						{t("scrims:associations.title")}
+					</LinkButton>
+				) : null}
+				<Filters />
 			</div>
-			{typeof scrimToRequestId === "number" ? (
-				<RequestScrimModal
-					postId={scrimToRequestId}
-					close={() => setScrimToRequestId(undefined)}
-				/>
-			) : null}
 			<SendouTabs
-				defaultSelectedKey={data.posts.owned.length > 0 ? "owned" : "available"}
+				key={pendingRequestPostId}
+				defaultSelectedKey={
+					pendingRequestPostId !== null
+						? "available"
+						: data.posts.owned.length > 0
+							? "owned"
+							: data.posts.booked.length > 0
+								? "booked"
+								: "available"
+				}
 			>
-				<SendouTabList sticky>
-					<SendouTab
-						id="owned"
-						isDisabled={!user}
-						icon={<ArrowDownOnSquareIcon />}
-						number={data.posts.owned.length}
-					>
-						{t("scrims:tabs.owned")}
-					</SendouTab>
-					<SendouTab
-						id="requested"
-						isDisabled={!user}
-						icon={<ArrowUpOnSquareIcon />}
-						number={data.posts.requested.length}
-						data-testid="requests-scrims-tab"
-					>
-						{t("scrims:tabs.requests")}
-					</SendouTab>
-					<SendouTab
-						id="available"
-						icon={<MegaphoneIcon />}
-						number={data.posts.neutral.length}
-						data-testid="available-scrims-tab"
-					>
-						{t("scrims:tabs.available")}
-					</SendouTab>
-				</SendouTabList>
-				<SendouTabPanel id="owned">
-					<ScrimsDaySeparatedTables
-						posts={data.posts.owned}
-						showDeletePost
-						showRequestRows
-						showStatus
-					/>
-				</SendouTabPanel>
-				<SendouTabPanel id="requested">
-					<ScrimsDaySeparatedTables
-						posts={data.posts.requested}
-						requestScrim={setScrimToRequestId}
-						showStatus
-					/>
-				</SendouTabPanel>
+				{user ? (
+					<SendouTabList sticky>
+						<SendouTab
+							id="available"
+							icon={<Megaphone />}
+							number={data.posts.neutral.length}
+							data-testid="available-scrims-tab"
+						>
+							{t("scrims:tabs.available")}
+						</SendouTab>
+						<SendouTab
+							id="owned"
+							isDisabled={!user}
+							icon={<Download />}
+							number={data.posts.owned.length}
+						>
+							{t("scrims:tabs.owned")}
+						</SendouTab>
+						<SendouTab
+							id="booked"
+							isDisabled={!user}
+							icon={<Check />}
+							number={data.posts.booked.length}
+							data-testid="booked-scrims-tab"
+						>
+							{t("scrims:tabs.booked")}
+						</SendouTab>
+					</SendouTabList>
+				) : null}
 				<SendouTabPanel id="available">
 					{data.posts.neutral.length > 0 ? (
-						<ScrimsDaySeparatedTables
+						<ScrimsDaySeparatedCards
 							posts={data.posts.neutral}
-							requestScrim={setScrimToRequestId}
+							filters={data.filters}
+							pendingRequestPostId={pendingRequestPostId}
+							autoScrollToPostId={autoScrollToPostId}
 						/>
 					) : (
-						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
+						<EmptyState navItem="scrims">
 							{t("scrims:noneAvailable")}
-						</div>
+						</EmptyState>
+					)}
+				</SendouTabPanel>
+				<SendouTabPanel id="owned">
+					{data.posts.owned.length > 0 ? (
+						<ScrimsDaySeparatedOwnedCards posts={data.posts.owned} />
+					) : (
+						<EmptyState navItem="scrims">{t("scrims:noOwnedPosts")}</EmptyState>
+					)}
+				</SendouTabPanel>
+				<SendouTabPanel id="booked">
+					{data.posts.booked.length > 0 ? (
+						<ScrimsDaySeparatedBookedCards posts={data.posts.booked} />
+					) : (
+						<EmptyState navItem="scrims">
+							{t("scrims:noBookedScrims")}
+						</EmptyState>
 					)}
 				</SendouTabPanel>
 			</SendouTabs>
@@ -184,100 +184,456 @@ export default function ScrimsPage() {
 	);
 }
 
-function RequestScrimModal({
-	postId,
-	close,
-}: {
-	postId: number;
-	close: () => void;
-}) {
-	const { t } = useTranslation(["scrims"]);
+function Filters() {
+	const { t } = useTranslation(["scrims", "forms", "common"]);
 	const data = useLoaderData<typeof loader>();
+	const [, setParams] = useSearchParamsTyped(scrimsSearchParams);
+	const persistFilters = useActionSubmit(scrimsActionSchema, {
+		encType: "application/json",
+	});
 
-	// both to avoid crash when requesting
-	const post = [...data.posts.neutral, ...data.posts.requested].find(
-		(post) => post.id === postId,
-	);
-	invariant(post, "Post not found");
+	const filters = data.filters;
+
+	const writeFilters = (partial: Partial<ScrimFilters>) => {
+		setParams({ ...filters, ...partial, useDefaults: false });
+	};
+
+	const associationPill =
+		data.associationOptions.length > 0
+			? [
+					{
+						key: "association",
+						name: t("scrims:filters.association"),
+						formattedValue: data.associationFilter?.name ?? null,
+						onRemove: () => setParams({ associationId: null }),
+						testId: "association-filter",
+						popover: (
+							<SendouSelect
+								aria-label={t("scrims:filters.association")}
+								items={data.associationOptions}
+								selectedKey={data.associationFilter?.id ?? null}
+								onSelectionChange={(key) =>
+									setParams({ associationId: key as number | null })
+								}
+							>
+								{({ id, name }) => (
+									<SendouSelectItem key={id} id={id}>
+										{name}
+									</SendouSelectItem>
+								)}
+							</SendouSelect>
+						),
+					},
+				]
+			: [];
 
 	return (
-		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>
-			<SendouForm
-				schema={newRequestSchema}
-				defaultValues={{
-					_action: "NEW_REQUEST",
-					scrimPostId: postId,
-					from:
-						data.teams.length > 0
-							? { mode: "TEAM", teamId: data.teams[0].id }
-							: {
-									mode: "PICKUP",
-									users: nullFilledArray(
-										SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
-									) as unknown as number[],
-								},
-				}}
-			>
-				<ScrimsDaySeparatedTables posts={[post]} showPopovers={false} />
-				<div className="font-semi-bold text-lighter italic">
-					{joinListToNaturalString(post.users.map((u) => u.username))}
-				</div>
-				{post.text ? (
-					<div className="text-sm text-lighter italic">{post.text}</div>
-				) : null}
-				<Divider />
-				<WithFormField usersTeams={data.teams} />
-			</SendouForm>
-		</SendouDialog>
+		<FilterBar
+			pills={[
+				{
+					key: "weekdayTimes",
+					name: t("scrims:filters.weekdayTimes"),
+					formattedValue: filters.weekdayTimes
+						? `${filters.weekdayTimes.start}–${filters.weekdayTimes.end}`
+						: null,
+					onRemove: () => writeFilters({ weekdayTimes: null }),
+					testId: "weekday-times-filter",
+					popover: (
+						<TimeRangePopover
+							name="weekdayTimes"
+							value={filters.weekdayTimes}
+							onChange={(timeRange) =>
+								writeFilters({ weekdayTimes: timeRange })
+							}
+						/>
+					),
+				},
+				{
+					key: "weekendTimes",
+					name: t("scrims:filters.weekendTimes"),
+					formattedValue: filters.weekendTimes
+						? `${filters.weekendTimes.start}–${filters.weekendTimes.end}`
+						: null,
+					onRemove: () => writeFilters({ weekendTimes: null }),
+					testId: "weekend-times-filter",
+					popover: (
+						<TimeRangePopover
+							name="weekendTimes"
+							value={filters.weekendTimes}
+							onChange={(timeRange) =>
+								writeFilters({ weekendTimes: timeRange })
+							}
+						/>
+					),
+				},
+				{
+					key: "divs",
+					name: t("scrims:filters.divs"),
+					formattedValue: filters.divs
+						? `${filters.divs.max}–${filters.divs.min}`
+						: null,
+					onRemove: () => writeFilters({ divs: null }),
+					testId: "divs-filter",
+					popover: (
+						<DivsPopover
+							value={filters.divs}
+							onChange={(divs) => writeFilters({ divs })}
+						/>
+					),
+				},
+				...associationPill,
+			]}
+			onReset={
+				!Scrim.filtersAreDefault(filters) || data.associationFilter
+					? () =>
+							setParams({
+								weekdayTimes: null,
+								weekendTimes: null,
+								divs: null,
+								associationId: null,
+								useDefaults: false,
+							})
+					: undefined
+			}
+			actions={
+				data.canSaveAsDefault ? (
+					<SendouButton
+						icon={<Star />}
+						isDisabled={persistFilters.state !== "idle"}
+						onClick={() =>
+							persistFilters.submit("PERSIST_SCRIM_FILTERS", { filters })
+						}
+						data-testid="save-filters-as-default-button"
+					>
+						{t("common:filterBar.saveAsDefault")}
+					</SendouButton>
+				) : null
+			}
+		/>
 	);
 }
 
-function ScrimsDaySeparatedTables({
+function TimeRangePopover({
+	name,
+	value,
+	onChange,
+}: {
+	name: string;
+	value: ScrimFilters["weekdayTimes"];
+	onChange: (value: ScrimFilters["weekdayTimes"]) => void;
+}) {
+	const { t } = useTranslation(["forms"]);
+	const [draft, setDraft] = React.useState(value);
+
+	const handleChange = (timeRange: { start: string; end: string } | null) => {
+		setDraft(timeRange);
+
+		if (timeRange === null) {
+			onChange(null);
+			return;
+		}
+
+		if (
+			v.safeParse(timeString, timeRange.start).success &&
+			v.safeParse(timeString, timeRange.end).success
+		) {
+			onChange(timeRange);
+		}
+	};
+
+	return (
+		<TimeRangeFormField
+			name={name}
+			value={draft}
+			onChange={handleChange}
+			startLabel={t("forms:labels.start")}
+			endLabel={t("forms:labels.end")}
+		/>
+	);
+}
+
+function DivsPopover({
+	value,
+	onChange,
+}: {
+	value: ScrimFilters["divs"];
+	onChange: (value: ScrimFilters["divs"]) => void;
+}) {
+	const { t } = useTranslation(["forms"]);
+	const [draft, setDraft] = React.useState<[LutiDiv | null, LutiDiv | null]>([
+		value?.max ?? null,
+		value?.min ?? null,
+	]);
+
+	const divItems = LUTI_DIVS.map((div) => ({ label: div, value: div }));
+
+	const handleChange = (newValue: [LutiDiv | null, LutiDiv | null]) => {
+		setDraft(newValue);
+
+		const [max, min] = newValue;
+		if (max !== null && min !== null) {
+			onChange({ max, min });
+		} else if (max === null && min === null) {
+			onChange(null);
+		}
+	};
+
+	return (
+		<DualSelectFormField
+			name="divs"
+			fields={[
+				{ label: t("forms:labels.scrimMaxDiv"), items: divItems },
+				{ label: t("forms:labels.scrimMinDiv"), items: divItems },
+			]}
+			value={draft}
+			onChange={handleChange}
+			onBlur={() => {}}
+		/>
+	);
+}
+
+function ScrimsDaySeparatedCards({
 	posts,
-	showPopovers = true,
-	showDeletePost = false,
-	showRequestRows = false,
-	showStatus = false,
-	requestScrim,
+	filters,
+	pendingRequestPostId,
+	autoScrollToPostId,
 }: {
 	posts: ScrimPost[];
-	showPopovers?: boolean;
-	showDeletePost?: boolean;
-	showRequestRows?: boolean;
-	showStatus?: boolean;
-	requestScrim?: (postId: number) => void;
+	filters: ScrimFilters;
+	pendingRequestPostId: number | null;
+	autoScrollToPostId: number | null;
 }) {
-	const { i18n } = useTranslation();
-
 	const postsByDay = R.groupBy(posts, (post) =>
-		databaseTimestampToDate(post.at).getDate(),
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);
 
 	return (
 		<div className="stack lg">
 			{Object.entries(postsByDay)
-				.sort((a, b) => a[1][0].at - b[1][0].at)
-				.map(([day, posts]) => {
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([day, dayPosts]) => (
+					<ScrimsDaySection
+						key={day}
+						posts={dayPosts!}
+						filters={filters}
+						pendingRequestPostId={pendingRequestPostId}
+						autoScrollToPostId={autoScrollToPostId}
+					/>
+				))}
+		</div>
+	);
+}
+
+function ScrimsDaySection({
+	posts,
+	filters,
+	pendingRequestPostId,
+	autoScrollToPostId,
+}: {
+	posts: ScrimPost[];
+	filters: ScrimFilters;
+	pendingRequestPostId: number | null;
+	autoScrollToPostId: number | null;
+}) {
+	const user = useUser();
+	const [showFiltered, setShowFiltered] = React.useState(false);
+	const [showRequestPending, setShowRequestPending] = React.useState(
+		pendingRequestPostId !== null,
+	);
+
+	const filteredPosts = posts.filter((post) =>
+		Scrim.applyFilters(post, filters),
+	);
+
+	const pendingRequestsCount = filteredPosts.filter((post) =>
+		post.requests.some((request) =>
+			request.users.some((rUser) => user?.id === rUser.id),
+		),
+	).length;
+
+	return (
+		<div className="stack md">
+			<div className="stack xxs">
+				<h2 className="text-sm">
+					<LocaleTime
+						date={posts[0].startsAt}
+						options={{
+							day: "numeric",
+							month: "numeric",
+							weekday: "long",
+						}}
+					/>
+				</h2>
+				{user ? (
+					<AvailableScrimsFilterButtons
+						showFiltered={showFiltered}
+						setShowFiltered={setShowFiltered}
+						showRequestPending={showRequestPending}
+						setShowRequestPending={setShowRequestPending}
+						pendingRequestsCount={pendingRequestsCount}
+						filteredCount={posts.length - filteredPosts.length}
+					/>
+				) : null}
+			</div>
+			<div className={styles.cardsGrid}>
+				{(showFiltered ? posts : filteredPosts).map((post) => {
+					const hasRequested = post.requests.some((request) =>
+						request.users.some((rUser) => user?.id === rUser.id),
+					);
+
+					if (hasRequested && !showRequestPending) {
+						return null;
+					}
+
+					const getAction = () => {
+						if (!user) return undefined;
+						if (hasRequested) return "VIEW_REQUEST";
+						if (post.requests.length === 0) return "REQUEST";
+						return undefined;
+					};
+
+					const isFilteredOut =
+						showFiltered && !Scrim.applyFilters(post, filters);
+
+					return (
+						<ScrimPostCard
+							key={post.id}
+							post={post}
+							action={getAction()}
+							isFilteredOut={isFilteredOut}
+							autoScrollIntoView={post.id === autoScrollToPostId}
+						/>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
+
+function AvailableScrimsFilterButtons({
+	showFiltered,
+	setShowFiltered,
+	showRequestPending,
+	setShowRequestPending,
+	pendingRequestsCount,
+	filteredCount,
+}: {
+	showFiltered: boolean;
+	setShowFiltered: (value: boolean) => void;
+	showRequestPending: boolean;
+	setShowRequestPending: (value: boolean) => void;
+	pendingRequestsCount: number;
+	filteredCount: number;
+}) {
+	const { t } = useTranslation(["scrims"]);
+
+	if (filteredCount === 0 && pendingRequestsCount === 0) {
+		return null;
+	}
+
+	return (
+		<div className={styles.filterButtons}>
+			{filteredCount > 0 ? (
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					onClick={() => setShowFiltered(!showFiltered)}
+					icon={<Funnel />}
+					className={showFiltered ? styles.active : undefined}
+				>
+					{showFiltered
+						? t("scrims:filters.hideFiltered", { count: filteredCount })
+						: t("scrims:filters.showFiltered", { count: filteredCount })}
+				</SendouButton>
+			) : null}
+			{pendingRequestsCount > 0 ? (
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					onClick={() => setShowRequestPending(!showRequestPending)}
+					icon={<Download />}
+					className={showRequestPending ? styles.active : undefined}
+					data-testid="toggle-pending-requests-button"
+				>
+					{showRequestPending
+						? t("scrims:filters.hidePendingRequests", {
+								count: pendingRequestsCount,
+							})
+						: t("scrims:filters.showPendingRequests", {
+								count: pendingRequestsCount,
+							})}
+				</SendouButton>
+			) : null}
+		</div>
+	);
+}
+
+function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
+	const { t } = useTranslation(["scrims"]);
+	const user = useUser();
+
+	const postsByDay = R.groupBy(posts, (post) =>
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
+	);
+
+	return (
+		<div className="stack lg">
+			{Object.entries(postsByDay)
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([day, dayPosts]) => {
 					return (
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
-								{databaseTimestampToDate(posts![0].at).toLocaleDateString(
-									i18n.language,
-									{
+								<LocaleTime
+									date={dayPosts![0].startsAt}
+									options={{
 										day: "numeric",
-										month: "long",
+										month: "numeric",
 										weekday: "long",
-									},
-								)}
+									}}
+								/>
 							</h2>
-							<ScrimsTable
-								posts={posts!}
-								requestScrim={requestScrim}
-								showDeletePost={showDeletePost}
-								showRequestRows={showRequestRows}
-								showPopovers={showPopovers}
-								showStatus={showStatus}
-							/>
+							<div className="stack lg">
+								{dayPosts!.map((post) => {
+									const isAccepted = post.requests.some(
+										(request) => request.isAccepted,
+									);
+									const canDelete =
+										user &&
+										post.permissions.DELETE_POST.includes(user.id) &&
+										!isAccepted;
+
+									return (
+										<div key={post.id} className="stack sm">
+											<ScrimPostCard
+												post={post}
+												action={canDelete ? "DELETE" : undefined}
+											/>
+											{post.requests.length > 0 ? (
+												<div className="stack sm">
+													{post.requests.map((request) => (
+														<ScrimRequestCard
+															key={request.id}
+															request={request}
+															postStartTime={post.startsAt}
+															canAccept={Boolean(
+																user &&
+																	post.permissions.MANAGE_REQUESTS.includes(
+																		user.id,
+																	),
+															)}
+														/>
+													))}
+												</div>
+											) : (
+												<div className="text-lighter text-lg font-bold mt-2 text-center">
+													{t("scrims:noRequestsYet")}
+												</div>
+											)}
+										</div>
+									);
+								})}
+							</div>
 						</div>
 					);
 				})}
@@ -285,419 +641,52 @@ function ScrimsDaySeparatedTables({
 	);
 }
 
-function ScrimsTable({
-	posts,
-	showPopovers,
-	showDeletePost,
-	showRequestRows,
-	showStatus,
-	requestScrim,
-}: {
-	posts: ScrimPost[];
-	showPopovers: boolean;
-	showDeletePost: boolean;
-	showRequestRows: boolean;
-	showStatus: boolean;
-	requestScrim?: (postId: number) => void;
-}) {
-	const { t } = useTranslation(["common", "scrims"]);
-	const user = useUser();
-
-	invariant(
-		!(requestScrim && showDeletePost),
-		"Can't have both request scrim and delete post",
+function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
+	const postsByDay = R.groupBy(posts, (post) =>
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);
 
-	const getStatus = (post: ScrimPost) => {
-		if (post.canceled) return "CANCELED";
-		if (post.requests.at(0)?.isAccepted) return "CONFIRMED";
-		if (
-			post.requests.some((r) => r.users.some((rUser) => user?.id === rUser.id))
-		) {
-			return "PENDING";
-		}
-
-		return null;
-	};
-
 	return (
-		<Table>
-			<thead>
-				<tr>
-					<th>{t("scrims:table.headers.time")}</th>
-					<th>{t("scrims:table.headers.team")}</th>
-					{showPopovers ? <th /> : null}
-					<th>{t("scrims:table.headers.divs")}</th>
-					{showStatus ? <th>{t("scrims:table.headers.status")}</th> : null}
-					{requestScrim || showDeletePost ? <th /> : null}
-				</tr>
-			</thead>
-			<tbody>
-				{posts.map((post) => {
-					const owner =
-						post.users.find((user) => user.isOwner) ?? post.users[0];
-
-					const requests = showRequestRows
-						? post.requests.map((request) => (
-								<RequestRow
-									key={request.id}
-									canAccept={Boolean(
-										user && post.permissions.MANAGE_REQUESTS.includes(user.id),
-									)}
-									request={request}
-									postId={post.id}
-								/>
-							))
-						: [];
-
-					const isAccepted = post.requests.some(
-						(request) => request.isAccepted,
-					);
-
-					const showContactButton =
-						isAccepted &&
-						post.requests.at(0)?.users.some((rUser) => rUser.id === user?.id);
-
-					const status = getStatus(post);
-
+		<div className="stack lg">
+			{Object.entries(postsByDay)
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([day, dayPosts]) => {
 					return (
-						<React.Fragment key={post.id}>
-							<tr>
-								<td>
-									<div className="stack horizontal sm">
-										<div className={styles.postTime}>
-											{!post.isScheduledForFuture ? (
-												t("scrims:now")
-											) : (
-												<TimePopover
-													time={databaseTimestampToDate(post.at)}
-													options={{
-														hour: "numeric",
-														minute: "numeric",
-													}}
-													underline={false}
-													footerText={t("scrims:postModal.footer", {
-														time: formatDistance(
-															databaseTimestampToDate(post.createdAt),
-															new Date(),
-															{
-																addSuffix: true,
-															},
-														),
-													})}
+						<div key={day} className="stack md">
+							<h2 className="text-sm">
+								<LocaleTime
+									date={dayPosts![0].startsAt}
+									options={{
+										day: "numeric",
+										month: "numeric",
+										weekday: "long",
+									}}
+								/>
+							</h2>
+							<div className="stack lg">
+								{dayPosts!.map((post) => {
+									const acceptedRequest = post.requests.find(
+										(request) => request.isAccepted,
+									);
+
+									return (
+										<div key={post.id} className="stack sm">
+											<ScrimPostCard post={post} action="CONTACT" />
+											{acceptedRequest ? (
+												<ScrimRequestCard
+													request={acceptedRequest}
+													postStartTime={post.startsAt}
+													canAccept={false}
+													showFooter={false}
 												/>
-											)}
-										</div>
-										{post.isPrivate ? (
-											<SendouPopover
-												trigger={
-													<SendouButton
-														variant="minimal"
-														icon={<EyeSlashIcon className={styles.postIcon} />}
-														data-testid="limited-visibility-popover"
-													/>
-												}
-											>
-												{t("scrims:limitedVisibility")}
-											</SendouPopover>
-										) : null}
-									</div>
-								</td>
-								<td>
-									<div className="stack horizontal sm items-center min-w-max">
-										{showPopovers ? (
-											<SendouPopover
-												trigger={
-													<SendouButton
-														variant="minimal"
-														icon={<UsersIcon className={styles.postIcon} />}
-													/>
-												}
-											>
-												<div className="stack md">
-													{post.users.map((user) => (
-														<Link
-															to={userPage(user)}
-															key={user.id}
-															className="stack horizontal sm"
-														>
-															<Avatar size="xxs" user={user} />
-															{user.username}
-														</Link>
-													))}
-												</div>
-											</SendouPopover>
-										) : null}
-										{post.team?.avatarUrl ? (
-											<Avatar
-												size="xxs"
-												url={userSubmittedImage(post.team.avatarUrl)}
-											/>
-										) : (
-											<Avatar size="xxs" user={owner} />
-										)}
-										{post.team?.name ??
-											t("scrims:pickup", { username: owner.username })}
-									</div>
-								</td>
-								{showPopovers ? (
-									<td>
-										{post.text ? (
-											<SendouPopover
-												trigger={
-													<SendouButton
-														variant="minimal"
-														icon={
-															<SpeechBubbleIcon className={styles.postIcon} />
-														}
-														data-testid="scrim-text-popover"
-													/>
-												}
-											>
-												{post.text}
-											</SendouPopover>
-										) : null}
-									</td>
-								) : null}
-								<td className="whitespace-nowrap">
-									{post.divs ? (
-										<>
-											{post.divs.max} - {post.divs.min}
-										</>
-									) : null}
-								</td>
-								{showStatus ? (
-									<td
-										className={clsx({
-											[styles.postFloatingActionCell]: status !== "CONFIRMED",
-										})}
-									>
-										<div
-											className={clsx(styles.postStatus, {
-												[styles.postStatusConfirmed]: status === "CONFIRMED",
-												[styles.postStatusPending]: status === "PENDING",
-												[styles.postStatusCanceled]: status === "CANCELED",
-											})}
-										>
-											{status === "CONFIRMED" ? (
-												<>
-													<CheckmarkIcon /> {t("scrims:status.booked")}
-												</>
-											) : null}
-											{status === "PENDING" ? (
-												<>
-													<ClockIcon /> {t("scrims:status.pending")}
-												</>
-											) : null}
-											{status === "CANCELED" ? (
-												<>
-													<CrossIcon /> {t("scrims:status.canceled")}
-												</>
 											) : null}
 										</div>
-									</td>
-								) : null}
-								{user && requestScrim && post.requests.length === 0 ? (
-									<td className={styles.postFloatingActionCell}>
-										<SendouButton
-											size="small"
-											onPress={() => requestScrim(post.id)}
-											icon={<ArrowUpOnSquareIcon />}
-											className="ml-auto"
-										>
-											{t("scrims:actions.request")}
-										</SendouButton>
-									</td>
-								) : null}
-								{showDeletePost && !isAccepted ? (
-									<td>
-										{user && post.permissions.DELETE_POST.includes(user.id) ? (
-											<FormWithConfirm
-												dialogHeading={t("scrims:deleteModal.title")}
-												submitButtonText={t("common:actions.delete")}
-												fields={[
-													["scrimPostId", post.id],
-													["_action", "DELETE_POST"],
-												]}
-											>
-												<SendouButton
-													size="small"
-													variant="destructive"
-													className="ml-auto"
-												>
-													{t("common:actions.delete")}
-												</SendouButton>
-											</FormWithConfirm>
-										) : (
-											<SendouPopover
-												trigger={
-													<SendouButton
-														variant="destructive"
-														size="small"
-														className="ml-auto"
-													>
-														{t("common:actions.delete")}
-													</SendouButton>
-												}
-											>
-												{t("scrims:deleteModal.prevented", {
-													username: owner.username,
-												})}
-											</SendouPopover>
-										)}
-									</td>
-								) : null}
-								{user &&
-								requestScrim &&
-								post.requests.length !== 0 &&
-								!post.requests.at(0)?.isAccepted &&
-								post.requests.at(0)?.permissions.CANCEL.includes(user.id) ? (
-									<td>
-										<FormWithConfirm
-											dialogHeading={t("scrims:cancelModal.title")}
-											submitButtonText={t("common:actions.cancel")}
-											fields={[
-												["scrimPostRequestId", post.requests[0].id],
-												["_action", "CANCEL_REQUEST"],
-											]}
-										>
-											<SendouButton
-												size="small"
-												variant="destructive"
-												icon={<CrossIcon />}
-												className="ml-auto"
-											>
-												{t("common:actions.cancel")}
-											</SendouButton>
-										</FormWithConfirm>
-									</td>
-								) : null}
-								{showContactButton ? (
-									<td className={styles.postFloatingActionCell}>
-										<ContactButton postId={post.id} />
-									</td>
-								) : null}
-								{isAccepted &&
-								post.requests.some(
-									(r) =>
-										r.isAccepted && !r.users.some((u) => u.id === user?.id),
-								) ? (
-									<td />
-								) : null}
-							</tr>
-							{requests}
-						</React.Fragment>
+									);
+								})}
+							</div>
+						</div>
 					);
 				})}
-			</tbody>
-		</Table>
-	);
-}
-
-function ContactButton({ postId }: { postId: number }) {
-	const { t } = useTranslation(["scrims"]);
-
-	return (
-		<LinkButton
-			to={scrimPage(postId)}
-			size="small"
-			className="w-max ml-auto"
-			icon={<SpeechBubbleFilledIcon />}
-		>
-			{t("scrims:actions.contact")}
-		</LinkButton>
-	);
-}
-
-function RequestRow({
-	canAccept,
-	request,
-	postId,
-}: {
-	canAccept: boolean;
-	request: ScrimPostRequest;
-	postId: number;
-}) {
-	const { t } = useTranslation(["common", "scrims"]);
-
-	const requestOwner =
-		request.users.find((user) => user.isOwner) ?? request.users[0];
-
-	const groupName =
-		request.team?.name ??
-		t("scrims:pickup", {
-			username: requestOwner.username,
-		});
-
-	return (
-		<tr className="bg-theme-transparent-important">
-			<td />
-			<td>
-				<div className="stack horizontal sm items-center">
-					<SendouPopover
-						trigger={
-							<SendouButton
-								icon={<UsersIcon className={styles.postIcon} />}
-								variant="minimal"
-							/>
-						}
-					>
-						<div className="stack md">
-							{request.users.map((user) => (
-								<Link
-									to={userPage(user)}
-									key={user.id}
-									className="stack horizontal sm"
-								>
-									<Avatar size="xxs" user={user} />
-									{user.username}
-								</Link>
-							))}
-						</div>
-					</SendouPopover>
-					{request.team?.avatarUrl ? (
-						<Avatar
-							size="xxs"
-							url={userSubmittedImage(request.team.avatarUrl)}
-						/>
-					) : (
-						<Avatar size="xxs" user={requestOwner} />
-					)}
-					{groupName}
-				</div>
-			</td>
-			<td />
-			<td />
-			<td />
-			<td className={styles.postFloatingActionCell}>
-				{!request.isAccepted && canAccept ? (
-					<FormWithConfirm
-						dialogHeading={t("scrims:acceptModal.title", { groupName })}
-						fields={[
-							["scrimPostRequestId", request.id],
-							["_action", "ACCEPT_REQUEST"],
-						]}
-						submitButtonVariant="primary"
-						submitButtonText={t("common:actions.accept")}
-					>
-						<SendouButton size="small" className="ml-auto">
-							{t("common:actions.accept")}
-						</SendouButton>
-					</FormWithConfirm>
-				) : !request.isAccepted && !canAccept ? (
-					<SendouPopover
-						trigger={
-							<SendouButton size="small" className="ml-auto">
-								{t("common:actions.accept")}
-							</SendouButton>
-						}
-					>
-						{t("scrims:acceptModal.prevented")}
-					</SendouPopover>
-				) : (
-					<ContactButton postId={postId} />
-				)}
-			</td>
-		</tr>
+		</div>
 	);
 }

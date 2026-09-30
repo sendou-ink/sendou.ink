@@ -1,0 +1,15 @@
+{
+	"tabs.preferences": "",
+	"tabs.matchProfile": "",
+	"tabs.locale": "",
+	"tabs.theme": "",
+	"tabs.sounds": "Sons",
+	"matchProfile.maps.teamPreferencesHint": "",
+	"matchProfile.maps.avoid": "Evitar",
+	"matchProfile.maps.prefer": "Prefere",
+	"matchProfile.maps.neutral": "Neutro",
+	"sounds.likeReceived": "",
+	"sounds.readyCheckStarted": "",
+	"sounds.matchStarted": "",
+	"sounds.tournamentMatchStarted": ""
+}

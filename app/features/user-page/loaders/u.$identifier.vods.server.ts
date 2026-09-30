@@ -1,15 +1,26 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { findVods } from "~/features/vods/queries/findVods.server";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import type { LoaderFunctionArgs } from "react-router";
+import { userPageUserId } from "~/features/user-page/user-page-context.server";
+import * as VodRepository from "~/features/vods/VodRepository.server";
+import { VODS_PAGE_BATCH_SIZE } from "~/features/vods/vods-constants";
+import { userVodsSearchParams } from "~/features/vods/vods-search-params";
+import { paginate } from "~/utils/remix.server";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const userId = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(params.identifier!),
-	).id;
+export const loader = async ({ request, url }: LoaderFunctionArgs) => {
+	const userId = userPageUserId();
+
+	const { page } = userVodsSearchParams.parse(request);
+
+	const [vods, totalCount] = await Promise.all([
+		VodRepository.findVods({
+			userId,
+			limit: VODS_PAGE_BATCH_SIZE,
+			offset: (page - 1) * VODS_PAGE_BATCH_SIZE,
+		}),
+		VodRepository.countVods({ userId }),
+	]);
 
 	return {
-		// TODO: add pagination instead of not showing oldest vods at all
-		vods: findVods({ userId, limit: 100 }),
+		vods,
+		...paginate({ url, page, pageSize: VODS_PAGE_BATCH_SIZE, totalCount }),
 	};
 };

@@ -1,0 +1,88 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "X",
+    "mode": "RM",
+    "stage": 13,
+    "timestamp": "9/7/2026 14:16",
+    "replayCode": "RUH3-3NEF-F5FY-PAJL",
+    "matchScores": [
+      100,
+      null
+    ],
+    "players": [
+      {
+        "name": "G,~,K",
+        "weaponId": 2051,
+        "paint": 1077,
+        "ka": 8,
+        "d": 3,
+        "s": 3
+      },
+      {
+        "name": "RADWIMPS",
+        "weaponId": 1015,
+        "paint": 690,
+        "ka": 7,
+        "d": 4,
+        "s": 2
+      },
+      {
+        "name": "けいた",
+        "weaponId": 8000,
+        "paint": 853,
+        "ka": 7,
+        "d": 5,
+        "s": 2
+      },
+      {
+        "name": "RD777",
+        "weaponId": 50,
+        "paint": 696,
+        "ka": 6,
+        "d": 7,
+        "s": 2
+      },
+      {
+        "name": "モンターニュ",
+        "weaponId": 50,
+        "paint": 771,
+        "ka": 9,
+        "d": 6,
+        "s": 1
+      },
+      {
+        "name": "8♪cloudy",
+        "weaponId": 7030,
+        "paint": 1150,
+        "ka": 5,
+        "d": 4,
+        "s": 2
+      },
+      {
+        "name": "めがねがし",
+        "weaponId": 70,
+        "paint": 559,
+        "ka": 7,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "むぎ",
+        "weaponId": 5000,
+        "paint": 546,
+        "ka": 4,
+        "d": 9,
+        "s": 1
+      }
+    ],
+    "stageLabel": "Brinewater Springs"
+  },
+  "options": {
+    "skipFields": [
+      "players.6.name",
+      "players.7.name"
+    ],
+    "notes": "Heavily compressed stream capture. Code hand-verified from the zoomed frame; a prior parse misread U>D, N>H, F>E, 5>6. Skipped names read without dakuten (see the 1411 case)."
+  }
+}

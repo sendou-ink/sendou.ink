@@ -1,53 +1,96 @@
+import { userArtPage } from "~/features/art/art-urls";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { assertUnreachable } from "~/utils/types";
 import {
 	badgePage,
+	EVENTS_PAGE,
+	FRIENDS_PAGE,
+	NEW_TROPHY_PAGE,
 	PLUS_VOTING_PAGE,
-	plusSuggestionPage,
 	SENDOUQ_PAGE,
+	SENDOUQ_READY_PAGE,
 	scrimPage,
 	scrimsPage,
 	sendouQMatchPage,
-	tournamentBracketsPage,
+	teamSchedulePage,
+	tournamentMatchPage,
 	tournamentRegisterPage,
+	tournamentSubsPage,
 	tournamentTeamPage,
-	userArtPage,
+	trophyPage,
+	type UserLinkArgs,
+	userEditProfilePage,
 } from "~/utils/urls";
 import type { Notification } from "./notifications-types";
+
+/** Values the notification's title and text interpolate. Some notification types have none. */
+export const notificationMeta = (notification: Notification) =>
+	"meta" in notification ? notification.meta : undefined;
 
 export const notificationNavIcon = (type: Notification["type"]) => {
 	switch (type) {
 		case "BADGE_ADDED":
 		case "BADGE_MANAGER_ADDED":
 			return "badges";
+		case "TROPHY_SUBMITTED":
+		case "TROPHY_SUBMISSION_ACCEPTED":
+		case "TROPHY_SUBMISSION_DECLINED":
+			return "trophies";
 		case "PLUS_SUGGESTION_ADDED":
 		case "PLUS_VOTING_STARTED":
 			return "plus";
 		case "SQ_ADDED_TO_GROUP":
 		case "SQ_NEW_MATCH":
+		case "SQ_READY_CHECK":
 		case "SEASON_STARTED":
+		case "SEASON_ENDED":
 			return "sendouq";
 		case "TAGGED_TO_ART":
+		case "COMMISSIONS_CLOSED":
 			return "art";
 		case "TO_ADDED_TO_TEAM":
 		case "TO_BRACKET_STARTED":
 		case "TO_CHECK_IN_OPENED":
 		case "TO_TEST_CREATED":
+		case "TO_LIKE_RECEIVED":
+		case "TO_LIKE_ACCEPTED":
+		case "TO_LEAGUE_TIMES_PROPOSED":
+		case "TO_LEAGUE_MATCH_SCHEDULED":
+		case "TO_LEAGUE_MATCH_STARTING_SOON":
 			return "medal";
 		case "SCRIM_NEW_REQUEST":
 		case "SCRIM_SCHEDULED":
 		case "SCRIM_CANCELED":
+		case "SCRIM_STARTING_SOON":
+		case "SCRIM_AUTO_DELETED":
 			return "scrims";
+		case "FRIEND_REQUEST_RECEIVED":
+			return "sendou_love";
+		case "TEAM_EVENT_ADDED":
+			return "t";
+		case "SCHEDULE_TEAM_REMINDER":
+			return "calendar";
 		default:
 			assertUnreachable(type);
 	}
 };
 
-export const notificationLink = (notification: Notification) => {
+export const notificationLink = (
+	notification: Notification,
+	recipient?: UserLinkArgs,
+) => {
 	switch (notification.type) {
 		case "BADGE_ADDED":
 			return badgePage(notification.meta.badgeId);
 		case "BADGE_MANAGER_ADDED":
 			return badgePage(notification.meta.badgeId);
+		case "TROPHY_SUBMITTED":
+		case "TROPHY_SUBMISSION_DECLINED":
+			return NEW_TROPHY_PAGE;
+		case "TROPHY_SUBMISSION_ACCEPTED":
+			return trophyPage(notification.meta.trophyId);
 		case "PLUS_SUGGESTION_ADDED":
 			return plusSuggestionPage({ tier: notification.meta.tier });
 		case "PLUS_VOTING_STARTED":
@@ -55,8 +98,17 @@ export const notificationLink = (notification: Notification) => {
 		case "SEASON_STARTED":
 		case "SQ_ADDED_TO_GROUP":
 			return SENDOUQ_PAGE;
+		case "SEASON_ENDED":
+			return recipient
+				? userSeasonsPage({
+						user: recipient,
+						season: notification.meta.seasonNth,
+					})
+				: SENDOUQ_PAGE;
 		case "SQ_NEW_MATCH":
 			return sendouQMatchPage(notification.meta.matchId);
+		case "SQ_READY_CHECK":
+			return SENDOUQ_READY_PAGE;
 		case "TAGGED_TO_ART":
 			return userArtPage(
 				{ discordId: notification.meta.adderDiscordId },
@@ -76,39 +128,40 @@ export const notificationLink = (notification: Notification) => {
 		case "TO_TEST_CREATED":
 		case "TO_CHECK_IN_OPENED":
 			return tournamentRegisterPage(notification.meta.tournamentId);
-		case "SCRIM_NEW_REQUEST": {
+		case "SCRIM_NEW_REQUEST":
+		case "SCRIM_AUTO_DELETED": {
 			return scrimsPage();
 		}
 		case "SCRIM_CANCELED":
-		case "SCRIM_SCHEDULED": {
+		case "SCRIM_SCHEDULED":
+		case "SCRIM_STARTING_SOON": {
 			return scrimPage(notification.meta.id);
+		}
+		case "COMMISSIONS_CLOSED": {
+			return userEditProfilePage({ discordId: notification.meta.discordId });
+		}
+		case "FRIEND_REQUEST_RECEIVED": {
+			return FRIENDS_PAGE;
+		}
+		case "TO_LIKE_RECEIVED":
+		case "TO_LIKE_ACCEPTED": {
+			return tournamentSubsPage(notification.meta.tournamentId);
+		}
+		case "TO_LEAGUE_TIMES_PROPOSED":
+		case "TO_LEAGUE_MATCH_SCHEDULED":
+		case "TO_LEAGUE_MATCH_STARTING_SOON": {
+			return tournamentMatchPage({
+				tournamentId: notification.meta.tournamentId,
+				matchId: notification.meta.matchId,
+			});
+		}
+		case "TEAM_EVENT_ADDED": {
+			return teamSchedulePage(notification.meta.teamCustomUrl);
+		}
+		case "SCHEDULE_TEAM_REMINDER": {
+			return EVENTS_PAGE;
 		}
 		default:
 			assertUnreachable(notification);
 	}
-};
-
-/** Takes the `meta` object of a notification and transforms it (if needed) to show the translated string to user */
-export const mapMetaForTranslation = (
-	notification: Notification,
-	language: string,
-) => {
-	if (
-		notification.type === "SCRIM_SCHEDULED" ||
-		notification.type === "SCRIM_CANCELED"
-	) {
-		return {
-			...notification.meta,
-			timeString: notification.meta.at // TODO: after two weeks this check can be removed (all notifications will have `at`)
-				? new Date(notification.meta.at).toLocaleString(language, {
-						day: "numeric",
-						month: "numeric",
-						hour: "numeric",
-						minute: "numeric",
-					})
-				: undefined,
-		};
-	}
-
-	return notification.meta;
 };

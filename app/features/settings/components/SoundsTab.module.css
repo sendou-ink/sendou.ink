@@ -1,0 +1,10 @@
+.volumeSliderIcon {
+	width: 16px;
+	height: 16px;
+}
+
+.volumeSliderInput {
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+	border: 0 !important;
+}

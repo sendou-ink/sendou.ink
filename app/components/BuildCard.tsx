@@ -1,20 +1,33 @@
 import clsx from "clsx";
+import {
+	HardDriveDownload,
+	Lock,
+	MessageCircleMore,
+	SquarePen,
+	Trash,
+} from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
-import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
+import { Link } from "react-router";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import type { BuildWeaponWithTop500Info } from "~/features/builds/queries/buildsBy.server";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { analyzerPage } from "~/features/build-analyzer/analyzer-urls";
+import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
+import {
+	BuildGraphic,
+	type BuildGraphicOwner,
+} from "~/features/img-export/components/BuildGraphic";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import type {
 	Ability as AbilityType,
 	BuildAbilitiesTuple,
+	GearType,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
+import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { gearTypeToInitial } from "~/utils/strings";
 import {
-	analyzerPage,
 	gearImageUrl,
 	mainWeaponImageUrl,
 	modeImageUrl,
@@ -27,12 +40,10 @@ import { Ability } from "./Ability";
 import styles from "./BuildCard.module.css";
 import { LinkButton, SendouButton } from "./elements/Button";
 import { SendouPopover } from "./elements/Popover";
+import { SendouSwitch } from "./elements/Switch";
 import { FormWithConfirm } from "./FormWithConfirm";
 import { Image } from "./Image";
-import { EditIcon } from "./icons/Edit";
-import { LockIcon } from "./icons/Lock";
-import { SpeechBubbleIcon } from "./icons/SpeechBubble";
-import { TrashIcon } from "./icons/Trash";
+import { LocaleTime } from "./LocaleTime";
 
 interface BuildProps {
 	build: Pick<
@@ -44,32 +55,29 @@ interface BuildProps {
 		| "headGearSplId"
 		| "shoesGearSplId"
 		| "updatedAt"
-		| "private"
+		| "isPrivate"
 	> & {
 		abilities: BuildAbilitiesTuple;
-		unsortedAbilities: BuildAbilitiesTuple;
 		modes: ModeShort[] | null;
-		weapons: Array<{
-			weaponSplId: Tables["BuildWeapon"]["weaponSplId"];
-			minRank: number | null;
-			maxPower: number | null;
-		}>;
+		weapons: Array<BuildWeaponWithTop500Info>;
 	};
-	owner?: Pick<UserWithPlusTier, "discordId" | "username" | "plusTier">;
+	owner?: Pick<UserWithPlusTier, "discordId" | "username" | "plusTier"> &
+		Partial<
+			Pick<BuildGraphicOwner, "customUrl" | "discordAvatar" | "customAvatarUrl">
+		>;
+	/** false when the page already shows the owner (e.g. their own builds page) */
+	showOwner?: boolean;
 	canEdit?: boolean;
-	withAbilitySorting?: boolean;
 }
 
 export function BuildCard({
 	build,
 	owner,
+	showOwner = true,
 	canEdit = false,
-	withAbilitySorting = true,
 }: BuildProps) {
 	const user = useUser();
 	const { t } = useTranslation(["weapons", "builds", "common", "game-misc"]);
-	const { i18n } = useTranslation();
-	const isMounted = useIsMounted();
 
 	const {
 		id,
@@ -81,24 +89,21 @@ export function BuildCard({
 		updatedAt,
 		modes,
 		weapons,
+		abilities,
 	} = build;
 
-	const abilities = withAbilitySorting
-		? build.abilities
-		: build.unsortedAbilities;
-
 	const isNoGear = [headGearSplId, clothesGearSplId, shoesGearSplId].some(
-		(id) => id === -1,
+		(gearSplId) => typeof gearSplId !== "number",
 	);
 
 	return (
 		<div
-			className={clsx(styles.card, { [styles.private]: build.private })}
+			className={clsx(styles.card, { [styles.private]: build.isPrivate })}
 			data-testid="build-card"
 		>
 			<div>
 				<div className={styles.topRow}>
-					{modes && modes.length > 0 && (
+					{modes && modes.length > 0 ? (
 						<div className={styles.modes}>
 							{modes.map((mode) => (
 								<Image
@@ -112,47 +117,41 @@ export function BuildCard({
 								/>
 							))}
 						</div>
-					)}
+					) : null}
 					<h2 className={styles.title} data-testid="build-title">
 						{title}
 					</h2>
 				</div>
 				<div className={styles.dateAuthorRow}>
-					{owner && (
+					{owner && showOwner ? (
 						<>
 							<Link to={userBuildsPage(owner)} className={styles.ownerLink}>
 								{owner.username}
 							</Link>
 							<div>•</div>
 						</>
-					)}
-					{owner?.plusTier ? (
+					) : null}
+					{owner?.plusTier && showOwner ? (
 						<>
 							<span>+{owner.plusTier}</span>
 							<div>•</div>
 						</>
 					) : null}
-					<div className="stack horizontal sm">
-						{build.private ? (
+					<div className="stack horizontal sm items-center">
+						{build.isPrivate ? (
 							<div className={styles.privateText}>
-								<LockIcon className={styles.privateIcon} />{" "}
-								{t("common:build.private")}
+								<Lock size={16} /> {t("common:build.private")}
 							</div>
 						) : null}
-						<time
-							className={clsx("whitespace-nowrap", { invisible: !isMounted })}
-						>
-							{isMounted
-								? databaseTimestampToDate(updatedAt).toLocaleDateString(
-										i18n.language,
-										{
-											day: "numeric",
-											month: "long",
-											year: "numeric",
-										},
-									)
-								: "t"}
-						</time>
+						<LocaleTime
+							date={updatedAt}
+							options={{
+								day: "numeric",
+								month: "numeric",
+								year: "numeric",
+							}}
+							className="whitespace-nowrap"
+						/>
 					</div>
 				</div>
 			</div>
@@ -160,11 +159,11 @@ export function BuildCard({
 				{weapons.map((weapon) => (
 					<RoundWeaponImage key={weapon.weaponSplId} weapon={weapon} />
 				))}
-				{weapons.length === 1 && (
+				{weapons.length === 1 ? (
 					<div className={styles.weaponText}>
 						{t(`weapons:MAIN_${weapons[0].weaponSplId}` as any)}
 					</div>
-				)}
+				) : null}
 			</div>
 			<div
 				className={clsx(styles.gearAbilities, {
@@ -188,24 +187,31 @@ export function BuildCard({
 				/>
 			</div>
 			<div className={styles.bottomRow}>
-				<Link
+				<LinkButton
 					to={analyzerPage({
 						weaponId: weapons[0].weaponSplId,
 						abilities: abilities.flat(),
 					})}
+					shape="circle"
+					variant="minimal"
+					size="small"
 				>
 					<Image
+						size={24}
 						alt={t("common:pages.analyzer")}
 						className={styles.icon}
 						path={navIconUrl("analyzer")}
 					/>
-				</Link>
+				</LinkButton>
+				{owner ? <BuildImageExportDialog build={build} owner={owner} /> : null}
 				{description ? (
 					<SendouPopover
 						trigger={
 							<SendouButton
+								shape="circle"
+								size="small"
 								variant="minimal"
-								icon={<SpeechBubbleIcon />}
+								icon={<MessageCircleMore />}
 								className={styles.smallText}
 							/>
 						}
@@ -213,17 +219,17 @@ export function BuildCard({
 						{description}
 					</SendouPopover>
 				) : null}
-				{canEdit && (
+				{canEdit ? (
 					<>
 						<LinkButton
+							shape="circle"
 							className={styles.smallText}
 							variant="minimal"
 							size="small"
 							to={`new?buildId=${id}&userId=${user!.id}`}
 							testId="edit-build"
-						>
-							<EditIcon className={styles.icon} />
-						</LinkButton>
+							icon={<SquarePen />}
+						/>
 						<FormWithConfirm
 							dialogHeading={t("builds:deleteConfirm", { title })}
 							fields={[
@@ -232,38 +238,98 @@ export function BuildCard({
 							]}
 						>
 							<SendouButton
-								icon={<TrashIcon className={styles.icon} />}
+								shape="circle"
+								size="small"
+								icon={<Trash />}
 								className={styles.smallText}
 								variant="minimal-destructive"
 								type="submit"
+								testId="delete-build"
 							/>
 						</FormWithConfirm>
 					</>
-				)}
+				) : null}
 			</div>
 		</div>
 	);
 }
 
+function BuildImageExportDialog({
+	build,
+	owner,
+}: {
+	build: BuildProps["build"];
+	owner: BuildGraphicOwner;
+}) {
+	const { t } = useTranslation(["common"]);
+	const [showTitle, setShowTitle] = React.useState(true);
+	const [showAbilityPoints, setShowAbilityPoints] = React.useState(true);
+	const [showAbilityChunks, setShowAbilityChunks] = React.useState(false);
+
+	return (
+		<ImageExportDialog
+			trigger={
+				<SendouButton
+					shape="circle"
+					size="small"
+					variant="minimal"
+					icon={<HardDriveDownload />}
+					className={styles.smallText}
+					aria-label={t("common:imageExport.export")}
+				/>
+			}
+			heading={t("common:imageExport.export")}
+			filename={`build-${mySlugify(build.title)}`}
+			qrCodePath={analyzerPage({
+				weaponId: build.weapons[0].weaponSplId,
+				abilities: build.abilities.flat(),
+			})}
+			settings={
+				<>
+					<SendouSwitch isSelected={showTitle} onChange={setShowTitle}>
+						{t("common:imageExport.buildTitle")}
+					</SendouSwitch>
+					<SendouSwitch
+						isSelected={showAbilityPoints}
+						onChange={setShowAbilityPoints}
+					>
+						{t("common:imageExport.abilityPoints")}
+					</SendouSwitch>
+					<SendouSwitch
+						isSelected={showAbilityChunks}
+						onChange={setShowAbilityChunks}
+					>
+						{t("common:imageExport.abilityChunks")}
+					</SendouSwitch>
+				</>
+			}
+		>
+			<BuildGraphic
+				build={build}
+				owner={owner}
+				showTitle={showTitle}
+				showAbilityPoints={showAbilityPoints}
+				showAbilityChunks={showAbilityChunks}
+			/>
+		</ImageExportDialog>
+	);
+}
+
 function RoundWeaponImage({ weapon }: { weapon: BuildWeaponWithTop500Info }) {
-	const { weaponSplId, maxPower, minRank } = weapon;
-	const normalizedWeaponSplId = altWeaponIdToId.get(weaponSplId) ?? weaponSplId;
+	const normalizedWeaponSplId = canonicalWeaponSplId(weapon.weaponSplId);
 
 	const { t } = useTranslation(["weapons"]);
 	const slug = mySlugify(
 		t(`weapons:MAIN_${normalizedWeaponSplId}`, { lng: "en" }),
 	);
 
-	const isTop500 = typeof maxPower === "number" && typeof minRank === "number";
-
 	return (
-		<div key={weaponSplId} className={styles.weapon}>
-			{isTop500 ? (
+		<div key={weapon.weaponSplId} className={styles.weapon}>
+			{weapon.isTop500 ? (
 				<Image
 					className={styles.top500}
 					path={navIconUrl("xsearch")}
 					alt=""
-					title={`Max X Power: ${maxPower} | Best Rank: ${minRank}`}
 					height={24}
 					width={24}
 					testId="top500-crown"
@@ -271,9 +337,9 @@ function RoundWeaponImage({ weapon }: { weapon: BuildWeaponWithTop500Info }) {
 			) : null}
 			<Link to={weaponBuildPage(slug)}>
 				<Image
-					path={mainWeaponImageUrl(weaponSplId)}
-					alt={t(`weapons:MAIN_${weaponSplId}` as any)}
-					title={t(`weapons:MAIN_${weaponSplId}` as any)}
+					path={mainWeaponImageUrl(weapon.weaponSplId)}
+					alt={t(`weapons:MAIN_${weapon.weaponSplId}`)}
+					title={t(`weapons:MAIN_${weapon.weaponSplId}`)}
 					height={36}
 					width={36}
 				/>
@@ -289,7 +355,7 @@ function AbilitiesRowWithGear({
 }: {
 	gearType: GearType;
 	abilities: AbilityType[];
-	gearId: number;
+	gearId: number | null;
 }) {
 	const { t } = useTranslation(["gear"]);
 	const translatedGearName = t(
@@ -298,7 +364,7 @@ function AbilitiesRowWithGear({
 
 	return (
 		<>
-			{gearId !== -1 ? (
+			{typeof gearId === "number" ? (
 				<Image
 					height={64}
 					width={64}

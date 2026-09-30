@@ -1,35 +1,30 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { db } from "~/db/sql";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { resolveMapList } from "~/features/tournament-bracket/core/mapList.server";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
-import i18next from "~/modules/i18n/i18next.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import { tournamentSharedCached } from "~/features/tournament-bracket/core/Tournament.server";
+import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
+import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
+import { jsonArrayFrom } from "~/utils/kysely.server";
+import { logger } from "~/utils/logger";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { id } from "~/utils/schema";
 import type { GetTournamentMatchResponse } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
-	const t = await i18next.getFixedT("en", ["game-misc"]);
-	const { id } = parseParams({
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const t = await getFixedTForLanguage("en", ["game-misc"]);
+	const { id: matchId } = parseParams({
 		params,
 		schema: paramsSchema,
 	});
 
-	const match = notFoundIfFalsy(
+	const match = notFoundIfNullish(
 		await db
 			.selectFrom("TournamentMatch")
 			.innerJoin(
@@ -48,6 +43,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				"TournamentMatch.id",
 				"TournamentMatch.opponentOne",
 				"TournamentMatch.opponentTwo",
+				"TournamentMatch.winnerSide",
 				"Tournament.mapPickingStyle",
 				"TournamentRound.maps",
 				jsonArrayFrom(
@@ -58,8 +54,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 							"TournamentMatchGameResult.mode",
 							"TournamentMatchGameResult.winnerTeamId",
 							"TournamentMatchGameResult.source",
-							"TournamentMatchGameResult.opponentOnePoints",
-							"TournamentMatchGameResult.opponentTwoPoints",
+							"TournamentMatchGameResult.ko",
 							jsonArrayFrom(
 								innerEb
 									.selectFrom("TournamentMatchGameResultParticipant")
@@ -71,33 +66,23 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 									),
 							).as("participants"),
 						])
-						.where("TournamentMatchGameResult.matchId", "=", id)
+						.where("TournamentMatchGameResult.matchId", "=", matchId)
 						.orderBy("TournamentMatchGameResult.number", "asc"),
 				).as("playedMapList"),
 			])
-			.where("TournamentMatch.id", "=", id)
+			.where("TournamentMatch.id", "=", matchId)
 			.executeTakeFirst(),
 	);
 
-	const parseSource = (
-		rawSource: string,
-	): NonNullable<GetTournamentMatchResponse["mapList"]>[number]["source"] => {
-		const parsed = Number(rawSource);
-		if (Number.isNaN(parsed)) {
-			return rawSource as "DEFAULT" | "TIEBREAKER" | "BOTH";
-		}
+	const tournament = await tournamentSharedCached(match.tournamentId);
 
-		return parsed;
-	};
 	const mapList = async (): Promise<GetTournamentMatchResponse["mapList"]> => {
-		if (!match.opponentOne.id || !match.opponentTwo.id) {
+		const { opponentOne, opponentTwo } = match;
+		if (!opponentOne?.id || !opponentTwo?.id) {
 			return null;
 		}
 
-		if (
-			match.opponentOne.result === "win" ||
-			match.opponentTwo.result === "win"
-		) {
+		if (match.winnerSide) {
 			return match.playedMapList.map((playedMap) => ({
 				map: {
 					mode: playedMap.mode,
@@ -108,25 +93,40 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				},
 				participatedUserIds: playedMap.participants.map((p) => p.userId),
 				winnerTeamId: playedMap.winnerTeamId,
-				source: parseSource(playedMap.source),
-				points:
-					playedMap.opponentOnePoints && playedMap.opponentTwoPoints
-						? [playedMap.opponentOnePoints, playedMap.opponentTwoPoints]
-						: null,
+				source: parseMaplistSource(playedMap.source),
+				ko: playedMap.ko !== null ? Boolean(playedMap.ko) : null,
 			}));
 		}
 
 		const pickBanEvents = match.maps?.pickBan
-			? await TournamentRepository.pickBanEventsByMatchId(match.id)
+			? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 			: [];
+
+		const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds([
+			opponentOne.id,
+			opponentTwo.id,
+		]);
 
 		return resolveMapList({
 			tournamentId: match.tournamentId,
-			matchId: id,
-			teams: [match.opponentOne.id, match.opponentTwo.id],
+			matchId,
+			teams: [opponentOne.id, opponentTwo.id],
+			mapPoolByTeamId: (teamId) => mapPools.get(teamId) ?? [],
 			mapPickingStyle: match.mapPickingStyle,
 			maps: match.maps,
+			pool: tournament.mapPool,
+			modesIncluded: tournament.modesIncluded,
 			pickBanEvents,
+			recentlyPlayedMaps:
+				match.mapPickingStyle !== "TO"
+					? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+							teamIds: [opponentOne.id, opponentTwo.id],
+							excludeMatchId: matchId,
+						}).catch((error) => {
+							logger.error("Failed to fetch recently played maps", error);
+							return [];
+						})
+					: undefined,
 		}).map((mapListMap) => {
 			return {
 				map: {
@@ -139,36 +139,32 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				participatedUserIds: null,
 				winnerTeamId: null,
 				source: mapListMap.source,
-				points: null,
+				ko: null,
 			};
 		});
 	};
 
-	const { bracketName, roundNameWithoutMatchIdentifier } = (
-		await tournamentFromDBCached({
-			tournamentId: match.tournamentId,
-			user: undefined,
-		})
-	).matchContextNamesById(id);
+	const { bracketName, roundNameWithoutMatchIdentifier } =
+		tournament.matchContextNamesById(matchId);
 
 	const result: GetTournamentMatchResponse = {
-		teamOne: match.opponentOne.id
+		teamOne: match.opponentOne?.id
 			? {
 					id: match.opponentOne.id,
 					score: match.opponentOne.score ?? 0,
 				}
 			: null,
-		teamTwo: match.opponentTwo.id
+		teamTwo: match.opponentTwo?.id
 			? {
 					id: match.opponentTwo.id,
 					score: match.opponentTwo.score ?? 0,
 				}
 			: null,
-		url: `https://sendou.ink/to/${match.tournamentId}/matches/${id}`,
+		url: `https://sendou.ink/to/${match.tournamentId}/matches/${matchId}`,
 		mapList: await mapList(),
 		bracketName: bracketName ?? null,
 		roundName: roundNameWithoutMatchIdentifier ?? null,
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };

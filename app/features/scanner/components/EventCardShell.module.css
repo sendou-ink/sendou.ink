@@ -1,0 +1,101 @@
+/* card chrome every detected-event card is built from */
+
+.card {
+	background: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	/* MatchCard's nested event list tightens this */
+	padding: var(--scanner-card-padding, var(--s-4));
+	min-width: 0;
+}
+
+.meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2) var(--s-4);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	font-variant-numeric: tabular-nums;
+	margin-bottom: var(--s-2);
+	align-items: center;
+}
+
+.teams {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+	gap: var(--s-2);
+}
+
+/* single hug-content box (own-results cards) */
+.solo {
+	grid-template-columns: max-content;
+}
+
+/* single full-width box (death cards) */
+.death {
+	grid-template-columns: 1fr;
+}
+
+/* lighter than a solid slab: translucent fill + hairline so the boxes read
+   as grouping, not chrome */
+.team {
+	border-radius: var(--radius-field);
+	padding: var(--s-2) var(--s-2-5);
+	background: color-mix(in oklab, var(--color-bg) 45%, transparent);
+	border: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
+	min-width: 0;
+	overflow-x: auto;
+
+	& h3 {
+		margin: 0 0 var(--s-1-5);
+		font-size: var(--font-2xs);
+		font-weight: var(--weight-bold);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-text-high);
+	}
+
+	&.win h3 {
+		color: var(--color-error-high);
+	}
+
+	&.lose h3 {
+		color: var(--color-info-high);
+	}
+}
+
+.players {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--font-xs);
+
+	& td {
+		padding: var(--s-0-5) var(--s-1-5);
+		white-space: nowrap;
+
+		&.num {
+			text-align: right;
+			font-variant-numeric: tabular-nums;
+		}
+	}
+}
+
+.solo .players {
+	width: auto;
+}
+
+.weaponCell {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+/* round black pucks, same language as the match card's weapon row */
+.weaponIcon {
+	width: 28px;
+	height: 28px;
+	vertical-align: middle;
+	background: var(--color-bg-badge);
+	border-radius: var(--radius-full);
+	padding: var(--s-0-5);
+}

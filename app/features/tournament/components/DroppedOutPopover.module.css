@@ -1,0 +1,21 @@
+.trigger {
+	width: 1.125rem;
+	height: 1.125rem;
+	flex-shrink: 0;
+	background-color: var(--color-warning-low);
+	color: var(--color-warning-high);
+
+	& > svg {
+		min-width: 0.625rem;
+		max-width: 0.625rem;
+		height: 0.625rem;
+	}
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	max-width: 16rem;
+	font-size: var(--font-xs);
+}

@@ -1,35 +1,34 @@
-import { type ActionFunctionArgs, redirect } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import { type ActionFunctionArgs, redirect } from "react-router";
 import { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
+import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
+import { calendarPage } from "~/features/calendar/calendar-urls";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import {
-	parseRequestPayload,
-	parseSafeSearchParams,
-} from "~/utils/remix.server";
-import { calendarPage } from "~/utils/urls";
-import { dayMonthYear } from "~/utils/zod";
+import { parseFormData } from "~/form/parse.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUserId(request);
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: calendarFiltersSearchParamsSchema,
 	});
 
-	await UserRepository.updatePreferences(user.id, {
-		defaultCalendarFilters: data,
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	await UserRepository.updateOwnPreferences({
+		defaultCalendarFilters: result.data,
 	});
 
-	const parsedSearchParams = parseSafeSearchParams({
-		request,
-		schema: dayMonthYear,
-	});
+	const { day, month, year } = calendarSearchParams.parse(request);
 
 	return redirect(
 		calendarPage({
-			dayMonthYear: parsedSearchParams.success
-				? parsedSearchParams.data
-				: undefined,
+			dayMonthYear:
+				typeof day === "number" &&
+				typeof month === "number" &&
+				typeof year === "number"
+					? { day, month, year }
+					: undefined,
 		}),
 	);
 };

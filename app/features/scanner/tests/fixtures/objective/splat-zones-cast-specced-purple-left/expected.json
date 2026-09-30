@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 248,
+		"score": [100, 49],
+		"penalty": [null, null],
+		"control": [false, false]
+	},
+	"options": {
+		"notes": "Casted stream (SWS26) from a purple-team player's POV: the specced team's plate sits left, so purple (magenta digits) is side 0 and green side 1 — opposite arrangement to the overhead frame from the same game. Zone neutral: both plates near-black."
+	}
+}

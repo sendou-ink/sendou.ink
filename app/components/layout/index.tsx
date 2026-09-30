@@ -1,145 +1,754 @@
-import { Link, useLocation, useMatches } from "@remix-run/react";
 import clsx from "clsx";
+import { isToday, isTomorrow } from "date-fns";
+import {
+	Calendar,
+	ChevronRight,
+	LogIn,
+	PanelLeft,
+	Settings,
+	Tv,
+	Users,
+} from "lucide-react";
 import * as React from "react";
+import { ViewTransition } from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useFetcher, useLocation, useMatches } from "react-router";
+import { Config } from "~/config";
+import { useUser } from "~/features/auth/core/user";
+import { ScheduleNudge } from "~/features/availability/components/ScheduleNudge";
+import { useChatContext } from "~/features/chat/ChatProvider";
+import { FriendMenu } from "~/features/friends/components/FriendMenu";
+import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
+import { useLayoutData } from "~/features/layout/LayoutDataProvider";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
+import { useHydrated } from "~/hooks/useHydrated";
+import { MOBILE_LAYOUT_QUERY, useLayoutSize } from "~/hooks/useLayoutSize";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { useScrollLock } from "~/hooks/useScrollLock";
+import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
+import { useVisualViewport } from "~/hooks/useVisualViewport";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { RootLoaderData } from "~/root";
+import { generateIdenticon } from "~/utils/identicon";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
-import { SendouButton } from "../elements/Button";
+import {
+	EVENTS_PAGE,
+	FRIENDS_PAGE,
+	navIconUrl,
+	SETTINGS_PAGE,
+	teamPage,
+	userPage,
+} from "~/utils/urls";
+import { Avatar } from "../Avatar";
+import { SendouButton, type SendouButtonProps } from "../elements/Button";
+import { SendouModal } from "../elements/Dialog";
+import { isOwnToggle } from "../elements/Popover";
+import { FuseZone } from "../fuse/Fuse";
 import { Image } from "../Image";
-import { HamburgerIcon } from "../icons/Hamburger";
+import { MobileNav } from "../MobileNav";
+import { NotificationDot } from "../NotificationDot";
+import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
+import { StreamListItems } from "../StreamListItems";
+import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
-import { NavDialog } from "./NavDialog";
+import { LogInButtonContainer } from "./LogInButtonContainer";
+import { authErrorSearchParams } from "./layout-search-params";
+import { NotificationPopover, useNotifications } from "./NotificationPopover";
+import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
-function useBreadcrumbs() {
+const MAX_DESKTOP_FRIENDS = 4;
+const SIDENAV_ACTION = "/sidenav";
+
+// lazy loaded to stay out of the eager bundle
+const AuthErrorDialog = React.lazy(() =>
+	import("./AuthErrorDialog").then((module) => ({
+		default: module.AuthErrorDialog,
+	})),
+);
+
+/** Loading-bar track inside the header that NProgress mounts into; styled in common.css. */
+export const NPROGRESS_ANCHOR_ID = "nprogress-anchor";
+
+function useRelativeDayFormat() {
+	const { i18n } = useTranslation();
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
+	const { formatter: dateTimeFormatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
+
+	const formatRelativeDay = (daysFromToday: number) => {
+		const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: "auto" });
+		const str = rtf.format(daysFromToday, "day");
+		return str.charAt(0).toUpperCase() + str.slice(1);
+	};
+
+	const formatRelativeDate = (timestamp: number) => {
+		const date = new Date(timestamp * 1000);
+		const timeStr = timeFormatter.format(date);
+
+		if (isToday(date)) {
+			return `${formatRelativeDay(0)}, ${timeStr}`;
+		}
+		if (isTomorrow(date)) {
+			return `${formatRelativeDay(1)}, ${timeStr}`;
+		}
+
+		return dateTimeFormatter.format(date);
+	};
+
+	return { formatRelativeDate };
+}
+
+function useBreadcrumbData() {
 	const { t } = useTranslation();
 	const matches = useMatches();
 
-	return React.useMemo(() => {
-		const result: Array<Breadcrumb | Array<Breadcrumb>> = [];
+	const breadcrumbs: Breadcrumb[] = [];
 
-		for (const match of [...matches].reverse()) {
-			const handle = match.handle as SendouRouteHandle | undefined;
-			const resolvedBreadcrumb = handle?.breadcrumb?.({ match, t });
-
-			if (resolvedBreadcrumb) {
-				result.push(resolvedBreadcrumb);
-			}
+	for (const match of [...matches].reverse()) {
+		const handle = match.handle as SendouRouteHandle | undefined;
+		const resolved = handle?.breadcrumb?.({ match, t });
+		if (resolved) {
+			const items = Array.isArray(resolved) ? resolved : [resolved];
+			breadcrumbs.push(...items);
 		}
+	}
 
-		return result.flat();
-	}, [matches, t]);
+	return {
+		breadcrumbs,
+		currentPageText: breadcrumbs.at(-1)?.text,
+	};
+}
+
+function useSideNavCollapsed(initialCollapsed: boolean) {
+	const [collapsed, setCollapsed] = React.useState(initialCollapsed);
+	const fetcher = useFetcher();
+
+	const setCollapsedAndPersist = (value: boolean) => {
+		setCollapsed(value);
+		fetcher.submit(
+			{ collapsed: String(value) },
+			{ method: "POST", action: SIDENAV_ACTION },
+		);
+	};
+
+	return [collapsed, setCollapsedAndPersist] as const;
+}
+
+/** Open state of a tablet-layout-only modal; leaving that layout or navigating closes it. */
+function useTabletModal(isTabletLayout: boolean) {
+	const location = useLocation();
+	const [openedOnPathname, setOpenedOnPathname] = React.useState<string | null>(
+		null,
+	);
+
+	const isOpen = isTabletLayout && openedOnPathname === location.pathname;
+	const setIsOpen = (open: boolean) =>
+		setOpenedOnPathname(open ? location.pathname : null);
+
+	return [isOpen, setIsOpen] as const;
+}
+
+/** Hides the mobile header while scrolling down and brings it back on scrolling up; always `0` outside the mobile layout. */
+function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
+	const [navOffset, setNavOffset] = React.useState(0);
+	const lastScrollY = React.useRef(0);
+	const isMobileLayout = useMediaQuery(MOBILE_LAYOUT_QUERY);
+
+	const NAV_HEIGHT_FALLBACK = 55;
+	const SCROLL_THRESHOLD_PX = 200;
+
+	const scrollAccumulator = React.useRef(0);
+
+	// stable so the effect revealing the nav on a status change can depend on it
+	const revealNav = React.useCallback(() => {
+		setNavOffset(0);
+		scrollAccumulator.current = 0;
+		lastScrollY.current = window.scrollY;
+	}, []);
+
+	React.useEffect(() => {
+		if (!isMobileLayout) return;
+
+		lastScrollY.current = window.scrollY;
+		scrollAccumulator.current = 0;
+
+		const handleScroll = () => {
+			const navHeight = headerRef.current?.offsetHeight ?? NAV_HEIGHT_FALLBACK;
+			const currentScrollY = window.scrollY;
+			const scrollDelta = currentScrollY - lastScrollY.current;
+
+			const directionChanged =
+				(scrollDelta > 0 && scrollAccumulator.current < 0) ||
+				(scrollDelta < 0 && scrollAccumulator.current > 0);
+
+			if (directionChanged) {
+				scrollAccumulator.current = 0;
+			}
+
+			scrollAccumulator.current += scrollDelta;
+
+			if (Math.abs(scrollAccumulator.current) >= SCROLL_THRESHOLD_PX) {
+				const overflow =
+					scrollAccumulator.current > 0
+						? scrollAccumulator.current - SCROLL_THRESHOLD_PX
+						: scrollAccumulator.current + SCROLL_THRESHOLD_PX;
+
+				setNavOffset((prevOffset) => {
+					const newOffset = prevOffset - overflow;
+					return Math.max(-navHeight, Math.min(0, newOffset));
+				});
+
+				scrollAccumulator.current =
+					scrollAccumulator.current > 0
+						? SCROLL_THRESHOLD_PX
+						: -SCROLL_THRESHOLD_PX;
+			}
+
+			lastScrollY.current = currentScrollY;
+		};
+
+		window.addEventListener("scroll", handleScroll, { passive: true });
+
+		return () => {
+			window.removeEventListener("scroll", handleScroll);
+			setNavOffset(0);
+		};
+	}, [headerRef, isMobileLayout]);
+
+	return { navOffset, revealNav };
+}
+
+/**
+ * Pops the scrolled-away mobile header back out when the global status
+ * changes, so the change is seen the moment it happens.
+ */
+function useRevealNavOnStatusChange(revealNav: () => void) {
+	const { status } = useGlobalStatus();
+	const statusKey = status ? `${status.state}:${status.count ?? ""}` : null;
+	const prevKeyRef = React.useRef(statusKey);
+
+	React.useEffect(() => {
+		if (prevKeyRef.current === statusKey) return;
+
+		prevKeyRef.current = statusKey;
+		revealNav();
+	}, [statusKey, revealNav]);
 }
 
 export function Layout({
 	children,
 	data,
-	isErrored = false,
 }: {
 	children: React.ReactNode;
 	data?: RootLoaderData;
-	isErrored?: boolean;
 }) {
-	const [navDialogOpen, setNavDialogOpen] = React.useState(false);
+	const chatContext = useChatContext();
+	const [sideNavCollapsed, setSideNavCollapsed] = useSideNavCollapsed(
+		data?.sidenavCollapsed ?? false,
+	);
+	const layoutSize = useLayoutSize();
+	const isTabletLayout = layoutSize === "tablet";
+	const sideNavId = React.useId();
+	const sideNavRef = React.useRef<HTMLElement>(null);
+	const [sideNavDrawerOpen, setSideNavDrawerOpen] = React.useState(false);
+	useClosePopoversOnNavigation(sideNavRef);
+	useScrollLock(sideNavDrawerOpen);
+	useVisualViewport();
+	const [chatSidebarModalOpen, setChatSidebarModalOpen] =
+		useTabletModal(isTabletLayout);
+	const chatSidebarOpen = chatContext?.chatOpen ?? false;
+	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
+
+	const setChatSidebarModalOpenAndSync = (open: boolean) => {
+		setChatSidebarModalOpen(open);
+		setChatSidebarOpen(open);
+	};
+
+	const { t } = useTranslation(["front", "common", "friends"]);
+	const { formatRelativeDate } = useRelativeDayFormat();
+	const isHydrated = useHydrated();
 	const location = useLocation();
-	const breadcrumbs = useBreadcrumbs();
+	const [authError] = useSearchParam(authErrorSearchParams, "authError");
+	const headerRef = React.useRef<HTMLElement>(null);
+	const { navOffset, revealNav } = useNavOffset(headerRef);
+	useRevealNavOnStatusChange(revealNav);
+
+	const user = useUser();
+	const { showUnseenDot } = useNotifications();
+	const { sidebar: sidebarData } = useLayoutData();
+	const events = sidebarData?.events ?? [];
+	const friends = sidebarData?.friends ?? [];
+	const unseenFriendRequests = useUnseenFriendRequests(
+		sidebarData?.incomingFriendRequestIds ?? [],
+	);
+	const streams = sidebarData?.streams ?? [];
+	const showScheduleNudge = sidebarData?.scheduleNudge ?? false;
 
 	const isFrontPage = location.pathname === "/";
 
 	const showLeaderboard =
-		import.meta.env.VITE_PLAYWIRE_PUBLISHER_ID &&
+		Config.fuseEnabled &&
 		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
-	return (
-		<div className="layout__container">
-			<NavDialog isOpen={navDialogOpen} close={() => setNavDialogOpen(false)} />
-			{isFrontPage ? (
-				<SendouButton
-					icon={<HamburgerIcon />}
-					className={clsx(styles.hamburger, styles.fab)}
-					variant="outlined"
-					onPress={() => setNavDialogOpen(true)}
-				/>
-			) : null}
-			<header className="layout__header layout__item_size">
-				<div className="layout__breadcrumb-container">
-					<Link to="/" className="layout__breadcrumb logo">
-						sendou.ink
-					</Link>
-					{breadcrumbs.flatMap((breadcrumb) => {
-						return [
-							<span
-								key={`${breadcrumb.href}-sep`}
-								className="layout__breadcrumb-separator"
-							>
-								»
-							</span>,
-							<BreadcrumbLink key={breadcrumb.href} data={breadcrumb} />,
-						];
-					})}
+
+	const sideNavFooterContent = (
+		<SideNavFooter>
+			<SideNavUserPanel />
+		</SideNavFooter>
+	);
+
+	const sideNavChildren = (
+		<>
+			<SideNavHeader
+				icon={<Calendar />}
+				action={
+					user ? (
+						<Link to={EVENTS_PAGE} className={styles.viewAllLink}>
+							{t("common:actions.viewAll")}
+							<ChevronRight size={14} />
+						</Link>
+					) : null
+				}
+			>
+				{t("front:sideNav.myCalendar")}
+			</SideNavHeader>
+			{showScheduleNudge ? <ScheduleNudge /> : null}
+			{events.length > 0 ? (
+				events.map((event) => (
+					<ListLink
+						key={`${event.type}-${event.id}`}
+						to={event.url}
+						imageUrl={event.logoUrl ?? undefined}
+						user={event.user ?? undefined}
+						subtitle={
+							isHydrated ? (
+								formatRelativeDate(event.startsAt)
+							) : (
+								<span className="invisible">Placeholder</span>
+							)
+						}
+					>
+						{event.scrimStatus === "booked"
+							? t("front:sideNav.scrimVs", { opponent: event.name })
+							: event.scrimStatus === "looking"
+								? t("front:sideNav.lookingForScrim")
+								: event.scrimStatus === "requestPending"
+									? t("front:sideNav.scrimRequestPending")
+									: event.name}
+					</ListLink>
+				))
+			) : (
+				<div className={styles.sideNavEmpty}>{t("front:sideNav.noEvents")}</div>
+			)}
+
+			<SideNavHeader
+				icon={<Users />}
+				action={
+					user ? (
+						<>
+							{unseenFriendRequests > 0 ? (
+								<span
+									className={styles.friendRequestsBadge}
+									role="status"
+									aria-label={t("friends:unseenRequests", {
+										count: unseenFriendRequests,
+									})}
+								>
+									{unseenFriendRequests}
+								</span>
+							) : null}
+							<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
+								{t("common:actions.viewAll")}
+								<ChevronRight size={14} />
+							</Link>
+						</>
+					) : null
+				}
+			>
+				{t("front:sideNav.friends")}
+			</SideNavHeader>
+			{friends.length > 0 ? (
+				friends
+					.slice(0, MAX_DESKTOP_FRIENDS)
+					.map((friend) => <FriendMenu key={friend.id} {...friend} />)
+			) : (
+				<div className={styles.sideNavEmpty}>
+					{user
+						? t("front:sideNav.friends.noFriends")
+						: t("front:sideNav.friends.notLoggedIn")}
 				</div>
-				<TopRightButtons
-					isErrored={isErrored}
-					showSupport={Boolean(
-						data && !data?.user?.roles.includes("MINOR_SUPPORT") && isFrontPage,
+			)}
+
+			<SideNavHeader icon={<Tv />}>{t("front:sideNav.streams")}</SideNavHeader>
+			{streams.length === 0 ? (
+				<div className={styles.sideNavEmpty}>
+					{t("front:sideNav.noStreams")}
+				</div>
+			) : null}
+			<StreamListItems
+				streams={streams}
+				isLoggedIn={Boolean(user)}
+				savedTournamentIds={sidebarData?.savedTournamentIds}
+			/>
+		</>
+	);
+
+	return (
+		<>
+			<SideNav
+				ref={sideNavRef}
+				id={sideNavId}
+				popover="auto"
+				tabIndex={-1}
+				onToggle={(event) => {
+					if (!isOwnToggle(event)) return;
+					const open = event.newState === "open";
+					setSideNavDrawerOpen(open);
+					if (open) event.currentTarget.focus();
+				}}
+				className={clsx(
+					styles.sideNavDrawer,
+					showLeaderboard && styles.sidebarFuseSpace,
+				)}
+				collapsed={sideNavCollapsed}
+				footer={sideNavFooterContent}
+				top={<SiteTitle />}
+				topCentered={isFrontPage}
+			>
+				{sideNavChildren}
+			</SideNav>
+			<MobileNav sidebarData={sidebarData} />
+			<div className={styles.container}>
+				<header
+					ref={headerRef}
+					className={styles.header}
+					style={{
+						transform: `translateY(${navOffset}px)`,
+					}}
+				>
+					<Link to="/" className={clsx(styles.siteLogo, styles.mobileLogo)}>
+						<SiteLogoContent />
+					</Link>
+					<SideNavCollapseButton
+						popoverTarget={sideNavId}
+						className={styles.sideNavModalTrigger}
+						showNotificationDot={!sideNavDrawerOpen && showUnseenDot}
+						badgeCount={!sideNavDrawerOpen ? unseenFriendRequests : 0}
+						testId="sidenav-modal-trigger"
+					/>
+					{chatSidebarModalOpen ? (
+						<SendouModal
+							className={styles.chatSidebarModal}
+							isDismissable
+							aria-label={t("common:chat.sidebar.title")}
+							onClose={() => setChatSidebarModalOpenAndSync(false)}
+						>
+							<ChatSidebar />
+						</SendouModal>
+					) : null}
+					<form
+						method="post"
+						action={SIDENAV_ACTION}
+						className={styles.sideNavCollapseForm}
+						onSubmit={(event) => {
+							event.preventDefault();
+							setSideNavCollapsed(!sideNavCollapsed);
+						}}
+					>
+						<input
+							type="hidden"
+							name="collapsed"
+							value={String(!sideNavCollapsed)}
+						/>
+						<input
+							type="hidden"
+							name="returnTo"
+							value={`${location.pathname}${location.search}`}
+						/>
+						<SideNavCollapseButton
+							type="submit"
+							className={styles.sideNavCollapseButton}
+							showNotificationDot={sideNavCollapsed && showUnseenDot}
+							badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
+							testId="sidenav-collapse-button"
+						/>
+					</form>
+					<TopNavMenus />
+					<TopRightButtons
+						showSupport={Boolean(
+							data && !data?.user?.roles.includes("MINOR_SUPPORT"),
+						)}
+						isLoggedIn={Boolean(data?.user)}
+						onChatToggle={
+							data?.user && !chatSidebarOpen
+								? () => setChatSidebarOpen(true)
+								: undefined
+						}
+						onChatModalToggle={
+							data?.user
+								? () => setChatSidebarModalOpenAndSync(!chatSidebarModalOpen)
+								: undefined
+						}
+						chatUnreadCount={chatContext?.totalUnreadCount}
+					/>
+					<div id={NPROGRESS_ANCHOR_ID} aria-hidden />
+				</header>
+				{showLeaderboard ? (
+					<FuseZone
+						id="fuse-header"
+						fuseSlot="header"
+						className="top-leaderboard"
+					/>
+				) : null}
+				{children}
+				<Footer />
+			</div>
+			{chatSidebarOpen && layoutSize === "desktop" ? (
+				<div
+					className={clsx(
+						styles.chatSidebar,
+						showLeaderboard && styles.sidebarFuseSpace,
 					)}
-					openNavDialog={() => setNavDialogOpen(true)}
-				/>
-			</header>
-			{showLeaderboard ? <MyRampUnit /> : null}
-			{children}
-			<Footer />
+				>
+					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
+				</div>
+			) : null}
+			{typeof authError === "string" ? (
+				<React.Suspense>
+					<AuthErrorDialog />
+				</React.Suspense>
+			) : null}
+		</>
+	);
+}
+
+function SiteTitle() {
+	const location = useLocation();
+	const { breadcrumbs, currentPageText } = useBreadcrumbData();
+
+	const isFrontPage = location.pathname === "/";
+	const hasBreadcrumbs = breadcrumbs.length > 0;
+
+	return (
+		<div className={styles.siteTitle}>
+			{/* the key remounts the logo when it changes place so it animates as a
+			    shared element; an update animation would instead run on every
+			    navigation since React can't tell the logo didn't move */}
+			<ViewTransition
+				key={isFrontPage ? "front" : "other"}
+				name="site-logo"
+				share="auto"
+				default="none"
+			>
+				<Link to="/" className={styles.siteLogo}>
+					<SiteLogoContent />
+				</Link>
+			</ViewTransition>
+
+			{hasBreadcrumbs ? (
+				<>
+					{breadcrumbs.map((crumb) => {
+						const isCurrentPage = location.pathname === crumb.href;
+
+						return (
+							<React.Fragment key={crumb.href}>
+								<span className={styles.separator}>/</span>
+								{isCurrentPage ? (
+									<PageIcon crumb={crumb} />
+								) : (
+									<Link to={crumb.href} className={styles.breadcrumbLink}>
+										<PageIcon crumb={crumb} />
+									</Link>
+								)}
+							</React.Fragment>
+						);
+					})}
+
+					{currentPageText ? (
+						<span className={styles.pageName}>{currentPageText}</span>
+					) : null}
+				</>
+			) : null}
 		</div>
 	);
 }
 
-function BreadcrumbLink({ data }: { data: Breadcrumb }) {
-	if (data.type === "IMAGE") {
-		const imageIsWithExtension = data.imgPath.includes(".");
+function SiteLogoContent() {
+	return (
+		<>
+			<span className={styles.siteLogoS}>S</span>
+			<span className={styles.siteLogoInk}>ink</span>
+		</>
+	);
+}
 
-		return (
-			<Link
-				to={data.href}
-				className={clsx("layout__breadcrumb", {
-					"stack horizontal sm items-center": data.text,
-				})}
-			>
-				{imageIsWithExtension ? (
-					<img
-						className={clsx("layout__breadcrumb__image", {
-							"rounded-full": data.rounded,
-						})}
-						alt=""
-						src={data.imgPath}
-						width={24}
-						height={24}
-					/>
-				) : (
-					<Image
-						className={clsx("layout__breadcrumb__image", {
-							"rounded-full": data.rounded,
-						})}
-						alt=""
-						path={data.imgPath}
-						width={24}
-						height={24}
-					/>
-				)}
-				<span className="layout__breadcrumb__text-mobile-hidden">
-					{data.text}
+function SideNavCollapseButton({
+	className,
+	showNotificationDot,
+	badgeCount,
+	testId,
+	...buttonProps
+}: {
+	className?: string;
+	showNotificationDot?: boolean;
+	badgeCount?: number;
+	testId?: string;
+} & Pick<SendouButtonProps, "type" | "popoverTarget">) {
+	const { t } = useTranslation(["friends"]);
+
+	return (
+		<div className={styles.sideNavCollapseButtonContainer} data-testid={testId}>
+			<SendouButton
+				className={className}
+				variant="minimal"
+				size="small"
+				shape="square"
+				icon={<PanelLeft />}
+				{...buttonProps}
+			/>
+			{showNotificationDot ? <NotificationDot /> : null}
+			{badgeCount ? (
+				<span
+					className={clsx(styles.sideNavCollapseBadge, {
+						[styles.sideNavCollapseBadgeLeft]: showNotificationDot,
+					})}
+					role="status"
+					aria-label={t("friends:unseenRequests", { count: badgeCount })}
+				>
+					{badgeCount}
 				</span>
-			</Link>
+			) : null}
+		</div>
+	);
+}
+
+function PageIcon({ crumb }: { crumb: Breadcrumb }) {
+	const [isErrored, setIsErrored] = React.useState(false);
+
+	if (crumb.type !== "IMAGE") {
+		return null;
+	}
+
+	const lastPathSegment = crumb.imgPath.split("/").pop() ?? "";
+	const isExternal = lastPathSegment.includes(".");
+	const iconClass = clsx(styles.pageIcon, "rounded");
+
+	// an <img> can finish loading (and fail) before React hydrates and attaches onError, so that
+	// error is missed — re-check on mount and fall back manually so SSR'd icons still heal
+	const checkAlreadyErrored = (img: HTMLImageElement | null) => {
+		if (img?.complete && img.naturalWidth === 0) setIsErrored(true);
+	};
+
+	const identiconSrc =
+		isErrored && crumb.identiconInput
+			? generateIdenticon(crumb.identiconInput)
+			: null;
+
+	return (
+		<div className={styles.pageIconWrapper}>
+			{isExternal ? (
+				<img
+					ref={checkAlreadyErrored}
+					src={identiconSrc ?? crumb.imgPath}
+					alt=""
+					className={iconClass}
+					width={28}
+					height={28}
+					onError={() => setIsErrored(true)}
+				/>
+			) : (
+				<Image
+					path={crumb.imgPath}
+					alt=""
+					className={iconClass}
+					width={20}
+					height={20}
+				/>
+			)}
+		</div>
+	);
+}
+
+function SideNavUserPanel() {
+	const { t } = useTranslation();
+	const location = useLocation();
+	const user = useUser();
+	const { notifications, unseenIds, showUnseenDot } = useNotifications();
+
+	if (user) {
+		return (
+			<>
+				<Link to={userPage(user)} className={styles.sideNavFooterUser}>
+					<Avatar user={user} size="xs" />
+					<span className={styles.sideNavFooterUsername}>{user.username}</span>
+				</Link>
+				<div className={styles.sideNavFooterActions}>
+					{user.team ? (
+						<Link
+							to={teamPage(user.team.customUrl)}
+							className={styles.sideNavFooterButton}
+							aria-label={t("header.myTeam")}
+							title={t("header.myTeam")}
+						>
+							{user.team.avatarUrl ? (
+								<img
+									src={user.team.avatarUrl}
+									alt=""
+									className={styles.sideNavFooterTeamAvatar}
+									width={22}
+									height={22}
+								/>
+							) : (
+								<Image path={navIconUrl("t")} alt="" width={22} height={22} />
+							)}
+						</Link>
+					) : null}
+					<div
+						className={styles.sideNavFooterNotification}
+						key={location.pathname}
+					>
+						{showUnseenDot ? (
+							<NotificationDot
+								className={styles.sideNavFooterUnseenDot}
+								testId="notifications-bell-dot"
+							/>
+						) : null}
+						<NotificationPopover
+							notifications={notifications}
+							unseenIds={unseenIds}
+							triggerClassName={styles.sideNavFooterButton}
+						/>
+					</div>
+					<Link to={SETTINGS_PAGE} className={styles.sideNavFooterButton}>
+						<Settings />
+					</Link>
+				</div>
+			</>
 		);
 	}
 
 	return (
-		<Link to={data.href} className="layout__breadcrumb">
-			{data.text}
-		</Link>
+		<>
+			<LogInButtonContainer>
+				<SendouButton type="submit" size="small" icon={<LogIn />}>
+					{t("header.login.discord")}
+				</SendouButton>
+			</LogInButtonContainer>
+			<div className={styles.sideNavFooterActions}>
+				<Link to={SETTINGS_PAGE} className={styles.sideNavFooterButton}>
+					<Settings />
+				</Link>
+			</div>
+		</>
 	);
-}
-
-function MyRampUnit() {
-	return <div className="top-leaderboard" id="pw-leaderboard_atf" />;
 }

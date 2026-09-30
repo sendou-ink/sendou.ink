@@ -5,8 +5,13 @@
 			"**",
 			"!scripts/dicts/**/*",
 			"!scripts/output/**/*",
-			"!app/db/seed/placements.json",
-			"!build/**/*"
+			"!app/db/seed/data/placements.json",
+			"!build/**/*",
+			"!app/features/scanner/tests/fixtures",
+			"!test-results/**/*",
+			"!playwright-report/**/*",
+			"!.react-router/**/*",
+			"!**/*.svg"
 		]
 	},
 	"linter": {
@@ -14,10 +19,44 @@
 			"suspicious": {
 				"noExplicitAny": "off",
 				"noArrayIndexKey": "off",
-				"noConsole": { "level": "error" }
+				"noConsole": { "level": "error" },
+				"noDeprecatedImports": "error",
+				"noVar": "error",
+				"noForIn": "error",
+				"useGuardForIn": "error",
+				"noConstantBinaryExpressions": "error",
+				"noUnassignedVariables": "error",
+				"noDuplicatedSpreadProps": "error",
+				"noUnknownAttribute": "error",
+				"useErrorMessage": "error",
+				"useNumberToFixedDigitsArgument": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"noSkippedTests": "error",
+				"noParametersOnlyUsedInRecursion": "error",
+				"useArraySortCompare": "error",
+				"noEvolvingTypes": "error",
+				"noReturnAssign": "error",
+				"noNestedPromises": "error",
+				"noUnusedExpressions": "error",
+				"noShadow": "error"
+			},
+			"correctness": {
+				"noUndeclaredVariables": "error",
+				"noUnusedInstantiation": "error",
+				"noNestedComponentDefinitions": "error",
+				"noReactPropAssignments": "error",
+				"noGlobalDirnameFilename": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useSingleJsDocAsterisk": "error",
+				"noUndeclaredDependencies": "error"
 			},
 			"style": {
 				"noNonNullAssertion": "off",
+				"noDescendingSpecificity": "off",
 				"noUnusedTemplateLiteral": {
 					"fix": "safe",
 					"level": "error"
@@ -38,7 +77,62 @@
 				"useSingleVarDeclarator": "error",
 				"useNumberNamespace": "error",
 				"noInferrableTypes": "error",
-				"noUselessElse": "error"
+				"noUselessElse": "error",
+				"noEnum": "error",
+				"noCommonJs": "error",
+				"noParameterProperties": "error",
+				"noMultiAssign": "error",
+				"noMultilineString": "error",
+				"noYodaExpression": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useTrimStartEnd": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useObjectSpread": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useNodeAssertStrict": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useCollapsedElseIf": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useSymbolDescription": "error",
+				"useGroupedAccessorPairs": "error",
+				"useSpreadOverApply": "error",
+				"useCollapsedIf": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useConsistentObjectDefinitions": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"useThrowNewError": "error",
+				"useShorthandAssign": "error",
+				"useFragmentSyntax": "error",
+				"noSubstr": "error",
+				"useUnifiedTypeSignatures": "error",
+				"useReadonlyClassProperties": "error",
+				"useForOf": "error",
+				"useErrorCause": "error",
+				"useThrowOnlyError": "error",
+				"noNamespace": "error",
+				"noDefaultExport": "error",
+				"useFilenamingConvention": {
+					"level": "error",
+					"options": {
+						"filenameCases": ["kebab-case", "PascalCase", "camelCase"],
+						"strictCase": false,
+						"requireAscii": true
+					}
+				}
 			},
 			"a11y": {
 				"useKeyWithClickEvents": "off",
@@ -49,10 +143,41 @@
 				"useLiteralKeys": {
 					"fix": "safe",
 					"level": "error"
-				}
+				},
+				"noImportantStyles": "off",
+				"useWhile": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"noUselessStringConcat": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"noDivRegex": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"noUselessCatchBinding": "error",
+				"noForEach": "error"
+			},
+			"performance": {
+				"noSyncScripts": "error"
 			},
 			"nursery": {
-				"useUniqueElementIds": "off"
+				"useImportsFirst": "error",
+				"useReactFunctionComponentDefinition": "error",
+				"useControlLabel": "error",
+				"useIframeSandbox": "error",
+				"useArraySome": "error",
+				"useReduceTypeParameter": "error",
+				"noUnnecessaryTemplateExpression": {
+					"fix": "safe",
+					"level": "error"
+				},
+				"noJsxLeakedDollar": "error",
+				"noJsxNamespace": "error",
+				"noNegationInEqualityCheck": "error",
+				"noExtendNative": "error"
 			}
 		}
 	},
@@ -69,5 +194,118 @@
 		"parser": {
 			"cssModules": true
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": [
+				"app/features/*/routes/**",
+				"app/modules/*/routes/**",
+				"app/features/*/loaders/**",
+				"app/features/*/actions/**"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"useFilenamingConvention": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/*.ts"],
+			"linter": {
+				"rules": {
+					"nursery": {
+						"useReactFunctionComponentDefinition": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["e2e/**"],
+			"linter": {
+				"rules": {
+					"nursery": {
+						"noPlaywrightPagePause": "error",
+						"noPlaywrightWaitForTimeout": "error",
+						"noPlaywrightMissingAwait": "error",
+						"noPlaywrightUselessAwait": "error",
+						"noPlaywrightWaitForNavigation": "error",
+						"noPlaywrightElementHandle": "error",
+						"noPlaywrightEval": "error",
+						"noPlaywrightNetworkidle": "error",
+						"noPlaywrightWaitForSelector": "error",
+						"usePlaywrightValidDescribeCallback": "error"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["types/**/*.d.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noNamespace": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": [
+				"app/features/*/routes/**",
+				"app/modules/*/routes/**",
+				"app/root.tsx",
+				"app/routes.ts",
+				"app/entry.server.tsx",
+				"*.config.ts",
+				"knip.ts",
+				"e2e/global-setup.ts",
+				"e2e/global-teardown.ts",
+				"scripts/**"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"noDefaultExport": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["app/**", "!app/modules/search-params/**"],
+			"plugins": ["./biome-plugins/no-raw-search-params.grit"]
+		},
+		{
+			"includes": ["app/**", "!app/hooks/useActionSubmit.ts"],
+			"plugins": ["./biome-plugins/no-raw-action-forms.grit"]
+		},
+		{
+			"includes": ["**/*.test.ts", "**/*.test.tsx"],
+			"linter": {
+				"rules": {
+					"nursery": {
+						"useConsistentTestIt": {
+							"level": "error",
+							"options": { "function": "test", "withinDescribe": "test" }
+						},
+						"useTestHooksOnTop": "error",
+						"useTestHooksInOrder": "error"
+					}
+				}
+			},
+			"plugins": ["./biome-plugins/no-raw-db-writes-in-tests.grit"]
+		},
+		{
+			"includes": ["app/db/seed/dev/**", "app/db/seed/index.ts"],
+			"plugins": ["./biome-plugins/no-raw-db-writes-in-dev-seed.grit"]
+		},
+		{
+			"includes": ["**", "!app/utils/kysely.server.ts"],
+			"plugins": ["./biome-plugins/no-kysely-sqlite-helpers.grit"]
+		},
+		{
+			"includes": ["app/**"],
+			"plugins": ["./biome-plugins/no-and-conditional-rendering.grit"]
+		}
+	]
 }

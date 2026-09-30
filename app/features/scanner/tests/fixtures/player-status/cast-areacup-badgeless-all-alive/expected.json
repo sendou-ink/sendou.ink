@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 258,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "JP broadcast (AREA CUP) spectator HUD with the camera-button badges hidden — the strip keeps the cast icon geometry, so the layout must resolve to cast via the geometry score, not the badge probe (reading it as POV drifts the outer-slot boxes off their icons and flickers phantom deaths). All eight players alive."
+	}
+}

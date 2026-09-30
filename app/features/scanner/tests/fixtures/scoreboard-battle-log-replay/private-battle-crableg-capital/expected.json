@@ -1,0 +1,73 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 18,
+    "timestamp": "9/7/2026 18:13",
+    "replayCode": "R1V4-PAHW-GGM2-PD9S",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "bobong",
+        "weaponId": 201,
+        "paint": 248,
+        "ka": 4,
+        "d": 1,
+        "s": 0
+      },
+      {
+        "name": "8♪cloudy",
+        "weaponId": 7022,
+        "paint": 392,
+        "ka": 2,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "あさごはん",
+        "weaponId": 2030,
+        "paint": 206,
+        "ka": 1,
+        "d": 0,
+        "s": 0
+      },
+      {
+        "name": "CPT-Eevee☆",
+        "weaponId": 8000,
+        "paint": 209,
+        "ka": 2,
+        "d": 2,
+        "s": 0
+      },
+      {
+        "name": "かなめ",
+        "weaponId": 4000,
+        "paint": 524,
+        "ka": 4,
+        "d": 3,
+        "s": 3
+      },
+      {
+        "name": "maomaoく3",
+        "weaponId": 2030,
+        "paint": 263,
+        "ka": 0,
+        "d": 2,
+        "s": 0
+      },
+      {
+        "name": "Ccaramel",
+        "weaponId": 8010,
+        "paint": 233,
+        "ka": 0,
+        "d": 4,
+        "s": 0
+      }
+    ],
+    "stageLabel": "Crableg Capital"
+  }
+}

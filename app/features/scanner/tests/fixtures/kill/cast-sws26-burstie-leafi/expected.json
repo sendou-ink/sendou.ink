@@ -1,0 +1,11 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 262,
+		"names": ["Burstie", "leafi !!"]
+	},
+	"options": {
+		"skipFields": ["names.1"],
+		"notes": "Frame shared with objective/splat-zones-cast-lime-control-blur-left (SWS26 broadcast): the spectator HUD draws the specced player's kill feed. Bottom row Burstie (the dot of its i reads as a grave accent, re-decided by the plain-tie rule), above it 'leafi !!' — the row shows three marks, the last being the message's own. Stream blur merges 'fi' into one segment (reads ↑), hence the skip."
+	}
+}

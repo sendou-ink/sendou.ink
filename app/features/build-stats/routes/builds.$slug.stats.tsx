@@ -1,9 +1,10 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
@@ -11,21 +12,24 @@ import {
 	outlinedMainWeaponImageUrl,
 	weaponBuildPage,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
-
+import {
+	metaTags,
+	ogPageImage,
+	type SerializeFrom,
+} from "../../../utils/remix";
 import { loader } from "../loaders/builds.$slug.stats.server";
+import styles from "./builds.$slug.stats.module.css";
+
 export { loader };
 
-import "../build-stats.css";
-import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
-
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: `${args.data.weaponName} popular abilities`,
-		ogTitle: `${args.data.weaponName} Splatoon 3 popular abilities`,
-		description: `List of the most popular abilities for ${args.data.weaponName} in Splatoon 3.`,
+		title: `${args.loaderData.weaponName} popular abilities`,
+		ogTitle: `${args.loaderData.weaponName} Splatoon 3 popular abilities`,
+		description: `List of the most popular abilities for ${args.loaderData.weaponName} in Splatoon 3.`,
+		image: ogPageImage("builds"),
 		location: args.location,
 	});
 };
@@ -33,7 +37,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "analyzer"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -47,11 +51,6 @@ export const handle: SendouRouteHandle = {
 				imgPath: outlinedMainWeaponImageUrl(data.weaponId),
 				href: weaponBuildPage(data.meta.slug),
 				type: "IMAGE",
-			},
-			{
-				href: "/",
-				text: data.meta.breadcrumbText,
-				type: "TEXT",
 			},
 		];
 	},
@@ -79,11 +78,11 @@ export default function BuildStatsPage() {
 							);
 
 						return (
-							<div key={stats.name} className="build-stats__ability-row">
+							<div key={stats.name} className={styles.abilityRow}>
 								<div>
 									<Ability ability={stats.name} size="SUB" />
 								</div>
-								<div className="build-stats__bars">
+								<div className={styles.bars}>
 									<div>
 										<WeaponImage
 											variant="badge"
@@ -95,7 +94,7 @@ export default function BuildStatsPage() {
 										{stats.apAverage.weapon} {t("analyzer:abilityPoints.short")}
 									</div>{" "}
 									<div
-										className="build-stats__bar"
+										className={styles.bar}
 										style={{ width: `${apToPx(stats.apAverage.weapon)}px` }}
 									/>
 									<div className="text-xs text-lighter font-bold justify-self-center">
@@ -105,7 +104,7 @@ export default function BuildStatsPage() {
 										{stats.apAverage.all} {t("analyzer:abilityPoints.short")}
 									</div>{" "}
 									<div
-										className="build-stats__bar"
+										className={styles.bar}
 										style={{ width: `${apToPx(stats.apAverage.all)}px` }}
 									/>
 								</div>
@@ -123,9 +122,9 @@ export default function BuildStatsPage() {
 							Math.floor((ap / MAX_AP) * 125);
 
 						return (
-							<div key={stats.name} className="build-stats__ability-row">
+							<div key={stats.name} className={styles.abilityRow}>
 								<Ability ability={stats.name} size="SUB" />
-								<div className="build-stats__bars">
+								<div className={styles.bars}>
 									<div>
 										<WeaponImage
 											variant="badge"
@@ -135,7 +134,7 @@ export default function BuildStatsPage() {
 									</div>
 									<div>{stats.percentage.weapon}%</div>{" "}
 									<div
-										className="build-stats__bar"
+										className={styles.bar}
 										style={{
 											width: `${percentageToPx(stats.percentage.weapon)}px`,
 										}}
@@ -145,7 +144,7 @@ export default function BuildStatsPage() {
 									</div>
 									<div>{stats.percentage.all}%</div>{" "}
 									<div
-										className="build-stats__bar"
+										className={styles.bar}
 										style={{
 											width: `${percentageToPx(stats.percentage.all)}px`,
 										}}

@@ -1,56 +1,69 @@
-import type { SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { UsersIcon } from "../../../components/icons/Users";
-import { tournamentBracketsPage } from "../../../utils/urls";
-
-import { loader } from "../loaders/to.$id.divisions.server";
-export { loader };
+import { Link } from "react-router";
+import { Redirect } from "~/components/Redirect";
+import { useUser } from "~/features/auth/core/user";
+import { useTournament } from "~/features/tournament/tournament-context";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import type { BracketMeta } from "../core/Tournament";
+import styles from "./to.$id.divisions.module.css";
 
 export default function TournamentDivisionsPage() {
-	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+	const user = useUser();
 
-	if (data.divisions.length === 0) {
+	const ownTeam = tournament.teamMemberOfByUser(user);
+	const ownDivisionIdx = ownTeam ? (ownTeam.startingBracketIdx ?? 0) : null;
+
+	// a single division has nothing to choose between, its brackets page is the one
+	if (tournament.leagueDivisions.length <= 1) {
 		return (
-			<div className="text-center text-lg font-semi-bold text-lighter">
-				Divisions have not been released yet, check back later
-			</div>
+			<Redirect
+				to={tournamentBracketsPage({ tournamentId: tournament.ctx.id })}
+			/>
 		);
 	}
 
 	return (
-		<div className="tournament__div__grid">
-			{data.divisions.map((div) => (
-				<DivisionLink key={div.tournamentId} div={div} />
+		<div className={styles.grid}>
+			{tournament.leagueDivisions.map((division) => (
+				<DivisionLink
+					key={division.idx}
+					division={division}
+					isParticipant={ownDivisionIdx === division.idx}
+				/>
 			))}
 		</div>
 	);
 }
 
 function DivisionLink({
-	div,
+	division,
+	isParticipant,
 }: {
-	div: SerializeFrom<typeof loader>["divisions"][number];
+	division: BracketMeta;
+	isParticipant: boolean;
 }) {
-	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["calendar"]);
-	const shortName = div.name.split("-").at(-1);
+	const tournament = useTournament();
 
 	return (
 		<Link
-			to={tournamentBracketsPage({ tournamentId: div.tournamentId })}
-			className={clsx("tournament__div__link", {
-				tournament__div__link__participant: data.divsParticipantOf.includes(
-					div.tournamentId,
-				),
+			to={tournamentBracketsPage({
+				tournamentId: tournament.ctx.id,
+				divisionIdx: division.idx,
 			})}
+			className={clsx(styles.link, {
+				[styles.participant]: isParticipant,
+			})}
+			data-testid="division-link"
 		>
-			{shortName}
-			<div className="tournament__div__participant-counts">
-				<UsersIcon />{" "}
+			{division.name}
+			<div className={styles.participantCounts}>
+				<Users />{" "}
 				{t("calendar:count.teams", {
-					count: div.teamsCount,
+					count: tournament.teamsCountOfBracket(division.idx),
 				})}
 			</div>
 		</Link>

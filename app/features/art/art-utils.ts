@@ -1,7 +1,9 @@
 export function previewUrl(url: string) {
-	// images with https are not hosted on spaces, this is used for local development
-	if (url.includes("https")) return url;
+	const lastDotIndex = url.lastIndexOf(".");
+	if (lastDotIndex === -1) return url;
 
-	const parts = url.split(".");
-	return `${parts[0]}-small.${parts[1]}`;
+	const urlWithoutExtension = url.slice(0, lastDotIndex);
+	const extension = url.slice(lastDotIndex + 1);
+
+	return `${urlWithoutExtension}-small.${extension}`;
 }

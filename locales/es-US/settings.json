@@ -1,0 +1,15 @@
+{
+	"tabs.preferences": "Preferencias",
+	"tabs.matchProfile": "Perfil de partida",
+	"tabs.locale": "Idioma",
+	"tabs.theme": "Tema",
+	"tabs.sounds": "Sonidos",
+	"matchProfile.maps.teamPreferencesHint": "",
+	"matchProfile.maps.avoid": "Evitar",
+	"matchProfile.maps.prefer": "Preferir",
+	"matchProfile.maps.neutral": "Neutral",
+	"sounds.likeReceived": "Invitación de grupo recibida",
+	"sounds.readyCheckStarted": "",
+	"sounds.matchStarted": "Partida de SendouQ iniciada",
+	"sounds.tournamentMatchStarted": "Set de torneo iniciado"
+}

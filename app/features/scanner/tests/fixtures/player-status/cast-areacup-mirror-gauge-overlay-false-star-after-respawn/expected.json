@@ -1,0 +1,39 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-left",
+		"cast": true,
+		"time": 124,
+		"special": [
+			[
+				false,
+				false,
+				false,
+				true
+			],
+			[
+				false,
+				false,
+				false,
+				false
+			]
+		],
+		"dead": [
+			[
+				false,
+				false,
+				false,
+				false
+			],
+			[
+				false,
+				false,
+				true,
+				false
+			]
+		]
+	},
+	"options": {
+		"notes": "Same footage one second on (2:06:32, clock 2:04), player-cam view with gauge digits and camera badges — but in the MIRRORED cast arrangement (left '+' pads at [625,701,777,852], right A/B/Y/X at [1110,1207,1303,1401]; the standard badge probes miss them). The live scan read this frame as pov and emitted ·★·★: the ★ on left slot 1 is FALSE — the .52 Gal just respawned and shows gauge 29 — which is the user-reported dead/ready flicker. Left slot 3's wash IS real (pale cream body, no gauge digit; spent by the next second). Right slot 2 splatted (27 kept over the X). Labels authored by Claude from pixel evidence; the user-confirmed part is that left slot 1 held no special here."
+	}
+}

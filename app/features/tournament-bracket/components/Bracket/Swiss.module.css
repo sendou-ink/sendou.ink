@@ -1,0 +1,34 @@
+.bracketNavLink {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	border-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
+	border-radius: 0;
+
+	&:active {
+		transform: translateY(0px);
+	}
+
+	&:first-of-type {
+		border-start-start-radius: var(--radius-box);
+		border-end-start-radius: var(--radius-box);
+	}
+
+	&:not(&:first-of-type) {
+		margin-left: -2px;
+	}
+
+	&:last-of-type {
+		border-start-end-radius: var(--radius-box);
+		border-end-end-radius: var(--radius-box);
+	}
+}
+
+.bracketNavLinkBig {
+	font-size: var(--font-lg);
+}
+
+.bracketNavLinkSelected {
+	color: var(--color-text);
+	background-color: var(--color-bg-high);
+}

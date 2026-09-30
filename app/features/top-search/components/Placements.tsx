@@ -1,22 +1,26 @@
-import { Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { Image, WeaponImage } from "~/components/Image";
+import { Image } from "~/components/Image";
 import {
-	brandImageUrl,
-	modeImageUrl,
+	RankTable,
+	RankTableInnerRow,
+	RankTableRank,
+	RankTableRow,
+	RankTableWeaponImage,
+} from "~/components/RankTable";
+import {
 	topSearchPage,
 	topSearchPlayerPage,
-} from "~/utils/urls";
-import type { FindPlacement } from "../queries/findPlacements.server";
+} from "~/features/top-search/top-search-urls";
+import { modeImageUrl } from "~/utils/urls";
 import { monthYearToSpan } from "../top-search-utils";
+import type * as XRankPlacementRepository from "../XRankPlacementRepository.server";
+import { DivisionImage } from "./DivisionImage";
+import styles from "./Placements.module.css";
 
 interface PlacementsTableProps {
-	placements: Array<FindPlacement>;
+	placements: Array<XRankPlacementRepository.FindPlacement>;
 	type?: "PLAYER_NAME" | "MODE_INFO";
 }
-
-const TENTATEK_BRAND_ID = "B10";
-const TAKOROKA_BRAND_ID = "B11";
 
 export function PlacementsTable({
 	placements,
@@ -25,67 +29,57 @@ export function PlacementsTable({
 	const { t } = useTranslation(["game-misc"]);
 
 	return (
-		<div className="placements__table">
+		<RankTable>
 			{placements.map((placement, i) => (
-				<Link
+				<RankTableRow
 					to={
 						type === "MODE_INFO"
 							? topSearchPage(placement)
 							: topSearchPlayerPage(placement.playerId)
 					}
 					key={placement.id}
-					className="placements__table__row"
-					data-testid={`placement-row-${i}`}
+					testId={`placement-row-${i}`}
 				>
-					<div className="placements__table__inner-row">
-						<div className="placements__table__rank">{placement.rank}</div>
+					<RankTableInnerRow>
+						<RankTableRank>{placement.rank}</RankTableRank>
 						{type === "MODE_INFO" ? (
 							<>
-								<div className="placements__table__mode">
-									<Image
+								<div className={styles.tableMode}>
+									<DivisionImage
+										region={placement.region}
 										alt={
 											placement.region === "WEST"
 												? "Tentatek Division"
 												: "Takoroka Division"
 										}
-										path={brandImageUrl(
-											placement.region === "WEST"
-												? TENTATEK_BRAND_ID
-												: TAKOROKA_BRAND_ID,
-										)}
-										width={24}
+										size={24}
 									/>
 								</div>
 
-								<div className="placements__table__mode">
+								<div className={styles.tableMode}>
 									<Image
 										alt={t(`game-misc:MODE_LONG_${placement.mode}`)}
 										path={modeImageUrl(placement.mode)}
 										width={24}
+										height={24}
 									/>
 								</div>
 							</>
 						) : null}
-						<WeaponImage
-							className="placements__table__weapon"
-							variant="build"
-							weaponSplId={placement.weaponSplId}
-							width={32}
-							height={32}
-						/>
+						<RankTableWeaponImage weaponSplId={placement.weaponSplId} />
 						{type === "PLAYER_NAME" ? <div>{placement.name}</div> : null}
 						{type === "MODE_INFO" ? (
-							<div className="placements__time">
+							<div className={styles.time}>
 								{monthYearToSpan(placement).from.month}/
 								{monthYearToSpan(placement).from.year} -{" "}
 								{monthYearToSpan(placement).to.month}/
 								{monthYearToSpan(placement).to.year}
 							</div>
 						) : null}
-					</div>
+					</RankTableInnerRow>
 					<div>{placement.power.toFixed(1)}</div>
-				</Link>
+				</RankTableRow>
 			))}
-		</div>
+		</RankTable>
 	);
 }

@@ -1,0 +1,10 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 277,
+		"names": ["julufm", "K DICTATOR"]
+	},
+	"options": {
+		"notes": "Frame shared with player-status/pov-umami-three-splats-cast-geometry (Sendou POV, Um'ami Ruins SZ 4:37): a double with a space inside a name."
+	}
+}

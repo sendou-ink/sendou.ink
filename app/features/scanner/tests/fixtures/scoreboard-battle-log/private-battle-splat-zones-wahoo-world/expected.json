@@ -1,0 +1,88 @@
+{
+  "event": "ScoreboardBattleLog",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 11,
+    "stageLabel": "Wahoo World",
+    "timestamp": "7/8/2026 21:43",
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 7,
+    "players": [
+      {
+        "name": "アリ",
+        "weaponId": 211,
+        "paint": 351,
+        "ka": 7,
+        "d": 1,
+        "s": 1
+      },
+      {
+        "name": "p",
+        "weaponId": 2070,
+        "paint": 630,
+        "ka": 6,
+        "d": 0,
+        "s": 2
+      },
+      {
+        "name": "hannah",
+        "weaponId": 50,
+        "paint": 361,
+        "ka": 4,
+        "d": 1,
+        "s": 1
+      },
+      {
+        "name": "goji",
+        "weaponId": 6011,
+        "paint": 298,
+        "ka": 2,
+        "d": 0,
+        "s": 1
+      },
+      {
+        "name": "Comrade",
+        "weaponId": 2070,
+        "paint": 575,
+        "ka": 1,
+        "d": 0,
+        "s": 2
+      },
+      {
+        "name": "☆☆1_¡[⊃し☆☆",
+        "weaponId": 4001,
+        "paint": 528,
+        "ka": 1,
+        "d": 3,
+        "s": 2
+      },
+      {
+        "name": "☆★」V「▲GN№★☆",
+        "weaponId": 211,
+        "paint": 239,
+        "ka": 2,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "Sendou",
+        "weaponId": 6011,
+        "paint": 265,
+        "ka": 0,
+        "d": 4,
+        "s": 1
+      }
+    ]
+  },
+  "options": {
+    "skipFields": [
+      "players.1.name",
+      "players.3.name"
+    ],
+    "notes": "1080p stream capture with horizontal banding. Live misread: the header stage read came back 'Wahnn WnrId l' (banding cuts the o bowls) and failed to snap to Wahoo World before bar-lookalike folding covered 'I'. players.1.name (p) reads P and players.3.name (goji) reads gパi under the same banding."
+  }
+}

@@ -1,35 +1,25 @@
+import type { Pronouns } from "~/db/tables-json";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import type { DataTypes, ValueToArray } from "~/modules/brackets-manager/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 
 /** GET /api/user/{userId|discordId} */
 
 export interface GetUserResponse {
 	id: number;
-	/**
-	 * @example "Sendou"
-	 */
+	/** @example "Sendou" */
 	name: string;
-	/**
-	 * @example "79237403620945920"
-	 */
+	/** @example "79237403620945920" */
 	discordId: string;
-	/**
-	 * @example "https://sendou.ink/u/sendou"
-	 */
+	/** @example "https://sendou.ink/u/sendou" */
 	url: string;
-	/**
-	 * @example "https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.png"
-	 */
+	/** @example "https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.png" */
 	avatarUrl: string | null;
-	/**
-	 * @example "FI"
-	 */
+	/** @example "FI" */
 	country: string | null;
 	socials: {
 		twitch: string | null;
-		// @deprecated
+		/** @deprecated */
 		twitter: null;
-		battlefy: string | null;
 		bsky: string | null;
 	};
 	plusServerTier: 1 | 2 | 3 | null;
@@ -37,28 +27,61 @@ export interface GetUserResponse {
 	badges: Array<Badge>;
 	/** Teams user is member of. The main team is always first in the array. */
 	teams: Array<GlobalTeamMembership>;
+	/** Splatoon 3 splashtag name & ID, if one is set. @example "Sendou#2955" */
+	inGameName: string | null;
+	/** User's pronouns. @example { "subject": "he", "object": "him" } */
+	pronouns: Pronouns | null;
 	peakXp: number | null;
 	/** Users current (or previous if it's off-season) ranked season (SendouQ & ranked tournaments) rank. Null if no rank for the season in question or the season does not have yet enough players on the leaderboard. */
 	currentRank: SeasonalRank | null;
 }
 
+/** GET /api/user/{userId|discordId|customUrl}/ids */
+
+export interface GetUserIdsResponse {
+	id: number;
+	/** @example "79237403620945920" */
+	discordId: string;
+	/** @example "sendou" */
+	customUrl: string | null;
+}
+
+/** GET /api/team/{teamId} */
+
+export interface GetTeamResponse {
+	id: number;
+	/** Name of the global team. @example "Moonlight" */
+	name: string;
+	/** URL for the global team page. @example "https://sendou.ink/t/moonlight" */
+	teamPageUrl: string;
+	/** URL for the global team logo. @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/pickup-logo-uReSb1b1XS3TWGLCKMDUD-1719054364813.webp" */
+	logoUrl: string | null;
+}
+
 /** GET /api/calendar/{year}/{week} */
 
 export type GetCalendarWeekResponse = Array<{
-	/**
-	 * @example "In The Zone 30"
-	 */
+	/** @example "In The Zone 30" */
 	name: string;
 	tournamentId: number | null;
-	/**
-	 * @example "https://sendou.ink/to/9/brackets"
-	 */
+	/** @example "https://sendou.ink/to/9/brackets" */
 	tournamentUrl: string | null;
-	/**
-	 * @example "2024-01-12T20:00:00.000Z"
-	 */
+	/** @example "2024-01-12T20:00:00.000Z" */
 	startTime: string;
 }>;
+
+/** GET /api/user/{userId}/active-match */
+
+export interface GetUsersActiveMatchResponse {
+	/** The user's current match ID or null if none */
+	matchId: number | null;
+	/** What kind of match the user is in right now */
+	lobby: "sendouq" | "tournament" | null;
+	/** The ID of the tournament (null for sendouq or no match) */
+	tournamentId: number | null;
+	/** The bracket index within the tournament (null for sendouq or no match). Can be used with GET /api/tournament/{tournamentId}/brackets/{bracketIdx} */
+	bracketIdx: number | null;
+}
 
 /** GET /api/sendouq/active-match/{userId} */
 
@@ -76,13 +99,14 @@ export interface GetSendouqMatchResponse {
 }
 
 type SendouqMatchTeam = {
+	id: number;
 	score: number;
 	players: Array<SendouqMatchPlayer>;
 };
 
 type SendouqMatchPlayer = {
 	userId: number;
-	/** User's at the start time of the match */
+	/** User's rank at the start time of the match */
 	rank: SendouQRank | null;
 };
 
@@ -91,21 +115,13 @@ type SendouQRank = { name: TierName; isPlus: boolean };
 /** GET /api/tournament/{tournamentId} */
 
 export interface GetTournamentResponse {
-	/**
-	 * @example "In The Zone 30"
-	 */
+	/** @example "In The Zone 30" */
 	name: string;
-	/**
-	 * @example "https://sendou.ink/to/9/brackets"
-	 */
+	/** @example "https://sendou.ink/to/9/brackets" */
 	url: string;
-	/**
-	 * @example "https://sendou.ink/static-assets/img/tournament-logos/itz.png"
-	 */
+	/** @example "https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/img/tournament-logos/itz.avif" */
 	logoUrl: string | null;
-	/**
-	 * @example "2024-01-12T20:00:00.000Z"
-	 */
+	/** @example "2024-01-12T20:00:00.000Z" */
 	startTime: string;
 	teams: {
 		registeredCount: number;
@@ -121,133 +137,105 @@ export interface GetTournamentResponse {
 
 export type GetTournamentTeamsResponse = Array<{
 	id: number;
-	/**
-	 * @example "Team Olive"
-	 */
+	/** @example "Team Olive" */
 	name: string;
-	/**
-	 * @example "2024-01-12T20:00:00.000Z"
-	 */
+	/** @example "2024-01-12T20:00:00.000Z" */
 	registeredAt: string;
 	checkedIn: boolean;
-	/**
-	 * URL for the tournament team page.
-	 *
-	 * @example "https://sendou.ink/to/9/teams/327"
-	 */
+	/** URL for the tournament team page. @example "https://sendou.ink/to/9/teams/327" */
 	url: string;
-	/**
-	 * URL for the global team page.
-	 *
-	 * @example "https://sendou.ink/t/moonlight"
-	 */
+	/** URL for the global team page. @example "https://sendou.ink/t/moonlight" */
 	teamPageUrl: string | null;
-	/**
-	 * @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/pickup-logo-uReSb1b1XS3TWGLCKMDUD-1719054364813.webp"
-	 */
+	/** Pickup team logos are only shown before the tournament starts to organizers and the team's own members. @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/pickup-logo-uReSb1b1XS3TWGLCKMDUD-1719054364813.webp" */
 	logoUrl: string | null;
 	seed: number | null;
+	/** Overall placement in the tournament. Null while the team is still playing. @example 5 */
+	placement: number | null;
+	/** Sets and maps the team has won and lost across every bracket it played. Null before the tournament has started. */
+	stats: {
+		setWins: number;
+		setLosses: number;
+		mapWins: number;
+		mapLosses: number;
+	} | null;
+	/** Only shown before the tournament starts to organizers and the team's own members. */
 	mapPool: Array<StageWithMode> | null;
-	/**
-	 *  Seeding power is a non-resetting MMR value that is used for sendou.ink's autoseeding capabilities.
-	 *  It is calculated as the average of the team's members' seeding power.
-	 *  Ranked and unranked tournaments contribute to different seeding power values.
-	 */
+	/** Non-resetting MMR used for autoseeding: average of the members' seeding power. Ranked and unranked tournaments feed separate values. */
 	seedingPower: {
 		ranked: number | null;
 		unranked: number | null;
 	};
 	members: Array<{
 		userId: number;
-		/**
-		 * @example "Sendou"
-		 */
+		/** @example "Sendou" */
 		name: string;
-		/**
-		 * @example "79237403620945920"
-		 */
+		/** @example "79237403620945920" */
 		discordId: string;
-		/**
-		 * @example "sendouc"
-		 */
-		battlefy: string | null;
-		/**
-		 * @example "https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.png"
-		 */
+		/** @example "https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.png" */
 		avatarUrl: string | null;
-		/**
-		 * @example "FI"
-		 */
+		/** @example "FI" */
 		country: string | null;
 		captain: boolean;
-		/**
-		 * Splatoon 3 splashtag name & ID. Notice the value returned is the player's set name at the time of the tournament.
-		 * Only available for tournaments with the "Require IGN's" option enabled.
-		 *
-		 * @example "Sendou#2955"
-		 */
+		/** Splatoon 3 splashtag as set at the time of the tournament. Only for tournaments with "Require IGN's" enabled. @example "Sendou#2955" */
 		inGameName: string | null;
-		/**
-		 *  Switch friend code used for identification purposes.
-		 *
-		 * @example "1234-5678-9101"
-		 */
-		friendCode: string;
-		/**
-		 * @example "2024-01-12T20:00:00.000Z"
-		 */
+		/** User's pronouns. @example { "subject": "he", "object": "him" } */
+		pronouns: Pronouns | null;
+		/** Switch friend code used for identification purposes. Only shown to the tournament's organizers and only for 30 days after the start (120 days for leagues). @example "1234-5678-9101" */
+		friendCode: string | null;
+		/** @example "2024-01-12T20:00:00.000Z" */
 		joinedAt: string;
 	}>;
+}>;
+
+/** GET /api/tournament/{tournamentId}/players */
+
+export type GetTournamentPlayersResponse = Array<{
+	userId: number;
+	matchIds: number[];
 }>;
 
 /** GET /api/tournament/{tournamentId}/casted */
 
 export interface GetCastedTournamentMatchesResponse {
-	/*
-	 * Matches that are currently being played and casted. Note: at the moment only one match can be casted at a time but this is an array for future proofing.
-	 */
+	/** Matches that are currently being played and casted. One per casting channel. */
 	current: Array<{
 		matchId: number;
 		channel: TournamentCastChannel;
 	}>;
-	/*
-	 * Matches that are locked to be casted.
-	 */
+	/** Matches that are locked to be casted. */
 	future: Array<{
 		matchId: number;
-		channel: TournamentCastChannel | null;
+		channel: TournamentCastChannel;
 	}>;
 }
 
 type TournamentCastChannel = {
 	type: "TWITCH";
-	/**
-	 * @example "iplsplatoon"
-	 */
+	/** @example "iplsplatoon" */
 	channelId: string;
 };
+
+/** GET /api/tournament/{tournamentId}/streams */
+
+export type GetTournamentStreamsResponse = Array<
+	{
+		platform: "TWITCH";
+		channelId: string;
+		viewerCount: number;
+	} & ({ type: "PLAYER"; userId: number } | { type: "CAST" })
+>;
 
 /** GET /api/tournament-match/{matchId} */
 
 export interface GetTournamentMatchResponse {
 	teamOne: TournamentMatchTeam | null;
 	teamTwo: TournamentMatchTeam | null;
-	/**
-	 * Name of the bracket this match belongs to.
-	 *
-	 * @example "Alpha Bracket"
-	 */
+	/** Name of the bracket this match belongs to. @example "Alpha Bracket" */
 	bracketName: string | null;
-	/**
-	 * Name of the round this match belongs to.
-	 *
-	 * @example "Grand Finals"
-	 */
+	/** Name of the round this match belongs to. @example "Grand Finals" */
 	roundName: string | null;
 	mapList: Array<MapListMap> | null;
-	/**
-	 * @example "https://sendou.ink/to/9/matches/695"
-	 */
+	/** @example "https://sendou.ink/to/9/matches/695" */
 	url: string;
 }
 
@@ -272,19 +260,27 @@ export interface GetTournamentBracketResponse {
 /** GET /api/tournament/{tournamentId}/brackets/{bracketIndex}/standings */
 
 export interface GetTournamentBracketStandingsResponse {
+	finished: boolean;
 	standings: Array<{
 		tournamentTeamId: number;
 		placement: number;
+		/** (round robin & swiss only) id of the group the team played in. Placements are shared across groups, meaning e.g. every group's winner has the placement 1. */
+		groupId?: number;
 		stats?: {
 			setWins: number;
 			setLosses: number;
 			mapWins: number;
 			mapLosses: number;
-			points: number;
+			/** @deprecated points are no longer tracked, see koCount instead */
+			points?: number;
+			/** (round robin only) how many knockout wins the team has */
+			koCount?: number;
 			winsAgainstTied: number;
 			lossesAgainstTied?: number;
-			buchholzSets?: number;
-			buchholzMaps?: number;
+			/** (swiss only) average win percentage of the team's opponents in sets, used as a tiebreaker */
+			opponentSetWinPercentage?: number;
+			/** (swiss only) average win percentage of the team's opponents in maps, used as a tiebreaker */
+			opponentMapWinPercentage?: number;
 		};
 	}>;
 }
@@ -293,18 +289,12 @@ export interface GetTournamentBracketStandingsResponse {
 
 export interface GetTournamentOrganizationResponse {
 	id: number;
-	/**
-	 * @example "Dapple Productions"
-	 */
+	/** @example "Dapple Productions" */
 	name: string;
 	description: string | null;
-	/**
-	 * @example "https://sendou.ink/org/dapple-productions"
-	 */
+	/** @example "https://sendou.ink/org/dapple-productions" */
 	url: string;
-	/**
-	 * @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/gBn45bbUMXM6359ZDQS5_-1722059432073.webp"
-	 */
+	/** @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/gBn45bbUMXM6359ZDQS5_-1722059432073.webp" */
 	logoUrl: string | null;
 	members: Array<TournamentOrganizationMember>;
 	socialLinkUrls: Array<string>;
@@ -312,14 +302,12 @@ export interface GetTournamentOrganizationResponse {
 
 interface TournamentOrganizationMember {
 	userId: number;
-	/**
-	 * @example "Sendou"
-	 */
+	/** @example "Sendou" */
 	name: string;
-	/**
-	 * @example "79237403620945920"
-	 */
+	/** @example "79237403620945920" */
 	discordId: string;
+	/** User's pronouns. @example { "subject": "he", "object": "him" } */
+	pronouns: Pronouns | null;
 	role: "ADMIN" | "MEMBER" | "ORGANIZER" | "STREAMER";
 	roleDisplayName: string | null;
 }
@@ -334,22 +322,10 @@ type Weapon = {
 type ProfileWeapon = Weapon & { isFiveStar: boolean };
 
 interface GlobalTeamMembership {
-	/**
-	 * Name of the global team.
-	 *
-	 * @example "Moonlight"
-	 */
-	name: string;
-	/**
-	 * Role of the user in the team.
-	 */
+	/** ID for the global team page. */
+	id: number;
+	/** Role of the user in the team. */
 	role: TeamMemberRole | null;
-	/**
-	 * URL for the global team page.
-	 *
-	 * @example "https://sendou.ink/t/moonlight"
-	 */
-	teamPageUrl: string;
 }
 
 type TeamMemberRole =
@@ -371,11 +347,7 @@ interface SeasonalRank {
 		name: RankTierName;
 		isPlus: boolean;
 	};
-	/**
-	 * Which season this rank is for.
-	 *
-	 * @example 7
-	 */
+	/** Which season this rank is for. @example 7 */
 	season: number;
 }
 
@@ -389,18 +361,12 @@ type RankTierName =
 	| "IRON";
 
 type Badge = {
-	/**
-	 * @example "Monday Afterparty"
-	 */
+	/** @example "Monday Afterparty" */
 	name: string;
 	count: number;
-	/**
-	 * @example "https://sendou.ink/static-assets/badges/monday.png"
-	 */
+	/** @example "https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/badges/monday.avif" */
 	imageUrl: string;
-	/**
-	 * @example "https://sendou.ink/static-assets/badges/monday.gif"
-	 */
+	/** @example "https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/badges/monday.gif" */
 	gifUrl: string;
 };
 
@@ -421,16 +387,24 @@ export type MapListMap = {
 	 * One of the following:
 	 * - id of the team that picked the map
 	 * - "DEFAULT" if it was a default map, something went wrong with the algorithm typically
-	 * - "TIEBREAKER" if it was a tiebreaker map (selected by the TO)
+	 * - "RANDOM" if it was a random map from the tournament's map pool that neither team picked
 	 * - "BOTH" both teams picked the map
 	 * - "TO" if it was a TO pick (from predefined maplist)
 	 * - "COUNTERPICK" if it was a counterpick
+	 * - "ROLL" if it was randomly selected
 	 */
-	source: number | "DEFAULT" | "TIEBREAKER" | "BOTH" | "TO" | "COUNTERPICK";
+	source:
+		| number
+		| "DEFAULT"
+		| "RANDOM"
+		| "BOTH"
+		| "TO"
+		| "COUNTERPICK"
+		| "ROLL";
 	winnerTeamId: number | null;
 	participatedUserIds: Array<number> | null;
-	/** (round robin only) points of the match used for tiebreaker purposes. e.g. [100, 0] indicates a knockout. */
-	points: [number, number] | null;
+	/** (round robin only) whether the map ended in a knockout. `null` if not tracked. */
+	ko: boolean | null;
 };
 
 type TournamentMatchTeam = {
@@ -443,5 +417,56 @@ type TournamentBracket = {
 	name: string;
 };
 
-// TODO: use a better documented type here
-type TournamentBracketData = ValueToArray<DataTypes>;
+type TournamentBracketData = BracketData;
+
+/** POST /api/tournament/{id}/seeds */
+
+/** @lintignore */
+export interface TournamentSeedsBody {
+	tournamentTeamIds: number[];
+}
+
+/** POST /api/tournament/{id}/starting-brackets */
+
+/** @lintignore */
+export interface TournamentStartingBracketsBody {
+	startingBrackets: Array<{
+		tournamentTeamId: number;
+		startingBracketIdx: number;
+	}>;
+}
+
+/** POST /api/tournament/{id}/teams/upsert */
+
+/** @lintignore */
+export interface TournamentUpsertTeamBody {
+	/** Present when editing an existing registration, absent when adding a new team. */
+	tournamentTeamId?: number;
+	/** Team name for a pickup team. Either `name` or `teamId` must be given. */
+	name?: string;
+	/** Linked sendou.ink team id. Name and logo are sourced from the team. */
+	teamId?: number;
+	/** Roster member that is the team owner/captain. */
+	ownerUserId: number;
+	/** Full roster; members missing from the list are removed from the team. */
+	members: Array<{
+		userId: number;
+		inGameName?: string;
+	}>;
+}
+
+/** POST /api/tournament/{id}/teams/{tournamentTeamId}/add-member */
+/** POST /api/tournament/{id}/teams/{tournamentTeamId}/remove-member */
+
+/** @lintignore */
+export interface TournamentTeamMemberBody {
+	userId: number;
+}
+
+/** POST /api/tournament/{id}/teams/{tournamentTeamId}/update-member-ign */
+
+/** @lintignore */
+export interface TournamentUpdateMemberIgnBody {
+	userId: number;
+	inGameName: string;
+}

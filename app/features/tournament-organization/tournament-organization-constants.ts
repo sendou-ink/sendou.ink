@@ -1,8 +1,30 @@
 export const TOURNAMENT_SERIES_EVENTS_PER_PAGE = 20;
 export const TOURNAMENT_SERIES_LEADERBOARD_SIZE = 50;
 
+export const MONTH_PARAM_FORMAT = "yyyy-MM";
+
+/** Id of the "Leagues Under The Ink" (LUTI) organization. */
+export const LUTI_ORGANIZATION_ID = 19;
+
+export const ESTABLISHED_ORG = {
+	MONTHS_CONSIDERED: 6,
+	GAIN_THRESHOLD: 150,
+	LOSE_THRESHOLD: 100,
+};
+
+export const TOURNAMENT_ORGANIZATION_ROLES = [
+	"ADMIN",
+	"MEMBER",
+	"ORGANIZER",
+	"STREAMER",
+] as const;
+
+export type TournamentOrganizationRole =
+	(typeof TOURNAMENT_ORGANIZATION_ROLES)[number];
+
 export const TOURNAMENT_ORGANIZATION = {
 	DESCRIPTION_MAX_LENGTH: 1_000,
 	BAN_REASON_MAX_LENGTH: 200,
 	MAX_BANNED_USERS: 100,
+	MAX_MEMBER_OF_COUNT: 5,
 };

@@ -1,17 +1,8 @@
-import type { MetaFunction } from "@remix-run/node";
-import {
-	Form,
-	Link,
-	useFetcher,
-	useLoaderData,
-	useNavigation,
-	useSearchParams,
-} from "@remix-run/react";
 import * as React from "react";
-import { Avatar } from "~/components/Avatar";
+import type { MetaFunction } from "react-router";
+import { Form, useFetcher, useLoaderData } from "react-router";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
@@ -19,24 +10,34 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { UserSearch } from "~/components/elements/UserSearch";
-import { FormMessage } from "~/components/FormMessage";
-import { Input } from "~/components/Input";
-import { SearchIcon } from "~/components/icons/Search";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SEED_VARIATIONS } from "~/features/api-private/constants";
-import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
+import { UserLink } from "~/components/UserLink";
+import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
-import {
-	impersonateUrl,
-	SEED_URL,
-	STOP_IMPERSONATING_URL,
-	userPage,
-} from "~/utils/urls";
+import { impersonateUrl, SEED_URL, STOP_IMPERSONATING_URL } from "~/utils/urls";
 import { action } from "../actions/admin.server";
+import {
+	banUserSchema,
+	forcePatronSchema,
+	friendCodeSearchSchema,
+	giveApiAccessSchema,
+	giveArtistSchema,
+	giveTournamentOrganizerSchema,
+	giveVideoAdderSchema,
+	linkPlayerSchema,
+	migrateUserSchema,
+	refreshPlusTiersSchema,
+	unbanUserSchema,
+	updateFriendCodeSchema,
+} from "../admin-schemas";
+import { adminSearchParams } from "../admin-search-params";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 import { loader } from "../loaders/admin.server";
-export { loader, action };
+
+export { action, loader };
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -46,8 +47,19 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function AdminPage() {
+	const isStaff = useHasRole("STAFF");
+
+	// is dev user or is someone impersonating another user (allow them to stop)
+	if (!isStaff && !DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
+		return (
+			<Main>
+				<Impersonate />
+			</Main>
+		);
+	}
+
 	return (
-		<Main>
+		<Main halfWidth>
 			<SendouTabs>
 				<SendouTabList>
 					<SendouTab id="actions">Actions</SendouTab>
@@ -66,39 +78,26 @@ export default function AdminPage() {
 
 function FriendCodeLookUp() {
 	const data = useLoaderData<typeof loader>();
-	const [searchParams, setSearchParams] = useSearchParams();
-	const [friendCode, setFriendCode] = React.useState(
-		searchParams.get("friendCode") ?? "",
+	const [friendCode, setFriendCode] = useSearchParam(
+		adminSearchParams,
+		"friendCode",
 	);
-	const fetcher = useFetcher();
 
 	return (
-		<div>
-			<div className="stack md horizontal justify-center">
-				<Input
-					placeholder="1234-5678-9101"
-					name="friendCode"
-					value={friendCode}
-					onChange={(e) => setFriendCode(e.target.value)}
-				/>
-				<SubmitButton
-					state={fetcher.state}
-					icon={<SearchIcon />}
-					onPress={() => setSearchParams({ friendCode })}
-				>
-					Search
-				</SubmitButton>
-			</div>
+		<div className="stack lg">
+			<SendouForm
+				schema={friendCodeSearchSchema}
+				defaultValues={{ friendCode: friendCode ?? "" }}
+				submitButtonText="Search"
+				onApply={({ friendCode: newFriendCode }) =>
+					setFriendCode(newFriendCode)
+				}
+			>
+				{({ FormField }) => <FormField name="friendCode" />}
+			</SendouForm>
 			<div className="stack lg">
 				{data.friendCodeSearchUsers?.map((user) => (
-					<Link
-						key={user.id}
-						to={userPage(user)}
-						className="stack horizontal sm text-main-forced items-center"
-					>
-						<Avatar user={user} size="sm" />
-						{user.username}
-					</Link>
+					<UserLink key={user.id} user={user} size="sm" />
 				))}
 			</div>
 		</div>
@@ -108,11 +107,12 @@ function FriendCodeLookUp() {
 function AdminActions() {
 	const isStaff = useHasRole("STAFF");
 	const isAdmin = useHasRole("ADMIN");
+	const isDev = useHasRole("DEV");
 
 	return (
 		<div className="stack lg">
-			{process.env.NODE_ENV !== "production" && <Seed />}
-			{process.env.NODE_ENV !== "production" || isAdmin ? (
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <Seed /> : null}
+			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin || isDev ? (
 				<Impersonate />
 			) : null}
 
@@ -120,13 +120,13 @@ function AdminActions() {
 			{isStaff ? <GiveArtist /> : null}
 			{isStaff ? <GiveVideoAdder /> : null}
 			{isAdmin ? <GiveTournamentOrganizer /> : null}
+			{isAdmin ? <GiveApiAccess /> : null}
 			{isStaff ? <UpdateFriendCode /> : null}
 			{isStaff ? <MigrateUser /> : null}
 			{isAdmin ? <ForcePatron /> : null}
 			{isStaff ? <BanUser /> : null}
 			{isStaff ? <UnbanUser /> : null}
 			{isAdmin ? <RefreshPlusTiers /> : null}
-			{isAdmin ? <CleanUp /> : null}
 		</div>
 	);
 }
@@ -145,7 +145,7 @@ function Impersonate() {
 			<h2>Impersonate user</h2>
 			<UserSearch
 				label="User to log in as"
-				onChange={(newUser) => setUserId(newUser.id)}
+				onChange={(newUser) => setUserId(newUser?.id)}
 			/>
 			<div className="stack horizontal md">
 				<SendouButton type="submit" isDisabled={!userId}>
@@ -162,257 +162,157 @@ function Impersonate() {
 }
 
 function MigrateUser() {
-	const [oldUserId, setOldUserId] = React.useState<number>();
-	const [newUserId, setNewUserId] = React.useState<number>();
-	const navigation = useNavigation();
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2>Migrate user data</h2>
-			<div className="stack horizontal md">
-				<UserSearch
-					label="Old user"
-					name="old-user"
-					onChange={(newUser) => setOldUserId(newUser.id)}
-				/>
-				<UserSearch
-					label="New user"
-					name="new-user"
-					onChange={(newUser) => setNewUserId(newUser.id)}
-				/>
-			</div>
-			<div className="stack horizontal md">
-				<SubmitButton
-					type="submit"
-					isDisabled={!oldUserId || !newUserId || navigation.state !== "idle"}
-					_action="MIGRATE"
-					state={fetcher.state}
-				>
-					Migrate
-				</SubmitButton>
-			</div>
-			<FormMessage type="info">
-				Note: data on "New user" will be deleted (e.g. builds)
-			</FormMessage>
-		</fetcher.Form>
+		<SendouForm
+			schema={migrateUserSchema}
+			title="Migrate user data"
+			submitButtonText="Migrate"
+		>
+			{({ FormField }) => (
+				<>
+					<FormField name="oldUser" />
+					<FormField name="newUser" />
+				</>
+			)}
+		</SendouForm>
 	);
 }
 
 function LinkPlayer() {
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2>Link player</h2>
-			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-				<div>
-					<label>Player ID</label>
-					<input type="number" name="playerId" />
-				</div>
-			</div>
-			<div className="stack horizontal md">
-				<SubmitButton type="submit" _action="LINK_PLAYER" state={fetcher.state}>
-					Link player
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<SendouForm
+			schema={linkPlayerSchema}
+			title="Link player"
+			submitButtonText="Link player"
+		>
+			{({ FormField }) => (
+				<>
+					<FormField name="user" />
+					<FormField name="playerId" />
+				</>
+			)}
+		</SendouForm>
 	);
 }
 
 function GiveArtist() {
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2>Add as artist</h2>
-			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-			</div>
-			<div className="stack horizontal md">
-				<SubmitButton type="submit" _action="ARTIST" state={fetcher.state}>
-					Add as artist
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<SendouForm
+			schema={giveArtistSchema}
+			title="Add as artist"
+			submitButtonText="Add as artist"
+		>
+			{({ FormField }) => <FormField name="user" />}
+		</SendouForm>
 	);
 }
 
 function GiveVideoAdder() {
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2>Give video adder</h2>
-			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-			</div>
-			<div className="stack horizontal md">
-				<SubmitButton type="submit" _action="VIDEO_ADDER" state={fetcher.state}>
-					Add as video adder
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<SendouForm
+			schema={giveVideoAdderSchema}
+			title="Give video adder"
+			submitButtonText="Add as video adder"
+		>
+			{({ FormField }) => <FormField name="user" />}
+		</SendouForm>
 	);
 }
 
 function GiveTournamentOrganizer() {
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2>Give tournament organizer</h2>
-			<UserSearch label="User" name="user" />
-			<div className="stack horizontal md">
-				<SubmitButton
-					type="submit"
-					_action="TOURNAMENT_ORGANIZER"
-					state={fetcher.state}
-				>
-					Add as tournament organizer
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<SendouForm
+			schema={giveTournamentOrganizerSchema}
+			title="Give tournament organizer"
+			submitButtonText="Add as tournament organizer"
+		>
+			{({ FormField }) => <FormField name="user" />}
+		</SendouForm>
+	);
+}
+
+function GiveApiAccess() {
+	return (
+		<SendouForm
+			schema={giveApiAccessSchema}
+			title="Give API access"
+			submitButtonText="Grant API access"
+		>
+			{({ FormField }) => <FormField name="user" />}
+		</SendouForm>
 	);
 }
 
 function UpdateFriendCode() {
-	const fetcher = useFetcher();
-	const id = React.useId();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2>Update friend code</h2>
-			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-				<div>
-					<label htmlFor={id}>Friend code</label>
-					<Input
-						leftAddon="SW-"
-						id={id}
-						name="friendCode"
-						pattern={FRIEND_CODE_REGEXP_PATTERN}
-						placeholder="1234-5678-9012"
-					/>
-				</div>
-			</div>
-			<div className="stack horizontal md">
-				<SubmitButton
-					type="submit"
-					_action="UPDATE_FRIEND_CODE"
-					state={fetcher.state}
-				>
-					Submit
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<SendouForm schema={updateFriendCodeSchema} title="Update friend code">
+			{({ FormField }) => (
+				<>
+					<FormField name="user" />
+					<FormField name="friendCode" />
+				</>
+			)}
+		</SendouForm>
 	);
 }
 
 function ForcePatron() {
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2>Force patron</h2>
-			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-
-				<div>
-					<label>Tier</label>
-					<select name="patronTier">
-						<option value="1">Support</option>
-						<option value="2">Supporter</option>
-						<option value="3">Supporter+</option>
-					</select>
-				</div>
-
-				<div>
-					<label>Patron till</label>
-					<input name="patronTill" type="date" />
-				</div>
-			</div>
-			<div className="stack horizontal md">
-				<SubmitButton
-					type="submit"
-					_action="FORCE_PATRON"
-					state={fetcher.state}
-				>
-					Save
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<SendouForm
+			schema={forcePatronSchema}
+			title="Force patron"
+			submitButtonText="Save"
+		>
+			{({ FormField }) => (
+				<>
+					<FormField name="user" />
+					<FormField name="patronTier" />
+					<FormField name="patronExpiresAt" />
+				</>
+			)}
+		</SendouForm>
 	);
 }
 
 function BanUser() {
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2 className="text-warning">Ban user</h2>
-			<div className="stack horizontal md">
-				<UserSearch label="User" name="user" />
-
-				<div>
-					<label>Banned till</label>
-					<input name="duration" type="datetime-local" />
-				</div>
-
-				<div>
-					<label>Reason</label>
-					<input name="reason" type="text" />
-				</div>
-			</div>
-			<div className="stack horizontal md">
-				<SubmitButton type="submit" _action="BAN_USER" state={fetcher.state}>
-					Save
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<SendouForm
+			schema={banUserSchema}
+			title={<span className="text-warning">Ban user</span>}
+			submitButtonText="Save"
+		>
+			{({ FormField }) => (
+				<>
+					<FormField name="user" />
+					<FormField name="expiresAt" />
+					<FormField name="reason" />
+				</>
+			)}
+		</SendouForm>
 	);
 }
 
 function UnbanUser() {
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form className="stack md" method="post">
-			<h2 className="text-warning">Unban user</h2>
-			<UserSearch label="User" name="user" />
-			<div className="stack horizontal md">
-				<SubmitButton type="submit" _action="UNBAN_USER" state={fetcher.state}>
-					Save
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		<SendouForm
+			schema={unbanUserSchema}
+			title={<span className="text-warning">Unban user</span>}
+			submitButtonText="Save"
+		>
+			{({ FormField }) => <FormField name="user" />}
+		</SendouForm>
 	);
 }
 
 function RefreshPlusTiers() {
-	const fetcher = useFetcher();
-
 	return (
-		<fetcher.Form method="post">
-			<h2>Refresh Plus Tiers</h2>
-			<SubmitButton type="submit" _action="REFRESH" state={fetcher.state}>
-				Refresh
-			</SubmitButton>
-		</fetcher.Form>
-	);
-}
-
-function CleanUp() {
-	const fetcher = useFetcher();
-
-	return (
-		<fetcher.Form method="post">
-			<h2>DB Clean up</h2>
-			<SubmitButton type="submit" _action="CLEAN_UP" state={fetcher.state}>
-				Clean up
-			</SubmitButton>
-		</fetcher.Form>
+		<SendouForm
+			schema={refreshPlusTiersSchema}
+			title="Refresh Plus Tiers"
+			submitButtonText="Refresh"
+		>
+			{null}
+		</SendouForm>
 	);
 }
 
@@ -425,16 +325,7 @@ function Seed() {
 			method="post"
 			action={SEED_URL}
 		>
-			<div className="stack horizontal md items-end">
-				<SubmitButton state={fetcher.state}>Seed</SubmitButton>
-				<SendouSelect label="Variation" name="variation">
-					{SEED_VARIATIONS.map((variation) => (
-						<SendouSelectItem key={variation} id={variation}>
-							{variation}
-						</SendouSelectItem>
-					))}
-				</SendouSelect>
-			</div>
+			<SubmitButton state={fetcher.state}>Seed</SubmitButton>
 		</fetcher.Form>
 	);
 }

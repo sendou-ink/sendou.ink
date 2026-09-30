@@ -1,21 +1,23 @@
-import { SendouFieldError } from "~/components/elements/FieldError";
-import { SendouFieldMessage } from "~/components/elements/FieldMessage";
+import { SendouFieldError, SendouFieldMessage } from "~/components/FormMessage";
 
+// TODO: deprecate in favor of FormMessage
 export function SendouBottomTexts({
 	bottomText,
 	errorText,
+	errorId,
 }: {
 	bottomText?: string;
 	errorText?: string;
+	errorId?: string;
 }) {
 	return (
 		<>
 			{errorText ? (
-				<SendouFieldError>{errorText}</SendouFieldError>
+				<SendouFieldError id={errorId}>{errorText}</SendouFieldError>
 			) : (
 				<SendouFieldError />
 			)}
-			{bottomText && !errorText ? (
+			{bottomText ? (
 				<SendouFieldMessage>{bottomText}</SendouFieldMessage>
 			) : null}
 		</>

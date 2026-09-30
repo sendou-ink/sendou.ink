@@ -1,9 +1,9 @@
-import type { MetaFunction } from "@remix-run/node";
-import { useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
 import clsx from "clsx";
-import * as React from "react";
-import { Flipper } from "react-flip-toolkit";
+import type * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import {
@@ -14,31 +14,42 @@ import {
 } from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
+import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
-import { Chat, useChat } from "~/features/chat/components/Chat";
-import { useAutoRefresh } from "~/hooks/useAutoRefresh";
-import { useIsMounted } from "~/hooks/useIsMounted";
-import { useWindowSize } from "~/hooks/useWindowSize";
-import { metaTags } from "~/utils/remix";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
+import { useMarkSqLikesSeen } from "~/features/global-status/global-status-likes-seen";
+import type { UserCardData } from "~/features/user-card/user-card-types";
+import { privateNoteSentimentScore } from "~/features/user-card/user-card-utils";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useHydrated } from "~/hooks/useHydrated";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	MATCH_PROFILE_PAGE,
 	navIconUrl,
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
-	SENDOUQ_SETTINGS_PAGE,
 	SENDOUQ_STREAMS_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/q.looking.server";
-import { GroupCard } from "../components/GroupCard";
+import { GroupCard, type GroupCardTrail } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
+import { canSuggest, groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
-import { FULL_GROUP_SIZE } from "../q-constants";
-import type { LookingGroupWithInviteCode } from "../q-types";
-export { action, loader };
+import { lookingSchema } from "../q-action-schemas";
+import {
+	FULL_GROUP_SIZE,
+	IS_Q_LOOKING_MOBILE_BREAKPOINT,
+	SENDOUQ_LOOKING_CHANNEL,
+	sqGroupChannel,
+} from "../q-constants";
+import { qLookingSearchParams } from "../q-search-params";
+import styles from "./q.looking.module.css";
 
-import "../q.css";
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user", "q"],
@@ -52,28 +63,51 @@ export const handle: SendouRouteHandle = {
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Matchmaking",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };
 
-export default function QLookingPage() {
+export default function QLookingShell() {
+	const isHydrated = useHydrated();
+
+	if (!isHydrated)
+		return (
+			<Main>
+				<Placeholder />
+			</Main>
+		);
+
+	return <QLookingPage />;
+}
+
+function QLookingPage() {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const [searchParams] = useSearchParams();
-	useAutoRefresh(data.lastUpdated);
+	const [joining] = useSearchParam(qLookingSearchParams, "joining");
 
-	const wasTryingToJoinAnotherTeam = searchParams.get("joining") === "true";
+	useMarkSqLikesSeen(data.ownGroup?.id, data.likes.received.length);
+
+	// pool-shape changes (a group joining/leaving, a morph, a match starting)
+	useTopicRevalidation(SENDOUQ_LOOKING_CHANNEL);
+	// group-specific updates (e.g. a received like)
+	useTopicRevalidation(
+		data.ownGroup ? sqGroupChannel(data.ownGroup.id) : "",
+		Boolean(data.ownGroup),
+	);
+
+	const wasTryingToJoinAnotherTeam = joining;
 
 	const showGoToSettingPrompt = () => {
-		if (!data.groups.own) return false;
+		if (!data.ownGroup) return false;
 
-		const isAlone = data.groups.own.members!.length === 1;
+		const isAlone = data.ownGroup.members.length === 1;
 		const hasWeaponPool = Boolean(
-			data.groups.own.members!.find((m) => m.id === user?.id)?.weapons,
+			data.ownGroup.members.find((m) => m.id === user?.id)?.weapons,
 		);
 		const hasVCStatus =
-			(data.groups.own.members!.find((m) => m.id === user?.id)?.languages ?? [])
+			(data.ownGroup.members.find((m) => m.id === user?.id)?.languages ?? [])
 				.length > 0;
 
 		return isAlone && (!hasWeaponPool || !hasVCStatus);
@@ -96,58 +130,59 @@ export default function QLookingPage() {
 }
 
 function InfoText() {
-	const { t, i18n } = useTranslation(["q"]);
-	const isMounted = useIsMounted();
+	const { t } = useTranslation(["q"]);
+	const isHydrated = useHydrated();
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+	});
 
-	if (data.expiryStatus === "EXPIRED") {
+	const expiryStatus = data.ownGroup
+		? groupExpiryStatus(data.ownGroup.latestActionAt)
+		: null;
+
+	if (expiryStatus === "EXPIRED") {
 		return (
-			<fetcher.Form
-				method="post"
-				className="text-xs text-lighter ml-auto text-error stack horizontal sm"
-			>
+			<div className="text-xs text-lighter ml-auto text-error stack horizontal sm items-center">
 				{t("q:looking.inactiveGroup")}{" "}
-				<SubmitButton
+				<ActionButton
+					schema={lookingSchema}
+					action="REFRESH_GROUP"
 					size="small"
 					variant="minimal"
-					_action="REFRESH_GROUP"
-					state={fetcher.state}
 				>
 					{t("q:looking.inactiveGroup.action")}
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 		);
 	}
 
-	if (data.expiryStatus === "EXPIRING_SOON") {
+	if (expiryStatus === "EXPIRING_SOON") {
 		return (
-			<fetcher.Form
-				method="post"
-				className="text-xs text-lighter ml-auto text-warning stack horizontal sm"
-			>
+			<div className="text-xs text-lighter ml-auto text-warning stack horizontal sm items-center">
 				{t("q:looking.inactiveGroup.soon")}{" "}
-				<SubmitButton
+				<ActionButton
+					schema={lookingSchema}
+					action="REFRESH_GROUP"
 					size="small"
 					variant="minimal"
-					_action="REFRESH_GROUP"
-					state={fetcher.state}
 				>
 					{t("q:looking.inactiveGroup.action")}
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 		);
 	}
 
 	return (
 		<div
 			className={clsx("text-xs text-lighter stack horizontal justify-between", {
-				invisible: !isMounted,
+				invisible: !isHydrated,
 			})}
 		>
 			<div className="stack sm horizontal">
 				<LinkButton
-					to={SENDOUQ_SETTINGS_PAGE}
+					to={MATCH_PROFILE_PAGE}
 					size="small"
 					variant="outlined"
 					className="stack horizontal xs"
@@ -158,15 +193,9 @@ function InfoText() {
 				<StreamsLinkButton />
 			</div>
 			<span className="text-xxs">
-				{isMounted
+				{isHydrated
 					? t("q:looking.lastUpdatedAt", {
-							time: new Date(data.lastUpdated).toLocaleTimeString(
-								i18n.language,
-								{
-									hour: "2-digit",
-									minute: "2-digit",
-								},
-							),
+							time: timeFormatter.format(new Date(data.lastUpdated)) ?? "",
 						})
 					: "Placeholder"}
 			</span>
@@ -194,275 +223,288 @@ function StreamsLinkButton() {
 function Groups() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 
-	const [_unseenMessages, setUnseenMessages] = React.useState(0);
-	const [chatVisible, setChatVisible] = React.useState(false);
-	const { width } = useWindowSize();
+	const width = useMainContentWidth();
 
-	const chatUsers = React.useMemo(() => {
-		return Object.fromEntries(
-			(data.groups.own?.members ?? []).map((m) => [m.id, m]),
-		);
-	}, [data]);
+	// width === 0 means the main content hasn't been measured yet
+	if (!isHydrated || width === 0) return null;
 
-	const rooms = React.useMemo(() => {
-		return data.chatCode
-			? [
-					{
-						code: data.chatCode,
-						label: "Group",
-					},
-				]
-			: [];
-	}, [data.chatCode]);
-
-	const onNewMessage = React.useCallback(() => {
-		setUnseenMessages((msg) => msg + 1);
-	}, []);
-
-	const chat = useChat({ rooms, onNewMessage });
-
-	const onChatMount = React.useCallback(() => {
-		setChatVisible(true);
-	}, []);
-
-	const onChatUnmount = React.useCallback(() => {
-		setChatVisible(false);
-		setUnseenMessages(0);
-	}, []);
-
-	const unseenMessages = chatVisible ? 0 : _unseenMessages;
-
-	if (!isMounted) return null;
-
-	const isMobile = width < 750;
+	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
 	const isFullGroup =
-		data.groups.own && data.groups.own.members!.length === FULL_GROUP_SIZE;
-	const ownGroup = data.groups.own as LookingGroupWithInviteCode | undefined;
+		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
-	const renderChat = data.groups.own && data.groups.own.members!.length > 1;
+	const suggestedByUsernames = new Map(
+		data.suggestions.map((suggestion) => [
+			suggestion.groupId,
+			suggestion.createdByUsername,
+		]),
+	);
+	const invitedByUsernames = new Map(
+		data.likes.given.map((like) => [like.groupId, like.createdByUsername]),
+	);
+
+	const suggestedGroupIds = new Set(suggestedByUsernames.keys());
+
+	const groups = sortGroups(data.groups, {
+		userCards: data.userCards,
+		suggestedGroupIds,
+	});
+
+	const isSoloGroup = data.ownGroup?.members.length === 1;
+
+	const trailOf = (groupId: number): GroupCardTrail | undefined => {
+		if (isSoloGroup) return undefined;
+
+		const invitedBy = invitedByUsernames.get(groupId);
+		if (invitedBy) return { type: "INVITED", username: invitedBy };
+
+		const suggestedBy = suggestedByUsernames.get(groupId);
+		if (suggestedBy) return { type: "SUGGESTED", username: suggestedBy };
+
+		return undefined;
+	};
+
+	const canSuggestGroups = Boolean(data.ownGroup && canSuggest(data.ownGroup));
+	// a group already invited or suggested has nothing left to point out
+	const isSuggestable = (groupId: number) =>
+		canSuggestGroups &&
+		!invitedByUsernames.has(groupId) &&
+		!suggestedByUsernames.has(groupId);
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
-			<ColumnHeader>
+			<ColumnHeader isMobile={isMobile}>
 				{t(
 					isFullGroup
 						? "q:looking.columns.challenged"
 						: "q:looking.columns.invited",
 				)}
 			</ColumnHeader>
-			{data.groups.neutral
-				.filter((group) => group.isLiked)
+			{groups
+				.filter((group) =>
+					data.likes.given.some((like) => like.groupId === group.id),
+				)
 				.map((group) => {
 					return (
 						<GroupCard
 							key={group.id}
 							group={group}
 							action="UNLIKE"
-							ownRole={data.role}
-							isExpired={data.expiryStatus === "EXPIRED"}
-							showNote
+							trail={trailOf(group.id)}
+							isSuggested={suggestedGroupIds.has(group.id)}
+							ownGroup={data.ownGroup}
 						/>
 					);
 				})}
 		</div>
 	);
 
-	const chatElement = (
-		<div>
-			{renderChat ? (
-				<>
-					<Chat
-						rooms={rooms}
-						users={chatUsers}
-						className="w-full"
-						messagesContainerClassName="q__chat-messages-container"
-						chat={chat}
-						onMount={onChatMount}
-						onUnmount={onChatUnmount}
-					/>
-					{!isMobile ? (
-						<div className="mt-4">{invitedGroupsDesktop}</div>
-					) : null}
-				</>
-			) : null}
-		</div>
-	);
-
-	const ownGroupElement = ownGroup ? (
-		<div className="stack md">
-			{!renderChat && (
-				<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
-			)}
-			<GroupCard group={ownGroup} ownRole={data.role} ownGroup showNote />
-			{ownGroup?.inviteCode ? (
+	const ownGroupElement = data.ownGroup ? (
+		<div className="stack sm">
+			<ColumnHeader isMobile={isMobile}>
+				{t("q:looking.columns.myGroup")}
+			</ColumnHeader>
+			<GroupCard
+				group={data.ownGroup}
+				ownGroup={data.ownGroup}
+				kickableUserIds={data.kickableUserIds}
+			/>
+			{data.ownGroup.inviteCode ? (
 				<MemberAdder
-					inviteCode={ownGroup.inviteCode}
-					groupMemberIds={(ownGroup.members ?? [])?.map((m) => m.id)}
+					inviteCode={data.ownGroup.inviteCode}
+					groupMemberIds={data.ownGroup.members.map((m) => m.id)}
 				/>
 			) : null}
 			<GroupLeaver
-				type={ownGroup.members.length === 1 ? "LEAVE_Q" : "LEAVE_GROUP"}
+				type={data?.ownGroup.members.length === 1 ? "LEAVE_Q" : "LEAVE_GROUP"}
 			/>
 			{!isMobile ? invitedGroupsDesktop : null}
 		</div>
 	) : null;
 
-	// no animations needed if liking group on mobile as they stay in place
-	const flipKey = `${data.groups.neutral
-		.map((g) => `${g.id}-${isMobile ? true : g.isLiked}`)
-		.join(":")};${data.groups.likesReceived.map((g) => g.id).join(":")}`;
+	const neutralGroups = groups.filter(
+		(group) =>
+			!data.likes.given.some((like) => like.groupId === group.id) &&
+			!data.likes.received.some((like) => like.groupId === group.id),
+	);
+	const groupsReceivedLikesFrom = groups.filter((group) =>
+		data.likes.received.some((like) => like.groupId === group.id),
+	);
 
 	return (
-		<Flipper flipKey={flipKey}>
-			<div
-				className={clsx("q__groups-container", {
-					"q__groups-container__mobile": isMobile,
-				})}
-			>
-				{!isMobile ? (
-					<div>
-						<SendouTabs>
-							<SendouTabList>
-								{data.groups.own && (
-									<SendouTab id="own" number={data.groups.own.members!.length}>
-										{t("q:looking.columns.myGroup")}
-									</SendouTab>
+		<div
+			className={clsx(styles.container, {
+				[styles.containerMobile]: isMobile,
+			})}
+		>
+			{!isMobile ? <div>{ownGroupElement}</div> : null}
+			<div className={styles.innerContainer}>
+				<SendouTabs>
+					<SendouTabList>
+						<SendouTab id="groups" number={neutralGroups.length}>
+							{t("q:looking.columns.groups")}
+						</SendouTab>
+						{isMobile ? (
+							<SendouTab id="received" number={groupsReceivedLikesFrom.length}>
+								{t(
+									isFullGroup
+										? "q:looking.columns.challenges"
+										: "q:looking.columns.invitations",
 								)}
-								{renderChat && (
-									<SendouTab id="chat" number={unseenMessages}>
-										{t("q:looking.columns.chat")}
-									</SendouTab>
-								)}
-							</SendouTabList>
-							<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
-							{data.chatCode && (
-								<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
-							)}
-						</SendouTabs>
-					</div>
-				) : null}
-				<div className="q__groups-inner-container">
-					<SendouTabs>
-						<SendouTabList scrolling={isMobile}>
-							<SendouTab id="groups" number={data.groups.neutral.length}>
-								{t("q:looking.columns.groups")}
 							</SendouTab>
-							{isMobile && (
-								<SendouTab
-									id="received"
-									number={data.groups.likesReceived.length}
-								>
-									{t(
-										isFullGroup
-											? "q:looking.columns.challenges"
-											: "q:looking.columns.invitations",
-									)}
-								</SendouTab>
-							)}
-							{isMobile && data.groups.own && (
-								<SendouTab id="own" number={data.groups.own.members!.length}>
-									{t("q:looking.columns.myGroup")}
-								</SendouTab>
-							)}
-							{isMobile && renderChat && (
-								<SendouTab id="chat" number={unseenMessages}>
-									{t("q:looking.columns.chat")}
-								</SendouTab>
-							)}
-						</SendouTabList>
-						<SendouTabPanel id="groups">
-							<div className="stack sm">
-								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
-								{data.groups.neutral
-									.filter((group) => isMobile || !group.isLiked)
-									.map((group) => {
-										return (
-											<GroupCard
-												key={group.id}
-												group={group}
-												action={group.isLiked ? "UNLIKE" : "LIKE"}
-												ownRole={data.role}
-												isExpired={data.expiryStatus === "EXPIRED"}
-												showNote
-											/>
-										);
-									})}
-							</div>
-						</SendouTabPanel>
-						<SendouTabPanel id="received">
-							<div className="stack sm">
-								{!data.groups.own ? <JoinQueuePrompt /> : null}
-								{data.groups.likesReceived.map((group) => {
-									const action = () => {
-										if (!isFullGroup) return "GROUP_UP";
+						) : null}
+						{isMobile && data.ownGroup ? (
+							<SendouTab id="own" number={data.ownGroup.members.length}>
+								{t("q:looking.columns.myGroup")}
+							</SendouTab>
+						) : null}
+					</SendouTabList>
+					<SendouTabPanel id="groups">
+						<div className="stack sm">
+							<ColumnHeader isMobile={isMobile}>
+								{t("q:looking.columns.available")}
+							</ColumnHeader>
+							{(isMobile
+								? groups.filter(
+										(group) =>
+											!data.likes.received.some(
+												(like) => like.groupId === group.id,
+											),
+									)
+								: neutralGroups
+							).map((group) => {
+								return (
+									<GroupCard
+										key={group.id}
+										group={group}
+										action={
+											data.likes.given.some((like) => like.groupId === group.id)
+												? "UNLIKE"
+												: "LIKE"
+										}
+										suggestable={isSuggestable(group.id)}
+										trail={trailOf(group.id)}
+										isSuggested={suggestedGroupIds.has(group.id)}
+										ownGroup={data.ownGroup}
+									/>
+								);
+							})}
+						</div>
+					</SendouTabPanel>
+					<SendouTabPanel id="received">
+						<div className="stack sm">
+							{!data.ownGroup ? <JoinQueuePrompt /> : null}
+							{groupsReceivedLikesFrom.map((group) => {
+								const like = data.likes.received.find(
+									(l) => l.groupId === group.id,
+								)!;
 
-										if (group.isRechallenge) return "MATCH_UP_RECHALLENGE";
-										return "MATCH_UP";
-									};
+								const likeAction = () => {
+									if (!isFullGroup) return "GROUP_UP";
 
-									return (
-										<GroupCard
-											key={group.id}
-											group={group}
-											action={action()}
-											ownRole={data.role}
-											isExpired={data.expiryStatus === "EXPIRED"}
-											showNote
-										/>
-									);
-								})}
-							</div>
-						</SendouTabPanel>
-						<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
-						<SendouTabPanel id="chat">{chatElement}</SendouTabPanel>
-					</SendouTabs>
-				</div>
-				{!isMobile ? (
-					<div className="stack sm">
-						<ColumnHeader>
-							{t(
-								isFullGroup
-									? "q:looking.columns.challenges"
-									: "q:looking.columns.invitations",
-							)}
-						</ColumnHeader>
-						{!data.groups.own ? <JoinQueuePrompt /> : null}
-						{data.groups.likesReceived.map((group) => {
-							const action = () => {
-								if (!isFullGroup) return "GROUP_UP";
+									if (like.isRechallenge) return "MATCH_UP_RECHALLENGE";
+									return "MATCH_UP";
+								};
 
-								if (group.isRechallenge) return "MATCH_UP_RECHALLENGE";
-								return "MATCH_UP";
-							};
-
-							return (
-								<GroupCard
-									key={group.id}
-									group={group}
-									action={action()}
-									ownRole={data.role}
-									isExpired={data.expiryStatus === "EXPIRED"}
-									showNote
-								/>
-							);
-						})}
-					</div>
-				) : null}
+								return (
+									<GroupCard
+										key={group.id}
+										group={group}
+										action={likeAction()}
+										suggestable={isSuggestable(group.id)}
+										trail={trailOf(group.id)}
+										isSuggested={suggestedGroupIds.has(group.id)}
+										ownGroup={data.ownGroup}
+									/>
+								);
+							})}
+						</div>
+					</SendouTabPanel>
+					<SendouTabPanel id="own">{ownGroupElement}</SendouTabPanel>
+				</SendouTabs>
 			</div>
-		</Flipper>
+			{!isMobile ? (
+				<div className="stack sm">
+					<ColumnHeader isMobile={isMobile}>
+						{t(
+							isFullGroup
+								? "q:looking.columns.challenges"
+								: "q:looking.columns.invitations",
+						)}
+					</ColumnHeader>
+					{!data.ownGroup ? <JoinQueuePrompt /> : null}
+					{groupsReceivedLikesFrom.map((group) => {
+						const like = data.likes.received.find(
+							(l) => l.groupId === group.id,
+						)!;
+
+						const likeAction = () => {
+							if (!isFullGroup) return "GROUP_UP";
+
+							if (like.isRechallenge) return "MATCH_UP_RECHALLENGE";
+							return "MATCH_UP";
+						};
+
+						return (
+							<GroupCard
+								key={group.id}
+								group={group}
+								action={likeAction()}
+								suggestable={isSuggestable(group.id)}
+								trail={trailOf(group.id)}
+								isSuggested={suggestedGroupIds.has(group.id)}
+								ownGroup={data.ownGroup}
+							/>
+						);
+					})}
+				</div>
+			) : null}
+		</div>
 	);
 }
 
-function ColumnHeader({ children }: { children: React.ReactNode }) {
-	const { width } = useWindowSize();
+/**
+ * Floats teammate-suggested groups to the top, then positive private note groups up and negative
+ * ones down, keeping the server's order within each bucket and full (censored) groups last. Note
+ * sentiment comes from the already-loaded `userCards`.
+ */
+function sortGroups<T extends { id: number; members?: { id: number }[] }>(
+	groups: T[],
+	{
+		userCards,
+		suggestedGroupIds,
+	}: {
+		userCards: Map<number, UserCardData>;
+		suggestedGroupIds: Set<number>;
+	},
+): T[] {
+	const sentimentScore = (group: T) =>
+		group.members ? privateNoteSentimentScore(group.members, userCards) : 0;
 
-	const isMobile = width < 750;
+	return groups.toSorted((a, b) => {
+		const aIsSuggested = suggestedGroupIds.has(a.id);
+		const bIsSuggested = suggestedGroupIds.has(b.id);
+		if (aIsSuggested !== bIsSuggested) return aIsSuggested ? -1 : 1;
 
+		const aIsFull = !a.members;
+		const bIsFull = !b.members;
+		if (aIsFull !== bIsFull) return aIsFull ? 1 : -1;
+
+		return sentimentScore(b) - sentimentScore(a);
+	});
+}
+
+function ColumnHeader({
+	isMobile,
+	children,
+}: {
+	isMobile: boolean;
+	children: React.ReactNode;
+}) {
 	if (isMobile) return null;
 
-	return <div className="q__column-header">{children}</div>;
+	return <div className={styles.header}>{children}</div>;
 }
 
 function JoinQueuePrompt() {

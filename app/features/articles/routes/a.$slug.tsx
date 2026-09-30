@@ -1,24 +1,25 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
-import Markdown from "markdown-to-jsx";
 import * as React from "react";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
-import invariant from "~/utils/invariant";
+import { Markdown } from "~/components/Markdown";
+import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	ARTICLES_MAIN_PAGE,
-	articlePage,
 	articlePreviewUrl,
 	navIconUrl,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, type SerializeFrom } from "../../../utils/remix";
 
 import { loader } from "../loaders/a.$slug.server";
+
 export { loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -28,18 +29,13 @@ export const handle: SendouRouteHandle = {
 				href: ARTICLES_MAIN_PAGE,
 				type: "IMAGE",
 			},
-			{
-				text: data.title,
-				href: articlePage(data.slug),
-				type: "TEXT",
-			},
 		];
 	},
 };
 
 export const meta: MetaFunction = (args) => {
 	invariant(args.params.slug);
-	const data = args.data as SerializeFrom<typeof loader> | null;
+	const data = args.loaderData as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 
@@ -62,14 +58,49 @@ export default function ArticlePage() {
 			<article className="article">
 				<h1>{data.title}</h1>
 				<div className="text-sm text-lighter">
-					by <Author /> • <time>{data.dateString}</time>
+					by <Author /> •{" "}
+					<LocaleTime
+						date={new Date(data.date)}
+						options={{
+							day: "numeric",
+							month: "numeric",
+							year: "numeric",
+							// article dates are calendar dates parsed as UTC midnight;
+							// formatting in the viewer's zone would shift the day west of UTC
+							timeZone: "UTC",
+						}}
+					/>
 				</div>
-				<Markdown options={{ wrapper: React.Fragment }}>
-					{data.content}
+				<Markdown>
+					{contentWithoutLeadingTitle(data.content, data.title)}
 				</Markdown>
 			</article>
 		</Main>
 	);
+}
+
+function normalizeText(text: string) {
+	return text
+		.replace(/\*+/g, "")
+		.replace(/…/g, "...")
+		.replace(/\\!/g, "!")
+		.trim();
+}
+
+function contentWithoutLeadingTitle(content: string, title: string) {
+	const trimmed = content.trimStart();
+	const firstLineEnd = trimmed.indexOf("\n");
+	const firstLine =
+		firstLineEnd === -1 ? trimmed : trimmed.slice(0, firstLineEnd);
+
+	if (
+		firstLine.startsWith("# ") &&
+		normalizeText(firstLine.slice(2)) === normalizeText(title)
+	) {
+		return trimmed.slice(firstLine.length).trimStart();
+	}
+
+	return content;
 }
 
 function Author() {

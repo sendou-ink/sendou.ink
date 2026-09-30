@@ -1,13 +1,25 @@
-import type { ShouldRevalidateFunction } from "@remix-run/react";
 import clsx from "clsx";
-import React from "react";
+import React, { type JSX } from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Ability } from "~/components/Ability";
-import { Image, WeaponImage } from "~/components/Image";
+import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSwitch } from "~/components/elements/Switch";
+import {
+	Image,
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import type { DamageType } from "~/features/build-analyzer";
-import { possibleApValues } from "~/features/build-analyzer";
+import { WeaponSelect } from "~/components/WeaponSelect";
+import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
+import type { DamageType } from "~/features/build-analyzer/analyzer-types";
+import type {
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,
@@ -21,6 +33,8 @@ import {
 	TRIPLE_SPLASHDOWN_ID,
 	WAVE_BREAKER_ID,
 } from "~/modules/in-game-lists/weapon-ids";
+import { roundToNDecimalPlaces } from "~/utils/number";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	mainWeaponImageUrl,
@@ -28,25 +42,19 @@ import {
 	modeImageUrl,
 	navIconUrl,
 	OBJECT_DAMAGE_CALCULATOR_URL,
-	specialWeaponImageUrl,
-	specialWeaponVariantImageUrl,
-	subWeaponImageUrl,
+	type SpecialWeaponImageVariant,
 } from "~/utils/urls";
+import { translateDamageReceiver } from "../calculator-constants";
 import { useObjectDamage } from "../calculator-hooks";
 import type { DamageReceiver } from "../calculator-types";
-import "../calculator.css";
-import type { MetaFunction } from "@remix-run/node";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { WeaponSelect } from "~/components/WeaponSelect";
-import { roundToNDecimalPlaces } from "~/utils/number";
-import { metaTags } from "~/utils/remix";
+import styles from "./object-damage-calculator.module.css";
 
-export const CURRENT_PATCH = "10.0";
+export const CURRENT_PATCH = "11.3";
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
 export const handle: SendouRouteHandle = {
-	i18n: ["weapons", "analyzer", "builds"],
+	i18n: ["weapons", "analyzer", "builds", "game-misc"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("object-damage-calculator"),
 		href: OBJECT_DAMAGE_CALCULATOR_URL,
@@ -60,6 +68,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon 3 object damage calculator",
 		description:
 			"Calculate how much damage weapons do to objects in Splatoon 3. The list of objects includes Crab Tank, Big Bubbler, Splash Wall, Rainmaker shield and more.",
+		image: ogPageImage("object-damage-calculator"),
 		location: args.location,
 	});
 };
@@ -79,9 +88,9 @@ export default function ObjectDamagePage() {
 
 	return (
 		<Main className="stack lg">
-			<div className="object-damage__controls">
-				<div className="object-damage__selects">
-					<div className="object-damage__selects__weapon">
+			<div className={styles.controls}>
+				<div className={styles.selects}>
+					<div>
 						<Label htmlFor="weapon">{t("analyzer:labels.weapon")}</Label>
 						<WeaponSelect
 							includeSubSpecial
@@ -110,9 +119,7 @@ export default function ObjectDamagePage() {
 				</div>
 				{multiShotCount ? (
 					<div className="stack sm horizontal items-center label-no-spacing">
-						<label className="plain" htmlFor="multi">
-							×{multiShotCount}
-						</label>
+						<label htmlFor="multi">×{multiShotCount}</label>
 						<SendouSwitch
 							id="multi"
 							isSelected={isMultiShot}
@@ -132,7 +139,6 @@ export default function ObjectDamagePage() {
 				>
 					<div>
 						<select
-							className="object-damage__select"
 							id="ap"
 							value={abilityPoints}
 							onChange={(e) =>
@@ -151,11 +157,11 @@ export default function ObjectDamagePage() {
 			) : (
 				<div>{t("analyzer:noDmgData")}</div>
 			)}
-			<div className="object-damage__bottom-container">
+			<div className={styles.bottomContainer}>
 				<div className="text-lighter text-xs">
 					{t("analyzer:dmgHtdExplanation")}
 				</div>
-				<div className="object-damage__patch">
+				<div className={styles.patch}>
 					{t("analyzer:patch")} {CURRENT_PATCH}
 				</div>
 			</div>
@@ -175,17 +181,16 @@ function DamageTypesSelect({
 
 	return (
 		<select
-			className="object-damage__select"
 			id="damage"
 			value={damageType}
 			onChange={(e) =>
 				handleChange({ newDamageType: e.target.value as DamageType })
 			}
 		>
-			{allDamageTypes.map((damageType) => {
+			{allDamageTypes.map((optionDamageType) => {
 				return (
-					<option key={damageType} value={damageType}>
-						{t(`analyzer:damage.${damageType}` as any)}
+					<option key={optionDamageType} value={optionDamageType}>
+						{t(`analyzer:damage.${optionDamageType}` as any)}
 					</option>
 				);
 			})}
@@ -193,47 +198,101 @@ function DamageTypesSelect({
 	);
 }
 
-const damageReceiverImages: Record<DamageReceiver, string> = {
-	Bomb_TorpedoBullet: subWeaponImageUrl(TORPEDO_ID),
-	BlowerInhale: specialWeaponImageUrl(INK_VAC_ID),
-	Chariot: specialWeaponImageUrl(CRAB_TANK_ID),
-	Gachihoko_Barrier: modeImageUrl("RM"),
-	GreatBarrier_Barrier: specialWeaponImageUrl(BIG_BUBBLER_ID),
-	GreatBarrier_WeakPoint: specialWeaponVariantImageUrl(
-		BIG_BUBBLER_ID,
-		"weakpoints",
-	),
-	NiceBall_Armor: specialWeaponImageUrl(BOOYAH_BOMB_ID),
-	ShockSonar: specialWeaponImageUrl(WAVE_BREAKER_ID),
-	Wsb_Flag: subWeaponImageUrl(SQUID_BEAKON_ID),
-	Wsb_Shield: subWeaponImageUrl(SPLASH_WALL_ID),
-	Wsb_Sprinkler: subWeaponImageUrl(SPRINKLER_ID),
-	BulletUmbrellaCanopyNormal: mainWeaponImageUrl(6000),
-	BulletUmbrellaCanopyWide: mainWeaponImageUrl(6010),
-	BulletUmbrellaCanopyCompact: mainWeaponImageUrl(6020),
-	BulletShelterCanopyFocus: mainWeaponImageUrl(6030),
-	BulletUmbrellaCanopyNormal_Launched: mainWeaponVariantImageUrl(
-		6000,
-		"launched",
-	),
-	BulletUmbrellaCanopyWide_Launched: mainWeaponVariantImageUrl(
-		6010,
-		"launched",
-	),
-	BulletShelterCanopyFocus_Launched: mainWeaponVariantImageUrl(
-		6030,
-		"launched",
-	),
-	Decoy: specialWeaponImageUrl(SUPER_CHUMP_ID),
-	BulletPogo: specialWeaponImageUrl(TRIPLE_SPLASHDOWN_ID),
+const RECEIVER_IMAGE_SIZE = 24;
+
+type DamageReceiverIcon =
+	| { kind: "sub"; id: SubWeaponId }
+	| {
+			kind: "special";
+			id: SpecialWeaponId;
+			variant?: SpecialWeaponImageVariant;
+	  }
+	| { kind: "path"; path: string };
+
+const damageReceiverImages: Record<DamageReceiver, DamageReceiverIcon> = {
+	Bomb_TorpedoBullet: { kind: "sub", id: TORPEDO_ID },
+	BlowerInhale: { kind: "special", id: INK_VAC_ID },
+	Chariot: { kind: "special", id: CRAB_TANK_ID },
+	Gachihoko_Barrier: { kind: "path", path: modeImageUrl("RM") },
+	GreatBarrier_Barrier: { kind: "special", id: BIG_BUBBLER_ID },
+	GreatBarrier_WeakPoint: {
+		kind: "special",
+		id: BIG_BUBBLER_ID,
+		variant: "weakpoints",
+	},
+	NiceBall_Armor: { kind: "special", id: BOOYAH_BOMB_ID },
+	ShockSonar: { kind: "special", id: WAVE_BREAKER_ID },
+	Wsb_Flag: { kind: "sub", id: SQUID_BEAKON_ID },
+	Wsb_Shield: { kind: "sub", id: SPLASH_WALL_ID },
+	Wsb_Sprinkler: { kind: "sub", id: SPRINKLER_ID },
+	BulletUmbrellaCanopyNormal: { kind: "path", path: mainWeaponImageUrl(6000) },
+	BulletUmbrellaCanopyWide: { kind: "path", path: mainWeaponImageUrl(6010) },
+	BulletUmbrellaCanopyCompact: {
+		kind: "path",
+		path: mainWeaponImageUrl(6020),
+	},
+	BulletShelterCanopyFocus: { kind: "path", path: mainWeaponImageUrl(6030) },
+	BulletUmbrellaCanopyNormal_Launched: {
+		kind: "path",
+		path: mainWeaponVariantImageUrl(6000, "launched"),
+	},
+	BulletUmbrellaCanopyWide_Launched: {
+		kind: "path",
+		path: mainWeaponVariantImageUrl(6010, "launched"),
+	},
+	BulletShelterCanopyFocus_Launched: {
+		kind: "path",
+		path: mainWeaponVariantImageUrl(6030, "launched"),
+	},
+	Decoy: { kind: "special", id: SUPER_CHUMP_ID },
+	BulletPogo: { kind: "special", id: TRIPLE_SPLASHDOWN_ID },
 };
+
+function DamageReceiverImage({
+	icon,
+	alt,
+}: {
+	icon: DamageReceiverIcon;
+	alt: string;
+}) {
+	switch (icon.kind) {
+		case "sub":
+			return (
+				<SubWeaponImage
+					subWeaponId={icon.id}
+					alt={alt}
+					size={RECEIVER_IMAGE_SIZE}
+					containerClassName={styles.receiverImage}
+				/>
+			);
+		case "special":
+			return (
+				<SpecialWeaponImage
+					specialWeaponId={icon.id}
+					variant={icon.variant}
+					alt={alt}
+					size={RECEIVER_IMAGE_SIZE}
+					containerClassName={styles.receiverImage}
+				/>
+			);
+		case "path":
+			return (
+				<Image
+					containerClassName={styles.receiverImage}
+					alt={alt}
+					path={icon.path}
+					size={RECEIVER_IMAGE_SIZE}
+				/>
+			);
+	}
+}
 
 const damageReceiverAp: Partial<Record<DamageReceiver, JSX.Element>> = {
 	GreatBarrier_Barrier: (
-		<Ability ability="SPU" size="TINY" className="object-damage__ability" />
+		<Ability ability="SPU" size="TINY" className={styles.ability} />
 	),
 	GreatBarrier_WeakPoint: (
-		<Ability ability="SPU" size="TINY" className="object-damage__ability" />
+		<Ability ability="SPU" size="TINY" className={styles.ability} />
 	),
 	Wsb_Shield: (
 		<Ability ability="BRU" size="TINY" className="object-damage__ability" />
@@ -253,11 +312,14 @@ function DamageReceiversGrid({
 	children: React.ReactNode;
 	abilityPoints: string;
 }): JSX.Element {
-	const { t } = useTranslation(["weapons", "analyzer", "common"]);
+	const { t } = useTranslation(["weapons", "analyzer", "common", "game-misc"]);
+
+	const translateReceiver = (receiver: DamageReceiver) =>
+		translateDamageReceiver(t, receiver);
 	return (
 		<div>
 			<div
-				className="object-damage__grid"
+				className={`${styles.grid} scrollbar`}
 				style={{
 					gridTemplateColumns: gridTemplateColumnsValue(
 						damagesToReceivers[0]?.damages.length ?? 0,
@@ -265,13 +327,13 @@ function DamageReceiversGrid({
 				}}
 			>
 				<div
-					className="object-damage__table-header"
+					className={styles.tableHeader}
 					style={{ zIndex: "1", justifyContent: "center" }}
 				>
 					<div>
 						<Label htmlFor="ap">
 							{t("analyzer:labels.amountOf")}
-							<div className="object-damage__ap-label">
+							<div className={styles.apLabel}>
 								<Ability ability="BRU" size="TINY" />
 								<Ability ability="SPU" size="TINY" />
 							</div>
@@ -280,7 +342,7 @@ function DamageReceiversGrid({
 					<div>{children}</div>
 				</div>
 				{damagesToReceivers[0]?.damages.map((damage) => (
-					<div key={damage.id} className="object-damage__table-header">
+					<div key={damage.id} className={styles.tableHeader}>
 						{t(`weapons:${weapon.type}_${weapon.id}` as any)}
 						<div className="text-lighter stack horizontal sm justify-center items-center">
 							{weapon.type === "MAIN" ? (
@@ -289,30 +351,24 @@ function DamageReceiversGrid({
 									width={24}
 									height={24}
 									variant="build"
-									className="object-damage__weapon-image"
+									className={styles.weaponImage}
 								/>
 							) : weapon.type === "SUB" ? (
-								<Image
-									alt=""
-									path={subWeaponImageUrl(weapon.id)}
-									width={24}
-									height={24}
-									className="object-damage__weapon-image"
+								<SubWeaponImage
+									subWeaponId={weapon.id}
+									size={24}
+									className={styles.weaponImage}
 								/>
 							) : (
-								<Image
-									alt=""
-									path={specialWeaponImageUrl(weapon.id)}
-									width={24}
-									height={24}
-									className="object-damage__weapon-image"
+								<SpecialWeaponImage
+									specialWeaponId={weapon.id}
+									size={24}
+									className={styles.weaponImage}
 								/>
 							)}
 						</div>
 						<div
-							className={clsx("object-damage__distance", {
-								invisible: !damage.distance,
-							})}
+							className={clsx(styles.distance, !damage.distance && "invisible")}
 						>
 							{t("analyzer:distanceInline", {
 								value: Array.isArray(damage.distance)
@@ -322,31 +378,38 @@ function DamageReceiversGrid({
 						</div>
 						<div className="stack horizontal sm justify-center items-center">
 							{t(`analyzer:damage.${damage.type}` as any)}
-							{damage.objectShredder && <Ability ability="OS" size="TINY" />}
+							{damage.objectShredder ? (
+								<Ability ability="OS" size="TINY" />
+							) : null}
 						</div>
 					</div>
 				))}
-				{damagesToReceivers.map((damageToReceiver, i) => {
+				{damagesToReceivers.map((damageToReceiver) => {
 					return (
 						<React.Fragment key={damageToReceiver.receiver}>
-							<div className="object-damage__table-header">
+							<div className={styles.tableHeader}>
 								<div>
 									<Label htmlFor="ap">
-										<div className="object-damage__ap-label">
-											{abilityPoints !== "0" &&
-												damageReceiverAp[damageToReceiver.receiver]}
+										<div className={styles.apLabel}>
+											{abilityPoints !== "0"
+												? damageReceiverAp[damageToReceiver.receiver]
+												: null}
 										</div>
 									</Label>
-									<Image
-										className="object-damage__receiver-image"
-										key={i}
-										alt=""
-										path={damageReceiverImages[damageToReceiver.receiver]}
-										width={40}
-										height={40}
-									/>
+									<SendouPopover
+										trigger={
+											<button type="button" className={styles.receiverButton}>
+												<DamageReceiverImage
+													icon={damageReceiverImages[damageToReceiver.receiver]}
+													alt={translateReceiver(damageToReceiver.receiver)}
+												/>
+											</button>
+										}
+									>
+										{translateReceiver(damageToReceiver.receiver)}
+									</SendouPopover>
 								</div>
-								<div className="object-damage__hp">
+								<div className={styles.hp}>
 									<span data-testid={`hp-${damageToReceiver.receiver}`}>
 										{roundToNDecimalPlaces(damageToReceiver.hitPoints)}
 									</span>
@@ -355,10 +418,10 @@ function DamageReceiversGrid({
 							</div>
 							{damageToReceiver.damages.map((damage) => {
 								return (
-									<div key={damage.id} className="object-damage__table-card">
-										<div className="object-damage__table-card__results">
+									<div key={damage.id} className={styles.tableCard}>
+										<div className={styles.tableCardResults}>
 											<abbr
-												className="object-damage__abbr"
+												className={styles.abbr}
 												title={t("analyzer:stat.category.damage")}
 											>
 												{t("analyzer:damageShort")}
@@ -371,7 +434,7 @@ function DamageReceiversGrid({
 												{damage.value}
 											</div>
 											<abbr
-												className="object-damage__abbr"
+												className={styles.abbr}
 												title={t("analyzer:hitsToDestroyLong")}
 											>
 												{t("analyzer:hitsToDestroyShort")}
@@ -384,7 +447,7 @@ function DamageReceiversGrid({
 												{damage.hitsToDestroy}
 											</div>
 										</div>
-										<div className="object-damage__multiplier">
+										<div className={styles.multiplier}>
 											×{damage.multiplier}
 										</div>
 									</div>

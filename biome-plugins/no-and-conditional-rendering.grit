@@ -1,0 +1,18 @@
+language js
+
+// `cond && <X />` renders the left value when it is falsy but not `null` /
+// `undefined` / `false`: a `0` count or an empty string ends up in the DOM as
+// text. The ternary form has no such edge, so it is the repo-wide convention
+// (AGENTS.md, "React"). Matches both `cond && <jsx/>` anywhere and any `&&`
+// standing directly as a JSX child, which covers helpers like
+// `{icon && React.cloneElement(icon, {...})}`.
+`$cond && $rendered` as $expression where {
+	or {
+		$rendered <: or {
+			JsxTagExpression(),
+			JsParenthesizedExpression(expression=JsxTagExpression())
+		},
+		$expression <: within JsxExpressionChild(expression=$expression)
+	},
+	register_diagnostic(span=$expression, message="Do not use `&&` for conditional rendering: a falsy left side that is not `null`/`undefined`/`false` (a `0` count, an empty string, `NaN`) renders itself. Use a ternary instead: `cond ? <X /> : null`.", severity="error")
+}

@@ -1,76 +1,103 @@
-import test, { expect } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
+	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
-	submit,
-} from "~/utils/playwright";
-import { associationsPage, scrimsPage } from "~/utils/urls";
+	test,
+} from "./helpers/playwright";
+import { AssociationsPage } from "./pages/associations/associations-page";
+import { NewAssociationPage } from "./pages/associations/new-association-page";
+import { AnythingAdder } from "./pages/layout/anything-adder";
+import { ScrimsPage } from "./pages/scrims/scrims-page";
 
 test.describe("Associations", () => {
 	test("creates a new association", async ({ page }) => {
-		await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: "/",
-		});
+		await navigate({ page, url: "/" });
 
-		await page.getByTestId("anything-adder-menu-button").click();
-		await page.getByTestId("menu-item-association").click();
+		await new AnythingAdder(page).add("association");
 
-		await page.getByLabel("Name").fill("My Association");
-		await submit(page);
+		const newAssociation = new NewAssociationPage(page);
+		await newAssociation.form.fill("name", "My Association");
+		await newAssociation.save();
 
-		await expect(
-			page.getByRole("heading").filter({ hasText: "My Association" }),
-		).toBeVisible();
+		const associations = new AssociationsPage(page);
+		await expect(associations.heading("My Association")).toBeVisible();
 	});
 
-	test("deletes an association", async ({ page }) => {
-		await seed(page);
+	test("deletes an association", async ({ page, factories }) => {
+		await factories.AssociationFactory.create({ userId: ADMIN_ID });
+		await factories.AssociationFactory.create({ userId: ADMIN_ID });
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: scrimsPage(),
-		});
-		await page.getByRole("link", { name: "Associations" }).click();
 
-		await expect(page.getByTestId("delete-association")).toHaveCount(2);
+		const scrims = new ScrimsPage(page);
+		await scrims.goto();
 
-		await page.getByTestId("delete-association").first().click();
-		await page.getByTestId("confirm-button").click();
+		const associations = await scrims.openAssociations();
 
-		await expect(page.getByTestId("delete-association")).toHaveCount(1);
+		await expect(associations.locators.deleteButtons).toHaveCount(2);
+
+		await associations.deleteFirst();
+
+		await expect(associations.locators.deleteButtons).toHaveCount(1);
 	});
 
-	test("joins and leaves an association", async ({ page }) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: associationsPage(),
-		});
+	test("stars a member, who then takes over when the admin leaves", async ({
+		page,
+		factories,
+	}) => {
+		await factories.AssociationFactory.create(
+			{ userId: ADMIN_ID },
+			{ memberUserIds: [NZAP_TEST_ID] },
+		);
 
-		const inviteLink = await page
-			.getByLabel("Share link to add members")
-			.first()
-			.inputValue();
+		await impersonate(page, ADMIN_ID);
+
+		const associations = new AssociationsPage(page);
+		await associations.goto();
+
+		await isNotVisible(associations.locators.leaveButton);
+
+		await associations.toggleManager("N-ZAP");
+
+		await expect(associations.locators.leaveButton).toBeVisible();
 
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: inviteLink.replace("https://sendou.ink", "http://localhost:5173"),
-		});
+		await associations.goto();
 
-		await submit(page);
+		await expect(associations.locators.inviteLinkInputs).toHaveCount(1);
+		await expect(associations.locators.resetLinkButton).toBeVisible();
+		await isNotVisible(associations.locators.deleteButtons);
 
-		await page.getByTestId("leave-team-button").click();
-		await page.getByTestId("confirm-button").click();
+		await impersonate(page, ADMIN_ID);
+		await associations.goto();
+		await associations.leave();
 
-		await isNotVisible(page.getByTestId("leave-team-button"));
+		await impersonate(page, NZAP_TEST_ID);
+		await associations.goto();
+
+		await expect(associations.locators.deleteButtons).toHaveCount(1);
+	});
+
+	test("joins and leaves an association", async ({ page, factories }) => {
+		await factories.AssociationFactory.create({ userId: ADMIN_ID });
+
+		await impersonate(page, ADMIN_ID);
+
+		const associations = new AssociationsPage(page);
+		await associations.goto();
+
+		const inviteCode = await associations.inviteCode();
+
+		await impersonate(page, NZAP_TEST_ID);
+		await associations.gotoInvite(inviteCode);
+		await associations.join();
+
+		await associations.leave();
+
+		await isNotVisible(associations.locators.leaveButton);
 	});
 });

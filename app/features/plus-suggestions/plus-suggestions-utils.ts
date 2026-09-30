@@ -1,7 +1,7 @@
-import type { Tables, UserWithPlusTier } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
-import { isAdmin } from "~/modules/permissions/utils";
 import { allTruthy } from "~/utils/arrays";
+import type { UserWithPlusTier } from "~/utils/kysely.server";
 import * as Seasons from "../mmr/core/Seasons";
 import { isVotingActive } from "../plus-voting/core";
 
@@ -39,41 +39,6 @@ export function canAddCommentToSuggestionBE({
 	]);
 }
 
-interface CanDeleteCommentArgs {
-	suggestionId: Tables["PlusSuggestion"]["id"];
-	author: Pick<Tables["User"], "id">;
-	user?: Pick<Tables["User"], "id" | "discordId">;
-	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
-}
-export function canDeleteComment(args: CanDeleteCommentArgs) {
-	const votingActive =
-		process.env.NODE_ENV === "test" ? false : isVotingActive();
-
-	if (isFirstSuggestion(args)) {
-		if (votingActive) return false;
-		if (isAdmin(args.user)) return true;
-
-		return allTruthy([isOwnComment(args), suggestionHasNoOtherComments(args)]);
-	}
-
-	return isOwnComment(args);
-}
-
-export function isFirstSuggestion({
-	suggestionId,
-	suggestions,
-}: Pick<CanDeleteCommentArgs, "suggestionId" | "suggestions">) {
-	for (const suggestedUser of Object.values(suggestions).flat()) {
-		for (const [i, suggestion] of suggestedUser.suggestions.entries()) {
-			if (suggestion.id !== suggestionId) continue;
-
-			return i === 0;
-		}
-	}
-
-	throw new Error(`Invalid suggestion id: ${suggestionId}`);
-}
-
 function alreadyCommentedByUser({
 	user,
 	suggestions,
@@ -84,13 +49,11 @@ function alreadyCommentedByUser({
 		(suggestion) =>
 			suggestion.tier === targetPlusTier &&
 			suggestion.suggested.id === suggested.id &&
-			suggestion.suggestions.some(
-				(suggestion) => suggestion.author.id === user?.id,
-			),
+			suggestion.entries.some((entry) => entry.author.id === user?.id),
 	);
 }
 
-export function playerAlreadySuggested({
+function playerAlreadySuggested({
 	suggestions,
 	suggested,
 	targetPlusTier,
@@ -112,32 +75,14 @@ function targetPlusTierIsSmallerOrEqual({
 	return user?.plusTier && user.plusTier <= targetPlusTier;
 }
 
-function isOwnComment({ author, user }: CanDeleteCommentArgs) {
-	return author.id === user?.id;
-}
-
-function suggestionHasNoOtherComments({
-	suggestions,
-	suggestionId,
-}: Pick<CanDeleteCommentArgs, "suggestionId" | "suggestions">) {
-	for (const suggestedUser of Object.values(suggestions).flat()) {
-		for (const suggestion of suggestedUser.suggestions) {
-			if (suggestion.id !== suggestionId) continue;
-
-			return suggestedUser.suggestions.length === 1;
-		}
-	}
-
-	throw new Error(`Invalid suggestion id: ${suggestionId}`);
-}
-
 interface CanSuggestNewUserArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
-	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
+	/** Whether the user has already started a suggestion this month, any tier. */
+	hasSuggestedThisMonth: boolean;
 }
 export function canSuggestNewUser({
 	user,
-	suggestions,
+	hasSuggestedThisMonth,
 }: CanSuggestNewUserArgs) {
 	const votingActive =
 		process.env.NODE_ENV === "test" ? false : isVotingActive();
@@ -146,7 +91,7 @@ export function canSuggestNewUser({
 
 	return allTruthy([
 		!votingActive,
-		!hasUserSuggestedThisMonth({ user, suggestions }),
+		!hasSuggestedThisMonth,
 		isPlusServerMember(user),
 		existsSeason,
 	]);
@@ -154,23 +99,4 @@ export function canSuggestNewUser({
 
 function isPlusServerMember(user?: Pick<UserWithPlusTier, "plusTier">) {
 	return Boolean(user?.plusTier);
-}
-
-export function playerAlreadyMember({
-	suggested,
-	targetPlusTier,
-}: {
-	suggested: Pick<UserWithPlusTier, "id" | "plusTier">;
-	targetPlusTier: NonNullable<UserWithPlusTier["plusTier"]>;
-}) {
-	return suggested.plusTier && suggested.plusTier <= targetPlusTier;
-}
-
-function hasUserSuggestedThisMonth({
-	user,
-	suggestions,
-}: Pick<CanSuggestNewUserArgs, "user" | "suggestions">) {
-	return suggestions.some(
-		(suggestion) => suggestion.suggestions[0].author.id === user?.id,
-	);
 }

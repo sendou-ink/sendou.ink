@@ -1,137 +1,192 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { sql } from "~/db/sql";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
+import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import * as QRepository from "~/features/sendouq/QRepository.server";
-import { giveTrust } from "~/features/tournament/queries/giveTrust.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import invariant from "~/utils/invariant";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
+import { normalizeFriendCode } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
-import { FULL_GROUP_SIZE, JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
-import { frontPageSchema } from "../q-schemas.server";
+import {
+	refreshSendouQInstance,
+	SendouQ,
+	sqRedirectIfNeeded,
+} from "../core/SendouQ.server";
+import { frontPageSchema } from "../q-action-schemas";
+import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
+import { qSearchParams } from "../q-search-params";
 import { userCanJoinQueueAt } from "../q-utils";
-import { addMember } from "../queries/addMember.server";
-import { deleteLikesByGroupId } from "../queries/deleteLikesByGroupId.server";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
+import { SendouQError, seasonInitialSkillsExist } from "../q-utils.server";
 
-export const action: ActionFunction = async ({ request }) => {
-	const user = await requireUser(request);
-	const data = await parseRequestPayload({
+export const action: ActionFunction = async ({ request, url }) => {
+	const user = requireUser();
+	const result = await parseFormData({
 		request,
 		schema: frontPageSchema,
 	});
 
-	switch (data._action) {
-		case "JOIN_QUEUE": {
-			await validateCanJoinQ(user);
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
 
-			await QRepository.createGroup({
-				status: data.direct === "true" ? "ACTIVE" : "PREPARING",
-				userId: user.id,
-			});
+	const data = result.data;
 
-			return redirect(
-				data.direct === "true" ? SENDOUQ_LOOKING_PAGE : SENDOUQ_PREPARING_PAGE,
-			);
-		}
-		case "JOIN_TEAM_WITH_TRUST":
-		case "JOIN_TEAM": {
-			await validateCanJoinQ(user);
-
-			const code = new URL(request.url).searchParams.get(
-				JOIN_CODE_SEARCH_PARAM_KEY,
-			);
-
-			const groupInvitedTo =
-				code && user ? findGroupByInviteCode(code) : undefined;
-			errorToastIfFalsy(
-				groupInvitedTo,
-				"Invite code doesn't match any active team",
-			);
-			errorToastIfFalsy(
-				groupInvitedTo.members.length < FULL_GROUP_SIZE,
-				"Team is full",
-			);
-
-			sql.transaction(() => {
-				addMember({
-					groupId: groupInvitedTo.id,
-					userId: user.id,
-					role: "MANAGER",
+	try {
+		switch (data._action) {
+			case "JOIN_QUEUE": {
+				await sqRedirectIfNeeded({
+					ownGroup: SendouQ.findOwnGroup(user.id),
+					currentLocation: "default",
 				});
-				deleteLikesByGroupId(groupInvitedTo.id);
 
-				if (data._action === "JOIN_TEAM_WITH_TRUST") {
-					const owner = groupInvitedTo.members.find((m) => m.role === "OWNER");
-					invariant(owner, "Owner not found");
+				await validateCanJoinQ(user);
 
-					giveTrust({
-						trustGiverUserId: user.id,
-						trustReceiverUserId: owner.id,
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insert({
+					status: data.direct === "true" ? "ACTIVE" : "PREPARING",
+					userId: user.id,
+				});
+
+				if (chatRoomIdToRevalidate) {
+					ChatSystemMessage.send({
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
 					});
 				}
-			})();
 
-			return redirect(
-				groupInvitedTo.status === "PREPARING"
-					? SENDOUQ_PREPARING_PAGE
-					: SENDOUQ_LOOKING_PAGE,
-			);
-		}
-		case "ADD_FRIEND_CODE": {
-			errorToastIfFalsy(
-				!(await UserRepository.currentFriendCodeByUserId(user.id)),
-				"Friend code already set",
-			);
+				await refreshSendouQInstance();
 
-			const isTakenFriendCode = (
-				await UserRepository.allCurrentFriendCodes()
-			).has(data.friendCode);
+				ChatSystemMessage.notifyStatusChanged([user.id]);
 
-			await UserRepository.insertFriendCode({
-				userId: user.id,
-				friendCode: data.friendCode,
-				submitterUserId: user.id,
-			});
+				// joining directly creates an ACTIVE group that enters the pool (a PREPARING one isn't in it)
+				if (data.direct === "true") {
+					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
+				}
 
-			if (isTakenFriendCode) {
-				await AdminRepository.banUser({
+				return redirect(
+					data.direct === "true"
+						? SENDOUQ_LOOKING_PAGE
+						: SENDOUQ_PREPARING_PAGE,
+				);
+			}
+			case "JOIN_TEAM": {
+				await validateCanJoinQ(user);
+
+				const { join: code } = qSearchParams.parse(url);
+
+				const groupInvitedTo =
+					code && user ? SendouQ.findGroupByInviteCode(code) : undefined;
+				errorToastIfFalsy(
+					groupInvitedTo,
+					"Invite code doesn't match any active team",
+				);
+
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insertMember(
+					groupInvitedTo.id,
+					{ userId: user.id },
+				);
+
+				if (chatRoomIdToRevalidate) {
+					ChatSystemMessage.send({
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
+					});
+				}
+
+				await refreshSendouQInstance();
+
+				ChatSystemMessage.notifyStatusChanged(
+					SendouQ.findUncensoredGroupById(groupInvitedTo.id)?.members.map(
+						(member) => member.id,
+					) ?? [user.id],
+				);
+
+				if (groupInvitedTo.status === "PREPARING") {
+					// a preparing group isn't in the pool, so only its members (on the preparing page)
+					ChatSystemMessage.send({
+						channel: sqGroupChannel(groupInvitedTo.id),
+					});
+				} else {
+					// the group's size/suitability changed for the whole pool, its own members included
+					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
+				}
+
+				return redirect(
+					groupInvitedTo.status === "PREPARING"
+						? SENDOUQ_PREPARING_PAGE
+						: SENDOUQ_LOOKING_PAGE,
+				);
+			}
+			case "ADD_FRIEND_CODE": {
+				errorToastIfFalsy(
+					!(await UserRepository.findCurrentFriendCodeByUserId(user.id)),
+					"Friend code already set",
+				);
+
+				const friendCode = normalizeFriendCode(data.friendCode);
+
+				const isTakenFriendCode = (
+					await UserRepository.findAllCurrentFriendCodes()
+				).has(friendCode);
+
+				await UserRepository.insertFriendCode({
 					userId: user.id,
-					banned: 1,
-					bannedReason:
-						"[automatic ban] This friend code is already in use by some other account. Please contact staff on our Discord helpdesk for resolution including merging accounts.",
-					bannedByUserId: null,
+					friendCode,
+					submitterUserId: user.id,
 				});
 
-				refreshBannedCache();
+				if (isTakenFriendCode) {
+					await AdminRepository.banUser({
+						userId: user.id,
+						banned: 1,
+						bannedReason:
+							"[automatic ban] This friend code is already in use by some other account. Please contact staff on our Discord helpdesk for resolution including merging accounts.",
+						bannedByUserId: null,
+					});
 
-				throw redirect(SUSPENDED_PAGE);
+					await refreshBannedCache();
+					await refreshApiTokensCache();
+
+					throw redirect(SUSPENDED_PAGE);
+				}
+
+				return null;
 			}
-
+			default: {
+				assertUnreachable(data);
+			}
+		}
+	} catch (error) {
+		// expected errors (two requests racing to create/join a group): return null so
+		// loaders re-run and the user sees the fresh state instead of an error page
+		if (error instanceof SendouQError) {
 			return null;
 		}
-		default: {
-			assertUnreachable(data);
-		}
+
+		throw error;
 	}
 };
 
 async function validateCanJoinQ(user: { id: number; discordId: string }) {
-	const friendCode = await UserRepository.currentFriendCodeByUserId(user.id);
+	const friendCode = await UserRepository.findCurrentFriendCodeByUserId(
+		user.id,
+	);
 	errorToastIfFalsy(friendCode, "No friend code");
 	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
 
-	errorToastIfFalsy(Seasons.current(), "Season is not active");
-	errorToastIfFalsy(!findCurrentGroupByUserId(user.id), "Already in a group");
+	const season = Seasons.current();
+	errorToastIfFalsy(season, "Season is not active");
 	errorToastIfFalsy(canJoinQueue, "Can't join queue right now");
+	errorToastIfFalsy(
+		await seasonInitialSkillsExist(season.nth),
+		"Season's starting powers are not set yet. Please contact staff on the Discord helpdesk",
+	);
 }

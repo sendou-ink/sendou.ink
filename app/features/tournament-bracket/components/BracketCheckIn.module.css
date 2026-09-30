@@ -1,0 +1,13 @@
+.checkIn {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+	border: 2px solid var(--color-bg-higher);
+	padding-block: var(--s-1-5);
+	padding-inline: var(--s-3);
+	font-weight: var(--weight-bold);
+}

@@ -1,0 +1,490 @@
+import * as React from "react";
+import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { useTournament } from "~/features/tournament/tournament-context";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import * as CSV from "~/modules/csv";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { teamPage, userPage } from "~/utils/urls";
+import styles from "./ExportDialog.module.css";
+
+const BASE_URL = "https://sendou.ink";
+
+const EXPORT_FORMATS = ["list", "csv"] as const;
+const EXPORT_STATUSES = ["all", "checkedIn", "notCheckedIn"] as const;
+const EXPORT_SORTS = ["name", "seed", "registration"] as const;
+const EXPORT_ROSTERS = ["full", "captains"] as const;
+
+type ExportFormat = (typeof EXPORT_FORMATS)[number];
+type ExportStatus = (typeof EXPORT_STATUSES)[number];
+type ExportSort = (typeof EXPORT_SORTS)[number];
+type ExportRoster = (typeof EXPORT_ROSTERS)[number];
+
+const FORMAT_LABELS: Record<ExportFormat, string> = {
+	list: "List",
+	csv: "CSV",
+};
+const ROSTER_LABELS: Record<ExportRoster, string> = {
+	full: "Full roster",
+	captains: "Captains only",
+};
+const STATUS_LABELS: Record<ExportStatus, string> = {
+	all: "All teams",
+	checkedIn: "Checked in only",
+	notCheckedIn: "Not checked in",
+};
+const SORT_LABELS: Record<ExportSort, string> = {
+	name: "Name",
+	seed: "Seed",
+	registration: "Registration time",
+};
+
+const TEAM_FIELDS = [
+	"teamName",
+	"seed",
+	"registeredAt",
+	"checkInStatus",
+	"teamPageUrl",
+] as const;
+const MEMBER_FIELDS = [
+	"memberUsername",
+	"memberInGameName",
+	"memberDiscord",
+	"memberProfileUrl",
+] as const;
+type ExportField =
+	| (typeof TEAM_FIELDS)[number]
+	| (typeof MEMBER_FIELDS)[number];
+
+const FIELD_LABELS: Record<ExportField, string> = {
+	teamName: "Team",
+	seed: "Seed",
+	registeredAt: "Registration time",
+	checkInStatus: "Check-in",
+	teamPageUrl: "Team page URL",
+	memberUsername: "Username",
+	memberInGameName: "In-game name",
+	memberDiscord: "Discord mention",
+	memberProfileUrl: "Profile URL",
+};
+
+const DEFAULT_FIELDS: ExportField[] = [
+	"teamName",
+	"seed",
+	"checkInStatus",
+	"memberUsername",
+];
+
+export function ExportDialog({
+	close,
+	teams: allTeams,
+}: {
+	close: () => void;
+	teams: TournamentTeamFull[];
+}) {
+	const tournament = useTournament();
+
+	const [format, setFormat] = React.useState<ExportFormat>("list");
+	const [status, setStatus] = React.useState<ExportStatus>("all");
+	const [bracketIdx, setBracketIdx] = React.useState(0);
+	const [sort, setSort] = React.useState<ExportSort>("seed");
+	const [roster, setRoster] = React.useState<ExportRoster>("full");
+	const [fields, setFields] = React.useState<Set<ExportField>>(
+		new Set(DEFAULT_FIELDS),
+	);
+
+	const toggleField = (field: ExportField) =>
+		setFields((prev) => {
+			const next = new Set(prev);
+			if (next.has(field)) {
+				next.delete(field);
+			} else {
+				next.add(field);
+			}
+			return next;
+		});
+
+	const selectedBracket = tournament.bracketsMeta[bracketIdx];
+	const bracketRequiresOwnCheckIn =
+		selectedBracket.requiresCheckIn && !selectedBracket.isStartingBracket;
+	const teams = scopedAndSortedTeams({
+		teams: allTeams,
+		status,
+		sort,
+		bracketIdx,
+		bracketRequiresOwnCheckIn,
+		bracketParticipantIds: new Set(
+			tournament.eligibleTeamIdsOfBracket(bracketIdx),
+		),
+	});
+	const content = buildContent({
+		teams,
+		format,
+		fields,
+		captainsOnly: roster === "captains",
+		bracketIdx,
+		bracketRequiresOwnCheckIn,
+		checkedInLabel: "Checked in",
+		notCheckedInLabel: "Not checked in",
+	});
+	const nothingToExportReason =
+		teams.length === 0
+			? "No teams match the selected bracket and status"
+			: fields.size === 0 || !content
+				? "Nothing to export with the selected fields"
+				: null;
+
+	const onDownload = () => {
+		handleDownload({
+			filename: `participants.${format === "csv" ? "csv" : "txt"}`,
+			content,
+			format,
+		});
+		close();
+	};
+
+	return (
+		<SendouDialog heading="Export participants" onClose={close}>
+			<div className="stack md">
+				<RadioRow
+					label="Format"
+					value={format}
+					onChange={setFormat}
+					options={EXPORT_FORMATS.map((value) => ({
+						value,
+						label: FORMAT_LABELS[value],
+					}))}
+				/>
+
+				<div className="stack sm">
+					<div className="text-sm font-bold">Fields</div>
+					<div className={styles.fieldGrid}>
+						{[...TEAM_FIELDS, ...MEMBER_FIELDS].map((field) => (
+							<label key={field} className={styles.fieldLabel}>
+								<input
+									type="checkbox"
+									checked={fields.has(field)}
+									onChange={() => toggleField(field)}
+								/>
+								{FIELD_LABELS[field]}
+							</label>
+						))}
+					</div>
+				</div>
+
+				<RadioRow
+					label="Roster"
+					value={roster}
+					onChange={setRoster}
+					options={EXPORT_ROSTERS.map((value) => ({
+						value,
+						label: ROSTER_LABELS[value],
+					}))}
+				/>
+
+				{tournament.bracketsMeta.length > 1 ? (
+					<RadioRow
+						label="Bracket"
+						value={String(bracketIdx)}
+						onChange={(value) => setBracketIdx(Number(value))}
+						options={tournament.bracketsMeta.map((bracket, idx) => ({
+							value: String(idx),
+							label: bracket.name || `#${idx}`,
+						}))}
+					/>
+				) : null}
+
+				<RadioRow
+					label="Status"
+					value={status}
+					onChange={setStatus}
+					options={EXPORT_STATUSES.map((value) => ({
+						value,
+						label: STATUS_LABELS[value],
+					}))}
+				/>
+
+				<RadioRow
+					label="Sort by"
+					value={sort}
+					onChange={setSort}
+					options={EXPORT_SORTS.map((value) => ({
+						value,
+						label: SORT_LABELS[value],
+					}))}
+				/>
+
+				<div className="stack sm items-center">
+					<SendouButton
+						onClick={onDownload}
+						isDisabled={nothingToExportReason !== null}
+					>
+						Download
+					</SendouButton>
+					{nothingToExportReason ? (
+						<div className="text-sm text-error">{nothingToExportReason}</div>
+					) : null}
+				</div>
+			</div>
+		</SendouDialog>
+	);
+}
+
+function RadioRow<T extends string>({
+	label,
+	value,
+	onChange,
+	options,
+}: {
+	label: string;
+	value: T;
+	onChange: (value: T) => void;
+	options: ReadonlyArray<{ value: T; label: string }>;
+}) {
+	const groupName = React.useId();
+
+	return (
+		<div className="stack sm">
+			<div className="text-sm font-bold">{label}</div>
+			<SendouChipRadioGroup wrap>
+				{options.map((option) => (
+					<SendouChipRadio
+						key={option.value}
+						name={groupName}
+						value={option.value}
+						checked={value === option.value}
+						onChange={(newValue) => onChange(newValue as T)}
+					>
+						{option.label}
+					</SendouChipRadio>
+				))}
+			</SendouChipRadioGroup>
+		</div>
+	);
+}
+
+function hasActiveCheckIn(
+	team: TournamentTeamFull,
+	bracketIdx: number,
+	bracketRequiresOwnCheckIn: boolean,
+) {
+	if (bracketRequiresOwnCheckIn) {
+		return team.checkIns.some(
+			(checkIn) => checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
+		);
+	}
+
+	const eventLevel = team.checkIns.filter(
+		(checkIn) => checkIn.bracketIdx === null,
+	);
+	return (
+		eventLevel.some((checkIn) => !checkIn.isCheckOut) &&
+		!eventLevel.some((checkIn) => checkIn.isCheckOut)
+	);
+}
+
+export function scopedAndSortedTeams({
+	teams,
+	status,
+	sort,
+	bracketIdx,
+	bracketRequiresOwnCheckIn,
+	bracketParticipantIds,
+}: {
+	teams: TournamentTeamFull[];
+	status: ExportStatus;
+	sort: ExportSort;
+	bracketIdx: number;
+	bracketRequiresOwnCheckIn: boolean;
+	bracketParticipantIds: Set<number>;
+}) {
+	const filtered = teams.filter((team) => {
+		if (!bracketParticipantIds.has(team.id)) {
+			return false;
+		}
+		switch (status) {
+			case "checkedIn":
+				return hasActiveCheckIn(team, bracketIdx, bracketRequiresOwnCheckIn);
+			case "notCheckedIn":
+				return !hasActiveCheckIn(team, bracketIdx, bracketRequiresOwnCheckIn);
+			default:
+				return true;
+		}
+	});
+
+	return [...filtered].sort((a, b) => {
+		switch (sort) {
+			case "name":
+				return a.name.localeCompare(b.name);
+			case "registration":
+				return a.createdAt - b.createdAt;
+			default: {
+				const aSeed = a.seed ?? Number.POSITIVE_INFINITY;
+				const bSeed = b.seed ?? Number.POSITIVE_INFINITY;
+				if (aSeed !== bSeed) return aSeed - bSeed;
+				return a.createdAt - b.createdAt;
+			}
+		}
+	});
+}
+
+function teamFieldValue(
+	team: TournamentTeamFull,
+	field: (typeof TEAM_FIELDS)[number],
+	opts: {
+		checkedInLabel: string;
+		notCheckedInLabel: string;
+		bracketIdx: number;
+		bracketRequiresOwnCheckIn: boolean;
+	},
+) {
+	switch (field) {
+		case "teamName":
+			return team.name;
+		case "seed":
+			return team.seed != null ? String(team.seed) : "";
+		case "registeredAt":
+			return databaseTimestampToDate(team.createdAt).toISOString();
+		case "checkInStatus":
+			return hasActiveCheckIn(
+				team,
+				opts.bracketIdx,
+				opts.bracketRequiresOwnCheckIn,
+			)
+				? opts.checkedInLabel
+				: opts.notCheckedInLabel;
+		case "teamPageUrl":
+			return team.team?.customUrl
+				? `${BASE_URL}${teamPage(team.team.customUrl)}`
+				: "";
+	}
+}
+
+function memberFieldValue(
+	member: TournamentTeamFull["members"][number],
+	field: (typeof MEMBER_FIELDS)[number],
+) {
+	switch (field) {
+		case "memberUsername":
+			return member.username;
+		case "memberInGameName":
+			return member.inGameName ?? "";
+		case "memberDiscord":
+			return member.discordId ? `<@${member.discordId}>` : "";
+		case "memberProfileUrl":
+			return `${BASE_URL}${userPage(member)}`;
+	}
+}
+
+function buildContent({
+	teams,
+	format,
+	fields,
+	captainsOnly,
+	bracketIdx,
+	bracketRequiresOwnCheckIn,
+	checkedInLabel,
+	notCheckedInLabel,
+}: {
+	teams: TournamentTeamFull[];
+	format: ExportFormat;
+	fields: Set<ExportField>;
+	captainsOnly: boolean;
+	bracketIdx: number;
+	bracketRequiresOwnCheckIn: boolean;
+	checkedInLabel: string;
+	notCheckedInLabel: string;
+}) {
+	const teamFields = TEAM_FIELDS.filter((field) => fields.has(field));
+	const memberFields = MEMBER_FIELDS.filter((field) => fields.has(field));
+	const membersOf = (team: TournamentTeamFull) =>
+		captainsOnly
+			? team.members.filter((member) => member.role === "OWNER")
+			: team.members;
+	const labelOpts = {
+		checkedInLabel,
+		notCheckedInLabel,
+		bracketIdx,
+		bracketRequiresOwnCheckIn,
+	};
+
+	if (format === "csv") {
+		const maxRoster = Math.max(
+			0,
+			...teams.map((team) => membersOf(team).length),
+		);
+
+		const header = [
+			...teamFields.map((field) => FIELD_LABELS[field]),
+			...Array.from({ length: maxRoster }).flatMap((_, i) =>
+				memberFields.map((field) => `Player ${i + 1} ${FIELD_LABELS[field]}`),
+			),
+		];
+
+		const rows = teams.map((team) => {
+			const teamValues = teamFields.map((field) =>
+				teamFieldValue(team, field, labelOpts),
+			);
+			const teamMembers = membersOf(team);
+			const memberValues = Array.from({ length: maxRoster }).flatMap((_, i) => {
+				const member = teamMembers[i];
+				return memberFields.map((field) =>
+					member ? memberFieldValue(member, field) : "",
+				);
+			});
+			return [...teamValues, ...memberValues];
+		});
+
+		return CSV.serialize([header, ...rows]);
+	}
+
+	// list: members grouped under each team; without member fields a plain list of team names, without
+	// team fields a tight flat list of members (e.g. captains-only + Discord mention)
+	const hasMemberFields = memberFields.length > 0;
+	const groupByTeam = teamFields.length > 0;
+
+	const entries = teams.map((team) => {
+		const teamLine = teamFields
+			.map((field) => teamFieldValue(team, field, labelOpts))
+			.filter(Boolean)
+			.join(" - ");
+		if (!hasMemberFields) return teamLine;
+		const memberLines = membersOf(team).map((member) => {
+			const memberLine = memberFields
+				.map((field) => memberFieldValue(member, field))
+				.filter(Boolean)
+				.join(" - ");
+			return groupByTeam ? `  ${memberLine}` : memberLine;
+		});
+		return [teamLine, ...memberLines].filter(Boolean).join("\n");
+	});
+
+	return entries
+		.filter(Boolean)
+		.join(groupByTeam && hasMemberFields ? "\n\n" : "\n");
+}
+
+function handleDownload({
+	content,
+	filename,
+	format,
+}: {
+	content: string;
+	filename: string;
+	format: ExportFormat;
+}) {
+	const isCsv = format === "csv";
+	const element = document.createElement("a");
+	const file = new Blob(isCsv ? [CSV.BOM, content] : [content], {
+		type: isCsv ? "text/csv;charset=utf-8" : "text/plain;charset=utf-8",
+	});
+	element.href = URL.createObjectURL(file);
+	element.download = filename;
+	document.body.appendChild(element);
+	element.click();
+	document.body.removeChild(element);
+}

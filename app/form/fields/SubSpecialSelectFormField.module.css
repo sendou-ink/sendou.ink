@@ -1,0 +1,9 @@
+.root {
+	width: 100%;
+}
+
+.option {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}

@@ -1,0 +1,267 @@
+import { type ChildProcess, execSync, spawn } from "node:child_process";
+import fs from "node:fs";
+import type { FullConfig } from "@playwright/test";
+import { ensureMigratedDb } from "../scripts/ensure-test-db";
+import {
+	E2E_BASE_PORT,
+	e2eWebhookPort,
+	e2eWorkerPort,
+} from "./helpers/playwright";
+
+const DEBUG = process.env.E2E_DEBUG === "true";
+const SERVER_PROCESSES: ChildProcess[] = [];
+const SEAWEEDFS_MARKER_FILE = ".e2e-seaweedfs-started";
+const STORAGE_BUCKET = "sendou";
+/** Marker object the container writes once the bucket exists; reading it back proves object reads work. */
+const SEAWEEDFS_READY_URL = `http://127.0.0.1:9000/${STORAGE_BUCKET}/.ready`;
+const BUILD_MARKER_FILE = ".e2e-build-marker";
+const BUILD_INPUTS = [
+	"app",
+	"public",
+	"package.json",
+	"pnpm-lock.yaml",
+	"vite.config.ts",
+];
+
+declare global {
+	var __E2E_SERVERS__: ChildProcess[];
+}
+
+/**
+ * Whether the image storage is usable, which takes more than SeaweedFS answering on its port:
+ * the bucket is bootstrapped only after startup, and the volume server registers with the master
+ * later still, so listing the bucket succeeds while object reads are answering 500. Fetching the
+ * marker object exercises the whole chain — otherwise a run would fail deep inside the one test
+ * that uploads an image (`art.spec.ts`) with an opaque 500.
+ */
+async function isSeaweedfsReady(): Promise<boolean> {
+	try {
+		const response = await fetch(SEAWEEDFS_READY_URL);
+		return response.ok;
+	} catch {
+		return false;
+	}
+}
+
+async function waitForSeaweedfs(timeout = 60000): Promise<boolean> {
+	const start = Date.now();
+	while (Date.now() - start < timeout) {
+		if (await isSeaweedfsReady()) {
+			return true;
+		}
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+	return false;
+}
+
+async function ensureSeaweedfsRunning(): Promise<boolean> {
+	if (await isSeaweedfsReady()) {
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log("SeaweedFS is already running");
+		return false;
+	}
+
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log("Starting SeaweedFS...");
+	execSync("docker compose up -d seaweedfs", { stdio: "inherit" });
+
+	const isReady = await waitForSeaweedfs();
+	if (!isReady) {
+		throw new Error(
+			`SeaweedFS did not become usable within timeout (${SEAWEEDFS_READY_URL} never answered OK). If SeaweedFS is running, its "${STORAGE_BUCKET}" bucket never finished bootstrapping — recreate the container with "docker compose up -d --force-recreate seaweedfs".`,
+		);
+	}
+
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log("SeaweedFS is ready");
+
+	fs.writeFileSync(SEAWEEDFS_MARKER_FILE, "");
+	return true;
+}
+
+/** Kills anything listening on the port range, returning whether something was killed. */
+function killProcessesOnPorts(firstPort: number, lastPort: number): boolean {
+	try {
+		const pids = execSync(`lsof -ti :${firstPort}-${lastPort} || true`, {
+			stdio: "pipe",
+		})
+			.toString()
+			.trim();
+		if (pids === "") return false;
+
+		execSync(`kill -9 ${pids.split("\n").join(" ")} 2>/dev/null || true`, {
+			stdio: "pipe",
+		});
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+async function waitForServer(port: number, timeout = 120000): Promise<void> {
+	const start = Date.now();
+	while (Date.now() - start < timeout) {
+		try {
+			const response = await fetch(`http://localhost:${port}/`);
+			if (response.ok || response.status === 404) {
+				// 404 is fine - server is up, just no route at /
+				return;
+			}
+		} catch {}
+		await new Promise((resolve) => setTimeout(resolve, 100));
+	}
+	throw new Error(`Server on port ${port} did not start within ${timeout}ms`);
+}
+
+/**
+ * Reuses the last e2e build when no build input changed since its marker. Directory mtimes
+ * catch deletes and renames; a build made outside the e2e flow (no marker, or output newer
+ * than the marker) or a marker from another port setup forces a rebuild. E2E_FORCE_BUILD=true overrides.
+ */
+function isBuildFresh(): boolean {
+	if (process.env.E2E_FORCE_BUILD === "true") return false;
+	if (!fs.existsSync(BUILD_MARKER_FILE)) return false;
+	if (!fs.existsSync("build/server/index.js")) return false;
+
+	try {
+		const marker = JSON.parse(fs.readFileSync(BUILD_MARKER_FILE, "utf8"));
+		if (marker.siteDomain !== `http://localhost:${E2E_BASE_PORT}`) return false;
+	} catch {
+		return false;
+	}
+
+	const markerMtime = fs.statSync(BUILD_MARKER_FILE).mtimeMs;
+	if (fs.statSync("build/server/index.js").mtimeMs > markerMtime) return false;
+
+	try {
+		const changedInput = execSync(
+			`find ${BUILD_INPUTS.join(" ")} -newer ${BUILD_MARKER_FILE} -print -quit`,
+		)
+			.toString()
+			.trim();
+		return changedInput === "";
+	} catch {
+		return false;
+	}
+}
+
+async function globalSetup(config: FullConfig) {
+	const workerCount = config.workers;
+
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log(`\nStarting e2e test setup with ${workerCount} workers...`);
+
+	await ensureSeaweedfsRunning();
+
+	if (isBuildFresh()) {
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log(
+			"Reusing existing build (no source changes since last e2e build)",
+		);
+	} else {
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log("Building the application...");
+		fs.rmSync(BUILD_MARKER_FILE, { force: true });
+		execSync("pnpm run build", {
+			stdio: "inherit",
+			env: {
+				...process.env,
+				VITE_E2E_TEST_RUN: "true",
+				VITE_SITE_DOMAIN: `http://localhost:${E2E_BASE_PORT}`,
+			},
+		});
+		fs.writeFileSync(
+			BUILD_MARKER_FILE,
+			JSON.stringify({
+				siteDomain: `http://localhost:${E2E_BASE_PORT}`,
+			}),
+		);
+	}
+
+	const serverPromises: Promise<void>[] = [];
+
+	// Kill any existing processes on our ports before starting; sweep beyond the
+	// current worker count so leftovers from a run with more workers also die
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log("Cleaning up any existing processes on e2e ports...");
+	const killedSomething = killProcessesOnPorts(
+		E2E_BASE_PORT,
+		e2eWorkerPort(Math.max(workerCount, 8) - 1),
+	);
+	if (killedSomething) {
+		// Wait briefly for ports to be released
+		await new Promise((resolve) => setTimeout(resolve, 500));
+	}
+
+	for (let i = 0; i < workerCount; i++) {
+		const port = e2eWorkerPort(i);
+		const dbPath = `db-test-e2e-${i}.sqlite3`;
+
+		ensureMigratedDb(dbPath);
+
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log(`Starting server for worker ${i} on port ${port}...`);
+		// react-router-serve directly instead of `pnpm start`: ensureMigratedDb
+		// above already migrated, making the script's `migrate up` step redundant
+		const serverProcess = spawn(
+			process.execPath,
+			["./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"],
+			{
+				env: {
+					...process.env,
+					NODE_ENV: "production",
+					DB_PATH: dbPath,
+					PORT: String(port),
+					DISCORD_CLIENT_ID: "123",
+					DISCORD_CLIENT_SECRET: "secret",
+					SESSION_SECRET: "secret",
+					VITE_SITE_DOMAIN: `http://localhost:${port}`,
+					VITE_E2E_TEST_RUN: "true",
+					STORAGE_END_POINT: "http://127.0.0.1:9000",
+					STORAGE_ACCESS_KEY: "seaweedfs-user",
+					STORAGE_SECRET: "seaweedfs-password",
+					STORAGE_REGION: "us-east-1",
+					STORAGE_BUCKET,
+					// creds from .env must not reach test servers (SyncLiveStreams would
+					// hit the real Twitch API and overwrite factory-seeded streams)
+					TWITCH_CLIENT_ID: "",
+					TWITCH_CLIENT_SECRET: "",
+					// tests assert webhook payloads by listening on the worker's webhook port
+					SQ_CANCEL_DISCORD_WEBHOOK_URL: `http://localhost:${e2eWebhookPort(i)}/sq-cancel`,
+				},
+				detached: false,
+			},
+		);
+
+		SERVER_PROCESSES.push(serverProcess);
+
+		if (DEBUG) {
+			serverProcess.stdout?.on("data", (data) => {
+				// biome-ignore lint/suspicious/noConsole: CLI script output
+				console.log(`[Worker ${i}] ${data.toString()}`);
+			});
+
+			serverProcess.stderr?.on("data", (data) => {
+				// biome-ignore lint/suspicious/noConsole: CLI script output
+				console.error(`[Worker ${i} ERROR] ${data.toString()}`);
+			});
+		}
+
+		serverPromises.push(
+			waitForServer(port).then(() => {
+				// biome-ignore lint/suspicious/noConsole: CLI script output
+				console.log(`Server for worker ${i} is ready on port ${port}`);
+			}),
+		);
+	}
+
+	// exposed to teardown before awaiting readiness so a failed startup still cleans up every spawned server
+	global.__E2E_SERVERS__ = SERVER_PROCESSES;
+
+	await Promise.all(serverPromises);
+
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log("\nAll servers started successfully!\n");
+}
+
+export default globalSetup;

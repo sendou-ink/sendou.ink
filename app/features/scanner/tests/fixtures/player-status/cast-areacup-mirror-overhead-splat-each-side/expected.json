@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-left",
+		"time": 125,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, true, false, false],
+			[false, false, true, false]
+		]
+	},
+	"options": {
+		"skipFields": ["layout"],
+		"notes": "AREA CUP FINAL (grey-win VoD, Flounder Heights) overhead map view at 2:06:31, same game as the gauge-overlay fixtures but after the specced POV switched teams: the badge-less strip is drawn in the MIRRORED cast arrangement (narrow ~76 pitch left, wide ~97 pitch right — the mirror's right column nearly coincides with POV's). The live scan classified this stretch as pov, which happened to read this frame right but flipped false ★s one second later. Left slot 1 (the yellow team's .52 Gal) is genuinely splatted here — its real death ends with a respawn by the next second — and right slot 2 is splatted too; everyone else alive. layout is skipped: a lone badge-less mirror frame is not distinguishable from POV by decisiveness (that ambiguity is exactly the misread this fixture guards), so a fresh parse reads it as pov with identical states; live scans resolve the arrangement from neighboring badge frames via stickiness. Labels authored by Claude from pixel evidence."
+	}
+}

@@ -1,0 +1,362 @@
+import { CalendarDays, Pin } from "lucide-react";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
+import * as R from "remeda";
+import { ActionButton } from "~/components/ActionButton";
+import { Avatar } from "~/components/Avatar";
+import { Divider } from "~/components/Divider";
+import { SendouButton } from "~/components/elements/Button";
+import { Main } from "~/components/Main";
+import { SubNav, SubNavLink } from "~/components/SubNav";
+import { ScheduleWeekDialog } from "~/features/availability/components/ScheduleWeekDialog";
+import { SendouForm } from "~/form/SendouForm";
+import { markFriendRequestsSeen } from "~/hooks/useUnseenFriendRequests";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { FriendMenu } from "../components/FriendMenu";
+import { friendSectionSortValue } from "../friends-constants";
+import {
+	acceptFriendRequestSchema,
+	cancelFriendRequestSchema,
+	declineFriendRequestSchema,
+	pinFriendSchema,
+	sendFriendRequestBaseSchema,
+	unpinFriendSchema,
+} from "../friends-schemas";
+import {
+	friendsSearchParams,
+	VIEW_FILTERS,
+	type ViewFilter,
+} from "../friends-search-params";
+import type { FriendsLoaderData } from "../loaders/friends.server";
+import styles from "./friends.module.css";
+
+export { action } from "../actions/friends.server";
+export { loader } from "../loaders/friends.server";
+
+export const shouldRevalidate = friendsSearchParams.shouldRevalidate;
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Friends",
+		location: args.location,
+	});
+};
+
+export const handle: SendouRouteHandle = {
+	i18n: ["friends", "schedule"],
+};
+
+export default function FriendsPage() {
+	const data = useLoaderData<FriendsLoaderData>();
+
+	const incomingRequestIds = data.incomingRequests
+		.map((request) => request.id)
+		.join(",");
+
+	React.useEffect(() => {
+		markFriendRequestsSeen(data.incomingRequests.map((request) => request.id));
+	}, [incomingRequestIds]);
+
+	return (
+		<Main halfWidth>
+			<div className="stack lg">
+				<SendFriendRequestSection />
+				<Divider />
+				{data.incomingRequests.length > 0 ? <IncomingRequestsSection /> : null}
+				{data.pendingRequests.length > 0 ? <PendingRequestsSection /> : null}
+				<FriendsListSection />
+			</div>
+		</Main>
+	);
+}
+
+function SendFriendRequestSection() {
+	const { t } = useTranslation(["common", "friends"]);
+
+	return (
+		<section>
+			<h2 className="text-lg mb-2">{t("friends:sendRequest.title")}</h2>
+			<SendouForm
+				schema={sendFriendRequestBaseSchema}
+				submitButtonText={t("friends:sendRequest.submit")}
+			>
+				{({ FormField }) => <FormField name="userId" />}
+			</SendouForm>
+		</section>
+	);
+}
+
+function IncomingRequestsSection() {
+	const { t } = useTranslation(["common", "friends"]);
+	const data = useLoaderData<FriendsLoaderData>();
+
+	return (
+		<section>
+			<h2 className="text-lg">{t("friends:incomingRequests.title")}</h2>
+			<div className="stack sm">
+				{data.incomingRequests.map((request) => (
+					<div key={request.id} className={styles.pendingRow}>
+						<Link to={request.sender.url} className={styles.pendingUser}>
+							<Avatar
+								user={{
+									discordId: request.sender.discordId,
+									discordAvatar: request.sender.discordAvatar,
+									customAvatarUrl: request.sender.customAvatarUrl,
+								}}
+								size="xxsm"
+							/>
+							<span className={styles.userName}>{request.sender.username}</span>
+						</Link>
+						<div className="stack horizontal sm">
+							<ActionButton
+								schema={acceptFriendRequestSchema}
+								action="ACCEPT_REQUEST"
+								fields={{ friendRequestId: request.id }}
+								variant="outlined"
+								size="miniscule"
+							>
+								{t("common:actions.accept")}
+							</ActionButton>
+							<ActionButton
+								schema={declineFriendRequestSchema}
+								action="DECLINE_REQUEST"
+								fields={{ friendRequestId: request.id }}
+								variant="minimal-destructive"
+								size="miniscule"
+							>
+								{t("common:actions.decline")}
+							</ActionButton>
+						</div>
+					</div>
+				))}
+			</div>
+		</section>
+	);
+}
+
+function PendingRequestsSection() {
+	const { t } = useTranslation(["common", "friends"]);
+	const data = useLoaderData<FriendsLoaderData>();
+
+	return (
+		<section>
+			<h2 className="text-lg">{t("friends:pendingRequests.title")}</h2>
+			<div className="stack sm">
+				{data.pendingRequests.map((request) => (
+					<div key={request.id} className={styles.pendingRow}>
+						<Link to={request.receiver.url} className={styles.pendingUser}>
+							<Avatar
+								user={{
+									discordId: request.receiver.discordId,
+									discordAvatar: request.receiver.discordAvatar,
+									customAvatarUrl: request.receiver.customAvatarUrl,
+								}}
+								size="xxsm"
+							/>
+							<span className={styles.userName}>
+								{request.receiver.username}
+							</span>
+						</Link>
+						<ActionButton
+							schema={cancelFriendRequestSchema}
+							action="CANCEL_REQUEST"
+							fields={{ friendRequestId: request.id }}
+							variant="minimal-destructive"
+							size="miniscule"
+						>
+							{t("common:actions.cancel")}
+						</ActionButton>
+					</div>
+				))}
+			</div>
+		</section>
+	);
+}
+
+function FriendsListSection() {
+	const { t } = useTranslation(["common", "friends"]);
+	const data = useLoaderData<FriendsLoaderData>();
+	const [viewParam] = useSearchParam(friendsSearchParams, "view");
+
+	const allCount = resolveShownItems("all", data).length;
+	const filterCounts: Record<ViewFilter, number> = {
+		friends: data.friends.length,
+		team: data.teamMembers.length,
+		all: allCount,
+	};
+
+	const defaultFilter =
+		VIEW_FILTERS.find((key) => filterCounts[key] > 0) ?? "friends";
+	const filter = viewParam ?? defaultFilter;
+
+	const viewLabels: Record<ViewFilter, string> = {
+		friends: `${t("friends:view.friends")} (${filterCounts.friends})`,
+		team: `${t("friends:view.teamMembers")} (${filterCounts.team})`,
+		all: `${t("friends:view.all")} (${filterCounts.all})`,
+	};
+
+	const shownItems = resolveShownItems(filter, data);
+	const emptyKey =
+		filter === "team"
+			? "friends:teamMembers.empty"
+			: "friends:friendsList.empty";
+
+	return (
+		<section className="stack md">
+			<div className={styles.friendsListHeader}>
+				<h2 className="text-lg ml-1">{t("friends:friendsList.title")}</h2>
+				<SubNav secondary>
+					{VIEW_FILTERS.map((value) => (
+						<SubNavLink
+							key={value}
+							to={friendsSearchParams.href("", { view: value })}
+							secondary
+							controlled
+							active={filter === value}
+							preventScrollReset
+						>
+							{viewLabels[value]}
+						</SubNavLink>
+					))}
+				</SubNav>
+			</div>
+			<div>
+				{shownItems.length === 0 ? (
+					<p className="no-results">{t(emptyKey)}</p>
+				) : (
+					<div className="stack xs">
+						{shownItems.map((item) => (
+							<FriendRow key={item.id} item={item} />
+						))}
+					</div>
+				)}
+			</div>
+		</section>
+	);
+}
+
+function FriendRow({ item }: { item: ShownItem }) {
+	const friendshipId =
+		"friendshipId" in item && typeof item.friendshipId === "number"
+			? item.friendshipId
+			: null;
+
+	return (
+		<div className={styles.friendRow} data-testid={`friend-row-${item.id}`}>
+			<FriendMenu name={item.username} {...item} />
+			<div className={styles.rowActions}>
+				<div className={styles.actionSlot}>
+					{item.schedule ? (
+						<ScheduleButton
+							userId={item.id}
+							username={item.username}
+							weeks={item.schedule}
+						/>
+					) : null}
+				</div>
+				<div className={styles.actionSlot}>
+					{typeof friendshipId === "number" ? (
+						<PinButton
+							userId={item.id}
+							username={item.username}
+							friendshipId={friendshipId}
+							isPinned={item.isPinned}
+						/>
+					) : null}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function PinButton({
+	userId,
+	username,
+	friendshipId,
+	isPinned,
+}: {
+	userId: number;
+	username: string;
+	friendshipId: number;
+	isPinned: boolean;
+}) {
+	const { t } = useTranslation(["friends"]);
+
+	return (
+		<ActionButton
+			schema={isPinned ? unpinFriendSchema : pinFriendSchema}
+			action={isPinned ? "UNPIN_FRIEND" : "PIN_FRIEND"}
+			fields={{ friendshipId, revalidateRoot: true }}
+			formClassName={styles.pinForm}
+			variant="minimal"
+			size="small"
+			icon={<Pin size={18} fill={isPinned ? "currentColor" : "none"} />}
+			aria-label={t(
+				isPinned ? "friends:friendsList.unpin" : "friends:friendsList.pin",
+				{ name: username },
+			)}
+			aria-pressed={isPinned}
+			testId={`friend-pin-button-${userId}`}
+		/>
+	);
+}
+
+function ScheduleButton({
+	userId,
+	username,
+	weeks,
+}: {
+	userId: number;
+	username: string;
+	weeks: NonNullable<ShownItem["schedule"]>;
+}) {
+	const { t } = useTranslation(["schedule"]);
+	const [dialogOpen, setDialogOpen] = React.useState(false);
+
+	return (
+		<>
+			<SendouButton
+				variant="minimal"
+				size="small"
+				icon={<CalendarDays size={18} />}
+				aria-label={t("schedule:friends.availabilityOf", { name: username })}
+				testId={`friend-schedule-button-${userId}`}
+				onClick={() => setDialogOpen(true)}
+			/>
+			{dialogOpen ? (
+				<ScheduleWeekDialog
+					username={username}
+					weeks={weeks}
+					onClose={() => setDialogOpen(false)}
+				/>
+			) : null}
+		</>
+	);
+}
+
+type ShownItem = ReturnType<typeof resolveShownItems>[number];
+
+function resolveShownItems(
+	filter: ViewFilter,
+	data: Awaited<ReturnType<FriendsLoaderData>>,
+) {
+	if (filter === "friends") return data.friends;
+	if (filter === "team") return data.teamMembers;
+
+	const friendIds = new Set(data.friends.map((f) => f.id));
+	const combined = [
+		...data.friends,
+		...data.teamMembers.filter((tm) => !friendIds.has(tm.id)),
+	];
+
+	// same order the loader sorted each group in: pinned and active first, then
+	// the ones who shared a schedule
+	return R.sortBy(
+		combined,
+		[(item) => friendSectionSortValue(item), "asc"],
+		[(item) => (item.schedule ? 1 : 0), "desc"],
+	);
+}

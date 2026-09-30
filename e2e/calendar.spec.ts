@@ -1,104 +1,369 @@
-import { expect, test } from "@playwright/test";
+import { subDays } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import {
-	expectIsHydrated,
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-} from "~/utils/playwright";
-import { calendarPage } from "~/utils/urls";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { calendarEventPage } from "~/utils/urls";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { CalendarEventPage } from "./pages/calendar/calendar-event-page";
+import { CalendarNewEventPage } from "./pages/calendar/calendar-new-event-page";
+import { CalendarPage } from "./pages/calendar/calendar-page";
+import { ReportWinnersPage } from "./pages/calendar/report-winners-page";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
+import { TournamentInfoPage } from "./pages/tournament/tournament-info-page";
+import { TournamentRulesPage } from "./pages/tournament/tournament-rules-page";
 
-const SENDOU_INK_TOURNAMENTS_COUNT = 6;
+const SENDOU_INK_TOURNAMENTS_COUNT = 3;
+const EXTERNAL_EVENTS_COUNT = 2;
 
 test.describe("Calendar", () => {
 	test("applies filters and operates hidden events toggle", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await navigate({
-			page,
-			url: calendarPage(),
-		});
+		// all of them at the same time so they share one clock header and its toggle
+		const startTimes = [dateToDatabaseTimestamp(new Date())];
+		for (let i = 0; i < SENDOU_INK_TOURNAMENTS_COUNT; i++) {
+			await factories.TournamentFactory.create({
+				authorId: ADMIN_ID,
+				startTimes,
+			});
+		}
+		for (let i = 0; i < EXTERNAL_EVENTS_COUNT; i++) {
+			await factories.CalendarEventFactory.create({
+				authorId: ADMIN_ID,
+				startTimes,
+			});
+		}
 
-		await page.getByTestId("filter-events-button").click();
-		await page.getByText("Only events hosted on sendou.ink").click();
+		await impersonate(page, NZAP_TEST_ID);
 
-		await page.getByText("Apply", { exact: true }).click();
+		const calendar = new CalendarPage(page);
+		await calendar.goto();
 
-		const tournamentCardLocator = page.getByTestId("tournament-card");
-		const hiddenEventsToggleButtonLocator = page.getByTestId(
-			"hidden-events-button",
-		);
+		await calendar.toggleEventTypeFilter("isSendou");
 
-		await expect(tournamentCardLocator).toHaveCount(
+		await expect(calendar.locators.tournamentCards).toHaveCount(
 			SENDOU_INK_TOURNAMENTS_COUNT,
 		);
 
-		await page.reload();
-		await expectIsHydrated(page);
+		await calendar.reload();
 
 		// remembers selection via search params
-		await expect(tournamentCardLocator).toHaveCount(
+		await expect(calendar.locators.tournamentCards).toHaveCount(
 			SENDOU_INK_TOURNAMENTS_COUNT,
 		);
 
-		await hiddenEventsToggleButtonLocator.first().click();
+		await calendar.toggleHiddenEvents();
 
-		await expect
-			.poll(() => tournamentCardLocator.count())
-			.toBeGreaterThan(SENDOU_INK_TOURNAMENTS_COUNT);
-
-		const countAfterToggle = await tournamentCardLocator.count();
-
-		await hiddenEventsToggleButtonLocator.first().click();
-		await expect
-			.poll(() => tournamentCardLocator.count())
-			.toBeLessThan(countAfterToggle); // not SENDOU_INK_TOURNAMENTS_COUNT as it's possible we untoggle more than one tournament
-	});
-
-	test("sets default filters", async ({ page }) => {
-		await seed(page);
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: calendarPage(),
-		});
-
-		const hiddenEventsToggleButtonLocator = page.getByTestId(
-			"hidden-events-button",
+		await expect(calendar.locators.tournamentCards).toHaveCount(
+			SENDOU_INK_TOURNAMENTS_COUNT + EXTERNAL_EVENTS_COUNT,
 		);
 
-		await isNotVisible(hiddenEventsToggleButtonLocator);
+		await calendar.toggleHiddenEvents();
 
-		await page.getByTestId("filter-events-button").click();
-		await page.getByText("Only ranked events").click();
+		await expect(calendar.locators.tournamentCards).toHaveCount(
+			SENDOU_INK_TOURNAMENTS_COUNT,
+		);
+	});
 
-		await page.getByText("Apply & make default", { exact: true }).click();
+	test("sets default filters", async ({ page, factories }) => {
+		// not hosted on sendou.ink, so the ranked filter hides it
+		await factories.CalendarEventFactory.create({ authorId: ADMIN_ID });
 
-		await expect(hiddenEventsToggleButtonLocator.first()).toBeVisible();
+		await impersonate(page, NZAP_TEST_ID);
 
-		await navigate({
-			page,
-			url: calendarPage(),
-		});
+		const calendar = new CalendarPage(page);
+		await calendar.goto();
+
+		await isNotVisible(calendar.locators.hiddenEventsButtons);
+
+		await calendar.toggleEventTypeFilter("isRanked");
+		await calendar.saveFiltersAsDefault();
+
+		await expect(calendar.locators.hiddenEventsButtons.first()).toBeVisible();
+
+		await calendar.goto();
 
 		// remembers selection via user preferences
-		await expect(hiddenEventsToggleButtonLocator.first()).toBeVisible();
+		await expect(calendar.locators.hiddenEventsButtons.first()).toBeVisible();
+
+		await calendar.removeEventTypeFilter();
+
+		// removing the filter sticks instead of falling back to the saved default
+		await isNotVisible(calendar.locators.hiddenEventsButtons);
+
+		await calendar.reload();
+
+		await isNotVisible(calendar.locators.hiddenEventsButtons);
 	});
 
 	test("navigates view more buttons", async ({ page }) => {
-		await seed(page);
-		await navigate({
-			page,
-			url: calendarPage(),
+		const calendar = new CalendarPage(page);
+		await calendar.goto();
+
+		await calendar.navigatePrevious();
+
+		await isNotVisible(calendar.locators.todayHeader);
+
+		await calendar.navigateNext();
+
+		await expect(calendar.locators.todayHeader).toBeVisible();
+	});
+
+	test("renders clock header times in the browser locale", async ({
+		browser,
+		workerBaseURL,
+		factories,
+	}) => {
+		await factories.CalendarEventFactory.create({ authorId: ADMIN_ID });
+
+		const openWith = async (locale: string) => {
+			const context = await browser.newContext({
+				locale,
+				baseURL: workerBaseURL,
+			});
+			const page = await context.newPage();
+			return { context, page };
+		};
+
+		const ca = await openWith("en-CA");
+		const gb = await openWith("en-GB");
+
+		try {
+			const caCalendar = new CalendarPage(ca.page);
+			const gbCalendar = new CalendarPage(gb.page);
+
+			await caCalendar.goto();
+			await gbCalendar.goto();
+
+			const caTime = await caCalendar.locators.clockHeaderTimes
+				.first()
+				.textContent();
+			const gbTime = await gbCalendar.locators.clockHeaderTimes
+				.first()
+				.textContent();
+
+			expect(caTime).toMatch(/AM|PM|a\.m\.|p\.m\./i);
+			expect(gbTime).not.toMatch(/AM|PM|a\.m\.|p\.m\./i);
+			expect(caTime).not.toBe(gbTime);
+		} finally {
+			await ca.context.close();
+			await gb.context.close();
+		}
+	});
+
+	test("creates, edits and deletes a calendar event", async ({ page }) => {
+		await impersonate(page);
+
+		const newEvent = new CalendarNewEventPage(page);
+		await newEvent.goto();
+
+		await newEvent.form.fill("name", "Test Calendar Event");
+		await newEvent.setFirstDate(new Date(2027, 0, 15, 17, 0));
+		await newEvent.form.fill("bracketUrl", "https://sendou.ink/test-bracket");
+
+		await newEvent.form.submit();
+
+		await expect(page).toHaveURL(/\/calendar\/\d+/);
+		const eventId = Number(page.url().match(/\/calendar\/(\d+)/)?.[1]);
+
+		const calendarEvent = new CalendarEventPage(page);
+		const editedDate = new Date(2027, 0, 20, 18, 0);
+
+		const editEvent = await calendarEvent.openEdit();
+		await editEvent.form.fill("name", "Renamed Calendar Event");
+		await editEvent.setFirstDate(editedDate);
+		await editEvent.save();
+
+		await expect(page).toHaveURL(calendarEventPage(eventId));
+		await expect(calendarEvent.startTime(editedDate)).toBeVisible();
+
+		const calendar = new CalendarPage(page);
+		const editedDateWeek = { day: 20, month: 0, year: 2027 };
+		await calendar.goto(editedDateWeek);
+
+		await expect(
+			calendar.tournamentCard("Renamed Calendar Event"),
+		).toBeVisible();
+
+		await calendarEvent.goto(eventId);
+		await calendarEvent.delete();
+
+		await expect(page).toHaveURL(/\/calendar$/);
+
+		await calendar.goto(editedDateWeek);
+
+		await isNotVisible(calendar.tournamentCard("Renamed Calendar Event"));
+	});
+
+	test("creates a new tournament with a map pool and follow-up bracket", async ({
+		page,
+		factories,
+	}) => {
+		// tournaments can only be added by an organizer, unlike calendar events
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
 		});
 
-		await page.getByTestId("calendar-navigate-button").first().click();
+		await impersonate(page, organizer.id);
 
-		await isNotVisible(page.getByTestId("today-header"));
+		const newTournament = new CalendarNewEventPage(page);
+		await newTournament.gotoNewTournament();
 
-		await page.getByTestId("calendar-navigate-button").nth(1).click();
-		await expect(page.getByTestId("today-header")).toBeVisible();
+		const startTime = new Date(2027, 0, 15, 17, 0);
+		const mapPool = [
+			{ stage: "Scorch Gorge", mode: "Splat Zones" },
+			{ stage: "Eeltail Alley", mode: "Tower Control" },
+			{ stage: "Hagglefish Market", mode: "Rainmaker" },
+		];
+
+		await newTournament.form.fill("name", "Test Tournament");
+		await newTournament.form.fill(
+			"description",
+			"An automated test tournament",
+		);
+		await newTournament.setFirstDate(startTime);
+		await newTournament.form.fill("discordInviteCode", "test-invite");
+
+		// flip a tournament setting away from its default
+		await newTournament.form.check("requireInGameNames");
+
+		// "Organizer picked" allows an arbitrary map pool, unlike the validated team pick pools
+		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
+		await newTournament.pickMapPool(mapPool);
+
+		await newTournament.addFollowUpBracket({
+			name: "Underground bracket",
+			format: "Single elimination",
+			placements: "-1",
+		});
+
+		await newTournament.form.submit();
+
+		await expect(page).toHaveURL(/\/to\/\d+/);
+		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);
+
+		const tournamentInfo = new TournamentInfoPage(page);
+		await tournamentInfo.goto(tournamentId);
+		await expect(tournamentInfo.startTime(startTime).first()).toBeVisible();
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournamentId);
+		await expect(brackets.bracketTab("Underground")).toBeVisible();
+
+		// the TO map pool round-trips onto the rules page
+		const rules = new TournamentRulesPage(page);
+		await rules.goto(tournamentId);
+		for (const { stage, mode } of mapPool) {
+			await expect(rules.stageName(stage)).toBeVisible();
+			await expect(rules.modeImage(mode).first()).toBeVisible();
+		}
+	});
+
+	test("creates a team picked tournament with a custom map pool", async ({
+		page,
+		factories,
+	}) => {
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+
+		await impersonate(page, organizer.id);
+
+		const newTournament = new CalendarNewEventPage(page);
+		await newTournament.gotoNewTournament();
+
+		await newTournament.form.fill("name", "Team Pick Tournament");
+		await newTournament.setFirstDate(new Date(2027, 0, 15, 17, 0));
+
+		await newTournament.form.checkItems("mapPickingStyle", ["AUTO"]);
+		await newTournament.setTeamPickModes(["Splat Zones", "Tower Control"]);
+		await newTournament.teamPickCountInput("Splat Zones").fill("2");
+		await newTournament.teamPickCountInput("Tower Control").fill("2");
+		await newTournament.form.checkItems("teamPickPool", ["CUSTOM"]);
+
+		const stages = ["Scorch Gorge", "Eeltail Alley", "Hagglefish Market"];
+		const customPool = stages.flatMap((stage) => [
+			{ stage, mode: "Splat Zones" },
+			{ stage, mode: "Tower Control" },
+		]);
+
+		// every mode needs one stage more than the teams pick in it
+		await newTournament.pickMapPool(
+			customPool.filter((map) => map.stage !== "Hagglefish Market"),
+		);
+		await expect(
+			newTournament.teamPickPoolStatus("SZ needs at least 3 stages (has 2)"),
+		).toBeVisible();
+
+		await newTournament.pickMapPool(
+			customPool.filter((map) => map.stage === "Hagglefish Market"),
+		);
+		await expect(
+			newTournament.teamPickPoolStatus(
+				"The map pool has enough stages in every mode",
+			),
+		).toBeVisible();
+
+		await newTournament.form.submit();
+
+		await expect(page).toHaveURL(/\/to\/\d+/);
+		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);
+
+		// the picked modes, counts and custom pool round-trip onto the rules page
+		const rules = new TournamentRulesPage(page);
+		await rules.goto(tournamentId);
+		await expect(rules.rule("each team picking 2× SZ, 2× TC")).toBeVisible();
+		await expect(
+			rules.rule("Maps are limited to the map pool above"),
+		).toBeVisible();
+		for (const stage of stages) {
+			await expect(rules.stageName(stage)).toBeVisible();
+		}
+	});
+
+	test("reports winners of a past event", async ({ page, factories }) => {
+		const event = await factories.CalendarEventFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 1))],
+		});
+
+		await impersonate(page);
+
+		const reportWinners = new ReportWinnersPage(page);
+		await reportWinners.goto(event.id);
+
+		await reportWinners.locators.participantCountInput.fill("50");
+		await reportWinners.locators.teamNameInput.fill("Team Olive");
+		await reportWinners.locators.placingInput.fill("1");
+
+		// a team without any players can't be reported
+		await reportWinners.locators.submitButton.click();
+		await expect(reportWinners.locators.emptyTeamError).toBeVisible();
+
+		await reportWinners.selectPlayer(1, "N-ZAP");
+		await reportWinners.fillPlayerAsText(2, "Player Without Account");
+
+		await reportWinners.submit();
+
+		await expect(page).toHaveURL(calendarEventPage(event.id));
+
+		const calendarEvent = new CalendarEventPage(page);
+		await expect(calendarEvent.resultRow("Team Olive")).toContainText(
+			"Player Without Account",
+		);
+
+		// reported results are loaded back into the form for editing
+		await reportWinners.goto(event.id);
+
+		await expect(reportWinners.locators.participantCountInput).toHaveValue(
+			"50",
+		);
+		await expect(reportWinners.locators.teamNameInput).toHaveValue(
+			"Team Olive",
+		);
+		await expect(reportWinners.locators.placingInput).toHaveValue("1");
+		await expect(reportWinners.player(1)).toContainText("N-ZAP");
+		await expect(reportWinners.player(2)).toHaveValue("Player Without Account");
 	});
 });

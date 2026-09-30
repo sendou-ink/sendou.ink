@@ -1,0 +1,27 @@
+.container {
+	user-select: none;
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tierList {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	row-gap: var(--s-2);
+	column-gap: var(--s-1);
+	margin-bottom: var(--s-6);
+}
+
+.filters {
+	display: flex;
+	gap: var(--s-4);
+}
+
+.modeFilters {
+	column-gap: var(--s-8);
+	row-gap: var(--s-2);
+	flex-wrap: wrap;
+}

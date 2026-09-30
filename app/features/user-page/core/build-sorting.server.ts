@@ -1,12 +1,12 @@
-import type { BuildSort } from "~/db/tables";
 import type * as BuildRepository from "~/features/builds/BuildRepository.server";
+import type { BuildSort } from "~/features/user-page/user-page-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
 interface SortBuildsArgs {
-	builds: Awaited<ReturnType<typeof BuildRepository.allByUserId>>;
+	builds: Awaited<ReturnType<typeof BuildRepository.findAllByUserId>>;
 	buildSorting: BuildSort[] | null;
 	weaponPool: MainWeaponId[];
 }
@@ -28,9 +28,12 @@ export function sortBuilds({
 			Math.min(...a.weapons.map((wpn) => wpn.weaponSplId)) -
 			Math.min(...b.weapons.map((wpn) => wpn.weaponSplId)),
 		UPDATED_AT: (a, b) => b.updatedAt - a.updatedAt,
-		HEADGEAR_ID: (a, b) => a.headGearSplId - b.headGearSplId,
-		CLOTHES_ID: (a, b) => a.clothesGearSplId - b.clothesGearSplId,
-		SHOES_ID: (a, b) => a.shoesGearSplId - b.shoesGearSplId,
+		HEADGEAR_ID: (a, b) =>
+			compareNullableNumbers(a.headGearSplId, b.headGearSplId),
+		CLOTHES_ID: (a, b) =>
+			compareNullableNumbers(a.clothesGearSplId, b.clothesGearSplId),
+		SHOES_ID: (a, b) =>
+			compareNullableNumbers(a.shoesGearSplId, b.shoesGearSplId),
 		MODE: (a, b) => {
 			const aLowestModeIdx = modesShort.findIndex((mode) =>
 				a.modes?.includes(mode),
@@ -45,11 +48,11 @@ export function sortBuilds({
 			return aLowestModeIdx - bLowestModeIdx;
 		},
 		TOP_500: (a, b) => {
-			const aHas = a.weapons.some((wpn) => wpn.maxPower !== null);
-			const bHas = b.weapons.some((wpn) => wpn.maxPower !== null);
+			const aHasTop500 = a.weapons.some((wpn) => wpn.isTop500 === 1);
+			const bHasTop500 = b.weapons.some((wpn) => wpn.isTop500 === 1);
 
-			if (aHas && !bHas) return -1;
-			if (!aHas && bHas) return 1;
+			if (aHasTop500 && !bHasTop500) return -1;
+			if (!aHasTop500 && bHasTop500) return 1;
 
 			return 0;
 		},
@@ -71,8 +74,8 @@ export function sortBuilds({
 			return aLowestWeaponIdx - bLowestWeaponIdx;
 		},
 		PUBLIC_BUILD: (a, b) => {
-			const aIsPublic = a?.private === 0;
-			const bIsPublic = b?.private === 0;
+			const aIsPublic = a?.isPrivate === 0;
+			const bIsPublic = b?.isPrivate === 0;
 			if (aIsPublic && !bIsPublic) {
 				return -1;
 			}
@@ -82,8 +85,8 @@ export function sortBuilds({
 			return 0;
 		},
 		PRIVATE_BUILD: (a, b) => {
-			const aIsPrivate = a?.private === 1;
-			const bIsPrivate = b?.private === 1;
+			const aIsPrivate = a?.isPrivate === 1;
+			const bIsPrivate = b?.isPrivate === 1;
 
 			if (aIsPrivate && !bIsPrivate) {
 				return -1;
@@ -103,4 +106,11 @@ export function sortBuilds({
 
 		return 0;
 	});
+}
+
+function compareNullableNumbers(a: number | null, b: number | null) {
+	if (a === null && b === null) return 0;
+	if (a === null) return 1;
+	if (b === null) return -1;
+	return a - b;
 }

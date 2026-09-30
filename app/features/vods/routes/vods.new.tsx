@@ -1,47 +1,54 @@
-import { useLoaderData } from "@remix-run/react";
-import {
-	Controller,
-	get,
-	useFieldArray,
-	useFormContext,
-	useWatch,
-} from "react-hook-form";
+import clsx from "clsx";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { z } from "zod/v4";
+import { type MetaFunction, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
-import { AddFieldButton } from "~/components/form/AddFieldButton";
-import { RemoveFieldButton } from "~/components/form/RemoveFieldButton";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import type { Tables } from "~/db/tables";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { YouTubeEmbed } from "~/components/YouTubeEmbed";
+import type { ArrayItemRenderContext, CustomFieldRenderProps } from "~/form";
+import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
+import type { FormRenderProps } from "~/form/SendouForm";
+import {
+	SendouForm,
+	useFormValue,
+	useOptionalFormFieldContext,
+} from "~/form/SendouForm";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
+import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";
-import { DateFormField } from "../../../components/form/DateFormField";
-import { InputFormField } from "../../../components/form/InputFormField";
-import { SelectFormField } from "../../../components/form/SelectFormField";
-import { SendouForm } from "../../../components/form/SendouForm";
 import { action } from "../actions/vods.new.server";
 import { loader } from "../loaders/vods.new.server";
-import { videoMatchTypes } from "../vods-constants";
-import { videoInputSchema } from "../vods-schemas";
+import { vodFormBaseSchema } from "../vods-schemas";
+import { extractYoutubeIdFromVideoUrl } from "../vods-utils";
+import styles from "./vods.new.module.css";
+
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "New VOD",
+		image: ogPageImage("vods"),
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods", "calendar"],
 };
 
-export type VodFormFields = z.infer<typeof videoInputSchema>;
-
 export default function NewVodPage() {
 	const isVideoAdder = useHasRole("VIDEO_ADDER");
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["vods"]);
+	const [player, setPlayer] = useState<YT.Player | null>(null);
 
 	if (!isVideoAdder) {
 		return (
@@ -51,104 +58,266 @@ export default function NewVodPage() {
 		);
 	}
 
+	const defaultValues = data.vodToEdit
+		? vodToEditToFormValues(data.vodToEdit)
+		: data.vodPrefill
+			? vodPrefillToFormValues(data.vodPrefill)
+			: {
+					type: "TOURNAMENT" as const,
+					teamSize: "4" as const,
+					pov: { type: "USER" as const },
+					matches: [
+						{
+							mode: "SZ" as const,
+							stageId: 1 as StageId,
+							startsAt: "",
+							weapon: undefined as MainWeaponId | undefined,
+							weaponsTeamOne: [] as WeaponPoolItem[],
+							weaponsTeamTwo: [] as WeaponPoolItem[],
+						},
+					],
+				};
+
 	return (
-		<Main halfWidth>
+		<Main halfWidth className={styles.layout}>
 			<SendouForm
-				heading={
+				title={
 					data.vodToEdit
 						? t("vods:forms.title.edit")
 						: t("vods:forms.title.create")
 				}
-				schema={videoInputSchema}
-				defaultValues={
-					data.vodToEdit
-						? {
-								vodToEditId: data.vodToEdit.id,
-								video: data.vodToEdit,
-							}
-						: {
-								video: {
-									type: "TOURNAMENT",
-									matches: [
-										{ mode: "SZ", stageId: 1, startsAt: "", weapons: [] },
-									],
-									pov: { type: "USER" } as VodFormFields["video"]["pov"],
-								},
-							}
-				}
+				schema={vodFormBaseSchema}
+				defaultValues={defaultValues}
 			>
-				<FormFields />
+				{({ FormField }) => (
+					<>
+						<YouTubeEmbedWrapper onPlayerReady={setPlayer} />
+						<VodFormFields player={player} FormField={FormField} />
+					</>
+				)}
 			</SendouForm>
 		</Main>
 	);
 }
 
-function FormFields() {
-	const { t } = useTranslation(["vods"]);
-	const videoType = useWatch({
-		name: "video.type",
-	}) as VodFormFields["video"]["type"];
+type VodToEdit = NonNullable<Awaited<ReturnType<typeof loader>>["vodToEdit"]>;
+
+function vodToEditToFormValues(vodToEdit: VodToEdit) {
+	const teamSize = vodToEdit.teamSize ?? 4;
+	const isCast = vodToEdit.type === "CAST";
+
+	return {
+		vodToEditId: vodToEdit.id,
+		youtubeUrl: vodToEdit.youtubeUrl,
+		title: vodToEdit.title,
+		date: new Date(
+			vodToEdit.date.year,
+			vodToEdit.date.month,
+			vodToEdit.date.day,
+		),
+		type: vodToEdit.type,
+		teamSize: String(teamSize) as "1" | "2" | "3" | "4",
+		pov: vodToEdit.pov,
+		matches: vodToEdit.matches.map((match: VodToEdit["matches"][number]) => ({
+			startsAt: match.startsAt,
+			mode: match.mode,
+			stageId: match.stageId as StageId,
+			weapon: isCast ? undefined : (match.weapons[0] ?? undefined),
+			weaponsTeamOne: isCast
+				? match.weapons
+						.slice(0, teamSize)
+						.map((id: MainWeaponId) => ({ id, isFavorite: false }))
+				: [],
+			weaponsTeamTwo: isCast
+				? match.weapons
+						.slice(teamSize)
+						.map((id: MainWeaponId) => ({ id, isFavorite: false }))
+				: [],
+		})),
+	};
+}
+
+type VodPrefill = NonNullable<Awaited<ReturnType<typeof loader>>["vodPrefill"]>;
+
+/**
+ * Prefill from the emberz VoD parser's `ingest` param; what the detectors missed stays at the blank
+ * defaults. CAST weapons are alpha's four slots then bravo's, unread slots dropped so the empty
+ * required selects surface them. A non-CAST VoD takes the POV player's weapon when their seat is known.
+ */
+function vodPrefillToFormValues(prefill: VodPrefill) {
+	const teamSize = 4;
+	const isCast = prefill.type === "CAST";
+
+	return {
+		type: prefill.type ?? ("TOURNAMENT" as const),
+		teamSize: "4" as const,
+		pov: { type: "USER" as const },
+		matches: prefill.matches.map((match) => ({
+			startsAt: match.startsAt,
+			mode: match.mode ?? ("SZ" as const),
+			stageId: (match.stageId ?? 1) as StageId,
+			weapon: isCast
+				? undefined
+				: ((match.povWeapon ?? undefined) as MainWeaponId | undefined),
+			weaponsTeamOne: isCast
+				? weaponPoolFromPrefill(match.weapons.slice(0, teamSize))
+				: ([] as WeaponPoolItem[]),
+			weaponsTeamTwo: isCast
+				? weaponPoolFromPrefill(match.weapons.slice(teamSize, teamSize * 2))
+				: ([] as WeaponPoolItem[]),
+		})),
+	};
+}
+
+function weaponPoolFromPrefill(
+	weapons: VodPrefill["matches"][number]["weapons"],
+): WeaponPoolItem[] {
+	return weapons
+		.filter((id): id is MainWeaponId => id !== null)
+		.map((id) => ({ id, isFavorite: false }));
+}
+
+function YouTubeEmbedWrapper({
+	onPlayerReady,
+}: {
+	onPlayerReady: (player: YT.Player) => void;
+}) {
+	const floatWidth = useFloatingEmbedWidth();
+	const youtubeUrl = useFormValue("youtubeUrl") as string | undefined;
+
+	if (!youtubeUrl) return null;
+
+	const videoId = extractYoutubeIdFromVideoUrl(youtubeUrl);
+	if (!videoId) return null;
+
+	return (
+		<div
+			className={clsx(styles.embedRail, { [styles.floating]: floatWidth })}
+			style={floatWidth ? { width: floatWidth } : undefined}
+		>
+			<div className={styles.embedContainer}>
+				<YouTubeEmbed id={videoId} enableApi onPlayerReady={onPlayerReady} />
+			</div>
+		</div>
+	);
+}
+
+const EMBED_RAIL_GAP = 24; // mirrors var(--s-6)
+const EMBED_FLOAT_WIDTHS = [400, 320] as const;
+
+/**
+ * Widest embed width the form's left margin fits, or `null` to leave it in flow. Measures the
+ * actual margin since a media query can't see the collapsed side nav or open chat sidebar.
+ */
+function useFloatingEmbedWidth(): number | null {
+	const [leftMargin, setLeftMargin] = useState(0);
+
+	useIsomorphicLayoutEffect(() => {
+		const main = document.querySelector("main");
+		const container = main?.parentElement;
+		if (!main || !container) return;
+
+		const measure = () => {
+			setLeftMargin(
+				main.getBoundingClientRect().left -
+					container.getBoundingClientRect().left,
+			);
+		};
+
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(container);
+
+		return () => observer.disconnect();
+	}, []);
+
+	return (
+		EMBED_FLOAT_WIDTHS.find((width) => leftMargin >= width + EMBED_RAIL_GAP) ??
+		null
+	);
+}
+
+type VodFormFieldComponent = FormRenderProps<
+	typeof vodFormBaseSchema.entries
+>["FormField"];
+
+function VodFormFields({
+	player,
+	FormField,
+}: {
+	player: YT.Player | null;
+	FormField: VodFormFieldComponent;
+}) {
+	const videoType = useFormValue("type") as string;
 
 	return (
 		<>
-			<InputFormField<VodFormFields>
-				label={t("vods:forms.title.youtubeUrl")}
-				name="video.youtubeUrl"
-				placeholder="https://www.youtube.com/watch?v=-dQ6JsVIKdY"
-				required
-				size="medium"
-			/>
+			<FormField name="youtubeUrl" />
+			<FormField name="title" />
+			<FormField name="date" />
+			<FormField name="type" />
 
-			<InputFormField<VodFormFields>
-				label={t("vods:forms.title.videoTitle")}
-				name="video.title"
-				placeholder="[SCL 47] (Grand Finals) Team Olive vs. Kraken Paradise"
-				required
-				size="medium"
-			/>
+			{videoType === "CAST" ? (
+				<TeamSizeField FormField={FormField} />
+			) : (
+				<PovFormField FormField={FormField} />
+			)}
 
-			<DateFormField<VodFormFields>
-				label={t("vods:forms.title.videoDate")}
-				name="video.date"
-				required
-				size="extra-small"
-			/>
-
-			<SelectFormField<VodFormFields>
-				label={t("vods:forms.title.type")}
-				name="video.type"
-				values={videoMatchTypes.map((role) => ({
-					value: role,
-					label: t(`vods:type.${role}`),
-				}))}
-				required
-			/>
-
-			{videoType !== "CAST" ? <PovFormField /> : null}
-
-			<MatchesFormfield videoType={videoType} />
+			<FormField name="matches">
+				{(ctx: ArrayItemRenderContext) => (
+					<MatchFieldsetContent
+						index={ctx.index}
+						itemName={ctx.itemName}
+						values={ctx.values as unknown as MatchFieldValues}
+						setItemField={
+							ctx.setItemField as <K extends keyof MatchFieldValues>(
+								field: K,
+								value: MatchFieldValues[K],
+							) => void
+						}
+						canRemove={ctx.canRemove}
+						remove={ctx.remove}
+						player={player}
+						videoType={videoType}
+						FormField={FormField}
+					/>
+				)}
+			</FormField>
 		</>
 	);
 }
 
-function PovFormField() {
-	const { t } = useTranslation(["vods", "calendar"]);
-	const methods = useFormContext<VodFormFields>();
+function TeamSizeField({ FormField }: { FormField: VodFormFieldComponent }) {
+	const context = useOptionalFormFieldContext();
 
-	const povNameError = get(methods.formState.errors, "video.pov.name");
+	// the weapon count per match is tied to the team size
+	const clearMatchWeapons = () => {
+		context?.setValueFromPrev("matches", (prev) =>
+			((prev ?? []) as Array<Record<string, unknown>>).map((match) => ({
+				...match,
+				weaponsTeamOne: [],
+				weaponsTeamTwo: [],
+			})),
+		);
+	};
+
+	return <FormField name="teamSize" onValueChange={clearMatchWeapons} />;
+}
+
+function PovFormField({ FormField }: { FormField: VodFormFieldComponent }) {
+	const { t } = useTranslation(["vods", "calendar"]);
 
 	return (
-		<Controller
-			control={methods.control}
-			name="video.pov"
-			render={({
-				field: { onChange, onBlur, value },
-				fieldState: { error },
-			}) => {
-				// biome-ignore lint/complexity/noUselessFragments: Biome upgrade
-				if (!value) return <></>;
+		<FormField name="pov">
+			{({ name, error, value, onChange }: CustomFieldRenderProps) => {
+				const povValue = value as
+					| { type: "USER"; userId?: number }
+					| { type: "NAME"; name?: string }
+					| undefined;
 
-				const asPlainInput = value.type === "NAME";
+				if (!povValue) return null;
+
+				const asPlainInput = povValue.type === "NAME";
 
 				const toggleInputType = () => {
 					if (asPlainInput) {
@@ -159,216 +328,306 @@ function PovFormField() {
 				};
 
 				return (
-					<div>
+					<div className={styles.povField}>
 						{asPlainInput ? (
 							<>
-								<Label required htmlFor="pov">
+								<Label required htmlFor={name}>
 									{t("vods:forms.title.pov")}
 								</Label>
 								<input
-									id="pov"
-									value={value.name ?? ""}
+									id={name}
+									value={povValue.name ?? ""}
 									onChange={(e) => {
 										onChange({ type: "NAME", name: e.target.value });
 									}}
-									onBlur={onBlur}
 								/>
 							</>
 						) : (
 							<UserSearch
 								label={t("vods:forms.title.pov")}
 								isRequired
-								name="team-player"
-								initialUserId={value.userId}
+								name="pov-user"
+								initialUserId={povValue.userId}
 								onChange={(newUser) =>
 									onChange({
 										type: "USER",
-										userId: newUser.id,
+										userId: newUser?.id,
 									})
 								}
-								onBlur={onBlur}
 							/>
 						)}
 						<SendouButton
 							size="small"
 							variant="minimal"
-							onPress={toggleInputType}
-							className="outline-theme mt-2"
+							onClick={toggleInputType}
+							className="mt-2"
 						>
 							{asPlainInput
 								? t("calendar:forms.team.player.addAsUser")
 								: t("calendar:forms.team.player.addAsText")}
 						</SendouButton>
-						{error && (
-							<FormMessage type="error">{error.message as string}</FormMessage>
-						)}
-						{povNameError && (
-							<FormMessage type="error">
-								{povNameError.message as string}
-							</FormMessage>
-						)}
+						{error ? <FormMessage type="error">{error}</FormMessage> : null}
 					</div>
 				);
 			}}
-		/>
+		</FormField>
 	);
 }
 
-function MatchesFormfield({
-	videoType,
-}: {
-	videoType: Tables["Video"]["type"];
-}) {
-	const {
-		formState: { errors },
-	} = useFormContext<VodFormFields>();
-	const { fields, append, remove } = useFieldArray<VodFormFields>({
-		name: "video.matches",
-	});
+interface MatchFieldValues {
+	startsAt: string;
+	mode: string;
+	stageId: StageId;
+	weapon: MainWeaponId | null;
+	weaponsTeamOne: WeaponPoolItem[];
+	weaponsTeamTwo: WeaponPoolItem[];
+}
 
-	const rootError = errors.video?.matches?.root;
+type MatchFieldsetContentProps = ArrayItemRenderContext<MatchFieldValues> & {
+	player: YT.Player | null;
+	videoType: string;
+	FormField: VodFormFieldComponent;
+};
+
+function MatchFieldsetContent({
+	index,
+	itemName,
+	values: matchValues,
+	setItemField,
+	canRemove,
+	remove,
+	player,
+	videoType,
+	FormField,
+}: MatchFieldsetContentProps) {
+	const { t } = useTranslation(["vods", "common"]);
+	const [currentTime, setCurrentTime] = useState<string>("");
+	const previousWeapons = (useFormValue(`matches[${index - 1}]`) ??
+		null) as MatchFieldValues | null;
+
+	useEffect(() => {
+		if (!player) return;
+
+		const interval = setInterval(() => {
+			try {
+				const time = player.getCurrentTime();
+				if (time) {
+					setCurrentTime(formatTime(time));
+				}
+			} catch {
+				// Silently ignore errors when getting current time
+			}
+		}, 250);
+
+		return () => clearInterval(interval);
+	}, [player]);
+
+	return (
+		<>
+			<div className="stack horizontal sm items-center justify-between">
+				<div className="text-md font-semi-bold">
+					{t("vods:gameCount", { count: index + 1 })}
+				</div>
+				{canRemove ? (
+					<SendouButton
+						size="small"
+						variant="minimal-destructive"
+						onClick={remove}
+					>
+						{t("common:actions.remove")}
+					</SendouButton>
+				) : null}
+			</div>
+
+			<div className="stack md mt-4">
+				<div>
+					<FormField name={`${itemName}.startsAt`} />
+					{currentTime ? (
+						<SendouButton
+							variant="minimal"
+							size="miniscule"
+							onClick={() => setItemField("startsAt", currentTime)}
+							className="mt-2"
+						>
+							{t("vods:forms.action.setAsCurrent", { time: currentTime })}
+						</SendouButton>
+					) : null}
+				</div>
+
+				<FormField name={`${itemName}.mode`} />
+
+				<FormField name={`${itemName}.stageId`} />
+
+				<WeaponsField
+					index={index}
+					matchValues={matchValues}
+					setItemField={setItemField}
+					videoType={videoType}
+					previousWeapons={previousWeapons}
+				/>
+			</div>
+		</>
+	);
+}
+
+function WeaponsField({
+	index,
+	matchValues,
+	setItemField,
+	videoType,
+	previousWeapons,
+}: {
+	index: number;
+	matchValues: MatchFieldValues;
+	setItemField: <K extends keyof MatchFieldValues>(
+		field: K,
+		value: MatchFieldValues[K],
+	) => void;
+	videoType: string;
+	previousWeapons: MatchFieldValues | null;
+}) {
+	const { t } = useTranslation(["vods", "forms"]);
+	const teamSizeValue = useFormValue("teamSize") as string | undefined;
+	const teamSize = teamSizeValue ? Number(teamSizeValue) : 4;
+	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
+		useRecentlyReportedWeapons();
+
+	const setWeapon = (value: MainWeaponId | null) => {
+		setItemField("weapon", value);
+		if (typeof value === "number") addRecentlyReportedWeapon(value);
+	};
+
+	const setTeamWeapon = (
+		team: "weaponsTeamOne" | "weaponsTeamTwo",
+		weaponIdx: number,
+		value: MainWeaponId | null,
+	) => {
+		const currentPool = [...(matchValues[team] || [])];
+		if (typeof value === "number") {
+			currentPool[weaponIdx] = { id: value, isFavorite: false };
+		} else {
+			currentPool.splice(weaponIdx, 1);
+		}
+		setItemField(team, currentPool);
+		if (typeof value === "number") addRecentlyReportedWeapon(value);
+	};
+
+	const copyFromPrevious = () => {
+		if (!previousWeapons) return;
+
+		if (videoType === "CAST") {
+			setItemField("weaponsTeamOne", [...previousWeapons.weaponsTeamOne]);
+			setItemField("weaponsTeamTwo", [...previousWeapons.weaponsTeamTwo]);
+		} else {
+			setItemField("weapon", previousWeapons.weapon);
+		}
+	};
+
+	const hasPreviousWeapons = previousWeapons
+		? videoType === "CAST"
+			? previousWeapons.weaponsTeamOne.length > 0 ||
+				previousWeapons.weaponsTeamTwo.length > 0
+			: previousWeapons.weapon !== null
+		: false;
 
 	return (
 		<div>
-			<div className="stack md">
-				{fields.map((field, i) => {
-					return (
-						<MatchesFieldset
-							key={field.id}
-							idx={i}
-							remove={remove}
-							canRemove={fields.length > 1}
-							videoType={videoType}
-						/>
-					);
-				})}
-				<AddFieldButton
-					onClick={() => {
-						append({ mode: "SZ", stageId: 1, startsAt: "", weapons: [] });
-					}}
+			{videoType === "CAST" ? (
+				<div>
+					<TeamWeaponSelects
+						label={t("forms:labels.vodWeaponsTeamOne")}
+						teamSize={teamSize}
+						matchIndex={index}
+						teamNumber={1}
+						weapons={matchValues.weaponsTeamOne}
+						quickSelectWeaponsIds={recentlyReportedWeapons}
+						onChange={(weaponIdx, weaponId) =>
+							setTeamWeapon("weaponsTeamOne", weaponIdx, weaponId)
+						}
+					/>
+					<TeamWeaponSelects
+						label={t("forms:labels.vodWeaponsTeamTwo")}
+						teamSize={teamSize}
+						matchIndex={index}
+						teamNumber={2}
+						weapons={matchValues.weaponsTeamTwo}
+						quickSelectWeaponsIds={recentlyReportedWeapons}
+						onChange={(weaponIdx, weaponId) =>
+							setTeamWeapon("weaponsTeamTwo", weaponIdx, weaponId)
+						}
+						className="mt-4"
+					/>
+				</div>
+			) : (
+				<WeaponSelect
+					label={t("forms:labels.vodWeapon")}
+					isRequired
+					testId={`match-${index}-weapon`}
+					value={matchValues.weapon}
+					quickSelectWeaponsIds={recentlyReportedWeapons}
+					onChange={setWeapon}
 				/>
-				{rootError && (
-					<FormMessage type="error">{rootError.message as string}</FormMessage>
-				)}
+			)}
+			{hasPreviousWeapons ? (
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					onClick={copyFromPrevious}
+					className="mt-2"
+				>
+					{t("vods:forms.action.copyFromPrevious")}
+				</SendouButton>
+			) : null}
+		</div>
+	);
+}
+
+function TeamWeaponSelects({
+	label,
+	teamSize,
+	matchIndex,
+	teamNumber,
+	weapons,
+	quickSelectWeaponsIds,
+	onChange,
+	className,
+}: {
+	label: string;
+	teamSize: number;
+	matchIndex: number;
+	teamNumber: 1 | 2;
+	weapons: WeaponPoolItem[];
+	quickSelectWeaponsIds: MainWeaponId[];
+	onChange: (weaponIdx: number, weaponId: MainWeaponId | null) => void;
+	className?: string;
+}) {
+	return (
+		<div className={className}>
+			<Label required>{label}</Label>
+			<div className="stack sm">
+				{new Array(teamSize).fill(null).map((_, i) => (
+					<WeaponSelect
+						key={i}
+						isRequired
+						testId={`match-${matchIndex}-team${teamNumber}-weapon-${i}`}
+						value={(weapons[i]?.id as MainWeaponId) ?? null}
+						quickSelectWeaponsIds={quickSelectWeaponsIds}
+						onChange={(weaponId) => onChange(i, weaponId)}
+					/>
+				))}
 			</div>
 		</div>
 	);
 }
 
-function MatchesFieldset({
-	idx,
-	remove,
-	canRemove,
-	videoType,
-}: {
-	idx: number;
-	remove: (idx: number) => void;
-	canRemove: boolean;
-	videoType: Tables["Video"]["type"];
-}) {
-	const { t } = useTranslation(["vods", "game-misc"]);
+export function formatTime(seconds: number): string {
+	const hours = Math.floor(seconds / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	const secs = Math.floor(seconds % 60);
 
-	return (
-		<div className="stack md">
-			<div className="stack horizontal sm">
-				<h2 className="text-md">{t("vods:gameCount", { count: idx + 1 })}</h2>
-				{canRemove ? <RemoveFieldButton onClick={() => remove(idx)} /> : null}
-			</div>
+	if (hours > 0) {
+		return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+	}
 
-			<InputFormField<VodFormFields>
-				required
-				label={t("vods:forms.title.startTimestamp")}
-				name={`video.matches.${idx}.startsAt`}
-				placeholder="10:22"
-			/>
-
-			<div className="stack horizontal sm">
-				<SelectFormField<VodFormFields>
-					required
-					label={t("vods:forms.title.mode")}
-					name={`video.matches.${idx}.mode`}
-					values={modesShort.map((mode) => ({
-						value: mode,
-						label: t(`game-misc:MODE_SHORT_${mode}`),
-					}))}
-				/>
-
-				<SelectFormField<VodFormFields>
-					required
-					label={t("vods:forms.title.stage")}
-					name={`video.matches.${idx}.stageId`}
-					values={stageIds.map((stageId) => ({
-						value: stageId,
-						label: t(`game-misc:STAGE_${stageId}`),
-					}))}
-				/>
-			</div>
-
-			<Controller
-				control={useFormContext<VodFormFields>().control}
-				name={`video.matches.${idx}.weapons`}
-				render={({ field: { onChange, value } }) => {
-					return (
-						<div>
-							{videoType === "CAST" ? (
-								<div>
-									<Label required>{t("vods:forms.title.weaponsTeamOne")}</Label>
-									<div className="stack sm">
-										{new Array(4).fill(null).map((_, i) => {
-											return (
-												<WeaponSelect
-													key={i}
-													isRequired
-													testId={`player-${i}-weapon`}
-													value={value[i] ?? null}
-													onChange={(weaponId) => {
-														const weapons = [...value];
-														weapons[i] = weaponId;
-
-														onChange(weapons);
-													}}
-												/>
-											);
-										})}
-									</div>
-									<div className="mt-4">
-										<Label required>
-											{t("vods:forms.title.weaponsTeamTwo")}
-										</Label>
-										<div className="stack sm">
-											{new Array(4).fill(null).map((_, i) => {
-												const adjustedI = i + 4;
-												return (
-													<WeaponSelect
-														key={i}
-														isRequired
-														testId={`player-${adjustedI}-weapon`}
-														value={value[adjustedI] ?? null}
-														onChange={(weaponId) => {
-															const weapons = [...value];
-															weapons[adjustedI] = weaponId;
-
-															onChange(weapons);
-														}}
-													/>
-												);
-											})}
-										</div>
-									</div>
-								</div>
-							) : (
-								<WeaponSelect
-									label={t("vods:forms.title.weapon")}
-									isRequired
-									testId={`match-${idx}-weapon`}
-									value={value[0] ?? null}
-									onChange={(weaponId) => onChange([weaponId])}
-								/>
-							)}
-						</div>
-					);
-				}}
-			/>
-		</div>
-	);
+	return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }

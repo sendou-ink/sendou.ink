@@ -1,0 +1,40 @@
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.weekLabel {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.days {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+	font-size: var(--font-xs);
+}
+
+.day {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-3);
+	padding-block: var(--s-1-5);
+
+	&:not(:first-child) {
+		border-top: var(--border-style);
+	}
+}
+
+.dayLabel {
+	flex-shrink: 0;
+	width: 4.5rem;
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}

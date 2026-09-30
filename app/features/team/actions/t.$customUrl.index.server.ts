@@ -1,27 +1,30 @@
-import type { ActionFunction } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
+import * as v from "valibot";
+import { requireUser } from "~/features/auth/core/user.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TeamRepository from "../TeamRepository.server";
-import {
-	teamParamsSchema,
-	teamProfilePageActionSchema,
-} from "../team-schemas.server";
+import { teamProfilePageActionSchema } from "../team-schemas";
+import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamMember, isTeamOwner, resolveNewOwner } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = await requireUserId(request);
+	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: teamProfilePageActionSchema,
 	});
 
-	const { customUrl } = teamParamsSchema.parse(params);
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const { customUrl } = v.parse(teamParamsSchema, params);
+	const team = notFoundIfNullish(
+		await TeamRepository.findByCustomUrl(customUrl),
+	);
 
 	switch (data._action) {
 		case "LEAVE_TEAM": {
@@ -47,12 +50,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "MAKE_MAIN_TEAM": {
-			await TeamRepository.switchMainTeam({
-				userId: user.id,
-				teamId: team.id,
-			});
+			await TeamRepository.switchOwnMainTeam(team.id);
 
 			break;
+		}
+		case "DELETE_TEAM": {
+			requirePermission(team, "DELETE");
+
+			await TeamRepository.deleteById(team.id);
+			throw redirect("/");
 		}
 		default: {
 			assertUnreachable(data);

@@ -1,0 +1,95 @@
+.container {
+	width: 100%;
+	max-width: 24rem;
+	margin-inline: auto;
+}
+
+.suggestedInfoText {
+	color: var(--color-text-high);
+	font-size: var(--font-lg);
+}
+
+.topContainer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.topContainerCentered {
+	justify-content: center;
+}
+
+.radios {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-5);
+}
+
+.radioContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.radioLabel {
+	font-size: var(--font-sm);
+	margin-block-end: 0;
+}
+
+.usersCount {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.suggestedUserInfo {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.suggestedUserHeading {
+	min-width: 0;
+}
+
+.suggestedUserTrigger {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	min-width: 0;
+	max-width: 100%;
+}
+
+.suggestedUsername {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.comment {
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+	min-width: 0;
+}
+
+.commentButton {
+	max-width: 12rem;
+	margin-inline-start: auto;
+	flex-shrink: 0;
+}
+
+.viewCommentsAction {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.commentTime {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.deleteButton {
+	display: inline;
+}

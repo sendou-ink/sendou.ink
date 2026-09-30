@@ -1,0 +1,156 @@
+diff --git a/dist/cjs/i18next.js b/dist/cjs/i18next.js
+index 6cdf84263936193ff243df98546da3e9104ab24c..1169f1f82abd621a40f8bc75bc62374d24e73a1d 100644
+--- a/dist/cjs/i18next.js
++++ b/dist/cjs/i18next.js
+@@ -531,6 +531,41 @@ class Translator extends EventEmitter {
+     };
+   }
+   translate(keys, o, lastKey) {
++    if (lastKey === undefined && typeof keys === 'string') {
++      let ck = null;
++      if (o === undefined) {
++        ck = `${this.language}\u0001\u0001\u0001\u0001${keys}`;
++      } else if (typeof o === 'object' && o !== null) {
++        let cacheable = true;
++        for (const k in o) {
++          if (k !== 'lng' && k !== 'lngs' && k !== 'ns' && k !== 'keyPrefix' && o[k] !== undefined) {
++            cacheable = false;
++            break;
++          }
++        }
++        if (cacheable) ck = `${o.lng || this.language}\u0001${o.lngs || ''}\u0001${o.ns || ''}\u0001${o.keyPrefix || ''}\u0001${keys}`;
++      }
++      if (ck !== null) {
++        let cache = this.__translationCache;
++        if (cache === undefined) {
++          cache = this.__translationCache = new Map();
++          const clear = () => this.__translationCache.clear();
++          this.resourceStore?.on?.('added', clear);
++          this.resourceStore?.on?.('removed', clear);
++        }
++        const hit = cache.get(ck);
++        if (hit !== undefined) return hit;
++        const res = this.__translateUncached(keys, o, lastKey);
++        if (typeof res === 'string') {
++          if (cache.size >= 40000) cache.clear();
++          cache.set(ck, res);
++        }
++        return res;
++      }
++    }
++    return this.__translateUncached(keys, o, lastKey);
++  }
++  __translateUncached(keys, o, lastKey) {
+     let opt = typeof o === 'object' ? {
+       ...o
+     } : o;
+@@ -2049,21 +2084,24 @@ class I18n extends EventEmitter {
+       const explicitCallNs = o.ns !== undefined && o.ns !== null;
+       o.ns = o.ns || fixedT.ns;
+       if (o.keyPrefix !== '') o.keyPrefix = o.keyPrefix || keyPrefix || fixedT.keyPrefix;
+-      const selectorOpts = {
+-        ...this.options,
+-        ...o
++      const buildSelectorOpts = () => {
++        const selectorOpts = {
++          ...this.options,
++          ...o
++        };
++        if (Array.isArray(scopeNs) && !explicitCallNs) selectorOpts.ns = scopeNs;
++        return selectorOpts;
+       };
+-      if (Array.isArray(scopeNs) && !explicitCallNs) selectorOpts.ns = scopeNs;
+-      if (typeof o.keyPrefix === 'function') o.keyPrefix = keysFromSelector(o.keyPrefix, selectorOpts);
++      if (typeof o.keyPrefix === 'function') o.keyPrefix = keysFromSelector(o.keyPrefix, buildSelectorOpts());
+       const keySeparator = this.options.keySeparator || '.';
+       let resultKey;
+       if (o.keyPrefix && Array.isArray(key)) {
+         resultKey = key.map(k => {
+-          if (typeof k === 'function') k = keysFromSelector(k, selectorOpts);
++          if (typeof k === 'function') k = keysFromSelector(k, buildSelectorOpts());
+           return `${o.keyPrefix}${keySeparator}${k}`;
+         });
+       } else {
+-        if (typeof key === 'function') key = keysFromSelector(key, selectorOpts);
++        if (typeof key === 'function') key = keysFromSelector(key, buildSelectorOpts());
+         resultKey = o.keyPrefix ? `${o.keyPrefix}${keySeparator}${key}` : key;
+       }
+       return this.t(resultKey, o);
+diff --git a/dist/esm/i18next.js b/dist/esm/i18next.js
+index d01bbdbd1c0c4a4ebf99d64f5fc61c290be67fc6..dbd2eded184a5e3bb6411a6f7a4afd9e368cb1f0 100644
+--- a/dist/esm/i18next.js
++++ b/dist/esm/i18next.js
+@@ -529,6 +529,41 @@ class Translator extends EventEmitter {
+     };
+   }
+   translate(keys, o, lastKey) {
++    if (lastKey === undefined && typeof keys === 'string') {
++      let ck = null;
++      if (o === undefined) {
++        ck = `${this.language}\u0001\u0001\u0001\u0001${keys}`;
++      } else if (typeof o === 'object' && o !== null) {
++        let cacheable = true;
++        for (const k in o) {
++          if (k !== 'lng' && k !== 'lngs' && k !== 'ns' && k !== 'keyPrefix' && o[k] !== undefined) {
++            cacheable = false;
++            break;
++          }
++        }
++        if (cacheable) ck = `${o.lng || this.language}\u0001${o.lngs || ''}\u0001${o.ns || ''}\u0001${o.keyPrefix || ''}\u0001${keys}`;
++      }
++      if (ck !== null) {
++        let cache = this.__translationCache;
++        if (cache === undefined) {
++          cache = this.__translationCache = new Map();
++          const clear = () => this.__translationCache.clear();
++          this.resourceStore?.on?.('added', clear);
++          this.resourceStore?.on?.('removed', clear);
++        }
++        const hit = cache.get(ck);
++        if (hit !== undefined) return hit;
++        const res = this.__translateUncached(keys, o, lastKey);
++        if (typeof res === 'string') {
++          if (cache.size >= 40000) cache.clear();
++          cache.set(ck, res);
++        }
++        return res;
++      }
++    }
++    return this.__translateUncached(keys, o, lastKey);
++  }
++  __translateUncached(keys, o, lastKey) {
+     let opt = typeof o === 'object' ? {
+       ...o
+     } : o;
+@@ -2047,21 +2082,24 @@ class I18n extends EventEmitter {
+       const explicitCallNs = o.ns !== undefined && o.ns !== null;
+       o.ns = o.ns || fixedT.ns;
+       if (o.keyPrefix !== '') o.keyPrefix = o.keyPrefix || keyPrefix || fixedT.keyPrefix;
+-      const selectorOpts = {
+-        ...this.options,
+-        ...o
++      const buildSelectorOpts = () => {
++        const selectorOpts = {
++          ...this.options,
++          ...o
++        };
++        if (Array.isArray(scopeNs) && !explicitCallNs) selectorOpts.ns = scopeNs;
++        return selectorOpts;
+       };
+-      if (Array.isArray(scopeNs) && !explicitCallNs) selectorOpts.ns = scopeNs;
+-      if (typeof o.keyPrefix === 'function') o.keyPrefix = keysFromSelector(o.keyPrefix, selectorOpts);
++      if (typeof o.keyPrefix === 'function') o.keyPrefix = keysFromSelector(o.keyPrefix, buildSelectorOpts());
+       const keySeparator = this.options.keySeparator || '.';
+       let resultKey;
+       if (o.keyPrefix && Array.isArray(key)) {
+         resultKey = key.map(k => {
+-          if (typeof k === 'function') k = keysFromSelector(k, selectorOpts);
++          if (typeof k === 'function') k = keysFromSelector(k, buildSelectorOpts());
+           return `${o.keyPrefix}${keySeparator}${k}`;
+         });
+       } else {
+-        if (typeof key === 'function') key = keysFromSelector(key, selectorOpts);
++        if (typeof key === 'function') key = keysFromSelector(key, buildSelectorOpts());
+         resultKey = o.keyPrefix ? `${o.keyPrefix}${keySeparator}${key}` : key;
+       }
+       return this.t(resultKey, o);

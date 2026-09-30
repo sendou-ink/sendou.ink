@@ -1,58 +1,81 @@
-import { type FetcherWithComponents, useFetcher } from "@remix-run/react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import type { SendouButtonProps } from "~/components/elements/Button";
+import { type FetcherWithComponents, useFetcher } from "react-router";
+import {
+	SendouButton,
+	type SendouButtonProps,
+} from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { useIsMounted } from "~/hooks/useIsMounted";
-import invariant from "~/utils/invariant";
+import { useHydrated } from "~/hooks/useHydrated";
+import { invariant } from "~/utils/invariant";
+import { FormMessage } from "./FormMessage";
 import { SubmitButton } from "./SubmitButton";
+
+interface ChildProps {
+	onClick?: () => void;
+	type?: "button";
+}
 
 export function FormWithConfirm({
 	fields,
 	children,
 	dialogHeading,
+	description,
 	submitButtonText,
 	action,
 	submitButtonTestId = "submit-button",
 	submitButtonVariant = "destructive",
 	fetcher: _fetcher,
+	isOpen,
+	onOpenChange,
+	onConfirm,
 }: {
 	fields?: (
 		| [name: string, value: string | number]
 		| readonly [name: string, value: string | number]
 	)[];
-	children: React.ReactNode;
+	children?: React.ReactElement<ChildProps>;
 	dialogHeading: string;
+	/** shown below the heading in the confirm dialog */
+	description?: React.ReactNode;
 	submitButtonText?: string;
 	action?: string;
 	submitButtonTestId?: string;
 	submitButtonVariant?: SendouButtonProps["variant"];
 	fetcher?: FetcherWithComponents<any>;
+	/** controlled open state, no child trigger needed */
+	isOpen?: boolean;
+	onOpenChange?: (isOpen: boolean) => void;
+	/** runs instead of submitting a form (client only action) */
+	onConfirm?: () => void;
 }) {
 	const componentsFetcher = useFetcher();
 	const fetcher = _fetcher ?? componentsFetcher;
 
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const { t } = useTranslation(["common"]);
-	const [dialogOpen, setDialogOpen] = React.useState(false);
+	const [internalOpen, setInternalOpen] = React.useState(false);
 	const formRef = React.useRef<HTMLFormElement>(null);
 	const id = React.useId();
 
-	const openDialog = React.useCallback(() => setDialogOpen(true), []);
-	const closeDialog = React.useCallback(() => setDialogOpen(false), []);
+	const isControlled = isOpen !== undefined;
+	const dialogOpen = isControlled ? isOpen : internalOpen;
 
-	invariant(React.isValidElement(children));
+	const openDialog = () => {
+		onOpenChange?.(true);
+		setInternalOpen(true);
+	};
+	const closeDialog = () => {
+		onOpenChange?.(false);
+		setInternalOpen(false);
+	};
 
-	React.useEffect(() => {
-		if (fetcher.state === "loading") {
-			closeDialog();
-		}
-	}, [fetcher.state, closeDialog]);
+	invariant(!children || React.isValidElement(children));
 
 	return (
 		<>
-			{isMounted
+			{isHydrated && !onConfirm
 				? // using portal here makes nesting this component in another form work
 					createPortal(
 						<fetcher.Form
@@ -61,6 +84,7 @@ export function FormWithConfirm({
 							ref={formRef}
 							method="post"
 							action={action}
+							onSubmit={closeDialog}
 						>
 							{fields?.map(([name, value]) => (
 								<input type="hidden" key={name} name={name} value={value} />
@@ -77,22 +101,42 @@ export function FormWithConfirm({
 			>
 				<div className="stack md">
 					<h2 className="text-md text-center">{dialogHeading}</h2>
+					{description ? (
+						<FormMessage type="info">{description}</FormMessage>
+					) : null}
 					<div className="stack horizontal md justify-center mt-2">
-						<SubmitButton
-							form={id}
-							variant={submitButtonVariant}
-							testId={dialogOpen ? "confirm-button" : submitButtonTestId}
-						>
-							{submitButtonText ?? t("common:actions.delete")}
-						</SubmitButton>
+						{onConfirm ? (
+							<SendouButton
+								variant={submitButtonVariant}
+								testId={dialogOpen ? "confirm-button" : submitButtonTestId}
+								onClick={() => {
+									closeDialog();
+									onConfirm();
+								}}
+							>
+								{submitButtonText ?? t("common:actions.delete")}
+							</SendouButton>
+						) : (
+							<SubmitButton
+								form={id}
+								variant={submitButtonVariant}
+								testId={dialogOpen ? "confirm-button" : submitButtonTestId}
+							>
+								{submitButtonText ?? t("common:actions.delete")}
+							</SubmitButton>
+						)}
 					</div>
 				</div>
 			</SendouDialog>
-			{React.cloneElement(children, {
-				// @ts-expect-error broke with @types/react upgrade. TODO: figure out narrower type than React.ReactNode
-				onPress: openDialog,
-				type: "button",
-			})}
+			{children
+				? React.cloneElement(children, {
+						onClick: () => {
+							children.props.onClick?.();
+							openDialog();
+						},
+						type: "button",
+					})
+				: null}
 		</>
 	);
 }

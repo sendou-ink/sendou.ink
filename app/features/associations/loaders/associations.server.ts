@@ -1,14 +1,13 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import type { LoaderFunctionArgs } from "react-router";
+import { requireUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseSafeSearchParams } from "~/utils/remix.server";
-import { inviteCodeObject } from "~/utils/zod";
 import * as AssociationRepository from "../AssociationRepository.server";
+import { associationsSearchParams } from "../associations-search-params";
 
 export type AssociationsLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUserId(request);
+	const user = requireUser();
 
 	const associations = (
 		await AssociationRepository.findByMemberUserId(user.id, {
@@ -19,7 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const associationsWithInviteCodes = await Promise.all(
 		associations.map(async (association) => ({
 			...association,
-			inviteCode: association.permissions.MANAGE.includes(user.id)
+			inviteCode: association.permissions.MANAGE_INVITE_LINK.includes(user.id)
 				? await AssociationRepository.findInviteCodeById(association.id)
 				: undefined,
 		})),
@@ -35,27 +34,21 @@ async function associationToJoin(
 	request: LoaderFunctionArgs["request"],
 	userId: number,
 ) {
-	const searchParams = parseSafeSearchParams({
-		request,
-		schema: inviteCodeObject,
+	const { inviteCode } = associationsSearchParams.parse(request);
+
+	if (!inviteCode) return null;
+
+	const association = await AssociationRepository.findByInviteCode(inviteCode, {
+		withMembers: true,
 	});
+	if (!association) return null;
 
-	if (!searchParams.success) return null;
-
-	const associationToJoin = await AssociationRepository.findByInviteCode(
-		searchParams.data.inviteCode,
-		{
-			withMembers: true,
-		},
-	);
-	if (!associationToJoin) return null;
-
-	if (associationToJoin.members!.some((member) => member.id === userId)) {
+	if (association.members!.some((member) => member.id === userId)) {
 		return null;
 	}
 
 	return {
-		association: associationToJoin,
-		inviteCode: searchParams.data.inviteCode,
+		association,
+		inviteCode,
 	};
 }

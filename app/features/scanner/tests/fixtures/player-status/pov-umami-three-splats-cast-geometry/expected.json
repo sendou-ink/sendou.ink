@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 277,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[true, false, false, false],
+			[false, false, true, true]
+		]
+	},
+	"options": {
+		"skipFields": ["dead.0.0", "dead.1.2"],
+		"notes": "Sendou POV, Um'ami Ruins SZ at 4:37 (2026-08-11 VoD, t=37) — left (teal) slot 0 (Sendou) splatted, right (pink) slots 2 and 3 splatted. While the POV player is dead the whole strip shrinks toward the timer (~0.77 scale; left column lands near the mirror pitches, right column drifts non-uniformly), and this frame is mid-tween: no fixed geometry reads every slot (left slot 0's X sits ~60px right of its steady center, right slot 2 reads ink 0.36 from red backdrop flanking the shrunken kite), hence the two skipped dead flags. The frame still pins the rest: right slot 3's cross, five alive bodies, and no phantom stars. The live-timeline impact of these sub-second shrink windows is absorbed by the match builder's dead-blip flip/bridge passes; the layout damage they used to do (sticky flips into cast-mirror, 107 of 136 reads in this VoD) is fenced by the comb-corroborated sticky flip."
+	}
+}

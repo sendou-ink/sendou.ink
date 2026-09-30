@@ -1,0 +1,89 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "X",
+    "mode": "RM",
+    "replayCode": "R17L-PFKK-C1Q2-143L",
+    "matchScores": [
+      53,
+      27
+    ],
+    "players": [
+      {
+        "name": "ちからこそパワー",
+        "weaponId": 5000,
+        "paint": 1167,
+        "ka": 18,
+        "d": 11,
+        "s": 4
+      },
+      {
+        "name": "めがねがし",
+        "weaponId": 70,
+        "paint": 1067,
+        "ka": 17,
+        "d": 6,
+        "s": 4
+      },
+      {
+        "name": "コーヒーゼリー",
+        "weaponId": 60,
+        "paint": 1653,
+        "ka": 14,
+        "d": 6,
+        "s": 6
+      },
+      {
+        "name": "しゅーたようつべ",
+        "weaponId": 7011,
+        "paint": 1374,
+        "ka": 12,
+        "d": 7,
+        "s": 4
+      },
+      {
+        "name": "むぎ",
+        "weaponId": 5000,
+        "paint": 843,
+        "ka": 12,
+        "d": 14,
+        "s": 2
+      },
+      {
+        "name": "8♪cloudy",
+        "weaponId": 7030,
+        "paint": 1837,
+        "ka": 9,
+        "d": 6,
+        "s": 4
+      },
+      {
+        "name": "キャンディ",
+        "weaponId": 0,
+        "paint": 1442,
+        "ka": 9,
+        "d": 8,
+        "s": 7
+      },
+      {
+        "name": "コジャケサラダ つべ",
+        "weaponId": 7021,
+        "paint": 1267,
+        "ka": 9,
+        "d": 10,
+        "s": 1
+      }
+    ],
+    "stage": 13,
+    "timestamp": "9/7/2026 14:11",
+    "stageLabel": "Brinewater Springs"
+  },
+  "options": {
+    "skipFields": [
+      "players.1.name",
+      "players.4.name",
+      "players.7.name"
+    ],
+    "notes": "Same stream as the 1404 case. The old export carried the anonymized-view nicknames; names here are the on-screen ones. Skipped names read without dakuten (めがねがし>めかねかし, むぎ>むき, コジャケサラダ>コジャケサラタ) - names atlas lacks templates for those glyphs. Code hand-verified (F>E misread)."
+  }
+}

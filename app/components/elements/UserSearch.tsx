@@ -1,150 +1,94 @@
-import { useFetcher } from "@remix-run/react";
-import clsx from "clsx";
 import * as React from "react";
-import {
-	Autocomplete,
-	Button,
-	Input,
-	type Key,
-	ListBox,
-	ListBoxItem,
-	Popover,
-	SearchField,
-	Select,
-	type SelectProps,
-	SelectValue,
-} from "react-aria-components";
-import { useTranslation } from "react-i18next";
-import { useDebounce } from "react-use";
-import { SendouBottomTexts } from "~/components/elements/BottomTexts";
-import { SendouLabel } from "~/components/elements/Label";
-import { ChevronUpDownIcon } from "~/components/icons/ChevronUpDown";
-import { CrossIcon } from "~/components/icons/Cross";
-import type { UserSearchLoaderData } from "~/features/user-search/loaders/u.server";
+import { useFetcher } from "react-router";
+import type { SearchLoaderData } from "~/features/search/routes/search";
+import { searchSearchParams } from "~/features/search/search-search-params";
 import { Avatar } from "../Avatar";
-import { SearchIcon } from "../icons/Search";
+import {
+	SearchSelect,
+	type SearchSelectFieldProps,
+	SearchSelectItem,
+	SearchSelectItemAdditionalText,
+} from "./SearchSelect";
+import { useEntitySearch } from "./useEntitySearch";
 
-import selectStyles from "./Select.module.css";
-import userSearchStyles from "./UserSearch.module.css";
+export type UserSearchResult = Extract<
+	NonNullable<SearchLoaderData>["results"][number],
+	{ type: "user" }
+>;
 
-type UserSearchUserItem = NonNullable<UserSearchLoaderData>["users"][number];
-
-interface UserSearchProps<T extends object>
-	extends Omit<SelectProps<T>, "children"> {
-	name?: string;
-	label?: string;
-	bottomText?: string;
-	errorText?: string;
+interface UserSearchProps extends SearchSelectFieldProps {
 	initialUserId?: number;
-	onChange?: (user: UserSearchUserItem) => void;
+	onChange?: (user: UserSearchResult | null) => void;
+	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export const UserSearch = React.forwardRef(function UserSearch<
-	T extends object,
->(
-	{
-		name,
-		label,
-		bottomText,
-		errorText,
-		initialUserId,
-		onChange,
-		...rest
-	}: UserSearchProps<T>,
-	ref?: React.Ref<HTMLButtonElement>,
-) {
-	const [selectedKey, setSelectedKey] = React.useState(initialUserId ?? null);
-	const { initialUser, ...list } = useUserSearch(setSelectedKey, initialUserId);
+export function UserSearch({
+	initialUserId,
+	onChange,
+	ref,
+	...rest
+}: UserSearchProps) {
+	const initialUser = useInitialUser(initialUserId);
 
-	const onSelectionChange = (userId: number) => {
-		setSelectedKey(userId);
-		onChange?.(
-			list.items.find((user) => user.id === userId) as UserSearchUserItem,
-		);
-	};
+	const search = useEntitySearch<UserSearchResult>({
+		buildUrl: (query) =>
+			searchSearchParams.href("/search", {
+				q: query,
+				type: "users",
+				limit: 6,
+			}),
+		parseResults: (data, query) => parseUserResults(data, query, initialUser),
+		initialItem: initialUser,
+		initialSelectedId: initialUserId,
+		onChange,
+	});
 
 	return (
-		<Select
-			name={name}
-			placeholder=""
-			selectedKey={selectedKey}
-			onSelectionChange={onSelectionChange as (key: Key | null) => void}
-			aria-label="User search"
+		<SearchSelect
 			{...rest}
-		>
-			{label ? (
-				<SendouLabel required={rest.isRequired}>{label}</SendouLabel>
-			) : null}
-			<Button className={selectStyles.button} ref={ref}>
-				<SelectValue className={userSearchStyles.selectValue} />
-				<span aria-hidden="true">
-					<ChevronUpDownIcon className={selectStyles.icon} />
-				</span>
-			</Button>
-			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
-			<Popover className={clsx(selectStyles.popover, userSearchStyles.popover)}>
-				<Autocomplete
-					inputValue={list.filterText}
-					onInputChange={list.setFilterText}
-				>
-					<SearchField
-						aria-label="Search"
-						autoFocus
-						className={selectStyles.searchField}
-					>
-						<SearchIcon aria-hidden className={selectStyles.smallIcon} />
-						<Input
-							className={clsx("plain", selectStyles.searchInput)}
-							data-testid="user-search-input"
-						/>
-						<Button className={selectStyles.searchClearButton}>
-							<CrossIcon className={selectStyles.smallIcon} />
-						</Button>
-					</SearchField>
-					<ListBox
-						items={[initialUser, ...list.items].filter(
-							(user) => user !== undefined,
-						)}
-						className={selectStyles.listBox}
-					>
-						{(item) => <UserItem item={item as UserSearchUserItem} />}
-					</ListBox>
-				</Autocomplete>
-			</Popover>
-		</Select>
+			ariaLabel="User search"
+			inputTestId="user-search-input"
+			inputClassName="in-container"
+			i18nKey="userSearch"
+			search={search}
+			buttonRef={ref}
+			renderItem={(item) => <UserItem item={item} />}
+		/>
 	);
-});
+}
 
-function UserItem({
-	item,
-}: {
-	item:
-		| UserSearchUserItem
-		| {
-				id: "NO_RESULTS";
-		  }
-		| {
-				id: "PLACEHOLDER";
-		  };
-}) {
-	const { t } = useTranslation(["common"]);
+function parseUserResults(
+	data: unknown,
+	query: string,
+	initialUser?: UserSearchResult,
+): UserSearchResult[] | null {
+	const searchData = data as SearchLoaderData;
+	if (!searchData || searchData.query !== query) return null;
+	return searchData.results
+		.filter((result): result is UserSearchResult => result.type === "user")
+		.filter((user) => user.id !== initialUser?.id);
+}
 
-	// for some reason the `renderEmptyState` on ListBox is not working
-	// so doing this as a workaround
-	if (typeof item.id === "string") {
-		return (
-			<ListBoxItem
-				textValue="PLACEHOLDER"
-				isDisabled
-				className={userSearchStyles.placeholder}
-			>
-				{item.id === "PLACEHOLDER"
-					? t("common:forms.userSearch.placeholder")
-					: t("common:forms.userSearch.noResults")}
-			</ListBoxItem>
-		);
-	}
+/** Loads the preselected id's user once; later changes come from picked results which carry the full user. */
+function useInitialUser(initialUserId?: number) {
+	const fetcher = useFetcher<SearchLoaderData>();
+	const { load } = fetcher;
+	const hasLoadedRef = React.useRef(false);
 
+	React.useEffect(() => {
+		if (!initialUserId || hasLoadedRef.current) {
+			return;
+		}
+		hasLoadedRef.current = true;
+		load(`/search?q=${initialUserId}&type=users&limit=1`);
+	}, [initialUserId, load]);
+
+	return fetcher.data?.results.find(
+		(result): result is UserSearchResult => result.type === "user",
+	);
+}
+
+function UserItem({ item }: { item: UserSearchResult }) {
 	const additionalText = () => {
 		const plusServer = item.plusTier ? `+${item.plusTier}` : "";
 		const profileUrl = item.customUrl ? `/u/${item.customUrl}` : "";
@@ -165,84 +109,18 @@ function UserItem({
 	};
 
 	return (
-		<ListBoxItem
+		<SearchSelectItem
 			id={item.id}
-			textValue={item.username}
-			className={({ isFocused, isSelected }) =>
-				clsx(userSearchStyles.item, {
-					[selectStyles.itemFocused]: isFocused,
-					[selectStyles.itemSelected]: isSelected,
-				})
-			}
-			data-testid="user-search-item"
+			textValue={item.name}
+			testId="user-search-item"
+			leading={<Avatar user={item} size="xxs" />}
 		>
-			<Avatar user={item} size="xxs" />
-			<div className={userSearchStyles.itemTextsContainer}>
-				{item.username}
-				{additionalText() ? (
-					<div className={userSearchStyles.itemAdditionalText}>
-						{additionalText()}
-					</div>
-				) : null}
-			</div>
-		</ListBoxItem>
+			{item.name}
+			{additionalText() ? (
+				<SearchSelectItemAdditionalText>
+					{additionalText()}
+				</SearchSelectItemAdditionalText>
+			) : null}
+		</SearchSelectItem>
 	);
-}
-
-function useUserSearch(
-	setSelectedKey: (userId: number | null) => void,
-	initialUserId?: number,
-) {
-	const [filterText, setFilterText] = React.useState("");
-
-	const queryFetcher = useFetcher<UserSearchLoaderData>();
-	const initialUserFetcher = useFetcher<UserSearchLoaderData>();
-
-	React.useEffect(() => {
-		if (
-			!initialUserId ||
-			initialUserFetcher.state !== "idle" ||
-			initialUserFetcher.data
-		) {
-			return;
-		}
-		initialUserFetcher.load(`/u?q=${initialUserId}`);
-	}, [initialUserId, initialUserFetcher]);
-
-	React.useEffect(() => {
-		if (initialUserId !== undefined) {
-			setSelectedKey(initialUserId);
-		}
-	}, [initialUserId, setSelectedKey]);
-
-	useDebounce(
-		() => {
-			if (!filterText) return;
-			queryFetcher.load(`/u?q=${filterText}&limit=6`);
-			setSelectedKey(null);
-		},
-		500,
-		[filterText],
-	);
-
-	const items = () => {
-		// data fetched for the query user has currently typed
-		if (queryFetcher.data && queryFetcher.data.query === filterText) {
-			if (queryFetcher.data.users.length === 0) {
-				return [{ id: "NO_RESULTS" }];
-			}
-			return queryFetcher.data.users;
-		}
-
-		return [{ id: "PLACEHOLDER" }];
-	};
-
-	const initialUser = initialUserFetcher.data?.users[0];
-
-	return {
-		filterText,
-		setFilterText,
-		items: items(),
-		initialUser,
-	};
 }

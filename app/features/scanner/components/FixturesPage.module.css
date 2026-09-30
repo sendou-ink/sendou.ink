@@ -1,0 +1,216 @@
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.controls {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.filter {
+	flex: 1;
+	max-width: 32rem;
+}
+
+.count {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	white-space: nowrap;
+}
+
+.hint {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	margin: 0;
+}
+
+.group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.groupTitle {
+	font-size: var(--font-sm);
+	margin: 0;
+}
+
+.card {
+	border: var(--border-width) solid var(--color-bg-high);
+	border-radius: var(--radius-box);
+	container-type: inline-size;
+}
+
+.cardHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-1-5) var(--s-2);
+	font-size: var(--font-xs);
+}
+
+/* undo the scanner-wide solid button look; the whole title row is the target */
+button.cardToggle {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: var(--s-1-5);
+	flex: 1;
+	min-width: 0;
+	height: auto;
+	background: none;
+	border: none;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.cardChevron {
+	color: var(--color-text-high);
+}
+
+.cardEvent {
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background: var(--color-bg-high);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	white-space: nowrap;
+}
+
+.cardBody {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: var(--s-3);
+	padding: var(--s-2);
+	border-top: var(--border-width) solid var(--color-bg-high);
+
+	@container (max-width: 60rem) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.frameImg {
+	display: block;
+	width: 100%;
+	border-radius: var(--radius-selector);
+	background: #000;
+}
+
+.expected {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	min-width: 0;
+	font-size: var(--font-xs);
+}
+
+.notes {
+	margin: 0;
+	color: var(--color-text-high);
+}
+
+.skips {
+	margin: 0;
+	color: var(--color-warning-high);
+	font-size: var(--font-2xs);
+}
+
+.rich {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.richStats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+
+	& b {
+		color: var(--color-text);
+	}
+}
+
+.strips {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.strip {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+}
+
+.slot {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+
+	& canvas {
+		display: block;
+		background: #000;
+		border-radius: var(--radius-selector);
+	}
+
+	& figcaption {
+		display: flex;
+		align-items: center;
+		gap: var(--s-1);
+		font-size: var(--font-2xs);
+		color: var(--color-text-high);
+	}
+}
+
+.slotDead figcaption {
+	color: var(--color-error-high);
+	font-weight: var(--weight-bold);
+}
+
+.slotSpecial figcaption {
+	color: var(--color-warning-high);
+	font-weight: var(--weight-bold);
+}
+
+.objectiveCrops {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	align-items: end;
+}
+
+.weaponIcon {
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+	object-fit: contain;
+}
+
+.jsonSummary {
+	cursor: pointer;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.json {
+	margin: var(--s-1) 0 0;
+	padding: var(--s-2);
+	border-radius: var(--radius-selector);
+	background: var(--color-bg-high);
+	font-size: var(--font-2xs);
+	overflow-x: auto;
+}

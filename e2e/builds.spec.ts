@@ -1,163 +1,239 @@
-import { expect, type Page, test } from "@playwright/test";
+import { subDays } from "date-fns";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
-import type { GearType } from "~/db/tables";
-import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
-import { impersonate, navigate, seed, selectWeapon } from "~/utils/playwright";
-import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { BuildFormPage } from "./pages/builds/build-form-page";
+import { BuildStatsPage } from "./pages/builds/build-stats-page";
+import { BuildsPage } from "./pages/builds/builds-page";
+import { PopularBuildsPage } from "./pages/builds/popular-builds-page";
+import { UserBuildsPage } from "./pages/builds/user-builds-page";
+import { WeaponBuildsPage } from "./pages/builds/weapon-builds-page";
+
+const ABILITIES_WITH_ISM: BuildAbilitiesTuple = [
+	["ISM", "ISM", "ISM", "ISM"],
+	["SSU", "SSU", "SSU", "SSU"],
+	["RSU", "RSU", "RSU", "RSU"],
+];
+
+const ABILITIES_WITHOUT_ISM: BuildAbilitiesTuple = [
+	["SSU", "SSU", "SSU", "SSU"],
+	["RSU", "RSU", "RSU", "RSU"],
+	["QR", "QR", "QR", "QR"],
+];
+
+// per build: CB 10 AP, ISM 9 AP, SSU 19 AP, RSU 19 AP
+const STATS_ABILITIES: BuildAbilitiesTuple = [
+	["CB", "ISM", "ISM", "ISM"],
+	["SSU", "SSU", "SSU", "SSU"],
+	["RSU", "RSU", "RSU", "RSU"],
+];
+
+const OTHER_WEAPON_ABILITIES: BuildAbilitiesTuple = [
+	["QR", "QR", "QR", "QR"],
+	["QSJ", "QSJ", "QSJ", "QSJ"],
+	["SS", "SS", "SS", "SS"],
+];
 
 test.describe("Builds", () => {
 	test("adds a build", async ({ page }) => {
-		await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: userNewBuildPage({ discordId: NZAP_TEST_DISCORD_ID }),
-		});
 
-		await selectWeapon({
-			testId: "weapon-0",
-			name: "Tenta Brella",
-			page,
-		});
-		await page.getByTestId("add-weapon-button").click();
-		await selectWeapon({
-			testId: "weapon-1",
-			name: "Splat Brella",
-			page,
-		});
+		const buildForm = new BuildFormPage(page);
+		await buildForm.gotoNew(NZAP_TEST_DISCORD_ID);
 
-		await selectGear({
-			type: "HEAD",
-			name: "White Headband",
-			page,
-		});
-		await selectGear({
-			type: "CLOTHES",
-			name: "Basic Tee",
-			page,
-		});
-		await selectGear({
-			type: "SHOES",
-			name: "Blue Lo-Tops",
-			page,
-		});
+		await buildForm.form.selectWeapons("weapons", [
+			"Tenta Brella",
+			"Splat Brella",
+		]);
 
-		for (let i = 0; i < 12; i++) {
-			await page.getByTestId("ISM-ability-button").click();
-		}
+		await buildForm.selectGear("HEAD", "White Headband");
+		await buildForm.selectGear("CLOTHES", "Basic Tee");
+		await buildForm.selectGear("SHOES", "Blue Lo-Tops");
 
-		await page.getByLabel("Title").fill("Test Build");
-		await page.getByLabel("Description").fill("Test Description");
-		await page.getByTestId("SZ-checkbox").click();
+		await buildForm.addAbility("ISM", 12);
 
-		await page.getByTestId("submit-button").click();
+		await buildForm.form.fill("title", "Test Build");
+		await buildForm.form.fill("description", "Test Description");
+		await buildForm.form.checkItems("modes", ["TC"]);
 
-		await expect(page.getByTestId("change-sorting-button")).toBeVisible();
+		await buildForm.form.submit();
 
-		const firstBuildCard = page.getByTestId("build-card").first();
+		const userBuilds = new UserBuildsPage(page);
+		await expect(userBuilds.locators.changeSortingButton).toBeVisible();
 
-		await expect(firstBuildCard.getByAltText("Tenta Brella")).toBeVisible();
-		await expect(firstBuildCard.getByAltText("Splat Brella")).toBeVisible();
+		const firstBuildCard = userBuilds.buildCard(0);
 
-		await expect(firstBuildCard.getByAltText("Tower Control")).toBeVisible();
-		await expect(firstBuildCard.getByAltText("Splat Zones")).not.toBeVisible();
+		await expect(firstBuildCard.weaponImage("Tenta Brella")).toBeVisible();
+		await expect(firstBuildCard.weaponImage("Splat Brella")).toBeVisible();
 
-		await expect(firstBuildCard.getByTestId("build-title")).toContainText(
-			"Test Build",
-		);
+		await expect(firstBuildCard.modeImage("Tower Control")).toBeVisible();
+		await expect(firstBuildCard.modeImage("Splat Zones")).not.toBeVisible();
+
+		await expect(firstBuildCard.title).toContainText("Test Build");
 	});
 
-	test("makes build private", async ({ page }) => {
-		await seed(page);
+	test("makes build private", async ({ page, factories }) => {
+		// backdating one build makes the updatedAt sort deterministic
+		const [olderBuild] = await factories.BuildFactory.createMany(2, {
+			ownerId: ADMIN_ID,
+		});
+		await factories.backdate("Build", olderBuild.id, {
+			updatedAt: subDays(new Date(), 1),
+		});
+
 		await impersonate(page);
-		await navigate({
-			page,
-			url: userBuildsPage({ discordId: ADMIN_DISCORD_ID }),
-		});
 
-		await page.getByTestId("edit-build").first().click();
+		const userBuilds = new UserBuildsPage(page);
+		await userBuilds.goto(ADMIN_DISCORD_ID);
 
-		await page.getByLabel("Private").click();
+		const buildIdBefore = await userBuilds.buildId(0);
 
-		await page.getByTestId("submit-button").click();
+		const buildForm = await userBuilds.editBuild(0);
+		await buildForm.form.check("isPrivate");
+		await buildForm.form.submit();
 
-		await expect(page.getByTestId("user-builds-tab")).toContainText(
-			"Builds (50)",
-		);
-		await expect(page.getByTestId("build-card").first()).toContainText(
-			"Private",
-		);
+		await expect(userBuilds.locators.buildCards).toHaveCount(2);
+		await expect(userBuilds.buildCard(0).root).toContainText("Private");
+
+		const buildIdAfter = await userBuilds.buildId(0);
+		expect(buildIdAfter).toBe(buildIdBefore);
 
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: userBuildsPage({ discordId: ADMIN_DISCORD_ID }),
-		});
-		await expect(page.getByTestId("user-builds-tab")).toContainText(
-			"Builds (49)",
-		);
-		await expect(page.getByTestId("build-card").first()).not.toContainText(
-			"Private",
-		);
+		await userBuilds.goto(ADMIN_DISCORD_ID);
+		await expect(userBuilds.locators.buildCards).toHaveCount(1);
+		await expect(userBuilds.buildCard(0).root).not.toContainText("Private");
 	});
 
-	test("filters builds", async ({ page }) => {
-		await seed(page);
-		await navigate({
-			page,
-			url: BUILDS_PAGE,
+	test("filters builds", async ({ page, factories }) => {
+		await factories.BuildFactory.createMany(3, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [40],
+			modes: ["TC"],
+			abilities: ABILITIES_WITH_ISM,
+		});
+		await factories.BuildFactory.createMany(2, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [40],
+			modes: ["SZ"],
+			abilities: ABILITIES_WITHOUT_ISM,
 		});
 
-		await page.getByTestId("weapon-40-link").click();
+		await impersonate(page, NZAP_TEST_ID);
 
-		//
-		// ability filter
-		//
-		await page.getByTestId("add-filter-button").click();
-		await page.getByTestId("menu-item-ability").click();
-		await page.getByTestId("comparison-select").selectOption("AT_MOST");
+		const weaponBuilds = new WeaponBuildsPage(page);
+		await new BuildsPage(page).openWeapon(40);
 
-		await expect(page.getByTestId("ISM-ability")).toHaveCount(1);
+		await weaponBuilds.addFilter("ability");
+		await weaponBuilds.locators.comparisonSelect.selectOption("AT_MOST");
 
-		await page.getByTestId("delete-filter-button").click();
+		// every build with ISM is hidden
+		await expect(weaponBuilds.ability("ISM")).toHaveCount(1);
 
-		// are we seeing builds with ISM again?
-		await expect(page.getByTestId("ISM-ability").nth(1)).toBeVisible();
+		await weaponBuilds.deleteFilter("ability");
 
-		//
-		// mode filter
-		//
-		await page.getByTestId("add-filter-button").click();
-		await page.getByTestId("menu-item-mode").click();
-		await page.getByLabel("Tower Control").click();
-		await expect(page.getByTestId("build-mode-TC")).toHaveCount(24);
-		await page.getByTestId("delete-filter-button").click();
+		await expect(weaponBuilds.ability("ISM").nth(1)).toBeVisible();
 
-		//
-		// date filter
-		//
-		await page.getByTestId("add-filter-button").click();
-		await page.getByTestId("menu-item-date").click();
-		await page.getByTestId("date-select").selectOption("CUSTOM");
-		await expect(page.getByTestId("date-input")).toBeVisible();
+		await weaponBuilds.addFilter("mode");
+		await weaponBuilds.modeFilterCheckbox("Tower Control").click();
+		await expect(weaponBuilds.modeBadge("TC")).toHaveCount(3);
+		await weaponBuilds.deleteFilter("mode");
+		await expect(weaponBuilds.locators.buildCards.first()).toBeVisible();
+
+		await weaponBuilds.addFilter("date");
+		await weaponBuilds.locators.dateSelect.selectOption("CUSTOM");
+		await expect(weaponBuilds.locators.dateInput).toBeVisible();
 		// no change in count since all builds in test data are new
-		await expect(page.getByTestId("build-card")).toHaveCount(24);
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(5);
+	});
+
+	test("aggregates builds into ability stats and popular builds", async ({
+		page,
+		factories,
+	}) => {
+		await factories.BuildFactory.createMany(3, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [40],
+			abilities: STATS_ABILITIES,
+		});
+		await factories.BuildFactory.create({
+			ownerId: NZAP_TEST_ID,
+			weaponSplIds: [40],
+			abilities: STATS_ABILITIES,
+		});
+		// a build for another weapon so site-wide stats differ from the weapon's
+		await factories.BuildFactory.create({
+			ownerId: NZAP_TEST_ID,
+			weaponSplIds: [10],
+			abilities: OTHER_WEAPON_ABILITIES,
+		});
+
+		const weaponBuilds = new WeaponBuildsPage(page);
+		await new BuildsPage(page).openWeapon(40);
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(4);
+
+		await weaponBuilds.locators.abilityStatsLink.click();
+
+		const buildStats = new BuildStatsPage(page);
+		await expect(buildStats.buildsCountTitle(4, "Splattershot")).toBeVisible();
+		// SSU and RSU weapon averages
+		await expect(buildStats.apAverage(19)).toHaveCount(2);
+		// ISM weapon average
+		await expect(buildStats.apAverage(9)).toHaveCount(1);
+		// CB is in every Splattershot build but in 4 of the 5 builds site-wide
+		await expect(buildStats.abilityPercentage(100)).toHaveCount(1);
+		await expect(buildStats.abilityPercentage(80)).toHaveCount(1);
+
+		const popularBuilds = new PopularBuildsPage(page);
+		await popularBuilds.goto("splattershot");
+
+		// admin's identical builds count once, N-ZAP's brings the signature to ×2
+		await expect(popularBuilds.placement(1)).toBeVisible();
+		await expect(popularBuilds.buildCount(2)).toBeVisible();
+		await expect(popularBuilds.ability("CB")).toBeVisible();
+		await expect(popularBuilds.abilityPoints(19)).toHaveCount(2);
+		await expect(popularBuilds.abilityPoints(9)).toHaveCount(1);
+		await isNotVisible(popularBuilds.placement(2));
+	});
+
+	test("edits build title, changes sorting and deletes a build", async ({
+		page,
+		factories,
+	}) => {
+		const olderBuild = await factories.BuildFactory.create({
+			ownerId: ADMIN_ID,
+			title: "Alpha Build",
+		});
+		await factories.BuildFactory.create({
+			ownerId: ADMIN_ID,
+			title: "Mid Build",
+		});
+		await factories.backdate("Build", olderBuild.id, {
+			updatedAt: subDays(new Date(), 1),
+		});
+
+		await impersonate(page);
+
+		const userBuilds = new UserBuildsPage(page);
+		await userBuilds.goto(ADMIN_DISCORD_ID);
+
+		await expect(userBuilds.buildCard(0).title).toContainText("Mid Build");
+
+		const buildForm = await userBuilds.editBuild(0);
+		await buildForm.form.fill("title", "Zulu Build");
+		await buildForm.form.submit();
+
+		await expect(userBuilds.buildCard(0).title).toContainText("Zulu Build");
+		await expect(userBuilds.buildCard(1).title).toContainText("Alpha Build");
+
+		await userBuilds.changeSortingTo("ALPHABETICAL_TITLE");
+
+		await expect(userBuilds.buildCard(0).title).toContainText("Alpha Build");
+		await expect(userBuilds.buildCard(1).title).toContainText("Zulu Build");
+
+		await userBuilds.deleteBuild(0);
+
+		await expect(userBuilds.locators.buildCards).toHaveCount(1);
+		await expect(userBuilds.buildCard(0).title).toContainText("Zulu Build");
 	});
 });
-
-async function selectGear({
-	page,
-	name,
-	type,
-}: {
-	page: Page;
-	name: string;
-	type: GearType;
-}) {
-	await page.getByTestId(`${type}-gear-select`).click();
-	await page.getByPlaceholder("Search gear...").fill(name);
-	await page
-		.getByRole("listbox", { name: "Suggestions" })
-		.getByTestId(`gear-select-option-${name}`)
-		.click();
-}

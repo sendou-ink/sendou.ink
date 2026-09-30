@@ -1,5 +1,10 @@
+import { Config } from "~/config";
 import * as Seasons from "../../mmr/core/Seasons";
 import type { MonthYear } from "./types";
+
+/** Lets the voting page be tested outside a voting window. */
+const VOTING_ALWAYS_OPEN =
+	process.env.NODE_ENV === "development" && !Config.prodMode;
 
 export function lastCompletedVoting(now: Date): MonthYear {
 	let match: { startDate: Date; endDate: Date } | null = null;
@@ -56,7 +61,21 @@ export function seasonToVotingRange(season: Seasons.ListItem) {
 	return { startDate, endDate };
 }
 
+/** Whether votes can be cast; unlike {@link isVotingActive} (which also locks suggesting) always true in local dev. */
+export function isVotingOpen() {
+	return VOTING_ALWAYS_OPEN || isVotingActive();
+}
+
+let votingActiveOverride = false;
+
+/** Tests only: fakes an ongoing voting window for {@link isVotingActive}. */
+export function DANGEROUS_setVotingActiveOverride(votingActive: boolean) {
+	votingActiveOverride = votingActive;
+}
+
 export function isVotingActive() {
+	if (votingActiveOverride) return true;
+
 	const now = new Date();
 
 	for (const season of Seasons.list) {

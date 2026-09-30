@@ -1,64 +1,212 @@
+.tabListContainer {
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.tabListRow {
+	--tab-list-border-width: 2px;
+	container-type: inline-size;
+	display: flex;
+	align-items: flex-end;
+
+	& .tabListContainer {
+		flex: 1;
+		min-width: 0;
+		/* tabs scrolled under the actions fade out, the underline stays solid */
+		mask-image:
+			linear-gradient(to right, #000 calc(100% - var(--s-6)), transparent),
+			linear-gradient(#000, #000);
+		mask-size:
+			100% calc(100% - var(--tab-list-border-width)),
+			100% var(--tab-list-border-width);
+		mask-position: top, bottom;
+		mask-repeat: no-repeat;
+	}
+}
+
+.tabListActions {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-inline-start: var(--s-2);
+	padding-bottom: var(--s-1);
+	border-bottom: var(--tab-list-border-width) solid var(--color-border);
+}
+
+@container (width < 640px) {
+	.tabListActions::before {
+		content: "";
+		width: 2px;
+		height: var(--s-4);
+		border-radius: 1px;
+		background-color: var(--color-border);
+	}
+}
+
 .tabList {
 	display: flex;
 	flex-direction: row;
-	border-bottom: 2px solid var(--border);
+	border-bottom: 2px solid var(--color-border);
+	min-width: fit-content;
+
+	& svg {
+		--icon-size: 16px;
+		min-width: var(--icon-size);
+		min-height: var(--icon-size);
+		max-width: var(--icon-size);
+		max-height: var(--icon-size);
+		margin-inline-end: var(--s-1-5);
+	}
 }
 
-.tabList svg {
-	--icon-size: 16px;
-	min-width: var(--icon-size);
-	min-height: var(--icon-size);
-	max-width: var(--icon-size);
-	max-height: var(--icon-size);
-	margin-inline-end: var(--s-1-5);
+.tabContainer {
+	min-width: fit-content;
+	margin-bottom: -2px;
+
+	& .tabButton {
+		background-color: transparent;
+		border: none;
+		font-size: var(--font-xs);
+		border-radius: 0;
+		border-bottom: 2px solid transparent;
+		color: var(--color-text-high);
+		white-space: nowrap;
+		flex: 1;
+		transform: none !important;
+
+		& img {
+			min-width: 16px;
+			min-height: 16px;
+			margin-inline-end: var(--s-1-5);
+		}
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+
+	&[data-selected] .tabButton {
+		border-color: var(--color-fg-accent);
+		color: var(--color-text);
+	}
+
+	&:focus-visible .tabButton {
+		color: var(--color-fg-accent) !important;
+		outline: none;
+	}
 }
 
-.tabButton img {
-	margin-inline-end: var(--s-1-5);
+.fullWidth {
+	width: 100%;
+	min-width: 100%;
+
+	& .tabContainer {
+		flex: 1;
+		min-width: 0;
+	}
 }
 
-.padded .tabPanel {
-	padding-block-start: var(--s-4);
+.root {
+	--tabs-gap: var(--s-6);
 }
 
-.disappearing:has(.tabList .tabButton:only-child).padded .tabPanel {
-	padding-top: 0;
+.root:not(.vertical) {
+	display: flex;
+	flex-direction: column;
 }
 
-.disappearing .tabList:has(.tabButton:only-child) {
-	display: none;
+.padded:not(.vertical) {
+	gap: var(--tabs-gap);
 }
 
-.tabButton {
-	background-color: transparent;
-	border: none;
-	font-size: var(--fonts-xs);
-	border-radius: 0;
-	border-bottom: 2px solid transparent;
-	color: var(--text-lighter);
-	white-space: nowrap;
-	flex: 1;
-	transform: none !important;
-}
+.disappearing {
+	&:has(.tabList > :only-child) {
+		gap: 0;
+	}
 
-.tabButton[data-selected] {
-	border-color: var(--theme);
-	color: var(--text);
-}
+	& .tabList:has(> :only-child) {
+		display: none;
+	}
 
-.tabButton[data-focus-visible] {
-	color: var(--theme) !important;
-	outline: none;
+	& .tabListRow:has(.tabList > :only-child) .tabListActions {
+		border: none;
+		padding-bottom: var(--s-2);
+
+		&::before {
+			display: none;
+		}
+	}
 }
 
 .tabNumber {
-	color: var(--theme);
+	color: var(--color-fg-accent);
 	margin-inline-start: var(--s-2);
+}
+
+.tabAlert {
+	margin-inline-start: var(--s-1);
+	margin-inline-end: 0 !important;
+	color: var(--color-warning);
 }
 
 .sticky {
 	position: sticky;
 	top: 47px;
 	z-index: 1;
-	background-color: var(--bg);
+	background-color: var(--color-bg);
+}
+
+.vertical {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: var(--tabs-gap);
+	align-items: start;
+
+	& .tabListContainer {
+		overflow: visible;
+		position: sticky;
+		top: var(--layout-sticky-top);
+		align-self: start;
+		background-color: var(--color-bg);
+		z-index: 1;
+	}
+
+	& .tabList {
+		flex-direction: column;
+		border-bottom: none;
+		border-inline-end: 2px solid var(--color-border);
+		min-width: 0;
+	}
+
+	& .tabContainer {
+		margin-bottom: 0;
+		margin-inline-end: -2px;
+
+		&[data-selected] .tabButton {
+			border-bottom-color: transparent;
+			border-inline-end-color: var(--color-fg-accent);
+		}
+	}
+
+	& .tabButton {
+		justify-content: flex-start;
+		border-bottom: none;
+		border-inline-end: 2px solid transparent;
+		text-align: start;
+		flex: none;
+		width: 100%;
+		padding: var(--s-2) var(--s-3);
+		padding-inline-end: var(--s-6);
+	}
+
+	& .tabNumber {
+		margin-inline-start: auto;
+		padding-inline-start: var(--s-3);
+	}
+
+	& .tabPanel {
+		min-width: 0;
+	}
 }

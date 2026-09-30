@@ -1,31 +1,42 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { z } from "zod/v4";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
+import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { LFG_PAGE } from "~/utils/urls";
-import { falsyToNull, id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";
-import { LFG, TEAM_POST_TYPES, TIMEZONES } from "../lfg-constants";
+import { TEAM_POST_TYPES } from "../lfg-constants";
+import { lfgNewSchema } from "../lfg-schemas";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUser(request);
-	const data = await parseRequestPayload({
+	const user = requireUser();
+	const result = await parseFormData({
 		request,
-		schema,
+		schema: lfgNewSchema,
 	});
 
-	const identifier = String(user.id);
-	const { team } =
-		(await UserRepository.findProfileByIdentifier(identifier)) ?? {};
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
 
-	const shouldIncludeTeam = TEAM_POST_TYPES.includes(data.type);
+	const data = result.data;
+	const type = data.type as Tables["LFGPost"]["type"];
+
+	const { team } = (await UserRepository.findProfileByUserId(user.id)) ?? {};
+
+	const shouldIncludeTeam = TEAM_POST_TYPES.includes(type);
 
 	errorToastIfFalsy(
 		!shouldIncludeTeam || team,
 		"Team needs to be set for this type of post",
 	);
+
+	const plusTierVisibility = data.plusTierVisibility
+		? Number(data.plusTierVisibility)
+		: null;
 
 	if (data.postId) {
 		await validateCanUpdatePost({
@@ -36,34 +47,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		await LFGRepository.updatePost(data.postId, {
 			text: data.postText,
 			timezone: data.timezone,
-			type: data.type,
+			type,
 			teamId: shouldIncludeTeam ? team?.id : null,
-			plusTierVisibility: data.plusTierVisibility,
+			plusTierVisibility,
+			languages:
+				data.languages.length > 0 ? JSON.stringify(data.languages) : null,
 		});
 	} else {
 		await LFGRepository.insertPost({
 			text: data.postText,
 			timezone: data.timezone,
-			type: data.type,
+			type,
 			teamId: shouldIncludeTeam ? team?.id : null,
 			authorId: user.id,
-			plusTierVisibility: data.plusTierVisibility,
+			plusTierVisibility,
+			languages:
+				data.languages.length > 0 ? JSON.stringify(data.languages) : null,
 		});
 	}
 
 	return redirect(LFG_PAGE);
 };
-
-const schema = z.object({
-	postId: id.optional(),
-	type: z.enum(LFG.types),
-	postText: z.string().min(LFG.MIN_TEXT_LENGTH).max(LFG.MAX_TEXT_LENGTH),
-	timezone: z.string().refine((val) => TIMEZONES.includes(val)),
-	plusTierVisibility: z.preprocess(
-		falsyToNull,
-		z.coerce.number().int().min(1).max(3).nullish(),
-	),
-});
 
 const validateCanUpdatePost = async ({
 	postId,
@@ -72,11 +76,8 @@ const validateCanUpdatePost = async ({
 	postId: number;
 	user: { id: number; plusTier: number | null };
 }) => {
-	const posts = await LFGRepository.posts(user);
-	const post = posts.find((post) => post.id === postId);
+	const posts = await LFGRepository.findAllPosts(user);
+	const post = posts.find((candidate) => candidate.id === postId);
 	errorToastIfFalsy(post, "Post to update not found");
-	errorToastIfFalsy(
-		post.author.id === user.id,
-		"You can only update your own posts",
-	);
+	requirePermission(post, "EDIT");
 };

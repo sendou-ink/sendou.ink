@@ -95,7 +95,6 @@ erDiagram
 ```mermaid
 erDiagram
     MapPoolMap }o--|| CalendarEvent : calendar_event
-    MapPoolMap }o--|| CalendarEvent : tie_breaker_calendar_event
     MapPoolMap }o--|| TournamentTeam : tournament_team
 ```
 
@@ -103,9 +102,8 @@ erDiagram
 
 Can be one of the following:
 1) Regular calendar events map pool
-2) Tournament's tiebreaker maps (teams' pick mode, AUTO_ALL)
-3) Tournament's map pool (TO's map picking mode)
-4) Tournament teams map picks (teams' pick mode, AUTO_ALL, AUTO_SZ etc.)
+2) Tournament's map pool (organizer picked, or the custom pool of a team picked tournament)
+3) Tournament teams map picks (team picked, the modes and counts live in `Tournament.settings.teamPick`)
 
 ## Plus Server Suggestions
 
@@ -175,6 +173,31 @@ erDiagram
 
 The database structure is mimicking the `brackets-manager.js` library. See this issue for a schema: [https://github.com/Drarig29/brackets-manager.js/issues/111#issuecomment-997417423](https://github.com/Drarig29/brackets-manager.js/issues/111#issuecomment-997417423)
 
+## Tournament Teams
+
+```mermaid
+erDiagram
+    Tournament ||--o{ TournamentTeam : has
+    TournamentTeam ||--|{ TournamentTeamMember : has
+    User ||--o{ TournamentTeamMember : member_of
+    TournamentTeam }o--o| AllTeam : team
+```
+
+### Notes
+
+- `isPlaceholder` - temporary team created automatically when an unregistered user joins the LFG queue
+- `isLooking` - team is visible in the LFG page
+- `teamId` - optional link to a sendou.ink team (for avatar/name)
+
+#### Placeholder team lifecycle
+
+- Unregistered user joins LFG -> placeholder team created (`isPlaceholder: 1`)
+- Registered user joins LFG -> existing team reused, only `isLooking` flag toggled
+- Placeholder user registers for tournament -> placeholder team deleted, new regular team created
+- Placeholder + placeholder merge -> surviving team set to `isPlaceholder: 0`
+- Placeholder + registered team merge -> registered team always survives
+- On merge, each member's `isStayAsSub` preference is preserved
+
 ## Tournament organizations
 
 ```mermaid
@@ -190,6 +213,22 @@ erDiagram
     TournamentOrganization ||--o{ TournamentOrganizationBannedUser : has_banned
     User ||--o{ TournamentOrganizationBannedUser : banned_from
 ```
+
+## Tournament VODs
+
+```mermaid
+erDiagram
+    TournamentStreamer }o--|| Tournament : tournament
+    TournamentStreamer }o--o| User : user
+
+    TournamentMatchVod }o--|| TournamentMatch : match
+    TournamentMatchVod }o--o| User : user
+```
+
+### Notes
+
+- **TournamentStreamer** - Twitch accounts streaming a tournament; auto-populated when players/casters go live. `userId` is null for cast accounts not linked to a sendou.ink user. Unique on `(twitchAccount, tournamentId)`.
+- **TournamentMatchVod** - Past broadcast VOD references for tournament matches with a timestamp offset to jump to the specific match.
 
 ## Videos
 ```mermaid

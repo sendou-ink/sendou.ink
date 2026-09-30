@@ -1,12 +1,15 @@
-import type { LoaderFunction } from "@remix-run/node";
 import { formatDistance } from "date-fns";
+import type { LoaderFunction } from "react-router";
+import * as R from "remeda";
 import { getUser } from "~/features/auth/core/user.server";
 import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import { isVotingActive } from "~/features/plus-voting/core/voting-time";
+import { isVotingOpen } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
+import type { UserCardData } from "~/features/user-card/user-card-types";
 
 export type PlusVotingLoaderData =
 	// next voting date is not in the system
@@ -27,14 +30,15 @@ export type PlusVotingLoaderData =
 	| {
 			type: "voting";
 			usersForVoting: PlusVotingRepository.UsersForVoting;
+			userCards: Map<number, UserCardData>;
 			votingEnds: {
 				timestamp: number;
 				relativeTime: string;
 			};
 	  };
 
-export const loader: LoaderFunction = async ({ request }) => {
-	const user = await getUser(request);
+export const loader: LoaderFunction = async () => {
+	const user = getUser();
 
 	const now = new Date();
 	const nextVotingRange = nextNonCompletedVoting(now);
@@ -43,7 +47,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 		return { type: "noTimeDefinedInfo" };
 	}
 
-	if (!isVotingActive()) {
+	if (!isVotingOpen()) {
 		return {
 			type: "timeInfo",
 			timeInfo: {
@@ -57,7 +61,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 	}
 
 	const usersForVoting = user?.plusTier
-		? await PlusVotingRepository.usersForVoting({
+		? await PlusVotingRepository.findAllUsersForVoting({
 				id: user.id,
 				plusTier: user.plusTier,
 			})
@@ -83,9 +87,17 @@ export const loader: LoaderFunction = async ({ request }) => {
 		};
 	}
 
+	const cardUserIds = R.unique(
+		usersForVoting.flatMap(({ user: votedUser, suggestion }) => [
+			votedUser.id,
+			...(suggestion?.entries ?? []).map((entry) => entry.author.id),
+		]),
+	);
+
 	return {
 		type: "voting",
 		usersForVoting,
+		...(await UserCardRepository.findAllByUserIds({ userIds: cardUserIds })),
 		votingEnds: {
 			timestamp: nextVotingRange.endDate.getTime(),
 			relativeTime: formatDistance(nextVotingRange.endDate, now, {

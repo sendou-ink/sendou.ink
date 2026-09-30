@@ -1,41 +1,47 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { coerceNumber, id } from "~/utils/schema";
 import type { GetTournamentBracketStandingsResponse } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
-	bidx: z.coerce.number().int(),
+	bidx: v.pipe(coerceNumber(), v.integer()),
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
-	const { id, bidx } = parseParams({ params, schema: paramsSchema });
-
-	const tournament = await tournamentFromDB({
-		user: undefined,
-		tournamentId: id,
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { id: tournamentId, bidx } = parseParams({
+		params,
+		schema: paramsSchema,
 	});
 
-	const bracket = notFoundIfFalsy(tournament.bracketByIdx(bidx));
-	notFoundIfFalsy(!bracket.preview);
+	const tournament = await tournamentFromDB(tournamentId);
+
+	const bracket = notFoundIfNullish(tournament.bracketByIdx(bidx));
+	if (bracket.preview) throw new Response(null, { status: 404 });
 
 	const result: GetTournamentBracketStandingsResponse = {
-		standings: bracket.standings.map((standing) => ({
+		finished: bracket.standingsAreFinal,
+		standings: bracket.liveStandings.map((standing) => ({
 			tournamentTeamId: standing.team.id,
 			placement: standing.placement,
-			stats: standing.stats,
+			groupId: standing.groupId,
+			stats: standing.stats
+				? {
+						setWins: standing.stats.setWins,
+						setLosses: standing.stats.setLosses,
+						mapWins: standing.stats.mapWins,
+						mapLosses: standing.stats.mapLosses,
+						koCount: standing.stats.koCount,
+						winsAgainstTied: standing.stats.winsAgainstTied,
+						lossesAgainstTied: standing.stats.lossesAgainstTied,
+						opponentSetWinPercentage: standing.stats.opponentSetWinPercentage,
+						opponentMapWinPercentage: standing.stats.opponentMapWinPercentage,
+					}
+				: undefined,
 		})),
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };

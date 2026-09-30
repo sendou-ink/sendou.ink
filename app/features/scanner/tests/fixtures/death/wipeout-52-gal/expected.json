@@ -1,0 +1,32 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 50,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "OG",
+        "SSU",
+        "SSU",
+        "QSJ"
+      ],
+      [
+        "SSU",
+        "IA",
+        "IA",
+        "IA"
+      ],
+      [
+        "SJ",
+        "SSU",
+        "RES",
+        "SRU"
+      ]
+    ],
+    "name": "さんだいめドパかげ",
+    "weaponLabel": ".52 Gal"
+  },
+  "options": {
+    "notes": "WIPEOUT banner covers the weapon name line; the weapon resolves via the burst icon fallback. The kana name needs the dakuten headroom in TAG_NAME_INNER (げ), the widened merge gap cap (い's strokes sit 16px apart), and the harvested crops."
+  }
+}

@@ -1,30 +1,20 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { db } from "~/db/sql";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { userSubmittedImage } from "~/utils/urls-img";
-import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { jsonArrayFrom } from "~/utils/kysely.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { id } from "~/utils/schema";
 import type { GetTournamentResponse } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { id: tournamentId } = parseParams({ params, schema: paramsSchema });
 
-	const { id } = parseParams({ params, schema: paramsSchema });
-
-	const tournament = notFoundIfFalsy(
+	const tournament = notFoundIfNullish(
 		await db
 			.selectFrom("Tournament")
 			.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
@@ -36,11 +26,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			.select(({ eb, exists, selectFrom }) => [
 				"CalendarEvent.name",
 				"CalendarEvent.organizationId",
-				"CalendarEventDate.startTime",
+				"CalendarEventDate.startsAt",
 				"Tournament.settings",
 				exists(
 					selectFrom("TournamentResult")
-						.where("TournamentResult.tournamentId", "=", id)
+						.where("TournamentResult.tournamentId", "=", tournamentId)
 						.select("TournamentResult.tournamentId"),
 				).as("isFinalized"),
 				eb
@@ -61,20 +51,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 								.on("TournamentTeamCheckIn.bracketIdx", "is", null),
 						)
 						.select(["TournamentTeamCheckIn.checkedInAt"])
-						.where("TournamentTeam.tournamentId", "=", id),
+						.where("TournamentTeam.tournamentId", "=", tournamentId)
+						.where("TournamentTeam.isPlaceholder", "=", 0),
 				).as("teams"),
 			])
-			.where("Tournament.id", "=", id)
+			.where("Tournament.id", "=", tournamentId)
 			.executeTakeFirst(),
 	);
 
 	const result: GetTournamentResponse = {
 		name: tournament.name,
-		startTime: databaseTimestampToDate(tournament.startTime).toISOString(),
-		url: `https://sendou.ink/to/${id}/brackets`,
-		logoUrl: tournament.logoUrl
-			? userSubmittedImage(tournament.logoUrl)
-			: `https://sendou.ink${HACKY_resolvePicture(tournament)}`,
+		startTime: databaseTimestampToDate(tournament.startsAt).toISOString(),
+		url: `https://sendou.ink/to/${tournamentId}/brackets`,
+		logoUrl: tournament.logoUrl,
 		teams: {
 			checkedInCount: tournament.teams.filter((team) => team.checkedInAt)
 				.length,
@@ -88,5 +77,5 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		isFinalized: Boolean(tournament.isFinalized),
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };

@@ -1,8 +1,12 @@
 import { cachified } from "@epic-web/cachified";
+import type {
+	SeasonPopularUsersWeapon,
+	UserSPLeaderboardItem,
+} from "~/features/leaderboards/LeaderboardRepository.server";
+import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
-import { spToOrdinal } from "~/features/mmr/mmr-utils";
-import { freshUserSkills, userSkills } from "~/features/mmr/tiered.server";
+import { userSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
@@ -10,10 +14,6 @@ import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import type { Unwrapped } from "~/utils/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import { seasonHasTopTen } from "../leaderboards-utils";
-import type { SeasonPopularUsersWeapon } from "../queries/seasonPopularUsersWeapon.server";
-import { seasonPopularUsersWeapon } from "../queries/seasonPopularUsersWeapon.server";
-import type { UserSPLeaderboardItem } from "../queries/userSPLeaderboard.server";
-import { userSPLeaderboard } from "../queries/userSPLeaderboard.server";
 
 export type UserLeaderboardWithAdditionsItem = Unwrapped<
 	typeof cachedFullUserLeaderboard
@@ -23,9 +23,11 @@ export async function cachedFullUserLeaderboard(season: number) {
 		key: `user-leaderboard-season-${season}`,
 		cache,
 		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
+		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
-			const leaderboard = userSPLeaderboard(season);
-			const withTiers = addTiers(leaderboard, season);
+			const leaderboard =
+				await LeaderboardRepository.findUserSPLeaderboard(season);
+			const withTiers = await addTiers(leaderboard, season);
 
 			const shouldAddPendingPlusTier =
 				season === Seasons.current()?.nth &&
@@ -38,13 +40,88 @@ export async function cachedFullUserLeaderboard(season: number) {
 					)
 				: withTiers;
 
-			return addWeapons(withPendingPlusTiers, seasonPopularUsersWeapon(season));
+			return addWeapons(
+				withPendingPlusTiers,
+				await LeaderboardRepository.findSeasonPopularUsersWeapon(season),
+			);
 		},
 	});
 }
 
-function addTiers(entries: UserSPLeaderboardItem[], season: number) {
-	const tiers = freshUserSkills(season);
+export async function cachedTeamLeaderboard({
+	season,
+	onlyOneEntryPerUser,
+}: {
+	season: number;
+	onlyOneEntryPerUser: boolean;
+}) {
+	return cachified({
+		key: teamLeaderboardCacheKey({ season, onlyOneEntryPerUser }),
+		cache,
+		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
+		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
+		async getFreshValue() {
+			return LeaderboardRepository.findTeamLeaderboardBySeason({
+				season,
+				onlyOneEntryPerUser,
+			});
+		},
+	});
+}
+
+/**
+ * The user's roster on the season's team leaderboard with its placement. Falls back to the
+ * "all rosters" leaderboard, where the entry has no placement comparable to the main one's.
+ */
+export async function findUserTeamEntry({
+	season,
+	userId,
+}: {
+	season: number;
+	userId: number;
+}) {
+	const hasUser = (entry: { members: Array<{ id: number }> }) =>
+		entry.members.some((member) => member.id === userId);
+
+	const rankedEntry = (
+		await cachedTeamLeaderboard({ season, onlyOneEntryPerUser: true })
+	).find(hasUser);
+
+	// a skipped team is on the leaderboard without taking a placement
+	if (rankedEntry)
+		return { entry: rankedEntry, rank: rankedEntry.placementRank ?? undefined };
+
+	const unrankedEntry = (
+		await cachedTeamLeaderboard({ season, onlyOneEntryPerUser: false })
+	).find(hasUser);
+
+	if (!unrankedEntry) return undefined;
+
+	return { entry: unrankedEntry, rank: undefined };
+}
+
+/** Clears both variants of a season's cached team leaderboard so a skip change shows without waiting for expiry. */
+export function clearCachedTeamLeaderboards(season: number) {
+	for (const onlyOneEntryPerUser of [true, false]) {
+		cache.delete(teamLeaderboardCacheKey({ season, onlyOneEntryPerUser }));
+	}
+}
+
+function teamLeaderboardCacheKey({
+	season,
+	onlyOneEntryPerUser,
+}: {
+	season: number;
+	onlyOneEntryPerUser: boolean;
+}) {
+	return `team-leaderboard-season-${season}-${onlyOneEntryPerUser ? "TEAM" : "TEAM-ALL"}`;
+}
+
+async function addTiers<T extends UserSPLeaderboardItem>(
+	entries: T[],
+	season: number,
+) {
+	const tiers = await userSkills(season);
 
 	const encounteredTiers = new Set<string>();
 	return entries.map((entry, i) => {
@@ -133,23 +210,27 @@ export function filterByWeaponCategory<
 	);
 
 	return entries.filter(
-		(entry) => entry.weaponSplId && weaponIdsOfCategory.has(entry.weaponSplId),
+		(entry) =>
+			typeof entry.weaponSplId === "number" &&
+			weaponIdsOfCategory.has(entry.weaponSplId),
 	);
 }
 
-export function addPlacementRank<T>(entries: T[]) {
-	return entries.map((entry, index) => ({
-		...entry,
-		placementRank: index + 1,
-	}));
+/** The user leaderboard entries the page shows, cut by placement rank (not count) so ties across the cutoff all show; {@link ownEntryPeek} covers what this leaves out. */
+export function shownUserLeaderboard(
+	leaderboard: UserLeaderboardWithAdditionsItem[],
+) {
+	return leaderboard.filter(
+		(entry) => entry.placementRank <= DEFAULT_LEADERBOARD_MAX_SIZE,
+	);
 }
 
-export function ownEntryPeek({
+export async function ownEntryPeek({
 	leaderboard,
 	userId,
 	season,
 }: {
-	leaderboard: UserSPLeaderboardItem[];
+	leaderboard: UserLeaderboardWithAdditionsItem[];
 	userId: number;
 	season: number;
 }) {
@@ -160,19 +241,21 @@ export function ownEntryPeek({
 
 	if (!found) return null;
 
-	const withTier = addTiers([found], season)[0];
+	const withTier = (await addTiers([found], season))[0];
 
-	const { intervals } = userSkills(season);
+	const { intervals } = await userSkills(season);
+
+	const currentTierIndex = intervals.findIndex(
+		(interval) =>
+			interval.name === withTier.tier.name &&
+			interval.isPlus === withTier.tier.isPlus,
+	);
+
+	const nextTier =
+		currentTierIndex > 0 ? intervals[currentTierIndex - 1] : undefined;
 
 	return {
 		entry: withTier,
-		nextTier: intervals
-			.slice()
-			.reverse()
-			.find(
-				(tier) =>
-					tier.neededOrdinal &&
-					tier.neededOrdinal > spToOrdinal(withTier.power),
-			),
+		nextTier,
 	};
 }

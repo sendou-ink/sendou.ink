@@ -1,15 +1,18 @@
-import { Outlet } from "@remix-run/react";
-import { AddNewButton } from "~/components/AddNewButton";
+import { type MetaFunction, Outlet } from "react-router";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	navIconUrl,
-	plusSuggestionPage,
-	plusSuggestionsNewPage,
-} from "~/utils/urls";
+import { navIconUrl } from "~/utils/urls";
 
-import "~/styles/plus.css";
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Plus Server",
+		image: ogPageImage("plus"),
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	navItemName: "plus",
@@ -23,9 +26,6 @@ export const handle: SendouRouteHandle = {
 export default function PlusPageLayout() {
 	return (
 		<Main className="stack md">
-			<div className="stack items-end">
-				<AddNewButton navIcon="plus" to={plusSuggestionsNewPage()} />
-			</div>
 			<SubNav>
 				<SubNavLink to="suggestions">Suggestions</SubNavLink>
 				<SubNavLink to="voting/results">Results</SubNavLink>

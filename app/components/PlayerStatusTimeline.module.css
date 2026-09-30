@@ -1,0 +1,94 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	padding: var(--s-2-5) var(--s-3);
+}
+
+.legend {
+	display: flex;
+	gap: var(--s-4);
+	justify-content: center;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.legendItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.legendSwatchDead,
+.legendSwatchSpecial {
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+}
+
+.legendSwatchDead {
+	background-color: var(--color-error);
+}
+
+.legendSwatchSpecial {
+	background-color: var(--color-info);
+}
+
+.team {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.teamLabel {
+	font-size: var(--font-xs);
+	font-weight: 600;
+	color: var(--color-text-high);
+}
+
+.row {
+	display: flex;
+	align-items: center;
+}
+
+.slotLabel {
+	display: flex;
+	justify-content: flex-end;
+	flex-shrink: 0;
+	width: var(--plot-gutter, 36px);
+	padding-right: var(--s-2);
+}
+
+.track {
+	position: relative;
+	flex: 1;
+	height: 14px;
+	overflow: hidden;
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+}
+
+.spanDead,
+.spanSpecial {
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	min-width: 3px;
+	border-radius: 2px;
+}
+
+.spanDead {
+	background-color: var(--color-error);
+	opacity: 0.75;
+}
+
+.spanSpecial {
+	background-color: var(--color-info);
+	opacity: 0.75;
+}
+
+.unknownWeapon {
+	opacity: 0.5;
+}

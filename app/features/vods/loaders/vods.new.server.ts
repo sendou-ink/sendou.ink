@@ -1,40 +1,58 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { notFoundIfFalsy } from "~/utils/remix.server";
-import { actualNumber, id } from "~/utils/zod";
-import { findVodById } from "../queries/findVodById.server";
-import { canEditVideo, vodToVideoBeingAdded } from "../vods-utils";
+import {
+	type PrefillVodMatch,
+	prefillVodMatches,
+} from "~/features/scanner-ingest/core/VodMatches";
+import type { IngestVodPrefill } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
+import { hasPermission } from "~/modules/permissions/utils";
+import { notFoundIfNullish } from "~/utils/remix.server";
+import * as VodRepository from "../VodRepository.server";
+import type { videoMatchTypes } from "../vods-constants";
+import { vodsNewSearchParams } from "../vods-search-params";
+import {
+	secondsToHoursMinutesSecondString,
+	vodToVideoBeingAdded,
+} from "../vods-utils";
 
-const newVodLoaderParamsSchema = z.object({
-	vod: z.preprocess(actualNumber, id),
-});
+export const loader = async ({ url }: LoaderFunctionArgs) => {
+	const user = requireUser();
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await requireUser(request);
+	const { vod: vodId, ingest } = vodsNewSearchParams.parse(url);
 
-	const url = new URL(request.url);
-	const params = newVodLoaderParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
-
-	if (!params.success) {
-		return { vodToEdit: null };
+	if (vodId === null) {
+		return { vodToEdit: null, vodPrefill: vodPrefillFromIngestParam(ingest) };
 	}
 
-	const vod = notFoundIfFalsy(findVodById(params.data.vod));
+	const vod = notFoundIfNullish(await VodRepository.findVodById(vodId));
 	const vodToEdit = vodToVideoBeingAdded(vod);
 
-	if (
-		!canEditVideo({
-			submitterUserId: vod.submitterUserId,
-			userId: user.id,
-			povUserId:
-				vodToEdit.pov?.type === "USER" ? vodToEdit.pov.userId : undefined,
-		})
-	) {
-		return { vodToEdit: null };
+	if (!hasPermission(vod, "EDIT", user)) {
+		return { vodToEdit: null, vodPrefill: null };
 	}
 
-	return { vodToEdit: { ...vodToEdit, id: vod.id } };
+	return { vodToEdit: { ...vodToEdit, id: vod.id }, vodPrefill: null };
 };
+
+export interface VodPrefill {
+	type: (typeof videoMatchTypes)[number] | null;
+	matches: (Omit<PrefillVodMatch, "startsAt"> & { startsAt: string })[];
+}
+
+/**
+ * `ingest` param (an ingestVodPrefillSchema payload from the scanner VoD tab's "Add VoD" button)
+ * to form-prefill data. Detection misses stay null; a malformed param has already decoded to null.
+ */
+function vodPrefillFromIngestParam(
+	ingest: IngestVodPrefill | null,
+): VodPrefill | null {
+	if (!ingest) return null;
+
+	return {
+		type: ingest.type ?? null,
+		matches: prefillVodMatches(ingest.matches).map((match) => ({
+			...match,
+			startsAt: secondsToHoursMinutesSecondString(match.startsAt),
+		})),
+	};
+}

@@ -1,31 +1,28 @@
 import { add } from "date-fns";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Association from "./Association";
 
 describe("isVisible", () => {
-	it("should return true if visibility is null", () => {
+	test("returns true if visibility is null", () => {
 		const args: Association.IsVisibleArgs = {
 			visibility: null,
-			time: new Date(),
 			associations: null,
 		};
 		expect(Association.isVisible(args)).toBe(true);
 	});
 
-	it("should return false if not member of the association", () => {
+	test("returns false if not member of the association", () => {
 		const args: Association.IsVisibleArgs = {
 			visibility: { forAssociation: 1 },
-			time: new Date(),
 			associations: null,
 		};
 		expect(Association.isVisible(args)).toBe(false);
 	});
 
-	it("should return true if member of the association", () => {
+	test("returns true if member of the association", () => {
 		const args: Association.IsVisibleArgs = {
 			visibility: { forAssociation: 1 },
-			time: new Date(),
 			associations: {
 				actual: [{ id: 1 }],
 				virtual: [],
@@ -34,10 +31,9 @@ describe("isVisible", () => {
 		expect(Association.isVisible(args)).toBe(true);
 	});
 
-	it("should return true if member of the virtual association", () => {
+	test("returns true if member of the virtual association", () => {
 		const args: Association.IsVisibleArgs = {
 			visibility: { forAssociation: "+1" },
-			time: new Date(),
 			associations: {
 				actual: [],
 				virtual: ["+1"],
@@ -46,7 +42,7 @@ describe("isVisible", () => {
 		expect(Association.isVisible(args)).toBe(true);
 	});
 
-	it("should return false if not yet visible", () => {
+	test("returns false if not yet visible", () => {
 		const visibleAt = add(new Date(), { days: 1 });
 
 		const args: Association.IsVisibleArgs = {
@@ -56,7 +52,6 @@ describe("isVisible", () => {
 					{ at: dateToDatabaseTimestamp(visibleAt), forAssociation: 1 },
 				],
 			},
-			time: new Date(),
 			associations: {
 				actual: [{ id: 1 }],
 				virtual: [],
@@ -65,7 +60,7 @@ describe("isVisible", () => {
 		expect(Association.isVisible(args)).toBe(false);
 	});
 
-	it("should return true if has become visible", () => {
+	test("returns true if has become visible", () => {
 		const visibleAt = add(new Date(), { days: 1 });
 
 		const args: Association.IsVisibleArgs = {
@@ -84,7 +79,7 @@ describe("isVisible", () => {
 		expect(Association.isVisible(args)).toBe(true);
 	});
 
-	it("should return true if has become public", () => {
+	test("returns true if has become public", () => {
 		const visibleAt = add(new Date(), { days: 1 });
 
 		const args: Association.IsVisibleArgs = {
@@ -103,7 +98,74 @@ describe("isVisible", () => {
 		expect(Association.isVisible(args)).toBe(true);
 	});
 
-	it("should return true if has become public (no associations)", () => {
+	test("returns true if viewer is a friend of the content owner", () => {
+		const args: Association.IsVisibleArgs = {
+			visibility: { forAssociation: "FRIENDS" },
+			associations: {
+				actual: [],
+				virtual: [],
+				friendIds: [42],
+			},
+			contentOwnerUserId: 42,
+		};
+		expect(Association.isVisible(args)).toBe(true);
+	});
+
+	test("returns false if viewer is not a friend of the content owner", () => {
+		const args: Association.IsVisibleArgs = {
+			visibility: { forAssociation: "FRIENDS" },
+			associations: {
+				actual: [],
+				virtual: [],
+				friendIds: [99],
+			},
+			contentOwnerUserId: 42,
+		};
+		expect(Association.isVisible(args)).toBe(false);
+	});
+
+	test("returns false for a non-friend when the viewer has the FRIENDS virtual association every user gets", () => {
+		const args: Association.IsVisibleArgs = {
+			visibility: { forAssociation: "FRIENDS" },
+			associations: {
+				actual: [],
+				virtual: ["FRIENDS"],
+				friendIds: [99],
+			},
+			contentOwnerUserId: 42,
+		};
+		expect(Association.isVisible(args)).toBe(false);
+	});
+
+	test("returns false for FRIENDS visibility when not logged in", () => {
+		const args: Association.IsVisibleArgs = {
+			visibility: { forAssociation: "FRIENDS" },
+			associations: null,
+		};
+		expect(Association.isVisible(args)).toBe(false);
+	});
+
+	test("returns true when FRIENDS visibility becomes public via notFoundInstructions", () => {
+		const visibleAt = add(new Date(), { days: 1 });
+
+		const args: Association.IsVisibleArgs = {
+			visibility: {
+				forAssociation: "FRIENDS",
+				notFoundInstructions: [
+					{ at: dateToDatabaseTimestamp(visibleAt), forAssociation: null },
+				],
+			},
+			time: add(new Date(), { days: 2 }),
+			associations: {
+				actual: [],
+				virtual: [],
+				friendIds: [],
+			},
+		};
+		expect(Association.isVisible(args)).toBe(true);
+	});
+
+	test("returns true if has become public (no associations)", () => {
 		const visibleAt = add(new Date(), { days: 1 });
 
 		const args: Association.IsVisibleArgs = {
@@ -117,5 +179,46 @@ describe("isVisible", () => {
 			associations: null,
 		};
 		expect(Association.isVisible(args)).toBe(true);
+	});
+});
+
+describe("mentionsAssociation", () => {
+	test.each([
+		{ why: "no visibility", visibility: null, expected: false },
+		{
+			why: "current association",
+			visibility: { forAssociation: 1 },
+			expected: true,
+		},
+		{
+			why: "other association",
+			visibility: { forAssociation: 2 },
+			expected: false,
+		},
+		{
+			why: "virtual association",
+			visibility: { forAssociation: "+1" as const },
+			expected: false,
+		},
+		{
+			why: "association later in the schedule",
+			visibility: {
+				forAssociation: 2,
+				notFoundInstructions: [{ at: 0, forAssociation: 1 }],
+			},
+			expected: true,
+		},
+		{
+			why: "schedule going public only",
+			visibility: {
+				forAssociation: 2,
+				notFoundInstructions: [{ at: 0, forAssociation: null }],
+			},
+			expected: false,
+		},
+	])("$why", ({ visibility, expected }) => {
+		expect(
+			Association.mentionsAssociation({ visibility, associationId: 1 }),
+		).toBe(expected);
 	});
 });

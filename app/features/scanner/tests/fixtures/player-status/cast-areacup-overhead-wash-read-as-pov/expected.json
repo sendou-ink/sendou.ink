@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 92,
+		"special": [
+			[false, false, false, false],
+			[false, false, true, false]
+		],
+		"dead": [
+			[false, false, true, false],
+			[true, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "AREA CUP FINAL (grey-win VoD) overhead map view at 1:32 — badge-less, digit-less strip with the リード! lead banner top-left and roster panels at the sides. The live scan classified this stretch as pov geometry (··✕· vs ✕··✕ (pov)), misaligning the slots: right slot 3's white special-ready wash went unread and the alive outermost slot got a false splat. Reads flip-flop pov/cast through this segment."
+	}
+}

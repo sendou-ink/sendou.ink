@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 157,
+		"score": [2, 15],
+		"penalty": [64, 65],
+		"control": [true, false]
+	},
+	"options": {
+		"notes": "Penalty pills under both plates at once; alpha (bright green fill) in control."
+	}
+}

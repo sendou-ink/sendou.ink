@@ -1,0 +1,58 @@
+import { execSync } from "node:child_process";
+import fs from "node:fs";
+import type { FullConfig } from "@playwright/test";
+
+const SEAWEEDFS_MARKER_FILE = ".e2e-seaweedfs-started";
+
+declare global {
+	var __E2E_SERVERS__: import("node:child_process").ChildProcess[];
+}
+
+async function globalTeardown(_config: FullConfig) {
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log("\nStopping e2e test servers...");
+
+	const servers = global.__E2E_SERVERS__ || [];
+
+	const exits: Promise<void>[] = [];
+	for (const server of servers) {
+		if (server && !server.killed && server.exitCode === null) {
+			exits.push(
+				new Promise((resolve) => server.once("exit", () => resolve())),
+			);
+
+			if (process.platform === "win32" && server.pid) {
+				// Windows needs the whole process tree killed or the ports stay occupied
+				try {
+					execSync(`taskkill /pid ${server.pid} /T /F`, { stdio: "pipe" });
+				} catch {
+					// Ignore errors, process might already be gone
+				}
+			} else {
+				server.kill("SIGTERM");
+			}
+		}
+	}
+
+	await Promise.race([
+		Promise.all(exits),
+		new Promise((resolve) => setTimeout(resolve, 2000)),
+	]);
+
+	// only stop SeaweedFS if we started it
+	if (fs.existsSync(SEAWEEDFS_MARKER_FILE)) {
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log("Stopping SeaweedFS...");
+		try {
+			execSync("docker compose stop seaweedfs", { stdio: "inherit" });
+		} catch {
+			// Ignore errors - SeaweedFS might already be stopped
+		}
+		fs.unlinkSync(SEAWEEDFS_MARKER_FILE);
+	}
+
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log("All servers stopped.\n");
+}
+
+export default globalTeardown;

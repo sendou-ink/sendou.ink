@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import styles from "./Label.module.css";
 
 type LabelProps = Pick<
 	React.DetailedHTMLProps<
@@ -27,12 +28,19 @@ export function Label({
 	spaced = true,
 }: LabelProps) {
 	return (
-		<div className={clsx("label__container", className, { "mb-0": !spaced })}>
+		<div className={clsx(styles.container, className, { "mb-0": !spaced })}>
 			<label htmlFor={htmlFor} className={labelClassName}>
-				{children} {required && <span className="text-error">*</span>}
+				{children} {required ? <span className="text-error">*</span> : null}
 			</label>
 			{valueLimits ? (
-				<div className={clsx("label__value", lengthWarning(valueLimits))}>
+				<div
+					className={clsx(styles.value, {
+						[styles.valueError]: lengthState(valueLimits) === "error",
+						[styles.valueWarning]: lengthState(valueLimits) === "warning",
+					})}
+					data-testid="label-value-counter"
+					data-length-state={lengthState(valueLimits)}
+				>
 					{valueLimits.current}/{valueLimits.max}
 				</div>
 			) : null}
@@ -40,9 +48,9 @@ export function Label({
 	);
 }
 
-function lengthWarning(valueLimits: NonNullable<LabelProps["valueLimits"]>) {
+function lengthState(valueLimits: NonNullable<LabelProps["valueLimits"]>) {
 	if (valueLimits.current > valueLimits.max) return "error";
 	if (valueLimits.current / valueLimits.max >= 0.9) return "warning";
 
-	return;
+	return undefined;
 }

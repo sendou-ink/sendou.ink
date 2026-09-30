@@ -1,19 +1,17 @@
-import type { Tables } from "~/db/tables";
-import { isAdmin } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "../../utils/dates";
 import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 import type { VideoBeingAdded, Vod } from "./vods-types";
 
 export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
-	const dateObj = databaseTimestampToDate(vod.youtubeDate);
+	const dateObj = databaseTimestampToDate(vod.youtubePublishedAt);
 
 	return {
 		title: vod.title,
 		youtubeUrl: youtubeIdToYoutubeUrl(vod.youtubeId),
 		date: {
-			day: dateObj.getDate(),
-			month: dateObj.getMonth(),
-			year: dateObj.getFullYear(),
+			day: dateObj.getUTCDate(),
+			month: dateObj.getUTCMonth(),
+			year: dateObj.getUTCFullYear(),
 		},
 		matches: vod.matches.map((match) => ({
 			...match,
@@ -32,27 +30,9 @@ export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 	};
 }
 
-export function canEditVideo({
-	userId,
-	submitterUserId,
-	povUserId,
-}: {
-	userId?: Tables["User"]["id"];
-	submitterUserId: Tables["User"]["id"];
-	povUserId?: Tables["User"]["id"];
-}) {
-	if (!userId) return false;
-
-	return (
-		isAdmin({ id: userId }) ||
-		userId === submitterUserId ||
-		userId === povUserId
-	);
-}
-
 export function extractYoutubeIdFromVideoUrl(url: string): string | null {
 	const match = url.match(
-		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([^&/?]+)/,
+		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([^&/?#]+)/,
 	);
 	return match ? match[1] : null;
 }
@@ -94,4 +74,37 @@ export function hoursMinutesSecondsStringToSeconds(
 
 export function youtubeIdToYoutubeUrl(youtubeId: string) {
 	return `https://www.youtube.com/watch?v=${youtubeId}`;
+}
+
+export function generateYoutubeTimestamps(
+	matches: Vod["matches"],
+	type: Vod["type"],
+	resolvers: {
+		weaponName: (weaponId: number) => string;
+		stageName: (stageId: number) => string;
+		modeName: (mode: string) => string;
+	},
+) {
+	const lines: string[] = [];
+
+	if (matches.length > 0 && matches[0].startsAt > 0) {
+		lines.push("0:00 Intro");
+	}
+
+	const isCast = type === "CAST";
+
+	for (const match of matches) {
+		const timestamp = secondsToHoursMinutesSecondString(match.startsAt);
+		const stage = resolvers.stageName(match.stageId);
+		const mode = resolvers.modeName(match.mode);
+
+		const weaponPart =
+			!isCast && match.weapons.length === 1
+				? `${resolvers.weaponName(match.weapons[0])} / `
+				: "";
+
+		lines.push(`${timestamp} ${weaponPart}${mode} ${stage}`);
+	}
+
+	return lines.join("\n");
 }

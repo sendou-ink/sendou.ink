@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { ordinalSuffix } from "~/utils/i18n";
 import {
 	FIRST_PLACEMENT_ICON_PATH,
 	SECOND_PLACEMENT_ICON_PATH,
@@ -38,18 +39,11 @@ export function Placement({
 	showAsSuperscript = true,
 	plain = false,
 }: PlacementProps) {
-	const { t } = useTranslation(undefined, {});
+	const { i18n } = useTranslation();
 
-	const ordinalSuffix = t("results.placeSuffix", {
-		count: placement,
-		ordinal: true,
-		// no suffix is a better default than english
-		defaultValue: "",
-		fallbackLng: [],
-	});
-
-	const isSuperscript = showAsSuperscript && ordinalSuffix.startsWith("^");
-	const ordinalSuffixText = ordinalSuffix.replace(/^\^/, "");
+	const suffix = ordinalSuffix(placement, i18n.language);
+	const isSuperscript = showAsSuperscript && suffix.startsWith("^");
+	const ordinalSuffixText = suffix.replace(/^\^/, "");
 
 	const iconPath = textOnly ? null : getSpecialPlacementIconPath(placement);
 

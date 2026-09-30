@@ -1,164 +1,335 @@
-import { z } from "zod/v4";
-import { BADGE } from "~/features/badges/badges-constants";
-import { isCustomUrl } from "~/utils/urls";
+import * as v from "valibot";
+import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
+import {
+	OBJECT_PRONOUNS,
+	SUBJECT_PRONOUNS,
+} from "~/features/user-page/user-page-constants";
+import {
+	checkboxGroup,
+	customField,
+	dualSelectOptional,
+	idConstantOptional,
+	image,
+	inGameName,
+	selectDynamicOptional,
+	stringConstant,
+	textArea,
+	textAreaOptional,
+	textField,
+	textFieldOptional,
+	toggle,
+	trophies,
+	weaponPool,
+} from "~/form/fields";
+import {
+	clothesGearIds,
+	headGearIds,
+	shoesGearIds,
+} from "~/modules/in-game-lists/gear-ids";
 import {
 	_action,
 	actualNumber,
-	checkboxValueToDbBoolean,
-	customCssVarObject,
-	dbBoolean,
+	clothesMainSlotAbility,
 	emptyArrayToNull,
-	falsyToNull,
+	headMainSlotAbility,
 	id,
+	preprocess,
 	processMany,
+	removeDuplicates,
 	safeJSONParse,
-	safeNullableStringSchema,
-	undefinedToNull,
-	weaponSplId,
-} from "~/utils/zod";
-import * as Seasons from "../mmr/core/Seasons";
+	shoesMainSlotAbility,
+	stackableAbility,
+	superRefine,
+} from "~/utils/schema";
+import { isCustomUrl } from "~/utils/urls";
 import {
+	allWidgetsFlat,
+	findWidgetById,
+	maxWidgetsPerSlot,
+} from "./core/widgets/portfolio";
+import {
+	BUILD_SORT_IDENTIFIERS,
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
-} from "./components/UserResultsTable";
-import { COUNTRY_CODES, USER } from "./user-page-constants";
+	USER,
+} from "./user-page-constants";
 
-export const userParamsSchema = z.object({ identifier: z.string() });
-
-export const seasonsSearchParamsSchema = z.object({
-	page: z.coerce.number().optional(),
-	info: z.enum(["weapons", "stages", "mates", "enemies"]).optional(),
-	season: z.coerce
-		.number()
-		.optional()
-		.refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth)),
-});
-
-export const userEditActionSchema = z
-	.object({
-		country: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.refine((val) => !val || COUNTRY_CODES.includes(val as any))
-				.nullable(),
-		),
-		bio: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.BIO_MAX_LENGTH).nullable(),
-		),
-		customUrl: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.max(USER.CUSTOM_URL_MAX_LENGTH)
-				.refine((val) => val === null || isCustomUrl(val), {
-					message: "forms.errors.invalidCustomUrl.numbers",
-				})
-				.refine((val) => val === null || /^[a-zA-Z0-9-_]+$/.test(val), {
-					message: "forms.errors.invalidCustomUrl.strangeCharacter",
-				})
-				.transform((val) => val?.toLowerCase())
-				.nullable(),
-		),
-		customName: safeNullableStringSchema({ max: USER.CUSTOM_NAME_MAX_LENGTH }),
-		battlefy: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.BATTLEFY_MAX_LENGTH).nullable(),
-		),
-		stickSens: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			z
-				.number()
-				.min(-50)
-				.max(50)
-				.refine((val) => val % 5 === 0)
-				.nullable(),
-		),
-		motionSens: z.preprocess(
-			processMany(actualNumber, undefinedToNull),
-			z
-				.number()
-				.min(-50)
-				.max(50)
-				.refine((val) => val % 5 === 0)
-				.nullable(),
-		),
-		inGameNameText: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.IN_GAME_NAME_TEXT_MAX_LENGTH).nullable(),
-		),
-		inGameNameDiscriminator: z.preprocess(
-			falsyToNull,
-			z
-				.string()
-				.refine((val) => /^[0-9a-z]{4,5}$/.test(val))
-				.nullable(),
-		),
-		css: customCssVarObject,
-		weapons: z.preprocess(
-			safeJSONParse,
-			z
-				.array(
-					z.object({
-						weaponSplId,
-						isFavorite: dbBoolean,
-					}),
-				)
-				.max(USER.WEAPON_POOL_MAX_SIZE),
-		),
-		favoriteBadgeIds: z.preprocess(
-			processMany(safeJSONParse, emptyArrayToNull),
-			z
-				.array(id)
-				.min(1)
-				.max(BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1)
-				.nullish(),
-		),
-		showDiscordUniqueName: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-		commissionsOpen: z.preprocess(checkboxValueToDbBoolean, dbBoolean),
-		commissionText: z.preprocess(
-			falsyToNull,
-			z.string().max(USER.COMMISSION_TEXT_MAX_LENGTH).nullable(),
-		),
-	})
-	.refine(
-		(val) => {
-			if (val.motionSens !== null && val.stickSens === null) {
+export const userEditProfileBaseSchema = v.object({
+	customAvatar: image({
+		label: "labels.profileCustomAvatar",
+		bottomText: "bottomTexts.profileCustomAvatar",
+		autoValidate: true,
+	}),
+	customName: textFieldOptional({
+		label: "labels.profileCustomName",
+		bottomText: "bottomTexts.profileCustomName",
+		maxLength: USER.CUSTOM_NAME_MAX_LENGTH,
+	}),
+	customUrl: textFieldOptional({
+		label: "labels.profileCustomUrl",
+		bottomText: "bottomTexts.profileCustomUrl",
+		leftAddon: "https://sendou.ink/u/",
+		maxLength: USER.CUSTOM_URL_MAX_LENGTH,
+		toLowerCase: true,
+		regExp: {
+			pattern: /^[a-zA-Z0-9-_]+$/,
+			message: "forms:errors.profileCustomUrlStrangeChar",
+		},
+		validate: {
+			func: isCustomUrl,
+			message: "forms:errors.profileCustomUrlNumbers",
+		},
+	}),
+	inGameName: inGameName({
+		label: "labels.inGameName",
+		bottomText: "bottomTexts.profileInGameName",
+	}),
+	pronouns: dualSelectOptional({
+		bottomText: "bottomTexts.profilePronouns",
+		fields: [
+			{
+				label: "labels.pronoun",
+				items: SUBJECT_PRONOUNS.map((p) => ({ label: () => p, value: p })),
+			},
+			{
+				label: "labels.pronoun",
+				items: OBJECT_PRONOUNS.map((p) => ({ label: () => p, value: p })),
+			},
+		],
+		validate: {
+			func: ([subject, object]) => {
+				if (subject === null && object === null) return true;
+				if (subject !== null && object !== null) return true;
 				return false;
-			}
-
-			return true;
+			},
+			message: "errors.profilePronounsBothOrNeither",
 		},
-		{
-			message: "forms.errors.invalidSens",
-		},
-	);
+	}),
+	country: selectDynamicOptional({
+		label: "labels.profileCountry",
+		searchable: true,
+	}),
+	favoriteTrophyIds: trophies({
+		label: "labels.profileFavoriteTrophies",
+		maxCount: SMALL_TROPHIES_PER_DISPLAY_PAGE,
+	}),
+	hiddenTrophyIds: trophies({
+		label: "labels.profileHiddenTrophies",
+	}),
+	commissionsOpen: toggle({
+		label: "labels.profileCommissionsOpen",
+		bottomText: "bottomTexts.profileCommissionsOpen",
+	}),
+	commissionText: textAreaOptional({
+		label: "labels.profileCommissionText",
+		bottomText: "bottomTexts.profileCommissionText",
+		maxLength: USER.COMMISSION_TEXT_MAX_LENGTH,
+	}),
+});
 
-export const editHighlightsActionSchema = z.object({
-	[HIGHLIGHT_CHECKBOX_NAME]: z.optional(
-		z.union([z.array(z.string()), z.string()]),
+export const editHighlightsActionSchema = v.object({
+	[HIGHLIGHT_CHECKBOX_NAME]: v.optional(
+		v.union([v.array(v.string()), v.string()]),
 	),
-	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: z.optional(
-		z.union([z.array(z.string()), z.string()]),
+	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: v.optional(
+		v.union([v.array(v.string()), v.string()]),
 	),
 });
 
-export const addModNoteSchema = z.object({
-	_action: _action("ADD_MOD_NOTE"),
-	value: z.string().trim().min(1).max(USER.MOD_NOTE_MAX_LENGTH),
+export const addModNoteSchema = v.object({
+	_action: stringConstant("ADD_MOD_NOTE"),
+	value: textArea({
+		label: "labels.text",
+		bottomText: "bottomTexts.modNote",
+		maxLength: USER.MOD_NOTE_MAX_LENGTH,
+	}),
 });
 
-export const deleteModNoteSchema = z.object({
+const deleteModNoteSchema = v.object({
 	_action: _action("DELETE_MOD_NOTE"),
 	noteId: id,
 });
 
-export const adminTabActionSchema = z.union([
+export const adminTabActionSchema = v.union([
 	addModNoteSchema,
 	deleteModNoteSchema,
 ]);
 
-export const userResultsPageSearchParamsSchema = z.object({
-	all: z.stringbool(),
+const widgetSettingsSchemas = allWidgetsFlat().map((widget) => {
+	if ("schema" in widget && widget.schema) {
+		return v.object({
+			id: v.literal(widget.id),
+			settings: widget.schema,
+		});
+	}
+	return v.object({
+		id: v.literal(widget.id),
+	});
 });
+
+const widgetSettingsSchema = v.union(widgetSettingsSchemas);
+
+export const widgetsEditSchema = (isSupporter: boolean) => {
+	const max = maxWidgetsPerSlot(isSupporter);
+
+	return v.object({
+		widgets: preprocess(
+			safeJSONParse,
+			v.pipe(
+				v.array(widgetSettingsSchema),
+				v.minLength(1),
+				v.maxLength(max.main + max.side),
+				v.check((widgets) => {
+					const seenIds = new Set<string>();
+					let mainCount = 0;
+					let sideCount = 0;
+					for (const w of widgets) {
+						const def = findWidgetById(w.id);
+						if (!def) return false;
+						if (def.supporterOnly && !isSupporter) return false;
+						if (seenIds.has(w.id)) return false;
+						seenIds.add(w.id);
+						if (def.slot === "main") mainCount++;
+						else sideCount++;
+					}
+					return mainCount <= max.main && sideCount <= max.side;
+				}),
+			),
+		),
+	});
+};
+
+const headGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
+		(val) =>
+			val === null || headGearIds.includes(val as (typeof headGearIds)[number]),
+	),
+);
+
+const clothesGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
+		(val) =>
+			val === null ||
+			clothesGearIds.includes(val as (typeof clothesGearIds)[number]),
+	),
+);
+
+const shoesGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
+		(val) =>
+			val === null ||
+			shoesGearIds.includes(val as (typeof shoesGearIds)[number]),
+	),
+);
+
+const abilitiesSchema = v.tuple([
+	v.tuple([
+		headMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+	v.tuple([
+		clothesMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+	v.tuple([
+		shoesMainSlotAbility,
+		stackableAbility,
+		stackableAbility,
+		stackableAbility,
+	]),
+]);
+
+const modeItems = [
+	{ label: "modes.TW" as const, value: "TW" as const },
+	{ label: "modes.SZ" as const, value: "SZ" as const },
+	{ label: "modes.TC" as const, value: "TC" as const },
+	{ label: "modes.RM" as const, value: "RM" as const },
+	{ label: "modes.CB" as const, value: "CB" as const },
+];
+
+export const newBuildBaseSchema = v.object({
+	buildToEditId: idConstantOptional(),
+	weapons: weaponPool({
+		label: "labels.buildWeapons",
+		minCount: 1,
+		maxCount: 5,
+		disableSorting: true,
+		disableFavorites: true,
+		disableAltSkinDuplicates: true,
+	}),
+	head: customField({ initialValue: null }, headGearIdSchema),
+	clothes: customField({ initialValue: null }, clothesGearIdSchema),
+	shoes: customField({ initialValue: null }, shoesGearIdSchema),
+	abilities: customField(
+		{
+			initialValue: [
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+				["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],
+			],
+		},
+		abilitiesSchema,
+	),
+	title: textField({
+		label: "labels.buildTitle",
+		maxLength: 50,
+	}),
+	description: textAreaOptional({
+		label: "labels.description",
+		maxLength: 280,
+	}),
+	modes: checkboxGroup({
+		label: "labels.buildModes",
+		items: modeItems,
+	}),
+	isPrivate: toggle({
+		label: "labels.buildPrivate",
+		bottomText: "bottomTexts.buildPrivate",
+	}),
+});
+
+function validateGearAllOrNone(data: {
+	head: number | null;
+	clothes: number | null;
+	shoes: number | null;
+}) {
+	const gearFilled = [data.head, data.clothes, data.shoes].filter(
+		(g) => g !== null,
+	);
+	return gearFilled.length === 0 || gearFilled.length === 3;
+}
+export const gearAllOrNoneRefine = {
+	fn: validateGearAllOrNone,
+	opts: { message: "forms:errors.gearAllOrNone", path: ["head"] },
+};
+
+export const newBuildSchema = v.pipe(
+	newBuildBaseSchema,
+	superRefine((data, ctx) => {
+		if (gearAllOrNoneRefine.fn(data)) return;
+
+		ctx.addIssue(gearAllOrNoneRefine.opts);
+	}),
+);
+
+export const buildsActionSchema = v.union([
+	v.object({
+		_action: _action("DELETE_BUILD"),
+		buildToDeleteId: preprocess(actualNumber, id),
+	}),
+
+	v.object({
+		_action: _action("UPDATE_SORTING"),
+		buildSorting: preprocess(
+			processMany(safeJSONParse, removeDuplicates, emptyArrayToNull),
+			v.nullable(v.array(v.picklist(BUILD_SORT_IDENTIFIERS))),
+		),
+	}),
+]);

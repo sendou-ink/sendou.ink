@@ -3,16 +3,16 @@ import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	AnyWeapon,
+	Damage,
 	DamageType,
-} from "~/features/build-analyzer";
-import type { Damage } from "~/features/build-analyzer/analyzer-types";
+} from "~/features/build-analyzer/analyzer-types";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import {
 	DAMAGE_RECEIVERS,
@@ -20,10 +20,10 @@ import {
 	damageTypesToCombine,
 } from "../calculator-constants";
 import type { CombineWith, DamageReceiver } from "../calculator-types";
-import objectDamages from "./object-dmg.json";
+import objectDamages from "../data/object-dmg.json";
 import { objectHitPoints } from "./objectHitPoints";
 
-export function damageTypeToMultipliers({
+function damageTypeToMultipliers({
 	type,
 	weapon,
 }: {
@@ -77,8 +77,7 @@ function resolveRelevantKey({
 	if (actualKeys.length === 1) return actualKeys[0];
 
 	for (const [weaponType, weaponIds, damageType, key] of damagePriorities) {
-		// handle alt kits e.g. Splatteshot might have id 10 but Tentatek Splattershot has id 11
-		// but in the context of this function they are one and the same
+		// alt kits (e.g. Tentatek Splattershot) share their base kit's damage
 		const normalizedWeaponId =
 			weapon.type === "MAIN" ? weaponIdToBaseWeaponId(weapon.id) : weapon.id;
 
@@ -86,8 +85,7 @@ function resolveRelevantKey({
 		if (!weaponIds.includes(normalizedWeaponId)) continue;
 		if (damageType !== type) continue;
 
-		// @ts-expect-error TODO: fix this (5.5 version)
-		if (!actualKeys.includes(key)) {
+		if (!actualKeys.includes(key as Exclude<typeof key, "Default">)) {
 			throw new Error(
 				`Invalid damagePriorities (no key in object-dmg.json for the weapon): ${JSON.stringify(
 					[weaponType, weaponIds, damageType, key],
@@ -105,7 +103,7 @@ function resolveRelevantKey({
 	);
 }
 
-export function multipliersToRecordWithFallbacks(
+function multipliersToRecordWithFallbacks(
 	multipliers: ReturnType<typeof damageTypeToMultipliers>,
 ) {
 	return Object.fromEntries(
@@ -130,7 +128,10 @@ export function resolveAllUniqueDamageTypes({
 				? analyzed.stats.specialWeaponDamages.map((d) => d.type)
 				: analyzed.stats.damages.map((d) => d.type);
 
-	return R.unique(damageTypes).filter((dmg) => !dmg.includes("SECONDARY"));
+	return R.unique(damageTypes).filter(
+		(dmg) =>
+			!dmg.includes("SECONDARY") && dmg !== "COMBO" && dmg !== "DISTANCE_JUMP",
+	);
 }
 
 function resolveFilteredDamages({
@@ -155,7 +156,7 @@ function resolveFilteredDamages({
 	const damageWithMultishots = (dmg: Damage, multiShots: number) => {
 		// initially only Dread Wringer
 		const isAsymmetric = analyzed.stats.damages.some(
-			(dmg) => dmg.type === "DIRECT_SECONDARY_MIN",
+			(candidate) => candidate.type === "DIRECT_SECONDARY_MIN",
 		);
 
 		if (!isAsymmetric) return dmg.value * multiShots;
@@ -166,7 +167,7 @@ function resolveFilteredDamages({
 				: "DIRECT_SECONDARY_MIN";
 
 		const secondaryDamage = analyzed.stats.damages.find(
-			(dmg) => dmg.type === otherKey,
+			(candidate) => candidate.type === otherKey,
 		);
 		invariant(secondaryDamage, "secondary damage not found");
 
@@ -261,7 +262,7 @@ export function calculateDamage({
 						}
 
 						const result = filteredDamages.find(
-							(damage) => damage.type === toCombine?.combineWith,
+							(candidate) => candidate.type === toCombine?.combineWith,
 						)?.value;
 
 						invariant(result);
@@ -289,8 +290,7 @@ export function calculateDamage({
 							const otherMultiplier =
 								multipliers[toCombine.combineWith][receiver];
 
-							// calculate "made up" multiplier that is taking the
-							// weighted average of the two multipliers
+							// "made up" multiplier: weighted average of the two
 							return (
 								(normalMultiplier * actualDamage() +
 									otherMultiplier * otherDamage()) /

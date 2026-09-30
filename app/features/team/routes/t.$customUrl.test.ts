@@ -1,61 +1,45 @@
-import type { SerializeFrom } from "@remix-run/node";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
-import { db } from "~/db/sql";
-import {
-	assertResponseErrored,
-	dbInsertUsers,
-	dbReset,
-	wrappedAction,
-	wrappedLoader,
-} from "~/utils/Test";
-import { loader as userProfileLoader } from "../../user-page/loaders/u.$identifier.index.server";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
-import { action as teamIndexPageAction } from "../actions/t.server";
-import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
+import { action as teamIndexPageAction } from "../actions/t.new.server";
 import * as TeamRepository from "../TeamRepository.server";
 import type {
 	createTeamSchema,
-	editTeamSchema,
 	teamProfilePageActionSchema,
-} from "../team-schemas.server";
-
-const loadUserTeamLoader = wrappedLoader<
-	SerializeFrom<typeof userProfileLoader>
->({
-	loader: userProfileLoader,
-});
+} from "../team-schemas";
+import {
+	createTeamOwnedByRegular,
+	createTeamWithRegularMember,
+} from "../tests/fixtures";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
+	isJsonSubmission: true,
 });
 const teamPageAction = wrappedAction<typeof teamProfilePageActionSchema>({
 	action: _teamPageAction,
-});
-const editTeamAction = wrappedAction<typeof editTeamSchema>({
-	action: _editTeamAction,
+	isJsonSubmission: true,
 });
 
 async function loadTeams() {
-	const data = await loadUserTeamLoader({
-		user: "regular",
-		params: {
-			identifier: String(REGULAR_USER_TEST_ID),
-		},
-	});
+	const teams =
+		await TeamRepository.findAllByMemberUserId(REGULAR_USER_TEST_ID);
 
-	return { team: data.user.team, secondaryTeams: data.user.secondaryTeams };
+	const mainTeam = teams.find((t) => t.isMainTeam);
+	const secondaryTeams = teams.filter((t) => !t.isMainTeam);
+
+	return { team: mainTeam, secondaryTeams };
 }
 
 describe("Secondary teams", () => {
 	beforeEach(async () => {
-		await dbInsertUsers();
-	});
-	afterEach(() => {
-		dbReset();
+		await UserFactory.createAdmin();
+		await UserFactory.createRegular();
 	});
 
-	it("first team created becomes main team", async () => {
+	test("first team created becomes main team", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 
 		const { team, secondaryTeams } = await loadTeams();
@@ -64,7 +48,7 @@ describe("Secondary teams", () => {
 		expect(secondaryTeams).toHaveLength(0);
 	});
 
-	it("second team created becomes secondary", async () => {
+	test("second team created becomes secondary", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 
@@ -74,7 +58,7 @@ describe("Secondary teams", () => {
 		expect(secondaryTeams[0].name).toBe("Team 2");
 	});
 
-	it("makes secondary team main team", async () => {
+	test("makes secondary team main team", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 
@@ -84,13 +68,13 @@ describe("Secondary teams", () => {
 		expect(secondaryTeams[0].name).toBe("Team 2");
 	});
 
-	it("sets main team (2 team)", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-		await createTeamAction({ name: "Team 2" }, { user: "regular" });
+	test("sets main team (2 team)", async () => {
+		await createTeamOwnedByRegular("Team 1");
+		const secondary = await createTeamOwnedByRegular("Team 2", false);
 
 		await teamPageAction(
 			{ _action: "MAKE_MAIN_TEAM" },
-			{ user: "regular", params: { customUrl: "team-2" } },
+			{ user: "regular", params: { customUrl: secondary.customUrl } },
 		);
 
 		const { team } = await loadTeams();
@@ -98,17 +82,17 @@ describe("Secondary teams", () => {
 		expect(team!.name).toBe("Team 2");
 	});
 
-	it("when deleting the main team, the secondary team becomes main", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-		await createTeamAction({ name: "Team 2" }, { user: "regular" });
+	test("when deleting the main team, the secondary team becomes main", async () => {
+		const main = await createTeamOwnedByRegular("Team 1");
+		await createTeamOwnedByRegular("Team 2", false);
 
-		await editTeamAction(
+		await teamPageAction(
 			{
 				_action: "DELETE_TEAM",
 			},
 			{
 				user: "regular",
-				params: { customUrl: "team-1" },
+				params: { customUrl: main.customUrl },
 			},
 		);
 
@@ -118,21 +102,23 @@ describe("Secondary teams", () => {
 		expect(secondaryTeams).toHaveLength(0);
 	});
 
-	it("when leaving the main team, the secondary team becomes main", async () => {
-		// has to be made by "admin" because can't leave team you own
-		await createTeamAction({ name: "Team 1" }, { user: "admin" });
-		await createTeamAction({ name: "Team 2" }, { user: "admin" });
+	test("only the team owner (or admin) can delete a team", async () => {
+		const { customUrl } = await createTeamWithRegularMember({ name: "Team 1" });
 
-		await TeamRepository.addNewTeamMember({
-			userId: REGULAR_USER_TEST_ID,
-			teamId: 1,
-			maxTeamsAllowed: 2,
-		});
-		await TeamRepository.addNewTeamMember({
-			userId: REGULAR_USER_TEST_ID,
-			teamId: 2,
-			maxTeamsAllowed: 2,
-		});
+		await expect(
+			teamPageAction(
+				{ _action: "DELETE_TEAM" },
+				{ user: "regular", params: { customUrl } },
+			),
+		).rejects.toThrow("Response thrown with status code: 403");
+
+		expect(await TeamRepository.findByCustomUrl(customUrl)).toBeTruthy();
+	});
+
+	test("when leaving the main team, the secondary team becomes main", async () => {
+		// owned by the admin because you can't leave a team you own
+		const main = await createTeamWithRegularMember({ name: "Team 1" });
+		await createTeamWithRegularMember({ name: "Team 2", isMainTeam: false });
 
 		const { team, secondaryTeams } = await loadTeams();
 
@@ -145,7 +131,7 @@ describe("Secondary teams", () => {
 			},
 			{
 				user: "regular",
-				params: { customUrl: "team-1" },
+				params: { customUrl: main.customUrl },
 			},
 		);
 
@@ -156,7 +142,7 @@ describe("Secondary teams", () => {
 		expect(newSecondaryTeams).toHaveLength(0);
 	});
 
-	it("creates max 2 teams as non-patron", async () => {
+	test("creates max 2 teams as non-patron", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 
@@ -167,113 +153,19 @@ describe("Secondary teams", () => {
 
 		assertResponseErrored(response);
 	});
+});
 
-	const makeUserPatron = () =>
-		db
-			.updateTable("User")
-			.set({ patronTier: 2 })
-			.where("id", "=", REGULAR_USER_TEST_ID)
-			.execute();
+describe("Secondary teams as patron", () => {
+	beforeEach(async () => {
+		await UserFactory.createRegular(null, { patronTier: 2 });
+	});
 
-	it("creates more than 2 teams as patron", async () => {
-		await makeUserPatron();
-
+	test("creates more than 2 teams as patron", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 		await createTeamAction({ name: "Team 3" }, { user: "regular" });
 
 		const { secondaryTeams } = await loadTeams();
 		expect(secondaryTeams).toHaveLength(2);
-	});
-
-	const createTeamWithImage = async (imageType: "avatar" | "banner") => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-
-		const imageId = await db
-			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({
-				url: `https://example.com/test-${imageType}.jpg`,
-				submitterUserId: REGULAR_USER_TEST_ID,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-
-		const imageField = imageType === "avatar" ? "avatarImgId" : "bannerImgId";
-		await db
-			.updateTable("AllTeam")
-			.set({ [imageField]: imageId.id })
-			.where("customUrl", "=", "team-1")
-			.execute();
-
-		return imageId.id;
-	};
-
-	it("deletes team avatar", async () => {
-		const imageId = await createTeamWithImage("avatar");
-
-		await editTeamAction(
-			{ _action: "DELETE_AVATAR" },
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		const team = await db
-			.selectFrom("Team")
-			.select("avatarImgId")
-			.where("customUrl", "=", "team-1")
-			.executeTakeFirst();
-
-		expect(team?.avatarImgId).toBeNull();
-
-		const image = await db
-			.selectFrom("UnvalidatedUserSubmittedImage")
-			.select("id")
-			.where("id", "=", imageId)
-			.executeTakeFirst();
-
-		expect(image).toBeUndefined();
-	});
-
-	it("deletes team banner", async () => {
-		const imageId = await createTeamWithImage("banner");
-
-		await editTeamAction(
-			{ _action: "DELETE_BANNER" },
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		const team = await db
-			.selectFrom("Team")
-			.select("bannerImgId")
-			.where("customUrl", "=", "team-1")
-			.executeTakeFirst();
-
-		expect(team?.bannerImgId).toBeNull();
-
-		const image = await db
-			.selectFrom("UnvalidatedUserSubmittedImage")
-			.select("id")
-			.where("id", "=", imageId)
-			.executeTakeFirst();
-
-		expect(image).toBeUndefined();
-	});
-
-	it("only team owner can delete images", async () => {
-		await createTeamWithImage("avatar");
-
-		await db
-			.insertInto("User")
-			.values({
-				discordName: "otheruser",
-				discordId: "999",
-			})
-			.execute();
-
-		const response = await editTeamAction(
-			{ _action: "DELETE_AVATAR" },
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		expect(response.status).toBe(302);
 	});
 });

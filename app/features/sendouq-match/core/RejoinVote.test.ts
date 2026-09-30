@@ -1,0 +1,175 @@
+import { describe, expect, test } from "vitest";
+import type { SQMatch } from "~/features/sendouq/core/SendouQ.server";
+import * as RejoinVote from "./RejoinVote";
+
+type MatchInput = Pick<SQMatch, "groupAlpha" | "groupBravo">;
+
+function groupWith(
+	members: Array<{ id: number; isContinuing: boolean | null }>,
+) {
+	return { members } as unknown as MatchInput["groupAlpha"];
+}
+
+describe("RejoinVote.result()", () => {
+	test("is ONGOING until the whole group has voted", () => {
+		expect(
+			RejoinVote.result([
+				{ userId: 1, isContinuing: true },
+				{ userId: 2, isContinuing: true },
+				{ userId: 3, isContinuing: true },
+			]),
+		).toEqual({ type: "ONGOING" });
+	});
+
+	test("resolves with the ids of members who chose to continue", () => {
+		const result = RejoinVote.result([
+			{ userId: 1, isContinuing: true },
+			{ userId: 2, isContinuing: false },
+			{ userId: 3, isContinuing: true },
+			{ userId: 4, isContinuing: false },
+		]);
+
+		expect(result).toEqual({
+			type: "RESOLVED",
+			continuingUserIds: [1, 3],
+		});
+	});
+
+	test("fails when fewer than two members want to continue", () => {
+		expect(
+			RejoinVote.result([
+				{ userId: 1, isContinuing: true },
+				{ userId: 2, isContinuing: false },
+				{ userId: 3, isContinuing: false },
+				{ userId: 4, isContinuing: false },
+			]),
+		).toEqual({ type: "FAILED" });
+	});
+});
+
+describe("RejoinVote.agreedNominatedUserId()", () => {
+	test.each([
+		{ why: "both teams named only them", teams: [[7], [7]], expected: 7 },
+		{
+			why: "they are the only name in common",
+			teams: [
+				[7, 8],
+				[7, 9],
+			],
+			expected: 7,
+		},
+		{
+			why: "the teams named nobody in common",
+			teams: [[7], [8]],
+			expected: null,
+		},
+		{
+			why: "the teams agree on more than one",
+			teams: [
+				[7, 8],
+				[7, 8],
+			],
+			expected: null,
+		},
+		{ why: "only one team reported", teams: [[7]], expected: null },
+	])("returns $expected when $why", ({ teams, expected }) => {
+		expect(RejoinVote.agreedNominatedUserId(teams)).toBe(expected);
+	});
+});
+
+describe("RejoinVote.userContinueStatus()", () => {
+	test("returns null when the user has not voted", () => {
+		expect(RejoinVote.userContinueStatus([], 1)).toBeNull();
+	});
+
+	test("returns the user's vote", () => {
+		const votes = [
+			{ userId: 1, isContinuing: false },
+			{ userId: 2, isContinuing: true },
+		];
+
+		expect(RejoinVote.userContinueStatus(votes, 2)).toBe(true);
+		expect(RejoinVote.userContinueStatus(votes, 1)).toBe(false);
+	});
+});
+
+describe("RejoinVote.canCastVote()", () => {
+	test("is true when the user has not voted yet", () => {
+		expect(
+			RejoinVote.canCastVote([{ userId: 2, isContinuing: true }], 1, true),
+		).toBe(true);
+		expect(
+			RejoinVote.canCastVote([{ userId: 2, isContinuing: true }], 1, false),
+		).toBe(true);
+	});
+
+	test("is true when changing a yes vote to a no", () => {
+		expect(
+			RejoinVote.canCastVote([{ userId: 1, isContinuing: true }], 1, false),
+		).toBe(true);
+	});
+
+	test("is false when re-casting a yes vote", () => {
+		expect(
+			RejoinVote.canCastVote([{ userId: 1, isContinuing: true }], 1, true),
+		).toBe(false);
+	});
+
+	test("is false once the user has voted no", () => {
+		expect(
+			RejoinVote.canCastVote([{ userId: 1, isContinuing: false }], 1, true),
+		).toBe(false);
+		expect(
+			RejoinVote.canCastVote([{ userId: 1, isContinuing: false }], 1, false),
+		).toBe(false);
+	});
+
+	test("is false once the vote has settled", () => {
+		const resolvedVotes = [
+			{ userId: 1, isContinuing: true },
+			{ userId: 2, isContinuing: true },
+			{ userId: 3, isContinuing: true },
+			{ userId: 4, isContinuing: true },
+		];
+
+		expect(RejoinVote.canCastVote(resolvedVotes, 1, false)).toBe(false);
+	});
+});
+
+describe("RejoinVote.extractOwnGroupVotesFromSendouqMatch()", () => {
+	const match = {
+		groupAlpha: groupWith([
+			{ id: 1, isContinuing: true },
+			{ id: 2, isContinuing: null },
+			{ id: 3, isContinuing: false },
+		]),
+		groupBravo: groupWith([{ id: 10, isContinuing: true }]),
+	} satisfies MatchInput;
+
+	test("returns only the cast votes of the user's own group", () => {
+		expect(RejoinVote.extractOwnGroupVotesFromSendouqMatch(match, 1)).toEqual([
+			{ userId: 1, isContinuing: true },
+			{ userId: 3, isContinuing: false },
+		]);
+	});
+
+	test("returns null when the user is in neither group", () => {
+		expect(
+			RejoinVote.extractOwnGroupVotesFromSendouqMatch(match, 999),
+		).toBeNull();
+	});
+});
+
+describe("RejoinVote.currentUserIds()", () => {
+	test("filters out members who voted against continuing", () => {
+		const result = RejoinVote.currentUserIds(
+			[
+				{ userId: 1, isContinuing: true },
+				{ userId: 2, isContinuing: false },
+			],
+			[1, 2, 3, 4],
+		);
+
+		expect(result).toEqual([1, 3, 4]);
+	});
+});

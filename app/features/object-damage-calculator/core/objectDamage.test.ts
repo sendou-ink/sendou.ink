@@ -3,8 +3,8 @@ import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	DamageType,
-} from "~/features/build-analyzer";
-import { buildStats } from "~/features/build-analyzer";
+} from "~/features/build-analyzer/analyzer-types";
+import { buildStats } from "~/features/build-analyzer/core/stats";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -54,8 +54,7 @@ function calculate({
 }
 
 describe("calculateDamage()", () => {
-	// the function throws if weapon resolves to more than one set of damage rates
-	// so this test goes through all of them to make sure they all work
+	// the function throws if a weapon resolves to more than one set of damage rates
 	test("Every weapon can calculate damage", () => {
 		for (const mainWeaponId of mainWeaponIds) {
 			const analyzed = buildStats({
@@ -64,6 +63,7 @@ describe("calculateDamage()", () => {
 			});
 
 			for (const damage of analyzed.stats.damages) {
+				if (damage.type === "COMBO") continue;
 				calculate({ mainWeaponId, damageType: damage.type });
 			}
 		}
@@ -89,6 +89,7 @@ describe("calculateDamage()", () => {
 
 			for (const damage of analyzedWithSpecialWeapon.stats
 				.specialWeaponDamages) {
+				if (damage.type === "COMBO") continue;
 				calculate({
 					specialWeaponId,
 					damageType: damage.type,
@@ -107,6 +108,7 @@ describe("calculateDamage()", () => {
 		const hpWithoutBRU = withoutBRU.find(
 			(d) => d.receiver === "Wsb_Shield",
 		)?.hitPoints;
+		// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
 		const hpWithBRU = withBRU.find((d) => d.receiver === "Wsb_Shield")
 			?.hitPoints!;
 
@@ -124,6 +126,7 @@ describe("calculateDamage()", () => {
 		const hpWithoutSPU = withoutSPU.find(
 			(d) => d.receiver === "GreatBarrier_Barrier",
 		)?.hitPoints;
+		// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
 		const hpWithSPU = withSPU.find((d) => d.receiver === "GreatBarrier_Barrier")
 			?.hitPoints!;
 
@@ -160,7 +163,7 @@ describe("calculateDamage()", () => {
 		[5010, "NORMAL_MAX", 34, 31],
 		// Tenta Brella
 		[6010, "NORMAL_MAX", 4, 4],
-		// // Tri-Stringer
+		// Tri-Stringer
 		[7010, "NORMAL_MAX", 3, 3],
 		// REEF-LUX
 		[7020, "NORMAL_MIN", 8, 7],

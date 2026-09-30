@@ -1,26 +1,39 @@
-import { useLoaderData } from "@remix-run/react";
-import type { z } from "zod/v4";
+import { Plus } from "lucide-react";
+import { Link, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { SendouForm } from "~/components/form/SendouForm";
-import { TextAreaFormField } from "~/components/form/TextAreaFormField";
-import { PlusIcon } from "~/components/icons/Plus";
-import { Main } from "~/components/Main";
+import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
-import { USER } from "~/features/user-page/user-page-constants";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { ReportsBarChart } from "~/features/user-report/components/ReportsBarChart";
+import { USER_REPORT_CATEGORY_LABELS } from "~/features/user-report/user-report-constants";
+import { SendouForm } from "~/form";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
+import { sendouQMatchPage, userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.admin.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.admin.server";
-import styles from "./u.$identifier.admin.module.css";
-export { loader, action };
+import { useUserPageLayoutData } from "../user-page-hooks";
+
+export { action, loader };
 
 export default function UserAdminPage() {
+	const layoutData = useUserPageLayoutData();
+
 	return (
-		<Main className="stack xl">
+		<div className="stack xl">
+			<SubPageHeader user={layoutData.user} title={"Admin"} />
 			<AccountInfos />
+
+			<div className="stack sm">
+				<Divider smallText className="font-bold">
+					Friend codes
+				</Divider>
+				<FriendCodes />
+			</div>
+
 			<div className="stack sm">
 				<Divider smallText className="font-bold">
 					Mod notes
@@ -30,11 +43,18 @@ export default function UserAdminPage() {
 
 			<div className="stack sm">
 				<Divider smallText className="font-bold">
+					Reports
+				</Divider>
+				<Reports />
+			</div>
+
+			<div className="stack sm">
+				<Divider smallText className="font-bold">
 					Ban log
 				</Divider>
 				<BanLog />
 			</div>
-		</Main>
+		</div>
 	);
 }
 
@@ -42,29 +62,37 @@ function AccountInfos() {
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<dl className={styles.dl}>
+		<dl>
 			<dt>User account created at</dt>
 			<dd>
-				{data.createdAt
-					? databaseTimestampToDate(data.createdAt).toLocaleString("en-US", {
+				{data.createdAt ? (
+					<LocaleTime
+						date={data.createdAt}
+						options={{
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
 							hour: "2-digit",
 							minute: "2-digit",
-						})
-					: "―"}
+						}}
+					/>
+				) : (
+					"―"
+				)}
 			</dd>
 
 			<dt>Discord account created at</dt>
 			<dd>
-				{new Date(data.discordAccountCreatedAt).toLocaleString("en-US", {
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-					hour: "2-digit",
-					minute: "2-digit",
-				})}
+				<LocaleTime
+					date={new Date(data.discordAccountCreatedAt)}
+					options={{
+						year: "numeric",
+						month: "numeric",
+						day: "numeric",
+						hour: "2-digit",
+						minute: "2-digit",
+					}}
+				/>
 			</dd>
 
 			<dt>Discord ID</dt>
@@ -109,15 +137,17 @@ function ModNotes() {
 		<div className="stack lg">
 			{data.modNotes.map((note) => (
 				<div key={note.noteId}>
-					<p className="font-bold">
-						{databaseTimestampToDate(note.createdAt).toLocaleString("en-US", {
+					<LocaleTime
+						date={note.createdAt}
+						options={{
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
-							hour: "2-digit",
-							minute: "2-digit",
-						})}
-					</p>
+							hour: "numeric",
+							minute: "numeric",
+						}}
+						className="font-bold"
+					/>
 					<p className="ml-2">By: {note.username}</p>
 					<p className="ml-2 whitespace-pre-wrap">Note: {note.text}</p>
 					{note.discordId === user?.discordId ? (
@@ -145,34 +175,67 @@ function ModNotes() {
 	);
 }
 
-type FormFields = z.infer<typeof addModNoteSchema>;
-
 function NewModNoteDialog() {
 	return (
 		<SendouDialog
 			heading="Adding a new mod note"
 			showCloseButton
 			trigger={
-				<SendouButton icon={<PlusIcon />} className="ml-auto mt-6">
+				<SendouButton icon={<Plus />} className="ml-auto mt-6">
 					New note
 				</SendouButton>
 			}
 		>
-			<SendouForm
-				schema={addModNoteSchema}
-				defaultValues={{
-					value: "",
-					_action: "ADD_MOD_NOTE",
-				}}
-			>
-				<TextAreaFormField<FormFields>
-					name="value"
-					label="Text"
-					maxLength={USER.MOD_NOTE_MAX_LENGTH}
-					bottomText="This note will be only visible to staff members."
-				/>
+			<SendouForm schema={addModNoteSchema}>
+				{({ FormField }) => <FormField name="value" />}
 			</SendouForm>
 		</SendouDialog>
+	);
+}
+
+function Reports() {
+	const data = useLoaderData<typeof loader>();
+	const formatDistanceToNow = useFormatDistanceToNow();
+
+	if (data.reports.length === 0) {
+		return <p className="text-center text-lighter italic">No reports</p>;
+	}
+
+	return (
+		<div className="stack md">
+			<p className="font-bold">{data.reports.length} total</p>
+			<ReportsBarChart monthlyCounts={data.reportsMonthlyCounts} />
+			<div className="stack sm" data-testid="user-reports-list">
+				{data.reports.map((report) => (
+					<details key={report.id}>
+						<summary>
+							<span className="font-bold">
+								{USER_REPORT_CATEGORY_LABELS[report.category]}
+							</span>{" "}
+							- By:{" "}
+							<Link
+								to={userPage({
+									discordId: report.reporterDiscordId,
+									customUrl: report.reporterCustomUrl,
+								})}
+							>
+								{report.reporterUsername}
+							</Link>{" "}
+							- {formatDistanceToNow(report.createdAt)}
+						</summary>
+						<p className="ml-2 whitespace-pre-wrap">{report.description}</p>
+						{report.matchId !== null ? (
+							<Link
+								className="ml-2 text-xs"
+								to={sendouQMatchPage(report.matchId)}
+							>
+								SendouQ match #{report.matchId}
+							</Link>
+						) : null}
+					</details>
+				))}
+			</div>
+		</div>
 	);
 }
 
@@ -187,15 +250,17 @@ function BanLog() {
 		<div className="stack lg">
 			{data.banLogs.map((ban) => (
 				<div key={ban.createdAt}>
-					<p className="font-bold">
-						{databaseTimestampToDate(ban.createdAt).toLocaleString("en-US", {
+					<LocaleTime
+						date={ban.createdAt}
+						options={{
 							year: "numeric",
-							month: "long",
+							month: "numeric",
 							day: "numeric",
-							hour: "2-digit",
-							minute: "2-digit",
-						})}
-					</p>
+							hour: "numeric",
+							minute: "numeric",
+						}}
+						className="font-bold"
+					/>
 					{ban.banned === 0 ? (
 						<p className="text-success ml-2">Unbanned</p>
 					) : (
@@ -205,15 +270,21 @@ function BanLog() {
 					{typeof ban.banned === "number" && ban.banned !== 0 ? (
 						<p className="ml-2">
 							Banned till:{" "}
-							{ban.banned !== 1
-								? databaseTimestampToDate(ban.banned).toLocaleString("en-US", {
+							{ban.banned !== 1 ? (
+								<LocaleTime
+									date={ban.banned}
+									options={{
 										year: "numeric",
-										month: "long",
+										month: "numeric",
 										day: "numeric",
-										hour: "2-digit",
-										minute: "2-digit",
-									})
-								: "No end date set"}
+										hour: "numeric",
+										minute: "numeric",
+									}}
+									inline
+								/>
+							) : (
+								"No end date set"
+							)}
 						</p>
 					) : null}
 					{ban.banned !== 0 ? (
@@ -224,6 +295,39 @@ function BanLog() {
 							)}
 						</p>
 					) : null}
+				</div>
+			))}
+		</div>
+	);
+}
+
+function FriendCodes() {
+	const data = useLoaderData<typeof loader>();
+
+	if (!data.friendCodes || data.friendCodes.length === 0) {
+		return <p className="text-center text-lighter italic">No friend codes</p>;
+	}
+
+	return (
+		<div className="stack lg">
+			{data.friendCodes.map((fc, index) => (
+				<div key={fc.createdAt}>
+					<p className="font-bold">{fc.friendCode}</p>
+					<p className="ml-2">
+						{index === 0 ? "Current" : "Past"} - Added on{" "}
+						<LocaleTime
+							date={fc.createdAt}
+							options={{
+								year: "numeric",
+								month: "numeric",
+								day: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							}}
+							inline
+						/>
+					</p>
+					<p className="ml-2">Submitted by: {fc.submitterUsername}</p>
 				</div>
 			))}
 		</div>

@@ -1,158 +1,176 @@
-import test, { expect, type Page } from "@playwright/test";
-import {
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-	selectUser,
-	selectWeapon,
-	submit,
-} from "~/utils/playwright";
-import { newVodPage, VODS_PAGE, vodVideoPage } from "~/utils/urls";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import { vodVideoPage } from "~/utils/urls";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { NewVodPage } from "./pages/vods/new-vod-page";
+import { VodPage } from "./pages/vods/vod-page";
+import { VodsPage } from "./pages/vods/vods-page";
 
-const chooseVideoDate = async (page: Page) => {
-	await page.getByTestId("open-calendar-button").click();
-	await page
-		.getByTestId("choose-date-button")
-		.filter({ has: page.locator(`text="1"`) })
-		.first()
-		.click();
-};
+const VIDEO_DATE = new Date(2024, 4, 15, 12, 0); // May 15, 2024 at 12:00
+const FORMATTED_VIDEO_DATE = `${VIDEO_DATE.getMonth() + 1}/${VIDEO_DATE.getDate()}/${VIDEO_DATE.getFullYear()}`;
+
+const LUNA_BLASTER: MainWeaponId = 200;
+const ZINK_MINI_SPLATLING: MainWeaponId = 4001;
+const TENTA_BRELLA: MainWeaponId = 6010;
+
+const SCORCH_GORGE: StageId = 0;
 
 test.describe("VoDs page", () => {
-	test("adds video (pov)", async ({ page }) => {
-		await seed(page);
+	test("adds video (pov)", async ({ page, factories }) => {
+		await factories.UserFactory.grant(ADMIN_ID, { roles: ["VIDEO_ADDER"] });
+
 		await impersonate(page);
-		await navigate({
-			page,
-			url: newVodPage(),
-		});
 
-		await page
-			.getByLabel("YouTube URL")
-			.fill("https://www.youtube.com/watch?v=o7kWlMZP3lM");
+		const newVod = new NewVodPage(page);
+		await newVod.goto();
 
-		await page
-			.getByLabel("Video title")
-			.fill("ITZXI Finals - Team Olive vs. Astral [CAMO TENTA PoV]");
+		await newVod.form.fill(
+			"youtubeUrl",
+			"https://www.youtube.com/watch?v=o7kWlMZP3lM",
+		);
+		await newVod.form.fill(
+			"title",
+			"ITZXI Finals - Team Olive vs. Astral [CAMO TENTA PoV]",
+		);
+		await newVod.form.setDate("date", VIDEO_DATE);
+		await newVod.form.select("type", "SCRIM");
 
-		await chooseVideoDate(page);
+		await newVod.selectPov("Sendou");
 
-		await page.getByLabel("Type").selectOption("SCRIM");
+		const firstMatch = newVod.match(0);
+		await firstMatch.setStartsAt("0:20");
+		await firstMatch.selectMode("Tower Control");
+		await firstMatch.selectStage("Hammerhead Bridge");
+		await firstMatch.selectWeapon("Zink Mini Splatling");
 
-		await selectUser({
-			labelName: "Player (Pov)",
-			page,
-			userName: "Sendou",
-		});
+		await newVod.addMatch();
 
-		await page.getByLabel("Start timestamp").fill("0:20");
-		await page.getByLabel("Mode").selectOption("TC");
-		await page.getByLabel("Stage").selectOption("5");
-		await selectWeapon({
-			name: "Zink Mini Splatling",
-			page,
-			testId: "match-0-weapon",
-		});
+		const secondMatch = newVod.match(1);
+		await secondMatch.setStartsAt("5:55");
+		await secondMatch.selectMode("Rainmaker");
+		await secondMatch.selectStage("Museum d'Alfonsino");
+		await secondMatch.selectWeapon("Tenta Brella");
 
-		await page.getByTestId("add-field-button").click();
+		const vod = await newVod.save();
 
-		await page.getByLabel("Start timestamp").last().fill("5:55");
-		await page.getByLabel("Mode").last().selectOption("RM");
-		await page.getByLabel("Stage").last().selectOption("6");
-		await selectWeapon({
-			name: "Tenta Brella",
-			page,
-			testId: "match-1-weapon",
-		});
+		await expect(vod.locators.publishedAt).toContainText(FORMATTED_VIDEO_DATE);
+		await expect(vod.weaponImage(ZINK_MINI_SPLATLING)).toBeVisible();
+		await expect(vod.weaponImage(TENTA_BRELLA)).toBeVisible();
 
-		await submit(page);
-
-		const now = new Date();
-		const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
-		await page.getByText(formattedDate).isVisible();
-		await page.getByTestId("weapon-img-4001").isVisible();
-		await page.getByTestId("weapon-img-6010").isVisible();
+		await vod.openCopyTimestamps();
+		await expect(vod.locators.timestamps).toHaveValue(
+			[
+				"0:00 Intro",
+				"0:20 Zink Mini Splatling / TC Hammerhead Bridge",
+				"5:55 Tenta Brella / RM Museum d'Alfonsino",
+			].join("\n"),
+		);
 	});
 
-	test("adds video (cast)", async ({ page }) => {
-		await seed(page);
+	test("adds video (cast)", async ({ page, factories }) => {
+		await factories.UserFactory.grant(ADMIN_ID, { roles: ["VIDEO_ADDER"] });
+
 		await impersonate(page);
-		await navigate({
-			page,
-			url: newVodPage(),
-		});
 
-		await page
-			.getByLabel("YouTube URL")
-			.fill("https://www.youtube.com/watch?v=QFk1Gf91SwI");
+		const newVod = new NewVodPage(page);
+		await newVod.goto();
 
-		await page
-			.getByLabel("Video title")
-			.fill("BIG ! vs Starburst - Splatoon 3 Grand Finals - The Big House 10");
+		await newVod.form.fill(
+			"youtubeUrl",
+			"https://www.youtube.com/watch?v=QFk1Gf91SwI",
+		);
+		await newVod.form.fill(
+			"title",
+			"BIG ! vs Starburst - Splatoon 3 Grand Finals - The Big House 10",
+		);
+		await newVod.form.setDate("date", VIDEO_DATE);
+		await newVod.form.select("type", "CAST");
 
-		await chooseVideoDate(page);
+		const match = newVod.match(0);
+		await match.setStartsAt("0:25");
+		await match.selectMode("Clam Blitz");
+		await match.selectStage("MakoMart");
 
-		await page.getByLabel("Type").selectOption("CAST");
-
-		await page.keyboard.press("Enter");
-
-		await page.getByLabel("Start timestamp").fill("0:25");
-		await page.getByLabel("Mode").selectOption("CB");
-		await page.getByLabel("Stage").selectOption("10");
-
-		for (let i = 0; i < 8; i++) {
-			await selectWeapon({
-				name: i < 4 ? "Luna Blaster" : "Tenta Brella",
-				page,
-				testId: `player-${i}-weapon`,
-			});
+		for (let i = 0; i < 4; i++) {
+			await match.selectTeamWeapon(1, i, "Luna Blaster");
+		}
+		for (let i = 0; i < 4; i++) {
+			await match.selectTeamWeapon(2, i, "Tenta Brella");
 		}
 
-		await submit(page);
+		const vod = await newVod.save();
 
 		for (let i = 0; i < 8; i++) {
-			await page
-				.getByTestId(`weapon-img-${i < 4 ? 200 : 6010}-${i}`)
-				.isVisible();
+			await expect(
+				vod.weaponImage(i < 4 ? LUNA_BLASTER : TENTA_BRELLA, i),
+			).toBeVisible();
 		}
 	});
 
-	test("edits vod", async ({ page }) => {
-		await seed(page);
+	test("edits and deletes vod", async ({ page, factories }) => {
+		const existingVod = await factories.VodFactory.create({
+			submitterUserId: ADMIN_ID,
+			pov: { type: "USER", userId: ADMIN_ID },
+			matches: [
+				{
+					startsAt: "0:00",
+					stageId: SCORCH_GORGE,
+					mode: "SZ",
+					weapons: [TENTA_BRELLA],
+				},
+			],
+		});
+
+		await factories.UserFactory.grant(ADMIN_ID, { roles: ["VIDEO_ADDER"] });
+
 		await impersonate(page);
-		await navigate({
-			page,
-			url: vodVideoPage(1),
-		});
 
-		await page.getByTestId("edit-vod-button").click();
+		const vod = new VodPage(page);
+		await vod.goto(existingVod.id);
 
-		await selectWeapon({
-			name: "Luna Blaster",
-			page,
-			testId: "match-3-weapon",
-		});
+		const editVod = await vod.openEdit();
+		await editVod.match(0).selectWeapon("Luna Blaster");
+		await editVod.save();
 
-		await submit(page);
+		await expect(page).toHaveURL(vodVideoPage(existingVod.id));
+		await expect(vod.weaponImage(LUNA_BLASTER)).toBeVisible();
 
-		await expect(page).toHaveURL(vodVideoPage(1));
+		await vod.delete();
 
-		await page.getByTestId("weapon-img-200-4").isVisible();
+		await expect(page).toHaveURL(/\/u\/.+\/vods/);
+
+		const vods = new VodsPage(page);
+		await vods.goto();
+
+		await expect(vods.locators.noVodsText).toBeVisible();
 	});
 
-	test("operates vod filters", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
-		await navigate({
-			page,
-			url: VODS_PAGE,
+	test("operates vod filters", async ({ page, factories }) => {
+		await factories.VodFactory.create({
+			submitterUserId: ADMIN_ID,
+			pov: { type: "USER", userId: NZAP_TEST_ID },
+			matches: [
+				{
+					startsAt: "0:00",
+					stageId: SCORCH_GORGE,
+					mode: "SZ",
+					weapons: [TENTA_BRELLA],
+				},
+			],
 		});
 
-		const nzapUserPageLink = page.getByRole("link", { name: "N-ZAP" });
+		await impersonate(page);
 
-		await nzapUserPageLink.isVisible();
-		await selectWeapon({ page, name: "Carbon Roller" });
-		await isNotVisible(nzapUserPageLink);
+		const vods = new VodsPage(page);
+		await vods.goto();
+
+		const nzapPovLink = vods.povLink("N-ZAP");
+		await expect(nzapPovLink).toBeVisible();
+
+		await vods.filterByWeapon("Carbon Roller");
+
+		await isNotVisible(nzapPovLink);
+		await expect(vods.locators.noVodsText).toBeVisible();
 	});
 });

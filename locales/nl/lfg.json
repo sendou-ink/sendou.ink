@@ -8,7 +8,6 @@
 	"post.lastActive": "",
 	"noPosts": "",
 	"expiring": "",
-	"addFilter": "",
 	"filters.Weapon": "",
 	"filters.Type": "",
 	"filters.Timezone": "",
@@ -16,17 +15,9 @@
 	"filters.PlusTier": "",
 	"filters.MaxTier": "",
 	"filters.MinTier": "",
-	"filters.suffix": "",
 	"filters.orAbove": "",
 	"new.noMorePosts": "",
-	"new.type.header": "",
-	"new.timezone.header": "",
-	"new.text.header": "",
-	"new.visibility.header": "",
-	"new.visibility.everyone": "",
 	"new.editOn": "",
 	"new.weaponPool.header": "",
-	"new.weaponPool.userProfile": "",
-	"new.languages.header": "",
-	"new.languages.sqSettingsPage": ""
+	"new.weaponPool.matchProfile": ""
 }

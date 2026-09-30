@@ -1,0 +1,12 @@
+.lightThemeOnly {
+	:is(html:global(.dark), [data-theme="dark"]) &:not([data-theme="light"] *) {
+		display: none;
+	}
+}
+
+.darkThemeOnly {
+	html:not(:global(.dark)) &:not([data-theme="dark"] *),
+	[data-theme="light"] & {
+		display: none;
+	}
+}

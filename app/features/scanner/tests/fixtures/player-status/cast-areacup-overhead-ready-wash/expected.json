@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 152,
+		"special": [
+			[true, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, true, true],
+			[true, false, true, false]
+		]
+	},
+	"options": {
+		"notes": "dead[1][2] sits on the overhead map's pale backdrop, which turns its grey plate near-white; it used to be accepted as a ready misread until the body-tint split told the untinted plate from a wash."
+	}
+}

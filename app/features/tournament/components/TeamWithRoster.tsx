@@ -1,64 +1,68 @@
-import { Link } from "@remix-run/react";
 import clsx from "clsx";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { useTournament } from "~/features/tournament/tournament-context";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { userPage } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
-import { useTournament, useTournamentFriendCodes } from "../routes/to.$id";
+import { useTournamentFriendCodes } from "../routes/to.$id";
+import styles from "./TeamWithRoster.module.css";
 
 export function TeamWithRoster({
 	team,
 	mapPool,
 	seed,
+	bracketLabel,
 	teamPageUrl,
 	activePlayers,
 }: {
-	team: TournamentDataTeam;
+	team: TournamentTeamFull;
 	mapPool?: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">> | null;
 	seed?: number;
+	bracketLabel?: string;
 	teamPageUrl?: string;
 	activePlayers?: Tables["User"]["id"][];
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
 	const friendCodes = useTournamentFriendCodes();
 
-	const teamLogoSrc = tournament.tournamentTeamLogoSrc(team);
-
 	return (
 		<div>
-			<div className="tournament__team-with-roster">
-				<div className="tournament__team-with-roster__name">
+			<div className={styles.teamWithRoster}>
+				<div className={styles.teamWithRosterName}>
 					<div className="stack horizontal sm justify-end items-end">
-						{teamLogoSrc ? <Avatar size="xxs" url={teamLogoSrc} /> : null}
+						<Avatar size="xxs" url={team.logoUrl} identiconInput={team.name} />
 						{seed ? (
-							<div className="tournament__team-with-roster__seed">#{seed}</div>
+							<div className={styles.teamWithRosterSeed}>
+								{bracketLabel ? `${bracketLabel} ` : null}#{seed}
+							</div>
 						) : null}
 					</div>{" "}
 					{teamPageUrl ? (
 						<Link
 							to={teamPageUrl}
-							className="tournament__team-with-roster__team-name"
+							className={styles.teamWithRosterTeamName}
 							data-testid="team-name"
+							title={team.name}
 						>
 							{team.name}
 						</Link>
 					) : (
-						<span className="tournament__team-with-roster__team-name">
+						<span className={styles.teamWithRosterTeamName} title={team.name}>
 							{team.name}
 						</span>
 					)}
 				</div>
-				<ul className="tournament__team-with-roster__members">
+				<ul className={styles.teamWithRosterMembers}>
 					{team.members.map((member) => {
 						const friendCode = friendCodes?.[member.userId];
-						const isSub =
-							databaseTimestampToDate(member.createdAt) >
-							tournament.ctx.startTime;
 
 						const name = () => {
 							if (!tournament.ctx.settings.requireInGameNames) {
@@ -69,20 +73,22 @@ export function TeamWithRoster({
 						};
 
 						return (
-							<li key={member.userId} className="tournament__team-member-row">
-								{member.isOwner ? (
-									<span className="tournament__team-member-name__role text-theme">
-										C
+							<li key={member.userId} className={styles.teamMemberRow}>
+								{member.role === "OWNER" ? (
+									<span className={`${styles.teamMemberNameRole}`}>
+										{t("tournament:roster.role.captain.short")}
 									</span>
 								) : null}
-								{isSub && !member.isOwner ? (
-									<span className="tournament__team-member-name__role tournament__team-member-name__role__sub">
-										S
+								{member.isSub && member.role !== "OWNER" ? (
+									<span
+										className={`${styles.teamMemberNameRole} ${styles.teamMemberNameRoleSub}`}
+									>
+										{t("tournament:roster.role.sub.short")}
 									</span>
 								) : null}
 								<div
-									className={clsx("tournament__team-with-roster__member", {
-										"tournament__team-with-roster__member__inactive":
+									className={clsx(styles.teamWithRosterMember, {
+										[styles.teamWithRosterMemberInactive]:
 											activePlayers && !activePlayers.includes(member.userId),
 									})}
 								>
@@ -90,13 +96,13 @@ export function TeamWithRoster({
 										user={member}
 										size="xxs"
 										className={clsx({
-											"tournament__team-with-roster__member__avatar-inactive":
+											[styles.teamWithRosterMemberAvatarInactive]:
 												activePlayers && !activePlayers.includes(member.userId),
 										})}
 									/>
 									<Link
 										to={userPage(member)}
-										className="tournament__team-member-name"
+										className={styles.teamMemberName}
 										data-testid="team-member-name"
 									>
 										{name()}
@@ -121,13 +127,12 @@ export function TeamWithRoster({
 }
 
 function FreshAccountEmoji({ discordId }: { discordId: string }) {
+	const { t } = useTranslation(["tournament"]);
+
 	if (!accountCreatedInTheLastSixMonths(discordId)) return null;
 
 	return (
-		<span
-			className="text-md mr-2"
-			title="Discord account created in the last 6 months"
-		>
+		<span className="text-md mr-2" title={t("tournament:roster.freshAccount")}>
 			👶
 		</span>
 	);
@@ -138,18 +143,27 @@ function TeamMapPool({
 }: {
 	mapPool: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">>;
 }) {
+	const sortedMapPool = mapPool.toSorted(
+		(a, b) =>
+			modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode) ||
+			a.stageId - b.stageId,
+	);
+
 	return (
 		<div
-			className={clsx("tournament__team-with-roster__map-pool", {
-				"tournament__team-with-roster__map-pool__3-columns":
-					mapPool.length % 3 === 0,
+			className={clsx(styles.teamWithRosterMapPool, {
+				[styles.teamWithRosterMapPool3Columns]: mapPool.length % 3 === 0,
 			})}
 		>
-			{mapPool.map(({ mode, stageId }, i) => {
+			{sortedMapPool.map(({ mode, stageId }, i) => {
 				return (
 					<div key={i}>
-						<StageImage stageId={stageId} width={85} />
-						<div className="tournament__team-with-roster__map-pool__mode-info">
+						<StageImage
+							stageId={stageId}
+							width={85}
+							testId={`team-map-pool-${mode}-${stageId}`}
+						/>
+						<div className={styles.teamWithRosterMapPoolModeInfo}>
 							<ModeImage mode={mode} size={16} />
 						</div>
 					</div>

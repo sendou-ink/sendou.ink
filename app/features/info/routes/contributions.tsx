@@ -1,6 +1,6 @@
-import type { MetaFunction } from "@remix-run/node";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";
@@ -23,6 +23,7 @@ export const handle: SendouRouteHandle = {
 };
 
 const PROGRAMMERS = [
+	"hfcRed",
 	"DoubleCookies",
 	"ElementUser",
 	"remmycat",
@@ -45,11 +46,11 @@ const TRANSLATORS: Array<{
 		language: "de",
 	},
 	{
-		translators: ["KaiserOfNone", "Mario64iscool2"],
+		translators: ["KaiserOfNone", "Mario64iscool2", "Lasky"],
 		language: "es-ES",
 	},
 	{
-		translators: ["Hachi Shibaru", "KaiserOfNone", "Mario64iscool2"],
+		translators: ["Hachi Shibaru", "KaiserOfNone", "Mario64iscool2", "Lasky"],
 		language: "es-US",
 	},
 	{
@@ -69,7 +70,7 @@ const TRANSLATORS: Array<{
 		language: "it",
 	},
 	{
-		translators: ["funyaaa", "taqm", "yutarour"],
+		translators: ["funyaaa", "taqm", "yutarour", "Koreki"],
 		language: "ja",
 	},
 	{
@@ -93,7 +94,14 @@ const TRANSLATORS: Array<{
 		language: "ru",
 	},
 	{
-		translators: ["たここ", "ShanglinMo", "gellneko", "zenpk", "chenyenru"],
+		translators: [
+			"たここ",
+			"ShanglinMo",
+			"gellneko",
+			"zenpk",
+			"chenyenru",
+			"Inkorest",
+		],
 		language: "zh",
 	},
 ];
@@ -116,10 +124,12 @@ export default function ContributionsPage() {
 					</a>
 				</li>
 				<li>Lean - {t("contributions:lean")}</li>
+				<li>BUGSLAP - {t("contributions:bugslap")}</li>
 				<li>borzoic - {t("contributions:borzoic")}</li>
 				<li>TORIPNG - {t("contributions:toripng")}</li>
 				<li>uberu - {t("contributions:uberu")}</li>
 				<li>yaga - {t("contributions:yaga")}</li>
+				<li>Centritide - {t("contributions:centritide")}</li>
 				<li>Antariska, yaga & harryXYZ - {t("contributions:antariska")}</li>
 				<li>
 					<a href={SPLATOON_3_INK} target="_blank" rel="noreferrer">

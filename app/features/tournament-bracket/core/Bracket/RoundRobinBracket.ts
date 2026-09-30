@@ -1,0 +1,370 @@
+import * as R from "remeda";
+import type { Tables } from "~/db/tables";
+import * as Standings from "~/features/tournament/core/Standings";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
+import { invariant } from "~/utils/invariant";
+import { type BracketMapCounts, roundSetKey } from "../toMapList";
+import { Bracket, type Standing } from "./Bracket";
+
+export class RoundRobinBracket extends Bracket {
+	get collectsKos() {
+		return true;
+	}
+
+	source({ placements, rest }: { placements: number[]; rest?: boolean }): {
+		relevantMatchesFinished: boolean;
+		teams: number[];
+	} {
+		invariant(placements.length > 0, "Empty placements not supported");
+		if (placements.some((p) => p < 0)) {
+			throw new Error("Negative placements not implemented");
+		}
+		const standings = this.standings;
+		const relevantMatchesFinished =
+			standings.length === this.participantTournamentTeamIds.length;
+
+		const maxExplicit = Math.max(...placements);
+		const matchesPlacement = (p: number) =>
+			placements.includes(p) || (rest === true && p >= maxExplicit);
+
+		if (this.settings?.hasAbDivisions) {
+			return {
+				relevantMatchesFinished,
+				teams: this.teamsFromPlacementsPerAbDivision(
+					standings,
+					placements,
+					rest === true,
+				),
+			};
+		}
+
+		const uniquePlacements = R.unique(standings.map((s) => s.placement));
+
+		// 1,3,5 -> 1,2,3 e.g.
+		const placementNormalized = (p: number) => {
+			return uniquePlacements.indexOf(p) + 1;
+		};
+
+		return {
+			relevantMatchesFinished,
+			teams: standings
+				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
+				.map((s) => s.team.id),
+		};
+	}
+
+	private teamsFromPlacementsPerAbDivision(
+		standings: Standing[],
+		placements: number[],
+		rest: boolean,
+	): number[] {
+		const groupIds = R.unique(
+			standings
+				.map((s) => s.groupId)
+				.filter((id): id is number => typeof id === "number"),
+		);
+		const maxExplicit = Math.max(...placements);
+		const teams: number[] = [];
+		for (const groupId of groupIds) {
+			for (const division of [0, 1] as const) {
+				const divisionStandings = standings.filter(
+					(s) => s.groupId === groupId && s.team.abDivision === division,
+				);
+				const maxPlacement = rest ? divisionStandings.length : maxExplicit;
+				for (let placement = 1; placement <= maxPlacement; placement++) {
+					if (
+						!placements.includes(placement) &&
+						!(rest && placement >= maxExplicit)
+					) {
+						continue;
+					}
+					const standing = divisionStandings[placement - 1];
+					if (standing) teams.push(standing.team.id);
+				}
+			}
+		}
+		return teams;
+	}
+
+	protected calculateStandings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: false });
+	}
+
+	protected calculateLiveStandings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: true });
+	}
+
+	private computeStandings({
+		includeUnfinishedGroups,
+	}: {
+		includeUnfinishedGroups: boolean;
+	}): Standing[] {
+		const groupIds = this.data.group.map((group) => group.id);
+
+		const placements: (Standing & { groupId: number })[] = [];
+		for (const groupId of groupIds) {
+			const matches = this.data.match.filter(
+				(match) => match.groupId === groupId,
+			);
+
+			const groupIsFinished = matches.every(
+				(match) =>
+					// BYE
+					match.opponent1 === null ||
+					match.opponent2 === null ||
+					// match was played out
+					match.winnerSide,
+			);
+
+			if (!groupIsFinished && !includeUnfinishedGroups) continue;
+
+			const droppedOutWithIncompleteMatches = new Set<number>();
+			for (const team of this.tournament.ctx.teams) {
+				if (!team.droppedOut) continue;
+				const teamMatches = matches.filter(
+					(m) => m.opponent1?.id === team.id || m.opponent2?.id === team.id,
+				);
+				if (teamMatches.length === 0) continue;
+				const allPlayed = teamMatches.every(
+					(m) =>
+						m.opponent1 === null ||
+						m.opponent2 === null ||
+						typeof m.opponent1?.score === "number" ||
+						typeof m.opponent2?.score === "number",
+				);
+				if (!allPlayed) droppedOutWithIncompleteMatches.add(team.id);
+			}
+
+			const teams: {
+				id: number;
+				setWins: number;
+				setLosses: number;
+				mapWins: number;
+				mapLosses: number;
+				winsAgainstTied: number;
+				koCount: number;
+			}[] = [];
+
+			const updateTeam = ({
+				teamId,
+				setWins = 0,
+				setLosses = 0,
+				mapWins = 0,
+				mapLosses = 0,
+				koCount = 0,
+			}: {
+				teamId: number;
+				setWins?: number;
+				setLosses?: number;
+				mapWins?: number;
+				mapLosses?: number;
+				koCount?: number;
+			}) => {
+				const team = teams.find((candidate) => candidate.id === teamId);
+				if (team) {
+					team.setWins += setWins;
+					team.setLosses += setLosses;
+					team.mapWins += mapWins;
+					team.mapLosses += mapLosses;
+					team.koCount += koCount;
+				} else {
+					teams.push({
+						id: teamId,
+						setWins,
+						setLosses,
+						mapWins,
+						mapLosses,
+						winsAgainstTied: 0,
+						koCount,
+					});
+				}
+			};
+
+			// every team belongs in the standings even if all its matches were forfeited by dropped out opponents
+			const groupTeamIds = R.unique(
+				matches
+					.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
+					.filter((id) => typeof id === "number"),
+			);
+			for (const teamId of groupTeamIds) {
+				if (droppedOutWithIncompleteMatches.has(teamId)) continue;
+
+				updateTeam({ teamId });
+			}
+
+			for (const match of matches) {
+				if (!match.winnerSide) continue;
+
+				const opponentIds = [match.opponent1?.id, match.opponent2?.id].filter(
+					(id) => typeof id === "number",
+				);
+
+				if (opponentIds.some((id) => droppedOutWithIncompleteMatches.has(id))) {
+					continue;
+				}
+
+				const winner =
+					match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
+
+				const loser =
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+
+				if (!winner || !loser) continue;
+
+				invariant(
+					typeof winner.id === "number" &&
+						typeof loser.id === "number" &&
+						"RoundRobinBracket.standings: winner or loser id not found",
+				);
+
+				// score might be missing when the set was ended early, defaulting both to 0 for now
+
+				updateTeam({
+					teamId: winner.id,
+					setWins: 1,
+					setLosses: 0,
+					mapWins: winner.score ?? 0,
+					mapLosses: loser.score ?? 0,
+					koCount: winner.totalKos ?? 0,
+				});
+				updateTeam({
+					teamId: loser.id,
+					setWins: 0,
+					setLosses: 1,
+					mapWins: loser.score ?? 0,
+					mapLosses: winner.score ?? 0,
+					koCount: loser.totalKos ?? 0,
+				});
+			}
+
+			for (const team of teams) {
+				for (const team2 of teams) {
+					if (team.id === team2.id) continue;
+					if (team.setWins !== team2.setWins) continue;
+
+					// they are different teams and are tied, let's check who won
+
+					const wonTheirMatch = matches.some(
+						(match) =>
+							(match.opponent1?.id === team.id &&
+								match.opponent2?.id === team2.id &&
+								match.winnerSide === "opponent1") ||
+							(match.opponent1?.id === team2.id &&
+								match.opponent2?.id === team.id &&
+								match.winnerSide === "opponent2"),
+					);
+
+					if (wonTheirMatch) {
+						team.winsAgainstTied++;
+					}
+				}
+			}
+
+			// dropped teams seeded after wins-against-tied so forfeits don't credit opponents while keeping them in standings
+			for (const teamId of droppedOutWithIncompleteMatches) {
+				teams.push({
+					id: teamId,
+					setWins: 0,
+					setLosses: 0,
+					mapWins: 0,
+					mapLosses: 0,
+					winsAgainstTied: 0,
+					koCount: 0,
+				});
+			}
+
+			const droppedOutTeams = this.tournament.ctx.teams
+				.filter((t) => t.droppedOut)
+				.map((t) => t.id);
+
+			placements.push(
+				...teams
+					.sort((a, b) => {
+						// TIEBREAKER 0) dropped out teams are always last
+						const aDroppedOut = droppedOutTeams.includes(a.id);
+						const bDroppedOut = droppedOutTeams.includes(b.id);
+
+						if (aDroppedOut && !bDroppedOut) return 1;
+						if (!aDroppedOut && bDroppedOut) return -1;
+
+						if (a.setWins > b.setWins) return -1;
+						if (a.setWins < b.setWins) return 1;
+
+						if (a.winsAgainstTied > b.winsAgainstTied) return -1;
+						if (a.winsAgainstTied < b.winsAgainstTied) return 1;
+
+						if (a.mapWins > b.mapWins) return -1;
+						if (a.mapWins < b.mapWins) return 1;
+
+						if (a.mapLosses < b.mapLosses) return -1;
+						if (a.mapLosses > b.mapLosses) return 1;
+
+						if (a.koCount > b.koCount) return -1;
+						if (a.koCount < b.koCount) return 1;
+
+						const aSeed = Number(this.tournament.teamById(a.id)?.seed);
+						const bSeed = Number(this.tournament.teamById(b.id)?.seed);
+
+						if (aSeed < bSeed) return -1;
+						if (aSeed > bSeed) return 1;
+
+						return 0;
+					})
+					.map((team, i) => {
+						return {
+							team: this.tournament.teamById(team.id)!,
+							placement: i + 1,
+							groupId,
+							stats: {
+								setWins: team.setWins,
+								setLosses: team.setLosses,
+								mapWins: team.mapWins,
+								mapLosses: team.mapLosses,
+								koCount: team.koCount,
+								winsAgainstTied: team.winsAgainstTied,
+							},
+						};
+					}),
+			);
+		}
+
+		const effectiveSeed = this.effectiveSeedResolver();
+		const sorted = placements.sort((a, b) => {
+			if (a.placement < b.placement) return -1;
+			if (a.placement > b.placement) return 1;
+
+			const aEffectiveSeed = effectiveSeed(a.team.id);
+			const bEffectiveSeed = effectiveSeed(b.team.id);
+			if (aEffectiveSeed < bEffectiveSeed) return -1;
+			if (aEffectiveSeed > bEffectiveSeed) return 1;
+
+			if (a.groupId < b.groupId) return -1;
+			if (a.groupId > b.groupId) return 1;
+
+			return 0;
+		});
+
+		return this.standingsWithoutNonParticipants(
+			Standings.reNumberPlacements(sorted),
+		);
+	}
+
+	get type(): Tables["TournamentStage"]["type"] {
+		return "round_robin";
+	}
+
+	defaultRoundBestOfs(data: BracketData) {
+		const result: BracketMapCounts = new Map();
+
+		for (const round of data.round) {
+			const key = roundSetKey(round);
+			if (!result.get(key)) {
+				result.set(key, new Map());
+			}
+
+			result.get(key)!.set(round.number, { count: 3, type: "BEST_OF" });
+		}
+
+		return result;
+	}
+}

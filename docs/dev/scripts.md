@@ -7,19 +7,19 @@ Note: These are mostly useful if you are running the site in production as an ad
 ## Add new badge to the database
 
 ```bash
-npx tsx scripts/add-badge.ts fire_green "Octofin Eliteboard"
+pnpm exec vite-node scripts/add-badge.ts fire_green "Octofin Eliteboard"
 ```
 
 ## Rename display name of a badge
 
 ```bash
-npx tsx scripts/rename-badge.ts 10 "New 4v4 Sundaes"
+pnpm exec vite-node scripts/rename-badge.ts 10 "New 4v4 Sundaes"
 ```
 
 ## Add many badge owners
 
 ```bash
-npx tsx scripts/add-badge-winners.ts 10 "750705955909664791,79237403620945920"
+pnpm exec vite-node scripts/add-badge-winners.ts 10 "750705955909664791,79237403620945920"
 ```
 
 ## Converting gifs (badges) to thumbnail (.png)
@@ -33,34 +33,33 @@ sips -s format png ./sundae.gif --out .
 While in the folder with the images:
 
 ```bash
-for i in *.png; do npx @squoosh/cli --avif '{"cqLevel":33,"cqAlphaLevel":-1,"denoiseLevel":0,"tileColsLog2":0,"tileRowsLog2":0,"speed":6,"subsample":1,"chromaDeltaQ":false,"sharpness":0,"tune":0}' $i; done
+for i in *.png; do pnpm dlx @squoosh/cli --avif '{"cqLevel":33,"cqAlphaLevel":-1,"denoiseLevel":0,"tileColsLog2":0,"tileRowsLog2":0,"speed":6,"subsample":1,"chromaDeltaQ":false,"sharpness":0,"tune":0}' $i; done
 ```
 
 Note: it only works with Node 16.
 
 ## Doing monthly update
 
-1. Fill /scripts/dicts with new data from leanny repository:
-   - weapon = contents of `weapon` folder
-   - langs = contents of `language` folder
-   - Couple of others at the root: `GearInfoClothes.json`, `GearInfoHead.json`, `GearInfoShoes.json`, `spl__DamageRateInfoConfig.pp__CombinationDataTableData.json`, `SplPlayer.game__GameParameterTable.json`, `WeaponInfoMain.json`, `WeaponInfoSpecial.json` and `WeaponInfoSub.json`
+1. Drop the whole [splat3 repository](https://github.com/Leanny/splat3) into `/scripts/dicts/splat3` (pull before).
+1. If the dump's shape changed, update `/scripts/splat3-types.ts` to match (the dump is gitignored, so these types are hand-maintained rather than inferred from the JSON).
 1. Update all `CURRENT_SEASON` constants
 1. Update `CURRENT_PATCH` constants
 1. Update `PATCHES` constant with the late patch + remove the oldest
 1. Update the stage list in `stage-ids.ts` and `create-misc-json.ts`. Add images from Lean's repository and avify them.
-1. `npx tsx scripts/create-misc-json.ts`
-1. `npx tsx scripts/create-gear-json.ts`
-1. `npx tsx scripts/create-analyzer-json.ts`
+1. `pnpm exec vite-node scripts/create-misc-json.ts`
+1. `pnpm exec vite-node scripts/create-gear-json.ts`
+1. `pnpm exec vite-node scripts/create-analyzer-json.ts`
    8a. Double check that no hard-coded special damages changed
-1. `npx tsx scripts/create-object-dmg-json.ts`
+1. `pnpm exec vite-node scripts/create-object-dmg-json.ts` (also writes `damage-rate-history.json` for the params page directly into `app/features/params/data`)
+1. `pnpm exec vite-node scripts/sync-weapon-params.ts` (writes the weapon/sub/special param histories for the params page, see [Sync weapon params](#sync-weapon-params))
 1. Fill new weapon IDs by category to `weapon-ids.ts` (easy to take from the diff of English weapons.json)
 1. Get gear IDs for each slot from /output folder and update `gear-ids.ts`.
 1. Replace `object-dmg.json` with the `object-dmg.json` in /output folder
 1. Replace `weapon-params.ts` with the `params.json` in /output folder
 1. Delete all images inside `main-weapons`, `main-weapons-outlined`, `main-weapons-outlined-2` and `gear` folders.
 1. Replace with images from Lean's repository.
-1. Run the `npx tsx scripts/replace-img-names.ts` command
-1. Run the `npx tsx scripts/replace-weapon-names.ts` command
+1. Run the `pnpm exec vite-node scripts/replace-img-names.ts` command
+1. Run the `pnpm exec vite-node scripts/replace-weapon-names.ts` command
 1. Run the .avif generating command in each image folder.
 2. Update manually any languages that use English `gear.json` and `weapons.json` files
 
@@ -68,8 +67,28 @@ Note: it only works with Node 16.
 
 Note: This is only useful if you have access to a production running on Render.com
 
-1. Access the "Shell" tab
-2. `cd /var/data`
-3. `cp db.sqlite3 db-copy.sqlite3`
-4. `wormhole send db-copy.sqlite3`
+```bash
+pnpm run download-prod-db
+```
+
+Takes a `VACUUM INTO` snapshot of the live database (compacted, and consistent unlike a `cp` of a WAL database), streams it down gzipped, and archives it as `../backups/db-<timestamp>.sqlite3.gz`. Once the snapshot has been verified it replaces `db-copy.sqlite3` in every local sendou.ink checkout, deletes the stale `db-prod.sqlite3` files, and rebuilds `db-prod.sqlite3` in the checkout you ran it from.
+
+Flags: `--dry-run` prints what would happen, `--yes` skips the confirmation, `--keep <n>` prunes all but the newest `n` archives.
+
+### One-time setup
+
+1. Add your public key at Render Dashboard -> Account Settings -> SSH Keys.
+2. Set `PROD_SSH_TARGET` in `.env` to the address in Render Dashboard -> the service -> SSH, e.g. `srv-xxxxxxxx@ssh.frankfurt.render.com`.
+3. Run `ssh $PROD_SSH_TARGET 'echo ok'` once to accept the host key.
+
+### Doing it by hand
+
+If SSH is unavailable, the same thing through the dashboard "Shell" tab:
+
+1. `cd /var/data`
+2. `sqlite3 -readonly db.sqlite3 "VACUUM INTO '/var/data/db-copy.sqlite3'"`
+3. `gzip db-copy.sqlite3`
+4. `wormhole send db-copy.sqlite3.gz`
 5. On the receiving computer use the command shown.
+6. `gunzip db-copy.sqlite3.gz`
+7. `rm db-copy.sqlite3.gz` on the server, it is sharing the disk with production

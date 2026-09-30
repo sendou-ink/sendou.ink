@@ -1,35 +1,79 @@
-import type { Insertable, Transaction } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import { type Insertable, type SqlBool, sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import type { CustomTheme, UserMapModePreferences } from "~/db/tables-json";
+import { actorId } from "~/features/auth/core/user.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import { NON_PLAYER_TEAM_ROLES } from "~/features/team/team-constants";
 import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
-import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { invariant } from "~/utils/invariant";
+import {
+	commonUserSelect,
+	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	matchProfileWeapons,
+	tournamentLogoOrNull,
+} from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
+import { mySlugify } from "~/utils/urls";
 
-export function findAllUndisbanded() {
+export function searchByName({
+	query,
+	limit,
+}: {
+	query: string;
+	limit: number;
+}) {
 	return db
 		.selectFrom("Team")
+		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
 		.select(({ eb }) => [
+			"Team.id",
 			"Team.customUrl",
 			"Team.name",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.whereRef("UserSubmittedImage.id", "=", "Team.avatarImgId")
-				.select("UserSubmittedImage.url")
-				.as("avatarSrc"),
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
 					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-					.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-					.select(["User.id", "User.username", "PlusTier.tier as plusTier"])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
+					.select(["User.id", "User.username", "User.tournamentName"])
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+					.where((eb2) =>
+						eb2.and([
+							eb2.or([
+								eb2("TeamMemberWithSecondary.role", "is", null),
+								eb2(
+									"TeamMemberWithSecondary.role",
+									"not in",
+									NON_PLAYER_TEAM_ROLES,
+								),
+							]),
+							eb2.or([
+								eb2("TeamMemberWithSecondary.roleType", "is", null),
+								eb2("TeamMemberWithSecondary.roleType", "!=", "OTHER"),
+							]),
+						]),
+					)
+					.orderBy("TeamMemberWithSecondary.order", "asc"),
 			).as("members"),
 		])
+		.where("Team.name", "like", `%${query}%`)
+		.orderBy("Team.name", "asc")
+		.limit(limit)
 		.execute();
+}
+
+export function findById(teamId: number) {
+	return db
+		.selectFrom("AllTeam")
+		.select(["AllTeam.id", "AllTeam.name"])
+		.where("AllTeam.id", "=", teamId)
+		.executeTakeFirst();
 }
 
 export function findAllMemberOfByUserId(userId: number) {
@@ -37,13 +81,22 @@ export function findAllMemberOfByUserId(userId: number) {
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
 		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
-		.select([
+		.select(({ eb }) => [
 			"Team.id",
 			"Team.customUrl",
 			"Team.name",
-			"UserSubmittedImage.url as logoUrl",
+			"Team.mapModePreferences",
+			"TeamMemberWithSecondary.role",
+			"TeamMemberWithSecondary.customRole",
+			"TeamMemberWithSecondary.isOwner",
+			"TeamMemberWithSecondary.isManager",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"logoUrl",
+			),
 		])
 		.where("TeamMemberWithSecondary.userId", "=", userId)
+		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
+		.orderBy("Team.name", "asc")
 		.execute();
 }
 
@@ -51,19 +104,25 @@ export type findByCustomUrl = NonNullable<
 	Awaited<ReturnType<typeof findByCustomUrl>>
 >;
 
-export function findByCustomUrl(
+export async function findByCustomUrl(
 	customUrl: string,
-	{ includeInviteCode = false } = {},
+	{
+		includeInviteCode = false,
+		includeUnvalidatedImages = false,
+		includeMapModePreferences = false,
+	} = {},
 ) {
-	return db
+	// joins the unvalidated table so the edit page can preview images pending moderation;
+	// for everyone else the url is gated on `validatedAt`
+	const row = await db
 		.selectFrom("Team")
 		.leftJoin(
-			"UserSubmittedImage as AvatarImage",
+			"UnvalidatedUserSubmittedImage as AvatarImage",
 			"AvatarImage.id",
 			"Team.avatarImgId",
 		)
 		.leftJoin(
-			"UserSubmittedImage as BannerImage",
+			"UnvalidatedUserSubmittedImage as BannerImage",
 			"BannerImage.id",
 			"Team.bannerImgId",
 		)
@@ -72,35 +131,72 @@ export function findByCustomUrl(
 			"Team.name",
 			"Team.bsky",
 			"Team.bio",
+			"Team.tag",
 			"Team.customUrl",
-			"Team.css",
-			"AvatarImage.url as avatarSrc",
-			"BannerImage.url as bannerSrc",
+			"Team.customTheme",
+			"Team.avatarImgId",
+			"Team.bannerImgId",
+			concatUserSubmittedImagePrefix(
+				includeUnvalidatedImages
+					? eb.ref("AvatarImage.url")
+					: eb.fn<string | null>("iif", [
+							eb("AvatarImage.validatedAt", "is not", null),
+							eb.ref("AvatarImage.url"),
+							sql`null`,
+						]),
+			).as("avatarUrl"),
+			concatUserSubmittedImagePrefix(
+				includeUnvalidatedImages
+					? eb.ref("BannerImage.url")
+					: eb.fn<string | null>("iif", [
+							eb("BannerImage.validatedAt", "is not", null),
+							eb.ref("BannerImage.url"),
+							sql`null`,
+						]),
+			).as("bannerUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
 					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
 					.select(({ eb: innerEb }) => [
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(innerEb),
 						"TeamMemberWithSecondary.role",
+						"TeamMemberWithSecondary.customRole",
+						"TeamMemberWithSecondary.roleType",
 						"TeamMemberWithSecondary.isOwner",
 						"TeamMemberWithSecondary.isManager",
 						"TeamMemberWithSecondary.isMainTeam",
 						"User.country",
 						"User.patronTier",
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("UserWeapon")
-								.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"])
-								.whereRef("UserWeapon.userId", "=", "User.id"),
-						).as("weapons"),
+						matchProfileWeapons(innerEb).as("weapons"),
 					])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+					.orderBy("TeamMemberWithSecondary.order", "asc"),
 			).as("members"),
 		])
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
+		.$if(includeMapModePreferences, (qb) =>
+			qb.select("Team.mapModePreferences"),
+		)
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
 		.executeTakeFirst();
+
+	if (!row) return;
+
+	const managerIds = row.members
+		.filter((member) => member.isOwner || member.isManager)
+		.map((member) => member.id);
+
+	return {
+		...row,
+		permissions: {
+			EDIT: managerIds,
+			MANAGE_ROSTER: managerIds,
+			DELETE: row.members
+				.filter((member) => member.isOwner)
+				.map((member) => member.id),
+		},
+	};
 }
 
 export type FindResultPlacementsById = NonNullable<
@@ -121,17 +217,11 @@ export function findResultPlacementsById(teamId: number) {
 		.execute();
 }
 
-export type FindResultsById = NonNullable<
-	Awaited<ReturnType<typeof findResultsById>>
->;
-
-/**
- * Retrieves tournament results for a given team by its ID.
- */
+/** Tournament results of the team. */
 export async function findResultsById(teamId: number) {
 	const rows = await db
-		.with("results", (db) =>
-			db
+		.with("results", (cte) =>
+			cte
 				.selectFrom("TournamentTeam")
 				.innerJoin(
 					"TournamentResult",
@@ -144,6 +234,7 @@ export async function findResultsById(teamId: number) {
 					"TournamentResult.tournamentId",
 					"TournamentResult.placement",
 					"TournamentResult.participantCount",
+					"TournamentTeam.startingBracketIdx",
 				])
 				.where("teamId", "=", teamId)
 				.groupBy("TournamentResult.tournamentId"),
@@ -159,18 +250,31 @@ export async function findResultsById(teamId: number) {
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
+		.innerJoin("Tournament", "Tournament.id", "results.tournamentId")
+		.leftJoin("TournamentDivisionTier", (join) =>
+			join
+				.onRef(
+					"TournamentDivisionTier.tournamentId",
+					"=",
+					"results.tournamentId",
+				)
+				.on(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("results"."startingBracketIdx", 0)`,
+				),
+		)
 		.select((eb) => [
 			"results.placement",
 			"results.tournamentId",
 			"results.participantCount",
 			"results.tournamentTeamId",
 			"CalendarEvent.name as tournamentName",
-			"CalendarEventDate.startTime",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			"CalendarEventDate.startsAt",
+			sql<
+				Tables["Tournament"]["tier"]
+			>`coalesce("TournamentDivisionTier"."tier", "Tournament"."tier")`.as(
+				"tier",
+			),
+			tournamentLogoOrNull(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("results as results2")
@@ -189,10 +293,10 @@ export async function findResultsById(teamId: number) {
 					)
 					.innerJoin("User", "User.id", "TournamentResult.userId")
 					.whereRef("results2.tournamentId", "=", "results.tournamentId")
-					.select(COMMON_USER_FIELDS),
+					.select((participantEb) => commonUserSelect(participantEb)),
 			).as("participants"),
 		])
-		.orderBy("CalendarEventDate.startTime", "desc")
+		.orderBy("CalendarEventDate.startsAt", "desc")
 		.execute();
 
 	const members = await allMembersById(teamId);
@@ -207,19 +311,20 @@ export async function findResultsById(teamId: number) {
 	});
 }
 
+// AllTeamMember rather than the TeamMemberWithSecondary view: subsOfResult needs past members too
 function allMembersById(teamId: number) {
 	return db
-		.selectFrom("TeamMemberWithSecondary")
+		.selectFrom("AllTeamMember")
 		.select([
-			"TeamMemberWithSecondary.userId",
-			"TeamMemberWithSecondary.leftAt",
-			"TeamMemberWithSecondary.createdAt",
+			"AllTeamMember.userId",
+			"AllTeamMember.leftAt",
+			"AllTeamMember.createdAt",
 		])
-		.where("TeamMemberWithSecondary.teamId", "=", teamId)
+		.where("AllTeamMember.teamId", "=", teamId)
 		.execute();
 }
 
-export async function teamsByMemberUserId(
+export async function findAllByMemberUserId(
 	userId: number,
 	trx?: Transaction<DB>,
 ) {
@@ -235,29 +340,37 @@ export async function teamsByMemberUserId(
 				eb
 					.selectFrom("TeamMemberWithSecondary as m2")
 					.innerJoin("User", "User.id", "m2.userId")
-					.select([...COMMON_USER_FIELDS, "m2.role"])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId"),
+					.select((memberEb) => [
+						...commonUserSelect(memberEb),
+						"m2.role",
+						"m2.roleType",
+					])
+					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId")
+					.orderBy("m2.order", "asc"),
 			).as("members"),
 		])
 		.where("userId", "=", userId)
+		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
 		.execute();
 }
 
-export async function create(
-	args: Pick<Insertable<Tables["Team"]>, "name" | "customUrl"> & {
+export async function insert(
+	args: Pick<Insertable<Tables["Team"]>, "name"> & {
 		ownerUserId: number;
 		isMainTeam: boolean;
 	},
 ) {
+	const customUrl = mySlugify(args.name);
+
 	return db.transaction().execute(async (trx) => {
 		const team = await trx
 			.insertInto("AllTeam")
 			.values({
 				name: args.name,
-				customUrl: args.customUrl,
+				customUrl,
 				inviteCode: shortNanoid(),
 			})
-			.returning("id")
+			.returning(["id", "customUrl"])
 			.executeTakeFirstOrThrow();
 
 		await trx
@@ -266,46 +379,126 @@ export async function create(
 				userId: args.ownerUserId,
 				teamId: team.id,
 				isOwner: 1,
-				isMainTeam: Number(args.isMainTeam),
+				isMainTeam: toDBBoolean(args.isMainTeam),
 			})
 			.execute();
+
+		return team;
 	});
 }
 
 export async function update({
 	id,
 	name,
-	customUrl,
 	bio,
 	bsky,
-	css,
+	tag,
+	avatarImgId,
+	bannerImgId,
 }: Pick<
 	Insertable<Tables["Team"]>,
-	"id" | "name" | "customUrl" | "bio" | "bsky"
-> & { css: string | null }) {
-	return db
-		.updateTable("AllTeam")
-		.set({
-			name,
-			customUrl,
-			bio,
-			bsky,
-			css,
-		})
-		.where("id", "=", id)
-		.returningAll()
-		.executeTakeFirstOrThrow();
+	"id" | "name" | "bio" | "bsky" | "tag" | "avatarImgId" | "bannerImgId"
+>) {
+	const customUrl = mySlugify(name);
+
+	return db.transaction().execute(async (trx) => {
+		const current = await trx
+			.selectFrom("Team")
+			.select(["avatarImgId", "bannerImgId"])
+			.where("id", "=", id)
+			.executeTakeFirst();
+
+		// removed or replaced images' submitted image rows are cleaned up
+		const orphanedImageIds: number[] = [];
+		if (current?.avatarImgId && current.avatarImgId !== avatarImgId) {
+			orphanedImageIds.push(current.avatarImgId);
+		}
+		if (current?.bannerImgId && current.bannerImgId !== bannerImgId) {
+			orphanedImageIds.push(current.bannerImgId);
+		}
+
+		if (orphanedImageIds.length > 0) {
+			await trx
+				.deleteFrom("UnvalidatedUserSubmittedImage")
+				.where("id", "in", orphanedImageIds)
+				.execute();
+		}
+
+		return trx
+			.updateTable("AllTeam")
+			.set({
+				name,
+				customUrl,
+				bio,
+				bsky,
+				tag,
+				avatarImgId,
+				bannerImgId,
+			})
+			.where("id", "=", id)
+			.returningAll()
+			.executeTakeFirstOrThrow();
+	});
 }
 
-export function switchMainTeam({
-	userId,
-	teamId,
+export async function updateCustomTheme({
+	id,
+	customTheme,
 }: {
-	userId: number;
-	teamId: number;
+	id: number;
+	customTheme: CustomTheme | null;
 }) {
+	await db
+		.updateTable("AllTeam")
+		.set({
+			customTheme: customTheme ? JSON.stringify(customTheme) : null,
+		})
+		.where("id", "=", id)
+		.execute();
+}
+
+/** Sets (or clears with `null`) SendouQ map/mode preferences; map pools of modes missing from the new value are kept. */
+export async function updateMapModePreferences({
+	id,
+	mapModePreferences,
+}: {
+	id: number;
+	mapModePreferences: UserMapModePreferences | null;
+}) {
+	if (!mapModePreferences) {
+		await db
+			.updateTable("AllTeam")
+			.set({ mapModePreferences: null })
+			.where("id", "=", id)
+			.execute();
+		return;
+	}
+
+	const current = await db
+		.selectFrom("Team")
+		.select("Team.mapModePreferences")
+		.where("Team.id", "=", id)
+		.executeTakeFirstOrThrow();
+
+	const merged: UserMapModePreferences = {
+		...mapModePreferences,
+		pool: MatchProfileRepository.mergeExcludedModePreferences(
+			mapModePreferences.pool,
+			current.mapModePreferences?.pool,
+		),
+	};
+
+	await db
+		.updateTable("AllTeam")
+		.set({ mapModePreferences: JSON.stringify(merged) })
+		.where("id", "=", id)
+		.execute();
+}
+
+export function switchOwnMainTeam(teamId: number) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		const currentTeams = await teamsByMemberUserId(userId, trx);
+		const currentTeams = await findAllByMemberUserId(userId, trx);
 
 		const teamToSwitchTo = currentTeams.find((team) => team.id === teamId);
 		invariant(teamToSwitchTo, "User is not a member of this team");
@@ -329,7 +522,7 @@ export function switchMainTeam({
 	});
 }
 
-export function del(teamId: number) {
+export function deleteById(teamId: number) {
 	return db.transaction().execute(async (trx) => {
 		const members = await trx
 			.selectFrom("TeamMember")
@@ -337,9 +530,9 @@ export function del(teamId: number) {
 			.where("teamId", "=", teamId)
 			.execute();
 
-		// switch main team to another if they at least one secondary team
+		// switch main team to a secondary team if they have one
 		for (const member of members) {
-			const currentTeams = await teamsByMemberUserId(member.userId, trx);
+			const currentTeams = await findAllByMemberUserId(member.userId, trx);
 
 			const teamToSwitchTo = currentTeams.find((team) => team.id !== teamId);
 
@@ -375,37 +568,6 @@ export function del(teamId: number) {
 	});
 }
 
-export function removeTeamImage(
-	teamId: number,
-	imageType: "avatar" | "banner",
-) {
-	const imageIdField = imageType === "avatar" ? "avatarImgId" : "bannerImgId";
-
-	return db.transaction().execute(async (trx) => {
-		const team = await trx
-			.selectFrom("Team")
-			.select(imageIdField)
-			.where("id", "=", teamId)
-			.executeTakeFirst();
-
-		const imageId = team?.[imageIdField];
-		if (imageId) {
-			await trx
-				.deleteFrom("UnvalidatedUserSubmittedImage")
-				.where("id", "=", imageId)
-				.execute();
-		}
-
-		await trx
-			.updateTable("AllTeam")
-			.set({
-				[imageIdField]: null,
-			})
-			.where("id", "=", teamId)
-			.execute();
-	});
-}
-
 export function resetInviteCode(teamId: number) {
 	return db
 		.updateTable("AllTeam")
@@ -416,31 +578,41 @@ export function resetInviteCode(teamId: number) {
 		.execute();
 }
 
-export function addNewTeamMember({
-	userId,
+export function insertOwnMembership({
 	teamId,
 	maxTeamsAllowed,
 }: {
-	userId: number;
 	teamId: number;
 	maxTeamsAllowed: number;
 }) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		const teamCount = (await teamsByMemberUserId(userId, trx)).length;
+		const teamCount = (await findAllByMemberUserId(userId, trx)).length;
 
 		if (teamCount >= maxTeamsAllowed) {
 			throw new Error("Trying to exceed allowed team count");
 		}
 
-		const isMainTeam = Number(teamCount === 0);
+		const isMainTeam = toDBBoolean(teamCount === 0);
+
+		const maxOrder = await trx
+			.selectFrom("AllTeamMember")
+			.select((eb) =>
+				eb.fn.coalesce(eb.fn.max("order"), sql<number>`-1`).as("maxOrder"),
+			)
+			.where("teamId", "=", teamId)
+			.where("leftAt", "is", null)
+			.executeTakeFirst();
+		const order = (maxOrder?.maxOrder ?? -1) + 1;
 
 		await trx
 			.insertInto("AllTeamMember")
-			.values({ userId, teamId, isMainTeam })
+			.values({ userId, teamId, isMainTeam, order })
 			.onConflict((oc) =>
 				oc.columns(["userId", "teamId"]).doUpdateSet({
 					leftAt: null,
 					isMainTeam,
+					order,
 				}),
 			)
 			.execute();
@@ -456,50 +628,100 @@ export function handleMemberLeaving({
 	teamId: number;
 	newOwnerUserId?: number;
 }) {
+	return db
+		.transaction()
+		.execute((trx) => memberLeave(trx, { userId, teamId, newOwnerUserId }));
+}
+
+/** In one transaction: updates kept members' role & editor status and kicks `kickedUserIds`. */
+export function updateRoster({
+	teamId,
+	members,
+	kickedUserIds,
+}: {
+	teamId: number;
+	members: Array<{
+		userId: number;
+		role: Tables["TeamMember"]["role"];
+		customRole: Tables["TeamMember"]["customRole"];
+		roleType: Tables["TeamMember"]["roleType"];
+		isManager: boolean;
+		order: number;
+	}>;
+	kickedUserIds: number[];
+}) {
 	return db.transaction().execute(async (trx) => {
-		const currentTeams = await teamsByMemberUserId(userId, trx);
-
-		const teamToLeave = currentTeams.find((team) => team.id === teamId);
-		invariant(teamToLeave, "User is not a member of this team");
-		invariant(
-			!teamToLeave.isOwner || newOwnerUserId,
-			"New owner id must be provided when old is leaving",
-		);
-
-		const wasMainTeam = teamToLeave.isMainTeam;
-		const newMainTeam = currentTeams.find((team) => team.id !== teamId);
-		if (wasMainTeam && newMainTeam) {
-			await trx
-				.updateTable("AllTeamMember")
-				.set({
-					isMainTeam: 1,
-				})
-				.where("userId", "=", userId)
-				.where("teamId", "=", newMainTeam.id)
-				.execute();
+		for (const userId of kickedUserIds) {
+			await memberLeave(trx, { userId, teamId });
 		}
 
-		await trx
-			.updateTable("AllTeamMember")
-			.set({
-				leftAt: databaseTimestampNow(),
-				isMainTeam: 0,
-				isOwner: 0,
-				isManager: 0,
-			})
-			.where("userId", "=", userId)
-			.where("teamId", "=", teamId)
-			.execute();
-		if (newOwnerUserId) {
+		for (const member of members) {
 			await trx
 				.updateTable("AllTeamMember")
 				.set({
-					isOwner: 1,
-					isManager: 0,
+					role: member.role,
+					customRole: member.customRole,
+					roleType: member.roleType,
+					isManager: member.isManager ? 1 : 0,
+					order: member.order,
 				})
-				.where("userId", "=", newOwnerUserId)
 				.where("teamId", "=", teamId)
+				.where("userId", "=", member.userId)
 				.execute();
 		}
 	});
+}
+
+async function memberLeave(
+	trx: Transaction<DB>,
+	{
+		userId,
+		teamId,
+		newOwnerUserId,
+	}: { userId: number; teamId: number; newOwnerUserId?: number },
+) {
+	const currentTeams = await findAllByMemberUserId(userId, trx);
+
+	const teamToLeave = currentTeams.find((team) => team.id === teamId);
+	invariant(teamToLeave, "User is not a member of this team");
+	invariant(
+		!teamToLeave.isOwner || newOwnerUserId,
+		"New owner id must be provided when old is leaving",
+	);
+
+	const wasMainTeam = teamToLeave.isMainTeam;
+	const newMainTeam = currentTeams.find((team) => team.id !== teamId);
+	if (wasMainTeam && newMainTeam) {
+		await trx
+			.updateTable("AllTeamMember")
+			.set({
+				isMainTeam: 1,
+			})
+			.where("userId", "=", userId)
+			.where("teamId", "=", newMainTeam.id)
+			.execute();
+	}
+
+	await trx
+		.updateTable("AllTeamMember")
+		.set({
+			leftAt: databaseTimestampNow(),
+			isMainTeam: 0,
+			isOwner: 0,
+			isManager: 0,
+		})
+		.where("userId", "=", userId)
+		.where("teamId", "=", teamId)
+		.execute();
+	if (newOwnerUserId) {
+		await trx
+			.updateTable("AllTeamMember")
+			.set({
+				isOwner: 1,
+				isManager: 0,
+			})
+			.where("userId", "=", newOwnerUserId)
+			.where("teamId", "=", teamId)
+			.execute();
+	}
 }

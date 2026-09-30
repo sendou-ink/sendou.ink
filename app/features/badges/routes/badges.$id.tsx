@@ -1,14 +1,39 @@
-import { Outlet, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, Outlet, useLoaderData } from "react-router";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
-import type { SerializeFrom } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { badgeUrl, userPage } from "~/utils/urls";
 import { badgeExplanationText } from "../badges-utils";
-
 import { loader } from "../loaders/badges.$id.server";
+import styles from "./badges.$id.module.css";
+
 export { loader };
+
+export const meta: MetaFunction = (args) => {
+	const data = args.loaderData as SerializeFrom<typeof loader> | null;
+
+	if (!data) return [];
+
+	const ownerCount = data.badge.owners.reduce(
+		(sum, owner) => sum + owner.count,
+		0,
+	);
+
+	return metaTags({
+		title: data.badge.displayName,
+		ogTitle: `${data.badge.displayName} (Splatoon badge)`,
+		description: `See who owns the ${data.badge.displayName} badge on sendou.ink. Awarded ${ownerCount} time${ownerCount === 1 ? "" : "s"} so far.`,
+		image: {
+			url: badgeUrl({ code: data.badge.code, extension: "gif" }),
+			dimensions: { width: 200, height: 200 },
+		},
+		location: args.location,
+	});
+};
 
 export interface BadgeDetailsContext {
 	badge: SerializeFrom<typeof loader>["badge"];
@@ -23,39 +48,39 @@ export default function BadgeDetailsPage() {
 
 	const context: BadgeDetailsContext = { badge: data.badge };
 
-	const badgeMaker = () => {
-		if (data.badge.author?.username) return data.badge.author?.username;
-		if (
-			[
-				"XP3500 (Splatoon 3)",
-				"XP4000 (Splatoon 3)",
-				"XP4500 (Splatoon 3)",
-				"XP5000 (Splatoon 3)",
-			].includes(data.badge.displayName)
-		) {
-			return "Dreamy";
-		}
-
-		return "borzoic";
-	};
-
 	return (
 		<div className="stack md items-center">
 			<Outlet context={context} />
 			<Badge badge={data.badge} isAnimated size={200} />
 			<div>
-				<div className="badges__explanation">
+				<div className={styles.explanation}>
 					{badgeExplanationText(t, data.badge)}
 				</div>
-				<div className="badges__managers">
-					{t("managedBy", {
-						users:
-							data.badge.managers.map((m) => m.username).join(", ") || "???",
-					})}{" "}
+				<div className={styles.managers}>
+					<Trans
+						i18nKey="managedBy"
+						ns="badges"
+						components={[
+							<span key="managers">
+								{data.badge.managers.length > 0 ? (
+									data.badge.managers.map((manager, idx) => (
+										<span key={manager.userId}>
+											<Link to={userPage(manager)}>{manager.username}</Link>
+											{idx < data.badge.managers.length - 1 ? ", " : ""}
+										</span>
+									))
+								) : (
+									<span>???</span>
+								)}
+							</span>,
+						]}
+					/>{" "}
 					(
-					{t("madeBy", {
-						user: badgeMaker(),
-					})}
+					<Trans
+						i18nKey="madeBy"
+						ns="badges"
+						components={[<BadgeMaker key="maker" badge={data.badge} />]}
+					/>
 					)
 				</div>
 			</div>
@@ -64,12 +89,12 @@ export default function BadgeDetailsPage() {
 					Edit
 				</LinkButton>
 			) : null}
-			<div className="badges__owners-container">
-				<ul className="badges__owners">
+			<div className={clsx(styles.ownersContainer, "scrollbar")}>
+				<ul className={styles.owners} data-testid="badge-owners">
 					{data.badge.owners.map((owner) => (
 						<li key={owner.id}>
 							<span
-								className={clsx("badges__count", {
+								className={clsx(styles.count, {
 									invisible: owner.count <= 1,
 								})}
 							>
@@ -82,4 +107,32 @@ export default function BadgeDetailsPage() {
 			</div>
 		</div>
 	);
+}
+
+function BadgeMaker({
+	badge,
+}: {
+	badge: SerializeFrom<typeof loader>["badge"];
+}) {
+	const badgeMakerName = () => {
+		if (badge.author?.username) return badge.author.username;
+		if (
+			[
+				"XP3500 (Splatoon 3)",
+				"XP4000 (Splatoon 3)",
+				"XP4500 (Splatoon 3)",
+				"XP5000 (Splatoon 3)",
+			].includes(badge.displayName)
+		) {
+			return "Dreamy";
+		}
+
+		return "borzoic";
+	};
+
+	if (badge.author) {
+		return <Link to={userPage(badge.author)}>{badge.author.username}</Link>;
+	}
+
+	return <span>{badgeMakerName()}</span>;
 }

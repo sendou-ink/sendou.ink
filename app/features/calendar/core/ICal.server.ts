@@ -4,7 +4,7 @@ import { logger } from "~/utils/logger";
 import { SENDOU_INK_BASE_URL } from "~/utils/urls";
 
 export async function getICalendar(events: Array<CalendarEvent>) {
-	// ical doesnt allow calendars with no events
+	// ical doesn't allow calendars with no events
 	if (events.length === 0) {
 		logger.warn("Could not construct ical feed, no events within time period");
 		return null;
@@ -31,9 +31,10 @@ function eventsAsICal(events: Array<CalendarEvent>): ics.ReturnObject {
 
 function eventInfoAsICalEvent(event: CalendarEvent): ics.EventAttributes {
 	const startDate = new Date(event.at);
-	const eventLink = `${SENDOU_INK_BASE_URL}/${event.url}`;
+	const eventLink = `${SENDOU_INK_BASE_URL}${event.url}`;
 
 	return {
+		uid: `event-${event.id}@sendou.ink`,
 		title: event.name,
 		start: [
 			startDate.getUTCFullYear(),

@@ -1,30 +1,24 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { getUserId } from "~/features/auth/core/user.server";
+import type { LoaderFunctionArgs } from "react-router";
+import { getUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { JOIN_CODE_SEARCH_PARAM_KEY } from "../q-constants";
-import { groupRedirectLocationByCurrentLocation } from "../q-utils";
-import { findCurrentGroupByUserId } from "../queries/findCurrentGroupByUserId.server";
-import { findGroupByInviteCode } from "../queries/findGroupByInviteCode.server";
+import { SendouQ, sqRedirectIfNeeded } from "../core/SendouQ.server";
+import { qSearchParams } from "../q-search-params";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUserId(request);
+export const loader = async ({ url }: LoaderFunctionArgs) => {
+	const user = getUser();
 
-	const code = new URL(request.url).searchParams.get(
-		JOIN_CODE_SEARCH_PARAM_KEY,
-	);
+	const { join: code } = qSearchParams.parse(url);
 
-	const redirectLocation = groupRedirectLocationByCurrentLocation({
-		group: user ? findCurrentGroupByUserId(user.id) : undefined,
+	const ownGroup = user ? SendouQ.findOwnGroup(user.id) : undefined;
+
+	await sqRedirectIfNeeded({
+		ownGroup,
 		currentLocation: "default",
 	});
 
-	if (redirectLocation) {
-		throw redirect(`${redirectLocation}${code ? "?joining=true" : ""}`);
-	}
-
-	const groupInvitedTo = code && user ? findGroupByInviteCode(code) : undefined;
+	const groupInvitedTo =
+		code && user ? SendouQ.findGroupByInviteCode(code) : undefined;
 
 	const season = Seasons.current();
 	const upcomingSeason = !season ? Seasons.next() : undefined;
@@ -34,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		upcomingSeason,
 		groupInvitedTo,
 		friendCode: user
-			? await UserRepository.currentFriendCodeByUserId(user.id)
+			? await UserRepository.findCurrentFriendCodeByUserId(user.id)
 			: undefined,
 	};
 };

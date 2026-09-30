@@ -1,0 +1,506 @@
+.widget {
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.mdBio {
+	clip-path: view-box;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-block: var(--s-2);
+	border-bottom: 2px solid var(--color-bg-higher);
+}
+
+.headerText {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin: 0;
+	color: var(--color-text-high);
+}
+
+.headerLink {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--color-fg-accent);
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding-block: var(--s-4);
+}
+
+.memberships {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.membership {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	color: var(--color-text);
+	margin-block-end: var(--s-1);
+	border-radius: var(--radius-field);
+	transition: background-color 0.2s;
+}
+
+.membershipInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.membershipName {
+	font-weight: var(--weight-semi);
+}
+
+.membershipRole {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.peakValue {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.widgetValueMain {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+}
+
+.widgetValueFooter {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.highlightedResults {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.result {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.resultPlacement {
+	flex-shrink: 0;
+}
+
+.resultInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	flex: 1;
+	line-height: 1.25;
+}
+
+.resultName {
+	font-weight: var(--weight-semi);
+}
+
+.tournamentName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	max-width: 100%;
+	overflow: hidden;
+
+	& a {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+		max-width: 175px;
+	}
+}
+
+.resultDate {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.videos {
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.weapon {
+	padding: var(--s-2);
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+}
+
+.customKits {
+	display: flex;
+	flex-direction: column;
+	padding-inline: var(--s-2);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.customKit {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-2);
+
+	& + & {
+		border-top: 1px solid var(--color-border);
+	}
+}
+
+.customKitWeapon {
+	display: flex;
+	flex-shrink: 0;
+	padding: var(--s-1-5);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+}
+
+.customKitName {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.customKitParts {
+	display: flex;
+	flex-shrink: 0;
+	gap: var(--s-1);
+}
+
+.customKitPart {
+	display: flex;
+	padding: var(--s-1);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+}
+
+.weaponGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+	gap: var(--s-2);
+	justify-items: center;
+}
+
+.weaponCount {
+	margin-top: var(--s-3);
+	text-align: center;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.weaponCountComplete {
+	color: var(--color-success);
+}
+
+.lfgPosts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.lfgPost {
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	border-radius: var(--radius-field);
+	padding: var(--s-2);
+	transition: background-color 0.2s;
+	background-color: var(--color-bg-high);
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.xRankPeaks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	justify-content: center;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.xRankPeakMode {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.xRankPeakModeIconWrapper {
+	position: relative;
+	width: 24px;
+	height: 24px;
+}
+
+.xRankPeakDivision {
+	position: absolute;
+	bottom: -2px;
+	right: -2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--color-bg-higher);
+	border-radius: 50%;
+	padding: 1px;
+}
+
+.placementResults {
+	display: flex;
+	gap: var(--s-4);
+	justify-content: center;
+	align-items: center;
+}
+
+.placementResult {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.builds {
+	display: flex;
+	gap: var(--s-3);
+	overflow-x: auto;
+	padding-block: var(--s-2);
+}
+
+.artGrid {
+	display: flex;
+	gap: var(--s-3);
+	overflow-x: auto;
+	padding-block: var(--s-2);
+}
+
+.artThumbnail {
+	height: 300px;
+	object-fit: contain;
+	flex-shrink: 0;
+}
+
+.socialLinks {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.socialLink {
+	font-size: var(--font-sm);
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+	word-break: break-all;
+	overflow-wrap: break-word;
+
+	& svg {
+		width: 18px;
+	}
+}
+
+.socialLinkIconContainer {
+	background-color: var(--color-bg-higher);
+	display: grid;
+	place-items: center;
+	border-radius: var(--radius-box);
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
+	flex-shrink: 0;
+
+	& svg {
+		width: 18px;
+		height: 18px;
+		fill: var(--color-text);
+	}
+
+	&.twitch svg {
+		fill: #9146ff;
+	}
+
+	&.youtube svg {
+		fill: #f00;
+	}
+
+	&.bsky path {
+		fill: #1285fe;
+	}
+
+	&.discord svg {
+		fill: #5865f2;
+	}
+}
+
+.socialLinksList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.socialLinkIconCircle {
+	border-radius: var(--radius-full);
+	padding: 0;
+	width: 24px;
+	height: 24px;
+
+	& svg {
+		width: 14px;
+		height: 14px;
+	}
+}
+
+.linkRow {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: var(--s-1-5);
+	width: 100%;
+	height: auto;
+	padding: var(--s-0-5) var(--s-1);
+	border-radius: var(--radius-field);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-body);
+
+	&:is(a, button):hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.socialLinkName {
+	overflow-wrap: anywhere;
+}
+
+.gameBadgeGrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	justify-content: center;
+}
+
+.gameBadgeButton {
+	padding: 0;
+}
+
+.gameBadgeImage {
+	width: 48px;
+	height: 48px;
+	object-fit: contain;
+}
+
+.friendsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.mapModePreferences {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.mapModePreferenceStages {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--s-1-5);
+}
+
+.liveStream {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	color: var(--color-text);
+}
+
+.liveStreamThumbnail {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+	border-radius: var(--radius-field);
+}
+
+.liveStreamInfo {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+/* same look as the sidebar's live badge */
+.liveBadge {
+	display: flex;
+	align-items: center;
+	height: var(--selector-size-xs);
+	padding: 0 var(--s-1);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-fill-second);
+	color: var(--color-fg-on-second);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+}
+
+.liveStreamName {
+	margin-inline-start: auto;
+	color: var(--color-text-high);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.countdownTitle {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	text-align: center;
+}
+
+.countdown {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--s-2) var(--s-3);
+}
+
+.countdownPart {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	min-width: 3ch;
+	font-variant-numeric: tabular-nums;
+}

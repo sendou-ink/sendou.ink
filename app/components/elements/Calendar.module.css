@@ -1,0 +1,114 @@
+.root {
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	border-radius: var(--radius-box);
+	padding: var(--s-4);
+	border: var(--border-style);
+	max-width: fit-content;
+}
+
+.header {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: space-between;
+	align-items: center;
+	margin-block-end: var(--s-1);
+	min-width: 250px;
+}
+
+.heading {
+	font-size: var(--font-lg);
+}
+
+.navButton {
+	background-color: transparent;
+	color: var(--color-fg-accent);
+	border: none;
+	padding: 0;
+	border-radius: 100%;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.navIcon {
+	width: 27.5px;
+}
+
+.grid {
+	width: 100%;
+	border-spacing: 0;
+}
+
+.headerCell {
+	color: var(--color-text-high);
+}
+
+.cell {
+	display: grid;
+	place-items: center;
+	font-size: var(--font-sm);
+	padding: var(--s-1-5);
+	width: 35px;
+	height: 35px;
+	border-radius: var(--radius-field);
+	outline-color: var(--color-fg-accent);
+	border: none;
+	background: transparent;
+	color: var(--color-text);
+	cursor: pointer;
+	margin: 0 auto;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+
+	&[data-selected] {
+		background-color: var(--color-bg-high);
+		color: var(--color-fg-accent);
+	}
+
+	&:hover {
+		background-color: var(--color-bg-high);
+		outline: initial;
+	}
+}
+
+.weekSelection {
+	& .grid {
+		/* the week band has to run unbroken across the row, including the empty cells of a month's first and last week */
+		border-spacing: 0;
+	}
+
+	& tr:hover td,
+	& tr:has([data-selected]) td {
+		background-color: var(--color-bg-high);
+	}
+
+	& tr:hover td:first-child,
+	& tr:has([data-selected]) td:first-child {
+		border-start-start-radius: var(--radius-field);
+		border-end-start-radius: var(--radius-field);
+	}
+
+	& tr:hover td:last-child,
+	& tr:has([data-selected]) td:last-child {
+		border-start-end-radius: var(--radius-field);
+		border-end-end-radius: var(--radius-field);
+	}
+
+	& .cell {
+		&:hover {
+			background-color: transparent;
+		}
+
+		/* the week is what gets selected, so the day it was picked from is not called out */
+		&[data-selected] {
+			background-color: transparent;
+			color: inherit;
+		}
+	}
+}

@@ -1,23 +1,448 @@
-.hamburger.fab {
+.container {
+	flex: 1;
+	min-width: 0;
+}
+
+.header {
+	container-type: inline-size;
+	display: flex;
+	width: 100%;
+	height: var(--layout-nav-height);
+	align-items: center;
+	gap: var(--s-2);
+	border-bottom: 1.5px solid var(--color-border);
+	background-color: var(--color-bg-nav);
+	font-weight: var(--weight-extra);
+	padding-inline: var(--s-4);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	/* captured on its own so animating content slides under it instead of over it */
+	view-transition-name: layout-header;
+
+	/* snapshots paint above the top layer, which would lift it over an open modal's backdrop */
+	:root:has(:modal) & {
+		view-transition-name: none;
+	}
+}
+
+::view-transition-group(layout-header) {
+	z-index: 1;
+}
+
+::view-transition-group(layout-header),
+::view-transition-old(layout-header),
+::view-transition-new(layout-header) {
+	animation-duration: 0s;
+}
+
+.siteTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	height: 100%;
+	min-width: 0;
+	padding: 3px;
+	margin: -3px;
+}
+
+.siteLogo {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	background-color: var(--color-fill-accent);
+	border-radius: var(--radius-field);
+	font-weight: var(--weight-bold);
+	color: var(--color-fg-on-accent);
+	text-decoration: none;
+	flex-shrink: 0;
+	transition: background-color 0.2s;
+	line-height: 1;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.siteLogoS {
+	font-size: 14px;
+	position: relative;
+	top: -4px;
+}
+
+.siteLogoInk {
+	font-size: 12px;
+	position: relative;
+	bottom: -4px;
+}
+
+.separator {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
+	opacity: 0.5;
+	animation: fadeIn 200ms ease-out 150ms both;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 0.5;
+	}
+}
+
+.pageIconWrapper {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	animation: fadeInFull 200ms ease-out 150ms both;
+}
+
+.pageIcon {
+	width: 28px;
+	height: 28px;
+	object-fit: cover;
+}
+
+@keyframes fadeInFull {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.breadcrumbLink {
+	display: flex;
+	align-items: center;
+	text-decoration: none;
+	border-radius: var(--radius-field);
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.pageName {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	animation: fadeInFull 200ms ease-out 150ms both;
+}
+
+@media screen and (display-mode: standalone) {
+	.header {
+		align-items: flex-end;
+		padding-top: calc(var(--s-2) + env(safe-area-inset-top));
+		padding-bottom: var(--s-2);
+		height: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+	}
+
+	.chatSidebarModal {
+		top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+		height: calc(100% - var(--layout-nav-height) - env(safe-area-inset-top));
+
+		&::backdrop {
+			top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+		}
+	}
+}
+
+.sideNavEmpty {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	padding: var(--s-1) var(--s-2);
+	margin: 0 auto;
+	font-style: italic;
+}
+
+.viewAllLink {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+
+	& svg {
+		stroke-width: 3;
+	}
+}
+
+.friendRequestsBadge {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-fg-on-accent);
+	background-color: var(--color-fill-accent);
+	min-width: 18px;
+	height: 18px;
+	padding: 0 var(--s-1);
+	border-radius: 9px;
 	display: grid;
-	position: fixed;
-	right: 27.5px;
-	bottom: 105px;
-	border-radius: 100%;
-	width: 3.75rem;
-	height: 3.75rem;
-	backdrop-filter: var(--backdrop-filter);
-	background-color: transparent;
-	border-color: var(--theme-transparent);
+	place-items: center;
+	margin-inline-end: var(--s-1-5);
+	pointer-events: none;
 }
 
-.hamburger.fab svg {
-	width: 2.25rem;
-	stroke-width: 2px;
+.sideNavCollapseBadge {
+	position: absolute;
+	top: -5px;
+	inset-inline-end: -5px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-fg-on-accent);
+	background-color: var(--color-fill-accent);
+	min-width: 16px;
+	height: 16px;
+	padding: 0 var(--s-0-5);
+	border-radius: 8px;
+	display: grid;
+	place-items: center;
+	line-height: 1;
+	pointer-events: none;
+
+	&.sideNavCollapseBadgeLeft {
+		inset-inline-end: auto;
+		inset-inline-start: -5px;
+	}
 }
 
-@media screen and (min-width: 600px) {
-	.hamburger.fab {
+.sideNavCollapseForm {
+	display: contents;
+}
+
+.sideNavCollapseButtonContainer {
+	display: none;
+	position: relative;
+	--dot-top: 2px;
+	--dot-right: 2px;
+
+	&:has(.sideNavCollapseButton) {
+		@media screen and (min-width: 1000px) {
+			display: flex;
+		}
+	}
+
+	&:has(.sideNavModalTrigger) {
+		@media screen and (min-width: 600px) and (max-width: 999px) {
+			display: flex;
+		}
+	}
+}
+
+/* Doubled selector increases specificity to beat Button.module.css's display: flex */
+.sideNavCollapseButton.sideNavCollapseButton,
+.sideNavModalTrigger.sideNavModalTrigger {
+	display: none;
+
+	& svg {
+		color: var(--color-text);
+		min-width: 20px;
+		max-width: 20px;
+	}
+
+	&.sideNavCollapseButton {
+		@media screen and (min-width: 1000px) {
+			display: flex;
+		}
+	}
+
+	&.sideNavModalTrigger {
+		@media screen and (min-width: 600px) and (max-width: 999px) {
+			display: flex;
+		}
+	}
+}
+
+/*
+The sidebar doubles as the tablet drawer: it is a popover, hidden on tablet
+until its header button opens it into the top layer. On desktop it is just
+shown, so the popover's user agent styles are reset here.
+*/
+.sideNavDrawer {
+	margin: 0;
+	padding: 0;
+	inset-block-end: auto;
+	inset-inline-end: auto;
+	width: auto;
+	border-block: 0;
+	border-inline-start: 0;
+	color: inherit;
+	outline: none;
+
+	@media screen and (min-width: 600px) and (max-width: 999px) {
+		&:popover-open {
+			display: flex;
+			position: fixed;
+			top: var(--layout-nav-height);
+			left: 0;
+			height: calc(100% - var(--layout-nav-height));
+
+			&::backdrop {
+				background-color: rgba(0, 0, 0, 0.4);
+				backdrop-filter: blur(4px);
+				top: var(--layout-nav-height);
+			}
+
+			@media screen and (display-mode: standalone) {
+				top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+				height: calc(
+					100% -
+					var(--layout-nav-height) -
+					env(safe-area-inset-top)
+				);
+
+				&::backdrop {
+					top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+				}
+			}
+		}
+	}
+}
+
+.mobileLogo {
+	display: flex;
+
+	@media screen and (min-width: 600px) {
 		display: none;
 	}
+}
+
+.chatSidebar {
+	display: none;
+	background-color: var(--color-bg-nav);
+	min-width: var(--layout-sidenav-width);
+	max-width: var(--layout-sidenav-width);
+	border-left: 1.5px solid var(--color-border);
+	position: sticky;
+	top: 0;
+	right: 0;
+	height: 100dvh;
+	flex-direction: column;
+	overflow: hidden;
+
+	@media screen and (min-width: 1000px) {
+		display: flex;
+	}
+}
+
+@media screen and (max-width: 1474px) {
+	.sidebarFuseSpace {
+		padding-bottom: var(--layout-fuse-bottom-height);
+	}
+}
+
+.chatSidebarModal {
+	position: fixed;
+	inset: 0;
+	top: var(--layout-nav-height);
+	margin: 0;
+	margin-left: auto;
+	padding: 0;
+	max-width: none;
+	max-height: none;
+	height: calc(100% - var(--layout-nav-height));
+	width: var(--layout-sidenav-width);
+	border: none;
+	border-left: 1.5px solid var(--color-border);
+	background-color: var(--color-bg-nav);
+	color: var(--color-text);
+	outline: none;
+
+	&::backdrop {
+		background-color: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(4px);
+		top: var(--layout-nav-height);
+	}
+}
+
+@media screen and (min-width: 1475px) {
+	:global(html[data-fuse="true"]) .chatSidebar {
+		z-index: 20;
+	}
+}
+
+.sideNavFooterUser {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	color: var(--color-text);
+	text-decoration: none;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	border-radius: var(--radius-field);
+	padding: var(--s-1);
+	margin-left: calc(-1 * var(--s-1));
+	flex: 1;
+	min-width: 0;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.sideNavFooterUsername {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sideNavFooterActions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	margin-left: auto;
+}
+
+.sideNavFooterButton {
+	display: grid;
+	place-items: center;
+	background-color: transparent;
+	width: var(--field-size-sm);
+	height: var(--field-size-sm);
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-field);
+	color: var(--color-text-high);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+
+	& svg {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+.sideNavFooterTeamAvatar {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.sideNavFooterNotification {
+	position: relative;
+}
+
+.sideNavFooterUnseenDot {
+	--dot-top: 2px;
+	--dot-right: 2px;
 }

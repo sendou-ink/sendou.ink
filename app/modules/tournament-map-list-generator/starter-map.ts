@@ -1,82 +1,88 @@
-// if one mode -> try to find common, otherwise something neither picked
-// if a tie breaker -> random tiebreaker
-// seed = always same
+// a map both teams picked, else one from the pool neither picked; seeded
 
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { logger } from "~/utils/logger";
-import { modesShort } from "../in-game-lists/modes";
+import { seededRandom } from "~/utils/random";
 import type { ModeWithStage } from "../in-game-lists/types";
-import {
-	seededRandom,
-	type TournamentMapListMap,
-	type TournamentMaplistInput,
-} from ".";
+import type { TournamentMapListMap, TournamentMaplistInput } from "./types";
 
 type StarterMapArgs = Pick<
 	TournamentMaplistInput,
-	"modesIncluded" | "tiebreakerMaps" | "seed" | "teams"
+	| "modesIncluded"
+	| "pool"
+	| "seed"
+	| "teams"
+	| "recentlyPlayedMaps"
+	| "modeOrder"
 >;
 
 export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
-	const { shuffle } = seededRandom(args.seed);
+	const { seededShuffle } = seededRandom(args.seed);
 
-	const commonMap = resolveRandomCommonMap(args.teams, shuffle);
+	const fixedMode = args.modeOrder?.[0] ?? null;
+	const isAllowedMode = (map: ModeWithStage) =>
+		args.modesIncluded.includes(map.mode) &&
+		(fixedMode === null || map.mode === fixedMode);
+
+	const isRecentlyPlayed = (map: ModeWithStage) => {
+		return Boolean(
+			args.recentlyPlayedMaps?.some(
+				(recent) => recent.stageId === map.stageId && recent.mode === map.mode,
+			),
+		);
+	};
+
+	const commonMap = resolveRandomCommonMap(
+		args.teams,
+		seededShuffle,
+		isRecentlyPlayed,
+		isAllowedMode,
+	);
 	if (commonMap) {
 		return [{ ...commonMap, source: "BOTH" }];
 	}
 
-	if (!args.tiebreakerMaps.isEmpty()) {
-		const randomTiebreaker = shuffle(args.tiebreakerMaps.stageModePairs)[0];
+	const poolMaps = seededShuffle(
+		args.pool.stageModePairs.filter(isAllowedMode),
+	);
+	const pickedByATeam = (map: ModeWithStage) =>
+		args.teams.some((team) => team.maps.has(map));
 
-		return [
-			{
-				mode: randomTiebreaker.mode,
-				stageId: randomTiebreaker.stageId,
-				source: "TIEBREAKER",
-			},
-		];
+	const neitherPicked = poolMaps.filter((map) => !pickedByATeam(map));
+
+	const randomMap =
+		neitherPicked.find((map) => !isRecentlyPlayed(map)) ?? neitherPicked[0];
+	if (randomMap) {
+		return [{ ...randomMap, source: "RANDOM" }];
 	}
 
-	// should be only one mode here always but just in case
-	// making it capable of handling many modes too
-	const allAvailableMaps = shuffle(
-		args.modesIncluded
-			.sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b))
-			.flatMap((mode) => stageIds.map((stageId) => ({ mode, stageId }))),
+	logger.warn(
+		`starterMap: fallback choice, both teams together picked every pool map. Team IDs: ${args.teams.map((t) => t.id).join(", ")}`,
 	);
 
-	for (const map of allAvailableMaps) {
-		if (
-			!args.teams.some((team) =>
-				team.maps.stageModePairs.some(
-					(teamMap) =>
-						teamMap.mode === map.mode && teamMap.stageId === map.stageId,
-				),
-			)
-		) {
-			return [{ ...map, source: "DEFAULT" }];
-		}
-	}
+	const fallbackMap =
+		poolMaps.find((map) => !isRecentlyPlayed(map)) ?? poolMaps[0];
 
-	logger.warn("startedMap: fallback choice");
-
-	return [{ ...allAvailableMaps[0], source: "DEFAULT" }];
+	return fallbackMap ? [{ ...fallbackMap, source: "RANDOM" }] : [];
 }
 
 function resolveRandomCommonMap(
 	teams: StarterMapArgs["teams"],
 	shuffle: <T>(o: T[]) => T[],
+	isRecentlyPlayed: (map: ModeWithStage) => boolean,
+	isAllowedMode: (map: ModeWithStage) => boolean,
 ): ModeWithStage | null {
 	const teamOnePicks = shuffle(teams[0].maps.stageModePairs);
 	const teamTwoPicks = shuffle(teams[1].maps.stageModePairs);
 
-	for (const map of teamOnePicks) {
-		for (const map2 of teamTwoPicks) {
-			if (map.mode === map2.mode && map.stageId === map2.stageId) {
-				return map;
-			}
-		}
-	}
+	const commonMaps = teamOnePicks.filter(
+		(map) =>
+			isAllowedMode(map) &&
+			teamTwoPicks.some(
+				(map2) => map.mode === map2.mode && map.stageId === map2.stageId,
+			),
+	);
 
-	return null;
+	return (
+		commonMaps.find((map) => !isRecentlyPlayed(map)) ?? commonMaps[0] ?? null
+	);
 }

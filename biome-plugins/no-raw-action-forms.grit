@@ -1,0 +1,25 @@
+language js
+
+// Fixed-field mutations (an `_action` plus hidden inputs) go through
+// `<ActionButton>` (app/components/ActionButton.tsx). Real multi-input forms
+// keep their own form but pass `schema` alongside `_action` to `SubmitButton`
+// so the action literal is type checked against the route's action schema.
+or {
+	JsxAttribute(name=`_action`) as $attr where {
+		$attr <: not within or {
+			JsxOpeningElement(attributes=contains JsxAttribute(name=`schema`)),
+			JsxSelfClosingElement(attributes=contains JsxAttribute(name=`schema`))
+		} ,
+		register_diagnostic(span=$attr, message="Untyped `_action`. For a fixed-field mutation use `<ActionButton schema={...} action=\"...\" fields={{...}}>`; for a submit button of a real multi-input form pass `schema={...}` alongside `_action` so the literal is type checked against the route's schema.", severity="error")
+	},
+	`name="_action"` as $attr where {
+		register_diagnostic(span=$attr, message="Do not submit `_action` via a hidden input or button name. Use `<ActionButton schema={...} action=\"...\" fields={{...}}>`, or a `SubmitButton` with `schema` and `_action` inside a real multi-input form. If neither fits, suppress with `// biome-ignore lint/plugin: <reason>`.", severity="error")
+	},
+	`$fetcher.submit($payload, $opts)` as $call where {
+		$payload <: contains `_action: $_`,
+		register_diagnostic(span=$call, message="Do not submit `_action` payloads with a raw fetcher.submit. Use the `useActionSubmit` hook so the action and fields are type checked against the route's schema. Suppress with `// biome-ignore lint/plugin: <reason>` if this cannot go through the hook.", severity="error")
+	},
+	`$formData.append("_action", $value)` as $append where {
+		register_diagnostic(span=$append, message="Do not build `_action` FormData by hand. Use the `useActionSubmit` hook so the action and fields are type checked against the route's schema. Suppress with `// biome-ignore lint/plugin: <reason>` if this payload includes files.", severity="error")
+	}
+}

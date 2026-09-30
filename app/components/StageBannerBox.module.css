@@ -1,0 +1,17 @@
+.banner {
+	background-image:
+		linear-gradient(
+			to right,
+			var(--stage-banner-fade, var(--color-bg-high)) 35%,
+			transparent 80%
+		),
+		var(--stage-banner);
+	background-origin: border-box;
+	background-position: right center;
+	/* fade layer is grown a pixel past the box so subpixel box sizes can't
+	   leave a sliver of the banner showing at the edges */
+	background-size:
+		calc(100% + 2px) calc(100% + 2px),
+		cover;
+	background-repeat: no-repeat;
+}

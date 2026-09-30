@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import * as v from "valibot";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
 import { type articleBySlug, normalizeAuthors } from "./bySlug.server";
@@ -11,7 +12,6 @@ export async function mostRecentArticles(count: number) {
 	const articles: Array<
 		Omit<NonNullable<ReturnType<typeof articleBySlug>>, "content"> & {
 			slug: string;
-			dateString: string;
 		}
 	> = [];
 	for (const file of files) {
@@ -21,15 +21,10 @@ export async function mostRecentArticles(count: number) {
 		);
 		const { data } = matter(rawMarkdown);
 
-		const { date, ...restParsed } = articleDataSchema.parse(data);
+		const { date, ...restParsed } = v.parse(articleDataSchema, data);
 		articles.push({
 			date,
 			slug: file.replace(".md", ""),
-			dateString: date.toLocaleDateString("en-US", {
-				day: "2-digit",
-				month: "long",
-				year: "numeric",
-			}),
 			authors: normalizeAuthors(restParsed.author),
 			title: restParsed.title,
 		});
@@ -37,6 +32,5 @@ export async function mostRecentArticles(count: number) {
 
 	return articles
 		.sort((a, b) => b.date.getTime() - a.date.getTime())
-		.slice(0, count)
-		.map(({ date: _date, ...rest }) => rest);
+		.slice(0, count);
 }

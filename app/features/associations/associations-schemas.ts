@@ -1,51 +1,69 @@
-import { z } from "zod/v4";
-import { _action, id, inviteCode, safeStringSchema } from "~/utils/zod";
+import * as v from "valibot";
+import { textField } from "~/form/fields";
+import { _action, id, inviteCode } from "~/utils/schema";
 import { ASSOCIATION } from "./associations-constants";
 
-export const createNewAssociationSchema = z.object({
-	name: safeStringSchema({ max: 100 }),
+export const createNewAssociationSchema = v.object({
+	name: textField({
+		label: "labels.name",
+		maxLength: 100,
+	}),
 });
 
-const removeMemberSchema = z.object({
+const removeMemberSchema = v.object({
 	_action: _action("REMOVE_MEMBER"),
 	associationId: id,
 	userId: id,
 });
 
-const deleteAssociationSchema = z.object({
+const addManagerSchema = v.object({
+	_action: _action("ADD_MANAGER"),
+	associationId: id,
+	userId: id,
+});
+
+const removeManagerSchema = v.object({
+	_action: _action("REMOVE_MANAGER"),
+	associationId: id,
+	userId: id,
+});
+
+const deleteAssociationSchema = v.object({
 	_action: _action("DELETE_ASSOCIATION"),
 	associationId: id,
 });
 
-const refreshInviteCodeSchema = z.object({
+const refreshInviteCodeSchema = v.object({
 	_action: _action("REFRESH_INVITE_CODE"),
 	associationId: id,
 });
 
-const joinAssociationSchema = z.object({
+const joinAssociationSchema = v.object({
 	_action: _action("JOIN_ASSOCIATION"),
 	inviteCode,
 });
 
-const leaveAssociationSchema = z.object({
+const leaveAssociationSchema = v.object({
 	_action: _action("LEAVE_ASSOCIATION"),
 	associationId: id,
 });
 
-export const associationsPageActionSchema = z.union([
+export const associationsPageActionSchema = v.union([
 	removeMemberSchema,
+	addManagerSchema,
+	removeManagerSchema,
 	deleteAssociationSchema,
 	refreshInviteCodeSchema,
 	joinAssociationSchema,
 	leaveAssociationSchema,
 ]);
 
-const virtualAssociationIdentifierSchema = z.enum(
+const virtualAssociationIdentifierSchema = v.picklist(
 	ASSOCIATION.VIRTUAL_IDENTIFIERS,
 );
 
-export const associationIdentifierSchema = z.union([
+export const associationIdentifierSchema = v.union([
 	virtualAssociationIdentifierSchema,
 	id,
-	z.literal("PUBLIC"), // null in DB
+	v.literal("PUBLIC"),
 ]);

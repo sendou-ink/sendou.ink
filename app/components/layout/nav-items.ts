@@ -1,113 +1,90 @@
-import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
+import { Config } from "~/config";
 
 export const navItems = [
 	{
 		name: "settings",
 		url: "settings",
-		prefetch: true,
 	},
-	import.meta.env.VITE_SHOW_LUTI_NAV_ITEM === "true"
+	Config.showLutiNavItem
 		? {
 				name: "luti",
 				url: "luti",
-				prefetch: false,
 			}
 		: null,
 	{
 		name: "sendouq",
 		url: "q",
-		prefetch: false,
 	},
 	{
 		name: "analyzer",
 		url: "analyzer",
-		prefetch: true,
+	},
+	{
+		name: "comp-analyzer",
+		url: "comp-analyzer",
 	},
 	{
 		name: "builds",
 		url: "builds",
-		prefetch: true,
 	},
 	{
 		name: "object-damage-calculator",
 		url: "object-damage-calculator",
-		prefetch: true,
 	},
 	{
 		name: "leaderboards",
 		url: "leaderboards",
-		prefetch: false,
 	},
-	FF_SCRIMS_ENABLED
-		? {
-				name: "scrims",
-				url: "scrims",
-				prefetch: false,
-			}
-		: null,
+	{
+		name: "scrims",
+		url: "scrims",
+	},
 	{
 		name: "lfg",
 		url: "lfg",
-		prefetch: false,
 	},
 	{
 		name: "plans",
 		url: "plans",
-		prefetch: false,
 	},
 	{
-		name: "badges",
-		url: "badges",
-		prefetch: false,
+		name: "trophies",
+		url: "trophies",
 	},
 	{
 		name: "calendar",
 		url: "calendar",
-		prefetch: false,
 	},
 	{
 		name: "plus",
 		url: "plus/suggestions",
-		prefetch: false,
-	},
-	{
-		name: "u",
-		url: "u",
-		prefetch: false,
 	},
 	{
 		name: "xsearch",
 		url: "xsearch",
-		prefetch: false,
 	},
 	{
 		name: "articles",
 		url: "a",
-		prefetch: false,
 	},
 	{
 		name: "vods",
 		url: "vods",
-		prefetch: false,
 	},
 	{
 		name: "art",
 		url: "art",
-		prefetch: false,
 	},
 	{
-		name: "t",
-		url: "t",
-		prefetch: false,
+		name: "tier-list-maker",
+		url: "tier-list-maker",
 	},
 	{
 		name: "links",
 		url: "links",
-		prefetch: true,
 	},
 	{
 		name: "maps",
 		url: "maps",
-		prefetch: false,
 	},
 ].filter((item) => item !== null);

@@ -1,0 +1,430 @@
+import type * as v from "valibot";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
+import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
+import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import type { SerializeFrom } from "~/utils/remix";
+import {
+	assertResponseErrored,
+	wrappedAction,
+	wrappedLoader,
+} from "~/utils/Test";
+import { action, loader } from "./to.$id.matches.$mid";
+
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
+	sendPersisted: vi.fn(),
+	notifyNotificationsChanged: vi.fn(),
+	notifyRoomsChangedByRoomIds: vi.fn(),
+}));
+
+const tournamentMatchAction = wrappedAction<typeof matchSchema>({
+	action,
+	isJsonSubmission: true,
+});
+const removeMemberApiActionWrapped = wrappedAction<
+	v.GenericSchema<{ userId: number }>
+>({
+	action: removeMemberApiAction,
+	isJsonSubmission: true,
+});
+
+const tournamentMatchLoader = wrappedLoader<SerializeFrom<typeof loader>>({
+	loader,
+});
+
+const ROSTER_SIZE = 4;
+
+/** Everybody but the organizer, who is created apart from them for their pinned id. */
+const users = UserFactory.pool();
+
+let tournamentId: number;
+let matchId: number;
+let teamOne: { id: number };
+/** Organizes the tournament and plays on team one. Who the actions submit as. */
+let organizerId: number;
+
+const matchParams = () => ({ id: String(tournamentId), mid: String(matchId) });
+
+/** Team one's first four members, the ones it fields when it has to pick. */
+const activeRoster = () => [organizerId, ...users.ids(ROSTER_SIZE - 1)];
+
+const loadMatchData = () => tournamentMatchLoader({ params: matchParams() });
+
+const reportScoreAction = ({
+	position,
+	params = matchParams(),
+	winnerTeamId = teamOne.id,
+}: {
+	position: number;
+	params?: { id: string; mid: string };
+	winnerTeamId?: number;
+}) =>
+	tournamentMatchAction(
+		{
+			_action: "REPORT_SCORE",
+			position,
+			winnerTeamId,
+		},
+		{ user: "admin", params },
+	);
+
+const setActiveRosterAction = (teamId = teamOne.id, roster = activeRoster()) =>
+	tournamentMatchAction(
+		{
+			_action: "SET_ACTIVE_ROSTER",
+			roster,
+			teamId,
+		},
+		{ user: "admin", params: matchParams() },
+	);
+
+const removeMemberAction = ({
+	userId,
+	teamId,
+}: {
+	userId: number;
+	teamId: number;
+}) =>
+	removeMemberApiActionWrapped(
+		{ userId },
+		{
+			user: "admin",
+			params: { id: String(tournamentId), teamId: String(teamId) },
+		},
+	);
+
+const createTournamentTeam = (
+	forTournamentId: number,
+	memberUserIds: number[],
+) =>
+	TournamentTeamFactory.create(
+		{ tournamentId: forTournamentId, memberUserIds },
+		{ isCheckedIn: true },
+	);
+
+describe("Tournament match page", () => {
+	beforeEach(async () => {
+		organizerId = (await UserFactory.createAdmin()).id;
+		await users.create(9);
+
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId,
+		});
+		tournamentId = tournament.id;
+
+		// six members, so that team one has subs and a roster to pick from them
+		teamOne = await createTournamentTeam(tournamentId, [
+			organizerId,
+			...users.ids(5),
+		]);
+		await createTournamentTeam(tournamentId, users.ids(9).slice(5));
+
+		[{ id: matchId }] = await TournamentFactory.startBracket(tournamentId);
+	});
+
+	describe("results", () => {
+		test("is empty array for new match", async () => {
+			const data = await loadMatchData();
+
+			expect(data.results).toBeDefined();
+			expect(data.results.length).toBe(0);
+		});
+
+		test("returns results for an in-progress match with correct fields", async () => {
+			await setActiveRosterAction();
+			await reportScoreAction({ position: 0 });
+
+			const data = await loadMatchData();
+
+			expect(data.results.length).toBe(1);
+
+			const result = data.results[0];
+			const playing = [...activeRoster(), ...users.ids(9).slice(5)];
+
+			expect(result.stageId).toBe(1);
+			expect(result.mode).toBe("SZ");
+			expect(
+				result.participants.every((participant) =>
+					playing.includes(participant.userId),
+				),
+				"Result participants should only include active roster user ids",
+			).toBeTruthy();
+			expect(result.ko).toBe(null);
+			expect(result.winnerTeamId).toBe(teamOne.id);
+		});
+
+		test("returns results for a completed match", async () => {
+			await setActiveRosterAction();
+			await reportScoreAction({ position: 0 });
+			await reportScoreAction({ position: 1 });
+
+			const data = await loadMatchData();
+
+			expect(data.results.length).toBe(2);
+		});
+	});
+
+	describe("mapList", () => {
+		test("returns TO picked map list for match", async () => {
+			const data = await loadMatchData();
+
+			expect(data.mapList).toBeDefined();
+			expect(data.mapList?.length).toBe(3);
+			expect(data.mapList?.[0].source).toBe("TO");
+			expect(data.mapList?.[0].mode).toBe("SZ");
+			expect(data.mapList?.[0].stageId).toBe(1);
+		});
+	});
+
+	describe("matchIsOver", () => {
+		test("is false for new match", async () => {
+			const data = await loadMatchData();
+
+			expect(data.matchIsOver).toBe(false);
+		});
+
+		test("is true for a completed match", async () => {
+			await setActiveRosterAction();
+			await reportScoreAction({ position: 0 });
+			await reportScoreAction({ position: 1 });
+
+			const data = await loadMatchData();
+
+			expect(data.matchIsOver).toBe(true);
+		});
+	});
+
+	describe("active roster", () => {
+		test("returns error if submitted active roster contains user id not in the team", async () => {
+			const res = await setActiveRosterAction(teamOne.id, [
+				...activeRoster().slice(0, ROSTER_SIZE - 1),
+				users.id(6),
+			]);
+
+			assertResponseErrored(res, "Invalid roster");
+		});
+
+		test("returns error if submitted active roster has the same player twice", async () => {
+			const res = await setActiveRosterAction(teamOne.id, [
+				organizerId,
+				organizerId,
+				organizerId,
+				organizerId,
+			]);
+
+			assertResponseErrored(res);
+		});
+
+		test("returns error if submitted active roster is not of correct length", async () => {
+			const res = await setActiveRosterAction(
+				teamOne.id,
+				activeRoster().slice(0, ROSTER_SIZE - 1),
+			);
+
+			assertResponseErrored(res, "Invalid roster length");
+		});
+
+		test("returns error if trying to report score without active roster", async () => {
+			const res = await reportScoreAction({ position: 0 });
+
+			assertResponseErrored(res, "Team one has no active roster");
+		});
+
+		test("wipes active roster if member in it removed by tournament admin", async () => {
+			await setActiveRosterAction();
+
+			await removeMemberAction({ teamId: teamOne.id, userId: users.id(1) });
+
+			const res = await reportScoreAction({ position: 0 });
+			assertResponseErrored(res, "Team one has no active roster");
+		});
+
+		test("retains active roster if member removed by tournament admin was not in it", async () => {
+			await setActiveRosterAction();
+
+			// team one's sixth member, so not one of the four it fields
+			await removeMemberAction({ teamId: teamOne.id, userId: users.id(5) });
+
+			const res = await reportScoreAction({ position: 0 });
+
+			expect(res).toBe(null);
+		});
+
+		test("does not require setting active roster if both teams have no subs", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
+			});
+			const subLessTeam = await createTournamentTeam(tournament.id, [
+				organizerId,
+				...users.ids(ROSTER_SIZE - 1),
+			]);
+			await createTournamentTeam(
+				tournament.id,
+				users.ids(ROSTER_SIZE * 2 - 1).slice(3),
+			);
+
+			const [match] = await TournamentFactory.startBracket(tournament.id);
+
+			const res = await reportScoreAction({
+				position: 0,
+				params: { id: String(tournament.id), mid: String(match.id) },
+				winnerTeamId: subLessTeam.id,
+			});
+
+			expect(res).toBe(null);
+		});
+	});
+
+	describe("pick/ban", () => {
+		/** Two maps more than the set's length, so both teams get to ban one. */
+		const BAN_2_MAPS = {
+			count: 3,
+			type: "BEST_OF",
+			pickBan: "BAN_2",
+			list: ([1, 2, 3, 4, 5] as const).map((stageId) => ({
+				mode: "SZ" as const,
+				stageId,
+			})),
+		} satisfies TournamentFactory.RoundMaps;
+
+		let pickBanParams: { id: string; mid: string };
+		/** Not the captain of the team whose turn it is to ban. */
+		let banningTeamMemberId: number;
+		let otherTeamMemberId: number;
+
+		const banAction = (user: number) =>
+			tournamentMatchAction(
+				{ _action: "BAN_PICK", mode: "SZ", stageId: 1 },
+				{ user, params: pickBanParams },
+			);
+
+		beforeEach(async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
+			});
+			const teamA = await createTournamentTeam(
+				tournament.id,
+				users.ids(ROSTER_SIZE),
+			);
+			await createTournamentTeam(
+				tournament.id,
+				users.ids(ROSTER_SIZE * 2).slice(ROSTER_SIZE),
+			);
+
+			const [match] = await TournamentFactory.startBracket(tournament.id, {
+				maps: BAN_2_MAPS,
+			});
+			pickBanParams = { id: String(tournament.id), mid: String(match.id) };
+
+			const data = await tournamentMatchLoader({ params: pickBanParams });
+			const teamABansFirst = data.match.opponentTwo?.id === teamA.id;
+
+			// second member of a team, so never its captain
+			banningTeamMemberId = teamABansFirst
+				? users.id(2)
+				: users.id(ROSTER_SIZE + 2);
+			otherTeamMemberId = teamABansFirst
+				? users.id(ROSTER_SIZE + 2)
+				: users.id(2);
+		});
+
+		test("lets a team member who is not the captain ban", async () => {
+			const res = await banAction(banningTeamMemberId);
+
+			expect(res).toBe(null);
+
+			const data = await tournamentMatchLoader({ params: pickBanParams });
+			expect(data.pickBanEvents.length).toBe(1);
+			expect(data.pickBanEvents[0].type).toBe("BAN");
+			expect(data.pickBanEvents[0].stageId).toBe(1);
+		});
+
+		test("returns error if a member of the team not in turn bans", async () => {
+			const res = await banAction(otherTeamMemberId);
+
+			assertResponseErrored(res, "Unauthorized");
+		});
+	});
+
+	describe("locked match", () => {
+		test("returns error when reporting score for a match waiting on previous matches", async () => {
+			await setActiveRosterAction();
+			// a state an earlier match of a larger bracket puts this row in, not one it was created in
+			// biome-ignore lint/plugin: written rather than seeded, see above
+			await db
+				.updateTable("TournamentMatch")
+				.set({ opponentOne: JSON.stringify({ id: null }) })
+				.where("id", "=", matchId)
+				.execute();
+
+			const res = await reportScoreAction({ position: 0 });
+
+			assertResponseErrored(res, "Match is locked");
+		});
+	});
+
+	describe("BYE matches", () => {
+		// as above: a BYE and a TBD opponent are states the surrounding bracket produces, so written not seeded
+		test("404s when accessing a BYE match", async () => {
+			// biome-ignore lint/plugin: as above
+			await db
+				.updateTable("TournamentMatch")
+				.set({ opponentTwo: null })
+				.where("id", "=", matchId)
+				.execute();
+
+			await expect(loadMatchData()).rejects.toThrow("404");
+		});
+
+		test("nots 404 when an opponent is a TBD placeholder waiting for an earlier match", async () => {
+			// biome-ignore lint/plugin: as above
+			await db
+				.updateTable("TournamentMatch")
+				.set({ opponentTwo: JSON.stringify({ id: null }) })
+				.where("id", "=", matchId)
+				.execute();
+
+			await expect(loadMatchData()).resolves.toBeDefined();
+		});
+	});
+
+	describe("league scheduling", () => {
+		const startLeagueMatch = async (isRealtime: boolean) => {
+			const league = await TournamentFactory.create(
+				{ authorId: organizerId },
+				{ isLeague: true },
+			);
+			await createTournamentTeam(league.id, users.ids(ROSTER_SIZE));
+			await createTournamentTeam(
+				league.id,
+				users.ids(ROSTER_SIZE * 2).slice(ROSTER_SIZE),
+			);
+
+			const [match] = await TournamentFactory.startBracket(league.id, {
+				isRealtime,
+			});
+
+			return { id: String(league.id), mid: String(match.id) };
+		};
+
+		test.each([
+			{ isRealtime: false, hasScheduling: true, phase: "UNSCHEDULED" },
+			{ isRealtime: true, hasScheduling: false, phase: "CLOSED" },
+		])(
+			"a set of a league bracket with isRealtime $isRealtime is $phase",
+			async ({ isRealtime, hasScheduling, phase }) => {
+				const data = await tournamentMatchLoader({
+					params: await startLeagueMatch(isRealtime),
+				});
+
+				expect(data.schedule.hasScheduling).toBe(hasScheduling);
+				expect(data.schedule.phase).toBe(phase);
+			},
+		);
+	});
+});

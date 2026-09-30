@@ -1,0 +1,84 @@
+.table {
+	--columns: minmax(0, 1fr) auto;
+
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+
+	&[data-variant="full"] {
+		--columns: minmax(0, 1fr) repeat(3, 4.5rem);
+	}
+
+	&[data-variant="full"][data-activity="true"] {
+		--columns: minmax(0, 1fr) repeat(3, 4.5rem) 8rem;
+	}
+}
+
+.header,
+.row {
+	display: grid;
+	grid-template-columns: var(--columns);
+	align-items: center;
+	gap: var(--s-4);
+	padding: var(--s-2);
+}
+
+.header {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	border-block-end: var(--border-style);
+}
+
+.row {
+	border-radius: var(--radius-field);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	text-decoration: none;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.player {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	min-width: 0;
+}
+
+.playerName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.numeric {
+	text-align: end;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.activity {
+	text-align: end;
+}
+
+.sparkline {
+	height: 1.75rem;
+}
+
+@container (width < 32rem) {
+	.table[data-variant="full"] :is(.header, .row) {
+		grid-template-columns: minmax(0, 1fr) 3rem;
+		gap: var(--s-3);
+	}
+
+	.table[data-variant="full"][data-activity="true"] :is(.header, .row) {
+		grid-template-columns: minmax(0, 1fr) 3rem 4.5rem;
+	}
+
+	.wideOnly {
+		display: none;
+	}
+}

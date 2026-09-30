@@ -1,22 +1,26 @@
-import { cors } from "remix-utils/cors";
+import * as ApiRepository from "~/features/api/ApiRepository.server";
+import type { ApiTokenType } from "~/features/api/api-types";
 
-const apiTokens = process.env.PUBLIC_API_TOKENS?.split(",") ?? [];
-export function requireBearerAuth(req: Request) {
-	const authHeader = req.headers.get("Authorization");
-	if (!authHeader) {
-		throw new Response("Missing Authorization header", { status: 401 });
+type CachedToken = { type: ApiTokenType; userId: number };
+
+async function loadApiTokensCache() {
+	const dbTokens = await ApiRepository.findAllApiTokens();
+
+	const tokenMap = new Map<string, CachedToken>();
+
+	for (const { token, type, userId } of dbTokens) {
+		tokenMap.set(token, { type, userId });
 	}
-	const token = authHeader.replace("Bearer ", "");
-	if (!apiTokens.includes(token)) {
-		throw new Response("Invalid token", { status: 401 });
-	}
+
+	return tokenMap;
 }
 
-export async function handleOptionsRequest(req: Request) {
-	if (req.method === "OPTIONS") {
-		throw await cors(req, new Response("OK", { status: 204 }), {
-			origin: "*",
-			credentials: true,
-		});
-	}
+let apiTokens: Map<string, CachedToken> = await loadApiTokensCache();
+
+export function getTokenInfo(token: string): CachedToken | undefined {
+	return apiTokens.get(token);
+}
+
+export async function refreshApiTokensCache() {
+	apiTokens = await loadApiTokensCache();
 }

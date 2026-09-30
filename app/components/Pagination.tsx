@@ -1,8 +1,7 @@
 import clsx from "clsx";
-import { SendouButton } from "~/components/elements/Button";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
-import { ArrowRightIcon } from "~/components/icons/ArrowRight";
-import { nullFilledArray } from "~/utils/arrays";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import * as React from "react";
+import styles from "./Pagination.module.css";
 
 export function Pagination({
 	currentPage,
@@ -10,46 +9,264 @@ export function Pagination({
 	nextPage,
 	previousPage,
 	setPage,
+	compact,
 }: {
 	currentPage: number;
 	pagesCount: number;
 	nextPage: () => void;
 	previousPage: () => void;
 	setPage: (page: number) => void;
+	/** Renders only the current page number with prev/next arrows */
+	compact?: boolean;
 }) {
+	const pages = getPageNumbers(currentPage, pagesCount);
+	const [jumpToIndex, setJumpToIndex] = React.useState<number | null>(null);
+
 	return (
-		<div className="pagination__container">
-			<SendouButton
-				icon={<ArrowLeftIcon />}
-				variant="outlined"
-				className="fix-rtl"
-				isDisabled={currentPage === 1}
-				onPress={previousPage}
+		<div className={styles.container}>
+			<button
+				type="button"
+				className={styles.arrow}
+				disabled={currentPage === 1}
+				onClick={previousPage}
 				aria-label="Previous page"
-			/>
-			<div className="pagination__dots">
-				{nullFilledArray(pagesCount).map((_, i) => (
-					// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
-					<div
-						key={i}
-						className={clsx("pagination__dot", {
-							pagination__dot__active: i === currentPage - 1,
-						})}
-						onClick={() => setPage(i + 1)}
-					/>
-				))}
-			</div>
-			<div className="pagination__page-count">
-				{currentPage}/{pagesCount}
-			</div>
-			<SendouButton
-				icon={<ArrowRightIcon />}
-				variant="outlined"
-				className="fix-rtl"
-				isDisabled={currentPage === pagesCount}
-				onPress={nextPage}
+			>
+				<ChevronLeft size={18} />
+			</button>
+			{compact ? (
+				<span className={clsx(styles.page, styles.pageActive)}>
+					{currentPage}
+				</span>
+			) : (
+				pages.map((page, index) =>
+					page.value === "..." ? (
+						<JumpToEllipsis
+							key={`ellipsis-${index}`}
+							isOpen={jumpToIndex === index}
+							pagesCount={pagesCount}
+							desktopOnly={page.desktopOnly}
+							mobileOnly={page.mobileOnly}
+							onOpen={() => setJumpToIndex(index)}
+							onClose={() => setJumpToIndex(null)}
+							onJump={(jumpPage) => {
+								setPage(jumpPage);
+								setJumpToIndex(null);
+							}}
+						/>
+					) : (
+						<PageButton
+							key={page.value}
+							page={page.value}
+							currentPage={currentPage}
+							desktopOnly={page.desktopOnly}
+							setPage={setPage}
+						/>
+					),
+				)
+			)}
+			<button
+				type="button"
+				className={styles.arrow}
+				disabled={currentPage === pagesCount}
+				onClick={nextPage}
 				aria-label="Next page"
-			/>
+			>
+				<ChevronRight size={18} />
+			</button>
 		</div>
 	);
+}
+
+function JumpToEllipsis({
+	isOpen,
+	pagesCount,
+	desktopOnly,
+	mobileOnly,
+	onOpen,
+	onClose,
+	onJump,
+}: {
+	isOpen: boolean;
+	pagesCount: number;
+	desktopOnly?: boolean;
+	mobileOnly?: boolean;
+	onOpen: () => void;
+	onClose: () => void;
+	onJump: (page: number) => void;
+}) {
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		const formData = new FormData(e.currentTarget);
+		const value = formData.get("page") as string;
+		if (!value) {
+			onClose();
+			return;
+		}
+
+		const pageNumber = Number(value);
+		if (Number.isNaN(pageNumber) || pageNumber < 1 || pageNumber > pagesCount) {
+			onClose();
+			return;
+		}
+
+		onJump(pageNumber);
+	};
+
+	const handleBlur = () => {
+		onClose();
+	};
+
+	if (isOpen) {
+		return (
+			<form
+				onSubmit={handleSubmit}
+				className={clsx(styles.jumpToForm, {
+					[styles.desktopOnly]: desktopOnly,
+					[styles.mobileOnly]: mobileOnly,
+				})}
+			>
+				<input
+					// biome-ignore lint/a11y/noAutofocus: valid use case
+					autoFocus
+					name="page"
+					type="text"
+					inputMode="numeric"
+					pattern="[0-9]*"
+					className={styles.jumpToInput}
+					onBlur={handleBlur}
+					aria-label={`Jump to page (1-${pagesCount})`}
+				/>
+			</form>
+		);
+	}
+
+	return (
+		<button
+			type="button"
+			className={clsx(styles.ellipsis, styles.ellipsisButton, {
+				[styles.desktopOnly]: desktopOnly,
+				[styles.mobileOnly]: mobileOnly,
+			})}
+			onClick={onOpen}
+			aria-label="Jump to page"
+		>
+			...
+		</button>
+	);
+}
+
+function PageButton({
+	page,
+	currentPage,
+	desktopOnly,
+	setPage,
+}: {
+	page: number;
+	currentPage: number;
+	desktopOnly?: boolean;
+	setPage: (page: number) => void;
+}) {
+	return (
+		<button
+			type="button"
+			className={clsx(styles.page, {
+				[styles.pageActive]: page === currentPage,
+				[styles.desktopOnly]: desktopOnly,
+			})}
+			onClick={() => setPage(page)}
+			aria-current={page === currentPage ? "page" : undefined}
+		>
+			{page}
+		</button>
+	);
+}
+
+type PageItem = {
+	value: number | "...";
+	desktopOnly?: boolean;
+	mobileOnly?: boolean;
+};
+
+export function getPageNumbers(
+	currentPage: number,
+	pagesCount: number,
+): PageItem[] {
+	if (pagesCount <= 5) {
+		return Array.from({ length: pagesCount }, (_, i) => ({ value: i + 1 }));
+	}
+
+	const showAllOnDesktop = pagesCount <= 9;
+
+	const { start: mobileStart, end: mobileEnd } = innerPageWindow(
+		currentPage,
+		pagesCount,
+		1,
+	);
+	const { start: desktopStart, end: desktopEnd } = showAllOnDesktop
+		? { start: 2, end: pagesCount - 1 }
+		: innerPageWindow(currentPage, pagesCount, 2);
+
+	const isMobileVisible = (page: number) =>
+		page >= mobileStart && page <= mobileEnd;
+	const isDesktopVisible = (page: number) =>
+		page >= desktopStart && page <= desktopEnd;
+
+	const pages: PageItem[] = [];
+
+	pages.push({ value: 1 });
+
+	const needsDesktopEllipsisStart = desktopStart > 2;
+	const needsMobileEllipsisStart = mobileStart > 2;
+
+	if (needsDesktopEllipsisStart && needsMobileEllipsisStart) {
+		pages.push({ value: "..." });
+	} else if (needsMobileEllipsisStart) {
+		pages.push({ value: "...", mobileOnly: true });
+	} else if (needsDesktopEllipsisStart) {
+		pages.push({ value: "...", desktopOnly: true });
+	}
+
+	for (let i = 2; i <= pagesCount - 1; i++) {
+		if (isDesktopVisible(i)) {
+			pages.push({ value: i, desktopOnly: !isMobileVisible(i) });
+		}
+	}
+
+	const needsDesktopEllipsisEnd = desktopEnd < pagesCount - 1;
+	const needsMobileEllipsisEnd = mobileEnd < pagesCount - 1;
+
+	if (needsDesktopEllipsisEnd && needsMobileEllipsisEnd) {
+		pages.push({ value: "..." });
+	} else if (needsMobileEllipsisEnd) {
+		pages.push({ value: "...", mobileOnly: true });
+	} else if (needsDesktopEllipsisEnd) {
+		pages.push({ value: "...", desktopOnly: true });
+	}
+
+	pages.push({ value: pagesCount });
+
+	return pages;
+}
+
+/**
+ * Inclusive range of inner page numbers (first and last are always shown) around the current
+ * page. Nudged inward by one at the very first/last page so the edge shows a bridging number
+ * instead of "1 2 … 8", and widened when exactly one page would be hidden: an ellipsis takes the
+ * same space, so "1 … 3" is never better than "1 2 3".
+ */
+function innerPageWindow(
+	currentPage: number,
+	pagesCount: number,
+	radius: number,
+): { start: number; end: number } {
+	const startNudge = currentPage === pagesCount ? 1 : 0;
+	const endNudge = currentPage === 1 ? 1 : 0;
+
+	let start = Math.max(2, currentPage - radius - startNudge);
+	let end = Math.min(pagesCount - 1, currentPage + radius + endNudge);
+
+	if (start === 3) start = 2;
+	if (end === pagesCount - 2) end = pagesCount - 1;
+
+	return { start, end };
 }

@@ -1,65 +1,62 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { i18next } from "~/modules/i18n/i18next.server";
-import { weaponIdIsNotAlt } from "~/modules/in-game-lists/weapon-ids";
-import { logger } from "~/utils/logger";
+import type { LoaderFunctionArgs } from "react-router";
+import { getUser } from "~/features/auth/core/user.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
+import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
-import {
-	BUILDS_PAGE_BATCH_SIZE,
-	BUILDS_PAGE_MAX_BUILDS,
-	FILTER_SEARCH_PARAM_KEY,
-} from "../builds-constants";
-import { buildFiltersSearchParams } from "../builds-schemas.server";
-import { cachedBuildsByWeaponId } from "../core/cached-builds.server";
+import * as BuildRepository from "../BuildRepository.server";
+import { BUILDS_PAGE_MAX_BUILDS } from "../builds-constants";
+import { buildsSearchParams } from "../builds-search-params";
 import { filterBuilds } from "../core/filter.server";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request, ["weapons", "common"], {
-		lng: "en",
-	});
+export const loader = async ({ params, url }: LoaderFunctionArgs) => {
+	const user = getUser();
+	const t = await getFixedTForLanguage("en", ["weapons", "common"]);
 	const weaponId = weaponNameSlugToId(params.slug);
 
-	if (typeof weaponId !== "number" || !weaponIdIsNotAlt(weaponId)) {
+	if (typeof weaponId !== "number" || weaponIdToType(weaponId) === "ALT_SKIN") {
 		throw new Response(null, { status: 404 });
 	}
 
-	const url = new URL(request.url);
-	const limit = Math.min(
-		Number(url.searchParams.get("limit") ?? BUILDS_PAGE_BATCH_SIZE),
-		BUILDS_PAGE_MAX_BUILDS,
-	);
+	const { limit, abilities, mode, date } = buildsSearchParams.parse(url);
 
 	const weaponName = t(`weapons:MAIN_${weaponId}`);
 
 	const slug = mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
 
-	const cachedBuilds = cachedBuildsByWeaponId(weaponId);
+	const hasActiveFilters =
+		abilities.length > 0 || mode !== null || date !== null;
 
-	const rawFilters = url.searchParams.get(FILTER_SEARCH_PARAM_KEY);
-	const filters = buildFiltersSearchParams.safeParse(rawFilters ?? "[]");
+	const builds = await BuildRepository.findAllByWeaponId(weaponId, {
+		limit: hasActiveFilters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
+		sortAbilities: !user?.preferences?.disableBuildAbilitySorting,
+	});
 
-	if (!filters.success) {
-		logger.error(
-			"Invalid filters",
-			JSON.stringify(filters.error.issues, null, 2),
-		);
+	const filteredBuilds = hasActiveFilters
+		? filterBuilds({
+				builds,
+				abilities,
+				mode,
+				date,
+				count: limit + 1,
+			})
+		: builds;
+
+	let hasMoreBuilds = false;
+	if (filteredBuilds.length > limit) {
+		filteredBuilds.pop();
+
+		if (limit < BUILDS_PAGE_MAX_BUILDS) {
+			hasMoreBuilds = true;
+		}
 	}
-
-	const filteredBuilds =
-		filters.success && filters.data && filters.data.length > 0
-			? filterBuilds({
-					builds: cachedBuilds,
-					filters: filters.data,
-					count: limit,
-				})
-			: cachedBuilds.slice(0, limit);
 
 	return {
 		weaponId,
 		weaponName,
 		builds: filteredBuilds,
 		limit,
+		hasMoreBuilds,
 		slug,
-		filters: filters.success ? filters.data : [],
 	};
 };

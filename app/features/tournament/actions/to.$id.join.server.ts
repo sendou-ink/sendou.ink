@@ -1,63 +1,59 @@
-import type { ActionFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
+import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	notifyTournamentStatusChanged,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import invariant from "~/utils/invariant";
-import {
-	errorToastIfFalsy,
-	notFoundIfFalsy,
-	parseParams,
-	parseRequestPayload,
-} from "~/utils/remix.server";
-import { tournamentPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
-import { findByInviteCode } from "../queries/findTeamByInviteCode.server";
-import { giveTrust } from "../queries/giveTrust.server";
-import { joinTeam } from "../queries/joinLeaveTeam.server";
-import { joinSchema } from "../tournament-schemas.server";
+import { invariant } from "~/utils/invariant";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
+import { tournamentPage, tournamentRegisterPage } from "~/utils/urls";
+import { tournamentJoinSearchParams } from "../tournament-search-params";
 import { validateCanJoinTeam } from "../tournament-utils";
 import {
-	inGameNameIfNeeded,
 	requireNotBannedByOrganization,
+	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
-	const { id: tournamentId } = parseParams({
+export const action: ActionFunction = async ({ params, url }) => {
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-	const user = await requireUserId(request);
-	const url = new URL(request.url);
-	const inviteCode = url.searchParams.get("code");
-	const data = await parseRequestPayload({ request, schema: joinSchema });
+		{ for: "action" },
+	);
+	const { code: inviteCode } = tournamentJoinSearchParams.parse(url);
 	invariant(inviteCode, "code is missing");
 
-	const leanTeam = notFoundIfFalsy(findByInviteCode(inviteCode));
-
-	const tournament = await tournamentFromDB({ tournamentId, user });
+	const leanTeam = notFoundIfNullish(
+		await TournamentTeamRepository.findByInviteCode(inviteCode),
+	);
 
 	await requireNotBannedByOrganization({
 		tournament,
 		user,
+	});
+	await requireSendouQParticipationIfNeeded({
+		tournament,
+		userId: user.id,
 	});
 
 	const teamToJoin = tournament.ctx.teams.find(
 		(team) => team.id === leanTeam.id,
 	);
 	const previousTeam = tournament.ctx.teams.find((team) =>
-		team.members.some((member) => member.userId === user.id),
+		team.memberUserIds.includes(user.id),
+	);
+
+	errorToastIfFalsy(
+		!previousTeam,
+		"Leave your current team before joining another",
 	);
 
 	if (tournament.hasStarted) {
-		errorToastIfFalsy(
-			!previousTeam || previousTeam.checkIns.length === 0,
-			"Can't leave checked in team mid tournament",
-		);
 		errorToastIfFalsy(tournament.autonomousSubs, "Subs are not allowed");
 	} else {
 		errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
@@ -68,7 +64,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			inviteCode,
 			teamToJoin,
 			userId: user.id,
-			maxTeamSize: tournament.maxTeamMemberCount,
+			maxTeamSize: tournament.maxMembersPerTeam,
 		}) === "VALID",
 		"Cannot join this team or invite code is invalid",
 	);
@@ -77,50 +73,31 @@ export const action: ActionFunction = async ({ request, params }) => {
 		"No friend code",
 	);
 
-	const whatToDoWithPreviousTeam = !previousTeam
-		? undefined
-		: previousTeam.members.some(
-					(member) => member.userId === user.id && member.isOwner,
-				)
-			? "DELETE"
-			: "LEAVE";
-
-	joinTeam({
-		userId: user.id,
-		newTeamId: teamToJoin.id,
-		previousTeamId: previousTeam?.id,
-		// making sure they aren't unfilling one checking in condition i.e. having full roster
-		// and then having members leave without it affecting the checking in status
-		checkOutTeam:
-			whatToDoWithPreviousTeam === "LEAVE" &&
-			previousTeam &&
-			previousTeam.members.length <= tournament.minMembersPerTeam,
-		whatToDoWithPreviousTeam,
-		tournamentId,
-		inGameName: await inGameNameIfNeeded({
-			tournament,
+	ChatSystemMessage.notifyRoomsChanged([
+		...(await TournamentLFGRepository.leaveLfg({
 			userId: user.id,
-		}),
-	});
+			tournamentId,
+		})),
+		...(await TournamentTeamRepository.join({
+			userId: user.id,
+			newTeamId: teamToJoin.id,
+		})),
+	]);
 
 	ShowcaseTournaments.addToCached({
 		tournamentId,
 		type: "participant",
 		userId: user.id,
 	});
-
-	if (data.trust) {
-		const inviterUserId = teamToJoin.members.find(
-			(member) => member.isOwner,
-		)?.userId;
-		invariant(inviterUserId, "Inviter user could not be resolved");
-		giveTrust({
-			trustGiverUserId: user.id,
-			trustReceiverUserId: inviterUserId,
-		});
-	}
+	await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 	clearTournamentDataCache(tournamentId);
 
-	throw redirect(tournamentPage(leanTeam.tournamentId));
+	await notifyTournamentStatusChanged(tournamentId, [user.id]);
+
+	throw redirect(
+		tournament.registrationOpen
+			? tournamentRegisterPage(leanTeam.tournamentId)
+			: tournamentPage(leanTeam.tournamentId),
+	);
 };

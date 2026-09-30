@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 214,
+		"special": [
+			[false, false, false, false],
+			[false, false, true, false]
+		],
+		"dead": [
+			[false, false, false, true],
+			[true, false, false, true]
+		]
+	},
+	"options": {
+		"notes": "Casted stream (SWS26) spectator HUD: bigger icons with camera-button badges below and special gauge percentages above (52/56/54/66 left, 72/27 right — exact counts not parsed yet; a dead icon can keep its number on screen). Left team's slot nearest the timer and the right team's outer two slots are splatted (grey X'd icons); the right team's third slot glows white with special ready."
+	}
+}

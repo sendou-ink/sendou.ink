@@ -12,7 +12,7 @@ export function Flag({
 	const { i18n } = useTranslation();
 
 	return (
-		<div
+		<span
 			className={clsx(`twf twf-${countryCode.toLowerCase()}`, {
 				"twf-s": tiny,
 			})}

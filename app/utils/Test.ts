@@ -1,13 +1,24 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import type { Params } from "@remix-run/react";
+import type {
+	ActionFunctionArgs,
+	LoaderFunctionArgs,
+	Params,
+} from "react-router";
+import type * as v from "valibot";
 import { expect } from "vitest";
-import type { z } from "zod/v4";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
-import { db, sql } from "~/db/sql";
+import { actAs } from "~/db/seed/core/actAs";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
+import {
+	getUserFromRequest,
+	userAsyncLocalStorage,
+} from "~/features/auth/core/user-context.server";
+import type { AnySchema } from "~/utils/schema";
 import { logger } from "./logger";
+
+/** User a wrapped action/loader runs as: a pinned seed user or any user id (e.g. one the test created). */
+export type TestUser = "admin" | "regular" | number;
 
 export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 	return (
@@ -15,32 +26,34 @@ export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 	);
 }
 
+/** Runs `fn` with the user as the actor (`actorId()` / `actorIdOrNull()`), for repository tests outside a request. */
+export function withUserId<T>(id: number, fn: () => T): T {
+	return actAs(id, fn);
+}
+
+/** Runs `fn` with no acting user (`actorIdOrNull()` is `null`), like an anonymous visitor's request. */
+export function withNoUser<T>(fn: () => T): T {
+	return userAsyncLocalStorage.run({ user: undefined }, fn);
+}
+
 /**
- * Wraps an action function to provide a strongly-typed, reusable handler for executing actions
- * in unit tests as if it was a normal function. The returned function allows you to pass
- * parameters that match the schema defined by the action, and it simulates a request with
- * authentication headers based on the provided user type.
+ * Wraps an action into a typed function for unit tests: takes the schema's output as args and
+ * simulates a request authenticated as the given user.
  *
  * @example
- * import { someAction } from "../actions/some.action.server";
- *
  * const someAction = wrappedAction<typeof someActionSchema>({ action });
  */
-export function wrappedAction<T extends z.ZodTypeAny>({
+export function wrappedAction<T extends AnySchema>({
 	action,
-	/** Is this action submitted as json (via SendouForm) */
+	/** submitted as json (via SendouForm) */
 	isJsonSubmission = false,
 }: {
-	// TODO: strongly type this
 	action: (args: ActionFunctionArgs) => any;
 	isJsonSubmission?: boolean;
 }) {
 	return async (
-		args: z.infer<T>,
-		{
-			user,
-			params = {},
-		}: { user?: "admin" | "regular"; params?: Params<string> } = {},
+		args: v.InferOutput<T>,
+		{ user, params = {} }: { user?: TestUser; params?: Params<string> } = {},
 	) => {
 		const body = isJsonSubmission
 			? JSON.stringify(args)
@@ -59,44 +72,59 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 			],
 		});
 
-		try {
-			const response = await action({
-				request,
-				context: {},
-				params,
-			});
+		const userFromRequest = await getUserFromRequest(
+			request,
+			new URL(request.url),
+		);
 
-			return response;
-		} catch (thrown) {
-			// we only log errors in vitest for failed tests so this is okay (more context)
-			logger.error("Error in wrappedAction:", thrown);
+		return userAsyncLocalStorage.run({ user: userFromRequest }, async () => {
+			try {
+				const response = await action({
+					request,
+					context: {} as any,
+					params,
+					pattern: "",
+					url: new URL(request.url),
+				});
 
-			if (thrown instanceof Response) {
-				// it was a redirect
-				if (thrown.status === 302) return thrown;
+				return response;
+			} catch (thrown) {
+				// vitest only shows logs for failed tests, so this just adds context
+				logger.error("Error in wrappedAction:", thrown);
 
-				throw new Error(`Response thrown with status code: ${thrown.status}`);
+				if (thrown instanceof Response) {
+					if (thrown.status === 302) return thrown;
+
+					throw new Error(
+						`Response thrown with status code: ${thrown.status}`,
+						{
+							cause: thrown,
+						},
+					);
+				}
+
+				throw thrown;
 			}
-
-			throw thrown;
-		}
+		});
 	};
 }
 
 export function wrappedLoader<T>({
 	loader,
 }: {
-	// TODO: strongly type this
 	loader: (args: LoaderFunctionArgs) => any;
 }) {
 	return async ({
 		user,
 		params = {},
+		url = "/path",
 	}: {
-		user?: "admin" | "regular";
+		user?: TestUser;
 		params?: Params<string>;
+		/** Path with its search params, built with the route's search params definition. */
+		url?: string;
 	} = {}) => {
-		const request = new Request("http://app.com/path", {
+		const request = new Request(new URL(url, "http://app.com"), {
 			method: "GET",
 			headers: [
 				...(await authHeader(user)),
@@ -104,107 +132,67 @@ export function wrappedLoader<T>({
 			],
 		});
 
-		try {
-			const data = await loader({
-				request,
-				params,
-				context: {},
-			});
+		const userFromRequest = await getUserFromRequest(
+			request,
+			new URL(request.url),
+		);
 
-			return data as T;
-		} catch (thrown) {
-			if (thrown instanceof Response) {
-				throw new Error(`Response thrown with status code: ${thrown.status}`);
+		return userAsyncLocalStorage.run({ user: userFromRequest }, async () => {
+			try {
+				const data = await loader({
+					request,
+					params,
+					context: {} as any,
+					pattern: "",
+					url: new URL(request.url),
+				});
+
+				return data as T;
+			} catch (thrown) {
+				if (thrown instanceof Response) {
+					throw new Error(
+						`Response thrown with status code: ${thrown.status}`,
+						{
+							cause: thrown,
+						},
+					);
+				}
+
+				throw thrown;
 			}
-
-			throw thrown;
-		}
+		});
 	};
 }
 
-/**
- * Asserts that the given response errored out (with a toast message, via `errorToastIfFalsy(cond)` call)
- *
- * @param response - The HTTP response object to check.
- * @param message - Optional. The expected error toast message shown to the user.
- */
+/** Asserts the response is an error toast redirect (via `errorToastIfFalsy` etc.), optionally with the given message. */
 export function assertResponseErrored(response: Response, message?: string) {
 	if (!response) {
 		throw new Error(`Expected a Response, got: ${response}`);
 	}
 
-	expect(response.headers.get("Location")).toContain("?__error=");
+	const location = response.headers.get("Location") ?? "";
+	const errorMessage = new URLSearchParams(location.split("?")[1]).get(
+		"__error",
+	);
+
+	expect(errorMessage).not.toBeNull();
 	if (message) {
-		expect(response.headers.get("Location")).toContain(message);
+		expect(errorMessage).toContain(message);
 	}
 }
 
-async function authHeader(
-	user?: "admin" | "regular",
-): Promise<[string, string][]> {
-	if (!user) return [];
+async function authHeader(user?: TestUser): Promise<[string, string][]> {
+	if (user === undefined) return [];
 
 	const session = await authSessionStorage.getSession();
 
-	session.set(SESSION_KEY, user === "admin" ? ADMIN_ID : REGULAR_USER_TEST_ID);
+	session.set(SESSION_KEY, testUserId(user));
 
 	return [["Cookie", await authSessionStorage.commitSession(session)]];
 }
 
-/**
- * Resets all data in the database by deleting all rows from every table,
- * except for SQLite system tables and the 'migrations' table.
- *
- * @example
- * describe("My integration test", () => {
- *   beforeEach(async () => {
- *     await dbInsertUsers(2);
- *   });
- *
- *   afterEach(() => {
- *     dbReset();
- *   });
- *
- *   // tests go here
- * });
- */
-export const dbReset = () => {
-	const tables = sql
-		.prepare(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'migrations';",
-		)
-		.all() as { name: string }[];
+function testUserId(user: Exclude<TestUser, undefined>): number {
+	if (typeof user === "number") return user;
 
-	sql.prepare("PRAGMA foreign_keys = OFF").run();
-	for (const table of tables) {
-		sql.prepare(`DELETE FROM "${table.name}"`).run();
-	}
-	sql.prepare("PRAGMA foreign_keys = ON").run();
-};
-
-/**
- * Inserts a specified number of user records into the "User" table in the database for integration testing.
- * 1) id: 1, discordName: "user1", discordId: "0"
- * 2) id: 2, discordName: "user2", discordId: "1"
- * 3) etc.
- *
- * @param count - The number of users to insert. Defaults to 2 if not provided.
- *
- * @example
- * // Inserts 5 users into the database
- * await dbInsertUsers(5);
- *
- * // Inserts 2 users (default)
- * await dbInsertUsers();
- */
-export const dbInsertUsers = (count = 2) =>
-	db
-		.insertInto("User")
-		.values(
-			Array.from({ length: count }).map((_, i) => ({
-				id: i + 1,
-				discordName: `user${i + 1}`,
-				discordId: String(i),
-			})),
-		)
-		.execute();
+	return user === "admin" ? ADMIN_ID : REGULAR_USER_TEST_ID;
+}

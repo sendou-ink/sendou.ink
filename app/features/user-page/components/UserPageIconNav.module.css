@@ -1,0 +1,49 @@
+.iconNav {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--s-2);
+}
+
+.iconNavItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	min-width: 0;
+	padding-inline: var(--s-3);
+	height: var(--field-size);
+	background-color: var(--color-bg);
+	border: 2px solid var(--color-bg-higher);
+	border-radius: var(--radius-box);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	transition: all 0.2s;
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-fg-second);
+		outline-offset: 2px;
+	}
+
+	&.active {
+		border-color: var(--color-fg-second);
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@container (width >= 720px) {
+	.iconNav {
+		grid-template-columns: repeat(2, 150px);
+	}
+}

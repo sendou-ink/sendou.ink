@@ -1,0 +1,28 @@
+.elimContainer {
+	--line-width: 30px;
+	display: grid;
+	grid-template-columns: repeat(
+			var(--round-count),
+			calc(var(--match-width) + var(--line-width))
+		);
+	overflow: visible;
+}
+
+.elimRoundMatchesContainer {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	gap: var(--s-8);
+	margin-top: var(--s-6);
+	flex: 1;
+	overflow: visible;
+}
+
+.elimRoundMatchesContainerTopBye {
+	margin-top: -18px;
+}
+
+.elimRoundColumn {
+	display: flex;
+	flex-direction: column;
+}

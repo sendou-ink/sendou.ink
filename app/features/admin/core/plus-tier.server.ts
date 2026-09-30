@@ -1,15 +1,15 @@
 import { addPendingPlusTiers } from "~/features/leaderboards/core/leaderboards.server";
-import { userSPLeaderboard } from "~/features/leaderboards/queries/userSPLeaderboard.server";
+import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonToVotingRange } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { userIsBanned } from "../../ban/core/banned.server";
 
 export async function plusTiersFromVotingAndLeaderboard() {
 	const newMembersFromVoting =
-		await PlusVotingRepository.allPlusTiersFromLatestVoting();
-	const newMembersFromLeaderboard = fromLeaderboard(newMembersFromVoting);
+		await PlusVotingRepository.findAllPlusTiersFromLatestVoting();
+	const newMembersFromLeaderboard = await fromLeaderboard(newMembersFromVoting);
 	return [
 		...newMembersFromLeaderboard,
 		// filter to ensure that user gets their highest tier
@@ -22,7 +22,7 @@ export async function plusTiersFromVotingAndLeaderboard() {
 	].filter(({ userId }) => !userIsBanned(userId));
 }
 
-function fromLeaderboard(
+async function fromLeaderboard(
 	newMembersFromVoting: Array<{ userId: number; plusTier: number }>,
 ) {
 	const now = new Date();
@@ -33,14 +33,12 @@ function fromLeaderboard(
 	if (currSeason) {
 		const range = seasonToVotingRange(currSeason);
 
-		// we are in the period of a season where the season's voting
-		// has ended but we don't yet have the latest leaderboard results
-		// -> last season's results are no longer valid
+		// voting has ended but the latest leaderboard isn't in yet, so last season's results are stale
 		if (range.endDate < now) return [];
 	}
 
 	const leaderboard = addPendingPlusTiers(
-		userSPLeaderboard(lastCompletedSeason.nth),
+		await LeaderboardRepository.findUserSPLeaderboard(lastCompletedSeason.nth),
 		newMembersFromVoting,
 		lastCompletedSeason.nth,
 	);

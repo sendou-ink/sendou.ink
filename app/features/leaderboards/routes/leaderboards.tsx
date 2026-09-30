@@ -1,39 +1,70 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
+import clsx from "clsx";
+import { Ban, MoreHorizontal, RotateCcw } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { TierImage, WeaponImage } from "~/components/Image";
+import { EmptyState } from "~/components/EmptyState";
+import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
+import { Image, ModeImage, TierImage } from "~/components/Image";
 import { Main } from "~/components/Main";
+import {
+	RankTable,
+	RankTableDividerRow,
+	RankTableInnerRow,
+	RankTableRank,
+	RankTableRow,
+	RankTableWeaponImage,
+} from "~/components/RankTable";
+import { WeaponSelect } from "~/components/WeaponSelect";
+import { SeasonSelect } from "~/features/mmr/components/SeasonSelect";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
+import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { metaTags } from "~/utils/remix";
+import { useHasRole } from "~/modules/permissions/hooks";
+import {
+	useSearchParam,
+	useSearchParamsTyped,
+} from "~/modules/search-params/hooks";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
 	navIconUrl,
 	teamPage,
-	topSearchPlayerPage,
 	userPage,
-	userSeasonsPage,
+	weaponCategoryUrl,
 } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
 import { InfoPopover } from "../../../components/InfoPopover";
+import { action } from "../actions/leaderboards.server";
 import { TopTenPlayer } from "../components/TopTenPlayer";
-import {
-	LEADERBOARD_TYPES,
-	SEASON_SEARCH_PARAM_KEY,
-	TYPE_SEARCH_PARAM_KEY,
-} from "../leaderboards-constants";
+import type { XPLeaderboardItem } from "../LeaderboardRepository.server";
+import { TEAM_LEADERBOARD_QUALIFYING_COUNT } from "../leaderboards-constants";
+import { leaderboardsActionSchema } from "../leaderboards-schemas";
+import { leaderboardsSearchParams } from "../leaderboards-search-params";
 import { seasonHasTopTen } from "../leaderboards-utils";
 import { loader } from "../loaders/leaderboards.server";
-import type { XPLeaderboardItem } from "../queries/XPLeaderboard.server";
-export { loader };
+import leaderboardsStyles from "./leaderboards.module.css";
 
-import "../../top-search/top-search.css";
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods"],
@@ -45,7 +76,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
+	const data = args.loaderData as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 
@@ -54,42 +85,23 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon leaderboards",
 		description:
 			"Leaderboards of top Splatoon players ranked by their X Battle placements as well as tournament and SendouQ results. Categories per weapon and mode.",
+		image: ogPageImage("leaderboards"),
 		location: args.location,
 	});
 };
 
 export default function LeaderboardsPage() {
-	const { t } = useTranslation(["common", "game-misc", "weapons"]);
-	const [searchParams, setSearchParams] = useSearchParams();
+	const { t } = useTranslation(["common"]);
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
 	const data = useLoaderData<typeof loader>();
 
-	const isAllUserLeaderboard =
-		!searchParams.get(TYPE_SEARCH_PARAM_KEY) ||
-		searchParams.get(TYPE_SEARCH_PARAM_KEY) === "USER";
+	const isAllUserLeaderboard = params.type === "USER";
 
-	const seasonPlusTypeToKey = ({
-		season,
-		type,
-	}: {
-		season: number;
-		type: string;
-	}) => `${type};${season}`;
-
-	const selectValue = () => {
-		const type =
-			searchParams.get(TYPE_SEARCH_PARAM_KEY) ?? LEADERBOARD_TYPES[0];
-
-		if (
-			LEADERBOARD_TYPES.includes(type as (typeof LEADERBOARD_TYPES)[number])
-		) {
-			return seasonPlusTypeToKey({
-				season: data.season,
-				type,
-			});
-		}
-
-		return type;
-	};
+	const selectedTab = params.type.startsWith("XP")
+		? "XP"
+		: params.type.startsWith("TEAM")
+			? "TEAMS"
+			: "PLAYERS";
 
 	const showTopTen = Boolean(
 		seasonHasTopTen(data.season) &&
@@ -103,73 +115,54 @@ export default function LeaderboardsPage() {
 
 	return (
 		<Main halfWidth className="stack lg">
-			<select
-				className="text-sm"
-				value={selectValue()}
-				onChange={(e) => {
-					const [type, season] = e.target.value.split(";");
-					setSearchParams({
-						[TYPE_SEARCH_PARAM_KEY]: type,
-						[SEASON_SEARCH_PARAM_KEY]: season,
-					});
+			<SendouTabs
+				selectedKey={selectedTab}
+				onSelectionChange={(key) => {
+					if (key === selectedTab) return;
+					if (key === "PLAYERS") return setParams({ type: "USER" });
+					if (key === "TEAMS") return setParams({ type: "TEAM" });
+					setParams({ type: "XP-ALL", season: null });
 				}}
 			>
-				{Seasons.allStarted().map((season) => {
-					return (
-						<optgroup label={`SP - Season ${season}`} key={season}>
-							{LEADERBOARD_TYPES.filter((type) => !type.includes("XP")).map(
-								(type) => {
-									const userOrTeam = type.includes("USER") ? "USER" : "TEAM";
-									const category = weaponCategories.find((c) =>
-										type.includes(c.name),
-									)?.name;
-
-									return (
-										<option
-											key={type}
-											value={seasonPlusTypeToKey({ season, type })}
-										>
-											{t(`common:leaderboard.type.${userOrTeam}`)}
-											{type.includes("ALL")
-												? ` (${t("leaderboard.type.XP-ALL")})`
-												: null}
-											{category
-												? ` (${t(`common:weapon.category.${category}`)})`
-												: ""}
-										</option>
-									);
-								},
-							)}
-						</optgroup>
-					);
-				})}
-				<optgroup label="XP">
-					<option value="XP-ALL">{t("common:leaderboard.type.XP-ALL")}</option>
-					{rankedModesShort.map((mode) => {
-						return (
-							<option key={mode} value={`XP-MODE-${mode}`}>
-								{t(`game-misc:MODE_LONG_${mode}`)}
-							</option>
-						);
-					})}
-				</optgroup>
-				{weaponCategories.map((category) => {
-					return (
-						<optgroup
-							key={category.name}
-							label={`XP (${t(`common:weapon.category.${category.name}`)})`}
-						>
-							{category.weaponIds.map((weaponId) => {
-								return (
-									<option key={weaponId} value={`XP-WEAPON-${weaponId}`}>
-										{t(`weapons:MAIN_${weaponId}`)}
-									</option>
-								);
-							})}
-						</optgroup>
-					);
-				})}
-			</select>
+				<SendouTabList>
+					<SendouTab
+						id="PLAYERS"
+						icon={<Image path={navIconUrl("sendouq")} alt="" width={16} />}
+					>
+						{t("common:leaderboard.tabs.players")}
+					</SendouTab>
+					<SendouTab
+						id="TEAMS"
+						icon={<Image path={navIconUrl("sendouq")} alt="" width={16} />}
+					>
+						{t("common:leaderboard.tabs.teams")}
+					</SendouTab>
+					<SendouTab
+						id="XP"
+						icon={<Image path={navIconUrl("xsearch")} alt="" width={16} />}
+					>
+						{t("common:leaderboard.tabs.xp")}
+					</SendouTab>
+				</SendouTabList>
+				<SendouTabPanel id="PLAYERS">
+					<div className="stack md">
+						<LeaderboardSeasonSelect />
+						<WeaponCategoryFilter />
+					</div>
+				</SendouTabPanel>
+				<SendouTabPanel id="TEAMS">
+					<div className="stack md">
+						<LeaderboardSeasonSelect />
+						<TeamScopeFilter />
+					</div>
+				</SendouTabPanel>
+				<SendouTabPanel id="XP">
+					<div className="stack md">
+						<XPModeFilter />
+						<XPWeaponSelect />
+					</div>
+				</SendouTabPanel>
+			</SendouTabs>
 			{showTopTen ? (
 				<div className="stack lg mx-auto">
 					{data
@@ -208,17 +201,17 @@ export default function LeaderboardsPage() {
 			{data.teamLeaderboard ? (
 				<TeamTable
 					entries={data.teamLeaderboard}
-					showQualificationDividers={!selectValue().includes("ALL")}
+					showQualificationDividers={params.type !== "TEAM-ALL"}
 				/>
 			) : null}
 			{data.xpLeaderboard ? <XPTable entries={data.xpLeaderboard} /> : null}
 
 			{renderNoEntries ? (
-				<div className="text-center text-lg text-lighter">
+				<EmptyState navItem="leaderboards">
 					{data.userLeaderboard
 						? t("common:leaderboard.noPlayers")
 						: t("common:leaderboard.noTeams")}
-				</div>
+				</EmptyState>
 			) : null}
 
 			{!data.xpLeaderboard && data.season === Seasons.current()?.nth ? (
@@ -227,6 +220,130 @@ export default function LeaderboardsPage() {
 				</div>
 			) : null}
 		</Main>
+	);
+}
+
+function LeaderboardSeasonSelect() {
+	const { t } = useTranslation(["common"]);
+	const data = useLoaderData<typeof loader>();
+	const [, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	return (
+		<SeasonSelect
+			label={t("common:leaderboard.season")}
+			season={data.season}
+			onChange={(season) => setParams({ season })}
+		/>
+	);
+}
+
+function WeaponCategoryFilter() {
+	const { t } = useTranslation(["common"]);
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	return (
+		<SendouChipRadioGroup wrap>
+			<SendouChipRadio
+				name="weapon-category"
+				value="ALL"
+				checked={params.type === "USER"}
+				onChange={() => setParams({ type: "USER" })}
+			>
+				{t("common:leaderboard.filter.all")}
+			</SendouChipRadio>
+			{weaponCategories.map((category) => (
+				<SendouChipRadio
+					key={category.name}
+					name="weapon-category"
+					value={category.name}
+					checked={params.type === `USER-${category.name}`}
+					onChange={() => setParams({ type: `USER-${category.name}` })}
+				>
+					<span className="stack horizontal xs items-center">
+						<Image path={weaponCategoryUrl(category.name)} size={18} alt="" />
+						{t(`common:weapon.category.${category.name}`)}
+					</span>
+				</SendouChipRadio>
+			))}
+		</SendouChipRadioGroup>
+	);
+}
+
+function TeamScopeFilter() {
+	const { t } = useTranslation(["common"]);
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	return (
+		<SendouChipRadioGroup>
+			<SendouChipRadio
+				name="team-scope"
+				value="TEAM"
+				checked={params.type === "TEAM"}
+				onChange={() => setParams({ type: "TEAM" })}
+			>
+				{t("common:leaderboard.teams.best")}
+			</SendouChipRadio>
+			<SendouChipRadio
+				name="team-scope"
+				value="TEAM-ALL"
+				checked={params.type === "TEAM-ALL"}
+				onChange={() => setParams({ type: "TEAM-ALL" })}
+			>
+				{t("common:leaderboard.teams.all")}
+			</SendouChipRadio>
+		</SendouChipRadioGroup>
+	);
+}
+
+function XPModeFilter() {
+	const { t } = useTranslation(["common", "game-misc"]);
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	return (
+		<SendouChipRadioGroup wrap>
+			<SendouChipRadio
+				name="xp-mode"
+				value="XP-ALL"
+				checked={params.type === "XP-ALL"}
+				onChange={() => setParams({ type: "XP-ALL" })}
+			>
+				{t("common:leaderboard.filter.allModes")}
+			</SendouChipRadio>
+			{rankedModesShort.map((mode) => (
+				<SendouChipRadio
+					key={mode}
+					name="xp-mode"
+					value={`XP-MODE-${mode}`}
+					checked={params.type === `XP-MODE-${mode}`}
+					onChange={() => setParams({ type: `XP-MODE-${mode}` })}
+				>
+					<span className="stack horizontal xs items-center">
+						<ModeImage mode={mode} size={18} />
+						{t(`game-misc:MODE_LONG_${mode}`)}
+					</span>
+				</SendouChipRadio>
+			))}
+		</SendouChipRadioGroup>
+	);
+}
+
+function XPWeaponSelect() {
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	const selectedWeaponId = params.type.startsWith("XP-WEAPON")
+		? (Number(params.type.split("-")[2]) as MainWeaponId)
+		: null;
+
+	return (
+		<WeaponSelect
+			clearable
+			value={selectedWeaponId}
+			onChange={(weaponId) =>
+				setParams({
+					type: weaponId === null ? "XP-ALL" : `XP-WEAPON-${weaponId}`,
+				})
+			}
+		/>
 	);
 }
 
@@ -242,35 +359,28 @@ function OwnEntryPeek({
 	return (
 		<div>
 			{entry.firstOfTier ? (
-				<div className="placements__tier-header">
+				<div className={leaderboardsStyles.tierHeader}>
 					<TierImage tier={entry.firstOfTier} width={32} />
 					{entry.firstOfTier.name}
 					{entry.firstOfTier.isPlus ? "+" : ""}
 				</div>
 			) : null}
 			<div>
-				<Link
+				<RankTableRow
 					to={userSeasonsPage({ user: entry, season: data.season })}
-					className="placements__table__row"
 				>
-					<div className="placements__table__inner-row">
-						<div className="placements__table__rank">{entry.placementRank}</div>
+					<RankTableInnerRow>
+						<RankTableRank>{entry.placementRank}</RankTableRank>
 						<div>
 							<Avatar size="xxs" user={entry} />
 						</div>
 						{typeof entry.weaponSplId === "number" ? (
-							<WeaponImage
-								className="placements__table__weapon"
-								variant="build"
-								weaponSplId={entry.weaponSplId}
-								width={32}
-								height={32}
-							/>
+							<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 						) : null}
-						<div className="placements__table__name">{entry.username}</div>
-						<div className="placements__table__power">{entry.power}</div>
-					</div>
-				</Link>
+						<div className={leaderboardsStyles.tableName}>{entry.username}</div>
+						<div className={leaderboardsStyles.tablePower}>{entry.power}</div>
+					</RankTableInnerRow>
+				</RankTableRow>
 			</div>
 			{nextTier ? (
 				<div className="text-xs text-lighter ml-auto stack items-end">
@@ -295,7 +405,7 @@ function PlayersTable({
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className="placements__table">
+		<RankTable>
 			{entries
 				// hide normal rows that are showed in "fancy" top 10 format
 				.filter((_, i) => !showingTopTen || i > 9)
@@ -303,33 +413,24 @@ function PlayersTable({
 					return (
 						<React.Fragment key={entry.entryId}>
 							{entry.firstOfTier && showTiers ? (
-								<div className="placements__tier-header">
+								<div className={leaderboardsStyles.tierHeader}>
 									<TierImage tier={entry.firstOfTier} width={32} />
 									{entry.firstOfTier.name}
 									{entry.firstOfTier.isPlus ? "+" : ""}
 								</div>
 							) : null}
-							<Link
+							<RankTableRow
 								to={userSeasonsPage({ user: entry, season: data.season })}
-								className="placements__table__row"
 							>
-								<div className="placements__table__inner-row">
-									<div className="placements__table__rank">
-										{entry.placementRank}
-									</div>
+								<RankTableInnerRow>
+									<RankTableRank>{entry.placementRank}</RankTableRank>
 									<div>
 										<Avatar size="xxs" user={entry} />
 									</div>
 									{typeof entry.weaponSplId === "number" ? (
-										<WeaponImage
-											className="placements__table__weapon"
-											variant="build"
-											weaponSplId={entry.weaponSplId}
-											width={32}
-											height={32}
-										/>
+										<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 									) : null}
-									<div className="placements__table__name">
+									<div className={leaderboardsStyles.tableName}>
 										{entry.username}
 									</div>
 									{entry.pendingPlusTier ? (
@@ -337,15 +438,15 @@ function PlayersTable({
 											➜ +{entry.pendingPlusTier}
 										</div>
 									) : null}
-									<div className="placements__table__power">
+									<div className={leaderboardsStyles.tablePower}>
 										{entry.power.toFixed(2)}
 									</div>
-								</div>
-							</Link>
+								</RankTableInnerRow>
+							</RankTableRow>
 						</React.Fragment>
 					);
 				})}
-		</div>
+		</RankTable>
 	);
 }
 
@@ -358,35 +459,38 @@ function TeamTable({
 }) {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
+	const [type] = useSearchParam(leaderboardsSearchParams, "type");
+	const isStaff = useHasRole("STAFF");
+	const showStaffActions = isStaff && type !== "TEAM-ALL";
 	const isCurrentSeason = data.season === Seasons.current()?.nth;
 	const showQualificationDividers =
 		_showQualificationDividers && isCurrentSeason && entries.length > 20;
 
 	return (
-		<div className="placements__table">
-			{entries.map((entry, i) => {
+		<RankTable>
+			{entries.map((entry) => {
 				return (
 					<React.Fragment key={entry.entryId}>
-						<div className="placements__table__row">
-							<div className="placements__table__inner-row">
-								<div className="placements__table__rank">
-									{entry.placementRank}
-								</div>
+						<RankTableRow>
+							<RankTableInnerRow>
+								<RankTableRank>{entry.placementRank}</RankTableRank>
 								{entry.team?.avatarUrl ? (
 									<Link
-										// TODO: can be made better when $narrowNotNull lands
-										to={teamPage(entry.team.customUrl!)}
-										// TODO: can be made better when $narrowNotNull lands
-										title={entry.team.name!}
+										to={teamPage(entry.team.customUrl)}
+										title={entry.team.name}
 									>
 										<Avatar
 											size="xxs"
-											url={userSubmittedImage(entry.team.avatarUrl)}
-											className="placements__avatar"
+											url={entry.team.avatarUrl}
+											className={leaderboardsStyles.avatar}
 										/>
 									</Link>
 								) : null}
-								<div className="text-xs">
+								<div
+									className={clsx("text-xs", {
+										[leaderboardsStyles.skippedTeam]: entry.isSkipped,
+									})}
+								>
 									{entry.members.map((member, i) => {
 										return (
 											<React.Fragment key={member.id}>
@@ -396,58 +500,94 @@ function TeamTable({
 										);
 									})}
 								</div>
-								<div className="placements__table__power">
+								<div className={leaderboardsStyles.tablePower}>
 									{entry.power.toFixed(2)}
 								</div>
-							</div>
-						</div>
-						{i === 11 && showQualificationDividers ? (
-							<div className="placements__table__row placements__table__row__qualification">
+								{showStaffActions ? <TeamStaffMenu entry={entry} /> : null}
+							</RankTableInnerRow>
+						</RankTableRow>
+						{entry.placementRank === TEAM_LEADERBOARD_QUALIFYING_COUNT &&
+						showQualificationDividers ? (
+							<RankTableDividerRow>
 								{t("common:leaderboard.qualification")}
 								<InfoPopover tiny>
 									{t("common:leaderboard.qualification.info")}
 								</InfoPopover>
-							</div>
+							</RankTableDividerRow>
 						) : null}
 					</React.Fragment>
 				);
 			})}
-		</div>
+		</RankTable>
+	);
+}
+
+function TeamStaffMenu({
+	entry,
+}: {
+	entry: NonNullable<SerializeFrom<typeof loader>["teamLeaderboard"]>[number];
+}) {
+	const data = useLoaderData<typeof loader>();
+	const { submit } = useActionSubmit(leaderboardsActionSchema, {
+		encType: "application/json",
+	});
+
+	const fields = { season: data.season, identifier: entry.identifier };
+
+	return (
+		<SendouMenu
+			trigger={
+				<SendouButton
+					size="miniscule"
+					variant="outlined"
+					icon={<MoreHorizontal />}
+					aria-label="Actions"
+				/>
+			}
+		>
+			{entry.isSkipped ? (
+				<SendouMenuItem
+					icon={<RotateCcw />}
+					onAction={() => submit("UNSKIP_TEAM", fields)}
+				>
+					Unskip
+				</SendouMenuItem>
+			) : (
+				<SendouMenuItem
+					icon={<Ban />}
+					isDestructive
+					onAction={() => submit("SKIP_TEAM", fields)}
+				>
+					Skip
+				</SendouMenuItem>
+			)}
+		</SendouMenu>
 	);
 }
 
 function XPTable({ entries }: { entries: XPLeaderboardItem[] }) {
 	return (
-		<div className="placements__table">
+		<RankTable>
 			{entries.map((entry) => {
 				return (
-					<Link
+					<RankTableRow
 						to={topSearchPlayerPage(entry.playerId)}
 						key={entry.entryId}
-						className="placements__table__row"
 					>
-						<div className="placements__table__inner-row">
-							<div className="placements__table__rank">
-								{entry.placementRank}
-							</div>
+						<RankTableInnerRow>
+							<RankTableRank>{entry.placementRank}</RankTableRank>
 							{entry.discordId ? (
 								<Avatar size="xxs" user={entry as any} />
 							) : null}
-							<WeaponImage
-								className="placements__table__weapon"
-								variant="build"
-								weaponSplId={entry.weaponSplId}
-								width={32}
-								height={32}
-							/>
+							<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 							<div>{entry.name}</div>
-							<div className="placements__table__power">
+							<div className={leaderboardsStyles.tablePower}>
 								{entry.power.toFixed(1)}
 							</div>
-						</div>
-					</Link>
+						</RankTableInnerRow>
+					</RankTableRow>
 				);
 			})}
-		</div>
+		</RankTable>
 	);
 }

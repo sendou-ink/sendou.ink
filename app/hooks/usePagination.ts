@@ -3,13 +3,15 @@ import * as React from "react";
 export function usePagination<T>({
 	items,
 	pageSize,
+	initialPage = 1,
 	scrollToTop = true,
 }: {
 	items: T[];
 	pageSize: number;
+	initialPage?: number;
 	scrollToTop?: boolean;
 }) {
-	const [currentPage, setCurrentPage] = React.useState(1);
+	const [currentPage, setCurrentPage] = React.useState(initialPage);
 	const pagesCount = Math.ceil(items.length / pageSize);
 
 	const itemsToDisplay = React.useMemo(
@@ -44,8 +46,7 @@ export function usePagination<T>({
 	const thereIsNextPage = currentPage < pagesCount;
 	const thereIsPreviousPage = currentPage > 1;
 
-	// if the list changes from externally it might be that we are on a page that doesn't exist anymore
-	// setting state inside render looks weird but should be ok
+	// an external list change can leave us on a page that no longer exists
 	if (itemsToDisplay.length === 0 && currentPage > 1) {
 		setCurrentPage(1);
 	}

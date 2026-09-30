@@ -1,0 +1,38 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-left",
+		"time": 288,
+		"special": [
+			[
+				false,
+				false,
+				false,
+				false
+			],
+			[
+				false,
+				false,
+				false,
+				false
+			]
+		],
+		"dead": [
+			[
+				false,
+				false,
+				true,
+				false
+			],
+			[
+				false,
+				false,
+				false,
+				false
+			]
+		]
+	},
+	"options": {
+		"notes": "Sendou POV, Marlin Airport SZ at 4:48 (2026-08-22 VoD, t=62) — live gameplay, bright glass-terminal backdrop leaking past the left icons. Left slot 2 is plainly crossed out (mid-death, correctly read one sample earlier and later); this frame the scan flipped to special L[1.1.] dead L[....]: the splatted slot went alive-and-ready and the saturated teal N-ZAP on left slot 0 got a phantom star. In the timeline this blip splits one real death into single-read fragments and manufactures special spans. Measured on the frame: icon centers sit on the cast-mirror pitches (left ~[608,682,757,833], right ~[1085,1178,1278,1372]) — S3 POV drawing the badge-less mirror arrangement — so layout is cast-mirror (the live scan had prefilled pov); the phantom star and wiped splat were pov/cast-geometry probes landing off the true centers."
+	}
+}

@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 251,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[true, false, true, true]
+		]
+	},
+	"options": {
+		"notes": "Same footage at 4:11, gauge-percentage spectator HUD. Right team slots 1, 3 and 4 are all splatted; the outermost X sits over a dark navy sky/structure backdrop and carries no gauge number, and the live scan missed it (✕·✕· @ 0.924), splitting the .52 Gal's single 7-second death into two runs. Left team all alive (window glare streaks the backdrop between the first icons)."
+	}
+}

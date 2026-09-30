@@ -1,0 +1,82 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 2,
+    "timestamp": "3/7/2026 22:28",
+    "replayCode": "R6KE-D064-3CXD-XVKL",
+    "matchScores": [
+      88,
+      77
+    ],
+    "povIndex": 1,
+    "players": [
+      {
+        "name": "Jasmeanie",
+        "paint": 1049,
+        "ka": 23,
+        "d": 9,
+        "s": 4,
+        "weaponId": 211
+      },
+      {
+        "name": "Sendou",
+        "paint": 1907,
+        "ka": 8,
+        "d": 5,
+        "s": 8,
+        "weaponId": 10
+      },
+      {
+        "name": "Enamel",
+        "paint": 1694,
+        "ka": 10,
+        "d": 3,
+        "s": 7,
+        "weaponId": 2070
+      },
+      {
+        "name": "★Bønk★•PE•",
+        "paint": 1745,
+        "ka": 4,
+        "d": 4,
+        "s": 9,
+        "weaponId": 1040
+      },
+      {
+        "name": "gameing",
+        "paint": 1099,
+        "ka": 13,
+        "d": 10,
+        "s": 5,
+        "weaponId": 201
+      },
+      {
+        "name": "Comrade",
+        "paint": 1969,
+        "ka": 9,
+        "d": 3,
+        "s": 8,
+        "weaponId": 2070
+      },
+      {
+        "name": "Hawianakin",
+        "paint": 1667,
+        "ka": 8,
+        "d": 6,
+        "s": 7,
+        "weaponId": 7012
+      },
+      {
+        "name": "term",
+        "paint": 1426,
+        "ka": 6,
+        "d": 11,
+        "s": 8,
+        "weaponId": 6001
+      }
+    ],
+    "stageLabel": "Hagglefish Market"
+  }
+}

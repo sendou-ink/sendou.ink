@@ -1,31 +1,32 @@
-import type { ActionFunction, LoaderFunction } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
 import { isbot } from "isbot";
-import { z } from "zod/v4";
+import type { ActionFunction, LoaderFunction } from "react-router";
+import { redirect } from "react-router";
+import * as v from "valibot";
+import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { requireRole } from "~/modules/permissions/guards.server";
+import { isAdmin, isStaff } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
 import {
 	canAccessLohiEndpoint,
-	errorToastIfFalsy,
-	parseSearchParams,
+	errorToastRedirect,
+	safeReturnTo,
 } from "~/utils/remix.server";
+import type { AnySyncSchema } from "~/utils/schema";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
-import { createLogInLink } from "../queries/createLogInLink.server";
-import { deleteLogInLinkByCode } from "../queries/deleteLogInLinkByCode.server";
-import { userIdByLogInLinkCode } from "../queries/userIdByLogInLinkCode.server";
+import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
 	authenticator,
 	IMPERSONATED_SESSION_KEY,
 	SESSION_KEY,
 } from "./authenticator.server";
+import type { AuthErrorCode } from "./errors";
 import { authSessionStorage } from "./session.server";
-import { getUserId, requireUser } from "./user.server";
+import { getUser } from "./user.server";
 
-export const callbackLoader: LoaderFunction = async ({ request }) => {
-	const url = new URL(request.url);
+export const callbackLoader: LoaderFunction = async ({ request, url }) => {
+	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
 	if (url.searchParams.get("error") === "access_denied") {
-		// The user denied the authentication request
 		// https://www.oauth.com/oauth2-servers/server-side-apps/possible-errors/
 
 		throw redirect(authErrorUrl("aborted"));
@@ -47,8 +48,11 @@ export const callbackLoader: LoaderFunction = async ({ request }) => {
 		});
 	} catch (error) {
 		if (error instanceof Error) {
-			logger.error("Error during authentication:", error);
-			throw redirect(authErrorUrl("unknown"));
+			logger.error(
+				`Error during authentication (${classifyAuthError(error)}):`,
+				error,
+			);
+			throw redirect(authErrorUrl(classifyAuthError(error)));
 		}
 
 		throw error;
@@ -65,60 +69,105 @@ export const logOutAction: ActionFunction = async ({ request }) => {
 };
 
 export const logInAction: ActionFunction = async ({ request }) => {
-	errorToastIfFalsy(
-		process.env.LOGIN_DISABLED !== "true",
-		"Login is temporarily disabled",
-	);
-
 	return await authenticator.authenticate("discord", request);
 };
 
-export const impersonateAction: ActionFunction = async ({ request }) => {
-	if (process.env.NODE_ENV === "production") {
-		const user = await requireUser(request);
-		requireRole(user, "ADMIN");
+export const impersonateAction: ActionFunction = async ({ request, url }) => {
+	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
+		const user = requireUser();
+		if (!user.roles.includes("ADMIN") && !user.roles.includes("DEV")) {
+			throw new Response("Forbidden", { status: 403 });
+		}
+
+		if (user.roles.includes("DEV") && !user.roles.includes("ADMIN")) {
+			// biome-ignore lint/plugin: a missing or malformed `id` must 400, not fall back to a default
+			const targetId = Number(url.searchParams.get("id"));
+			if (isAdmin({ id: targetId }) || isStaff({ id: targetId })) {
+				throw new Response("Forbidden", { status: 403 });
+			}
+		}
 	}
+
+	const returnTo = await formReturnTo(request);
 
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
 	);
 
-	const url = new URL(request.url);
+	const realUserId = session.get(SESSION_KEY);
+
+	// biome-ignore-start lint/plugin: a missing or malformed `id` must 400, not fall back to a default
 	const rawId = url.searchParams.get("id");
 
 	const userId = Number(url.searchParams.get("id"));
+	// biome-ignore-end lint/plugin: a missing or malformed `id` must 400, not fall back to a default
 	if (!rawId || Number.isNaN(userId)) throw new Response(null, { status: 400 });
+
+	logger.info(
+		`Impersonation: user ${realUserId} started impersonating user ${userId}`,
+	);
 
 	session.set(IMPERSONATED_SESSION_KEY, userId);
 
-	throw redirect(ADMIN_PAGE, {
+	throw redirect(returnTo ?? ADMIN_PAGE, {
 		headers: { "Set-Cookie": await authSessionStorage.commitSession(session) },
 	});
 };
 
 export const stopImpersonatingAction: ActionFunction = async ({ request }) => {
+	const returnTo = await formReturnTo(request);
+
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
 	);
 
+	const realUserId = session.get(SESSION_KEY);
+	const impersonatedUserId = session.get(IMPERSONATED_SESSION_KEY);
+
+	logger.info(
+		`Impersonation: user ${realUserId} stopped impersonating user ${impersonatedUserId}`,
+	);
+
 	session.unset(IMPERSONATED_SESSION_KEY);
 
-	throw redirect(ADMIN_PAGE, {
+	throw redirect(returnTo ?? ADMIN_PAGE, {
 		headers: { "Set-Cookie": await authSessionStorage.commitSession(session) },
 	});
 };
 
-// below is alternative log-in flow that is operated via the Lohi Discord bot
-// this is intended primarily as a workaround when website is having problems communicating
-// with the Discord due to rate limits or other reasons
+async function formReturnTo(request: Request): Promise<string | null> {
+	if (!request.headers.get("Content-Type")?.includes("form")) return null;
 
-// only light validation here as we generally trust Lohi
-const createLogInLinkActionSchema = z.object({
-	discordId: z.string(),
-	discordAvatar: z.string().nullish(),
-	discordName: z.string(),
-	discordUniqueName: z.string(),
-	updateOnly: z.enum(["true", "false"]),
+	return safeReturnTo((await request.formData()).get("returnTo"));
+}
+
+// alternative log-in flow via the Lohi Discord bot, a workaround for when the site can't reach
+// Discord (rate limits etc.). Only light validation as we trust Lohi; these params are
+// infrastructure conventions and intentionally bypass app/modules/search-params/
+function parseSearchParams<T extends AnySyncSchema>({
+	request,
+	schema,
+}: {
+	request: Request;
+	schema: T;
+}): v.InferOutput<T> {
+	const searchParams = Object.fromEntries(new URL(request.url).searchParams);
+
+	try {
+		return v.parse(schema, searchParams);
+	} catch (e) {
+		logger.error("Error parsing search params", e);
+
+		throw errorToastRedirect("Validation failed");
+	}
+}
+
+const createLogInLinkActionSchema = v.object({
+	discordId: v.string(),
+	discordAvatar: v.optional(v.nullable(v.string())),
+	discordName: v.string(),
+	discordUniqueName: v.string(),
+	updateOnly: v.picklist(["true", "false"]),
 });
 
 export const createLogInLinkAction: ActionFunction = async ({ request }) => {
@@ -140,15 +189,15 @@ export const createLogInLinkAction: ActionFunction = async ({ request }) => {
 
 	if (data.updateOnly === "true") return null;
 
-	const createdLink = createLogInLink(user.id);
+	const createdLink = await LogInLinkRepository.insert(user.id);
 
 	return {
 		code: createdLink.code,
 	};
 };
 
-const logInViaLinkActionSchema = z.object({
-	code: z.string(),
+const logInViaLinkActionSchema = v.object({
+	code: v.string(),
 });
 
 export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
@@ -162,16 +211,17 @@ export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
 		request,
 		schema: logInViaLinkActionSchema,
 	});
-	const user = await getUserId(request);
+	const user = getUser();
 
 	if (user) {
 		throw redirect("/");
 	}
 
-	const userId = userIdByLogInLinkCode(data.code);
-	if (!userId) {
+	const result = await LogInLinkRepository.findValidByCode(data.code);
+	if (!result) {
 		throw new Response("Invalid log in link", { status: 400 });
 	}
+	const userId = result.userId;
 
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
@@ -179,9 +229,30 @@ export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
 
 	session.set(SESSION_KEY, userId);
 
-	deleteLogInLinkByCode(data.code);
+	await LogInLinkRepository.deleteByCode(data.code);
 
 	throw redirect("/", {
 		headers: { "Set-Cookie": await authSessionStorage.commitSession(session) },
 	});
 };
+
+function classifyAuthError(error: Error): AuthErrorCode {
+	const message = error.message;
+
+	if (
+		message.includes("rate limited") ||
+		("status" in error && error.status === 429)
+	) {
+		return "discordOverloaded";
+	}
+
+	if (message === "Unverified user") {
+		return "unverifiedEmail";
+	}
+
+	if (message.includes("Missing state")) {
+		return "browserPrivacy";
+	}
+
+	return "unknown";
+}

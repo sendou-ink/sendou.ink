@@ -1,0 +1,39 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"cast": true,
+		"time": 253,
+		"special": [
+			[
+				false,
+				false,
+				false,
+				false
+			],
+			[
+				false,
+				false,
+				false,
+				true
+			]
+		],
+		"dead": [
+			[
+				false,
+				false,
+				false,
+				false
+			],
+			[
+				true,
+				false,
+				true,
+				false
+			]
+		]
+	},
+	"options": {
+		"notes": "Same footage at 4:13, spectator HUD with special-gauge percentages above the icons and camera-button/D-pad badges below (85/72/49 left, 11/17/26 right; a splatted icon keeps its number). Right team's outermost slot is fully washed with special ready and shows no gauge number — the live scan never captured this ★ (the .52 Gal's brief special between its two deaths, user-confirmed) and neighboring reads called the slot dead instead. Left outer slot's wash is gone by this frame (special spent), despite its missing gauge number."
+	}
+}

@@ -1,10 +1,10 @@
 import clsx from "clsx";
+import { ArrowLeft, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { BANNED_MAPS } from "~/features/sendouq-settings/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -12,8 +12,6 @@ import { split, startsWith } from "~/utils/strings";
 import { assertType } from "~/utils/types";
 import { modeImageUrl, stageImageUrl } from "~/utils/urls";
 import { SendouButton } from "./elements/Button";
-import { ArrowLongLeftIcon } from "./icons/ArrowLongLeft";
-import { CrossIcon } from "./icons/Cross";
 
 import styles from "./MapPoolSelector.module.css";
 
@@ -32,7 +30,6 @@ export type MapPoolSelectorProps = {
 	footer?: React.ReactNode;
 	/** Enables clear button, template selection, and toggling a whole stage */
 	allowBulkEdit?: boolean;
-	hideBanned?: boolean;
 };
 
 export function MapPoolSelector({
@@ -46,7 +43,6 @@ export function MapPoolSelector({
 	info,
 	footer,
 	allowBulkEdit = false,
-	hideBanned = false,
 }: MapPoolSelectorProps) {
 	const { t } = useTranslation();
 
@@ -64,53 +60,51 @@ export function MapPoolSelector({
 		handleMapPoolChange(MapPool.EMPTY);
 	};
 
-	const handleTemplateChange = (template: MapPoolTemplateValue) => {
-		setTemplate(template);
+	const handleTemplateChange = (newTemplate: MapPoolTemplateValue) => {
+		setTemplate(newTemplate);
 
-		if (template === "none") {
+		if (newTemplate === "none") {
 			return;
 		}
 
-		if (startsWith(template, "preset:")) {
-			const [, presetId] = split(template, ":");
+		if (startsWith(newTemplate, "preset:")) {
+			const [, presetId] = split(newTemplate, ":");
 
 			handleMapPoolChange(MapPool[presetId]);
 			return;
 		}
 
-		assertType<never, typeof template>();
+		assertType<never, typeof newTemplate>();
 	};
 
 	return (
 		<fieldset className={className}>
-			{Boolean(title) && <legend>{title}</legend>}
-			{Boolean(handleRemoval || allowBulkEdit) && (
+			{title ? <legend>{title}</legend> : null}
+			{handleRemoval || allowBulkEdit ? (
 				<div className="stack horizontal sm justify-end">
-					{handleRemoval && (
-						<SendouButton variant="minimal" onPress={handleRemoval}>
+					{handleRemoval ? (
+						<SendouButton variant="minimal" onClick={handleRemoval}>
 							{t("actions.remove")}
 						</SendouButton>
-					)}
-					{allowBulkEdit && (
+					) : null}
+					{allowBulkEdit ? (
 						<SendouButton
 							variant="minimal-destructive"
 							isDisabled={mapPool.isEmpty()}
-							onPress={handleClear}
+							onClick={handleClear}
 						>
 							{t("actions.clear")}
 						</SendouButton>
-					)}
+					) : null}
 				</div>
-			)}
+			) : null}
 			<div className="stack md">
-				{allowBulkEdit && (
-					<div className={styles.templateSelection}>
-						<MapPoolTemplateSelect
-							value={template}
-							handleChange={handleTemplateChange}
-						/>
-					</div>
-				)}
+				{allowBulkEdit ? (
+					<MapPoolTemplateSelect
+						value={template}
+						handleChange={handleTemplateChange}
+					/>
+				) : null}
 				{info}
 				<MapPoolStages
 					mapPool={mapPool}
@@ -118,7 +112,6 @@ export function MapPoolSelector({
 					allowBulkEdit={allowBulkEdit}
 					modesToInclude={modesToInclude}
 					preselectedMapPool={preselectedMapPool}
-					hideBanned={hideBanned}
 				/>
 				{footer}
 			</div>
@@ -132,7 +125,6 @@ export type MapPoolStagesProps = {
 	allowBulkEdit?: boolean;
 	modesToInclude?: ModeShort[];
 	preselectedMapPool?: MapPool;
-	hideBanned?: boolean;
 };
 
 export function MapPoolStages({
@@ -141,7 +133,6 @@ export function MapPoolStages({
 	allowBulkEdit = false,
 	modesToInclude,
 	preselectedMapPool,
-	hideBanned = false,
 }: MapPoolStagesProps) {
 	const { t } = useTranslation(["game-misc", "common"]);
 
@@ -163,7 +154,9 @@ export function MapPoolStages({
 		const newMapPool = mapPool.parsed[mode].includes(stageId)
 			? new MapPool({
 					...mapPool.parsed,
-					[mode]: mapPool.parsed[mode].filter((id) => id !== stageId),
+					[mode]: mapPool.parsed[mode].filter(
+						(poolStageId) => poolStageId !== stageId,
+					),
 				})
 			: new MapPool({
 					...mapPool.parsed,
@@ -175,11 +168,11 @@ export function MapPoolStages({
 
 	const handleStageClear = (stageId: StageId) => {
 		const newMapPool = new MapPool({
-			TW: mapPool.parsed.TW.filter((id) => id !== stageId),
-			SZ: mapPool.parsed.SZ.filter((id) => id !== stageId),
-			TC: mapPool.parsed.TC.filter((id) => id !== stageId),
-			RM: mapPool.parsed.RM.filter((id) => id !== stageId),
-			CB: mapPool.parsed.CB.filter((id) => id !== stageId),
+			TW: mapPool.parsed.TW.filter((poolStageId) => poolStageId !== stageId),
+			SZ: mapPool.parsed.SZ.filter((poolStageId) => poolStageId !== stageId),
+			TC: mapPool.parsed.TC.filter((poolStageId) => poolStageId !== stageId),
+			RM: mapPool.parsed.RM.filter((poolStageId) => poolStageId !== stageId),
+			CB: mapPool.parsed.CB.filter((poolStageId) => poolStageId !== stageId),
 		});
 
 		handleMapPoolChange?.(newMapPool);
@@ -252,11 +245,9 @@ export function MapPoolStages({
 									return (
 										<button
 											key={mode}
-											className={clsx(styles.modeButton, "outline-theme", {
+											className={clsx(styles.modeButton, {
 												[styles.selected]: selected,
 												[styles.preselected]: preselected,
-												invisible:
-													hideBanned && BANNED_MAPS[mode].includes(stageId),
 											})}
 											onClick={() => handleModeChange?.({ mode, stageId })}
 											type="button"
@@ -278,31 +269,29 @@ export function MapPoolStages({
 										</button>
 									);
 								})}
-							{!isPresentational &&
-								allowBulkEdit &&
-								(mapPool.hasStage(stageId) ? (
+							{!isPresentational && allowBulkEdit ? (
+								mapPool.hasStage(stageId) ? (
 									<SendouButton
+										shape="circle"
 										key="clear"
-										onPress={() => handleStageClear(stageId)}
-										icon={<CrossIcon title={t("common:actions.remove")} />}
+										onClick={() => handleStageClear(stageId)}
+										icon={<X />}
 										variant="minimal"
 										aria-label={t("common:actions.remove")}
 										size="small"
 									/>
 								) : (
 									<SendouButton
+										shape="circle"
 										key="select-all"
-										onPress={() => handleStageAdd(stageId)}
-										icon={
-											<ArrowLongLeftIcon
-												title={t("common:actions.selectAll")}
-											/>
-										}
+										onClick={() => handleStageAdd(stageId)}
+										icon={<ArrowLeft />}
 										variant="minimal"
 										aria-label={t("common:actions.selectAll")}
 										size="small"
 									/>
-								))}
+								)
+							) : null}
 						</div>
 					</div>
 				</div>
@@ -363,7 +352,7 @@ function MapPoolTemplateSelect({
 						</option>
 					))}
 				</optgroup>
-				{recentEvents && recentEvents.length > 0 && (
+				{recentEvents && recentEvents.length > 0 ? (
 					<optgroup label={t("common:maps.template.yourRecentEvents")}>
 						{recentEvents.map((event) => (
 							<option key={event.id} value={`recent-event:${event.id}`}>
@@ -371,7 +360,7 @@ function MapPoolTemplateSelect({
 							</option>
 						))}
 					</optgroup>
-				)}
+				) : null}
 			</select>
 		</label>
 	);

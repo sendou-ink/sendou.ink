@@ -1,9 +1,9 @@
-import { useMatches } from "@remix-run/react";
+import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useMatches } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
-import { ArrowLeftIcon } from "~/components/icons/ArrowLeft";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { teamPage } from "~/utils/urls";
 
 export function TeamGoBackButton() {
@@ -11,13 +11,13 @@ export function TeamGoBackButton() {
 
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as TeamLoaderData;
+	const layoutData = parentRoute.loaderData as TeamLoaderData;
 
 	return (
 		<div className="stack">
 			<LinkButton
 				to={teamPage(layoutData.team.customUrl)}
-				icon={<ArrowLeftIcon />}
+				icon={<ChevronLeft />}
 				variant="outlined"
 				size="small"
 				className="mr-auto"

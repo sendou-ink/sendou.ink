@@ -1,8 +1,9 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
+import { EmptyState } from "~/components/EmptyState";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -11,18 +12,24 @@ import {
 	outlinedMainWeaponImageUrl,
 	weaponBuildPage,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import {
+	metaTags,
+	ogPageImage,
+	type SerializeFrom,
+} from "../../../utils/remix";
 
 import { loader } from "../loaders/builds.$slug.popular.server";
+
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: `${args.data.weaponName} popular builds`,
-		ogTitle: `${args.data.weaponName} Splatoon 3 popular builds`,
-		description: `List of most popular ability combinations for ${args.data.weaponName}.`,
+		title: `${args.loaderData.weaponName} popular builds`,
+		ogTitle: `${args.loaderData.weaponName} Splatoon 3 popular builds`,
+		description: `List of most popular ability combinations for ${args.loaderData.weaponName}.`,
+		image: ogPageImage("builds"),
 		location: args.location,
 	});
 };
@@ -30,7 +37,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["analyzer", "builds"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -45,11 +52,6 @@ export const handle: SendouRouteHandle = {
 				href: weaponBuildPage(data.meta.slug),
 				type: "IMAGE",
 			},
-			{
-				href: "/",
-				text: data.meta.breadcrumbText,
-				type: "TEXT",
-			},
 		];
 	},
 };
@@ -60,11 +62,9 @@ export default function PopularBuildsPage() {
 
 	return (
 		<Main className="stack lg">
-			{data.popularBuilds.length === 0 && (
-				<div className="text-lg text-lighter text-center">
-					{t("builds:noPopularBuilds")}
-				</div>
-			)}
+			{data.popularBuilds.length === 0 ? (
+				<EmptyState navItem="builds">{t("builds:noPopularBuilds")}</EmptyState>
+			) : null}
 			{data.popularBuilds.map((build, i) => {
 				return (
 					<div key={build.id} className="stack horizontal lg items-center">

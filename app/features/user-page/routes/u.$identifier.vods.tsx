@@ -1,34 +1,43 @@
-import { useLoaderData, useMatches } from "@remix-run/react";
-import { AddNewButton } from "~/components/AddNewButton";
-import { VodListing } from "~/features/vods/components/VodListing";
-import invariant from "~/utils/invariant";
+import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
+import { Pagination } from "~/components/Pagination";
+import {
+	VodListing,
+	VodListingList,
+} from "~/features/vods/components/VodListing";
+import { userVodsSearchParams } from "~/features/vods/vods-search-params";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { newVodPage } from "~/utils/urls";
-
+import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.vods.server";
-export { loader };
+import { useUserPageLayoutData } from "../user-page-hooks";
 
-import "~/features/vods/vods.css";
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods"],
 };
 
 export default function UserVodsPage() {
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
 	const data = useLoaderData<typeof loader>();
+	const layoutData = useUserPageLayoutData();
+	const { t } = useTranslation(["common"]);
+
+	const pagination = useSearchParamPagination({
+		definition: userVodsSearchParams,
+		currentPage: data.currentPage,
+		pagesCount: data.pagesCount,
+	});
 
 	return (
 		<div className="stack md">
-			<div className="stack items-end">
-				<AddNewButton navIcon="vods" to={newVodPage()} />
-			</div>
-			<div className="vods__listing__list">
+			<SubPageHeader user={layoutData.user} title={t("common:pages.vods")} />
+			<VodListingList>
 				{data.vods.map((vod) => (
 					<VodListing key={vod.id} vod={vod} showUser={false} />
 				))}
-			</div>
+			</VodListingList>
+			{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 		</div>
 	);
 }

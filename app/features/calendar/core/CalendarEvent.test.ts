@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type {
 	CalendarEvent as CalendarEventType,
 	CalendarFilters,
@@ -12,14 +12,19 @@ function makeEvent(
 		at: Date.now(),
 		id: 1,
 		isRanked: null,
+		tier: null,
+		tentativeTier: null,
 		tags: [],
 		modes: ["SZ"],
 		teamsCount: 2,
+		membersCount: 8,
+		minMembersPerTeam: 4,
 		organization: null,
 		authorId: 1,
 		type: "calendar",
 		normalizedTeamCount: 0,
 		badges: [],
+		trophy: null,
 		logoUrl: null,
 		name: "",
 		url: "",
@@ -28,7 +33,7 @@ function makeEvent(
 }
 
 describe("CalendarEvent.applyFilters", () => {
-	it("returns all events as shown with default filters", () => {
+	test("returns all events as shown with default filters", () => {
 		const events = [
 			{
 				at: 123,
@@ -43,7 +48,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.hidden).toHaveLength(0);
 	});
 
-	it("filters by isRanked", () => {
+	test("filters by isRanked", () => {
 		const events = [
 			{
 				at: 123,
@@ -64,7 +69,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.hidden).toHaveLength(2);
 	});
 
-	it("filters by tagsIncluded", () => {
+	test("filters by tagsIncluded", () => {
 		const events = [
 			{
 				at: 123,
@@ -83,7 +88,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown[0].id).toBe(1);
 	});
 
-	it("filters by tagsExcluded", () => {
+	test("filters by tagsExcluded", () => {
 		const events = [
 			{
 				at: 123,
@@ -102,7 +107,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown[0].id).toBe(2);
 	});
 
-	it("filters by games", () => {
+	test("filters by games", () => {
 		const events = [
 			{
 				at: 123,
@@ -122,7 +127,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown[0].id).toBe(1);
 	});
 
-	it("filters by preferredVersus", () => {
+	test("filters by preferredVersus", () => {
 		const events = [
 			{
 				at: 123,
@@ -142,7 +147,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown.map((e) => e.id)).toEqual([1, 2]);
 	});
 
-	it("filters by modes (not exact)", () => {
+	test("filters by modes (not exact)", () => {
 		const events = [
 			{
 				at: 123,
@@ -160,7 +165,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown.map((e) => e.id)).toEqual([1]);
 	});
 
-	it("filters by modes (exact)", () => {
+	test("filters by modes (exact)", () => {
 		const events = [
 			{
 				at: 123,
@@ -179,7 +184,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown.map((e) => e.id)).toEqual([2]);
 	});
 
-	it("filters by minTeamCount", () => {
+	test("filters by minTeamCount", () => {
 		const events = [
 			{
 				at: 123,
@@ -197,7 +202,44 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown.map((e) => e.id)).toEqual([2]);
 	});
 
-	it("filters by orgsIncluded", () => {
+	test("filters by tier range, taking the tentative tier into account", () => {
+		const events = [
+			{
+				at: 123,
+				events: [
+					makeEvent({ id: 1, tier: 1 }),
+					makeEvent({ id: 2, tier: 3 }),
+					makeEvent({ id: 3, tentativeTier: 4 }),
+					makeEvent({ id: 4, tier: 6 }),
+					makeEvent({ id: 5, tentativeTier: 8 }),
+					makeEvent({ id: 6 }),
+				],
+			},
+		];
+		const filters: CalendarFilters = {
+			...CalendarEvent.defaultFilters(),
+			minTier: 2,
+			maxTier: 6,
+		};
+		const result = CalendarEvent.applyFilters(events, filters);
+		expect(result[0].events.shown.map((e) => e.id)).toEqual([2, 3, 4]);
+	});
+
+	test("shows untiered events when the tier range is at its default", () => {
+		const events = [
+			{
+				at: 123,
+				events: [makeEvent({ id: 1 }), makeEvent({ id: 2, tier: 5 })],
+			},
+		];
+		const result = CalendarEvent.applyFilters(
+			events,
+			CalendarEvent.defaultFilters(),
+		);
+		expect(result[0].events.shown.map((e) => e.id)).toEqual([1, 2]);
+	});
+
+	test("filters by orgsIncluded", () => {
 		const events = [
 			{
 				at: 123,
@@ -216,7 +258,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown.map((e) => e.id)).toEqual([1]);
 	});
 
-	it("filters by orgsExcluded", () => {
+	test("filters by orgsExcluded", () => {
 		const events = [
 			{
 				at: 123,
@@ -235,7 +277,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown.map((e) => e.id)).toEqual([2, 3]);
 	});
 
-	it("filters by authorIdsExcluded", () => {
+	test("filters by authorIdsExcluded", () => {
 		const events = [
 			{
 				at: 123,
@@ -253,7 +295,7 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown.map((e) => e.id)).toEqual([2]);
 	});
 
-	it("filters by combining two different filters", () => {
+	test("filters by combining two different filters", () => {
 		const events = [
 			{
 				at: 123,

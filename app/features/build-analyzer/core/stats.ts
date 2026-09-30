@@ -22,29 +22,33 @@ import {
 	TORPEDO_ID,
 	ZIPCASTER_ID,
 } from "~/modules/in-game-lists/weapon-ids";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import { assertUnreachable } from "~/utils/types";
 import {
 	DAMAGE_TYPE,
 	RAINMAKER_SPEED_PENALTY_MODIFIER,
+	TENACITY_SPECIAL_POINTS_PER_SECOND,
 } from "../analyzer-constants";
 import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	DamageType,
 	InkConsumeType,
+	MainWeaponInkConsumptionStats,
 	MainWeaponParams,
 	SpecialWeaponParams,
 	StatFunctionInput,
 	SubWeaponParams,
+	TenacityPlayerDeficit,
 } from "../analyzer-types";
 import { INK_CONSUME_TYPES } from "../analyzer-types";
-import type { abilityValues as abilityValuesJson } from "./ability-values";
+import type { abilityValues as abilityValuesJson } from "../data/ability-values";
 import {
 	abilityPointsToEffects,
 	abilityValues,
 	apFromMap,
+	mainWeaponParams as getMainWeaponParams,
 	hasEffect,
 	hpDivided,
 	weaponIdToMultiShotCount,
@@ -62,8 +66,7 @@ export function buildStats({
 	mainOnlyAbilities?: Array<Ability>;
 	hasTacticooler: boolean;
 }): AnalyzedBuild {
-	const mainWeaponParams = weaponParams().mainWeapons[weaponSplId];
-	invariant(mainWeaponParams, `Weapon with splId ${weaponSplId} not found`);
+	const mainWeaponParams = getMainWeaponParams(weaponSplId);
 
 	const subWeaponParams =
 		weaponParams().subWeapons[mainWeaponParams.subWeaponId];
@@ -72,8 +75,9 @@ export function buildStats({
 		`Sub weapon with splId ${mainWeaponParams.subWeaponId} not found`,
 	);
 
-	const specialWeaponParams =
-		weaponParams().specialWeapons[mainWeaponParams.specialWeaponId];
+	const specialWeaponParams = weaponParams().specialWeapons[
+		mainWeaponParams.specialWeaponId
+	] as SpecialWeaponParams;
 	invariant(
 		specialWeaponParams,
 		`Special weapon with splId ${mainWeaponParams.specialWeaponId} not found`,
@@ -108,17 +112,25 @@ export function buildStats({
 			specialPoint: specialPoint(input),
 			specialLost: specialLost(input),
 			specialLostSplattedByRP: specialLost(input, true),
+			tenacitySecondsToSpecial: tenacitySecondsToSpecial(input),
 			fullInkTankOptions: fullInkTankOptions(input),
 			damages: damages(input),
 			specialWeaponDamages: specialWeaponDamages(input),
 			subWeaponDefenseDamages: subWeaponDefenseDamages(input),
-			mainWeaponWhiteInkSeconds:
-				typeof mainWeaponParams.InkRecoverStop === "number"
-					? framesToSeconds(mainWeaponParams.InkRecoverStop)
-					: undefined,
+			mainWeaponWhiteInkSeconds: optionalFramesToSeconds(
+				mainWeaponParams.InkRecoverStop,
+			),
+			mainWeaponWhiteInkSecondsHorizontalSwing: optionalFramesToSeconds(
+				mainWeaponParams.InkRecoverStop_WeaponWideSwingParam,
+			),
+			mainWeaponWhiteInkSecondsVerticalSwing: optionalFramesToSeconds(
+				mainWeaponParams.InkRecoverStop_WeaponVerticalSwingParam,
+			),
 			subWeaponWhiteInkSeconds: framesToSeconds(subWeaponParams.InkRecoverStop),
 			subWeaponInkConsumptionPercentage:
 				subWeaponInkConsumptionPercentage(input),
+			...mainWeaponInkConsumptionPercentages(input),
+			mainWeaponRollSeconds: mainWeaponRollSeconds(input),
 			squidFormInkRecoverySeconds: squidFormInkRecoverySeconds(input),
 			humanoidFormInkRecoverySeconds: humanoidFormInkRecoverySeconds(input),
 			runSpeed: runSpeed(input),
@@ -135,6 +147,7 @@ export function buildStats({
 			swimSpeed: swimSpeed(input),
 			swimSpeedHoldingRainmaker: swimSpeedHoldingRainmaker(input),
 			runSpeedInEnemyInk: runSpeedInEnemyInk(input),
+			jumpHeightInEnemyInk: jumpHeightInEnemyInk(input),
 			damageTakenInEnemyInkPerSecond: damageTakenInEnemyInkPerSecond(input),
 			enemyInkDamageLimit: enemyInkDamageLimit(input),
 			framesBeforeTakingDamageInEnemyInk:
@@ -148,6 +161,7 @@ export function buildStats({
 			shotAutofireSpreadAir: shotAutofireSpreadAir(input),
 			shotAutofireSpreadGround: mainWeaponParams.Variable_Stand_DegSwerve,
 			squidSurgeChargeFrames: squidSurgeChargeFrames(input),
+			squidRollSpeedRetained: squidRollSpeedRetained(input),
 			subDefPointSensorMarkedTimeInSeconds:
 				subDefPointSensorMarkedTimeInSeconds(input),
 			subDefInkMineMarkedTimeInSeconds: subDefInkMineMarkedTimeInSeconds(input),
@@ -195,7 +209,7 @@ function specialPoint({
 
 	const { effect } = abilityPointsToEffects({
 		abilityPoints: apFromMap({
-			abilityPoints: abilityPoints,
+			abilityPoints,
 			ability: SPECIAL_POINT_ABILITY,
 		}),
 		key: "IncreaseRt_Special",
@@ -206,6 +220,26 @@ function specialPoint({
 		baseValue: mainWeaponParams.SpecialPoint,
 		modifiedBy: SPECIAL_POINT_ABILITY,
 		value: Math.ceil(mainWeaponParams.SpecialPoint / effect),
+	};
+}
+
+function tenacitySecondsToSpecial({
+	mainWeaponParams,
+	mainOnlyAbilities,
+}: StatFunctionInput): AnalyzedBuild["stats"]["tenacitySecondsToSpecial"] {
+	if (!mainOnlyAbilities.includes("T")) return;
+
+	// Special Charge Up does not affect Tenacity's fill rate, so the unmodified points are used
+	const secondsToSpecial = (playerDeficit: TenacityPlayerDeficit) =>
+		roundToNDecimalPlaces(
+			mainWeaponParams.SpecialPoint /
+				TENACITY_SPECIAL_POINTS_PER_SECOND[playerDeficit],
+		);
+
+	return {
+		1: secondsToSpecial(1),
+		2: secondsToSpecial(2),
+		3: secondsToSpecial(3),
 	};
 }
 
@@ -221,12 +255,12 @@ function specialLost(
 		? OWN_RESPAWN_PUNISHER_EXTRA_SPECIAL_LOST
 		: 0;
 
-	const specialSavedAfterDeathForDisplay = (effect: number) =>
-		Number(((1.0 - effect) * 100).toFixed(2));
+	const specialSavedAfterDeathForDisplay = (ratio: number) =>
+		Number(((1.0 - ratio) * 100).toFixed(2));
 
 	const { baseEffect, effect } = abilityPointsToEffects({
 		abilityPoints: apFromMap({
-			abilityPoints: abilityPoints,
+			abilityPoints,
 			ability: SPECIAL_SAVED_AFTER_DEATH_ABILITY,
 		}),
 		key: "SpecialGaugeRt_Restart",
@@ -255,9 +289,7 @@ function subWeaponInkConsumptionPercentage(args: StatFunctionInput) {
 			(args.subWeaponParams.InkConsume * 100) / inkTankSize(args.weaponSplId),
 		),
 		value: roundToNDecimalPlaces(
-			// + 0.004 is a hack to avoid situation where the value is e.g. 50.0005
-			// -> rounds to 50% so it appears you can throw two subs
-			// which is not correct so we force the round upwards
+			// + 0.0045 forces e.g. 50.0005 to round up, else it shows 50% as if two subs fit
 			(subWeaponConsume(args).inkConsume * 100 + 0.0045) /
 				inkTankSize(args.weaponSplId),
 		),
@@ -289,11 +321,10 @@ export function fullInkTankOptions(
 				id: nanoid(),
 				subsUsed: subsFromFullInkTank,
 				type,
-				value: effectToRounded(
+				value: cutToNDecimalPlaces(
 					(inkTankSize(args.weaponSplId) -
 						subWeaponInkConsume * subsFromFullInkTank) /
 						mainWeaponInkConsume,
-					2,
 				),
 			});
 		}
@@ -333,6 +364,65 @@ function subWeaponConsume({
 	};
 }
 
+function mainWeaponInkConsumptionPercentages(
+	args: StatFunctionInput,
+): MainWeaponInkConsumptionStats {
+	const result: MainWeaponInkConsumptionStats = {};
+
+	for (const type of INK_CONSUME_TYPES) {
+		const baseInkConsume = mainWeaponInkConsumeByType({
+			...args,
+			abilityPoints: new Map(),
+			type,
+		});
+
+		if (typeof baseInkConsume !== "number") continue;
+
+		const inkConsume = mainWeaponInkConsumeByType({ ...args, type });
+		invariant(typeof inkConsume === "number");
+
+		result[`mainWeaponInkConsumptionPercentage_${type}`] = {
+			baseValue: roundToNDecimalPlaces(
+				(baseInkConsume * 100) / inkTankSize(args.weaponSplId),
+			),
+			value: roundToNDecimalPlaces(
+				(inkConsume * 100) / inkTankSize(args.weaponSplId),
+			),
+			modifiedBy: "ISM",
+		};
+	}
+
+	return result;
+}
+
+function mainWeaponRollSeconds({
+	mainWeaponParams,
+	abilityPoints,
+	weaponSplId,
+}: StatFunctionInput): AnalyzedBuild["stats"]["mainWeaponRollSeconds"] {
+	const inkConsumePerFrame =
+		mainWeaponParams.InkConsumeMaxPerFrame_WeaponRollParam;
+	if (typeof inkConsumePerFrame !== "number") return;
+
+	const { baseEffect, effect } = abilityPointsToEffects({
+		abilityPoints: apFromMap({
+			abilityPoints,
+			ability: "ISM",
+		}),
+		key: "ConsumeRt_Main",
+		weapon: mainWeaponParams,
+	});
+
+	const rollFrames = (consumeRate: number) =>
+		inkTankSize(weaponSplId) / (inkConsumePerFrame * consumeRate);
+
+	return {
+		baseValue: framesToSeconds(rollFrames(baseEffect)),
+		value: framesToSeconds(rollFrames(effect)),
+		modifiedBy: "ISM",
+	};
+}
+
 function mainWeaponInkConsumeByType({
 	mainWeaponParams,
 	abilityPoints,
@@ -349,8 +439,7 @@ function mainWeaponInkConsumeByType({
 		weapon: mainWeaponParams,
 	});
 
-	// these keys are always mutually exclusive i.e. even if inkConsumeTypeToParamsKeys() returns many keys
-	// then weapon params of this weapon should only have one defined
+	// the keys are mutually exclusive, a weapon's params only ever define one of them
 	for (const key of inkConsumeTypeToParamsKeys(type)) {
 		const value = mainWeaponParams[key];
 
@@ -359,8 +448,7 @@ function mainWeaponInkConsumeByType({
 		}
 	}
 
-	// not all weapons have all ink consume types
-	// i.e. blaster does not (hopefully) perform dualie dodge rolls
+	// not all weapons have all ink consume types (a blaster has no dodge roll)
 	return;
 }
 
@@ -374,6 +462,8 @@ function inkConsumeTypeToParamsKeys(
 			return ["InkConsume_SwingParam", "InkConsume_WeaponSwingParam"];
 		case "SLOSH":
 			return ["InkConsumeSlosher"];
+		case "SECONDARY_MODE":
+			return ["InkConsumeVariable"];
 		case "TAP_SHOT":
 			return ["InkConsumeMinCharge"];
 		case "FULL_CHARGE":
@@ -416,6 +506,7 @@ const damageTypeToParamsKey: Record<
 	DIRECT_SECONDARY_MIN: "DamageParam_Secondary_ValueDirectMin",
 	DIRECT_SECONDARY_MAX: "DamageParam_Secondary_ValueDirectMax",
 	DISTANCE: ["BlastParam_DistanceDamage", "DistanceDamage_BlastParamArray"],
+	DISTANCE_JUMP: "BlastJumpParam_DistanceDamage",
 	SPLASH: ["BlastParam_SplashDamage", "DistanceDamage_SplashBlastParam"],
 	SPLASH_MIN: "SwingUnitGroupParam_DamageParam_DamageMinValue",
 	SPLASH_MAX: "SwingUnitGroupParam_DamageParam_DamageMaxValue",
@@ -436,15 +527,20 @@ const damageTypeToParamsKey: Record<
 	WAVE: "WaveDamage",
 	SPECIAL_MAX_CHARGE: "ExhaleBlastParamMaxChargeDistanceDamage",
 	SPECIAL_MIN_CHARGE: "ExhaleBlastParamMinChargeDistanceDamage",
+	SPECIAL_INHALE: "InhaleDamage",
 	SPECIAL_SWING: "SwingDamage",
 	SPECIAL_THROW: "ThrowDamage",
 	SPECIAL_THROW_DIRECT: "ThrowDirectDamage",
 	SPECIAL_BULLET_MAX: "BulletDamageMax",
 	SPECIAL_BULLET_MIN: "BulletDamageMin",
+	SPECIAL_SPLASH_MAX: "SplashDamageMax",
+	SPECIAL_SPLASH_MIN: "SplashDamageMin",
 	SPECIAL_CANNON: "CannonDamage",
 	SPECIAL_BUMP: "BumpDamage",
 	SPECIAL_JUMP: "JumpDamage",
 	SPECIAL_TICK: "TickDamage",
+	// Virtual damage type for comp-analyzer, calculated from other damages
+	COMBO: [],
 };
 
 function damages(args: StatFunctionInput): AnalyzedBuild["stats"]["damages"] {
@@ -545,7 +641,7 @@ function specialWeaponDamages(
 			id: nanoid(),
 			distance: 0,
 			value: R.sum(cannonDamages.map((v) => v.value)),
-			type: "SPECIAL_CANNON",
+			type: "COMBO",
 		});
 	}
 
@@ -617,7 +713,7 @@ function subWeaponDefenseDamages(
 								R.sum(arrayValues.map((v) => v.value)),
 								1,
 							),
-							type,
+							type: "BOMB_DIRECT",
 						});
 					}
 
@@ -641,12 +737,12 @@ function subWeaponDefenseDamages(
 								distance: [
 									Math.min(
 										...secondHalfValues.map(
-											(value) => value.distance as number,
+											(halfValue) => halfValue.distance as number,
 										),
 									),
 									Math.max(
 										...secondHalfValues.map(
-											(value) => value.distance as number,
+											(halfValue) => halfValue.distance as number,
 										),
 									),
 								],
@@ -659,10 +755,14 @@ function subWeaponDefenseDamages(
 								subWeaponId: id,
 								distance: [
 									Math.min(
-										...firstHalfValues.map((value) => value.distance as number),
+										...firstHalfValues.map(
+											(halfValue) => halfValue.distance as number,
+										),
 									),
 									Math.max(
-										...firstHalfValues.map((value) => value.distance as number),
+										...firstHalfValues.map(
+											(halfValue) => halfValue.distance as number,
+										),
 									),
 								],
 								baseValue: firstHalfValues[0].baseValue,
@@ -726,7 +826,7 @@ function subWeaponIdToEffectKey(
 	}
 }
 
-function subWeaponDamageValue({
+export function subWeaponDamageValue({
 	baseValue,
 	subWeaponId,
 	abilityPoints,
@@ -752,6 +852,8 @@ function subWeaponDamageValue({
 
 const framesToSeconds = (frames: number) =>
 	effectToRounded(Math.ceil(frames) / 60);
+const optionalFramesToSeconds = (frames: number | undefined) =>
+	typeof frames === "number" ? framesToSeconds(frames) : undefined;
 function squidFormInkRecoverySeconds(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["squidFormInkRecoverySeconds"] {
@@ -833,6 +935,26 @@ function runSpeedInEnemyInk(
 		baseValue: effectToRounded(baseEffect * 10),
 		value: effectToRounded(effect * 10),
 		modifiedBy: RUN_SPEED_IN_ENEMY_INK_ABILITY,
+	};
+}
+
+function jumpHeightInEnemyInk(
+	args: StatFunctionInput,
+): AnalyzedBuild["stats"]["jumpHeightInEnemyInk"] {
+	const JUMP_HEIGHT_IN_ENEMY_INK_ABILITY = "RES";
+	const { baseEffect, effect } = abilityPointsToEffects({
+		abilityPoints: apFromMap({
+			abilityPoints: args.abilityPoints,
+			ability: JUMP_HEIGHT_IN_ENEMY_INK_ABILITY,
+		}),
+		key: "OpInk_JumpVel",
+		weapon: args.mainWeaponParams,
+	});
+
+	return {
+		baseValue: effectToRounded(baseEffect * 10),
+		value: effectToRounded(effect * 10),
+		modifiedBy: JUMP_HEIGHT_IN_ENEMY_INK_ABILITY,
 	};
 }
 
@@ -996,10 +1118,13 @@ function superJumpTimeGroundFrames(
 	};
 }
 
+const STEALTH_JUMP_EXTRA_FRAMES = 60;
 function superJumpTimeTotal(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["superJumpTimeTotal"] {
 	const SUPER_JUMP_TIME_TOTAL_ABILITY = "QSJ";
+	const hasStealthJump = args.mainOnlyAbilities.includes("SJ");
+	const stealthJumpExtraFrames = hasStealthJump ? STEALTH_JUMP_EXTRA_FRAMES : 0;
 
 	const charge = abilityPointsToEffects({
 		abilityPoints: apFromMap({
@@ -1022,8 +1147,12 @@ function superJumpTimeTotal(
 		baseValue: framesToSeconds(
 			Math.ceil(charge.baseEffect) + Math.ceil(move.baseEffect),
 		),
-		value: framesToSeconds(Math.ceil(charge.effect) + Math.ceil(move.effect)),
-		modifiedBy: SUPER_JUMP_TIME_TOTAL_ABILITY,
+		value: framesToSeconds(
+			Math.ceil(charge.effect) +
+				Math.ceil(move.effect) +
+				stealthJumpExtraFrames,
+		),
+		modifiedBy: [SUPER_JUMP_TIME_TOTAL_ABILITY, "SJ"],
 	};
 }
 
@@ -1110,6 +1239,26 @@ function squidSurgeChargeFrames(
 		baseValue: Math.ceil(baseEffect),
 		value: Math.ceil(effect),
 		modifiedBy: SQUID_SURGE_CHARGE_FRAMES_ABILITY,
+	};
+}
+
+function squidRollSpeedRetained(
+	args: StatFunctionInput,
+): AnalyzedBuild["stats"]["squidRollSpeedRetained"] {
+	const SQUID_ROLL_SPEED_RETAINED_ABILITY = "IA";
+	const { baseEffect, effect } = abilityPointsToEffects({
+		abilityPoints: apFromMap({
+			abilityPoints: args.abilityPoints,
+			ability: SQUID_ROLL_SPEED_RETAINED_ABILITY,
+		}),
+		key: "Somersault_MoveVelKd",
+		weapon: args.mainWeaponParams,
+	});
+
+	return {
+		baseValue: effectToRounded(baseEffect * 100, 1),
+		value: effectToRounded(effect * 100, 1),
+		modifiedBy: SQUID_ROLL_SPEED_RETAINED_ABILITY,
 	};
 }
 
@@ -1230,16 +1379,16 @@ export function subStats(
 			weapon: args.subWeaponParams,
 		});
 
-		const toValue = (effect: number) => {
+		const toValue = (rawEffect: number) => {
 			switch (type) {
 				case "NO_CHANGE":
-					return roundToNDecimalPlaces(effect);
+					return roundToNDecimalPlaces(rawEffect);
 				case "SUB_VELOCITY":
-					return roundToNDecimalPlaces(effect, 3);
+					return roundToNDecimalPlaces(rawEffect, 3);
 				case "HP":
-					return roundToNDecimalPlaces(hpDivided(effect), 1);
+					return roundToNDecimalPlaces(hpDivided(rawEffect), 1);
 				case "TIME":
-					return framesToSeconds(effect);
+					return framesToSeconds(rawEffect);
 				default:
 					assertUnreachable(type);
 			}
@@ -1373,7 +1522,7 @@ function subQsjBoost(
 
 	const SUB_QSJ_BOOST_KEY = "BRU";
 
-	// Lean: This is the base that is used with their weird formula (I didn't even bother renaming the vars and just used what my disassembler gave me)
+	// Lean: base of their weird formula, var names as given by the disassembler
 	const calculate = (ap: number) => {
 		const multiplier = abilityValues({
 			key: "SubSpecUpParam",

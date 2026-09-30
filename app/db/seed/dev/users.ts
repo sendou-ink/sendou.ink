@@ -1,0 +1,370 @@
+import { addDays } from "date-fns";
+import type { UserMapModePreferences } from "~/db/tables-json";
+import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
+import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
+import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
+import { LUTI_DIVS } from "~/features/scrims/scrims-constants";
+import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
+import { DEFAULT_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
+import type { StoredWidget } from "~/features/user-page/core/widgets/types";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import {
+	ADMIN_TEST_AVATAR,
+	NZAP_TEST_AVATAR,
+	NZAP_TEST_DISCORD_ID,
+	STAFF_TEST_DISCORD_ID,
+} from "../constants";
+import { faker } from "../core/faker";
+import * as SplatoonFaker from "../core/SplatoonFaker";
+import * as showcaseNames from "../core/showcaseNames";
+import * as UserFactory from "../factories/UserFactory";
+
+const SHOWCASE_COUNT = 100;
+/** Latest finished LUTI the seeded divisions are from. */
+const LUTI_SEASON = 17;
+const CROWD_COUNT = 396;
+
+export type SeededUsers = {
+	adminId: number;
+	nzapId: number;
+	orgAdminId: number;
+	staffId: number;
+	/** The curated first ~100, wired into everything later modules seed. */
+	showcaseIds: number[];
+	crowdIds: number[];
+	/** Showcase users with the artist role, some with commissions open. */
+	artistIds: number[];
+	/** Showcase users whose profile can gain favorite badges without losing anything. */
+	favoriteBadgeUserIds: number[];
+};
+
+export async function seedUsers(): Promise<SeededUsers> {
+	// the plainest of the two profiles: no widgets of their own, so the default layout
+	const admin = await UserFactory.createAdmin(
+		{
+			discordId: ADMIN_DISCORD_ID,
+			discordName: "Sendou",
+			discordUniqueName: "sendou",
+			discordAvatar: ADMIN_TEST_AVATAR,
+			twitch: "Sendou",
+			profile: {
+				country: "FI",
+				customUrl: "sendou",
+				inGameName: "Sendou#1234",
+			},
+			friendCode: "0109-8080-3707",
+		},
+		{
+			roles: ["VIDEO_ADDER", "TOURNAMENT_ORGANIZER", "ARTIST"],
+			matchProfile: {
+				mapModePreferences: fakePreferences(),
+				vc: "YES",
+				weaponPool: [{ id: 200, isFavorite: false }],
+			},
+		},
+	);
+
+	const nzap = await UserFactory.createRegular(
+		{
+			discordId: NZAP_TEST_DISCORD_ID,
+			discordName: "N-ZAP",
+			discordUniqueName: "nzap",
+			discordAvatar: NZAP_TEST_AVATAR,
+			twitch: "nzap_stream",
+			youtubeId: "UCWbJLXByvsfQvTcR4HLPs5Q",
+			youtubeName: "N-ZAP Plays",
+			bsky: "nzap.bsky.social",
+			profile: {
+				country: "SE",
+				customUrl: "nzap",
+				pronouns: JSON.stringify({ subject: "they", object: "them" }),
+				inGameName: "N-ZAP#5678",
+			},
+			friendCode: "1234-5678-9012",
+		},
+		{
+			patronTier: 2,
+			roles: ["VIDEO_ADDER", "TOURNAMENT_ORGANIZER", "ARTIST"],
+			div: "2",
+			divSeason: LUTI_SEASON,
+			matchProfile: {
+				mapModePreferences: fakePreferences(),
+				vc: "YES",
+				languages: ["en", "ja"],
+				weaponPool: SplatoonFaker.mainWeapons(4).map((id) => ({
+					id,
+					isFavorite: false,
+				})),
+			},
+			card: { shortBio: "Supporter of sendou.ink" },
+			widgets: nzapWidgets(),
+		},
+	);
+
+	const orgAdmin = await UserFactory.createOrgAdmin(null, {
+		roles: ["API_ACCESSER"],
+	});
+
+	const showcase = await seedShowcaseUsers();
+	const crowd = await UserFactory.createMany(CROWD_COUNT);
+	for (const [i, user] of crowd.entries()) {
+		if (i % 2 === 0) continue;
+
+		await UserFactory.grant(user.id, {
+			matchProfile: {
+				weaponPool: SplatoonFaker.mainWeapons(
+					faker.helpers.arrayElement([1, 2, 3, 4]),
+				).map((id) => ({ id, isFavorite: faker.number.float(1) < 0.3 })),
+			},
+		});
+	}
+
+	const staff = await UserFactory.createStaff({
+		discordId: STAFF_TEST_DISCORD_ID,
+		discordName: "Panda",
+	});
+
+	return {
+		adminId: admin.id,
+		nzapId: nzap.id,
+		orgAdminId: orgAdmin.id,
+		staffId: staff.id,
+		showcaseIds: showcase.ids,
+		crowdIds: crowd.map((user) => user.id),
+		artistIds: showcase.artistIds,
+		favoriteBadgeUserIds: showcase.favoriteBadgeUserIds,
+	};
+}
+
+async function seedShowcaseUsers() {
+	const ids: number[] = [];
+	const artistIds: number[] = [];
+	const favoriteBadgeUserIds: number[] = [];
+
+	for (const customName of showcaseNames.CUSTOM_NAMES) {
+		const hasKanji = /[一-龯]/u.test(customName);
+
+		const user = await UserFactory.create(
+			{
+				profile: {
+					customName,
+					inGameName: hasKanji
+						? showcaseNames.kanaInGameName()
+						: SplatoonFaker.inGameName(),
+				},
+			},
+			showcaseOptions(),
+		);
+
+		ids.push(user.id);
+		favoriteBadgeUserIds.push(user.id);
+	}
+
+	const noProfileUser = await UserFactory.create({
+		profile: null,
+		friendCode: null,
+	});
+	ids.push(noProfileUser.id);
+
+	const maximalUser = await UserFactory.create(
+		{
+			profile: {
+				customName: showcaseNames.customName(),
+				customUrl: "maximal",
+				country: "JP",
+				pronouns: JSON.stringify({ subject: "they", object: "them" }),
+				inGameName: showcaseNames.kanaInGameName(),
+			},
+		},
+		{
+			...showcaseOptions(),
+			patronTier: 2,
+			widgets: migratedWidgets(),
+			card: {
+				shortBio: faker.lorem.sentence(),
+				bannerPresetImg: String(faker.helpers.arrayElement(stageIds)),
+				unverifiedPeakXP: fakePeakXp(),
+			},
+		},
+	);
+	ids.push(maximalUser.id);
+
+	for (let i = ids.length; i < SHOWCASE_COUNT; i++) {
+		const isArtist = artistIds.length < 12;
+		const commissionsOpen = isArtist && faker.number.float(1) < 0.5;
+
+		const user = await UserFactory.create(
+			{
+				profile: {
+					customName:
+						faker.number.float(1) < 0.6
+							? showcaseNames.customName()
+							: undefined,
+					customUrl: faker.number.float(1) < 0.2 ? `showcase-${i}` : undefined,
+					country:
+						faker.number.float(1) < 0.8 ? UserFactory.fakeCountry() : undefined,
+					inGameName:
+						faker.number.float(1) < 0.4
+							? showcaseNames.kanaInGameName()
+							: SplatoonFaker.inGameName(),
+					commissionsOpen: commissionsOpen ? 1 : undefined,
+					commissionText: commissionsOpen ? faker.lorem.paragraph() : undefined,
+				},
+			},
+			{
+				...showcaseOptions(),
+				roles: isArtist ? ["ARTIST"] : undefined,
+			},
+		);
+
+		ids.push(user.id);
+		if (isArtist) {
+			artistIds.push(user.id);
+		}
+	}
+
+	return { ids, artistIds, favoriteBadgeUserIds };
+}
+
+/** What the widget backfill migration leaves a user who had a bio and sensitivity saved. */
+function migratedWidgets(): NonNullable<
+	Parameters<typeof UserFactory.create>[1]
+>["widgets"] {
+	return DEFAULT_WIDGETS.map((widget) => {
+		if (widget.id === "bio") {
+			return { ...widget, settings: { bio: showcaseNames.maxLengthBio() } };
+		}
+		if (widget.id === "sens") {
+			return {
+				...widget,
+				settings: { ...widget.settings, motionSens: -25, stickSens: 10 },
+			};
+		}
+
+		return widget;
+	});
+}
+
+/** The one seeded supporter's widgets: both slots filled to the supporter limits. */
+export function nzapWidgets(): StoredWidget[] {
+	return [
+		{ id: "bio-md", settings: { bio: showcaseNames.maxLengthBio() } },
+		{ id: "teams" },
+		{ id: "live-stream" },
+		{ id: "luti-div" },
+		{
+			id: "countdown",
+			settings: { title: "Next LAN", date: addDays(new Date(), 42) },
+		},
+		{
+			id: "markdown",
+			settings: {
+				content:
+					"## Looking for\n\n- **Scrims** on weekdays\n- A *support* player\n\nDM me on Discord!",
+			},
+		},
+		{
+			id: "sens",
+			settings: { controller: "s2-pro-con", motionSens: 50, stickSens: 5 },
+		},
+		{ id: "social-links" },
+		{ id: "weapon-pool", settings: { weaponPool: [] } },
+		{ id: "map-mode-preferences" },
+		{ id: "badges-owned", settings: { favoriteBadgeIds: [] } },
+		{ id: "trophies-owned" },
+		{ id: "art", settings: { source: "ALL" } },
+		{ id: "x-rank-peaks", settings: { division: "both" } },
+	];
+}
+
+function showcaseOptions(): Parameters<typeof UserFactory.create>[1] {
+	return {
+		matchProfile: {
+			mapModePreferences: fakePreferences(),
+			vc: faker.helpers.arrayElement([
+				"YES",
+				"YES",
+				"YES",
+				"NO",
+				"LISTEN_ONLY",
+			]),
+			languages: fakeLanguages(),
+			weaponPool: SplatoonFaker.mainWeapons(
+				faker.helpers.arrayElement([1, 2, 3, 4]),
+			).map((id) => ({ id, isFavorite: faker.number.float(1) < 0.3 })),
+		},
+		div:
+			faker.number.float(1) < 0.6
+				? faker.helpers.arrayElement(LUTI_DIVS)
+				: undefined,
+		divSeason: LUTI_SEASON,
+		card: {
+			shortBio: faker.number.float(1) < 0.6 ? faker.lorem.sentence() : null,
+			bannerPresetImg: fakeBannerPresetImg(),
+			unverifiedPeakXP: faker.number.float(1) < 0.4 ? fakePeakXp() : null,
+		},
+	};
+}
+
+function fakeLanguages(): UnifiedLanguageCode[] {
+	const languages: UnifiedLanguageCode[] =
+		faker.number.float(1) > 0.1 ? ["en"] : [];
+	for (const language of ["es", "fr", "de", "it", "ja"] as const) {
+		if (faker.number.float(1) > 0.9) languages.push(language);
+	}
+
+	return languages;
+}
+
+function fakePreferences(): UserMapModePreferences {
+	const modes: UserMapModePreferences["modes"] = modesShort.flatMap((mode) => {
+		if (faker.number.float(1) > 0.5 && mode !== "SZ") return [];
+
+		return {
+			mode,
+			preference:
+				faker.number.float(1) > (mode === "SZ" ? 0.2 : 0.5)
+					? ("PREFER" as const)
+					: ("AVOID" as const),
+		};
+	});
+
+	return {
+		modes,
+		pool: modesShort.flatMap((mode) => {
+			const preference = modes.find((m) => m.mode === mode);
+			if (preference?.preference === "AVOID") return [];
+
+			return {
+				mode,
+				stages: faker.helpers
+					.shuffle(stageIds)
+					.filter((stageId) => !BANNED_MAPS[mode].includes(stageId))
+					.slice(0, AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
+			};
+		}),
+	};
+}
+
+/** Self-reported peak XP with exactly one division defined, as the column expects. */
+function fakePeakXp() {
+	const points = faker.number.int({ min: 2000, max: 3500 });
+	const isTentatek = faker.datatype.boolean();
+
+	return {
+		overall: points,
+		tentatek: isTentatek ? points : null,
+		takoroka: isTentatek ? null : points,
+	};
+}
+
+/** Mix of the three banner sources: null, a stage banner, an explicit color. */
+function fakeBannerPresetImg() {
+	const roll = faker.number.float(1);
+	if (roll < 0.34) return null;
+	if (roll < 0.67) return String(faker.helpers.arrayElement(stageIds));
+
+	return faker.helpers.arrayElement(PRESET_COLORS);
+}

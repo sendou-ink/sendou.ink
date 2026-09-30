@@ -1,0 +1,225 @@
+.rosters {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-8);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	width: max-content;
+	max-width: 100%;
+	margin-inline: auto;
+}
+
+.rostersDivider {
+	display: none;
+}
+
+@container (width >= 640px) {
+	.rosters {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+		gap: var(--s-4);
+		width: auto;
+		max-width: none;
+		margin-inline: 0;
+	}
+
+	.rosterColumn {
+		margin-inline: auto;
+		width: max-content;
+		max-width: 100%;
+		min-width: 0;
+	}
+
+	.rostersDivider {
+		display: block;
+		background-color: var(--color-border);
+		width: 1px;
+		align-self: stretch;
+	}
+}
+
+.rostersSpacedHeader {
+	min-height: 45px;
+	display: flex;
+	align-items: center;
+}
+
+.teamHeaderText {
+	min-width: 0;
+}
+
+.teamNameHeading {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 320px;
+}
+
+.rosterMembers {
+	position: relative;
+	padding-inline-start: 34px;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2-5);
+	margin-top: var(--s-2);
+
+	&::before {
+		content: "";
+		position: absolute;
+		inset-inline-start: 21px;
+		top: -8px;
+		bottom: 0;
+		width: 3px;
+		background-color: var(--color-border-high);
+		opacity: 0.3;
+		border-radius: 0 0 var(--radius-field) var(--radius-field);
+	}
+}
+
+.tierBadge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.tierPopover {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.tierPopoverName {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	text-transform: capitalize;
+}
+
+.memberGrid {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--s-1);
+	min-width: 0;
+
+	& > * {
+		max-width: 100%;
+		min-width: 0;
+	}
+}
+
+.memberLink {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	max-width: 100%;
+	min-width: 0;
+}
+
+.memberSecondRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.memberNameStack {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.2;
+	min-width: 0;
+
+	& > span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		max-width: 100%;
+	}
+}
+
+.memberInGameName {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
+.memberTier {
+	display: flex;
+	justify-content: center;
+	width: 24px;
+	flex-shrink: 0;
+}
+
+.memberMeta {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-2xs);
+}
+
+.subbedOutTrigger {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.subbedOutIcon {
+	--subbed-out-icon-size: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--subbed-out-icon-size);
+	height: var(--subbed-out-icon-size);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+}
+
+.subbedOutPopover {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.subbedOutHeader {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+}
+
+.rosterEditCount {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	margin-block-end: var(--s-2);
+	text-align: center;
+}
+
+.rosterEditButtons {
+	display: flex;
+	gap: var(--s-2);
+	margin-block-start: var(--s-4);
+	justify-content: center;
+}
+
+.teamAvatar {
+	border-radius: var(--radius-avatar);
+	width: 44px;
+	height: 44px;
+	flex-shrink: 0;
+
+	&[data-side="alpha"] {
+		background-color: var(--color-fg-accent);
+	}
+
+	&[data-side="bravo"] {
+		background-color: var(--color-fg-second);
+	}
+}

@@ -1,5 +1,6 @@
 import * as R from "remeda";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import * as Engine from "~/features/tournament-bracket/core/engine";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";
@@ -12,25 +13,24 @@ export const tournamentCtxTeam = (
 		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null, isCheckOut: 0 }],
 		createdAt: 0,
 		id: teamId,
-		inviteCode: null,
 		avgSeedingSkillOrdinal: null,
 		startingBracketIdx: null,
-		team: null,
-		mapPool: [],
-		members: [],
+		abDivision: null,
+		hasMapPool: false,
+		memberUserIds: [],
+		ownerUserId: null,
 		activeRosterUserIds: [],
-		pickupAvatarUrl: null,
+		logoUrl: null,
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,
 		droppedOut: 0,
-		noScreen: 0,
 		seed: teamId + 1,
 		...partial,
 	};
 };
 
 const nTeams = (n: number, startingId: number) => {
-	const teams = [];
+	const teams: TournamentData["ctx"]["teams"] = [];
 	for (let i = 0; i < n; i++) {
 		teams.push(tournamentCtxTeam(i + 1, tournamentCtxTeam(i + startingId)));
 	}
@@ -46,7 +46,7 @@ export const testTournament = ({
 	},
 	ctx,
 }: {
-	data?: TournamentManagerDataSet;
+	data?: BracketData;
 	ctx?: Partial<TournamentData["ctx"]>;
 }) => {
 	const participant = R.pipe(
@@ -56,103 +56,163 @@ export const testTournament = ({
 		R.unique<number[]>,
 	);
 
+	const tournamentCtx: TournamentData["ctx"] = {
+		eventId: 1,
+		id: 1,
+		tags: null,
+		organization: null,
+		tier: null,
+		tentativeTier: null,
+		hasRules: false,
+		logoUrl: "/test.avif",
+		discordUrl: null,
+		startsAt: 1705858842,
+		isFinalized: 0,
+		name: "test",
+		castTwitchAccounts: [],
+		bracketProgressionOverrides: [],
+		staff: [],
+		toSetMapPool: [],
+		latestTeamIdByDuplicatedUserId: {},
+		mapPickingStyle: "AUTO",
+		settings: {
+			teamPick: { modes: [{ mode: "SZ", count: 6 }], pool: "SENDOUQ" },
+			bracketProgression: [
+				{
+					name: "Main Bracket",
+					type: "double_elimination",
+					requiresCheckIn: false,
+					settings: {},
+				},
+			],
+		},
+		castedMatchesInfo: null,
+		permissions: {
+			ADMIN: [1],
+			ORGANIZE: [1],
+			MANAGE_MATCHES: [1],
+			EDIT_EVENT_INFO: [1],
+			EDIT_IN_GAME_NAMES: [],
+		},
+		teams: nTeams(participant.length, Math.min(...participant)),
+		author: {
+			customUrl: null,
+			customAvatarUrl: null,
+			discordAvatar: null,
+			discordId: "123",
+			username: "test",
+			pronouns: null,
+			id: 1,
+		},
+		...ctx,
+	};
+
 	return new Tournament({
+		// engine created data has no stage names, the database assigns them from the bracket progression
+		data: {
+			...data,
+			stage: data.stage.map((stage, stageIdx) => ({
+				...stage,
+				name:
+					stage.name ??
+					tournamentCtx.settings.bracketProgression[stageIdx]?.name,
+			})),
+		},
+		ctx: tournamentCtx,
+		participatedUsers: [],
+	});
+};
+
+/** A started swiss tournament of two teams with their first match ongoing, optionally locked for a cast. */
+export const runningTournamentWithMatch = ({
+	tournamentId,
+	teamOneUserIds,
+	teamTwoUserIds,
+	isLeague,
+	lockFirstMatchForCast,
+}: {
+	tournamentId: number;
+	teamOneUserIds: number[];
+	teamTwoUserIds: number[];
+	isLeague?: boolean;
+	lockFirstMatchForCast?: boolean;
+}) => {
+	const data = Engine.create({
+		type: "swiss",
+		seeding: [1, 2],
+		settings: {},
+	});
+
+	return testTournament({
 		data,
 		ctx: {
-			eventId: 1,
-			id: 1,
-			tags: null,
-			description: null,
-			organization: null,
-			parentTournamentId: null,
-			rules: null,
-			logoUrl: null,
-			logoSrc: "/test.png",
-			logoValidatedAt: null,
-			discordUrl: null,
-			startTime: 1705858842,
-			isFinalized: 0,
-			name: "test",
-			castTwitchAccounts: [],
-			bracketProgressionOverrides: [],
-			subCounts: [],
-			staff: [],
-			tieBreakerMapPool: [],
-			toSetMapPool: [],
-			participatedUsers: [],
-			mapPickingStyle: "AUTO_SZ",
+			id: tournamentId,
 			settings: {
-				bracketProgression: [
-					{
-						name: "Main Bracket",
-						type: "double_elimination",
-						requiresCheckIn: false,
-						settings: {},
-					},
-				],
+				bracketProgression: progressions.swissOneGroup,
+				isLeague,
 			},
-			castedMatchesInfo: null,
-			teams: nTeams(participant.length, Math.min(...participant)),
-			author: {
-				chatNameColor: null,
-				customUrl: null,
-				discordAvatar: null,
-				discordId: "123",
-				username: "test",
-				id: 1,
-			},
-			...ctx,
+			castedMatchesInfo: lockFirstMatchForCast
+				? {
+						lockedMatches: [
+							{ matchId: data.match[0].id, twitchAccount: "test" },
+						],
+						castedMatches: [],
+					}
+				: null,
+			teams: [
+				tournamentCtxTeam(1, { memberUserIds: teamOneUserIds }),
+				tournamentCtxTeam(2, { memberUserIds: teamTwoUserIds }),
+			],
 		},
 	});
 };
 
-export const adjustResults = (
-	data: TournamentManagerDataSet,
-	adjustedArr: Array<{
-		ids: [number, number];
-		score: [number, number];
-		points?: [number, number];
-	}>,
-): TournamentManagerDataSet => {
-	return {
-		...data,
-		match: data.match.map((match, idx) => {
-			const adjusted = adjustedArr[idx];
-			if (!adjusted) throw new Error(`No adjusted result for match ${idx}`);
+/** Combines brackets into one tournament's data, offsetting local ids the way the database does on adding a stage. */
+export const mergeStages = (...brackets: BracketData[]): BracketData => {
+	const merged: BracketData = { stage: [], group: [], round: [], match: [] };
 
-			if (adjusted.ids[0] !== match.opponent1!.id) {
-				throw new Error("Adjusted match opponent1 id does not match");
-			}
+	for (const bracket of brackets) {
+		const offsets = {
+			stage: merged.stage.length,
+			group: merged.group.length,
+			round: merged.round.length,
+			match: merged.match.length,
+		};
 
-			if (adjusted.ids[1] !== match.opponent2!.id) {
-				throw new Error("Adjusted match opponent2 id does not match");
-			}
-
-			return {
+		merged.stage.push(
+			...bracket.stage.map((stage) => ({
+				...stage,
+				id: stage.id + offsets.stage,
+				number: offsets.stage + 1,
+			})),
+		);
+		merged.group.push(
+			...bracket.group.map((group) => ({
+				...group,
+				id: group.id + offsets.group,
+				stageId: group.stageId + offsets.stage,
+			})),
+		);
+		merged.round.push(
+			...bracket.round.map((round) => ({
+				...round,
+				id: round.id + offsets.round,
+				stageId: round.stageId + offsets.stage,
+				groupId: round.groupId + offsets.group,
+			})),
+		);
+		merged.match.push(
+			...bracket.match.map((match) => ({
 				...match,
-				opponent1: {
-					...match.opponent1!,
-					score: adjusted.score[0],
-					result: adjusted.score[0] > adjusted.score[1] ? "win" : "loss",
-					totalPoints: adjusted.points
-						? adjusted.points[0]
-						: adjusted.score[0] > adjusted.score[1]
-							? 100
-							: 0,
-				},
-				opponent2: {
-					...match.opponent2!,
-					score: adjusted.score[1],
-					result: adjusted.score[1] > adjusted.score[0] ? "win" : "loss",
-					totalPoints: adjusted.points
-						? adjusted.points[1]
-						: adjusted.score[1] > adjusted.score[0]
-							? 100
-							: 0,
-				},
-			};
-		}),
-	};
+				id: match.id + offsets.match,
+				stageId: match.stageId + offsets.stage,
+				groupId: match.groupId + offsets.group,
+				roundId: match.roundId + offsets.round,
+			})),
+		);
+	}
+
+	return merged;
 };
 
 const DEFAULT_PROGRESSION_ARGS = {
@@ -257,6 +317,40 @@ export const progressions = {
 			],
 		},
 	],
+	league: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "Division 1",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Division 1 Playoffs",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "Division 2",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Division 2 Playoffs",
+			sources: [
+				{
+					bracketIdx: 2,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
 	swissOneGroup: [
 		{
 			...DEFAULT_PROGRESSION_ARGS,
@@ -264,6 +358,26 @@ export const progressions = {
 			settings: {
 				groupCount: 1,
 			},
+		},
+	],
+	swissEarlyAdvance: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+			settings: {
+				advanceThreshold: 3,
+			},
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "B1",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [],
+				},
+			],
 		},
 	],
 	doubleEliminationWithUnderground: [
@@ -279,6 +393,228 @@ export const progressions = {
 				{
 					bracketIdx: 0,
 					placements: [-1, -2],
+				},
+			],
+		},
+	],
+	singleEliminationWithUnderground: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Underground",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [-1],
+				},
+			],
+		},
+	],
+	multiSourceTopCut: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Redemption",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [3, 4],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Top Cut",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [1, 2],
+				},
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
+	multiSourceTopCutWithConsolation: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Redemption",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [3, 4],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Top Cut",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [1, 2],
+				},
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Consolation",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [5, 6, 7, 8],
+				},
+			],
+		},
+	],
+	poolsToBracketsViaIntermediateBrackets: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "Day 1 Pools",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Redemption",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [2, 3, 4],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Alpha",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1],
+				},
+				{
+					bracketIdx: 1,
+					placements: [1, 2, 3, 4, 5, 6, 7, 8],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Beta",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [9, 10, 11, 12],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Gamma",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [5, 6],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Delta",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [7, 8],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "Epsilon Seeding",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [9, 10, 11],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Epsilon",
+			sources: [
+				{
+					bracketIdx: 6,
+					placements: [1, 2, 3, 4],
+				},
+			],
+		},
+	],
+	swissToTwoSingleEliminationsWithUnderground: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+			settings: {
+				groupCount: 1,
+			},
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Alpha",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2, 3, 4, 5, 6, 7, 8],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Beta",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [9, 10, 11, 12, 13, 14, 15, 16],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Alpha UG",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [-1],
 				},
 			],
 		},

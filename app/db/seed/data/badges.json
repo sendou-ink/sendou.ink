@@ -1,0 +1,207 @@
+[
+	{
+		"code": "sundae",
+		"displayName": "4v4 Sundaes",
+		"hue": null
+	},
+	{
+		"code": "zones",
+		"displayName": "Dapple SZ Speedladder",
+		"hue": null
+	},
+	{
+		"code": "ebtv",
+		"displayName": "EBTV League",
+		"hue": -72
+	},
+	{
+		"code": "girls",
+		"displayName": "Girls Duo Cup",
+		"hue": null
+	},
+	{
+		"code": "idtga",
+		"displayName": "It's Dangerous to go Alone",
+		"hue": null
+	},
+	{
+		"code": "beta_top1",
+		"displayName": "Beta's Events",
+		"hue": null
+	},
+	{
+		"code": "beta_top2",
+		"displayName": "Launch Day",
+		"hue": null
+	},
+	{
+		"code": "beta_top3",
+		"displayName": "Launch Day",
+		"hue": null
+	},
+	{
+		"code": "pair",
+		"displayName": "League Rush (Pair)",
+		"hue": null
+	},
+	{
+		"code": "quad",
+		"displayName": "League Rush (Quad)",
+		"hue": null
+	},
+	{
+		"code": "lobster",
+		"displayName": "Lobster Crossfire",
+		"hue": null
+	},
+	{
+		"code": "monday",
+		"displayName": "Monday Afterparty",
+		"hue": null
+	},
+	{
+		"code": "pool1",
+		"displayName": "Paddling Pool Weekly",
+		"hue": null
+	},
+	{
+		"code": "snapshot_gold",
+		"displayName": "Snapshot (Alpha)",
+		"hue": null
+	},
+	{
+		"code": "snapshot_silver",
+		"displayName": "Snapshot (Beta)",
+		"hue": null
+	},
+	{
+		"code": "snapshot_bronze",
+		"displayName": "Snapshot (Gamma)",
+		"hue": null
+	},
+	{
+		"code": "superjump_alpha",
+		"displayName": "Superjump",
+		"hue": null
+	},
+	{
+		"code": "superjump_beta",
+		"displayName": "Superjump (Beta bracket)",
+		"hue": null
+	},
+	{
+		"code": "superjump_gamma",
+		"displayName": "Superjump (Gamma bracket)",
+		"hue": null
+	},
+	{
+		"code": "toni_kensa",
+		"displayName": "Toni Kensa Cup",
+		"hue": null
+	},
+	{
+		"code": "pool2",
+		"displayName": "Golden Paddling Pool Event",
+		"hue": null
+	},
+	{
+		"code": "lutipink",
+		"displayName": "LUTI Season 12 (Div X)",
+		"hue": null
+	},
+	{
+		"code": "lutired",
+		"displayName": "LUTI Season 12 (Div 1)",
+		"hue": null
+	},
+	{
+		"code": "lutiorange",
+		"displayName": "LUTI Season 12 (Div 2)",
+		"hue": null
+	},
+	{
+		"code": "lutiyellow",
+		"displayName": "LUTI Season 12 (Div 3)",
+		"hue": null
+	},
+	{
+		"code": "lutilimegreen",
+		"displayName": "LUTI Season 12 (Div 4)",
+		"hue": null
+	},
+	{
+		"code": "lutigreen",
+		"displayName": "LUTI Season 12 (Div 5)",
+		"hue": null
+	},
+	{
+		"code": "lutiblue",
+		"displayName": "LUTI Season 12 (Div 6)",
+		"hue": null
+	},
+	{
+		"code": "lutipurple",
+		"displayName": "LUTI Season 12 (Div 7)",
+		"hue": null
+	},
+	{
+		"code": "lutitan",
+		"displayName": "LUTI Season 12 (Div 8)",
+		"hue": null
+	},
+	{
+		"code": "lutitan",
+		"displayName": "LUTI Season 12 (Div 9)",
+		"hue": null
+	},
+	{
+		"code": "tidal_tuesdays",
+		"displayName": "Tidal Tuesdays",
+		"hue": null
+	},
+	{
+		"code": "squid_junction",
+		"displayName": "Squid Junction",
+		"hue": null
+	},
+	{
+		"code": "triton",
+		"displayName": "Triton-Cup",
+		"hue": null
+	},
+	{
+		"code": "cake",
+		"displayName": "Yay's SUPER AWESOME Birthday Bash!",
+		"hue": null
+	},
+	{
+		"code": "20xx",
+		"displayName": "a 20XX Series tournament",
+		"hue": null
+	},
+	{
+		"code": "itz_red",
+		"displayName": "In The Zone 1-9",
+		"hue": null
+	},
+	{
+		"code": "itz_orange",
+		"displayName": "In The Zone 10-19",
+		"hue": null
+	},
+	{
+		"code": "itz_blue",
+		"displayName": "In The Zone 20-29",
+		"hue": null
+	},
+	{
+		"code": "patreon",
+		"displayName": "Supporter",
+		"hue": null
+	},
+	{
+		"code": "patreon_plus",
+		"displayName": "Supporter+",
+		"hue": null
+	}
+]

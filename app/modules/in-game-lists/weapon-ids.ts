@@ -5,9 +5,9 @@ export const weaponCategories = [
 	{
 		name: "SHOOTERS",
 		weaponIds: [
-			0, 1, 10, 11, 20, 21, 22, 30, 31, 32, 40, 41, 42, 45, 46, 47, 50, 51, 60,
-			61, 70, 71, 72, 80, 81, 82, 90, 91, 92, 100, 101, 300, 301, 302, 310, 311,
-			312, 400, 401,
+			0, 1, 10, 11, 20, 21, 22, 30, 31, 32, 40, 41, 42, 45, 46, 47, 48, 50, 51,
+			60, 61, 70, 71, 72, 80, 81, 82, 90, 91, 92, 100, 101, 300, 301, 302, 310,
+			311, 312, 400, 401,
 		],
 	},
 	{
@@ -76,12 +76,9 @@ export const mainWeaponIds = weaponCategories
 	.flatMap((category) => category.weaponIds)
 	.sort((a, b) => a - b);
 
-export const weaponIdToAltId = new Map<
-	MainWeaponId,
-	MainWeaponId | MainWeaponId[]
->([
+const weaponIdToAltId = new Map<MainWeaponId, MainWeaponId | MainWeaponId[]>([
 	[40, [45, 47]],
-	[41, 46],
+	[41, [46, 48]],
 	[200, 205],
 	[1010, 1015],
 	[1110, 1115],
@@ -93,10 +90,11 @@ export const weaponIdToAltId = new Map<
 	[7010, 7015],
 	[8000, 8005],
 ]);
-export const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
+const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
 	[45, 40],
 	[47, 40],
 	[46, 41],
+	[48, 41],
 	[205, 200],
 	[1015, 1010],
 	[1115, 1110],
@@ -110,8 +108,14 @@ export const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
 ]);
 
 /**
- * Converts a given weapon ID to an array containing the weapon ID and its alternate IDs. For example if you enter the ID 40 (Splattershot) it will return [40, 45, 47] (Splattershot, Hero Shot Replica, Order Shot Replica)
+ * Folds only cosmetic alt skins to their base (45 Hero Shot Replica → 40), keeping alt kits unlike
+ * {@link weaponIdToBaseWeaponId} (41 Tentatek stays 41). Mirrors the `BuildWeapon.canonicalWeaponSplId` column.
  */
+export function canonicalWeaponSplId(weaponSplId: MainWeaponId): MainWeaponId {
+	return altWeaponIdToId.get(weaponSplId) ?? weaponSplId;
+}
+
+/** The weapon id and its alt skin ids, e.g. 40 (Splattershot) → [40, 45, 47] (+ Hero Shot Replica, Order Shot Replica). */
 export function weaponIdToArrayWithAlts(weaponId: MainWeaponId) {
 	const altId = weaponIdToAltId.get(weaponId);
 	if (altId !== undefined) {
@@ -120,18 +124,25 @@ export function weaponIdToArrayWithAlts(weaponId: MainWeaponId) {
 
 	const regularId = altWeaponIdToId.get(weaponId);
 	if (regularId !== undefined) {
-		const altId = weaponIdToAltId.get(regularId);
-		if (altId !== undefined) {
-			return [regularId, ...(Array.isArray(altId) ? altId : [altId])];
+		const regularAltId = weaponIdToAltId.get(regularId);
+		if (regularAltId !== undefined) {
+			return [
+				regularId,
+				...(Array.isArray(regularAltId) ? regularAltId : [regularAltId]),
+			];
 		}
 	}
 
 	return [weaponId];
 }
 
-const altWeaponIds = new Set(altWeaponIdToId.keys());
-export const weaponIdIsNotAlt = (weaponId: MainWeaponId) =>
-	!altWeaponIds.has(weaponId);
+/** 40 Splattershot → "BASE", 41 Tentatek → "ALT_KIT", 45 Hero Shot Replica → "ALT_SKIN". */
+export const weaponIdToType = (weaponId: MainWeaponId) => {
+	if (altWeaponIdToId.has(weaponId)) return "ALT_SKIN";
+	if (weaponId === weaponIdToBaseWeaponId(weaponId)) return "BASE";
+
+	return "ALT_KIT";
+};
 
 export const SPLAT_BOMB_ID = 0;
 export const SUCTION_BOMB_ID = 1;
@@ -176,20 +187,20 @@ export const nonBombSubWeaponIds = [
 export const TRIZOOKA_ID = 1;
 export const BIG_BUBBLER_ID = 2;
 export const ZIPCASTER_ID = 3;
-export const TENTA_MISSILES_ID = 4;
+const TENTA_MISSILES_ID = 4;
 export const INK_STORM_ID = 5;
 export const BOOYAH_BOMB_ID = 6;
 export const WAVE_BREAKER_ID = 7;
 export const INK_VAC_ID = 8;
 export const KILLER_WAIL_ID = 9;
-export const INKJET_ID = 10;
-export const ULTRA_STAMP_ID = 11;
+const INKJET_ID = 10;
+const ULTRA_STAMP_ID = 11;
 export const CRAB_TANK_ID = 12;
-export const REEF_SLIDER_ID = 13;
-export const TRIPLE_INKSTRIKE_ID = 14;
-export const TACTICOOLER_ID = 15;
+const REEF_SLIDER_ID = 13;
+const TRIPLE_INKSTRIKE_ID = 14;
+const TACTICOOLER_ID = 15;
 export const SUPER_CHUMP_ID = 16;
-export const KRAKEN_ROYALE_ID = 17;
+const KRAKEN_ROYALE_ID = 17;
 export const TRIPLE_SPLASHDOWN_ID = 18;
 export const SPLATTERCOLOR_SCREEN_ID = 19;
 
@@ -265,18 +276,6 @@ export const exampleMainWeaponIdWithSpecialWeaponId = (
 	}
 };
 
-/**
- * Calculates the base weapon ID from a main weapon ID.
- *
- * @example
- * // Returns 40 (because Splattershot is the base weapon for its kit)
- * weaponIdToBaseWeaponId(40); // -> 40
- *
- * // (41 is Tentatek Splattershot, which is an alt kit of Splattershot)
- * weaponIdToBaseWeaponId(41); // -> 40
- *
- * // (45 is Hero Shot Replica, which is an alt skin of Splattershot)
- * weaponIdToBaseWeaponId(45); // -> 40
- */
+/** Base weapon of a kit or skin: 40, 41 (Tentatek) and 45 (Hero Shot Replica) → 40. */
 export const weaponIdToBaseWeaponId = (id: MainWeaponId) =>
 	(id - (id % 10)) as MainWeaponId;

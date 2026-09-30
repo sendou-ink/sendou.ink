@@ -1,0 +1,84 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "X",
+    "mode": "RM",
+    "stage": 13,
+    "timestamp": "9/7/2026 14:04",
+    "replayCode": "R80B-00DL-WF4X-V3CA",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "D4C",
+        "weaponId": 80,
+        "paint": 691,
+        "ka": 8,
+        "d": 3,
+        "s": 3
+      },
+      {
+        "name": "ちからこそパワー",
+        "weaponId": 5000,
+        "paint": 562,
+        "ka": 7,
+        "d": 3,
+        "s": 2
+      },
+      {
+        "name": "8♪cloudy",
+        "weaponId": 7030,
+        "paint": 787,
+        "ka": 8,
+        "d": 3,
+        "s": 2
+      },
+      {
+        "name": "このゲームたのしいl",
+        "weaponId": 80,
+        "paint": 568,
+        "ka": 8,
+        "d": 3,
+        "s": 3
+      },
+      {
+        "name": "Rami",
+        "weaponId": 5000,
+        "paint": 431,
+        "ka": 9,
+        "d": 6,
+        "s": 2
+      },
+      {
+        "name": "ぐ",
+        "weaponId": 80,
+        "paint": 514,
+        "ka": 3,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "ミルクリスピー",
+        "weaponId": 90,
+        "paint": 494,
+        "ka": 6,
+        "d": 4,
+        "s": 1
+      },
+      {
+        "name": "だれやそれあけみ",
+        "weaponId": 80,
+        "paint": 455,
+        "ka": 5,
+        "d": 3,
+        "s": 1
+      }
+    ],
+    "stageLabel": "Brinewater Springs"
+  },
+  "options": {
+    "notes": "Heavily compressed stream capture. Replay code hand-verified from the zoomed frame; a prior parse misread 8>6, B>D/A, F>E, A>I."
+  }
+}

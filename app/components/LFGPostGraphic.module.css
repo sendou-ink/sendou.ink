@@ -1,0 +1,99 @@
+.typeBadge {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	text-align: right;
+	color: var(--graphic-accent);
+}
+
+.details {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-3);
+}
+
+.weapons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+	padding: var(--s-1-5);
+	background-color: oklch(0% 0 0 / 0.3);
+	border-radius: var(--radius-field);
+}
+
+.pills {
+	display: flex;
+	flex-shrink: 0;
+	gap: var(--s-1-5);
+}
+
+.pill {
+	padding: var(--s-1) var(--s-2);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-extra);
+	color: var(--graphic-text-dim);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-full);
+}
+
+.textBox {
+	padding: var(--s-3);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	line-height: 1.5;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+}
+
+.members {
+	/* keep in sync with MEMBER_WEAPON_SIZE */
+	--member-weapon-size: 28px;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+}
+
+/* rows without weapons stay as tall as the ones with them */
+.member {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	grid-template-rows: minmax(
+			calc(var(--member-weapon-size) + 2 * var(--s-1)),
+			auto
+		);
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+
+	& .weapons {
+		padding: var(--s-1);
+	}
+}
+
+.memberName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	line-height: 1.3;
+}
+
+/* claims the free space like the header title, so a name the raster measures wider still fits */
+.memberUsername {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

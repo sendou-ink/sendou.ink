@@ -1,19 +1,14 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
-import { streamsByTournamentId } from "../core/streams.server";
+import type { LoaderFunctionArgs } from "react-router";
+import {
+	fetchTournamentStreams,
+	tournamentFromParams,
+} from "~/features/tournament-bracket/core/Tournament.server";
+import type { SerializeFrom } from "~/utils/remix";
 
-export type TournamentStreamsLoader = typeof loader;
+export type TournamentStreamsLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
-	});
-	const tournament = notFoundIfFalsy(await tournamentData({ tournamentId }));
+	const { tournamentId } = await tournamentFromParams(params, { for: "view" });
 
-	return {
-		streams: await streamsByTournamentId(tournament.ctx),
-	};
+	return { streams: await fetchTournamentStreams(tournamentId) };
 };

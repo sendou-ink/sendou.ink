@@ -1,16 +1,15 @@
-import { Link } from "@remix-run/react";
+import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Avatar } from "~/components/Avatar";
+import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { UsersIcon } from "~/components/icons/Users";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
+import { TierPill } from "~/components/TierPill";
+import { UserLink } from "~/components/UserLink";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
-import { HACKY_resolvePicture } from "~/features/tournament/tournament-utils";
-import { databaseTimestampToDate } from "~/utils/dates";
-import { tournamentLogoUrl, tournamentTeamPage, userPage } from "~/utils/urls";
-import { userSubmittedImage } from "~/utils/urls-img";
+import { tournamentTeamPage } from "~/utils/urls";
 
 import styles from "./TeamResultsTable.module.css";
 
@@ -19,7 +18,7 @@ interface TeamResultsTableProps {
 }
 
 export function TeamResultsTable({ results }: TeamResultsTableProps) {
-	const { t, i18n } = useTranslation("user");
+	const { t } = useTranslation("user");
 
 	return (
 		<Table>
@@ -33,10 +32,6 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 			</thead>
 			<tbody>
 				{results.map((result) => {
-					const logoUrl = result.logoUrl
-						? userSubmittedImage(result.logoUrl)
-						: HACKY_resolvePicture({ name: result.tournamentName });
-
 					return (
 						<tr key={result.tournamentId}>
 							<td className="pl-4 whitespace-nowrap">
@@ -48,20 +43,20 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 								</div>
 							</td>
 							<td className="whitespace-nowrap">
-								{databaseTimestampToDate(result.startTime).toLocaleDateString(
-									i18n.language,
-									{
+								<LocaleTime
+									date={result.startsAt}
+									options={{
 										day: "numeric",
-										month: "short",
+										month: "numeric",
 										year: "numeric",
-									},
-								)}
+									}}
+								/>
 							</td>
 							<td>
 								<div className="stack horizontal xs items-center">
-									{logoUrl !== tournamentLogoUrl("default") ? (
+									{result.logoUrl ? (
 										<img
-											src={logoUrl}
+											src={result.logoUrl}
 											alt=""
 											width={18}
 											height={18}
@@ -76,6 +71,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 									>
 										{result.tournamentName}
 									</Link>
+									{result.tier ? <TierPill tier={result.tier} /> : null}
 								</div>
 							</td>
 							<td>
@@ -84,7 +80,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 										<SendouPopover
 											trigger={
 												<SendouButton
-													icon={<UsersIcon />}
+													icon={<Users />}
 													size="small"
 													variant="minimal"
 												>
@@ -95,13 +91,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 											<ul className={styles.players}>
 												{result.subs.map((player) => (
 													<li key={player.id} className="flex items-center">
-														<Link
-															to={userPage(player)}
-															className="stack horizontal xs items-center"
-														>
-															<Avatar user={player} size="xxs" />
-															{player.username}
-														</Link>
+														<UserLink user={player} />
 													</li>
 												))}
 											</ul>

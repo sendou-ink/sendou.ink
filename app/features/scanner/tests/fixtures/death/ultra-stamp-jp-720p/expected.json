@@ -1,0 +1,30 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 11,
+    "weaponType": "SPECIAL",
+    "abilities": [
+      [
+        "IRU",
+        "QR",
+        "SPU"
+      ],
+      [
+        "AD",
+        "SPU",
+        "RES",
+        "UNKNOWN"
+      ],
+      [
+        "SPU",
+        "SS",
+        "QSJ"
+      ]
+    ],
+    "name": "gori_1",
+    "weaponLabel": "Ultra Stamp"
+  },
+  "options": {
+    "notes": "720p VoD capture (upscaled to canonical at ingest), JP death message 'ウルトラハンコ で / やられた！'. The garbled low-fidelity read only resolves through the candidate-lattice re-rank (weapon is a SPECIAL, so the burst-icon paths can't help). The name band is a two-hue split banner (yellow/green diagonal), read via the split-background candidate in the tag parse. Streamer webcam bottom-left pixelated for privacy (region sits left of every parsed ROI)."
+  }
+}

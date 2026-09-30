@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 255,
+		"special": [
+			[true, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[true, false, true, false]
+		]
+	},
+	"options": {
+		"notes": "AREA CUP FINAL (grey-win VoD, Flounder Heights) spectator HUD at 4:15. Right team's outermost slot is a plain alive purple body tilted mid-bounce — the live scan read it as splatted (✕·✕✕ @ 0.749), manufacturing a third death for the .52 Gal whose real second death only starts three seconds later; one second after this frame the same body washes into special ready. Right slots 1 and 3 are genuinely splatted. Left team's outermost slot carries the bright special-ready wash."
+	}
+}

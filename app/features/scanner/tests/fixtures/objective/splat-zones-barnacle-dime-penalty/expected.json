@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 209,
+		"score": [2, 84],
+		"penalty": [75, null],
+		"control": [false, true]
+	},
+	"options": {
+		"notes": "Single-digit count with a large penalty on alpha; bravo (purple) in control with the team-color fill."
+	}
+}

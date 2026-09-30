@@ -12,16 +12,17 @@ const dontWrite = process.argv.includes(NO_WRITE_KEY);
 
 const KNOWN_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
 
+// `_zero` is an i18next `count === 0` override, not a CLDR category: it legitimately sits beside the
+// bare singular key single-plural languages (zh, ja, ko) use, so it never counts as a suffix clash
+const ZERO_SUFFIX = "_zero";
+const PLURAL_SUFFIXES = KNOWN_SUFFIXES.filter((sfx) => sfx !== ZERO_SUFFIX);
+
 const REPO_TRANSLATIONS_INFO_URL =
-	"https://github.com/sendou-ink/sendou.ink#translations";
+	"https://github.com/sendou-ink/sendou.ink/blob/main/docs/translation.md";
 
 const MD = {
 	inlineCode: (s: string) => `\`${s}\``,
 	strong: (s: string) => `**${s}**`,
-	h2: (s: string) => `## ${s}`,
-	li: (s: string) => `- ${s}`,
-	ticked: (s: string) => `- [x] ${s}`,
-	unticked: (s: string) => `- [ ] ${s}`,
 };
 
 const otherLanguageTranslationPath = (code?: string, fileName?: string) =>
@@ -66,8 +67,8 @@ for (const file of fileNames) {
 			let otherLanguageContent: Record<string, string>;
 			try {
 				otherLanguageContent = JSON.parse(otherRawContent);
-			} catch {
-				throw new Error(`failed to parse ${lang}/${file}`);
+			} catch (error) {
+				throw new Error(`failed to parse ${lang}/${file}`, { cause: error });
 			}
 
 			const otherLanguageContentKeys = getKeysWithoutSuffix(
@@ -89,7 +90,7 @@ for (const file of fileNames) {
 			});
 
 			const missingKeys = englishContentKeys.filter(
-				(key) => !otherLanguageContentKeys.includes(key),
+				(missingKey) => !otherLanguageContentKeys.includes(missingKey),
 			);
 
 			if (key === "weapons" || key === "gear") {
@@ -114,7 +115,6 @@ if (dontWrite) {
 }
 
 const markdown = createTranslationProgessMarkdown({
-	missingTranslations,
 	totalTranslationCounts,
 });
 
@@ -186,46 +186,53 @@ function validateNoDuplicateKeys({
 	}
 }
 
-// get keys while respecting different plural/context key suffixes in different languages.
+// keys with their language-specific plural/context suffixes stripped
 function getKeysWithoutSuffix(
 	translations: Record<string, string>,
 	lang: string,
 	file: string,
 ): string[] {
-	const foundSuffixKeys = new Set<string>();
-	const keys = [];
+	const pluralBaseKeys = new Set<string>();
+	const bareKeys = new Set<string>();
+	const keys: string[] = [];
+
+	const pushOnce = (key: string) => {
+		if (!keys.includes(key)) keys.push(key);
+	};
 
 	for (const [key, value] of Object.entries(translations)) {
 		if (value === "") {
 			continue; // Consider key missing if untranslated
 		}
 
-		const suffix = KNOWN_SUFFIXES.find((sfx) => key.endsWith(sfx));
+		if (key.endsWith(ZERO_SUFFIX)) {
+			// `_zero` override always maps to its base key and never clashes with it
+			pushOnce(key.slice(0, -ZERO_SUFFIX.length));
+			continue;
+		}
+
+		const suffix = PLURAL_SUFFIXES.find((sfx) => key.endsWith(sfx));
 		if (!suffix) {
-			if (foundSuffixKeys.has(key)) {
+			if (pluralBaseKeys.has(key)) {
 				throw new Error(
 					`Found same key with and without suffixes in ${lang}/${file}: ${key}`,
 				);
 			}
-			keys.push(key);
+			bareKeys.add(key);
+			pushOnce(key);
 			continue;
 		}
 
-		const baseKey = key.replace(suffix, "");
+		const baseKey = key.slice(0, -suffix.length);
 
-		if (foundSuffixKeys.has(baseKey)) {
-			// Already found this key with a suffix. Duplicates are handled elsewhere.
-			continue;
-		}
-
-		if (keys.includes(baseKey)) {
+		if (bareKeys.has(baseKey)) {
 			throw new Error(
 				`Found same key with and without suffixes in ${lang}/${file}: ${baseKey}`,
 			);
 		}
 
-		keys.push(baseKey);
-		foundSuffixKeys.add(baseKey);
+		pluralBaseKeys.add(baseKey);
+		pushOnce(baseKey);
 	}
 
 	return keys;
@@ -257,11 +264,11 @@ function MDCompletionStatus({
 }
 
 function MDOverviewTable({
-	totalTranslationCounts,
+	totalTranslationCounts: keyCountsByFile,
 }: {
 	totalTranslationCounts: Record<string, number>;
 }) {
-	const totalKeysCount = Object.values(totalTranslationCounts).reduce(
+	const totalKeysCount = Object.values(keyCountsByFile).reduce(
 		(a, b) => a + b,
 		0,
 	);
@@ -269,7 +276,7 @@ function MDOverviewTable({
 		(name) => name !== "weapons.json" && name !== "gear.json",
 	);
 
-	const rows = [];
+	const rows: string[] = [];
 
 	rows.push(
 		`| Language | Total | ${relevantFiles.map(MD.inlineCode).join(" | ")} |`,
@@ -278,7 +285,7 @@ function MDOverviewTable({
 	rows.push(`| :-- | :-: | ${relevantFiles.map(() => ":-:").join(" | ")} |`);
 
 	for (const [lang, missingKeysObj] of Object.entries(missingTranslations)) {
-		const cells = [];
+		const cells: string[] = [];
 
 		cells.push(MD.strong(lang));
 
@@ -306,7 +313,7 @@ function MDOverviewTable({
 
 			cells.push(
 				MDCompletionStatus({
-					totalCount: totalTranslationCounts[fileKey],
+					totalCount: keyCountsByFile[fileKey],
 					missingCount: missingKeysInFile.length,
 				}),
 			);
@@ -318,70 +325,9 @@ function MDOverviewTable({
 	return rows.join("\n");
 }
 
-function MDDetailsList({
-	summary,
-	content,
-}: {
-	summary: string;
-	content: string[];
-}) {
-	return `<details><summary>${summary}</summary><ul>${content
-		.map((c) => `<li>${c}</li>`)
-		.join("")}</ul></details>`;
-}
-
-function MDMissingKeysList({
-	missingTranslations,
-}: {
-	missingTranslations: Record<string, Record<string, Array<string>>>;
-}) {
-	const blocks = [];
-
-	for (const [lang, missingKeysObj] of Object.entries(missingTranslations)) {
-		const parts = [];
-
-		parts.push(MD.h2(lang));
-
-		for (const [fileKey, missingKeys] of Object.entries(missingKeysObj)) {
-			const noneMissing = missingKeys.length === 0;
-			const checkbox = noneMissing ? MD.ticked : MD.unticked;
-			const fileEntry = checkbox(MD.inlineCode(`${fileKey}.json`));
-
-			const allMissing = missingKeys.length === totalTranslationCounts[fileKey];
-
-			const keysLabel = allMissing
-				? "All keys"
-				: missingKeys.length === 1
-					? "1 key"
-					: `${missingKeys.length} keys`;
-
-			const details = noneMissing
-				? ""
-				: MDDetailsList({
-						summary: `${keysLabel} missing`,
-						content: allMissing
-							? [
-									`Create a fresh copy of ${MD.inlineCode(
-										`en/${fileKey}.json`,
-									)} to get started.`,
-								]
-							: missingKeys,
-					});
-
-			parts.push(`${fileEntry} ${details}`);
-		}
-
-		blocks.push(parts.join("\n"));
-	}
-
-	return blocks.join("\n\n");
-}
-
 function createTranslationProgessMarkdown({
-	missingTranslations,
-	totalTranslationCounts,
+	totalTranslationCounts: keyCountsByFile,
 }: {
-	missingTranslations: Record<string, Record<string, Array<string>>>;
 	totalTranslationCounts: Record<string, number>;
 }) {
 	return `
@@ -395,9 +341,5 @@ If you want to contribute by adding missing translations, make sure to read the 
 
 Key: 🟢 = Done, 🟡 = In progress, 🔴 = Not started
 
-${MDOverviewTable({ totalTranslationCounts })}
-
-## Missing Keys
-  
-${MDMissingKeysList({ missingTranslations })}`;
+${MDOverviewTable({ totalTranslationCounts: keyCountsByFile })}`;
 }

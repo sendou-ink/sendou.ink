@@ -13,5 +13,9 @@ export type Role =
 	| "ARTIST"
 	| "CALENDAR_EVENT_ADDER"
 	| "TOURNAMENT_ADDER"
+	| "API_ACCESSER"
+	| "QA"
+	| "DEV"
+	| "SCANNER_TESTER"
 	| "SUPPORTER" // patrons of "Supporter" tier or higher
 	| "MINOR_SUPPORT"; // patrons of "Support" tier or higher

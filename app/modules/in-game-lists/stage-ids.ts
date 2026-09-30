@@ -54,3 +54,7 @@ export const stagesObj = {
 	LEMURIA_HUB: 23,
 	URCHIN_UNDERPASS: 24,
 } as const;
+
+export function shortStageName(fullName: string) {
+	return fullName.split(" ")[0];
+}

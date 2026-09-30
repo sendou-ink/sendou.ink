@@ -1,52 +1,50 @@
-import { useFetcher } from "@remix-run/react";
-import clsx from "clsx";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "~/components/Input";
-import { Label } from "~/components/Label";
-import { SubmitButton } from "~/components/SubmitButton";
-import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
-import { SENDOUQ_PAGE } from "~/utils/urls";
+import { Image } from "~/components/Image";
+import { InfoPopover } from "~/components/InfoPopover";
+import { addFriendCodeSchema } from "~/features/sendouq/q-schemas";
+import { SendouForm } from "~/form/SendouForm";
+import { navIconUrl, SENDOUQ_PAGE } from "~/utils/urls";
+
+const FC_INFO_IMAGE_URL = navIconUrl("fc-info");
 
 export function FriendCodeInput({
 	friendCode,
 }: {
 	friendCode?: string | null;
 }) {
-	const fetcher = useFetcher();
 	const { t } = useTranslation(["common"]);
-	const id = React.useId();
+
+	if (friendCode) {
+		return <div className="font-bold text-center">SW-{friendCode}</div>;
+	}
 
 	return (
-		<fetcher.Form method="post" action={SENDOUQ_PAGE}>
-			<div
-				className={clsx("stack sm horizontal items-end", {
-					"justify-center": friendCode,
-				})}
-			>
-				<div>
-					{!friendCode ? (
-						<Label htmlFor={id}>{t("common:fc.title")}</Label>
-					) : null}
-					{friendCode ? (
-						<div className="font-bold">SW-{friendCode}</div>
-					) : (
-						<Input
-							leftAddon="SW-"
-							id={id}
-							name="friendCode"
-							pattern={FRIEND_CODE_REGEXP_PATTERN}
-							placeholder="1234-5678-9012"
-							required
-						/>
-					)}
+		<SendouForm
+			schema={addFriendCodeSchema}
+			action={SENDOUQ_PAGE}
+			revalidateRoot
+			submitButtonText={t("common:actions.save")}
+		>
+			{({ FormField }) => (
+				<div className="stack sm">
+					<FormField name="friendCode" />
+					<div className="stack horizontal sm items-center text-lighter text-xs">
+						{t("common:fc.onceSetStaffOnly")}
+						<InfoPopover tiny>
+							<div className="stack sm">
+								<div className="text-xs font-bold">
+									{t("common:fc.whereToFind")}
+								</div>
+								<Image
+									path={FC_INFO_IMAGE_URL}
+									alt={t("common:fc.whereToFind")}
+									width={320}
+								/>
+							</div>
+						</InfoPopover>
+					</div>
 				</div>
-				{!friendCode ? (
-					<SubmitButton _action="ADD_FRIEND_CODE" state={fetcher.state}>
-						Save
-					</SubmitButton>
-				) : null}
-			</div>
-		</fetcher.Form>
+			)}
+		</SendouForm>
 	);
 }

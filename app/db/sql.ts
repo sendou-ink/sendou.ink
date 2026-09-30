@@ -1,40 +1,97 @@
+import { DatabaseSync } from "node:sqlite";
 import { styleText } from "node:util";
-import Database from "better-sqlite3";
-import {
-	Kysely,
-	type LogEvent,
-	ParseJSONResultsPlugin,
-	SqliteDialect,
-} from "kysely";
+import { Kysely, type LogEvent } from "kysely";
 import { format } from "sql-formatter";
-import invariant from "~/utils/invariant";
+import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
+import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
+import { JSON_COLUMNS } from "./json-columns";
+import { computedJsonColumns } from "./json-selections";
+import { NodeSqliteDialect } from "./node-sqlite-dialect";
 import type { DB } from "./tables";
+import { WriteTrackerPlugin } from "./write-tracker";
 
-const LOG_LEVEL = (["trunc", "full", "none"] as const).find(
-	(val) => val === process.env.SQL_LOG,
+const sql = new DatabaseSync(
+	ServerConfig.isTest ? ":memory:" : ServerConfig.dbPath,
 );
 
-const migratedEmptyDb = new Database("db-test.sqlite3").serialize();
+if (ServerConfig.isTest) {
+	applyMigratedSchema(sql);
+}
 
-invariant(process.env.DB_PATH, "DB_PATH env variable must be set");
+sql.exec("PRAGMA journal_mode = WAL");
+// in WAL mode NORMAL only risks durability across a power loss (https://sqlite.org/pragma.html)
+sql.exec("PRAGMA synchronous = NORMAL");
+sql.exec("PRAGMA foreign_keys = ON");
+sql.exec("PRAGMA busy_timeout = 5000");
+// a checkpoint only rewinds the WAL, without this the file keeps the high water mark of the
+// largest transaction ever written (a VACUUM rewrites the whole db through it) forever
+sql.exec("PRAGMA journal_size_limit = 67108864");
+// 64MB page cache (default is 2MB)
+sql.exec("PRAGMA cache_size = -65536");
+// reads straight from the OS page cache without read() syscalls (https://sqlite.org/mmap.html)
+sql.exec("PRAGMA mmap_size = 3221225472");
+// https://sqlite.org/pragma.html#pragma_optimize, paired with the periodic OptimizeDatabase routine
+sql.exec("PRAGMA optimize = 0x10002");
 
-export const sql = new Database(
-	process.env.NODE_ENV === "test" ? migratedEmptyDb : process.env.DB_PATH,
+// strips diacritics ("cafe" matches "Café"); with LIKE's ASCII case-insensitivity this also folds case
+sql.function("unaccent", { deterministic: true }, (value) =>
+	typeof value === "string"
+		? value.normalize("NFD").replace(/\p{M}/gu, "")
+		: value,
 );
-
-sql.pragma("journal_mode = WAL");
-sql.pragma("foreign_keys = ON");
-sql.pragma("busy_timeout = 5000");
 
 export const db = new Kysely<DB>({
-	dialect: new SqliteDialect({
+	dialect: new NodeSqliteDialect({
 		database: sql,
+		cacheStatements: true,
+		jsonColumns: JSON_COLUMNS,
+		computedJsonColumns,
 	}),
-	log: LOG_LEVEL === "trunc" || LOG_LEVEL === "full" ? logQuery : logError,
-	plugins: [new ParseJSONResultsPlugin()],
+	log,
+	plugins: [new EmptyValuesNoopPlugin(), new WriteTrackerPlugin()],
 });
+
+// each test worker gets an in-memory db built by replaying the DDL of the migrated empty file from
+// scripts/ensure-test-db.ts; unlike better-sqlite3, `node:sqlite` can't deserialize a db into memory
+function applyMigratedSchema(target: DatabaseSync) {
+	const source = new DatabaseSync("db-test.sqlite3", {
+		readOnly: true,
+		timeout: 5000,
+	});
+
+	try {
+		// virtual tables create their own shadow tables (e.g. UserSearch_data)
+		const statements = source
+			.prepare(`
+				SELECT sql FROM sqlite_master m
+				WHERE sql IS NOT NULL
+				AND name NOT LIKE 'sqlite_%'
+				AND NOT EXISTS (
+					SELECT 1 FROM sqlite_master AS vt
+					WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
+					AND m.name LIKE vt.name || '_%'
+				)
+				ORDER BY m.rowid
+			`)
+			.all() as Array<{ sql: string }>;
+
+		for (const statement of statements) {
+			target.exec(statement.sql);
+		}
+	} finally {
+		source.close();
+	}
+}
+
+function log(event: LogEvent) {
+	if (ServerConfig.sqlLog === "trunc" || ServerConfig.sqlLog === "full") {
+		logQuery(event);
+	} else {
+		logError(event);
+	}
+}
 
 function logQuery(event: LogEvent) {
 	const isSelectQuery = Boolean((event.query.query as any).from?.froms);
@@ -42,7 +99,7 @@ function logQuery(event: LogEvent) {
 	if (event.level === "query" && isSelectQuery) {
 		const from = () =>
 			(event.query.query as any).from.froms.map(
-				(f: any) => f.table.identifier.name,
+				(f: any) => f.table?.identifier?.name ?? f.alias?.name ?? "unknown",
 			);
 		// biome-ignore lint/suspicious/noConsole: dev only
 		console.log(styleText("blue", `-- SQLITE QUERY to "${from()}" --`));
@@ -63,12 +120,7 @@ function logQuery(event: LogEvent) {
 function logError(event: LogEvent) {
 	if (
 		event.level === "error" &&
-		// it seems that this error happens everytime something goes wrong inside transaction
-		// my guess is that the transaction is already implicitly rolled back in the case of error
-		// but kysely also does it explicitly -> fails because there is no transaction to rollback.
-		// this `logError` function at least makes it so that due to that the error doesn't get logged
-		// but of course the best solution would also avoid useless rollbacks, something for the future
-		// btw this particular check is here just to avoid the double "no transaction is active" log
+		// an error inside a transaction rolls it back implicitly, so kysely's explicit rollback fails after
 		!(event.error as any).message.includes("no transaction is active")
 	) {
 		logger.error(event.error);
@@ -88,12 +140,12 @@ function millisToColor(millis: number) {
 	return "red";
 }
 
-function formatSql(sql: string, params: readonly unknown[]) {
-	const formatted = format(sql);
+function formatSql(query: string, params: readonly unknown[]) {
+	const formatted = format(query);
 
 	const lines = formatted.split("\n");
 
-	if (LOG_LEVEL === "full" || lines.length <= 11) {
+	if (ServerConfig.sqlLog === "full" || lines.length <= 11) {
 		return addParams(formatted, params);
 	}
 
@@ -102,10 +154,10 @@ function formatSql(sql: string, params: readonly unknown[]) {
 	return `${lines.slice(0, 10).join("\n")}\n... (${linesNotShown} more lines) ...\n`;
 }
 
-function addParams(sql: string, params: readonly unknown[]) {
+function addParams(query: string, params: readonly unknown[]) {
 	const coloredParams = params.map((param) =>
 		styleText("yellow", JSON.stringify(param)),
 	);
 
-	return sql.replace(/\?/g, () => coloredParams.shift() || "");
+	return query.replace(/\?/g, () => coloredParams.shift() || "");
 }

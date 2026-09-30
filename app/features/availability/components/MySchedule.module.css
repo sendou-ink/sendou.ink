@@ -1,0 +1,39 @@
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	flex-wrap: wrap;
+
+	/* the two links read as one blur of blue at the gap the heading needs */
+	& > a + button {
+		margin-inline-start: var(--s-1);
+	}
+}
+
+.weekHeading {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	margin-inline: var(--s-2);
+}
+
+.notFilled {
+	color: inherit;
+	opacity: 0.7;
+	font-size: var(--font-2xs);
+	margin-inline-start: var(--s-1);
+}
+
+.actions {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-2);
+}

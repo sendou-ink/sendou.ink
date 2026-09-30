@@ -33,6 +33,8 @@ const createBuild = ({
 	};
 };
 
+const noFilters = { abilities: [], mode: null, date: null };
+
 describe("Filter builds", () => {
 	test("returns correct build back based on abilities (AT_LEAST)", () => {
 		const filtered = filterBuilds({
@@ -41,9 +43,9 @@ describe("Filter builds", () => {
 				createBuild({ headAbilities: ["ISM", "ISM", "ISM", "ISM"] }),
 			],
 			count: 2,
-			filters: [
+			...noFilters,
+			abilities: [
 				{
-					type: "ability",
 					ability: "ISM",
 					value: 10,
 					comparison: "AT_LEAST",
@@ -62,9 +64,9 @@ describe("Filter builds", () => {
 				createBuild({ headAbilities: ["ISM", "ISM", "ISM", "ISM"] }),
 			],
 			count: 2,
-			filters: [
+			...noFilters,
+			abilities: [
 				{
-					type: "ability",
 					ability: "ISM",
 					value: 6,
 					comparison: "AT_MOST",
@@ -83,9 +85,9 @@ describe("Filter builds", () => {
 				createBuild({ headAbilities: ["ISS", "ISS", "ISM", "ISM"] }),
 			],
 			count: 2,
-			filters: [
+			...noFilters,
+			abilities: [
 				{
-					type: "ability",
 					ability: "T",
 					value: true,
 				},
@@ -103,9 +105,9 @@ describe("Filter builds", () => {
 				createBuild({ headAbilities: ["ISS", "ISS", "ISM", "ISM"] }),
 			],
 			count: 2,
-			filters: [
+			...noFilters,
+			abilities: [
 				{
-					type: "ability",
 					ability: "T",
 					value: false,
 				},
@@ -130,45 +132,8 @@ describe("Filter builds", () => {
 				createBuild({ headAbilities: ["ISM", "ISM", "ISM", "ISM"], modes: [] }),
 			],
 			count: 3,
-			filters: [
-				{
-					type: "mode",
-					mode: "SZ",
-				},
-			],
-		});
-
-		expect(filtered.length).toBe(1);
-		expect(filtered[0].abilities[0]).toEqual(["ISS", "ISM", "ISM", "ISM"]);
-	});
-
-	test("filters based on many modes", () => {
-		const filtered = filterBuilds({
-			builds: [
-				createBuild({
-					headAbilities: ["ISS", "ISM", "ISM", "ISM"],
-					modes: ["SZ", "TC"],
-				}),
-				createBuild({
-					headAbilities: ["ISM", "ISM", "ISM", "ISM"],
-					modes: ["SZ"],
-				}),
-				createBuild({
-					headAbilities: ["ISM", "ISM", "ISM", "ISM"],
-					modes: ["TC"],
-				}),
-			],
-			count: 3,
-			filters: [
-				{
-					type: "mode",
-					mode: "SZ",
-				},
-				{
-					type: "mode",
-					mode: "TC",
-				},
-			],
+			...noFilters,
+			mode: "SZ",
 		});
 
 		expect(filtered.length).toBe(1);
@@ -188,19 +153,15 @@ describe("Filter builds", () => {
 				}),
 			],
 			count: 2,
-			filters: [
-				{
-					type: "date",
-					date: "2022-01-01",
-				},
-			],
+			...noFilters,
+			date: "2022-01-01",
 		});
 
 		expect(filtered.length).toBe(1);
 		expect(filtered[0].abilities[0]).toEqual(["ISS", "ISM", "ISM", "ISM"]);
 	});
 
-	test("combines filters of same type", () => {
+	test("combines multiple ability conditions", () => {
 		const filtered = filterBuilds({
 			builds: [
 				createBuild({ headAbilities: ["T", "ISM", "ISM", "ISM"] }),
@@ -208,14 +169,13 @@ describe("Filter builds", () => {
 				createBuild({ headAbilities: ["ISS", "ISS", "ISM", "ISM"] }),
 			],
 			count: 2,
-			filters: [
+			...noFilters,
+			abilities: [
 				{
-					type: "ability",
 					ability: "T",
 					value: true,
 				},
 				{
-					type: "ability",
 					ability: "ISM",
 					value: 9,
 					comparison: "AT_LEAST",
@@ -247,13 +207,10 @@ describe("Filter builds", () => {
 				}),
 			],
 			count: 2,
-			filters: [
+			...noFilters,
+			date: "2022-01-01",
+			abilities: [
 				{
-					type: "date",
-					date: "2022-01-01",
-				},
-				{
-					type: "ability",
 					ability: "ISM",
 					value: 9,
 					comparison: "AT_LEAST",
@@ -273,7 +230,7 @@ describe("Filter builds", () => {
 				createBuild({ headAbilities: ["ISM", "ISM", "ISM", "ISM"] }),
 			],
 			count: 2,
-			filters: [],
+			...noFilters,
 		});
 
 		expect(filtered.length).toBe(2);

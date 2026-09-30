@@ -1,20 +1,22 @@
 import { logger } from "./logger";
 
-// https://stackoverflow.com/a/50101022
+/** `fetch` that aborts after `timeout` ms, also honoring a caller supplied `init.signal`. */
 export async function fetchWithTimeout(
 	input: RequestInfo | URL,
 	init?: RequestInit | undefined,
 	timeout = 5000,
 ) {
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => {
-		controller.abort();
-		logger.error("Fetch timed out");
-	}, timeout);
+	const timeoutSignal = AbortSignal.timeout(timeout);
+	const signal = init?.signal
+		? AbortSignal.any([init.signal, timeoutSignal])
+		: timeoutSignal;
 
-	const response = await fetch(input, { signal: controller.signal, ...init });
-
-	clearTimeout(timeoutId);
-
-	return response;
+	try {
+		return await fetch(input, { ...init, signal });
+	} catch (error) {
+		if (timeoutSignal.aborted) {
+			logger.error("Fetch timed out");
+		}
+		throw error;
+	}
 }

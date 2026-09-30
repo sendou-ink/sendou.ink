@@ -1,38 +1,37 @@
-import type { MetaFunction, SerializeFrom } from "@remix-run/node";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { useLoaderData, useSearchParams } from "@remix-run/react";
+import clsx from "clsx";
+import { X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { AddNewButton } from "~/components/AddNewButton";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
+import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { CrossIcon } from "~/components/icons/Cross";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { artPage } from "~/features/art/art-urls";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { artPage, navIconUrl, newArtPage } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
-import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
+import { navIconUrl } from "~/utils/urls";
+import {
+	metaTags,
+	ogPageImage,
+	type SerializeFrom,
+} from "../../../utils/remix";
+import { ART_TABS, artSearchParams } from "../art-search-params";
 import { ArtGrid } from "../components/ArtGrid";
 import { TagSelect } from "../components/TagSelect";
-
 import { loader } from "../loaders/art.server";
+
 export { loader };
 
-const OPEN_COMMISIONS_KEY = "open";
-
-export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	const currentFilteredTag = args.currentUrl.searchParams.get(
-		FILTERED_TAG_KEY_SEARCH_PARAM_KEY,
-	);
-	const nextFilteredTag = args.nextUrl.searchParams.get(
-		FILTERED_TAG_KEY_SEARCH_PARAM_KEY,
-	);
-
-	if (currentFilteredTag === nextFilteredTag) return false;
-
-	return args.defaultShouldRevalidate;
-};
+export const shouldRevalidate = artSearchParams.shouldRevalidate;
 
 export const handle: SendouRouteHandle = {
 	i18n: ["art"],
@@ -44,7 +43,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
+	const data = args.loaderData as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 
@@ -53,22 +52,27 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon art showcase",
 		description:
 			"Splatoon art filterable by various tags. Find artist to commission for your own custom art. Includes various styles such as traditional, digital, 3D and SFM.",
+		image: ogPageImage("art"),
 		location: args.location,
 	});
 };
 
 export default function ArtPage() {
-	const { t } = useTranslation(["art", "common"]);
+	const { t } = useTranslation(["art", "common", "forms"]);
 	const data = useLoaderData<typeof loader>();
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [
+		{ tab: selectedTab, tag: filteredTag, open: showOpenCommissions },
+		setParams,
+	] = useSearchParamsTyped(artSearchParams);
 	const switchId = React.useId();
 
-	const filteredTag = searchParams.get(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
-	const showOpenCommissions = searchParams.get(OPEN_COMMISIONS_KEY) === "true";
+	const showcaseArts = !showOpenCommissions
+		? data.showcaseArts
+		: data.showcaseArts.filter((art) => art.author?.commissionsOpen);
 
-	const arts = !showOpenCommissions
-		? data.arts
-		: data.arts.filter((art) => art.author?.commissionsOpen);
+	const recentlyUploadedArts = !showOpenCommissions
+		? data.recentlyUploadedArts
+		: data.recentlyUploadedArts.filter((art) => art.author?.commissionsOpen);
 
 	return (
 		<Main className="stack lg">
@@ -76,30 +80,25 @@ export default function ArtPage() {
 				<div className="stack horizontal sm text-sm font-semi-bold">
 					<SendouSwitch
 						isSelected={showOpenCommissions}
-						onChange={() =>
-							setSearchParams((prev) => {
-								prev.set(OPEN_COMMISIONS_KEY, String(!showOpenCommissions));
-								return prev;
-							})
-						}
+						onChange={() => setParams({ open: !showOpenCommissions })}
 						id={switchId}
 					/>
 					<Label htmlFor={switchId} className="m-auto-0">
-						{t("art:openCommissionsOnly")}
+						{t("forms:labels.profileCommissionsOpen")}
 					</Label>
 				</div>
-				<div className="stack horizontal sm items-center">
+				<div
+					className={clsx({
+						invisible: selectedTab !== ART_TABS.SHOWCASE,
+					})}
+				>
 					<TagSelect
 						key={filteredTag}
 						tags={data.allTags}
 						onSelectionChange={(tagName) => {
-							setSearchParams((prev) => {
-								prev.set(FILTERED_TAG_KEY_SEARCH_PARAM_KEY, tagName as string);
-								return prev;
-							});
+							setParams({ tag: tagName as string });
 						}}
 					/>
-					<AddNewButton navIcon="art" to={newArtPage()} />
 				</div>
 			</div>
 			{filteredTag ? (
@@ -108,12 +107,9 @@ export default function ArtPage() {
 					<SendouButton
 						size="small"
 						variant="minimal-destructive"
-						icon={<CrossIcon />}
-						onPress={() => {
-							setSearchParams((prev) => {
-								prev.delete(FILTERED_TAG_KEY_SEARCH_PARAM_KEY);
-								return prev;
-							});
+						icon={<X />}
+						onClick={() => {
+							setParams({ tag: null });
 						}}
 						data-testid="clear-filter-button"
 					>
@@ -121,7 +117,34 @@ export default function ArtPage() {
 					</SendouButton>
 				</div>
 			) : null}
-			<ArtGrid arts={arts} />
+			<SendouTabs
+				selectedKey={selectedTab}
+				onSelectionChange={(key) => {
+					const tab = key as (typeof ART_TABS)[keyof typeof ART_TABS];
+					setParams(
+						tab === ART_TABS.RECENTLY_UPLOADED ? { tab, tag: null } : { tab },
+					);
+				}}
+			>
+				<SendouTabList>
+					<SendouTab id={ART_TABS.RECENTLY_UPLOADED}>
+						{t("art:tabs.recentlyUploaded")}
+					</SendouTab>
+					<SendouTab id={ART_TABS.SHOWCASE}>{t("art:tabs.showcase")}</SendouTab>
+				</SendouTabList>
+				<SendouTabPanel id={ART_TABS.RECENTLY_UPLOADED}>
+					<ArtGrid arts={recentlyUploadedArts} showUploadDate />
+				</SendouTabPanel>
+				<SendouTabPanel id={ART_TABS.SHOWCASE}>
+					{filteredTag && showcaseArts.length === 0 ? (
+						<EmptyState navItem="art">
+							{t("art:noArtForTag", { tag: filteredTag })}
+						</EmptyState>
+					) : (
+						<ArtGrid arts={showcaseArts} />
+					)}
+				</SendouTabPanel>
+			</SendouTabs>
 		</Main>
 	);
 }

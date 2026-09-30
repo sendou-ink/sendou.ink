@@ -1,0 +1,118 @@
+.container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	background-color: var(--color-bg-high);
+	border: var(--border-style);
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--radius-full);
+	width: fit-content;
+	margin-inline: auto;
+}
+
+.arrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	background: transparent;
+	color: var(--color-text);
+	cursor: pointer;
+	border-radius: var(--radius-full);
+	transition: opacity 0.15s ease;
+
+	&:hover:not(:disabled) {
+		opacity: 0.7;
+	}
+
+	&:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+}
+
+.page {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2rem;
+	height: 2rem;
+	padding: 0 var(--s-1);
+	border: none;
+	background: transparent;
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
+	border-radius: var(--radius-full);
+	transition: background-color 0.15s ease;
+
+	&:hover:not(.pageActive) {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.pageActive {
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
+}
+
+.ellipsis {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.5rem;
+	height: 2rem;
+	color: var(--color-text);
+	font-size: var(--font-sm);
+}
+
+.ellipsisButton {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	border-radius: var(--radius-full);
+	transition: background-color 0.15s ease;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.jumpToForm {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.jumpToInput {
+	max-width: 2.5rem;
+	max-height: 1.75rem;
+	padding: 0 var(--s-1);
+	border: 2px solid var(--color-fg-accent);
+	border-radius: var(--radius-sm);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	text-align: center;
+
+	&:focus {
+		outline: none;
+	}
+}
+
+@container (width < 580px) {
+	.desktopOnly {
+		display: none;
+	}
+}
+
+@container (width >= 580px) {
+	.mobileOnly {
+		display: none;
+	}
+}

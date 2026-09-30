@@ -1,17 +1,15 @@
-*If you are not adding a badge just clear this template*
+## Summary
 
-## Badge adding checklist
+<!-- Brief description of what this PR does -->
 
-Please check each and mark with "x" to indicate you have verified that requirement. This allows for more seamless badge reviews, thank you!
+## Routes changed
 
-- [ ] The `.avif` file is static, not animated (generate it from the .png)
-- [ ] Rotation of animation is counterclockwise
-- [ ] Rotation is of correct speed (around 3 seconds for full round)
-- [ ] Badge is centered both vertically and horizontally
-- [ ] Badge is zoomed in enough (not too much blank space around it)
+<!-- Which views if any are affected? -->
 
-For full list of requirements that need to bet met for the badge to be added please check the instructions in /docs/badges.md file.
+## Notes
 
----
+<!-- Important notes for context or as info to the reviewer -->
 
-<!-- Add more info/context here if you want -->
+## Closes
+
+<!-- Which issues are closed if any -->

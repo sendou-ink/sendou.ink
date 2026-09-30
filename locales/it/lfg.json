@@ -8,7 +8,6 @@
 	"post.lastActive": "aggiornato",
 	"noPosts": "Nessun post per questo filtro",
 	"expiring": "Il post sta scadendo. Stai ancora cercando?",
-	"addFilter": "Aggiungi filtro",
 	"filters.Weapon": "Pool di armi",
 	"filters.Type": "Tipo di post",
 	"filters.Timezone": "Differenza per fuso orario",
@@ -16,17 +15,9 @@
 	"filters.PlusTier": "Tier Plus",
 	"filters.MaxTier": "Tier massimo",
 	"filters.MinTier": "Tier minimo",
-	"filters.suffix": "filter",
 	"filters.orAbove": "o più",
 	"new.noMorePosts": "Non puoi creare altri posts",
-	"new.type.header": "Tipo",
-	"new.timezone.header": "Fuso orario",
-	"new.text.header": "Testo",
-	"new.visibility.header": "Visibilità",
-	"new.visibility.everyone": "Tutti",
 	"new.editOn": "Modifica sul tuo",
 	"new.weaponPool.header": "Pool di armi",
-	"new.weaponPool.userProfile": "profilo utente",
-	"new.languages.header": "Lingue",
-	"new.languages.sqSettingsPage": "Pagina impostazioni SendouQ"
+	"new.weaponPool.matchProfile": ""
 }

@@ -1,10 +1,18 @@
-import { describe, expect, it, test } from "vitest";
-import type { Match } from "~/modules/brackets-model";
+import { addMinutes } from "date-fns";
+import { describe, expect, test } from "vitest";
+import type {
+	BracketData,
+	GeneratedRound,
+	MatchData,
+} from "~/features/tournament-bracket/core/engine/types";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { unwrap } from "~/utils/result";
+import * as Engine from "./engine";
+import type * as Progression from "./Progression";
 import { Tournament } from "./Tournament";
 import {
 	IN_THE_ZONE_32,
 	PADDLING_POOL_255,
-	PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES,
 	PADDLING_POOL_257,
 } from "./tests/mocks";
 import { SWIM_OR_SINK_167 } from "./tests/mocks-sos";
@@ -117,7 +125,10 @@ describe("Follow-up bracket progression", () => {
 		).toBe(AMOUNT_OF_BEST_VS_BEST);
 	});
 
-	const validateNoRematches = (rrMatches: Match[], topCutMatches: Match[]) => {
+	const validateNoRematches = (
+		rrMatches: MatchData[],
+		topCutMatches: MatchData[],
+	) => {
 		for (const topCutMatch of topCutMatches) {
 			if (!topCutMatch.opponent1?.id || !topCutMatch.opponent2?.id) {
 				continue;
@@ -158,30 +169,61 @@ describe("Follow-up bracket progression", () => {
 		validateNoRematches(rrMatches, topCutMatches);
 	});
 
-	test("avoids rematches in RR -> SE (PP 255) - only minimum swap", () => {
-		const oldTopCutMatches = PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES();
-		const newTopCutMatches = tournamentPP255.brackets[1].data.match;
+	test("group rivals in the top cut can only meet in the final (PP 255)", () => {
+		const rrStandings = tournamentPP255.brackets[0].standings;
+		const topCut = tournamentPP255.brackets[1];
 
-		let different = 0;
+		// group winners keep the best seeds
+		const groupWinnerIds = rrStandings
+			.filter((standing) => standing.placement === 1)
+			.map((standing) => standing.team.id);
+		expect(new Set(topCut.seeding?.slice(0, groupWinnerIds.length))).toEqual(
+			new Set(groupWinnerIds),
+		);
 
-		for (const match of oldTopCutMatches) {
-			if (!match.opponent1?.id || !match.opponent2?.id) {
-				continue;
-			}
+		// with two teams advancing per group, both should land in opposite
+		// halves of the bracket
+		const firstRoundId = topCut.data.round[0].id;
+		const matchCount = topCut.data.match.filter(
+			(match) => match.roundId === firstRoundId,
+		).length;
+		const halfByTeamId = new Map<number, number>();
+		for (const match of topCut.data.match) {
+			if (match.roundId !== firstRoundId) continue;
 
-			const newMatch = newTopCutMatches.find(
-				(m) =>
-					m.opponent1?.id === match.opponent1.id &&
-					m.opponent2?.id === match.opponent2.id,
-			);
-
-			if (!newMatch) {
-				different++;
+			for (const id of [match.opponent1?.id, match.opponent2?.id]) {
+				if (typeof id === "number") {
+					halfByTeamId.set(id, match.number <= matchCount / 2 ? 0 : 1);
+				}
 			}
 		}
 
-		// 1 team should get swapped meaning two matches are now different
-		expect(different, "Amount of different matches is incorrect").toBe(2);
+		const groupIds = new Set(rrStandings.map((standing) => standing.groupId));
+		for (const groupId of groupIds) {
+			const groupTeamIds = (topCut.seeding ?? []).filter(
+				(teamId) =>
+					rrStandings.find((standing) => standing.team.id === teamId)
+						?.groupId === groupId,
+			);
+
+			expect(groupTeamIds).toHaveLength(2);
+			expect(halfByTeamId.get(groupTeamIds[0])).not.toBe(
+				halfByTeamId.get(groupTeamIds[1]),
+			);
+		}
+	});
+
+	test("initializes an unstarted DE + underground tournament with exactly 2 teams", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: progressions.doubleEliminationWithUnderground,
+				},
+				teams: [tournamentCtxTeam(1), tournamentCtxTeam(2)],
+			},
+		});
+
+		expect(tournament.brackets).toHaveLength(2);
 	});
 
 	// TODO: handle LUTI bracket progression
@@ -191,7 +233,7 @@ describe("Follow-up bracket progression", () => {
 });
 
 describe("Bracket progression override", () => {
-	it("handles no override", () => {
+	test("handles no override", () => {
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167(),
 		});
@@ -210,7 +252,7 @@ describe("Bracket progression override", () => {
 		);
 	});
 
-	it("overrides causing the team to go to another bracket", () => {
+	test("overrides causing the team to go to another bracket", () => {
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167([
 				{
@@ -226,7 +268,7 @@ describe("Bracket progression override", () => {
 		).toBeTruthy();
 	});
 
-	it("overrides causing the team not to go to their original bracket", () => {
+	test("overrides causing the team not to go to their original bracket", () => {
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167([
 				{
@@ -242,7 +284,7 @@ describe("Bracket progression override", () => {
 		).toBeFalsy();
 	});
 
-	it("destinationBracketIdx = -1 eliminates the team", () => {
+	test("destinationBracketIdx = -1 eliminates the team", () => {
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167([
 				{
@@ -267,7 +309,7 @@ describe("Bracket progression override", () => {
 		);
 	});
 
-	it("override teams seeded at the end", () => {
+	test("override teams seeded at the end", () => {
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167([
 				{
@@ -281,7 +323,7 @@ describe("Bracket progression override", () => {
 		expect(tournament.brackets[1].seeding?.at(-1)).toBe(14809);
 	});
 
-	it("if redundant override, still in the right bracket", () => {
+	test("if redundant override, still in the right bracket", () => {
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167([
 				{
@@ -297,7 +339,7 @@ describe("Bracket progression override", () => {
 		).toBeTruthy();
 	});
 
-	it("redundants override does not affect the seed", () => {
+	test("redundants override does not affect the seed", () => {
 		const tournamentTeamId = 14735;
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167(),
@@ -322,7 +364,7 @@ describe("Bracket progression override", () => {
 	});
 
 	// note there is also logic for avoiding replays
-	it("override teams seeded according to their placement in the source bracket", () => {
+	test("override teams seeded according to their placement in the source bracket", () => {
 		const tournament = new Tournament({
 			...SWIM_OR_SINK_167([
 				// throw these to different brackets to avoid replays
@@ -380,29 +422,403 @@ describe("Adjusting team starting bracket", () => {
 		});
 	};
 
-	it("defaults to bracket idx = 0", () => {
+	test("defaults to bracket idx = 0", () => {
 		const tournament = createTournament([null, null, null, null]);
 
 		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 
-	it("setting starting bracket idx has an effect", () => {
+	test("setting starting bracket idx has an effect", () => {
 		const tournament = createTournament([0, 0, 1, 1]);
 
 		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(2);
 		expect(tournament.brackets[1].participantTournamentTeamIds).toHaveLength(2);
 	});
 
-	it("handles too high bracket idx gracefully", () => {
+	test("handles too high bracket idx gracefully", () => {
 		const tournament = createTournament([0, 0, 0, 10]);
 
 		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 
-	it("handles bracket idx is not a valid starting bracket idx gracefully", () => {
+	test("handles bracket idx is not a valid starting bracket idx gracefully", () => {
 		// 2 is not valid because it is a follow-up bracket
 		const tournament = createTournament([0, 0, 0, 2]);
 
 		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 });
+
+describe("eligibleTeamIdsOfBracket", () => {
+	const notCheckedIn = (teamId: number) =>
+		tournamentCtxTeam(teamId, { checkIns: [] });
+
+	test("includes teams not checked in for the starting bracket", () => {
+		const tournament = testTournament({
+			ctx: {
+				teams: [tournamentCtxTeam(1), tournamentCtxTeam(2), notCheckedIn(3)],
+			},
+		});
+
+		expect(tournament.eligibleTeamIdsOfBracket(0)).toEqual([1, 2, 3]);
+	});
+
+	test("includes only teams starting in the bracket when there are many starting brackets", () => {
+		const tournament = testTournament({
+			ctx: {
+				teams: [
+					tournamentCtxTeam(1, { startingBracketIdx: 0 }),
+					tournamentCtxTeam(2, { startingBracketIdx: 1 }),
+					notCheckedIn(3),
+				],
+				settings: {
+					bracketProgression: progressions.manyStartBrackets,
+				},
+			},
+		});
+
+		expect(tournament.eligibleTeamIdsOfBracket(0)).toEqual([1, 3]);
+		expect(tournament.eligibleTeamIdsOfBracket(1)).toEqual([2]);
+	});
+});
+
+describe("League divisions", () => {
+	const leagueTournament = (isLeague = true) =>
+		testTournament({
+			ctx: {
+				teams: [0, 0, 0, 2].map((startingBracketIdx, i) =>
+					tournamentCtxTeam(i + 1, { startingBracketIdx }),
+				),
+				settings: {
+					isLeague,
+					bracketProgression: progressions.league,
+				},
+			},
+		});
+
+	test("every starting bracket is a division", () => {
+		expect(leagueTournament().leagueDivisions.map((div) => div.idx)).toEqual([
+			0, 2,
+		]);
+	});
+
+	test("has no divisions when not a league", () => {
+		expect(leagueTournament(false).leagueDivisions).toEqual([]);
+	});
+
+	test("playoffs belong to the division they are sourced from", () => {
+		expect(leagueTournament().leagueDivisionOfBracket(3)).toBe(2);
+	});
+
+	test("brackets of a division exclude the other divisions'", () => {
+		expect(
+			leagueTournament()
+				.visibleBracketsMetaOfDivision(2)
+				.map((bracket) => bracket.name),
+		).toEqual(["Division 2", "Division 2 Playoffs"]);
+	});
+
+	test("every bracket is shown when no division is selected", () => {
+		expect(leagueTournament().visibleBracketsMetaOfDivision(null)).toHaveLength(
+			4,
+		);
+	});
+
+	test("teams of a division are the ones starting in it", () => {
+		expect(leagueTournament().teamsCountOfBracket(0)).toBe(3);
+		expect(leagueTournament().teamsCountOfBracket(2)).toBe(1);
+	});
+});
+
+describe("Resolving the team a user is a member of", () => {
+	const USER_ID = 1;
+
+	const tournamentWithTeams = (
+		teams: Array<{ id: number; createdAt: number }>,
+		latestTeamIdByDuplicatedUserId: Record<number, number> = {},
+	) =>
+		testTournament({
+			ctx: {
+				teams: teams.map((team) =>
+					tournamentCtxTeam(team.id, {
+						createdAt: team.createdAt,
+						memberUserIds: [USER_ID],
+					}),
+				),
+				latestTeamIdByDuplicatedUserId,
+			},
+		});
+
+	test("resolves the only team the user is a member of", () => {
+		const tournament = tournamentWithTeams([{ id: 1, createdAt: 1 }]);
+
+		expect(tournament.teamMemberOfByUser({ id: USER_ID })?.id).toBe(1);
+	});
+
+	test("resolves the team the user joined most recently when on many teams", () => {
+		// e.g. the user's first team dropped out and the organizer added them to an
+		// older team afterwards
+		const tournament = tournamentWithTeams(
+			[
+				{ id: 1, createdAt: 1 },
+				{ id: 2, createdAt: 100 },
+			],
+			{ [USER_ID]: 1 },
+		);
+
+		expect(tournament.teamMemberOfByUser({ id: USER_ID })?.id).toBe(1);
+	});
+
+	test("falls back to the first team when the most recently joined one is not visible", () => {
+		const tournament = tournamentWithTeams(
+			[
+				{ id: 1, createdAt: 1 },
+				{ id: 2, createdAt: 2 },
+			],
+			{ [USER_ID]: 3 },
+		);
+
+		expect(tournament.teamMemberOfByUser({ id: USER_ID })?.id).toBe(1);
+	});
+
+	test("returns null if the user is not a member of any team", () => {
+		const tournament = tournamentWithTeams([{ id: 1, createdAt: 1 }]);
+
+		expect(tournament.teamMemberOfByUser({ id: USER_ID + 1 })).toBeNull();
+	});
+});
+
+describe("teamMemberOfProgressStatus in swiss", () => {
+	const teamsWithMembers = [1, 2, 3, 4].map((teamId) =>
+		tournamentCtxTeam(teamId, { memberUserIds: [100 + teamId] }),
+	);
+
+	test("resolves an early advanced team as waiting for the follow-up bracket", () => {
+		const data = playOutEarlyAdvanceSwiss(progressions.swissEarlyAdvance);
+
+		const tournament = testTournament({
+			data,
+			ctx: {
+				settings: { bracketProgression: progressions.swissEarlyAdvance },
+				teams: teamsWithMembers,
+			},
+		});
+
+		expect(
+			tournament.bracketByIdx(1)?.seeding,
+			"test setup: the advanced team should be in the top cut preview",
+		).toContain(1);
+		expect(tournament.teamMemberOfProgressStatus({ id: 101 })?.type).toBe(
+			"WAITING_FOR_BRACKET",
+		);
+	});
+
+	test("resolves a dropped out team's status as thanks for playing", () => {
+		const data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4],
+			settings: {},
+		});
+		finishPendingMatches(data);
+
+		const tournament = testTournament({
+			data,
+			ctx: {
+				settings: { bracketProgression: progressions.swissOneGroup },
+				teams: [1, 2, 3, 4].map((teamId) =>
+					tournamentCtxTeam(teamId, {
+						memberUserIds: [100 + teamId],
+						droppedOut: teamId === 4 ? 1 : 0,
+					}),
+				),
+			},
+		});
+
+		expect(tournament.teamMemberOfProgressStatus({ id: 104 })?.type).toBe(
+			"THANKS_FOR_PLAYING",
+		);
+	});
+});
+
+describe("teamMemberOfProgressStatus with a follow-up bracket check-in", () => {
+	const teamsWithMembers = [1, 2, 3, 4].map((teamId) =>
+		tournamentCtxTeam(teamId, { memberUserIds: [100 + teamId] }),
+	);
+
+	const progressionStartingIn = (
+		minutes: number,
+	): Progression.ParsedBracket[] => [
+		{
+			...progressions.swissEarlyAdvance[0],
+		},
+		{
+			...progressions.swissEarlyAdvance[1],
+			requiresCheckIn: true,
+			startTime: dateToDatabaseTimestamp(addMinutes(new Date(), minutes)),
+		},
+	];
+
+	const progressStatusWithFollowUpIn = (minutes: number) => {
+		const bracketProgression = progressionStartingIn(minutes);
+
+		return testTournament({
+			data: playOutEarlyAdvanceSwiss(bracketProgression),
+			ctx: { settings: { bracketProgression }, teams: teamsWithMembers },
+		}).teamMemberOfProgressStatus({ id: 101 });
+	};
+
+	test("asks for the check-in once the bracket's check-in has opened", () => {
+		expect(progressStatusWithFollowUpIn(30)).toEqual({
+			type: "CHECKIN",
+			bracketIdx: 1,
+		});
+	});
+
+	test("waits for the bracket while its check-in has yet to open", () => {
+		expect(progressStatusWithFollowUpIn(3 * 60)).toEqual({
+			type: "WAITING_FOR_BRACKET",
+			bracketIdx: 1,
+		});
+	});
+});
+
+describe("Swiss early advance bracket sourcing", () => {
+	const progressionWithConsolation: Progression.ParsedBracket[] = [
+		{
+			name: "Main Bracket",
+			type: "swiss",
+			requiresCheckIn: false,
+			settings: { advanceThreshold: 3 },
+		},
+		{
+			name: "Top Cut",
+			type: "single_elimination",
+			requiresCheckIn: false,
+			settings: {},
+			sources: [{ bracketIdx: 0, placements: [] }],
+		},
+		{
+			name: "Consolation",
+			type: "single_elimination",
+			requiresCheckIn: false,
+			settings: {},
+			sources: [{ bracketIdx: 0, placements: [2, 3, 4] }],
+		},
+	];
+
+	test("sources a consolation bracket by its placements instead of the advance threshold", () => {
+		const data = playOutEarlyAdvanceSwiss(progressionWithConsolation);
+
+		const tournament = testTournament({
+			data,
+			ctx: { settings: { bracketProgression: progressionWithConsolation } },
+		});
+
+		expect(
+			tournament.bracketByIdx(1)?.seeding,
+			"test setup: the swiss winner should be in the top cut",
+		).toContain(1);
+		expect(
+			tournament.bracketByIdx(2)?.seeding,
+			"the swiss winner advanced to the top cut and should not also be in the consolation bracket",
+		).not.toContain(1);
+	});
+});
+
+describe("teamById division seeds", () => {
+	test("assigns unique seeds within a division when a late registrant has null startingBracketIdx", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							name: "Div A",
+							type: "round_robin",
+							requiresCheckIn: false,
+							settings: {},
+						},
+						{
+							name: "Div B",
+							type: "round_robin",
+							requiresCheckIn: false,
+							settings: {},
+						},
+					],
+				},
+				teams: [
+					// DB query orders by seed ASC which puts NULL seeds first in SQLite
+					tournamentCtxTeam(5, {
+						seed: null,
+						startingBracketIdx: null,
+						createdAt: 5,
+					}),
+					tournamentCtxTeam(1, { seed: 1, startingBracketIdx: 0 }),
+					tournamentCtxTeam(2, { seed: 2, startingBracketIdx: 0 }),
+					tournamentCtxTeam(3, { seed: 3, startingBracketIdx: 1 }),
+					tournamentCtxTeam(4, { seed: 4, startingBracketIdx: 1 }),
+				],
+			},
+		});
+
+		const divATeamSeeds = [1, 2, 5].map(
+			(teamId) => tournament.teamById(teamId)?.seed,
+		);
+
+		expect(new Set(divATeamSeeds).size).toBe(3);
+	});
+});
+
+/** 4 teams, 5 rounds, advance threshold 3. Team 1 wins rounds 1-3 locking their spot, after which the pairing excludes them. */
+function playOutEarlyAdvanceSwiss(
+	progression: Progression.ParsedBracket[],
+): BracketData {
+	const data = Engine.create({
+		type: "swiss",
+		seeding: [1, 2, 3, 4],
+		settings: { advanceThreshold: 3 },
+	});
+	const groupId = data.group[0].id;
+
+	finishPendingMatches(data);
+	for (let roundNumber = 2; roundNumber <= 5; roundNumber++) {
+		const bracket = testTournament({
+			data,
+			ctx: { settings: { bracketProgression: progression } },
+		}).bracketByIdx(0)!;
+		const generated = Engine.generateRound(bracket.data, {
+			groupId,
+			standings: bracket.standings,
+			settings: bracket.settings,
+		});
+		if (!generated.ok) break;
+		appendGeneratedRound(data, unwrap(generated));
+		finishPendingMatches(data);
+	}
+
+	return data;
+}
+
+/** Finishes every pending match, team 1 always winning theirs and otherwise the home side. */
+function finishPendingMatches(data: BracketData) {
+	for (const match of data.match) {
+		if (match.winnerSide !== null || !match.opponent2) continue;
+
+		match.winnerSide = match.opponent2.id === 1 ? "opponent2" : "opponent1";
+	}
+}
+
+function appendGeneratedRound(data: BracketData, round: GeneratedRound) {
+	let id = Math.max(...data.match.map((match) => match.id)) + 1;
+	for (const match of round.matches) {
+		data.match.push({
+			id: id++,
+			stageId: data.stage[0].id,
+			groupId: round.groupId,
+			roundId: round.roundId,
+			number: match.number,
+			opponent1: match.opponent1,
+			opponent2: match.opponent2,
+			winnerSide: null,
+		});
+	}
+}

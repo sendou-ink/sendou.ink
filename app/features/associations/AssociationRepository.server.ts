@@ -1,9 +1,11 @@
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { TablesInsertable, TablesUpdatable } from "~/db/tables";
+import type { Tables, TablesInsertable } from "~/db/tables";
 import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
+import { ASSOCIATION } from "~/features/associations/associations-constants";
+import * as FriendRepository from "~/features/friends/FriendRepository.server";
+import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 
 interface FindOptions {
@@ -26,6 +28,7 @@ export async function findByMemberUserId(
 	return {
 		actual: await findBy({ type: "user", userId }, options),
 		virtual: await virtualAssociationsByUserId(userId),
+		friendIds: await FriendRepository.findFriendIds(userId),
 	};
 }
 
@@ -57,7 +60,10 @@ const baseFindQuery = (options: FindOptions) =>
 						.selectFrom("AssociationMember")
 						.innerJoin("User", "User.id", "AssociationMember.userId")
 						.whereRef("AssociationMember.associationId", "=", "Association.id")
-						.select([...COMMON_USER_FIELDS, "AssociationMember.role"]),
+						.select((memberEb) => [
+							...commonUserSelect(memberEb),
+							"AssociationMember.role",
+						]),
 				).as("members"),
 			),
 		);
@@ -82,15 +88,59 @@ async function findBy(
 						.where("Association.id", "=", args.associationId)
 						.execute();
 
-	return associations.map((a) => ({
-		...a,
-		permissions: {
-			MANAGE: (a.members ?? [])
-				.filter((member) => member.role === "ADMIN")
-				.map((user) => user.id),
-		},
-	}));
+	return associations.map((a) => {
+		const members = a.members ?? [];
+		const adminIds = memberIdsWithRole(members, "ADMIN");
+		const managerIds = memberIdsWithRole(members, "MANAGER");
+
+		return {
+			...a,
+			members: a.members?.map((member) => ({
+				...member,
+				permissions: {
+					REMOVE: memberRemoverIds({ member, adminIds, managerIds }),
+				},
+			})),
+			permissions: {
+				MANAGE: adminIds,
+				MANAGE_INVITE_LINK: [...adminIds, ...managerIds],
+			},
+		};
+	});
 }
+
+function memberIdsWithRole(
+	members: Array<{ id: number; role: Tables["AssociationMember"]["role"] }>,
+	role: Tables["AssociationMember"]["role"],
+) {
+	return members
+		.filter((member) => member.role === role)
+		.map((member) => member.id);
+}
+
+/** Admins can remove anyone but themselves, managers only regular members. */
+function memberRemoverIds({
+	member,
+	adminIds,
+	managerIds,
+}: {
+	member: { id: number; role: Tables["AssociationMember"]["role"] };
+	adminIds: Array<number>;
+	managerIds: Array<number>;
+}) {
+	const removerIds =
+		member.role === "ADMIN"
+			? []
+			: member.role === "MANAGER"
+				? adminIds
+				: [...adminIds, ...managerIds];
+
+	return removerIds.filter((id) => id !== member.id);
+}
+
+const DEFAULT_VIRTUAL_ASSOCIATIONS: Array<AssociationVirtualIdentifier> = [
+	"FRIENDS",
+];
 
 async function virtualAssociationsByUserId(
 	userId: number,
@@ -101,14 +151,16 @@ async function virtualAssociationsByUserId(
 			.select(["PlusTier.tier as plusTier"])
 			.where("userId", "=", userId)
 			.executeTakeFirst()) ?? {};
-	if (!plusTier) return [];
+	if (!plusTier) return [...DEFAULT_VIRTUAL_ASSOCIATIONS];
 
-	if (plusTier === 1) return ["+1", "+2", "+3"] as const;
-	if (plusTier === 2) return ["+2", "+3"] as const;
-	if (plusTier === 3) return ["+3"] as const;
+	if (plusTier === 1)
+		return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+1", "+2", "+3"] as const;
+	if (plusTier === 2)
+		return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+2", "+3"] as const;
+	if (plusTier === 3) return [...DEFAULT_VIRTUAL_ASSOCIATIONS, "+3"] as const;
 
 	logger.error("Invalid plusTier", { plusTier });
-	return [];
+	return [...DEFAULT_VIRTUAL_ASSOCIATIONS];
 }
 
 type InsertArgs = Omit<TablesInsertable["Association"], "inviteCode"> & {
@@ -137,18 +189,25 @@ export function insert({ userId, ...associationArgs }: InsertArgs) {
 			.insertInto("AssociationMember")
 			.values({ userId, associationId: association.id, role: "ADMIN" })
 			.execute();
-	});
-}
 
-export function update(
-	associationId: number,
-	args: Partial<TablesUpdatable["Association"]>,
-) {
-	return db
-		.updateTable("Association")
-		.set(args)
-		.where("id", "=", associationId)
-		.execute();
+		const { count, patronTier } = await trx
+			.selectFrom("AssociationMember")
+			.innerJoin("User", "User.id", "AssociationMember.userId")
+			.select((eb) => [eb.fn.countAll<number>().as("count"), "User.patronTier"])
+			.where("AssociationMember.userId", "=", userId)
+			.executeTakeFirstOrThrow();
+
+		const maxCount =
+			(patronTier ?? 0) >= 2
+				? ASSOCIATION.MAX_COUNT_SUPPORTER
+				: ASSOCIATION.MAX_COUNT_REGULAR_USER;
+
+		if (count > maxCount) {
+			throw new LimitReachedError("Max amount of associations reached");
+		}
+
+		return association;
+	});
 }
 
 export function refreshInviteCode(associationId: number) {
@@ -159,7 +218,7 @@ export function refreshInviteCode(associationId: number) {
 		.execute();
 }
 
-export function addMember({
+export function insertMember({
 	associationId,
 	userId,
 }: {
@@ -172,7 +231,24 @@ export function addMember({
 		.execute();
 }
 
-export function removeMember({
+export function updateMemberRole({
+	associationId,
+	userId,
+	role,
+}: {
+	associationId: number;
+	userId: number;
+	role: Tables["AssociationMember"]["role"];
+}) {
+	return db
+		.updateTable("AssociationMember")
+		.set({ role })
+		.where("associationId", "=", associationId)
+		.where("userId", "=", userId)
+		.execute();
+}
+
+export function deleteMember({
 	associationId,
 	userId,
 }: {
@@ -186,6 +262,34 @@ export function removeMember({
 		.execute();
 }
 
-export function del(associationId: number) {
+/** Removes the member and, when they were the admin, promotes `newAdminUserId` in their place. */
+export function handleMemberLeaving({
+	associationId,
+	userId,
+	newAdminUserId,
+}: {
+	associationId: number;
+	userId: number;
+	newAdminUserId?: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("AssociationMember")
+			.where("associationId", "=", associationId)
+			.where("userId", "=", userId)
+			.execute();
+
+		if (typeof newAdminUserId === "number") {
+			await trx
+				.updateTable("AssociationMember")
+				.set({ role: "ADMIN" })
+				.where("associationId", "=", associationId)
+				.where("userId", "=", newAdminUserId)
+				.execute();
+		}
+	});
+}
+
+export function deleteById(associationId: number) {
 	return db.deleteFrom("Association").where("id", "=", associationId).execute();
 }

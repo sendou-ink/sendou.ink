@@ -1,0 +1,130 @@
+.sectionHeader {
+	font-size: var(--font-sm);
+}
+
+.section {
+	background-color: var(--color-bg-high);
+	margin-inline: -12px;
+	padding: var(--s-4) var(--s-3);
+}
+
+.sectionForm {
+	width: 100%;
+	max-width: 26rem;
+	margin-inline: auto;
+}
+
+.sectionWarning {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-align: center;
+	color: var(--color-text-high);
+}
+
+.teamOptionAvailability {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-weight: var(--weight-body);
+}
+
+.rosterMutedNote {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.rosterRows {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+
+	& > li {
+		padding-block: var(--s-2);
+
+		& + li {
+			border-top: 1px solid var(--color-border);
+		}
+	}
+}
+
+.emptySlotRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-fg-accent);
+}
+
+.emptySlotRowOptional {
+	color: var(--color-text-high);
+}
+
+.emptySlotCircle {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	border-radius: var(--radius-full);
+	border: var(--border-style-accent);
+	color: var(--color-fg-accent);
+}
+
+.emptySlotCircleOptional {
+	border: var(--border-width) dashed var(--color-fg-accent);
+}
+
+.addMembers {
+	border-top: 1px solid var(--color-border);
+	padding-top: var(--s-3);
+}
+
+.addMembersHeading {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.quickAddRow {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2);
+}
+
+.quickAddSelect {
+	flex: 1;
+	min-width: 0;
+}
+
+.quickAddAllRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+}
+
+.quickAddItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	min-width: 0;
+}
+
+.quickAddItemAvailability {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-body);
+}
+
+@container (width >= 640px) {
+	.section {
+		margin: 0;
+		border-radius: var(--radius-box);
+		padding: var(--s-6) var(--s-5);
+	}
+}

@@ -1,25 +1,30 @@
-import type { MetaFunction } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import clsx from "clsx";
+import { Check } from "lucide-react";
 import * as React from "react";
+import type { MetaFunction } from "react-router";
+import { Form, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
+import { Markdown } from "~/components/Markdown";
 import { RelativeTime } from "~/components/RelativeTime";
 import { usePlusVoting } from "~/features/plus-voting/core";
-import { metaTags } from "~/utils/remix";
+import { UserCard } from "~/features/user-card/components/UserCard";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
 import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.suggestions";
-
 import { action } from "../actions/plus.voting.server";
 import {
 	loader,
 	type PlusVotingLoaderData,
 } from "../loaders/plus.voting.server";
+import styles from "./plus.voting.module.css";
+
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Plus Server Voting",
+		image: ogPageImage("plus"),
 		location: args.location,
 	});
 };
@@ -53,8 +58,8 @@ function VotingTimingInfo(
 	return (
 		<div className="stack md">
 			{data.voted ? (
-				<div className="plus-voting__alert">
-					<CheckmarkIcon /> You have voted
+				<div className={styles.votingAlert}>
+					<Check /> You have voted
 				</div>
 			) : null}
 			<div className="text-sm text-center">
@@ -83,7 +88,7 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 	if (!isReady) return null;
 
 	return (
-		<div className="plus-voting__container stack md">
+		<div className={clsx(styles.votingContainer, "stack md")}>
 			<div className="stack xs">
 				<div className="text-sm text-center">
 					Voting ends{" "}
@@ -93,7 +98,7 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 				</div>
 				{progress ? (
 					<progress
-						className="plus-voting__progress"
+						className={styles.votingProgress}
 						value={progress[0]}
 						max={progress[1]}
 						title={`Voting progress ${progress[0]} out of ${progress[1]}`}
@@ -111,7 +116,7 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					<SendouButton
 						className="ml-auto"
 						variant="minimal"
-						onPress={undoLast}
+						onClick={undoLast}
 					>
 						Undo?
 					</SendouButton>
@@ -121,20 +126,29 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 			)}
 			{currentUser ? (
 				<div className="stack md items-center">
-					<Avatar user={currentUser.user} size="lg" />
-					<h2>{currentUser.user.username}</h2>
+					<h2>
+						<UserCard userId={currentUser.user.id}>
+							<span className={styles.votingUserTrigger}>
+								<Avatar user={currentUser.user} size="lg" />
+								{currentUser.user.username}
+							</span>
+						</UserCard>
+					</h2>
 					<div className="stack horizontal lg">
 						<SendouButton
-							className="plus-voting__vote-button downvote"
+							className={clsx(
+								styles.votingVoteButton,
+								styles.votingVoteButtonDownvote,
+							)}
 							variant="outlined"
-							onPress={() => addVote("downvote")}
+							onClick={() => addVote("downvote")}
 						>
 							-1
 						</SendouButton>
 						<SendouButton
-							className="plus-voting__vote-button"
+							className={styles.votingVoteButton}
 							variant="outlined"
-							onPress={() => addVote("upvote")}
+							onClick={() => addVote("upvote")}
 						>
 							+1
 						</SendouButton>
@@ -147,15 +161,19 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					) : null}
 					{currentUser.user.bio ? (
 						<article className="w-full">
-							<h2 className="plus-voting__bio-header">Bio</h2>
-							{currentUser.user.bio}
+							<h2 className={styles.votingBioHeader}>Bio</h2>
+							{currentUser.user.bio.markdown ? (
+								<Markdown>{currentUser.user.bio.text}</Markdown>
+							) : (
+								currentUser.user.bio.text
+							)}
 						</article>
 					) : null}
 				</div>
 			) : (
 				<Form method="post">
 					<input type="hidden" name="votes" value={JSON.stringify(votes)} />
-					<SendouButton className="plus-voting__submit-button" type="submit">
+					<SendouButton className={styles.votingSubmitButton} type="submit">
 						Submit votes
 					</SendouButton>
 				</Form>

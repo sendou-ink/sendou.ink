@@ -1,57 +1,92 @@
-import clsx from "clsx";
-import {
-	Button,
-	DateInput,
-	type DatePickerProps,
-	DateSegment,
-	type DateValue,
-	Dialog,
-	Group,
-	Popover,
-	DatePicker as ReactAriaDatePicker,
-} from "react-aria-components";
+import { format, parse } from "date-fns";
+import * as React from "react";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
-import { SendouCalendar } from "~/components/elements/Calendar";
-import {
-	type FormFieldSize,
-	formFieldSizeToClassName,
-} from "../form/form-utils";
-import { CalendarIcon } from "../icons/Calendar";
+import { isValidDate } from "~/utils/dates";
+import styles from "./DatePicker.module.css";
 import { SendouLabel } from "./Label";
 
-interface SendouDatePickerProps<T extends DateValue>
-	extends DatePickerProps<T> {
+const DATE_INPUT_FORMAT = "yyyy-MM-dd";
+const DATETIME_INPUT_FORMAT = "yyyy-MM-dd'T'HH:mm";
+
+interface SendouDatePickerProps {
 	label: string;
+	value: Date | null;
+	/** `isBadInput` = the input holds a partial or impossible date, e.g. 31.9. */
+	onChange: (value: Date | null, meta: { isBadInput: boolean }) => void;
+	granularity?: "day" | "minute";
 	bottomText?: string;
 	errorText?: string;
-	size?: FormFieldSize;
+	errorId?: string;
+	isRequired?: boolean;
+	isDisabled?: boolean;
+	onBlur?: () => void;
 }
 
-export function SendouDatePicker<T extends DateValue>({
+/** Native `date` / `datetime-local` input, so the browser owns locale, clock format and the picker UI. */
+export function SendouDatePicker({
 	label,
-	errorText,
+	value,
+	onChange,
+	granularity = "minute",
 	bottomText,
-	size,
+	errorText,
+	errorId,
 	isRequired,
-	...rest
-}: SendouDatePickerProps<T>) {
+	isDisabled,
+	onBlur,
+}: SendouDatePickerProps) {
+	const id = React.useId();
+
+	const inputValue = value
+		? format(
+				value,
+				granularity === "day" ? DATE_INPUT_FORMAT : DATETIME_INPUT_FORMAT,
+			)
+		: "";
+
 	return (
-		<ReactAriaDatePicker {...rest} validationBehavior="aria">
-			<SendouLabel required={isRequired}>{label}</SendouLabel>
-			<Group
-				className={clsx("react-aria-Group", formFieldSizeToClassName(size))}
-			>
-				<DateInput>{(segment) => <DateSegment segment={segment} />}</DateInput>
-				<Button data-testid="open-calendar-button">
-					<CalendarIcon />
-				</Button>
-			</Group>
-			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
-			<Popover>
-				<Dialog>
-					<SendouCalendar />
-				</Dialog>
-			</Popover>
-		</ReactAriaDatePicker>
+		<div className={styles.root}>
+			<SendouLabel htmlFor={id} required={isRequired}>
+				{label}
+			</SendouLabel>
+			<input
+				id={id}
+				type={granularity === "day" ? "date" : "datetime-local"}
+				value={inputValue}
+				onChange={(event) =>
+					onChange(parseInputValue(event.target.value, granularity), {
+						isBadInput: event.target.validity.badInput,
+					})
+				}
+				onBlur={() => onBlur?.()}
+				disabled={isDisabled}
+				required={isRequired}
+				aria-invalid={errorText ? true : undefined}
+				aria-describedby={errorText ? errorId : undefined}
+			/>
+			<SendouBottomTexts
+				bottomText={bottomText}
+				errorText={errorText}
+				errorId={errorId}
+			/>
+		</div>
 	);
+}
+
+// the input's value is local time without a zone, which `new Date(string)`
+// would misread as UTC for date-only values, so it is parsed against the
+// format it was written with
+function parseInputValue(
+	raw: string,
+	granularity: "day" | "minute",
+): Date | null {
+	if (!raw) return null;
+
+	const date = parse(
+		raw,
+		granularity === "day" ? DATE_INPUT_FORMAT : DATETIME_INPUT_FORMAT,
+		new Date(),
+	);
+
+	return isValidDate(date) ? date : null;
 }

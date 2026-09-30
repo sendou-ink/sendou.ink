@@ -1,0 +1,70 @@
+.table {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.rank {
+	min-width: 28px;
+	text-align: right;
+}
+
+.row {
+	background-color: var(--color-bg-high);
+	display: flex;
+	padding: var(--s-2) var(--s-3);
+	align-items: center;
+	justify-content: space-between;
+	color: var(--color-text);
+	transition: 0.1s ease-in-out background-color;
+	border-radius: 0;
+
+	&:first-of-type {
+		border-radius: var(--radius-box) var(--radius-box) 0 0;
+	}
+
+	&:last-of-type {
+		border-radius: 0 0 var(--radius-box) var(--radius-box);
+	}
+
+	&:only-child {
+		border-radius: var(--radius-box);
+	}
+
+	/* long boards skip laying out and painting the rows scrolled out of view;
+	   the skipped ones must still be exactly as tall as the rendered ones or the
+	   page jumps while scrolling, and as engines disagree on whether the
+	   intrinsic size includes the padding, the height is pinned with a min-height
+	   instead: an avatar row, or a weapon image row */
+	content-visibility: auto;
+	min-block-size: calc(24px + 2 * var(--s-2));
+
+	&:has(.weapon) {
+		min-block-size: calc(32px + 2 * var(--s-2));
+	}
+}
+
+.dividerRow {
+	justify-content: center;
+	gap: var(--s-2);
+	background-color: var(--color-bg-higher);
+	font-size: var(--font-xs);
+}
+
+a.row:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.weapon {
+	background-color: var(--color-bg);
+	border-radius: 100%;
+}
+
+.innerRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	width: 100%;
+}

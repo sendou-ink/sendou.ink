@@ -5,16 +5,16 @@ import {
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
 import { Image } from "~/components/Image";
-import type { GearType } from "~/db/tables";
 import { brandIds } from "~/modules/in-game-lists/brand-ids";
 import {
 	clothesGearBrandGrouped,
 	headGearBrandGrouped,
 	shoesGearBrandGrouped,
 } from "~/modules/in-game-lists/gear-ids";
+import type { GearType } from "~/modules/in-game-lists/types";
 import { brandImageUrl, gearImageUrl } from "~/utils/urls";
 
-import styles from "./WeaponSelect.module.css";
+import styles from "./GearSelect.module.css";
 
 interface GearSelectProps<Clearable extends boolean | undefined = undefined> {
 	label?: string;
@@ -47,19 +47,17 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 			search={{
 				placeholder: t("common:forms.gearSearch.search.placeholder"),
 			}}
-			className={styles.selectWidthWider}
-			popoverClassName={styles.selectWidthWider}
 			selectedKey={value}
 			defaultSelectedKey={initialValue}
-			onSelectionChange={(value) => onChange?.(value as any)}
+			onSelectionChange={(selected) => onChange?.(selected as any)}
 			clearable={clearable}
 			data-testid={`${type}-gear-select`}
 		>
 			{({ key, items: gear, brandId, idx }) => (
 				<SendouSelectItemSection
-					className={idx === 0 ? "pt-0-5-forced" : undefined}
+					className={idx === 0 ? "pt-0-5" : undefined}
 					heading={t(`game-misc:BRAND_${brandId}` as any)}
-					headingImgPath={brandImageUrl(brandId)}
+					headingImg={<Image path={brandImageUrl(brandId)} size={28} alt="" />}
 					key={key}
 				>
 					{gear.map(({ id, name }) => (
@@ -100,13 +98,13 @@ function useGearItems(type: GearType) {
 				: shoesGearBrandGrouped;
 
 	const items = brandIds.map((brandId, idx) => {
-		const items = groupedGear[brandId] || [];
+		const brandGear = groupedGear[brandId] || [];
 
 		return {
 			brandId,
 			key: brandId,
 			idx,
-			items: items.map((gearId) => ({
+			items: brandGear.map((gearId) => ({
 				id: gearId,
 				name: t(`${translationPrefix}_${gearId}` as any),
 			})),

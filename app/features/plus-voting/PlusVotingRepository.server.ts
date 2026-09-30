@@ -8,20 +8,21 @@ import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { invariant } from "~/utils/invariant";
+import { commonUserSelect } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
+import * as PlusVoting from "./core/PlusVoting";
 
 const resultsByMonthYearQuery = (args: MonthYear) =>
 	db
 		.selectFrom("PlusVotingResult")
 		.innerJoin("User", "PlusVotingResult.votedId", "User.id")
-		.select([
-			...COMMON_USER_FIELDS,
+		.select((eb) => [
+			...commonUserSelect(eb),
 			"PlusVotingResult.wasSuggested",
-			"PlusVotingResult.passedVoting",
 			"PlusVotingResult.tier",
 			"PlusVotingResult.score",
+			"PlusVotingResult.votedId",
 		])
 		.where("PlusVotingResult.month", "=", args.month)
 		.where("PlusVotingResult.year", "=", args.year)
@@ -30,27 +31,77 @@ type ResultsByMonthYearQueryReturnType = InferResult<
 	ReturnType<typeof resultsByMonthYearQuery>
 >;
 
-export function allPlusTiersFromLatestVoting() {
-	return db
-		.selectFrom("FreshPlusTier")
-		.select(["FreshPlusTier.userId", "FreshPlusTier.tier as plusTier"])
-		.where("FreshPlusTier.tier", "is not", null)
-		.execute() as Promise<{ userId: number; plusTier: number }[]>;
+export async function findAllPlusTiersFromLatestVoting() {
+	// resolving month & year first lets SQLite push the filter into the PlusVotingResult view
+	const latestVoting = await db
+		.selectFrom("PlusVote")
+		.select(["PlusVote.year", "PlusVote.month"])
+		.where("PlusVote.becomesValidAt", "<", sql<number>`strftime('%s', 'now')`)
+		.orderBy("PlusVote.year", "desc")
+		.orderBy("PlusVote.month", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	const rows = latestVoting
+		? await db
+				.selectFrom("PlusVotingResult")
+				.select([
+					"PlusVotingResult.votedId",
+					"PlusVotingResult.tier",
+					"PlusVotingResult.score",
+					"PlusVotingResult.wasSuggested",
+				])
+				.where("PlusVotingResult.year", "=", latestVoting.year)
+				.where("PlusVotingResult.month", "=", latestVoting.month)
+				.execute()
+		: [];
+
+	const withPassed = PlusVoting.computePassedVoting(rows);
+	return PlusVoting.computeFreshPlusTiers(withPassed);
 }
 
-export type ResultsByMonthYearItem = Unwrapped<typeof resultsByMonthYear>;
-export async function resultsByMonthYear(args: MonthYear) {
+export type ResultsByMonthYearItem = Unwrapped<typeof findResultsByMonthYear>;
+export async function findResultsByMonthYear(args: MonthYear) {
 	const rows = await resultsByMonthYearQuery(args).execute();
 
-	return groupPlusVotingResults(rows);
+	const passedMap = new Map<
+		string,
+		{ passedVoting: number; wasSuggested: number }
+	>();
+	const rawForVoting = rows.map((row) => ({
+		votedId: row.votedId,
+		tier: row.tier,
+		score: row.score,
+		wasSuggested: row.wasSuggested,
+	}));
+	for (const r of PlusVoting.computePassedVoting(rawForVoting)) {
+		passedMap.set(`${r.votedId}-${r.tier}`, {
+			passedVoting: r.passedVoting,
+			wasSuggested: r.wasSuggested,
+		});
+	}
+
+	const enrichedRows = rows.map((row) => {
+		const computed = passedMap.get(`${row.votedId}-${row.tier}`);
+		return {
+			...row,
+			passedVoting: computed?.passedVoting ?? 0,
+		};
+	});
+
+	return groupPlusVotingResults(enrichedRows);
 }
 
-function groupPlusVotingResults(rows: ResultsByMonthYearQueryReturnType) {
+type EnrichedRow = ResultsByMonthYearQueryReturnType[number] & {
+	passedVoting: number;
+};
+
+function groupPlusVotingResults(rows: EnrichedRow[]) {
 	const grouped: Record<
 		number,
 		{
-			passed: ResultsByMonthYearQueryReturnType;
-			failed: ResultsByMonthYearQueryReturnType;
+			passed: EnrichedRow[];
+			failed: EnrichedRow[];
 		}
 	> = {};
 
@@ -73,31 +124,40 @@ function groupPlusVotingResults(rows: ResultsByMonthYearQueryReturnType) {
 		.sort((a, b) => a.tier - b.tier);
 }
 
+type Bio = { text: string; markdown: boolean };
+
 export type UsersForVoting = {
 	user: Pick<
 		Tables["User"],
-		"id" | "discordId" | "username" | "discordAvatar" | "bio"
-	>;
+		"id" | "discordId" | "username" | "discordAvatar"
+	> & { customAvatarUrl: string | null; bio: Bio | null };
 	suggestion?: PlusSuggestionRepository.FindAllByMonthItem;
 }[];
 
-export async function usersForVoting(loggedInUser: {
+export async function findAllUsersForVoting(loggedInUser: {
 	id: number;
 	plusTier: number;
 }) {
 	const members = await db
 		.selectFrom("User")
 		.innerJoin("PlusTier", "PlusTier.userId", "User.id")
-		.select([...COMMON_USER_FIELDS, "User.bio"])
+		.select((eb) => commonUserSelect(eb))
 		.where("PlusTier.tier", "=", loggedInUser.plusTier)
 		.execute();
 
 	const votingRange = nextNonCompletedVoting(new Date());
 	invariant(votingRange, "No next voting found");
 
-	const suggestedUsers = (
-		await PlusSuggestionRepository.findAllByMonth(rangeToMonthYear(votingRange))
-	).filter((suggestion) => suggestion.tier === loggedInUser.plusTier);
+	const suggestedUsers = await PlusSuggestionRepository.findAllByMonth({
+		...rangeToMonthYear(votingRange),
+		tier: loggedInUser.plusTier,
+	});
+
+	// bios are not part of a suggestion (the suggestions page does not render them)
+	const bios = await findBiosByUserIds([
+		...members.map((member) => member.id),
+		...suggestedUsers.map((suggestion) => suggestion.suggested.id),
+	]);
 
 	const result: UsersForVoting = [];
 
@@ -108,7 +168,8 @@ export async function usersForVoting(loggedInUser: {
 				discordId: member.discordId,
 				username: member.username,
 				discordAvatar: member.discordAvatar,
-				bio: member.bio,
+				customAvatarUrl: member.customAvatarUrl,
+				bio: bios.get(member.id) ?? null,
 			},
 		});
 	}
@@ -120,7 +181,8 @@ export async function usersForVoting(loggedInUser: {
 				discordId: suggestion.suggested.discordId,
 				username: suggestion.suggested.username,
 				discordAvatar: suggestion.suggested.discordAvatar,
-				bio: suggestion.suggested.bio,
+				customAvatarUrl: suggestion.suggested.customAvatarUrl,
+				bio: bios.get(suggestion.suggested.id) ?? null,
 			},
 			suggestion,
 		});
@@ -147,7 +209,13 @@ export async function hasVoted(args: {
 
 export type UpsertManyPlusVotesArgs = Pick<
 	TablesInsertable["PlusVote"],
-	"month" | "year" | "tier" | "authorId" | "votedId" | "score" | "validAfter"
+	| "month"
+	| "year"
+	| "tier"
+	| "authorId"
+	| "votedId"
+	| "score"
+	| "becomesValidAt"
 >[];
 export function upsertMany(votes: UpsertManyPlusVotesArgs) {
 	const firstVote = votes[0];
@@ -162,4 +230,44 @@ export function upsertMany(votes: UpsertManyPlusVotesArgs) {
 
 		await trx.insertInto("PlusVote").values(votes).execute();
 	});
+}
+
+/** Bios as the profile page's bio widget stores them, keyed by user id. */
+async function findBiosByUserIds(userIds: number[]) {
+	const bios = new Map<number, Bio>();
+
+	if (userIds.length === 0) return bios;
+
+	const rows = await db
+		.selectFrom("UserWidget")
+		.select([
+			"UserWidget.userId",
+			// cast keeps a bio that happens to look like JSON a string, the dialect
+			// parses raw selections starting with `json` as documents
+			sql<
+				string | null
+			>`cast(json_extract("UserWidget"."widget", '$.settings.bio') as text)`.as(
+				"bio",
+			),
+			sql<string>`json_extract("UserWidget"."widget", '$.id')`.as("widgetId"),
+		])
+		.where("UserWidget.userId", "in", userIds)
+		.where(sql`json_extract("UserWidget"."widget", '$.id')`, "in", [
+			"bio",
+			"bio-md",
+		])
+		.orderBy("UserWidget.index", "asc")
+		.execute();
+
+	for (const row of rows) {
+		// a user can have both bio widgets, the one higher up their profile wins
+		if (row.bio && !bios.has(row.userId)) {
+			bios.set(row.userId, {
+				text: row.bio,
+				markdown: row.widgetId === "bio-md",
+			});
+		}
+	}
+
+	return bios;
 }

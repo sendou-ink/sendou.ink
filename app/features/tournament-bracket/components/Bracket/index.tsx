@@ -1,17 +1,23 @@
-import * as React from "react";
-import { useDraggable } from "react-use-draggable-scroll";
+import clsx from "clsx";
+import type * as React from "react";
 import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
+import { useDragToScroll } from "~/hooks/useDragToScroll";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { EliminationBracketSide } from "./Elimination";
+import styles from "./index.module.css";
 import { RoundRobinBracket } from "./RoundRobin";
 import { SwissBracket } from "./Swiss";
 
 export function Bracket({
 	bracket,
 	bracketIdx,
+	groupId,
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
+	/** Group whose matches were loaded, for the bracket types shown one group at a time. */
+	groupId?: number | null;
 }) {
 	const { bracketExpanded } = useBracketExpanded();
 
@@ -26,7 +32,11 @@ export function Bracket({
 	if (bracket.type === "swiss") {
 		return (
 			<BracketContainer>
-				<SwissBracket bracket={bracket} bracketIdx={bracketIdx} />
+				<SwissBracket
+					bracket={bracket}
+					bracketIdx={bracketIdx}
+					groupId={groupId}
+				/>
 			</BracketContainer>
 		);
 	}
@@ -68,7 +78,7 @@ function BracketContainer({
 }) {
 	if (!scrollable) {
 		return (
-			<div className="bracket" data-testid="brackets-viewer">
+			<div className={styles.bracket} data-testid="brackets-viewer">
 				{children}
 			</div>
 		);
@@ -82,21 +92,48 @@ function ScrollableBracketContainer({
 }: {
 	children: React.ReactNode;
 }) {
-	const ref = React.useRef<HTMLDivElement>(
-		null,
-	) as React.MutableRefObject<HTMLDivElement>;
-	const { events } = useDraggable(ref, {
-		applyRubberBandEffect: true,
-	});
+	const ref = useDragToScroll<HTMLDivElement>();
+	usePublishBracketTopOffset(ref);
 
 	return (
-		<div
-			className="bracket scrolling-bracket"
-			data-testid="brackets-viewer"
-			ref={ref}
-			{...events}
-		>
-			{children}
+		<div className={styles.breakoutWrapper}>
+			<div
+				className={clsx(styles.bracket, styles.scrollingBracket)}
+				data-testid="brackets-viewer"
+				ref={ref}
+			>
+				{children}
+			</div>
 		</div>
 	);
+}
+
+/**
+ * Inside a breakout container (see `mainBreakout`) publishes the bracket's distance from the viewport top
+ * as `--bracket-fill-top`, from which CSS derives `max-height` accounting for the mobile bottom nav and
+ * safe area insets JS can't read. No-op elsewhere, so the static `max-height` applies.
+ */
+function usePublishBracketTopOffset(ref: React.RefObject<HTMLElement | null>) {
+	useIsomorphicLayoutEffect(() => {
+		const el = ref.current;
+		if (!el?.closest("[data-main-breakout]")) return;
+
+		const update = () => {
+			el.style.setProperty(
+				"--bracket-fill-top",
+				`${el.getBoundingClientRect().top}px`,
+			);
+		};
+
+		update();
+
+		const observer = new ResizeObserver(update);
+		observer.observe(document.body);
+		window.addEventListener("resize", update);
+
+		return () => {
+			observer.disconnect();
+			window.removeEventListener("resize", update);
+		};
+	}, [ref]);
 }

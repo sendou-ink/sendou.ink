@@ -1,7 +1,7 @@
-import { Link, type MetaFunction, useLoaderData } from "@remix-run/react";
+import { Bell } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { BellIcon } from "~/components/icons/Bell";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { metaTags } from "../../../utils/remix";
 import { SETTINGS_PAGE } from "../../../utils/urls";
@@ -11,10 +11,13 @@ import {
 	NotificationsList,
 } from "../components/NotificationList";
 import { loader } from "../loaders/notifications.server";
-import { useMarkNotificationsAsSeen } from "../notifications-hooks";
-export { loader };
-
+import {
+	useMarkNotificationsAsSeen,
+	useStickyUnseenIds,
+} from "../notifications-hooks";
 import styles from "./notifications.module.css";
+
+export { loader };
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -26,25 +29,7 @@ export const meta: MetaFunction = (args) => {
 export default function NotificationsPage() {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
-	const [unseenIds, setUnseenIds] = React.useState(new Set<number>());
-
-	// persist unseen dots for the duration of the page being viewed
-	React.useEffect(() => {
-		setUnseenIds((prevUnseenIds) => {
-			const newUnseenIds = new Set(prevUnseenIds);
-
-			for (const id of data.notifications
-				.filter((notification) => !notification.seen)
-				.map((notification) => notification.id)) {
-				newUnseenIds.add(id);
-			}
-
-			// optimize render by not updating state if nothing changed
-			if (newUnseenIds.size === prevUnseenIds.size) return prevUnseenIds;
-
-			return newUnseenIds;
-		});
-	}, [data.notifications]);
+	const unseenIds = useStickyUnseenIds(data.notifications, true);
 
 	const unSeenIdsArr = React.useMemo(() => Array.from(unseenIds), [unseenIds]);
 
@@ -54,7 +39,7 @@ export default function NotificationsPage() {
 		<Main className="stack md">
 			<div className="stack horizontal justify-between items-center flex-wrap">
 				<h2 className={styles.header}>
-					<BellIcon /> {t("common:notifications.title")}
+					<Bell /> {t("common:notifications.title")}
 				</h2>
 				<Link className="text-xs" to={SETTINGS_PAGE}>
 					{t("common:notifications.managePush")}
@@ -75,9 +60,9 @@ export default function NotificationsPage() {
 									seen: Number(!unseenIds.has(notification.id)),
 								}}
 							/>
-							{i !== data.notifications.length - 1 && (
+							{i !== data.notifications.length - 1 ? (
 								<NotificationItemDivider />
-							)}
+							) : null}
 						</React.Fragment>
 					))}
 				</NotificationsList>

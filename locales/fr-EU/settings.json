@@ -1,0 +1,15 @@
+{
+	"tabs.preferences": "",
+	"tabs.matchProfile": "",
+	"tabs.locale": "",
+	"tabs.theme": "",
+	"tabs.sounds": "Notifications",
+	"matchProfile.maps.teamPreferencesHint": "",
+	"matchProfile.maps.avoid": "Détester",
+	"matchProfile.maps.prefer": "Préférer",
+	"matchProfile.maps.neutral": "Neutre",
+	"sounds.likeReceived": "",
+	"sounds.readyCheckStarted": "",
+	"sounds.matchStarted": "",
+	"sounds.tournamentMatchStarted": ""
+}

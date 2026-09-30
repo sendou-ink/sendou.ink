@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
 import { sortBuilds } from "./build-sorting.server";
@@ -22,16 +22,17 @@ const mockBuild = (
 		shoesGearSplId: 0,
 		description: null,
 		modes: ["SZ"],
-		private: 0,
+		isPrivate: 0,
 		title: "",
 		updatedAt: databaseTimestampNow(),
-		weapons: [{ weaponSplId: 0, maxPower: null, minRank: null }],
+		weapons: [{ weaponSplId: 0, isTop500: 0 }],
+		permissions: { EDIT: [] },
 		...partialBuild,
 	};
 };
 
 describe("sortBuilds()", () => {
-	it("sorts by UPDATED_AT", () => {
+	test("sorts by UPDATED_AT", () => {
 		const builds = [
 			mockBuild({ id: 1, updatedAt: 1 }),
 			mockBuild({ id: 2, updatedAt: 3 }),
@@ -48,18 +49,18 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[1].id).toBe(3);
 	});
 
-	it("sorts by TOP_500", () => {
+	test("sorts by TOP_500", () => {
 		const builds = [
 			mockBuild({ id: 1 }),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 1, maxPower: 3000, minRank: 1 }],
+				weapons: [{ weaponSplId: 1, isTop500: 1 }],
 			}),
 			mockBuild({
 				id: 3,
 				weapons: [
-					{ weaponSplId: 0, maxPower: null, minRank: null },
-					{ weaponSplId: 1, maxPower: 2900, minRank: 1 },
+					{ weaponSplId: 0, isTop500: 0 },
+					{ weaponSplId: 1, isTop500: 1 },
 				],
 			}),
 		];
@@ -74,14 +75,12 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[1].id).toBe(3);
 	});
 
-	// Add other test cases similarly...
-
-	it("sorts by both PUBLIC_BUILD and PRIVATE_BUILD", () => {
+	test("sorts by both PUBLIC_BUILD and PRIVATE_BUILD", () => {
 		const builds = [
-			mockBuild({ id: 1, private: 1 }),
-			mockBuild({ id: 2, private: 0 }),
-			mockBuild({ id: 3, private: 1 }),
-			mockBuild({ id: 4, private: 0 }),
+			mockBuild({ id: 1, isPrivate: 1 }),
+			mockBuild({ id: 2, isPrivate: 0 }),
+			mockBuild({ id: 3, isPrivate: 1 }),
+			mockBuild({ id: 4, isPrivate: 0 }),
 		];
 
 		const sortedBuilds1 = sortBuilds({
@@ -107,19 +106,19 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds2[3].id).toBe(4);
 	});
 
-	it("sorts by WEAPON_POOL", () => {
+	test("sorts by WEAPON_POOL", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
-				weapons: [{ weaponSplId: 1000, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 1000, isTop500: 0 }],
 			}),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 10, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 10, isTop500: 0 }],
 			}),
 			mockBuild({
 				id: 3,
-				weapons: [{ weaponSplId: 1, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 1, isTop500: 0 }],
 			}),
 		];
 
@@ -133,7 +132,7 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[1].id).toBe(2);
 	});
 
-	it("sorts by WEAPON_POOL (alt kits are same priority)", () => {
+	test("sorts by WEAPON_POOL (alt kits are same priority)", () => {
 		const mockBuildBuilder = (
 			id: number,
 			weaponIds: MainWeaponId[],
@@ -142,8 +141,7 @@ describe("sortBuilds()", () => {
 				id,
 				weapons: weaponIds.map((wepId) => ({
 					weaponSplId: wepId,
-					maxPower: null,
-					minRank: null,
+					isTop500: 0,
 				})),
 			});
 		};
@@ -193,7 +191,7 @@ describe("sortBuilds()", () => {
 		}
 	});
 
-	it("sorts by ALPHABETICAL_TITLE", () => {
+	test("sorts by ALPHABETICAL_TITLE", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
@@ -219,21 +217,21 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[1].id).toBe(2);
 	});
 
-	it("sorts by WEAPON_IN_GAME_ORDER", () => {
+	test("sorts by WEAPON_IN_GAME_ORDER", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
-				weapons: [{ weaponSplId: 1, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 1, isTop500: 0 }],
 			}),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 10, maxPower: null, minRank: null }],
+				weapons: [{ weaponSplId: 10, isTop500: 0 }],
 			}),
 			mockBuild({
 				id: 3,
 				weapons: [
-					{ weaponSplId: 1000, maxPower: null, minRank: null },
-					{ weaponSplId: 1, maxPower: null, minRank: null },
+					{ weaponSplId: 1000, isTop500: 0 },
+					{ weaponSplId: 1, isTop500: 0 },
 				],
 			}),
 		];
@@ -247,7 +245,7 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[2].id).toBe(2);
 	});
 
-	it("sorts by MODE", () => {
+	test("sorts by MODE", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
@@ -272,7 +270,7 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[2].id).toBe(2);
 	});
 
-	it("sorts by MODE (no mode last)", () => {
+	test("sorts by MODE (no mode last)", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
@@ -298,7 +296,7 @@ describe("sortBuilds()", () => {
 	});
 
 	for (const identifier of ["HEADGEAR_ID", "CLOTHES_ID", "SHOES_ID"]) {
-		it(`sorts by ${identifier}`, () => {
+		test(`sorts by ${identifier}`, () => {
 			const key = (
 				{
 					HEADGEAR_ID: "headGearSplId",
@@ -330,9 +328,44 @@ describe("sortBuilds()", () => {
 
 			expect(sortedBuilds[2].id).toBe(1);
 		});
+
+		test(`sorts ${identifier} with null gear last`, () => {
+			const key = (
+				{
+					HEADGEAR_ID: "headGearSplId",
+					CLOTHES_ID: "clothesGearSplId",
+					SHOES_ID: "shoesGearSplId",
+				} as const
+			)[identifier]!;
+
+			const builds = [
+				mockBuild({
+					id: 1,
+					[key]: null,
+				}),
+				mockBuild({
+					id: 2,
+					[key]: 5,
+				}),
+				mockBuild({
+					id: 3,
+					[key]: 1,
+				}),
+			];
+
+			const sortedBuilds = sortBuilds({
+				builds,
+				buildSorting: [identifier as any],
+				weaponPool: [],
+			});
+
+			expect(sortedBuilds[0].id).toBe(3);
+			expect(sortedBuilds[1].id).toBe(2);
+			expect(sortedBuilds[2].id).toBe(1);
+		});
 	}
 
-	it("sorts when buildSort not given", () => {
+	test("sorts when buildSort not given", () => {
 		const builds = [mockBuild({}), mockBuild({}), mockBuild({})];
 
 		sortBuilds({
@@ -342,7 +375,7 @@ describe("sortBuilds()", () => {
 		});
 	});
 
-	it("sorts by UPDATED_AT and ALPHABETICAL_TITLE", () => {
+	test("sorts by UPDATED_AT and ALPHABETICAL_TITLE", () => {
 		const builds = [
 			mockBuild({ id: 1, updatedAt: 3, title: "C" }),
 			mockBuild({ id: 2, updatedAt: 2, title: "B" }),
@@ -359,7 +392,7 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[1].id).toBe(3);
 	});
 
-	it("sorts by ALPHABETICAL_TITLE and UPDATED_AT (reverse)", () => {
+	test("sorts by ALPHABETICAL_TITLE and UPDATED_AT (reverse)", () => {
 		const builds = [
 			mockBuild({ id: 1, updatedAt: 3, title: "C" }),
 			mockBuild({ id: 2, updatedAt: 2, title: "B" }),
@@ -375,11 +408,11 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[0].id).toBe(3);
 	});
 
-	it("sorts by PUBLIC_BUILD", () => {
+	test("sorts by PUBLIC_BUILD", () => {
 		const builds = [
-			mockBuild({ id: 1, private: 1 }),
-			mockBuild({ id: 2, private: 1 }),
-			mockBuild({ id: 3, private: 0 }),
+			mockBuild({ id: 1, isPrivate: 1 }),
+			mockBuild({ id: 2, isPrivate: 1 }),
+			mockBuild({ id: 3, isPrivate: 0 }),
 		];
 
 		const sortedBuilds = sortBuilds({
@@ -393,11 +426,11 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[2].id).toBe(2);
 	});
 
-	it("sorts by PRIVATE_BUILD", () => {
+	test("sorts by PRIVATE_BUILD", () => {
 		const builds = [
-			mockBuild({ id: 1, private: 0 }),
-			mockBuild({ id: 2, private: 1 }),
-			mockBuild({ id: 3, private: 1 }),
+			mockBuild({ id: 1, isPrivate: 0 }),
+			mockBuild({ id: 2, isPrivate: 1 }),
+			mockBuild({ id: 3, isPrivate: 1 }),
 		];
 
 		const sortedBuilds = sortBuilds({

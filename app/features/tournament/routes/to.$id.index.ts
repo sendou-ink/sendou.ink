@@ -1,25 +1,18 @@
-import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { parseParams } from "~/utils/remix.server";
-import {
-	tournamentBracketsPage,
-	tournamentRegisterPage,
-	tournamentResultsPage,
-} from "~/utils/urls";
-import { idObject } from "~/utils/zod";
-import hasTournamentFinalized from "../queries/hasTournamentFinalized.server";
-import hasTournamentStarted from "../queries/hasTournamentStarted.server";
+import { type LoaderFunctionArgs, redirect } from "react-router";
+import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { tournamentInfoPage, tournamentResultsPage } from "~/utils/urls";
 
-export const loader = ({ params }: LoaderFunctionArgs) => {
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { tournament, tournamentId } = await tournamentFromParams(params, {
+		for: "view",
 	});
 
-	if (!hasTournamentStarted(tournamentId)) {
-		return redirect(tournamentRegisterPage(tournamentId));
+	if (!tournament.hasStarted) {
+		return redirect(tournamentInfoPage(tournamentId));
 	}
 
-	if (!hasTournamentFinalized(tournamentId)) {
+	if (!tournament.ctx.isFinalized) {
 		return redirect(tournamentBracketsPage({ tournamentId }));
 	}
 

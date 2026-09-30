@@ -1,41 +1,49 @@
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	SerializeFrom,
-} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import clsx from "clsx";
+import generalI18next from "i18next";
+import NProgress from "nprogress";
+import * as React from "react";
+import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
+import { useTranslation } from "react-i18next";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import {
+	data,
 	Links,
 	Meta,
 	Outlet,
 	Scripts,
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
-	useHref,
+	useFetchers,
 	useLoaderData,
+	useLocation,
 	useMatches,
 	useNavigate,
 	useNavigation,
+	useRevalidator,
 	useSearchParams,
-} from "@remix-run/react";
-import generalI18next from "i18next";
-import NProgress from "nprogress";
-import * as React from "react";
-import { I18nProvider, RouterProvider } from "react-aria-components";
-import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
-import { useTranslation } from "react-i18next";
-import type { NavigateOptions } from "react-router-dom";
-import { useDebounce } from "react-use";
-import { useChangeLanguage } from "remix-i18next/react";
-import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
-import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
+} from "react-router";
+import { Config } from "~/config";
+import type { CustomTheme } from "~/db/tables-json";
+import { resolveLayoutData } from "~/features/layout/core/layout.server";
+import { useDebounce } from "~/hooks/useDebounce";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
+import lexendLatinUrl from "~/styles/fonts/lexend-latin.woff2?url";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
-import { Layout } from "./components/layout";
-import { Ramp } from "./components/ramp/Ramp";
+import { FusePageInit } from "./components/fuse/Fuse";
+import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { getUser } from "./features/auth/core/user.server";
-import { userIsBanned } from "./features/ban/core/banned.server";
+import { userMiddleware } from "./features/auth/core/user-middleware.server";
+import { ChatProvider } from "./features/chat/ChatProvider";
+import { resolveRoomList } from "./features/chat/chat-room-list.server";
+import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
+import { GlobalStatusProvider } from "./features/global-status/GlobalStatusProvider";
+import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
+import { LayoutDataProvider } from "./features/layout/LayoutDataProvider";
+import { NotificationsProvider } from "./features/notifications/NotificationsProvider";
+import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
 import {
 	isTheme,
 	Theme,
@@ -43,30 +51,79 @@ import {
 	ThemeProvider,
 	useTheme,
 } from "./features/theme/core/provider";
-import { getThemeSession } from "./features/theme/core/session.server";
-import { useIsMounted } from "./hooks/useIsMounted";
-import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
-import i18next, { i18nCookie } from "./modules/i18n/i18next.server";
-import type { Namespace } from "./modules/i18n/resources.server";
-import { isRevalidation, metaTags } from "./utils/remix";
-import { SUSPENDED_PAGE } from "./utils/urls";
-
-import "nprogress/nprogress.css";
-import "~/styles/common.css";
-import "~/styles/elements.css";
-import "~/styles/flags.css";
-import "~/styles/layout.css";
-import "~/styles/reset.css";
-import "~/styles/utils.css";
+import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { timezoneMiddleware } from "./features/timezone/timezone-middleware.server";
+import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
+import { useHydrated } from "./hooks/useHydrated";
+import {
+	ALWAYS_LOADED_NAMESPACES,
+	DEFAULT_LANGUAGE,
+} from "./modules/i18n/config";
+import {
+	getLocale,
+	i18nCookie,
+	i18nMiddleware,
+} from "./modules/i18n/i18next.server";
+import { localePreloadUrls } from "./modules/i18n/locale-preload.server";
+import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
+import { isSupporter } from "./modules/permissions/utils";
+import { redirectsMiddleware } from "./modules/redirects/redirects-middleware.server";
+import { SearchParamsProvider } from "./modules/search-params/hooks";
+import { IS_E2E_TEST_RUN } from "./utils/e2e";
+import { allI18nNamespaces } from "./utils/i18n";
+import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
+import { requestContextMiddleware } from "./utils/request-context-middleware.server";
+import { APP_ICON_URL, pwaSplashScreenImageUrl } from "./utils/urls";
+import "~/styles/fonts.css";
 import "~/styles/vars.css";
+import "~/styles/normalize.css";
+import "~/styles/common.css";
+import "~/styles/utils.css";
+import "~/styles/flags.css";
+import "nprogress/nprogress.css";
+import {
+	OpenModalsContext,
+	useHoverCursorForViewTransitions,
+} from "~/utils/view-transition";
+
+const PRELOAD_TRANSLATION_TIMEOUT_MS = 3000;
+
+export const middleware: Route.MiddlewareFunction[] = [
+	redirectsMiddleware,
+	requestContextMiddleware,
+	sessionIdMiddleware,
+	userMiddleware,
+	i18nMiddleware,
+	timezoneMiddleware,
+];
+
+// anchors the loading bar to the header (between the sidebars); at module scope so
+// even the very first navigation's NProgress.start doesn't render over the sidebar
+NProgress.configure({ parent: `#${NPROGRESS_ANCHOR_ID}` });
+
+type DevFaviconColors = { fill: string; stroke: string };
+
+// tints the favicon per local dev instance so the browser tabs of parallel
+// worktrees are told apart, matching each one's VS Code (Peacock) colors
+const DEV_FAVICON_COLORS: Record<string, DevFaviconColors | undefined> = {
+	yellow: { fill: "#eae4c8", stroke: "#dcd2a3" },
+	pink: { fill: "#eac8dd", stroke: "#dca3c6" },
+	cyan: { fill: "#c8e3ea", stroke: "#a3d0dc" },
+};
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isMatchResultsScopedRevalidation(args)) return false;
 	if (isRevalidation(args)) return true;
 
-	// // reload on language change so the selected language gets set into the cookie
-	const lang = args.nextUrl.searchParams.get("lng");
+	if (args.formData?.get("revalidateRoot") === "true") return true;
 
-	return Boolean(lang);
+	const json = args.json as Record<string, unknown> | undefined;
+	if (json?.revalidateRoot === true) return true;
+
+	// biome-ignore lint/plugin: presence check only, before any route's definition has parsed the URL
+	if (args.nextUrl.searchParams.has("lng")) return true;
+
+	return false;
 };
 
 export const meta: MetaFunction = (args) => {
@@ -83,23 +140,20 @@ export type RootLoaderData = SerializeFrom<typeof loader>;
 export type LoggedInUser = NonNullable<RootLoaderData["user"]>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const user = await getUser(request, false);
-	const locale = await i18next.getLocale(request);
+	const user = getUser();
+	const locale = getLocale();
 	const themeSession = await getThemeSession(request);
+	const sidenavSession = await getSidenavSession(request);
 
-	// avoid redirection loop
-	if (
-		user &&
-		userIsBanned(user?.id) &&
-		new URL(request.url).pathname !== SUSPENDED_PAGE
-	) {
-		return redirect(SUSPENDED_PAGE);
-	}
+	const layoutData = await resolveLayoutData(user);
 
-	return json(
+	return data(
 		{
 			locale,
+			chatRoomList: user ? await resolveRoomList(user) : [],
+			i18nPreloadUrls: localePreloadUrls(locale),
 			theme: themeSession.getTheme(),
+			sidenavCollapsed: sidenavSession.getCollapsed(),
 			user: user
 				? {
 						username: user.username,
@@ -107,19 +161,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						discordId: user.discordId,
 						id: user.id,
 						customUrl: user.customUrl,
+						customAvatarUrl: user.customAvatarUrl,
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
 						preferences: user.preferences ?? {},
-						languages: user.languages ? user.languages.split(",") : [],
+						languages: user.languages ?? [],
 						plusTier: user.plusTier,
 						roles: user.roles,
+						createdAt: user.createdAt,
+						team: user.team,
 					}
 				: undefined,
-			notifications: user
-				? await NotificationRepository.findByUserId(user.id, {
-						limit: NOTIFICATIONS.PEEK_COUNT,
-					})
-				: undefined,
+			customTheme: isSupporter(user) ? user?.customTheme : undefined,
+			devFaviconColors: devFaviconColors(request),
+			...layoutData,
 		},
 		{
 			headers: { "Set-Cookie": await i18nCookie.serialize(locale) },
@@ -128,35 +183,58 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["common", "game-misc", "weapons"],
+	i18n: [...ALWAYS_LOADED_NAMESPACES],
 };
 
 function Document({
 	children,
-	data,
-	isErrored = false,
+	data: rootData,
 }: {
 	children: React.ReactNode;
 	data?: RootLoaderData;
-	isErrored?: boolean;
 }) {
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
-	const navigate = useNavigate();
-	const locale = data?.locale ?? DEFAULT_LANGUAGE;
+	const locale = rootData?.locale ?? DEFAULT_LANGUAGE;
+	const customThemeStyle = useCustomThemeVars();
 
-	// TODO: re-enable after testing if it causes bug where JS is not loading on revisit
-	// useRevalidateOnRevisit();
 	useChangeLanguage(locale);
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
-	const customizedCSSVars = useCustomizedCSSVars();
+	useHoverCursorForViewTransitions();
+
+	const htmlStyle: Record<string, string | number> = {
+		...Object.fromEntries(customThemeStyle),
+		...(rootData?.user?.roles.includes("MINOR_SUPPORT")
+			? { "--layout-fuse-bottom-height": "0px" }
+			: {}),
+	};
 
 	return (
-		<html lang={locale} dir={i18n.dir()} className={htmlThemeClass}>
+		<html
+			lang={locale}
+			dir={i18n.dir()}
+			className={clsx(htmlThemeClass, "scrollbar")}
+			style={htmlStyle}
+			data-fuse={
+				Config.fuseEnabled && !rootData?.user?.roles.includes("MINOR_SUPPORT")
+					? "true"
+					: undefined
+			}
+			suppressHydrationWarning
+		>
 			<head>
 				<meta charSet="utf-8" />
+				{Config.fuseEnabled &&
+				// check for data so supporters don't see ads on error page
+				rootData &&
+				!rootData.user?.roles.includes("MINOR_SUPPORT") ? (
+					<script
+						async
+						src="https://cdn.fuseplatform.net/publift/tags/2/4242/fuse.js"
+					/>
+				) : null}
 				<meta
 					name="viewport"
 					content="initial-scale=1, viewport-fit=cover, user-scalable=no"
@@ -170,29 +248,45 @@ function Document({
 				<meta name="theme-color" content="#010115" />
 				<Meta />
 				<Links />
+				{rootData?.i18nPreloadUrls?.map((url) => (
+					<link
+						key={url}
+						rel="preload"
+						as="fetch"
+						crossOrigin="anonymous"
+						href={url}
+					/>
+				))}
 				<ThemeHead />
+				{rootData?.devFaviconColors ? (
+					<DevFavicon colors={rootData.devFaviconColors} />
+				) : null}
 				<link rel="manifest" href="/app.webmanifest" />
 				<PWALinks />
 				<Fonts />
 			</head>
-			<body style={customizedCSSVars}>
-				{process.env.NODE_ENV === "development" && <HydrationTestIndicator />}
+			<body>
+				{IS_E2E_TEST_RUN ? <HydrationTestIndicator /> : null}
 				<React.StrictMode>
-					<RouterProvider navigate={navigate} useHref={useHref}>
-						<I18nProvider locale={i18n.language}>
-							<SendouToastRegion />
-							<MyRamp data={data} />
-							<Layout data={data} isErrored={isErrored}>
-								{children}
-							</Layout>
-						</I18nProvider>
-					</RouterProvider>
+					<SearchParamsProvider>
+						<SendouToastRegion />
+						<UnsavedChangesGuard />
+						<MyFuse data={rootData} />
+						<ChatProvider
+							user={rootData?.user}
+							roomList={rootData?.chatRoomList}
+						>
+							<NotificationsProvider user={rootData?.user}>
+								<LayoutDataProvider data={rootData}>
+									<GlobalStatusProvider user={rootData?.user}>
+										<Layout data={rootData}>{children}</Layout>
+									</GlobalStatusProvider>
+								</LayoutDataProvider>
+							</NotificationsProvider>
+						</ChatProvider>
+					</SearchParamsProvider>
 				</React.StrictMode>
-				<ScrollRestoration
-					getKey={(location) => {
-						return location.pathname;
-					}}
-				/>
+				<ScrollRestoration />
 				<Scripts />
 			</body>
 		</html>
@@ -200,13 +294,17 @@ function Document({
 }
 
 function useTriggerToasts() {
+	// biome-ignore lint/plugin: app-wide toast params written by server redirects, belonging to no one feature
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
+	const scrollBeforeToast = useScrollBeforeToast();
 
 	const error = searchParams.get("__error");
 	const success = searchParams.get("__success");
+	const searchWithoutToastParams = searchParamsWithoutToastParams(searchParams);
 
-	React.useEffect(() => {
+	// layout effect: the restore has to land after <ScrollRestoration /> (a child) reset the scroll, before paint
+	useIsomorphicLayoutEffect(() => {
 		if (!error && !success) return;
 
 		if (error) {
@@ -226,8 +324,46 @@ function useTriggerToasts() {
 			);
 		}
 
-		navigate({ search: "" }, { replace: true });
-	}, [error, success, navigate]);
+		if (scrollBeforeToast.current.pathname === window.location.pathname) {
+			window.scrollTo(0, scrollBeforeToast.current.y);
+		}
+
+		navigate(
+			{ search: searchWithoutToastParams },
+			{
+				replace: true,
+				preventScrollReset: true,
+				defaultShouldRevalidate: false,
+			},
+		);
+	}, [error, success, searchWithoutToastParams, navigate, scrollBeforeToast]);
+}
+
+function searchParamsWithoutToastParams(searchParams: URLSearchParams) {
+	const rest = new URLSearchParams(searchParams);
+	rest.delete("__error");
+	rest.delete("__success");
+
+	const asString = rest.toString();
+
+	return asString ? `?${asString}` : "";
+}
+
+/** Latest scroll position and the page it was scrolled on, to undo the scroll reset of a toast's redirect. */
+function useScrollBeforeToast() {
+	const ref = React.useRef({ pathname: "", y: 0 });
+
+	React.useEffect(() => {
+		const onScroll = () => {
+			ref.current = { pathname: window.location.pathname, y: window.scrollY };
+		};
+
+		window.addEventListener("scroll", onScroll, { passive: true });
+
+		return () => window.removeEventListener("scroll", onScroll);
+	}, []);
+
+	return ref;
 }
 
 function useLoadingIndicator() {
@@ -241,309 +377,377 @@ function useLoadingIndicator() {
 				NProgress.done();
 			}
 		},
-		250,
+		150,
 		[transition.state],
 	);
 }
 
-// TODO: this should be an array if we can figure out how to make Typescript
-// enforce that it has every member of keyof CustomTypeOptions["resources"] without duplicating the type manually
-export const namespaceJsonsToPreloadObj: Record<Namespace, boolean> = {
-	common: true,
-	analyzer: true,
-	badges: true,
-	builds: true,
-	calendar: true,
-	contributions: true,
-	faq: true,
-	"game-misc": true,
-	gear: true,
-	user: true,
-	weapons: true,
-	scrims: true,
-	tournament: true,
-	team: true,
-	vods: true,
-	art: true,
-	q: true,
-	lfg: true,
-	org: true,
-	front: true,
-};
-const namespaceJsonsToPreload = Object.keys(namespaceJsonsToPreloadObj);
-
 function usePreloadTranslation() {
 	React.useEffect(() => {
-		void generalI18next.loadNamespaces(namespaceJsonsToPreload);
+		const loadAll = () =>
+			void generalI18next.loadNamespaces(allI18nNamespaces());
+
+		if (typeof window.requestIdleCallback !== "function") {
+			const timeoutId = window.setTimeout(
+				loadAll,
+				PRELOAD_TRANSLATION_TIMEOUT_MS,
+			);
+			return () => window.clearTimeout(timeoutId);
+		}
+
+		const idleId = window.requestIdleCallback(loadAll, {
+			timeout: PRELOAD_TRANSLATION_TIMEOUT_MS,
+		});
+		return () => window.cancelIdleCallback(idleId);
 	}, []);
 }
 
-const CUSTOMIZED_CSS_VARS_NAME = "css";
-
-function useCustomizedCSSVars() {
+function useCustomThemeVars() {
 	const matches = useMatches();
+	const styles: Map<string, number> = new Map();
 
 	for (const match of matches) {
-		if ((match.data as any)?.[CUSTOMIZED_CSS_VARS_NAME]) {
-			return Object.fromEntries(
-				Object.entries(
-					(match.data as any)[CUSTOMIZED_CSS_VARS_NAME] as Record<
-						string,
-						string
-					>,
-				).map(([key, value]) => [
-					`--${key}`,
-					`var(--preview-${key}, ${value})`,
-				]),
-			) as React.CSSProperties;
+		const loaderData = match.loaderData as
+			| { customTheme?: CustomTheme }
+			| undefined;
+
+		if (loaderData?.customTheme) {
+			for (const [key, value] of Object.entries(loaderData.customTheme)) {
+				// Skips size and border variables for themes that arent the user's own
+				if (
+					match.id !== "root" &&
+					(key.includes("--_size") || key.includes("--_border"))
+				)
+					continue;
+				if (value === null) continue;
+
+				styles.set(key, value);
+			}
 		}
 	}
 
-	return;
-}
-
-declare module "react-aria-components" {
-	interface RouterConfig {
-		routerOptions: NavigateOptions;
-	}
+	return styles;
 }
 
 export default function App() {
-	// prop drilling data instead of using useLoaderData in the child components directly because
-	// useLoaderData can't be used in CatchBoundary and layout is rendered in it as well
-	//
-	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
-	const data = useLoaderData<RootLoaderData>();
+	const rootData = useLoaderData<RootLoaderData>();
+	const [openModals, setOpenModals] = React.useState(0);
 
 	return (
-		<ThemeProvider
-			specifiedTheme={isTheme(data.theme) ? data.theme : null}
-			themeSource="user-preference"
-		>
-			<Document data={data}>
-				<Outlet />
-			</Document>
-		</ThemeProvider>
+		<OpenModalsContext value={{ count: openModals, setCount: setOpenModals }}>
+			<ThemeProvider
+				specifiedTheme={isTheme(rootData.theme) ? rootData.theme : null}
+				themeSource="user-preference"
+			>
+				<Document data={rootData}>
+					<Outlet />
+				</Document>
+			</ThemeProvider>
+		</OpenModalsContext>
 	);
 }
 
-export const ErrorBoundary = () => {
+export function ErrorBoundary() {
 	return (
 		<ThemeProvider themeSource="static" specifiedTheme={Theme.DARK}>
-			<Document isErrored>
+			<Document>
 				<Catcher />
 			</Document>
 		</ThemeProvider>
 	);
-};
+}
 
 function HydrationTestIndicator() {
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
+	const navigation = useNavigation();
+	const revalidator = useRevalidator();
+	const fetchers = useFetchers();
+	const location = useLocation();
 
-	if (!isMounted) return null;
+	if (!isHydrated) return null;
 
-	return <div style={{ display: "none" }} data-testid="hydrated" />;
+	const busy = [
+		navigation.state !== "idle"
+			? `nav:${navigation.state}:${navigation.location?.pathname}`
+			: null,
+		revalidator.state !== "idle" ? `revalidator:${revalidator.state}` : null,
+		...fetchers
+			.filter((fetcher) => fetcher.state !== "idle")
+			.map(
+				(fetcher) =>
+					`fetcher[${fetcher.key}]:${fetcher.state}:${fetcher.formAction ?? "load"}`,
+			),
+	].filter(Boolean);
+
+	const routerIdle = busy.length === 0;
+
+	return (
+		<div
+			style={{ display: "none" }}
+			data-testid="hydrated"
+			data-router-idle={routerIdle ? "true" : undefined}
+			data-router-busy={routerIdle ? undefined : busy.join(" | ")}
+			// the rendered search trails the browser's by a commit: once the toast params are
+			// gone from here the forms keyed on the location (see SendouForm) have remounted
+			data-location-search={location.search}
+		/>
+	);
+}
+
+function devFaviconColors(request: Request) {
+	if (process.env.NODE_ENV !== "development") return;
+
+	const [subdomain] = new URL(request.url).hostname.split(".");
+
+	return DEV_FAVICON_COLORS[subdomain];
+}
+
+function DevFavicon({ colors }: { colors: DevFaviconColors }) {
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="8" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="4" /></svg>`;
+
+	return (
+		<link
+			rel="icon"
+			type="image/svg+xml"
+			href={`data:image/svg+xml,${encodeURIComponent(svg)}`}
+		/>
+	);
 }
 
 function Fonts() {
 	return (
-		<>
-			<link rel="preconnect" href="https://fonts.googleapis.com" />
-			<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-			<link
-				href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap"
-				rel="stylesheet"
-			/>
-		</>
+		<link
+			rel="preload"
+			href={lexendLatinUrl}
+			as="font"
+			type="font/woff2"
+			crossOrigin="anonymous"
+		/>
 	);
 }
 
 function PWALinks() {
 	return (
 		<>
-			<link rel="apple-touch-icon" href="/static-assets/img/app-icon.png" />
+			<link rel="apple-touch-icon" href={APP_ICON_URL} />
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_14_Pro_Max_landscape.png"
+				href={pwaSplashScreenImageUrl("iPhone_14_Pro_Max_landscape.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_14_Pro_landscape.png"
+				href={pwaSplashScreenImageUrl("iPhone_14_Pro_landscape.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_14_Plus__iPhone_13_Pro_Max__iPhone_12_Pro_Max_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_14_Plus__iPhone_13_Pro_Max__iPhone_12_Pro_Max_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_14__iPhone_13_Pro__iPhone_13__iPhone_12_Pro__iPhone_12_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_14__iPhone_13_Pro__iPhone_13__iPhone_12_Pro__iPhone_12_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_13_mini__iPhone_12_mini__iPhone_11_Pro__iPhone_XS__iPhone_X_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_13_mini__iPhone_12_mini__iPhone_11_Pro__iPhone_XS__iPhone_X_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_11_Pro_Max__iPhone_XS_Max_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_11_Pro_Max__iPhone_XS_Max_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_11__iPhone_XR_landscape.png"
+				href={pwaSplashScreenImageUrl("iPhone_11__iPhone_XR_landscape.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_8_Plus__iPhone_7_Plus__iPhone_6s_Plus__iPhone_6_Plus_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_8_Plus__iPhone_7_Plus__iPhone_6s_Plus__iPhone_6_Plus_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/iPhone_8__iPhone_7__iPhone_6s__iPhone_6__4.7__iPhone_SE_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_8__iPhone_7__iPhone_6s__iPhone_6__4.7__iPhone_SE_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/4__iPhone_SE__iPod_touch_5th_generation_and_later_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"4__iPhone_SE__iPod_touch_5th_generation_and_later_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/12.9__iPad_Pro_landscape.png"
+				href={pwaSplashScreenImageUrl("12.9__iPad_Pro_landscape.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/11__iPad_Pro__10.5__iPad_Pro_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"11__iPad_Pro__10.5__iPad_Pro_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/10.9__iPad_Air_landscape.png"
+				href={pwaSplashScreenImageUrl("10.9__iPad_Air_landscape.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/10.5__iPad_Air_landscape.png"
+				href={pwaSplashScreenImageUrl("10.5__iPad_Air_landscape.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/10.2__iPad_landscape.png"
+				href={pwaSplashScreenImageUrl("10.2__iPad_landscape.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/9.7__iPad_Pro__7.9__iPad_mini__9.7__iPad_Air__9.7__iPad_landscape.png"
+				href={pwaSplashScreenImageUrl(
+					"9.7__iPad_Pro__7.9__iPad_mini__9.7__iPad_Air__9.7__iPad_landscape.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
-				href="/static-assets/img/splash-screens/8.3__iPad_Mini_landscape.png"
+				href={pwaSplashScreenImageUrl("8.3__iPad_Mini_landscape.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_14_Pro_Max_portrait.png"
+				href={pwaSplashScreenImageUrl("iPhone_14_Pro_Max_portrait.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_14_Pro_portrait.png"
+				href={pwaSplashScreenImageUrl("iPhone_14_Pro_portrait.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_14_Plus__iPhone_13_Pro_Max__iPhone_12_Pro_Max_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_14_Plus__iPhone_13_Pro_Max__iPhone_12_Pro_Max_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_14__iPhone_13_Pro__iPhone_13__iPhone_12_Pro__iPhone_12_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_14__iPhone_13_Pro__iPhone_13__iPhone_12_Pro__iPhone_12_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_13_mini__iPhone_12_mini__iPhone_11_Pro__iPhone_XS__iPhone_X_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_13_mini__iPhone_12_mini__iPhone_11_Pro__iPhone_XS__iPhone_X_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_11_Pro_Max__iPhone_XS_Max_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_11_Pro_Max__iPhone_XS_Max_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_11__iPhone_XR_portrait.png"
+				href={pwaSplashScreenImageUrl("iPhone_11__iPhone_XR_portrait.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_8_Plus__iPhone_7_Plus__iPhone_6s_Plus__iPhone_6_Plus_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_8_Plus__iPhone_7_Plus__iPhone_6s_Plus__iPhone_6_Plus_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/iPhone_8__iPhone_7__iPhone_6s__iPhone_6__4.7__iPhone_SE_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"iPhone_8__iPhone_7__iPhone_6s__iPhone_6__4.7__iPhone_SE_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/4__iPhone_SE__iPod_touch_5th_generation_and_later_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"4__iPhone_SE__iPod_touch_5th_generation_and_later_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/12.9__iPad_Pro_portrait.png"
+				href={pwaSplashScreenImageUrl("12.9__iPad_Pro_portrait.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/11__iPad_Pro__10.5__iPad_Pro_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"11__iPad_Pro__10.5__iPad_Pro_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/10.9__iPad_Air_portrait.png"
+				href={pwaSplashScreenImageUrl("10.9__iPad_Air_portrait.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/10.5__iPad_Air_portrait.png"
+				href={pwaSplashScreenImageUrl("10.5__iPad_Air_portrait.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/10.2__iPad_portrait.png"
+				href={pwaSplashScreenImageUrl("10.2__iPad_portrait.png")}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/9.7__iPad_Pro__7.9__iPad_mini__9.7__iPad_Air__9.7__iPad_portrait.png"
+				href={pwaSplashScreenImageUrl(
+					"9.7__iPad_Pro__7.9__iPad_mini__9.7__iPad_Air__9.7__iPad_portrait.png",
+				)}
 			/>
 			<link
 				rel="apple-touch-startup-image"
 				media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-				href="/static-assets/img/splash-screens/8.3__iPad_Mini_portrait.png"
+				href={pwaSplashScreenImageUrl("8.3__iPad_Mini_portrait.png")}
 			/>
 		</>
 	);
 }
 
-function MyRamp({ data }: { data: RootLoaderData | undefined }) {
-	if (!data || data.user?.roles.includes("MINOR_SUPPORT")) {
+function MyFuse({ data: rootData }: { data: RootLoaderData | undefined }) {
+	if (!rootData || rootData.user?.roles.includes("MINOR_SUPPORT")) {
 		return null;
 	}
 
 	return (
 		<ClientErrorBoundary fallback={null}>
-			<Ramp />
+			<FusePageInit />
 		</ClientErrorBoundary>
 	);
 }

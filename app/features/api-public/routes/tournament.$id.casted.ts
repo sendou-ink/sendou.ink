@@ -1,33 +1,25 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { cors } from "remix-utils/cors";
-import { z } from "zod/v4";
+import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { db } from "~/db/sql";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
-import {
-	handleOptionsRequest,
-	requireBearerAuth,
-} from "../api-public-utils.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { id } from "~/utils/schema";
 import type { GetCastedTournamentMatchesResponse } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	await handleOptionsRequest(request);
-	requireBearerAuth(request);
-
-	const { id } = parseParams({
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { id: tournamentId } = parseParams({
 		params,
 		schema: paramsSchema,
 	});
 
-	const tournament = notFoundIfFalsy(
+	const tournament = notFoundIfNullish(
 		await db
 			.selectFrom("Tournament")
 			.select(["Tournament.castedMatchesInfo"])
-			.where("Tournament.id", "=", id)
+			.where("Tournament.id", "=", tournamentId)
 			.executeTakeFirst(),
 	);
 
@@ -41,11 +33,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 				},
 			})) ?? [],
 		future:
-			tournament.castedMatchesInfo?.lockedMatches.map((matchId) => ({
-				matchId: matchId,
-				channel: null,
+			tournament.castedMatchesInfo?.lockedMatches.map((lm) => ({
+				matchId: lm.matchId,
+				channel: {
+					type: "TWITCH" as const,
+					channelId: lm.twitchAccount,
+				},
 			})) ?? [],
 	};
 
-	return await cors(request, json(result));
+	return Response.json(result);
 };

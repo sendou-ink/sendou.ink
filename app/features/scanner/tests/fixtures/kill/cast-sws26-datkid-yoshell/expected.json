@@ -1,0 +1,10 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 214,
+		"names": ["datkid", "y0shell"]
+	},
+	"options": {
+		"notes": "Frame shared with player-status/cast-sws26-three-dead-one-special (SWS26 broadcast): a double. The second character of y0shell is the O/0 box BlitzMain draws for both; labeled as the digit the after-lowercase rule reads — UNCONFIRMED against the player's real name."
+	}
+}

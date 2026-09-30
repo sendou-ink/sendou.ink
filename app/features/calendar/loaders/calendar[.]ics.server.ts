@@ -1,20 +1,20 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { parseSearchParams } from "~/utils/remix.server";
+import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
+import * as v from "valibot";
+import { safeJSONParse } from "~/utils/schema";
 import * as CalendarRepository from "../CalendarRepository.server";
-import { calendarFiltersSearchParamsObject } from "../calendar-schemas";
+import { calendarFiltersSearchParamsSchema } from "../calendar-schemas";
+import { calendarSearchParams } from "../calendar-search-params";
 import * as CalendarEvent from "../core/CalendarEvent";
 import * as ICal from "../core/ICal.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const filters = parseSearchParams({
-		request,
-		schema: calendarFiltersSearchParamsObject,
-	}).filters;
+	const filters = resolveFilters(request);
 
 	const startTime = new Date();
 	const endTime = new Date(startTime);
 
-	// get all events over the two weeks, might be good to make this an parameter in the future
+	// two weeks of events, could be a parameter in the future
 	endTime.setDate(startTime.getDate() + 14);
 
 	// handle timezone mismatch between server and client
@@ -43,3 +43,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		},
 	});
 };
+
+/** Subscribed feed URLs may still carry the pre-FilterBar `filters` JSON param. */
+function resolveFilters(request: Request) {
+	// biome-ignore lint/plugin: legacy param no current route produces
+	const legacyFilters = new URL(request.url).searchParams.get("filters");
+	if (legacyFilters !== null) {
+		const parsed = v.safeParse(
+			calendarFiltersSearchParamsSchema,
+			safeJSONParse(legacyFilters),
+		);
+		if (parsed.success) return parsed.output;
+	}
+
+	return R.pick(calendarSearchParams.parse(request), [
+		...CalendarEvent.FILTERS_KEYS,
+	]);
+}

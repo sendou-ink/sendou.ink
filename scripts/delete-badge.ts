@@ -1,6 +1,5 @@
-import "dotenv/config";
 import { db } from "~/db/sql";
-import invariant from "~/utils/invariant";
+import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
 const rawId = process.argv[2]?.trim();

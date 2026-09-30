@@ -1,57 +1,101 @@
-import type { ExpressionBuilder, FunctionModule, NotNull } from "kysely";
+import type { ExpressionBuilder, NotNull, SqlBool } from "kysely";
 import { sql } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
-import { db, sql as dbDirect } from "~/db/sql";
+import { db } from "~/db/sql";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import type { CustomTheme, UserPreferences } from "~/db/tables-json";
+import { actorId } from "~/features/auth/core/user.server";
+import { PATRON_CHIP_THEME_VARS } from "~/features/theme/theme-constants";
+import {
+	BEST_TIER_NUMBER,
+	type TournamentTierNumber,
+	WORST_TIER_NUMBER,
+} from "~/features/tournament/core/tiering";
 import type {
 	BuildSort,
-	DB,
-	Tables,
-	TablesInsertable,
-	UserPreferences,
-} from "~/db/tables";
-import type { ChatUser } from "~/features/chat/components/Chat";
+	ResultSource,
+} from "~/features/user-page/user-page-constants";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
-import type { CommonUser } from "~/utils/kysely.server";
-import { COMMON_USER_FIELDS, userChatNameColor } from "~/utils/kysely.server";
-import { safeNumberParse } from "~/utils/number";
+import {
+	databaseTimestampNow,
+	dateToDatabaseTimestamp,
+	dateToYYYYMMDD,
+} from "~/utils/dates";
+import { invariant } from "~/utils/invariant";
+import {
+	asJson,
+	commonUserSelect,
+	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
+	jsonArrayFrom,
+	jsonObjectFrom,
+	tournamentLogoOrNull,
+	userByIdentifierQuery,
+} from "~/utils/kysely.server";
+import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
+import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
+import {
+	DEFAULT_WIDGETS,
+	findWidgetById,
+	widgetsAvailableTo,
+} from "./core/widgets/portfolio";
+import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
+import type { LoadedWidget } from "./core/widgets/types";
+import { SPL2_JOIN_ORDER_CUTOFF } from "./user-page-constants";
 
-const identifierToUserIdQuery = (identifier: string) =>
-	db
-		.selectFrom("User")
-		.select("User.id")
-		.where((eb) => {
-			// we don't want to parse discord id's as numbers (length = 18)
-			const parsedId =
-				identifier.length < 10 ? safeNumberParse(identifier) : null;
-			if (parsedId) {
-				return eb("User.id", "=", parsedId);
-			}
-
-			if (/^\d+$/.test(identifier)) {
-				return eb("User.discordId", "=", identifier);
-			}
-
-			return eb("User.customUrl", "=", identifier);
-		});
-
-export function identifierToUserId(identifier: string) {
-	return identifierToUserIdQuery(identifier).executeTakeFirst();
+export function findIdByIdentifier(identifier: string) {
+	return userByIdentifierQuery(identifier).executeTakeFirst();
 }
 
-export async function identifierToBuildFields(identifier: string) {
-	const row = await identifierToUserIdQuery(identifier)
+/** Identity of the user a `/u/:identifier` page is about, incl. what their canonical page URL needs. */
+export function findPageUserByIdentifier(identifier: string) {
+	return userByIdentifierQuery(identifier)
+		.select(["User.discordId", "User.customUrl"])
+		.executeTakeFirst();
+}
+
+/** Country codes of the given users keyed by user id, users without a country set absent. */
+export async function findCountriesByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return new Map<number, string>();
+
+	const rows = await db
+		.selectFrom("User")
+		.select(["User.id", "User.country"])
+		.where("User.id", "in", userIds)
+		.where("User.country", "is not", null)
+		.$narrowType<{ country: NotNull }>()
+		.execute();
+
+	return new Map(rows.map((row) => [row.id, row.country]));
+}
+
+/** Plus tiers of the given users keyed by user id, users without a tier absent. */
+export async function findPlusTiersByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return new Map<number, number>();
+
+	const rows = await db
+		.selectFrom("PlusTier")
+		.select(["PlusTier.userId", "PlusTier.tier"])
+		.where("PlusTier.userId", "in", userIds)
+		.execute();
+
+	return new Map(rows.map((row) => [row.userId, row.tier]));
+}
+
+export async function findBuildFieldsByUserId(userId: number) {
+	const row = await db
+		.selectFrom("User")
+		.where("User.id", "=", userId)
 		.select(({ eb }) => [
 			"User.buildSorting",
 			jsonArrayFrom(
 				eb
-					.selectFrom("UserWeapon")
-					.select("UserWeapon.weaponSplId")
-					.whereRef("UserWeapon.userId", "=", "User.id")
-					.orderBy("UserWeapon.order", "asc"),
+					.selectFrom("UserWeaponPool")
+					.select("UserWeaponPool.weaponSplId")
+					.whereRef("UserWeaponPool.userId", "=", "User.id")
+					.orderBy("UserWeaponPool.sortOrder", "asc"),
 			).as("weapons"),
 		])
 		.executeTakeFirst();
@@ -62,25 +106,26 @@ export async function identifierToBuildFields(identifier: string) {
 
 	return {
 		...row,
-		weapons: row.weapons.map((row) => row.weaponSplId),
+		weapons: row.weapons.map((weapon) => weapon.weaponSplId),
 	};
 }
 
-export function findLayoutDataByIdentifier(
-	identifier: string,
-	loggedInUserId?: number,
-) {
-	return identifierToUserIdQuery(identifier)
+export function findLayoutDataById(userId: number, loggedInUserId?: number) {
+	return db
+		.selectFrom("User")
+		.where("User.id", "=", userId)
+		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select((eb) => [
-			...COMMON_USER_FIELDS,
+			...commonUserSelect(eb),
+			"User.pronouns",
+			"User.country",
+			"User.inGameName",
+			"PlusTier.tier as plusTier",
 			"User.commissionText",
 			"User.commissionsOpen",
-			sql<Record<
-				string,
-				string
-			> | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."css", null)`.as(
-				"css",
-			),
+			asJson(
+				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+			).as("customTheme"),
 			eb
 				.selectFrom("TournamentResult")
 				.whereRef("TournamentResult.userId", "=", "User.id")
@@ -95,11 +140,13 @@ export function findLayoutDataByIdentifier(
 				.selectFrom("Build")
 				.select(({ fn }) => fn.countAll<number>().as("count"))
 				.whereRef("Build.ownerId", "=", "User.id")
-				.where((eb) =>
-					eb.or(
+				.where((buildEb) =>
+					buildEb.or(
 						[
-							eb("Build.private", "=", 0),
-							loggedInUserId ? eb("Build.ownerId", "=", loggedInUserId) : null,
+							buildEb("Build.isPrivate", "=", 0),
+							loggedInUserId
+								? buildEb("Build.ownerId", "=", loggedInUserId)
+								: null,
 						].filter((filter) => filter !== null),
 					),
 				)
@@ -116,16 +163,22 @@ export function findLayoutDataByIdentifier(
 				)
 				.whereRef("VideoMatchPlayer.playerUserId", "=", "User.id")
 				.as("vodsCount"),
+			// indexed union: an OR spanning Art and ArtUserMetadata would scan the whole Art table
 			eb
 				.selectFrom("Art")
-				.leftJoin("ArtUserMetadata", "ArtUserMetadata.artId", "Art.id")
 				.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-				.select(({ fn }) => fn.count<number>("Art.id").distinct().as("count"))
-				.where((innerEb) =>
-					innerEb.or([
-						innerEb("Art.authorId", "=", sql.raw<any>("User.id")),
-						innerEb("ArtUserMetadata.userId", "=", sql.raw<any>("User.id")),
-					]),
+				.select(({ fn }) => fn.countAll<number>().as("count"))
+				.where("Art.id", "in", (innerEb) =>
+					innerEb
+						.selectFrom("Art")
+						.select("Art.id")
+						.whereRef("Art.authorId", "=", "User.id")
+						.union(
+							innerEb
+								.selectFrom("ArtUserMetadata")
+								.select("ArtUserMetadata.artId as id")
+								.whereRef("ArtUserMetadata.userId", "=", "User.id"),
+						),
 				)
 				.as("artCount"),
 		])
@@ -139,36 +192,27 @@ export function findLayoutDataByIdentifier(
 		.executeTakeFirst();
 }
 
-export async function findProfileByIdentifier(
-	identifier: string,
-	forceShowDiscordUniqueName?: boolean,
-) {
-	const row = await identifierToUserIdQuery(identifier)
+export async function findProfileByUserId(userId: number) {
+	const row = await db
+		.selectFrom("User")
+		.where("User.id", "=", userId)
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(({ eb }) => [
 			"User.twitch",
 			"User.youtubeId",
-			"User.battlefy",
 			"User.bsky",
 			"User.country",
-			"User.bio",
-			"User.motionSens",
-			"User.stickSens",
 			"User.inGameName",
 			"User.customName",
 			"User.discordName",
-			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
-			"User.favoriteBadgeIds",
+			"User.favoriteTrophyIds",
+			"User.hiddenTrophyIds",
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
-			jsonArrayFrom(
-				eb
-					.selectFrom("UserWeapon")
-					.select(["UserWeapon.weaponSplId", "UserWeapon.isFavorite"])
-					.whereRef("UserWeapon.userId", "=", "User.id")
-					.orderBy("UserWeapon.order", "asc"),
-			).as("weapons"),
+			"User.pronouns",
+			"User.customAvatarImgId",
+			customAvatarUrl(eb).as("customAvatarUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -178,47 +222,19 @@ export async function findProfileByIdentifier(
 						"UserSubmittedImage.id",
 						"Team.avatarImgId",
 					)
-					.select([
+					.select((teamEb) => [
 						"Team.name",
 						"Team.customUrl",
 						"Team.id",
 						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.role as userTeamRole",
-						"UserSubmittedImage.url as avatarUrl",
+						"TeamMemberWithSecondary.customRole as userTeamCustomRole",
+						concatUserSubmittedImagePrefix(
+							teamEb.ref("UserSubmittedImage.url"),
+						).as("avatarUrl"),
 					])
 					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id"),
 			).as("teams"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("BadgeOwner")
-					.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-					.select(({ fn }) => [
-						fn.count<number>("BadgeOwner.badgeId").as("count"),
-						"Badge.id",
-						"Badge.displayName",
-						"Badge.code",
-						"Badge.hue",
-					])
-					.whereRef("BadgeOwner.userId", "=", "User.id")
-					.groupBy(["BadgeOwner.badgeId", "BadgeOwner.userId"]),
-			).as("badges"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("SplatoonPlayer")
-					.innerJoin(
-						"XRankPlacement",
-						"XRankPlacement.playerId",
-						"SplatoonPlayer.id",
-					)
-					.select(({ fn }) => [
-						"XRankPlacement.mode",
-						fn.max<number>("XRankPlacement.power").as("power"),
-						fn.min<number>("XRankPlacement.rank").as("rank"),
-						"XRankPlacement.playerId",
-					])
-					.whereRef("SplatoonPlayer.userId", "=", "User.id")
-					.groupBy(["XRankPlacement.mode"]),
-			).as("topPlacements"),
 		])
 		.executeTakeFirst();
 
@@ -226,59 +242,82 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
-	const favoriteBadgeIds = favoriteBadgesOwnedAndSupporterStatusAdjusted(row);
-
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
-		favoriteBadgeIds,
-		badges: row.badges.sort((a, b) => {
-			const aIdx = favoriteBadgeIds?.indexOf(a.id) ?? -1;
-			const bIdx = favoriteBadgeIds?.indexOf(b.id) ?? -1;
-
-			if (aIdx !== bIdx) {
-				if (aIdx === -1) return 1;
-				if (bIdx === -1) return -1;
-
-				return aIdx - bIdx;
-			}
-
-			return b.id - a.id;
-		}),
-		discordUniqueName:
-			forceShowDiscordUniqueName || row.showDiscordUniqueName
-				? row.discordUniqueName
-				: null,
 	};
 }
 
-function favoriteBadgesOwnedAndSupporterStatusAdjusted(row: {
-	favoriteBadgeIds: number[] | null;
-	badges: Array<{
-		id: number;
-	}>;
-	patronTier: number | null;
-}) {
-	// filter out favorite badges no longer owner of
-	let favoriteBadgeIds =
-		row.favoriteBadgeIds?.filter((badgeId) =>
-			row.badges.some((badge) => badge.id === badgeId),
-		) ?? null;
+export async function upsertWidgets(
+	userId: number,
+	widgets: Array<Tables["UserWidget"]["widget"]>,
+) {
+	return db.transaction().execute(async (trx) => {
+		await trx.deleteFrom("UserWidget").where("userId", "=", userId).execute();
 
-	if (favoriteBadgeIds?.length === 0) {
-		favoriteBadgeIds = null;
-	}
+		await trx
+			.insertInto("UserWidget")
+			.values(
+				widgets.map((widget, index) => ({
+					userId,
+					index,
+					widget: JSON.stringify(widget),
+				})),
+			)
+			.execute();
+	});
+}
 
-	// non-supporters can only have one favorite badge, handle losing supporter status
-	favoriteBadgeIds = isSupporter(row)
-		? favoriteBadgeIds
-		: favoriteBadgeIds
-			? [favoriteBadgeIds[0]]
-			: null;
+export async function findStoredWidgetsByUserId(
+	userId: number,
+): Promise<Array<Tables["UserWidget"]["widget"]>> {
+	const rows = await db
+		.selectFrom("UserWidget")
+		.innerJoin("User", "User.id", "UserWidget.userId")
+		.select(["UserWidget.widget", "User.patronTier"])
+		.where("UserWidget.userId", "=", userId)
+		.orderBy("UserWidget.index", "asc")
+		.execute();
 
-	return favoriteBadgeIds;
+	if (rows.length === 0) return DEFAULT_WIDGETS;
+
+	return widgetsAvailableTo(
+		rows.map((row) => row.widget),
+		isSupporter({ patronTier: rows[0]!.patronTier }),
+	);
+}
+
+export async function findWidgetsByUserId(
+	userId: number,
+): Promise<LoadedWidget[]> {
+	const widgets = await findStoredWidgetsByUserId(userId);
+
+	const loadedWidgets = await Promise.all(
+		widgets.map(async (widget) => {
+			const definition = findWidgetById(widget.id);
+
+			if (!definition) {
+				logger.warn(`Unknown widget id found for user ${userId}: ${widget.id}`);
+				return null;
+			}
+
+			const loader = WIDGET_LOADERS[widget.id as keyof typeof WIDGET_LOADERS];
+			const data = loader
+				? await loader(userId, widget.settings as any)
+				: widget.settings;
+
+			return {
+				id: widget.id,
+				data,
+				settings: widget.settings,
+				slot: definition.slot,
+			} as LoadedWidget;
+		}),
+	);
+
+	return loadedWidgets.filter((w) => w !== null);
 }
 
 export function findByCustomUrl(customUrl: string) {
@@ -293,17 +332,19 @@ export function findByFriendCode(friendCode: string) {
 	return db
 		.selectFrom("UserFriendCode")
 		.innerJoin("User", "User.id", "UserFriendCode.userId")
-		.select([...COMMON_USER_FIELDS])
+		.select((eb) => commonUserSelect(eb))
 		.where("UserFriendCode.friendCode", "=", friendCode)
 		.execute();
 }
 
-export function findBannedStatusByUserId(userId: number) {
-	return db
+export async function findUsernameById(id: number) {
+	const user = await db
 		.selectFrom("User")
-		.select(["User.banned", "User.bannedReason"])
-		.where("User.id", "=", userId)
+		.select("User.username")
+		.where("User.id", "=", id)
 		.executeTakeFirst();
+
+	return user?.username ?? null;
 }
 
 export async function findLeanById(id: number) {
@@ -312,10 +353,13 @@ export async function findLeanById(id: number) {
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.where("User.id", "=", id)
 		.select(({ eb }) => [
-			...COMMON_USER_FIELDS,
+			...commonUserSelect(eb),
+			"User.createdAt",
+			"User.customTheme",
 			"User.isArtist",
 			"User.isVideoAdder",
 			"User.isTournamentOrganizer",
+			"User.isApiAccesser",
 			"User.patronTier",
 			"User.languages",
 			"User.inGameName",
@@ -328,13 +372,36 @@ export async function findLeanById(id: number) {
 				.orderBy("UserFriendCode.createdAt", "desc")
 				.limit(1)
 				.as("friendCode"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("TeamMember")
+					.innerJoin("Team", "Team.id", "TeamMember.teamId")
+					.leftJoin(
+						"UserSubmittedImage",
+						"UserSubmittedImage.id",
+						"Team.avatarImgId",
+					)
+					.select(({ ref }) => [
+						"Team.name",
+						"Team.customUrl",
+						concatUserSubmittedImagePrefix(ref("UserSubmittedImage.url")).as(
+							"avatarUrl",
+						),
+					])
+					.where("TeamMember.userId", "=", id),
+			).as("team"),
 		])
 		.executeTakeFirst();
 
 	if (!user) return;
 
 	return {
-		...R.omit(user, ["isArtist", "isVideoAdder", "isTournamentOrganizer"]),
+		...R.omit(user, [
+			"isArtist",
+			"isVideoAdder",
+			"isTournamentOrganizer",
+			"isApiAccesser",
+		]),
 		roles: userRoles(user),
 	};
 }
@@ -353,11 +420,11 @@ export function findModInfoById(id: number) {
 				eb
 					.selectFrom("ModNote")
 					.innerJoin("User", "User.id", "ModNote.authorId")
-					.select([
+					.select((modNoteEb) => [
 						"ModNote.id as noteId",
 						"ModNote.text",
 						"ModNote.createdAt",
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(modNoteEb),
 					])
 					.where("ModNote.isDeleted", "=", 0)
 					.where("ModNote.userId", "=", id)
@@ -367,11 +434,11 @@ export function findModInfoById(id: number) {
 				eb
 					.selectFrom("BanLog")
 					.innerJoin("User", "User.id", "BanLog.bannedByUserId")
-					.select([
+					.select((banLogEb) => [
 						"BanLog.banned",
 						"BanLog.bannedReason",
 						"BanLog.createdAt",
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(banLogEb),
 					])
 					.where("BanLog.userId", "=", id)
 					.orderBy("BanLog.createdAt", "desc"),
@@ -384,11 +451,47 @@ export function findModInfoById(id: number) {
 export function findAllPatrons() {
 	return db
 		.selectFrom("User")
-		.select(["User.id", "User.discordId", "User.username", "User.patronTier"])
+		.select([
+			"User.id",
+			"User.discordId",
+			"User.username",
+			"User.patronTier",
+			asJson(
+				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+			).as("customTheme"),
+		])
 		.where("User.patronTier", "is not", null)
 		.orderBy("User.patronTier", "desc")
-		.orderBy("User.patronSince", "asc")
+		.orderBy("User.patronStartedAt", "asc")
 		.execute();
+}
+
+/** Patrons for the footer marquee, reshuffled each UTC day and slimmed to the fields the chip renders. */
+export async function findAllPatronsForFooter() {
+	const rows = await db
+		.selectFrom("User")
+		.select([
+			"User.id",
+			"User.discordId",
+			"User.username",
+			asJson(
+				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+			).as("customTheme"),
+		])
+		.where("User.patronTier", "is not", null)
+		.orderBy("User.id", "asc")
+		.execute();
+
+	const patrons = rows.map((row) => ({
+		...row,
+		customTheme: row.customTheme
+			? R.pick(row.customTheme, PATRON_CHIP_THEME_VARS)
+			: null,
+	}));
+
+	const { seededShuffle } = seededRandom(dateToYYYYMMDD(new Date()));
+
+	return seededShuffle(patrons);
 }
 
 export function findAllPlusServerMembers() {
@@ -403,40 +506,73 @@ export function findAllPlusServerMembers() {
 		.execute();
 }
 
-export async function findChatUsersByUserIds(userIds: number[]) {
-	const users = await db
+export async function existingUserIds(userIds: Array<number>) {
+	if (userIds.length === 0) return [];
+
+	const rows = await db
 		.selectFrom("User")
-		.select([
-			"User.id",
-			"User.discordId",
-			"User.discordAvatar",
-			"User.username",
-			userChatNameColor,
-		])
+		.select("User.id")
 		.where("User.id", "in", userIds)
 		.execute();
 
-	const result: Record<number, ChatUser> = {};
-
-	for (const user of users) {
-		result[user.id] = user;
-	}
-
-	return result;
+	return rows.map((row) => row.id);
 }
 
-const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
-	return eb
+export interface ResultsFilters {
+	showHighlightsOnly?: boolean;
+	tournamentName?: string;
+	teamName?: string;
+	mateUserId?: number;
+	minTier?: TournamentTierNumber;
+	maxTier?: TournamentTierNumber;
+	maxPlacement?: number;
+	fromYear?: number;
+	toYear?: number;
+	source?: ResultSource;
+	minParticipantCount?: number;
+}
+
+const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
+	eb
 		.selectFrom("CalendarEventDate")
-		.select(({ fn }) => [fn.max("CalendarEventDate.startTime").as("startTime")])
+		.select(({ fn }) => [fn.max("CalendarEventDate.startsAt").as("startsAt")])
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
-		.as("startTime");
-};
-export function findResultsByUserId(
+		.as("startsAt");
+
+const maxEventStartTimeExpr = sql<number>`(select max(${sql.ref("CalendarEventDate.startsAt")}) from ${sql.table("CalendarEventDate")} where ${sql.ref("CalendarEventDate.eventId")} = ${sql.ref("CalendarEvent.id")})`;
+
+const maxEventStartTimeAtLeastExpr = (year: number) =>
+	sql<boolean>`${maxEventStartTimeExpr} >= ${yearStartsAt(year)}`;
+
+const maxEventStartTimeAtMostExpr = (year: number) =>
+	sql<boolean>`${maxEventStartTimeExpr} <= ${yearEndsAt(year)}`;
+
+const NEVER_MATCHES = sql<boolean>`0`;
+
+const isTierFiltered = ({
+	minTier = BEST_TIER_NUMBER,
+	maxTier = WORST_TIER_NUMBER,
+}: ResultsFilters) =>
+	minTier !== BEST_TIER_NUMBER || maxTier !== WORST_TIER_NUMBER;
+
+/** Results reported on a calendar event have no tier, so filtering by tier excludes them. */
+const includesCalendarEventResults = (filters: ResultsFilters) =>
+	filters.source !== "SENDOU" && !isTierFiltered(filters);
+
+const includesTournamentResults = (filters: ResultsFilters) =>
+	filters.source !== "EXTERNAL";
+
+const yearStartsAt = (year: number) =>
+	dateToDatabaseTimestamp(new Date(Date.UTC(year, 0, 1)));
+
+const yearEndsAt = (year: number) =>
+	dateToDatabaseTimestamp(new Date(Date.UTC(year + 1, 0, 1))) - 1;
+
+const baseCalendarEventResultsQuery = (
 	userId: number,
-	{ showHighlightsOnly = false }: { showHighlightsOnly?: boolean } = {},
-) {
-	let calendarEventResultsQuery = db
+	filters: ResultsFilters,
+) => {
+	let query = db
 		.selectFrom("CalendarEventResultPlayer")
 		.innerJoin(
 			"CalendarEventResultTeam",
@@ -453,43 +589,78 @@ export function findResultsByUserId(
 				.onRef("UserResultHighlight.teamId", "=", "CalendarEventResultTeam.id")
 				.on("UserResultHighlight.userId", "=", userId),
 		)
-		.select(({ eb, fn }) => [
-			"CalendarEvent.id as eventId",
-			sql<number>`null`.as("tournamentId"),
-			"CalendarEventResultTeam.placement",
-			"CalendarEvent.participantCount",
-			sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
-			sql<string | null>`null`.as("logoUrl"),
-			"CalendarEvent.name as eventName",
-			"CalendarEventResultTeam.id as teamId",
-			"CalendarEventResultTeam.name as teamName",
-			fn<number | null>("iif", [
-				"UserResultHighlight.userId",
-				sql`1`,
-				sql`0`,
-			]).as("isHighlight"),
-			withMaxEventStartTime(eb),
-			jsonArrayFrom(
-				eb
-					.selectFrom("CalendarEventResultPlayer")
-					.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
-					.select([...COMMON_USER_FIELDS, "CalendarEventResultPlayer.name"])
-					.whereRef(
-						"CalendarEventResultPlayer.teamId",
-						"=",
-						"CalendarEventResultTeam.id",
-					)
-					.where((eb) =>
-						eb.or([
-							eb("CalendarEventResultPlayer.userId", "is", null),
-							eb("CalendarEventResultPlayer.userId", "!=", userId),
-						]),
-					),
-			).as("mates"),
-		])
 		.where("CalendarEventResultPlayer.userId", "=", userId);
 
-	let tournamentResultsQuery = db
+	if (!includesCalendarEventResults(filters)) {
+		return query.where(NEVER_MATCHES);
+	}
+
+	if (filters.showHighlightsOnly) {
+		query = query.where("UserResultHighlight.userId", "is not", null);
+	}
+
+	if (filters.tournamentName) {
+		query = query.where(
+			nameLikeExpr("CalendarEvent.name", filters.tournamentName),
+		);
+	}
+
+	if (filters.teamName) {
+		query = query.where(
+			nameLikeExpr("CalendarEventResultTeam.name", filters.teamName),
+		);
+	}
+
+	if (filters.mateUserId) {
+		const mateUserId = filters.mateUserId;
+		query = query.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("CalendarEventResultPlayer as MatePlayer")
+					.select("MatePlayer.userId")
+					.whereRef("MatePlayer.teamId", "=", "CalendarEventResultTeam.id")
+					.where("MatePlayer.userId", "=", mateUserId),
+			),
+		);
+	}
+
+	if (filters.maxPlacement) {
+		query = query.where(
+			"CalendarEventResultTeam.placement",
+			"<=",
+			filters.maxPlacement,
+		);
+	}
+
+	if (filters.minParticipantCount) {
+		query = query.where(
+			"CalendarEvent.participantCount",
+			">=",
+			filters.minParticipantCount,
+		);
+	}
+
+	if (filters.fromYear) {
+		query = query.where(maxEventStartTimeAtLeastExpr(filters.fromYear));
+	}
+
+	if (filters.toYear) {
+		query = query.where(maxEventStartTimeAtMostExpr(filters.toYear));
+	}
+
+	return query;
+};
+
+/** Tier of the division the result was placed in, falling back to the tournament's own tier. */
+const RESULT_TIER = sql<
+	Tables["Tournament"]["tier"]
+>`coalesce("TournamentDivisionTier"."tier", "Tournament"."tier")`;
+
+const baseTournamentResultsQuery = (
+	userId: number,
+	filters: ResultsFilters,
+) => {
+	let query = db
 		.selectFrom("TournamentResult")
 		.innerJoin(
 			"TournamentTeam",
@@ -501,27 +672,189 @@ export function findResultsByUserId(
 			"CalendarEvent.tournamentId",
 			"TournamentResult.tournamentId",
 		)
+		.innerJoin("Tournament", "Tournament.id", "TournamentResult.tournamentId")
+		.leftJoin("TournamentDivisionTier", (join) =>
+			join
+				.onRef(
+					"TournamentDivisionTier.tournamentId",
+					"=",
+					"TournamentResult.tournamentId",
+				)
+				.on(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
+				),
+		)
+		.where("TournamentResult.userId", "=", userId);
+
+	if (!includesTournamentResults(filters)) {
+		return query.where(NEVER_MATCHES);
+	}
+
+	if (filters.showHighlightsOnly) {
+		query = query.where("TournamentResult.isHighlight", "=", 1);
+	}
+
+	if (filters.tournamentName) {
+		query = query.where(
+			nameLikeExpr("CalendarEvent.name", filters.tournamentName),
+		);
+	}
+
+	if (filters.teamName) {
+		query = query.where(nameLikeExpr("TournamentTeam.name", filters.teamName));
+	}
+
+	if (filters.mateUserId) {
+		const mateUserId = filters.mateUserId;
+		query = query.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("TournamentResult as MateResult")
+					.select("MateResult.userId")
+					.whereRef(
+						"MateResult.tournamentTeamId",
+						"=",
+						"TournamentResult.tournamentTeamId",
+					)
+					.where("MateResult.userId", "=", mateUserId),
+			),
+		);
+	}
+
+	if (isTierFiltered(filters)) {
+		query = query
+			.where(RESULT_TIER, ">=", filters.minTier ?? BEST_TIER_NUMBER)
+			.where(RESULT_TIER, "<=", filters.maxTier ?? WORST_TIER_NUMBER);
+	}
+
+	if (filters.maxPlacement) {
+		query = query.where(
+			"TournamentResult.placement",
+			"<=",
+			filters.maxPlacement,
+		);
+	}
+
+	if (filters.minParticipantCount) {
+		query = query.where(
+			"TournamentResult.participantCount",
+			">=",
+			filters.minParticipantCount,
+		);
+	}
+
+	if (filters.fromYear) {
+		query = query.where(maxEventStartTimeAtLeastExpr(filters.fromYear));
+	}
+
+	if (filters.toYear) {
+		query = query.where(maxEventStartTimeAtMostExpr(filters.toYear));
+	}
+
+	return query;
+};
+
+const escapeLikePattern = (value: string) =>
+	value.replace(/[\\%_]/g, (char) => `\\${char}`);
+
+const nameLikeExpr = (column: string, name: string) => {
+	const pattern = `%${escapeLikePattern(name)}%`;
+	return sql<boolean>`${sql.ref(column)} like ${pattern} escape '\\'`;
+};
+
+export async function findResultsByUserId(
+	userId: number,
+	{
+		limit,
+		offset,
+		...filters
+	}: ResultsFilters & {
+		limit?: number;
+		offset?: number;
+	} = {},
+) {
+	const page =
+		limit !== undefined
+			? await findResultPageKeys(userId, filters, { limit, offset })
+			: null;
+
+	const calendarEventResultsQuery = baseCalendarEventResultsQuery(
+		userId,
+		filters,
+	)
+		.$if(page !== null, (qb) =>
+			qb.where("CalendarEventResultTeam.id", "in", page!.calendarEventTeamIds),
+		)
+		.select(({ eb, fn }) => [
+			"CalendarEvent.id as eventId",
+			sql<number>`null`.as("tournamentId"),
+			"CalendarEventResultTeam.placement",
+			"CalendarEvent.participantCount",
+			sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
+			sql<string | null>`null`.as("div"),
+			sql<string | null>`null`.as("logoUrl"),
+			"CalendarEvent.name as eventName",
+			"CalendarEventResultTeam.id as teamId",
+			"CalendarEventResultTeam.name as teamName",
+			fn<number | null>("iif", [
+				"UserResultHighlight.userId",
+				sql`1`,
+				sql`0`,
+			]).as("isHighlight"),
+			sql<number | null>`null`.as("tier"),
+			withMaxEventStartTime(eb),
+			jsonArrayFrom(
+				eb
+					.selectFrom("CalendarEventResultPlayer")
+					.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
+					.select((mateEb) => [
+						...commonUserSelect(mateEb),
+						"CalendarEventResultPlayer.name",
+					])
+					.whereRef(
+						"CalendarEventResultPlayer.teamId",
+						"=",
+						"CalendarEventResultTeam.id",
+					)
+					.where((mateEb) =>
+						mateEb.or([
+							mateEb("CalendarEventResultPlayer.userId", "is", null),
+							mateEb("CalendarEventResultPlayer.userId", "!=", userId),
+						]),
+					),
+			).as("mates"),
+		]);
+
+	const tournamentResultsQuery = baseTournamentResultsQuery(userId, filters)
+		.$if(page !== null, (qb) =>
+			qb.where(
+				"TournamentResult.tournamentTeamId",
+				"in",
+				page!.tournamentTeamIds,
+			),
+		)
 		.select(({ eb }) => [
 			sql<number>`null`.as("eventId"),
 			"TournamentResult.tournamentId",
 			"TournamentResult.placement",
 			"TournamentResult.participantCount",
 			"TournamentResult.setResults",
-			eb
-				.selectFrom("UserSubmittedImage")
-				.select(["UserSubmittedImage.url"])
-				.whereRef("CalendarEvent.avatarImgId", "=", "UserSubmittedImage.id")
-				.as("logoUrl"),
+			"TournamentResult.div",
+			tournamentLogoOrNull(eb).as("logoUrl"),
 			"CalendarEvent.name as eventName",
 			"TournamentTeam.id as teamId",
 			"TournamentTeam.name as teamName",
 			"TournamentResult.isHighlight",
+			RESULT_TIER.as("tier"),
 			withMaxEventStartTime(eb),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentResult as TournamentResult2")
 					.innerJoin("User", "User.id", "TournamentResult2.userId")
-					.select([...COMMON_USER_FIELDS, sql<string | null>`null`.as("name")])
+					.select((mateEb) => [
+						...commonUserSelect(mateEb),
+						sql<string | null>`null`.as("name"),
+					])
 					.whereRef(
 						"TournamentResult2.tournamentTeamId",
 						"=",
@@ -529,27 +862,77 @@ export function findResultsByUserId(
 					)
 					.where("TournamentResult2.userId", "!=", userId),
 			).as("mates"),
-		])
-		.where("TournamentResult.userId", "=", userId);
-
-	if (showHighlightsOnly) {
-		calendarEventResultsQuery = calendarEventResultsQuery.where(
-			"UserResultHighlight.userId",
-			"is not",
-			null,
-		);
-		tournamentResultsQuery = tournamentResultsQuery.where(
-			"TournamentResult.isHighlight",
-			"=",
-			1,
-		);
-	}
+		]);
 
 	return calendarEventResultsQuery
 		.unionAll(tournamentResultsQuery)
-		.orderBy("startTime", "desc")
-		.$narrowType<{ startTime: NotNull }>()
+		.orderBy("startsAt", "desc")
+		.$narrowType<{ startsAt: NotNull }>()
 		.execute();
+}
+
+/**
+ * Identities of the results on one page, newest first. Resolved on their own because the
+ * per-row columns of {@link findResultsByUserId} (mates, logos) would otherwise be computed
+ * for the user's every result before the sort and limit.
+ */
+async function findResultPageKeys(
+	userId: number,
+	filters: ResultsFilters,
+	{ limit, offset }: { limit: number; offset?: number },
+) {
+	const rows = await baseCalendarEventResultsQuery(userId, filters)
+		.select((eb) => [
+			sql<number | null>`"CalendarEventResultTeam"."id"`.as(
+				"calendarEventTeamId",
+			),
+			sql<number | null>`null`.as("tournamentTeamId"),
+			withMaxEventStartTime(eb),
+		])
+		.unionAll(
+			baseTournamentResultsQuery(userId, filters).select((eb) => [
+				sql<number | null>`null`.as("calendarEventTeamId"),
+				sql<number | null>`"TournamentResult"."tournamentTeamId"`.as(
+					"tournamentTeamId",
+				),
+				withMaxEventStartTime(eb),
+			]),
+		)
+		.orderBy("startsAt", "desc")
+		.limit(limit)
+		.$if(offset !== undefined, (qb) => qb.offset(offset!))
+		.execute();
+
+	return {
+		calendarEventTeamIds: rows.flatMap((row) =>
+			row.calendarEventTeamId !== null ? [row.calendarEventTeamId] : [],
+		),
+		tournamentTeamIds: rows.flatMap((row) =>
+			row.tournamentTeamId !== null ? [row.tournamentTeamId] : [],
+		),
+	};
+}
+
+export async function countResultsByUserId(
+	userId: number,
+	filters: ResultsFilters = {},
+) {
+	const calendarEventResultsQuery = baseCalendarEventResultsQuery(
+		userId,
+		filters,
+	).select(({ fn }) => [fn.countAll<number>().as("count")]);
+
+	const tournamentResultsQuery = baseTournamentResultsQuery(
+		userId,
+		filters,
+	).select(({ fn }) => [fn.countAll<number>().as("count")]);
+
+	const [calendarEventResults, tournamentResults] = await Promise.all([
+		calendarEventResultsQuery.executeTakeFirst(),
+		tournamentResultsQuery.executeTakeFirst(),
+	]);
+
+	return (calendarEventResults?.count ?? 0) + (tournamentResults?.count ?? 0);
 }
 
 export async function hasHighlightedResultsByUserId(userId: number) {
@@ -575,16 +958,37 @@ export async function hasHighlightedResultsByUserId(userId: number) {
 	return !!highlightedCalendarEventResult;
 }
 
-const searchSelectedFields = ({ fn }: { fn: FunctionModule<DB, "User"> }) =>
+export async function findResultPlacementsByUserId(userId: number) {
+	const tournamentResults = await db
+		.selectFrom("TournamentResult")
+		.select(["TournamentResult.placement"])
+		.where("userId", "=", userId)
+		.execute();
+
+	const calendarEventResults = await db
+		.selectFrom("CalendarEventResultPlayer")
+		.innerJoin(
+			"CalendarEventResultTeam",
+			"CalendarEventResultTeam.id",
+			"CalendarEventResultPlayer.teamId",
+		)
+		.select(["CalendarEventResultTeam.placement"])
+		.where("CalendarEventResultPlayer.userId", "=", userId)
+		.execute();
+
+	return [
+		...tournamentResults.map((r) => ({ placement: r.placement })),
+		...calendarEventResults.map((r) => ({ placement: r.placement })),
+	];
+}
+
+const searchSelectedFields = (eb: ExpressionBuilder<DB, "User">) =>
 	[
-		...COMMON_USER_FIELDS,
+		...commonUserSelect(eb),
 		"User.inGameName",
+		"User.tournamentName",
 		"PlusTier.tier as plusTier",
-		fn<string | null>("iif", [
-			"User.showDiscordUniqueName",
-			"User.discordUniqueName",
-			sql`null`,
-		]).as("discordUniqueName"),
+		"User.discordUniqueName",
 	] as const;
 export async function search({
 	query,
@@ -593,26 +997,62 @@ export async function search({
 	query: string;
 	limit: number;
 }) {
-	let exactMatches: Array<
-		CommonUser & {
-			inGameName: string | null;
-			plusTier: number | null;
-			discordUniqueName: string | null;
-		}
-	> = [];
-	if (query.length > 1) {
-		exactMatches = await db
-			.selectFrom("User")
-			.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-			.select(searchSelectedFields)
-			.where((eb) =>
-				eb.or([
-					eb("User.username", "like", query),
-					eb("User.inGameName", "like", query),
-					eb("User.discordUniqueName", "like", query),
-					eb("User.customUrl", "like", query),
-				]),
-			)
+	// one scan over User with exact matches ranked first instead of an exact pass + a fuzzy pass
+	const exactConditions = (eb: ExpressionBuilder<DB, "User">) => [
+		eb("User.username", "like", query),
+		eb("User.inGameName", "like", query),
+		eb("User.discordUniqueName", "like", query),
+		eb("User.customUrl", "like", query),
+	];
+
+	const fuzzyQuery = `%${query}%`;
+	const fuzzyConditions = (eb: ExpressionBuilder<DB, "User">) => [
+		eb("User.username", "like", fuzzyQuery),
+		eb("User.inGameName", "like", fuzzyQuery),
+		eb("User.discordUniqueName", "like", fuzzyQuery),
+	];
+
+	const includeExactMatches = query.length > 1;
+
+	// the trigram index needs 3+ characters and can't do LIKE wildcards; those queries scan User
+	const canUseSearchIndex =
+		query.length >= 3 && !query.includes("%") && !query.includes("_");
+
+	let dbQuery = db
+		.selectFrom("User")
+		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+		.select(searchSelectedFields)
+		.where((eb) =>
+			eb.or(
+				includeExactMatches
+					? [...fuzzyConditions(eb), ...exactConditions(eb)]
+					: fuzzyConditions(eb),
+			),
+		);
+
+	if (canUseSearchIndex) {
+		// the trigram index prefilters a superset; the LIKE conditions above stay the source of truth
+		const ftsPhrase = `"${query.replaceAll('"', '""')}"`;
+		dbQuery = dbQuery
+			.innerJoin("UserSearch", "UserSearch.rowid", "User.id")
+			.where(sql<boolean>`"UserSearch" match ${ftsPhrase}`);
+	}
+
+	if (includeExactMatches) {
+		dbQuery = dbQuery.orderBy(
+			(eb) =>
+				eb
+					.case()
+					.when(eb.or(exactConditions(eb)))
+					.then(0)
+					.else(1)
+					.end(),
+			"asc",
+		);
+	}
+
+	return (
+		dbQuery
 			.orderBy(
 				(eb) =>
 					eb
@@ -623,42 +1063,11 @@ export async function search({
 						.end(),
 				"asc",
 			)
+			// deterministic order for ties so both query paths return the same rows
+			.orderBy("User.id", "asc")
 			.limit(limit)
-			.execute();
-	}
-
-	const fuzzyQuery = `%${query}%`;
-	const fuzzyMatches = await db
-		.selectFrom("User")
-		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-		.select(searchSelectedFields)
-		.where((eb) =>
-			eb
-				.or([
-					eb("User.username", "like", fuzzyQuery),
-					eb("User.inGameName", "like", fuzzyQuery),
-					eb("User.discordUniqueName", "like", fuzzyQuery),
-				])
-				.and(
-					"User.id",
-					"not in",
-					exactMatches.map((match) => match.id),
-				),
-		)
-		.orderBy(
-			(eb) =>
-				eb
-					.case()
-					.when("PlusTier.tier", "is", null)
-					.then(4)
-					.else(eb.ref("PlusTier.tier"))
-					.end(),
-			"asc",
-		)
-		.limit(limit - exactMatches.length)
-		.execute();
-
-	return [...exactMatches, ...fuzzyMatches];
+			.execute()
+	);
 }
 
 export function searchExact(args: {
@@ -693,7 +1102,7 @@ export function searchExact(args: {
 	return query.execute();
 }
 
-export async function currentFriendCodeByUserId(userId: number) {
+export async function findCurrentFriendCodeByUserId(userId: number) {
 	return db
 		.selectFrom("UserFriendCode")
 		.select([
@@ -707,9 +1116,24 @@ export async function currentFriendCodeByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
+/** All friend codes a user has ever submitted. */
+export async function findFriendCodesByUserId(userId: number) {
+	return db
+		.selectFrom("UserFriendCode")
+		.leftJoin("User", "User.id", "UserFriendCode.submitterUserId")
+		.select([
+			"UserFriendCode.friendCode",
+			"UserFriendCode.createdAt",
+			"User.username as submitterUsername",
+		])
+		.where("UserFriendCode.userId", "=", userId)
+		.orderBy("UserFriendCode.createdAt", "desc")
+		.execute();
+}
+
 let cachedFriendCodes: Set<string> | null = null;
 
-export async function allCurrentFriendCodes() {
+export async function findAllCurrentFriendCodes() {
 	if (cachedFriendCodes) {
 		return cachedFriendCodes;
 	}
@@ -737,7 +1161,7 @@ export async function allCurrentFriendCodes() {
 	return friendCodes;
 }
 
-export async function inGameNameByUserId(userId: number) {
+export async function findInGameNameByUserId(userId: number) {
 	return (
 		await db
 			.selectFrom("User")
@@ -745,6 +1169,56 @@ export async function inGameNameByUserId(userId: number) {
 			.where("id", "=", userId)
 			.executeTakeFirst()
 	)?.inGameName;
+}
+
+export async function findPatronStartedAtByUserId(userId: number) {
+	return (
+		await db
+			.selectFrom("User")
+			.select("User.patronStartedAt")
+			.where("id", "=", userId)
+			.executeTakeFirst()
+	)?.patronStartedAt;
+}
+
+/** Division and season of the last LUTI the user placed in, `null` when they never have. */
+export async function findDivByUserId(userId: number) {
+	const row = await db
+		.selectFrom("User")
+		.select(["User.div", "User.divSeason"])
+		.where("id", "=", userId)
+		.executeTakeFirst();
+
+	if (!row?.div) return null;
+
+	return { div: row.div, divSeason: row.divSeason };
+}
+
+export async function findJoinOrderByUserId(userId: number) {
+	const row = await db
+		.selectFrom("User")
+		.select("User.joinOrder")
+		.where("id", "=", userId)
+		.executeTakeFirst();
+
+	if (!row?.joinOrder) return null;
+
+	return {
+		joinOrder: row.joinOrder,
+		isSpl2: row.joinOrder <= SPL2_JOIN_ORDER_CUTOFF,
+	};
+}
+
+export async function findCommissionsByUserId(userId: number) {
+	return await db
+		.selectFrom("User")
+		.select([
+			"User.commissionsOpen",
+			"User.commissionsOpenedAt",
+			"User.commissionText",
+		])
+		.where("id", "=", userId)
+		.executeTakeFirst();
 }
 
 export function insertFriendCode(args: TablesInsertable["UserFriendCode"]) {
@@ -762,12 +1236,25 @@ export function upsert(
 		| "discordUniqueName"
 		| "twitch"
 		| "youtubeId"
+		| "youtubeName"
 		| "bsky"
 	>,
 ) {
 	return db
 		.insertInto("User")
-		.values({ ...args, createdAt: databaseTimestampNow() })
+		.values((eb) => ({
+			...args,
+			createdAt: databaseTimestampNow(),
+			joinOrder: eb
+				.selectFrom("User")
+				.select(
+					eb(
+						eb.fn.coalesce(eb.fn.max("joinOrder"), eb.val(0)),
+						"+",
+						eb.val(1),
+					).as("nextJoinOrder"),
+				),
+		}))
 		.onConflict((oc) => {
 			return oc.column("discordId").doUpdateSet({
 				...R.omit(args, ["discordId"]),
@@ -780,40 +1267,34 @@ export function upsert(
 type UpdateProfileArgs = Pick<
 	TablesInsertable["User"],
 	| "country"
-	| "bio"
 	| "customUrl"
 	| "customName"
-	| "motionSens"
-	| "stickSens"
+	| "pronouns"
 	| "inGameName"
-	| "battlefy"
-	| "css"
-	| "showDiscordUniqueName"
 	| "commissionText"
 	| "commissionsOpen"
 > & {
-	userId: number;
-	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
-	favoriteBadgeIds?: number[] | null;
+	favoriteTrophyIds?: number[] | null;
+	hiddenTrophyIds?: number[] | null;
+	customAvatarImgId?: number | null;
 };
-export function updateProfile(args: UpdateProfileArgs) {
+export function updateOwnProfile(args: UpdateProfileArgs) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("UserWeapon")
-			.where("userId", "=", args.userId)
-			.execute();
-
-		if (args.weapons.length > 0) {
+		// a removed or replaced custom avatar's image row is cleaned up
+		const current = await trx
+			.selectFrom("User")
+			.select("User.customAvatarImgId")
+			.where("id", "=", userId)
+			.executeTakeFirst();
+		if (
+			current?.customAvatarImgId &&
+			current.customAvatarImgId !== args.customAvatarImgId
+		) {
 			await trx
-				.insertInto("UserWeapon")
-				.values(
-					args.weapons.map((weapon, i) => ({
-						userId: args.userId,
-						weaponSplId: weapon.weaponSplId,
-						isFavorite: weapon.isFavorite,
-						order: i + 1,
-					})),
-				)
+				.deleteFrom("UnvalidatedUserSubmittedImage")
+				.where("id", "=", current.customAvatarImgId)
+				.where("UnvalidatedUserSubmittedImage.submitterUserId", "=", userId)
 				.execute();
 		}
 
@@ -821,31 +1302,57 @@ export function updateProfile(args: UpdateProfileArgs) {
 			.updateTable("User")
 			.set({
 				country: args.country,
-				bio: args.bio,
 				customUrl: args.customUrl,
 				customName: args.customName,
-				motionSens: args.motionSens,
-				stickSens: args.stickSens,
+				pronouns: args.pronouns,
 				inGameName: args.inGameName,
-				css: args.css,
-				battlefy: args.battlefy,
-				favoriteBadgeIds: args.favoriteBadgeIds
-					? JSON.stringify(args.favoriteBadgeIds)
+				favoriteTrophyIds: args.favoriteTrophyIds
+					? JSON.stringify(args.favoriteTrophyIds)
 					: null,
-				showDiscordUniqueName: args.showDiscordUniqueName,
+				hiddenTrophyIds: args.hiddenTrophyIds
+					? JSON.stringify(args.hiddenTrophyIds)
+					: null,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,
+				commissionsOpenedAt:
+					args.commissionsOpen === 1 ? databaseTimestampNow() : null,
+				customAvatarImgId: args.customAvatarImgId ?? null,
 			})
-			.where("id", "=", args.userId)
+			.where("id", "=", userId)
 			.returning(["User.id", "User.customUrl", "User.discordId"])
 			.executeTakeFirstOrThrow();
 	});
 }
 
-export function updatePreferences(
-	userId: number,
-	newPreferences: UserPreferences,
+/** Bulk-sets each user's latest LUTI division. Used by the `ComputeLutiDivs` routine. */
+export function updateManyDivs(
+	updates: Array<{ userId: number; div: string; divSeason: number | null }>,
 ) {
+	if (updates.length === 0) return;
+
+	return db.transaction().execute(async (trx) => {
+		for (const { userId, div, divSeason } of updates) {
+			await trx
+				.updateTable("User")
+				.set({ div, divSeason })
+				.where("id", "=", userId)
+				.execute();
+		}
+	});
+}
+
+export function updateOwnCustomTheme(css: CustomTheme | null) {
+	return db
+		.updateTable("User")
+		.set({
+			customTheme: css ? JSON.stringify(css) : null,
+		})
+		.where("id", "=", actorId())
+		.execute();
+}
+
+export function updateOwnPreferences(newPreferences: UserPreferences) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		const current =
 			(
@@ -872,35 +1379,33 @@ export function updatePreferences(
 }
 
 type UpdateResultHighlightsArgs = {
-	userId: number;
 	resultTeamIds: Array<number>;
 	resultTournamentTeamIds: Array<number>;
 };
-export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
+export function updateOwnResultHighlights(args: UpdateResultHighlightsArgs) {
+	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		await trx
 			.deleteFrom("UserResultHighlight")
-			.where("userId", "=", args.userId)
+			.where("userId", "=", userId)
 			.execute();
 
-		if (args.resultTeamIds.length > 0) {
-			await trx
-				.insertInto("UserResultHighlight")
-				.values(
-					args.resultTeamIds.map((teamId) => ({
-						userId: args.userId,
-						teamId,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("UserResultHighlight")
+			.values(
+				args.resultTeamIds.map((teamId) => ({
+					userId,
+					teamId,
+				})),
+			)
+			.execute();
 
 		await trx
 			.updateTable("TournamentResult")
 			.set({
 				isHighlight: 0,
 			})
-			.where("TournamentResult.userId", "=", args.userId)
+			.where("TournamentResult.userId", "=", userId)
 			.execute();
 
 		if (args.resultTournamentTeamIds.length > 0) {
@@ -909,7 +1414,7 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 				.set({
 					isHighlight: 1,
 				})
-				.where("TournamentResult.userId", "=", args.userId)
+				.where("TournamentResult.userId", "=", userId)
 				.where(
 					"TournamentResult.tournamentTeamId",
 					"in",
@@ -920,22 +1425,16 @@ export function updateResultHighlights(args: UpdateResultHighlightsArgs) {
 	});
 }
 
-export function updateBuildSorting({
-	userId,
-	buildSorting,
-}: {
-	userId: number;
-	buildSorting: BuildSort[] | null;
-}) {
+export function updateOwnBuildSorting(buildSorting: BuildSort[] | null) {
 	return db
 		.updateTable("User")
 		.set({ buildSorting: buildSorting ? JSON.stringify(buildSorting) : null })
-		.where("id", "=", userId)
+		.where("id", "=", actorId())
 		.execute();
 }
 
 export type UpdatePatronDataArgs = Array<
-	Pick<Tables["User"], "discordId" | "patronTier" | "patronSince">
+	Pick<Tables["User"], "discordId" | "patronTier" | "patronStartedAt">
 >;
 export function updatePatronData(users: UpdatePatronDataArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -943,13 +1442,13 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 			.updateTable("User")
 			.set({
 				patronTier: null,
-				patronSince: null,
-				patronTill: null,
+				patronStartedAt: null,
+				patronExpiresAt: null,
 			})
 			.where((eb) =>
 				eb.or([
-					eb("patronTill", "<", dateToDatabaseTimestamp(new Date())),
-					eb("patronTill", "is", null),
+					eb("patronExpiresAt", "<", dateToDatabaseTimestamp(new Date())),
+					eb("patronExpiresAt", "is", null),
 				]),
 			)
 			.execute();
@@ -959,8 +1458,8 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 				.updateTable("User")
 				.set({
 					patronTier: user.patronTier,
-					patronSince: user.patronSince,
-					patronTill: null,
+					patronStartedAt: user.patronStartedAt,
+					patronExpiresAt: null,
 				})
 				.where("User.discordId", "=", user.discordId)
 				.execute();
@@ -968,28 +1467,117 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 	});
 }
 
-// TODO: use Kysely
-const updateByDiscordIdStm = dbDirect.prepare(/* sql */ `
-  update
-    "User"
-  set
-    "discordAvatar" = @discordAvatar,
-    "discordName" = coalesce(@discordName, "discordName"),
-    "discordUniqueName" = coalesce(@discordUniqueName, "discordUniqueName")
-  where
-    "discordId" = @discordId
-`);
-export const updateMany = dbDirect.transaction(
-	(
-		argsArr: Array<
-			Pick<
-				Tables["User"],
-				"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
-			>
-		>,
-	) => {
+export function updateMany(
+	argsArr: Array<
+		Pick<
+			Tables["User"],
+			"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
+		>
+	>,
+) {
+	return db.transaction().execute(async (trx) => {
 		for (const updateArgs of argsArr) {
-			updateByDiscordIdStm.run(updateArgs);
+			await trx
+				.updateTable("User")
+				.set((eb) => ({
+					discordAvatar: updateArgs.discordAvatar,
+					discordName: eb.fn.coalesce(
+						eb.val(updateArgs.discordName),
+						"User.discordName",
+					),
+					discordUniqueName: eb.fn.coalesce(
+						eb.val(updateArgs.discordUniqueName),
+						"User.discordUniqueName",
+					),
+				}))
+				.where("User.discordId", "=", updateArgs.discordId)
+				.execute();
 		}
-	},
-);
+	});
+}
+
+export async function anyUserPrefersNoScreen(
+	userIds: number[],
+): Promise<boolean> {
+	if (userIds.length === 0) return false;
+
+	const result = await db
+		.selectFrom("User")
+		.select("User.noScreen")
+		.where("User.id", "in", userIds)
+		.where("User.noScreen", "=", 1)
+		.executeTakeFirst();
+
+	return Boolean(result);
+}
+
+export async function findSocialLinksByUserId(userId: number) {
+	const user = await db
+		.selectFrom("User")
+		.select([
+			"User.twitch",
+			"User.youtubeId",
+			"User.youtubeName",
+			"User.bsky",
+			"User.discordUniqueName",
+		])
+		.where("User.id", "=", userId)
+		.executeTakeFirst();
+
+	if (!user) return [];
+
+	const links: Array<
+		| {
+				type: "url";
+				platform: "twitch" | "youtube" | "bsky";
+				/** Account name on the platform, null if only an id is known */
+				name: string | null;
+				url: string;
+		  }
+		| { type: "text"; platform: "discord"; name: string }
+	> = [];
+
+	if (user.twitch) {
+		links.push({
+			type: "url",
+			platform: "twitch",
+			name: user.twitch,
+			url: twitchUrl(user.twitch),
+		});
+	}
+	if (user.youtubeId) {
+		links.push({
+			type: "url",
+			platform: "youtube",
+			name: user.youtubeName,
+			url: youtubeUrl(user.youtubeId),
+		});
+	}
+	if (user.bsky) {
+		links.push({
+			type: "url",
+			platform: "bsky",
+			name: user.bsky,
+			url: bskyUrl(user.bsky),
+		});
+	}
+	if (user.discordUniqueName) {
+		links.push({
+			type: "text",
+			platform: "discord",
+			name: user.discordUniqueName,
+		});
+	}
+
+	return links;
+}
+
+export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
+	if (twitchUsernames.length === 0) return [];
+
+	return db
+		.selectFrom("User")
+		.select(["User.id", "User.twitch"])
+		.where("User.twitch", "in", twitchUsernames)
+		.execute();
+}

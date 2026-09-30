@@ -1,36 +1,28 @@
-import type { MetaFunction } from "@remix-run/node";
-import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { useSearchParams } from "@remix-run/react";
+import { Check, Clipboard } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
+import type { MetaFunction } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
 import type { Tables } from "~/db/tables";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
-import invariant from "~/utils/invariant";
-import { metaTags } from "~/utils/remix";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { invariant } from "~/utils/invariant";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ipLabsMaps, MAPS_URL, navIconUrl } from "~/utils/urls";
-import { generateMapList } from "../core/map-list-generator/map-list";
-import { modesOrder } from "../core/map-list-generator/modes";
-import { mapPoolToNonEmptyModes } from "../core/map-list-generator/utils";
+import * as MapList from "../core/MapList";
 import { MapPool } from "../core/map-pool";
+import { mapListGeneratorSearchParams } from "../map-list-generator-search-params";
 
 import styles from "./maps.module.css";
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;
-
-export const shouldRevalidate: ShouldRevalidateFunction = ({ nextUrl }) => {
-	const searchParams = new URL(nextUrl).searchParams;
-	// Only let loader reload data if we're not currently editing the map pool
-	// and persisting it in the search params.
-	return searchParams.has("readonly");
-};
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -38,6 +30,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon 3 map list generator",
 		description:
 			"Generate a map list based on maps you choose or a tournament's map pool.",
+		image: ogPageImage("maps"),
 		location: args.location,
 	});
 };
@@ -82,34 +75,23 @@ export default function MapListPage() {
 }
 
 export function useSearchParamPersistedMapPool() {
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [params, setParams] = useSearchParamsTyped(
+		mapListGeneratorSearchParams,
+	);
 
-	const [mapPool, setMapPool] = React.useState(() => {
-		if (searchParams.has("pool")) {
-			return new MapPool(searchParams.get("pool")!);
-		}
-
-		return MapPool.ANARCHY;
-	});
+	const [mapPool, setMapPool] = React.useState(() => new MapPool(params.pool));
 
 	const handleMapPoolChange = (
 		newMapPool: MapPool,
 		event?: Pick<Tables["CalendarEvent"], "id" | "name">,
 	) => {
 		setMapPool(newMapPool);
-		setSearchParams(
-			event
-				? { eventId: event.id.toString() }
-				: {
-						pool: newMapPool.serialized,
-					},
-			{ replace: true, preventScrollReset: true },
-		);
+		setParams(event ? { eventId: event.id } : { pool: newMapPool.serialized });
 	};
 
 	return {
 		mapPool,
-		readonly: searchParams.has("readonly"),
+		readonly: params.readonly,
 		handleMapPoolChange,
 	};
 }
@@ -118,17 +100,16 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 	const { t } = useTranslation(["game-misc", "common"]);
 	const [mapList, setMapList] = React.useState<ModeWithStage[]>();
 	const [szEveryOther, setSzEveryOther] = React.useState(false);
-	const [, copyToClipboard] = useCopyToClipboard();
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	const handleCreateMaplist = () => {
-		const [list] = generateMapList(
-			mapPool,
-			modesOrder(
-				szEveryOther ? "SZ_EVERY_OTHER" : "EQUAL",
-				mapPoolToNonEmptyModes(mapPool),
-			),
-			[AMOUNT_OF_MAPS_IN_MAP_LIST],
-		);
+		const generator = MapList.generate({ mapPool });
+		generator.next();
+
+		const list = generator.next({
+			amount: AMOUNT_OF_MAPS_IN_MAP_LIST,
+			pattern: szEveryOther ? (Math.random() > 0.5 ? "SZ*" : "*SZ") : undefined,
+		}).value;
 
 		invariant(list);
 
@@ -142,16 +123,12 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 		<div className={styles.mapListCreator}>
 			<div className={styles.toggleContainer}>
 				<Label>{t("common:maps.halfSz")}</Label>
-				<SendouSwitch
-					isSelected={szEveryOther}
-					onChange={setSzEveryOther}
-					size="small"
-				/>
+				<SendouSwitch isSelected={szEveryOther} onChange={setSzEveryOther} />
 			</div>
-			<SendouButton onPress={handleCreateMaplist} isDisabled={disabled}>
+			<SendouButton onClick={handleCreateMaplist} isDisabled={disabled}>
 				{t("common:maps.createMapList")}
 			</SendouButton>
-			{mapList && (
+			{mapList ? (
 				<>
 					<ol className={styles.mapList}>
 						{mapList.map(({ mode, stageId }, i) => (
@@ -169,7 +146,8 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 					<SendouButton
 						size="small"
 						variant="outlined"
-						onPress={() =>
+						icon={copySuccess ? <Check /> : <Clipboard />}
+						onClick={() =>
 							copyToClipboard(
 								mapList
 									.map(
@@ -185,7 +163,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 						{t("common:actions.copyToClipboard")}
 					</SendouButton>
 				</>
-			)}
+			) : null}
 		</div>
 	);
 }

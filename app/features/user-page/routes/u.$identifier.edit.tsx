@@ -1,510 +1,133 @@
-import { Form, Link, useLoaderData, useMatches } from "@remix-run/react";
-import clsx from "clsx";
-import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { CustomizedColorsInput } from "~/components/CustomizedColorsInput";
-import { SendouButton } from "~/components/elements/Button";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
-import { SendouSwitch } from "~/components/elements/Switch";
-import { FormErrors } from "~/components/FormErrors";
+import { Link, useLoaderData } from "react-router";
 import { FormMessage } from "~/components/FormMessage";
-import { WeaponImage } from "~/components/Image";
-import { Input } from "~/components/Input";
-import { StarIcon } from "~/components/icons/Star";
-import { StarFilledIcon } from "~/components/icons/StarFilled";
-import { TrashIcon } from "~/components/icons/Trash";
-import { Label } from "~/components/Label";
-import { SubmitButton } from "~/components/SubmitButton";
-import { WeaponSelect } from "~/components/WeaponSelect";
-import type { Tables } from "~/db/tables";
-import { BADGE } from "~/features/badges/badges-constants";
-import { BadgesSelector } from "~/features/badges/components/BadgesSelector";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { FriendCodePopover } from "~/components/FriendCodePopover";
+import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
+import { existingImage } from "~/form/image-field";
+import { SendouForm } from "~/form/SendouForm";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
-import invariant from "~/utils/invariant";
-import { rawSensToString } from "~/utils/strings";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FAQ_PAGE } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.edit.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import { COUNTRY_CODES, USER } from "../user-page-constants";
-export { loader, action };
+import { COUNTRY_CODES } from "../user-page-constants";
+import { useUserPageLayoutData } from "../user-page-hooks";
+import { userEditProfileBaseSchema } from "../user-page-schemas";
 
-import styles from "~/styles/u.$identifier.module.css";
+export { action, loader };
+
+export const handle: SendouRouteHandle = {
+	i18n: ["common", "user"],
+};
 
 export default function UserEditPage() {
 	const { t } = useTranslation(["common", "user"]);
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 	const data = useLoaderData<typeof loader>();
-
 	const isSupporter = useHasRole("SUPPORTER");
 	const isArtist = useHasRole("ARTIST");
 
-	return (
-		<div className="half-width">
-			<Form className={styles.container} method="post">
-				{isSupporter ? (
-					<CustomizedColorsInput initialColors={layoutData.css} />
-				) : null}
-				<CustomNameInput />
-				<CustomUrlInput parentRouteData={layoutData} />
-				<InGameNameInputs />
-				<SensSelects />
-				<BattlefyInput />
-				<CountrySelect />
-				<FavBadgeSelect />
-				<WeaponPoolSelect />
-				<BioTextarea initialValue={data.user.bio} />
-				{data.discordUniqueName ? (
-					<ShowUniqueDiscordNameToggle />
-				) : (
-					<input type="hidden" name="showDiscordUniqueName" value="on" />
-				)}
-				{isArtist ? (
-					<>
-						<CommissionsOpenToggle parentRouteData={layoutData} />
-						<CommissionTextArea initialValue={layoutData.user.commissionText} />
-					</>
-				) : (
-					<>
-						<input type="hidden" name="commissionsOpen" value="off" />
-						<input type="hidden" name="commissionText" value="" />
-					</>
-				)}
-				<FormMessage type="info">
-					<Trans i18nKey={"user:discordExplanation"} t={t}>
-						Username, profile picture, YouTube, Bluesky and Twitch accounts come
-						from your Discord account. See <Link to={FAQ_PAGE}>FAQ</Link> for
-						more information.
-					</Trans>
-				</FormMessage>
-				<SubmitButton>{t("common:actions.save")}</SubmitButton>
-				<FormErrors namespace="user" />
-			</Form>
-		</div>
-	);
-}
+	const countryOptions = useCountryOptions();
 
-function CustomUrlInput({
-	parentRouteData,
-}: {
-	parentRouteData: UserPageLoaderData;
-}) {
-	const { t } = useTranslation(["user"]);
+	const trophyOptions = data.ownedTrophies.map((trophy) => ({
+		id: trophy.id,
+		name: trophy.name,
+		model: trophy.model,
+		tier: trophy.tier,
+	}));
+
+	const defaultValues = {
+		customAvatar: existingImage(
+			data.user.customAvatarImgId,
+			data.user.customAvatarUrl,
+		),
+		customName: data.user.customName ?? "",
+		customUrl: layoutData.user.customUrl ?? "",
+		inGameName: data.user.inGameName ?? "",
+		pronouns: pronounsDefaultValue(data.user.pronouns),
+		country: data.user.country ?? null,
+		favoriteTrophyIds: data.favoriteTrophyIds ?? [],
+		hiddenTrophyIds: data.hiddenTrophyIds ?? [],
+		commissionsOpen: Boolean(layoutData.user.commissionsOpen),
+		commissionText: layoutData.user.commissionText ?? "",
+	};
 
 	return (
-		<div className="w-full">
-			<Label htmlFor="customUrl">{t("user:customUrl")}</Label>
-			<Input
-				name="customUrl"
-				id="customUrl"
-				leftAddon="https://sendou.ink/u/"
-				maxLength={USER.CUSTOM_URL_MAX_LENGTH}
-				defaultValue={parentRouteData.user.customUrl ?? undefined}
+		<div className="stack lg">
+			<SubPageHeader
+				user={layoutData.user}
+				title={t("user:widgets.editProfile")}
 			/>
-			<FormMessage type="info">{t("user:forms.info.customUrl")}</FormMessage>
-		</div>
-	);
-}
-
-function CustomNameInput() {
-	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
-
-	return (
-		<div className="w-full">
-			<Label htmlFor="customName">{t("user:customName")}</Label>
-			<Input
-				name="customName"
-				id="customName"
-				maxLength={USER.CUSTOM_NAME_MAX_LENGTH}
-				defaultValue={data.user.customName ?? undefined}
-			/>
-			<FormMessage type="info">
-				{t("user:forms.customName.info", {
-					discordName: data.user.discordName,
-				})}
-			</FormMessage>
-		</div>
-	);
-}
-
-function InGameNameInputs() {
-	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
-
-	const inGameNameParts = data.user.inGameName?.split("#");
-
-	return (
-		<div className="stack items-start">
-			<Label>{t("user:ign")}</Label>
-			<div className="stack horizontal sm items-center">
-				<Input
-					className={styles.inGameNameText}
-					name="inGameNameText"
-					aria-label="In game name"
-					maxLength={USER.IN_GAME_NAME_TEXT_MAX_LENGTH}
-					defaultValue={inGameNameParts?.[0]}
-				/>
-				<div className={styles.inGameNameHashtag}>#</div>
-				<Input
-					className={styles.inGameNameDiscriminator}
-					name="inGameNameDiscriminator"
-					aria-label="In game name discriminator"
-					maxLength={USER.IN_GAME_NAME_DISCRIMINATOR_MAX_LENGTH}
-					pattern="[0-9a-z]{4,5}"
-					defaultValue={inGameNameParts?.[1]}
-				/>
-			</div>
-		</div>
-	);
-}
-
-const SENS_OPTIONS = [
-	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
-	40, 45, 50,
-];
-function SensSelects() {
-	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
-
-	return (
-		<div className="stack horizontal md">
-			<div>
-				<Label htmlFor="motionSens">{t("user:motionSens")}</Label>
-				<select
-					id="motionSens"
-					name="motionSens"
-					defaultValue={data.user.motionSens ?? undefined}
-					className={styles.sensSelect}
+			<div className="half-width">
+				<SendouForm
+					schema={userEditProfileBaseSchema}
+					defaultValues={defaultValues}
+					submitButtonText={t("common:actions.save")}
+					revalidateRoot
 				>
-					<option value="">{"-"}</option>
-					{SENS_OPTIONS.map((sens) => (
-						<option key={sens} value={sens}>
-							{rawSensToString(Number(sens))}
-						</option>
-					))}
-				</select>
-			</div>
-
-			<div>
-				<Label htmlFor="stickSens">{t("user:stickSens")}</Label>
-				<select
-					id="stickSens"
-					name="stickSens"
-					defaultValue={data.user.stickSens ?? undefined}
-					className={styles.sensSelect}
-				>
-					<option value="">{"-"}</option>
-					{SENS_OPTIONS.map((sens) => (
-						<option key={sens} value={sens}>
-							{rawSensToString(Number(sens))}
-						</option>
-					))}
-				</select>
+					{({ FormField }) => (
+						<>
+							<FriendCodePopover />
+							<FormField name="customName" />
+							<FormField name="customUrl" />
+							<FormField name="customAvatar" disabled={!isSupporter} />
+							<FormField name="inGameName" />
+							<FormField name="pronouns" />
+							<FormField name="country" options={countryOptions} />
+							{isSupporter && data.ownedTrophies.length >= 2 ? (
+								<FormField
+									name="favoriteTrophyIds"
+									options={trophyOptions}
+									maxCount={SMALL_TROPHIES_PER_DISPLAY_PAGE}
+								/>
+							) : null}
+							{data.ownedTrophies.length >= 1 ? (
+								<FormField name="hiddenTrophyIds" options={trophyOptions} />
+							) : null}
+							{isArtist ? (
+								<>
+									<FormField name="commissionsOpen" />
+									<FormField name="commissionText" />
+								</>
+							) : null}
+							<FormMessage type="info">
+								<Trans i18nKey={"user:discordExplanation"} t={t}>
+									Username, profile picture, YouTube, Bluesky and Twitch
+									accounts come from your Discord account. See
+									<Link to={FAQ_PAGE}>FAQ</Link> for more information.
+								</Trans>
+							</FormMessage>
+						</>
+					)}
+				</SendouForm>
 			</div>
 		</div>
 	);
 }
 
-function CountrySelect() {
-	const { t, i18n } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
-	const isMounted = useIsMounted();
-	const [value, setValue] = React.useState(data.user.country ?? null);
+function useCountryOptions() {
+	const { i18n } = useTranslation();
+	const isHydrated = useHydrated();
 
-	// TODO: if react-aria-components start supporting "suppressHydrationWarning" it would likely be a better solution here
-	const items = COUNTRY_CODES.map((countryCode) => ({
-		name: isMounted
+	return COUNTRY_CODES.map((countryCode) => ({
+		value: countryCode,
+		label: isHydrated
 			? countryCodeToTranslatedName({
 					countryCode,
 					language: i18n.language,
 				})
 			: countryCode,
-		id: countryCode,
-		key: countryCode,
 	})).sort((a, b) =>
-		a.name.localeCompare(b.name, i18n.language, { sensitivity: "base" }),
-	);
-
-	return (
-		<>
-			{/* TODO: this is a workaround for clearable not working with uncontrolled values, in future the component should handle this one way or another */}
-			<input type="hidden" name="country" value={value ?? ""} />
-			<SendouSelect
-				items={items}
-				label={t("user:country")}
-				search={{
-					placeholder: t("user:forms.country.search.placeholder"),
-				}}
-				selectedKey={value}
-				onSelectionChange={(value) => setValue(value as string | null)}
-				clearable
-			>
-				{({ key, ...item }) => (
-					<SendouSelectItem key={key} {...item}>
-						{item.name}
-					</SendouSelectItem>
-				)}
-			</SendouSelect>
-		</>
+		a.label.localeCompare(b.label, i18n.language, { sensitivity: "base" }),
 	);
 }
 
-function BattlefyInput() {
-	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
-
-	return (
-		<div className="w-full">
-			<Label htmlFor="customName">{t("user:battlefy")}</Label>
-			<Input
-				name="battlefy"
-				id="battlefy"
-				maxLength={USER.BATTLEFY_MAX_LENGTH}
-				defaultValue={data.user.battlefy ?? undefined}
-				leftAddon="https://battlefy.com/users/"
-			/>
-			<FormMessage type="info">{t("user:forms.info.battlefy")}</FormMessage>
-		</div>
-	);
-}
-
-function WeaponPoolSelect() {
-	const data = useLoaderData<typeof loader>();
-	const [weapons, setWeapons] = React.useState(data.user.weapons);
-	const { t } = useTranslation(["user"]);
-
-	const latestWeapon = weapons[weapons.length - 1];
-
-	return (
-		<div className={clsx("stack md", styles.weaponPool)}>
-			<input type="hidden" name="weapons" value={JSON.stringify(weapons)} />
-			{weapons.length < USER.WEAPON_POOL_MAX_SIZE ? (
-				<WeaponSelect
-					label={t("user:weaponPool")}
-					onChange={(weaponSplId) => {
-						setWeapons([
-							...weapons,
-							{
-								weaponSplId,
-								isFavorite: 0,
-							},
-						]);
-					}}
-					disabledWeaponIds={weapons.map((w) => w.weaponSplId)}
-					// empty on selection
-					key={latestWeapon?.weaponSplId ?? "empty"}
-				/>
-			) : (
-				<span className="text-xs text-warning">
-					{t("user:forms.errors.maxWeapons")}
-				</span>
-			)}
-			<div className="stack horizontal sm justify-center">
-				{weapons.map((weapon) => {
-					return (
-						<div key={weapon.weaponSplId} className="stack xs">
-							<div className="u__weapon">
-								<WeaponImage
-									weaponSplId={weapon.weaponSplId}
-									variant={weapon.isFavorite ? "badge-5-star" : "badge"}
-									width={38}
-									height={38}
-								/>
-							</div>
-							<div className="stack sm horizontal items-center justify-center">
-								<SendouButton
-									icon={weapon.isFavorite ? <StarFilledIcon /> : <StarIcon />}
-									variant="minimal"
-									aria-label="Favorite weapon"
-									onPress={() =>
-										setWeapons(
-											weapons.map((w) =>
-												w.weaponSplId === weapon.weaponSplId
-													? {
-															...weapon,
-															isFavorite: weapon.isFavorite === 1 ? 0 : 1,
-														}
-													: w,
-											),
-										)
-									}
-								/>
-								<SendouButton
-									icon={<TrashIcon />}
-									variant="minimal-destructive"
-									aria-label="Delete weapon"
-									onPress={() =>
-										setWeapons(
-											weapons.filter(
-												(w) => w.weaponSplId !== weapon.weaponSplId,
-											),
-										)
-									}
-									data-testid={`delete-weapon-${weapon.weaponSplId}`}
-									size="small"
-								/>
-							</div>
-						</div>
-					);
-				})}
-			</div>
-		</div>
-	);
-}
-
-function BioTextarea({
-	initialValue,
-}: {
-	initialValue: Tables["User"]["bio"];
-}) {
-	const { t } = useTranslation("user");
-	const [value, setValue] = React.useState(initialValue ?? "");
-
-	return (
-		<div className={styles.bioContainer}>
-			<Label
-				htmlFor="bio"
-				valueLimits={{ current: value.length, max: USER.BIO_MAX_LENGTH }}
-			>
-				{t("bio")}
-			</Label>
-			<textarea
-				id="bio"
-				name="bio"
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
-				maxLength={USER.BIO_MAX_LENGTH}
-			/>
-		</div>
-	);
-}
-
-function FavBadgeSelect() {
-	const data = useLoaderData<typeof loader>();
-	const { t } = useTranslation(["user"]);
-	const [value, setValue] = React.useState(data.favoriteBadgeIds ?? []);
-	const isSupporter = useHasRole("SUPPORTER");
-
-	// doesn't make sense to select favorite badge
-	// if user has no badges or only has 1 badge
-	if (data.user.badges.length < 2) return null;
-
-	const onChange = (newBadges: number[]) => {
-		if (isSupporter) {
-			setValue(newBadges);
-		} else {
-			// non-supporters can only set which badge is the big one
-			setValue(newBadges.length > 0 ? [newBadges[0]] : []);
-		}
-	};
-
-	return (
-		<div>
-			<input
-				type="hidden"
-				name="favoriteBadgeIds"
-				value={JSON.stringify(value)}
-			/>
-			<label htmlFor="favoriteBadgeIds">{t("user:favoriteBadges")}</label>
-			<BadgesSelector
-				options={data.user.badges}
-				selectedBadges={value}
-				onChange={onChange}
-				maxCount={BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1}
-				showSelect={isSupporter || value.length === 0}
-			>
-				{!isSupporter ? (
-					<div className="text-sm text-lighter font-semi-bold text-center">
-						{t("user:forms.favoriteBadges.nonSupporter")}
-					</div>
-				) : null}
-			</BadgesSelector>
-		</div>
-	);
-}
-
-function ShowUniqueDiscordNameToggle() {
-	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
-	const [checked, setChecked] = React.useState(
-		Boolean(data.user.showDiscordUniqueName),
-	);
-
-	return (
-		<div>
-			<label htmlFor="showDiscordUniqueName">
-				{t("user:forms.showDiscordUniqueName")}
-			</label>
-			<SendouSwitch
-				isSelected={checked}
-				onChange={setChecked}
-				name="showDiscordUniqueName"
-			/>
-			<FormMessage type="info">
-				{t("user:forms.showDiscordUniqueName.info", {
-					discordUniqueName: data.discordUniqueName,
-				})}
-			</FormMessage>
-		</div>
-	);
-}
-
-function CommissionsOpenToggle({
-	parentRouteData,
-}: {
-	parentRouteData: UserPageLoaderData;
-}) {
-	const { t } = useTranslation(["user"]);
-	const [checked, setChecked] = React.useState(
-		Boolean(parentRouteData.user.commissionsOpen),
-	);
-
-	return (
-		<div>
-			<label htmlFor="commissionsOpen">{t("user:forms.commissionsOpen")}</label>
-			<SendouSwitch
-				isSelected={checked}
-				onChange={setChecked}
-				name="commissionsOpen"
-			/>
-		</div>
-	);
-}
-
-function CommissionTextArea({
-	initialValue,
-}: {
-	initialValue: Tables["User"]["commissionText"];
-}) {
-	const { t } = useTranslation(["user"]);
-	const [value, setValue] = React.useState(initialValue ?? "");
-
-	return (
-		<div className={styles.bioContainer}>
-			<Label
-				htmlFor="commissionText"
-				valueLimits={{
-					current: value.length,
-					max: USER.COMMISSION_TEXT_MAX_LENGTH,
-				}}
-			>
-				{t("user:forms.commissionText")}
-			</Label>
-			<textarea
-				id="commissionText"
-				name="commissionText"
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
-				maxLength={USER.COMMISSION_TEXT_MAX_LENGTH}
-			/>
-			<FormMessage type="info">
-				{t("user:forms.commissionText.info")}
-			</FormMessage>
-		</div>
-	);
+function pronounsDefaultValue(
+	pronouns: { subject: string; object: string } | null,
+): [string | null, string | null] {
+	if (!pronouns) return [null, null];
+	return [pronouns.subject, pronouns.object];
 }

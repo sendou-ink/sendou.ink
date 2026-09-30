@@ -1,5 +1,9 @@
 import { TZDate } from "@date-fns/tz";
 import { isWeekend } from "date-fns";
+import {
+	BEST_TIER_NUMBER,
+	WORST_TIER_NUMBER,
+} from "~/features/tournament/core/tiering";
 import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
 import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import { assertType } from "~/utils/types";
@@ -9,7 +13,7 @@ import type {
 	GroupedCalendarEvents,
 } from "../calendar-types";
 
-const FILTERS_KEYS = [
+export const FILTERS_KEYS = [
 	"preferredStartTime",
 	"tagsIncluded",
 	"tagsExcluded",
@@ -22,15 +26,15 @@ const FILTERS_KEYS = [
 	"modes",
 	"modesExact",
 	"minTeamCount",
+	"minTier",
+	"maxTier",
 	"preferredVersus",
 ] as const;
 
 assertType<(typeof FILTERS_KEYS)[number], keyof CalendarFilters>();
 assertType<keyof CalendarFilters, (typeof FILTERS_KEYS)[number]>();
 
-/**
- * Returns the default empty state of filter settings for calendar events.
- */
+/** Default empty calendar filters. */
 export function defaultFilters(): CalendarFilters {
 	return {
 		preferredStartTime: "ANY",
@@ -46,22 +50,19 @@ export function defaultFilters(): CalendarFilters {
 		orgsExcluded: [],
 		authorIdsExcluded: [],
 		minTeamCount: 0,
+		minTier: BEST_TIER_NUMBER,
+		maxTier: WORST_TIER_NUMBER,
 	};
 }
 
 const defaultFiltersString = filtersToString(defaultFilters());
 
-/**
- * Determines whether the provided calendar filters match the default filter settings.
- */
+/** Whether the filters equal the defaults. */
 export function isDefaultFilters(filters: CalendarFilters): boolean {
 	return filtersToString(filters) === defaultFiltersString;
 }
 
-/**
- * Serializes the given calendar filters object into a string representation to be used as e.g. React key.
- */
-export function filtersToString(filters: CalendarFilters): string {
+function filtersToString(filters: CalendarFilters): string {
 	let result = "";
 
 	for (const key of FILTERS_KEYS) {
@@ -71,11 +72,7 @@ export function filtersToString(filters: CalendarFilters): string {
 	return result;
 }
 
-/**
- * Applies the provided calendar filters to a list of grouped calendar events.
- *
- * Returns a new array where each group contains separated lists of shown and hidden events. Event is shown if it matches all set filters.
- */
+/** Splits each group's events into shown (matching every set filter) and hidden. */
 export function applyFilters(
 	events: {
 		at: number;
@@ -251,6 +248,23 @@ function matchesFilter(
 			}
 
 			return event.teamsCount >= minTeamCount;
+		}
+		case "minTier": {
+			const { minTier, maxTier } = filters;
+			if (minTier === BEST_TIER_NUMBER && maxTier === WORST_TIER_NUMBER) {
+				return true;
+			}
+
+			const tier = event.tier ?? event.tentativeTier;
+			if (tier === null) {
+				return false;
+			}
+
+			return tier >= minTier && tier <= maxTier;
+		}
+		case "maxTier": {
+			// handled in the minTier filter
+			return true;
 		}
 		case "orgsIncluded": {
 			const orgsIncluded = filters[key];

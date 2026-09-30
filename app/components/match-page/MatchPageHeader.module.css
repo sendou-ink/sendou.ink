@@ -1,0 +1,14 @@
+.root {
+	display: flex;
+	justify-content: space-between;
+}
+
+.title {
+	font-size: var(--font-lg);
+}
+
+.subtitle {
+	font-weight: var(--weight-bold);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}

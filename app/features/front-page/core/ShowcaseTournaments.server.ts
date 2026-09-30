@@ -1,7 +1,13 @@
 import cachified from "@epic-web/cachified";
+import * as R from "remeda";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { tournamentIsRanked } from "~/features/tournament/tournament-utils";
+import {
+	getBracketProgressionLabel,
+	tournamentIsRanked,
+} from "~/features/tournament/tournament-utils";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,
@@ -22,7 +28,12 @@ interface ParticipationInfo {
 	organizers: Set<ShowcaseCalendarEvent["id"]>;
 }
 
-export async function frontPageTournamentsByUserId(
+export async function upcomingTournaments(): Promise<ShowcaseCalendarEvent[]> {
+	const tournaments = await cachedTournaments();
+	return tournaments.upcoming;
+}
+
+export async function categorizedTournamentsByUserId(
 	userId: number | null,
 ): Promise<ShowcaseTournamentCollection> {
 	const tournaments = await cachedTournaments();
@@ -67,13 +78,10 @@ export function addToCached({
 	userId,
 	tournamentId,
 	type,
-	newTeamCount,
 }: {
 	userId: number;
 	tournamentId: number;
 	type: "participant" | "organizer";
-	/** If a new team joined, the new total team count for the tournament including the new one */
-	newTeamCount?: number;
 }) {
 	if (!participationInfoMap) return;
 
@@ -87,13 +95,6 @@ export function addToCached({
 	}
 
 	participationInfoMap.set(userId, participation);
-
-	if (typeof newTeamCount === "number") {
-		updateCachedTournamentTeamCount({
-			tournamentId,
-			newTeamCount,
-		});
-	}
 }
 
 export function removeFromCached({
@@ -119,21 +120,22 @@ export function removeFromCached({
 	participationInfoMap.set(userId, participation);
 }
 
-export function updateCachedTournamentTeamCount({
-	tournamentId,
-	newTeamCount,
-}: {
-	tournamentId: number;
-	newTeamCount: number;
-}) {
-	cachedTournaments().then((tournaments) => {
-		const tournament = tournaments.upcoming.find(
-			(tournament) => tournament.id === tournamentId,
-		);
-		if (tournament) {
-			tournament.teamsCount = newTeamCount;
-		}
-	});
+/** Refreshes one cached showcase tournament's team & participant counts; no-op if not cached. */
+export async function refreshCachedTournamentCounts(tournamentId: number) {
+	if (!cache.has(SHOWCASE_TOURNAMENTS_CACHE_KEY)) return;
+
+	const tournaments = await cachedTournaments();
+	const cachedTournament = tournaments.upcoming.find(
+		(tournament) => tournament.id === tournamentId,
+	);
+	if (!cachedTournament) return;
+
+	const counts =
+		await TournamentRepository.findShowcaseCountsById(tournamentId);
+	if (!counts) return;
+
+	cachedTournament.teamsCount = counts.teamsCount;
+	cachedTournament.membersCount = counts.membersCount;
 }
 
 async function cachedParticipationInfo(
@@ -154,7 +156,7 @@ async function cachedParticipationInfo(
 	return participation.get(userId) ?? emptyParticipationInfo();
 }
 
-export const SHOWCASE_TOURNAMENTS_CACHE_KEY = "front-tournaments-list";
+const SHOWCASE_TOURNAMENTS_CACHE_KEY = "front-tournaments-list";
 
 export const clearCachedTournaments = () =>
 	cache.delete(SHOWCASE_TOURNAMENTS_CACHE_KEY);
@@ -165,8 +167,7 @@ async function cachedTournaments() {
 		cache,
 		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
-			const tournaments = await TournamentRepository.forShowcase();
-
+			const tournaments = await TournamentRepository.findAllForShowcase();
 			const mapped = tournaments.map(mapTournamentFromDB);
 
 			return deleteExtraResults(mapped);
@@ -175,16 +176,25 @@ async function cachedTournaments() {
 }
 
 function deleteExtraResults(tournaments: ShowcaseCalendarEvent[]) {
+	const threeDaysAgo = databaseTimestampThreeDaysAgo();
 	const nonResults = tournaments.filter(
-		(tournament) => !tournament.firstPlacer,
+		(tournament) =>
+			tournament.firstPlacers.length === 0 &&
+			!tournament.isFinalized &&
+			tournament.startsAt > threeDaysAgo,
 	);
 
 	const rankedResults = tournaments
-		.filter((tournament) => tournament.firstPlacer && tournament.isRanked)
-		.sort((a, b) => b.teamsCount - a.teamsCount);
+		.filter(
+			(tournament) => tournament.firstPlacers.length > 0 && tournament.isRanked,
+		)
+		.sort((a, b) => showcaseScore(b) - showcaseScore(a));
 	const nonRankedResults = tournaments
-		.filter((tournament) => tournament.firstPlacer && !tournament.isRanked)
-		.sort((a, b) => b.teamsCount - a.teamsCount);
+		.filter(
+			(tournament) =>
+				tournament.firstPlacers.length > 0 && !tournament.isRanked,
+		)
+		.sort((a, b) => showcaseScore(b) - showcaseScore(a));
 
 	const rankedResultsToKeep = rankedResults.slice(0, 4);
 	// min 2, max 6 non ranked results
@@ -195,7 +205,7 @@ function deleteExtraResults(tournaments: ShowcaseCalendarEvent[]) {
 
 	return {
 		results: [...rankedResultsToKeep, ...nonRankedResultsToKeep].sort(
-			(a, b) => b.startTime - a.startTime,
+			(a, b) => b.startsAt - a.startsAt,
 		),
 		upcoming: nonResults,
 	};
@@ -206,8 +216,8 @@ function resolveShowcaseTournaments(
 ): ShowcaseCalendarEvent[] {
 	const happeningDuringNextWeek = tournaments.filter(
 		(tournament) =>
-			tournament.startTime > databaseTimestampSixHoursAgo() &&
-			tournament.startTime < databaseTimestampWeekFromNow(),
+			tournament.startsAt > databaseTimestampSixHoursAgo() &&
+			tournament.startsAt < databaseTimestampWeekFromNow(),
 	);
 	const sorted = happeningDuringNextWeek.sort(
 		(a, b) => b.teamsCount - a.teamsCount,
@@ -219,7 +229,7 @@ function resolveShowcaseTournaments(
 		.filter((tournament) => !tournament.isRanked)
 		.slice(0, 6 - ranked.length);
 
-	return [...ranked, ...nonRanked].sort((a, b) => a.startTime - b.startTime);
+	return [...ranked, ...nonRanked].sort((a, b) => a.startsAt - b.startsAt);
 }
 
 async function tournamentsToParticipationInfoMap(
@@ -227,7 +237,7 @@ async function tournamentsToParticipationInfoMap(
 ): Promise<Map<CommonUser["id"], ParticipationInfo>> {
 	const tournamentIds = tournaments.map((tournament) => tournament.id);
 	const tournamentsWithUsers =
-		await TournamentRepository.relatedUsersByTournamentIds(tournamentIds);
+		await TournamentRepository.findRelatedUsersByTournamentIds(tournamentIds);
 
 	const result: Map<CommonUser["id"], ParticipationInfo> = new Map();
 
@@ -256,10 +266,6 @@ async function tournamentsToParticipationInfoMap(
 			addToMap(userId, tournament.id, "organizer");
 		}
 
-		for (const { userId } of tournament.organizationMembers) {
-			addToMap(userId, tournament.id, "organizer");
-		}
-
 		addToMap(tournament.authorId, tournament.id, "organizer");
 	}
 
@@ -271,14 +277,25 @@ const MEMBERS_TO_SHOW = 5;
 function mapTournamentFromDB(
 	tournament: TournamentRepository.ForShowcase,
 ): ShowcaseCalendarEvent {
+	const firstPlacers = resolveFirstPlacers(tournament);
+
+	const tentativeTier =
+		tournament.tier === null &&
+		tournament.organizationId !== null &&
+		!tournament.firstPlacers.length
+			? getTentativeTier(tournament.organizationId, tournament.name)
+			: null;
+
 	return {
 		type: "showcase",
 		url: tournamentPage(tournament.id),
 		id: tournament.id,
 		authorId: tournament.authorId,
+		organizationId: tournament.organizationId,
 		name: tournament.name,
-		startTime: tournament.startTime,
+		startsAt: tournament.startsAt,
 		teamsCount: tournament.teamsCount,
+		membersCount: tournament.membersCount,
 		logoUrl: tournament.logoUrl,
 		organization: tournament.organization
 			? {
@@ -288,35 +305,89 @@ function mapTournamentFromDB(
 			: null,
 		isRanked: tournamentIsRanked({
 			isSetAsRanked: tournament.settings.isRanked,
-			startTime: databaseTimestampToDate(tournament.startTime),
+			startsAt: databaseTimestampToDate(tournament.startsAt),
 			minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 			isTest: tournament.settings.isTest ?? false,
 		}),
+		tier: tournament.tier ?? null,
+		tentativeTier,
 		hidden: Boolean(tournament.hidden),
-		modes: null, // no need to show modes for front page, maybe could in the future?
-		firstPlacer:
-			tournament.firstPlacers.length > 0
-				? {
-						teamName: tournament.firstPlacers[0].teamName,
-						logoUrl:
-							tournament.firstPlacers[0].teamLogoUrl ??
-							tournament.firstPlacers[0].pickupAvatarUrl,
-						members: tournament.firstPlacers
-							.slice(0, MEMBERS_TO_SHOW)
-							.map((firstPlacer) => ({
-								customUrl: firstPlacer.customUrl,
-								discordAvatar: firstPlacer.discordAvatar,
-								discordId: firstPlacer.discordId,
-								id: firstPlacer.id,
-								username: firstPlacer.username,
-								country: firstPlacer.country,
-							})),
-						notShownMembersCount:
-							tournament.firstPlacers.length > MEMBERS_TO_SHOW
-								? tournament.firstPlacers.length - MEMBERS_TO_SHOW
-								: 0,
-					}
-				: null,
+		isFinalized: Boolean(tournament.isFinalized),
+		minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
+		modes: null,
+		hasVods: (tournament.vodCount ?? 0) > 0,
+		firstPlacers,
+	};
+}
+
+type FirstPlacerRow = TournamentRepository.ForShowcase["firstPlacers"][number];
+
+function resolveFirstPlacers(
+	tournament: TournamentRepository.ForShowcase,
+): ShowcaseCalendarEvent["firstPlacers"] {
+	if (tournament.firstPlacers.length === 0) {
+		return [];
+	}
+
+	if (
+		Progression.hasAbDivisionsFinals(tournament.settings.bracketProgression)
+	) {
+		const byDiv = R.groupBy(tournament.firstPlacers, (p) => p.div ?? "");
+		return Object.values(byDiv)
+			.map((rows) => buildFirstPlacerEntry(rows, { withMembers: false }))
+			.sort((a, b) => (a.div ?? "").localeCompare(b.div ?? ""));
+	}
+
+	const winnerRows = winnersOfHighestDivision(tournament);
+	return [buildFirstPlacerEntry(winnerRows, { withMembers: true })];
+}
+
+function winnersOfHighestDivision(
+	tournament: TournamentRepository.ForShowcase,
+): FirstPlacerRow[] {
+	if (tournament.firstPlacers.every((p) => p.div === null)) {
+		return tournament.firstPlacers;
+	}
+
+	const highestDivName = getBracketProgressionLabel(
+		0,
+		tournament.settings.bracketProgression,
+	);
+	const highestDivWinners = tournament.firstPlacers.filter(
+		(p) => p.div === highestDivName,
+	);
+
+	return highestDivWinners.length > 0
+		? highestDivWinners
+		: tournament.firstPlacers;
+}
+
+function buildFirstPlacerEntry(
+	rows: FirstPlacerRow[],
+	{ withMembers }: { withMembers: boolean },
+): ShowcaseCalendarEvent["firstPlacers"][number] {
+	const first = rows[0];
+	const members = withMembers
+		? rows.slice(0, MEMBERS_TO_SHOW).map((row) => ({
+				customUrl: row.customUrl,
+				customAvatarUrl: row.customAvatarUrl,
+				discordAvatar: row.discordAvatar,
+				discordId: row.discordId,
+				id: row.id,
+				username: row.username,
+				country: row.country,
+			}))
+		: [];
+
+	return {
+		teamName: first.teamName,
+		logoUrl: first.teamLogoUrl ?? first.pickupAvatarUrl,
+		div: first.div,
+		members,
+		notShownMembersCount:
+			withMembers && rows.length > MEMBERS_TO_SHOW
+				? rows.length - MEMBERS_TO_SHOW
+				: 0,
 	};
 }
 
@@ -328,10 +399,28 @@ function databaseTimestampWeekFromNow() {
 	return dateToDatabaseTimestamp(now);
 }
 
+function databaseTimestampThreeDaysAgo() {
+	const now = new Date();
+
+	now.setDate(now.getDate() - 3);
+
+	return dateToDatabaseTimestamp(now);
+}
+
 function databaseTimestampSixHoursAgo() {
 	const now = new Date();
 
 	now.setHours(now.getHours() - 6);
 
 	return dateToDatabaseTimestamp(now);
+}
+
+const TIER_BONUS_PER_STEP = 5;
+function showcaseScore(tournament: ShowcaseCalendarEvent): number {
+	const tierBonus =
+		typeof tournament.tier === "number"
+			? (10 - tournament.tier) * TIER_BONUS_PER_STEP
+			: 0;
+
+	return tournament.teamsCount + tierBonus;
 }

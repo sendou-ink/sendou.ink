@@ -1,0 +1,11 @@
+.tableMode {
+	background-color: var(--color-bg);
+	border-radius: 100%;
+	padding: var(--s-1);
+}
+
+.time {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}

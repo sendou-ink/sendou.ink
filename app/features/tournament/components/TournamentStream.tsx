@@ -1,26 +1,29 @@
-import type { SerializeFrom } from "@remix-run/node";
+import clsx from "clsx";
+import { User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { UserIcon } from "~/components/icons/User";
+import { useTournament } from "~/features/tournament/tournament-context";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { twitchUrl } from "~/utils/urls";
-import type { TournamentStreamsLoader } from "../loaders/to.$id.streams.server";
-import { useTournament } from "../routes/to.$id";
+import styles from "./TournamentStream.module.css";
 
 export function TournamentStream({
 	stream,
 	withThumbnail = true,
 }: {
-	stream: SerializeFrom<TournamentStreamsLoader>["streams"][number];
+	stream: Tournament["streams"][number];
 	withThumbnail?: boolean;
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
-	const team = tournament.ctx.teams.find((team) =>
-		team.members.some((m) => m.userId === stream.userId),
-	);
-	const user = team?.members.find((m) => m.userId === stream.userId);
 
 	return (
-		<div key={stream.userId} className="stack sm">
+		<div
+			key={stream.userId}
+			className="stack sm"
+			data-testid="tournament-stream"
+		>
 			{withThumbnail ? (
 				<a
 					href={twitchUrl(stream.twitchUserName)}
@@ -36,19 +39,25 @@ export function TournamentStream({
 				</a>
 			) : null}
 			<div className="stack md horizontal justify-between">
-				{user && team ? (
-					<div className="tournament__stream__user-container">
-						<Avatar size="xxs" user={user} /> {user.username}
-						<span className="text-theme-secondary">{team.name}</span>
+				{stream.user ? (
+					<div className={styles.streamUserContainer}>
+						<Avatar size="xxs" user={stream.user} /> {stream.user.username}
+						<span
+							className={clsx("text-theme-secondary", styles.streamTeamName)}
+							title={stream.teamName ?? undefined}
+						>
+							{stream.teamName}
+						</span>
 					</div>
 				) : (
-					<div className="tournament__stream__user-container">
-						<Avatar size="xxs" url={tournament.ctx.logoSrc} />
-						Cast <span className="text-lighter">{stream.twitchUserName}</span>
+					<div className={styles.streamUserContainer}>
+						<Avatar size="xxs" url={tournament.ctx.logoUrl} />
+						{t("tournament:streams.cast")}{" "}
+						<span className="text-lighter">{stream.twitchUserName}</span>
 					</div>
 				)}
-				<div className="tournament__stream__viewer-count">
-					<UserIcon />
+				<div className={styles.streamViewerCount}>
+					<User />
 					{stream.viewerCount}
 				</div>
 			</div>
@@ -59,7 +68,7 @@ export function TournamentStream({
 					rel="noreferrer"
 					className="text-xxs text-semi-bold text-center"
 				>
-					Watch now
+					{t("tournament:streams.watchNow")}
 				</a>
 			) : null}
 		</div>

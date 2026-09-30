@@ -6,8 +6,8 @@
 	"tournament_many": "",
 	"tournament_other": "Attribué pour avoir gagné {{tournament}} (×{{count}})",
 	"forYourEvent": "Un badge pour votre événement ?",
-	"managedBy": "Géré par {{users}}",
-	"madeBy": "Fait par {{user}}",
+	"managedBy": "Géré par <0></0>",
+	"madeBy": "Fait par <0></0>",
 	"own.divider": "Badges gérés",
 	"other.divider": "Autres badges",
 	"noBadgesFound": "Aucun badge correspondant à votre recherche"

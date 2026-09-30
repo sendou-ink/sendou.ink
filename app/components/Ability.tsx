@@ -7,6 +7,7 @@ import styles from "./Ability.module.css";
 import { Image } from "./Image";
 
 const sizeMap = {
+	HUGE: 64,
 	MAIN: 42,
 	SUB: 32,
 	SUBTINY: 26,
@@ -46,7 +47,6 @@ export function Ability({
 
 	const readonly = typeof onClick === "undefined" || ability === "UNKNOWN"; // Force "UNKNOWN" ability icons to be readonly
 
-	// Render an ability as a button only if it is meant to be draggable (i.e., not readonly)
 	const AbilityTag = readonly ? "div" : "button";
 
 	const altText =

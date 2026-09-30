@@ -1,0 +1,32 @@
+.resultsTableWrapper {
+	width: 100%;
+	overflow-x: auto;
+}
+
+.resultsTableHighlights {
+	border: var(--s-2) solid var(--color-bg-high);
+	padding-inline: 0 !important;
+
+	& > legend {
+		margin-inline-start: var(--s-2);
+		padding-inline: var(--s-1);
+	}
+}
+
+.highlightsContainer {
+	position: relative;
+	padding-bottom: 80px; /* Leave space for sticky button */
+}
+
+.highlightsStickyButton {
+	position: sticky;
+	bottom: 0;
+	background-color: var(--color-bg);
+	padding: var(--s-2) 0;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-2);
+	margin-top: var(--s-4);
+}

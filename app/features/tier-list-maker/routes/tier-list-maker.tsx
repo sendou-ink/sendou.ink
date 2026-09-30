@@ -1,0 +1,446 @@
+import type { ClientRect, CollisionDetection, Modifier } from "@dnd-kit/core";
+import {
+	closestCenter,
+	DndContext,
+	DragOverlay,
+	KeyboardSensor,
+	PointerSensor,
+	pointerWithin,
+	TouchSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+	SortableContext,
+	sortableKeyboardCoordinates,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import clsx from "clsx";
+import { HardDriveDownload, Plus, RefreshCcw } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
+import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSwitch } from "~/components/elements/Switch";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
+import { ModeImage } from "~/components/Image";
+import { Main } from "~/components/Main";
+import { Placeholder } from "~/components/Placeholder";
+import { useUser } from "~/features/auth/core/user";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
+import { useHydrated } from "~/hooks/useHydrated";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import { metaTags, ogPageImage } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { navIconUrl, TIER_LIST_MAKER_URL } from "~/utils/urls";
+import { ItemDragPreview } from "../components/ItemDragPreview";
+import { ItemPool } from "../components/ItemPool";
+import { TierListGraphic } from "../components/TierListGraphic";
+import { TierRow } from "../components/TierRow";
+import {
+	TierListProvider,
+	useTierListState,
+} from "../contexts/TierListContext";
+import type { TierListPlacementMode } from "../hooks/useTierList";
+import type { TierListItem } from "../tier-list-maker-schemas";
+import {
+	tierIdFromSortableId,
+	tierListMakerPathWithState,
+	tierSortableId,
+} from "../tier-list-maker-utils";
+import styles from "./tier-list-maker.module.css";
+
+const PLACEMENT_MODES: TierListPlacementMode[] = ["track", "click"];
+
+/** Tier rows and items share one context, so each drag only collides with its own kind of target. */
+const tierAwareCollisionDetection: CollisionDetection = (args) => {
+	const isTierDrag = tierIdFromSortableId(String(args.active.id)) !== null;
+	const droppableContainers = args.droppableContainers.filter(
+		(container) =>
+			(tierIdFromSortableId(String(container.id)) !== null) === isTierDrag,
+	);
+
+	if (isTierDrag) return closestCenter({ ...args, droppableContainers });
+
+	const pointerCollisions = pointerWithin({ ...args, droppableContainers });
+
+	// gaps between items would otherwise resolve to the tier itself, snapping the sort preview back
+	const tierZoneCollision = pointerCollisions.find((collision) =>
+		String(collision.id).startsWith("tier-"),
+	);
+	const tierZoneRect = tierZoneCollision
+		? args.droppableRects.get(tierZoneCollision.id)
+		: undefined;
+	if (!tierZoneCollision || !tierZoneRect) return pointerCollisions;
+
+	const itemsInTierZone = droppableContainers.filter((container) => {
+		const rect = args.droppableRects.get(container.id);
+		return (
+			container.id !== tierZoneCollision.id &&
+			rect !== undefined &&
+			isRectCenterWithin(rect, tierZoneRect)
+		);
+	});
+	if (itemsInTierZone.length === 0) return [tierZoneCollision];
+
+	return closestCenter({ ...args, droppableContainers: itemsInTierZone });
+};
+
+const restrictTierDragToVerticalAxis: Modifier = (args) =>
+	args.active && tierIdFromSortableId(String(args.active.id)) !== null
+		? restrictToVerticalAxis(args)
+		: args.transform;
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Tier List Maker",
+		ogTitle: "Splatoon 3 tier list maker",
+		description:
+			"Generate Splatoon tier lists featuring main weapons, sub weapons, special weapons or stages.",
+		image: ogPageImage("tier-list-maker"),
+		location: args.location,
+	});
+};
+
+export const handle: SendouRouteHandle = {
+	i18n: "tier-list-maker",
+	breadcrumb: () => ({
+		imgPath: navIconUrl("tier-list-maker"),
+		href: TIER_LIST_MAKER_URL,
+		type: "IMAGE",
+	}),
+};
+
+export default function TierListMakerPage() {
+	const isHydrated = useHydrated();
+
+	if (!isHydrated)
+		return (
+			<Main bigger>
+				<Placeholder />
+			</Main>
+		);
+
+	return (
+		<TierListProvider>
+			<TierListMakerContent />
+		</TierListProvider>
+	);
+}
+
+function TierListMakerContent() {
+	const { t } = useTranslation(["tier-list-maker"]);
+
+	const {
+		itemType,
+		setItemType,
+		state,
+		activeItem,
+		isReorderingTiers,
+		handleDragStart,
+		handleDragOver,
+		handleDragEnd,
+		handleDragCancel,
+		handleAddTier,
+		handleReset,
+		hideAltKits,
+		setHideAltKits,
+		hideAltSkins,
+		setHideAltSkins,
+		canAddDuplicates,
+		setCanAddDuplicates,
+		showTierHeaders,
+		setShowTierHeaders,
+		selectedModes,
+		setSelectedModes,
+		placementMode,
+		setPlacementMode,
+	} = useTierListState();
+
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 200,
+				tolerance: 5,
+			},
+		}),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
+
+	return (
+		<Main bigger className={clsx(styles.container, "stack lg")}>
+			<div className={styles.header}>
+				<div className="stack horizontal md">
+					<SendouButton onClick={handleAddTier} size="small" icon={<Plus />}>
+						{t("tier-list-maker:addTier")}
+					</SendouButton>
+					<TierListExportDialog />
+				</div>
+				<ResetPopover key={state.tierItems.size} handleReset={handleReset} />
+			</div>
+
+			<DndContext
+				sensors={sensors}
+				collisionDetection={tierAwareCollisionDetection}
+				modifiers={[restrictTierDragToVerticalAxis]}
+				onDragStart={handleDragStart}
+				onDragOver={handleDragOver}
+				onDragEnd={handleDragEnd}
+				onDragCancel={handleDragCancel}
+			>
+				<div className="stack">
+					<div className={styles.tierList}>
+						<SortableContext
+							items={state.tiers.map((tier) => tierSortableId(tier.id))}
+							strategy={verticalListSortingStrategy}
+						>
+							{state.tiers.map((tier) => (
+								<TierRow key={tier.id} tier={tier} />
+							))}
+						</SortableContext>
+					</div>
+
+					<div className="stack horizontal md flex-wrap items-center">
+						<SendouChipRadioGroup>
+							{PLACEMENT_MODES.map((mode) => (
+								<SendouChipRadio
+									key={mode}
+									name="tier-list-placement-mode"
+									value={mode}
+									checked={placementMode === mode}
+									onChange={(value) =>
+										setPlacementMode(value as TierListPlacementMode)
+									}
+								>
+									{t(
+										`tier-list-maker:placementMode${mode === "track" ? "Track" : "Click"}`,
+									)}
+								</SendouChipRadio>
+							))}
+						</SendouChipRadioGroup>
+						<SendouSwitch
+							isSelected={!canAddDuplicates}
+							onChange={(value) => setCanAddDuplicates(!value)}
+						>
+							{t("tier-list-maker:noDuplicates")}
+						</SendouSwitch>
+						<SendouSwitch
+							isSelected={showTierHeaders}
+							onChange={setShowTierHeaders}
+						>
+							{t("tier-list-maker:showTierHeaders")}
+						</SendouSwitch>
+					</div>
+				</div>
+
+				<SendouTabs
+					selectedKey={itemType}
+					onSelectionChange={(key) => setItemType(key as TierListItem["type"])}
+				>
+					<SendouTabList>
+						<SendouTab id="main-weapon">
+							{t("tier-list-maker:mainWeapons")}
+						</SendouTab>
+						<SendouTab id="sub-weapon">
+							{t("tier-list-maker:subWeapons")}
+						</SendouTab>
+						<SendouTab id="special-weapon">
+							{t("tier-list-maker:specialWeapons")}
+						</SendouTab>
+						<SendouTab id="stage">{t("tier-list-maker:stages")}</SendouTab>
+						<SendouTab id="mode">{t("tier-list-maker:modes")}</SendouTab>
+						<SendouTab id="stage-mode">
+							{t("tier-list-maker:stageModes")}
+						</SendouTab>
+						<SendouTab id="ability">{t("tier-list-maker:abilities")}</SendouTab>
+					</SendouTabList>
+
+					<SendouTabPanel id="main-weapon">
+						<div className="stack md">
+							<ItemPool />
+							<div className={styles.filters}>
+								<SendouSwitch
+									isSelected={hideAltKits}
+									onChange={setHideAltKits}
+								>
+									{t("tier-list-maker:hideAltKits")}
+								</SendouSwitch>
+								<SendouSwitch
+									isSelected={hideAltSkins}
+									onChange={setHideAltSkins}
+								>
+									{t("tier-list-maker:hideAltSkins")}
+								</SendouSwitch>
+							</div>
+						</div>
+					</SendouTabPanel>
+
+					<SendouTabPanel id="sub-weapon">
+						<ItemPool />
+					</SendouTabPanel>
+
+					<SendouTabPanel id="special-weapon">
+						<ItemPool />
+					</SendouTabPanel>
+
+					<SendouTabPanel id="stage">
+						<ItemPool />
+					</SendouTabPanel>
+
+					<SendouTabPanel id="mode">
+						<ItemPool />
+					</SendouTabPanel>
+
+					<SendouTabPanel id="stage-mode">
+						<div className="stack md">
+							<ItemPool />
+							<div className={clsx(styles.filters, styles.modeFilters)}>
+								{modesShort.map((mode) => {
+									const isSelected = selectedModes.includes(mode);
+									return (
+										<SendouSwitch
+											key={mode}
+											isSelected={isSelected}
+											onChange={(selected) => {
+												if (selected) {
+													setSelectedModes([...selectedModes, mode]);
+												} else {
+													setSelectedModes(
+														selectedModes.filter((m) => m !== mode),
+													);
+												}
+											}}
+										>
+											<ModeImage mode={mode} size={32} />
+										</SendouSwitch>
+									);
+								})}
+							</div>
+						</div>
+					</SendouTabPanel>
+
+					<SendouTabPanel id="ability">
+						<ItemPool />
+					</SendouTabPanel>
+				</SendouTabs>
+
+				{/* an empty overlay would hide the dropped tier row during its drop animation */}
+				{isReorderingTiers ? null : (
+					<DragOverlay>
+						{activeItem ? <ItemDragPreview item={activeItem} /> : null}
+					</DragOverlay>
+				)}
+			</DndContext>
+		</Main>
+	);
+}
+
+function TierListExportDialog() {
+	const { t } = useTranslation(["tier-list-maker", "common"]);
+	const user = useUser();
+	const { state, getItemsInTier, showTierHeaders, title, setTitle } =
+		useTierListState();
+	const [showUsername, setShowUsername] = useState(true);
+
+	return (
+		<ImageExportDialog
+			trigger={
+				<SendouButton size="small" icon={<HardDriveDownload />}>
+					{t("common:imageExport.export")}
+				</SendouButton>
+			}
+			heading={t("common:imageExport.export")}
+			filename="tier-list"
+			qrCodePath={tierListMakerPathWithState({
+				state,
+				title,
+				showTierHeaders,
+			})}
+			settings={
+				<>
+					<input
+						type="text"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						placeholder={t("tier-list-maker:title")}
+						aria-label={t("tier-list-maker:title")}
+					/>
+					{user ? (
+						<SendouSwitch isSelected={showUsername} onChange={setShowUsername}>
+							{t("tier-list-maker:showUsername")}
+						</SendouSwitch>
+					) : null}
+				</>
+			}
+		>
+			<TierListGraphic
+				title={title}
+				author={showUsername && user ? user : undefined}
+				tiers={state.tiers.map((tier) => ({
+					...tier,
+					items: getItemsInTier(tier.id),
+				}))}
+				showTierHeaders={showTierHeaders}
+			/>
+		</ImageExportDialog>
+	);
+}
+
+function ResetPopover({ handleReset }: { handleReset: () => void }) {
+	const { t } = useTranslation(["tier-list-maker", "common"]);
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					size="small"
+					icon={<RefreshCcw />}
+					variant="minimal-destructive"
+				>
+					{t("common:actions.reset")}
+				</SendouButton>
+			}
+		>
+			<div className="stack sm items-center">
+				<div>{t("tier-list-maker:resetConfirmation")}</div>
+				<div className="stack horizontal sm">
+					<SendouButton
+						size="miniscule"
+						variant="destructive"
+						onClick={() => {
+							handleReset();
+						}}
+					>
+						{t("common:actions.reset")}
+					</SendouButton>
+				</div>
+			</div>
+		</SendouPopover>
+	);
+}
+
+function isRectCenterWithin(rect: ClientRect, container: ClientRect) {
+	const centerX = rect.left + rect.width / 2;
+	const centerY = rect.top + rect.height / 2;
+
+	return (
+		centerX >= container.left &&
+		centerX <= container.right &&
+		centerY >= container.top &&
+		centerY <= container.bottom
+	);
+}

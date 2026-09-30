@@ -1,33 +1,90 @@
-// @ts-nocheck
-
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-// 1) WeaponInfoMain.json inside dicts
-// 2) WeaponInfoSub.json inside dicts
-// 3) WeaponInfoSpecial.json inside dicts
-// 4) misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json
-import params from "./dicts/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json";
-import weapons from "./dicts/WeaponInfoMain.json";
-import specialWeapons from "./dicts/WeaponInfoSpecial.json";
-import subWeapons from "./dicts/WeaponInfoSub.json";
+// To run this script drop the https://github.com/Leanny/splat3 repo into scripts/dicts/splat3
+import {
+	loadDamageRateInfo,
+	loadWeaponInfoMain,
+	loadWeaponInfoSpecial,
+	loadWeaponInfoSub,
+	PARAMETER_DIR,
+} from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const OUTPUT_DIR_PATH = path.join(__dirname, "output");
+const params = loadDamageRateInfo();
+const weapons = loadWeaponInfoMain();
+const subWeapons = loadWeaponInfoSub();
+const specialWeapons = loadWeaponInfoSpecial();
+
+const OBJECT_DMG_OUTPUT_PATH = path.join(
+	__dirname,
+	"..",
+	"app",
+	"features",
+	"object-damage-calculator",
+	"data",
+	"object-dmg.json",
+);
+const DAMAGE_RATE_CONFIG_FILE_NAME =
+	"spl__DamageRateInfoConfig.pp__CombinationDataTableData.json";
+const HISTORY_OUTPUT_PATH = path.join(
+	__dirname,
+	"..",
+	"app",
+	"features",
+	"params",
+	"data",
+	"damage-rate-history.json",
+);
+
+type DamageReceiver = (typeof DAMAGE_RECEIVERS)[number];
+
+type ResultEntry = {
+	mainWeaponIds: MainWeaponId[];
+	subWeaponIds: SubWeaponId[];
+	specialWeaponIds: SpecialWeaponId[];
+	rates: { target: string; rate: number }[];
+};
+
+type DamageRateCell = {
+	ColumnKey: string;
+	RowKey: string;
+	DamageRate?: number;
+};
+
+type DamageRateConfig = { CellList: Record<string, DamageRateCell> };
+
+type TargetHistory = {
+	target: string;
+	current: number;
+	history: Array<{ version: string; value: number }>;
+};
+
+type DamageRateHistoryRow = {
+	mainWeaponIds: MainWeaponId[];
+	subWeaponIds: SubWeaponId[];
+	specialWeaponIds: SpecialWeaponId[];
+	targets: TargetHistory[];
+};
 
 const weaponParamsToWeaponIds = (
-	params: typeof weapons | typeof subWeapons | typeof specialWeapons,
+	weaponParams: typeof weapons | typeof subWeapons | typeof specialWeapons,
 	key: string,
 ) => {
-	return params
+	return weaponParams
 		.filter((param) => {
 			return (
 				param.DefaultDamageRateInfoRow === key ||
@@ -39,69 +96,192 @@ const weaponParamsToWeaponIds = (
 		.map((weapon) => weapon.Id);
 };
 
-const result = {};
-for (const cell of Object.values(params.CellList)) {
-	if (!DAMAGE_RECEIVERS.includes(cell.ColumnKey)) continue;
-	if (!cell.DamageRate) continue;
+const isDamageReceiver = (key: string): key is DamageReceiver =>
+	(DAMAGE_RECEIVERS as readonly string[]).includes(key);
 
-	if (!result[cell.RowKey]) {
-		result[cell.RowKey] = {
-			mainWeaponIds: weaponParamsToWeaponIds(weapons, cell.RowKey).filter(
-				(id) => mainWeaponIds.includes(id),
-			),
-			subWeaponIds: weaponParamsToWeaponIds(subWeapons, cell.RowKey).filter(
-				(id) => subWeaponIds.includes(id),
-			),
-			specialWeaponIds: weaponParamsToWeaponIds(
-				specialWeapons,
-				cell.RowKey,
-			).filter((id) => specialWeaponIds.includes(id)),
-			rates: [],
-		};
+const mainIdsForRow = (rowKey: string) =>
+	weaponParamsToWeaponIds(weapons, rowKey).filter((id): id is MainWeaponId =>
+		(mainWeaponIds as readonly number[]).includes(id),
+	);
+const subIdsForRow = (rowKey: string) =>
+	weaponParamsToWeaponIds(subWeapons, rowKey).filter((id): id is SubWeaponId =>
+		(subWeaponIds as readonly number[]).includes(id),
+	);
+const specialIdsForRow = (rowKey: string) =>
+	weaponParamsToWeaponIds(specialWeapons, rowKey).filter(
+		(id): id is SpecialWeaponId =>
+			(specialWeaponIds as readonly number[]).includes(id),
+	);
+
+/**
+ * Per-target damage rates of every damage rate info row in one config dump, PvP-relevant receivers
+ * only, with the synthetic launched/Recycled Brella canopy targets derived as the calculator expects.
+ */
+const damageRatesByRow = (
+	config: DamageRateConfig,
+): Map<string, Map<string, number>> => {
+	const result = new Map<string, Map<string, number>>();
+
+	for (const cell of Object.values(config.CellList)) {
+		if (!isDamageReceiver(cell.ColumnKey)) continue;
+		if (!cell.DamageRate) continue;
+
+		let row = result.get(cell.RowKey);
+		if (!row) {
+			row = new Map();
+			result.set(cell.RowKey, row);
+		}
+
+		row.set(cell.ColumnKey, cell.DamageRate);
+
+		// launched versions have double health but share the same rate
+		if (
+			cell.ColumnKey.includes("BulletUmbrellaCanopyNormal") ||
+			cell.ColumnKey.includes("BulletUmbrellaCanopyWide")
+		) {
+			row.set(`${cell.ColumnKey}_Launched`, cell.DamageRate);
+		}
+
+		// Recycled Brella reuses Splat Brella's special damage rates
+		if (cell.ColumnKey === "BulletUmbrellaCanopyNormal") {
+			row.set("BulletShelterCanopyFocus", cell.DamageRate);
+			row.set("BulletShelterCanopyFocus_Launched", cell.DamageRate);
+		}
 	}
+
+	return result;
+};
+
+const result: Record<string, ResultEntry | undefined> = {};
+for (const [rowKey, rates] of damageRatesByRow(params)) {
+	const mainWeaponIdsForRow = mainIdsForRow(rowKey);
+	const subWeaponIdsForRow = subIdsForRow(rowKey);
+	const specialWeaponIdsForRow = specialIdsForRow(rowKey);
 
 	// if it applies to no PvP weapons, we don't care about it
 	if (
-		result[cell.RowKey].mainWeaponIds.length === 0 &&
-		result[cell.RowKey].subWeaponIds.length === 0 &&
-		result[cell.RowKey].specialWeaponIds.length === 0 &&
-		cell.RowKey !== "ObjectEffect_Up"
+		mainWeaponIdsForRow.length === 0 &&
+		subWeaponIdsForRow.length === 0 &&
+		specialWeaponIdsForRow.length === 0 &&
+		rowKey !== "ObjectEffect_Up"
 	) {
-		result[cell.RowKey] = undefined;
 		continue;
 	}
 
-	result[cell.RowKey].rates.push({
-		target: cell.ColumnKey,
-		rate: cell.DamageRate,
-	});
-
-	// add a second rate for launched versions, since they have double health
-	if (
-		cell.ColumnKey.includes("BulletUmbrellaCanopyNormal") ||
-		cell.ColumnKey.includes("BulletUmbrellaCanopyWide")
-	) {
-		result[cell.RowKey].rates.push({
-			target: `${cell.ColumnKey}_Launched`,
-			rate: cell.DamageRate,
-		});
-	}
-
-	// if it has special damage rates for Splat Brella, add the same value for Recycled Brella
-	if (cell.ColumnKey === "BulletUmbrellaCanopyNormal") {
-		result[cell.RowKey].rates.push({
-			target: "BulletShelterCanopyFocus",
-			rate: cell.DamageRate,
-		});
-
-		result[cell.RowKey].rates.push({
-			target: "BulletShelterCanopyFocus_Launched",
-			rate: cell.DamageRate,
-		});
-	}
+	result[rowKey] = {
+		mainWeaponIds: mainWeaponIdsForRow,
+		subWeaponIds: subWeaponIdsForRow,
+		specialWeaponIds: specialWeaponIdsForRow,
+		rates: [...rates].map(([target, rate]) => ({ target, rate })),
+	};
 }
 
-fs.writeFileSync(
-	path.join(OUTPUT_DIR_PATH, "object-dmg.json"),
-	JSON.stringify(result, null, 2),
-);
+fs.writeFileSync(OBJECT_DMG_OUTPUT_PATH, JSON.stringify(result, null, 2));
+
+writeDamageRateHistory();
+
+function versionDirToDisplay(version: string): string {
+	const num = Number.parseInt(version, 10);
+	const major = Math.floor(num / 100);
+	const minor = Math.floor((num % 100) / 10);
+	const patch = num % 10;
+	return `${major}.${minor}.${patch}`;
+}
+
+/**
+ * Writes the per-row, per-target damage rate history across every versioned dump for the params
+ * page's patch history. Only PvP-relevant rows and targets whose rate ever changed are kept.
+ */
+function writeDamageRateHistory() {
+	const versionDirs = fs
+		.readdirSync(PARAMETER_DIR)
+		.filter((dir) => /^\d+$/.test(dir))
+		.sort((a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10));
+
+	const ratesByVersion = new Map<string, Map<string, Map<string, number>>>();
+	for (const version of versionDirs) {
+		const filePath = path.join(
+			PARAMETER_DIR,
+			version,
+			"misc",
+			DAMAGE_RATE_CONFIG_FILE_NAME,
+		);
+		if (!fs.existsSync(filePath)) continue;
+
+		const config = JSON.parse(
+			fs.readFileSync(filePath, "utf8"),
+		) as DamageRateConfig;
+		ratesByVersion.set(version, damageRatesByRow(config));
+	}
+
+	const presentVersions = versionDirs.filter((version) =>
+		ratesByVersion.has(version),
+	);
+	const latestVersion = presentVersions[presentVersions.length - 1];
+
+	const rows: Record<string, DamageRateHistoryRow> = {};
+	for (const [rowKey, latestRates] of ratesByVersion.get(latestVersion) ?? []) {
+		const mainWeaponIdsForRow = mainIdsForRow(rowKey);
+		const subWeaponIdsForRow = subIdsForRow(rowKey);
+		const specialWeaponIdsForRow = specialIdsForRow(rowKey);
+
+		if (
+			mainWeaponIdsForRow.length === 0 &&
+			subWeaponIdsForRow.length === 0 &&
+			specialWeaponIdsForRow.length === 0
+		) {
+			continue;
+		}
+
+		const targets: TargetHistory[] = [];
+		for (const [target, current] of latestRates) {
+			const presentForTarget = presentVersions.filter(
+				(version) =>
+					ratesByVersion.get(version)?.get(rowKey)?.get(target) !== undefined,
+			);
+
+			const history: Array<{ version: string; value: number }> = [];
+			for (let i = 0; i < presentForTarget.length - 1; i++) {
+				const value = ratesByVersion
+					.get(presentForTarget[i])!
+					.get(rowKey)!
+					.get(target)!;
+				const nextValue = ratesByVersion
+					.get(presentForTarget[i + 1])!
+					.get(rowKey)!
+					.get(target)!;
+				if (value !== nextValue) {
+					history.push({
+						version: versionDirToDisplay(presentForTarget[i]),
+						value,
+					});
+				}
+			}
+
+			if (history.length > 0) {
+				targets.push({ target, current, history });
+			}
+		}
+
+		if (targets.length > 0) {
+			rows[rowKey] = {
+				mainWeaponIds: mainWeaponIdsForRow,
+				subWeaponIds: subWeaponIdsForRow,
+				specialWeaponIds: specialWeaponIdsForRow,
+				targets,
+			};
+		}
+	}
+
+	fs.writeFileSync(
+		HISTORY_OUTPUT_PATH,
+		JSON.stringify(
+			{
+				metadata: { versions: presentVersions.map(versionDirToDisplay) },
+				rows,
+			},
+			null,
+			2,
+		),
+	);
+}

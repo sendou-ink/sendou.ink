@@ -1,0 +1,16 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-4);
+}
+
+.tabs {
+	width: 100%;
+}
+
+.dataCredit {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	text-decoration: underline;
+}

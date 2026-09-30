@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"time": 192,
+		"cast": true,
+		"special": [
+			[true, false, false, false],
+			[false, false, false, true]
+		],
+		"dead": [
+			[false, true, false, false],
+			[true, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Casted stream (Splat World Series 2026 playoffs, Day 1 Swiss) at 3:12, yellow team left vs purple right, both strips at a similar pitch (read as the even geometry) with the D-pad and A/B/Y/X camera badges drawn under the icons. Two icons wear the special-ready wash and have their gauge number hidden: the yellow team's outer slot (read correctly) and the purple team's outer slot, a pale lavender body that scored well under the ready floor (bodyPale 0.22 vs 0.38 on the yellow one) and came back not ready. The read also reported cast null despite the badges. Gauge numbers 86/19 sit on the yellow team's alive inner slots, 15/17/50 on the purple team's first three; layout left unpinned."
+	}
+}

@@ -1,0 +1,27 @@
+.layout {
+	position: relative;
+}
+
+.embedContainer {
+	margin-block: var(--s-2);
+}
+
+/* floated left of the form when its left margin fits the embed (measured and width set by JS).
+   Anchored to the form's own left edge so it never overlaps the side nav; spans the full form
+   height while the embed sticks within it, staying in view while scrolling the long form. */
+.embedRail.floating {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: calc(100% + var(--s-6));
+
+	& .embedContainer {
+		position: sticky;
+		top: calc(var(--layout-nav-height) + var(--s-4));
+		margin-block: 0;
+	}
+}
+
+.povField {
+	width: 100%;
+}

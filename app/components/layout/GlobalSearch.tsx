@@ -1,0 +1,524 @@
+import clsx from "clsx";
+import type { TFunction } from "i18next";
+import { Search } from "lucide-react";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useFetcher } from "react-router";
+import { Avatar } from "~/components/Avatar";
+import { SendouModal } from "~/components/elements/Dialog";
+import { SendouRadio, SendouRadioGroup } from "~/components/elements/Radio";
+import { Image } from "~/components/Image";
+import { Input } from "~/components/Input";
+import { LocaleTime } from "~/components/LocaleTime";
+import { LogInPopover } from "~/components/LogInPopover";
+import type { SearchLoaderData } from "~/features/search/routes/search";
+import { searchSearchParams } from "~/features/search/search-search-params";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
+import { useDebounce } from "~/hooks/useDebounce";
+import { useHydrated } from "~/hooks/useHydrated";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import {
+	navIconUrl,
+	teamPage,
+	userPage,
+	weaponCategoryUrl,
+} from "~/utils/urls";
+import styles from "./GlobalSearch.module.css";
+import {
+	saveRecentWeapon,
+	searchTypePersisted,
+	useRecentWeapons,
+} from "./global-search-persisted";
+import {
+	globalSearchSearchParams,
+	GLOBAL_SEARCH_TYPES as SEARCH_TYPES,
+	type GlobalSearchType as SearchType,
+} from "./global-search-search-params";
+import {
+	SearchResultsEmptyState,
+	SearchResultsItem,
+	SearchResultsItemName,
+	SearchResultsItemRow,
+	SearchResultsListBox,
+} from "./SearchResults";
+import {
+	filterWeaponResults,
+	type SelectedWeapon,
+	WeaponDestinationMenu,
+	WeaponResultsList,
+	weaponToSelectedWeapon,
+} from "./WeaponSearch";
+
+const SEARCH_TYPE_TO_PREFIX: Record<SearchType, string> = {
+	weapons: "w",
+	users: "u",
+	teams: "t",
+	organizations: "o",
+	tournaments: "to",
+};
+
+function searchTypeIconPath(type: SearchType): string {
+	if (type === "weapons") {
+		return weaponCategoryUrl("SHOOTERS");
+	}
+	const navIcons: Record<Exclude<SearchType, "weapons">, string> = {
+		users: "u",
+		teams: "t",
+		organizations: "medal",
+		tournaments: "calendar",
+	};
+	return navIconUrl(navIcons[type]);
+}
+
+export function GlobalSearch() {
+	const { t } = useTranslation(["common"]);
+	const [params, setParams] = useSearchParamsTyped(globalSearchSearchParams);
+	const isHydrated = useHydrated();
+	const isMac = isHydrated && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+
+	const searchParamOpen = params.search === "open";
+
+	const [isOpen, setIsOpen] = React.useState(searchParamOpen);
+
+	const prevSearchParamOpen = React.useRef(searchParamOpen);
+	if (searchParamOpen !== prevSearchParamOpen.current) {
+		setIsOpen(searchParamOpen);
+	}
+	prevSearchParamOpen.current = searchParamOpen;
+
+	React.useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			const modifierKey = isMac ? e.metaKey : e.ctrlKey;
+			if (modifierKey && e.key === "k") {
+				e.preventDefault();
+				setIsOpen(true);
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, [isMac]);
+
+	const handleOpenChange = (open: boolean) => {
+		setIsOpen(open);
+		if (open) return;
+		if (
+			params.search === null &&
+			params.type === null &&
+			params.weapon === null
+		) {
+			return;
+		}
+
+		setParams({ search: null, type: null, weapon: null });
+	};
+
+	return (
+		<>
+			<Link
+				to={globalSearchSearchParams.href("", { search: "open" })}
+				defaultShouldRevalidate={false}
+				preventScrollReset
+				className={styles.searchButton}
+			>
+				<Search className={styles.searchIcon} />
+				<span className={styles.searchLabel}>
+					<span className={styles.searchPlaceholder}>{t("common:search")}</span>
+					<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
+				</span>
+			</Link>
+			{isOpen ? (
+				<SendouModal
+					className={styles.modal}
+					aria-label={t("common:search")}
+					isDismissable
+					onClose={() => handleOpenChange(false)}
+				>
+					<GlobalSearchContent
+						onClose={() => setIsOpen(false)}
+						initialSearchType={params.type}
+						initialWeaponId={params.weapon}
+					/>
+				</SendouModal>
+			) : null}
+		</>
+	);
+}
+
+/** Search is logged in only, so a logged out visitor gets a log in prompt instead. */
+export function LoggedOutGlobalSearch() {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<LogInPopover>
+			<button type="button" className={styles.searchButton}>
+				<Search className={styles.searchIcon} />
+				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
+			</button>
+		</LogInPopover>
+	);
+}
+
+function resolveInitialWeapon(
+	weaponId: MainWeaponId | null,
+	t: TFunction<["common", "weapons"]>,
+): SelectedWeapon | null {
+	if (weaponId === null) return null;
+	const name = t(`weapons:MAIN_${weaponId}`);
+	if (!name || name === `MAIN_${weaponId}`) return null;
+	return weaponToSelectedWeapon(weaponId, t);
+}
+
+function GlobalSearchContent({
+	onClose,
+	initialSearchType,
+	initialWeaponId,
+}: {
+	onClose: () => void;
+	initialSearchType: SearchType | null;
+	initialWeaponId: MainWeaponId | null;
+}) {
+	const { t } = useTranslation(["common", "weapons"]);
+	const [query, setQuery] = React.useState("");
+	const [searchType, setSearchType] = React.useState<SearchType>(
+		() => initialSearchType ?? PersistedState.read(searchTypePersisted),
+	);
+	const [selectedWeapon, setSelectedWeapon] =
+		React.useState<SelectedWeapon | null>(
+			resolveInitialWeapon(initialWeaponId, t),
+		);
+
+	const inputRef = React.useRef<HTMLInputElement>(null);
+	const listBoxRef = React.useRef<HTMLDivElement>(null);
+	const modifierKeyRef = React.useRef(false);
+
+	const handleClickCapture = (e: React.MouseEvent) => {
+		modifierKeyRef.current = e.metaKey || e.ctrlKey;
+	};
+
+	const fetcher = useFetcher<SearchLoaderData>();
+	const recentWeaponIds = useRecentWeapons();
+
+	React.useEffect(() => {
+		if (!selectedWeapon) {
+			inputRef.current?.focus();
+		}
+	}, [selectedWeapon]);
+
+	useDebounce(
+		() => {
+			if (searchType === "weapons") return;
+			if (query.length < 3) return;
+			fetcher.load(
+				searchSearchParams.href("/search", {
+					q: query,
+					type: searchType as Exclude<SearchType, "weapons">,
+					limit: 10,
+				}),
+			);
+		},
+		300,
+		[query, searchType],
+	);
+
+	const hasQuery = query.length >= 3;
+	const fetchedQuery = fetcher.data?.query ?? null;
+	const fetchedType = fetcher.data?.type ?? null;
+	const isCurrentFetch =
+		hasQuery && fetchedQuery === query && fetchedType === searchType;
+	const results =
+		hasQuery && fetchedType === searchType ? (fetcher.data?.results ?? []) : [];
+
+	const weaponResults =
+		searchType === "weapons" && hasQuery ? filterWeaponResults(query, t) : [];
+
+	const recentWeapons: SelectedWeapon[] =
+		searchType === "weapons"
+			? recentWeaponIds.map((id) => weaponToSelectedWeapon(id, t))
+			: [];
+
+	const handleSelect = (key: React.Key) => {
+		if (searchType === "weapons") {
+			const weapon =
+				weaponResults.find((w) => `weapon-${w.id}` === key) ??
+				recentWeapons.find((w) => `weapon-${w.id}` === key);
+			if (weapon) {
+				setSelectedWeapon(weapon);
+				setQuery("");
+			}
+			return;
+		}
+
+		if (!modifierKeyRef.current) {
+			onClose();
+		}
+	};
+
+	const handleSearchTypeChange = (value: string) => {
+		setSearchType(value as SearchType);
+		PersistedState.write(searchTypePersisted, value as SearchType);
+		setSelectedWeapon(null);
+	};
+
+	const handleSearchTypeClick = () => {
+		inputRef.current?.focus();
+	};
+
+	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		const separatorMatch = value.match(/^([a-zA-Z]+)\.$/);
+
+		if (separatorMatch) {
+			const typedPrefix = separatorMatch[1];
+			const matchedType = SEARCH_TYPES.find(
+				(type) => SEARCH_TYPE_TO_PREFIX[type] === typedPrefix,
+			);
+			if (matchedType) {
+				setSearchType(matchedType);
+				PersistedState.write(searchTypePersisted, matchedType);
+				setSelectedWeapon(null);
+				setQuery("");
+				return;
+			}
+		}
+
+		setQuery(value);
+	};
+
+	const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		const currentResults = searchType === "weapons" ? weaponResults : results;
+		if (e.key === "ArrowDown" && currentResults.length > 0) {
+			e.preventDefault();
+			listBoxRef.current?.focus();
+		}
+	};
+
+	const handleDestinationSelect = () => {
+		if (!selectedWeapon) return;
+
+		saveRecentWeapon(selectedWeapon.id);
+		if (!modifierKeyRef.current) {
+			onClose();
+		}
+	};
+
+	const handleBackToWeaponSearch = () => {
+		setSelectedWeapon(null);
+	};
+
+	if (searchType === "weapons" && selectedWeapon) {
+		return (
+			<div className={styles.content} onClickCapture={handleClickCapture}>
+				<WeaponDestinationMenu
+					selectedWeapon={selectedWeapon}
+					onBack={handleBackToWeaponSearch}
+					onSelect={handleDestinationSelect}
+					listBoxRef={listBoxRef}
+				/>
+			</div>
+		);
+	}
+
+	return (
+		<div className={styles.content} onClickCapture={handleClickCapture}>
+			<div className={styles.inputContainer}>
+				<p className={styles.inputPrefix}>
+					{`${SEARCH_TYPE_TO_PREFIX[searchType]}.`}
+				</p>
+				<Input
+					ref={inputRef}
+					className={styles.input}
+					placeholder={t("common:search.placeholder")}
+					value={query}
+					onChange={handleQueryChange}
+					onKeyDown={handleInputKeyDown}
+					icon={<Search className={styles.inputIcon} />}
+				/>
+			</div>
+			<div className={styles.searchTypeContainer}>
+				<SendouRadioGroup
+					value={searchType}
+					onChange={handleSearchTypeChange}
+					aria-label="Search type"
+					className={styles.searchTypeRadioGroup}
+					onMouseDown={preventFocusLeavingInput}
+				>
+					{SEARCH_TYPES.map((type) => (
+						<SendouRadio
+							key={type}
+							value={type}
+							className={styles.searchTypeRadioWrapper}
+							onClick={handleSearchTypeClick}
+						>
+							{({ isSelected, isHovered, isFocusVisible }) => (
+								<span
+									className={clsx(styles.searchTypeRadio, {
+										[styles.searchTypeRadioSelected]: isSelected,
+										[styles.searchTypeRadioHovered]: isHovered && !isSelected,
+										[styles.searchTypeRadioFocusVisible]: isFocusVisible,
+									})}
+								>
+									<Image path={searchTypeIconPath(type)} size={18} alt="" />
+									{t(`common:search.type.${type}`)}
+								</span>
+							)}
+						</SendouRadio>
+					))}
+				</SendouRadioGroup>
+			</div>
+			{searchType === "weapons" ? (
+				<WeaponResultsList
+					weaponResults={weaponResults}
+					recentWeapons={recentWeapons}
+					onSelect={handleSelect}
+					hasQuery={hasQuery}
+					listBoxRef={listBoxRef}
+				/>
+			) : (
+				<SearchResultsListBox
+					ref={listBoxRef}
+					className="scrollbar"
+					aria-label={t("common:search")}
+					onAction={handleSelect}
+					renderEmptyState={() => {
+						if (!hasQuery) {
+							return (
+								<SearchResultsEmptyState>
+									{t("common:search.hint")}
+								</SearchResultsEmptyState>
+							);
+						}
+						if (!isCurrentFetch) {
+							return (
+								<SearchResultsEmptyState>
+									{t("common:search.searching")}
+								</SearchResultsEmptyState>
+							);
+						}
+						return (
+							<SearchResultsEmptyState>
+								{t("common:search.noResults")}
+							</SearchResultsEmptyState>
+						);
+					}}
+				>
+					{results.map((result) => (
+						<SearchResultsItem
+							key={getResultKey(result)}
+							id={getResultKey(result)}
+							href={getResultHref(result)}
+						>
+							<ResultItem result={result} />
+						</SearchResultsItem>
+					))}
+				</SearchResultsListBox>
+			)}
+		</div>
+	);
+}
+
+function preventFocusLeavingInput(e: React.MouseEvent) {
+	e.preventDefault();
+}
+
+type SearchResult = NonNullable<SearchLoaderData>["results"][number];
+
+function getResultKey(result: SearchResult): string {
+	switch (result.type) {
+		case "user":
+			return `user-${result.id}`;
+		case "team":
+			return `team-${result.customUrl}`;
+		case "organization":
+			return `org-${result.id}`;
+		case "tournament":
+			return `tournament-${result.id}`;
+	}
+}
+
+function getResultHref(result: SearchResult): string {
+	switch (result.type) {
+		case "user":
+			return userPage({
+				discordId: result.discordId,
+				customUrl: result.customUrl,
+			});
+		case "team":
+			return teamPage(result.customUrl);
+		case "organization":
+			return tournamentOrganizationPage({ organizationSlug: result.slug });
+		case "tournament":
+			return `/to/${result.id}`;
+	}
+}
+
+function ResultItem({ result }: { result: SearchResult }) {
+	switch (result.type) {
+		case "user":
+			return (
+				<SearchResultsItemRow>
+					<Avatar
+						user={{
+							discordId: result.discordId,
+							discordAvatar: result.discordAvatar,
+						}}
+						size="xxs"
+					/>
+					<div className={styles.resultTexts}>
+						<SearchResultsItemName>{result.name}</SearchResultsItemName>
+						{result.inGameName ? (
+							<span className={styles.resultSecondary}>
+								{result.inGameName}
+							</span>
+						) : null}
+					</div>
+				</SearchResultsItemRow>
+			);
+		case "team":
+			return (
+				<SearchResultsItemRow>
+					<Avatar
+						url={result.avatarUrl}
+						size="xxs"
+						identiconInput={result.name}
+					/>
+					<SearchResultsItemName>{result.name}</SearchResultsItemName>
+				</SearchResultsItemRow>
+			);
+		case "organization":
+			return (
+				<SearchResultsItemRow>
+					<Avatar
+						url={result.avatarUrl}
+						size="xxs"
+						identiconInput={result.name}
+					/>
+					<SearchResultsItemName>{result.name}</SearchResultsItemName>
+				</SearchResultsItemRow>
+			);
+		case "tournament":
+			return (
+				<SearchResultsItemRow>
+					{result.logoUrl ? (
+						<img
+							src={result.logoUrl}
+							alt=""
+							width={24}
+							height={24}
+							className={styles.resultLogo}
+						/>
+					) : null}
+					<div className={styles.resultTexts}>
+						<SearchResultsItemName>{result.name}</SearchResultsItemName>
+						<LocaleTime
+							date={result.startsAt}
+							options={{ day: "numeric", month: "long", year: "numeric" }}
+							className={styles.resultSecondary}
+						/>
+					</div>
+				</SearchResultsItemRow>
+			);
+	}
+}

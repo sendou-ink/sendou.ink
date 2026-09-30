@@ -1,6 +1,5 @@
-import "dotenv/config";
-import { sql } from "~/db/sql";
-import invariant from "~/utils/invariant";
+import { db } from "~/db/sql";
+import { invariant } from "~/utils/invariant";
 
 const discordId = process.argv[2]?.trim();
 const discordId2 = process.argv[3]?.trim();
@@ -11,24 +10,15 @@ invariant(discordId !== discordId2, "discord ids must be different");
 
 const tempDiscordId = "temp-discord-id";
 
-const stm = sql.prepare(
-	/** sql */ `update "User" set "discordId" = @newDiscordId where "discordId" = @discordId;`,
-);
+await db.transaction().execute(async (trx) => {
+	const swap = (from: string, to: string) =>
+		trx
+			.updateTable("User")
+			.set({ discordId: to })
+			.where("discordId", "=", from)
+			.execute();
 
-// swap user discordIds
-sql.transaction(() => {
-	stm.run({
-		discordId: discordId,
-		newDiscordId: tempDiscordId,
-	});
-
-	stm.run({
-		discordId: discordId2,
-		newDiscordId: discordId,
-	});
-
-	stm.run({
-		discordId: tempDiscordId,
-		newDiscordId: discordId2,
-	});
-})();
+	await swap(discordId, tempDiscordId);
+	await swap(discordId2, discordId);
+	await swap(tempDiscordId, discordId2);
+});

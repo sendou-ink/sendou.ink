@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-left",
+		"time": 267,
+		"special": [
+			[false, true, false, false],
+			[false, false, false, true]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"skipFields": ["special.0.1"],
+		"notes": "sendou-triton VoD (MakoMart, match 6) spectator HUD at 4:27 (t=2576). All eight players are alive — no icon is crossed out — yet the live scan read left slot0 as splatted (✕··· @ 0.967), one of the +2 phantom deaths the audit charges against this row; the icon sits over the dark rafters of the ceiling backdrop, which starves the body probe of team ink. Reads two seconds later flap ✕ between slots 0, 2 and 3 on the same all-alive strip. special.0.1 is skipped: slot1's body reads pale under its white Splattershot silhouette and the wash-vs-weapon boundary is unclear from the frame alone. Layout corrected from the live scan's 'cast': the icon apexes measure [603,680,754,828|1086,1180,1278,1366] — the badge-less MIRROR arrangement's pitches (left 76, right 97), not cast's — which is why cast geometry read slot0's boxes off the icon (true center 605, cast center 543); under mirror geometry every slot reads its labeled state."
+	}
+}

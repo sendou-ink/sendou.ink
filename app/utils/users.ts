@@ -1,8 +1,8 @@
 import { logger } from "./logger";
 import { isCustomUrl } from "./urls";
 
-const longUrlRegExp = /(https:\/\/)?sendou.ink\/u\/(.+)/;
-const shortUrlRegExp = /(https:\/\/)?snd.ink\/(.+)/;
+const longUrlRegExp = /(https:\/\/)?sendou\.ink\/u\/([^/?#]+)/;
+const shortUrlRegExp = /(https:\/\/)?snd\.ink\/([^/?#]+)/;
 const DISCORD_ID_MIN_LENGTH = 17;
 export function queryToUserIdentifier(
 	query: string,
@@ -17,7 +17,11 @@ export function queryToUserIdentifier(
 			return { customUrl: identifier };
 		}
 
-		return { discordId: identifier };
+		if (identifier.length >= DISCORD_ID_MIN_LENGTH) {
+			return { discordId: identifier };
+		}
+
+		return { id: Number(identifier) };
 	}
 
 	// = it's numeric
@@ -35,9 +39,8 @@ export function queryToUserIdentifier(
 // snowflake logic from https://github.dev/vegeta897/snow-stamp/blob/main/src/util.js
 const DISCORD_EPOCH = 1420070400000;
 
-// Converts a snowflake ID string into a JS Date object using the provided epoch (in ms), or Discord's epoch if not provided
+/** Converts a Discord snowflake ID into the Date it was created at */
 export function convertSnowflakeToDate(snowflake: string) {
-	// Convert snowflake to BigInt to extract timestamp bits
 	// https://discord.com/developers/docs/reference#snowflakes
 	const milliseconds = BigInt(snowflake) >> 22n;
 	return new Date(Number(milliseconds) + DISCORD_EPOCH);

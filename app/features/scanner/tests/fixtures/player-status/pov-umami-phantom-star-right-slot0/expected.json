@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 265,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Sendou POV, Um'ami Ruins SZ at 4:25 (2026-08-11 VoD, t=49) — all 8 alive, nobody washed. The scan read a phantom special-ready star on right slot 0: the pale lavender backdrop past the kite apex fed the shoulder probe (paleGlow 0.32) while body ink 0.36 slipped under the old flat 0.4 wash guard — the graded guard now demands a strongly pale body (>=0.35) at that ink level, and this backdrop leak reads pale only 0.27. Layout is 'cast' because the steady-state S3 POV strip measures identical to the cast icon geometry (left ~[543,642,741,837], right ~[1085,1161,1237,1320]) — layout means geometry, not footage type; castProven stays false here."
+	}
+}

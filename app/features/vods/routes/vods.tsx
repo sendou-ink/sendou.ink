@@ -1,23 +1,30 @@
-import type { MetaFunction } from "@remix-run/node";
-import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import { AddNewButton } from "~/components/AddNewButton";
-import { SendouButton } from "~/components/elements/Button";
-import { Label } from "~/components/Label";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
+import { EmptyState } from "~/components/EmptyState";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { Main } from "~/components/Main";
+import { Pagination } from "~/components/Pagination";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
-import { metaTags } from "~/utils/remix";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, newVodPage, VODS_PAGE } from "~/utils/urls";
-import { VodListing } from "../components/VodListing";
+import { navIconUrl, VODS_PAGE } from "~/utils/urls";
+import { VodListing, VodListingList } from "../components/VodListing";
 import { loader } from "../loaders/vods.server";
-import { VODS_PAGE_BATCH_SIZE, videoMatchTypes } from "../vods-constants";
-export { loader };
+import { videoMatchTypes } from "../vods-constants";
+import { vodsSearchParams } from "../vods-search-params";
 
-import "../vods.css";
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods"],
@@ -34,142 +41,140 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		ogTitle: "Splatoon 3 VODs (gameplay footage search)",
 		description:
 			"Search for Splatoon 3 VODs (gameplay footage) by mode, stage and/or weapon.",
+		image: ogPageImage("vods"),
 		location: args.location,
 	});
 };
 
 export default function VodsSearchPage() {
-	const { t } = useTranslation(["vods", "common"]);
+	const { t } = useTranslation(["vods"]);
 	const data = useLoaderData<typeof loader>();
-	const [, setSearchParams] = useSearchParams();
 
-	const addToSearchParams = (key: string, value: string | number) => {
-		setSearchParams((params) => ({
-			...Object.fromEntries(params.entries()),
-			[key]: String(value),
-		}));
-	};
+	const pagination = useSearchParamPagination({
+		definition: vodsSearchParams,
+		currentPage: data.currentPage,
+		pagesCount: data.pagesCount,
+	});
 
 	return (
 		<Main className="stack lg" bigger>
-			<div className="stack sm horizontal justify-between items-start">
-				<Filters addToSearchParams={addToSearchParams} />
-				<AddNewButton navIcon="vods" to={newVodPage()} />
-			</div>
+			<Filters />
 			{data.vods.length > 0 ? (
 				<>
-					<div className="vods__listing__list">
+					<VodListingList>
 						{data.vods.map((vod) => (
 							<VodListing key={vod.id} vod={vod} />
 						))}
-					</div>
-					{data.hasMoreVods && (
-						<SendouButton
-							className="m-0-auto"
-							size="small"
-							onPress={() =>
-								addToSearchParams("limit", data.limit + VODS_PAGE_BATCH_SIZE)
-							}
-						>
-							{t("common:actions.loadMore")}
-						</SendouButton>
-					)}
+					</VodListingList>
+					{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 				</>
 			) : (
-				<div className="text-lg text-lighter">{t("vods:noVods")}</div>
+				<EmptyState navItem="vods">{t("vods:noVods")}</EmptyState>
 			)}
 		</Main>
 	);
 }
 
-function Filters({
-	addToSearchParams,
-}: {
-	addToSearchParams: (key: string, value: string | number) => void;
-}) {
-	const { t } = useTranslation(["game-misc", "vods"]);
+function Filters() {
+	const { t } = useTranslation(["game-misc", "vods", "weapons"]);
 
-	const [searchParams] = useSearchParams();
-	const mode = modesShort.find(
-		(mode) => searchParams.get("mode") && mode === searchParams.get("mode"),
-	);
-	const stageId = stageIds.find(
-		(stageId) =>
-			searchParams.get("stageId") &&
-			stageId === Number(searchParams.get("stageId")),
-	);
-	const weapon = mainWeaponIds.find(
-		(id) =>
-			searchParams.get("weapon") && id === Number(searchParams.get("weapon")),
-	);
-	const type = videoMatchTypes.find(
-		(type) => searchParams.get("type") && type === searchParams.get("type"),
-	);
+	const [{ mode, stageId, weapon, type }, setParams] =
+		useSearchParamsTyped(vodsSearchParams);
 
 	return (
-		<div className="stack sm horizontal flex-wrap">
-			<div>
-				<Label>{t("vods:forms.title.mode")}</Label>
-				<select
-					name="mode"
-					value={mode ?? ""}
-					onChange={(e) => addToSearchParams("mode", e.target.value)}
-				>
-					<option value="">-</option>
-					{modesShort.map((mode) => {
-						return (
-							<option key={mode} value={mode}>
-								{t(`game-misc:MODE_SHORT_${mode}`)}
-							</option>
-						);
-					})}
-				</select>
-			</div>
-			<div>
-				<Label>{t("vods:forms.title.stage")}</Label>
-				<select
-					name="stage"
-					value={stageId ?? ""}
-					onChange={(e) => addToSearchParams("stageId", e.target.value)}
-				>
-					<option value="">-</option>
-					{stageIds.map((stageId) => {
-						return (
-							<option key={stageId} value={stageId}>
-								{t(`game-misc:STAGE_${stageId}`)}
-							</option>
-						);
-					})}
-				</select>
-			</div>
-
-			<WeaponSelect
-				label={t("vods:forms.title.weapon")}
-				value={weapon ?? null}
-				onChange={(weaponId) => {
-					addToSearchParams("weapon", weaponId ?? "");
-				}}
-				clearable
-			/>
-
-			<div>
-				<Label>{t("vods:forms.title.type")}</Label>
-				<select
-					name="type"
-					className="vods__type-select"
-					value={type ?? ""}
-					onChange={(e) => addToSearchParams("type", e.target.value)}
-				>
-					<option value="">-</option>
-					{videoMatchTypes.map((type) => {
-						return (
-							<option key={type} value={type}>
-								{t(`vods:type.${type}`)}
-							</option>
-						);
-					})}
-				</select>
-			</div>
-		</div>
+		<FilterBar
+			pills={[
+				{
+					key: "mode",
+					name: t("vods:forms.title.mode"),
+					formattedValue:
+						mode !== null ? t(`game-misc:MODE_SHORT_${mode}`) : null,
+					onRemove: () => setParams({ mode: null }),
+					testId: "vods-mode-filter",
+					popover: (
+						<SendouChipRadioGroup wrap>
+							{modesShort.map((option) => (
+								<SendouChipRadio
+									key={option}
+									name="vods-mode"
+									value={option}
+									checked={mode === option}
+									onChange={(value) => setParams({ mode: value as ModeShort })}
+								>
+									{t(`game-misc:MODE_SHORT_${option}`)}
+								</SendouChipRadio>
+							))}
+						</SendouChipRadioGroup>
+					),
+				},
+				{
+					key: "stage",
+					name: t("vods:forms.title.stage"),
+					formattedValue:
+						stageId !== null ? t(`game-misc:STAGE_${stageId}`) : null,
+					onRemove: () => setParams({ stageId: null }),
+					testId: "vods-stage-filter",
+					popover: (
+						<SendouSelect
+							aria-label={t("vods:forms.title.stage")}
+							items={stageIds.map((id) => ({ id }))}
+							selectedKey={stageId}
+							onSelectionChange={(key) =>
+								setParams({ stageId: key as StageId })
+							}
+							search={{}}
+						>
+							{({ id }) => (
+								<SendouSelectItem key={id} id={id}>
+									{t(`game-misc:STAGE_${id}`)}
+								</SendouSelectItem>
+							)}
+						</SendouSelect>
+					),
+				},
+				{
+					key: "weapon",
+					name: t("vods:forms.title.weapon"),
+					formattedValue: weapon !== null ? t(`weapons:MAIN_${weapon}`) : null,
+					onRemove: () => setParams({ weapon: null }),
+					testId: "vods-weapon-filter",
+					popover: (
+						<WeaponSelect
+							value={weapon}
+							onChange={(weaponId) => {
+								setParams({ weapon: weaponId ?? null });
+							}}
+							clearable
+						/>
+					),
+				},
+				{
+					key: "type",
+					name: t("vods:forms.title.type"),
+					formattedValue: type !== null ? t(`vods:type.${type}`) : null,
+					onRemove: () => setParams({ type: null }),
+					testId: "vods-type-filter",
+					popover: (
+						<SendouChipRadioGroup wrap>
+							{videoMatchTypes.map((option) => (
+								<SendouChipRadio
+									key={option}
+									name="vods-type"
+									value={option}
+									checked={type === option}
+									onChange={(value) =>
+										setParams({
+											type: value as (typeof videoMatchTypes)[number],
+										})
+									}
+								>
+									{t(`vods:type.${option}`)}
+								</SendouChipRadio>
+							))}
+						</SendouChipRadioGroup>
+					),
+				},
+			]}
+		/>
 	);
 }

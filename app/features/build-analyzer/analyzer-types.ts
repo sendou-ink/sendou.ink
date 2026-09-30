@@ -5,22 +5,21 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import type { DAMAGE_TYPE } from "./analyzer-constants";
+import type {
+	DAMAGE_TYPE,
+	TENACITY_PLAYER_DEFICITS,
+} from "./analyzer-constants";
 import type { SPECIAL_EFFECTS } from "./core/specialEffects";
-import type { abilityValues } from "./core/utils";
-import type { weaponParams } from "./core/weapon-params";
+import type { weaponParams } from "./data/weapon-params";
 
 type Overwrites = Record<
 	string,
 	Partial<Record<"High" | "Mid" | "Low", number>>
 >;
 
-export interface MainWeaponParams {
-	subWeaponId: SubWeaponId;
-	specialWeaponId: SpecialWeaponId;
+export interface BaseWeaponStats {
 	/** Replacing default values of the ability json for this specific weapon */
 	overwrites?: Overwrites;
-	SpecialPoint: number;
 	/** Weapon's weight class. "Light/Heavy weapon" */
 	WeaponSpeedType?: "Slow" | "Fast";
 	/** Total frames it takes the weapon to shoot out three times */
@@ -39,7 +38,7 @@ export interface MainWeaponParams {
 	DamageParam_ValueDirect?: number;
 	DamageParam_ValueDirectMax?: number;
 	DamageParam_ValueDirectMin?: number;
-	// Dread Wringer
+	/** Dread Wringer */
 	DamageParam_Secondary_ValueDirectMax?: number;
 	DamageParam_Secondary_ValueDirectMin?: number;
 	DamageParam_SplatanaVerticalDirect?: number;
@@ -69,14 +68,18 @@ export interface MainWeaponParams {
 	DamageParam_ValueMinCharge?: number;
 	BlastParam_SplashDamage?: number;
 	BlastParam_DistanceDamage?: Array<DistanceDamage>;
-	// DamageParam_ReduceStartFrame?: number;
-	// DamageParam_ReduceEndFrame?: number;
+	/** S-BLAST's blast when the shot is fired mid-jump */
+	BlastJumpParam_DistanceDamage?: Array<DistanceDamage>;
 	/** Brella shield HP */
 	CanopyHP?: number;
 	/** Amount of frames white ink (=no ink recovery during this time) takes */
 	InkRecoverStop?: number;
+	InkRecoverStop_WeaponVerticalSwingParam?: number;
+	InkRecoverStop_WeaponWideSwingParam?: number;
 	/** How much ink one shot consumes? InkConsume = 0.5 means 2 shots per full tank */
 	InkConsume?: number;
+	/** Squeezer rapid fire (secondary mode) consumption per shot */
+	InkConsumeVariable?: number;
 	/** How much ink one slosh of slosher consumes? */
 	InkConsumeSlosher?: number;
 	/** How much ink one fully charged shot consumes? */
@@ -99,12 +102,55 @@ export interface MainWeaponParams {
 	InkConsume_WeaponShelterShotgunParam?: number;
 	/** How much ink a dualie dodge roll consumes? */
 	InkConsume_SideStepParam?: number;
-	/** How much ink a fully charger Splatana shot consumes? */
+	/** How much ink rolling with a roller or brush consumes per frame at full rolling speed? */
+	InkConsumeMaxPerFrame_WeaponRollParam?: number;
+	/** How much ink a fully charged Splatana shot consumes? */
 	InkConsumeFullCharge_ChargeParam?: number;
-	//InkConsumeMidCharge_ChargeParam?: number;
-	// SpeedInkConsumeMax_WeaponRollParam?: number;
-	// SpeedInkConsumeMin_WeaponRollParam?: number;
+
+	// Range parameters for shooters/blasters/sloshers/splatlings/dualies
+	/** Initial bullet velocity */
+	Range_SpawnSpeed?: number;
+	/** Velocity cap after straight phase */
+	Range_GoStraightStateEndMaxSpeed?: number;
+	/** Frames in straight phase */
+	Range_GoStraightToBrakeStateFrame?: number;
+	/** Gravity constant (typically 0.016) */
+	Range_FreeGravity?: number;
+	/** Air resistance during free phase (rollers only, typically 0.1) */
+	Range_FreeAirResist?: number;
+	/** Velocity multiplier (typically 2.0) */
+	Range_ZRate?: number;
+	/** Air resistance during brake phase (typically 0.36) */
+	Range_BrakeAirResist?: number;
+	/** Gravity during brake phase (typically 0.07) */
+	Range_BrakeGravity?: number;
+	/** Frames in brake phase (typically 4) */
+	Range_BrakeToFreeStateFrame?: number;
+	/** Max frames (Splatanas) or max bounces (Bloblobber) before projectile stops */
+	Range_BurstFrame?: number;
+	/** Speed multiplier after bouncing (Bloblobber only) */
+	Range_BounceAfterMaxSpeed?: number;
+
+	// Range parameters for chargers (direct distance values)
+	/** Charger full charge range */
+	DistanceFullCharge?: number;
+	/** Charger max charge range */
+	DistanceMaxCharge?: number;
+	/** Charger min charge range */
+	DistanceMinCharge?: number;
+
+	// Blaster specific
+	/** Blaster explosion radius */
+	BlastRadius?: number;
 }
+
+export interface WeaponKit {
+	subWeaponId: SubWeaponId;
+	specialWeaponId: SpecialWeaponId;
+	SpecialPoint: number;
+}
+
+export type MainWeaponParams = BaseWeaponStats & WeaponKit;
 
 export interface DistanceDamage {
 	Damage: number;
@@ -137,19 +183,40 @@ export type SpecialWeaponParams = SpecialWeaponParamsObject[SpecialWeaponId] & {
 	WaveDamage?: number;
 	ExhaleBlastParamMaxChargeDistanceDamage?: Array<DistanceDamage>;
 	ExhaleBlastParamMinChargeDistanceDamage?: Array<DistanceDamage>;
+	InhaleDamage?: number;
 	SwingDamage?: Array<DistanceDamage>;
 	ThrowDamage?: Array<DistanceDamage>;
 	ThrowDirectDamage?: number;
 	BulletDamageMin?: number;
 	BulletDamageMax?: number;
+	SplashDamageMax?: Array<DistanceDamage>;
+	SplashDamageMin?: Array<DistanceDamage>;
 	CannonDamage?: Array<DistanceDamage>;
 	BumpDamage?: number;
 	JumpDamage?: number;
 	TickDamage?: number;
+
+	// Map planner range circle params (populated by scripts/create-analyzer-json.ts).
+	/** Effect radius for area specials (Big Bubbler, Ink Storm, ...) */
+	Range_Radius?: number;
+	/** Straight-flight range for projectile specials with a fixed distance (Inkjet) */
+	Range_Distance?: number;
+	/** Outer blast radius drawn around a projectile special's impact */
+	Range_BlastRadius?: number;
+	/** Projectile trajectory params (Trizooka, Crab Tank); see comp-analyzer weapon-range */
+	Range_SpawnSpeed?: number;
+	Range_GoStraightStateEndMaxSpeed?: number;
+	Range_GoStraightToBrakeStateFrame?: number;
+	Range_FreeGravity?: number;
+	Range_FreeAirResist?: number;
+	Range_BrakeAirResist?: number;
+	Range_BrakeGravity?: number;
+	Range_BrakeToFreeStateFrame?: number;
 };
 
 export type ParamsJson = {
-	mainWeapons: Record<MainWeaponId, MainWeaponParams>;
+	baseWeaponStats: Record<MainWeaponId, BaseWeaponStats>;
+	weaponKits: Record<MainWeaponId, WeaponKit>;
 	subWeapons: Record<SubWeaponId, SubWeaponParams>;
 	specialWeapons: SpecialWeaponParamsObject;
 };
@@ -182,6 +249,7 @@ export const INK_CONSUME_TYPES = [
 	"SLOSH",
 	"VERTICAL_SWING",
 	"HORIZONTAL_SWING",
+	"SECONDARY_MODE",
 	"TAP_SHOT",
 	"FULL_CHARGE",
 	"SPLATLING_CHARGE",
@@ -195,7 +263,13 @@ export interface FullInkTankOption {
 	type: InkConsumeType;
 }
 
+export type MainWeaponInkConsumptionStats = {
+	[K in InkConsumeType as `mainWeaponInkConsumptionPercentage_${K}`]?: Stat;
+};
+
 export type DamageType = (typeof DAMAGE_TYPE)[number];
+
+export type TenacityPlayerDeficit = (typeof TENACITY_PLAYER_DEFICITS)[number];
 
 export interface Damage {
 	value: number;
@@ -224,9 +298,15 @@ export interface AnalyzedBuild {
 		specialPoint: Stat;
 		specialLost: Stat;
 		specialLostSplattedByRP: Stat;
+		/** Seconds for Tenacity to fill the special gauge, keyed by how many players the team is down. */
+		tenacitySecondsToSpecial?: Record<TenacityPlayerDeficit, number>;
 		mainWeaponWhiteInkSeconds?: number;
+		mainWeaponWhiteInkSecondsHorizontalSwing?: number;
+		mainWeaponWhiteInkSecondsVerticalSwing?: number;
 		subWeaponWhiteInkSeconds: number;
 		subWeaponInkConsumptionPercentage: Stat;
+		/** Seconds a full ink tank lasts rolling at full speed (rollers and brushes) */
+		mainWeaponRollSeconds?: Stat;
 		fullInkTankOptions: Array<FullInkTankOption & { id: string }>;
 		damages: Array<Damage & { id: string }>;
 		specialWeaponDamages: Array<Damage & { id: string }>;
@@ -241,6 +321,7 @@ export interface AnalyzedBuild {
 		swimSpeed: Stat;
 		swimSpeedHoldingRainmaker: Stat;
 		runSpeedInEnemyInk: Stat;
+		jumpHeightInEnemyInk: Stat;
 		framesBeforeTakingDamageInEnemyInk: Stat;
 		damageTakenInEnemyInkPerSecond: Stat;
 		enemyInkDamageLimit: Stat;
@@ -253,6 +334,7 @@ export interface AnalyzedBuild {
 		shotAutofireSpreadAir?: Stat;
 		shotAutofireSpreadGround?: number;
 		squidSurgeChargeFrames: Stat;
+		squidRollSpeedRetained: Stat;
 
 		subDefPointSensorMarkedTimeInSeconds: Stat;
 		subDefInkMineMarkedTimeInSeconds: Stat;
@@ -283,12 +365,10 @@ export interface AnalyzedBuild {
 		specialRadiusRangeMin?: Stat;
 		specialRadiusRangeMax?: Stat;
 		specialPowerUpDuration?: Stat;
-	};
+	} & MainWeaponInkConsumptionStats;
 }
 
 export type SpecialEffectType = (typeof SPECIAL_EFFECTS)[number]["type"];
-
-export type AbilityValuesKeys = keyof typeof abilityValues;
 
 export type AnyWeapon =
 	| { type: "MAIN"; id: MainWeaponId }

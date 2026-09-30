@@ -1,148 +1,112 @@
-import { Link, useLoaderData } from "@remix-run/react";
 import clsx from "clsx";
+import { subMonths } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { SendouButton } from "~/components/elements/Button";
-import {
-	SendouTab,
-	SendouTabList,
-	SendouTabPanel,
-	SendouTabs,
-} from "~/components/elements/Tabs";
-import { Image } from "~/components/Image";
+import { Image, WeaponImage } from "~/components/Image";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
-import { KeyIcon } from "~/components/icons/Key";
-import { LogOutIcon } from "~/components/icons/LogOut";
-import { SearchIcon } from "~/components/icons/Search";
-import { UsersIcon } from "~/components/icons/Users";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { globalSearchSearchParams } from "~/components/layout/global-search-search-params";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
-import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
+import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
+import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
+import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
+import styles from "~/styles/front.module.css";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	BLANK_IMAGE_URL,
-	CALENDAR_TOURNAMENTS_PAGE,
-	LOG_OUT_URL,
+	CALENDAR_PAGE,
 	LUTI_PAGE,
-	leaderboardsPage,
 	navIconUrl,
 	SENDOUQ_PAGE,
 	sqHeaderGuyImageUrl,
+	WELCOME_PAGE,
 } from "~/utils/urls";
-
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
+
 export { loader };
 
-import "~/styles/front.css";
-
 export const handle: SendouRouteHandle = {
-	i18n: ["front"],
+	i18n: ["front", "game-misc"],
 };
 
 export default function FrontPage() {
 	return (
-		<Main className="front-page__container">
+		<Main className={styles.frontPageContainer}>
 			<LeagueBanner />
-			<DesktopSideNav />
 			<SeasonBanner />
-			<TournamentCards />
+			<SplatoonRotations />
+			<TournamentShowcase />
 			<ResultHighlights />
+			<DiscoverFeatures />
 			<ChangelogList />
 		</Main>
 	);
 }
 
-function DesktopSideNav() {
-	const user = useUser();
-	const { t } = useTranslation(["common"]);
+function useSeasonData() {
+	const season = Seasons.next() ?? Seasons.currentOrPrevious()!;
+	const previousSeason = Seasons.previous();
 
+	const isInFuture = new Date() < season.starts;
+	const isShowingPreviousSeason = previousSeason?.nth === season.nth;
+
+	return { season, isInFuture, isShowingPreviousSeason };
+}
+
+function SeasonDates({
+	season,
+	className,
+}: {
+	season: ReturnType<typeof useSeasonData>["season"];
+	className: string;
+}) {
 	return (
-		<nav className="front-page__side-nav">
-			{navItems.map((item) => {
-				return (
-					<Link
-						to={`/${item.url}`}
-						key={item.name}
-						prefetch={item.prefetch ? "render" : undefined}
-						className="front-page__side-nav-item"
-					>
-						<Image
-							path={navIconUrl(item.name)}
-							height={20}
-							width={20}
-							alt={item.name}
-						/>
-						{<div>{t(`common:pages.${item.name}` as any)}</div>}
-					</Link>
-				);
-			})}
-			{user ? (
-				<form method="post" action={LOG_OUT_URL}>
-					<SendouButton
-						size="small"
-						variant="minimal"
-						icon={<LogOutIcon />}
-						type="submit"
-						className="front-page__side-nav__log-out"
-					>
-						{t("common:header.logout")}
-					</SendouButton>
-				</form>
-			) : null}
-		</nav>
+		<div className={className}>
+			<LocaleTimeRange
+				from={season.starts}
+				to={season.ends}
+				options={{ month: "numeric", day: "numeric" }}
+				inline
+			/>
+		</div>
 	);
 }
 
 function SeasonBanner() {
-	const { t, i18n } = useTranslation(["front"]);
-	const season = Seasons.next(new Date()) ?? Seasons.currentOrPrevious()!;
-	const _previousSeason = Seasons.previous();
-	const isMounted = useIsMounted();
-
-	const isInFuture = new Date() < season.starts;
-	const isShowingPreviousSeason = _previousSeason?.nth === season.nth;
+	const { t } = useTranslation(["front"]);
+	const { season, isInFuture, isShowingPreviousSeason } = useSeasonData();
 
 	if (isShowingPreviousSeason) return null;
 
 	return (
-		<div className="stack xs">
-			<Link to={SENDOUQ_PAGE} className="front__season-banner">
-				<div className="front__season-banner__header">
+		<div className={styles.seasonBannerMobileOnly}>
+			<Link to={SENDOUQ_PAGE} className={styles.seasonBanner}>
+				<div className={styles.seasonBannerHeader}>
 					{t("front:sq.season", { nth: season.nth })}
 				</div>
-				{isMounted ? (
-					<div className="front__season-banner__dates">
-						{season.starts.toLocaleDateString(i18n.language, {
-							month: "long",
-							day: "numeric",
-						})}{" "}
-						-{" "}
-						{season.ends.toLocaleDateString(i18n.language, {
-							month: "long",
-							day: "numeric",
-						})}
-					</div>
-				) : (
-					<div className="front__season-banner__dates invisible">X</div>
-				)}
+				<SeasonDates season={season} className={styles.seasonBannerDates} />
 				<Image
-					className="front__season-banner__img"
+					className={styles.seasonBannerImg}
 					path={sqHeaderGuyImageUrl(season.nth)}
 					alt=""
+					loading="eager"
 				/>
 			</Link>
-			<Link to={SENDOUQ_PAGE} className="front__season-banner__link">
+			<Link to={SENDOUQ_PAGE} className={styles.seasonBannerLink}>
 				<div className="stack horizontal xs items-center">
 					<Image path={navIconUrl("sendouq")} width={24} alt="" />
 					{isInFuture ? t("front:sq.prepare") : t("front:sq.participate")}
@@ -153,12 +117,61 @@ function SeasonBanner() {
 	);
 }
 
+function SeasonCard() {
+	const { t } = useTranslation(["front", "common"]);
+	const { season, isInFuture, isShowingPreviousSeason } = useSeasonData();
+
+	if (isShowingPreviousSeason) return null;
+
+	return (
+		<div className={styles.seasonCardDesktopOnly}>
+			<h2 className={styles.resultHighlightsTitle}>
+				{t("common:pages.sendouq")}
+			</h2>
+			<Link to={SENDOUQ_PAGE} className={styles.seasonCard}>
+				<div className={styles.seasonCardHeader}>
+					{t("front:sq.season", { nth: season.nth })}
+				</div>
+				<SeasonDates season={season} className={styles.seasonCardDates} />
+				<Image
+					className={styles.seasonCardImg}
+					path={sqHeaderGuyImageUrl(season.nth)}
+					alt=""
+					loading="eager"
+				/>
+			</Link>
+			<Link to={SENDOUQ_PAGE} className={styles.seasonCardButton}>
+				<Image path={navIconUrl("sendouq")} size={16} alt="" />
+				{isInFuture ? t("front:sq.prepare") : t("front:sq.participate")}
+			</Link>
+		</div>
+	);
+}
+
+function WelcomeBanner() {
+	const { t } = useTranslation(["front"]);
+	const user = useUser();
+
+	const isNewUser =
+		typeof user?.createdAt === "number" &&
+		databaseTimestampToDate(user.createdAt) > subMonths(new Date(), 6);
+
+	if (user && !isNewUser) return null;
+
+	return (
+		<Link to={WELCOME_PAGE} className={styles.welcomeBanner}>
+			{t("front:welcomeBanner")}
+			<ArrowRightIcon />
+		</Link>
+	);
+}
+
 function LeagueBanner() {
-	const showBannerFor = import.meta.env.VITE_SHOW_BANNER_FOR_SEASON;
+	const showBannerFor = Config.showBannerForSeason;
 	if (!showBannerFor) return null;
 
 	return (
-		<Link to={LUTI_PAGE} className="front__luti-banner">
+		<Link to={LUTI_PAGE} className={styles.lutiBanner}>
 			<Image path={navIconUrl("luti")} size={24} alt="" />
 			Registration now open for Leagues Under The Ink (LUTI) Season{" "}
 			{showBannerFor}!
@@ -166,160 +179,112 @@ function LeagueBanner() {
 	);
 }
 
-function TournamentCards() {
+function TournamentShowcase() {
 	const { t } = useTranslation(["front"]);
 	const data = useLoaderData<typeof loader>();
 
-	if (
-		data.tournaments.participatingFor.length === 0 &&
-		data.tournaments.organizingFor.length === 0 &&
-		data.tournaments.showcase.length === 0
-	) {
-		return null;
-	}
-
-	const showSignedUpTab = data.tournaments.participatingFor.length > 0;
-	const showOrganizerTab = data.tournaments.organizingFor.length > 0;
-	const showDiscoverTab = data.tournaments.showcase.length > 0;
+	if (data.tournaments.showcase.length === 0) return null;
 
 	return (
-		<div>
-			<SendouTabs padded={false}>
-				<SendouTabList>
-					{showSignedUpTab ? (
-						<SendouTab id="signed-up" icon={<UsersIcon />}>
-							{t("front:showcase.tabs.signedUp")}
-						</SendouTab>
-					) : null}
-					{showOrganizerTab ? (
-						<SendouTab id="organizer" icon={<KeyIcon />}>
-							{t("front:showcase.tabs.organizer")}
-						</SendouTab>
-					) : null}
-					{showDiscoverTab ? (
-						<SendouTab id="discover" icon={<SearchIcon />}>
-							{t("front:showcase.tabs.discover")}
-						</SendouTab>
-					) : null}
-				</SendouTabList>
-				<SendouTabPanel id="signed-up">
-					<ShowcaseTournamentScroller
-						tournaments={data.tournaments.participatingFor}
-					/>
-				</SendouTabPanel>
-				<SendouTabPanel id="organizer">
-					<ShowcaseTournamentScroller
-						tournaments={data.tournaments.organizingFor}
-					/>
-				</SendouTabPanel>
-				<SendouTabPanel id="discover">
-					<ShowcaseTournamentScroller tournaments={data.tournaments.showcase} />
-				</SendouTabPanel>
-			</SendouTabs>
-		</div>
-	);
-}
-
-function ShowcaseTournamentScroller({
-	tournaments,
-}: {
-	tournaments: ShowcaseCalendarEvent[];
-}) {
-	return (
-		<div className="front__tournament-cards">
-			<div className="front__tournament-cards__spacer overflow-x-scroll">
-				{tournaments.map((tournament) => (
+		<div className={styles.tournamentCards}>
+			<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
+				{data.tournaments.showcase.map((tournament) => (
 					<TournamentCard
 						key={tournament.id}
 						tournament={tournament}
-						className="mt-4"
+						timeFormat="absolute"
 					/>
 				))}
 			</div>
-			<AllTournamentsLinkCard />
+			<Link to={CALENDAR_PAGE} className={styles.tournamentCardsViewAllCard}>
+				<Image path={navIconUrl("medal")} size={36} alt="" />
+				{t("front:showcase.viewAll")}
+			</Link>
 		</div>
-	);
-}
-
-function AllTournamentsLinkCard() {
-	const { t } = useTranslation(["front"]);
-
-	return (
-		<Link
-			to={CALENDAR_TOURNAMENTS_PAGE}
-			className="front__tournament-cards__view-all-card mt-4"
-		>
-			<Image path={navIconUrl("medal")} size={36} alt="" />
-			{t("front:showcase.viewAll")}
-		</Link>
 	);
 }
 
 function ResultHighlights() {
-	const { t } = useTranslation(["front"]);
 	const data = useLoaderData<typeof loader>();
 
-	// should not happen
-	if (
-		!data.leaderboards.team.length ||
-		!data.leaderboards.user.length ||
-		!data.tournaments.results.length
-	) {
-		return null;
-	}
-
-	const season = Seasons.currentOrPrevious()!;
-
-	const recentResults = (
-		<>
-			<h2 className="front__result-highlights__title front__result-highlights__title__tournaments">
-				{t("front:showcase.results")}
-			</h2>
-			<div className="front__tournament-cards__spacer">
-				{data.tournaments.results.map((tournament) => (
-					<TournamentCard key={tournament.id} tournament={tournament} />
-				))}
-			</div>
-		</>
-	);
+	const hasLeaderboards =
+		data.leaderboards.user.length > 0 && data.leaderboards.team.length > 0;
 
 	return (
 		<>
-			<div className="front__result-highlights overflow-x-auto">
-				<div className="stack sm text-center">
-					<h2 className="front__result-highlights__title">
-						{t("front:leaderboards.topPlayers")}
-					</h2>
-					<Leaderboard
-						entries={data.leaderboards.user}
-						fullLeaderboardUrl={leaderboardsPage({
-							season: season.nth,
-							type: "USER",
-						})}
-					/>
-				</div>
-				<div className="stack sm text-center">
-					<h2 className="front__result-highlights__title">
-						{t("front:leaderboards.topTeams")}
-					</h2>
-					<Leaderboard
-						entries={data.leaderboards.team}
-						fullLeaderboardUrl={leaderboardsPage({
-							season: season.nth,
-							type: "TEAM",
-						})}
-					/>
-				</div>
-				<div className="stack sm text-center mobile-hidden">
-					{recentResults}
-				</div>
+			<div
+				className={clsx(
+					styles.resultHighlights,
+					styles.resultHighlightsTop,
+					"overflow-x-auto scrollbar",
+				)}
+			>
+				<SeasonCard />
+				{hasLeaderboards ? <Leaderboards /> : null}
 			</div>
-			<div className="front__result-highlights overflow-x-auto">
-				<div className="stack sm text-center desktop-hidden">
-					{recentResults}
-				</div>
+			{data.tournaments.results.length > 0 ? <TournamentResults /> : null}
+		</>
+	);
+}
+
+function Leaderboards() {
+	const { t } = useTranslation(["front"]);
+	const data = useLoaderData<typeof loader>();
+
+	const season = Seasons.currentOrPrevious()!;
+
+	return (
+		<>
+			<div className="stack sm text-center">
+				<h2 className={styles.resultHighlightsTitle}>
+					{t("front:leaderboards.topPlayers")}
+				</h2>
+				<Leaderboard
+					entries={data.leaderboards.user}
+					fullLeaderboardUrl={leaderboardsPage({
+						season: season.nth,
+						type: "USER",
+					})}
+				/>
+			</div>
+			<div className="stack sm text-center">
+				<h2 className={styles.resultHighlightsTitle}>
+					{t("front:leaderboards.topTeams")}
+				</h2>
+				<Leaderboard
+					entries={data.leaderboards.team}
+					fullLeaderboardUrl={leaderboardsPage({
+						season: season.nth,
+						type: "TEAM",
+					})}
+				/>
 			</div>
 		</>
+	);
+}
+
+function TournamentResults() {
+	const { t } = useTranslation(["front"]);
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		<div className={clsx(styles.resultHighlights, "scrollbar")}>
+			<div className="stack sm text-center">
+				<h2
+					className={clsx(
+						styles.resultHighlightsTitle,
+						styles.resultHighlightsTitleTournaments,
+					)}
+				>
+					{t("front:showcase.results")}
+				</h2>
+				<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
+					{data.tournaments.results.map((tournament) => (
+						<TournamentCard key={tournament.id} tournament={tournament} />
+					))}
+				</div>
+			</div>
+		</div>
 	);
 }
 
@@ -334,7 +299,7 @@ function Leaderboard({
 
 	return (
 		<div className="stack xs items-center">
-			<div className="front__leaderboard">
+			<div className={styles.leaderboard}>
 				{entries.map((entry, index) => (
 					<Link
 						to={entry.url}
@@ -342,9 +307,13 @@ function Leaderboard({
 						className="stack sm horizontal items-center text-main-forced"
 					>
 						<div className="mx-1">{index + 1}</div>
-						<Avatar url={entry.avatarUrl ?? BLANK_IMAGE_URL} size="xs" />
+						<Avatar
+							url={entry.avatarUrl}
+							identiconInput={entry.name}
+							size="xs"
+						/>
 						<div className="stack items-start">
-							<div className="front__leaderboard__name">{entry.name}</div>
+							<div className={styles.leaderboardName}>{entry.name}</div>
 							<div className="text-xs font-semi-bold text-lighter">
 								{entry.power.toFixed(2)}
 							</div>
@@ -352,10 +321,76 @@ function Leaderboard({
 					</Link>
 				))}
 			</div>
-			<Link to={fullLeaderboardUrl} className="front__leaderboard__view-all">
+			<Link to={fullLeaderboardUrl} className={styles.leaderboardViewAll}>
 				<Image path={navIconUrl("leaderboards")} size={16} alt="" />
 				{t("front:leaderboards.viewFull")}
 			</Link>
+		</div>
+	);
+}
+
+const DISCOVER_EXCLUDED_ITEMS = new Set(["settings", "luti"]);
+
+function DiscoverFeatures() {
+	const { t } = useTranslation(["front", "common"]);
+	const data = useLoaderData<typeof loader>();
+	const user = useUser();
+
+	const filteredNavItems = navItems.filter(
+		(item) =>
+			!DISCOVER_EXCLUDED_ITEMS.has(item.name) &&
+			(item.name !== "trophies" || canAccessTrophies(user)),
+	);
+
+	return (
+		<div className="stack md">
+			<Divider smallText className="text-uppercase text-xs font-bold">
+				{t("front:discover.header")}
+			</Divider>
+			{data.weaponPool && data.weaponPool.length > 0 ? (
+				<div className={styles.weaponPills}>
+					{data.weaponPool.map((weapon) => (
+						<Link
+							key={weapon.weaponSplId}
+							to={globalSearchSearchParams.href("", {
+								search: "open",
+								type: "weapons",
+								weapon: weapon.weaponSplId,
+							})}
+							defaultShouldRevalidate={false}
+							className={styles.weaponPill}
+						>
+							<WeaponImage
+								weaponSplId={weapon.weaponSplId}
+								variant="badge"
+								size={32}
+							/>
+						</Link>
+					))}
+				</div>
+			) : null}
+			<nav className={styles.discoverGrid}>
+				{filteredNavItems.map((item) => (
+					<Link
+						key={item.name}
+						to={`/${item.url}`}
+						prefetch="intent"
+						className={styles.discoverGridItem}
+					>
+						<div className={styles.discoverGridItemImage}>
+							<Image
+								path={navIconUrl(item.name)}
+								height={32}
+								width={32}
+								alt=""
+							/>
+						</div>
+						<span>{t(`common:pages.${item.name}` as any)}</span>
+					</Link>
+				))}
+			</nav>
+			<WelcomeBanner />
+			<PWAInstallBanner />
 		</div>
 	);
 }
@@ -384,7 +419,7 @@ function ChangelogList() {
 				className="stack horizontal sm mx-auto text-xs font-bold"
 			>
 				{t("front:updates.viewPast")}{" "}
-				<ExternalIcon className="front__external-link-icon" />
+				<ExternalIcon className={styles.externalLinkIcon} />
 			</a>
 		</div>
 	);
@@ -410,7 +445,8 @@ function ChangelogItem({ item }: { item: Changelog.ChangelogItem }) {
 								key={image.thumb}
 								src={image.thumb}
 								alt=""
-								className="front__change-log__img"
+								className={styles.changeLogImg}
+								loading="lazy"
 							/>
 						))}
 					</div>
@@ -445,7 +481,7 @@ function BSKYIconLink({
 			href={postUrl}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="front__change-log__icon-button"
+			className={styles.changeLogIconButton}
 		>
 			{children}
 			<span

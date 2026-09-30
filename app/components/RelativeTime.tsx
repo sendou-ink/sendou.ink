@@ -1,5 +1,5 @@
 import type * as React from "react";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 
 export function RelativeTime({
 	children,
@@ -8,22 +8,16 @@ export function RelativeTime({
 	children: React.ReactNode;
 	timestamp: number;
 }) {
-	const isMounted = useIsMounted();
+	const { formatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "numeric",
+		day: "numeric",
+		month: "numeric",
+		timeZoneName: "short",
+	});
 
 	return (
-		<abbr
-			title={
-				isMounted
-					? new Date(timestamp).toLocaleString("en-US", {
-							hour: "numeric",
-							minute: "numeric",
-							day: "numeric",
-							month: "long",
-							timeZoneName: "short",
-						})
-					: undefined
-			}
-		>
+		<abbr title={formatter.format(new Date(timestamp)) ?? undefined}>
 			{children}
 		</abbr>
 	);

@@ -1,42 +1,40 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { userPageUserId } from "~/features/user-page/user-page-context.server";
 import { adminTabActionSchema } from "~/features/user-page/user-page-schemas";
+import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import {
-	badRequestIfFalsy,
-	notFoundIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { badRequestIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const loggedInUser = await requireUser(request);
+export const action = async ({ request }: ActionFunctionArgs) => {
+	const loggedInUser = requireUser();
 
-	requireRole(loggedInUser, "STAFF");
+	requireRole("STAFF");
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: adminTabActionSchema,
 	});
 
-	const user = notFoundIfFalsy(
-		await UserRepository.findLayoutDataByIdentifier(params.identifier!),
-	);
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	switch (data._action) {
 		case "ADD_MOD_NOTE": {
 			await AdminRepository.addModNote({
-				authorId: loggedInUser.id,
-				userId: user.id,
+				userId: userPageUserId(),
 				text: data.value,
 			});
 			break;
 		}
 		case "DELETE_MOD_NOTE": {
 			const note = badRequestIfFalsy(
-				await AdminRepository.findModeNoteById(data.noteId),
+				await AdminRepository.findModNoteById(data.noteId),
 			);
 
 			if (note.authorId !== loggedInUser.id) {

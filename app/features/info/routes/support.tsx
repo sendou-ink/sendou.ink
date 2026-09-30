@@ -1,11 +1,10 @@
-import type { MetaFunction } from "@remix-run/node";
+import { Check } from "lucide-react";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
-import { CheckmarkIcon } from "~/components/icons/Checkmark";
 import { Main } from "~/components/Main";
-import { FF_SCRIMS_ENABLED } from "~/features/scrims/scrims-constants";
 import { metaTags } from "~/utils/remix";
 import {
 	PATREON_HOW_TO_CONNECT_DISCORD_URL,
@@ -13,8 +12,7 @@ import {
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-
-import "../support.css";
+import styles from "./support.module.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -60,8 +58,18 @@ const PERKS = [
 	},
 	{
 		tier: 2,
+		name: "earlyAccess",
+		extraInfo: false,
+	},
+	{
+		tier: 2,
 		name: "previewQ",
 		extraInfo: false,
+	},
+	{
+		tier: 2,
+		name: "seasonSummaryImage",
+		extraInfo: true,
 	},
 	{
 		tier: 2,
@@ -77,6 +85,21 @@ const PERKS = [
 		tier: 2,
 		name: "customizedColorsUser",
 		extraInfo: false,
+	},
+	{
+		tier: 2,
+		name: "supporterWidgets",
+		extraInfo: true,
+	},
+	{
+		tier: 2,
+		name: "moreWidgets",
+		extraInfo: true,
+	},
+	{
+		tier: 2,
+		name: "customAvatar",
+		extraInfo: true,
 	},
 	{
 		tier: 2,
@@ -164,14 +187,12 @@ export default function SupportPage() {
 function SupportTable() {
 	const { t } = useTranslation();
 	return (
-		<div className="support__table">
+		<div className={styles.table}>
 			<div />
 			<div>Support</div>
 			<div>Supporter</div>
 			<div>Supporter+</div>
-			{PERKS.filter(
-				(perk) => FF_SCRIMS_ENABLED || perk.name !== "joinMoreAssociations",
-			).map((perk) => {
+			{PERKS.map((perk) => {
 				return (
 					<React.Fragment key={perk.name}>
 						<div className="justify-self-start">
@@ -181,7 +202,7 @@ function SupportTable() {
 									{" "}
 									<SendouPopover
 										trigger={
-											<SendouButton className="support__popover-trigger">
+											<SendouButton className={styles.popoverTrigger}>
 												?
 											</SendouButton>
 										}
@@ -192,9 +213,7 @@ function SupportTable() {
 							) : null}
 						</div>
 						<div>
-							{perk.tier === 1 ? (
-								<CheckmarkIcon className="support__checkmark" />
-							) : null}
+							{perk.tier === 1 ? <Check className={styles.checkmark} /> : null}
 						</div>
 						{perk.name === "badge" ? (
 							<div>
@@ -206,9 +225,7 @@ function SupportTable() {
 							</div>
 						) : (
 							<div>
-								{perk.tier <= 2 ? (
-									<CheckmarkIcon className="support__checkmark" />
-								) : null}
+								{perk.tier <= 2 ? <Check className={styles.checkmark} /> : null}
 							</div>
 						)}
 						{perk.name === "badge" ? (
@@ -224,9 +241,7 @@ function SupportTable() {
 							</div>
 						) : (
 							<div>
-								{perk.tier <= 3 ? (
-									<CheckmarkIcon className="support__checkmark" />
-								) : null}
+								{perk.tier <= 3 ? <Check className={styles.checkmark} /> : null}
 							</div>
 						)}
 					</React.Fragment>

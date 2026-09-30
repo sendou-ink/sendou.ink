@@ -13,12 +13,7 @@ interface CollapsedEvents {
 	onToggleHidden: () => void;
 }
 
-/**
- * Custom hook to manage hiding/showing calendar events. Handles collapsing adjacent times given both of them have only hidden events.
- * E.g. 10pm with all hidden and 11pm with all hidden should be shown in one section as 10pm - 11pm to the user.
- *
- * @param eventTimes - Array of event times as returned by the calendar data loader.
- */
+/** Hiding/showing calendar events, collapsing adjacent times with only hidden events into one section (10pm - 11pm). */
 export function useCollapsableEvents(
 	eventTimes: CalendarLoaderData["eventTimes"],
 ) {
@@ -60,7 +55,7 @@ export function useCollapsableEvents(
 			date,
 			hiddenShown,
 			onToggleHidden: () => {
-				// if we clicked a range section, uncollapse it
+				// a range section uncollapses
 				if (containedTimes.size > 1) {
 					setCollapsingDisabled(true);
 				}
