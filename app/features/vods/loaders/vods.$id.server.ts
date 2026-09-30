@@ -4,7 +4,7 @@ import * as VodRepository from "../VodRepository.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const vod = notFoundIfNullish(
-		await VodRepository.findVodById(Number(params.id)),
+		await VodRepository.vodWithMatches(Number(params.id)).executeTakeFirst(),
 	);
 
 	return { vod };

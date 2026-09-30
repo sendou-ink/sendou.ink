@@ -1,34 +1,12 @@
 import type * as v from "valibot";
-import type { Tables } from "~/db/tables";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { QueryRow } from "~/db/entity-query";
+import type * as VodRepository from "./VodRepository.server";
 import type { videoSchema } from "./vods-schemas";
 
 export type VideoBeingAdded = v.InferOutput<typeof videoSchema>;
 
-export interface Vod {
-	id: Tables["Video"]["id"];
-	pov?:
-		| (Pick<
-				Tables["User"],
-				"username" | "discordId" | "discordAvatar" | "customUrl" | "id"
-		  > & { customAvatarUrl: string | null })
-		| string;
-	title: Tables["Video"]["title"];
-	type: Tables["Video"]["type"];
-	youtubePublishedAt: Tables["Video"]["youtubePublishedAt"];
-	youtubeId: Tables["Video"]["youtubeId"];
-	matches: Array<VodMatch>;
-	submitterUserId: Tables["Video"]["submitterUserId"];
-}
+/** A vod as its own page shows it. */
+export type Vod = QueryRow<ReturnType<typeof VodRepository.vodWithMatches>>;
 
-export type VodMatch = Pick<
-	Tables["VideoMatch"],
-	"id" | "mode" | "stageId" | "startsAt"
-> & {
-	weapons: Array<MainWeaponId>;
-};
-
-export type ListVod = Omit<Vod, "youtubePublishedAt" | "matches"> & {
-	weapons: Array<MainWeaponId>;
-	type: Tables["Video"]["type"];
-};
+/** A vod as listings show it. */
+export type ListVod = QueryRow<ReturnType<typeof VodRepository.userVods>>;

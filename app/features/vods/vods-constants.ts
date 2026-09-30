@@ -1,4 +1,4 @@
-/** Types `UnvalidatedVideo.type`. */
+/** Types `Video.type`. */
 export const videoMatchTypes = [
 	"TOURNAMENT",
 	"CAST",

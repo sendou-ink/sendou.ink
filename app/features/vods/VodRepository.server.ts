@@ -1,398 +1,320 @@
-import {
-	type Expression,
-	type ExpressionBuilder,
-	type SelectQueryBuilder,
-	type SqlBool,
-	sql,
-} from "kysely";
-import * as R from "remeda";
+import type { Transaction } from "kysely";
+import { crud } from "~/db/crud";
+import { defineQuery, mapRows, refine, unchanged } from "~/db/entity-query";
 import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
+import type { DB } from "~/db/tables";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
-import {
-	dateToDatabaseTimestamp,
-	dayMonthYearToDatabaseTimestamp,
-} from "~/utils/dates";
+import { dayMonthYearToDate } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import {
-	type CommonUser,
-	commonUserJsonObject,
 	commonUserSelect,
 	jsonArrayFrom,
+	jsonObjectFrom,
 } from "~/utils/kysely.server";
-import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
-import type { VideoBeingAdded, Vod } from "./vods-types";
+import type { VideoBeingAdded } from "./vods-types";
 import {
 	extractYoutubeIdFromVideoUrl,
 	hoursMinutesSecondsStringToSeconds,
 } from "./vods-utils";
 
-export async function findByUserId(userId: Tables["User"]["id"], limit = 100) {
-	return findVods({ userId, limit });
-}
+const videoTable = crud("Video");
+const matchTable = crud("VideoMatch");
+const playerTable = crud("VideoMatchPlayer");
 
-type VodFilters = {
-	weapon?: MainWeaponId;
-	mode?: ModeShort;
-	stageId?: StageId;
-	type?: Tables["Video"]["type"];
-	userId?: number;
-};
+export const { deleteById } = videoTable;
 
-/** Page of the vods matching the filters, newest first, with the weapons and players of their matching match rows. */
-export async function findVods({
-	limit = VODS_PAGE_BATCH_SIZE,
-	offset = 0,
-	...filters
-}: VodFilters & {
-	limit?: number;
-	offset?: number;
-}) {
-	const result = await vodsWithMatches()
-		.selectAll("Video")
-		.select(({ fn, ref, eb }) => [
-			sql<
-				Array<number>
-			>`json_group_array(distinct ${ref("VideoMatchPlayer.weaponSplId")})`
-				.$castTo<MainWeaponId[]>()
-				.as("weapons"),
-			fn
-				.agg("json_group_array", ["VideoMatchPlayer.playerName"])
-				.$castTo<string[]>()
-				.as("playerNames"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("User")
-					.select((playerEb) => commonUserSelect(playerEb))
-					.whereRef("User.id", "=", "VideoMatchPlayer.playerUserId"),
-			).as("players"),
-		])
-		// the page is resolved by id first: with the limit on this read, the aggregates
-		// of every matching vod would be computed before it applies
-		.where(
+/**
+ * Vods, newest published first, with `pov`: the user or the plain name whose point of view the
+ * vod shows, `null` for casts.
+ */
+export const vods = defineQuery({
+	root: "Video",
+	select: (qb) =>
+		qb.select((eb) => [
 			"Video.id",
-			"in",
-			filteredVideoIds(filters)
-				.orderBy("Video.youtubePublishedAt", "desc")
-				.limit(limit)
-				.offset(offset),
-		)
-		.groupBy("Video.id")
-		.orderBy("Video.youtubePublishedAt", "desc")
-		.execute();
+			"Video.title",
+			"Video.type",
+			"Video.youtubeId",
+			"Video.youtubePublishedAt",
+			"Video.submitterUserId",
+			jsonObjectFrom(
+				eb
+					.selectFrom("VideoMatchPlayer")
+					.innerJoin(
+						"VideoMatch",
+						"VideoMatch.id",
+						"VideoMatchPlayer.videoMatchId",
+					)
+					.select((playerEb) => [
+						"VideoMatchPlayer.playerName as name",
+						jsonObjectFrom(
+							playerEb
+								.selectFrom("User")
+								.select((userEb) => commonUserSelect(userEb))
+								.whereRef("User.id", "=", "VideoMatchPlayer.playerUserId"),
+						).as("user"),
+					])
+					.whereRef("VideoMatch.videoId", "=", "Video.id")
+					.where((playerEb) =>
+						playerEb.or([
+							playerEb("VideoMatchPlayer.playerName", "is not", null),
+							playerEb("VideoMatchPlayer.playerUserId", "is not", null),
+						]),
+					)
+					.orderBy("VideoMatch.startsAt", "asc")
+					.orderBy("VideoMatchPlayer.player", "asc")
+					.limit(1),
+			).as("pov"),
+		]),
+	map: (row) => ({ pov: row.pov?.name ?? row.pov?.user ?? null }),
+	defaultSort: [["Video.youtubePublishedAt", "desc"]],
+	vocabulary: () => ({
+		/** Vods with a match fitting every given filter: played in the mode, on the stage and with the weapon or one of its alt skins. */
+		withMatch: ({
+			mode,
+			stageId,
+			weapon,
+		}: {
+			mode: ModeShort | null;
+			stageId: StageId | null;
+			weapon: MainWeaponId | null;
+		}) =>
+			mode === null && stageId === null && weapon === null
+				? unchanged("Video")
+				: refine("Video", (qb) =>
+						qb.where((eb) =>
+							eb(
+								"Video.id",
+								"in",
+								eb
+									.selectFrom("VideoMatch")
+									.select("VideoMatch.videoId")
+									.$if(mode !== null, (matchQb) =>
+										matchQb.where("VideoMatch.mode", "=", mode!),
+									)
+									.$if(stageId !== null, (matchQb) =>
+										matchQb.where("VideoMatch.stageId", "=", stageId!),
+									)
+									// joined rather than `exists`, so the weapon's index drives the lookup instead of a scan over every match
+									.$if(weapon !== null, (matchQb) =>
+										matchQb
+											.innerJoin(
+												"VideoMatchPlayer",
+												"VideoMatchPlayer.videoMatchId",
+												"VideoMatch.id",
+											)
+											.where(
+												"VideoMatchPlayer.weaponSplId",
+												"in",
+												weaponIdToArrayWithAlts(weapon!),
+											),
+									),
+							),
+						),
+					),
+		/** Vods showing the user's point of view. */
+		withPovUser: (userId: number) => // xxx: withPovUser, confusing naming since we just filter?
+			refine("Video", (qb) =>
+				qb.where((eb) =>
+					eb(
+						"Video.id",
+						"in",
+						eb
+							.selectFrom("VideoMatchPlayer")
+							.innerJoin(
+								"VideoMatch",
+								"VideoMatch.id",
+								"VideoMatchPlayer.videoMatchId",
+							)
+							.select("VideoMatch.videoId")
+							.where("VideoMatchPlayer.playerUserId", "=", userId),
+					),
+				),
+			),
+		/** The distinct weapons played in the vod, `leading` and its alt skins first so a listing's peek shows what was filtered for. */
+		withWeapons: (leading: MainWeaponId | null = null) =>
+			refine("Video", (qb) =>
+				qb.select((eb) => {
+					const weapons = eb
+						.selectFrom("VideoMatchPlayer")
+						.innerJoin(
+							"VideoMatch",
+							"VideoMatch.id",
+							"VideoMatchPlayer.videoMatchId",
+						)
+						.select((weaponEb) => [
+							"VideoMatchPlayer.weaponSplId",
+							weaponEb.fn.min("VideoMatch.startsAt").as("firstPlayedAt"),
+						])
+						.whereRef("VideoMatch.videoId", "=", "Video.id")
+						.groupBy("VideoMatchPlayer.weaponSplId")
+						.as("weapon");
 
-	const vods = result.map((value) => {
-		const { playerNames, players, weapons, ...vod } = value;
-		return {
-			...vod,
-			weapons: filteredWeaponFirst(weapons, filters.weapon),
-			pov: playerNames[0] ?? players[0],
-		};
+					return eb
+						.selectFrom(weapons)
+						.select((weaponEb) => {
+							const weaponIds = weaponEb.fn.agg<MainWeaponId[]>(
+								"json_group_array",
+								["weapon.weaponSplId"],
+							);
+
+							return (
+								leading === null
+									? weaponIds
+									: weaponIds.orderBy(
+											weaponEb(
+												"weapon.weaponSplId",
+												"in",
+												weaponIdToArrayWithAlts(leading),
+											),
+											"desc",
+										)
+							)
+								.orderBy("weapon.firstPlayedAt", "asc")
+								.as("weapons");
+						})
+						.$asScalar()
+						.$castTo<MainWeaponId[]>()
+						.as("weapons");
+				}),
+			),
+		/** The vod's matches in the order they are played, each with its weapons in player order. */
+		withMatches: () =>
+			refine("Video", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("VideoMatch")
+							.select((matchEb) => [
+								"VideoMatch.id",
+								"VideoMatch.mode",
+								"VideoMatch.stageId",
+								"VideoMatch.startsAt",
+								matchEb
+									.selectFrom("VideoMatchPlayer")
+									.select((playerEb) =>
+										playerEb.fn
+											.agg<MainWeaponId[]>("json_group_array", [
+												"VideoMatchPlayer.weaponSplId",
+											])
+											.orderBy("VideoMatchPlayer.player", "asc")
+											.as("weapons"),
+									)
+									.whereRef(
+										"VideoMatchPlayer.videoMatchId",
+										"=",
+										"VideoMatch.id",
+									)
+									.$asScalar()
+									.$castTo<MainWeaponId[]>()
+									.as("weapons"),
+							])
+							.whereRef("VideoMatch.videoId", "=", "Video.id")
+							.orderBy("VideoMatch.startsAt", "asc"),
+					).as("matches"),
+				),
+			),
+		/** The submitter and the point of view user may edit the vod. */
+		withEditPermissions: () =>
+			mapRows(
+				"Video",
+				(row: {
+					submitterUserId: number;
+					pov: string | { id: number } | null;
+				}) => ({
+					permissions: {
+						EDIT:
+							typeof row.pov === "object" && row.pov !== null
+								? [row.submitterUserId, row.pov.id]
+								: [row.submitterUserId],
+					},
+				}),
+			),
+	}),
+});
+
+/** The vod with its matches and who may edit it. */
+export function vodWithMatches(id: number) {
+	return vods().where({ id }).withMatches().withEditPermissions();
+}
+
+/** The vods showing the user's point of view, with the weapons played. */
+export function userVods(userId: number) {
+	return vods().withPovUser(userId).withWeapons();
+}
+
+/** Inserts the vod with its matches, returning its id. */
+export function insert(args: VideoBeingAdded & { submitterUserId: number }) {
+	return db.transaction().execute(async (trx) => {
+		const { id } = await videoTable.insert(
+			{ ...videoValues(args), submitterUserId: args.submitterUserId },
+			trx,
+		);
+		await insertMatches(id, args, trx);
+
+		return { id };
 	});
-	return vods;
 }
 
-/** How many vods match the filters. */
-export async function countVods(filters: VodFilters) {
-	const result = await db
-		.selectFrom(filteredVideoIds(filters).as("filtered"))
-		.select(({ fn }) => fn.countAll<number>().as("count"))
-		.executeTakeFirstOrThrow();
+/** Updates the vod and replaces its matches. The submitter stays the original one. */
+export function update(args: VideoBeingAdded & { id: number }) {
+	return db.transaction().execute(async (trx) => {
+		await videoTable.updateById(args.id, videoValues(args), trx);
+		await matchTable.delete({ videoId: args.id }, trx);
+		await insertMatches(args.id, args, trx);
 
-	return result.count;
+		return { id: args.id };
+	});
 }
 
-export async function findVodById(id: Tables["Video"]["id"]) {
-	const videoQuery = db
-		.selectFrom("Video")
-		.select([
-			"id",
-			"title",
-			"youtubePublishedAt",
-			"youtubeId",
-			"type",
-			"submitterUserId",
-		])
-		.where("Video.id", "=", id);
-
-	const video = await videoQuery.executeTakeFirst();
-
-	if (video) {
-		const videoMatchQuery = db
-			.selectFrom("VideoMatch")
-			.select([
-				"VideoMatch.id",
-				"VideoMatch.mode",
-				"VideoMatch.stageId",
-				"VideoMatch.startsAt",
-			])
-			.leftJoin(
-				"VideoMatchPlayer",
-				"VideoMatch.id",
-				"VideoMatchPlayer.videoMatchId",
-			)
-			.leftJoin("User", "VideoMatchPlayer.playerUserId", "User.id")
-			.select(({ fn, eb }) => [
-				fn
-					.agg("json_group_array", ["VideoMatchPlayer.weaponSplId"])
-					.$castTo<MainWeaponId[]>()
-					.as("weapons"),
-				fn
-					.agg("json_group_array", ["VideoMatchPlayer.playerName"])
-					.filterWhere("VideoMatchPlayer.playerName", "is not", null)
-					.$castTo<string[]>()
-					.as("playerNames"),
-				fn
-					.agg("json_group_array", [commonUserJsonObject(eb)])
-					.filterWhere("User.username", "is not", null)
-					.$castTo<CommonUser[]>()
-					.as("players"),
-			])
-			.where("VideoMatch.videoId", "=", id)
-			.groupBy("VideoMatch.id")
-			.orderBy("VideoMatch.startsAt", "asc")
-			.orderBy("VideoMatchPlayer.player", "asc");
-
-		const matches = await videoMatchQuery.execute();
-
-		const pov = resolvePov(matches);
-		const povUserId = typeof pov === "string" ? undefined : pov?.id;
-
-		return {
-			...video,
-			pov,
-			matches: R.map(matches, R.omit(["players", "playerNames"])),
-			permissions: {
-				EDIT:
-					povUserId === undefined
-						? [video.submitterUserId]
-						: [video.submitterUserId, povUserId],
-			},
-		};
-	}
-	return null;
-}
-
-function resolvePov(
-	matches: Array<{ playerNames: string[]; players: CommonUser[] }>,
-): Vod["pov"] {
-	for (const match of matches) {
-		if (match.playerNames.length > 0) {
-			return match.playerNames[0];
-		}
-
-		if (match.players.length > 0) {
-			return match.players[0];
-		}
-	}
-
-	return;
-}
-
-export async function update(
-	args: VideoBeingAdded & {
-		isValidated: boolean;
-		id: number;
-	},
-) {
-	return save(args);
-}
-
-export async function insert(
-	args: VideoBeingAdded & {
-		submitterUserId: number;
-		isValidated: boolean;
-	},
-) {
-	return save(args);
-}
-
-async function save(
-	args: VideoBeingAdded & {
-		submitterUserId?: number;
-		isValidated: boolean;
-		id?: number;
-	},
-) {
+function videoValues(args: VideoBeingAdded) {
 	const youtubeId = extractYoutubeIdFromVideoUrl(args.youtubeUrl);
 	invariant(youtubeId, "Invalid YouTube URL");
-	return db.transaction().execute(async (trx) => {
-		let videoId: number;
-		const video = {
-			title: args.title,
-			type: args.type,
-			youtubePublishedAt: dayMonthYearToDatabaseTimestamp(args.date),
-			eventId: args.eventId ?? null,
-			youtubeId,
-			validatedAt: args.isValidated
-				? dateToDatabaseTimestamp(new Date())
-				: null,
-		};
-		if (args.id) {
-			await trx
-				.deleteFrom("VideoMatch")
-				.where("videoId", "=", args.id)
-				.execute();
 
-			// editing keeps the video's original submitter
-			await trx
-				.updateTable("UnvalidatedVideo")
-				.set(video)
-				.where("id", "=", args.id)
-				.execute();
-			videoId = args.id;
-		} else {
-			invariant(
-				typeof args.submitterUserId === "number",
-				"Submitter is required to add a video",
-			);
-			const result = await trx
-				.insertInto("UnvalidatedVideo")
-				.values({ ...video, submitterUserId: args.submitterUserId })
-				.returning("UnvalidatedVideo.id")
-				.executeTakeFirstOrThrow();
-			videoId = result.id;
-		}
-
-		const insertedMatches = await trx
-			.insertInto("VideoMatch")
-			.values(
-				args.matches.map((match) => ({
-					videoId,
-					startsAt: hoursMinutesSecondsStringToSeconds(match.startsAt),
-					stageId: match.stageId,
-					mode: match.mode,
-				})),
-			)
-			.returning("VideoMatch.id")
-			.execute();
-
-		// RETURNING makes no ordering promise, so sort to line the ids up with args.matches
-		const matchIds = insertedMatches
-			.map((match) => match.id)
-			.sort((a, b) => a - b);
-
-		const players = args.matches.flatMap((match, matchIdx) =>
-			match.weapons.map((weaponSplId, weaponIdx) => ({
-				videoMatchId: matchIds[matchIdx],
-				playerUserId: args.pov?.type === "USER" ? args.pov.userId : null,
-				playerName: args.pov?.type === "NAME" ? args.pov.name : null,
-				weaponSplId,
-				player: weaponIdx + 1,
-			})),
-		);
-
-		await trx.insertInto("VideoMatchPlayer").values(players).execute();
-
-		return { ...video, id: videoId };
-	});
-}
-
-export function deleteById(id: number) {
-	return db.deleteFrom("UnvalidatedVideo").where("id", "=", id).execute();
-}
-
-const vodsWithMatches = () =>
-	db
-		.selectFrom("Video")
-		.leftJoin("VideoMatch", "VideoMatch.videoId", "Video.id")
-		.leftJoin(
-			"VideoMatchPlayer",
-			"VideoMatch.id",
-			"VideoMatchPlayer.videoMatchId",
-		);
-
-type VodsWithMatchesDB =
-	ReturnType<typeof vodsWithMatches> extends SelectQueryBuilder<
-		infer JoinedDB,
-		any,
-		any
-	>
-		? JoinedDB
-		: never;
-
-type VodsTables = "Video" | "VideoMatch" | "VideoMatchPlayer";
-
-/** The filtered weapon and its alt skins lead the list so the listing's peek always shows what was filtered for. */
-function filteredWeaponFirst(
-	weapons: MainWeaponId[],
-	weapon: MainWeaponId | undefined,
-) {
-	if (weapon === undefined) return weapons;
-
-	const filtered = new Set(weaponIdToArrayWithAlts(weapon));
-	return R.partition(weapons, (id) => filtered.has(id)).flat();
-}
-
-/** Conditions the filters put on the match rows. `userId` makes the vod's own filters moot: it is the user's vods regardless. */
-function vodFilters({ weapon, mode, stageId, type, userId }: VodFilters) {
-	return (eb: ExpressionBuilder<VodsWithMatchesDB, VodsTables>) => {
-		const conditions: Expression<SqlBool>[] = [];
-		if (userId) {
-			conditions.push(eb("VideoMatchPlayer.playerUserId", "=", userId));
-		} else {
-			if (type) {
-				conditions.push(eb("Video.type", "=", type));
-			}
-			if (mode) {
-				conditions.push(eb("VideoMatch.mode", "=", mode));
-			}
-			if (stageId !== undefined) {
-				conditions.push(eb("VideoMatch.stageId", "=", stageId));
-			}
-		}
-		if (weapon !== undefined) {
-			conditions.push(
-				eb(
-					"VideoMatchPlayer.weaponSplId",
-					"in",
-					weaponIdToArrayWithAlts(weapon),
-				),
-			);
-		}
-
-		return eb.and(conditions);
+	return {
+		title: args.title,
+		type: args.type,
+		youtubePublishedAt: dayMonthYearToDate(args.date),
+		eventId: args.eventId ?? null,
+		youtubeId,
 	};
 }
 
-/**
- * Ids of the vods matching the filters, joined only as far as a filter reads: inner joins
- * let a player level filter start from the player rows' index instead of walking every vod.
- */
-function filteredVideoIds(filters: VodFilters) {
-	const { type, userId, mode, stageId, weapon } = filters;
-	const filtersPlayers = userId !== undefined || weapon !== undefined;
-	const filtersMatches =
-		!filtersPlayers && (mode !== undefined || stageId !== undefined);
+async function insertMatches(
+	videoId: number,
+	{ matches, pov }: VideoBeingAdded,
+	trx: Transaction<DB>,
+) {
+	const insertedMatches = await matchTable.insertMany(
+		matches.map((match) => ({
+			videoId,
+			startsAt: hoursMinutesSecondsStringToSeconds(match.startsAt),
+			stageId: match.stageId,
+			mode: match.mode,
+		})),
+		trx,
+	);
 
-	return db
-		.selectFrom("Video")
-		.select("Video.id")
-		.distinct()
-		.$if(Boolean(type) && !userId, (qb) => qb.where("Video.type", "=", type!))
-		.$if(filtersPlayers, (qb) =>
-			qb
-				.innerJoin("VideoMatch", "VideoMatch.videoId", "Video.id")
-				.innerJoin(
-					"VideoMatchPlayer",
-					"VideoMatch.id",
-					"VideoMatchPlayer.videoMatchId",
-				)
-				.where(vodFilters(filters)),
-		)
-		.$if(filtersMatches, (qb) =>
-			qb
-				.innerJoin("VideoMatch", "VideoMatch.videoId", "Video.id")
-				.leftJoin(
-					"VideoMatchPlayer",
-					"VideoMatch.id",
-					"VideoMatchPlayer.videoMatchId",
-				)
-				.where(vodFilters(filters)),
-		);
+	// RETURNING makes no ordering promise, so sort to line the ids up with matches
+	const matchIds = insertedMatches
+		.map((match) => match.id)
+		.sort((a, b) => a - b);
+
+	await playerTable.insertMany(
+		matches.flatMap((match, matchIdx) =>
+			match.weapons.map((weaponSplId, weaponIdx) => ({
+				videoMatchId: matchIds[matchIdx],
+				playerUserId: pov?.type === "USER" ? pov.userId : null,
+				playerName: pov?.type === "NAME" ? pov.name : null,
+				weaponSplId,
+				player: weaponIdx + 1,
+			})),
+		),
+		trx,
+	);
 }

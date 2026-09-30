@@ -14,6 +14,7 @@ import type {
 } from "kysely/helpers/sqlite";
 import { Config } from "~/config";
 import {
+	assertNotTimestampReference,
 	jsonValuedNode,
 	jsonValuedSelection,
 	selectionOutputName,
@@ -495,12 +496,15 @@ export function jsonBuildObject<O extends Record<string, Expression<unknown>>>(
 	obj: O,
 ): ReturnType<typeof sqliteJsonBuildObject<O>> {
 	return sql`json_object(${sql.join(
-		Object.keys(obj).flatMap((key) => [
-			sql.lit(key),
-			jsonValuedNode(obj[key].toOperationNode())
-				? sql`json(${obj[key]})`
-				: obj[key],
-		]),
+		Object.keys(obj).flatMap((key) => {
+			const node = obj[key].toOperationNode();
+			assertNotTimestampReference(node);
+
+			return [
+				sql.lit(key),
+				jsonValuedNode(node) ? sql`json(${obj[key]})` : obj[key],
+			];
+		}),
 	)})` as ReturnType<typeof sqliteJsonBuildObject<O>>;
 }
 
@@ -525,6 +529,7 @@ function jsonObjectArgs(
 				"jsonArrayFrom and jsonObjectFrom can only handle explicit selections. selectAll() is not allowed in the subquery.",
 			);
 		}
+		assertNotTimestampReference(selection);
 
 		const ref = sql.ref(`${table}.${name}`);
 

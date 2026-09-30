@@ -2,6 +2,7 @@ import { sql } from "kysely";
 import { beforeEach, describe, expect, expectTypeOf, test } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as VodFactory from "~/db/seed/factories/VodFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { jsonObjectFrom } from "~/utils/kysely.server";
 import { withNoUser } from "~/utils/Test";
@@ -336,6 +337,33 @@ describe("paginate", () => {
 			.paginate({ after: cursor, size: 2 });
 
 		expect(idsOf(page.items)).toEqual(inTitleDescOrder().slice(0, 2));
+	});
+
+	test("walks every row exactly once with cursors on a timestamp sort key", async () => {
+		const videos = defineQuery({
+			root: "Video",
+			select: (qb) => qb.select("Video.id"),
+			defaultSort: [["Video.youtubePublishedAt", "desc"]],
+		});
+		const videoIds: number[] = [];
+		for (const day of [2, 1, 2]) {
+			const { id } = await VodFactory.create({
+				submitterUserId: users.id(1),
+				date: { day, month: 0, year: 2024 },
+			});
+			videoIds.push(id);
+		}
+
+		const seen: number[] = [];
+		let after: string | null = null;
+		do {
+			const page: { items: Array<{ id: number }>; nextCursor: string | null } =
+				await videos().paginate({ after, size: 1 });
+			seen.push(...idsOf(page.items));
+			after = page.nextCursor;
+		} while (after);
+
+		expect(seen).toEqual([videoIds[0], videoIds[2], videoIds[1]]);
 	});
 
 	test("seeks through an expression sort key", async () => {

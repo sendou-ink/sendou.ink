@@ -9,7 +9,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 	const user = requireUser();
 
 	const vod = badRequestIfFalsy(
-		await VodRepository.findVodById(Number(params.id)),
+		await VodRepository.vodWithMatches(Number(params.id)).executeTakeFirst(),
 	);
 
 	requirePermission(vod, "EDIT");

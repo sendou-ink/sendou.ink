@@ -233,10 +233,6 @@ erDiagram
 ## Videos
 ```mermaid
 erDiagram
-    UnvalidatedVideo ||--|{ VideoMatch : has
+    Video ||--|{ VideoMatch : has
     VideoMatch ||--o{ VideoMatchPlayer : has
 ```
-
-### Notes
-
-- `Video` - Same as `UnvalidatedVideo` (redundant)

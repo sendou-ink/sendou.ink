@@ -4,8 +4,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { dayMonthYearToDatabaseTimestamp } from "~/utils/dates";
-import type { Vod } from "./vods-types";
+import { dayMonthYearToDate } from "~/utils/dates";
 import {
 	extractYoutubeIdFromVideoUrl,
 	generateYoutubeTimestamps,
@@ -235,17 +234,14 @@ describe("vodToVideoBeingAdded", () => {
 
 	test("round-trips the stored day/month/year regardless of server timezone", () => {
 		const date = { day: 5, month: 0, year: 2024 };
-		const vod: Vod = {
-			id: 1,
+		const result = vodToVideoBeingAdded({
 			title: "Test VOD",
 			type: "TOURNAMENT",
 			youtubeId: "dQw4w9WgXcQ",
-			youtubePublishedAt: dayMonthYearToDatabaseTimestamp(date),
-			submitterUserId: 1,
+			youtubePublishedAt: dayMonthYearToDate(date),
 			matches: [],
-		};
-
-		const result = vodToVideoBeingAdded(vod);
+			pov: null,
+		});
 
 		expect(result.date).toEqual(date);
 	});

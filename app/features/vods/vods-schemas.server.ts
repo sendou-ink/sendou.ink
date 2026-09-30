@@ -11,7 +11,9 @@ export const vodFormSchemaServer = v.pipeAsync(
 		if (!data.vodToEditId) return;
 
 		const user = requireUser();
-		const vod = await VodRepository.findVodById(data.vodToEditId);
+		const vod = await VodRepository.vodWithMatches(
+			data.vodToEditId,
+		).executeTakeFirst();
 		if (vod && hasPermission(vod, "EDIT", user)) return;
 
 		ctx.addIssue({

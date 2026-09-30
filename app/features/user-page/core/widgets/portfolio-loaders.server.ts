@@ -213,7 +213,7 @@ export const WIDGET_LOADERS = {
 		return UserRepository.findJoinOrderByUserId(userId);
 	},
 	videos: async (userId: number) => {
-		return VodRepository.findByUserId(userId, 3);
+		return VodRepository.userVods(userId).limit(3).execute();
 	},
 	"lfg-posts": async (userId: number) => {
 		const posts = await authorsPosts(userId).execute();

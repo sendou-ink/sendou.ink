@@ -24,7 +24,9 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		return { vodToEdit: null, vodPrefill: vodPrefillFromIngestParam(ingest) };
 	}
 
-	const vod = notFoundIfNullish(await VodRepository.findVodById(vodId));
+	const vod = notFoundIfNullish(
+		await VodRepository.vodWithMatches(vodId).executeTakeFirst(),
+	);
 	const vodToEdit = vodToVideoBeingAdded(vod);
 
 	if (!hasPermission(vod, "EDIT", user)) {

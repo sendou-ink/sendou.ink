@@ -22,7 +22,7 @@ type RootQB<R extends TableName> = SelectQueryBuilder<DB, R, NoFields>;
 type Override<O, A> = Simplify<Omit<O, keyof A> & A>;
 type SortTarget = string | ((eb: AnyEB) => Expression<unknown>);
 type SortKey = readonly [SortTarget, OrderByDirection];
-type CursorValue = string | number;
+type CursorValue = string | number | Date;
 type Row = Record<string, unknown>;
 type ResolveLoad = (keys: number[]) => Promise<Map<number, unknown>>;
 
@@ -627,7 +627,10 @@ function hasIdPrimaryKey(table: string) {
 }
 
 function encodeCursor(values: CursorValue[]) {
-	return Buffer.from(JSON.stringify(values)).toString("base64url");
+	const encoded = values.map((value) =>
+		value instanceof Date ? { date: value.getTime() } : value,
+	);
+	return Buffer.from(JSON.stringify(encoded)).toString("base64url");
 }
 
 function decodeCursor(
@@ -640,19 +643,28 @@ function decodeCursor(
 		const values: unknown = JSON.parse(
 			Buffer.from(cursor, "base64url").toString(),
 		);
-		if (
-			Array.isArray(values) &&
-			values.length === keyCount &&
-			values.every(
-				(value) =>
-					typeof value === "string" ||
-					(typeof value === "number" && Number.isFinite(value)),
-			)
-		) {
-			return values;
-		}
+		if (!Array.isArray(values) || values.length !== keyCount) return null;
+
+		const decoded = values.map(decodeCursorValue);
+		if (decoded.every((value) => value !== null)) return decoded;
 	} catch {
 		// tampered cursors serve the first page
+	}
+
+	return null;
+}
+
+function decodeCursorValue(value: unknown): CursorValue | null {
+	if (typeof value === "string") return value;
+	if (typeof value === "number" && Number.isFinite(value)) return value;
+	if (
+		typeof value === "object" &&
+		value !== null &&
+		"date" in value &&
+		typeof value.date === "number" &&
+		Number.isFinite(value.date)
+	) {
+		return new Date(value.date);
 	}
 
 	return null;

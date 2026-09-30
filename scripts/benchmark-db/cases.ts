@@ -51,6 +51,7 @@ import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
+import { VODS_PAGE_BATCH_SIZE } from "~/features/vods/vods-constants";
 import { LUTI_NAME_PREFIX } from "~/routines/computeLutiDivs";
 import { dateToDatabaseTimestamp, dateToYYYYMMDD } from "~/utils/dates";
 import type { Fixtures } from "./fixtures";
@@ -1564,16 +1565,34 @@ export function buildCases(fx: Fixtures): {
 			UserRepository.findIdsByTwitchUsernames(twitchUsernames),
 	);
 
-	add("VodRepository.findByUserId", fx.vod, (vod) =>
-		VodRepository.findByUserId(vod.userId),
+	add("VodRepository.userVods.widget", fx.vod, (vod) =>
+		VodRepository.userVods(vod.userId).limit(3).execute(),
 	);
-	addStatic("VodRepository.findVods.default", () => VodRepository.findVods({}));
-	add("VodRepository.findVods.byWeapon", fx.heavyWeaponSplId, (weaponSplId) =>
-		VodRepository.findVods({ weapon: weaponSplId }),
+	add("VodRepository.userVods.page", fx.vod, (vod) =>
+		VodRepository.userVods(vod.userId).paginate({
+			page: 1,
+			size: VODS_PAGE_BATCH_SIZE,
+		}),
 	);
-	addStatic("VodRepository.countVods", () => VodRepository.countVods({}));
-	add("VodRepository.findVodById", fx.vod, (vod) =>
-		VodRepository.findVodById(vod.videoId),
+	addStatic("VodRepository.vods.listing", () =>
+		VodRepository.vods()
+			.withWeapons()
+			.paginate({ page: 1, size: VODS_PAGE_BATCH_SIZE }),
+	);
+	add("VodRepository.vods.listing.byWeapon", fx.heavyWeaponSplId, (weapon) =>
+		VodRepository.vods()
+			.withMatch({ mode: null, stageId: null, weapon })
+			.withWeapons(weapon)
+			.paginate({ page: 1, size: VODS_PAGE_BATCH_SIZE }),
+	);
+	addStatic("VodRepository.vods.listing.byModeAndStage", () =>
+		VodRepository.vods()
+			.withMatch({ mode: "SZ", stageId: 1, weapon: null })
+			.withWeapons()
+			.paginate({ page: 1, size: VODS_PAGE_BATCH_SIZE }),
+	);
+	add("VodRepository.vodWithMatches", fx.vod, (vod) =>
+		VodRepository.vodWithMatches(vod.videoId).executeTakeFirst(),
 	);
 
 	return { cases, skipped };

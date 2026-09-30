@@ -10,6 +10,7 @@ import { JSON_COLUMNS } from "./json-columns";
 import { computedJsonColumns } from "./json-selections";
 import { NodeSqliteDialect } from "./node-sqlite-dialect";
 import type { DB } from "./tables";
+import { TIMESTAMP_COLUMNS } from "./timestamp-columns";
 import { WriteTrackerPlugin } from "./write-tracker";
 
 const sql = new DatabaseSync(
@@ -48,6 +49,7 @@ export const db = new Kysely<DB>({
 		cacheStatements: true,
 		jsonColumns: JSON_COLUMNS,
 		computedJsonColumns,
+		timestampColumns: TIMESTAMP_COLUMNS,
 	}),
 	log,
 	plugins: [new EmptyValuesNoopPlugin(), new WriteTrackerPlugin()],

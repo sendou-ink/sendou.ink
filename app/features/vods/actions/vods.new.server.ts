@@ -29,13 +29,11 @@ export const action: ActionFunction = async ({ request }) => {
 	const savedVideo = formData.vodToEditId
 		? await VodRepository.update({
 				...video,
-				isValidated: true,
 				id: formData.vodToEditId,
 			})
 		: await VodRepository.insert({
 				...video,
 				submitterUserId: user.id,
-				isValidated: true,
 			});
 
 	throw redirect(vodVideoPage(savedVideo.id));

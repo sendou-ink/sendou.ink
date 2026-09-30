@@ -11,6 +11,7 @@ import {
 	SelectQueryNode,
 } from "kysely";
 import { JSON_COLUMNS } from "./json-columns";
+import { TIMESTAMP_COLUMNS } from "./timestamp-columns";
 
 /** SQL shapes {@link jsonValuedNode} recognizes: the subqueries the json helpers emit and direct `json*(` function calls (e.g. `jsonBuildObject`, `json_set`). */
 const JSON_EXPRESSION_PREFIX =
@@ -73,6 +74,29 @@ export function jsonValuedNode(
 	}
 
 	return jsonValuedReference(node, sources);
+}
+
+/**
+ * Throws for a reference to a timestamp column put inside a JSON document: JSON has no dates, so
+ * it would arrive as unix seconds while typed `Date`. Select it at the top level instead.
+ */
+// xxx: revive nested timestamps in the dialect (record their key paths in this AST walk) and drop this guard
+export function assertNotTimestampReference(node: OperationNode) {
+	const target = AliasNode.is(node) ? node.node : node;
+	if (
+		!ReferenceNode.is(target) ||
+		!ColumnNode.is(target.column) ||
+		target.table === undefined
+	) {
+		return;
+	}
+
+	const column = `${target.table.table.identifier.name}.${target.column.column.name}`;
+	if (TIMESTAMP_COLUMNS.has(column)) {
+		throw new Error(
+			`${column} is a timestamp, which nested JSON can't decode yet. Select it at the top level.`,
+		);
+	}
 }
 
 /** JSON-valued output names of the derived tables and CTEs a query selects from, by the name they are visible under. */

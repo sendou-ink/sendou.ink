@@ -87,11 +87,6 @@ export function dayMonthYearToDate({ day, month, year }: DayMonthYear) {
 	return new Date(Date.UTC(year, month, day, 12));
 }
 
-/** Day/month/year to a database timestamp, noon UTC. */
-export function dayMonthYearToDatabaseTimestamp(args: DayMonthYear) {
-	return dateToDatabaseTimestamp(dayMonthYearToDate(args));
-}
-
 // https://stackoverflow.com/a/71336659
 export function weekNumberToDate({
 	week,

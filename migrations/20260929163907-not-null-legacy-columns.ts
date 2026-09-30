@@ -64,6 +64,9 @@ const COLUMN_DEFINITIONS: Record<string, Record<string, string>> = {
  * lack a signature because the column's backfill read the public only `BuildAbilitySum`, and
  * Ability Doubler builds saved before the signature and sums learned to double their subs still
  * carry the undoubled values.
+ * Also replaces the `Video` view with the `UnvalidatedVideo` table it filtered, renamed to `Video`.
+ * Every video has been validated on submission since 2023; the only unvalidated rows are two
+ * abandoned duplicates, deleted along with the `validatedAt` column.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	// a no-op inside a transaction, and needed off so dropping the old tables doesn't cascade to their children
@@ -81,6 +84,8 @@ export async function up(db: Kysely<any>): Promise<void> {
 				await sql.raw(statement).execute(trx);
 			}
 
+			await replaceVideoViewWithTable(trx);
+
 			const violations = await sql`pragma foreign_key_check`.execute(trx);
 			if (violations.rows.length > 0) {
 				throw new Error(
@@ -91,6 +96,30 @@ export async function up(db: Kysely<any>): Promise<void> {
 	} finally {
 		await sql`pragma foreign_keys = on`.execute(db);
 	}
+}
+
+async function replaceVideoViewWithTable(trx: Kysely<any>) {
+	// foreign keys are off, so the children don't cascade
+	const unvalidatedMatchIds = sql`
+		select "id" from "VideoMatch" where "videoId" in (
+			select "id" from "UnvalidatedVideo" where "validatedAt" is null
+		)
+	`;
+	await sql`delete from "VideoMatchPlayer" where "videoMatchId" in (${unvalidatedMatchIds})`.execute(
+		trx,
+	);
+	await sql`delete from "VideoMatch" where "id" in (${unvalidatedMatchIds})`.execute(
+		trx,
+	);
+	await sql`delete from "UnvalidatedVideo" where "validatedAt" is null`.execute(
+		trx,
+	);
+
+	await sql`drop view "Video"`.execute(trx);
+	await sql`alter table "UnvalidatedVideo" drop column "validatedAt"`.execute(
+		trx,
+	);
+	await sql`alter table "UnvalidatedVideo" rename to "Video"`.execute(trx);
 }
 
 /** Renaming a table fails while any view or trigger refers to a table that doesn't exist, as the old ones briefly don't. */

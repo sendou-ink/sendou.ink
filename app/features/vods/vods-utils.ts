@@ -1,17 +1,19 @@
-import { databaseTimestampToDate } from "../../utils/dates";
 import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 import type { VideoBeingAdded, Vod } from "./vods-types";
 
-export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
-	const dateObj = databaseTimestampToDate(vod.youtubePublishedAt);
-
+export function vodToVideoBeingAdded(
+	vod: Pick<
+		Vod,
+		"title" | "youtubeId" | "youtubePublishedAt" | "matches" | "type" | "pov"
+	>,
+): VideoBeingAdded {
 	return {
 		title: vod.title,
 		youtubeUrl: youtubeIdToYoutubeUrl(vod.youtubeId),
 		date: {
-			day: dateObj.getUTCDate(),
-			month: dateObj.getUTCMonth(),
-			year: dateObj.getUTCFullYear(),
+			day: vod.youtubePublishedAt.getUTCDate(),
+			month: vod.youtubePublishedAt.getUTCMonth(),
+			year: vod.youtubePublishedAt.getUTCFullYear(),
 		},
 		matches: vod.matches.map((match) => ({
 			...match,

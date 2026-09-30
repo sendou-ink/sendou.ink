@@ -19,7 +19,6 @@ export const { create, createMany } = defineFactory({
 				weapons: [SplatoonFaker.mainWeapon()],
 			},
 		],
-		isValidated: true,
 	}),
 	insert: VodRepository.insert,
 });

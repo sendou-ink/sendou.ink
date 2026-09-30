@@ -64,7 +64,7 @@ When the column is a known set *plus* an open-ended value (an id in string form,
 
 ## Views
 
-Two naming conventions pair a base table with a filtered view: the `All` prefix (`AllTeam` table / `Team` view) and the `Unvalidated` prefix (`UnvalidatedVideo` / `Video`). Write to the prefixed table, read from the view. Both share one interface, so document per-column which fields are meaningless when read through the view. Mark view entries in the `DB` interface as read-only.
+Two naming conventions pair a base table with a filtered view: the `All` prefix (`AllTeam` table / `Team` view) and the `Unvalidated` prefix (`UnvalidatedUserSubmittedImage` / `UserSubmittedImage`). Write to the prefixed table, read from the view. Both share one interface, so document per-column which fields are meaningless when read through the view. Mark view entries in the `DB` interface as read-only.
 
 ## JSDoc
 
