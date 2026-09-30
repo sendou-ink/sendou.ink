@@ -9,6 +9,7 @@ import {
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import { DEV_IDS } from "~/features/admin/admin-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
@@ -1097,6 +1098,6 @@ async function trophyTier(
 
 function trophyPermissions(managerId: number | null) {
 	return {
-		EDIT: managerId ? [managerId] : [],
+		EDIT: R.unique([...(managerId ? [managerId] : []), ...DEV_IDS]),
 	};
 }

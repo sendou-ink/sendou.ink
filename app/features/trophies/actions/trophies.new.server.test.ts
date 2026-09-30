@@ -1,5 +1,6 @@
 import type * as v from "valibot";
 import { beforeEach, describe, expect, test } from "vitest";
+import { DEV_TEST_ID } from "~/db/seed/constants";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
@@ -8,6 +9,7 @@ import * as TournamentOrganizationRepository from "~/features/tournament-organiz
 import { decompressFromBase64 } from "~/utils/compression";
 import {
 	assertResponseErrored,
+	type TestUser,
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
@@ -41,7 +43,6 @@ const users = UserFactory.pool();
 const managerId = () => users.id(1);
 const winnerIds = () => users.ids(5).slice(1, 5);
 const loserIds = () => users.ids(9).slice(5, 9);
-const outsiderId = () => users.id(10);
 
 describe("trophy submissions", () => {
 	const submitterId = () => users.id(1);
@@ -93,7 +94,9 @@ describe("trophy backfill", () => {
 	let tournamentId: number;
 
 	beforeEach(async () => {
-		await users.create(10);
+		await UserFactory.createAdmin();
+		await users.create(9);
+		await UserFactory.createDev();
 
 		const organization = await TournamentOrganizationFactory.create(
 			{ ownerId: managerId() },
@@ -128,7 +131,7 @@ describe("trophy backfill", () => {
 		).id;
 	});
 
-	const backfill = (userIds: number[], user = managerId()) =>
+	const backfill = (userIds: number[], user: TestUser = "admin") =>
 		backfillAction(
 			{
 				_action: "BACKFILL",
@@ -144,9 +147,9 @@ describe("trophy backfill", () => {
 			(tournament) => tournament.tournamentId,
 		);
 
-	test("the manager lists the series' tournaments with their winners", async () => {
+	test("an admin lists the series' tournaments with their winners", async () => {
 		const data = await loadBackfillable({
-			user: managerId(),
+			user: "admin",
 			params: { id: String(trophyId), seriesId: String(seriesId) },
 		});
 
@@ -158,16 +161,16 @@ describe("trophy backfill", () => {
 		);
 	});
 
-	test("someone other than the manager can't list the tournaments", async () => {
+	test("the trophy's manager can't list the tournaments", async () => {
 		await expect(
 			loadBackfillable({
-				user: outsiderId(),
+				user: managerId(),
 				params: { id: String(trophyId), seriesId: String(seriesId) },
 			}),
 		).rejects.toThrow("403");
 	});
 
-	test("the manager awards the trophy to the chosen winners", async () => {
+	test("an admin awards the trophy to the chosen winners", async () => {
 		await backfill(winnerIds().slice(0, 3));
 
 		expect(await awardedTournamentIds()).toEqual([tournamentId]);
@@ -180,9 +183,16 @@ describe("trophy backfill", () => {
 		);
 	});
 
-	test("someone other than the manager can't award the trophy", async () => {
-		await expect(backfill(winnerIds(), outsiderId())).rejects.toThrow("403");
+	test("a dev awards the trophy", async () => {
+		await backfill(winnerIds(), DEV_TEST_ID);
 
+		expect(await awardedTournamentIds()).toEqual([tournamentId]);
+	});
+
+	test("the trophy's manager can't award it", async () => {
+		const response = await backfill(winnerIds(), managerId());
+
+		assertResponseErrored(response, "Not allowed");
 		expect(await awardedTournamentIds()).toEqual([]);
 	});
 

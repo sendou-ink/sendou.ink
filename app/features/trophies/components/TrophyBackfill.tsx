@@ -16,7 +16,7 @@ import type { TrophyBackfillLoaderData } from "../routes/trophies.$id.backfill.$
 import { trophyActionSchema } from "../trophies-schemas";
 import styles from "./TrophyBackfill.module.css";
 
-type BackfillTrophy = NewTrophyLoaderData["editableTrophies"][number];
+type BackfillTrophy = NewTrophyLoaderData["backfillTrophies"][number];
 type BackfillTournament = TrophyBackfillLoaderData["tournaments"][number];
 
 type Awards = Record<number, number[]>;
@@ -25,7 +25,7 @@ export function TrophyBackfill({
 	trophies,
 	series,
 }: {
-	trophies: NewTrophyLoaderData["editableTrophies"];
+	trophies: NewTrophyLoaderData["backfillTrophies"];
 	series: NewTrophyLoaderData["backfillSeries"];
 }) {
 	const { t } = useTranslation(["trophies", "common"]);

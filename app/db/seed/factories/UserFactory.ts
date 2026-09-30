@@ -9,6 +9,7 @@ import * as UserCardRepository from "~/features/user-card/UserCardRepository.ser
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { invariant } from "~/utils/invariant";
 import {
+	DEV_TEST_ID,
 	ORG_ADMIN_TEST_ID,
 	REGULAR_USER_TEST_ID,
 	STAFF_TEST_ID,
@@ -249,6 +250,12 @@ export const createStaff = (
 	overrides?: Partial<UpsertArgs> | null,
 	options?: Options,
 ) => createPinned(STAFF_TEST_ID, overrides, options);
+
+/** The dev id user. Create after every unpinned user so the ids in between stay free. */
+export const createDev = (
+	overrides?: Partial<UpsertArgs> | null,
+	options?: Options,
+) => createPinned(DEV_TEST_ID, overrides, options);
 
 async function createPinned(
 	pinnedId: number,

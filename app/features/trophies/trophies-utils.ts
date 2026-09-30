@@ -58,6 +58,12 @@ function subscribeToNothing() {
 	return () => {};
 }
 
+export function canBackfillTrophies(user?: { roles: Array<Role> } | null) {
+	if (!user) return false;
+
+	return user.roles.includes("ADMIN") || user.roles.includes("DEV");
+}
+
 export function canReviewTrophies(user?: { roles: Array<Role> } | null) {
 	if (!user) return false;
 

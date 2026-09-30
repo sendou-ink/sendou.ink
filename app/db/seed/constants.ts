@@ -8,3 +8,5 @@ export const ORG_ADMIN_TEST_ID = 3;
 /** Matches STAFF_IDS[0] (Panda) so the seeded user is recognized as STAFF. */
 export const STAFF_TEST_ID = 11329;
 export const STAFF_TEST_DISCORD_ID = "138757634500067328";
+/** Matches DEV_IDS[0] so the seeded user is recognized as DEV. */
+export const DEV_TEST_ID = 27883;

@@ -98,7 +98,10 @@ export default function NewTrophyPage() {
 					<SendouTab id="upload">{t("trophies:new.tabs.upload")}</SendouTab>
 					<SendouTab
 						id="manage"
-						isDisabled={data.editableTrophies.length === 0}
+						isDisabled={
+							data.editableTrophies.length === 0 &&
+							data.backfillTrophies.length === 0
+						}
 					>
 						{t("trophies:new.tabs.manage")}
 					</SendouTab>
@@ -122,25 +125,29 @@ export default function NewTrophyPage() {
 				</SendouTabPanel>
 				<SendouTabPanel id="manage">
 					<div className="stack lg">
-						<div className="stack md">
-							<Divider smallText>{t("trophies:new.manage.update")}</Divider>
-							{data.ownUnreviewedCount >= TROPHY_PENDING_PER_USER_LIMIT ? (
-								<Alert variation="WARNING">
-									{t("trophies:new.form.limitReached", {
-										limit: TROPHY_PENDING_PER_USER_LIMIT,
-									})}
-								</Alert>
-							) : (
-								<UpdateTrophySection key={data.ownUnreviewedCount} />
-							)}
-						</div>
-						<div className="stack md">
-							<Divider smallText>{t("trophies:new.manage.backfill")}</Divider>
-							<TrophyBackfill
-								trophies={data.editableTrophies}
-								series={data.backfillSeries}
-							/>
-						</div>
+						{data.editableTrophies.length > 0 ? (
+							<div className="stack md">
+								<Divider smallText>{t("trophies:new.manage.update")}</Divider>
+								{data.ownUnreviewedCount >= TROPHY_PENDING_PER_USER_LIMIT ? (
+									<Alert variation="WARNING">
+										{t("trophies:new.form.limitReached", {
+											limit: TROPHY_PENDING_PER_USER_LIMIT,
+										})}
+									</Alert>
+								) : (
+									<UpdateTrophySection key={data.ownUnreviewedCount} />
+								)}
+							</div>
+						) : null}
+						{data.backfillTrophies.length > 0 ? (
+							<div className="stack md">
+								<Divider smallText>{t("trophies:new.manage.backfill")}</Divider>
+								<TrophyBackfill
+									trophies={data.backfillTrophies}
+									series={data.backfillSeries}
+								/>
+							</div>
+						) : null}
 					</div>
 				</SendouTabPanel>
 				<SendouTabPanel id="pending">

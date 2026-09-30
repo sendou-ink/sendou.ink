@@ -25,7 +25,11 @@ import * as TrophyBackfill from "../core/TrophyBackfill.server";
 import * as TrophyRepository from "../TrophyRepository.server";
 import { TROPHY_PENDING_PER_USER_LIMIT } from "../trophies-constants";
 import { trophyActionSchema, trophyFormSchema } from "../trophies-schemas";
-import { canReviewTrophies, compressTrophyModel } from "../trophies-utils";
+import {
+	canBackfillTrophies,
+	canReviewTrophies,
+	compressTrophyModel,
+} from "../trophies-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
@@ -212,9 +216,10 @@ export const action: ActionFunction = async ({ request }) => {
 			return null;
 		}
 		case "BACKFILL": {
+			errorToastIfFalsy(canBackfillTrophies(user), "Not allowed");
+
 			const trophy = await TrophyRepository.findById(data.trophyId);
 			errorToastIfFalsy(trophy, "Trophy not found");
-			requirePermission(trophy, "EDIT");
 			errorToastIfFalsy(trophy.organizationId, "Trophy has no organization");
 
 			const tournaments = await TrophyBackfill.backfillableTournaments({
