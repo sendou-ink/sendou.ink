@@ -9,7 +9,6 @@ import {
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
-import { isSupporter } from "~/modules/permissions/utils";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -28,7 +27,6 @@ import {
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
 import { sortTrophiesByFavorites } from "../user-page/core/trophy-sorting.server";
 import {
-	SUPPORTER_TROPHY_CODE,
 	TROPHY_APPROVALS_REQUIRED,
 	XP_TROPHY_CODE_PREFIX,
 } from "./trophies-constants";
@@ -620,33 +618,10 @@ export function backfill({
 	});
 }
 
-/** Recomputes special trophy (supporter, XP) ownership; still-eligible owners keep their `createdAt`. */
+/** Recomputes special trophy (XP) ownership; still-eligible owners keep their `createdAt`. */
 export function syncSpecialTrophies() {
 	return db.transaction().execute(async (trx) => {
-		await syncSupporterTrophyOwners(trx);
 		await syncXpTrophyOwners(trx);
-	});
-}
-
-async function syncSupporterTrophyOwners(trx: Transaction<DB>) {
-	const trophy = await trx
-		.selectFrom("Trophy")
-		.select("id")
-		.where("code", "=", SUPPORTER_TROPHY_CODE)
-		.executeTakeFirst();
-
-	if (!trophy) return;
-
-	const patrons = await trx
-		.selectFrom("User")
-		.select(["id", "patronTier"])
-		.where("patronTier", "is not", null)
-		.execute();
-
-	await replaceSpecialTrophyOwners({
-		trx,
-		trophyId: trophy.id,
-		userIds: patrons.filter(isSupporter).map((patron) => patron.id),
 	});
 }
 

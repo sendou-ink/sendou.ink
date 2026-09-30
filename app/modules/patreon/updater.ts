@@ -1,7 +1,6 @@
 import * as v from "valibot";
 import { ServerConfig } from "~/config.server";
 import { STAFF_DISCORD_IDS } from "~/features/admin/admin-constants";
-import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { fetchWithTimeout } from "~/utils/fetch";
@@ -47,7 +46,6 @@ export async function updatePatreonData(): Promise<void> {
 	];
 
 	await UserRepository.updatePatronData(patronsWithMods);
-	await TrophyRepository.syncSpecialTrophies();
 }
 
 const MAX_RETRIES = 10;

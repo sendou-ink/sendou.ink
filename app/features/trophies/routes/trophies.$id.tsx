@@ -95,11 +95,9 @@ export default function TrophyDetailsPage() {
 				) : null}
 				{special ? (
 					<p className={styles.trophyMeta}>
-						{special.type === "supporter"
-							? t("trophies:special.supporter.description")
-							: t("trophies:special.xp.description", {
-									value: special.value,
-								})}
+						{t("trophies:special.xp.description", {
+							value: special.value,
+						})}
 					</p>
 				) : null}
 			</div>

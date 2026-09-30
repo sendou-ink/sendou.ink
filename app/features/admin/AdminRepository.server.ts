@@ -476,8 +476,6 @@ export async function forcePatron(args: {
 		})
 		.where("User.id", "=", args.id)
 		.execute();
-
-	await TrophyRepository.syncSpecialTrophies();
 }
 
 export async function findAllBannedUsers() {

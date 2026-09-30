@@ -142,11 +142,9 @@ function TrophyModal({
 				<div>
 					<Divider />
 					<p className={styles.specialDescription}>
-						{special.type === "supporter"
-							? t("trophies:special.supporter.description")
-							: t("trophies:special.xp.description", {
-									value: special.value,
-								})}
+						{t("trophies:special.xp.description", {
+							value: special.value,
+						})}
 					</p>
 				</div>
 			) : null}

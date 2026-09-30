@@ -11,7 +11,6 @@
 	"details.noTournamentHistory": "Sin historial de torneos",
 	"details.upcoming": "Próximos",
 	"display.viewTrophyPage": "Ver página del trofeo",
-	"special.supporter.description": "Otorgado por apoyar a sendou.ink",
 	"special.xp.description": "Otorgado por alcanzar {{value}} de Energía X",
 	"new.form.limitReached": "Has alcanzado el límite de {{limit}} trofeos pendientes. Borra o espera a que se revise un envío existente antes de enviar otro.",
 	"new.form.preview.light": "Modo claro",

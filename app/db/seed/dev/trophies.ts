@@ -1,8 +1,5 @@
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
-import {
-	SUPPORTER_TROPHY_CODE,
-	XP_TROPHY_CODE_PREFIX,
-} from "~/features/trophies/trophies-constants";
+import { XP_TROPHY_CODE_PREFIX } from "~/features/trophies/trophies-constants";
 import { faker } from "../core/faker";
 import trophies from "../data/trophies.json";
 import * as TrophyFactory from "../factories/TrophyFactory";
@@ -44,15 +41,10 @@ export async function seedTrophies({
 	return { ids };
 }
 
-/** Non-tournament trophies handed to everybody eligible like the nightly sync. Runs last: eligibility follows from patrons and X Rank placements. */
+/** Non-tournament trophies handed to everybody eligible like the nightly sync. Runs last: eligibility follows from X Rank placements. */
 export async function seedSpecialTrophies() {
 	const models = TrophyFactory.MODELS;
 
-	await TrophyFactory.create({
-		name: "Supporter",
-		model: models[0],
-		code: SUPPORTER_TROPHY_CODE,
-	});
 	await TrophyFactory.create({
 		name: "3000 X Power",
 		model: models[1],
