@@ -4,7 +4,7 @@
  * running live session's clips (nothing evicted while you play), `history`
  * keeps the `MAX_HISTORY_CLIPS` best across sessions (lowest score replaced
  * when full — download to keep), and `vod` holds a scanned file's clips for
- * this visit only (purged on the next page load; the file is on disk).
+ * the visit that cut them only (the file is on disk; see visit.ts).
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { CLIP_BLOBS_STORE, CLIPS_STORE, readwrite, tx } from "./db";
@@ -15,7 +15,8 @@ export type ClipBucket = "session" | "history" | "vod";
 
 export type ClipSource =
 	| { kind: "live"; sessionKey: number }
-	| { kind: "vod"; name: string };
+	/** `visit`: the page load that cut it (see visit.ts) */
+	| { kind: "vod"; name: string; visit: string };
 
 export interface ScannerClip {
 	id: number;
@@ -119,8 +120,10 @@ export async function rollSessionClipsIntoHistory(): Promise<number> {
 	return evicted;
 }
 
-/** Drops every VoD clip (a new visit starts without them) or one file's. */
-export function deleteVodClips(name?: string): Promise<void> {
+/** Drops the VoD clips `drop` picks. */
+export function deleteVodClips(
+	drop: (clip: ScannerClip) => boolean,
+): Promise<void> {
 	return readwrite([CLIPS_STORE, CLIP_BLOBS_STORE], (transaction) => {
 		const clips = transaction.objectStore(CLIPS_STORE);
 		const blobs = transaction.objectStore(CLIP_BLOBS_STORE);
@@ -128,11 +131,7 @@ export function deleteVodClips(name?: string): Promise<void> {
 		req.onsuccess = () => {
 			const cursor = req.result;
 			if (!cursor) return;
-			const clip = cursor.value as ScannerClip;
-			if (
-				name === undefined ||
-				(clip.source.kind === "vod" && clip.source.name === name)
-			) {
+			if (drop(cursor.value as ScannerClip)) {
 				blobs.delete(cursor.primaryKey);
 				cursor.delete();
 			}

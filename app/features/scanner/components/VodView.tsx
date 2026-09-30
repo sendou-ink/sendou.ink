@@ -38,6 +38,7 @@ import { sendouUpload } from "./sendou-upload";
 import type { ScanEvent } from "./session-data";
 import { useDebug } from "./use-debug";
 import styles from "./VodView.module.css";
+import { isThisVisitsVodClip } from "./visit";
 import {
 	startVodScan,
 	useVodScan,
@@ -205,14 +206,12 @@ function VodSessionView({
 	const [, setParams] = useSearchParamsTyped(scannerSearchParams);
 	const clips = useClips();
 	const user = useUser();
-	const vodClips = clips.filter(
-		(clip) => clip.source.kind === "vod" && clip.source.name === name,
-	);
+	const vodClips = clips.filter((clip) => isThisVisitsVodClip(clip, name));
 	const upload = running ? null : sendouUpload(events);
 
 	const remove = async () => {
 		await deleteVod(name);
-		await deleteVodClips(name);
+		await deleteVodClips((clip) => isThisVisitsVodClip(clip, name));
 		await Promise.all([refreshVods(), refreshClips()]);
 		setParams({ view: "home" });
 	};

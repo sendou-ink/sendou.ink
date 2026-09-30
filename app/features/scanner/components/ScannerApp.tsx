@@ -9,13 +9,15 @@ import { useEffect } from "react";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { scannerSearchParams } from "../scanner-search-params";
-import { deleteVodClips, rollSessionClipsIntoHistory } from "../store/clips";
 import { ClipsView } from "./ClipsView";
-import { refreshClips } from "./clips-feed";
 import { FixturesPage } from "./FixturesPage";
 import { LandingView } from "./LandingView";
 import { LiveView } from "./LiveView";
-import { retryUploadsWhileOpen, useLiveSession } from "./live-session";
+import {
+	retryUploadsWhileOpen,
+	settleClipStore,
+	useLiveSession,
+} from "./live-session";
 import { MontageView } from "./MontageView";
 import { cancelMontageScan } from "./montage";
 import { PastSessionView } from "./PastSessionView";
@@ -25,11 +27,7 @@ import { setUploadUser } from "./upload";
 import { VodView } from "./VodView";
 import { cancelVodScan } from "./vod-scan";
 
-/**
- * Once per page load: a file's clips live for one visit (the file is on
- * disk), and session clips left by a capture that never reached Stop (a
- * reload, a closed tab) belong to the history now, not the next capture.
- */
+/** settleClipStore() runs once per page load, not per mount */
 let storeSettled = false;
 
 export function ScannerApp() {
@@ -47,10 +45,7 @@ export function ScannerApp() {
 	useEffect(() => {
 		if (storeSettled) return;
 		storeSettled = true;
-		void Promise.allSettled([
-			deleteVodClips(),
-			rollSessionClipsIntoHistory(),
-		]).then(() => refreshClips());
+		settleClipStore();
 	}, []);
 
 	// a file scan has no Cancel button: leaving the page is how it is stopped

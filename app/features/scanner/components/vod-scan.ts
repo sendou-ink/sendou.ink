@@ -45,6 +45,7 @@ import type { FixtureData } from "./fixture-export";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
 import { thumbnailFromBlob } from "./thumbnail";
+import { holdVisitLock, isThisVisitsVodClip, VISIT_ID } from "./visit";
 import { refreshVods } from "./vods-feed";
 
 /** seek-fallback stride while the worker reports activity */
@@ -522,7 +523,11 @@ async function cutClips(
 		})
 		.sort((a, b) => b.window.score - a.window.score)
 		.slice(0, MAX_VOD_CLIPS);
-	await deleteVodClips(file.name).catch(() => {});
+	// held before the first save, so another tab's page load never takes these for abandoned
+	await holdVisitLock();
+	await deleteVodClips((clip) => isThisVisitsVodClip(clip, file.name)).catch(
+		() => {},
+	);
 	if (windows.length === 0) {
 		await refreshClips();
 		return;
@@ -541,7 +546,7 @@ async function cutClips(
 				{
 					createdAt: Date.now(),
 					bucket: "vod",
-					source: { kind: "vod", name: file.name },
+					source: { kind: "vod", name: file.name, visit: VISIT_ID },
 					start: clip.start,
 					end: clip.end,
 					t: window.t,

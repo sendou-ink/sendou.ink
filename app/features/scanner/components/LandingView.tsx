@@ -29,6 +29,7 @@ import { getLiveSession, startCapture, useLiveSession } from "./live-session";
 import { SettingsPopover } from "./SettingsPopover";
 import { SourceSelect } from "./SourceSelect";
 import { useDebug } from "./use-debug";
+import { isThisVisitsVodClip } from "./visit";
 import { startVodScan } from "./vod-scan";
 import { useVods } from "./vods-feed";
 
@@ -264,9 +265,7 @@ function sessionRows(
 		kind: "vod",
 		name: vod.name,
 		savedAt: vod.savedAt,
-		clips: clips.filter(
-			(clip) => clip.source.kind === "vod" && clip.source.name === vod.name,
-		).length,
+		clips: clips.filter((clip) => isThisVisitsVodClip(clip, vod.name)).length,
 	}));
 	return [...liveRows, ...vodRows].sort((a, b) => rowTime(b) - rowTime(a));
 }

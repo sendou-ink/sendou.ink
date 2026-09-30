@@ -65,7 +65,10 @@ describe("rollSessionClipsIntoHistory()", () => {
 
 	test("leaves a file's clips out of history", async () => {
 		await saveClip(
-			clip({ bucket: "vod", source: { kind: "vod", name: "a.mkv" } }),
+			clip({
+				bucket: "vod",
+				source: { kind: "vod", name: "a.mkv", visit: "v" },
+			}),
 			BLOB,
 		);
 
@@ -78,25 +81,33 @@ describe("rollSessionClipsIntoHistory()", () => {
 describe("deleteVodClips()", () => {
 	beforeEach(clearAll);
 
-	test("drops one file's clips, or every file's", async () => {
+	test("drops the clips it picks", async () => {
 		await saveClip(
-			clip({ bucket: "vod", source: { kind: "vod", name: "a.mkv" } }),
+			clip({
+				bucket: "vod",
+				source: { kind: "vod", name: "a.mkv", visit: "v" },
+			}),
 			BLOB,
 		);
 		await saveClip(
-			clip({ bucket: "vod", source: { kind: "vod", name: "b.mkv" } }),
+			clip({
+				bucket: "vod",
+				source: { kind: "vod", name: "b.mkv", visit: "v" },
+			}),
 			BLOB,
 		);
 		await saveClip(clip({ bucket: "history" }), BLOB);
 
-		await deleteVodClips("a.mkv");
+		await deleteVodClips(
+			(c) => c.source.kind === "vod" && c.source.name === "a.mkv",
+		);
 		expect(
 			(await listClips())
 				.map((c) => c.bucket)
 				.toSorted((a, b) => a.localeCompare(b)),
 		).toEqual(["history", "vod"]);
 
-		await deleteVodClips();
+		await deleteVodClips(() => true);
 		expect((await listClips()).map((c) => c.bucket)).toEqual(["history"]);
 	});
 });

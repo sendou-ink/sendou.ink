@@ -63,6 +63,7 @@ import {
 import { audioDeviceIdOf, readSettings } from "./settings";
 import { thumbnailFromBlob } from "./thumbnail";
 import { sendLive, uploadEnabled } from "./upload";
+import { deleteClosedVisitsVodClips } from "./visit";
 
 const SAMPLE_FPS = 2;
 
@@ -340,6 +341,9 @@ function endCapture(next: LiveSnapshot): void {
 	// the ring outlives the capture until its last clips are cut
 	const endingRing = ring;
 	ring = null;
+	// and so does the lock: a capture another tab started meanwhile would have its first clips rolled
+	const releaseLock = releaseCaptureLock;
+	releaseCaptureLock = null;
 	release();
 	if (stream) stopTracks(stream);
 	set(next);
@@ -349,10 +353,36 @@ function endCapture(next: LiveSnapshot): void {
 	captureEnding = cutRemainingClips(endingRing)
 		.then(() => rollSessionClipsIntoHistory())
 		.then(() => refreshClips())
-		.catch(() => {});
+		.catch(() => {})
+		.finally(() => releaseLock?.());
 	void trimEvents()
 		.then(() => refreshFeed(0))
 		.catch(() => {});
+}
+
+/**
+ * Once per page load: drops the VoD clips of visits no tab has open any more,
+ * and rolls session clips left by a capture that never reached Stop (a
+ * reload, a closed tab) into history — unless a capture is running in
+ * another tab, whose session they are. A capture started meanwhile waits.
+ */
+export function settleClipStore(): void {
+	captureEnding = captureEnding
+		.then(() =>
+			Promise.allSettled([
+				deleteClosedVisitsVodClips(),
+				rollAbandonedSessionClips(),
+			]),
+		)
+		.then(() => refreshClips());
+}
+
+function rollAbandonedSessionClips(): Promise<unknown> {
+	if (!navigator.locks) return rollSessionClipsIntoHistory();
+	// holding the lock keeps another tab from starting a capture mid-roll
+	return navigator.locks.request(CAPTURE_LOCK, { ifAvailable: true }, (lock) =>
+		lock ? rollSessionClipsIntoHistory() : undefined,
+	);
 }
 
 /**
