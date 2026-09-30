@@ -115,7 +115,7 @@ function isBackgroundAlpha(state: ModelState) {
 	);
 }
 
-function toColor3(color: RawColor): Color3 {
+export function toColor3(color: RawColor): Color3 {
 	return Array.isArray(color)
 		? [color[0], color[1], color[2]]
 		: [color.r, color.g, color.b];

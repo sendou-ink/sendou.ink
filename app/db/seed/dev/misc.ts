@@ -23,6 +23,19 @@ import type { SeededTournaments } from "./tournaments";
 import type { SeededUsers } from "./users";
 
 const NZAP_PLAYER_SPL_ID = "qx6imlx72tfeqrhqfnmm";
+const NZAP_XP_TROPHY_PLACEMENTS: Array<{
+	weaponSplId: MainWeaponId;
+	power: number;
+	region: Tables["XRankPlacement"]["region"];
+	mode: ModeShort;
+	month: number;
+}> = [
+	{ weaponSplId: 40, power: 3621.4, region: "WEST", mode: "SZ", month: 2 },
+	{ weaponSplId: 40, power: 3544.9, region: "JPN", mode: "TC", month: 3 },
+	{ weaponSplId: 2030, power: 3238.2, region: "WEST", mode: "RM", month: 4 },
+	{ weaponSplId: 1010, power: 3071.6, region: "JPN", mode: "CB", month: 5 },
+	{ weaponSplId: 6000, power: 4012.8, region: "WEST", mode: "SZ", month: 6 },
+];
 const FRIEND_COUNT = 8;
 /** Friends of the admin, none of them a teammate, so that friends-only surfaces have something to show. */
 const ADMIN_FRIEND_COUNT = 3;
@@ -77,15 +90,25 @@ async function seedXRankPlacements(users: SeededUsers) {
 					? unaffiliatedTopPlayerId
 					: undefined;
 
+		await XRankPlacementFactory.create({
+			...placement,
+			mode: placement.mode as ModeShort,
+			region: placement.region as Tables["XRankPlacement"]["region"],
+			weaponSplId: placement.weaponSplId as MainWeaponId,
+			playerUserId,
+		});
+	}
+
+	for (const [i, placement] of NZAP_XP_TROPHY_PLACEMENTS.entries()) {
 		await XRankPlacementFactory.create(
 			{
 				...placement,
-				mode: placement.mode as ModeShort,
-				region: placement.region as Tables["XRankPlacement"]["region"],
-				weaponSplId: placement.weaponSplId as MainWeaponId,
-				playerUserId,
+				year: 2024,
+				rank: 10 + i,
+				playerSplId: NZAP_PLAYER_SPL_ID,
+				playerUserId: users.nzapId,
 			},
-			{ refreshPeakXp: i === placements.length - 1 },
+			{ refreshPeakXp: i === NZAP_XP_TROPHY_PLACEMENTS.length - 1 },
 		);
 	}
 }
@@ -96,10 +119,10 @@ async function seedArts(users: SeededUsers) {
 	for (const authorId of [users.nzapId, ...users.artistIds]) {
 		const artCount = faker.helpers.arrayElement([1, 2, 3, 3, 4]);
 
-		for (let i = 0; i < artCount; i++) {
+		for (let i = 0; i < artCount && nextUrl < SEED_ART_URLS.length; i++) {
 			await ArtFactory.create({
 				authorId,
-				url: getArtFilename(nextUrl++ % SEED_ART_URLS.length),
+				url: getArtFilename(nextUrl++),
 				description:
 					faker.number.float(1) < 0.5 ? faker.lorem.paragraph() : null,
 				linkedUsers:

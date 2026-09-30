@@ -140,6 +140,10 @@ export default [
 		"features/trophies/routes/trophies.$id.tournaments.ts",
 	),
 	route(
+		"/trophies/:id/placements/:userId",
+		"features/trophies/routes/trophies.$id.placements.$userId.ts",
+	),
+	route(
 		"/trophies/:id/backfill/:seriesId",
 		"features/trophies/routes/trophies.$id.backfill.$seriesId.ts",
 	),

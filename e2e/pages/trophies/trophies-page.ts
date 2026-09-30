@@ -13,6 +13,7 @@ export class TrophiesPage {
 			searchInput: page.getByRole("textbox"),
 			// the "Add new" menu links to /trophies/new from every page
 			trophyLinks: page.locator("main").locator("a[href^='/trophies/']"),
+			xpSection: page.getByTestId("xp-trophies"),
 		};
 	}
 
@@ -38,6 +39,13 @@ export class TrophiesPage {
 		return this.tile(trophyId).getByTestId("trophy-corner-pill");
 	}
 
+	async openXpTrophy(name: string) {
+		await this.locators.xpSection
+			.getByRole("link", { name, exact: true })
+			.click();
+		return new TrophyDetailsPage(this.page);
+	}
+
 	async openFirst() {
 		await this.locators.trophyLinks.first().click();
 		return new TrophyDetailsPage(this.page);
@@ -59,6 +67,7 @@ class TrophyDetailsPage {
 		this.locators = {
 			ownersHeading: page.getByText("Owners", { exact: true }),
 			ownerLinks: page.locator("main").locator("a[href^='/u/']"),
+			weaponCounts: page.getByTestId("trophy-weapons").getByRole("listitem"),
 		};
 	}
 

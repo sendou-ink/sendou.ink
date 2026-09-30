@@ -1,30 +1,61 @@
 import { addWeeks } from "date-fns";
+import type { RawPicoCAD2File } from "picocad2-web";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Role } from "~/modules/permissions/types";
 import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	TROPHY_UPCOMING_HIGHLIGHT_WEEKS,
-	XP_TROPHY_CODE_PREFIX,
-} from "./trophies-constants";
+import * as XpTrophy from "./core/XpTrophy";
+import { TROPHY_UPCOMING_HIGHLIGHT_WEEKS } from "./trophies-constants";
 
 const TERMS_AGREED_SESSION_STORAGE_KEY = "trophyTermsAgreed";
 
 const DECOMPRESSED_MODEL_CACHE_MAX_CHARS = 16 * 1024 * 1024;
 
-type SpecialTrophyKind = { type: "xp"; value: number };
+let xpTrophyMaster: RawPicoCAD2File | null = null;
+let xpTrophyMasterLoading: Promise<void> | null = null;
+const xpTrophyMasterListeners = new Set<() => void>();
+const xpTrophyStates = new Map<string, string>();
 
-export function parseSpecialTrophyCode(
-	code: string | null | undefined,
-): SpecialTrophyKind | null {
-	if (!code) return null;
+// Downloads and parses the master file containing ALL XP trophies to create a model file for the requested variant.
+// We get an overall smaller file size and better performance with this.
+export function useXpTrophyState(variant: XpTrophy.Variant | null) {
+	const master = useSyncExternalStore(
+		variant ? subscribeToXpTrophyMaster : subscribeToNothing,
+		() => xpTrophyMaster,
+		() => null,
+	);
+	if (!variant || !master) return null;
 
-	if (code.startsWith(XP_TROPHY_CODE_PREFIX)) {
-		const value = Number(code.slice(XP_TROPHY_CODE_PREFIX.length));
-		if (Number.isFinite(value)) return { type: "xp", value };
+	const code = XpTrophy.code(variant);
+	const cached = xpTrophyStates.get(code);
+	if (cached) return cached;
+
+	const state = JSON.stringify(XpTrophy.variantState(master, variant));
+	xpTrophyStates.set(code, state);
+	return state;
+}
+
+function subscribeToXpTrophyMaster(listener: () => void) {
+	xpTrophyMasterListeners.add(listener);
+
+	if (!xpTrophyMasterLoading) {
+		xpTrophyMasterLoading = import("./data/xp-trophies-master.txt?raw")
+			.then(({ default: raw }) => {
+				xpTrophyMaster = JSON.parse(raw);
+				for (const notify of xpTrophyMasterListeners) notify();
+			})
+			.catch(() => {
+				xpTrophyMasterLoading = null;
+			});
 	}
 
-	return null;
+	return () => {
+		xpTrophyMasterListeners.delete(listener);
+	};
+}
+
+function subscribeToNothing() {
+	return () => {};
 }
 
 export function canReviewTrophies(user?: { roles: Array<Role> } | null) {

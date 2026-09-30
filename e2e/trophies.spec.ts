@@ -1,5 +1,5 @@
 import { addDays, subDays } from "date-fns";
-import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import { TROPHY_APPROVALS_REQUIRED } from "~/features/trophies/trophies-constants";
 import { decompressFromBase64 } from "~/utils/compression";
@@ -268,6 +268,60 @@ test.describe("Trophies", () => {
 		await isNotVisible(details.tournamentRow(skipped.id));
 		await expect(details.owner("N-ZAP")).toBeVisible();
 		await isNotVisible(details.owner("Sendou"));
+	});
+
+	test("awards X Power trophies per weapon category", async ({
+		page,
+		factories,
+	}) => {
+		const SPLATTERSHOT = 40;
+		const SPLASH_O_MATIC = 20;
+		const SPLAT_CHARGER = 2010;
+		for (const [weaponSplId, power, region] of [
+			[SPLATTERSHOT, 3550, "WEST"],
+			[SPLATTERSHOT, 3510, "JPN"],
+			[SPLASH_O_MATIC, 3120, "WEST"],
+			[SPLAT_CHARGER, 3050, "WEST"],
+		] as const) {
+			await factories.XRankPlacementFactory.create({
+				playerUserId: NZAP_TEST_ID,
+				weaponSplId,
+				power,
+				region,
+			});
+		}
+		await factories.TrophyFactory.createXpTrophies();
+		await factories.UserFactory.grant(NZAP_TEST_ID, {
+			widgets: [{ id: "trophies-owned" }],
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const trophies = new TrophiesPage(page);
+		await trophies.goto();
+		const details = await trophies.openXpTrophy("3500 X Power Shooters");
+
+		await expect(details.owner("N-ZAP")).toBeVisible();
+
+		// the Splash-o-matic placement fell short of 3500
+		await expect(details.locators.weaponCounts).toHaveCount(1);
+
+		const userPage = new UserPage(page);
+		await userPage.goto(NZAP_TEST_DISCORD_ID);
+		await expect(
+			userPage.locators.trophyDisplay.getByRole("button"),
+		).toHaveCount(2);
+		
+		// reached in both divisions, Takoroka is the one shown
+		await expect(
+			userPage.trophyDivision("3500 X Power Shooters", "Takoroka"),
+		).toBeVisible();
+		await expect(
+			userPage.trophyDivision("3000 X Power Chargers", "Tentatek"),
+		).toBeVisible();
+
+		await userPage.openTrophy("3500 X Power Shooters");
+		await expect(userPage.locators.trophyPlacementRows).toHaveCount(3);
 	});
 });
 

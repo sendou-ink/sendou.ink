@@ -3,10 +3,13 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
+import * as XpTrophy from "./core/XpTrophy";
 import * as TrophyRepository from "./TrophyRepository.server";
 import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 
@@ -506,5 +509,192 @@ describe("backfill", () => {
 			[],
 		);
 		expect(await ownersOf(trophy.id)).toEqual([]);
+	});
+});
+
+describe("X Power trophies", () => {
+	const SPLATTERSHOT = 40;
+	const SPLASH_O_MATIC = 20;
+	const SPLAT_CHARGER = 2010;
+
+	const users = UserFactory.pool();
+	const playerId = () => users.id(1);
+	const otherPlayerId = () => users.id(2);
+
+	let trophyIdByCode: Map<string, number>;
+
+	beforeEach(async () => {
+		await users.create(2);
+		trophyIdByCode = new Map(
+			(await TrophyFactory.createXpTrophies()).map((trophy) => [
+				trophy.code,
+				trophy.id,
+			]),
+		);
+	});
+
+	const place = (args: {
+		userId?: number;
+		weaponSplId: MainWeaponId;
+		power: number;
+		region?: "WEST" | "JPN";
+	}) =>
+		XRankPlacementFactory.create({
+			playerUserId: args.userId,
+			playerSplId: args.userId ? undefined : "unlinked-player",
+			weaponSplId: args.weaponSplId,
+			power: args.power,
+			...(args.region ? { region: args.region } : {}),
+		});
+
+	const ownedCodes = async (userId: number) =>
+		(
+			await db
+				.selectFrom("SpecialTrophyOwner")
+				.innerJoin("Trophy", "Trophy.id", "SpecialTrophyOwner.trophyId")
+				.select("Trophy.code")
+				.where("SpecialTrophyOwner.userId", "=", userId)
+				.orderBy("Trophy.code", "asc")
+				.execute()
+		).map((row) => row.code);
+
+	describe("syncSpecialTrophies", () => {
+		test("awards the highest milestone reached per weapon category", async () => {
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLATTERSHOT,
+				power: 3100,
+			});
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLASH_O_MATIC,
+				power: 3520,
+			});
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLAT_CHARGER,
+				power: 3210,
+			});
+
+			await TrophyRepository.syncSpecialTrophies();
+
+			expect(await ownedCodes(playerId())).toEqual([
+				"xp-chargers-3200",
+				"xp-shooters-3500",
+			]);
+		});
+
+		test("awards nothing below the lowest milestone", async () => {
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLATTERSHOT,
+				power: 2999,
+			});
+
+			await TrophyRepository.syncSpecialTrophies();
+
+			expect(await ownedCodes(playerId())).toEqual([]);
+		});
+
+		test("awards nothing for placements of players no user linked", async () => {
+			await place({ weaponSplId: SPLATTERSHOT, power: 3600 });
+
+			await TrophyRepository.syncSpecialTrophies();
+
+			expect(
+				await db.selectFrom("SpecialTrophyOwner").select("userId").execute(),
+			).toEqual([]);
+		});
+
+		test("moves an owner up when they reach a higher milestone", async () => {
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLATTERSHOT,
+				power: 3100,
+			});
+			await TrophyRepository.syncSpecialTrophies();
+
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLATTERSHOT,
+				power: 3300,
+			});
+			await TrophyRepository.syncSpecialTrophies();
+
+			expect(await ownedCodes(playerId())).toEqual(["xp-shooters-3200"]);
+		});
+	});
+
+	describe("findByOwnerUserId", () => {
+		test("shows the division each X Power trophy was won in, Takoroka over Tentatek", async () => {
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLATTERSHOT,
+				power: 3620,
+				region: "WEST",
+			});
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLASH_O_MATIC,
+				power: 3540,
+				region: "JPN",
+			});
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLAT_CHARGER,
+				power: 3050,
+				region: "WEST",
+			});
+			await TrophyRepository.syncSpecialTrophies();
+
+			const trophies = await TrophyRepository.findByOwnerUserId(playerId());
+
+			expect(
+				trophies
+					.map((trophy) => ({ code: trophy.code, division: trophy.division }))
+					.toSorted((a, b) => (a.code ?? "").localeCompare(b.code ?? "")),
+			).toEqual([
+				{ code: "xp-chargers-3000", division: "WEST" },
+				{ code: "xp-shooters-3500", division: "JPN" },
+			]);
+		});
+	});
+
+	describe("findXpWeaponCountsById", () => {
+		test("counts the owners who reached the milestone with each weapon", async () => {
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLATTERSHOT,
+				power: 3550,
+			});
+			await place({
+				userId: playerId(),
+				weaponSplId: SPLASH_O_MATIC,
+				power: 3510,
+			});
+			await place({
+				userId: otherPlayerId(),
+				weaponSplId: SPLATTERSHOT,
+				power: 3600,
+			});
+			// below the milestone, so not what got them the trophy
+			await place({
+				userId: otherPlayerId(),
+				weaponSplId: SPLASH_O_MATIC,
+				power: 3100,
+			});
+			await TrophyRepository.syncSpecialTrophies();
+
+			const counts = await TrophyRepository.findXpWeaponCountsById({
+				trophyId: trophyIdByCode.get("xp-shooters-3500")!,
+				weaponIds: XpTrophy.categoryWeaponIds("shooters"),
+				milestone: 3500,
+			});
+
+			expect(counts).toEqual([
+				{ weaponSplId: SPLATTERSHOT, ownerCount: 2 },
+				{ weaponSplId: SPLASH_O_MATIC, ownerCount: 1 },
+			]);
+		});
 	});
 });

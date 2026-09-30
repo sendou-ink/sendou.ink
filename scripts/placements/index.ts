@@ -2,6 +2,7 @@ import * as v from "valibot";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { invariant } from "~/utils/invariant";
@@ -53,6 +54,7 @@ async function main() {
 	await XRankPlacementRepository.insertMany(placements);
 	await XRankPlacementRepository.refreshAllPeakXp();
 	await BadgeRepository.syncXPBadges();
+	await TrophyRepository.syncSpecialTrophies();
 	await BuildRepository.recalculateAllSortValues();
 	await XRankPlacementRepository.refreshTenStarWeapons();
 	logger.info(`done reading in ${placements.length} placements`);

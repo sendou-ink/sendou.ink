@@ -25,6 +25,10 @@ export class UserPage {
 			vodsTab: page.locator('[data-testid="user-vods-tab"]:visible'),
 			resultsTab: page.locator('[data-testid="user-results-tab"]:visible'),
 			seasonsTournamentResult: page.getByTestId("seasons-tournament-result"),
+			trophyDisplay: page.getByTestId("trophy-display"),
+			trophyPlacementRows: page
+				.getByRole("dialog")
+				.getByTestId("trophy-placement"),
 		};
 	}
 
@@ -35,6 +39,20 @@ export class UserPage {
 	/** Navigates with any of the identifiers the page accepts: user id, Discord id or custom URL. */
 	async gotoWithIdentifier(identifier: string | number) {
 		await navigate({ page: this.page, url: `/u/${identifier}` });
+	}
+
+	openTrophy(name: string) {
+		return this.locators.trophyDisplay
+			.getByRole("button", { name, exact: true })
+			.click();
+	}
+
+	trophyDivision(trophyName: string, divisionName: string) {
+		return this.locators.trophyDisplay
+			.getByRole("button", { name: trophyName, exact: true })
+			.getByTestId("trophy-corner-pill")
+			.getByAltText(divisionName)
+			.filter({ visible: true });
 	}
 
 	badgeImage(displayName: string) {

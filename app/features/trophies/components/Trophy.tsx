@@ -18,7 +18,8 @@ import { TierPill } from "~/components/TierPill";
 import { useTheme } from "~/features/theme/core/provider";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import { decompressTrophyModel } from "../trophies-utils";
+import * as XpTrophy from "../core/XpTrophy";
+import { decompressTrophyModel, useXpTrophyState } from "../trophies-utils";
 import style from "./Trophy.module.css";
 
 type TrophyCtxValue =
@@ -88,6 +89,7 @@ export function TrophyGrid({
 
 export function Trophy({
 	model,
+	code,
 	preview,
 	tier,
 	tentativeTier,
@@ -101,6 +103,7 @@ export function Trophy({
 	showAnimationProgress,
 }: {
 	model: string;
+	code?: string | null;
 	preview?: boolean;
 	tier?: number | null;
 	tentativeTier?: number | null;
@@ -138,7 +141,10 @@ export function Trophy({
 	}
 
 	const swapping = activeModel !== model;
-	const modelState = decompressTrophyModel(activeModel);
+	const xpVariant = XpTrophy.parseCode(code);
+	const xpState = useXpTrophyState(xpVariant);
+	const isLoadingXpState = xpVariant !== null && xpState === null;
+	const modelState = xpVariant ? xpState : decompressTrophyModel(activeModel);
 	const siteColorScheme = useTrophyColorScheme();
 	const colorScheme = forcedColorScheme ?? siteColorScheme;
 
@@ -276,7 +282,7 @@ export function Trophy({
 		</div>
 	) : null;
 
-	if (error || modelState === null) {
+	if (error || (modelState === null && !isLoadingXpState)) {
 		return (
 			<div className={style.container} style={containerStyle}>
 				<div className={clsx(style.trophy, style.error)}>
@@ -290,7 +296,10 @@ export function Trophy({
 
 	return (
 		<div className={style.container} style={containerStyle} aria-busy={!drawn}>
-			{deferred || isLoadingSharedContext || !RENDERS_MODELS ? (
+			{deferred ||
+			isLoadingSharedContext ||
+			isLoadingXpState ||
+			!RENDERS_MODELS ? (
 				<div className={style.trophy} />
 			) : (
 				<canvas

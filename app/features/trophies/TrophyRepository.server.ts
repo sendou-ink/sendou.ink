@@ -9,6 +9,7 @@ import {
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -20,20 +21,14 @@ import {
 	commonUserSelect,
 	jsonArrayFrom,
 	jsonObjectFrom,
-	peakXpOverallSql,
 	tournamentLogoWithDefault,
 	tournamentTeamCount,
 } from "~/utils/kysely.server";
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
 import { sortTrophiesByFavorites } from "../user-page/core/trophy-sorting.server";
-import {
-	TROPHY_APPROVALS_REQUIRED,
-	XP_TROPHY_CODE_PREFIX,
-} from "./trophies-constants";
-import {
-	hasUpcomingTournamentSoon,
-	parseSpecialTrophyCode,
-} from "./trophies-utils";
+import * as XpTrophy from "./core/XpTrophy";
+import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
+import { hasUpcomingTournamentSoon } from "./trophies-utils";
 
 type TrophyRecentTournament = {
 	tier: number | null;
@@ -42,10 +37,12 @@ type TrophyRecentTournament = {
 	startTime: number | null;
 };
 
+/** Tournament trophies, special ones are listed by their own functions. */
 export async function all() {
 	const rows = await db
 		.selectFrom("Trophy")
 		.select((eb) => ["id", "name", "model", withRecentTournaments(eb)])
+		.where("code", "is", null)
 		.execute();
 
 	return sortByEffectiveTier(rows.map(addEffectiveTier));
@@ -239,9 +236,35 @@ async function findOwnedTrophies(userId: number) {
 		.where("SpecialTrophyOwner.userId", "=", userId)
 		.execute();
 
+	const xpPlacements = specialRows.some((row) => XpTrophy.parseCode(row.code))
+		? await db
+				.selectFrom("XRankPlacement")
+				.innerJoin(
+					"SplatoonPlayer",
+					"SplatoonPlayer.id",
+					"XRankPlacement.playerId",
+				)
+				.select([
+					"XRankPlacement.weaponSplId",
+					"XRankPlacement.power",
+					"XRankPlacement.region",
+				])
+				.where("SplatoonPlayer.userId", "=", userId)
+				.execute()
+		: [];
+
 	return [
-		...tournamentRows,
-		...specialRows.map((row) => ({ ...row, count: 1, tier: null })),
+		...tournamentRows.map((row) => ({ ...row, division: null })),
+		...specialRows.map((row) => {
+			const xpVariant = XpTrophy.parseCode(row.code);
+
+			return {
+				...row,
+				count: 1,
+				tier: null,
+				division: xpVariant ? XpTrophy.division(xpPlacements, xpVariant) : null,
+			};
+		}),
 	];
 }
 
@@ -496,6 +519,53 @@ export async function existsByName(args: {
 	return Boolean(pending);
 }
 
+export function findAllXp() {
+	return db
+		.selectFrom("Trophy")
+		.select(["Trophy.id", "Trophy.name", "Trophy.model", "Trophy.code"])
+		.where("Trophy.code", "like", XpTrophy.CODE_LIKE_PATTERN)
+		.execute();
+}
+
+export async function findCodeById(trophyId: number) {
+	const row = await db
+		.selectFrom("Trophy")
+		.select("Trophy.code")
+		.where("Trophy.id", "=", trophyId)
+		.executeTakeFirst();
+
+	return row?.code ?? null;
+}
+
+export function findXpWeaponCountsById({
+	trophyId,
+	weaponIds,
+	milestone,
+}: {
+	trophyId: number;
+	weaponIds: readonly MainWeaponId[];
+	milestone: number;
+}) {
+	return db
+		.selectFrom("XRankPlacement")
+		.innerJoin("SplatoonPlayer", "SplatoonPlayer.id", "XRankPlacement.playerId")
+		.innerJoin("SpecialTrophyOwner", (join) =>
+			join
+				.onRef("SpecialTrophyOwner.userId", "=", "SplatoonPlayer.userId")
+				.on("SpecialTrophyOwner.trophyId", "=", trophyId),
+		)
+		.select(({ fn }) => [
+			"XRankPlacement.weaponSplId",
+			fn.count<number>("SplatoonPlayer.userId").distinct().as("ownerCount"),
+		])
+		.where("XRankPlacement.weaponSplId", "in", [...weaponIds])
+		.where("XRankPlacement.power", ">=", milestone)
+		.groupBy("XRankPlacement.weaponSplId")
+		.orderBy("ownerCount", "desc")
+		.orderBy("XRankPlacement.weaponSplId", "asc")
+		.execute();
+}
+
 export async function findAllForEditing() {
 	const rows = await db
 		.selectFrom("Trophy")
@@ -618,52 +688,49 @@ export function backfill({
 	});
 }
 
-/** Recomputes special trophy (XP) ownership; still-eligible owners keep their `createdAt`. */
+/**
+ * Recomputes X Power trophy ownership from the Top 500 placements of linked players (see
+ * {@link XpTrophy.awards}). Still-eligible owners keep their `createdAt`.
+ */
 export function syncSpecialTrophies() {
 	return db.transaction().execute(async (trx) => {
-		await syncXpTrophyOwners(trx);
-	});
-}
-
-async function syncXpTrophyOwners(trx: Transaction<DB>) {
-	const xpTrophies = (
-		await trx
+		const trophies = await trx
 			.selectFrom("Trophy")
-			.select(["id", "code"])
-			.where("code", "like", `${XP_TROPHY_CODE_PREFIX}%`)
-			.execute()
-	).flatMap((trophy) => {
-		const parsed = parseSpecialTrophyCode(trophy.code);
-		return parsed?.type === "xp"
-			? [{ id: trophy.id, value: parsed.value }]
-			: [];
+			.select(["Trophy.id", "Trophy.code"])
+			.where("Trophy.code", "like", XpTrophy.CODE_LIKE_PATTERN)
+			.execute();
+		if (trophies.length === 0) return;
+
+		const placements = await trx
+			.selectFrom("XRankPlacement")
+			.innerJoin(
+				"SplatoonPlayer",
+				"SplatoonPlayer.id",
+				"XRankPlacement.playerId",
+			)
+			.select(({ fn }) => [
+				"SplatoonPlayer.userId",
+				"XRankPlacement.weaponSplId",
+				fn.max<number>("XRankPlacement.power").as("power"),
+			])
+			.where("SplatoonPlayer.userId", "is not", null)
+			.groupBy(["SplatoonPlayer.userId", "XRankPlacement.weaponSplId"])
+			.$narrowType<{ userId: NotNull }>()
+			.execute();
+
+		const ownerIdsByCode = R.mapValues(
+			R.groupBy(XpTrophy.awards(placements), (award) => award.code),
+			(awards) => awards.map((award) => award.userId),
+		);
+
+		for (const trophy of trophies) {
+			await replaceSpecialTrophyOwners({
+				trx,
+				trophyId: trophy.id,
+				userIds: (trophy.code ? ownerIdsByCode[trophy.code] : undefined) ?? [],
+			});
+		}
 	});
-
-	if (xpTrophies.length === 0) return;
-
-	const byValueDesc = R.sortBy(xpTrophies, [(trophy) => trophy.value, "desc"]);
-
-	const userPeakXps = await trx
-		.selectFrom("SplatoonPlayer")
-		.select(["userId", peakXpOverallSql().as("peakXp")])
-		.where("userId", "is not", null)
-		.where("peakXp", "is not", null)
-		.$narrowType<{ userId: NotNull; peakXp: NotNull }>()
-		.execute();
-
-	const ownersByTrophyId = new Map<number, number[]>(
-		xpTrophies.map((trophy) => [trophy.id, []]),
-	);
-	for (const { userId, peakXp } of userPeakXps) {
-		const highestReached = byValueDesc.find((trophy) => peakXp >= trophy.value);
-		if (!highestReached) continue;
-
-		ownersByTrophyId.get(highestReached.id)?.push(userId);
-	}
-
-	for (const [trophyId, userIds] of ownersByTrophyId) {
-		await replaceSpecialTrophyOwners({ trx, trophyId, userIds });
-	}
 }
 
 async function replaceSpecialTrophyOwners({
@@ -682,6 +749,8 @@ async function replaceSpecialTrophyOwners({
 		deleteStale = deleteStale.where("userId", "not in", userIds);
 	}
 	await deleteStale.execute();
+
+	if (userIds.length === 0) return;
 
 	await trx
 		.insertInto("SpecialTrophyOwner")
