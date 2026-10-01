@@ -21,7 +21,7 @@ export function insert(
 				type: notification.type,
 				pictureUrl: notification.pictureUrl,
 				meta: notificationMeta(notification)
-					? JSON.stringify(notificationMeta(notification))
+					? notificationMeta(notification)
 					: null,
 			})
 			.returning("id")
@@ -155,7 +155,7 @@ export function upsertOwnSubscription(subscription: NotificationSubscription) {
 		.insertInto("NotificationUserSubscription")
 		.values({
 			userId: actorId(),
-			subscription: JSON.stringify(subscription),
+			subscription,
 		})
 		.onConflict((oc) =>
 			// an endpoint identifies one browser; a resubscribe or another user
@@ -165,7 +165,7 @@ export function upsertOwnSubscription(subscription: NotificationSubscription) {
 				.expression(sql`json_extract("subscription", '$.endpoint')`)
 				.doUpdateSet({
 					userId: actorId(),
-					subscription: JSON.stringify(subscription),
+					subscription,
 				}),
 		)
 		.execute();

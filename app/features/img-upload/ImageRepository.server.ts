@@ -43,6 +43,7 @@ const unvalidatedImagesBaseQuery = db
 				eb
 					.selectFrom("Team")
 					.select("Team.id")
+					.where("Team.deletedAt", "is", null)
 					.where((innerEb) =>
 						innerEb.or([
 							innerEb(

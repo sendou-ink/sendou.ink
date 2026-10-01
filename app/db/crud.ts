@@ -29,7 +29,8 @@ const UPDATED_AT = "updatedAt";
  * ops a table gets follow its keys: `findById`/`updateById`/`deleteById` need a single `id`
  * primary key, `findOneBy`/`upsert` a unique key, and views get no writes. Updates stamp
  * `updatedAt` themselves on tables that have one. Repositories re-export the ops they want to
- * expose: `export const { deleteById } = crud("Build")`.
+ * expose: `export const { deleteById } = crud("Build")`, or `.except(...)` columns the repository
+ * keeps consistent itself: `export const { updateById } = crud("Team").except("customUrl")`.
  */
 export function crud<T extends TableName>(table: T): CrudOps<T> {
 	// the ops are typed per table by CrudOps, the body is table agnostic
@@ -161,6 +162,7 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 			id: number,
 			values: Record<string, unknown>,
 			trx?: Transaction<DB>,
+			// xxx: why not stamped?
 		) => ops.update({ id }, values, trx).then((count) => count > 0),
 		delete: async (where: Record<string, unknown>, trx?: Transaction<DB>) => {
 			assertNotEmpty(where, "delete");
@@ -173,6 +175,44 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 		},
 		deleteById: (id: number, trx?: Transaction<DB>) =>
 			ops.delete({ id }, trx).then((count) => count > 0),
+		except: (...columns: string[]) => {
+			const assertNotWritten = (values: Record<string, unknown>) => {
+				const written = columns.filter(
+					(column) => values[column] !== undefined,
+				);
+				if (written.length > 0) {
+					throw new Error(
+						`crud("${table}") excepts ${written.join(", ")}, write it through the repository`,
+					);
+				}
+			};
+
+			return {
+				findById: ops.findById,
+				findOneBy: ops.findOneBy,
+				findManyBy: ops.findManyBy,
+				exists: ops.exists,
+				count: ops.count,
+				delete: ops.delete,
+				deleteById: ops.deleteById,
+				update: async (
+					where: Record<string, unknown>,
+					values: Record<string, unknown>,
+					trx?: Transaction<DB>,
+				) => {
+					assertNotWritten(values);
+					return ops.update(where, values, trx);
+				},
+				updateById: async (
+					id: number,
+					values: Record<string, unknown>,
+					trx?: Transaction<DB>,
+				) => {
+					assertNotWritten(values);
+					return ops.updateById(id, values, trx);
+				},
+			};
+		},
 	};
 
 	return ops as unknown as CrudOps<T>;
@@ -227,7 +267,30 @@ type ReadOps<T extends TableName> = {
 			}
 		: unknown);
 
-type WriteOps<T extends TableName> = {
+/** Updates and deletes, `V` being what an update may set. */
+type ChangeOps<T extends TableName, V> = {
+	/** Updates the rows matching `where`, returning how many there were. */
+	update(
+		where: NonEmptyFilter<T>,
+		values: V,
+		trx?: Transaction<DB>,
+	): Promise<number>;
+	/** Deletes the rows matching `where`, returning how many there were. */
+	delete(where: NonEmptyFilter<T>, trx?: Transaction<DB>): Promise<number>;
+} & (HasIdPrimaryKey<T> extends true
+	? {
+			/** Updates the row, returning whether it existed. With no values it only stamps `updatedAt`. */
+			updateById(
+				id: number,
+				values: V,
+				trx?: Transaction<DB>,
+			): Promise<boolean>;
+			/** Deletes the row, returning whether it existed. */
+			deleteById(id: number, trx?: Transaction<DB>): Promise<boolean>;
+		}
+	: unknown);
+
+type WriteOps<T extends TableName> = ChangeOps<T, UpdateValues<T>> & {
 	/** Inserts a row, returning its id when the table has one. */
 	insert(
 		values: Insertable<DB[T]>,
@@ -238,41 +301,30 @@ type WriteOps<T extends TableName> = {
 		values: Insertable<DB[T]>[],
 		trx?: Transaction<DB>,
 	): Promise<HasIdPrimaryKey<T> extends true ? { id: number }[] : undefined>;
-	/** Updates the rows matching `where`, returning how many there were. */
-	update(
-		where: NonEmptyFilter<T>,
-		values: UpdateValues<T>,
-		trx?: Transaction<DB>,
-	): Promise<number>;
-	/** Deletes the rows matching `where`, returning how many there were. */
-	delete(where: NonEmptyFilter<T>, trx?: Transaction<DB>): Promise<number>;
+	/**
+	 * The reads, updates and deletes without the given columns, for the ones the repository keeps
+	 * consistent itself (a derived value, a write with side effects). Updates setting one throw,
+	 * in case a spread slipped it past the types. Inserts and upserts set every column, so they
+	 * stay hand-written.
+	 */
+	except<const K extends keyof UpdateValues<T> & string>(
+		...columns: K[]
+	): ReadOps<T> & ChangeOps<T, Omit<UpdateValues<T>, K>>;
 } & (HasUniqueKey<T> extends true
-	? {
-			/**
-			 * Inserts the row, or updates the `update` columns of the one it conflicts with on the
-			 * `conflict` unique key. An empty `update` leaves a conflicting row as it is (`updatedAt`
-			 * included) and returns its id.
-			 */
-			upsert(
-				values: Insertable<DB[T]>,
-				options: {
-					conflict: UniqueKey<T>;
-					update: ReadonlyArray<keyof UpdateValues<T> & string>;
-				},
-				trx?: Transaction<DB>,
-			): Promise<InsertResult<T>>;
-		}
-	: unknown) &
-	(HasIdPrimaryKey<T> extends true
 		? {
-				/** Updates the row, returning whether it existed. With no values it only stamps `updatedAt`. */
-				updateById(
-					id: number,
-					values: UpdateValues<T>,
+				/**
+				 * Inserts the row, or updates the `update` columns of the one it conflicts with on the
+				 * `conflict` unique key. An empty `update` leaves a conflicting row as it is (`updatedAt`
+				 * included) and returns its id.
+				 */
+				upsert(
+					values: Insertable<DB[T]>,
+					options: {
+						conflict: UniqueKey<T>;
+						update: ReadonlyArray<keyof UpdateValues<T> & string>;
+					},
 					trx?: Transaction<DB>,
-				): Promise<boolean>;
-				/** Deletes the row, returning whether it existed. */
-				deleteById(id: number, trx?: Transaction<DB>): Promise<boolean>;
+				): Promise<InsertResult<T>>;
 			}
 		: unknown);
 
@@ -284,6 +336,7 @@ function applyWhere(query: any, table: string, where: Record<string, unknown>) {
 	for (const [column, value] of Object.entries(where)) {
 		if (value === undefined) continue;
 
+		// xxx: is this really needed?
 		result =
 			value === null
 				? result.where(`${table}.${column}`, "is", null)

@@ -58,14 +58,14 @@ async function searchByType({
 			}));
 		}
 		case "teams": {
-			const teams = await TeamRepository.searchByName({ query, limit });
+			const teams = await teamsNamed(query, limit);
 			return teams.map((t) => ({
 				type: "team" as const,
 				id: t.id,
 				name: t.name,
 				avatarUrl: t.avatarUrl,
 				customUrl: t.customUrl,
-				members: t.members,
+				members: t.players,
 			}));
 		}
 		case "organizations": {
@@ -101,4 +101,12 @@ async function searchByType({
 			}));
 		}
 	}
+}
+
+function teamsNamed(query: string, limit: number) {
+	return TeamRepository.teams()
+		.nameContaining(query)
+		.withPlayers()
+		.limit(limit)
+		.execute();
 }

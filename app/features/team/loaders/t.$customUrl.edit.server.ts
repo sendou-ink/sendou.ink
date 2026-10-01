@@ -14,10 +14,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { customUrl } = v.parse(teamParamsSchema, params);
 
 	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl, {
-			includeUnvalidatedImages: true,
-			includeMapModePreferences: true,
-		}),
+		await TeamRepository.teamByCustomUrl(customUrl)
+			.withProfile()
+			.withImageUploads()
+			.withMapModePreferences()
+			.executeTakeFirst(),
 	);
 
 	if (!hasPermission(team, "EDIT", user)) {

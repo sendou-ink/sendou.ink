@@ -141,17 +141,42 @@ describe("crud", () => {
 		).rejects.toThrow("without a where filter");
 	});
 
+	test("except throws on an update setting an excepted column", async () => {
+		const { id } = await modNotes.insert({
+			userId: targetId(),
+			authorId: authorId(),
+			text: "note",
+		});
+		const values = { text: "edited", isDeleted: 1 } as const;
+
+		await expect(
+			modNotes.except("isDeleted").updateById(id, values),
+		).rejects.toThrow("excepts isDeleted");
+		expect((await modNotes.findById(id))?.text).toBe("note");
+	});
+
 	test("ops follow the table's keys", () => {
 		expectTypeOf(modNotes).toHaveProperty("findById");
 		expectTypeOf(privateNotes).not.toHaveProperty("findById");
 		expectTypeOf(privateNotes).toHaveProperty("upsert");
 		expectTypeOf(crud("UserFriendCode")).not.toHaveProperty("findOneBy");
-		expectTypeOf(crud("Team")).not.toHaveProperty("insert");
-		expectTypeOf(crud("Team")).toHaveProperty("findManyBy");
+		expectTypeOf(crud("TeamMember")).not.toHaveProperty("insert");
+		expectTypeOf(crud("TeamMember")).toHaveProperty("findManyBy");
 
 		expectTypeOf(privateNotes.update)
 			.parameter(1)
 			.not.toHaveProperty("updatedAt");
+
+		const exceptingNotes = modNotes.except("isDeleted");
+		expectTypeOf(exceptingNotes.updateById)
+			.parameter(1)
+			.not.toHaveProperty("isDeleted");
+		expectTypeOf(exceptingNotes.updateById).parameter(1).toHaveProperty("text");
+		expectTypeOf(exceptingNotes).not.toHaveProperty("insert");
+		expectTypeOf(exceptingNotes.updateById).toBeCallableWith(1, {
+			// @ts-expect-error an excepted column
+			isDeleted: 1,
+		});
 
 		const userTable = crud("User");
 		expectTypeOf(userTable.findOneBy).toBeCallableWith({ customUrl: "sendou" });

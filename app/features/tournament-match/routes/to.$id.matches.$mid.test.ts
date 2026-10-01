@@ -358,7 +358,7 @@ describe("Tournament match page", () => {
 			// biome-ignore lint/plugin: written rather than seeded, see above
 			await db
 				.updateTable("TournamentMatch")
-				.set({ opponentOne: JSON.stringify({ id: null }) })
+				.set({ opponentOne: { id: null } })
 				.where("id", "=", matchId)
 				.execute();
 
@@ -385,7 +385,7 @@ describe("Tournament match page", () => {
 			// biome-ignore lint/plugin: as above
 			await db
 				.updateTable("TournamentMatch")
-				.set({ opponentTwo: JSON.stringify({ id: null }) })
+				.set({ opponentTwo: { id: null } })
 				.where("id", "=", matchId)
 				.execute();
 

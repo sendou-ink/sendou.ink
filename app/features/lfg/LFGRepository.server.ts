@@ -145,7 +145,8 @@ export const posts = defineQuery({
 										.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 								).as("members"),
 							])
-							.whereRef("Team.id", "=", "LFGPost.teamId"),
+							.whereRef("Team.id", "=", "LFGPost.teamId")
+							.where("Team.deletedAt", "is", null),
 					).as("team"),
 				),
 			),

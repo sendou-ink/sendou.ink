@@ -80,19 +80,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			),
 			jsonObjectFrom(
 				eb
-					.selectFrom("AllTeam")
+					.selectFrom("Team")
 					.leftJoin(
 						"UserSubmittedImage",
-						"AllTeam.avatarImgId",
+						"Team.avatarImgId",
 						"UserSubmittedImage.id",
 					)
-					.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
+					.whereRef("Team.id", "=", "TournamentTeam.teamId")
 					.select([
-						"AllTeam.customUrl",
+						"Team.customUrl",
 						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 							"logoUrl",
 						),
-						"AllTeam.deletedAt",
+						"Team.deletedAt",
 					]),
 			).as("team"),
 			jsonArrayFrom(

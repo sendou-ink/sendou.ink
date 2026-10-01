@@ -12,9 +12,9 @@ export const createTeamSchemaServer = v.objectAsync({
 	name: v.pipeAsync(
 		createTeamSchema.entries.name,
 		v.checkAsync(async (name) => {
-			const existingTeam = await TeamRepository.findByCustomUrl(
+			const existingTeam = await TeamRepository.teamByCustomUrl(
 				mySlugify(name),
-			);
+			).executeTakeFirst();
 
 			return !existingTeam;
 		}, "forms:errors.duplicateName"),

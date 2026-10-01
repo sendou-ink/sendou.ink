@@ -27,7 +27,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { customUrl } = v.parse(teamParamsSchema, params);
 
 	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl),
+		await TeamRepository.teamByCustomUrl(customUrl).executeTakeFirst(),
 	);
 
 	const user = getUser();

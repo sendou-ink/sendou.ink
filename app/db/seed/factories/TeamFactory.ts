@@ -25,6 +25,8 @@ type Options = {
 	roles?: Record<number, MemberRole>;
 	/** Members who may edit the team like the owner does, saved as the roster page saves them. */
 	managerUserIds?: number[];
+	/** Soft deletes the team the way its owner does on the team page. */
+	isDeleted?: boolean;
 };
 
 /** First of `memberUserIds` is the owner, the rest join like in production (within the non-patron team limit). */
@@ -58,6 +60,7 @@ export const { create } = defineFactory({
 			mapModePreferences,
 			roles,
 			managerUserIds,
+			isDeleted,
 		}: Options,
 	) => {
 		if (roles || managerUserIds) {
@@ -82,24 +85,28 @@ export const { create } = defineFactory({
 			});
 		}
 
-		if (!hasAvatar && !avatarUrl) return;
+		if (hasAvatar || avatarUrl) {
+			const image = await ImageFactory.create(
+				avatarUrl
+					? { submitterUserId: team.ownerUserId, url: avatarUrl }
+					: { submitterUserId: team.ownerUserId },
+				{ isValidated: true },
+			);
 
-		const image = await ImageFactory.create(
-			avatarUrl
-				? { submitterUserId: team.ownerUserId, url: avatarUrl }
-				: { submitterUserId: team.ownerUserId },
-			{ isValidated: true },
-		);
+			// the team edit page saves the whole profile at once; the rest is still empty on a fresh insert
+			await TeamRepository.update({
+				id: team.id,
+				name: team.name,
+				bio: null,
+				bsky: null,
+				tag: null,
+				avatarImgId: image.id,
+				bannerImgId: null,
+			});
+		}
 
-		// the team edit page saves the whole profile at once; the rest is still empty on a fresh insert
-		await TeamRepository.update({
-			id: team.id,
-			name: team.name,
-			bio: null,
-			bsky: null,
-			tag: null,
-			avatarImgId: image.id,
-			bannerImgId: null,
-		});
+		if (isDeleted) {
+			await TeamRepository.deleteById(team.id);
+		}
 	},
 });

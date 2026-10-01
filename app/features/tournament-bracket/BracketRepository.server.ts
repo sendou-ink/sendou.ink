@@ -157,7 +157,7 @@ export function insertBracket(args: {
 				tournamentId: args.tournamentId,
 				name: args.name,
 				type: stageInput.type,
-				settings: JSON.stringify(stageInput.settings),
+				settings: stageInput.settings,
 				number: kyselySql<number>`(select coalesce(max("number"), 0) + 1 from "TournamentStage" where "tournamentId" = ${args.tournamentId})`,
 			})
 			.returning(["id"])
@@ -191,21 +191,21 @@ export function insertBracket(args: {
 
 		const groupIdMapping = zipInsertedIds(args.bracket.group, insertedGroups);
 
-		if (args.bracket.round.some((round) => !round.maps)) {
-			throw new Error("Round is missing maps");
-		}
-
 		const insertedRounds = await trx
 			.insertInto("TournamentRound")
 			.values(
-				args.bracket.round.map((round) => ({
-					stageId: stage.id,
-					groupId: groupIdMapping.get(round.groupId)!,
-					section: round.section,
-					number: round.number,
-					maps: JSON.stringify(round.maps),
-					isPlayableAt: round.isPlayableAt ?? null,
-				})),
+				args.bracket.round.map((round) => {
+					if (!round.maps) throw new Error("Round is missing maps");
+
+					return {
+						stageId: stage.id,
+						groupId: groupIdMapping.get(round.groupId)!,
+						section: round.section,
+						number: round.number,
+						maps: round.maps,
+						isPlayableAt: round.isPlayableAt ?? null,
+					};
+				}),
 			)
 			.returning(["id"])
 			.execute();
@@ -561,11 +561,13 @@ export function resetBracket(tournamentStageId: number) {
 }
 
 /** Opponents are stored as JSON with the SQL-aggregated fields stripped (NULL for BYEs). */
-function serializeOpponent(opponent: ParticipantResult | null): string | null {
+function serializeOpponent(
+	opponent: ParticipantResult | null,
+): ParticipantResult | null {
 	if (!opponent) return null;
 
 	const { totalKos, ...persisted } = opponent;
-	return JSON.stringify(persisted);
+	return persisted;
 }
 
 function insertMatchChatRooms(

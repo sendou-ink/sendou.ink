@@ -75,9 +75,7 @@ export function setActiveRoster({
 	return db
 		.updateTable("TournamentTeam")
 		.set({
-			activeRosterUserIds: activeRosterUserIds
-				? JSON.stringify(activeRosterUserIds)
-				: null,
+			activeRosterUserIds: activeRosterUserIds ?? null,
 		})
 		.where("TournamentTeam.id", "=", teamId)
 		.execute();

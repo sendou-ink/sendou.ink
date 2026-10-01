@@ -8,7 +8,6 @@ import type {
 	ColumnType,
 	GeneratedAlways,
 	Insertable,
-	JSONColumnType,
 	Selectable,
 } from "kysely";
 import type {
@@ -74,31 +73,32 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { DBTournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
-import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
 type Generated<T> =
 	T extends ColumnType<infer S, infer I, infer U>
 		? ColumnType<S, I | undefined, U>
 		: ColumnType<T, T | undefined, T>;
 
+/** Stored as JSON text; read, inserted and updated as the payload, the dialect encodes it. */
+export type JSONColumn<T> = ColumnType<T, T, T>;
+
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
 export type DBBoolean = 0 | 1;
 
-/** Shape shared by the `AllTeam` table and the `Team` view. See {@link DB} for which to select from. */
 export interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
 	bio: string | null;
 	createdAt: Generated<number>;
 	customUrl: string;
-	customTheme: Generated<JSONColumnTypeNullable<CustomTheme>>;
-	/** Soft delete marker. Always `null` when selected via the `Team` view, which filters these rows out. */
+	customTheme: Generated<JSONColumn<CustomTheme | null>>;
+	/** Soft delete marker. `TeamRepository.teams()` hides these unless a step lifts the guard. */
 	deletedAt: number | null;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	name: string;
 	bsky: string | null;
-	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
+	mapModePreferences: JSONColumn<UserMapModePreferences | null>;
 	/** Shown in-game in front of members' names */
 	tag: string | null;
 }
@@ -224,13 +224,13 @@ export interface Build {
 	headGearSplId: number | null;
 	id: GeneratedAlways<number>;
 	isPrivate: Generated<DBBoolean>;
-	modes: JSONColumnTypeNullable<ModeShort[]>;
+	modes: JSONColumn<ModeShort[] | null>;
 	ownerId: number;
 	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
 	/** 3x4 ability tuple (head/clothes/shoes × main + 3 subs). */
-	abilities: JSONColumnType<BuildAbilitiesTuple>;
+	abilities: JSONColumn<BuildAbilitiesTuple>;
 	/** Serialized ability+AP combo (e.g. `SSU_30,ISS_10`) used to group identical builds for the popular builds view. */
 	abilitiesSignature: string;
 }
@@ -270,7 +270,7 @@ export interface CalendarEvent {
 	discordUrl: GeneratedAlways<string | null>;
 	name: string;
 	participantCount: number | null;
-	tags: JSONColumnTypeNullable<CalendarEventTag[]>;
+	tags: JSONColumn<CalendarEventTag[] | null>;
 	hidden: Generated<DBBoolean>;
 	tournamentId: number | null;
 	organizationId: number | null;
@@ -479,7 +479,7 @@ export interface LFGPost {
 	authorId: number;
 	teamId: number | null;
 	plusTierVisibility: number | null;
-	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
+	languages: JSONColumn<UnifiedLanguageCode[] | null>;
 	updatedAt: Generated<number>;
 	createdAt: Generated<number>;
 }
@@ -565,7 +565,7 @@ export interface IngestedMatch {
 	submitterUserId: number | null;
 	/** database timestamp (seconds) the match was played at, when known */
 	playedAt: number | null;
-	data: JSONColumnType<ScannerMatch>;
+	data: JSONColumn<ScannerMatch>;
 	matchHash: string;
 	/** server-resolved tournament the match probably belongs to; aids future linking */
 	tournamentIdHint: number | null;
@@ -628,22 +628,22 @@ export interface SplatoonPlayer {
 	splId: string;
 	userId: number | null;
 	/** Players best XP across both divisions. Denormalized for performance. */
-	peakXp: JSONColumnTypeNullable<PeakXP>;
+	peakXp: JSONColumn<PeakXP | null>;
 }
 
 export interface Tournament {
-	settings: Generated<JSONColumnType<TournamentSettings>>;
+	settings: Generated<JSONColumn<TournamentSettings>>;
 	id: GeneratedAlways<number>;
 	mapPickingStyle: TournamentMapPickingStyle;
 	/** Maps prepared ahead of time for rounds. Follows settings.bracketProgression order. Null in the spot if not defined yet for that bracket. */
-	preparedMaps: JSONColumnTypeNullable<(PreparedMaps | null)[]>;
-	castTwitchAccounts: JSONColumnTypeNullable<string[]>;
-	castedMatchesInfo: JSONColumnTypeNullable<CastedMatchesInfo>;
+	preparedMaps: JSONColumn<(PreparedMaps | null)[] | null>;
+	castTwitchAccounts: JSONColumn<string[] | null>;
+	castedMatchesInfo: JSONColumn<CastedMatchesInfo | null>;
 	rules: string | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
 	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
-	seedingSnapshot: Generated<JSONColumnTypeNullable<SeedingSnapshot>>;
+	seedingSnapshot: Generated<JSONColumn<SeedingSnapshot | null>>;
 	/** Tournament tier based on top teams' skill. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
 	tier: TournamentTierNumber | null;
 	vodsLastSyncAt: Generated<number | null>;
@@ -696,8 +696,8 @@ export interface TournamentMatch {
 	groupId: number;
 	id: GeneratedAlways<number>;
 	number: number;
-	opponentOne: JSONColumnTypeNullable<ParticipantResult>;
-	opponentTwo: JSONColumnTypeNullable<ParticipantResult>;
+	opponentOne: JSONColumn<ParticipantResult | null>;
+	opponentTwo: JSONColumn<ParticipantResult | null>;
 	roundId: number;
 	stageId: number;
 	/** Set when the match becomes playable i.e. its status is "STARTED" */
@@ -759,7 +759,7 @@ export interface TournamentResult {
 	tournamentId: number;
 	tournamentTeamId: number;
 	/** E.g. ["W", "L", null] = won the first set, lost the second, did not play the third. */
-	setResults: Generated<JSONColumnType<WinLossParticipationArray>>;
+	setResults: Generated<JSONColumn<WinLossParticipationArray>>;
 	userId: number;
 	/** Division label for tournaments with multiple starting brackets (e.g., "D1", "D2") */
 	div: string | null;
@@ -774,7 +774,7 @@ export interface TournamentRound {
 	stageId: number;
 	/** Part of the elimination group the round belongs to. `null` in round robin and swiss. */
 	section: TournamentRoundSection | null;
-	maps: JSONColumnType<TournamentRoundMaps>;
+	maps: JSONColumn<TournamentRoundMaps>;
 	/** Leagues: the round's sets are playable from this time on. Null = playable whenever. */
 	isPlayableAt: number | null;
 }
@@ -784,7 +784,7 @@ export interface TournamentStage {
 	id: GeneratedAlways<number>;
 	name: string;
 	number: number;
-	settings: JSONColumnType<StageSettings>;
+	settings: JSONColumn<StageSettings>;
 	tournamentId: number;
 	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
 	createdAt: Generated<number>;
@@ -812,7 +812,7 @@ export interface TournamentTeam {
 	seed: number | null;
 	/** For formats that have many starting brackets, where should the team start? */
 	startingBracketIdx: number | null;
-	activeRosterUserIds: JSONColumnTypeNullable<number[]>;
+	activeRosterUserIds: JSONColumn<number[] | null>;
 	tournamentId: number;
 	teamId: number | null;
 	avatarImgId: number | null;
@@ -869,7 +869,7 @@ export interface TournamentAuditLog {
 	subjectUserId: number | null;
 	/** References {@link TournamentTeamHistory.id} so the team name stays resolvable after the team is hard-deleted. */
 	tournamentTeamHistoryId: number | null;
-	metadata: JSONColumnTypeNullable<TournamentAuditLogMetadata>;
+	metadata: JSONColumn<TournamentAuditLogMetadata | null>;
 	createdAt: Generated<number>;
 }
 
@@ -878,7 +878,7 @@ export interface TournamentOrganization {
 	name: string;
 	slug: string;
 	description: string | null;
-	socials: JSONColumnTypeNullable<string[]>;
+	socials: JSONColumn<string[] | null>;
 	avatarImgId: number | null;
 	isEstablished: Generated<DBBoolean>;
 }
@@ -900,9 +900,9 @@ export interface TournamentOrganizationSeries {
 	organizationId: number;
 	name: string;
 	description: string | null;
-	substringMatches: JSONColumnType<string[]>;
+	substringMatches: JSONColumn<string[]>;
 	showLeaderboard: Generated<DBBoolean>;
-	tierHistory: JSONColumnTypeNullable<TournamentTierNumber[]>;
+	tierHistory: JSONColumn<TournamentTierNumber[] | null>;
 }
 
 export interface TournamentBracketProgressionOverride {
@@ -965,7 +965,7 @@ export interface User {
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
-	customTheme: Generated<JSONColumnTypeNullable<CustomTheme>>;
+	customTheme: Generated<JSONColumn<CustomTheme | null>>;
 	customUrl: string | null;
 	discordAvatar: string | null;
 	customAvatarImgId: number | null;
@@ -977,16 +977,16 @@ export interface User {
 	/** Name the user is shown under in tournaments, set by organizers of established organizations. `null` = their `username` is used. */
 	tournamentName: string | null;
 	discordUniqueName: string | null;
-	favoriteTrophyIds: JSONColumnTypeNullable<number[]>;
-	hiddenTrophyIds: JSONColumnTypeNullable<number[]>;
+	favoriteTrophyIds: JSONColumn<number[] | null>;
+	hiddenTrophyIds: JSONColumn<number[] | null>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
 	isArtist: Generated<DBBoolean>;
 	isVideoAdder: Generated<DBBoolean>;
 	isTournamentOrganizer: Generated<DBBoolean>;
 	isApiAccesser: Generated<DBBoolean>;
-	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
-	pronouns: Generated<JSONColumnTypeNullable<Pronouns>>;
+	languages: JSONColumn<UnifiedLanguageCode[] | null>;
+	pronouns: Generated<JSONColumn<Pronouns | null>>;
 	patronStartedAt: number | null;
 	patronTier: number | null;
 	patronExpiresAt: number | null;
@@ -995,12 +995,12 @@ export interface User {
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
 	youtubeName: string | null;
-	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
-	weaponPool: JSONColumnTypeNullable<WeaponPoolEntry[]>;
+	mapModePreferences: JSONColumn<UserMapModePreferences | null>;
+	weaponPool: JSONColumn<WeaponPoolEntry[] | null>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
-	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
-	preferences: JSONColumnTypeNullable<UserPreferences>;
+	buildSorting: JSONColumn<BuildSort[] | null>;
+	preferences: JSONColumn<UserPreferences | null>;
 	/** Can be null because we did not always save this. */
 	createdAt: number | null;
 	joinOrder: number | null;
@@ -1009,13 +1009,13 @@ export interface User {
 	/** Supporter-uploaded user card banner (UserSubmittedImage id). Takes precedence over `bannerPresetImg`. */
 	bannerImgId: number | null;
 	/** Card stat types the user has chosen to hide from their card. */
-	hiddenCardStats: JSONColumnTypeNullable<Array<HideableUserCardStat>>;
+	hiddenCardStats: JSONColumn<Array<HideableUserCardStat> | null>;
 	/** Div in the latest finished LUTI (e.g. "2" or "X"). Must have been in a team that did not drop and the user played at least one match (got result as well) */
 	div: string | null;
 	/** LUTI season `div` was earned in. */
 	divSeason: number | null;
 	/** Peak XP as indicated by the user. Should have either `takoroka` or `tentatek` key defined but not both. */
-	unverifiedPeakXP: JSONColumnTypeNullable<PeakXP>;
+	unverifiedPeakXP: JSONColumn<PeakXP | null>;
 	/** Division the user card's XP is taken from. `null` when the user has not picked one, showing their highest XP across both. */
 	xpDivision: XRankPlacementRegion | null;
 }
@@ -1067,7 +1067,7 @@ export interface UserFriendCode {
 export interface UserWidget {
 	userId: number;
 	index: number;
-	widget: JSONColumnType<StoredWidget>;
+	widget: JSONColumn<StoredWidget>;
 }
 export interface ApiToken {
 	id: GeneratedAlways<number>;
@@ -1193,7 +1193,7 @@ export interface ScrimPost {
 	maxDiv: number | null;
 	/** Lowest LUTI div accepted */
 	minDiv: number | null;
-	visibility: JSONColumnTypeNullable<AssociationVisibility>;
+	visibility: JSONColumn<AssociationVisibility | null>;
 	text: string | null;
 	chatRoomId: number | null;
 	/** Refers to the team looking for the team (can also be a pick-up) */
@@ -1286,7 +1286,7 @@ export interface AssociationMember {
 export interface Notification {
 	id: GeneratedAlways<number>;
 	type: NotificationValue["type"];
-	meta: JSONColumnTypeNullable<Record<string, number | string>>;
+	meta: JSONColumn<Record<string, number | string> | null>;
 	pictureUrl: string | null;
 	createdAt: Generated<number>;
 }
@@ -1301,7 +1301,7 @@ export interface NotificationUser {
 export interface NotificationUserSubscription {
 	id: GeneratedAlways<number>;
 	userId: number;
-	subscription: JSONColumnType<NotificationSubscription>;
+	subscription: JSONColumn<NotificationSubscription>;
 }
 
 export interface SplatoonRotation {
@@ -1364,12 +1364,10 @@ export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 
 /**
  * Every table and view. Views (marked below) are read-only. Base table / filtered view pairs use an
- * `All` or `Unvalidated` prefix on the table (`AllTeam`/`Team`, `UnvalidatedUserSubmittedImage`/`UserSubmittedImage`): write to
+ * `All` or `Unvalidated` prefix on the table (`AllTeamMember`/`TeamMember`, `UnvalidatedUserSubmittedImage`/`UserSubmittedImage`): write to
  * the prefixed table, read from the view unless you want the filtered-out rows.
  */
 export interface DB {
-	/** Table backing the `Team` view. Includes soft-deleted teams. */
-	AllTeam: Team;
 	/** Table backing the `TeamMember` & `TeamMemberWithSecondary` views. Includes members who have left and members of deleted teams. */
 	AllTeamMember: TeamMember;
 	ApiToken: ApiToken;
@@ -1428,7 +1426,7 @@ export interface DB {
 	LeaderboardTeamSkip: LeaderboardTeamSkip;
 	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
-	/** VIEW over `AllTeam`, excludes soft-deleted teams. Insert/update via `AllTeam`. */
+	/** Includes soft-deleted teams, read through `TeamRepository.teams()` to hide them. */
 	Team: Team;
 	/** VIEW over `AllTeamMember`, excludes members who have left, members of deleted teams, and members whose secondary team this is. Insert/update via `AllTeamMember`. */
 	TeamMember: TeamMember;

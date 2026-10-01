@@ -100,7 +100,7 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 		case "SAVE_SCHEDULE_VISIBILITY": {
 			// intersecting with the actual memberships is the validation, and prunes teams left since
-			const teams = await TeamRepository.findAllMemberOfByUserId(user.id);
+			const teams = await TeamRepository.teams().forMember(user.id).execute();
 			const sharedWith = new Set(data.sharedWith);
 
 			const friends = sharedWith.has(SCHEDULE_VISIBILITY_FRIENDS_VALUE);

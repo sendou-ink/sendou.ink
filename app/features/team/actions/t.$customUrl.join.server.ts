@@ -14,13 +14,13 @@ export const action: ActionFunction = async ({ params, url }) => {
 	const { customUrl } = v.parse(teamParamsSchema, params);
 
 	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl, {
-			includeInviteCode: true,
-		}),
+		await TeamRepository.teamByCustomUrl(customUrl)
+			.withInviteCode()
+			.executeTakeFirst(),
 	);
 
 	const { code } = teamJoinSearchParams.parse(url);
-	const realInviteCode = team.inviteCode!;
+	const realInviteCode = team.inviteCode;
 
 	errorToastIfFalsy(
 		validateInviteCode({

@@ -4,7 +4,7 @@ import * as TeamRepository from "../TeamRepository.server";
 export const loader = async () => {
 	const user = requireUser();
 
-	const teams = await TeamRepository.findAllMemberOfByUserId(user.id);
-
-	return { teamMemberOfCount: teams.length };
+	return {
+		teamMemberOfCount: await TeamRepository.teams().forMember(user.id).count(),
+	};
 };

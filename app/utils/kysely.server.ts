@@ -1,6 +1,5 @@
 import {
 	type AliasedRawBuilder,
-	type ColumnType,
 	type Expression,
 	type ExpressionBuilder,
 	type RawBuilder,
@@ -421,10 +420,6 @@ export function concatUserSubmittedImagePrefix<T extends string | null>(
 		`${USER_SUBMITTED_IMAGE_ROOT}/`,
 	)} || ${expr})`;
 }
-
-export type JSONColumnTypeNullable<
-	SelectType extends object | string | number | null,
-> = ColumnType<SelectType | null, string | null, string | null>;
 
 const TEN_STAR_CASE = sql<number>`case when "TenStarWeapon"."weaponSplId" is not null then 1 else 0 end`;
 

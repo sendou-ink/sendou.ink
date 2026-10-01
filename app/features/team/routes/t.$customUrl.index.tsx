@@ -32,8 +32,8 @@ import { useHasPermission } from "~/modules/permissions/hooks";
 import { invariant } from "~/utils/invariant";
 import { editTeamPage, manageTeamRosterPage, userPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.index.server";
-import type * as TeamRepository from "../TeamRepository.server";
 import { teamProfilePageActionSchema } from "../team-schemas";
+import type { TeamMemberWithProfile } from "../team-types";
 import {
 	getMemberRoleType,
 	isTeamMember,
@@ -335,7 +335,7 @@ function MemberRow({
 	member,
 	number,
 }: {
-	member: TeamRepository.findByCustomUrl["members"][number];
+	member: TeamMemberWithProfile;
 	number: number;
 }) {
 	const { t } = useTranslation(["team"]);
@@ -385,11 +385,7 @@ function MemberRow({
 	);
 }
 
-function MobileMemberCard({
-	member,
-}: {
-	member: TeamRepository.findByCustomUrl["members"][number];
-}) {
+function MobileMemberCard({ member }: { member: TeamMemberWithProfile }) {
 	const { t } = useTranslation(["team"]);
 
 	return (

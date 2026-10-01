@@ -9,9 +9,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { customUrl } = v.parse(teamParamsSchema, params);
 
 	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl, {
-			includeInviteCode: true,
-		}),
+		await TeamRepository.teamByCustomUrl(customUrl)
+			.withInviteCode()
+			.executeTakeFirst(),
 	);
 
 	requirePermission(team, "MANAGE_ROSTER");

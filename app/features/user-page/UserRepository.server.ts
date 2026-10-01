@@ -348,7 +348,7 @@ export async function upsertWidgets(
 				widgets.map((widget, index) => ({
 					userId,
 					index,
-					widget: JSON.stringify(widget),
+					widget,
 				})),
 			)
 			.execute();
@@ -1391,12 +1391,8 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				customName: args.customName,
 				pronouns: args.pronouns,
 				inGameName: args.inGameName,
-				favoriteTrophyIds: args.favoriteTrophyIds
-					? JSON.stringify(args.favoriteTrophyIds)
-					: null,
-				hiddenTrophyIds: args.hiddenTrophyIds
-					? JSON.stringify(args.hiddenTrophyIds)
-					: null,
+				favoriteTrophyIds: args.favoriteTrophyIds ?? null,
+				hiddenTrophyIds: args.hiddenTrophyIds ?? null,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,
 				commissionsOpenedAt:
@@ -1430,7 +1426,7 @@ export function updateOwnCustomTheme(css: CustomTheme | null) {
 	return db
 		.updateTable("User")
 		.set({
-			customTheme: css ? JSON.stringify(css) : null,
+			customTheme: css,
 		})
 		.where("id", "=", actorId())
 		.execute();
@@ -1456,7 +1452,7 @@ export function updateOwnPreferences(newPreferences: UserPreferences) {
 		await trx
 			.updateTable("User")
 			.set({
-				preferences: JSON.stringify(mergedPreferences),
+				preferences: mergedPreferences,
 			})
 			.where("id", "=", userId)
 			.execute();
@@ -1513,7 +1509,7 @@ export function updateOwnResultHighlights(args: UpdateResultHighlightsArgs) {
 export function updateOwnBuildSorting(buildSorting: BuildSort[] | null) {
 	return db
 		.updateTable("User")
-		.set({ buildSorting: buildSorting ? JSON.stringify(buildSorting) : null })
+		.set({ buildSorting })
 		.where("id", "=", actorId())
 		.execute();
 }

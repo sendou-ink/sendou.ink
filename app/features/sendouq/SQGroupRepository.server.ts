@@ -28,10 +28,10 @@ const CHAT_ROOM_LIFESPAN_HOURS = 12;
 export async function findMapModePreferencesByGroupId(groupId: number) {
 	const group = await db
 		.selectFrom("Group")
-		.leftJoin("AllTeam", "AllTeam.id", "Group.teamId")
+		.leftJoin("Team", "Team.id", "Group.teamId")
 		.select([
-			"AllTeam.mapModePreferences as teamMapModePreferences",
-			"AllTeam.name as teamName",
+			"Team.mapModePreferences as teamMapModePreferences",
+			"Team.name as teamName",
 		])
 		.where("Group.id", "=", groupId)
 		.executeTakeFirst();
@@ -87,7 +87,7 @@ export async function findCurrentGroups() {
 			.selectFrom("Group")
 			.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
 			.innerJoin("User", "User.id", "GroupMember.userId")
-			.leftJoin("AllTeam", "AllTeam.id", "Group.teamId")
+			.leftJoin("Team", "Team.id", "Group.teamId")
 			.leftJoin("GroupMatch", (join) =>
 				join.on((eb) =>
 					eb.or([
@@ -102,7 +102,7 @@ export async function findCurrentGroups() {
 				"Group.inviteCode",
 				"Group.latestActionAt",
 				"Group.status",
-				"AllTeam.mapModePreferences as teamMapModePreferences",
+				"Team.mapModePreferences as teamMapModePreferences",
 				"GroupMatch.id as matchId",
 				commonUserMembersAgg(eb, {
 					mapModePreferences: eb.ref("User.mapModePreferences"),
@@ -264,7 +264,11 @@ export async function syncTeamId(groupId: number, trx: Transaction<DB>) {
 				.onRef("AllTeamMember.userId", "=", "GroupMember.userId")
 				.on("AllTeamMember.leftAt", "is", null),
 		)
-		.innerJoin("Team", "Team.id", "AllTeamMember.teamId")
+		.innerJoin("Team", (join) =>
+			join
+				.onRef("Team.id", "=", "AllTeamMember.teamId")
+				.on("Team.deletedAt", "is", null),
+		)
 		.select(["AllTeamMember.teamId"])
 		.where("GroupMember.groupId", "=", groupId)
 		.execute();

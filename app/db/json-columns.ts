@@ -1,10 +1,8 @@
 /**
  * Every "Table.column" the dialect parses as JSON; other text stays a plain string even if JSON-shaped.
- * Kept in sync with the JSONColumnType declarations of tables.ts by json-columns.test.ts.
+ * Kept in sync with the JSONColumn declarations of tables.ts by json-columns.test.ts.
  */
 export const JSON_COLUMNS: ReadonlySet<string> = new Set([
-	"AllTeam.customTheme",
-	"AllTeam.mapModePreferences",
 	"Build.abilities",
 	"Build.modes",
 	"CalendarEvent.tags",

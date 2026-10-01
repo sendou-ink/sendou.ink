@@ -3,14 +3,14 @@ import type {
 	MemberRole,
 	MemberRoleType,
 } from "~/features/team/team-constants";
-import type * as TeamRepository from "./TeamRepository.server";
 import { NON_PLAYER_TEAM_ROLES, TEAM } from "./team-constants";
+import type { TeamWithMembers } from "./team-types";
 
 export function isTeamOwner({
 	team,
 	user,
 }: {
-	team: TeamRepository.findByCustomUrl;
+	team: TeamWithMembers;
 	user?: { id: number };
 }) {
 	if (!user) return false;
@@ -22,7 +22,7 @@ export function isTeamMember({
 	team,
 	user,
 }: {
-	team: TeamRepository.findByCustomUrl;
+	team: TeamWithMembers;
 	user?: { id: number };
 }) {
 	if (!user) return false;
@@ -30,7 +30,7 @@ export function isTeamMember({
 	return team.members.some((member) => member.id === user.id);
 }
 
-export function isTeamFull(team: TeamRepository.findByCustomUrl) {
+export function isTeamFull(team: TeamWithMembers) {
 	return team.members.length >= TEAM.MAX_MEMBER_COUNT;
 }
 

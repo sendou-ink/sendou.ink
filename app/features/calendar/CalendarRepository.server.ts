@@ -607,7 +607,7 @@ export async function insert(args: CreateArgs) {
 					.insertInto("Tournament")
 					.values({
 						mapPickingStyle: args.mapPickingStyle,
-						settings: JSON.stringify(settings),
+						settings,
 						rules: args.rules,
 					})
 					.returning("id")
@@ -639,7 +639,7 @@ export async function insert(args: CreateArgs) {
 			.values({
 				name: args.name,
 				authorId: args.authorId,
-				tags: args.tags ? JSON.stringify(args.tags) : null,
+				tags: args.tags ?? null,
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
@@ -694,7 +694,7 @@ export async function update(args: UpdateArgs) {
 			.updateTable("CalendarEvent")
 			.set({
 				name: args.name,
-				tags: args.tags ? JSON.stringify(args.tags) : null,
+				tags: args.tags ?? null,
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
@@ -802,7 +802,7 @@ async function updateTournamentTables(
 		.updateTable("Tournament")
 		.set({
 			mapPickingStyle: args.mapPickingStyle,
-			settings: JSON.stringify(settings),
+			settings,
 			rules: args.rules,
 			preparedMaps: changedFormat || changedMapPickingStyle ? null : undefined,
 		})

@@ -929,19 +929,24 @@ export function buildCases(fx: Fixtures): {
 		SplatoonRotationRepository.findAll(),
 	);
 
-	addStatic("TeamRepository.searchByName", () =>
-		TeamRepository.searchByName(SEARCH_QUERY),
+	addStatic("TeamRepository.teams.search", () =>
+		TeamRepository.teams()
+			.nameContaining(SEARCH_QUERY.query)
+			.withPlayers()
+			.limit(SEARCH_QUERY.limit)
+			.execute(),
 	);
-	add("TeamRepository.findById", fx.heavyTeam, (team) =>
-		TeamRepository.findById(team.id),
+	add("TeamRepository.linkedTeam", fx.heavyTeam, (team) =>
+		TeamRepository.linkedTeam(team.id).executeTakeFirst(),
 	);
-	add("TeamRepository.findAllMemberOfByUserId", fx.heavyTeam, (team) =>
-		TeamRepository.findAllMemberOfByUserId(team.memberUserId),
+	add("TeamRepository.teams.forMember", fx.heavyTeam, (team) =>
+		TeamRepository.teams().forMember(team.memberUserId).execute(),
 	);
-	add("TeamRepository.findByCustomUrl", fx.heavyTeam, (team) =>
-		TeamRepository.findByCustomUrl(team.customUrl, {
-			includeInviteCode: true,
-		}),
+	add("TeamRepository.teamByCustomUrl", fx.heavyTeam, (team) =>
+		TeamRepository.teamByCustomUrl(team.customUrl)
+			.withProfile()
+			.withInviteCode()
+			.executeTakeFirst(),
 	);
 	add("TeamRepository.findResultPlacementsById", fx.heavyTeam, (team) =>
 		TeamRepository.findResultPlacementsById(team.id),
@@ -949,8 +954,8 @@ export function buildCases(fx: Fixtures): {
 	add("TeamRepository.findResultsById", fx.heavyTeam, (team) =>
 		TeamRepository.findResultsById(team.id),
 	);
-	add("TeamRepository.findAllByMemberUserId", fx.heavyTeam, (team) =>
-		TeamRepository.findAllByMemberUserId(team.memberUserId),
+	add("TeamRepository.teamsWithMembersOf", fx.heavyTeam, (team) =>
+		TeamRepository.teamsWithMembersOf(team.memberUserId).execute(),
 	);
 
 	add(

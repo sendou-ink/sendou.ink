@@ -431,7 +431,7 @@ async function createUserWithPoollessPreferences(seasonNth: number) {
 	// biome-ignore lint/plugin: no production write leaves out the pool
 	await db
 		.updateTable("User")
-		.set({ mapModePreferences: JSON.stringify({ modes: [] }) })
+		.set({ mapModePreferences: { modes: [], pool: [] } })
 		.where("id", "=", user.id)
 		.execute();
 

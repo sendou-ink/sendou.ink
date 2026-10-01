@@ -99,9 +99,9 @@ export async function updateOwnMatchProfile({
 		await trx
 			.updateTable("User")
 			.set({
-				mapModePreferences: JSON.stringify(newMapModePreferences),
+				mapModePreferences: newMapModePreferences,
 				vc,
-				languages: languages.length > 0 ? JSON.stringify(languages) : null,
+				languages: languages.length > 0 ? languages : null,
 				noScreen,
 			})
 			.where("id", "=", userId)

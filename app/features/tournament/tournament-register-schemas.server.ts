@@ -19,7 +19,8 @@ export function registerTeamFormSchemaServer({
 		superRefineAsync(async (data, ctx) => {
 			const linkedTeamId = data.teamId ? Number(data.teamId) : null;
 			const name = linkedTeamId
-				? (await TeamRepository.findById(linkedTeamId))?.name
+				? (await TeamRepository.linkedTeam(linkedTeamId).executeTakeFirst())
+						?.name
 				: data.pickUpName;
 			if (!name) return;
 

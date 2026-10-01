@@ -79,7 +79,7 @@ export async function seedUsers(): Promise<SeededUsers> {
 			profile: {
 				country: "SE",
 				customUrl: "nzap",
-				pronouns: JSON.stringify({ subject: "they", object: "them" }),
+				pronouns: { subject: "they", object: "them" },
 				inGameName: "N-ZAP#5678",
 			},
 			friendCode: "1234-5678-9012",
@@ -174,7 +174,7 @@ async function seedShowcaseUsers() {
 				customName: showcaseNames.customName(),
 				customUrl: "maximal",
 				country: "JP",
-				pronouns: JSON.stringify({ subject: "they", object: "them" }),
+				pronouns: { subject: "they", object: "them" },
 				inGameName: showcaseNames.kanaInGameName(),
 			},
 		},

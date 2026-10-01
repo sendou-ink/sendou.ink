@@ -65,7 +65,7 @@ export function insert(args: InsertArgs) {
 				text: args.text,
 				maps: args.maps,
 				mapsTournamentId: args.mapsTournamentId,
-				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
+				visibility: args.visibility ?? null,
 				managedByAnyone: args.managedByAnyone ? 1 : 0,
 				isScheduledForFuture: args.isScheduledForFuture ? 1 : 0,
 			})
@@ -142,7 +142,11 @@ export function deleteById(scrimPostId: number) {
 
 const baseFindQuery = db
 	.selectFrom("ScrimPost")
-	.leftJoin("Team", "ScrimPost.teamId", "Team.id")
+	.leftJoin("Team", (join) =>
+		join
+			.onRef("ScrimPost.teamId", "=", "Team.id")
+			.on("Team.deletedAt", "is", null),
+	)
 	.leftJoin("UserSubmittedImage", "Team.avatarImgId", "UserSubmittedImage.id")
 	.leftJoin(
 		"CalendarEvent",
@@ -191,7 +195,11 @@ const baseFindQuery = db
 		jsonArrayFrom(
 			eb
 				.selectFrom("ScrimPostRequest")
-				.leftJoin("Team", "ScrimPostRequest.teamId", "Team.id")
+				.leftJoin("Team", (join) =>
+					join
+						.onRef("ScrimPostRequest.teamId", "=", "Team.id")
+						.on("Team.deletedAt", "is", null),
+				)
 				.leftJoin(
 					"UserSubmittedImage",
 					"Team.avatarImgId",

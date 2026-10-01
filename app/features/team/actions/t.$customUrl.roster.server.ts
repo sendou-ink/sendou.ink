@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	const { customUrl } = v.parse(teamParamsSchema, params);
 	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl),
+		await TeamRepository.teamByCustomUrl(customUrl).executeTakeFirst(),
 	);
 	requirePermission(team, "MANAGE_ROSTER");
 

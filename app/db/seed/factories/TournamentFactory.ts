@@ -107,7 +107,7 @@ export const { create } = defineFactory({
 			await db
 				.updateTable("Tournament")
 				.set({
-					settings: sql<string>`json_set(settings, '$.isLeague', json('true'))`,
+					settings: sql<TournamentSettings>`json_set(settings, '$.isLeague', json('true'))`,
 				})
 				.where("id", "=", tournament.id)
 				.execute();

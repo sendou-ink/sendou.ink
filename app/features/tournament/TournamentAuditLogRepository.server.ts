@@ -54,7 +54,7 @@ export async function insert(args: InsertArgs, trx: Transaction<DB>) {
 			actorUserId: actorId(),
 			subjectUserId: args.subjectUserId ?? null,
 			tournamentTeamHistoryId,
-			metadata: args.metadata ? JSON.stringify(args.metadata) : null,
+			metadata: args.metadata ?? null,
 		})
 		.execute();
 }

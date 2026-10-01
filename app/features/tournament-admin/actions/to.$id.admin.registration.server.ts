@@ -51,7 +51,7 @@ export const upsertRegistrationAction = async (
 
 	const linkedTeamId = data.linkedTeam ? data.teamId : null;
 	const name = linkedTeamId
-		? (await TeamRepository.findById(linkedTeamId))!.name
+		? (await TeamRepository.linkedTeam(linkedTeamId).executeTakeFirst())!.name
 		: data.pickUpName!;
 
 	// linked teams source their logo from the sendou.ink team, so any pickup avatar is cleared

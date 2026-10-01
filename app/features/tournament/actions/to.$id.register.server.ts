@@ -69,7 +69,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			errorToastIfFalsy(
 				!linkedTeamId ||
-					(await TeamRepository.findAllMemberOfByUserId(user.id)).some(
+					(await TeamRepository.teams().forMember(user.id).execute()).some(
 						(team) => team.id === linkedTeamId,
 					),
 				"Team id does not match any of the teams you are in",
@@ -78,7 +78,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 			// linked teams source their name and logo from the sendou.ink team
 			const name = (
 				linkedTeamId
-					? (await TeamRepository.findById(linkedTeamId))?.name
+					? (await TeamRepository.linkedTeam(linkedTeamId).executeTakeFirst())
+							?.name
 					: data.pickUpName
 			)!;
 

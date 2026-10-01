@@ -67,6 +67,8 @@ const COLUMN_DEFINITIONS: Record<string, Record<string, string>> = {
  * Also replaces the `Video` view with the `UnvalidatedVideo` table it filtered, renamed to `Video`.
  * Every video has been validated on submission since 2023; the only unvalidated rows are two
  * abandoned duplicates, deleted along with the `validatedAt` column.
+ * Likewise replaces the `Team` view with the `AllTeam` table it filtered, renamed to `Team`. Reads
+ * hide soft-deleted teams through a chain guard instead, the member views now filter on `deletedAt`.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	// a no-op inside a transaction, and needed off so dropping the old tables doesn't cascade to their children
@@ -85,6 +87,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			}
 
 			await replaceVideoViewWithTable(trx);
+			await replaceTeamViewWithTable(trx);
 
 			const violations = await sql`pragma foreign_key_check`.execute(trx);
 			if (violations.rows.length > 0) {
@@ -120,6 +123,30 @@ async function replaceVideoViewWithTable(trx: Kysely<any>) {
 		trx,
 	);
 	await sql`alter table "UnvalidatedVideo" rename to "Video"`.execute(trx);
+}
+
+async function replaceTeamViewWithTable(trx: Kysely<any>) {
+	// the member views read the "Team" view, which has to go before the table can take its name
+	await sql`drop view "TeamMember"`.execute(trx);
+	await sql`drop view "TeamMemberWithSecondary"`.execute(trx);
+	await sql`drop view "Team"`.execute(trx);
+	await sql`alter table "AllTeam" rename to "Team"`.execute(trx);
+
+	await sql`
+		create view "TeamMemberWithSecondary" as
+		select "AllTeamMember".*
+		from "AllTeamMember"
+		inner join "Team" on "Team"."id" = "AllTeamMember"."teamId"
+		where "AllTeamMember"."leftAt" is null and "Team"."deletedAt" is null
+	`.execute(trx);
+	await sql`
+		create view "TeamMember" as
+		select "AllTeamMember".*
+		from "AllTeamMember"
+		inner join "Team" on "Team"."id" = "AllTeamMember"."teamId"
+		where "AllTeamMember"."leftAt" is null and "Team"."deletedAt" is null
+			and "AllTeamMember"."isMainTeam" = 1
+	`.execute(trx);
 }
 
 /** Renaming a table fails while any view or trigger refers to a table that doesn't exist, as the old ones briefly don't. */

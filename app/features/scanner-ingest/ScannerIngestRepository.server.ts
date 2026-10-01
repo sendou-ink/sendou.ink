@@ -536,7 +536,7 @@ async function addOrMergeMatch(
 				povUserId,
 				submitterUserId,
 				playedAt: toDbTimestamp(canonical.playedAt),
-				data: JSON.stringify(canonical),
+				data: canonical,
 				matchHash: hash,
 				...hints,
 			})
@@ -556,7 +556,7 @@ async function addOrMergeMatch(
 		.updateTable("IngestedMatch")
 		.set({
 			playedAt: toDbTimestamp(mergedCanonical.playedAt),
-			data: JSON.stringify(mergedCanonical),
+			data: mergedCanonical,
 			matchHash: matchHash({ povUserId, match: mergedCanonical }),
 			tournamentIdHint: stored.tournamentIdHint ?? hints.tournamentIdHint,
 			groupMatchIdHint: stored.groupMatchIdHint ?? hints.groupMatchIdHint,

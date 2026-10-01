@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
+import type { QueryRow } from "~/db/entity-query";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
 import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
@@ -78,7 +79,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		]),
 	);
 
-	const teams = user ? await TeamRepository.findAllByMemberUserId(user.id) : [];
+	const teams = user
+		? await TeamRepository.teamsWithMembersOf(user.id).execute()
+		: [];
 
 	return {
 		...(await UserCardRepository.findAllByUserIds({
@@ -127,7 +130,7 @@ async function rosterAvailability({
 	viewerId,
 }: {
 	posts: Array<ScrimPost>;
-	teams: Awaited<ReturnType<typeof TeamRepository.findAllByMemberUserId>>;
+	teams: QueryRow<ReturnType<typeof TeamRepository.teamsWithMembersOf>>[];
 	viewerId: number | null;
 }) {
 	const userIds = R.unique(

@@ -4,6 +4,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { teamParamsSchema } from "~/features/team/team-schemas.server";
+import type { TeamWithMembers } from "~/features/team/team-types";
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -17,7 +18,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const { customUrl } = v.parse(teamParamsSchema, params);
 
 	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl),
+		await TeamRepository.teamByCustomUrl(customUrl).executeTakeFirst(),
 	);
 
 	requirePermission(team, "EDIT");
@@ -111,7 +112,7 @@ function validatedParticipantUserIds(
 		participants: "ALL" | "SELECTED";
 		participantUserIds: Array<string>;
 	},
-	team: NonNullable<Awaited<ReturnType<typeof TeamRepository.findByCustomUrl>>>,
+	team: TeamWithMembers,
 ) {
 	if (data.participants !== "SELECTED") return undefined;
 

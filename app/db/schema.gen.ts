@@ -2,43 +2,6 @@
 // Kept in sync with the migrations by schema.gen.test.ts and with tables.ts by its type assertions.
 
 export const SCHEMA = {
-	AllTeam: {
-		kind: "table",
-		columns: [
-			"id",
-			"name",
-			"customUrl",
-			"inviteCode",
-			"bio",
-			"avatarImgId",
-			"bannerImgId",
-			"createdAt",
-			"deletedAt",
-			"bsky",
-			"tag",
-			"customTheme",
-			"mapModePreferences",
-		],
-		nullable: [
-			"bio",
-			"avatarImgId",
-			"bannerImgId",
-			"deletedAt",
-			"bsky",
-			"tag",
-			"customTheme",
-			"mapModePreferences",
-		],
-		withDefault: ["createdAt", "customTheme"],
-		generatedAlways: ["id"],
-		primaryKey: ["id"],
-		uniqueKeys: [["id"]],
-		foreignKeys: {
-			bannerImgId: "UnvalidatedUserSubmittedImage.id",
-			avatarImgId: "UnvalidatedUserSubmittedImage.id",
-		},
-		triggers: [],
-	},
 	AllTeamMember: {
 		kind: "table",
 		columns: [
@@ -61,7 +24,7 @@ export const SCHEMA = {
 		uniqueKeys: [["teamId", "userId"]],
 		foreignKeys: {
 			userId: "User.id",
-			teamId: "AllTeam.id",
+			teamId: "Team.id",
 		},
 		triggers: [],
 	},
@@ -547,7 +510,7 @@ export const SCHEMA = {
 		primaryKey: ["id"],
 		uniqueKeys: [["id"]],
 		foreignKeys: {
-			teamId: "AllTeam.id",
+			teamId: "Team.id",
 			chatRoomId: "ChatRoom.id",
 		},
 		triggers: ["group_deletes_chat_room"],
@@ -826,7 +789,7 @@ export const SCHEMA = {
 		primaryKey: ["id"],
 		uniqueKeys: [["id"], ["authorId", "type"]],
 		foreignKeys: {
-			teamId: "AllTeam.id",
+			teamId: "Team.id",
 			authorId: "User.id",
 		},
 		triggers: [],
@@ -1269,7 +1232,7 @@ export const SCHEMA = {
 		primaryKey: ["id"],
 		uniqueKeys: [["id"]],
 		foreignKeys: {
-			teamId: "AllTeam.id",
+			teamId: "Team.id",
 			chatRoomId: "ChatRoom.id",
 			mapsTournamentId: "Tournament.id",
 			canceledByUserId: "User.id",
@@ -1293,7 +1256,7 @@ export const SCHEMA = {
 		primaryKey: ["id"],
 		uniqueKeys: [["id"], ["scrimPostId", "teamId"]],
 		foreignKeys: {
-			teamId: "AllTeam.id",
+			teamId: "Team.id",
 			scrimPostId: "ScrimPost.id",
 		},
 		triggers: [],
@@ -1447,7 +1410,7 @@ export const SCHEMA = {
 		triggers: [],
 	},
 	Team: {
-		kind: "view",
+		kind: "table",
 		columns: [
 			"id",
 			"name",
@@ -1464,25 +1427,23 @@ export const SCHEMA = {
 			"mapModePreferences",
 		],
 		nullable: [
-			"id",
-			"name",
-			"customUrl",
-			"inviteCode",
 			"bio",
 			"avatarImgId",
 			"bannerImgId",
-			"createdAt",
 			"deletedAt",
 			"bsky",
 			"tag",
 			"customTheme",
 			"mapModePreferences",
 		],
-		withDefault: [],
-		generatedAlways: [],
-		primaryKey: [],
-		uniqueKeys: [],
-		foreignKeys: {},
+		withDefault: ["createdAt", "customTheme"],
+		generatedAlways: ["id"],
+		primaryKey: ["id"],
+		uniqueKeys: [["id"]],
+		foreignKeys: {
+			bannerImgId: "UnvalidatedUserSubmittedImage.id",
+			avatarImgId: "UnvalidatedUserSubmittedImage.id",
+		},
 		triggers: [],
 	},
 	TeamEvent: {
@@ -1503,7 +1464,7 @@ export const SCHEMA = {
 		uniqueKeys: [["id"]],
 		foreignKeys: {
 			authorId: "User.id",
-			teamId: "AllTeam.id",
+			teamId: "Team.id",
 		},
 		triggers: [],
 	},
@@ -2114,7 +2075,7 @@ export const SCHEMA = {
 		uniqueKeys: [["id"], ["tournamentId", "name"], ["inviteCode"]],
 		foreignKeys: {
 			avatarImgId: "UnvalidatedUserSubmittedImage.id",
-			teamId: "AllTeam.id",
+			teamId: "Team.id",
 			tournamentId: "Tournament.id",
 			chatRoomId: "ChatRoom.id",
 			tournamentTeamHistoryId: "TournamentTeamHistory.id",

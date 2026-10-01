@@ -24,8 +24,9 @@ const teamPageAction = wrappedAction<typeof teamProfilePageActionSchema>({
 });
 
 async function loadTeams() {
-	const teams =
-		await TeamRepository.findAllByMemberUserId(REGULAR_USER_TEST_ID);
+	const teams = await TeamRepository.teams()
+		.forMember(REGULAR_USER_TEST_ID)
+		.execute();
 
 	const mainTeam = teams.find((t) => t.isMainTeam);
 	const secondaryTeams = teams.filter((t) => !t.isMainTeam);
@@ -112,7 +113,9 @@ describe("Secondary teams", () => {
 			),
 		).rejects.toThrow("Response thrown with status code: 403");
 
-		expect(await TeamRepository.findByCustomUrl(customUrl)).toBeTruthy();
+		expect(
+			await TeamRepository.teamByCustomUrl(customUrl).executeTakeFirst(),
+		).toBeTruthy();
 	});
 
 	test("when leaving the main team, the secondary team becomes main", async () => {

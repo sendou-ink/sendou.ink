@@ -27,7 +27,8 @@ export function adminRegistrationFormSchemaServer({
 		superRefineAsync(async (data, ctx) => {
 			const name = data.linkedTeam
 				? typeof data.teamId === "number"
-					? (await TeamRepository.findById(data.teamId))?.name
+					? (await TeamRepository.linkedTeam(data.teamId).executeTakeFirst())
+							?.name
 					: undefined
 				: data.pickUpName;
 			if (

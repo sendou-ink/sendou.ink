@@ -262,8 +262,8 @@ const findEventsBaseQuery = (organizationId: number) =>
 						"TournamentTeam.id",
 						"TournamentResult.tournamentTeamId",
 					)
-					.leftJoin("AllTeam", "TournamentTeam.teamId", "AllTeam.id")
-					.leftJoin("UserSubmittedImage as u1", "AllTeam.avatarImgId", "u1.id")
+					.leftJoin("Team", "TournamentTeam.teamId", "Team.id")
+					.leftJoin("UserSubmittedImage as u1", "Team.avatarImgId", "u1.id")
 					.leftJoin(
 						"UserSubmittedImage as u2",
 						"TournamentTeam.avatarImgId",
@@ -706,7 +706,7 @@ export function update({
 				name,
 				description,
 				slug: mySlugify(name),
-				socials: socials ? JSON.stringify(socials) : null,
+				socials: socials ?? null,
 				...(avatarImgId !== undefined ? { avatarImgId } : {}),
 			})
 			.where("id", "=", id)
@@ -741,7 +741,7 @@ export function update({
 						organizationId: id,
 						name: s.name,
 						description: s.description,
-						substringMatches: JSON.stringify([s.name.toLowerCase()]),
+						substringMatches: [s.name.toLowerCase()],
 						showLeaderboard: toDBBoolean(s.showLeaderboard),
 					})),
 				)
@@ -780,8 +780,7 @@ export function update({
 							eventNameLower.includes(match.toLowerCase()),
 						);
 					})
-					.filter((t) => t.tier !== null)
-					.map((t) => t.tier);
+					.flatMap((t) => (t.tier === null ? [] : [t.tier]));
 
 				if (matchingTiers.length === 0) continue;
 
@@ -789,7 +788,7 @@ export function update({
 
 				await trx
 					.updateTable("TournamentOrganizationSeries")
-					.set({ tierHistory: JSON.stringify(tierHistory) })
+					.set({ tierHistory })
 					.where("id", "=", s.id)
 					.execute();
 			}
@@ -947,7 +946,7 @@ export async function updateSeriesTierHistory({
 
 	await db
 		.updateTable("TournamentOrganizationSeries")
-		.set({ tierHistory: JSON.stringify(newTierHistory) })
+		.set({ tierHistory: newTierHistory })
 		.where("id", "=", matchingSeries.id)
 		.execute();
 }

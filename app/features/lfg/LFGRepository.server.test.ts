@@ -246,7 +246,7 @@ describe("LFGRepository.posts filters", () => {
 		const { id: postId } = await LFGPostFactory.create({
 			type: "PLAYER_FOR_TEAM",
 			authorId: authorId(),
-			languages: JSON.stringify(["fi", "en"]),
+			languages: ["de", "en"],
 		});
 		await LFGPostFactory.create({
 			type: "PLAYER_FOR_TEAM",

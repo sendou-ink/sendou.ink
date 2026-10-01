@@ -128,7 +128,7 @@ export function Widget({
 							id: team.id,
 							url: teamPage(team.customUrl),
 							name: team.name,
-							logoUrl: team.logoUrl,
+							logoUrl: team.avatarUrl,
 							roleDisplayName:
 								team.customRole ??
 								(team.role ? t(`team:roles.${team.role}`) : null),

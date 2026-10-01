@@ -1,11 +1,18 @@
-import { type Insertable, type SqlBool, sql, type Transaction } from "kysely";
+import {
+	type ExpressionBuilder,
+	type SqlBool,
+	sql,
+	type Transaction,
+} from "kysely";
+import { crud } from "~/db/crud";
+import { defineQuery, mapRows, refine } from "~/db/entity-query";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
-import type { CustomTheme, UserMapModePreferences } from "~/db/tables-json";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import type { UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
-import { NON_PLAYER_TEAM_ROLES } from "~/features/team/team-constants";
+import { NON_PLAYER_TEAM_ROLES, TEAM } from "~/features/team/team-constants";
 import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
@@ -20,189 +27,185 @@ import {
 import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
 
-export function searchByName({
-	query,
-	limit,
-}: {
-	query: string;
-	limit: number;
-}) {
-	return db
-		.selectFrom("Team")
-		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
-		.select(({ eb }) => [
+const teamTable = crud("Team");
+const memberTable = crud("AllTeamMember");
+const currentMemberTable = crud("TeamMemberWithSecondary");
+const mainTeamMemberTable = crud("TeamMember");
+
+export const { updateById } = teamTable.except("customUrl", "deletedAt");
+
+// no user can be on more teams at once
+const MEMBERSHIPS_LIMIT = TEAM.MAX_TEAM_COUNT_PATRON;
+// past members included, no team comes close
+const MEMBERSHIPS_PER_TEAM_LIMIT = 100;
+
+/**
+ * Teams with their logo's `url`, by name. Soft-deleted teams are hidden unless a step lifts the
+ * guard: `includingDeleted`.
+ */
+export const teams = defineQuery({
+	root: "Team",
+	select: (qb) =>
+		qb.select((eb) => [
 			"Team.id",
 			"Team.customUrl",
 			"Team.name",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"avatarUrl",
-			),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TeamMemberWithSecondary")
-					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-					.select(["User.id", "User.username", "User.tournamentName"])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
-					.where((eb2) =>
-						eb2.and([
-							eb2.or([
-								eb2("TeamMemberWithSecondary.role", "is", null),
-								eb2(
-									"TeamMemberWithSecondary.role",
-									"not in",
-									NON_PLAYER_TEAM_ROLES,
-								),
-							]),
-							eb2.or([
-								eb2("TeamMemberWithSecondary.roleType", "is", null),
-								eb2("TeamMemberWithSecondary.roleType", "!=", "OTHER"),
-							]),
-						]),
+			validatedImageUrl(eb, "Team.avatarImgId").as("avatarUrl"),
+		]),
+	defaultSort: [["Team.name", "asc"]],
+	guards: {
+		deleted: (qb) => qb.where("Team.deletedAt", "is", null),
+	},
+	vocabulary: ({ lift }) => ({
+		/** Soft-deleted teams too, for what still points at one (a tournament team linked to it). */
+		includingDeleted: () => lift("deleted"),
+		nameContaining: (text: string) =>
+			refine("Team", (qb) => qb.where("Team.name", "like", `%${text}%`)),
+		/** Teams the user is a current member of with their membership, main team first. */
+		forMember: (userId: number) =>
+			refine("Team", (qb) =>
+				qb
+					.innerJoin(
+						"TeamMemberWithSecondary as Membership",
+						"Membership.teamId",
+						"Team.id",
 					)
-					.orderBy("TeamMemberWithSecondary.order", "asc"),
-			).as("members"),
-		])
-		.where("Team.name", "like", `%${query}%`)
-		.orderBy("Team.name", "asc")
-		.limit(limit)
-		.execute();
-}
-
-export function findById(teamId: number) {
-	return db
-		.selectFrom("AllTeam")
-		.select(["AllTeam.id", "AllTeam.name"])
-		.where("AllTeam.id", "=", teamId)
-		.executeTakeFirst();
-}
-
-export function findAllMemberOfByUserId(userId: number) {
-	return db
-		.selectFrom("TeamMemberWithSecondary")
-		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
-		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
-		.select(({ eb }) => [
-			"Team.id",
-			"Team.customUrl",
-			"Team.name",
-			"Team.mapModePreferences",
-			"TeamMemberWithSecondary.role",
-			"TeamMemberWithSecondary.customRole",
-			"TeamMemberWithSecondary.isOwner",
-			"TeamMemberWithSecondary.isManager",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"logoUrl",
+					.where("Membership.userId", "=", userId)
+					.select([
+						"Membership.role",
+						"Membership.customRole",
+						"Membership.isOwner",
+						"Membership.isManager",
+						"Membership.isMainTeam",
+					]),
+			).sortedBy(["Membership.isMainTeam", "desc"], ["Team.name", "asc"]),
+		/** What the team page shows besides the roster, the banner's `url` included. */
+		withProfile: () =>
+			refine("Team", (qb) =>
+				qb.select((eb) => [
+					"Team.bio",
+					"Team.bsky",
+					"Team.tag",
+					"Team.customTheme",
+					validatedImageUrl(eb, "Team.bannerImgId").as("bannerUrl"),
+				]),
 			),
-		])
-		.where("TeamMemberWithSecondary.userId", "=", userId)
-		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
-		.orderBy("Team.name", "asc")
-		.execute();
+		/** The logo and banner images with their urls even while pending validation, for the edit form to preview. */
+		withImageUploads: () =>
+			refine("Team", (qb) =>
+				qb.select((eb) => [
+					"Team.avatarImgId",
+					"Team.bannerImgId",
+					uploadedImageUrl(eb, "Team.avatarImgId").as("avatarUploadUrl"),
+					uploadedImageUrl(eb, "Team.bannerImgId").as("bannerUploadUrl"),
+				]),
+			),
+		withInviteCode: () => refine("Team", (qb) => qb.select("Team.inviteCode")),
+		withMapModePreferences: () =>
+			refine("Team", (qb) => qb.select("Team.mapModePreferences")),
+		/** The current members with their roles and match profile weapons, in roster order. */
+		withMembers: () =>
+			refine("Team", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TeamMemberWithSecondary")
+							.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
+							.select((memberEb) => [
+								...commonUserSelect(memberEb),
+								"TeamMemberWithSecondary.role",
+								"TeamMemberWithSecondary.customRole",
+								"TeamMemberWithSecondary.roleType",
+								"TeamMemberWithSecondary.isOwner",
+								"TeamMemberWithSecondary.isManager",
+								"TeamMemberWithSecondary.isMainTeam",
+								"User.country",
+								"User.patronTier",
+								matchProfileWeapons(memberEb).as("weapons"),
+							])
+							.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+							.orderBy("TeamMemberWithSecondary.order", "asc"),
+					).as("members"),
+				),
+			),
+		/** The names of the current members who play, leaving out coaches and other staff roles, in roster order. */
+		withPlayers: () =>
+			refine("Team", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TeamMemberWithSecondary")
+							.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
+							.select(["User.id", "User.username", "User.tournamentName"])
+							.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
+							.where((memberEb) =>
+								memberEb.and([
+									memberEb.or([
+										memberEb("TeamMemberWithSecondary.role", "is", null),
+										memberEb(
+											"TeamMemberWithSecondary.role",
+											"not in",
+											NON_PLAYER_TEAM_ROLES,
+										),
+									]),
+									memberEb.or([
+										memberEb("TeamMemberWithSecondary.roleType", "is", null),
+										memberEb("TeamMemberWithSecondary.roleType", "!=", "OTHER"),
+									]),
+								]),
+							)
+							.orderBy("TeamMemberWithSecondary.order", "asc"),
+					).as("players"),
+				),
+			),
+		/** The owner and managers may edit the team and manage its roster, only the owner may delete it. */
+		withPermissions: () =>
+			mapRows(
+				"Team",
+				(row: {
+					members: Array<{ id: number; isOwner: number; isManager: number }>;
+				}) => {
+					const managerIds = row.members
+						.filter((member) => member.isOwner || member.isManager)
+						.map((member) => member.id);
+
+					return {
+						permissions: {
+							EDIT: managerIds,
+							MANAGE_ROSTER: managerIds,
+							DELETE: row.members
+								.filter((member) => member.isOwner)
+								.map((member) => member.id),
+						},
+					};
+				},
+			),
+	}),
+});
+
+/** The team with its members and who may edit it, manage its roster or delete it. */
+export function teamByCustomUrl(customUrl: string) {
+	return teams()
+		.where({ customUrl: customUrl.toLowerCase() })
+		.withMembers()
+		.withPermissions();
 }
 
-export type findByCustomUrl = NonNullable<
-	Awaited<ReturnType<typeof findByCustomUrl>>
->;
+/** The user's teams with their members, main team first. */
+export function teamsWithMembersOf(userId: number) {
+	return teams().forMember(userId).withMembers();
+}
 
-export async function findByCustomUrl(
-	customUrl: string,
-	{
-		includeInviteCode = false,
-		includeUnvalidatedImages = false,
-		includeMapModePreferences = false,
-	} = {},
-) {
-	// joins the unvalidated table so the edit page can preview images pending moderation;
-	// for everyone else the url is gated on `validatedAt`
-	const row = await db
-		.selectFrom("Team")
-		.leftJoin(
-			"UnvalidatedUserSubmittedImage as AvatarImage",
-			"AvatarImage.id",
-			"Team.avatarImgId",
-		)
-		.leftJoin(
-			"UnvalidatedUserSubmittedImage as BannerImage",
-			"BannerImage.id",
-			"Team.bannerImgId",
-		)
-		.select(({ eb }) => [
-			"Team.id",
-			"Team.name",
-			"Team.bsky",
-			"Team.bio",
-			"Team.tag",
-			"Team.customUrl",
-			"Team.customTheme",
-			"Team.avatarImgId",
-			"Team.bannerImgId",
-			concatUserSubmittedImagePrefix(
-				includeUnvalidatedImages
-					? eb.ref("AvatarImage.url")
-					: eb.fn<string | null>("iif", [
-							eb("AvatarImage.validatedAt", "is not", null),
-							eb.ref("AvatarImage.url"),
-							sql`null`,
-						]),
-			).as("avatarUrl"),
-			concatUserSubmittedImagePrefix(
-				includeUnvalidatedImages
-					? eb.ref("BannerImage.url")
-					: eb.fn<string | null>("iif", [
-							eb("BannerImage.validatedAt", "is not", null),
-							eb.ref("BannerImage.url"),
-							sql`null`,
-						]),
-			).as("bannerUrl"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TeamMemberWithSecondary")
-					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-					.select(({ eb: innerEb }) => [
-						...commonUserSelect(innerEb),
-						"TeamMemberWithSecondary.role",
-						"TeamMemberWithSecondary.customRole",
-						"TeamMemberWithSecondary.roleType",
-						"TeamMemberWithSecondary.isOwner",
-						"TeamMemberWithSecondary.isManager",
-						"TeamMemberWithSecondary.isMainTeam",
-						"User.country",
-						"User.patronTier",
-						matchProfileWeapons(innerEb).as("weapons"),
-					])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
-					.orderBy("TeamMemberWithSecondary.order", "asc"),
-			).as("members"),
-		])
-		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
-		.$if(includeMapModePreferences, (qb) =>
-			qb.select("Team.mapModePreferences"),
-		)
-		.where("Team.customUrl", "=", customUrl.toLowerCase())
-		.executeTakeFirst();
-
-	if (!row) return;
-
-	const managerIds = row.members
-		.filter((member) => member.isOwner || member.isManager)
-		.map((member) => member.id);
-
-	return {
-		...row,
-		permissions: {
-			EDIT: managerIds,
-			MANAGE_ROSTER: managerIds,
-			DELETE: row.members
-				.filter((member) => member.isOwner)
-				.map((member) => member.id),
-		},
-	};
+/** The team a tournament team links to, soft-deleted included: the tournament team keeps its name. */
+export function linkedTeam(teamId: number) {
+	return teams().where({ id: teamId }).includingDeleted();
 }
 
 export type FindResultPlacementsById = NonNullable<
 	Awaited<ReturnType<typeof findResultPlacementsById>>
 >;
 
+// xxx: migrate to TournamentTeamRepo
 export function findResultPlacementsById(teamId: number) {
 	return db
 		.selectFrom("TournamentTeam")
@@ -217,6 +220,7 @@ export function findResultPlacementsById(teamId: number) {
 		.execute();
 }
 
+// xxx: migrate to TournamentTeamRepo
 /** Tournament results of the team. */
 export async function findResultsById(teamId: number) {
 	const rows = await db
@@ -299,63 +303,18 @@ export async function findResultsById(teamId: number) {
 		.orderBy("CalendarEventDate.startsAt", "desc")
 		.execute();
 
-	const members = await allMembersById(teamId);
+	// past members too, subsOfResult needs who was on the roster at the time
+	const members = await memberTable.findManyBy(
+		{ teamId },
+		{ limit: MEMBERSHIPS_PER_TEAM_LIMIT },
+	);
 
-	return rows.map((row) => {
-		const subs = subsOfResult(row, members);
-
-		return {
-			...row,
-			subs,
-		};
-	});
+	return rows.map((row) => ({ ...row, subs: subsOfResult(row, members) }));
 }
 
-// AllTeamMember rather than the TeamMemberWithSecondary view: subsOfResult needs past members too
-function allMembersById(teamId: number) {
-	return db
-		.selectFrom("AllTeamMember")
-		.select([
-			"AllTeamMember.userId",
-			"AllTeamMember.leftAt",
-			"AllTeamMember.createdAt",
-		])
-		.where("AllTeamMember.teamId", "=", teamId)
-		.execute();
-}
-
-export async function findAllByMemberUserId(
-	userId: number,
-	trx?: Transaction<DB>,
-) {
-	return (trx ?? db)
-		.selectFrom("TeamMemberWithSecondary")
-		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
-		.select((eb) => [
-			"TeamMemberWithSecondary.teamId as id",
-			"Team.name",
-			"TeamMemberWithSecondary.isOwner",
-			"TeamMemberWithSecondary.isMainTeam",
-			jsonArrayFrom(
-				eb
-					.selectFrom("TeamMemberWithSecondary as m2")
-					.innerJoin("User", "User.id", "m2.userId")
-					.select((memberEb) => [
-						...commonUserSelect(memberEb),
-						"m2.role",
-						"m2.roleType",
-					])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "m2.teamId")
-					.orderBy("m2.order", "asc"),
-			).as("members"),
-		])
-		.where("userId", "=", userId)
-		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
-		.execute();
-}
-
-export async function insert(
-	args: Pick<Insertable<Tables["Team"]>, "name"> & {
+/** Inserts the team with `ownerUserId` as its owner, returning its id and custom url. */
+export function insert(
+	args: Pick<TablesInsertable["Team"], "name"> & {
 		ownerUserId: number;
 		isMainTeam: boolean;
 	},
@@ -363,60 +322,47 @@ export async function insert(
 	const customUrl = mySlugify(args.name);
 
 	return db.transaction().execute(async (trx) => {
-		const team = await trx
-			.insertInto("AllTeam")
-			.values({
-				name: args.name,
-				customUrl,
-				inviteCode: shortNanoid(),
-			})
-			.returning(["id", "customUrl"])
-			.executeTakeFirstOrThrow();
+		const team = await teamTable.insert(
+			{ name: args.name, customUrl, inviteCode: shortNanoid() },
+			trx,
+		);
 
-		await trx
-			.insertInto("AllTeamMember")
-			.values({
+		await memberTable.insert(
+			{
 				userId: args.ownerUserId,
 				teamId: team.id,
 				isOwner: 1,
 				isMainTeam: toDBBoolean(args.isMainTeam),
-			})
-			.execute();
+			},
+			trx,
+		);
 
-		return team;
+		return { id: team.id, customUrl };
 	});
 }
 
-export async function update({
+/** Updates the team's profile, deleting the images it no longer uses. */
+export function update({
 	id,
-	name,
-	bio,
-	bsky,
-	tag,
-	avatarImgId,
-	bannerImgId,
+	...profile
 }: Pick<
-	Insertable<Tables["Team"]>,
+	Tables["Team"],
 	"id" | "name" | "bio" | "bsky" | "tag" | "avatarImgId" | "bannerImgId"
 >) {
-	const customUrl = mySlugify(name);
-
 	return db.transaction().execute(async (trx) => {
-		const current = await trx
-			.selectFrom("Team")
-			.select(["avatarImgId", "bannerImgId"])
-			.where("id", "=", id)
-			.executeTakeFirst();
+		const current = await teamTable.findById(id, trx);
 
-		// removed or replaced images' submitted image rows are cleaned up
-		const orphanedImageIds: number[] = [];
-		if (current?.avatarImgId && current.avatarImgId !== avatarImgId) {
-			orphanedImageIds.push(current.avatarImgId);
-		}
-		if (current?.bannerImgId && current.bannerImgId !== bannerImgId) {
-			orphanedImageIds.push(current.bannerImgId);
-		}
+		const orphanedImageIds = [
+			current?.avatarImgId,
+			current?.bannerImgId,
+		].filter(
+			(imgId): imgId is number =>
+				typeof imgId === "number" &&
+				imgId !== profile.avatarImgId &&
+				imgId !== profile.bannerImgId,
+		);
 
+		// xxx: this should prolly be a trigger which would simplify this function quite a bit, see chat rooms for example
 		if (orphanedImageIds.length > 0) {
 			await trx
 				.deleteFrom("UnvalidatedUserSubmittedImage")
@@ -424,37 +370,12 @@ export async function update({
 				.execute();
 		}
 
-		return trx
-			.updateTable("AllTeam")
-			.set({
-				name,
-				customUrl,
-				bio,
-				bsky,
-				tag,
-				avatarImgId,
-				bannerImgId,
-			})
-			.where("id", "=", id)
-			.returningAll()
-			.executeTakeFirstOrThrow();
+		await teamTable.updateById(
+			id,
+			{ ...profile, customUrl: mySlugify(profile.name) },
+			trx,
+		);
 	});
-}
-
-export async function updateCustomTheme({
-	id,
-	customTheme,
-}: {
-	id: number;
-	customTheme: CustomTheme | null;
-}) {
-	await db
-		.updateTable("AllTeam")
-		.set({
-			customTheme: customTheme ? JSON.stringify(customTheme) : null,
-		})
-		.where("id", "=", id)
-		.execute();
 }
 
 /** Sets (or clears with `null`) SendouQ map/mode preferences; map pools of modes missing from the new value are kept. */
@@ -466,19 +387,12 @@ export async function updateMapModePreferences({
 	mapModePreferences: UserMapModePreferences | null;
 }) {
 	if (!mapModePreferences) {
-		await db
-			.updateTable("AllTeam")
-			.set({ mapModePreferences: null })
-			.where("id", "=", id)
-			.execute();
+		await teamTable.updateById(id, { mapModePreferences: null });
 		return;
 	}
 
-	const current = await db
-		.selectFrom("Team")
-		.select("Team.mapModePreferences")
-		.where("Team.id", "=", id)
-		.executeTakeFirstOrThrow();
+	const current = await teamTable.findById(id);
+	invariant(current, "Team to update not found");
 
 	const merged: UserMapModePreferences = {
 		...mapModePreferences,
@@ -488,94 +402,61 @@ export async function updateMapModePreferences({
 		),
 	};
 
-	await db
-		.updateTable("AllTeam")
-		.set({ mapModePreferences: JSON.stringify(merged) })
-		.where("id", "=", id)
-		.execute();
+	await teamTable.updateById(id, {
+		mapModePreferences: merged,
+	});
 }
 
 export function switchOwnMainTeam(teamId: number) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		const currentTeams = await findAllByMemberUserId(userId, trx);
+		const memberships = await currentMembershipsOf(userId, trx);
+		invariant(
+			memberships.some((membership) => membership.teamId === teamId),
+			"User is not a member of this team",
+		);
 
-		const teamToSwitchTo = currentTeams.find((team) => team.id === teamId);
-		invariant(teamToSwitchTo, "User is not a member of this team");
-
-		await trx
-			.updateTable("AllTeamMember")
-			.set({
-				isMainTeam: 0,
-			})
-			.where("userId", "=", userId)
-			.execute();
-
-		await trx
-			.updateTable("AllTeamMember")
-			.set({
-				isMainTeam: 1,
-			})
-			.where("userId", "=", userId)
-			.where("teamId", "=", teamId)
-			.execute();
+		await memberTable.update({ userId }, { isMainTeam: 0 }, trx);
+		await memberTable.update({ userId, teamId }, { isMainTeam: 1 }, trx);
 	});
 }
 
+/** Soft deletes the team and its LFG posts. Members whose main team it was get one of their other teams as main. */
 export function deleteById(teamId: number) {
 	return db.transaction().execute(async (trx) => {
-		const members = await trx
-			.selectFrom("TeamMember")
-			.select(["TeamMember.userId"])
-			.where("teamId", "=", teamId)
-			.execute();
+		const mainTeamMembers = await mainTeamMemberTable.findManyBy(
+			{ teamId },
+			{ limit: MEMBERSHIPS_PER_TEAM_LIMIT },
+			trx,
+		);
 
-		// switch main team to a secondary team if they have one
-		for (const member of members) {
-			const currentTeams = await findAllByMemberUserId(member.userId, trx);
-
-			const teamToSwitchTo = currentTeams.find((team) => team.id !== teamId);
-
+		for (const member of mainTeamMembers) {
+			const teamToSwitchTo = (
+				await currentMembershipsOf(member.userId, trx)
+			).find((membership) => membership.teamId !== teamId);
 			if (!teamToSwitchTo) continue;
 
-			await trx
-				.updateTable("AllTeamMember")
-				.set({
-					isMainTeam: 1,
-				})
-				.where("userId", "=", member.userId)
-				.where("teamId", "=", teamToSwitchTo.id)
-				.execute();
+			await memberTable.update(
+				{ userId: member.userId, teamId: teamToSwitchTo.teamId },
+				{ isMainTeam: 1 },
+				trx,
+			);
 		}
 
-		await trx
-			.updateTable("AllTeamMember")
-			.set({
-				isMainTeam: 0,
-			})
-			.where("AllTeamMember.teamId", "=", teamId)
-			.execute();
+		await memberTable.update({ teamId }, { isMainTeam: 0 }, trx);
 
 		await LFGRepository.deletePostsByTeamId(teamId, trx);
 
-		await trx
-			.updateTable("AllTeam")
-			.set({
-				deletedAt: databaseTimestampNow(),
-			})
-			.where("id", "=", teamId)
-			.execute();
+		await teamTable.updateById(
+			teamId,
+			{ deletedAt: databaseTimestampNow() },
+			trx,
+		);
 	});
 }
 
 export function resetInviteCode(teamId: number) {
-	return db
-		.updateTable("AllTeam")
-		.set({
-			inviteCode: shortNanoid(),
-		})
-		.where("id", "=", teamId)
-		.execute();
+	return teamTable.updateById(teamId, { inviteCode: shortNanoid() });
 }
 
 export function insertOwnMembership({
@@ -587,7 +468,7 @@ export function insertOwnMembership({
 }) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		const teamCount = (await findAllByMemberUserId(userId, trx)).length;
+		const teamCount = (await currentMembershipsOf(userId, trx)).length;
 
 		if (teamCount >= maxTeamsAllowed) {
 			throw new Error("Trying to exceed allowed team count");
@@ -655,19 +536,12 @@ export function updateRoster({
 			await memberLeave(trx, { userId, teamId });
 		}
 
-		for (const member of members) {
-			await trx
-				.updateTable("AllTeamMember")
-				.set({
-					role: member.role,
-					customRole: member.customRole,
-					roleType: member.roleType,
-					isManager: member.isManager ? 1 : 0,
-					order: member.order,
-				})
-				.where("teamId", "=", teamId)
-				.where("userId", "=", member.userId)
-				.execute();
+		for (const { userId, isManager, ...member } of members) {
+			await memberTable.update(
+				{ teamId, userId },
+				{ ...member, isManager: toDBBoolean(isManager) },
+				trx,
+			);
 		}
 	});
 }
@@ -680,48 +554,78 @@ async function memberLeave(
 		newOwnerUserId,
 	}: { userId: number; teamId: number; newOwnerUserId?: number },
 ) {
-	const currentTeams = await findAllByMemberUserId(userId, trx);
+	const memberships = await currentMembershipsOf(userId, trx);
 
-	const teamToLeave = currentTeams.find((team) => team.id === teamId);
+	const teamToLeave = memberships.find(
+		(membership) => membership.teamId === teamId,
+	);
 	invariant(teamToLeave, "User is not a member of this team");
 	invariant(
 		!teamToLeave.isOwner || newOwnerUserId,
 		"New owner id must be provided when old is leaving",
 	);
 
-	const wasMainTeam = teamToLeave.isMainTeam;
-	const newMainTeam = currentTeams.find((team) => team.id !== teamId);
-	if (wasMainTeam && newMainTeam) {
-		await trx
-			.updateTable("AllTeamMember")
-			.set({
-				isMainTeam: 1,
-			})
-			.where("userId", "=", userId)
-			.where("teamId", "=", newMainTeam.id)
-			.execute();
+	const newMainTeam = memberships.find(
+		(membership) => membership.teamId !== teamId,
+	);
+	if (teamToLeave.isMainTeam && newMainTeam) {
+		await memberTable.update(
+			{ userId, teamId: newMainTeam.teamId },
+			{ isMainTeam: 1 },
+			trx,
+		);
 	}
 
-	await trx
-		.updateTable("AllTeamMember")
-		.set({
+	await memberTable.update(
+		{ userId, teamId },
+		{
 			leftAt: databaseTimestampNow(),
 			isMainTeam: 0,
 			isOwner: 0,
 			isManager: 0,
-		})
-		.where("userId", "=", userId)
-		.where("teamId", "=", teamId)
-		.execute();
+		},
+		trx,
+	);
 	if (newOwnerUserId) {
-		await trx
-			.updateTable("AllTeamMember")
-			.set({
-				isOwner: 1,
-				isManager: 0,
-			})
-			.where("userId", "=", newOwnerUserId)
-			.where("teamId", "=", teamId)
-			.execute();
+		await memberTable.update(
+			{ userId: newOwnerUserId, teamId },
+			{ isOwner: 1, isManager: 0 },
+			trx,
+		);
 	}
+}
+
+/** Main team first. */
+function currentMembershipsOf(userId: number, trx: Transaction<DB>) {
+	return currentMemberTable.findManyBy(
+		{ userId },
+		{ limit: MEMBERSHIPS_LIMIT, orderBy: [["isMainTeam", "desc"]] },
+		trx,
+	);
+}
+
+function validatedImageUrl(
+	eb: ExpressionBuilder<DB, "Team">,
+	imgIdColumn: "Team.avatarImgId" | "Team.bannerImgId",
+) {
+	return concatUserSubmittedImagePrefix(
+		eb
+			.selectFrom("UserSubmittedImage")
+			.select("UserSubmittedImage.url")
+			.whereRef("UserSubmittedImage.id", "=", imgIdColumn)
+			.$asScalar(),
+	).$castTo<string | null>();
+}
+
+function uploadedImageUrl(
+	eb: ExpressionBuilder<DB, "Team">,
+	imgIdColumn: "Team.avatarImgId" | "Team.bannerImgId",
+) {
+	return concatUserSubmittedImagePrefix(
+		eb
+			.selectFrom("UnvalidatedUserSubmittedImage")
+			.select("UnvalidatedUserSubmittedImage.url")
+			.whereRef("UnvalidatedUserSubmittedImage.id", "=", imgIdColumn)
+			.$asScalar(),
+	).$castTo<string | null>();
 }

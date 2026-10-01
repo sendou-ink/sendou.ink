@@ -18,7 +18,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const { customUrl } = v.parse(teamParamsSchema, params);
 
 	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl),
+		await TeamRepository.teamByCustomUrl(customUrl)
+			.withImageUploads()
+			.executeTakeFirst(),
 	);
 
 	requirePermission(team, "EDIT");
@@ -43,8 +45,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Team does not have custom theme access",
 			);
 
-			await TeamRepository.updateCustomTheme({
-				id: team.id,
+			await TeamRepository.updateById(team.id, {
 				customTheme: data.newValue ? ThemePalette.build(data.newValue) : null,
 			});
 
@@ -68,13 +69,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "EDIT": {
 			const newCustomUrl = mySlugify(data.name);
-			const duplicateTeam = await TeamRepository.findByCustomUrl(newCustomUrl);
+			const duplicateTeam =
+				await TeamRepository.teamByCustomUrl(newCustomUrl).executeTakeFirst();
 
 			if (duplicateTeam && duplicateTeam.id !== team.id) {
 				return { fieldErrors: { name: "forms:errors.duplicateName" } };
 			}
 
-			const updatedTeam = await TeamRepository.update({
+			await TeamRepository.update({
 				id: team.id,
 				name: data.name,
 				bio: data.bio,
@@ -84,7 +86,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				bannerImgId: data.banner,
 			});
 
-			throw redirect(teamPage(updatedTeam.customUrl));
+			throw redirect(teamPage(newCustomUrl));
 		}
 		default: {
 			assertUnreachable(data);

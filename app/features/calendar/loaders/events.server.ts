@@ -31,7 +31,7 @@ export const loader = async () => {
 	const mySchedule = await myScheduleData(user.id);
 	const teamEvents = await findUpcomingTeamEvents(user.id);
 	const leagueMatches = await findUpcomingLeagueMatches(user.id);
-	const myTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
+	const myTeams = await TeamRepository.teams().forMember(user.id).execute();
 
 	const registered = [
 		...tournamentsData.participatingFor.map(tournamentToSidebarEvent),

@@ -322,14 +322,10 @@ export async function updateOwnCard(args: {
 				shortBio: args.shortBio,
 				bannerPresetImg: args.bannerPresetImg,
 				bannerImgId: args.bannerImgId,
-				unverifiedPeakXP: args.unverifiedPeakXP
-					? JSON.stringify(args.unverifiedPeakXP)
-					: null,
+				unverifiedPeakXP: args.unverifiedPeakXP ?? null,
 				xpDivision: args.xpDivision,
 				hiddenCardStats:
-					args.hiddenCardStats.length > 0
-						? JSON.stringify(args.hiddenCardStats)
-						: null,
+					args.hiddenCardStats.length > 0 ? args.hiddenCardStats : null,
 			})
 			.where("id", "=", userId)
 			.execute();

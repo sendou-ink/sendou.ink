@@ -1,4 +1,5 @@
 import { type ActionFunction, redirect } from "react-router";
+import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
@@ -6,6 +7,7 @@ import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-co
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
+import { SUBJECT_PRONOUNS } from "../user-page-constants";
 import { userEditProfileBaseSchema } from "../user-page-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -35,8 +37,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const [subjectPronoun, objectPronoun] = data.pronouns ?? [null, null];
 	const pronouns =
-		subjectPronoun && objectPronoun
-			? JSON.stringify({ subject: subjectPronoun, object: objectPronoun })
+		subjectPronoun &&
+		objectPronoun &&
+		R.isIncludedIn(subjectPronoun, SUBJECT_PRONOUNS)
+			? { subject: subjectPronoun, object: objectPronoun }
 			: null;
 
 	const isSupporter = user.roles?.includes("SUPPORTER");

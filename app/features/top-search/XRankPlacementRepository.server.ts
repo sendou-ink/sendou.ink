@@ -3,6 +3,7 @@ import { crud } from "~/db/crud";
 import { defineQuery, refine, sortedBy, unchanged } from "~/db/entity-query";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import type { PeakXP } from "~/db/tables-json";
 
 const placementTable = crud("XRankPlacement");
 const playerTable = crud("SplatoonPlayer");
@@ -127,7 +128,7 @@ export async function refreshAllPeakXp() {
 		.updateTable("SplatoonPlayer")
 		.set({
 			// denormalized PeakXP json: overall + per-division peaks (WEST = Tentatek, else Takoroka)
-			peakXp: sql<string | null>`(
+			peakXp: sql<PeakXP | null>`(
 				select iif(
 					max("XRankPlacement"."power") is null,
 					null,

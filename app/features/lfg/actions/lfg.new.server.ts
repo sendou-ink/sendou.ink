@@ -47,8 +47,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			type,
 			teamId: shouldIncludeTeam ? team?.id : null,
 			plusTierVisibility,
-			languages:
-				data.languages.length > 0 ? JSON.stringify(data.languages) : null,
+			languages: data.languages.length > 0 ? data.languages : null,
 		});
 	} else {
 		await LFGRepository.insert({
@@ -58,8 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			teamId: shouldIncludeTeam ? team?.id : null,
 			authorId: user.id,
 			plusTierVisibility,
-			languages:
-				data.languages.length > 0 ? JSON.stringify(data.languages) : null,
+			languages: data.languages.length > 0 ? data.languages : null,
 		});
 	}
 

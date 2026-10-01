@@ -159,15 +159,18 @@ erDiagram
 
 ```mermaid
 erDiagram
-    AllTeam ||--o{ AllTeamMember : has
+    Team ||--o{ AllTeamMember : has
     User ||--o{ AllTeamMember : member_of
 ```
 
+### Notes
+
+- `Team.deletedAt` - disbanded teams are soft deleted; `TeamRepository.teams()` leaves them out unless `includingDeleted()` lifts the guard
+
 ### Views
 
-- **Team** - Teams excluding disbanded
-- **TeamMember** - `AllTeamMember` excluding members who already left their team & secondary teams
-- **TeamMemberWithSecondary** - `AllTeamMember` excluding members who already left their team but including secondary teams
+- **TeamMember** - `AllTeamMember` excluding members who already left their team, members of disbanded teams & secondary teams
+- **TeamMemberWithSecondary** - `AllTeamMember` excluding members who already left their team & members of disbanded teams but including secondary teams
 
 ## Tournaments
 
@@ -180,7 +183,7 @@ erDiagram
     Tournament ||--o{ TournamentTeam : has
     TournamentTeam ||--|{ TournamentTeamMember : has
     User ||--o{ TournamentTeamMember : member_of
-    TournamentTeam }o--o| AllTeam : team
+    TournamentTeam }o--o| Team : team
 ```
 
 ### Notes

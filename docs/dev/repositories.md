@@ -172,6 +172,7 @@ export { deletePlacements as delete };
 - `upsert` with an empty `update` is insert-if-missing: a conflicting row is left as it is (`updatedAt` included) and its id is returned, so a caller can reference the row either way. `findManyBy` requires a `limit`, `update`/`delete` reject an empty filter, `trx` is the last parameter.
 - Updates and upserts stamp `updatedAt` on tables that have one, and the ops don't accept it as a value. An update with no values only stamps it: `LFGRepository.bumpById` is `updateById(id, {})`.
 - `crud` reads are raw table access and don't see chain guards. An entity with guards doesn't re-export them for public reads; internal lookups like an ownership check are fine.
+- Columns the repository keeps consistent itself (a value derived from another column, a write with side effects) are left out of the re-exported writes with `.except(...)`: `export const { updateById } = teamTable.except("customUrl", "deletedAt")`. Passing one is a type error, and an update that still sets one (through a spread) throws. The repository writes them through the unrestricted instance. `except` keeps reads, updates and deletes; inserts and upserts set every column, so they stay hand-written.
 - A table whose derived rows are kept in sync by app code keeps its hand-written writes (`BuildRepository.insert`/`update` maintain `BuildWeapon.sortValue` and the ability sums).
 - Still hand-written: transactions over several tables, `*Own*` actor scoping, domain errors, aggregate/stats queries and perf-tuned reads.
 

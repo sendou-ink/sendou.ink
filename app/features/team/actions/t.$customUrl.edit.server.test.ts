@@ -69,7 +69,10 @@ describe("team page editing", () => {
 	};
 
 	const teamRow = async () => {
-		const team = await TeamRepository.findByCustomUrl(customUrl);
+		const team = await TeamRepository.teamByCustomUrl(customUrl)
+			.withProfile()
+			.withImageUploads()
+			.executeTakeFirst();
 		invariant(team, `No team with the custom url ${customUrl}`);
 
 		return team;

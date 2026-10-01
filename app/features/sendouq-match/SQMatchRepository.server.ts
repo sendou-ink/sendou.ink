@@ -284,22 +284,22 @@ function groupWithTeamAndMembers(
 				"Group.tierIsPlus",
 				jsonObjectFrom(
 					groupEb
-						.selectFrom("AllTeam")
+						.selectFrom("Team")
 						.leftJoin(
 							"UserSubmittedImage",
-							"AllTeam.avatarImgId",
+							"Team.avatarImgId",
 							"UserSubmittedImage.id",
 						)
 						.select((teamEb) => [
-							"AllTeam.id",
-							"AllTeam.name",
-							"AllTeam.customUrl",
-							"AllTeam.mapModePreferences",
+							"Team.id",
+							"Team.name",
+							"Team.customUrl",
+							"Team.mapModePreferences",
 							concatUserSubmittedImagePrefix(
 								teamEb.ref("UserSubmittedImage.url"),
 							).as("avatarUrl"),
 						])
-						.where("AllTeam.id", "=", groupEb.ref("Group.teamId")),
+						.where("Team.id", "=", groupEb.ref("Group.teamId")),
 				).as("team"),
 				jsonArrayFrom(
 					groupEb

@@ -352,7 +352,7 @@ async function setTournamentSettings(
 	// biome-ignore lint/plugin: leagues are not created through app code, so no production write reaches isLeague
 	await db
 		.updateTable("Tournament")
-		.set({ settings: JSON.stringify({ ...settings, ...patch }) })
+		.set({ settings: { ...settings, ...patch } })
 		.where("id", "=", tournamentId)
 		.execute();
 }

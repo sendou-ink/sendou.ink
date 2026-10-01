@@ -14,7 +14,7 @@ export const loader = async () => {
 	const user = requireUser();
 
 	const [teams, friendsAndTeammates] = await Promise.all([
-		TeamRepository.findAllByMemberUserId(user.id),
+		TeamRepository.teamsWithMembersOf(user.id).execute(),
 		SQGroupRepository.findFriendsAndTeammates(user.id),
 	]);
 

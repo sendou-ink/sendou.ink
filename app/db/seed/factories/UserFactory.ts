@@ -164,7 +164,7 @@ async function currentProfile(userId: number): Promise<ProfileArgs> {
 
 	return {
 		...user,
-		pronouns: user.pronouns ? JSON.stringify(user.pronouns) : null,
+		pronouns: user.pronouns ?? null,
 	};
 }
 
@@ -189,13 +189,11 @@ export async function linkTwitch(userId: number, twitch: string | null) {
 
 /** Subject and object forms as one JSON object, as the profile page saves them. */
 export function fakePronouns() {
-	return JSON.stringify(
-		faker.helpers.arrayElement([
-			{ subject: "he", object: "him" },
-			{ subject: "she", object: "her" },
-			{ subject: "they", object: "them" },
-		] satisfies Pronouns[]),
-	);
+	return faker.helpers.arrayElement<Pronouns>([
+		{ subject: "he", object: "him" },
+		{ subject: "she", object: "her" },
+		{ subject: "they", object: "them" },
+	]);
 }
 
 /** Biased like the player base: US and big European scenes first, anything possible. */

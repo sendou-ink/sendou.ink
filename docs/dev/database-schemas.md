@@ -52,7 +52,7 @@ A delete is complete at the database level: deleting a row removes everything th
 
 ## JSON columns
 
-Stored as text, typed with `JSONColumnType<T>` (not null) or `JSONColumnTypeNullable<T>` (nullable) from `~/utils/kysely.server`. Both serialize to `string` on insert, so pass `JSON.stringify(...)`.
+Stored as text, typed with `JSONColumn<T>` from `tables.ts` (`JSONColumn<T | null>` when nullable) and registered in `app/db/json-columns.ts`. App code reads and writes the payload itself: the dialect parses the column on read and binds any plain object or array parameter as JSON text, so never `JSON.stringify` a value you write. Every payload is an object or an array, never a bare string or number.
 
 The payload type lives with its feature and is imported by `tables.ts`. Only payloads with no natural feature home go in `app/db/tables-json.ts`.
 
@@ -64,7 +64,9 @@ When the column is a known set *plus* an open-ended value (an id in string form,
 
 ## Views
 
-Two naming conventions pair a base table with a filtered view: the `All` prefix (`AllTeam` table / `Team` view) and the `Unvalidated` prefix (`UnvalidatedUserSubmittedImage` / `UserSubmittedImage`). Write to the prefixed table, read from the view. Both share one interface, so document per-column which fields are meaningless when read through the view. Mark view entries in the `DB` interface as read-only.
+Two naming conventions pair a base table with a filtered view: the `All` prefix (`AllTeamMember` table / `TeamMember` view) and the `Unvalidated` prefix (`UnvalidatedUserSubmittedImage` / `UserSubmittedImage`). Write to the prefixed table, read from the view. Both share one interface, so document per-column which fields are meaningless when read through the view. Mark view entries in the `DB` interface as read-only.
+
+A new entity hides its filtered-out rows with a chain guard rather than a view (see [repositories.md](./repositories.md)): `Team` keeps its soft-deleted rows and `TeamRepository.teams()` leaves them out. A hand-written read of such a table applies the filter itself, in the join condition when the join is a left join.
 
 ## JSDoc
 

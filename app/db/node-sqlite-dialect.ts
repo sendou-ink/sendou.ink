@@ -61,7 +61,7 @@ export interface NodeSqliteDialectConfig {
 	cacheStatements?: boolean;
 	/**
 	 * "Table.column" names parsed as JSON; other text stays verbatim so JSON-shaped user input stays a string.
-	 * Origin metadata sees through aliases, views, subqueries and CTEs, so use underlying table names (`AllTeam`, not `Team`).
+	 * Origin metadata sees through aliases, views, subqueries and CTEs, so use underlying table names (`AllTeamMember`, not `TeamMember`).
 	 */
 	jsonColumns?: ReadonlySet<string>;
 	/**
@@ -305,16 +305,33 @@ class NodeSqliteConnection implements DatabaseConnection {
 	}
 }
 
-/** `Date` parameters bound as unix seconds, the only type SQLite doesn't take as is. */
+/**
+ * Parameters SQLite doesn't take as is: a `Date` is bound as unix seconds and a plain object or
+ * array (a JSON column's payload) as JSON text. Lists like `in (...)` arrive as separate parameters.
+ */
 function toSqliteParameters(parameters: ReadonlyArray<unknown>) {
-	if (!parameters.some((parameter) => parameter instanceof Date)) {
+	if (!parameters.some(needsConversion)) {
 		return parameters as SQLInputValue[];
 	}
 
-	return parameters.map((parameter) =>
-		parameter instanceof Date
-			? Math.floor(parameter.getTime() / 1000)
-			: (parameter as SQLInputValue),
+	return parameters.map((parameter) => {
+		if (parameter instanceof Date)
+			return Math.floor(parameter.getTime() / 1000);
+		if (isJsonPayload(parameter)) return JSON.stringify(parameter);
+		return parameter as SQLInputValue;
+	});
+}
+
+function needsConversion(parameter: unknown) {
+	return parameter instanceof Date || isJsonPayload(parameter);
+}
+
+function isJsonPayload(parameter: unknown) {
+	return (
+		typeof parameter === "object" &&
+		parameter !== null &&
+		(Array.isArray(parameter) ||
+			Object.getPrototypeOf(parameter) === Object.prototype)
 	);
 }
 

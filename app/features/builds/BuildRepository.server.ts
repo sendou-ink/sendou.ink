@@ -147,6 +147,7 @@ interface CreateArgs {
 	isPrivate: TablesInsertable["Build"]["isPrivate"];
 }
 
+// xxx: why not crud?
 export async function insert(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
 		const computed = await computeBuildData(args, trx);
@@ -163,7 +164,7 @@ export async function insert(args: CreateArgs) {
 				clothesGearSplId: args.clothesGearSplId,
 				shoesGearSplId: args.shoesGearSplId,
 				isPrivate: args.isPrivate,
-				abilities: JSON.stringify(args.abilities),
+				abilities: args.abilities,
 				abilitiesSignature: computed.abilitiesSignature,
 				updatedAt,
 			})
@@ -186,6 +187,7 @@ export async function insert(args: CreateArgs) {
 	});
 }
 
+// xxx: why not crud?
 export async function update(args: CreateArgs & { id: number }) {
 	return db.transaction().execute(async (trx) => {
 		const computed = await computeBuildData(args, trx);
@@ -201,7 +203,7 @@ export async function update(args: CreateArgs & { id: number }) {
 				clothesGearSplId: args.clothesGearSplId,
 				shoesGearSplId: args.shoesGearSplId,
 				isPrivate: args.isPrivate,
-				abilities: JSON.stringify(args.abilities),
+				abilities: args.abilities,
 				abilitiesSignature: computed.abilitiesSignature,
 				updatedAt,
 			})
@@ -382,9 +384,9 @@ function weaponIsTop500(sortValue: number | null): boolean {
 function serializeModes(modes: Array<ModeShort> | null) {
 	if (!modes || modes.length === 0) return null;
 
-	return JSON.stringify(
-		modes.slice().sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b)),
-	);
+	return modes
+		.slice()
+		.sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b));
 }
 
 interface ComputedBuildData {

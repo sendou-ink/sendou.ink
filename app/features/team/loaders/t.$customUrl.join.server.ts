@@ -9,6 +9,7 @@ import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 import { teamJoinSearchParams } from "../team-search-params";
+import type { TeamWithMembers } from "../team-types";
 import { isTeamFull, isTeamMember } from "../team-utils";
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
@@ -16,16 +17,15 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const { customUrl } = v.parse(teamParamsSchema, params);
 
 	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl, {
-			includeInviteCode: true,
-		}),
+		await TeamRepository.teamByCustomUrl(customUrl)
+			.withInviteCode()
+			.executeTakeFirst(),
 	);
 
 	const { code } = teamJoinSearchParams.parse(url);
-	const realInviteCode = team.inviteCode!;
+	const realInviteCode = team.inviteCode;
 
-	const teamCount = (await TeamRepository.findAllByMemberUserId(user.id))
-		.length;
+	const teamCount = await TeamRepository.teams().forMember(user.id).count();
 
 	const validation = validateInviteCode({
 		inviteCode: code ?? "",
@@ -57,7 +57,7 @@ export function validateInviteCode({
 }: {
 	inviteCode: string;
 	realInviteCode: string;
-	team: TeamRepository.findByCustomUrl;
+	team: TeamWithMembers;
 	user?: { id: number };
 	reachedTeamCountLimit: boolean;
 }) {

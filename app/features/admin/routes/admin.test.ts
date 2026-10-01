@@ -304,8 +304,10 @@ describe("Account migration", () => {
 			.executeTakeFirst();
 
 	test("deletes past team membership status of the new user", async () => {
-		const team = await TeamFactory.create({ memberUserIds: [users.id(2)] });
-		await TeamRepository.deleteById(team.id);
+		await TeamFactory.create(
+			{ memberUserIds: [users.id(2)] },
+			{ isDeleted: true },
+		);
 
 		const membershipBeforeMigration = await membershipOf(users.id(2));
 		expect(membershipBeforeMigration).toBeDefined();

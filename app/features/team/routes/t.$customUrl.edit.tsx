@@ -57,8 +57,8 @@ export default function EditTeamPage() {
 						tag: team.tag ?? "",
 						bsky: team.bsky ?? "",
 						bio: team.bio ?? "",
-						logo: existingImage(team.avatarImgId, team.avatarUrl),
-						banner: existingImage(team.bannerImgId, team.bannerUrl),
+						logo: existingImage(team.avatarImgId, team.avatarUploadUrl),
+						banner: existingImage(team.bannerImgId, team.bannerUploadUrl),
 					}}
 					submitButtonText={t("common:actions.submit")}
 					submitButtonTestId="edit-team-submit-button"

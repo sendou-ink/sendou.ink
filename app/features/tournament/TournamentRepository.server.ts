@@ -169,10 +169,10 @@ export async function findById(id: number) {
 						"TournamentTeam.avatarImgId",
 						"PickupAvatar.id",
 					)
-					.leftJoin("AllTeam", "AllTeam.id", "TournamentTeam.teamId")
+					.leftJoin("Team", "Team.id", "TournamentTeam.teamId")
 					.leftJoin(
 						"UserSubmittedImage as TeamAvatar",
-						"AllTeam.avatarImgId",
+						"Team.avatarImgId",
 						"TeamAvatar.id",
 					)
 					.select(({ eb: innerEb }) => [
@@ -562,20 +562,20 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 			).as("mapPool"),
 			jsonObjectFrom(
 				eb
-					.selectFrom("AllTeam")
+					.selectFrom("Team")
 					.leftJoin(
 						"UserSubmittedImage",
-						"AllTeam.avatarImgId",
+						"Team.avatarImgId",
 						"UserSubmittedImage.id",
 					)
-					.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
+					.whereRef("Team.id", "=", "TournamentTeam.teamId")
 					.select((teamEb) => [
-						"AllTeam.id",
-						"AllTeam.customUrl",
+						"Team.id",
+						"Team.customUrl",
 						concatUserSubmittedImagePrefix(
 							teamEb.ref("UserSubmittedImage.url"),
 						).as("logoUrl"),
-						"AllTeam.deletedAt",
+						"Team.deletedAt",
 					]),
 			).as("team"),
 		])
@@ -859,10 +859,10 @@ export function findAllForShowcase() {
 						"TournamentResult.tournamentTeamId",
 						"TournamentTeam.id",
 					)
-					.leftJoin("AllTeam", "TournamentTeam.teamId", "AllTeam.id")
+					.leftJoin("Team", "TournamentTeam.teamId", "Team.id")
 					.leftJoin(
 						"UserSubmittedImage as TeamAvatar",
-						"AllTeam.avatarImgId",
+						"Team.avatarImgId",
 						"TeamAvatar.id",
 					)
 					.leftJoin(
@@ -1210,7 +1210,7 @@ export function updateProgression({
 		await trx
 			.updateTable("Tournament")
 			.set({
-				settings: JSON.stringify(newSettings),
+				settings: newSettings,
 				preparedMaps: changedFormat ? null : undefined,
 			})
 			.where("id", "=", tournamentId)
@@ -1300,7 +1300,7 @@ export function upsertPreparedMaps({
 
 		await trx
 			.updateTable("Tournament")
-			.set({ preparedMaps: JSON.stringify(preparedMaps) })
+			.set({ preparedMaps })
 			.where("Tournament.id", "=", tournamentId)
 			.execute();
 	});
@@ -1316,11 +1316,9 @@ export function updateCastTwitchAccounts({
 	return db
 		.updateTable("Tournament")
 		.set({
-			castTwitchAccounts: JSON.stringify(
-				castTwitchAccounts
-					.map((account) => account.trim().toLowerCase())
-					.filter(Boolean),
-			),
+			castTwitchAccounts: castTwitchAccounts
+				.map((account) => account.trim().toLowerCase())
+				.filter(Boolean),
 		})
 		.where("id", "=", tournamentId)
 		.execute();
@@ -1364,7 +1362,7 @@ export function lockMatch({
 		await trx
 			.updateTable("Tournament")
 			.set({
-				castedMatchesInfo: JSON.stringify(castedMatchesInfo),
+				castedMatchesInfo,
 			})
 			.where("id", "=", tournamentId)
 			.execute();
@@ -1391,7 +1389,7 @@ export function unlockMatch({
 		await trx
 			.updateTable("Tournament")
 			.set({
-				castedMatchesInfo: JSON.stringify(castedMatchesInfo),
+				castedMatchesInfo,
 			})
 			.where("id", "=", tournamentId)
 			.execute();
@@ -1433,7 +1431,7 @@ export function setMatchAsCasted({
 		await trx
 			.updateTable("Tournament")
 			.set({
-				castedMatchesInfo: JSON.stringify(newCastedMatchesInfo),
+				castedMatchesInfo: newCastedMatchesInfo,
 			})
 			.where("id", "=", tournamentId)
 			.execute();
@@ -1705,7 +1703,7 @@ export function finalize({
 				placement: tournamentResult.placement,
 				participantCount: tournamentResult.participantCount,
 				tournamentTeamId: tournamentResult.tournamentTeamId,
-				setResults: JSON.stringify(setResults ?? []),
+				setResults: setResults ?? [],
 				div: tournamentResult.div,
 			}));
 
@@ -1850,7 +1848,7 @@ export function updateTeamSeeds({
 			memberRows,
 			(member) => member.tournamentTeamId,
 		);
-		const snapshot = JSON.stringify({
+		const snapshot = {
 			savedAt: databaseTimestampNow(),
 			teams: teamIds.map((teamId) => ({
 				teamId,
@@ -1858,7 +1856,7 @@ export function updateTeamSeeds({
 					({ userId, username }) => ({ userId, username }),
 				),
 			})),
-		});
+		};
 		await trx
 			.updateTable("Tournament")
 			.set({ seedingSnapshot: snapshot })
