@@ -124,7 +124,7 @@ export function Trophy({
 	const [error, setError] = useState<boolean>(false);
 	const [drawn, setDrawn] = useState(false);
 	const [everDrawn, setEverDrawn] = useState(false);
-	const [activeModel, setActiveModel] = useState(model);
+	const [active, setActive] = useState({ model, code });
 	const [hasAnimation, setHasAnimation] = useState(false);
 	const animationProgressRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = usePrefersReducedMotion();
@@ -132,19 +132,22 @@ export function Trophy({
 	const onRenderStatsRef = useRef(onRenderStats);
 	onRenderStatsRef.current = onRenderStats;
 
-	const prevModelRef = useRef(model);
-	if (prevModelRef.current !== model) {
-		prevModelRef.current = model;
+	const prevSourceRef = useRef({ model, code });
+	if (
+		prevSourceRef.current.model !== model ||
+		prevSourceRef.current.code !== code
+	) {
+		prevSourceRef.current = { model, code };
 		setError(false);
-		if (!drawn || reducedMotion) setActiveModel(model);
+		if (!drawn || reducedMotion) setActive({ model, code });
 		setDrawn(false);
 	}
 
-	const swapping = activeModel !== model;
-	const xpVariant = XpTrophy.parseCode(code);
+	const swapping = active.model !== model || active.code !== code;
+	const xpVariant = XpTrophy.parseCode(active.code);
 	const xpState = useXpTrophyState(xpVariant);
 	const isLoadingXpState = xpVariant !== null && xpState === null;
-	const modelState = xpVariant ? xpState : decompressTrophyModel(activeModel);
+	const modelState = xpVariant ? xpState : decompressTrophyModel(active.model);
 	const siteColorScheme = useTrophyColorScheme();
 	const colorScheme = forcedColorScheme ?? siteColorScheme;
 
@@ -225,9 +228,9 @@ export function Trophy({
 				};
 			}
 
-			viewer.startRenderLoop(false);
 			viewer.whenReady().then(() => {
 				if (viewerRef.current !== viewer) return;
+				viewer.startRenderLoop(false);
 				setDrawn(true);
 				setEverDrawn(true);
 			});
@@ -309,7 +312,7 @@ export function Trophy({
 						[style.interactive]: !preview && !disableCameraControls,
 					})}
 					onTransitionEnd={() => {
-						if (swapping) setActiveModel(model);
+						if (swapping) setActive({ model, code });
 					}}
 				/>
 			)}
