@@ -1,4 +1,11 @@
+import * as R from "remeda";
+
 const PENALTY_BRIDGE_SECONDS = 6;
+const MAX_TIME_TICKS = 8;
+const PX_PER_TIME_TICK = 56;
+const TIME_TICK_STEPS_SECONDS = [
+	1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600,
+];
 
 /** Label gutter left of the plot, shared by the objective chart's y-axis and the player-status weapon column so both span the same x-range. */
 export const TIMELINE_PLOT_GUTTER_PX = 36;
@@ -118,9 +125,32 @@ export function withUnpushedTrackCounts<T extends TrackCountEvent>(
 	});
 }
 
-/** `oklch(64% 0.16 10)` → `oklch(64% 0.16 10 / 0.55)` */
-export function withAlpha(oklchColor: string, alpha: number) {
-	return oklchColor.replace(/\)$/, ` / ${alpha})`);
+/**
+ * Round-numbered time-axis ticks between `min` and `max` (seconds), spaced to fit `plotWidth`.
+ * Shared so stacked timelines draw their gridlines at the same times.
+ */
+export function timelineTimeTicks({
+	min,
+	max,
+	plotWidth,
+}: {
+	min: number;
+	max: number;
+	plotWidth: number;
+}) {
+	const maxCount = R.clamp(Math.floor(plotWidth / PX_PER_TIME_TICK), {
+		min: 2,
+		max: MAX_TIME_TICKS,
+	});
+	const range = Math.max(max - min, 1);
+	const step =
+		TIME_TICK_STEPS_SECONDS.find(
+			(candidate) => range / candidate <= maxCount - 1,
+		) ?? Math.ceil(range / (maxCount - 1) / 3600) * 3600;
+
+	return R.range(Math.ceil(min / step), Math.floor(max / step) + 1).map(
+		(multiple) => multiple * step,
+	);
 }
 
 /** Seconds formatted as m:ss, with an hours part only when needed. */

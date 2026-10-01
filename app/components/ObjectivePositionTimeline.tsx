@@ -4,22 +4,21 @@
  * goal in bravo's. Shares the objective chart's x-axis and y-label gutter so both line up.
  */
 
-import {
-	Chart as ChartJS,
-	Filler,
-	LinearScale,
-	LineElement,
-	PointElement,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
-import { useThemeColors } from "~/hooks/useThemeColors";
+import clsx from "clsx";
+import { useElementSize } from "~/hooks/useElementSize";
 import styles from "./ObjectivePositionTimeline.module.css";
 import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
-import { TIMELINE_PLOT_GUTTER_PX, withAlpha } from "./objective-timeline-utils";
-
-ChartJS.register(LinearScale, PointElement, LineElement, Filler);
+import {
+	TIMELINE_PLOT_GUTTER_PX,
+	timelineTimeTicks,
+} from "./objective-timeline-utils";
 
 const TRACK_END = 100;
+const POSITION_TICKS = [TRACK_END, 0, -TRACK_END];
+const DEFAULT_WIDTH = 600;
+const DEFAULT_HEIGHT = 116;
+const PLOT_PADDING_Y_PX = 6;
+const Y_LABEL_GAP_PX = 6;
 
 export function ObjectivePositionTimeline({
 	events,
@@ -29,83 +28,121 @@ export function ObjectivePositionTimeline({
 	events: readonly ObjectiveTimelineEvent[];
 	domain: [number, number];
 }) {
-	const colors = useThemeColors({
-		alpha: "--color-chart-alpha",
-		bravo: "--color-chart-bravo",
-		border: "--color-border",
-		borderHigh: "--color-border-high",
-		text: "--color-text-high",
-	});
-	const points = events.flatMap((event) =>
-		event.data.position != null ? [{ x: event.t, y: event.data.position }] : [],
+	const { ref: measureRef, size } = useElementSize<HTMLDivElement>();
+
+	const reads = events.flatMap((event) =>
+		event.data.position != null
+			? [{ t: event.t, position: event.data.position }]
+			: [],
 	);
-	if (points.length === 0) return null;
+	if (reads.length === 0) return null;
+
+	const { width, height } = size ?? {
+		width: DEFAULT_WIDTH,
+		height: DEFAULT_HEIGHT,
+	};
+	const [xMin, xMax] = domain;
+	const xRange = Math.max(xMax - xMin, 1);
+	const plotLeft = TIMELINE_PLOT_GUTTER_PX;
+	const plotRight = width;
+	const plotTop = PLOT_PADDING_Y_PX;
+	const plotBottom = height - PLOT_PADDING_Y_PX;
+	const xAt = (time: number) =>
+		plotLeft + ((time - xMin) / xRange) * (plotRight - plotLeft);
+	const yAt = (position: number) =>
+		plotTop +
+		((TRACK_END - position) / (2 * TRACK_END)) * (plotBottom - plotTop);
+
+	const withCrossings = withZeroCrossings(reads);
+	const areaPath = (clamp: (position: number) => number) =>
+		[
+			`M${xAt(withCrossings[0]!.t).toFixed(1)} ${yAt(0).toFixed(1)}`,
+			...withCrossings.map(
+				(read) =>
+					`L${xAt(read.t).toFixed(1)} ${yAt(clamp(read.position)).toFixed(1)}`,
+			),
+			`L${xAt(withCrossings[withCrossings.length - 1]!.t).toFixed(1)} ${yAt(0).toFixed(1)}`,
+			"Z",
+		].join(" ");
 
 	return (
 		<div className={styles.container}>
-			<Line
-				data={{
-					datasets: [
-						{
-							data: points,
-							borderColor: colors.text,
-							borderWidth: 1.5,
-							pointRadius: 0,
-							pointHoverRadius: 0,
-							fill: {
-								target: { value: 0 },
-								above: withAlpha(colors.alpha, 0.45),
-								below: withAlpha(colors.bravo, 0.45),
-							},
-						},
-					],
-				}}
-				options={{
-					animation: false,
-					maintainAspectRatio: false,
-					events: [],
-					layout: { autoPadding: false },
-					scales: {
-						x: {
-							type: "linear",
-							min: domain[0],
-							max: domain[1],
-							grid: { color: colors.border },
-							border: { color: colors.borderHigh },
-							// same tick limit as the objective chart so the gridlines line up
-							ticks: { display: false, maxTicksLimit: 8 },
-						},
-						y: {
-							min: -TRACK_END,
-							max: TRACK_END,
-							grid: {
-								color: (ctx) =>
-									ctx.tick?.value === 0 ? colors.borderHigh : colors.border,
-							},
-							border: { color: colors.borderHigh },
-							afterBuildTicks: (axis) => {
-								axis.ticks = [
-									{ value: -TRACK_END },
-									{ value: 0 },
-									{ value: TRACK_END },
-								];
-							},
-							afterFit: (axis) => {
-								axis.width = TIMELINE_PLOT_GUTTER_PX;
-							},
-							ticks: {
-								color: colors.text,
-								autoSkip: false,
-								callback: (value) => Math.abs(Number(value)),
-							},
-						},
-					},
-					plugins: {
-						legend: { display: false },
-						tooltip: { enabled: false },
-					},
-				}}
-			/>
+			<div ref={measureRef} className={styles.plot}>
+				<svg
+					className={styles.chart}
+					viewBox={`0 0 ${width} ${height}`}
+					aria-hidden="true"
+				>
+					{timelineTimeTicks({
+						min: xMin,
+						max: xMax,
+						plotWidth: plotRight - plotLeft,
+					}).map((tick) => (
+						<line
+							key={tick}
+							className={clsx(styles.gridLine, styles.gridLineDashed)}
+							x1={xAt(tick)}
+							y1={plotTop}
+							x2={xAt(tick)}
+							y2={plotBottom}
+						/>
+					))}
+					{POSITION_TICKS.map((tick) => (
+						<g key={tick}>
+							<line
+								className={clsx(
+									styles.gridLine,
+									tick === 0 ? styles.gridLineZero : styles.gridLineDashed,
+								)}
+								x1={plotLeft}
+								y1={yAt(tick)}
+								x2={plotRight}
+								y2={yAt(tick)}
+							/>
+							<text
+								className={styles.label}
+								x={plotLeft - Y_LABEL_GAP_PX}
+								y={yAt(tick)}
+								textAnchor="end"
+								dominantBaseline="middle"
+							>
+								{Math.abs(tick)}
+							</text>
+						</g>
+					))}
+					<path
+						className={clsx(styles.area, styles.alpha)}
+						d={areaPath((position) => Math.max(position, 0))}
+					/>
+					<path
+						className={clsx(styles.area, styles.bravo)}
+						d={areaPath((position) => Math.min(position, 0))}
+					/>
+					<polyline
+						className={styles.line}
+						points={reads
+							.map(
+								(read) =>
+									`${xAt(read.t).toFixed(1)},${yAt(read.position).toFixed(1)}`,
+							)
+							.join(" ")}
+					/>
+				</svg>
+			</div>
 		</div>
 	);
+}
+
+/** Inserts a read at each point the line crosses the middle, so clamping either side to zero keeps the exact shape. */
+function withZeroCrossings(reads: Array<{ t: number; position: number }>) {
+	return reads.flatMap((read, i) => {
+		const previous = reads[i - 1];
+		if (!previous || previous.position * read.position >= 0) return [read];
+
+		const ratio = previous.position / (previous.position - read.position);
+		return [
+			{ t: previous.t + (read.t - previous.t) * ratio, position: 0 },
+			read,
+		];
+	});
 }
