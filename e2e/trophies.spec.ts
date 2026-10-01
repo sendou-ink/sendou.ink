@@ -311,7 +311,7 @@ test.describe("Trophies", () => {
 		await expect(
 			userPage.locators.trophyDisplay.getByRole("button"),
 		).toHaveCount(2);
-		
+
 		// reached in both divisions, Takoroka is the one shown
 		await expect(
 			userPage.trophyDivision("3500 X Power Shooters", "Takoroka"),
