@@ -34,17 +34,6 @@ export function deleteById(id: number) {
 }
 
 /** Count of the author's unvalidated art images. */
-export async function countUnvalidatedArt(authorId: number) {
-	const result = await db
-		.selectFrom("UnvalidatedUserSubmittedImage")
-		.innerJoin("Art", "Art.imgId", "UnvalidatedUserSubmittedImage.id")
-		.select(({ fn }) => fn.countAll<number>().as("count"))
-		.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
-		.where("Art.authorId", "=", authorId)
-		.executeTakeFirstOrThrow();
-	return result.count;
-}
-
 const unvalidatedImagesBaseQuery = db
 	.selectFrom("UnvalidatedUserSubmittedImage")
 	.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)

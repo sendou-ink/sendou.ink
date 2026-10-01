@@ -38,7 +38,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	if (data.artId) {
 		const existingArt = badRequestIfFalsy(
-			await ArtRepository.findById(data.artId),
+			await ArtRepository.arts().where({ id: data.artId }).executeTakeFirst(),
 		);
 		requirePermission(existingArt, "EDIT");
 

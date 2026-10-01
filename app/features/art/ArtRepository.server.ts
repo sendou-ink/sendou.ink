@@ -1,348 +1,186 @@
 import { type ExpressionBuilder, sql, type Transaction } from "kysely";
+import { crud } from "~/db/crud";
+import { defineQuery, refine, sortedBy } from "~/db/entity-query";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { invariant } from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 } from "~/utils/kysely.server";
-import { seededRandom } from "~/utils/random";
-import type { ListedArt } from "./art-types";
+import type { ArtSource } from "./art-types";
 
-export function unlinkOwnFromArt(artId: number) {
-	return db
-		.deleteFrom("ArtUserMetadata")
-		.where("artId", "=", artId)
-		.where("userId", "=", actorId())
-		.execute();
-}
+const artTable = crud("Art");
+const imageTable = crud("UnvalidatedUserSubmittedImage");
+const linkedUserTable = crud("ArtUserMetadata");
+const tagTable = crud("ArtTag");
+const taggedArtTable = crud("TaggedArt");
 
-function getDailySeed() {
-	const today = new Date();
-	const year = today.getFullYear();
-	const month = today.getMonth() + 1;
-	const day = today.getDate();
-	return `${year}-${month}-${day}`;
-}
+export const { deleteById } = artTable;
 
-export async function findShowcaseArts(): Promise<ListedArt[]> {
-	const arts = await db
-		.selectFrom((eb) =>
+/**
+ * Art with its image's `url`, the ids of the users tagged in it and who may edit or unlink it,
+ * newest first. Art whose image awaits validation is hidden unless a step lifts the guard:
+ * `awaitingValidation`.
+ */
+export const arts = defineQuery({
+	root: "Art",
+	select: (qb) =>
+		qb.select((eb) => [
+			"Art.id",
+			"Art.authorId",
+			"Art.description",
+			"Art.createdAt",
+			"Art.isShowcase",
+			concatUserSubmittedImagePrefix(
+				eb
+					.selectFrom("UnvalidatedUserSubmittedImage")
+					.select("UnvalidatedUserSubmittedImage.url")
+					.whereRef("UnvalidatedUserSubmittedImage.id", "=", "Art.imgId")
+					.$asScalar()
+					.$notNull(),
+			).as("url"),
 			eb
-				// each author's most recent art (showcase first) via SQLite's max() + bare column rule,
-				// packed into one integer since createdAt always stays below the isShowcase component
-				.selectFrom("Art")
-				.innerJoin("User", "User.id", "Art.authorId")
-				.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-				.select(({ fn }) => [
-					"Art.id as artId",
-					fn
-						.max(
-							sql<number>`"Art"."isShowcase" * 10000000000 + "Art"."createdAt"`,
+				.selectFrom("ArtUserMetadata")
+				.select((linkedEb) =>
+					linkedEb.fn
+						.agg<number[]>("json_group_array", ["ArtUserMetadata.userId"])
+						.as("linkedUserIds"),
+				)
+				.whereRef("ArtUserMetadata.artId", "=", "Art.id")
+				.$asScalar()
+				.$castTo<number[]>()
+				.as("linkedUserIds"),
+		]),
+	map: (row) => ({
+		isShowcase: row.isShowcase === 1,
+		permissions: {
+			EDIT: [row.authorId],
+			UNLINK: row.linkedUserIds,
+		},
+	}),
+	defaultSort: [["Art.createdAt", "desc"]],
+	guards: {
+		unvalidated: (qb) => qb.where((eb) => imageValidated(eb, true)),
+	},
+	vocabulary: ({ lift }) => ({
+		/** Only art whose image awaits validation. */
+		awaitingValidation: () =>
+			lift("unvalidated", (qb) => qb.where((eb) => imageValidated(eb, false))),
+		/** The author with whether their commissions are open. */
+		withAuthor: () =>
+			UserRepository.withUser("author", "Art.authorId", ["commissionsOpen"]),
+		withTags: () =>
+			refine("Art", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TaggedArt")
+							.innerJoin("ArtTag", "ArtTag.id", "TaggedArt.tagId")
+							.select(["ArtTag.id", "ArtTag.name"])
+							.whereRef("TaggedArt.artId", "=", "Art.id"),
+					).as("tags"),
+				),
+			),
+		/** The users tagged in the art. */
+		withLinkedUsers: () =>
+			refine("Art", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("ArtUserMetadata")
+							.innerJoin("User", "User.id", "ArtUserMetadata.userId")
+							.select((linkedEb) => commonUserSelect(linkedEb))
+							.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
+					).as("linkedUsers"),
+				),
+			),
+		/** Art the user made (`MADE-BY`), is tagged in without having made it (`MADE-OF`) or either (`ALL`). */
+		involvingUser: (userId: number, source: ArtSource = "ALL") =>
+			refine("Art", (qb) =>
+				qb.where((eb) => {
+					const madeBy = eb("Art.authorId", "=", userId);
+					const taggedIn = eb(
+						"Art.id",
+						"in",
+						eb
+							.selectFrom("ArtUserMetadata")
+							.select("ArtUserMetadata.artId")
+							.where("ArtUserMetadata.userId", "=", userId),
+					);
+
+					switch (source) {
+						case "ALL":
+							return eb.or([madeBy, taggedIn]);
+						case "MADE-BY":
+							return madeBy;
+						case "MADE-OF":
+							return eb.and([eb("Art.authorId", "!=", userId), taggedIn]);
+					}
+				}),
+			),
+		/** Each author's showcase art, or their newest when none is. With `tagId`, picked among the author's art with the tag. */
+		bestOfEachAuthor: (tagId: number | null = null) =>
+			refine("Art", (qb) =>
+				qb.where("Art.id", "in", (eb) =>
+					eb
+						.selectFrom((innerEb) =>
+							innerEb
+								// each author's most recent art (showcase first) via SQLite's max() + bare column rule,
+								// packed into one integer since createdAt always stays below the isShowcase component
+								.selectFrom("Art")
+								.innerJoin(
+									"UserSubmittedImage",
+									"UserSubmittedImage.id",
+									"Art.imgId",
+								)
+								.$if(tagId !== null, (taggedQb) =>
+									taggedQb
+										.innerJoin("TaggedArt", "TaggedArt.artId", "Art.id")
+										.where("TaggedArt.tagId", "=", tagId!),
+								)
+								.select(({ fn }) => [
+									"Art.id as artId",
+									fn
+										.max(
+											sql<number>`"Art"."isShowcase" * 10000000000 + "Art"."createdAt"`,
+										)
+										.as("packedShowcaseCreatedAt"),
+								])
+								.groupBy("Art.authorId")
+								.as("BestOfAuthor"),
 						)
-						.as("packedShowcaseCreatedAt"),
-				])
-				.groupBy("Art.authorId")
-				.as("BestOfAuthor"),
-		)
-		.innerJoin("Art", "Art.id", "BestOfAuthor.artId")
-		.innerJoin("User", "User.id", "Art.authorId")
-		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-		.select((eb) => [
-			"Art.id",
-			"Art.createdAt",
-			"Art.isShowcase",
-			...commonUserSelect(eb, { idAs: "userId" }),
-			"User.commissionsOpen",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"url",
+						.select("BestOfAuthor.artId"),
+				),
 			),
-			linkedUsersSubquery(eb).as("linkedUsers"),
-		])
-		.orderBy("Art.isShowcase", "desc")
-		.orderBy("Art.createdAt", "desc")
-		.orderBy("User.id", "asc")
-		.execute();
+		showcaseFirst: () =>
+			sortedBy("Art", ["Art.isShowcase", "desc"], ["Art.createdAt", "desc"]),
+	}),
+});
 
-	const mappedArts = arts.map((a) => ({
-		id: a.id,
-		createdAt: a.createdAt,
-		url: a.url,
-		isShowcase: Boolean(a.isShowcase),
-		author: {
-			commissionsOpen: a.commissionsOpen,
-			discordAvatar: a.discordAvatar,
-			customAvatarUrl: a.customAvatarUrl,
-			discordId: a.discordId,
-			username: a.username,
-		},
-		permissions: artPermissions({
-			authorId: a.userId,
-			linkedUsers: a.linkedUsers,
-		}),
-	}));
+export const tags = defineQuery({
+	root: "ArtTag",
+	select: (qb) => qb.select(["ArtTag.id", "ArtTag.name"]),
+});
 
-	const { seededShuffle } = seededRandom(getDailySeed());
-	return seededShuffle(mappedArts);
+/** Removes the actor from the users tagged in the art. */
+export function unlinkOwnFromArt(artId: number) {
+	return linkedUserTable.delete({ artId, userId: actorId() });
 }
 
-export async function findShowcaseArtsByTag(
-	tagId: Tables["ArtTag"]["id"],
-): Promise<ListedArt[]> {
-	const arts = await db
-		.selectFrom("TaggedArt")
-		.innerJoin("Art", "Art.id", "TaggedArt.artId")
-		.innerJoin("User", "User.id", "Art.authorId")
-		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-		.select((eb) => [
-			"Art.id",
-			"Art.createdAt",
-			"Art.isShowcase",
-			...commonUserSelect(eb, { idAs: "userId" }),
-			"User.commissionsOpen",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"url",
-			),
-			linkedUsersSubquery(eb).as("linkedUsers"),
-		])
-		.where("TaggedArt.tagId", "=", tagId)
-		.orderBy("Art.isShowcase", "desc")
-		.orderBy("Art.createdAt", "desc")
-		.execute();
-
-	const encounteredUserIds = new Set<number>();
-
-	return arts
-		.filter((row) => {
-			if (encounteredUserIds.has(row.userId)) {
-				return false;
-			}
-
-			encounteredUserIds.add(row.userId);
-
-			return true;
-		})
-		.map((a) => ({
-			id: a.id,
-			createdAt: a.createdAt,
-			url: a.url,
-			isShowcase: Boolean(a.isShowcase),
-			author: {
-				commissionsOpen: a.commissionsOpen,
-				discordAvatar: a.discordAvatar,
-				customAvatarUrl: a.customAvatarUrl,
-				discordId: a.discordId,
-				username: a.username,
-			},
-			permissions: artPermissions({
-				authorId: a.userId,
-				linkedUsers: a.linkedUsers,
-			}),
-		}));
-}
-
-export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
-	const arts = await db
-		.selectFrom("Art")
-		.innerJoin("User", "User.id", "Art.authorId")
-		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-		.select((eb) => [
-			"Art.id",
-			"Art.createdAt",
-			"Art.isShowcase",
-			...commonUserSelect(eb, { idAs: "userId" }),
-			"User.commissionsOpen",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"url",
-			),
-			linkedUsersSubquery(eb).as("linkedUsers"),
-		])
-		.orderBy("Art.createdAt", "desc")
-		.limit(100)
-		.execute();
-
-	return arts.map((a) => ({
-		id: a.id,
-		createdAt: a.createdAt,
-		url: a.url,
-		isShowcase: Boolean(a.isShowcase),
-		author: {
-			commissionsOpen: a.commissionsOpen,
-			discordAvatar: a.discordAvatar,
-			customAvatarUrl: a.customAvatarUrl,
-			discordId: a.discordId,
-			username: a.username,
-		},
-		permissions: artPermissions({
-			authorId: a.userId,
-			linkedUsers: a.linkedUsers,
-		}),
-	}));
-}
-
-export async function findAllTags() {
-	return db.selectFrom("ArtTag").select(["id", "name"]).execute();
-}
-
+/** Deletes tags no art has anymore, returning how many were deleted. */
 export async function deleteOrphanTags() {
 	const result = await db
 		.deleteFrom("ArtTag")
-		.where("id", "not in", db.selectFrom("TaggedArt").select("TaggedArt.tagId"))
+		.where("ArtTag.id", "not in", (eb) =>
+			eb.selectFrom("TaggedArt").select("TaggedArt.tagId"),
+		)
 		.executeTakeFirst();
 
 	return Number(result.numDeletedRows);
-}
-
-/** Art by its id, with the ids of the users tagged in it. */
-export async function findById(id: Tables["Art"]["id"]) {
-	const row = await db
-		.selectFrom("Art")
-		.select(({ eb }) => [
-			"Art.id",
-			"Art.authorId",
-			linkedUsersSubquery(eb).as("linkedUsers"),
-		])
-		.where("Art.id", "=", id)
-		.executeTakeFirst();
-
-	if (!row) return;
-
-	return {
-		id: row.id,
-		linkedUserIds: row.linkedUsers.map((linkedUser) => linkedUser.id),
-		permissions: artPermissions({
-			authorId: row.authorId,
-			linkedUsers: row.linkedUsers,
-		}),
-	};
-}
-
-export async function findArtsByUserId(
-	userId: number,
-	{ includeAuthored = true, includeTagged = true } = {},
-): Promise<ListedArt[]> {
-	const taggedButNotAuthored = includeTagged
-		? await db
-				.selectFrom("Art")
-				.innerJoin("ArtUserMetadata", "ArtUserMetadata.artId", "Art.id")
-				.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-				.innerJoin("User", "User.id", "Art.authorId")
-				.select(({ eb }) => [
-					"Art.id",
-					"Art.description",
-					"Art.createdAt",
-					"Art.isShowcase",
-					concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-						"url",
-					),
-					...commonUserSelect(eb, { idAs: "userId" }),
-					"User.commissionsOpen",
-					jsonArrayFrom(
-						eb
-							.selectFrom("TaggedArt")
-							.innerJoin("ArtTag", "ArtTag.id", "TaggedArt.tagId")
-							.select(["ArtTag.id", "ArtTag.name"])
-							.whereRef("TaggedArt.artId", "=", "Art.id"),
-					).as("tags"),
-					jsonArrayFrom(
-						eb
-							.selectFrom("ArtUserMetadata")
-							.innerJoin(
-								"User as LinkedUser",
-								"LinkedUser.id",
-								"ArtUserMetadata.userId",
-							)
-							.select((linkedEb) =>
-								commonUserSelect(linkedEb, { alias: "LinkedUser" }),
-							)
-							.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
-					).as("linkedUsers"),
-				])
-				.where("ArtUserMetadata.userId", "=", userId)
-				.where("Art.authorId", "!=", userId)
-				.execute()
-		: [];
-
-	const authored = includeAuthored
-		? await db
-				.selectFrom("Art")
-				.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-				.select(({ eb }) => [
-					"Art.id",
-					"Art.description",
-					"Art.createdAt",
-					"Art.isShowcase",
-					concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-						"url",
-					),
-					jsonArrayFrom(
-						eb
-							.selectFrom("TaggedArt")
-							.innerJoin("ArtTag", "ArtTag.id", "TaggedArt.tagId")
-							.select(["ArtTag.id", "ArtTag.name"])
-							.whereRef("TaggedArt.artId", "=", "Art.id"),
-					).as("tags"),
-					jsonArrayFrom(
-						eb
-							.selectFrom("ArtUserMetadata")
-							.innerJoin(
-								"User as LinkedUser",
-								"LinkedUser.id",
-								"ArtUserMetadata.userId",
-							)
-							.select((linkedEb) =>
-								commonUserSelect(linkedEb, { alias: "LinkedUser" }),
-							)
-							.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
-					).as("linkedUsers"),
-				])
-				.where("Art.authorId", "=", userId)
-				.execute()
-		: [];
-
-	const combined = [
-		...taggedButNotAuthored.map((row) => ({
-			id: row.id,
-			url: row.url,
-			description: row.description ?? undefined,
-			createdAt: row.createdAt,
-			isShowcase: Boolean(row.isShowcase),
-			tags: row.tags.length > 0 ? row.tags : undefined,
-			linkedUsers: row.linkedUsers.length > 0 ? row.linkedUsers : undefined,
-			author: {
-				discordId: row.discordId,
-				username: row.username,
-				discordAvatar: row.discordAvatar,
-				customAvatarUrl: row.customAvatarUrl,
-				commissionsOpen: row.commissionsOpen,
-			},
-			permissions: artPermissions({
-				authorId: row.userId,
-				linkedUsers: row.linkedUsers,
-			}),
-		})),
-		...authored.map((row) => ({
-			id: row.id,
-			url: row.url,
-			description: row.description ?? undefined,
-			createdAt: row.createdAt,
-			isShowcase: Boolean(row.isShowcase),
-			tags: row.tags.length > 0 ? row.tags : undefined,
-			linkedUsers: row.linkedUsers.length > 0 ? row.linkedUsers : undefined,
-			author: undefined,
-			permissions: artPermissions({
-				authorId: userId,
-				linkedUsers: row.linkedUsers,
-			}),
-		})),
-	];
-
-	return combined.sort((a, b) => b.createdAt - a.createdAt);
-}
-
-export async function deleteById(id: number) {
-	return db.deleteFrom("Art").where("id", "=", id).execute();
 }
 
 type TagsToAdd = Array<Partial<Pick<Tables["ArtTag"], "name" | "id">>>;
@@ -353,44 +191,42 @@ type InsertArtArgs = Pick<Tables["Art"], "description"> &
 		tags: TagsToAdd;
 	};
 
-export async function insert(args: InsertArtArgs) {
+/**
+ * Inserts the actor's art with its image, tagged users and tags, returning the ids of the art and
+ * its image. The author's first art is their showcase.
+ */
+export function insert(args: InsertArtArgs) {
 	const authorId = actorId();
-	return await db.transaction().execute(async (trx) => {
-		const img = await trx
-			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({
+
+	return db.transaction().execute(async (trx) => {
+		const image = await imageTable.insert(
+			{
 				submitterUserId: authorId,
 				url: args.url,
 				validatedAt: args.validatedAt,
-			})
-			.returningAll()
-			.executeTakeFirstOrThrow();
+			},
+			trx,
+		);
 
-		const hasExistingArt = await trx
-			.selectFrom("Art")
-			.select("id")
-			.where("authorId", "=", authorId)
-			.executeTakeFirst();
+		const hasExistingArt = await artTable.exists({ authorId }, trx);
 
-		const art = await trx
-			.insertInto("Art")
-			.values({
+		const art = await artTable.insert(
+			{
 				authorId,
 				description: args.description,
-				imgId: img.id,
+				imgId: image.id,
 				isShowcase: hasExistingArt ? 0 : 1,
-			})
-			.returningAll()
-			.executeTakeFirstOrThrow();
+			},
+			trx,
+		);
 
-		await trx
-			.insertInto("ArtUserMetadata")
-			.values(args.linkedUsers.map((userId) => ({ artId: art.id, userId })))
-			.execute();
+		await linkedUserTable.insertMany(
+			args.linkedUsers.map((userId) => ({ artId: art.id, userId })),
+			trx,
+		);
+		await insertTags({ tagsToAdd: args.tags, authorId, artId: art.id }, trx);
 
-		await insertTags({ tags: args.tags, authorId, artId: art.id }, trx);
-
-		return art;
+		return { id: art.id, imgId: image.id };
 	});
 }
 
@@ -399,41 +235,33 @@ type UpdateArtArgs = Pick<Tables["Art"], "description" | "isShowcase"> & {
 	tags: TagsToAdd;
 };
 
-export async function update(id: number, args: UpdateArtArgs) {
-	return await db.transaction().execute(async (trx) => {
-		const { authorId } = await trx
-			.selectFrom("Art")
-			.select("authorId")
-			.where("id", "=", id)
-			.executeTakeFirstOrThrow();
+/** Updates the art and replaces its tagged users and tags. Making it the showcase unsets the author's previous one. */
+export function update(id: number, args: UpdateArtArgs) {
+	return db.transaction().execute(async (trx) => {
+		const art = await artTable.findById(id, trx);
+		invariant(art, "Art to update not found");
 
 		if (args.isShowcase) {
-			await trx
-				.updateTable("Art")
-				.set({ isShowcase: 0 })
-				.where("authorId", "=", authorId)
-				.execute();
+			await artTable.update({ authorId: art.authorId }, { isShowcase: 0 }, trx);
 		}
 
-		await trx
-			.updateTable("Art")
-			.set({
-				description: args.description,
-				isShowcase: args.isShowcase ? 1 : 0,
-			})
-			.where("id", "=", id)
-			.execute();
+		await artTable.updateById(
+			id,
+			{ description: args.description, isShowcase: args.isShowcase },
+			trx,
+		);
 
-		await trx.deleteFrom("ArtUserMetadata").where("artId", "=", id).execute();
+		await linkedUserTable.delete({ artId: id }, trx);
+		await linkedUserTable.insertMany(
+			args.linkedUsers.map((userId) => ({ artId: id, userId })),
+			trx,
+		);
 
-		await trx
-			.insertInto("ArtUserMetadata")
-			.values(args.linkedUsers.map((userId) => ({ artId: id, userId })))
-			.execute();
-
-		await trx.deleteFrom("TaggedArt").where("artId", "=", id).execute();
-
-		await insertTags({ tags: args.tags, authorId, artId: id }, trx);
+		await taggedArtTable.delete({ artId: id }, trx);
+		await insertTags(
+			{ tagsToAdd: args.tags, authorId: art.authorId, artId: id },
+			trx,
+		);
 
 		return id;
 	});
@@ -441,17 +269,17 @@ export async function update(id: number, args: UpdateArtArgs) {
 
 async function insertTags(
 	{
-		tags,
+		tagsToAdd,
 		authorId,
 		artId,
 	}: {
-		tags: TagsToAdd;
+		tagsToAdd: TagsToAdd;
 		authorId: number;
 		artId: number;
 	},
 	trx: Transaction<DB>,
 ) {
-	const newTagNames = tags
+	const newTagNames = tagsToAdd
 		.filter((tag) => !tag.id)
 		.map((tag) => {
 			if (!tag.name) {
@@ -460,43 +288,32 @@ async function insertTags(
 			return tag.name;
 		});
 
-	const newTagIds = (
-		await trx
-			.insertInto("ArtTag")
-			.values(newTagNames.map((name) => ({ name, authorId })))
-			.returning("ArtTag.id")
-			.execute()
-	).map((tag) => tag.id);
+	const newTags = await tagTable.insertMany(
+		newTagNames.map((name) => ({ name, authorId })),
+		trx,
+	);
 
 	const tagIds = [
-		...tags.flatMap((tag) => (tag.id ? [tag.id] : [])),
-		...newTagIds,
+		...tagsToAdd.flatMap((tag) => (tag.id ? [tag.id] : [])),
+		...newTags.map((tag) => tag.id),
 	];
 
-	await trx
-		.insertInto("TaggedArt")
-		.values(tagIds.map((tagId) => ({ artId, tagId })))
-		.execute();
-}
-
-function linkedUsersSubquery(eb: ExpressionBuilder<DB, "Art">) {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("ArtUserMetadata")
-			.select("ArtUserMetadata.userId as id")
-			.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
+	await taggedArtTable.insertMany(
+		tagIds.map((tagId) => ({ artId, tagId })),
+		trx,
 	);
 }
 
-function artPermissions({
-	authorId,
-	linkedUsers,
-}: {
-	authorId: number;
-	linkedUsers: Array<{ id: number }>;
-}): ListedArt["permissions"] {
-	return {
-		EDIT: [authorId],
-		UNLINK: linkedUsers.map((linkedUser) => linkedUser.id),
-	};
+function imageValidated(eb: ExpressionBuilder<DB, "Art">, validated: boolean) {
+	return eb.exists(
+		eb
+			.selectFrom("UnvalidatedUserSubmittedImage")
+			.select("UnvalidatedUserSubmittedImage.id")
+			.whereRef("UnvalidatedUserSubmittedImage.id", "=", "Art.imgId")
+			.where(
+				"UnvalidatedUserSubmittedImage.validatedAt",
+				validated ? "is not" : "is",
+				null,
+			),
+	);
 }

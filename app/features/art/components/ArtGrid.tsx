@@ -28,10 +28,13 @@ const preloadedImageUrls = new Set<string>();
 
 export function ArtGrid({
 	arts,
+	pageUserId,
 	enablePreview = false,
 	showUploadDate = false,
 }: {
 	arts: ListedArt[];
+	/** Whose art page the grid is on. Their own art shows no author but the edit actions. */
+	pageUserId?: number;
 	enablePreview?: boolean;
 	showUploadDate?: boolean;
 }) {
@@ -65,6 +68,7 @@ export function ArtGrid({
 					<ImagePreview
 						key={art.id}
 						art={art}
+						isPageUsersOwn={art.author.id === pageUserId}
 						enablePreview={enablePreview}
 						showUploadDate={showUploadDate}
 						onClick={enablePreview ? () => setBigArtId(art.id) : undefined}
@@ -165,7 +169,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 								{art.description}
 							</div>
 						) : null}
-						{art.tags || art.linkedUsers ? (
+						{art.tags?.length || art.linkedUsers?.length ? (
 							<div className={styles.tagsContainer}>
 								{art.linkedUsers?.map((user) => (
 									<Link
@@ -196,11 +200,13 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 
 function ImagePreview({
 	art,
+	isPageUsersOwn,
 	onClick,
 	enablePreview = false,
 	showUploadDate = false,
 }: {
 	art: ListedArt;
+	isPageUsersOwn: boolean;
 	onClick?: () => void;
 	enablePreview?: boolean;
 	showUploadDate?: boolean;
@@ -236,7 +242,7 @@ function ImagePreview({
 		image
 	);
 
-	if (!art.author && canEdit) {
+	if (isPageUsersOwn && canEdit) {
 		return (
 			<div>
 				{img}
@@ -271,7 +277,7 @@ function ImagePreview({
 			</div>
 		);
 	}
-	if (!art.author) return img;
+	if (isPageUsersOwn) return img;
 
 	const uploadDateText = showUploadDate
 		? formatDistanceToNow(databaseTimestampToDate(art.createdAt), {

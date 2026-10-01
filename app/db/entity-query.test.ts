@@ -83,6 +83,16 @@ describe("defineQuery", () => {
 		expect(titlesOf(await testBuilds().onlyPrivate().execute())).toEqual(["C"]);
 	});
 
+	test("counts the rows the guards and filters let through", async () => {
+		expect(await testBuilds().limit(1).count()).toBe(2);
+		expect(await testBuilds().includingPrivate().count()).toBe(3);
+		expect(
+			await testBuilds()
+				.where({ ownerId: users.id(2) })
+				.count(),
+		).toBe(1);
+	});
+
 	test("stacks sorts in call order and falls back to the default sort", async () => {
 		expect(
 			titlesOf(await testBuilds().ownerDesc().titleDesc().execute()),

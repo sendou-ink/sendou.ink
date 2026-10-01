@@ -68,11 +68,11 @@ export default function ArtPage() {
 
 	const showcaseArts = !showOpenCommissions
 		? data.showcaseArts
-		: data.showcaseArts.filter((art) => art.author?.commissionsOpen);
+		: data.showcaseArts.filter((art) => art.author.commissionsOpen);
 
 	const recentlyUploadedArts = !showOpenCommissions
 		? data.recentlyUploadedArts
-		: data.recentlyUploadedArts.filter((art) => art.author?.commissionsOpen);
+		: data.recentlyUploadedArts.filter((art) => art.author.commissionsOpen);
 
 	return (
 		<Main className="stack lg">

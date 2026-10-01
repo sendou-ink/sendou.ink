@@ -68,6 +68,8 @@ const USER_EXTRAS = {
 			.$castTo<number | null>(),
 	country: (eb: ExpressionBuilder<DB, "User">) => eb.ref("User.country"),
 	languages: (eb: ExpressionBuilder<DB, "User">) => eb.ref("User.languages"),
+	commissionsOpen: (eb: ExpressionBuilder<DB, "User">) =>
+		eb.ref("User.commissionsOpen"),
 	weaponPool: (eb: ExpressionBuilder<DB, "User">) => matchProfileWeapons(eb),
 	card: (eb: ExpressionBuilder<DB, "User">) =>
 		UserCardRepository.cardOf(eb.ref("User.id")),

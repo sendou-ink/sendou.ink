@@ -62,7 +62,9 @@ describe("deleteById", () => {
 	test("deletes associated art when deleting image", async () => {
 		const art = await ArtFactory.create({ authorId: users.id(1) });
 
-		const artsBefore = await ArtRepository.findArtsByUserId(users.id(1));
+		const artsBefore = await ArtRepository.arts()
+			.where({ authorId: users.id(1) })
+			.execute();
 		expect(artsBefore).toHaveLength(1);
 		expect(artsBefore[0].id).toBe(art.id);
 
@@ -71,38 +73,10 @@ describe("deleteById", () => {
 		const result = await ImageRepository.findById(art.imgId);
 		expect(result).toBeUndefined();
 
-		const artsAfter = await ArtRepository.findArtsByUserId(users.id(1));
+		const artsAfter = await ArtRepository.arts()
+			.where({ authorId: users.id(1) })
+			.execute();
 		expect(artsAfter).toHaveLength(0);
-	});
-});
-
-describe("countUnvalidatedArt", () => {
-	beforeEach(async () => {
-		await users.create(1);
-	});
-
-	test("counts unvalidated art by author", async () => {
-		await createUnvalidatedArt(users.id(1));
-		await createUnvalidatedArt(users.id(1));
-
-		const count = await ImageRepository.countUnvalidatedArt(users.id(1));
-
-		expect(count).toBe(2);
-	});
-
-	test("does not count validated art", async () => {
-		await createUnvalidatedArt(users.id(1));
-		await ArtFactory.create({ authorId: users.id(1) });
-
-		const count = await ImageRepository.countUnvalidatedArt(users.id(1));
-
-		expect(count).toBe(1);
-	});
-
-	test("returns 0 when author has no unvalidated art", async () => {
-		const count = await ImageRepository.countUnvalidatedArt(users.id(1));
-
-		expect(count).toBe(0);
 	});
 });
 

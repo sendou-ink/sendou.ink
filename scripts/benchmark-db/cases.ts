@@ -111,21 +111,43 @@ export function buildCases(fx: Fixtures): {
 		ApiRepository.findAllApiTokens(),
 	);
 
-	addStatic("ArtRepository.findShowcaseArts", () =>
-		ArtRepository.findShowcaseArts(),
+	addStatic("ArtRepository.arts.showcase", () =>
+		ArtRepository.arts()
+			.bestOfEachAuthor()
+			.withAuthor()
+			.showcaseFirst()
+			.execute(),
 	);
-	add("ArtRepository.findShowcaseArtsByTag", fx.heavyArtTagId, (tagId) =>
-		ArtRepository.findShowcaseArtsByTag(tagId),
+	add("ArtRepository.arts.showcaseByTag", fx.heavyArtTagId, (tagId) =>
+		ArtRepository.arts()
+			.bestOfEachAuthor(tagId)
+			.withAuthor()
+			.showcaseFirst()
+			.execute(),
 	);
-	addStatic("ArtRepository.findRecentlyUploadedArts", () =>
-		ArtRepository.findRecentlyUploadedArts(),
+	addStatic("ArtRepository.arts.recentlyUploaded", () =>
+		ArtRepository.arts().withAuthor().limit(100).execute(),
 	);
-	addStatic("ArtRepository.findAllTags", () => ArtRepository.findAllTags());
-	add("ArtRepository.findArtsByUserId", fx.heavyArtUserId, (userId) =>
-		ArtRepository.findArtsByUserId(userId),
+	addStatic("ArtRepository.tags", () => ArtRepository.tags().execute());
+	add("ArtRepository.arts.userArts", fx.heavyArtUserId, (userId) =>
+		ArtRepository.arts()
+			.involvingUser(userId)
+			.withAuthor()
+			.withTags()
+			.withLinkedUsers()
+			.execute(),
 	);
-	add("ArtRepository.findById", fx.heavyArtId, (artId) =>
-		ArtRepository.findById(artId),
+	add(
+		"ArtRepository.arts.awaitingValidationCount",
+		fx.heavyArtUserId,
+		(userId) =>
+			ArtRepository.arts()
+				.where({ authorId: userId })
+				.awaitingValidation()
+				.count(),
+	);
+	add("ArtRepository.arts.byId", fx.heavyArtId, (artId) =>
+		ArtRepository.arts().where({ id: artId }).executeTakeFirst(),
 	);
 
 	add("AssociationRepository.findById", fx.heavyAssociation, (association) =>
@@ -407,9 +429,6 @@ export function buildCases(fx: Fixtures): {
 
 	add("ImageRepository.findById", fx.imageId, (imageId) =>
 		ImageRepository.findById(imageId),
-	);
-	add("ImageRepository.countUnvalidatedArt", fx.heavyArtUserId, (userId) =>
-		ImageRepository.countUnvalidatedArt(userId),
 	);
 	addStatic("ImageRepository.countAllUnvalidated", () =>
 		ImageRepository.countAllUnvalidated(),

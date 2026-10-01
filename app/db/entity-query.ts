@@ -175,6 +175,8 @@ interface EntityQuery<R extends TableName, O, V, M extends PropertyKey> {
 	paginate(options: CursorOptions): Promise<CursorPage<O>>;
 	execute(): Promise<O[]>;
 	executeTakeFirst(): Promise<O | undefined>;
+	/** How many rows the chain's guards and filters let through; selections, sort and `limit` don't apply. */
+	count(): Promise<number>;
 	compile(): CompiledQuery;
 }
 
@@ -468,6 +470,12 @@ function createChain(
 		compile: () => build().compile(),
 		execute: () => run(build()),
 		executeTakeFirst: async () => (await run(build(1)))[0],
+		count: () =>
+			countRows(
+				unsorted()
+					.clearSelect()
+					.select((eb: AnyEB) => eb.lit(1).as("__counted")),
+			),
 	};
 
 	for (const [name, factory] of Object.entries(vocabulary)) {

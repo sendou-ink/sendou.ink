@@ -7,17 +7,17 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
 	const { art: artId } = artNewSearchParams.parse(url);
-	if (artId === null) {
-		return { art: null, tags: await ArtRepository.findAllTags() };
-	}
+	const art =
+		artId === null
+			? undefined
+			: await ownArt(artId, user.id).executeTakeFirst();
 
-	const userArts = await ArtRepository.findArtsByUserId(user.id, {
-		includeTagged: false,
-	});
-	const art = userArts.find((a) => a.id === artId);
-	if (!art) {
-		return { art: null, tags: await ArtRepository.findAllTags() };
-	}
-
-	return { art, tags: await ArtRepository.findAllTags() };
+	return { art: art ?? null, tags: await ArtRepository.tags().execute() };
 };
+
+function ownArt(artId: number, userId: number) {
+	return ArtRepository.arts()
+		.where({ id: artId, authorId: userId })
+		.withTags()
+		.withLinkedUsers();
+}

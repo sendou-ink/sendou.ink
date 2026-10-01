@@ -286,17 +286,10 @@ export const WIDGET_LOADERS = {
 		);
 	},
 	art: async (userId: number, settings: ExtractWidgetSettings<"art">) => {
-		const includeAuthored =
-			settings.source === "ALL" || settings.source === "MADE-BY";
-		const includeTagged =
-			settings.source === "ALL" || settings.source === "MADE-OF";
-
-		const arts = await ArtRepository.findArtsByUserId(userId, {
-			includeAuthored,
-			includeTagged,
-		});
-
-		return arts.slice(0, 3);
+		return ArtRepository.arts()
+			.involvingUser(userId, settings.source)
+			.limit(3)
+			.execute();
 	},
 	commissions: async (userId: number) => {
 		return UserRepository.findCommissionsByUserId(userId);

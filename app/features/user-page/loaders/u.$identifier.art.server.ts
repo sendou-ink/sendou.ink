@@ -1,13 +1,12 @@
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { getUser } from "~/features/auth/core/user.server";
-import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
 
 export const loader = async () => {
 	const loggedInUser = getUser();
 	const userId = userPageUserId();
 
-	const arts = await ArtRepository.findArtsByUserId(userId);
+	const arts = await userArts(userId).execute();
 
 	const tagCounts = arts.reduce<Record<string, number>>((acc, art) => {
 		if (!art.tags) return acc;
@@ -27,7 +26,18 @@ export const loader = async () => {
 		tagCounts: tagCountsSortedArr.length > 0 ? tagCountsSortedArr : null,
 		unvalidatedArtCount:
 			userId === loggedInUser?.id
-				? await ImageRepository.countUnvalidatedArt(userId)
+				? await ArtRepository.arts()
+						.where({ authorId: userId })
+						.awaitingValidation()
+						.count()
 				: 0,
 	};
 };
+
+function userArts(userId: number) {
+	return ArtRepository.arts()
+		.involvingUser(userId)
+		.withAuthor()
+		.withTags()
+		.withLinkedUsers();
+}

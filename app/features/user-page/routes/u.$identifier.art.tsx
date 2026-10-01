@@ -25,15 +25,18 @@ export default function UserArtPage() {
 		data.tagCounts?.find((tagCount) => tagCount[0] === tagParam)?.[0] ?? null;
 	const layoutData = useUserPageLayoutData();
 
+	const isMadeByPageUser = (art: (typeof data.arts)[number]) =>
+		art.author.id === layoutData.user.id;
 	const hasBothArtMadeByAndMadeOf =
-		data.arts.some((a) => a.author) && data.arts.some((a) => !a.author);
+		data.arts.some(isMadeByPageUser) &&
+		data.arts.some((art) => !isMadeByPageUser(art));
 
 	let arts =
 		type === "ALL" || !hasBothArtMadeByAndMadeOf
 			? data.arts
 			: type === "MADE-BY"
-				? data.arts.filter((a) => !a.author)
-				: data.arts.filter((a) => a.author);
+				? data.arts.filter(isMadeByPageUser)
+				: data.arts.filter((art) => !isMadeByPageUser(art));
 
 	if (filteredTag) {
 		arts = arts.filter((a) => a.tags?.some((tag) => tag.name === filteredTag));
@@ -127,7 +130,7 @@ export default function UserArtPage() {
 				</div>
 			) : null}
 
-			<ArtGrid arts={arts} enablePreview />
+			<ArtGrid arts={arts} pageUserId={layoutData.user.id} enablePreview />
 		</div>
 	);
 }

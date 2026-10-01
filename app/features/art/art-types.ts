@@ -1,29 +1,15 @@
-import type { Tables } from "~/db/tables";
-import type { CommonUser } from "~/utils/kysely.server";
+import type { QueryRow } from "~/db/entity-query";
+import type * as ArtRepository from "./ArtRepository.server";
 
-export interface ListedArt {
-	id: Tables["Art"]["id"];
-	createdAt: Tables["Art"]["createdAt"];
-	url: Tables["UserSubmittedImage"]["url"];
-	description?: Tables["Art"]["description"];
-	isShowcase: boolean;
-	tags?: Array<{
-		id: Tables["ArtTag"]["id"];
-		name: Tables["ArtTag"]["name"];
-	}>;
-	linkedUsers?: Array<CommonUser>;
-	author?: {
-		discordId: Tables["User"]["discordId"];
-		username: Tables["User"]["username"];
-		discordAvatar: Tables["User"]["discordAvatar"];
-		customAvatarUrl: string | null;
-		commissionsOpen: Tables["User"]["commissionsOpen"];
-	};
-	permissions: {
-		EDIT: Array<number>;
-		UNLINK: Array<number>;
-	};
-}
+type Arts = ReturnType<typeof ArtRepository.arts>;
+type ArtWithAuthor = QueryRow<ReturnType<Arts["withAuthor"]>>;
+type ArtDetails = Pick<
+	QueryRow<ReturnType<ReturnType<Arts["withTags"]>["withLinkedUsers"]>>,
+	"tags" | "linkedUsers"
+>;
+
+/** Art as a grid lists it. The user page's grid also shows its tags and tagged users. */
+export type ListedArt = ArtWithAuthor & Partial<ArtDetails>;
 
 export const ART_SOURCES = ["ALL", "MADE-BY", "MADE-OF"] as const;
 export type ArtSource = (typeof ART_SOURCES)[number];
