@@ -132,7 +132,15 @@ async function init({
 				);
 			}
 		}
-		const resources = await fetchScoreboardResources(assetsBaseUrl);
+		const { resources, missingAtlases, missingIcons } =
+			await fetchScoreboardResources(assetsBaseUrl);
+		if (missingAtlases.length > 0 || missingIcons.length > 0) {
+			// biome-ignore lint/suspicious/noConsole: the scan goes on with what loaded, so say what didn't
+			console.warn("scanner: assets failed to load", {
+				missingAtlases,
+				missingIcons,
+			});
+		}
 		detectors = createAllDetectors(resources);
 		scheduler = new DetectorScheduler(detectors, {
 			suppressSteadyFrames,
@@ -142,7 +150,7 @@ async function init({
 		collectTelemetry = collect;
 		attachFrames = attach;
 		telemetry = freshTelemetry();
-		post({ kind: "ready" });
+		post({ kind: "ready", missingAtlases });
 	} catch (error) {
 		post({ kind: "error", message: `init failed: ${String(error)}` });
 	}

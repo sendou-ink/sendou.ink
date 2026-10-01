@@ -72,7 +72,12 @@ opens it, for anyone, through the same handoff Inspect uses.
 - **Upload** is on by default when logged in (settings toggle, persisted).
   Live: a scoreboard closes its match and sends it, a 15 s tick retries
   unlinked matches on a backoff (`sendou-ingest.ts`) and flushes closed
-  matches whose send was skipped; Stop sends what is left. Per-event send
+  matches whose send was skipped; Stop sends what is left. Server-side, a
+  game report (tournament or SendouQ) links the stored, still unlinked
+  matches hinted to its context (`scanner-ingest/core/relink.server.ts`),
+  and a SendouQ report undo drops the map's links (a tournament undo deletes
+  the result, cascading them), so a correction relinks without a resend.
+  Per-event send
   statuses back the cards' upload status button (`UploadStatus.tsx`) and its
   Retry/Upload. VoD scans never upload: their reads carry no wall clock, and
   without one a stranger's game can't be told apart from the uploader's
@@ -577,11 +582,21 @@ in the **sendou-ink/assets repo** under `assets/img/**` (`.avif`; ids from
 Scanner-specific sets — glyph atlases and the planner signature atlas — live
 in the same repo under `assets/scanner/v1/**` (override the local path with
 `SCANNER_ASSETS_DIR`). These are the only assets that mutate at a fixed URL —
-nothing sets Cache-Control on the Space, and each atlas's `.png` and `.json`
-cache independently, so a regen that moves glyph boxes must bump the version
-segment. Otherwise a client can pair a fresh image with a stale meta and
+the CDN serves them with `max-age=3600` and each atlas's `.png` and `.json`
+cache independently. The worker fetches them `no-cache` (an ETag
+revalidation), which keeps the browser cache from pairing a fresh image with
+a stale meta, but the CDN edge can still do so for an hour, so a regen that
+moves glyph boxes must bump the version segment. Otherwise a client can
 silently read garbage (old dirs are deleted from the Space by the sync's
 `--delete-removed`).
+
+Loading never fails init over one asset: every fetch is retried once, an
+icon that still fails only drops its template (a weapon added to
+`in-game-lists` before the assets push), and an atlas that fails reads as
+null. The worker's `ready` names the missing atlases; a live capture refuses
+to start with any (its games would upload unread — an unread lobby passes
+`ingestSkipReasons`), VoD/screenshot scans carry on. Node loading
+(`node/resources.ts`) stays strict and throws on a missing icon.
 
 - Browser/worker: everything from `Config.staticAssetsUrl` — icons at
   `img/**`, atlases at `scanner/v1/**` (base URL rides the worker init

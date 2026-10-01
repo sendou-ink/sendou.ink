@@ -31,7 +31,7 @@ const MIN_RESOLVED_SCOREBOARDS = 2;
  * plays of one map. Outside every candidate the scan stays unlinked (re-sendable) rather than
  * silently putting strangers on a match page.
  */
-const PLAYED_AT_TOLERANCE_MS = 30 * 60 * 1000;
+export const PLAYED_AT_TOLERANCE_MS = 30 * 60 * 1000;
 
 /** The match context an ingest request was resolved to belong to. */
 export type IngestContext =

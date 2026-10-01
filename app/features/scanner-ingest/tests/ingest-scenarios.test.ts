@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
+import { linkStoredMatches } from "../core/relink.server";
 import {
 	ALPHA_NAMES,
 	anotherSendouqMatch,
@@ -456,6 +459,62 @@ describe("SendouQ flow", () => {
 		const page = await qMatchPage(w.match.id);
 		expect(page.ingestedScoreboards.map((sb) => sb.mapIndex)).toEqual([0, 1]);
 	});
+
+	test("Q14 send before report: the report links the stored read without a resend", async () => {
+		const w = await sendouqWorld();
+		const res = await ingest(w.povUser, [w.scanned(w.maps[0]!)]);
+		expect(res.linkedGamesCount).toBe(0);
+
+		await SQMatchRepository.reportMapWinner({
+			matchId: w.match.id,
+			winnerId: w.match.alphaGroup.id,
+			reportedByUserId: w.povUser.id,
+			reportedCount: 0,
+		});
+		await linkStoredMatches({ type: "sendouq", groupMatchId: w.match.id });
+
+		const page = await qMatchPage(w.match.id);
+		expect(page.ingestedScoreboards.map((sb) => sb.mapIndex)).toEqual([0]);
+		expect(page.reportedWeapons).toEqual([
+			{
+				groupMatchId: w.match.id,
+				mapIndex: 0,
+				userId: w.povUser.id,
+				weaponSplId: WEAPONS[0],
+			},
+		]);
+	});
+
+	test("Q15 corrected map report: the undo unlinks the read, which relinks only to a report it agrees with", async () => {
+		const w = await sendouqWorld();
+		const reportFirstMap = async (winnerId: number) => {
+			await SQMatchRepository.reportMapWinner({
+				matchId: w.match.id,
+				winnerId,
+				reportedByUserId: w.povUser.id,
+				reportedCount: 0,
+			});
+			await linkStoredMatches({ type: "sendouq", groupMatchId: w.match.id });
+		};
+		const undoFirstMap = () =>
+			SQMatchRepository.undoMapReport({ matchId: w.match.id, mapIndex: 0 });
+
+		await reportFirstMap(w.match.alphaGroup.id);
+		await ingest(w.povUser, [w.scanned(w.maps[0]!)]);
+		expect(await fetchLinks()).toHaveLength(1);
+
+		await undoFirstMap();
+		expect(await fetchLinks()).toHaveLength(0);
+
+		await reportFirstMap(w.match.bravoGroup.id);
+		expect(await fetchLinks()).toHaveLength(0);
+		expect((await qMatchPage(w.match.id)).ingestedScoreboards).toHaveLength(0);
+
+		await undoFirstMap();
+		await reportFirstMap(w.match.alphaGroup.id);
+		expect(await fetchLinks()).toHaveLength(1);
+		expect((await qMatchPage(w.match.id)).ingestedScoreboards).toHaveLength(1);
+	});
 });
 
 describe("tournament flow", () => {
@@ -624,6 +683,39 @@ describe("tournament flow", () => {
 
 		expect(res.linkedGamesCount).toBe(2);
 		expect(await fetchReportedWeapons()).toHaveLength(0);
+	});
+
+	test("T8 undone and re-reported game: the read relinks to the new result without a resend", async () => {
+		const w = await tournamentWorld();
+		const finalMatch = w.matches.at(-1)!;
+		const [game1] = await w.games(finalMatch.id);
+		await ingest(w.povUser, [w.scanned(game1!)]);
+		const [result] = await TournamentMatchRepository.findResultsByMatchId(
+			finalMatch.id,
+		);
+
+		await TournamentMatchRepository.deleteResultById(result!.id);
+		expect(await fetchLinks()).toHaveLength(0);
+
+		const reReported = await TournamentMatchRepository.insertResult({
+			matchId: finalMatch.id,
+			mode: result!.mode,
+			stageId: result!.stageId,
+			reporterId: w.author.id,
+			winnerTeamId: result!.winnerTeamId,
+			number: 1,
+			source: result!.source,
+		});
+		await linkStoredMatches({
+			type: "tournament",
+			tournamentId: w.tournamentId,
+			tournamentMatchId: finalMatch.id,
+		});
+
+		const links = await fetchLinks();
+		expect(links.map((link) => link.tournamentMatchGameResultId)).toEqual([
+			reReported.id,
+		]);
 	});
 });
 

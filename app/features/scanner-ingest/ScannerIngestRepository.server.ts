@@ -495,6 +495,61 @@ export async function addLinks({
 	});
 }
 
+/** Stored matches hinted to the context and played since `playedSince` that no game links yet, chronological. */
+export function findUnlinkedMatchesByHint({
+	context,
+	playedSince,
+}: {
+	context: IngestContext;
+	/** database timestamp (seconds) */
+	playedSince: number;
+}) {
+	return db
+		.selectFrom("IngestedMatch")
+		.select([
+			"IngestedMatch.id",
+			"IngestedMatch.data",
+			"IngestedMatch.povUserId",
+		])
+		.where(
+			context.type === "tournament"
+				? "IngestedMatch.tournamentIdHint"
+				: "IngestedMatch.groupMatchIdHint",
+			"=",
+			context.type === "tournament"
+				? context.tournamentId
+				: context.groupMatchId,
+		)
+		.where("IngestedMatch.playedAt", ">=", playedSince)
+		.where((eb) =>
+			eb.not(
+				eb.exists(
+					eb
+						.selectFrom("IngestedMatchLink")
+						.select("IngestedMatchLink.id")
+						.whereRef(
+							"IngestedMatchLink.ingestedMatchId",
+							"=",
+							"IngestedMatch.id",
+						),
+				),
+			),
+		)
+		.orderBy("IngestedMatch.playedAt", "asc")
+		.execute();
+}
+
+/** Unlinks every ingested match from a SendouQ map, as when its report is undone. */
+export async function deleteLinksByGroupMatchMapId(
+	groupMatchMapId: number,
+	trx?: Transaction<DB>,
+) {
+	await (trx ?? db)
+		.deleteFrom("IngestedMatchLink")
+		.where("IngestedMatchLink.groupMatchMapId", "=", groupMatchMapId)
+		.execute();
+}
+
 async function addOrMergeMatch(
 	trx: Transaction<DB>,
 	{

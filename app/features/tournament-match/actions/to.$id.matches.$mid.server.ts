@@ -6,6 +6,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { PersistedSystemMessageType } from "~/features/chat/chat-types";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import { linkStoredMatches } from "~/features/scanner-ingest/core/relink.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -120,6 +121,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			// the game was already reported, let their page refresh to pick it up
 			if (!reported) return null;
+
+			await linkStoredMatches({
+				type: "tournament",
+				tournamentId,
+				tournamentMatchId: match.id,
+			});
 
 			endedDroppedMatchIds = reported.endedMatchIds;
 			setIsOver = reported.setOver;

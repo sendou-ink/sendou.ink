@@ -45,6 +45,7 @@ interface QueuedFrame {
 export class AnalyzerClient {
 	readonly #worker: Worker;
 	#ready = false;
+	#missingAtlases: readonly string[] = [];
 	#busy = false;
 	readonly #onResult: ResultHandler;
 	readonly #onError: ErrorHandler;
@@ -98,6 +99,7 @@ export class AnalyzerClient {
 			const msg = e.data;
 			if (msg.kind === "ready") {
 				this.#ready = true;
+				this.#missingAtlases = msg.missingAtlases;
 				resolveReady();
 			} else if (msg.kind === "result") {
 				this.#onResult(msg);
@@ -137,6 +139,11 @@ export class AnalyzerClient {
 
 	whenReady(): Promise<void> {
 		return this.#readyPromise;
+	}
+
+	/** Atlases the worker could not load (known once ready): it scans on, but its reads lack what they cover. */
+	get missingAtlases(): readonly string[] {
+		return this.#missingAtlases;
 	}
 
 	get busy(): boolean {

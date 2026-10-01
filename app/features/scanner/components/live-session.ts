@@ -91,6 +91,13 @@ const AUDIO_SILENCE_MS = 5_000;
 const CAPTURE_LOCK = "scanner:capture";
 const SOURCE_ENDED_ERROR =
 	"The capture source was disconnected — check the capture card or OBS Virtual Camera and start the capture again";
+/**
+ * Without its atlases the worker reads no names, digits, lobbies or stages;
+ * such games would upload as unread lobbies (which pass the lobby filter), so
+ * the capture doesn't start at all rather than store them.
+ */
+const MISSING_ATLASES_ERROR =
+	"Some of the scanner's game data could not be downloaded — check the connection and start the capture again";
 
 export type LiveStatus = "idle" | "starting" | "running" | "error";
 /** `unsupported`: no WebCodecs/track processor; `failed`: the encoder refused this stream */
@@ -263,6 +270,9 @@ export async function startCapture({
 		client = starting;
 		try {
 			await starting.whenReady();
+			if (starting.missingAtlases.length > 0) {
+				throw new Error(MISSING_ATLASES_ERROR);
+			}
 		} catch (error) {
 			starting.dispose();
 			if (client === starting) client = null;

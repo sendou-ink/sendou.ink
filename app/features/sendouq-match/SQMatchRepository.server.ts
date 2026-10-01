@@ -20,6 +20,7 @@ import {
 } from "~/features/mmr/mmr-constants";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import {
@@ -1964,6 +1965,10 @@ export async function undoMatchReport({
 			{ matchId, mapIndex: decidingMapIndex },
 			trx,
 		);
+		await ScannerIngestRepository.deleteLinksByGroupMatchMapId(
+			decidingMap.id,
+			trx,
+		);
 
 		await trx
 			.deleteFrom("GroupMatchContinueVote")
@@ -2015,6 +2020,10 @@ export async function undoMapReport({
 			.execute();
 
 		await ReportedWeaponRepository.deleteByMapIndex({ matchId, mapIndex }, trx);
+		await ScannerIngestRepository.deleteLinksByGroupMatchMapId(
+			targetMap.id,
+			trx,
+		);
 
 		await trx
 			.deleteFrom("GroupMatchContinueVote")

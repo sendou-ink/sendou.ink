@@ -52,7 +52,11 @@ export type WorkerRequest =
 	| AbortChunkRequest;
 
 export type WorkerResponse =
-	| { kind: "ready" }
+	| {
+			kind: "ready";
+			/** glyph/planner atlases that failed to load: names, digits, lobbies, stages… read as null, so results must not be uploaded */
+			missingAtlases: string[];
+	  }
 	| {
 			kind: "result";
 			detector: string;
