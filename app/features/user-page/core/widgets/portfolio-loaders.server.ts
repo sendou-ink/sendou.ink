@@ -18,7 +18,10 @@ import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import {
+	mainWeaponIds,
+	weaponCategories,
+} from "~/modules/in-game-lists/weapon-ids";
 import type { ExtractWidgetSettings } from "./types";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
@@ -105,18 +108,12 @@ export const WIDGET_LOADERS = {
 		return userData.TOP_100;
 	},
 	"peak-xp": async (userId: number) => {
-		const placements = await XRankPlacementRepository.findPlacementsByUserId(
-			userId,
-			{
-				limit: 1,
-			},
-		);
+		const peakPlacement = await peakPlacementOf(userId).executeTakeFirst();
 
-		if (!placements || placements.length === 0) {
+		if (!peakPlacement) {
 			return null;
 		}
 
-		const peakPlacement = placements[0];
 		const leaderboardEntry =
 			// optimize, only check leaderboard if peak placement is high enough
 			peakPlacement.power >= 3318.9
@@ -135,19 +132,13 @@ export const WIDGET_LOADERS = {
 		userId: number,
 		settings: ExtractWidgetSettings<"peak-xp-weapon">,
 	) => {
-		const placements = await XRankPlacementRepository.findPlacementsByUserId(
-			userId,
-			{
-				weaponId: settings.weaponSplId,
-				limit: 1,
-			},
-		);
+		const peakPlacement = await peakPlacementOf(userId)
+			.where({ weaponSplId: settings.weaponSplId })
+			.executeTakeFirst();
 
-		if (!placements || placements.length === 0) {
+		if (!peakPlacement) {
 			return null;
 		}
-
-		const peakPlacement = placements[0];
 
 		const leaderboard = await LeaderboardRepository.findWeaponXPLeaderboard(
 			settings.weaponSplId,
@@ -224,10 +215,11 @@ export const WIDGET_LOADERS = {
 		return posts.map((post) => ({ id: post.id, type: post.type }));
 	},
 	"top-500-weapons": async (userId: number) => {
-		const placements =
-			await XRankPlacementRepository.findPlacementsByUserId(userId);
+		const placements = await XRankPlacementRepository.placements()
+			.claimedBy(userId)
+			.execute();
 
-		if (!placements || placements.length === 0) {
+		if (placements.length === 0) {
 			return null;
 		}
 
@@ -272,10 +264,16 @@ export const WIDGET_LOADERS = {
 		userId: number,
 		settings: ExtractWidgetSettings<"x-rank-peaks">,
 	) => {
-		return XRankPlacementRepository.findPeaksByUserId(
-			userId,
-			settings.division,
-		);
+		const placements = await XRankPlacementRepository.placements()
+			.claimedBy(userId)
+			.inDivision(settings.division)
+			.highestPowerFirst()
+			.execute();
+
+		return modesShort.flatMap((mode) => {
+			const peak = placements.find((placement) => placement.mode === mode);
+			return peak ? [peak] : [];
+		});
 	},
 	builds: async (userId: number) => {
 		return (
@@ -311,8 +309,13 @@ export const WIDGET_LOADERS = {
 			return MatchProfileRepository.findWeaponPoolByUserId(userId);
 		}
 
-		const tenStarWeaponSplIds =
-			await XRankPlacementRepository.findTenStarWeaponSplIdsByUserId(userId);
+		const tenStarWeapons = await XRankPlacementRepository.findTenStarWeaponsBy(
+			{ userId },
+			{ limit: mainWeaponIds.length },
+		);
+		const tenStarWeaponSplIds = tenStarWeapons.map(
+			(weapon) => weapon.weaponSplId,
+		);
 
 		return settings.weaponPool.map((weapon) => ({
 			weaponSplId: weapon.id,
@@ -378,10 +381,11 @@ async function getTop500WeaponsByCategory(
 	userId: number,
 	categoryName?: string,
 ) {
-	const placements =
-		await XRankPlacementRepository.findPlacementsByUserId(userId);
+	const placements = await XRankPlacementRepository.placements()
+		.claimedBy(userId)
+		.execute();
 
-	if (!placements || placements.length === 0) {
+	if (placements.length === 0) {
 		return null;
 	}
 
@@ -412,4 +416,11 @@ function authorsPosts(authorId: number) {
 		.where({ authorId })
 		.visibleToActor()
 		.newestFirst();
+}
+
+function peakPlacementOf(userId: number) {
+	return XRankPlacementRepository.placements()
+		.claimedBy(userId)
+		.highestPowerFirst()
+		.limit(1);
 }

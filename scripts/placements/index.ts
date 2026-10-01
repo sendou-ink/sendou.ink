@@ -33,9 +33,7 @@ void main();
 async function main() {
 	const placements: Placements = [];
 
-	await XRankPlacementRepository.deleteAllByMonthYear(
-		resolveMonthYear(jsonNumber),
-	);
+	await XRankPlacementRepository.delete(resolveMonthYear(jsonNumber));
 	for (const mode of modes) {
 		for (const region of regions) {
 			for (const includeWeapon of [false]) {

@@ -161,9 +161,15 @@ export const { deleteById } = crud("Build");
 // a secondary table: keep it private or rename the binding
 const notes = crud("PrivateUserNote");
 export const { deleteById: deleteDateById } = crud("CalendarEventDate");
+
+// `delete` is a reserved word, so the main table's is bound under another name and exported as `delete`
+const { delete: deletePlacements } = crud("XRankPlacement");
+export { deletePlacements as delete };
+// call site: XRankPlacementRepository.delete({ month, year })
 ```
 
-- The ops follow the table's keys: `findById`/`updateById`/`deleteById` need a single `id` primary key, `findOneBy` takes a complete unique key and `upsert`'s `conflict` must be one, views get no writes. `findManyBy` requires a `limit`, `update`/`delete` reject an empty filter, `trx` is the last parameter.
+- The ops follow the table's keys: `findById`/`updateById`/`deleteById` need a single `id` primary key, `findOneBy` takes a complete unique key and `upsert`'s `conflict` must be one, views get no writes.
+- `upsert` with an empty `update` is insert-if-missing: a conflicting row is left as it is (`updatedAt` included) and its id is returned, so a caller can reference the row either way. `findManyBy` requires a `limit`, `update`/`delete` reject an empty filter, `trx` is the last parameter.
 - Updates and upserts stamp `updatedAt` on tables that have one, and the ops don't accept it as a value. An update with no values only stamps it: `LFGRepository.bumpById` is `updateById(id, {})`.
 - `crud` reads are raw table access and don't see chain guards. An entity with guards doesn't re-export them for public reads; internal lookups like an ownership check are fine.
 - A table whose derived rows are kept in sync by app code keeps its hand-written writes (`BuildRepository.insert`/`update` maintain `BuildWeapon.sortValue` and the ability sums).
@@ -204,6 +210,8 @@ if (mode) {
 ## Performance
 
 Writes block the whole server (see [architecture.md](./architecture.md)), and one slow read hurts every route.
+
+- Queries run synchronously on a single `DatabaseSync` connection: the promise a query returns is already settled work. `Promise.all` over repository calls gains nothing and only obscures the order they run in, so await them one by one.
 
 - Every list read is bounded — a `limit` parameter or a key that limits the result set.
 - Check `EXPLAIN QUERY PLAN` for new queries: no unexpected full table scans, indexes actually used.

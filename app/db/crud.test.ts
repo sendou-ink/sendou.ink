@@ -80,6 +80,29 @@ describe("crud", () => {
 		expect((await privateNotes.findOneBy(key))?.updatedAt).toBeGreaterThan(1);
 	});
 
+	test("upsert with no update columns leaves the conflicting row as is and returns its id", async () => {
+		const players = crud("SplatoonPlayer");
+		const existing = await players.insert({
+			splId: "existing",
+			userId: authorId(),
+		});
+
+		const upserted = await players.upsert(
+			{ splId: "existing", userId: null },
+			{ conflict: ["splId"], update: [] },
+		);
+		const inserted = await players.upsert(
+			{ splId: "new" },
+			{ conflict: ["splId"], update: [] },
+		);
+
+		expect(upserted).toEqual(existing);
+		expect(await players.findById(existing.id)).toMatchObject({
+			userId: authorId(),
+		});
+		expect(await players.findById(inserted.id)).toMatchObject({ splId: "new" });
+	});
+
 	test("findManyBy treats null as is null and applies limit and orderBy", async () => {
 		await privateNotes.insertMany([
 			{ authorId: authorId(), targetId: targetId(), sentiment: "NEUTRAL" },

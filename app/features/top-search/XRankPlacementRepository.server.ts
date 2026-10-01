@@ -1,10 +1,20 @@
-import type { InferResult } from "kysely";
 import { sql } from "kysely";
+import { crud } from "~/db/crud";
+import { defineQuery, refine, sortedBy, unchanged } from "~/db/entity-query";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { peakXpOverallSql } from "~/utils/kysely.server";
+
+const placementTable = crud("XRankPlacement");
+const playerTable = crud("SplatoonPlayer");
+
+const { delete: deletePlacements } = placementTable;
+
+export { deletePlacements as delete };
+
+export const { findById: findPlayerById, exists: playerExists } = playerTable;
+export const { findManyBy: findTenStarWeaponsBy } = crud("TenStarWeapon");
+
+type XRankDivision = "both" | "tentatek" | "takoroka";
 
 export type XRankPlacementInsertArgs = Omit<
 	Tables["XRankPlacement"],
@@ -12,38 +22,24 @@ export type XRankPlacementInsertArgs = Omit<
 > & {
 	/** In-game id of the player the placement belongs to. */
 	playerSplId: string;
-	/** For sources that already know the pairing; claiming later goes through `AdminRepository.linkUserAndPlayer`. */
-	playerUserId?: number;
 };
 
-/** Inserts placements, creating `SplatoonPlayer` rows for new in-game ids. Returns ids in insertion order. */
-export function insertMany(placements: XRankPlacementInsertArgs[]) {
+/** Inserts placements, creating unclaimed `SplatoonPlayer` rows for new in-game ids. Returns ids in insertion order. */
+export function insertMany(newPlacements: XRankPlacementInsertArgs[]) {
 	return db.transaction().execute(async (trx) => {
 		const ids: number[] = [];
 
-		for (const { playerSplId, playerUserId, ...placement } of placements) {
-			await trx
-				.insertInto("SplatoonPlayer")
-				.values({ splId: playerSplId, userId: playerUserId ?? null })
-				.onConflict((oc) =>
-					playerUserId
-						? oc.column("splId").doUpdateSet({ userId: playerUserId })
-						: oc.column("splId").doNothing(),
-				)
-				.execute();
+		for (const { playerSplId, ...placement } of newPlacements) {
+			const player = await playerTable.upsert(
+				{ splId: playerSplId },
+				{ conflict: ["splId"], update: [] },
+				trx,
+			);
 
-			const inserted = await trx
-				.insertInto("XRankPlacement")
-				.values({
-					...placement,
-					playerId: (eb) =>
-						eb
-							.selectFrom("SplatoonPlayer")
-							.select("SplatoonPlayer.id")
-							.where("splId", "=", playerSplId),
-				})
-				.returning("id")
-				.executeTakeFirstOrThrow();
+			const inserted = await placementTable.insert(
+				{ ...placement, playerId: player.id },
+				trx,
+			);
 
 			ids.push(inserted.id);
 		}
@@ -52,64 +48,16 @@ export function insertMany(placements: XRankPlacementInsertArgs[]) {
 	});
 }
 
-/** Removes every placement of the given month. */
-export function deleteAllByMonthYear(
-	args: Pick<Tables["XRankPlacement"], "month" | "year">,
-) {
-	return db
-		.deleteFrom("XRankPlacement")
-		.where("month", "=", args.month)
-		.where("year", "=", args.year)
-		.execute();
-}
-
+/** Clears the user's claim on their in-game player. */
 export function unlinkPlayerByUserId(userId: number) {
-	return db
-		.updateTable("SplatoonPlayer")
-		.set({ userId: null })
-		.where("SplatoonPlayer.userId", "=", userId)
-		.execute();
+	return playerTable.update({ userId }, { userId: null });
 }
 
-/** Whether the user has a linked Splatoon player (i.e. has claimed their X Rank results). */
-export async function isPlayerLinkedByUserId(userId: number): Promise<boolean> {
-	const player = await db
-		.selectFrom("SplatoonPlayer")
-		.select("SplatoonPlayer.id")
-		.where("SplatoonPlayer.userId", "=", userId)
-		.executeTakeFirst();
-
-	return Boolean(player);
-}
-
-/** Weapons the user has a ten-star badge for, from their linked X Rank placements. */
-export async function findTenStarWeaponSplIdsByUserId(userId: number) {
-	const rows = await db
-		.selectFrom("TenStarWeapon")
-		.select("TenStarWeapon.weaponSplId")
-		.where("TenStarWeapon.userId", "=", userId)
-		.execute();
-
-	return rows.map((row) => row.weaponSplId);
-}
-
-/** From the linked player's denormalized `SplatoonPlayer.peakXp` (see {@link refreshAllPeakXp}); `null` without one. */
-export async function findPeakVerifiedXpByUserId(
-	userId: Tables["User"]["id"],
-): Promise<number | null> {
-	const row = await db
-		.selectFrom("SplatoonPlayer")
-		.where("SplatoonPlayer.userId", "=", userId)
-		.select(peakXpOverallSql().as("overall"))
-		.executeTakeFirst();
-
-	return row?.overall ?? null;
-}
-
-function xRankPlacementsQueryBase() {
-	return db
-		.selectFrom("XRankPlacement")
-		.select([
+/** X Rank Top 500 placements, best rank first. */
+export const placements = defineQuery({
+	root: "XRankPlacement",
+	select: (qb) =>
+		qb.select([
 			"XRankPlacement.id",
 			"XRankPlacement.weaponSplId",
 			"XRankPlacement.name",
@@ -120,118 +68,59 @@ function xRankPlacementsQueryBase() {
 			"XRankPlacement.region",
 			"XRankPlacement.playerId",
 			"XRankPlacement.mode",
-		])
-		.innerJoin("SplatoonPlayer", "XRankPlacement.playerId", "SplatoonPlayer.id")
-		.leftJoin("User", "SplatoonPlayer.userId", "User.id")
-		.select(["User.discordId", "User.customUrl"]);
-}
+		]),
+	defaultSort: [["XRankPlacement.rank", "asc"]],
+	vocabulary: () => ({
+		/** Placements of the in-game player the user has claimed. */
+		claimedBy: (userId: number) =>
+			refine("XRankPlacement", (qb) =>
+				qb.where("XRankPlacement.playerId", "=", (eb) =>
+					eb
+						.selectFrom("SplatoonPlayer")
+						.select("SplatoonPlayer.id")
+						.where("SplatoonPlayer.userId", "=", userId),
+				),
+			),
+		/** Placements of the division's leaderboard, every placement for `both`. */
+		inDivision: (division: XRankDivision) =>
+			division === "both"
+				? unchanged("XRankPlacement")
+				: refine("XRankPlacement", (qb) =>
+						qb.where(
+							"XRankPlacement.region",
+							"=",
+							division === "tentatek" ? "WEST" : "JPN",
+						),
+					),
+		newestFirst: () =>
+			sortedBy(
+				"XRankPlacement",
+				["XRankPlacement.year", "desc"],
+				["XRankPlacement.month", "desc"],
+			),
+		bestRankFirst: () =>
+			sortedBy("XRankPlacement", ["XRankPlacement.rank", "asc"]),
+		highestPowerFirst: () =>
+			sortedBy("XRankPlacement", ["XRankPlacement.power", "desc"]),
+	}),
+});
 
-export async function findPlacementsOfMonth(
-	args: Pick<Tables["XRankPlacement"], "mode" | "region" | "month" | "year">,
-) {
-	return await xRankPlacementsQueryBase()
-		.where("XRankPlacement.mode", "=", args.mode)
-		.where("XRankPlacement.region", "=", args.region)
-		.where("XRankPlacement.month", "=", args.month)
-		.where("XRankPlacement.year", "=", args.year)
-		.orderBy("XRankPlacement.rank", "asc")
-		.execute();
-}
-
-export async function findPlacementsByPlayerId(
-	playerId: Tables["XRankPlacement"]["playerId"],
-) {
-	const result = await xRankPlacementsQueryBase()
-		.where("XRankPlacement.playerId", "=", playerId)
-		.orderBy("XRankPlacement.year", "desc")
-		.orderBy("XRankPlacement.month", "desc")
-		.orderBy("XRankPlacement.rank", "asc")
-		.execute();
-	return result.length ? result : null;
-}
-
-export async function findPlacementsByUserId(
-	userId: Tables["User"]["id"],
-	options?: {
-		limit?: number;
-		weaponId?: MainWeaponId;
-		weaponIds?: readonly MainWeaponId[];
-	},
-) {
-	let query = xRankPlacementsQueryBase()
-		.where("SplatoonPlayer.userId", "=", userId)
-		.orderBy("XRankPlacement.power", "desc");
-
-	if (typeof options?.weaponId === "number") {
-		query = query.where("XRankPlacement.weaponSplId", "=", options.weaponId);
-	}
-
-	if (options?.weaponIds) {
-		query = query.where("XRankPlacement.weaponSplId", "in", [
-			...options.weaponIds,
-		]);
-	}
-
-	if (options?.limit) {
-		query = query.limit(options.limit);
-	}
-
-	const result = await query.execute();
-	return result.length ? result : null;
-}
+/** In-game players placements are recorded under, claimed by at most one user. */
+export const players = defineQuery({
+	root: "SplatoonPlayer",
+	select: (qb) => qb.select(["SplatoonPlayer.id", "SplatoonPlayer.userId"]),
+});
 
 /** Every month with placements, newest first. */
 export async function findAllMonthYears() {
 	return await db
 		.selectFrom("XRankPlacement")
-		.select(["month", "year"])
+		.select(["XRankPlacement.month", "XRankPlacement.year"])
 		.distinct()
-		.orderBy("year", "desc")
-		.orderBy("month", "desc")
+		.orderBy("XRankPlacement.year", "desc")
+		.orderBy("XRankPlacement.month", "desc")
 		.execute();
 }
-
-export async function findPeaksByUserId(
-	userId: Tables["User"]["id"],
-	division?: "both" | "tentatek" | "takoroka",
-) {
-	let innerQuery = db
-		.selectFrom("XRankPlacement")
-		.innerJoin("SplatoonPlayer", "XRankPlacement.playerId", "SplatoonPlayer.id")
-		.where("SplatoonPlayer.userId", "=", userId)
-		.select([
-			"XRankPlacement.mode",
-			"XRankPlacement.rank",
-			"XRankPlacement.power",
-			"XRankPlacement.region",
-			"XRankPlacement.playerId",
-			sql<number>`ROW_NUMBER() OVER (PARTITION BY "XRankPlacement"."mode" ORDER BY "XRankPlacement"."power" DESC)`.as(
-				"rn",
-			),
-		]);
-
-	if (division === "tentatek") {
-		innerQuery = innerQuery.where("XRankPlacement.region", "=", "WEST");
-	} else if (division === "takoroka") {
-		innerQuery = innerQuery.where("XRankPlacement.region", "=", "JPN");
-	}
-
-	const rows = await db
-		.selectFrom(innerQuery.as("ranked"))
-		.selectAll()
-		.where("rn", "=", 1)
-		.execute();
-
-	const peaksByMode = new Map(rows.map((row) => [row.mode, row]));
-
-	return modesShort
-		.map((mode) => peaksByMode.get(mode))
-		.filter((p): p is NonNullable<typeof p> => p !== undefined);
-}
-
-export type FindPlacement = InferResult<
-	ReturnType<typeof xRankPlacementsQueryBase>
->[number];
 
 export async function refreshAllPeakXp() {
 	await db

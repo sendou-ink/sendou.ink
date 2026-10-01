@@ -9,12 +9,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const { mode, region, month, year } = topSearchSearchParams.parse(request);
 
-	const placements = await XRankPlacementRepository.findPlacementsOfMonth({
-		mode,
-		region,
-		month: month ?? latestMonth,
-		year: year ?? latestYear,
-	});
+	const placements = await XRankPlacementRepository.placements()
+		.where({
+			mode,
+			region,
+			month: month ?? latestMonth,
+			year: year ?? latestYear,
+		})
+		.execute();
 
 	return {
 		placements,

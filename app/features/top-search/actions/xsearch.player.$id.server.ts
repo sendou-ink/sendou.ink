@@ -19,13 +19,12 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const placements = notFoundIfNullish(
-		await XRankPlacementRepository.findPlacementsByPlayerId(id),
+	const player = notFoundIfNullish(
+		await XRankPlacementRepository.findPlayerById(id),
 	);
-	const currentLinkedUserDiscordId = placements[0].discordId;
 
 	errorToastIfFalsy(
-		currentLinkedUserDiscordId === user.discordId,
+		player.userId === user.id,
 		"This player is not linked to you",
 	);
 

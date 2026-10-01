@@ -5,7 +5,6 @@ import { db } from "~/db/sql";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as XRankPlacementRepository from "./XRankPlacementRepository.server";
 
-const SPLOOSH_O_MATIC: MainWeaponId = 0;
 const SPLATTERSHOT: MainWeaponId = 40;
 const SPLATTERSHOT_NOUVEAU: MainWeaponId = 41;
 
@@ -74,7 +73,7 @@ describe("refreshAllPeakXp", () => {
 		});
 		await XRankPlacementRepository.refreshAllPeakXp();
 
-		await XRankPlacementRepository.deleteAllByMonthYear(PLACED_ON);
+		await XRankPlacementRepository.delete(PLACED_ON);
 		await XRankPlacementRepository.refreshAllPeakXp();
 
 		expect((await peakXpOf("player-1")).peakXp).toBeNull();
@@ -82,16 +81,17 @@ describe("refreshAllPeakXp", () => {
 });
 
 describe("refreshTenStarWeapons", () => {
-	let user: { id: number };
+	const users = UserFactory.pool();
+	const userId = () => users.id(1);
 
 	beforeEach(async () => {
-		user = await UserFactory.create();
+		await users.create(1);
 	});
 
 	test("JPN placement qualifies regardless of rank", async () => {
 		await XRankPlacementFactory.create({
 			playerSplId: "player-1",
-			playerUserId: user.id,
+			playerUserId: userId(),
 			power: 2500,
 			region: "JPN",
 			rank: 450,
@@ -103,14 +103,14 @@ describe("refreshTenStarWeapons", () => {
 		const rows = await findTenStarWeapons();
 
 		expect(rows).toHaveLength(1);
-		expect(rows[0].userId).toBe(user.id);
+		expect(rows[0].userId).toBe(userId());
 		expect(rows[0].weaponSplId).toBe(SPLATTERSHOT);
 	});
 
 	test("WEST placement with rank <= 100 qualifies", async () => {
 		await XRankPlacementFactory.create({
 			playerSplId: "player-1",
-			playerUserId: user.id,
+			playerUserId: userId(),
 			power: 3000,
 			region: "WEST",
 			rank: 50,
@@ -128,7 +128,7 @@ describe("refreshTenStarWeapons", () => {
 	test("WEST placement with rank > 100 does not qualify", async () => {
 		await XRankPlacementFactory.create({
 			playerSplId: "player-1",
-			playerUserId: user.id,
+			playerUserId: userId(),
 			power: 2500,
 			region: "WEST",
 			rank: 101,
@@ -157,7 +157,7 @@ describe("refreshTenStarWeapons", () => {
 	test("duplicate weapon placements produce one row", async () => {
 		await XRankPlacementFactory.create({
 			playerSplId: "player-1",
-			playerUserId: user.id,
+			playerUserId: userId(),
 			power: 2500,
 			region: "JPN",
 			rank: 100,
@@ -165,7 +165,7 @@ describe("refreshTenStarWeapons", () => {
 		});
 		await XRankPlacementFactory.create({
 			playerSplId: "player-1",
-			playerUserId: user.id,
+			playerUserId: userId(),
 			power: 2700,
 			region: "JPN",
 			rank: 50,
@@ -178,30 +178,45 @@ describe("refreshTenStarWeapons", () => {
 	});
 });
 
-describe("findPlacementsByUserId", () => {
-	test("weaponId filter returns only Sploosh-o-matic (weapon id 0) placements", async () => {
-		const user = await UserFactory.create();
+describe("placements.claimedBy", () => {
+	test("returns only the placements of the user's player", async () => {
+		const [claimer, other] = await UserFactory.createMany(2);
 
-		await XRankPlacementFactory.create({
-			playerUserId: user.id,
-			power: 3000,
-			weaponSplId: SPLATTERSHOT,
+		const { id: claimedId } = await XRankPlacementFactory.create({
+			playerUserId: claimer.id,
 		});
-		await XRankPlacementFactory.create({
-			playerUserId: user.id,
-			power: 2500,
-			weaponSplId: SPLOOSH_O_MATIC,
-		});
+		await XRankPlacementFactory.create({ playerUserId: other.id });
+		await XRankPlacementFactory.create({ playerSplId: "unclaimed" });
 
-		const placements = await XRankPlacementRepository.findPlacementsByUserId(
-			user.id,
-			{ weaponId: SPLOOSH_O_MATIC, limit: 1 },
-		);
+		const placements = await XRankPlacementRepository.placements()
+			.claimedBy(claimer.id)
+			.execute();
 
-		expect(placements?.map((placement) => placement.weaponSplId)).toEqual([
-			SPLOOSH_O_MATIC,
-		]);
+		expect(placements.map((placement) => placement.id)).toEqual([claimedId]);
 	});
+});
+
+describe("placements.inDivision", () => {
+	test.each([
+		{ division: "tentatek", regions: ["WEST"] },
+		{ division: "takoroka", regions: ["JPN"] },
+		{ division: "both", regions: ["WEST", "JPN"] },
+	] as const)(
+		"$division keeps $regions placements",
+		async ({ division, regions }) => {
+			await XRankPlacementFactory.create({
+				playerSplId: "p-1",
+				region: "WEST",
+			});
+			await XRankPlacementFactory.create({ playerSplId: "p-2", region: "JPN" });
+
+			const placements = await XRankPlacementRepository.placements()
+				.inDivision(division)
+				.execute();
+
+			expect(placements.map((placement) => placement.region)).toEqual(regions);
+		},
+	);
 });
 
 describe("refreshTenStarWeapons with userId", () => {

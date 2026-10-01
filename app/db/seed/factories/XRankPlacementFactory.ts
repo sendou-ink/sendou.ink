@@ -1,3 +1,4 @@
+import { crud } from "~/db/crud";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { invariant } from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
@@ -6,12 +7,16 @@ import * as SplatoonFaker from "../core/SplatoonFaker";
 
 const PLACED_ON = { month: 1, year: 2024 };
 
+const playerTable = crud("SplatoonPlayer");
+
 type InsertArgs = Omit<
 	XRankPlacementRepository.XRankPlacementInsertArgs,
 	"playerSplId"
 > & {
 	/** Defaults to one derived from `playerUserId`. */
 	playerSplId?: string;
+	/** User who has claimed the player, set directly without what `AdminRepository.linkUserAndPlayer` refreshes. */
+	playerUserId?: number;
 };
 
 type Options = {
@@ -38,16 +43,20 @@ export const { create } = defineFactory({
 		title: faker.lorem.words(2),
 		weaponSplId: SplatoonFaker.mainWeapon(),
 	}),
-	insert: async ({ playerSplId, ...args }: InsertArgs) => {
-		const splId = playerSplId ?? `player-${args.playerUserId}`;
+	insert: async ({ playerSplId, playerUserId, ...args }: InsertArgs) => {
+		const splId = playerSplId ?? `player-${playerUserId}`;
 		invariant(
-			playerSplId || args.playerUserId,
+			playerSplId || playerUserId,
 			"A placement needs either an in-game id or a user to derive one from",
 		);
 
 		const [id] = await XRankPlacementRepository.insertMany([
 			{ ...args, playerSplId: splId },
 		]);
+
+		if (playerUserId) {
+			await playerTable.update({ splId }, { userId: playerUserId });
+		}
 
 		return { id };
 	},

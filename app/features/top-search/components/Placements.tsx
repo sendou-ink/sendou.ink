@@ -12,13 +12,13 @@ import {
 	topSearchPlayerPage,
 } from "~/features/top-search/top-search-urls";
 import { modeImageUrl } from "~/utils/urls";
+import type { Placement } from "../top-search-types";
 import { monthYearToSpan } from "../top-search-utils";
-import type * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 import { DivisionImage } from "./DivisionImage";
 import styles from "./Placements.module.css";
 
 interface PlacementsTableProps {
-	placements: Array<XRankPlacementRepository.FindPlacement>;
+	placements: Array<Placement>;
 	type?: "PLAYER_NAME" | "MODE_INFO";
 }
 

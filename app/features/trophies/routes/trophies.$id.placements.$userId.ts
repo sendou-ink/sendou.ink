@@ -1,6 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
+import { refine } from "~/db/entity-query";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/schema";
@@ -24,10 +26,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	const placements = await XRankPlacementRepository.findPlacementsByUserId(
-		userId,
-		{ weaponIds: XpTrophy.categoryWeaponIds(xpVariant.category) },
-	);
-
-	return { placements: placements ?? [] };
+	return {
+		placements: await claimedPlacementsWithWeapons(
+			userId,
+			XpTrophy.categoryWeaponIds(xpVariant.category),
+		).execute(),
+	};
 };
+
+function claimedPlacementsWithWeapons(
+	userId: number,
+	weaponIds: readonly MainWeaponId[],
+) {
+	return XRankPlacementRepository.placements()
+		.claimedBy(userId)
+		.with(
+			refine("XRankPlacement", (qb) =>
+				qb.where("XRankPlacement.weaponSplId", "in", [...weaponIds]),
+			),
+		)
+		.highestPowerFirst();
+}

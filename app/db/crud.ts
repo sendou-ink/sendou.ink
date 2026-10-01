@@ -104,28 +104,45 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 			options: { conflict: readonly string[]; update: readonly string[] },
 			trx?: Transaction<DB>,
 		) => {
+			const leavesExisting = options.update.length === 0;
 			const query = executor(trx)
 				.insertInto(table)
 				.values(values)
-				.onConflict((oc: OnConflictBuilder<any, any>) =>
-					oc
-						.columns(options.conflict)
-						.doUpdateSet((eb: ExpressionBuilder<any, any>) =>
-							stamped(
-								Object.fromEntries(
-									options.update.map((column) => [
-										column,
-										eb.ref(`excluded.${column}`),
-									]),
-								),
+				.onConflict((oc: OnConflictBuilder<any, any>) => {
+					const target = oc.columns(options.conflict);
+					if (leavesExisting) return target.doNothing();
+
+					return target.doUpdateSet((eb: ExpressionBuilder<any, any>) =>
+						stamped(
+							Object.fromEntries(
+								options.update.map((column) => [
+									column,
+									eb.ref(`excluded.${column}`),
+								]),
 							),
 						),
-				);
+					);
+				});
 			if (!returnsId()) {
 				await query.execute();
 				return;
 			}
-			return query.returning("id").executeTakeFirstOrThrow();
+			if (!leavesExisting) {
+				return query.returning("id").executeTakeFirstOrThrow();
+			}
+
+			// do nothing returns no row on a conflict, so the existing row's id is looked up by its key
+			return (
+				(await query.returning("id").executeTakeFirst()) ??
+				selectWhere(
+					Object.fromEntries(
+						options.conflict.map((column) => [column, values[column]]),
+					),
+					trx,
+				)
+					.select(`${table}.id`)
+					.executeTakeFirstOrThrow()
+			);
 		},
 		update: async (
 			where: Record<string, unknown>,
@@ -231,7 +248,11 @@ type WriteOps<T extends TableName> = {
 	delete(where: NonEmptyFilter<T>, trx?: Transaction<DB>): Promise<number>;
 } & (HasUniqueKey<T> extends true
 	? {
-			/** Inserts the row, or updates the `update` columns of the one it conflicts with on the `conflict` unique key. */
+			/**
+			 * Inserts the row, or updates the `update` columns of the one it conflicts with on the
+			 * `conflict` unique key. An empty `update` leaves a conflicting row as it is (`updatedAt`
+			 * included) and returns its id.
+			 */
 			upsert(
 				values: Insertable<DB[T]>,
 				options: {

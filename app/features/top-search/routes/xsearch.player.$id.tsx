@@ -59,29 +59,21 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	});
 };
 
-function hasUserLinked<T extends { discordId: string | null }>(
-	user: T,
-): user is T & { discordId: string } {
-	return user.discordId !== null;
-}
-
 export default function XSearchPlayerPage() {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
 
-	const placementUser = data.placements[0];
-
 	const isLinkedToCurrentUser =
-		user && user?.discordId === placementUser.discordId;
+		data.linkedUser !== null && data.linkedUser.id === user?.id;
 
 	return (
 		<Main halfWidth className="stack lg">
 			<div>
 				<div>
 					<h2 className="text-lg">
-						{hasUserLinked(placementUser) ? (
-							<Link to={userPage(placementUser)}>{data.names.primary}</Link>
+						{data.linkedUser ? (
+							<Link to={userPage(data.linkedUser)}>{data.names.primary}</Link>
 						) : (
 							data.names.primary
 						)}{" "}
@@ -93,7 +85,7 @@ export default function XSearchPlayerPage() {
 						</div>
 					) : null}
 				</div>
-				{!hasUserLinked(placementUser) ? <HowToLinkPopover /> : null}
+				{!data.linkedUser ? <HowToLinkPopover /> : null}
 			</div>
 			<PlacementsTable placements={data.placements} type="MODE_INFO" />
 			{isLinkedToCurrentUser ? <UnlinkFormWithButton /> : null}

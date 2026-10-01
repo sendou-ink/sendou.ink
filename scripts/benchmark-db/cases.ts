@@ -934,40 +934,33 @@ export function buildCases(fx: Fixtures): {
 		TeamRepository.findAllByMemberUserId(team.memberUserId),
 	);
 
-	add("XRankPlacementRepository.isPlayerLinkedByUserId", fx.xrank, (xrank) =>
-		XRankPlacementRepository.isPlayerLinkedByUserId(xrank.userId),
-	);
 	add(
-		"XRankPlacementRepository.findTenStarWeaponSplIdsByUserId",
+		"XRankPlacementRepository.placements.ofMonth",
 		fx.xrank,
-		(xrank) =>
-			XRankPlacementRepository.findTenStarWeaponSplIdsByUserId(xrank.userId),
+		({ mode, region, month, year }) =>
+			XRankPlacementRepository.placements()
+				.where({ mode, region, month, year })
+				.execute(),
 	);
-	add(
-		"XRankPlacementRepository.findPeakVerifiedXpByUserId",
-		fx.xrank,
-		(xrank) =>
-			XRankPlacementRepository.findPeakVerifiedXpByUserId(xrank.userId),
+	add("XRankPlacementRepository.placements.ofPlayer", fx.xrank, (xrank) =>
+		XRankPlacementRepository.placements()
+			.where({ playerId: xrank.playerId })
+			.newestFirst()
+			.bestRankFirst()
+			.execute(),
 	);
-	add("XRankPlacementRepository.findPlacementsOfMonth", fx.xrank, (xrank) =>
-		XRankPlacementRepository.findPlacementsOfMonth({
-			mode: xrank.mode,
-			region: xrank.region,
-			month: xrank.month,
-			year: xrank.year,
-		}),
+	add("XRankPlacementRepository.placements.claimedBy", fx.xrank, (xrank) =>
+		XRankPlacementRepository.placements().claimedBy(xrank.userId).execute(),
 	);
-	add("XRankPlacementRepository.findPlacementsByPlayerId", fx.xrank, (xrank) =>
-		XRankPlacementRepository.findPlacementsByPlayerId(xrank.playerId),
-	);
-	add("XRankPlacementRepository.findPlacementsByUserId", fx.xrank, (xrank) =>
-		XRankPlacementRepository.findPlacementsByUserId(xrank.userId),
+	add("XRankPlacementRepository.placements.peaks", fx.xrank, (xrank) =>
+		XRankPlacementRepository.placements()
+			.claimedBy(xrank.userId)
+			.inDivision("both")
+			.highestPowerFirst()
+			.execute(),
 	);
 	addStatic("XRankPlacementRepository.findAllMonthYears", () =>
 		XRankPlacementRepository.findAllMonthYears(),
-	);
-	add("XRankPlacementRepository.findPeaksByUserId", fx.xrank, (xrank) =>
-		XRankPlacementRepository.findPeaksByUserId(xrank.userId, "both"),
 	);
 
 	add(

@@ -12,7 +12,7 @@ export const loader = async () => {
 			includeHiddenStats: true,
 		}),
 		UserCardRepository.findCardEditExtrasByUserId(user.id),
-		XRankPlacementRepository.isPlayerLinkedByUserId(user.id),
+		XRankPlacementRepository.playerExists({ userId: user.id }),
 	]);
 
 	const card = userCards.get(user.id);
