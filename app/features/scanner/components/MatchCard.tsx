@@ -11,6 +11,7 @@ import clsx from "clsx";
 import { ChevronDown, Play } from "lucide-react";
 import { useId, useState } from "react";
 import { Ability } from "~/components/Ability";
+import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
@@ -370,13 +371,14 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 						const weaponId = match.teams[team].players[index]?.weaponId ?? null;
 						const isPov = match.pov?.team === team && match.pov.index === index;
 						return weaponId !== null ? (
-							<WeaponImage
+							<CircleBackdrop
 								key={index}
-								weaponSplId={weaponId}
-								variant="badge"
-								size={28}
-								className={clsx(styles.weapon, { [styles.pov]: isPov })}
-							/>
+								className={clsx(styles.weaponBackdrop, {
+									[styles.pov]: isPov,
+								})}
+							>
+								<WeaponImage weaponSplId={weaponId} variant="badge" size={32} />
+							</CircleBackdrop>
 						) : (
 							<span
 								key={index}

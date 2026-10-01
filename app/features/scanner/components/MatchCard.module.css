@@ -204,7 +204,7 @@
 .weaponRow {
 	display: inline-flex;
 	align-items: center;
-	gap: var(--s-1);
+	gap: var(--s-3);
 }
 
 .vs {
@@ -220,11 +220,15 @@
 	background: var(--color-bg-higher);
 	border-radius: var(--radius-full);
 	padding: 2px;
+}
 
-	&.pov {
-		outline: 2px solid var(--color-fg-accent);
-		outline-offset: 1px;
-	}
+.weaponBackdrop {
+	border-radius: var(--radius-full);
+}
+
+.pov {
+	outline: 2px solid var(--color-fg-accent);
+	outline-offset: 1px;
 }
 
 .weaponUnknown {
