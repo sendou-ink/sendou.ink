@@ -6,7 +6,6 @@ import {
 	focusMoveForKey,
 	rovingFocusIndex,
 } from "~/utils/roving-focus";
-import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import { Image } from "../Image";
 import styles from "./Menu.module.css";
 import {
@@ -45,7 +44,6 @@ export function SendouMenu({
 }: SendouMenuProps) {
 	const popoverId = `${React.useId()}-menu`;
 	const popoverTriggerProps = usePopoverTriggerPropsOnceHydrated(popoverId);
-	const topLayerStyle = useTopLayerViewTransitionStyle();
 
 	const [open, setOpen] = React.useState(false);
 	const popoverRef = React.useRef<HTMLDivElement>(null);
@@ -128,7 +126,6 @@ export function SendouMenu({
 				className={clsx(styles.popover, "scrollbar", popoverClassName, {
 					[styles.scrolling]: scrolling,
 				})}
-				style={topLayerStyle}
 				onBeforeToggle={onBeforeToggle}
 				onToggle={onToggle}
 				onKeyDown={onKeyDown}

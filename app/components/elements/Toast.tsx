@@ -1,11 +1,9 @@
 import clsx from "clsx";
 import { Check, CircleAlert, OctagonAlert, X } from "lucide-react";
 import * as React from "react";
-import { ViewTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import { finishUpdateIfUnmoved } from "~/utils/view-transition";
+import { Flipper } from "../Flipper";
 import { SendouButton } from "./Button";
 import styles from "./Toast.module.css";
 
@@ -60,29 +58,24 @@ class ToastQueue {
 export const toastQueue = new ToastQueue();
 
 const EMPTY_TOASTS: QueuedToast[] = [];
+const FADE_DURATION_MS = 400;
 
 export function SendouToastRegion() {
 	const { t } = useTranslation(["common"]);
-	const [toasts, setToasts] = React.useState(EMPTY_TOASTS);
-	React.useEffect(() => {
-		const sync = () => {
-			React.startTransition(() => setToasts(toastQueue.getSnapshot()));
-		};
-		const unsubscribe = toastQueue.subscribe(sync);
-		// a toast added before this subscription (e.g. from a layout effect on load)
-		sync();
-		return unsubscribe;
-	}, []);
+	const toasts = React.useSyncExternalStore(
+		toastQueue.subscribe,
+		toastQueue.getSnapshot,
+		() => EMPTY_TOASTS,
+	);
 	const regionRef = React.useRef<HTMLDivElement>(null);
 
-	// layout effect so the region is open before the entering toast gets snapshotted
-	useIsomorphicLayoutEffect(() => {
+	React.useEffect(() => {
 		const region = regionRef.current;
 		if (!region) return;
 		if (toasts.length > 0 && !region.matches(":popover-open")) {
 			region.showPopover();
 		} else if (toasts.length === 0 && region.matches(":popover-open")) {
-			region.hidePopover();
+			hideAfterAnimations(region);
 		}
 	}, [toasts.length]);
 
@@ -93,14 +86,15 @@ export function SendouToastRegion() {
 			aria-label={t("common:notifications.title")}
 			className={clsx(styles.toastRegion, { hidden: IS_E2E_TEST_RUN })}
 		>
-			{toasts.map((toast) => (
-				<ViewTransition
-					key={toast.key}
-					enter="toast"
-					exit="toast"
-					onUpdate={finishUpdateIfUnmoved}
-				>
+			<Flipper
+				flipKey={toasts}
+				fadeDuration={FADE_DURATION_MS}
+				className={styles.toastList}
+			>
+				{toasts.map((toast) => (
 					<div
+						key={toast.key}
+						data-flip-id={toast.key}
 						role={toast.content.variant === "error" ? "alert" : "status"}
 						className={clsx(styles.toast, {
 							[styles.errorToast]: toast.content.variant === "error",
@@ -127,8 +121,19 @@ export function SendouToastRegion() {
 						</div>
 						<div>{toast.content.message}</div>
 					</div>
-				</ViewTransition>
-			))}
+				))}
+			</Flipper>
 		</section>
 	);
+}
+
+function hideAfterAnimations(region: HTMLElement) {
+	const animations = region
+		.getAnimations({ subtree: true })
+		.map((animation) => animation.finished);
+
+	void Promise.allSettled(animations).then(() => {
+		if (toastQueue.getSnapshot().length > 0) return;
+		if (region.matches(":popover-open")) region.hidePopover();
+	});
 }

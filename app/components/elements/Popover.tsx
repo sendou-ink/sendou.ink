@@ -3,7 +3,6 @@ import * as React from "react";
 import { flushSync } from "react-dom";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
-import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import styles from "./Popover.module.css";
 import { type FloatingPlacement, useFloatingLayer } from "./useFloatingLayer";
 import { useScrollIntoView } from "./useScrollIntoView";
@@ -119,7 +118,6 @@ export function SendouPopover({
 
 	const popoverRef = React.useRef<HTMLDivElement>(null);
 	const triggerContainerRef = React.useRef<HTMLSpanElement>(null);
-	const topLayerStyle = useTopLayerViewTransitionStyle();
 
 	const setOpen = (next: boolean) => {
 		if (!isControlled) {
@@ -204,7 +202,6 @@ export function SendouPopover({
 				id={popoverId}
 				popover="auto"
 				className={clsx(styles.content, popoverClassName)}
-				style={topLayerStyle}
 				role="dialog"
 				tabIndex={-1}
 				onBeforeToggle={onBeforeToggle}
@@ -232,7 +229,6 @@ export function SendouAnchoredPopover({
 	"aria-label"?: string;
 }) {
 	const popoverRef = React.useRef<HTMLDivElement>(null);
-	const topLayerStyle = useTopLayerViewTransitionStyle();
 
 	// before the positioning effect, so the content is placed by its first paint
 	useIsomorphicLayoutEffect(() => {
@@ -272,7 +268,6 @@ export function SendouAnchoredPopover({
 			ref={popoverRef}
 			popover="auto"
 			className={styles.content}
-			style={topLayerStyle}
 			role="dialog"
 			tabIndex={-1}
 			aria-label={ariaLabel}

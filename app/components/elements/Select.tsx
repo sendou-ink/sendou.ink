@@ -6,7 +6,6 @@ import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { type FocusMove, rovingFocusIndex } from "~/utils/roving-focus";
-import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import {
 	focusLeftTo,
 	isOwnToggle,
@@ -144,7 +143,6 @@ export function SendouSelect<T extends object>({
 }: SendouSelectProps<T>) {
 	const { t } = useTranslation(["common"]);
 	const uid = React.useId();
-	const topLayerStyle = useTopLayerViewTransitionStyle();
 	const popoverId = `${uid}-select-popover`;
 	const popoverTriggerProps = usePopoverTriggerPropsOnceHydrated(popoverId);
 	const listboxId = `${uid}-select-listbox`;
@@ -571,7 +569,6 @@ export function SendouSelect<T extends object>({
 				id={popoverId}
 				popover="auto"
 				className={clsx(styles.popover, popoverClassName)}
-				style={topLayerStyle}
 				onBeforeToggle={onPopoverBeforeToggle}
 				onToggle={onPopoverToggle}
 				onKeyDown={onPopoverKeyDown}

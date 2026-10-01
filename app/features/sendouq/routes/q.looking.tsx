@@ -12,6 +12,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { Flipper } from "~/components/Flipper";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
@@ -333,7 +334,8 @@ function Groups() {
 	);
 
 	return (
-		<div
+		<Flipper
+			flipKey={data}
 			className={clsx(styles.container, {
 				[styles.containerMobile]: isMobile,
 			})}
@@ -460,7 +462,7 @@ function Groups() {
 					})}
 				</div>
 			) : null}
-		</div>
+		</Flipper>
 	);
 }
 

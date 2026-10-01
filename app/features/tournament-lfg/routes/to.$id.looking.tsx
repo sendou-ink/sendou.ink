@@ -15,6 +15,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { Flipper } from "~/components/Flipper";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
@@ -141,7 +142,8 @@ function GroupsView({
 	);
 
 	return (
-		<div
+		<Flipper
+			flipKey={data}
 			className={clsx(styles.container, {
 				[styles.containerMobile]: isMobile,
 			})}
@@ -228,7 +230,7 @@ function GroupsView({
 					))}
 				</div>
 			) : null}
-		</div>
+		</Flipper>
 	);
 }
 

@@ -1,6 +1,4 @@
 .toastRegion {
-	flex-direction: column;
-	gap: 8px;
 	position: fixed;
 	inset: unset;
 	top: calc(var(--layout-nav-height) + var(--s-2));
@@ -12,10 +10,12 @@
 	color: var(--color-text);
 	overflow: visible;
 	outline: none;
+}
 
-	&:popover-open {
-		display: flex;
-	}
+.toastList {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
 .toast {
@@ -30,26 +30,6 @@
 	border: 2px solid var(--color-info);
 	width: 250px;
 	outline: none;
-}
-
-::view-transition-new(:global(.toast)):only-child {
-	animation: appear 400ms;
-}
-
-::view-transition-old(:global(.toast)):only-child {
-	animation: disappear 400ms forwards;
-}
-
-@keyframes disappear {
-	to {
-		opacity: 0;
-	}
-}
-
-@keyframes appear {
-	from {
-		opacity: 0;
-	}
 }
 
 .topRow {

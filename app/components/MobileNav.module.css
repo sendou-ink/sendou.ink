@@ -1,8 +1,6 @@
 .mobileNav {
 	display: block;
 	position: fixed;
-	/* captured on its own so animating content slides under it instead of over it */
-	view-transition-name: layout-mobile-nav;
 	inset: auto var(--scrollbar-width, 0px) 0 0;
 	width: auto;
 	height: auto;
@@ -18,11 +16,6 @@
 		var(--layout-nav-height) +
 		env(safe-area-inset-bottom)
 	);
-
-	/* snapshots paint above the top layer, which would lift it over an open modal's backdrop */
-	:root:has(:modal) & {
-		view-transition-name: none;
-	}
 }
 
 @media screen and (min-width: 600px) {
@@ -409,14 +402,4 @@
 	&::backdrop {
 		animation: none;
 	}
-}
-
-::view-transition-group(layout-mobile-nav) {
-	z-index: 1;
-}
-
-::view-transition-group(layout-mobile-nav),
-::view-transition-old(layout-mobile-nav),
-::view-transition-new(layout-mobile-nav) {
-	animation-duration: 0s;
 }

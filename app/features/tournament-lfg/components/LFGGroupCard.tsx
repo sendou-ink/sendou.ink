@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { Edit, Mic, Star, Trash, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
-import { ViewTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
@@ -24,10 +23,6 @@ import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl } from "~/utils/urls";
-import {
-	finishUpdateIfUnmoved,
-	usePageViewTransitionClasses,
-} from "~/utils/view-transition";
 import {
 	lookingSchema,
 	updateGroupFormSchema,
@@ -86,62 +81,60 @@ export function LFGGroupCard({
 	const showOrganizerDelete = !currentMember && tournament.isOrganizer(user);
 
 	return (
-		<LFGGroupCardContainer isOwnGroup={isOwnGroup}>
-			<section className={styles.group}>
-				{group.teamName ? (
-					<Divider smallText className={styles.teamHeader}>
-						{group.teamAvatarUrl ? (
-							<Avatar size="xxs" url={group.teamAvatarUrl} />
-						) : null}
-						<div className={styles.teamName}>{group.teamName}</div>
-					</Divider>
-				) : null}
-				<div className="stack md">
-					{group.members.map((member) => (
-						<LFGGroupMemberRow
-							key={member.discordId}
-							member={member}
-							showActions={showActions}
-							isOwnGroup={isOwnGroup}
-						/>
-					))}
-				</div>
-				{isOwnGroup ? (
-					<LFGOwnGroupControls
-						key={group.note ?? ""}
-						note={group.note}
-						editable={group.usersRole === "OWNER"}
-						isStayAsSub={currentMember?.isStayAsSub ?? false}
-						memberCount={group.members.length}
+		<section
+			className={styles.group}
+			data-flip-id={isOwnGroup ? undefined : group.id}
+		>
+			{group.teamName ? (
+				<Divider smallText className={styles.teamHeader}>
+					{group.teamAvatarUrl ? (
+						<Avatar size="xxs" url={group.teamAvatarUrl} />
+					) : null}
+					<div className={styles.teamName}>{group.teamName}</div>
+				</Divider>
+			) : null}
+			<div className="stack md">
+				{group.members.map((member) => (
+					<LFGGroupMemberRow
+						key={member.discordId}
+						member={member}
+						showActions={showActions}
+						isOwnGroup={isOwnGroup}
 					/>
-				) : group.note ? (
-					<div className="text-lighter text-center text-xs mt-1">
-						{group.note}
-					</div>
-				) : null}
-				{action &&
-				(ownGroup?.usersRole === "OWNER" ||
-					ownGroup?.usersRole === "MANAGER") ? (
-					<ActionButton
-						schema={lookingSchema}
-						action={action}
-						fields={{ targetTeamId: group.id }}
-						formClassName="stack items-center"
-						size="small"
-						variant={action === "UNLIKE" ? "destructive" : "outlined"}
-					>
-						{action === "LIKE"
-							? t("q:looking.groups.actions.invite")
-							: action === "ACCEPT"
-								? t("common:actions.accept")
-								: t("q:looking.groups.actions.undo")}
-					</ActionButton>
-				) : null}
-				{showOrganizerDelete ? (
-					<LFGOrganizerGroupRemover group={group} />
-				) : null}
-			</section>
-		</LFGGroupCardContainer>
+				))}
+			</div>
+			{isOwnGroup ? (
+				<LFGOwnGroupControls
+					key={group.note ?? ""}
+					note={group.note}
+					editable={group.usersRole === "OWNER"}
+					isStayAsSub={currentMember?.isStayAsSub ?? false}
+					memberCount={group.members.length}
+				/>
+			) : group.note ? (
+				<div className="text-lighter text-center text-xs mt-1">
+					{group.note}
+				</div>
+			) : null}
+			{action &&
+			(ownGroup?.usersRole === "OWNER" || ownGroup?.usersRole === "MANAGER") ? (
+				<ActionButton
+					schema={lookingSchema}
+					action={action}
+					fields={{ targetTeamId: group.id }}
+					formClassName="stack items-center"
+					size="small"
+					variant={action === "UNLIKE" ? "destructive" : "outlined"}
+				>
+					{action === "LIKE"
+						? t("q:looking.groups.actions.invite")
+						: action === "ACCEPT"
+							? t("common:actions.accept")
+							: t("q:looking.groups.actions.undo")}
+				</ActionButton>
+			) : null}
+			{showOrganizerDelete ? <LFGOrganizerGroupRemover group={group} /> : null}
+		</section>
 	);
 }
 
@@ -175,26 +168,6 @@ function LFGOrganizerGroupRemover({ group }: { group: LFGGroup }) {
 				</SendouButton>
 			</FormWithConfirm>
 		</div>
-	);
-}
-
-function LFGGroupCardContainer({
-	isOwnGroup,
-	children,
-}: {
-	isOwnGroup: boolean;
-	children: React.ReactNode;
-}) {
-	const transitionClasses = usePageViewTransitionClasses({
-		update: "card-update",
-	});
-
-	if (isOwnGroup) return <>{children}</>;
-
-	return (
-		<ViewTransition {...transitionClasses} onUpdate={finishUpdateIfUnmoved}>
-			{children}
-		</ViewTransition>
 	);
 }
 

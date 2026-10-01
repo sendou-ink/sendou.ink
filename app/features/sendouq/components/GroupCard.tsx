@@ -2,7 +2,6 @@ import clsx from "clsx";
 import type { SqlBool } from "kysely";
 import { Check, Hourglass, Mic, Volume2, VolumeX, X } from "lucide-react";
 import * as React from "react";
-import { ViewTransition } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
@@ -31,10 +30,6 @@ import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { nullFilledArray } from "~/utils/arrays";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { SENDOUQ_LOOKING_PAGE, TIERS_PAGE, tierImageUrl } from "~/utils/urls";
-import {
-	finishUpdateIfUnmoved,
-	usePageViewTransitionClasses,
-} from "~/utils/view-transition";
 import type {
 	SQGroup,
 	SQGroupMember,
@@ -103,170 +98,167 @@ export function GroupCard({
 	const futureMatchModesToShow = group.members ? null : futureMatchModes;
 
 	return (
-		<GroupCardContainer isOwnGroup={isOwnGroup}>
-			<section
-				className={clsx(styles.group, { [styles.suggested]: isSuggested })}
-				data-testid="sendouq-group-card"
-			>
-				{group.members ? (
-					<div className="stack md">
-						{group.members.map((member) => {
-							return (
-								<GroupMember
-									member={member}
-									key={member.discordId}
-									hideVc={hideVc}
-									hideWeapons={hideWeapons}
-									hideNote={hideNote}
-									isReady={readyUserIds?.includes(member.id)}
-									isKickable={kickableUserIds?.includes(member.id)}
-								/>
-							);
-						})}
-					</div>
-				) : null}
-				{futureMatchModesToShow && group.noScreen ? (
-					<div className={styles.noScreen}>
-						<SpecialWeaponImage
-							specialWeaponId={SPLATTERCOLOR_SCREEN_ID}
-							size={14}
-						/>
-						<X size={12} className={styles.noScreenCross} />
-						{t("q:looking.noScreen")}
-					</div>
-				) : null}
-				{futureMatchModesToShow ? (
-					<div className={styles.futureMatchModes}>
-						{futureMatchModesToShow.map((mode) => {
-							return (
-								<div
-									key={mode}
-									className={styles.futureMatchMode}
-									data-testid={`group-card-mode-${mode}`}
-								>
-									<ModeImage mode={mode} />
-								</div>
-							);
-						})}
-					</div>
-				) : null}
-				{group.tier &&
-				(!group.members || group.members.length === FULL_GROUP_SIZE) ? (
-					<div className="stack xs text-lighter font-bold items-center justify-center text-xs">
-						<TierImage tier={group.tier} width={100} />
-						<div>
-							{group.tier.name}
-							{group.tier.isPlus ? "+" : ""}{" "}
-							{group.isReplay ? (
-								<>
-									/{" "}
-									<span className="text-theme-secondary text-uppercase">
-										{t("q:looking.replay")}
-									</span>
-								</>
-							) : null}
-						</div>
-					</div>
-				) : null}
-				{group.tier && displayOnly && !group.members ? (
-					<div className={styles.displayTier}>
-						<TierImage tier={group.tier} width={38} />
+		<section
+			className={clsx(styles.group, { [styles.suggested]: isSuggested })}
+			data-testid="sendouq-group-card"
+			data-flip-id={isOwnGroup ? undefined : group.id}
+		>
+			{group.members ? (
+				<div className="stack md">
+					{group.members.map((member) => {
+						return (
+							<GroupMember
+								member={member}
+								key={member.discordId}
+								hideVc={hideVc}
+								hideWeapons={hideWeapons}
+								hideNote={hideNote}
+								isReady={readyUserIds?.includes(member.id)}
+								isKickable={kickableUserIds?.includes(member.id)}
+							/>
+						);
+					})}
+				</div>
+			) : null}
+			{futureMatchModesToShow && group.noScreen ? (
+				<div className={styles.noScreen}>
+					<SpecialWeaponImage
+						specialWeaponId={SPLATTERCOLOR_SCREEN_ID}
+						size={14}
+					/>
+					<X size={12} className={styles.noScreenCross} />
+					{t("q:looking.noScreen")}
+				</div>
+			) : null}
+			{futureMatchModesToShow ? (
+				<div className={styles.futureMatchModes}>
+					{futureMatchModesToShow.map((mode) => {
+						return (
+							<div
+								key={mode}
+								className={styles.futureMatchMode}
+								data-testid={`group-card-mode-${mode}`}
+							>
+								<ModeImage mode={mode} />
+							</div>
+						);
+					})}
+				</div>
+			) : null}
+			{group.tier &&
+			(!group.members || group.members.length === FULL_GROUP_SIZE) ? (
+				<div className="stack xs text-lighter font-bold items-center justify-center text-xs">
+					<TierImage tier={group.tier} width={100} />
+					<div>
 						{group.tier.name}
-						{group.tier.isPlus ? "+" : ""}
-					</div>
-				) : null}
-				{group.tierRange ? (
-					<div className="stack md items-center">
-						<div className="stack sm horizontal items-center justify-center">
-							<div className="stack xs items-center">
-								<TierImage tier={group.tierRange.range[0]} width={80} />
-								{group.tierRange.diff[0] ? (
-									<div className="text-lighter text-sm font-bold">
-										({group.tierRange.diff[0]})
-									</div>
-								) : null}
-							</div>
-							{/** in preview mode they don't see full group tiers (because they don't have a group to compare against) so it is a "true range" */}
-							{group.tierRange.diff[0] ? (
-								<SendouPopover
-									popoverClassName="text-main-forced"
-									trigger={
-										<SendouButton className={styles.popoverButton}>
-											{t("q:looking.range.or")}
-										</SendouButton>
-									}
-								>
-									{t("q:looking.range.or.explanation")}
-								</SendouPopover>
-							) : (
-								"—"
-							)}
-							<div className="stack xs items-center">
-								<TierImage tier={group.tierRange.range[1]} width={80} />
-								{group.tierRange.diff[1] ? (
-									<div className="text-lighter text-sm font-bold">
-										(+{group.tierRange.diff[1]})
-									</div>
-								) : null}
-							</div>
-						</div>
+						{group.tier.isPlus ? "+" : ""}{" "}
 						{group.isReplay ? (
-							<div className="text-theme-secondary text-uppercase text-xs font-bold">
-								{t("q:looking.replay")}
-							</div>
+							<>
+								/{" "}
+								<span className="text-theme-secondary text-uppercase">
+									{t("q:looking.replay")}
+								</span>
+							</>
 						) : null}
 					</div>
-				) : null}
-				{actionToShow || suggestable || trail ? (
-					<div className="stack xs items-center">
-						<div className="stack sm horizontal items-center justify-center">
-							{actionToShow ? (
-								<ActionButton
-									schema={lookingSchema}
-									action={
-										actionToShow === "MATCH_UP_RECHALLENGE"
-											? "MATCH_UP"
-											: actionToShow
-									}
-									fields={{ targetGroupId: group.id }}
-									size="small"
-									variant={
-										actionToShow === "UNLIKE" ? "destructive" : undefined
-									}
-									testId="group-card-action-button"
-								>
-									{actionToShow === "MATCH_UP" ||
-									actionToShow === "MATCH_UP_RECHALLENGE"
-										? t("q:looking.groups.actions.startMatch")
-										: actionToShow === "LIKE" && !group.members
-											? t("q:looking.groups.actions.challenge")
-											: actionToShow === "LIKE"
-												? t("q:looking.groups.actions.invite")
-												: actionToShow === "GROUP_UP"
-													? t("q:looking.groups.actions.groupUp")
-													: t("q:looking.groups.actions.undo")}
-								</ActionButton>
-							) : null}
-							{suggestable ? (
-								<ActionButton
-									schema={lookingSchema}
-									action="SUGGEST"
-									fields={{ targetGroupId: group.id }}
-									size="small"
-									variant="outlined"
-									testId="group-card-suggest-button"
-								>
-									{t("q:looking.groups.actions.suggest")}
-								</ActionButton>
+				</div>
+			) : null}
+			{group.tier && displayOnly && !group.members ? (
+				<div className={styles.displayTier}>
+					<TierImage tier={group.tier} width={38} />
+					{group.tier.name}
+					{group.tier.isPlus ? "+" : ""}
+				</div>
+			) : null}
+			{group.tierRange ? (
+				<div className="stack md items-center">
+					<div className="stack sm horizontal items-center justify-center">
+						<div className="stack xs items-center">
+							<TierImage tier={group.tierRange.range[0]} width={80} />
+							{group.tierRange.diff[0] ? (
+								<div className="text-lighter text-sm font-bold">
+									({group.tierRange.diff[0]})
+								</div>
 							) : null}
 						</div>
-						{trail ? (
-							<GroupCardTrailText trail={trail} isFullGroup={!group.members} />
+						{/** in preview mode they don't see full group tiers (because they don't have a group to compare against) so it is a "true range" */}
+						{group.tierRange.diff[0] ? (
+							<SendouPopover
+								popoverClassName="text-main-forced"
+								trigger={
+									<SendouButton className={styles.popoverButton}>
+										{t("q:looking.range.or")}
+									</SendouButton>
+								}
+							>
+								{t("q:looking.range.or.explanation")}
+							</SendouPopover>
+						) : (
+							"—"
+						)}
+						<div className="stack xs items-center">
+							<TierImage tier={group.tierRange.range[1]} width={80} />
+							{group.tierRange.diff[1] ? (
+								<div className="text-lighter text-sm font-bold">
+									(+{group.tierRange.diff[1]})
+								</div>
+							) : null}
+						</div>
+					</div>
+					{group.isReplay ? (
+						<div className="text-theme-secondary text-uppercase text-xs font-bold">
+							{t("q:looking.replay")}
+						</div>
+					) : null}
+				</div>
+			) : null}
+			{actionToShow || suggestable || trail ? (
+				<div className="stack xs items-center">
+					<div className="stack sm horizontal items-center justify-center">
+						{actionToShow ? (
+							<ActionButton
+								schema={lookingSchema}
+								action={
+									actionToShow === "MATCH_UP_RECHALLENGE"
+										? "MATCH_UP"
+										: actionToShow
+								}
+								fields={{ targetGroupId: group.id }}
+								size="small"
+								variant={actionToShow === "UNLIKE" ? "destructive" : undefined}
+								testId="group-card-action-button"
+							>
+								{actionToShow === "MATCH_UP" ||
+								actionToShow === "MATCH_UP_RECHALLENGE"
+									? t("q:looking.groups.actions.startMatch")
+									: actionToShow === "LIKE" && !group.members
+										? t("q:looking.groups.actions.challenge")
+										: actionToShow === "LIKE"
+											? t("q:looking.groups.actions.invite")
+											: actionToShow === "GROUP_UP"
+												? t("q:looking.groups.actions.groupUp")
+												: t("q:looking.groups.actions.undo")}
+							</ActionButton>
+						) : null}
+						{suggestable ? (
+							<ActionButton
+								schema={lookingSchema}
+								action="SUGGEST"
+								fields={{ targetGroupId: group.id }}
+								size="small"
+								variant="outlined"
+								testId="group-card-suggest-button"
+							>
+								{t("q:looking.groups.actions.suggest")}
+							</ActionButton>
 						) : null}
 					</div>
-				) : null}
-			</section>
-		</GroupCardContainer>
+					{trail ? (
+						<GroupCardTrailText trail={trail} isFullGroup={!group.members} />
+					) : null}
+				</div>
+			) : null}
+		</section>
 	);
 }
 
@@ -296,26 +288,6 @@ function GroupCardTrailText({
 				components={[<span key="username" className="font-bold" />]}
 			/>
 		</div>
-	);
-}
-
-function GroupCardContainer({
-	isOwnGroup,
-	children,
-}: {
-	isOwnGroup: boolean;
-	children: React.ReactNode;
-}) {
-	const transitionClasses = usePageViewTransitionClasses({
-		update: "card-update",
-	});
-
-	if (isOwnGroup) return <>{children}</>;
-
-	return (
-		<ViewTransition {...transitionClasses} onUpdate={finishUpdateIfUnmoved}>
-			{children}
-		</ViewTransition>
 	);
 }
 
