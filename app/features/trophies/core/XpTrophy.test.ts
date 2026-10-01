@@ -10,12 +10,11 @@ type VisibleNode = {
 	readonly children: readonly VisibleNode[];
 };
 
-const master: RawPicoCAD2File = JSON.parse(
-	readFileSync(
-		new URL("../data/xp-trophies-master.txt", import.meta.url),
-		"utf8",
-	),
+const masterJson = readFileSync(
+	new URL("../data/xp-trophies-master.txt", import.meta.url),
+	"utf8",
 );
+const master: RawPicoCAD2File = JSON.parse(masterJson);
 
 describe("XpTrophy.VARIANTS", () => {
 	test("has one trophy per weapon category and milestone", () => {
@@ -23,6 +22,15 @@ describe("XpTrophy.VARIANTS", () => {
 
 		expect(codes).toHaveLength(11 * 4);
 		expect(new Set(codes).size).toBe(codes.length);
+	});
+
+	test("has a model for every weapon category", () => {
+		const modelled = new Set(master.graph.children.map((node) => node.name));
+		const missing = XpTrophy.VARIANTS.filter(
+			(variant) => !modelled.has(variant.category),
+		);
+
+		expect(missing).toEqual([]);
 	});
 });
 
@@ -149,7 +157,10 @@ describe("XpTrophy.variantState", () => {
 	const children = state.source?.graph.children ?? [];
 
 	test("keeps only the variant's category and the pedestal", () => {
-		expect(children.map((node) => node.name)).toEqual(["chargers", "pedestal"]);
+		expect(children.map((node) => node.name).toSorted()).toEqual([
+			"chargers",
+			"pedestal",
+		]);
 	});
 
 	test("keeps only the variant's milestone digits on the pedestal", () => {
@@ -161,7 +172,7 @@ describe("XpTrophy.variantState", () => {
 		expect(digitFolders).toEqual(["35"]);
 	});
 
-	test("shows every part of the variant", () => {
+	test("shows every part of the variant without forcing anything visible", () => {
 		const hidden = (node: VisibleNode): string[] => [
 			...(node.visible ? [] : [node.name]),
 			...node.children.flatMap(hidden),
@@ -177,17 +188,18 @@ describe("XpTrophy.variantState", () => {
 		expect(analysis?.backgroundIsAlpha).toBe(true);
 	});
 
-	test("leaves the master untouched", () => {
-		const masterPedestal = master.graph.children.find(
-			(node) => node.name === "pedestal",
-		);
+	test.each([...new Set(XpTrophy.VARIANTS.map(({ category }) => category))])(
+		"spins %s around its center",
+		(category) => {
+			const [x, , z] =
+				XpTrophy.variantState(master, { category, milestone: 3000 }).model
+					?.camera?.target ?? [];
 
-		expect(master.graph.children).toHaveLength(9);
-		expect(
-			master.graph.children.find((node) => node.name === "chargers")?.visible,
-		).toBe(false);
-		expect(
-			masterPedestal?.children.filter((node) => /^\d+$/.test(node.name)),
-		).toHaveLength(4);
+			expect([x, z]).toEqual([0, 0]);
+		},
+	);
+
+	test("leaves the master untouched", () => {
+		expect(master).toEqual(JSON.parse(masterJson));
 	});
 });
