@@ -82,6 +82,8 @@ import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";
 
+// xxx: as final step, check all query chains and see if any method can be dropped because that particular loader/action/component does not need a field
+
 const PRELOAD_TRANSLATION_TIMEOUT_MS = 3000;
 
 export const middleware: Route.MiddlewareFunction[] = [

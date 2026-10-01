@@ -22,7 +22,7 @@ const idsOf = (rows: Array<{ id: number }>) =>
 	rows.map((row) => row.id).sort((a, b) => a - b);
 
 describe("VodRepository.vods", () => {
-	describe("withMatch", () => {
+	describe("havingMatch", () => {
 		test.each([
 			{
 				why: "weapon, its alt skin included",
@@ -43,14 +43,14 @@ describe("VodRepository.vods", () => {
 			const seeded = await seedVodsOfEveryFilter();
 
 			const rows = await VodRepository.vods()
-				.withMatch({ mode: null, stageId: null, weapon: null, ...filter })
+				.havingMatch({ mode: null, stageId: null, weapon: null, ...filter })
 				.execute();
 
 			expect(idsOf(rows)).toEqual(idsOf(expected.map((name) => seeded[name])));
 		});
 	});
 
-	test("withPovUser returns the vods showing the user's point of view", async () => {
+	test("fromPovOf returns the vods showing the user's point of view", async () => {
 		const own = await VodFactory.create({
 			submitterUserId: submitterId(),
 			pov: { type: "USER", userId: povUserId() },
@@ -60,7 +60,7 @@ describe("VodRepository.vods", () => {
 			pov: { type: "USER", userId: submitterId() },
 		});
 
-		const rows = await VodRepository.vods().withPovUser(povUserId()).execute();
+		const rows = await VodRepository.vods().fromPovOf(povUserId()).execute();
 
 		expect(idsOf(rows)).toEqual([own.id]);
 	});
@@ -197,7 +197,7 @@ describe("VodRepository.update", () => {
 	});
 });
 
-/** Vods each matching some of the `withMatch` filters but never all of them. */
+/** Vods each matching some of the `havingMatch` filters but never all of them. */
 async function seedVodsOfEveryFilter() {
 	const vod = (matches: Array<[ModeShort, StageId, MainWeaponId]>) =>
 		VodFactory.create({

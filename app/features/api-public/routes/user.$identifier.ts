@@ -67,7 +67,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			.executeTakeFirst(),
 	);
 
-	const badges = await BadgeRepository.findByOwnerUserId(user.id, []);
+	const badges = await BadgeRepository.findAllByOwnerUserId({
+		userId: user.id,
+		favoriteBadgeIds: [],
+	});
 
 	const season = Seasons.currentOrPrevious(new Date())!.nth;
 

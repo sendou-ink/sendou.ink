@@ -94,7 +94,9 @@ export const action: ActionFunction = async ({ request }) => {
 			)
 		: null;
 
-	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
+	const managedBadges = await BadgeRepository.badges()
+		.managedBy([user.id])
+		.execute();
 	const attachableBadgeIds = new Set([
 		...managedBadges.map((badge) => badge.id),
 		...(eventToEdit?.badgePrizes ?? []).map((badge) => badge.id),

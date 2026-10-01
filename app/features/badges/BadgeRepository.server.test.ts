@@ -48,6 +48,30 @@ describe("syncXPBadges", () => {
 	});
 });
 
+describe("badges.managedBy", () => {
+	const users = UserFactory.pool();
+
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	test("returns each badge any of the users manages once", async () => {
+		const shared = await BadgeFactory.create(null, {
+			managerIds: [users.id(1), users.id(2)],
+		});
+		const ownOnly = await BadgeFactory.create(null, {
+			managerIds: [users.id(2)],
+		});
+		await BadgeFactory.create(null, { managerIds: [users.id(3)] });
+
+		const managed = await BadgeRepository.badges()
+			.managedBy([users.id(1), users.id(2)])
+			.execute();
+
+		expect(managed.map((badge) => badge.id)).toEqual([shared.id, ownOnly.id]);
+	});
+});
+
 describe("replaceManagers", () => {
 	test("empty list clears existing managers", async () => {
 		const user = await UserFactory.create();
@@ -58,7 +82,9 @@ describe("replaceManagers", () => {
 			managerIds: [],
 		});
 
-		const updated = await BadgeRepository.findById(badge.id);
+		const updated = await BadgeRepository.badgeDetails(
+			badge.id,
+		).executeTakeFirst();
 		expect(updated?.managers).toHaveLength(0);
 	});
 });
@@ -70,7 +96,9 @@ describe("replaceOwners", () => {
 
 		await BadgeRepository.replaceOwners({ badgeId: badge.id, ownerIds: [] });
 
-		const updated = await BadgeRepository.findById(badge.id);
+		const updated = await BadgeRepository.badgeDetails(
+			badge.id,
+		).executeTakeFirst();
 		expect(updated?.owners).toHaveLength(0);
 	});
 });
@@ -83,8 +111,9 @@ const givePeakXp = (userId: number, power: number) =>
 	);
 
 async function findBadgeByCode(code: string) {
-	const badges = await BadgeRepository.findAll();
-	const badge = badges.find((b) => b.code === code);
+	const badge = await BadgeRepository.badges()
+		.where({ code })
+		.executeTakeFirst();
 	if (!badge) return null;
-	return BadgeRepository.findById(badge.id);
+	return BadgeRepository.badgeDetails(badge.id).executeTakeFirst();
 }

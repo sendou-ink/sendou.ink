@@ -9,9 +9,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	requirePermission(organization, "EDIT");
 
 	const badgeOptions = async () => {
-		const result = await BadgeRepository.findByManagersList(
-			organization.members.map((member) => member.id),
-		);
+		const result = await BadgeRepository.badges()
+			.managedBy(organization.members.map((member) => member.id))
+			.execute();
 
 		// a badge the org no longer manages stays deletable
 		for (const badge of organization.badges) {

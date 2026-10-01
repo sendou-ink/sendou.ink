@@ -10,7 +10,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		params,
 		schema: idObject,
 	});
-	const badge = notFoundIfNullish(await BadgeRepository.findById(id));
+	const badge = notFoundIfNullish(
+		await BadgeRepository.badgeDetails(id).executeTakeFirst(),
+	);
 
 	return {
 		badge,

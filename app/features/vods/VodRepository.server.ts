@@ -75,7 +75,7 @@ export const vods = defineQuery({
 	defaultSort: [["Video.youtubePublishedAt", "desc"]],
 	vocabulary: () => ({
 		/** Vods with a match fitting every given filter: played in the mode, on the stage and with the weapon or one of its alt skins. */
-		withMatch: ({
+		havingMatch: ({
 			mode,
 			stageId,
 			weapon,
@@ -118,7 +118,7 @@ export const vods = defineQuery({
 						),
 					),
 		/** Vods showing the user's point of view. */
-		withPovUser: (userId: number) => // xxx: withPovUser, confusing naming since we just filter?
+		fromPovOf: (userId: number) =>
 			refine("Video", (qb) =>
 				qb.where((eb) =>
 					eb(
@@ -245,7 +245,7 @@ export function vodWithMatches(id: number) {
 
 /** The vods showing the user's point of view, with the weapons played. */
 export function userVods(userId: number) {
-	return vods().withPovUser(userId).withWeapons();
+	return vods().fromPovOf(userId).withWeapons();
 }
 
 /** Inserts the vod with its matches, returning its id. */

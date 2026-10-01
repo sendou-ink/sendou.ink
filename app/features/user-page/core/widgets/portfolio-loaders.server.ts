@@ -30,13 +30,16 @@ export const WIDGET_LOADERS = {
 		userId: number,
 		settings: ExtractWidgetSettings<"badges-owned">,
 	) => {
-		return BadgeRepository.findByOwnerUserId(userId, settings.favoriteBadgeIds);
+		return BadgeRepository.findAllByOwnerUserId({
+			userId,
+			favoriteBadgeIds: settings.favoriteBadgeIds,
+		});
 	},
 	"badges-authored": async (userId: number) => {
-		return BadgeRepository.findByAuthorUserId(userId);
+		return BadgeRepository.badges().where({ authorId: userId }).execute();
 	},
 	"badges-managed": async (userId: number) => {
-		return BadgeRepository.findManagedByUserId(userId);
+		return BadgeRepository.badges().managedBy([userId]).execute();
 	},
 	teams: async (userId: number) => {
 		return TeamRepository.findAllMemberOfByUserId(userId);

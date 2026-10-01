@@ -10,10 +10,10 @@ export const loader = async () => {
 	);
 
 	const badgesOwnedWidget = currentWidgets.find((w) => w.id === "badges-owned");
-	const ownedBadges = await BadgeRepository.findByOwnerUserId(
-		user.id,
-		badgesOwnedWidget?.settings.favoriteBadgeIds ?? [],
-	);
+	const ownedBadges = await BadgeRepository.findAllByOwnerUserId({
+		userId: user.id,
+		favoriteBadgeIds: badgesOwnedWidget?.settings.favoriteBadgeIds ?? [],
+	});
 
 	return { currentWidgets, ownedBadges };
 };

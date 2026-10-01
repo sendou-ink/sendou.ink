@@ -2,6 +2,8 @@ import type { Pronouns } from "~/db/tables-json";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 
+// xxx: migrate to repository
+
 /** GET /api/user/{userId|discordId} */
 
 export interface GetUserResponse {

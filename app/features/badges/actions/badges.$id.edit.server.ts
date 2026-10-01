@@ -20,7 +20,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: editBadgeActionSchema,
 	});
 	const badgeId = v.parse(preprocess(actualNumber, v.number()), params.id);
-	const badge = notFoundIfNullish(await BadgeRepository.findById(badgeId));
+	const badge = notFoundIfNullish(
+		await BadgeRepository.badgeDetails(badgeId).executeTakeFirst(),
+	);
 
 	switch (data._action) {
 		case "MANAGERS": {

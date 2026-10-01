@@ -225,21 +225,23 @@ export function buildCases(fx: Fixtures): {
 		AvailabilityRepository.findTeamEventById(id),
 	);
 
-	addStatic("BadgeRepository.findAll", () => BadgeRepository.findAll());
-	add("BadgeRepository.findById", fx.heavyBadgeId, (badgeId) =>
-		BadgeRepository.findById(badgeId),
+	addStatic("BadgeRepository.badges.listing", () =>
+		BadgeRepository.badges().withManagers().withManagePermissions().execute(),
 	);
-	add("BadgeRepository.findByManagersList", fx.manyUserIds, (userIds) =>
-		BadgeRepository.findByManagersList(userIds),
+	add("BadgeRepository.badgeDetails", fx.heavyBadgeId, (badgeId) =>
+		BadgeRepository.badgeDetails(badgeId).executeTakeFirst(),
 	);
-	add("BadgeRepository.findManagedByUserId", fx.badgeManagerUserId, (userId) =>
-		BadgeRepository.findManagedByUserId(userId),
+	add("BadgeRepository.badges.managedByMany", fx.manyUserIds, (userIds) =>
+		BadgeRepository.badges().managedBy(userIds).execute(),
 	);
-	add("BadgeRepository.findByOwnerUserId", fx.badgeOwnerUserId, (userId) =>
-		BadgeRepository.findByOwnerUserId(userId, []),
+	add("BadgeRepository.badges.managedBy", fx.badgeManagerUserId, (userId) =>
+		BadgeRepository.badges().managedBy([userId]).execute(),
 	);
-	add("BadgeRepository.findByAuthorUserId", fx.badgeAuthorId, (userId) =>
-		BadgeRepository.findByAuthorUserId(userId),
+	add("BadgeRepository.findAllByOwnerUserId", fx.badgeOwnerUserId, (userId) =>
+		BadgeRepository.findAllByOwnerUserId({ userId, favoriteBadgeIds: [] }),
+	);
+	add("BadgeRepository.badges.byAuthor", fx.badgeAuthorId, (userId) =>
+		BadgeRepository.badges().where({ authorId: userId }).execute(),
 	);
 
 	add("BuildRepository.builds.userBuilds", fx.heavyBuildUserId, (userId) =>
@@ -1581,13 +1583,13 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("VodRepository.vods.listing.byWeapon", fx.heavyWeaponSplId, (weapon) =>
 		VodRepository.vods()
-			.withMatch({ mode: null, stageId: null, weapon })
+			.havingMatch({ mode: null, stageId: null, weapon })
 			.withWeapons(weapon)
 			.paginate({ page: 1, size: VODS_PAGE_BATCH_SIZE }),
 	);
 	addStatic("VodRepository.vods.listing.byModeAndStage", () =>
 		VodRepository.vods()
-			.withMatch({ mode: "SZ", stageId: 1, weapon: null })
+			.havingMatch({ mode: "SZ", stageId: 1, weapon: null })
 			.withWeapons()
 			.paginate({ page: 1, size: VODS_PAGE_BATCH_SIZE }),
 	);

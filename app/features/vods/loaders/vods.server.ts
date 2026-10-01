@@ -31,6 +31,6 @@ function listedVods({
 }: Omit<ReturnType<typeof vodsSearchParams.parse>, "page">) {
 	return VodRepository.vods()
 		.where({ type: type ?? undefined })
-		.withMatch({ mode, stageId, weapon })
+		.havingMatch({ mode, stageId, weapon })
 		.withWeapons(weapon);
 }

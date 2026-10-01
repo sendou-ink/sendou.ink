@@ -1,143 +1,94 @@
-import type { ExpressionBuilder, NotNull } from "kysely";
+import type { NotNull } from "kysely";
+import { crud } from "~/db/crud";
+import { defineQuery, mapRows, refine } from "~/db/entity-query";
 import { db } from "~/db/sql";
-import type { DB, TablesInsertable } from "~/db/tables";
 import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { invariant } from "~/utils/invariant";
 import {
 	commonUserSelect,
 	jsonArrayFrom,
-	jsonObjectFrom,
 	peakXpOverallSql,
 } from "~/utils/kysely.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
 import { findSplatoon3XpBadgeValue } from "./badges-utils";
 
-const addPermissions = <T extends { managers: { userId: number }[] }>(
-	row: T,
-) => ({
-	...row,
-	permissions: {
-		MANAGE: row.managers.map((m) => m.userId),
-	},
+const badgeTable = crud("Badge");
+const managerTable = crud("BadgeManager");
+const ownerTable = crud("TournamentBadgeOwner");
+
+export const { findById, insert } = badgeTable;
+
+/** Badges, in the order they were added. */
+export const badges = defineQuery({
+	root: "Badge",
+	select: (qb) =>
+		qb.select(["Badge.id", "Badge.code", "Badge.displayName", "Badge.hue"]),
+	defaultSort: [["Badge.id", "asc"]],
+	vocabulary: () => ({
+		/** Who made the badge, `null` for a legacy badge. */
+		withAuthor: () => UserRepository.withUser("author", "Badge.authorId"),
+		withManagers: () =>
+			refine("Badge", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("BadgeManager")
+							.innerJoin("User", "BadgeManager.userId", "User.id")
+							.select((managerEb) => [
+								"BadgeManager.userId",
+								...commonUserSelect(managerEb),
+							])
+							.whereRef("BadgeManager.badgeId", "=", "Badge.id"),
+					).as("managers"),
+				),
+			),
+		/** Badges any of the users manages. */
+		managedBy: (userIds: number[]) =>
+			refine("Badge", (qb) =>
+				qb.where((eb) =>
+					eb(
+						"Badge.id",
+						"in",
+						eb
+							.selectFrom("BadgeManager")
+							.select("BadgeManager.badgeId")
+							.where("BadgeManager.userId", "in", userIds),
+					),
+				),
+			),
+		/** The badge's managers may manage it. */
+		withManagePermissions: () =>
+			mapRows("Badge", (row: { managers: Array<{ userId: number }> }) => ({
+				permissions: {
+					MANAGE: row.managers.map((manager) => manager.userId),
+				},
+			})),
+	}),
 });
 
-const withAuthor = (eb: ExpressionBuilder<DB, "Badge">) => {
-	return jsonObjectFrom(
-		eb
-			.selectFrom("User")
-			.select((userEb) => commonUserSelect(userEb))
-			.whereRef("User.id", "=", "Badge.authorId"),
-	).as("author");
-};
-
-const withManagers = (eb: ExpressionBuilder<DB, "Badge">) => {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("BadgeManager")
-			.innerJoin("User", "BadgeManager.userId", "User.id")
-			.select((managerEb) => ["userId", ...commonUserSelect(managerEb)])
-			.whereRef("BadgeManager.badgeId", "=", "Badge.id"),
-	).as("managers");
-};
-
-// a constant badgeId (not correlated to "Badge"."id") lets SQLite push the predicate into both arms of the BadgeOwner view
-const withOwners = (eb: ExpressionBuilder<DB, "Badge">, badgeId: number) => {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("BadgeOwner")
-			.innerJoin("User", "BadgeOwner.userId", "User.id")
-			.select(({ fn }) => [
-				fn.sum<number>("BadgeOwner.count").as("count"),
-				"User.id",
-				"User.discordId",
-				"User.username",
-			])
-			.where("BadgeOwner.badgeId", "=", badgeId)
-			.groupBy("User.id")
-			.orderBy("count", "desc"),
-	).as("owners");
-};
-
-/** Adds a badge. `authorId` is who made it, `null` for a legacy badge. */
-export function insert(
-	args: Pick<
-		TablesInsertable["Badge"],
-		"code" | "displayName" | "hue" | "authorId"
-	>,
-) {
-	return db
-		.insertInto("Badge")
-		.values(args)
-		.returning("id")
-		.executeTakeFirstOrThrow();
-}
-
-export async function findAll() {
-	const rows = await db
-		.selectFrom("Badge")
-		.select(({ eb }) => [
-			"id",
-			"displayName",
-			"code",
-			"hue",
-			withManagers(eb),
-			withAuthor(eb),
-		])
-		.execute();
-
-	return rows.map(addPermissions);
-}
-
-export async function findById(badgeId: number) {
-	const row = await db
-		.selectFrom("Badge")
-		.select((eb) => [
-			"Badge.id",
-			"Badge.displayName",
-			"Badge.code",
-			"Badge.hue",
-			withAuthor(eb),
-			withManagers(eb),
-			withOwners(eb, badgeId),
-		])
-		.where("id", "=", badgeId)
-		.executeTakeFirst();
-
-	if (!row) {
-		return null;
-	}
-
-	return addPermissions(row);
-}
-
-export function findByManagersList(userIds: number[]) {
-	return db
-		.selectFrom("Badge")
-		.select(["Badge.id", "Badge.code", "Badge.displayName", "Badge.hue"])
-		.innerJoin("BadgeManager", "Badge.id", "BadgeManager.badgeId")
-		.where("BadgeManager.userId", "in", userIds)
-		.orderBy("Badge.id", "asc")
-		.groupBy("Badge.id")
-		.execute();
-}
-
-export function findManagedByUserId(userId: number) {
-	return db
-		.selectFrom("BadgeManager")
-		.innerJoin("Badge", "Badge.id", "BadgeManager.badgeId")
-		.select(["Badge.id", "Badge.code", "Badge.displayName", "Badge.hue"])
-		.where("BadgeManager.userId", "=", userId)
-		.execute();
+/** The badge with its author, managers, owners and who may manage it. */
+export function badgeDetails(id: number) {
+	return badges()
+		.where({ id })
+		.withAuthor()
+		.withManagers()
+		.withManagePermissions()
+		.with(ownersOf(id));
 }
 
 /**
- * Takes a constant userId on purpose: correlating to an outer "User"."id" would stop SQLite
- * pushing the predicate into both arms of the BadgeOwner view, materializing the full view.
+ * The user's badges with how many times they own each, favorites first. Takes a constant userId
+ * on purpose: correlating to an outer "User"."id" would stop SQLite pushing the predicate into
+ * both arms of the BadgeOwner view, materializing the full view.
  */
-export async function findByOwnerUserId(
-	userId: number,
-	favoriteBadgeIds: number[],
-) {
+export async function findAllByOwnerUserId({
+	userId,
+	favoriteBadgeIds,
+}: {
+	userId: number;
+	favoriteBadgeIds: number[];
+}) {
 	const rows = await db
 		.selectFrom("BadgeOwner")
 		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
@@ -163,15 +114,6 @@ export async function findByOwnerUserId(
 	});
 }
 
-export function findByAuthorUserId(userId: number) {
-	return db
-		.selectFrom("Badge")
-		.select(["Badge.id", "Badge.displayName", "Badge.code", "Badge.hue"])
-		.where("Badge.authorId", "=", userId)
-		.groupBy("Badge.id")
-		.execute();
-}
-
 export function replaceManagers({
 	badgeId,
 	managerIds,
@@ -180,23 +122,15 @@ export function replaceManagers({
 	managerIds: number[];
 }) {
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("BadgeManager")
-			.where("badgeId", "=", badgeId)
-			.execute();
-
-		await trx
-			.insertInto("BadgeManager")
-			.values(
-				managerIds.map((userId) => ({
-					badgeId,
-					userId,
-				})),
-			)
-			.execute();
+		await managerTable.delete({ badgeId }, trx);
+		await managerTable.insertMany(
+			managerIds.map((userId) => ({ badgeId, userId })),
+			trx,
+		);
 	});
 }
 
+/** Replaces the badge's owners, repeating an id for multiple wins. */
 export function replaceOwners({
 	badgeId,
 	ownerIds,
@@ -205,39 +139,32 @@ export function replaceOwners({
 	ownerIds: number[];
 }) {
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("TournamentBadgeOwner")
-			.where("badgeId", "=", badgeId)
-			.execute();
+		await ownerTable.delete({ badgeId }, trx);
 
 		const counts = new Map<number, number>();
 		for (const userId of ownerIds) {
 			counts.set(userId, (counts.get(userId) ?? 0) + 1);
 		}
 
-		await trx
-			.insertInto("TournamentBadgeOwner")
-			.values(
-				Array.from(counts, ([userId, count]) => ({
-					badgeId,
-					userId,
-					count,
-				})),
-			)
-			.execute();
+		await ownerTable.insertMany(
+			Array.from(counts, ([userId, count]) => ({ badgeId, userId, count })),
+			trx,
+		);
 	});
 }
 
+/** Gives every user with a linked X Rank player the XP badge of their peak power, replacing the previous ones. */
 export async function syncXPBadges() {
 	return db.transaction().execute(async (trx) => {
+		const xpBadges = await trx
+			.selectFrom("Badge")
+			.select(["Badge.id", "Badge.code"])
+			.where("Badge.code", "in", SPLATOON_3_XP_BADGE_VALUES.map(String))
+			.execute();
+
 		const badgeIdByValue = new Map<number, number>();
 		for (const value of SPLATOON_3_XP_BADGE_VALUES) {
-			const badge = await trx
-				.selectFrom("Badge")
-				.select("id")
-				.where("code", "=", String(value))
-				.executeTakeFirst();
-
+			const badge = xpBadges.find((xpBadge) => xpBadge.code === String(value));
 			invariant(badge, `Badge ${value} not found`);
 
 			badgeIdByValue.set(value, badge.id);
@@ -245,24 +172,47 @@ export async function syncXPBadges() {
 
 		await trx
 			.deleteFrom("TournamentBadgeOwner")
-			.where("badgeId", "in", [...badgeIdByValue.values()])
+			.where("TournamentBadgeOwner.badgeId", "in", [...badgeIdByValue.values()])
 			.execute();
 
 		const userTopXPowers = await trx
 			.selectFrom("SplatoonPlayer")
-			.select(["userId", peakXpOverallSql().as("peakXp")])
-			.where("userId", "is not", null)
+			.select(["SplatoonPlayer.userId", peakXpOverallSql().as("peakXp")])
+			.where("SplatoonPlayer.userId", "is not", null)
 			.where("peakXp", "is not", null)
 			.$narrowType<{ userId: NotNull; peakXp: NotNull }>()
 			.execute();
 
 		const badgeOwners = userTopXPowers.flatMap(({ userId, peakXp }) => {
-			const badgeValue = findSplatoon3XpBadgeValue(peakXp!);
+			const badgeValue = findSplatoon3XpBadgeValue(peakXp);
 			const badgeId = badgeValue ? badgeIdByValue.get(badgeValue) : undefined;
 
 			return badgeId ? [{ badgeId, userId }] : [];
 		});
 
-		await trx.insertInto("TournamentBadgeOwner").values(badgeOwners).execute();
+		await ownerTable.insertMany(badgeOwners, trx);
 	});
+}
+
+// a constant badgeId (not correlated to "Badge"."id") lets SQLite push the predicate into both
+// arms of the BadgeOwner view, ~20x faster for a badge with many owners
+function ownersOf(badgeId: number) {
+	return refine("Badge", (qb) =>
+		qb.select((eb) =>
+			jsonArrayFrom(
+				eb
+					.selectFrom("BadgeOwner")
+					.innerJoin("User", "BadgeOwner.userId", "User.id")
+					.select(({ fn }) => [
+						fn.sum<number>("BadgeOwner.count").as("count"),
+						"User.id",
+						"User.discordId",
+						"User.username",
+					])
+					.where("BadgeOwner.badgeId", "=", badgeId)
+					.groupBy("User.id")
+					.orderBy("count", "desc"),
+			).as("owners"),
+		),
+	);
 }

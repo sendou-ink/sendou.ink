@@ -71,7 +71,9 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		);
 	}
 
-	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
+	const managedBadges = await BadgeRepository.badges()
+		.managedBy([user.id])
+		.execute();
 
 	const organizations = (
 		await findValidOrganizations(
