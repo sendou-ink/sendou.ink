@@ -31,14 +31,14 @@ import type {
 } from "./ring-buffer-protocol";
 
 /**
- * Bitrate scales with the pixel rate: 1080p60 lands at ~10 Mbps, plenty for
- * highlights, and a clip costs ~1.25 MB a second. The floor keeps 720p sharp
- * (16 Mbps was ~indistinguishable from the source at 720p60 per the
- * auto-clipper measurements).
+ * Bitrate scales with the pixel rate: 1080p60 lands at ~12.5 Mbps and a clip
+ * costs ~1.55 MB a second. The floor keeps 720p sharp (16 Mbps was
+ * ~indistinguishable from the source at 720p60 per the auto-clipper
+ * measurements).
  */
-const VIDEO_BITS_PER_PIXEL = 0.08;
-const MIN_VIDEO_BITRATE = 6_000_000;
-const MAX_VIDEO_BITRATE = 12_000_000;
+const VIDEO_BITS_PER_PIXEL = 0.1;
+const MIN_VIDEO_BITRATE = 10_000_000;
+const MAX_VIDEO_BITRATE = 14_000_000;
 /**
  * Hardware first. Chromium's `prefer-hardware` is hardware-only, so software
  * (OpenH264) must be asked for: Linux, VMs, older GPUs.

@@ -116,7 +116,7 @@ the ring would have dropped it by then:
   a worker so a busy page never costs the footage a frame (on the main
   thread ~12% of a 60 fps track was lost to the one-frame processor
   buffer). There the video runs through a `VideoEncoder` (H.264, keyframe
-  every 2 s, bitrate scaled by pixel rate: ~10 Mbps at 1080p60) into a ring
+  every 2 s, bitrate scaled by pixel rate: ~12.5 Mbps at 1080p60) into a ring
   of GOPs holding the last
   `RING_BUFFER_SECONDS`; the audio through an `AudioEncoder` (AAC, else
   Opus) into the same ring. `openCapture` asks for 60 fps explicitly, as
