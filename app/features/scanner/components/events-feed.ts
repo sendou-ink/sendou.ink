@@ -54,6 +54,8 @@ export interface LiveSession {
 	events: StoredEvent[];
 	/** chronological */
 	built: BuiltMatch<StoredEvent>[];
+	/** `built` plus the unbacked kill-feed stretches (match-builder.ts), chronological — clip material only */
+	clipMatches: BuiltMatch<StoredEvent>[];
 	summary: SessionSummary;
 	startedAt: number;
 	endedAt: number;
@@ -272,6 +274,7 @@ function addCompactedSessions(matches: readonly CompactedMatch[]): void {
 			compacted: true,
 			events: built.flatMap((b) => b.sources).toSorted((a, b) => a.t - b.t),
 			built,
+			clipMatches: built,
 			summary: sessionSummary(built.map((b) => b.match)),
 			startedAt: session.key,
 			endedAt: session.endedAt,
@@ -296,7 +299,10 @@ async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 		let sorted = kept.toSorted(
 			(a, b) => a.t - b.t || (a.id ?? 0) - (b.id ?? 0),
 		);
-		let built = buildScannerMatches(sorted, matchCache);
+		let clipMatches = buildScannerMatches(sorted, matchCache, {
+			unbacked: true,
+		});
+		let built = clipMatches.filter((b) => !b.unbacked);
 		// objective reads grouped into a match whose mode rules their overlay out
 		// slipped past the live block (e.g. the mode read arrived after them) —
 		// delete them
@@ -311,13 +317,17 @@ async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 			rawEvents = rawEvents.filter((event) => !invalidSet.has(event));
 			kept = kept.filter((event) => !invalidSet.has(event));
 			sorted = sorted.filter((event) => !invalidSet.has(event));
-			built = buildScannerMatches(sorted, matchCache);
+			clipMatches = buildScannerMatches(sorted, matchCache, {
+				unbacked: true,
+			});
+			built = clipMatches.filter((b) => !b.unbacked);
 		}
 		const session: LiveSession = {
 			key,
 			compacted: false,
 			events: sorted,
 			built,
+			clipMatches,
 			summary: sessionSummary(built.map((b) => b.match)),
 			startedAt: key,
 			endedAt: sessionEvents.at(-1)!.detectedAt,

@@ -2,7 +2,8 @@
  * The clip ring buffer's engine, off the main thread so a busy page never
  * costs it a frame: the capture's video track (a transferred
  * MediaStreamTrackProcessor stream) runs through a VideoEncoder (hardware
- * H.264 where available, a keyframe every `KEYFRAME_INTERVAL_S`) into a
+ * H.264 where available, else software — also when the hardware encoder
+ * gives up mid-capture — a keyframe every `KEYFRAME_INTERVAL_S`) into a
  * ring of GOPs holding the last `seconds`; the audio track through an
  * AudioEncoder into the same ring. Every packet is stamped with the wall
  * clock its frame was captured at — noted as the frame enters the encoder,
@@ -29,8 +30,23 @@ import type {
 	RingWorkerResponse,
 } from "./ring-buffer-protocol";
 
-/** ~indistinguishable from the source at 720p60 per the auto-clipper measurements */
-const VIDEO_BITRATE = 16_000_000;
+/**
+ * Bitrate scales with the pixel rate: 1080p60 lands at ~10 Mbps, plenty for
+ * highlights, and a clip costs ~1.25 MB a second. The floor keeps 720p sharp
+ * (16 Mbps was ~indistinguishable from the source at 720p60 per the
+ * auto-clipper measurements).
+ */
+const VIDEO_BITS_PER_PIXEL = 0.08;
+const MIN_VIDEO_BITRATE = 6_000_000;
+const MAX_VIDEO_BITRATE = 12_000_000;
+/**
+ * Hardware first. Chromium's `prefer-hardware` is hardware-only, so software
+ * (OpenH264) must be asked for: Linux, VMs, older GPUs.
+ */
+const VIDEO_ACCELERATIONS: HardwareAcceleration[] = [
+	"prefer-hardware",
+	"no-preference",
+];
 const KEYFRAME_INTERVAL_S = 2;
 const AUDIO_BITRATE = 160_000;
 /** high profile at level 5.1 covers 1080p60; the fallbacks trade profile for reach */
@@ -119,22 +135,12 @@ class Ring {
 		height,
 		framerate,
 	}: Extract<RingWorkerRequest, { kind: "start" }>): Promise<void> {
-		const codec = await firstSupportedVideoCodec(width, height, framerate);
-		if (!codec) throw new Error("no H.264 encoder available for clips");
-
-		this.#videoEncoder = new VideoEncoder({
-			output: (chunk, meta) => this.#onVideoChunk(chunk, meta),
-			error: (error) => this.#fail(error),
-		});
-		this.#videoEncoder.configure({
-			codec,
-			width,
-			height,
-			bitrate: VIDEO_BITRATE,
-			framerate,
-			latencyMode: "realtime",
-			hardwareAcceleration: "prefer-hardware",
-		});
+		const config = await firstSupportedVideoConfig(
+			{ width, height, framerate },
+			VIDEO_ACCELERATIONS,
+		);
+		if (!config) throw new Error("no H.264 encoder available for clips");
+		this.#configureVideo(config);
 		void this.#pumpVideo(video);
 		if (audio && typeof AudioEncoder !== "undefined") {
 			void this.#pumpAudio(audio);
@@ -166,6 +172,8 @@ class Ring {
 		if (!first || !this.#videoConfig) return null;
 		const clipStart = first.wall;
 		const clipEnd = video.at(-1)!.wall;
+		// the encoder stopped before the window: the ring only holds older footage
+		if (clipEnd < start) return null;
 		const thumbnail =
 			gops.findLast((gop) => gop.thumbnail && gop.packets[0]!.wall <= end)
 				?.thumbnail ?? gops[0]?.thumbnail;
@@ -362,9 +370,39 @@ class Ring {
 		}
 	}
 
-	#fail(error: unknown): void {
+	#configureVideo(config: VideoEncoderConfig): void {
+		const encoder = new VideoEncoder({
+			output: (chunk, meta) => this.#onVideoChunk(chunk, meta),
+			error: (error) => void this.#onVideoError(encoder, config, error),
+		});
+		encoder.configure(config);
+		this.#videoEncoder = encoder;
+	}
+
+	/**
+	 * A hardware encoder can fail only once frames flow (its sessions run out
+	 * while OBS encodes on the same GPU), so it is swapped for software and
+	 * the ring restarts: packets of two encoders never share a clip.
+	 */
+	async #onVideoError(
+		encoder: VideoEncoder,
+		config: VideoEncoderConfig,
+		error: unknown,
+	): Promise<void> {
+		if (this.#videoEncoder !== encoder) return;
 		this.#videoEncoder = null;
-		post({ kind: "error", message: describe(error) });
+		const software =
+			config.hardwareAcceleration === "prefer-hardware"
+				? await firstSupportedVideoConfig(config, ["no-preference"])
+				: null;
+		if (!software) {
+			post({ kind: "error", message: describe(error) });
+			return;
+		}
+		this.#gops.length = 0;
+		this.#videoConfig = undefined;
+		this.#lastKeyframeAt = Number.NEGATIVE_INFINITY;
+		this.#configureVideo(software);
 	}
 }
 
@@ -467,27 +505,49 @@ function base64Of(bytes: Uint8Array): string {
 	return btoa(binary);
 }
 
-async function firstSupportedVideoCodec(
-	width: number,
-	height: number,
-	framerate: number,
-): Promise<string | null> {
-	for (const codec of VIDEO_CODECS) {
-		try {
-			const { supported } = await VideoEncoder.isConfigSupported({
+/** The first encoder config this browser supports, accelerations in order, each through every codec. */
+async function firstSupportedVideoConfig(
+	{
+		width,
+		height,
+		framerate,
+	}: { width: number; height: number; framerate?: number },
+	accelerations: readonly HardwareAcceleration[],
+): Promise<VideoEncoderConfig | null> {
+	for (const hardwareAcceleration of accelerations) {
+		for (const codec of VIDEO_CODECS) {
+			const config: VideoEncoderConfig = {
 				codec,
 				width,
 				height,
-				bitrate: VIDEO_BITRATE,
+				bitrate: videoBitrate(width, height, framerate ?? 60),
 				framerate,
 				latencyMode: "realtime",
-			});
-			if (supported) return codec;
-		} catch {
-			// an unknown codec string throws rather than reporting unsupported
+				hardwareAcceleration,
+			};
+			try {
+				const { supported } = await VideoEncoder.isConfigSupported(config);
+				if (supported) return config;
+			} catch {
+				// an unknown codec string throws rather than reporting unsupported
+			}
 		}
 	}
 	return null;
+}
+
+function videoBitrate(
+	width: number,
+	height: number,
+	framerate: number,
+): number {
+	return Math.min(
+		MAX_VIDEO_BITRATE,
+		Math.max(
+			MIN_VIDEO_BITRATE,
+			Math.round(width * height * framerate * VIDEO_BITS_PER_PIXEL),
+		),
+	);
 }
 
 async function firstSupportedAudioCodec(

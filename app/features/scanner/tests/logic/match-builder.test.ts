@@ -1750,3 +1750,79 @@ test("a same-name stack seen again inside the row lifetime is the same row", () 
 	]);
 	assert.equal(built[0]!.match.kills!.length, 1);
 });
+
+test("a row entering unread does not take the place of the named row above it", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		kill(10, ["A"]),
+		kill(12, [null, "A"]),
+		kill(13, ["C", "A"]),
+		scoreboard(300),
+	]);
+	assert.deepEqual(
+		built[0]!.match.kills!.map((k) => [k.t, k.name]),
+		[
+			[10, "A"],
+			[12, "C"],
+		],
+	);
+});
+
+test("an unread row keeps its kill when a later read cannot name it either", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		kill(10, ["A"]),
+		kill(12, [null, "A"]),
+		kill(13, [null, "A"]),
+		scoreboard(300),
+	]);
+	assert.deepEqual(
+		built[0]!.match.kills!.map((k) => [k.t, k.name]),
+		[
+			[10, "A"],
+			[12, null],
+		],
+	);
+});
+
+test("unbacked matches are left out by default", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		kill(60, ["A"]),
+		mapStart(400),
+		kill(460, ["B"]),
+	]);
+	assert.deepEqual(built, []);
+});
+
+test("unbacked matches are emitted flagged on request, map intro opened or orphaned", () => {
+	const built = buildScannerMatches(
+		[
+			kill(20, ["Z"]),
+			mapStart(30),
+			kill(60, ["A"]),
+			mapStart(400),
+			kill(460, ["B"]),
+			scoreboard(700),
+			kill(800, ["C"]),
+		],
+		undefined,
+		{ unbacked: true },
+	);
+	assert.deepEqual(
+		built.map((b) => [b.unbacked ?? false, b.match.kills?.map((k) => k.name)]),
+		[
+			[true, ["Z"]],
+			[true, ["A"]],
+			[false, ["B"]],
+			[true, ["C"]],
+		],
+	);
+});
+
+test("unbacked matches without kill reads are not emitted", () => {
+	const built = buildScannerMatches([mapStart(0), mapStart(400)], undefined, {
+		unbacked: true,
+	});
+	assert.deepEqual(built, []);
+});

@@ -274,7 +274,9 @@ export async function startCapture({
 			if (!supportsRingBuffer()) {
 				clips = "unsupported";
 			} else {
-				const startingRing = new ClipRingBuffer(RING_BUFFER_SECONDS);
+				const startingRing = new ClipRingBuffer(RING_BUFFER_SECONDS, () =>
+					onClipsFailed(startingRing),
+				);
 				ring = startingRing;
 				try {
 					await startingRing.start(stream);
@@ -319,7 +321,8 @@ export async function startCapture({
 			stream,
 			hasAudio: stream.getAudioTracks().length > 0,
 			audioError: desktop ? desktop.error : opened.audioError,
-			clips,
+			// the encoder may have given up between starting and here
+			clips: ring?.failure ? "failed" : clips,
 		});
 	} catch (error) {
 		if (stream) stopTracks(stream);
@@ -548,9 +551,18 @@ async function persist(
 	refreshFeed();
 }
 
+/**
+ * The clip encoder gave up mid-capture: the capture goes on without new
+ * footage, the ring still cuts the windows it holds.
+ */
+function onClipsFailed(failed: ClipRingBuffer): void {
+	if (ring !== failed || snapshot.status !== "running") return;
+	set({ clips: "failed", audioSignal: null });
+}
+
 /** Whether the clip encoder is getting sound; a device that opens fine but delivers silence shows up here. */
 function audioCheck(): void {
-	if (snapshot.status !== "running") return;
+	if (snapshot.status !== "running" || snapshot.clips !== "on") return;
 	const track = snapshot.stream?.getAudioTracks()[0];
 	const signalAt = ring?.audioSignalAt ?? null;
 	const next: AudioSignal | null = !track
@@ -611,7 +623,7 @@ function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
 			score: clip.score,
 			clipId: Promise.resolve(clip.id),
 		}));
-	for (const built of session.built) {
+	for (const built of session.clipMatches) {
 		const deaths = built.sources
 			.filter((event) => event.type === DEATH_EVENT_TYPE)
 			.map((event) => event.t);
@@ -677,6 +689,15 @@ async function cutClip(
 			},
 			clip.blob,
 		);
+		if (!saved) {
+			// out of room: the clips it would have replaced stay, and the next
+			// tick sees them again as saved clips
+			for (const cut of replaces) {
+				const id = await cut.clipId;
+				if (id !== null) ownClipIds.delete(id);
+			}
+			return null;
+		}
 		ownClipIds.add(saved.id);
 		for (const cut of replaces) {
 			const id = await cut.clipId;

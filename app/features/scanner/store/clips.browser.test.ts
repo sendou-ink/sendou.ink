@@ -111,3 +111,50 @@ describe("deleteVodClips()", () => {
 		expect((await listClips()).map((c) => c.bucket)).toEqual(["history"]);
 	});
 });
+
+describe("saveClip()", () => {
+	beforeEach(clearAll);
+
+	const MAX_BYTES = BLOB.size * 2;
+
+	test("drops the group's lowest-scoring clips to stay under the byte budget", async () => {
+		await saveClip(clip({ score: 10 }), BLOB, { maxBytes: MAX_BYTES });
+		await saveClip(clip({ bucket: "history", score: 20 }), BLOB, {
+			maxBytes: MAX_BYTES,
+		});
+
+		const saved = await saveClip(clip({ score: 30 }), BLOB, {
+			maxBytes: MAX_BYTES,
+		});
+
+		expect(saved?.bytes).toBe(BLOB.size);
+		expect((await listClips()).map((c) => c.score)).toEqual([30, 20]);
+	});
+
+	test("saves nothing when the clip scores below a full budget", async () => {
+		await saveClip(clip({ score: 20 }), BLOB, { maxBytes: MAX_BYTES });
+		await saveClip(clip({ score: 30 }), BLOB, { maxBytes: MAX_BYTES });
+
+		expect(
+			await saveClip(clip({ score: 10 }), BLOB, { maxBytes: MAX_BYTES }),
+		).toBeNull();
+		expect((await listClips()).map((c) => c.score)).toEqual([30, 20]);
+	});
+
+	test("keeps a file's clips out of the live clips' budget", async () => {
+		await saveClip(clip({ score: 20 }), BLOB, { maxBytes: MAX_BYTES });
+		await saveClip(clip({ score: 30 }), BLOB, { maxBytes: MAX_BYTES });
+
+		await saveClip(
+			clip({
+				bucket: "vod",
+				source: { kind: "vod", name: "a.mkv", visit: "v" },
+				score: 100,
+			}),
+			BLOB,
+			{ maxBytes: MAX_BYTES },
+		);
+
+		expect((await listClips()).map((c) => c.score)).toEqual([100, 30, 20]);
+	});
+});

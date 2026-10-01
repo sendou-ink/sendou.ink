@@ -5,7 +5,8 @@
  * preceding MapStart claims the last 8 minutes of deaths. Without delimiters
  * (casted footage) minimaps group per map by stage change and time gap. A
  * match is emitted only when a scoreboard or minimaps back it, regardless of
- * lobby/outcome — `ingestSkipReasons` filters those. Deaths are harvested
+ * lobby/outcome — `ingestSkipReasons` filters those (the clip scorer alone
+ * asks for the unbacked ones too). Deaths are harvested
  * onto player rows as enemy builds (ability-harvest.ts).
  */
 import type {
@@ -169,6 +170,11 @@ export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
 	/** input events the match was built from, chronological — the send-status unit for callers */
 	sources: E[];
+	/**
+	 * only built with `{ unbacked: true }`: no scoreboard or minimap backs the
+	 * match, so it is kill-feed material for clips, not a game to show or send
+	 */
+	unbacked?: true;
 }
 
 /**
@@ -190,13 +196,20 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * recording time not contradicting it) joins that match's `sources` instead of
  * forming a new one, as does a results screen read again with no match
  * opened since. Every input event ends up in at most one match's `sources`.
+ *
+ * `unbacked` also emits, flagged, the stretches with kill reads no scoreboard
+ * or minimap backed (a results screen missed, the map never opened, a match
+ * still being played): the clip scorer needs their streaks, nothing else
+ * should see them.
  */
 export function buildScannerMatches<E extends DetectedEvent>(
 	events: readonly E[],
 	cache?: MatchBuildCache<E>,
+	{ unbacked = false }: { unbacked?: boolean } = {},
 ): BuiltMatch<E>[] {
 	const sorted = events.toSorted((a, b) => a.t - b.t);
 	const built: BuiltMatch<E>[] = [];
+	const unbackedBuilt: BuiltMatch<E>[] = [];
 	const nextStage = buildNextStageMap(sorted);
 
 	let open: OpenMatch<E> | null = null;
@@ -208,24 +221,38 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	let orphanKills: E[] = [];
 	const finalize = (): void => {
 		if (!open) return;
-		if (open.scoreboard || open.minimaps.length > 0) {
+		if (isBacked(open)) {
 			built.push(cachedBuiltMatch(open, cache));
+		} else if (unbacked && open.kills.length > 0) {
+			unbackedBuilt.push(cachedBuiltMatch(open, cache));
 		}
 		open = null;
+	};
+	// orphan reads no scoreboard claimed are left behind
+	const dropOrphans = (): void => {
+		if (unbacked && orphanKills.length > 0) {
+			unbackedBuilt.push(
+				cachedBuiltMatch(
+					{ ...startMatch(), deaths: orphanDeaths, kills: orphanKills },
+					cache,
+				),
+			);
+		}
+		orphanDeaths = [];
+		orphanObjectives = [];
+		orphanPlayerStatuses = [];
+		orphanStripWeapons = [];
+		orphanKills = [];
 	};
 
 	for (const event of sorted) {
 		if (event.type === MAP_START_EVENT_TYPE) {
 			// a new match intro abandons any match whose scoreboard was missed
 			finalize();
+			dropOrphans();
 			open = startMatch();
 			open.mapStart = event;
 			vote(open.stageVotes, (event.data as MapStartData).stage);
-			orphanDeaths = [];
-			orphanObjectives = [];
-			orphanPlayerStatuses = [];
-			orphanStripWeapons = [];
-			orphanKills = [];
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 			const revisited =
 				revisitedMatch(built, event) ??
@@ -301,8 +328,12 @@ export function buildScannerMatches<E extends DetectedEvent>(
 		}
 	}
 	finalize();
+	dropOrphans();
 
-	return built;
+	if (unbackedBuilt.length === 0) return built;
+	return [...built, ...unbackedBuilt].sort(
+		(a, b) => a.sources[0]!.t - b.sources[0]!.t,
+	);
 }
 
 /**
@@ -522,6 +553,10 @@ interface OpenMatch<E extends DetectedEvent> {
 	lastMinimapT: number | null;
 }
 
+function isBacked<E extends DetectedEvent>(open: OpenMatch<E>): boolean {
+	return open.scoreboard !== null || open.minimaps.length > 0;
+}
+
 function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 	return {
 		mapStart: null,
@@ -703,7 +738,9 @@ function toBuiltMatch<E extends DetectedEvent>(
 		pov,
 	};
 
-	return { match, sources };
+	return isBacked(open)
+		? { match, sources }
+		: { match, sources, unbacked: true };
 }
 
 function floorOrNull(t: number | undefined): number | null {
@@ -872,35 +909,28 @@ function buildProgress(
 /**
  * One kill per feed row entering the feed. Rows expire oldest-first and a
  * single read can miss an inner row (a blurred pill ends the bottom-up scan
- * early), so each read is matched newest-first as a subsequence of the rows
- * still remembered (first seen within KILL_ROW_LIFETIME_SECONDS): a row
- * matching a remembered one is carried, anything else is a new kill.
- * Remembered rows a read fails to show stay remembered until they age out,
- * so the recovered read after a truncated one re-counts nothing.
+ * early), so each read is aligned as a subsequence of the rows still
+ * remembered (first seen within KILL_ROW_LIFETIME_SECONDS): a row matching a
+ * remembered one is carried, anything else is a new kill. An unreadable
+ * (null) row matches any name, but the alignment carries as many named
+ * matches as it can, so a row sliding in unread never takes a named row's
+ * place; a carried unread row takes the name it is later read with, kill
+ * included. Remembered rows a read fails to show stay remembered until they
+ * age out, so the recovered read after a truncated one re-counts nothing.
  */
 function deriveKills(
 	reads: readonly { t: number; data: KillData }[],
 ): ScannerMatchKill[] {
 	const kills: ScannerMatchKill[] = [];
 	// rows believed on screen, oldest first, by the read that first saw them
-	let known: { name: string | null; t: number }[] = [];
+	let known: { name: string | null; t: number; kill: ScannerMatchKill }[] = [];
 	for (const read of reads) {
 		known = known.filter((row) => read.t - row.t <= KILL_ROW_LIFETIME_SECONDS);
 		const names = read.data.names.toReversed();
-
-		// newest-first greedy subsequence match: a row matches the newest
-		// remembered row not yet claimed, skipping remembered rows this read
-		// failed to show
-		const matched = new Map<number, number>();
-		let j = known.length - 1;
-		for (let i = names.length - 1; i >= 0; i--) {
-			let k = j;
-			while (k >= 0 && !sameRowName(names[i]!, known[k]!.name)) k--;
-			if (k >= 0) {
-				matched.set(k, i);
-				j = k - 1;
-			}
-		}
+		const matched = alignKillRows(
+			known.map((row) => row.name),
+			names,
+		);
 
 		// rebuild the remembered stack in order: unmatched remembered rows stay
 		// (hidden or expiring), unmatched read rows are new kills
@@ -910,8 +940,9 @@ function deriveKills(
 		const placeNewUpTo = (end: number): void => {
 			for (; placed < end; placed++) {
 				const name = names[placed]!;
-				kills.push({ t, time: read.data.time, name });
-				next.push({ name, t: read.t });
+				const kill = { t, time: read.data.time, name };
+				kills.push(kill);
+				next.push({ name, t: read.t, kill });
 			}
 		};
 		for (const [k, row] of known.entries()) {
@@ -921,7 +952,13 @@ function deriveKills(
 				continue;
 			}
 			placeNewUpTo(i);
-			next.push(row);
+			const name = names[i]!;
+			if (row.name === null && name !== null) {
+				row.kill.name = name;
+				next.push({ ...row, name });
+			} else {
+				next.push(row);
+			}
 			placed = i + 1;
 		}
 		placeNewUpTo(names.length);
@@ -932,8 +969,56 @@ function deriveKills(
 	return kills.toSorted((a, b) => a.t - b.t);
 }
 
-function sameRowName(a: string | null, b: string | null): boolean {
-	if (a === null || b === null) return true;
+/**
+ * The order-preserving pairing of remembered rows with read rows (both oldest
+ * first) that carries the most rows, named matches outweighing two unread
+ * ones; ties go to the newest remembered rows, which expire last. Maps
+ * remembered index → read index.
+ */
+function alignKillRows(
+	known: readonly (string | null)[],
+	read: readonly (string | null)[],
+): Map<number, number> {
+	const weightOf = (knownIndex: number, readIndex: number): number => {
+		const a = known[knownIndex]!;
+		const b = read[readIndex]!;
+		if (a === null || b === null) return 1;
+		return sameRowName(a, b) ? 3 : 0;
+	};
+	// best[k][i]: the heaviest alignment of known[0..k) with read[0..i)
+	const best = Array.from({ length: known.length + 1 }, () =>
+		new Array<number>(read.length + 1).fill(0),
+	);
+	for (let k = 1; k <= known.length; k++) {
+		for (let i = 1; i <= read.length; i++) {
+			const weight = weightOf(k - 1, i - 1);
+			best[k]![i] = Math.max(
+				best[k - 1]![i]!,
+				best[k]![i - 1]!,
+				weight > 0 ? best[k - 1]![i - 1]! + weight : 0,
+			);
+		}
+	}
+
+	const matched = new Map<number, number>();
+	let k = known.length;
+	let i = read.length;
+	while (k > 0 && i > 0) {
+		const weight = weightOf(k - 1, i - 1);
+		if (weight > 0 && best[k]![i] === best[k - 1]![i - 1]! + weight) {
+			matched.set(k - 1, i - 1);
+			k--;
+			i--;
+		} else if (best[k]![i] === best[k - 1]![i]) {
+			k--;
+		} else {
+			i--;
+		}
+	}
+	return matched;
+}
+
+function sameRowName(a: string, b: string): boolean {
 	const ka = matchKey(a);
 	const kb = matchKey(b);
 	const similarity =

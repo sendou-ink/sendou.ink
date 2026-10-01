@@ -45,10 +45,12 @@ export function supportsRingBuffer(): boolean {
 
 export class ClipRingBuffer {
 	readonly #seconds: number;
+	readonly #onFailure: (message: string) => void;
 	#worker: Worker | null = null;
+	#started = false;
+	#failure: string | null = null;
 	#audioSignalAt: number | null = null;
 	#audioFailure: string | null = null;
-	#failure: string | null = null;
 	#nextCutId = 0;
 	readonly #cuts = new Map<
 		number,
@@ -58,8 +60,14 @@ export class ClipRingBuffer {
 		}
 	>();
 
-	constructor(seconds: number) {
+	/**
+	 * `onFailure`: the encoder gave up after starting (with no software to
+	 * fall back on) or the worker died. Cuts go on serving the footage
+	 * already in the ring.
+	 */
+	constructor(seconds: number, onFailure: (message: string) => void) {
 		this.#seconds = seconds;
+		this.#onFailure = onFailure;
 	}
 
 	/**
@@ -74,6 +82,11 @@ export class ClipRingBuffer {
 	/** Why the audio encoder gave up, once it has; clips from then on are silent. */
 	get audioFailure(): string | null {
 		return this.#audioFailure;
+	}
+
+	/** Why the encoder gave up after starting, once it has; no new footage from then on. */
+	get failure(): string | null {
+		return this.#failure;
 	}
 
 	/** Starts encoding both tracks; resolves once the worker's video encoder is configured. */
@@ -101,14 +114,12 @@ export class ClipRingBuffer {
 		const started = new Promise<void>((resolve, reject) => {
 			worker.onmessage = (e: MessageEvent<RingWorkerResponse>) => {
 				const msg = e.data;
-				if (msg.kind === "started") resolve();
-				else if (msg.kind === "error") {
-					reject(new Error(msg.message));
-					this.#failure = msg.message;
-					for (const cut of this.#cuts.values()) {
-						cut.reject(new Error(msg.message));
-					}
-					this.#cuts.clear();
+				if (msg.kind === "started") {
+					this.#started = true;
+					resolve();
+				} else if (msg.kind === "error") {
+					if (this.#started) this.#fail(msg.message);
+					else reject(new Error(msg.message));
 				} else if (msg.kind === "cut") {
 					this.#cuts.get(msg.id)?.resolve(msg.clip);
 					this.#cuts.delete(msg.id);
@@ -122,7 +133,13 @@ export class ClipRingBuffer {
 				}
 			};
 			worker.onerror = (event) => {
-				reject(new Error(event.message || "clip worker failed"));
+				const message = event.message || "clip worker failed";
+				if (!this.#started) {
+					reject(new Error(message));
+					return;
+				}
+				this.stop();
+				this.#fail(message);
 			};
 		});
 		this.#send(
@@ -150,7 +167,6 @@ export class ClipRingBuffer {
 		end: number,
 		audioOffset = 0,
 	): Promise<RingBufferClip | null> {
-		if (this.#failure) return Promise.reject(new Error(this.#failure));
 		if (!this.#worker) return Promise.resolve(null);
 		const id = this.#nextCutId++;
 		return new Promise((resolve, reject) => {
@@ -166,6 +182,11 @@ export class ClipRingBuffer {
 		for (const cut of this.#cuts.values()) cut.resolve(null);
 		this.#cuts.clear();
 		this.#audioSignalAt = null;
+	}
+
+	#fail(message: string): void {
+		this.#failure = message;
+		this.#onFailure(message);
 	}
 
 	#send(msg: RingWorkerRequest, transfer: Transferable[] = []): void {

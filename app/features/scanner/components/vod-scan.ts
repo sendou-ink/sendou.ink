@@ -509,7 +509,7 @@ async function cutClips(
 	events: ScanEvent[],
 	update: (patch: Partial<VodScanSnapshot>) => void,
 ): Promise<void> {
-	const windows = buildScannerMatches(events)
+	const windows = buildScannerMatches(events, undefined, { unbacked: true })
 		.flatMap((built) => {
 			const deaths = built.sources
 				.filter((event) => event.type === DEATH_EVENT_TYPE)
@@ -534,15 +534,18 @@ async function cutClips(
 	}
 	update({ clipsWork: { state: "cutting", done: 0, total: windows.length } });
 	let saved = 0;
-	try {
-		for (const { window, built } of windows) {
+	let skipped = 0;
+	let error: string | null = null;
+	// best first: one clip failing (or not fitting) still leaves room to try the rest
+	for (const [index, { window, built }] of windows.entries()) {
+		try {
 			const clip = await extractVodClip(file, {
 				start: window.start,
 				end: window.end,
 				maxSeconds: MAX_CLIP_SECONDS,
 			});
 			const thumbnail = (await vodFrameThumbnail(file, window.t)) ?? undefined;
-			await saveClip(
+			const stored = await saveClip(
 				{
 					createdAt: Date.now(),
 					bucket: "vod",
@@ -560,18 +563,30 @@ async function cutClips(
 				},
 				clip.blob,
 			);
-			saved++;
-			update({
-				clipsWork: { state: "cutting", done: saved, total: windows.length },
-			});
-			await refreshClips();
+			if (stored) {
+				saved++;
+				await refreshClips();
+			} else {
+				skipped++;
+			}
+		} catch (clipError) {
+			error ??= describeError(clipError);
 		}
-		update({ clipsWork: { state: "done", saved, error: null } });
-	} catch (error) {
 		update({
-			clipsWork: { state: "done", saved, error: describeError(error) },
+			clipsWork: { state: "cutting", done: index + 1, total: windows.length },
 		});
 	}
+	update({
+		clipsWork: {
+			state: "done",
+			saved,
+			error:
+				error ??
+				(skipped > 0
+					? `${skipped} ${skipped === 1 ? "clip" : "clips"} left out, storage is full`
+					: null),
+		},
+	});
 }
 
 function toScanEvent(event: StoredVodEvent): ScanEvent {

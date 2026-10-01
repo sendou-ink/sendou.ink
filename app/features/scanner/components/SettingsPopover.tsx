@@ -17,7 +17,7 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import { SCANNER_PAGE } from "~/utils/urls";
 import { MAX_SESSIONS } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
-import { MAX_HISTORY_CLIPS } from "../store/clips";
+import { LIVE_CLIPS_MAX_BYTES, MAX_HISTORY_CLIPS } from "../store/clips";
 import styles from "./SettingsPopover.module.css";
 import {
 	AUDIO_OFFSET_LIMIT_MS,
@@ -138,7 +138,9 @@ export function SettingsPopover({
 				<p className={styles.note}>
 					Clip history keeps the {MAX_HISTORY_CLIPS} best; the lowest is
 					replaced when full. Download what you want to keep. This session's
-					clips are safe until you stop.
+					clips are kept until you stop, unless clips outgrow{" "}
+					{LIVE_CLIPS_MAX_BYTES / 1_000_000_000} GB: the lowest-scoring go
+					first.
 					<br />
 					Sessions: last 30 days or {MAX_SESSIONS} sessions.
 				</p>

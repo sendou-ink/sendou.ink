@@ -96,7 +96,11 @@ is the pure, swappable scorer: only the POV player's own kills feed it
 no POV death between them and no pause over `STREAK_MAX_GAP_S`, cut where the
 clip would outgrow `MAX_CLIP_SECONDS`; `MIN_KILLS` (4) makes it a window,
 scored `kills² + kills / span`. Both controllers run the same
-`scoreWindows(match, deaths)` → cut → `store/clips.ts` path:
+`scoreWindows(match, deaths)` → cut → `store/clips.ts` path, over the
+session's matches plus the stretches no scoreboard or minimap backs
+(`buildScannerMatches(…, { unbacked: true })`, `LiveSession.clipMatches`):
+a streak must not wait for a results screen that may never be read, and live
+the ring would have dropped it by then:
 
 - One capture per browser profile: `startCapture` holds a Web Lock
   (`CAPTURE_LOCK`) for its lifetime, so a second tab gets an error instead
@@ -106,8 +110,9 @@ scored `kills² + kills / span`. Both controllers run the same
   stream's tracks become `MediaStreamTrackProcessor` streams, transferred to
   a worker so a busy page never costs the footage a frame (on the main
   thread ~12% of a 60 fps track was lost to the one-frame processor
-  buffer). There the video runs through a `VideoEncoder` (hardware H.264,
-  ~16 Mbps, keyframe every 2 s) into a ring of GOPs holding the last
+  buffer). There the video runs through a `VideoEncoder` (H.264, keyframe
+  every 2 s, bitrate scaled by pixel rate: ~10 Mbps at 1080p60) into a ring
+  of GOPs holding the last
   `RING_BUFFER_SECONDS`; the audio through an `AudioEncoder` (AAC, else
   Opus) into the same ring. `openCapture` asks for 60 fps explicitly, as
   Chromium's default of 30 would halve a capture card. Packets carry the
@@ -143,11 +148,22 @@ scored `kills² + kills / span`. Both controllers run the same
   the window start are copied into a fresh MP4 (video + audio, no
   re-encode, so a minute of 1080p takes well under a second). mediabunny's
   `Conversion` with `trim` always transcodes; keep using the packet copy.
+- **Encoder**: hardware first, then software — Chromium's
+  `prefer-hardware` never falls back by itself (Linux, VMs, older GPUs). A
+  hardware encoder can also fail only once frames flow (NVENC sessions taken
+  by OBS): the worker swaps in software and restarts the ring. If nothing is
+  left the status line shows clips as failed; the ring still cuts what it
+  holds.
 - **Buckets** (`store/clips.ts`): `session` holds the running session's
-  clips (nothing evicted while you play); Stop rolls them into `history`,
+  clips (kept until Stop, budget permitting); Stop rolls them into `history`,
   where `MAX_HISTORY_CLIPS` (20) applies by score — download to keep. A
   file's clips (`vod`) live for one visit and are purged on the next page
-  load; the file is on disk. Clip records carry the real `start`/`end`
+  load; the file is on disk. Bytes are capped too: the live clips (session
+  and history together) stay under `LIVE_CLIPS_MAX_BYTES` (4 GB) and each
+  file's clips under `VOD_CLIPS_MAX_BYTES` (2 GB, they keep the source
+  bitrate), lowest score dropped first, and a clip that
+  would eat into the last 250 MB of quota (the events share it) is not
+  saved — on a file the scan carries on with the next window. Clip records carry the real `start`/`end`
   seconds (a packet-copied clip starts at a keyframe), and a card's deaths
   and kills get a ▶ when a clip covers their `t`.
 

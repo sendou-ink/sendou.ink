@@ -1,15 +1,27 @@
 /**
  * Clip persistence: records in `clips` (listing never touches video), MP4s
  * in `clip-blobs` under the record id. Three buckets: `session` holds the
- * running live session's clips (nothing evicted while you play), `history`
- * keeps the `MAX_HISTORY_CLIPS` best across sessions (lowest score replaced
- * when full — download to keep), and `vod` holds a scanned file's clips for
- * the visit that cut them only (the file is on disk; see visit.ts).
+ * running live session's clips (kept until Stop), `history` keeps the
+ * `MAX_HISTORY_CLIPS` best across sessions (lowest score replaced when full —
+ * download to keep), and `vod` holds a scanned file's clips for the visit
+ * that cut them only (the file is on disk; see visit.ts). Bytes are budgeted
+ * too: the live clips (session and history together) stay under
+ * `LIVE_CLIPS_MAX_BYTES` and each file's clips under `VOD_CLIPS_MAX_BYTES`,
+ * the lowest-scoring going first, and no
+ * clip is saved into the quota the events need.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { CLIP_BLOBS_STORE, CLIPS_STORE, readwrite, tx } from "./db";
 
 export const MAX_HISTORY_CLIPS = 20;
+/** ~90 typical session clips on top of a full history */
+export const LIVE_CLIPS_MAX_BYTES = 4_000_000_000;
+/** a file's clips keep its bitrate (~5 MB/s at 40 Mbps) but only live for one visit */
+const VOD_CLIPS_MAX_BYTES = 2_000_000_000;
+/** quota a clip save leaves free, so the games' events keep saving */
+const STORAGE_RESERVE_BYTES = 250_000_000;
+/** clips saved before their size was kept were all encoded at 16 Mbps */
+const LEGACY_BYTES_PER_SECOND = 2_000_000;
 
 export type ClipBucket = "session" | "history" | "vod";
 
@@ -38,25 +50,51 @@ export interface ScannerClip {
 	hasAudio: boolean;
 	/** small JPEG data URL */
 	thumbnail?: string;
+	/** the MP4's size; absent on clips saved before it was kept */
+	bytes?: number;
 }
 
-export type ClipToSave = Omit<ScannerClip, "id">;
+export type ClipToSave = Omit<ScannerClip, "id" | "bytes">;
 
+/**
+ * Saves the clip, making room in its byte budget by dropping its group's
+ * lowest-scoring clips. Resolves to null, saving nothing, when the clip
+ * itself does not make the cut or would eat into the quota the events need.
+ */
 export async function saveClip(
 	clip: ClipToSave,
 	blob: Blob,
-): Promise<ScannerClip> {
+	{
+		maxBytes = clip.source.kind === "live"
+			? LIVE_CLIPS_MAX_BYTES
+			: VOD_CLIPS_MAX_BYTES,
+	} = {},
+): Promise<ScannerClip | null> {
+	if (!(await hasRoomFor(blob.size))) return null;
 	let saved: ScannerClip | null = null;
 	await readwrite([CLIPS_STORE, CLIP_BLOBS_STORE], (transaction) => {
-		const add = transaction
-			.objectStore(CLIPS_STORE)
-			.add(clip) as IDBRequest<number>;
-		add.onsuccess = () => {
-			saved = { ...clip, id: add.result };
-			transaction.objectStore(CLIP_BLOBS_STORE).put(blob, add.result);
+		const clips = transaction.objectStore(CLIPS_STORE);
+		const blobs = transaction.objectStore(CLIP_BLOBS_STORE);
+		const getAll = clips.getAll() as IDBRequest<ScannerClip[]>;
+		getAll.onsuccess = () => {
+			const incoming = { ...clip, bytes: blob.size };
+			const group = getAll.result.filter((other) =>
+				sameBudget(other.source, clip.source),
+			);
+			const dropped = overBudget([...group, incoming], maxBytes);
+			if (dropped.includes(incoming)) return;
+			for (const other of dropped as ScannerClip[]) {
+				clips.delete(other.id);
+				blobs.delete(other.id);
+			}
+			const add = clips.add(incoming) as IDBRequest<number>;
+			add.onsuccess = () => {
+				saved = { ...incoming, id: add.result };
+				blobs.put(blob, add.result);
+			};
 		};
 	});
-	return saved!;
+	return saved;
 }
 
 /** Every clip, best first (score, then newest). */
@@ -70,7 +108,10 @@ export async function listClips(): Promise<ScannerClip[]> {
 }
 
 /** Sort order of every clip list: best first, newest breaks ties. */
-function byScore(a: ScannerClip, b: ScannerClip): number {
+function byScore(
+	a: Pick<ScannerClip, "score" | "createdAt">,
+	b: Pick<ScannerClip, "score" | "createdAt">,
+): number {
 	return b.score - a.score || b.createdAt - a.createdAt;
 }
 
@@ -138,6 +179,36 @@ export function deleteVodClips(
 			cursor.continue();
 		};
 	});
+}
+
+/** Live clips share one budget, a file's clips (per visit) another. */
+function sameBudget(a: ClipSource, b: ClipSource): boolean {
+	if (a.kind === "live" || b.kind === "live") return a.kind === b.kind;
+	return a.name === b.name && a.visit === b.visit;
+}
+
+/** The clips that do not fit `maxBytes` when kept best first. */
+function overBudget<T extends Omit<ScannerClip, "id">>(
+	clips: readonly T[],
+	maxBytes: number,
+): T[] {
+	let total = 0;
+	return clips.toSorted(byScore).filter((clip) => {
+		const bytes =
+			clip.bytes ?? (clip.end - clip.start) * LEGACY_BYTES_PER_SECOND;
+		if (total + bytes > maxBytes) return true;
+		total += bytes;
+		return false;
+	});
+}
+
+/** Whether `bytes` more still leaves the reserve free; true where the browser cannot tell. */
+async function hasRoomFor(bytes: number): Promise<boolean> {
+	const estimate = await navigator.storage?.estimate?.().catch(() => undefined);
+	if (estimate?.quota === undefined || estimate.usage === undefined) {
+		return true;
+	}
+	return estimate.quota - estimate.usage - bytes >= STORAGE_RESERVE_BYTES;
 }
 
 /** Bytes the origin uses, per the browser's estimate; null where unsupported. */
