@@ -27,6 +27,7 @@ import {
 	buildScannerMatches,
 	ingestSkipReasons,
 	invalidObjectiveEvents,
+	type MatchBuildCache,
 } from "../../core/match-builder";
 import type { ScannerLobby } from "../../scanner-types";
 import { test } from "../node-test-compat";
@@ -919,6 +920,50 @@ test("a battle log view with the winner panel misplaced still joins its match", 
 		battleLogScoreboard(900, { paints: swapped }),
 	]);
 	assert.equal(built.length, 1);
+});
+
+test("with a cache, a rebuild reuses each match whose events are unchanged", () => {
+	const cache: MatchBuildCache<DetectedEvent> = new WeakMap();
+	const first = [mapStart(0), death(100, "l1"), scoreboard(300)];
+	const second = [mapStart(400), death(450, "l2")];
+	const before = buildScannerMatches(
+		[...first, ...second, minimap(460)],
+		cache,
+	);
+	const after = buildScannerMatches(
+		[...first, ...second, minimap(460), scoreboard(700)],
+		cache,
+	);
+	assert.equal(after[0], before[0]);
+	assert.notEqual(after[1], before[1]);
+	assert.deepEqual(
+		after,
+		buildScannerMatches([...first, ...second, minimap(460), scoreboard(700)]),
+	);
+});
+
+test("with a cache, a battle log view joining a match leaves the cached match as it was", () => {
+	const cache: MatchBuildCache<DetectedEvent> = new WeakMap();
+	const game = playedGame();
+	const [before] = buildScannerMatches(game, cache);
+	const view = battleLogScoreboard(900, { paints: GAME_PAINTS });
+	const [after] = buildScannerMatches([...game, view], cache);
+	assert.equal(before!.sources.length, 3);
+	assert.equal(after!.sources.at(-1), view);
+	assert.equal(
+		buildScannerMatches([...game, view], cache)[0]!.sources.length,
+		4,
+	);
+});
+
+test("with a cache, a personal results screen leaves the cached match as it was", () => {
+	const cache: MatchBuildCache<DetectedEvent> = new WeakMap();
+	const game = [mapStart(0), scoreboard(300, { povIndex: 5 })];
+	const [before] = buildScannerMatches(game, cache);
+	const [after] = buildScannerMatches([...game, ownResults(320)], cache);
+	assert.equal(before!.match.teams[1].players[1]!.abilities, undefined);
+	assert.deepEqual(after!.match.teams[1].players[1]!.abilities, OWN_BUILD);
+	assert.equal(after!.match.teams[0], before!.match.teams[0]);
 });
 
 test("a battle log view of another game forms its own match", () => {

@@ -51,9 +51,11 @@ opens it, for anyone, through the same handoff Inspect uses.
   whole sessions older than 30 days, beyond the newest 20 or past the
   `MAX_STORED_EVENTS` budget (~140 SZ games; the newest session is never
   cut) go — never part of one, so a kept session's cards always expand to
-  their full timeline and scoreboards. The feed and live sends re-read only
-  the newest session (`refreshFeed`/`sendLive` take a session key to read
-  from), so the store's size costs nothing per saved event.
+  their full timeline and scoreboards. A saved event re-reads only what was
+  saved since the last read (plus the events a send status write named),
+  and a match whose events are unchanged objects is reused rather than
+  rebuilt (`MatchBuildCache`); live sends take their matches from the feed.
+  So neither the store's size nor a long session costs much per saved event.
 - **Compaction** (`events-feed.ts` on refresh, `store/compacted-matches.ts`):
   72 h after a session ends its games are frozen as built, one record each,
   keeping every source event except the per-second Objective/PlayerStatus/

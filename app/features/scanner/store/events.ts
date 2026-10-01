@@ -215,6 +215,26 @@ export function listEvents(since = 0): Promise<StoredEvent[]> {
 	);
 }
 
+/** The stored events among `ids`, read over their id range; ids no longer stored are left out. */
+export async function getEvents(
+	ids: readonly number[],
+): Promise<StoredEvent[]> {
+	if (ids.length === 0) return [];
+	const wanted = new Set(ids);
+	const inRange = await tx(
+		EVENTS_STORE,
+		"readonly",
+		(store) =>
+			store.getAll(
+				IDBKeyRange.bound(
+					ids.reduce((a, b) => Math.min(a, b)),
+					ids.reduce((a, b) => Math.max(a, b)),
+				),
+			) as IDBRequest<StoredEvent[]>,
+	);
+	return inRange.filter((event) => wanted.has(event.id!));
+}
+
 /** The event's full-res analyzed PNG, or undefined when none was stored. */
 export function loadEventFrame(id: number): Promise<Blob | undefined> {
 	return tx(

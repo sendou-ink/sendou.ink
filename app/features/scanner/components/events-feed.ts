@@ -3,11 +3,15 @@
  * sessions (core/sessions.ts) with each session's matches built once per
  * refresh rather than per render. Every saved event asks for a refresh, ~2-3
  * a second during a match; requests landing while one runs coalesce into a
- * single trailing pass. A refresh re-reads only the newest session unless
- * told otherwise: the store holds weeks of sessions, and only a send status
- * write or a delete changes an older one. Refreshes also compact the sessions
- * that ended `SESSION_COMPACT_AFTER_MS` ago (store/compacted-matches.ts) and
- * apply retention to the compacted ones.
+ * single trailing pass. A refresh re-reads only the events saved since the
+ * last one unless told otherwise, plus the events a send status write named
+ * (`refreshFeedEvents`): a session runs to tens of thousands of events, so
+ * the cost of a pass must not grow with it. For the same reason the events
+ * read earlier keep their objects, and a match whose events are all the same
+ * objects is not built again (`MatchBuildCache`) — it keeps its identity, so
+ * its card skips rendering too. Refreshes also compact the sessions that
+ * ended `SESSION_COMPACT_AFTER_MS` ago (store/compacted-matches.ts) and apply
+ * retention to the compacted ones.
  */
 import { useSyncExternalStore } from "react";
 import * as R from "remeda";
@@ -15,6 +19,7 @@ import {
 	type BuiltMatch,
 	buildScannerMatches,
 	invalidObjectiveEvents,
+	type MatchBuildCache,
 } from "../core/match-builder";
 import {
 	compactSources,
@@ -33,7 +38,12 @@ import {
 	deleteCompactedSessions,
 	listCompactedMatches,
 } from "../store/compacted-matches";
-import { deleteEvents, listEvents, type StoredEvent } from "../store/events";
+import {
+	deleteEvents,
+	getEvents,
+	listEvents,
+	type StoredEvent,
+} from "../store/events";
 
 export interface LiveSession {
 	/** the first event's detection time — the URL id */
@@ -59,15 +69,23 @@ export interface FeedSnapshot {
 
 const EMPTY: FeedSnapshot = { loaded: false, sessions: [] };
 
+/** How far behind the last read's start the next one reaches: a save stamped just before a read can commit just after it. */
+const READ_OVERLAP_MS = 5_000;
+
 let snapshot: FeedSnapshot = EMPTY;
 const listeners = new Set<() => void>();
 let running = false;
 /** the earliest `since` requested while a refresh was running */
 let pendingSince: number | null = null;
+/** events to re-read wherever they sit, rewritten since they were read */
+const pendingIds = new Set<number>();
+/** when the read that last covered every event up to then started */
+let readThrough = 0;
 /** callers waiting on a refresh that has not been read yet */
 let waiters: (() => void)[] = [];
 /** an older session's events don't change, so its build is kept */
 const buildCache = new Map<number, { signature: string; built: LiveSession }>();
+const matchCache: MatchBuildCache<StoredEvent> = new WeakMap();
 /** the raw events the snapshot's not yet compacted sessions were built from */
 let rawEvents: StoredEvent[] = [];
 /** the compacted sessions, by key */
@@ -75,34 +93,44 @@ const compactedSessions = new Map<number, LiveSession>();
 
 /**
  * Re-reads the events detected at or after `since` (a session's key, 0 for
- * everything) and keeps the older sessions as they are. Defaults to the newest
- * session, the one a capture adds to — everything before the feed first loads.
+ * everything) and keeps the older ones as they are. Defaults to the events
+ * saved since the last read — everything before the feed first loads.
  * Resolves once a read covering the request has landed (or failed).
  */
-export function refreshFeed(since = newestSessionKey()): Promise<void> {
+export function refreshFeed(
+	since = readThrough - READ_OVERLAP_MS,
+): Promise<void> {
 	pendingSince = Math.min(pendingSince ?? since, since);
 	const landed = new Promise<void>((resolve) => waiters.push(resolve));
 	if (running) return landed;
 	running = true;
 	void (async () => {
 		let covered: (() => void)[] = [];
+		let ids: number[] = [];
 		try {
 			while (pendingSince !== null) {
 				const from = pendingSince;
 				pendingSince = null;
+				ids = [...pendingIds];
+				pendingIds.clear();
 				covered = waiters;
 				waiters = [];
-				const [loaded, loadedCompacted] = await Promise.all([
+				const startedAt = Date.now();
+				const [loaded, reread, loadedCompacted] = await Promise.all([
 					listEvents(from),
+					getEvents(ids),
 					listCompactedMatches(from),
 				]);
-				const loadedIds = new Set(loaded.map((event) => event.id));
+				if (from <= readThrough) readThrough = startedAt;
+				const replaced = new Set([...ids, ...loaded.map((event) => event.id!)]);
 				rawEvents = [
 					...rawEvents.filter(
-						(event) => event.detectedAt < from && !loadedIds.has(event.id),
+						(event) => event.detectedAt < from && !replaced.has(event.id!),
 					),
+					...reread.filter((event) => event.detectedAt < from),
 					...loaded,
 				];
+				ids = [];
 				for (const key of compactedSessions.keys()) {
 					if (key >= from) compactedSessions.delete(key);
 				}
@@ -114,6 +142,7 @@ export function refreshFeed(since = newestSessionKey()): Promise<void> {
 			}
 		} catch {
 			pendingSince = null;
+			for (const id of ids) pendingIds.add(id);
 			snapshot = { loaded: true, sessions: snapshot.sessions };
 			for (const listener of listeners) listener();
 		} finally {
@@ -123,6 +152,15 @@ export function refreshFeed(since = newestSessionKey()): Promise<void> {
 		}
 	})();
 	return landed;
+}
+
+/**
+ * Re-reads the given events wherever they sit (along with what was saved
+ * since the last read), after a write changed them in the store.
+ */
+export function refreshFeedEvents(ids: readonly number[]): Promise<void> {
+	for (const id of ids) pendingIds.add(id);
+	return refreshFeed();
 }
 
 /**
@@ -254,10 +292,11 @@ async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 			sessions.push(cached.built);
 			continue;
 		}
-		const sorted = sessionEvents.toSorted(
+		let kept = sessionEvents;
+		let sorted = kept.toSorted(
 			(a, b) => a.t - b.t || (a.id ?? 0) - (b.id ?? 0),
 		);
-		let built = buildScannerMatches(sorted);
+		let built = buildScannerMatches(sorted, matchCache);
 		// objective reads grouped into a match whose mode rules their overlay out
 		// slipped past the live block (e.g. the mode read arrived after them) —
 		// delete them
@@ -269,7 +308,10 @@ async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 					.filter((id): id is number => id !== undefined),
 			);
 			const invalidSet = new Set(invalid);
-			built = buildScannerMatches(sorted.filter((e) => !invalidSet.has(e)));
+			rawEvents = rawEvents.filter((event) => !invalidSet.has(event));
+			kept = kept.filter((event) => !invalidSet.has(event));
+			sorted = sorted.filter((event) => !invalidSet.has(event));
+			built = buildScannerMatches(sorted, matchCache);
 		}
 		const session: LiveSession = {
 			key,
@@ -281,7 +323,7 @@ async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 			endedAt: sessionEvents.at(-1)!.detectedAt,
 			originT: sorted[0]!.t,
 		};
-		buildCache.set(key, { signature, built: session });
+		buildCache.set(key, { signature: signatureOf(kept), built: session });
 		sessions.push(session);
 	}
 	for (const key of buildCache.keys()) {

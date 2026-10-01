@@ -4,15 +4,15 @@
  * never overlap (a send requested mid-flight runs right after), and one
  * place that knows whether uploading is on at all (the setting, and a login).
  */
-import { type BuiltMatch, buildScannerMatches } from "../core/match-builder";
+import type { BuiltMatch } from "../core/match-builder";
 import {
 	compactedBuilt,
 	listCompactedMatches,
 	updateCompactedMatchesSend,
 } from "../store/compacted-matches";
 import { COMPACTED_MATCHES_STORE, EVENTS_STORE } from "../store/db";
-import { listEvents, type SendStatus, updateEventsSend } from "../store/events";
-import { refreshFeed } from "./events-feed";
+import { type SendStatus, updateEventsSend } from "../store/events";
+import { getFeed, refreshFeed, refreshFeedEvents } from "./events-feed";
 import { type SendResult, sendMatches } from "./sendou-ingest";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
@@ -31,7 +31,8 @@ interface SendTarget {
 		matches: readonly BuiltMatch<ScanEvent>[],
 		send: SendStatus,
 	) => Promise<void>;
-	onStatus: (since: number) => void;
+	/** absent when `writeSend` already refreshes what it wrote */
+	onStatus?: (since: number) => void;
 }
 
 interface Sender {
@@ -57,9 +58,9 @@ export function uploadEnabled(): boolean {
 }
 
 /**
- * Sends the matches `include` selects among the live events detected since
- * `since` (the key of the session they belong to); the feed refreshes from
- * there as statuses change.
+ * Sends the matches `include` selects among the live sessions from the one
+ * keyed `since` on, as the feed has them built; the feed re-reads the events
+ * whose status changed.
  */
 export function sendLive(
 	include: MatchSelector,
@@ -69,13 +70,21 @@ export function sendLive(
 		EVENTS_STORE,
 		{ include, since },
 		{
-			load: async (from) => buildScannerMatches(await listEvents(from)),
-			writeSend: (matches, sendStatus) =>
-				updateEventsSend(
-					matches.flatMap((built) => built.sources.map((event) => event.id!)),
-					sendStatus,
-				),
-			onStatus: refreshFeed,
+			load: async (from) => {
+				await refreshFeed();
+				return getFeed()
+					.sessions.filter(
+						(session) => !session.compacted && session.key >= from,
+					)
+					.flatMap((session) => session.built);
+			},
+			writeSend: async (matches, sendStatus) => {
+				const ids = matches.flatMap((built) =>
+					built.sources.map((event) => event.id!),
+				);
+				await updateEventsSend(ids, sendStatus);
+				void refreshFeedEvents(ids);
+			},
 		},
 	);
 }
@@ -127,7 +136,7 @@ async function send(
 			const pass = await sendMatches({
 				matches: await target.load(since),
 				include: next.include,
-				onStatus: () => target.onStatus(since),
+				onStatus: () => target.onStatus?.(since),
 				writeSend: target.writeSend,
 			});
 			result.sentMatches += pass.sentMatches;
@@ -144,7 +153,7 @@ async function send(
 		}
 	} finally {
 		sender.sending = false;
-		target.onStatus(sentSince);
+		target.onStatus?.(sentSince);
 	}
 	return result;
 }

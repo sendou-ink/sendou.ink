@@ -172,6 +172,17 @@ export interface BuiltMatch<E extends DetectedEvent> {
 }
 
 /**
+ * Lets a caller rebuilding a growing timeline reuse each match whose input
+ * events are the very same objects as last time, so the per-match work runs
+ * only for matches that changed and unchanged ones keep their identity. Keyed
+ * by a match's first input event; events must not be mutated in place.
+ */
+export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
+	E,
+	{ inputs: readonly E[]; built: BuiltMatch<E> }
+>;
+
+/**
  * Splits a timeline into ScannerMatch objects, chronological. A personal
  * results screen identifies no match of its own but completes the POV
  * player's build on the match whose results screen it follows. A battle
@@ -182,6 +193,7 @@ export interface BuiltMatch<E extends DetectedEvent> {
  */
 export function buildScannerMatches<E extends DetectedEvent>(
 	events: readonly E[],
+	cache?: MatchBuildCache<E>,
 ): BuiltMatch<E>[] {
 	const sorted = events.toSorted((a, b) => a.t - b.t);
 	const built: BuiltMatch<E>[] = [];
@@ -197,7 +209,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	const finalize = (): void => {
 		if (!open) return;
 		if (open.scoreboard || open.minimaps.length > 0) {
-			built.push(toBuiltMatch(open));
+			built.push(cachedBuiltMatch(open, cache));
 		}
 		open = null;
 	};
@@ -221,7 +233,10 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			if (revisited) {
 				// the game already has its match, and the one being played (if
 				// any) keeps gathering events
-				revisited.sources.push(event);
+				built[built.indexOf(revisited)] = {
+					...revisited,
+					sources: [...revisited.sources, event],
+				};
 				continue;
 			}
 			if (!open) {
@@ -281,7 +296,8 @@ export function buildScannerMatches<E extends DetectedEvent>(
 		} else if (event.type === KILL_EVENT_TYPE) {
 			(open?.kills ?? orphanKills).push(event);
 		} else if (event.type === SCOREBOARD_OWN_EVENT_TYPE) {
-			attachOwnResults(built.at(-1), event);
+			const completed = withOwnResults(built.at(-1), event);
+			if (completed) built[built.length - 1] = completed;
 		}
 	}
 	finalize();
@@ -292,20 +308,33 @@ export function buildScannerMatches<E extends DetectedEvent>(
 /**
  * The personal results screen shows the POV player's full gear (mains and
  * subs), which no other screen reads whole: it completes that player's build
- * on the match whose scoreboard it follows.
+ * on the match whose scoreboard it follows. Returns that match completed, as
+ * a copy; undefined when the screen belongs to none.
  */
-function attachOwnResults<E extends DetectedEvent>(
+function withOwnResults<E extends DetectedEvent>(
 	last: BuiltMatch<E> | undefined,
 	event: E,
-): void {
-	if (!last?.match.pov || last.match.endsAt === null) return;
-	if (event.t - last.match.endsAt > OWN_RESULTS_WINDOW_SECONDS) return;
+): BuiltMatch<E> | undefined {
+	const pov = last?.match.pov;
+	if (!last || !pov || last.match.endsAt === null) return undefined;
+	if (event.t - last.match.endsAt > OWN_RESULTS_WINDOW_SECONDS)
+		return undefined;
 	const data = event.data as ScoreboardOwnData;
-	const player =
-		last.match.teams[last.match.pov.team].players[last.match.pov.index];
-	if (!player || data.abilities.length === 0) return;
-	player.abilities = data.abilities;
-	last.sources.push(event);
+	const team = last.match.teams[pov.team];
+	const player = team.players[pov.index];
+	if (!player || data.abilities.length === 0) return undefined;
+	const teams = [...last.match.teams] as ScannerMatch["teams"];
+	teams[pov.team] = {
+		...team,
+		players: team.players.with(pov.index, {
+			...player,
+			abilities: data.abilities,
+		}),
+	};
+	return {
+		match: { ...last.match, teams },
+		sources: [...last.sources, event],
+	};
 }
 
 /** Why a built match is held back from /ingest; absent = it is sent. */
@@ -543,10 +572,9 @@ function leadingStage(votes: Map<StageId, number>): StageId | null {
 	return winner;
 }
 
-function toBuiltMatch<E extends DetectedEvent>(
-	open: OpenMatch<E>,
-): BuiltMatch<E> {
-	const sources = [
+/** The open match's events in a fixed order; equal lists mean the same match. */
+function openMatchInputs<E extends DetectedEvent>(open: OpenMatch<E>): E[] {
+	return [
 		...(open.mapStart ? [open.mapStart] : []),
 		...open.minimaps,
 		...open.deaths,
@@ -555,7 +583,32 @@ function toBuiltMatch<E extends DetectedEvent>(
 		...open.stripWeapons,
 		...open.kills,
 		...(open.scoreboard ? [open.scoreboard] : []),
-	].sort((a, b) => a.t - b.t);
+	];
+}
+
+function cachedBuiltMatch<E extends DetectedEvent>(
+	open: OpenMatch<E>,
+	cache: MatchBuildCache<E> | undefined,
+): BuiltMatch<E> {
+	if (!cache) return toBuiltMatch(open);
+	const inputs = openMatchInputs(open);
+	const cached = cache.get(inputs[0]!);
+	if (
+		cached &&
+		cached.inputs.length === inputs.length &&
+		cached.inputs.every((event, index) => event === inputs[index])
+	) {
+		return cached.built;
+	}
+	const built = toBuiltMatch(open);
+	cache.set(inputs[0]!, { inputs, built });
+	return built;
+}
+
+function toBuiltMatch<E extends DetectedEvent>(
+	open: OpenMatch<E>,
+): BuiltMatch<E> {
+	const sources = openMatchInputs(open).sort((a, b) => a.t - b.t);
 
 	const board = open.scoreboard?.data as ScoreboardData | undefined;
 	const start = open.mapStart?.data as MapStartData | undefined;

@@ -274,18 +274,21 @@ export async function startCapture({
 			if (!supportsRingBuffer()) {
 				clips = "unsupported";
 			} else {
-				ring = new ClipRingBuffer(RING_BUFFER_SECONDS);
+				const startingRing = new ClipRingBuffer(RING_BUFFER_SECONDS);
+				ring = startingRing;
 				try {
-					await ring.start(stream);
+					await startingRing.start(stream);
 					clips = "on";
 				} catch {
-					ring.stop();
-					ring = null;
+					startingRing.stop();
+					if (ring === startingRing) ring = null;
 					clips = "failed";
 				}
 			}
 		}
 
+		// the worker died while the ring started and onWorkerError tore down what it could
+		if (client !== starting) throw new Error("The analyzer worker stopped");
 		if (videoTrack?.readyState === "ended") throw new Error(SOURCE_ENDED_ERROR);
 		stopSampler = startSampler(video, SAMPLE_FPS, (bitmap, t) => {
 			client?.analyze(bitmap, t);
@@ -321,7 +324,10 @@ export async function startCapture({
 	} catch (error) {
 		if (stream) stopTracks(stream);
 		release();
-		set({ ...IDLE, status: "error", error: describeError(error) });
+		// a worker failure already showed why, which is friendlier than how the start ended
+		if (snapshot.status !== "error") {
+			set({ ...IDLE, status: "error", error: describeError(error) });
+		}
 	}
 }
 
