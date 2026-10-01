@@ -5,6 +5,7 @@ import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Form, Link, type MetaFunction, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
+import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { OrganizationSearch } from "~/components/elements/OrganizationSearch";
@@ -35,6 +36,7 @@ import {
 } from "~/utils/urls";
 import { action } from "../actions/trophies.new.server";
 import { Trophy, TrophyContextProvider } from "../components/Trophy";
+import { TrophyBackfill } from "../components/TrophyBackfill";
 import {
 	analyzeTrophyModel,
 	mergePeakRenderStats,
@@ -54,7 +56,7 @@ import {
 } from "../trophies-constants";
 import {
 	createTrophyFormSchema,
-	pendingTrophyActionSchema,
+	trophyActionSchema,
 	updateTrophyFormSchema,
 } from "../trophies-schemas";
 import {
@@ -95,10 +97,13 @@ export default function NewTrophyPage() {
 				<SendouTabList>
 					<SendouTab id="upload">{t("trophies:new.tabs.upload")}</SendouTab>
 					<SendouTab
-						id="update"
-						isDisabled={data.editableTrophies.length === 0}
+						id="manage"
+						isDisabled={
+							data.editableTrophies.length === 0 &&
+							data.backfillTrophies.length === 0
+						}
 					>
-						{t("trophies:new.tabs.update")}
+						{t("trophies:new.tabs.manage")}
 					</SendouTab>
 					<SendouTab id="pending" number={data.pendingTrophies.length}>
 						{t("trophies:new.tabs.pending")}
@@ -118,16 +123,32 @@ export default function NewTrophyPage() {
 						</TrophyTermsGate>
 					)}
 				</SendouTabPanel>
-				<SendouTabPanel id="update">
-					{data.ownUnreviewedCount >= TROPHY_PENDING_PER_USER_LIMIT ? (
-						<Alert variation="WARNING">
-							{t("trophies:new.form.limitReached", {
-								limit: TROPHY_PENDING_PER_USER_LIMIT,
-							})}
-						</Alert>
-					) : (
-						<UpdateTrophyTab key={data.ownUnreviewedCount} />
-					)}
+				<SendouTabPanel id="manage">
+					<div className="stack lg">
+						{data.editableTrophies.length > 0 ? (
+							<div className="stack md">
+								<Divider smallText>{t("trophies:new.manage.update")}</Divider>
+								{data.ownUnreviewedCount >= TROPHY_PENDING_PER_USER_LIMIT ? (
+									<Alert variation="WARNING">
+										{t("trophies:new.form.limitReached", {
+											limit: TROPHY_PENDING_PER_USER_LIMIT,
+										})}
+									</Alert>
+								) : (
+									<UpdateTrophySection key={data.ownUnreviewedCount} />
+								)}
+							</div>
+						) : null}
+						{data.backfillTrophies.length > 0 ? (
+							<div className="stack md">
+								<Divider smallText>{t("trophies:new.manage.backfill")}</Divider>
+								<TrophyBackfill
+									trophies={data.backfillTrophies}
+									series={data.backfillSeries}
+								/>
+							</div>
+						) : null}
+					</div>
 				</SendouTabPanel>
 				<SendouTabPanel id="pending">
 					<TrophyList items={data.pendingTrophies} listKind="pending" />
@@ -244,7 +265,7 @@ function NewTrophyForm() {
 	);
 }
 
-function UpdateTrophyTab() {
+function UpdateTrophySection() {
 	const { t } = useTranslation(["trophies"]);
 	const data = useLoaderData<typeof loader>();
 	const [selectedId, setSelectedId] = React.useState<number | null>(null);
@@ -429,33 +450,42 @@ function ModelField({
 			{error ? <FormMessage type="error">{error}</FormMessage> : null}
 			{preview.compressedModel ? (
 				<TrophyContextProvider>
-					<div className={styles.previewThemes}>
-						{(["light", "dark"] as const).map((theme) => (
-							<div
-								key={theme}
-								className={styles.previewTheme}
-								data-theme={theme}
-							>
-								<span className={styles.previewThemeLabel}>
-									{t(`trophies:new.form.preview.${theme}`)}
-								</span>
-								<Trophy
-									model={preview.compressedModel}
-									preview
-									tier={1}
-									colorScheme={theme}
-								/>
-								<Trophy
-									model={preview.compressedModel}
-									onRenderStats={reportRenderStats}
-									colorScheme={theme}
-								/>
-							</div>
-						))}
-					</div>
+					<TrophyThemePreviews
+						model={preview.compressedModel}
+						onRenderStats={reportRenderStats}
+					/>
 				</TrophyContextProvider>
 			) : null}
 			<ModelSpecs analysis={preview.analysis} peakStats={peakStats} />
+		</div>
+	);
+}
+
+function TrophyThemePreviews({
+	model,
+	onRenderStats,
+}: {
+	model: string;
+	onRenderStats: (stats: RenderStats) => void;
+}) {
+	const { t } = useTranslation(["trophies"]);
+
+	return (
+		<div className={styles.previewThemes}>
+			{(["light", "dark"] as const).map((theme) => (
+				<div key={theme} className={styles.previewTheme} data-theme={theme}>
+					<span className={styles.previewThemeLabel}>
+						{t(`trophies:new.form.preview.${theme}`)}
+					</span>
+					<Trophy model={model} preview tier={1} colorScheme={theme} />
+					<Trophy
+						model={model}
+						onRenderStats={onRenderStats}
+						colorScheme={theme}
+						showAnimationProgress
+					/>
+				</div>
+			))}
 		</div>
 	);
 }
@@ -667,7 +697,7 @@ function TrophyListRow({
 	deferred: boolean;
 }) {
 	const { t } = useTranslation(["trophies", "common"]);
-	const { submit, state } = useActionSubmit(pendingTrophyActionSchema);
+	const { submit, state } = useActionSubmit(trophyActionSchema);
 
 	const isOwner = pending.submitterUserId === currentUserId;
 	const isDeclined = pending.declinedAt !== null;
@@ -713,7 +743,18 @@ function TrophyListRow({
 				onClose={() => setPreviewOpen(false)}
 				showCloseButton
 			>
-				<Trophy model={pending.model} onRenderStats={reportRenderStats} />
+				<TrophyThemePreviews
+					model={pending.model}
+					onRenderStats={reportRenderStats}
+				/>
+				{analysis ? (
+					<TrophyRenderStats
+						analysis={analysis}
+						drawCalls={drawCalls}
+						polyCount={polyCount}
+						className="mt-4"
+					/>
+				) : null}
 			</SendouDialog>
 			<div className={styles.pendingMain}>
 				<div className={styles.pendingHeader}>
@@ -778,48 +819,11 @@ function TrophyListRow({
 					</span>
 				</div>
 				{analysis ? (
-					<div className={styles.pendingSpecs}>
-						<span
-							className={clsx({
-								[styles.pendingSpecsWarn]:
-									drawCalls > TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
-							})}
-						>
-							{t("trophies:new.specs.stats.drawCalls", {
-								value: drawCalls,
-							})}
-						</span>
-						<span
-							className={clsx({
-								[styles.pendingSpecsWarn]:
-									polyCount > TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
-							})}
-						>
-							{t("trophies:new.specs.stats.polys", {
-								value: polyCount,
-							})}
-						</span>
-						<span
-							className={clsx({
-								[styles.pendingSpecsWarn]:
-									analysis.effectsCount > TROPHY_MODEL_RECOMMENDED_MAX_EFFECTS,
-							})}
-						>
-							{t("trophies:new.specs.stats.effects", {
-								value: analysis.effectsCount,
-							})}
-						</span>
-						{!analysis.cameraTargetCentered ? (
-							<span className={styles.pendingSpecsError}>
-								{t("trophies:new.specs.stats.cameraTargetOff")}
-							</span>
-						) : null}
-						{!analysis.backgroundIsAlpha ? (
-							<span className={styles.pendingSpecsError}>
-								{t("trophies:new.specs.stats.backgroundNotAlpha")}
-							</span>
-						) : null}
-					</div>
+					<TrophyRenderStats
+						analysis={analysis}
+						drawCalls={drawCalls}
+						polyCount={polyCount}
+					/>
 				) : null}
 				{pending.target ? (
 					<PendingTrophyDiff pending={pending} target={pending.target} />
@@ -896,11 +900,70 @@ function TrophyListRow({
 	);
 }
 
+function TrophyRenderStats({
+	analysis,
+	drawCalls,
+	polyCount,
+	className,
+}: {
+	analysis: TrophyModelAnalysis;
+	drawCalls: number;
+	polyCount: number;
+	className?: string;
+}) {
+	const { t } = useTranslation(["trophies"]);
+
+	return (
+		<div className={clsx(styles.pendingSpecs, className)}>
+			<span
+				className={clsx({
+					[styles.pendingSpecsWarn]:
+						drawCalls > TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
+				})}
+			>
+				{t("trophies:new.specs.stats.drawCalls", {
+					value: drawCalls,
+				})}
+			</span>
+			<span
+				className={clsx({
+					[styles.pendingSpecsWarn]:
+						polyCount > TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
+				})}
+			>
+				{t("trophies:new.specs.stats.polys", {
+					value: polyCount,
+				})}
+			</span>
+			<span
+				className={clsx({
+					[styles.pendingSpecsWarn]:
+						analysis.effectsCount > TROPHY_MODEL_RECOMMENDED_MAX_EFFECTS,
+				})}
+			>
+				{t("trophies:new.specs.stats.effects", {
+					value: analysis.effectsCount,
+				})}
+			</span>
+			{!analysis.cameraTargetCentered ? (
+				<span className={styles.pendingSpecsError}>
+					{t("trophies:new.specs.stats.cameraTargetOff")}
+				</span>
+			) : null}
+			{!analysis.backgroundIsAlpha ? (
+				<span className={styles.pendingSpecsError}>
+					{t("trophies:new.specs.stats.backgroundNotAlpha")}
+				</span>
+			) : null}
+		</div>
+	);
+}
+
 function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 	const { t } = useTranslation(["trophies"]);
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [reason, setReason] = React.useState("");
-	const { submit, fetcher } = useActionSubmit(pendingTrophyActionSchema);
+	const { submit, fetcher } = useActionSubmit(trophyActionSchema);
 	const id = React.useId();
 
 	React.useEffect(() => {

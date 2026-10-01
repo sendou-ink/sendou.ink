@@ -18,7 +18,8 @@ import { TierPill } from "~/components/TierPill";
 import { useTheme } from "~/features/theme/core/provider";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import { decompressTrophyModel } from "../trophies-utils";
+import * as XpTrophy from "../core/XpTrophy";
+import { decompressTrophyModel, useXpTrophyState } from "../trophies-utils";
 import style from "./Trophy.module.css";
 
 type TrophyCtxValue =
@@ -88,6 +89,7 @@ export function TrophyGrid({
 
 export function Trophy({
 	model,
+	code,
 	preview,
 	tier,
 	tentativeTier,
@@ -98,8 +100,10 @@ export function Trophy({
 	colorScheme: forcedColorScheme,
 	fps = 60,
 	deferred,
+	showAnimationProgress,
 }: {
 	model: string;
+	code?: string | null;
 	preview?: boolean;
 	tier?: number | null;
 	tentativeTier?: number | null;
@@ -110,6 +114,7 @@ export function Trophy({
 	colorScheme?: ColorScheme;
 	fps?: number;
 	deferred?: boolean;
+	showAnimationProgress?: boolean;
 }) {
 	const ctxValue = useContext(TrophyCtx);
 	const context = ctxValue?.context;
@@ -119,22 +124,30 @@ export function Trophy({
 	const [error, setError] = useState<boolean>(false);
 	const [drawn, setDrawn] = useState(false);
 	const [everDrawn, setEverDrawn] = useState(false);
-	const [activeModel, setActiveModel] = useState(model);
+	const [active, setActive] = useState({ model, code });
+	const [hasAnimation, setHasAnimation] = useState(false);
+	const animationProgressRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = usePrefersReducedMotion();
 
 	const onRenderStatsRef = useRef(onRenderStats);
 	onRenderStatsRef.current = onRenderStats;
 
-	const prevModelRef = useRef(model);
-	if (prevModelRef.current !== model) {
-		prevModelRef.current = model;
+	const prevSourceRef = useRef({ model, code });
+	if (
+		prevSourceRef.current.model !== model ||
+		prevSourceRef.current.code !== code
+	) {
+		prevSourceRef.current = { model, code };
 		setError(false);
-		if (!drawn || reducedMotion) setActiveModel(model);
+		if (!drawn || reducedMotion) setActive({ model, code });
 		setDrawn(false);
 	}
 
-	const swapping = activeModel !== model;
-	const modelState = decompressTrophyModel(activeModel);
+	const swapping = active.model !== model || active.code !== code;
+	const xpVariant = XpTrophy.parseCode(active.code);
+	const xpState = useXpTrophyState(xpVariant);
+	const isLoadingXpState = xpVariant !== null && xpState === null;
+	const modelState = xpVariant ? xpState : decompressTrophyModel(active.model);
 	const siteColorScheme = useTrophyColorScheme();
 	const colorScheme = forcedColorScheme ?? siteColorScheme;
 
@@ -199,15 +212,25 @@ export function Trophy({
 				return;
 			}
 
-			if (context && onRenderStats) {
+			const animationDuration = viewer.modelInfo?.animationDuration ?? 0;
+			const tracksAnimationProgress = Boolean(
+				showAnimationProgress && animationDuration > 0,
+			);
+			setHasAnimation(tracksAnimationProgress);
+
+			if ((context && onRenderStats) || tracksAnimationProgress) {
 				viewer.onFrame = () => {
-					onRenderStatsRef.current?.({ ...context.stats });
+					if (context) onRenderStatsRef.current?.({ ...context.stats });
+					animationProgressRef.current?.style.setProperty(
+						"--animation-progress",
+						String(viewer.animation.time / animationDuration),
+					);
 				};
 			}
 
-			viewer.startRenderLoop(false);
 			viewer.whenReady().then(() => {
 				if (viewerRef.current !== viewer) return;
+				viewer.startRenderLoop(false);
 				setDrawn(true);
 				setEverDrawn(true);
 			});
@@ -234,6 +257,7 @@ export function Trophy({
 			disableCameraControls,
 			colorScheme,
 			fps,
+			showAnimationProgress,
 		],
 	);
 
@@ -261,7 +285,7 @@ export function Trophy({
 		</div>
 	) : null;
 
-	if (error || modelState === null) {
+	if (error || (modelState === null && !isLoadingXpState)) {
 		return (
 			<div className={style.container} style={containerStyle}>
 				<div className={clsx(style.trophy, style.error)}>
@@ -275,7 +299,10 @@ export function Trophy({
 
 	return (
 		<div className={style.container} style={containerStyle} aria-busy={!drawn}>
-			{deferred || isLoadingSharedContext || !RENDERS_MODELS ? (
+			{deferred ||
+			isLoadingSharedContext ||
+			isLoadingXpState ||
+			!RENDERS_MODELS ? (
 				<div className={style.trophy} />
 			) : (
 				<canvas
@@ -285,10 +312,17 @@ export function Trophy({
 						[style.interactive]: !preview && !disableCameraControls,
 					})}
 					onTransitionEnd={() => {
-						if (swapping) setActiveModel(model);
+						if (swapping) setActive({ model, code });
 					}}
 				/>
 			)}
+			{hasAnimation ? (
+				<div
+					ref={animationProgressRef}
+					className={style.animationProgress}
+					data-testid="trophy-animation-progress"
+				/>
+			) : null}
 			{everDrawn || swapping ? null : (
 				<div className={style.loading}>
 					<div className={style.spinner} />

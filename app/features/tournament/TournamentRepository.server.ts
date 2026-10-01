@@ -3,7 +3,6 @@ import {
 	type Insertable,
 	type Kysely,
 	type NotNull,
-	type SqlBool,
 	sql,
 	type Transaction,
 } from "kysely";
@@ -26,6 +25,7 @@ import type {
 	TournamentTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { isSupporter } from "~/modules/permissions/utils";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
@@ -836,6 +836,20 @@ export function findAllForShowcase() {
 						"CalendarEvent.organizationId",
 					),
 			).as("organization"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("CalendarEventBadge")
+					.innerJoin("Badge", "CalendarEventBadge.badgeId", "Badge.id")
+					.select(["Badge.id", "Badge.code", "Badge.hue", "Badge.displayName"])
+					.whereRef("CalendarEventBadge.eventId", "=", "CalendarEvent.id")
+					.orderBy("Badge.id", "asc"),
+			).as("badges"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("Trophy")
+					.select(["Trophy.model"])
+					.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
+			).as("trophy"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentResult")
@@ -1663,28 +1677,20 @@ export function finalize({
 		);
 		await trx.insertInto("TournamentBadgeOwner").values(badgeOwners).execute();
 
-		if (trophyReceiver && trophyReceiver.userIds.length > 0) {
-			const tier = await trophyTier(trx, {
-				tournamentId,
-				tournamentTeamId: summary.tournamentResults.find((result) =>
-					trophyReceiver.userIds.includes(result.userId),
-				)?.tournamentTeamId,
-			});
-
-			await trx
-				.insertInto("TrophyOwner")
-				.values(
-					trophyReceiver.userIds.map((userId) => ({
+		if (trophyReceiver) {
+			await TrophyRepository.insertTournamentOwners(
+				[
+					{
 						tournamentId,
+						tournamentTeamId: summary.tournamentResults.find((result) =>
+							trophyReceiver.userIds.includes(result.userId),
+						)?.tournamentTeamId,
 						trophyId: trophyReceiver.trophyId,
-						userId,
-						tier,
-					})),
-				)
-				.onConflict((oc) =>
-					oc.columns(["tournamentId", "userId", "trophyId"]).doNothing(),
-				)
-				.execute();
+						userIds: trophyReceiver.userIds,
+					},
+				],
+				trx,
+			);
 		}
 
 		const tournamentResults = summary.tournamentResults
@@ -1943,41 +1949,6 @@ export async function findRunningTournamentIds() {
 		.execute();
 
 	return rows.map((row) => row.id);
-}
-
-/** Tier of the winning team's division, falling back to the tournament's tier when unknown or never tiered. */
-async function trophyTier(
-	trx: Transaction<DB>,
-	{
-		tournamentId,
-		tournamentTeamId,
-	}: { tournamentId: number; tournamentTeamId?: number },
-) {
-	const divisionTier = tournamentTeamId
-		? await trx
-				.selectFrom("TournamentDivisionTier")
-				.innerJoin(
-					"TournamentTeam",
-					"TournamentTeam.tournamentId",
-					"TournamentDivisionTier.tournamentId",
-				)
-				.select("TournamentDivisionTier.tier")
-				.where("TournamentTeam.id", "=", tournamentTeamId)
-				.where(
-					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
-				)
-				.executeTakeFirst()
-		: undefined;
-
-	if (divisionTier) return divisionTier.tier;
-
-	const tournament = await trx
-		.selectFrom("Tournament")
-		.select("tier")
-		.where("id", "=", tournamentId)
-		.executeTakeFirst();
-
-	return tournament?.tier ?? null;
 }
 
 /** Which seeding skill the tournament ranks by, resolved once: inline in the join it parsed the settings JSON per member row. */

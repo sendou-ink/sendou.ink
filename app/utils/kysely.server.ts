@@ -266,6 +266,15 @@ export function calendarEventStartTime(
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id");
 }
 
+export function calendarEventNameMatchesSeries(substringMatches: string[]) {
+	return (eb: ExpressionBuilder<Tables, "CalendarEvent">) =>
+		eb.or(
+			substringMatches.map((match) =>
+				eb("CalendarEvent.name", "like", `%${match}%`),
+			),
+		);
+}
+
 /** Subquery counting a tournament's non-placeholder teams. Correlates on `"Tournament"."id"`. */
 export function tournamentTeamCount(
 	eb: ExpressionBuilder<Tables, "Tournament">,

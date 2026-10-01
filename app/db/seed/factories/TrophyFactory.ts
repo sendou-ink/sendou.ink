@@ -1,5 +1,6 @@
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
+import * as XpTrophy from "~/features/trophies/core/XpTrophy";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { defineFactory } from "../core/defineFactory";
 // the e2e process loads this factory as plain ESM, where the attribute is required
@@ -25,6 +26,23 @@ export const { create } = defineFactory({
 			.returning("id")
 			.executeTakeFirstOrThrow(),
 });
+
+/** Every X Power trophy, awarded for the placements already in like the migration adding them does. */
+export async function createXpTrophies() {
+	const created: Array<{ id: number; code: string }> = [];
+	for (const variant of XpTrophy.VARIANTS) {
+		const trophy = await create({
+			name: variant.name,
+			code: variant.code,
+			model: "",
+		});
+		created.push({ id: trophy.id, code: variant.code });
+	}
+
+	await TrophyRepository.syncSpecialTrophies();
+
+	return created;
+}
 
 type PendingOptions = {
 	/** Who approves the submission; enough of them and the trophy is created. */

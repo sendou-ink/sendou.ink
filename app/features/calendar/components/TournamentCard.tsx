@@ -153,9 +153,8 @@ export function TournamentCard({
 				) : null}
 				{modes ? <ModesRow modes={modes} /> : null}
 				<div className={styles.pillsContainer}>
-					{isCalendar &&
-					(tournament.trophy ||
-						(tournament.badges && tournament.badges.length > 0)) ? (
+					{tournament.trophy ||
+					(tournament.badges && tournament.badges.length > 0) ? (
 						<PrizesPill
 							badges={tournament.badges}
 							trophy={tournament.trophy?.model}

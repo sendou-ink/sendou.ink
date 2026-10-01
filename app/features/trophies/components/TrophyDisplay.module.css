@@ -31,6 +31,8 @@
 .winMembers {
 	display: flex;
 	flex-direction: column;
+	padding-left: var(--s-2);
+	border-left: var(--border-style);
 }
 
 .winMember {
@@ -45,10 +47,6 @@
 	& > * {
 		min-width: 0;
 		max-width: 100%;
-	}
-
-	&:nth-child(odd) {
-		background-color: var(--color-bg-high);
 	}
 }
 
@@ -90,4 +88,9 @@
 	font-size: var(--font-sm);
 	color: var(--color-text-high);
 	padding-top: var(--s-2);
+}
+
+.placements {
+	display: flex;
+	flex-direction: column;
 }

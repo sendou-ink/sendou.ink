@@ -7,7 +7,6 @@ import { Config } from "~/config";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { useUser } from "~/features/auth/core/user";
-import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import {
 	impersonateUrl,
 	navIconUrl,
@@ -243,7 +242,6 @@ function CategoryMenu({
 
 	const visibleItems = category.items.filter((item) => {
 		if ("staffOnly" in item && !showStaffOnly) return false;
-		if (item.name === "trophies" && !canAccessTrophies(user)) return false;
 		return true;
 	});
 

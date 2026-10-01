@@ -20,7 +20,6 @@ import { ScheduleNudge } from "~/features/availability/components/ScheduleNudge"
 import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
-import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
 import { useScrollLock } from "~/hooks/useScrollLock";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
@@ -435,29 +434,25 @@ function MenuPanel({
 
 				<nav aria-label={t("front:mobileNav.menu")}>
 					<ul className={styles.navGrid}>
-						{navItems
-							.filter(
-								(item) => item.name !== "trophies" || canAccessTrophies(user),
-							)
-							.map((item) => (
-								<li key={item.name}>
-									<Link
-										to={`/${item.url}`}
-										prefetch="intent"
-										className={styles.navItem}
-									>
-										<div className={styles.navItemImage}>
-											<Image
-												path={navIconUrl(item.name)}
-												height={32}
-												width={32}
-												alt=""
-											/>
-										</div>
-										<span>{t(`common:pages.${item.name}` as any)}</span>
-									</Link>
-								</li>
-							))}
+						{navItems.map((item) => (
+							<li key={item.name}>
+								<Link
+									to={`/${item.url}`}
+									prefetch="intent"
+									className={styles.navItem}
+								>
+									<div className={styles.navItemImage}>
+										<Image
+											path={navIconUrl(item.name)}
+											height={32}
+											width={32}
+											alt=""
+										/>
+									</div>
+									<span>{t(`common:pages.${item.name}` as any)}</span>
+								</Link>
+							</li>
+						))}
 					</ul>
 				</nav>
 

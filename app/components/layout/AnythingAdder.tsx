@@ -6,7 +6,6 @@ import { useUser } from "~/features/auth/core/user";
 import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
 import { plusSuggestionsNewPage } from "~/features/plus-suggestions/plus-suggestions-urls";
-import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { userNewBuildPage } from "~/features/user-page/user-page-urls";
 import { newVodPage } from "~/features/vods/vods-urls";
 import {
@@ -103,15 +102,13 @@ export function AnythingAdder() {
 			imagePath: navIconUrl("plus"),
 			href: plusSuggestionsNewPage(),
 		},
-		canAccessTrophies(user)
-			? {
-					id: "trophy",
-					children: t("header.adder.trophy"),
-					imagePath: navIconUrl("trophies"),
-					href: NEW_TROPHY_PAGE,
-				}
-			: null,
-	].filter((item) => item !== null);
+		{
+			id: "trophy",
+			children: t("header.adder.trophy"),
+			imagePath: navIconUrl("trophies"),
+			href: NEW_TROPHY_PAGE,
+		},
+	];
 
 	return (
 		<SendouMenu

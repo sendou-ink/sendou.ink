@@ -7,7 +7,6 @@ import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
 import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
-import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import type { SerializeFrom } from "~/utils/remix";
 import * as CalendarRepository from "../CalendarRepository.server";
 import * as CalendarEvent from "../core/CalendarEvent";
@@ -54,24 +53,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
 				: CalendarEvent.defaultFilters(),
 		);
 
-	const eventTimes = canAccessTrophies(user)
-		? filtered
-		: filtered.map((time) => ({
-				...time,
-				events: {
-					shown: time.events.shown.map((event) => ({
-						...event,
-						trophy: null,
-					})),
-					hidden: time.events.hidden.map((event) => ({
-						...event,
-						trophy: null,
-					})),
-				},
-			}));
-
 	return {
-		eventTimes,
+		eventTimes: filtered,
 		dateViewed,
 		filters,
 		canSaveAsDefault,

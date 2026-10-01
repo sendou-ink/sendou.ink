@@ -1,10 +1,9 @@
 import { addDays, subDays } from "date-fns";
-import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import { TROPHY_APPROVALS_REQUIRED } from "~/features/trophies/trophies-constants";
 import { decompressFromBase64 } from "~/utils/compression";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { TROPHIES_PAGE } from "~/utils/urls";
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
@@ -26,27 +25,6 @@ const ROSTER_SIZE = 4;
 const UPCOMING_IN_DAYS = 10;
 
 test.describe("Trophies", () => {
-	test("hides trophies from users without early access", async ({
-		page,
-		factories,
-	}) => {
-		await factories.TrophyFactory.create({ name: TROPHY_NAME });
-
-		await impersonate(page, NZAP_TEST_ID);
-
-		const response = await page.goto(TROPHIES_PAGE);
-		expect(response?.status()).toBe(404);
-
-		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
-		await isNotVisible(page.getByTestId("trophy-display"));
-
-		// remove once feature is released
-		const newTrophy = new NewTrophyPage(page);
-		await newTrophy.goto();
-		await expect(newTrophy.locators.agreeToTermsButton).toBeVisible();
-	});
-
 	test("shows trophy wins via user page trophy display", async ({
 		page,
 		factories,
@@ -54,12 +32,14 @@ test.describe("Trophies", () => {
 		test.slow();
 
 		const trophy = await factories.TrophyFactory.create({ name: TROPHY_NAME });
-		const tournament = await playTrophyTournament(factories, trophy.id);
+		const tournament = await playTrophyTournament(factories, {
+			trophyId: trophy.id,
+		});
 		await factories.UserFactory.grant(ADMIN_ID, {
 			widgets: [{ id: "trophies-owned" }],
 		});
 
-		await impersonate(page);
+		await impersonate(page, NZAP_TEST_ID);
 
 		const userPage = new UserPage(page);
 		await userPage.goto(ADMIN_DISCORD_ID);
@@ -95,7 +75,10 @@ test.describe("Trophies", () => {
 			name: "Chris P. Bacon",
 		});
 
-		await playTrophyTournament(factories, trophy.id, organization.id);
+		await playTrophyTournament(factories, {
+			trophyId: trophy.id,
+			organizationId: organization.id,
+		});
 		const upcoming = await factories.TournamentFactory.create({
 			name: `${TROPHY_NAME} 2`,
 			authorId: ADMIN_ID,
@@ -106,7 +89,7 @@ test.describe("Trophies", () => {
 			trophyId: trophy.id,
 		});
 
-		await impersonate(page);
+		await impersonate(page, NZAP_TEST_ID);
 
 		const trophies = new TrophiesPage(page);
 		await trophies.goto();
@@ -227,13 +210,128 @@ test.describe("Trophies", () => {
 			notifications.notification(`Your trophy ${declinedName} was declined`),
 		).toBeVisible();
 	});
+
+	test("backfills a trophy to the winners of a past tournament", async ({
+		page,
+		factories,
+	}) => {
+		test.slow();
+
+		const seriesName = "Wellstring";
+		const organization = await factories.TournamentOrganizationFactory.create(
+			{ name: ORGANIZATION_NAME, ownerId: ADMIN_ID },
+			{
+				series: [
+					{ name: seriesName, description: null, showLeaderboard: false },
+				],
+			},
+		);
+		const trophy = await factories.TrophyFactory.create({
+			name: TROPHY_NAME,
+			organizationId: organization.id,
+			managerId: ADMIN_ID,
+		});
+
+		const awardedName = `${TROPHY_NAME} 1`;
+		const skippedName = `${TROPHY_NAME} 2`;
+		const awarded = await playTrophyTournament(factories, {
+			organizationId: organization.id,
+			name: awardedName,
+		});
+		const skipped = await playTrophyTournament(factories, {
+			organizationId: organization.id,
+			name: skippedName,
+		});
+
+		await impersonate(page);
+
+		const newTrophy = new NewTrophyPage(page);
+		await newTrophy.goto();
+
+		const backfill = await newTrophy.openBackfill();
+		await backfill.selectTrophy(TROPHY_NAME);
+		await backfill.selectSeries(seriesName);
+
+		await backfill.toggleTournament(awardedName);
+		await backfill.toggleWinner({
+			tournamentName: awardedName,
+			username: "Sendou",
+		});
+		await backfill.award();
+
+		// an awarded tournament can't be backfilled again
+		await isNotVisible(backfill.tournament(awardedName));
+		await expect(backfill.tournament(skippedName)).toBeVisible();
+
+		const details = await new TrophiesPage(page).gotoTrophy(trophy.id);
+		await expect(details.tournamentRow(awarded.id)).toBeVisible();
+		await isNotVisible(details.tournamentRow(skipped.id));
+		await expect(details.owner("N-ZAP")).toBeVisible();
+		await isNotVisible(details.owner("Sendou"));
+	});
+
+	test("awards X Power trophies per weapon category", async ({
+		page,
+		factories,
+	}) => {
+		const SPLATTERSHOT = 40;
+		const SPLASH_O_MATIC = 20;
+		const SPLAT_CHARGER = 2010;
+		for (const [weaponSplId, power, region] of [
+			[SPLATTERSHOT, 3550, "WEST"],
+			[SPLATTERSHOT, 3510, "JPN"],
+			[SPLASH_O_MATIC, 3120, "WEST"],
+			[SPLAT_CHARGER, 3050, "WEST"],
+		] as const) {
+			await factories.XRankPlacementFactory.create({
+				playerUserId: NZAP_TEST_ID,
+				weaponSplId,
+				power,
+				region,
+			});
+		}
+		await factories.TrophyFactory.createXpTrophies();
+		await factories.UserFactory.grant(NZAP_TEST_ID, {
+			widgets: [{ id: "trophies-owned" }],
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const trophies = new TrophiesPage(page);
+		await trophies.goto();
+		const details = await trophies.openXpTrophy("3500 X Power Shooters");
+
+		await expect(details.owner("N-ZAP")).toBeVisible();
+
+		// the Splash-o-matic placement fell short of 3500
+		await expect(details.locators.weaponCounts).toHaveCount(1);
+
+		const userPage = new UserPage(page);
+		await userPage.goto(NZAP_TEST_DISCORD_ID);
+		await expect(
+			userPage.locators.trophyDisplay.getByRole("button"),
+		).toHaveCount(2);
+
+		// reached in both divisions, Takoroka is the one shown
+		await expect(
+			userPage.trophyDivision("3500 X Power Shooters", "Takoroka"),
+		).toBeVisible();
+		await expect(
+			userPage.trophyDivision("3000 X Power Chargers", "Tentatek"),
+		).toBeVisible();
+
+		await userPage.openTrophy("3500 X Power Shooters");
+		await expect(userPage.locators.trophyPlacementRows).toHaveCount(3);
+	});
 });
 
-/** Plays a tournament with the trophy as its prize, awarding it to the winning team. */
 async function playTrophyTournament(
 	factories: Factories,
-	trophyId: number,
-	organizationId?: number,
+	{
+		trophyId,
+		organizationId,
+		name = `${TROPHY_NAME} 1`,
+	}: { trophyId?: number; organizationId?: number; name?: string },
 ) {
 	// the top seed wins, so the anchor users are on it and end up owning the trophy
 	const players = await factories.UserFactory.createMany(
@@ -246,7 +344,7 @@ async function playTrophyTournament(
 
 	return factories.TournamentFactory.createPlayed(
 		{
-			name: `${TROPHY_NAME} 1`,
+			name,
 			authorId: ADMIN_ID,
 			organizationId,
 			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 21))],

@@ -2,13 +2,14 @@ import clsx from "clsx";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
+import { WeaponImage } from "~/components/Image";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import { userPage } from "~/utils/urls";
 import { TrophyShowcase } from "../components/TrophyShowcase";
 import { TrophyTournamentHistory } from "../components/TrophyTournamentHistory";
+import * as XpTrophy from "../core/XpTrophy";
 import { loader } from "../loaders/trophies.$id.server";
-import { parseSpecialTrophyCode } from "../trophies-utils";
 import styles from "./trophies.$id.module.css";
 
 export { loader };
@@ -33,15 +34,16 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function TrophyDetailsPage() {
-	const { t } = useTranslation(["trophies"]);
+	const { t } = useTranslation(["trophies", "common"]);
 	const data = useLoaderData<typeof loader>();
-	const { trophy, tournaments } = data;
+	const { trophy, tournaments, xpWeapons } = data;
 
-	const special = parseSpecialTrophyCode(trophy.code);
+	const xpVariant = XpTrophy.parseCode(trophy.code);
 
 	return (
 		<TrophyShowcase
 			model={trophy.model}
+			code={trophy.code}
 			className={styles.trophyDetailsContainer}
 			detailsClassName={styles.trophyDetails}
 		>
@@ -93,17 +95,41 @@ export default function TrophyDetailsPage() {
 						</Trans>
 					</p>
 				) : null}
-				{special ? (
+				{xpVariant ? (
 					<p className={styles.trophyMeta}>
-						{special.type === "supporter"
-							? t("trophies:special.supporter.description")
-							: t("trophies:special.xp.description", {
-									value: special.value,
-								})}
+						{t("trophies:special.xp.categoryDescription", {
+							value: xpVariant.milestone,
+							category: t(
+								`common:weapon.category.${XpTrophy.categoryKey(xpVariant.category)}`,
+							),
+						})}
 					</p>
 				) : null}
 			</div>
-			{special ? null : (
+			{xpWeapons ? (
+				xpWeapons.length > 0 ? (
+					<div className="stack xs">
+						<Divider className={styles.divider} smallText>
+							{t("trophies:details.weapons")}
+						</Divider>
+						<ul className={styles.weapons} data-testid="trophy-weapons">
+							{xpWeapons.map((weapon) => (
+								<li key={weapon.weaponSplId}>
+									<WeaponImage
+										weaponSplId={weapon.weaponSplId}
+										variant="badge"
+										width={32}
+										height={32}
+									/>
+									<span className={styles.weaponCount}>
+										×{weapon.ownerCount}
+									</span>
+								</li>
+							))}
+						</ul>
+					</div>
+				) : null
+			) : (
 				<div className="stack xs">
 					<Divider className={styles.divider} smallText>
 						{t("trophies:details.tournamentHistory")}
@@ -122,7 +148,7 @@ export default function TrophyDetailsPage() {
 					{t("trophies:details.owners")}
 				</Divider>
 				{trophy.owners.length > 0 ? (
-					<ul className={styles.owners}>
+					<ul className={styles.owners} data-testid="trophy-owners">
 						{trophy.owners.map((owner) => (
 							<li key={owner.id}>
 								<Link to={userPage(owner)}>{owner.username}</Link>

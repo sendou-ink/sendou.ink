@@ -9,7 +9,6 @@ import { tournamentData } from "~/features/tournament-bracket/core/Tournament.se
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
-import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { hasPermission } from "~/modules/permissions/utils";
 import { calendarNewSearchParams } from "../calendar-search-params";
@@ -96,9 +95,8 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		typeof org === "string" ? [] : [org.id],
 	);
 
-	const trophies = canAccessTrophies(user)
-		? await TrophyRepository.findByOrganizationIds(validOrganizationIds)
-		: [];
+	const trophies =
+		await TrophyRepository.findByOrganizationIds(validOrganizationIds);
 
 	const eventToCopy = eventToCopyRaw
 		? {

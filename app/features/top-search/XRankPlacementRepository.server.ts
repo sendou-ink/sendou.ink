@@ -152,7 +152,11 @@ export async function findPlacementsByPlayerId(
 
 export async function findPlacementsByUserId(
 	userId: Tables["User"]["id"],
-	options?: { limit?: number; weaponId?: MainWeaponId },
+	options?: {
+		limit?: number;
+		weaponId?: MainWeaponId;
+		weaponIds?: readonly MainWeaponId[];
+	},
 ) {
 	let query = xRankPlacementsQueryBase()
 		.where("SplatoonPlayer.userId", "=", userId)
@@ -160,6 +164,12 @@ export async function findPlacementsByUserId(
 
 	if (typeof options?.weaponId === "number") {
 		query = query.where("XRankPlacement.weaponSplId", "=", options.weaponId);
+	}
+
+	if (options?.weaponIds) {
+		query = query.where("XRankPlacement.weaponSplId", "in", [
+			...options.weaponIds,
+		]);
 	}
 
 	if (options?.limit) {

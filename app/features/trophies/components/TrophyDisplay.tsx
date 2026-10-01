@@ -6,20 +6,22 @@ import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { DotPagination } from "~/components/DotPagination";
 import { WeaponImage } from "~/components/Image";
+import { DivisionImage } from "~/features/top-search/components/DivisionImage";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
 import { usePagination } from "~/hooks/usePagination";
-import { trophyWinsPage } from "~/utils/urls";
+import { trophyPlacementsPage, trophyWinsPage } from "~/utils/urls";
+import * as XpTrophy from "../core/XpTrophy";
+import type { TrophyPlacementsLoaderData } from "../routes/trophies.$id.placements.$userId";
 import type { TrophyWinsLoaderData } from "../routes/trophies.$id.wins.$userId";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "../trophies-constants";
-import {
-	parseSpecialTrophyCode,
-	useProgressiveRender,
-} from "../trophies-utils";
+import { useProgressiveRender } from "../trophies-utils";
 import { TournamentSummaryRow } from "./TournamentSummaryRow";
 import { Trophy, TrophyContextProvider, TrophyGrid } from "./Trophy";
 import styles from "./TrophyDisplay.module.css";
 import { TrophyShowcaseModal } from "./TrophyShowcase";
+import { XPlacementSummaryRow } from "./XPlacementSummaryRow";
 
 type TrophyItem = {
 	id: number;
@@ -28,6 +30,8 @@ type TrophyItem = {
 	tier?: number | null;
 	code?: string | null;
 	count?: number | null;
+	/** Division an X Power trophy was won in. */
+	division?: XRankPlacementRegion | null;
 };
 
 export interface TrophyDisplayProps {
@@ -41,6 +45,7 @@ export function TrophyDisplay({
 	userId,
 	className,
 }: TrophyDisplayProps) {
+	const { t } = useTranslation(["common"]);
 	const [openTrophy, setOpenTrophy] = React.useState<TrophyItem | null>(null);
 
 	const {
@@ -78,6 +83,7 @@ export function TrophyDisplay({
 						>
 							<Trophy
 								model={trophy.model}
+								code={trophy.code}
 								tier={trophy.tier ?? null}
 								preview={!!openTrophy}
 								staticOnSoftwareRendering
@@ -85,9 +91,15 @@ export function TrophyDisplay({
 								fps={30}
 								deferred={i >= visibleCount}
 								pill={
-									trophy.count && trophy.count > 1
-										? `×${trophy.count}`
-										: undefined
+									trophy.division ? (
+										<DivisionImage
+											region={trophy.division}
+											size={16}
+											alt={t(`common:divisions.${trophy.division}`)}
+										/>
+									) : trophy.count && trophy.count > 1 ? (
+										`×${trophy.count}`
+									) : undefined
 								}
 							/>
 						</button>
@@ -123,31 +135,51 @@ function TrophyModal({
 	userId: number;
 	onClose: () => void;
 }) {
-	const { t } = useTranslation(["trophies"]);
+	const { t } = useTranslation(["trophies", "common"]);
 	const fetcher = useFetcher<TrophyWinsLoaderData>();
+	const placementsFetcher = useFetcher<TrophyPlacementsLoaderData>();
 	const data = fetcher.data;
+	const placements = placementsFetcher.data?.placements;
 
-	const special = parseSpecialTrophyCode(trophy.code);
+	const xpVariant = XpTrophy.parseCode(trophy.code);
 
 	const loadedRef = React.useRef(false);
 	React.useEffect(() => {
-		if (parseSpecialTrophyCode(trophy.code) || loadedRef.current) return;
+		if (loadedRef.current) return;
 		loadedRef.current = true;
-		fetcher.load(trophyWinsPage({ trophyId: trophy.id, userId }));
-	}, [fetcher.load, trophy.id, trophy.code, userId]);
+
+		if (XpTrophy.parseCode(trophy.code)) {
+			placementsFetcher.load(
+				trophyPlacementsPage({ trophyId: trophy.id, userId }),
+			);
+		} else {
+			fetcher.load(trophyWinsPage({ trophyId: trophy.id, userId }));
+		}
+	}, [fetcher.load, placementsFetcher.load, trophy.id, trophy.code, userId]);
 
 	return (
 		<TrophyShowcaseModal trophy={trophy} onClose={onClose}>
-			{special ? (
+			{xpVariant ? (
 				<div>
 					<Divider />
 					<p className={styles.specialDescription}>
-						{special.type === "supporter"
-							? t("trophies:special.supporter.description")
-							: t("trophies:special.xp.description", {
-									value: special.value,
-								})}
+						{t("trophies:special.xp.categoryDescription", {
+							value: xpVariant.milestone,
+							category: t(
+								`common:weapon.category.${XpTrophy.categoryKey(xpVariant.category)}`,
+							),
+						})}
 					</p>
+				</div>
+			) : null}
+			{placements && placements.length > 0 ? (
+				<div className="stack xs">
+					<Divider />
+					<div className={styles.placements}>
+						{placements.map((placement) => (
+							<XPlacementSummaryRow key={placement.id} placement={placement} />
+						))}
+					</div>
 				</div>
 			) : null}
 			{data

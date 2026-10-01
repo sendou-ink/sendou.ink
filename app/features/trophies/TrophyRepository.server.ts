@@ -1,33 +1,35 @@
 import { sub } from "date-fns";
-import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
+import {
+	type ExpressionBuilder,
+	type NotNull,
+	type SqlBool,
+	sql,
+	type Transaction,
+} from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
-import { isSupporter } from "~/modules/permissions/utils";
+import { DEV_IDS } from "~/features/admin/admin-constants";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
+import { ConcurrentModificationError } from "~/utils/errors";
 import {
+	calendarEventNameMatchesSeries,
 	calendarEventStartTime,
 	commonUserSelect,
 	jsonArrayFrom,
 	jsonObjectFrom,
-	peakXpOverallSql,
 	tournamentLogoWithDefault,
 	tournamentTeamCount,
 } from "~/utils/kysely.server";
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
 import { sortTrophiesByFavorites } from "../user-page/core/trophy-sorting.server";
-import {
-	SUPPORTER_TROPHY_CODE,
-	TROPHY_APPROVALS_REQUIRED,
-	XP_TROPHY_CODE_PREFIX,
-} from "./trophies-constants";
-import {
-	hasUpcomingTournamentSoon,
-	parseSpecialTrophyCode,
-} from "./trophies-utils";
+import * as XpTrophy from "./core/XpTrophy";
+import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
+import { hasUpcomingTournamentSoon } from "./trophies-utils";
 
 type TrophyRecentTournament = {
 	tier: number | null;
@@ -36,10 +38,12 @@ type TrophyRecentTournament = {
 	startTime: number | null;
 };
 
+/** Tournament trophies, special ones are listed by their own functions. */
 export async function all() {
 	const rows = await db
 		.selectFrom("Trophy")
 		.select((eb) => ["id", "name", "model", withRecentTournaments(eb)])
+		.where("code", "is", null)
 		.execute();
 
 	return sortByEffectiveTier(rows.map(addEffectiveTier));
@@ -233,9 +237,35 @@ async function findOwnedTrophies(userId: number) {
 		.where("SpecialTrophyOwner.userId", "=", userId)
 		.execute();
 
+	const xpPlacements = specialRows.some((row) => XpTrophy.parseCode(row.code))
+		? await db
+				.selectFrom("XRankPlacement")
+				.innerJoin(
+					"SplatoonPlayer",
+					"SplatoonPlayer.id",
+					"XRankPlacement.playerId",
+				)
+				.select([
+					"XRankPlacement.weaponSplId",
+					"XRankPlacement.power",
+					"XRankPlacement.region",
+				])
+				.where("SplatoonPlayer.userId", "=", userId)
+				.execute()
+		: [];
+
 	return [
-		...tournamentRows,
-		...specialRows.map((row) => ({ ...row, count: 1, tier: null })),
+		...tournamentRows.map((row) => ({ ...row, division: null })),
+		...specialRows.map((row) => {
+			const xpVariant = XpTrophy.parseCode(row.code);
+
+			return {
+				...row,
+				count: 1,
+				tier: null,
+				division: xpVariant ? XpTrophy.division(xpPlacements, xpVariant) : null,
+			};
+		}),
 	];
 }
 
@@ -275,6 +305,7 @@ export async function findById(trophyId: number) {
 			"Trophy.name",
 			"Trophy.model",
 			"Trophy.code",
+			"Trophy.organizationId",
 			withCreator(eb),
 			withManager(eb),
 			withOrganization(eb),
@@ -291,9 +322,7 @@ export async function findById(trophyId: number) {
 	return {
 		...trophy,
 		owners: [...trophy.owners, ...specialOwners],
-		permissions: {
-			EDIT: trophy.manager ? [trophy.manager.id] : [],
-		},
+		permissions: trophyPermissions(trophy.manager?.id ?? null),
 	};
 }
 
@@ -491,91 +520,218 @@ export async function existsByName(args: {
 	return Boolean(pending);
 }
 
-export async function findManagedBy(userId: number) {
+export function findAllXp() {
 	return db
 		.selectFrom("Trophy")
-		.select(["id", "name", "model", "organizationId", "managerId", "creatorId"])
-		.where("managerId", "=", userId)
+		.select(["Trophy.id", "Trophy.name", "Trophy.model", "Trophy.code"])
+		.where("Trophy.code", "like", XpTrophy.CODE_LIKE_PATTERN)
+		.execute();
+}
+
+export async function findCodeById(trophyId: number) {
+	const row = await db
+		.selectFrom("Trophy")
+		.select("Trophy.code")
+		.where("Trophy.id", "=", trophyId)
+		.executeTakeFirst();
+
+	return row?.code ?? null;
+}
+
+export function findXpWeaponCountsById({
+	trophyId,
+	weaponIds,
+	milestone,
+}: {
+	trophyId: number;
+	weaponIds: readonly MainWeaponId[];
+	milestone: number;
+}) {
+	return db
+		.selectFrom("XRankPlacement")
+		.innerJoin("SplatoonPlayer", "SplatoonPlayer.id", "XRankPlacement.playerId")
+		.innerJoin("SpecialTrophyOwner", (join) =>
+			join
+				.onRef("SpecialTrophyOwner.userId", "=", "SplatoonPlayer.userId")
+				.on("SpecialTrophyOwner.trophyId", "=", trophyId),
+		)
+		.select(({ fn }) => [
+			"XRankPlacement.weaponSplId",
+			fn.count<number>("SplatoonPlayer.userId").distinct().as("ownerCount"),
+		])
+		.where("XRankPlacement.weaponSplId", "in", [...weaponIds])
+		.where("XRankPlacement.power", ">=", milestone)
+		.groupBy("XRankPlacement.weaponSplId")
+		.orderBy("ownerCount", "desc")
+		.orderBy("XRankPlacement.weaponSplId", "asc")
 		.execute();
 }
 
 export async function findAllForEditing() {
-	return db
+	const rows = await db
 		.selectFrom("Trophy")
 		.select(["id", "name", "model", "organizationId", "managerId", "creatorId"])
 		.where("code", "is", null)
 		.execute();
+
+	return rows.map((row) => ({
+		...row,
+		permissions: trophyPermissions(row.managerId),
+	}));
 }
 
-/** Recomputes special trophy (supporter, XP) ownership; still-eligible owners keep their `createdAt`. */
+export function findAllBackfillableTournaments({
+	organizationId,
+	substringMatches,
+}: {
+	organizationId: number;
+	substringMatches: string[];
+}) {
+	return db
+		.selectFrom("CalendarEvent")
+		.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
+		.select((eb) => [
+			"Tournament.id as tournamentId",
+			"Tournament.settings",
+			"CalendarEvent.name",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+			calendarEventStartTime(eb).as("startTime"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentResult")
+					.innerJoin("User", "User.id", "TournamentResult.userId")
+					.innerJoin(
+						"TournamentTeam",
+						"TournamentTeam.id",
+						"TournamentResult.tournamentTeamId",
+					)
+					.select((resultEb) => [
+						...commonUserSelect(resultEb),
+						"TournamentResult.tournamentTeamId",
+						"TournamentResult.div",
+						"TournamentResult.setResults",
+						"TournamentTeam.name as teamName",
+					])
+					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
+					.where("TournamentResult.placement", "=", 1)
+					.orderBy("User.id", "asc"),
+			).as("firstPlacers"),
+		])
+		.where("CalendarEvent.organizationId", "=", organizationId)
+		.where("CalendarEvent.hidden", "=", 0)
+		.where("CalendarEvent.trophyId", "is", null)
+		.where("Tournament.isFinalized", "=", 1)
+		.where(calendarEventNameMatchesSeries(substringMatches))
+		.orderBy("startTime", "desc")
+		.execute();
+}
+
+type TournamentOwnersArgs = {
+	tournamentId: number;
+	tournamentTeamId?: number;
+	trophyId: number;
+	userIds: number[];
+};
+
+export async function insertTournamentOwners(
+	awards: TournamentOwnersArgs[],
+	trx: Transaction<DB>,
+) {
+	const tieredAwards: Array<
+		TournamentOwnersArgs & { tier: Awaited<ReturnType<typeof trophyTier>> }
+	> = [];
+	for (const award of awards) {
+		tieredAwards.push({ ...award, tier: await trophyTier(trx, award) });
+	}
+
+	const rows = tieredAwards.flatMap(
+		({ tournamentId, trophyId, userIds, tier }) =>
+			userIds.map((userId) => ({ tournamentId, trophyId, userId, tier })),
+	);
+	if (rows.length === 0) return;
+
+	await trx
+		.insertInto("TrophyOwner")
+		.values(rows)
+		.onConflict((oc) =>
+			oc.columns(["tournamentId", "userId", "trophyId"]).doNothing(),
+		)
+		.execute();
+}
+
+export function backfill({
+	trophyId,
+	awards,
+}: {
+	trophyId: number;
+	awards: Array<Omit<TournamentOwnersArgs, "trophyId">>;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const tournamentIds = awards.map((award) => award.tournamentId);
+
+		const { numUpdatedRows } = await trx
+			.updateTable("CalendarEvent")
+			.set({ trophyId })
+			.where("CalendarEvent.tournamentId", "in", tournamentIds)
+			.where("CalendarEvent.trophyId", "is", null)
+			.executeTakeFirst();
+
+		if (Number(numUpdatedRows) !== tournamentIds.length) {
+			throw new ConcurrentModificationError(
+				"A tournament to backfill already has a trophy",
+			);
+		}
+
+		await insertTournamentOwners(
+			awards.map((award) => ({ ...award, trophyId })),
+			trx,
+		);
+	});
+}
+
+/**
+ * Recomputes X Power trophy ownership from the Top 500 placements of linked players (see
+ * {@link XpTrophy.awards}). Still-eligible owners keep their `createdAt`.
+ */
 export function syncSpecialTrophies() {
 	return db.transaction().execute(async (trx) => {
-		await syncSupporterTrophyOwners(trx);
-		await syncXpTrophyOwners(trx);
-	});
-}
-
-async function syncSupporterTrophyOwners(trx: Transaction<DB>) {
-	const trophy = await trx
-		.selectFrom("Trophy")
-		.select("id")
-		.where("code", "=", SUPPORTER_TROPHY_CODE)
-		.executeTakeFirst();
-
-	if (!trophy) return;
-
-	const patrons = await trx
-		.selectFrom("User")
-		.select(["id", "patronTier"])
-		.where("patronTier", "is not", null)
-		.execute();
-
-	await replaceSpecialTrophyOwners({
-		trx,
-		trophyId: trophy.id,
-		userIds: patrons.filter(isSupporter).map((patron) => patron.id),
-	});
-}
-
-async function syncXpTrophyOwners(trx: Transaction<DB>) {
-	const xpTrophies = (
-		await trx
+		const trophies = await trx
 			.selectFrom("Trophy")
-			.select(["id", "code"])
-			.where("code", "like", `${XP_TROPHY_CODE_PREFIX}%`)
-			.execute()
-	).flatMap((trophy) => {
-		const parsed = parseSpecialTrophyCode(trophy.code);
-		return parsed?.type === "xp"
-			? [{ id: trophy.id, value: parsed.value }]
-			: [];
+			.select(["Trophy.id", "Trophy.code"])
+			.where("Trophy.code", "like", XpTrophy.CODE_LIKE_PATTERN)
+			.execute();
+		if (trophies.length === 0) return;
+
+		const placements = await trx
+			.selectFrom("XRankPlacement")
+			.innerJoin(
+				"SplatoonPlayer",
+				"SplatoonPlayer.id",
+				"XRankPlacement.playerId",
+			)
+			.select(({ fn }) => [
+				"SplatoonPlayer.userId",
+				"XRankPlacement.weaponSplId",
+				fn.max<number>("XRankPlacement.power").as("power"),
+			])
+			.where("SplatoonPlayer.userId", "is not", null)
+			.groupBy(["SplatoonPlayer.userId", "XRankPlacement.weaponSplId"])
+			.$narrowType<{ userId: NotNull }>()
+			.execute();
+
+		const ownerIdsByCode = R.mapValues(
+			R.groupBy(XpTrophy.awards(placements), (award) => award.code),
+			(awards) => awards.map((award) => award.userId),
+		);
+
+		for (const trophy of trophies) {
+			await replaceSpecialTrophyOwners({
+				trx,
+				trophyId: trophy.id,
+				userIds: (trophy.code ? ownerIdsByCode[trophy.code] : undefined) ?? [],
+			});
+		}
 	});
-
-	if (xpTrophies.length === 0) return;
-
-	const byValueDesc = R.sortBy(xpTrophies, [(trophy) => trophy.value, "desc"]);
-
-	const userPeakXps = await trx
-		.selectFrom("SplatoonPlayer")
-		.select(["userId", peakXpOverallSql().as("peakXp")])
-		.where("userId", "is not", null)
-		.where("peakXp", "is not", null)
-		.$narrowType<{ userId: NotNull; peakXp: NotNull }>()
-		.execute();
-
-	const ownersByTrophyId = new Map<number, number[]>(
-		xpTrophies.map((trophy) => [trophy.id, []]),
-	);
-	for (const { userId, peakXp } of userPeakXps) {
-		const highestReached = byValueDesc.find((trophy) => peakXp >= trophy.value);
-		if (!highestReached) continue;
-
-		ownersByTrophyId.get(highestReached.id)?.push(userId);
-	}
-
-	for (const [trophyId, userIds] of ownersByTrophyId) {
-		await replaceSpecialTrophyOwners({ trx, trophyId, userIds });
-	}
 }
 
 async function replaceSpecialTrophyOwners({
@@ -594,6 +750,8 @@ async function replaceSpecialTrophyOwners({
 		deleteStale = deleteStale.where("userId", "not in", userIds);
 	}
 	await deleteStale.execute();
+
+	if (userIds.length === 0) return;
 
 	await trx
 		.insertInto("SpecialTrophyOwner")
@@ -902,4 +1060,44 @@ export async function addApproval(args: {
 			.returning("id")
 			.executeTakeFirstOrThrow();
 	});
+}
+
+async function trophyTier(
+	trx: Transaction<DB>,
+	{
+		tournamentId,
+		tournamentTeamId,
+	}: { tournamentId: number; tournamentTeamId?: number },
+) {
+	const divisionTier = tournamentTeamId
+		? await trx
+				.selectFrom("TournamentDivisionTier")
+				.innerJoin(
+					"TournamentTeam",
+					"TournamentTeam.tournamentId",
+					"TournamentDivisionTier.tournamentId",
+				)
+				.select("TournamentDivisionTier.tier")
+				.where("TournamentTeam.id", "=", tournamentTeamId)
+				.where(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
+				)
+				.executeTakeFirst()
+		: undefined;
+
+	if (divisionTier) return divisionTier.tier;
+
+	const tournament = await trx
+		.selectFrom("Tournament")
+		.select("tier")
+		.where("id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return tournament?.tier ?? null;
+}
+
+function trophyPermissions(managerId: number | null) {
+	return {
+		EDIT: R.unique([...(managerId ? [managerId] : []), ...DEV_IDS]),
+	};
 }

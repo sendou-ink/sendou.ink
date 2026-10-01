@@ -1,26 +1,30 @@
 import { cachified } from "@epic-web/cachified";
-import { getUser } from "~/features/auth/core/user.server";
+import * as R from "remeda";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
+import * as XpTrophy from "../core/XpTrophy";
 import * as TrophyRepository from "../TrophyRepository.server";
-import { canAccessTrophies } from "../trophies-utils";
 
 const TROPHIES_CACHE_KEY = "trophies";
 
 export const loader = async () => {
-	if (!canAccessTrophies(getUser())) {
-		throw new Response(null, { status: 404 });
-	}
+	const [trophies, xpTrophies] = await Promise.all([
+		cachified({
+			key: TROPHIES_CACHE_KEY,
+			cache,
+			ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
+			async getFreshValue() {
+				return TrophyRepository.all();
+			},
+		}),
+		TrophyRepository.findAllXp(),
+	]);
 
-	const trophies = await cachified({
-		key: TROPHIES_CACHE_KEY,
-		cache,
-		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
-		async getFreshValue() {
-			return TrophyRepository.all();
-		},
-	});
-
-	return { trophies };
+	return {
+		trophies,
+		xpTrophies: R.sortBy(xpTrophies, (trophy) =>
+			XpTrophy.VARIANTS.findIndex((variant) => variant.code === trophy.code),
+		),
+	};
 };
 
 export function clearTrophiesCache() {
