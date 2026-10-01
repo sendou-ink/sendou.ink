@@ -125,7 +125,7 @@ export async function findAllOpenRoomIdsByUserId(
 			.innerJoin("ScrimPost", "ScrimPost.id", "ScrimPostRequest.scrimPostId")
 			.select("ScrimPost.chatRoomId as id")
 			.where("ScrimPostRequestUser.userId", "=", userId)
-			.where("ScrimPostRequest.isAccepted", "=", 1)
+			.where("ScrimPostRequest.isAccepted", "=", true)
 			.where(openRoom("ScrimPost.chatRoomId"))
 			.execute(),
 	]);

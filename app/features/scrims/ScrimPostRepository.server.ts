@@ -1,8 +1,29 @@
-import { addHours, sub } from "date-fns";
-import { type Insertable, type NotNull, sql } from "kysely";
-import type { Tables, TablesInsertable } from "~/db/tables";
-import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
+import { addHours } from "date-fns";
+import {
+	type Expression,
+	type ExpressionBuilder,
+	type NotNull,
+	type SqlBool,
+	sql,
+} from "kysely";
+import { crud } from "~/db/crud";
+import {
+	defineQuery,
+	type Modifier,
+	mapRows,
+	refine,
+	sortedBy,
+	unchanged,
+} from "~/db/entity-query";
+import type { DB, TablesInsertable } from "~/db/tables";
+import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
+import {
+	actorId,
+	actorIdOrNull,
+	actorIdOrNullSafe,
+} from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
@@ -13,39 +34,275 @@ import {
 	DuplicateEntryError,
 } from "~/utils/errors";
 import {
-	type CommonUser,
+	asBoolean,
+	asJson,
+	commonUserJsonObject,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	jsonBuildObject,
+	jsonObjectFrom,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { db } from "../../db/sql";
 import { invariant } from "../../utils/invariant";
-import type { Unwrapped } from "../../utils/types";
-import type { AssociationVisibility } from "../associations/associations-types";
-import * as Scrim from "./core/Scrim";
-import type { ScrimPost, ScrimPostUser } from "./scrims-types";
-import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
+import { SCRIM } from "./scrims-constants";
+import type { LutiDiv } from "./scrims-types";
 
 const CHAT_ROOM_LIFESPAN_HOURS = 24;
 
-type InsertArgs = Pick<
+const MAX_TIME_RANGE_SECONDS = SCRIM.MAX_TIME_RANGE_MS / 1000;
+
+const postTable = crud("ScrimPost");
+const postUserTable = crud("ScrimPostUser");
+const requestTable = crud("ScrimPostRequest");
+const requestUserTable = crud("ScrimPostRequestUser");
+
+export const { deleteById } = postTable;
+export const { deleteById: deleteRequestById } = requestTable;
+
+/**
+ * Scrim posts. `startsAt` is the booked start once a request is accepted (`rangeEndsAt` then
+ * `null`), `isPrivate` whether the post is currently shown to some associations only. Posts
+ * shown to some associations only and booked scrims are hidden unless a step lifts the guard:
+ * `visibleToActor`, `involvingActor` or `includingHidden`.
+ */
+export const posts = defineQuery({
+	root: "ScrimPost",
+	select: (qb) =>
+		qb.select((eb) => [
+			"ScrimPost.id",
+			"ScrimPost.createdAt",
+			"ScrimPost.text",
+			"ScrimPost.maps",
+			"ScrimPost.chatRoomId",
+			"ScrimPost.managedByAnyone",
+			"ScrimPost.isScheduledForFuture",
+			bookedStartsAt(eb).as("startsAt"),
+			sql<
+				number | null
+			>`iif(${isBooked(eb)}, null, ${eb.ref("ScrimPost.rangeEndsAt")})`.as(
+				"rangeEndsAt",
+			),
+			asBoolean(
+				eb.not(
+					AssociationRepository.isPublic(eb, eb.ref("ScrimPost.visibility")),
+				),
+			).as("isPrivate"),
+			asJson(
+				sql<{
+					max: LutiDiv;
+					min: LutiDiv;
+				} | null>`iif(${eb.ref("ScrimPost.maxDiv")} is not null and ${eb.ref("ScrimPost.minDiv")} is not null, ${jsonBuildObject(
+					{
+						max: lutiDiv(eb.ref("ScrimPost.maxDiv")),
+						min: lutiDiv(eb.ref("ScrimPost.minDiv")),
+					},
+				)}, null)`,
+			).as("divs"),
+			jsonObjectFrom(
+				teamOf(eb.ref("ScrimPost.teamId")).$narrowType<{
+					customUrl: NotNull;
+				}>(),
+			).as("team"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("CalendarEvent")
+					.select((eventEb) => [
+						"CalendarEvent.tournamentId as id",
+						"CalendarEvent.name",
+						tournamentLogoWithDefault(eventEb).as("avatarUrl"),
+					])
+					.whereRef(
+						"CalendarEvent.tournamentId",
+						"=",
+						"ScrimPost.mapsTournamentId",
+					)
+					.$narrowType<{ id: NotNull }>(),
+			).as("mapsTournament"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("User")
+					.select((userEb) => [
+						eb.ref("ScrimPost.canceledAt").as("at"),
+						eb.ref("ScrimPost.cancelReason").as("reason"),
+						commonUserJsonObject(userEb).as("byUser"),
+					])
+					.whereRef("User.id", "=", "ScrimPost.canceledByUserId")
+					.where("ScrimPost.canceledAt", "is not", null)
+					.where("ScrimPost.cancelReason", "is not", null)
+					.$narrowType<{ at: NotNull; reason: NotNull }>(),
+			).as("canceled"),
+		]),
+	defaultSort: [["ScrimPost.startsAt", "asc"]],
+	guards: {
+		hidden: (qb) =>
+			qb.where((eb) =>
+				eb.and([
+					eb.not(isBooked(eb)),
+					AssociationRepository.isPublic(eb, eb.ref("ScrimPost.visibility")),
+				]),
+			),
+	},
+	vocabulary: ({ lift }) => ({
+		/** The actor's scrims plus the posts not booked yet that are currently shown to them. */
+		visibleToActor: () =>
+			lift("hidden", (qb) =>
+				qb.where((eb) => {
+					const viewerId = actorIdOrNull();
+					const browsable = eb.and([
+						eb.not(isBooked(eb)),
+						AssociationRepository.isVisibleToActor(eb, {
+							visibility: eb.ref("ScrimPost.visibility"),
+							contentOwnerId: ownerIdOf(eb),
+						}),
+					]);
+
+					return viewerId === null
+						? browsable
+						: eb.or([participatedBy(eb, [viewerId]), browsable]);
+				}),
+			),
+		/** The posts the actor takes part in, see {@link participatedBy}. */
+		involvingActor: () =>
+			lift("hidden", (qb) => qb.where((eb) => participatedBy(eb, [actorId()]))),
+		/** Posts any of the users takes part in, see {@link participatedBy}. */
+		involvingAnyOf: (userIds: number[]) =>
+			refine("ScrimPost", (qb) =>
+				qb.where((eb) => participatedBy(eb, userIds)),
+			),
+		/** Every post regardless of who it is shown to, for internal jobs and pages checking access themselves. */
+		includingHidden: () => lift("hidden"),
+		/**
+		 * The users of the post and the requests to it the actor may see: the accepted one once
+		 * booked, before that every request for the post's users and their own for the rest.
+		 * Without an actor (routines) only the accepted request.
+		 */
+		withParticipants: ({ cards = false }: { cards?: boolean } = {}) =>
+			participants({ cards }),
+		/**
+		 * Posts shown to the association at any point of their schedule. The actor's own posts and
+		 * booked scrims stay, as the filter only narrows what is browsed.
+		 */
+		forAssociation: (associationId: number | null) =>
+			associationId === null
+				? unchanged("ScrimPost")
+				: refine("ScrimPost", (qb) =>
+						qb.where((eb) => {
+							const viewerId = actorIdOrNull();
+
+							return eb.or([
+								AssociationRepository.mentionsAssociation(eb, {
+									visibility: eb.ref("ScrimPost.visibility"),
+									associationId,
+								}),
+								isBooked(eb),
+								...(viewerId === null
+									? []
+									: [
+											eb.exists(
+												eb
+													.selectFrom("ScrimPostUser")
+													.select("ScrimPostUser.userId")
+													.whereRef(
+														"ScrimPostUser.scrimPostId",
+														"=",
+														"ScrimPost.id",
+													)
+													.where("ScrimPostUser.userId", "=", viewerId),
+											),
+										]),
+							]);
+						}),
+					),
+		/** Posts whose start (the booked one once booked) is at `date` or later. */
+		startingFrom: (date: Date) =>
+			refine("ScrimPost", (qb) => {
+				const timestamp = dateToDatabaseTimestamp(date);
+
+				// a booked start is at most the post's flexibility after its own start, which lets the index narrow the scan
+				return qb
+					.where("ScrimPost.startsAt", ">=", timestamp - MAX_TIME_RANGE_SECONDS)
+					.where((eb) => eb(bookedStartsAt(eb), ">=", timestamp));
+			}),
+		/** Posts whose start (the booked one once booked) is before `date`. */
+		startingBefore: (date: Date) =>
+			refine("ScrimPost", (qb) => {
+				const timestamp = dateToDatabaseTimestamp(date);
+
+				return qb
+					.where("ScrimPost.startsAt", "<", timestamp)
+					.where((eb) => eb(bookedStartsAt(eb), "<", timestamp));
+			}),
+		/** Posts with an accepted request. */
+		booked: () => refine("ScrimPost", (qb) => qb.where(isBooked)),
+		soonestFirst: () => sortedBy("ScrimPost", [bookedStartsAt, "asc"]),
+		/**
+		 * Who may manage the post (its owners, or all its users when it is managed by anyone),
+		 * delete it, cancel the scrim (also the accepted request's users) and track its maps (both
+		 * sides of a booked scrim). A request's users may cancel it.
+		 */
+		withPermissions: () =>
+			mapRows(
+				"ScrimPost",
+				(row: {
+					managedByAnyone: boolean;
+					users: Array<{ id: number; isOwner: boolean }>;
+					requests: Array<ParticipantsRow["requests"][number]>;
+				}) => {
+					const userIds = row.users.map((user) => user.id);
+					const managerIds = row.managedByAnyone
+						? userIds
+						: row.users.filter((user) => user.isOwner).map((user) => user.id);
+					const acceptedRequestUserIds =
+						row.requests
+							.find((request) => request.isAccepted)
+							?.users.map((user) => user.id) ?? null;
+
+					return {
+						permissions: {
+							MANAGE_REQUESTS: managerIds,
+							DELETE_POST: managerIds,
+							CANCEL: [...managerIds, ...(acceptedRequestUserIds ?? [])],
+							MANAGE_TRACKING: acceptedRequestUserIds
+								? [...userIds, ...acceptedRequestUserIds]
+								: [],
+						},
+						requests: row.requests.map((request) => ({
+							...request,
+							permissions: { CANCEL: request.users.map((user) => user.id) },
+						})),
+					};
+				},
+			),
+	}),
+});
+
+/** The post with its participants and permissions, hidden ones included: the scrim page checks access itself. */
+export function postById(id: number) {
+	return posts()
+		.where({ id })
+		.includingHidden()
+		.withParticipants()
+		.withPermissions();
+}
+
+/** The actor's upcoming scrims that aren't canceled, booked or still looking for an opponent, soonest first. */
+export function ownUpcoming() {
+	return posts()
+		.involvingActor()
+		.where({ canceledAt: null })
+		.startingFrom(new Date())
+		.soonestFirst()
+		.withParticipants();
+}
+
+type InsertArgs = Omit<
 	TablesInsertable["ScrimPost"],
-	| "startsAt"
-	| "rangeEndsAt"
-	| "maxDiv"
-	| "minDiv"
-	| "teamId"
-	| "text"
-	| "maps"
-	| "mapsTournamentId"
+	"chatRoomId" | "canceledAt" | "canceledByUserId" | "cancelReason"
 > & {
 	/** users related to the post other than the author */
-	users: Array<Pick<Insertable<Tables["ScrimPostUser"]>, "userId" | "isOwner">>;
-	visibility: AssociationVisibility | null;
-	managedByAnyone: boolean;
-	isScheduledForFuture: boolean;
+	users: Array<Pick<TablesInsertable["ScrimPostUser"], "userId" | "isOwner">>;
 };
 
 export function insert(args: InsertArgs) {
@@ -53,40 +310,26 @@ export function insert(args: InsertArgs) {
 		throw new Error("At least one user must be provided");
 	}
 
+	const { users, ...post } = args;
+
 	return db.transaction().execute(async (trx) => {
-		const newPost = await trx
-			.insertInto("ScrimPost")
-			.values({
-				startsAt: args.startsAt,
-				rangeEndsAt: args.rangeEndsAt,
-				maxDiv: args.maxDiv,
-				minDiv: args.minDiv,
-				teamId: args.teamId,
-				text: args.text,
-				maps: args.maps,
-				mapsTournamentId: args.mapsTournamentId,
-				visibility: args.visibility ?? null,
-				managedByAnyone: args.managedByAnyone ? 1 : 0,
-				isScheduledForFuture: args.isScheduledForFuture ? 1 : 0,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
+		const { id } = await postTable.insert(post, trx);
 
-		await trx
-			.insertInto("ScrimPostUser")
-			.values(args.users.map((user) => ({ ...user, scrimPostId: newPost.id })))
-			.execute();
+		await postUserTable.insertMany(
+			users.map((user) => ({ ...user, scrimPostId: id })),
+			trx,
+		);
 
-		return newPost.id;
+		return id;
 	});
 }
 
 type InsertRequestArgs = Pick<
-	Insertable<Tables["ScrimPostRequest"]>,
+	TablesInsertable["ScrimPostRequest"],
 	"scrimPostId" | "teamId" | "message" | "startsAt"
 > & {
 	users: Array<
-		Pick<Insertable<Tables["ScrimPostRequestUser"]>, "userId" | "isOwner">
+		Pick<TablesInsertable["ScrimPostRequestUser"], "userId" | "isOwner">
 	>;
 };
 
@@ -94,388 +337,60 @@ type InsertRequestArgs = Pick<
 export function insertRequest(args: InsertRequestArgs) {
 	invariant(args.users.length > 0, "At least one user must be provided");
 
-	return db.transaction().execute(async (trx) => {
-		if (typeof args.teamId === "number") {
-			const existingTeamRequest = await trx
-				.selectFrom("ScrimPostRequest")
-				.select("id")
-				.where("scrimPostId", "=", args.scrimPostId)
-				.where("teamId", "=", args.teamId)
-				.executeTakeFirst();
+	const { users, ...request } = args;
 
-			if (existingTeamRequest) {
-				throw new DuplicateEntryError(
-					"Team already has a request for this scrim post",
-				);
-			}
+	return db.transaction().execute(async (trx) => {
+		if (
+			typeof request.teamId === "number" &&
+			(await requestTable.exists(
+				{ scrimPostId: request.scrimPostId, teamId: request.teamId },
+				trx,
+			))
+		) {
+			throw new DuplicateEntryError(
+				"Team already has a request for this scrim post",
+			);
 		}
 
-		const newRequest = await trx
-			.insertInto("ScrimPostRequest")
-			.values({
-				scrimPostId: args.scrimPostId,
-				teamId: args.teamId,
-				message: args.message,
-				startsAt: args.startsAt,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
+		const { id } = await requestTable.insert(request, trx);
 
-		await trx
-			.insertInto("ScrimPostRequestUser")
-			.values(
-				args.users.map((user) => ({
-					isOwner: user.isOwner,
-					userId: user.userId,
-					scrimPostRequestId: newRequest.id,
-				})),
-			)
-			.execute();
+		await requestUserTable.insertMany(
+			users.map((user) => ({ ...user, scrimPostRequestId: id })),
+			trx,
+		);
 
-		return newRequest.id;
+		return id;
 	});
 }
 
-export function deleteById(scrimPostId: number) {
-	return db.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
-}
-
-const baseFindQuery = db
-	.selectFrom("ScrimPost")
-	.leftJoin("Team", (join) =>
-		join
-			.onRef("ScrimPost.teamId", "=", "Team.id")
-			.on("Team.deletedAt", "is", null),
-	)
-	.leftJoin("UserSubmittedImage", "Team.avatarImgId", "UserSubmittedImage.id")
-	.leftJoin(
-		"CalendarEvent",
-		"ScrimPost.mapsTournamentId",
-		"CalendarEvent.tournamentId",
-	)
-	.select((eb) => [
-		"ScrimPost.id",
-		"ScrimPost.startsAt",
-		"ScrimPost.rangeEndsAt",
-		"ScrimPost.createdAt",
-		"ScrimPost.visibility",
-		"ScrimPost.maxDiv",
-		"ScrimPost.minDiv",
-		"ScrimPost.text",
-		"ScrimPost.maps",
-		"ScrimPost.mapsTournamentId",
-		"ScrimPost.managedByAnyone",
-		"ScrimPost.canceledAt",
-		"ScrimPost.canceledByUserId",
-		"ScrimPost.cancelReason",
-		"ScrimPost.isScheduledForFuture",
-		jsonBuildObject({
-			name: eb.ref("Team.name"),
-			customUrl: eb.ref("Team.customUrl"),
-			avatarUrl: concatUserSubmittedImagePrefix(
-				eb.ref("UserSubmittedImage.url"),
-			),
-		}).as("team"),
-		jsonBuildObject({
-			id: eb.ref("CalendarEvent.tournamentId"),
-			name: eb.ref("CalendarEvent.name"),
-			avatarUrl: tournamentLogoWithDefault(eb),
-		}).as("mapsTournament"),
-		jsonArrayFrom(
-			eb
-				.selectFrom("ScrimPostUser")
-				.innerJoin("User", "ScrimPostUser.userId", "User.id")
-				.select((userEb) => [
-					...commonUserSelect(userEb),
-					"User.inGameName",
-					"ScrimPostUser.isOwner",
-				])
-				.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
-		).as("users"),
-		jsonArrayFrom(
-			eb
-				.selectFrom("ScrimPostRequest")
-				.leftJoin("Team", (join) =>
-					join
-						.onRef("ScrimPostRequest.teamId", "=", "Team.id")
-						.on("Team.deletedAt", "is", null),
-				)
-				.leftJoin(
-					"UserSubmittedImage",
-					"Team.avatarImgId",
-					"UserSubmittedImage.id",
-				)
-				.select((innerEb) => [
-					"ScrimPostRequest.id",
-					"ScrimPostRequest.isAccepted",
-					"ScrimPostRequest.createdAt",
-					"ScrimPostRequest.message",
-					"ScrimPostRequest.startsAt",
-					jsonBuildObject({
-						name: innerEb.ref("Team.name"),
-						customUrl: innerEb.ref("Team.customUrl"),
-						avatarUrl: concatUserSubmittedImagePrefix(
-							innerEb.ref("UserSubmittedImage.url"),
-						),
-					}).as("team"),
-					jsonArrayFrom(
-						innerEb
-							.selectFrom("ScrimPostRequestUser")
-							.innerJoin("User", "ScrimPostRequestUser.userId", "User.id")
-							.select((requestUserEb) => [
-								...commonUserSelect(requestUserEb),
-								"User.inGameName",
-								"ScrimPostRequestUser.isOwner",
-							])
-							.whereRef(
-								"ScrimPostRequestUser.scrimPostRequestId",
-								"=",
-								"ScrimPostRequest.id",
-							),
-					).as("users"),
-				])
-				.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id"),
-		).as("requests"),
-	]);
-
-/** The booked start of a scrim: the accepted request's chosen time for a range post, the post's own otherwise. */
-const bookedStartsAt = sql<number>`coalesce((select "ScrimPostRequest"."startsAt" from "ScrimPostRequest" where "ScrimPostRequest"."scrimPostId" = "ScrimPost"."id" and "ScrimPostRequest"."isAccepted" = 1), "ScrimPost"."startsAt")`;
-
-function findMany() {
-	const min = sub(new Date(), { hours: 3 });
-
-	return baseFindQuery
-		.orderBy("startsAt", "asc")
-		.where("ScrimPost.startsAt", ">=", dateToDatabaseTimestamp(min))
-		.execute();
-}
-
-const mapDBRowToScrimPost = (
-	row: Unwrapped<typeof findMany> & { chatRoomId?: number | null },
-): ScrimPost => {
-	const someRequestIsAccepted = row.requests.some(
-		(request) => request.isAccepted,
-	);
-
-	// once one is accepted, rest are not relevant
-	const requests = someRequestIsAccepted
-		? row.requests.filter((request) => request.isAccepted)
-		: row.requests;
-
-	const users: ScrimPostUser[] = row.users.map((user) => ({
-		...user,
-		isOwner: Boolean(user.isOwner),
-	}));
-
-	const ownerIds = users.filter((user) => user.isOwner).map((user) => user.id);
-	const managerIds = row.managedByAnyone
-		? users.map((user) => user.id)
-		: ownerIds;
-
-	let canceled: ScrimPost["canceled"] = null;
-	if (row.canceledAt && row.cancelReason) {
-		let cancelingUser = users.find((u) => u.id === row.canceledByUserId);
-		if (!cancelingUser) {
-			const allRequestUsers = requests.flatMap((request) => request.users);
-			const found = allRequestUsers.find((u) => u.id === row.canceledByUserId);
-			if (found) {
-				cancelingUser = { ...found, isOwner: Boolean(found.isOwner) };
-			}
-		}
-		if (cancelingUser) {
-			canceled = {
-				at: row.canceledAt,
-				byUser: cancelingUser,
-				reason: row.cancelReason,
-			};
-		}
-	}
-
-	const result = {
-		id: row.id,
-		startsAt: row.startsAt,
-		rangeEndsAt: row.rangeEndsAt,
-		createdAt: row.createdAt,
-		visibility: row.visibility,
-		text: row.text,
-		isScheduledForFuture: Boolean(row.isScheduledForFuture),
-		divs:
-			typeof row.maxDiv === "number" && typeof row.minDiv === "number"
-				? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
-				: null,
-		maps: row.maps,
-		mapsTournament: row.mapsTournament.id
-			? {
-					id: row.mapsTournament.id,
-					name: row.mapsTournament.name!,
-					avatarUrl: row.mapsTournament.avatarUrl,
-				}
-			: null,
-		chatRoomId: row.chatRoomId ?? null,
-		team: row.team.name
-			? {
-					name: row.team.name,
-					customUrl: row.team.customUrl!,
-					avatarUrl: row.team.avatarUrl,
-				}
-			: null,
-		requests: requests.map((request) => {
-			return {
-				id: request.id,
-				isAccepted: Boolean(request.isAccepted),
-				createdAt: request.createdAt,
-				message: request.message,
-				startsAt: request.startsAt,
-				team: request.team.name
-					? {
-							name: request.team.name,
-							customUrl: request.team.customUrl!,
-							avatarUrl: request.team.avatarUrl,
-						}
-					: null,
-				users: request.users.map((user) => ({
-					...user,
-					isOwner: Boolean(user.isOwner),
-				})),
-				permissions: {
-					CANCEL: request.users.map((u) => u.id),
-				},
-			};
-		}),
-		users,
-		permissions: {
-			MANAGE_REQUESTS: managerIds,
-			DELETE_POST: managerIds,
-			CANCEL: managerIds.concat(requests.at(0)?.users.map((u) => u.id) ?? []),
-			MANAGE_TRACKING: someRequestIsAccepted
-				? users
-						.map((u) => u.id)
-						.concat(requests[0]?.users.map((u) => u.id) ?? [])
-				: [],
-		},
-		managedByAnyone: Boolean(row.managedByAnyone),
-		canceled,
-	};
-
-	if (!Scrim.isAccepted(result)) {
-		return result;
-	}
-
-	return {
-		...result,
-		startsAt: Scrim.getStartTime(result),
-		rangeEndsAt: null,
-	};
-};
-
-/** Posts owning the given chat rooms, with the users of the post and of its accepted request. */
-export async function findAllByChatRoomIds(chatRoomIds: number[]) {
-	if (chatRoomIds.length === 0) return [];
-
-	return db
-		.selectFrom("ScrimPost")
-		.select((eb) => [
-			"ScrimPost.id",
-			"ScrimPost.chatRoomId",
-			"ScrimPost.startsAt",
-			jsonArrayFrom(
-				eb
-					.selectFrom("ScrimPostUser")
-					.select("ScrimPostUser.userId")
-					.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
-			).as("postUsers"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("ScrimPostRequestUser")
-					.innerJoin(
-						"ScrimPostRequest",
-						"ScrimPostRequest.id",
-						"ScrimPostRequestUser.scrimPostRequestId",
-					)
-					.select("ScrimPostRequestUser.userId")
-					.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
-					.where("ScrimPostRequest.isAccepted", "=", 1),
-			).as("acceptedRequestUsers"),
-			eb
-				.selectFrom("ScrimPostRequest")
-				.select("ScrimPostRequest.startsAt")
-				.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
-				.where("ScrimPostRequest.isAccepted", "=", 1)
-				.limit(1)
-				.$asScalar()
-				.as("acceptedRequestStartsAt"),
-		])
-		.where("ScrimPost.chatRoomId", "in", chatRoomIds)
-		.$narrowType<{ chatRoomId: NotNull }>()
-		.execute();
-}
-
-export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
-	const row = await baseFindQuery
-		.select(["ScrimPost.chatRoomId"])
-		.where("ScrimPost.id", "=", scrimPostId)
-		.executeTakeFirst();
-
-	if (!row) return null;
-
-	return mapDBRowToScrimPost(row);
-}
-
-export async function findAllRelevant(): Promise<ScrimPost[]> {
-	const userId = actorIdOrNull();
-	const rows = await findMany();
-
-	const mapped = rows
-		.map(mapDBRowToScrimPost)
-		.filter(
-			(post) =>
-				!Scrim.isAccepted(post) ||
-				(userId && Scrim.isParticipating(post, userId)),
-		);
-
-	if (!userId) return mapped.map((post) => ({ ...post, requests: [] }));
-
-	return mapped.map(getPostRequestCensor(userId));
-}
-
+/**
+ * Books the scrim with the request and opens its chat room. @throws {ConcurrentModificationError}
+ * if another request for the post was accepted first.
+ */
 export function acceptRequest(scrimPostRequestId: number) {
 	return db.transaction().execute(async (trx) => {
-		const target = await trx
-			.selectFrom("ScrimPostRequest")
-			.select("scrimPostId")
-			.where("id", "=", scrimPostRequestId)
-			.executeTakeFirstOrThrow();
+		const request = await requestTable.findById(scrimPostRequestId, trx);
+		invariant(request, "Scrim post request not found");
 
-		await trx
-			.updateTable("ScrimPostRequest")
-			.set({ isAccepted: 1 })
-			.where("id", "=", scrimPostRequestId)
-			.execute();
+		await requestTable.updateById(
+			scrimPostRequestId,
+			{ isAccepted: true },
+			trx,
+		);
 
-		const acceptedRequests = await trx
-			.selectFrom("ScrimPostRequest")
-			.select("id")
-			.where("scrimPostId", "=", target.scrimPostId)
-			.where("isAccepted", "=", 1)
-			.execute();
-
-		if (acceptedRequests.length > 1) {
+		const acceptedCount = await requestTable.count(
+			{ scrimPostId: request.scrimPostId, isAccepted: true },
+			trx,
+		);
+		if (acceptedCount > 1) {
 			throw new ConcurrentModificationError(
 				"Another request for this scrim post was already accepted",
 			);
 		}
 
 		// the scrim is now scheduled, so its chat becomes available
-		const request = await trx
-			.selectFrom("ScrimPostRequest")
-			.select("ScrimPostRequest.startsAt")
-			.where("id", "=", scrimPostRequestId)
-			.executeTakeFirstOrThrow();
-		const post = await trx
-			.selectFrom("ScrimPost")
-			.select(["ScrimPost.chatRoomId", "ScrimPost.startsAt"])
-			.where("ScrimPost.id", "=", target.scrimPostId)
-			.executeTakeFirstOrThrow();
+		const post = await postTable.findById(request.scrimPostId, trx);
+		invariant(post, "Scrim post not found");
 
 		if (post.chatRoomId === null) {
 			const scrimStartsAt = databaseTimestampToDate(
@@ -488,40 +403,25 @@ export function acceptRequest(scrimPostRequestId: number) {
 				},
 				trx,
 			);
-			await trx
-				.updateTable("ScrimPost")
-				.set({ chatRoomId: chatRoom.id })
-				.where("ScrimPost.id", "=", target.scrimPostId)
-				.execute();
+			await postTable.updateById(post.id, { chatRoomId: chatRoom.id }, trx);
 		}
 	});
 }
 
-export function deleteRequest(scrimPostRequestId: number) {
-	return db
-		.deleteFrom("ScrimPostRequest")
-		.where("id", "=", scrimPostRequestId)
-		.execute();
-}
-
+/** Cancels the booked scrim, filling `canceledByUserId` with the actor. */
 export function cancelScrim(id: number, reason: string) {
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.updateTable("ScrimPost")
-			.set({
+		await postTable.update(
+			{ id, canceledAt: null },
+			{
 				canceledAt: databaseTimestampNow(),
 				canceledByUserId: actorId(),
 				cancelReason: reason,
-			})
-			.where("id", "=", id)
-			.where("canceledAt", "is", null)
-			.execute();
+			},
+			trx,
+		);
 
-		const post = await trx
-			.selectFrom("ScrimPost")
-			.select("ScrimPost.chatRoomId")
-			.where("ScrimPost.id", "=", id)
-			.executeTakeFirst();
+		const post = await postTable.findById(id, trx);
 
 		// the scrim is not happening anymore, so its chat belongs with the past ones
 		await ChatRepository.updateRoomsInactive(
@@ -532,79 +432,10 @@ export function cancelScrim(id: number, reason: string) {
 	});
 }
 
-/** Accepted scrims starting within [startTime, endTime), excluding ones created after `excludeRecentlyCreated`. */
-export async function findAcceptedScrimsBetweenTwoTimestamps({
-	startTime,
-	endTime,
-	excludeRecentlyCreated,
-}: {
-	startTime: Date;
-	endTime: Date;
-	excludeRecentlyCreated: Date;
-}) {
-	const rows = await baseFindQuery
-		.where(bookedStartsAt, ">=", dateToDatabaseTimestamp(startTime))
-		.where(bookedStartsAt, "<", dateToDatabaseTimestamp(endTime))
-		.where("ScrimPost.canceledAt", "is", null)
-		.where(
-			"ScrimPost.createdAt",
-			"<",
-			dateToDatabaseTimestamp(excludeRecentlyCreated),
-		)
-		.execute();
-
-	return rows.map(mapDBRowToScrimPost).filter((post) => Scrim.isAccepted(post));
-}
-
-/** Accepted, uncanceled scrims of the users whose resolved start (accepted request's time for a range post, else the post's) falls in the window; one row per participating user per scrim. */
-export async function findAllAcceptedByUserIds({
-	userIds,
-	startsAt,
-	endsAt,
-}: {
-	userIds: Array<number>;
-	startsAt: number;
-	endsAt: number;
-}) {
-	if (userIds.length === 0) return [];
-
-	const resolvedStartsAt = sql<number>`coalesce("ScrimPostRequest"."startsAt", "ScrimPost"."startsAt")`;
-
-	const acceptedInWindow = db
-		.selectFrom("ScrimPost")
-		.innerJoin("ScrimPostRequest", (join) =>
-			join
-				.onRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
-				.on("ScrimPostRequest.isAccepted", "=", 1),
-		)
-		.where("ScrimPost.canceledAt", "is", null)
-		.where(resolvedStartsAt, ">=", startsAt)
-		.where(resolvedStartsAt, "<=", endsAt);
-
-	const [postSideUsers, requestSideUsers] = await Promise.all([
-		acceptedInWindow
-			.innerJoin("ScrimPostUser", "ScrimPostUser.scrimPostId", "ScrimPost.id")
-			.select(["ScrimPostUser.userId", resolvedStartsAt.as("startsAt")])
-			.where("ScrimPostUser.userId", "in", userIds)
-			.execute(),
-		acceptedInWindow
-			.innerJoin(
-				"ScrimPostRequestUser",
-				"ScrimPostRequestUser.scrimPostRequestId",
-				"ScrimPostRequest.id",
-			)
-			.select(["ScrimPostRequestUser.userId", resolvedStartsAt.as("startsAt")])
-			.where("ScrimPostRequestUser.userId", "in", userIds)
-			.execute(),
-	]);
-
-	return [...postSideUsers, ...requestSideUsers];
-}
-
 /**
- * Pending (unaccepted, uncanceled, future) posts and requests involving the users that overlap
- * [startTime, endTime], for auto-cleaning when a scrim is scheduled: posts come with member ids
- * for notifying, requests are deleted silently.
+ * Pending (not booked, uncanceled, future) posts of the users and their pending requests that
+ * overlap [startTime, endTime], for clearing them out when a scrim is booked: posts come with
+ * member ids for notifying, requests are deleted silently.
  */
 export async function findPendingOverlapsForUsers({
 	userIds,
@@ -618,157 +449,290 @@ export async function findPendingOverlapsForUsers({
 	/** window end, database timestamp (seconds) */
 	endTime: number;
 	excludePostId: number;
-}): Promise<{
-	posts: Array<{ id: number; startsAt: number; memberIds: number[] }>;
-	requestIds: number[];
-}> {
+}) {
 	if (userIds.length === 0) {
 		return { posts: [], requestIds: [] };
 	}
 
-	const now = dateToDatabaseTimestamp(new Date());
-
-	const rows = await baseFindQuery
+	const pendingPosts = db
+		.selectFrom("ScrimPost")
+		.where("ScrimPost.id", "!=", excludePostId)
 		.where("ScrimPost.canceledAt", "is", null)
-		.where("ScrimPost.startsAt", ">=", now)
-		.where((eb) =>
-			eb.or([
-				eb.exists(
-					eb
-						.selectFrom("ScrimPostUser")
-						.select("ScrimPostUser.scrimPostId")
-						.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
-						.where("ScrimPostUser.userId", "in", userIds),
-				),
-				eb.exists(
-					eb
-						.selectFrom("ScrimPostRequest")
-						.innerJoin(
-							"ScrimPostRequestUser",
-							"ScrimPostRequestUser.scrimPostRequestId",
-							"ScrimPostRequest.id",
-						)
-						.select("ScrimPostRequest.scrimPostId")
-						.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
-						.where("ScrimPostRequestUser.userId", "in", userIds),
-				),
-			]),
+		.where("ScrimPost.startsAt", ">=", databaseTimestampNow())
+		.where((eb) => eb.not(isBooked(eb)));
+
+	const overlappingPosts = await pendingPosts
+		.select((eb) => [
+			"ScrimPost.id",
+			"ScrimPost.startsAt",
+			jsonArrayFrom(
+				eb
+					.selectFrom("ScrimPostUser")
+					.select("ScrimPostUser.userId")
+					.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
+			).as("members"),
+		])
+		.where("ScrimPost.startsAt", "<=", endTime)
+		.where(
+			(eb) => eb.fn.coalesce("ScrimPost.rangeEndsAt", "ScrimPost.startsAt"),
+			">=",
+			startTime,
 		)
-		.execute();
-
-	const userIdSet = new Set(userIds);
-
-	const posts: Array<{ id: number; startsAt: number; memberIds: number[] }> =
-		[];
-	const requestIds: number[] = [];
-
-	for (const post of rows
-		.map(mapDBRowToScrimPost)
-		.filter((candidate) => !Scrim.isAccepted(candidate))) {
-		if (post.id === excludePostId) continue;
-
-		const postInvolvesUser = post.users.some((u) => userIdSet.has(u.id));
-		const postIntervalOverlaps =
-			post.startsAt <= endTime &&
-			(post.rangeEndsAt ?? post.startsAt) >= startTime;
-		if (postInvolvesUser && postIntervalOverlaps) {
-			posts.push({
-				id: post.id,
-				startsAt: post.startsAt,
-				memberIds: post.users.map((u) => u.id),
-			});
-		}
-
-		for (const request of post.requests) {
-			if (request.isAccepted) continue;
-			const effectiveAt = request.startsAt ?? post.startsAt;
-			const requestInvolvesUser = request.users.some((u) =>
-				userIdSet.has(u.id),
-			);
-			if (
-				requestInvolvesUser &&
-				effectiveAt >= startTime &&
-				effectiveAt <= endTime
-			) {
-				requestIds.push(request.id);
-			}
-		}
-	}
-
-	return { posts, requestIds };
-}
-
-export type SidebarScrim = {
-	id: number;
-	startsAt: number;
-	opponentName: string | null;
-	opponentAvatarUrl: string | null;
-	/** Owner of an opponent without a team, whose avatar stands in for a team's logo. */
-	opponentUser: CommonUser | null;
-	status: "booked" | "looking" | "requestPending";
-};
-
-export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
-	const now = dateToDatabaseTimestamp(new Date());
-
-	const rows = await baseFindQuery
-		.where("ScrimPost.canceledAt", "is", null)
-		.where(bookedStartsAt, ">=", now)
 		.where("ScrimPost.id", "in", (eb) =>
 			eb
 				.selectFrom("ScrimPostUser")
 				.select("ScrimPostUser.scrimPostId")
-				.where("ScrimPostUser.userId", "=", userId)
-				.union(
-					eb
-						.selectFrom("ScrimPostRequest")
-						.innerJoin(
-							"ScrimPostRequestUser",
-							"ScrimPostRequestUser.scrimPostRequestId",
-							"ScrimPostRequest.id",
-						)
-						.select("ScrimPostRequest.scrimPostId")
-						.where("ScrimPostRequestUser.userId", "=", userId),
-				),
+				.where("ScrimPostUser.userId", "in", userIds),
 		)
-		.orderBy(bookedStartsAt, "asc")
 		.execute();
 
-	return rows
-		.map(mapDBRowToScrimPost)
-		.filter(
-			(post) => !Scrim.isAccepted(post) || Scrim.isParticipating(post, userId),
+	const overlappingRequests = await pendingPosts
+		.innerJoin(
+			"ScrimPostRequest",
+			"ScrimPostRequest.scrimPostId",
+			"ScrimPost.id",
 		)
-		.map((post) => {
-			const isAccepted = Scrim.isAccepted(post);
-			const userIsInPost = post.users.some((u) => u.id === userId);
+		.select("ScrimPostRequest.id")
+		.where(
+			(eb) => eb.fn.coalesce("ScrimPostRequest.startsAt", "ScrimPost.startsAt"),
+			">=",
+			startTime,
+		)
+		.where(
+			(eb) => eb.fn.coalesce("ScrimPostRequest.startsAt", "ScrimPost.startsAt"),
+			"<=",
+			endTime,
+		)
+		.where("ScrimPostRequest.id", "in", (eb) =>
+			eb
+				.selectFrom("ScrimPostRequestUser")
+				.select("ScrimPostRequestUser.scrimPostRequestId")
+				.where("ScrimPostRequestUser.userId", "in", userIds),
+		)
+		.execute();
 
-			if (!isAccepted) {
-				return {
-					id: post.id,
-					startsAt: post.startsAt,
-					opponentName: null,
-					opponentAvatarUrl: null,
-					opponentUser: null,
-					status: userIsInPost
-						? ("looking" as const)
-						: ("requestPending" as const),
-				};
-			}
+	return {
+		posts: overlappingPosts.map((post) => ({
+			id: post.id,
+			startsAt: post.startsAt,
+			memberIds: post.members.map((member) => member.userId),
+		})),
+		requestIds: overlappingRequests.map((request) => request.id),
+	};
+}
 
-			const opponent = userIsInPost
-				? post.requests[0]
-				: { team: post.team, users: post.users };
-			const opponentTeam = opponent?.team;
-			const opponentOwner = opponent?.users.find((u) => u.isOwner);
+type ParticipantsRow =
+	ReturnType<typeof participants> extends Modifier<"ScrimPost", infer Added>
+		? Added
+		: never;
 
-			return {
-				id: post.id,
-				startsAt: post.startsAt,
-				opponentName: opponentTeam?.name ?? opponentOwner?.username ?? null,
-				opponentAvatarUrl: opponentTeam?.avatarUrl ?? null,
-				opponentUser: opponentTeam ? null : (opponentOwner ?? null),
-				status: "booked" as const,
-			};
-		});
+function participants({ cards }: { cards: boolean }) {
+	return refine("ScrimPost", (qb) =>
+		qb.select((eb) => {
+			const viewerId = actorIdOrNullSafe();
+
+			return [
+				jsonArrayFrom(
+					eb
+						.selectFrom("ScrimPostUser")
+						.innerJoin("User", "User.id", "ScrimPostUser.userId")
+						.select((userEb) => [
+							...commonUserSelect(userEb),
+							"User.inGameName",
+							"ScrimPostUser.isOwner",
+						])
+						.$if(cards, (userQb) =>
+							userQb.select((userEb) =>
+								UserCardRepository.cardOf(userEb.ref("User.id")).as("card"),
+							),
+						)
+						.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
+				).as("users"),
+				jsonArrayFrom(
+					eb
+						.selectFrom("ScrimPostRequest")
+						.select((requestEb) => [
+							"ScrimPostRequest.id",
+							"ScrimPostRequest.isAccepted",
+							"ScrimPostRequest.createdAt",
+							"ScrimPostRequest.message",
+							"ScrimPostRequest.startsAt",
+							jsonObjectFrom(
+								teamOf(requestEb.ref("ScrimPostRequest.teamId")).$narrowType<{
+									customUrl: NotNull;
+								}>(),
+							).as("team"),
+							jsonArrayFrom(
+								requestEb
+									.selectFrom("ScrimPostRequestUser")
+									.innerJoin("User", "User.id", "ScrimPostRequestUser.userId")
+									.select((userEb) => [
+										...commonUserSelect(userEb),
+										"User.inGameName",
+										"ScrimPostRequestUser.isOwner",
+									])
+									.$if(cards, (userQb) =>
+										userQb.select((userEb) =>
+											UserCardRepository.cardOf(userEb.ref("User.id")).as(
+												"card",
+											),
+										),
+									)
+									.whereRef(
+										"ScrimPostRequestUser.scrimPostRequestId",
+										"=",
+										"ScrimPostRequest.id",
+									),
+							).as("users"),
+						])
+						.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+						.where((requestEb) =>
+							requestEb.or([
+								requestEb("ScrimPostRequest.isAccepted", "=", true),
+								...(viewerId === null
+									? []
+									: [
+											requestEb.and([
+												requestEb.not(isBooked(eb)),
+												requestEb.or([
+													requestEb.exists(
+														requestEb
+															.selectFrom("ScrimPostUser")
+															.select("ScrimPostUser.userId")
+															.whereRef(
+																"ScrimPostUser.scrimPostId",
+																"=",
+																"ScrimPost.id",
+															)
+															.where("ScrimPostUser.userId", "=", viewerId),
+													),
+													requestEb.exists(
+														requestEb
+															.selectFrom("ScrimPostRequestUser")
+															.select("ScrimPostRequestUser.userId")
+															.whereRef(
+																"ScrimPostRequestUser.scrimPostRequestId",
+																"=",
+																"ScrimPostRequest.id",
+															)
+															.where(
+																"ScrimPostRequestUser.userId",
+																"=",
+																viewerId,
+															),
+													),
+												]),
+											]),
+										]),
+							]),
+						)
+						.orderBy("ScrimPostRequest.id", "asc"),
+				).as("requests"),
+			];
+		}),
+	);
+}
+
+function isBooked(eb: ExpressionBuilder<DB, "ScrimPost">) {
+	return eb.exists(
+		eb
+			.selectFrom("ScrimPostRequest")
+			.select("ScrimPostRequest.id")
+			.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+			.where("ScrimPostRequest.isAccepted", "=", true),
+	);
+}
+
+/** The accepted request's chosen time for a range post, the post's own start otherwise. */
+function bookedStartsAt(eb: ExpressionBuilder<DB, "ScrimPost">) {
+	return eb.fn.coalesce(
+		eb
+			.selectFrom("ScrimPostRequest")
+			.select("ScrimPostRequest.startsAt")
+			.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+			.where("ScrimPostRequest.isAccepted", "=", true)
+			.limit(1)
+			.$asScalar(),
+		eb.ref("ScrimPost.startsAt"),
+	);
+}
+
+/**
+ * Whether any of the users takes part in the post: one of its users, or of a request to it that
+ * is accepted or made while it isn't booked yet. A request passed over for another is not.
+ */
+function participatedBy(
+	eb: ExpressionBuilder<DB, "ScrimPost">,
+	userIds: number[],
+): Expression<SqlBool> {
+	// not correlated to the post, so SQLite builds the id list once per query
+	return eb(
+		"ScrimPost.id",
+		"in",
+		eb
+			.selectFrom("ScrimPostUser")
+			.select("ScrimPostUser.scrimPostId")
+			.where("ScrimPostUser.userId", "in", userIds)
+			.union(
+				eb
+					.selectFrom("ScrimPostRequestUser")
+					.innerJoin(
+						"ScrimPostRequest",
+						"ScrimPostRequest.id",
+						"ScrimPostRequestUser.scrimPostRequestId",
+					)
+					.select("ScrimPostRequest.scrimPostId")
+					.where("ScrimPostRequestUser.userId", "in", userIds)
+					.where((requestEb) =>
+						requestEb.or([
+							requestEb("ScrimPostRequest.isAccepted", "=", true),
+							requestEb.not(
+								requestEb.exists(
+									requestEb
+										.selectFrom("ScrimPostRequest as AcceptedRequest")
+										.select("AcceptedRequest.id")
+										.whereRef(
+											"AcceptedRequest.scrimPostId",
+											"=",
+											"ScrimPostRequest.scrimPostId",
+										)
+										.where("AcceptedRequest.isAccepted", "=", true),
+								),
+							),
+						]),
+					),
+			),
+	);
+}
+
+function ownerIdOf(eb: ExpressionBuilder<DB, "ScrimPost">) {
+	return eb
+		.selectFrom("ScrimPostUser")
+		.select("ScrimPostUser.userId")
+		.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
+		.where("ScrimPostUser.isOwner", "=", true)
+		.limit(1)
+		.$asScalar();
+}
+
+/** The team's card fields, `null` once the team is deleted. Correlated through `teamId`, so it works under any root. */
+function teamOf(teamId: Expression<number | null>) {
+	return db
+		.selectFrom("Team")
+		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
+		.select((teamEb) => [
+			"Team.name",
+			"Team.customUrl",
+			concatUserSubmittedImagePrefix(teamEb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
+		])
+		.where("Team.id", "=", teamId)
+		.where("Team.deletedAt", "is", null);
+}
+
+/** The division stored as a number as it is shown, 0 being "X". */
+function lutiDiv(div: Expression<number | null>) {
+	// raw, as Kysely can't infer the division names from the numbers
+	return sql<LutiDiv>`iif(${div} = 0, 'X', cast(${div} as text))`;
 }

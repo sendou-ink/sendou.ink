@@ -46,7 +46,7 @@ test.describe("Events", () => {
 		});
 		await factories.ScrimPostFactory.create({
 			startsAt,
-			users: [{ userId: NZAP_TEST_ID, isOwner: 1 }],
+			users: [{ userId: NZAP_TEST_ID, isOwner: true }],
 		});
 
 		await impersonate(page, NZAP_TEST_ID);

@@ -1,7 +1,9 @@
 import { add, sub } from "date-fns";
+import { refine } from "../db/entity-query";
 import { notify } from "../features/notifications/core/notify.server";
 import * as Scrim from "../features/scrims/core/Scrim";
 import * as ScrimPostRepository from "../features/scrims/ScrimPostRepository.server";
+import { dateToDatabaseTimestamp } from "../utils/dates";
 import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
@@ -10,12 +12,7 @@ export const NotifyScrimStartingSoonRoutine = new Routine({
 	func: async () => {
 		const now = new Date();
 
-		const scrims =
-			await ScrimPostRepository.findAcceptedScrimsBetweenTwoTimestamps({
-				startTime: now,
-				endTime: add(now, { hours: 1 }),
-				excludeRecentlyCreated: sub(now, { hours: 2 }),
-			});
+		const scrims = await startingWithinTheHour(now).execute();
 
 		for (const scrim of scrims) {
 			const acceptedRequest = scrim.requests.find((r) => r.isAccepted);
@@ -46,3 +43,23 @@ export const NotifyScrimStartingSoonRoutine = new Routine({
 		}
 	},
 });
+
+/** Booked scrims starting within the hour, posts made in the last two hours left out. */
+function startingWithinTheHour(now: Date) {
+	return ScrimPostRepository.posts()
+		.includingHidden()
+		.booked()
+		.where({ canceledAt: null })
+		.startingFrom(now)
+		.startingBefore(add(now, { hours: 1 }))
+		.with(
+			refine("ScrimPost", (qb) =>
+				qb.where(
+					"ScrimPost.createdAt",
+					"<",
+					dateToDatabaseTimestamp(sub(now, { hours: 2 })),
+				),
+			),
+		)
+		.withParticipants();
+}

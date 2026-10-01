@@ -82,7 +82,7 @@ type Generated<T> =
 /** Stored as JSON text; read, inserted and updated as the payload, the dialect encodes it. */
 export type JSONColumn<T> = ColumnType<T, T, T>;
 
-/** In SQLite booleans are presented as 0 (false) and 1 (true) */
+/** In SQLite booleans are presented as 0 (false) and 1 (true). Columns typed `boolean` instead are converted by the dialect, see `boolean-columns.ts`. */
 export type DBBoolean = 0 | 1;
 
 export interface Team {
@@ -240,7 +240,7 @@ export interface BuildWeapon {
 	weaponSplId: MainWeaponId;
 	/** Alt skins collapse to their base weapon (e.g. Hero Shot Replica `45` → Splattershot `40`). Indexed for the builds-by-weapon, popular, and stats queries so they can filter `= ?` against a covering index instead of `IN (alt skins…)`. */
 	canonicalWeaponSplId: MainWeaponId;
-	/** Mirror of `Build.updatedAt`. Denormalized so the `(canonicalWeaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
+	/** Mirror of `Build.updatedAt` (can trail it by a second after an edit). Denormalized so the `(canonicalWeaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
 	updatedAt: number;
 	/** Per-weapon sort priority: `plusTier * 2 + (this weapon is top500 ? 0 : 1)` for public builds, NULL for private. */
 	sortValue: number | null;
@@ -1198,12 +1198,12 @@ export interface ScrimPost {
 	chatRoomId: number | null;
 	/** Refers to the team looking for the team (can also be a pick-up) */
 	teamId: number | null;
-	managedByAnyone: Generated<DBBoolean>;
+	managedByAnyone: Generated<boolean>;
 	canceledAt: number | null;
 	canceledByUserId: number | null;
 	cancelReason: string | null;
 	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
-	isScheduledForFuture: Generated<DBBoolean>;
+	isScheduledForFuture: Generated<boolean>;
 	/** Maps/modes the scrim is available for. If null means no preference unless "mapsTournamentId" is set */
 	maps: "SZ" | "ALL" | "RANKED" | null;
 	/** If set, specifies the maps of a tournament to play */
@@ -1236,7 +1236,7 @@ export interface ScrimMap {
 export interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
-	isOwner: DBBoolean;
+	isOwner: boolean;
 }
 
 export interface ScrimPickupRoster {
@@ -1259,14 +1259,14 @@ export interface ScrimPostRequest {
 	message: string | null;
 	/** Specific time selected by requester (required when post has rangeEndsAt) */
 	startsAt: number | null;
-	isAccepted: Generated<DBBoolean>;
+	isAccepted: Generated<boolean>;
 	createdAt: Generated<number>;
 }
 
 export interface ScrimPostRequestUser {
 	scrimPostRequestId: number;
 	userId: number;
-	isOwner: DBBoolean;
+	isOwner: boolean;
 }
 
 export interface Association {

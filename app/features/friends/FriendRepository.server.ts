@@ -458,29 +458,6 @@ export async function findFriendsByUserId(userId: number) {
 		.execute();
 }
 
-export async function findFriendIds(userId: number): Promise<number[]> {
-	const rows = await db
-		.selectFrom("Friendship")
-		.select((eb) =>
-			eb
-				.case()
-				.when("Friendship.userOneId", "=", userId)
-				.then(eb.ref("Friendship.userTwoId"))
-				.else(eb.ref("Friendship.userOneId"))
-				.end()
-				.as("friendId"),
-		)
-		.where((eb) =>
-			eb.or([
-				eb("Friendship.userOneId", "=", userId),
-				eb("Friendship.userTwoId", "=", userId),
-			]),
-		)
-		.execute();
-
-	return rows.map((row) => row.friendId);
-}
-
 export async function findFriendship({
 	userOneId,
 	userTwoId,

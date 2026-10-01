@@ -13,12 +13,13 @@ import * as ScrimMapByMap from "../core/ScrimMapByMap";
 import * as ScrimMapListRepository from "../ScrimMapListRepository.server";
 import * as ScrimMapRepository from "../ScrimMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import type { ScrimPost } from "../scrims-types";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
 	const post = notFoundIfNullish(
-		await ScrimPostRepository.findById(Number(params.id)),
+		await ScrimPostRepository.postById(Number(params.id)).executeTakeFirst(),
 	);
 
 	if (!Scrim.isAccepted(post)) {
@@ -48,6 +49,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const mapByMap = await resolveMapByMap({ post, user });
 
 	return {
+		// xxx: cards through the chain (withParticipants with cards + friend codes) instead, once
+		// MatchRosterTab (shared with the tournament and SendouQ match pages) takes them from its members
 		...(await UserCardRepository.findAllByUserIds({
 			userIds: participantIds,
 			include: { friendCode: true },
@@ -70,7 +73,7 @@ async function resolveMapByMap({
 	post,
 	user,
 }: {
-	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
+	post: ScrimPost;
 	user: AuthenticatedUser;
 }) {
 	const [mapLists, maps] = await Promise.all([
@@ -82,7 +85,7 @@ async function resolveMapByMap({
 	const currentMap = maps.find((m) => m.reportedAt === null) ?? null;
 	const viewerSide = Scrim.sideOfUser(post, user.id);
 	const locked = Scrim.isTrackingLocked({
-		startTime: Scrim.getStartTime(post),
+		startTime: post.startsAt,
 		maps,
 		mapLists,
 	});

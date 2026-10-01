@@ -17,7 +17,7 @@ import type {
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import { jsonArrayFrom } from "~/utils/kysely.server";
 import { MAIN_SLOT_AP } from "../build-analyzer/analyzer-constants";
@@ -124,6 +124,9 @@ export const builds = defineQuery({
 });
 
 const buildTable = crud("Build");
+const buildWeaponTable = crud("BuildWeapon");
+const buildAbilitySumTable = crud("BuildAbilitySum");
+const buildWeaponAbilityTable = crud("BuildWeaponAbility");
 
 export const { deleteById } = buildTable;
 
@@ -147,15 +150,13 @@ interface CreateArgs {
 	isPrivate: TablesInsertable["Build"]["isPrivate"];
 }
 
-// xxx: why not crud?
 export async function insert(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
 		const computed = await computeBuildData(args, trx);
-		const updatedAt = dateToDatabaseTimestamp(new Date());
+		const updatedAt = databaseTimestampNow();
 
-		const { id: buildId } = await trx
-			.insertInto("Build")
-			.values({
+		const { id: buildId } = await buildTable.insert(
+			{
 				ownerId: args.ownerId,
 				title: args.title,
 				description: args.description,
@@ -167,18 +168,13 @@ export async function insert(args: CreateArgs) {
 				abilities: args.abilities,
 				abilitiesSignature: computed.abilitiesSignature,
 				updatedAt,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
+			},
+			trx,
+		);
 
 		await insertBuildChildren({ buildId, args, computed, updatedAt }, trx);
 
-		const { count } = await trx
-			.selectFrom("Build")
-			.select((eb) => eb.fn.countAll<number>().as("count"))
-			.where("ownerId", "=", args.ownerId)
-			.executeTakeFirstOrThrow();
-
+		const count = await buildTable.count({ ownerId: args.ownerId }, trx);
 		if (count > BUILD.MAX_COUNT) {
 			throw new LimitReachedError("Max amount of builds reached");
 		}
@@ -187,15 +183,13 @@ export async function insert(args: CreateArgs) {
 	});
 }
 
-// xxx: why not crud?
 export async function update(args: CreateArgs & { id: number }) {
 	return db.transaction().execute(async (trx) => {
 		const computed = await computeBuildData(args, trx);
-		const updatedAt = dateToDatabaseTimestamp(new Date());
 
-		await trx
-			.updateTable("Build")
-			.set({
+		await buildTable.updateById(
+			args.id,
+			{
 				title: args.title,
 				description: args.description,
 				modes: serializeModes(args.modes),
@@ -205,26 +199,16 @@ export async function update(args: CreateArgs & { id: number }) {
 				isPrivate: args.isPrivate,
 				abilities: args.abilities,
 				abilitiesSignature: computed.abilitiesSignature,
-				updatedAt,
-			})
-			.where("id", "=", args.id)
-			.execute();
+			},
+			trx,
+		);
 
-		await trx
-			.deleteFrom("BuildWeapon")
-			.where("buildId", "=", args.id)
-			.execute();
-		await trx
-			.deleteFrom("BuildAbilitySum")
-			.where("buildId", "=", args.id)
-			.execute();
-		await trx
-			.deleteFrom("BuildWeaponAbility")
-			.where("buildId", "=", args.id)
-			.execute();
+		await buildWeaponTable.delete({ buildId: args.id }, trx);
+		await buildAbilitySumTable.delete({ buildId: args.id }, trx);
+		await buildWeaponAbilityTable.delete({ buildId: args.id }, trx);
 
 		await insertBuildChildren(
-			{ buildId: args.id, args, computed, updatedAt },
+			{ buildId: args.id, args, computed, updatedAt: databaseTimestampNow() },
 			trx,
 		);
 	});
@@ -483,35 +467,31 @@ async function insertBuildChildren(
 	},
 	trx: Transaction<DB>,
 ) {
-	await trx
-		.insertInto("BuildWeapon")
-		.values(
-			args.weaponSplIds.map((weaponSplId) => ({
-				buildId,
-				weaponSplId,
-				canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
-				sortValue: computed.sortValueByWeaponSplId.get(weaponSplId) ?? null,
-				updatedAt,
-			})),
-		)
-		.execute();
+	await buildWeaponTable.insertMany(
+		args.weaponSplIds.map((weaponSplId) => ({
+			buildId,
+			weaponSplId,
+			canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
+			sortValue: computed.sortValueByWeaponSplId.get(weaponSplId) ?? null,
+			updatedAt,
+		})),
+		trx,
+	);
 
 	// private builds are excluded so the stats queries are pure covering-index scans;
 	// visibility flips are handled by `update`'s delete-then-reinsert
 	if (args.isPrivate) return;
 
-	await trx
-		.insertInto("BuildAbilitySum")
-		.values(
-			computed.abilitySums.map(([ability, abilityPoints]) => ({
-				buildId,
-				ability,
-				abilityPoints,
-			})),
-		)
-		.execute();
+	await buildAbilitySumTable.insertMany(
+		computed.abilitySums.map(([ability, abilityPoints]) => ({
+			buildId,
+			ability,
+			abilityPoints,
+		})),
+		trx,
+	);
 
-	const weaponAbilityRows: TablesInsertable["BuildWeaponAbility"][] =
+	await buildWeaponAbilityTable.insertMany(
 		args.weaponSplIds.flatMap((weaponSplId) =>
 			computed.abilitySums.map(([ability, abilityPoints]) => ({
 				canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
@@ -519,9 +499,7 @@ async function insertBuildChildren(
 				ability,
 				abilityPoints,
 			})),
-		);
-	await trx
-		.insertInto("BuildWeaponAbility")
-		.values(weaponAbilityRows)
-		.execute();
+		),
+		trx,
+	);
 }

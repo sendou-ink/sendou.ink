@@ -21,7 +21,7 @@ export const loader = async () => {
 
 	const tournamentsData =
 		await ShowcaseTournaments.categorizedTournamentsByUserId(user.id);
-	const scrimsData = await ScrimPostRepository.findUserScrims(user.id);
+	const ownScrims = await ScrimPostRepository.ownUpcoming().execute();
 	const savedTournaments =
 		await SavedCalendarEventRepository.findAllUpcomingByUserId(user.id);
 	const upcomingTournaments = await ShowcaseTournaments.upcomingTournaments();
@@ -42,8 +42,8 @@ export const loader = async () => {
 		.map(tournamentToSidebarEvent)
 		.sort((a, b) => a.startsAt - b.startsAt);
 
-	const scrims = scrimsData
-		.map(scrimToSidebarEvent)
+	const scrims = ownScrims
+		.map((post) => scrimToSidebarEvent(post, user.id))
 		.sort((a, b) => a.startsAt - b.startsAt);
 
 	const team = teamEvents.map(teamEventToSidebarEvent);

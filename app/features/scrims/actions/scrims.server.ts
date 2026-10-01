@@ -1,8 +1,7 @@
 import { add, sub } from "date-fns";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
-import * as Association from "~/features/associations/core/Association";
+import { refine } from "~/db/entity-query";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -20,7 +19,6 @@ import {
 } from "~/utils/errors";
 import { logger } from "~/utils/logger";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
-import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
@@ -72,18 +70,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				postId: data.scrimPostId,
 			});
 
-			if (post.visibility) {
-				const associations = await AssociationsRepository.findByMemberUserId(
-					user.id,
-				);
-				const canSeePost = Association.isVisible({
-					associations,
-					visibility: post.visibility,
-					contentOwnerUserId: post.users.find((u) => u.isOwner)?.id,
-				});
-				errorToastIfFalsy(canSeePost, "Post not found");
-			}
-
 			if (data.from.mode === "PICKUP") {
 				const pickupUserError = await validatePickup(data.from.users, user.id);
 				if (pickupUserError) {
@@ -126,7 +112,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						await usersListForPost({ authorId: user.id, from: data.from })
 					).map((userId) => ({
 						userId,
-						isOwner: toDBBoolean(user.id === userId),
+						isOwner: user.id === userId,
 					})),
 				});
 			} catch (error) {
@@ -181,7 +167,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				meta: { scrimPostId: post.id },
 			});
 
-			const fullPost = await ScrimPostRepository.findById(post.id);
+			const fullPost = await visiblePosts()
+				.where({ id: post.id })
+				.executeTakeFirst();
 
 			const postTeamName = Scrim.sideDisplayName(post);
 			const requestTeamName = Scrim.sideDisplayName(scrimRequest);
@@ -211,9 +199,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				);
 
 				try {
-					const bookedAt = databaseTimestampToDate(
-						Scrim.getStartTime(fullPost),
-					);
+					const bookedAt = databaseTimestampToDate(fullPost.startsAt);
 					const startTime = dateToDatabaseTimestamp(
 						sub(bookedAt, { hours: SCRIM.AUTO_CANCEL_WINDOW_HOURS }),
 					);
@@ -230,7 +216,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						});
 
 					for (const requestId of requestIds) {
-						await ScrimPostRepository.deleteRequest(requestId);
+						await ScrimPostRepository.deleteRequestById(requestId);
 					}
 
 					for (const removed of posts) {
@@ -267,7 +253,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				"Can't cancel an accepted request",
 			);
 
-			await ScrimPostRepository.deleteRequest(data.scrimPostRequestId);
+			await ScrimPostRepository.deleteRequestById(data.scrimPostRequestId);
 
 			const requestOwner = scrimRequest.users.find((u) => u.isOwner);
 			if (requestOwner) {
@@ -299,8 +285,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 async function findPost({ postId }: { postId: number }) {
-	const posts = await ScrimPostRepository.findAllRelevant();
-	const post = posts.find((candidate) => candidate.id === postId);
+	const post = await visiblePosts().where({ id: postId }).executeTakeFirst();
 
 	errorToastIfFalsy(post, "Post not found");
 
@@ -308,10 +293,18 @@ async function findPost({ postId }: { postId: number }) {
 }
 
 async function findRequest({ requestId }: { requestId: number }) {
-	const posts = await ScrimPostRepository.findAllRelevant();
-	const post = posts.find((candidate) =>
-		candidate.requests.some((postRequest) => postRequest.id === requestId),
-	);
+	const post = await visiblePosts()
+		.with(
+			refine("ScrimPost", (qb) =>
+				qb.where("ScrimPost.id", "in", (eb) =>
+					eb
+						.selectFrom("ScrimPostRequest")
+						.select("ScrimPostRequest.scrimPostId")
+						.where("ScrimPostRequest.id", "=", requestId),
+				),
+			),
+		)
+		.executeTakeFirst();
 	const request = post?.requests.find(
 		(candidate) => candidate.id === requestId,
 	);
@@ -319,4 +312,12 @@ async function findRequest({ requestId }: { requestId: number }) {
 	errorToastIfFalsy(post && request, "Request not found");
 
 	return { post, request };
+}
+
+function visiblePosts() {
+	return ScrimPostRepository.posts()
+		.visibleToActor()
+		.startingFrom(sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }))
+		.withParticipants()
+		.withPermissions();
 }

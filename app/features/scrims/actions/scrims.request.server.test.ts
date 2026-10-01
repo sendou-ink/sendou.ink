@@ -17,7 +17,8 @@ const requestScrim = wrappedAction<typeof scrimRequestFormSchema>({
 });
 
 const requestsForPost = async (scrimPostId: number) =>
-	(await ScrimPostRepository.findById(scrimPostId))?.requests;
+	(await ScrimPostRepository.postById(scrimPostId).executeTakeFirst())
+		?.requests;
 
 describe("Scrim requests: pickup roster validation", () => {
 	test("does not add a user who opted out of non-friend pickups (parity with post creation)", async () => {
@@ -33,7 +34,7 @@ describe("Scrim requests: pickup roster validation", () => {
 		// some other team's public post to request against
 		const [postOwner] = await UserFactory.createMany(1);
 		const post = await ScrimPostFactory.create({
-			users: [{ userId: postOwner.id, isOwner: 1 }],
+			users: [{ userId: postOwner.id, isOwner: true }],
 		});
 
 		const res = await requestScrim(

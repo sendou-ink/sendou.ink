@@ -6,19 +6,19 @@ Note: some older columns don't follow this yet. Fix them as you touch them rathe
 
 ## Booleans
 
-SQLite has no boolean type, so booleans are `0`/`1` integers typed as `DBBoolean` (`0 | 1`).
+SQLite has no boolean type, so booleans are stored as `0`/`1` integers. App code reads and writes them as `boolean`: type the column `boolean` in `tables.ts` and add it to `BOOLEAN_COLUMNS` (`app/db/boolean-columns.ts`, which the compiler checks against `tables.ts`). The dialect reads it back as a `boolean` by column origin, binds any `boolean` parameter as `0`/`1` (`where` included), and the JSON helpers put it in nested documents as a JSON `true`/`false`. A computed flag (`exists(...)`, a comparison) has no origin, so select it through `asBoolean(...)` from `~/utils/kysely.server`.
 
-- **Always `DBBoolean`**, never a raw `number`. The union is what stops `Number(x)` and other arbitrary integers from being inserted.
-- **Always non-null.** Give the column `integer not null default 0` and type it `Generated<DBBoolean>`. A three-state boolean is almost never wanted — `null` just becomes a second way to say false that every reader has to remember to coalesce.
+Columns not moved yet are still typed `DBBoolean` (`0 | 1`) and written with `toDBBoolean`; move a feature's flags when you migrate its repository.
+
+- **Never a raw `number`.** The union (or `boolean`) is what stops `Number(x)` and other arbitrary integers from being inserted.
+- **Always non-null.** Give the column `integer not null default 0` and type it `Generated<boolean>`. A three-state boolean is almost never wanted — `null` just becomes a second way to say false that every reader has to remember to coalesce.
 - **`DBBoolean | null` only for a genuine tri-state**, and then document what `null` means. Example: `TournamentMatchGameResult.ko` is `null` when KOs aren't collected for that bracket at all, which is different from "no KO happened".
 - **Name flags `is*`/`has*`** (`isPrivate`, `isFinalized`, `isMainTeam`), not bare adjectives.
 
-Converting to one:
+For the `DBBoolean` columns not moved yet:
 
 - `toDBBoolean(someBoolean)` from `~/utils/sql` — use this instead of `Number(x)` or `x ? 1 : 0` when writing to the DB.
 - `dbBoolean` / `checkboxValueToDbBoolean` from `~/utils/schema` for form and payload schemas.
-
-Reading is just truthiness (`if (build.isPrivate)`); convert to a real boolean with `Boolean()` when the value crosses into a domain type.
 
 Counter-examples that look like booleans but aren't: `User.banned` (`1` = permaban, otherwise a timestamp), `TournamentSub.canVc` (0/1/2), `TournamentTeam.abDivision` (0 = A, 1 = B).
 

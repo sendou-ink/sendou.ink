@@ -1,12 +1,127 @@
+import { type Expression, type ExpressionBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
-import type { Tables, TablesInsertable } from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
-import * as FriendRepository from "~/features/friends/FriendRepository.server";
+import type { AssociationVisibility } from "~/features/associations/associations-types";
+import { actorIdOrNull } from "~/features/auth/core/user.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
+
+type VisibilityExpression = Expression<AssociationVisibility | null>;
+
+/**
+ * Whether content with the visibility is visible to the actor right now: to everyone while it is
+ * public, otherwise to members of the associations it is currently shown to, to the plus server
+ * tiers it is shown to (`"+2"` includes +1 members) and, when shown to `"FRIENDS"`, to friends
+ * of `contentOwnerId`. Anonymous visitors see public content only.
+ */
+export function isVisibleToActor(
+	eb: ExpressionBuilder<DB, any>,
+	{
+		visibility,
+		contentOwnerId,
+	}: {
+		visibility: VisibilityExpression;
+		contentOwnerId: Expression<number | null>;
+	},
+) {
+	const viewerId = actorIdOrNull();
+	if (viewerId === null) return isPublic(eb, visibility);
+
+	const viewerPlusTier = eb
+		.selectFrom("PlusTier")
+		.select("PlusTier.tier")
+		.where("PlusTier.userId", "=", viewerId);
+
+	return eb.or([
+		eb(visibility, "is", null),
+		eb.exists(
+			shownTo(eb, visibility, databaseTimestampNow())
+				.select("shownTo.kind")
+				.where((shownEb) =>
+					shownEb.or([
+						shownEb("shownTo.kind", "=", "null"),
+						shownEb.and([
+							shownEb("shownTo.kind", "=", "integer"),
+							shownEb(
+								"shownTo.identifier",
+								"in",
+								shownEb
+									.selectFrom("AssociationMember")
+									.select("AssociationMember.associationId")
+									.where("AssociationMember.userId", "=", viewerId),
+							),
+						]),
+						shownEb.and([
+							shownEb("shownTo.kind", "=", "text"),
+							shownEb("shownTo.identifier", "=", "FRIENDS"),
+							shownEb.exists(
+								shownEb
+									.selectFrom("Friendship")
+									.select("Friendship.id")
+									.where((friendEb) =>
+										friendEb.or([
+											friendEb.and([
+												friendEb("Friendship.userOneId", "=", viewerId),
+												friendEb("Friendship.userTwoId", "=", contentOwnerId),
+											]),
+											friendEb.and([
+												friendEb("Friendship.userTwoId", "=", viewerId),
+												friendEb("Friendship.userOneId", "=", contentOwnerId),
+											]),
+										]),
+									),
+							),
+						]),
+						shownEb.and([
+							shownEb("shownTo.kind", "=", "text"),
+							shownEb("shownTo.identifier", "in", ["+1", "+2", "+3"]),
+							shownEb(
+								sql<number>`cast(substr(${shownEb.ref("shownTo.identifier")}, 2) as integer)`,
+								">=",
+								viewerPlusTier,
+							),
+						]),
+					]),
+				),
+		),
+	]);
+}
+
+/** Whether content with the visibility is visible to everyone right now. */
+export function isPublic(
+	eb: ExpressionBuilder<DB, any>,
+	visibility: VisibilityExpression,
+) {
+	return eb.or([
+		eb(visibility, "is", null),
+		eb.exists(
+			shownTo(eb, visibility, databaseTimestampNow())
+				.select("shownTo.kind")
+				.where("shownTo.kind", "=", "null"),
+		),
+	]);
+}
+
+/** Whether the association is in the visibility at any point of its schedule, not only right now. */
+export function mentionsAssociation(
+	eb: ExpressionBuilder<DB, any>,
+	{
+		visibility,
+		associationId,
+	}: { visibility: VisibilityExpression; associationId: number },
+) {
+	return eb.exists(
+		shownTo(eb, visibility, null)
+			.select("shownTo.kind")
+			.where("shownTo.kind", "=", "integer")
+			.where("shownTo.identifier", "=", associationId),
+	);
+}
 
 interface FindOptions {
 	withMembers: boolean;
@@ -28,7 +143,6 @@ export async function findByMemberUserId(
 	return {
 		actual: await findBy({ type: "user", userId }, options),
 		virtual: await virtualAssociationsByUserId(userId),
-		friendIds: await FriendRepository.findFriendIds(userId),
 	};
 }
 
@@ -292,4 +406,30 @@ export function handleMemberLeaving({
 
 export function deleteById(associationId: number) {
 	return db.deleteFrom("Association").where("id", "=", associationId).execute();
+}
+
+/**
+ * Who the content is shown to at `at` (`null`: at any point of its schedule), one row per
+ * identifier: the base association plus each "not found" instruction whose time has come. `kind`
+ * is the JSON type, as SQLite would otherwise compare a `"+1"` text identifier as the number 1
+ * against an association id.
+ */
+function shownTo(
+	eb: ExpressionBuilder<DB, any>,
+	visibility: VisibilityExpression,
+	at: number | null,
+) {
+	// json_each is a table-valued function, which Kysely can't express
+	const identifiers = sql<{
+		identifier: number | string | null;
+		kind: "null" | "integer" | "text" | null;
+	}>`(
+		select ${visibility} ->> '$.forAssociation' as "identifier", json_type(${visibility}, '$.forAssociation') as "kind"
+		union all
+		select "instruction"."value" ->> '$.forAssociation', json_type("instruction"."value", '$.forAssociation')
+		from json_each(${visibility}, '$.notFoundInstructions') as "instruction"
+		${at === null ? sql`` : sql`where "instruction"."value" ->> '$.at' < ${at}`}
+	)`;
+
+	return eb.selectFrom(identifiers.as("shownTo"));
 }

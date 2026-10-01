@@ -37,7 +37,7 @@ async function seedScrimPosts(users: SeededUsers, teams: SeededTeams) {
 
 		return taken.map((userId, i) => ({
 			userId,
-			isOwner: i === 0 ? (1 as const) : (0 as const),
+			isOwner: i === 0,
 		}));
 	};
 
@@ -46,11 +46,11 @@ async function seedScrimPosts(users: SeededUsers, teams: SeededTeams) {
 		add(new Date(), { hours: 2 }),
 	);
 	const acceptedPostUsers = [
-		{ userId: users.adminId, isOwner: 1 as const },
+		{ userId: users.adminId, isOwner: true as const },
 		...takeUsers(3),
 	];
 	const acceptedRequestUsers = [
-		{ userId: users.nzapId, isOwner: 1 as const },
+		{ userId: users.nzapId, isOwner: true as const },
 		...takeUsers(3),
 	];
 	await ScrimPostFactory.create(

@@ -9,26 +9,11 @@ import {
 } from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
 import { LUTI_DIVS } from "./scrims-constants";
-import type { LutiDiv, ScrimPost } from "./scrims-types";
+import type { LutiDiv, ScrimPostWithParticipants } from "./scrims-types";
 
-export const getPostRequestCensor =
-	(userId: number) =>
-	(post: ScrimPost): ScrimPost => {
-		return {
-			...post,
-			requests: post.requests.filter((request) => {
-				const isOwnPost = post.users.some((user) => user.id === userId);
-				if (isOwnPost) {
-					return true;
-				}
-
-				const isOwnRequest = request.users.some((user) => user.id === userId);
-				return isOwnRequest;
-			}),
-		};
-	};
-
-export function dividePosts(posts: Array<ScrimPost>, userId?: number) {
+export function dividePosts<
+	T extends Pick<ScrimPostWithParticipants, "users" | "requests">,
+>(posts: Array<T>, userId?: number) {
 	const grouped = R.groupBy(posts, (post) => {
 		const isAccepted = post.requests.some((request) => request.isAccepted);
 		const isParticipating = userId
@@ -52,12 +37,6 @@ export function dividePosts(posts: Array<ScrimPost>, userId?: number) {
 		booked: grouped.BOOKED ?? [],
 	};
 }
-
-export const parseLutiDiv = (div: number): LutiDiv => {
-	if (div === 0) return "X";
-
-	return String(div) as LutiDiv;
-};
 
 /** The LUTI division (e.g. `"X"`, `"2"`) of a name like "LUTI: Season 15 - Division 2", or `null`. */
 export const parseLutiDivFromName = (name: string): LutiDiv | null => {
@@ -89,7 +68,7 @@ export function requestStarts({
 	post,
 	now,
 }: {
-	post: Pick<ScrimPost, "startsAt" | "rangeEndsAt">;
+	post: Pick<ScrimPostWithParticipants, "startsAt" | "rangeEndsAt">;
 	now: number;
 }): Array<number> {
 	const starts = post.rangeEndsAt
@@ -109,7 +88,7 @@ export function postSpan({
 	post,
 	now,
 }: {
-	post: Pick<ScrimPost, "startsAt" | "rangeEndsAt">;
+	post: Pick<ScrimPostWithParticipants, "startsAt" | "rangeEndsAt">;
 	now: number;
 }): TimeRange {
 	const starts = requestStarts({ post, now });

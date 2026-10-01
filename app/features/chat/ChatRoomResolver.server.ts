@@ -1,6 +1,8 @@
 import * as R from "remeda";
+import { refine } from "~/db/entity-query";
 import type { Tables } from "~/db/tables";
 import { ADMIN_ID, STAFF_IDS } from "~/features/admin/admin-constants";
+import * as Scrim from "~/features/scrims/core/Scrim";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -233,22 +235,34 @@ async function resolveScrimRooms(
 ): Promise<ResolvedRoom[]> {
 	if (rooms.length === 0) return [];
 
-	const owners = await ScrimPostRepository.findAllByChatRoomIds(
-		rooms.map((room) => room.id),
-	);
+	const owners = await scrimsOwningRooms(rooms.map((room) => room.id));
 
 	return joinOwners(rooms, owners, (owner) => ({
 		titleParams: {
-			startsAt: String(owner.acceptedRequestStartsAt ?? owner.startsAt),
+			startsAt: String(owner.startsAt),
 		},
 		url: scrimPage(owner.id),
 		imageUrl: null,
-		participantUserIds: [
-			...owner.postUsers.map((user) => user.userId),
-			...owner.acceptedRequestUsers.map((user) => user.userId),
-		],
+		participantUserIds: Scrim.participantIdsListFromAccepted(owner),
 		observerUserIds: [],
 	}));
+}
+
+/** The scrims owning the rooms, with both sides of each. */
+async function scrimsOwningRooms(roomIds: number[]) {
+	const posts = await ScrimPostRepository.posts()
+		.includingHidden()
+		.with(
+			refine("ScrimPost", (qb) =>
+				qb.where("ScrimPost.chatRoomId", "in", roomIds),
+			),
+		)
+		.withParticipants()
+		.execute();
+
+	return posts.flatMap(({ chatRoomId, ...post }) =>
+		chatRoomId === null ? [] : [{ ...post, chatRoomId }],
+	);
 }
 
 function joinOwners<T extends { chatRoomId: number }>(

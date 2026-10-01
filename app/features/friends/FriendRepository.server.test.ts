@@ -197,7 +197,7 @@ describe("deleteFriendRequestByReceiver", () => {
 	});
 });
 
-describe("insertFriendship / findFriendship / findFriendIds", () => {
+describe("insertFriendship / findFriendship", () => {
 	beforeEach(async () => {
 		await createUsers(3);
 	});
@@ -244,36 +244,6 @@ describe("insertFriendship / findFriendship / findFriendIds", () => {
 			userTwoId: users.id(3),
 		});
 		expect(friendship).toBeDefined();
-	});
-
-	test("findFriendIds returns friend's ID", async () => {
-		await FriendshipFactory.create({
-			userOneId: users.id(1),
-			userTwoId: users.id(2),
-		});
-
-		const friendIds = await FriendRepository.findFriendIds(users.id(1));
-
-		expect(friendIds).toHaveLength(1);
-		expect(friendIds).toContain(users.id(2));
-	});
-
-	test("findFriendIds returns friend ID from both sides", async () => {
-		await FriendshipFactory.create({
-			userOneId: users.id(1),
-			userTwoId: users.id(2),
-		});
-
-		const friendIdsOfUser2 = await FriendRepository.findFriendIds(users.id(2));
-
-		expect(friendIdsOfUser2).toHaveLength(1);
-		expect(friendIdsOfUser2).toContain(users.id(1));
-	});
-
-	test("findFriendIds returns empty array with no friends", async () => {
-		const friendIds = await FriendRepository.findFriendIds(users.id(1));
-
-		expect(friendIds).toHaveLength(0);
 	});
 });
 

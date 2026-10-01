@@ -24,10 +24,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { TimePopover } from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
-import {
-	UserCard,
-	useUserCardData,
-} from "~/features/user-card/components/UserCard";
+import { UserCard } from "~/features/user-card/components/UserCard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -35,7 +32,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage } from "~/utils/urls";
 import { scrimsActionSchema } from "../scrims-schemas";
 import { scrimsSearchParams } from "../scrims-search-params";
-import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
+import type { ScrimPost } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import { ScrimFitStripe } from "./ScrimAvailability";
 import styles from "./ScrimCard.module.css";
@@ -175,15 +172,13 @@ function ScrimTeamAvatar({
 	teamName: string;
 	owner: ScrimPost["users"][number];
 }) {
-	const cardData = useUserCardData(owner.id);
-
 	if (teamAvatarUrl) {
 		return <Avatar size="xs" url={teamAvatarUrl} alt={teamName} />;
 	}
 
 	return (
-		<UserCard userId={owner.id} withMutualFriends>
-			<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
+		<UserCard data={owner.card} withMutualFriends>
+			<NoteAvatar sentiment={owner.card?.privateNote?.sentiment} size="sm">
 				<Avatar size="xs" user={owner} alt={owner.username} />
 			</NoteAvatar>
 		</UserCard>
@@ -227,12 +222,10 @@ function ScrimTeamMembersPopover({ users }: { users: ScrimPost["users"] }) {
 }
 
 function ScrimTeamMemberRow({ user }: { user: ScrimPost["users"][number] }) {
-	const cardData = useUserCardData(user.id);
-
 	return (
-		<UserCard userId={user.id} withMutualFriends>
+		<UserCard data={user.card} withMutualFriends>
 			<span className="stack horizontal sm items-center">
-				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="xs">
+				<NoteAvatar sentiment={user.card?.privateNote?.sentiment} size="xs">
 					<Avatar size="xxs" user={user} />
 				</NoteAvatar>
 				{user.username}
@@ -270,12 +263,10 @@ function ScrimRequestMemberRow({
 	user: ScrimPost["users"][number];
 	children?: React.ReactNode;
 }) {
-	const cardData = useUserCardData(user.id);
-
 	return (
-		<UserCard userId={user.id} withMutualFriends>
+		<UserCard data={user.card} withMutualFriends>
 			<span className="stack horizontal sm items-center">
-				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
+				<NoteAvatar sentiment={user.card?.privateNote?.sentiment} size="sm">
 					<Avatar size="xs" user={user} />
 				</NoteAvatar>
 				<span>
@@ -554,7 +545,7 @@ function ScrimActionButtons({
 }
 
 interface ScrimRequestCardProps {
-	request: ScrimPostRequest;
+	request: ScrimPost["requests"][number];
 	postStartTime: number;
 	canAccept: boolean;
 	showFooter?: boolean;

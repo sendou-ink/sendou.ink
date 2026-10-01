@@ -5,9 +5,10 @@ import { format } from "sql-formatter";
 import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
+import { BOOLEAN_COLUMNS } from "./boolean-columns";
 import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
 import { JSON_COLUMNS } from "./json-columns";
-import { computedJsonColumns } from "./json-selections";
+import { computedBooleanColumns, computedJsonColumns } from "./json-selections";
 import { NodeSqliteDialect } from "./node-sqlite-dialect";
 import type { DB } from "./tables";
 import { TIMESTAMP_COLUMNS } from "./timestamp-columns";
@@ -50,6 +51,8 @@ export const db = new Kysely<DB>({
 		jsonColumns: JSON_COLUMNS,
 		computedJsonColumns,
 		timestampColumns: TIMESTAMP_COLUMNS,
+		booleanColumns: BOOLEAN_COLUMNS,
+		computedBooleanColumns,
 	}),
 	log,
 	plugins: [new EmptyValuesNoopPlugin(), new WriteTrackerPlugin()],

@@ -12,7 +12,6 @@ import * as Availability from "~/features/availability/core/Availability";
 import { serializeLutiDiv } from "~/features/scrims/scrims-utils";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { toDBBoolean } from "~/utils/sql";
 import { scrimPage } from "~/utils/urls";
 import type { Factories } from "./helpers/factories";
 import {
@@ -579,7 +578,7 @@ async function createGroup(factories: Factories, userId?: number) {
 
 	return userIds.map((id, index) => ({
 		userId: id,
-		isOwner: toDBBoolean(index === 0),
+		isOwner: index === 0,
 	}));
 }
 

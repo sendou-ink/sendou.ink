@@ -34,6 +34,8 @@ export const SCRIM = {
 	REQUEST_MESSAGE_MAX_LENGTH: 200,
 	MAX_TIME_RANGE_MS: 3 * 60 * 60 * 1000, // 3 hours
 	AUTO_CANCEL_WINDOW_HOURS: 1,
+	/** How long after its start a post stays on the scrims page. */
+	LISTED_HOURS_AFTER_START: 3,
 };
 
 export const SCRIM_TRACKING_AUTO_LOCK_HOURS = 4;

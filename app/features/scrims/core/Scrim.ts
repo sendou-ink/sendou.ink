@@ -24,15 +24,21 @@ import {
 	SCRIM,
 	SCRIM_TRACKING_AUTO_LOCK_HOURS,
 } from "../scrims-constants";
-import type { ScrimFilters, ScrimPost, ScrimSide } from "../scrims-types";
+import type {
+	ScrimFilters,
+	ScrimPostWithParticipants,
+	ScrimSide,
+} from "../scrims-types";
+
+type PostSides = Pick<ScrimPostWithParticipants, "users" | "requests">;
 
 /** Returns true if the original poster has accepted any of the requests. */
-export function isAccepted(post: ScrimPost) {
+export function isAccepted(post: Pick<ScrimPostWithParticipants, "requests">) {
 	return post.requests.some((request) => request.isAccepted);
 }
 
 /** Returns true if the user is participating in the scrim, either in the original post users list or the request. */
-export function isParticipating(post: ScrimPost, userId: number) {
+export function isParticipating(post: PostSides, userId: number) {
 	return (
 		post.requests.some((request) =>
 			request.users.some((user) => user.id === userId),
@@ -45,7 +51,9 @@ export function resolvePoolCode(postId: number) {
 }
 
 /** Participant ids of an accepted post (one whose scrim page exists). */
-export function participantIdsListFromAccepted(post: ScrimPost) {
+export function participantIdsListFromAccepted(
+	post: PostSides & Pick<ScrimPostWithParticipants, "id">,
+) {
 	const acceptedRequest = post.requests.find((r) => r.isAccepted);
 
 	if (!acceptedRequest) {
@@ -59,12 +67,6 @@ export function participantIdsListFromAccepted(post: ScrimPost) {
 		.concat(acceptedRequest?.users.map((u) => u.id) ?? []);
 }
 
-/** The scrim's actual start: the accepted request's time when the post has a range (rangeEndsAt set), else the post's start. */
-export function getStartTime(post: ScrimPost): number {
-	const acceptedRequest = post.requests.find((r) => r.isAccepted);
-	return acceptedRequest?.startsAt ?? post.startsAt;
-}
-
 /** Display name of a scrim side: the team name, else "{ownerUsername}'s pickup". */
 export function sideDisplayName(side: {
 	team: { name: string } | null;
@@ -75,7 +77,10 @@ export function sideDisplayName(side: {
 	return `${owner.username}'s pickup`;
 }
 
-export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
+export function applyFilters(
+	post: Pick<ScrimPostWithParticipants, "divs" | "startsAt" | "rangeEndsAt">,
+	filters: ScrimFilters,
+): boolean {
 	const hasMinFilter = filters.divs?.min !== null;
 	const hasMaxFilter = filters.divs?.max !== null;
 	if (filters.divs && (hasMinFilter || hasMaxFilter) && post.divs) {
@@ -150,7 +155,7 @@ export function filtersAreDefault(filters: ScrimFilters): boolean {
 }
 
 /** The user's side in the scrim (post's users are ALPHA, accepted request's are BRAVO), or null when not in the accepted pairing. */
-export function sideOfUser(post: ScrimPost, userId: number): ScrimSide | null {
+export function sideOfUser(post: PostSides, userId: number): ScrimSide | null {
 	if (post.users.some((u) => u.id === userId)) return "ALPHA";
 
 	const acceptedRequest = post.requests.find((r) => r.isAccepted);

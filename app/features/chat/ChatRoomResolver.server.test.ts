@@ -77,7 +77,7 @@ const setupAcceptedScrim = async () => {
 		startsAt: dateToDatabaseTimestamp(startsAt),
 		users: postUserIds.map((userId, i) => ({
 			userId,
-			isOwner: i === 0 ? (1 as const) : (0 as const),
+			isOwner: i === 0,
 		})),
 	});
 	const team = await TeamFactory.create({ memberUserIds: requestUserIds });
@@ -88,12 +88,12 @@ const setupAcceptedScrim = async () => {
 		startsAt: null,
 		users: requestUserIds.map((userId, i) => ({
 			userId,
-			isOwner: i === 0 ? (1 as const) : (0 as const),
+			isOwner: i === 0,
 		})),
 	});
 	await ScrimPostRepository.acceptRequest(requestId);
 
-	const post = await ScrimPostRepository.findById(postId);
+	const post = await ScrimPostRepository.postById(postId).executeTakeFirst();
 
 	return {
 		postId,

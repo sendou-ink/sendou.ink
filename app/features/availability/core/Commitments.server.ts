@@ -1,9 +1,11 @@
 import * as R from "remeda";
+import * as Scrim from "~/features/scrims/core/Scrim";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as SeriesTeamCount from "~/features/tournament-organization/core/SeriesTeamCount.server";
+import { databaseTimestampToDate } from "~/utils/dates";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
 import type { BusyBlock } from "../availability-types";
@@ -41,7 +43,7 @@ export async function busyBlocksByUserIds({
 			endsAt,
 			excludeTournamentId,
 		});
-	const scrims = await ScrimPostRepository.findAllAcceptedByUserIds({
+	const scrims = await bookedScrims({
 		userIds,
 		startsAt: startsAt - AVAILABILITY.SCRIM_COMMITMENT_SECONDS,
 		endsAt,
@@ -112,5 +114,35 @@ export async function busyBlocksByUserIds({
 				),
 			],
 		),
+	);
+}
+
+/** The users' booked, uncanceled scrims starting in the window, one entry per user taking part. */
+async function bookedScrims({
+	userIds,
+	startsAt,
+	endsAt,
+}: {
+	userIds: Array<number>;
+	startsAt: number;
+	endsAt: number;
+}) {
+	const posts = await ScrimPostRepository.posts()
+		.includingHidden()
+		.booked()
+		.where({ canceledAt: null })
+		.involvingAnyOf(userIds)
+		.startingFrom(databaseTimestampToDate(startsAt))
+		// a scrim starting as the window ends doesn't overlap it, so the bound can be exclusive
+		.startingBefore(databaseTimestampToDate(endsAt))
+		.withParticipants()
+		.execute();
+
+	const askedUserIds = new Set(userIds);
+
+	return posts.flatMap((post) =>
+		Scrim.participantIdsListFromAccepted(post)
+			.filter((userId) => askedUserIds.has(userId))
+			.map((userId) => ({ userId, startsAt: post.startsAt })),
 	);
 }

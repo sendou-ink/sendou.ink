@@ -29,9 +29,10 @@ import {
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server";
+import * as Scrim from "~/features/scrims/core/Scrim";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { scrimsSearchParams } from "~/features/scrims/scrims-search-params";
+import type { ScrimPostWithParticipants } from "~/features/scrims/scrims-types";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import {
@@ -104,7 +105,7 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 
 	const tournamentsData =
 		await ShowcaseTournaments.categorizedTournamentsByUserId(userId);
-	const scrimsData = await ScrimPostRepository.findUserScrims(userId);
+	const scrims = await ScrimPostRepository.ownUpcoming().execute();
 	const friendsWithActivity =
 		await FriendRepository.findByUserIdWithActivity(userId);
 	const savedTournaments =
@@ -135,7 +136,9 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 			return tournamentToSidebarEvent(t);
 		});
 
-	const scrimEvents: SidebarEvent[] = scrimsData.map(scrimToSidebarEvent);
+	const scrimEvents: SidebarEvent[] = scrims.map((post) =>
+		scrimToSidebarEvent(post, userId),
+	);
 
 	const teamEventEvents: SidebarEvent[] = teamEvents.map(
 		teamEventToSidebarEvent,
@@ -529,23 +532,42 @@ export function teamEventToSidebarEvent(
 
 const SCRIMS_ICON_URL = `${navIconUrl("scrims")}.avif`;
 
-export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
+/** The scrim as one of the viewer's events: against the opponent's team (or owner, without one) once booked. */
+export function scrimToSidebarEvent(
+	post: ScrimPostWithParticipants,
+	viewerId: number,
+): SidebarEvent {
+	const status = Scrim.isAccepted(post)
+		? "booked"
+		: post.users.some((user) => user.id === viewerId)
+			? "looking"
+			: "requestPending";
+	const opponent =
+		status !== "booked"
+			? null
+			: Scrim.sideOfUser(post, viewerId) === "ALPHA"
+				? post.requests.find((request) => request.isAccepted)
+				: post;
+	const opponentOwner = opponent?.users.find((user) => user.isOwner) ?? null;
+	// an opponent without a team is shown by their owner's avatar instead
+	const opponentUser = opponent?.team ? null : opponentOwner;
+
 	return {
-		id: s.id,
-		name: s.opponentName ?? "Scrim",
+		id: post.id,
+		name: opponent?.team?.name ?? opponentOwner?.username ?? "Scrim",
 		url:
-			s.status === "booked"
-				? href("/scrims/:id", { id: String(s.id) })
-				: s.status === "requestPending"
+			status === "booked"
+				? href("/scrims/:id", { id: String(post.id) })
+				: status === "requestPending"
 					? scrimsSearchParams.href(href("/scrims"), {
-							pendingRequestPostId: s.id,
+							pendingRequestPostId: post.id,
 						})
 					: href("/scrims"),
-		// an opponent without a team is shown by their owner's avatar instead
-		logoUrl: s.opponentAvatarUrl ?? (s.opponentUser ? null : SCRIMS_ICON_URL),
-		user: s.opponentUser,
-		startsAt: s.startsAt,
+		logoUrl:
+			opponent?.team?.avatarUrl ?? (opponentUser ? null : SCRIMS_ICON_URL),
+		user: opponentUser,
+		startsAt: post.startsAt,
 		type: "scrim" as const,
-		scrimStatus: s.status,
+		scrimStatus: status,
 	};
 }

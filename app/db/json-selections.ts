@@ -10,6 +10,7 @@ import {
 	type RootOperationNode,
 	SelectQueryNode,
 } from "kysely";
+import { BOOLEAN_COLUMNS } from "./boolean-columns";
 import { JSON_COLUMNS } from "./json-columns";
 import { TIMESTAMP_COLUMNS } from "./timestamp-columns";
 
@@ -19,12 +20,53 @@ const JSON_EXPRESSION_PREFIX =
 
 const NO_NAMES: ReadonlySet<string> = new Set();
 
+/** Leading SQL comment `asBoolean` marks a computed expression with, as it has no column origin to decode by. */
+const COMPUTED_BOOLEAN_MARKER = "/* boolean */";
+
 /** Output names of the query's computed result columns whose value is a JSON document, e.g. the subquery a `jsonArrayFrom` selection compiles to. */
 export function computedJsonColumns(
 	query: RootOperationNode,
 ): ReadonlySet<string> {
 	// `returning` selections keep the origin metadata of the column they write to
 	return SelectQueryNode.is(query) ? outputNames(query) : NO_NAMES;
+}
+
+/** Output names of the query's computed result columns read as `boolean`, the `asBoolean(...)` selections. */
+export function computedBooleanColumns(
+	query: RootOperationNode,
+): ReadonlySet<string> {
+	if (!SelectQueryNode.is(query)) return NO_NAMES;
+
+	const names = new Set<string>();
+	for (const { selection } of query.selections ?? []) {
+		const name = selectionOutputName(selection);
+		if (
+			name &&
+			AliasNode.is(selection) &&
+			computedBooleanNode(selection.node)
+		) {
+			names.add(name);
+		}
+	}
+
+	return names;
+}
+
+/** Whether a select list entry or expression is a 0/1 flag the app reads as `boolean`: a boolean column or an `asBoolean(...)`. */
+export function booleanValuedNode(node: OperationNode): boolean {
+	const target = AliasNode.is(node) ? node.node : node;
+	if (computedBooleanNode(target)) return true;
+	if (
+		!ReferenceNode.is(target) ||
+		!ColumnNode.is(target.column) ||
+		target.table === undefined
+	) {
+		return false;
+	}
+
+	return BOOLEAN_COLUMNS.has(
+		`${target.table.table.identifier.name}.${target.column.column.name}`,
+	);
 }
 
 /** Output name a selection comes back under, or `undefined` for selections that have none (`selectAll()`). */
@@ -171,5 +213,12 @@ function jsonValuedReference(node: OperationNode, sources?: SourceOutputNames) {
 	return (
 		JSON_COLUMNS.has(`${table}.${column}`) ||
 		Boolean(sources?.get(table)?.has(column))
+	);
+}
+
+function computedBooleanNode(node: OperationNode) {
+	return (
+		RawNode.is(node) &&
+		(node.sqlFragments[0] ?? "").startsWith(COMPUTED_BOOLEAN_MARKER)
 	);
 }

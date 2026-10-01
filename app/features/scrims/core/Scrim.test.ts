@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
 import {
@@ -116,30 +116,11 @@ describe("applyFilters", () => {
 		startsAt: Date,
 		rangeEndsAt?: Date,
 		divs?: { min: string; max: string },
-	): ScrimPost {
+	): Parameters<typeof applyFilters>[0] {
 		return {
-			id: 1,
 			startsAt: dateToDatabaseTimestamp(startsAt),
 			rangeEndsAt: rangeEndsAt ? dateToDatabaseTimestamp(rangeEndsAt) : null,
 			divs: divs ? { min: divs.min as any, max: divs.max as any } : null,
-			users: [],
-			requests: [],
-			canceled: null,
-			createdAt: databaseTimestampNow(),
-			visibility: null,
-			chatRoomId: null,
-			text: "",
-			maps: null,
-			isScheduledForFuture: false,
-			managedByAnyone: false,
-			mapsTournament: null,
-			permissions: {
-				MANAGE_REQUESTS: [],
-				CANCEL: [],
-				DELETE_POST: [],
-				MANAGE_TRACKING: [],
-			},
-			team: null,
 		};
 	}
 

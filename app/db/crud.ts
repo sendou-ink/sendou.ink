@@ -162,7 +162,6 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 			id: number,
 			values: Record<string, unknown>,
 			trx?: Transaction<DB>,
-			// xxx: why not stamped?
 		) => ops.update({ id }, values, trx).then((count) => count > 0),
 		delete: async (where: Record<string, unknown>, trx?: Transaction<DB>) => {
 			assertNotEmpty(where, "delete");
@@ -336,7 +335,6 @@ function applyWhere(query: any, table: string, where: Record<string, unknown>) {
 	for (const [column, value] of Object.entries(where)) {
 		if (value === undefined) continue;
 
-		// xxx: is this really needed?
 		result =
 			value === null
 				? result.where(`${table}.${column}`, "is", null)

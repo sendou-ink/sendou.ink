@@ -53,7 +53,7 @@ const STATEMENT_CACHE_SIZE = 5000;
 
 const NO_COLUMNS: ReadonlySet<string> = new Set();
 
-type ColumnDecoder = "json" | "timestamp" | null;
+type ColumnDecoder = "json" | "timestamp" | "boolean" | null;
 
 export interface NodeSqliteDialectConfig {
 	database: DatabaseSync;
@@ -75,6 +75,13 @@ export interface NodeSqliteDialectConfig {
 	 * Any `Date` parameter is written as unix seconds regardless.
 	 */
 	timestampColumns?: ReadonlySet<string>;
+	/**
+	 * "Table.column" names of 0/1 flags read as `boolean`, by column origin like {@link jsonColumns}.
+	 * Any `boolean` parameter is written as 0/1 regardless.
+	 */
+	booleanColumns?: ReadonlySet<string>;
+	/** Output names of computed result columns read as `boolean` (`asBoolean(...)`), which have no origin. Called once per prepared statement. */
+	computedBooleanColumns?: (query: RootOperationNode) => ReadonlySet<string>;
 }
 
 /**
@@ -179,11 +186,13 @@ class NodeSqliteDriver implements Driver {
 	}
 }
 
-/** Which result columns of one query need decoding: JSON documents by column origin and by output name for the columns that have no origin, timestamps by column origin. */
+/** Which result columns of one query need decoding: JSON documents and booleans by column origin and by output name for the columns that have no origin, timestamps by column origin. */
 interface DecodedColumns {
 	jsonByOrigin: ReadonlySet<string>;
 	jsonByOutputName: ReadonlySet<string>;
 	timestampsByOrigin: ReadonlySet<string>;
+	booleansByOrigin: ReadonlySet<string>;
+	booleansByOutputName: ReadonlySet<string>;
 }
 
 interface PreparedStatement {
@@ -204,6 +213,10 @@ class NodeSqliteConnection implements DatabaseConnection {
 		query: RootOperationNode,
 	) => ReadonlySet<string>;
 	readonly #timestampColumns?: ReadonlySet<string>;
+	readonly #booleanColumns?: ReadonlySet<string>;
+	readonly #computedBooleanColumns?: (
+		query: RootOperationNode,
+	) => ReadonlySet<string>;
 	readonly #cache = new Map<string, PreparedStatement>();
 
 	constructor(config: NodeSqliteDialectConfig) {
@@ -212,6 +225,8 @@ class NodeSqliteConnection implements DatabaseConnection {
 		this.#jsonColumns = config.jsonColumns;
 		this.#computedJsonColumns = config.computedJsonColumns;
 		this.#timestampColumns = config.timestampColumns;
+		this.#booleanColumns = config.booleanColumns;
+		this.#computedBooleanColumns = config.computedBooleanColumns;
 	}
 
 	async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
@@ -294,20 +309,29 @@ class NodeSqliteConnection implements DatabaseConnection {
 	}
 
 	#decodedColumnsFor(query: RootOperationNode): DecodedColumns | undefined {
-		if (!this.#jsonColumns && !this.#timestampColumns) return undefined;
+		if (
+			!this.#jsonColumns &&
+			!this.#timestampColumns &&
+			!this.#booleanColumns
+		) {
+			return undefined;
+		}
 
 		return {
 			jsonByOrigin: this.#jsonColumns ?? NO_COLUMNS,
 			jsonByOutputName:
 				(this.#jsonColumns && this.#computedJsonColumns?.(query)) || NO_COLUMNS,
 			timestampsByOrigin: this.#timestampColumns ?? NO_COLUMNS,
+			booleansByOrigin: this.#booleanColumns ?? NO_COLUMNS,
+			booleansByOutputName: this.#computedBooleanColumns?.(query) ?? NO_COLUMNS,
 		};
 	}
 }
 
 /**
- * Parameters SQLite doesn't take as is: a `Date` is bound as unix seconds and a plain object or
- * array (a JSON column's payload) as JSON text. Lists like `in (...)` arrive as separate parameters.
+ * Parameters SQLite doesn't take as is: a `Date` is bound as unix seconds, a `boolean` as 0/1 and
+ * a plain object or array (a JSON column's payload) as JSON text. Lists like `in (...)` arrive as
+ * separate parameters.
  */
 function toSqliteParameters(parameters: ReadonlyArray<unknown>) {
 	if (!parameters.some(needsConversion)) {
@@ -317,13 +341,18 @@ function toSqliteParameters(parameters: ReadonlyArray<unknown>) {
 	return parameters.map((parameter) => {
 		if (parameter instanceof Date)
 			return Math.floor(parameter.getTime() / 1000);
+		if (typeof parameter === "boolean") return parameter ? 1 : 0;
 		if (isJsonPayload(parameter)) return JSON.stringify(parameter);
 		return parameter as SQLInputValue;
 	});
 }
 
 function needsConversion(parameter: unknown) {
-	return parameter instanceof Date || isJsonPayload(parameter);
+	return (
+		parameter instanceof Date ||
+		typeof parameter === "boolean" ||
+		isJsonPayload(parameter)
+	);
 }
 
 function isJsonPayload(parameter: unknown) {
@@ -371,12 +400,15 @@ function columnMetadata(
 			if (!decodedColumns) return null;
 			// null origin = computed expression (jsonArrayFrom subquery, or a coalesce over user text)
 			if (it.column === null) {
-				return decodedColumns.jsonByOutputName.has(it.name) ? "json" : null;
+				if (decodedColumns.jsonByOutputName.has(it.name)) return "json";
+				if (decodedColumns.booleansByOutputName.has(it.name)) return "boolean";
+				return null;
 			}
 
 			const origin = `${it.table}.${it.column}`;
 			if (decodedColumns.jsonByOrigin.has(origin)) return "json";
 			if (decodedColumns.timestampsByOrigin.has(origin)) return "timestamp";
+			if (decodedColumns.booleansByOrigin.has(origin)) return "boolean";
 			return null;
 		}),
 	};
@@ -419,6 +451,8 @@ function toRow<R>(prepared: PreparedStatement, rawRow: SQLOutputValue[]): R {
 			row[columnNames[i]] = parseJsonValue(value);
 		} else if (decoder === "timestamp" && typeof value === "number") {
 			row[columnNames[i]] = new Date(value * 1000);
+		} else if (decoder === "boolean" && typeof value === "number") {
+			row[columnNames[i]] = value !== 0;
 		} else {
 			row[columnNames[i]] = value;
 		}

@@ -21,11 +21,14 @@ import * as ScrimMapListRepository from "../ScrimMapListRepository.server";
 import * as ScrimMapRepository from "../ScrimMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { scrimIdActionSchema } from "../scrims-schemas";
+import type { ScrimPost } from "../scrims-types";
 import { parseMapPoolInput } from "../scrims-utils";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = parseParams({ params, schema: idObject });
-	const post = notFoundIfNullish(await ScrimPostRepository.findById(id));
+	const post = notFoundIfNullish(
+		await ScrimPostRepository.postById(id).executeTakeFirst(),
+	);
 	const user = requireUser();
 
 	const result = await parseFormData({
@@ -48,7 +51,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			errorToastIfFalsy(Scrim.isAccepted(post), "Scrim is not accepted");
 			errorToastIfFalsy(!post.canceled, "Scrim is already canceled");
 
-			if (databaseTimestampToDate(Scrim.getStartTime(post)) < new Date()) {
+			if (databaseTimestampToDate(post.startsAt) < new Date()) {
 				errorToast("Cannot cancel a scrim that was already scheduled to start");
 			}
 
@@ -214,7 +217,7 @@ async function loadMapByMapContext({
 	post,
 	user,
 }: {
-	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
+	post: ScrimPost;
 	user: ReturnType<typeof requireUser>;
 }) {
 	const viewerSide = Scrim.sideOfUser(post, user.id);
@@ -226,7 +229,7 @@ async function loadMapByMapContext({
 
 	if (
 		Scrim.isTrackingLocked({
-			startTime: Scrim.getStartTime(post),
+			startTime: post.startsAt,
 			maps,
 			mapLists,
 		})
@@ -237,9 +240,7 @@ async function loadMapByMapContext({
 	return { viewerSide: viewerSide!, maps, mapLists };
 }
 
-function broadcastRevalidate(
-	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>,
-) {
+function broadcastRevalidate(post: ScrimPost) {
 	if (!post.chatRoomId) return;
 	ChatSystemMessage.send({
 		channel: chatRoomChannel(post.chatRoomId),
@@ -251,7 +252,7 @@ function broadcastMapChange({
 	type,
 	user,
 }: {
-	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
+	post: ScrimPost;
 	type: "MAP_REPLAYED" | "MAP_PICKED";
 	user: ReturnType<typeof requireUser>;
 }) {

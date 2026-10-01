@@ -95,11 +95,14 @@ describe("Commitments.busyBlocksByUserIds", () => {
 		await ScrimPostFactory.create(
 			{
 				startsAt: WEEK_STARTS_AT + 2 * DAY,
-				users: [{ userId: memberId(), isOwner: 1 }],
+				users: [{ userId: memberId(), isOwner: true }],
 			},
 			{
 				requests: [
-					{ users: [{ userId: opponentId(), isOwner: 1 }], isAccepted: true },
+					{
+						users: [{ userId: opponentId(), isOwner: true }],
+						isAccepted: true,
+					},
 				],
 			},
 		);
@@ -120,9 +123,9 @@ describe("Commitments.busyBlocksByUserIds", () => {
 		await ScrimPostFactory.create(
 			{
 				startsAt: WEEK_STARTS_AT + 2 * DAY,
-				users: [{ userId: memberId(), isOwner: 1 }],
+				users: [{ userId: memberId(), isOwner: true }],
 			},
-			{ requests: [{ users: [{ userId: opponentId(), isOwner: 1 }] }] },
+			{ requests: [{ users: [{ userId: opponentId(), isOwner: true }] }] },
 		);
 
 		expect(await blocksOf(memberId())).toBeUndefined();
@@ -134,12 +137,12 @@ describe("Commitments.busyBlocksByUserIds", () => {
 			{
 				startsAt: WEEK_STARTS_AT + DAY,
 				rangeEndsAt: WEEK_STARTS_AT + DAY + 3 * HOUR,
-				users: [{ userId: memberId(), isOwner: 1 }],
+				users: [{ userId: memberId(), isOwner: true }],
 			},
 			{
 				requests: [
 					{
-						users: [{ userId: opponentId(), isOwner: 1 }],
+						users: [{ userId: opponentId(), isOwner: true }],
 						startsAt: WEEK_STARTS_AT + DAY + HOUR,
 						isAccepted: true,
 					},
@@ -317,11 +320,14 @@ describe("Commitments.busyBlocksByUserIds", () => {
 		await ScrimPostFactory.create(
 			{
 				startsAt: WEEK_STARTS_AT + 2 * DAY,
-				users: [{ userId: memberId(), isOwner: 1 }],
+				users: [{ userId: memberId(), isOwner: true }],
 			},
 			{
 				requests: [
-					{ users: [{ userId: opponentId(), isOwner: 1 }], isAccepted: true },
+					{
+						users: [{ userId: opponentId(), isOwner: true }],
+						isAccepted: true,
+					},
 				],
 			},
 		);

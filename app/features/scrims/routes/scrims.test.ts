@@ -4,7 +4,6 @@ import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { toDBBoolean } from "~/utils/sql";
 import { wrappedAction } from "~/utils/Test";
 import { action } from "../actions/scrims.server";
 import type { scrimsActionSchema } from "../scrims-schemas";
@@ -30,10 +29,10 @@ describe("Scrims NEW_REQUEST action", () => {
 		const post = await ScrimPostFactory.create({
 			startsAt: dateToDatabaseTimestamp(postStartsAt),
 			users: [
-				{ userId: postOwner.id, isOwner: toDBBoolean(true) },
+				{ userId: postOwner.id, isOwner: true },
 				...postMembers.map((member) => ({
 					userId: member.id,
-					isOwner: toDBBoolean(false),
+					isOwner: false,
 				})),
 			],
 		});

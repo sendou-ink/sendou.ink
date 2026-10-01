@@ -1,4 +1,5 @@
-import { eachDayOfInterval, subDays } from "date-fns";
+import { eachDayOfInterval, sub, subDays } from "date-fns";
+import { refine } from "~/db/entity-query";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
@@ -27,6 +28,7 @@ import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerInges
 import * as ScrimMapListRepository from "~/features/scrims/ScrimMapListRepository.server";
 import * as ScrimMapRepository from "~/features/scrims/ScrimMapRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
+import { SCRIM } from "~/features/scrims/scrims-constants";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
@@ -400,9 +402,6 @@ export function buildCases(fx: Fixtures): {
 	add("FriendRepository.findFriendsByUserId", fx.heavyFriendPair, (pair) =>
 		FriendRepository.findFriendsByUserId(pair.userId),
 	);
-	add("FriendRepository.findFriendIds", fx.heavyFriendPair, (pair) =>
-		FriendRepository.findFriendIds(pair.userId),
-	);
 	add("FriendRepository.findFriendRequestBetween", fx.heavyFriendPair, (pair) =>
 		FriendRepository.findFriendRequestBetween({
 			senderId: pair.userId,
@@ -711,25 +710,40 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	add(
-		"ScrimPostRepository.findAllByChatRoomIds",
+		"ScrimPostRepository.posts.owningChatRooms",
 		fx.openChatRoomIdsByType?.SCRIM ?? null,
-		(roomIds) => ScrimPostRepository.findAllByChatRoomIds(roomIds),
+		(roomIds) =>
+			ScrimPostRepository.posts()
+				.includingHidden()
+				.with(
+					refine("ScrimPost", (qb) =>
+						qb.where("ScrimPost.chatRoomId", "in", roomIds),
+					),
+				)
+				.withParticipants()
+				.execute(),
 	);
-	add("ScrimPostRepository.findById", fx.heavyScrimPostId, (scrimPostId) =>
-		ScrimPostRepository.findById(scrimPostId),
+	add("ScrimPostRepository.postById", fx.heavyScrimPostId, (scrimPostId) =>
+		ScrimPostRepository.postById(scrimPostId).executeTakeFirst(),
 	);
-	addStatic("ScrimPostRepository.findAllRelevant", () =>
-		ScrimPostRepository.findAllRelevant(),
+	addStatic("ScrimPostRepository.posts.listed", () =>
+		ScrimPostRepository.posts()
+			.visibleToActor()
+			.startingFrom(sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }))
+			.soonestFirst()
+			.withParticipants({ cards: true })
+			.withPermissions()
+			.execute(),
 	);
-	add(
-		"ScrimPostRepository.findAcceptedScrimsBetweenTwoTimestamps",
-		fx.scrimWindow,
-		(window) =>
-			ScrimPostRepository.findAcceptedScrimsBetweenTwoTimestamps({
-				startTime: window.startTime,
-				endTime: window.endTime,
-				excludeRecentlyCreated: window.endTime,
-			}),
+	add("ScrimPostRepository.posts.bookedWithin", fx.scrimWindow, (window) =>
+		ScrimPostRepository.posts()
+			.includingHidden()
+			.booked()
+			.where({ canceledAt: null })
+			.startingFrom(window.startTime)
+			.startingBefore(window.endTime)
+			.withParticipants()
+			.execute(),
 	);
 	add(
 		"ScrimPostRepository.findPendingOverlapsForUsers",
@@ -742,18 +756,23 @@ export function buildCases(fx: Fixtures): {
 				excludePostId: -1,
 			}),
 	);
-	add("ScrimPostRepository.findUserScrims", fx.scrimUserIds, (userIds) =>
-		ScrimPostRepository.findUserScrims(userIds[0]),
+	// relies on the benchmark's actor context
+	addStatic("ScrimPostRepository.ownUpcoming", () =>
+		ScrimPostRepository.ownUpcoming().execute(),
 	);
 	add(
-		"ScrimPostRepository.findAllAcceptedByUserIds",
+		"ScrimPostRepository.posts.involvingAnyOf.booked",
 		both(fx.scrimUserIds, fx.scrimWindow),
 		([userIds, window]) =>
-			ScrimPostRepository.findAllAcceptedByUserIds({
-				userIds,
-				startsAt: dateToDatabaseTimestamp(window.startTime),
-				endsAt: dateToDatabaseTimestamp(window.endTime),
-			}),
+			ScrimPostRepository.posts()
+				.includingHidden()
+				.booked()
+				.where({ canceledAt: null })
+				.involvingAnyOf(userIds)
+				.startingFrom(window.startTime)
+				.startingBefore(window.endTime)
+				.withParticipants()
+				.execute(),
 	);
 
 	add(

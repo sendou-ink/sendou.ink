@@ -2,6 +2,7 @@ import {
 	type AliasedRawBuilder,
 	type Expression,
 	type ExpressionBuilder,
+	type OperationNode,
 	type RawBuilder,
 	type SqlBool,
 	sql,
@@ -14,6 +15,7 @@ import type {
 import { Config } from "~/config";
 import {
 	assertNotTimestampReference,
+	booleanValuedNode,
 	jsonValuedNode,
 	jsonValuedSelection,
 	selectionOutputName,
@@ -495,10 +497,7 @@ export function jsonBuildObject<O extends Record<string, Expression<unknown>>>(
 			const node = obj[key].toOperationNode();
 			assertNotTimestampReference(node);
 
-			return [
-				sql.lit(key),
-				jsonValuedNode(node) ? sql`json(${obj[key]})` : obj[key],
-			];
+			return [sql.lit(key), jsonValue(node, obj[key])];
 		}),
 	)})` as ReturnType<typeof sqliteJsonBuildObject<O>>;
 }
@@ -509,6 +508,26 @@ export function jsonBuildObject<O extends Record<string, Expression<unknown>>>(
  */
 export function asJson<T>(expr: Expression<T>): RawBuilder<T> {
 	return sql<T>`json(${expr})`;
+}
+
+/**
+ * A computed 0/1 flag (`exists(...)`, a comparison) read as a `boolean`, at the top level or
+ * nested in JSON. Boolean columns need none, the dialect knows them by their origin.
+ */
+export function asBoolean(expr: Expression<SqlBool>): RawBuilder<boolean> {
+	// the marker json-selections.ts looks for, spelled out as it must lead the first SQL fragment
+	return sql<boolean>`/* boolean */ (${expr})`;
+}
+
+function jsonValue(node: OperationNode, value: Expression<unknown>) {
+	if (booleanValuedNode(node)) return jsonBoolean(value);
+	if (jsonValuedNode(node)) return sql`json(${value})`;
+	return value;
+}
+
+/** A 0/1 flag as a JSON `true`/`false` (`null` stays), as SQLite has no boolean to put in a document. */
+function jsonBoolean(value: Expression<unknown>) {
+	return sql`json(case ${value} when 1 then 'true' when 0 then 'false' end)`;
 }
 
 function jsonObjectArgs(
@@ -530,7 +549,11 @@ function jsonObjectArgs(
 
 		args.push(
 			sql.lit(name),
-			jsonValuedSelection(selection) ? sql`json(${ref})` : ref,
+			booleanValuedNode(selection)
+				? jsonBoolean(ref)
+				: jsonValuedSelection(selection)
+					? sql`json(${ref})`
+					: ref,
 		);
 	}
 

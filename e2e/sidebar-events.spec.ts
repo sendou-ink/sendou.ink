@@ -39,7 +39,7 @@ test.describe("Sidebar events", () => {
 
 		await factories.ScrimPostFactory.create({
 			startsAt: inHours(3),
-			users: [{ userId: NZAP_TEST_ID, isOwner: 1 }],
+			users: [{ userId: NZAP_TEST_ID, isOwner: true }],
 		});
 
 		await factories.TournamentFactory.create({
@@ -84,24 +84,27 @@ test.describe("Sidebar events", () => {
 			{
 				startsAt: inHours(1),
 				teamId: opponentTeam.id,
-				users: [{ userId: opponentOwner.id, isOwner: 1 }],
+				users: [{ userId: opponentOwner.id, isOwner: true }],
 			},
 			{
 				requests: [
-					{ users: [{ userId: NZAP_TEST_ID, isOwner: 1 }], isAccepted: true },
+					{
+						users: [{ userId: NZAP_TEST_ID, isOwner: true }],
+						isAccepted: true,
+					},
 				],
 			},
 		);
 		await factories.ScrimPostFactory.create({
 			startsAt: inHours(2),
-			users: [{ userId: NZAP_TEST_ID, isOwner: 1 }],
+			users: [{ userId: NZAP_TEST_ID, isOwner: true }],
 		});
 		const pending = await factories.ScrimPostFactory.create(
 			{
 				startsAt: inHours(3),
-				users: [{ userId: otherPostOwner.id, isOwner: 1 }],
+				users: [{ userId: otherPostOwner.id, isOwner: true }],
 			},
-			{ requests: [{ users: [{ userId: NZAP_TEST_ID, isOwner: 1 }] }] },
+			{ requests: [{ users: [{ userId: NZAP_TEST_ID, isOwner: true }] }] },
 		);
 
 		await impersonate(page, NZAP_TEST_ID);

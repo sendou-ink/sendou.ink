@@ -37,11 +37,11 @@ describe("scrims loader", () => {
 		const association = await createAssociation();
 
 		const { id: associationPostId } = await ScrimPostFactory.create({
-			users: [{ userId: otherUserId(), isOwner: 1 }],
+			users: [{ userId: otherUserId(), isOwner: true }],
 			visibility: { forAssociation: association.id },
 		});
 		await ScrimPostFactory.create({
-			users: [{ userId: otherUserId(), isOwner: 1 }],
+			users: [{ userId: otherUserId(), isOwner: true }],
 		});
 
 		const data = await loadFilteredByAssociation(association.id);
@@ -55,7 +55,7 @@ describe("scrims loader", () => {
 		const association = await createAssociation();
 
 		const { id: ownPostId } = await ScrimPostFactory.create({
-			users: [{ userId: viewerId(), isOwner: 1 }],
+			users: [{ userId: viewerId(), isOwner: true }],
 		});
 
 		const data = await loadFilteredByAssociation(association.id);
@@ -68,12 +68,12 @@ describe("scrims loader", () => {
 
 		const { id: bookedPostId } = await ScrimPostFactory.create(
 			{
-				users: [{ userId: viewerId(), isOwner: 1 }],
+				users: [{ userId: viewerId(), isOwner: true }],
 			},
 			{
 				requests: [
 					{
-						users: [{ userId: requesterId(), isOwner: 1 }],
+						users: [{ userId: requesterId(), isOwner: true }],
 						isAccepted: true,
 					},
 				],
@@ -91,7 +91,7 @@ describe("scrims loader", () => {
 		});
 
 		const { id: postId } = await ScrimPostFactory.create({
-			users: [{ userId: otherUserId(), isOwner: 1 }],
+			users: [{ userId: otherUserId(), isOwner: true }],
 		});
 
 		const data = await loadFilteredByAssociation(otherAssociation.id);
