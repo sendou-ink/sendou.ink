@@ -1,5 +1,4 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { refine } from "~/db/entity-query";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -118,9 +117,5 @@ function exactUser(
 	return UserRepository.users()
 		.where(identifier)
 		.withPlusTier()
-		.with(
-			refine("User", (qb) =>
-				qb.select(["User.inGameName", "User.tournamentName"]),
-			),
-		);
+		.withColumns(["inGameName", "tournamentName"]);
 }

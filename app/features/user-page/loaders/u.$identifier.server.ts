@@ -1,5 +1,4 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { refine } from "~/db/entity-query";
 import { getUser } from "~/features/auth/core/user.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -45,15 +44,10 @@ function layoutUser(userId: number) {
 		.withCountry()
 		.withPatronTheme()
 		.withTabCounts()
-		// xxx: could we somehow have an API that just lets you select more fields, preferably only giving those as option that are not part of the default select?
-		.with(
-			refine("User", (qb) =>
-				qb.select([
-					"User.pronouns",
-					"User.inGameName",
-					"User.commissionText",
-					"User.commissionsOpen",
-				]),
-			),
-		);
+		.withColumns([
+			"pronouns",
+			"inGameName",
+			"commissionText",
+			"commissionsOpen",
+		]);
 }

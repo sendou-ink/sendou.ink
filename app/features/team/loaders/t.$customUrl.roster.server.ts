@@ -10,7 +10,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const team = notFoundIfNullish(
 		await TeamRepository.teamByCustomUrl(customUrl)
-			.withInviteCode()
+			.withColumns(["inviteCode"])
 			.executeTakeFirst(),
 	);
 

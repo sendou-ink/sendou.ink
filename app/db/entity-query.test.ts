@@ -165,6 +165,23 @@ describe("defineQuery", () => {
 		expect(titlesOf(rows)).toEqual(["A"]);
 	});
 
+	test("withColumns adds root columns, JSON parsed, paginated rows included", async () => {
+		await BuildFactory.create({
+			ownerId: users.id(1),
+			title: "d",
+			description: "desc",
+			modes: ["SZ", "TC"],
+		});
+		const chain = () =>
+			testBuilds().where({ title: "d" }).withColumns(["description", "modes"]);
+
+		const expected = { title: "D", description: "desc", modes: ["SZ", "TC"] };
+		expect(await chain().executeTakeFirst()).toMatchObject(expected);
+		expect(
+			(await chain().paginate({ page: 1, size: 1 })).items[0],
+		).toMatchObject(expected);
+	});
+
 	test("withUser adds the user the foreign key points at", async () => {
 		const [row] = await testBuilds()
 			.with(UserRepository.withUser("owner", "Build.ownerId", ["plusTier"]))
@@ -251,6 +268,16 @@ describe("defineQuery", () => {
 
 		// @ts-expect-error not a column of the root table
 		testBuilds().where({ nope: 1 });
+
+		expectTypeOf(
+			testBuilds().withColumns(["description"]).execute,
+		).returns.resolves.items.toHaveProperty("description");
+
+		// @ts-expect-error already on the row
+		testBuilds().withColumns(["title"]);
+
+		// @ts-expect-error not a column of the root table
+		testBuilds().withColumns(["nope"]);
 
 		expect(() =>
 			// @ts-expect-error the root has no single id primary key

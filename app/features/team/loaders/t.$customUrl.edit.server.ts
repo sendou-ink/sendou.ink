@@ -17,7 +17,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		await TeamRepository.teamByCustomUrl(customUrl)
 			.withProfile()
 			.withImageUploads()
-			.withMapModePreferences()
+			.withColumns(["mapModePreferences"])
 			.executeTakeFirst(),
 	);
 

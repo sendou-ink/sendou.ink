@@ -15,7 +15,7 @@ export const action: ActionFunction = async ({ params, url }) => {
 
 	const team = notFoundIfNullish(
 		await TeamRepository.teamByCustomUrl(customUrl)
-			.withInviteCode()
+			.withColumns(["inviteCode"])
 			.executeTakeFirst(),
 	);
 

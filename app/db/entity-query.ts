@@ -11,7 +11,12 @@ import {
 } from "kysely";
 import { jsonBuildObject } from "~/utils/kysely.server";
 import { SCHEMA } from "./schema.gen";
-import type { ColumnFilter, HasIdPrimaryKey, TableName } from "./schema-types";
+import type {
+	ColumnFilter,
+	HasIdPrimaryKey,
+	TableName,
+	Row as TableRow,
+} from "./schema-types";
 import { db } from "./sql";
 import type { DB } from "./tables";
 
@@ -162,6 +167,10 @@ interface EntityQuery<R extends TableName, O, V, M extends PropertyKey> {
 	whereIdIn: HasIdPrimaryKey<R> extends true
 		? (ids: ReadonlyArray<number>) => Chain<R, O, V, M>
 		: never;
+	/** Adds plain root columns to the row, offering only those not on it yet. */
+	withColumns<const C extends Exclude<keyof TableRow<R> & string, keyof O>>(
+		columns: ReadonlyArray<C>,
+	): Chain<R, Override<O, Pick<TableRow<R>, C>>, V, M>;
 	/** Adds a one-off step. The second time the same step is needed, it moves into the vocabulary. */
 	with<Mod extends Modifier<R, any, any, any>>(
 		modifier: Mod,
@@ -475,6 +484,11 @@ function createChain(
 			assertIdPrimaryKey("whereIdIn");
 			return addStep({ apply: (qb) => qb.where(idRef, "in", ids) });
 		},
+		withColumns: (columns: ReadonlyArray<string>) =>
+			addStep({
+				apply: (qb) =>
+					qb.select(columns.map((column) => `${definition.root}.${column}`)),
+			}),
 		with: addStep,
 		limit: (count: number) => next({ limit: count }),
 		paginate: (options: PageOptions | CursorOptions) =>

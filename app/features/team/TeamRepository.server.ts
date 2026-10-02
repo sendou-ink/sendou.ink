@@ -109,9 +109,6 @@ export const teams = defineQuery({
 					uploadedImageUrl(eb, "Team.bannerImgId").as("bannerUploadUrl"),
 				]),
 			),
-		withInviteCode: () => refine("Team", (qb) => qb.select("Team.inviteCode")),
-		withMapModePreferences: () =>
-			refine("Team", (qb) => qb.select("Team.mapModePreferences")),
 		/** The current members with their roles and match profile weapons, in roster order. */
 		withMembers: () =>
 			refine("Team", (qb) =>

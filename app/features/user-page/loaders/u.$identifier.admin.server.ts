@@ -1,5 +1,4 @@
 import { isSameMonth, startOfMonth, subMonths } from "date-fns";
-import { refine } from "~/db/entity-query";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
@@ -43,18 +42,14 @@ function modInfo(userId: number) {
 		.where({ id: userId })
 		.withModNotes()
 		.withBanLogs()
-		.with(
-			refine("User", (qb) =>
-				qb.select([
-					"User.discordUniqueName",
-					"User.isVideoAdder",
-					"User.isArtist",
-					"User.isTournamentOrganizer",
-					"User.plusSkippedForSeasonNth",
-					"User.createdAt",
-				]),
-			),
-		);
+		.withColumns([
+			"discordUniqueName",
+			"isVideoAdder",
+			"isArtist",
+			"isTournamentOrganizer",
+			"plusSkippedForSeasonNth",
+			"createdAt",
+		]);
 }
 
 function reportsMonthlyCounts(

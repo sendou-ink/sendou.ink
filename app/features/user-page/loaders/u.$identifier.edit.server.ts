@@ -1,5 +1,4 @@
 import { redirect } from "react-router";
-import { refine } from "~/db/entity-query";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -34,16 +33,12 @@ function editedProfile(userId: number) {
 	return UserRepository.users()
 		.where({ id: userId })
 		.withCountry()
-		.with(
-			refine("User", (qb) =>
-				qb.select([
-					"User.customName",
-					"User.inGameName",
-					"User.pronouns",
-					"User.customAvatarImgId",
-					"User.favoriteTrophyIds",
-					"User.hiddenTrophyIds",
-				]),
-			),
-		);
+		.withColumns([
+			"customName",
+			"inGameName",
+			"pronouns",
+			"customAvatarImgId",
+			"favoriteTrophyIds",
+			"hiddenTrophyIds",
+		]);
 }

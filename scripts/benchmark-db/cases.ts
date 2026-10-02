@@ -964,7 +964,7 @@ export function buildCases(fx: Fixtures): {
 	add("TeamRepository.teamByCustomUrl", fx.heavyTeam, (team) =>
 		TeamRepository.teamByCustomUrl(team.customUrl)
 			.withProfile()
-			.withInviteCode()
+			.withColumns(["inviteCode"])
 			.executeTakeFirst(),
 	);
 	add("TeamRepository.findResultPlacementsById", fx.heavyTeam, (team) =>
