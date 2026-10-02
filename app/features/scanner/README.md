@@ -281,9 +281,9 @@ sequenceDiagram
   opens a match, a scoreboard closes one (claiming the last 8 min of deaths
   when the intro was missed), minimaps group per map by confirmed stage
   change and >5 min gap. A battle history screen (battle log, replay
-  browser) showing a game already built — same scoreboard fingerprint (the
-  order-free paint/K+A/deaths/specials lines), recording time within 20 min
-  of its play time — joins that match's sources instead of forming a new
+  browser) showing a game already built — at least 6 paint totals shared
+  order-free (a misread or unread row still joins), stage not contradicting
+  it, recording time within 20 min of its play time — joins that match's sources instead of forming a new
   one, so browsing the log after playing neither adds a card nor re-uploads
   (the match was already sent). A history screen with its stage unread
   (typically a frame caught mid-transition) forms no match of its own; the

@@ -83,6 +83,7 @@ import {
 	weaponSlotRowPermutation,
 } from "./slot-row-assignment";
 import { editDistance, matchKey } from "./text";
+import { multisetOverlap } from "./timeline/same-scoreboard";
 
 /** How far back a scoreboard with no MapStart claims deaths: matches run well under 8 min. */
 const FALLBACK_WINDOW_SECONDS = 480;
@@ -156,8 +157,11 @@ const HISTORY_SCOREBOARD_EVENT_TYPES: readonly string[] = [
 	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
 ];
 
-/** Paint totals a board must read to fingerprint its game; fewer could collide between games. */
-const FINGERPRINT_MIN_PAINT_READ = 6;
+/**
+ * Paint totals two boards must share to show the same game: tolerates a couple
+ * of misread or unread rows, while different games practically never share this many.
+ */
+const SAME_GAME_MIN_SHARED_PAINTS = 6;
 
 /**
  * How far a history screen's recording time may sit from the earlier read of
@@ -192,8 +196,8 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * Splits a timeline into ScannerMatch objects, chronological. A personal
  * results screen identifies no match of its own but completes the POV
  * player's build on the match whose results screen it follows. A battle
- * history screen showing an already built game (same scoreboard fingerprint,
- * recording time not contradicting it) joins that match's `sources` instead of
+ * history screen showing an already built game (≥6 shared paint totals, stage
+ * and recording time not contradicting it) joins that match's `sources` instead of
  * forming a new one, as does a results screen read again with no match
  * opened since. A history screen with its stage unread and no such match
  * forms none. Every input event ends up in at most one match's `sources`.
@@ -1609,7 +1613,7 @@ function historyData(
 
 /**
  * The earlier match a battle history screen shows again: its closing board
- * has the same fingerprint and its play time doesn't contradict the screen's
+ * shows the same game and its play time doesn't contradict the screen's
  * recording time (either may be unknown, e.g. on VoD scans).
  */
 function revisitedMatch<E extends DetectedEvent>(
@@ -1617,12 +1621,11 @@ function revisitedMatch<E extends DetectedEvent>(
 	event: E,
 ): BuiltMatch<E> | undefined {
 	if (!HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) return undefined;
-	const fingerprint = scoreboardFingerprint(event.data as ScoreboardData);
-	if (fingerprint === null) return undefined;
+	const board = event.data as ScoreboardData;
 	const recordedAt = playedAt(event);
 
 	return built.findLast((candidate) => {
-		if (closingBoardFingerprint(candidate) !== fingerprint) return false;
+		if (!closesSameGame(candidate, board)) return false;
 		return (
 			recordedAt === null ||
 			candidate.match.playedAt === null ||
@@ -1654,44 +1657,44 @@ function reshownResultsMatch<E extends DetectedEvent>(
 ): BuiltMatch<E> | undefined {
 	if (event.type !== SCOREBOARD_EVENT_TYPE) return undefined;
 	const last = built.at(-1);
-	const fingerprint = scoreboardFingerprint(event.data as ScoreboardData);
-	if (!last || fingerprint === null) return undefined;
-	return closingBoardFingerprint(last) === fingerprint ? last : undefined;
-}
-
-function closingBoardFingerprint<E extends DetectedEvent>(
-	built: BuiltMatch<E>,
-): string | null {
-	const board = built.sources.find((source) =>
-		SCOREBOARD_EVENT_TYPES.includes(source.type),
-	);
-	return board ? scoreboardFingerprint(board.data as ScoreboardData) : null;
+	if (!last) return undefined;
+	return closesSameGame(last, event.data as ScoreboardData) ? last : undefined;
 }
 
 /**
- * A game's identity off its board: each team's stat lines (paint, K+A, deaths,
- * specials) as an order-free multiset, teams order-free too (a history screen
- * can misplace the winner panel). Paint totals practically never repeat
- * between games; names (OCR wobble) and weapons (icon sizes differ per
- * screen) are left out. Null when too few paint totals were read to tell games apart.
+ * Whether `board` shows the game `built` closed with: the stages don't
+ * disagree and the boards share enough paint totals, order-free (a history
+ * screen can misplace the winner panel). Paint totals practically never repeat
+ * between games; names (OCR wobble) and weapons (icon sizes differ per screen)
+ * are left out.
  */
-function scoreboardFingerprint(board: ScoreboardData): string | null {
-	const paintsRead = board.players.filter(
-		(player) => player.paint !== null,
-	).length;
-	if (paintsRead < FINGERPRINT_MIN_PAINT_READ) return null;
+function closesSameGame<E extends DetectedEvent>(
+	built: BuiltMatch<E>,
+	board: ScoreboardData,
+): boolean {
+	const closingBoard = built.sources.find((source) =>
+		SCOREBOARD_EVENT_TYPES.includes(source.type),
+	);
+	if (!closingBoard) return false;
+	if (
+		board.stage !== null &&
+		built.match.stage !== null &&
+		board.stage !== built.match.stage
+	) {
+		return false;
+	}
+	return (
+		multisetOverlap(
+			paintsRead(closingBoard.data as ScoreboardData),
+			paintsRead(board),
+		) >= SAME_GAME_MIN_SHARED_PAINTS
+	);
+}
 
-	const teamKey = (players: ScoreboardData["players"]) =>
-		players
-			.map((player) => [player.paint, player.ka, player.d, player.s].join(":"))
-			.sort()
-			.join(",");
-	return [
-		teamKey(board.players.slice(0, PLAYERS_PER_TEAM)),
-		teamKey(board.players.slice(PLAYERS_PER_TEAM)),
-	]
-		.sort()
-		.join("|");
+function paintsRead(board: ScoreboardData): number[] {
+	return board.players.flatMap((player) =>
+		player.paint !== null ? [player.paint] : [],
+	);
 }
 
 function teamsFromScoreboard(

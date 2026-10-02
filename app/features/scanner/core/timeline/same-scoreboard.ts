@@ -27,7 +27,7 @@ function charDiff(a: string, b: string): number {
 }
 
 /** Size of the multiset intersection of two number lists. */
-function multisetOverlap(a: number[], b: number[]): number {
+export function multisetOverlap(a: number[], b: number[]): number {
 	const counts = new Map<number, number>();
 	for (const v of a) counts.set(v, (counts.get(v) ?? 0) + 1);
 	let n = 0;

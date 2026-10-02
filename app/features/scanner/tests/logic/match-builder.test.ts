@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { test } from "vitest";
 import type {
 	AbilityWithUnknown,
 	MainWeaponId,
@@ -30,7 +31,6 @@ import {
 	type MatchBuildCache,
 } from "../../core/match-builder";
 import type { ScannerLobby } from "../../scanner-types";
-import { test } from "../node-test-compat";
 
 const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];
 const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];
@@ -926,6 +926,44 @@ test("a battle log view with the winner panel misplaced still joins its match", 
 	assert.equal(built.length, 1);
 });
 
+test.each([
+	{
+		why: "a paint total misread",
+		paints: GAME_PAINTS.map((paint, i) => (i === 2 ? paint + 5 : paint)),
+	},
+	{
+		why: "a paint total unread",
+		paints: GAME_PAINTS.map((paint, i) => (i === 6 ? null : paint)),
+	},
+	{
+		why: "two paint totals misread",
+		paints: GAME_PAINTS.map((paint, i) => (i < 2 ? paint + 1 : paint)),
+	},
+])("a battle log view with $why still joins its match", ({ paints }) => {
+	const built = buildScannerMatches([
+		...playedGame(),
+		battleLogScoreboard(900, { paints }),
+	]);
+	assert.equal(built.length, 1);
+});
+
+test("a battle log view sharing too few paint totals forms its own match", () => {
+	const paints = GAME_PAINTS.map((paint, i) => (i < 3 ? paint + 1 : paint));
+	const built = buildScannerMatches([
+		...playedGame(),
+		battleLogScoreboard(900, { paints }),
+	]);
+	assert.equal(built.length, 2);
+});
+
+test("a battle log view of the same paint totals on another stage forms its own match", () => {
+	const built = buildScannerMatches([
+		...playedGame(),
+		battleLogScoreboard(900, { paints: GAME_PAINTS, stage: 1 as StageId }),
+	]);
+	assert.equal(built.length, 2);
+});
+
 test("with a cache, a rebuild reuses each match whose events are unchanged", () => {
 	const cache: MatchBuildCache<DetectedEvent> = new WeakMap();
 	const first = [mapStart(0), death(100, "l1"), scoreboard(300)];
@@ -1051,6 +1089,15 @@ test("a results screen read again with no match opened since joins its match", (
 	const built = buildScannerMatches([...playedGame(), reread]);
 	assert.equal(built.length, 1);
 	assert.equal(built[0]!.sources.at(-1), reread);
+});
+
+test("a results screen read again with a paint total misread joins its match", () => {
+	const paints = GAME_PAINTS.map((paint, i) => (i === 0 ? paint + 10 : paint));
+	const built = buildScannerMatches([
+		...playedGame(),
+		scoreboard(345, { paints }),
+	]);
+	assert.equal(built.length, 1);
 });
 
 test("a results screen repeating an earlier board is a new game", () => {
