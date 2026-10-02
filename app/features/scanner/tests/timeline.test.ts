@@ -57,6 +57,16 @@ test("timeline drops low-confidence events", () => {
 	assert.equal(tl.events.length, 0);
 });
 
+test("history screens keep a stricter confidence floor than the shared one", () => {
+	const tl = new TimelineBuilder({ minConfidence: 0.6 });
+	assert.equal(tl.push(replay(100, 0.7, {})).action, "dropped");
+	assert.equal(
+		tl.push(event(100, 0.7, "QuickScoreboardBattleLog")).action,
+		"dropped",
+	);
+	assert.equal(tl.push(event(100, 0.7)).action, "added");
+});
+
 test("timeline merges same-type events inside the window", () => {
 	const tl = new TimelineBuilder({ mergeWindow: 30, minConfidence: 0 });
 	assert.equal(tl.push(event(100, 0.8)).action, "added");
@@ -89,44 +99,44 @@ test("different event types never merge", () => {
 
 test("scoreboards with different stages stay separate inside the window", () => {
 	const tl = new TimelineBuilder({ minConfidence: 0 });
-	assert.equal(tl.push(replay(100, 0.8, { stage: 21 })).action, "added");
-	assert.equal(tl.push(replay(104, 0.8, { stage: 2 })).action, "added");
-	assert.equal(tl.push(replay(108, 0.8, { stage: 17 })).action, "added");
+	assert.equal(tl.push(replay(100, 0.9, { stage: 21 })).action, "added");
+	assert.equal(tl.push(replay(104, 0.9, { stage: 2 })).action, "added");
+	assert.equal(tl.push(replay(108, 0.9, { stage: 17 })).action, "added");
 	// revisiting the first replay merges back into its event, skipping the
 	// incompatible ones in between
-	assert.equal(tl.push(replay(112, 0.7, { stage: 21 })).action, "merged");
+	assert.equal(tl.push(replay(112, 0.8, { stage: 21 })).action, "merged");
 	assert.equal(tl.events.length, 3);
 });
 
 test("a null stage read never splits", () => {
 	const tl = new TimelineBuilder({ minConfidence: 0 });
-	tl.push(replay(100, 0.8, { stage: 21 }));
-	assert.equal(tl.push(replay(104, 0.7, { stage: null })).action, "merged");
+	tl.push(replay(100, 0.9, { stage: 21 }));
+	assert.equal(tl.push(replay(104, 0.8, { stage: null })).action, "merged");
 });
 
 test("different recording timestamps split, equal ones merge", () => {
 	const tl = new TimelineBuilder({ minConfidence: 0 });
-	tl.push(replay(100, 0.8, { timestamp: "3/7/2026 21:15" }));
+	tl.push(replay(100, 0.9, { timestamp: "3/7/2026 21:15" }));
 	assert.equal(
-		tl.push(replay(104, 0.8, { timestamp: "3/7/2026 21:22" })).action,
+		tl.push(replay(104, 0.9, { timestamp: "3/7/2026 21:22" })).action,
 		"added",
 	);
 	assert.equal(
-		tl.push(replay(108, 0.7, { timestamp: "3/7/2026 21:15" })).action,
+		tl.push(replay(108, 0.8, { timestamp: "3/7/2026 21:15" })).action,
 		"merged",
 	);
 });
 
 test("replay codes tolerate misread glyphs but split on real differences", () => {
 	const tl = new TimelineBuilder({ minConfidence: 0 });
-	tl.push(replay(100, 0.8, { replayCode: "R797-V51Y-945W-C4JJ" }));
+	tl.push(replay(100, 0.9, { replayCode: "R797-V51Y-945W-C4JJ" }));
 	// same replay, three glyphs misread on a low-fidelity capture
 	assert.equal(
-		tl.push(replay(104, 0.7, { replayCode: "R797-U51Y-945W-G4JL" })).action,
+		tl.push(replay(104, 0.8, { replayCode: "R797-U51Y-945W-G4JL" })).action,
 		"merged",
 	);
 	assert.equal(
-		tl.push(replay(108, 0.8, { replayCode: "RVRM-XXEL-0573-Q4SV" })).action,
+		tl.push(replay(108, 0.9, { replayCode: "RVRM-XXEL-0573-Q4SV" })).action,
 		"added",
 	);
 });
@@ -134,16 +144,16 @@ test("replay codes tolerate misread glyphs but split on real differences", () =>
 test("disjoint paint totals split when stage and code are unreadable", () => {
 	const tl = new TimelineBuilder({ minConfidence: 0 });
 	tl.push(
-		replay(100, 0.8, {
+		replay(100, 0.9, {
 			players: players([327, 408, 270, 354, 381, 613, 456, 287]),
 		}),
 	);
-	const other = replay(104, 0.8, {
+	const other = replay(104, 0.9, {
 		players: players([733, 946, 1020, 878, 666, 1068, 1050, 631]),
 	});
 	assert.equal(tl.push(other).action, "added");
 	// same board re-read with jitter: a couple of rows misread or null
-	const jittered = replay(108, 0.7, {
+	const jittered = replay(108, 0.8, {
 		players: players([733, 946, 1020, null, 666, 1068, 1050, 613]),
 	});
 	assert.equal(tl.push(jittered).action, "merged");
@@ -153,11 +163,11 @@ test("disjoint paint totals split when stage and code are unreadable", () => {
 test("too few readable paints never split", () => {
 	const tl = new TimelineBuilder({ minConfidence: 0 });
 	tl.push(
-		replay(100, 0.8, {
+		replay(100, 0.9, {
 			players: players([327, 408, 270, null, null, null, null, null]),
 		}),
 	);
-	const other = replay(104, 0.7, {
+	const other = replay(104, 0.8, {
 		players: players([733, 946, 1020, null, null, null, null, null]),
 	});
 	assert.equal(tl.push(other).action, "merged");

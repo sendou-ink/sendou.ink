@@ -285,7 +285,10 @@ sequenceDiagram
   order-free paint/K+A/deaths/specials lines), recording time within 20 min
   of its play time — joins that match's sources instead of forming a new
   one, so browsing the log after playing neither adds a card nor re-uploads
-  (the match was already sent). Likewise a results screen read again with no
+  (the match was already sent). A history screen with its stage unread
+  (typically a frame caught mid-transition) forms no match of its own; the
+  timeline also holds history screens to a 0.75 confidence floor (clean
+  reads score 0.81+). Likewise a results screen read again with no
   match opened since (a lost-connection dialog hid it and the detector
   re-armed) joins the last match. An event belongs to at most one match; deaths
   reveal enemy builds (`ability-harvest.ts`), the personal results screen

@@ -152,9 +152,13 @@ function replayScoreboard(
 
 function battleLogScoreboard(
 	t: number,
-	{ timestamp = null as string | null, paints = [] as (number | null)[] } = {},
+	{
+		timestamp = null as string | null,
+		paints = [] as (number | null)[],
+		stage = 0 as StageId | null,
+	} = {},
 ): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t, { paints }).data as ScoreboardData;
+	const base = scoreboard(t, { paints, stage }).data as ScoreboardData;
 	const data: ScoreboardBattleLogData = {
 		...base,
 		timestamp,
@@ -972,6 +976,37 @@ test("a battle log view of another game forms its own match", () => {
 		battleLogScoreboard(900, { paints: OTHER_GAME_PAINTS }),
 	]);
 	assert.equal(built.length, 2);
+});
+
+test("a battle log view with its stage unread forms no match of its own", () => {
+	const view = battleLogScoreboard(900, {
+		paints: OTHER_GAME_PAINTS,
+		stage: null,
+	});
+	const built = buildScannerMatches([...playedGame(), view]);
+	assert.equal(built.length, 1);
+	assert.ok(!built[0]!.sources.includes(view));
+});
+
+test("a battle log view with its stage unread still joins its already built match", () => {
+	const view = battleLogScoreboard(900, { paints: GAME_PAINTS, stage: null });
+	const built = buildScannerMatches([...playedGame(), view]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.sources.at(-1), view);
+});
+
+test("a battle log view with its stage unread does not close the match still gathering events", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		death(100, "l1"),
+		battleLogScoreboard(150, { paints: OTHER_GAME_PAINTS, stage: null }),
+		scoreboard(300, { paints: GAME_PAINTS }),
+	]);
+	assert.equal(built.length, 1);
+	assert.deepEqual(
+		built[0]!.sources.map((e) => e.t),
+		[0, 100, 300],
+	);
 });
 
 test("a battle log view whose recording time contradicts the earlier read forms its own match", () => {

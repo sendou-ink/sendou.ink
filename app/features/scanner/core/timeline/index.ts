@@ -39,7 +39,7 @@ export interface TimelineOptions {
 	sameEventDataByType: Record<string, (a: unknown, b: unknown) => boolean>;
 	/** events below this confidence are dropped */
 	minConfidence: number;
-	/** per-type floor overrides: evidence events scored on a different scale (raw NCC peaks) opt out of the shared floor */
+	/** per-type floor overrides: evidence events scored on a different scale (raw NCC peaks) opt out of the shared floor, history screens raise it */
 	minConfidenceByType: Record<string, number>;
 	/**
 	 * per-frame state samples, where every read carries state at its instant
@@ -93,8 +93,13 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 		[KILL_EVENT_TYPE]: sameKillData,
 	},
 	minConfidence: 0.6,
+	// history screens: clean reads score 0.81+, and a read under that floor
+	// would form a card of its own when its fingerprint can't match the game
 	minConfidenceByType: {
 		[STRIP_WEAPONS_EVENT_TYPE]: 0,
+		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: 0.75,
+		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: 0.75,
+		[QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: 0.75,
 	},
 	sampledTypes: [PLAYER_STATUS_EVENT_TYPE],
 	firstReadTypes: [KILL_EVENT_TYPE],

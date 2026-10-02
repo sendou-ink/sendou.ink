@@ -195,7 +195,8 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * history screen showing an already built game (same scoreboard fingerprint,
  * recording time not contradicting it) joins that match's `sources` instead of
  * forming a new one, as does a results screen read again with no match
- * opened since. Every input event ends up in at most one match's `sources`.
+ * opened since. A history screen with its stage unread and no such match
+ * forms none. Every input event ends up in at most one match's `sources`.
  *
  * `unbacked` also emits, flagged, the stretches with kill reads no scoreboard
  * or minimap backed (a results screen missed, the map never opened, a match
@@ -266,6 +267,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				};
 				continue;
 			}
+			if (isStagelessHistoryRead(event)) continue;
 			if (!open) {
 				open = startMatch();
 				open.deaths = orphanDeaths.filter(
@@ -1628,6 +1630,17 @@ function revisitedMatch<E extends DetectedEvent>(
 				REVISIT_PLAYED_AT_TOLERANCE_MS
 		);
 	});
+}
+
+/**
+ * A history screen whose stage went unread names no game of its own (typically
+ * a frame caught mid-transition), so it may only join an already built match.
+ */
+function isStagelessHistoryRead(event: DetectedEvent): boolean {
+	return (
+		HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type) &&
+		(event.data as ScoreboardData).stage === null
+	);
 }
 
 /**
