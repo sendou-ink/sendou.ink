@@ -34,6 +34,7 @@ import styles from "./ChatSidebar.module.css";
 
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext();
+	const [showInactive, setShowInactive] = React.useState(false);
 
 	if (!chatContext) return null;
 
@@ -45,7 +46,13 @@ export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 		return <LoadingState onClose={onClose} />;
 	}
 
-	return <RoomList onClose={onClose} />;
+	return (
+		<RoomList
+			onClose={onClose}
+			showInactive={showInactive}
+			setShowInactive={setShowInactive}
+		/>
+	);
 }
 
 interface RoomDisplay {
@@ -150,10 +157,17 @@ function LoadingState({ onClose }: { onClose?: () => void }) {
 	);
 }
 
-function RoomList({ onClose }: { onClose?: () => void }) {
+function RoomList({
+	onClose,
+	showInactive,
+	setShowInactive,
+}: {
+	onClose?: () => void;
+	showInactive: boolean;
+	setShowInactive: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
-	const [showInactive, setShowInactive] = React.useState(false);
 
 	const byRecency = (a: ChatRoomListItem, b: ChatRoomListItem) =>
 		(b.latestMessageAt ?? 0) - (a.latestMessageAt ?? 0) || b.id - a.id;
