@@ -3,6 +3,7 @@ import { redirect } from "react-router";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { SUSPENDED_PAGE } from "~/utils/urls";
+import { noteActorRead } from "./actor-reads.server";
 import { IMPERSONATED_SESSION_KEY, SESSION_KEY } from "./authenticator.server";
 import { authSessionStorage } from "./session.server";
 
@@ -17,6 +18,7 @@ interface UserContext {
 export const userAsyncLocalStorage = new AsyncLocalStorage<UserContext>();
 
 export function getUserContext(): UserContext {
+	noteActorRead();
 	const context = userAsyncLocalStorage.getStore();
 	if (!context) {
 		throw new Error("getUserContext called outside of user middleware context");

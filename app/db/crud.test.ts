@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, expectTypeOf, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { crud } from "./crud";
+import { isDatabaseDirty, markDatabaseClean } from "./write-tracker";
 
 const users = UserFactory.pool();
 const authorId = () => users.id(1);
@@ -133,6 +134,51 @@ describe("crud", () => {
 				sentiment: "POSITIVE",
 			}),
 		).toBe(false);
+	});
+
+	test("a reused compiled query binds each call's values", async () => {
+		const first = await modNotes.insert({
+			userId: targetId(),
+			authorId: authorId(),
+			text: "one",
+		});
+		const second = await modNotes.insert({
+			userId: authorId(),
+			authorId: targetId(),
+			text: "two",
+		});
+
+		expect((await modNotes.findById(first.id))?.text).toBe("one");
+		expect((await modNotes.findById(second.id))?.text).toBe("two");
+
+		expect(
+			await modNotes.update({ authorId: targetId() }, { text: "edited" }),
+		).toBe(1);
+		expect((await modNotes.findById(first.id))?.text).toBe("one");
+		expect((await modNotes.findById(second.id))?.text).toBe("edited");
+	});
+
+	test("filters on null and on a value compile to separate queries", async () => {
+		const note = { authorId: authorId(), targetId: targetId() };
+		await privateNotes.insert({ ...note, text: null, sentiment: "NEUTRAL" });
+
+		expect(await privateNotes.count({ ...note, text: null })).toBe(1);
+		expect(await privateNotes.count({ ...note, text: "x" })).toBe(0);
+		expect(await privateNotes.count({ ...note, text: null })).toBe(1);
+	});
+
+	test("a write through a reused compiled query marks the database dirty", async () => {
+		const { id } = await modNotes.insert({
+			userId: targetId(),
+			authorId: authorId(),
+			text: "note",
+		});
+		await modNotes.updateById(id, { text: "first" });
+
+		markDatabaseClean();
+		await modNotes.updateById(id, { text: "second" });
+
+		expect(isDatabaseDirty()).toBe(true);
 	});
 
 	test("update and delete throw without a filter", async () => {

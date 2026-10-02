@@ -49,6 +49,15 @@ const SCHEMA_PRESERVING_RAW_COMMANDS = new Set([
 	"explain",
 ]);
 
+/** Leading keywords of raw statements that don't count as writes. */
+const TRANSACTION_CONTROL_COMMANDS = new Set([
+	"begin",
+	"commit",
+	"rollback",
+	"savepoint",
+	"release",
+]);
+
 const STATEMENT_CACHE_SIZE = 5000;
 
 const NO_COLUMNS: ReadonlySet<string> = new Set();
@@ -82,6 +91,8 @@ export interface NodeSqliteDialectConfig {
 	booleanColumns?: ReadonlySet<string>;
 	/** Output names of computed result columns read as `boolean` (`asBoolean(...)`), which have no origin. Called once per prepared statement. */
 	computedBooleanColumns?: (query: RootOperationNode) => ReadonlySet<string>;
+	/** Called before every statement but select queries and transaction control; other raw SQL counts as a write. */
+	onWrite?: () => void;
 }
 
 /**
@@ -217,10 +228,12 @@ class NodeSqliteConnection implements DatabaseConnection {
 	readonly #computedBooleanColumns?: (
 		query: RootOperationNode,
 	) => ReadonlySet<string>;
+	readonly #onWrite?: () => void;
 	readonly #cache = new Map<string, PreparedStatement>();
 
 	constructor(config: NodeSqliteDialectConfig) {
 		this.#database = config.database;
+		this.#onWrite = config.onWrite;
 		this.#cacheStatements = config.cacheStatements ?? false;
 		this.#jsonColumns = config.jsonColumns;
 		this.#computedJsonColumns = config.computedJsonColumns;
@@ -230,6 +243,8 @@ class NodeSqliteConnection implements DatabaseConnection {
 	}
 
 	async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
+		if (this.#onWrite && isWrite(compiledQuery)) this.#onWrite();
+
 		const prepared = this.#preparedStatementFor(compiledQuery);
 		const parameters = toSqliteParameters(compiledQuery.parameters);
 
@@ -365,12 +380,23 @@ function isJsonPayload(parameter: unknown) {
 }
 
 function canChangeSchema(sql: string) {
-	const firstKeyword = sql
+	return !SCHEMA_PRESERVING_RAW_COMMANDS.has(firstKeyword(sql));
+}
+
+function isWrite({ query, sql }: CompiledQuery) {
+	if (query.kind === "SelectQueryNode") return false;
+
+	return (
+		query.kind !== "RawNode" ||
+		!TRANSACTION_CONTROL_COMMANDS.has(firstKeyword(sql))
+	);
+}
+
+function firstKeyword(sql: string) {
+	return sql
 		.trimStart()
 		.split(/[\s;(]/, 1)[0]
 		.toLowerCase();
-
-	return !SCHEMA_PRESERVING_RAW_COMMANDS.has(firstKeyword);
 }
 
 function prepare(

@@ -1,3 +1,4 @@
+import { noteActorRead } from "./actor-reads.server";
 import { IMPERSONATED_SESSION_KEY, SESSION_KEY } from "./authenticator.server";
 import { authSessionStorage } from "./session.server";
 import {
@@ -35,6 +36,7 @@ export function actorIdOrNull(): number | null {
 
 /** Null also when there is no request context at all (e.g. cron routines); never throws. */
 export function actorIdOrNullSafe(): number | null {
+	noteActorRead();
 	return userAsyncLocalStorage.getStore()?.user?.id ?? null;
 }
 

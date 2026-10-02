@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, expectTypeOf, test } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as VodFactory from "~/db/seed/factories/VodFactory";
+import { actorIdOrNull } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { jsonObjectFrom } from "~/utils/kysely.server";
-import { withNoUser } from "~/utils/Test";
+import { asBoolean, jsonObjectFrom } from "~/utils/kysely.server";
+import { withNoUser, withUserId } from "~/utils/Test";
 import {
 	defineQuery,
 	defineResolver,
@@ -283,6 +284,74 @@ describe("defineQuery", () => {
 			// @ts-expect-error the root has no single id primary key
 			testWidgets().whereIdIn([1]),
 		).toThrow();
+	});
+});
+
+describe("memoized selections", () => {
+	let titleSuffix = "";
+	const memoBuilds = defineQuery({
+		root: "Build",
+		select: (qb) => qb.select(["Build.id", "Build.ownerId"]),
+		defaultSort: [["Build.id", "asc"]],
+		vocabulary: () => ({
+			withOwnedByActor: () =>
+				refine("Build", (qb) =>
+					qb.select((eb) =>
+						asBoolean(eb("Build.ownerId", "=", actorIdOrNull())).as(
+							"ownedByActor",
+						),
+					),
+				),
+			withBuiltAt: () =>
+				refine("Build", (qb) =>
+					qb.select((eb) => eb.val(Date.now()).as("builtAt")),
+				),
+			withSuffixedTitle: () =>
+				refine("Build", (qb) =>
+					qb.select((eb) =>
+						eb
+							.fn<string>("concat", ["Build.title", eb.val(titleSuffix)])
+							.as("suffixedTitle"),
+					),
+				),
+		}),
+	});
+
+	beforeEach(async () => {
+		await users.create(2);
+		await BuildFactory.create({ ownerId: users.id(1) });
+	});
+
+	test("builds a step reading the actor per chain", async () => {
+		const ownedByActor = (userId: number) =>
+			withUserId(userId, async () =>
+				(await memoBuilds().withOwnedByActor().execute()).map(
+					(row) => row.ownedByActor,
+				),
+			);
+
+		expect(await ownedByActor(users.id(1))).toEqual([true]);
+		expect(await ownedByActor(users.id(2))).toEqual([false]);
+	});
+
+	test("builds a step reading the clock per chain", async () => {
+		const builtAt = async () =>
+			(await memoBuilds().withBuiltAt().executeTakeFirst())?.builtAt;
+
+		const first = await builtAt();
+		await new Promise((resolve) => setTimeout(resolve, 5));
+
+		expect(await builtAt()).toBeGreaterThan(first!);
+	});
+
+	test("throws when a memoized step's selections vary beyond its arguments", () => {
+		titleSuffix = "a";
+		memoBuilds().withSuffixedTitle().compile();
+
+		titleSuffix = "b";
+		expect(() => memoBuilds().withSuffixedTitle().compile()).toThrow(
+			/memoized/,
+		);
 	});
 });
 

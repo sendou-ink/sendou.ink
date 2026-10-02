@@ -8,7 +8,7 @@ patchedDependencies:
   '@react-router/serve@8.1.0': 08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673
   '@techstark/opencv-js@5.0.0-release.1': 0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3
   i18next@26.3.6: 34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a
-  kysely@0.29.0: a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a
+  kysely@0.29.0: ec4c2dc25df098e39ee7d948fd2983895350f2cbc6abd6f22495fe90e55b9dd9
   react-i18next@17.0.11: 1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269
 
 importers:
@@ -89,7 +89,7 @@ importers:
         version: 5.2.2
       kysely:
         specifier: 0.29.0
-        version: 0.29.0(patch_hash=a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a)
+        version: 0.29.0(patch_hash=ec4c2dc25df098e39ee7d948fd2983895350f2cbc6abd6f22495fe90e55b9dd9)
       lucide-react:
         specifier: 1.47.0
         version: 1.47.0(react@19.3.0)
@@ -7631,7 +7631,7 @@ snapshots:
       yaml: 2.9.1
       zod: 4.6.5
 
-  kysely@0.29.0(patch_hash=a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a): {}
+  kysely@0.29.0(patch_hash=ec4c2dc25df098e39ee7d948fd2983895350f2cbc6abd6f22495fe90e55b9dd9): {}
 
   lightningcss-android-arm64@1.33.0:
     optional: true

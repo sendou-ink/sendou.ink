@@ -3,12 +3,16 @@ import {
 	type CompiledQuery,
 	type Expression,
 	type ExpressionBuilder,
+	type OperationNodeSource,
 	type OrderByDirection,
+	type SelectExpression,
 	type SelectQueryBuilder,
+	type SelectQueryNode,
 	type Simplify,
 	type SqlBool,
 	sql,
 } from "kysely";
+import { actorReadCount } from "~/features/auth/core/actor-reads.server";
 import { jsonBuildObject } from "~/utils/kysely.server";
 import { SCHEMA } from "./schema.gen";
 import type {
@@ -32,6 +36,11 @@ type Row = Record<string, unknown>;
 type ResolveLoad = (keys: number[]) => Promise<Map<number, unknown>>;
 
 const RESOLVE_MARKER = "__resolve";
+const BASE_SELECT_KEY = "__base";
+// bounds the memo of a definition whose selection steps take arguments with many values (ids); past it, new keys are built per chain
+const MEMOIZED_STEPS_LIMIT = 1000;
+const VERIFIES_MEMOIZED_SELECTIONS = process.env.NODE_ENV !== "production";
+const CLOCK_SHIFT_MS = 24 * 60 * 60 * 1000;
 const resolveLoads = new Map<string, ResolveLoad>();
 
 /**
@@ -57,6 +66,8 @@ export interface Modifier<
 	readonly sortKeys?: ReadonlyArray<SortKey>;
 	readonly lifts?: ReadonlyArray<string>;
 	readonly map?: (row: any) => Record<string, unknown>;
+	/** Identifies a step whose selections depend only on this key, so they are built once. Vocabulary words get one from their name and arguments. */
+	readonly memoKey?: string;
 	readonly __types?: {
 		root: R;
 		added: Added;
@@ -258,6 +269,12 @@ interface QueryDefinition<
  * Defines an entity's composable read: the base shape plus a vocabulary of named steps. Returns
  * a function starting a new chain; steps apply in a fixed phase order when it compiles (guards
  * and filters, selections, sort, limit, resolvers, mappers), so call order only matters for sort keys.
+ *
+ * The selections of the base shape and of steps that only select are built once and reused by
+ * every chain, keyed by the vocabulary word and its arguments. A step reading the actor or the
+ * clock is detected and built per chain instead; anything else that varies (the current season,
+ * a setting) goes in as an argument or into a filter. Outside production every reuse is checked
+ * against a fresh build, which throws on a violation.
  */
 export function defineQuery<
 	R extends TableName,
@@ -275,13 +292,12 @@ export function defineQuery<
 				apply: apply as ((qb: AnyQB) => AnyQB) | undefined,
 			}),
 		}) ?? {};
+	const runtime = new QueryRuntime(
+		definition as unknown as AnyDefinition,
+		vocabulary,
+	);
 
-	return () =>
-		createChain(definition as unknown as AnyDefinition, vocabulary, {
-			steps: [],
-			filters: [],
-			limit: undefined,
-		}) as Chain<R, Override<S, MO>, V>;
+	return () => runtime.start() as unknown as Chain<R, Override<S, MO>, V>;
 }
 
 interface AnyDefinition {
@@ -298,98 +314,294 @@ interface ChainState {
 	limit: number | undefined;
 }
 
-function createChain(
-	definition: AnyDefinition,
-	vocabulary: Vocabulary<any>,
-	state: ChainState,
-) {
-	const next = (patch: Partial<ChainState>) =>
-		createChain(definition, vocabulary, { ...state, ...patch });
-	const addStep = (step: Modifier<any, any, any, any>) =>
-		next({ steps: [...state.steps, step] });
+const EMPTY_STATE: ChainState = { steps: [], filters: [], limit: undefined };
 
-	const idRef = `${definition.root}.id`;
+/**
+ * What a build of the chain is for: `rows` is the full query, `selectionsOnly` only what the rows
+ * show for ids that already passed the filters (guards, `where` filters and steps selecting
+ * nothing are left out), `filtersOnly` only what decides which rows match, its selections dropped.
+ */
+type BuildMode = "rows" | "selectionsOnly" | "filtersOnly";
 
-	// `selectionsOnly` builds only what the rows show, for ids that already passed the filters:
-	// guards, `where` filters and steps selecting nothing (filters, sort joins) are left out
-	const unsorted = ({ selectionsOnly = false } = {}) => {
-		let qb: AnyQB = (db as unknown as SelectFromAny).selectFrom(
-			definition.root,
-		);
+/** A step's selections, built once, ready to splice into another chain's `select`. */
+type MemoizedSelections = ReadonlyArray<OperationNodeSource>;
 
-		const lifted = new Set(state.steps.flatMap((step) => step.lifts ?? []));
-		for (const [name, guard] of Object.entries(definition.guards ?? {})) {
-			if (!selectionsOnly && !lifted.has(name)) qb = guard(qb);
+/** Per definition: the chain class carrying the vocabulary as methods, and the memoized selections. */
+class QueryRuntime {
+	readonly definition: AnyDefinition;
+	readonly idRef: string;
+	readonly baseStep: Modifier<any>;
+	readonly #Chain: new (
+		runtime: QueryRuntime,
+		state: ChainState,
+	) => ChainImpl;
+	readonly #memoizedSelections = new Map<string, MemoizedSelections>();
+	// a word that filters, joins or reads the actor or the clock does so whatever its arguments
+	readonly #unmemoizableWords = new Set<string>();
+
+	constructor(definition: AnyDefinition, vocabulary: Vocabulary<any>) {
+		this.definition = definition;
+		this.idRef = `${definition.root}.id`;
+		this.baseStep = { apply: definition.select, memoKey: BASE_SELECT_KEY };
+
+		class VocabularyChain extends ChainImpl {}
+		for (const [name, factory] of Object.entries(vocabulary)) {
+			Object.defineProperty(VocabularyChain.prototype, name, {
+				value(this: ChainImpl, ...args: unknown[]) {
+					return this.addStep(vocabularyStep(name, factory, args));
+				},
+			});
+		}
+		this.#Chain = VocabularyChain;
+	}
+
+	start() {
+		return this.chain(EMPTY_STATE);
+	}
+
+	chain(state: ChainState) {
+		return new this.#Chain(this, state);
+	}
+
+	selectFrom(): AnyQB {
+		return (db as unknown as SelectFromAny).selectFrom(this.definition.root);
+	}
+
+	/** The step's selections when it only selects, built the first time it is seen. */
+	memoizedSelectionsOf(
+		step: Modifier<any, any, any, any>,
+	): MemoizedSelections | null {
+		if (!step.memoKey || !step.apply) return null;
+
+		const known = this.#memoizedSelections.get(step.memoKey);
+		if (known) {
+			if (VERIFIES_MEMOIZED_SELECTIONS) {
+				this.#assertStillBuilds(step.memoKey, step.apply, known);
+			}
+			return known;
 		}
 
-		for (const filter of selectionsOnly ? [] : state.filters) {
-			for (const [column, value] of Object.entries(filter)) {
-				if (value === undefined) continue;
-				const ref = `${definition.root}.${column}`;
-				qb =
-					value === null
-						? qb.where(ref, "is", null)
-						: qb.where(ref, "=", value);
+		const word = memoKeyWord(step.memoKey);
+		if (
+			this.#unmemoizableWords.has(word) ||
+			this.#memoizedSelections.size >= MEMOIZED_STEPS_LIMIT
+		) {
+			return null;
+		}
+
+		const memoized = this.#memoize(step.apply);
+		if (memoized) {
+			this.#memoizedSelections.set(step.memoKey, memoized);
+		} else {
+			this.#unmemoizableWords.add(word);
+		}
+		return memoized;
+	}
+
+	// a step reading the actor or the clock builds different SQL per chain, so it's never memoized
+	#memoize(apply: (qb: AnyQB) => AnyQB) {
+		const readsBefore = actorReadCount();
+		const blank = this.selectFrom();
+		const applied = apply(blank);
+		const selections = selectionsAdded(blank, applied);
+		if (!selections || actorReadCount() !== readsBefore) return null;
+
+		const readsClock = !sameQuery(
+			applied,
+			withShiftedClock(() => apply(this.selectFrom())),
+		);
+		return readsClock ? null : selections;
+	}
+
+	#assertStillBuilds(
+		key: string,
+		apply: (qb: AnyQB) => AnyQB,
+		memoized: MemoizedSelections,
+	) {
+		if (
+			!sameQuery(
+				selectMemoized(this.selectFrom(), memoized),
+				apply(this.selectFrom()),
+			)
+		) {
+			throw new Error(
+				`The "${key}" step of "${this.definition.root}" built different selections than the memoized ones: they may depend only on its arguments, the actor and the clock. Pass anything else that varies (a season, a setting) as an argument.`,
+			);
+		}
+	}
+}
+
+class ChainImpl {
+	readonly #runtime: QueryRuntime;
+	readonly #state: ChainState;
+
+	constructor(runtime: QueryRuntime, state: ChainState) {
+		this.#runtime = runtime;
+		this.#state = state;
+	}
+
+	addStep(step: Modifier<any, any, any, any>) {
+		return this.#next({ steps: [...this.#state.steps, step] });
+	}
+
+	where(filter: Record<string, unknown>) {
+		return this.#next({ filters: [...this.#state.filters, filter] });
+	}
+
+	whereIdIn(ids: ReadonlyArray<number>) {
+		this.#assertIdPrimaryKey("whereIdIn");
+		const { idRef } = this.#runtime;
+		return this.addStep({ apply: (qb) => qb.where(idRef, "in", ids) });
+	}
+
+	withColumns(columns: ReadonlyArray<string>) {
+		const { root } = this.#runtime.definition;
+		return this.addStep({
+			apply: (qb) => qb.select(columns.map((column) => `${root}.${column}`)),
+			memoKey: `withColumns(${columns.join(",")})`,
+		});
+	}
+
+	with(step: Modifier<any, any, any, any>) {
+		return this.addStep(step);
+	}
+
+	limit(count: number) {
+		return this.#next({ limit: count });
+	}
+
+	paginate(options: PageOptions | CursorOptions) {
+		return "after" in options
+			? this.#paginateByCursor(options)
+			: this.#paginateByPage(options);
+	}
+
+	compile() {
+		return this.#build().compile();
+	}
+
+	execute() {
+		return this.#run(this.#build());
+	}
+
+	async executeTakeFirst() {
+		return (await this.#run(this.#build(1)))[0];
+	}
+
+	count() {
+		return countRows(
+			this.#unsorted("filtersOnly")
+				.clearSelect()
+				.select((eb: AnyEB) => eb.lit(1).as("__counted")),
+		);
+	}
+
+	#next(patch: Partial<ChainState>) {
+		return this.#runtime.chain({ ...this.#state, ...patch });
+	}
+
+	#unsorted(mode: BuildMode = "rows") {
+		const runtime = this.#runtime;
+		const { definition } = runtime;
+		let qb = runtime.selectFrom();
+
+		if (mode !== "selectionsOnly") {
+			const lifted = new Set(
+				this.#state.steps.flatMap((step) => step.lifts ?? []),
+			);
+			for (const [name, guard] of Object.entries(definition.guards ?? {})) {
+				if (!lifted.has(name)) qb = guard(qb);
+			}
+
+			for (const filter of this.#state.filters) {
+				for (const [column, value] of Object.entries(filter)) {
+					if (value === undefined) continue;
+					const ref = `${definition.root}.${column}`;
+					qb =
+						value === null
+							? qb.where(ref, "is", null)
+							: qb.where(ref, "=", value);
+				}
 			}
 		}
 
-		for (const step of state.steps) {
+		for (const step of this.#state.steps) {
 			if (!step.apply) continue;
 
+			const memoized = runtime.memoizedSelectionsOf(step);
+			if (memoized) {
+				if (mode !== "filtersOnly") qb = selectMemoized(qb, memoized);
+				continue;
+			}
+
 			const applied = applyWithoutOrderBy(qb, step.apply);
-			if (!selectionsOnly || addsSelections(qb, applied)) qb = applied;
+			if (mode !== "selectionsOnly" || addsSelections(qb, applied)) {
+				qb = applied;
+			}
 		}
 
-		return definition.select(qb);
-	};
+		const base = runtime.memoizedSelectionsOf(runtime.baseStep);
+		if (!base) return definition.select(qb);
 
-	const sortKeys = () => {
-		const stepSortKeys = state.steps.flatMap((step) => step.sortKeys ?? []);
+		return mode === "filtersOnly" ? qb : selectMemoized(qb, base);
+	}
+
+	#sortKeys() {
+		const stepSortKeys = this.#state.steps.flatMap(
+			(step) => step.sortKeys ?? [],
+		);
 		return stepSortKeys.length > 0
 			? stepSortKeys
-			: (definition.defaultSort ?? []);
-	};
+			: (this.#runtime.definition.defaultSort ?? []);
+	}
 
-	const build = (limit = state.limit) => {
-		const qb = orderByKeys(unsorted(), sortKeys());
+	#build(limit = this.#state.limit) {
+		const qb = orderByKeys(this.#unsorted(), this.#sortKeys());
 
 		return typeof limit === "number" ? qb.limit(limit) : qb;
-	};
+	}
 
-	const mapRow = (row: Row) => {
-		let result = definition.map ? { ...row, ...definition.map(row) } : row;
-		for (const step of state.steps) {
-			if (step.map) result = { ...result, ...step.map(result) };
+	// rows are fresh from the driver, so mappers write into them in place
+	#mapRow(row: Row) {
+		const { map } = this.#runtime.definition;
+		if (map) Object.assign(row, map(row));
+		for (const step of this.#state.steps) {
+			if (step.map) Object.assign(row, step.map(row));
 		}
-		return result;
-	};
+		return row;
+	}
 
-	const run = async (qb: AnyQB) => {
+	async #run(qb: AnyQB) {
 		const compiled = qb.compile();
 		const { rows } = await db.executeQuery<Row>(compiled);
 
-		return (await resolveRows(rows, compiled.sql)).map(mapRow);
-	};
+		return (await resolveRows(rows, compiled.sql)).map((row) =>
+			this.#mapRow(row),
+		);
+	}
 
 	// total order for paging: the id breaks ties so every row has exactly one position
-	const assertIdPrimaryKey = (operation: string) => {
-		if (!hasIdPrimaryKey(definition.root)) {
+	#assertIdPrimaryKey(operation: string) {
+		const { root } = this.#runtime.definition;
+		if (!hasIdPrimaryKey(root)) {
 			throw new Error(
-				`${operation} needs a single "id" primary key, "${definition.root}" has none`,
+				`${operation} needs a single "id" primary key, "${root}" has none`,
 			);
 		}
-	};
+	}
 
-	const pageKeys = (): SortKey[] => {
-		assertIdPrimaryKey("paginate");
+	#pageKeys(): SortKey[] {
+		this.#assertIdPrimaryKey("paginate");
 
-		const keys = sortKeys();
+		const { idRef } = this.#runtime;
+		const keys = this.#sortKeys();
 		return keys.at(-1)?.[0] === idRef ? [...keys] : [...keys, [idRef, "asc"]];
-	};
+	}
 
 	// phase 1: filters, sort and seek only, selecting the id and the sort key values
-	const keyQuery = (keys: ReadonlyArray<SortKey>) =>
-		unsorted()
+	#keyQuery(keys: ReadonlyArray<SortKey>) {
+		const { idRef } = this.#runtime;
+		return this.#unsorted("filtersOnly")
 			.clearSelect()
 			.select((eb: AnyEB) => [
 				eb.ref(idRef).as("__id"),
@@ -397,33 +609,34 @@ function createChain(
 					sql`${sortExpression(eb, target)}`.as(`__key${i}`),
 				),
 			]);
+	}
 
 	// phase 2: the full rows of one page, in phase 1's order
-	const rowsByIds = async (ids: number[]) => {
+	async #rowsByIds(ids: number[]) {
 		if (ids.length === 0) return [];
 
-		return run(
-			unsorted({ selectionsOnly: true })
+		return this.#run(
+			this.#unsorted("selectionsOnly")
 				.innerJoin(
 					sql`json_each(${JSON.stringify(ids)})`.as("__page"),
-					(join) => join.onRef("__page.value", "=", idRef),
+					(join) => join.onRef("__page.value", "=", this.#runtime.idRef),
 				)
 				.orderBy("__page.key"),
 		);
-	};
+	}
 
-	const paginateByPage = async ({ page, size, containing }: PageOptions) => {
-		const keys = pageKeys();
+	async #paginateByPage({ page, size, containing }: PageOptions) {
+		const keys = this.#pageKeys();
 
 		let currentPage = page;
 		if (typeof containing === "number") {
-			const target = await keyQuery(keys)
-				.where(idRef, "=", containing)
+			const target = await this.#keyQuery(keys)
+				.where(this.#runtime.idRef, "=", containing)
 				.executeTakeFirst();
 
 			if (target) {
 				const rowsBefore = await countRows(
-					keyQuery(keys).where((eb: AnyEB) =>
+					this.#keyQuery(keys).where((eb: AnyEB) =>
 						seek(eb, keys, keyValuesOf(target, keys), "before"),
 					),
 				);
@@ -433,7 +646,7 @@ function createChain(
 
 		// the total rides along the page's ids, only a page past a non-empty result's end needs its own count
 		const idRows: Array<{ __id: number; __total: number }> = await orderByKeys(
-			keyQuery(keys).select((eb: AnyEB) =>
+			this.#keyQuery(keys).select((eb: AnyEB) =>
 				eb.fn.countAll().over().as("__total"),
 			),
 			keys,
@@ -443,21 +656,21 @@ function createChain(
 			.execute();
 		const totalCount =
 			idRows[0]?.__total ??
-			(currentPage === 1 ? 0 : await countRows(keyQuery(keys)));
+			(currentPage === 1 ? 0 : await countRows(this.#keyQuery(keys)));
 
 		return {
-			items: await rowsByIds(idRows.map((row) => row.__id)),
+			items: await this.#rowsByIds(idRows.map((row) => row.__id)),
 			currentPage,
 			pagesCount: Math.max(1, Math.ceil(totalCount / size)),
 			totalCount,
 		};
-	};
+	}
 
-	const paginateByCursor = async ({ after, size }: CursorOptions) => {
-		const keys = pageKeys();
+	async #paginateByCursor({ after, size }: CursorOptions) {
+		const keys = this.#pageKeys();
 		const cursor = decodeCursor(after, keys.length);
 
-		let query = keyQuery(keys);
+		let query = this.#keyQuery(keys);
 		if (cursor) {
 			query = query.where((eb: AnyEB) => seek(eb, keys, cursor, "after"));
 		}
@@ -469,46 +682,149 @@ function createChain(
 		const lastRow = pageRows.at(-1);
 
 		return {
-			items: await rowsByIds(pageRows.map((row: { __id: number }) => row.__id)),
+			items: await this.#rowsByIds(
+				pageRows.map((row: { __id: number }) => row.__id),
+			),
 			nextCursor:
 				idRows.length > size && lastRow
 					? encodeCursor(keyValuesOf(lastRow, keys))
 					: null,
 		};
-	};
+	}
+}
 
-	const chain: Record<string, unknown> = {
-		where: (filter: Record<string, unknown>) =>
-			next({ filters: [...state.filters, filter] }),
-		whereIdIn: (ids: ReadonlyArray<number>) => {
-			assertIdPrimaryKey("whereIdIn");
-			return addStep({ apply: (qb) => qb.where(idRef, "in", ids) });
-		},
-		withColumns: (columns: ReadonlyArray<string>) =>
-			addStep({
-				apply: (qb) =>
-					qb.select(columns.map((column) => `${definition.root}.${column}`)),
-			}),
-		with: addStep,
-		limit: (count: number) => next({ limit: count }),
-		paginate: (options: PageOptions | CursorOptions) =>
-			"after" in options ? paginateByCursor(options) : paginateByPage(options),
-		compile: () => build().compile(),
-		execute: () => run(build()),
-		executeTakeFirst: async () => (await run(build(1)))[0],
-		count: () =>
-			countRows(
-				unsorted()
-					.clearSelect()
-					.select((eb: AnyEB) => eb.lit(1).as("__counted")),
-			),
-	};
-
-	for (const [name, factory] of Object.entries(vocabulary)) {
-		chain[name] = (...args: unknown[]) => addStep(factory(...args));
+/** A vocabulary word's step, keyed for memoizing by the word and its arguments unless building it read the actor. */
+function vocabularyStep(
+	name: string,
+	factory: (...args: any[]) => Modifier<any, any, any, any>,
+	args: unknown[],
+) {
+	const readsBefore = actorReadCount();
+	const step = factory(...args);
+	if (step.memoKey || !step.apply || actorReadCount() !== readsBefore) {
+		return step;
 	}
 
-	return chain;
+	const key = argumentsKey(args);
+	return key === null ? step : { ...step, memoKey: `${name}(${key})` };
+}
+
+/** The vocabulary word or helper a memo key belongs to: `forWeapon` of `forWeapon(40)`. */
+function memoKeyWord(memoKey: string) {
+	const argumentsStart = memoKey.indexOf("(");
+	return argumentsStart === -1 ? memoKey : memoKey.slice(0, argumentsStart);
+}
+
+/** Arguments as a key, `null` when one isn't a primitive or a list of them. */
+function argumentsKey(args: ReadonlyArray<unknown>): string | null {
+	const parts: string[] = [];
+	for (const arg of args) {
+		const part = Array.isArray(arg) ? argumentsKey(arg) : primitiveKey(arg);
+		if (part === null) return null;
+		parts.push(Array.isArray(arg) ? `[${part}]` : part);
+	}
+
+	return parts.join(",");
+}
+
+function primitiveKey(value: unknown) {
+	if (typeof value === "string") return JSON.stringify(value);
+	if (
+		value === null ||
+		value === undefined ||
+		typeof value === "number" ||
+		typeof value === "boolean"
+	) {
+		return String(value);
+	}
+
+	return null;
+}
+
+/** The selections `after` adds to `before`, `null` when it changed anything else (a join, a filter). */
+function selectionsAdded(
+	before: AnyQB,
+	after: AnyQB,
+): MemoizedSelections | null {
+	const beforeNode: Record<string, unknown> = { ...before.toOperationNode() };
+	const afterNode: SelectQueryNode = after.toOperationNode();
+
+	const afterFields: Record<string, unknown> = { ...afterNode };
+	const keys = new Set([
+		...Object.keys(beforeNode),
+		...Object.keys(afterFields),
+	]);
+	for (const key of keys) {
+		if (key !== "selections" && beforeNode[key] !== afterFields[key]) {
+			return null;
+		}
+	}
+
+	const added = afterNode.selections?.slice(
+		(beforeNode.selections as unknown[] | undefined)?.length ?? 0,
+	);
+	if (!added || added.length === 0) return null;
+
+	return added.map(({ selection }) => ({ toOperationNode: () => selection }));
+}
+
+function selectMemoized(qb: AnyQB, selections: MemoizedSelections) {
+	// any operation node source is accepted as a selection, Kysely's types only list its builders
+	return qb.select(
+		selections as unknown as ReadonlyArray<SelectExpression<any, any>>,
+	);
+}
+
+function sameQuery(a: AnyQB, b: AnyQB) {
+	const left = a.compile();
+	const right = b.compile();
+
+	return (
+		left.sql === right.sql &&
+		left.parameters.length === right.parameters.length &&
+		left.parameters.every((parameter, i) =>
+			sameParameter(parameter, right.parameters[i]),
+		)
+	);
+}
+
+/** Runs `build` with the clock a day ahead, so a step reading the clock builds different SQL. */
+function withShiftedClock<T>(build: () => T): T {
+	const RealDate = Date;
+	const now = () => RealDate.now() + CLOCK_SHIFT_MS;
+	class ShiftedDate extends RealDate {
+		constructor(...args: unknown[]) {
+			super(...((args.length === 0 ? [now()] : args) as [number]));
+		}
+
+		static now() {
+			return now();
+		}
+
+		// dates made before the shift are still dates
+		static [Symbol.hasInstance](value: unknown) {
+			return value instanceof RealDate;
+		}
+	}
+
+	// building is synchronous, so nothing else runs while the clock is shifted
+	globalThis.Date = ShiftedDate as unknown as DateConstructor;
+	try {
+		return build();
+	} finally {
+		globalThis.Date = RealDate;
+	}
+}
+
+function sameParameter(a: unknown, b: unknown) {
+	if (a instanceof Date && b instanceof Date) {
+		return a.getTime() === b.getTime();
+	}
+	if (typeof a === "object" && a !== null) {
+		return JSON.stringify(a) === JSON.stringify(b);
+	}
+
+	return Object.is(a, b);
 }
 
 interface SelectFromAny {

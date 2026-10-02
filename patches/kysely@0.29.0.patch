@@ -56,3 +56,19 @@ index c75dfa47aad5eb505a241896067e60e536ea0561..2621cf967f242f7d405eecc95bc7befa
      /**
       * Sets the columns to insert.
       *
+diff --git a/dist/util/object-utils.js b/dist/util/object-utils.js
+index 72436c2cf4b3fde34ec16d100464d945bb5571bd..2895257b5a28c8e3a902022c9c30c561cf6257a4 100644
+--- a/dist/util/object-utils.js
++++ b/dist/util/object-utils.js
+@@ -59,8 +59,10 @@ export function isPlainObject(obj) {
+ export function getLast(arr) {
+     return arr[arr.length - 1];
+ }
++// freezing every operation node is ~20% of building a query; outside production it still catches mutation
++const FREEZES = process.env.NODE_ENV !== 'production';
+ export function freeze(obj) {
+-    return Object.freeze(obj);
++    return FREEZES ? Object.freeze(obj) : obj;
+ }
+ export function asArray(arg) {
+     if (isReadonlyArray(arg)) {

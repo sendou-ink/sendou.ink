@@ -132,6 +132,7 @@ export function withUser<
 						.whereRef("User.id", "=", sql.ref(column)),
 				).as(as),
 			),
+		memoKey: `withUser(${as},${column},${extras ?? []})`,
 	};
 }
 

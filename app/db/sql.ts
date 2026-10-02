@@ -12,7 +12,7 @@ import { computedBooleanColumns, computedJsonColumns } from "./json-selections";
 import { NodeSqliteDialect } from "./node-sqlite-dialect";
 import type { DB } from "./tables";
 import { TIMESTAMP_COLUMNS } from "./timestamp-columns";
-import { WriteTrackerPlugin } from "./write-tracker";
+import { markDatabaseDirty } from "./write-tracker";
 
 const sql = new DatabaseSync(
 	ServerConfig.isTest ? ":memory:" : ServerConfig.dbPath,
@@ -53,9 +53,10 @@ export const db = new Kysely<DB>({
 		timestampColumns: TIMESTAMP_COLUMNS,
 		booleanColumns: BOOLEAN_COLUMNS,
 		computedBooleanColumns,
+		onWrite: markDatabaseDirty,
 	}),
 	log,
-	plugins: [new EmptyValuesNoopPlugin(), new WriteTrackerPlugin()],
+	plugins: [new EmptyValuesNoopPlugin()],
 });
 
 // each test worker gets an in-memory db built by replaying the DDL of the migrated empty file from

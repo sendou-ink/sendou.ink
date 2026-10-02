@@ -1,11 +1,15 @@
-import type {
-	ExpressionBuilder,
-	Insertable,
-	OnConflictBuilder,
-	OrderByDirection,
-	Selectable,
-	Transaction,
-	Updateable,
+import {
+	type Compilable,
+	createQueryId,
+	type ExpressionBuilder,
+	type Insertable,
+	type OnConflictBuilder,
+	type OrderByDirection,
+	type QueryResult,
+	type RootOperationNode,
+	type Selectable,
+	type Transaction,
+	type Updateable,
 } from "kysely";
 import { databaseTimestampNow } from "~/utils/dates";
 import { SCHEMA } from "./schema.gen";
@@ -23,6 +27,8 @@ import { db } from "./sql";
 import type { DB } from "./tables";
 
 const UPDATED_AT = "updatedAt";
+// bounds the compiled queries of one table; shapes come from code, so it is only reached by a bug
+const COMPILED_QUERIES_LIMIT = 500;
 
 /**
  * Generic single-table operations typed from `tables.ts` plus the generated schema metadata. The
@@ -48,44 +54,141 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 	const selectWhere = (where: Record<string, unknown>, trx?: Transaction<DB>) =>
 		applyWhere(executor(trx).selectFrom(table), table, where);
 
+	// `null` marks a shape whose compiled parameters didn't line up with the values, built every call
+	const compiledQueries = new Map<string, CompiledShape | null>();
+
+	/**
+	 * Runs the query compiled once per `shape` (op plus which columns it names), binding
+	 * `parameters` to the SQL. Values that compile into the SQL itself (expressions, lists in a
+	 * filter) build the query every call.
+	 */
+	const runCompiled = (
+		shape: string | null,
+		parameters: unknown[],
+		build: () => Compilable,
+		trx?: Transaction<DB>,
+	): Promise<QueryResult<any>> => {
+		const target = executor(trx);
+		const known = shape === null ? null : compiledQueries.get(shape);
+		if (known) {
+			return target.executeQuery({
+				...known,
+				parameters,
+				queryId: createQueryId(),
+			});
+		}
+
+		const compiled = build().compile();
+		if (
+			shape !== null &&
+			known === undefined &&
+			compiledQueries.size < COMPILED_QUERIES_LIMIT
+		) {
+			compiledQueries.set(
+				shape,
+				sameParameters(compiled.parameters, parameters)
+					? { sql: compiled.sql, query: compiled.query }
+					: null,
+			);
+		}
+
+		return target.executeQuery(compiled);
+	};
+
+	const selectRows = (
+		op: string,
+		where: Record<string, unknown>,
+		extraParameters: unknown[],
+		build: (query: any) => any,
+		trx?: Transaction<DB>,
+	) => {
+		const filter = filterShape(where);
+		return runCompiled(
+			filter && `${op}:${filter.shape}`,
+			[...(filter?.parameters ?? []), ...extraParameters],
+			() => build(selectWhere(where, trx)),
+			trx,
+		);
+	};
+
 	const ops = {
-		findById: (id: number, trx?: Transaction<DB>) =>
-			selectWhere({ id }, trx).selectAll().executeTakeFirst(),
-		findOneBy: (where: Record<string, unknown>, trx?: Transaction<DB>) =>
-			selectWhere(where, trx).selectAll().executeTakeFirst(),
-		findManyBy: (
+		findById: (id: number, trx?: Transaction<DB>) => ops.findOneBy({ id }, trx),
+		findOneBy: async (
+			where: Record<string, unknown>,
+			trx?: Transaction<DB>,
+		) => {
+			const { rows } = await selectRows(
+				"findOneBy",
+				where,
+				[],
+				(query) => query.selectAll(),
+				trx,
+			);
+			return rows[0];
+		},
+		findManyBy: async (
 			where: Record<string, unknown>,
 			options: FindManyOptions<string>,
 			trx?: Transaction<DB>,
 		) => {
-			let query = selectWhere(where, trx).selectAll();
-			for (const [column, direction] of options.orderBy ?? []) {
-				query = query.orderBy(`${table}.${column}`, direction);
-			}
-			return query.limit(options.limit).execute();
+			const orderBy = options.orderBy ?? [];
+			const { rows } = await selectRows(
+				`findManyBy(${orderBy.join(";")})`,
+				where,
+				[options.limit],
+				(query) => {
+					let result = query.selectAll();
+					for (const [column, direction] of orderBy) {
+						result = result.orderBy(`${table}.${column}`, direction);
+					}
+					return result.limit(options.limit);
+				},
+				trx,
+			);
+			return rows;
 		},
 		exists: async (where: Record<string, unknown>, trx?: Transaction<DB>) => {
-			const row = await selectWhere(where, trx)
-				.select((eb: ExpressionBuilder<any, any>) => eb.lit(1).as("found"))
-				.limit(1)
-				.executeTakeFirst();
-			return Boolean(row);
+			const { rows } = await selectRows(
+				"exists",
+				where,
+				[1],
+				(query) =>
+					query
+						.select((eb: ExpressionBuilder<any, any>) => eb.lit(1).as("found"))
+						.limit(1),
+				trx,
+			);
+			return rows.length > 0;
 		},
 		count: async (where: Record<string, unknown>, trx?: Transaction<DB>) => {
-			const { count } = await selectWhere(where, trx)
-				.select((eb: ExpressionBuilder<any, any>) =>
-					eb.fn.countAll<number>().as("count"),
-				)
-				.executeTakeFirstOrThrow();
-			return count;
+			const { rows } = await selectRows(
+				"count",
+				where,
+				[],
+				(query) =>
+					query.select((eb: ExpressionBuilder<any, any>) =>
+						eb.fn.countAll<number>().as("count"),
+					),
+				trx,
+			);
+			return rows[0].count as number;
 		},
 		insert: async (values: Record<string, unknown>, trx?: Transaction<DB>) => {
-			const query = executor(trx).insertInto(table).values(values);
-			if (!returnsId()) {
-				await query.execute();
-				return;
+			const written = valuesShape(values);
+			const { rows } = await runCompiled(
+				written && `insert:${written.shape}`,
+				written?.parameters ?? [],
+				() => {
+					const query = executor(trx).insertInto(table).values(values);
+					return returnsId() ? query.returning("id") : query;
+				},
+				trx,
+			);
+			if (!returnsId()) return;
+			if (!rows[0]) {
+				throw new Error(`crud insert into "${table}" returned no id`);
 			}
-			return query.returning("id").executeTakeFirstOrThrow();
+			return rows[0];
 		},
 		insertMany: async (
 			values: Record<string, unknown>[],
@@ -151,12 +254,17 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 			trx?: Transaction<DB>,
 		) => {
 			assertNotEmpty(where, "update");
-			const result = await applyWhere(
-				executor(trx).updateTable(table).set(stamped(values)),
-				table,
-				where,
-			).executeTakeFirst();
-			return Number(result.numUpdatedRows);
+			const set = stamped(values);
+			const written = valuesShape(set);
+			const filter = filterShape(where);
+			const { numAffectedRows } = await runCompiled(
+				written && filter && `update:${written.shape}:${filter.shape}`,
+				[...(written?.parameters ?? []), ...(filter?.parameters ?? [])],
+				() =>
+					applyWhere(executor(trx).updateTable(table).set(set), table, where),
+				trx,
+			);
+			return Number(numAffectedRows);
 		},
 		updateById: (
 			id: number,
@@ -165,12 +273,14 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 		) => ops.update({ id }, values, trx).then((count) => count > 0),
 		delete: async (where: Record<string, unknown>, trx?: Transaction<DB>) => {
 			assertNotEmpty(where, "delete");
-			const result = await applyWhere(
-				executor(trx).deleteFrom(table),
-				table,
-				where,
-			).executeTakeFirst();
-			return Number(result.numDeletedRows);
+			const filter = filterShape(where);
+			const { numAffectedRows } = await runCompiled(
+				filter && `delete:${filter.shape}`,
+				filter?.parameters ?? [],
+				() => applyWhere(executor(trx).deleteFrom(table), table, where),
+				trx,
+			);
+			return Number(numAffectedRows);
 		},
 		deleteById: (id: number, trx?: Transaction<DB>) =>
 			ops.delete({ id }, trx).then((count) => count > 0),
@@ -342,6 +452,72 @@ function applyWhere(query: any, table: string, where: Record<string, unknown>) {
 	}
 
 	return result;
+}
+
+interface CompiledShape {
+	sql: string;
+	query: RootOperationNode;
+}
+
+interface Shape {
+	shape: string;
+	parameters: unknown[];
+}
+
+/** An equality filter's columns (`null` compiling to `is null`) and its parameters, `null` when a value compiles into the SQL. */
+function filterShape(where: Record<string, unknown>): Shape | null {
+	const columns: string[] = [];
+	const parameters: unknown[] = [];
+	for (const [column, value] of Object.entries(where)) {
+		if (value === undefined) continue;
+		if (value === null) {
+			columns.push(`${column} is null`);
+			continue;
+		}
+		// a list compiles to `in (?, ?, ...)`, one parameter per item
+		if (Array.isArray(value) || !isBoundValue(value)) return null;
+
+		columns.push(column);
+		parameters.push(value);
+	}
+
+	return { shape: columns.join(","), parameters };
+}
+
+/** Written columns and their values, `null` when a value compiles into the SQL. */
+function valuesShape(values: Record<string, unknown>): Shape | null {
+	const columns: string[] = [];
+	const parameters: unknown[] = [];
+	for (const [column, value] of Object.entries(values)) {
+		if (value === undefined) continue;
+		if (!isBoundValue(value)) return null;
+
+		columns.push(column);
+		parameters.push(value);
+	}
+
+	return { shape: columns.join(","), parameters };
+}
+
+/** Whether Kysely binds the value as a parameter rather than compiling it into the SQL (an expression, a subquery). */
+function isBoundValue(value: unknown) {
+	if (typeof value === "function") return false;
+	return !(
+		typeof value === "object" &&
+		value !== null &&
+		typeof (value as { toOperationNode?: unknown }).toOperationNode ===
+			"function"
+	);
+}
+
+function sameParameters(
+	compiled: ReadonlyArray<unknown>,
+	parameters: ReadonlyArray<unknown>,
+) {
+	return (
+		compiled.length === parameters.length &&
+		compiled.every((parameter, i) => parameter === parameters[i])
+	);
 }
 
 function assertNotEmpty(where: Record<string, unknown>, operation: string) {
