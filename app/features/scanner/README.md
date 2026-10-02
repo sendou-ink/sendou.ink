@@ -285,7 +285,11 @@ sequenceDiagram
   order-free (a misread or unread row still joins), stage not contradicting
   it, recording time within 20 min of its play time — joins that match's sources instead of forming a new
   one, so browsing the log after playing neither adds a card nor re-uploads
-  (the match was already sent). A history screen with its stage unread
+  (the match was already sent). Any other history screen closes the game
+  being gathered — a missed results screen amended from the log — unless
+  the intro/minimap stage, intro mode or recording time (vs. the game's
+  first read) contradicts it; then it forms its own match and the game
+  stays open. A history screen with its stage unread
   (typically a frame caught mid-transition) forms no match of its own; the
   timeline also holds history screens to a 0.75 confidence floor (clean
   reads score 0.81+). Likewise a results screen read again with no

@@ -165,8 +165,9 @@ const SAME_GAME_MIN_SHARED_PAINTS = 6;
 
 /**
  * How far a history screen's recording time may sit from the earlier read of
- * the same game: it is on the console clock and marks the game's start, while
- * a results screen's time is the PC clock at the game's end.
+ * the same game, or from the first read of the game it closes: it is on the
+ * console clock and marks the game's start, while a results screen's time is
+ * the PC clock at the game's end.
  */
 const REVISIT_PLAYED_AT_TOLERANCE_MS = 20 * 60 * 1000;
 
@@ -199,8 +200,11 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * history screen showing an already built game (≥6 shared paint totals, stage
  * and recording time not contradicting it) joins that match's `sources` instead of
  * forming a new one, as does a results screen read again with no match
- * opened since. A history screen with its stage unread and no such match
- * forms none. Every input event ends up in at most one match's `sources`.
+ * opened since. Any other history screen closes the game being gathered (a
+ * missed results screen amended from the log) unless its stage, mode or
+ * recording time contradicts that game's reads; then it forms a match of its
+ * own and the game stays open. A history screen with its stage unread and no
+ * built match forms none. Every input event ends up in at most one match's `sources`.
  *
  * `unbacked` also emits, flagged, the stretches with kill reads no scoreboard
  * or minimap backed (a results screen missed, the map never opened, a match
@@ -232,6 +236,17 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			unbackedBuilt.push(cachedBuiltMatch(open, cache));
 		}
 		open = null;
+	};
+	const claimOrphans = (t: number): OpenMatch<E> => {
+		const withinWindow = (read: E) => t - read.t <= FALLBACK_WINDOW_SECONDS;
+		return {
+			...startMatch(),
+			deaths: orphanDeaths.filter(withinWindow),
+			objectives: orphanObjectives.filter(withinWindow),
+			playerStatuses: orphanPlayerStatuses.filter(withinWindow),
+			stripWeapons: orphanStripWeapons.filter(withinWindow),
+			kills: orphanKills.filter(withinWindow),
+		};
 	};
 	// orphan reads no scoreboard claimed are left behind
 	const dropOrphans = (): void => {
@@ -272,24 +287,16 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				continue;
 			}
 			if (isStagelessHistoryRead(event)) continue;
-			if (!open) {
-				open = startMatch();
-				open.deaths = orphanDeaths.filter(
-					(death) => event.t - death.t <= FALLBACK_WINDOW_SECONDS,
-				);
-				open.objectives = orphanObjectives.filter(
-					(objective) => event.t - objective.t <= FALLBACK_WINDOW_SECONDS,
-				);
-				open.playerStatuses = orphanPlayerStatuses.filter(
-					(status) => event.t - status.t <= FALLBACK_WINDOW_SECONDS,
-				);
-				open.stripWeapons = orphanStripWeapons.filter(
-					(read) => event.t - read.t <= FALLBACK_WINDOW_SECONDS,
-				);
-				open.kills = orphanKills.filter(
-					(read) => event.t - read.t <= FALLBACK_WINDOW_SECONDS,
-				);
+			const closing: OpenMatch<E> = open ?? claimOrphans(event.t);
+			if (isHistoryOfAnotherGame(event, closing)) {
+				// the log shows another game: the one being gathered stays open
+				const shown = startMatch<E>();
+				shown.scoreboard = event;
+				vote(shown.stageVotes, (event.data as ScoreboardData).stage);
+				built.push(cachedBuiltMatch(shown, cache));
+				continue;
 			}
+			open = closing;
 			open.scoreboard = event;
 			vote(open.stageVotes, (event.data as ScoreboardData).stage);
 			finalize();
@@ -336,7 +343,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	finalize();
 	dropOrphans();
 
-	if (unbackedBuilt.length === 0) return built;
+	// a history screen of another game is built before the open match it interrupted
 	return [...built, ...unbackedBuilt].sort(
 		(a, b) => a.sources[0]!.t - b.sources[0]!.t,
 	);
@@ -1588,15 +1595,20 @@ function bestCount(
  */
 function playedAt(scoreboard: DetectedEvent | null): number | null {
 	if (!scoreboard) return null;
-	const detectedAt = (scoreboard as { detectedAt?: number }).detectedAt ?? null;
-	const timestamped = historyData(scoreboard);
-	if (timestamped?.timestamp) {
-		const recorded = parseReplayTimestamp(timestamped.timestamp, {
-			now: detectedAt ?? undefined,
-		});
-		if (recorded !== null) return recorded;
-	}
-	return detectedAt;
+	return recordedAt(scoreboard) ?? detectedAtOf(scoreboard);
+}
+
+/** A history screen's on-screen recording time (the game's start, console clock); null when unread. */
+function recordedAt(event: DetectedEvent): number | null {
+	const timestamp = historyData(event)?.timestamp;
+	if (!timestamp) return null;
+	return parseReplayTimestamp(timestamp, {
+		now: detectedAtOf(event) ?? undefined,
+	});
+}
+
+function detectedAtOf(event: DetectedEvent): number | null {
+	return (event as { detectedAt?: number }).detectedAt ?? null;
 }
 
 /** The replay-browser and both battle log screens carry the recording timestamp; only the former a replay code. */
@@ -1622,14 +1634,14 @@ function revisitedMatch<E extends DetectedEvent>(
 ): BuiltMatch<E> | undefined {
 	if (!HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) return undefined;
 	const board = event.data as ScoreboardData;
-	const recordedAt = playedAt(event);
+	const shownPlayedAt = playedAt(event);
 
 	return built.findLast((candidate) => {
 		if (!closesSameGame(candidate, board)) return false;
 		return (
-			recordedAt === null ||
+			shownPlayedAt === null ||
 			candidate.match.playedAt === null ||
-			Math.abs(recordedAt - candidate.match.playedAt) <=
+			Math.abs(shownPlayedAt - candidate.match.playedAt) <=
 				REVISIT_PLAYED_AT_TOLERANCE_MS
 		);
 	});
@@ -1643,6 +1655,37 @@ function isStagelessHistoryRead(event: DetectedEvent): boolean {
 	return (
 		HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type) &&
 		(event.data as ScoreboardData).stage === null
+	);
+}
+
+/**
+ * Whether a history screen shows another game than the one `pending` holds the
+ * reads of: the stage or mode its intro or minimaps read disagrees, or its
+ * recording time is too far from when those reads were seen. Without such
+ * evidence it closes the game, standing in for a missed results screen.
+ */
+function isHistoryOfAnotherGame<E extends DetectedEvent>(
+	event: E,
+	pending: OpenMatch<E>,
+): boolean {
+	if (!HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) return false;
+	const board = event.data as ScoreboardData;
+	const start = pending.mapStart?.data as MapStartData | undefined;
+
+	const stage = start?.stage ?? leadingStage(pending.stageVotes);
+	if (stage !== null && board.stage !== null && stage !== board.stage) {
+		return true;
+	}
+	const mode = start?.mode ?? null;
+	if (mode !== null && board.mode !== null && mode !== board.mode) return true;
+
+	const recorded = recordedAt(event);
+	const readTimes = openMatchInputs(pending)
+		.map(detectedAtOf)
+		.filter((t) => t !== null);
+	if (recorded === null || readTimes.length === 0) return false;
+	return (
+		Math.abs(recorded - Math.min(...readTimes)) > REVISIT_PLAYED_AT_TOLERANCE_MS
 	);
 }
 

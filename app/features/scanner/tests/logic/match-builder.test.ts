@@ -156,9 +156,10 @@ function battleLogScoreboard(
 		timestamp = null as string | null,
 		paints = [] as (number | null)[],
 		stage = 0 as StageId | null,
+		mode = "SZ" as ModeShort | null,
 	} = {},
 ): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t, { paints, stage }).data as ScoreboardData;
+	const base = scoreboard(t, { paints, stage, mode }).data as ScoreboardData;
 	const data: ScoreboardBattleLogData = {
 		...base,
 		timestamp,
@@ -1081,6 +1082,75 @@ test("a battle log view does not close the match still gathering events", () => 
 	assert.deepEqual(
 		built[1]!.sources.map((e) => e.t),
 		[1000, 1100, 1300],
+	);
+});
+
+test.each([
+	{ why: "an open match", intro: [mapStart(0)] },
+	{ why: "orphan reads", intro: [] },
+])(
+	"a battle log view stands in for a missed results screen of $why",
+	({ intro }) => {
+		const view = battleLogScoreboard(400, {
+			timestamp: "25.12.2025 21:30",
+			paints: OTHER_GAME_PAINTS,
+		});
+		const reads = [...intro, death(100, "l1")];
+		for (const read of reads) {
+			(read as DetectedEvent & { detectedAt?: number }).detectedAt = PLAYED_AT;
+		}
+		const built = buildScannerMatches([...reads, view]);
+		assert.equal(built.length, 1);
+		assert.deepEqual(built[0]!.sources, [...reads, view]);
+	},
+);
+
+test.each([
+	{
+		why: "on another stage",
+		view: () => battleLogScoreboard(200, { stage: 5 as StageId }),
+	},
+	{
+		why: "of another mode",
+		view: () => {
+			const view = battleLogScoreboard(200);
+			(view.data as ScoreboardData).mode = "CB";
+			return view;
+		},
+	},
+	{
+		why: "recorded long before the game",
+		view: () => battleLogScoreboard(200, { timestamp: "25.12.2025 19:30" }),
+	},
+])(
+	"a battle log view $why leaves the match being gathered open",
+	({ view: makeView }) => {
+		const start = mapStart(0) as DetectedEvent & { detectedAt?: number };
+		start.detectedAt = PLAYED_AT;
+		const view = makeView();
+		const built = buildScannerMatches([
+			start,
+			objective(60),
+			death(100, "l1"),
+			view,
+			scoreboard(300, { paints: GAME_PAINTS }),
+		]);
+		assert.deepEqual(
+			built.map((b) => b.sources.map((e) => e.t)),
+			[[0, 60, 100, 300], [200]],
+		);
+		assert.deepEqual(invalidObjectiveEvents(built), []);
+	},
+);
+
+test("a battle log view recorded long before the orphan reads leaves them unclaimed", () => {
+	const read = death(100, "l1") as DetectedEvent & { detectedAt?: number };
+	read.detectedAt = PLAYED_AT;
+	const view = battleLogScoreboard(200, { timestamp: "25.12.2025 19:30" });
+	const built = buildScannerMatches([read, view, scoreboard(300)]);
+	assert.deepEqual(
+		built.map((b) => b.sources.map((e) => e.t)),
+		[[100, 300], [200]],
 	);
 });
 
