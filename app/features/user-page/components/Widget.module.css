@@ -394,9 +394,27 @@
 	font-size: var(--font-sm);
 	font-weight: var(--weight-body);
 
+	&:is(button) {
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-align: start;
+	}
+
 	&:is(a, button):hover {
 		background-color: var(--color-bg-high);
 	}
+}
+
+.socialLinkActionIcon {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	color: var(--color-text-high);
+}
+
+.socialLinkActionIconSuccess {
+	color: var(--color-success);
 }
 
 .socialLinkName {

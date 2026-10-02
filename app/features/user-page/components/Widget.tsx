@@ -1,5 +1,11 @@
 import clsx from "clsx";
-import { Link2 as LinkIcon } from "lucide-react";
+import {
+	Check,
+	Clipboard,
+	Link2 as LinkIcon,
+	SquareArrowOutUpRight,
+} from "lucide-react";
+import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { BuildCard } from "~/components/BuildCard";
@@ -37,6 +43,7 @@ import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
@@ -922,9 +929,9 @@ function SocialLinksWidget({
 
 				if (link.type === "text") {
 					return (
-						<div key={link.platform} className={styles.linkRow}>
+						<CopySocialLinkButton key={link.platform} value={link.name}>
 							{content}
-						</div>
+						</CopySocialLinkButton>
 					);
 				}
 
@@ -937,10 +944,43 @@ function SocialLinksWidget({
 						className={styles.linkRow}
 					>
 						{content}
+						<SquareArrowOutUpRight className={styles.socialLinkActionIcon} />
 					</a>
 				);
 			})}
 		</div>
+	);
+}
+
+function CopySocialLinkButton({
+	value,
+	children,
+}: {
+	value: string;
+	children: React.ReactNode;
+}) {
+	const { t } = useTranslation(["common"]);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
+
+	return (
+		<button
+			type="button"
+			className={styles.linkRow}
+			onClick={() => copyToClipboard(value)}
+			title={t("common:actions.copyToClipboard")}
+		>
+			{children}
+			{copySuccess ? (
+				<Check
+					className={clsx(
+						styles.socialLinkActionIcon,
+						styles.socialLinkActionIconSuccess,
+					)}
+				/>
+			) : (
+				<Clipboard className={styles.socialLinkActionIcon} />
+			)}
+		</button>
 	);
 }
 
