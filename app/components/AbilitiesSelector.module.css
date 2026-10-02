@@ -76,42 +76,62 @@
 	container-type: inline-size;
 	display: flex;
 	flex-direction: column;
-	padding-block: var(--s-2);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	gap: var(--s-2);
 }
 
 .paletteGroup {
 	--palette-gap: var(--s-1);
+	--marker-column-width: calc(
+		var(--row-marker-offset) *
+		2 +
+		var(--row-marker-width)
+	);
 	position: relative;
 	display: flex;
 	min-inline-size: 0;
-	padding-block: 0;
-	padding-inline: calc(var(--row-marker-offset) + var(--row-marker-width))
+	padding-block: var(--s-2);
+	padding-inline: calc(var(--marker-column-width) + var(--row-end-padding))
 		var(--row-end-padding);
 	border: 0;
 	border-radius: 0;
 	margin: 0;
-	background: none;
+	background: linear-gradient(
+		to right,
+		var(--color-bg-higher) var(--marker-column-width),
+		transparent 0
+	);
 	flex-wrap: wrap;
 	justify-content: center;
 	gap: var(--palette-gap);
 
+	&:first-child {
+		border-start-start-radius: calc(var(--radius-box) - var(--border-width));
+	}
+
+	&:last-child {
+		border-end-start-radius: calc(var(--radius-box) - var(--border-width));
+	}
+
 	& + .paletteGroup {
-		padding-block-start: var(--s-2);
 		border-block-start: var(--border-style);
 
-		& .rowMarker {
-			top: var(--s-2);
+		&::before {
+			content: "";
+			position: absolute;
+			width: calc(var(--marker-column-width) + var(--border-width));
+			height: var(--border-width);
+			background-color: var(--color-border-high);
+			inset-block-start: calc(var(--border-width) * -1);
+			inset-inline-start: calc(var(--border-width) * -1);
 		}
 	}
 }
 
 @container (width < 17rem) {
 	.paletteGroup {
-		--row-marker-offset: var(--s-1);
+		--row-marker-offset: var(--s-1-5);
 		--row-end-padding: var(--s-1);
 	}
 
