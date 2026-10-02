@@ -318,6 +318,7 @@ function visiblePosts() {
 	return ScrimPostRepository.posts()
 		.visibleToActor()
 		.startingFrom(sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }))
+		.withListingDetails()
 		.withParticipants()
 		.withPermissions();
 }

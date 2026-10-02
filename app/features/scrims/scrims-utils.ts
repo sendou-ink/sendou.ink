@@ -9,7 +9,11 @@ import {
 } from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
 import { LUTI_DIVS } from "./scrims-constants";
-import type { LutiDiv, ScrimPostWithParticipants } from "./scrims-types";
+import type {
+	ListedScrimPost,
+	LutiDiv,
+	ScrimPostWithParticipants,
+} from "./scrims-types";
 
 export function dividePosts<
 	T extends Pick<ScrimPostWithParticipants, "users" | "requests">,
@@ -68,7 +72,7 @@ export function requestStarts({
 	post,
 	now,
 }: {
-	post: Pick<ScrimPostWithParticipants, "startsAt" | "rangeEndsAt">;
+	post: Pick<ListedScrimPost, "startsAt" | "rangeEndsAt">;
 	now: number;
 }): Array<number> {
 	const starts = post.rangeEndsAt
@@ -88,7 +92,7 @@ export function postSpan({
 	post,
 	now,
 }: {
-	post: Pick<ScrimPostWithParticipants, "startsAt" | "rangeEndsAt">;
+	post: Pick<ListedScrimPost, "startsAt" | "rangeEndsAt">;
 	now: number;
 }): TimeRange {
 	const starts = requestStarts({ post, now });

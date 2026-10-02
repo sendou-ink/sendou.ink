@@ -1,4 +1,4 @@
-import { addHours } from "date-fns";
+import { addHours, sub } from "date-fns";
 import {
 	type Expression,
 	type ExpressionBuilder,
@@ -62,8 +62,7 @@ export const { deleteById } = postTable;
 export const { deleteById: deleteRequestById } = requestTable;
 
 /**
- * Scrim posts. `startsAt` is the booked start once a request is accepted (`rangeEndsAt` then
- * `null`), `isPrivate` whether the post is currently shown to some associations only. Posts
+ * Scrim posts with their team. `startsAt` is the booked start once a request is accepted. Posts
  * shown to some associations only and booked scrims are hidden unless a step lifts the guard:
  * `visibleToActor`, `involvingActor` or `includingHidden`.
  */
@@ -72,67 +71,13 @@ export const posts = defineQuery({
 	select: (qb) =>
 		qb.select((eb) => [
 			"ScrimPost.id",
-			"ScrimPost.createdAt",
-			"ScrimPost.text",
-			"ScrimPost.maps",
-			"ScrimPost.chatRoomId",
 			"ScrimPost.managedByAnyone",
-			"ScrimPost.isScheduledForFuture",
 			bookedStartsAt(eb).as("startsAt"),
-			sql<
-				number | null
-			>`iif(${isBooked(eb)}, null, ${eb.ref("ScrimPost.rangeEndsAt")})`.as(
-				"rangeEndsAt",
-			),
-			asBoolean(
-				eb.not(
-					AssociationRepository.isPublic(eb, eb.ref("ScrimPost.visibility")),
-				),
-			).as("isPrivate"),
-			asJson(
-				sql<{
-					max: LutiDiv;
-					min: LutiDiv;
-				} | null>`iif(${eb.ref("ScrimPost.maxDiv")} is not null and ${eb.ref("ScrimPost.minDiv")} is not null, ${jsonBuildObject(
-					{
-						max: lutiDiv(eb.ref("ScrimPost.maxDiv")),
-						min: lutiDiv(eb.ref("ScrimPost.minDiv")),
-					},
-				)}, null)`,
-			).as("divs"),
 			jsonObjectFrom(
 				teamOf(eb.ref("ScrimPost.teamId")).$narrowType<{
 					customUrl: NotNull;
 				}>(),
 			).as("team"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("CalendarEvent")
-					.select((eventEb) => [
-						"CalendarEvent.tournamentId as id",
-						"CalendarEvent.name",
-						tournamentLogoWithDefault(eventEb).as("avatarUrl"),
-					])
-					.whereRef(
-						"CalendarEvent.tournamentId",
-						"=",
-						"ScrimPost.mapsTournamentId",
-					)
-					.$narrowType<{ id: NotNull }>(),
-			).as("mapsTournament"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("User")
-					.select((userEb) => [
-						eb.ref("ScrimPost.canceledAt").as("at"),
-						eb.ref("ScrimPost.cancelReason").as("reason"),
-						commonUserJsonObject(userEb).as("byUser"),
-					])
-					.whereRef("User.id", "=", "ScrimPost.canceledByUserId")
-					.where("ScrimPost.canceledAt", "is not", null)
-					.where("ScrimPost.cancelReason", "is not", null)
-					.$narrowType<{ at: NotNull; reason: NotNull }>(),
-			).as("canceled"),
 		]),
 	defaultSort: [["ScrimPost.startsAt", "asc"]],
 	guards: {
@@ -238,6 +183,83 @@ export const posts = defineQuery({
 		booked: () => refine("ScrimPost", (qb) => qb.where(isBooked)),
 		soonestFirst: () => sortedBy("ScrimPost", [bookedStartsAt, "asc"]),
 		/**
+		 * What the post's card on the scrims page shows. `rangeEndsAt` is `null` once booked,
+		 * `isPrivate` whether the post is currently shown to some associations only.
+		 */
+		withListingDetails: () =>
+			refine("ScrimPost", (qb) =>
+				qb.select((eb) => [
+					"ScrimPost.createdAt",
+					"ScrimPost.text",
+					"ScrimPost.maps",
+					"ScrimPost.isScheduledForFuture",
+					sql<
+						number | null
+					>`iif(${isBooked(eb)}, null, ${eb.ref("ScrimPost.rangeEndsAt")})`.as(
+						"rangeEndsAt",
+					),
+					asBoolean(
+						eb.not(
+							AssociationRepository.isPublic(
+								eb,
+								eb.ref("ScrimPost.visibility"),
+							),
+						),
+					).as("isPrivate"),
+					asJson(
+						sql<{
+							max: LutiDiv;
+							min: LutiDiv;
+						} | null>`iif(${eb.ref("ScrimPost.maxDiv")} is not null and ${eb.ref("ScrimPost.minDiv")} is not null, ${jsonBuildObject(
+							{
+								max: lutiDiv(eb.ref("ScrimPost.maxDiv")),
+								min: lutiDiv(eb.ref("ScrimPost.minDiv")),
+							},
+						)}, null)`,
+					).as("divs"),
+				]),
+			),
+		/** The tournament whose map pool the post uses, `null` for none. */
+		withMapsTournament: () =>
+			refine("ScrimPost", (qb) =>
+				qb.select((eb) =>
+					jsonObjectFrom(
+						eb
+							.selectFrom("CalendarEvent")
+							.select((eventEb) => [
+								"CalendarEvent.tournamentId as id",
+								"CalendarEvent.name",
+								tournamentLogoWithDefault(eventEb).as("avatarUrl"),
+							])
+							.whereRef(
+								"CalendarEvent.tournamentId",
+								"=",
+								"ScrimPost.mapsTournamentId",
+							)
+							.$narrowType<{ id: NotNull }>(),
+					).as("mapsTournament"),
+				),
+			),
+		/** When, why and by whom the scrim was canceled, `null` when it wasn't. */
+		withCancellation: () =>
+			refine("ScrimPost", (qb) =>
+				qb.select((eb) =>
+					jsonObjectFrom(
+						eb
+							.selectFrom("User")
+							.select((userEb) => [
+								eb.ref("ScrimPost.canceledAt").as("at"),
+								eb.ref("ScrimPost.cancelReason").as("reason"),
+								commonUserJsonObject(userEb).as("byUser"),
+							])
+							.whereRef("User.id", "=", "ScrimPost.canceledByUserId")
+							.where("ScrimPost.canceledAt", "is not", null)
+							.where("ScrimPost.cancelReason", "is not", null)
+							.$narrowType<{ at: NotNull; reason: NotNull }>(),
+					).as("canceled"),
+				),
+			),
+		/**
 		 * Who may manage the post (its owners, or all its users when it is managed by anyone),
 		 * delete it, cancel the scrim (also the accepted request's users) and track its maps (both
 		 * sides of a booked scrim). A request's users may cancel it.
@@ -278,12 +300,32 @@ export const posts = defineQuery({
 	}),
 });
 
-/** The post with its participants and permissions, hidden ones included: the scrim page checks access itself. */
+/** The post as its page shows it, hidden ones included: the scrim page checks access itself. */
 export function postById(id: number) {
 	return posts()
 		.where({ id })
 		.includingHidden()
+		.withColumns(["chatRoomId"])
+		.withMapsTournament()
+		.withCancellation()
 		.withParticipants()
+		.withPermissions();
+}
+
+/**
+ * The posts the scrims page lists, with the viewer's and the participants' user cards. An
+ * association filter narrows only what is browsed.
+ */
+export function listedPosts(associationId: number | null) {
+	return posts()
+		.visibleToActor()
+		.startingFrom(sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }))
+		.forAssociation(associationId)
+		.soonestFirst()
+		.withListingDetails()
+		.withMapsTournament()
+		.withCancellation()
+		.withParticipants({ cards: true })
 		.withPermissions();
 }
 

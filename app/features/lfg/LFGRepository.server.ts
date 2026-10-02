@@ -49,7 +49,6 @@ export const posts = defineQuery({
 			"LFGPost.text",
 			"LFGPost.createdAt",
 			"LFGPost.updatedAt",
-			"LFGPost.plusTierVisibility",
 			"LFGPost.languages",
 		]),
 	map: (row) => ({

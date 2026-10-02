@@ -12,7 +12,7 @@ import {
 } from "~/features/availability/components/RegistrationAvailabilityPanel";
 import * as Scrim from "../core/Scrim";
 import type { loader as scrimsLoader } from "../loaders/scrims.server";
-import type { ScrimPost } from "../scrims-types";
+import type { ListedScrimPost } from "../scrims-types";
 import { requestStarts } from "../scrims-utils";
 import styles from "./ScrimAvailability.module.css";
 
@@ -32,7 +32,7 @@ export function useRosterFit({
 	teamId,
 	at,
 }: {
-	post: ScrimPost;
+	post: ListedScrimPost;
 	teamId?: number;
 	at?: number | null;
 }): ScrimRosterFit | null {
@@ -64,7 +64,7 @@ export function useRosterFit({
 }
 
 /** The post card's fit stripe: how much of the viewer's roster could play it, details a click away. Left out when none could — a row of zeroes down the page is noise. */
-export function ScrimFitStripe({ post }: { post: ScrimPost }) {
+export function ScrimFitStripe({ post }: { post: ListedScrimPost }) {
 	const { t } = useTranslation(["schedule"]);
 	const fit = useRosterFit({ post });
 

@@ -1,4 +1,3 @@
-import { sub } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import type { QueryRow } from "~/db/entity-query";
@@ -9,9 +8,8 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { SCRIM } from "../scrims-constants";
 import { scrimsSearchParams } from "../scrims-search-params";
-import type { ScrimPost } from "../scrims-types";
+import type { ListedScrimPost } from "../scrims-types";
 import { dividePosts, postSpan } from "../scrims-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -40,7 +38,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		) ?? null;
 
 	const posts = dividePosts(
-		await listedPosts(associationFilter?.id ?? null).execute(),
+		await ScrimPostRepository.listedPosts(
+			associationFilter?.id ?? null,
+		).execute(),
 		user?.id,
 	);
 
@@ -80,7 +80,7 @@ async function rosterAvailability({
 	teams,
 	viewerId,
 }: {
-	posts: Array<Pick<ScrimPost, "id" | "startsAt" | "rangeEndsAt">>;
+	posts: Array<Pick<ListedScrimPost, "id" | "startsAt" | "rangeEndsAt">>;
 	teams: QueryRow<ReturnType<typeof TeamRepository.teamsWithMembersOf>>[];
 	viewerId: number | null;
 }) {
@@ -103,15 +103,4 @@ async function rosterAvailability({
 			viewerId,
 		}),
 	};
-}
-
-/** The posts the viewer may see, their user cards included; an association filter narrows only what is browsed. */
-function listedPosts(associationId: number | null) {
-	return ScrimPostRepository.posts()
-		.visibleToActor()
-		.startingFrom(sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }))
-		.forAssociation(associationId)
-		.soonestFirst()
-		.withParticipants({ cards: true })
-		.withPermissions();
 }

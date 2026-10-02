@@ -1,6 +1,6 @@
 import { type ExpressionBuilder, sql, type Transaction } from "kysely";
 import { crud } from "~/db/crud";
-import { defineQuery, refine, sortedBy } from "~/db/entity-query";
+import { defineQuery, mapRows, refine, sortedBy } from "~/db/entity-query";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
@@ -22,8 +22,7 @@ const taggedArtTable = crud("TaggedArt");
 export const { deleteById } = artTable;
 
 /**
- * Art with its image's `url`, the ids of the users tagged in it and who may edit or unlink it,
- * newest first. Art whose image awaits validation is hidden unless a step lifts the guard:
+ * Art with its image's `url`, newest first. Art whose image awaits validation is hidden unless a step lifts the guard:
  * `awaitingValidation`.
  */
 export const arts = defineQuery({
@@ -34,7 +33,6 @@ export const arts = defineQuery({
 			"Art.authorId",
 			"Art.description",
 			"Art.createdAt",
-			"Art.isShowcase",
 			concatUserSubmittedImagePrefix(
 				eb
 					.selectFrom("UnvalidatedUserSubmittedImage")
@@ -43,25 +41,7 @@ export const arts = defineQuery({
 					.$asScalar()
 					.$notNull(),
 			).as("url"),
-			eb
-				.selectFrom("ArtUserMetadata")
-				.select((linkedEb) =>
-					linkedEb.fn
-						.agg<number[]>("json_group_array", ["ArtUserMetadata.userId"])
-						.as("linkedUserIds"),
-				)
-				.whereRef("ArtUserMetadata.artId", "=", "Art.id")
-				.$asScalar()
-				.$castTo<number[]>()
-				.as("linkedUserIds"),
 		]),
-	map: (row) => ({
-		isShowcase: row.isShowcase === 1,
-		permissions: {
-			EDIT: [row.authorId],
-			UNLINK: row.linkedUserIds,
-		},
-	}),
 	defaultSort: [["Art.createdAt", "desc"]],
 	guards: {
 		unvalidated: (qb) => qb.where((eb) => imageValidated(eb, true)),
@@ -97,6 +77,17 @@ export const arts = defineQuery({
 							.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
 					).as("linkedUsers"),
 				),
+			),
+		/** The author may edit the art and the tagged users unlink themselves from it. */
+		withPermissions: () =>
+			mapRows(
+				"Art",
+				(row: { authorId: number; linkedUsers: Array<{ id: number }> }) => ({
+					permissions: {
+						EDIT: [row.authorId],
+						UNLINK: row.linkedUsers.map((user) => user.id),
+					},
+				}),
 			),
 		/** Art the user made (`MADE-BY`), is tagged in without having made it (`MADE-OF`) or either (`ALL`). */
 		involvingUser: (userId: number, source: ArtSource = "ALL") =>

@@ -15,7 +15,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const userMatchProfile = await MatchProfileRepository.findSettingsByUserId(
 		user.id,
 	);
-	const ownPosts = await LFGRepository.posts().ownedByActor().execute();
+	const ownPosts = await LFGRepository.posts()
+		.ownedByActor()
+		.withColumns(["plusTierVisibility"])
+		.execute();
 	const postToEdit = ownPosts.find((post) => post.id === postId);
 
 	return {

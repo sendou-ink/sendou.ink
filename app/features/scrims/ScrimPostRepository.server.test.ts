@@ -450,8 +450,12 @@ describe("ScrimPostRepository.ownUpcoming", () => {
 			bookedInMinutes: 90,
 		});
 
-		const scrims = await ownUpcomingOf(users.id(2));
-		const scrim = scrims.find((candidate) => candidate.id === id);
+		const scrim = await withUserId(users.id(2), () =>
+			ScrimPostRepository.ownUpcoming()
+				.where({ id })
+				.withListingDetails()
+				.executeTakeFirst(),
+		);
 
 		expect(scrim?.startsAt).toBe(bookedAt);
 		expect(scrim?.rangeEndsAt).toBeNull();

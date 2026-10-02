@@ -39,5 +39,6 @@ function userArts(userId: number) {
 		.involvingUser(userId)
 		.withAuthor()
 		.withTags()
-		.withLinkedUsers();
+		.withLinkedUsers()
+		.withPermissions();
 }

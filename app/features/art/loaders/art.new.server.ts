@@ -18,6 +18,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 function ownArt(artId: number, userId: number) {
 	return ArtRepository.arts()
 		.where({ id: artId, authorId: userId })
+		.withColumns(["isShowcase"])
 		.withTags()
 		.withLinkedUsers();
 }

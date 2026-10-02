@@ -38,7 +38,11 @@ export const action: ActionFunction = async ({ request }) => {
 
 	if (data.artId) {
 		const existingArt = badRequestIfFalsy(
-			await ArtRepository.arts().where({ id: data.artId }).executeTakeFirst(),
+			await ArtRepository.arts()
+				.where({ id: data.artId })
+				.withLinkedUsers()
+				.withPermissions()
+				.executeTakeFirst(),
 		);
 		requirePermission(existingArt, "EDIT");
 
@@ -50,7 +54,10 @@ export const action: ActionFunction = async ({ request }) => {
 		});
 
 		notify({
-			userIds: R.difference(linkedUsers, existingArt.linkedUserIds),
+			userIds: R.difference(
+				linkedUsers,
+				existingArt.linkedUsers.map((linkedUser) => linkedUser.id),
+			),
 			notification: {
 				type: "TAGGED_TO_ART",
 				meta: {

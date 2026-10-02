@@ -13,9 +13,14 @@ export type ScrimPostWithParticipants = QueryRow<
 	ReturnType<Posts["withParticipants"]>
 >;
 
-/** A scrim post as pages show it: with its participants and what the viewer may do with it. */
+/** A scrim post as its own page shows it. */
 export type ScrimPost = QueryRow<
-	ReturnType<ReturnType<Posts["withParticipants"]>["withPermissions"]>
+	ReturnType<typeof ScrimPostRepository.postById>
+>;
+
+/** A scrim post as the scrims page lists it. */
+export type ListedScrimPost = QueryRow<
+	ReturnType<typeof ScrimPostRepository.listedPosts>
 >;
 
 export interface TimeRange {

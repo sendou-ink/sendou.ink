@@ -53,7 +53,10 @@ describe("ArtRepository.arts", () => {
 			linkedUsers: [taggedUserId()],
 		});
 
-		const [art] = await ArtRepository.arts().execute();
+		const [art] = await ArtRepository.arts()
+			.withLinkedUsers()
+			.withPermissions()
+			.execute();
 
 		expect(art.permissions).toEqual({
 			EDIT: [authorId()],
@@ -175,10 +178,12 @@ describe("ArtRepository.insert", () => {
 			authorId: authorId(),
 		});
 
-		const result = await ArtRepository.arts().execute();
+		const result = await ArtRepository.arts()
+			.withColumns(["isShowcase"])
+			.execute();
 
-		expect(result.find((art) => art.id === first.id)?.isShowcase).toBe(true);
-		expect(result.find((art) => art.id === second.id)?.isShowcase).toBe(false);
+		expect(result.find((art) => art.id === first.id)?.isShowcase).toBe(1);
+		expect(result.find((art) => art.id === second.id)?.isShowcase).toBe(0);
 	});
 });
 
@@ -218,8 +223,10 @@ describe("ArtRepository.update", () => {
 			isShowcase: 1,
 		});
 
-		const result = await ArtRepository.arts().execute();
-		expect(result.find((art) => art.id === first.id)?.isShowcase).toBe(false);
-		expect(result.find((art) => art.id === second.id)?.isShowcase).toBe(true);
+		const result = await ArtRepository.arts()
+			.withColumns(["isShowcase"])
+			.execute();
+		expect(result.find((art) => art.id === first.id)?.isShowcase).toBe(0);
+		expect(result.find((art) => art.id === second.id)?.isShowcase).toBe(1);
 	});
 });

@@ -40,18 +40,12 @@ const MEMBERSHIPS_LIMIT = TEAM.MAX_TEAM_COUNT_PATRON;
 const MEMBERSHIPS_PER_TEAM_LIMIT = 100;
 
 /**
- * Teams with their logo's `url`, by name. Soft-deleted teams are hidden unless a step lifts the
+ * Teams by name. Soft-deleted teams are hidden unless a step lifts the
  * guard: `includingDeleted`.
  */
 export const teams = defineQuery({
 	root: "Team",
-	select: (qb) =>
-		qb.select((eb) => [
-			"Team.id",
-			"Team.customUrl",
-			"Team.name",
-			validatedImageUrl(eb, "Team.avatarImgId").as("avatarUrl"),
-		]),
+	select: (qb) => qb.select(["Team.id", "Team.customUrl", "Team.name"]),
 	defaultSort: [["Team.name", "asc"]],
 	guards: {
 		deleted: (qb) => qb.where("Team.deletedAt", "is", null),
@@ -86,6 +80,13 @@ export const teams = defineQuery({
 						.selectFrom("TeamMember")
 						.select("TeamMember.teamId")
 						.where("TeamMember.userId", "=", userId),
+				),
+			),
+		/** The logo's `avatarUrl`, `null` while it awaits validation. */
+		withLogo: () =>
+			refine("Team", (qb) =>
+				qb.select((eb) =>
+					validatedImageUrl(eb, "Team.avatarImgId").as("avatarUrl"),
 				),
 			),
 		/** What the team page shows besides the roster, the banner's `url` included. */

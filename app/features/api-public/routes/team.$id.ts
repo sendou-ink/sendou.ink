@@ -13,7 +13,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: teamId } = parseParams({ params, schema: paramsSchema });
 
 	const team = notFoundIfNullish(
-		await TeamRepository.teams().where({ id: teamId }).executeTakeFirst(),
+		await TeamRepository.teams()
+			.where({ id: teamId })
+			.withLogo()
+			.executeTakeFirst(),
 	);
 
 	const result: GetTeamResponse = {

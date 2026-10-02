@@ -25,6 +25,7 @@ import {
 	SCRIM_TRACKING_AUTO_LOCK_HOURS,
 } from "../scrims-constants";
 import type {
+	ListedScrimPost,
 	ScrimFilters,
 	ScrimPostWithParticipants,
 	ScrimSide,
@@ -78,7 +79,7 @@ export function sideDisplayName(side: {
 }
 
 export function applyFilters(
-	post: Pick<ScrimPostWithParticipants, "divs" | "startsAt" | "rangeEndsAt">,
+	post: Pick<ListedScrimPost, "divs" | "startsAt" | "rangeEndsAt">,
 	filters: ScrimFilters,
 ): boolean {
 	const hasMinFilter = filters.divs?.min !== null;

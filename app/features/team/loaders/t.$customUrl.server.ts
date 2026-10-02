@@ -14,6 +14,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const team = notFoundIfNullish(
 		await TeamRepository.teamByCustomUrl(customUrl)
 			.withProfile()
+			.withLogo()
 			.executeTakeFirst(),
 	);
 

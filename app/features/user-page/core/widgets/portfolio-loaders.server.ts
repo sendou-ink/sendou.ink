@@ -49,7 +49,7 @@ export const WIDGET_LOADERS = {
 		return BadgeRepository.badges().managedBy([userId]).execute();
 	},
 	teams: async (userId: number) => {
-		return TeamRepository.teams().forMember(userId).execute();
+		return TeamRepository.teams().forMember(userId).withLogo().execute();
 	},
 	organizations: async (userId: number) => {
 		return TournamentOrganizationRepository.findByUserId(userId);

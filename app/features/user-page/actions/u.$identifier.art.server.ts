@@ -22,7 +22,11 @@ export const action: ActionFunction = async ({ request }) => {
 		case "DELETE_ART": {
 			// the image stays on static hosting; storage is cheap and a cleanup routine can come later
 			const artToDelete = badRequestIfFalsy(
-				await ArtRepository.arts().where({ id: data.id }).executeTakeFirst(),
+				await ArtRepository.arts()
+					.where({ id: data.id })
+					.withLinkedUsers()
+					.withPermissions()
+					.executeTakeFirst(),
 			);
 			requirePermission(artToDelete, "EDIT");
 

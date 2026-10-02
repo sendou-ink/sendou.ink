@@ -106,6 +106,7 @@ async function searchByType({
 function teamsNamed(query: string, limit: number) {
 	return TeamRepository.teams()
 		.nameContaining(query)
+		.withLogo()
 		.withPlayers()
 		.limit(limit)
 		.execute();

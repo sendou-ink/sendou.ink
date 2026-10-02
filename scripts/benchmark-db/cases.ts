@@ -1,4 +1,4 @@
-import { eachDayOfInterval, sub, subDays } from "date-fns";
+import { eachDayOfInterval, subDays } from "date-fns";
 import { refine } from "~/db/entity-query";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
@@ -28,7 +28,6 @@ import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerInges
 import * as ScrimMapListRepository from "~/features/scrims/ScrimMapListRepository.server";
 import * as ScrimMapRepository from "~/features/scrims/ScrimMapRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import { SCRIM } from "~/features/scrims/scrims-constants";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
@@ -137,6 +136,7 @@ export function buildCases(fx: Fixtures): {
 			.withAuthor()
 			.withTags()
 			.withLinkedUsers()
+			.withPermissions()
 			.execute(),
 	);
 	add(
@@ -501,7 +501,10 @@ export function buildCases(fx: Fixtures): {
 			.execute(),
 	);
 	addStatic("LFGRepository.posts.ownedByActor", () =>
-		LFGRepository.posts().ownedByActor().execute(),
+		LFGRepository.posts()
+			.ownedByActor()
+			.withColumns(["plusTierVisibility"])
+			.execute(),
 	);
 
 	add("LiveStreamRepository.findByUserId", fx.heavyUser, (user) =>
@@ -720,20 +723,15 @@ export function buildCases(fx: Fixtures): {
 						qb.where("ScrimPost.chatRoomId", "in", roomIds),
 					),
 				)
+				.withColumns(["chatRoomId"])
 				.withParticipants()
 				.execute(),
 	);
 	add("ScrimPostRepository.postById", fx.heavyScrimPostId, (scrimPostId) =>
 		ScrimPostRepository.postById(scrimPostId).executeTakeFirst(),
 	);
-	addStatic("ScrimPostRepository.posts.listed", () =>
-		ScrimPostRepository.posts()
-			.visibleToActor()
-			.startingFrom(sub(new Date(), { hours: SCRIM.LISTED_HOURS_AFTER_START }))
-			.soonestFirst()
-			.withParticipants({ cards: true })
-			.withPermissions()
-			.execute(),
+	addStatic("ScrimPostRepository.listedPosts", () =>
+		ScrimPostRepository.listedPosts(null).execute(),
 	);
 	add("ScrimPostRepository.posts.bookedWithin", fx.scrimWindow, (window) =>
 		ScrimPostRepository.posts()
@@ -951,6 +949,7 @@ export function buildCases(fx: Fixtures): {
 	addStatic("TeamRepository.teams.search", () =>
 		TeamRepository.teams()
 			.nameContaining(SEARCH_QUERY.query)
+			.withLogo()
 			.withPlayers()
 			.limit(SEARCH_QUERY.limit)
 			.execute(),
@@ -964,6 +963,7 @@ export function buildCases(fx: Fixtures): {
 	add("TeamRepository.teamByCustomUrl", fx.heavyTeam, (team) =>
 		TeamRepository.teamByCustomUrl(team.customUrl)
 			.withProfile()
+			.withLogo()
 			.withColumns(["inviteCode"])
 			.executeTakeFirst(),
 	);

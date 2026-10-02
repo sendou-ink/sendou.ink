@@ -15,7 +15,7 @@ import {
 import type { loader as scrimsLoader } from "../loaders/scrims.server";
 import { SCRIM } from "../scrims-constants";
 import { scrimRequestFormSchema } from "../scrims-schemas";
-import type { ScrimPost } from "../scrims-types";
+import type { ListedScrimPost } from "../scrims-types";
 import { generateTimeOptions } from "../scrims-utils";
 import { ScrimAvailabilityRows, useRosterFit } from "./ScrimAvailability";
 import { WithFormField } from "./WithFormField";
@@ -24,7 +24,7 @@ export function ScrimRequestModal({
 	post,
 	close,
 }: {
-	post: ScrimPost;
+	post: ListedScrimPost;
 	close: () => void;
 }) {
 	const { t, i18n } = useTranslation(["scrims"]);
@@ -103,7 +103,7 @@ export function ScrimRequestModal({
 }
 
 /** How the roster the request is made with fits the exact slot being asked for. */
-function ScrimRequestAvailability({ post }: { post: ScrimPost }) {
+function ScrimRequestAvailability({ post }: { post: ListedScrimPost }) {
 	const { t } = useTranslation(["schedule"]);
 	const from = useFormValue("from") as
 		| { mode: "TEAM"; teamId: number }

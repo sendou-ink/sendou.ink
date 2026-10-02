@@ -25,6 +25,10 @@ import { previewUrl } from "../art-utils";
 import styles from "./ArtGrid.module.css";
 
 const preloadedImageUrls = new Set<string>();
+const NO_PERMISSIONS: NonNullable<ListedArt["permissions"]> = {
+	EDIT: [],
+	UNLINK: [],
+};
 
 export function ArtGrid({
 	arts,
@@ -211,8 +215,9 @@ function ImagePreview({
 	enablePreview?: boolean;
 	showUploadDate?: boolean;
 }) {
-	const canEdit = useHasPermission(art, "EDIT");
-	const canUnlink = useHasPermission(art, "UNLINK");
+	const permissions = art.permissions ?? NO_PERMISSIONS;
+	const canEdit = useHasPermission({ permissions }, "EDIT");
+	const canUnlink = useHasPermission({ permissions }, "UNLINK");
 	const [imageSettled, imageRef] = useImageSettled();
 	const { t } = useTranslation(["common", "art"]);
 	const formatDistanceToNow = useFormatDistanceToNow();

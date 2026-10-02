@@ -40,7 +40,7 @@ import { loader } from "../loaders/scrims.server";
 import { LUTI_DIVS } from "../scrims-constants";
 import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
 import { scrimsSearchParams } from "../scrims-search-params";
-import type { LutiDiv, ScrimFilters, ScrimPost } from "../scrims-types";
+import type { ListedScrimPost, LutiDiv, ScrimFilters } from "../scrims-types";
 import styles from "./scrims.module.css";
 
 export { action, loader };
@@ -398,7 +398,7 @@ function ScrimsDaySeparatedCards({
 	pendingRequestPostId,
 	autoScrollToPostId,
 }: {
-	posts: ScrimPost[];
+	posts: ListedScrimPost[];
 	filters: ScrimFilters;
 	pendingRequestPostId: number | null;
 	autoScrollToPostId: number | null;
@@ -430,7 +430,7 @@ function ScrimsDaySection({
 	pendingRequestPostId,
 	autoScrollToPostId,
 }: {
-	posts: ScrimPost[];
+	posts: ListedScrimPost[];
 	filters: ScrimFilters;
 	pendingRequestPostId: number | null;
 	autoScrollToPostId: number | null;
@@ -568,7 +568,7 @@ function AvailableScrimsFilterButtons({
 	);
 }
 
-function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
+function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ListedScrimPost[] }) {
 	const { t } = useTranslation(["scrims"]);
 	const user = useUser();
 
@@ -641,7 +641,11 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 	);
 }
 
-function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
+function ScrimsDaySeparatedBookedCards({
+	posts,
+}: {
+	posts: ListedScrimPost[];
+}) {
 	const postsByDay = R.groupBy(posts, (post) =>
 		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);

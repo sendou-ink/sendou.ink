@@ -40,7 +40,6 @@ export const vods = defineQuery({
 			"Video.title",
 			"Video.type",
 			"Video.youtubeId",
-			"Video.youtubePublishedAt",
 			"Video.submitterUserId",
 			jsonObjectFrom(
 				eb
@@ -238,9 +237,13 @@ export const vods = defineQuery({
 	}),
 });
 
-/** The vod with its matches and who may edit it. */
+/** The vod with its publish date, matches and who may edit it. */
 export function vodWithMatches(id: number) {
-	return vods().where({ id }).withMatches().withEditPermissions();
+	return vods()
+		.where({ id })
+		.withColumns(["youtubePublishedAt"])
+		.withMatches()
+		.withEditPermissions();
 }
 
 /** The vods showing the user's point of view, with the weapons played. */

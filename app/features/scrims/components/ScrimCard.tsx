@@ -32,14 +32,14 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage } from "~/utils/urls";
 import { scrimsActionSchema } from "../scrims-schemas";
 import { scrimsSearchParams } from "../scrims-search-params";
-import type { ScrimPost } from "../scrims-types";
+import type { ListedScrimPost } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import { ScrimFitStripe } from "./ScrimAvailability";
 import styles from "./ScrimCard.module.css";
 import { ScrimRequestModal } from "./ScrimRequestModal";
 
 interface ScrimPostCardProps {
-	post: ScrimPost;
+	post: ListedScrimPost;
 	action?: "DELETE" | "REQUEST" | "VIEW_REQUEST" | "CONTACT";
 	isFilteredOut?: boolean;
 	autoScrollIntoView?: boolean;
@@ -170,7 +170,7 @@ function ScrimTeamAvatar({
 }: {
 	teamAvatarUrl: string | null | undefined;
 	teamName: string;
-	owner: ScrimPost["users"][number];
+	owner: ListedScrimPost["users"][number];
 }) {
 	if (teamAvatarUrl) {
 		return <Avatar size="xs" url={teamAvatarUrl} alt={teamName} />;
@@ -202,7 +202,11 @@ function ScrimVisibilityPopover() {
 	);
 }
 
-function ScrimTeamMembersPopover({ users }: { users: ScrimPost["users"] }) {
+function ScrimTeamMembersPopover({
+	users,
+}: {
+	users: ListedScrimPost["users"];
+}) {
 	return (
 		<SendouPopover
 			trigger={
@@ -221,7 +225,11 @@ function ScrimTeamMembersPopover({ users }: { users: ScrimPost["users"] }) {
 	);
 }
 
-function ScrimTeamMemberRow({ user }: { user: ScrimPost["users"][number] }) {
+function ScrimTeamMemberRow({
+	user,
+}: {
+	user: ListedScrimPost["users"][number];
+}) {
 	return (
 		<UserCard data={user.card} withMutualFriends>
 			<span className="stack horizontal sm items-center">
@@ -234,7 +242,11 @@ function ScrimTeamMemberRow({ user }: { user: ScrimPost["users"][number] }) {
 	);
 }
 
-function ScrimRequestMembersList({ users }: { users: ScrimPost["users"] }) {
+function ScrimRequestMembersList({
+	users,
+}: {
+	users: ListedScrimPost["users"];
+}) {
 	const { t } = useTranslation(["scrims"]);
 
 	const sortedUsers = [...users].sort(
@@ -260,7 +272,7 @@ function ScrimRequestMemberRow({
 	user,
 	children,
 }: {
-	user: ScrimPost["users"][number];
+	user: ListedScrimPost["users"][number];
 	children?: React.ReactNode;
 }) {
 	return (
@@ -281,7 +293,7 @@ function ScrimRequestMemberRow({
 function ScrimTournamentPopover({
 	tournament,
 }: {
-	tournament: NonNullable<ScrimPost["mapsTournament"]>;
+	tournament: NonNullable<ListedScrimPost["mapsTournament"]>;
 }) {
 	return (
 		<SendouPopover
@@ -320,7 +332,7 @@ function ScrimStartTimeDisplay({
 	isScheduledForFuture: boolean;
 	startTimestamp: number;
 	createdAtTimestamp: number;
-	canceled: ScrimPost["canceled"];
+	canceled: ListedScrimPost["canceled"];
 }) {
 	const { t } = useTranslation(["scrims"]);
 
@@ -420,7 +432,7 @@ function ScrimActionButtons({
 	post,
 }: {
 	action: ScrimPostCardProps["action"];
-	post: ScrimPost;
+	post: ListedScrimPost;
 }) {
 	const { t } = useTranslation(["scrims", "common"]);
 	const user = useUser();
@@ -545,7 +557,7 @@ function ScrimActionButtons({
 }
 
 interface ScrimRequestCardProps {
-	request: ScrimPost["requests"][number];
+	request: ListedScrimPost["requests"][number];
 	postStartTime: number;
 	canAccept: boolean;
 	showFooter?: boolean;

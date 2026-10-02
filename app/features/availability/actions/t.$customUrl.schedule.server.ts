@@ -18,7 +18,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const { customUrl } = v.parse(teamParamsSchema, params);
 
 	const team = notFoundIfNullish(
-		await TeamRepository.teamByCustomUrl(customUrl).executeTakeFirst(),
+		await TeamRepository.teamByCustomUrl(customUrl)
+			.withLogo()
+			.executeTakeFirst(),
 	);
 
 	requirePermission(team, "EDIT");

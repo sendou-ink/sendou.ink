@@ -257,6 +257,7 @@ async function scrimsOwningRooms(roomIds: number[]) {
 				qb.where("ScrimPost.chatRoomId", "in", roomIds),
 			),
 		)
+		.withColumns(["chatRoomId"])
 		.withParticipants()
 		.execute();
 

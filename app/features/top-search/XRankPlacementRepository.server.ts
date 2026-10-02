@@ -109,7 +109,7 @@ export const placements = defineQuery({
 /** In-game players placements are recorded under, claimed by at most one user. */
 export const players = defineQuery({
 	root: "SplatoonPlayer",
-	select: (qb) => qb.select(["SplatoonPlayer.id", "SplatoonPlayer.userId"]),
+	select: (qb) => qb.select("SplatoonPlayer.id"),
 });
 
 /** Every month with placements, newest first. */

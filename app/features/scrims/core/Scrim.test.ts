@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
-import type { ScrimFilters, ScrimPost } from "../scrims-types";
+import type { ListedScrimPost, ScrimFilters } from "../scrims-types";
 import {
 	applyFilters,
 	isTrackingLocked,
@@ -18,7 +18,10 @@ const HOUR = 60 * 60;
 type MockUser = { id: number };
 type MockRequest = { isAccepted: boolean; users: MockUser[] };
 
-function createPost(users: MockUser[], requests: MockRequest[]): ScrimPost {
+function createPost(
+	users: MockUser[],
+	requests: MockRequest[],
+): ListedScrimPost {
 	return {
 		id: 1,
 		users,
@@ -29,7 +32,7 @@ function createPost(users: MockUser[], requests: MockRequest[]): ScrimPost {
 		description: "",
 		status: "open",
 		authorId: 0,
-	} as unknown as ScrimPost;
+	} as unknown as ListedScrimPost;
 }
 
 describe("participantIdsListFromAccepted", () => {
