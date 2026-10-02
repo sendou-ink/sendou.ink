@@ -72,7 +72,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	});
 	const topMates = mates.slice(0, TOP_MATES_COUNT);
 
-	const countries = await UserRepository.findCountriesByUserIds([
+	const countries = await countriesOf([
 		...(teamEntry?.entry.members.map((member) => member.id) ?? []),
 		...topMates.map((mate) => mate.user.id),
 	]);
@@ -184,3 +184,15 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		),
 	};
 };
+
+/** Country codes keyed by user id, users without a country set absent. */
+async function countriesOf(userIds: number[]) {
+	const users = await UserRepository.users()
+		.whereIdIn(userIds)
+		.withCountry()
+		.execute();
+
+	return new Map(
+		users.flatMap((user) => (user.country ? [[user.id, user.country]] : [])),
+	);
+}

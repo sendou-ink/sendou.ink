@@ -1,4 +1,5 @@
 import { add } from "date-fns";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { CustomTheme, Pronouns, UserPreferences } from "~/db/tables-json";
@@ -76,7 +77,7 @@ const EMPTY_MATCH_PROFILE: MatchProfileArgs = {
 	vc: "NO",
 	languages: [],
 	weaponPool: [],
-	noScreen: 0,
+	noScreen: false,
 };
 
 const GRANT_ROLE: Record<Role, (userId: number) => Promise<unknown>> = {
@@ -124,7 +125,7 @@ function fakeFriendCode() {
 	return `${faker.string.numeric(4)}-${faker.string.numeric(4)}-${faker.string.numeric(4)}`;
 }
 
-/** Snowflake-like: 42 bits of timestamp, `seq` in the low 22. Must stay 10+ chars or `userByIdentifierQuery` reads it as a row id. */
+/** Snowflake-like: 42 bits of timestamp, `seq` in the low 22. Must stay 10+ chars or `UserRepository.users().identifiedBy` reads it as a row id. */
 function fakeDiscordId(seq: number) {
 	const DISCORD_EPOCH_MS = 1420070400000n;
 	const FAKE_CREATED_AT_MS = 1685577600000n; // 2023-06-01
@@ -145,34 +146,30 @@ export async function updateProfile(
 }
 
 async function currentProfile(userId: number): Promise<ProfileArgs> {
-	const user = await db
-		.selectFrom("User")
-		.select([
-			"country",
-			"customUrl",
-			"customName",
-			"pronouns",
-			"inGameName",
-			"commissionText",
-			"commissionsOpen",
-			"favoriteTrophyIds",
-			"hiddenTrophyIds",
-			"customAvatarImgId",
-		])
-		.where("id", "=", userId)
-		.executeTakeFirstOrThrow();
+	const user = await UserRepository.findById(userId);
+	invariant(user, `No user with id ${userId}`);
 
-	return {
-		...user,
-		pronouns: user.pronouns ?? null,
-	};
+	return R.pick(user, [
+		"country",
+		"customUrl",
+		"customName",
+		"pronouns",
+		"inGameName",
+		"commissionText",
+		"commissionsOpen",
+		"favoriteTrophyIds",
+		"hiddenTrophyIds",
+		"customAvatarImgId",
+	]);
 }
 
 /** Links the Twitch account the way logging in with it connected on Discord does. */
 export async function linkTwitch(userId: number, twitch: string | null) {
-	const user = await db
-		.selectFrom("User")
-		.select([
+	const user = await UserRepository.findById(userId);
+	invariant(user, `No user with id ${userId}`);
+
+	await UserRepository.upsert({
+		...R.pick(user, [
 			"discordId",
 			"discordName",
 			"discordAvatar",
@@ -180,11 +177,9 @@ export async function linkTwitch(userId: number, twitch: string | null) {
 			"youtubeId",
 			"youtubeName",
 			"bsky",
-		])
-		.where("id", "=", userId)
-		.executeTakeFirstOrThrow();
-
-	await UserRepository.upsert({ ...user, twitch });
+		]),
+		twitch,
+	});
 }
 
 /** Subject and object forms as one JSON object, as the profile page saves them. */

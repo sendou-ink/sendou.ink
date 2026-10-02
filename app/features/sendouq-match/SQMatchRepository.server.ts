@@ -1019,7 +1019,7 @@ export function insert({
 			.innerJoin("User", "User.id", "GroupMember.userId")
 			.select("User.id")
 			.where("GroupMember.groupId", "in", [alphaGroupId, bravoGroupId])
-			.where("User.noScreen", "=", 1)
+			.where("User.noScreen", "=", true)
 			.executeTakeFirst();
 
 		const chatRoom = await ChatRepository.insertRoom(

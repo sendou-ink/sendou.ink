@@ -97,9 +97,9 @@ export const DiscordStrategy = () => {
 					discordResponses,
 				);
 
-				const isAlreadyRegistered = Boolean(
-					await UserRepository.findIdByIdentifier(user.id),
-				);
+				const isAlreadyRegistered = await UserRepository.exists({
+					discordId: user.id,
+				});
 
 				if (!isAlreadyRegistered && !user.verified) {
 					logger.info(`User is not verified with id: ${user.id}`);

@@ -1,4 +1,5 @@
 import { differenceInMinutes } from "date-fns";
+import { refine } from "~/db/entity-query";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
@@ -26,8 +27,7 @@ async function syncLiveStreams() {
 	}
 
 	const streamTwitchNames = streams.map((s) => s.twitchUserName);
-	const matchingUsers =
-		await UserRepository.findIdsByTwitchUsernames(streamTwitchNames);
+	const matchingUsers = await usersStreamingAs(streamTwitchNames).execute();
 
 	const twitchToUserId = new Map<string, number>();
 	for (const user of matchingUsers) {
@@ -102,4 +102,12 @@ async function syncTournamentStreamers(
 
 	await LiveStreamRepository.insertTournamentStreamers(rows);
 	lastTournamentStreamSync = now;
+}
+
+function usersStreamingAs(twitchUsernames: string[]) {
+	return UserRepository.users().with(
+		refine("User", (qb) =>
+			qb.where("User.twitch", "in", twitchUsernames).select("User.twitch"),
+		),
+	);
 }

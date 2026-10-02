@@ -25,7 +25,9 @@ export const action: ActionFunction = async ({ request }) => {
 	const data = result.data;
 
 	if (data.customUrl) {
-		const existingUser = await UserRepository.findByCustomUrl(data.customUrl);
+		const existingUser = await UserRepository.findOneBy({
+			customUrl: data.customUrl,
+		});
 		if (existingUser && existingUser.id !== user.id) {
 			return {
 				fieldErrors: {
@@ -53,7 +55,7 @@ export const action: ActionFunction = async ({ request }) => {
 				.slice(0, SMALL_TROPHIES_PER_DISPLAY_PAGE)
 		: [];
 
-	const editedUser = await UserRepository.updateOwnProfile({
+	await UserRepository.updateOwnProfile({
 		country: data.country,
 		customUrl: data.customUrl,
 		customName: data.customName,
@@ -62,7 +64,7 @@ export const action: ActionFunction = async ({ request }) => {
 		favoriteTrophyIds: limitedTrophyIds.length > 0 ? limitedTrophyIds : null,
 		hiddenTrophyIds:
 			data.hiddenTrophyIds.length > 0 ? data.hiddenTrophyIds : null,
-		commissionsOpen: isArtist && data.commissionsOpen ? 1 : 0,
+		commissionsOpen: isArtist && data.commissionsOpen,
 		commissionText: isArtist ? data.commissionText : null,
 		customAvatarImgId: isSupporter ? data.customAvatar : null,
 	});
@@ -79,5 +81,7 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 	}
 
-	throw redirect(userPage(editedUser));
+	throw redirect(
+		userPage({ discordId: user.discordId, customUrl: data.customUrl }),
+	);
 };

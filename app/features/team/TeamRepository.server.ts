@@ -79,6 +79,15 @@ export const teams = defineQuery({
 						"Membership.isMainTeam",
 					]),
 			).sortedBy(["Membership.isMainTeam", "desc"], ["Team.name", "asc"]),
+		mainTeamOf: (userId: number) =>
+			refine("Team", (qb) =>
+				qb.where("Team.id", "in", (eb) =>
+					eb
+						.selectFrom("TeamMember")
+						.select("TeamMember.teamId")
+						.where("TeamMember.userId", "=", userId),
+				),
+			),
 		/** What the team page shows besides the roster, the banner's `url` included. */
 		withProfile: () =>
 			refine("Team", (qb) =>

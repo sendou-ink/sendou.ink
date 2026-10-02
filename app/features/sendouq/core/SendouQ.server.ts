@@ -1,7 +1,6 @@
 import { isWithinInterval, sub } from "date-fns";
 import { redirect } from "react-router";
 import * as R from "remeda";
-import type { DBBoolean } from "~/db/tables";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
@@ -410,7 +409,7 @@ class SendouQClass {
 		};
 	}
 
-	#groupNoScreen(group: { members: { noScreen: DBBoolean }[] }) {
+	#groupNoScreen(group: { members: { noScreen: boolean }[] }) {
 		return this.#groupIsFull(group)
 			? group.members.some((member) => member.noScreen)
 			: null;

@@ -13,7 +13,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 	return {
 		users: Object.fromEntries(
-			(await UserRepository.findAllPlusServerMembers()).map((u) => [
+			(await UserRepository.users().inPlusServer().execute()).map((u) => [
 				u.discordId,
 				u.plusTier,
 			]),

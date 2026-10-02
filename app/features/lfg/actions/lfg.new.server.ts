@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
@@ -25,7 +25,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const data = result.data;
 	const type = data.type as Tables["LFGPost"]["type"];
 
-	const { team } = (await UserRepository.findProfileByUserId(user.id)) ?? {};
+	const team = await TeamRepository.teams()
+		.mainTeamOf(user.id)
+		.executeTakeFirst();
 
 	const shouldIncludeTeam = TEAM_POST_TYPES.includes(type);
 

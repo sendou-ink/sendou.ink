@@ -1,6 +1,6 @@
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { DBBoolean, Tables } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
@@ -53,7 +53,7 @@ export async function updateOwnMatchProfile({
 	vc: Tables["User"]["vc"];
 	languages: UnifiedLanguageCode[];
 	weaponPool: WeaponPoolItem[];
-	noScreen: DBBoolean;
+	noScreen: boolean;
 }) {
 	const userId = actorId();
 	const current = await db

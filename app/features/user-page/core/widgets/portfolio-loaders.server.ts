@@ -1,3 +1,5 @@
+import * as R from "remeda";
+import type { Tables } from "~/db/tables";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { getUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
@@ -22,6 +24,8 @@ import {
 	mainWeaponIds,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
+import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
+import { SPL2_JOIN_ORDER_CUTOFF } from "../../user-page-constants";
 import type { ExtractWidgetSettings } from "./types";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
@@ -201,10 +205,13 @@ export const WIDGET_LOADERS = {
 		};
 	},
 	"patron-since": async (userId: number) => {
-		return UserRepository.findPatronStartedAtByUserId(userId);
+		return (await UserRepository.findById(userId))?.patronStartedAt;
 	},
 	"join-date": async (userId: number) => {
-		return UserRepository.findJoinOrderByUserId(userId);
+		const joinOrder = (await UserRepository.findById(userId))?.joinOrder;
+		if (!joinOrder) return null;
+
+		return { joinOrder, isSpl2: joinOrder <= SPL2_JOIN_ORDER_CUTOFF };
 	},
 	videos: async (userId: number) => {
 		return VodRepository.userVods(userId).limit(3).execute();
@@ -292,7 +299,14 @@ export const WIDGET_LOADERS = {
 			.execute();
 	},
 	commissions: async (userId: number) => {
-		return UserRepository.findCommissionsByUserId(userId);
+		const user = await UserRepository.findById(userId);
+		if (!user) return;
+
+		return R.pick(user, [
+			"commissionsOpen",
+			"commissionsOpenedAt",
+			"commissionText",
+		]);
 	},
 	"weapon-pool": async (
 		userId: number,
@@ -323,7 +337,9 @@ export const WIDGET_LOADERS = {
 		return settings.kits;
 	},
 	"social-links": async (userId: number) => {
-		return UserRepository.findSocialLinksByUserId(userId);
+		const user = await UserRepository.findById(userId);
+
+		return user ? socialLinks(user) : [];
 	},
 	links: async (_userId: number, settings: ExtractWidgetSettings<"links">) => {
 		return settings.links;
@@ -344,7 +360,10 @@ export const WIDGET_LOADERS = {
 		return FriendRepository.findFriendsByUserId(userId);
 	},
 	"luti-div": async (userId: number) => {
-		return UserRepository.findDivByUserId(userId);
+		const user = await UserRepository.findById(userId);
+		if (!user?.div) return null;
+
+		return { div: user.div, divSeason: user.divSeason };
 	},
 	"map-mode-preferences": async (userId: number) => {
 		const preferences =
@@ -416,4 +435,56 @@ function peakPlacementOf(userId: number) {
 		.claimedBy(userId)
 		.highestPowerFirst()
 		.limit(1);
+}
+
+function socialLinks(
+	user: Pick<
+		Tables["User"],
+		"twitch" | "youtubeId" | "youtubeName" | "bsky" | "discordUniqueName"
+	>,
+) {
+	const links: Array<
+		| {
+				type: "url";
+				platform: "twitch" | "youtube" | "bsky";
+				/** Account name on the platform, null if only an id is known */
+				name: string | null;
+				url: string;
+		  }
+		| { type: "text"; platform: "discord"; name: string }
+	> = [];
+
+	if (user.twitch) {
+		links.push({
+			type: "url",
+			platform: "twitch",
+			name: user.twitch,
+			url: twitchUrl(user.twitch),
+		});
+	}
+	if (user.youtubeId) {
+		links.push({
+			type: "url",
+			platform: "youtube",
+			name: user.youtubeName,
+			url: youtubeUrl(user.youtubeId),
+		});
+	}
+	if (user.bsky) {
+		links.push({
+			type: "url",
+			platform: "bsky",
+			name: user.bsky,
+			url: bskyUrl(user.bsky),
+		});
+	}
+	if (user.discordUniqueName) {
+		links.push({
+			type: "text",
+			platform: "discord",
+			name: user.discordUniqueName,
+		});
+	}
+
+	return links;
 }

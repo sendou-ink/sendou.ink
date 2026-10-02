@@ -961,7 +961,7 @@ export interface User {
 	bannedReason: string | null;
 	/** Shown on user card */
 	shortBio: string | null;
-	commissionsOpen: Generated<DBBoolean>;
+	commissionsOpen: Generated<boolean>;
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
@@ -981,10 +981,10 @@ export interface User {
 	hiddenTrophyIds: JSONColumn<number[] | null>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
-	isArtist: Generated<DBBoolean>;
-	isVideoAdder: Generated<DBBoolean>;
-	isTournamentOrganizer: Generated<DBBoolean>;
-	isApiAccesser: Generated<DBBoolean>;
+	isArtist: Generated<boolean>;
+	isVideoAdder: Generated<boolean>;
+	isTournamentOrganizer: Generated<boolean>;
+	isApiAccesser: Generated<boolean>;
 	languages: JSONColumn<UnifiedLanguageCode[] | null>;
 	pronouns: Generated<JSONColumn<Pronouns | null>>;
 	patronStartedAt: number | null;
@@ -998,7 +998,7 @@ export interface User {
 	mapModePreferences: JSONColumn<UserMapModePreferences | null>;
 	weaponPool: JSONColumn<WeaponPoolEntry[] | null>;
 	plusSkippedForSeasonNth: number | null;
-	noScreen: Generated<DBBoolean>;
+	noScreen: Generated<boolean>;
 	buildSorting: JSONColumn<BuildSort[] | null>;
 	preferences: JSONColumn<UserPreferences | null>;
 	/** Can be null because we did not always save this. */

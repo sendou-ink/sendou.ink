@@ -58,6 +58,11 @@ const testBuilds = defineQuery({
 	}),
 });
 
+const testWidgets = defineQuery({
+	root: "UserWidget",
+	select: (qb) => qb.select(["UserWidget.userId", "UserWidget.index"]),
+});
+
 describe("defineQuery", () => {
 	beforeEach(async () => {
 		await users.create(2);
@@ -111,6 +116,20 @@ describe("defineQuery", () => {
 			.execute();
 
 		expect(titlesOf(rows)).toEqual(["C"]);
+	});
+
+	test("filters by a list of ids, an empty one matching none", async () => {
+		const [first, , third] = await testBuilds().includingPrivate().execute();
+
+		expect(
+			titlesOf(
+				await testBuilds()
+					.includingPrivate()
+					.whereIdIn([first.id, third.id])
+					.execute(),
+			),
+		).toEqual(["B", "C"]);
+		expect(await testBuilds().whereIdIn([]).execute()).toEqual([]);
 	});
 
 	test("applies limit after sorting", async () => {
@@ -232,6 +251,11 @@ describe("defineQuery", () => {
 
 		// @ts-expect-error not a column of the root table
 		testBuilds().where({ nope: 1 });
+
+		expect(() =>
+			// @ts-expect-error the root has no single id primary key
+			testWidgets().whereIdIn([1]),
+		).toThrow();
 	});
 });
 

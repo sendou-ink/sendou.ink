@@ -4,7 +4,9 @@ import { isSupporter } from "~/modules/permissions/utils";
 import { userPage } from "~/utils/urls";
 
 export const loader: LoaderFunction = async ({ params }) => {
-	const user = await UserRepository.findByCustomUrl(params.customUrl!);
+	const user = await UserRepository.findOneBy({
+		customUrl: params.customUrl!,
+	});
 
 	if (!user || !isSupporter(user)) {
 		return redirect("/");

@@ -328,7 +328,7 @@ describe("banUser", () => {
 			bannedByUserId: users.id(2),
 		});
 
-		const modInfo = await UserRepository.findModInfoById(users.id(1));
+		const modInfo = await banLogsOf(users.id(1));
 
 		expect(modInfo?.banLogs).toHaveLength(1);
 		expect(modInfo?.banLogs[0].banned).toBe(1);
@@ -344,7 +344,7 @@ describe("banUser", () => {
 			bannedByUserId: null,
 		});
 
-		const modInfo = await UserRepository.findModInfoById(users.id(1));
+		const modInfo = await banLogsOf(users.id(1));
 
 		expect(modInfo?.banLogs).toHaveLength(0);
 	});
@@ -374,7 +374,7 @@ describe("banUser", () => {
 		expect(result.size).toBe(1);
 		expect(result.get(users.id(1))?.bannedReason).toBe("Updated ban reason");
 
-		const modInfo = await UserRepository.findModInfoById(users.id(1));
+		const modInfo = await banLogsOf(users.id(1));
 		expect(modInfo?.banLogs).toHaveLength(2);
 		expect(modInfo?.banLogs[0].bannedReason).toBe("First ban");
 		expect(modInfo?.banLogs[1].bannedReason).toBe("Updated ban reason");
@@ -442,7 +442,7 @@ describe("unbanUser", () => {
 			unbannedByUserId: unbanner.id,
 		});
 
-		const modInfo = await UserRepository.findModInfoById(banned.id);
+		const modInfo = await banLogsOf(banned.id);
 
 		expect(modInfo?.banLogs).toHaveLength(2);
 
@@ -535,3 +535,10 @@ describe("replacePlusTiers", () => {
 		expect(await sortValueByBuildId(build.id)).toBe(NO_TIER_SORT_VALUE);
 	});
 });
+
+function banLogsOf(userId: number) {
+	return UserRepository.users()
+		.where({ id: userId })
+		.withBanLogs()
+		.executeTakeFirst();
+}

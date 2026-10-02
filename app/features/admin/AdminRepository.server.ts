@@ -406,7 +406,7 @@ export function replacePlusTiers(
 export function makeVideoAdderByUserId(userId: number) {
 	return db
 		.updateTable("User")
-		.set({ isVideoAdder: 1 })
+		.set({ isVideoAdder: true })
 		.where("User.id", "=", userId)
 		.execute();
 }
@@ -414,7 +414,7 @@ export function makeVideoAdderByUserId(userId: number) {
 export function makeArtistByUserId(userId: number) {
 	return db
 		.updateTable("User")
-		.set({ isArtist: 1 })
+		.set({ isArtist: true })
 		.where("User.id", "=", userId)
 		.execute();
 }
@@ -422,7 +422,7 @@ export function makeArtistByUserId(userId: number) {
 export function makeTournamentOrganizerByUserId(userId: number) {
 	return db
 		.updateTable("User")
-		.set({ isTournamentOrganizer: 1 })
+		.set({ isTournamentOrganizer: true })
 		.where("User.id", "=", userId)
 		.execute();
 }
@@ -430,7 +430,7 @@ export function makeTournamentOrganizerByUserId(userId: number) {
 export function makeApiAccesserByUserId(userId: number) {
 	return db
 		.updateTable("User")
-		.set({ isApiAccesser: 1 })
+		.set({ isApiAccesser: true })
 		.where("User.id", "=", userId)
 		.execute();
 }

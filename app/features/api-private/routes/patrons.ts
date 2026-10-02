@@ -1,4 +1,5 @@
 import type { ActionFunction, LoaderFunctionArgs } from "react-router";
+import { sortedBy } from "~/db/entity-query";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { updatePatreonData } from "~/modules/patreon";
 import {
@@ -19,5 +20,15 @@ export const action: ActionFunction = async ({ request }) => {
 export const loader = ({ request }: LoaderFunctionArgs) => {
 	unauthorizedIfFalsy(canAccessLohiEndpoint(request));
 
-	return UserRepository.findAllPatrons();
+	return UserRepository.users()
+		.patrons()
+		.withPatronTheme()
+		.with(
+			sortedBy(
+				"User",
+				["User.patronTier", "desc"],
+				["User.patronStartedAt", "asc"],
+			),
+		)
+		.execute();
 };

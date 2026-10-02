@@ -314,7 +314,7 @@ function permissionsOf(tournament: {
 		members: Array<{
 			userId: number;
 			role: TournamentOrganizationRole;
-			isTournamentOrganizer: DBBoolean;
+			isTournamentOrganizer: boolean;
 			patronTier: number | null;
 		}>;
 	} | null;
@@ -343,7 +343,7 @@ function permissionsOf(tournament: {
 					(member) =>
 						member.role === "ADMIN" &&
 						(isEstablished ||
-							Boolean(member.isTournamentOrganizer) ||
+							member.isTournamentOrganizer ||
 							isSupporter(member)),
 				)
 				.map((member) => member.userId),

@@ -22,16 +22,6 @@ vi.mock("~/modules/twitch/utils.server", () => ({
 	hasTwitchEnvVars: () => true,
 }));
 
-vi.mock(
-	"~/features/user-page/UserRepository.server",
-	async (importOriginal) => ({
-		...(await importOriginal<
-			typeof import("~/features/user-page/UserRepository.server")
-		>()),
-		findIdsByTwitchUsernames: () => [],
-	}),
-);
-
 const users = UserFactory.pool();
 
 function findAllTournamentStreamers() {

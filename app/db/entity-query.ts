@@ -11,7 +11,7 @@ import {
 } from "kysely";
 import { jsonBuildObject } from "~/utils/kysely.server";
 import { SCHEMA } from "./schema.gen";
-import type { ColumnFilter, TableName } from "./schema-types";
+import type { ColumnFilter, HasIdPrimaryKey, TableName } from "./schema-types";
 import { db } from "./sql";
 import type { DB } from "./tables";
 
@@ -158,6 +158,10 @@ type Step<R extends TableName, O, V, M extends PropertyKey, Mod> =
 interface EntityQuery<R extends TableName, O, V, M extends PropertyKey> {
 	/** Equality filter on root columns, `null` meaning `is null`. */
 	where(filter: ColumnFilter<R>): Chain<R, O, V, M>;
+	/** Rows whose `id` is one of `ids`, an empty list matching none. Needs a single `id` primary key. */
+	whereIdIn: HasIdPrimaryKey<R> extends true
+		? (ids: ReadonlyArray<number>) => Chain<R, O, V, M>
+		: never;
 	/** Adds a one-off step. The second time the same step is needed, it moves into the vocabulary. */
 	with<Mod extends Modifier<R, any, any, any>>(
 		modifier: Mod,
@@ -359,12 +363,16 @@ function createChain(
 	};
 
 	// total order for paging: the id breaks ties so every row has exactly one position
-	const pageKeys = (): SortKey[] => {
+	const assertIdPrimaryKey = (operation: string) => {
 		if (!hasIdPrimaryKey(definition.root)) {
 			throw new Error(
-				`paginate needs a single "id" primary key, "${definition.root}" has none`,
+				`${operation} needs a single "id" primary key, "${definition.root}" has none`,
 			);
 		}
+	};
+
+	const pageKeys = (): SortKey[] => {
+		assertIdPrimaryKey("paginate");
 
 		const keys = sortKeys();
 		return keys.at(-1)?.[0] === idRef ? [...keys] : [...keys, [idRef, "asc"]];
@@ -463,6 +471,10 @@ function createChain(
 	const chain: Record<string, unknown> = {
 		where: (filter: Record<string, unknown>) =>
 			next({ filters: [...state.filters, filter] }),
+		whereIdIn: (ids: ReadonlyArray<number>) => {
+			assertIdPrimaryKey("whereIdIn");
+			return addStep({ apply: (qb) => qb.where(idRef, "in", ids) });
+		},
 		with: addStep,
 		limit: (count: number) => next({ limit: count }),
 		paginate: (options: PageOptions | CursorOptions) =>

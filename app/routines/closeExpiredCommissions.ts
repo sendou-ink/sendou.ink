@@ -11,7 +11,7 @@ export const CloseExpiredCommissionsRoutine = new Routine({
 		const usersWithExpiredCommissions = await db
 			.selectFrom("User")
 			.select(["id", "discordId"])
-			.where("commissionsOpen", "=", 1)
+			.where("commissionsOpen", "=", true)
 			.where("commissionsOpenedAt", "is not", null)
 			.where(
 				"commissionsOpenedAt",
@@ -29,7 +29,7 @@ export const CloseExpiredCommissionsRoutine = new Routine({
 		await db
 			.updateTable("User")
 			.set({
-				commissionsOpen: 0,
+				commissionsOpen: false,
 				commissionsOpenedAt: null,
 			})
 			.where("id", "in", userIds)

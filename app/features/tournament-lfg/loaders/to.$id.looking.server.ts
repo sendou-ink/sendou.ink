@@ -176,9 +176,7 @@ async function resolveOwnTeam({
 	const team = teamsFull.find((t) => t.id === teamLite.id);
 	if (!team) return null;
 
-	const plusTiers = await UserRepository.findPlusTiersByUserIds(
-		team.members.map((m) => m.userId),
-	);
+	const plusTiers = await plusTiersOf(team.members.map((m) => m.userId));
 
 	const members: LFGGroupMember[] = team.members.map((m) => ({
 		id: m.userId,
@@ -254,4 +252,14 @@ function parseWeapons(raw: unknown): Array<{
 			isTenStar: Boolean(w.isTenStar),
 		}),
 	);
+}
+
+/** Plus tiers keyed by user id, users without a tier absent. */
+async function plusTiersOf(userIds: number[]) {
+	const members = await UserRepository.users()
+		.whereIdIn(userIds)
+		.inPlusServer()
+		.execute();
+
+	return new Map(members.map((member) => [member.id, member.plusTier]));
 }

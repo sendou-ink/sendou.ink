@@ -837,7 +837,7 @@ function CommissionsWidget({
 
 	if (!data) return null;
 
-	const isOpen = data.commissionsOpen === 1;
+	const isOpen = data.commissionsOpen;
 
 	return (
 		<div className="stack sm items-center">

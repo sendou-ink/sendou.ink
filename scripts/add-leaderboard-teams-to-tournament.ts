@@ -78,11 +78,8 @@ async function main() {
 			invariant(user.friendCode, `User ${member.username} has no friend code`);
 
 			if (tournament.ctx.settings.requireInGameNames) {
-				const inGameName = await UserRepository.findInGameNameByUserId(
-					member.id,
-				);
 				invariant(
-					inGameName,
+					user.inGameName,
 					`User ${member.username} has no in-game name (required by tournament)`,
 				);
 			}

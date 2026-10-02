@@ -8,7 +8,9 @@ export const userPageMiddleware: MiddlewareFunction<Response> = async (
 	next,
 ) => {
 	const user = notFoundIfNullish(
-		await UserRepository.findPageUserByIdentifier(params.identifier!),
+		await UserRepository.users()
+			.identifiedBy(params.identifier!)
+			.executeTakeFirst(),
 	);
 
 	return userPageAsyncLocalStorage.run({ user }, () => next());

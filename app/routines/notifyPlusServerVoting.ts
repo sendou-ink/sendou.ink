@@ -31,8 +31,8 @@ export const NotifyPlusServerVotingRoutine = new Routine({
 					seasonNth: season.nth,
 				},
 			},
-			userIds: (await UserRepository.findAllPlusServerMembers()).map(
-				(member) => member.userId,
+			userIds: (await UserRepository.users().inPlusServer().execute()).map(
+				(member) => member.id,
 			),
 		});
 	},

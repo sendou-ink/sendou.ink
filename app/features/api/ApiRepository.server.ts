@@ -56,8 +56,8 @@ export async function findAllApiTokens() {
 		// NOTE: permissions logic also exists in checkUserHasApiAccess function
 		.where((eb) =>
 			eb.or([
-				eb("User.isApiAccesser", "=", 1),
-				eb("User.isTournamentOrganizer", "=", 1),
+				eb("User.isApiAccesser", "=", true),
+				eb("User.isTournamentOrganizer", "=", true),
 				eb("User.patronTier", ">=", 2),
 				eb.and([
 					eb("TournamentOrganization.isEstablished", "=", 1),

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -7,6 +8,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { withNoUser, withUserId } from "~/utils/Test";
 import * as UserRepository from "./UserRepository.server";
 
 describe("UserRepository", () => {
@@ -17,7 +19,7 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const user = await UserRepository.findModInfoById(1);
+		const user = await UserRepository.findById(1);
 
 		expect(user).toBeDefined();
 		expect(user?.createdAt).toBeDefined();
@@ -30,7 +32,7 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const user = await UserRepository.findLayoutDataById(id);
+		const user = await UserRepository.users().where({ id }).executeTakeFirst();
 
 		expect(user?.username).toBe("TestUser");
 
@@ -40,7 +42,9 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const updatedUser = await UserRepository.findLayoutDataById(id);
+		const updatedUser = await UserRepository.users()
+			.where({ id })
+			.executeTakeFirst();
 		expect(updatedUser?.username).toBe("UpdatedUser");
 	});
 
@@ -51,7 +55,7 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const user = await UserRepository.findModInfoById(1);
+		const user = await UserRepository.findById(1);
 		const createdAt = user?.createdAt;
 
 		await UserRepository.upsert({
@@ -60,7 +64,7 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const updatedUser = await UserRepository.findModInfoById(1);
+		const updatedUser = await UserRepository.findById(1);
 		expect(updatedUser?.createdAt).toEqual(createdAt);
 	});
 
@@ -71,7 +75,7 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const result = await UserRepository.findJoinOrderByUserId(id);
+		const result = await UserRepository.findById(id);
 
 		expect(result?.joinOrder).toBe(1);
 	});
@@ -89,12 +93,8 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		expect(
-			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
-		).toBe(1);
-		expect(
-			(await UserRepository.findJoinOrderByUserId(secondId))?.joinOrder,
-		).toBe(2);
+		expect((await UserRepository.findById(firstId))?.joinOrder).toBe(1);
+		expect((await UserRepository.findById(secondId))?.joinOrder).toBe(2);
 
 		await UserRepository.upsert({
 			discordId: "1",
@@ -102,9 +102,68 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		expect(
-			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
-		).toBe(1);
+		expect((await UserRepository.findById(firstId))?.joinOrder).toBe(1);
+	});
+
+	describe("UserRepository.users", () => {
+		const users = UserFactory.pool();
+		const ownerId = () => users.id(1);
+		const otherUserId = () => users.id(2);
+
+		beforeEach(async () => {
+			await users.create(2);
+		});
+
+		test.each([
+			{ why: "id", identifierOf: (user: Identifiable) => String(user.id) },
+			{
+				why: "Discord id",
+				identifierOf: (user: Identifiable) => user.discordId,
+			},
+			{
+				why: "custom url",
+				identifierOf: (user: Identifiable) => user.customUrl ?? "",
+			},
+		])(
+			"identifiedBy finds the user by their $why",
+			async ({ identifierOf }) => {
+				await UserFactory.updateProfile(ownerId(), { customUrl: "owner" });
+				const owner = await UserRepository.findById(ownerId());
+
+				const found = await UserRepository.users()
+					.identifiedBy(identifierOf(owner!))
+					.execute();
+
+				expect(found.map((user) => user.id)).toEqual([ownerId()]);
+			},
+		);
+
+		describe("withTabCounts", () => {
+			beforeEach(async () => {
+				await BuildFactory.create({ ownerId: ownerId() });
+				await BuildFactory.create({ ownerId: ownerId(), isPrivate: 1 });
+			});
+
+			const buildsCount = async () =>
+				(
+					await UserRepository.users()
+						.where({ id: ownerId() })
+						.withTabCounts()
+						.executeTakeFirst()
+				)?.buildsCount;
+
+			test("counts private builds for their owner", async () => {
+				expect(await withUserId(ownerId(), buildsCount)).toBe(2);
+			});
+
+			test("leaves private builds out for other users", async () => {
+				expect(await withUserId(otherUserId(), buildsCount)).toBe(1);
+			});
+
+			test("leaves private builds out for anonymous visitors", async () => {
+				expect(await withNoUser(buildsCount)).toBe(1);
+			});
+		});
 	});
 
 	describe("findResultsByUserId filters", () => {
@@ -598,3 +657,5 @@ describe("UserRepository", () => {
 function ids(patrons: Array<{ id: number }>) {
 	return patrons.map((patron) => patron.id);
 }
+
+type Identifiable = { id: number; discordId: string; customUrl: string | null };

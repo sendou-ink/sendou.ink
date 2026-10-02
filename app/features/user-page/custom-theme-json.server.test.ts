@@ -26,7 +26,10 @@ describe("supporter custom theme on the profile layout", () => {
 			customTheme: CUSTOM_THEME,
 		});
 
-		const layoutData = await UserRepository.findLayoutDataById(user.id);
+		const layoutData = await UserRepository.users()
+			.where({ id: user.id })
+			.withPatronTheme()
+			.executeTakeFirst();
 
 		// `root.tsx` spreads the object into CSS variables, so a raw string renders as garbage
 		expect(layoutData?.customTheme?.["--_acc-h"]).toBe(
@@ -39,7 +42,10 @@ describe("supporter custom theme on the profile layout", () => {
 			customTheme: CUSTOM_THEME,
 		});
 
-		const layoutData = await UserRepository.findLayoutDataById(user.id);
+		const layoutData = await UserRepository.users()
+			.where({ id: user.id })
+			.withPatronTheme()
+			.executeTakeFirst();
 
 		expect(layoutData?.customTheme).toBeNull();
 	});

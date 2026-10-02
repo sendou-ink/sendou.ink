@@ -288,12 +288,12 @@ async function notifyReviewersOfSubmission({
 	trophyName: string;
 	submitter: AuthenticatedUser;
 }) {
-	const reviewerIds = await UserRepository.existingUserIds(
-		[ADMIN_ID, ...QA_IDS].filter((id) => id !== submitter.id),
-	);
+	const reviewers = await UserRepository.users()
+		.whereIdIn([ADMIN_ID, ...QA_IDS].filter((id) => id !== submitter.id))
+		.execute();
 
 	notify({
-		userIds: reviewerIds,
+		userIds: reviewers.map((reviewer) => reviewer.id),
 		notification: {
 			type: "TROPHY_SUBMITTED",
 			meta: { trophyName, submitterUsername: submitter.username },

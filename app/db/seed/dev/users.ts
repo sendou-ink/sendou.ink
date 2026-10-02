@@ -209,7 +209,7 @@ async function seedShowcaseUsers() {
 						faker.number.float(1) < 0.4
 							? showcaseNames.kanaInGameName()
 							: SplatoonFaker.inGameName(),
-					commissionsOpen: commissionsOpen ? 1 : undefined,
+					commissionsOpen: commissionsOpen ? true : undefined,
 					commissionText: commissionsOpen ? faker.lorem.paragraph() : undefined,
 				},
 			},

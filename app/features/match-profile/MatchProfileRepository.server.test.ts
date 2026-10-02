@@ -27,7 +27,7 @@ const updateProfile = (
 			vc: "NO",
 			languages: [],
 			weaponPool: [],
-			noScreen: 0,
+			noScreen: false,
 			...args,
 		}),
 	);
@@ -35,7 +35,7 @@ const updateProfile = (
 describe("updateOwnMatchProfile", () => {
 	beforeEach(async () => {
 		await users.create(1, null, {
-			matchProfile: { mapModePreferences: PREFERENCES, noScreen: 0 },
+			matchProfile: { mapModePreferences: PREFERENCES, noScreen: false },
 		});
 	});
 
@@ -47,7 +47,7 @@ describe("updateOwnMatchProfile", () => {
 	});
 
 	test("detects a noScreen change", async () => {
-		const result = await updateProfile({ noScreen: 1 });
+		const result = await updateProfile({ noScreen: true });
 
 		expect(result.noScreenChanged).toBe(true);
 		expect(result.mapModePreferencesChanged).toBe(false);

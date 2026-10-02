@@ -35,7 +35,9 @@ export async function cachedFullUserLeaderboard(season: number) {
 			const withPendingPlusTiers = shouldAddPendingPlusTier
 				? addPendingPlusTiers(
 						withTiers,
-						await UserRepository.findAllPlusServerMembers(),
+						(await UserRepository.users().inPlusServer().execute()).map(
+							(member) => ({ userId: member.id, plusTier: member.plusTier }),
+						),
 						season,
 					)
 				: withTiers;

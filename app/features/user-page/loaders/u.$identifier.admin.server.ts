@@ -1,4 +1,5 @@
 import { isSameMonth, startOfMonth, subMonths } from "date-fns";
+import { refine } from "~/db/entity-query";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
@@ -17,15 +18,11 @@ export const loader = async () => {
 	requireRole("STAFF");
 
 	const user = notFoundIfNullish(
-		await UserRepository.findLayoutDataById(userPageUserId()),
+		await modInfo(userPageUserId()).executeTakeFirst(),
 	);
 
 	logger.info(
 		`User ${loggedInUser.username} (#${loggedInUser.id}) is viewing admin tab for user ${user.username} (#${user.id})`,
-	);
-
-	const userData = notFoundIfNullish(
-		await UserRepository.findModInfoById(user.id),
 	);
 
 	const friendCodes = await UserRepository.findFriendCodesByUserId(user.id);
@@ -33,14 +30,32 @@ export const loader = async () => {
 	const reports = await UserReportRepository.findAllByReportedUserId(user.id);
 
 	return {
-		...userData,
-		discordId: user.discordId,
+		...user,
 		discordAccountCreatedAt: convertSnowflakeToDate(user.discordId).getTime(),
 		friendCodes,
 		reports,
 		reportsMonthlyCounts: reportsMonthlyCounts(reports),
 	};
 };
+
+function modInfo(userId: number) {
+	return UserRepository.users()
+		.where({ id: userId })
+		.withModNotes()
+		.withBanLogs()
+		.with(
+			refine("User", (qb) =>
+				qb.select([
+					"User.discordUniqueName",
+					"User.isVideoAdder",
+					"User.isArtist",
+					"User.isTournamentOrganizer",
+					"User.plusSkippedForSeasonNth",
+					"User.createdAt",
+				]),
+			),
+		);
+}
 
 function reportsMonthlyCounts(
 	reports: Awaited<

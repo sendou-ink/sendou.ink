@@ -25,28 +25,6 @@ import type { DB, Tables } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { dateToDatabaseTimestamp } from "./dates";
 import { IS_E2E_TEST_RUN } from "./e2e";
-import { safeNumberParse } from "./number";
-
-/** Base query selecting the user by URL identifier (user id, Discord id or custom URL). */
-export function userByIdentifierQuery(identifier: string) {
-	return db
-		.selectFrom("User")
-		.select("User.id")
-		.where((eb) => {
-			// we don't want to parse discord id's as numbers (length = 18)
-			const parsedId =
-				identifier.length < 10 ? safeNumberParse(identifier) : null;
-			if (parsedId) {
-				return eb("User.id", "=", parsedId);
-			}
-
-			if (/^\d+$/.test(identifier)) {
-				return eb("User.discordId", "=", identifier);
-			}
-
-			return eb("User.customUrl", "=", identifier);
-		});
-}
 
 /**
  * SQLite expression extracting a Splatoon player's overall peak XP from the denormalized `peakXp`
@@ -130,10 +108,7 @@ export function commonUserSelect<const O extends CommonUserSelectOptions>(
  * Full URL of a user's supporter custom avatar, or `null`. Alias it when selecting directly.
  * Prefer {@link commonUserSelect} / {@link commonUserJsonObject} when they fit.
  */
-export function customAvatarUrl(
-	eb: ExpressionBuilder<DB, any>,
-	alias = "User",
-) {
+function customAvatarUrl(eb: ExpressionBuilder<DB, any>, alias = "User") {
 	return concatUserSubmittedImagePrefix(
 		eb
 			.selectFrom("UserSubmittedImage")

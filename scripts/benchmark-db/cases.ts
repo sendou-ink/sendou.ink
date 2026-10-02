@@ -1499,26 +1499,65 @@ export function buildCases(fx: Fixtures): {
 		UserCardRepository.findVerifiedXpByUserId(user.id, null),
 	);
 
-	add("UserRepository.findIdByIdentifier", fx.heavyUser, (user) =>
-		UserRepository.findIdByIdentifier(user.identifier),
+	add("UserRepository.users.identifiedBy", fx.heavyUser, (user) =>
+		UserRepository.users().identifiedBy(user.identifier).executeTakeFirst(),
 	);
-	add("UserRepository.findPageUserByIdentifier", fx.heavyUser, (user) =>
-		UserRepository.findPageUserByIdentifier(user.identifier),
+	add("UserRepository.users.countries", fx.skillBatch, (skillBatch) =>
+		UserRepository.users()
+			.whereIdIn(skillBatch.userIds)
+			.withCountry()
+			.execute(),
 	);
-	add("UserRepository.findCountriesByUserIds", fx.skillBatch, (skillBatch) =>
-		UserRepository.findCountriesByUserIds(skillBatch.userIds),
+	add("UserRepository.users.plusTiers", fx.skillBatch, (skillBatch) =>
+		UserRepository.users()
+			.whereIdIn(skillBatch.userIds)
+			.inPlusServer()
+			.execute(),
 	);
-	add("UserRepository.findPlusTiersByUserIds", fx.skillBatch, (skillBatch) =>
-		UserRepository.findPlusTiersByUserIds(skillBatch.userIds),
+	add("UserRepository.users.layout", fx.heavyUser, (user) =>
+		UserRepository.users()
+			.where({ id: user.id })
+			.withPlusTier()
+			.withCountry()
+			.withPatronTheme()
+			.withTabCounts()
+			.executeTakeFirst(),
 	);
-	add("UserRepository.findBuildFieldsByUserId", fx.heavyUser, (user) =>
-		UserRepository.findBuildFieldsByUserId(user.id),
+	add("UserRepository.users.modInfo", fx.heavyUser, (user) =>
+		UserRepository.users()
+			.where({ id: user.id })
+			.withModNotes()
+			.withBanLogs()
+			.executeTakeFirst(),
 	);
-	add("UserRepository.findLayoutDataById", fx.heavyUser, (user) =>
-		UserRepository.findLayoutDataById(user.id, user.id),
+	add("UserRepository.findOneBy.customUrl", fx.userCustomUrl, (customUrl) =>
+		UserRepository.findOneBy({ customUrl }),
 	);
-	add("UserRepository.findProfileByUserId", fx.heavyUser, (user) =>
-		UserRepository.findProfileByUserId(user.id),
+	add("UserRepository.users.exactSearch", fx.userCustomUrl, (customUrl) =>
+		UserRepository.users().where({ customUrl }).withPlusTier().execute(),
+	);
+	add("UserRepository.users.byFriendCode", fx.friendCode, (friendCode) =>
+		UserRepository.users()
+			.with(
+				refine("User", (qb) =>
+					qb.where("User.id", "in", (eb) =>
+						eb
+							.selectFrom("UserFriendCode")
+							.select("UserFriendCode.userId")
+							.where("UserFriendCode.friendCode", "=", friendCode),
+					),
+				),
+			)
+			.execute(),
+	);
+	add("UserRepository.users.byTwitch", fx.twitchUsernames, (twitchUsernames) =>
+		UserRepository.users()
+			.with(
+				refine("User", (qb) =>
+					qb.where("User.twitch", "in", twitchUsernames).select("User.twitch"),
+				),
+			)
+			.execute(),
 	);
 	add("UserRepository.findStoredWidgetsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findStoredWidgetsByUserId(user.id),
@@ -1526,23 +1565,14 @@ export function buildCases(fx: Fixtures): {
 	add("UserRepository.findWidgetsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findWidgetsByUserId(user.id),
 	);
-	add("UserRepository.findByCustomUrl", fx.userCustomUrl, (customUrl) =>
-		UserRepository.findByCustomUrl(customUrl),
-	);
-	add("UserRepository.findByFriendCode", fx.friendCode, (friendCode) =>
-		UserRepository.findByFriendCode(friendCode),
-	);
 	add("UserRepository.findLeanById", fx.heavyUser, (user) =>
 		UserRepository.findLeanById(user.id),
 	);
-	add("UserRepository.findModInfoById", fx.heavyUser, (user) =>
-		UserRepository.findModInfoById(user.id),
+	addStatic("UserRepository.users.patrons", () =>
+		UserRepository.users().patrons().withPatronTheme().execute(),
 	);
-	addStatic("UserRepository.findAllPatrons", () =>
-		UserRepository.findAllPatrons(),
-	);
-	addStatic("UserRepository.findAllPlusServerMembers", () =>
-		UserRepository.findAllPlusServerMembers(),
+	addStatic("UserRepository.users.inPlusServer", () =>
+		UserRepository.users().inPlusServer().execute(),
 	);
 	add("UserRepository.findResultsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findResultsByUserId(user.id, {}),
@@ -1563,9 +1593,6 @@ export function buildCases(fx: Fixtures): {
 		UserRepository.findResultPlacementsByUserId(user.id),
 	);
 	addStatic("UserRepository.search", () => UserRepository.search(SEARCH_QUERY));
-	add("UserRepository.searchExact", fx.userCustomUrl, (customUrl) =>
-		UserRepository.searchExact({ customUrl }),
-	);
 	add("UserRepository.findCurrentFriendCodeByUserId", fx.heavyUser, (user) =>
 		UserRepository.findCurrentFriendCodeByUserId(user.id),
 	);
@@ -1575,32 +1602,8 @@ export function buildCases(fx: Fixtures): {
 	addStatic("UserRepository.findAllCurrentFriendCodes", () =>
 		UserRepository.findAllCurrentFriendCodes(),
 	);
-	add("UserRepository.findInGameNameByUserId", fx.heavyUser, (user) =>
-		UserRepository.findInGameNameByUserId(user.id),
-	);
-	add("UserRepository.findPatronStartedAtByUserId", fx.heavyUser, (user) =>
-		UserRepository.findPatronStartedAtByUserId(user.id),
-	);
-	add("UserRepository.findDivByUserId", fx.heavyUser, (user) =>
-		UserRepository.findDivByUserId(user.id),
-	);
-	add("UserRepository.findJoinOrderByUserId", fx.heavyUser, (user) =>
-		UserRepository.findJoinOrderByUserId(user.id),
-	);
-	add("UserRepository.findCommissionsByUserId", fx.heavyUser, (user) =>
-		UserRepository.findCommissionsByUserId(user.id),
-	);
 	add("UserRepository.anyUserPrefersNoScreen", fx.manyUserIds, (userIds) =>
 		UserRepository.anyUserPrefersNoScreen(userIds),
-	);
-	add("UserRepository.findSocialLinksByUserId", fx.heavyUser, (user) =>
-		UserRepository.findSocialLinksByUserId(user.id),
-	);
-	add(
-		"UserRepository.findIdsByTwitchUsernames",
-		fx.twitchUsernames,
-		(twitchUsernames) =>
-			UserRepository.findIdsByTwitchUsernames(twitchUsernames),
 	);
 
 	add("VodRepository.userVods.widget", fx.vod, (vod) =>

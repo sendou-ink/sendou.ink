@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { refine } from "~/db/entity-query";
 import {
 	getRealUserId,
 	isImpersonating,
@@ -27,7 +28,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return {
 		isImpersonating: await isImpersonating(request),
 		friendCodeSearchUsers: friendCode
-			? await UserRepository.findByFriendCode(normalizeFriendCode(friendCode))
+			? await usersWithFriendCode(normalizeFriendCode(friendCode)).execute()
 			: [],
 	};
 };
+
+function usersWithFriendCode(friendCode: string) {
+	return UserRepository.users().with(
+		refine("User", (qb) =>
+			qb.where("User.id", "in", (eb) =>
+				eb
+					.selectFrom("UserFriendCode")
+					.select("UserFriendCode.userId")
+					.where("UserFriendCode.friendCode", "=", friendCode),
+			),
+		),
+	);
+}

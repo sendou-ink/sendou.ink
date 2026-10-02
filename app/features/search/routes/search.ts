@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { refine } from "~/db/entity-query";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -42,7 +43,7 @@ async function searchByType({
 		case "users": {
 			const identifier = queryToUserIdentifier(query);
 			const users = identifier
-				? await UserRepository.searchExact(identifier)
+				? await exactUser(identifier).execute()
 				: await UserRepository.search({ query, limit });
 			return users.map((u) => ({
 				type: "user" as const,
@@ -109,4 +110,17 @@ function teamsNamed(query: string, limit: number) {
 		.withPlayers()
 		.limit(limit)
 		.execute();
+}
+
+function exactUser(
+	identifier: NonNullable<ReturnType<typeof queryToUserIdentifier>>,
+) {
+	return UserRepository.users()
+		.where(identifier)
+		.withPlusTier()
+		.with(
+			refine("User", (qb) =>
+				qb.select(["User.inGameName", "User.tournamentName"]),
+			),
+		);
 }
