@@ -139,7 +139,7 @@ const SPECIAL_REGAIN_MIN_SECONDS = 10;
  * name inside it is the same row still up. How long a row stays up is
  * unattested beyond single frames; a row outliving this would count twice.
  */
-const KILL_ROW_LIFETIME_SECONDS = 8;
+const KILL_ROW_LIFETIME_SECONDS = 5;
 
 /** Name similarity (1 - edits / length) at which two stack reads show the same row. */
 const KILL_SAME_ROW_MIN_SIMILARITY = 0.7;
