@@ -61,7 +61,8 @@ export default function UserEditPage() {
 				user={layoutData.user}
 				title={t("user:widgets.editProfile")}
 			/>
-			<div className="half-width">
+			<div className="half-width stack md-plus">
+				<FriendCodePopover />
 				<SendouForm
 					schema={userEditProfileBaseSchema}
 					defaultValues={defaultValues}
@@ -70,7 +71,6 @@ export default function UserEditPage() {
 				>
 					{({ FormField }) => (
 						<>
-							<FriendCodePopover />
 							<FormField name="customName" />
 							<FormField name="customUrl" />
 							<FormField name="customAvatar" disabled={!isSupporter} />
