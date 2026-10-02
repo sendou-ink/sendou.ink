@@ -99,6 +99,10 @@ const PLAYERS_PER_TEAM = 4;
  */
 const EARLY_END_MARGIN_SECONDS = 10;
 
+/** Game clock lengths: a full game's results screen comes no sooner after its intro. */
+const TURF_WAR_CLOCK_SECONDS = 180;
+const RANKED_CLOCK_SECONDS = 300;
+
 /**
  * Minimum hue distance between the two team inks before color orients counter
  * reads: attested pairs measure >130° apart, so a closer seed pair is a misread
@@ -392,7 +396,9 @@ export type IngestSkipReason =
  * Which built matches are not worth sending to /ingest, and why: lobbies other
  * than Private and X Battle (unread lobbies get the benefit of the doubt), and games a disconnect
  * cut short — counter reads show the game couldn't have ended on its own
- * (`endedEarly`), or the same map/mode was replayed right after with a score.
+ * (`endedEarly`), or with no counter read to tell, a results screen came
+ * before the clock could run out and the same map/mode was replayed right
+ * after with a score.
  * Replay evidence only arrives after the fact, so a live scan may already have
  * sent the abandoned game; the counter-read check catches it in the moment.
  */
@@ -404,7 +410,10 @@ export function ingestSkipReasons<E extends DetectedEvent>(
 		const { match } = candidate;
 		if (!isUploadedLobby(match.lobby)) {
 			reasons.set(candidate, "lobby");
-		} else if (endedEarly(match) || wasReplayed(built, index)) {
+		} else if (
+			isScoreless(match) &&
+			(endedEarly(match) || wasReplayed(built, index))
+		) {
 			reasons.set(candidate, "disconnect");
 		}
 	}
@@ -482,27 +491,39 @@ function objectiveMode(
 	return votes.TC > votes.RM ? "TC" : "RM";
 }
 
+/** A results screen was read but its score banner wasn't: a disconnect, or a misread. */
+function isScoreless(match: ScannerMatch): boolean {
+	// no results screen at all: an unfinished scan, not an unfinished game
+	return match.winner !== null && match.matchScores === null;
+}
+
 /**
- * A disconnect ended the match before it was decided: a results screen with no
- * score, and the last counter read still needed more game than the footage
- * gave it — a game ends no sooner than the clock running out or (SZ) the
- * lower counter falling to zero at its 1/s cap (penalty worked off first).
+ * A disconnect ended the match before it was decided: the last counter read
+ * still needed more game than the footage gave it — a game ends no sooner than
+ * the clock running out or (SZ) the lower counter falling to zero at its 1/s
+ * cap (penalty worked off first).
  */
 function endedEarly(match: ScannerMatch): boolean {
-	// no results screen at all: an unfinished scan, not an unfinished game
-	if (match.winner === null) return false;
-	if (match.matchScores !== null) return false;
+	const shortfall = counterShortfallSeconds(match);
+	return shortfall !== null && shortfall > EARLY_END_MARGIN_SECONDS;
+}
+
+/**
+ * How much more game the last counter read needed than the footage gave it;
+ * null when no counter read bounds the game's end.
+ */
+function counterShortfallSeconds(match: ScannerMatch): number | null {
 	const lastSample = match.objective?.samples.at(-1);
-	if (!lastSample || match.endsAt === null) return false;
+	if (!lastSample || match.endsAt === null) return null;
 
 	const soonestEnd = secondsUntilSoonestEnd(
 		lastSample,
 		match.objective?.mode === "SZ",
 	);
-	if (soonestEnd === null) return false;
+	if (soonestEnd === null) return null;
 
 	const secondsLeftInFootage = match.endsAt - lastSample.t;
-	return soonestEnd - secondsLeftInFootage > EARLY_END_MARGIN_SECONDS;
+	return soonestEnd - secondsLeftInFootage;
 }
 
 /** Only SZ's count ticks at a known rate (1/s), so only it bounds a knockout. */
@@ -523,25 +544,49 @@ function secondsUntilSoonestEnd(
 
 /**
  * Whether the scoreless match at `index` was played again right after: the
- * following matches on the same mode and stage are the same game restarted, so
+ * following games on the same mode and stage are the same game restarted, so
  * one of them reaching a score means the earlier attempts were disconnects.
- * The run stops at the first other map.
+ * The run stops at the first other map; battle history views of other games
+ * are no games played and don't count. Only a match the results screen came
+ * before the clock could run out qualifies — otherwise a misread banner would
+ * drop a real game whenever the next one shares its map (X Battle rotations).
  */
 function wasReplayed<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
 	index: number,
 ): boolean {
-	const { match } = built[index]!;
-	if (match.matchScores !== null) return false;
+	const { match, sources } = built[index]!;
 	if (match.mode === null || match.stage === null) return false;
+	// a counter read bounding the game's end settles it alone (`endedEarly`)
+	if (counterShortfallSeconds(match) !== null) return false;
+	if (!endedBeforeClock(match, sources)) return false;
 
 	for (const later of built.slice(index + 1)) {
+		if (!isPlayedGame(later.sources)) continue;
 		if (later.match.mode !== match.mode || later.match.stage !== match.stage) {
 			return false;
 		}
 		if (later.match.matchScores !== null) return true;
 	}
 	return false;
+}
+
+/** The results screen came sooner after the intro than the mode's clock runs. */
+function endedBeforeClock(
+	match: ScannerMatch,
+	sources: readonly DetectedEvent[],
+): boolean {
+	const intro = sources.find((event) => event.type === MAP_START_EVENT_TYPE);
+	if (!intro || match.endsAt === null) return false;
+	const clockSeconds =
+		match.mode === "TW" ? TURF_WAR_CLOCK_SECONDS : RANKED_CLOCK_SECONDS;
+	return match.endsAt - intro.t < clockSeconds;
+}
+
+function isPlayedGame(sources: readonly DetectedEvent[]): boolean {
+	return sources.some(
+		(event) => !HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type),
+	);
 }
 
 /** A match being accumulated as the timeline is walked. */

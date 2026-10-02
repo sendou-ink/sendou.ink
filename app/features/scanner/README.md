@@ -303,7 +303,8 @@ sequenceDiagram
   scanner-ingest merges them server-side. Senders filter with
   `ingestSkipReasons`: private/unread lobby only, and no games a disconnect
   cut short (scoreless + counter left more time than the footage did, or
-  replayed right after on the same map — the latter only resolves after the
+  with no counter read, results came before the clock could run out and the
+  same map was replayed right after — the latter only resolves after the
   fact, so a live scan may already have sent the game).
 - The route (`routes/scanner.tsx`) is SSR-guarded: the client tree loads via
   `React.lazy` after `useHydrated`; nothing from `core/worker/capture/store`

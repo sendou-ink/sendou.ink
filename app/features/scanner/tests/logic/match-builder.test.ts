@@ -815,14 +815,58 @@ test("a scoreless match a knockout could have ended is kept", () => {
 test("a scoreless match replayed on the same map is a disconnect", () => {
 	const built = buildScannerMatches([
 		mapStart(0),
-		scoreboard(300, { matchScores: [null, null] }),
-		mapStart(400),
-		scoreboard(700),
+		scoreboard(150, { matchScores: [null, null] }),
+		mapStart(250),
+		scoreboard(550),
 	]);
 	const skipped = ingestSkipReasons(built);
 	assert.equal(built.length, 2);
 	assert.equal(skipped.get(built[0]!), "disconnect");
 	assert.equal(skipped.get(built[1]!), undefined);
+});
+
+test("a full-length match whose score went unread is kept when the same map follows", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		scoreboard(320, { matchScores: [null, null] }),
+		mapStart(400),
+		scoreboard(720),
+	]);
+	assert.equal(built.length, 2);
+	assert.equal(ingestSkipReasons(built).size, 0);
+});
+
+test("a scoreless match whose counters ran down the clock is kept when the same map follows", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(140, { time: 5, score: [40, 60], penalty: [0, 0] }),
+		scoreboard(160, { matchScores: [null, null] }),
+		mapStart(250),
+		scoreboard(550),
+	]);
+	assert.equal(built.length, 2);
+	assert.equal(ingestSkipReasons(built).size, 0);
+});
+
+test("a match whose results screen went unread is kept when the same map follows", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		minimap(60),
+		mapStart(150),
+		scoreboard(450),
+	]);
+	assert.equal(built.length, 2);
+	assert.equal(ingestSkipReasons(built).size, 0);
+});
+
+test("a battle log view of another game on the same map is no replay", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		scoreboard(150, { matchScores: [null, null], paints: GAME_PAINTS }),
+		battleLogScoreboard(200, { paints: OTHER_GAME_PAINTS }),
+	]);
+	assert.equal(built.length, 2);
+	assert.equal(ingestSkipReasons(built).size, 0);
 });
 
 test("a scoreless match the next map moves on from is kept", () => {
