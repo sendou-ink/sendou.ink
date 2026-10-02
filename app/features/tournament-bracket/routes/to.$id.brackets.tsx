@@ -16,6 +16,7 @@ import {
 	useLoaderData,
 	useLocation,
 	useOutletContext,
+	useRevalidator,
 } from "react-router";
 import { Alert } from "~/components/Alert";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -102,6 +103,7 @@ function TournamentBracketsView() {
 	useScrollToMatchOnLoad();
 
 	const bracket = tournament.bracketByIdx(data.bracketIdx);
+	useRevalidateOnUnknownTeams(bracket);
 
 	useTopicRevalidation(
 		tournamentChannel(tournament.ctx.id),
@@ -279,6 +281,19 @@ function useScrollToMatchOnLoad() {
 			.querySelector(`[data-match-id="${scrollToMatchId}"]`)
 			?.scrollIntoView({ block: "center", inline: "center" });
 	}, [scrollToMatchId]);
+}
+
+/** The layout does not revalidate on navigations within the tournament, so it can lack teams registered since it loaded. */
+function useRevalidateOnUnknownTeams(bracket: BracketType | null) {
+	const { revalidate } = useRevalidator();
+	const hasUnknownTeams =
+		bracket?.participantTournamentTeamIds.some(
+			(teamId) => !bracket.tournament.teamById(teamId),
+		) ?? false;
+
+	React.useEffect(() => {
+		if (hasUnknownTeams) revalidate();
+	}, [hasUnknownTeams, revalidate]);
 }
 
 function getAbDivisionsStartError(

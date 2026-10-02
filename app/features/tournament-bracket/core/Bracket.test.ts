@@ -322,6 +322,42 @@ describe("swiss standings - losses against tied", () => {
 	});
 });
 
+describe("live standings - teams the tournament does not know", () => {
+	// client-side the bracket's match data can be fresher than the layout's teams
+	test.each(["swiss", "round_robin"] as const)(
+		"leaves them out (%s)",
+		(type) => {
+			const tournament = testTournament({
+				ctx: {
+					settings: {
+						bracketProgression: [
+							{
+								type,
+								name: "Bracket",
+								requiresCheckIn: false,
+								settings: {},
+								sources: [],
+							},
+						],
+					},
+					teams: [tournamentCtxTeam(1), tournamentCtxTeam(2)],
+				},
+				data: Engine.create({
+					type,
+					seeding: [1, 2, 3],
+					settings: { groupCount: 1, roundCount: 3 },
+				}),
+			});
+
+			const standings = tournament.bracketByIdx(0)!.liveStandings;
+
+			expect(standings.map((standing) => standing.team.id).sort()).toEqual([
+				1, 2,
+			]);
+		},
+	);
+});
+
 describe("swiss standings - cross group ties", () => {
 	// Two Swiss groups of four playing one round. Group 1 is won by seed 3 (who beat
 	// seed 7), group 2 by seed 6 (who upset seed 2). Both are 1st of their group, and

@@ -376,6 +376,8 @@ export class SwissBracket extends Bracket {
 
 			placements.push(
 				...teams
+					// client-side the layout's teams can lag behind freshly loaded match data, mostly preview tournaments (prevent crash)
+					.filter((team) => this.tournament.teamById(team.id))
 					.sort((a, b) => {
 						// TIEBREAKER 0) dropped out teams are always last
 						const aDroppedOut = droppedOutTeams.includes(a.id);
