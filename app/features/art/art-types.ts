@@ -14,8 +14,11 @@ type ArtDetails = Pick<
 	"tags" | "linkedUsers" | "permissions"
 >;
 
-/** Art as a grid lists it. The user page's grid also shows its tags, tagged users and permissions. */
-export type ListedArt = ArtWithAuthor & Partial<ArtDetails>;
+/** Art as the art page's grids list it. */
+export type ListedArt = ArtWithAuthor;
+
+/** Art as a user's art page lists it: also its tags, tagged users and what the viewer may do with it. */
+export type UserPageArt = ArtWithAuthor & ArtDetails;
 
 export const ART_SOURCES = ["ALL", "MADE-BY", "MADE-OF"] as const;
 export type ArtSource = (typeof ART_SOURCES)[number];

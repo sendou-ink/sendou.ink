@@ -130,7 +130,7 @@ export default function UserArtPage() {
 				</div>
 			) : null}
 
-			<ArtGrid arts={arts} pageUserId={layoutData.user.id} enablePreview />
+			<ArtGrid arts={arts} pageUserId={layoutData.user.id} />
 		</div>
 	);
 }

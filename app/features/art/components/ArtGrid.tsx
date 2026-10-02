@@ -20,28 +20,31 @@ import { userPage } from "~/utils/urls";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
 import { ART_PER_PAGE } from "../art-constants";
 import { artGridSearchParams } from "../art-search-params";
-import type { ListedArt } from "../art-types";
+import type { ListedArt, UserPageArt } from "../art-types";
 import { previewUrl } from "../art-utils";
 import styles from "./ArtGrid.module.css";
 
 const preloadedImageUrls = new Set<string>();
-const NO_PERMISSIONS: NonNullable<ListedArt["permissions"]> = {
-	EDIT: [],
-	UNLINK: [],
-};
+const NO_PERMISSIONS: UserPageArt["permissions"] = { EDIT: [], UNLINK: [] };
+
+type GridArt = ListedArt & Partial<UserPageArt>;
+
+type ArtGridProps = { showUploadDate?: boolean } & (
+	| { arts: ListedArt[]; pageUserId?: never }
+	| {
+			arts: UserPageArt[];
+			/** Whose art page the grid is on: previews open on click and their own art shows the edit actions instead of the author. */
+			pageUserId: number;
+	  }
+);
 
 export function ArtGrid({
-	arts,
+	arts: listedArts,
 	pageUserId,
-	enablePreview = false,
 	showUploadDate = false,
-}: {
-	arts: ListedArt[];
-	/** Whose art page the grid is on. Their own art shows no author but the edit actions. */
-	pageUserId?: number;
-	enablePreview?: boolean;
-	showUploadDate?: boolean;
-}) {
+}: ArtGridProps) {
+	const arts: GridArt[] = listedArts;
+	const enablePreview = typeof pageUserId === "number";
 	const [bigArtId, setBigArtId] = useSearchParam(artGridSearchParams, "big");
 	const {
 		itemsToDisplay,
@@ -94,7 +97,7 @@ export function ArtGrid({
 	);
 }
 
-function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
+function BigImageDialog({ close, art }: { close: () => void; art: GridArt }) {
 	const dialogRef = React.useRef<HTMLDialogElement>(null);
 	const [infoVisible, setInfoVisible] = React.useState(true);
 	const [imageSettled, imageRef] = useImageSettled();
@@ -209,7 +212,7 @@ function ImagePreview({
 	enablePreview = false,
 	showUploadDate = false,
 }: {
-	art: ListedArt;
+	art: GridArt;
 	isPageUsersOwn: boolean;
 	onClick?: () => void;
 	enablePreview?: boolean;
@@ -435,7 +438,7 @@ function useImageAspectRatio() {
 }
 
 /** Page the art is on, so that a shared `?big=` link renders the page containing it. */
-function pageOfArt(arts: ListedArt[], artId: number | null) {
+function pageOfArt(arts: GridArt[], artId: number | null) {
 	if (typeof artId !== "number") return 1;
 
 	const index = arts.findIndex((art) => art.id === artId);
