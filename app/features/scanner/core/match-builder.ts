@@ -683,7 +683,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 	}));
 	const minimaps = minimapReads.map((read) => read.data);
 
-	const mode = board?.mode ?? start?.mode ?? null;
+	const mode = matchMode(board?.mode ?? null, start?.mode ?? null);
 	// reads of the overlay the mode doesn't draw are lookalike misreads, and on
 	// a mode with no parsed overlay the statuses riding along with them go too.
 	// Minimap card states and the kill feed are mode-agnostic and feed their
@@ -754,6 +754,21 @@ function toBuiltMatch<E extends DetectedEvent>(
 	return isBacked(open)
 		? { match, sources }
 		: { match, sources, unbacked: true };
+}
+
+/**
+ * The mode the intro and results screen agree on; a disagreement means one of
+ * them misread, so the mode is unknown rather than letting a misread rule out
+ * the real overlay's reads.
+ */
+function matchMode(
+	boardMode: ModeShort | null,
+	startMode: ModeShort | null,
+): ModeShort | null {
+	if (boardMode !== null && startMode !== null && boardMode !== startMode) {
+		return null;
+	}
+	return boardMode ?? startMode;
 }
 
 function floorOrNull(t: number | undefined): number | null {

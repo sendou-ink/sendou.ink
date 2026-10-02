@@ -410,8 +410,9 @@ sequenceDiagram
   misreads the builder leaves out, and on Turf War / Clam Blitz every read
   is: the builder nulls that match's `objective` and callers discard the
   events (`invalidObjectiveEvents`; Live also stops collecting once a
-  MapStart reveals such a mode). A match with no mode read builds from its
-  majority overlay and discards nothing. PlayerStatus reads follow the
+  MapStart reveals such a mode). A match with no mode read, or whose intro
+  and results screen disagree on it, builds from its majority overlay and
+  discards nothing. PlayerStatus reads follow the
   objective pipeline wholesale: same replay-wipe anchor, cast orientation
   inherited from the nearest counter read, nulled together on TW/CB matches, and rendered as
   per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,

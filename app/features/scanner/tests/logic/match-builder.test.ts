@@ -441,6 +441,20 @@ test("an unknown-mode match builds from its majority overlay and deletes nothing
 	assert.deepEqual(invalidObjectiveEvents(built), []);
 });
 
+test("an intro and results screen disagreeing on the mode leave it unknown and delete nothing", () => {
+	const events = [
+		mapStart(0),
+		objective(60),
+		playerStatus(61),
+		scoreboard(300, { mode: "CB" }),
+	];
+	const built = buildScannerMatches(events);
+	assert.equal(built[0]!.match.mode, null);
+	assert.equal(built[0]!.match.objective!.samples.length, 1);
+	assert.equal(built[0]!.match.playerStatus!.samples.length, 1);
+	assert.deepEqual(invalidObjectiveEvents(built), []);
+});
+
 test("a known non-SZ match drops its objective reads", () => {
 	const events = [
 		mapStart(0, { mode: "CB" }),
