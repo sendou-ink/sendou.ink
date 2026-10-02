@@ -28,6 +28,7 @@ import {
 } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { scrimsSearchParams } from "~/features/scrims/scrims-search-params";
@@ -206,13 +207,12 @@ function combinedStreamsCached(): Promise<SidebarStream[]> {
 
 async function combinedStreams(): Promise<SidebarStream[]> {
 	const tournamentStreams = getLiveTournamentStreams();
-	const [sendouQEntries, xRankRows, upcomingTournaments, externalStreams] =
-		await Promise.all([
-			getSendouQSidebarStreams(),
-			LiveStreamRepository.findXRankStreams(),
-			ShowcaseTournaments.upcomingTournaments(),
-			ExternalStreamRepository.findAllForSidebar(),
-		]);
+	const sendouQEntries = await getSendouQSidebarStreams();
+	const xRankRows = await LiveStreamRepository.findXRankStreams(
+		Seasons.currentOrPrevious()!.nth,
+	);
+	const upcomingTournaments = await ShowcaseTournaments.upcomingTournaments();
+	const externalStreams = await ExternalStreamRepository.findAllForSidebar();
 
 	const seenUsernames = new Set([
 		...getLiveTournamentStreamerTwitchNames(),

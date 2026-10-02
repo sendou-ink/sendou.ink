@@ -1,5 +1,6 @@
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { commonUserSelect, peakXpOverallSql } from "~/utils/kysely.server";
 import * as StreamRanking from "../sidebar/core/StreamRanking";
 
@@ -40,13 +41,28 @@ export function findByUserId(userId: number) {
 		.executeTakeFirst();
 }
 
-export function findXRankStreams() {
+/** Live streams of high X Power players with a calculated skill (enough sets for the leaderboard) in season `season` or the one before it. */
+export function findXRankStreams(season: number) {
 	return db
 		.selectFrom("LiveStream")
 		.innerJoin("User", "User.twitch", "LiveStream.twitch")
 		.innerJoin("SplatoonPlayer", "SplatoonPlayer.userId", "User.id")
 		.where(peakXpOverallSql(), ">=", StreamRanking.minXpForStreamToBeShown())
 		.where("LiveStream.twitch", "is not", null)
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("Skill")
+					.select("Skill.id")
+					.whereRef("Skill.userId", "=", "User.id")
+					.where("Skill.season", "in", [season - 1, season])
+					.where(
+						"Skill.matchesCount",
+						">=",
+						MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
+					),
+			),
+		)
 		.select((eb) => [
 			...commonUserSelect(eb),
 			peakXpOverallSql<number>().as("peakXp"),

@@ -452,7 +452,7 @@ export function buildCases(fx: Fixtures): {
 		LiveStreamRepository.findByUserId(user.id),
 	);
 	addStatic("LiveStreamRepository.findXRankStreams", () =>
-		LiveStreamRepository.findXRankStreams(),
+		LiveStreamRepository.findXRankStreams(Seasons.currentOrPrevious()!.nth),
 	);
 
 	add("MatchProfileRepository.findSettingsByUserId", fx.heavyUser, (user) =>
