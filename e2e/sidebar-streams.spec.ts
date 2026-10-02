@@ -1,6 +1,9 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { tournamentStreamsPage, twitchUrl } from "~/utils/urls";
+import type { Factories } from "./helpers/factories";
 import {
 	expect,
 	expectNoErrorPage,
@@ -57,16 +60,7 @@ test.describe("Sidebar streams", () => {
 		page,
 		factories,
 	}) => {
-		const [topPlayer] = await createNamedUsers(factories, ["TopPlayer"], {
-			twitch: XRANK_TWITCH,
-		});
-		await factories.XRankPlacementFactory.create(
-			{ playerUserId: topPlayer.id, power: TOP_PLAYER_XP },
-			{ refreshPeakXp: true },
-		);
-		await factories.LiveStreamFactory.replaceAll([
-			{ userId: topPlayer.id, twitch: XRANK_TWITCH },
-		]);
+		await createLiveXRankStreamer(factories);
 
 		await impersonate(page, NZAP_TEST_ID);
 		await new FrontPage(page).goto();
@@ -85,16 +79,7 @@ test.describe("Sidebar streams", () => {
 		page,
 		factories,
 	}) => {
-		const [topPlayer] = await createNamedUsers(factories, ["TopPlayer"], {
-			twitch: XRANK_TWITCH,
-		});
-		await factories.XRankPlacementFactory.create(
-			{ playerUserId: topPlayer.id, power: TOP_PLAYER_XP },
-			{ refreshPeakXp: true },
-		);
-		await factories.LiveStreamFactory.replaceAll([
-			{ userId: topPlayer.id, twitch: XRANK_TWITCH },
-		]);
+		await createLiveXRankStreamer(factories);
 
 		await factories.TournamentFactory.create(
 			{
@@ -210,3 +195,20 @@ test.describe("Sidebar streams", () => {
 		await expectNoErrorPage(page);
 	});
 });
+
+async function createLiveXRankStreamer(factories: Factories) {
+	const [topPlayer] = await createNamedUsers(factories, ["TopPlayer"], {
+		twitch: XRANK_TWITCH,
+	});
+	await factories.XRankPlacementFactory.create(
+		{ playerUserId: topPlayer.id, power: TOP_PLAYER_XP },
+		{ refreshPeakXp: true },
+	);
+	await factories.SkillFactory.create(
+		{ userId: topPlayer.id, season: Seasons.currentOrPrevious()!.nth },
+		{ matchesCount: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD },
+	);
+	await factories.LiveStreamFactory.replaceAll([
+		{ userId: topPlayer.id, twitch: XRANK_TWITCH },
+	]);
+}

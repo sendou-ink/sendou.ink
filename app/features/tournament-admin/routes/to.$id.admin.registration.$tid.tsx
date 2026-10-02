@@ -381,21 +381,16 @@ function ImportTeamSection({
 					heading={t("forms:regImportTeam")}
 					onClose={() => setIsOpen(false)}
 				>
-					{/* The modal is portaled out of the registration <form> in the DOM,
-					    but its submit event still bubbles through the React tree to the
-					    outer form. Stop it here so importing doesn't submit registration. */}
-					<div onSubmit={(e) => e.stopPropagation()}>
-						<SendouForm
-							schema={importTeamFormSchema}
-							onApply={handleApply}
-							submitButtonText={t("forms:regImportTeam")}
-						>
-							<ImportTeamFields
-								currentTournamentId={currentTournamentId}
-								teamsRef={teamsRef}
-							/>
-						</SendouForm>
-					</div>
+					<SendouForm
+						schema={importTeamFormSchema}
+						onApply={handleApply}
+						submitButtonText={t("forms:regImportTeam")}
+					>
+						<ImportTeamFields
+							currentTournamentId={currentTournamentId}
+							teamsRef={teamsRef}
+						/>
+					</SendouForm>
 				</SendouDialog>
 			) : null}
 		</div>

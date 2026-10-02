@@ -11,6 +11,7 @@ import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { SettingsPage } from "./pages/settings/settings-page";
+import { UserEditProfilePage } from "./pages/user/user-edit-profile-page";
 import { UserEditWidgetsPage } from "./pages/user/user-edit-widgets-page";
 import { UserPage } from "./pages/user/user-page";
 import { UserSeasonsPage } from "./pages/user/user-seasons-page";
@@ -130,6 +131,16 @@ test.describe("User page", () => {
 
 		await expect(userPage.flag("SE")).toBeVisible();
 		await expect(userPage.text("Lean#1234")).toBeVisible();
+	});
+
+	test("sets friend code from the edit profile page", async ({ page }) => {
+		await impersonate(page, NZAP_TEST_ID);
+
+		const editProfile = new UserEditProfilePage(page);
+		await editProfile.goto(NZAP_TEST_DISCORD_ID);
+		await editProfile.setFriendCode("0123-4567-8901");
+
+		await expect(editProfile.friendCodeButton("0123-4567-8901")).toBeVisible();
 	});
 
 	test("customizes theme colors and resets them", async ({

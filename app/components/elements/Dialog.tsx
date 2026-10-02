@@ -91,6 +91,8 @@ function DialogElement({
 			tabIndex={-1}
 			closedby="closerequest"
 			onClose={onClose}
+			// a portal doesn't stop React events from bubbling to an outer form
+			onSubmit={(e) => e.stopPropagation()}
 			{...backdropPressHandlers}
 		>
 			{children}
