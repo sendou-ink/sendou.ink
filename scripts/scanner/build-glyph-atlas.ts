@@ -106,14 +106,13 @@ const NAME_GREEK = "ια"; // ι: "Rιppιng_H", α: "◇Dαrz™" (special-symb
  * The rest of the in-game name editor's symbol pickers (sendou.ink's
  * IN_GAME_NAME_CHARACTER_CATEGORIES "symbols" + "cjk-symbols"), minus what
  * nameCharset() already carries and chars the Blitz cmap doesn't map
- * (ˊˋ𝑓⁀⚪⚫◻◼⍑; nameSymbols() re-checks at build time). "•" stays out: BlitzMain's
+ * (nameSymbols() checks at build time). "•" stays out: BlitzMain's
  * bullet is a 4px dot, the on-screen circle comes from "●" via RENDER_ALIASES.
  * Only the fullwidth "～" (U+FF5E), the form fixture labels attest — the wave
  * dash "〜" (U+301C) is a pixel-identical homoglyph that would duel it.
  * Scoreboard-names only (not death-tag) until attested, like NAME_GREEK.
  */
-const NAME_SYMBOLS =
-	"′‘’‚‛…″“”„←→↑↓⇒⇔˜€∞√∀⊂⊃∴∵∂№♭♀♂◎◇◆△▲▽▼†※™『』【】〈〉《》〔〕々〆〇〃～";
+const NAME_SYMBOLS = "′‘’…”‐―←→↑↓⇒⇔˜€ƒ∞√∀⊂⊃∴∵∂№♭♀♂◎□■◇◆△▽†※™【】々〆〒仝～";
 
 /**
  * Render the key char but emit it as the value: in-game names show "•" as a

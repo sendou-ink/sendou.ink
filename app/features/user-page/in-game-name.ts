@@ -15,20 +15,20 @@ export const IN_GAME_NAME_CHARACTER_CATEGORIES = [
 		id: "symbols",
 		label: "inGameName.categories.symbols",
 		characters: [
-			..."¿¡′‘’‚‛•…″“”„«»←→↑↓⇒⇔˜ˊˋ¢€£¥¤𝑓×÷±∞√¬∀⊂⊃∴∵⌒∂№°¹²³¼½¾♪♭♀♂○⚪⚫◎◻◼◇◆△▲▽▼☆★©®™§¶†⍑※",
+			..."¿¡′‘’…”‐―«»←→↑↓⇒⇔˜´¨¦¢€£¥¤ƒ×÷±∞√¬∀⊂⊃∴∵⌒∂№°¹²³¼½¾♪♭♀♂○●◎□■◇◆△▽☆★©®™§¶†※",
 		],
 	},
 	{
 		id: "accented",
 		label: "inGameName.categories.accented",
 		characters: [
-			..."àáâãäåæāăąçćċčðďǆǳèéêëēęěğġģħìíîïīįıĳķĺļľłÀÁÂÃÄÅÆĀĂĄÇĆĊČÐĎǅǲÈÉÊËĒĘĚĞĠĢĦÌÍÎÏĪĮİĲĶĹĻĽŁñńņňòóôõöøœőŕřšßśşþťţùúûüūůűųýÿźżžÑŃŅŇÒÓÔÕÖØŒŐŔŘŠẞŚŞÞŤŢÙÚÛÜŪŮŰŲÝŸŹŻŽ",
+			..."àáâãäåæāăçćċčĉðďǆǳèéêëēĕğġģħìíîïīįĳķĺļľłÀÁÂÃÄÅÆĀĂÇĆĊČĈÐĎǄǱÈÉÊËĒĔĞĠĢĦÌÍÎÏĪĮİĲĶĹĻĽŁñńņňòóôõöøœőŕřšßśşþťțùúûüūůűųýÿźżžÑŃŅŇÒÓÔÕÖØŒŐŔŘŠŚŞÞŤȚÙÚÛÜŪŮŰŲÝŸŹŻŽ",
 		],
 	},
 	{
 		id: "greek",
 		label: "inGameName.categories.greek",
-		characters: [..."αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"],
+		characters: [..."αβγδεζηθικλμνξοπρσςτυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"],
 	},
 	{
 		id: "cyrillic",
@@ -38,17 +38,17 @@ export const IN_GAME_NAME_CHARACTER_CATEGORIES = [
 	{
 		id: "hiragana",
 		label: "inGameName.categories.hiragana",
-		characters: [...range(0x3041, 0x3096), ..."ゝゞ"],
+		characters: [...range(0x3041, 0x308f), ..."をんゝ"],
 	},
 	{
 		id: "katakana",
 		label: "inGameName.categories.katakana",
-		characters: [...range(0x30a1, 0x30fa), ..."ヽヾ"],
+		characters: [...range(0x30a1, 0x30ef), ..."ヲンヴヵヶ"],
 	},
 	{
 		id: "cjk-symbols",
 		label: "inGameName.categories.cjkSymbols",
-		characters: [..."、。「」『』【】〈〉《》〔〕〜・ー々〆〇〃"],
+		characters: [..."、。「」【】・ー～々〆〒仝"],
 	},
 ] as const satisfies ReadonlyArray<{
 	id: string;
@@ -60,28 +60,152 @@ const PICKER_CHARACTERS = IN_GAME_NAME_CHARACTER_CATEGORIES.flatMap(
 	(category) => category.characters,
 );
 
-const ASCII_NOT_VALID = new Set(["%", "@", "\\"]);
+const ASCII_NOT_VALID = new Set(["'", "%", "@", "\\"]);
 const ASCII_CHARACTERS = range(0x20, 0x7e).filter(
 	(character) => !ASCII_NOT_VALID.has(character),
 );
 
+/** Japanese keyboard symbols, left out of the picker as they look like their ASCII counterparts. */
+const FULLWIDTH_SYMBOLS = [
+	..."！＃＄＆（）＊＋，－．／：；＜＝＞？［］＾＿｛｜｝￥",
+];
+
 const ALLOWED_CHARACTERS = new Set<string>([
 	...ASCII_CHARACTERS,
 	...PICKER_CHARACTERS,
+	...FULLWIDTH_SYMBOLS,
 ]);
 
-/** Every script a Switch keyboard can produce, incl. kanji/hanzi and hangul which the picker can't enumerate. */
-const ALLOWED_SCRIPTS_REGEXP =
-	/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\p{Script=Hangul}]$/u;
+/** Kanji/hanzi and hangul, too numerous for the picker. */
+const IDEOGRAPH_OR_HANGUL_REGEXP =
+	/^[\p{Unified_Ideograph}\p{Script=Hangul}]$/u;
 
-/** Punctuation & symbols not covered by the scripts above. */
-const ALLOWED_CODE_POINT_RANGES = [
-	[0x3000, 0x303f], // CJK symbols and punctuation
-	[0x3099, 0x309c], // Kana voiced sound marks
-	[0x30fb, 0x30fc], // Katakana middle dot & prolonged sound mark
-	[0xff01, 0xff60], // Fullwidth forms
-	[0xffe0, 0xffe6], // Fullwidth signs
-] as const;
+/** Lookalikes mapped to the in-game character. Anything else falls back to its compatibility or accentless form. */
+const CHARACTER_REPLACEMENTS = new Map([
+	["'", "’"],
+	["\t", " "],
+	["⏜", "⌒"],
+	["⁀", "⌒"],
+	["⌢", "⌒"],
+	["◠", "⌒"],
+	["𝑓", "ƒ"],
+	["◼", "■"],
+	["▪", "■"],
+	["⬛", "■"],
+	["◻", "□"],
+	["☐", "□"],
+	["⬜", "□"],
+	["▢", "□"],
+	["⚪", "○"],
+	["◯", "○"],
+	["⚫", "●"],
+	["⬤", "●"],
+	["⏺", "●"],
+	["•", "●"],
+	["⦾", "◎"],
+	["⊚", "◎"],
+	["⭗", "◎"],
+	["⦿", "◎"],
+	["◉", "◎"],
+	["▲", "△"],
+	["▵", "△"],
+	["🔺", "△"],
+	["▼", "▽"],
+	["∇", "▽"],
+	["🔻", "▽"],
+	["▿", "▽"],
+	["♦", "◆"],
+	["♢", "◇"],
+	["◊", "◇"],
+	["⬦", "◇"],
+	["⭐", "★"],
+	["⭑", "★"],
+	["🌟", "★"],
+	["✫", "★"],
+	["✬", "★"],
+	["✭", "★"],
+	["✯", "★"],
+	["✩", "☆"],
+	["✰", "☆"],
+	["✝", "†"],
+	["✞", "†"],
+	["🎵", "♪"],
+	["🎶", "♪"],
+	["♫", "♪"],
+	["♩", "♪"],
+	["⨯", "×"],
+	["✖", "×"],
+	["✕", "×"],
+	["✘", "×"],
+	["⟹", "⇒"],
+	["⇛", "⇒"],
+	["⬆", "↑"],
+	["⬇", "↓"],
+	["➡", "→"],
+	["⟶", "→"],
+	["≪", "«"],
+	["≫", "»"],
+	["《", "«"],
+	["》", "»"],
+	["『", "「"],
+	["』", "」"],
+	["〜", "～"],
+	["〃", "”"],
+	["⍑", "〒"],
+	["·", "・"],
+	["‧", "・"],
+	["∙", "・"],
+	["⋅", "・"],
+	["ˊ", "´"],
+	["ˋ", "`"],
+	["˚", "°"],
+	["º", "°"],
+	["∘", "°"],
+	["“", "”"],
+	["„", "”"],
+	["‛", "‘"],
+	["‚", ","],
+	["″", '"'],
+	["–", "‐"],
+	["—", "―"],
+	["−", "-"],
+	["∼", "~"],
+	["Ţ", "Ț"],
+	["ţ", "ț"],
+	["Ș", "Ş"],
+	["ș", "ş"],
+	["Đ", "Ð"],
+	["ı", "i"],
+	["ẞ", "ß"],
+	["ї", "ï"],
+	["І", "I"],
+	["і", "i"],
+	["ѕ", "s"],
+	["∅", "Ø"],
+	["∆", "Δ"],
+	["∑", "Σ"],
+	["Ʌ", "Λ"],
+	["Ө", "Θ"],
+	["Ɵ", "Θ"],
+	["ɵ", "θ"],
+	["⍺", "α"],
+	["ɑ", "α"],
+	["ɛ", "ε"],
+	["⍳", "ι"],
+	["ɩ", "ι"],
+	["ƞ", "η"],
+	["ᴋ", "к"],
+	["ᴍ", "м"],
+	["ᴛ", "т"],
+	["ᴠ", "v"],
+	["ʙ", "в"],
+	["ᴄ", "c"],
+	["ʜ", "н"],
+	["ᴏ", "o"],
+	["ᴎ", "и"],
+	["ᴙ", "я"],
+	["ɸ", "φ"],
+]);
 
 const IN_GAME_NAME_REGEXP = new RegExp(
 	`^(.+)#([0-9a-z]{${IN_GAME_NAME.DISCRIMINATOR_MIN_LENGTH},${IN_GAME_NAME.DISCRIMINATOR_MAX_LENGTH}})$`,
@@ -93,9 +217,9 @@ export function inGameNameLength(value: string): number {
 	return [...value].length;
 }
 
-/** Normalizes and drops every character the game does not allow. */
+/** Normalizes, swaps lookalikes for the in-game character and drops every character the game does not allow. */
 export function sanitizeInGameName(value: string): string {
-	return [...normalizeInGameName(value)].filter(characterIsAllowed).join("");
+	return [...normalizeInGameName(value)].map(toAllowedCharacters).join("");
 }
 
 /** Unicode normalization applied before validating or storing. */
@@ -119,13 +243,37 @@ export function inGameNameIsValid(value: string): boolean {
 }
 
 function characterIsAllowed(character: string): boolean {
-	if (ALLOWED_CHARACTERS.has(character)) return true;
-	if (ALLOWED_SCRIPTS_REGEXP.test(character)) return true;
-
-	const codePoint = character.codePointAt(0)!;
-	return ALLOWED_CODE_POINT_RANGES.some(
-		([from, to]) => codePoint >= from && codePoint <= to,
+	return (
+		ALLOWED_CHARACTERS.has(character) ||
+		IDEOGRAPH_OR_HANGUL_REGEXP.test(character)
 	);
+}
+
+function toAllowedCharacters(character: string): string {
+	if (characterIsAllowed(character)) return character;
+
+	const replacement = CHARACTER_REPLACEMENTS.get(character);
+	if (replacement) return replacement;
+
+	const compatibilityForm = [...character.normalize("NFKC")]
+		.map((part) => CHARACTER_REPLACEMENTS.get(part) ?? part)
+		.join("");
+	if ([...compatibilityForm].every(characterIsAllowed)) {
+		return compatibilityForm;
+	}
+
+	return withoutDiacritics(character) ?? "";
+}
+
+function withoutDiacritics(character: string): string | null {
+	const decomposed = [...character.normalize("NFD")];
+	while (decomposed.length > 1) {
+		decomposed.pop();
+		const candidate = decomposed.join("").normalize("NFC");
+		if (characterIsAllowed(candidate)) return candidate;
+	}
+
+	return null;
 }
 
 function range(from: number, to: number): string[] {
