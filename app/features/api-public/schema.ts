@@ -197,7 +197,7 @@ export type GetTournamentPlayersResponse = Array<{
 /** GET /api/tournament/{tournamentId}/casted */
 
 export interface GetCastedTournamentMatchesResponse {
-	/** Matches that are currently being played and casted. One per casting channel. */
+	/** Match currently assigned to each casting channel. Stays until the next match is assigned, so it may already be finished. */
 	current: Array<{
 		matchId: number;
 		channel: TournamentCastChannel;
