@@ -223,7 +223,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	const sorted = events.toSorted((a, b) => a.t - b.t);
 	const built: BuiltMatch<E>[] = [];
 	const unbackedBuilt: BuiltMatch<E>[] = [];
-	const nextStage = buildNextStageMap(sorted);
+	const minimapLookahead = buildMinimapLookahead(sorted);
 
 	let open: OpenMatch<E> | null = null;
 	// deaths/objective/status reads seen with no match open to anchor them yet
@@ -313,13 +313,20 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			const stage = (event.data as MinimapData).stage;
 			if (open) {
 				// a stage change only splits when the next read doesn't refute it: a
-				// lone disagreeing frame is a misread folded in as a minority vote
-				const current = leadingStage(open.stageVotes);
+				// lone disagreeing frame is a misread folded in as a minority vote.
+				// An intro's stage outranks minimap reads: it holds until no later
+				// read of this game shows it again (the next game's intro was missed)
+				const lookahead = minimapLookahead.get(event)!;
+				const introStage = open.mapStart
+					? (open.mapStart.data as MapStartData).stage
+					: null;
+				const current = introStage ?? leadingStage(open.stageVotes);
 				const stageChanged =
 					current !== null &&
 					stage !== null &&
 					stage !== current &&
-					(nextStage.get(event) ?? stage) === stage;
+					(lookahead.nextStage ?? stage) === stage &&
+					(introStage === null || !lookahead.laterStages.has(introStage));
 				const gapTooBig =
 					open.lastMinimapT !== null &&
 					event.t - open.lastMinimapT > MATCH_GAP_SECONDS;
@@ -604,8 +611,9 @@ interface OpenMatch<E extends DetectedEvent> {
 	kills: E[];
 	scoreboard: E | null;
 	/**
-	 * per-stage read counts (a MapStart's stage seeds it); the plurality winner
-	 * delimits same-vs-next map so one misread frame can't poison the match
+	 * per-stage read counts (a MapStart's stage seeds it); without an intro
+	 * stage the plurality winner delimits same-vs-next map so one misread frame
+	 * can't poison the match
 	 */
 	stageVotes: Map<StageId, number>;
 	lastMinimapT: number | null;
@@ -630,22 +638,47 @@ function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 	};
 }
 
+interface MinimapLookahead {
+	/** the next minimap's non-null stage read */
+	nextStage: StageId | null;
+	/** stages read by later minimaps before the next intro, scoreboard or time gap */
+	laterStages: ReadonlySet<StageId>;
+}
+
 /**
- * For each minimap event, the next minimap's non-null stage read — the
- * refutation signal for the stage-change split.
+ * For each minimap event, what the minimaps after it read — the refutation
+ * signals for the stage-change split.
  */
-function buildNextStageMap<E extends DetectedEvent>(
+function buildMinimapLookahead<E extends DetectedEvent>(
 	sorted: readonly E[],
-): Map<E, StageId | null> {
-	const nextStage = new Map<E, StageId | null>();
-	let carry: StageId | null = null;
+): Map<E, MinimapLookahead> {
+	const lookahead = new Map<E, MinimapLookahead>();
+	let nextStage: StageId | null = null;
+	let laterStages = new Set<StageId>();
+	let laterMinimapT: number | null = null;
 	for (let i = sorted.length - 1; i >= 0; i--) {
 		const event = sorted[i]!;
+		if (
+			event.type === MAP_START_EVENT_TYPE ||
+			SCOREBOARD_EVENT_TYPES.includes(event.type)
+		) {
+			laterStages = new Set();
+			continue;
+		}
 		if (event.type !== MINIMAP_EVENT_TYPE) continue;
-		nextStage.set(event, carry);
-		carry = (event.data as MinimapData).stage ?? carry;
+		if (laterMinimapT !== null && laterMinimapT - event.t > MATCH_GAP_SECONDS) {
+			laterStages = new Set();
+		}
+		lookahead.set(event, { nextStage, laterStages });
+		const stage = (event.data as MinimapData).stage;
+		if (stage !== null && !laterStages.has(stage)) {
+			// copied so the sets already handed out keep what they saw
+			laterStages = new Set(laterStages).add(stage);
+		}
+		nextStage = stage ?? nextStage;
+		laterMinimapT = event.t;
 	}
-	return nextStage;
+	return lookahead;
 }
 
 function vote(votes: Map<StageId, number>, stage: StageId | null): void {

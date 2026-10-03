@@ -280,7 +280,8 @@ sequenceDiagram
 - `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart
   opens a match, a scoreboard closes one (claiming the last 8 min of deaths
   when the intro was missed), minimaps group per map by confirmed stage
-  change and >5 min gap. A battle history screen (battle log, replay
+  change and >5 min gap — an intro's stage outranks minimap reads, so a
+  match it opened splits only once no later minimap of that game reads it. A battle history screen (battle log, replay
   browser) showing a game already built — at least 6 paint totals shared
   order-free (a misread or unread row still joins), stage not contradicting
   it, recording time within 20 min of its play time — joins that match's sources instead of forming a new

@@ -1321,6 +1321,52 @@ test("a confirmed stage change splits even when the misread-looking frame is mid
 	);
 });
 
+test("consistent minimap misreads do not split a match from its intro's stage", () => {
+	const built = buildScannerMatches([
+		mapStart(30, { stage: 0 }),
+		minimap(70, { stage: 0 }),
+		minimap(90, { stage: 1 }),
+		minimap(110, { stage: 1 }),
+		minimap(130, { stage: 1 }),
+		minimap(150, { stage: 0 }),
+	]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.match.stage, 0);
+});
+
+test("a stage change the intro's stage never returns from splits off the next game", () => {
+	const built = buildScannerMatches([
+		mapStart(30, { stage: 0 }),
+		minimap(70, { stage: 0 }),
+		minimap(90, { stage: 0 }),
+		minimap(300, { stage: 1 }),
+		minimap(320, { stage: 1 }),
+	]);
+	assert.deepEqual(
+		built.map((b) => [b.match.stage, b.match.startsAt]),
+		[
+			[0, 30],
+			[1, 300],
+		],
+	);
+});
+
+test("the intro's stage read again only in the next game does not hold the split back", () => {
+	const built = buildScannerMatches([
+		mapStart(30, { stage: 0 }),
+		minimap(70, { stage: 0 }),
+		minimap(300, { stage: 1 }),
+		minimap(320, { stage: 1 }),
+		scoreboard(400, { stage: 1 }),
+		mapStart(450, { stage: 0 }),
+		minimap(490, { stage: 0 }),
+	]);
+	assert.deepEqual(
+		built.map((b) => b.match.startsAt),
+		[30, 300, 450],
+	);
+});
+
 // KNOWN LIMITATION: two consecutive games on the SAME stage with a break
 // shorter than MATCH_GAP_SECONDS merge into one match — casted footage has no
 // native delimiter and the minimap carries no signal to split on.
