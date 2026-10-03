@@ -324,6 +324,11 @@ export function buildCases(fx: Fixtures): {
 		ChatRepository.findMessageById(messageId),
 	);
 	add(
+		"ChatRepository.findAllParticipantsByUserIds",
+		fx.manyUserIds,
+		(userIds) => ChatRepository.findAllParticipantsByUserIds(userIds),
+	);
+	add(
 		"ChatRepository.findMessageStatsByRoomIds",
 		fx.heavyChatUsers,
 		(chatUsers) =>

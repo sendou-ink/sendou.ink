@@ -163,6 +163,17 @@ export function findMessageById(messageId: number) {
 		.executeTakeFirst();
 }
 
+/** Users as rooms list their participants, for mentioning them. */
+export async function findAllParticipantsByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return [];
+
+	return db
+		.selectFrom("User")
+		.select((eb) => commonUserSelect(eb))
+		.where("User.id", "in", userIds)
+		.execute();
+}
+
 /** Per-room message stats for the user: unread count (messages newer than their read indicator) and the latest message. Rooms with no messages are left out. */
 export async function findMessageStatsByRoomIds(
 	userId: number,

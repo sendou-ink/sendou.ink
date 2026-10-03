@@ -198,7 +198,9 @@ describe("Chat", () => {
 		const screen = await renderChat([createMessage()], { readOnly: true });
 
 		await expect.element(screen.getByText("Read-only")).toBeInTheDocument();
-		expect(screen.getByRole("textbox").elements()).toHaveLength(0);
+		expect(
+			screen.getByPlaceholder("Press enter to send").elements(),
+		).toHaveLength(0);
 	});
 
 	test("sends the draft on enter and clears the composer", async () => {
@@ -225,6 +227,109 @@ describe("Chat", () => {
 		await userEvent.keyboard("{Enter}");
 
 		expect(onSend).not.toHaveBeenCalled();
+	});
+
+	describe("mentions", () => {
+		const BOB = { ...ALICE, id: 2, username: "Bob", discordId: "2" };
+		const CAROL = { ...ALICE, id: 3, username: "Carol", discordId: "3" };
+
+		const renderComposer = async () => {
+			const onSend = vi.fn();
+			const screen = await renderChat([createMessage()], {
+				onSend,
+				mentionableUsers: [BOB, CAROL],
+			});
+			const composer = screen.getByPlaceholder("Press enter to send");
+			await composer.click();
+
+			return { screen, composer, onSend };
+		};
+
+		test("renders mention tokens as the mentioned users' names", async () => {
+			const screen = await renderChat(
+				[createMessage({ contents: "gg <mention-2> and <mention-99>" })],
+				{ mentionableUsers: [BOB] },
+			);
+
+			await expect.element(screen.getByText("@Bob")).toBeInTheDocument();
+			await expect
+				.element(screen.getByText("@unknown user"))
+				.toBeInTheDocument();
+		});
+
+		test("picks a suggestion with the keyboard and sends it as a token", async () => {
+			const { screen, composer, onSend } = await renderComposer();
+
+			await userEvent.keyboard("hi @ca");
+			await expect
+				.element(screen.getByRole("option", { name: "Carol" }))
+				.toBeVisible();
+			await userEvent.keyboard("{Enter}");
+			await expect.element(composer).toHaveValue("hi @Carol ");
+
+			await userEvent.keyboard("gg{Enter}");
+			expect(onSend).toHaveBeenCalledWith({
+				publicId: expect.any(String),
+				contents: "hi <mention-3> gg",
+			});
+		});
+
+		test("suggests the room's users and message authors, the arrow keys moving through them", async () => {
+			const { screen } = await renderComposer();
+
+			await userEvent.keyboard("@");
+			expect(
+				screen
+					.getByRole("option")
+					.elements()
+					.map((option) => option.textContent),
+			).toEqual(["Bob", "Carol", "Alice"]);
+
+			await userEvent.keyboard("{ArrowDown}");
+			await expect
+				.element(screen.getByRole("option", { name: "Carol" }))
+				.toHaveAttribute("aria-selected", "true");
+		});
+
+		test("sends the picked one of two users sharing a name", async () => {
+			const otherBob = { ...BOB, id: 5, discordId: "5" };
+			const onSend = vi.fn();
+			const screen = await renderChat([], {
+				onSend,
+				mentionableUsers: [BOB, otherBob],
+			});
+			await screen.getByPlaceholder("Press enter to send").click();
+
+			await userEvent.keyboard("@bo");
+			await expect.element(screen.getByRole("listbox")).toBeVisible();
+			await userEvent.keyboard("{ArrowDown}{Enter}");
+			await userEvent.keyboard("and @bo{Enter}{Enter}");
+
+			expect(onSend).toHaveBeenCalledWith({
+				publicId: expect.any(String),
+				contents: "<mention-5> and <mention-2>",
+			});
+		});
+
+		test("closes the suggestions on escape", async () => {
+			const { screen } = await renderComposer();
+
+			await userEvent.keyboard("@");
+			await expect.element(screen.getByRole("listbox")).toBeVisible();
+
+			await userEvent.keyboard("{Escape}");
+			expect(screen.getByRole("option").elements()).toHaveLength(0);
+		});
+
+		test("picks a suggestion by clicking it", async () => {
+			const { screen, composer } = await renderComposer();
+
+			await userEvent.keyboard("@b");
+			await screen.getByRole("option", { name: "Bob" }).click();
+
+			await expect.element(composer).toHaveValue("@Bob ");
+			await expect.element(composer).toHaveFocus();
+		});
 	});
 
 	test("renders a splatnet room link with its QR code", async () => {

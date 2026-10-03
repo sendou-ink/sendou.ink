@@ -11,6 +11,7 @@ import {
 } from "~/features/events/tests/fixtures";
 import { withUserId } from "~/utils/Test";
 import * as ChatRepository from "../ChatRepository.server";
+import { mentionToken } from "../chat-mentions";
 import { setupSqMatch } from "../tests/fixtures";
 import { loader as roomsLoader } from "./api.chat.rooms";
 import { loader as roomLoader } from "./api.chat.rooms.$id";
@@ -102,6 +103,23 @@ describe("chat messages action", () => {
 		expect(result).toHaveProperty("fieldErrors");
 	});
 
+	test.each([
+		{ why: "at the limit is sent", textLength: 199, sent: true },
+		{ why: "over the limit is refused", textLength: 200, sent: false },
+	])(
+		"a message with a mention counting as one character $why",
+		async ({ textLength, sent }) => {
+			const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+
+			const result = await sendMessage(alphaUserIds[0], match.chatRoomId!, {
+				publicId: "mmmmmmmmmm",
+				contents: `${"a".repeat(textLength)}${mentionToken(bravoUserIds[0])}`,
+			});
+
+			expect("message" in result).toBe(sent);
+		},
+	);
+
 	test("403s a non-participant", async () => {
 		const { match } = await setupSqMatch(users);
 
@@ -189,6 +207,18 @@ describe("chat rooms loader", () => {
 			url: expect.stringContaining(String(match.id)),
 		});
 		expect(matchRoom?.participantUserIds).toHaveLength(8);
+	});
+
+	test("lists the room's participants by name for mentioning them", async () => {
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+
+		const data = await loadRooms(alphaUserIds[0]);
+		const matchRoom = data.rooms.find((room) => room.id === match.chatRoomId);
+
+		expect(matchRoom?.participants.map((user) => user.id).sort()).toEqual(
+			[...alphaUserIds, ...bravoUserIds].sort(),
+		);
+		expect(matchRoom?.participants[0].username).toEqual(expect.any(String));
 	});
 
 	test("exposes the room's inactive flag and latest message stats", async () => {

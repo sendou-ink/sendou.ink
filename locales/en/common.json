@@ -391,6 +391,8 @@
 	"chat.systemMsg.leagueRescheduleDeclined": "{{name}} declined the new times. The set keeps its current time",
 	"chat.systemMsg.leagueTimeSetByOrganizer": "{{name}} (organizer) set the time of the set",
 	"chat.newMessages": "New messages",
+	"chat.mention.suggestions": "Mention suggestions",
+	"chat.mention.unknownUser": "unknown user",
 	"chat.sidebar.title": "Chat",
 	"chat.sidebar.noActiveChats": "No active chats",
 	"chat.sidebar.inactive": "Inactive",

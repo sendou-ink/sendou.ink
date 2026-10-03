@@ -391,6 +391,8 @@
 	"chat.systemMsg.leagueRescheduleDeclined": "",
 	"chat.systemMsg.leagueTimeSetByOrganizer": "",
 	"chat.newMessages": "Новые сообщения",
+	"chat.mention.suggestions": "",
+	"chat.mention.unknownUser": "",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",
 	"chat.sidebar.inactive": "",

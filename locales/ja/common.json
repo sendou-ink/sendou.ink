@@ -391,6 +391,8 @@
 	"chat.systemMsg.leagueRescheduleDeclined": "",
 	"chat.systemMsg.leagueTimeSetByOrganizer": "",
 	"chat.newMessages": "新着メッセージ",
+	"chat.mention.suggestions": "",
+	"chat.mention.unknownUser": "",
 	"chat.sidebar.title": "チャット",
 	"chat.sidebar.noActiveChats": "使用中のチャットはありません",
 	"chat.sidebar.inactive": "",

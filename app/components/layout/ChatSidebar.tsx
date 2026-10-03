@@ -631,6 +631,7 @@ function RoomChat({ room }: { room: ChatRoomListItem }) {
 			})}
 			onSend={(message) => chatContext.sendMessage(room.id, message)}
 			labelByUserId={room.labelByUserId}
+			mentionableUsers={room.participants}
 			disabled={expired}
 			readOnly={!expired && !room.canPost}
 		/>

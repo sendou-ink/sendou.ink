@@ -91,6 +91,8 @@ export interface ChatRoomListItem {
 	url: string;
 	imageUrl: string | null;
 	participantUserIds: number[];
+	/** The participants as users, for mentioning them and naming them in mentions. */
+	participants: CommonUser[];
 	/** Role labels (e.g. "TO", "Stream") shown next to non-participant authors, keyed by user id. */
 	labelByUserId: Record<number, string>;
 	/** databaseTimestamp */

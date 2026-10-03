@@ -4,7 +4,7 @@ import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import * as ChatRepository from "../ChatRepository.server";
 import * as ChatRoomResolver from "../ChatRoomResolver.server";
-import { roomListItem } from "../chat-room-list.server";
+import { findParticipantsById, roomListItem } from "../chat-room-list.server";
 import type { ChatRoomListItem } from "../chat-types";
 
 /**
@@ -19,9 +19,10 @@ export const loader = async ({
 
 	const room = await ChatRoomResolver.requireRoom(roomId, "VIEW");
 
-	const [stats] = await ChatRepository.findMessageStatsByRoomIds(user.id, [
-		roomId,
+	const [[stats], participantsById] = await Promise.all([
+		ChatRepository.findMessageStatsByRoomIds(user.id, [roomId]),
+		findParticipantsById([room]),
 	]);
 
-	return { room: roomListItem(room, stats, user) };
+	return { room: roomListItem(room, { stats, participantsById, user }) };
 };

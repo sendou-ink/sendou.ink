@@ -126,6 +126,26 @@
 	word-break: break-all;
 }
 
+.mention {
+	padding-inline: var(--s-1);
+	border-radius: var(--radius-selector);
+	font-weight: var(--weight-semi);
+	color: var(--color-fg-accent);
+	background-color: var(--color-bg-accent);
+}
+
+.messageMentionsYou {
+	margin-inline: calc(var(--s-1) * -1);
+	padding: var(--s-1);
+	border-inline-start: 2px solid var(--color-fg-second);
+	background-color: var(--color-bg-second);
+}
+
+.mentionSelf {
+	background-color: transparent;
+	padding-inline: 0;
+}
+
 .composer {
 	display: flex;
 	flex-direction: column;

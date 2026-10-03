@@ -3,23 +3,35 @@ import { sub } from "date-fns";
 import { SendHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
-import { browser } from "react-dom";
+import { browser, flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import * as v from "valibot";
+import { useUser } from "~/features/auth/core/user";
 import { useEventsReadyState } from "~/features/events/events-hooks";
 import { useDebounce } from "~/hooks/useDebounce";
 import { useVirtualizer } from "~/modules/virtualizer/react";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
+import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
 import { MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
+import {
+	activeMentionQuery,
+	encodeMentions,
+	mentionSuggestions,
+	mentionsUser,
+	type PickedMention,
+	shiftPickedMentions,
+	splitByMentions,
+} from "../chat-mentions";
 import { findRoomLinks } from "../chat-message-links";
 import { sendChatMessageSchema } from "../chat-schemas";
 import type { ChatMessageAuthor, ClientChatMessage } from "../chat-types";
 import styles from "./Chat.module.css";
+import { MentionSuggestions, mentionSuggestionId } from "./MentionSuggestions";
 
 const MESSAGE_GAP = 8;
 const ESTIMATED_MESSAGE_HEIGHT = 44;
@@ -33,6 +45,7 @@ export interface ChatProps {
 	/** Role labels (e.g. "TO") shown next to the author, keyed by user id. */
 	labelByUserId?: Record<number, string>;
 	firstUnreadMessageId?: number | null;
+	mentionableUsers?: CommonUser[];
 	className?: string;
 	messagesContainerClassName?: string;
 	/** Renders the room read-only with an expiry note, e.g. once it has expired. */
@@ -41,54 +54,78 @@ export interface ChatProps {
 	readOnly?: boolean;
 }
 
+const MentionsContext = React.createContext<{
+	usersById: Map<number, CommonUser>;
+	ownUserId: number | null;
+}>({ usersById: new Map(), ownUserId: null });
+
 export function Chat({
 	messages,
 	onSend,
 	labelByUserId,
 	firstUnreadMessageId,
+	mentionableUsers = [],
 	className,
 	messagesContainerClassName,
 	disabled,
 	readOnly,
 }: ChatProps) {
 	const { t } = useTranslation(["common"]);
+	const user = useUser();
+
+	const mentionableById = new Map<number, CommonUser>();
+	for (const mentionable of [
+		...mentionableUsers,
+		...messages.flatMap((message) => (message.author ? [message.author] : [])),
+	]) {
+		mentionableById.set(mentionable.id, mentionable);
+	}
+	const mentionCandidates = [...mentionableById.values()].filter(
+		(mentionable) => mentionable.id !== user?.id,
+	);
 
 	return (
-		<section className={clsx(styles.container, className)}>
-			<div className={styles.inputContainer}>
-				<React.Suspense
-					fallback={
-						// the same role as the log so the sidebar sizes it the same
-						<div
-							role="log"
-							aria-label="Chat messages"
-							className={clsx(
-								styles.messages,
-								"scrollbar",
-								messagesContainerClassName,
-							)}
+		<MentionsContext
+			value={{ usersById: mentionableById, ownUserId: user?.id ?? null }}
+		>
+			<section className={clsx(styles.container, className)}>
+				<div className={styles.inputContainer}>
+					<React.Suspense
+						fallback={
+							// the same role as the log so the sidebar sizes it the same
+							<div
+								role="log"
+								aria-label="Chat messages"
+								className={clsx(
+									styles.messages,
+									"scrollbar",
+									messagesContainerClassName,
+								)}
+							/>
+						}
+					>
+						<MessageLog
+							messages={messages}
+							labelByUserId={labelByUserId}
+							firstUnreadMessageId={firstUnreadMessageId}
+							className={messagesContainerClassName}
 						/>
-					}
-				>
-					<MessageLog
-						messages={messages}
-						labelByUserId={labelByUserId}
-						firstUnreadMessageId={firstUnreadMessageId}
-						className={messagesContainerClassName}
-					/>
-				</React.Suspense>
-				{readOnly ? (
-					// only observers ever see this, so it stays English
-					<div className="text-xs text-lighter text-center my-4">Read-only</div>
-				) : disabled ? (
-					<div className="text-xs text-lighter text-center my-4">
-						{t("common:chat.expired")}
-					</div>
-				) : (
-					<Composer onSend={onSend} />
-				)}
-			</div>
-		</section>
+					</React.Suspense>
+					{readOnly ? (
+						// only observers ever see this, so it stays English
+						<div className="text-xs text-lighter text-center my-4">
+							Read-only
+						</div>
+					) : disabled ? (
+						<div className="text-xs text-lighter text-center my-4">
+							{t("common:chat.expired")}
+						</div>
+					) : (
+						<Composer onSend={onSend} mentionCandidates={mentionCandidates} />
+					)}
+				</div>
+			</section>
+		</MentionsContext>
 	);
 }
 
@@ -250,11 +287,28 @@ function MessageLog({
 }
 
 /** A plain form on purpose: the chat client POSTs the message itself, so sending never touches the router or revalidates the page's loaders. */
-function Composer({ onSend }: { onSend: ChatProps["onSend"] }) {
+function Composer({
+	onSend,
+	mentionCandidates,
+}: {
+	onSend: ChatProps["onSend"];
+	mentionCandidates: CommonUser[];
+}) {
 	const { t } = useTranslation(["common", "forms"]);
 	const readyState = useEventsReadyState();
 	const [contents, setContents] = React.useState("");
+	const [caret, setCaret] = React.useState(0);
+	const [isFocused, setIsFocused] = React.useState(false);
+	const [activeSuggestionIndex, setActiveSuggestionIndex] = React.useState(0);
+	const [dismissedMentionStart, setDismissedMentionStart] = React.useState<
+		number | null
+	>(null);
+	const [pickedMentions, setPickedMentions] = React.useState<PickedMention[]>(
+		[],
+	);
 	const inputRef = React.useRef<HTMLInputElement>(null);
+	const composerRowRef = React.useRef<HTMLDivElement>(null);
+	const suggestionsId = React.useId();
 	const [connectionStatusShown, setConnectionStatusShown] =
 		React.useState(false);
 	useDebounce(
@@ -267,18 +321,77 @@ function Composer({ onSend }: { onSend: ChatProps["onSend"] }) {
 	const showConnectionStatus = sendingDisabled && connectionStatusShown;
 	const isEmpty = contents.trim().length === 0;
 
+	const mentionQuery = isFocused ? activeMentionQuery(contents, caret) : null;
+	const suggestions =
+		mentionQuery && mentionQuery.start !== dismissedMentionStart
+			? mentionSuggestions(mentionCandidates, mentionQuery.query)
+			: [];
+	const suggestionsOpen = suggestions.length > 0;
+	const activeSuggestion =
+		suggestions[Math.min(activeSuggestionIndex, suggestions.length - 1)];
+
+	const syncCaret = (input: HTMLInputElement) =>
+		setCaret(input.selectionStart ?? input.value.length);
+
+	const selectSuggestion = (user: CommonUser) => {
+		const input = inputRef.current;
+		if (!mentionQuery || !input) return;
+
+		const before = `${contents.slice(0, mentionQuery.start)}@${user.username} `;
+		const next = before + contents.slice(caret);
+		if (next.length > MESSAGE_MAX_LENGTH) return;
+
+		setPickedMentions([
+			...shiftPickedMentions(pickedMentions, contents, next),
+			{ userId: user.id, username: user.username, start: mentionQuery.start },
+		]);
+		flushSync(() => setContents(next));
+		input.setSelectionRange(before.length, before.length);
+		setCaret(before.length);
+	};
+
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+		if (!suggestionsOpen) return;
+
+		switch (event.key) {
+			case "ArrowDown":
+			case "ArrowUp": {
+				event.preventDefault();
+				const step = event.key === "ArrowDown" ? 1 : -1;
+				setActiveSuggestionIndex(
+					(suggestions.indexOf(activeSuggestion) + step + suggestions.length) %
+						suggestions.length,
+				);
+				break;
+			}
+			case "Enter":
+			case "Tab": {
+				event.preventDefault();
+				selectSuggestion(activeSuggestion);
+				break;
+			}
+			case "Escape": {
+				event.preventDefault();
+				setDismissedMentionStart(mentionQuery!.start);
+				break;
+			}
+		}
+	};
+
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		if (sendingDisabled || isEmpty) return;
 
 		const parsed = v.safeParse(sendChatMessageSchema, {
 			publicId: shortNanoid(),
-			contents,
+			contents: encodeMentions(contents, mentionCandidates, pickedMentions),
 		});
 		if (!parsed.success) return;
 
 		onSend(parsed.output);
 		setContents("");
+		setPickedMentions([]);
+		setDismissedMentionStart(null);
 		inputRef.current?.focus();
 	};
 
@@ -298,14 +411,48 @@ function Composer({ onSend }: { onSend: ChatProps["onSend"] }) {
 					)}
 				</div>
 			) : null}
-			<div className={styles.composerRow}>
+			<div ref={composerRowRef} className={styles.composerRow}>
 				<input
 					ref={inputRef}
 					value={contents}
-					onChange={(event) => setContents(event.target.value)}
+					onChange={(event) => {
+						const input = event.target;
+						setPickedMentions(
+							shiftPickedMentions(pickedMentions, contents, input.value),
+						);
+						setContents(input.value);
+						syncCaret(input);
+						setActiveSuggestionIndex(0);
+						if (
+							activeMentionQuery(input.value, input.selectionStart ?? 0)
+								?.start !== dismissedMentionStart
+						) {
+							setDismissedMentionStart(null);
+						}
+					}}
+					onSelect={(event) => syncCaret(event.currentTarget)}
+					onKeyDown={handleKeyDown}
+					onFocus={() => setIsFocused(true)}
+					onBlur={() => setIsFocused(false)}
 					placeholder={t("forms:placeholders.chatMessage")}
 					maxLength={MESSAGE_MAX_LENGTH}
 					disabled={sendingDisabled}
+					role="combobox"
+					aria-autocomplete="list"
+					aria-expanded={suggestionsOpen}
+					aria-controls={suggestionsId}
+					aria-activedescendant={
+						suggestionsOpen
+							? mentionSuggestionId(suggestionsId, activeSuggestion.id)
+							: undefined
+					}
+				/>
+				<MentionSuggestions
+					id={suggestionsId}
+					anchorRef={composerRowRef}
+					users={suggestions}
+					activeUserId={suggestionsOpen ? activeSuggestion.id : null}
+					onSelect={selectSuggestion}
 				/>
 				<SendouButton
 					type="submit"
@@ -329,9 +476,18 @@ function Message({
 	label?: string;
 }) {
 	const author = message.author;
+	const { ownUserId } = React.use(MentionsContext);
+	const mentionsYou =
+		ownUserId !== null &&
+		message.contents !== null &&
+		mentionsUser(message.contents, ownUserId);
 
 	return (
-		<div className={styles.message}>
+		<div
+			className={clsx(styles.message, {
+				[styles.messageMentionsYou]: mentionsYou,
+			})}
+		>
 			{author ? (
 				<div
 					className={clsx(styles.avatarWrapper, {
@@ -410,6 +566,31 @@ function SystemMessage({
 }
 
 function MessageContents({ text }: { text: string }) {
+	return splitByMentions(text).map((part, i) =>
+		part.type === "mention" ? (
+			<Mention key={i} userId={part.userId} />
+		) : (
+			<TextWithRoomLinks key={i} text={part.text} />
+		),
+	);
+}
+
+function Mention({ userId }: { userId: number }) {
+	const { t } = useTranslation(["common"]);
+	const { usersById, ownUserId } = React.use(MentionsContext);
+
+	return (
+		<span
+			className={clsx(styles.mention, {
+				[styles.mentionSelf]: userId === ownUserId,
+			})}
+		>
+			@{usersById.get(userId)?.username ?? t("common:chat.mention.unknownUser")}
+		</span>
+	);
+}
+
+function TextWithRoomLinks({ text }: { text: string }) {
 	const matches = findRoomLinks(text);
 
 	if (matches.length === 0) return <>{text}</>;
