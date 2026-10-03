@@ -470,20 +470,23 @@ export async function insertMember(
 	return { chatRoomIdToRevalidate };
 }
 
-/** Count of pending likes each non-inactive group has received, keyed by group id. */
-export async function findCurrentReceivedLikeCounts() {
+/** Ids of the groups that have pending likes on each non-inactive group, keyed by the liked group's id. */
+export async function findCurrentReceivedLikerGroupIds() {
 	const rows = await db
 		.selectFrom("GroupLike")
 		.innerJoin("Group", "Group.id", "GroupLike.targetGroupId")
-		.select((eb) => [
-			"GroupLike.targetGroupId",
-			eb.fn.countAll<number>().as("count"),
-		])
+		.select(["GroupLike.targetGroupId", "GroupLike.likerGroupId"])
 		.where("Group.status", "!=", "INACTIVE")
-		.groupBy("GroupLike.targetGroupId")
 		.execute();
 
-	return new Map(rows.map((row) => [row.targetGroupId, row.count]));
+	const likerGroupIdsByTarget = new Map<number, number[]>();
+	for (const row of rows) {
+		const likerGroupIds = likerGroupIdsByTarget.get(row.targetGroupId) ?? [];
+		likerGroupIds.push(row.likerGroupId);
+		likerGroupIdsByTarget.set(row.targetGroupId, likerGroupIds);
+	}
+
+	return likerGroupIdsByTarget;
 }
 
 export async function findAllLikesByGroupId(groupId: number) {

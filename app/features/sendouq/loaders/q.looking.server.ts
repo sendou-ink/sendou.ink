@@ -55,7 +55,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		groups: groupsToShow,
 		ownGroup,
 		likes: ownGroup
-			? await SQGroupRepository.findAllLikesByGroupId(ownGroup.id)
+			? await likesWithVisibleReceived(ownGroup.id, groups)
 			: {
 					given: [],
 					received: [],
@@ -78,3 +78,18 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		),
 	};
 };
+
+/** Leaves out likes from groups the looking pool hides (e.g. gone stale), matching the header's count. */
+async function likesWithVisibleReceived(
+	ownGroupId: number,
+	groups: Array<{ id: number }>,
+) {
+	const likes = await SQGroupRepository.findAllLikesByGroupId(ownGroupId);
+
+	return {
+		...likes,
+		received: likes.received.filter((like) =>
+			groups.some((group) => group.id === like.groupId),
+		),
+	};
+}

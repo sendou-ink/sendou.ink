@@ -1,4 +1,4 @@
-import { addHours, addMinutes, subHours } from "date-fns";
+import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
@@ -122,6 +122,25 @@ describe("resolveGlobalStatus", () => {
 			count: 1,
 			groupId: group.id,
 			expiresAt: expect.any(Number),
+		});
+	});
+
+	test("does not count a like from a group gone stale in the looking pool", async () => {
+		const likerGroup = await SQGroupFactory.create({
+			memberUserIds: userIds([5]),
+		});
+		await SQGroupFactory.create(
+			{ memberUserIds: userIds([1, 2]) },
+			{ likedByGroupIds: [likerGroup.id] },
+		);
+		await backdate("Group", likerGroup.id, {
+			latestActionAt: subMinutes(new Date(), 45),
+		});
+		await refreshSendouQInstance();
+
+		expect(await resolveGlobalStatus(users.id(1))).toMatchObject({
+			state: "SQ_QUEUED",
+			count: 0,
 		});
 	});
 

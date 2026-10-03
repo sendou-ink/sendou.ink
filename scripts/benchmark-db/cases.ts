@@ -874,8 +874,8 @@ export function buildCases(fx: Fixtures): {
 	addStatic("SQGroupRepository.findRecentlyFinishedMatches", () =>
 		SQGroupRepository.findRecentlyFinishedMatches(),
 	);
-	addStatic("SQGroupRepository.findCurrentReceivedLikeCounts", () =>
-		SQGroupRepository.findCurrentReceivedLikeCounts(),
+	addStatic("SQGroupRepository.findCurrentReceivedLikerGroupIds", () =>
+		SQGroupRepository.findCurrentReceivedLikerGroupIds(),
 	);
 
 	addStatic("SplatoonRotationRepository.findAll", () =>
