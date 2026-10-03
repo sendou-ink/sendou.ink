@@ -465,10 +465,10 @@ function Composer({
 				<SendouButton
 					type="submit"
 					className={styles.sendButton}
-					size="small"
+					shape="square"
 					isDisabled={sendingDisabled || isEmpty}
 					aria-label={t("common:chat.send")}
-					icon={<SendHorizontal size={16} />}
+					icon={<SendHorizontal size={18} />}
 					data-testid="chat-submit-button"
 				/>
 			</div>

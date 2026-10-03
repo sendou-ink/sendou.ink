@@ -340,15 +340,4 @@
 	& form input {
 		width: 100%;
 	}
-
-	& form button {
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		display: grid;
-		place-items: center;
-		flex-shrink: 0;
-		background-color: transparent;
-		mask-image: none;
-	}
 }

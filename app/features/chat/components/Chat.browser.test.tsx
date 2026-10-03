@@ -218,6 +218,26 @@ describe("Chat", () => {
 		await expect.element(composer).toHaveValue("");
 	});
 
+	test("rings the joined composer row while the input or the send button has keyboard focus", async () => {
+		const screen = await renderChat([createMessage()]);
+
+		const composer = screen.getByPlaceholder("Press enter to send");
+		const row = (composer.element() as HTMLElement).parentElement!;
+		const sendButton = screen.getByTestId("chat-submit-button");
+		expect(getComputedStyle(row).outlineStyle).toBe("none");
+
+		await composer.fill("hi");
+		await vi.waitFor(() => {
+			expect(getComputedStyle(row).outlineStyle).toBe("solid");
+		});
+		expect(getComputedStyle(composer.element()).outlineStyle).toBe("none");
+
+		await userEvent.keyboard("{Tab}");
+		await expect.element(sendButton).toHaveFocus();
+		expect(getComputedStyle(row).outlineStyle).toBe("solid");
+		expect(getComputedStyle(sendButton.element()).boxShadow).not.toBe("none");
+	});
+
 	test("a blank draft is not sent", async () => {
 		const onSend = vi.fn();
 		const screen = await renderChat([createMessage()], { onSend });
