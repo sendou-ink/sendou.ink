@@ -565,11 +565,10 @@ function CombinedChatView({
 							))}
 						</SendouTabList>
 					</div>
-					{rooms.map((room, index) => (
+					{rooms.map((room) => (
 						<SplitPanel
 							key={room.id}
 							room={room}
-							showHeader={index > 0}
 							isSelected={room.id === selectedRoomId}
 							onFocus={() => setSelectedRoomId(room.id)}
 						/>
@@ -584,15 +583,13 @@ function roomTabId(roomId: number) {
 	return `chat-room-${roomId}`;
 }
 
-/** The primary (match) room sits on top with its sub-header hidden, the main header already names it. As tabs only the selected panel shows. */
+/** One room of the split view, the primary (match) room on top. As tabs only the selected panel shows. */
 function SplitPanel({
 	room,
-	showHeader,
 	isSelected,
 	onFocus,
 }: {
 	room: ChatRoomListItem;
-	showHeader: boolean;
 	isSelected: boolean;
 	onFocus: () => void;
 }) {
@@ -607,9 +604,7 @@ function SplitPanel({
 			aria-labelledby={`tab-${tabId}`}
 			onFocus={onFocus}
 		>
-			{showHeader ? (
-				<div className={styles.splitPanelHeader}>{roomShortLabel(room, t)}</div>
-			) : null}
+			<div className={styles.splitPanelHeader}>{roomShortLabel(room, t)}</div>
 			<div className={styles.chatContainer}>
 				<RoomChat room={room} />
 			</div>
