@@ -313,7 +313,7 @@ export function tournamentMembersCount(
 ) {
 	return eb
 		.case()
-		.when("Tournament.isFinalized", "=", 1)
+		.when("Tournament.isFinalized", "=", true)
 		.then(
 			eb
 				.selectFrom("TournamentResult")

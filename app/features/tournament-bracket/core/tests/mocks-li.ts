@@ -6668,7 +6668,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			},
 		],
 		bracketProgressionOverrides: [],
-		isFinalized: 0,
+		isFinalized: false,
 		teams: [
 			{
 				id: 16805,

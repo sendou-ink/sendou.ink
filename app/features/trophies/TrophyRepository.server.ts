@@ -563,7 +563,7 @@ export function findAllBackfillableTournaments({
 		.where("CalendarEvent.organizationId", "=", organizationId)
 		.where("CalendarEvent.hidden", "=", 0)
 		.where("CalendarEvent.trophyId", "is", null)
-		.where("Tournament.isFinalized", "=", 1)
+		.where("Tournament.isFinalized", "=", true)
 		.where(calendarEventNameMatchesSeries(substringMatches))
 		.orderBy("startTime", "desc")
 		.execute();

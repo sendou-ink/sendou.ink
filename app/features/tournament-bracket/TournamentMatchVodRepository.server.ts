@@ -2,7 +2,7 @@ import { subDays, subHours } from "date-fns";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	commonUserSelect,
 	jsonArrayFrom,
@@ -79,8 +79,8 @@ export function insertMany(vods: Omit<Tables["TournamentMatchVod"], "id">[]) {
 
 export function findTournamentsNeedingVodSync() {
 	const oneDayAgo = dateToDatabaseTimestamp(subDays(new Date(), 1));
-	const threeHoursAgo = dateToDatabaseTimestamp(subHours(new Date(), 3));
-	const sixHoursAgo = dateToDatabaseTimestamp(subHours(new Date(), 6));
+	const threeHoursAgo = subHours(new Date(), 3);
+	const sixHoursAgo = subHours(new Date(), 6);
 
 	return db
 		.selectFrom("Tournament")
@@ -91,7 +91,7 @@ export function findTournamentsNeedingVodSync() {
 			"CalendarEventDate.eventId",
 		)
 		.select(["Tournament.id"])
-		.where("Tournament.isFinalized", "=", 1)
+		.where("Tournament.isFinalized", "=", true)
 		.where(({ or, and, eb }) =>
 			or([
 				and([
@@ -112,7 +112,7 @@ export function markVodSyncCompleted(tournamentId: number) {
 	return db
 		.updateTable("Tournament")
 		.set((eb) => ({
-			vodsLastSyncAt: databaseTimestampNow(),
+			vodsLastSyncAt: new Date(),
 			vodsSyncCount: eb("vodsSyncCount", "+", 1),
 		}))
 		.where("id", "=", tournamentId)

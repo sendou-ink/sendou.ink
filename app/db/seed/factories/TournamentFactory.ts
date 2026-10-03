@@ -260,7 +260,11 @@ export async function castMatch({
 	matchId: number;
 	twitchAccount: string;
 }) {
-	const tournament = await TournamentRepository.findById(tournamentId);
+	const tournament = await TournamentRepository.tournaments()
+		.where({ id: tournamentId })
+		.includingHidden()
+		.withColumns(["castTwitchAccounts"])
+		.executeTakeFirst();
 	invariant(tournament, `Tournament ${tournamentId} not found`);
 
 	await TournamentRepository.updateCastTwitchAccounts({

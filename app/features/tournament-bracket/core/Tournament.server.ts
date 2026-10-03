@@ -1,6 +1,7 @@
 import { isAfter, sub, subDays } from "date-fns";
 import { type Params, redirect } from "react-router";
 import { ServerConfig } from "~/config.server";
+import type { QueryRow } from "~/db/entity-query";
 import {
 	type AuthenticatedUser,
 	getUser,
@@ -39,7 +40,7 @@ import {
 
 /** Everything a tournament is made of including brackets and streams. */
 export async function tournamentData(tournamentId: number) {
-	const ctx = await TournamentRepository.findById(tournamentId);
+	const ctx = await tournamentCtx(tournamentId).executeTakeFirst();
 	if (!ctx) return null;
 
 	const data = await BracketRepository.findByTournamentId(tournamentId);
@@ -123,7 +124,7 @@ export type TournamentLayoutData = {
 
 /** No per member profile data, map pool or invite code, see {@link tournamentTeamsFullCached} for those. */
 export type TournamentDataTeam = Omit<
-	TournamentRepository.FindById["teams"][number],
+	QueryRow<ReturnType<typeof tournamentCtx>>["teams"][number],
 	"teamLogoUrl" | "pickupAvatarUrl" | "inviteCode"
 > & {
 	/**
@@ -606,9 +607,9 @@ export async function refreshRunningTournaments() {
 }
 
 async function primeRunningTournamentsCache() {
-	const tournamentIds = await TournamentRepository.findRunningTournamentIds();
+	const running = await runningTournaments().execute();
 
-	for (const tournamentId of tournamentIds) {
+	for (const { id: tournamentId } of running) {
 		const data = await tournamentData(tournamentId);
 		if (!data) continue;
 
@@ -618,3 +619,39 @@ async function primeRunningTournamentsCache() {
 }
 
 await primeRunningTournamentsCache();
+
+/** Everything the `Tournament` class is built from. Hidden ones included, a draft's viewer is checked with {@link requireTournamentVisible}. */
+function tournamentCtx(tournamentId: number) {
+	return TournamentRepository.tournaments()
+		.where({ id: tournamentId })
+		.includingHidden()
+		.withEvent()
+		.withColumns([
+			"settings",
+			"castTwitchAccounts",
+			"castedMatchesInfo",
+			"mapPickingStyle",
+			"tier",
+			"isFinalized",
+		])
+		.withHasRules()
+		.withOrganizationDetails()
+		.withAuthor()
+		.withStaff()
+		.withBracketProgressionOverrides()
+		.withTeams()
+		.withToSetMapPool()
+		.withPermissions();
+}
+
+/** Unfinalized tournaments, drafts included, whose first bracket started within the last two days. */
+function runningTournaments() {
+	const now = new Date();
+
+	return TournamentRepository.tournaments()
+		.where({ isFinalized: false })
+		.includingHidden()
+		.excludingTests()
+		.started()
+		.startingBetween(sub(now, { days: 2 }), now);
+}

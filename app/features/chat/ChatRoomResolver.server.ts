@@ -168,12 +168,11 @@ async function resolveTournamentMatchRooms(
 			),
 		),
 	);
-	const [members, organizers] = await Promise.all([
-		TournamentTeamRepository.findAllMembersByTeamIds(teamIds),
-		TournamentRepository.findOrganizerPermissionsByTournamentIds(
-			R.unique(owners.map((owner) => owner.tournamentId)),
-		),
-	]);
+	const members =
+		await TournamentTeamRepository.findAllMembersByTeamIds(teamIds);
+	const organizers = await organizerPermissionsByTournamentId(
+		owners.map((owner) => owner.tournamentId),
+	);
 
 	return joinOwners(rooms, owners, (owner) => {
 		const opponentTeamIds = [
@@ -211,10 +210,9 @@ async function resolveTournamentTeamRooms(
 		rooms.map((room) => room.id),
 	);
 
-	const organizers =
-		await TournamentRepository.findOrganizerPermissionsByTournamentIds(
-			R.unique(owners.map((owner) => owner.tournamentId)),
-		);
+	const organizers = await organizerPermissionsByTournamentId(
+		owners.map((owner) => owner.tournamentId),
+	);
 
 	return joinOwners(rooms, owners, (owner) => ({
 		titleParams: {
@@ -305,6 +303,17 @@ function joinOwners<T extends { chatRoomId: number }>(
 			}),
 		};
 	});
+}
+
+// hidden ones included, a room's organizers observe it whether or not the tournament is listed
+async function organizerPermissionsByTournamentId(tournamentIds: number[]) {
+	const rows = await TournamentRepository.tournaments()
+		.whereIdIn(R.unique(tournamentIds))
+		.includingHidden()
+		.withOrganizerPermissions()
+		.execute();
+
+	return new Map(rows.map((row) => [row.id, row.permissions]));
 }
 
 /** Labels the tournament's organizers "TO" and its streamers "Stream". */

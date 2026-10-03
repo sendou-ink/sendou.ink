@@ -313,7 +313,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		hasRules: true,
 		name: "Zones Weekly 38",
 		startsAt: 1734685200,
-		isFinalized: 0,
+		isFinalized: false,
 		organization: null,
 		logoUrl: "tournament-logo-hfX5gzVyrt5QCV8fiQA4n-1716906622859.webp",
 		author: {

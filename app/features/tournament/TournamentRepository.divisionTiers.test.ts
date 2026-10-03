@@ -18,7 +18,12 @@ describe("TournamentRepository.upsertDivisionTier", () => {
 	};
 
 	const tierOf = async (tournamentId: number) =>
-		(await TournamentRepository.findById(tournamentId))?.tier;
+		(
+			await TournamentRepository.tournaments()
+				.where({ id: tournamentId })
+				.withColumns(["tier"])
+				.executeTakeFirst()
+		)?.tier;
 
 	test("gives the tournament the tier of its only division", async () => {
 		const tournamentId = await createTournament();

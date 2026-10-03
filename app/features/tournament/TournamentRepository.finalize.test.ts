@@ -199,7 +199,7 @@ describe("TournamentRepository.finalize", () => {
 			.where("userId", "=", users.id(1))
 			.executeTakeFirstOrThrow();
 
-		expect(tournament.isFinalized).toBe(1);
+		expect(tournament.isFinalized).toBe(true);
 		expect(newSkills).toHaveLength(0);
 		expect(placement.placement).toBe(1);
 	});

@@ -67,7 +67,7 @@ export const testTournament = ({
 		logoUrl: "/test.avif",
 		discordUrl: null,
 		startsAt: 1705858842,
-		isFinalized: 0,
+		isFinalized: false,
 		name: "test",
 		castTwitchAccounts: [],
 		bracketProgressionOverrides: [],

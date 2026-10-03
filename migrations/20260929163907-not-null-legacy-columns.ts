@@ -71,6 +71,8 @@ const COLUMN_DEFINITIONS: Record<string, Record<string, string>> = {
  * hide soft-deleted teams through a chain guard instead, the member views now filter on `deletedAt`.
  * Renames `PendingTrophy` to `TrophySubmission` (and its approvals with it), as it keeps reviewed
  * submissions too, and indexes `SpecialTrophyOwner` by user for the trophies a user owns.
+ * Adds `hidden` to the `CalendarEvent` tournament id index, so the guard hiding drafts and test
+ * tournaments reads it from the index instead of the event row.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	// a no-op inside a transaction, and needed off so dropping the old tables doesn't cascade to their children
@@ -92,6 +94,10 @@ export async function up(db: Kysely<any>): Promise<void> {
 			await replaceTeamViewWithTable(trx);
 			await renamePendingTrophyToTrophySubmission(trx);
 			await sql`create index "special_trophy_owner_user_id" on "SpecialTrophyOwner" ("userId")`.execute(
+				trx,
+			);
+			await sql`drop index "calendar_event_tournament_id"`.execute(trx);
+			await sql`create index "calendar_event_tournament_id" on "CalendarEvent" ("tournamentId", "hidden")`.execute(
 				trx,
 			);
 

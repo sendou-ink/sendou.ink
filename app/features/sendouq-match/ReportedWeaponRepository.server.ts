@@ -220,7 +220,7 @@ export async function findSeasonReportedWeaponsByUserId({
 			fn.countAll<number>().as("count"),
 		])
 		.where("ReportedWeapon.userId", "=", userId)
-		.where("Tournament.isFinalized", "=", 1)
+		.where("Tournament.isFinalized", "=", true)
 		.where("ReportedWeapon.createdAt", ">=", startsTs)
 		.where("ReportedWeapon.createdAt", "<=", endsTs)
 		.groupBy("ReportedWeapon.weaponSplId");

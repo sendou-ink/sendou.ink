@@ -245,7 +245,7 @@ describe("calendar new action: team picked tournament", () => {
 		expect(res.fieldErrors).toBeUndefined();
 
 		const edited = await tournamentFromDB(tournament.id);
-		expect(edited.ctx.teams[0].hasMapPool).toBe(0);
+		expect(edited.ctx.teams[0].hasMapPool).toBe(false);
 		expect(edited.ctx.teams[0].checkIns).toEqual([]);
 	});
 });

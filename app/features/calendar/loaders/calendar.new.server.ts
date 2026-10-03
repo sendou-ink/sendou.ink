@@ -45,7 +45,9 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		return {
 			...event,
 			tournament: eventTournament,
-			rules: await TournamentRepository.findRulesById(event.tournamentId),
+			rules:
+				(await tournamentRules(event.tournamentId).executeTakeFirst())?.rules ??
+				null,
 			teamsHavePickedMaps:
 				eventTournament?.ctx.teams.some((team) => team.hasMapPool) ?? false,
 		};
@@ -166,4 +168,12 @@ export async function findValidOrganizations(
 	return orgs
 		.filter((org) => org.isEstablished)
 		.map((org) => R.omit(org, ["isEstablished", "role", "roleDisplayName"]));
+}
+
+// hidden ones included like the rest of the event, the edit is checked against its permissions
+function tournamentRules(tournamentId: number) {
+	return TournamentRepository.tournaments()
+		.where({ id: tournamentId })
+		.includingHidden()
+		.withColumns(["rules"]);
 }

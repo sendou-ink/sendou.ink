@@ -29,14 +29,16 @@ const createTournamentTeam = (
 	);
 
 const showcaseCounts = async (tournamentId: number) => {
-	const counts =
-		await TournamentRepository.findShowcaseCountsById(tournamentId);
+	const counts = await TournamentRepository.tournaments()
+		.where({ id: tournamentId })
+		.withCounts()
+		.executeTakeFirst();
 	expect(counts).toBeDefined();
 
 	return counts!;
 };
 
-describe("TournamentRepository.findShowcaseCountsById", () => {
+describe("TournamentRepository.tournaments().withCounts", () => {
 	beforeEach(async () => {
 		await users.create(MEMBERS_PER_TEAM * TEAM_COUNT);
 	});

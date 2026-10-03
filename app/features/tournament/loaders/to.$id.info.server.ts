@@ -15,13 +15,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		},
 	);
 
-	const [description, endsAt] = await Promise.all([
-		TournamentRepository.findDescriptionById(tournamentId),
+	const [tournamentDescription, endsAt] = await Promise.all([
+		tournamentWithDescription(tournamentId).executeTakeFirst(),
 		estimatedEnd(tournament)?.catch((error) => {
 			logger.error("Failed to estimate the tournament's end", error);
 			return null;
 		}) ?? null,
 	]);
+	const description = tournamentDescription?.description ?? null;
 
 	if (!user) {
 		return { isSaved: false, description, endsAt };
@@ -55,4 +56,12 @@ function estimatedEnd(tournament: Tournament) {
 		),
 		teamCount: tournament.ctx.teams.length,
 	});
+}
+
+// visibility checked by tournamentFromParams
+function tournamentWithDescription(tournamentId: number) {
+	return TournamentRepository.tournaments()
+		.where({ id: tournamentId })
+		.includingHidden()
+		.withDescription();
 }

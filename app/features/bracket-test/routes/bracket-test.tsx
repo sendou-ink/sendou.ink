@@ -52,7 +52,7 @@ export default function BracketTestLayout() {
 		ctx: {
 			id: 1,
 			name: "Bracket Test",
-			isFinalized: 0,
+			isFinalized: false,
 			castedMatchesInfo: null,
 			teams,
 			settings: {

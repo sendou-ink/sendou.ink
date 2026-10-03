@@ -13,7 +13,11 @@ type InsertArgs = {
 export const { create } = defineFactory({
 	defaults: () => ({ role: "ORGANIZER" as const }),
 	insert: async (args: InsertArgs) => {
-		const tournament = await TournamentRepository.findById(args.tournamentId);
+		const tournament = await TournamentRepository.tournaments()
+			.where({ id: args.tournamentId })
+			.includingHidden()
+			.withStaff()
+			.executeTakeFirst();
 
 		await TournamentRepository.setStaff({
 			tournamentId: args.tournamentId,

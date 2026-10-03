@@ -56,6 +56,10 @@ const testBuilds = defineQuery({
 			})),
 		sortedInsideRefine: () =>
 			refine("Build", (qb) => qb.orderBy("Build.title", "asc")),
+		withTitleWords: () =>
+			refine("Build", (qb) =>
+				qb.select(sql<string>`"Build"."title" || ' words'`.as("titleWords")),
+			).mapRows((row) => ({ titleWords: row.titleWords.split(" ") })),
 	}),
 });
 
@@ -150,6 +154,12 @@ describe("defineQuery", () => {
 			.execute();
 
 		expect(row).toMatchObject({ title: "B!", titleLength: 2, score: 4 });
+	});
+
+	test("a refine step's mapper rewrites what the step selected", async () => {
+		const [row] = await testBuilds().withTitleWords().execute();
+
+		expect(row.titleWords).toEqual(["b", "words"]);
 	});
 
 	test("throws when a refine step sorts with orderBy", () => {

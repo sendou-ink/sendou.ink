@@ -1,4 +1,4 @@
-import { eachDayOfInterval, subDays } from "date-fns";
+import { eachDayOfInterval, sub, subDays } from "date-fns";
 import { refine } from "~/db/entity-query";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
@@ -1280,15 +1280,40 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	add(
-		"TournamentRepository.findOrganizerPermissionsByTournamentIds",
+		"TournamentRepository.tournaments.organizerPermissions",
 		fx.recentTournamentIds,
 		(tournamentIds) =>
-			TournamentRepository.findOrganizerPermissionsByTournamentIds(
-				tournamentIds,
-			),
+			TournamentRepository.tournaments()
+				.whereIdIn(tournamentIds)
+				.includingHidden()
+				.withOrganizerPermissions()
+				.execute(),
 	);
-	add("TournamentRepository.findById", fx.heavyTournamentId, (tournamentId) =>
-		TournamentRepository.findById(tournamentId),
+	add(
+		"TournamentRepository.tournaments.ctx",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.tournaments()
+				.where({ id: tournamentId })
+				.includingHidden()
+				.withEvent()
+				.withColumns([
+					"settings",
+					"castTwitchAccounts",
+					"castedMatchesInfo",
+					"mapPickingStyle",
+					"tier",
+					"isFinalized",
+				])
+				.withHasRules()
+				.withOrganizationDetails()
+				.withAuthor()
+				.withStaff()
+				.withBracketProgressionOverrides()
+				.withTeams()
+				.withToSetMapPool()
+				.withPermissions()
+				.executeTakeFirst(),
 	);
 	add(
 		"TournamentRepository.findStreamsByTournamentId",
@@ -1309,20 +1334,24 @@ export function buildCases(fx: Fixtures): {
 			TournamentRepository.findParticipatedUserIdsById(tournamentId),
 	);
 	add(
-		"TournamentRepository.findRulesById",
-		fx.heavyTournamentId,
-		(tournamentId) => TournamentRepository.findRulesById(tournamentId),
-	);
-	add(
-		"TournamentRepository.findDescriptionById",
-		fx.heavyTournamentId,
-		(tournamentId) => TournamentRepository.findDescriptionById(tournamentId),
-	);
-	add(
-		"TournamentRepository.findSeedingSnapshotById",
+		"TournamentRepository.tournaments.rules",
 		fx.heavyTournamentId,
 		(tournamentId) =>
-			TournamentRepository.findSeedingSnapshotById(tournamentId),
+			TournamentRepository.tournaments()
+				.where({ id: tournamentId })
+				.includingHidden()
+				.withColumns(["rules"])
+				.executeTakeFirst(),
+	);
+	add(
+		"TournamentRepository.tournaments.description",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.tournaments()
+				.where({ id: tournamentId })
+				.includingHidden()
+				.withDescription()
+				.executeTakeFirst(),
 	);
 	add(
 		"TournamentRepository.findResultsByTournamentId",
@@ -1337,20 +1366,9 @@ export function buildCases(fx: Fixtures): {
 		}),
 	);
 	add(
-		"TournamentRepository.findTOSetMapPoolById",
-		fx.heavyTournamentId,
-		(tournamentId) => TournamentRepository.findTOSetMapPoolById(tournamentId),
-	);
-	add(
 		"TournamentRepository.findPreparedMapsById",
 		fx.heavyTournamentId,
 		(tournamentId) => TournamentRepository.findPreparedMapsById(tournamentId),
-	);
-	add(
-		"TournamentRepository.findRelatedUsersByTournamentIds",
-		fx.recentTournamentIds,
-		(tournamentIds) =>
-			TournamentRepository.findRelatedUsersByTournamentIds(tournamentIds),
 	);
 	add(
 		"TournamentRepository.findParticipantTwitchAccounts",
@@ -1358,18 +1376,49 @@ export function buildCases(fx: Fixtures): {
 		(tournamentIds) =>
 			TournamentRepository.findParticipantTwitchAccounts(tournamentIds),
 	);
-	addStatic("TournamentRepository.findAllForShowcase", () =>
-		TournamentRepository.findAllForShowcase(),
+	addStatic("TournamentRepository.tournaments.showcase", () =>
+		TournamentRepository.tournaments()
+			.includingHidden()
+			.startingBetween(sub(new Date(), { days: 7 }), null)
+			.soonestFirst()
+			.withColumns(["settings", "tier", "isFinalized"])
+			.withAuthor()
+			.withOrganization()
+			.withCounts()
+			.withBadges()
+			.withTrophy()
+			.withFirstPlacers()
+			.withHasVods()
+			.execute(),
 	);
 	add(
-		"TournamentRepository.findShowcaseCountsById",
+		"TournamentRepository.tournaments.relatedUsers",
+		fx.recentTournamentIds,
+		(tournamentIds) =>
+			TournamentRepository.tournaments()
+				.whereIdIn(tournamentIds)
+				.includingHidden()
+				.withAuthor()
+				.withStaff()
+				.execute(),
+	);
+	add(
+		"TournamentRepository.tournaments.counts",
 		fx.heavyTournamentId,
-		(tournamentId) => TournamentRepository.findShowcaseCountsById(tournamentId),
+		(tournamentId) =>
+			TournamentRepository.tournaments()
+				.where({ id: tournamentId })
+				.includingHidden()
+				.withCounts()
+				.executeTakeFirst(),
 	);
 	add(
-		"TournamentRepository.findAllBetweenTwoTimestamps",
+		"TournamentRepository.tournaments.startingBetween",
 		fx.calendarWindow,
-		(window) => TournamentRepository.findAllBetweenTwoTimestamps(window),
+		(window) =>
+			TournamentRepository.tournaments()
+				.startingBetween(window.startTime, window.endTime)
+				.execute(),
 	);
 	add(
 		"TournamentRepository.findPendingCheckInsStartingBetween",
@@ -1400,8 +1449,14 @@ export function buildCases(fx: Fixtures): {
 	addStatic("TournamentRepository.searchByName", () =>
 		TournamentRepository.searchByName(SEARCH_QUERY),
 	);
-	addStatic("TournamentRepository.findRunningTournamentIds", () =>
-		TournamentRepository.findRunningTournamentIds(),
+	addStatic("TournamentRepository.tournaments.running", () =>
+		TournamentRepository.tournaments()
+			.where({ isFinalized: false })
+			.includingHidden()
+			.excludingTests()
+			.started()
+			.startingBetween(sub(new Date(), { days: 2 }), new Date())
+			.execute(),
 	);
 	add(
 		"TournamentRepository.findDivisionTiersByTournamentId",

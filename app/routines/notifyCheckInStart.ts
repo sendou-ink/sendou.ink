@@ -10,17 +10,12 @@ export const NotifyCheckInStartRoutine = new Routine({
 	func: async () => {
 		const now = new Date();
 		const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-		const tournaments = await TournamentRepository.findAllBetweenTwoTimestamps({
-			startTime: now,
-			endTime: oneHourFromNow,
-		});
+		const startingSoon = await TournamentRepository.tournaments()
+			.startingBetween(now, oneHourFromNow)
+			.execute();
 
-		for (const { tournamentId } of tournaments) {
-			const tournament = await tournamentDataCached(tournamentId!);
-
-			if (tournament.ctx.settings.isTest || tournament.ctx.settings.isDraft) {
-				continue;
-			}
+		for (const { id: tournamentId } of startingSoon) {
+			const tournament = await tournamentDataCached(tournamentId);
 
 			logger.info(
 				`Notifying check-in start for tournament ${tournament.ctx.id}`,

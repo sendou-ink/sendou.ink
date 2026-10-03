@@ -84,6 +84,14 @@ type Refinement<R extends TableName, B extends AnyQB> = Modifier<
 	sortedBy(
 		...keys: Array<readonly [SortableColumn<B>, OrderByDirection]>
 	): Modifier<R, SelectedOf<B>>;
+	/**
+	 * Reshapes what the step selected after the query ran, usually rewriting a selected key into
+	 * its domain value (raw JSON into the computed `permissions`), so the raw form never reaches
+	 * the row. No other mapper may write the keys it returns.
+	 */
+	mapRows<Out extends Record<string, unknown>>(
+		map: (row: SelectedOf<B>) => Out,
+	): Modifier<R, Override<SelectedOf<B>, Out>, unknown, keyof Out>;
 };
 
 type SelectedOf<B> =
@@ -107,6 +115,10 @@ export function refine<R extends TableName, B extends AnyQB>(
 		sortedBy: (...keys) => ({
 			apply: apply as (qb: AnyQB) => AnyQB,
 			sortKeys: keys,
+		}),
+		mapRows: (map) => ({
+			apply: apply as (qb: AnyQB) => AnyQB,
+			map: map as (row: any) => Record<string, unknown>,
 		}),
 	};
 }
@@ -558,7 +570,7 @@ class ChainImpl {
 	#build(limit = this.#state.limit) {
 		const qb = orderByKeys(this.#unsorted(), this.#sortKeys());
 
-		return typeof limit === "number" ? qb.limit(limit) : qb;
+		return typeof limit === "number" ? qb.limit(literalCount(limit)) : qb;
 	}
 
 	// rows are fresh from the driver, so mappers write into them in place
@@ -651,7 +663,7 @@ class ChainImpl {
 			),
 			keys,
 		)
-			.limit(size)
+			.limit(literalCount(size))
 			.offset((currentPage - 1) * size)
 			.execute();
 		const totalCount =
@@ -676,7 +688,7 @@ class ChainImpl {
 		}
 
 		const idRows = await orderByKeys(query, keys)
-			.limit(size + 1)
+			.limit(literalCount(size + 1))
 			.execute();
 		const pageRows = idRows.slice(0, size);
 		const lastRow = pageRows.at(-1);
@@ -1018,6 +1030,20 @@ function decodeCursorValue(value: unknown): CursorValue | null {
 	}
 
 	return null;
+}
+
+/**
+ * A limit inlined into the SQL: bound as a parameter it cost SQLite (3.53) ~1.5µs per correlated
+ * subquery in the select list on every run, a chain's typical shape. Offsets don't pay it.
+ */
+function literalCount(count: number) {
+	if (!Number.isSafeInteger(count) || count < 0) {
+		throw new Error(
+			`Expected a limit to be a non-negative integer, got ${count}`,
+		);
+	}
+
+	return sql.lit(count);
 }
 
 function addsSelections(before: AnyQB, after: AnyQB) {

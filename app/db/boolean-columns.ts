@@ -20,6 +20,7 @@ const BOOLEAN_COLUMN_FLAGS: Record<BooleanColumn, true> = {
 	"ScrimPostRequest.isAccepted": true,
 	"ScrimPostRequestUser.isOwner": true,
 	"ScrimPostUser.isOwner": true,
+	"Tournament.isFinalized": true,
 	"User.commissionsOpen": true,
 	"User.isApiAccesser": true,
 	"User.isArtist": true,

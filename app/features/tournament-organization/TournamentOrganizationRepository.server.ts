@@ -433,7 +433,7 @@ export function findAllUnfinalizedEvents(organizationId: number) {
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
 		.select(["Tournament.id"])
-		.where("Tournament.isFinalized", "=", 0)
+		.where("Tournament.isFinalized", "=", false)
 		.where("CalendarEvent.organizationId", "=", organizationId)
 		.execute();
 }
@@ -766,7 +766,7 @@ export function update({
 					"Tournament.tier",
 					"CalendarEventDate.startsAt",
 				])
-				.where("Tournament.isFinalized", "=", 1)
+				.where("Tournament.isFinalized", "=", true)
 				.where("CalendarEvent.organizationId", "=", id)
 				.where("CalendarEvent.hidden", "=", 0)
 				.orderBy("CalendarEventDate.startsAt", "asc")

@@ -22,9 +22,18 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		teams,
 		seedingSnapshot:
-			await TournamentRepository.findSeedingSnapshotById(tournamentId),
+			(await tournamentSeedingSnapshot(tournamentId).executeTakeFirst())
+				?.seedingSnapshot ?? null,
 		...(await UserCardRepository.findAllByUserIds({
 			userIds,
 		})),
 	};
 };
+
+// visibility checked by tournamentFromParams
+function tournamentSeedingSnapshot(tournamentId: number) {
+	return TournamentRepository.tournaments()
+		.where({ id: tournamentId })
+		.includingHidden()
+		.withColumns(["seedingSnapshot"]);
+}

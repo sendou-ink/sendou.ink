@@ -1,5 +1,7 @@
 import cachified from "@epic-web/cachified";
+import { sub } from "date-fns";
 import * as R from "remeda";
+import { type QueryRow, refine } from "~/db/entity-query";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
@@ -13,7 +15,7 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import type { CommonUser } from "~/utils/kysely.server";
+import { type CommonUser, jsonArrayFrom } from "~/utils/kysely.server";
 import { tournamentPage } from "~/utils/urls";
 
 interface ShowcaseTournamentCollection {
@@ -130,8 +132,7 @@ export async function refreshCachedTournamentCounts(tournamentId: number) {
 	);
 	if (!cachedTournament) return;
 
-	const counts =
-		await TournamentRepository.findShowcaseCountsById(tournamentId);
+	const counts = await tournamentCounts(tournamentId).executeTakeFirst();
 	if (!counts) return;
 
 	cachedTournament.teamsCount = counts.teamsCount;
@@ -167,7 +168,7 @@ async function cachedTournaments() {
 		cache,
 		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
-			const tournaments = await TournamentRepository.findAllForShowcase();
+			const tournaments = await showcaseTournaments().execute();
 			const mapped = tournaments.map(mapTournamentFromDB);
 
 			return deleteExtraResults(mapped);
@@ -237,7 +238,7 @@ async function tournamentsToParticipationInfoMap(
 ): Promise<Map<CommonUser["id"], ParticipationInfo>> {
 	const tournamentIds = tournaments.map((tournament) => tournament.id);
 	const tournamentsWithUsers =
-		await TournamentRepository.findRelatedUsersByTournamentIds(tournamentIds);
+		await tournamentsWithRelatedUsers(tournamentIds).execute();
 
 	const result: Map<CommonUser["id"], ParticipationInfo> = new Map();
 
@@ -262,11 +263,12 @@ async function tournamentsToParticipationInfoMap(
 			addToMap(userId, tournament.id, "participant");
 		}
 
-		for (const { userId } of tournament.staff) {
-			addToMap(userId, tournament.id, "organizer");
+		for (const staffer of tournament.staff) {
+			if (staffer.role !== "ORGANIZER") continue;
+			addToMap(staffer.id, tournament.id, "organizer");
 		}
 
-		addToMap(tournament.authorId, tournament.id, "organizer");
+		addToMap(tournament.author.id, tournament.id, "organizer");
 	}
 
 	return result;
@@ -275,23 +277,24 @@ async function tournamentsToParticipationInfoMap(
 const MEMBERS_TO_SHOW = 5;
 
 function mapTournamentFromDB(
-	tournament: TournamentRepository.ForShowcase,
+	tournament: ShowcaseTournamentRow,
 ): ShowcaseCalendarEvent {
 	const firstPlacers = resolveFirstPlacers(tournament);
+	const organizationId = tournament.organization?.id ?? null;
 
 	const tentativeTier =
 		tournament.tier === null &&
-		tournament.organizationId !== null &&
+		organizationId !== null &&
 		!tournament.firstPlacers.length
-			? getTentativeTier(tournament.organizationId, tournament.name)
+			? getTentativeTier(organizationId, tournament.name)
 			: null;
 
 	return {
 		type: "showcase",
 		url: tournamentPage(tournament.id),
 		id: tournament.id,
-		authorId: tournament.authorId,
-		organizationId: tournament.organizationId,
+		authorId: tournament.author.id,
+		organizationId,
 		name: tournament.name,
 		startsAt: tournament.startsAt,
 		teamsCount: tournament.teamsCount,
@@ -311,21 +314,22 @@ function mapTournamentFromDB(
 		}),
 		tier: tournament.tier ?? null,
 		tentativeTier,
-		hidden: Boolean(tournament.hidden),
-		isFinalized: Boolean(tournament.isFinalized),
+		hidden: Boolean(tournament.settings.isTest || tournament.settings.isDraft),
+		isFinalized: tournament.isFinalized,
 		minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 		modes: null,
-		hasVods: (tournament.vodCount ?? 0) > 0,
+		hasVods: tournament.hasVods,
 		badges: tournament.badges,
 		trophy: tournament.trophy,
 		firstPlacers,
 	};
 }
 
-type FirstPlacerRow = TournamentRepository.ForShowcase["firstPlacers"][number];
+type ShowcaseTournamentRow = QueryRow<ReturnType<typeof showcaseTournaments>>;
+type FirstPlacerRow = ShowcaseTournamentRow["firstPlacers"][number];
 
 function resolveFirstPlacers(
-	tournament: TournamentRepository.ForShowcase,
+	tournament: ShowcaseTournamentRow,
 ): ShowcaseCalendarEvent["firstPlacers"] {
 	if (tournament.firstPlacers.length === 0) {
 		return [];
@@ -345,7 +349,7 @@ function resolveFirstPlacers(
 }
 
 function winnersOfHighestDivision(
-	tournament: TournamentRepository.ForShowcase,
+	tournament: ShowcaseTournamentRow,
 ): FirstPlacerRow[] {
 	if (tournament.firstPlacers.every((p) => p.div === null)) {
 		return tournament.firstPlacers;
@@ -425,4 +429,52 @@ function showcaseScore(tournament: ShowcaseCalendarEvent): number {
 			: 0;
 
 	return tournament.teamsCount + tierBonus;
+}
+
+// hidden ones included, they reach only their organizers via `organizingFor`
+function showcaseTournaments() {
+	return TournamentRepository.tournaments()
+		.includingHidden()
+		.startingBetween(sub(new Date(), { days: 7 }), null)
+		.soonestFirst()
+		.withColumns(["settings", "tier", "isFinalized"])
+		.withAuthor()
+		.withOrganization()
+		.withCounts()
+		.withBadges()
+		.withTrophy()
+		.withFirstPlacers()
+		.withHasVods();
+}
+
+function tournamentCounts(tournamentId: number) {
+	return TournamentRepository.tournaments()
+		.where({ id: tournamentId })
+		.includingHidden()
+		.withCounts();
+}
+
+function tournamentsWithRelatedUsers(tournamentIds: number[]) {
+	return TournamentRepository.tournaments()
+		.whereIdIn(tournamentIds)
+		.includingHidden()
+		.withAuthor()
+		.withStaff()
+		.with(
+			refine("Tournament", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TournamentTeam")
+							.innerJoin(
+								"TournamentTeamMember",
+								"TournamentTeamMember.tournamentTeamId",
+								"TournamentTeam.id",
+							)
+							.select("TournamentTeamMember.userId")
+							.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id"),
+					).as("teamMembers"),
+				),
+			),
+		);
 }

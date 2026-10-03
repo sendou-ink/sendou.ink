@@ -1353,7 +1353,7 @@ export const PADDLING_POOL_257 = () =>
 					customAvatarUrl: null,
 				},
 			],
-			isFinalized: 1,
+			isFinalized: true,
 			inProgressBrackets: [
 				{
 					id: 28,
@@ -3977,7 +3977,7 @@ export const PADDLING_POOL_255 = () =>
 					customAvatarUrl: null,
 				},
 			],
-			isFinalized: 1,
+			isFinalized: true,
 			inProgressBrackets: [
 				{
 					id: 20,
@@ -6433,7 +6433,7 @@ export const IN_THE_ZONE_32 = ({
 					customAvatarUrl: null,
 				},
 			],
-			isFinalized: 1,
+			isFinalized: true,
 			inProgressBrackets: [
 				{
 					id: 16,

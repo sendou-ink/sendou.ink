@@ -352,7 +352,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Can't override progression if follow-up brackets are started",
 			);
 
-			await TournamentRepository.overrideTeamBracketProgression({
+			await TournamentRepository.upsertBracketProgressionOverride({
 				tournamentTeamId: data.tournamentTeamId,
 				sourceBracketIdx: data.sourceBracketIdx,
 				destinationBracketIdx: data.destinationBracketIdx,

@@ -12,7 +12,7 @@ const mockTournament = {
 	ctx: {
 		id: 1,
 		name: "Test Tournament",
-		isFinalized: 0,
+		isFinalized: false,
 		castedMatchesInfo: null,
 		teams: [
 			{

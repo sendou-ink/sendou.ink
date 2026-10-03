@@ -51,13 +51,16 @@ const permissionsOfTournament = async ({
 		});
 	}
 
-	const found = await TournamentRepository.findById(tournament.id);
+	const found = await TournamentRepository.tournaments()
+		.where({ id: tournament.id })
+		.withPermissions()
+		.executeTakeFirst();
 	invariant(found, "Expected to find the tournament");
 
 	return found.permissions;
 };
 
-describe("TournamentRepository.findById", () => {
+describe("TournamentRepository.tournaments().withPermissions", () => {
 	beforeEach(async () => {
 		await users.create(7);
 	});

@@ -641,12 +641,12 @@ export interface Tournament {
 	castedMatchesInfo: JSONColumn<CastedMatchesInfo | null>;
 	rules: string | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
-	isFinalized: Generated<DBBoolean>;
+	isFinalized: Generated<boolean>;
 	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
 	seedingSnapshot: Generated<JSONColumn<SeedingSnapshot | null>>;
 	/** Tournament tier based on top teams' skill. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
 	tier: TournamentTierNumber | null;
-	vodsLastSyncAt: Generated<number | null>;
+	vodsLastSyncAt: Generated<Date | null>;
 	/** How many times vods have been synced (automatic process that happens when tournament has concluded). */
 	vodsSyncCount: Generated<number>;
 }

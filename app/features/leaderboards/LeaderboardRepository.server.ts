@@ -486,7 +486,7 @@ export async function findSeasonPopularUsersWeapon(
 		)
 		.innerJoin("Tournament", "Tournament.id", "TournamentStage.tournamentId")
 		.select(packedUserWeapon.as("packedUserWeapon"))
-		.where("Tournament.isFinalized", "=", 1)
+		.where("Tournament.isFinalized", "=", true)
 		.where("ReportedWeapon.createdAt", ">=", startsTs)
 		.where("ReportedWeapon.createdAt", "<=", endsTs);
 

@@ -2181,7 +2181,7 @@ export const SWIM_OR_SINK_167 = (
 			},
 		],
 		bracketProgressionOverrides: overrides ?? [],
-		isFinalized: 0,
+		isFinalized: false,
 		teams: [
 			{
 				id: 14657,
