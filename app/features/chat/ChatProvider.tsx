@@ -53,6 +53,7 @@ interface ChatContextValue {
 		roomId: number,
 		message: { publicId: string; contents: string },
 	) => void;
+	retryMessage: (roomId: number, publicId: string) => void;
 	/** Active rooms out of sight (a background tab of the split view), stable across renders. */
 	setHiddenRoomIds: (roomIds: number[]) => void;
 	totalUnreadCount: number;
@@ -254,6 +255,7 @@ function ChatProviderInner({
 			snapshot.unreadDividerByRoomId.get(roomId),
 		ensureMessagesLoaded: chatClient.ensureMessagesLoaded,
 		sendMessage,
+		retryMessage: chatClient.retry,
 		setHiddenRoomIds: chatClient.setHiddenRoomIds,
 		totalUnreadCount: snapshot.totalUnreadCount,
 		chatOpen,

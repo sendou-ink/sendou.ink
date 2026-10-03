@@ -1,5 +1,4 @@
 import * as R from "remeda";
-import { toastQueue } from "~/components/elements/Toast";
 import type { ServerEvent } from "~/features/events/events-types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
@@ -33,8 +32,6 @@ interface ChatClientDeps {
 		message: { publicId: string; contents: string },
 	) => Promise<{ message: ChatMessageWithAuthor } | null>;
 	postRead: (roomId: number, lastSeenMessageId: number) => Promise<void>;
-	/** Called when a send did not reach the server, to tell the user their message was not delivered. */
-	onSendFailed: () => void;
 	addServerEventListener: (
 		listener: (event: ServerEvent) => void,
 	) => () => void;
@@ -77,11 +74,13 @@ export interface ChatClient {
 	ensureMessagesLoaded: (roomId: number) => void;
 	/** Reconnect catch-up: refetches the room list and every loaded history. */
 	catchUp: () => void;
-	/** Appends an optimistic pending message and POSTs the send; the pending row is replaced by the SSE echo or the POST response (whichever lands first), and removed with an error notice if the send fails. */
+	/** Appends an optimistic pending message and POSTs the send; the pending row is replaced by the SSE echo or the POST response (whichever lands first), and marked failed if the send fails. */
 	send: (
 		roomId: number,
 		message: { publicId: string; contents: string; author: ChatMessageAuthor },
 	) => void;
+	/** Sends a failed message again, pending until it lands or fails anew. */
+	retry: (roomId: number, publicId: string) => void;
 	/** Zeroes the room's unread count and debounces the read-indicator POST. */
 	markRead: (roomId: number) => void;
 	/** Posts every debounced read indicator right away, for a page that is going away. */
@@ -465,6 +464,59 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		}
 	};
 
+	const postPendingMessage = (
+		roomId: number,
+		message: { publicId: string; contents: string },
+	) => {
+		void deps
+			.postMessage(roomId, message)
+			.catch((error) => {
+				logger.error("Sending chat message failed", error);
+				return null;
+			})
+			.then((data) => {
+				if (!data) {
+					// a failed send stuck at pending forever would read as delivered
+					patchPendingMessage(roomId, message.publicId, { failed: true });
+					return;
+				}
+
+				// usually the SSE echo lands first, both reconcile by publicId
+				insertPersisted(data.message);
+				const room = roomById(roomId);
+				if (room) {
+					setRoom(roomId, {
+						latestMessageId: Math.max(
+							room.latestMessageId ?? 0,
+							data.message.id,
+						),
+						latestMessageAt: Math.max(
+							room.latestMessageAt ?? 0,
+							data.message.createdAt,
+						),
+					});
+				}
+				notify();
+			});
+	};
+
+	const patchPendingMessage = (
+		roomId: number,
+		publicId: string,
+		patch: Partial<ClientChatMessage>,
+	) => {
+		const messages = messagesByRoomId.get(roomId);
+		if (!messages) return;
+
+		const index = messages.findIndex(
+			(message) => message.pending && message.publicId === publicId,
+		);
+		if (index === -1) return;
+
+		setMessages(roomId, messages.with(index, { ...messages[index], ...patch }));
+		notify();
+	};
+
 	/** A failed fetch must not leave behind an empty history that reads as loaded. */
 	const dropEmptyHistory = (roomId: number) => {
 		if (messagesByRoomId.get(roomId)?.length !== 0) return;
@@ -574,46 +626,16 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			]);
 			notify();
 
-			void deps
-				.postMessage(roomId, { publicId, contents })
-				.catch((error) => {
-					logger.error("Sending chat message failed", error);
-					return null;
-				})
-				.then((data) => {
-					if (data) {
-						// usually the SSE echo lands first; both reconcile by publicId
-						insertPersisted(data.message);
-						const room = roomById(roomId);
-						if (room) {
-							setRoom(roomId, {
-								latestMessageId: Math.max(
-									room.latestMessageId ?? 0,
-									data.message.id,
-								),
-								latestMessageAt: Math.max(
-									room.latestMessageAt ?? 0,
-									data.message.createdAt,
-								),
-							});
-						}
-						notify();
-						return;
-					}
+			postPendingMessage(roomId, { publicId, contents });
+		},
+		retry: (roomId, publicId) => {
+			const failed = messagesByRoomId
+				.get(roomId)
+				?.find((message) => message.failed && message.publicId === publicId);
+			if (!failed?.contents) return;
 
-					deps.onSendFailed();
-
-					// a failed send stuck at pending forever would read as delivered
-					const messages = messagesByRoomId.get(roomId);
-					if (!messages) return;
-					const withoutFailed = messages.filter(
-						(message) => !(message.pending && message.publicId === publicId),
-					);
-					if (withoutFailed.length !== messages.length) {
-						setMessages(roomId, withoutFailed);
-						notify();
-					}
-				});
+			patchPendingMessage(roomId, publicId, { failed: false });
+			postPendingMessage(roomId, { publicId, contents: failed.contents });
 		},
 		markRead,
 		flushReads,
@@ -647,7 +669,6 @@ const OFFLINE_DEPS: ChatClientDeps = {
 	fetchMessages: NEVER_RESOLVING,
 	postMessage: NEVER_RESOLVING,
 	postRead: NEVER_RESOLVING,
-	onSendFailed: () => {},
 	addServerEventListener: () => () => {},
 };
 
@@ -691,11 +712,6 @@ export const chatClient = createChatClient({
 		};
 		return data.message ? { message: data.message } : null;
 	},
-	onSendFailed: () =>
-		toastQueue.add({
-			message: "Message could not be sent",
-			variant: "error",
-		}),
 	// keepalive: the flush on the way out of a page happens as the document is
 	// unloading, where an ordinary fetch is cancelled before it is sent
 	postRead: async (roomId, lastSeenMessageId) => {

@@ -391,6 +391,7 @@
 	"chat.systemMsg.leagueRescheduleDeclined": "",
 	"chat.systemMsg.leagueTimeSetByOrganizer": "",
 	"chat.newMessages": "新消息",
+	"chat.retrySend": "",
 	"chat.mention.suggestions": "",
 	"chat.mention.unknownUser": "",
 	"chat.sidebar.title": "聊天",

@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { sub } from "date-fns";
-import { SendHorizontal } from "lucide-react";
+import { RotateCw, SendHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
 import { browser, flushSync } from "react-dom";
@@ -42,6 +42,7 @@ export interface ChatProps {
 	messages: ClientChatMessage[];
 	/** Hands a validated composer send to the chat client (optimistic append + POST). */
 	onSend: (message: { publicId: string; contents: string }) => void;
+	onRetry?: (publicId: string) => void;
 	/** Role labels (e.g. "TO") shown next to the author, keyed by user id. */
 	labelByUserId?: Record<number, string>;
 	firstUnreadMessageId?: number | null;
@@ -62,6 +63,7 @@ const MentionsContext = React.createContext<{
 export function Chat({
 	messages,
 	onSend,
+	onRetry,
 	labelByUserId,
 	firstUnreadMessageId,
 	mentionableUsers = [],
@@ -108,6 +110,7 @@ export function Chat({
 							messages={messages}
 							labelByUserId={labelByUserId}
 							firstUnreadMessageId={firstUnreadMessageId}
+							onRetry={onRetry}
 							className={messagesContainerClassName}
 						/>
 					</React.Suspense>
@@ -133,8 +136,12 @@ function MessageLog({
 	messages,
 	labelByUserId,
 	firstUnreadMessageId = null,
+	onRetry,
 	className,
-}: Pick<ChatProps, "messages" | "labelByUserId" | "firstUnreadMessageId"> & {
+}: Pick<
+	ChatProps,
+	"messages" | "labelByUserId" | "firstUnreadMessageId" | "onRetry"
+> & {
 	className?: string;
 }) {
 	// the server can't open the pane scrolled to its end, so it stays empty
@@ -267,6 +274,7 @@ function MessageLog({
 												? labelByUserId?.[msg.authorUserId]
 												: undefined
 										}
+										onRetry={onRetry}
 									/>
 								)}
 							</div>
@@ -471,10 +479,13 @@ function Composer({
 function Message({
 	message,
 	label,
+	onRetry,
 }: {
 	message: ClientChatMessage;
 	label?: string;
+	onRetry?: (publicId: string) => void;
 }) {
+	const { t } = useTranslation(["common"]);
 	const author = message.author;
 	const { ownUserId } = React.use(MentionsContext);
 	const mentionsYou =
@@ -486,6 +497,7 @@ function Message({
 		<div
 			className={clsx(styles.message, {
 				[styles.messageMentionsYou]: mentionsYou,
+				[styles.messageFailed]: message.failed,
 			})}
 		>
 			{author ? (
@@ -524,6 +536,17 @@ function Message({
 						<MessageContents text={message.contents} />
 					) : null}
 				</div>
+				{message.failed && onRetry ? (
+					<SendouButton
+						variant="minimal-destructive"
+						size="miniscule"
+						icon={<RotateCw />}
+						onClick={() => onRetry(message.publicId)}
+						className={styles.retryButton}
+					>
+						{t("common:chat.retrySend")}
+					</SendouButton>
+				) : null}
 			</div>
 		</div>
 	);

@@ -106,6 +106,10 @@
 	opacity: 0.7;
 }
 
+.retryButton {
+	margin-block-start: var(--s-1);
+}
+
 .roomLinkBlock {
 	display: flex;
 	flex-direction: column;
@@ -144,6 +148,18 @@
 .mentionSelf {
 	background-color: transparent;
 	padding-inline: 0;
+}
+
+.messageFailed {
+	margin-inline: calc(var(--s-1) * -1);
+	padding: var(--s-1);
+	border-inline-start: 2px solid var(--color-error-high);
+	background-color: var(--color-error-low);
+
+	.messageContents {
+		color: var(--color-error-high);
+		opacity: 0.5;
+	}
 }
 
 .composer {

@@ -80,6 +80,7 @@ export interface UnreadDivider {
 /** A message as held client-side: a persisted row, or an optimistic send awaiting its echo. */
 export interface ClientChatMessage extends ChatMessageWithAuthor {
 	pending?: boolean;
+	failed?: boolean;
 }
 
 /** One room of the user's room list as served by `GET /api/chat/rooms`. */

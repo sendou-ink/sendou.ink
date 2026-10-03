@@ -229,6 +229,37 @@ describe("Chat", () => {
 		expect(onSend).not.toHaveBeenCalled();
 	});
 
+	test("offers retrying a failed send, not one still pending", async () => {
+		const onRetry = vi.fn();
+		const screen = await renderChat(
+			[
+				createMessage({
+					id: 0,
+					publicId: "failed1234",
+					contents: "Lost",
+					pending: true,
+					failed: true,
+				}),
+				createMessage({
+					id: 0,
+					publicId: "pending123",
+					contents: "On its way",
+					pending: true,
+				}),
+			],
+			{ onRetry },
+		);
+
+		const retryButtons = screen.getByRole("button", {
+			name: "Not sent, retry",
+		});
+		await expect.element(retryButtons).toBeInTheDocument();
+		expect(retryButtons.elements()).toHaveLength(1);
+
+		await retryButtons.click();
+		expect(onRetry).toHaveBeenCalledWith("failed1234");
+	});
+
 	describe("mentions", () => {
 		const BOB = { ...ALICE, id: 2, username: "Bob", discordId: "2" };
 		const CAROL = { ...ALICE, id: 3, username: "Carol", discordId: "3" };

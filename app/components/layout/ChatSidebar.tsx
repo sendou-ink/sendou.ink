@@ -630,6 +630,7 @@ function RoomChat({ room }: { room: ChatRoomListItem }) {
 				ownUserId: user?.id ?? 0,
 			})}
 			onSend={(message) => chatContext.sendMessage(room.id, message)}
+			onRetry={(publicId) => chatContext.retryMessage(room.id, publicId)}
 			labelByUserId={room.labelByUserId}
 			mentionableUsers={room.participants}
 			disabled={expired}
