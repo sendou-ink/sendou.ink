@@ -1,0 +1,112 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 16,
+    "stageLabel": "Humpback Pump Track",
+    "spectator": true,
+    "teammates": [
+      {
+        "self": false,
+        "name": "Deffy»95",
+        "weaponLabel": "Carbon Roller Deco",
+        "weaponId": 1001,
+        "abilities": [
+          "QSJ",
+          "NS",
+          "SJ"
+        ],
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "self": false,
+        "name": "Stance☆»95",
+        "weaponLabel": ".96 Gal",
+        "weaponId": 80,
+        "abilities": [
+          "SSU",
+          "SSU",
+          "IRU"
+        ],
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "self": false,
+        "name": "Kei»95",
+        "weaponLabel": "Heavy Edit Splatling",
+        "weaponId": 4050,
+        "abilities": [
+          "LDE",
+          "RSU",
+          "SCU"
+        ],
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "self": false,
+        "name": "S&wich»95",
+        "weaponLabel": "Splatana Wiper",
+        "weaponId": 8010,
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ],
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "name": "カニ strings",
+        "weaponLabel": "N-ZAP '85",
+        "weaponId": 60,
+        "abilities": [
+          "RSU",
+          "SCU",
+          "SJ"
+        ],
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "カニ glum",
+        "weaponLabel": ".52 Gal",
+        "weaponId": 50,
+        "abilities": [
+          "SSU",
+          "SSU",
+          "SJ"
+        ],
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "カニ Jokera",
+        "weaponLabel": "Cometz Octobrush",
+        "weaponId": 1112,
+        "abilities": [
+          "CB",
+          "NS",
+          "SJ"
+        ],
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "カニOguriCap",
+        "weaponLabel": "Splattershot Jr.",
+        "weaponId": 10,
+        "abilities": [
+          "ISS",
+          "ISS",
+          "SJ"
+        ],
+        "dead": false,
+        "specialReady": false
+      }
+    ]
+  }
+}

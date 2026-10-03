@@ -71,6 +71,7 @@ import {
 	MINIMAP_ABILITY_INK_THRESHOLD,
 	MINIMAP_WEAPON_INK_THRESHOLD,
 	NAME_BIN_THRESHOLD,
+	NAME_PLAIN_TIE_MARGIN,
 	NAME_TEXT_HEIGHT,
 	PRESENCE_MIN_LAPLACIAN,
 	SPECIAL_READY_INK_THRESHOLD,
@@ -425,7 +426,10 @@ export function createMinimapDetector(
 				parseNameSteps(
 					band,
 					set,
-					{ binThreshold: NAME_BIN_THRESHOLD },
+					{
+						binThreshold: NAME_BIN_THRESHOLD,
+						plainTieMargin: NAME_PLAIN_TIE_MARGIN,
+					},
 					speculative,
 				),
 			),

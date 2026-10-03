@@ -15,8 +15,8 @@ export const MAX_ROWS = 4;
 /** Text caps sit at y1004 on the bottom row and y938 on the one above. */
 const ROW_PITCH = 66;
 
-/** Bottom row's text band: from the squid icon's right edge to the pill's plain right end, with drift headroom. */
-const TEXT_ROI_BOTTOM: Roi = { x: 796, y: 997, w: 412, h: 38 };
+/** Bottom row's text band: from the squid icon's right edge to the pill's plain right end, with drift headroom; descenders reach y1035 ('g' lost its tail at h 38 and read 'A'). */
+const TEXT_ROI_BOTTOM: Roi = { x: 796, y: 997, w: 412, h: 41 };
 
 /** Tight cap height of the row text (atlas nominal height). */
 export const KILL_TEXT_HEIGHT = 24;

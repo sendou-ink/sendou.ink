@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponLabel": "Splattershot Jr.",
+    "weaponId": 10,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "ISS",
+        "QSJ",
+        "RES",
+        "QR"
+      ],
+      [
+        "ISS",
+        "ISS",
+        "ISS",
+        "QR"
+      ],
+      [
+        "SJ",
+        "SPU",
+        "BRU",
+        "ISS"
+      ]
+    ],
+    "name": "カニOguriCap"
+  }
+}

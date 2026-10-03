@@ -57,6 +57,9 @@ import {
 	gateAbilityProbe,
 	JA_CONST_LINE_ROI,
 	JA_WEAPON_LINE_ROI,
+	REPLAY_HINT_CHIP_MIN_CHANNEL,
+	REPLAY_HINT_CHIP_PROBES,
+	REPLAY_HINT_L_CHIP,
 	SPLAT_LINE1_ROI,
 	SPLAT_TEXT_BIN_THRESHOLD,
 	TAG_NAME_INNER,
@@ -260,6 +263,12 @@ export function createDeathDetector(
 	/** Crop the tilted tag, rotate it level, and return the name band crop. */
 	function levelTagInner(rgb: Mat): Mat {
 		const outer = copyRoi(rgb, TAG_NAME_OUTER);
+		const inner = levelOuter(outer, cv.INTER_LINEAR, cv.BORDER_REPLICATE);
+		outer.delete();
+		return inner;
+	}
+
+	function levelOuter(outer: Mat, interpolation: number, border: number): Mat {
 		const center = new cv.Point(outer.cols / 2, outer.rows / 2);
 		const m = cv.getRotationMatrix2D(center, -TAG_TILT_DEG, 1);
 		const rotated = new cv.Mat();
@@ -268,15 +277,52 @@ export function createDeathDetector(
 			rotated,
 			m,
 			new cv.Size(outer.cols, outer.rows),
-			cv.INTER_LINEAR,
-			cv.BORDER_REPLICATE,
+			interpolation,
+			border,
 			new cv.Scalar(),
 		);
 		m.delete();
-		outer.delete();
 		const inner = copyRoi(rotated, TAG_NAME_INNER);
 		rotated.delete();
 		return inner;
+	}
+
+	function showsReplayHints(rgb: Mat): boolean {
+		return REPLAY_HINT_CHIP_PROBES.every((roi) => {
+			const probe = copyRoi(rgb, roi);
+			const d = probe.data;
+			let min = 255;
+			for (let i = 0; i < probe.rows * probe.cols; i++) {
+				min = Math.min(min, d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
+			}
+			probe.delete();
+			return min >= REPLAY_HINT_CHIP_MIN_CHANNEL;
+		});
+	}
+
+	let replayChipMask: Mat | null = null;
+	/** REPLAY_HINT_L_CHIP in the leveled name band's coordinates. */
+	function replayChipMaskInner(): Mat {
+		if (!replayChipMask) {
+			const outer = new cv.Mat(
+				TAG_NAME_OUTER.h,
+				TAG_NAME_OUTER.w,
+				cv.CV_8UC1,
+				new cv.Scalar(0),
+			);
+			const x = REPLAY_HINT_L_CHIP.x - TAG_NAME_OUTER.x;
+			const y = REPLAY_HINT_L_CHIP.y - TAG_NAME_OUTER.y;
+			cv.rectangle(
+				outer,
+				new cv.Point(x, y),
+				new cv.Point(x + REPLAY_HINT_L_CHIP.w, y + REPLAY_HINT_L_CHIP.h),
+				new cv.Scalar(255),
+				-1,
+			);
+			replayChipMask = levelOuter(outer, cv.INTER_NEAREST, cv.BORDER_CONSTANT);
+			outer.delete();
+		}
+		return replayChipMask;
 	}
 
 	const tagMemo: { signature: Uint8Array; read: TagNameRead }[] = [];
@@ -485,6 +531,7 @@ export function createDeathDetector(
 		inner: Mat,
 		backgrounds: readonly [number, number, number][],
 		spaceGap: number,
+		chipMask: Mat | null,
 		speculative: boolean,
 	): MatchSteps<{
 		parsed: ParsedName;
@@ -492,6 +539,7 @@ export function createDeathDetector(
 		textColor: [number, number, number] | null;
 	}> {
 		const band = distanceBand(inner, backgrounds, false);
+		if (chipMask) band.setTo(new cv.Scalar(0), chipMask);
 		cv.normalize(band, band, 0, 255, cv.NORM_MINMAX);
 		clearBorderBlobs(band, TAG_NAME_BIN_THRESHOLD);
 
@@ -504,6 +552,7 @@ export function createDeathDetector(
 		if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
 			textColor = medianColor(inner, (i) => ink[i]! > TAG_NAME_BIN_THRESHOLD);
 			refined = distanceBand(inner, [textColor], true);
+			if (chipMask) refined.setTo(new cv.Scalar(0), chipMask);
 			clearBorderBlobs(refined, TAG_NAME_REFINE_BIN_THRESHOLD);
 		}
 		const [bandParse, refinedParse] = yield* all([
@@ -542,6 +591,7 @@ export function createDeathDetector(
 	): MatchSteps<{ read: TagNameRead; memoHit: boolean }> {
 		const spaceGap = Math.max(7, Math.round(tagNameGlyphs!.medianWidth * 0.55));
 		const inner = levelTagInner(rgb);
+		const chipMask = showsReplayHints(rgb) ? replayChipMaskInner() : null;
 		const signature = tagSignature(inner);
 		let read = tagMemoLookup(signature);
 		const memoHit = read !== null;
@@ -580,7 +630,13 @@ export function createDeathDetector(
 			};
 			const reads = yield* all(
 				candidates.map((backgrounds) =>
-					readWithBackground(inner, backgrounds, spaceGap, speculative),
+					readWithBackground(
+						inner,
+						backgrounds,
+						spaceGap,
+						chipMask,
+						speculative,
+					),
 				),
 			);
 			let best = reads[0]!;

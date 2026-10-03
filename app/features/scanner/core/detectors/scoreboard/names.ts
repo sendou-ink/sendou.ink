@@ -135,15 +135,16 @@ function normalizeOhs(name: string): string {
 
 /**
  * A long bar is '_' or a dash by height alone, which the templates weigh
- * lightly: ">_<" read ">ー<". A bar whose bottom reaches the line's baseline
- * (median ink bottom of the other glyphs) is an underscore; dashes float at
- * mid height.
+ * lightly: ">_<" read ">ー<", "Jrod_14" read "Jrod¯14". A bar whose bottom
+ * reaches the line's baseline (median ink bottom of the other glyphs) is an
+ * underscore; dashes float at mid height, a macron at the cap line.
  */
 const BASELINE_BAR_CHARS = new Set(["-", "ー", "¯", "_"]);
+const UNDERSCORE_LOOKALIKES = new Set(["-", "ー", "¯"]);
 const UNDERSCORE_BASELINE_SLACK_PX = 2;
 
 function resolveUnderscoreByBaseline(raw: RecognizedText): RecognizedText {
-	if (!raw.chars.some((c) => LONG_BAR_CHARS.has(c.char))) return raw;
+	if (!raw.chars.some((c) => UNDERSCORE_LOOKALIKES.has(c.char))) return raw;
 	const anchors = raw.chars
 		.filter((c) => !BASELINE_BAR_CHARS.has(c.char))
 		.map((c) => c.y1)
@@ -151,7 +152,7 @@ function resolveUnderscoreByBaseline(raw: RecognizedText): RecognizedText {
 	if (anchors.length === 0) return raw;
 	const baseline = anchors[Math.floor(anchors.length / 2)]!;
 	const chars = raw.chars.map((c) => {
-		if (!LONG_BAR_CHARS.has(c.char)) return c;
+		if (!UNDERSCORE_LOOKALIKES.has(c.char)) return c;
 		if (baseline - c.y1 > UNDERSCORE_BASELINE_SLACK_PX) return c;
 		return { ...c, char: "_" };
 	});
@@ -275,12 +276,14 @@ function resolveBhByBowlFloor(
  * profile keeps them: an O's top and bottom solid rows sit inset from its
  * mid-height edge on both sides alike, a D's only on the right. Measured
  * across fixtures at 15-29px, a D's right inset exceeds its left by 0.15+ of
- * the glyph height, an O's by under 0.08. Only an O read over a near-tied D
- * is re-decided: a D read already stands.
+ * the glyph height, an O's by under 0.08. A D read over a near-tied O only
+ * turns O when its corners are near level: a ~15px D can sit at 0.05 ("sDpp"),
+ * the 48px splash tag O of "OguriCap" read D at 0.00.
  */
 const ROUND_CHARS = new Set(["O", "0"]);
 const DO_SCORE_MARGIN = 0.05;
 const D_MIN_CORNER_ASYMMETRY = 0.15;
+const O_MAX_CORNER_ASYMMETRY = 0.025;
 /** solid rows reach this share of the glyph's brightest pixel */
 const SOLID_ROW_FRACTION = 0.8;
 const EDGE_LEVEL = 128;
@@ -289,12 +292,14 @@ function resolveDoByCorners(
 	raw: RecognizedText,
 	grayView: Mat,
 ): RecognizedText {
+	const twinOf = (c: RecognizedChar) =>
+		c.candidates?.find(
+			(k) =>
+				(ROUND_CHARS.has(c.char) ? k.char === "D" : ROUND_CHARS.has(k.char)) &&
+				c.score - k.score <= DO_SCORE_MARGIN,
+		);
 	const contested = (c: RecognizedChar) =>
-		ROUND_CHARS.has(c.char) &&
-		(c.candidates?.some(
-			(k) => k.char === "D" && c.score - k.score <= DO_SCORE_MARGIN,
-		) ??
-			false);
+		(ROUND_CHARS.has(c.char) || c.char === "D") && twinOf(c) !== undefined;
 	if (!raw.chars.some(contested)) return raw;
 
 	const gray = new (getCV().Mat)();
@@ -302,10 +307,14 @@ function resolveDoByCorners(
 	const { cols, data } = gray;
 	const chars = raw.chars.map((c) => {
 		if (!contested(c)) return c;
-		const asymmetry = cornerAsymmetry(data, cols, c);
-		if (!(asymmetry >= D_MIN_CORNER_ASYMMETRY * (c.y1 - c.y0))) return c;
-		const d = c.candidates!.find((k) => k.char === "D")!;
-		return { ...c, char: "D", score: d.score };
+		const asymmetry = cornerAsymmetry(data, cols, c) / (c.y1 - c.y0);
+		const isD =
+			c.char === "D"
+				? !(asymmetry < O_MAX_CORNER_ASYMMETRY)
+				: asymmetry >= D_MIN_CORNER_ASYMMETRY;
+		if (isD === (c.char === "D")) return c;
+		const twin = twinOf(c)!;
+		return { ...c, char: twin.char, score: twin.score };
 	});
 	gray.delete();
 	return { ...raw, text: retext(raw.text, chars), chars };

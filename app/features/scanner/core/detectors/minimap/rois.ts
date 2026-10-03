@@ -106,6 +106,8 @@ export const MINIMAP_ABILITY_INK_THRESHOLD = 90;
 /** BlitzMain caps measure 28-29px on every card (self included). */
 export const NAME_TEXT_HEIGHT = 29;
 export const NAME_BIN_THRESHOLD = 170;
+/** A fullwidth bracket reads level with its ASCII twin ("[K]yo!" 0.015 apart). */
+export const NAME_PLAIN_TIE_MARGIN = 0.02;
 
 /** Cross-out probe: fraction of saturated+bright HSV pixels. Struck 0.26-0.38, clean <=0.01. */
 export const CROSS_SATURATION_MIN = 110;
@@ -244,8 +246,8 @@ export function spectatorCardLayout(
 	const dy = SPECTATOR_ROW_PITCH * row;
 	return {
 		// superscripts and accents reach 2px above the old top (x² read x・); the
-		// card's team stripe ends 4px above this one
-		name: { x: 198 + dx, y: 303 + dy, w: 310, h: 47 },
+		// card's team stripe ends 4px above this one; a 'g' tail reaches 50px down
+		name: { x: 198 + dx, y: 303 + dy, w: 310, h: 51 },
 		weapon: { x: 196 + dx, y: 350 + dy, w: 66, h: 54 },
 		subTile: { x: 264 + dx, y: 354 + dy, w: 38, h: 42 },
 		badges: [
