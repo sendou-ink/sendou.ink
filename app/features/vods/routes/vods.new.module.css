@@ -25,3 +25,29 @@
 .povField {
 	width: 100%;
 }
+
+.scannerBanner {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin-block-end: var(--s-2);
+	padding: var(--s-1) var(--s-2-5);
+	border-radius: var(--radius-box);
+	background-color: var(--color-info-low);
+	color: var(--color-info-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+
+	& a {
+		color: inherit;
+		text-decoration: underline;
+	}
+}
+
+.scannerBannerIcon {
+	flex-shrink: 0;
+
+	& img {
+		display: block;
+	}
+}
