@@ -52,7 +52,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						)
 						.select(["TournamentTeamCheckIn.checkedInAt"])
 						.where("TournamentTeam.tournamentId", "=", tournamentId)
-						.where("TournamentTeam.isPlaceholder", "=", 0),
+						.where("TournamentTeam.isPlaceholder", "=", false),
 				).as("teams"),
 			])
 			.where("Tournament.id", "=", tournamentId)

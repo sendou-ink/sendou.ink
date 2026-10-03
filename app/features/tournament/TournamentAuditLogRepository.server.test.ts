@@ -27,7 +27,7 @@ const createTournamentTeam = (
 		{
 			tournamentId,
 			memberUserIds: [actorId()],
-			team: { name, prefersNotToHost: 0, teamId: null },
+			team: { name, prefersNotToHost: false, teamId: null },
 		},
 		options,
 	);
@@ -76,7 +76,7 @@ describe("TournamentAuditLogRepository", () => {
 		await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
 			memberUserIds: [actorId(), subjectId()],
-			team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+			team: { name: "Team Olive", prefersNotToHost: false, teamId: null },
 		});
 
 		const events = await TournamentAuditLogRepository.findByTournamentId({

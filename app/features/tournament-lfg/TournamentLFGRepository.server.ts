@@ -22,7 +22,7 @@ export function startLooking(args: {
 	return db.transaction().execute(async (trx) => {
 		await trx
 			.updateTable("TournamentTeam")
-			.set({ isLooking: 1 })
+			.set({ isLooking: true })
 			.where("id", "=", args.teamId)
 			.execute();
 
@@ -44,8 +44,8 @@ export function insertPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 				tournamentId: args.tournamentId,
 				name: randomTeamName(),
 				inviteCode: shortNanoid(),
-				isPlaceholder: 1,
-				isLooking: 1,
+				isPlaceholder: true,
+				isLooking: true,
 				lfgNote: args.lfgNote ?? null,
 			})
 			.returning("id")
@@ -57,7 +57,7 @@ export function insertPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 				tournamentTeamId: createdTeam.id,
 				userId: args.userId,
 				role: "OWNER",
-				isStayAsSub: args.isStayAsSub ? 1 : 0,
+				isStayAsSub: args.isStayAsSub ?? false,
 			})
 			.execute();
 
@@ -91,7 +91,7 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 			lfgMembersAgg(eb).as("members"),
 		])
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.where("TournamentTeam.isLooking", "=", 1)
+		.where("TournamentTeam.isLooking", "=", true)
 		.groupBy("TournamentTeam.id")
 		.execute();
 }
@@ -112,8 +112,8 @@ export async function findSubGroups(tournamentId: number) {
 			lfgMembersAgg(eb).as("members"),
 		])
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.where("TournamentTeam.isPlaceholder", "=", 1)
-		.where("TournamentTeamMember.isStayAsSub", "=", 1)
+		.where("TournamentTeam.isPlaceholder", "=", true)
+		.where("TournamentTeamMember.isStayAsSub", "=", true)
 		.groupBy("TournamentTeam.id")
 		.execute();
 
@@ -170,8 +170,8 @@ export function mergeTeams({
 		await trx
 			.updateTable("TournamentTeam")
 			.set({
-				isLooking: memberUserIds.length >= maxGroupSize ? 0 : undefined,
-				isPlaceholder: 0,
+				isLooking: memberUserIds.length >= maxGroupSize ? false : undefined,
+				isPlaceholder: false,
 			})
 			.where("id", "=", survivingTeamId)
 			.execute();
@@ -286,7 +286,7 @@ export function updateOwnStayAsSub({
 }) {
 	return db
 		.updateTable("TournamentTeamMember")
-		.set({ isStayAsSub: value ? 1 : 0 })
+		.set({ isStayAsSub: value })
 		.where("tournamentTeamId", "=", teamId)
 		.where("userId", "=", actorId())
 		.execute();
@@ -315,7 +315,7 @@ export function leaveLfg({
 			])
 			.where("TournamentTeamMember.userId", "=", userId)
 			.where("TournamentTeam.tournamentId", "=", tournamentId)
-			.where("TournamentTeam.isLooking", "=", 1)
+			.where("TournamentTeam.isLooking", "=", true)
 			.executeTakeFirst();
 
 		if (!userTeam) return [];
@@ -323,12 +323,12 @@ export function leaveLfg({
 		if (!userTeam.isPlaceholder) {
 			await trx
 				.updateTable("TournamentTeam")
-				.set({ isLooking: 0 })
+				.set({ isLooking: false })
 				.where("id", "=", userTeam.tournamentTeamId)
 				.execute();
 			await trx
 				.updateTable("TournamentTeamMember")
-				.set({ isStayAsSub: 0 })
+				.set({ isStayAsSub: false })
 				.where("tournamentTeamId", "=", userTeam.tournamentTeamId)
 				.execute();
 			await deleteLikesByTeamId(userTeam.tournamentTeamId, trx);
@@ -358,7 +358,7 @@ export async function findAllSubsByTournamentId(tournamentId: number) {
 		)
 		.select("TournamentTeamMember.userId")
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.where("TournamentTeamMember.isStayAsSub", "=", 1)
+		.where("TournamentTeamMember.isStayAsSub", "=", true)
 		.execute();
 
 	return rows.map((row) => row.userId);

@@ -168,9 +168,8 @@ async function resolveTournamentMatchRooms(
 			),
 		),
 	);
-	const members =
-		await TournamentTeamRepository.findAllMembersByTeamIds(teamIds);
-	const organizers = await organizerPermissionsByTournamentId(
+	const membersByTeamId = await memberIdsByTeamId(teamIds);
+	const tournaments = await tournamentsById(
 		owners.map((owner) => owner.tournamentId),
 	);
 
@@ -179,7 +178,7 @@ async function resolveTournamentMatchRooms(
 			owner.opponentOne?.id,
 			owner.opponentTwo?.id,
 		].filter((id): id is number => typeof id === "number");
-		const permissions = organizers.get(owner.tournamentId);
+		const permissions = tournaments.get(owner.tournamentId)?.permissions;
 
 		return {
 			titleParams: {
@@ -191,9 +190,9 @@ async function resolveTournamentMatchRooms(
 				matchId: owner.id,
 			}),
 			imageUrl: owner.logoUrl,
-			participantUserIds: members
-				.filter((member) => opponentTeamIds.includes(member.tournamentTeamId))
-				.map((member) => member.userId),
+			participantUserIds: opponentTeamIds.flatMap(
+				(teamId) => membersByTeamId.get(teamId) ?? [],
+			),
 			// streamers cast the matches, so they observe them as well
 			observerUserIds: permissions?.MANAGE_MATCHES ?? [],
 			labelByUserId: organizerLabels(permissions),
@@ -206,25 +205,26 @@ async function resolveTournamentTeamRooms(
 ): Promise<ResolvedRoom[]> {
 	if (rooms.length === 0) return [];
 
-	const owners = await TournamentTeamRepository.findAllByChatRoomIds(
-		rooms.map((room) => room.id),
+	const teams = await tournamentTeamsOwningRooms(rooms.map((room) => room.id));
+	const tournaments = await tournamentsById(
+		teams.map((team) => team.tournamentId),
 	);
-
-	const organizers = await organizerPermissionsByTournamentId(
-		owners.map((owner) => owner.tournamentId),
-	);
+	const owners = teams.flatMap((team) => {
+		const tournament = tournaments.get(team.tournamentId);
+		return tournament ? [{ ...team, tournament }] : [];
+	});
 
 	return joinOwners(rooms, owners, (owner) => ({
 		titleParams: {
 			teamName: owner.name,
-			tournamentName: owner.tournamentName,
+			tournamentName: owner.tournament.name,
 		},
 		url: tournamentSubsPage(owner.tournamentId),
-		imageUrl: owner.logoUrl,
+		imageUrl: owner.tournament.logoUrl,
 		participantUserIds: owner.members.map((member) => member.userId),
-		observerUserIds: organizers.get(owner.tournamentId)?.ORGANIZE ?? [],
-		labelByUserId: organizerLabels(organizers.get(owner.tournamentId)),
-		inactive: Boolean(owner.isFinalized),
+		observerUserIds: owner.tournament.permissions.ORGANIZE,
+		labelByUserId: organizerLabels(owner.tournament.permissions),
+		inactive: owner.tournament.isFinalized,
 	}));
 }
 
@@ -305,15 +305,45 @@ function joinOwners<T extends { chatRoomId: number }>(
 	});
 }
 
+/** The LFG groups and teams owning the rooms, with their members. */
+async function tournamentTeamsOwningRooms(roomIds: number[]) {
+	const teams = await TournamentTeamRepository.tournamentTeams()
+		.includingPlaceholders()
+		.with(
+			refine("TournamentTeam", (qb) =>
+				qb.where("TournamentTeam.chatRoomId", "in", roomIds),
+			),
+		)
+		.withColumns(["chatRoomId", "tournamentId"])
+		.withMembers()
+		.execute();
+
+	return teams.flatMap(({ chatRoomId, ...team }) =>
+		chatRoomId === null ? [] : [{ ...team, chatRoomId }],
+	);
+}
+
+async function memberIdsByTeamId(tournamentTeamIds: number[]) {
+	const teams = await TournamentTeamRepository.tournamentTeams()
+		.whereIdIn(tournamentTeamIds)
+		.withMembers()
+		.execute();
+
+	return new Map(
+		teams.map((team) => [team.id, team.members.map((member) => member.userId)]),
+	);
+}
+
 // hidden ones included, a room's organizers observe it whether or not the tournament is listed
-async function organizerPermissionsByTournamentId(tournamentIds: number[]) {
+async function tournamentsById(tournamentIds: number[]) {
 	const rows = await TournamentRepository.tournaments()
 		.whereIdIn(R.unique(tournamentIds))
 		.includingHidden()
+		.withColumns(["isFinalized"])
 		.withOrganizerPermissions()
 		.execute();
 
-	return new Map(rows.map((row) => [row.id, row.permissions]));
+	return new Map(rows.map((row) => [row.id, row]));
 }
 
 /** Labels the tournament's organizers "TO" and its streamers "Stream". */

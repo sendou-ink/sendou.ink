@@ -260,7 +260,7 @@ export function tournamentTeamCount(
 		.selectFrom("TournamentTeam")
 		.select((eb2) => eb2.fn.countAll<number>().as("count"))
 		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-		.where("TournamentTeam.isPlaceholder", "=", 0);
+		.where("TournamentTeam.isPlaceholder", "=", false);
 }
 
 /** Expression resolving to whether any of a tournament's brackets has been started. */
@@ -288,7 +288,7 @@ function tournamentCheckedInTeams(eb: ExpressionBuilder<DB, "Tournament">) {
 			"TournamentTeam.id",
 		)
 		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where("TournamentTeam.isPlaceholder", "=", false)
 		.where((eb2) =>
 			eb2.or([
 				eb2("TournamentTeamCheckIn.checkedInAt", "is not", null),

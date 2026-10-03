@@ -8,7 +8,6 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -59,9 +58,9 @@ export const upsertRegistrationAction = async (
 
 	const team =
 		typeof data.tournamentTeamId === "number"
-			? (
-					await TournamentRepository.findTeamsFullByTournamentId(tournamentId)
-				).find((t) => t.id === data.tournamentTeamId)
+			? await TournamentTeamRepository.teamsWithRosters(tournamentId)
+					.where({ id: data.tournamentTeamId })
+					.executeTakeFirst()
 			: undefined;
 
 	errorToastIfFalsy(team || !tournament.hasStarted, "Tournament has started");
@@ -114,6 +113,7 @@ export const upsertRegistrationAction = async (
 			teamId: linkedTeamId,
 			avatarImgId,
 			ownerUserId,
+			isOrganizerAdded: true,
 			ownerChange,
 			membersToAdd,
 			membersToRemove,

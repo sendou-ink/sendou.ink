@@ -1036,7 +1036,7 @@ function pickupTeamName(takenNames: Set<string>) {
 function fakeTeamProfile(roster: Roster) {
 	return {
 		name: roster.name,
-		prefersNotToHost: faker.number.float(1) < 0.2 ? (1 as const) : (0 as const),
+		prefersNotToHost: faker.number.float(1) < 0.2,
 		teamId: roster.teamId,
 	};
 }

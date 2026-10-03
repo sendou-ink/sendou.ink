@@ -23,7 +23,6 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
-import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import * as TeamPick from "../core/TeamPick";
 import { registerSchema } from "../tournament-schemas.server";
@@ -91,14 +90,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 					"Can't change team name after registration has closed",
 				);
 
-				await TournamentTeamRepository.update({
+				await TournamentTeamRepository.upsertRegistration({
+					tournamentTeamId: ownTeam.id,
+					tournamentId,
+					name,
+					teamId: linkedTeamId,
 					avatarImgId,
-					team: {
-						id: ownTeam.id,
-						name,
-						prefersNotToHost: toDBBoolean(data.prefersNotToHost),
-						teamId: linkedTeamId,
-					},
+					prefersNotToHost: data.prefersNotToHost,
+					ownerUserId: user.id,
+					isOrganizerAdded: false,
 				});
 			} else {
 				await requireNotBannedByOrganization({
@@ -130,15 +130,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 						tournamentId,
 					}),
 				);
-				await TournamentTeamRepository.insert({
-					team: {
-						name,
-						prefersNotToHost: toDBBoolean(data.prefersNotToHost),
-						teamId: linkedTeamId,
-					},
-					userId: user.id,
+				await TournamentTeamRepository.upsertRegistration({
 					tournamentId,
+					name,
+					teamId: linkedTeamId,
 					avatarImgId,
+					prefersNotToHost: data.prefersNotToHost,
+					ownerUserId: user.id,
+					membersToAdd: [user.id],
+					isOrganizerAdded: false,
 				});
 				await SavedCalendarEventRepository.unsaveByUserId({
 					userId: user.id,
@@ -200,10 +200,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 			const teamMemberOf = tournament.teamMemberOfByUser(user);
 			errorToastIfFalsy(teamMemberOf, "You are not in a team");
 			errorToastIfFalsy(
-				!(await TournamentTeamRepository.isOrganizerAddedMember({
-					tournamentTeamId: teamMemberOf.id,
-					userId: user.id,
-				})),
+				!(
+					await TournamentTeamRepository.findMemberBy({
+						tournamentTeamId: teamMemberOf.id,
+						userId: user.id,
+					})
+				)?.isOrganizerAdded,
 				"You were added to the team by the organizer, contact the TO to leave the team",
 			);
 			errorToastIfFalsy(

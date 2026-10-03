@@ -39,32 +39,32 @@ describe("CheckIn.isCheckedInToBrackets", () => {
 		{ why: "no check-ins", checkIns: [], expected: false },
 		{
 			why: "event check-in only",
-			checkIns: [{ bracketIdx: null, checkedInAt: 1, isCheckOut: 0 }],
+			checkIns: [{ bracketIdx: null, checkedInAt: 1, isCheckOut: false }],
 			expected: false,
 		},
 		{
 			why: "checked in to a shared bracket",
-			checkIns: [{ bracketIdx: 2, checkedInAt: 1, isCheckOut: 0 }],
+			checkIns: [{ bracketIdx: 2, checkedInAt: 1, isCheckOut: false }],
 			expected: true,
 		},
 		{
 			why: "checked in to a bracket not shared",
-			checkIns: [{ bracketIdx: 3, checkedInAt: 1, isCheckOut: 0 }],
+			checkIns: [{ bracketIdx: 3, checkedInAt: 1, isCheckOut: false }],
 			expected: false,
 		},
 		{
 			why: "checked out after checking in to a shared bracket",
 			checkIns: [
-				{ bracketIdx: 2, checkedInAt: 1, isCheckOut: 0 },
-				{ bracketIdx: 1, checkedInAt: 2, isCheckOut: 1 },
+				{ bracketIdx: 2, checkedInAt: 1, isCheckOut: false },
+				{ bracketIdx: 1, checkedInAt: 2, isCheckOut: true },
 			],
 			expected: false,
 		},
 		{
 			why: "checked in again after checking out",
 			checkIns: [
-				{ bracketIdx: 1, checkedInAt: 1, isCheckOut: 1 },
-				{ bracketIdx: 2, checkedInAt: 2, isCheckOut: 0 },
+				{ bracketIdx: 1, checkedInAt: 1, isCheckOut: true },
+				{ bracketIdx: 2, checkedInAt: 2, isCheckOut: false },
 			],
 			expected: true,
 		},

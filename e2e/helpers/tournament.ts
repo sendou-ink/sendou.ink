@@ -187,7 +187,7 @@ export async function createTeams(
 					tournamentId,
 					team: {
 						name: `Team ${i + 1}`,
-						prefersNotToHost: 0 as const,
+						prefersNotToHost: false,
 						teamId: null,
 					},
 					memberUserIds: [

@@ -1310,7 +1310,6 @@ export function buildCases(fx: Fixtures): {
 				.withAuthor()
 				.withStaff()
 				.withBracketProgressionOverrides()
-				.withTeams()
 				.withToSetMapPool()
 				.withPermissions()
 				.executeTakeFirst(),
@@ -1320,12 +1319,6 @@ export function buildCases(fx: Fixtures): {
 		fx.heavyTournamentId,
 		(tournamentId) =>
 			TournamentRepository.findStreamsByTournamentId(tournamentId),
-	);
-	add(
-		"TournamentRepository.findTeamsFullByTournamentId",
-		fx.heavyTournamentId,
-		(tournamentId) =>
-			TournamentRepository.findTeamsFullByTournamentId(tournamentId),
 	);
 	add(
 		"TournamentRepository.findParticipatedUserIdsById",
@@ -1369,12 +1362,6 @@ export function buildCases(fx: Fixtures): {
 		"TournamentRepository.findPreparedMapsById",
 		fx.heavyTournamentId,
 		(tournamentId) => TournamentRepository.findPreparedMapsById(tournamentId),
-	);
-	add(
-		"TournamentRepository.findParticipantTwitchAccounts",
-		fx.recentTournamentIds,
-		(tournamentIds) =>
-			TournamentRepository.findParticipantTwitchAccounts(tournamentIds),
 	);
 	addStatic("TournamentRepository.tournaments.showcase", () =>
 		TournamentRepository.tournaments()
@@ -1436,12 +1423,6 @@ export function buildCases(fx: Fixtures): {
 			TournamentRepository.findTopThreeResultsByTournamentIds([tournamentId]),
 	);
 	add(
-		"TournamentRepository.findFriendCodesByTournamentId",
-		fx.heavyTournamentId,
-		(tournamentId) =>
-			TournamentRepository.findFriendCodesByTournamentId(tournamentId),
-	);
-	add(
 		"TournamentRepository.findPickBanEventsByMatchId",
 		fx.heavyTournamentMatchId,
 		(matchId) => TournamentRepository.findPickBanEventsByMatchId(matchId),
@@ -1466,25 +1447,66 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	add(
-		"TournamentTeamRepository.findAllByChatRoomIds",
+		"TournamentTeamRepository.tournamentTeams.ctx",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentTeamRepository.tournamentTeams()
+				.where({ tournamentId })
+				.withPickupAvatar()
+				.withLinkedTeam()
+				.withMembers()
+				.withCheckIns()
+				.withHasMapPool()
+				.withAvgSeedingSkillOrdinal()
+				.execute(),
+	);
+	add(
+		"TournamentTeamRepository.teamsWithRosters",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentTeamRepository.teamsWithRosters(tournamentId).execute(),
+	);
+	add(
+		"TournamentTeamRepository.tournamentTeams.owningRooms",
 		fx.openChatRoomIdsByType?.TOURNAMENT_TEAM ?? null,
-		(roomIds) => TournamentTeamRepository.findAllByChatRoomIds(roomIds),
+		(roomIds) =>
+			TournamentTeamRepository.tournamentTeams()
+				.includingPlaceholders()
+				.with(
+					refine("TournamentTeam", (qb) =>
+						qb.where("TournamentTeam.chatRoomId", "in", roomIds),
+					),
+				)
+				.withColumns(["chatRoomId", "tournamentId"])
+				.withMembers()
+				.execute(),
 	);
 	add(
-		"TournamentTeamRepository.findAllMembersByTeamIds",
+		"TournamentTeamRepository.tournamentTeams.members",
 		fx.manyTournamentTeamIds,
-		(teamIds) => TournamentTeamRepository.findAllMembersByTeamIds(teamIds),
+		(teamIds) =>
+			TournamentTeamRepository.tournamentTeams()
+				.whereIdIn(teamIds)
+				.withMembers()
+				.execute(),
 	);
 	add(
-		"TournamentTeamRepository.findByInviteCode",
+		"TournamentTeamRepository.teamByInviteCode",
 		fx.tournamentTeamInviteCode,
-		(inviteCode) => TournamentTeamRepository.findByInviteCode(inviteCode),
+		(inviteCode) =>
+			TournamentTeamRepository.teamByInviteCode(inviteCode).executeTakeFirst(),
 	);
 	add(
-		"TournamentTeamRepository.findInviteCodeById",
-		fx.heavyTournamentTeamId,
-		(tournamentTeamId) =>
-			TournamentTeamRepository.findInviteCodeById(tournamentTeamId),
+		"TournamentTeamRepository.findParticipantTwitchAccounts",
+		fx.recentTournamentIds,
+		(tournamentIds) =>
+			TournamentTeamRepository.findParticipantTwitchAccounts(tournamentIds),
+	);
+	add(
+		"TournamentTeamRepository.findFriendCodesByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentTeamRepository.findFriendCodesByTournamentId(tournamentId),
 	);
 	add("TournamentTeamRepository.isPickupAvatarImgId", fx.imageId, (imageId) =>
 		TournamentTeamRepository.isPickupAvatarImgId(imageId),
@@ -1514,10 +1536,10 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 	add(
-		"TournamentTeamRepository.isOrganizerAddedMember",
+		"TournamentTeamRepository.findMemberBy",
 		both(fx.heavyTournamentTeamId, fx.heavyUser),
 		([tournamentTeamId, user]) =>
-			TournamentTeamRepository.isOrganizerAddedMember({
+			TournamentTeamRepository.findMemberBy({
 				tournamentTeamId,
 				userId: user.id,
 			}),

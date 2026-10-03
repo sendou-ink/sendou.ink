@@ -1,7 +1,7 @@
 import { differenceInMinutes } from "date-fns";
 import { refine } from "~/db/entity-query";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getStreams } from "~/modules/twitch";
@@ -74,9 +74,10 @@ async function syncTournamentStreamers(
 		typeof LiveStreamRepository.insertTournamentStreamers
 	>[0] = [];
 
-	const participants = await TournamentRepository.findParticipantTwitchAccounts(
-		tournaments.map((tournament) => tournament.ctx.id),
-	);
+	const participants =
+		await TournamentTeamRepository.findParticipantTwitchAccounts(
+			tournaments.map((tournament) => tournament.ctx.id),
+		);
 
 	for (const participant of participants) {
 		if (!streamsByTwitchName.has(participant.twitch.toLowerCase())) continue;

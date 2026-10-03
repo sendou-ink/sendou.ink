@@ -416,7 +416,7 @@ test.describe("Tournament", () => {
 });
 
 function pickUpTeam(name: string) {
-	return { name, prefersNotToHost: 0 as const, teamId: null };
+	return { name, prefersNotToHost: false, teamId: null };
 }
 
 function teamNameForSeed(seed: number) {

@@ -4,7 +4,7 @@ import type { ParsedBracket } from "./Progression";
 interface CheckInRow {
 	bracketIdx: number | null;
 	checkedInAt: number;
-	isCheckOut: number;
+	isCheckOut: boolean;
 }
 
 /**

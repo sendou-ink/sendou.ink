@@ -1199,7 +1199,7 @@ async function resolveLfgTournament() {
 	const row = await db
 		.selectFrom("TournamentTeam")
 		.select(["tournamentId", "id"])
-		.where("isLooking", "=", 1)
+		.where("isLooking", "=", true)
 		.orderBy("id", "desc")
 		.limit(1)
 		.executeTakeFirst();

@@ -12,7 +12,6 @@ import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import * as Standings from "../core/Standings";
 import { type AllRoundsItem, tournamentTeamSets } from "../core/sets.server";
-import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 
 export type TournamentTeamLoaderData = SerializeFrom<typeof loader>;
 
@@ -65,7 +64,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		team,
 		// the invite link of the add sub popover, only the team's own captain gets it
 		subInviteCode: canAddSubs(fullTournament, tournamentTeamId, user)
-			? await TournamentTeamRepository.findInviteCodeById(tournamentTeamId)
+			? team.inviteCode
 			: null,
 		activePlayers:
 			sets.length > 0

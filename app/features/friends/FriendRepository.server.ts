@@ -79,7 +79,7 @@ function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
 		.leftJoin("TournamentTeamMember", (join) =>
 			join
 				.onRef("TournamentTeamMember.userId", "=", "User.id")
-				.on("TournamentTeamMember.isLooking", "=", 1)
+				.on("TournamentTeamMember.isLooking", "=", true)
 				.on((eb) =>
 					eb.exists(
 						eb

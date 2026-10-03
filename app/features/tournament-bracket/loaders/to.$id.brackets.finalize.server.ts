@@ -3,7 +3,7 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonRatings, seedingRatings } from "~/features/mmr/mmr-utils.server";
 import * as Standings from "~/features/tournament/core/Standings";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	summaryRatingTargets,
 	tournamentSummary,
@@ -89,7 +89,9 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 
 	const rostersByTeamId = new Map(
 		(
-			await TournamentRepository.findTeamsFullByTournamentId(tournament.ctx.id)
+			await TournamentTeamRepository.teamsWithRosters(
+				tournament.ctx.id,
+			).execute()
 		).map((team) => [team.id, team.members]),
 	);
 

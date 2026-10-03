@@ -224,7 +224,7 @@ function transformMembers(
 			languages,
 			vc: m.vc,
 			role: m.role,
-			isStayAsSub: m.isStayAsSub === 1,
+			isStayAsSub: m.isStayAsSub,
 			weapons,
 			plusTier: m.plusTier,
 		};

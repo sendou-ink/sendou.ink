@@ -225,7 +225,7 @@ test.describe("Team page", () => {
 			{
 				tournamentId: tournament.id,
 				memberUserIds,
-				team: { name: TEAM_NAME, prefersNotToHost: 0, teamId },
+				team: { name: TEAM_NAME, prefersNotToHost: false, teamId },
 			},
 			{ isCheckedIn: true },
 		);

@@ -628,7 +628,7 @@ describe("teamMemberOfProgressStatus in swiss", () => {
 				teams: [1, 2, 3, 4].map((teamId) =>
 					tournamentCtxTeam(teamId, {
 						memberUserIds: [100 + teamId],
-						droppedOut: teamId === 4 ? 1 : 0,
+						droppedOut: teamId === 4,
 					}),
 				),
 			},
@@ -733,9 +733,15 @@ describe("follow-up bracket check-in shared between brackets", () => {
 				teams: [1, 2, 3, 4].map((teamId) =>
 					tournamentCtxTeam(teamId, {
 						checkIns: [
-							{ checkedInAt: 1, bracketIdx: null, isCheckOut: 0 },
+							{ checkedInAt: 1, bracketIdx: null, isCheckOut: false },
 							...(teamId === betaTeamId
-								? [{ checkedInAt: 2, bracketIdx: 2, isCheckOut: 0 as const }]
+								? [
+										{
+											checkedInAt: 2,
+											bracketIdx: 2,
+											isCheckOut: false as const,
+										},
+									]
 								: []),
 						],
 					}),

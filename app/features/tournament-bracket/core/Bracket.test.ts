@@ -135,7 +135,7 @@ describe("swiss standings - losses against tied", () => {
 					],
 				},
 				teams: [1, 2, 3, 4, 5, 6].map((teamId) =>
-					tournamentCtxTeam(teamId, { droppedOut: teamId === 6 ? 1 : 0 }),
+					tournamentCtxTeam(teamId, { droppedOut: teamId === 6 }),
 				),
 			},
 		});
@@ -171,7 +171,7 @@ describe("swiss standings - losses against tied", () => {
 				ctx: {
 					...tournamentData.ctx,
 					teams: tournamentData.ctx.teams.map((ctxTeam) =>
-						ctxTeam.id === team.id ? { ...ctxTeam, droppedOut: 1 } : ctxTeam,
+						ctxTeam.id === team.id ? { ...ctxTeam, droppedOut: true } : ctxTeam,
 					),
 				},
 			}).bracketByIdx(0)!.standings;
@@ -245,7 +245,7 @@ describe("swiss standings - losses against tied", () => {
 						],
 					},
 					teams: [1, 2, 3, 4, 5, 6, 7, 8].map((teamId) =>
-						tournamentCtxTeam(teamId, { droppedOut: teamId === 3 ? 1 : 0 }),
+						tournamentCtxTeam(teamId, { droppedOut: teamId === 3 }),
 					),
 				},
 			});
@@ -672,7 +672,7 @@ describe("round robin standings - dropped out teams", () => {
 					tournamentCtxTeam(1, { seed: 1 }),
 					tournamentCtxTeam(2, { seed: 2 }),
 					tournamentCtxTeam(3, { seed: 3 }),
-					tournamentCtxTeam(4, { seed: 4, droppedOut: 1 }),
+					tournamentCtxTeam(4, { seed: 4, droppedOut: true }),
 				],
 			},
 			data,
@@ -829,7 +829,7 @@ describe("round robin standings - dropped out teams", () => {
 					teams: [1, 2, 3, 4, 5].map((teamId) =>
 						tournamentCtxTeam(teamId, {
 							seed: teamId,
-							droppedOut: teamId === droppedOutTeamId ? 1 : 0,
+							droppedOut: teamId === droppedOutTeamId,
 						}),
 					),
 				},

@@ -55,8 +55,7 @@ export const action = async (args: ActionFunctionArgs) => {
 		);
 
 		if (team.activeRosterUserIds?.includes(userId)) {
-			await TournamentTeamRepository.setActiveRoster({
-				teamId: team.id,
+			await TournamentTeamRepository.updateById(team.id, {
 				activeRosterUserIds: null,
 			});
 		}

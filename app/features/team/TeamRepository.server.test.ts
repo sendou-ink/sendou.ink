@@ -20,7 +20,7 @@ describe("TeamRepository.findResultsById", () => {
 			memberUserIds: [owner.id, formerMember.id],
 			team: {
 				name: team.name,
-				prefersNotToHost: 0,
+				prefersNotToHost: false,
 				teamId: team.id,
 			},
 		});

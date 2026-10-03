@@ -2,6 +2,7 @@ import { isAfter, subDays } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	bracketsMetaCached,
@@ -23,7 +24,9 @@ export type TournamentLoaderData = {
 	streamsCount: number;
 	friendCodes:
 		| Awaited<
-				ReturnType<typeof TournamentRepository.findFriendCodesByTournamentId>
+				ReturnType<
+					typeof TournamentTeamRepository.findFriendCodesByTournamentId
+				>
 		  >
 		| undefined;
 	preparedMaps:
@@ -61,7 +64,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		},
 		streamsCount: tournament.streams.length,
 		friendCodes: showFriendCodes
-			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
+			? await TournamentTeamRepository.findFriendCodesByTournamentId(
+					tournamentId,
+				)
 			: undefined,
 		preparedMaps:
 			hasPermission(tournament.ctx, "ORGANIZE", user) &&

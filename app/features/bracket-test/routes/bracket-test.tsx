@@ -208,7 +208,7 @@ function generateTeams(count: number) {
 		name: `Team ${i + 1}`,
 		seed: i + 1,
 		members: [{ userId: i + 1, username: `Player${i + 1}` }],
-		droppedOut: 0,
+		droppedOut: false,
 	}));
 }
 

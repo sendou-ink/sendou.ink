@@ -79,7 +79,7 @@ async function getParticipantsForOrgInMonth(
 		.where("ced.startsAt", ">=", startTimestamp)
 		.where("ced.startsAt", "<", endTimestamp)
 		.where("ttci.checkedInAt", "is not", null)
-		.where("ttci.isCheckOut", "=", 0)
+		.where("ttci.isCheckOut", "=", false)
 		.executeTakeFirst();
 
 	return result?.count ?? 0;

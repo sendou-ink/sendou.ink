@@ -440,5 +440,5 @@ async function createTournament(
 }
 
 function pickUpTeam(name: string) {
-	return { name, prefersNotToHost: 0 as const, teamId: null };
+	return { name, prefersNotToHost: false, teamId: null };
 }

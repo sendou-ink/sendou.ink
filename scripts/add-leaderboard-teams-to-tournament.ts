@@ -97,28 +97,17 @@ async function main() {
 		const teamName = resolvedNames[i];
 		const owner = entry.members[0];
 
-		const tournamentTeam = await userAsyncLocalStorage.run(
-			{ user: adminUser },
-			() =>
-				TournamentTeamRepository.insert({
-					team: {
-						name: teamName,
-						prefersNotToHost: 0,
-						teamId: entry.team?.id ?? null,
-					},
-					userId: owner.id,
-					tournamentId,
-				}),
+		await userAsyncLocalStorage.run({ user: adminUser }, () =>
+			TournamentTeamRepository.upsertRegistration({
+				tournamentId,
+				name: teamName,
+				teamId: entry.team?.id ?? null,
+				avatarImgId: null,
+				ownerUserId: owner.id,
+				membersToAdd: entry.members.map((member) => member.id),
+				isOrganizerAdded: false,
+			}),
 		);
-
-		for (const member of entry.members.slice(1)) {
-			await userAsyncLocalStorage.run({ user: adminUser }, () =>
-				TournamentTeamRepository.join({
-					newTeamId: tournamentTeam.id,
-					userId: member.id,
-				}),
-			);
-		}
 
 		logger.info(
 			`Created team "${teamName}" (placement #${entry.placementRank}) with members: ${entry.members.map((m) => m.username).join(", ")}`,

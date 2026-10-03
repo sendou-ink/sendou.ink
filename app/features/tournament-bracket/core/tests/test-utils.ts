@@ -10,7 +10,9 @@ export const tournamentCtxTeam = (
 	partial?: Partial<TournamentData["ctx"]["teams"][0]>,
 ): TournamentData["ctx"]["teams"][0] => {
 	return {
-		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null, isCheckOut: 0 }],
+		checkIns: [
+			{ checkedInAt: 1705858841, bracketIdx: null, isCheckOut: false },
+		],
 		createdAt: 0,
 		id: teamId,
 		avgSeedingSkillOrdinal: null,
@@ -22,8 +24,8 @@ export const tournamentCtxTeam = (
 		activeRosterUserIds: [],
 		logoUrl: null,
 		name: `Team ${teamId}`,
-		prefersNotToHost: 0,
-		droppedOut: 0,
+		prefersNotToHost: false,
+		droppedOut: false,
 		seed: teamId + 1,
 		...partial,
 	};

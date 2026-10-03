@@ -6,7 +6,7 @@ import type { TournamentSettings } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as Standings from "~/features/tournament/core/Standings";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	seedsByStartingBracket,
 	sortTeamsBySeeding,
@@ -138,7 +138,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			).as("mapPool"),
 		])
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where("TournamentTeam.isPlaceholder", "=", false)
 		.orderBy("TournamentTeam.createdAt", "asc")
 		.execute();
 
@@ -146,7 +146,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		ctx: tournament.ctx,
 		user,
 	})
-		? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
+		? await TournamentTeamRepository.findFriendCodesByTournamentId(tournamentId)
 		: null;
 
 	const seedByTeamId = hasStarted

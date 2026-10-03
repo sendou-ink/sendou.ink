@@ -414,7 +414,7 @@ export function findAllOrganizedTournamentTeamCounts({
 					"=",
 					"CalendarEvent.tournamentId",
 				)
-				.where("TournamentTeam.isPlaceholder", "=", 0)
+				.where("TournamentTeam.isPlaceholder", "=", false)
 				.as("teamCount"),
 		])
 		.$narrowType<{ organizationId: NotNull; teamCount: NotNull }>()
@@ -646,7 +646,7 @@ export async function countActiveParticipants({
 		.where("ced.startsAt", ">=", startTime)
 		.where("ced.startsAt", "<", endTime)
 		.where("ttci.checkedInAt", "is not", null)
-		.where("ttci.isCheckOut", "=", 0)
+		.where("ttci.isCheckOut", "=", false)
 		.executeTakeFirst();
 
 	return result?.count ?? 0;

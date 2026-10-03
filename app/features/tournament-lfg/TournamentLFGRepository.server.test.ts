@@ -603,7 +603,7 @@ describe("leaveLfg", () => {
 		expect(groups).toHaveLength(0);
 	});
 
-	test("sets isLooking=0 for non-placeholder team", async () => {
+	test("sets isLooking off for non-placeholder team", async () => {
 		const tournament = await createTournament();
 
 		const team = await TournamentTeamFactory.create(
@@ -628,7 +628,7 @@ describe("leaveLfg", () => {
 			.where("id", "=", team.id)
 			.executeTakeFirstOrThrow();
 
-		expect(teamRow.isLooking).toBe(0);
+		expect(teamRow.isLooking).toBe(false);
 	});
 });
 

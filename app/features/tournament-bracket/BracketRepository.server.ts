@@ -166,7 +166,7 @@ export function insertBracket(args: {
 		// no team can join once a bracket has started, so none is looking for members anymore
 		await trx
 			.updateTable("TournamentTeam")
-			.set({ isLooking: 0 })
+			.set({ isLooking: false })
 			.where("tournamentId", "=", args.tournamentId)
 			.execute();
 

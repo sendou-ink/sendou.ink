@@ -29,7 +29,9 @@ export const action: ActionFunction = async ({ params, url }) => {
 	invariant(inviteCode, "code is missing");
 
 	const leanTeam = notFoundIfNullish(
-		await TournamentTeamRepository.findByInviteCode(inviteCode),
+		await TournamentTeamRepository.teamByInviteCode(
+			inviteCode,
+		).executeTakeFirst(),
 	);
 
 	await requireNotBannedByOrganization({

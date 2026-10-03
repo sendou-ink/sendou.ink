@@ -496,8 +496,7 @@ async function setActiveRosters(tournamentId: number, match: PlayedMatch) {
 		// a team without subs plays with everybody it has, so it is never asked
 		if (team.memberUserIds.length === tournament.minMembersPerTeam) continue;
 
-		await TournamentTeamRepository.setActiveRoster({
-			teamId,
+		await TournamentTeamRepository.updateById(teamId, {
 			activeRosterUserIds: team.memberUserIds.slice(
 				0,
 				tournament.minMembersPerTeam,

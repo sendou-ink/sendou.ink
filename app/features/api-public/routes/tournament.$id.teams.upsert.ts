@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { upsertRegistrationAction } from "~/features/tournament-admin/actions/to.$id.admin.registration.server";
 import { ADMIN_REGISTRATION_MAX_MEMBERS } from "~/features/tournament-admin/tournament-admin-registration-schemas";
@@ -44,9 +44,9 @@ export const action = async (args: ActionFunctionArgs) => {
 
 	const existingTeam =
 		typeof body.tournamentTeamId === "number"
-			? (
-					await TournamentRepository.findTeamsFullByTournamentId(tournamentId)
-				).find((team) => team.id === body.tournamentTeamId)
+			? await TournamentTeamRepository.teamsWithRosters(tournamentId)
+					.where({ id: body.tournamentTeamId })
+					.executeTakeFirst()
 			: undefined;
 	if (typeof body.tournamentTeamId === "number" && !existingTeam) {
 		return Response.json(

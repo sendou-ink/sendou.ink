@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -88,6 +89,7 @@ describe("TournamentTeamRepository", () => {
 					teamId: null,
 					avatarImgId: null,
 					ownerUserId: ownerId(),
+					isOrganizerAdded: true,
 					ownerChange: null,
 					membersToAdd: [ownerId(), memberId(), anotherMemberId()],
 					membersToRemove: [],
@@ -117,7 +119,7 @@ describe("TournamentTeamRepository", () => {
 			const team = await TournamentTeamFactory.create({
 				tournamentId: tournament.id,
 				memberUserIds: [ownerId()],
-				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+				team: { name: "Team Olive", prefersNotToHost: false, teamId: null },
 			});
 
 			await withUserId(organizerId(), () =>
@@ -128,6 +130,7 @@ describe("TournamentTeamRepository", () => {
 					teamId: null,
 					avatarImgId: null,
 					ownerUserId: ownerId(),
+					isOrganizerAdded: true,
 					ownerChange: null,
 					membersToAdd: [memberId(), anotherMemberId()],
 					membersToRemove: [],
@@ -156,6 +159,7 @@ describe("TournamentTeamRepository", () => {
 					teamId: null,
 					avatarImgId: null,
 					ownerUserId: ownerId(),
+					isOrganizerAdded: true,
 					ownerChange: null,
 					membersToAdd: [ownerId(), memberId()],
 					membersToRemove: [],
@@ -177,6 +181,59 @@ describe("TournamentTeamRepository", () => {
 			);
 		});
 
+		test("a player registering their own team is not marked as organizer added", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+
+			const team = await withUserId(ownerId(), () =>
+				TournamentTeamRepository.upsertRegistration({
+					tournamentId: tournament.id,
+					name: "Team Olive",
+					teamId: null,
+					avatarImgId: null,
+					ownerUserId: ownerId(),
+					membersToAdd: [ownerId()],
+					isOrganizerAdded: false,
+				}),
+			);
+
+			const [owner] = await membersByTeamId(team.id);
+
+			expect(owner.isOrganizerAdded).toBe(false);
+			expect(owner.role).toBe("OWNER");
+		});
+
+		test("an edit leaving out prefersNotToHost keeps it", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [ownerId()],
+				team: { name: "Team Olive", prefersNotToHost: true, teamId: null },
+			});
+
+			await withUserId(organizerId(), () =>
+				TournamentTeamRepository.upsertRegistration({
+					tournamentTeamId: team.id,
+					tournamentId: tournament.id,
+					name: "Team Lime",
+					teamId: null,
+					avatarImgId: null,
+					ownerUserId: ownerId(),
+					isOrganizerAdded: true,
+				}),
+			);
+
+			const edited = await TournamentTeamRepository.tournamentTeams()
+				.where({ id: team.id })
+				.executeTakeFirst();
+
+			expect(edited?.name).toBe("Team Lime");
+			expect(edited?.prefersNotToHost).toBe(true);
+		});
+
 		test("updates tournament names of members", async () => {
 			const tournament = await TournamentFactory.create({
 				authorId: organizerId(),
@@ -191,6 +248,7 @@ describe("TournamentTeamRepository", () => {
 						teamId: null,
 						avatarImgId: null,
 						ownerUserId: ownerId(),
+						isOrganizerAdded: true,
 						ownerChange: null,
 						membersToAdd: [ownerId(), memberId()],
 						membersToRemove: [],
@@ -225,6 +283,7 @@ describe("TournamentTeamRepository", () => {
 					teamId: null,
 					avatarImgId: null,
 					ownerUserId: ownerId(),
+					isOrganizerAdded: true,
 					ownerChange: null,
 					membersToAdd: [ownerId()],
 					membersToRemove: [],
@@ -258,7 +317,7 @@ describe("TournamentTeamRepository", () => {
 			const team = await TournamentTeamFactory.create({
 				tournamentId: tournament.id,
 				memberUserIds: [ownerId()],
-				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+				team: { name: "Team Olive", prefersNotToHost: false, teamId: null },
 			});
 
 			const upsert = (tournamentName: string) =>
@@ -270,6 +329,7 @@ describe("TournamentTeamRepository", () => {
 						teamId: null,
 						avatarImgId: null,
 						ownerUserId: ownerId(),
+						isOrganizerAdded: true,
 						ownerChange: null,
 						membersToAdd: [],
 						membersToRemove: [],
@@ -301,7 +361,7 @@ describe("TournamentTeamRepository", () => {
 			const team = await TournamentTeamFactory.create({
 				tournamentId: tournament.id,
 				memberUserIds: [ownerId()],
-				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+				team: { name: "Team Olive", prefersNotToHost: false, teamId: null },
 			});
 
 			await withUserId(memberId(), () =>
@@ -316,7 +376,7 @@ describe("TournamentTeamRepository", () => {
 			expect(
 				members.find((teamMember) => teamMember.userId === memberId())
 					?.isOrganizerAdded,
-			).toBe(0);
+			).toBe(false);
 		});
 	});
 
@@ -329,7 +389,7 @@ describe("TournamentTeamRepository", () => {
 				{
 					tournamentId: tournament.id,
 					memberUserIds: [ownerId(), memberId()],
-					team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+					team: { name: "Team Olive", prefersNotToHost: false, teamId: null },
 				},
 				{ isLooking: true },
 			);
@@ -350,7 +410,7 @@ describe("TournamentTeamRepository", () => {
 			const team = await TournamentTeamFactory.create({
 				tournamentId: tournament.id,
 				memberUserIds: [ownerId()],
-				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+				team: { name: "Team Olive", prefersNotToHost: false, teamId: null },
 			});
 
 			expect(
@@ -457,6 +517,47 @@ describe("TournamentTeamRepository", () => {
 				{ mode: "SZ", stageId: 1 },
 				{ mode: "SZ", stageId: 1 },
 			]);
+		});
+	});
+
+	describe("tournamentTeams", () => {
+		const createTeams = async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [ownerId()],
+			});
+			const placeholder = await TournamentLFGTeamFactory.create({
+				tournamentId: tournament.id,
+				userId: memberId(),
+			});
+
+			return { tournament, team, placeholder };
+		};
+
+		test("leaves out the placeholder teams of the tournament's LFG", async () => {
+			const { tournament, team } = await createTeams();
+
+			const teams = await TournamentTeamRepository.tournamentTeams()
+				.where({ tournamentId: tournament.id })
+				.execute();
+
+			expect(teams.map((row) => row.id)).toEqual([team.id]);
+		});
+
+		test("includingPlaceholders brings the placeholder teams back", async () => {
+			const { tournament, team, placeholder } = await createTeams();
+
+			const teams = await TournamentTeamRepository.tournamentTeams()
+				.where({ tournamentId: tournament.id })
+				.includingPlaceholders()
+				.execute();
+
+			expect(teams.map((row) => row.id).sort(byId)).toEqual(
+				[team.id, placeholder.id].sort(byId),
+			);
 		});
 	});
 

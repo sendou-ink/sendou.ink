@@ -28,7 +28,7 @@ import type {
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
-import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
+import { nullFilledArray } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import {
@@ -44,7 +44,6 @@ import {
 	tournamentTeamsCount,
 	tournamentUsername,
 } from "~/utils/kysely.server";
-import type { Unwrapped } from "~/utils/types";
 import type { TournamentTierNumber } from "./core/tiering";
 import { updatedCastedMatchesInfo } from "./tournament-utils";
 
@@ -408,121 +407,6 @@ export const tournaments = defineQuery({
 					).as("toSetMapPool"),
 				),
 			),
-		// xxx: maybe it's just cleaner to have this come from the TournamentTeamRepository
-		/**
-		 * The registered teams in seed order without their rosters' profile data (see
-		 * {@link findTeamsFullByTournamentId}), plus `latestTeamIdByDuplicatedUserId`: users on
-		 * several rosters mapped to the team they joined most recently. Nearly always empty, which
-		 * lets the teams leave out the per member join timestamps only this tiebreak needs.
-		 */
-		withTeams: () =>
-			refine("Tournament", (qb) =>
-				qb.select((eb) =>
-					jsonArrayFrom(
-						eb
-							.selectFrom("TournamentTeam")
-							.leftJoin(
-								"UserSubmittedImage as PickupAvatar",
-								"TournamentTeam.avatarImgId",
-								"PickupAvatar.id",
-							)
-							.leftJoin("Team", "Team.id", "TournamentTeam.teamId")
-							.leftJoin(
-								"UserSubmittedImage as TeamAvatar",
-								"Team.avatarImgId",
-								"TeamAvatar.id",
-							)
-							.select((teamEb) => [
-								"TournamentTeam.id",
-								"TournamentTeam.name",
-								"TournamentTeam.seed",
-								"TournamentTeam.prefersNotToHost",
-								"TournamentTeam.droppedOut",
-								"TournamentTeam.createdAt",
-								"TournamentTeam.inviteCode",
-								"TournamentTeam.activeRosterUserIds",
-								"TournamentTeam.startingBracketIdx",
-								"TournamentTeam.abDivision",
-								concatUserSubmittedImagePrefix(teamEb.ref("TeamAvatar.url")).as(
-									"teamLogoUrl",
-								),
-								concatUserSubmittedImagePrefix(
-									teamEb.ref("PickupAvatar.url"),
-								).as("pickupAvatarUrl"),
-								asBoolean(
-									teamEb.exists(
-										teamEb
-											.selectFrom("MapPoolMap")
-											.select("MapPoolMap.stageId")
-											.whereRef(
-												"MapPoolMap.tournamentTeamId",
-												"=",
-												"TournamentTeam.id",
-											),
-									),
-								).as("hasMapPool"),
-								// the type picked per team, inside the join it parsed the settings once per member
-								teamEb
-									.case()
-									.when(settingsFlag("isRanked"), "=", 1)
-									.then(averageSeedingOrdinal(teamEb, "RANKED"))
-									.else(averageSeedingOrdinal(teamEb, "UNRANKED"))
-									.end()
-									.as("avgSeedingSkillOrdinal"),
-								jsonArrayFrom(
-									teamEb
-										.selectFrom("TournamentTeamMember")
-										.select([
-											"TournamentTeamMember.userId",
-											"TournamentTeamMember.role",
-											"TournamentTeamMember.createdAt",
-										])
-										.whereRef(
-											"TournamentTeamMember.tournamentTeamId",
-											"=",
-											"TournamentTeam.id",
-										)
-										.orderBy(
-											sql`"TournamentTeamMember"."role" = 'OWNER'`,
-											"desc",
-										)
-										.orderBy("TournamentTeamMember.createdAt", "asc"),
-								).as("members"),
-								jsonArrayFrom(
-									teamEb
-										.selectFrom("TournamentTeamCheckIn")
-										.select([
-											"TournamentTeamCheckIn.bracketIdx",
-											"TournamentTeamCheckIn.checkedInAt",
-											"TournamentTeamCheckIn.isCheckOut",
-										])
-										.whereRef(
-											"TournamentTeamCheckIn.tournamentTeamId",
-											"=",
-											"TournamentTeam.id",
-										),
-								).as("checkIns"),
-							])
-							.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-							.where("TournamentTeam.isPlaceholder", "=", 0)
-							.orderBy("TournamentTeam.seed", "asc")
-							.orderBy("TournamentTeam.createdAt", "asc")
-							.orderBy("TournamentTeam.id", "asc"),
-					).as("teams"),
-				),
-			).mapRows(({ teams }) => ({
-				teams: teams.map(({ members, ...team }) => ({
-					...team,
-					avgSeedingSkillOrdinal:
-						typeof team.avgSeedingSkillOrdinal === "number"
-							? Math.round(team.avgSeedingSkillOrdinal * 100) / 100
-							: null,
-					memberUserIds: members.map((member) => member.userId),
-					ownerUserId:
-						members.find((member) => member.role === "OWNER")?.userId ?? null,
-				})),
-				latestTeamIdByDuplicatedUserId: latestTeamIdByDuplicatedUserId(teams),
-			})),
 		/** Teams that count for the tournament (see `tournamentTeamsCount`) and their players. */
 		withCounts: () =>
 			refine("Tournament", (qb) =>
@@ -681,7 +565,7 @@ export async function findStreamsByTournamentId(tournamentId: number) {
 			...commonUserSelect(eb, { inTournament: true }),
 		])
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where("TournamentTeam.isPlaceholder", "=", false)
 		.where(({ exists, selectFrom }) =>
 			exists(
 				selectFrom("TournamentTeamCheckIn")
@@ -737,157 +621,6 @@ export async function findParticipatedUserIdsById(tournamentId: number) {
 		.execute();
 
 	return rows.map((row) => row.userId);
-}
-
-export type TeamFull = Unwrapped<typeof findTeamsFullByTournamentId>;
-
-// xxx: a tournament team read, move it there once TournamentTeamRepository is converted
-/**
- * Full rosters of a tournament's teams: per member profile data, map pools and
- * invite codes. Kept out of the `withTeams` step because the tournament layout ships
- * the lite team shape only — views that render rosters load these separately.
- */
-export async function findTeamsFullByTournamentId(tournamentId: number) {
-	const teams = await db
-		.selectFrom("TournamentTeam")
-		.leftJoin(
-			"UserSubmittedImage as PickupAvatar",
-			"TournamentTeam.avatarImgId",
-			"PickupAvatar.id",
-		)
-		.select((eb) => [
-			"TournamentTeam.id",
-			"TournamentTeam.name",
-			"TournamentTeam.seed",
-			"TournamentTeam.prefersNotToHost",
-			"TournamentTeam.droppedOut",
-			"TournamentTeam.inviteCode",
-			"TournamentTeam.createdAt",
-			"TournamentTeam.activeRosterUserIds",
-			"TournamentTeam.startingBracketIdx",
-			"TournamentTeam.abDivision",
-			"TournamentTeam.avatarImgId",
-			concatUserSubmittedImagePrefix(eb.ref("PickupAvatar.url")).as(
-				"pickupAvatarUrl",
-			),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentTeamMember")
-					.innerJoin("User", "TournamentTeamMember.userId", "User.id")
-					.leftJoin("SeedingSkill", (join) =>
-						join
-							.onRef("User.id", "=", "SeedingSkill.userId")
-							.on("SeedingSkill.type", "=", seedingSkillTypeOf(tournamentId)),
-					)
-					.select((memberEb) => [
-						...commonUserSelect(memberEb, {
-							idAs: "userId",
-							inTournament: true,
-						}),
-						"User.country",
-						"User.tournamentName",
-						"SeedingSkill.ordinal",
-						"TournamentTeamMember.role",
-						"TournamentTeamMember.createdAt",
-						"TournamentTeamMember.isSub",
-						"TournamentTeamMember.isOrganizerAdded",
-						sql<string | null> /*sql*/`coalesce(
-              "TournamentTeamMember"."inGameName",
-              "User"."inGameName"
-            )`.as("inGameName"),
-					])
-					.whereRef(
-						"TournamentTeamMember.tournamentTeamId",
-						"=",
-						"TournamentTeam.id",
-					)
-					.orderBy(sql`"TournamentTeamMember"."role" = 'OWNER'`, "desc")
-					.orderBy("TournamentTeamMember.createdAt", "asc"),
-			).as("members"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentTeamCheckIn")
-					.select([
-						"TournamentTeamCheckIn.bracketIdx",
-						"TournamentTeamCheckIn.checkedInAt",
-						"TournamentTeamCheckIn.isCheckOut",
-					])
-					.whereRef(
-						"TournamentTeamCheckIn.tournamentTeamId",
-						"=",
-						"TournamentTeam.id",
-					),
-			).as("checkIns"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("MapPoolMap")
-					.whereRef("MapPoolMap.tournamentTeamId", "=", "TournamentTeam.id")
-					.select(["MapPoolMap.stageId", "MapPoolMap.mode"]),
-			).as("mapPool"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("Team")
-					.leftJoin(
-						"UserSubmittedImage",
-						"Team.avatarImgId",
-						"UserSubmittedImage.id",
-					)
-					.whereRef("Team.id", "=", "TournamentTeam.teamId")
-					.select((teamEb) => [
-						"Team.id",
-						"Team.customUrl",
-						concatUserSubmittedImagePrefix(
-							teamEb.ref("UserSubmittedImage.url"),
-						).as("logoUrl"),
-						"Team.deletedAt",
-					]),
-			).as("team"),
-		])
-		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.where("TournamentTeam.isPlaceholder", "=", 0)
-		.orderBy("TournamentTeam.seed", "asc")
-		.orderBy("TournamentTeam.createdAt", "asc")
-		.orderBy("TournamentTeam.id", "asc")
-		.execute();
-
-	return teams.map((team) => ({
-		...team,
-		members: team.members.map((member) => R.omit(member, ["ordinal"])),
-		avgSeedingSkillOrdinal: nullifyingAvg(
-			team.members
-				.map((member) => member.ordinal)
-				.filter((memberOrdinal) => typeof memberOrdinal === "number"),
-		),
-	}));
-}
-
-// xxx: a tournament team read, move it there once TournamentTeamRepository is converted
-/**
- * Twitch accounts of the given tournaments' participants who have not dropped out.
- * Only the live stream sync routine needs them.
- */
-export async function findParticipantTwitchAccounts(tournamentIds: number[]) {
-	if (tournamentIds.length === 0) return [];
-
-	return db
-		.selectFrom("TournamentTeamMember")
-		.innerJoin(
-			"TournamentTeam",
-			"TournamentTeam.id",
-			"TournamentTeamMember.tournamentTeamId",
-		)
-		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
-		.select([
-			"TournamentTeam.tournamentId",
-			"TournamentTeamMember.userId",
-			"User.twitch",
-		])
-		.where("TournamentTeam.tournamentId", "in", tournamentIds)
-		.where("TournamentTeam.isPlaceholder", "=", 0)
-		.where("TournamentTeam.droppedOut", "=", 0)
-		.where("User.twitch", "is not", null)
-		.$narrowType<{ twitch: NotNull }>()
-		.execute();
 }
 
 /** Tournaments whose name contains the query, the ones happening now or next up first. */
@@ -958,7 +691,7 @@ export async function findLatestFinalizedLeagueParticipants(args: {
 		.select(["TournamentResult.userId", "TournamentTeam.startingBracketIdx"])
 		.distinct()
 		.where("TournamentResult.tournamentId", "=", league.id)
-		.where("TournamentTeam.droppedOut", "=", 0)
+		.where("TournamentTeam.droppedOut", "=", false)
 		.execute();
 
 	return {
@@ -1027,8 +760,8 @@ export function findPendingCheckInsStartingBetween({
 			)
 			.where("CalendarEvent.hidden", "=", 0)
 			.where("Tournament.isFinalized", "=", false)
-			.where("TournamentTeam.droppedOut", "=", 0)
-			.where("TournamentTeam.isPlaceholder", "=", 0)
+			.where("TournamentTeam.droppedOut", "=", false)
+			.where("TournamentTeam.isPlaceholder", "=", false)
 			.where(settingsFlag("isTest"), "is not", 1)
 			.where(settingsFlag("isLeague"), "is not", 1)
 			.where(settingsFlag("isDraft"), "is not", 1)
@@ -1070,33 +803,6 @@ export async function findTopThreeResultsByTournamentIds(
 		.where("TournamentResult.tournamentId", "in", tournamentIds)
 		.where("TournamentResult.placement", "<=", 3)
 		.execute();
-}
-
-// xxx: TournamentTeamRepository
-/** The participants' friend codes by user id, the latest one when a user has several. */
-export async function findFriendCodesByTournamentId(tournamentId: number) {
-	const values = await db
-		.selectFrom("TournamentTeam")
-		.innerJoin(
-			"TournamentTeamMember",
-			"TournamentTeam.id",
-			"TournamentTeamMember.tournamentTeamId",
-		)
-		.innerJoin(
-			"UserFriendCode",
-			"TournamentTeamMember.userId",
-			"UserFriendCode.userId",
-		)
-		.select(["TournamentTeamMember.userId", "UserFriendCode.friendCode"])
-		.orderBy("UserFriendCode.createdAt", "asc")
-		.where("TournamentTeam.tournamentId", "=", tournamentId)
-		.execute();
-
-	// later friend code overwrites earlier ones
-	return values.reduce<Record<number, string>>((acc, cur) => {
-		acc[cur.userId] = cur.friendCode;
-		return acc;
-	}, {});
 }
 
 /** Pick/ban and roll events of the match in the order they happened. */
@@ -1726,34 +1432,10 @@ function startsAtOf(eb: ExpressionBuilder<DB, "Tournament">) {
 		.$notNull();
 }
 
-function settingsFlag(flag: "isDraft" | "isTest" | "isLeague" | "isRanked") {
+function settingsFlag(flag: "isDraft" | "isTest" | "isLeague") {
 	return sql<
 		number | null
 	>`json_extract("Tournament"."settings", ${`$.${flag}`})`;
-}
-
-/** The average seeding skill ordinal of the team's members. Correlates on `"TournamentTeam"."id"`. */
-function averageSeedingOrdinal(
-	eb: ExpressionBuilder<DB, "TournamentTeam">,
-	type: Tables["SeedingSkill"]["type"],
-) {
-	return eb
-		.selectFrom("TournamentTeamMember")
-		.innerJoin("SeedingSkill", (join) =>
-			join
-				.onRef("SeedingSkill.userId", "=", "TournamentTeamMember.userId")
-				.on("SeedingSkill.type", "=", type),
-		)
-		.select(({ fn }) => fn.avg<number>("SeedingSkill.ordinal").as("average"))
-		.whereRef("TournamentTeamMember.tournamentTeamId", "=", "TournamentTeam.id")
-		.$asScalar();
-}
-
-/** {@link seedingSkillType} resolved once: inline in the join it parsed the settings JSON per member row. */
-function seedingSkillTypeOf(tournamentId: number) {
-	return sql<
-		Tables["SeedingSkill"]["type"]
-	>`(select case when json_extract("settings", '$.isRanked') = 1 then 'RANKED' else 'UNRANKED' end from "Tournament" where "id" = ${tournamentId})`;
 }
 
 /** Who holds a role on the tournament: its author, staff and organization members. */
@@ -1855,39 +1537,4 @@ function permissionsOf(holders: {
 			? membersWithRole(["ADMIN", "ORGANIZER"])
 			: [],
 	};
-}
-
-function latestTeamIdByDuplicatedUserId(
-	teams: Array<{
-		id: number;
-		members: Array<{ userId: number; createdAt: number }>;
-	}>,
-) {
-	const latestByUserId = new Map<
-		number,
-		{ teamId: number; joinedAt: number }
-	>();
-	const duplicatedUserIds = new Set<number>();
-
-	for (const team of teams) {
-		for (const member of team.members) {
-			const existing = latestByUserId.get(member.userId);
-			if (existing) {
-				duplicatedUserIds.add(member.userId);
-			}
-			if (!existing || member.createdAt > existing.joinedAt) {
-				latestByUserId.set(member.userId, {
-					teamId: team.id,
-					joinedAt: member.createdAt,
-				});
-			}
-		}
-	}
-
-	const result: Record<number, number> = {};
-	for (const userId of duplicatedUserIds) {
-		result[userId] = latestByUserId.get(userId)!.teamId;
-	}
-
-	return result;
 }

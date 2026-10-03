@@ -193,8 +193,7 @@ async function dropTeamOut({
 			droppingTeam.memberUserIds,
 			tournament.minMembersPerTeam,
 		);
-		await TournamentTeamRepository.setActiveRoster({
-			teamId,
+		await TournamentTeamRepository.updateById(teamId, {
 			activeRosterUserIds: randomRoster,
 		});
 	}

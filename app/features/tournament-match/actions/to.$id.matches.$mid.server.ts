@@ -150,8 +150,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Invalid roster",
 			);
 
-			await TournamentTeamRepository.setActiveRoster({
-				teamId: data.teamId,
+			await TournamentTeamRepository.updateById(data.teamId, {
 				activeRosterUserIds: data.roster,
 			});
 

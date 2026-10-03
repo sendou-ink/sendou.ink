@@ -358,14 +358,14 @@ export async function findAllResultsByTournamentId(
 		const opponentOne: AllMatchResultOpponent = {
 			id: row.opponentOneId,
 			score: row.opponentOneScore,
-			droppedOut: row.opponentOneDroppedOut === 1,
+			droppedOut: row.opponentOneDroppedOut,
 			activeRosterUserIds: row.opponentOneActiveRoster,
 			memberUserIds: row.opponentOneMembers.map((member) => member.userId),
 		};
 		const opponentTwo: AllMatchResultOpponent = {
 			id: row.opponentTwoId,
 			score: row.opponentTwoScore,
-			droppedOut: row.opponentTwoDroppedOut === 1,
+			droppedOut: row.opponentTwoDroppedOut,
 			activeRosterUserIds: row.opponentTwoActiveRoster,
 			memberUserIds: row.opponentTwoMembers.map((member) => member.userId),
 		};

@@ -1,4 +1,5 @@
 import { addDays } from "date-fns";
+import type { Tables } from "~/db/tables";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
@@ -9,10 +10,10 @@ import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 import * as ImageFactory from "./ImageFactory";
 
-type InsertArgs = Omit<
-	Parameters<typeof TournamentTeamRepository.insert>[0],
-	"userId" | "additionalMemberUserIds"
-> & {
+type InsertArgs = {
+	tournamentId: number;
+	team: Pick<Tables["TournamentTeam"], "name" | "prefersNotToHost" | "teamId">;
+	avatarImgId: number | null;
 	/** The team's members, the first of them its owner. */
 	memberUserIds: number[];
 	/** Gives the team a logo, submitted by its owner. */
@@ -40,7 +41,7 @@ export const { create } = defineFactory({
 	defaults: () => ({
 		team: {
 			name: faker.company.name(),
-			prefersNotToHost: 0 as const,
+			prefersNotToHost: false,
 			teamId: null,
 		},
 		avatarImgId: null,
@@ -50,35 +51,35 @@ export const { create } = defineFactory({
 		hasAvatar,
 		mapPool,
 		registeredAt,
-		...args
+		tournamentId,
+		team: { name, prefersNotToHost, teamId },
+		avatarImgId,
 	}: InsertArgs) => {
-		const [ownerUserId, ...additionalMemberUserIds] = memberUserIds;
+		const [ownerUserId] = memberUserIds;
 		invariant(ownerUserId, "A team needs at least an owner");
 
-		const avatarImgId = hasAvatar
+		const resolvedAvatarImgId = hasAvatar
 			? (
 					await ImageFactory.create(
 						{ submitterUserId: ownerUserId },
 						{ isValidated: true },
 					)
 				).id
-			: args.avatarImgId;
+			: avatarImgId;
 
 		const team = await actAs(ownerUserId, () =>
-			TournamentTeamRepository.insert({
-				...args,
-				avatarImgId,
-				userId: ownerUserId,
-				additionalMemberUserIds,
+			TournamentTeamRepository.upsertRegistration({
+				tournamentId,
+				name,
+				teamId,
+				avatarImgId: resolvedAvatarImgId,
+				prefersNotToHost,
+				ownerUserId,
+				membersToAdd: memberUserIds,
+				isOrganizerAdded: false,
+				mapPool,
 			}),
 		);
-
-		if (mapPool) {
-			await TournamentTeamRepository.upsertCounterpickMaps({
-				tournamentTeamId: team.id,
-				mapPool,
-			});
-		}
 
 		if (registeredAt) {
 			await backdate("TournamentTeam", team.id, { createdAt: registeredAt });

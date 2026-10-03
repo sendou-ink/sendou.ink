@@ -807,8 +807,8 @@ export interface TournamentTeam {
 	id: GeneratedAlways<number>;
 	inviteCode: string;
 	name: string;
-	prefersNotToHost: Generated<DBBoolean>;
-	droppedOut: Generated<DBBoolean>;
+	prefersNotToHost: Generated<boolean>;
+	droppedOut: Generated<boolean>;
 	seed: number | null;
 	/** For formats that have many starting brackets, where should the team start? */
 	startingBracketIdx: number | null;
@@ -816,8 +816,8 @@ export interface TournamentTeam {
 	tournamentId: number;
 	teamId: number | null;
 	avatarImgId: number | null;
-	isLooking: Generated<DBBoolean>;
-	isPlaceholder: Generated<DBBoolean>;
+	isLooking: Generated<boolean>;
+	isPlaceholder: Generated<boolean>;
 	lfgNote: string | null;
 	chatRoomId: number | null;
 	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
@@ -832,7 +832,7 @@ export interface TournamentTeamCheckIn {
 	bracketIdx: number | null;
 	tournamentTeamId: number;
 	/** Indicates that this bracket defaults to checked in and this team has been explicitly checked out from it */
-	isCheckOut: Generated<DBBoolean>;
+	isCheckOut: Generated<boolean>;
 }
 
 export interface TournamentTeamMember {
@@ -841,13 +841,13 @@ export interface TournamentTeamMember {
 	tournamentTeamId: number;
 	userId: number;
 	role: Generated<"OWNER" | "MANAGER" | "REGULAR">;
-	isStayAsSub: Generated<DBBoolean>;
+	isStayAsSub: Generated<boolean>;
 	/** Set when the member was added to the roster after registration closed. */
-	isSub: Generated<DBBoolean>;
+	isSub: Generated<boolean>;
 	/** Set when the member was added to the roster by the tournament organizer instead of joining on their own. */
-	isOrganizerAdded: Generated<DBBoolean>;
+	isOrganizerAdded: Generated<boolean>;
 	/** Denormalized from TournamentTeam.isLooking */
-	isLooking: Generated<DBBoolean>;
+	isLooking: Generated<boolean>;
 }
 
 /** Stable shadow of a tournament team's identity that survives the team's hard-deletion, so the audit log can still resolve its name. */

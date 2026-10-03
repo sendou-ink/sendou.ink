@@ -6,7 +6,9 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const { code: inviteCode } = tournamentJoinSearchParams.parse(url);
 
 	const team = inviteCode
-		? await TournamentTeamRepository.findByInviteCode(inviteCode)
+		? await TournamentTeamRepository.teamByInviteCode(
+				inviteCode,
+			).executeTakeFirst()
 		: null;
 
 	return {

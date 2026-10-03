@@ -10,6 +10,7 @@ import {
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
@@ -43,6 +44,7 @@ export async function tournamentData(tournamentId: number) {
 	const ctx = await tournamentCtx(tournamentId).executeTakeFirst();
 	if (!ctx) return null;
 
+	const teams = await tournamentCtxTeams(tournamentId).execute();
 	const data = await BracketRepository.findByTournamentId(tournamentId);
 	const tournamentHasStarted = data.stage.length > 0;
 
@@ -61,18 +63,17 @@ export async function tournamentData(tournamentId: number) {
 		ctx: {
 			...ctx,
 			tentativeTier,
-			teams: ctx.teams.map(
-				({
-					teamLogoUrl,
-					pickupAvatarUrl,
-					inviteCode: _inviteCode,
-					...team
-				}): TournamentDataTeam => ({
-					...team,
+			teams: teams.map(
+				({ team, pickupAvatarUrl, members, ...rest }): TournamentDataTeam => ({
+					...rest,
 					logoUrl:
-						teamLogoUrl ?? (tournamentHasStarted ? pickupAvatarUrl : null),
+						team?.logoUrl ?? (tournamentHasStarted ? pickupAvatarUrl : null),
+					memberUserIds: members.map((member) => member.userId),
+					ownerUserId:
+						members.find((member) => member.role === "OWNER")?.userId ?? null,
 				}),
 			),
+			latestTeamIdByDuplicatedUserId: latestTeamIdByDuplicatedUserId(teams),
 		},
 	};
 }
@@ -124,14 +125,16 @@ export type TournamentLayoutData = {
 
 /** No per member profile data, map pool or invite code, see {@link tournamentTeamsFullCached} for those. */
 export type TournamentDataTeam = Omit<
-	QueryRow<ReturnType<typeof tournamentCtx>>["teams"][number],
-	"teamLogoUrl" | "pickupAvatarUrl" | "inviteCode"
+	QueryRow<ReturnType<typeof tournamentCtxTeams>>,
+	"team" | "pickupAvatarUrl" | "members"
 > & {
 	/**
 	 * Linked team logo, falling back to the pickup avatar once started. Views showing pickup avatars
 	 * before that (own team, organizer) read them off {@link tournamentTeamsFullCached}, censored per viewer.
 	 */
 	logoUrl: string | null;
+	memberUserIds: number[];
+	ownerUserId: number | null;
 };
 
 /** The parts of a tournament that decide whether it may be seen at all. */
@@ -412,7 +415,7 @@ export type TournamentTeamFull = Unwrapped<typeof tournamentTeamsFullCached>;
 
 type TournamentTeamsCacheEntry = {
 	storedAt: number;
-	teams: ReturnType<typeof TournamentRepository.findTeamsFullByTournamentId>;
+	teams: Promise<TournamentTeamRepository.TeamWithRoster[]>;
 	anonymousCensored?: ReturnType<typeof censoredTeams>;
 };
 
@@ -435,7 +438,7 @@ export async function tournamentTeamsFullCached({
 	if (ServerConfig.disableCache) {
 		return censoredTeams({
 			teams:
-				await TournamentRepository.findTeamsFullByTournamentId(tournamentId),
+				await TournamentTeamRepository.teamsWithRosters(tournamentId).execute(),
 			revealInfo,
 			user,
 		});
@@ -481,7 +484,7 @@ function tournamentTeamsCacheEntry(tournamentId: number) {
 
 	const entry: TournamentTeamsCacheEntry = {
 		storedAt: Date.now(),
-		teams: TournamentRepository.findTeamsFullByTournamentId(tournamentId),
+		teams: TournamentTeamRepository.teamsWithRosters(tournamentId).execute(),
 	};
 	entry.teams.catch(() => {
 		if (tournamentTeamsCache.get(tournamentId) === entry) {
@@ -499,7 +502,7 @@ function censoredTeams({
 	revealInfo,
 	user,
 }: {
-	teams: TournamentRepository.TeamFull[];
+	teams: TournamentTeamRepository.TeamWithRoster[];
 	revealInfo: boolean;
 	user?: { id: number };
 }) {
@@ -639,9 +642,59 @@ function tournamentCtx(tournamentId: number) {
 		.withAuthor()
 		.withStaff()
 		.withBracketProgressionOverrides()
-		.withTeams()
 		.withToSetMapPool()
 		.withPermissions();
+}
+
+/** The teams of {@link tournamentCtx}, logos and members resolved by {@link tournamentData}. */
+function tournamentCtxTeams(tournamentId: number) {
+	return TournamentTeamRepository.tournamentTeams()
+		.where({ tournamentId })
+		.withPickupAvatar()
+		.withLinkedTeam()
+		.withMembers()
+		.withCheckIns()
+		.withHasMapPool()
+		.withAvgSeedingSkillOrdinal();
+}
+
+/**
+ * Users on several rosters mapped to the team they joined most recently. Nearly always empty,
+ * which lets the teams leave out the per member join timestamps only this tiebreak needs.
+ */
+function latestTeamIdByDuplicatedUserId(
+	teams: Array<{
+		id: number;
+		members: Array<{ userId: number; createdAt: number }>;
+	}>,
+) {
+	const latestByUserId = new Map<
+		number,
+		{ teamId: number; joinedAt: number }
+	>();
+	const duplicatedUserIds = new Set<number>();
+
+	for (const team of teams) {
+		for (const member of team.members) {
+			const existing = latestByUserId.get(member.userId);
+			if (existing) {
+				duplicatedUserIds.add(member.userId);
+			}
+			if (!existing || member.createdAt > existing.joinedAt) {
+				latestByUserId.set(member.userId, {
+					teamId: team.id,
+					joinedAt: member.createdAt,
+				});
+			}
+		}
+	}
+
+	const result: Record<number, number> = {};
+	for (const userId of duplicatedUserIds) {
+		result[userId] = latestByUserId.get(userId)!.teamId;
+	}
+
+	return result;
 }
 
 /** Unfinalized tournaments, drafts included, whose first bracket started within the last two days. */

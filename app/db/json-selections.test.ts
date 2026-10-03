@@ -84,6 +84,7 @@ describe("reading rows", () => {
 				teamId: null,
 				avatarImgId: null,
 				ownerUserId: member.id,
+				isOrganizerAdded: true,
 				ownerChange: null,
 				membersToAdd: [member.id],
 				membersToRemove: [],

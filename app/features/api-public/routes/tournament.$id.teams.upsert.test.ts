@@ -29,7 +29,7 @@ const namedPlayerTeam = async () => {
 	const team = await TournamentTeamFactory.create({
 		tournamentId: tournament.id,
 		memberUserIds: [player.id],
-		team: { name: TEAM_NAME, prefersNotToHost: 0, teamId: null },
+		team: { name: TEAM_NAME, prefersNotToHost: false, teamId: null },
 	});
 
 	await withUserId(ADMIN_ID, () =>
@@ -40,6 +40,7 @@ const namedPlayerTeam = async () => {
 			teamId: null,
 			avatarImgId: null,
 			ownerUserId: player.id,
+			isOrganizerAdded: true,
 			ownerChange: null,
 			membersToAdd: [],
 			membersToRemove: [],
