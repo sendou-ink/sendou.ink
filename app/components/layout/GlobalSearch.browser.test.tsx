@@ -1,4 +1,4 @@
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createBrowserRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
@@ -24,7 +24,7 @@ describe("GlobalSearch", () => {
 	test("opens from the search param and closes when navigating back pops it", async () => {
 		pushSearchParamOpen();
 
-		const router = createMemoryRouter([
+		const router = createBrowserRouter([
 			{ path: "*", element: <GlobalSearch /> },
 		]);
 		await render(<RouterProvider router={router} />);

@@ -31,5 +31,9 @@
 	"filters.atMost": "",
 	"filters.date.since": "",
 	"filters.date.custom": "",
-	"filters.filterByWeapon": ""
+	"filters.filterByWeapon": "",
+	"weaponBuildCount_one": "",
+	"weaponBuildCount_few": "",
+	"weaponBuildCount_many": "",
+	"weaponBuildCount_other": ""
 }

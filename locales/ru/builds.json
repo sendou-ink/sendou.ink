@@ -31,5 +31,9 @@
 	"filters.atMost": "Максимум",
 	"filters.date.since": "От",
 	"filters.date.custom": "Пользовательская",
-	"filters.filterByWeapon": "Фильтровать по оружию"
+	"filters.filterByWeapon": "Фильтровать по оружию",
+	"weaponBuildCount_one": "",
+	"weaponBuildCount_few": "",
+	"weaponBuildCount_many": "",
+	"weaponBuildCount_other": ""
 }

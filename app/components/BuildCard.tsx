@@ -29,7 +29,6 @@ import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { gearTypeToInitial } from "~/utils/strings";
 import {
 	gearImageUrl,
-	mainWeaponImageUrl,
 	modeImageUrl,
 	mySlugify,
 	navIconUrl,
@@ -38,11 +37,12 @@ import {
 } from "~/utils/urls";
 import { Ability } from "./Ability";
 import styles from "./BuildCard.module.css";
+import { CircleBackdrop } from "./CircleBackdrop";
 import { LinkButton, SendouButton } from "./elements/Button";
 import { SendouPopover } from "./elements/Popover";
 import { SendouSwitch } from "./elements/Switch";
 import { FormWithConfirm } from "./FormWithConfirm";
-import { Image } from "./Image";
+import { Image, WeaponImage } from "./Image";
 import { LocaleTime } from "./LocaleTime";
 
 interface BuildProps {
@@ -330,19 +330,19 @@ function RoundWeaponImage({ weapon }: { weapon: BuildWeaponWithTop500Info }) {
 					className={styles.top500}
 					path={navIconUrl("xsearch")}
 					alt=""
-					height={24}
-					width={24}
+					height={14}
+					width={14}
 					testId="top500-crown"
 				/>
 			) : null}
 			<Link to={weaponBuildPage(slug)}>
-				<Image
-					path={mainWeaponImageUrl(weapon.weaponSplId)}
-					alt={t(`weapons:MAIN_${weapon.weaponSplId}`)}
-					title={t(`weapons:MAIN_${weapon.weaponSplId}`)}
-					height={36}
-					width={36}
-				/>
+				<CircleBackdrop className={styles.weaponBackdrop}>
+					<WeaponImage
+						weaponSplId={weapon.weaponSplId}
+						variant="build"
+						size={40}
+					/>
+				</CircleBackdrop>
 			</Link>
 		</div>
 	);
@@ -365,14 +365,14 @@ function AbilitiesRowWithGear({
 	return (
 		<>
 			{typeof gearId === "number" ? (
-				<Image
-					height={64}
-					width={64}
-					alt={translatedGearName}
-					title={translatedGearName}
-					path={gearImageUrl(gearType, gearId)}
-					className={styles.gear}
-				/>
+				<CircleBackdrop className={styles.gearBackdrop}>
+					<Image
+						size={56}
+						alt={translatedGearName}
+						title={translatedGearName}
+						path={gearImageUrl(gearType, gearId)}
+					/>
+				</CircleBackdrop>
 			) : null}
 			{abilities.map((ability, i) => (
 				<Ability key={i} ability={ability} size={i === 0 ? "MAIN" : "SUB"} />

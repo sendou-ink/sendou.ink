@@ -1,6 +1,5 @@
-import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { BackLink } from "~/components/BackLink";
 import type { Tables } from "~/db/tables";
 import { userPage } from "~/utils/urls";
 import styles from "./SubPageHeader.module.css";
@@ -26,15 +25,14 @@ export function SubPageHeader({
 					<h1 className={styles.title}>{title}</h1>
 					{subtitle ? <div className={styles.subtitle}>{subtitle}</div> : null}
 				</div>
-				<Link
+				<BackLink
 					to={userPage(user)}
 					className={styles.backLink}
 					aria-label="Back to profile"
 				>
-					<ArrowLeft className={styles.backIcon} />
 					<Avatar user={user} size="xxs" className={styles.avatar} />
 					<span className={styles.username}>{user.username}</span>
-				</Link>
+				</BackLink>
 				{children ? <div className={styles.actions}>{children}</div> : null}
 			</div>
 		</header>

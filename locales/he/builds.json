@@ -31,5 +31,8 @@
 	"filters.atMost": "לכל היותר",
 	"filters.date.since": "מאז",
 	"filters.date.custom": "מותאם אישית",
-	"filters.filterByWeapon": "מסנן לפי נשק"
+	"filters.filterByWeapon": "מסנן לפי נשק",
+	"weaponBuildCount_one": "",
+	"weaponBuildCount_two": "",
+	"weaponBuildCount_other": ""
 }

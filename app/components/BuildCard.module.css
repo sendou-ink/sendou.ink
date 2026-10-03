@@ -55,9 +55,7 @@
 
 .weapon {
 	position: relative;
-	padding: var(--s-0-5);
 	border-radius: 50%;
-	background-color: var(--color-bg);
 
 	&:focus-within {
 		outline: var(--focus-ring);
@@ -65,10 +63,15 @@
 	}
 }
 
+.weaponBackdrop {
+	--circle-backdrop-color: var(--color-bg);
+}
+
 .top500 {
 	position: absolute;
-	top: -14px;
-	right: 8px;
+	z-index: 1;
+	top: -11px;
+	right: 12px;
 }
 
 .weaponText {
@@ -83,7 +86,7 @@
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: center;
-	gap: var(--s-1);
+	gap: var(--s-1-5);
 }
 
 .gearAbilities {
@@ -101,10 +104,8 @@
 	row-gap: 28px;
 }
 
-.gear {
-	border-radius: 50%;
-	background-color: var(--color-bg);
-	overflow: visible;
+.gearBackdrop {
+	--circle-backdrop-color: var(--color-bg);
 }
 
 .bottomRow {

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { Image, WeaponImage } from "~/components/Image";
+import { Image } from "~/components/Image";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
@@ -15,6 +15,7 @@ import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { globalSearchSearchParams } from "~/components/layout/global-search-search-params";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
+import { WeaponPoolBanner } from "~/components/WeaponPoolBanner";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
@@ -344,26 +345,17 @@ function DiscoverFeatures() {
 				{t("front:discover.header")}
 			</Divider>
 			{data.weaponPool && data.weaponPool.length > 0 ? (
-				<div className={styles.weaponPills}>
-					{data.weaponPool.map((weapon) => (
-						<Link
-							key={weapon.weaponSplId}
-							to={globalSearchSearchParams.href("", {
-								search: "open",
-								type: "weapons",
-								weapon: weapon.weaponSplId,
-							})}
-							defaultShouldRevalidate={false}
-							className={styles.weaponPill}
-						>
-							<WeaponImage
-								weaponSplId={weapon.weaponSplId}
-								variant="badge"
-								size={32}
-							/>
-						</Link>
-					))}
-				</div>
+				<WeaponPoolBanner
+					weaponIds={data.weaponPool.map((weapon) => weapon.weaponSplId)}
+					weaponHref={(weaponId) =>
+						globalSearchSearchParams.href("", {
+							search: "open",
+							type: "weapons",
+							weapon: weaponId,
+						})
+					}
+					defaultShouldRevalidate={false}
+				/>
 			) : null}
 			<nav className={styles.discoverGrid}>
 				{filteredNavItems.map((item) => (

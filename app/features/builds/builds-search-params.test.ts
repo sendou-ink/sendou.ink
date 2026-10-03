@@ -3,7 +3,10 @@ import {
 	assertDecodesToDefault,
 	assertRoundTrips,
 } from "~/modules/search-params/search-params-test-utils";
-import { buildsSearchParams } from "./builds-search-params";
+import {
+	buildsIndexSearchParams,
+	buildsSearchParams,
+} from "./builds-search-params";
 
 describe("buildsSearchParams", () => {
 	test("round-trips", () => {
@@ -41,6 +44,21 @@ describe("buildsSearchParams", () => {
 			["not-a-date"],
 			["2026-13-99"],
 			["2026-1-1"],
+		]);
+	});
+});
+
+describe("buildsIndexSearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(buildsIndexSearchParams, {
+			category: [null, "SHOOTERS", "CHARGERS", "SPLATANAS"],
+		});
+	});
+
+	test("decodes garbage to defaults", () => {
+		assertDecodesToDefault(buildsIndexSearchParams, "category", [
+			["chargers"],
+			["SUBS"],
 		]);
 	});
 });

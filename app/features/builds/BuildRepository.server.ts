@@ -301,6 +301,21 @@ export async function findAllByWeaponId(
 	return rows.map((row) => buildRowToResult(row, shouldSortAbilities));
 }
 
+/** Public build count per canonical weapon id (alt skins folded), weapons without builds omitted. */
+export async function countAllPublicByWeaponId() {
+	const rows = await db
+		.selectFrom("BuildWeapon")
+		.select(({ fn }) => [
+			"BuildWeapon.canonicalWeaponSplId as weaponSplId",
+			fn.countAll<number>().as("count"),
+		])
+		.where("BuildWeapon.sortValue", "is not", null)
+		.groupBy("BuildWeapon.canonicalWeaponSplId")
+		.execute();
+
+	return new Map(rows.map((row) => [row.weaponSplId, row.count]));
+}
+
 /** Recomputes `BuildWeapon.sortValue` (plus tier + per-weapon top500), for one user's builds if given. */
 export async function recalculateAllSortValues(
 	userId?: number,

@@ -409,7 +409,7 @@ function MostPlayedWeapons({
 								<WeaponImage
 									weaponSplId={weaponSplId}
 									variant="badge"
-									size={32}
+									size={36}
 								/>
 							</CircleBackdrop>
 							<div className="stack xxs">
@@ -642,7 +642,7 @@ function StageWeaponUsageStats(props: {
 											<WeaponImage
 												weaponSplId={u.weaponSplId}
 												variant="badge"
-												size={48}
+												size={54}
 											/>
 										</CircleBackdrop>
 										<div

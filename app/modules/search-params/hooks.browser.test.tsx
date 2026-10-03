@@ -148,8 +148,8 @@ describe("useSearchParamsTyped", () => {
 	});
 
 	test("values equal to their default are removed from the URL", async () => {
-		const { screen } = await renderTestRouter();
-		window.history.replaceState(null, "", "?page=5");
+		const { screen, router } = await renderTestRouter();
+		await router.navigate("?page=5", { replace: true });
 		await expect.element(screen.getByTestId("page")).toHaveTextContent("5");
 
 		await screen.getByRole("button", { name: "reset page" }).click();
@@ -159,8 +159,8 @@ describe("useSearchParamsTyped", () => {
 	});
 
 	test("declared resets reset other params on write", async () => {
-		const { screen } = await renderTestRouter();
-		window.history.replaceState(null, "", "?page=5");
+		const { screen, router } = await renderTestRouter();
+		await router.navigate("?page=5", { replace: true });
 		await expect.element(screen.getByTestId("page")).toHaveTextContent("5");
 
 		await screen.getByRole("button", { name: "set filters" }).click();
@@ -198,5 +198,42 @@ describe("useSearchParam", () => {
 			.element(screen.getByTestId("view-only"))
 			.toHaveTextContent("grid");
 		expect(viewRenders).toBeGreaterThan(initialViewRenders);
+	});
+});
+
+describe("navigating to another route", () => {
+	test("the leaving route keeps its params until it unmounts", async () => {
+		const originalHref = window.location.href;
+		const renderedViews: string[] = [];
+
+		function ViewRecorder() {
+			const [view] = useSearchParam(definition, "view");
+			renderedViews.push(view);
+
+			return <div data-testid="recorded-view">{view}</div>;
+		}
+
+		window.history.replaceState(null, "", "/search-params-test-a?view=grid");
+		const router = createBrowserRouter([
+			{ path: "/search-params-test-a", element: <ViewRecorder /> },
+			{
+				path: "/search-params-test-b",
+				element: <div data-testid="other-route">other</div>,
+			},
+		]);
+
+		try {
+			const screen = await render(<RouterProvider router={router} />);
+			await expect
+				.element(screen.getByTestId("recorded-view"))
+				.toHaveTextContent("grid");
+
+			await router.navigate("/search-params-test-b");
+			await expect.element(screen.getByTestId("other-route")).toBeVisible();
+
+			expect(renderedViews).not.toContain("list");
+		} finally {
+			window.history.replaceState(null, "", originalHref);
+		}
 	});
 });
