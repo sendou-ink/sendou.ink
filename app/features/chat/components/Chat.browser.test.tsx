@@ -327,6 +327,42 @@ describe("Chat", () => {
 			.not.toBeInTheDocument();
 	});
 
+	test("opens at the unread divider when the unread messages don't fit on screen", async () => {
+		const screen = await renderChat(manyMessages(100), {
+			firstUnreadMessageId: 31,
+		});
+
+		const divider = screen.getByTestId("chat-unread-divider");
+		await expect.element(divider).toBeInTheDocument();
+
+		const log = screen.getByRole("log").element() as HTMLElement;
+		await vi.waitFor(() => {
+			const dividerTop =
+				divider.element().getBoundingClientRect().top -
+				log.getBoundingClientRect().top;
+			expect(dividerTop).toBeGreaterThanOrEqual(0);
+			expect(dividerTop).toBeLessThan(log.clientHeight / 2);
+		});
+		expect(isScrolledToBottom(log)).toBe(false);
+		await expect
+			.element(screen.getByText("Message 31", { exact: true }))
+			.toBeInTheDocument();
+	});
+
+	test("stays at the end with the divider in view when the unread messages fit on screen", async () => {
+		const screen = await renderChat(manyMessages(100), {
+			firstUnreadMessageId: 99,
+		});
+
+		await expect
+			.element(screen.getByTestId("chat-unread-divider"))
+			.toBeInTheDocument();
+		const log = screen.getByRole("log").element() as HTMLElement;
+		await vi.waitFor(() => {
+			expect(isScrolledToBottom(log)).toBe(true);
+		});
+	});
+
 	test("keeps the reading position when a new message arrives while scrolled up", async () => {
 		const { screen, controls } = await renderChatWithControls(manyMessages(50));
 

@@ -72,6 +72,11 @@ export interface ChatMessageWithAuthor {
 	author: ChatMessageAuthor | null;
 }
 
+export interface UnreadDivider {
+	unreadCount: number;
+	upToMessageId: number;
+}
+
 /** A message as held client-side: a persisted row, or an optimistic send awaiting its echo. */
 export interface ClientChatMessage extends ChatMessageWithAuthor {
 	pending?: boolean;

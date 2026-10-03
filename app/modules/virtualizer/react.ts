@@ -129,6 +129,7 @@ export function useVirtualizer({
 		totalSize,
 		items,
 		measureElement,
+		startOf: (index: number) => core.startOf(index),
 	};
 }
 

@@ -16,14 +16,26 @@ import {
 const THRESHOLD = 100;
 // how long after wheel/touch/keyboard input a scroll event still counts as user-initiated
 const USER_SCROLL_INTENT_MS = 150;
+// room left above the "new messages" divider when scrolled to it
+const UNREAD_DIVIDER_MARGIN = 8;
 
 export function useChatAutoScroll(
 	messages: ClientChatMessage[],
 	ref: React.RefObject<HTMLElement | null>,
+	{
+		firstUnreadMessageId = null,
+		firstUnreadOffset = () => null,
+	}: {
+		firstUnreadMessageId?: number | null;
+		firstUnreadOffset?: () => number | null;
+	} = {},
 ) {
 	const user = useUser();
 	const [unseenMessages, setUnseenMessages] = React.useState(false);
 	const pinnedToBottomRef = React.useRef(true);
+	const pinnedToFirstUnreadRef = React.useRef(false);
+	const firstUnreadOffsetRef = React.useRef(firstUnreadOffset);
+	firstUnreadOffsetRef.current = firstUnreadOffset;
 	const lastUserScrollIntentRef = React.useRef(Number.NEGATIVE_INFINITY);
 	const isPointerDownRef = React.useRef(false);
 	const lastStableScrollTopRef = React.useRef(0);
@@ -33,8 +45,22 @@ export function useChatAutoScroll(
 		if (!messagesContainer) return;
 
 		pinnedToBottomRef.current = true;
+		pinnedToFirstUnreadRef.current = false;
 		messagesContainer.scrollTop = messagesContainer.scrollHeight;
 		setUnseenMessages(false);
+	}, [ref]);
+
+	const scrollToFirstUnread = React.useCallback(() => {
+		const messagesContainer = ref.current;
+		const offset = firstUnreadOffsetRef.current();
+		if (!messagesContainer || offset === null) return;
+
+		const top = offset - UNREAD_DIVIDER_MARGIN;
+		const bottom =
+			messagesContainer.scrollHeight - messagesContainer.clientHeight;
+
+		pinnedToBottomRef.current = top >= bottom;
+		messagesContainer.scrollTop = Math.min(top, bottom);
 	}, [ref]);
 
 	React.useEffect(() => {
@@ -63,7 +89,13 @@ export function useChatAutoScroll(
 			// whenever the message collection changes; undo those resets so
 			// they neither unpin the auto scroll nor yank the user out of the
 			// history they were reading
-			if (!isUserScroll) {
+			if (isUserScroll) {
+				pinnedToFirstUnreadRef.current = false;
+			} else {
+				if (pinnedToFirstUnreadRef.current) {
+					scrollToFirstUnread();
+					return;
+				}
 				if (pinnedToBottomRef.current && !isScrolledToBottom) {
 					messagesContainer.scrollTop = messagesContainer.scrollHeight;
 					return;
@@ -104,12 +136,12 @@ export function useChatAutoScroll(
 			window.removeEventListener("pointerup", handlePointerUp);
 			messagesContainer.removeEventListener("scroll", handleScroll);
 		};
-	}, [ref]);
+	}, [ref, scrollToFirstUnread]);
 
 	const hasMessages = messages.length > 0;
 
 	// the virtualizer resizes the content asynchronously as it measures rows, without
-	// scroll events, so keep the view glued to the bottom while pinned there
+	// scroll events, so keep the view glued to where it is pinned
 	React.useEffect(() => {
 		if (!hasMessages) return;
 
@@ -118,14 +150,16 @@ export function useChatAutoScroll(
 		if (!scrollContent) return;
 
 		const observer = new ResizeObserver(() => {
-			if (pinnedToBottomRef.current) {
+			if (pinnedToFirstUnreadRef.current) {
+				scrollToFirstUnread();
+			} else if (pinnedToBottomRef.current) {
 				messagesContainer.scrollTop = messagesContainer.scrollHeight;
 			}
 		});
 		observer.observe(scrollContent);
 
 		return () => observer.disconnect();
-	}, [ref, hasMessages]);
+	}, [ref, hasMessages, scrollToFirstUnread]);
 
 	const latestMessage = messages.at(-1);
 	const latestMessagePublicId = latestMessage?.publicId;
@@ -141,6 +175,13 @@ export function useChatAutoScroll(
 			setUnseenMessages(true);
 		}
 	}, [latestMessagePublicId, latestMessageIsOwn, scrollToBottom]);
+
+	React.useEffect(() => {
+		pinnedToFirstUnreadRef.current = firstUnreadMessageId !== null;
+		if (firstUnreadMessageId !== null) {
+			scrollToFirstUnread();
+		}
+	}, [firstUnreadMessageId, scrollToFirstUnread]);
 
 	return {
 		unseenMessagesInTheRoom: unseenMessages,

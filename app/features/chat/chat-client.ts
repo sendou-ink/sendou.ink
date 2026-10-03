@@ -16,6 +16,7 @@ import type {
 	ChatRoomListItem,
 	ClientChatMessage,
 	RouteChatRoom,
+	UnreadDivider,
 } from "./chat-types";
 
 const READ_DEBOUNCE_MS = 1_500;
@@ -55,6 +56,8 @@ export interface ChatSnapshot {
 	totalUnreadCount: number;
 	/** Loaded histories, oldest first, optimistic pending sends last. Absent key = history not fetched yet. */
 	messagesByRoomId: ReadonlyMap<number, ClientChatMessage[]>;
+	/** What was unread as each room last came into view, for the "new messages" divider. Absent key = nothing was. */
+	unreadDividerByRoomId: ReadonlyMap<number, UnreadDivider>;
 }
 
 export interface ChatClient {
@@ -106,6 +109,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	let hiddenRoomIds = new Set<number>();
 	/** `openRoomIds` without `hiddenRoomIds`, kept in sync by `updateViewedRoomIds`. */
 	let viewedRoomIds = new Set<number>();
+	let unreadDividerByRoomId = new Map<number, UnreadDivider>();
 	let snapshot: ChatSnapshot | null = null;
 
 	const loadingObservedRoomIds = new Set<number>();
@@ -408,9 +412,27 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		);
 		for (const roomId of viewedRoomIds) {
 			if (!previous.has(roomId)) {
+				placeUnreadDivider(roomId);
 				markRead(roomId);
 			}
 		}
+	};
+
+	const placeUnreadDivider = (roomId: number) => {
+		const room = roomById(roomId);
+		const next = new Map(unreadDividerByRoomId);
+
+		if (room && room.unreadCount > 0 && room.latestMessageId !== null) {
+			next.set(roomId, {
+				unreadCount: room.unreadCount,
+				upToMessageId: room.latestMessageId,
+			});
+		} else if (!next.delete(roomId)) {
+			return;
+		}
+
+		unreadDividerByRoomId = next;
+		notify();
 	};
 
 	const loadMessages = async (roomId: number) => {
@@ -492,6 +514,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			messagesByRoomId = new Map();
 			openRoomIds = new Set();
 			viewedRoomIds = new Set();
+			unreadDividerByRoomId = new Map();
 			locallyReadByRoomId.clear();
 			loadingObservedRoomIds.clear();
 			refetchedUnknownRoomIds.clear();
@@ -508,6 +531,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 					0,
 				),
 				messagesByRoomId,
+				unreadDividerByRoomId,
 			};
 			return snapshot;
 		},

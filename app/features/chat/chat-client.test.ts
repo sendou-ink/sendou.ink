@@ -267,6 +267,30 @@ describe("createChatClient", () => {
 		expect(harness.postRead).toHaveBeenCalledWith(1, 5);
 	});
 
+	test("a room coming into view keeps what was unread for the divider, cleared when nothing was", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 5 }),
+		});
+		client.setViewedRoomIds([1]);
+
+		expect(client.getSnapshot().unreadDividerByRoomId.get(1)).toEqual({
+			unreadCount: 1,
+			upToMessageId: 5,
+		});
+
+		client.setViewedRoomIds([]);
+		client.setViewedRoomIds([1]);
+
+		expect(client.getSnapshot().unreadDividerByRoomId.has(1)).toBe(false);
+	});
+
 	test("a message to a viewed but hidden room counts unread until the room is shown", async () => {
 		const harness = createHarness();
 		const client = await startedClient(harness);

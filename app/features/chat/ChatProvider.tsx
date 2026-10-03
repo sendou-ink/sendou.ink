@@ -19,6 +19,7 @@ import type {
 	ChatRoomListItem,
 	ClientChatMessage,
 	RouteChatRoom,
+	UnreadDivider,
 } from "./chat-types";
 
 const EMPTY_MESSAGES: ClientChatMessage[] = [];
@@ -32,6 +33,7 @@ const SERVER_SNAPSHOT: ChatSnapshot = {
 	observedRoomIds: new Set(),
 	totalUnreadCount: 0,
 	messagesByRoomId: new Map(),
+	unreadDividerByRoomId: new Map(),
 };
 const getServerSnapshot = () => SERVER_SNAPSHOT;
 
@@ -42,6 +44,8 @@ interface ChatContextValue {
 	/** Looks a room up from the list or the route-opened observed rooms (observer access). */
 	roomForId: (roomId: number) => ChatRoomListItem | undefined;
 	messagesForRoom: (roomId: number) => ClientChatMessage[];
+	/** What was unread as the room last came into view, for the "new messages" divider. */
+	unreadDividerForRoom: (roomId: number) => UnreadDivider | undefined;
 	/** Fetches the room's history unless it is already loaded or loading. */
 	ensureMessagesLoaded: (roomId: number) => void;
 	/** Sends the message outside the router (no revalidation), rendering it optimistically until the echo or POST response confirms it. */
@@ -246,6 +250,8 @@ function ChatProviderInner({
 		roomForId: (roomId) => snapshot.roomsById.get(roomId),
 		messagesForRoom: (roomId) =>
 			snapshot.messagesByRoomId.get(roomId) ?? EMPTY_MESSAGES,
+		unreadDividerForRoom: (roomId) =>
+			snapshot.unreadDividerByRoomId.get(roomId),
 		ensureMessagesLoaded: chatClient.ensureMessagesLoaded,
 		sendMessage,
 		setHiddenRoomIds: chatClient.setHiddenRoomIds,

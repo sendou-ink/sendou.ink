@@ -15,11 +15,13 @@ import {
 	SendouTabList,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { useUser } from "~/features/auth/core/user";
 import {
 	useChatContext,
 	useCurrentRouteChatRooms,
 } from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
+import { firstUnreadMessageId } from "~/features/chat/chat-unread-divider";
 import { Chat } from "~/features/chat/components/Chat";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import {
@@ -614,12 +616,19 @@ function SplitPanel({
 
 function RoomChat({ room }: { room: ChatRoomListItem }) {
 	const chatContext = useChatContext()!;
+	const user = useUser();
 
 	const expired = room.expiresAt <= dateToDatabaseTimestamp(new Date());
+	const messages = chatContext.messagesForRoom(room.id);
 
 	return (
 		<Chat
-			messages={chatContext.messagesForRoom(room.id)}
+			messages={messages}
+			firstUnreadMessageId={firstUnreadMessageId({
+				messages,
+				divider: chatContext.unreadDividerForRoom(room.id),
+				ownUserId: user?.id ?? 0,
+			})}
 			onSend={(message) => chatContext.sendMessage(room.id, message)}
 			labelByUserId={room.labelByUserId}
 			disabled={expired}

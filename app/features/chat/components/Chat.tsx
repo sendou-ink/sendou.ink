@@ -32,6 +32,7 @@ export interface ChatProps {
 	onSend: (message: { publicId: string; contents: string }) => void;
 	/** Role labels (e.g. "TO") shown next to the author, keyed by user id. */
 	labelByUserId?: Record<number, string>;
+	firstUnreadMessageId?: number | null;
 	className?: string;
 	messagesContainerClassName?: string;
 	/** Renders the room read-only with an expiry note, e.g. once it has expired. */
@@ -44,6 +45,7 @@ export function Chat({
 	messages,
 	onSend,
 	labelByUserId,
+	firstUnreadMessageId,
 	className,
 	messagesContainerClassName,
 	disabled,
@@ -71,6 +73,7 @@ export function Chat({
 					<MessageLog
 						messages={messages}
 						labelByUserId={labelByUserId}
+						firstUnreadMessageId={firstUnreadMessageId}
 						className={messagesContainerClassName}
 					/>
 				</React.Suspense>
@@ -92,8 +95,11 @@ export function Chat({
 function MessageLog({
 	messages,
 	labelByUserId,
+	firstUnreadMessageId = null,
 	className,
-}: Pick<ChatProps, "messages" | "labelByUserId"> & { className?: string }) {
+}: Pick<ChatProps, "messages" | "labelByUserId" | "firstUnreadMessageId"> & {
+	className?: string;
+}) {
 	// the server can't open the pane scrolled to its end, so it stays empty
 	// (the fallback holding its place) until the browser renders it
 	React.use(browser("the chat log opens scrolled to its end"));
@@ -101,9 +107,20 @@ function MessageLog({
 	const { t } = useTranslation(["common"]);
 	const messagesContainerRef = React.useRef<HTMLDivElement>(null);
 
+	const firstUnreadIndex =
+		firstUnreadMessageId === null
+			? -1
+			: messages.findIndex((msg) => msg.id === firstUnreadMessageId);
 	const { unseenMessagesInTheRoom, scrollToBottom } = useChatAutoScroll(
 		messages,
 		messagesContainerRef,
+		{
+			firstUnreadMessageId:
+				firstUnreadIndex === -1 ? null : firstUnreadMessageId,
+
+			firstUnreadOffset: () =>
+				firstUnreadIndex === -1 ? null : virtualizer.startOf(firstUnreadIndex),
+		},
 	);
 
 	const systemMessageText = (msg: ClientChatMessage) => {
@@ -195,6 +212,14 @@ function MessageLog({
 								data-testid="chat-message-row"
 								style={{ transform: `translateY(${start}px)` }}
 							>
+								{index === firstUnreadIndex ? (
+									<div
+										className={styles.unreadDivider}
+										data-testid="chat-unread-divider"
+									>
+										{t("common:chat.newMessages")}
+									</div>
+								) : null}
 								{systemMessage ? (
 									<SystemMessage message={msg} text={systemMessage} />
 								) : (
