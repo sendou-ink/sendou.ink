@@ -8,9 +8,9 @@
 	"friendsList.friendSince": "Amigos desde el {{date}}",
 	"friendsList.viewUserPage": "Ver página de usuario",
 	"friendsList.viewTournament": "Ver torneo",
-	"friendsList.viewMatch": "Ver combate",
-	"friendsList.live": "En directo",
-	"friendsList.inMatch": "Combate",
+	"friendsList.viewMatch": "Ver partida",
+	"friendsList.live": "En vivo",
+	"friendsList.inMatch": "Partida",
 	"friendsList.nextMatch": "Siguiente",
 	"friendsList.watchStream": "Ver stream",
 	"friendsList.joinSendouQ": "Unirse a SendouQ",
@@ -21,8 +21,8 @@
 	"view.all": "Todos",
 	"teamMembers.empty": "Aún no hay miembros en el equipo",
 	"unseenRequests_one": "{{count}} solicitud de amistad sin ver",
-	"unseenRequests_many": "",
+	"unseenRequests_many": "{{count}} solicitudes de amistad sin ver",
 	"unseenRequests_other": "{{count}} solicitudes de amistad sin ver",
-	"friendsList.pin": "",
-	"friendsList.unpin": ""
+	"friendsList.pin": "Fijar a {{name}} arriba",
+	"friendsList.unpin": "Dejar de fijar a {{name}}"
 }

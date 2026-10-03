@@ -4,12 +4,12 @@
 	"tabs.locale": "Idioma",
 	"tabs.theme": "Tema",
 	"tabs.sounds": "Sonidos",
-	"matchProfile.maps.teamPreferencesHint": "",
+	"matchProfile.maps.teamPreferencesHint": "¿Buscas las preferencias de mapas de tu equipo? Están en la página de Editar equipo.",
 	"matchProfile.maps.avoid": "Evitar",
 	"matchProfile.maps.prefer": "Preferir",
 	"matchProfile.maps.neutral": "Neutral",
 	"sounds.likeReceived": "Invitación de grupo recibida",
-	"sounds.readyCheckStarted": "",
+	"sounds.readyCheckStarted": "Confirmación de listos de SendouQ iniciada",
 	"sounds.matchStarted": "Partida de SendouQ iniciada",
 	"sounds.tournamentMatchStarted": "Set de torneo iniciado"
 }

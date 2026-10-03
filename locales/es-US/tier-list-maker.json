@@ -1,5 +1,5 @@
 {
-	"addTier": "Añadir tier",
+	"addTier": "Agregar tier",
 	"mainWeapons": "Armas principales",
 	"subWeapons": "Armas secundarias",
 	"specialWeapons": "Armas especiales",
@@ -8,7 +8,7 @@
 	"stageModes": "Escenario + Modos",
 	"abilities": "Potenciadores",
 	"dropItems": "Suelta los elementos aquí",
-	"clickToAdd": "Haz clic en los elementos para añadirlos aquí",
+	"clickToAdd": "Haz clic en los elementos para agregarlos aquí",
 	"placementModeTrack": "Arrastrar y soltar",
 	"placementModeClick": "Hacer clic para colocar",
 	"editingTier": "Editando tier",
