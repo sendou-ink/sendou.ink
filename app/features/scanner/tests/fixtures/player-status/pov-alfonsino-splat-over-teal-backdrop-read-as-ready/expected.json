@@ -1,0 +1,20 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"cast": null,
+		"time": 206,
+		"special": [
+			[true, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, true, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"skipFields": ["layout"],
+		"notes": "Triton cup VoD (v2811381928, 720p S3 POV), Museum d'Alfonsino SZ at 3:26, t=1657. Left slot 1 (Custom Blaster) is splatted from 3:27 to 3:24: a dark squid under a grey X, with a pale teal backdrop showing through the translucent plate. That backdrop tints the ink-poor body to 0.33-0.45, past the 0.30 wash floor, so the splat read as special-ready on two of its four reads. The remaining lone dead read was then debounced away, and the match lost one of the player's 8 deaths. The X strokes still show: grey 0.23-0.36, where every attested wash at that tint reads <=0.20. Left slot 0 holds a real wash. The strip sits at an in-between pitch here (left apexes ~[590,670,753,833]), so the layout is not asserted."
+	}
+}

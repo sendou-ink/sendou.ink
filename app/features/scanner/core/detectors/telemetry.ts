@@ -23,6 +23,9 @@ export interface ScanTelemetry {
 	/** video seconds covered by keyframe-hop skimming (chunk scan) */
 	skimVideoS: number;
 	wallMs: number;
+	/** scans (workers) that matched on WebGPU, and their summed wait for GPU results */
+	gpuScans: number;
+	gpuWaitMs: number;
 	detectors: Record<string, DetectorTelemetry>;
 }
 
@@ -34,6 +37,8 @@ export function createScanTelemetry(): ScanTelemetry {
 		activeVideoS: 0,
 		skimVideoS: 0,
 		wallMs: 0,
+		gpuScans: 0,
+		gpuWaitMs: 0,
 		detectors: {},
 	};
 }
@@ -68,6 +73,8 @@ export function mergeScanTelemetry(
 		out.activeVideoS += part.activeVideoS;
 		out.skimVideoS += part.skimVideoS;
 		out.wallMs = Math.max(out.wallMs, part.wallMs);
+		out.gpuScans += part.gpuScans;
+		out.gpuWaitMs += part.gpuWaitMs;
 		for (const [id, d] of Object.entries(part.detectors)) {
 			const bucket = detectorTelemetry(out, id);
 			bucket.checks += d.checks;

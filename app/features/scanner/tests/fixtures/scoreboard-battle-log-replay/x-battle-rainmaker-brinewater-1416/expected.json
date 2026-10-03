@@ -79,10 +79,6 @@
     "stageLabel": "Brinewater Springs"
   },
   "options": {
-    "skipFields": [
-      "players.6.name",
-      "players.7.name"
-    ],
-    "notes": "Heavily compressed stream capture. Code hand-verified from the zoomed frame; a prior parse misread U>D, N>H, F>E, 5>6. Skipped names read without dakuten (see the 1411 case)."
+    "notes": "Heavily compressed stream capture. Code hand-verified from the zoomed frame; a prior parse misread U>D, N>H, F>E, 5>6. めがねがし and むぎ once read without dakuten (see the 1411 case)."
   }
 }

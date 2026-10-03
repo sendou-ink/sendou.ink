@@ -1,0 +1,46 @@
+.source {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	min-width: 0;
+}
+
+/* the global select is full width, which would break a card's row */
+.select {
+	appearance: none;
+	width: 100%;
+	max-width: 22rem;
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	background-image: var(--field-icon-chevron);
+	background-position: center right var(--field-padding);
+	background-size: var(--field-size-icon) auto;
+	background-repeat: no-repeat;
+	color: var(--color-text);
+	cursor: pointer;
+	font-family: inherit;
+	font-size: var(--font-sm);
+	height: var(--field-size);
+	padding: 0 calc(var(--field-size-icon) + var(--field-padding) + var(--s-2)) 0
+		var(--field-padding);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	outline: none;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+}
+
+.audio {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}

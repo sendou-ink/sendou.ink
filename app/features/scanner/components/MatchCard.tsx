@@ -1,35 +1,51 @@
 /**
- * Glanceable card for one ScannerMatch in the live feed: stage banner, mode +
- * stage, score, team weapons and /ingest status. Expanding reveals the
- * match's kills (from the feed) and the source event cards below it.
+ * One game of a session or file, the same card in every view. Collapsed it
+ * is one row: mode and stage, the result, the POV weapon and K/D/S, then
+ * the game's clips and, once the game is over, its upload state beside the
+ * expand arrow. Expanded it shows the data and
+ * nothing interpreted: the scoreboard, the objective + player-status
+ * timeline and deaths and kills (each with a ▶ when a clip covers it), and
+ * the game's data as a zip to report a misread with.
  */
-
 import clsx from "clsx";
-import { ChevronDown, Crosshair } from "lucide-react";
-import type * as React from "react";
+import { ChevronDown, Download, Play } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
+import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { SendouButton } from "~/components/elements/Button";
-import { ModeImage, WeaponImage } from "~/components/Image";
+import { SendouPopover } from "~/components/elements/Popover";
+import { GameTimeline } from "~/components/GameTimeline";
+import { Image, ModeImage, WeaponImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { matchScoresFromObjective } from "~/components/objective-timeline-utils";
 import { StageBannerBox } from "~/components/StageBannerBox";
-import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
+import { abilities as ALL_ABILITIES } from "~/modules/in-game-lists/abilities";
 import type {
 	AbilityWithUnknown,
-	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { sendouQMatchPage, tournamentMatchPage } from "~/utils/urls";
-import type { IngestSkipReason } from "../core/match-builder";
+import { navIconUrl, SENDOU_INK_DISCORD_URL } from "~/utils/urls";
+import { clipCovers } from "../core/clips/scoring";
+import {
+	DEATH_EVENT_TYPE,
+	type DeathData,
+} from "../core/detectors/death/index";
+import { formatClock, formatPosition } from "../core/format";
+import { lobbyLabel, modeLabel, stageLabel, weaponLabel } from "../core/labels";
+import type { BuiltMatch } from "../core/match-builder";
 import type {
 	ScannerMatch,
 	ScannerMatchKill,
 	ScannerMatchPlayer,
 } from "../core/scanner-match";
-import type { SendStatus } from "../store/events";
-import { formatClock, formatTime, useEventTimeFormatter } from "./format";
-import { lobbyLabel, modeLabel, stageLabel } from "./labels";
+import { matchResult } from "../core/sessions";
+import type { ScannerClip } from "../store/clips";
+import { downloadBlob } from "./download";
+import { displayOrder, gameTimelineProps } from "./game-timeline-view";
 import styles from "./MatchCard.module.css";
+import { matchZip } from "./match-zip";
+import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
+import { type UploadState, UploadStatusButton } from "./UploadStatus";
 
 /** the game score a knockout wins at */
 const KO_MATCH_SCORE = 100;
@@ -41,265 +57,267 @@ const KO_MATCH_SCORE = 100;
 const MATCH_CLOCK_SECONDS: Partial<Record<ModeShort, number>> = { TW: 180 };
 const DEFAULT_MATCH_CLOCK_SECONDS = 300;
 
-/** one per gear slot: [head, clothes, shoes], the arc's left-to-right order */
-const UNKNOWN_MAIN_ABILITIES: AbilityWithUnknown[] = [
-	"UNKNOWN",
-	"UNKNOWN",
-	"UNKNOWN",
-];
+/** The scan knows the on-screen sides only, not who is playing: left, right. */
+const TEAM_LABELS = ["Alpha", "Bravo"] as const;
 
-/**
- * Where each main sits on the half-moon under the weapon. A positive CSS
- * rotation swings the arc's offset to the *left*, so angles descend to read
- * head, clothes, shoes left to right.
- */
-const ABILITY_ARC_ANGLES = ["44deg", "0deg", "-44deg"];
+const GEAR_ROWS = 3;
+const SLOTS_PER_ROW = 4;
 
-const SEND_STATE_CLASS: Record<SendStatus["state"], string> = {
-	queued: styles.queued,
-	sending: styles.sending,
-	sent: styles.sent,
-	unlinked: styles.unlinked,
-	failed: styles.failed,
-};
+/** the gear row a slot-only main can only sit in; stackables fit anywhere */
+const MAIN_ONLY_ROW = new Map<string, number>(
+	ALL_ABILITIES.flatMap((ability): [string, number][] =>
+		ability.type === "HEAD_MAIN_ONLY"
+			? [[ability.name, 0]]
+			: ability.type === "CLOTHES_MAIN_ONLY"
+				? [[ability.name, 1]]
+				: ability.type === "SHOES_MAIN_ONLY"
+					? [[ability.name, 2]]
+					: [],
+	),
+);
 
-const SEND_CHIP_LABELS: Record<Exclude<SendStatus["state"], "sent">, string> = {
-	queued: "queued",
-	sending: "sending…",
-	unlinked: "waiting for report",
-	failed: "failed",
-};
+const PLAYERS_PER_TEAM = 4;
 
 export function MatchCard({
-	match,
-	send,
-	onSend,
-	live = false,
-	inProgress = false,
-	skipReason,
-	justFormed = false,
-	children,
+	built,
+	number,
+	originT,
+	kind,
+	justFormed,
+	expandable,
+	upload,
+	clips,
+	onPlayClip,
+	getFrame,
 }: {
-	match: ScannerMatch;
-	/** the match's /ingest status, aggregated from its source events */
-	send?: SendStatus;
-	/** when set, shows a Send/Retry button for this match */
-	onSend?: () => void;
-	/** still being played: no closing scoreboard yet and the scan is running */
-	live?: boolean;
-	/** the newest match, still being formulated — shows an "in progress" chip; at most one card */
-	inProgress?: boolean;
-	/** set = ingestSkipReasons held the match back from /ingest */
-	skipReason?: IngestSkipReason;
+	built: BuiltMatch<ScanEvent>;
+	/** 1-based position in the session, oldest first */
+	number: number;
+	/** stream/file second positions count from */
+	originT: number;
+	kind: SessionKind;
 	/** the scan just formed this match — play the enter animation */
-	justFormed?: boolean;
-	/** expandable detail content, typically the source event cards */
-	children?: React.ReactNode;
+	justFormed: boolean;
+	/** false while the match is still being scanned: no expand button yet */
+	expandable: boolean;
+	/** null when the session's matches never upload */
+	upload: UploadState | null;
+	/** the clips this game produced, best first */
+	clips: readonly ScannerClip[];
+	onPlayClip: (clip: ScannerClip) => void;
+	getFrame: (event: ScanEvent) => GetFrame | undefined;
 }) {
+	const { match } = built;
 	const [expanded, setExpanded] = useState(false);
-	// fixed at mount: re-rendering must not cut the animation short, and a card
-	// remounting for another reason (switching lobby tabs) must not replay it
+	// fixed at mount: re-rendering must not cut the animation short
 	const [enter] = useState(justFormed);
-
-	// one-shot flash animations only on a state *change*, so already-sent
-	// matches don't replay the glow on every mount
-	const [prevSendState, setPrevSendState] = useState(send?.state);
-	const [flash, setFlash] = useState<"sent" | "failed" | null>(null);
-	if (prevSendState !== send?.state) {
-		setPrevSendState(send?.state);
+	const uploadKind = upload?.kind ?? null;
+	const [prevUploadKind, setPrevUploadKind] = useState(uploadKind);
+	const [flash, setFlash] = useState<"uploaded" | "failed" | null>(null);
+	if (prevUploadKind !== uploadKind) {
+		setPrevUploadKind(uploadKind);
 		setFlash(
-			send?.state === "sent" || send?.state === "failed" ? send.state : null,
+			uploadKind === "uploaded" || uploadKind === "failed" ? uploadKind : null,
 		);
 	}
 
+	const result = matchResult(match);
+	const pov = povPlayer(match);
+	const matchOrigin = timelineOrigin(match);
+	const scannedAt = built.sources.find(
+		(event) => event.detectedAt !== undefined,
+	)?.detectedAt;
 	const meta = [
-		modeLabel(match.mode),
-		skipReason === "lobby" ? lobbyLabel(match.lobby) : null,
-		match.startsAt !== null ? timeRangeLabel(match) : null,
+		match.lobby !== null && match.lobby !== "PRIVATE"
+			? lobbyLabel(match.lobby)
+			: null,
 		match.replayCode,
 		match.cast ? "cast" : null,
 	]
 		.filter(Boolean)
 		.join(" · ");
 
-	const inner = (
-		<>
+	const className = clsx(styles.matchCard, {
+		[styles.enter]: enter,
+		[styles.flashUploaded]: flash === "uploaded",
+		[styles.flashFailed]: flash === "failed",
+	});
+
+	const head = (
+		<div className={styles.head}>
 			<div className={styles.main}>
+				<div className={clsx(styles.numberColumn, "line-height-tight")}>
+					<span className={styles.number}>Game {number}</span>
+					{kind === "vod" ? (
+						match.startsAt !== null ? (
+							<span className={styles.scannedAt}>
+								{formatPosition(match.startsAt - originT)}
+							</span>
+						) : null
+					) : scannedAt !== undefined ? (
+						<LocaleTime
+							date={new Date(scannedAt)}
+							options={{ timeStyle: "short" }}
+							className={styles.scannedAt}
+						/>
+					) : null}
+				</div>
 				{match.mode !== null ? (
-					<ModeImage mode={match.mode} size={30} className={styles.mode} />
+					<ModeImage mode={match.mode} size={26} className={styles.mode} />
 				) : null}
 				<div className={styles.headline}>
 					<div className={styles.title}>
-						<div className={styles.stage}>
+						{modeLabel(match.mode) ? (
+							<span className={styles.modeName}>{modeLabel(match.mode)}</span>
+						) : null}
+						<span className={styles.stage}>
 							{stageLabel(match.stage) ?? "Unknown stage"}
-						</div>
-						<StatusChip send={send} skipReason={skipReason} live={live} />
+						</span>
 					</div>
 					{meta ? <div className={styles.meta}>{meta}</div> : null}
-					<TeamWeapons match={match} />
 				</div>
 				<div className={styles.side}>
-					{live ? (
-						<span className={clsx(styles.chip, styles.live)}>
-							<span className={styles.dot} />
-							live
+					<Score match={match} result={result} />
+					{pov ? (
+						<span className={styles.kds}>
+							{pov.ka ?? "?"}/{pov.d ?? "?"}/{pov.s ?? "?"}
 						</span>
-					) : (
-						<Score match={match} inProgress={inProgress} />
-					)}
-					{onSend && send?.state !== "sent" && send?.state !== "sending" ? (
-						<button type="button" onClick={onSend}>
-							{send?.state === "failed" || send?.state === "unlinked"
-								? "Retry"
-								: "Send"}
-						</button>
 					) : null}
-					{children ? (
+				</div>
+			</div>
+			<div className={styles.foot}>
+				<TeamWeapons match={match} />
+				{clips.length > 0 ? (
+					<span className={styles.clips}>
+						{clips.map((clip) => (
+							<button
+								key={clip.id}
+								type="button"
+								className={styles.clipChip}
+								onClick={() => onPlayClip(clip)}
+							>
+								<Play size={11} aria-hidden />
+								{clip.kills}k
+								{clip.time !== null
+									? ` · ${formatClock(elapsed(match.mode, clip.time))}`
+									: null}
+							</button>
+						))}
+					</span>
+				) : null}
+				{expandable ? (
+					<span className={styles.footEnd}>
+						{upload ? (
+							<UploadStatusButton state={upload} className={styles.circle} />
+						) : null}
 						<SendouButton
 							variant="minimal"
 							size="small"
 							shape="circle"
 							icon={<ChevronDown />}
-							className={clsx(styles.expand, { [styles.expanded]: expanded })}
+							className={clsx(styles.circle, styles.expand, {
+								[styles.expanded]: expanded,
+							})}
 							aria-expanded={expanded}
-							aria-label={expanded ? "Hide events" : "Show events"}
+							aria-label={expanded ? "Hide details" : "Show details"}
 							onClick={() => setExpanded(!expanded)}
 						/>
-					) : null}
-				</div>
+					</span>
+				) : null}
 			</div>
-			{send?.state === "failed" && send.error ? (
-				<div className={styles.error}>{send.error}</div>
-			) : null}
-		</>
+		</div>
 	);
 
-	const className = clsx(
-		styles.matchCard,
-		send?.state ? SEND_STATE_CLASS[send.state] : null,
-		{
-			[styles.enter]: enter,
-			[styles.live]: live,
-			[styles.flashSent]: flash === "sent",
-			[styles.flashFailed]: flash === "failed",
-		},
+	const summary = (
+		<div className={styles.summary}>
+			<Scoreboard match={match} result={result} />
+			{match.objective || match.playerStatus ? (
+				<GameTimeline {...gameTimelineProps(match, matchOrigin, TEAM_LABELS)} />
+			) : null}
+			<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
+			<ReportData
+				built={built}
+				getFrame={getFrame}
+				fileName={`scanner-${scannedAt !== undefined ? new Date(scannedAt).toISOString().slice(0, 10) : kind}-game-${number}.zip`}
+			/>
+		</div>
 	);
 
 	const card =
 		match.stage !== null ? (
 			<StageBannerBox stageId={match.stage} className={className}>
-				{inner}
+				{head}
 			</StageBannerBox>
 		) : (
-			<div className={className}>{inner}</div>
+			<div className={className}>{head}</div>
 		);
 
-	if (!children) return card;
 	return (
 		<div className={styles.group}>
 			{card}
-			{expanded ? (
-				<div className={styles.events}>
-					{match.kills ? (
-						<MatchKills kills={match.kills} mode={match.mode} />
-					) : null}
-					{children}
-				</div>
+			{expanded && expandable ? (
+				<div className={styles.details}>{summary}</div>
 			) : null}
 		</div>
 	);
 }
 
-/** The POV player's splats off the kill feed, in the order they happened, stamped with match time elapsed. */
-function MatchKills({
-	kills,
-	mode,
-}: {
-	kills: readonly ScannerMatchKill[];
-	mode: ModeShort | null;
-}) {
-	const clockStart =
-		(mode !== null ? MATCH_CLOCK_SECONDS[mode] : undefined) ??
-		DEFAULT_MATCH_CLOCK_SECONDS;
+/**
+ * Live sessions stamp reads with wall-clock seconds and VoDs with file position;
+ * the timeline charts want seconds since the match began either way.
+ */
+function timelineOrigin(match: ScannerMatch): number {
 	return (
-		<div className={styles.kills}>
-			<span className={styles.killsLabel}>
-				<Crosshair size={12} aria-hidden />
-				kills · {kills.length}
-			</span>
-			{kills.map((kill, i) => (
-				<span key={i} className={styles.kill}>
-					<span className={styles.killClock}>
-						{kill.time !== null
-							? formatClock(Math.max(0, clockStart - kill.time))
-							: "?:??"}
-					</span>
-					{kill.name ?? "?"}
-				</span>
-			))}
-		</div>
+		match.startsAt ??
+		match.objective?.samples[0]?.t ??
+		match.playerStatus?.samples[0]?.t ??
+		0
 	);
 }
 
-/** Labeled rule above the newest card of each set in the feed. */
-export function SetDivider({ number }: { number: number }) {
-	return <div className={styles.setDivider}>Set {number}</div>;
+function povPlayer(match: ScannerMatch): ScannerMatchPlayer | undefined {
+	return match.pov
+		? match.teams[match.pov.team].players[match.pov.index]
+		: undefined;
 }
 
-function timeRangeLabel(match: ScannerMatch): string {
-	const start = formatTime(match.startsAt!);
-	return match.endsAt !== null && match.endsAt !== match.startsAt
-		? `${start}–${formatTime(match.endsAt)}`
-		: start;
+/** time elapsed on the match clock from a time-left reading */
+function elapsed(mode: ModeShort | null, timeLeft: number): number {
+	const clockStart =
+		(mode !== null ? MATCH_CLOCK_SECONDS[mode] : undefined) ??
+		DEFAULT_MATCH_CLOCK_SECONDS;
+	return Math.max(0, clockStart - timeLeft);
 }
 
 function Score({
 	match,
-	inProgress,
+	result,
 }: {
 	match: ScannerMatch;
-	inProgress: boolean;
+	result: "win" | "loss" | null;
 }) {
-	if (match.matchScores === null) {
-		if (!inProgress) return null;
-		return (
-			<span className={clsx(styles.chip, styles.inProgress)}>
-				<span className={styles.dot} />
-				in progress
-			</span>
-		);
-	}
+	if (match.matchScores === null && match.winner === null) return null;
 	const objectiveScores = matchScoresFromObjective(
 		match.objective?.samples ?? [],
 	);
 	const [left, right] = displayOrder(match);
-
+	const scores = match.matchScores ?? [null, null];
 	return (
-		<div className={styles.matchScore}>
-			<span className={winnerClass(match, left)}>
-				{scoreLabel(match.matchScores[left], objectiveScores[left])}
-			</span>
-			<span> – </span>
-			<span className={winnerClass(match, right)}>
-				{scoreLabel(match.matchScores[right], objectiveScores[right])}
-			</span>
-		</div>
+		<span className={styles.score}>
+			{result ? (
+				<span className={result === "win" ? styles.win : styles.loss}>
+					{result === "win" ? "WIN" : "LOSS"}
+				</span>
+			) : null}
+			{match.matchScores !== null || objectiveScores.some((s) => s !== null) ? (
+				<span className={styles.scoreNumbers}>
+					{scoreLabel(scores[left], objectiveScores[left])}
+					<span className={styles.scoreDash}>–</span>
+					{scoreLabel(scores[right], objectiveScores[right])}
+				</span>
+			) : null}
+		</span>
 	);
-}
-
-/**
- * `teams` order is winner-first on a scoreboard-closed match, so it flips
- * between games. The card keeps the scan's own side (alpha) left and the
- * enemy right for every match so consecutive games line up; footage with no
- * POV seat read (casts) keeps `teams` order.
- */
-function displayOrder(match: ScannerMatch): [0 | 1, 0 | 1] {
-	return match.pov?.team === 1 ? [1, 0] : [0, 1];
-}
-
-function winnerClass(match: ScannerMatch, team: 0 | 1): string | undefined {
-	if (match.winner === null) return undefined;
-	return match.winner === team ? styles.win : styles.lose;
 }
 
 /**
@@ -317,186 +335,364 @@ function scoreLabel(
 	if (objectiveScore !== null) {
 		return objectiveScore === KO_MATCH_SCORE ? "(KO)" : `(${objectiveScore})`;
 	}
-
 	return score === null ? "?" : String(score);
 }
 
-interface TeamWeapon {
-	weaponId: MainWeaponId;
-	/** the scan's own player — highlighted among the eight */
-	pov: boolean;
-	/** head/clothes/shoes mains; null when no death screen revealed the build */
-	mainAbilities: AbilityWithUnknown[] | null;
-}
-
+/** Both teams' weapons, always four a side: a slot the scan never read shows a ?. */
 function TeamWeapons({ match }: { match: ScannerMatch }) {
-	const weaponsOf = (team: 0 | 1): TeamWeapon[] =>
-		match.teams[team].players
-			.map((player, index) => ({
-				weaponId: player.weaponId,
-				pov: match.pov?.team === team && match.pov.index === index,
-				mainAbilities: mainAbilities(player),
-			}))
-			.filter((weapon): weapon is TeamWeapon => weapon.weaponId !== null);
 	const [left, right] = displayOrder(match);
-	const leftWeapons = weaponsOf(left);
-	const rightWeapons = weaponsOf(right);
-	if (leftWeapons.length + rightWeapons.length === 0) return null;
-	// one read build is enough to show the arcs; the rest fall back to unknowns
-	const withAbilities = [...leftWeapons, ...rightWeapons].some(
-		(weapon) => weapon.mainAbilities !== null,
-	);
-
 	return (
-		<div
-			className={clsx(styles.weapons, {
-				[styles.withAbilities]: withAbilities,
-			})}
-		>
-			{leftWeapons.length > 0 ? (
-				<WeaponRow weapons={leftWeapons} withAbilities={withAbilities} />
-			) : null}
-			{leftWeapons.length > 0 && rightWeapons.length > 0 ? (
-				<span className={styles.vs}>vs</span>
-			) : null}
-			{rightWeapons.length > 0 ? (
-				<WeaponRow weapons={rightWeapons} withAbilities={withAbilities} />
-			) : null}
-		</div>
-	);
-}
-
-/** The three gear mains of a build, or null when none were read; partial builds keep unknown slots. */
-function mainAbilities(
-	player: ScannerMatchPlayer,
-): AbilityWithUnknown[] | null {
-	const mains = UNKNOWN_MAIN_ABILITIES.map(
-		(unknown, slot) => player.abilities?.[slot]?.[0] ?? unknown,
-	);
-	return mains.some((ability) => ability !== "UNKNOWN") ? mains : null;
-}
-
-/** One team's weapons, kept together when the card is too narrow for both. */
-function WeaponRow({
-	weapons,
-	withAbilities,
-}: {
-	weapons: TeamWeapon[];
-	withAbilities: boolean;
-}) {
-	return (
-		<div className={styles.weaponRow}>
-			{weapons.map((weapon, i) => (
-				<div
-					key={i}
-					className={clsx(styles.weaponSlot, {
-						[styles.withAbilities]: withAbilities,
+		<span className={styles.teamWeapons}>
+			{[left, right].map((team, side) => (
+				<span key={team} className={styles.weaponRow}>
+					{side === 1 ? <span className={styles.vs}>vs</span> : null}
+					{Array.from({ length: PLAYERS_PER_TEAM }, (_, index) => {
+						const weaponId = match.teams[team].players[index]?.weaponId ?? null;
+						const isPov = match.pov?.team === team && match.pov.index === index;
+						return weaponId !== null ? (
+							<CircleBackdrop
+								key={index}
+								className={clsx(styles.weaponBackdrop, {
+									[styles.pov]: isPov,
+								})}
+							>
+								<WeaponImage weaponSplId={weaponId} variant="badge" size={32} />
+							</CircleBackdrop>
+						) : (
+							<span
+								key={index}
+								className={clsx(styles.weapon, styles.weaponUnknown, {
+									[styles.pov]: isPov,
+								})}
+								title="weapon not read"
+							>
+								?
+							</span>
+						);
 					})}
-				>
-					<WeaponImage
-						weaponSplId={weapon.weaponId}
-						variant="build"
-						size={28}
-						className={clsx(styles.weapon, { [styles.pov]: weapon.pov })}
-					/>
-					{withAbilities ? (
-						<AbilityArc
-							abilities={weapon.mainAbilities ?? UNKNOWN_MAIN_ABILITIES}
-						/>
-					) : null}
+				</span>
+			))}
+		</span>
+	);
+}
+
+function Scoreboard({
+	match,
+	result,
+}: {
+	match: ScannerMatch;
+	result: "win" | "loss" | null;
+}) {
+	if (match.teams.every((team) => team.players.length === 0)) return null;
+	const [left, right] = displayOrder(match);
+	return (
+		<div className={styles.scoreboard}>
+			{[left, right].map((team, side) => (
+				<div key={team} className={styles.team}>
+					<div className={styles.teamHeading}>
+						{TEAM_LABELS[side]}
+						{match.winner === team ? " · WIN" : null}
+						{result === null && match.pov?.team === team ? " · you" : null}
+					</div>
+					<table className={styles.players}>
+						<tbody>
+							{match.teams[team].players.map((player, index) => {
+								const isPov =
+									match.pov?.team === team && match.pov.index === index;
+								return (
+									<tr key={index}>
+										<td className={styles.weaponCell}>
+											{player.weaponId !== null ? (
+												<WeaponImage
+													weaponSplId={player.weaponId}
+													variant="build"
+													size={32}
+													className={clsx(styles.weapon, {
+														[styles.pov]: isPov,
+													})}
+												/>
+											) : (
+												<span
+													className={clsx(styles.weapon, styles.weaponUnknown, {
+														[styles.pov]: isPov,
+													})}
+													title="weapon not read"
+												>
+													?
+												</span>
+											)}
+										</td>
+										<td className={styles.name}>{player.name ?? "?"}</td>
+										<td>
+											<PlayerAbilities abilities={player.abilities} />
+										</td>
+										<td className={styles.num}>
+											{player.ka ?? "?"}/{player.d ?? "?"}/{player.s ?? "?"}
+										</td>
+										<td className={styles.num}>
+											{player.paint !== null ? `${player.paint}p` : ""}
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
 				</div>
 			))}
 		</div>
 	);
 }
 
-/** Gear mains laid out as a half-moon hugging the weapon's lower edge. */
-function AbilityArc({ abilities }: { abilities: AbilityWithUnknown[] }) {
+interface DeathRow {
+	t: number;
+	timeLeft: number | null;
+	label: string;
+}
+
+/** The POV player's deaths (off the death overlays) and kills (off the kill feed), each with its clip. */
+function DeathsAndKills({
+	built,
+	clips,
+	onPlayClip,
+}: {
+	built: BuiltMatch<ScanEvent>;
+	clips: readonly ScannerClip[];
+	onPlayClip: (clip: ScannerClip) => void;
+}) {
+	const { match } = built;
+	const deaths: DeathRow[] = built.sources
+		.filter((event) => event.type === DEATH_EVENT_TYPE)
+		.map((event) => {
+			const data = event.data as DeathData;
+			return {
+				t: event.t,
+				timeLeft: matchClockAt(match, event.t),
+				label: weaponLabel(data.weaponType, data.weaponId) ?? data.name ?? "?",
+			};
+		});
+	const kills = match.kills ?? [];
+	if (deaths.length === 0 && kills.length === 0) return null;
+	const clipAt = (t: number) => clips.find((clip) => clipCovers(clip, t));
+
 	return (
-		<div className={styles.abilityArc}>
-			{abilities.map((ability, i) => (
-				<span
-					key={i}
-					className={styles.arcSlot}
-					style={
-						{ "--arc-angle": ABILITY_ARC_ANGLES[i] } as React.CSSProperties
-					}
-				>
-					<Ability
-						ability={ability}
-						size="TINY"
-						className={styles.arcAbility}
-					/>
-				</span>
-			))}
+		<div className={styles.deathsKills}>
+			<div className={styles.column}>
+				<div className={styles.columnHeading}>Deaths · {deaths.length}</div>
+				{deaths.map((death, i) => (
+					<div key={i} className={styles.row}>
+						<span className={styles.clock}>
+							{death.timeLeft !== null
+								? formatClock(elapsed(match.mode, death.timeLeft))
+								: "–:––"}
+						</span>
+						<span className={styles.rowLabel}>{death.label}</span>
+						<PlayButton clip={clipAt(death.t)} onPlayClip={onPlayClip} />
+					</div>
+				))}
+			</div>
+			<div className={styles.column}>
+				<div className={styles.columnHeading}>Kills · {kills.length}</div>
+				{groupKills(kills).map((group, i) => (
+					<div key={i} className={styles.row}>
+						<span className={styles.clock}>
+							{group[0]!.time !== null
+								? formatClock(elapsed(match.mode, group[0]!.time))
+								: "–:––"}
+						</span>
+						<span className={styles.rowLabel}>
+							{group.map((kill) => kill.name ?? "?").join(" · ")}
+							{group.length > 1 ? (
+								<span className={styles.streak}> {group.length}k</span>
+							) : null}
+						</span>
+						<PlayButton
+							clip={clipAt(group.at(-1)!.t)}
+							onPlayClip={onPlayClip}
+						/>
+					</div>
+				))}
+			</div>
 		</div>
 	);
 }
 
-function StatusChip({
-	send,
-	skipReason,
-	live,
+/** kills within a few seconds of each other read as one line */
+const KILL_GROUP_GAP_S = 6;
+
+function groupKills(kills: readonly ScannerMatchKill[]): ScannerMatchKill[][] {
+	const groups: ScannerMatchKill[][] = [];
+	for (const kill of kills) {
+		const group = groups.at(-1);
+		if (group && kill.t - group.at(-1)!.t <= KILL_GROUP_GAP_S) group.push(kill);
+		else groups.push([kill]);
+	}
+	return groups;
+}
+
+function PlayButton({
+	clip,
+	onPlayClip,
 }: {
-	send?: SendStatus;
-	skipReason?: IngestSkipReason;
-	live: boolean;
+	clip: ScannerClip | undefined;
+	onPlayClip: (clip: ScannerClip) => void;
 }) {
-	const formatSentAt = useEventTimeFormatter();
-	if (skipReason) {
-		return (
-			<span className={styles.chip}>
-				{skipReason === "disconnect" ? "disconnect" : "not ingested"}
-			</span>
-		);
-	}
-	if (send?.state === "sent") {
-		return (
-			<span
-				className={clsx(styles.chip, styles.sent)}
-				title={`ingested ${formatSentAt(send.at)}`}
-			>
-				✓
-				{send.link ? (
-					<a
-						href={ingestedMatchUrl(send.link)}
-						target="_blank"
-						rel="noreferrer"
-					>
-						{ingestedMatchLabel(send.link)}
-					</a>
-				) : null}
-			</span>
-		);
-	}
-	if (send) {
-		return (
-			<span
-				className={clsx(styles.chip, SEND_STATE_CLASS[send.state])}
-				title={send.error}
-			>
-				{send.state === "queued" || send.state === "sending" ? (
-					<span className={styles.dot} />
-				) : null}
-				{SEND_CHIP_LABELS[send.state]}
-			</span>
-		);
-	}
-	if (live) return null;
-	return <span className={styles.chip}>not sent</span>;
+	if (!clip) return <span className={styles.playSlot} />;
+	return (
+		<button
+			type="button"
+			className={clsx(styles.playSlot, styles.playButton)}
+			aria-label="Play clip"
+			onClick={() => onPlayClip(clip)}
+		>
+			<Play size={12} aria-hidden />
+		</button>
+	);
 }
 
-function ingestedMatchUrl(link: IngestedMatchLink): string {
-	return link.type === "tournament"
-		? tournamentMatchPage({
-				tournamentId: link.tournamentId,
-				matchId: link.matchId,
-			})
-		: sendouQMatchPage(link.groupMatchId);
+/**
+ * The match timer's reading at stream time `t`, projected from the nearest
+ * read that carried one (counter, status strip or kill feed); null when the
+ * match had no timed read.
+ */
+function matchClockAt(match: ScannerMatch, t: number): number | null {
+	const timed = [
+		...(match.objective?.samples ?? []),
+		...(match.playerStatus?.samples ?? []),
+		...(match.kills ?? []),
+	].filter((sample) => sample.time !== null);
+	if (timed.length === 0) return null;
+	const nearest = timed.reduce((best, sample) =>
+		Math.abs(sample.t - t) < Math.abs(best.t - t) ? sample : best,
+	);
+	return Math.max(0, nearest.time! - (t - nearest.t));
 }
 
-function ingestedMatchLabel(link: IngestedMatchLink): string {
-	return link.type === "tournament"
-		? `Match ID #${link.matchId}`
-		: `SQ Match ID #${link.groupMatchId}`;
+/**
+ * A player's mains in head/clothes/shoes order, then a build button when
+ * every slot was read. The POV player's full gear comes from the
+ * personal-results screen, an enemy's from the death overlay when they
+ * splatted you, everyone else's mains from the minimap cards.
+ */
+function PlayerAbilities({
+	abilities,
+}: {
+	abilities: AbilityWithUnknown[][] | undefined;
+}) {
+	if (!abilities || abilities.length === 0) return null;
+	const rows = gearRows(abilities);
+	const fullBuild = rows.every((row) => row?.length === SLOTS_PER_ROW)
+		? (rows as AbilityWithUnknown[][])
+		: null;
+	return (
+		<div className={styles.abilities}>
+			{rows.map((row, i) =>
+				row?.[0] ? (
+					<Ability key={i} ability={row[0]} size="SUBTINY" />
+				) : (
+					<span key={i} className={styles.abilitySlot} />
+				),
+			)}
+			{fullBuild ? (
+				<SendouPopover
+					popoverClassName={styles.buildPopover}
+					trigger={
+						<button
+							type="button"
+							className={styles.buildButton}
+							aria-label="Show build"
+						>
+							<Image path={navIconUrl("builds")} alt="" size={20} />
+						</button>
+					}
+				>
+					<div className={styles.buildGrid}>
+						{fullBuild.flatMap((row, rowIndex) =>
+							row.map((ability, slot) => (
+								<Ability
+									key={`${rowIndex}-${slot}`}
+									ability={ability}
+									size={slot === 0 ? "MAIN" : "SUB"}
+								/>
+							)),
+						)}
+					</div>
+				</SendouPopover>
+			) : null}
+		</div>
+	);
+}
+
+/**
+ * Rows in head/clothes/shoes order. A read lists rows as they were seen, but
+ * a slot-only main (Respawn Punisher is clothes only, Stealth Jump shoes
+ * only) pins its row to that gear; the other rows take the free slots in
+ * their read order.
+ */
+function gearRows(
+	abilities: readonly AbilityWithUnknown[][],
+): (AbilityWithUnknown[] | undefined)[] {
+	const rows: (AbilityWithUnknown[] | undefined)[] = [
+		undefined,
+		undefined,
+		undefined,
+	];
+	const loose: AbilityWithUnknown[][] = [];
+	for (const row of abilities.slice(0, GEAR_ROWS)) {
+		const pinned = row[0] === undefined ? undefined : MAIN_ONLY_ROW.get(row[0]);
+		if (pinned !== undefined && rows[pinned] === undefined) rows[pinned] = row;
+		else loose.push(row);
+	}
+	for (const row of loose) {
+		const free = rows.indexOf(undefined);
+		if (free === -1) break;
+		rows[free] = row;
+	}
+	return rows;
+}
+
+/** The game's frames and raw reads as a zip, what a misread is reported with. */
+function ReportData({
+	built,
+	getFrame,
+	fileName,
+}: {
+	built: BuiltMatch<ScanEvent>;
+	getFrame: (event: ScanEvent) => GetFrame | undefined;
+	fileName: string;
+}) {
+	const [zipping, setZipping] = useState(false);
+
+	const download = async () => {
+		setZipping(true);
+		try {
+			const zip = await matchZip(built, getFrame);
+			downloadBlob(
+				fileName,
+				new Blob([zip as Uint8Array<ArrayBuffer>], { type: "application/zip" }),
+			);
+		} finally {
+			setZipping(false);
+		}
+	};
+
+	return (
+		<div className={clsx(styles.report, "text-xs text-lighter")}>
+			<SendouButton
+				variant="minimal"
+				size="small"
+				icon={<Download />}
+				isDisabled={zipping}
+				onClick={() => void download()}
+			>
+				Game data
+			</SendouButton>
+			<span>
+				Something read wrong? Send this file on{" "}
+				<a href={SENDOU_INK_DISCORD_URL} target="_blank" rel="noreferrer">
+					Discord
+				</a>
+				.
+			</span>
+		</div>
+	);
 }

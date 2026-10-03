@@ -1,10 +1,12 @@
 /**
- * Golden-file tests for the ObjectiveDetector over every fixture in objective/,
- * plus cross-negative sweeps both ways: the objective gate must stay quiet on
- * every other detector's positives (and the shared negatives), and vice versa.
+ * Golden-file tests for the ObjectiveDetector over every fixture in objective/
+ * (SZ plates and the TC/RM track), plus cross-negative sweeps both ways: the
+ * objective gate must stay quiet on every other detector's positives (and the
+ * shared negatives), and vice versa.
  */
 
 import assert from "node:assert/strict";
+import { realpathSync } from "node:fs";
 import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
@@ -31,6 +33,8 @@ await loadOpenCV();
 const resources = await loadScoreboardResources();
 const detector = createObjectiveDetector(resources);
 const fixtures = loadFixtures("objective");
+/** A track position is the icon's x in ~4.5px units: a pixel of jitter can round either way. */
+const POSITION_TOLERANCE = 1;
 
 test("objective fixtures exist", () => {
 	assert.ok(fixtures.length > 0, "no fixtures found under objective/");
@@ -108,27 +112,42 @@ for (const fixture of fixtures) {
 				},
 				() => {
 					assert.equal(
-						event.data.penalty[side],
+						event.data.mode === "SZ" ? event.data.penalty[side] : null,
 						expected.penalty![side],
 						`penalty[${side}] mismatch (${debug()})`,
 					);
 				},
 			);
-			await t.test(
-				`control[${side}]`,
-				{
-					skip:
-						expected.control === undefined || skip(fixture, `control.${side}`),
-				},
-				() => {
-					assert.equal(
-						event.data.control[side],
-						expected.control![side],
-						`control[${side}] mismatch (${debug()})`,
-					);
-				},
-			);
 		}
+
+		await t.test(
+			"control",
+			{ skip: expected.control === undefined || skip(fixture, "control") },
+			() => {
+				assert.equal(
+					event.data.control,
+					expected.control,
+					`control mismatch (${debug()})`,
+				);
+			},
+		);
+
+		await t.test(
+			"position",
+			{ skip: expected.position === undefined || skip(fixture, "position") },
+			() => {
+				const position =
+					event.data.mode === "SZ" ? undefined : event.data.position;
+				if (expected.position === null || position == null) {
+					assert.equal(position, expected.position, `(${debug()})`);
+					return;
+				}
+				assert.ok(
+					Math.abs(position - expected.position!) <= POSITION_TOLERANCE,
+					`position ${position}, expected ${expected.position} (${debug()})`,
+				);
+			},
+		);
 	});
 }
 
@@ -206,6 +225,14 @@ for (const fixture of loadFixtures("negative")) {
 	});
 }
 
+// a TC/RM frame shared with another detector's fixture (symlinked, e.g. a
+// death overlay over the track) legitimately fires that detector's gate
+const sharedFrames = new Map(
+	["death", "kill"].map((dir) => [
+		dir,
+		new Set(loadFixtures(dir).map((f) => realpathSync(f.framePath))),
+	]),
+);
 const otherDetectors: readonly [string, Detector<unknown>][] = [
 	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
 	[
@@ -225,6 +252,9 @@ for (const fixture of fixtures.filter(
 )) {
 	test(`other gates stay quiet on objective/${fixture.name}`, async () => {
 		for (const [name, other] of otherDetectors) {
+			if (sharedFrames.get(name)?.has(realpathSync(fixture.framePath))) {
+				continue;
+			}
 			const { gate } = await runDetectorOnFixture(other, fixture);
 			assert.equal(
 				gate.pass,

@@ -1,4 +1,11 @@
+import * as R from "remeda";
+
 const PENALTY_BRIDGE_SECONDS = 6;
+const MAX_TIME_TICKS = 8;
+const PX_PER_TIME_TICK = 56;
+const TIME_TICK_STEPS_SECONDS = [
+	1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600,
+];
 
 /** Label gutter left of the plot, shared by the objective chart's y-axis and the player-status weapon column so both span the same x-range. */
 export const TIMELINE_PLOT_GUTTER_PX = 36;
@@ -84,6 +91,66 @@ export function matchScoresFromObjective(
 	};
 
 	return [lastCountTaken(0), lastCountTaken(1)];
+}
+
+interface TrackCountEvent {
+	data: {
+		score: [number | null, number | null];
+		position?: number | null;
+	};
+}
+
+/**
+ * TC/RM draw no count plate for a team that never pushed past the middle, so
+ * a side's reads before its first count showed its full count, not an
+ * unreadable one. SZ events (no `position`) pass through untouched.
+ *
+ * @param sorted events sorted by `t` ascending; result is index-aligned
+ */
+export function withUnpushedTrackCounts<T extends TrackCountEvent>(
+	sorted: readonly T[],
+): T[] {
+	if (!sorted.some((event) => event.data.position !== undefined)) {
+		return [...sorted];
+	}
+	const firstRead = ([0, 1] as const).map((side) =>
+		sorted.findIndex((event) => event.data.score[side] !== null),
+	);
+	return sorted.map((event, i) => {
+		const score = event.data.score.map((value, side) => {
+			const first = firstRead[side]!;
+			return value === null && (first === -1 || i < first) ? FULL_COUNT : value;
+		}) as [number | null, number | null];
+		return { ...event, data: { ...event.data, score } };
+	});
+}
+
+/**
+ * Round-numbered time-axis ticks between `min` and `max` (seconds), spaced to fit `plotWidth`.
+ * Shared so stacked timelines draw their gridlines at the same times.
+ */
+export function timelineTimeTicks({
+	min,
+	max,
+	plotWidth,
+}: {
+	min: number;
+	max: number;
+	plotWidth: number;
+}) {
+	const maxCount = R.clamp(Math.floor(plotWidth / PX_PER_TIME_TICK), {
+		min: 2,
+		max: MAX_TIME_TICKS,
+	});
+	const range = Math.max(max - min, 1);
+	const step =
+		TIME_TICK_STEPS_SECONDS.find(
+			(candidate) => range / candidate <= maxCount - 1,
+		) ?? Math.ceil(range / (maxCount - 1) / 3600) * 3600;
+
+	return R.range(Math.ceil(min / step), Math.floor(max / step) + 1).map(
+		(multiple) => multiple * step,
+	);
 }
 
 /** Seconds formatted as m:ss, with an hours part only when needed. */

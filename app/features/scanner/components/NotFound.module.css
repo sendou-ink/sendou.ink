@@ -1,0 +1,11 @@
+.notFound {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+
+	& p {
+		margin: 0;
+	}
+}

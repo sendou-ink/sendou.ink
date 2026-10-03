@@ -63,6 +63,109 @@ export function findVodsByTournamentId(tournamentId: number) {
 		.execute();
 }
 
+/**
+ * Every VoD of the tournament with what is needed to download its match: its round, when the match started and
+ * when its last game was reported, plus the streamer and the team whose POV the VoD is and how many sets that team
+ * won (`null` for casts).
+ */
+export async function findAllForDownloadByTournamentId(tournamentId: number) {
+	const [vods, finishedMatches] = await Promise.all([
+		db
+			.selectFrom("TournamentMatchVod")
+			.innerJoin(
+				"TournamentMatch",
+				"TournamentMatch.id",
+				"TournamentMatchVod.matchId",
+			)
+			.innerJoin(
+				"TournamentStage",
+				"TournamentStage.id",
+				"TournamentMatch.stageId",
+			)
+			.innerJoin(
+				"TournamentRound",
+				"TournamentRound.id",
+				"TournamentMatch.roundId",
+			)
+			.innerJoin(
+				"TournamentGroup",
+				"TournamentGroup.id",
+				"TournamentMatch.groupId",
+			)
+			.select((eb) => [
+				"TournamentMatchVod.matchId",
+				"TournamentMatchVod.account",
+				"TournamentMatchVod.userId",
+				"TournamentMatchVod.platformVideoId",
+				"TournamentMatchVod.timestampSeconds",
+				"TournamentMatch.startedAt",
+				"TournamentStage.type as stageType",
+				"TournamentRound.number as roundNumber",
+				"TournamentGroup.number as groupNumber",
+				eb
+					.selectFrom("TournamentMatchGameResult")
+					.select((innerEb) =>
+						innerEb.fn
+							.max("TournamentMatchGameResult.createdAt")
+							.as("createdAt"),
+					)
+					.whereRef(
+						"TournamentMatchGameResult.matchId",
+						"=",
+						"TournamentMatch.id",
+					)
+					.as("lastGameReportedAt"),
+				eb
+					.selectFrom("TournamentTeamMember")
+					.select("TournamentTeamMember.tournamentTeamId")
+					.whereRef(
+						"TournamentTeamMember.userId",
+						"=",
+						"TournamentMatchVod.userId",
+					)
+					.where(
+						sql<boolean>`"TournamentTeamMember"."tournamentTeamId" in (json_extract("TournamentMatch"."opponentOne", '$.id'), json_extract("TournamentMatch"."opponentTwo", '$.id'))`,
+					)
+					.as("povTeamId"),
+			])
+			.where("TournamentStage.tournamentId", "=", tournamentId)
+			.orderBy("TournamentMatchVod.matchId", "asc")
+			.execute(),
+		db
+			.selectFrom("TournamentMatch")
+			.innerJoin(
+				"TournamentStage",
+				"TournamentStage.id",
+				"TournamentMatch.stageId",
+			)
+			.select([
+				"TournamentMatch.opponentOne",
+				"TournamentMatch.opponentTwo",
+				"TournamentMatch.winnerSide",
+			])
+			.where("TournamentStage.tournamentId", "=", tournamentId)
+			.where("TournamentMatch.winnerSide", "is not", null)
+			.execute(),
+	]);
+
+	const setWinsByTeamId = new Map<number, number>();
+	for (const match of finishedMatches) {
+		const winnerId =
+			match.winnerSide === "opponent1"
+				? match.opponentOne?.id
+				: match.opponentTwo?.id;
+		if (typeof winnerId !== "number") continue;
+
+		setWinsByTeamId.set(winnerId, (setWinsByTeamId.get(winnerId) ?? 0) + 1);
+	}
+
+	return vods.map((vod) => ({
+		...vod,
+		povTeamSetWins:
+			vod.povTeamId === null ? null : (setWinsByTeamId.get(vod.povTeamId) ?? 0),
+	}));
+}
+
 export function insertMany(vods: Omit<Tables["TournamentMatchVod"], "id">[]) {
 	return db
 		.insertInto("TournamentMatchVod")

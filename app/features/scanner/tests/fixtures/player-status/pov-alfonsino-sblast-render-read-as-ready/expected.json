@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"cast": null,
+		"time": 224,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, true, false]
+		]
+	},
+	"options": {
+		"notes": "Private-battle spectator camera, Museum d'Alfonsino SZ at 3:44 (Top Level Scrim VoD 2tE_iIUDSio, t=1145). Badge-less narrow-right geometry. Left slot 2 is Mongering's S-BLAST '91 (the small purple 91 under the icon is part of that weapon's art, not a gauge — the player-switch banner at t=838 ties the same render and badge to Mongering): its render is a big near-white silhouette covering most of the body box, so bodyPale reached 0.37 while the body kept 0.39 team ink, and a pale body alone was enough to read ready — the whole match charted as one unbroken special-ready band on that row. Every left body is saturated orange (alive, none washed); right slot 2 is splatted (grey X on a neutral plate). A real wash empties the ink it pales (0.06-0.10 on this same slot, see pov-alfonsino-splash-real-ready-wash), so a ready read the shoulder glow does not corroborate now needs an ink-poor body."
+	}
+}

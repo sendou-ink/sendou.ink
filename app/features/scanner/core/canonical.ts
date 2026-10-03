@@ -2,6 +2,15 @@
 export const CANONICAL_WIDTH = 1920;
 export const CANONICAL_HEIGHT = 1080;
 
+/** The smallest rect covering every ROI. */
+export function unionRoi(rois: readonly Roi[]): Roi {
+	const x = Math.min(...rois.map((r) => r.x));
+	const y = Math.min(...rois.map((r) => r.y));
+	const right = Math.max(...rois.map((r) => r.x + r.w));
+	const bottom = Math.max(...rois.map((r) => r.y + r.h));
+	return { x, y, w: right - x, h: bottom - y };
+}
+
 export interface Roi {
 	x: number;
 	y: number;

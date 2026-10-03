@@ -1,0 +1,10 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 263,
+		"names": ["Masque"]
+	},
+	"options": {
+		"notes": "Frame shared with objective/rainmaker-dropped-neutral (rainmaker VoD, Rainmaker overlay)."
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"event": "Minimap",
+	"data": {
+		"spectator": false,
+		"teammates": [
+			{ "self": false, "dead": false },
+			{ "self": false, "dead": false },
+			{ "self": false, "dead": false },
+			{ "self": true, "dead": true }
+		],
+		"enemies": [
+			{ "dead": false },
+			{ "dead": false },
+			{ "dead": false },
+			{ "dead": false }
+		]
+	},
+	"options": {
+		"notes": "Triton cup VoD (v2811381928, 720p S3 POV), Museum d'Alfonsino SZ at 1:21, t=1782.25. The POV player (have faith, .52 Gal) was splatted at 1:22 and this is the respawn map fading in. The self card is struck through, but the X's pale strokes over a light yellow backdrop are soft on this frame: the cross probe reads saturated 0.33, while its crispness reads 49 |Laplacian|, under the 65 floor. The card read as alive, and that one read split the player's death on the timeline into a band too short to be real, which was debounced away. Half a second later the same card reads 81. Names, weapons and abilities are soft mid-fade and are not asserted."
+	}
+}

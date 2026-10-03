@@ -13,7 +13,8 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
 import { copyRoi } from "../../image";
 import { hueDistance, hueOf } from "../../ink-color";
-import { matchWeapon, type WeaponTemplate } from "../scoreboard/weapons";
+import { all, type MatchSteps } from "../../match-steps";
+import { matchWeaponSteps, type WeaponTemplate } from "../scoreboard/weapons";
 import type { DetectedEvent } from "../types";
 import type { PlayerStatusData, PlayerStatusLayout } from "./player-status";
 import {
@@ -45,19 +46,28 @@ export interface StripWeaponsData {
 	slots: [(StripWeaponCandidate[] | null)[], (StripWeaponCandidate[] | null)[]];
 }
 
-/** Match every alive slot's icon; `status` (same frame) supplies slot centers and dead flags. */
-export function parseStripWeapons(
+/** Match every alive slot's icon (all slots in one lockstep); `status` (same frame) supplies slot centers and dead flags. */
+export function* parseStripWeaponsSteps(
 	frame: Mat,
 	t: number,
 	status: PlayerStatusData,
 	templates: WeaponTemplate[],
-): DetectedEvent<StripWeaponsData> {
+): MatchSteps<DetectedEvent<StripWeaponsData>> {
 	const centers = slotCenters(status.layout);
+	const alive = centers.flatMap((sideCenters, side) =>
+		sideCenters.flatMap((cx, slot) =>
+			status.dead[side as 0 | 1][slot] ? [] : [{ side, slot, cx }],
+		),
+	);
+	const matched = yield* all(
+		alive.map(({ cx }) => matchSlot(frame, cx, templates)),
+	);
 	const scores: number[] = [];
 	const slots = centers.map((sideCenters, side) =>
-		sideCenters.map((cx, slot): StripWeaponCandidate[] | null => {
-			if (status.dead[side as 0 | 1][slot]) return null;
-			const candidates = matchSlot(frame, cx, templates);
+		sideCenters.map((_, slot): StripWeaponCandidate[] | null => {
+			const index = alive.findIndex((a) => a.side === side && a.slot === slot);
+			if (index === -1) return null;
+			const candidates = matched[index]!;
 			if (candidates.length > 0) scores.push(candidates[0]!.score);
 			return candidates;
 		}),
@@ -87,11 +97,11 @@ function slotCenters(
 			: STATUS_SLOT_CENTERS_NARROW_LEFT;
 }
 
-function matchSlot(
+function* matchSlot(
 	frame: Mat,
 	cx: number,
 	templates: WeaponTemplate[],
-): StripWeaponCandidate[] {
+): MatchSteps<StripWeaponCandidate[]> {
 	const cv = getCV();
 	const crop = copyRoi(frame, {
 		x: cx + STRIP_WEAPON_BOX.dx,
@@ -103,7 +113,7 @@ function matchSlot(
 	cv.cvtColor(crop, search, cv.COLOR_RGBA2RGB);
 	crop.delete();
 	knockoutPlate(search);
-	const match = matchWeapon(search, templates, {
+	const match = yield* matchWeaponSteps(search, templates, {
 		inkThreshold: STRIP_WEAPON_INK_THRESHOLD,
 		topN: STRIP_WEAPON_TOP_K,
 	});

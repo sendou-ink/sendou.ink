@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-left",
+		"cast": null,
+		"time": 247,
+		"special": [
+			[false, true, false, true],
+			[true, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, true]
+		]
+	},
+	"options": {
+		"notes": "Triton cup VoD (v2811381928, 720p S3 POV), Brinewater Springs SZ at 4:07, t=6097.3. Right slot 0 holds a Nautilus whose special-ready wash is plainly visible (pale lilac icon) but whose big dark drum render fills most of the body box: the body reads ink-poor (0.00) with the wash diluted to tint 0.28, just under the 0.30 wash floor, so the slot read as a splat. Over the game the slot alternated ★/✕ every second while ready (pulse phases landing either side of the floor). It still reads pale 0.16, which a tinted splat never does (tinted splats read pale <=0.01), hence STATUS_PALE_WASH_*. Right slot 3 is a real splat, left slots 1 and 3 hold washes. The strip is at the narrow-left pitch here (left apexes ~[608,683,758,834], right ~[1087,1183,1280,1377])."
+	}
+}

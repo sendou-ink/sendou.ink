@@ -10,6 +10,8 @@ import {
 	type Roi,
 } from "./canonical";
 import { getCV, type Mat, meanOf, minMaxLoc } from "./cv";
+import { type FrameKernels, frameKernels } from "./frame-kernels";
+import type { Homography } from "./rectify";
 
 export type { Roi };
 
@@ -55,6 +57,50 @@ export function normalizeFrame(src: Mat): Mat {
 	return dst;
 }
 
+let conversions: { frame: Mat; gray?: Mat; rgb?: Mat; hsv?: Mat } | null = null;
+
+function conversionsOf(frame: Mat) {
+	if (conversions?.frame !== frame) {
+		conversions?.gray?.delete();
+		conversions?.rgb?.delete();
+		conversions?.hsv?.delete();
+		conversions = { frame };
+	}
+	return conversions;
+}
+
+/**
+ * Grayscale of a canonical frame, shared by every gate and parse that reads
+ * the frame: the first caller converts, the rest reuse the mat until a
+ * different frame is converted. Read-only; never delete it. Pass only the
+ * frame the detectors receive, never a derived mat (that would release the
+ * frame's conversions while a parse still reads them).
+ */
+export function frameGray(frame: Mat): Mat {
+	const cached = conversionsOf(frame);
+	cached.gray ??= convert(frame, "rgbaToGray", getCV().COLOR_RGBA2GRAY);
+	return cached.gray;
+}
+
+/** RGB of a canonical frame, shared like frameGray. */
+export function frameRgb(frame: Mat): Mat {
+	const cached = conversionsOf(frame);
+	cached.rgb ??= convert(frame, "rgbaToRgb", getCV().COLOR_RGBA2RGB);
+	return cached.rgb;
+}
+
+/** HSV (from frameRgb) of a canonical frame, shared like frameGray. */
+export function frameHsv(frame: Mat): Mat {
+	const rgb = frameRgb(frame);
+	const cached = conversionsOf(frame);
+	if (!cached.hsv) {
+		const cv = getCV();
+		cached.hsv = new cv.Mat();
+		cv.cvtColor(rgb, cached.hsv, cv.COLOR_RGB2HSV);
+	}
+	return cached.hsv;
+}
+
 /**
  * Crops a rect out of a mat as a view: fine as *input* to OpenCV calls but
  * NEVER read `.data` off it — this opencv.js build mishandles `.data` and
@@ -63,6 +109,113 @@ export function normalizeFrame(src: Mat): Mat {
 export function cropRoi(src: Mat, roi: Roi): Mat {
 	const cv = getCV();
 	return src.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
+}
+
+/**
+ * `region` of the plane `src` maps onto under `h` (row-major 3x3, source to
+ * destination coordinates), as a region-sized mat with region.x/y at 0/0.
+ * Bilinear; pixels from outside the frame come out black.
+ */
+export function warpPerspective(src: Mat, h: Homography, region: Roi): Mat {
+	const cv = getCV();
+	const m = cv.matFromArray(3, 3, cv.CV_64F, regionHomography(h, region));
+	const dst = new cv.Mat();
+	cv.warpPerspective(
+		src,
+		dst,
+		m,
+		new cv.Size(region.w, region.h),
+		cv.INTER_LINEAR,
+		cv.BORDER_CONSTANT,
+		new cv.Scalar(0, 0, 0, 255),
+	);
+	m.delete();
+	return dst;
+}
+
+/**
+ * `warpPerspective(src, h, region)` computed at the pixels of `rois` (region
+ * coordinates) only; every other pixel is left 0. For gates probing a few
+ * small ROIs of a large rectified region every frame. The pixels match
+ * OpenCV's exactly: its 8UC4 bilinear warp (this build runs the scalar path)
+ * maps each output pixel through the f32 inverse homography and interpolates
+ * in f32, all of which is replayed here per pixel with the source
+ * coordinates computed once. Sources must be canonical frames; a probe
+ * reaching past the frame edge falls back to the full warp.
+ */
+export function createProbeWarp(
+	h: Homography,
+	region: Roi,
+	rois: readonly Roi[],
+): (src: Mat) => Mat {
+	const cv = getCV();
+	const f = Math.fround;
+	const m = cv.matFromArray(3, 3, cv.CV_64F, regionHomography(h, region));
+	const inverse = new cv.Mat();
+	cv.invert(m, inverse, cv.DECOMP_LU);
+	const M = Array.from(inverse.data64F as Float64Array, f);
+	m.delete();
+	inverse.delete();
+
+	const outOffsets: number[] = [];
+	const srcOffsets: number[] = [];
+	const alphas: number[] = [];
+	const betas: number[] = [];
+	let inside = true;
+	for (const roi of rois) {
+		for (let y = roi.y; y < roi.y + roi.h; y++) {
+			for (let x = roi.x; x < roi.x + roi.w; x++) {
+				const w = f(f(f(x * M[6]!) + f(y * M[7]!)) + M[8]!);
+				const sx = f(f(f(f(x * M[0]!) + f(y * M[1]!)) + M[2]!) / w);
+				const sy = f(f(f(f(x * M[3]!) + f(y * M[4]!)) + M[5]!) / w);
+				const ix = Math.floor(sx);
+				const iy = Math.floor(sy);
+				if (
+					!(ix >= 0 && ix < CANONICAL_WIDTH - 1) ||
+					!(iy >= 0 && iy < CANONICAL_HEIGHT - 1)
+				) {
+					inside = false;
+				}
+				outOffsets.push((y * region.w + x) * 4);
+				srcOffsets.push((iy * CANONICAL_WIDTH + ix) * 4);
+				alphas.push(f(sx - ix));
+				betas.push(f(sy - iy));
+			}
+		}
+	}
+	if (!inside) return (src) => warpPerspective(src, h, region);
+
+	const count = outOffsets.length;
+	const outAt = Int32Array.from(outOffsets);
+	const srcAt = Int32Array.from(srcOffsets);
+	const alpha = Float32Array.from(alphas);
+	const beta = Float32Array.from(betas);
+	const rowBytes = CANONICAL_WIDTH * 4;
+	return (src) => {
+		const dst = cv.Mat.zeros(region.h, region.w, cv.CV_8UC4);
+		const out = dst.data as Uint8Array;
+		const pixels = src.data as Uint8Array;
+		for (let i = 0; i < count; i++) {
+			const s = srcAt[i]!;
+			const o = outAt[i]!;
+			const a = alpha[i]!;
+			const b = beta[i]!;
+			for (let c = 0; c < 4; c++) {
+				const p00 = pixels[s + c]!;
+				const p01 = pixels[s + 4 + c]!;
+				const p10 = pixels[s + rowBytes + c]!;
+				const p11 = pixels[s + rowBytes + 4 + c]!;
+				const v0 = f(p00 + f(a * (p01 - p00)));
+				const v1 = f(p10 + f(a * (p11 - p10)));
+				const v = f(v0 + f(b * f(v1 - v0)));
+				// lrintf: half to even (v is within [0, 255])
+				let rounded = Math.floor(v + 0.5);
+				if (rounded - v === 0.5 && (rounded & 1) === 1) rounded--;
+				out[o + c] = rounded;
+			}
+		}
+		return dst;
+	};
 }
 
 /** Crop a rect into a fresh continuous mat (safe for `.data` access). */
@@ -188,5 +341,32 @@ export function matToFrameData(mat: Mat): FrameData {
 		data: new Uint8ClampedArray(rgba.data),
 	};
 	rgba.delete();
+	return out;
+}
+
+/** `h` re-based so `region`'s top-left is the destination origin (row-major, as warpPerspective takes it). */
+function regionHomography(h: Homography, region: Roi): number[] {
+	return [
+		h[0] - region.x * h[6],
+		h[1] - region.x * h[7],
+		h[2] - region.x * h[8],
+		h[3] - region.y * h[6],
+		h[4] - region.y * h[7],
+		h[5] - region.y * h[8],
+		h[6],
+		h[7],
+		h[8],
+	];
+}
+
+/** cvtColor of an RGBA frame, through the SIMD kernel when it can run. */
+function convert(frame: Mat, kernel: keyof FrameKernels, code: number): Mat {
+	const cv = getCV();
+	const kernels = frameKernels();
+	if (kernels && frame.type() === cv.CV_8UC4 && frame.isContinuous()) {
+		return kernels[kernel](frame);
+	}
+	const out = new cv.Mat();
+	cv.cvtColor(frame, out, code);
 	return out;
 }

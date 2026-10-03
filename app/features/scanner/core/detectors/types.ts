@@ -1,4 +1,5 @@
 import type { Mat } from "../cv";
+import type { MatchSteps } from "../match-steps";
 
 export interface DetectedEvent<TData = unknown> {
 	type: string;
@@ -70,4 +71,14 @@ export interface Detector<TData = unknown> {
 	attachFrame?: boolean;
 	gate(frame: Mat): GateResult;
 	parse(frame: Mat, t: number, gate?: GateResult): DetectedEvent<TData>[];
+	/**
+	 * parse() as match steps (match-steps.ts) for a batching driver; `parse`
+	 * must equal runSync of it. `speculative` prefetches candidate sets.
+	 */
+	parseSteps(
+		frame: Mat,
+		t: number,
+		gate: GateResult | undefined,
+		speculative: boolean,
+	): MatchSteps<DetectedEvent<TData>[]>;
 }

@@ -9,10 +9,11 @@ import type { Mat } from "../../cv";
 import {
 	type GlyphSet,
 	type RecognizedChar,
-	recognizeText,
+	recognizeTextSteps,
 	scaleGlyphSet,
 } from "../../glyphs";
 import { copyRoi, maxBrightness, meanBrightness } from "../../image";
+import { all, type MatchSteps } from "../../match-steps";
 import type { ScoreboardResources } from "../scoreboard/index";
 import {
 	GATE_TIMER_MAX_MEAN,
@@ -51,22 +52,34 @@ export function timerBoxChecks(gray: Mat): boolean[] {
 	];
 }
 
-export function readMatchTimer(
+/** The match timer at every glyph size (read in one lockstep), best read kept. */
+export function* readMatchTimerSteps(
 	gray: Mat,
 	timerSets: readonly GlyphSet[],
-): TimerRead {
+	speculative = false,
+): MatchSteps<TimerRead> {
 	const band = copyRoi(gray, TIMER_DIGIT_ROI);
 	let best: TimerRead & { score: number } = {
 		value: null,
 		reading: "",
 		score: 0,
 	};
-	for (const timerSet of timerSets) {
-		const raw = recognizeText(band, timerSet, {
-			binThreshold: TIMER_BIN_THRESHOLD,
-			spaceGap: Number.POSITIVE_INFINITY,
-			minCharScore: 0.3,
-		});
+	const raws = yield* all(
+		timerSets.map((timerSet) =>
+			recognizeTextSteps(
+				band,
+				timerSet,
+				{
+					binThreshold: TIMER_BIN_THRESHOLD,
+					spaceGap: Number.POSITIVE_INFINITY,
+					minCharScore: 0.3,
+				},
+				speculative,
+			),
+		),
+	);
+	for (const [setIndex, timerSet] of timerSets.entries()) {
+		const raw = raws[setIndex]!;
 		if (!best.reading) best = { ...best, reading: raw.text };
 		const isTimerDigit = (c: RecognizedChar) =>
 			c.score >= TIMER_DIGIT_MIN_CONF &&

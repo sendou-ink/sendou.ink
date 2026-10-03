@@ -1,0 +1,14 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "TC",
+		"time": 226,
+		"score": [null, 24],
+		"control": 1,
+		"position": -77
+	},
+	"options": {
+		"skipFields": ["mode"],
+		"notes": "Blurry capture: the checkpoint squares read 0.50 on the square probe, so the read reports no mode and the match's mode decides."
+	}
+}

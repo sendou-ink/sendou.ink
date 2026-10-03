@@ -3,27 +3,22 @@
  * so requests are same-origin: the session cookie rides along and the
  * logged-in user comes from the root loader (useUser); the server resolves
  * the tournament/match. The unit of accounting is one ScannerMatch
- * (core/match-builder.ts) — every source event's IndexedDB record tracks its
- * outcome (the `send` status the feed cards display) — while the unit of
- * transport is a request of up to `MAX_MATCHES_PER_REQUEST`. Resends are
- * safe: sendou.ink dedupes by content hash, merges partials, and scoreboards
- * are first-ingest-wins.
+ * (core/match-builder.ts) — every live source event's IndexedDB record tracks
+ * its outcome (the `send` status the match cards display) — while
+ * the unit of transport is a request of up to `MAX_MATCHES_PER_REQUEST`.
+ * Resends are safe: sendou.ink dedupes by content hash, merges partials, and
+ * scoreboards are first-ingest-wins.
  */
 
 import * as R from "remeda";
-import type {
-	IngestedMatchLink,
-	IngestResponse,
-} from "~/features/scanner-ingest/scanner-ingest-schemas";
+import type { IngestResponse } from "~/features/scanner-ingest/scanner-ingest-schemas";
+import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
-import { buildScannerMatches, ingestSkipReasons } from "../core/match-builder";
+import { ingestSkipReasons } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
-import {
-	type SendStatus,
-	type StoredEvent,
-	updateEventsSend,
-} from "../store/events";
+import type { SendStatus } from "../store/events";
+import type { ScanEvent } from "./session-data";
 
 const INGEST_URL = "/ingest";
 
@@ -31,16 +26,25 @@ const INGEST_URL = "/ingest";
 const MAX_MATCHES_PER_REQUEST = 50;
 
 /**
- * Retry delays after each unlinked send: a live send usually beats the players
- * to reporting the game, so the first attempts find nothing to link to. Running
- * out gives up — the capture ending still makes one last attempt.
+ * Retry delays after each send in a row that didn't land: a live send usually
+ * beats the players to reporting the game, so the first attempts find nothing
+ * to link to, and a failed one (a deploy's 5xx, a dropped connection) usually
+ * goes through a little later. Running out gives up — the capture ending still
+ * makes one last attempt.
  */
-const UNLINKED_RETRY_DELAYS_MS = [30_000, 2 * 60_000, 5 * 60_000];
+const RETRY_DELAYS_MS = [30_000, 2 * 60_000, 5 * 60_000];
 
-export interface SendouUser {
-	id: number;
-	username: string;
-}
+/** A request sendou.ink hasn't answered by then fails, so a hung one can't hold up the sends queued behind it. */
+const INGEST_TIMEOUT_MS = 30_000;
+
+/**
+ * A "sending" status older than this was cut off (the tab closed mid-request)
+ * and counts as failed. Outlives any live request, which the timeout bounds.
+ */
+const STALE_SENDING_MS = 2 * INGEST_TIMEOUT_MS;
+
+/** Browsers refuse keepalive requests over 64 KiB; bigger ones go out without it. */
+const KEEPALIVE_MAX_BODY_BYTES = 64 * 1024;
 
 export interface SendResult {
 	sentMatches: number;
@@ -48,39 +52,36 @@ export interface SendResult {
 }
 
 /**
- * Builds the stored events into matches, POSTs the ingestable ones `include`
- * selects, and records the outcome on every source event's `send` status
- * (calling `onStatus` after each request's store writes).
+ * POSTs the ingestable `matches` (a whole session or file, which
+ * the skip rules look across) that `include` selects, and records the outcome
+ * through `writeSend` (calling `onStatus` after each request's store writes).
  *
  * Matches go out in as few requests as the server cap allows: sendou.ink
- * resolves a whole request at once, so several matches anchor on their
- * mode+stage sequence instead of one match's timestamp — this is what makes
- * catching up on a session's backlog work. One request resolves to one
- * context, so a backlog spanning two links the larger and leaves the rest
- * "unlinked"; the retry carries only those, which then resolve on their own.
+ * resolves a whole request to one context, so a backlog spanning two links
+ * the larger and leaves the rest "unlinked"; the retry carries only those,
+ * which then resolve on their own.
  */
 export async function sendMatches({
-	events,
+	matches,
 	include,
 	onStatus,
+	writeSend,
 }: {
-	events: readonly StoredEvent[];
-	include: (built: BuiltMatch<StoredEvent>) => boolean;
+	/** chronological */
+	matches: readonly BuiltMatch<ScanEvent>[];
+	include: (built: BuiltMatch<ScanEvent>) => boolean;
 	onStatus: () => void;
+	/** stores a send status on the given matches */
+	writeSend: (
+		matches: readonly BuiltMatch<ScanEvent>[],
+		send: SendStatus,
+	) => Promise<void>;
 }): Promise<SendResult> {
-	const allBuilt = ingestableBuilt(
-		buildScannerMatches(events.filter((e) => e.id !== undefined)),
-	);
-	const selected = allBuilt.filter(include);
-	await clearOrphanedQueued(events, allBuilt);
+	const selected = ingestableBuilt(matches).filter(include);
 
 	const result: SendResult = { sentMatches: 0, failedMatches: 0 };
 	for (const request of R.chunk(selected, MAX_MATCHES_PER_REQUEST)) {
-		const idsPerMatch = request.map((built) => built.sources.map((e) => e.id!));
-		await updateEventsSend(idsPerMatch.flat(), {
-			state: "sending",
-			at: Date.now(),
-		});
+		await writeSend(request, { state: "sending", at: Date.now() });
 		onStatus();
 		try {
 			const response = await postIngestMatches(
@@ -94,25 +95,24 @@ export async function sendMatches({
 				// match: the game is just not reported yet, so a later resend can still
 				// land it. Without a context there is nothing to wait for.
 				const unlinked = !link && response.contextResolved;
-				await updateEventsSend(idsPerMatch[matchIndex]!, {
+				await writeSend([built], {
 					state: unlinked ? "unlinked" : "sent",
 					at: Date.now(),
 					...(link ? { link } : null),
-					...(unlinked
-						? {
-								attempts:
-									(aggregateSendStatus(built.sources)?.attempts ?? 0) + 1,
-							}
-						: null),
+					...(unlinked ? { attempts: nextAttempt(built) } : null),
 				});
 			}
 			result.sentMatches += request.length;
 		} catch (err) {
-			await updateEventsSend(idsPerMatch.flat(), {
-				state: "failed",
-				at: Date.now(),
-				error: err instanceof Error ? err.message : String(err),
-			});
+			const error = err instanceof Error ? err.message : String(err);
+			for (const built of request) {
+				await writeSend([built], {
+					state: "failed",
+					at: Date.now(),
+					error,
+					attempts: nextAttempt(built),
+				});
+			}
 			result.failedMatches += request.length;
 		}
 		onStatus();
@@ -120,83 +120,25 @@ export async function sendMatches({
 	return result;
 }
 
-export interface VodResultsSendReport {
-	sentMatches: number;
-	totalMatches: number;
-	/** last failure's message; null when every request went through */
-	error: string | null;
-	/** links /ingest reported, keyed by index into the scan's ingestable matches */
-	links: Array<{ matchIndex: number; link: IngestedMatchLink }>;
-}
-
-/**
- * One-go sender for the VoD tab's "Send results": POSTs as many matches per
- * request as the server cap allows — usually the whole scan, so sendou.ink's
- * content-based tournament resolution sees the full match sequence. No
- * per-event status bookkeeping (VoD events don't live in the live feed store);
- * resending is safe, so a partial failure is simply retried whole.
- */
-export async function sendVodResults(
-	events: readonly DetectedEvent[],
-	onProgress?: (sentMatches: number, totalMatches: number) => void,
-): Promise<VodResultsSendReport> {
-	const matches = ingestableMatches(events);
-
-	let sentMatches = 0;
-	let error: string | null = null;
-	const links: VodResultsSendReport["links"] = [];
-	const chunks = R.chunk(matches, MAX_MATCHES_PER_REQUEST);
-	for (const [chunkIndex, request] of chunks.entries()) {
-		const offset = chunkIndex * MAX_MATCHES_PER_REQUEST;
-		try {
-			const response = await postIngestMatches(request);
-			for (const linked of response.linkedMatches ?? []) {
-				links.push({
-					matchIndex: offset + linked.matchIndex,
-					link: linked.link,
-				});
-			}
-			sentMatches += request.length;
-			onProgress?.(sentMatches, matches.length);
-		} catch (err) {
-			error = err instanceof Error ? err.message : String(err);
-		}
-	}
-	return { sentMatches, totalMatches: matches.length, error, links };
-}
-
-/** The number of matches a set of events would send to /ingest. */
-export function countIngestableMatches(
-	events: readonly DetectedEvent[],
-): number {
-	return ingestableMatches(events).length;
-}
-
 /** Match selector: the match built from the given stored event. */
 export function matchContaining(
 	id: number,
-): (built: BuiltMatch<StoredEvent>) => boolean {
+): (built: BuiltMatch<ScanEvent>) => boolean {
 	return (built) => built.sources.some((e) => e.id === id);
 }
 
 /**
  * The single send status a match displays, folded from its source events: an
- * in-flight send wins, then failure, then success, then queued; within a
- * state the most recent change is shown.
+ * in-flight send wins, then failure, then success; within a state the most
+ * recent change is shown. A send cut off mid-request shows as failed.
  */
 export function aggregateSendStatus(
-	sources: readonly StoredEvent[],
+	sources: readonly ScanEvent[],
 ): SendStatus | undefined {
 	const statuses = sources
-		.map((e) => e.send)
+		.map((e) => currentSendStatus(e.send))
 		.filter((status) => status !== undefined);
-	for (const state of [
-		"sending",
-		"failed",
-		"unlinked",
-		"sent",
-		"queued",
-	] as const) {
+	for (const state of ["sending", "failed", "unlinked", "sent"] as const) {
 		const ofState = statuses.filter((status) => status.state === state);
 		if (ofState.length > 0) {
 			return ofState.reduce((a, b) => (a.at >= b.at ? a : b));
@@ -206,31 +148,60 @@ export function aggregateSendStatus(
 }
 
 /** Match selector: matches not yet sent (nor currently sending). */
-export function unsentMatches(built: BuiltMatch<StoredEvent>): boolean {
-	return !built.sources.some(
-		(e) => e.send?.state === "sent" || e.send?.state === "sending",
-	);
+export function unsentMatches(built: BuiltMatch<ScanEvent>): boolean {
+	return !built.sources.some((e) => {
+		const state = currentSendStatus(e.send)?.state;
+		return state === "sent" || state === "sending";
+	});
 }
 
-/** Match selector: matches stored without a game to link to, whose next retry is due. */
-export function retryableUnlinkedMatches(
-	built: BuiltMatch<StoredEvent>,
-): boolean {
+/** Match selector: matches stored without a game to link to, or whose send failed, with their next retry due. */
+export function retryDueMatches(built: BuiltMatch<ScanEvent>): boolean {
 	const status = aggregateSendStatus(built.sources);
-	if (status?.state !== "unlinked") return false;
+	if (status?.state !== "unlinked" && status?.state !== "failed") return false;
 
-	const delay = UNLINKED_RETRY_DELAYS_MS[(status.attempts ?? 1) - 1];
+	const delay = RETRY_DELAYS_MS[(status.attempts ?? 1) - 1];
 	return delay !== undefined && Date.now() - status.at >= delay;
 }
 
-function ingestableMatches(events: readonly DetectedEvent[]): ScannerMatch[] {
-	return ingestableBuilt(buildScannerMatches(events)).map(
-		(built) => built.match,
+/**
+ * Match selector: a closed match whose send was never attempted. A
+ * match-close send can be skipped (a page reload loses the queue), so the
+ * retry tick flushes these. Sent/unlinked/failed matches follow their own paths.
+ */
+export function unsentClosedMatches(built: BuiltMatch<ScanEvent>): boolean {
+	return (
+		built.sources.some((e) => SCOREBOARD_EVENT_TYPES.includes(e.type)) &&
+		built.sources.every((e) => e.send === undefined)
 	);
 }
 
+/** The count of sends in a row that didn't land the match, this one included. */
+function nextAttempt(built: BuiltMatch<ScanEvent>): number {
+	const previous = aggregateSendStatus(built.sources);
+	return previous?.state === "unlinked" || previous?.state === "failed"
+		? (previous.attempts ?? 1) + 1
+		: 1;
+}
+
+function currentSendStatus(
+	status: SendStatus | undefined,
+): SendStatus | undefined {
+	if (
+		status?.state !== "sending" ||
+		Date.now() - status.at < STALE_SENDING_MS
+	) {
+		return status;
+	}
+	return {
+		state: "failed",
+		at: status.at,
+		error: "the upload was interrupted before sendou.ink answered",
+	};
+}
+
 function ingestableBuilt<E extends DetectedEvent>(
-	built: BuiltMatch<E>[],
+	built: readonly BuiltMatch<E>[],
 ): BuiltMatch<E>[] {
 	const skipped = ingestSkipReasons(built);
 	return built.filter((match) => !skipped.has(match));
@@ -239,45 +210,30 @@ function ingestableBuilt<E extends DetectedEvent>(
 async function postIngestMatches(
 	matches: ScannerMatch[],
 ): Promise<IngestResponse> {
-	const res = await fetch(INGEST_URL, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ matches }),
-	});
-	if (!res.ok) {
-		throw new Error(
-			res.status === 401 ? "not logged in to sendou.ink" : await errorText(res),
-		);
+	const body = new TextEncoder().encode(JSON.stringify({ matches }));
+	try {
+		const res = await fetch(INGEST_URL, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body,
+			signal: AbortSignal.timeout(INGEST_TIMEOUT_MS),
+			// lets the send finish when the tab closes right after Stop
+			keepalive: body.byteLength <= KEEPALIVE_MAX_BODY_BYTES,
+		});
+		if (!res.ok) {
+			throw new Error(
+				res.status === 401
+					? "not logged in to sendou.ink"
+					: await errorText(res),
+			);
+		}
+		return await res.json();
+	} catch (err) {
+		if (err instanceof DOMException && err.name === "TimeoutError") {
+			throw new Error("sendou.ink didn't answer in time", { cause: err });
+		}
+		throw err;
 	}
-	return res.json();
-}
-
-/**
- * Live sending marks events "queued" as they arrive; ones the builder later
- * leaves out (non-private match, older than the fallback window) would sit
- * "queued" forever, so once a match boundary has passed them clear the status.
- */
-async function clearOrphanedQueued(
-	events: readonly StoredEvent[],
-	allBuilt: BuiltMatch<StoredEvent>[],
-): Promise<void> {
-	const lastBoundaryT = Math.max(
-		...allBuilt.map((built) => built.sources.at(-1)!.t),
-		Number.NEGATIVE_INFINITY,
-	);
-	const builtIds = new Set(
-		allBuilt.flatMap((built) => built.sources.map((e) => e.id)),
-	);
-	const orphaned = events
-		.filter(
-			(e) =>
-				e.send?.state === "queued" &&
-				e.id !== undefined &&
-				!builtIds.has(e.id) &&
-				e.t <= lastBoundaryT,
-		)
-		.map((e) => e.id!);
-	if (orphaned.length > 0) await updateEventsSend(orphaned, undefined);
 }
 
 async function errorText(res: Response): Promise<string> {

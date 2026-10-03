@@ -23,9 +23,62 @@ import { assembleScoreboardResources } from "../core/resources";
  */
 const ATLAS_PATH = "scanner/v1";
 
-async function fetchImage(url: string): Promise<FrameData> {
-	const res = await fetch(url);
+/** A failed fetch is tried once more after this, riding out a dropped connection or a CDN hiccup. */
+const RETRY_DELAY_MS = 1_000;
+
+/**
+ * Atlases mutate at a fixed URL and each one's .png and .json cache on their
+ * own, so they are revalidated on every load rather than risking a fresh
+ * image paired with a stale meta.
+ */
+const ATLAS_FETCH: RequestInit = { cache: "no-cache" };
+
+interface FetchedResources {
+	resources: ScoreboardResources;
+	/** atlases (and the planner set) that failed to load: their reads come back null */
+	missingAtlases: string[];
+	/** `<dir>/<id>` of game icons that failed to load: their templates are left out */
+	missingIcons: string[];
+}
+
+/** Requires loadOpenCV() to have resolved. */
+export async function fetchScoreboardResources(
+	base: string,
+): Promise<FetchedResources> {
+	const missingAtlases: string[] = [];
+	const recordMissing = <T>(name: string, load: Promise<(() => T) | null>) =>
+		load.then((getter) => {
+			if (getter) return getter;
+			missingAtlases.push(name);
+			return () => null;
+		});
+	const atlasBase = `${base}/${ATLAS_PATH}`;
+	const { resources, missingIcons } = await assembleScoreboardResources({
+		readIcon: (dir, id) => fetchImage(`${base}/img/${dir}/${id}.avif`),
+		loadAtlas: (name) => recordMissing(name, fetchAtlas(atlasBase, name)),
+		loadPlannerStages: () =>
+			recordMissing("planner", fetchPlannerStages(atlasBase)),
+	});
+	return { resources, missingAtlases, missingIcons };
+}
+
+async function fetchOk(url: string, init?: RequestInit): Promise<Response> {
+	try {
+		return await fetchOnce(url, init);
+	} catch {
+		await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+		return fetchOnce(url, init);
+	}
+}
+
+async function fetchOnce(url: string, init?: RequestInit): Promise<Response> {
+	const res = await fetch(url, init);
 	if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`);
+	return res;
+}
+
+async function fetchImage(url: string, init?: RequestInit): Promise<FrameData> {
+	const res = await fetchOk(url, init);
 	const bitmap = await createImageBitmap(await res.blob());
 	const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
 	const ctx = canvas.getContext("2d")!;
@@ -35,53 +88,39 @@ async function fetchImage(url: string): Promise<FrameData> {
 	return { width: data.width, height: data.height, data: data.data };
 }
 
-function makeFetchAtlas(base: string) {
-	return async function fetchAtlas(
-		name: string,
-	): Promise<() => GlyphSet | null> {
-		try {
-			const [meta, image] = await Promise.all([
-				fetch(`${base}/glyphs/${name}.json`).then((r) => {
-					if (!r.ok) throw new Error(String(r.status));
-					return r.json() as Promise<AtlasMeta>;
-				}),
-				fetchImage(`${base}/glyphs/${name}.png`),
-			]);
-			const set = loadGlyphSet(image, meta);
-			return () => set;
-		} catch {
-			return () => null;
-		}
-	};
-}
-
-function makeFetchPlannerStages(base: string) {
-	return async function fetchPlannerStages(): Promise<
-		() => PlannerStage[] | null
-	> {
-		try {
-			const [manifest, atlas] = await Promise.all([
-				fetch(`${base}/planner/manifest.json`).then((r) => {
-					if (!r.ok) throw new Error(String(r.status));
-					return r.json() as Promise<PlannerManifest>;
-				}),
-				fetchImage(`${base}/planner/signatures.png`),
-			]);
-			const stages = loadPlannerStages(atlas, manifest);
-			return () => stages;
-		} catch {
-			return () => null;
-		}
-	};
-}
-
-/** Requires loadOpenCV() to have resolved. */
-export function fetchScoreboardResources(
+/** Null when the atlas could not be loaded. */
+async function fetchAtlas(
 	base: string,
-): Promise<ScoreboardResources> {
-	return assembleScoreboardResources({
-		readIcon: (dir, id) => fetchImage(`${base}/img/${dir}/${id}.avif`),
-		loadAtlas: makeFetchAtlas(`${base}/${ATLAS_PATH}`),
-		loadPlannerStages: makeFetchPlannerStages(`${base}/${ATLAS_PATH}`),
-	});
+	name: string,
+): Promise<(() => GlyphSet) | null> {
+	try {
+		const [meta, image] = await Promise.all([
+			fetchOk(`${base}/glyphs/${name}.json`, ATLAS_FETCH).then(
+				(res) => res.json() as Promise<AtlasMeta>,
+			),
+			fetchImage(`${base}/glyphs/${name}.png`, ATLAS_FETCH),
+		]);
+		const set = loadGlyphSet(image, meta);
+		return () => set;
+	} catch {
+		return null;
+	}
+}
+
+/** Null when the planner signatures could not be loaded. */
+async function fetchPlannerStages(
+	base: string,
+): Promise<(() => PlannerStage[]) | null> {
+	try {
+		const [manifest, atlas] = await Promise.all([
+			fetchOk(`${base}/planner/manifest.json`, ATLAS_FETCH).then(
+				(res) => res.json() as Promise<PlannerManifest>,
+			),
+			fetchImage(`${base}/planner/signatures.png`, ATLAS_FETCH),
+		]);
+		const stages = loadPlannerStages(atlas, manifest);
+		return () => stages;
+	} catch {
+		return null;
+	}
 }

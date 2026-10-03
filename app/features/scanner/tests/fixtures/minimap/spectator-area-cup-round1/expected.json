@@ -106,9 +106,6 @@
     "stageLabel": "Manta Maria"
   },
   "options": {
-    "skipFields": [
-      "enemies.0.name"
-    ],
-    "notes": "8-player spectator map screen from the AREA CUP stream (Round 1), pre-match — teams at spawn, so the control estimate sits near zero (spawn markers only). Formerly negative/map-screen-2; relabeled when the spectator variant became gated off the X jump-button disc. enemies.0.name skipped: ウルボー reads ウルホー — the ボ dakuten is below atlas resolution at this size (same limit as snix-special-ready's ぎ). teammates.2.name ーロたべる is the pixel reading; if the real name uses kanji (一口たべる) it is unrecoverable — 一/ー and 口/ロ are pixel-identical and the atlas carries no kanji."
+    "notes": "8-player spectator map screen from the AREA CUP stream (Round 1), pre-match — teams at spawn, so the control estimate sits near zero (spawn markers only). Formerly negative/map-screen-2; relabeled when the spectator variant became gated off the X jump-button disc. enemies.0.name (ウルボー) once read ウルホー — the thinned ボ dakuten lost the near-tie to ホ until parseName's floating-mark probe (same as snix-special-ready's ぎ). teammates.2.name ーロたべる is the pixel reading; if the real name uses kanji (一口たべる) it is unrecoverable — 一/ー and 口/ロ are pixel-identical and the atlas carries no kanji."
   }
 }

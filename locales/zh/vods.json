@@ -15,6 +15,7 @@
 	"forms.action.setAsCurrent": "设为当前时间 ({{time}})",
 	"forms.action.copyFromPrevious": "从上个比赛复制",
 	"noVods": "未找到符合当前筛选条件的视频。我们遗漏了什么吗？请参阅常见问题与解答页面以获取有关如何获取视频上传权限的信息。",
+	"scannerBanner": "",
 	"gainPerms": "请在本网站的 Discord 服务器的 helpdesk 频道申请获取上传视频的资格。",
 	"deleteConfirm": "确认要删除 '{{title}}' 吗？",
 	"errors.youtubePreviewFailed": "加载 YouTube 预览失败",

@@ -186,9 +186,9 @@ describe("addLinks", () => {
 		expect(await fetchLinks()).toHaveLength(2);
 	});
 
-	test("reports the POV player's weapon once", async () => {
-		const povUser = await UserFactory.create();
-		const { match: groupMatch, maps } = await setupSendouqMatch();
+	test("reports the POV player's weapon once, tagged with its scan and dated to the game", async () => {
+		const { match: groupMatch, maps, users } = await setupSendouqMatch();
+		const povUser = users[0]!;
 
 		const { effectiveMatches } =
 			await ScannerIngestRepository.addOrMergeMatches({
@@ -201,7 +201,9 @@ describe("addLinks", () => {
 			{
 				ingestedMatchId: effectiveMatches[0].id,
 				match: effectiveMatches[0].data,
-				game: sendouqGame(maps[0]),
+				game: sendouqGame(maps[0], {
+					winnerUserIds: users.slice(0, FULL_GROUP_SIZE).map((user) => user.id),
+				}),
 			},
 		];
 
@@ -215,6 +217,75 @@ describe("addLinks", () => {
 		expect(reportedWeapons[0].mapIndex).toBe(maps[0].index);
 		expect(reportedWeapons[0].userId).toBe(povUser.id);
 		expect(reportedWeapons[0].weaponSplId).toBe(WEAPONS[0]);
+		expect(reportedWeapons[0].ingestedMatchId).toBe(effectiveMatches[0].id);
+		expect(reportedWeapons[0].createdAt).toBe(Math.floor(PLAYED_AT / 1000));
+	});
+
+	test("reports no weapon for a sender outside the game's rosters", async () => {
+		const outsider = await UserFactory.create();
+		const { maps, users } = await setupSendouqMatch();
+
+		const { effectiveMatches } =
+			await ScannerIngestRepository.addOrMergeMatches({
+				povUserId: outsider.id,
+				submitterUserId: outsider.id,
+				matches: [testMatch({ pov: { team: 0, index: 0 } })],
+				context: null,
+			});
+
+		const linkedCount = await ScannerIngestRepository.addLinks({
+			links: [
+				{
+					ingestedMatchId: effectiveMatches[0].id,
+					match: effectiveMatches[0].data,
+					game: sendouqGame(maps[0], {
+						winnerUserIds: users
+							.slice(0, FULL_GROUP_SIZE)
+							.map((user) => user.id),
+					}),
+				},
+			],
+			povUserId: outsider.id,
+		});
+
+		expect(linkedCount).toBe(1);
+		expect(await fetchReportedWeapons()).toHaveLength(0);
+	});
+
+	test("deleting the ingested match deletes the weapon reported from it", async () => {
+		const { maps, users } = await setupSendouqMatch();
+		const povUser = users[0]!;
+
+		const { effectiveMatches } =
+			await ScannerIngestRepository.addOrMergeMatches({
+				povUserId: povUser.id,
+				submitterUserId: povUser.id,
+				matches: [testMatch({ pov: { team: 0, index: 0 } })],
+				context: null,
+			});
+		await ScannerIngestRepository.addLinks({
+			links: [
+				{
+					ingestedMatchId: effectiveMatches[0].id,
+					match: effectiveMatches[0].data,
+					game: sendouqGame(maps[0], {
+						winnerUserIds: users
+							.slice(0, FULL_GROUP_SIZE)
+							.map((user) => user.id),
+					}),
+				},
+			],
+			povUserId: povUser.id,
+		});
+		expect(await fetchReportedWeapons()).toHaveLength(1);
+
+		// biome-ignore lint/plugin: no production path deletes ingested matches yet
+		await db
+			.deleteFrom("IngestedMatch")
+			.where("id", "=", effectiveMatches[0].id)
+			.execute();
+
+		expect(await fetchReportedWeapons()).toHaveLength(0);
 	});
 });
 
@@ -345,7 +416,7 @@ async function setupSendouqMatch(options: { isConcluded?: boolean } = {}) {
 		.orderBy("index", "asc")
 		.execute();
 
-	return { match, maps };
+	return { match, maps, users };
 }
 
 function fetchIngestedMatches() {
@@ -368,13 +439,16 @@ function fetchReportedWeapons() {
 	return db.selectFrom("ReportedWeapon").selectAll().execute();
 }
 
-function sendouqGame(map: {
-	id: number;
-	matchId: number;
-	index: number;
-	mode: IngestableGame["mode"];
-	stageId: IngestableGame["stageId"];
-}): IngestableGame {
+function sendouqGame(
+	map: {
+		id: number;
+		matchId: number;
+		index: number;
+		mode: IngestableGame["mode"];
+		stageId: IngestableGame["stageId"];
+	},
+	rosters: Partial<Pick<IngestableGame, "winnerUserIds" | "loserUserIds">> = {},
+): IngestableGame {
 	return {
 		target: {
 			type: "sendouq",
@@ -388,7 +462,9 @@ function sendouqGame(map: {
 		loserUserIds: [],
 		winnerInGameNames: [],
 		loserInGameNames: [],
+		inGameNameByUserId: new Map(),
 		playedAt: Math.floor(PLAYED_AT / 1000),
 		linkedPlayerNames: null,
+		...rosters,
 	};
 }

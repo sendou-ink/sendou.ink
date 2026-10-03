@@ -45,9 +45,11 @@ interface QueuedFrame {
 export class AnalyzerClient {
 	readonly #worker: Worker;
 	#ready = false;
+	#missingAtlases: readonly string[] = [];
 	#busy = false;
 	readonly #onResult: ResultHandler;
 	readonly #onError: ErrorHandler;
+	readonly #onFrameError: ErrorHandler;
 	readonly #onDone: DoneHandler | undefined;
 	readonly #readyPromise: Promise<void>;
 	#rejectReady: ((error: Error) => void) | undefined;
@@ -66,11 +68,18 @@ export class AnalyzerClient {
 			collectTelemetry?: boolean;
 			/** max frames buffered while a frame is in flight (0 = drop them) */
 			frameQueueLimit?: number;
+			/** match templates on WebGPU when the browser has an adapter (settings `webgpu`) */
+			webgpu?: boolean;
+			/** ship the analyzed frame's image on results (default true) */
+			attachFrames?: boolean;
+			/** one frame's analysis threw; the worker carries on (default onError) */
+			onFrameError?: ErrorHandler;
 		} = {},
 	) {
 		this.#frameQueueLimit = options.frameQueueLimit ?? 0;
 		this.#onResult = onResult;
 		this.#onError = onError;
+		this.#onFrameError = options.onFrameError ?? onError;
 		this.#onDone = onDone;
 		this.#worker = new Worker(
 			new URL("./analyzer.worker.ts", import.meta.url),
@@ -90,9 +99,12 @@ export class AnalyzerClient {
 			const msg = e.data;
 			if (msg.kind === "ready") {
 				this.#ready = true;
+				this.#missingAtlases = msg.missingAtlases;
 				resolveReady();
 			} else if (msg.kind === "result") {
 				this.#onResult(msg);
+			} else if (msg.kind === "frameError") {
+				this.#onFrameError(msg.message);
 			} else if (msg.kind === "done") {
 				this.#settle();
 				this.#onDone?.(msg.t, { calm: msg.calm, telemetry: msg.telemetry });
@@ -120,11 +132,18 @@ export class AnalyzerClient {
 			assetsBaseUrl: Config.staticAssetsUrl,
 			suppressSteadyFrames: options.suppressSteadyFrames ?? true,
 			collectTelemetry: options.collectTelemetry ?? false,
+			webgpu: options.webgpu ?? false,
+			attachFrames: options.attachFrames ?? true,
 		});
 	}
 
 	whenReady(): Promise<void> {
 		return this.#readyPromise;
+	}
+
+	/** Atlases the worker could not load (known once ready): it scans on, but its reads lack what they cover. */
+	get missingAtlases(): readonly string[] {
+		return this.#missingAtlases;
 	}
 
 	get busy(): boolean {

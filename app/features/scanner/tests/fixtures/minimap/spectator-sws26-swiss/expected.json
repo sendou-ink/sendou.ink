@@ -106,9 +106,6 @@
     "stageLabel": "Eeltail Alley"
   },
   "options": {
-    "skipFields": [
-      "teammates.0.name"
-    ],
-    "notes": "8-player spectator map screen from the SWS26 cast, same game as the objective/ splat-zones-cast-* fixtures: green team left column, purple right — the cross-detector anchor pair for objective team-color tracking. teammates.0.name skipped: King Inate reads King lnate — capital I and lowercase l are pixel-identical in BlitzMain at this size (the POV nameplate in the sibling frame confirms Inate)."
+    "notes": "8-player spectator map screen from the SWS26 cast, same game as the objective/ splat-zones-cast-* fixtures: green team left column, purple right — the cross-detector anchor pair for objective team-color tracking. teammates.0.name (King Inate) once read King lnate — capital I and lowercase l are pixel-identical in BlitzMain, so the bar rule reads a word-initial bar before a consonant as I (the POV nameplate in the sibling frame confirms Inate)."
   }
 }

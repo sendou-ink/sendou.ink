@@ -34,7 +34,7 @@
         "s": 3
       },
       {
-        "name": "てんさく",
+        "name": "でんさく",
         "weaponId": 3000,
         "paint": 818,
         "ka": 5,
@@ -75,5 +75,8 @@
       }
     ],
     "stageLabel": "Mincemeat Metalworks"
+  },
+  "options": {
+    "notes": "Two players named でんさく (rows 1 and 3): row 3 was once labeled てんさく off a read that lost the dakuten; the frame shows the mark on both."
   }
 }

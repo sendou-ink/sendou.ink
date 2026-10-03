@@ -1,53 +1,49 @@
 /**
- * IndexedDB event store: one `events` store keyed by auto id, indexed by
- * timestamp, with a small thumbnail per event; the full-res analyzed PNG lives
- * in the separate `frames` store under the same id (loadEventFrame) so listing
- * the feed never deserializes megabytes of blobs. Saving past MAX_EVENTS
- * evicts the oldest events and their frames; past MAX_FRAMES the oldest
- * frames alone (the events stay, marked frameless).
+ * IndexedDB store of live detections: one `events` store keyed by auto id,
+ * indexed by timestamp; the full-res analyzed frame lives in the separate
+ * `frames` store under the same id (loadEventFrame) so listing the feed never
+ * deserializes megabytes of blobs. Retention runs on save (throttled): whole
+ * sessions past `core/sessions.ts`'s age/count/event limits go, then the
+ * frames past `frames.ts`'s age and size budget (the events stay, marked frameless).
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/detectors/types";
-import { db, EVENTS_STORE, FRAMES_STORE, tx } from "./db";
+import { expiredSessionEventIds } from "../core/sessions";
+import { EVENTS_STORE, FRAMES_STORE, readwrite, tx } from "./db";
+import { trimFrames } from "./frames";
 
-/**
- * Counter/status reads land ~2.2 events a second of match time, so the cap must
- * hold a whole session: at 1000 the store rolled over in ~8 minutes and evicted
- * matches before they were sent (2026-08-23: Mahi-Mahi reached sendou.ink with no data).
- */
-const MAX_EVENTS = 10_000;
-
-/** Full-res frame PNGs (~1-2MB each) evicted past this count; only "Save fixture" loses them. */
-const MAX_FRAMES = 200;
+/** The retention pass walks every key; once a minute is plenty for limits measured in days. */
+const RETENTION_INTERVAL_MS = 60_000;
 
 /** Where an event stands with sendou.ink /ingest; absent = never attempted. */
 export interface SendStatus {
 	/** "unlinked": sendou.ink stored the match but its game is not reported yet — resent on a backoff */
-	state: "queued" | "sending" | "sent" | "unlinked" | "failed";
+	state: "sending" | "sent" | "unlinked" | "failed";
 	/** wall-clock time of the last state change */
 	at: number;
 	/** failure detail, set when state is "failed" */
 	error?: string;
 	/** the sendou.ink match /ingest linked the sent match to, when it reported one */
 	link?: IngestedMatchLink;
-	/** how many times the match came back unlinked, set while state is "unlinked" */
+	/** how many sends in a row came back unlinked or failed, set while state is "unlinked" or "failed" */
 	attempts?: number;
 }
 
 export interface StoredEvent {
 	id?: number;
 	type: string;
+	/** seconds — wall-clock seconds for live captures, seconds into the file for VoDs */
 	t: number;
 	/** wall-clock time of detection */
 	detectedAt: number;
 	confidence: number;
 	data: unknown;
-	/** small JPEG data URL of the source frame */
-	thumbnail?: string;
 	/** whether a full-res frame exists in the `frames` store under this id */
 	hasFrame?: boolean;
 	send?: SendStatus;
 }
+
+let lastRetentionAt = 0;
 
 /**
  * Persists a detection; resolves to its store id. `reuseId` overwrites that row
@@ -55,7 +51,6 @@ export interface StoredEvent {
  */
 export async function saveEvent(
 	event: DetectedEvent,
-	thumbnail?: string,
 	frame?: Blob,
 	reuseId?: number,
 ): Promise<number> {
@@ -66,66 +61,65 @@ export async function saveEvent(
 		detectedAt: Date.now(),
 		confidence: event.confidence,
 		data: event.data,
-		thumbnail,
 		hasFrame: frame !== undefined,
 	};
-	const database = await db();
-	return new Promise<number>((resolve, reject) => {
-		const transaction = database.transaction(
-			[EVENTS_STORE, FRAMES_STORE],
-			"readwrite",
-		);
+	let id = 0;
+	let retained = false;
+	await readwrite([EVENTS_STORE, FRAMES_STORE], (transaction) => {
 		const events = transaction.objectStore(EVENTS_STORE);
 		const frames = transaction.objectStore(FRAMES_STORE);
-		let id: number;
 		const add = events.put(record) as IDBRequest<number>;
 		add.onsuccess = () => {
 			id = add.result;
 			if (frame) frames.put(frame, id);
 			else if (reuseId !== undefined) frames.delete(id);
-			evictOldest(events, frames);
+			const now = Date.now();
+			if (now - lastRetentionAt >= RETENTION_INTERVAL_MS) {
+				lastRetentionAt = now;
+				retainSessions(events, frames, now);
+				retained = true;
+			}
 		};
-		transaction.oncomplete = () => resolve(id);
-		transaction.onerror = () => reject(transaction.error);
 	});
+	if (retained) void trimFrames().catch(() => {});
+	return id;
 }
 
-/** Delete records (and frames) beyond MAX_EVENTS, oldest ids first. */
-function evictOldest(events: IDBObjectStore, frames: IDBObjectStore): void {
-	const count = events.count();
-	count.onsuccess = () => {
-		let excess = count.result - MAX_EVENTS;
-		if (excess <= 0) return;
-		const cursor = events.openCursor(); // ascending id = oldest first
-		cursor.onsuccess = () => {
-			const c = cursor.result;
-			if (!c || excess <= 0) return;
-			frames.delete(c.primaryKey);
-			c.delete();
-			excess--;
-			if (excess > 0) c.continue();
-		};
-	};
-	const frameCount = frames.count();
-	frameCount.onsuccess = () => {
-		let excess = frameCount.result - MAX_FRAMES;
-		if (excess <= 0) return;
-		const cursor = frames.openKeyCursor(); // ascending id = oldest first
-		cursor.onsuccess = () => {
-			const c = cursor.result;
-			if (!c || excess <= 0) return;
-			const id = c.primaryKey;
+/** Runs the retention pass now (page load, capture start/stop). */
+export async function trimEvents(): Promise<void> {
+	lastRetentionAt = Date.now();
+	await readwrite([EVENTS_STORE, FRAMES_STORE], (transaction) =>
+		retainSessions(
+			transaction.objectStore(EVENTS_STORE),
+			transaction.objectStore(FRAMES_STORE),
+			Date.now(),
+		),
+	);
+	await trimFrames();
+}
+
+/**
+ * Session retention over key cursors only (no record is deserialized): the
+ * `detectedAt` index yields every event's id and time, which splits the sessions.
+ */
+function retainSessions(
+	events: IDBObjectStore,
+	frames: IDBObjectStore,
+	now: number,
+): void {
+	const stamps: { id: number; detectedAt: number }[] = [];
+	const cursor = events.index("detectedAt").openKeyCursor();
+	cursor.onsuccess = () => {
+		const c = cursor.result;
+		if (c) {
+			stamps.push({ id: c.primaryKey as number, detectedAt: c.key as number });
+			c.continue();
+			return;
+		}
+		for (const id of expiredSessionEventIds(stamps, now)) {
+			events.delete(id);
 			frames.delete(id);
-			const get = events.get(id) as IDBRequest<StoredEvent | undefined>;
-			get.onsuccess = () => {
-				const record = get.result;
-				if (!record?.hasFrame) return;
-				record.hasFrame = false;
-				events.put(record);
-			};
-			excess--;
-			if (excess > 0) c.continue();
-		};
+		}
 	};
 }
 
@@ -134,9 +128,7 @@ export async function updateEventsSend(
 	ids: number[],
 	send: SendStatus | undefined,
 ): Promise<void> {
-	const database = await db();
-	return new Promise<void>((resolve, reject) => {
-		const transaction = database.transaction(EVENTS_STORE, "readwrite");
+	await readwrite([EVENTS_STORE], (transaction) => {
 		const events = transaction.objectStore(EVENTS_STORE);
 		for (const id of ids) {
 			const get = events.get(id) as IDBRequest<StoredEvent | undefined>;
@@ -148,57 +140,58 @@ export async function updateEventsSend(
 				events.put(record);
 			};
 		}
-		transaction.oncomplete = () => resolve();
-		transaction.onerror = () => reject(transaction.error);
 	});
 }
 
 /** Deletes the given events and their frames in one transaction. */
 export async function deleteEvents(ids: number[]): Promise<void> {
-	const database = await db();
-	return new Promise<void>((resolve, reject) => {
-		const transaction = database.transaction(
-			[EVENTS_STORE, FRAMES_STORE],
-			"readwrite",
-		);
+	await readwrite([EVENTS_STORE, FRAMES_STORE], (transaction) => {
 		const events = transaction.objectStore(EVENTS_STORE);
 		const frames = transaction.objectStore(FRAMES_STORE);
 		for (const id of ids) {
 			events.delete(id);
 			frames.delete(id);
 		}
-		transaction.oncomplete = () => resolve();
-		transaction.onerror = () => reject(transaction.error);
 	});
 }
 
-export function listEvents(): Promise<StoredEvent[]> {
+/** Events detected at or after `since` (wall-clock ms), every event by default. */
+export function listEvents(since = 0): Promise<StoredEvent[]> {
 	return tx(
 		EVENTS_STORE,
 		"readonly",
-		(store) => store.getAll() as IDBRequest<StoredEvent[]>,
+		(store) =>
+			store
+				.index("detectedAt")
+				.getAll(IDBKeyRange.lowerBound(since)) as IDBRequest<StoredEvent[]>,
 	);
 }
 
-/** The event's full-res analyzed PNG, or undefined when none was stored. */
+/** The stored events among `ids`, read over their id range; ids no longer stored are left out. */
+export async function getEvents(
+	ids: readonly number[],
+): Promise<StoredEvent[]> {
+	if (ids.length === 0) return [];
+	const wanted = new Set(ids);
+	const inRange = await tx(
+		EVENTS_STORE,
+		"readonly",
+		(store) =>
+			store.getAll(
+				IDBKeyRange.bound(
+					ids.reduce((a, b) => Math.min(a, b)),
+					ids.reduce((a, b) => Math.max(a, b)),
+				),
+			) as IDBRequest<StoredEvent[]>,
+	);
+	return inRange.filter((event) => wanted.has(event.id!));
+}
+
+/** The event's full-res analyzed frame, or undefined when none was stored. */
 export function loadEventFrame(id: number): Promise<Blob | undefined> {
 	return tx(
 		FRAMES_STORE,
 		"readonly",
 		(store) => store.get(id) as IDBRequest<Blob | undefined>,
 	);
-}
-
-export async function clearEvents(): Promise<void> {
-	const database = await db();
-	return new Promise<void>((resolve, reject) => {
-		const transaction = database.transaction(
-			[EVENTS_STORE, FRAMES_STORE],
-			"readwrite",
-		);
-		transaction.objectStore(EVENTS_STORE).clear();
-		transaction.objectStore(FRAMES_STORE).clear();
-		transaction.oncomplete = () => resolve();
-		transaction.onerror = () => reject(transaction.error);
-	});
 }

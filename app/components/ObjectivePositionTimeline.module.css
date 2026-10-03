@@ -1,0 +1,61 @@
+.container {
+	display: flex;
+	height: 140px;
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	padding: var(--s-2-5) var(--s-3);
+}
+
+.plot {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+}
+
+.chart {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+.gridLine {
+	stroke: color-mix(in oklch, var(--color-text) 8%, transparent);
+	stroke-width: 1;
+
+	&.gridLineDashed {
+		stroke-dasharray: 3 4;
+	}
+
+	&.gridLineZero {
+		stroke: color-mix(in oklch, var(--color-text) 25%, transparent);
+	}
+}
+
+.label {
+	font-size: 10px;
+	font-weight: var(--weight-semi);
+	fill: var(--color-text-high);
+}
+
+.area {
+	fill: currentColor;
+	fill-opacity: 0.45;
+}
+
+.alpha {
+	color: var(--color-chart-alpha);
+}
+
+.bravo {
+	color: var(--color-chart-bravo);
+}
+
+.line {
+	fill: none;
+	stroke: var(--color-text-high);
+	stroke-width: 1.5;
+	stroke-linejoin: round;
+}

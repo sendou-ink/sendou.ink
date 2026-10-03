@@ -38,7 +38,7 @@ import type { GlyphSet } from "./glyphs";
 import type { FrameData } from "./image";
 
 export interface ResourceIO {
-	/** decoded RGBA of the shared game icon img/<dir>/<id>.avif */
+	/** decoded RGBA of the shared game icon img/<dir>/<id>.avif; rejects when it can't be read */
 	readIcon(dir: string, id: string): Promise<FrameData>;
 	/** glyph atlas by name as a (possibly lazy) getter; () => null when absent */
 	loadAtlas(name: string): Promise<() => GlyphSet | null>;
@@ -77,17 +77,34 @@ function lazy<T>(build: () => T): () => T {
 	};
 }
 
-/** Requires loadOpenCV() to have resolved. */
+interface AssembledResources {
+	resources: ScoreboardResources;
+	/** `<dir>/<id>` of the icons that could not be read; their templates are left out */
+	missingIcons: string[];
+}
+
+/**
+ * Requires loadOpenCV() to have resolved. One unreadable icon (a weapon added
+ * to in-game-lists before the assets repo has its image) only drops that
+ * template, the caller decides whether that is fatal.
+ */
 export async function assembleScoreboardResources(
 	io: ResourceIO,
-): Promise<ScoreboardResources> {
-	const icons = (dir: string, ids: readonly (number | string)[]) =>
-		Promise.all(
-			ids.map(async (id) => ({
-				id: String(id),
-				image: await io.readIcon(dir, String(id)),
-			})),
+): Promise<AssembledResources> {
+	const missingIcons: string[] = [];
+	const icons = async (dir: string, ids: readonly (number | string)[]) => {
+		const read = await Promise.allSettled(
+			ids.map((id) => io.readIcon(dir, String(id))),
 		);
+		return read.flatMap((result, i) => {
+			const id = String(ids[i]);
+			if (result.status === "rejected") {
+				missingIcons.push(`${dir}/${id}`);
+				return [];
+			}
+			return [{ id, image: result.value }];
+		});
+	};
 
 	const [
 		weaponIcons,
@@ -153,7 +170,7 @@ export async function assembleScoreboardResources(
 		prepareMinimapAbilityTemplates(abilityIcons),
 	);
 
-	return {
+	const resources: ScoreboardResources = {
 		get weapons() {
 			return weapons();
 		},
@@ -230,4 +247,5 @@ export async function assembleScoreboardResources(
 			return atlas.killFeedGlyphs();
 		},
 	};
+	return { resources, missingIcons };
 }
