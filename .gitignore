@@ -42,3 +42,4 @@ notepad.txt
 *.mkv
 *.webm
 *.mov
+!/e2e/fixtures/scanner-vod.webm

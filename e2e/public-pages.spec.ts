@@ -114,7 +114,7 @@ test.describe("Public pages", () => {
 		await scanner.goto();
 		await expectNoErrorPage(page);
 		await expect(page).toHaveURL(/\/scanner$/);
-		await expect(scanner.startCaptureButton()).toBeVisible();
+		await expect(scanner.locators.startCaptureButton).toBeVisible();
 	});
 
 	test("prompts a logged out visitor to log in when using search or a filter", async ({

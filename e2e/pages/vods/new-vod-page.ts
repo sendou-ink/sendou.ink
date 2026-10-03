@@ -59,9 +59,20 @@ class VodMatchFields {
 	private readonly page: Page;
 	private readonly index: number;
 
+	readonly locators;
+
 	constructor(page: Page, index: number) {
 		this.page = page;
 		this.index = index;
+		this.locators = {
+			startsAt: page.getByLabel("Start timestamp").nth(index),
+			stageSelect: page.getByTestId("stage-select").nth(index),
+			weaponSelect: page.getByTestId(`match-${index}-weapon`),
+		};
+	}
+
+	modeRadio(modeName: string) {
+		return this.page.getByRole("radio", { name: modeName }).nth(this.index);
 	}
 
 	async setStartsAt(timestamp: string) {
