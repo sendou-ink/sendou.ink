@@ -463,11 +463,11 @@ function CombinedChatView({
 	const roomDisplay = useRoomDisplay();
 	const splitViewRef = React.useRef<HTMLDivElement>(null);
 	const tabBarRef = React.useRef<HTMLDivElement>(null);
-	const [selectedRoomIdState, setSelectedRoomId] = React.useState(rooms[0].id);
+	const { selectedTabRoomId, setSelectedTabRoomId: setSelectedRoomId } =
+		chatContext;
 
-	const selectedRoomId = rooms.some((room) => room.id === selectedRoomIdState)
-		? selectedRoomIdState
-		: rooms[0].id;
+	const selectedRoomId =
+		rooms.find((room) => room.id === selectedTabRoomId)?.id ?? rooms[0].id;
 	const backgroundRoomIdsKey = rooms
 		.filter((room) => room.id !== selectedRoomId)
 		.map((room) => room.id)

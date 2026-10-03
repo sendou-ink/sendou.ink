@@ -57,6 +57,9 @@ interface ChatContextValue {
 	/** Rooms on screen: none, one, or several (split view, the first being primary). */
 	activeRoomIds: number[];
 	setActiveRoomIds: (roomIds: number[]) => void;
+	/** The split view's selected tab, remembered while the chat is closed. Can name a room no longer active. */
+	selectedTabRoomId: number | null;
+	setSelectedTabRoomId: (roomId: number) => void;
 }
 
 const ChatContext = React.createContext<ChatContextValue | null>(null);
@@ -160,6 +163,9 @@ function ChatProviderInner({
 	const [activeRoomIds, setActiveRoomIds] = React.useState<number[]>(() =>
 		roomIdsFromKey(autoOpenRoomIdsKey),
 	);
+	const [selectedTabRoomId, setSelectedTabRoomId] = React.useState<
+		number | null
+	>(null);
 	// the server renders a route's rooms open as the desktop layout has them
 	// (smaller layouts hide the rail); the route sync settles it once the
 	// layout is known
@@ -248,6 +254,8 @@ function ChatProviderInner({
 		setChatOpen,
 		activeRoomIds,
 		setActiveRoomIds,
+		selectedTabRoomId,
+		setSelectedTabRoomId,
 	};
 
 	return (
