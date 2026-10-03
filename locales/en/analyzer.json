@@ -185,7 +185,6 @@
 	"hitsToDestroyShort": "HTD",
 	"labels.amountOf": "Amount of",
 	"labels.damageType": "Damage type",
-	"labels.weapon": "Weapon",
 	"dmgHtdExplanation": "DMG = Damage | HTD = Hits to destroy",
 	"noDmgData": "No damage data yet for this weapon. Check back later!",
 	"perInkTankGrid.header_one": "{{weapon}} shots after ×{{count}} sub weapon used",

@@ -187,7 +187,6 @@
 	"hitsToDestroyShort": "GPD",
 	"labels.amountOf": "Quantidade de",
 	"labels.damageType": "Tipo de dano",
-	"labels.weapon": "Arma",
 	"dmgHtdExplanation": "DANO = Dano | GPD = Golpes para destruir",
 	"noDmgData": "Ainda não há dados sobre o dano dessa arma. Verifique mais tarde!",
 	"perInkTankGrid.header_one": "Tiros da(o) {{weapon}} após a arma secundária ter sido usada {{count}}×",

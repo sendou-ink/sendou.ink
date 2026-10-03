@@ -189,7 +189,6 @@
 	"hitsToDestroyShort": "HTD",
 	"labels.amountOf": "Ilość",
 	"labels.damageType": "Rodzaj szkody",
-	"labels.weapon": "Broń",
 	"dmgHtdExplanation": "DMG = Szkoda | HTD = Strzały do zniszczenia",
 	"noDmgData": "Brak informacji o szkodzie tej broni. Sprawdź później!",
 	"perInkTankGrid.header_one": "",

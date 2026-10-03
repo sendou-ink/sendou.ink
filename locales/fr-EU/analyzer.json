@@ -187,7 +187,6 @@
 	"hitsToDestroyShort": "CAD",
 	"labels.amountOf": "Nombre de",
 	"labels.damageType": "Type de dégâts",
-	"labels.weapon": "Arme",
 	"dmgHtdExplanation": "DGT = Dégâts | CAD = Coups avant destruction",
 	"noDmgData": "Il n'y a pas de données sur les dégâts de cette arme. Revenez plus tard !",
 	"perInkTankGrid.header_one": "Tirs de {{weapon}} après ×{{count}} utilisation de l'arme secondaire",

@@ -189,7 +189,6 @@
 	"hitsToDestroyShort": "АДУ",
 	"labels.amountOf": "Количество",
 	"labels.damageType": "Вид урона",
-	"labels.weapon": "Оружие",
 	"dmgHtdExplanation": "УРН = Урон | АДУ = Атак до уничтожения",
 	"noDmgData": "На данный момент нет информации про урон этого оружия. Проверьте позже!",
 	"perInkTankGrid.header_one": "{{weapon}} выстрел после ×{{count}} использования запасного оружия",
