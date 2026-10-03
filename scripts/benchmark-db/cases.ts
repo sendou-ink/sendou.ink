@@ -1361,10 +1361,10 @@ export function buildCases(fx: Fixtures): {
 			TournamentTeamRepository.findInviteCodeById(tournamentTeamId),
 	);
 	add(
-		"TournamentTeamRepository.findChatRoomIdById",
+		"TournamentTeamRepository.findAllChatRoomIdsByIds",
 		fx.heavyTournamentTeamId,
 		(tournamentTeamId) =>
-			TournamentTeamRepository.findChatRoomIdById(tournamentTeamId),
+			TournamentTeamRepository.findAllChatRoomIdsByIds([tournamentTeamId]),
 	);
 	add("TournamentTeamRepository.isPickupAvatarImgId", fx.imageId, (imageId) =>
 		TournamentTeamRepository.isPickupAvatarImgId(imageId),

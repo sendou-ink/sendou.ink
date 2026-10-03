@@ -30,6 +30,7 @@ import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { executeRoll } from "../core/executeRoll.server";
 import * as LeagueScheduling from "../core/LeagueScheduling";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
+import type { FindMatchById } from "../TournamentMatchRepository.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 
 export type TournamentMatchLoaderData = SerializeFrom<typeof loader>;
@@ -223,6 +224,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					isParticipant ||
 					isSiteStaff ||
 					tournament.isOrganizerOrStreamer(user),
+				canReadTeamChats: isSiteStaff || isTournamentStaff,
+				teamName: (tournamentTeamId) => teamFullById(tournamentTeamId)?.name,
 			}),
 		),
 		canJoin,
@@ -404,32 +407,53 @@ async function ownTeamAvailability({
 	};
 }
 
-/** Pickups only, opens a chat as tabs or split view. */
+/** Team rooms are pickups only. A participant's opens with the match chat as tabs or split view, organizers read both. */
 async function chatRoomInputs({
 	match,
 	userId,
 	canChatInMatch,
+	canReadTeamChats,
+	teamName,
 }: {
-	match: {
-		chatRoomId: number | null;
-		players: { id: number; tournamentTeamId: number }[];
-	};
+	match: Pick<
+		FindMatchById,
+		"chatRoomId" | "players" | "opponentOne" | "opponentTwo"
+	>;
 	userId: number | undefined;
 	canChatInMatch: boolean;
+	canReadTeamChats: boolean;
+	teamName: (tournamentTeamId: number) => string | undefined;
 }): Promise<RouteChatRoomInput[]> {
 	if (!match.chatRoomId || !canChatInMatch) return [];
 
 	const ownTeamId = match.players.find(
 		(player) => player.id === userId,
 	)?.tournamentTeamId;
-	const ownTeamChatRoomId = ownTeamId
-		? await TournamentTeamRepository.findChatRoomIdById(ownTeamId)
-		: null;
+	const teamIds = ownTeamId
+		? [ownTeamId]
+		: canReadTeamChats
+			? [match.opponentOne?.id, match.opponentTwo?.id].filter(
+					(id): id is number => typeof id === "number",
+				)
+			: [];
+	const teamRooms =
+		await TournamentTeamRepository.findAllChatRoomIdsByIds(teamIds);
 
 	return [
 		{ roomId: match.chatRoomId, autoOpen: true },
-		...(ownTeamChatRoomId
-			? [{ roomId: ownTeamChatRoomId, autoOpen: true }]
-			: []),
+		...teamIds.flatMap((teamId) => {
+			const teamRoom = teamRooms.find((room) => room.id === teamId);
+			if (!teamRoom) return [];
+
+			return ownTeamId
+				? [{ roomId: teamRoom.chatRoomId, autoOpen: true }]
+				: [
+						{
+							roomId: teamRoom.chatRoomId,
+							autoOpen: false,
+							label: teamName(teamId),
+						},
+					];
+		}),
 	];
 }
