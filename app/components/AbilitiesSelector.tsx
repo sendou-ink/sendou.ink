@@ -14,7 +14,13 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import clsx from "clsx";
-import { Layers } from "lucide-react";
+import {
+	HatGlasses,
+	Layers,
+	type LucideIcon,
+	Shirt,
+	SportShoe,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { abilities } from "~/modules/in-game-lists/abilities";
@@ -34,20 +40,21 @@ const SLOTS_DROPPABLE_ID = "slots";
 const PREVIEW_SHOW_DELAY_MS = 150;
 const PREVIEW_HIDE_DELAY_MS = 100;
 
-const STACKABLE_GROUP: PaletteGroup = {
-	type: "STACKABLE",
-	label: "Stackable abilities",
-};
-
-const MAIN_ONLY_GROUPS: PaletteGroup[] = [
-	{ type: "HEAD_MAIN_ONLY", label: "Headgear-only abilities" },
-	{ type: "CLOTHES_MAIN_ONLY", label: "Clothing-only abilities" },
-	{ type: "SHOES_MAIN_ONLY", label: "Shoes-only abilities" },
+const PALETTE_GROUPS: PaletteGroup[] = [
+	{ type: "STACKABLE", label: "Stackable abilities", Icon: Layers },
+	{
+		type: "HEAD_MAIN_ONLY",
+		label: "Headgear-only abilities",
+		Icon: HatGlasses,
+	},
+	{ type: "CLOTHES_MAIN_ONLY", label: "Clothing-only abilities", Icon: Shirt },
+	{ type: "SHOES_MAIN_ONLY", label: "Shoes-only abilities", Icon: SportShoe },
 ];
 
 interface PaletteGroup {
 	type: AbilityType;
 	label: string;
+	Icon: LucideIcon;
 }
 
 interface DragData {
@@ -164,14 +171,14 @@ export function AbilitiesSelector({
 		});
 	};
 
-	const renderPaletteGroup = (group: PaletteGroup, marker: React.ReactNode) => (
+	const renderPaletteGroup = (group: PaletteGroup) => (
 		<fieldset
 			key={group.type}
 			aria-label={group.label}
 			className={styles.paletteGroup}
 		>
 			<span aria-hidden className={styles.rowMarker}>
-				{marker}
+				<group.Icon size={22} strokeWidth={2.5} />
 			</span>
 			{abilities
 				.filter((ability) => ability.type === group.type)
@@ -232,11 +239,7 @@ export function AbilitiesSelector({
 					)}
 				</SlotGrid>
 				<div className={styles.palette}>
-					{renderPaletteGroup(
-						STACKABLE_GROUP,
-						<Layers size={22} strokeWidth={2.5} />,
-					)}
-					{MAIN_ONLY_GROUPS.map((group, i) => renderPaletteGroup(group, i + 1))}
+					{PALETTE_GROUPS.map(renderPaletteGroup)}
 				</div>
 			</div>
 			<DragOverlay dropAnimation={null}>
