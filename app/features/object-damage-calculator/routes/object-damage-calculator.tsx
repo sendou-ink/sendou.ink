@@ -536,7 +536,9 @@ function DamageReceiversGrid({
 													damage.objectShredder ? "-os" : ""
 												}-${damageToReceiver.receiver}`}
 											>
-												{damage.hitsToDestroy}
+												{Number.isFinite(damage.hitsToDestroy)
+													? damage.hitsToDestroy
+													: "∞"}
 											</div>
 										</div>
 										<div className={styles.multiplier}>

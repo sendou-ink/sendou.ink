@@ -2651,6 +2651,7 @@ export const weaponParams = {
 					Distance: 14.9,
 				},
 			],
+			BumpDamage: 2200,
 			Range_Radius: 9,
 		},
 		"14": {

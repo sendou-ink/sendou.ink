@@ -124,7 +124,7 @@ const damageRatesByRow = (
 
 	for (const cell of Object.values(config.CellList)) {
 		if (!isDamageReceiver(cell.ColumnKey)) continue;
-		if (!cell.DamageRate) continue;
+		if (cell.DamageRate === undefined) continue;
 
 		let row = result.get(cell.RowKey);
 		if (!row) {
