@@ -254,7 +254,6 @@ function parseArgs(argv: string[]) {
 	let checkEvery = 1;
 	let threads = Math.max(1, cpus().length - 2);
 	let cpu = false;
-	// biome-ignore lint/style/useForOf: the index advances inside the loop to consume flag values
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]!;
 		if (arg === "--check-every") checkEvery = Number(argv[++i]);
