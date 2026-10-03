@@ -48,7 +48,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		teamsFull.find((team) => team.id === tournamentTeamId);
 
 	const match = notFoundIfNullish(
-		await TournamentMatchRepository.findMatchById(matchId),
+		await TournamentMatchRepository.matchById(matchId).executeTakeFirst(),
 	);
 
 	if (match.tournamentId !== tournamentId) {
@@ -64,7 +64,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 		: [];
 
-	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
+	const results = await TournamentMatchRepository.gameResults()
+		.where({ matchId })
+		.withParticipants()
+		.execute();
 
 	const reportedWeapons =
 		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
@@ -262,7 +265,7 @@ async function resolveLeagueSchedule({
 	matchIsOver,
 }: {
 	tournament: Tournament;
-	match: NonNullable<TournamentMatchRepository.FindMatchById>;
+	match: TournamentMatchRepository.MatchById;
 	bracket: Bracket | null;
 	user: { id: number } | undefined;
 	isParticipant: boolean;
@@ -312,9 +315,9 @@ async function resolveLeagueSchedule({
 		canSeeBoard,
 		proposals:
 			canSeeBoard && boardOpen
-				? await TournamentMatchRepository.findScheduleProposalsByMatchId(
-						match.id,
-					)
+				? await TournamentMatchRepository.scheduleProposals()
+						.where({ matchId: match.id })
+						.execute()
 				: [],
 		availability:
 			user && ownTeamId && boardOpen
@@ -334,7 +337,7 @@ async function resolveLeagueSchedule({
 
 function nextRoundPlayableAt(
 	bracket: Bracket | null,
-	match: NonNullable<TournamentMatchRepository.FindMatchById>,
+	match: TournamentMatchRepository.MatchById,
 ) {
 	const round = bracket?.data.round.find((r) => r.id === match.roundId);
 	if (!round) return null;

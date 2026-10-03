@@ -16,7 +16,7 @@ import * as TeamPick from "~/features/tournament/core/TeamPick";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as Series from "~/features/tournament-organization/core/Series";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "~/features/tournament-organization/TournamentOrganizationSeriesRepository.server";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import {
 	databaseTimestampNow,
@@ -438,14 +438,15 @@ export async function findRecentTournamentsByOrganizerUserId(userId: number) {
 		.orderBy("startsAt", "desc")
 		.execute();
 
-	const series =
-		await TournamentOrganizationRepository.findAllSeriesByOrganizationIds(
+	const series = await TournamentOrganizationSeriesRepository.series()
+		.ofOrganizations(
 			R.unique(
 				tournaments
 					.map((tournament) => tournament.organizationId)
 					.filter((organizationId) => organizationId !== null),
 			),
-		);
+		)
+		.execute();
 
 	const latestOfEachSeries = R.uniqueBy(tournaments, (tournament) => {
 		const tournamentSeries = Series.findByEventName({

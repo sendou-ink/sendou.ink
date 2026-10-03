@@ -98,9 +98,9 @@ const playOutMatch = async (
 
 	while (!setOver) {
 		const tournament = await tournamentFromDB(setup.tournamentId);
-		const matchRow = await TournamentMatchRepository.findMatchById(
+		const matchRow = await TournamentMatchRepository.matchById(
 			setup.matchId,
-		);
+		).executeTakeFirst();
 		invariant(matchRow, "Match not found");
 		invariant(matchRow.opponentOne?.id, "Match has no first opponent");
 		invariant(matchRow.opponentTwo?.id, "Match has no second opponent");

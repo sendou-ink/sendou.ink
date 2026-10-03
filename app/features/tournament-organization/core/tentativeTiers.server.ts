@@ -1,5 +1,5 @@
 import { calculateTentativeTier } from "~/features/tournament/core/tiering";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "../TournamentOrganizationSeriesRepository.server";
 import * as Series from "./Series";
 
 interface SeriesMatch {
@@ -8,7 +8,9 @@ interface SeriesMatch {
 }
 
 async function loadCache(): Promise<Map<number, SeriesMatch[]>> {
-	const rows = await TournamentOrganizationRepository.findAllSeries();
+	const rows = await TournamentOrganizationSeriesRepository.series()
+		.withColumns(["tierHistory"])
+		.execute();
 
 	const result = new Map<number, SeriesMatch[]>();
 	for (const row of rows) {

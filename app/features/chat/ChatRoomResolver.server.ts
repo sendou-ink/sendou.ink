@@ -155,47 +155,50 @@ async function resolveTournamentMatchRooms(
 ): Promise<ResolvedRoom[]> {
 	if (rooms.length === 0) return [];
 
-	const owners = await TournamentMatchRepository.findAllByChatRoomIds(
+	const matches = await tournamentMatchesOwningRooms(
 		rooms.map((room) => room.id),
 	);
 
 	// the opponent team ids come from the already-fetched match rows; they are
 	// never used as search predicates (see the resolver SQL spike)
 	const teamIds = R.unique(
-		owners.flatMap((owner) =>
-			[owner.opponentOne?.id, owner.opponentTwo?.id].filter(
+		matches.flatMap((match) =>
+			[match.opponentOne?.id, match.opponentTwo?.id].filter(
 				(id): id is number => typeof id === "number",
 			),
 		),
 	);
 	const membersByTeamId = await memberIdsByTeamId(teamIds);
 	const tournaments = await tournamentsById(
-		owners.map((owner) => owner.tournamentId),
+		matches.map((match) => match.tournamentId),
 	);
+	const owners = matches.flatMap((match) => {
+		const tournament = tournaments.get(match.tournamentId);
+		return tournament ? [{ ...match, tournament }] : [];
+	});
 
 	return joinOwners(rooms, owners, (owner) => {
 		const opponentTeamIds = [
 			owner.opponentOne?.id,
 			owner.opponentTwo?.id,
 		].filter((id): id is number => typeof id === "number");
-		const permissions = tournaments.get(owner.tournamentId)?.permissions;
 
 		return {
 			titleParams: {
-				tournamentName: owner.tournamentName,
+				tournamentName: owner.tournament.name,
 				matchId: String(owner.id),
 			},
 			url: tournamentMatchPage({
 				tournamentId: owner.tournamentId,
 				matchId: owner.id,
 			}),
-			imageUrl: owner.logoUrl,
+			imageUrl: owner.tournament.logoUrl,
 			participantUserIds: opponentTeamIds.flatMap(
 				(teamId) => membersByTeamId.get(teamId) ?? [],
 			),
 			// streamers cast the matches, so they observe them as well
-			observerUserIds: permissions?.MANAGE_MATCHES ?? [],
-			labelByUserId: organizerLabels(permissions),
+			observerUserIds: owner.tournament.permissions.MANAGE_MATCHES,
+			labelByUserId: organizerLabels(owner.tournament.permissions),
 		};
 	});
 }
@@ -305,6 +308,24 @@ function joinOwners<T extends { chatRoomId: number }>(
 	});
 }
 
+/** The tournament matches owning the rooms. */
+async function tournamentMatchesOwningRooms(roomIds: number[]) {
+	const matches = await TournamentMatchRepository.matches()
+		.with(
+			refine("TournamentMatch", (qb) =>
+				qb.where("TournamentMatch.chatRoomId", "in", roomIds),
+			),
+		)
+		.withColumns(["chatRoomId"])
+		.withOpponents()
+		.withTournamentId()
+		.execute();
+
+	return matches.flatMap(({ chatRoomId, ...match }) =>
+		chatRoomId === null ? [] : [{ ...match, chatRoomId }],
+	);
+}
+
 /** The LFG groups and teams owning the rooms, with their members. */
 async function tournamentTeamsOwningRooms(roomIds: number[]) {
 	const teams = await TournamentTeamRepository.tournamentTeams()
@@ -348,13 +369,12 @@ async function tournamentsById(tournamentIds: number[]) {
 
 /** Labels the tournament's organizers "TO" and its streamers "Stream". */
 function organizerLabels(
-	permissions?: Pick<
+	permissions: Pick<
 		ReturnType<typeof organizerPermissions>,
 		"ORGANIZE" | "MANAGE_MATCHES"
 	>,
 ) {
 	const labelByUserId: Record<number, string> = {};
-	if (!permissions) return labelByUserId;
 
 	// MANAGE_MATCHES holds the organizers too, so the "TO" pass overwrites theirs
 	for (const userId of permissions.MANAGE_MATCHES) {

@@ -10,7 +10,7 @@ import * as R from "remeda";
 import { crud } from "~/db/crud";
 import { defineQuery, refine, sortedBy, unchanged } from "~/db/entity-query";
 import { db } from "~/db/sql";
-import type { DB, DBBoolean, Tables } from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
 import type {
 	CastedMatchesInfo,
 	PreparedMaps,
@@ -1500,7 +1500,7 @@ function organizationMembersOf(eb: ExpressionBuilder<DB, "Tournament">) {
 
 function permissionsOf(holders: {
 	authorId: number;
-	isEstablished: DBBoolean | null;
+	isEstablished: boolean | null;
 	staff: Array<{ userId: number; role: Tables["TournamentStaff"]["role"] }>;
 	organizationMembers: Array<{
 		userId: number;

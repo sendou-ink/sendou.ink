@@ -12,6 +12,8 @@ export async function organizationFromParams(
 ) {
 	const { slug } = parseParams({ params, schema: organizationParamsSchema });
 	return notFoundIfNullish(
-		await TournamentOrganizationRepository.findBySlug(slug),
+		await TournamentOrganizationRepository.organizationBySlug(
+			slug,
+		).executeTakeFirst(),
 	);
 }

@@ -25,9 +25,10 @@ export const loader = async () => {
 	const savedTournaments =
 		await SavedCalendarEventRepository.findAllUpcomingByUserId(user.id);
 	const upcomingTournaments = await ShowcaseTournaments.upcomingTournaments();
-	const userOrganizations = await TournamentOrganizationRepository.findByUserId(
-		user.id,
-	);
+	const userOrganizations =
+		await TournamentOrganizationRepository.organizations()
+			.forMember(user.id)
+			.execute();
 	const mySchedule = await myScheduleData(user.id);
 	const teamEvents = await findUpcomingTeamEvents(user.id);
 	const leagueMatches = await findUpcomingLeagueMatches(user.id);

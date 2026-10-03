@@ -5,6 +5,7 @@ import {
 	type RawBuilder,
 	type Transaction,
 } from "kysely";
+import { crud } from "~/db/crud";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
@@ -17,6 +18,12 @@ import type {
 	GeneratedRound,
 	ParticipantResult,
 } from "./core/engine/types";
+
+const stageTable = crud("TournamentStage");
+const groupTable = crud("TournamentGroup");
+const roundTable = crud("TournamentRound");
+const matchTable = crud("TournamentMatch");
+const tournamentTeamTable = crud("TournamentTeam");
 
 const CHAT_ROOM_LIFESPAN_DAYS = 7;
 // scheduled league sets can be postponed to the end of the season, so their rooms live until the set is decided
@@ -151,24 +158,28 @@ export function insertBracket(args: {
 	const hasScheduling = args.isLeague && !stageInput.settings.isRealtime;
 
 	return db.transaction().execute(async (trx) => {
-		const stage = await trx
-			.insertInto("TournamentStage")
-			.values({
+		const [latestStage] = await stageTable.findManyBy(
+			{ tournamentId: args.tournamentId },
+			{ orderBy: [["number", "desc"]], limit: 1 },
+			trx,
+		);
+		const stage = await stageTable.insert(
+			{
 				tournamentId: args.tournamentId,
 				name: args.name,
 				type: stageInput.type,
 				settings: stageInput.settings,
-				number: kyselySql<number>`(select coalesce(max("number"), 0) + 1 from "TournamentStage" where "tournamentId" = ${args.tournamentId})`,
-			})
-			.returning(["id"])
-			.executeTakeFirstOrThrow();
+				number: (latestStage?.number ?? 0) + 1,
+			},
+			trx,
+		);
 
 		// no team can join once a bracket has started, so none is looking for members anymore
-		await trx
-			.updateTable("TournamentTeam")
-			.set({ isLooking: false })
-			.where("tournamentId", "=", args.tournamentId)
-			.execute();
+		await tournamentTeamTable.update(
+			{ tournamentId: args.tournamentId },
+			{ isLooking: false },
+			trx,
+		);
 
 		if (
 			args.bracket.group.length === 0 ||
@@ -178,37 +189,31 @@ export function insertBracket(args: {
 			throw new Error("Bracket is missing groups, rounds or matches");
 		}
 
-		const insertedGroups = await trx
-			.insertInto("TournamentGroup")
-			.values(
-				args.bracket.group.map((group) => ({
-					stageId: stage.id,
-					number: group.number,
-				})),
-			)
-			.returning(["id"])
-			.execute();
+		const insertedGroups = await groupTable.insertMany(
+			args.bracket.group.map((group) => ({
+				stageId: stage.id,
+				number: group.number,
+			})),
+			trx,
+		);
 
 		const groupIdMapping = zipInsertedIds(args.bracket.group, insertedGroups);
 
-		const insertedRounds = await trx
-			.insertInto("TournamentRound")
-			.values(
-				args.bracket.round.map((round) => {
-					if (!round.maps) throw new Error("Round is missing maps");
+		const insertedRounds = await roundTable.insertMany(
+			args.bracket.round.map((round) => {
+				if (!round.maps) throw new Error("Round is missing maps");
 
-					return {
-						stageId: stage.id,
-						groupId: groupIdMapping.get(round.groupId)!,
-						section: round.section,
-						number: round.number,
-						maps: round.maps,
-						isPlayableAt: round.isPlayableAt ?? null,
-					};
-				}),
-			)
-			.returning(["id"])
-			.execute();
+				return {
+					stageId: stage.id,
+					groupId: groupIdMapping.get(round.groupId)!,
+					section: round.section,
+					number: round.number,
+					maps: round.maps,
+					isPlayableAt: round.isPlayableAt ?? null,
+				};
+			}),
+			trx,
+		);
 
 		const roundIdMapping = zipInsertedIds(args.bracket.round, insertedRounds);
 
@@ -227,25 +232,21 @@ export function insertBracket(args: {
 			startedMatches.map((match, i) => [match.id, startedChatRoomIds[i]]),
 		);
 
-		await trx
-			.insertInto("TournamentMatch")
-			.values(
-				args.bracket.match.map((match) => ({
-					stageId: stage.id,
-					groupId: groupIdMapping.get(match.groupId)!,
-					roundId: roundIdMapping.get(match.roundId)!,
-					number: match.number,
-					opponentOne: serializeOpponent(match.opponent1),
-					opponentTwo: serializeOpponent(match.opponent2),
-					winnerSide: match.winnerSide,
-					chatRoomId: chatRoomIdByMatchId.get(match.id) ?? null,
-					startedAt:
-						statuses.get(match.id) === "STARTED"
-							? databaseTimestampNow()
-							: null,
-				})),
-			)
-			.execute();
+		await matchTable.insertMany(
+			args.bracket.match.map((match) => ({
+				stageId: stage.id,
+				groupId: groupIdMapping.get(match.groupId)!,
+				roundId: roundIdMapping.get(match.roundId)!,
+				number: match.number,
+				opponentOne: serializeOpponent(match.opponent1),
+				opponentTwo: serializeOpponent(match.opponent2),
+				winnerSide: match.winnerSide,
+				chatRoomId: chatRoomIdByMatchId.get(match.id) ?? null,
+				startedAt:
+					statuses.get(match.id) === "STARTED" ? databaseTimestampNow() : null,
+			})),
+			trx,
+		);
 
 		return { stageId: stage.id };
 	});
@@ -267,15 +268,15 @@ export async function applyMatchChanges(
 	trx: Transaction<DB>,
 ): Promise<number[]> {
 	for (const match of args.result.changedMatches) {
-		await trx
-			.updateTable("TournamentMatch")
-			.set({
+		await matchTable.updateById(
+			match.id,
+			{
 				opponentOne: serializeOpponent(match.opponent1),
 				opponentTwo: serializeOpponent(match.opponent2),
 				winnerSide: match.winnerSide,
-			})
-			.where("id", "=", match.id)
-			.execute();
+			},
+			trx,
+		);
 	}
 
 	await syncStartedAt(
@@ -351,11 +352,11 @@ async function syncStartedAt(
 				trx,
 			);
 			for (const [i, match] of matches.entries()) {
-				await trx
-					.updateTable("TournamentMatch")
-					.set({ chatRoomId: chatRoomIds[i] })
-					.where("TournamentMatch.id", "=", match.id)
-					.execute();
+				await matchTable.updateById(
+					match.id,
+					{ chatRoomId: chatRoomIds[i] },
+					trx,
+				);
 			}
 		}
 	}
@@ -502,23 +503,21 @@ export async function insertRoundMatches(
 		playableMatches.map((match, i) => [match, chatRoomIds[i]]),
 	);
 
-	await trx
-		.insertInto("TournamentMatch")
-		.values(
-			args.round.matches.map((match) => ({
-				stageId: args.stageId,
-				groupId: args.round.groupId,
-				roundId: args.round.roundId,
-				number: match.number,
-				opponentOne: serializeOpponent(match.opponent1),
-				opponentTwo: serializeOpponent(match.opponent2),
-				winnerSide: null,
-				chatRoomId: chatRoomIdByMatch.get(match) ?? null,
-				// swiss rounds are only generated once they can be played
-				startedAt: hasBothOpponents(match) ? databaseTimestampNow() : null,
-			})),
-		)
-		.execute();
+	await matchTable.insertMany(
+		args.round.matches.map((match) => ({
+			stageId: args.stageId,
+			groupId: args.round.groupId,
+			roundId: args.round.roundId,
+			number: match.number,
+			opponentOne: serializeOpponent(match.opponent1),
+			opponentTwo: serializeOpponent(match.opponent2),
+			winnerSide: null,
+			chatRoomId: chatRoomIdByMatch.get(match) ?? null,
+			// swiss rounds are only generated once they can be played
+			startedAt: hasBothOpponents(match) ? databaseTimestampNow() : null,
+		})),
+		trx,
+	);
 }
 
 /** DELETEs a round's matches (swiss unadvance). */
@@ -527,37 +526,12 @@ export async function deleteRoundMatches(args: {
 	groupId: number;
 	roundId: number;
 }): Promise<void> {
-	await db
-		.deleteFrom("TournamentMatch")
-		.where("stageId", "=", args.stageId)
-		.where("groupId", "=", args.groupId)
-		.where("roundId", "=", args.roundId)
-		.execute();
+	await matchTable.delete(args);
 }
 
-/** Deletes the whole stage subtree (matches, rounds, groups, stage). */
+/** Deletes the stage, its groups, rounds and matches going with it. */
 export function resetBracket(tournamentStageId: number) {
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("TournamentMatch")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentRound")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentGroup")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentStage")
-			.where("id", "=", tournamentStageId)
-			.execute();
-	});
+	return stageTable.deleteById(tournamentStageId);
 }
 
 /** Opponents are stored as JSON with the SQL-aggregated fields stripped (NULL for BYEs). */

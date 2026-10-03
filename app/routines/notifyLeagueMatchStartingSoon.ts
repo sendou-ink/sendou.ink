@@ -10,33 +10,32 @@ export const NotifyLeagueMatchStartingSoonRoutine = new Routine({
 	func: async () => {
 		const now = databaseTimestampNow();
 
-		const matches = await TournamentMatchRepository.findScheduledBetween({
-			startsAt: now,
-			endsAt: now + LEAGUE_SCHEDULING.STARTING_SOON_SECONDS,
-		});
+		const matches = await TournamentMatchRepository.matches()
+			.undecided()
+			.scheduledBetween(now, now + LEAGUE_SCHEDULING.STARTING_SOON_SECONDS)
+			.withTournamentId()
+			.withTeams()
+			.execute();
 
 		for (const match of matches) {
 			logger.info(
-				`Notifying league set starting soon for match ${match.id} with ${match.members.length} participants`,
+				`Notifying league set starting soon for match ${match.id} with ${match.teams.flatMap((team) => team.members).length} participants`,
 			);
 
-			const sides = [
-				{ id: match.teamOneId, opponentName: match.teamTwoName },
-				{ id: match.teamTwoId, opponentName: match.teamOneName },
-			];
-			for (const side of sides) {
+			for (const team of match.teams) {
+				const opponent = match.teams.find((other) => other.id !== team.id);
+				if (!opponent) continue;
+
 				await notify({
 					notification: {
 						type: "TO_LEAGUE_MATCH_STARTING_SOON",
 						meta: {
 							tournamentId: match.tournamentId,
 							matchId: match.id,
-							opponentTeamName: side.opponentName,
+							opponentTeamName: opponent.name,
 						},
 					},
-					userIds: match.members
-						.filter((member) => member.tournamentTeamId === side.id)
-						.map((member) => member.userId),
+					userIds: team.members.map((member) => member.userId),
 				});
 			}
 		}

@@ -21,8 +21,9 @@ export const action: ActionFunction = async ({ request }) => {
 		return { fieldErrors: result.fieldErrors };
 	}
 
-	const orgCount =
-		await TournamentOrganizationRepository.countOrganizationsByUserId(user.id);
+	const orgCount = await TournamentOrganizationRepository.organizations()
+		.forMember(user.id)
+		.count();
 
 	errorToastIfFalsy(
 		orgCount < TOURNAMENT_ORGANIZATION.MAX_MEMBER_OF_COUNT,

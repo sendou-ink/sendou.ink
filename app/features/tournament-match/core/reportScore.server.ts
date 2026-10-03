@@ -7,8 +7,8 @@ import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { invariant } from "~/utils/invariant";
 import { errorToastIfFalsy } from "~/utils/remix.server";
-import { errorIsSqliteUniqueConstraintFailure, toDBBoolean } from "~/utils/sql";
-import type { FindMatchById } from "../TournamentMatchRepository.server";
+import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
+import type { MatchById } from "../TournamentMatchRepository.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import { matchIsLocked } from "../tournament-match-utils";
 
@@ -34,7 +34,7 @@ export async function reportScore({
 	winnerTeamId,
 	ko,
 }: {
-	match: FindMatchById;
+	match: MatchById;
 	tournament: Tournament;
 	mapList: TournamentMapListMap[] | null;
 	user: { id: number };
@@ -127,7 +127,7 @@ export async function reportScore({
 						winnerTeamId,
 						number: position + 1,
 						source: serializeMaplistSource(currentMap.source),
-						ko: bracket.collectsKos ? toDBBoolean(Boolean(ko)) : null,
+						ko: bracket.collectsKos ? Boolean(ko) : null,
 					},
 					trx,
 				);
@@ -177,7 +177,7 @@ function canReportScore({
 	tournament,
 	user,
 }: {
-	match: FindMatchById;
+	match: MatchById;
 	tournament: Tournament;
 	user: { id: number };
 }) {

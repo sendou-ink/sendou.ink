@@ -70,14 +70,10 @@ async function searchByType({
 		}
 		case "organizations": {
 			const numericQuery = /^\d+$/.test(query) ? Number(query) : null;
-			const orgs = numericQuery
-				? await TournamentOrganizationRepository.findOneById(numericQuery).then(
-						(o) => (o ? [o] : []),
-					)
-				: await TournamentOrganizationRepository.searchByName({
-						query,
-						limit,
-					});
+			const orgs = await organizationsMatching(
+				numericQuery ? { id: numericQuery } : { name: query },
+				limit,
+			);
 
 			return orgs.map((o) => ({
 				type: "organization" as const,
@@ -108,6 +104,22 @@ function teamsNamed(query: string, limit: number) {
 		.nameContaining(query)
 		.withLogo()
 		.withPlayers()
+		.limit(limit)
+		.execute();
+}
+
+function organizationsMatching(
+	match: { id: number } | { name: string },
+	limit: number,
+) {
+	const organizations = TournamentOrganizationRepository.organizations();
+
+	return (
+		"id" in match
+			? organizations.where({ id: match.id })
+			: organizations.nameContaining(match.name)
+	)
+		.withLogo()
 		.limit(limit)
 		.execute();
 }

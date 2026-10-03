@@ -61,7 +61,10 @@ export const WIDGET_LOADERS = {
 		return TeamRepository.teams().forMember(userId).withLogo().execute();
 	},
 	organizations: async (userId: number) => {
-		return TournamentOrganizationRepository.findByUserId(userId);
+		return TournamentOrganizationRepository.organizations()
+			.forMember(userId)
+			.withLogo()
+			.execute();
 	},
 	"peak-sp": async (userId: number) => {
 		const seasonsParticipatedIn =

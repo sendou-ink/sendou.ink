@@ -5,7 +5,7 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "~/features/tournament-organization/TournamentOrganizationSeriesRepository.server";
 import { decompressFromBase64 } from "~/utils/compression";
 import {
 	assertResponseErrored,
@@ -106,10 +106,9 @@ describe("trophy backfill", () => {
 				],
 			},
 		);
-		const [series] =
-			await TournamentOrganizationRepository.findAllSeriesByOrganizationIds([
-				organization.id,
-			]);
+		const [series] = await TournamentOrganizationSeriesRepository.series()
+			.where({ organizationId: organization.id })
+			.execute();
 		seriesId = series.id;
 
 		trophyId = (

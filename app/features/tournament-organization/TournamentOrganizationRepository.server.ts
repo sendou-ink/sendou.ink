@@ -1,14 +1,17 @@
 import { isFuture } from "date-fns";
-import { type ExpressionBuilder, type NotNull, sql } from "kysely";
+import {
+	type ExpressionBuilder,
+	type NotNull,
+	sql,
+	type Transaction,
+} from "kysely";
 import * as R from "remeda";
+import { crud } from "~/db/crud";
+import { defineQuery, mapRows, refine } from "~/db/entity-query";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
-import {
-	TIER_HISTORY_LENGTH,
-	type TournamentTierNumber,
-	updateTierHistory,
-} from "~/features/tournament/core/tiering";
+import { TIER_HISTORY_LENGTH } from "~/features/tournament/core/tiering";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
@@ -19,219 +22,230 @@ import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
+	jsonObjectFrom,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
-import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
 
-interface CreateArgs {
-	ownerId: number;
-	name: string;
-}
+const organizationTable = crud("TournamentOrganization");
+const memberTable = crud("TournamentOrganizationMember");
+const seriesTable = crud("TournamentOrganizationSeries");
+const badgeTable = crud("TournamentOrganizationBadge");
+const bannedUserTable = crud("TournamentOrganizationBannedUser");
+const unvalidatedImageTable = crud("UnvalidatedUserSubmittedImage");
 
-export function insert(args: CreateArgs) {
-	return db.transaction().execute(async (trx) => {
-		const org = await trx
-			.insertInto("TournamentOrganization")
-			.values({
-				name: args.name,
-				slug: mySlugify(args.name),
-			})
-			.returning(["id", "slug"])
-			.executeTakeFirstOrThrow();
+// the slug follows the name and a replaced logo's image is deleted, both through `update`
+export const { updateById, deleteById } = organizationTable.except(
+	"name",
+	"slug",
+	"avatarImgId",
+);
 
-		await trx
-			.insertInto("TournamentOrganizationMember")
-			.values({
-				organizationId: org.id,
-				userId: args.ownerId,
-				role: "ADMIN",
-			})
-			.execute();
-
-		return org;
-	});
-}
-
-export async function findBySlug(slug: string) {
-	const organization = await db
-		.selectFrom("TournamentOrganization")
-		.leftJoin(
-			"UserSubmittedImage",
-			"UserSubmittedImage.id",
-			"TournamentOrganization.avatarImgId",
-		)
-		.select(({ eb }) => [
+/** Tournament organizations in the order they were created. */
+export const organizations = defineQuery({
+	root: "TournamentOrganization",
+	select: (qb) =>
+		qb.select([
 			"TournamentOrganization.id",
 			"TournamentOrganization.name",
-			"TournamentOrganization.description",
-			"TournamentOrganization.socials",
 			"TournamentOrganization.slug",
-			"TournamentOrganization.isEstablished",
-			"TournamentOrganization.avatarImgId",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"avatarUrl",
-			),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentOrganizationMember")
-					.innerJoin("User", "User.id", "TournamentOrganizationMember.userId")
-					.select((memberEb) => [
-						"TournamentOrganizationMember.role",
-						"TournamentOrganizationMember.roleDisplayName",
-						...commonUserSelect(memberEb),
-					])
-					.whereRef(
-						"TournamentOrganizationMember.organizationId",
-						"=",
+		]),
+	defaultSort: [["TournamentOrganization.id", "asc"]],
+	vocabulary: () => ({
+		/** Organizations whose name contains the text, accents ignored, alphabetically. */
+		nameContaining: (text: string) =>
+			refine("TournamentOrganization", (qb) =>
+				qb.where(({ eb, ref }) =>
+					eb(
+						sql`unaccent(${ref("TournamentOrganization.name")})`,
+						"like",
+						sql`unaccent(${`%${text}%`})`,
+					),
+				),
+			).sortedBy(["TournamentOrganization.name", "asc"]),
+		/** Organizations the user is a member of with their `role` and `roleDisplayName`, only the given roles when there are some. */
+		forMember: (
+			userId: number,
+			roles: ReadonlyArray<Tables["TournamentOrganizationMember"]["role"]> = [],
+		) =>
+			refine("TournamentOrganization", (qb) => {
+				const memberships = qb
+					.innerJoin(
+						"TournamentOrganizationMember as Membership",
+						"Membership.organizationId",
 						"TournamentOrganization.id",
 					)
-					.orderBy(
-						sql`coalesce(TournamentOrganizationMember.roleDisplayName, TournamentOrganizationMember.role)`,
-						"asc",
+					.where("Membership.userId", "=", userId)
+					.select(["Membership.role", "Membership.roleDisplayName"]);
+
+				return roles.length > 0
+					? memberships.where("Membership.role", "in", roles)
+					: memberships;
+			}),
+		/** The logo's `avatarUrl`, `null` while it awaits validation. */
+		withLogo: () =>
+			refine("TournamentOrganization", (qb) =>
+				qb.select((eb) =>
+					concatUserSubmittedImagePrefix(
+						eb
+							.selectFrom("UserSubmittedImage")
+							.select("UserSubmittedImage.url")
+							.whereRef(
+								"UserSubmittedImage.id",
+								"=",
+								"TournamentOrganization.avatarImgId",
+							)
+							.$asScalar(),
+					).as("avatarUrl"),
+				),
+			),
+		/** Members with their roles, by role (the displayed name of it when set) and then by username. */
+		withMembers: () =>
+			refine("TournamentOrganization", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TournamentOrganizationMember")
+							.innerJoin(
+								"User",
+								"User.id",
+								"TournamentOrganizationMember.userId",
+							)
+							.select((memberEb) => [
+								"TournamentOrganizationMember.role",
+								"TournamentOrganizationMember.roleDisplayName",
+								...commonUserSelect(memberEb),
+							])
+							.whereRef(
+								"TournamentOrganizationMember.organizationId",
+								"=",
+								"TournamentOrganization.id",
+							)
+							.orderBy(
+								sql`coalesce(TournamentOrganizationMember.roleDisplayName, TournamentOrganizationMember.role)`,
+								"asc",
+							)
+							.orderBy("User.username", "asc"),
+					).as("members"),
+				),
+			),
+		withSeries: () =>
+			refine("TournamentOrganization", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TournamentOrganizationSeries")
+							.select([
+								"TournamentOrganizationSeries.id",
+								"TournamentOrganizationSeries.name",
+								"TournamentOrganizationSeries.substringMatches",
+								"TournamentOrganizationSeries.showLeaderboard",
+								"TournamentOrganizationSeries.description",
+								"TournamentOrganizationSeries.tierHistory",
+							])
+							.whereRef(
+								"TournamentOrganizationSeries.organizationId",
+								"=",
+								"TournamentOrganization.id",
+							),
+					).as("series"),
+				),
+			),
+		/** Badges the organization may award in its tournaments. */
+		withBadges: () =>
+			refine("TournamentOrganization", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TournamentOrganizationBadge")
+							.innerJoin(
+								"Badge",
+								"Badge.id",
+								"TournamentOrganizationBadge.badgeId",
+							)
+							.select([
+								"Badge.id",
+								"Badge.displayName",
+								"Badge.code",
+								"Badge.hue",
+							])
+							.whereRef(
+								"TournamentOrganizationBadge.organizationId",
+								"=",
+								"TournamentOrganization.id",
+							),
+					).as("badges"),
+				),
+			),
+		/** The organization's admins may edit it and ban users from its tournaments. */
+		withPermissions: () =>
+			mapRows(
+				"TournamentOrganization",
+				(row: {
+					members: Array<{
+						id: number;
+						role: Tables["TournamentOrganizationMember"]["role"];
+					}>;
+				}) => {
+					const adminIds = row.members
+						.filter((member) => member.role === "ADMIN")
+						.map((member) => member.id);
+
+					return { permissions: { EDIT: adminIds, BAN: adminIds } };
+				},
+			),
+	}),
+});
+
+/** Users banned by organizations, the latest ban first. Expired bans are included. */
+export const bannedUsers = defineQuery({
+	root: "TournamentOrganizationBannedUser",
+	select: (qb) =>
+		qb.select([
+			"TournamentOrganizationBannedUser.privateNote",
+			"TournamentOrganizationBannedUser.updatedAt",
+			"TournamentOrganizationBannedUser.expiresAt",
+		]),
+	defaultSort: [["TournamentOrganizationBannedUser.updatedAt", "desc"]],
+	vocabulary: () => ({
+		// not UserRepository.withUser: importing it closes a cycle back here through the
+		// portfolio widgets, and tentativeTiers reads `series` while this module still loads
+		withUser: () =>
+			refine("TournamentOrganizationBannedUser", (qb) =>
+				qb.select((eb) =>
+					jsonObjectFrom(
+						eb
+							.selectFrom("User")
+							.select((userEb) => commonUserSelect(userEb))
+							.whereRef(
+								"User.id",
+								"=",
+								"TournamentOrganizationBannedUser.userId",
+							),
 					)
-					.orderBy("User.username", "asc"),
-			).as("members"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentOrganizationSeries")
-					.select([
-						"TournamentOrganizationSeries.id",
-						"TournamentOrganizationSeries.name",
-						"TournamentOrganizationSeries.substringMatches",
-						"TournamentOrganizationSeries.showLeaderboard",
-						"TournamentOrganizationSeries.description",
-						"TournamentOrganizationSeries.tierHistory",
-					])
-					.whereRef(
-						"TournamentOrganizationSeries.organizationId",
-						"=",
-						"TournamentOrganization.id",
-					),
-			).as("series"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentOrganizationBadge")
-					.innerJoin("Badge", "Badge.id", "TournamentOrganizationBadge.badgeId")
-					.select(["Badge.id", "Badge.displayName", "Badge.code", "Badge.hue"])
-					.whereRef(
-						"TournamentOrganizationBadge.organizationId",
-						"=",
-						"TournamentOrganization.id",
-					),
-			).as("badges"),
-		])
-		.where("TournamentOrganization.slug", "=", slug)
-		.executeTakeFirst();
+						.$notNull()
+						.as("user"),
+				),
+			),
+	}),
+});
 
-	if (!organization) return null;
-
-	const orgAdminUserIds = organization.members
-		.filter((member) => member.role === "ADMIN")
-		.map((member) => member.id);
-
-	return {
-		...organization,
-		permissions: {
-			EDIT: orgAdminUserIds,
-			BAN: orgAdminUserIds,
-		},
-	};
+/** What the organization's pages show: its profile, members, series and badges, with who may edit it or ban users. */
+export function organizationBySlug(slug: string) {
+	return organizations()
+		.where({ slug })
+		.withColumns(["description", "socials", "isEstablished", "avatarImgId"])
+		.withLogo()
+		.withMembers()
+		.withSeries()
+		.withBadges()
+		.withPermissions();
 }
 
-export function findByUserId(
-	userId: number,
-	{
-		roles = [],
-	}: {
-		/** If set, filters organizations by user's org member role */
-		roles?: Array<Tables["TournamentOrganizationMember"]["role"]>;
-	} = {},
-) {
-	return db
-		.selectFrom("TournamentOrganizationMember")
-		.innerJoin(
-			"TournamentOrganization",
-			"TournamentOrganization.id",
-			"TournamentOrganizationMember.organizationId",
-		)
-		.leftJoin(
-			"UserSubmittedImage",
-			"UserSubmittedImage.id",
-			"TournamentOrganization.avatarImgId",
-		)
-		.select(({ eb }) => [
-			"TournamentOrganization.id",
-			"TournamentOrganization.name",
-			"TournamentOrganization.slug",
-			"TournamentOrganization.isEstablished",
-			"TournamentOrganizationMember.role",
-			"TournamentOrganizationMember.roleDisplayName",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"logoUrl",
-			),
-		])
-		.where("TournamentOrganizationMember.userId", "=", userId)
-		.$if(roles.length > 0, (qb) =>
-			qb.where("TournamentOrganizationMember.role", "in", roles),
-		)
-		.orderBy("TournamentOrganization.id", "asc")
-		.execute();
-}
-
-export function searchByName({
-	query,
-	limit,
-}: {
-	query: string;
-	limit: number;
-}) {
-	return db
-		.selectFrom("TournamentOrganization")
-		.leftJoin(
-			"UserSubmittedImage",
-			"UserSubmittedImage.id",
-			"TournamentOrganization.avatarImgId",
-		)
-		.select(({ eb }) => [
-			"TournamentOrganization.id",
-			"TournamentOrganization.name",
-			"TournamentOrganization.slug",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"avatarUrl",
-			),
-		])
-		.where(({ eb, ref }) =>
-			eb(
-				sql`unaccent(${ref("TournamentOrganization.name")})`,
-				"like",
-				sql`unaccent(${`%${query}%`})`,
-			),
-		)
-		.orderBy("TournamentOrganization.name", "asc")
-		.limit(limit)
-		.execute();
-}
-
-export function findOneById(id: number) {
-	return db
-		.selectFrom("TournamentOrganization")
-		.leftJoin(
-			"UserSubmittedImage",
-			"UserSubmittedImage.id",
-			"TournamentOrganization.avatarImgId",
-		)
-		.select(({ eb }) => [
-			"TournamentOrganization.id",
-			"TournamentOrganization.name",
-			"TournamentOrganization.slug",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"avatarUrl",
-			),
-		])
-		.where("TournamentOrganization.id", "=", id)
-		.executeTakeFirst();
+/** Whether an organization has the slug, e.g. one a new organization's name would get. */
+export function existsBySlug(slug: string) {
+	return organizationTable.exists({ slug });
 }
 
 interface FindEventsByMonthArgs {
@@ -374,18 +388,6 @@ export async function findEventsByMonth({
 	return events.map(mapEvent);
 }
 
-/** Every tournament series of every organization. */
-export function findAllSeries() {
-	return db
-		.selectFrom("TournamentOrganizationSeries")
-		.select([
-			"TournamentOrganizationSeries.organizationId",
-			"TournamentOrganizationSeries.substringMatches",
-			"TournamentOrganizationSeries.tierHistory",
-		])
-		.execute();
-}
-
 /**
  * Team counts of each organization's started tournaments within the window, oldest first.
  * Counts what the tournament page shows: placeholder teams excluded, dropped out ones included.
@@ -425,16 +427,6 @@ export function findAllOrganizedTournamentTeamCounts({
 		.where("CalendarEventDate.startsAt", "<=", databaseTimestampNow())
 		.groupBy("CalendarEvent.id")
 		.orderBy("startsAt", "asc")
-		.execute();
-}
-
-export function findAllUnfinalizedEvents(organizationId: number) {
-	return db
-		.selectFrom("Tournament")
-		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
-		.select(["Tournament.id"])
-		.where("Tournament.isFinalized", "=", false)
-		.where("CalendarEvent.organizationId", "=", organizationId)
 		.execute();
 }
 
@@ -507,24 +499,6 @@ export async function findAllEventsBySeries({
 	return events.map(mapEvent);
 }
 
-/** Series belonging to any of the given organizations. */
-export async function findAllSeriesByOrganizationIds(
-	organizationIds: number[],
-) {
-	if (organizationIds.length === 0) return [];
-
-	return db
-		.selectFrom("TournamentOrganizationSeries")
-		.select([
-			"TournamentOrganizationSeries.id",
-			"TournamentOrganizationSeries.name",
-			"TournamentOrganizationSeries.organizationId",
-			"TournamentOrganizationSeries.substringMatches",
-		])
-		.where("TournamentOrganizationSeries.organizationId", "in", organizationIds)
-		.execute();
-}
-
 /**
  * Events of the series the user won, oldest first, hosted tournaments and hand-reported results
  * alike. Only finalized tournaments have results, so ongoing events are never included.
@@ -551,58 +525,57 @@ export async function findAllSeriesWinsByUserId({
 			),
 		]);
 
-	const [tournamentWins, reportedWins] = await Promise.all([
-		db
-			.selectFrom("TournamentResult")
-			.innerJoin(
-				"CalendarEvent",
-				"CalendarEvent.tournamentId",
-				"TournamentResult.tournamentId",
-			)
-			.innerJoin(
-				"CalendarEventDate",
-				"CalendarEventDate.eventId",
-				"CalendarEvent.id",
-			)
-			.select(({ fn }) => [
-				"CalendarEvent.name",
-				fn.min("CalendarEventDate.startsAt").as("startsAt"),
-			])
-			.where("TournamentResult.userId", "=", userId)
-			.where("TournamentResult.placement", "=", 1)
-			.where("TournamentResult.tournamentId", "!=", excludeTournamentId)
-			.where(isEventOfTheSeries)
-			.groupBy("CalendarEvent.id")
-			.execute(),
-		db
-			.selectFrom("CalendarEventResultPlayer")
-			.innerJoin(
-				"CalendarEventResultTeam",
-				"CalendarEventResultTeam.id",
-				"CalendarEventResultPlayer.teamId",
-			)
-			.innerJoin(
-				"CalendarEvent",
-				"CalendarEvent.id",
-				"CalendarEventResultTeam.eventId",
-			)
-			.innerJoin(
-				"CalendarEventDate",
-				"CalendarEventDate.eventId",
-				"CalendarEvent.id",
-			)
-			.select(({ fn }) => [
-				"CalendarEvent.name",
-				fn.min("CalendarEventDate.startsAt").as("startsAt"),
-			])
-			.where("CalendarEventResultPlayer.userId", "=", userId)
-			.where("CalendarEventResultTeam.placement", "=", 1)
-			// a tournament of the site reports its own results, counted above
-			.where("CalendarEvent.tournamentId", "is", null)
-			.where(isEventOfTheSeries)
-			.groupBy("CalendarEvent.id")
-			.execute(),
-	]);
+	const tournamentWins = await db
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentResult.tournamentId",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select(({ fn }) => [
+			"CalendarEvent.name",
+			fn.min("CalendarEventDate.startsAt").as("startsAt"),
+		])
+		.where("TournamentResult.userId", "=", userId)
+		.where("TournamentResult.placement", "=", 1)
+		.where("TournamentResult.tournamentId", "!=", excludeTournamentId)
+		.where(isEventOfTheSeries)
+		.groupBy("CalendarEvent.id")
+		.execute();
+
+	const reportedWins = await db
+		.selectFrom("CalendarEventResultPlayer")
+		.innerJoin(
+			"CalendarEventResultTeam",
+			"CalendarEventResultTeam.id",
+			"CalendarEventResultPlayer.teamId",
+		)
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.id",
+			"CalendarEventResultTeam.eventId",
+		)
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select(({ fn }) => [
+			"CalendarEvent.name",
+			fn.min("CalendarEventDate.startsAt").as("startsAt"),
+		])
+		.where("CalendarEventResultPlayer.userId", "=", userId)
+		.where("CalendarEventResultTeam.placement", "=", 1)
+		// a tournament of the site reports its own results, counted above
+		.where("CalendarEvent.tournamentId", "is", null)
+		.where(isEventOfTheSeries)
+		.groupBy("CalendarEvent.id")
+		.execute();
 
 	return R.sortBy(
 		[...tournamentWins, ...reportedWins].map((win) => ({
@@ -652,6 +625,39 @@ export async function countActiveParticipants({
 	return result?.count ?? 0;
 }
 
+/** Whether the organization has banned the user, an expired ban not counting. */
+export async function isUserBannedByOrganization({
+	organizationId,
+	userId,
+}: {
+	organizationId: number;
+	userId: number;
+}) {
+	const ban = await bannedUserTable.findOneBy({ organizationId, userId });
+
+	if (!ban) return false;
+
+	if (!ban.expiresAt) return true;
+
+	return isFuture(databaseTimestampToDate(ban.expiresAt));
+}
+
+/** Creates the organization with the owner as its admin. The slug follows from the name. */
+export function insert({ ownerId, name }: { ownerId: number; name: string }) {
+	const slug = mySlugify(name);
+
+	return db.transaction().execute(async (trx) => {
+		const { id } = await organizationTable.insert({ name, slug }, trx);
+
+		await memberTable.insert(
+			{ organizationId: id, userId: ownerId, role: "ADMIN" },
+			trx,
+		);
+
+		return { id, slug };
+	});
+}
+
 interface UpdateArgs
 	extends Pick<
 		Tables["TournamentOrganization"],
@@ -666,13 +672,18 @@ interface UpdateArgs
 		>
 	>;
 	series: Array<
-		Pick<Tables["TournamentOrganizationSeries"], "description" | "name"> & {
-			showLeaderboard: boolean;
-		}
+		Pick<
+			Tables["TournamentOrganizationSeries"],
+			"description" | "name" | "showLeaderboard"
+		>
 	>;
 	badges: number[];
 }
 
+/**
+ * Replaces the organization's profile, members, series and badges. A new series starts with the
+ * tiers of the finalized tournaments matching its name. Returns the slug following from the name.
+ */
 export function update({
 	id,
 	name,
@@ -680,155 +691,87 @@ export function update({
 	socials,
 	avatarImgId,
 	members,
-	series,
+	series: newSeries,
 	badges,
 }: UpdateArgs) {
+	const slug = mySlugify(name);
+
 	return db.transaction().execute(async (trx) => {
 		if (avatarImgId !== undefined) {
-			const current = await trx
-				.selectFrom("TournamentOrganization")
-				.select("avatarImgId")
-				.where("id", "=", id)
-				.executeTakeFirst();
+			const current = await organizationTable.findById(id, trx);
 
 			// a removed or replaced logo leaves its submitted image row unreferenced
 			if (current?.avatarImgId && current.avatarImgId !== avatarImgId) {
-				await trx
-					.deleteFrom("UnvalidatedUserSubmittedImage")
-					.where("id", "=", current.avatarImgId)
-					.execute();
+				await unvalidatedImageTable.deleteById(current.avatarImgId, trx);
 			}
 		}
 
-		const updatedOrg = await trx
-			.updateTable("TournamentOrganization")
-			.set({
-				name,
-				description,
-				slug: mySlugify(name),
-				socials: socials ?? null,
-				...(avatarImgId !== undefined ? { avatarImgId } : {}),
-			})
-			.where("id", "=", id)
-			.returningAll()
-			.executeTakeFirstOrThrow();
+		await organizationTable.updateById(
+			id,
+			{ name, description, slug, socials: socials ?? null, avatarImgId },
+			trx,
+		);
 
-		await trx
-			.deleteFrom("TournamentOrganizationMember")
-			.where("organizationId", "=", id)
-			.execute();
+		await memberTable.delete({ organizationId: id }, trx);
+		await memberTable.insertMany(
+			members.map((member) => ({ organizationId: id, ...member })),
+			trx,
+		);
 
-		await trx
-			.insertInto("TournamentOrganizationMember")
-			.values(
-				members.map((member) => ({
-					organizationId: id,
-					...member,
-				})),
-			)
-			.execute();
+		await seriesTable.delete({ organizationId: id }, trx);
+		if (newSeries.length > 0) {
+			const finalizedTournaments = await finalizedTournamentTiers(id, trx);
 
-		await trx
-			.deleteFrom("TournamentOrganizationSeries")
-			.where("organizationId", "=", id)
-			.execute();
+			await seriesTable.insertMany(
+				newSeries.map((s) => {
+					const substringMatches = [s.name.toLowerCase()];
+					const matchingTiers = finalizedTournaments
+						.filter((t) =>
+							substringMatches.some((match) =>
+								t.name.toLowerCase().includes(match),
+							),
+						)
+						.flatMap((t) => (t.tier === null ? [] : [t.tier]));
 
-		if (series.length > 0) {
-			const insertedSeries = await trx
-				.insertInto("TournamentOrganizationSeries")
-				.values(
-					series.map((s) => ({
+					return {
 						organizationId: id,
 						name: s.name,
 						description: s.description,
-						substringMatches: [s.name.toLowerCase()],
-						showLeaderboard: toDBBoolean(s.showLeaderboard),
-					})),
-				)
-				.returning(["id", "substringMatches"])
-				.execute();
-
-			const finalizedTournaments = await trx
-				.selectFrom("Tournament")
-				.innerJoin(
-					"CalendarEvent",
-					"CalendarEvent.tournamentId",
-					"Tournament.id",
-				)
-				.innerJoin(
-					"CalendarEventDate",
-					"CalendarEventDate.eventId",
-					"CalendarEvent.id",
-				)
-				.select([
-					"Tournament.id as tournamentId",
-					"CalendarEvent.name",
-					"Tournament.tier",
-					"CalendarEventDate.startsAt",
-				])
-				.where("Tournament.isFinalized", "=", true)
-				.where("CalendarEvent.organizationId", "=", id)
-				.where("CalendarEvent.hidden", "=", 0)
-				.orderBy("CalendarEventDate.startsAt", "asc")
-				.execute();
-
-			for (const s of insertedSeries) {
-				const matchingTiers = finalizedTournaments
-					.filter((t) => {
-						const eventNameLower = t.name.toLowerCase();
-						return s.substringMatches.some((match) =>
-							eventNameLower.includes(match.toLowerCase()),
-						);
-					})
-					.flatMap((t) => (t.tier === null ? [] : [t.tier]));
-
-				if (matchingTiers.length === 0) continue;
-
-				const tierHistory = matchingTiers.slice(-TIER_HISTORY_LENGTH);
-
-				await trx
-					.updateTable("TournamentOrganizationSeries")
-					.set({ tierHistory })
-					.where("id", "=", s.id)
-					.execute();
-			}
+						substringMatches,
+						showLeaderboard: s.showLeaderboard,
+						tierHistory:
+							matchingTiers.length > 0
+								? matchingTiers.slice(-TIER_HISTORY_LENGTH)
+								: null,
+					};
+				}),
+				trx,
+			);
 		}
 
-		await trx
-			.deleteFrom("TournamentOrganizationBadge")
-			.where("TournamentOrganizationBadge.organizationId", "=", id)
-			.execute();
+		await badgeTable.delete({ organizationId: id }, trx);
+		await badgeTable.insertMany(
+			badges.map((badgeId) => ({ organizationId: id, badgeId })),
+			trx,
+		);
 
-		await trx
-			.insertInto("TournamentOrganizationBadge")
-			.values(
-				badges.map((badgeId) => ({
-					organizationId: id,
-					badgeId,
-				})),
-			)
-			.execute();
-
-		return updatedOrg;
+		return { id, slug };
 	});
 }
 
+/** Removes the actor from the organization's members. */
 export function deleteOwnMembership(organizationId: number) {
-	return db
-		.deleteFrom("TournamentOrganizationMember")
-		.where("organizationId", "=", organizationId)
-		.where("userId", "=", actorId())
-		.execute();
+	return memberTable.delete({ organizationId, userId: actorId() });
 }
 
-/** Bans a user from the organization, updating the entry if they already are. */
+/** Bans a user from the organization, updating the ban's note and expiry if they already are. */
 export function upsertBannedUser(
 	args: Omit<TablesInsertable["TournamentOrganizationBannedUser"], "updatedAt">,
 ) {
-	return db
-		.insertInto("TournamentOrganizationBannedUser")
-		.values({ ...args, updatedAt: databaseTimestampNow() })
-		.execute();
+	return bannedUserTable.upsert(args, {
+		conflict: ["organizationId", "userId"],
+		update: ["privateNote", "expiresAt"],
+	});
 }
 
 /** Removes a user from the organization's banned list. */
@@ -839,114 +782,26 @@ export function unbanUser({
 	organizationId: number;
 	userId: number;
 }) {
-	return db
-		.deleteFrom("TournamentOrganizationBannedUser")
-		.where("organizationId", "=", organizationId)
-		.where("userId", "=", userId)
-		.execute();
+	return bannedUserTable.delete({ organizationId, userId });
 }
 
-/** All users banned by the organization. */
-export function findAllBannedUsersByOrganizationId(organizationId: number) {
-	return db
-		.selectFrom("TournamentOrganizationBannedUser")
-		.innerJoin("User", "User.id", "TournamentOrganizationBannedUser.userId")
-		.select((eb) => [
-			"TournamentOrganizationBannedUser.privateNote",
-			"TournamentOrganizationBannedUser.updatedAt",
-			"TournamentOrganizationBannedUser.expiresAt",
-			...commonUserSelect(eb),
-		])
-		.where(
-			"TournamentOrganizationBannedUser.organizationId",
-			"=",
-			organizationId,
-		)
-		.orderBy("TournamentOrganizationBannedUser.updatedAt", "desc")
-		.execute();
-}
-
-/** Whether the organization has banned the user. */
-export async function isUserBannedByOrganization({
-	organizationId,
-	userId,
-}: {
-	organizationId: number;
-	userId: number;
-}) {
-	const result = await db
-		.selectFrom("TournamentOrganizationBannedUser")
-		.select(["userId", "expiresAt"])
-		.where("organizationId", "=", organizationId)
-		.where("userId", "=", userId)
-		.executeTakeFirst();
-
-	if (!result) return false;
-
-	if (!result.expiresAt) return true;
-
-	return isFuture(databaseTimestampToDate(result.expiresAt));
-}
-
-/** How many organizations the user is a member of. */
-export async function countOrganizationsByUserId(userId: number) {
-	const result = await db
-		.selectFrom("TournamentOrganizationMember")
-		.select((eb) => eb.fn.count("organizationId").as("count"))
-		.where("userId", "=", userId)
-		.executeTakeFirstOrThrow();
-
-	return Number(result.count);
-}
-
-/** Sets the organization's `isEstablished` flag. */
-export function updateIsEstablished(
+/** Tiers of the organization's finalized tournaments, oldest first. */
+function finalizedTournamentTiers(
 	organizationId: number,
-	isEstablished: boolean,
+	trx: Transaction<DB>,
 ) {
-	return db
-		.updateTable("TournamentOrganization")
-		.set({ isEstablished: toDBBoolean(isEstablished) })
-		.where("id", "=", organizationId)
-		.execute();
-}
-
-export function deleteById(organizationId: number) {
-	return db
-		.deleteFrom("TournamentOrganization")
-		.where("id", "=", organizationId)
-		.execute();
-}
-
-export async function updateSeriesTierHistory({
-	organizationId,
-	eventName,
-	newTier,
-}: {
-	organizationId: number;
-	eventName: string;
-	newTier: TournamentTierNumber;
-}) {
-	const series = await db
-		.selectFrom("TournamentOrganizationSeries")
-		.select(["id", "substringMatches", "tierHistory"])
-		.where("organizationId", "=", organizationId)
-		.execute();
-
-	const eventNameLower = eventName.toLowerCase();
-	const matchingSeries = series.find((s) =>
-		s.substringMatches.some((match) =>
-			eventNameLower.includes(match.toLowerCase()),
-		),
-	);
-
-	if (!matchingSeries) return;
-
-	const newTierHistory = updateTierHistory(matchingSeries.tierHistory, newTier);
-
-	await db
-		.updateTable("TournamentOrganizationSeries")
-		.set({ tierHistory: newTierHistory })
-		.where("id", "=", matchingSeries.id)
+	return trx
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select(["CalendarEvent.name", "Tournament.tier"])
+		.where("Tournament.isFinalized", "=", true)
+		.where("CalendarEvent.organizationId", "=", organizationId)
+		.where("CalendarEvent.hidden", "=", 0)
+		.orderBy("CalendarEventDate.startsAt", "asc")
 		.execute();
 }

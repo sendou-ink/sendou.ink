@@ -795,7 +795,7 @@ describe("tournamentNameParts", () => {
 					id: 1,
 					name: "Sendou's Tournaments",
 					slug: "sendou",
-					isEstablished: 1,
+					isEstablished: true,
 					logoUrl: null,
 					members: [],
 					series: [{ name: "In The Zone" }],

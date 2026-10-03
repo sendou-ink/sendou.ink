@@ -707,7 +707,7 @@ export interface TournamentMatch {
 	/** Leagues: the time the teams (or the organizer) agreed the set is played at. */
 	scheduledAt: number | null;
 	/** Leagues: the organizer set {@link TournamentMatch.scheduledAt}, closing the candidate board for the teams. */
-	scheduleSetByOrganizer: Generated<DBBoolean>;
+	scheduleSetByOrganizer: Generated<boolean>;
 }
 
 /** Leagues: a candidate time one team put on the set's scheduling board. Only exists while open, accepting or rejecting deletes the match's proposals. */
@@ -736,7 +736,7 @@ export interface TournamentMatchGameResult {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	/** Whether the game ended in a knockout. `null` if not collected for this bracket. */
-	ko: DBBoolean | null;
+	ko: boolean | null;
 	matchId: number;
 	mode: ModeShort;
 	number: number;
@@ -880,7 +880,7 @@ export interface TournamentOrganization {
 	description: string | null;
 	socials: JSONColumn<string[] | null>;
 	avatarImgId: number | null;
-	isEstablished: Generated<DBBoolean>;
+	isEstablished: Generated<boolean>;
 }
 
 export interface TournamentOrganizationMember {
@@ -901,7 +901,7 @@ export interface TournamentOrganizationSeries {
 	name: string;
 	description: string | null;
 	substringMatches: JSONColumn<string[]>;
-	showLeaderboard: Generated<DBBoolean>;
+	showLeaderboard: Generated<boolean>;
 	tierHistory: JSONColumn<TournamentTierNumber[] | null>;
 }
 

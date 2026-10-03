@@ -144,7 +144,7 @@ export function Widget({
 								organizationSlug: org.slug,
 							}),
 							name: org.name,
-							logoUrl: org.logoUrl,
+							logoUrl: org.avatarUrl,
 							roleDisplayName:
 								org.roleDisplayName ?? t(`org:roles.${org.role}`),
 						}))}

@@ -45,7 +45,7 @@ import { executeRoll } from "../core/executeRoll.server";
 import * as LeagueScheduling from "../core/LeagueScheduling";
 import { resolveMatchMapList } from "../core/mapList.server";
 import { reportScore } from "../core/reportScore.server";
-import type { FindMatchById } from "../TournamentMatchRepository.server";
+import type { MatchById } from "../TournamentMatchRepository.server";
 import { tournamentMatchChannel } from "../tournament-match-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 		schema: matchPageParamsSchema,
 	});
 	const match = notFoundIfNullish(
-		await TournamentMatchRepository.findMatchById(matchId),
+		await TournamentMatchRepository.matchById(matchId).executeTakeFirst(),
 	);
 
 	if (match.tournamentId !== tournamentId) {
@@ -165,8 +165,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				return null;
 			}
 
-			const results =
-				await TournamentMatchRepository.findResultsByMatchId(matchId);
+			const results = await matchGameResults(matchId);
 			const lastResult = results[results.length - 1];
 			invariant(lastResult, "Last result is missing");
 
@@ -220,7 +219,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 					await TournamentMatchRepository.deleteResultById(lastResult.id, trx);
 
 					for (const number of pickBanEventNumbersToDelete) {
-						await TournamentMatchRepository.deletePickBanEvent(
+						await TournamentMatchRepository.deletePickBanEvents(
 							{ matchId, number },
 							trx,
 						);
@@ -282,8 +281,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			await db.transaction().execute(async (trx) => {
 				if (typeof data.ko === "boolean") {
-					await TournamentMatchRepository.updateResultKo(
-						{ id: result.id, ko: data.ko },
+					await TournamentMatchRepository.updateResultById(
+						result.id,
+						{ ko: data.ko },
 						trx,
 					);
 				}
@@ -312,8 +312,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "BAN_PICK": {
-			const results =
-				await TournamentMatchRepository.findResultsByMatchId(matchId);
+			const results = await matchGameResults(matchId);
 
 			invariant(
 				match.opponentOne?.id && match.opponentTwo?.id,
@@ -473,8 +472,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Match can't be reopened, bracket has progressed",
 			);
 
-			const results =
-				await TournamentMatchRepository.findResultsByMatchId(matchId);
+			const results = await matchGameResults(matchId);
 			const lastResult = results[results.length - 1];
 
 			const followingMatches = tournament.followingMatches(match.id);
@@ -490,8 +488,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 					// round robin edge case: leave the match as is, lock it and unlock later to continue (should not really ever happen)
 					if (bracketFormat !== "round_robin") {
 						for (const followingMatch of followingMatches) {
-							await TournamentMatchRepository.deletePickBanEventsByMatchId(
-								followingMatch.id,
+							await TournamentMatchRepository.deletePickBanEvents(
+								{ matchId: followingMatch.id },
 								trx,
 							);
 						}
@@ -627,11 +625,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 			endedDroppedMatchIds = endedMatchIds;
 
 			// no further games: trim weapons reported in advance for maps beyond the games played
-			const playedResults =
-				await TournamentMatchRepository.findResultsByMatchId(matchId);
 			await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
 				tournamentMatchId: matchId,
-				gameCount: playedResults.length,
+				gameCount: await TournamentMatchRepository.gameResults()
+					.where({ matchId })
+					.count(),
 			});
 
 			emitMatchUpdate = true;
@@ -681,10 +679,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 			errorToastIfFalsy(team, "Not a member of either team");
 
 			const schedule = leagueSchedule(tournament, match);
-			const proposals =
-				await TournamentMatchRepository.findScheduleProposalsByMatchId(
-					match.id,
-				);
+			const proposals = await TournamentMatchRepository.scheduleProposals()
+				.where({ matchId: match.id })
+				.execute();
 			const proposedAts = R.unique(data.times.map(dateToDatabaseTimestamp));
 			const error = LeagueScheduling.validateProposals({
 				proposedAts,
@@ -805,7 +802,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			errorToastIfFalsy(match.scheduledAt !== null, "Set has no time yet");
 
 			const deletedCount =
-				await TournamentMatchRepository.deleteScheduleProposalsByTeam({
+				await TournamentMatchRepository.deleteScheduleProposals({
 					matchId: match.id,
 					tournamentTeamId: team.opponent.id,
 				});
@@ -918,10 +915,7 @@ const PROPOSAL_ERROR_MESSAGES: Record<LeagueScheduling.ProposalError, string> =
 		ORGANIZER_LOCKED: "The organizer set the time of this set",
 	};
 
-function leagueSchedule(
-	tournament: Tournament,
-	match: NonNullable<FindMatchById>,
-) {
+function leagueSchedule(tournament: Tournament, match: MatchById) {
 	const now = databaseTimestampNow();
 
 	return {
@@ -940,7 +934,7 @@ function leagueSchedule(
 /** The user's team of the set with the opposing team's roster next to it, null when they play for neither. */
 function leagueTeamOfUser(
 	tournament: Tournament,
-	match: NonNullable<FindMatchById>,
+	match: MatchById,
 	userId: number,
 ) {
 	const teamIds = [match.opponentOne?.id, match.opponentTwo?.id];
@@ -974,7 +968,7 @@ function leagueTeamOfUser(
 }
 
 function sendLeagueChatMessage(
-	match: NonNullable<FindMatchById>,
+	match: MatchById,
 	type: PersistedSystemMessageType,
 	authorUserId: number,
 ) {
@@ -994,7 +988,7 @@ async function notifyLeagueMatchScheduled({
 	actorId,
 }: {
 	tournament: Tournament;
-	match: NonNullable<FindMatchById>;
+	match: MatchById;
 	actorId: number;
 }) {
 	await resolveNotifications({
@@ -1024,10 +1018,7 @@ async function notifyLeagueMatchScheduled({
 }
 
 /** Room of the brackets page views rendering this match; the whole tournament's room if its bracket can't be resolved. */
-function matchResultsRoom(
-	tournament: Tournament,
-	match: NonNullable<FindMatchById>,
-) {
+function matchResultsRoom(tournament: Tournament, match: MatchById) {
 	const bracketIdx = tournament.matchIdToBracketIdx(match.id);
 
 	if (typeof bracketIdx !== "number") {
@@ -1071,9 +1062,13 @@ function canReportTournamentScore({
 	isMemberOfATeamInTheMatch,
 	isOrganizer,
 }: {
-	match: NonNullable<FindMatchById>;
+	match: MatchById;
 	isMemberOfATeamInTheMatch: boolean;
 	isOrganizer: boolean;
 }) {
 	return !match.winnerSide && (isMemberOfATeamInTheMatch || isOrganizer);
+}
+
+function matchGameResults(matchId: number) {
+	return TournamentMatchRepository.gameResults().where({ matchId }).execute();
 }

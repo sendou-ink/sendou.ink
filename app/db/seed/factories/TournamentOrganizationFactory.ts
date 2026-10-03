@@ -44,7 +44,9 @@ export const { create, createMany } = defineFactory({
 		}: Options,
 	) => {
 		if (isEstablished) {
-			await TournamentOrganizationRepository.updateIsEstablished(org.id, true);
+			await TournamentOrganizationRepository.updateById(org.id, {
+				isEstablished: true,
+			});
 		}
 
 		if (
@@ -75,7 +77,10 @@ async function applyUpdate(
 		avatarFileName,
 	}: Omit<Options, "isEstablished">,
 ) {
-	const org = await TournamentOrganizationRepository.findBySlug(slug);
+	const org =
+		await TournamentOrganizationRepository.organizationBySlug(
+			slug,
+		).executeTakeFirst();
 	invariant(org, "Organization not found");
 
 	const avatar = avatarFileName

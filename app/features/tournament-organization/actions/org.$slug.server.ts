@@ -37,9 +37,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			requirePermission(organization, "BAN");
 
 			const allBannedUsers =
-				await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
-					organization.id,
-				);
+				await TournamentOrganizationRepository.bannedUsers()
+					.where({ organizationId: organization.id })
+					.execute();
 			const currentlyBannedUsers = allBannedUsers.filter(
 				(bu) =>
 					!bu.expiresAt || isFuture(databaseTimestampToDate(bu.expiresAt)),
@@ -85,10 +85,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		case "UPDATE_IS_ESTABLISHED": {
 			requireRole("ADMIN");
 
-			await TournamentOrganizationRepository.updateIsEstablished(
-				organization.id,
-				data.isEstablished,
-			);
+			await TournamentOrganizationRepository.updateById(organization.id, {
+				isEstablished: data.isEstablished,
+			});
 
 			logger.info(
 				`Organization isEstablished updated: organization=${organization.name} (${organization.id}), isEstablished=${data.isEstablished}, updated by userId=${user.id}`,

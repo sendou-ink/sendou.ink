@@ -18,7 +18,7 @@ import { syncCached } from "~/utils/cache.server";
 import { logger } from "~/utils/logger";
 import { unwrap } from "~/utils/result";
 import { assertUnreachable } from "~/utils/types";
-import type { FindMatchById } from "../TournamentMatchRepository.server";
+import type { MatchById } from "../TournamentMatchRepository.server";
 
 interface ResolveCurrentMapListArgs {
 	tournamentId: number;
@@ -100,7 +100,7 @@ export async function resolveMatchMapList({
 	match,
 	tournament,
 }: {
-	match: FindMatchById;
+	match: MatchById;
 	tournament: Tournament;
 }): Promise<TournamentMapListMap[] | null> {
 	if (!match.opponentOne?.id || !match.opponentTwo?.id) return null;

@@ -44,9 +44,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	const lastResultAts = new Map(
 		(
-			await TournamentMatchRepository.findLastResultAtsByTournamentId(
-				tournamentId,
-			)
+			await TournamentMatchRepository.matches()
+				.ofTournament(tournamentId)
+				.withLastResultAt()
+				.execute()
 		).map((row) => [row.id, row.lastResultAt]),
 	);
 	const now = databaseTimestampNow();

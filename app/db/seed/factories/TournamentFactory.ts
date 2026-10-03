@@ -474,7 +474,9 @@ export async function backdateMatch({
 }) {
 	await backdate("TournamentMatch", matchId, { startedAt: playedAt });
 
-	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
+	const results = await TournamentMatchRepository.gameResults()
+		.where({ matchId })
+		.execute();
 	for (const [index, result] of results.entries()) {
 		await backdate("TournamentMatchGameResult", result.id, {
 			createdAt: addMinutes(playedAt, (index + 1) * MINUTES_PER_GAME),
@@ -572,7 +574,8 @@ function winningTeam(tournament: Awaited<ReturnType<typeof tournamentFromDB>>) {
 }
 
 async function findMatch(matchId: number) {
-	const match = await TournamentMatchRepository.findMatchById(matchId);
+	const match =
+		await TournamentMatchRepository.matchById(matchId).executeTakeFirst();
 	invariant(match, `Match ${matchId} not found`);
 
 	return match;

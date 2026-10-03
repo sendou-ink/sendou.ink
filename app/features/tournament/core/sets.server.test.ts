@@ -28,9 +28,9 @@ function playedSetRow(
 		stageId: 1,
 		section: "winners",
 		matches: [
-			{ mode: "SZ", stageId: 1, source: "BOTH", wasWinner: 1 },
-			{ mode: "TC", stageId: 2, source: "BOTH", wasWinner: 0 },
-			{ mode: "RM", stageId: 3, source: "BOTH", wasWinner: 0 },
+			{ mode: "SZ", stageId: 1, source: "BOTH", wasWinner: true },
+			{ mode: "TC", stageId: 2, source: "BOTH", wasWinner: false },
+			{ mode: "RM", stageId: 3, source: "BOTH", wasWinner: false },
 		],
 		players: [],
 		...overrides,

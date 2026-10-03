@@ -47,6 +47,7 @@ import * as TournamentMatchVodRepository from "~/features/tournament-bracket/Tou
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "~/features/tournament-organization/TournamentOrganizationSeriesRepository.server";
 import { LUTI_ORGANIZATION_ID } from "~/features/tournament-organization/tournament-organization-constants";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
@@ -1062,14 +1063,25 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	add(
-		"TournamentMatchRepository.findAllByChatRoomIds",
+		"TournamentMatchRepository.matches.chatRoomOwners",
 		fx.openChatRoomIdsByType?.TOURNAMENT_MATCH ?? null,
-		(roomIds) => TournamentMatchRepository.findAllByChatRoomIds(roomIds),
+		(roomIds) =>
+			TournamentMatchRepository.matches()
+				.with(
+					refine("TournamentMatch", (qb) =>
+						qb.where("TournamentMatch.chatRoomId", "in", roomIds),
+					),
+				)
+				.withColumns(["chatRoomId"])
+				.withOpponents()
+				.withTournamentId()
+				.execute(),
 	);
 	add(
-		"TournamentMatchRepository.findMatchById",
+		"TournamentMatchRepository.matchById",
 		fx.heavyTournamentMatchId,
-		(matchId) => TournamentMatchRepository.findMatchById(matchId),
+		(matchId) =>
+			TournamentMatchRepository.matchById(matchId).executeTakeFirst(),
 	);
 	add(
 		"TournamentMatchRepository.findResultById",
@@ -1077,9 +1089,13 @@ export function buildCases(fx: Fixtures): {
 		(resultId) => TournamentMatchRepository.findResultById(resultId),
 	);
 	add(
-		"TournamentMatchRepository.findResultsByMatchId",
+		"TournamentMatchRepository.gameResults.participants",
 		fx.heavyTournamentMatchId,
-		(matchId) => TournamentMatchRepository.findResultsByMatchId(matchId),
+		(matchId) =>
+			TournamentMatchRepository.gameResults()
+				.where({ matchId })
+				.withParticipants()
+				.execute(),
 	);
 	add(
 		"TournamentMatchRepository.findAllResultsByTournamentId",
@@ -1102,16 +1118,21 @@ export function buildCases(fx: Fixtures): {
 			TournamentMatchRepository.findByTournamentTeamId(tournamentTeamId),
 	);
 	add(
-		"TournamentMatchRepository.findScheduleProposalsByMatchId",
+		"TournamentMatchRepository.scheduleProposals",
 		fx.scheduleProposal?.matchId ?? fx.heavyTournamentMatchId,
 		(matchId) =>
-			TournamentMatchRepository.findScheduleProposalsByMatchId(matchId),
+			TournamentMatchRepository.scheduleProposals()
+				.where({ matchId })
+				.execute(),
 	);
 	add(
-		"TournamentMatchRepository.findLastResultAtsByTournamentId",
+		"TournamentMatchRepository.matches.lastResultAt",
 		fx.heaviestBracketTournamentId,
 		(tournamentId) =>
-			TournamentMatchRepository.findLastResultAtsByTournamentId(tournamentId),
+			TournamentMatchRepository.matches()
+				.ofTournament(tournamentId)
+				.withLastResultAt()
+				.execute(),
 	);
 	add(
 		"TournamentMatchRepository.findScheduledByUserIds",
@@ -1134,13 +1155,15 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 	add(
-		"TournamentMatchRepository.findScheduledBetween",
+		"TournamentMatchRepository.matches.scheduledBetween",
 		fx.availabilityWindow,
 		(window) =>
-			TournamentMatchRepository.findScheduledBetween({
-				startsAt: window.startsAt,
-				endsAt: window.endsAt,
-			}),
+			TournamentMatchRepository.matches()
+				.undecided()
+				.scheduledBetween(window.startsAt, window.endsAt)
+				.withTournamentId()
+				.withTeams()
+				.execute(),
 	);
 	add(
 		"TournamentMatchRepository.findScheduleProposalById",
@@ -1149,14 +1172,29 @@ export function buildCases(fx: Fixtures): {
 			TournamentMatchRepository.findScheduleProposalById(proposal.id),
 	);
 
-	add("TournamentOrganizationRepository.findBySlug", fx.heavyOrg, (org) =>
-		TournamentOrganizationRepository.findBySlug(org.slug),
+	add(
+		"TournamentOrganizationRepository.organizationBySlug",
+		fx.heavyOrg,
+		(org) =>
+			TournamentOrganizationRepository.organizationBySlug(
+				org.slug,
+			).executeTakeFirst(),
 	);
-	add("TournamentOrganizationRepository.findByUserId", fx.heavyOrg, (org) =>
-		TournamentOrganizationRepository.findByUserId(org.memberUserId),
+	add(
+		"TournamentOrganizationRepository.organizations.forMember",
+		fx.heavyOrg,
+		(org) =>
+			TournamentOrganizationRepository.organizations()
+				.forMember(org.memberUserId)
+				.withLogo()
+				.execute(),
 	);
-	addStatic("TournamentOrganizationRepository.searchByName", () =>
-		TournamentOrganizationRepository.searchByName(SEARCH_QUERY),
+	addStatic("TournamentOrganizationRepository.organizations.search", () =>
+		TournamentOrganizationRepository.organizations()
+			.nameContaining(SEARCH_QUERY.query)
+			.withLogo()
+			.limit(SEARCH_QUERY.limit)
+			.execute(),
 	);
 	add(
 		"TournamentOrganizationRepository.findEventsByMonth",
@@ -1169,9 +1207,14 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 	add(
-		"TournamentOrganizationRepository.findAllUnfinalizedEvents",
+		"TournamentRepository.tournaments.unfinalizedOfOrganization",
 		fx.heavyOrg,
-		(org) => TournamentOrganizationRepository.findAllUnfinalizedEvents(org.id),
+		(org) =>
+			TournamentRepository.tournaments()
+				.includingHidden()
+				.ofOrganization(org.id)
+				.where({ isFinalized: false })
+				.execute(),
 	);
 	add(
 		"TournamentOrganizationRepository.findPaginatedEventsBySeries",
@@ -1202,13 +1245,11 @@ export function buildCases(fx: Fixtures): {
 				endTime: org.windowEnd,
 			}),
 	);
-	add(
-		"TournamentOrganizationRepository.findAllBannedUsersByOrganizationId",
-		fx.heavyOrg,
-		(org) =>
-			TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
-				org.id,
-			),
+	add("TournamentOrganizationRepository.bannedUsers.user", fx.heavyOrg, (org) =>
+		TournamentOrganizationRepository.bannedUsers()
+			.where({ organizationId: org.id })
+			.withUser()
+			.execute(),
 	);
 	add(
 		"TournamentOrganizationRepository.isUserBannedByOrganization",
@@ -1220,15 +1261,25 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 	add(
-		"TournamentOrganizationRepository.countOrganizationsByUserId",
+		"TournamentOrganizationRepository.organizations.forMember.count",
 		fx.heavyOrg,
 		(org) =>
-			TournamentOrganizationRepository.countOrganizationsByUserId(
-				org.memberUserId,
-			),
+			TournamentOrganizationRepository.organizations()
+				.forMember(org.memberUserId)
+				.count(),
 	);
-	addStatic("TournamentOrganizationRepository.findAllSeries", () =>
-		TournamentOrganizationRepository.findAllSeries(),
+	addStatic("TournamentOrganizationSeriesRepository.series.tierHistory", () =>
+		TournamentOrganizationSeriesRepository.series()
+			.withColumns(["tierHistory"])
+			.execute(),
+	);
+	add(
+		"TournamentOrganizationSeriesRepository.series.ofOrganizations",
+		fx.heavyOrg,
+		(org) =>
+			TournamentOrganizationSeriesRepository.series()
+				.ofOrganizations([org.id])
+				.execute(),
 	);
 	addStatic(
 		"TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts",

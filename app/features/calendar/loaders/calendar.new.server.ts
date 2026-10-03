@@ -152,9 +152,10 @@ export async function findValidOrganizations(
 	userId: number,
 	isTournamentAdder: boolean,
 ) {
-	const orgs = await TournamentOrganizationRepository.findByUserId(userId, {
-		roles: ["ADMIN", "ORGANIZER"],
-	});
+	const orgs = await TournamentOrganizationRepository.organizations()
+		.forMember(userId, ["ADMIN", "ORGANIZER"])
+		.withColumns(["isEstablished"])
+		.execute();
 
 	if (isTournamentAdder) {
 		return [

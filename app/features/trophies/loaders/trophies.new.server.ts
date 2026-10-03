@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import type { QueryRow } from "~/db/entity-query";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "~/features/tournament-organization/TournamentOrganizationSeriesRepository.server";
 import { hasPermission } from "~/modules/permissions/utils";
 import type { SerializeFrom } from "~/utils/remix";
 import * as TrophyRepository from "../TrophyRepository.server";
@@ -27,13 +27,15 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 
 	const backfillTrophies = canBackfill ? trophies : [];
 	const backfillSeries = (
-		await TournamentOrganizationRepository.findAllSeriesByOrganizationIds(
-			R.unique(
-				backfillTrophies.flatMap((trophy) =>
-					trophy.organizationId ? [trophy.organizationId] : [],
+		await TournamentOrganizationSeriesRepository.series()
+			.ofOrganizations(
+				R.unique(
+					backfillTrophies.flatMap((trophy) =>
+						trophy.organizationId ? [trophy.organizationId] : [],
+					),
 				),
-			),
-		)
+			)
+			.execute()
 	).map(({ id, name, organizationId }) => ({ id, name, organizationId }));
 
 	const allItems = canReview ? rawItems : rawItems.map(stripReviewerInfo);

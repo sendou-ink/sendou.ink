@@ -60,7 +60,7 @@ export async function findAllApiTokens() {
 				eb("User.isTournamentOrganizer", "=", true),
 				eb("User.patronTier", ">=", 2),
 				eb.and([
-					eb("TournamentOrganization.isEstablished", "=", 1),
+					eb("TournamentOrganization.isEstablished", "=", true),
 					eb.or([
 						eb("TournamentOrganizationMember.role", "=", "ADMIN"),
 						eb("TournamentOrganizationMember.role", "=", "ORGANIZER"),

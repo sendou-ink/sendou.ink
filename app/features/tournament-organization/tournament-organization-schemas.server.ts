@@ -8,11 +8,9 @@ export const newOrganizationSchemaServer = v.objectAsync({
 	name: v.pipeAsync(
 		newOrganizationSchema.entries.name,
 		v.checkAsync(async (name) => {
-			const existing = await TournamentOrganizationRepository.findBySlug(
+			return !(await TournamentOrganizationRepository.existsBySlug(
 				mySlugify(name),
-			);
-
-			return !existing;
+			));
 		}, "forms:errors.duplicateOrgName"),
 	),
 });

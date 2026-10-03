@@ -1,17 +1,23 @@
-import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
+import {
+	type ExpressionBuilder,
+	type NotNull,
+	sql,
+	type Transaction,
+} from "kysely";
+import { crud } from "~/db/crud";
+import { defineQuery, type QueryRow, refine } from "~/db/entity-query";
 import { db } from "~/db/sql";
-import type { DB } from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { Side } from "~/features/tournament-bracket/core/engine/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { invariant } from "~/utils/invariant";
 import {
-	commonUserJsonObject,
+	asBoolean,
 	commonUserSelect,
 	jsonArrayFrom,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
-import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
@@ -23,124 +29,214 @@ const opponentTwoScore = sql<
 	number | null
 >`"TournamentMatch"."opponentTwo" ->> '$.score'`;
 
-/** Matches owning the given chat rooms, with the tournament they belong to. */
-export async function findAllByChatRoomIds(chatRoomIds: number[]) {
-	if (chatRoomIds.length === 0) return [];
+const matchTable = crud("TournamentMatch");
+const resultTable = crud("TournamentMatchGameResult");
+const participantTable = crud("TournamentMatchGameResultParticipant");
+const pickBanEventTable = crud("TournamentMatchPickBanEvent");
+const proposalTable = crud("TournamentMatchScheduleProposal");
 
-	return db
-		.selectFrom("TournamentMatch")
-		.innerJoin(
-			"TournamentStage",
-			"TournamentStage.id",
-			"TournamentMatch.stageId",
-		)
-		.innerJoin(
-			"CalendarEvent",
-			"CalendarEvent.tournamentId",
-			"TournamentStage.tournamentId",
-		)
-		.select((eb) => [
-			"TournamentMatch.id",
-			"TournamentMatch.chatRoomId",
-			"TournamentMatch.opponentOne",
-			"TournamentMatch.opponentTwo",
-			"TournamentStage.tournamentId",
-			"CalendarEvent.name as tournamentName",
-			tournamentLogoWithDefault(eb).as("logoUrl"),
-		])
-		.where("TournamentMatch.chatRoomId", "in", chatRoomIds)
-		.$narrowType<{ chatRoomId: NotNull }>()
-		.execute();
-}
+export const {
+	findById: findResultById,
+	insert: insertResult,
+	updateById: updateResultById,
+	deleteById: deleteResultById,
+} = resultTable;
+export const { delete: deletePickBanEvents } = pickBanEventTable;
+export const {
+	findById: findScheduleProposalById,
+	delete: deleteScheduleProposals,
+} = proposalTable;
 
-export type FindMatchById = NonNullable<Unwrapped<typeof findMatchById>>;
-export async function findMatchById(id: number) {
-	const row = await db
-		.selectFrom("TournamentMatch")
-		.innerJoin(
-			"TournamentStage",
-			"TournamentStage.id",
-			"TournamentMatch.stageId",
-		)
-		.innerJoin(
-			"TournamentRound",
-			"TournamentRound.id",
-			"TournamentMatch.roundId",
-		)
-		.innerJoin("Tournament", "Tournament.id", "TournamentStage.tournamentId")
-		.select(({ eb }) => [
-			"TournamentMatch.id",
-			"TournamentMatch.groupId",
-			"TournamentMatch.opponentOne",
-			"TournamentMatch.opponentTwo",
-			"TournamentMatch.winnerSide",
-			"TournamentMatch.chatRoomId",
-			"TournamentMatch.startedAt",
-			"TournamentMatch.scheduledAt",
-			"TournamentMatch.scheduleSetByOrganizer",
-			"Tournament.mapPickingStyle",
-			"TournamentRound.id as roundId",
-			"TournamentRound.maps as roundMaps",
-			"TournamentRound.isPlayableAt as roundIsPlayableAt",
-			"Tournament.id as tournamentId",
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentTeamMember")
-					.innerJoin("User", "User.id", "TournamentTeamMember.userId")
-					.select((memberEb) => [
-						...commonUserSelect(memberEb, { inTournament: true }),
-						"TournamentTeamMember.tournamentTeamId",
-						sql<
-							string | null
-						>`coalesce("TournamentTeamMember"."inGameName", "User"."inGameName")`.as(
-							"inGameName",
-						),
-						"User.pronouns",
-					])
-					.where(({ or, eb: innerEb }) =>
-						or([
-							innerEb(
-								"TournamentTeamMember.tournamentTeamId",
-								"=",
-								opponentOneId,
+/** Tournament matches, in no particular order unless a step sorts. */
+export const matches = defineQuery({
+	root: "TournamentMatch",
+	// opponents are a step: a tournament's matches are listed without them on hot paths, parsing their JSON is most of the read
+	select: (qb) => qb.select(["TournamentMatch.id"]),
+	vocabulary: () => ({
+		/** Both opponents (`null` for a BYE or a slot still waiting for its team) and the side that won, `null` while undecided. */
+		withOpponents: () =>
+			refine("TournamentMatch", (qb) =>
+				qb.select([
+					"TournamentMatch.opponentOne",
+					"TournamentMatch.opponentTwo",
+					"TournamentMatch.winnerSide",
+				]),
+			),
+		ofTournament: (tournamentId: number) =>
+			refine("TournamentMatch", (qb) =>
+				qb.where("TournamentMatch.stageId", "in", (eb) =>
+					eb
+						.selectFrom("TournamentStage")
+						.select("TournamentStage.id")
+						.where("TournamentStage.tournamentId", "=", tournamentId),
+				),
+			),
+		undecided: () =>
+			refine("TournamentMatch", (qb) =>
+				qb.where("TournamentMatch.winnerSide", "is", null),
+			),
+		/** Leagues: sets the teams agreed to play at or after `startsAt` and before `endsAt`. */
+		scheduledBetween: (startsAt: number, endsAt: number) =>
+			refine("TournamentMatch", (qb) =>
+				qb
+					.where("TournamentMatch.scheduledAt", ">=", startsAt)
+					.where("TournamentMatch.scheduledAt", "<", endsAt),
+			),
+		/** The id of the tournament the match is played in. */
+		withTournamentId: () =>
+			refine("TournamentMatch", (qb) =>
+				qb.select((eb) =>
+					stageOf(eb)
+						.select("TournamentStage.tournamentId")
+						.$asScalar()
+						.$notNull()
+						.as("tournamentId"),
+				),
+			),
+		withMapPickingStyle: () =>
+			refine("TournamentMatch", (qb) =>
+				qb.select((eb) =>
+					eb
+						.selectFrom("Tournament")
+						.select("Tournament.mapPickingStyle")
+						.where("Tournament.id", "=", (tournamentEb) =>
+							stageOf(tournamentEb).select("TournamentStage.tournamentId"),
+						)
+						.$asScalar()
+						.$notNull()
+						.as("mapPickingStyle"),
+				),
+			),
+		/** The round's maps (`roundMaps`, `bestOf` their count) and when a league round opens (`roundIsPlayableAt`). */
+		withRoundMaps: () =>
+			refine("TournamentMatch", (qb) =>
+				qb.select((eb) => [
+					roundOf(eb)
+						.select("TournamentRound.maps")
+						.$asScalar()
+						.$notNull()
+						.as("roundMaps"),
+					roundOf(eb)
+						.select("TournamentRound.isPlayableAt")
+						.$asScalar()
+						.as("roundIsPlayableAt"),
+				]),
+			).mapRows(({ roundMaps, roundIsPlayableAt }) => ({
+				roundMaps,
+				roundIsPlayableAt,
+				bestOf: roundMaps.count,
+			})),
+		/** When the last game was reported, `null` before the first one. */
+		withLastResultAt: () =>
+			refine("TournamentMatch", (qb) =>
+				qb.select((eb) =>
+					eb
+						.selectFrom("TournamentMatchGameResult")
+						.select(({ fn }) =>
+							fn.max("TournamentMatchGameResult.createdAt").as("lastResultAt"),
+						)
+						.whereRef(
+							"TournamentMatchGameResult.matchId",
+							"=",
+							"TournamentMatch.id",
+						)
+						.as("lastResultAt"),
+				),
+			),
+		/** Both teams' names and the user ids of their members. */
+		withTeams: () =>
+			refine("TournamentMatch", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TournamentTeam")
+							.select((teamEb) => [
+								"TournamentTeam.id",
+								"TournamentTeam.name",
+								jsonArrayFrom(
+									teamEb
+										.selectFrom("TournamentTeamMember")
+										.select("TournamentTeamMember.userId")
+										.whereRef(
+											"TournamentTeamMember.tournamentTeamId",
+											"=",
+											"TournamentTeam.id",
+										),
+								).as("members"),
+							])
+							.where((teamEb) =>
+								teamEb.or([
+									teamEb("TournamentTeam.id", "=", opponentOneId),
+									teamEb("TournamentTeam.id", "=", opponentTwoId),
+								]),
 							),
-							innerEb(
+					).as("teams"),
+				),
+			),
+		/** Members of both teams with their in-game names and pronouns. */
+		withPlayers: () =>
+			refine("TournamentMatch", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TournamentTeamMember")
+							.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+							.select((memberEb) => [
+								...commonUserSelect(memberEb, { inTournament: true }),
 								"TournamentTeamMember.tournamentTeamId",
-								"=",
-								opponentTwoId,
+								sql<
+									string | null
+								>`coalesce("TournamentTeamMember"."inGameName", "User"."inGameName")`.as(
+									"inGameName",
+								),
+								"User.pronouns",
+							])
+							.where((memberEb) =>
+								memberEb.or([
+									memberEb(
+										"TournamentTeamMember.tournamentTeamId",
+										"=",
+										opponentOneId,
+									),
+									memberEb(
+										"TournamentTeamMember.tournamentTeamId",
+										"=",
+										opponentTwoId,
+									),
+								]),
 							),
-						]),
-					),
-			).as("players"),
+					).as("players"),
+				),
+			),
+	}),
+});
+
+export type MatchById = QueryRow<ReturnType<typeof matchById>>;
+
+/** What the match page needs of the match: its round, scheduling, tournament and both teams' players. */
+export function matchById(matchId: number) {
+	return matches()
+		.where({ id: matchId })
+		.withOpponents()
+		.withColumns([
+			"groupId",
+			"roundId",
+			"chatRoomId",
+			"startedAt",
+			"scheduledAt",
+			"scheduleSetByOrganizer",
 		])
-		.where("TournamentMatch.id", "=", id)
-		.executeTakeFirst();
-
-	if (!row) return;
-
-	return {
-		...row,
-		bestOf: row.roundMaps.count,
-	};
+		.withTournamentId()
+		.withMapPickingStyle()
+		.withRoundMaps()
+		.withPlayers();
 }
 
-export function findResultById(id: number) {
-	return db
-		.selectFrom("TournamentMatchGameResult")
-		.select([
-			"TournamentMatchGameResult.id",
-			"TournamentMatchGameResult.matchId",
-			"TournamentMatchGameResult.ko",
-			"TournamentMatchGameResult.winnerTeamId",
-		])
-		.where("TournamentMatchGameResult.id", "=", id)
-		.executeTakeFirst();
-}
-
-export function findResultsByMatchId(matchId: number) {
-	return db
-		.selectFrom("TournamentMatchGameResult")
-		.select(({ eb }) => [
+/** Reported games of matches in the order they were played. */
+export const gameResults = defineQuery({
+	root: "TournamentMatchGameResult",
+	select: (qb) =>
+		qb.select([
 			"TournamentMatchGameResult.id",
 			"TournamentMatchGameResult.winnerTeamId",
 			"TournamentMatchGameResult.stageId",
@@ -148,112 +244,47 @@ export function findResultsByMatchId(matchId: number) {
 			"TournamentMatchGameResult.source",
 			"TournamentMatchGameResult.createdAt",
 			"TournamentMatchGameResult.ko",
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentMatchGameResultParticipant")
-					.select([
-						"TournamentMatchGameResultParticipant.tournamentTeamId",
-						"TournamentMatchGameResultParticipant.userId",
-					])
-					.whereRef(
-						"TournamentMatchGameResultParticipant.matchGameResultId",
-						"=",
-						"TournamentMatchGameResult.id",
-					),
-			).as("participants"),
-		])
-		.where("TournamentMatchGameResult.matchId", "=", matchId)
-		.orderBy("TournamentMatchGameResult.number", "asc")
-		.execute();
-}
+		]),
+	defaultSort: [["TournamentMatchGameResult.number", "asc"]],
+	vocabulary: () => ({
+		/** Who played the game for which team. */
+		withParticipants: () =>
+			refine("TournamentMatchGameResult", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TournamentMatchGameResultParticipant")
+							.select([
+								"TournamentMatchGameResultParticipant.tournamentTeamId",
+								"TournamentMatchGameResultParticipant.userId",
+							])
+							.whereRef(
+								"TournamentMatchGameResultParticipant.matchGameResultId",
+								"=",
+								"TournamentMatchGameResult.id",
+							),
+					).as("participants"),
+				),
+			),
+	}),
+});
 
-/** Inserts a single game result, returning the id it was given. */
-export function insertResult(
-	args: Insertable<DB["TournamentMatchGameResult"]>,
-	trx?: Transaction<DB>,
-) {
-	return (trx ?? db)
-		.insertInto("TournamentMatchGameResult")
-		.values(args)
-		.returning("id")
-		.executeTakeFirstOrThrow();
-}
+export type GameResult = QueryRow<ReturnType<typeof gameResults>>;
 
-/** Updates the KO status of a single game result. */
-export function updateResultKo(
-	args: { id: number; ko: boolean },
-	trx?: Transaction<DB>,
-) {
-	return (trx ?? db)
-		.updateTable("TournamentMatchGameResult")
-		.set({ ko: toDBBoolean(args.ko) })
-		.where("TournamentMatchGameResult.id", "=", args.id)
-		.execute();
-}
-
-/** Sets the players who participated in a game result, replacing any existing ones. */
-export async function setParticipants(
-	args: {
-		resultId: number;
-		participants: Array<
-			Pick<
-				Insertable<DB["TournamentMatchGameResultParticipant"]>,
-				"userId" | "tournamentTeamId"
-			>
-		>;
-	},
-	trx: Transaction<DB>,
-) {
-	await trx
-		.deleteFrom("TournamentMatchGameResultParticipant")
-		.where(
-			"TournamentMatchGameResultParticipant.matchGameResultId",
-			"=",
-			args.resultId,
-		)
-		.execute();
-
-	await trx
-		.insertInto("TournamentMatchGameResultParticipant")
-		.values(
-			args.participants.map((participant) => ({
-				...participant,
-				matchGameResultId: args.resultId,
-			})),
-		)
-		.execute();
-}
-
-/** Deletes a single game result by its id. */
-export function deleteResultById(id: number, trx?: Transaction<DB>) {
-	return (trx ?? db)
-		.deleteFrom("TournamentMatchGameResult")
-		.where("TournamentMatchGameResult.id", "=", id)
-		.execute();
-}
-
-/** Deletes all pick/ban events belonging to a match. */
-export function deletePickBanEventsByMatchId(
-	matchId: number,
-	trx?: Transaction<DB>,
-) {
-	return (trx ?? db)
-		.deleteFrom("TournamentMatchPickBanEvent")
-		.where("TournamentMatchPickBanEvent.matchId", "=", matchId)
-		.execute();
-}
-
-/** Deletes a single pick/ban event by its match and event number. */
-export function deletePickBanEvent(
-	args: { matchId: number; number: number },
-	trx?: Transaction<DB>,
-) {
-	return (trx ?? db)
-		.deleteFrom("TournamentMatchPickBanEvent")
-		.where("TournamentMatchPickBanEvent.matchId", "=", args.matchId)
-		.where("TournamentMatchPickBanEvent.number", "=", args.number)
-		.execute();
-}
+/** Candidate times on league sets' scheduling boards, earliest first. */
+export const scheduleProposals = defineQuery({
+	root: "TournamentMatchScheduleProposal",
+	select: (qb) =>
+		qb.select([
+			"TournamentMatchScheduleProposal.id",
+			"TournamentMatchScheduleProposal.tournamentTeamId",
+			"TournamentMatchScheduleProposal.proposedAt",
+		]),
+	defaultSort: [
+		["TournamentMatchScheduleProposal.proposedAt", "asc"],
+		["TournamentMatchScheduleProposal.id", "asc"],
+	],
+});
 
 interface AllMatchResultOpponent {
 	id: number;
@@ -523,13 +554,17 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentMatchGameResult")
-					.select([
+					.select((gameEb) => [
 						"TournamentMatchGameResult.mode",
 						"TournamentMatchGameResult.stageId",
 						"TournamentMatchGameResult.source",
-						sql<number>`"TournamentMatchGameResult"."winnerTeamId" = ${tournamentTeamId}`.as(
-							"wasWinner",
-						),
+						asBoolean(
+							gameEb(
+								"TournamentMatchGameResult.winnerTeamId",
+								"=",
+								tournamentTeamId,
+							),
+						).as("wasWinner"),
 					])
 					.whereRef(
 						"TournamentMatchGameResult.matchId",
@@ -595,50 +630,6 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 			"asc",
 		)
 		.orderBy("TournamentRound.number", "asc")
-		.execute();
-}
-
-/** Open candidate times of the set's scheduling board, earliest first, with who put them up. */
-export function findScheduleProposalsByMatchId(matchId: number) {
-	return db
-		.selectFrom("TournamentMatchScheduleProposal")
-		.innerJoin("User", "User.id", "TournamentMatchScheduleProposal.authorId")
-		.select((eb) => [
-			"TournamentMatchScheduleProposal.id",
-			"TournamentMatchScheduleProposal.tournamentTeamId",
-			"TournamentMatchScheduleProposal.proposedAt",
-			"TournamentMatchScheduleProposal.createdAt",
-			commonUserJsonObject(eb).as("author"),
-		])
-		.where("TournamentMatchScheduleProposal.matchId", "=", matchId)
-		.orderBy("TournamentMatchScheduleProposal.proposedAt", "asc")
-		.execute();
-}
-
-/** Per match of the tournament, when its last game was reported. */
-export function findLastResultAtsByTournamentId(tournamentId: number) {
-	return db
-		.selectFrom("TournamentMatch")
-		.innerJoin(
-			"TournamentStage",
-			"TournamentStage.id",
-			"TournamentMatch.stageId",
-		)
-		.select((eb) => [
-			"TournamentMatch.id",
-			eb
-				.selectFrom("TournamentMatchGameResult")
-				.select(({ fn }) =>
-					fn.max("TournamentMatchGameResult.createdAt").as("lastResultAt"),
-				)
-				.whereRef(
-					"TournamentMatchGameResult.matchId",
-					"=",
-					"TournamentMatch.id",
-				)
-				.as("lastResultAt"),
-		])
-		.where("TournamentStage.tournamentId", "=", tournamentId)
 		.execute();
 }
 
@@ -710,63 +701,28 @@ export function findScheduledByUserId({
 		.execute();
 }
 
-/** Undecided league sets agreed to be played inside the window, with both rosters. */
-export function findScheduledBetween({
-	startsAt,
-	endsAt,
-}: {
-	startsAt: number;
-	endsAt: number;
-}) {
-	return db
-		.selectFrom("TournamentMatch")
-		.innerJoin(
-			"TournamentStage",
-			"TournamentStage.id",
-			"TournamentMatch.stageId",
-		)
-		.innerJoin("TournamentTeam as TeamOne", (join) =>
-			join.on(opponentOneId, "=", sql.ref("TeamOne.id")),
-		)
-		.innerJoin("TournamentTeam as TeamTwo", (join) =>
-			join.on(opponentTwoId, "=", sql.ref("TeamTwo.id")),
-		)
-		.select((eb) => [
-			"TournamentMatch.id",
-			"TournamentMatch.scheduledAt",
-			"TournamentStage.tournamentId",
-			"TeamOne.id as teamOneId",
-			"TeamOne.name as teamOneName",
-			"TeamTwo.id as teamTwoId",
-			"TeamTwo.name as teamTwoName",
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentTeamMember")
-					.select([
-						"TournamentTeamMember.userId",
-						"TournamentTeamMember.tournamentTeamId",
-					])
-					.where((innerEb) =>
-						innerEb.or([
-							innerEb(
-								"TournamentTeamMember.tournamentTeamId",
-								"=",
-								innerEb.ref("TeamOne.id"),
-							),
-							innerEb(
-								"TournamentTeamMember.tournamentTeamId",
-								"=",
-								innerEb.ref("TeamTwo.id"),
-							),
-						]),
-					),
-			).as("members"),
-		])
-		.where("TournamentMatch.winnerSide", "is", null)
-		.where("TournamentMatch.scheduledAt", ">=", startsAt)
-		.where("TournamentMatch.scheduledAt", "<", endsAt)
-		.$narrowType<{ scheduledAt: NotNull }>()
-		.execute();
+/** Sets the players who participated in a game result, replacing any existing ones. */
+export async function setParticipants(
+	args: {
+		resultId: number;
+		participants: Array<
+			Pick<
+				Tables["TournamentMatchGameResultParticipant"],
+				"userId" | "tournamentTeamId"
+			>
+		>;
+	},
+	trx: Transaction<DB>,
+) {
+	await participantTable.delete({ matchGameResultId: args.resultId }, trx);
+
+	await participantTable.insertMany(
+		args.participants.map((participant) => ({
+			...participant,
+			matchGameResultId: args.resultId,
+		})),
+		trx,
+	);
 }
 
 /** Puts the candidate times on the set's board; ones the team already has there are skipped. */
@@ -844,35 +800,6 @@ export function replaceScheduleProposals({
 	});
 }
 
-export function findScheduleProposalById(id: number) {
-	return db
-		.selectFrom("TournamentMatchScheduleProposal")
-		.selectAll()
-		.where("TournamentMatchScheduleProposal.id", "=", id)
-		.executeTakeFirst();
-}
-
-/** Takes one team's candidates off the board, e.g. when the other team declines a reschedule. Returns the count deleted. */
-export async function deleteScheduleProposalsByTeam({
-	matchId,
-	tournamentTeamId,
-}: {
-	matchId: number;
-	tournamentTeamId: number;
-}) {
-	const result = await db
-		.deleteFrom("TournamentMatchScheduleProposal")
-		.where("TournamentMatchScheduleProposal.matchId", "=", matchId)
-		.where(
-			"TournamentMatchScheduleProposal.tournamentTeamId",
-			"=",
-			tournamentTeamId,
-		)
-		.executeTakeFirst();
-
-	return Number(result.numDeletedRows);
-}
-
 /** Agrees the set's time, clearing the board; `setByOrganizer` closes the board for the teams. */
 export function scheduleMatch({
 	matchId,
@@ -884,19 +811,13 @@ export function scheduleMatch({
 	setByOrganizer: boolean;
 }) {
 	return db.transaction().execute(async (trx) => {
-		await trx
-			.updateTable("TournamentMatch")
-			.set({
-				scheduledAt,
-				scheduleSetByOrganizer: toDBBoolean(setByOrganizer),
-			})
-			.where("TournamentMatch.id", "=", matchId)
-			.execute();
+		await matchTable.updateById(
+			matchId,
+			{ scheduledAt, scheduleSetByOrganizer: setByOrganizer },
+			trx,
+		);
 
-		await trx
-			.deleteFrom("TournamentMatchScheduleProposal")
-			.where("TournamentMatchScheduleProposal.matchId", "=", matchId)
-			.execute();
+		await proposalTable.delete({ matchId }, trx);
 	});
 }
 
@@ -930,4 +851,18 @@ function scheduledMatchesQuery() {
 		])
 		.where("TournamentMatch.winnerSide", "is", null)
 		.$narrowType<{ scheduledAt: NotNull }>();
+}
+
+/** The match's stage. Correlates on `"TournamentMatch"."stageId"`. */
+function stageOf(eb: ExpressionBuilder<DB, "TournamentMatch">) {
+	return eb
+		.selectFrom("TournamentStage")
+		.whereRef("TournamentStage.id", "=", "TournamentMatch.stageId");
+}
+
+/** The match's round. Correlates on `"TournamentMatch"."roundId"`. */
+function roundOf(eb: ExpressionBuilder<DB, "TournamentMatch">) {
+	return eb
+		.selectFrom("TournamentRound")
+		.whereRef("TournamentRound.id", "=", "TournamentMatch.roundId");
 }

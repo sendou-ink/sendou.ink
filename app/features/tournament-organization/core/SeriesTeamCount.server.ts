@@ -4,6 +4,7 @@ import * as R from "remeda";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "../TournamentOrganizationSeriesRepository.server";
 
 const CACHE_KEY = "series-team-counts";
 /** How old an edition can be and still say something about the next one. */
@@ -58,12 +59,16 @@ function cachedSeriesTeamCounts() {
 }
 
 async function seriesTeamCounts() {
-	const [series, tournaments] = await Promise.all([
-		TournamentOrganizationRepository.findAllSeries(),
-		TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts({
-			startedAfter: dateToDatabaseTimestamp(subDays(new Date(), LOOKBACK_DAYS)),
-		}),
-	]);
+	const series =
+		await TournamentOrganizationSeriesRepository.series().execute();
+	const tournaments =
+		await TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts(
+			{
+				startedAfter: dateToDatabaseTimestamp(
+					subDays(new Date(), LOOKBACK_DAYS),
+				),
+			},
+		);
 
 	const result = new Map<number, Array<SeriesTeamCounts>>();
 	for (const row of series) {

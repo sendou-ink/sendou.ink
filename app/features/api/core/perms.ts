@@ -8,9 +8,11 @@ export async function checkUserHasApiAccess(user: AuthenticatedUser) {
 		return true;
 	}
 
-	const orgs = await TournamentOrganizationRepository.findByUserId(user.id, {
-		roles: ["ADMIN", "ORGANIZER", "STREAMER"],
-	});
+	const establishedOrganizationsCount =
+		await TournamentOrganizationRepository.organizations()
+			.forMember(user.id, ["ADMIN", "ORGANIZER", "STREAMER"])
+			.where({ isEstablished: true })
+			.count();
 
-	return orgs.some((org) => org.isEstablished);
+	return establishedOrganizationsCount > 0;
 }

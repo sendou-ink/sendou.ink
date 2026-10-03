@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import type { QueryRow } from "~/db/entity-query";
 import { getUser } from "~/features/auth/core/user.server";
 import { calculateTentativeTier } from "~/features/tournament/core/tiering";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
@@ -81,9 +82,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		trophies: await TrophyRepository.findAllRankedByTier(organization.id),
 		bannedUsers:
 			user?.id && organization.permissions.BAN.includes(user.id)
-				? await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
-						organization.id,
-					)
+				? await TournamentOrganizationRepository.bannedUsers()
+						.where({ organizationId: organization.id })
+						.withUser()
+						.execute()
 				: null,
 	};
 }
@@ -94,8 +96,8 @@ async function seriesStuff({
 	userId,
 }: {
 	organizationId: number;
-	series: NonNullable<
-		Awaited<ReturnType<typeof TournamentOrganizationRepository.findBySlug>>
+	series: QueryRow<
+		ReturnType<typeof TournamentOrganizationRepository.organizationBySlug>
 	>["series"][number];
 	userId?: number;
 }) {

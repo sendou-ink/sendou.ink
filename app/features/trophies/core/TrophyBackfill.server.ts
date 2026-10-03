@@ -1,6 +1,6 @@
 import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "~/features/tournament-organization/TournamentOrganizationSeriesRepository.server";
 import * as TrophyRepository from "../TrophyRepository.server";
 
 export async function backfillableTournaments({
@@ -10,11 +10,9 @@ export async function backfillableTournaments({
 	organizationId: number;
 	seriesId: number;
 }) {
-	const series = (
-		await TournamentOrganizationRepository.findAllSeriesByOrganizationIds([
-			organizationId,
-		])
-	).find((candidate) => candidate.id === seriesId);
+	const series = await TournamentOrganizationSeriesRepository.series()
+		.where({ id: seriesId, organizationId })
+		.executeTakeFirst();
 	if (!series) return null;
 
 	const tournaments = await TrophyRepository.findAllBackfillableTournaments({

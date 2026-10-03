@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { parseFormDataWithImages } from "~/form/parse.server";
@@ -57,9 +58,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	ShowcaseTournaments.clearParticipationInfoMap();
 
 	// and tournament data caches so permission changes show immediately
-	for (const tournament of await TournamentOrganizationRepository.findAllUnfinalizedEvents(
-		organization.id,
-	)) {
+	for (const tournament of await unfinalizedTournaments(organization.id)) {
 		clearTournamentDataCache(tournament.id);
 	}
 
@@ -67,3 +66,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		tournamentOrganizationPage({ organizationSlug: newOrganization.slug }),
 	);
 };
+
+// hidden ones included, their organizers see them too
+function unfinalizedTournaments(organizationId: number) {
+	return TournamentRepository.tournaments()
+		.includingHidden()
+		.ofOrganization(organizationId)
+		.where({ isFinalized: false })
+		.execute();
+}

@@ -15,28 +15,33 @@ import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-con
 
 const users = UserFactory.pool();
 
-describe("findByUserId", () => {
+describe("TournamentOrganizationRepository.organizations", () => {
 	beforeEach(async () => {
-		await users.create(3);
+		await users.create(2);
 	});
 
-	test("returns organizations where user is a member", async () => {
-		const [org1, org2] = await TournamentOrganizationFactory.createMany(2, {
+	test("forMember returns the organizations the user is a member of with their role", async () => {
+		const ownOrg = await TournamentOrganizationFactory.create({
 			ownerId: users.id(1),
 		});
-
-		const result = await TournamentOrganizationRepository.findByUserId(
-			users.id(1),
+		const otherOrg = await TournamentOrganizationFactory.create(
+			{ ownerId: users.id(2) },
+			{ members: [{ userId: users.id(1), role: "ORGANIZER" }] },
 		);
+		await TournamentOrganizationFactory.create({ ownerId: users.id(2) });
 
-		expect(result).toHaveLength(2);
-		expect(result.map((org) => org.id).sort((a, b) => a - b)).toEqual(
-			[org1.id, org2.id].sort((a, b) => a - b),
-		);
+		const result = await TournamentOrganizationRepository.organizations()
+			.forMember(users.id(1))
+			.execute();
+
+		expect(result.map(({ id, role }) => ({ id, role }))).toEqual([
+			{ id: ownOrg.id, role: "ADMIN" },
+			{ id: otherOrg.id, role: "ORGANIZER" },
+		]);
 	});
 
-	test("filters organizations by role when roles parameter is provided", async () => {
-		const org1 = await TournamentOrganizationFactory.create({
+	test("forMember with roles leaves out organizations where the user has another role", async () => {
+		const ownOrg = await TournamentOrganizationFactory.create({
 			ownerId: users.id(1),
 		});
 		await TournamentOrganizationFactory.create(
@@ -44,27 +49,112 @@ describe("findByUserId", () => {
 			{ members: [{ userId: users.id(1), role: "ORGANIZER" }] },
 		);
 
-		const adminOrgs = await TournamentOrganizationRepository.findByUserId(
-			users.id(1),
-			{ roles: ["ADMIN"] },
-		);
-		const allOrgs = await TournamentOrganizationRepository.findByUserId(
-			users.id(1),
-		);
+		const result = await TournamentOrganizationRepository.organizations()
+			.forMember(users.id(1), ["ADMIN"])
+			.execute();
 
-		expect(adminOrgs).toHaveLength(1);
-		expect(adminOrgs[0].id).toBe(org1.id);
-		expect(allOrgs).toHaveLength(2);
+		expect(result.map((org) => org.id)).toEqual([ownOrg.id]);
 	});
 
-	test("returns empty array when user is not a member of any organization", async () => {
-		await TournamentOrganizationFactory.create({ ownerId: users.id(1) });
-
-		const result = await TournamentOrganizationRepository.findByUserId(
-			users.id(2),
+	test("withPermissions lets only admins edit and ban", async () => {
+		const org = await TournamentOrganizationFactory.create(
+			{ ownerId: users.id(1) },
+			{ members: [{ userId: users.id(2), role: "ORGANIZER" }] },
 		);
 
-		expect(result).toHaveLength(0);
+		const result = await TournamentOrganizationRepository.organizationBySlug(
+			org.slug,
+		).executeTakeFirst();
+
+		expect(result?.permissions).toEqual({
+			EDIT: [users.id(1)],
+			BAN: [users.id(1)],
+		});
+	});
+});
+
+describe("upsertBannedUser", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("updates the ban of a user who is banned already", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+
+		await TournamentOrganizationRepository.upsertBannedUser({
+			organizationId: org.id,
+			userId: users.id(2),
+			privateNote: "first",
+			expiresAt: null,
+		});
+		await TournamentOrganizationRepository.upsertBannedUser({
+			organizationId: org.id,
+			userId: users.id(2),
+			privateNote: "second",
+			expiresAt: null,
+		});
+
+		const bans = await TournamentOrganizationRepository.bannedUsers()
+			.where({ organizationId: org.id })
+			.execute();
+
+		expect(bans.map((ban) => ban.privateNote)).toEqual(["second"]);
+	});
+});
+
+describe("update", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("starts a new series with the tiers of the finalized tournaments matching its name", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+			name: "Organizers",
+		});
+		for (const [name, tier] of [
+			["Low Ink #1", 3],
+			["Other Cup", 1],
+			["Low Ink #2", 2],
+		] as const) {
+			await TournamentFactory.createPlayed(
+				{
+					authorId: users.id(1),
+					organizationId: org.id,
+					name,
+					minMembersPerTeam: 1,
+				},
+				{
+					teamRosters: [[users.id(1)], [users.id(2)]],
+					playedOut: "all",
+					tier,
+				},
+			);
+		}
+
+		await TournamentOrganizationRepository.update({
+			id: org.id,
+			name: "Organizers",
+			description: null,
+			socials: null,
+			members: [{ userId: users.id(1), role: "ADMIN", roleDisplayName: null }],
+			series: [{ name: "Low Ink", description: null, showLeaderboard: true }],
+			badges: [],
+		});
+
+		const updated = await TournamentOrganizationRepository.organizationBySlug(
+			org.slug,
+		).executeTakeFirst();
+
+		expect(updated?.series).toEqual([
+			expect.objectContaining({
+				substringMatches: ["low ink"],
+				showLeaderboard: true,
+				tierHistory: [3, 2],
+			}),
+		]);
 	});
 });
 

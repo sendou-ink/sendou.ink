@@ -7,7 +7,7 @@ import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalend
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "~/features/tournament-organization/TournamentOrganizationSeriesRepository.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import type {
@@ -123,7 +123,7 @@ async function updateSeriesTierHistory(tournament: Tournament) {
 	if (tier === null) return;
 
 	try {
-		await TournamentOrganizationRepository.updateSeriesTierHistory({
+		await TournamentOrganizationSeriesRepository.updateSeriesTierHistory({
 			organizationId,
 			eventName: tournament.ctx.name,
 			newTier: tier,

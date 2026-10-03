@@ -6,7 +6,7 @@ import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOr
 import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "~/features/tournament-organization/TournamentOrganizationSeriesRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as TrophyBackfill from "./TrophyBackfill.server";
 
@@ -117,10 +117,9 @@ describe("TrophyBackfill.backfillableTournaments", () => {
 		);
 		organizationId = organization.id;
 
-		const [series] =
-			await TournamentOrganizationRepository.findAllSeriesByOrganizationIds([
-				organizationId,
-			]);
+		const [series] = await TournamentOrganizationSeriesRepository.series()
+			.where({ organizationId })
+			.execute();
 		seriesId = series.id;
 	});
 
@@ -232,10 +231,9 @@ describe("TrophyBackfill.backfillableTournaments", () => {
 				],
 			},
 		);
-		const [otherSeries] =
-			await TournamentOrganizationRepository.findAllSeriesByOrganizationIds([
-				otherOrganization.id,
-			]);
+		const [otherSeries] = await TournamentOrganizationSeriesRepository.series()
+			.where({ organizationId: otherOrganization.id })
+			.execute();
 
 		expect(
 			await TrophyBackfill.backfillableTournaments({

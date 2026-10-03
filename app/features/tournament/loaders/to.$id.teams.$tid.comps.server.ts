@@ -8,6 +8,7 @@ import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/to
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as Series from "~/features/tournament-organization/core/Series";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TournamentOrganizationSeriesRepository from "~/features/tournament-organization/TournamentOrganizationSeriesRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { forbidden, parseParams } from "~/utils/remix.server";
@@ -127,10 +128,9 @@ async function previousSeriesWins({
 	if (!organizationId) return null;
 
 	const series = Series.findByEventName({
-		series:
-			await TournamentOrganizationRepository.findAllSeriesByOrganizationIds([
-				organizationId,
-			]),
+		series: await TournamentOrganizationSeriesRepository.series()
+			.where({ organizationId })
+			.execute(),
 		eventName: tournamentName,
 	});
 	if (!series) return null;

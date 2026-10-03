@@ -22,7 +22,7 @@ export function BannedUsersList({
 	const { t } = useTranslation(["org"]);
 
 	const bannedUsersKey = (bannedUsers ?? [])
-		.map((u) => [u.id, u.privateNote].join("-"))
+		.map((u) => [u.user.id, u.privateNote].join("-"))
 		.join(",");
 
 	if (bannedUsers.length === 0) {
@@ -57,13 +57,13 @@ export function BannedUsersList({
 								isPast(databaseTimestampToDate(bannedUser.expiresAt));
 
 							return (
-								<tr key={bannedUser.id}>
+								<tr key={bannedUser.user.id}>
 									<td>
-										<UserLink user={bannedUser} size="xs">
+										<UserLink user={bannedUser.user} size="xs">
 											<span
 												className={clsx({ [styles.expiredBan]: isExpired })}
 											>
-												{bannedUser.username}
+												{bannedUser.user.username}
 											</span>
 										</UserLink>
 									</td>
@@ -100,10 +100,10 @@ export function BannedUsersList({
 										<FormWithConfirm
 											fields={[
 												["_action", "UNBAN_USER"],
-												["userId", bannedUser.id],
+												["userId", bannedUser.user.id],
 											]}
 											dialogHeading={t("org:banned.unbanConfirm", {
-												username: bannedUser.username,
+												username: bannedUser.user.username,
 											})}
 											submitButtonText={t("org:banned.unban")}
 										>

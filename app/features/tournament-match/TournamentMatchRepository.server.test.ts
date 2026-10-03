@@ -147,12 +147,10 @@ describe("scheduleMatch", () => {
 			setByOrganizer: false,
 		});
 
-		const updated = await TournamentMatchRepository.findMatchById(match.id);
+		const updated = await scheduledMatch(match.id);
 		expect(updated?.scheduledAt).toBe(at);
-		expect(updated?.scheduleSetByOrganizer).toBe(0);
-		expect(
-			await TournamentMatchRepository.findScheduleProposalsByMatchId(match.id),
-		).toHaveLength(0);
+		expect(updated?.scheduleSetByOrganizer).toBe(false);
+		expect(await proposalsOf(match.id)).toHaveLength(0);
 	});
 
 	test("the organizer's time closes the board", async () => {
@@ -164,10 +162,7 @@ describe("scheduleMatch", () => {
 			scheduledAt: at,
 			setByOrganizer: true,
 		});
-		expect(
-			(await TournamentMatchRepository.findMatchById(match.id))
-				?.scheduleSetByOrganizer,
-		).toBe(1);
+		expect((await scheduledMatch(match.id))?.scheduleSetByOrganizer).toBe(true);
 	});
 });
 
@@ -194,8 +189,7 @@ describe("replaceScheduleProposals", () => {
 		});
 
 		expect(added).toHaveLength(1);
-		const proposals =
-			await TournamentMatchRepository.findScheduleProposalsByMatchId(match.id);
+		const proposals = await proposalsOf(match.id);
 		expect(proposals.map((proposal) => proposal.proposedAt)).toEqual([
 			at,
 			at + 2 * HOUR,
@@ -221,53 +215,19 @@ describe("replaceScheduleProposals", () => {
 			proposedAts: [],
 		});
 
-		const proposals =
-			await TournamentMatchRepository.findScheduleProposalsByMatchId(match.id);
+		const proposals = await proposalsOf(match.id);
 		expect(proposals.map((proposal) => proposal.tournamentTeamId)).toEqual([
 			teams[1].id,
 		]);
 	});
 });
 
-describe("deleteScheduleProposalsByTeam", () => {
+describe("TournamentMatchRepository.matches", () => {
 	beforeEach(async () => {
 		await users.create(2);
 	});
 
-	test("declining a reschedule takes only the requesting team's candidates off", async () => {
-		const { match, teams } = await leagueSet();
-		const at = databaseTimestampNow() + HOUR;
-		for (const [index, team] of teams.entries()) {
-			await TournamentMatchScheduleFactory.propose({
-				matchId: match.id,
-				tournamentTeamId: team.id,
-				authorId: users.id(index + 1),
-				proposedAts: [at + index * HOUR],
-			});
-		}
-
-		const deletedCount =
-			await TournamentMatchRepository.deleteScheduleProposalsByTeam({
-				matchId: match.id,
-				tournamentTeamId: teams[1].id,
-			});
-
-		expect(deletedCount).toBe(1);
-		const proposals =
-			await TournamentMatchRepository.findScheduleProposalsByMatchId(match.id);
-		expect(proposals.map((proposal) => proposal.tournamentTeamId)).toEqual([
-			teams[0].id,
-		]);
-		expect(proposals[0].author.id).toBe(users.id(1));
-	});
-});
-
-describe("findScheduledBetween", () => {
-	beforeEach(async () => {
-		await users.create(2);
-	});
-
-	test("lists undecided sets agreed inside the window with both rosters", async () => {
+	test("scheduledBetween lists undecided sets agreed inside the window with both rosters", async () => {
 		const { match, teams } = await leagueSet();
 		const now = databaseTimestampNow();
 		await TournamentMatchScheduleFactory.schedule({
@@ -275,24 +235,39 @@ describe("findScheduledBetween", () => {
 			scheduledAt: now + HOUR / 2,
 		});
 
-		const inWindow = await TournamentMatchRepository.findScheduledBetween({
-			startsAt: now,
-			endsAt: now + HOUR,
-		});
+		const inWindow = await scheduledBetween(now, now + HOUR);
 		expect(inWindow).toHaveLength(1);
 		const ascending = (a: number, b: number) => a - b;
 		expect(
-			inWindow[0].members.map((member) => member.userId).toSorted(ascending),
+			inWindow[0].teams
+				.flatMap((team) => team.members.map((member) => member.userId))
+				.toSorted(ascending),
 		).toEqual([users.id(1), users.id(2)].toSorted(ascending));
 		expect(
-			[inWindow[0].teamOneId, inWindow[0].teamTwoId].toSorted(ascending),
+			inWindow[0].teams.map((team) => team.id).toSorted(ascending),
 		).toEqual(teams.map((team) => team.id).toSorted(ascending));
 
-		expect(
-			await TournamentMatchRepository.findScheduledBetween({
-				startsAt: now + HOUR,
-				endsAt: now + 2 * HOUR,
-			}),
-		).toHaveLength(0);
+		expect(await scheduledBetween(now + HOUR, now + 2 * HOUR)).toHaveLength(0);
 	});
 });
+
+function scheduledMatch(matchId: number) {
+	return TournamentMatchRepository.matches()
+		.where({ id: matchId })
+		.withColumns(["scheduledAt", "scheduleSetByOrganizer"])
+		.executeTakeFirst();
+}
+
+function proposalsOf(matchId: number) {
+	return TournamentMatchRepository.scheduleProposals()
+		.where({ matchId })
+		.execute();
+}
+
+function scheduledBetween(startsAt: number, endsAt: number) {
+	return TournamentMatchRepository.matches()
+		.undecided()
+		.scheduledBetween(startsAt, endsAt)
+		.withTeams()
+		.execute();
+}
