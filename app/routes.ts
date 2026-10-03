@@ -50,6 +50,8 @@ export default [
 	index("features/front-page/routes/index.tsx"),
 	route("/patrons-list", "features/front-page/routes/patrons-list.ts"),
 
+	route("/health", "features/health/routes/health.ts"),
+
 	route("/sidenav", "features/layout/routes/sidenav.ts"),
 
 	route("/sse", "features/events/routes/sse.ts"),
