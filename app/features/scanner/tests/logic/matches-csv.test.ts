@@ -113,3 +113,22 @@ test("unread values are blank cells, not question marks", () => {
 		assert.equal(row![header!.indexOf(name)], "", name);
 	}
 });
+
+test("text cells a spreadsheet would run as a formula are neutralized", () => {
+	const [header, row] = rows(
+		matchesToCsv(
+			[
+				{
+					...BASE,
+					teams: [
+						{ players: [{ ...BASE.teams[0].players[0]!, name: "=1+1" }] },
+						BASE.teams[1],
+					],
+				},
+			],
+			{ label: "@SUM(A1)", originT: 0 },
+		),
+	);
+	assert.equal(row![header!.indexOf("source")], "'@SUM(A1)");
+	assert.match(row![header!.indexOf("enemies")]!, /^'=1\+1 · /);
+});

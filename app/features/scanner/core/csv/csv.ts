@@ -1,5 +1,8 @@
 /** CSV assembly shared by the events and matches exports: RFC 4180 quoting, CRLF rows. */
 
+/** text a spreadsheet would evaluate as a formula (OCR'd names, VoD file names) */
+const FORMULA_TRIGGER = /^[=+\-@\t\r]/;
+
 export type CsvCell = string | number | null | undefined;
 
 export function toCsv(
@@ -13,6 +16,9 @@ export function toCsv(
 
 function csvCell(value: CsvCell): string {
 	if (value === null || value === undefined) return "";
-	const s = String(value);
+	const s =
+		typeof value === "string" && FORMULA_TRIGGER.test(value)
+			? `'${value}`
+			: String(value);
 	return /[",\n\r]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
 }
