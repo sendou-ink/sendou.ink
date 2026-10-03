@@ -1,26 +1,57 @@
 .container {
 	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.narrowOnly {
+	@container (width >= 40rem) {
+		display: none;
+	}
+}
+
+.wideOnly {
+	@container (width < 40rem) {
+		display: none;
+	}
 }
 
 .layout {
-	display: grid;
-	grid-template-areas:
-		"search"
-		"weaponPool"
-		"categoryHeader"
-		"categories"
-		"weapons";
-	grid-template-columns: minmax(0, 1fr);
+	display: flex;
+	flex-direction: column;
 	gap: var(--s-3) var(--s-2);
 
 	@container (width < 40rem) {
+		& > .search {
+			order: 1;
+		}
+
+		& > .weaponPool {
+			order: 2;
+		}
+
+		& > .categoryHeader {
+			order: 3;
+		}
+
+		& > .categories {
+			order: 4;
+		}
+
+		& > .weapons {
+			order: 5;
+		}
+
 		&.pickingCategory > .weapons,
-		&:not(.pickingCategory) > .categories {
+		&:not(.pickingCategory) > .categories,
+		&:has(> .categoryHeader) > .weaponPool {
 			display: none;
 		}
 	}
 
 	@container (width >= 40rem) {
+		display: grid;
 		grid-template-areas:
 			"search search weaponPool"
 			"categories weapons weapons";
@@ -44,22 +75,16 @@
 }
 
 .categoryHeader {
-	grid-area: categoryHeader;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: var(--s-3);
+	margin: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	gap: var(--s-2);
 
 	@container (width >= 40rem) {
 		display: none;
 	}
-}
-
-.categoryHeaderTitle {
-	display: flex;
-	align-items: center;
-	font-size: var(--font-lg);
-	gap: var(--s-2);
 }
 
 .categories {
@@ -173,6 +198,10 @@
 	--circle-backdrop-color: var(--color-bg);
 }
 
+.subSpecialImageBackdrop {
+	--circle-backdrop-content-scale: 0.75;
+}
+
 .weaponInfo {
 	display: flex;
 	flex: 1;
@@ -196,7 +225,7 @@
 	gap: var(--s-1);
 }
 
-.buildCount {
+.suffix {
 	margin-inline-start: var(--s-1-5);
 	color: var(--color-text-high);
 	font-size: var(--font-xs);

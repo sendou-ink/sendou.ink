@@ -22,7 +22,8 @@ const PARTIAL_BUILD: BuildAbilitiesTupleWithUnknown = [
 describe("analyzerSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(analyzerSearchParams, {
-			weapon: [0, 10, 8000],
+			weapon: [null, 0, 10, 8000],
+			category: [null, "SHOOTERS"],
 			build: [EMPTY_BUILD, FULL_BUILD, PARTIAL_BUILD],
 			build2: [EMPTY_BUILD, FULL_BUILD],
 			lde: [0, 22, 10],

@@ -53,9 +53,10 @@ test.describe("Mobile smoke", () => {
 		await mobileNav.menuLink("Builds").click();
 		await expect(page).toHaveURL(/\/builds/);
 		await expectNoErrorPage(page);
-		await expect(
-			new BuildsPage(page).weaponLink(SPLATTERSHOT_ID),
-		).toBeVisible();
+		const builds = new BuildsPage(page);
+		// on mobile the category is picked before its weapons are shown
+		await builds.categoryLink("Shooters").click();
+		await expect(builds.weaponLink(SPLATTERSHOT_ID)).toBeVisible();
 
 		await mobileNav.openPanel("menu");
 		await mobileNav.menuLink("Calendar").click();

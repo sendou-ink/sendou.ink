@@ -1,7 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import type { Ability } from "~/modules/in-game-lists/types";
 import { ANALYZER_URL, weaponParamsPage } from "~/utils/urls";
-import { expect, navigate, selectWeapon } from "../../helpers/playwright";
+import { expect, navigate } from "../../helpers/playwright";
 import { BuildFormPage } from "../builds/build-form-page";
 import { WeaponParamsPage } from "./weapon-params-page";
 
@@ -17,6 +17,10 @@ export class AnalyzerPage {
 			newBuildPrompt: page.getByTestId("new-build-prompt"),
 			abilitySelector: page.getByTestId("ability-selector"),
 			rawParametersLink: page.getByRole("link", { name: /Raw parameters/ }),
+			backToWeaponLandingLink: page
+				.getByRole("main")
+				.getByRole("link", { name: "Back", exact: true }),
+			weaponLanding: page.getByTestId("weapon-landing"),
 		};
 	}
 
@@ -36,8 +40,16 @@ export class AnalyzerPage {
 		return this.page.getByTestId(`ap-compare-${buildNumber}`);
 	}
 
-	async selectWeapon(name: string) {
-		await selectWeapon({ page: this.page, name });
+	/** Picks a weapon from the landing shown when no weapon is selected yet */
+	async pickWeapon(name: string) {
+		const { weaponLanding } = this.locators;
+		await weaponLanding.getByRole("textbox").fill(name);
+		await weaponLanding.getByText(name, { exact: true }).click();
+	}
+
+	async changeWeapon(name: string) {
+		await this.locators.backToWeaponLandingLink.click();
+		await this.pickWeapon(name);
 	}
 
 	async openStatCategory(testId: string) {

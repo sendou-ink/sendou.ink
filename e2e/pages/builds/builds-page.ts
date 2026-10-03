@@ -14,6 +14,10 @@ export class BuildsPage {
 		await navigate({ page: this.page, url: BUILDS_PAGE });
 	}
 
+	categoryLink(name: string) {
+		return this.page.getByRole("main").getByRole("link", { name, exact: true });
+	}
+
 	weaponLink(weaponSplId: MainWeaponId) {
 		return this.page.getByTestId(`weapon-${weaponSplId}-link`);
 	}

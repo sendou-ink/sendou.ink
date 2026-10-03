@@ -10,17 +10,22 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
+import { BackLink } from "~/components/BackLink";
 import { BuildCard } from "~/components/BuildCard";
+import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
-import { ModeImage } from "~/components/Image";
+import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { PageHeader } from "~/components/PageHeader";
+import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
 import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
+import { weaponIdToCategory } from "~/modules/in-game-lists/weapon-ids";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { dateToYYYYMMDD, isValidDate } from "~/utils/dates";
 import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
@@ -118,6 +123,31 @@ export default function WeaponsBuildsPage() {
 
 	return (
 		<Main className="stack lg">
+			<PageHeader
+				image={
+					<CircleBackdrop>
+						<WeaponImage
+							weaponSplId={data.weaponId}
+							variant="build"
+							size={36}
+						/>
+					</CircleBackdrop>
+				}
+				title={data.weaponName}
+				subtitle={
+					<>
+						<Image path={navIconUrl("builds")} size={16} alt="" />
+						{t("common:pages.builds")}
+					</>
+				}
+				back={
+					<BackLink
+						to={weaponLandingSearchParams.href(BUILDS_PAGE, {
+							category: weaponIdToCategory(data.weaponId),
+						})}
+					/>
+				}
+			/>
 			<div className={styles.buildsButtons}>
 				<Filters />
 				<div className={styles.buildsButtonsLink}>

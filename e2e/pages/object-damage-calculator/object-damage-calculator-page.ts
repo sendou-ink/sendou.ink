@@ -1,7 +1,8 @@
 import type { Page } from "@playwright/test";
+import type { DamageType } from "~/features/build-analyzer/analyzer-types";
 import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
 import { OBJECT_DAMAGE_CALCULATOR_URL } from "~/utils/urls";
-import { navigate, selectWeapon } from "../../helpers/playwright";
+import { navigate } from "../../helpers/playwright";
 
 export class ObjectDamageCalculatorPage {
 	private readonly page: Page;
@@ -10,7 +11,10 @@ export class ObjectDamageCalculatorPage {
 	constructor(page: Page) {
 		this.page = page;
 		this.locators = {
-			damageTypeSelect: page.locator("text=Damage type"),
+			weaponLanding: page.getByTestId("weapon-landing"),
+			backToWeaponLandingLink: page
+				.getByRole("main")
+				.getByRole("link", { name: "Back", exact: true }),
 			abilityPointsSelect: page.locator("text=Amount of"),
 			multiplierSwitch: page.getByTestId("multi-switch"),
 		};
@@ -32,12 +36,22 @@ export class ObjectDamageCalculatorPage {
 		return this.page.getByTestId(`htd-${receiver}`);
 	}
 
-	async selectWeapon(name: string) {
-		await selectWeapon({ page: this.page, name });
+	/** Picks a weapon from the landing shown when no weapon is selected yet */
+	async pickWeapon(name: string) {
+		const { weaponLanding } = this.locators;
+		await weaponLanding.getByRole("textbox").fill(name);
+		await weaponLanding.getByText(name, { exact: true }).click();
 	}
 
-	async selectDamageType(damageType: string) {
-		await this.locators.damageTypeSelect.selectOption(damageType);
+	async changeWeapon(name: string) {
+		await this.locators.backToWeaponLandingLink.click();
+		await this.pickWeapon(name);
+	}
+
+	async selectDamageType(damageType: DamageType) {
+		await this.page
+			.locator(`label[for="chip-radio-damage-${damageType}"]`)
+			.click();
 	}
 
 	async selectAbilityPoints(abilityPoints: number) {

@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
 import { EMPTY_BUILD } from "~/features/builds/builds-constants";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
@@ -29,7 +30,8 @@ const specialEffectTypes = SPECIAL_EFFECTS.map((effect) => effect.type) as [
 ];
 
 export const analyzerSearchParams = SearchParams.define({
-	weapon: SP.param(numericEnum(mainWeaponIds), { default: 0, loader: false }),
+	weapon: SP.param(v.nullable(numericEnum(mainWeaponIds)), { loader: false }),
+	category: weaponLandingSearchParams.shape.category,
 	build: SP.custom(serializedBuildCodec, {
 		default: EMPTY_BUILD,
 		loader: false,

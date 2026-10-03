@@ -1,13 +1,11 @@
 .controls {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-2);
+	gap: var(--s-4);
 }
 
-.selects {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: var(--s-4);
+.subSpecialImageBackdrop {
+	--circle-backdrop-content-scale: 0.75;
 }
 
 .ability {
