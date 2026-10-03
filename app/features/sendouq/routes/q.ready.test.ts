@@ -78,7 +78,7 @@ describe("SendouQ ready check page", () => {
 			readyCount: 1,
 		});
 		// so that a field carrying more about them can't be added unnoticed
-		expect(Object.keys(data).sort()).toEqual([
+		expect(Object.keys(data).sort((a, b) => a.localeCompare(b))).toEqual([
 			"expiresAt",
 			"group",
 			"readyUserIds",

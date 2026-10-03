@@ -9,7 +9,7 @@ or {
 		$attr <: not within or {
 			JsxOpeningElement(attributes=contains JsxAttribute(name=`schema`)),
 			JsxSelfClosingElement(attributes=contains JsxAttribute(name=`schema`))
-		} ,
+		},
 		register_diagnostic(span=$attr, message="Untyped `_action`. For a fixed-field mutation use `<ActionButton schema={...} action=\"...\" fields={{...}}>`; for a submit button of a real multi-input form pass `schema={...}` alongside `_action` so the literal is type checked against the route's schema.", severity="error")
 	},
 	`name="_action"` as $attr where {

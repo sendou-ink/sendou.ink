@@ -164,7 +164,6 @@ function parseArgs(argv: string[]): {
 	let parsedCollectTelemetry = false;
 	let parsedGpu = false;
 	let parsedRecordDir: string | undefined;
-	// biome-ignore lint/style/useForOf: the index advances inside the loop to consume flag values
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]!;
 		if (arg === "--fps") parsedFps = Number(argv[++i]);

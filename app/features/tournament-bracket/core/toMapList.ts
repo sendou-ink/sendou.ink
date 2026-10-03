@@ -13,7 +13,8 @@ export type BracketMapCounts = Map<
 	// roundSetKey(round) ->
 	string,
 	// round.number ->
-	Map<number, { count: number; type: "BEST_OF" }>>;
+	Map<number, { count: number; type: "BEST_OF" }>
+>;
 
 /** Identifies the rounds numbered together: a round robin/swiss group's rounds, or one section of an elimination group. */
 export function roundSetKey(round: Pick<RoundData, "groupId" | "section">) {
