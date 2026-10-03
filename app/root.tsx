@@ -20,6 +20,7 @@ import {
 	useNavigate,
 	useNavigation,
 	useRevalidator,
+	useRouteLoaderData,
 	useSearchParams,
 } from "react-router";
 import { Config } from "~/config";
@@ -440,9 +441,24 @@ export default function App() {
 }
 
 export function ErrorBoundary() {
+	const rootData = useRouteLoaderData<RootLoaderData>("root");
+
+	if (!rootData) {
+		return (
+			<ThemeProvider themeSource="static" specifiedTheme={Theme.DARK}>
+				<Document>
+					<Catcher />
+				</Document>
+			</ThemeProvider>
+		);
+	}
+
 	return (
-		<ThemeProvider themeSource="static" specifiedTheme={Theme.DARK}>
-			<Document>
+		<ThemeProvider
+			specifiedTheme={isTheme(rootData.theme) ? rootData.theme : null}
+			themeSource="user-preference"
+		>
+			<Document data={rootData}>
 				<Catcher />
 			</Document>
 		</ThemeProvider>
