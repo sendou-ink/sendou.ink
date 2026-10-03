@@ -1,5 +1,7 @@
 import * as React from "react";
+import * as v from "valibot";
 import { playSound } from "~/features/chat/chat-utils";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import type { GlobalStatus, GlobalStatusState } from "./global-status-types";
 
 const SOUND_BY_STATE: Partial<Record<GlobalStatusState, string>> = {
@@ -8,6 +10,13 @@ const SOUND_BY_STATE: Partial<Record<GlobalStatusState, string>> = {
 	TO_MATCH: "tournament_match",
 };
 
+const lastSeenStatusPersisted = PersistedState.define({
+	key: "global-status-last-seen",
+	storage: "local",
+	schema: v.nullable(v.string()),
+	default: null,
+});
+
 /**
  * Plays the alert sound of a status the user has just moved into (a ready
  * check starting, a match being ready to play) as well as of a like landing
@@ -15,7 +24,8 @@ const SOUND_BY_STATE: Partial<Record<GlobalStatusState, string>> = {
  * anywhere on the site rather than only on the page the moment belongs to.
  *
  * The first status seen never plays: a sound announces a moment arriving, not
- * one already underway when the page was opened.
+ * one already underway when the page was opened. Neither does a status another
+ * tab has already seen, so a backgrounded tab catching up stays silent.
  */
 export function useGlobalStatusSounds(status: GlobalStatus | null) {
 	const previousRef = React.useRef<GlobalStatus | null | undefined>(undefined);
@@ -24,11 +34,30 @@ export function useGlobalStatusSounds(status: GlobalStatus | null) {
 		const previous = previousRef.current;
 		previousRef.current = status;
 
-		if (previous === undefined || !status) return;
+		const seenByAnotherTab = markSeenAcrossTabs(status);
+
+		if (previous === undefined || !status || seenByAnotherTab) return;
 
 		const sound = soundForTransition(previous, status);
 		if (sound) playSound(sound);
 	}, [status]);
+}
+
+/** Records the status as the latest seen by any tab, returning whether it already was. */
+function markSeenAcrossTabs(status: GlobalStatus | null) {
+	const key = status ? statusKey(status) : null;
+	if (PersistedState.read(lastSeenStatusPersisted) === key) return true;
+
+	PersistedState.write(lastSeenStatusPersisted, key);
+	return false;
+}
+
+function statusKey(status: GlobalStatus) {
+	if (status.state === "SQ_QUEUED") {
+		return `${status.state}:${status.groupId}:${status.count ?? 0}`;
+	}
+
+	return `${status.state}:${status.url}`;
 }
 
 function soundForTransition(
