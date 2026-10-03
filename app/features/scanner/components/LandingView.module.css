@@ -10,9 +10,57 @@
 	color: var(--color-fg-accent);
 }
 
-.top {
+.header {
 	display: flex;
-	justify-content: flex-end;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.titleRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-3);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+}
+
+.howItWorks {
+	font-size: var(--font-xs);
+
+	& summary {
+		width: fit-content;
+		font-weight: var(--weight-semi);
+		color: var(--color-fg-accent);
+	}
+}
+
+.facts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	max-width: 70ch;
+	margin: var(--s-2) 0 0;
+	padding: var(--s-3) var(--s-4);
+	border-radius: var(--radius-box);
+	background: var(--color-bg-high);
+
+	& dt {
+		font-weight: var(--weight-bold);
+
+		&:not(:first-child) {
+			margin-top: var(--s-2);
+		}
+	}
+
+	& dd {
+		margin: 0;
+		color: var(--color-text-high);
+	}
 }
 
 .cards {

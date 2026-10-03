@@ -21,7 +21,9 @@ three idioms behind.
 
 Anyone can capture, scan files and get clips locally; only uploading needs a
 login (`components/upload.ts` mirrors the root loader's user for the
-controllers). The landing (`components/LandingView.tsx`) is two entry cards
+controllers). The landing (`components/LandingView.tsx`) is a title and a
+"How it works" disclosure (requirements, what's read, privacy, what's
+uploaded — keep it in sync with `UPLOADED_LOBBIES`), two entry cards
 (Live / File), the clip history strip and the sessions list; everything else
 is one component, `components/SessionView.tsx`, rendered identically for the
 running capture (`LiveView`), a past session (`PastSessionView`) and a
