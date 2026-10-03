@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import type { WindowSchedule } from "~/features/availability/availability-types";
 import * as Availability from "~/features/availability/core/Availability";
 import * as VisibleSchedules from "~/features/availability/core/VisibleSchedules.server";
+import type { RouteChatRoomInput } from "~/features/chat/chat-types";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -213,13 +214,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		// observers (TO/streamer/site staff) chat alongside the participants
 		chatRooms: await RouteChatRooms.resolve(
 			user,
-			match.chatRoomId &&
-				(isParticipant || isSiteStaff || tournament.isOrganizerOrStreamer(user))
-				? [{ roomId: match.chatRoomId, autoOpen: true }]
-				: [],
+			await chatRoomInputs({
+				match,
+				userId: user?.id,
+				canChatInMatch:
+					isParticipant ||
+					isSiteStaff ||
+					tournament.isOrganizerOrStreamer(user),
+			}),
 		),
 		canJoin,
 		schedule,
@@ -398,4 +402,34 @@ async function ownTeamAvailability({
 			};
 		}),
 	};
+}
+
+/** Pickups only, opens a chat as tabs or split view. */
+async function chatRoomInputs({
+	match,
+	userId,
+	canChatInMatch,
+}: {
+	match: {
+		chatRoomId: number | null;
+		players: { id: number; tournamentTeamId: number }[];
+	};
+	userId: number | undefined;
+	canChatInMatch: boolean;
+}): Promise<RouteChatRoomInput[]> {
+	if (!match.chatRoomId || !canChatInMatch) return [];
+
+	const ownTeamId = match.players.find(
+		(player) => player.id === userId,
+	)?.tournamentTeamId;
+	const ownTeamChatRoomId = ownTeamId
+		? await TournamentTeamRepository.findChatRoomIdById(ownTeamId)
+		: null;
+
+	return [
+		{ roomId: match.chatRoomId, autoOpen: true },
+		...(ownTeamChatRoomId
+			? [{ roomId: ownTeamChatRoomId, autoOpen: true }]
+			: []),
+	];
 }

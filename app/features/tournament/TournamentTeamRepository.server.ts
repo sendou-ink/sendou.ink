@@ -1033,6 +1033,17 @@ export async function findInviteCodeById(tournamentTeamId: number) {
 	return row?.inviteCode ?? null;
 }
 
+/** Chat room of one team, only pickup teams formed via LFG have one. */
+export async function findChatRoomIdById(tournamentTeamId: number) {
+	const row = await db
+		.selectFrom("TournamentTeam")
+		.select("TournamentTeam.chatRoomId")
+		.where("TournamentTeam.id", "=", tournamentTeamId)
+		.executeTakeFirst();
+
+	return row?.chatRoomId ?? null;
+}
+
 /** Whether some team of some tournament has this image as its pickup logo; organizers copy those when importing teams. */
 export async function isPickupAvatarImgId(imgId: number) {
 	const row = await db

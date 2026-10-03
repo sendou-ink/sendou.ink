@@ -1360,6 +1360,12 @@ export function buildCases(fx: Fixtures): {
 		(tournamentTeamId) =>
 			TournamentTeamRepository.findInviteCodeById(tournamentTeamId),
 	);
+	add(
+		"TournamentTeamRepository.findChatRoomIdById",
+		fx.heavyTournamentTeamId,
+		(tournamentTeamId) =>
+			TournamentTeamRepository.findChatRoomIdById(tournamentTeamId),
+	);
 	add("TournamentTeamRepository.isPickupAvatarImgId", fx.imageId, (imageId) =>
 		TournamentTeamRepository.isPickupAvatarImgId(imageId),
 	);

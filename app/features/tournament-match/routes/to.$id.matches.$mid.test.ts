@@ -427,4 +427,50 @@ describe("Tournament match page", () => {
 			},
 		);
 	});
+
+	describe("chat rooms", () => {
+		const pickupTeamUserIds = () => users.ids(ROSTER_SIZE);
+		const opponentUserIds = () => users.ids(ROSTER_SIZE * 2).slice(ROSTER_SIZE);
+
+		/** Team one formed via LFG, so it has a chat room of its own. */
+		const startMatchWithPickupTeam = async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
+			});
+			await TournamentTeamFactory.create(
+				{ tournamentId: tournament.id, memberUserIds: pickupTeamUserIds() },
+				{ isCheckedIn: true, isLooking: true },
+			);
+			await createTournamentTeam(tournament.id, opponentUserIds());
+
+			const [match] = await TournamentFactory.startBracket(tournament.id);
+
+			return { id: String(tournament.id), mid: String(match.id) };
+		};
+
+		const surfacedRoomTypes = async (user: number) => {
+			const data = await tournamentMatchLoader({
+				user,
+				params: await startMatchWithPickupTeam(),
+			});
+
+			return data.chatRooms.map(({ room, autoOpen }) => ({
+				type: room.type,
+				autoOpen,
+			}));
+		};
+
+		test("opens a participant's pickup team chat after the match chat", async () => {
+			expect(await surfacedRoomTypes(pickupTeamUserIds()[1])).toEqual([
+				{ type: "TOURNAMENT_MATCH", autoOpen: true },
+				{ type: "TOURNAMENT_TEAM", autoOpen: true },
+			]);
+		});
+
+		test("opens only the match chat for a participant whose team has no chat", async () => {
+			expect(await surfacedRoomTypes(opponentUserIds()[0])).toEqual([
+				{ type: "TOURNAMENT_MATCH", autoOpen: true },
+			]);
+		});
+	});
 });
