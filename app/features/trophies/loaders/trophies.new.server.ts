@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
+import type { QueryRow } from "~/db/entity-query";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { hasPermission } from "~/modules/permissions/utils";
@@ -15,13 +16,10 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 	const canReview = canReviewTrophies(user);
 	const canBackfill = canBackfillTrophies(user);
 
-	const [rawItems, ownUnreviewedCount, trophies] = await Promise.all([
-		canReview
-			? TrophyRepository.allPending()
-			: TrophyRepository.pendingBySubmitter(user.id),
-		TrophyRepository.unreviewedCountBySubmitter(user.id),
-		TrophyRepository.findAllForEditing(),
-	]);
+	const rawItems = await submissions(canReview ? undefined : user.id).execute();
+	const ownUnreviewedCount =
+		await TrophyRepository.countUnreviewedBySubmitterUserId(user.id);
+	const trophies = await tournamentTrophies().execute();
 
 	const editableTrophies = trophies.filter((trophy) =>
 		hasPermission(trophy, "EDIT", user),
@@ -62,17 +60,32 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 	};
 };
 
-function stripReviewerInfo(
-	item: Awaited<ReturnType<typeof TrophyRepository.allPending>>[number],
-) {
+function stripReviewerInfo(item: QueryRow<ReturnType<typeof submissions>>) {
 	return {
 		...item,
 		approvals: item.approvals.map(() => ({
 			userId: null as number | null,
 			username: null as string | null,
-			createdAt: 0,
 		})),
-		declinedByUserId: null,
-		declinedByUsername: null,
+		decliner: null,
 	};
+}
+
+function submissions(submitterUserId: number | undefined) {
+	return TrophyRepository.submissions()
+		.where({ submitterUserId })
+		.withSubmitter()
+		.withDecliner()
+		.withManager()
+		.withCreator()
+		.withOrganization()
+		.withApprovals()
+		.withTarget();
+}
+
+function tournamentTrophies() {
+	return TrophyRepository.trophies()
+		.where({ code: null })
+		.withColumns(["organizationId", "managerId", "creatorId"])
+		.withEditPermissions();
 }

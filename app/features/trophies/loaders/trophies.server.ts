@@ -13,10 +13,10 @@ export const loader = async () => {
 			cache,
 			ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
 			async getFreshValue() {
-				return TrophyRepository.all();
+				return TrophyRepository.findAllRankedByTier();
 			},
 		}),
-		TrophyRepository.findAllXp(),
+		TrophyRepository.trophies().forXPower().withColumns(["code"]).execute(),
 	]);
 
 	return {

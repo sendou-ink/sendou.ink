@@ -78,7 +78,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		series: await seriesInfo(),
 		month,
 		year,
-		trophies: await TrophyRepository.findByOrganizationId(organization.id),
+		trophies: await TrophyRepository.findAllRankedByTier(organization.id),
 		bannedUsers:
 			user?.id && organization.permissions.BAN.includes(user.id)
 				? await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(

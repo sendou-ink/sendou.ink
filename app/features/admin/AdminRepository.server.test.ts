@@ -10,7 +10,6 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { databaseTimestampNow } from "~/utils/dates";
 import * as AdminRepository from "./AdminRepository.server";
 
 const users = UserFactory.pool();
@@ -41,7 +40,7 @@ describe("migrate", () => {
 			.values({
 				trophyId: args.trophyId,
 				userId: args.userId,
-				createdAt: databaseTimestampNow(),
+				createdAt: new Date(),
 			})
 			.execute();
 	};
@@ -55,7 +54,7 @@ describe("migrate", () => {
 			ownerId: oldUserId,
 		});
 
-		return TrophyFactory.createPending(
+		return TrophyFactory.createSubmission(
 			{
 				organizationId: organization.id,
 				submitterUserId: args.submitterUserId,
@@ -102,7 +101,7 @@ describe("migrate", () => {
 		).toEqual([{ userId: oldUserId }]);
 
 		const pending = await db
-			.selectFrom("PendingTrophy")
+			.selectFrom("TrophySubmission")
 			.select(["submitterUserId", "managerId"])
 			.executeTakeFirstOrThrow();
 		expect(pending).toEqual({
@@ -111,7 +110,10 @@ describe("migrate", () => {
 		});
 
 		expect(
-			await db.selectFrom("PendingTrophyApproval").select("userId").execute(),
+			await db
+				.selectFrom("TrophySubmissionApproval")
+				.select("userId")
+				.execute(),
 		).toEqual([{ userId: oldUserId }]);
 	});
 
@@ -143,7 +145,10 @@ describe("migrate", () => {
 			await db.selectFrom("SpecialTrophyOwner").select("userId").execute(),
 		).toEqual([{ userId: oldUserId }]);
 		expect(
-			await db.selectFrom("PendingTrophyApproval").select("userId").execute(),
+			await db
+				.selectFrom("TrophySubmissionApproval")
+				.select("userId")
+				.execute(),
 		).toEqual([{ userId: oldUserId }]);
 	});
 

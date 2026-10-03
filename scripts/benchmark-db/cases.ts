@@ -1468,12 +1468,50 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 
-	addStatic("TrophyRepository.all", () => TrophyRepository.all());
-	add("TrophyRepository.findById", fx.trophy, (trophy) =>
-		TrophyRepository.findById(trophy.heavyTrophyId),
+	addStatic("TrophyRepository.findAllRankedByTier", () =>
+		TrophyRepository.findAllRankedByTier(),
 	);
-	add("TrophyRepository.findByOwnerUserId", fx.trophy, (trophy) =>
-		TrophyRepository.findByOwnerUserId(trophy.ownerUserId),
+	addStatic("TrophyRepository.trophies.xp", () =>
+		TrophyRepository.trophies().forXPower().withColumns(["code"]).execute(),
+	);
+	add("TrophyRepository.trophies.details", fx.trophy, (trophy) =>
+		TrophyRepository.trophies()
+			.where({ id: trophy.heavyTrophyId })
+			.withColumns(["code"])
+			.withCreator()
+			.withManager()
+			.withOrganization()
+			.withOwners()
+			.executeTakeFirst(),
+	);
+	addStatic("TrophyRepository.trophies.editing", () =>
+		TrophyRepository.trophies()
+			.where({ code: null })
+			.withColumns(["organizationId", "managerId", "creatorId"])
+			.withEditPermissions()
+			.execute(),
+	);
+	add("TrophyRepository.trophies.ownedBy", fx.trophy, (trophy) =>
+		TrophyRepository.trophies().ownedBy(trophy.ownerUserId).execute(),
+	);
+	add("TrophyRepository.findAllByOwnerUserId", fx.trophy, (trophy) =>
+		TrophyRepository.findAllByOwnerUserId(trophy.ownerUserId),
+	);
+	addStatic("TrophyRepository.submissions.review", () =>
+		TrophyRepository.submissions()
+			.withSubmitter()
+			.withDecliner()
+			.withManager()
+			.withCreator()
+			.withOrganization()
+			.withApprovals()
+			.withTarget()
+			.execute(),
+	);
+	add(
+		"TrophyRepository.countUnreviewedBySubmitterUserId",
+		fx.heavyUser,
+		(user) => TrophyRepository.countUnreviewedBySubmitterUserId(user.id),
 	);
 	add("TrophyRepository.findTournamentsByTrophyId", fx.trophy, (trophy) =>
 		TrophyRepository.findTournamentsByTrophyId(trophy.heavyTrophyId),

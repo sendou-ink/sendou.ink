@@ -25,12 +25,22 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
 import { SPL2_JOIN_ORDER_CUTOFF } from "../../user-page-constants";
+import { sortTrophiesByFavorites } from "../trophy-sorting.server";
 import type { ExtractWidgetSettings } from "./types";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
 export const WIDGET_LOADERS = {
 	"trophies-owned": async (userId: number) => {
-		return TrophyRepository.findByOwnerUserId(userId);
+		const owner = await trophyPreferencesOf(userId).executeTakeFirst();
+		if (!owner) return [];
+
+		const hiddenTrophyIds = new Set(owner.hiddenTrophyIds ?? []);
+		const trophies = await TrophyRepository.findAllByOwnerUserId(userId);
+
+		return sortTrophiesByFavorites({
+			...owner,
+			trophies: trophies.filter((trophy) => !hiddenTrophyIds.has(trophy.id)),
+		}).trophies;
 	},
 	"badges-owned": async (
 		userId: number,
@@ -420,6 +430,12 @@ async function getTop500WeaponsByCategory(
 		weaponIds: categoryWeaponIds.sort((a, b) => a - b),
 		total: category.weaponIds.length,
 	};
+}
+
+function trophyPreferencesOf(userId: number) {
+	return UserRepository.users()
+		.where({ id: userId })
+		.withColumns(["favoriteTrophyIds", "hiddenTrophyIds", "patronTier"]);
 }
 
 function authorsPosts(authorId: number) {

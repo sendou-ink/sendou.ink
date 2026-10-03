@@ -153,7 +153,7 @@ test.describe("Trophies", () => {
 		const approvedName = "Approved Trophy";
 		const declinedName = "Declined Trophy";
 		for (const name of [approvedName, declinedName]) {
-			await factories.TrophyFactory.createPending({
+			await factories.TrophyFactory.createSubmission({
 				name,
 				organizationId: organization.id,
 				submitterUserId: NZAP_TEST_ID,

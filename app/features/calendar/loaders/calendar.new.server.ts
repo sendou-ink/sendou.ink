@@ -97,8 +97,10 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		typeof org === "string" ? [] : [org.id],
 	);
 
-	const trophies =
-		await TrophyRepository.findByOrganizationIds(validOrganizationIds);
+	const trophies = await TrophyRepository.trophies()
+		.ofOrganizations(validOrganizationIds)
+		.withColumns(["organizationId"])
+		.execute();
 
 	const eventToCopy = eventToCopyRaw
 		? {

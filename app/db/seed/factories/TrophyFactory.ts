@@ -9,7 +9,7 @@ import trophies from "../data/trophies.json" with { type: "json" };
 /** Compressed model states of real trophies, one of which every trophy is given. */
 export const MODELS = Object.values(trophies);
 
-/** Written directly; `createPending` covers the submission flow. Awarding is `TournamentFactory`'s job (finalizing). */
+/** Written directly; `createSubmission` covers the submission flow. Awarding is `TournamentFactory`'s job (finalizing). */
 export const { create } = defineFactory({
 	defaults: ({ seq }) => ({
 		name: `Trophy ${seq}`,
@@ -44,7 +44,7 @@ export async function createXpTrophies() {
 	return created;
 }
 
-type PendingOptions = {
+type SubmissionOptions = {
 	/** Who approves the submission; enough of them and the trophy is created. */
 	approverUserIds?: number[];
 	/** Who turns the submission down, and why. */
@@ -52,28 +52,28 @@ type PendingOptions = {
 };
 
 /** Submissions awaiting review; the options review them the way the review page does. */
-export const { create: createPending, createMany: createManyPending } =
+export const { create: createSubmission, createMany: createManySubmissions } =
 	defineFactory({
 		defaults: ({ seq }) => ({
-			name: `Pending trophy ${seq}`,
+			name: `Submitted trophy ${seq}`,
 			model: MODELS[seq % MODELS.length],
 			description: "",
 		}),
-		insert: TrophyRepository.createPending,
+		insert: TrophyRepository.insertSubmission,
 		applyOptions: async (
-			pending,
-			{ approverUserIds, declinedBy }: PendingOptions,
+			submission,
+			{ approverUserIds, declinedBy }: SubmissionOptions,
 		) => {
 			for (const userId of approverUserIds ?? []) {
 				await TrophyRepository.addApproval({
-					pendingTrophyId: pending.id,
+					submissionId: submission.id,
 					userId,
 				});
 			}
 
 			if (declinedBy) {
-				await TrophyRepository.declinePending({
-					id: pending.id,
+				await TrophyRepository.declineSubmission({
+					id: submission.id,
 					reason: declinedBy.reason,
 					declinedByUserId: declinedBy.userId,
 				});

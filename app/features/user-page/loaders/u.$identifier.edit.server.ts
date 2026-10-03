@@ -16,9 +16,9 @@ export const loader = async () => {
 	const friendCodeResult = await UserRepository.findCurrentFriendCodeByUserId(
 		user.id,
 	);
-	const ownedTrophies = await TrophyRepository.findByOwnerUserIdIncludingHidden(
-		user.id,
-	);
+	const ownedTrophies = await TrophyRepository.trophies()
+		.ownedBy(user.id)
+		.execute();
 
 	return {
 		user: userProfile,

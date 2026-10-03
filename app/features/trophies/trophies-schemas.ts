@@ -110,11 +110,11 @@ const trophyBackfillAwards = v.pipe(
 export const trophyActionSchema = v.union([
 	v.object({
 		_action: _action("DELETE"),
-		pendingTrophyId: id,
+		submissionId: id,
 	}),
 	v.object({
 		_action: _action("DECLINE"),
-		pendingTrophyId: id,
+		submissionId: id,
 		reason: v.pipe(
 			v.string(),
 			v.trim(),
@@ -124,7 +124,7 @@ export const trophyActionSchema = v.union([
 	}),
 	v.object({
 		_action: _action("APPROVE"),
-		pendingTrophyId: id,
+		submissionId: id,
 	}),
 	v.object({
 		_action: _action("BACKFILL"),

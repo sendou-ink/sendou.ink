@@ -7,9 +7,13 @@ import {
 	type Transaction,
 } from "kysely";
 import * as R from "remeda";
+import { crud } from "~/db/crud";
+import { defineQuery, mapRows, refine } from "~/db/entity-query";
 import { db } from "~/db/sql";
-import type { DB } from "~/db/tables";
+import type { DB, TablesInsertable } from "~/db/tables";
 import { DEV_IDS } from "~/features/admin/admin-constants";
+import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
@@ -26,10 +30,17 @@ import {
 	tournamentTeamCount,
 } from "~/utils/kysely.server";
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
-import { sortTrophiesByFavorites } from "../user-page/core/trophy-sorting.server";
 import * as XpTrophy from "./core/XpTrophy";
 import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 import { hasUpcomingTournamentSoon } from "./trophies-utils";
+
+const trophyTable = crud("Trophy");
+const specialOwnerTable = crud("SpecialTrophyOwner");
+const submissionTable = crud("TrophySubmission");
+const approvalTable = crud("TrophySubmissionApproval");
+
+export const { findById } = trophyTable;
+export const { deleteById: deleteSubmissionById } = submissionTable;
 
 type TrophyRecentTournament = {
 	tier: number | null;
@@ -38,294 +49,265 @@ type TrophyRecentTournament = {
 	startTime: number | null;
 };
 
-/** Tournament trophies, special ones are listed by their own functions. */
-export async function all() {
-	const rows = await db
-		.selectFrom("Trophy")
-		.select((eb) => ["id", "name", "model", withRecentTournaments(eb)])
-		.where("code", "is", null)
+/** Trophies, tournament and special ones (`code` set). */
+export const trophies = defineQuery({
+	root: "Trophy",
+	// xxx: every list ships each trophy's full model (~6 KB), the trophies page grows with the trophy count
+	select: (qb) => qb.select(["Trophy.id", "Trophy.name", "Trophy.model"]),
+	defaultSort: [["Trophy.id", "asc"]],
+	vocabulary: () => ({
+		/** The X Power trophies. */
+		forXPower: () =>
+			refine("Trophy", (qb) =>
+				qb.where("Trophy.code", "like", XpTrophy.CODE_LIKE_PATTERN),
+			),
+		/** Trophies of any of the organizations. */
+		ofOrganizations: (organizationIds: number[]) =>
+			refine("Trophy", (qb) =>
+				qb.where("Trophy.organizationId", "in", organizationIds),
+			),
+		/** Trophies the user owns, with how many times they won each (`count`, 1 for a special trophy) and their best `tier`. */
+		ownedBy: (userId: number) =>
+			refine("Trophy", (qb) =>
+				qb
+					.where("Trophy.id", "in", (eb) =>
+						eb
+							.selectFrom("TrophyOwner")
+							.select("TrophyOwner.trophyId")
+							.where("TrophyOwner.userId", "=", userId)
+							.union(
+								eb
+									.selectFrom("SpecialTrophyOwner")
+									.select("SpecialTrophyOwner.trophyId")
+									.where("SpecialTrophyOwner.userId", "=", userId),
+							),
+					)
+					.select((eb) => [
+						eb(
+							eb
+								.selectFrom("TrophyOwner")
+								.select((countEb) => countEb.fn.countAll<number>().as("count"))
+								.whereRef("TrophyOwner.trophyId", "=", "Trophy.id")
+								.where("TrophyOwner.userId", "=", userId)
+								.$asScalar()
+								.$notNull(),
+							"+",
+							eb
+								.selectFrom("SpecialTrophyOwner")
+								.select((countEb) => countEb.fn.countAll<number>().as("count"))
+								.whereRef("SpecialTrophyOwner.trophyId", "=", "Trophy.id")
+								.where("SpecialTrophyOwner.userId", "=", userId)
+								.$asScalar()
+								.$notNull(),
+						).as("count"),
+						eb
+							.selectFrom("TrophyOwner")
+							.select((tierEb) =>
+								tierEb.fn.min<number | null>("TrophyOwner.tier").as("tier"),
+							)
+							.whereRef("TrophyOwner.trophyId", "=", "Trophy.id")
+							.where("TrophyOwner.userId", "=", userId)
+							.$asScalar()
+							.as("tier"),
+					]),
+			),
+		withCreator: () => UserRepository.withUser("creator", "Trophy.creatorId"),
+		withManager: () => UserRepository.withUser("manager", "Trophy.managerId"),
+		withOrganization: () =>
+			refine("Trophy", (qb) =>
+				qb.select((eb) => organizationObject(eb, "Trophy.organizationId")),
+			),
+		/** Everyone who owns the trophy with how many times, most wins first. */
+		withOwners: () =>
+			refine("Trophy", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom((ownersEb) =>
+								ownersEb
+									.selectFrom("TrophyOwner")
+									.select((countEb) => [
+										"TrophyOwner.userId",
+										countEb.fn.countAll<number>().as("count"),
+									])
+									.whereRef("TrophyOwner.trophyId", "=", "Trophy.id")
+									.groupBy("TrophyOwner.userId")
+									.unionAll(
+										ownersEb
+											.selectFrom("SpecialTrophyOwner")
+											.select((countEb) => [
+												"SpecialTrophyOwner.userId",
+												countEb.val(1).as("count"),
+											])
+											.whereRef(
+												"SpecialTrophyOwner.trophyId",
+												"=",
+												"Trophy.id",
+											),
+									)
+									.as("Owner"),
+							)
+							.innerJoin("User", "User.id", "Owner.userId")
+							.select((ownerEb) => [
+								"Owner.count",
+								...commonUserSelect(ownerEb),
+							])
+							.orderBy("Owner.count", "desc")
+							.orderBy("User.id", "asc"),
+					).as("owners"),
+				),
+			),
+		/** The trophy's manager and the devs may edit it. */
+		withEditPermissions: () =>
+			mapRows("Trophy", (row: { managerId: number | null }) => ({
+				permissions: {
+					EDIT: R.unique([
+						...(row.managerId ? [row.managerId] : []),
+						...DEV_IDS,
+					]),
+				},
+			})),
+	}),
+});
+
+/** Trophy submissions, newest first. */
+export const submissions = defineQuery({
+	root: "TrophySubmission",
+	// xxx: the review page ships the model of every submission ever reviewed, drop it from that tab or paginate it
+	select: (qb) =>
+		qb.select([
+			"TrophySubmission.id",
+			"TrophySubmission.name",
+			"TrophySubmission.model",
+			"TrophySubmission.description",
+			"TrophySubmission.organizationId",
+			"TrophySubmission.submitterUserId",
+			"TrophySubmission.declineReason",
+			"TrophySubmission.declinedAt",
+			"TrophySubmission.acceptedAt",
+			"TrophySubmission.managerId",
+			"TrophySubmission.creatorId",
+		]),
+	defaultSort: [["TrophySubmission.createdAt", "desc"]],
+	vocabulary: () => ({
+		/** Submissions neither declined nor accepted yet. */
+		unreviewed: () =>
+			refine("TrophySubmission", (qb) =>
+				qb
+					.where("TrophySubmission.declinedAt", "is", null)
+					.where("TrophySubmission.acceptedAt", "is", null),
+			),
+		withSubmitter: () =>
+			UserRepository.withUser("submitter", "TrophySubmission.submitterUserId"),
+		withDecliner: () =>
+			UserRepository.withUser("decliner", "TrophySubmission.declinedByUserId"),
+		/** Who is to manage the trophy, `null` for the submitter. */
+		withManager: () =>
+			UserRepository.withUser("manager", "TrophySubmission.managerId"),
+		/** Who is to be credited for the trophy, `null` for the submitter or for keeping the current creator. */
+		withCreator: () =>
+			UserRepository.withUser("creator", "TrophySubmission.creatorId"),
+		withOrganization: () =>
+			refine("TrophySubmission", (qb) =>
+				qb.select((eb) =>
+					organizationObject(eb, "TrophySubmission.organizationId"),
+				),
+			),
+		/** Who approved the submission, in the order they did. */
+		withApprovals: () =>
+			refine("TrophySubmission", (qb) =>
+				qb.select((eb) =>
+					jsonArrayFrom(
+						eb
+							.selectFrom("TrophySubmissionApproval")
+							.innerJoin("User", "TrophySubmissionApproval.userId", "User.id")
+							.select(["TrophySubmissionApproval.userId", "User.username"])
+							.whereRef(
+								"TrophySubmissionApproval.submissionId",
+								"=",
+								"TrophySubmission.id",
+							)
+							.orderBy("TrophySubmissionApproval.createdAt", "asc"),
+					).as("approvals"),
+				),
+			),
+		/** The trophy an edit submission changes, as it is now. `null` for a new trophy. */
+		withTarget: () =>
+			refine("TrophySubmission", (qb) =>
+				qb.select((eb) =>
+					jsonObjectFrom(
+						eb
+							.selectFrom("Trophy")
+							.leftJoin("User", "User.id", "Trophy.managerId")
+							.leftJoin("User as Creator", "Creator.id", "Trophy.creatorId")
+							.leftJoin(
+								"TournamentOrganization",
+								"TournamentOrganization.id",
+								"Trophy.organizationId",
+							)
+							.select([
+								"Trophy.id",
+								"Trophy.name",
+								"Trophy.model",
+								"Trophy.organizationId",
+								"Trophy.managerId",
+								"Trophy.creatorId",
+								"User.username as managerUsername",
+								"Creator.username as creatorUsername",
+								"TournamentOrganization.name as organizationName",
+								"TournamentOrganization.slug as organizationSlug",
+							])
+							.whereRef("Trophy.id", "=", "TrophySubmission.targetTrophyId"),
+					).as("target"),
+				),
+			),
+	}),
+});
+
+/**
+ * Tournament trophies, of one organization when given, ranked by the tier of their most recent
+ * tiered tournament: its `tier`, else the organization's `tentativeTier` for it. Within a tier,
+ * those with a tournament coming up soon come first.
+ */
+export async function findAllRankedByTier(organizationId?: number) {
+	const rows = await trophies()
+		.where({ code: null, organizationId })
+		.with(withRecentTournaments())
 		.execute();
 
 	return sortByEffectiveTier(rows.map(addEffectiveTier));
 }
 
-const withRecentTournaments = (eb: ExpressionBuilder<DB, "Trophy">) =>
-	jsonArrayFrom(
-		eb
-			.selectFrom("CalendarEvent")
-			.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
-			.select((eb2) => [
-				"Tournament.tier",
-				"CalendarEvent.name",
-				"CalendarEvent.organizationId",
-				calendarEventStartTime(eb2).as("startTime"),
-			])
-			.whereRef("CalendarEvent.trophyId", "=", "Trophy.id")
-			.where("CalendarEvent.hidden", "=", 0)
-			.orderBy((eb2) => calendarEventStartTime(eb2), "desc"),
-	).as("recentTournaments");
-
-function addEffectiveTier<
-	T extends { recentTournaments: Array<TrophyRecentTournament> },
->({ recentTournaments, ...rest }: T) {
-	const upcomingTournamentAt = nextUpcomingStartTime(recentTournaments);
-
-	for (const tournament of recentTournaments) {
-		const tierInfo = tournamentTierInfo(tournament);
-		if (tierInfo.tier !== null || tierInfo.tentativeTier !== null) {
-			return { ...rest, ...tierInfo, upcomingTournamentAt };
-		}
-	}
-
-	return { ...rest, tier: null, tentativeTier: null, upcomingTournamentAt };
-}
-
-function nextUpcomingStartTime(tournaments: Array<TrophyRecentTournament>) {
-	const now = dateToDatabaseTimestamp(new Date());
-
-	// ordered newest first, so the last future start time is the next one up
-	const futureStartTimes = tournaments
-		.map((tournament) => tournament.startTime)
-		.filter(
-			(startTime): startTime is number => startTime !== null && startTime > now,
-		);
-
-	return futureStartTimes.at(-1) ?? null;
-}
-
-function tournamentTierInfo(tournament: TrophyRecentTournament) {
-	const isPastEvent =
-		tournament.startTime !== null &&
-		databaseTimestampToDate(tournament.startTime) <
-			sub(new Date(), { days: 1 });
-
-	const tentativeTier =
-		tournament.tier === null &&
-		tournament.organizationId !== null &&
-		!isPastEvent
-			? getTentativeTier(tournament.organizationId, tournament.name)
-			: null;
-
-	return { tier: tournament.tier, tentativeTier };
-}
-
-function sortByEffectiveTier<
-	T extends {
-		id: number;
-		tier: number | null;
-		tentativeTier: number | null;
-		upcomingTournamentAt: number | null;
-	},
->(rows: T[]) {
-	return R.sortBy(
-		rows,
-		(row) => row.tier ?? row.tentativeTier ?? Number.MAX_SAFE_INTEGER,
-		(row) => (hasUpcomingTournamentSoon(row.upcomingTournamentAt) ? 0 : 1),
-		(row) => row.id,
-	);
-}
-
-const withCreator = (eb: ExpressionBuilder<DB, "Trophy">) => {
-	return jsonObjectFrom(
-		eb
-			.selectFrom("User")
-			.select((userEb) => commonUserSelect(userEb))
-			.whereRef("User.id", "=", "Trophy.creatorId"),
-	).as("creator");
-};
-
-const withManager = (eb: ExpressionBuilder<DB, "Trophy">) => {
-	return jsonObjectFrom(
-		eb
-			.selectFrom("User")
-			.select((userEb) => commonUserSelect(userEb))
-			.whereRef("User.id", "=", "Trophy.managerId"),
-	).as("manager");
-};
-
-const withOrganization = (eb: ExpressionBuilder<DB, "Trophy">) => {
-	return jsonObjectFrom(
-		eb
-			.selectFrom("TournamentOrganization")
-			.select(["TournamentOrganization.name", "TournamentOrganization.slug"])
-			.whereRef("TournamentOrganization.id", "=", "Trophy.organizationId"),
-	).as("organization");
-};
-
-const withOwners = (eb: ExpressionBuilder<DB, "Trophy">) => {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("TrophyOwner")
-			.innerJoin("User", "TrophyOwner.userId", "User.id")
-			.select((ownerEb) => [
-				ownerEb.fn.count<number>("TrophyOwner.trophyId").as("count"),
-				...commonUserSelect(ownerEb),
-			])
-			.whereRef("TrophyOwner.trophyId", "=", "Trophy.id")
-			.groupBy("User.id")
-			.orderBy("count", "desc"),
-	).as("owners");
-};
-
-const withSpecialOwners = (eb: ExpressionBuilder<DB, "Trophy">) => {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("SpecialTrophyOwner")
-			.innerJoin("User", "SpecialTrophyOwner.userId", "User.id")
-			.select((ownerEb) => [
-				ownerEb.val(1).as("count"),
-				...commonUserSelect(ownerEb),
-			])
-			.whereRef("SpecialTrophyOwner.trophyId", "=", "Trophy.id")
-			.orderBy("User.id", "asc"),
-	).as("specialOwners");
-};
-
-export async function findByOrganizationId(organizationId: number) {
-	const rows = await db
-		.selectFrom("Trophy")
-		.select((eb) => ["id", "name", "model", withRecentTournaments(eb)])
-		.where("organizationId", "=", organizationId)
+/**
+ * The user's trophies, hidden ones included, with how many times they won each (`count`), their
+ * best `tier` and the X Rank `division` an X Power trophy was won in.
+ */
+export async function findAllByOwnerUserId(userId: number) {
+	const owned = await trophies()
+		.ownedBy(userId)
+		.withColumns(["code"])
 		.execute();
 
-	return sortByEffectiveTier(rows.map(addEffectiveTier));
-}
-
-export async function findByOrganizationIds(organizationIds: number[]) {
-	if (organizationIds.length === 0) return [];
-
-	return db
-		.selectFrom("Trophy")
-		.select(["id", "name", "model", "organizationId"])
-		.where("organizationId", "in", organizationIds)
-		.execute();
-}
-
-async function findOwnedTrophies(userId: number) {
-	const tournamentRows = await db
-		.selectFrom("TrophyOwner")
-		.innerJoin("Trophy", "Trophy.id", "TrophyOwner.trophyId")
-		.innerJoin("User", "User.id", "TrophyOwner.userId")
-		.select(({ fn }) => [
-			fn.count<number>("TrophyOwner.trophyId").as("count"),
-			fn.min<number | null>("TrophyOwner.tier").as("tier"),
-			"Trophy.id",
-			"Trophy.name",
-			"Trophy.model",
-			"Trophy.code",
-			"User.favoriteTrophyIds",
-			"User.hiddenTrophyIds",
-			"User.patronTier",
-		])
-		.where("TrophyOwner.userId", "=", userId)
-		.groupBy(["TrophyOwner.trophyId", "TrophyOwner.userId"])
-		.execute();
-
-	const specialRows = await db
-		.selectFrom("SpecialTrophyOwner")
-		.innerJoin("Trophy", "Trophy.id", "SpecialTrophyOwner.trophyId")
-		.innerJoin("User", "User.id", "SpecialTrophyOwner.userId")
-		.select([
-			"Trophy.id",
-			"Trophy.name",
-			"Trophy.model",
-			"Trophy.code",
-			"User.favoriteTrophyIds",
-			"User.hiddenTrophyIds",
-			"User.patronTier",
-		])
-		.where("SpecialTrophyOwner.userId", "=", userId)
-		.execute();
-
-	const xpPlacements = specialRows.some((row) => XpTrophy.parseCode(row.code))
-		? await db
-				.selectFrom("XRankPlacement")
-				.innerJoin(
-					"SplatoonPlayer",
-					"SplatoonPlayer.id",
-					"XRankPlacement.playerId",
-				)
-				.select([
-					"XRankPlacement.weaponSplId",
-					"XRankPlacement.power",
-					"XRankPlacement.region",
-				])
-				.where("SplatoonPlayer.userId", "=", userId)
-				.execute()
+	const placements = owned.some((trophy) => XpTrophy.parseCode(trophy.code))
+		? await XRankPlacementRepository.placements().claimedBy(userId).execute()
 		: [];
 
-	return [
-		...tournamentRows.map((row) => ({ ...row, division: null })),
-		...specialRows.map((row) => {
-			const xpVariant = XpTrophy.parseCode(row.code);
+	return owned.map((trophy) => {
+		const xpVariant = XpTrophy.parseCode(trophy.code);
 
-			return {
-				...row,
-				count: 1,
-				tier: null,
-				division: xpVariant ? XpTrophy.division(xpPlacements, xpVariant) : null,
-			};
-		}),
-	];
+		return {
+			...trophy,
+			division: xpVariant ? XpTrophy.division(placements, xpVariant) : null,
+		};
+	});
 }
 
-export async function findByOwnerUserId(userId: number) {
-	const rows = await findOwnedTrophies(userId);
-
-	if (rows.length === 0) return [];
-
-	const { favoriteTrophyIds, hiddenTrophyIds, patronTier } = rows[0];
-	const hiddenSet = new Set(hiddenTrophyIds ?? []);
-
-	return sortTrophiesByFavorites({
-		favoriteTrophyIds,
-		hiddenTrophyIds,
-		patronTier,
-		trophies: rows
-			.filter((row) => !hiddenSet.has(row.id))
-			.map((row) =>
-				R.omit(row, ["favoriteTrophyIds", "hiddenTrophyIds", "patronTier"]),
-			),
-	}).trophies;
+/** Unreviewed submissions of the user. */
+export function countUnreviewedBySubmitterUserId(submitterUserId: number) {
+	return submissions().where({ submitterUserId }).unreviewed().count();
 }
 
-export async function findByOwnerUserIdIncludingHidden(userId: number) {
-	const rows = await findOwnedTrophies(userId);
-
-	return rows.map((row) =>
-		R.omit(row, ["favoriteTrophyIds", "hiddenTrophyIds", "patronTier"]),
-	);
-}
-
-export async function findById(trophyId: number) {
-	const row = await db
-		.selectFrom("Trophy")
-		.select((eb) => [
-			"Trophy.id",
-			"Trophy.name",
-			"Trophy.model",
-			"Trophy.code",
-			"Trophy.organizationId",
-			withCreator(eb),
-			withManager(eb),
-			withOrganization(eb),
-			withOwners(eb),
-			withSpecialOwners(eb),
-		])
-		.where("Trophy.id", "=", trophyId)
-		.executeTakeFirst();
-
-	if (!row) return null;
-
-	const { specialOwners, ...trophy } = row;
-
-	return {
-		...trophy,
-		owners: [...trophy.owners, ...specialOwners],
-		permissions: trophyPermissions(trophy.manager?.id ?? null),
-	};
-}
-
+// xxx: a calendar/tournament read, move it there once CalendarRepository is converted
 export async function findTournamentsByTrophyId(trophyId: number) {
 	const rows = await db
 		.selectFrom("CalendarEvent")
@@ -354,6 +336,7 @@ export async function findTournamentsByTrophyId(trophyId: number) {
 	}));
 }
 
+// xxx: a calendar/tournament read, move it there once CalendarRepository is converted
 export async function findWinsByOwner({
 	trophyId,
 	userId,
@@ -472,16 +455,6 @@ export async function findWinsByOwner({
 	});
 }
 
-export async function findOrganizationIdById(trophyId: number) {
-	const row = await db
-		.selectFrom("Trophy")
-		.select("organizationId")
-		.where("id", "=", trophyId)
-		.executeTakeFirst();
-
-	return row?.organizationId ?? null;
-}
-
 /** Whether the name is taken by a trophy or a submission still awaiting review. */
 export async function existsByName(args: {
 	name: string;
@@ -500,42 +473,24 @@ export async function existsByName(args: {
 
 	if (trophy) return true;
 
-	let pendingQuery = db
-		.selectFrom("PendingTrophy")
+	let submissionQuery = db
+		.selectFrom("TrophySubmission")
 		.select("id")
 		.where("name", "=", args.name)
 		.where("declinedAt", "is", null)
 		.where("acceptedAt", "is", null);
 
 	if (args.excludeTrophyId !== undefined) {
-		pendingQuery = pendingQuery.where(
+		submissionQuery = submissionQuery.where(
 			"targetTrophyId",
 			"is not",
 			args.excludeTrophyId,
 		);
 	}
 
-	const pending = await pendingQuery.executeTakeFirst();
+	const submission = await submissionQuery.executeTakeFirst();
 
-	return Boolean(pending);
-}
-
-export function findAllXp() {
-	return db
-		.selectFrom("Trophy")
-		.select(["Trophy.id", "Trophy.name", "Trophy.model", "Trophy.code"])
-		.where("Trophy.code", "like", XpTrophy.CODE_LIKE_PATTERN)
-		.execute();
-}
-
-export async function findCodeById(trophyId: number) {
-	const row = await db
-		.selectFrom("Trophy")
-		.select("Trophy.code")
-		.where("Trophy.id", "=", trophyId)
-		.executeTakeFirst();
-
-	return row?.code ?? null;
+	return Boolean(submission);
 }
 
 export function findXpWeaponCountsById({
@@ -567,19 +522,7 @@ export function findXpWeaponCountsById({
 		.execute();
 }
 
-export async function findAllForEditing() {
-	const rows = await db
-		.selectFrom("Trophy")
-		.select(["id", "name", "model", "organizationId", "managerId", "creatorId"])
-		.where("code", "is", null)
-		.execute();
-
-	return rows.map((row) => ({
-		...row,
-		permissions: trophyPermissions(row.managerId),
-	}));
-}
-
+// xxx: a calendar/tournament read, move it there once CalendarRepository is converted
 export function findAllBackfillableTournaments({
 	organizationId,
 	substringMatches,
@@ -695,12 +638,12 @@ export function backfill({
  */
 export function syncSpecialTrophies() {
 	return db.transaction().execute(async (trx) => {
-		const trophies = await trx
+		const xpTrophies = await trx
 			.selectFrom("Trophy")
 			.select(["Trophy.id", "Trophy.code"])
 			.where("Trophy.code", "like", XpTrophy.CODE_LIKE_PATTERN)
 			.execute();
-		if (trophies.length === 0) return;
+		if (xpTrophies.length === 0) return;
 
 		const placements = await trx
 			.selectFrom("XRankPlacement")
@@ -724,7 +667,7 @@ export function syncSpecialTrophies() {
 			(awards) => awards.map((award) => award.userId),
 		);
 
-		for (const trophy of trophies) {
+		for (const trophy of xpTrophies) {
 			await replaceSpecialTrophyOwners({
 				trx,
 				trophyId: trophy.id,
@@ -732,6 +675,221 @@ export function syncSpecialTrophies() {
 			});
 		}
 	});
+}
+
+/** Inserts a submission awaiting review, returning its id. */
+export function insertSubmission(
+	args: Omit<TablesInsertable["TrophySubmission"], "createdAt">,
+) {
+	return submissionTable.insert({ ...args, createdAt: new Date() });
+}
+
+/** Declines the submission unless it was accepted already, dropping its approvals. Returns whether it was declined. */
+export async function declineSubmission(args: {
+	id: number;
+	reason: string;
+	declinedByUserId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const submission = await submissionTable.findById(args.id, trx);
+		if (!submission || submission.acceptedAt !== null) {
+			return false;
+		}
+
+		await approvalTable.delete({ submissionId: args.id }, trx);
+		await submissionTable.updateById(
+			args.id,
+			{
+				declineReason: args.reason,
+				declinedAt: new Date(),
+				declinedByUserId: args.declinedByUserId,
+			},
+			trx,
+		);
+
+		return true;
+	});
+}
+
+/**
+ * Records the user's approval of the submission. The approval completing the required count
+ * accepts it, creating the trophy or applying the edit, and its id is returned; otherwise `null`.
+ */
+export async function addApproval(args: {
+	submissionId: number;
+	userId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const insertResult = await trx
+			.insertInto("TrophySubmissionApproval")
+			.values({
+				submissionId: args.submissionId,
+				userId: args.userId,
+				createdAt: new Date(),
+			})
+			.onConflict((oc) => oc.doNothing())
+			.executeTakeFirst();
+
+		if (!insertResult.numInsertedOrUpdatedRows) {
+			return null;
+		}
+
+		const approvalCount = await approvalTable.count(
+			{ submissionId: args.submissionId },
+			trx,
+		);
+		if (approvalCount < TROPHY_APPROVALS_REQUIRED) {
+			return null;
+		}
+
+		const submission = await submissionTable.findById(args.submissionId, trx);
+		if (
+			!submission ||
+			submission.declinedAt !== null ||
+			submission.acceptedAt !== null
+		) {
+			return null;
+		}
+
+		await submissionTable.updateById(
+			submission.id,
+			{ acceptedAt: new Date() },
+			trx,
+		);
+
+		const managerId = submission.managerId ?? submission.submitterUserId;
+
+		if (submission.targetTrophyId !== null) {
+			await trophyTable.updateById(
+				submission.targetTrophyId,
+				{
+					name: submission.name,
+					model: submission.model,
+					organizationId: submission.organizationId,
+					managerId,
+					...(submission.creatorId !== null
+						? { creatorId: submission.creatorId }
+						: {}),
+				},
+				trx,
+			);
+			return { id: submission.targetTrophyId };
+		}
+
+		return trophyTable.insert(
+			{
+				name: submission.name,
+				model: submission.model,
+				organizationId: submission.organizationId,
+				creatorId: submission.creatorId ?? submission.submitterUserId,
+				managerId,
+			},
+			trx,
+		);
+	});
+}
+
+function withRecentTournaments() {
+	return refine("Trophy", (qb) =>
+		qb.select((eb) =>
+			jsonArrayFrom(
+				eb
+					.selectFrom("CalendarEvent")
+					.innerJoin(
+						"Tournament",
+						"Tournament.id",
+						"CalendarEvent.tournamentId",
+					)
+					.select((eb2) => [
+						"Tournament.tier",
+						"CalendarEvent.name",
+						"CalendarEvent.organizationId",
+						calendarEventStartTime(eb2).as("startTime"),
+					])
+					.whereRef("CalendarEvent.trophyId", "=", "Trophy.id")
+					.where("CalendarEvent.hidden", "=", 0)
+					.orderBy((eb2) => calendarEventStartTime(eb2), "desc"),
+			).as("recentTournaments"),
+		),
+	);
+}
+
+function addEffectiveTier<
+	T extends { recentTournaments: Array<TrophyRecentTournament> },
+>({ recentTournaments, ...rest }: T) {
+	const upcomingTournamentAt = nextUpcomingStartTime(recentTournaments);
+
+	for (const tournament of recentTournaments) {
+		const tierInfo = tournamentTierInfo(tournament);
+		if (tierInfo.tier !== null || tierInfo.tentativeTier !== null) {
+			return { ...rest, ...tierInfo, upcomingTournamentAt };
+		}
+	}
+
+	return { ...rest, tier: null, tentativeTier: null, upcomingTournamentAt };
+}
+
+function nextUpcomingStartTime(tournaments: Array<TrophyRecentTournament>) {
+	const now = dateToDatabaseTimestamp(new Date());
+
+	// ordered newest first, so the last future start time is the next one up
+	const futureStartTimes = tournaments
+		.map((tournament) => tournament.startTime)
+		.filter(
+			(startTime): startTime is number => startTime !== null && startTime > now,
+		);
+
+	return futureStartTimes.at(-1) ?? null;
+}
+
+function tournamentTierInfo(tournament: TrophyRecentTournament) {
+	const isPastEvent =
+		tournament.startTime !== null &&
+		databaseTimestampToDate(tournament.startTime) <
+			sub(new Date(), { days: 1 });
+
+	const tentativeTier =
+		tournament.tier === null &&
+		tournament.organizationId !== null &&
+		!isPastEvent
+			? getTentativeTier(tournament.organizationId, tournament.name)
+			: null;
+
+	return { tier: tournament.tier, tentativeTier };
+}
+
+function sortByEffectiveTier<
+	T extends {
+		id: number;
+		tier: number | null;
+		tentativeTier: number | null;
+		upcomingTournamentAt: number | null;
+	},
+>(rows: T[]) {
+	return R.sortBy(
+		rows,
+		(row) => row.tier ?? row.tentativeTier ?? Number.MAX_SAFE_INTEGER,
+		(row) => (hasUpcomingTournamentSoon(row.upcomingTournamentAt) ? 0 : 1),
+		(row) => row.id,
+	);
+}
+
+function organizationObject(
+	eb: ExpressionBuilder<DB, any>,
+	organizationIdColumn:
+		| "Trophy.organizationId"
+		| "TrophySubmission.organizationId",
+) {
+	return jsonObjectFrom(
+		eb
+			.selectFrom("TournamentOrganization")
+			.select(["TournamentOrganization.name", "TournamentOrganization.slug"])
+			.whereRef(
+				"TournamentOrganization.id",
+				"=",
+				sql.ref(organizationIdColumn),
+			),
+	).as("organization");
 }
 
 async function replaceSpecialTrophyOwners({
@@ -743,323 +901,24 @@ async function replaceSpecialTrophyOwners({
 	trophyId: number;
 	userIds: number[];
 }) {
-	let deleteStale = trx
-		.deleteFrom("SpecialTrophyOwner")
-		.where("trophyId", "=", trophyId);
-	if (userIds.length > 0) {
-		deleteStale = deleteStale.where("userId", "not in", userIds);
+	if (userIds.length === 0) {
+		await specialOwnerTable.delete({ trophyId }, trx);
+		return;
 	}
-	await deleteStale.execute();
 
-	if (userIds.length === 0) return;
+	await trx
+		.deleteFrom("SpecialTrophyOwner")
+		.where("trophyId", "=", trophyId)
+		.where("userId", "not in", userIds)
+		.execute();
 
 	await trx
 		.insertInto("SpecialTrophyOwner")
 		.values(
-			userIds.map((userId) => ({
-				trophyId,
-				userId,
-				createdAt: dateToDatabaseTimestamp(new Date()),
-			})),
+			userIds.map((userId) => ({ trophyId, userId, createdAt: new Date() })),
 		)
 		.onConflict((oc) => oc.doNothing())
 		.execute();
-}
-
-export async function createPending(args: {
-	name: string;
-	model: string;
-	description: string;
-	organizationId: number;
-	submitterUserId: number;
-	targetTrophyId?: number;
-	managerId?: number;
-	creatorId?: number;
-}) {
-	return db
-		.insertInto("PendingTrophy")
-		.values({
-			name: args.name,
-			model: args.model,
-			description: args.description,
-			organizationId: args.organizationId,
-			submitterUserId: args.submitterUserId,
-			createdAt: dateToDatabaseTimestamp(new Date()),
-			declineReason: null,
-			declinedAt: null,
-			declinedByUserId: null,
-			targetTrophyId: args.targetTrophyId ?? null,
-			managerId: args.managerId ?? null,
-			creatorId: args.creatorId ?? null,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-}
-
-const withApprovals = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("PendingTrophyApproval")
-			.innerJoin("User", "PendingTrophyApproval.userId", "User.id")
-			.select([
-				"PendingTrophyApproval.userId",
-				"PendingTrophyApproval.createdAt",
-				"User.username",
-			])
-			.whereRef(
-				"PendingTrophyApproval.pendingTrophyId",
-				"=",
-				"PendingTrophy.id",
-			)
-			.orderBy("PendingTrophyApproval.createdAt", "asc"),
-	).as("approvals");
-};
-
-const withTarget = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
-	return jsonObjectFrom(
-		eb
-			.selectFrom("Trophy")
-			.leftJoin("User", "User.id", "Trophy.managerId")
-			.leftJoin("User as Creator", "Creator.id", "Trophy.creatorId")
-			.leftJoin(
-				"TournamentOrganization",
-				"TournamentOrganization.id",
-				"Trophy.organizationId",
-			)
-			.select([
-				"Trophy.id",
-				"Trophy.name",
-				"Trophy.model",
-				"Trophy.organizationId",
-				"Trophy.managerId",
-				"Trophy.creatorId",
-				"User.username as managerUsername",
-				"Creator.username as creatorUsername",
-				"TournamentOrganization.name as organizationName",
-				"TournamentOrganization.slug as organizationSlug",
-			])
-			.whereRef("Trophy.id", "=", "PendingTrophy.targetTrophyId"),
-	).as("target");
-};
-
-const withTargetManager = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
-	return jsonObjectFrom(
-		eb
-			.selectFrom("User")
-			.select(["User.id", "User.username", "User.discordId"])
-			.whereRef("User.id", "=", "PendingTrophy.managerId"),
-	).as("manager");
-};
-
-const withPendingCreator = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
-	return jsonObjectFrom(
-		eb
-			.selectFrom("User")
-			.select(["User.id", "User.username", "User.discordId"])
-			.whereRef("User.id", "=", "PendingTrophy.creatorId"),
-	).as("creator");
-};
-
-function pendingBaseQuery() {
-	return db
-		.selectFrom("PendingTrophy")
-		.leftJoin(
-			"User as Submitter",
-			"Submitter.id",
-			"PendingTrophy.submitterUserId",
-		)
-		.leftJoin(
-			"User as Decliner",
-			"Decliner.id",
-			"PendingTrophy.declinedByUserId",
-		)
-		.leftJoin(
-			"TournamentOrganization",
-			"TournamentOrganization.id",
-			"PendingTrophy.organizationId",
-		)
-		.select((eb) => [
-			"PendingTrophy.id",
-			"PendingTrophy.name",
-			"PendingTrophy.model",
-			"PendingTrophy.description",
-			"PendingTrophy.organizationId",
-			"PendingTrophy.submitterUserId",
-			"PendingTrophy.createdAt",
-			"PendingTrophy.declineReason",
-			"PendingTrophy.declinedAt",
-			"PendingTrophy.declinedByUserId",
-			"PendingTrophy.acceptedAt",
-			"PendingTrophy.targetTrophyId",
-			"PendingTrophy.managerId",
-			"PendingTrophy.creatorId",
-			"Submitter.username as submitterUsername",
-			"Submitter.discordId as submitterDiscordId",
-			"Decliner.username as declinedByUsername",
-			"TournamentOrganization.name as organizationName",
-			"TournamentOrganization.slug as organizationSlug",
-			withApprovals(eb),
-			withTarget(eb),
-			withTargetManager(eb),
-			withPendingCreator(eb),
-		]);
-}
-
-export async function findPendingById(id: number) {
-	const row = await pendingBaseQuery()
-		.where("PendingTrophy.id", "=", id)
-		.executeTakeFirst();
-
-	return row ?? null;
-}
-
-export async function allPending() {
-	return pendingBaseQuery()
-		.orderBy("PendingTrophy.createdAt", "desc")
-		.execute();
-}
-
-export async function pendingBySubmitter(submitterUserId: number) {
-	return pendingBaseQuery()
-		.where("PendingTrophy.submitterUserId", "=", submitterUserId)
-		.orderBy("PendingTrophy.createdAt", "desc")
-		.execute();
-}
-
-export async function unreviewedCountBySubmitter(submitterUserId: number) {
-	const row = await db
-		.selectFrom("PendingTrophy")
-		.select((eb) => eb.fn.countAll<number>().as("count"))
-		.where("submitterUserId", "=", submitterUserId)
-		.where("declinedAt", "is", null)
-		.where("acceptedAt", "is", null)
-		.executeTakeFirstOrThrow();
-
-	return row.count;
-}
-
-export async function deletePending(id: number) {
-	await db.deleteFrom("PendingTrophy").where("id", "=", id).execute();
-}
-
-export async function declinePending(args: {
-	id: number;
-	reason: string;
-	declinedByUserId: number;
-}) {
-	return db.transaction().execute(async (trx) => {
-		const pending = await trx
-			.selectFrom("PendingTrophy")
-			.select("acceptedAt")
-			.where("id", "=", args.id)
-			.executeTakeFirst();
-
-		if (!pending || pending.acceptedAt !== null) {
-			return false;
-		}
-
-		await trx
-			.deleteFrom("PendingTrophyApproval")
-			.where("pendingTrophyId", "=", args.id)
-			.execute();
-
-		await trx
-			.updateTable("PendingTrophy")
-			.set({
-				declineReason: args.reason,
-				declinedAt: dateToDatabaseTimestamp(new Date()),
-				declinedByUserId: args.declinedByUserId,
-			})
-			.where("id", "=", args.id)
-			.execute();
-
-		return true;
-	});
-}
-
-export async function addApproval(args: {
-	pendingTrophyId: number;
-	userId: number;
-}) {
-	return db.transaction().execute(async (trx) => {
-		const insertResult = await trx
-			.insertInto("PendingTrophyApproval")
-			.values({
-				pendingTrophyId: args.pendingTrophyId,
-				userId: args.userId,
-				createdAt: dateToDatabaseTimestamp(new Date()),
-			})
-			.onConflict((oc) => oc.doNothing())
-			.executeTakeFirst();
-
-		if (!insertResult.numInsertedOrUpdatedRows) {
-			return null;
-		}
-
-		const { count } = await trx
-			.selectFrom("PendingTrophyApproval")
-			.select((eb) => eb.fn.countAll<number>().as("count"))
-			.where("pendingTrophyId", "=", args.pendingTrophyId)
-			.executeTakeFirstOrThrow();
-
-		if (count < TROPHY_APPROVALS_REQUIRED) {
-			return null;
-		}
-
-		const pending = await trx
-			.selectFrom("PendingTrophy")
-			.select([
-				"id",
-				"name",
-				"model",
-				"organizationId",
-				"submitterUserId",
-				"targetTrophyId",
-				"managerId",
-				"creatorId",
-			])
-			.where("id", "=", args.pendingTrophyId)
-			.where("declinedAt", "is", null)
-			.where("acceptedAt", "is", null)
-			.executeTakeFirst();
-
-		if (!pending) return null;
-
-		await trx
-			.updateTable("PendingTrophy")
-			.set({ acceptedAt: dateToDatabaseTimestamp(new Date()) })
-			.where("id", "=", args.pendingTrophyId)
-			.execute();
-
-		if (pending.targetTrophyId !== null) {
-			await trx
-				.updateTable("Trophy")
-				.set({
-					name: pending.name,
-					model: pending.model,
-					organizationId: pending.organizationId,
-					managerId: pending.managerId ?? pending.submitterUserId,
-					...(pending.creatorId !== null
-						? { creatorId: pending.creatorId }
-						: {}),
-				})
-				.where("id", "=", pending.targetTrophyId)
-				.execute();
-			return { id: pending.targetTrophyId };
-		}
-
-		return trx
-			.insertInto("Trophy")
-			.values({
-				name: pending.name,
-				model: pending.model,
-				organizationId: pending.organizationId,
-				creatorId: pending.creatorId ?? pending.submitterUserId,
-				managerId: pending.managerId ?? pending.submitterUserId,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-	});
 }
 
 async function trophyTier(
@@ -1094,10 +953,4 @@ async function trophyTier(
 		.executeTakeFirst();
 
 	return tournament?.tier ?? null;
-}
-
-function trophyPermissions(managerId: number | null) {
-	return {
-		EDIT: R.unique([...(managerId ? [managerId] : []), ...DEV_IDS]),
-	};
 }

@@ -77,10 +77,8 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	if (data.trophyId) {
-		const trophyOrganizationId = await TrophyRepository.findOrganizationIdById(
-			data.trophyId,
-		);
-		if (trophyOrganizationId !== organizationId) {
+		const trophy = await TrophyRepository.findById(data.trophyId);
+		if (trophy?.organizationId !== organizationId) {
 			errorToast("Trophy does not belong to the selected organization");
 		}
 		data.badges = [];

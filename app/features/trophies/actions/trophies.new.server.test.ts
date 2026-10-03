@@ -72,7 +72,7 @@ describe("trophy submissions", () => {
 	test("a submission awaits review with the submitter as its creator", async () => {
 		expect(await submit({ name: "Regular Trophy" })).toBe(null);
 
-		const pending = await TrophyRepository.pendingBySubmitter(submitterId());
+		const pending = await submissionsOf(submitterId()).execute();
 		expect(pending.map((trophy) => trophy.name)).toEqual(["Regular Trophy"]);
 		expect(pending[0].creatorId).toBe(submitterId());
 	});
@@ -82,7 +82,7 @@ describe("trophy submissions", () => {
 			await submit({ name: "Commissioned Trophy", creatorId: artistId() }),
 		).toBe(null);
 
-		const [pending] = await TrophyRepository.pendingBySubmitter(submitterId());
+		const [pending] = await submissionsOf(submitterId()).execute();
 		expect(pending.creatorId).toBe(artistId());
 		expect(pending.creator?.id).toBe(artistId());
 	});
@@ -175,9 +175,12 @@ describe("trophy backfill", () => {
 
 		expect(await awardedTournamentIds()).toEqual([tournamentId]);
 
-		const ownerIds = (await TrophyRepository.findById(trophyId))?.owners.map(
-			(owner) => owner.id,
-		);
+		const ownerIds = (
+			await TrophyRepository.trophies()
+				.where({ id: trophyId })
+				.withOwners()
+				.executeTakeFirst()
+		)?.owners.map((owner) => owner.id);
 		expect(ownerIds?.toSorted((a, b) => a - b)).toEqual(
 			winnerIds().slice(0, 3),
 		);
@@ -211,3 +214,9 @@ describe("trophy backfill", () => {
 		assertResponseErrored(response, "can't be backfilled");
 	});
 });
+
+function submissionsOf(submitterUserId: number) {
+	return TrophyRepository.submissions()
+		.where({ submitterUserId })
+		.withCreator();
+}

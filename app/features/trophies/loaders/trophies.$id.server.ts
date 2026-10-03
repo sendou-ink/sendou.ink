@@ -10,10 +10,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const [trophy, tournaments] = await Promise.all([
-		TrophyRepository.findById(id).then(notFoundIfNullish),
-		TrophyRepository.findTournamentsByTrophyId(id),
-	]);
+	const trophy = notFoundIfNullish(await trophyDetails(id).executeTakeFirst());
+	const tournaments = await TrophyRepository.findTournamentsByTrophyId(id);
 
 	const xpVariant = XpTrophy.parseCode(trophy.code);
 
@@ -29,3 +27,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			: null,
 	};
 };
+
+function trophyDetails(id: number) {
+	return TrophyRepository.trophies()
+		.where({ id })
+		.withColumns(["code"])
+		.withCreator()
+		.withManager()
+		.withOrganization()
+		.withOwners();
+}

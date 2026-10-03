@@ -192,30 +192,30 @@ export interface TrophyOwner {
 export interface SpecialTrophyOwner {
 	trophyId: number;
 	userId: number;
-	createdAt: number;
+	createdAt: Date;
 }
 
-export interface PendingTrophy {
+export interface TrophySubmission {
 	id: GeneratedAlways<number>;
 	name: string;
 	model: string;
 	description: string;
 	organizationId: number | null;
 	submitterUserId: number;
-	createdAt: number;
+	createdAt: Date;
 	declineReason: string | null;
-	declinedAt: number | null;
+	declinedAt: Date | null;
 	declinedByUserId: number | null;
-	acceptedAt: number | null;
+	acceptedAt: Date | null;
 	targetTrophyId: number | null;
 	managerId: number | null;
 	creatorId: number | null;
 }
 
-export interface PendingTrophyApproval {
-	pendingTrophyId: number;
+export interface TrophySubmissionApproval {
+	submissionId: number;
 	userId: number;
-	createdAt: number;
+	createdAt: Date;
 }
 
 export interface Build {
@@ -1461,8 +1461,8 @@ export interface DB {
 	Trophy: Trophy;
 	TrophyOwner: TrophyOwner;
 	SpecialTrophyOwner: SpecialTrophyOwner;
-	PendingTrophy: PendingTrophy;
-	PendingTrophyApproval: PendingTrophyApproval;
+	TrophySubmission: TrophySubmission;
+	TrophySubmissionApproval: TrophySubmissionApproval;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;

@@ -13,6 +13,11 @@ type TimestampColumn = {
 // a Record so the compiler checks the list both ways against the `Date` columns of tables.ts
 // xxx: once every `*At` column is typed `Date`, derive this from schema.gen.ts instead of listing columns
 const TIMESTAMP_COLUMN_FLAGS: Record<TimestampColumn, true> = {
+	"SpecialTrophyOwner.createdAt": true,
+	"TrophySubmission.acceptedAt": true,
+	"TrophySubmission.createdAt": true,
+	"TrophySubmission.declinedAt": true,
+	"TrophySubmissionApproval.createdAt": true,
 	"Video.youtubePublishedAt": true,
 };
 

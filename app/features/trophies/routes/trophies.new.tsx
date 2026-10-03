@@ -708,11 +708,11 @@ function TrophyListRow({
 	);
 
 	const handleDelete = () => {
-		submit("DELETE", { pendingTrophyId: pending.id });
+		submit("DELETE", { submissionId: pending.id });
 	};
 
 	const handleApprove = () => {
-		submit("APPROVE", { pendingTrophyId: pending.id });
+		submit("APPROVE", { submissionId: pending.id });
 	};
 
 	const [previewOpen, setPreviewOpen] = React.useState(false);
@@ -767,22 +767,14 @@ function TrophyListRow({
 					pending.submitterUserId !== pending.target.managerId ? (
 						<span className={styles.notManagerBadge}>
 							{t("trophies:new.pending.notFromManager")} (
-							{pending.submitterUsername})
+							{pending.submitter.username})
 						</span>
 					) : null}
 					<span className={styles.pendingName}>{pending.name}</span>
 					<span className={styles.pendingMeta}>
-						{pending.manager?.discordId ? (
-							<Link to={userPage({ discordId: pending.manager.discordId })}>
-								{pending.manager.username}
-							</Link>
-						) : pending.submitterDiscordId ? (
-							<Link to={userPage({ discordId: pending.submitterDiscordId })}>
-								{pending.submitterUsername}
-							</Link>
-						) : (
-							pending.submitterUsername
-						)}
+						<Link to={userPage(pending.manager ?? pending.submitter)}>
+							{(pending.manager ?? pending.submitter).username}
+						</Link>
 						{pending.creator &&
 						pending.creator.id !==
 							(pending.manager?.id ?? pending.submitterUserId) ? (
@@ -794,26 +786,22 @@ function TrophyListRow({
 									values={{ name: pending.creator.username }}
 								>
 									Created by
-									<Link to={userPage({ discordId: pending.creator.discordId })}>
+									<Link to={userPage(pending.creator)}>
 										{pending.creator.username}
 									</Link>
 								</Trans>
 							</>
 						) : null}
-						{pending.organizationName ? (
+						{pending.organization ? (
 							<>
 								{" • "}
-								{pending.organizationSlug ? (
-									<Link
-										to={tournamentOrganizationPage({
-											organizationSlug: pending.organizationSlug,
-										})}
-									>
-										{pending.organizationName}
-									</Link>
-								) : (
-									pending.organizationName
-								)}
+								<Link
+									to={tournamentOrganizationPage({
+										organizationSlug: pending.organization.slug,
+									})}
+								>
+									{pending.organization.name}
+								</Link>
 							</>
 						) : null}
 					</span>
@@ -849,9 +837,9 @@ function TrophyListRow({
 				{isDeclined ? (
 					<div className={styles.declined}>
 						<p>
-							{pending.declinedByUsername
+							{pending.decliner
 								? t("trophies:new.pending.declinedBy", {
-										name: pending.declinedByUsername,
+										name: pending.decliner.username,
 									})
 								: t("trophies:new.pending.declined")}
 						</p>
@@ -870,7 +858,7 @@ function TrophyListRow({
 									? t("trophies:new.pending.approved")
 									: t("trophies:new.pending.approve")}
 							</SendouButton>
-							<DeclineButton pendingTrophyId={pending.id} />
+							<DeclineButton submissionId={pending.id} />
 							<SendouButton
 								variant="outlined"
 								size="small"
@@ -959,7 +947,7 @@ function TrophyRenderStats({
 	);
 }
 
-function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
+function DeclineButton({ submissionId }: { submissionId: number }) {
 	const { t } = useTranslation(["trophies"]);
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [reason, setReason] = React.useState("");
@@ -994,7 +982,7 @@ function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 						className={styles.dialogForm}
 						onSubmit={(e) => {
 							e.preventDefault();
-							submit("DECLINE", { pendingTrophyId, reason });
+							submit("DECLINE", { submissionId, reason });
 						}}
 					>
 						<div>
@@ -1040,8 +1028,7 @@ function PendingTrophyDiff({
 	const { t } = useTranslation(["trophies", "forms"]);
 
 	const newManagerId = pending.managerId ?? pending.submitterUserId;
-	const newManagerName =
-		pending.manager?.username ?? pending.submitterUsername ?? "?";
+	const newManagerName = (pending.manager ?? pending.submitter).username;
 
 	const fields: Array<{
 		label: string;
@@ -1058,7 +1045,7 @@ function PendingTrophyDiff({
 		{
 			label: t("forms:labels.trophyOrganization"),
 			oldValue: target.organizationName ?? "—",
-			newValue: pending.organizationName ?? "—",
+			newValue: pending.organization?.name ?? "—",
 			changed: target.organizationId !== pending.organizationId,
 		},
 		{

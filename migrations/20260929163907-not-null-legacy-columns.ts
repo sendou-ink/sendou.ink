@@ -69,6 +69,8 @@ const COLUMN_DEFINITIONS: Record<string, Record<string, string>> = {
  * abandoned duplicates, deleted along with the `validatedAt` column.
  * Likewise replaces the `Team` view with the `AllTeam` table it filtered, renamed to `Team`. Reads
  * hide soft-deleted teams through a chain guard instead, the member views now filter on `deletedAt`.
+ * Renames `PendingTrophy` to `TrophySubmission` (and its approvals with it), as it keeps reviewed
+ * submissions too, and indexes `SpecialTrophyOwner` by user for the trophies a user owns.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	// a no-op inside a transaction, and needed off so dropping the old tables doesn't cascade to their children
@@ -88,6 +90,10 @@ export async function up(db: Kysely<any>): Promise<void> {
 
 			await replaceVideoViewWithTable(trx);
 			await replaceTeamViewWithTable(trx);
+			await renamePendingTrophyToTrophySubmission(trx);
+			await sql`create index "special_trophy_owner_user_id" on "SpecialTrophyOwner" ("userId")`.execute(
+				trx,
+			);
 
 			const violations = await sql`pragma foreign_key_check`.execute(trx);
 			if (violations.rows.length > 0) {
@@ -123,6 +129,23 @@ async function replaceVideoViewWithTable(trx: Kysely<any>) {
 		trx,
 	);
 	await sql`alter table "UnvalidatedVideo" rename to "Video"`.execute(trx);
+}
+
+async function renamePendingTrophyToTrophySubmission(trx: Kysely<any>) {
+	await sql`alter table "PendingTrophy" rename to "TrophySubmission"`.execute(
+		trx,
+	);
+	await sql`drop index "pending_trophy_submitter_idx"`.execute(trx);
+	await sql`create index "trophy_submission_submitter_idx" on "TrophySubmission" ("submitterUserId")`.execute(
+		trx,
+	);
+
+	await sql`alter table "PendingTrophyApproval" rename to "TrophySubmissionApproval"`.execute(
+		trx,
+	);
+	await sql`alter table "TrophySubmissionApproval" rename column "pendingTrophyId" to "submissionId"`.execute(
+		trx,
+	);
 }
 
 async function replaceTeamViewWithTable(trx: Kysely<any>) {

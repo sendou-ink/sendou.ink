@@ -48,16 +48,17 @@ export const action: ActionFunction = async ({ request }) => {
 
 		const data = result.data;
 
-		const pendingCount = await TrophyRepository.unreviewedCountBySubmitter(
-			user.id,
-		);
+		const pendingCount =
+			await TrophyRepository.countUnreviewedBySubmitterUserId(user.id);
 		errorToastIfFalsy(
 			pendingCount < TROPHY_PENDING_PER_USER_LIMIT,
 			"Pending trophy limit reached",
 		);
 
 		if (data._action === "UPDATE") {
-			const trophy = await TrophyRepository.findById(data.targetTrophyId);
+			const trophy = await editableTrophy(
+				data.targetTrophyId,
+			).executeTakeFirst();
 			errorToastIfFalsy(trophy, "Trophy not found");
 			requirePermission(trophy, "EDIT");
 
@@ -69,7 +70,7 @@ export const action: ActionFunction = async ({ request }) => {
 				return { fieldErrors: { name: "forms:errors.trophyNameTaken" } };
 			}
 
-			await TrophyRepository.createPending({
+			await TrophyRepository.insertSubmission({
 				name: data.name,
 				model: compressTrophyModel(stripDisabledEffects(data.model)),
 				description: data.description ?? "",
@@ -95,7 +96,7 @@ export const action: ActionFunction = async ({ request }) => {
 			return { fieldErrors: { name: "forms:errors.trophyNameTaken" } };
 		}
 
-		await TrophyRepository.createPending({
+		await TrophyRepository.insertSubmission({
 			name: data.name,
 			model: compressTrophyModel(stripDisabledEffects(data.model)),
 			description: data.description ?? "",
@@ -119,16 +120,14 @@ export const action: ActionFunction = async ({ request }) => {
 
 	switch (data._action) {
 		case "DELETE": {
-			const pending = await TrophyRepository.findPendingById(
-				data.pendingTrophyId,
-			);
+			const pending = await submission(data.submissionId).executeTakeFirst();
 			errorToastIfFalsy(pending, "Pending trophy not found");
 
 			const isOwner = pending.submitterUserId === user.id;
 			const canReview = canReviewTrophies(user);
 			errorToastIfFalsy(isOwner || canReview, "Not allowed");
 
-			await TrophyRepository.deletePending(data.pendingTrophyId);
+			await TrophyRepository.deleteSubmissionById(data.submissionId);
 
 			await resolveSubmittedNotification(pending.name);
 			return null;
@@ -136,9 +135,7 @@ export const action: ActionFunction = async ({ request }) => {
 		case "DECLINE": {
 			errorToastIfFalsy(canReviewTrophies(user), "Not allowed");
 
-			const pending = await TrophyRepository.findPendingById(
-				data.pendingTrophyId,
-			);
+			const pending = await submission(data.submissionId).executeTakeFirst();
 			errorToastIfFalsy(pending, "Pending trophy not found");
 			errorToastIfFalsy(!pending.declinedAt, "Trophy is already declined");
 			errorToastIfFalsy(
@@ -146,8 +143,8 @@ export const action: ActionFunction = async ({ request }) => {
 				"Cannot decline an accepted trophy",
 			);
 
-			const declined = await TrophyRepository.declinePending({
-				id: data.pendingTrophyId,
+			const declined = await TrophyRepository.declineSubmission({
+				id: data.submissionId,
 				reason: data.reason,
 				declinedByUserId: user.id,
 			});
@@ -170,9 +167,7 @@ export const action: ActionFunction = async ({ request }) => {
 		case "APPROVE": {
 			errorToastIfFalsy(canReviewTrophies(user), "Not allowed");
 
-			const pending = await TrophyRepository.findPendingById(
-				data.pendingTrophyId,
-			);
+			const pending = await submission(data.submissionId).executeTakeFirst();
 
 			errorToastIfFalsy(pending, "Pending trophy not found");
 			errorToastIfFalsy(
@@ -186,7 +181,7 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 
 			const inserted = await TrophyRepository.addApproval({
-				pendingTrophyId: data.pendingTrophyId,
+				submissionId: data.submissionId,
 				userId: user.id,
 			});
 
@@ -272,6 +267,17 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 	}
 };
+
+function editableTrophy(id: number) {
+	return TrophyRepository.trophies()
+		.where({ id })
+		.withColumns(["managerId"])
+		.withEditPermissions();
+}
+
+function submission(id: number) {
+	return TrophyRepository.submissions().where({ id }).withApprovals();
+}
 
 function resolveSubmittedNotification(trophyName: string) {
 	return resolveNotifications({

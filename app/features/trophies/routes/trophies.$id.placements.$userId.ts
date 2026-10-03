@@ -20,7 +20,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const xpVariant = XpTrophy.parseCode(
-		await TrophyRepository.findCodeById(trophyId),
+		(await TrophyRepository.findById(trophyId))?.code,
 	);
 	if (!xpVariant) {
 		throw new Response(null, { status: 404 });

@@ -14,7 +14,7 @@ import * as TrophyRepository from "./TrophyRepository.server";
 import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 
 describe("trophy approvals", () => {
-	let pendingTrophyId: number;
+	let submissionId: number;
 	let reviewerIds: number[];
 
 	beforeEach(async () => {
@@ -26,29 +26,29 @@ describe("trophy approvals", () => {
 			ownerId: submitter.id,
 		});
 
-		const pending = await TrophyFactory.createPending({
+		const pending = await TrophyFactory.createSubmission({
 			organizationId: organization.id,
 			submitterUserId: submitter.id,
 		});
-		pendingTrophyId = pending.id;
+		submissionId = pending.id;
 	});
 
 	test("creates the trophy exactly once when approvals exceed the required count", async () => {
 		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED - 1)) {
-			expect(
-				await TrophyRepository.addApproval({ pendingTrophyId, userId }),
-			).toBe(null);
+			expect(await TrophyRepository.addApproval({ submissionId, userId })).toBe(
+				null,
+			);
 		}
 
 		const accepted = await TrophyRepository.addApproval({
-			pendingTrophyId,
+			submissionId,
 			userId: reviewerIds[TROPHY_APPROVALS_REQUIRED - 1],
 		});
 		expect(accepted?.id).toBeTypeOf("number");
 
 		expect(
 			await TrophyRepository.addApproval({
-				pendingTrophyId,
+				submissionId,
 				userId: reviewerIds[TROPHY_APPROVALS_REQUIRED],
 			}),
 		).toBe(null);
@@ -62,7 +62,7 @@ describe("trophy approvals", () => {
 		const organization = await TournamentOrganizationFactory.create({
 			ownerId: submitter.id,
 		});
-		const pending = await TrophyFactory.createPending({
+		const pending = await TrophyFactory.createSubmission({
 			organizationId: organization.id,
 			submitterUserId: submitter.id,
 			creatorId: artist.id,
@@ -73,7 +73,7 @@ describe("trophy approvals", () => {
 		} = null;
 		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
 			accepted = await TrophyRepository.addApproval({
-				pendingTrophyId: pending.id,
+				submissionId: pending.id,
 				userId,
 			});
 		}
@@ -88,30 +88,30 @@ describe("trophy approvals", () => {
 
 	test("ignores repeated approvals from the same user", async () => {
 		await TrophyRepository.addApproval({
-			pendingTrophyId,
+			submissionId,
 			userId: reviewerIds[0],
 		});
 
 		expect(
 			await TrophyRepository.addApproval({
-				pendingTrophyId,
+				submissionId,
 				userId: reviewerIds[0],
 			}),
 		).toBe(null);
 
-		const pending = await TrophyRepository.findPendingById(pendingTrophyId);
+		const pending = await findSubmissionWithApprovals(submissionId);
 		expect(pending?.approvals.length).toBe(1);
 		expect(await trophyCount()).toBe(0);
 	});
 
 	test("re-approval after acceptance does not create another trophy", async () => {
 		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
-			await TrophyRepository.addApproval({ pendingTrophyId, userId });
+			await TrophyRepository.addApproval({ submissionId, userId });
 		}
 
 		expect(
 			await TrophyRepository.addApproval({
-				pendingTrophyId,
+				submissionId,
 				userId: reviewerIds[0],
 			}),
 		).toBe(null);
@@ -121,63 +121,63 @@ describe("trophy approvals", () => {
 
 	test("declines a pending trophy that is not accepted", async () => {
 		await TrophyRepository.addApproval({
-			pendingTrophyId,
+			submissionId,
 			userId: reviewerIds[0],
 		});
 
 		expect(
-			await TrophyRepository.declinePending({
-				id: pendingTrophyId,
+			await TrophyRepository.declineSubmission({
+				id: submissionId,
 				reason: "reason",
 				declinedByUserId: reviewerIds[1],
 			}),
 		).toBe(true);
 
-		const pending = await TrophyRepository.findPendingById(pendingTrophyId);
+		const pending = await findSubmissionWithApprovals(submissionId);
 		expect(pending?.declinedAt).not.toBe(null);
 		expect(pending?.approvals.length).toBe(0);
 	});
 
 	test("does not decline an already accepted pending trophy", async () => {
 		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
-			await TrophyRepository.addApproval({ pendingTrophyId, userId });
+			await TrophyRepository.addApproval({ submissionId, userId });
 		}
 
 		expect(
-			await TrophyRepository.declinePending({
-				id: pendingTrophyId,
+			await TrophyRepository.declineSubmission({
+				id: submissionId,
 				reason: "reason",
 				declinedByUserId: reviewerIds[TROPHY_APPROVALS_REQUIRED],
 			}),
 		).toBe(false);
 
-		const pending = await TrophyRepository.findPendingById(pendingTrophyId);
+		const pending = await findSubmissionWithApprovals(submissionId);
 		expect(pending?.declinedAt).toBe(null);
 		expect(await trophyCount()).toBe(1);
 	});
 
 	test("stays accepted even if approvals drop below the required count", async () => {
 		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
-			await TrophyRepository.addApproval({ pendingTrophyId, userId });
+			await TrophyRepository.addApproval({ submissionId, userId });
 		}
 
 		// biome-ignore lint/plugin: simulates raising TROPHY_APPROVALS_REQUIRED after acceptance, which no production code path can do
 		await db
-			.deleteFrom("PendingTrophyApproval")
-			.where("pendingTrophyId", "=", pendingTrophyId)
+			.deleteFrom("TrophySubmissionApproval")
+			.where("submissionId", "=", submissionId)
 			.where("userId", "=", reviewerIds[0])
 			.execute();
 
 		expect(
 			await TrophyRepository.addApproval({
-				pendingTrophyId,
+				submissionId,
 				userId: reviewerIds[TROPHY_APPROVALS_REQUIRED],
 			}),
 		).toBe(null);
 
 		expect(
-			await TrophyRepository.declinePending({
-				id: pendingTrophyId,
+			await TrophyRepository.declineSubmission({
+				id: submissionId,
 				reason: "reason",
 				declinedByUserId: reviewerIds[TROPHY_APPROVALS_REQUIRED],
 			}),
@@ -187,16 +187,16 @@ describe("trophy approvals", () => {
 	});
 
 	test("approvals after a decline do not create a trophy", async () => {
-		await TrophyRepository.declinePending({
-			id: pendingTrophyId,
+		await TrophyRepository.declineSubmission({
+			id: submissionId,
 			reason: "reason",
 			declinedByUserId: reviewerIds[0],
 		});
 
 		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
-			expect(
-				await TrophyRepository.addApproval({ pendingTrophyId, userId }),
-			).toBe(null);
+			expect(await TrophyRepository.addApproval({ submissionId, userId })).toBe(
+				null,
+			);
 		}
 
 		expect(await trophyCount()).toBe(0);
@@ -278,7 +278,9 @@ describe("trophy list tiers", () => {
 			startInDays: 5 * 7,
 		});
 
-		const names = (await TrophyRepository.all()).map((row) => row.name);
+		const names = (await TrophyRepository.findAllRankedByTier()).map(
+			(row) => row.name,
+		);
 
 		expect(names).toEqual([
 			"Upcoming Trophy",
@@ -323,7 +325,7 @@ describe("existsByName", () => {
 	});
 
 	test("updating a trophy keeping its name does not collide with its accepted submission", async () => {
-		await TrophyFactory.createPending(
+		await TrophyFactory.createSubmission(
 			{ name: "Winner's Cup", organizationId, submitterUserId: ownerId },
 			{ approverUserIds: approverIds },
 		);
@@ -351,7 +353,7 @@ describe("existsByName", () => {
 	});
 
 	test("a submission awaiting review blocks the name", async () => {
-		await TrophyFactory.createPending({
+		await TrophyFactory.createSubmission({
 			name: "Contested Cup",
 			organizationId,
 			submitterUserId: ownerId,
@@ -363,7 +365,7 @@ describe("existsByName", () => {
 	});
 
 	test("a declined submission does not block the name", async () => {
-		await TrophyFactory.createPending(
+		await TrophyFactory.createSubmission(
 			{ name: "Declined Cup", organizationId, submitterUserId: ownerId },
 			{ declinedBy: { userId: approverIds[0], reason: "reason" } },
 		);
@@ -389,7 +391,7 @@ describe("user deletion", () => {
 		const organization = await TournamentOrganizationFactory.create({
 			ownerId: submitter.id,
 		});
-		await TrophyFactory.createPending(
+		await TrophyFactory.createSubmission(
 			{
 				organizationId: organization.id,
 				submitterUserId: submitter.id,
@@ -408,13 +410,22 @@ describe("user deletion", () => {
 		expect(orphaned).toEqual({ creatorId: null, managerId: null });
 
 		expect(
-			await db.selectFrom("PendingTrophyApproval").selectAll().execute(),
+			await db.selectFrom("TrophySubmissionApproval").selectAll().execute(),
 		).toEqual([]);
 	});
 });
 
 async function findTrophyByName(name: string) {
-	return (await TrophyRepository.all()).find((row) => row.name === name);
+	return (await TrophyRepository.findAllRankedByTier()).find(
+		(row) => row.name === name,
+	);
+}
+
+function findSubmissionWithApprovals(id: number) {
+	return TrophyRepository.submissions()
+		.where({ id })
+		.withApprovals()
+		.executeTakeFirst();
 }
 
 async function trophyCount() {
@@ -625,7 +636,7 @@ describe("X Power trophies", () => {
 		});
 	});
 
-	describe("findByOwnerUserId", () => {
+	describe("findAllByOwnerUserId", () => {
 		test("shows the division each X Power trophy was won in, Takoroka over Tentatek", async () => {
 			await place({
 				userId: playerId(),
@@ -647,7 +658,7 @@ describe("X Power trophies", () => {
 			});
 			await TrophyRepository.syncSpecialTrophies();
 
-			const trophies = await TrophyRepository.findByOwnerUserId(playerId());
+			const trophies = await TrophyRepository.findAllByOwnerUserId(playerId());
 
 			expect(
 				trophies

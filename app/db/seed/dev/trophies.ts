@@ -60,11 +60,11 @@ async function seedPendingTrophies({
 		name: `Pending trophy ${index + 1}`,
 	});
 
-	await TrophyFactory.createManyPending(PENDING_COUNT, (index) =>
+	await TrophyFactory.createManySubmissions(PENDING_COUNT, (index) =>
 		submission(index),
 	);
 
-	await TrophyFactory.createManyPending(
+	await TrophyFactory.createManySubmissions(
 		PARTIALLY_APPROVED_COUNT,
 		(index) => ({
 			...submission(index),
@@ -73,7 +73,7 @@ async function seedPendingTrophies({
 		{ approverUserIds: [users.adminId] },
 	);
 
-	await TrophyFactory.createManyPending(
+	await TrophyFactory.createManySubmissions(
 		ACCEPTED_COUNT,
 		(index) => ({
 			...submission(index),
@@ -82,7 +82,7 @@ async function seedPendingTrophies({
 		{ approverUserIds: [users.adminId, users.staffId, users.orgAdminId] },
 	);
 
-	await TrophyFactory.createManyPending(
+	await TrophyFactory.createManySubmissions(
 		DECLINED_COUNT,
 		(index) => ({
 			...submission(index),

@@ -145,15 +145,15 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			)
 			.execute();
 		await trx
-			.deleteFrom("PendingTrophyApproval")
+			.deleteFrom("TrophySubmissionApproval")
 			.where("userId", "=", args.newUserId)
 			.where((eb) =>
 				eb(
-					"PendingTrophyApproval.pendingTrophyId",
+					"TrophySubmissionApproval.submissionId",
 					"in",
 					eb
-						.selectFrom("PendingTrophyApproval")
-						.select("pendingTrophyId")
+						.selectFrom("TrophySubmissionApproval")
+						.select("submissionId")
 						.where("userId", "=", args.oldUserId),
 				),
 			)
@@ -180,22 +180,22 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.set({ managerId: args.oldUserId })
 			.execute();
 		await trx
-			.updateTable("PendingTrophy")
+			.updateTable("TrophySubmission")
 			.where("submitterUserId", "=", args.newUserId)
 			.set({ submitterUserId: args.oldUserId })
 			.execute();
 		await trx
-			.updateTable("PendingTrophy")
+			.updateTable("TrophySubmission")
 			.where("managerId", "=", args.newUserId)
 			.set({ managerId: args.oldUserId })
 			.execute();
 		await trx
-			.updateTable("PendingTrophy")
+			.updateTable("TrophySubmission")
 			.where("declinedByUserId", "=", args.newUserId)
 			.set({ declinedByUserId: args.oldUserId })
 			.execute();
 		await trx
-			.updateTable("PendingTrophyApproval")
+			.updateTable("TrophySubmissionApproval")
 			.where("userId", "=", args.newUserId)
 			.set({ userId: args.oldUserId })
 			.execute();
