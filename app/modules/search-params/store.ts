@@ -1,14 +1,11 @@
 const listeners = new Set<() => void>();
 
-let historyPatched = false;
-
 /**
- * Fires on any search string change: react-router navigations, our own `history.replaceState` writes and
- * back/forward. Our `replaceState` writes (`loader: false`) are invisible to `useLocation()`, so read those
- * params through this module's hooks.
+ * Fires on our own `history.replaceState` writes (`loader: false`), which are invisible to `useLocation()`.
+ * Router navigations (including back/forward) are not notified here: consumers rerender through `useLocation()`,
+ * in the same commit as the router, so the new params never paint ahead of the route (and its scroll reset).
  */
 export function subscribe(listener: () => void) {
-	patchHistoryOnce();
 	listeners.add(listener);
 
 	return () => {
@@ -16,26 +13,8 @@ export function subscribe(listener: () => void) {
 	};
 }
 
-function notify() {
+export function notify() {
 	for (const listener of listeners) {
 		listener();
 	}
-}
-
-function patchHistoryOnce() {
-	if (historyPatched || typeof window === "undefined") return;
-	historyPatched = true;
-
-	const originalPushState = window.history.pushState.bind(window.history);
-	const originalReplaceState = window.history.replaceState.bind(window.history);
-
-	window.history.pushState = (...args) => {
-		originalPushState(...args);
-		notify();
-	};
-	window.history.replaceState = (...args) => {
-		originalReplaceState(...args);
-		notify();
-	};
-	window.addEventListener("popstate", notify);
 }

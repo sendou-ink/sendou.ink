@@ -1,5 +1,4 @@
 {
-	"weaponSelect.label": "",
 	"rawParameters": "",
 	"attribute.weight": "Gewicht",
 	"attribute.weight.Fast": "Licht",
@@ -186,7 +185,6 @@
 	"hitsToDestroyShort": "",
 	"labels.amountOf": "",
 	"labels.damageType": "",
-	"labels.weapon": "",
 	"dmgHtdExplanation": "",
 	"noDmgData": "",
 	"perInkTankGrid.header_one": "",

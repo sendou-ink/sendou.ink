@@ -1,5 +1,4 @@
 {
-	"weaponSelect.label": "要分析的武器",
 	"rawParameters": "原始参数",
 	"attribute.weight": "量级",
 	"attribute.weight.Fast": "轻量级",
@@ -183,7 +182,6 @@
 	"hitsToDestroyShort": "HTD",
 	"labels.amountOf": "所需能力点数",
 	"labels.damageType": "伤害类型",
-	"labels.weapon": "武器",
 	"dmgHtdExplanation": "DMG = 伤害 | HTD = 破坏所需伤害",
 	"noDmgData": "目前没有该武器的伤害数据。请期待后续更新！",
 	"perInkTankGrid.header": "使用 {{count}} 次次要武器后的 {{weapon}} 剩余攻击次数",

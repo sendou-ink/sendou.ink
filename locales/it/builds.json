@@ -31,5 +31,8 @@
 	"filters.atMost": "Al più",
 	"filters.date.since": "Da",
 	"filters.date.custom": "Personalizzato",
-	"filters.filterByWeapon": "Filtra per armi"
+	"filters.filterByWeapon": "Filtra per armi",
+	"weaponBuildCount_one": "",
+	"weaponBuildCount_many": "",
+	"weaponBuildCount_other": ""
 }

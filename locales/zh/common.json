@@ -469,5 +469,6 @@
 	"tier.tentative": "暂定 {{tierName}} 级别（基于过往历史）",
 	"tier.confirmed": "{{tierName}} 级别赛事",
 	"spoilerFree.showResults": "显示结果",
-	"spoilerFree.hideResults": "隐藏结果"
+	"spoilerFree.hideResults": "隐藏结果",
+	"yourWeapons": ""
 }

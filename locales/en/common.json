@@ -469,5 +469,6 @@
 	"tier.tentative": "Tentative {{tierName}}-tier (based on series history)",
 	"tier.confirmed": "{{tierName}}-tier tournament",
 	"spoilerFree.showResults": "Show results",
-	"spoilerFree.hideResults": "Hide results"
+	"spoilerFree.hideResults": "Hide results",
+	"yourWeapons": "Your weapons"
 }

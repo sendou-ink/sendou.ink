@@ -266,6 +266,9 @@ export function buildCases(fx: Fixtures): {
 			sortAbilities: true,
 		}),
 	);
+	addStatic("BuildRepository.countAllPublicByWeaponId", () =>
+		BuildRepository.countAllPublicByWeaponId(),
+	);
 
 	add(
 		"CalendarRepository.findAllBetweenTwoTimestamps",

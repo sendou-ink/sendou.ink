@@ -31,5 +31,7 @@
 	"filters.atMost": "Maks",
 	"filters.date.since": "Siden",
 	"filters.date.custom": "Tilpasset",
-	"filters.filterByWeapon": ""
+	"filters.filterByWeapon": "",
+	"weaponBuildCount_one": "",
+	"weaponBuildCount_other": ""
 }

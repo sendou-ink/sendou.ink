@@ -363,3 +363,32 @@ describe("BuildRepository.findAllPopularAbilitiesByWeaponId", () => {
 		expect(altRows).toEqual(rows);
 	});
 });
+
+describe("BuildRepository.countAllPublicByWeaponId", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("counts public builds per weapon with alt skins folded", async () => {
+		await createBuild({ ownerId: users.id(1) });
+		await createBuild({
+			ownerId: users.id(2),
+			weaponSplIds: [HERO_SHOT_REPLICA, SPLATTERSHOT_NOUVEAU],
+		});
+
+		const counts = await BuildRepository.countAllPublicByWeaponId();
+
+		expect(counts.get(SPLATTERSHOT)).toBe(2);
+		expect(counts.get(SPLATTERSHOT_NOUVEAU)).toBe(1);
+		expect(counts.has(HERO_SHOT_REPLICA)).toBe(false);
+	});
+
+	test("excludes private builds", async () => {
+		await createBuild({ ownerId: users.id(1) });
+		await createBuild({ ownerId: users.id(2), isPrivate: 1 });
+
+		const counts = await BuildRepository.countAllPublicByWeaponId();
+
+		expect(counts.get(SPLATTERSHOT)).toBe(1);
+	});
+});

@@ -4,8 +4,22 @@ import type {
 	DamageType,
 } from "~/features/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import {
+	nonBombSubWeaponIds,
+	nonDamagingSpecialWeaponIds,
+	specialWeaponIds,
+	subWeaponIds,
+} from "~/modules/in-game-lists/weapon-ids";
 import type { CombineWith, DamageReceiver } from "./calculator-types";
 import type objectDamages from "./data/object-dmg.json";
+
+export const DAMAGING_SUB_WEAPON_IDS = subWeaponIds.filter(
+	(id) => !nonBombSubWeaponIds.includes(id),
+);
+
+export const DAMAGING_SPECIAL_WEAPON_IDS = specialWeaponIds.filter(
+	(id) => !nonDamagingSpecialWeaponIds.includes(id),
+);
 
 export const DAMAGE_RECEIVERS = [
 	"Chariot", // Crab Tank

@@ -14,10 +14,9 @@ import {
 	resolveAllUniqueDamageTypes,
 } from "./core/objectDamage";
 
-export function useObjectDamage() {
+export function useObjectDamage(anyWeapon: AnyWeapon) {
 	const [params, setParams] = useSearchParamsTyped(calculatorSearchParams);
 
-	const anyWeapon = params.weapon;
 	const abilityPoints = params.ap;
 	const isMultiShot = params.multi;
 	const analyzed = buildStats({
@@ -37,18 +36,15 @@ export function useObjectDamage() {
 	});
 
 	const handleChange = ({
-		newAnyWeapon = anyWeapon,
 		newAbilityPoints = abilityPoints,
 		newDamageType = damageType,
 		newIsMultiShot = isMultiShot,
 	}: {
-		newAnyWeapon?: AnyWeapon;
 		newAbilityPoints?: number;
 		newDamageType?: DamageType;
 		newIsMultiShot?: boolean;
 	}) => {
 		setParams({
-			weapon: newAnyWeapon,
 			ap: newAbilityPoints,
 			dmg: newDamageType ?? null,
 			multi: newIsMultiShot,

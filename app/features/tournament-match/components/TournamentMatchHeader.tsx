@@ -1,5 +1,4 @@
-import { ArrowLeft } from "lucide-react";
-import { LinkButton } from "~/components/elements/Button";
+import { BackLink } from "~/components/BackLink";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { BracketsPageState } from "~/features/tournament-bracket/routes/to.$id.brackets";
@@ -19,7 +18,7 @@ export function TournamentMatchHeader({
 		<MatchPageHeader
 			subtitle={bracketName}
 			topRight={
-				<LinkButton
+				<BackLink
 					to={tournamentBracketsPage({
 						tournamentId: tournament.ctx.id,
 						bracketIdx: data.bracketContext.bracketIdx,
@@ -29,14 +28,8 @@ export function TournamentMatchHeader({
 								: undefined,
 					})}
 					state={{ scrollToMatchId: data.match.id } satisfies BracketsPageState}
-					variant="outlined"
-					size="small"
-					className="w-max"
-					icon={<ArrowLeft />}
-					testId="back-to-bracket-button"
-				>
-					Back to bracket
-				</LinkButton>
+					data-testid="back-to-bracket-button"
+				/>
 			}
 		>
 			{roundName}

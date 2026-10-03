@@ -1,3 +1,4 @@
+import { invariant } from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import type { MainWeaponId, SpecialWeaponId, SubWeaponId } from "./types";
 
@@ -279,3 +280,13 @@ export const exampleMainWeaponIdWithSpecialWeaponId = (
 /** Base weapon of a kit or skin: 40, 41 (Tentatek) and 45 (Hero Shot Replica) → 40. */
 export const weaponIdToBaseWeaponId = (id: MainWeaponId) =>
 	(id - (id % 10)) as MainWeaponId;
+
+/** Category (e.g. "SHOOTERS") the main weapon belongs to. */
+export function weaponIdToCategory(weaponId: MainWeaponId) {
+	const category = weaponCategories.find((weaponCategory) =>
+		(weaponCategory.weaponIds as readonly MainWeaponId[]).includes(weaponId),
+	);
+	invariant(category, `No category for weapon ${weaponId}`);
+
+	return category.name;
+}

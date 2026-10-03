@@ -1,5 +1,4 @@
 {
-	"weaponSelect.label": "Arma a analizar",
 	"rawParameters": "Parámetros brutos",
 	"attribute.weight": "Peso",
 	"attribute.weight.Fast": "Ligero",
@@ -188,7 +187,6 @@
 	"hitsToDestroyShort": "GPD",
 	"labels.amountOf": "Cantidad de",
 	"labels.damageType": "Tipo de daño",
-	"labels.weapon": "Arma",
 	"dmgHtdExplanation": "Daño = Daño | GPD = Golpes para destruir",
 	"noDmgData": "Aún no hay datos de daño para esta arma. ¡Vuelve a revisar más tarde!",
 	"perInkTankGrid.header_one": "Disparos de {{weapon}} tras usar ×{{count}} arma secundaria",

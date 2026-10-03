@@ -31,5 +31,8 @@
 	"filters.atMost": "Au plus",
 	"filters.date.since": "",
 	"filters.date.custom": "",
-	"filters.filterByWeapon": ""
+	"filters.filterByWeapon": "",
+	"weaponBuildCount_one": "",
+	"weaponBuildCount_many": "",
+	"weaponBuildCount_other": ""
 }

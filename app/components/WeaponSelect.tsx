@@ -7,42 +7,25 @@ import {
 	SendouSelectItem,
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
-import {
-	Image,
-	SpecialWeaponImage,
-	SubWeaponImage,
-	WeaponImage,
-} from "~/components/Image";
-import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
+import { Image, WeaponImage } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
 	mainWeaponIds,
-	nonDamagingSpecialWeaponIds,
-	SPLAT_BOMB_ID,
-	specialWeaponIds,
-	subWeaponIds,
-	TRIZOOKA_ID,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
 import { weaponCategoryUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";
 
-interface WeaponSelectProps<
-	Clearable extends boolean | undefined = undefined,
-	IncludeSubSpecial extends boolean | undefined = undefined,
-> {
+interface WeaponSelectProps<Clearable extends boolean | undefined = undefined> {
 	label?: string;
-	value?: (IncludeSubSpecial extends true ? AnyWeapon : MainWeaponId) | null;
-	initialValue?: IncludeSubSpecial extends true ? AnyWeapon : MainWeaponId;
+	value?: MainWeaponId | null;
+	initialValue?: MainWeaponId;
 	onChange?: (
-		weaponId:
-			| (IncludeSubSpecial extends true ? AnyWeapon : MainWeaponId)
-			| (Clearable extends true ? null : never),
+		weaponId: MainWeaponId | (Clearable extends true ? null : never),
 	) => void;
 	clearable?: Clearable;
-	includeSubSpecial?: IncludeSubSpecial;
 	disabledWeaponIds?: Array<MainWeaponId>;
 	testId?: string;
 	isRequired?: boolean;
@@ -54,7 +37,6 @@ interface WeaponSelectProps<
 
 export function WeaponSelect<
 	Clearable extends boolean | undefined = undefined,
-	IncludeSubSpecial extends boolean | undefined = undefined,
 >({
 	label,
 	value,
@@ -62,13 +44,12 @@ export function WeaponSelect<
 	onChange,
 	disabledWeaponIds,
 	clearable,
-	includeSubSpecial,
 	testId = "weapon-select",
 	isRequired,
 	quickSelectWeaponsIds,
 	isDisabled,
 	placeholder,
-}: WeaponSelectProps<Clearable, IncludeSubSpecial>) {
+}: WeaponSelectProps<Clearable>) {
 	const { t } = useTranslation(["common"]);
 	const isControlled = value !== undefined;
 	const [lastUncontrolledKey, setLastUncontrolledKey] = React.useState<
@@ -76,7 +57,6 @@ export function WeaponSelect<
 	>(() => keyify(initialValue) ?? null);
 	const selectedKey = isControlled ? keyify(value) : lastUncontrolledKey;
 	const { items, filterValue, setFilterValue } = useWeaponItems({
-		includeSubSpecial,
 		quickSelectWeaponsIds,
 		selectedKey,
 	});
@@ -87,15 +67,9 @@ export function WeaponSelect<
 			setLastUncontrolledKey(key === null ? null : String(key));
 		}
 		if (key === null) return onChange?.(null as any);
-		const [type, id] = (key as string).split("_");
-		const weapon = {
-			id: Number(id),
-			type: type as "MAIN" | "SUB" | "SPECIAL",
-		} as AnyWeapon;
+		const [, id] = (key as string).split("_");
 
-		if (!includeSubSpecial) return onChange?.(weapon.id as any); // plain main weapon id
-
-		onChange?.(weapon as any);
+		onChange?.(Number(id) as MainWeaponId);
 	};
 
 	return (
@@ -126,15 +100,7 @@ export function WeaponSelect<
 				<SendouSelectItemSection
 					heading={name}
 					headingImg={
-						key === "quick-select" ? undefined : name === "subs" ? (
-							<SubWeaponImage subWeaponId={SPLAT_BOMB_ID} size={28} alt="" />
-						) : name === "specials" ? (
-							<SpecialWeaponImage
-								specialWeaponId={TRIZOOKA_ID}
-								size={28}
-								alt=""
-							/>
-						) : (
+						key === "quick-select" ? undefined : (
 							<Image path={weaponCategoryUrl(name)} size={28} alt="" />
 						)
 					}
@@ -147,33 +113,15 @@ export function WeaponSelect<
 							id={weapon.anyWeaponId}
 							textValue={weaponName}
 							className={styles.option}
-							isDisabled={
-								includeSubSpecial
-									? false
-									: disabledWeaponIds?.includes(weapon.id as MainWeaponId)
-							}
+							isDisabled={disabledWeaponIds?.includes(weapon.id)}
 						>
 							<div className={styles.item}>
-								{weapon.type === "MAIN" ? (
-									<WeaponImage
-										weaponSplId={weapon.id}
-										variant="build"
-										size={24}
-										className={styles.weaponImg}
-									/>
-								) : weapon.type === "SUB" ? (
-									<SubWeaponImage
-										subWeaponId={weapon.id}
-										size={24}
-										className={styles.weaponImg}
-									/>
-								) : (
-									<SpecialWeaponImage
-										specialWeaponId={weapon.id}
-										size={24}
-										className={styles.weaponImg}
-									/>
-								)}
+								<WeaponImage
+									weaponSplId={weapon.id}
+									variant="build"
+									size={24}
+									className={styles.weaponImg}
+								/>
 								<span
 									className={styles.weaponLabel}
 									data-testid={`weapon-select-option-${weaponName}`}
@@ -189,7 +137,10 @@ export function WeaponSelect<
 	);
 }
 
-const weaponNameToWeaponMapCache = new Map<string, Map<string, AnyWeapon>>();
+const weaponNameToWeaponMapCache = new Map<
+	string,
+	Map<string, { id: MainWeaponId; type: "MAIN" }>
+>();
 
 function useWeaponFilter() {
 	const { t, i18n } = useTranslation(["weapons"]);
@@ -213,33 +164,23 @@ function useWeaponFilter() {
 }
 
 function buildWeaponNameToWeaponMap(t: TFunction<["weapons"]>) {
-	const map = new Map<string, AnyWeapon>();
+	const map = new Map<string, { id: MainWeaponId; type: "MAIN" }>();
 
 	for (const id of mainWeaponIds) {
 		map.set(t(`weapons:MAIN_${id}`), { id, type: "MAIN" });
-	}
-
-	for (const id of subWeaponIds) {
-		map.set(t(`weapons:SUB_${id}`), { id, type: "SUB" });
-	}
-
-	for (const id of specialWeaponIds) {
-		map.set(t(`weapons:SPECIAL_${id}`), { id, type: "SPECIAL" });
 	}
 
 	return map;
 }
 
 function useWeaponItems({
-	includeSubSpecial,
 	quickSelectWeaponsIds,
 	selectedKey,
 }: {
-	includeSubSpecial: boolean | undefined;
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
 	selectedKey: string | null | undefined;
 }) {
-	const items = useAllWeaponCategories(includeSubSpecial);
+	const items = useAllWeaponCategories();
 	const [filterValue, setFilterValue] = React.useState("");
 	const { t } = useTranslation(["common"]);
 
@@ -260,23 +201,13 @@ function useWeaponItems({
 			key: "quick-select" as const,
 			name: t("common:forms.weaponSearch.quickSelect"),
 			items: items
-				.flatMap((c) =>
-					c.items
-						.map((item) => (item.weapon.type === "MAIN" ? item : null))
-						.filter((val) => val !== null),
-				)
-				.filter((item) =>
-					weaponIdsToInclude.has(item.weapon.id as MainWeaponId),
-				)
-				.sort((a, b) => {
-					const aIdx = quickSelectWeaponsIds.indexOf(
-						a.weapon.id as MainWeaponId,
-					);
-					const bIdx = quickSelectWeaponsIds.indexOf(
-						b.weapon.id as MainWeaponId,
-					);
-					return aIdx - bIdx;
-				}),
+				.flatMap((c) => c.items)
+				.filter((item) => weaponIdsToInclude.has(item.weapon.id))
+				.sort(
+					(a, b) =>
+						quickSelectWeaponsIds.indexOf(a.weapon.id) -
+						quickSelectWeaponsIds.indexOf(b.weapon.id),
+				),
 		};
 
 		return {
@@ -298,27 +229,23 @@ const allWeaponCategoriesCache = new Map<
 	ReturnType<typeof buildAllWeaponCategories>
 >();
 
-function useAllWeaponCategories(withSubSpecial = false) {
+function useAllWeaponCategories() {
 	const { t, i18n } = useTranslation(["weapons"]);
 
-	const cacheKey = `${i18n.language}-${withSubSpecial}`;
-	const cached = allWeaponCategoriesCache.get(cacheKey);
+	const cached = allWeaponCategoriesCache.get(i18n.language);
 	if (cached) return cached;
 
-	const categories = buildAllWeaponCategories(t, withSubSpecial);
+	const categories = buildAllWeaponCategories(t);
 	if (i18n.hasLoadedNamespace("weapons")) {
-		allWeaponCategoriesCache.set(cacheKey, categories);
+		allWeaponCategoriesCache.set(i18n.language, categories);
 	}
 	return categories;
 }
 
-function buildAllWeaponCategories(
-	t: TFunction<["weapons"]>,
-	withSubSpecial: boolean,
-) {
-	const mainWeaponCategories = weaponCategories.map((category, idx) => ({
+function buildAllWeaponCategories(t: TFunction<["weapons"]>) {
+	return weaponCategories.map((category, idx) => ({
 		name: category.name,
-		key: category.name,
+		key: category.name as string,
 		idx,
 		items: category.weaponIds.map((id) => ({
 			name: t(`weapons:MAIN_${id}`),
@@ -329,52 +256,10 @@ function buildAllWeaponCategories(
 			},
 		})),
 	}));
-
-	if (!withSubSpecial) {
-		return mainWeaponCategories;
-	}
-
-	const subWeaponCategory = {
-		name: "subs" as const,
-		key: "subs",
-		idx: 0,
-		items: subWeaponIds.map((id) => ({
-			name: t(`weapons:SUB_${id}`),
-			weapon: {
-				anyWeaponId: `SUB_${id}`,
-				id,
-				type: "SUB" as const,
-			},
-		})),
-	};
-
-	const specialWeaponCategory = {
-		name: "specials" as const,
-		key: "specials",
-		idx: 1,
-		items: specialWeaponIds
-			// currently no use-case exists to select big bubbler or tacticooler
-			.filter((id) => !nonDamagingSpecialWeaponIds.includes(id))
-			.map((id) => ({
-				name: t(`weapons:SPECIAL_${id}`),
-				weapon: {
-					anyWeaponId: `SPECIAL_${id}`,
-					id,
-					type: "SPECIAL" as const,
-				},
-			})),
-	};
-
-	return [
-		subWeaponCategory,
-		specialWeaponCategory,
-		...mainWeaponCategories.map((c) => ({ ...c, idx: c.idx + 2 })),
-	];
 }
 
-function keyify(value?: MainWeaponId | AnyWeapon | null) {
+function keyify(value?: MainWeaponId | null) {
 	if (typeof value === "number") return `MAIN_${value}`;
-	if (!value) return value;
 
-	return `${value.type}_${value.id}`;
+	return value;
 }

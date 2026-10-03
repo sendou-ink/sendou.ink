@@ -1,0 +1,77 @@
+.pageHeader {
+	container-type: inline-size;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-areas:
+		"heading back"
+		". actions";
+	align-items: center;
+	gap: var(--s-3) var(--s-4);
+
+	&:not(:has(> .actions)) {
+		grid-template-areas: "heading back";
+	}
+
+	@container (width < 36rem) {
+		grid-template-areas:
+			"heading back"
+			"actions actions";
+	}
+}
+
+.heading {
+	grid-area: heading;
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	min-width: 0;
+}
+
+.titles {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+	line-height: 1.2;
+
+	@container (width >= 36rem) {
+		font-size: var(--font-lg);
+	}
+}
+
+.subtitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	line-height: 1.2;
+}
+
+.back {
+	grid-area: back;
+	align-self: start;
+	justify-self: end;
+}
+
+.actions {
+	grid-area: actions;
+	justify-self: end;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+
+	@container (width < 36rem) {
+		justify-self: start;
+	}
+}

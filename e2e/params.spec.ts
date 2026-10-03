@@ -11,7 +11,7 @@ test.describe("Weapon parameters", () => {
 		const analyzer = new AnalyzerPage(page);
 		await analyzer.goto();
 
-		await analyzer.selectWeapon("Splattershot");
+		await analyzer.pickWeapon("Splattershot");
 
 		const weaponParams = await analyzer.openRawParameters("splattershot");
 		await expect(page).toHaveURL(/\/params\/splattershot/);

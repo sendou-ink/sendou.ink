@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
 import {
 	DAMAGE_TYPE,
 	possibleApValues,
@@ -9,21 +10,13 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import {
-	mainWeaponIds,
-	nonBombSubWeaponIds,
-	nonDamagingSpecialWeaponIds,
-	specialWeaponIds,
-	subWeaponIds,
-	weaponCategories,
-} from "~/modules/in-game-lists/weapon-ids";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { codec, SP } from "~/modules/search-params/search-params";
-
-const DEFAULT_ANY_WEAPON: AnyWeapon = {
-	type: "MAIN",
-	id: weaponCategories[0].weaponIds[0],
-};
+import {
+	DAMAGING_SPECIAL_WEAPON_IDS,
+	DAMAGING_SUB_WEAPON_IDS,
+} from "./calculator-constants";
 
 const anyWeapon = codec(
 	v.custom<AnyWeapon>(() => true),
@@ -40,7 +33,11 @@ const anyWeapon = codec(
 );
 
 export const calculatorSearchParams = SearchParams.define({
-	weapon: SP.custom(anyWeapon, { default: DEFAULT_ANY_WEAPON, loader: false }),
+	weapon: SP.custom(SearchParams.nullableCodec(anyWeapon), {
+		default: null,
+		loader: false,
+	}),
+	category: weaponLandingSearchParams.shape.category,
 	ap: SP.param(
 		v.pipe(
 			v.number(),
@@ -57,10 +54,7 @@ function decodeAnyWeapon(value: string): AnyWeapon | null {
 	if (value.startsWith("SUB_")) {
 		const id = Number(value.replace("SUB_", ""));
 
-		const isDamagingSub = subWeaponIds
-			.filter((subId) => !nonBombSubWeaponIds.includes(subId))
-			.includes(id as SubWeaponId);
-		if (!isDamagingSub) return null;
+		if (!DAMAGING_SUB_WEAPON_IDS.includes(id as SubWeaponId)) return null;
 
 		return { type: "SUB", id: id as SubWeaponId };
 	}
@@ -68,10 +62,7 @@ function decodeAnyWeapon(value: string): AnyWeapon | null {
 	if (value.startsWith("SPECIAL_")) {
 		const id = Number(value.replace("SPECIAL_", ""));
 
-		if (
-			!specialWeaponIds.includes(id as SpecialWeaponId) ||
-			nonDamagingSpecialWeaponIds.includes(id)
-		) {
+		if (!DAMAGING_SPECIAL_WEAPON_IDS.includes(id as SpecialWeaponId)) {
 			return null;
 		}
 
@@ -88,7 +79,7 @@ function decodeAnyWeapon(value: string): AnyWeapon | null {
 
 	// legacy decode fallback: bare numeric main weapon id
 	const legacyId = Number(value);
-	if (mainWeaponIds.includes(legacyId as MainWeaponId)) {
+	if (/^\d+$/.test(value) && mainWeaponIds.includes(legacyId as MainWeaponId)) {
 		return { type: "MAIN", id: legacyId as MainWeaponId };
 	}
 

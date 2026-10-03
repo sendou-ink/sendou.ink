@@ -31,5 +31,7 @@
 	"filters.atMost": "At most",
 	"filters.date.since": "Since",
 	"filters.date.custom": "Custom",
-	"filters.filterByWeapon": "Filter by weapon"
+	"filters.filterByWeapon": "Filter by weapon",
+	"weaponBuildCount_one": "{{count}} build",
+	"weaponBuildCount_other": "{{count}} builds"
 }

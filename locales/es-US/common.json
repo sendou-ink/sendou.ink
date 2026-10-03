@@ -469,5 +469,6 @@
 	"tier.tentative": "Tier {{tierName}} provisional (según el historial de la serie)",
 	"tier.confirmed": "Torneo de tier {{tierName}}",
 	"spoilerFree.showResults": "Mostrar resultados",
-	"spoilerFree.hideResults": "Ocultar resultados"
+	"spoilerFree.hideResults": "Ocultar resultados",
+	"yourWeapons": ""
 }

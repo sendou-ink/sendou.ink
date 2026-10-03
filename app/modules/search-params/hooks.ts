@@ -82,12 +82,25 @@ function useDecodedValues<Shape extends AnyShape>(
 	keys: string[],
 ): SearchParamsValues<Shape> {
 	const initialSearch = React.useContext(InitialSearchContext) ?? "";
+	const { pathname } = useLocation();
+	const lastSearchRef = React.useRef<string | null>(null);
 
 	const relevantSearch = React.useSyncExternalStore(
 		Store.subscribe,
-		() => SearchParams.pickRelevantSearch(keys, window.location.search),
+		() => {
+			// react-router pushes the next URL before rendering the next route, keep showing this route's params meanwhile
+			if (
+				lastSearchRef.current !== null &&
+				!isSamePathname(window.location.pathname, pathname)
+			) {
+				return lastSearchRef.current;
+			}
+
+			return SearchParams.pickRelevantSearch(keys, window.location.search);
+		},
 		() => SearchParams.pickRelevantSearch(keys, initialSearch),
 	);
+	lastSearchRef.current = relevantSearch;
 
 	return React.useMemo(
 		() => definition.parse(new URLSearchParams(relevantSearch)),
@@ -125,8 +138,16 @@ function useSetSearchParams<Shape extends AnyShape>(
 				});
 			} else {
 				window.history.replaceState(window.history.state, "", url);
+				Store.notify();
 			}
 		},
 		[definition],
+	);
+}
+
+function isSamePathname(a: string, b: string) {
+	return (
+		new URL(a, "http://localhost").pathname ===
+		new URL(b, "http://localhost").pathname
 	);
 }

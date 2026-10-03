@@ -7,6 +7,7 @@ test.describe("Object Damage Calculator", () => {
 	}) => {
 		const calculator = new ObjectDamageCalculatorPage(page);
 		await calculator.goto();
+		await calculator.pickWeapon("Sploosh-o-matic");
 
 		const hp = calculator.hitPoints();
 		const dmg = calculator.damage();
@@ -30,11 +31,12 @@ test.describe("Object Damage Calculator", () => {
 	test("changes weapon and saves it to url", async ({ page }) => {
 		const calculator = new ObjectDamageCalculatorPage(page);
 		await calculator.goto();
+		await calculator.pickWeapon("Sploosh-o-matic");
 
 		const dmg = calculator.damage();
 		const dmgBefore = (await dmg.textContent())!;
 
-		await calculator.selectWeapon("Luna Blaster");
+		await calculator.changeWeapon("Luna Blaster");
 
 		await expect(dmg).not.toHaveText(dmgBefore);
 		await page.reload();
@@ -44,8 +46,7 @@ test.describe("Object Damage Calculator", () => {
 	test("multiplier switch increases damage", async ({ page }) => {
 		const calculator = new ObjectDamageCalculatorPage(page);
 		await calculator.goto();
-
-		await calculator.selectWeapon("Tri-Stringer");
+		await calculator.pickWeapon("Tri-Stringer");
 
 		const dmg = calculator.damage();
 		const dmgBefore = (await dmg.textContent())!;
@@ -58,6 +59,7 @@ test.describe("Object Damage Calculator", () => {
 	test("object hp increases when ability points added", async ({ page }) => {
 		const calculator = new ObjectDamageCalculatorPage(page);
 		await calculator.goto();
+		await calculator.pickWeapon("Sploosh-o-matic");
 
 		const crabTankHp = calculator.hitPoints();
 		const crabTankHpBefore = (await crabTankHp.textContent())!;
@@ -71,5 +73,14 @@ test.describe("Object Damage Calculator", () => {
 		await expect(crabTankHp).toHaveText(crabTankHpBefore);
 		// ... but Splash Wall does
 		await expect(splashWallHp).not.toHaveText(splashWallHpBefore);
+	});
+
+	test("picks a sub weapon from its own category", async ({ page }) => {
+		const calculator = new ObjectDamageCalculatorPage(page);
+		await calculator.goto();
+		await calculator.pickWeapon("Splat Bomb");
+
+		await expect(calculator.damage().first()).toBeVisible();
+		await expect(page).toHaveURL(/weapon=SUB_0/);
 	});
 });

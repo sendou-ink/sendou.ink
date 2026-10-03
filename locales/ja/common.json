@@ -469,5 +469,6 @@
 	"tier.tentative": "仮 {{tierName}} ティア (過去大会履歴込み）",
 	"tier.confirmed": "{{tierName}} ティア大会",
 	"spoilerFree.showResults": "結果を表示",
-	"spoilerFree.hideResults": "結果を非表示"
+	"spoilerFree.hideResults": "結果を非表示",
+	"yourWeapons": ""
 }

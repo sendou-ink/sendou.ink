@@ -1,5 +1,4 @@
 {
-	"weaponSelect.label": "",
 	"rawParameters": "",
 	"attribute.weight": "Vægt",
 	"attribute.weight.Fast": "Let",
@@ -186,7 +185,6 @@
 	"hitsToDestroyShort": "TfØ",
 	"labels.amountOf": "Mængde af",
 	"labels.damageType": "Skadetype",
-	"labels.weapon": "Våben",
 	"dmgHtdExplanation": "Skade = Skade | TfØ = Træffere for at ødelægge (objekt)",
 	"noDmgData": "Der er endnu ikke nogen data for dette våbens skade.",
 	"perInkTankGrid.header_one": "{{weapon}} skud efter at sub-våbnet er brugt {{count}} gange ",

@@ -2,7 +2,14 @@ import clsx from "clsx";
 import React, { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
+import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
+import { BackLink } from "~/components/BackLink";
+import { CircleBackdrop } from "~/components/CircleBackdrop";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
@@ -13,9 +20,10 @@ import {
 } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { WeaponSelect } from "~/components/WeaponSelect";
+import { PageHeader } from "~/components/PageHeader";
+import { WeaponLanding } from "~/components/WeaponLanding";
 import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
-import type { DamageType } from "~/features/build-analyzer/analyzer-types";
+import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import type {
 	SpecialWeaponId,
 	SubWeaponId,
@@ -32,7 +40,12 @@ import {
 	TORPEDO_ID,
 	TRIPLE_SPLASHDOWN_ID,
 	WAVE_BREAKER_ID,
+	weaponIdToCategory,
 } from "~/modules/in-game-lists/weapon-ids";
+import {
+	useSearchParam,
+	useSearchParamsTyped,
+} from "~/modules/search-params/hooks";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -44,10 +57,18 @@ import {
 	OBJECT_DAMAGE_CALCULATOR_URL,
 	type SpecialWeaponImageVariant,
 } from "~/utils/urls";
-import { translateDamageReceiver } from "../calculator-constants";
+import {
+	DAMAGING_SPECIAL_WEAPON_IDS,
+	DAMAGING_SUB_WEAPON_IDS,
+	translateDamageReceiver,
+} from "../calculator-constants";
 import { useObjectDamage } from "../calculator-hooks";
+import { calculatorSearchParams } from "../calculator-search-params";
 import type { DamageReceiver } from "../calculator-types";
+import { loader } from "../loaders/object-damage-calculator.server";
 import styles from "./object-damage-calculator.module.css";
+
+export { loader };
 
 export const CURRENT_PATCH = "11.3";
 
@@ -73,10 +94,56 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
-export default function ObjectDamagePage() {
+export default function ObjectDamageCalculatorShell() {
+	const [weapon] = useSearchParam(calculatorSearchParams, "weapon");
+
+	if (!weapon) {
+		return <ObjectDamageCalculatorWeaponLanding />;
+	}
+
+	return <ObjectDamagePage weapon={weapon} />;
+}
+
+function ObjectDamageCalculatorWeaponLanding() {
+	const { t } = useTranslation(["common"]);
+	const data = useLoaderData<typeof loader>();
+	const [params] = useSearchParamsTyped(calculatorSearchParams);
+
+	const weaponHref = (weapon: AnyWeapon) =>
+		calculatorSearchParams.href(OBJECT_DAMAGE_CALCULATOR_URL, {
+			...params,
+			weapon,
+			category: null,
+		});
+
+	return (
+		<Main bigger>
+			<WeaponLanding
+				title={t("common:pages.object-damage-calculator")}
+				backTo="/"
+				weapons={data.weapons}
+				weaponPoolIds={data.weaponPoolIds}
+				weaponHref={(weaponId) => weaponHref({ type: "MAIN", id: weaponId })}
+				subSpecial={{
+					subWeaponIds: DAMAGING_SUB_WEAPON_IDS,
+					specialWeaponIds: DAMAGING_SPECIAL_WEAPON_IDS,
+					href: weaponHref,
+				}}
+				categoryHref={(category) =>
+					calculatorSearchParams.href(OBJECT_DAMAGE_CALCULATOR_URL, {
+						...params,
+						category,
+					})
+				}
+				navItem="object-damage-calculator"
+			/>
+		</Main>
+	);
+}
+
+function ObjectDamagePage({ weapon }: { weapon: AnyWeapon }) {
 	const { t } = useTranslation(["analyzer"]);
 	const {
-		weapon,
 		handleChange,
 		damagesToReceivers,
 		abilityPoints,
@@ -84,53 +151,48 @@ export default function ObjectDamagePage() {
 		allDamageTypes,
 		multiShotCount,
 		isMultiShot,
-	} = useObjectDamage();
+	} = useObjectDamage(weapon);
 
 	return (
 		<Main className="stack lg">
-			<div className={styles.controls}>
-				<div className={styles.selects}>
-					<div>
-						<Label htmlFor="weapon">{t("analyzer:labels.weapon")}</Label>
-						<WeaponSelect
-							includeSubSpecial
-							value={weapon}
-							onChange={(newAnyWeapon) => {
-								handleChange({
-									newAnyWeapon,
-								});
-							}}
-						/>
-					</div>
-					{allDamageTypes.length > 0 ? (
-						<div
-							className={clsx({
-								invisible: !damagesToReceivers || allDamageTypes.length === 1,
-							})}
-						>
-							<Label htmlFor="damage">{t("analyzer:labels.damageType")}</Label>
-							<DamageTypesSelect
-								handleChange={handleChange}
-								damageType={damageType}
-								allDamageTypes={allDamageTypes}
+			<WeaponHeader weapon={weapon} />
+			{(damagesToReceivers && allDamageTypes.length > 1) || multiShotCount ? (
+				<div className={styles.controls}>
+					{damagesToReceivers && allDamageTypes.length > 1 ? (
+						<div>
+							<Label>{t("analyzer:labels.damageType")}</Label>
+							<SendouChipRadioGroup wrap>
+								{allDamageTypes.map((optionDamageType) => (
+									<SendouChipRadio
+										key={optionDamageType}
+										name="damage"
+										value={optionDamageType}
+										checked={damageType === optionDamageType}
+										onChange={() =>
+											handleChange({ newDamageType: optionDamageType })
+										}
+									>
+										{t(`analyzer:damage.${optionDamageType}` as any)}
+									</SendouChipRadio>
+								))}
+							</SendouChipRadioGroup>
+						</div>
+					) : null}
+					{multiShotCount ? (
+						<div className="stack sm horizontal items-center label-no-spacing">
+							<label htmlFor="multi">×{multiShotCount}</label>
+							<SendouSwitch
+								id="multi"
+								isSelected={isMultiShot}
+								onChange={(isSelected) =>
+									handleChange({ newIsMultiShot: isSelected })
+								}
+								data-testid="multi-switch"
 							/>
 						</div>
 					) : null}
 				</div>
-				{multiShotCount ? (
-					<div className="stack sm horizontal items-center label-no-spacing">
-						<label htmlFor="multi">×{multiShotCount}</label>
-						<SendouSwitch
-							id="multi"
-							isSelected={isMultiShot}
-							onChange={(isSelected) =>
-								handleChange({ newIsMultiShot: isSelected })
-							}
-							data-testid="multi-switch"
-						/>
-					</div>
-				) : null}
-			</div>
+			) : null}
 			{damagesToReceivers ? (
 				<DamageReceiversGrid
 					damagesToReceivers={damagesToReceivers}
@@ -169,33 +231,63 @@ export default function ObjectDamagePage() {
 	);
 }
 
-function DamageTypesSelect({
-	allDamageTypes,
-	handleChange,
-	damageType,
-}: Pick<
-	ReturnType<typeof useObjectDamage>,
-	"handleChange" | "damageType" | "allDamageTypes"
->) {
-	const { t } = useTranslation(["analyzer"]);
+function WeaponHeader({ weapon }: { weapon: AnyWeapon }) {
+	const { t } = useTranslation(["weapons", "common"]);
+	const [params] = useSearchParamsTyped(calculatorSearchParams);
 
 	return (
-		<select
-			id="damage"
-			value={damageType}
-			onChange={(e) =>
-				handleChange({ newDamageType: e.target.value as DamageType })
+		<PageHeader
+			image={
+				<CircleBackdrop
+					className={clsx({
+						[styles.subSpecialImageBackdrop]: weapon.type !== "MAIN",
+					})}
+				>
+					<AnyWeaponImage weapon={weapon} size={36} />
+				</CircleBackdrop>
 			}
-		>
-			{allDamageTypes.map((optionDamageType) => {
-				return (
-					<option key={optionDamageType} value={optionDamageType}>
-						{t(`analyzer:damage.${optionDamageType}` as any)}
-					</option>
-				);
-			})}
-		</select>
+			title={t(`weapons:${weapon.type}_${weapon.id}` as any)}
+			subtitle={
+				<>
+					<Image
+						path={navIconUrl("object-damage-calculator")}
+						size={16}
+						alt=""
+					/>
+					{t("common:pages.object-damage-calculator")}
+				</>
+			}
+			back={
+				<BackLink
+					to={calculatorSearchParams.href(OBJECT_DAMAGE_CALCULATOR_URL, {
+						...params,
+						weapon: null,
+						category: weaponLandingCategory(weapon),
+					})}
+				/>
+			}
+		/>
 	);
+}
+
+function AnyWeaponImage({ weapon, size }: { weapon: AnyWeapon; size: number }) {
+	switch (weapon.type) {
+		case "MAIN":
+			return (
+				<WeaponImage weaponSplId={weapon.id} variant="build" size={size} />
+			);
+		case "SUB":
+			return <SubWeaponImage subWeaponId={weapon.id} size={size} />;
+		case "SPECIAL":
+			return <SpecialWeaponImage specialWeaponId={weapon.id} size={size} />;
+	}
+}
+
+function weaponLandingCategory(weapon: AnyWeapon) {
+	if (weapon.type === "SUB") return "SUBS";
+	if (weapon.type === "SPECIAL") return "SPECIALS";
+
+	return weaponIdToCategory(weapon.id);
 }
 
 const RECEIVER_IMAGE_SIZE = 24;

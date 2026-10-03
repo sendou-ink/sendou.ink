@@ -1,26 +1,23 @@
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link } from "react-router";
-import { Image } from "~/components/Image";
+import { useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import {
-	weaponCategories,
-	weaponIdToType,
-} from "~/modules/in-game-lists/weapon-ids";
+import { WeaponLanding } from "~/components/WeaponLanding";
+import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
+import * as SearchParams from "~/modules/search-params/search-params";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
-	mainWeaponImageUrl,
 	mySlugify,
 	navIconUrl,
 	weaponBuildPage,
-	weaponCategoryUrl,
 } from "~/utils/urls";
-import { metaTags, ogPageImage } from "../../../utils/remix";
+import { loader } from "../loaders/builds.server";
 
-import styles from "./builds.module.css";
+export { loader };
+
+export const shouldRevalidate = SearchParams.skipSearchOnlyRevalidation;
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -34,7 +31,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: "weapons",
+	i18n: ["weapons", "builds"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("builds"),
 		href: BUILDS_PAGE,
@@ -43,57 +40,29 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function BuildsPage() {
-	const { t } = useTranslation(["common", "weapons"]);
-
-	const weaponIdToSlug = (weaponId: MainWeaponId) => {
-		return mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
-	};
+	const { t } = useTranslation(["common", "weapons", "builds"]);
+	const data = useLoaderData<typeof loader>();
 
 	return (
-		<Main className="stack md">
-			{weaponCategories.map((category) => (
-				<div key={category.name} className={styles.category}>
-					<div className={styles.categoryHeader}>
-						<Image
-							path={weaponCategoryUrl(category.name)}
-							width={40}
-							height={40}
-							alt={t(`common:weapon.category.${category.name}`)}
-						/>
-						{t(`common:weapon.category.${category.name}`)}
-					</div>
-					<div className={styles.categoryWeapons}>
-						{(category.weaponIds as readonly MainWeaponId[])
-							.filter((weaponId) => weaponIdToType(weaponId) !== "ALT_SKIN")
-							.map((weaponId, i) => (
-								<React.Fragment key={weaponId}>
-									{i !== 0 && weaponId % 10 === 0 ? (
-										<WeaponFamilyDivider />
-									) : null}
-									<Link
-										key={weaponId}
-										to={weaponBuildPage(weaponIdToSlug(weaponId))}
-										className={styles.categoryWeapon}
-										data-testid={`weapon-${weaponId}-link`}
-									>
-										<Image
-											className={styles.categoryWeaponImg}
-											path={mainWeaponImageUrl(weaponId)}
-											width={28}
-											height={28}
-											alt={t(`weapons:MAIN_${weaponId}`)}
-										/>
-										{t(`weapons:MAIN_${weaponId}`)}
-									</Link>
-								</React.Fragment>
-							))}
-					</div>
-				</div>
-			))}
+		<Main bigger>
+			<WeaponLanding
+				title={t("common:pages.builds")}
+				backTo="/"
+				weapons={data.weapons}
+				weaponPoolIds={data.weaponPoolIds}
+				weaponHref={(weaponId) =>
+					weaponBuildPage(
+						mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" })),
+					)
+				}
+				categoryHref={(category) =>
+					weaponLandingSearchParams.href(BUILDS_PAGE, { category })
+				}
+				weaponSuffix={(weapon) =>
+					t("builds:weaponBuildCount", { count: weapon.buildCount })
+				}
+				navItem="builds"
+			/>
 		</Main>
 	);
-}
-
-function WeaponFamilyDivider() {
-	return <div className={styles.divider} />;
 }

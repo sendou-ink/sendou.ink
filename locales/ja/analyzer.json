@@ -1,5 +1,4 @@
 {
-	"weaponSelect.label": "武器",
 	"rawParameters": "",
 	"attribute.weight": "重さ",
 	"attribute.weight.Fast": "軽量級",
@@ -182,7 +181,6 @@
 	"hitsToDestroyShort": "確定数",
 	"labels.amountOf": "ギアパワー数:",
 	"labels.damageType": "ダメージタイプ",
-	"labels.weapon": "ブキ",
 	"dmgHtdExplanation": " ",
 	"noDmgData": "このブキのダメージデータはまだ分かっていません。もう少しお待ちください！",
 	"bigBubblerExplanation": "{{weapon}} 耐久値が上がるにつれて継続時間も増えます。",

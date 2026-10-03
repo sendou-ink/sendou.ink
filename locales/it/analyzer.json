@@ -1,5 +1,4 @@
 {
-	"weaponSelect.label": "",
 	"rawParameters": "",
 	"attribute.weight": "Peso",
 	"attribute.weight.Fast": "Leggero",
@@ -188,7 +187,6 @@
 	"hitsToDestroyShort": "HTD",
 	"labels.amountOf": "Quantità di",
 	"labels.damageType": "Tipo di danno",
-	"labels.weapon": "Arma",
 	"dmgHtdExplanation": "DMG = Danno | HTD = Colpi per distruggere",
 	"noDmgData": "Non ci sono ancora dati sui danni di quest'arma. Controlla più tardi!",
 	"perInkTankGrid.header_one": "{{weapon}} colpi dopo ×{{count}} arma secondaria usata",

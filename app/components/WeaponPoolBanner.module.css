@@ -1,0 +1,65 @@
+.weaponPoolBanner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	min-width: 0;
+	max-width: 100%;
+	min-height: var(--field-size);
+	padding: 0 var(--s-1) 0 var(--s-3);
+	border: 1px solid color-mix(in oklch, var(--color-warning) 25%, transparent);
+	border-radius: var(--radius-box);
+	background-color: color-mix(in oklch, var(--color-warning) 8%, transparent);
+	gap: var(--s-1) var(--s-3);
+	margin: 0 auto;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	gap: var(--s-2);
+}
+
+.icon {
+	width: 1rem;
+	color: var(--color-warning);
+}
+
+.weapons {
+	display: flex;
+	overflow-x: auto;
+	min-width: 0;
+	max-width: 100%;
+	gap: var(--s-0-5);
+	scrollbar-width: none;
+}
+
+.weapon {
+	--circle-backdrop-color: color-mix(
+		in oklch,
+		var(--color-warning) 22%,
+		transparent
+	);
+
+	display: grid;
+	flex-shrink: 0;
+	width: 2.5rem;
+	height: calc(var(--field-size) - 2px);
+	border-radius: var(--radius-field);
+	place-items: center;
+
+	&:hover {
+		background-color: color-mix(
+			in oklch,
+			var(--color-warning) 15%,
+			transparent
+		);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+}
