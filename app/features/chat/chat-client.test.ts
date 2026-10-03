@@ -267,6 +267,29 @@ describe("createChatClient", () => {
 		expect(harness.postRead).toHaveBeenCalledWith(1, 5);
 	});
 
+	test("a message to a viewed but hidden room counts unread until the room is shown", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.ensureMessagesLoaded(1);
+		await flush();
+		client.setHiddenRoomIds([1]);
+		client.setViewedRoomIds([1]);
+
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 5 }),
+		});
+
+		expect(client.getSnapshot().totalUnreadCount).toBe(1);
+
+		client.setHiddenRoomIds([]);
+
+		expect(client.getSnapshot().totalUnreadCount).toBe(0);
+		await flushReadDebounce();
+		expect(harness.postRead).toHaveBeenCalledWith(1, 5);
+	});
+
 	test("the echo replaces the optimistic pending send with the same publicId", async () => {
 		const harness = createHarness();
 		const client = await startedClient(harness);

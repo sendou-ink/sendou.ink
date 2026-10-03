@@ -85,6 +85,8 @@ export interface ChatClient {
 	flushReads: () => void;
 	/** Rooms the user has on screen right now: incoming messages there are read immediately instead of counting unread. */
 	setViewedRoomIds: (roomIds: number[]) => void;
+	/** Viewed rooms that are still out of sight (a background tab of the split view), they count unread messages like closed ones. */
+	setHiddenRoomIds: (roomIds: number[]) => void;
 }
 
 export function createChatClient(deps: ChatClientDeps): ChatClient {
@@ -100,6 +102,9 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	/** The ids of the observed rooms in `roomsById`, kept in sync by `replaceRooms`. */
 	let observedRoomIds = new Set<number>();
 	let messagesByRoomId = new Map<number, ClientChatMessage[]>();
+	let openRoomIds = new Set<number>();
+	let hiddenRoomIds = new Set<number>();
+	/** `openRoomIds` without `hiddenRoomIds`, kept in sync by `updateViewedRoomIds`. */
 	let viewedRoomIds = new Set<number>();
 	let snapshot: ChatSnapshot | null = null;
 
@@ -396,6 +401,18 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		}
 	};
 
+	const updateViewedRoomIds = () => {
+		const previous = viewedRoomIds;
+		viewedRoomIds = new Set(
+			[...openRoomIds].filter((roomId) => !hiddenRoomIds.has(roomId)),
+		);
+		for (const roomId of viewedRoomIds) {
+			if (!previous.has(roomId)) {
+				markRead(roomId);
+			}
+		}
+	};
+
 	const loadMessages = async (roomId: number) => {
 		if (loadingMessageRoomIds.has(roomId)) return;
 		loadingMessageRoomIds.add(roomId);
@@ -473,6 +490,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			roomsRefreshQueued = false;
 			replaceRooms(new Map());
 			messagesByRoomId = new Map();
+			openRoomIds = new Set();
 			viewedRoomIds = new Set();
 			locallyReadByRoomId.clear();
 			loadingObservedRoomIds.clear();
@@ -576,13 +594,12 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		markRead,
 		flushReads,
 		setViewedRoomIds: (roomIds) => {
-			const previous = viewedRoomIds;
-			viewedRoomIds = new Set(roomIds);
-			for (const roomId of viewedRoomIds) {
-				if (!previous.has(roomId)) {
-					markRead(roomId);
-				}
-			}
+			openRoomIds = new Set(roomIds);
+			updateViewedRoomIds();
+		},
+		setHiddenRoomIds: (roomIds) => {
+			hiddenRoomIds = new Set(roomIds);
+			updateViewedRoomIds();
 		},
 	};
 }

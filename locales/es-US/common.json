@@ -398,6 +398,7 @@
 	"chat.room.groupShort": "Grupo",
 	"chat.room.match": "Partida #{{id}}",
 	"chat.room.matchShort": "Partida",
+	"chat.room.teamShort": "",
 	"chat.room.scrim": "Scrim",
 	"fc.title": "Clave de amigo",
 	"fc.whereToFind": "Encuentra tu clave de amigo en tu Nintendo Switch (2)",

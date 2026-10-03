@@ -49,7 +49,8 @@ interface ChatContextValue {
 		roomId: number,
 		message: { publicId: string; contents: string },
 	) => void;
-	markAsRead: (roomId: number) => void;
+	/** Active rooms out of sight (a background tab of the split view), stable across renders. */
+	setHiddenRoomIds: (roomIds: number[]) => void;
 	totalUnreadCount: number;
 	chatOpen: boolean;
 	setChatOpen: (open: boolean) => void;
@@ -165,7 +166,9 @@ function ChatProviderInner({
 	const chatOpen =
 		chatOpenState || (!hydrated && autoOpenRoomIdsKey.length > 0);
 
-	// messages arriving to a room on screen are read immediately instead of counting unread
+	// messages arriving to a room on screen are read immediately instead of
+	// counting unread. This also reads the rooms as they open, minus the ones a
+	// view mounting in the same commit has hidden (a background tab)
 	React.useEffect(() => {
 		chatClient.setViewedRoomIds(chatOpenState ? activeRoomIds : []);
 	}, [chatOpenState, activeRoomIds]);
@@ -194,17 +197,10 @@ function ChatProviderInner({
 
 	const setChatOpen = (open: boolean) => {
 		setChatOpenState(open);
-		if (!open) return;
+		if (!open || activeRoomIds.length > 0 || rooms.length !== 1) return;
 
-		if (activeRoomIds.length > 0) {
-			for (const roomId of activeRoomIds) {
-				chatClient.markRead(roomId);
-			}
-		} else if (rooms.length === 1) {
-			setActiveRoomIds([rooms[0].id]);
-			chatClient.ensureMessagesLoaded(rooms[0].id);
-			chatClient.markRead(rooms[0].id);
-		}
+		setActiveRoomIds([rooms[0].id]);
+		chatClient.ensureMessagesLoaded(rooms[0].id);
 	};
 
 	useChatRouteSync({
@@ -246,7 +242,7 @@ function ChatProviderInner({
 			snapshot.messagesByRoomId.get(roomId) ?? EMPTY_MESSAGES,
 		ensureMessagesLoaded: chatClient.ensureMessagesLoaded,
 		sendMessage,
-		markAsRead: chatClient.markRead,
+		setHiddenRoomIds: chatClient.setHiddenRoomIds,
 		totalUnreadCount: snapshot.totalUnreadCount,
 		chatOpen,
 		setChatOpen,
@@ -314,9 +310,6 @@ function useChatRouteSync({
 		const openChatForRooms = (roomIds: number[]) => {
 			setActiveRoomIds(roomIds);
 			setChatOpenState(true);
-			for (const roomId of roomIds) {
-				chatClient.markRead(roomId);
-			}
 		};
 
 		const autoOpenRoomIds = roomIdsFromKey(autoOpenRoomIdsKey);
