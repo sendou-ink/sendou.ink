@@ -1,5 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import MagicString from "magic-string";
+import type { Node, Plugin as PostcssPlugin, Rule } from "postcss";
 import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
 
@@ -70,6 +71,11 @@ export default defineConfig((config) => {
 				: []),
 		],
 
+		css: {
+			postcss: {
+				plugins: [hoverOnlyOnHoverDevices()],
+			},
+		},
 		test: {
 			globalSetup: ["./scripts/ensure-test-db.ts"],
 			projects: [
@@ -154,4 +160,52 @@ function cssModuleLayer(id: string) {
 	if (/\/app\/components\/[^/]+\.module\.css$/.test(id)) return "components";
 
 	return "features";
+}
+
+const HOVER_MEDIA_PARAMS = "(hover: hover)";
+
+/**
+ * Wraps every `:hover` rule in `@media (hover: hover)` so touch devices don't get
+ * hover styles stuck on whatever element was last tapped or scrolled over.
+ */
+function hoverOnlyOnHoverDevices(): PostcssPlugin {
+	return {
+		postcssPlugin: "hover-only-on-hover-devices",
+		Rule(rule, { AtRule }) {
+			if (!rule.selector.includes(":hover")) return;
+			if (isInsideHoverMedia(rule)) return;
+
+			const hoverSelectors = rule.selectors.filter((selector) =>
+				selector.includes(":hover"),
+			);
+			const otherSelectors = rule.selectors.filter(
+				(selector) => !selector.includes(":hover"),
+			);
+			const media = new AtRule({ name: "media", params: HOVER_MEDIA_PARAMS });
+
+			if (otherSelectors.length === 0) {
+				rule.replaceWith(media);
+				media.append(rule);
+				return;
+			}
+
+			media.append(rule.clone({ selectors: hoverSelectors }));
+			rule.selectors = otherSelectors;
+			rule.after(media);
+		},
+	};
+}
+
+function isInsideHoverMedia(rule: Rule) {
+	for (let node: Node | undefined = rule.parent; node; node = node.parent) {
+		if (
+			node.type === "atrule" &&
+			"params" in node &&
+			node.params === HOVER_MEDIA_PARAMS
+		) {
+			return true;
+		}
+	}
+
+	return false;
 }

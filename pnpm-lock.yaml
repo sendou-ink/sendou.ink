@@ -217,6 +217,9 @@ importers:
       magic-string:
         specifier: 1.4.2
         version: 1.4.2
+      postcss:
+        specifier: 8.5.28
+        version: 8.5.28
       sharp:
         specifier: ^0.35.4
         version: 0.35.4(@types/node@26.6.2)

@@ -119,15 +119,6 @@ function ObjectDamageCalculatorWeaponLanding() {
 	return (
 		<Main bigger>
 			<WeaponLanding
-				image={
-					<CircleBackdrop>
-						<Image
-							path={navIconUrl("object-damage-calculator")}
-							size={36}
-							alt=""
-						/>
-					</CircleBackdrop>
-				}
 				title={t("common:pages.object-damage-calculator")}
 				backTo="/"
 				weapons={data.weapons}

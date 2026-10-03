@@ -1,8 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
-import { CircleBackdrop } from "~/components/CircleBackdrop";
-import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { WeaponLanding } from "~/components/WeaponLanding";
 import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
@@ -48,11 +46,6 @@ export default function BuildsPage() {
 	return (
 		<Main bigger>
 			<WeaponLanding
-				image={
-					<CircleBackdrop>
-						<Image path={navIconUrl("builds")} size={36} alt="" />
-					</CircleBackdrop>
-				}
 				title={t("common:pages.builds")}
 				backTo="/"
 				weapons={data.weapons}

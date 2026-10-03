@@ -25,7 +25,11 @@ import {
 	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { mainWeaponImageUrl, weaponCategoryUrl } from "~/utils/urls";
+import {
+	mainWeaponImageUrl,
+	navIconUrl,
+	weaponCategoryUrl,
+} from "~/utils/urls";
 import styles from "./WeaponLanding.module.css";
 import { weaponLandingSearchParams } from "./weapon-landing-search-params";
 
@@ -46,7 +50,6 @@ interface WeaponLandingWeapon {
 /** Weapon picker page: header, search, browse by category and quick links to the user's weapon pool. Selected category lives in the `category` search param. */
 export function WeaponLanding<W extends WeaponLandingWeapon>({
 	title,
-	image,
 	backTo,
 	weapons,
 	weaponPoolIds,
@@ -57,7 +60,6 @@ export function WeaponLanding<W extends WeaponLandingWeapon>({
 	navItem,
 }: {
 	title: React.ReactNode;
-	image: React.ReactNode;
 	/** Where the header's back link leads, on narrow screens inside a category it leads back to the category list instead */
 	backTo: string;
 	/** Weapons to pick from, alt skins excluded */
@@ -74,7 +76,7 @@ export function WeaponLanding<W extends WeaponLandingWeapon>({
 		specialWeaponIds: readonly SpecialWeaponId[];
 		href: (weapon: SubOrSpecialWeapon) => string;
 	};
-	/** Nav icon of the empty state shown when the search has no results */
+	/** Nav icon of the page, shown in the header and the empty state of a search with no results */
 	navItem: string;
 }) {
 	const { t } = useTranslation(["common", "weapons"]);
@@ -135,33 +137,64 @@ export function WeaponLanding<W extends WeaponLandingWeapon>({
 				.filter((family) => family.length > 0)
 		: [];
 
+	const pageImage = (
+		<CircleBackdrop>
+			<Image path={navIconUrl(navItem)} size={36} alt="" />
+		</CircleBackdrop>
+	);
+
 	return (
 		<div className={styles.container} data-testid="weapon-landing">
-			<PageHeader
-				image={image}
-				title={title}
-				back={
-					isInCategory ? (
-						<>
-							<div className={styles.narrowOnly}>
+			{isInCategory ? (
+				<>
+					<div className={styles.narrowOnly}>
+						<PageHeader
+							image={
+								<CircleBackdrop
+									className={clsx({
+										[styles.subSpecialImageBackdrop]:
+											selectedCategory === "SUBS" ||
+											selectedCategory === "SPECIALS",
+									})}
+								>
+									<CategoryImage category={selectedCategory} size={36} />
+								</CircleBackdrop>
+							}
+							title={<CategoryName category={selectedCategory} />}
+							subtitle={
+								<>
+									<Image path={navIconUrl(navItem)} size={16} alt="" />
+									{title}
+								</>
+							}
+							back={
 								<BackLink
 									to={categoryHref(null)}
 									replace
 									defaultShouldRevalidate={false}
 								/>
-							</div>
-							<div className={styles.wideOnly}>
-								<BackLink to={backTo} />
-							</div>
-						</>
-					) : (
-						<BackLink to={backTo} />
-					)
-				}
-			/>
+							}
+						/>
+					</div>
+					<div className={styles.wideOnly}>
+						<PageHeader
+							image={pageImage}
+							title={title}
+							back={<BackLink to={backTo} />}
+						/>
+					</div>
+				</>
+			) : (
+				<PageHeader
+					image={pageImage}
+					title={title}
+					back={<BackLink to={backTo} />}
+				/>
+			)}
 			<div
 				className={clsx(styles.layout, {
 					[styles.pickingCategory]: isPickingCategory,
+					[styles.inCategory]: isInCategory,
 				})}
 			>
 				<Input
@@ -172,12 +205,6 @@ export function WeaponLanding<W extends WeaponLandingWeapon>({
 					placeholder={t("common:forms.weaponSearch.search.placeholder")}
 					aria-label={t("common:forms.weaponSearch.search.placeholder")}
 				/>
-				{selectedCategory && !isSearching ? (
-					<h2 className={styles.categoryHeader}>
-						<CategoryImage category={selectedCategory} size={24} />
-						<CategoryName category={selectedCategory} />
-					</h2>
-				) : null}
 				<div className={styles.weapons}>
 					{shownWeapons.length === 0 && shownSubSpecialFamilies.length === 0 ? (
 						<div className={styles.noResults}>

@@ -124,6 +124,7 @@
 		"i18next-locales-sync": "2.1.1",
 		"knip": "6.38.0",
 		"magic-string": "1.4.2",
+		"postcss": "8.5.28",
 		"sharp": "^0.35.4",
 		"sql-formatter": "15.9.0",
 		"typescript": "7.0.2",

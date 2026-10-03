@@ -168,10 +168,8 @@
 		opacity 0.1s ease,
 		filter 0.1s ease;
 
-	@media (hover: hover) {
-		&:hover:not(.unplaceable) {
-			transform: scale(1.15);
-		}
+	&:hover:not(.unplaceable) {
+		transform: scale(1.15);
 	}
 
 	&::after {

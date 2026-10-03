@@ -155,11 +155,6 @@ function AnalyzerWeaponLanding() {
 	return (
 		<Main bigger>
 			<WeaponLanding
-				image={
-					<CircleBackdrop>
-						<Image path={navIconUrl("analyzer")} size={36} alt="" />
-					</CircleBackdrop>
-				}
 				title={t("common:pages.analyzer")}
 				backTo="/"
 				weapons={data.weapons}

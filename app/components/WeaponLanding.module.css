@@ -31,21 +31,17 @@
 			order: 2;
 		}
 
-		& > .categoryHeader {
+		& > .categories {
 			order: 3;
 		}
 
-		& > .categories {
-			order: 4;
-		}
-
 		& > .weapons {
-			order: 5;
+			order: 4;
 		}
 
 		&.pickingCategory > .weapons,
 		&:not(.pickingCategory) > .categories,
-		&:has(> .categoryHeader) > .weaponPool {
+		&.inCategory > .weaponPool {
 			display: none;
 		}
 	}
@@ -72,19 +68,6 @@
 
 .weaponPool {
 	grid-area: weaponPool;
-}
-
-.categoryHeader {
-	display: flex;
-	align-items: center;
-	margin: 0;
-	font-size: var(--font-sm);
-	font-weight: var(--weight-bold);
-	gap: var(--s-2);
-
-	@container (width >= 40rem) {
-		display: none;
-	}
 }
 
 .categories {
