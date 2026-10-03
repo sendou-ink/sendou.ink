@@ -14,6 +14,7 @@ import {
 	RESULTS_FIRST_YEAR,
 	SEASON_RESULT_SOURCES,
 	SEASON_STATS_TABS,
+	SEASONS_STAFF_DIALOGS,
 } from "./user-page-constants";
 import {
 	userArtSearchParams,
@@ -94,6 +95,7 @@ describe("userSeasonsSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(userSeasonsSearchParams, {
 			season: [null, newestSeason, oldestSeason],
+			staffDialog: [null, ...SEASONS_STAFF_DIALOGS],
 		});
 	});
 
@@ -101,6 +103,10 @@ describe("userSeasonsSearchParams", () => {
 		assertDecodesToDefault(userSeasonsSearchParams, "season", [
 			[String(notStartedSeason)],
 			["-1"],
+			["abc"],
+		]);
+		assertDecodesToDefault(userSeasonsSearchParams, "staffDialog", [
+			["CANCELED_MATCHES"],
 			["abc"],
 		]);
 	});

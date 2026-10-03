@@ -1,6 +1,7 @@
 import { eachDayOfInterval, subDays } from "date-fns";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
+import * as ModAuditLogRepository from "~/features/admin/ModAuditLogRepository.server";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
@@ -789,6 +790,12 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("SQMatchRepository.findSeasonCanceledMatchesByUserId", fx.sq, (sq) =>
 		SQMatchRepository.findSeasonCanceledMatchesByUserId(sq),
+	);
+	add("ModAuditLogRepository.findSeasonByUserId", fx.sq, (sq) =>
+		ModAuditLogRepository.findSeasonByUserId({
+			...sq,
+			type: "SENDOUQ_PUBLIC_NOTE",
+		}),
 	);
 	add(
 		"SQMatchRepository.findCancelReportsByGroupMatchId",

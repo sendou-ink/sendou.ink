@@ -8,6 +8,7 @@ import {
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { UserMapModePreferences } from "~/db/tables-json";
+import * as ModAuditLogRepository from "~/features/admin/ModAuditLogRepository.server";
 import { actorId } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -982,6 +983,13 @@ export function updateOwnMemberNote({
 			.where("groupId", "=", groupId)
 			.where("userId", "=", actorId())
 			.execute();
+
+		if (value) {
+			await ModAuditLogRepository.insert(
+				{ type: "SENDOUQ_PUBLIC_NOTE", text: value },
+				trx,
+			);
+		}
 
 		await refreshGroup(groupId, trx);
 	});
