@@ -1,6 +1,9 @@
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
+	define: {
+		__GIT_COMMIT__: JSON.stringify(""),
+	},
 	test: {
 		name: "unit",
 		include: ["**/*.test.{ts,tsx}"],

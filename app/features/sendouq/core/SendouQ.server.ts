@@ -3,6 +3,7 @@ import { redirect } from "react-router";
 import * as R from "remeda";
 import type { DBBoolean } from "~/db/tables";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
@@ -143,6 +144,16 @@ class SendouQClass {
 		return (this.#receivedLikerGroupIds.get(groupId) ?? []).filter(
 			(likerGroupId) => visibleGroupIds.has(likerGroupId),
 		).length;
+	}
+
+	/** {@link likesReceivedCount} of every group that has received any likes, keyed by group id. */
+	likesReceivedCounts() {
+		return new Map(
+			Array.from(this.#receivedLikerGroupIds.keys(), (groupId) => [
+				groupId,
+				this.likesReceivedCount(groupId),
+			]),
+		);
 	}
 
 	/** A group by id without censoring sensitive data. */
@@ -592,9 +603,32 @@ function matchMapPools(match: DBMatch) {
 /** Global SendouQ manager: all active groups and matchmaking state. */
 export let SendouQ = await freshSendouQInstance();
 
-/** Reloads the global SendouQ instance from the database; call after any change to groups or matches. */
+let likesReceivedCounts = SendouQ.likesReceivedCounts();
+
+/** Reloads the global SendouQ instance from the database; call after any change to groups or matches. Notifies the groups whose received likes count changed, e.g. a liker left the looking pool or went stale since the last reload. */
 export async function refreshSendouQInstance() {
 	SendouQ = await freshSendouQInstance();
+
+	const previousLikesReceivedCounts = likesReceivedCounts;
+	likesReceivedCounts = SendouQ.likesReceivedCounts();
+
+	const changedGroupIds = R.unique([
+		...previousLikesReceivedCounts.keys(),
+		...likesReceivedCounts.keys(),
+	]).filter(
+		(groupId) =>
+			(previousLikesReceivedCounts.get(groupId) ?? 0) !==
+			(likesReceivedCounts.get(groupId) ?? 0),
+	);
+
+	ChatSystemMessage.notifyStatusChanged(
+		changedGroupIds.flatMap(
+			(groupId) =>
+				SendouQ.findUncensoredGroupById(groupId)?.members.map(
+					(member) => member.id,
+				) ?? [],
+		),
+	);
 }
 
 async function freshSendouQInstance() {

@@ -18,6 +18,7 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
+import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import { useMarkSqLikesSeen } from "~/features/global-status/global-status-likes-seen";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import { privateNoteSentimentScore } from "~/features/user-card/user-card-utils";
@@ -88,7 +89,13 @@ function QLookingPage() {
 	const data = useLoaderData<typeof loader>();
 	const [joining] = useSearchParam(qLookingSearchParams, "joining");
 
-	useMarkSqLikesSeen(data.ownGroup?.id, data.likes.received.length);
+	const { status } = useGlobalStatus();
+
+	useMarkSqLikesSeen({
+		groupId: data.ownGroup?.id,
+		receivedLikesCount: data.likes.received.length,
+		status,
+	});
 
 	// pool-shape changes (a group joining/leaving, a morph, a match starting)
 	useTopicRevalidation(SENDOUQ_LOOKING_CHANNEL);
