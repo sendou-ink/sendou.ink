@@ -1,28 +1,3 @@
-.heatmap {
-	/* how many are free at once, as steps between the track and the strongest "can play" green */
-	--heat-1: color-mix(
-		in oklab,
-		var(--color-success-high) 20%,
-		var(--color-bg-high)
-	);
-	--heat-2: color-mix(
-		in oklab,
-		var(--color-success-high) 40%,
-		var(--color-bg-high)
-	);
-	--heat-3: color-mix(
-		in oklab,
-		var(--color-success-high) 60%,
-		var(--color-bg-high)
-	);
-	--heat-4: color-mix(
-		in oklab,
-		var(--color-success-high) 80%,
-		var(--color-bg-high)
-	);
-	--heat-5: var(--color-success-high);
-}
-
 .chips {
 	display: flex;
 	flex-wrap: wrap;
@@ -72,10 +47,16 @@
 	gap: 2px;
 }
 
+/* tiers match the playable-window dots: filled can play, outlined one short, neutral below */
 .cell {
+	display: grid;
+	place-items: center;
 	height: 1.5rem;
 	border-radius: 3px;
-	background-color: var(--color-bg-high);
+	box-shadow: inset 0 0 0 1px var(--color-bg-high);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+	line-height: 1;
 
 	&:hover {
 		outline: 2px solid var(--color-border-high);
@@ -83,24 +64,22 @@
 	}
 }
 
-.count1 {
-	background-color: var(--heat-1);
+.tierFull {
+	background-color: var(--color-success);
+	box-shadow: none;
+	color: var(--color-text-on-light);
 }
 
-.count2 {
-	background-color: var(--heat-2);
+.tierOneShort {
+	background-color: var(--color-success-low);
+	box-shadow: inset 0 0 0 1px var(--color-success);
+	color: var(--color-success-high);
 }
 
-.count3 {
-	background-color: var(--heat-3);
-}
-
-.count4 {
-	background-color: var(--heat-4);
-}
-
-.count5 {
-	background-color: var(--heat-5);
+.tierFew {
+	background-color: var(--color-bg-higher);
+	box-shadow: none;
+	color: var(--color-text-high);
 }
 
 /* framed like the popover element: page background inside the standard border */
@@ -200,6 +179,10 @@
 	width: 14px;
 	height: 10px;
 	border-radius: 2px;
+
+	&.tierFew {
+		box-shadow: inset 0 0 0 1px var(--color-border-high);
+	}
 }
 
 .unreported {

@@ -32,7 +32,6 @@
 	"registration.summary.out": "{{amount}} no disponibles",
 	"registration.summary.unknown": "{{amount}} sin datos",
 	"team.canPlay": "El equipo puede jugar ({{players}}+)",
-	"team.legendFreeAtOnce": "libres a la vez",
 	"team.currentWeek": "Esta semana",
 	"team.editAvailability": "Editar mi disponibilidad",
 	"team.hidden": "Solo los miembros del equipo pueden ver el horario del equipo",
