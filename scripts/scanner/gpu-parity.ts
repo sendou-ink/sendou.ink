@@ -113,7 +113,7 @@ function fixtureGroups(): string[][] {
 			readdirSync(join(FIXTURES_DIR, dir))
 				.sort()
 				.flatMap((fixture) =>
-					["frame.png", "frame.jpg", "frame.jpeg"]
+					["frame.png", "frame.webp", "frame.jpg", "frame.jpeg"]
 						.map((name) => join(FIXTURES_DIR, dir, fixture, name))
 						.filter((path) => {
 							try {

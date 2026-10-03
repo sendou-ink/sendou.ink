@@ -62,7 +62,7 @@ const PREVIEW_POST_INTERVAL_MS = 600;
 const PREVIEW_WIDTH = 480;
 const PREVIEW_HEIGHT = 270;
 
-/** A read-back frame normalized to the canonical size, its capture pixels kept for the PNG. */
+/** A read-back frame normalized to the canonical size, its capture pixels kept for the stored frame. */
 interface PreparedFrame {
 	pixels: FrameData;
 	frame: Mat;
@@ -87,7 +87,7 @@ let chunkAborted = false;
 let lastFrameT = Number.NEGATIVE_INFINITY;
 /**
  * Mirror of the main thread's timeline (same defaults), fed every event first:
- * a frame is PNG-encoded only when some event would be listed rather than
+ * a frame is encoded only when some event would be listed rather than
  * merged into an earlier read — a fixed-cadence detector re-reads a standing
  * screen twice a second, and encoding 1080p for each repeat cost more than
  * the parse.
@@ -205,7 +205,7 @@ async function analyzePrepared(
 	// UI never re-grabs a later frame — encoded at most once per frame
 	let encoded: Promise<Blob> | null = null;
 	const frameBlob = () => {
-		encoded ??= encodePng(pixels);
+		encoded ??= encodeFrame(pixels);
 		return encoded;
 	};
 
@@ -583,8 +583,12 @@ function gpuRunner() {
 	return undefined;
 }
 
-/** PNG of read-back pixels, for the UI's thumbnails and fixture export. */
-function encodePng({ width, height, data }: FrameData): Promise<Blob> {
+/**
+ * Lossless WebP of read-back pixels (half a PNG's size, exact pixels), the
+ * frame a misread is reported and made into a fixture with. Browsers without
+ * a WebP encoder fall back to PNG.
+ */
+function encodeFrame({ width, height, data }: FrameData): Promise<Blob> {
 	const canvas = new OffscreenCanvas(width, height);
 	canvas
 		.getContext("2d")!
@@ -593,7 +597,7 @@ function encodePng({ width, height, data }: FrameData): Promise<Blob> {
 			0,
 			0,
 		);
-	return canvas.convertToBlob({ type: "image/png" });
+	return canvas.convertToBlob({ type: "image/webp", quality: 1 });
 }
 
 function freshTelemetry(): ScanTelemetry | null {

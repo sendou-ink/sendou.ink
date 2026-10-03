@@ -1,7 +1,0 @@
-.events {
-	--scanner-card-padding: var(--s-2-5) 14px;
-
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-2);
-}

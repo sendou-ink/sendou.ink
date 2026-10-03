@@ -1,23 +1,16 @@
 /**
  * IndexedDB store of live detections: one `events` store keyed by auto id,
- * indexed by timestamp, with a small thumbnail per event; the full-res
- * analyzed PNG lives in the separate `frames` store under the same id
- * (loadEventFrame) so listing the feed never deserializes megabytes of
- * blobs. Retention runs on save (throttled): whole sessions past
- * `core/sessions.ts`'s age/count/event limits go, and frames go after
- * `FRAME_MAX_AGE_MS` or past `MAX_FRAMES` (the events stay, marked frameless).
+ * indexed by timestamp; the full-res analyzed frame lives in the separate
+ * `frames` store under the same id (loadEventFrame) so listing the feed never
+ * deserializes megabytes of blobs. Retention runs on save (throttled): whole
+ * sessions past `core/sessions.ts`'s age/count/event limits go, then the
+ * frames past `frames.ts`'s age and size budget (the events stay, marked frameless).
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/detectors/types";
 import { expiredSessionEventIds } from "../core/sessions";
 import { EVENTS_STORE, FRAMES_STORE, readwrite, tx } from "./db";
-
-/**
- * Full-res frame PNGs (~1-2MB each) are what makes a misread reportable; only
- * debug-mode captures save them, bounded by age and count, whichever bites first.
- */
-const MAX_FRAMES = 200;
-const FRAME_MAX_AGE_MS = 72 * 60 * 60 * 1000;
+import { trimFrames } from "./frames";
 
 /** The retention pass walks every key; once a minute is plenty for limits measured in days. */
 const RETENTION_INTERVAL_MS = 60_000;
@@ -45,8 +38,6 @@ export interface StoredEvent {
 	detectedAt: number;
 	confidence: number;
 	data: unknown;
-	/** small JPEG data URL of the source frame */
-	thumbnail?: string;
 	/** whether a full-res frame exists in the `frames` store under this id */
 	hasFrame?: boolean;
 	send?: SendStatus;
@@ -60,7 +51,6 @@ let lastRetentionAt = 0;
  */
 export async function saveEvent(
 	event: DetectedEvent,
-	thumbnail?: string,
 	frame?: Blob,
 	reuseId?: number,
 ): Promise<number> {
@@ -71,10 +61,10 @@ export async function saveEvent(
 		detectedAt: Date.now(),
 		confidence: event.confidence,
 		data: event.data,
-		thumbnail,
 		hasFrame: frame !== undefined,
 	};
 	let id = 0;
+	let retained = false;
 	await readwrite([EVENTS_STORE, FRAMES_STORE], (transaction) => {
 		const events = transaction.objectStore(EVENTS_STORE);
 		const frames = transaction.objectStore(FRAMES_STORE);
@@ -86,31 +76,33 @@ export async function saveEvent(
 			const now = Date.now();
 			if (now - lastRetentionAt >= RETENTION_INTERVAL_MS) {
 				lastRetentionAt = now;
-				retain(events, frames, now);
+				retainSessions(events, frames, now);
+				retained = true;
 			}
 		};
 	});
+	if (retained) void trimFrames().catch(() => {});
 	return id;
 }
 
 /** Runs the retention pass now (page load, capture start/stop). */
-export function trimEvents(): Promise<void> {
+export async function trimEvents(): Promise<void> {
 	lastRetentionAt = Date.now();
-	return readwrite([EVENTS_STORE, FRAMES_STORE], (transaction) =>
-		retain(
+	await readwrite([EVENTS_STORE, FRAMES_STORE], (transaction) =>
+		retainSessions(
 			transaction.objectStore(EVENTS_STORE),
 			transaction.objectStore(FRAMES_STORE),
 			Date.now(),
 		),
 	);
+	await trimFrames();
 }
 
 /**
- * Session and frame retention over key cursors only (no record is
- * deserialized): the `detectedAt` index yields every event's id and time,
- * which splits the sessions and dates each frame.
+ * Session retention over key cursors only (no record is deserialized): the
+ * `detectedAt` index yields every event's id and time, which splits the sessions.
  */
-function retain(
+function retainSessions(
 	events: IDBObjectStore,
 	frames: IDBObjectStore,
 	now: number,
@@ -124,49 +116,9 @@ function retain(
 			c.continue();
 			return;
 		}
-		const expired = new Set(expiredSessionEventIds(stamps, now));
-		for (const id of expired) {
+		for (const id of expiredSessionEventIds(stamps, now)) {
 			events.delete(id);
 			frames.delete(id);
-		}
-		const detectedAtById = new Map(
-			stamps
-				.filter((stamp) => !expired.has(stamp.id))
-				.map((stamp) => [stamp.id, stamp.detectedAt] as const),
-		);
-		retainFrames(events, frames, detectedAtById, now);
-	};
-}
-
-function retainFrames(
-	events: IDBObjectStore,
-	frames: IDBObjectStore,
-	detectedAtById: Map<number, number>,
-	now: number,
-): void {
-	const ids: number[] = [];
-	const cursor = frames.openKeyCursor(); // ascending id = oldest first
-	cursor.onsuccess = () => {
-		const c = cursor.result;
-		if (c) {
-			ids.push(c.primaryKey as number);
-			c.continue();
-			return;
-		}
-		const excess = Math.max(0, ids.length - MAX_FRAMES);
-		for (const [index, id] of ids.entries()) {
-			const detectedAt = detectedAtById.get(id);
-			const stale =
-				detectedAt === undefined || now - detectedAt > FRAME_MAX_AGE_MS;
-			if (!stale && index >= excess) continue;
-			frames.delete(id);
-			const get = events.get(id) as IDBRequest<StoredEvent | undefined>;
-			get.onsuccess = () => {
-				const record = get.result;
-				if (!record?.hasFrame) return;
-				record.hasFrame = false;
-				events.put(record);
-			};
 		}
 	};
 }
@@ -235,7 +187,7 @@ export async function getEvents(
 	return inRange.filter((event) => wanted.has(event.id!));
 }
 
-/** The event's full-res analyzed PNG, or undefined when none was stored. */
+/** The event's full-res analyzed frame, or undefined when none was stored. */
 export function loadEventFrame(id: number): Promise<Blob | undefined> {
 	return tx(
 		FRAMES_STORE,

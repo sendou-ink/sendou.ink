@@ -63,7 +63,6 @@ import {
 	unsentMatches,
 } from "./sendou-ingest";
 import { audioDeviceIdOf, readSettings } from "./settings";
-import { thumbnailFromBlob } from "./thumbnail";
 import { sendLive, uploadEnabled } from "./upload";
 import { deleteClosedVisitsVodClips } from "./visit";
 
@@ -204,14 +203,9 @@ function set(patch: Partial<LiveSnapshot>): void {
 
 /**
  * Opens the source, brings the worker up, then starts sampling; a second call
- * while running is ignored. `saveFrames` (debug mode) keeps each event's
- * analyzed frame and thumbnail for the raw detections.
+ * while running is ignored.
  */
-export async function startCapture({
-	saveFrames,
-}: {
-	saveFrames: boolean;
-}): Promise<void> {
+export async function startCapture(): Promise<void> {
 	if (snapshot.status === "starting" || snapshot.status === "running") return;
 	// before any await, so a double click's second call sees it and bails
 	set({ ...IDLE, status: "starting" });
@@ -271,7 +265,6 @@ export async function startCapture({
 		const starting = new AnalyzerClient(onResult, onWorkerError, undefined, {
 			frameQueueLimit: FRAME_QUEUE_LIMIT,
 			webgpu: settings.webgpu,
-			attachFrames: saveFrames,
 			onFrameError,
 		});
 		client = starting;
@@ -549,10 +542,9 @@ async function persist(
 	stale: number | undefined,
 ): Promise<void> {
 	try {
-		const thumbnail = frame ? await thumbnailFromBlob(frame) : undefined;
 		// reusing the replaced event's id keeps match card keys stable, so
 		// repeat detections don't remount the cards
-		const id = await saveEvent(event, thumbnail, frame, stale);
+		const id = await saveEvent(event, frame, stale);
 		storedIds.set(event, id);
 		if (uploadEnabled() && SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 			// a scoreboard closes its match — send it

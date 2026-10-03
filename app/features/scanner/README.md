@@ -63,14 +63,15 @@ opens it, for anyone, through the same handoff Inspect uses.
   keeping every source event except the per-second Objective/PlayerStatus/
   StripWeapons reads (`compactSources`; ~85% of a game's events, ~6× its
   bytes), and its raw events are deleted in the same transaction. Cards,
-  uploads (`sendCompacted`) and the debug tab read a compacted session like
+  uploads (`sendCompacted`) and the game data zip read a compacted session like
   a raw one, but it no longer picks up match builder fixes and its
   `Raw detections` CSV option is disabled. Compacted sessions share the
-  30-day / 20-session retention with the raw ones. Full-res
-  frames (and the thumbnails made from them) are only captured in debug
-  mode — the worker skips the PNG encode otherwise (`attachFrames`) — and
-  are bounded by 72 h and `MAX_FRAMES`, the event staying with
-  `hasFrame: false`. Clips have their own cap and outlive session deletion.
+  30-day / 20-session retention with the raw ones. Every listed event keeps
+  its full-res analyzed frame as a lossless WebP (~1.1 MB at 1080p, half a
+  PNG; the montage's VoD scans skip it with `attachFrames: false`), live and
+  VoD frames alike bounded by 72 h and a shared 500 MB budget, newest first
+  (`store/frames.ts`), the event staying with `hasFrame: false`. Clips have
+  their own cap and outlive session deletion.
 - **Upload** is on by default when logged in (settings toggle, persisted).
   Live: a scoreboard closes its match and sends it, a 15 s tick retries
   unlinked matches on a backoff (`sendou-ingest.ts`) and flushes closed
@@ -88,12 +89,17 @@ opens it, for anyone, through the same handoff Inspect uses.
   `Matches` (`core/csv/matches.ts`, one row per game, the rows the cards
   render) and `Raw detections` (`core/csv/events.ts`, one row per event).
   Column names stay English keys.
+- **Game data** (`components/match-zip.ts`): an expanded match card's
+  download, what users report a misread with — `match.json` (the card's
+  match), `events.json` (every source event, each naming its frame folder)
+  and `frames/<n>-<type>-<position>/` with the frame plus a prefilled
+  `expected.json`, fixture-ready.
 - **Debug gate** (`use-debug.ts`: DEV/ADMIN role or `?debug=true`, which
   Settings → Debug → `Enable debug` sets):
-  `Save frame as fixture` (Settings → Debug, live only), `?telemetry=true`,
-  and the `Raw detections` disclosure inside a match card (the per-event
-  cards with Inspect). The screenshot view (`ScreenshotPage.tsx`) is not
-  gated; the fixtures and montage views are dev-only.
+  `Save frame as fixture` (Settings → Debug, live only) and
+  `?telemetry=true`. The screenshot view (`ScreenshotPage.tsx`) is not
+  gated (drop a frame from a game data zip on the landing to inspect it);
+  the fixtures and montage views are dev-only.
 
 ## Clips
 
@@ -649,7 +655,7 @@ new tests there whenever they can be written without a frame.
 ## Fixtures
 
 A test case is a directory `tests/fixtures/<detector>/<case-name>/` with
-`frame.png|jpg` (raw capture, never re-encoded) and `expected.json` (partial
+`frame.png|webp|jpg` (raw capture, never lossily re-encoded) and `expected.json` (partial
 expectations, sendou ids; `stageLabel`/`weaponLabel` are informational for
 the human corrector — tests compare only ids). A frame that already serves
 another detector's fixture (a kill feed caught in an objective frame) is
@@ -658,8 +664,9 @@ and the kill suite's cross-negative sweep skips shared frames by real path.
 Negative cases
 (`{ "event": "none" }`) go in the shared `tests/fixtures/negative/`; every
 detector's suite sweeps them. Every live misread should become a fixture —
-the live app's "Save fixture" button exports the byte-exact analyzed frame
-plus a prefilled `expected.json`. **Fixture ground-truth labels are
+an expanded match card's `Game data` zip holds each analyzed frame
+(lossless WebP, pixel-exact) with a prefilled `expected.json` in a folder
+that drops into `tests/fixtures/<detector>/` as is. **Fixture ground-truth labels are
 hand-corrected by the user (the Splatoon domain authority) — treat them as
 definitive over any matcher output.** The dev-only fixtures view
 (`/scanner?view=fixtures`) renders every fixture's frame beside its

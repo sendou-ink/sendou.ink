@@ -18,6 +18,7 @@ import { SCANNER_PAGE } from "~/utils/urls";
 import { MAX_SESSIONS } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
 import { LIVE_CLIPS_MAX_BYTES, MAX_HISTORY_CLIPS } from "../store/clips";
+import { FRAME_MAX_AGE_MS, MAX_FRAME_BYTES } from "../store/frames";
 import styles from "./SettingsPopover.module.css";
 import {
 	AUDIO_OFFSET_LIMIT_MS,
@@ -143,6 +144,9 @@ export function SettingsPopover({
 					first.
 					<br />
 					Sessions: last 30 days or {MAX_SESSIONS} sessions.
+					<br />
+					Game data frames: last {FRAME_MAX_AGE_MS / (24 * 60 * 60 * 1000)}{" "}
+					days, up to {MAX_FRAME_BYTES / (1024 * 1024)} MB.
 				</p>
 				{!debug || showSaveFrame || showDevLinks ? (
 					<section className={styles.section}>

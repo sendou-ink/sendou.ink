@@ -15,7 +15,7 @@ export interface InitRequest {
 	collectTelemetry?: boolean;
 	/** match templates (and upscale sub-1080p frames) on WebGPU when an adapter exists; default false */
 	webgpu?: boolean;
-	/** PNG-encode the analyzed frame onto results whose events fired; default true (live and VoD scans only want it in debug mode) */
+	/** encode the analyzed frame onto results whose events fired; default true */
 	attachFrames?: boolean;
 }
 
@@ -63,7 +63,7 @@ export type WorkerResponse =
 			t: number;
 			gate: GateResult;
 			events: DetectedEvent<unknown>[];
-			/** lossless PNG of the exact frame that was analyzed; present when events fired */
+			/** lossless image of the exact frame that was analyzed; present when events fired */
 			frame?: Blob;
 	  }
 	/** frame t threw mid-analysis; the worker is still usable and a "done" follows */

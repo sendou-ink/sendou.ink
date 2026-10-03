@@ -331,6 +331,13 @@ button.expand {
 	gap: var(--s-4);
 }
 
+.report {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1) var(--s-2);
+}
+
 @keyframes scanner-detail-in {
 	from {
 		opacity: 0;

@@ -1,11 +1,11 @@
 /**
  * Shared IndexedDB handle. Stores:
  *  - `events`: live detections, keyed by auto id (events.ts)
- *  - `frames`: their full-res analyzed PNGs by event id, kept apart so listing the feed never deserializes them
+ *  - `frames`: their full-res analyzed frames by event id, kept apart so listing the feed never deserializes them (frames.ts)
  *  - `compacted-matches`: older live sessions' games, frozen as built, indexed by session (compacted-matches.ts)
  *  - `vods`: one summary per scanned VoD, keyed by file name (vods.ts)
  *  - `vod-events`: each saved VoD's detections, indexed by VoD name
- *  - `vod-frames`: their PNGs, keyed by vod-event id
+ *  - `vod-frames`: their frames, keyed by vod-event id
  *  - `clips`: clip records by auto id, indexed by bucket (clips.ts)
  *  - `clip-blobs`: the clips' MP4s, keyed by clip id
  *  - `inspect-frames`: one-shot Inspect handoffs into a new debug tab (inspect.ts)

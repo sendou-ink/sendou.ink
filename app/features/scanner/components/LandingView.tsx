@@ -29,7 +29,6 @@ import styles from "./LandingView.module.css";
 import { getLiveSession, startCapture, useLiveSession } from "./live-session";
 import { SettingsPopover } from "./SettingsPopover";
 import { SourceSelect } from "./SourceSelect";
-import { useDebug } from "./use-debug";
 import { isThisVisitsVodClip } from "./visit";
 import { startVodScan } from "./vod-scan";
 import { useVods } from "./vods-feed";
@@ -58,7 +57,6 @@ export function LandingView() {
 	const vods = useVods();
 	const clips = useClips();
 	const [telemetry] = useSearchParam(scannerSearchParams, "telemetry");
-	const debug = useDebug();
 	const [, setParams] = useSearchParamsTyped(scannerSearchParams);
 	const [over, setOver] = useState(false);
 	const [playing, setPlaying] = useState<ScannerClip | null>(null);
@@ -72,7 +70,7 @@ export function LandingView() {
 			setParams({ view: "live" });
 			return;
 		}
-		await startCapture({ saveFrames: debug });
+		await startCapture();
 		if (getLiveSession().status === "running") setParams({ view: "live" });
 	};
 
@@ -81,7 +79,7 @@ export function LandingView() {
 			void inspectScreenshot(file);
 			return;
 		}
-		void startVodScan(file, { telemetry, saveFrames: debug });
+		void startVodScan(file, { telemetry });
 		setParams({ view: "vod", name: file.name });
 	};
 
@@ -224,8 +222,9 @@ function HowItWorks() {
 				<dt>Privacy</dt>
 				<dd>
 					Everything is processed on your computer. Video never leaves the
-					browser, and sessions and clips are saved in this browser only. This
-					also means you should always download any data you want to keep.
+					browser, and sessions, clips and the screenshots each game was read
+					from are saved in this browser only. This also means you should always
+					download any data you want to keep.
 				</dd>
 				<dt>What gets uploaded</dt>
 				<dd>

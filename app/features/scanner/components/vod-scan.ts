@@ -44,7 +44,6 @@ import { describeError } from "./errors";
 import type { FixtureData } from "./fixture-export";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
-import { thumbnailFromBlob } from "./thumbnail";
 import { holdVisitLock, isThisVisitsVodClip, VISIT_ID } from "./visit";
 import { refreshVods } from "./vods-feed";
 
@@ -125,14 +124,14 @@ const listeners = new Set<() => void>();
 let progressSnapshot = IDLE_PROGRESS;
 const progressListeners = new Set<() => void>();
 const laneCanvases = new Map<number, HTMLCanvasElement>();
-/** lossless PNGs of the frames the detectors analyzed this scan, until saved */
+/** lossless images of the frames the detectors analyzed this scan, until saved */
 let frames = new WeakMap<ScanEvent, Blob>();
 let abortRef = { aborted: false };
 let abortChunks: (() => void) | null = null;
 /**
- * Bumped per scan: a cancelled scan's workers settle asynchronously and
- * its thumbnail work drains after, so their writes must not land on the
- * snapshot (or the preview canvas) of the scan that replaced it.
+ * Bumped per scan: a cancelled scan's workers settle asynchronously, so
+ * their writes must not land on the snapshot (or the preview canvas) of the
+ * scan that replaced it.
  */
 let generation = 0;
 
@@ -202,17 +201,16 @@ export function cancelVodScan(): void {
 
 /**
  * Scans `file` as fast as decoding allows; a finished scan replaces any saved
- * one of the same name. `saveFrames` (debug mode) keeps each event's analyzed
- * frame and thumbnail for the raw detections; `clips: false` skips cutting
- * clips of the scan.
+ * one of the same name. `saveFrames: false` skips keeping each event's
+ * analyzed frame, `clips: false` cutting clips of the scan.
  */
 export async function startVodScan(
 	file: File,
 	{
 		telemetry,
-		saveFrames,
+		saveFrames = true,
 		clips = true,
-	}: { telemetry: boolean; saveFrames: boolean; clips?: boolean },
+	}: { telemetry: boolean; saveFrames?: boolean; clips?: boolean },
 ): Promise<void> {
 	cancelVodScan();
 	const abort = { aborted: false };
@@ -238,7 +236,6 @@ export async function startVodScan(
 	const timeline = new TimelineBuilder();
 	let events: ScanEvent[] = [];
 	let clients: AnalyzerClient[] = [];
-	const thumbnailWork: Promise<void>[] = [];
 	let publishTimer: ReturnType<typeof setTimeout> | null = null;
 	const publish = () => {
 		publishTimer ??= setTimeout(() => {
@@ -263,27 +260,19 @@ export async function startVodScan(
 								continue;
 							const frame =
 								action.action === "extended" ? undefined : result.frame;
-							thumbnailWork.push(
-								(async () => {
-									const thumbnail = frame
-										? await thumbnailFromBlob(frame)
-										: undefined;
-									const replaced =
-										action.action === "added"
-											? undefined
-											: events.find((e) => sameEvent(e, action.replaced));
-									const scanEvent: ScanEvent = {
-										...event,
-										thumbnail,
-										hasFrame: frame !== undefined,
-									};
-									if (frame) frames.set(scanEvent, frame);
-									events = events.filter((e) => e !== replaced);
-									events.push(scanEvent);
-									events.sort((a, b) => a.t - b.t);
-									publish();
-								})().catch(() => {}),
-							);
+							const replaced =
+								action.action === "added"
+									? undefined
+									: events.find((e) => sameEvent(e, action.replaced));
+							const scanEvent: ScanEvent = {
+								...event,
+								hasFrame: frame !== undefined,
+							};
+							if (frame) frames.set(scanEvent, frame);
+							events = events.filter((e) => e !== replaced);
+							events.push(scanEvent);
+							events.sort((a, b) => a.t - b.t);
+							publish();
 						}
 					},
 					(message) => {
@@ -461,7 +450,6 @@ export async function startVodScan(
 	}
 
 	async function finalize(duration: number): Promise<void> {
-		await Promise.all(thumbnailWork);
 		events = withoutInvalidObjectives(events);
 		update({ events });
 		updateProgress({
@@ -486,7 +474,6 @@ export async function startVodScan(
 				t: event.t,
 				confidence: event.confidence,
 				data: event.data,
-				thumbnail: event.thumbnail,
 				frame: frames.get(event),
 			})),
 		);
@@ -596,7 +583,6 @@ function toScanEvent(event: StoredVodEvent): ScanEvent {
 		t: event.t,
 		confidence: event.confidence,
 		data: event.data,
-		thumbnail: event.thumbnail,
 		hasFrame: event.hasFrame,
 	};
 }

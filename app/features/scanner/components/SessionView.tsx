@@ -26,13 +26,11 @@ import type { ScannerLobby } from "../scanner-types";
 import type { ScannerClip } from "../store/clips";
 import { ClipDialog } from "./ClipDialog";
 import { ClipStrip } from "./ClipStrip";
-import type { GetFrame } from "./EventCard";
 import { MatchCard } from "./MatchCard";
 import styles from "./SessionView.module.css";
 import { aggregateSendStatus } from "./sendou-ingest";
-import type { ScanEvent, SessionKind } from "./session-data";
+import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
 import { uploadStateOf } from "./UploadStatus";
-import { useDebug } from "./use-debug";
 
 const NO_KEYS: ReadonlySet<React.Key> = new Set();
 
@@ -97,7 +95,6 @@ export function SessionView({
 	/** rendered between the header and the clips (a scan's progress, an error) */
 	children?: React.ReactNode;
 }) {
-	const debug = useDebug();
 	const [playing, setPlaying] = useState<ScannerClip | null>(null);
 
 	const skipReasons = ingestSkipReasons(built);
@@ -158,7 +155,6 @@ export function SessionView({
 				clips={clipsByMatch[index]!}
 				onPlayClip={setPlaying}
 				getFrame={getFrame}
-				debug={debug}
 			/>
 		);
 	};

@@ -1,7 +1,7 @@
 /**
  * Fixture discovery and detector execution for tests and tools. A fixture is a
- * directory under tests/fixtures/<detector>/<case-name>/ holding frame.png or
- * frame.jpg (raw capture, any resolution) and expected.json.
+ * directory under tests/fixtures/<detector>/<case-name>/ holding frame.png,
+ * .webp or .jpg (raw capture, any resolution) and expected.json.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -154,10 +154,11 @@ export function loadFixtures(detector: string): Fixture[] {
 		.filter((e) => e.isDirectory())
 		.map((e) => {
 			const dir = join(root, e.name);
-			const framePath = ["frame.png", "frame.jpg", "frame.jpeg"]
+			const framePath = ["frame.png", "frame.webp", "frame.jpg", "frame.jpeg"]
 				.map((f) => join(dir, f))
 				.find(existsSync);
-			if (!framePath) throw new Error(`fixture ${e.name}: no frame.png/jpg`);
+			if (!framePath)
+				throw new Error(`fixture ${e.name}: no frame.png/webp/jpg`);
 			const expected = JSON.parse(
 				readFileSync(join(dir, "expected.json"), "utf8"),
 			) as ExpectedScoreboard;

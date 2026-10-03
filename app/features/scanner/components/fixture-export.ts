@@ -57,7 +57,8 @@ function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
 	return eventType === DEATH_EVENT_TYPE;
 }
 
-function buildExpectedJson(
+/** A detection's expected.json, prefilled from the detector's output. Null data = negative-fixture form. */
+export function buildExpectedJson(
 	data: FixtureData | null,
 	eventType = "Scoreboard",
 ): string {
@@ -265,21 +266,6 @@ export function downloadExpectedJson(
 	data: FixtureData | null,
 	eventType?: string,
 ): void {
-	download(
-		"expected.json",
-		new Blob([buildExpectedJson(data, eventType)], {
-			type: "application/json",
-		}),
-	);
-}
-
-/** Fixture export for a live detection: the stored PNG is the byte-exact analyzed frame plus its parse output. */
-export function saveFixtureFromEvent(
-	frame: Blob,
-	data: FixtureData,
-	eventType: string,
-): void {
-	download("frame.png", frame);
 	download(
 		"expected.json",
 		new Blob([buildExpectedJson(data, eventType)], {

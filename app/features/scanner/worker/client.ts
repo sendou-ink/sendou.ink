@@ -70,7 +70,7 @@ export class AnalyzerClient {
 			frameQueueLimit?: number;
 			/** match templates on WebGPU when the browser has an adapter (settings `webgpu`) */
 			webgpu?: boolean;
-			/** ship the analyzed frame's PNG on results (default true) */
+			/** ship the analyzed frame's image on results (default true) */
 			attachFrames?: boolean;
 			/** one frame's analysis threw; the worker carries on (default onError) */
 			onFrameError?: ErrorHandler;

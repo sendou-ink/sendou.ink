@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { strFromU8, unzipSync } from "fflate";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { LogInPopover } from "./pages/layout/log-in-popover";
@@ -94,6 +95,33 @@ test.describe("Scanner", () => {
 				s: String(GAME.pov.s),
 			}),
 		);
+	});
+
+	test("downloads a scanned game's frames and reads as a zip", async ({
+		page,
+	}) => {
+		const scanner = new ScannerPage(page);
+		await scanVod(scanner);
+		await scanner.locators.showDetailsButton.click();
+
+		const download = await scanner.downloadGameData();
+		const files = unzipSync(await fs.readFile(await download.path()));
+		const names = Object.keys(files);
+		const events = JSON.parse(strFromU8(files["events.json"]!));
+
+		expect(names).toContain("match.json");
+		expect(
+			names.some((name) =>
+				/^frames\/[^/]+-MapStart-[^/]+\/frame\.webp$/.test(name),
+			),
+		).toBe(true);
+		expect(
+			events.some(
+				(event: { type: string; frame?: string }) =>
+					event.type === "MapStart" &&
+					files[`${event.frame}/expected.json`] !== undefined,
+			),
+		).toBe(true);
 	});
 
 	test("prefills a new VoD from a scanned file", async ({

@@ -578,12 +578,12 @@ export function ScreenshotPage() {
 		<div>
 			<SessionHeader>
 				<Dropzone onFile={(file: File) => void analyze(file)}>
-					Drop a frame (PNG/JPEG) here, or{" "}
+					Drop a frame (PNG/WebP/JPEG) here, or{" "}
 					<label>
 						pick a file
 						<input
 							type="file"
-							accept="image/png,image/jpeg"
+							accept="image/png,image/webp,image/jpeg"
 							style={{ display: "none" }}
 							onChange={(e) => {
 								const file = e.target.files?.[0];

@@ -36,6 +36,7 @@ export class ScannerPage {
 				name: "Add to VoDs",
 			}),
 			showDetailsButton: main.getByRole("button", { name: "Show details" }),
+			gameDataButton: main.getByRole("button", { name: "Game data" }),
 			notFound: main.getByText("This VoD is no longer saved."),
 		};
 	}
@@ -78,6 +79,12 @@ export class ScannerPage {
 	async deleteScan() {
 		await this.locators.deleteButton.click();
 		await this.locators.confirmDeleteButton.click();
+	}
+
+	async downloadGameData() {
+		const downloadPromise = this.page.waitForEvent("download");
+		await this.locators.gameDataButton.click();
+		return downloadPromise;
 	}
 
 	async downloadMatchesCsv() {

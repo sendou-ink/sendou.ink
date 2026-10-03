@@ -4,22 +4,16 @@
  * the game's clips and, once the game is over, its upload state beside the
  * expand arrow. Expanded it shows the data and
  * nothing interpreted: the scoreboard, the objective + player-status
- * timeline and deaths and kills (each with a ▶ when a clip covers it). In
- * debug mode that summary sits in a tab beside the raw events and frames.
+ * timeline and deaths and kills (each with a ▶ when a clip covers it), and
+ * the game's data as a zip to report a misread with.
  */
 import clsx from "clsx";
-import { ChevronDown, Play } from "lucide-react";
-import { useId, useState } from "react";
+import { ChevronDown, Download, Play } from "lucide-react";
+import { useState } from "react";
 import { Ability } from "~/components/Ability";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import {
-	SendouTab,
-	SendouTabList,
-	SendouTabPanel,
-	SendouTabs,
-} from "~/components/elements/Tabs";
 import { GameTimeline } from "~/components/GameTimeline";
 import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
@@ -30,7 +24,7 @@ import type {
 	AbilityWithUnknown,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { navIconUrl } from "~/utils/urls";
+import { navIconUrl, SENDOU_INK_DISCORD_URL } from "~/utils/urls";
 import { clipCovers } from "../core/clips/scoring";
 import {
 	DEATH_EVENT_TYPE,
@@ -46,11 +40,11 @@ import type {
 } from "../core/scanner-match";
 import { matchResult } from "../core/sessions";
 import type { ScannerClip } from "../store/clips";
-import type { GetFrame } from "./EventCard";
+import { downloadBlob } from "./download";
 import { displayOrder, gameTimelineProps } from "./game-timeline-view";
 import styles from "./MatchCard.module.css";
-import { RawDetections } from "./RawDetections";
-import type { ScanEvent, SessionKind } from "./session-data";
+import { matchZip } from "./match-zip";
+import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
 import { type UploadState, UploadStatusButton } from "./UploadStatus";
 
 /** the game score a knockout wins at */
@@ -95,7 +89,6 @@ export function MatchCard({
 	clips,
 	onPlayClip,
 	getFrame,
-	debug,
 }: {
 	built: BuiltMatch<ScanEvent>;
 	/** 1-based position in the session, oldest first */
@@ -113,11 +106,9 @@ export function MatchCard({
 	clips: readonly ScannerClip[];
 	onPlayClip: (clip: ScannerClip) => void;
 	getFrame: (event: ScanEvent) => GetFrame | undefined;
-	debug: boolean;
 }) {
 	const { match } = built;
 	const [expanded, setExpanded] = useState(false);
-	const tabIdPrefix = useId();
 	// fixed at mount: re-rendering must not cut the animation short
 	const [enter] = useState(justFormed);
 	const uploadKind = upload?.kind ?? null;
@@ -244,6 +235,11 @@ export function MatchCard({
 				<GameTimeline {...gameTimelineProps(match, matchOrigin, TEAM_LABELS)} />
 			) : null}
 			<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
+			<ReportData
+				built={built}
+				getFrame={getFrame}
+				fileName={`scanner-${scannedAt !== undefined ? new Date(scannedAt).toISOString().slice(0, 10) : kind}-game-${number}.zip`}
+			/>
 		</div>
 	);
 
@@ -260,24 +256,7 @@ export function MatchCard({
 		<div className={styles.group}>
 			{card}
 			{expanded && expandable ? (
-				<div className={styles.details}>
-					{debug ? (
-						<SendouTabs>
-							<SendouTabList>
-								<SendouTab id={`${tabIdPrefix}-summary`}>Summary</SendouTab>
-								<SendouTab id={`${tabIdPrefix}-events`}>Events</SendouTab>
-							</SendouTabList>
-							<SendouTabPanel id={`${tabIdPrefix}-summary`}>
-								{summary}
-							</SendouTabPanel>
-							<SendouTabPanel id={`${tabIdPrefix}-events`}>
-								<RawDetections sources={built.sources} getFrame={getFrame} />
-							</SendouTabPanel>
-						</SendouTabs>
-					) : (
-						summary
-					)}
-				</div>
+				<div className={styles.details}>{summary}</div>
 			) : null}
 		</div>
 	);
@@ -669,4 +648,51 @@ function gearRows(
 		rows[free] = row;
 	}
 	return rows;
+}
+
+/** The game's frames and raw reads as a zip, what a misread is reported with. */
+function ReportData({
+	built,
+	getFrame,
+	fileName,
+}: {
+	built: BuiltMatch<ScanEvent>;
+	getFrame: (event: ScanEvent) => GetFrame | undefined;
+	fileName: string;
+}) {
+	const [zipping, setZipping] = useState(false);
+
+	const download = async () => {
+		setZipping(true);
+		try {
+			const zip = await matchZip(built, getFrame);
+			downloadBlob(
+				fileName,
+				new Blob([zip as Uint8Array<ArrayBuffer>], { type: "application/zip" }),
+			);
+		} finally {
+			setZipping(false);
+		}
+	};
+
+	return (
+		<div className={clsx(styles.report, "text-xs text-lighter")}>
+			<SendouButton
+				variant="minimal"
+				size="small"
+				icon={<Download />}
+				isDisabled={zipping}
+				onClick={() => void download()}
+			>
+				Game data
+			</SendouButton>
+			<span>
+				Something read wrong? Send this file on{" "}
+				<a href={SENDOU_INK_DISCORD_URL} target="_blank" rel="noreferrer">
+					Discord
+				</a>
+				.
+			</span>
+		</div>
+	);
 }
