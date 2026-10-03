@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Search as SearchIcon } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { BackLink } from "~/components/BackLink";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
@@ -11,6 +11,7 @@ import { Input } from "~/components/Input";
 import { PageHeader } from "~/components/PageHeader";
 import { WeaponPoolBanner } from "~/components/WeaponPoolBanner";
 import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
+import { DESKTOP_LAYOUT_QUERY } from "~/hooks/useLayoutSize";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -40,6 +41,12 @@ type WeaponLandingCategory = NonNullable<
 >;
 
 type SubOrSpecialWeapon = Extract<AnyWeapon, { type: "SUB" | "SPECIAL" }>;
+
+/** Location state accepted by the weapon landing (e.g. from a weapon page's back link). */
+export interface WeaponLandingState {
+	/** If set, the search is focused on load on desktop. */
+	focusSearch?: boolean;
+}
 
 interface WeaponLandingWeapon {
 	id: MainWeaponId;
@@ -82,6 +89,8 @@ export function WeaponLanding<W extends WeaponLandingWeapon>({
 	const { t } = useTranslation(["common", "weapons"]);
 	const [rawCategory] = useSearchParam(weaponLandingSearchParams, "category");
 	const [searchTerm, setSearchTerm] = React.useState("");
+	const searchInputRef = React.useRef<HTMLInputElement>(null);
+	useFocusSearchOnReturn(searchInputRef);
 
 	const categories: WeaponLandingCategory[] = [
 		...weaponCategories.map((weaponCategory) => weaponCategory.name),
@@ -198,6 +207,7 @@ export function WeaponLanding<W extends WeaponLandingWeapon>({
 				})}
 			>
 				<Input
+					ref={searchInputRef}
 					className={styles.search}
 					icon={<SearchIcon />}
 					value={searchTerm}
@@ -272,6 +282,21 @@ export function WeaponLanding<W extends WeaponLandingWeapon>({
 			</div>
 		</div>
 	);
+}
+
+/** Returning from a weapon page on desktop lets the user search for the next weapon right away. */
+function useFocusSearchOnReturn(ref: React.RefObject<HTMLInputElement | null>) {
+	const location = useLocation();
+	const focusSearch = (location.state as WeaponLandingState | null)
+		?.focusSearch;
+
+	React.useEffect(() => {
+		if (!focusSearch || !window.matchMedia(DESKTOP_LAYOUT_QUERY).matches) {
+			return;
+		}
+
+		ref.current?.focus();
+	}, [focusSearch, ref]);
 }
 
 function WeaponRow({

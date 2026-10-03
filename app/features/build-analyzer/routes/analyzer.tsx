@@ -29,7 +29,10 @@ import { Main } from "~/components/Main";
 import { PageHeader } from "~/components/PageHeader";
 import { Placeholder } from "~/components/Placeholder";
 import { Table } from "~/components/Table";
-import { WeaponLanding } from "~/components/WeaponLanding";
+import {
+	WeaponLanding,
+	type WeaponLandingState,
+} from "~/components/WeaponLanding";
 import { useUser } from "~/features/auth/core/user";
 import { objectDamageCalculatorPage } from "~/features/object-damage-calculator/calculator-urls";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
@@ -1122,6 +1125,7 @@ function WeaponHeader({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 						weapon: null,
 						category: weaponIdToCategory(mainWeaponId),
 					})}
+					state={{ focusSearch: true } satisfies WeaponLandingState}
 				/>
 			}
 		/>
