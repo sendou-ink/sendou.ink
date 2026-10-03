@@ -307,7 +307,6 @@
 	flex: 1;
 	min-height: 0;
 	overflow: hidden;
-	padding-block-start: var(--s-2);
 
 	/* Chat section.container */
 	& > section {
@@ -327,8 +326,6 @@
 
 	/* messages: no top padding, fill available space */
 	& [role="log"] {
-		padding-top: 0;
-		padding-inline: var(--s-2);
 		flex: 1;
 		height: auto;
 	}
