@@ -14,7 +14,12 @@ import { loadEventFrame } from "../store/events";
 import { useClips } from "./clips-feed";
 import { EventFeed } from "./EventFeed";
 import { ExportMenu } from "./ExportMenu";
-import { currentSession, newestSessionKey, useFeed } from "./events-feed";
+import {
+	currentSession,
+	findSession,
+	newestSessionKey,
+	useFeed,
+} from "./events-feed";
 import styles from "./LiveView.module.css";
 import {
 	saveCurrentFrameAsFixture,
@@ -46,7 +51,8 @@ export function LiveView() {
 		(clip) =>
 			clip.bucket === "session" &&
 			clip.source.kind === "live" &&
-			clip.source.sessionKey === session?.key,
+			session !== null &&
+			findSession(feed, clip.source.sessionKey) === session,
 	);
 	const newest = session?.built.at(-1);
 	const reading =

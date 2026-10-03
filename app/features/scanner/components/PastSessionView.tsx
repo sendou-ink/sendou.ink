@@ -40,7 +40,7 @@ export function PastSessionView() {
 		(clip) =>
 			clip.bucket !== "vod" &&
 			clip.source.kind === "live" &&
-			clip.source.sessionKey === session.key,
+			findSession(feed, clip.source.sessionKey) === session,
 	);
 
 	const remove = async () => {

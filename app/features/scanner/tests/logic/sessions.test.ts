@@ -14,6 +14,7 @@ import {
 	MAX_STORED_EVENTS,
 	SESSION_GAP_MS,
 	SESSION_MAX_AGE_MS,
+	sessionByKey,
 	sessionKey,
 	sessionSummary,
 	splitSessions,
@@ -92,6 +93,22 @@ test("the split follows detection time, not input order", () => {
 
 test("a session is keyed by its first detection", () => {
 	assert.equal(sessionKey(stamped(1_000, 2_000)), 1_000);
+});
+
+test("a session is found by a key its first events moved past", () => {
+	const earlier = { key: 0, endedAt: HOUR };
+	const session = { key: 10 * HOUR, endedAt: 11 * HOUR };
+	const sessions = [earlier, session];
+	assert.equal(sessionByKey(sessions, session.key), session);
+	assert.equal(sessionByKey(sessions, session.key - 5 * 60 * 1000), session);
+	assert.equal(sessionByKey(sessions, earlier.key), earlier);
+});
+
+test("a gone session's key names no session", () => {
+	const gone = { key: 0, endedAt: HOUR };
+	const next = { key: gone.endedAt + SESSION_GAP_MS, endedAt: 5 * HOUR };
+	assert.equal(sessionByKey([next], gone.key), null);
+	assert.equal(sessionByKey([next], next.endedAt + 1), null);
 });
 
 test("the summary counts decided games, the record and the POV K/D", () => {

@@ -17,6 +17,7 @@ import {
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
 import { SCANNER_PAGE } from "~/utils/urls";
+import { sessionByKey } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
 import { MAX_HISTORY_CLIPS, type ScannerClip } from "../store/clips";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
@@ -258,7 +259,8 @@ function sessionRows(
 		endedAt: session.endedAt,
 		clips: clips.filter(
 			(clip) =>
-				clip.source.kind === "live" && clip.source.sessionKey === session.key,
+				clip.source.kind === "live" &&
+				sessionByKey(sessions, clip.source.sessionKey) === session,
 		).length,
 	}));
 	const vodRows: SessionRow[] = vods.map((vod) => ({

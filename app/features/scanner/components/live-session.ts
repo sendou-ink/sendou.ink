@@ -48,6 +48,7 @@ import { getClips, refreshClips } from "./clips-feed";
 import { describeError } from "./errors";
 import {
 	currentSession,
+	findSession,
 	getFeed,
 	newestSessionKey,
 	refreshFeed,
@@ -618,13 +619,14 @@ async function cutRemainingClips(
 
 /** Cuts the session's scored windows closed by `nowT` that no better clip already covers. */
 function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
-	const session = currentSession(getFeed());
+	const feed = getFeed();
+	const session = currentSession(feed);
 	if (!session) return;
 	const saved: LiveCut[] = getClips()
 		.filter(
 			(clip) =>
 				clip.source.kind === "live" &&
-				clip.source.sessionKey === session.key &&
+				findSession(feed, clip.source.sessionKey) === session &&
 				!ownClipIds.has(clip.id),
 		)
 		.map((clip) => ({

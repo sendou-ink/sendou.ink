@@ -67,6 +67,22 @@ export function sessionKey(session: readonly Stamped[]): number {
 	return session[0]!.detectedAt;
 }
 
+/**
+ * The session `key` names among `sessions` (oldest first), null when none
+ * does. Deleting or rewriting a session's first events moves its key forward
+ * to a later event, so a key handed out before (a URL, a clip's `sessionKey`)
+ * names the session starting within `SESSION_GAP_MS` after it. A gone
+ * session's key never does: the next session starts at least that long after.
+ */
+export function sessionByKey<S extends { key: number; endedAt: number }>(
+	sessions: readonly S[],
+	key: number,
+): S | null {
+	const session = sessions.find((candidate) => candidate.endedAt >= key);
+	if (!session || session.key - key >= SESSION_GAP_MS) return null;
+	return session;
+}
+
 export interface SessionSummary {
 	/** matches whose winner was read */
 	games: number;

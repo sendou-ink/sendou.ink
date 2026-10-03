@@ -27,6 +27,7 @@ import {
 	SESSION_COMPACT_AFTER_MS,
 	SESSION_GAP_MS,
 	type SessionSummary,
+	sessionByKey,
 	sessionKey,
 	sessionSummary,
 	splitSessions,
@@ -204,7 +205,7 @@ export function findSession(
 	feed: FeedSnapshot,
 	key: number,
 ): LiveSession | null {
-	return feed.sessions.find((session) => session.key === key) ?? null;
+	return sessionByKey(feed.sessions, key);
 }
 
 /**
