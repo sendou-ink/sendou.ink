@@ -1,7 +1,6 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
-import { getUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
