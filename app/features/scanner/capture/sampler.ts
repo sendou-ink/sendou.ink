@@ -5,6 +5,9 @@
  * different page loads share one timeline.
  */
 
+const CAPTURE_CARD_LABEL =
+	/elgato|\bhd60\b|cam ?link|usb video|capture|avermedia|live gamer/i;
+
 export interface MediaInputs {
 	video: MediaDeviceInfo[];
 	audio: MediaDeviceInfo[];
@@ -56,6 +59,25 @@ export function isVirtualCamera(device: Pick<MediaDeviceInfo, "label">) {
 }
 
 /**
+ * The video input to capture: the saved one while it is plugged in, else the
+ * first that looks like a capture card, else OBS Virtual Camera. Null when
+ * none of those is there, so a webcam is only ever used when picked by hand.
+ */
+export function resolveVideoInput<
+	T extends Pick<MediaDeviceInfo, "deviceId" | "label">,
+>(videoInputs: readonly T[], savedDeviceId: string): T | null {
+	const listed = videoInputs.filter((device) => device.deviceId !== "");
+	return (
+		(savedDeviceId
+			? listed.find((device) => device.deviceId === savedDeviceId)
+			: undefined) ??
+		listed.find((device) => CAPTURE_CARD_LABEL.test(device.label)) ??
+		listed.find(isVirtualCamera) ??
+		null
+	);
+}
+
+/**
  * The audio input that belongs to a video input: the same physical device
  * (shared `groupId`), else one whose label starts the same way (a capture
  * card's audio and video interfaces). Null for a virtual camera or no match.
@@ -84,10 +106,10 @@ export interface OpenedCapture {
 }
 
 /**
- * Opens the source: 1080p video from `videoDeviceId` (the default camera when
- * empty) plus raw audio from `audioDeviceId` when given. A refused or busy
- * audio input falls back to video only — clips are silent rather than absent
- * — with the failure reported so the header can say why.
+ * Opens the source: 1080p video from `videoDeviceId` plus raw audio from
+ * `audioDeviceId` when given. A refused or busy audio input falls back to
+ * video only — clips are silent rather than absent — with the failure
+ * reported so the header can say why.
  */
 export async function openCapture({
 	videoDeviceId,
@@ -97,7 +119,7 @@ export async function openCapture({
 	audioDeviceId: string | null;
 }): Promise<OpenedCapture> {
 	const video: MediaTrackConstraints = {
-		deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
+		deviceId: { exact: videoDeviceId },
 		width: { ideal: 1920 },
 		height: { ideal: 1080 },
 		// Chromium's own default is 30, which would halve a capture card's 60

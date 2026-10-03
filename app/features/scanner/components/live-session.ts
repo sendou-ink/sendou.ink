@@ -16,6 +16,7 @@ import {
 	openCapture,
 	openDesktopAudio,
 	requestInputAccess,
+	resolveVideoInput,
 	startSampler,
 } from "../capture/sampler";
 import {
@@ -92,6 +93,8 @@ const AUDIO_SILENCE_MS = 5_000;
 const CAPTURE_LOCK = "scanner:capture";
 const SOURCE_ENDED_ERROR =
 	"The capture source was disconnected — check the capture card or OBS Virtual Camera and start the capture again";
+const NO_SOURCE_ERROR =
+	"No capture card or OBS Virtual Camera found — connect one, or pick the source from the list next to the button";
 /**
  * Without its atlases the worker reads no names, digits, lobbies or stages;
  * such games would upload as unread lobbies (which pass the lobby filter), so
@@ -240,14 +243,17 @@ export async function startCapture({
 		if (!inputsRevealed(inputs) && (await requestInputAccess())) {
 			inputs = await listMediaInputs().catch(() => noInputs);
 		}
-		const videoInput =
-			inputs.video.find((d) => d.deviceId === settings.sourceDeviceId) ?? null;
+		const videoInput = resolveVideoInput(inputs.video, settings.sourceDeviceId);
+		if (!videoInput) {
+			desktop?.track?.stop();
+			throw new Error(NO_SOURCE_ERROR);
+		}
 		const sourceAudio =
-			settings.audioSource === "source" && videoInput
+			settings.audioSource === "source"
 				? audioInputFor(videoInput, inputs.audio)
 				: null;
 		const opened = await openCapture({
-			videoDeviceId: settings.sourceDeviceId,
+			videoDeviceId: videoInput.deviceId,
 			audioDeviceId:
 				sourceAudio?.deviceId ?? audioDeviceIdOf(settings.audioSource),
 		});

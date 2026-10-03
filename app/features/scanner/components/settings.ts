@@ -9,7 +9,7 @@ import { useSyncExternalStore } from "react";
 const STORAGE_KEY = "scanner:settings";
 
 export interface ScannerSettings {
-	/** `deviceId` of the video input; empty = the browser's default camera */
+	/** `deviceId` of the video input; empty or unplugged = the first capture card or OBS Virtual Camera */
 	sourceDeviceId: string;
 	/** what live clips hear */
 	audioSource: AudioSource;

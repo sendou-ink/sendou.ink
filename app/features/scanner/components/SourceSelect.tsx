@@ -1,8 +1,8 @@
 /**
- * The capture source: one select listing every video input, the capture
- * card first and OBS Virtual Camera as just another entry, and under it what
- * clips hear: the source's own audio, the desktop's sound, any audio input
- * or nothing. Browsers reveal ids and labels only once camera permission is
+ * The capture source: one select listing every video input, a capture card
+ * (else OBS Virtual Camera) preselected and a webcam used only when picked
+ * by hand, and under it what clips hear: the source's own audio, the
+ * desktop's sound, any audio input or nothing. Browsers reveal ids and labels only once camera permission is
  * granted, so the list is re-read whenever a capture starts or stops, and
  * opening a select while it is still anonymous asks for the permission
  * right there. Both choices are remembered in localStorage.
@@ -15,6 +15,7 @@ import {
 	listMediaInputs,
 	type MediaInputs,
 	requestInputAccess,
+	resolveVideoInput,
 } from "../capture/sampler";
 import { useLiveSession } from "./live-session";
 import styles from "./SourceSelect.module.css";
@@ -60,12 +61,11 @@ export function SourceSelect({ disabled }: { disabled?: boolean }) {
 	};
 
 	// before the first granted permission Chromium lists devices with empty
-	// ids and labels, which would collide with the default entry
+	// ids and labels, which would collide with the placeholder entry
 	const videoInputs = inputs.video.filter((device) => device.deviceId !== "");
 	const audioInputs = inputs.audio.filter((device) => device.deviceId !== "");
-	const selected = settings.sourceDeviceId
-		? videoInputs.find((device) => device.deviceId === settings.sourceDeviceId)
-		: undefined;
+	const selected =
+		resolveVideoInput(videoInputs, settings.sourceDeviceId) ?? undefined;
 	const sourceAudio = selected ? audioInputFor(selected, inputs.audio) : null;
 
 	return (
@@ -76,10 +76,14 @@ export function SourceSelect({ disabled }: { disabled?: boolean }) {
 				disabled={disabled}
 				onPointerDown={reveal}
 				onKeyDown={reveal}
-				value={selected ? settings.sourceDeviceId : ""}
+				value={selected?.deviceId ?? ""}
 				onChange={(e) => updateSettings({ sourceDeviceId: e.target.value })}
 			>
-				<option value="">Default camera</option>
+				{selected ? null : (
+					<option value="" disabled>
+						Pick the source
+					</option>
+				)}
 				{videoInputs.map((device) => (
 					<option key={device.deviceId} value={device.deviceId}>
 						{deviceLabel(device)}
