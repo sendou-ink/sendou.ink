@@ -38,6 +38,7 @@ import {
 	shiftPickedMentions,
 	splitByMentions,
 } from "../chat-mentions";
+import { continuesBatch } from "../chat-message-batches";
 import { findRoomLinks } from "../chat-message-links";
 import { sendChatMessageSchema } from "../chat-schemas";
 import {
@@ -56,7 +57,6 @@ import {
 } from "./ComposerSuggestions";
 import { StickerImage } from "./StickerImage";
 
-const MESSAGE_GAP = 8;
 const ESTIMATED_MESSAGE_HEIGHT = 44;
 /** How long the stream may be down before the composer says so, so a connect right after page load never flashes it. */
 const CONNECTION_STATUS_GRACE_MS = 1_500;
@@ -257,7 +257,6 @@ function MessageLog({
 		count: messages.length,
 		scrollRef: messagesContainerRef,
 		estimatedSize: ESTIMATED_MESSAGE_HEIGHT,
-		gap: MESSAGE_GAP,
 	});
 
 	return (
@@ -275,12 +274,16 @@ function MessageLog({
 					{virtualizer.items.map(({ index, start }) => {
 						const msg = messages[index];
 						const systemMessage = systemMessageText(msg);
+						const continuation = continuesBatch(messages[index - 1], msg);
 
 						return (
 							<div
 								key={msg.publicId}
 								ref={virtualizer.measureElement(index)}
-								className={styles.messageRow}
+								className={clsx(styles.messageRow, {
+									[styles.messageRowFirst]: index === 0,
+									[styles.messageRowContinuation]: continuation,
+								})}
 								data-testid="chat-message-row"
 								style={{ transform: `translateY(${start}px)` }}
 							>
@@ -288,7 +291,6 @@ function MessageLog({
 									<hr
 										aria-label={t("common:chat.newMessages")}
 										className={styles.unreadDivider}
-										style={{ top: index === 0 ? 0 : -MESSAGE_GAP / 2 - 1 }}
 										data-testid="chat-unread-divider"
 									/>
 								) : null}
@@ -303,6 +305,7 @@ function MessageLog({
 												: undefined
 										}
 										onRetry={onRetry}
+										continuation={continuation}
 									/>
 								)}
 							</div>
@@ -661,10 +664,12 @@ function Message({
 	message,
 	label,
 	onRetry,
+	continuation,
 }: {
 	message: ClientChatMessage;
 	label?: string;
 	onRetry?: (publicId: string) => void;
+	continuation: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
 	const author = message.author;
@@ -684,7 +689,9 @@ function Message({
 				[styles.messageFailed]: message.failed,
 			})}
 		>
-			{author ? (
+			{continuation ? (
+				<div className={styles.continuationGutter} />
+			) : author ? (
 				<div
 					className={clsx(styles.avatarWrapper, {
 						[styles.avatarWrapperStaff]: label,
@@ -695,22 +702,24 @@ function Message({
 				</div>
 			) : null}
 			<div>
-				<div className={styles.messageInfo}>
-					<div
-						className={styles.messageUser}
-						style={
-							author?.chatNameHue
-								? { "--chat-hue": author.chatNameHue }
-								: undefined
-						}
-					>
-						{author?.username ?? "???"}
+				{continuation ? null : (
+					<div className={styles.messageInfo}>
+						<div
+							className={styles.messageUser}
+							style={
+								author?.chatNameHue
+									? { "--chat-hue": author.chatNameHue }
+									: undefined
+							}
+						>
+							{author?.username ?? "???"}
+						</div>
+						<PronounsTag author={author} />
+						{!message.pending ? (
+							<MessageTimestamp createdAt={message.createdAt} />
+						) : null}
 					</div>
-					<PronounsTag author={author} />
-					{!message.pending ? (
-						<MessageTimestamp createdAt={message.createdAt} />
-					) : null}
-				</div>
+				)}
 				<div
 					className={clsx(styles.messageContents, {
 						[styles.messageContentsPending]: message.pending,

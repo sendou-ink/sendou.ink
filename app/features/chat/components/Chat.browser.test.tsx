@@ -665,9 +665,42 @@ describe("Chat", () => {
 		const divider = screen.getByTestId("chat-unread-divider");
 		await expect.element(divider).toHaveAccessibleName("New messages");
 		const row = divider.element().parentElement!;
-		expect(row.offsetHeight).toBe(
-			(row.lastElementChild as HTMLElement).offsetHeight,
+		expect(
+			row.offsetHeight - Number.parseFloat(getComputedStyle(row).paddingTop),
+		).toBe((row.lastElementChild as HTMLElement).offsetHeight);
+	});
+
+	test("batches a chain of messages from one user, a long pause starting a new batch", async () => {
+		const bob: ChatMessageAuthor = { ...ALICE, id: 2, username: "Bob" };
+		const screen = await renderChat([
+			createMessage({ id: 1, publicId: "p1", contents: "first" }),
+			createMessage({
+				id: 2,
+				publicId: "p2",
+				contents: "second",
+				createdAt: 1700000060,
+			}),
+			createMessage({
+				id: 3,
+				publicId: "p3",
+				contents: "after a pause",
+				createdAt: 1700000400,
+			}),
+			createMessage({
+				id: 4,
+				publicId: "p4",
+				authorUserId: 2,
+				author: bob,
+				contents: "someone else",
+				createdAt: 1700000420,
+			}),
+		]);
+
+		await expect.element(screen.getByText("someone else")).toBeInTheDocument();
+		expect(screen.getByText("Alice", { exact: true }).elements()).toHaveLength(
+			2,
 		);
+		expect(screen.getByText("Bob", { exact: true }).elements()).toHaveLength(1);
 	});
 
 	test("stays at the end with the divider in view when the unread messages fit on screen", async () => {
