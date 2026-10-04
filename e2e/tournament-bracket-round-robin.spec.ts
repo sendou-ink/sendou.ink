@@ -91,6 +91,7 @@ test.describe("Tournament bracket round robin", () => {
 		await admin.goto(tournament.id);
 
 		const eventEdit = await admin.editEventInfo();
+		await eventEdit.goToStep("maps");
 		await eventEdit.clearMapPool();
 		await eventEdit.selectMapPoolTemplate("preset:CB");
 		await eventEdit.save();

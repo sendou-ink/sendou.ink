@@ -1,7 +1,12 @@
 import type { Page } from "@playwright/test";
 import { calendarNewBaseSchema } from "~/features/calendar/calendar-new-schemas";
 import { CALENDAR_NEW_PAGE, TOURNAMENT_NEW_PAGE } from "~/utils/urls";
-import { datetimeLocalValue, navigate, submit } from "../../helpers/playwright";
+import {
+	datetimeLocalValue,
+	dragAndDrop,
+	navigate,
+	submit,
+} from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 
 const ALL_MODE_NAMES = [
@@ -12,7 +17,7 @@ const ALL_MODE_NAMES = [
 	"Clam Blitz",
 ];
 
-/** `/calendar/new`, also used for adding tournaments and editing existing events. */
+/** `/calendar/new`, also used for adding tournaments (a form of steps) and editing existing events. */
 export class CalendarNewEventPage {
 	private readonly page: Page;
 	readonly form;
@@ -27,17 +32,18 @@ export class CalendarNewEventPage {
 			noTournamentPermissionsAlert: page.getByText(
 				"No permissions to add tournaments",
 			),
-			addBracketButton: page.getByTestId("brackets-add-item-button"),
-			bracketNameInputs: page.getByLabel(/^Bracket name *\*?$/),
-			bracketFormatSelects: page.getByLabel("Format"),
-			placementsInputs: page.getByLabel("Placements"),
-			deleteBracketButtons: page.getByTestId("brackets-remove-item-button"),
-			signUpSourceRadios: page.getByRole("radio", { name: "Sign-up" }),
-			// the sources array is nested inside a progression item, so its add button
-			// test id is prefixed by the item's path e.g. "progression[1].sources"
-			addSourceButtons: page.locator(
-				'[data-testid$="sources-add-item-button"]',
-			),
+			addBracketButton: page.getByTestId("builder-add-bracket-button"),
+			bracketCards: page.getByTestId("builder-bracket-card"),
+			connectionPills: page.getByTestId("builder-connection-pill"),
+			// the builder's side panel edits one bracket or connection at a time
+			bracketNameInput: page.getByLabel(/^Bracket name *\*?$/),
+			bracketFormatSelect: page.getByLabel("Format", { exact: true }),
+			placementsInput: page.getByLabel("Placements"),
+			deleteBracketButton: page.getByTestId("builder-delete-bracket-button"),
+			startingBracketsColumn: page.getByText("Starting brackets", {
+				exact: true,
+			}),
+			lastStepButton: page.getByTestId("form-step-button-prizes"),
 			mapPoolTemplateSelect: page.getByLabel("Template"),
 			clearMapPoolButton: page.getByRole("button", { name: "Clear" }),
 		};
@@ -97,24 +103,72 @@ export class CalendarNewEventPage {
 		}
 	}
 
-	async deleteLastBracket() {
-		await this.locators.deleteBracketButtons.last().click();
+	/** Opens a step of the tournament form. Moving forward validates the steps passed. */
+	async goToStep(step: "basics" | "teams" | "maps" | "format" | "prizes") {
+		await this.page.getByTestId(`form-step-button-${step}`).click();
 	}
 
+	/** Selects a bracket of the format builder for editing in its side panel. */
+	async selectBracket(nth: number) {
+		await this.goToStep("format");
+		await this.locators.bracketCards
+			.nth(nth)
+			.getByRole("button")
+			.first()
+			.click();
+	}
+
+	async addBracket({ name, format }: { name: string; format: string }) {
+		await this.goToStep("format");
+		await this.locators.addBracketButton.click();
+		await this.locators.bracketNameInput.fill(name);
+		await this.locators.bracketFormatSelect.selectOption(format);
+	}
+
+	/** Sends teams from one bracket to another, optionally typing out which placements. */
+	async connect(fromNth: number, toNth: number, placements?: string) {
+		await this.goToStep("format");
+		await this.locators.bracketCards
+			.nth(fromNth)
+			.getByRole("button", { name: /^Send teams from/ })
+			.click();
+		await this.locators.bracketCards
+			.nth(toNth)
+			.getByRole("button")
+			.first()
+			.click();
+
+		if (placements !== undefined) {
+			await this.locators.placementsInput.fill(placements);
+		}
+	}
+
+	async deleteLastBracket() {
+		await this.selectBracket((await this.locators.bracketCards.count()) - 1);
+		await this.locators.deleteBracketButton.click();
+	}
+
+	/** Types out the placements of the last connection of the format builder. */
 	async fillLastPlacements(placements: string) {
-		await this.locators.placementsInputs.last().fill(placements);
+		await this.goToStep("format");
+		await this.locators.connectionPills.last().click();
+		await this.locators.placementsInput.fill(placements);
 	}
 
 	async setBracketFormat(nth: number, formatLabel: string) {
-		await this.locators.bracketFormatSelects.nth(nth).selectOption(formatLabel);
+		await this.selectBracket(nth);
+		await this.locators.bracketFormatSelect.selectOption(formatLabel);
 	}
 
-	/** Selects the "Sign-up" source for every bracket, making them all starting brackets. */
+	/** Moves every bracket to the starting brackets column, removing their connections. */
 	async makeAllBracketsStartingBrackets() {
-		for (const radio of await this.locators.signUpSourceRadios.all()) {
-			if (await radio.isEnabled()) {
-				await radio.check();
-			}
+		await this.goToStep("format");
+		const count = await this.locators.bracketCards.count();
+		for (let nth = 1; nth < count; nth++) {
+			await dragAndDrop(this.page, {
+				from: this.locators.bracketCards.nth(nth),
+				to: this.locators.startingBracketsColumn,
+			});
 		}
 	}
 
@@ -126,12 +180,16 @@ export class CalendarNewEventPage {
 		await this.locators.mapPoolTemplateSelect.selectOption(value);
 	}
 
-	save() {
+	/** Submits the form, from the last step when it is a tournament form of steps. */
+	async save() {
+		if (await this.locators.lastStepButton.isVisible()) {
+			await this.locators.lastStepButton.click();
+		}
+
 		return submit(this.page);
 	}
 
-	// a freshly added bracket is already a follow-up (sourcing from the first
-	// bracket), so it only needs its name, format and source placements filled in
+	/** Adds a bracket taking teams from the first bracket with the given placements. */
 	async addFollowUpBracket({
 		name,
 		format,
@@ -141,21 +199,13 @@ export class CalendarNewEventPage {
 		format: string;
 		placements: string;
 	}) {
-		await this.locators.addBracketButton.click();
-
-		await this.locators.bracketNameInputs.last().fill(name);
-		await this.locators.bracketFormatSelects.last().selectOption(format);
-		await this.locators.placementsInputs.last().fill(placements);
+		await this.addBracket({ name, format });
+		const lastNth = (await this.locators.bracketCards.count()) - 1;
+		await this.connect(0, lastNth, placements);
 	}
 
 	async renameBracket(nth: number, name: string) {
-		await this.locators.bracketNameInputs.nth(nth).fill(name);
-	}
-
-	/** Adds another source bracket to the last bracket of the progression. The new
-	 * row preselects the first bracket not sourced by it yet. */
-	async addSourceToLastBracket(placements: string) {
-		await this.locators.addSourceButtons.last().click();
-		await this.locators.placementsInputs.last().fill(placements);
+		await this.selectBracket(nth);
+		await this.locators.bracketNameInput.fill(name);
 	}
 }

@@ -484,5 +484,11 @@
 	"bottomTexts.trophyModel": "The 3D model state exported from the",
 	"errors.trophyNameTaken": "A trophy with this name already exists",
 	"errors.trophyWithBadges": "Cannot combine trophy and badges",
-	"labels.scheduleSharedWith": "Shared with"
+	"labels.scheduleSharedWith": "Shared with",
+	"steps.progress": "Step {{current}} of {{total}} · {{step}}",
+	"steps.tournament.basics": "Basics",
+	"steps.tournament.teams": "Teams & rules",
+	"steps.tournament.maps": "Maps",
+	"steps.tournament.format": "Format",
+	"steps.tournament.prizes": "Prizes & review"
 }

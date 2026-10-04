@@ -4,10 +4,10 @@ import type { TeamPickSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { StageId } from "~/modules/in-game-lists/types";
 import {
+	calendarNewSchema,
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
 } from "./calendar-new-schemas";
-import { calendarNewSchemaServer } from "./calendar-new-schemas.server";
 import {
 	type CalendarNewFormValues,
 	calendarNewFormValues,
@@ -37,7 +37,7 @@ const teamPickValues = (overrides: Partial<CalendarNewFormValues> = {}) =>
 	});
 
 const issuesOf = (values: CalendarNewFormValues) => {
-	const result = v.safeParse(calendarNewSchemaServer, values);
+	const result = v.safeParse(calendarNewSchema, values);
 
 	return (result.issues ?? []).map((issue) => ({
 		path: issue.path?.map((item) => String(item.key)).join("."),
@@ -45,7 +45,7 @@ const issuesOf = (values: CalendarNewFormValues) => {
 	}));
 };
 
-describe("calendarNewSchemaServer team pick", () => {
+describe("calendarNewSchema team pick", () => {
 	test("accepts team pick settings the pool can serve", () => {
 		expect(issuesOf(teamPickValues())).toEqual([]);
 	});

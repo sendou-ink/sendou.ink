@@ -345,6 +345,14 @@ export type TournamentSearchFieldOptions = {
 	onTournamentSelected?: (tournament: TournamentSearchItem | null) => void;
 };
 
+/** One step of a multi-step `SendouForm`, rendered by the `<FormStep>` of the same `name`. */
+export interface FormStepDefinition<TFieldName extends string = string> {
+	name: string;
+	label: FormsTranslationKey;
+	/** Top-level fields the step renders. Their errors keep the user from moving past the step. */
+	fields: readonly TFieldName[];
+}
+
 /** Object schema of a form or fieldset, plain or wrapped in a pipe (e.g. a cross-field `superRefine`). */
 export type FormObjectSchema<
 	TEntries extends v.ObjectEntries = v.ObjectEntries,

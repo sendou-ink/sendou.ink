@@ -325,6 +325,7 @@ test.describe("Tournament bracket multi stage", () => {
 		// start time in the past so the brackets can be started right away
 		await newTournament.setFirstDate(subMinutes(new Date(), 30));
 
+		await newTournament.goToStep("maps");
 		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
 		await newTournament.selectMapPoolTemplate("preset:SZ");
 
@@ -342,9 +343,9 @@ test.describe("Tournament bracket multi stage", () => {
 			format: "Single elimination",
 			placements: "1-2",
 		});
-		await newTournament.addSourceToLastBracket("1");
+		await newTournament.connect(1, 2, "1");
 
-		await newTournament.form.submit();
+		await newTournament.save();
 
 		await expect(page).toHaveURL(/\/to\/\d+/);
 		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)![1]);

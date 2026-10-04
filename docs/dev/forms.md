@@ -296,6 +296,53 @@ Submitting hands the validated values to `onApply` instead of the server:
 
 For applying every change immediately (no submit button), use `mode="client"` with `onApply`.
 
+### Multi-Step Forms
+
+Long forms can be split into steps shown one at a time. Define the steps next to the schema, each naming the top-level fields it renders:
+
+```ts
+export const NEW_THING_STEPS: ReadonlyArray<
+  FormStepDefinition<keyof typeof newThingSchema.entries>
+> = [
+  { name: "basics", label: "steps.newThing.basics", fields: ["name", "description"] },
+  { name: "settings", label: "steps.newThing.settings", fields: ["isPublic"] },
+];
+```
+
+Then pass them to `SendouForm` and wrap each step's fields in a `<FormStep>` of the same name:
+
+```tsx
+<SendouForm schema={newThingSchema} steps={NEW_THING_STEPS}>
+  <FormStep name="basics">
+    <FormField name="name" />
+    <FormField name="description" />
+  </FormStep>
+  <FormStep name="settings">
+    <FormField name="isPublic" />
+  </FormStep>
+</SendouForm>
+```
+
+- A stepper on top and Back/Next buttons at the bottom are rendered automatically, only the last step has the submit button. Pressing enter in a field moves to the next step.
+- Moving forward (Next or a later step in the stepper) validates the fields of every step passed and stops at the first one with errors. Moving back never validates.
+- Errors are only shown for steps the user has tried to leave, so a step isn't full of errors when first opened. Errors of fields no step lists only show after submitting.
+- Steps stay mounted while hidden, so local state of their fields survives switching steps.
+- When submitting fails, client side or on the server, the form switches to the step of the first error before focusing it.
+- `useFormSteps()` gives the steps, the current one and `goToStep(name)`, e.g. for "Edit" links of a review step.
+
+Cross-field rules (`superRefine`) should be part of the schema passed to the form for the steps to catch them before submitting.
+
+### Revealing Nested Fields of a Custom Field
+
+A custom field that shows only part of its nested fields at a time (e.g. one selected item of a list) registers a revealer, which the form calls with the field name of an error before focusing it:
+
+```tsx
+useFieldRevealer((fieldName) => {
+  const match = fieldName.match(/^brackets\[(\d+)\]/);
+  if (match) setSelectedIdx(Number(match[1]));
+});
+```
+
 ### Dynamic Select Options
 
 For `selectDynamicOptional`, pass options via the `options` prop:

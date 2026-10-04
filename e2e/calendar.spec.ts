@@ -226,9 +226,11 @@ test.describe("Calendar", () => {
 		await newTournament.form.fill("discordInviteCode", "test-invite");
 
 		// flip a tournament setting away from its default
+		await newTournament.goToStep("teams");
 		await newTournament.form.check("requireInGameNames");
 
 		// "Organizer picked" allows an arbitrary map pool, unlike the validated team pick pools
+		await newTournament.goToStep("maps");
 		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
 		await newTournament.pickMapPool(mapPool);
 
@@ -238,7 +240,7 @@ test.describe("Calendar", () => {
 			placements: "-1",
 		});
 
-		await newTournament.form.submit();
+		await newTournament.save();
 
 		await expect(page).toHaveURL(/\/to\/\d+/);
 		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);
@@ -276,6 +278,7 @@ test.describe("Calendar", () => {
 		await newTournament.form.fill("name", "Team Pick Tournament");
 		await newTournament.setFirstDate(new Date(2027, 0, 15, 17, 0));
 
+		await newTournament.goToStep("maps");
 		await newTournament.form.checkItems("mapPickingStyle", ["AUTO"]);
 		await newTournament.setTeamPickModes(["Splat Zones", "Tower Control"]);
 		await newTournament.teamPickCountInput("Splat Zones").fill("2");
@@ -305,7 +308,7 @@ test.describe("Calendar", () => {
 			),
 		).toBeVisible();
 
-		await newTournament.form.submit();
+		await newTournament.save();
 
 		await expect(page).toHaveURL(/\/to\/\d+/);
 		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);

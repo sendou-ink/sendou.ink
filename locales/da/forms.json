@@ -484,5 +484,11 @@
 	"bottomTexts.trophyModel": "",
 	"errors.trophyNameTaken": "",
 	"errors.trophyWithBadges": "",
-	"labels.scheduleSharedWith": ""
+	"labels.scheduleSharedWith": "",
+	"steps.progress": "",
+	"steps.tournament.basics": "",
+	"steps.tournament.teams": "",
+	"steps.tournament.maps": "",
+	"steps.tournament.format": "",
+	"steps.tournament.prizes": ""
 }

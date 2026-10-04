@@ -431,7 +431,8 @@ function toOutputBracketFormat(brackets: InputBracket[]): ParsedBracket[] {
 	return result;
 }
 
-function parsePlacements(
+/** "1-3,5+" -> { placements: [1, 2, 3, 5], rest: true }, null if not valid placements syntax. Empty input is the Swiss early advance case. */
+export function parsePlacements(
 	placements: string,
 ): { placements: number[]; rest: boolean } | null {
 	if (placements.trim() === "") {

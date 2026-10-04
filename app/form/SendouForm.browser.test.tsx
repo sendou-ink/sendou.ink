@@ -22,7 +22,7 @@ import {
 	toggle as toggleField,
 	userSearch,
 } from "./fields";
-import { SendouForm, useFormFieldContext } from "./SendouForm";
+import { FormStep, SendouForm, useFormFieldContext } from "./SendouForm";
 import type { ArrayItemRenderContext, FormObjectSchema } from "./types";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
@@ -1662,6 +1662,106 @@ describe("SendouForm", () => {
 
 			expect(nameRenders).toBeGreaterThanOrEqual(5);
 			expect(bioRenders).toBe(0);
+		});
+	});
+
+	describe("steps", () => {
+		const STEPS_SCHEMA = v.object({
+			name: textField({ label: "labels.name", maxLength: 100 }),
+			bio: textField({ label: "labels.bio", maxLength: 100 }),
+		});
+		const STEPS = [
+			{ name: "first", label: "steps.tournament.basics", fields: ["name"] },
+			{ name: "second", label: "steps.tournament.teams", fields: ["bio"] },
+		] as const;
+
+		function renderStepsForm(defaultValues?: Record<string, unknown>) {
+			const form = (
+				<SendouForm
+					schema={STEPS_SCHEMA}
+					steps={STEPS}
+					defaultValues={defaultValues}
+				>
+					<FormStep name="first">
+						<FormField name="name" />
+					</FormStep>
+					<FormStep name="second">
+						<FormField name="bio" />
+					</FormStep>
+				</SendouForm>
+			);
+			const router = createMemoryRouter([{ path: "/", element: form }], {
+				initialEntries: ["/"],
+			});
+			return render(<RouterProvider router={router} />);
+		}
+
+		test("shows only the current step's fields", async () => {
+			const screen = await renderStepsForm();
+
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+			await expect.element(screen.getByLabelText("Bio")).not.toBeVisible();
+		});
+
+		test("keeps the user on the step while its fields are invalid", async () => {
+			const screen = await renderStepsForm();
+
+			await userEvent.click(screen.getByTestId("form-next-step-button"));
+
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+		});
+
+		test("moves on without showing the next step's errors yet", async () => {
+			const screen = await renderStepsForm();
+
+			await userEvent.type(screen.getByLabelText("Name").element(), "Test");
+			await userEvent.click(screen.getByTestId("form-next-step-button"));
+
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+			await expect
+				.element(screen.getByText("This field is required"))
+				.not.toBeInTheDocument();
+		});
+
+		test("pressing enter in a field moves to the next step", async () => {
+			const screen = await renderStepsForm();
+
+			await userEvent.type(
+				screen.getByLabelText("Name").element(),
+				"Test{Enter}",
+			);
+
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+		});
+
+		test("shows the submit button only on the last step", async () => {
+			const screen = await renderStepsForm({ name: "Test" });
+
+			await expect
+				.element(screen.getByRole("button", { name: "Submit" }))
+				.not.toBeInTheDocument();
+
+			await userEvent.click(screen.getByTestId("form-next-step-button"));
+
+			await expect
+				.element(screen.getByRole("button", { name: "Submit" }))
+				.toBeVisible();
+			await userEvent.click(screen.getByRole("button", { name: "Back" }));
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+		});
+
+		test("switches to the step of a field the server returned an error for", async () => {
+			mockFetcherData = { fieldErrors: { bio: "forms:errors.required" } };
+
+			const screen = await renderStepsForm({ name: "Test", bio: "Bio" });
+
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
 		});
 	});
 });

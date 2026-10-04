@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import * as React from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -6,14 +7,21 @@ import type { FetcherWithComponents } from "react-router";
 import { useFetcher, useLocation } from "react-router";
 import { isPlainObject } from "remeda";
 import * as v from "valibot";
-import type { SendouButtonProps } from "~/components/elements/Button";
+import {
+	SendouButton,
+	type SendouButtonProps,
+} from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
 import { holdRevalidationsDuring } from "~/features/chat/revalidation-scope";
 import { FormField as FormFieldComponent } from "./FormField";
 import { getFormFieldMetadata } from "./fields";
 import styles from "./SendouForm.module.css";
-import type { FormObjectSchema, TypedFormFieldComponent } from "./types";
+import type {
+	FormObjectSchema,
+	FormStepDefinition,
+	TypedFormFieldComponent,
+} from "./types";
 import { useUnsavedChangesChecker } from "./UnsavedChangesGuard";
 import {
 	buildFieldPath,
@@ -65,11 +73,17 @@ interface FormStore {
 	setDirty: (dirty: boolean) => void;
 }
 
+type FieldRevealer = (fieldName: string) => void;
+
 type FormFieldContextValue = Omit<
 	FormContextValue,
 	"values" | "clientErrors"
 > & {
 	store: FormStore;
+	steps: ReadonlyArray<FormStepDefinition> | undefined;
+	currentStepIdx: number;
+	goToStep: (stepIdx: number) => void;
+	registerFieldRevealer: (revealer: FieldRevealer) => () => void;
 };
 
 const FormContext = React.createContext<FormFieldContextValue | null>(null);
@@ -109,6 +123,11 @@ type BaseFormProps<T extends v.ObjectEntries> = {
 	) => boolean;
 	/** Called once after the action returns without field errors. */
 	onSuccess?: () => void;
+	/**
+	 * Splits the form into steps shown one at a time, each rendered by a `<FormStep>` of the same name.
+	 * Moving forward validates the fields of the steps passed and only the last step submits.
+	 */
+	steps?: ReadonlyArray<FormStepDefinition<keyof T & string>>;
 };
 
 /**
@@ -149,6 +168,8 @@ interface LatestFormProps {
 	mode: FormMode;
 	fetcher: FetcherWithComponents<{ fieldErrors?: Record<string, string> }>;
 	t: (key: string) => string;
+	steps: ReadonlyArray<FormStepDefinition> | undefined;
+	currentStepIdx: number;
 }
 
 export function SendouForm<T extends v.ObjectEntries>(
@@ -184,6 +205,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	secondarySubmit,
 	hideSubmitButtonWhen,
 	onSuccess,
+	steps,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -192,6 +214,8 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		Partial<Record<string, string>>
 	>(fetcher.data?.fieldErrors ?? {});
 	const [fallbackError, setFallbackError] = React.useState<string | null>(null);
+	const [currentStepIdx, setCurrentStepIdx] = React.useState(0);
+	const formRef = React.useRef<HTMLElement | null>(null);
 
 	const storeRef = React.useRef<FormStore | null>(null);
 	if (storeRef.current === null) {
@@ -213,6 +237,8 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		mode,
 		fetcher,
 		t: t as unknown as LatestFormProps["t"],
+		steps,
+		currentStepIdx,
 	};
 	const latest = React.useRef(latestProps);
 	latest.current = latestProps;
@@ -221,9 +247,11 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		createFormActions({
 			store,
 			latest,
+			formRef,
 			setHasSubmitted,
 			setVisibleServerErrors,
 			setFallbackError,
+			setCurrentStepIdx,
 		}),
 	);
 
@@ -241,21 +269,9 @@ function SendouFormInner<T extends v.ObjectEntries>({
 			return;
 		}
 
-		for (const [fieldName, errorMessage] of errorEntries) {
-			const errorElement = document.getElementById(errorMessageId(fieldName));
-			if (!errorElement) {
-				setFallbackError(`${t(errorMessage as never)} (${fieldName})`);
-				return;
-			}
-		}
-
-		setFallbackError(null);
-
-		const firstError = findFirstErrorElementInDomOrder(
-			errorEntries.map(([fieldName]) => fieldName),
-		);
-		if (firstError) focusAndScrollToError(firstError);
-	}, [fetcher.data, t]);
+		// revealing the field (e.g. switching to its step) updates state, which can't be flushed mid-commit
+		queueMicrotask(() => actions.focusServerErrors(errorEntries));
+	}, [fetcher.data, actions]);
 
 	const hasUnsavedChangesRef = React.useRef<() => boolean>(() => false);
 	hasUnsavedChangesRef.current = () =>
@@ -291,6 +307,10 @@ function SendouFormInner<T extends v.ObjectEntries>({
 			submitToServer: actions.submitToServer,
 			fetcherState: fetcher.state,
 			store,
+			steps: steps as ReadonlyArray<FormStepDefinition> | undefined,
+			currentStepIdx,
+			goToStep: actions.goToStep,
+			registerFieldRevealer: actions.registerFieldRevealer,
 		}),
 		[
 			schema,
@@ -302,6 +322,8 @@ function SendouFormInner<T extends v.ObjectEntries>({
 			fetcher.state,
 			store,
 			actions,
+			steps,
+			currentStepIdx,
 		],
 	);
 
@@ -312,24 +334,34 @@ function SendouFormInner<T extends v.ObjectEntries>({
 				})
 			: children;
 
+	const submitButton = (
+		<SubmitButton
+			testId={submitButtonTestId}
+			state={fetcher.state}
+			variant={submitButtonVariant}
+			size={submitButtonSize}
+		>
+			{submitButtonText ?? t("submit")}
+		</SubmitButton>
+	);
+
 	const formContent = (
 		<>
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
+			{steps ? <FormStepper /> : null}
 			{resolvedChildren}
-			{mode !== "submit" || readOnly ? null : (
+			{steps ? (
+				<FormStepFooter
+					submitButton={readOnly ? null : submitButton}
+					secondarySubmit={secondarySubmit}
+				/>
+			) : mode !== "submit" || readOnly ? null : (
 				<SubmitRow
 					hideWhen={
 						hideSubmitButtonWhen as ((values: unknown) => boolean) | undefined
 					}
 				>
-					<SubmitButton
-						testId={submitButtonTestId}
-						state={fetcher.state}
-						variant={submitButtonVariant}
-						size={submitButtonSize}
-					>
-						{submitButtonText ?? t("submit")}
-					</SubmitButton>
+					{submitButton}
 					{secondarySubmit}
 				</SubmitRow>
 			)}
@@ -350,6 +382,9 @@ function SendouFormInner<T extends v.ObjectEntries>({
 				<div className={resolvedClassName}>{formContent}</div>
 			) : (
 				<form
+					ref={(element) => {
+						formRef.current = element;
+					}}
 					method="post"
 					action={action}
 					className={resolvedClassName}
@@ -399,6 +434,159 @@ function ConditionalSubmitRow({
 	return <div className={SUBMIT_ROW_CLASS_NAME}>{children}</div>;
 }
 
+/** One step of a multi-step form (see the `steps` prop of `SendouForm`). Kept mounted while hidden so its fields keep their local state. */
+export function FormStep({
+	name,
+	children,
+}: {
+	name: string;
+	children: React.ReactNode;
+}) {
+	const context = React.useContext(FormContext);
+	const isCurrent = context?.steps?.[context.currentStepIdx]?.name === name;
+
+	return (
+		<div className={styles.step} hidden={!isCurrent} data-form-step={name}>
+			{children}
+		</div>
+	);
+}
+
+/** Steps of the surrounding multi-step `SendouForm`. `goToStep` validates the steps passed when moving forward. */
+export function useFormSteps() {
+	const context = React.useContext(FormContext);
+	if (!context?.steps) {
+		throw new Error("useFormSteps must be used within a SendouForm with steps");
+	}
+
+	const { steps, currentStepIdx, goToStep } = context;
+
+	return {
+		steps,
+		currentStep: steps[currentStepIdx],
+		goToStep: (stepName: string) =>
+			goToStep(steps.findIndex((step) => step.name === stepName)),
+	};
+}
+
+/**
+ * Lets a custom field show the part of itself rendering a nested field (e.g. by selecting an item) before
+ * the form focuses that field's error. Called with the field name, e.g. `brackets[2].name`.
+ */
+export function useFieldRevealer(reveal: (fieldName: string) => void) {
+	const context = React.useContext(FormContext);
+	const latestReveal = React.useRef(reveal);
+	latestReveal.current = reveal;
+
+	const register = context?.registerFieldRevealer;
+	React.useEffect(
+		() => register?.((fieldName) => latestReveal.current(fieldName)),
+		[register],
+	);
+}
+
+function FormStepper() {
+	const { t } = useTranslation(["forms"]);
+	const context = React.useContext(FormContext);
+	const store = context?.store ?? EMPTY_FORM_STORE;
+	const getClientErrors = () => store.clientErrors;
+	const clientErrors = React.useSyncExternalStore(
+		store.subscribe,
+		getClientErrors,
+		getClientErrors,
+	);
+
+	if (!context?.steps) return null;
+	const { steps, currentStepIdx, goToStep, serverErrors } = context;
+
+	const erroredStepIdxs = new Set(
+		[...Object.keys(clientErrors), ...Object.keys(serverErrors)].map(
+			(fieldName) => stepIdxOfField(steps, fieldName),
+		),
+	);
+
+	return (
+		<ol className={styles.stepper}>
+			{steps.map((step, stepIdx) => {
+				const isCurrent = stepIdx === currentStepIdx;
+				const hasErrors = erroredStepIdxs.has(stepIdx);
+				const isDone = stepIdx < currentStepIdx && !hasErrors;
+
+				return (
+					<li key={step.name} className={styles.stepperItem}>
+						<button
+							type="button"
+							className={clsx(styles.stepperButton, {
+								[styles.stepperButtonCurrent]: isCurrent,
+								[styles.stepperButtonError]: hasErrors,
+							})}
+							aria-current={isCurrent ? "step" : undefined}
+							onClick={() => goToStep(stepIdx)}
+							data-testid={`form-step-button-${step.name}`}
+						>
+							<span className={styles.stepperNumber} aria-hidden="true">
+								{hasErrors ? "!" : isDone ? <Check size={14} /> : stepIdx + 1}
+							</span>
+							{t(step.label)}
+						</button>
+					</li>
+				);
+			})}
+		</ol>
+	);
+}
+
+function FormStepFooter({
+	submitButton,
+	secondarySubmit,
+}: {
+	submitButton: React.ReactNode;
+	secondarySubmit: React.ReactNode;
+}) {
+	const { t } = useTranslation(["forms", "common"]);
+	const context = React.useContext(FormContext);
+	if (!context?.steps) return null;
+
+	const { steps, currentStepIdx, goToStep } = context;
+	const isLastStep = currentStepIdx === steps.length - 1;
+
+	return (
+		<div className={styles.stepFooter}>
+			{currentStepIdx > 0 ? (
+				<SendouButton
+					variant="outlined"
+					icon={<ArrowLeft />}
+					onClick={() => goToStep(currentStepIdx - 1)}
+				>
+					{t("common:actions.back")}
+				</SendouButton>
+			) : null}
+			<span className={styles.stepFooterProgress}>
+				{t("forms:steps.progress", {
+					current: currentStepIdx + 1,
+					total: steps.length,
+					step: t(steps[currentStepIdx].label),
+				})}
+			</span>
+			{isLastStep ? (
+				<>
+					{submitButton}
+					{secondarySubmit}
+				</>
+			) : (
+				// a submit button so pressing enter in a field moves on, see `handleSubmit`
+				<SendouButton
+					type="submit"
+					icon={<ArrowRight />}
+					testId="form-next-step-button"
+				>
+					{t("common:actions.next")}
+				</SendouButton>
+			)}
+		</div>
+	);
+}
+
 function createFormStore(
 	initialValues: Record<string, unknown>,
 	initialClientErrors: Partial<Record<string, string>>,
@@ -438,11 +626,13 @@ function createFormStore(
 interface FormActionDeps {
 	store: FormStore;
 	latest: React.RefObject<LatestFormProps>;
+	formRef: React.RefObject<HTMLElement | null>;
 	setHasSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
 	setVisibleServerErrors: React.Dispatch<
 		React.SetStateAction<Partial<Record<string, string>>>
 	>;
 	setFallbackError: React.Dispatch<React.SetStateAction<string | null>>;
+	setCurrentStepIdx: React.Dispatch<React.SetStateAction<number>>;
 }
 
 /**
@@ -452,13 +642,98 @@ interface FormActionDeps {
 function createFormActions({
 	store,
 	latest,
+	formRef,
 	setHasSubmitted,
 	setVisibleServerErrors,
 	setFallbackError,
+	setCurrentStepIdx,
 }: FormActionDeps) {
+	// steps the user has tried to leave (or submitted), only their errors are shown so later steps don't greet the user with errors
+	const validatedStepIdxs = new Set<number>();
+	const fieldRevealers = new Set<FieldRevealer>();
+
+	const registerFieldRevealer = (revealer: FieldRevealer) => {
+		fieldRevealers.add(revealer);
+		return () => {
+			fieldRevealers.delete(revealer);
+		};
+	};
+
+	registerFieldRevealer((fieldName) => {
+		const stepIdx = stepIdxOfField(latest.current.steps, fieldName);
+		if (stepIdx !== -1) setCurrentStepIdx(stepIdx);
+	});
+
+	const revealField = (fieldName: string) => {
+		flushSync(() => {
+			for (const reveal of fieldRevealers) {
+				reveal(fieldName);
+			}
+		});
+	};
+
+	const errorsOfValidatedSteps = (errors: Record<string, string>) => {
+		const { steps } = latest.current;
+		if (!steps) return errors;
+
+		const allStepsValidated = validatedStepIdxs.size === steps.length;
+		const result: Record<string, string> = {};
+		for (const [fieldName, error] of Object.entries(errors)) {
+			const stepIdx = stepIdxOfField(steps, fieldName);
+			const isShown =
+				stepIdx === -1 ? allStepsValidated : validatedStepIdxs.has(stepIdx);
+			if (isShown) result[fieldName] = error;
+		}
+		return result;
+	};
+
+	const changeStep = (stepIdx: number) => {
+		flushSync(() => setCurrentStepIdx(stepIdx));
+
+		const form = formRef.current;
+		if (form && form.getBoundingClientRect().top < 0) {
+			form.scrollIntoView({ block: "start" });
+		}
+	};
+
+	const goToStep = (targetIdx: number) => {
+		const { steps, currentStepIdx, schema } = latest.current;
+		if (!steps || targetIdx === currentStepIdx) return;
+		if (targetIdx < 0 || targetIdx >= steps.length) return;
+
+		if (targetIdx < currentStepIdx) {
+			changeStep(targetIdx);
+			return;
+		}
+
+		const errors = computeFieldErrors(schema, store.values);
+		for (let stepIdx = currentStepIdx; stepIdx < targetIdx; stepIdx++) {
+			validatedStepIdxs.add(stepIdx);
+
+			const stepErrors = Object.fromEntries(
+				Object.entries(errors).filter(
+					([fieldName]) => stepIdxOfField(steps, fieldName) === stepIdx,
+				),
+			);
+			if (Object.keys(stepErrors).length > 0) {
+				setHasSubmitted(true);
+				flushSync(() => {
+					store.setClientErrors(errorsOfValidatedSteps(errors));
+				});
+				scrollToFirstError(stepErrors);
+				return;
+			}
+		}
+
+		store.setClientErrors(errorsOfValidatedSteps(errors));
+		changeStep(targetIdx);
+	};
+
 	const scrollToFirstError = (errors: Record<string, string>) => {
 		const errorFieldNames = Object.keys(errors);
 		if (errorFieldNames.length === 0) return;
+
+		revealField(firstErrorFieldName(latest.current, errorFieldNames));
 
 		const firstError = findFirstErrorElementInDomOrder(errorFieldNames);
 		if (firstError) {
@@ -475,9 +750,31 @@ function createFormActions({
 		}
 	};
 
+	const focusServerErrors = (errorEntries: Array<[string, string]>) => {
+		const errorFieldNames = errorEntries.map(([fieldName]) => fieldName);
+		revealField(firstErrorFieldName(latest.current, errorFieldNames));
+
+		for (const [fieldName, errorMessage] of errorEntries) {
+			const errorElement = document.getElementById(errorMessageId(fieldName));
+			if (!errorElement) {
+				setFallbackError(`${latest.current.t(errorMessage)} (${fieldName})`);
+				return;
+			}
+		}
+
+		setFallbackError(null);
+
+		const firstError = findFirstErrorElementInDomOrder(errorFieldNames);
+		if (firstError) focusAndScrollToError(firstError);
+	};
+
 	const validateAndPrepare = (): boolean => {
 		setHasSubmitted(true);
 		setVisibleServerErrors({});
+
+		for (const stepIdx of (latest.current.steps ?? []).keys()) {
+			validatedStepIdxs.add(stepIdx);
+		}
 
 		const newErrors = computeFieldErrors(latest.current.schema, store.values);
 
@@ -563,7 +860,9 @@ function createFormActions({
 
 	const revalidateAll = (updatedValues: Record<string, unknown>) => {
 		store.setClientErrors(
-			computeFieldErrors(latest.current.schema, updatedValues),
+			errorsOfValidatedSteps(
+				computeFieldErrors(latest.current.schema, updatedValues),
+			),
 		);
 	};
 
@@ -598,6 +897,14 @@ function createFormActions({
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+
+		// pressing enter in a text input submits implicitly, before the last step that means moving on
+		const { steps, currentStepIdx } = latest.current;
+		if (steps && currentStepIdx < steps.length - 1) {
+			goToStep(currentStepIdx + 1);
+			return;
+		}
+
 		if (!validateAndPrepare()) return;
 
 		const { onApply } = latest.current;
@@ -619,7 +926,42 @@ function createFormActions({
 		submitToServer,
 		onFieldChange,
 		handleSubmit,
+		goToStep,
+		registerFieldRevealer,
+		focusServerErrors,
 	};
+}
+
+/** Index of the step rendering the field (a top-level or nested name like `brackets[0].name`), -1 if none does. */
+function stepIdxOfField(
+	steps: ReadonlyArray<FormStepDefinition> | undefined,
+	fieldName: string,
+) {
+	if (!steps) return -1;
+
+	const topLevelKey = fieldName.split(/[.[]/)[0];
+	return steps.findIndex((step) => step.fields.includes(topLevelKey));
+}
+
+/** The error to bring into view: of the earliest step, then by schema order. Field order on the page is only known once rendered. */
+function firstErrorFieldName(
+	{ steps, schema }: Pick<LatestFormProps, "steps" | "schema">,
+	errorFieldNames: string[],
+) {
+	const schemaKeys = Object.keys(schema.entries);
+	const rank = (fieldName: string) => {
+		const stepIdx = stepIdxOfField(steps, fieldName);
+		return [
+			stepIdx === -1 ? Number.POSITIVE_INFINITY : stepIdx,
+			schemaKeys.indexOf(fieldName.split(/[.[]/)[0]),
+		] as const;
+	};
+
+	return errorFieldNames.toSorted((a, b) => {
+		const [stepA, keyA] = rank(a);
+		const [stepB, keyB] = rank(b);
+		return stepA - stepB || keyA - keyB;
+	})[0];
 }
 
 /**

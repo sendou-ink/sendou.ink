@@ -22,9 +22,10 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
+import type { FormStepDefinition } from "~/form/types";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
-import { id, modeShort, type ValidationCtx } from "~/utils/schema";
+import { id, modeShort, superRefine, type ValidationCtx } from "~/utils/schema";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import {
 	bracketsFormField,
@@ -203,8 +204,73 @@ export const calendarNewBaseSchema = v.object({
 	}),
 });
 
-/** Shared sync cross-field rules, reused by the server schema (see `*.server.ts`). */
-export function calendarNewSyncRefine(
+/** {@link calendarNewBaseSchema} with its cross-field rules, so the form catches e.g. bracket progression errors before submitting. */
+export const calendarNewSchema = v.pipe(
+	calendarNewBaseSchema,
+	superRefine(calendarNewSyncRefine),
+);
+
+/** Steps of the tournament form. Calendar events use a single page. */
+export const TOURNAMENT_FORM_STEPS: ReadonlyArray<
+	FormStepDefinition<keyof typeof calendarNewBaseSchema.entries>
+> = [
+	{
+		name: "basics",
+		label: "steps.tournament.basics",
+		fields: [
+			"name",
+			"startTime",
+			"organizationId",
+			"description",
+			"rules",
+			"avatarImgId",
+			"discordInviteCode",
+			"tags",
+		],
+	},
+	{
+		name: "teams",
+		label: "steps.tournament.teams",
+		fields: [
+			"minMembersPerTeam",
+			"maxMembersPerTeam",
+			"isInvitational",
+			"regClosesAt",
+			"requireInGameNames",
+			"enableSubs",
+			"autonomousSubs",
+			"enableNoScreenToggle",
+			"isRanked",
+			"isLeague",
+			"isTest",
+			"isDraft",
+			"requireSendouQParticipation",
+		],
+	},
+	{
+		name: "maps",
+		label: "steps.tournament.maps",
+		fields: [
+			"mapPickingStyle",
+			"teamPickModes",
+			"teamPickCounts",
+			"teamPickPool",
+			"pool",
+		],
+	},
+	{
+		name: "format",
+		label: "steps.tournament.format",
+		fields: ["brackets", "progression"],
+	},
+	{
+		name: "prizes",
+		label: "steps.tournament.prizes",
+		fields: ["badges", "trophyId"],
+	},
+];
+
+function calendarNewSyncRefine(
 	data: v.InferOutput<typeof calendarNewBaseSchema>,
 	ctx: ValidationCtx,
 ) {

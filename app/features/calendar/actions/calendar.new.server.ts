@@ -29,16 +29,16 @@ import { pathnameFromPotentialURL } from "~/utils/strings";
 import { calendarEventPage } from "~/utils/urls";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import {
+	calendarNewSchema,
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
 } from "../calendar-new-schemas";
-import { calendarNewSchemaServer } from "../calendar-new-schemas.server";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
 import { regClosesAtDate } from "../calendar-utils";
 import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action = defineAction(
-	{ body: calendarNewSchemaServer },
+	{ body: calendarNewSchema },
 	async ({ body, resolveImages }) => {
 		const user = requireUser();
 

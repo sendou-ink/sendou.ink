@@ -1,17 +1,17 @@
-import { Trash } from "lucide-react";
+import { SquareArrowOutUpRight, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Form, Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useNavigate } from "react-router";
 import { Alert } from "~/components/Alert";
-import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouSection } from "~/components/elements/Section";
 import { FormMessage } from "~/components/FormMessage";
 import { ModeImage } from "~/components/Image";
 import { Label } from "~/components/Label";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
-import { SubmitButton } from "~/components/SubmitButton";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type {
@@ -20,8 +20,14 @@ import type {
 } from "~/features/tournament/tournament-constants";
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
+import { getFormFieldMetadata } from "~/form/fields";
 import { existingImage } from "~/form/image-field";
-import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import {
+	FormStep,
+	SendouForm,
+	useFormFieldContext,
+	useFormSteps,
+} from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -30,23 +36,31 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
+import {
+	CALENDAR_NEW_PAGE,
+	CREATING_TOURNAMENT_DOC_LINK,
+	FAQ_PAGE,
+} from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
 import type { RegClosesAtOption } from "../calendar-constants";
 import styles from "../calendar-new.module.css";
 import {
 	calendarNewBaseSchema,
+	calendarNewSchema,
 	customTeamPickPool,
 	type TeamPickCountsFormValue,
+	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
 } from "../calendar-new-schemas";
 import {
+	type BracketFormValue,
 	defaultBracketsFormValues,
 	progressionToFormValues,
 } from "../calendar-progression-form";
+import { calendarNewSearchParams } from "../calendar-search-params";
 import type { CalendarEventTag } from "../calendar-types";
 import { datesToRegClosesAt } from "../calendar-utils";
-import { BracketProgressionFormFields } from "../components/BracketProgressionFormFields";
+import { BracketProgressionBuilder } from "../components/BracketProgressionBuilder";
 import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
@@ -74,7 +88,9 @@ const useBaseEvent = () => {
 	return eventToCopy ?? eventToEdit;
 };
 
+// xxx: polish styles and overall flow
 export default function CalendarNewEventPage() {
+	const { t } = useTranslation(["calendar"]);
 	const baseEvent = useBaseEvent();
 	const isCalendarEventAdder = useHasRole("CALENDAR_EVENT_ADDER");
 	const data = useLoaderData<typeof loader>();
@@ -107,7 +123,7 @@ export default function CalendarNewEventPage() {
 	}
 
 	return (
-		<Main halfWidth>
+		<Main halfWidth={!data.isAddingTournament} bigger={data.isAddingTournament}>
 			<div className="stack md">
 				<div className="stack horizontal md items-center">
 					<h1 className="text-lg">
@@ -116,24 +132,28 @@ export default function CalendarNewEventPage() {
 					{data.isAddingTournament ? (
 						<a
 							href={CREATING_TOURNAMENT_DOC_LINK}
-							className="text-lg text-bold"
-							title="Documentation about creating tournaments"
+							className={styles.helpLink}
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							?
+							{t("calendar:newTournament.help")}
+							<SquareArrowOutUpRight className={styles.helpLinkIcon} />
 						</a>
 					) : null}
 				</div>
-				{data.isAddingTournament ? <TemplateTournamentForm /> : null}
 				<SendouForm
 					key={baseEvent?.eventId}
-					schema={calendarNewBaseSchema}
+					schema={calendarNewSchema}
 					defaultValues={defaultValues}
 					submitButtonTestId="submit-button"
 					fullWidth
+					steps={data.isAddingTournament ? TOURNAMENT_FORM_STEPS : undefined}
 				>
-					<CalendarNewFields />
+					{data.isAddingTournament ? (
+						<TournamentSteps />
+					) : (
+						<CalendarEventFields />
+					)}
 				</SendouForm>
 			</div>
 		</Main>
@@ -229,101 +249,303 @@ function useDefaultValues() {
 	};
 }
 
-function TemplateTournamentForm() {
+function CopyTournamentPicker() {
+	const { t } = useTranslation(["calendar"]);
 	const { recentTournaments } = useLoaderData<typeof loader>();
+	const navigate = useNavigate();
 	const [eventId, setEventId] = React.useState("");
+	const id = React.useId();
 	const { formatter } = useDateTimeFormat({
 		month: "numeric",
 		day: "numeric",
 	});
 
-	if (!recentTournaments) return null;
+	if (!recentTournaments || recentTournaments.length === 0) return null;
 
 	return (
-		<>
-			<div>
-				<Form className="stack horizontal sm flex-wrap">
+		<SendouSection title={t("calendar:newTournament.copy")}>
+			<div className="stack sm">
+				<label htmlFor={id}>{t("calendar:newTournament.copyLabel")}</label>
+				<div className="stack horizontal sm flex-wrap">
 					<select
-						name="copyEventId"
-						onChange={(event) => {
-							setEventId(event.target.value);
-						}}
+						id={id}
+						value={eventId}
+						onChange={(event) => setEventId(event.target.value)}
 					>
-						<option value="">Select a template</option>
+						<option value="">
+							{t("calendar:newTournament.copyPlaceholder")}
+						</option>
 						{recentTournaments.map((event) => (
 							<option key={event.id} value={event.id}>
 								{event.name} ({formatter.format(event.startsAt) ?? ""})
 							</option>
 						))}
 					</select>
-					<SubmitButton isDisabled={!eventId} testId="use-template-button">
-						Use template
-					</SubmitButton>
-				</Form>
+					<SendouButton
+						variant="outlined"
+						isDisabled={!eventId}
+						testId="use-template-button"
+						onClick={() =>
+							navigate(
+								calendarNewSearchParams.href(CALENDAR_NEW_PAGE, {
+									copyEventId: Number(eventId),
+								}),
+							)
+						}
+					>
+						{t("calendar:newTournament.copyButton")}
+					</SendouButton>
+				</div>
+				<FormMessage type="info">
+					{t("calendar:newTournament.copyInfo")}
+				</FormMessage>
 			</div>
-			<hr />
-		</>
+		</SendouSection>
 	);
 }
 
-function CalendarNewFields() {
+function CalendarEventFields() {
 	const data = useLoaderData<typeof loader>();
-	const { values } = useFormFieldContext();
-	const isAdmin = useHasRole("ADMIN");
-
-	const isTournament = Boolean(values.toToolsEnabled);
-	const isEditing = Boolean(data.eventToEdit);
-
-	const organizationOptions = data.organizations
-		.filter(
-			(org): org is Exclude<(typeof data.organizations)[number], string> =>
-				typeof org !== "string",
-		)
-		.map((org) => ({ value: String(org.id), label: org.name }));
+	const organizationOptions = useOrganizationOptions();
 
 	return (
 		<div className="stack md">
 			<FormField name="name" />
-			<DescriptionField isTournament={isTournament} />
+			<DescriptionField isTournament={false} />
 			{data.organizations.length > 0 ? (
 				<FormField name="organizationId" options={organizationOptions} />
 			) : null}
-			{isTournament ? <FormField name="rules" /> : null}
-			{isTournament ? (
-				<FormField name="startTime" />
-			) : (
-				<FormField name="date" />
-			)}
-			{!isTournament ? <FormField name="bracketUrl" /> : null}
+			<FormField name="date" />
+			<FormField name="bracketUrl" />
 			<FormField name="discordInviteCode" />
 			<FormField name="tags" />
 			{data.badgeOptions.length > 0 ? (
 				<FormField name="badges" options={data.badgeOptions} />
 			) : null}
-			{isTournament ? <TrophyField /> : null}
-			{isTournament ? <FormField name="avatarImgId" /> : null}
-			{isTournament ? (
-				<>
-					<Divider smallText className="mt-4">
-						Tournament settings
-					</Divider>
-					<MemberCountFields />
-					<FormField name="regClosesAt" />
-					<FormField name="isRanked" />
-					<FormField name="enableNoScreenToggle" />
-					<FormField name="enableSubs" />
-					<FormField name="autonomousSubs" />
-					<FormField name="requireInGameNames" />
-					<FormField name="isInvitational" />
-					{!isEditing ? <FormField name="isTest" /> : null}
-					<FormField name="isLeague" />
-					<DraftField />
-					{isAdmin ? <FormField name="requireSendouQParticipation" /> : null}
-				</>
-			) : null}
-			<MapsSection isTournament={isTournament} />
-			{isTournament ? <BracketProgressionField /> : null}
+			<CalendarMapPoolField />
 		</div>
+	);
+}
+
+function TournamentSteps() {
+	const { t } = useTranslation(["calendar"]);
+	const data = useLoaderData<typeof loader>();
+	const { values } = useFormFieldContext();
+	const isAdmin = useHasRole("ADMIN");
+	const organizationOptions = useOrganizationOptions();
+
+	const isEditing = Boolean(data.eventToEdit);
+	const isInvitational = Boolean(values.isInvitational);
+
+	return (
+		<>
+			<FormStep name="basics">
+				<div className={styles.stepColumn}>
+					{isEditing ? null : <CopyTournamentPicker />}
+					<FormField name="name" />
+					<FormField name="startTime" />
+					{data.organizations.length > 0 ? (
+						<FormField name="organizationId" options={organizationOptions} />
+					) : null}
+					<DescriptionField isTournament />
+					<FormField name="rules" />
+					<FormField name="avatarImgId" />
+					<FormField name="discordInviteCode" />
+					<FormField name="tags" />
+				</div>
+			</FormStep>
+
+			<FormStep name="teams">
+				<div className={styles.stepColumn}>
+					<SendouSection title={t("calendar:newTournament.section.teamSize")}>
+						<div className="stack md">
+							<MemberCountFields />
+						</div>
+					</SendouSection>
+					<SendouSection
+						title={t("calendar:newTournament.section.registration")}
+					>
+						<div className="stack md">
+							<FormField name="isInvitational" />
+							{isInvitational ? null : (
+								<>
+									<FormField name="regClosesAt" />
+									<FormField name="requireInGameNames" />
+									<FormField name="enableSubs" />
+								</>
+							)}
+						</div>
+					</SendouSection>
+					<SendouSection
+						title={t("calendar:newTournament.section.duringTournament")}
+					>
+						<div className="stack md">
+							<FormField name="autonomousSubs" />
+							<FormField name="enableNoScreenToggle" />
+						</div>
+					</SendouSection>
+					<SendouSection
+						title={t("calendar:newTournament.section.typeAndVisibility")}
+					>
+						<div className="stack md">
+							<FormField name="isRanked" />
+							<FormField name="isLeague" />
+							{isEditing ? null : <FormField name="isTest" />}
+							<DraftField />
+							{isAdmin ? (
+								<FormField name="requireSendouQParticipation" />
+							) : null}
+						</div>
+					</SendouSection>
+				</div>
+			</FormStep>
+
+			<FormStep name="maps">
+				<div className={styles.stepColumn}>
+					<TournamentMapsFields />
+				</div>
+			</FormStep>
+
+			<FormStep name="format">
+				<BracketProgressionBuilder isInvitational={isInvitational} />
+			</FormStep>
+
+			<FormStep name="prizes">
+				<div className={styles.stepColumn}>
+					<SendouSection title={t("calendar:newTournament.section.prizes")}>
+						<div className="stack md">
+							{data.badgeOptions.length > 0 ? (
+								<FormField name="badges" options={data.badgeOptions} />
+							) : null}
+							<TrophyField />
+							{data.badgeOptions.length === 0 && data.trophies.length === 0 ? (
+								<FormMessage type="info">
+									{t("calendar:newTournament.noPrizes")}
+								</FormMessage>
+							) : null}
+						</div>
+					</SendouSection>
+					<TournamentReview />
+				</div>
+			</FormStep>
+		</>
+	);
+}
+
+function useOrganizationOptions() {
+	const data = useLoaderData<typeof loader>();
+
+	return data.organizations
+		.filter(
+			(org): org is Exclude<(typeof data.organizations)[number], string> =>
+				typeof org !== "string",
+		)
+		.map((org) => ({ value: String(org.id), label: org.name }));
+}
+
+/** What the earlier steps were filled with, each with a way back to its step. */
+function TournamentReview() {
+	const { t } = useTranslation(["calendar", "forms", "common"]);
+	const { values } = useFormFieldContext();
+	const { steps, goToStep } = useFormSteps();
+	const organizationOptions = useOrganizationOptions();
+
+	const fieldLabel = (
+		fieldName: keyof typeof calendarNewBaseSchema.entries,
+	) => {
+		const metadata = getFormFieldMetadata(
+			calendarNewBaseSchema.entries[fieldName],
+		);
+		const label = metadata && "label" in metadata ? metadata.label : undefined;
+		return label ? t(label as never) : fieldName;
+	};
+	const enabledToggleLabels = (
+		fieldNames: Array<keyof typeof calendarNewBaseSchema.entries>,
+	) => fieldNames.filter((fieldName) => values[fieldName]).map(fieldLabel);
+
+	const brackets = values.brackets as BracketFormValue[];
+	const startTime = values.startTime instanceof Date ? values.startTime : null;
+	const organizationName = organizationOptions.find(
+		(option) => option.value === values.organizationId,
+	)?.label;
+	const playersCount = String(values.minMembersPerTeam);
+
+	const summaries: Record<string, React.ReactNode[]> = {
+		basics: [
+			(values.name as string) || t("calendar:newTournament.review.noName"),
+			startTime ? (
+				<LocaleTime
+					key="startTime"
+					date={startTime}
+					options={{
+						day: "numeric",
+						month: "short",
+						hour: "numeric",
+						minute: "numeric",
+					}}
+				/>
+			) : null,
+			organizationName ?? null,
+		],
+		teams: [
+			`${playersCount}v${playersCount}`,
+			...enabledToggleLabels([
+				"isInvitational",
+				"requireInGameNames",
+				"enableSubs",
+				"autonomousSubs",
+				"isRanked",
+				"isLeague",
+				"isTest",
+				"isDraft",
+			]),
+		],
+		maps: [
+			t(
+				`forms:options.mapPickingStyle.${values.mapPickingStyle as "TO" | "AUTO"}`,
+			),
+			values.mapPickingStyle === "TO"
+				? t("calendar:newTournament.review.mapCount", {
+						count: values.pool
+							? MapPool.toDbList(values.pool as string).length
+							: 0,
+					})
+				: null,
+		],
+		format: brackets.map(
+			(bracket) => bracket.name || t("calendar:builder.unnamed"),
+		),
+	};
+
+	return (
+		<SendouSection title={t("calendar:newTournament.review")}>
+			<dl className={styles.review}>
+				{steps.flatMap((step) => {
+					const summary = summaries[step.name]?.filter(Boolean);
+					if (!summary) return [];
+
+					return (
+						<div key={step.name} className={styles.reviewRow}>
+							<dt className={styles.reviewStep}>{t(`forms:${step.label}`)}</dt>
+							<dd className={styles.reviewValues}>
+								{summary.map((item, idx) => (
+									<span key={idx} className={styles.reviewValue}>
+										{item}
+									</span>
+								))}
+							</dd>
+							<SendouButton
+								size="small"
+								variant="minimal"
+								onClick={() => goToStep(step.name)}
+							>
+								{t("common:actions.edit")}
+							</SendouButton>
+						</div>
+					);
+				})}
+			</dl>
+		</SendouSection>
 	);
 }
 
@@ -461,22 +683,15 @@ function DraftField() {
 	return <FormField name="isDraft" />;
 }
 
-function MapsSection({ isTournament }: { isTournament: boolean }) {
+function TournamentMapsFields() {
 	const { t } = useTranslation(["forms"]);
 	const { values, setValue } = useFormFieldContext();
 	const data = useLoaderData<typeof loader>();
 
-	if (!isTournament) {
-		return <CalendarMapPoolField />;
-	}
-
 	const mapPickingStyle = values.mapPickingStyle as TournamentMapPickingStyle;
 
 	return (
-		<div className="stack md w-full">
-			<Divider smallText className="mt-4">
-				Tournament maps
-			</Divider>
+		<>
 			{/* reset the (polymorphic) pool when switching map picking style so a
 			previous style's maps don't leak into the new one */}
 			<FormField
@@ -493,7 +708,7 @@ function MapsSection({ isTournament }: { isTournament: boolean }) {
 					{t("forms:bottomTexts.teamPickReset")}
 				</div>
 			) : null}
-		</div>
+		</>
 	);
 }
 
@@ -782,20 +997,5 @@ function TournamentMapPoolField() {
 				);
 			}}
 		</FormField>
-	);
-}
-
-function BracketProgressionField() {
-	const { values } = useFormFieldContext();
-
-	return (
-		<div className="stack md w-full">
-			<Divider smallText className="mt-4">
-				Tournament format
-			</Divider>
-			<BracketProgressionFormFields
-				isInvitational={Boolean(values.isInvitational)}
-			/>
-		</div>
 	);
 }

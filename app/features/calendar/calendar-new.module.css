@@ -1,3 +1,62 @@
 .countInput {
 	width: 4.5rem;
 }
+
+.stepColumn {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	width: 100%;
+	max-width: 40rem;
+	margin-inline: auto;
+}
+
+.review {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+}
+
+.reviewRow {
+	display: grid;
+	grid-template-columns: 8rem minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+}
+
+.reviewStep {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.reviewValues {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+	margin: 0;
+}
+
+.reviewValue {
+	padding: var(--s-0-5) var(--s-2);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+	font-size: var(--font-xs);
+}
+
+.helpLink {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.helpLinkIcon {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+}

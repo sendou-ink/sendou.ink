@@ -185,7 +185,8 @@ export function defaultBracketsFormValues(): {
 	};
 }
 
-function newBracketFormValue(): BracketFormValue {
+/** Form field values of a freshly added bracket, double elimination with the format defaults. */
+export function newBracketFormValue(): BracketFormValue {
 	return {
 		name: "",
 		type: "double_elimination",

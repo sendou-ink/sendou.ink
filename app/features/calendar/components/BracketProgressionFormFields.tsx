@@ -100,7 +100,8 @@ export function BracketProgressionFormFields({
 	);
 }
 
-function BracketFields({
+/** Fields of one bracket: name, format and the settings of that format. Follow-ups also get a start time and check-in. */
+export function BracketFields({
 	renderContext,
 	isDisabled,
 }: {
@@ -336,7 +337,8 @@ function SourceFields({
 	);
 }
 
-function PlacementsSyntaxPopover() {
+/** Explains the syntax of the placements input. */
+export function PlacementsSyntaxPopover() {
 	return (
 		<InfoPopover tiny>
 			<div>

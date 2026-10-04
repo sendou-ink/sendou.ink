@@ -1,11 +1,9 @@
 import { addDays } from "date-fns";
 import type * as v from "valibot";
-import type { calendarNewSchemaServer } from "../calendar-new-schemas.server";
+import type { calendarNewSchema } from "../calendar-new-schemas";
 import { defaultBracketsFormValues } from "../calendar-progression-form";
 
-export type CalendarNewFormValues = v.InferOutput<
-	typeof calendarNewSchemaServer
->;
+export type CalendarNewFormValues = v.InferOutput<typeof calendarNewSchema>;
 
 /** Every field of the calendar new form filled in for a tournament starting in a week, override what the test is about. */
 export function calendarNewFormValues(
