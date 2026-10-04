@@ -641,7 +641,9 @@ function parametersToMainWeaponResult(
 		InkConsumeVariable: params.VariableWeaponParam?.InkConsume,
 		InkConsumeSlosher,
 		InkConsumeFullCharge: params.WeaponParam?.InkConsumeFullCharge,
-		InkConsumeMinCharge: params.WeaponParam?.InkConsumeMinCharge,
+		InkConsumeMinCharge:
+			params.WeaponParam?.InkConsumeMinCharge ??
+			params.spl__WeaponStringerParam?.ChargeParam?.InkConsumeMinCharge,
 		InkConsumeFullChargeSplatling,
 		InkConsume_WeaponSwingParam: params.WeaponSwingParam?.InkConsume,
 		InkConsume_WeaponVerticalSwingParam:

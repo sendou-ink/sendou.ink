@@ -170,6 +170,21 @@ describe("Analyze build", () => {
 	});
 
 	test.each([
+		{ why: "Tri-Stringer", weaponSplId: 7010 },
+		{ why: "REEF-LUX 450", weaponSplId: 7020 },
+		{ why: "Wellstring V", weaponSplId: 7030 },
+	] as const)(
+		"Stringer has tap shot ink consumption ($why)",
+		({ weaponSplId }) => {
+			const analyzed = buildStats({ weaponSplId, hasTacticooler: false });
+
+			expect(
+				analyzed.stats.mainWeaponInkConsumptionPercentage_TAP_SHOT,
+			).toBeDefined();
+		},
+	);
+
+	test.each([
 		{ why: "Painbrush", weaponSplId: 1120, expected: 0.833 },
 		{ why: "Splatana Stamper", weaponSplId: 8000, expected: 0.667 },
 		{ why: "Tenta Brella", weaponSplId: 6010, expected: 1.167 },

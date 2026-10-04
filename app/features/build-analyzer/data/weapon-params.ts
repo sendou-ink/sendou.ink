@@ -1044,6 +1044,7 @@ export const weaponParams = {
 				},
 			],
 			ChargeFrameFullCharge: 72,
+			InkConsumeMinCharge: 0.05,
 			InkConsumeFullCharge_ChargeParam: 0.085,
 		},
 		"7020": {
@@ -1061,6 +1062,7 @@ export const weaponParams = {
 			DamageParam_ValueMin: 300,
 			ChargeFrameFullCharge: 34,
 			KeepChargeFullFrame: 75,
+			InkConsumeMinCharge: 0.035,
 			InkConsumeFullCharge_ChargeParam: 0.065,
 		},
 		"7030": {
@@ -1084,6 +1086,7 @@ export const weaponParams = {
 				},
 			],
 			ChargeFrameFullCharge: 80,
+			InkConsumeMinCharge: 0.07,
 			InkConsumeFullCharge_ChargeParam: 0.09,
 		},
 		"8000": {
