@@ -22,6 +22,7 @@
 		"compute-luti-divs": "vite-node scripts/compute-luti-divs.ts",
 		"vods:download": "cross-env DB_PATH=db-prod.sqlite3 VITE_PROD_MODE=true vite-node scripts/download-tournament-vods.ts",
 		"download-prod-db": "node scripts/download-prod-db.ts",
+		"deploy:prod": "node scripts/deploy-prod.ts",
 		"refresh-prod-db": "node scripts/refresh-prod-db.ts && pnpm run migrate:prod",
 		"biome:check": "biome check --error-on-warnings .",
 		"biome:fix": "biome check --error-on-warnings --write .",
