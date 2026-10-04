@@ -1,6 +1,7 @@
 /**
  * One game of a session or file, the same card in every view. Collapsed it
- * is one row: mode and stage, the result, the POV weapon and K/D/S, then
+ * is one row: mode and stage (plus the X Battle set count the game left),
+ * the result, the POV weapon and K/D/S, then
  * the game's clips and, once the game is over, its upload state beside the
  * expand arrow. Expanded it shows the data and
  * nothing interpreted: the scoreboard, the objective + player-status
@@ -48,6 +49,7 @@ import type {
 	ScannerMatchPlayer,
 } from "../core/scanner-match";
 import { matchResult } from "../core/sessions";
+import { xBattleCards } from "../core/x-battle";
 import type { ScannerClip } from "../store/clips";
 import { downloadBlob } from "./download";
 import { displayOrder, gameTimelineProps } from "./game-timeline-view";
@@ -136,10 +138,12 @@ export function MatchCard({
 	const scannedAt = built.sources.find(
 		(event) => event.detectedAt !== undefined,
 	)?.detectedAt;
+	const setCount = xBattleCards(built.sources).count;
 	const meta = [
 		match.lobby !== null && match.lobby !== "PRIVATE"
 			? lobbyLabel(match.lobby)
 			: null,
+		setCount ? `Set ${setCount.wins ?? "?"}–${setCount.losses ?? "?"}` : null,
 		match.replayCode,
 		match.cast ? "cast" : null,
 	]

@@ -42,6 +42,18 @@ import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../detectors/scoreboard-own/index";
+import {
+	X_RANK_POSITION_EVENT_TYPE,
+	type XRankPositionData,
+} from "../detectors/x-rank/position";
+import {
+	X_SET_COUNT_EVENT_TYPE,
+	type XSetCountData,
+} from "../detectors/x-rank/set-count";
+import {
+	X_SET_RESULT_EVENT_TYPE,
+	type XSetResultData,
+} from "../detectors/x-rank/set-result";
 import { formatClock, formatTime } from "../format";
 import {
 	lobbyLabel,
@@ -49,6 +61,9 @@ import {
 	modeLabel,
 	stageLabel,
 	weaponLabel,
+	xRankPositionLabel,
+	xSetCountLabel,
+	xSetResultLabel,
 } from "../labels";
 import { type CsvCell, toCsv } from "./csv";
 
@@ -144,6 +159,19 @@ function formatPlayers(data: ScoreboardData): string {
 				`${p.ka ?? "?"}/${p.d ?? "?"}/${p.s ?? "?"}`,
 		)
 		.join("; ");
+}
+
+function xRankLabel(
+	type: string,
+	data: XSetCountData | XSetResultData | XRankPositionData,
+): string {
+	if (type === X_SET_COUNT_EVENT_TYPE) {
+		return `set ${xSetCountLabel(data as XSetCountData)}`;
+	}
+	if (type === X_SET_RESULT_EVENT_TYPE) {
+		return `set over ${xSetResultLabel(data as XSetResultData)}`;
+	}
+	return `position ${xRankPositionLabel(data as XRankPositionData)}`;
 }
 
 function eventCells(event: CsvEvent, originT: number): CsvCell[] {
@@ -311,6 +339,29 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 				"",
 				"",
 				`${clock}${formatStripWeaponsSide(d, 0)} vs ${formatStripWeaponsSide(d, 1)} (${d.layout})`,
+				"",
+				"",
+			];
+		}
+		case X_SET_COUNT_EVENT_TYPE:
+		case X_SET_RESULT_EVENT_TYPE:
+		case X_RANK_POSITION_EVENT_TYPE: {
+			const d = event.data as
+				| XSetCountData
+				| XSetResultData
+				| XRankPositionData;
+			return [
+				...base,
+				"",
+				modeLabel(d.mode),
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				xRankLabel(event.type, d),
 				"",
 				"",
 			];

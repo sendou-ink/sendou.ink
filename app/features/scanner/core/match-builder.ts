@@ -84,6 +84,7 @@ import {
 } from "./slot-row-assignment";
 import { editDistance, matchKey } from "./text";
 import { multisetOverlap } from "./timeline/same-scoreboard";
+import { X_BATTLE_CARD_EVENT_TYPES } from "./x-battle";
 
 /** How far back a scoreboard with no MapStart claims deaths: matches run well under 8 min. */
 const FALLBACK_WINDOW_SECONDS = 480;
@@ -154,6 +155,16 @@ const KILL_SAME_ROW_MIN_SIMILARITY = 0.7;
  */
 const OWN_RESULTS_WINDOW_SECONDS = 90;
 
+/**
+ * The X Battle lobby cards (set count, set result, position) report on the
+ * game just played: the lobby shows them after the personal results screen
+ * and before the results screen, so they normally join the game still being
+ * gathered. A card seen within this of a match closed before it (results
+ * screen read first) joins that match; a card with no game open waits this
+ * long for a results screen to claim it.
+ */
+const X_BATTLE_CARDS_WINDOW_SECONDS = 90;
+
 /** Battle history screens: browsing them after playing shows games the timeline already holds. */
 const HISTORY_SCOREBOARD_EVENT_TYPES: readonly string[] = [
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
@@ -201,7 +212,9 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
 /**
  * Splits a timeline into ScannerMatch objects, chronological. A personal
  * results screen identifies no match of its own but completes the POV
- * player's build on the match whose results screen it follows. A battle
+ * player's build on the match whose results screen it follows, and the X
+ * Battle lobby cards (shown before that game's results screen) join the
+ * sources of the game they report on. A battle
  * history screen showing an already built game (≥6 shared paint totals, stage
  * and recording time not contradicting it) joins that match's `sources` instead of
  * forming a new one, as does a results screen read again with no match
@@ -238,6 +251,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	let orphanPlayerStatuses: E[] = [];
 	let orphanStripWeapons: E[] = [];
 	let orphanKills: E[] = [];
+	let orphanXBattleCards: E[] = [];
 	const finalize = (): void => {
 		if (!open) return;
 		if (isBacked(open)) {
@@ -258,6 +272,9 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			playerStatuses: orphanPlayerStatuses.filter(withinWindow),
 			stripWeapons: orphanStripWeapons.filter(withinWindow),
 			kills: orphanKills.filter(withinWindow),
+			xBattleCards: orphanXBattleCards.filter(
+				(card) => t - card.t <= X_BATTLE_CARDS_WINDOW_SECONDS,
+			),
 		};
 	};
 	// orphan reads no scoreboard claimed are left behind
@@ -275,6 +292,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 		orphanPlayerStatuses = [];
 		orphanStripWeapons = [];
 		orphanKills = [];
+		orphanXBattleCards = [];
 	};
 
 	for (const event of sorted) {
@@ -333,6 +351,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			orphanPlayerStatuses = [];
 			orphanStripWeapons = [];
 			orphanKills = [];
+			orphanXBattleCards = [];
 		} else if (event.type === MINIMAP_EVENT_TYPE) {
 			const stage = (event.data as MinimapData).stage;
 			if (open) {
@@ -373,6 +392,16 @@ export function buildScannerMatches<E extends DetectedEvent>(
 		} else if (event.type === SCOREBOARD_OWN_EVENT_TYPE) {
 			const completed = withOwnResults(built.at(-1), event);
 			if (completed) built[built.length - 1] = completed;
+		} else if (X_BATTLE_CARD_EVENT_TYPES.includes(event.type)) {
+			// the lobby shows the cards before the game's results screen, so
+			// they usually join the game still being gathered
+			if (open) {
+				open.xBattleCards.push(event);
+			} else {
+				const reported = withXBattleCard(built.at(-1), event);
+				if (reported) built[built.length - 1] = reported;
+				else orphanXBattleCards.push(event);
+			}
 		}
 	}
 	finalize();
@@ -412,6 +441,30 @@ function withOwnResults<E extends DetectedEvent>(
 	};
 	return {
 		match: { ...last.match, teams },
+		sources: [...last.sources, event],
+	};
+}
+
+/**
+ * An X Battle lobby card seen with no game open joins the match closed
+ * shortly before it, as a copy with the card in its sources (and an unread
+ * lobby read as X Battle). Undefined when
+ * no X Battle game (or one of unread lobby) closed shortly before it.
+ */
+function withXBattleCard<E extends DetectedEvent>(
+	last: BuiltMatch<E> | undefined,
+	event: E,
+): BuiltMatch<E> | undefined {
+	if (!last || last.match.endsAt === null || isHistoryOnly(last)) {
+		return undefined;
+	}
+	if (last.match.lobby !== null && last.match.lobby !== "X") return undefined;
+	if (event.t - last.match.endsAt > X_BATTLE_CARDS_WINDOW_SECONDS) {
+		return undefined;
+	}
+	return {
+		...last,
+		match: { ...last.match, lobby: last.match.lobby ?? "X" },
 		sources: [...last.sources, event],
 	};
 }
@@ -646,6 +699,8 @@ interface OpenMatch<E extends DetectedEvent> {
 	stripWeapons: E[];
 	/** kill-feed stack reads; become the match's `kills` */
 	kills: E[];
+	/** X Battle lobby cards reporting on this game; ride along in its sources */
+	xBattleCards: E[];
 	scoreboard: E | null;
 	/**
 	 * per-stage read counts (a MapStart's stage seeds it); without an intro
@@ -669,6 +724,7 @@ function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 		playerStatuses: [],
 		stripWeapons: [],
 		kills: [],
+		xBattleCards: [],
 		scoreboard: null,
 		stageVotes: new Map(),
 		lastMinimapT: null,
@@ -745,6 +801,7 @@ function openMatchInputs<E extends DetectedEvent>(open: OpenMatch<E>): E[] {
 		...open.playerStatuses,
 		...open.stripWeapons,
 		...open.kills,
+		...open.xBattleCards,
 		...(open.scoreboard ? [open.scoreboard] : []),
 	];
 }
@@ -844,7 +901,9 @@ function toBuiltMatch<E extends DetectedEvent>(
 			sources.length > 0 ? Math.max(0, Math.floor(sources[0]!.t)) : null,
 		endsAt: floorOrNull(open.scoreboard?.t ?? open.minimaps.at(-1)?.t),
 		playedAt: playedAt(open.scoreboard),
-		lobby: board?.lobby ?? null,
+		// only X Battle shows its lobby cards: they tell a game whose results
+		// screen was missed (or its header unread) apart from other lobbies
+		lobby: board?.lobby ?? (open.xBattleCards.length > 0 ? "X" : null),
 		mode,
 		stage: board?.stage ?? start?.stage ?? leadingStage(open.stageVotes),
 		matchScores: board?.matchScores.some((score) => score !== null)

@@ -159,6 +159,8 @@ export interface ScoreboardResources {
 	minimapSubWeapons?: SpecialTemplate[] | null;
 	/** Planner-map signatures (assets/cv/planner) for minimap stage identification; without them `stage` stays null. */
 	plannerStages?: import("../minimap/stage").PlannerStage[] | null;
+	/** Ranked mode icons for the X Battle cards; without them their `mode` stays null. */
+	modeIcons?: import("../x-rank/shared").ModeIconTemplate[] | null;
 }
 
 export const SCOREBOARD_EVENT_TYPE = "Scoreboard";

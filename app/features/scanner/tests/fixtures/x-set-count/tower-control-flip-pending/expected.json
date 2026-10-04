@@ -1,0 +1,12 @@
+{
+  "event": "XSetCount",
+  "data": {
+    "mode": "TC",
+    "wins": 1,
+    "losses": 2
+  },
+  "options": {
+    "untrusted": true,
+    "notes": "the second win slot already filled, the digits not yet flipped to 2 - 2"
+  }
+}

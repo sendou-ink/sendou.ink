@@ -243,6 +243,22 @@ test("a scoreboard closes the match early", () => {
 	assert.equal(s.calm(41), true);
 });
 
+test("a chunk starting mid-stream counts as an open match until a scoreboard", () => {
+	const s = make({});
+	s.reset(100, { midStream: true });
+	feed(s, 100, { pass: false });
+	assert.equal(s.calm(130), false);
+	feed(s, 131, { pass: true, confidence: 0.9, type: "Scoreboard" });
+	assert.equal(s.calm(141), true);
+});
+
+test("a chunk starting mid-stream turns calm once matchOpenMaxS passes", () => {
+	const s = make({});
+	s.reset(100, { midStream: true });
+	feed(s, 100, { pass: false });
+	assert.equal(s.calm(100 + 60), true);
+});
+
 test("a t jumping backwards resets the session", () => {
 	const s = make({ searchIntervalS: 1 });
 	feed(s, 100, { pass: false });

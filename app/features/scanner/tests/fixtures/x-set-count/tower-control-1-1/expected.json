@@ -1,0 +1,8 @@
+{
+  "event": "XSetCount",
+  "data": {
+    "mode": "TC",
+    "wins": 1,
+    "losses": 1
+  }
+}

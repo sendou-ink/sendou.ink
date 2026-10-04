@@ -279,7 +279,7 @@ async function scanChunk({
 	tEnd,
 }: ScanChunkRequest): Promise<void> {
 	chunkAborted = false;
-	scheduler!.reset(tStart);
+	scheduler!.reset(tStart, { midStream: tStart > 0 });
 	telemetry = freshTelemetry();
 	shadowTimeline = new TimelineBuilder();
 	const wallStart = performance.now();

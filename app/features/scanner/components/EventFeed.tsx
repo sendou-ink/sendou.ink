@@ -12,8 +12,26 @@ import {
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
+import {
+	X_RANK_POSITION_EVENT_TYPE,
+	type XRankPositionData,
+} from "../core/detectors/x-rank/position";
+import {
+	X_SET_COUNT_EVENT_TYPE,
+	type XSetCountData,
+} from "../core/detectors/x-rank/set-count";
+import {
+	X_SET_RESULT_EVENT_TYPE,
+	type XSetResultData,
+} from "../core/detectors/x-rank/set-result";
 import { formatPosition } from "../core/format";
-import { modeLabel, stageLabel } from "../core/labels";
+import {
+	modeLabel,
+	stageLabel,
+	xRankPositionLabel,
+	xSetCountLabel,
+	xSetResultLabel,
+} from "../core/labels";
 import type { ScannerMatch } from "../core/scanner-match";
 import styles from "./EventFeed.module.css";
 import { EventTypeIcon } from "./EventTypeIcon";
@@ -109,6 +127,12 @@ function eventLabel(event: ScanEvent): string | null {
 			return "Personal results read";
 		case SCOREBOARD_BATTLE_LOG_EVENT_TYPE:
 			return "Battle history read";
+		case X_SET_COUNT_EVENT_TYPE:
+			return `X Battle set ${xSetCountLabel(event.data as XSetCountData)}`;
+		case X_SET_RESULT_EVENT_TYPE:
+			return `X Battle set over: ${xSetResultLabel(event.data as XSetResultData)}`;
+		case X_RANK_POSITION_EVENT_TYPE:
+			return `X Rank position ${xRankPositionLabel(event.data as XRankPositionData)}`;
 		default:
 			return null;
 	}

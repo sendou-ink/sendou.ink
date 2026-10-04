@@ -46,3 +46,39 @@
 		background-color: var(--color-border);
 	}
 }
+
+.xSetDivider {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
+	margin-top: var(--s-1-5);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	font-variant-numeric: tabular-nums;
+
+	&::before,
+	&::after {
+		content: "";
+		flex: 1;
+		min-width: var(--s-4);
+		height: var(--border-width);
+		background-color: var(--color-border);
+	}
+}
+
+.xSetSummary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1) var(--s-2-5);
+}
+
+.xSetWon {
+	color: var(--color-success-high);
+}
+
+.xSetLost {
+	color: var(--color-error-high);
+}

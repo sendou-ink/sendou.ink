@@ -324,7 +324,7 @@ sequenceDiagram
   `React.lazy` after `useHydrated`; nothing from `core/worker/capture/store`
   may be imported at route-module top level. There is no feature flag: the
   page and `/ingest` are open to everyone (ingest still requires a login).
-- Ten detectors: `scoreboard` (results screen),
+- Thirteen detectors: `scoreboard` (results screen),
   `scoreboard-battle-log-replay` (replay-browser detail),
   `scoreboard-battle-log` (Recent Battles detail — same data sans replay
   code, panels stacked), `quick-scoreboard-battle-log` (the same detail as
@@ -338,7 +338,9 @@ sequenceDiagram
   plates, and the Tower Control / Rainmaker track, see below. Splat Zones and
   Clam Blitz draw the same plates, so a CB read carries `mode: "SZ"` too and
   the match's mode tells them apart; in CB a filled plate means that team's
-  attack window is open, charted as control), `kill` (the "Splatted <name>!" feed
+  attack window is open, charted as control), `x-set-count`,
+  `x-set-result` and `x-rank-position` (the X Battle lobby cards, see
+  below), `kill` (the "Splatted <name>!" feed
   bottom-center). The feed is the POV player's — on the SWS26 broadcast the
   specced player's, so a cast's kills follow camera swaps. One `Kill` event
   per frame carries the whole visible stack newest-first, up to four rows,
@@ -715,3 +717,45 @@ never pushed past the middle: the charts show its full count until its
 first plate read (`withUnpushedTrackCounts`). Fixtures: `objective/tower-*`,
 `objective/rainmaker-*` (tower_control / rainmaker VoDs plus TC/RM death
 frames symlinked).
+
+## X Battle cards
+
+After an X Battle game the lobby shows one near-black card
+(`core/detectors/x-rank/`, geometry in `rois.ts`): `XSetCount` ("WINS
+LOSSES 1 - 2" over win slots and loss squids) after every game that leaves
+the set undecided, then after the deciding game `XSetResult` (the "2 - 3"
+header, one VICTORY/DEFEAT tile per game in play order, X Power and its
+signed change) followed by `XRankPosition` ("#259" and an up/down arrow).
+Every card carries the mode off its icon (`img/modes/*`, RGB templates on
+black). Numbers are BlitzBold, read with the team-digit atlas rescaled;
+punctuation ("." "-" "+") is told apart by ink-run geometry since the digit
+templates can't match anything smaller than themselves.
+
+All three animate toward their final value and hold it only briefly: the
+count card opens on the score before the game, fills the new slot and only
+then flips the digits (~0.5s before fading); the set result counts the old
+X Power to the new one in ~0.3s; the position counts in the arrow's
+direction. So no detector sets `sufficientConfidence` (the first clean read
+is the stale one), each gate returns a `signature` over its numbers, and the
+timeline orders same-type reads by `animationProgressByType` instead of
+confidence: a further-along read replaces the kept one, an earlier one
+merges into it. A count read whose digits disagree with its slots, or a set
+result whose header doesn't describe a decided set of tiles (tiles still
+popping in), scores under the timeline floor. The result tiles center on
+the card (five games three over two, four two over two), so each is found
+as a run of VICTORY yellow / DEFEAT purple text rather than at a fixed
+slot. A gain shows "+30.0" on a teal splat and an orange up arrow, a loss
+"-29.2" on a grey splat and a grey down arrow. Not yet attested: a
+three-game set's tiles, the card while X Power is still being calculated,
+an unchanged position, and modes other than Tower Control (the other mode
+icons are matched untested). The lobby shows the cards after the
+personal results screen but before the game's results screen (read while
+matchmaking for the next game), so the match builder hands each card to the
+game still being gathered, else to an X Battle game closed within 90s
+before it, else to a results screen within 90s after it;
+`core/x-battle.ts` reads them back off `sources`, so compacted sessions keep
+them. Only X Battle shows the cards, so a game carrying one with its lobby
+unread (results screen missed or its header misread) is an X Battle game: the match card shows
+the set count in its meta line, and the session's X list draws the set
+result and position as a divider above the deciding game. Fixtures come from the
+fW5h-Ooc-Cg VoD (`x-set-count/`, `x-set-result/`, `x-rank-position/`).

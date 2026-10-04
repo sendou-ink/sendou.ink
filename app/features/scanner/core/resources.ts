@@ -34,6 +34,10 @@ import type { ScoreboardResources } from "./detectors/scoreboard/index";
 import { prepareSpecialTemplates } from "./detectors/scoreboard/specials";
 import { prepareWeaponTemplates } from "./detectors/scoreboard/weapons";
 import { prepareOwnAbilityTemplates } from "./detectors/scoreboard-own/abilities";
+import {
+	prepareModeIconTemplates,
+	X_RANK_MODES,
+} from "./detectors/x-rank/shared";
 import type { GlyphSet } from "./glyphs";
 import type { FrameData } from "./image";
 
@@ -111,6 +115,7 @@ export async function assembleScoreboardResources(
 		specialIcons,
 		subIcons,
 		abilityIcons,
+		modeIcons,
 		plannerStages,
 		atlasEntries,
 	] = await Promise.all([
@@ -123,6 +128,7 @@ export async function assembleScoreboardResources(
 			...abilityList.map((ability) => ability.name),
 			"UNKNOWN",
 		]),
+		icons("modes", X_RANK_MODES),
 		io.loadPlannerStages(),
 		Promise.all(
 			(Object.entries(ATLASES) as [keyof typeof ATLASES, string][]).map(
@@ -169,6 +175,7 @@ export async function assembleScoreboardResources(
 	const minimapAbilities = lazy(() =>
 		prepareMinimapAbilityTemplates(abilityIcons),
 	);
+	const modeIconTemplates = lazy(() => prepareModeIconTemplates(modeIcons));
 
 	const resources: ScoreboardResources = {
 		get weapons() {
@@ -203,6 +210,9 @@ export async function assembleScoreboardResources(
 		},
 		get plannerStages() {
 			return plannerStages();
+		},
+		get modeIcons() {
+			return modeIconTemplates();
 		},
 		get paintDigits() {
 			return atlas.paintDigits();

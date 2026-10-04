@@ -24,6 +24,18 @@ import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-battle-log-replay/index";
 import type { DetectedEvent } from "../detectors/types";
+import {
+	X_RANK_POSITION_EVENT_TYPE,
+	xRankPositionProgress,
+} from "../detectors/x-rank/position";
+import {
+	X_SET_COUNT_EVENT_TYPE,
+	xSetCountProgress,
+} from "../detectors/x-rank/set-count";
+import {
+	X_SET_RESULT_EVENT_TYPE,
+	xSetResultProgress,
+} from "../detectors/x-rank/set-result";
 import { sameScoreboardMatch } from "./same-scoreboard";
 
 export interface TimelineOptions {
@@ -58,6 +70,14 @@ export interface TimelineOptions {
 	 * taking it over would move the kill to when the row was about to leave.
 	 */
 	firstReadTypes: readonly string[];
+	/**
+	 * per-type animation order for screens that count toward their final
+	 * value (X Battle cards): positive when `b` is further along than `a`.
+	 * Every frame of the count reads equally well, so instead of confidence a
+	 * further-along read replaces the kept one and an earlier one merges into
+	 * it; only reads level on the animation fall back to confidence.
+	 */
+	animationProgressByType: Record<string, (a: unknown, b: unknown) => number>;
 }
 
 const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
@@ -103,6 +123,11 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	},
 	sampledTypes: [PLAYER_STATUS_EVENT_TYPE],
 	firstReadTypes: [KILL_EVENT_TYPE],
+	animationProgressByType: {
+		[X_SET_COUNT_EVENT_TYPE]: xSetCountProgress,
+		[X_SET_RESULT_EVENT_TYPE]: xSetResultProgress,
+		[X_RANK_POSITION_EVENT_TYPE]: xRankPositionProgress,
+	},
 };
 
 export type TimelineAction =
@@ -149,9 +174,16 @@ export class TimelineBuilder {
 			this.#events.sort((a, b) => a.t - b.t);
 			return { action: "added", event };
 		}
+		const progress =
+			this.#options.animationProgressByType[event.type]?.(
+				near.data,
+				event.data,
+			) ?? 0;
+		if (progress < 0) return { action: "merged", into: near };
 		if (
-			event.confidence > near.confidence &&
-			!this.#options.firstReadTypes.includes(event.type)
+			progress > 0 ||
+			(event.confidence > near.confidence &&
+				!this.#options.firstReadTypes.includes(event.type))
 		) {
 			this.#events[this.#events.indexOf(near)] = event;
 			this.#events.sort((a, b) => a.t - b.t);

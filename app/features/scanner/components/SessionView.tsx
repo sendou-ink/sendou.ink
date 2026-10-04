@@ -4,7 +4,8 @@
  * (fed the built matches and the summary line), the clip strip, then the
  * match cards newest first. A session mixing lobbies (private battles beside
  * X or open play) splits into lobby tabs; sets are a private battle concept,
- * so only that list gets set dividers. Games known only from browsing the
+ * so only that list gets set dividers; an X Battle set's end divides the X
+ * list above its deciding game. Games known only from browsing the
  * battle log stay hidden until asked for. Live and File share this all the
  * way down to the clip cutter.
  */
@@ -19,7 +20,9 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { ModeImage } from "~/components/Image";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start";
+import { xRankPositionLabel } from "../core/labels";
 import type { IngestSkipReason } from "../core/match-builder";
 import {
 	type BuiltMatch,
@@ -29,6 +32,7 @@ import {
 import { assignMatchSets } from "../core/match-sets";
 import type { ScannerMatch } from "../core/scanner-match";
 import { kdRatio, type SessionSummary, sessionSummary } from "../core/sessions";
+import { type XBattleCards, xBattleCards } from "../core/x-battle";
 import type { ScannerLobby } from "../scanner-types";
 import type { ScannerClip } from "../store/clips";
 import { ClipDialog } from "./ClipDialog";
@@ -255,15 +259,56 @@ function MatchList({
 		<div className={styles.matches}>
 			{[...matches].reverse().map((b, reverseIndex) => {
 				const index = matches.length - 1 - reverseIndex;
+				const xCards = xBattleCards(b.sources);
 				return (
 					<Fragment key={keyOf(b)}>
 						{showSetDividers && setNumbers[index + 1] !== setNumbers[index] ? (
 							<div className={styles.setDivider}>Set {setNumbers[index]}</div>
 						) : null}
+						{xCards.result || xCards.position ? (
+							<XSetDivider cards={xCards} />
+						) : null}
 						{renderMatch(b)}
 					</Fragment>
 				);
 			})}
+		</div>
+	);
+}
+
+/** An X Battle set's end, above its deciding game: the set score, the X Power it left and the X Rank position. */
+function XSetDivider({ cards }: { cards: XBattleCards }) {
+	const { result, position } = cards;
+	const mode = result?.mode ?? position?.mode ?? null;
+	const wins = result?.results.filter((r) => r === "WIN").length ?? 0;
+	const losses = (result?.results.length ?? 0) - wins;
+	return (
+		<div className={styles.xSetDivider}>
+			<span className={styles.xSetSummary}>
+				{mode ? <ModeImage mode={mode} size={18} /> : null}
+				{result ? (
+					<span className={wins > losses ? styles.xSetWon : styles.xSetLost}>
+						Set {wins > losses ? "won" : "lost"} {wins}–{losses}
+					</span>
+				) : null}
+				{result?.power != null ? (
+					<span>
+						X Power {result.power.toFixed(1)}
+						{result.powerChange !== null ? (
+							<span
+								className={
+									result.powerChange >= 0 ? styles.xSetWon : styles.xSetLost
+								}
+							>
+								{" "}
+								({result.powerChange >= 0 ? "+" : ""}
+								{result.powerChange.toFixed(1)})
+							</span>
+						) : null}
+					</span>
+				) : null}
+				{position ? <span>{xRankPositionLabel(position)}</span> : null}
+			</span>
 		</div>
 	);
 }

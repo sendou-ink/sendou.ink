@@ -1,0 +1,9 @@
+{
+  "event": "XSetResult",
+  "data": {
+    "mode": "TC",
+    "results": ["LOSE", "LOSE", "WIN", "WIN", "LOSE"],
+    "powerChange": -29.2,
+    "power": 2723.2
+  }
+}

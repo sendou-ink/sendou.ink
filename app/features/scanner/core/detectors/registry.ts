@@ -24,6 +24,9 @@ import {
 } from "./scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "./scoreboard-own/index";
 import type { Detector } from "./types";
+import { createXRankPositionDetector } from "./x-rank/position";
+import { createXSetCountDetector } from "./x-rank/set-count";
+import { createXSetResultDetector } from "./x-rank/set-result";
 
 /** Event types whose data is the full 8-player ScoreboardData shape. */
 export const SCOREBOARD_EVENT_TYPES: readonly string[] = [
@@ -47,5 +50,8 @@ export function createAllDetectors(
 		createMinimapDetector(resources) as Detector<unknown>,
 		createObjectiveDetector(resources) as Detector<unknown>,
 		createKillDetector(resources) as Detector<unknown>,
+		createXSetCountDetector(resources) as Detector<unknown>,
+		createXSetResultDetector(resources) as Detector<unknown>,
+		createXRankPositionDetector(resources) as Detector<unknown>,
 	];
 }

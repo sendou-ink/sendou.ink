@@ -24,6 +24,9 @@ import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-ba
 import type { ScoreboardBattleLogReplayData } from "../../core/detectors/scoreboard-battle-log-replay/index";
 import type { ScoreboardOwnData } from "../../core/detectors/scoreboard-own/index";
 import type { DetectedEvent } from "../../core/detectors/types";
+import type { XRankPositionData } from "../../core/detectors/x-rank/position";
+import type { XSetCountData } from "../../core/detectors/x-rank/set-count";
+import type { XSetResultData } from "../../core/detectors/x-rank/set-result";
 import {
 	buildScannerMatches,
 	ingestSkipReasons,
@@ -31,6 +34,7 @@ import {
 	isHistoryOnly,
 	type MatchBuildCache,
 } from "../../core/match-builder";
+import { xBattleCards } from "../../core/x-battle";
 import type { ScannerLobby } from "../../scanner-types";
 
 const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];
@@ -705,6 +709,124 @@ test("a personal results screen long after the scoreboard is left alone", () => 
 	]);
 	assert.equal(built!.match.teams[0].players[0]!.abilities, undefined);
 	assert.equal(built!.sources.length, 2);
+});
+
+const SET_COUNT: XSetCountData = { mode: "TC", wins: 1, losses: 2 };
+const SET_RESULT: XSetResultData = {
+	mode: "TC",
+	results: ["LOSE", "LOSE", "WIN", "WIN", "LOSE"],
+	powerChange: -29.2,
+	power: 2723.2,
+};
+const RANK_POSITION: XRankPositionData = {
+	mode: "TC",
+	position: 259,
+	direction: "DOWN",
+};
+
+function xCard(
+	t: number,
+	type: "XSetCount" | "XSetResult" | "XRankPosition",
+): DetectedEvent {
+	const data = {
+		XSetCount: SET_COUNT,
+		XSetResult: SET_RESULT,
+		XRankPosition: RANK_POSITION,
+	}[type];
+	return { type, t, confidence: 0.95, data };
+}
+
+test("an X Battle set count shown before the results screen joins that game", () => {
+	const [built] = buildScannerMatches([
+		mapStart(0),
+		ownResults(300),
+		xCard(305, "XSetCount"),
+		scoreboard(320, { lobby: "X" }),
+	]);
+	assert.deepEqual(xBattleCards(built!.sources), {
+		count: SET_COUNT,
+		result: null,
+		position: null,
+	});
+});
+
+test("the X Battle set result and position join the deciding game, not the next one", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		xCard(300, "XSetResult"),
+		xCard(303, "XRankPosition"),
+		scoreboard(320, { lobby: "X" }),
+		mapStart(450, { stage: 1 }),
+		scoreboard(750, { lobby: "X", stage: 1 }),
+	]);
+	assert.deepEqual(
+		built.map((b) => xBattleCards(b.sources)),
+		[
+			{ count: null, result: SET_RESULT, position: RANK_POSITION },
+			{ count: null, result: null, position: null },
+		],
+	);
+});
+
+test("an X Battle card after the game's results screen joins that game", () => {
+	const [built] = buildScannerMatches([
+		mapStart(0),
+		scoreboard(300, { lobby: "X" }),
+		xCard(330, "XSetCount"),
+	]);
+	assert.deepEqual(xBattleCards(built!.sources).count, SET_COUNT);
+});
+
+test("an X Battle card with no game open is claimed by the results screen after it", () => {
+	const [built] = buildScannerMatches([
+		xCard(300, "XSetCount"),
+		scoreboard(320, { lobby: "X" }),
+	]);
+	assert.deepEqual(xBattleCards(built!.sources).count, SET_COUNT);
+});
+
+test.each([
+	{
+		why: "no results screen",
+		events: () => [mapStart(0), minimap(120), xCard(330, "XSetCount")],
+	},
+	{
+		why: "an unread results header, card before it",
+		events: () => [
+			mapStart(0),
+			xCard(300, "XSetCount"),
+			scoreboard(320, { lobby: null }),
+		],
+	},
+	{
+		why: "an unread results header, card after it",
+		events: () => [
+			mapStart(0),
+			scoreboard(300, { lobby: null }),
+			xCard(330, "XSetCount"),
+		],
+	},
+])(
+	"a game carrying an X Battle card is an X Battle game: $why",
+	({ events }) => {
+		const [built] = buildScannerMatches(events());
+		assert.equal(built!.match.lobby, "X");
+	},
+);
+
+test("an X Battle card joins no game of another lobby, nor one closed long before", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		scoreboard(300, { lobby: "PRIVATE" }),
+		xCard(330, "XSetCount"),
+		mapStart(450, { stage: 1 }),
+		scoreboard(750, { lobby: "X", stage: 1 }),
+		xCard(900, "XSetCount"),
+	]);
+	assert.deepEqual(
+		built.map((b) => b.sources.length),
+		[2, 2],
+	);
 });
 
 test("enriches players with abilities from the match's deaths", () => {

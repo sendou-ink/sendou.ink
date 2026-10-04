@@ -74,6 +74,9 @@ interface ExpectedScoreboard {
 		| "PlayerStatus"
 		| "StripWeapons"
 		| "Kill"
+		| "XSetCount"
+		| "XSetResult"
+		| "XRankPosition"
 		| "none";
 	data?: {
 		lobby?: ScannerLobby;
@@ -112,8 +115,18 @@ interface ExpectedScoreboard {
 		penalty?: [number | null, number | null];
 		/** Objective only: which team currently holds the objective; null = neither */
 		control?: 0 | 1 | null;
-		/** Objective TC/RM only: the icon along the track, -100 (left end) .. 100 (right end); null = no icon */
+		/** Objective TC/RM: the icon along the track, -100 (left end) .. 100 (right end); null = no icon. XRankPosition: the X Rank position */
 		position?: number | null;
+		/** XRankPosition only: the arrow beside the position */
+		direction?: "UP" | "DOWN" | null;
+		/** XSetCount only */
+		wins?: number | null;
+		losses?: number | null;
+		/** XSetResult only: game results in play order */
+		results?: ("WIN" | "LOSE")[];
+		/** XSetResult only: signed X Power change, and the power after it */
+		powerChange?: number | null;
+		power?: number | null;
 		/** PlayerStatus only: special held per slot, [left team, right team] */
 		special?: [boolean[], boolean[]];
 		/** PlayerStatus only: splatted per slot, [left team, right team] */
@@ -137,6 +150,8 @@ interface ExpectedScoreboard {
 		skipFields?: string[];
 		/** free-form context for humans (why fields are skipped, capture quirks) */
 		notes?: string;
+		/** X Battle cards: a mid-animation frame whose read must score under the timeline floor */
+		untrusted?: boolean;
 	};
 }
 

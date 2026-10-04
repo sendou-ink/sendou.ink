@@ -34,6 +34,18 @@ import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
+import {
+	X_RANK_POSITION_EVENT_TYPE,
+	type XRankPositionData,
+} from "../core/detectors/x-rank/position";
+import {
+	X_SET_COUNT_EVENT_TYPE,
+	type XSetCountData,
+} from "../core/detectors/x-rank/set-count";
+import {
+	X_SET_RESULT_EVENT_TYPE,
+	type XSetResultData,
+} from "../core/detectors/x-rank/set-result";
 import { mainWeaponLabel, stageLabel, weaponLabel } from "../core/labels";
 import { downloadBlob as download } from "./download";
 
@@ -51,7 +63,17 @@ export type FixtureData =
 	| ObjectiveData
 	| PlayerStatusData
 	| StripWeaponsData
-	| KillData;
+	| KillData
+	| XSetCountData
+	| XSetResultData
+	| XRankPositionData;
+
+/** The X Battle cards' data is already in its fixture form. */
+const AS_IS_EVENT_TYPES: readonly string[] = [
+	X_SET_COUNT_EVENT_TYPE,
+	X_SET_RESULT_EVENT_TYPE,
+	X_RANK_POSITION_EVENT_TYPE,
+];
 
 function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
 	return eventType === DEATH_EVENT_TYPE;
@@ -64,6 +86,9 @@ export function buildExpectedJson(
 ): string {
 	if (!data) {
 		return `${JSON.stringify({ event: "none" }, null, 2)}\n`;
+	}
+	if (AS_IS_EVENT_TYPES.includes(eventType)) {
+		return `${JSON.stringify({ event: eventType, data }, null, 2)}\n`;
 	}
 	if (isDeath(data, eventType)) {
 		const label = weaponLabel(data.weaponType, data.weaponId);

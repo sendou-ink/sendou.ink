@@ -118,14 +118,22 @@ export class DetectorScheduler {
 		}
 	}
 
-	/** Drop all session state; `t` seeds the activity clock (chunk start). */
-	reset(t = Number.NEGATIVE_INFINITY): void {
+	/**
+	 * Drop all session state; `t` seeds the activity clock (chunk start).
+	 * `midStream`: a VoD chunk starting inside the file may start inside a game
+	 * whose intro it never sees, so it counts as an open match until a
+	 * scoreboard closes it or matchOpenMaxS passes — else the game's last reads
+	 * turn the chunk calm and skimming hops over the short screens after it.
+	 */
+	reset(t = Number.NEGATIVE_INFINITY, { midStream = false } = {}): void {
 		for (const [id, state] of this.#states) {
 			this.#states.set(id, freshState(state.info));
 		}
 		this.#maxT = t;
 		this.#lastActivityT = t;
-		this.#matchOpenUntilT = Number.NEGATIVE_INFINITY;
+		this.#matchOpenUntilT = midStream
+			? t + this.#options.matchOpenMaxS
+			: Number.NEGATIVE_INFINITY;
 	}
 
 	/** Earliest t any detector wants a check; frames before it skip analysis and readback. */

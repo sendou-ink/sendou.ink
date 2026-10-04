@@ -39,12 +39,19 @@ import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
 import type { DetectedEvent } from "../core/detectors/types";
+import type { XRankPositionData } from "../core/detectors/x-rank/position";
+import * as xRank from "../core/detectors/x-rank/rois";
+import type { XSetCountData } from "../core/detectors/x-rank/set-count";
+import type { XSetResultData } from "../core/detectors/x-rank/set-result";
 import {
 	lobbyLabel,
 	mainWeaponLabel,
 	modeLabel,
 	stageLabel,
 	weaponLabel,
+	xRankPositionLabel,
+	xSetCountLabel,
+	xSetResultLabel,
 } from "../core/labels";
 import {
 	homographyFromQuad,
@@ -250,6 +257,18 @@ function gateSummary(result: Result): string | null {
 			const data = event.data as unknown as ObjectiveData;
 			return `${confidence} · ${formatTimer(data.time)} · score ${data.score[0] ?? "?"}–${data.score[1] ?? "?"}`;
 		}
+		case "x-set-count": {
+			const data = event.data as unknown as XSetCountData;
+			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · set ${xSetCountLabel(data)}`;
+		}
+		case "x-set-result": {
+			const data = event.data as unknown as XSetResultData;
+			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${xSetResultLabel(data)}`;
+		}
+		case "x-rank-position": {
+			const data = event.data as unknown as XRankPositionData;
+			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${xRankPositionLabel(data)}`;
+		}
 		case "kill": {
 			const data = event.data as unknown as KillData;
 			return `${confidence} · ${formatTimer(data.time)} · splatted ${data.names.map((name) => name ?? "?").join(", ")}`;
@@ -362,6 +381,60 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 			for (const roi of kill.darkProbes(row)) rect(roi, "#facc15");
 		}
 		rect(objective.TIMER_DIGIT_ROI, "#f87171");
+		return;
+	}
+	if (detector === "x-set-count") {
+		rect(xRank.CARD_ICON_ROI, "#34d399");
+		rect(xRank.COUNT_WINS_DIGIT_ROI, "#f87171");
+		rect(xRank.COUNT_LOSSES_DIGIT_ROI, "#f87171");
+		rect(xRank.COUNT_LABEL_BAND, "#e879f9");
+		for (const x of xRank.COUNT_WIN_SLOT_CENTERS_X) {
+			const half = xRank.COUNT_WIN_SLOT_HALF;
+			rect(
+				{
+					x: x - half,
+					y: xRank.COUNT_WIN_SLOT_Y - half,
+					w: 2 * half,
+					h: 2 * half,
+				},
+				"#60a5fa",
+			);
+		}
+		for (const x of xRank.COUNT_LOSS_SLOT_CENTERS_X) {
+			const half = xRank.COUNT_LOSS_SLOT_HALF;
+			rect(
+				{
+					x: x - half,
+					y: xRank.COUNT_LOSS_SLOT_Y - half,
+					w: 2 * half,
+					h: 2 * half,
+				},
+				"#60a5fa",
+			);
+		}
+		for (const roi of xRank.COUNT_DARK_PROBES) rect(roi, "#facc15");
+		return;
+	}
+	if (detector === "x-set-result") {
+		rect(xRank.CARD_ICON_ROI, "#34d399");
+		rect(xRank.RESULT_HEADER_ROI, "#f87171");
+		for (const roi of xRank.RESULT_TILE_ROWS) rect(roi, "#60a5fa");
+		rect(xRank.RESULT_POWER_ROI, "#f87171");
+		rect(xRank.RESULT_CHANGE_ROI, "#e879f9");
+		for (const roi of [
+			...xRank.RESULT_DARK_PROBES,
+			...xRank.RESULT_PANEL_PROBES,
+		]) {
+			rect(roi, "#facc15");
+		}
+		return;
+	}
+	if (detector === "x-rank-position") {
+		rect(xRank.POSITION_ICON_ROI, "#34d399");
+		rect(xRank.POSITION_LABEL_ROI, "#e879f9");
+		rect(xRank.POSITION_NUMBER_ROI, "#f87171");
+		rect(xRank.POSITION_ARROW_ROI, "#60a5fa");
+		for (const roi of xRank.POSITION_DARK_PROBES) rect(roi, "#facc15");
 		return;
 	}
 	if (detector === "map-start") {
@@ -565,6 +638,7 @@ export function ScreenshotPage() {
 	const isMinimap = activeDetector === "minimap";
 	const isObjective = activeDetector === "objective";
 	const isKill = activeDetector === "kill";
+	const isXRank = activeDetector.startsWith("x-");
 	const winnerSide = String(event?.debug?.winnerSide ?? "left");
 	const rowRois = isReplay
 		? replayRows(winnerSide)
@@ -996,7 +1070,8 @@ export function ScreenshotPage() {
 			!isOwn &&
 			!isMinimap &&
 			!isObjective &&
-			!isKill ? (
+			!isKill &&
+			!isXRank ? (
 				<table className={styles.inspector}>
 					<thead>
 						<tr>

@@ -17,6 +17,9 @@ import {
 	type WeaponType,
 } from "../core/detectors/death/weapon-names";
 import type { ScannerLobby } from "../scanner-types";
+import type { XRankPositionData } from "./detectors/x-rank/position";
+import type { XSetCountData } from "./detectors/x-rank/set-count";
+import type { XSetResultData } from "./detectors/x-rank/set-result";
 
 const MISC = gameMisc as Record<string, string>;
 
@@ -60,4 +63,27 @@ const LOBBY_LABELS: Record<ScannerLobby, string> = {
 
 export function lobbyLabel(lobby: ScannerLobby | null): string | null {
 	return lobby === null ? null : LOBBY_LABELS[lobby];
+}
+
+/** "2-2", "?" for an unread side. */
+export function xSetCountLabel(data: XSetCountData): string {
+	return `${data.wins ?? "?"}-${data.losses ?? "?"}`;
+}
+
+/** "LLWWL · X Power 2723.2 (-29.2)" */
+export function xSetResultLabel(data: XSetResultData): string {
+	const results = data.results.map((r) => (r === "WIN" ? "W" : "L")).join("");
+	const change =
+		data.powerChange === null
+			? ""
+			: ` (${data.powerChange > 0 ? "+" : ""}${data.powerChange.toFixed(1)})`;
+	const power = data.power === null ? "?" : data.power.toFixed(1);
+	return `${results} · X Power ${power}${change}`;
+}
+
+/** "#259 ↓" */
+export function xRankPositionLabel(data: XRankPositionData): string {
+	const arrow =
+		data.direction === "UP" ? " ↑" : data.direction === "DOWN" ? " ↓" : "";
+	return `#${data.position ?? "?"}${arrow}`;
 }
