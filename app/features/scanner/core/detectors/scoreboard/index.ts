@@ -108,6 +108,9 @@ export interface ScoreboardResources {
 	/** header tag glyphs: lobby line, and the mode+stage line */
 	headerLobbyGlyphs: GlyphSet | null;
 	headerLineGlyphs: GlyphSet | null;
+	/** the same lines' kana for a Japanese header, read when the Latin read doesn't snap; without them JA headers read null */
+	headerLobbyJaGlyphs?: GlyphSet | null;
+	headerLineJaGlyphs?: GlyphSet | null;
 	/**
 	 * Replay-browser extras in FOT-RowdyStd (code line, VICTORY/DEFEAT tags); falls back to
 	 * rescaled name/header glyphs.
@@ -244,8 +247,12 @@ export function createScoreboardDetector(
 			headerLobbyGlyphs && headerLineGlyphs
 				? parseHeaderSteps(
 						gray,
-						headerLobbyGlyphs,
-						headerLineGlyphs,
+						{
+							lobby: headerLobbyGlyphs,
+							line: headerLineGlyphs,
+							lobbyJa: resources.headerLobbyJaGlyphs,
+							lineJa: resources.headerLineJaGlyphs,
+						},
 						speculative,
 					)
 				: done(null),

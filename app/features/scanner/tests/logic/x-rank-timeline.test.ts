@@ -68,6 +68,16 @@ describe("TimelineBuilder X Battle cards", () => {
 		]);
 	});
 
+	test("keeps a read X Power over an earlier unread one", () => {
+		const timeline = new TimelineBuilder();
+		timeline.push(result(1.3, { powerChange: 20, power: null }));
+		timeline.push(result(1.5, { powerChange: 20, power: 4571.9 }));
+
+		expect(timeline.events.map((e) => e.data)).toMatchObject([
+			{ powerChange: 20, power: 4571.9 },
+		]);
+	});
+
 	test("ignores an X Power read further away than the whole change", () => {
 		const timeline = new TimelineBuilder();
 		timeline.push(result(1.4, { powerChange: -29.2, power: 2728.0 }));

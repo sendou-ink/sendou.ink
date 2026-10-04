@@ -62,15 +62,16 @@ export const RESULT_PANEL_PROBES: readonly Roi[] = [
 export const RESULT_HEADER_ROI: Roi = { x: 840, y: 342, w: 240, h: 72 };
 export const RESULT_HEADER_HEIGHT = 52;
 /**
- * The result tiles' two rows, read in play order. The tiles center on the
- * card, so their x depends on the count (5 games: three over two, 4: two
- * over two): each tile is found as a run of VICTORY yellow or DEFEAT purple
- * text columns instead of at a fixed slot.
+ * The result tiles, read in play order. They center on the card, so their
+ * place depends on the count (5 games: three over two, 4: two over two, 3:
+ * one row midway between those two): each row is found as a band of VICTORY
+ * yellow / DEFEAT purple text, each tile as a run of its text columns.
  */
-export const RESULT_TILE_ROWS: readonly Roi[] = [
-	{ x: 640, y: 428, w: 640, h: 42 },
-	{ x: 640, y: 478, w: 640, h: 42 },
-];
+export const RESULT_TILES_ROI: Roi = { x: 640, y: 422, w: 640, h: 104 };
+/** Text rows of one band sit closer than this; the two rows' text ~25px apart. */
+export const RESULT_TILE_LINE_MAX_GAP = 4;
+/** Tile text is ~25px tall; a shorter band is a fragment. */
+export const RESULT_TILE_LINE_MIN_HEIGHT = 12;
 /** Letters of one word sit closer than this; neighboring tiles' words ~75px apart. */
 export const RESULT_TILE_TEXT_MAX_GAP = 30;
 /** "DEFEAT" spans ~120px; a narrower run of tile-colored text is a fragment. */
@@ -84,7 +85,7 @@ export const RESULT_CHANGE_HEIGHT = 23;
 export const RESULT_CHANGE_BIN_THRESHOLD = 200;
 export const RESULT_SIGNATURE_ROI: Roi = { x: 640, y: 340, w: 740, h: 420 };
 
-// --- position ("Position / Estimate #259 ↓") ---
+// --- position ("Position / Estimate #259 ↓", Japanese "推定 1位 →") ---
 
 export const POSITION_DARK_PROBES: readonly Roi[] = [
 	{ x: 540, y: 700, w: 150, h: 100 },
@@ -99,4 +100,5 @@ export const POSITION_LABEL_MIN_FRACTION = 0.05;
 export const POSITION_NUMBER_ROI: Roi = { x: 640, y: 626, w: 530, h: 118 };
 export const POSITION_NUMBER_HEIGHT = 92;
 export const POSITION_NUMBER_MIN_FRACTION = 0.05;
-export const POSITION_ARROW_ROI: Roi = { x: 1160, y: 575, w: 140, h: 180 };
+/** From the number's tail to the card's right edge: the arrow sits 25-40px after the number, so its x varies with the digit count. */
+export const POSITION_ARROW_ROI: Roi = { x: 1000, y: 575, w: 400, h: 185 };

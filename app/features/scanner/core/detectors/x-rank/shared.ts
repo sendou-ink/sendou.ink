@@ -27,6 +27,8 @@ const RUN_MIN_INK = 8;
 const RUN_MIN_INK_RATIO = 0.01;
 /** Columns of background kept around a run so its glyph edges survive masking. */
 const RUN_PAD = 3;
+/** A digit matches at ~0.94; a symbol ("#", "位") matches its closest digit at ~0.55. */
+const SYMBOL_MAX_SCORE = 0.75;
 
 export interface ModeIconTemplate {
 	mode: RankedModeShort;
@@ -142,9 +144,10 @@ export function* readModeIconSteps(
  * Reads one line of BlitzBold digits. The digit templates can't match glyphs
  * smaller than themselves, so the line is cut into ink columns first: short
  * runs are a decimal point or a minus told apart by placement, each tall run
- * is recognized on its own (it may hold fused digits). `leading` handles a
- * glyph outside the digit set that opens the line: a sign ("+" is nearly
- * digit-tall, so only a flat one is "-") or one to drop (the position's "#").
+ * is recognized on its own (it may hold fused digits). `extras` handles
+ * glyphs outside the digit set: a leading sign ("+" is nearly digit-tall, so
+ * only a flat one is "-"), or symbols to drop at either end of the line (the
+ * position's "#259", "1位"), told apart from digits by their poor match.
  */
 export function* readNumberSteps(
 	gray: Mat,
@@ -152,7 +155,7 @@ export function* readNumberSteps(
 	digits: GlyphSet,
 	binThreshold: number,
 	speculative: boolean,
-	leading?: "sign" | "skip",
+	extras?: "sign" | "symbols",
 ): MatchSteps<NumberRead> {
 	const cv = getCV();
 	const crop = copyRoi(gray, roi);
@@ -166,7 +169,7 @@ export function* readNumberSteps(
 		lineHeight * lineHeight * RUN_MIN_INK_RATIO,
 	);
 	const inked = runs.filter((r) => r.ink >= minInk);
-	const lead = leading ? inked[0] : undefined;
+	const lead = extras === "sign" ? inked[0] : undefined;
 	const kept = lead ? inked.slice(1) : inked;
 	const isTall = (r: InkRun) =>
 		r.y1 - r.y0 >= lineHeight * PUNCTUATION_MAX_HEIGHT_RATIO;
@@ -194,12 +197,24 @@ export function* readNumberSteps(
 	for (const c of crops) c.delete();
 	crop.delete();
 
+	// a symbol can split into several runs (位's two radicals)
+	const isSymbol = (index: number) =>
+		minScore(reads[index]!.chars.map((c) => c.score)) < SYMBOL_MAX_SCORE;
+	let first = 0;
+	let last = tall.length - 1;
+	if (extras === "symbols") {
+		while (first <= last && isSymbol(first)) first++;
+		while (last >= first && isSymbol(last)) last--;
+	}
+	const symbols = new Set([...tall.slice(0, first), ...tall.slice(last + 1)]);
+
 	let text = "";
-	if (lead && leading === "sign") {
+	if (lead) {
 		text += isFlat(lead) ? "-" : "+";
 	}
 	const digitScores: number[] = [];
 	for (const run of kept) {
+		if (symbols.has(run)) continue;
 		const index = tall.indexOf(run);
 		if (index >= 0) {
 			for (const char of reads[index]!.chars) {

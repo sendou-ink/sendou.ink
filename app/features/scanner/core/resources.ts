@@ -58,6 +58,8 @@ const ATLASES = {
 	nameGlyphs: "scoreboard-names",
 	headerLobbyGlyphs: "scoreboard-header-lobby",
 	headerLineGlyphs: "scoreboard-header-line",
+	headerLobbyJaGlyphs: "scoreboard-header-lobby-ja",
+	headerLineJaGlyphs: "scoreboard-header-line-ja",
 	replayCodeGlyphs: "scoreboard-replay-code",
 	replayResultGlyphs: "scoreboard-replay-result",
 	deathWeaponGlyphs: "death-weapon",
@@ -231,6 +233,12 @@ export async function assembleScoreboardResources(
 		},
 		get headerLineGlyphs() {
 			return atlas.headerLineGlyphs();
+		},
+		get headerLobbyJaGlyphs() {
+			return atlas.headerLobbyJaGlyphs();
+		},
+		get headerLineJaGlyphs() {
+			return atlas.headerLineJaGlyphs();
 		},
 		get replayCodeGlyphs() {
 			return atlas.replayCodeGlyphs();

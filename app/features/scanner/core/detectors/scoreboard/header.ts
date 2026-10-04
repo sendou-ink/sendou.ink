@@ -3,6 +3,8 @@
  * boxes. Tags auto-size, so each band is trimmed to the tag extent (near-black
  * bg + white text vs the mid-brightness thumbnail), OCR'd as one line and
  * snapped against every language's mode × stage combos (core/localized.ts).
+ * The Latin atlases carry no kana, so a band that doesn't snap is read again
+ * with the Japanese ones and the better snap wins.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
@@ -14,9 +16,16 @@ import {
 } from "../../glyphs";
 import { copyRoi } from "../../image";
 import { ALL_LOBBY_ENTRIES, MODE_STAGE_COMBOS } from "../../localized";
-import { all, type MatchSteps } from "../../match-steps";
+import { all, done, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
 import { HEADER_LINE_BAND, HEADER_LOBBY_BAND } from "./rois";
+
+export interface HeaderGlyphs {
+	lobby: GlyphSet;
+	line: GlyphSet;
+	lobbyJa?: GlyphSet | null;
+	lineJa?: GlyphSet | null;
+}
 
 export interface ParsedHeader {
 	lobby: ScannerLobby | null;
@@ -140,21 +149,45 @@ export function* readTagBandSteps(
 
 export function* parseHeaderSteps(
 	gray: Mat,
-	lobbyGlyphs: GlyphSet,
-	lineGlyphs: GlyphSet,
+	glyphs: HeaderGlyphs,
 	speculative = false,
 ): MatchSteps<ParsedHeader> {
-	const [lobbyReading, lineReading] = yield* all([
-		readTagBandSteps(gray, HEADER_LOBBY_BAND, lobbyGlyphs, {}, speculative),
-		readTagBandSteps(gray, HEADER_LINE_BAND, lineGlyphs, {}, speculative),
+	const [latinLobby, latinLine] = yield* all([
+		readTagBandSteps(gray, HEADER_LOBBY_BAND, glyphs.lobby, {}, speculative),
+		readTagBandSteps(gray, HEADER_LINE_BAND, glyphs.line, {}, speculative),
 	]);
+	const snapLobby = (reading: string) =>
+		reading ? closestBy(reading, ALL_LOBBY_ENTRIES, (e) => e.text) : null;
+	const snapLine = (reading: string) =>
+		reading ? closestBy(reading, MODE_STAGE_COMBOS, (c) => c.text) : null;
+	const latinLobbyMatch = snapLobby(latinLobby);
+	const latinLineMatch = snapLine(latinLine);
 
-	const lobbyMatch = lobbyReading
-		? closestBy(lobbyReading, ALL_LOBBY_ENTRIES, (e) => e.text)
-		: null;
-	const lineMatch = lineReading
-		? closestBy(lineReading, MODE_STAGE_COMBOS, (c) => c.text)
-		: null;
+	const unsnapped = (match: { score: number } | null) =>
+		(match?.score ?? 0) < MIN_MATCH_SCORE;
+	const [jaLobby, jaLine] = yield* all([
+		glyphs.lobbyJa && unsnapped(latinLobbyMatch)
+			? readTagBandSteps(
+					gray,
+					HEADER_LOBBY_BAND,
+					glyphs.lobbyJa,
+					{},
+					speculative,
+				)
+			: done(""),
+		glyphs.lineJa && unsnapped(latinLineMatch)
+			? readTagBandSteps(gray, HEADER_LINE_BAND, glyphs.lineJa, {}, speculative)
+			: done(""),
+	]);
+	const jaLobbyMatch = snapLobby(jaLobby);
+	const jaLineMatch = snapLine(jaLine);
+	const jaLobbyWins =
+		(jaLobbyMatch?.score ?? 0) > (latinLobbyMatch?.score ?? 0);
+	const jaLineWins = (jaLineMatch?.score ?? 0) > (latinLineMatch?.score ?? 0);
+	const lobbyReading = jaLobbyWins ? jaLobby : latinLobby;
+	const lineReading = jaLineWins ? jaLine : latinLine;
+	const lobbyMatch = jaLobbyWins ? jaLobbyMatch : latinLobbyMatch;
+	const lineMatch = jaLineWins ? jaLineMatch : latinLineMatch;
 
 	const lobby =
 		lobbyMatch && lobbyMatch.score >= MIN_MATCH_SCORE

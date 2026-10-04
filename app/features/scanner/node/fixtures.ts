@@ -118,7 +118,7 @@ interface ExpectedScoreboard {
 		/** Objective TC/RM: the icon along the track, -100 (left end) .. 100 (right end); null = no icon. XRankPosition: the X Rank position */
 		position?: number | null;
 		/** XRankPosition only: the arrow beside the position */
-		direction?: "UP" | "DOWN" | null;
+		direction?: "UP" | "DOWN" | "SAME" | null;
 		/** XSetCount only */
 		wins?: number | null;
 		losses?: number | null;

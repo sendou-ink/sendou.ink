@@ -418,7 +418,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 	if (detector === "x-set-result") {
 		rect(xRank.CARD_ICON_ROI, "#34d399");
 		rect(xRank.RESULT_HEADER_ROI, "#f87171");
-		for (const roi of xRank.RESULT_TILE_ROWS) rect(roi, "#60a5fa");
+		rect(xRank.RESULT_TILES_ROI, "#60a5fa");
 		rect(xRank.RESULT_POWER_ROI, "#f87171");
 		rect(xRank.RESULT_CHANGE_ROI, "#e879f9");
 		for (const roi of [

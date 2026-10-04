@@ -162,8 +162,12 @@ export function createScoreboardOwnDetector(
 			headerLobbyGlyphs && headerLineGlyphs
 				? parseHeaderSteps(
 						gray,
-						headerLobbyGlyphs,
-						headerLineGlyphs,
+						{
+							lobby: headerLobbyGlyphs,
+							line: headerLineGlyphs,
+							lobbyJa: resources.headerLobbyJaGlyphs,
+							lineJa: resources.headerLineJaGlyphs,
+						},
 						speculative,
 					)
 				: done(null),

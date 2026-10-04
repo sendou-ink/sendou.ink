@@ -1,0 +1,12 @@
+{
+  "event": "XSetResult",
+  "data": {
+    "mode": "TC",
+    "results": ["WIN", "WIN", "WIN"],
+    "powerChange": 20,
+    "power": 4571.9
+  },
+  "options": {
+    "notes": "-I23PqqYtHQ VoD 1:01:52: Japanese card, a three-game set's tiles in one row"
+  }
+}

@@ -1,7 +1,9 @@
 /**
  * XRankPositionDetector: the X Rank position card after the set result —
- * teal "Position", "Estimate", the yellow "#259" and an arrow: grey and
- * pointing down when the position number grew, orange and up when it shrank. The number counts from the old position
+ * teal "Position", "Estimate", the yellow "#259" (the Japanese card: a white
+ * "1位") and an arrow: grey and pointing down when the position number grew,
+ * orange and up when it shrank, green and pointing right when it held. The
+ * arrow follows the number, so it is found as the card's rightmost ink. The number counts from the old position
  * toward the new one in the arrow's direction for ~0.5s and holds the final
  * value only ~0.3s before the card fades, so the timeline keeps the read
  * furthest along that direction (`xRankPositionProgress`).
@@ -35,7 +37,7 @@ import {
 
 export const X_RANK_POSITION_EVENT_TYPE = "XRankPosition";
 
-export type XRankPositionDirection = "UP" | "DOWN";
+export type XRankPositionDirection = "UP" | "DOWN" | "SAME";
 
 export interface XRankPositionData {
 	mode: RankedModeShort | null;
@@ -45,8 +47,12 @@ export interface XRankPositionData {
 
 /** Confidence of a read whose number didn't parse: under the timeline floor. */
 const UNREAD_CONFIDENCE = 0.3;
-/** The arrow is ~165px tall; a shorter white run is something else. */
-const ARROW_MIN_HEIGHT = 100;
+/** The arrow is ~155px long; a shorter run of ink is something else. */
+const ARROW_MIN_LENGTH = 90;
+/** Columns with fewer ink pixels are speckle. */
+const ARROW_COLUMN_MIN_INK = 3;
+/** The arrow's tail stripes sit closer than this; the number ends ≥25px before it. */
+const ARROW_MAX_COLUMN_GAP = 8;
 /** Rows sampled at each end of the arrow, as a fraction of its height. */
 const ARROW_END_FRACTION = 0.12;
 /** The shaft end is several times wider than the head's tip. */
@@ -60,7 +66,14 @@ export function xRankPositionProgress(a: unknown, b: unknown): number {
 	const da = a as XRankPositionData;
 	const db = b as XRankPositionData;
 	const direction = db.direction ?? da.direction;
-	if (da.position === null || db.position === null || !direction) return 0;
+	if (
+		da.position === null ||
+		db.position === null ||
+		!direction ||
+		direction === "SAME"
+	) {
+		return 0;
+	}
 	return Math.sign(
 		(db.position - da.position) * (direction === "DOWN" ? 1 : -1),
 	);
@@ -87,7 +100,7 @@ export function createXRankPositionDetector(
 			allDark(gray, POSITION_DARK_PROBES, CARD_DARK_MAX_MEAN),
 			rgbFraction(rgb, POSITION_LABEL_ROI, isTitleTeal) >=
 				POSITION_LABEL_MIN_FRACTION,
-			rgbFraction(rgb, POSITION_NUMBER_ROI, isNumberYellow) >=
+			rgbFraction(rgb, POSITION_NUMBER_ROI, isNumberInk) >=
 				POSITION_NUMBER_MIN_FRACTION,
 		];
 		const pass = checks.every(Boolean);
@@ -117,7 +130,7 @@ export function createXRankPositionDetector(
 				set,
 				NUMBER_BIN_THRESHOLD,
 				speculative,
-				"skip",
+				"symbols",
 			),
 			readModeIconSteps(rgb, POSITION_ICON_ROI, resources.modeIcons),
 		]);
@@ -150,22 +163,41 @@ export function createXRankPositionDetector(
 	};
 }
 
-/** The arrow's shaft end is wide, its head ends in a point: whichever end is narrower is where it points. */
+/**
+ * The arrow is the rightmost run of ink columns. Lying flat, it held; upright,
+ * its shaft end is wide and its head ends in a point, so whichever end is
+ * narrower is where it points.
+ */
 function arrowDirection(rgb: Mat): XRankPositionDirection | null {
 	const crop = copyRoi(rgb, POSITION_ARROW_ROI);
 	const { rows, cols } = crop;
 	const data = crop.data;
+	const isInk = (x: number, y: number) => {
+		const i = (y * cols + x) * 3;
+		return isArrowInk(data[i]!, data[i + 1]!, data[i + 2]!);
+	};
+	const inked = Array.from({ length: cols }, (_, x) => {
+		let ink = 0;
+		for (let y = 0; y < rows; y++) if (isInk(x, y)) ink++;
+		return ink >= ARROW_COLUMN_MIN_INK;
+	});
+	const x1 = inked.lastIndexOf(true);
+	let x0 = x1;
+	for (let x = x1 - 1; x >= 0 && x0 - x <= ARROW_MAX_COLUMN_GAP; x--) {
+		if (inked[x]) x0 = x;
+	}
 	const widths = new Array<number>(rows).fill(0);
 	for (let y = 0; y < rows; y++) {
-		for (let x = 0; x < cols; x++) {
-			const i = (y * cols + x) * 3;
-			if (isArrowInk(data[i]!, data[i + 1]!, data[i + 2]!)) widths[y]!++;
+		for (let x = Math.max(0, x0); x <= x1; x++) {
+			if (isInk(x, y)) widths[y]!++;
 		}
 	}
 	crop.delete();
 	const y0 = widths.findIndex((w) => w > 0);
 	const y1 = widths.findLastIndex((w) => w > 0);
-	if (y0 < 0 || y1 - y0 < ARROW_MIN_HEIGHT) return null;
+	if (y0 < 0) return null;
+	if (x1 - x0 >= y1 - y0) return x1 - x0 >= ARROW_MIN_LENGTH ? "SAME" : null;
+	if (y1 - y0 < ARROW_MIN_LENGTH) return null;
 	const band = Math.max(1, Math.round((y1 - y0) * ARROW_END_FRACTION));
 	const mean = (from: number) =>
 		widths.slice(from, from + band).reduce((sum, w) => sum + w, 0) / band;
@@ -180,11 +212,12 @@ function isTitleTeal(r: number, g: number, b: number): boolean {
 	return g >= 150 && b >= 120 && r <= 120;
 }
 
-function isNumberYellow(r: number, g: number, b: number): boolean {
-	return r >= 170 && g >= 170 && b <= 110;
+/** Yellow "#259", or the Japanese card's white "1位". */
+function isNumberInk(r: number, g: number, b: number): boolean {
+	return r >= 170 && g >= 170 && (b <= 110 || b >= 170);
 }
 
-/** DOWN is a light grey arrow darkening toward its head, UP an orange one; the card around them is near-black. */
+/** DOWN is a light grey arrow darkening toward its head, UP an orange one, SAME a green one; the card around them is near-black. */
 function isArrowInk(r: number, g: number, b: number): boolean {
 	return Math.max(r, g, b) >= 100;
 }

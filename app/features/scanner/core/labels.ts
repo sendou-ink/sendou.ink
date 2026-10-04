@@ -84,6 +84,12 @@ export function xSetResultLabel(data: XSetResultData): string {
 /** "#259 ↓" */
 export function xRankPositionLabel(data: XRankPositionData): string {
 	const arrow =
-		data.direction === "UP" ? " ↑" : data.direction === "DOWN" ? " ↓" : "";
+		data.direction === "UP"
+			? " ↑"
+			: data.direction === "DOWN"
+				? " ↓"
+				: data.direction === "SAME"
+					? " →"
+					: "";
 	return `#${data.position ?? "?"}${arrow}`;
 }

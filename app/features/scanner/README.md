@@ -646,7 +646,10 @@ Fonts are proprietary and gitignored: `BlitzMain.otf`, `BlitzBold.otf`,
 root; from the splatoon3-fonts repo). Atlas builders fail loudly without
 them. Names and row digits use BlitzMain; team totals BlitzBold; the replay
 code line and VICTORY/DEFEAT tags FOT-RowdyStd-EB; the JP death message mixes
-condensed Kurokane and Rowdy (`death-weapon-ja`). Regeneration order:
+condensed Kurokane and Rowdy (`death-weapon-ja`); the Japanese results
+header reads through its own Blitz-kana pair (`scoreboard-header-lobby-ja`,
+`scoreboard-header-line-ja`), tried only on a band the Latin atlases don't
+snap. Regeneration order:
 `scanner:bootstrap-atlas` (fixture crops win via tie-break) →
 `scanner:build-glyph-atlas`; localized sets via
 `scanner:build-localized-entries` (expects a splat3 checkout at `../splat3`)
@@ -725,7 +728,8 @@ After an X Battle game the lobby shows one near-black card
 LOSSES 1 - 2" over win slots and loss squids) after every game that leaves
 the set undecided, then after the deciding game `XSetResult` (the "2 - 3"
 header, one VICTORY/DEFEAT tile per game in play order, X Power and its
-signed change) followed by `XRankPosition` ("#259" and an up/down arrow).
+signed change) followed by `XRankPosition` ("#259" and an up/down arrow, or a
+flat one when the position held).
 Every card carries the mode off its icon (`img/modes/*`, RGB templates on
 black). Numbers are BlitzBold, read with the team-digit atlas rescaled;
 punctuation ("." "-" "+") is told apart by ink-run geometry since the digit
@@ -742,13 +746,18 @@ confidence: a further-along read replaces the kept one, an earlier one
 merges into it. A count read whose digits disagree with its slots, or a set
 result whose header doesn't describe a decided set of tiles (tiles still
 popping in), scores under the timeline floor. The result tiles center on
-the card (five games three over two, four two over two), so each is found
-as a run of VICTORY yellow / DEFEAT purple text rather than at a fixed
+the card (five games three over two, four two over two, three in one row
+midway between), so each row is found as a band of VICTORY yellow / DEFEAT
+purple text and each tile as a run of its columns rather than at a fixed
 slot. A gain shows "+30.0" on a teal splat and an orange up arrow, a loss
-"-29.2" on a grey splat and a grey down arrow. Not yet attested: a
-three-game set's tiles, the card while X Power is still being calculated,
-an unchanged position, and modes other than Tower Control (the other mode
-icons are matched untested). The lobby shows the cards after the
+"-29.2" on a grey splat and a grey down arrow, a held position a green
+right arrow (`SAME`). The arrow follows the number, so it is read as the
+card's rightmost ink. The Japanese cards say WIN/LOSE on the tiles and
+draw the position as a white "1位": number reads drop poorly matching
+glyphs at either end of the line (the "#", the "位"). Not yet attested: the
+card while X Power is still being calculated, a Japanese position that
+moved (yellow or white digits?), and modes other than Tower Control (the
+other mode icons are matched untested). The lobby shows the cards after the
 personal results screen but before the game's results screen (read while
 matchmaking for the next game), so the match builder hands each card to the
 game still being gathered, else to an X Battle game closed within 90s
@@ -758,4 +767,5 @@ them. Only X Battle shows the cards, so a game carrying one with its lobby
 unread (results screen missed or its header misread) is an X Battle game: the match card shows
 the set count in its meta line, and the session's X list draws the set
 result and position as a divider above the deciding game. Fixtures come from the
-fW5h-Ooc-Cg VoD (`x-set-count/`, `x-set-result/`, `x-rank-position/`).
+fW5h-Ooc-Cg VoD (`x-set-count/`, `x-set-result/`, `x-rank-position/`), the
+Japanese ones (`*-ja`) from -I23PqqYtHQ.
