@@ -56,6 +56,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 afterEach(() => {
 	setReadyState("CONNECTED");
 	currentUser.id = null;
+	localStorage.removeItem("chat__cooldowns");
 });
 
 const ALICE: ChatMessageAuthor = {

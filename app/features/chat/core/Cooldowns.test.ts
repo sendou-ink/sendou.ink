@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as Cooldowns from "./Cooldowns";
 
 describe("Cooldowns.until", () => {
@@ -22,5 +22,42 @@ describe("Cooldowns.until", () => {
 		Cooldowns.start(["restarted"], 1_000, 5_800);
 
 		expect(Cooldowns.until("restarted", 6_200)).toBe(6_800);
+	});
+
+	describe("with local storage", () => {
+		const storage = new Map<string, string>();
+
+		beforeEach(() => {
+			storage.clear();
+			vi.stubGlobal("localStorage", {
+				getItem: (key: string) => storage.get(key) ?? null,
+				setItem: (key: string, value: string) => storage.set(key, value),
+			});
+		});
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		test("reads a cooldown another tab started", () => {
+			storage.set("chat__cooldowns", JSON.stringify({ "mention:1": 6_000 }));
+
+			expect(Cooldowns.until("mention:1", 5_000)).toBe(6_000);
+		});
+
+		test("saves only the cooldowns still running", () => {
+			Cooldowns.start(["old"], 1_000, 1_000);
+			Cooldowns.start(["new"], 1_000, 5_000);
+
+			expect(JSON.parse(storage.get("chat__cooldowns")!)).toEqual({
+				new: 6_000,
+			});
+		});
+
+		test("treats unreadable storage as no cooldowns", () => {
+			storage.set("chat__cooldowns", "not json");
+
+			expect(Cooldowns.until("mention:1", 5_000)).toBeNull();
+		});
 	});
 });
