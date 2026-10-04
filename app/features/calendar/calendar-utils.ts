@@ -1,4 +1,8 @@
 import { addDays, addWeeks, startOfWeek, subWeeks } from "date-fns";
+import {
+	dayMonthYearToLocalDate,
+	localDateToDayMonthYear,
+} from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import type { DayMonthYear } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
@@ -125,7 +129,7 @@ export function datesToRegClosesAt({
 
 export function daysForCalendar(currentDate?: DayMonthYear) {
 	const anchor = currentDate
-		? new Date(currentDate.year, currentDate.month, currentDate.day)
+		? dayMonthYearToLocalDate(currentDate)
 		: new Date();
 	const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
 
@@ -133,22 +137,14 @@ export function daysForCalendar(currentDate?: DayMonthYear) {
 		previous: weekDays(subWeeks(weekStart, 1)),
 		shown: weekDays(weekStart),
 		next: weekDays(addWeeks(weekStart, 1)),
-		current: dateToDayMonthYear(anchor),
+		current: localDateToDayMonthYear(anchor),
 	};
 }
 
 function weekDays(weekStart: Date): Array<DayMonthYear> {
 	return Array.from({ length: DAYS_SHOWN_AT_A_TIME }, (_, i) =>
-		dateToDayMonthYear(addDays(weekStart, i)),
+		localDateToDayMonthYear(addDays(weekStart, i)),
 	);
-}
-
-function dateToDayMonthYear(date: Date): DayMonthYear {
-	return {
-		day: date.getDate(),
-		month: date.getMonth(),
-		year: date.getFullYear(),
-	};
 }
 
 export function calendarEventSorter(a: CalendarEvent, b: CalendarEvent) {

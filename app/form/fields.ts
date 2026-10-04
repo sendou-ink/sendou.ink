@@ -12,10 +12,12 @@ import type {
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
+import { dayMonthYearToDate } from "~/utils/dates";
 import type { AnySyncSchema, DayMonthYear } from "~/utils/schema";
 import {
 	coerceNumber,
 	date,
+	dayMonthYear as dayMonthYearSchema,
 	falsyToNull,
 	id,
 	preprocess,
@@ -630,18 +632,22 @@ type DateTimeArgs = WithTypedTranslationKeys<
 	maxMessage?: FormsTranslationKey;
 };
 
-function boundedDate(args: DateTimeArgs, schema: v.GenericSchema<Date, Date>) {
+function boundedDate<TSchema extends AnySyncSchema>(
+	args: DateTimeArgs,
+	schema: TSchema,
+	toDate: (value: v.InferOutput<TSchema>) => Date,
+) {
 	const resolveMin = args.min ?? (() => new Date(Date.UTC(2015, 4, 28)));
 	const resolveMax = args.max ?? (() => new Date(Date.UTC(2030, 4, 28)));
 
 	return v.pipe(
 		schema,
 		v.check(
-			(d) => d >= resolveMin(),
+			(value) => toDate(value) >= resolveMin(),
 			`forms:${args.minMessage ?? "errors.dateTooEarly"}`,
 		),
 		v.check(
-			(d) => d <= resolveMax(),
+			(value) => toDate(value) <= resolveMax(),
 			`forms:${args.maxMessage ?? "errors.dateTooLate"}`,
 		),
 	);
@@ -662,7 +668,10 @@ function datetimeMetadata(
 
 export function datetime(args: DateTimeArgs): v.GenericSchema<Date> {
 	return register(
-		preprocess(date, boundedDate(args, v.date("forms:errors.required"))),
+		preprocess(
+			date,
+			boundedDate(args, v.date("forms:errors.required"), R.identity()),
+		),
 		datetimeMetadata(args, { type: "datetime", required: true }),
 	) as never;
 }
@@ -672,22 +681,19 @@ export function datetimeOptional(
 ): v.NullishSchema<v.GenericSchema<Date>, undefined> {
 	// `nullish` stays outermost so `v.object` reads the key as optional (a pipe would hide the wrapper)
 	return register(
-		v.nullish(preprocess(date, boundedDate(args, v.date()))),
+		v.nullish(preprocess(date, boundedDate(args, v.date(), R.identity()))),
 		datetimeMetadata(args, { type: "datetime", required: false }),
 	) as never;
 }
 
 export function dayMonthYear(
 	args: DateTimeArgs,
-): v.GenericSchema<Date, DayMonthYear> {
+): v.GenericSchema<DayMonthYear> {
 	return register(
-		v.pipe(
-			preprocess(date, boundedDate(args, v.date("forms:errors.required"))),
-			v.transform((d) => ({
-				day: d.getDate(),
-				month: d.getMonth(),
-				year: d.getFullYear(),
-			})),
+		boundedDate(
+			args,
+			v.object(dayMonthYearSchema.entries, "forms:errors.required"),
+			dayMonthYearToDate,
 		),
 		datetimeMetadata(args, { type: "date", required: true }),
 	) as never;

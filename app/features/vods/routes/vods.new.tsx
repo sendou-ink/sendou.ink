@@ -129,11 +129,7 @@ function vodToEditToFormValues(vodToEdit: VodToEdit) {
 		vodToEditId: vodToEdit.id,
 		youtubeUrl: vodToEdit.youtubeUrl,
 		title: vodToEdit.title,
-		date: new Date(
-			vodToEdit.date.year,
-			vodToEdit.date.month,
-			vodToEdit.date.day,
-		),
+		date: vodToEdit.date,
 		type: vodToEdit.type,
 		teamSize: String(teamSize) as "1" | "2" | "3" | "4",
 		pov: vodToEdit.pov,

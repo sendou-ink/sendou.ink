@@ -1,6 +1,7 @@
 import * as v from "valibot";
-import { describe, expect, test } from "vitest";
-import { textField, textFieldOptional } from "./fields";
+import { afterEach, describe, expect, test } from "vitest";
+import { localDateToDayMonthYear } from "~/utils/dates";
+import { dayMonthYear, textField, textFieldOptional } from "./fields";
 
 describe("textField", () => {
 	const urlSchema = textField({ validate: "url", maxLength: 30 });
@@ -34,5 +35,34 @@ describe("textFieldOptional", () => {
 		{ input: undefined, why: "missing value" },
 	])("parses to null ($why)", ({ input }) => {
 		expect(v.parse(urlSchema, input)).toBeNull();
+	});
+});
+
+describe("dayMonthYear", () => {
+	const schema = dayMonthYear({ label: "labels.date" });
+	const originalTimezone = process.env.TZ;
+
+	afterEach(() => {
+		if (originalTimezone === undefined) {
+			delete process.env.TZ;
+		} else {
+			process.env.TZ = originalTimezone;
+		}
+	});
+
+	test.each([
+		{ clientTimezone: "Europe/Helsinki", why: "client ahead of UTC" },
+		{ clientTimezone: "America/New_York", why: "client behind UTC" },
+		{ clientTimezone: "Pacific/Kiritimati", why: "client far ahead of UTC" },
+	])("keeps the day picked on the client ($why)", ({ clientTimezone }) => {
+		process.env.TZ = clientTimezone;
+		const pickedOnClient = JSON.parse(
+			JSON.stringify(localDateToDayMonthYear(new Date(2026, 8, 28))),
+		);
+
+		process.env.TZ = "UTC";
+		const result = v.parse(schema, pickedOnClient);
+
+		expect(result).toEqual({ day: 28, month: 8, year: 2026 });
 	});
 });
