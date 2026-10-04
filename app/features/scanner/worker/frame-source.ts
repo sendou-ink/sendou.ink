@@ -56,6 +56,7 @@ export type DecodeRequest =
 			/** the stream ends at the first sample at or past this time */
 			end: number;
 			preview: PreviewOptions;
+			hardwareAcceleration: HardwareAcceleration;
 	  }
 	| { kind: "floor"; session: number; t: number }
 	| { kind: "release"; session: number }
@@ -153,10 +154,11 @@ export function openFrameSource(
 	start: number,
 	end: number,
 	preview: PreviewOptions,
+	hardwareAcceleration: HardwareAcceleration,
 ): FrameSource {
 	return worker
-		? workerSource(worker, file, start, end, preview)
-		: localSource(file, start, end, preview);
+		? workerSource(worker, file, start, end, preview, hardwareAcceleration)
+		: localSource(file, start, end, preview, hardwareAcceleration);
 }
 
 let nextSession = 0;
@@ -168,6 +170,7 @@ function workerSource(
 	start: number,
 	end: number,
 	preview: PreviewOptions,
+	hardwareAcceleration: HardwareAcceleration,
 ): FrameSource {
 	const session = nextSession++;
 	const queue: SourceItem[] = [];
@@ -201,7 +204,15 @@ function workerSource(
 	worker.addEventListener("message", onMessage);
 	worker.addEventListener("error", onError);
 	const send = (request: DecodeRequest) => worker.postMessage(request);
-	send({ kind: "open", session, file, start, end, preview });
+	send({
+		kind: "open",
+		session,
+		file,
+		start,
+		end,
+		preview,
+		hardwareAcceleration,
+	});
 	return {
 		async next() {
 			while (queue.length === 0 && !ended && !failure) {
@@ -244,6 +255,7 @@ function localSource(
 	start: number,
 	end: number,
 	preview: PreviewOptions,
+	hardwareAcceleration: HardwareAcceleration,
 ): FrameSource {
 	const input = new Input({
 		formats: ALL_FORMATS,
@@ -265,7 +277,9 @@ function localSource(
 		const track = await input.getPrimaryVideoTrack();
 		if (!track) throw new Error("no video track");
 		await pumpSamples({
-			samples: new VideoSampleSink(track).samples(start),
+			samples: new VideoSampleSink(track, { hardwareAcceleration }).samples(
+				start,
+			),
 			end,
 			preview,
 			floor: () => floor,

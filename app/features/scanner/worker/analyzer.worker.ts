@@ -65,6 +65,16 @@ const PROGRESS_POST_INTERVAL_MS = 400;
 const PREVIEW_POST_INTERVAL_MS = 600;
 const PREVIEW_WIDTH = 480;
 const PREVIEW_HEIGHT = 270;
+/**
+ * Failures (decode errors, a crashed GPU process taking the hardware decoder
+ * down) a chunk scan recovers from by resuming at its cursor before it gives
+ * up on the rest of its slice.
+ */
+const MAX_CHUNK_FAILURES = 10;
+/** A crashed GPU process takes a moment to come back. */
+const CHUNK_RETRY_DELAY_MS = 1000;
+/** Footage hopped over when a spot fails to decode even in software. */
+const UNDECODABLE_SKIP_S = 5;
 
 /** A read-back frame normalized to the canonical size, its capture pixels kept for the stored frame. */
 interface PreparedFrame {
@@ -288,6 +298,10 @@ async function scanChunk({
 	let lastPreviewAt = 0;
 	let cursor = tStart;
 	let mode: "active" | "skim" = "active";
+	let hardwareAcceleration: HardwareAcceleration = "no-preference";
+	let failures = 0;
+	let failuresHere = 0;
+	let failedAt = Number.NEGATIVE_INFINITY;
 
 	const input = new Input({
 		formats: ALL_FORMATS,
@@ -298,7 +312,7 @@ async function scanChunk({
 		if (!track || !(await track.canDecode())) {
 			throw new Error("worker cannot decode this file");
 		}
-		const samples = new VideoSampleSink(track);
+		let samples = new VideoSampleSink(track);
 		const packets = new EncodedPacketSink(track);
 
 		frameReader ??= createFrameReader(readFrame);
@@ -372,11 +386,18 @@ async function scanChunk({
 		 * likely due read back in the helper worker.
 		 */
 		const scanActive = async (): Promise<"calm" | "end"> => {
-			const source = openFrameSource(await decodeWorker(), file, cursor, tEnd, {
-				intervalMs: PREVIEW_POST_INTERVAL_MS,
-				width: PREVIEW_WIDTH,
-				height: PREVIEW_HEIGHT,
-			});
+			const source = openFrameSource(
+				await decodeWorker(),
+				file,
+				cursor,
+				tEnd,
+				{
+					intervalMs: PREVIEW_POST_INTERVAL_MS,
+					width: PREVIEW_WIDTH,
+					height: PREVIEW_HEIGHT,
+				},
+				hardwareAcceleration,
+			);
 			let upcoming: Promise<SourceItem | null> | null = null;
 			let exhausted = false;
 			/** decoded, stream order, steps not taken yet */
@@ -439,30 +460,38 @@ async function scanChunk({
 						wake();
 					},
 				);
-				while (!finished) {
-					for (const item of queue) if (item.t < bound) release(item);
-					const held = queue.filter((item) => item.frame || item.read);
-					if (!held.some((item) => item.read)) {
-						const likely = held.find((item) => item.t >= guess);
-						if (likely) readAhead(likely);
+				try {
+					while (!finished) {
+						for (const item of queue) if (item.t < bound) release(item);
+						const held = queue.filter((item) => item.frame || item.read);
+						if (!held.some((item) => item.read)) {
+							const likely = held.find((item) => item.t >= guess);
+							if (likely) readAhead(likely);
+						}
+						const pulling =
+							!exhausted &&
+							held.length < MAX_OPEN_FRAMES &&
+							!held.some((item) => item.read) &&
+							queue.every((item) => item.t < tEnd);
+						const woken = new Promise<void>((resolve) => {
+							wake = resolve;
+						});
+						if (!pulling) {
+							await woken;
+							continue;
+						}
+						upcoming ??= source.next();
+						if (
+							(await Promise.race([upcoming.then(() => true), woken])) !== true
+						)
+							continue;
+						const pulled = await next();
+						if (pulled) queue.push(pulled);
 					}
-					const pulling =
-						!exhausted &&
-						held.length < MAX_OPEN_FRAMES &&
-						!held.some((item) => item.read) &&
-						queue.every((item) => item.t < tEnd);
-					const woken = new Promise<void>((resolve) => {
-						wake = resolve;
-					});
-					if (!pulling) {
-						await woken;
-						continue;
-					}
-					upcoming ??= source.next();
-					if ((await Promise.race([upcoming.then(() => true), woken])) !== true)
-						continue;
-					const pulled = await next();
-					if (pulled) queue.push(pulled);
+				} catch (error) {
+					// a decode failure must not leave the pass running into the retry
+					await done.catch(() => {});
+					throw error;
 				}
 				await done;
 			};
@@ -504,37 +533,60 @@ async function scanChunk({
 		};
 
 		while (!chunkAborted && cursor < tEnd) {
-			if (mode === "active") {
-				// dense sequential decode: every frame is seen, the scheduler
-				// decides which are worth analyzing
-				if ((await scanActive()) === "end") break;
-				mode = "skim";
-			} else {
-				// skim: hop keyframe to keyframe (single-frame decodes) while
-				// calm, capped so long GOPs cannot hide a short screen
-				const key = await packets.getKeyPacket(cursor + MAX_SKIM_STRIDE_S, {
-					verifyKeyPackets: true,
-				});
-				const target =
-					key && key.timestamp > cursor
-						? key.timestamp
-						: cursor + MAX_SKIM_STRIDE_S;
-				if (target >= tEnd) {
-					cursor = tEnd;
-					break;
+			try {
+				if (mode === "active") {
+					// dense sequential decode: every frame is seen, the scheduler
+					// decides which are worth analyzing
+					if ((await scanActive()) === "end") break;
+					mode = "skim";
+				} else {
+					// skim: hop keyframe to keyframe (single-frame decodes) while
+					// calm, capped so long GOPs cannot hide a short screen
+					const key = await packets.getKeyPacket(cursor + MAX_SKIM_STRIDE_S, {
+						verifyKeyPackets: true,
+					});
+					const target =
+						key && key.timestamp > cursor
+							? key.timestamp
+							: cursor + MAX_SKIM_STRIDE_S;
+					if (target >= tEnd) {
+						cursor = tEnd;
+						break;
+					}
+					const sample = await samples.getSample(target);
+					if (!sample) {
+						cursor = target;
+						continue;
+					}
+					const { t, frame, preview } = await pull(sample);
+					account(t);
+					if (t >= scheduler!.nextDueT()) await readAndAnalyze(frame, t);
+					else frame.close();
+					report(preview);
+					cursor = Math.max(cursor, target);
+					if (!scheduler!.calm(cursor)) mode = "active";
 				}
-				const sample = await samples.getSample(target);
-				if (!sample) {
-					cursor = target;
-					continue;
+			} catch (error) {
+				// resume at the cursor: a first failure there retries as is
+				// (a crashed GPU process is back by then), a second decodes in
+				// software from then on, a third hops over the spot
+				if (chunkAborted || ++failures > MAX_CHUNK_FAILURES) throw error;
+				failuresHere = cursor > failedAt ? 1 : failuresHere + 1;
+				failedAt = cursor;
+				// biome-ignore lint/suspicious/noConsole: the scan carries on, so say what it recovered from
+				console.warn(
+					`scanner: chunk ${chunkIndex} failed at ${cursor.toFixed(1)}s, resuming`,
+					error,
+				);
+				if (failuresHere >= 2 && hardwareAcceleration !== "prefer-software") {
+					hardwareAcceleration = "prefer-software";
+					samples = new VideoSampleSink(track, { hardwareAcceleration });
+				} else if (failuresHere >= 2) {
+					cursor = Math.min(tEnd, cursor + UNDECODABLE_SKIP_S);
 				}
-				const { t, frame, preview } = await pull(sample);
-				account(t);
-				if (t >= scheduler!.nextDueT()) await readAndAnalyze(frame, t);
-				else frame.close();
-				report(preview);
-				cursor = Math.max(cursor, target);
-				if (!scheduler!.calm(cursor)) mode = "active";
+				await new Promise((resolve) =>
+					setTimeout(resolve, CHUNK_RETRY_DELAY_MS),
+				);
 			}
 		}
 
@@ -547,7 +599,7 @@ async function scanChunk({
 	} catch (error) {
 		post({
 			kind: "error",
-			message: `chunk ${chunkIndex} scan failed: ${String(error)}`,
+			message: String(error),
 		});
 	} finally {
 		input.dispose();

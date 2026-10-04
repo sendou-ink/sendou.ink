@@ -79,7 +79,9 @@ async function decode(
 		const track = await input.getPrimaryVideoTrack();
 		if (!track) throw new Error("no video track");
 		await pumpSamples({
-			samples: new VideoSampleSink(track).samples(request.start),
+			samples: new VideoSampleSink(track, {
+				hardwareAcceleration: request.hardwareAcceleration,
+			}).samples(request.start),
 			end: request.end,
 			preview: request.preview,
 			floor: () => own.floor,

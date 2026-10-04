@@ -24,6 +24,7 @@ import {
 	type ScanTelemetry,
 } from "../core/detectors/telemetry";
 import type { DetectedEvent } from "../core/detectors/types";
+import { formatPosition } from "../core/format";
 import {
 	buildScannerMatches,
 	invalidObjectiveEvents,
@@ -87,6 +88,8 @@ export interface VodScanLane {
 	t: number;
 	mode: VodScanMode;
 	done: boolean;
+	/** the lane gave up at `t`; the rest of its slice went unscanned */
+	failed: boolean;
 }
 
 export interface VodScanProgress {
@@ -320,6 +323,7 @@ export async function startVodScan(
 				t: i * span,
 				mode: "active" as VodScanMode,
 				done: false,
+				failed: false,
 				telemetry: null as ScanTelemetry | null,
 			}));
 			abortChunks = () => {
@@ -350,6 +354,7 @@ export async function startVodScan(
 							t: Math.min(c.t, c.tEnd),
 							mode: c.mode,
 							done: c.done,
+							failed: c.failed,
 						})),
 					},
 					telemetry: mergedTelemetry(),
@@ -380,7 +385,11 @@ export async function startVodScan(
 							},
 							(error) => {
 								chunk.done = true;
-								update({ error: describeError(error) });
+								chunk.failed = true;
+								pushUiUpdate({ force: true });
+								update({
+									error: `Worker ${chunkIndex + 1} gave up, ${formatPosition(Math.min(chunk.t, chunk.tEnd))} – ${formatPosition(chunk.tEnd)} was not scanned (${describeError(error)})`,
+								});
 							},
 						),
 				),
@@ -429,6 +438,7 @@ export async function startVodScan(
 									t,
 									mode: seek.doneInfo?.calm ? "skim" : "active",
 									done: false,
+									failed: false,
 								},
 							],
 						},

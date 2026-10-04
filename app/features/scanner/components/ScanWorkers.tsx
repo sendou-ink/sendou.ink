@@ -4,7 +4,7 @@
  * skimming past dead air, and how many games it has found.
  */
 import clsx from "clsx";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { formatPosition } from "../core/format";
 import { buildScannerMatches } from "../core/match-builder";
 import styles from "./ScanWorkers.module.css";
@@ -101,7 +101,11 @@ function LaneTile({
 						[styles.modeActive]: !lane.done && lane.mode === "active",
 					})}
 				>
-					{lane.done ? (
+					{lane.failed ? (
+						<>
+							<X size={12} /> Gave up
+						</>
+					) : lane.done ? (
 						<>
 							<Check size={12} /> Done
 						</>
