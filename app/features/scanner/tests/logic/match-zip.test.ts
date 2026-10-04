@@ -2,6 +2,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { describe, expect, test } from "vitest";
 import { matchZip } from "../../components/match-zip";
 import type { ScanEvent } from "../../components/session-data";
+import type { ExportClip } from "../../core/csv/matches";
 import type { DeathData } from "../../core/detectors/death/index";
 import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
 import { buildScannerMatches } from "../../core/match-builder";
@@ -56,12 +57,16 @@ const FRAMES = new Map<ScanEvent, Blob>([
 	[scoreboard, new Blob([PNG_BYTES], { type: "image/png" })],
 ]);
 
-async function unzipMatch() {
+async function unzipMatch(clips: readonly ExportClip[] = []) {
 	const [built] = buildScannerMatches([mapStart, death, scoreboard]);
-	const zip = await matchZip(built!, (event) => {
-		const frame = FRAMES.get(event);
-		return frame ? () => Promise.resolve(frame) : undefined;
-	});
+	const zip = await matchZip(
+		built!,
+		(event) => {
+			const frame = FRAMES.get(event);
+			return frame ? () => Promise.resolve(frame) : undefined;
+		},
+		clips,
+	);
 	return unzipSync(zip);
 }
 
@@ -104,5 +109,18 @@ describe("matchZip", () => {
 		const match = JSON.parse(strFromU8(files["match.json"]!));
 
 		expect(match.mode).toBe("SZ");
+	});
+
+	test("lists the game's clips chronologically in the built match", async () => {
+		const files = await unzipMatch([
+			{ kills: 3, start: 300, end: 325 },
+			{ kills: 1, start: 160, end: 170 },
+		]);
+		const match = JSON.parse(strFromU8(files["match.json"]!));
+
+		expect(match.clips).toEqual([
+			{ kills: 1, start: 160, end: 170 },
+			{ kills: 3, start: 300, end: 325 },
+		]);
 	});
 });

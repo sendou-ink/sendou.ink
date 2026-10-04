@@ -8,7 +8,11 @@ import { Download, FileText, ListTree } from "lucide-react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { eventsToCsv } from "../core/csv/events";
-import { type MatchCsvSource, matchesToCsv } from "../core/csv/matches";
+import {
+	type ExportClip,
+	type MatchCsvSource,
+	matchesToCsv,
+} from "../core/csv/matches";
 import type { BuiltMatch } from "../core/match-builder";
 import { SESSION_COMPACT_AFTER_MS } from "../core/sessions";
 import { downloadCsv } from "./download";
@@ -20,7 +24,7 @@ export function ExportMenu({
 	built,
 	events,
 	source,
-	clipCounts,
+	clipsByMatch,
 	fileBase,
 }: {
 	/** chronological */
@@ -28,7 +32,8 @@ export function ExportMenu({
 	/** null once the session is compacted */
 	events: readonly ScanEvent[] | null;
 	source: MatchCsvSource;
-	clipCounts: readonly number[];
+	/** aligned with `built` */
+	clipsByMatch: readonly (readonly ExportClip[])[];
 	/** `scanner-matches-2026-09-16` / `sws26-finals` — the download's stem */
 	fileBase: string;
 }) {
@@ -54,7 +59,7 @@ export function ExportMenu({
 						matchesToCsv(
 							built.map((b) => b.match),
 							source,
-							clipCounts,
+							clipsByMatch,
 						),
 					)
 				}

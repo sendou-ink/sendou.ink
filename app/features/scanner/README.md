@@ -91,7 +91,7 @@ opens it, for anyone, through the same handoff Inspect uses.
   Column names stay English keys.
 - **Game data** (`components/match-zip.ts`): an expanded match card's
   download, what users report a misread with — `match.json` (the card's
-  match), `events.json` (every source event, each naming its frame folder)
+  match plus its clips' kills and stream/file `start`/`end`), `events.json` (every source event, each naming its frame folder)
   and `frames/<n>-<type>-<position>/` with the frame plus a prefilled
   `expected.json`, fixture-ready.
 - **Debug gate** (`use-debug.ts`: DEV/ADMIN role or `?debug=true`, which

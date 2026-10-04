@@ -44,7 +44,12 @@ function rows(csv: string): string[][] {
 
 test("one row per game with the POV side first", () => {
 	const [header, row] = rows(
-		matchesToCsv([BASE], { label: "sws26-finals.mkv", originT: 0 }, [2]),
+		matchesToCsv([BASE], { label: "sws26-finals.mkv", originT: 0 }, [
+			[
+				{ kills: 3, start: 3900, end: 3925 },
+				{ kills: 1, start: 3760, end: 3770 },
+			],
+		]),
 	);
 	assert.equal(header![0], "played_at");
 	const cell = (name: string) => row![header!.indexOf(name)];
@@ -62,15 +67,25 @@ test("one row per game with the POV side first", () => {
 	assert.equal(cell("s"), "3");
 	assert.equal(cell("paint"), "1204");
 	assert.equal(cell("clips"), "2");
+	assert.equal(
+		cell("clip_times"),
+		"1 kill · 01:02:40–01:02:50; 3 kills · 01:05:00–01:05:25",
+	);
 	assert.equal(cell("cast"), "");
 });
 
 test("positions count from the session's origin", () => {
 	const [header, row] = rows(
-		matchesToCsv([BASE], { label: "2026-09-16 19:02", originT: 3700 }),
+		matchesToCsv([BASE], { label: "2026-09-16 19:02", originT: 3700 }, [
+			[{ kills: 4, start: 3760, end: 3790 }],
+		]),
 	);
 	assert.equal(row![header!.indexOf("at")], "00:00:30");
 	assert.equal(row![header!.indexOf("t_seconds")], "30");
+	assert.equal(
+		row![header!.indexOf("clip_times")],
+		"4 kills · 00:01:00–00:01:30",
+	);
 });
 
 test("teammates exclude the POV row and enemies pack the other side", () => {
@@ -109,6 +124,7 @@ test("unread values are blank cells, not question marks", () => {
 		"ka",
 		"teammates",
 		"replay_code",
+		"clip_times",
 	]) {
 		assert.equal(row![header!.indexOf(name)], "", name);
 	}

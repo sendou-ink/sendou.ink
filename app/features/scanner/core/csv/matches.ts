@@ -31,6 +31,7 @@ const HEADER = [
 	"cast",
 	"replay_code",
 	"clips",
+	"clip_times",
 ];
 
 export interface MatchCsvSource {
@@ -40,16 +41,24 @@ export interface MatchCsvSource {
 	originT: number;
 }
 
-/** `clipCounts` aligns by index with `matches`: how many clips each game produced. */
+export interface ExportClip {
+	kills: number;
+	/** stream/file second */
+	start: number;
+	/** stream/file second */
+	end: number;
+}
+
+/** `clipsByMatch` aligns by index with `matches`: the clips each game produced. */
 export function matchesToCsv(
 	matches: readonly ScannerMatch[],
 	source: MatchCsvSource,
-	clipCounts: readonly number[] = [],
+	clipsByMatch: readonly (readonly ExportClip[])[] = [],
 ): string {
 	return toCsv(
 		HEADER,
 		matches.map((match, index) =>
-			matchCells(match, source, clipCounts[index] ?? 0),
+			matchCells(match, source, clipsByMatch[index] ?? []),
 		),
 	);
 }
@@ -57,7 +66,7 @@ export function matchesToCsv(
 function matchCells(
 	match: ScannerMatch,
 	source: MatchCsvSource,
-	clips: number,
+	clips: readonly ExportClip[],
 ): CsvCell[] {
 	const at = match.startsAt === null ? null : match.startsAt - source.originT;
 	const povTeam = match.pov?.team ?? 0;
@@ -92,8 +101,20 @@ function matchCells(
 		packPlayers(enemies),
 		match.cast ? 1 : "",
 		match.replayCode,
-		clips,
+		clips.length,
+		packClips(clips, source.originT),
 	];
+}
+
+/** `4 kills · 01:02:10–01:02:40`, chronological and `;` separated */
+function packClips(clips: readonly ExportClip[], originT: number): string {
+	return clips
+		.toSorted((a, b) => a.start - b.start)
+		.map(
+			(clip) =>
+				`${clip.kills} ${clip.kills === 1 ? "kill" : "kills"} · ${formatTime(clip.start - originT)}–${formatTime(clip.end - originT)}`,
+		)
+		.join("; ");
 }
 
 /** `name · weapon · ka/d/s · paint`, `;` separated — the events CSV's convention. */

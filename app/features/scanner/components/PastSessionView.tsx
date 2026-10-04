@@ -88,7 +88,7 @@ export function PastSessionView() {
 									label: sessionLabel(session.startedAt),
 									originT: session.originT,
 								}}
-								clipCounts={info.clipCounts}
+								clipsByMatch={info.clipsByMatch}
 								fileBase={`scanner-${new Date(session.startedAt).toISOString().slice(0, 10)}`}
 							/>
 							<FormWithConfirm

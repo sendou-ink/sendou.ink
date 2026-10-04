@@ -1,10 +1,11 @@
 /**
- * A game's bundle for reporting a misread: the match as built, its source
- * events, and every stored analyzed frame as a fixture-ready folder
+ * A game's bundle for reporting a misread: the match as built (with its
+ * clips' kill counts and stream/file windows), its source events, and every stored analyzed frame as a fixture-ready folder
  * (`frames/<n>-<type>-<position>/` holding the frame and a prefilled
  * expected.json).
  */
 import { strToU8, type Zippable, zipSync } from "fflate";
+import type { ExportClip } from "../core/csv/matches";
 import type { BuiltMatch } from "../core/match-builder";
 import { buildExpectedJson, type FixtureData } from "./fixture-export";
 import type { GetFrame, ScanEvent } from "./session-data";
@@ -18,6 +19,7 @@ const FRAME_EXTENSIONS: Record<string, string> = {
 export async function matchZip(
 	built: BuiltMatch<ScanEvent>,
 	getFrame: (event: ScanEvent) => GetFrame | undefined,
+	clips: readonly ExportClip[] = [],
 ): Promise<Uint8Array> {
 	const originT = built.sources[0]?.t ?? 0;
 	const files: Zippable = {};
@@ -46,7 +48,18 @@ export async function matchZip(
 			};
 		}),
 	);
-	files["match.json"] = strToU8(JSON.stringify(built.match, null, 2));
+	files["match.json"] = strToU8(
+		JSON.stringify(
+			{
+				...built.match,
+				clips: clips
+					.toSorted((a, b) => a.start - b.start)
+					.map(({ kills, start, end }) => ({ kills, start, end })),
+			},
+			null,
+			2,
+		),
+	);
 	files["events.json"] = strToU8(JSON.stringify(events, null, 2));
 
 	return zipSync(files);

@@ -237,7 +237,7 @@ function VodSessionView({
 								built={info.built}
 								events={events}
 								source={{ label: name, originT: 0 }}
-								clipCounts={info.clipCounts}
+								clipsByMatch={info.clipsByMatch}
 								fileBase={name.replace(/\.[^.]+$/, "")}
 							/>
 							{upload?.url ? (

@@ -62,7 +62,7 @@ export interface SessionInfo {
 	/** `8 games · 5–3 · K/D 1.4 · 3 clips` */
 	summaryLine: string;
 	/** aligned with `built` */
-	clipCounts: number[];
+	clipsByMatch: ScannerClip[][];
 	skipReasons: Map<BuiltMatch<ScanEvent>, IngestSkipReason>;
 }
 
@@ -119,7 +119,7 @@ export function SessionView({
 		built,
 		summary,
 		summaryLine: summaryLine(summary, clips.length),
-		clipCounts: clipsByMatch.map((matchClips) => matchClips.length),
+		clipsByMatch,
 		skipReasons,
 	};
 	const justFormedKeys = useJustFormedKeys(built.map(keyOf));

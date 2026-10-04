@@ -119,7 +119,7 @@ export function LiveView() {
 									label: sessionLabel(session?.startedAt ?? live.since ?? 0),
 									originT: session?.originT ?? 0,
 								}}
-								clipCounts={info.clipCounts}
+								clipsByMatch={info.clipsByMatch}
 								fileBase={`scanner-${new Date(session?.startedAt ?? Date.now()).toISOString().slice(0, 10)}`}
 							/>
 							<SendouButton

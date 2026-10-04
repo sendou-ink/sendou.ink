@@ -250,6 +250,7 @@ export function MatchCard({
 			<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
 			<ReportData
 				built={built}
+				clips={clips}
 				getFrame={getFrame}
 				fileName={`scanner-${scannedAt !== undefined ? new Date(scannedAt).toISOString().slice(0, 10) : kind}-game-${number}.zip`}
 			/>
@@ -678,10 +679,12 @@ function gearRows(
 /** The game's frames and raw reads as a zip, what a misread is reported with. */
 function ReportData({
 	built,
+	clips,
 	getFrame,
 	fileName,
 }: {
 	built: BuiltMatch<ScanEvent>;
+	clips: readonly ScannerClip[];
 	getFrame: (event: ScanEvent) => GetFrame | undefined;
 	fileName: string;
 }) {
@@ -690,7 +693,7 @@ function ReportData({
 	const download = async () => {
 		setZipping(true);
 		try {
-			const zip = await matchZip(built, getFrame);
+			const zip = await matchZip(built, getFrame, clips);
 			downloadBlob(
 				fileName,
 				new Blob([zip as Uint8Array<ArrayBuffer>], { type: "application/zip" }),
