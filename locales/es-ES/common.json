@@ -394,6 +394,8 @@
 	"chat.systemMsg.leagueTimeSetByOrganizer": "{{name}} (organizador) ha fijado el horario del set",
 	"chat.newMessages": "Nuevos mensajes",
 	"chat.retrySend": "",
+	"chat.status.characterCount": "",
+	"chat.status.mentionCooldown": "",
 	"chat.mention.suggestions": "",
 	"chat.mention.unknownUser": "",
 	"chat.sidebar.title": "Chat",

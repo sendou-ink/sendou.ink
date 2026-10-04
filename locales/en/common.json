@@ -394,6 +394,8 @@
 	"chat.systemMsg.leagueTimeSetByOrganizer": "{{name}} (organizer) set the time of the set",
 	"chat.newMessages": "New messages",
 	"chat.retrySend": "Not sent, retry",
+	"chat.status.characterCount": "{{used}}/{{max}} characters",
+	"chat.status.mentionCooldown": "You can mention {{username}} again in {{seconds}}s",
 	"chat.mention.suggestions": "Mention suggestions",
 	"chat.mention.unknownUser": "unknown user",
 	"chat.sidebar.title": "Chat",

@@ -5,9 +5,11 @@ import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
 import { browser, flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import * as v from "valibot";
 import { useUser } from "~/features/auth/core/user";
 import { useEventsReadyState } from "~/features/events/events-hooks";
+import { useCooldown } from "~/hooks/useCooldown";
 import { useDebounce } from "~/hooks/useDebounce";
 import { useVirtualizer } from "~/modules/virtualizer/react";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -17,10 +19,17 @@ import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
 import { MESSAGE_MAX_LENGTH } from "../chat-constants";
+import {
+	cooldownUntil,
+	MENTION_COOLDOWN_MS,
+	mentionCooldownKey,
+	startCooldowns,
+} from "../chat-cooldowns";
 import { useChatAutoScroll } from "../chat-hooks";
 import {
 	activeMentionQuery,
 	encodeMentions,
+	mentionedUserIds,
 	mentionSuggestions,
 	mentionsUser,
 	type PickedMention,
@@ -37,6 +46,8 @@ const MESSAGE_GAP = 8;
 const ESTIMATED_MESSAGE_HEIGHT = 44;
 /** How long the stream may be down before the composer says so, so a connect right after page load never flashes it. */
 const CONNECTION_STATUS_GRACE_MS = 1_500;
+/** The composer status shows the character count once this close to the limit. */
+const CHARACTER_COUNT_SHOWN_FROM = MESSAGE_MAX_LENGTH - 40;
 
 export interface ChatProps {
 	messages: ClientChatMessage[];
@@ -338,6 +349,35 @@ function Composer({
 	const activeSuggestion =
 		suggestions[Math.min(activeSuggestionIndex, suggestions.length - 1)];
 
+	const encodedContents = encodeMentions(
+		contents,
+		mentionCandidates,
+		pickedMentions,
+	);
+	const mentionOnCooldown = R.firstBy(
+		mentionedUserIds(encodedContents).flatMap((userId) => {
+			const until = cooldownUntil(mentionCooldownKey(userId));
+			return until === null ? [] : [{ userId, until }];
+		}),
+		[(cooldown) => cooldown.until, "desc"],
+	);
+	const cooldownSecondsLeft = useCooldown(mentionOnCooldown?.until ?? null);
+	const onCooldown = mentionOnCooldown !== undefined && cooldownSecondsLeft > 0;
+
+	const status = onCooldown
+		? t("common:chat.status.mentionCooldown", {
+				username: mentionCandidates.find(
+					(user) => user.id === mentionOnCooldown.userId,
+				)?.username,
+				seconds: cooldownSecondsLeft,
+			})
+		: contents.length >= CHARACTER_COUNT_SHOWN_FROM
+			? t("common:chat.status.characterCount", {
+					used: contents.length,
+					max: MESSAGE_MAX_LENGTH,
+				})
+			: null;
+
 	const syncCaret = (input: HTMLInputElement) =>
 		setCaret(input.selectionStart ?? input.value.length);
 
@@ -388,15 +428,19 @@ function Composer({
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (sendingDisabled || isEmpty) return;
+		if (sendingDisabled || isEmpty || onCooldown) return;
 
 		const parsed = v.safeParse(sendChatMessageSchema, {
 			publicId: shortNanoid(),
-			contents: encodeMentions(contents, mentionCandidates, pickedMentions),
+			contents: encodedContents,
 		});
 		if (!parsed.success) return;
 
 		onSend(parsed.output);
+		startCooldowns(
+			mentionedUserIds(parsed.output.contents).map(mentionCooldownKey),
+			MENTION_COOLDOWN_MS,
+		);
 		setContents("");
 		setPickedMentions([]);
 		setDismissedMentionStart(null);
@@ -404,75 +448,80 @@ function Composer({
 	};
 
 	return (
-		<form className={styles.composer} onSubmit={handleSubmit}>
-			{showConnectionStatus ? (
-				<div
-					className={clsx(
-						"text-xxs font-semi-bold",
-						readyState === "CONNECTING" ? "text-lighter" : "text-warning",
-					)}
-				>
-					{t(
-						readyState === "CONNECTING"
-							? "common:chat.connecting"
-							: "common:chat.disconnected",
-					)}
-				</div>
-			) : null}
-			<div ref={composerRowRef} className={styles.composerRow}>
-				<input
-					ref={inputRef}
-					value={contents}
-					onChange={(event) => {
-						const input = event.target;
-						setPickedMentions(
-							shiftPickedMentions(pickedMentions, contents, input.value),
-						);
-						setContents(input.value);
-						syncCaret(input);
-						setActiveSuggestionIndex(0);
-						if (
-							activeMentionQuery(input.value, input.selectionStart ?? 0)
-								?.start !== dismissedMentionStart
-						) {
-							setDismissedMentionStart(null);
-						}
-					}}
-					onSelect={(event) => syncCaret(event.currentTarget)}
-					onKeyDown={handleKeyDown}
-					onFocus={() => setIsFocused(true)}
-					onBlur={() => setIsFocused(false)}
-					placeholder={t("forms:placeholders.chatMessage")}
-					maxLength={MESSAGE_MAX_LENGTH}
-					disabled={sendingDisabled}
-					role="combobox"
-					aria-autocomplete="list"
-					aria-expanded={suggestionsOpen}
-					aria-controls={suggestionsId}
-					aria-activedescendant={
-						suggestionsOpen
-							? mentionSuggestionId(suggestionsId, activeSuggestion.id)
-							: undefined
-					}
-				/>
-				<MentionSuggestions
-					id={suggestionsId}
-					anchorRef={composerRowRef}
-					users={suggestions}
-					activeUserId={suggestionsOpen ? activeSuggestion.id : null}
-					onSelect={selectSuggestion}
-				/>
-				<SendouButton
-					type="submit"
-					className={styles.sendButton}
-					shape="square"
-					isDisabled={sendingDisabled || isEmpty}
-					aria-label={t("common:chat.send")}
-					icon={<SendHorizontal size={18} />}
-					data-testid="chat-submit-button"
-				/>
+		<>
+			<div role="status" className={styles.composerStatus}>
+				{status}
 			</div>
-		</form>
+			<form className={styles.composer} onSubmit={handleSubmit}>
+				{showConnectionStatus ? (
+					<div
+						className={clsx(
+							"text-xxs font-semi-bold",
+							readyState === "CONNECTING" ? "text-lighter" : "text-warning",
+						)}
+					>
+						{t(
+							readyState === "CONNECTING"
+								? "common:chat.connecting"
+								: "common:chat.disconnected",
+						)}
+					</div>
+				) : null}
+				<div ref={composerRowRef} className={styles.composerRow}>
+					<input
+						ref={inputRef}
+						value={contents}
+						onChange={(event) => {
+							const input = event.target;
+							setPickedMentions(
+								shiftPickedMentions(pickedMentions, contents, input.value),
+							);
+							setContents(input.value);
+							syncCaret(input);
+							setActiveSuggestionIndex(0);
+							if (
+								activeMentionQuery(input.value, input.selectionStart ?? 0)
+									?.start !== dismissedMentionStart
+							) {
+								setDismissedMentionStart(null);
+							}
+						}}
+						onSelect={(event) => syncCaret(event.currentTarget)}
+						onKeyDown={handleKeyDown}
+						onFocus={() => setIsFocused(true)}
+						onBlur={() => setIsFocused(false)}
+						placeholder={t("forms:placeholders.chatMessage")}
+						maxLength={MESSAGE_MAX_LENGTH}
+						disabled={sendingDisabled}
+						role="combobox"
+						aria-autocomplete="list"
+						aria-expanded={suggestionsOpen}
+						aria-controls={suggestionsId}
+						aria-activedescendant={
+							suggestionsOpen
+								? mentionSuggestionId(suggestionsId, activeSuggestion.id)
+								: undefined
+						}
+					/>
+					<MentionSuggestions
+						id={suggestionsId}
+						anchorRef={composerRowRef}
+						users={suggestions}
+						activeUserId={suggestionsOpen ? activeSuggestion.id : null}
+						onSelect={selectSuggestion}
+					/>
+					<SendouButton
+						type="submit"
+						className={styles.sendButton}
+						shape="square"
+						isDisabled={sendingDisabled || isEmpty || onCooldown}
+						aria-label={t("common:chat.send")}
+						icon={<SendHorizontal size={18} />}
+						data-testid="chat-submit-button"
+					/>
+				</div>
+			</form>
+		</>
 	);
 }
 

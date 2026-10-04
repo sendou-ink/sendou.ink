@@ -238,6 +238,19 @@ describe("Chat", () => {
 		expect(getComputedStyle(sendButton.element()).boxShadow).not.toBe("none");
 	});
 
+	test("shows the character count in the status once close to the limit", async () => {
+		const screen = await renderChat([createMessage()]);
+		const composer = screen.getByPlaceholder("Press enter to send");
+
+		await composer.fill("a".repeat(150));
+		expect(screen.getByRole("status").elements()).toHaveLength(0);
+
+		await composer.fill("a".repeat(170));
+		await expect
+			.element(screen.getByRole("status"))
+			.toHaveTextContent("170/200 characters");
+	});
+
 	test("a blank draft is not sent", async () => {
 		const onSend = vi.fn();
 		const screen = await renderChat([createMessage()], { onSend });
@@ -360,6 +373,33 @@ describe("Chat", () => {
 				publicId: expect.any(String),
 				contents: "<mention-5> and <mention-2>",
 			});
+		});
+
+		test("holds back mentioning the same user again while on cooldown, telling how long", async () => {
+			const dave = { ...ALICE, id: 7, username: "Dave", discordId: "7" };
+			const onSend = vi.fn();
+			const screen = await renderChat([], {
+				onSend,
+				mentionableUsers: [dave],
+			});
+			const composer = screen.getByPlaceholder("Press enter to send");
+			await composer.fill("@Dave hi");
+			await userEvent.keyboard("{Enter}");
+			expect(onSend).toHaveBeenCalledTimes(1);
+
+			await composer.fill("@Dave again");
+			await expect
+				.element(screen.getByRole("status"))
+				.toHaveTextContent(/You can mention Dave again in \d+s/);
+			await expect
+				.element(screen.getByTestId("chat-submit-button"))
+				.toBeDisabled();
+			await userEvent.keyboard("{Enter}");
+			expect(onSend).toHaveBeenCalledTimes(1);
+
+			await composer.fill("no mention");
+			await userEvent.keyboard("{Enter}");
+			expect(onSend).toHaveBeenCalledTimes(2);
 		});
 
 		test("closes the suggestions on escape", async () => {

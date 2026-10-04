@@ -170,6 +170,21 @@
 	border-top: 1.5px solid var(--color-border);
 }
 
+.composerStatus {
+	flex-shrink: 0;
+	padding: var(--s-1-5) var(--s-3);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--color-text-high);
+	background-color: var(--color-bg-high);
+
+	&:empty {
+		display: none;
+	}
+}
+
 .composerRow {
 	display: flex;
 	align-items: center;
