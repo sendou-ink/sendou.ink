@@ -391,23 +391,29 @@ function Composer({
 		sticker !== null && stickerCooldownSecondsLeft > 0;
 	const onCooldown = mentionOnCooldownShown || stickerOnCooldownShown;
 
-	const status = mentionOnCooldownShown
-		? t("common:chat.status.mentionCooldown", {
-				username: mentionCandidates.find(
-					(user) => user.id === mentionOnCooldown.userId,
-				)?.username,
-				seconds: mentionCooldownSecondsLeft,
-			})
-		: stickerOnCooldownShown
-			? t("common:chat.status.stickerCooldown", {
-					seconds: stickerCooldownSecondsLeft,
+	const status = showConnectionStatus
+		? t(
+				readyState === "CONNECTING"
+					? "common:chat.connecting"
+					: "common:chat.disconnected",
+			)
+		: mentionOnCooldownShown
+			? t("common:chat.status.mentionCooldown", {
+					username: mentionCandidates.find(
+						(user) => user.id === mentionOnCooldown.userId,
+					)?.username,
+					seconds: mentionCooldownSecondsLeft,
 				})
-			: contents.length >= CHARACTER_COUNT_SHOWN_FROM
-				? t("common:chat.status.characterCount", {
-						used: contents.length,
-						max: MESSAGE_MAX_LENGTH,
+			: stickerOnCooldownShown
+				? t("common:chat.status.stickerCooldown", {
+						seconds: stickerCooldownSecondsLeft,
 					})
-				: null;
+				: contents.length >= CHARACTER_COUNT_SHOWN_FROM
+					? t("common:chat.status.characterCount", {
+							used: contents.length,
+							max: MESSAGE_MAX_LENGTH,
+						})
+					: null;
 
 	const syncCaret = (input: HTMLInputElement) =>
 		setCaret(input.selectionStart ?? input.value.length);
@@ -544,24 +550,16 @@ function Composer({
 					/>
 				</div>
 			) : null}
-			<div role="status" className={styles.composerStatus}>
+			<div
+				role="status"
+				className={clsx(styles.composerStatus, {
+					[styles.composerStatusWarning]:
+						showConnectionStatus && readyState !== "CONNECTING",
+				})}
+			>
 				{status}
 			</div>
 			<form className={styles.composer} onSubmit={handleSubmit}>
-				{showConnectionStatus ? (
-					<div
-						className={clsx(
-							"text-xxs font-semi-bold",
-							readyState === "CONNECTING" ? "text-lighter" : "text-warning",
-						)}
-					>
-						{t(
-							readyState === "CONNECTING"
-								? "common:chat.connecting"
-								: "common:chat.disconnected",
-						)}
-					</div>
-				) : null}
 				<div ref={composerRowRef} className={styles.composerRow}>
 					<input
 						ref={inputRef}

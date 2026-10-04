@@ -707,7 +707,9 @@ describe("Chat", () => {
 		expect(screen.getByText("Disconnected").elements()).toHaveLength(0);
 
 		await wait(CONNECTION_STATUS_GRACE_MS);
-		await expect.element(screen.getByText("Disconnected")).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole("status"))
+			.toHaveTextContent("Disconnected");
 	});
 
 	test("never says the stream is down when it reconnects inside the grace period", async () => {

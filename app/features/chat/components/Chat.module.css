@@ -213,6 +213,10 @@
 	}
 }
 
+.composerStatusWarning {
+	color: var(--color-warning);
+}
+
 .composerRow {
 	display: flex;
 	align-items: center;
