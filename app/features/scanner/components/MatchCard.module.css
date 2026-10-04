@@ -146,6 +146,7 @@
 .side {
 	display: flex;
 	align-items: center;
+	align-self: flex-start;
 	gap: var(--s-3);
 	margin-inline-start: auto;
 	flex-shrink: 0;
