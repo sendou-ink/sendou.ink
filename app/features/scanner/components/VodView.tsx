@@ -43,6 +43,7 @@ import {
 	startVodScan,
 	useVodScan,
 	useVodScanProgress,
+	VOD_FILE_ACCEPT,
 	vodScanFrame,
 } from "./vod-scan";
 import { refreshVods } from "./vods-feed";
@@ -83,7 +84,7 @@ function ScanVodView({ name }: { name: string }) {
 							Try another file
 							<input
 								type="file"
-								accept="video/*"
+								accept={VOD_FILE_ACCEPT}
 								onChange={(e) => {
 									const file = e.target.files?.[0];
 									e.target.value = "";

@@ -47,6 +47,9 @@ import { readSettings } from "./settings";
 import { holdVisitLock, isThisVisitsVodClip, VISIT_ID } from "./visit";
 import { refreshVods } from "./vods-feed";
 
+/** `video/*` alone hides containers the OS doesn't know as video (e.g. .mkv on macOS) */
+export const VOD_FILE_ACCEPT = "video/*,.mkv,.webm,.mov,.mp4,.ts";
+
 /** seek-fallback stride while the worker reports activity */
 const SEEK_ACTIVE_STRIDE_S = 0.25;
 /**

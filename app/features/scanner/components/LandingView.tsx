@@ -30,7 +30,7 @@ import { getLiveSession, startCapture, useLiveSession } from "./live-session";
 import { SettingsPopover } from "./SettingsPopover";
 import { SourceSelect } from "./SourceSelect";
 import { isThisVisitsVodClip } from "./visit";
-import { startVodScan } from "./vod-scan";
+import { startVodScan, VOD_FILE_ACCEPT } from "./vod-scan";
 import { useVods } from "./vods-feed";
 
 /** how many history clips the landing strip shows before "See all" */
@@ -158,7 +158,7 @@ export function LandingView() {
 						<span className={styles.choose}>choose file</span>
 						<input
 							type="file"
-							accept="video/*,image/*"
+							accept={`${VOD_FILE_ACCEPT},image/png,image/webp,image/jpeg`}
 							className={styles.fileInput}
 							onChange={(e) => {
 								const file = e.target.files?.[0];
