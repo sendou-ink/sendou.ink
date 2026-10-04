@@ -2,8 +2,8 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { withUserId } from "~/utils/Test";
 import * as EventBus from "../core/EventBus.server";
-import { userChannel } from "../events-types";
-import { HEARTBEAT_INTERVAL_MS, loader } from "./sse";
+import { HEARTBEAT_INTERVAL_MS, userChannel } from "../events-types";
+import { loader } from "./sse";
 import { action } from "./sse.$connectionId.topics";
 
 const openedStreams: Array<() => void> = [];
@@ -68,14 +68,14 @@ describe("sse heartbeat", () => {
 		vi.useRealTimers();
 	});
 
-	test("writes a comment frame every interval", async () => {
+	test("writes a heartbeat event every interval", async () => {
 		vi.useFakeTimers();
 		const stream = openStream(11);
 		await stream.nextChunk();
 
 		await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
 
-		expect(await stream.nextChunk()).toBe(": heartbeat\n\n");
+		expect(await stream.nextChunk()).toBe('data: {"kind":"heartbeat"}\n\n');
 	});
 
 	test("clears the interval when the connection closes", async () => {

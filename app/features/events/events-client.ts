@@ -1,17 +1,27 @@
 import { logger } from "~/utils/logger";
-import type { ServerEvent } from "./events-types";
+import { HEARTBEAT_INTERVAL_MS, type ServerEvent } from "./events-types";
 
 const SSE_URL = "/sse";
 const sseTopicsUrl = (connectionId: string) => `/sse/${connectionId}/topics`;
+// a connection dropped while the app was suspended raises no error of its own
+const SILENT_CONNECTION_TIMEOUT_MS = HEARTBEAT_INTERVAL_MS * 2 + 15_000;
+// wall clock checked on an interval, as timers don't advance while the device sleeps
+const LIVENESS_CHECK_INTERVAL_MS = 5_000;
+const REOPEN_BASE_DELAY_MS = 1_000;
+const REOPEN_MAX_DELAY_MS = 30_000;
 
 export type EventsReadyState = "CONNECTING" | "CONNECTED" | "CLOSED";
 
-type WireEvent = ServerEvent | { kind: "hello"; connectionId: string };
+type WireEvent =
+	| ServerEvent
+	| { kind: "hello"; connectionId: string }
+	| { kind: "heartbeat" };
 
 interface EventsClientDeps {
 	openEventSource: (handlers: {
 		onMessage: (data: string) => void;
-		onError: () => void;
+		/** `permanent` when the source gave up and won't reconnect on its own (e.g. a non-200 response). */
+		onError: (permanent: boolean) => void;
 	}) => { close: () => void };
 	replaceTopics: (
 		connectionId: string,
@@ -39,11 +49,16 @@ export function createEventsClient(deps: EventsClientDeps): EventsClient {
 	const readyStateListeners = new Set<() => void>();
 	const eventListeners = new Set<(event: ServerEvent) => void>();
 
+	let active = false;
 	let source: { close: () => void } | null = null;
 	let readyState: EventsReadyState = "CLOSED";
 	let connectionId: string | null = null;
 	let syncedTopicsKey: string | null = null;
 	let syncing = false;
+	let lastMessageAt = 0;
+	let livenessCheck: ReturnType<typeof setInterval> | null = null;
+	let scheduledReopen: ReturnType<typeof setTimeout> | null = null;
+	let failedReopens = 0;
 
 	const setReadyState = (next: EventsReadyState) => {
 		if (readyState === next) return;
@@ -70,25 +85,102 @@ export function createEventsClient(deps: EventsClientDeps): EventsClient {
 				if (topicsKey === syncedTopicsKey) break;
 				if (topics.length === 0 && syncedTopicsKey === null) {
 					// a fresh connection has no topics server-side, nothing to replace
-					syncedTopicsKey = topicsKey;
+					markSynced(topicsKey);
 					break;
 				}
 
-				const response = await deps.replaceTopics(currentConnectionId, topics);
-				// 404 = the connection died mid-PUT; the next hello replays the topics
-				if (response.status >= 400 && response.status !== 404) {
-					logger.error(`Replacing SSE topics failed (${response.status})`);
+				const status = await deps
+					.replaceTopics(currentConnectionId, topics)
+					.then(
+						(response) => response.status,
+						(error) => {
+							logger.error("Replacing SSE topics failed", error);
+							return null;
+						},
+					);
+				// the connection was replaced mid-PUT, the next round syncs the new one
+				if (currentConnectionId !== connectionId) continue;
+
+				if (status !== null && status >= 400 && status !== 404) {
+					logger.error(`Replacing SSE topics failed (${status})`);
 				}
-				syncedTopicsKey = topicsKey;
+				// 404 = the server lost the connection though the stream looks open; a new one replays the topics
+				if (status === null || status === 404 || status >= 500) {
+					reopenAfterFailure();
+					break;
+				}
+				markSynced(topicsKey);
 			}
-		} catch (error) {
-			logger.error("Replacing SSE topics failed", error);
 		} finally {
 			syncing = false;
 		}
 	};
 
+	const markSynced = (topicsKey: string) => {
+		syncedTopicsKey = topicsKey;
+		failedReopens = 0;
+	};
+
+	const openSource = () => {
+		lastMessageAt = Date.now();
+		source = deps.openEventSource({
+			onMessage: handleMessage,
+			onError: handleError,
+		});
+	};
+
+	const closeSource = () => {
+		source?.close();
+		source = null;
+		connectionId = null;
+		syncedTopicsKey = null;
+	};
+
+	const reopenNow = () => {
+		closeSource();
+		setReadyState("CONNECTING");
+		openSource();
+	};
+
+	const reopenAfterFailure = () => {
+		closeSource();
+		setReadyState("CONNECTING");
+		if (scheduledReopen !== null) return;
+
+		// jittered so clients failing together during a deploy don't retry at once
+		const delay =
+			Math.min(REOPEN_MAX_DELAY_MS, REOPEN_BASE_DELAY_MS * 2 ** failedReopens) *
+			(0.5 + Math.random() / 2);
+		failedReopens++;
+		scheduledReopen = setTimeout(() => {
+			scheduledReopen = null;
+			openSource();
+		}, delay);
+	};
+
+	const checkLiveness = () => {
+		if (!source) return;
+		if (Date.now() - lastMessageAt < SILENT_CONNECTION_TIMEOUT_MS) return;
+
+		reopenNow();
+	};
+
+	const handleError = (permanent: boolean) => {
+		if (!source) return;
+
+		if (permanent) {
+			reopenAfterFailure();
+			return;
+		}
+
+		connectionId = null;
+		syncedTopicsKey = null;
+		setReadyState("CONNECTING");
+	};
+
 	const handleMessage = (data: string) => {
+		lastMessageAt = Date.now();
+
 		let event: WireEvent;
 		try {
 			event = JSON.parse(data);
@@ -103,6 +195,7 @@ export function createEventsClient(deps: EventsClientDeps): EventsClient {
 			void syncTopics();
 			return;
 		}
+		if (event.kind === "heartbeat") return;
 
 		for (const listener of eventListeners) {
 			listener(event);
@@ -111,25 +204,24 @@ export function createEventsClient(deps: EventsClientDeps): EventsClient {
 
 	return {
 		connect: () => {
-			if (source) return;
+			if (active) return;
+			active = true;
 
 			setReadyState("CONNECTING");
-			source = deps.openEventSource({
-				onMessage: handleMessage,
-				onError: () => {
-					connectionId = null;
-					syncedTopicsKey = null;
-					if (source) setReadyState("CONNECTING");
-				},
-			});
+			openSource();
+			livenessCheck = setInterval(checkLiveness, LIVENESS_CHECK_INTERVAL_MS);
 		},
 		disconnect: () => {
-			if (!source) return;
+			if (!active) return;
+			active = false;
 
-			source.close();
-			source = null;
-			connectionId = null;
-			syncedTopicsKey = null;
+			if (livenessCheck !== null) clearInterval(livenessCheck);
+			livenessCheck = null;
+			if (scheduledReopen !== null) clearTimeout(scheduledReopen);
+			scheduledReopen = null;
+			failedReopens = 0;
+
+			closeSource();
 			setReadyState("CLOSED");
 		},
 		getReadyState: () => readyState,
@@ -169,7 +261,9 @@ export const eventsClient = createEventsClient({
 		eventSource.addEventListener("message", (event) =>
 			handlers.onMessage(event.data),
 		);
-		eventSource.addEventListener("error", handlers.onError);
+		eventSource.addEventListener("error", () =>
+			handlers.onError(eventSource.readyState === EventSource.CLOSED),
+		);
 		return { close: () => eventSource.close() };
 	},
 	replaceTopics: async (connectionId, topics) => {

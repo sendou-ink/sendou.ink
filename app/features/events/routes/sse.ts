@@ -3,9 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as EventBus from "../core/EventBus.server";
 import * as SseConnections from "../core/SseConnections.server";
-import { userChannel } from "../events-types";
-
-export const HEARTBEAT_INTERVAL_MS = 25_000;
+import { HEARTBEAT_INTERVAL_MS, userChannel } from "../events-types";
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
 	const user = requireUser();
@@ -33,7 +31,7 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 			};
 
 			const heartbeat = setInterval(() => {
-				write(": heartbeat\n\n");
+				send({ kind: "heartbeat" });
 			}, HEARTBEAT_INTERVAL_MS);
 
 			close = () => {
