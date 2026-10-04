@@ -396,7 +396,8 @@ describe("Chat", () => {
 
 			const text = screen.getByText("gg all");
 			const sticker = screen.getByTestId("chat-message-sticker");
-			await expect.element(sticker).toHaveAttribute("alt", "Booyah");
+			await expect.element(sticker).toBeInTheDocument();
+			expect(sticker.element().querySelector("img")?.alt).toBe("Booyah");
 			expect(
 				text.element().compareDocumentPosition(sticker.element()) &
 					Node.DOCUMENT_POSITION_FOLLOWING,

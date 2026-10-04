@@ -171,9 +171,7 @@
 }
 
 .sticker {
-	display: block;
 	margin-block-start: var(--s-1);
-	object-fit: contain;
 }
 
 .selectedSticker {
@@ -183,10 +181,6 @@
 	gap: var(--s-2);
 	padding: var(--s-1-5) var(--s-3);
 	border-top: 1.5px solid var(--color-border);
-
-	& img {
-		object-fit: contain;
-	}
 }
 
 .selectedStickerName {

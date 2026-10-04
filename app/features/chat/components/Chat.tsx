@@ -15,7 +15,6 @@ import { useVirtualizer } from "~/modules/virtualizer/react";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import type { CommonUser } from "~/utils/kysely.server";
-import { chatStickerUrl } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
@@ -55,6 +54,7 @@ import {
 	ComposerSuggestions,
 	composerSuggestionId,
 } from "./ComposerSuggestions";
+import { StickerImage } from "./StickerImage";
 
 const MESSAGE_GAP = 8;
 const ESTIMATED_MESSAGE_HEIGHT = 44;
@@ -529,12 +529,7 @@ function Composer({
 		<>
 			{sticker ? (
 				<div className={styles.selectedSticker}>
-					<img
-						src={chatStickerUrl(sticker.id)}
-						alt=""
-						width={STICKER_PREVIEW_SIZE}
-						height={STICKER_PREVIEW_SIZE}
-					/>
+					<StickerImage sticker={sticker} size={STICKER_PREVIEW_SIZE} />
 					<span className={styles.selectedStickerName}>{sticker.name}</span>
 					<SendouButton
 						variant="minimal-destructive"
@@ -648,14 +643,7 @@ function suggestionsFor(
 			kind: "sticker",
 			key: `sticker-${sticker.id}`,
 			label: sticker.name,
-			image: (
-				<img
-					src={chatStickerUrl(sticker.id)}
-					alt=""
-					width={STICKER_SUGGESTION_SIZE}
-					height={STICKER_SUGGESTION_SIZE}
-				/>
-			),
+			image: <StickerImage sticker={sticker} size={STICKER_SUGGESTION_SIZE} />,
 			sticker,
 		}));
 	}
@@ -730,12 +718,10 @@ function Message({
 				>
 					{text ? <MessageContents text={text} /> : null}
 					{sticker ? (
-						<img
-							src={chatStickerUrl(sticker.id)}
+						<StickerImage
+							sticker={sticker}
+							size={STICKER_MESSAGE_SIZE}
 							alt={sticker.name}
-							title={sticker.name}
-							width={STICKER_MESSAGE_SIZE}
-							height={STICKER_MESSAGE_SIZE}
 							className={styles.sticker}
 							data-testid="chat-message-sticker"
 						/>
