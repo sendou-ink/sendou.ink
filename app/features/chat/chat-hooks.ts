@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useRevalidator } from "react-router";
+import { useFetchers, useNavigation, useRevalidator } from "react-router";
 import {
 	useEventStreamCatchUp,
 	useEventsTopic,
@@ -8,6 +8,7 @@ import {
 import { useUser } from "../auth/core/user";
 import type { ClientChatMessage } from "./chat-types";
 import {
+	holdRevalidations,
 	revalidateWithScope,
 	scheduleBroadcastRevalidation,
 } from "./revalidation-scope";
@@ -185,4 +186,24 @@ export function useServerRevalidationEvents(userId: number) {
 		// every subscribed client refetch in the same instant
 		scheduleBroadcastRevalidation(revalidate, event.scope);
 	});
+}
+
+/** Holds broadcast revalidations while any form submission is in flight, also covering those not going through `holdRevalidationsDuring` (e.g. a plain `<fetcher.Form>`). */
+export function useHoldRevalidationsDuringSubmissions() {
+	const navigation = useNavigation();
+	const fetchers = useFetchers();
+
+	const isSubmitting =
+		isMutationMethod(navigation.formMethod) ||
+		fetchers.some((fetcher) => isMutationMethod(fetcher.formMethod));
+
+	React.useEffect(() => {
+		if (!isSubmitting) return;
+
+		return holdRevalidations();
+	}, [isSubmitting]);
+}
+
+function isMutationMethod(formMethod: string | undefined) {
+	return formMethod !== undefined && formMethod.toUpperCase() !== "GET";
 }

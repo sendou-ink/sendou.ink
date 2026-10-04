@@ -24,17 +24,30 @@ let deferredRevalidation: {
  * user on the page with nothing happening. The held revalidation runs once, afterwards.
  */
 export async function holdRevalidationsDuring(submission: () => Promise<void>) {
-	heldSubmissions++;
+	const release = holdRevalidations();
 	try {
 		await submission();
 	} finally {
+		release();
+	}
+}
+
+/** Holds broadcast revalidations back like {@link holdRevalidationsDuring} until the returned release is called. */
+export function holdRevalidations() {
+	heldSubmissions++;
+
+	let released = false;
+	return () => {
+		if (released) return;
+		released = true;
+
 		heldSubmissions--;
 		if (heldSubmissions === 0 && deferredRevalidation) {
 			const { revalidate, scope } = deferredRevalidation;
 			deferredRevalidation = null;
 			revalidateWithScope(revalidate, scope ?? undefined);
 		}
-	}
+	};
 }
 
 /** Runs a broadcast triggered revalidation, remembering its scope while in flight so `shouldRevalidate` can skip loaders the broadcast cannot have changed. */

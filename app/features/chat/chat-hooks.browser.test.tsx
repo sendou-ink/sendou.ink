@@ -1,11 +1,17 @@
 import type * as React from "react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, RouterProvider, useFetcher } from "react-router";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { ServerEvent } from "~/features/events/events-types";
-import { useLiveRevalidation, useServerRevalidationEvents } from "./chat-hooks";
+import {
+	useHoldRevalidationsDuringSubmissions,
+	useLiveRevalidation,
+	useServerRevalidationEvents,
+} from "./chat-hooks";
 
 const mocks = vi.hoisted(() => ({
+	holdRevalidations: vi.fn(),
+	releaseHold: vi.fn(),
 	revalidateWithScope: vi.fn(),
 	scheduleBroadcastRevalidation: vi.fn(),
 	user: null as { id: number } | null,
@@ -21,6 +27,7 @@ vi.mock("~/features/auth/core/user", () => ({
 }));
 
 vi.mock("./revalidation-scope", () => ({
+	holdRevalidations: mocks.holdRevalidations,
 	revalidateWithScope: mocks.revalidateWithScope,
 	scheduleBroadcastRevalidation: mocks.scheduleBroadcastRevalidation,
 }));
@@ -45,6 +52,8 @@ const renderWithRouter = (element: React.ReactElement) =>
 	);
 
 afterEach(() => {
+	mocks.holdRevalidations.mockReset();
+	mocks.releaseHold.mockClear();
 	mocks.revalidateWithScope.mockClear();
 	mocks.scheduleBroadcastRevalidation.mockClear();
 	mocks.user = null;
@@ -125,5 +134,59 @@ describe("useServerRevalidationEvents", () => {
 		emitServerEvent({ kind: "notificationsChanged" });
 
 		expect(mocks.scheduleBroadcastRevalidation).not.toHaveBeenCalled();
+	});
+});
+
+function SubmittingFetcher({ method }: { method: "get" | "post" }) {
+	useHoldRevalidationsDuringSubmissions();
+	const fetcher = useFetcher();
+
+	return (
+		<fetcher.Form method={method} action="/action">
+			<button type="submit">Submit</button>
+		</fetcher.Form>
+	);
+}
+
+describe("useHoldRevalidationsDuringSubmissions", () => {
+	test("holds revalidations while a fetcher submission is in flight", async () => {
+		mocks.holdRevalidations.mockReturnValue(mocks.releaseHold);
+		let resolveAction!: () => void;
+		const router = createMemoryRouter([
+			{ path: "/", element: <SubmittingFetcher method="post" /> },
+			{
+				path: "/action",
+				action: () =>
+					new Promise<null>((resolve) => {
+						resolveAction = () => resolve(null);
+					}),
+			},
+		]);
+
+		const screen = await render(<RouterProvider router={router} />);
+		await screen.getByRole("button", { name: "Submit" }).click();
+
+		await vi.waitFor(() => expect(mocks.holdRevalidations).toHaveBeenCalled());
+		expect(mocks.releaseHold).not.toHaveBeenCalled();
+
+		resolveAction();
+		await vi.waitFor(() => expect(mocks.releaseHold).toHaveBeenCalledTimes(1));
+	});
+
+	test("does not hold for a GET submission", async () => {
+		const router = createMemoryRouter([
+			{ path: "/", element: <SubmittingFetcher method="get" /> },
+			{ path: "/action", loader: () => new Promise<null>(() => {}) },
+		]);
+
+		const screen = await render(<RouterProvider router={router} />);
+		await screen.getByRole("button", { name: "Submit" }).click();
+
+		await vi.waitFor(() =>
+			expect(router.state.fetchers.values().next().value?.state).toBe(
+				"loading",
+			),
+		);
+		expect(mocks.holdRevalidations).not.toHaveBeenCalled();
 	});
 });

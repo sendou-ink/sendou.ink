@@ -1,4 +1,4 @@
-import { add, sub } from "date-fns";
+import { add, addHours, sub, subHours } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -15,6 +15,9 @@ const createTournament = (name: string, startsAt: Date) =>
 		name,
 		startTimes: [dateToDatabaseTimestamp(startsAt)],
 	});
+
+// fixed length: calendar weeks across a DST change are an hour off, enough to flip the order
+const weeksInHours = (weeks: number) => weeks * 7 * 24;
 
 const search = async (limit = 10) =>
 	(await TournamentRepository.searchByName({ query: QUERY, limit })).map(
@@ -49,19 +52,19 @@ describe("TournamentRepository.searchByName", () => {
 	test("sorts the rest by their distance from now", async () => {
 		await createTournament(
 			`${QUERY} In 3 Weeks`,
-			add(new Date(), { weeks: 3 }),
+			addHours(new Date(), weeksInHours(3)),
 		);
 		await createTournament(
 			`${QUERY} 2 Weeks Ago`,
-			sub(new Date(), { weeks: 2 }),
+			subHours(new Date(), weeksInHours(2)),
 		);
 		await createTournament(
 			`${QUERY} In 2 Weeks`,
-			add(new Date(), { weeks: 2 }),
+			addHours(new Date(), weeksInHours(2)),
 		);
 		await createTournament(
 			`${QUERY} 3 Weeks Ago`,
-			sub(new Date(), { weeks: 3 }),
+			subHours(new Date(), weeksInHours(3)),
 		);
 
 		expect(await search()).toEqual([
