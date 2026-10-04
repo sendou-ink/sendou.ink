@@ -1,7 +1,6 @@
 import { Volume2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { CHAT_MENTION_SOUND } from "~/features/chat/chat-constants";
 import {
 	playSoundIgnoringSetting,
 	soundCodeToLocalStorageKey,
@@ -33,7 +32,6 @@ function SoundCheckboxes() {
 			code: "tournament_match",
 			name: t("settings:sounds.tournamentMatchStarted"),
 		},
-		{ code: CHAT_MENTION_SOUND, name: t("settings:sounds.chatMention") },
 	];
 
 	const [soundValues, setSoundValues] = React.useState(

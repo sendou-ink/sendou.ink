@@ -11,6 +11,5 @@
 	"sounds.likeReceived": "收到小组邀请",
 	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "SendouQ 对局开始",
-	"sounds.tournamentMatchStarted": "赛事对局开始",
-	"sounds.chatMention": ""
+	"sounds.tournamentMatchStarted": "赛事对局开始"
 }

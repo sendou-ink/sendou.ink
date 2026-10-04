@@ -11,6 +11,5 @@
 	"sounds.likeReceived": "Group invitation received",
 	"sounds.readyCheckStarted": "SendouQ ready check started",
 	"sounds.matchStarted": "SendouQ match started",
-	"sounds.tournamentMatchStarted": "Tournament match started",
-	"sounds.chatMention": "Mentioned in chat"
+	"sounds.tournamentMatchStarted": "Tournament match started"
 }
