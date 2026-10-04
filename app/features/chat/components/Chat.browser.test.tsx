@@ -353,6 +353,22 @@ describe("Chat", () => {
 			).toHaveLength(0);
 		});
 
+		test("escape, or backspace in an empty input, removes the picked sticker", async () => {
+			const { screen } = await renderComposer();
+			const removeButton = () =>
+				screen.getByRole("button", { name: "Remove sticker" }).elements();
+
+			await userEvent.keyboard("+booyah{Enter}");
+			expect(removeButton()).toHaveLength(1);
+			await userEvent.keyboard("{Escape}");
+			expect(removeButton()).toHaveLength(0);
+
+			await userEvent.keyboard("+booyah{Enter}a{Backspace}");
+			expect(removeButton()).toHaveLength(1);
+			await userEvent.keyboard("{Backspace}");
+			expect(removeButton()).toHaveLength(0);
+		});
+
 		test("scrolls the suggestion moved to with the keyboard into view", async () => {
 			const { screen } = await renderComposer();
 

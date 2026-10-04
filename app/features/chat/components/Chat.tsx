@@ -451,7 +451,16 @@ function Composer({
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-		if (!suggestionsOpen) return;
+		if (!suggestionsOpen) {
+			const removesSticker =
+				event.key === "Escape" ||
+				(event.key === "Backspace" && contents.length === 0);
+			if (sticker && removesSticker) {
+				event.preventDefault();
+				setSticker(null);
+			}
+			return;
+		}
 
 		switch (event.key) {
 			case "ArrowDown":
