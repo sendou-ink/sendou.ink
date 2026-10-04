@@ -236,7 +236,12 @@ export function SessionView({
 				</SendouTabs>
 			)}
 			{playing ? (
-				<ClipDialog clip={playing} onClose={() => setPlaying(null)} />
+				<ClipDialog
+					clip={playing}
+					clips={clips}
+					onPlay={setPlaying}
+					onClose={() => setPlaying(null)}
+				/>
 			) : null}
 		</div>
 	);

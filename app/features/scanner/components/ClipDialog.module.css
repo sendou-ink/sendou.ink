@@ -30,3 +30,17 @@
 	color: var(--color-text-high);
 	font-variant-numeric: tabular-nums;
 }
+
+.nav {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.position {
+	min-width: 4ch;
+	text-align: center;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	font-variant-numeric: tabular-nums;
+}

@@ -196,7 +196,12 @@ export function LandingView() {
 			</section>
 
 			{playing ? (
-				<ClipDialog clip={playing} onClose={() => setPlaying(null)} />
+				<ClipDialog
+					clip={playing}
+					clips={history}
+					onPlay={setPlaying}
+					onClose={() => setPlaying(null)}
+				/>
 			) : null}
 		</div>
 	);

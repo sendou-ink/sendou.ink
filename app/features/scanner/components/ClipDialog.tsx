@@ -1,5 +1,8 @@
-/** Plays a clip off its stored blob, with download and delete beside it. */
-import { Download, Trash2 } from "lucide-react";
+/**
+ * Plays a clip off its stored blob, with download and delete beside it and
+ * back/forward buttons stepping through the list it was opened from.
+ */
+import { ChevronLeft, ChevronRight, Download, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -12,12 +15,20 @@ import { refreshClips } from "./clips-feed";
 
 export function ClipDialog({
 	clip,
+	clips,
+	onPlay,
 	onClose,
 }: {
 	clip: ScannerClip;
+	/** the list back/forward step through, in the order it is shown */
+	clips: readonly ScannerClip[];
+	onPlay: (clip: ScannerClip) => void;
 	onClose: () => void;
 }) {
 	const url = useClipUrl(clip.id);
+	const index = clips.findIndex((other) => other.id === clip.id);
+	const previous = index > 0 ? clips[index - 1] : undefined;
+	const next = index !== -1 ? clips[index + 1] : undefined;
 	const where = [modeLabel(clip.mode), stageLabel(clip.stage)]
 		.filter(Boolean)
 		.join(" · ");
@@ -43,6 +54,31 @@ export function ClipDialog({
 					<div className={styles.video} />
 				)}
 				<div className={styles.actions}>
+					{index !== -1 && clips.length > 1 ? (
+						<span className={styles.nav}>
+							<SendouButton
+								variant="minimal"
+								size="small"
+								shape="circle"
+								icon={<ChevronLeft />}
+								aria-label="Previous clip"
+								isDisabled={!previous}
+								onClick={previous ? () => onPlay(previous) : undefined}
+							/>
+							<span className={styles.position}>
+								{index + 1} / {clips.length}
+							</span>
+							<SendouButton
+								variant="minimal"
+								size="small"
+								shape="circle"
+								icon={<ChevronRight />}
+								aria-label="Next clip"
+								isDisabled={!next}
+								onClick={next ? () => onPlay(next) : undefined}
+							/>
+						</span>
+					) : null}
 					<span className={styles.meta}>
 						{formatPosition(clip.end - clip.start)}
 						{clip.hasAudio ? null : " · no audio"}
@@ -71,7 +107,9 @@ export function ClipDialog({
 						onConfirm={() => {
 							void deleteClip(clip.id).then(() => {
 								void refreshClips();
-								onClose();
+								const neighbor = next ?? previous;
+								if (neighbor) onPlay(neighbor);
+								else onClose();
 							});
 						}}
 					>
