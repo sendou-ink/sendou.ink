@@ -122,6 +122,8 @@
 	"notifications.text.TEAM_EVENT_ADDED": "",
 	"notifications.title.SCHEDULE_TEAM_REMINDER": "",
 	"notifications.text.SCHEDULE_TEAM_REMINDER": "",
+	"notifications.title.CHAT_MENTION": "",
+	"notifications.text.CHAT_MENTION": "",
 	"auth.errors.aborted": "登录中止",
 	"auth.errors.failed": "登录失败",
 	"auth.errors.discordPermissions": "为了完善您的sendou.ink个人资料，网站需要获取您的 Discord 名字、头像和社交链接。",

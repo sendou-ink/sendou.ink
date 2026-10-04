@@ -44,6 +44,7 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	FRIEND_REQUEST_RECEIVED: "normal",
 	TEAM_EVENT_ADDED: "normal",
 	SCHEDULE_TEAM_REMINDER: "normal",
+	CHAT_MENTION: "high",
 };
 
 /** How long a push is held back; anything marking the notification seen meanwhile (addressing it, opening the list, `defaultSeenUserIds`) cancels it for that user. */

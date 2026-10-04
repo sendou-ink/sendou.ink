@@ -1,4 +1,5 @@
 import { userArtPage } from "~/features/art/art-urls";
+import { chatOpenedPage } from "~/features/chat/chat-urls";
 import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
@@ -72,6 +73,8 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 			return "t";
 		case "SCHEDULE_TEAM_REMINDER":
 			return "calendar";
+		case "CHAT_MENTION":
+			return "u";
 		default:
 			assertUnreachable(type);
 	}
@@ -160,6 +163,12 @@ export const notificationLink = (
 		}
 		case "SCHEDULE_TEAM_REMINDER": {
 			return EVENTS_PAGE;
+		}
+		case "CHAT_MENTION": {
+			return chatOpenedPage({
+				pageUrl: notification.meta.roomUrl,
+				roomId: notification.meta.roomId,
+			});
 		}
 		default:
 			assertUnreachable(notification);

@@ -122,6 +122,8 @@
 	"notifications.text.TEAM_EVENT_ADDED": "",
 	"notifications.title.SCHEDULE_TEAM_REMINDER": "",
 	"notifications.text.SCHEDULE_TEAM_REMINDER": "",
+	"notifications.title.CHAT_MENTION": "",
+	"notifications.text.CHAT_MENTION": "",
 	"auth.errors.aborted": "Accesso cancellato",
 	"auth.errors.failed": "Accesso fallito",
 	"auth.errors.discordPermissions": "Per il tuo profilo di sendou.ink, il sito ha bisogno di accesso al nome utente, avatar e connessioni social del tuo profilo Discord.",

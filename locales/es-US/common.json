@@ -122,6 +122,8 @@
 	"notifications.text.TEAM_EVENT_ADDED": "{{teamName}} tiene un nuevo evento: {{eventName}}",
 	"notifications.title.SCHEDULE_TEAM_REMINDER": "Falta tu Disponibilidad",
 	"notifications.text.SCHEDULE_TEAM_REMINDER": "Tus compañeros de equipo están esperando que llenes tu disponibilidad de la semana",
+	"notifications.title.CHAT_MENTION": "",
+	"notifications.text.CHAT_MENTION": "",
 	"auth.errors.aborted": "Ingreso cancelado",
 	"auth.errors.failed": "Ingreso fallido",
 	"auth.errors.discordPermissions": "Para tu perfil en sendou.ink, el sitio requiere acceso a tu nombre de Discord, tu avatar y tus redes sociales conectadas.",

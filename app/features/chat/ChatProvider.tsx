@@ -8,13 +8,16 @@ import {
 import { chatRoomChannel } from "~/features/events/events-types";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useLayoutSize";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { LoggedInUser } from "~/root";
+import { useIsAttending } from "./chat-attention";
 import {
 	type ChatSnapshot,
 	chatClient,
 	snapshotFromLoaderData,
 } from "./chat-client";
 import { useServerRevalidationEvents } from "./chat-hooks";
+import { chatSearchParams } from "./chat-search-params";
 import type {
 	ChatRoomListItem,
 	ClientChatMessage,
@@ -65,6 +68,7 @@ interface ChatContextValue {
 	/** The split view's selected tab, remembered while the chat is closed. Can name a room no longer active. */
 	selectedTabRoomId: number | null;
 	setSelectedTabRoomId: (roomId: number) => void;
+	chatOpenRequest: number;
 }
 
 const ChatContext = React.createContext<ChatContextValue | null>(null);
@@ -178,11 +182,16 @@ function ChatProviderInner({
 		chatOpenState || (!hydrated && autoOpenRoomIdsKey.length > 0);
 
 	// messages arriving to a room on screen are read immediately instead of
-	// counting unread. This also reads the rooms as they open, minus the ones a
-	// view mounting in the same commit has hidden (a background tab)
+	// counting unread, but only while the user pays attention to the tab (it is
+	// visible, focused and not idle). This also reads the rooms as they open or
+	// as the user comes back, minus the ones a view mounting in the same commit
+	// has hidden (a background tab)
+	const attending = useIsAttending();
 	React.useEffect(() => {
-		chatClient.setViewedRoomIds(chatOpenState ? activeRoomIds : []);
-	}, [chatOpenState, activeRoomIds]);
+		chatClient.setViewedRoomIds(
+			chatOpenState && attending ? activeRoomIds : [],
+		);
+	}, [chatOpenState, attending, activeRoomIds]);
 
 	const rooms = snapshot.rooms;
 
@@ -226,6 +235,23 @@ function ChatProviderInner({
 		setChatOpenState,
 	});
 
+	const [chatOpenRequest, setChatOpenRequest] = React.useState(0);
+	useOpenChatFromSearchParam({
+		hydrated,
+		roomsLoaded: snapshot.roomsLoaded,
+		roomsById: snapshot.roomsById,
+		autoOpenRoomIdsKey,
+		openChat: (roomIds, selectedRoomId) => {
+			for (const roomId of roomIds) {
+				chatClient.ensureMessagesLoaded(roomId);
+			}
+			setActiveRoomIds(roomIds);
+			setSelectedTabRoomId(selectedRoomId);
+			setChatOpenState(true);
+			setChatOpenRequest((request) => request + 1);
+		},
+	});
+
 	const sendMessage = (
 		roomId: number,
 		message: { publicId: string; contents: string },
@@ -264,11 +290,51 @@ function ChatProviderInner({
 		setActiveRoomIds,
 		selectedTabRoomId,
 		setSelectedTabRoomId,
+		chatOpenRequest,
 	};
 
 	return (
 		<ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
 	);
+}
+
+function useOpenChatFromSearchParam({
+	hydrated,
+	roomsLoaded,
+	roomsById,
+	autoOpenRoomIdsKey,
+	openChat,
+}: {
+	hydrated: boolean;
+	roomsLoaded: boolean;
+	roomsById: ReadonlyMap<number, ChatRoomListItem>;
+	autoOpenRoomIdsKey: string;
+	openChat: (roomIds: number[], selectedRoomId: number) => void;
+}) {
+	const [chatRoomId, setChatRoomId] = useSearchParam(chatSearchParams, "chat");
+	const openChatRef = React.useRef(openChat);
+	openChatRef.current = openChat;
+
+	// declared after the route sync so the room opened here is not replaced by the route's own
+	React.useEffect(() => {
+		if (chatRoomId === null || !roomsLoaded || !hydrated) return;
+
+		setChatRoomId(null);
+		if (!roomsById.has(chatRoomId)) return;
+
+		const autoOpenRoomIds = roomIdsFromKey(autoOpenRoomIdsKey);
+		openChatRef.current(
+			autoOpenRoomIds.includes(chatRoomId) ? autoOpenRoomIds : [chatRoomId],
+			chatRoomId,
+		);
+	}, [
+		chatRoomId,
+		roomsLoaded,
+		hydrated,
+		roomsById,
+		autoOpenRoomIdsKey,
+		setChatRoomId,
+	]);
 }
 
 function useChatRouteSync({

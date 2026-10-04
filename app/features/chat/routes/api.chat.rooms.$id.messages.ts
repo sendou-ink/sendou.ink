@@ -6,6 +6,7 @@ import { parseFormData } from "~/form/parse.server";
 import { invariant } from "~/utils/invariant";
 import { badRequestIfFalsy, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
+import * as ChatMentionNotification from "../ChatMentionNotification.server";
 import * as ChatRepository from "../ChatRepository.server";
 import * as ChatRoomResolver from "../ChatRoomResolver.server";
 import { sendChatMessageSchema } from "../chat-schemas";
@@ -62,6 +63,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		[...room.participantUserIds.map(userChannel), chatRoomChannel(roomId)],
 		{ kind: "chatMessage", roomId, message },
 	);
+	await ChatMentionNotification.notifyMentioned({ room, message });
 
 	return { message };
 };

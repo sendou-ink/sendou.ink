@@ -91,6 +91,7 @@ function createHarness({
 		): Promise<{ messages: ChatMessageWithAuthor[] } | null> => ({ messages }),
 	);
 	const postRead = vi.fn(async () => {});
+	const onMention = vi.fn();
 
 	const client = createChatClient({
 		fetchRooms,
@@ -98,6 +99,7 @@ function createHarness({
 		fetchMessages,
 		postMessage,
 		postRead,
+		onMention,
 		addServerEventListener: (listener) => {
 			eventListener = listener;
 			return () => {
@@ -114,6 +116,7 @@ function createHarness({
 		fetchMessages,
 		postMessage,
 		postRead,
+		onMention,
 		emit: (event: ServerEvent) => eventListener?.(event),
 		isListening: () => eventListener !== null,
 	};
@@ -287,6 +290,62 @@ describe("createChatClient", () => {
 		client.setViewedRoomIds([1]);
 
 		expect(client.getSnapshot().unreadDividerByRoomId.has(1)).toBe(false);
+	});
+
+	test("a message mentioning the user alerts, telling whether its room is viewed", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 5, contents: "gg <mention-1>" }),
+		});
+		client.setViewedRoomIds([1]);
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 6, contents: "<mention-1> again" }),
+		});
+
+		expect(harness.onMention.mock.calls).toEqual([
+			[{ roomId: 1, roomViewed: false }],
+			[{ roomId: 1, roomViewed: true }],
+		]);
+	});
+
+	test.each([
+		{
+			why: "the user's own message alerts not",
+			messages: [message({ id: 5, authorUserId: 1, contents: "<mention-1>" })],
+			alerts: 0,
+		},
+		{
+			why: "a mention of someone else alerts not",
+			messages: [message({ id: 5, contents: "<mention-3>" })],
+			alerts: 0,
+		},
+		{
+			why: "a repeated delivery alerts once",
+			messages: [
+				message({ id: 5, contents: "<mention-1>" }),
+				message({ id: 5, contents: "<mention-1>" }),
+			],
+			alerts: 1,
+		},
+	])("$why", async ({ messages, alerts }) => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		for (const incoming of messages) {
+			harness.emit({ kind: "chatMessage", roomId: 1, message: incoming });
+		}
+
+		expect(harness.onMention).toHaveBeenCalledTimes(alerts);
 	});
 
 	test("a message to a viewed but hidden room counts unread until the room is shown", async () => {

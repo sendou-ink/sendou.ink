@@ -228,6 +228,8 @@ export const chatRoomMessagesRoute = (roomId: number) =>
 	`${chatRoomDataRoute(roomId)}/messages`;
 export const chatRoomReadRoute = (roomId: number) =>
 	`${chatRoomDataRoute(roomId)}/read`;
+export const chatRoomMentionsSeenRoute = (roomId: number) =>
+	`${chatRoomDataRoute(roomId)}/mentions/seen`;
 
 export const userCardFriendshipPage = (userId: number) =>
 	`/user-card/${userId}/friendship`;

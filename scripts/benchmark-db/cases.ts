@@ -523,6 +523,16 @@ export function buildCases(fx: Fixtures): {
 		fx.manyUserIds,
 		(userIds) => NotificationRepository.findAllSubscriptionsByUserIds(userIds),
 	);
+	add(
+		"NotificationRepository.findUserIdsWithUnseenByType",
+		both(fx.manyUserIds, fx.heavyChatRoomId),
+		([userIds, roomId]) =>
+			NotificationRepository.findUserIdsWithUnseenByType({
+				userIds,
+				type: "CHAT_MENTION",
+				meta: { roomId },
+			}),
+	);
 
 	add(
 		"PlusSuggestionRepository.findAllByMonth",

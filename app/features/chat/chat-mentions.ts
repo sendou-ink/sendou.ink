@@ -41,6 +41,14 @@ export function splitByMentions(contents: string): MessagePart[] {
 	return parts;
 }
 
+export function mentionedUserIds(contents: string) {
+	return R.unique(
+		Array.from(contents.matchAll(MENTION_TOKEN_REGEX), (match) =>
+			Number(match[1]),
+		),
+	);
+}
+
 export function mentionsUser(contents: string, userId: number) {
 	return contents.includes(mentionToken(userId));
 }

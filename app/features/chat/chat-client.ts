@@ -5,10 +5,15 @@ import { logger } from "~/utils/logger";
 import {
 	CHAT_ROOMS_DATA_ROUTE,
 	chatRoomDataRoute,
+	chatRoomMentionsSeenRoute,
 	chatRoomMessagesRoute,
 	chatRoomReadRoute,
 } from "~/utils/urls";
 import { eventsClient } from "../events/events-client";
+import { attention } from "./chat-attention";
+import { CHAT_MENTION_SOUND } from "./chat-constants";
+import { createMentionAlerts } from "./chat-mention-alerts";
+import { mentionsUser } from "./chat-mentions";
 import type {
 	ChatMessageAuthor,
 	ChatMessageWithAuthor,
@@ -17,6 +22,7 @@ import type {
 	RouteChatRoom,
 	UnreadDivider,
 } from "./chat-types";
+import { playSound } from "./chat-utils";
 
 const READ_DEBOUNCE_MS = 1_500;
 
@@ -32,6 +38,8 @@ interface ChatClientDeps {
 		message: { publicId: string; contents: string },
 	) => Promise<{ message: ChatMessageWithAuthor } | null>;
 	postRead: (roomId: number, lastSeenMessageId: number) => Promise<void>;
+	/** A message mentioning the user arrived, `roomViewed` when it landed in a room they are viewing. */
+	onMention: (mention: { roomId: number; roomViewed: boolean }) => void;
 	addServerEventListener: (
 		listener: (event: ServerEvent) => void,
 	) => () => void;
@@ -243,6 +251,20 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 
 		if (viewedRoomIds.has(message.roomId)) {
 			markRead(message.roomId);
+		}
+
+		const isNew = message.id > (room.latestMessageId ?? 0);
+		if (
+			isNew &&
+			!isOwn &&
+			ownUserId !== null &&
+			message.contents !== null &&
+			mentionsUser(message.contents, ownUserId)
+		) {
+			deps.onMention({
+				roomId: message.roomId,
+				roomViewed: viewedRoomIds.has(message.roomId),
+			});
 		}
 
 		// a system message accompanies an owner state change (a confirmed score
@@ -669,6 +691,7 @@ const OFFLINE_DEPS: ChatClientDeps = {
 	fetchMessages: NEVER_RESOLVING,
 	postMessage: NEVER_RESOLVING,
 	postRead: NEVER_RESOLVING,
+	onMention: () => {},
 	addServerEventListener: () => () => {},
 };
 
@@ -691,6 +714,16 @@ const fetchJson = async <T>(url: string): Promise<T | null> => {
 	}
 	return (await response.json()) as T;
 };
+
+const mentionAlerts = createMentionAlerts({
+	attention,
+	playSound: () => playSound(CHAT_MENTION_SOUND),
+	resolveMentions: (roomId) => {
+		void fetch(chatRoomMentionsSeenRoute(roomId), { method: "POST" }).catch(
+			(error) => logger.error("Resolving chat mentions failed", error),
+		);
+	},
+});
 
 export const chatClient = createChatClient({
 	fetchRooms: () => fetchJson(CHAT_ROOMS_DATA_ROUTE),
@@ -722,5 +755,6 @@ export const chatClient = createChatClient({
 			keepalive: true,
 		});
 	},
+	onMention: mentionAlerts.handleMention,
 	addServerEventListener: (listener) => eventsClient.addEventListener(listener),
 });

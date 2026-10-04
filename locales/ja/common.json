@@ -122,6 +122,8 @@
 	"notifications.text.TEAM_EVENT_ADDED": "",
 	"notifications.title.SCHEDULE_TEAM_REMINDER": "",
 	"notifications.text.SCHEDULE_TEAM_REMINDER": "",
+	"notifications.title.CHAT_MENTION": "",
+	"notifications.text.CHAT_MENTION": "",
 	"auth.errors.aborted": "ログインを中断しました",
 	"auth.errors.failed": "ログインに失敗しました",
 	"auth.errors.discordPermissions": "sendou.ink プロファイルを作成するには、Discord 名、アバター、そしてSNSの連携が必要です。",

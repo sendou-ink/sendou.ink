@@ -11,5 +11,6 @@
 	"sounds.likeReceived": "",
 	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
-	"sounds.tournamentMatchStarted": ""
+	"sounds.tournamentMatchStarted": "",
+	"sounds.chatMention": ""
 }
