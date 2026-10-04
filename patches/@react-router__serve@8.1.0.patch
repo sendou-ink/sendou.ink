@@ -1,8 +1,8 @@
 diff --git a/dist/cli.js b/dist/cli.js
-index 7871cebe46f6df886b76364db5346adfa1838622..cbb32659bb2a57c2cd847ddfd35a9a07ab22a033 100644
+index 7871cebe46f6df886b76364db5346adfa1838622..3189db69a236f65f99338c672b0b8c766a31e523 100644
 --- a/dist/cli.js
 +++ b/dist/cli.js
-@@ -110,7 +110,7 @@ async function run() {
+@@ -110,15 +110,16 @@ async function run() {
  	};
  	let app = express();
  	app.disable("x-powered-by");
@@ -11,11 +11,15 @@ index 7871cebe46f6df886b76364db5346adfa1838622..cbb32659bb2a57c2cd847ddfd35a9a07
  	let expressPublicPath = getExpressPath(build.publicPath);
  	app.use(path.posix.join(expressPublicPath, "assets"), express.static(path.join(build.assetsBuildDirectory, "assets"), {
  		immutable: true,
-@@ -118,7 +117,6 @@ async function run() {
+ 		maxAge: "1y"
  	}));
- 	app.use(expressPublicPath, express.static(build.assetsBuildDirectory));
- 	app.use(express.static("public", { maxAge: "1h" }));
+-	app.use(expressPublicPath, express.static(build.assetsBuildDirectory));
+-	app.use(express.static("public", { maxAge: "1h" }));
 -	app.use(morgan("tiny"));
++	// patched: page and .data requests skip the static file lookups, two fs.stat calls each
++	let onlyForFiles = (middleware) => (req, res, next) => /\.[^/.]+$/.test(req.path) && !req.path.endsWith(".data") ? middleware(req, res, next) : next();
++	app.use(expressPublicPath, onlyForFiles(express.static(build.assetsBuildDirectory)));
++	app.use(onlyForFiles(express.static("public", { maxAge: "1h" })));
  	if (build.fetch) app.all("/{*splat}", createRequestListener(build.fetch));
  	else app.all("/{*splat}", createRequestHandler({
  		build: buildModule,

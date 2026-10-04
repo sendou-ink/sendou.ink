@@ -1,0 +1,306 @@
+diff --git a/dist/development/lib/dom/ssr/server.js b/dist/development/lib/dom/ssr/server.js
+index a2b1aca6bfc6cb9a663596780167b58102beb361..2b29018c3bd23ba9bbb307debcf5b456324bf160 100644
+--- a/dist/development/lib/dom/ssr/server.js
++++ b/dist/development/lib/dom/ssr/server.js
+@@ -32,7 +32,7 @@ import * as React$1 from "react";
+ function ServerRouter({ context, url, nonce }) {
+ 	if (typeof url === "string") url = new URL(url);
+ 	let { manifest, routeModules, criticalCss, serverHandoffString } = context;
+-	let routes = createServerRoutes(manifest.routes, routeModules, context.future, context.isSpaMode);
++	let routes = cachedServerRoutes(manifest.routes, routeModules, context.future, context.isSpaMode);
+ 	context.staticHandlerContext.loaderData = { ...context.staticHandlerContext.loaderData };
+ 	for (let match of context.staticHandlerContext.matches) {
+ 		let routeId = match.route.id;
+@@ -65,5 +65,14 @@ function ServerRouter({ context, url, nonce }) {
+ 		nonce
+ 	})) : null);
+ }
++// patched: the routes only depend on the build, so they are created once instead of on every document request
++const serverRoutesCache = /* @__PURE__ */ new WeakMap();
++function cachedServerRoutes(manifestRoutes, routeModules, future, isSpaMode) {
++	let cached = serverRoutesCache.get(manifestRoutes);
++	if (cached && cached.routeModules === routeModules && cached.future === future && cached.isSpaMode === isSpaMode) return cached.routes;
++	let routes = createServerRoutes(manifestRoutes, routeModules, future, isSpaMode);
++	serverRoutesCache.set(manifestRoutes, { routeModules, future, isSpaMode, routes });
++	return routes;
++}
+ //#endregion
+ export { ServerRouter };
+diff --git a/dist/development/lib/router/matcher.js b/dist/development/lib/router/matcher.js
+index 135d8da979b2a7c88c43f2f85c43de0ac6a49ad0..5eb2b3edfda349e5de531559c3313e4d0f4ac8e3 100644
+--- a/dist/development/lib/router/matcher.js
++++ b/dist/development/lib/router/matcher.js
+@@ -8,11 +8,14 @@
+  *
+  * @license MIT
+  */
+-import { flattenAndRankRoutes, matchRoutesImpl } from "./utils.js";
++import { parsePath } from "./history.js";
++import { flattenAndRankRoutes, matchRoutesImpl, stripBasename } from "./utils.js";
+ //#region lib/router/matcher.ts
+ var V6RegExMatcher = class {
+ 	#routes = [];
+ 	#branches = [];
++	#branchesByFirstSegment = /* @__PURE__ */ new Map();
++	#dynamicFirstSegmentBranches = [];
+ 	#basename;
+ 	constructor(basename) {
+ 		this.#basename = basename;
+@@ -20,10 +23,31 @@ var V6RegExMatcher = class {
+ 	update(routes) {
+ 		this.#routes = routes;
+ 		this.#branches = flattenAndRankRoutes(routes);
++		// patched: index branches by their static first segment so a match only scans the branches that can match
++		let firstSegments = this.#branches.map(staticFirstSegment);
++		this.#dynamicFirstSegmentBranches = this.#branches.filter((_, i) => firstSegments[i] === null);
++		this.#branchesByFirstSegment = /* @__PURE__ */ new Map();
++		for (let segment of new Set(firstSegments)) if (segment !== null) this.#branchesByFirstSegment.set(segment, this.#branches.filter((_, i) => firstSegments[i] === null || firstSegments[i] === segment));
+ 	}
+ 	match(locationArg, allowPartial = false) {
+-		return matchRoutesImpl(this.#routes, locationArg, this.#basename, allowPartial, this.#branches);
++		return matchRoutesImpl(this.#routes, locationArg, this.#basename, allowPartial, this.#candidateBranches(locationArg));
++	}
++	#candidateBranches(locationArg) {
++		let pathname = stripBasename((typeof locationArg === "string" ? parsePath(locationArg) : locationArg).pathname || "/", this.#basename);
++		if (pathname == null) return this.#branches;
++		let firstSegment;
++		try {
++			firstSegment = decodeURIComponent(pathname.split("/", 2)[1] ?? "").toLowerCase();
++		} catch {
++			return this.#branches;
++		}
++		return this.#branchesByFirstSegment.get(firstSegment) ?? this.#dynamicFirstSegmentBranches;
+ 	}
+ };
++const STATIC_SEGMENT_RE = /^[A-Za-z0-9_.~-]+$/;
++function staticFirstSegment(branch) {
++	let segment = branch.path.split("/").find((s) => s !== "");
++	return segment !== void 0 && STATIC_SEGMENT_RE.test(segment) ? segment.toLowerCase() : null;
++}
+ //#endregion
+ export { V6RegExMatcher };
+diff --git a/dist/development/lib/server-runtime/crypto.js b/dist/development/lib/server-runtime/crypto.js
+index a4f6c3f43084bfccf5d9ebe4908868502ce70b58..c0619093ba8a2763d523d5a868896626636123f4 100644
+--- a/dist/development/lib/server-runtime/crypto.js
++++ b/dist/development/lib/server-runtime/crypto.js
+@@ -10,7 +10,10 @@
+  */
+ //#region lib/server-runtime/crypto.ts
+ const encoder = /* @__PURE__ */ new TextEncoder();
++// patched: node:crypto HMAC is synchronous and ~10x faster than WebCrypto's importKey + sign/verify per cookie
++const nodeCrypto = typeof process !== "undefined" ? process.getBuiltinModule?.("node:crypto") : void 0;
+ const sign = async (value, secret) => {
++	if (nodeCrypto) return value + "." + nodeCrypto.createHmac("sha256", secret).update(value).digest("base64").replace(/=+$/, "");
+ 	let data = encoder.encode(value);
+ 	let key = await createKey(secret, ["sign"]);
+ 	let signature = await crypto.subtle.sign("HMAC", key, data);
+@@ -21,6 +24,13 @@ const unsign = async (cookie, secret) => {
+ 	let index = cookie.lastIndexOf(".");
+ 	let value = cookie.slice(0, index);
+ 	let hash = cookie.slice(index + 1);
++	if (nodeCrypto) try {
++		let signature = byteStringToUint8Array(atob(hash));
++		let expected = nodeCrypto.createHmac("sha256", secret).update(value).digest();
++		return signature.length === expected.length && nodeCrypto.timingSafeEqual(signature, expected) ? value : false;
++	} catch {
++		return false;
++	}
+ 	let data = encoder.encode(value);
+ 	let key = await createKey(secret, ["verify"]);
+ 	try {
+diff --git a/dist/development/lib/server-runtime/entry.js b/dist/development/lib/server-runtime/entry.js
+index e863c7243768adc4b6a73da7e485895249358bab..26aec6dfce410872389037706052ccaa8f71d570 100644
+--- a/dist/development/lib/server-runtime/entry.js
++++ b/dist/development/lib/server-runtime/entry.js
+@@ -9,7 +9,14 @@
+  * @license MIT
+  */
+ //#region lib/server-runtime/entry.ts
++// patched: memoized per build so the document render can reuse the server routes built from it
++const entryRouteModulesCache = /* @__PURE__ */ new WeakMap();
+ function createEntryRouteModules(manifest) {
++	let cached = entryRouteModulesCache.get(manifest);
++	if (!cached) entryRouteModulesCache.set(manifest, cached = createEntryRouteModulesUncached(manifest));
++	return cached;
++}
++function createEntryRouteModulesUncached(manifest) {
+ 	return Object.keys(manifest).reduce((memo, routeId) => {
+ 		let route = manifest[routeId];
+ 		if (route) memo[routeId] = route.module;
+diff --git a/dist/development/vendor/turbo-stream-v2/flatten.js b/dist/development/vendor/turbo-stream-v2/flatten.js
+index 61b8dbf73570da26728aada21ecdd5f3ed4a75cd..f27872d6b326e691eb00f9a5ecd3eb9bbf83d675 100644
+--- a/dist/development/vendor/turbo-stream-v2/flatten.js
++++ b/dist/development/vendor/turbo-stream-v2/flatten.js
+@@ -46,15 +46,16 @@ async function stringify(stack) {
+ 		stack.push([value, index]);
+ 		return index;
+ 	};
++	// patched: built once instead of once per value
++	const partsForObj = (obj) => Object.keys(obj).map((k) => `"_${flattenValue(k)}":${flattenValue(obj[k])}`).join(",");
+ 	let i = 0;
+ 	while (stack.length > 0) {
+-		const now = getNow();
+-		if (++i % 6e3 === 0 && now - lastYieldTime >= TIME_LIMIT_MS) {
++		// patched: reads the clock only when a yield is due instead of once per value
++		if (++i % 6e3 === 0 && getNow() - lastYieldTime >= TIME_LIMIT_MS) {
+ 			await yieldToMain();
+ 			lastYieldTime = getNow();
+ 		}
+ 		const [input, index] = stack.pop();
+-		const partsForObj = (obj) => Object.keys(obj).map((k) => `"_${flattenValue(k)}":${flattenValue(obj[k])}`).join(",");
+ 		let error = null;
+ 		switch (typeof input) {
+ 			case "boolean":
+diff --git a/dist/production/lib/dom/ssr/server.js b/dist/production/lib/dom/ssr/server.js
+index a2b1aca6bfc6cb9a663596780167b58102beb361..2b29018c3bd23ba9bbb307debcf5b456324bf160 100644
+--- a/dist/production/lib/dom/ssr/server.js
++++ b/dist/production/lib/dom/ssr/server.js
+@@ -32,7 +32,7 @@ import * as React$1 from "react";
+ function ServerRouter({ context, url, nonce }) {
+ 	if (typeof url === "string") url = new URL(url);
+ 	let { manifest, routeModules, criticalCss, serverHandoffString } = context;
+-	let routes = createServerRoutes(manifest.routes, routeModules, context.future, context.isSpaMode);
++	let routes = cachedServerRoutes(manifest.routes, routeModules, context.future, context.isSpaMode);
+ 	context.staticHandlerContext.loaderData = { ...context.staticHandlerContext.loaderData };
+ 	for (let match of context.staticHandlerContext.matches) {
+ 		let routeId = match.route.id;
+@@ -65,5 +65,14 @@ function ServerRouter({ context, url, nonce }) {
+ 		nonce
+ 	})) : null);
+ }
++// patched: the routes only depend on the build, so they are created once instead of on every document request
++const serverRoutesCache = /* @__PURE__ */ new WeakMap();
++function cachedServerRoutes(manifestRoutes, routeModules, future, isSpaMode) {
++	let cached = serverRoutesCache.get(manifestRoutes);
++	if (cached && cached.routeModules === routeModules && cached.future === future && cached.isSpaMode === isSpaMode) return cached.routes;
++	let routes = createServerRoutes(manifestRoutes, routeModules, future, isSpaMode);
++	serverRoutesCache.set(manifestRoutes, { routeModules, future, isSpaMode, routes });
++	return routes;
++}
+ //#endregion
+ export { ServerRouter };
+diff --git a/dist/production/lib/router/matcher.js b/dist/production/lib/router/matcher.js
+index 135d8da979b2a7c88c43f2f85c43de0ac6a49ad0..5eb2b3edfda349e5de531559c3313e4d0f4ac8e3 100644
+--- a/dist/production/lib/router/matcher.js
++++ b/dist/production/lib/router/matcher.js
+@@ -8,11 +8,14 @@
+  *
+  * @license MIT
+  */
+-import { flattenAndRankRoutes, matchRoutesImpl } from "./utils.js";
++import { parsePath } from "./history.js";
++import { flattenAndRankRoutes, matchRoutesImpl, stripBasename } from "./utils.js";
+ //#region lib/router/matcher.ts
+ var V6RegExMatcher = class {
+ 	#routes = [];
+ 	#branches = [];
++	#branchesByFirstSegment = /* @__PURE__ */ new Map();
++	#dynamicFirstSegmentBranches = [];
+ 	#basename;
+ 	constructor(basename) {
+ 		this.#basename = basename;
+@@ -20,10 +23,31 @@ var V6RegExMatcher = class {
+ 	update(routes) {
+ 		this.#routes = routes;
+ 		this.#branches = flattenAndRankRoutes(routes);
++		// patched: index branches by their static first segment so a match only scans the branches that can match
++		let firstSegments = this.#branches.map(staticFirstSegment);
++		this.#dynamicFirstSegmentBranches = this.#branches.filter((_, i) => firstSegments[i] === null);
++		this.#branchesByFirstSegment = /* @__PURE__ */ new Map();
++		for (let segment of new Set(firstSegments)) if (segment !== null) this.#branchesByFirstSegment.set(segment, this.#branches.filter((_, i) => firstSegments[i] === null || firstSegments[i] === segment));
+ 	}
+ 	match(locationArg, allowPartial = false) {
+-		return matchRoutesImpl(this.#routes, locationArg, this.#basename, allowPartial, this.#branches);
++		return matchRoutesImpl(this.#routes, locationArg, this.#basename, allowPartial, this.#candidateBranches(locationArg));
++	}
++	#candidateBranches(locationArg) {
++		let pathname = stripBasename((typeof locationArg === "string" ? parsePath(locationArg) : locationArg).pathname || "/", this.#basename);
++		if (pathname == null) return this.#branches;
++		let firstSegment;
++		try {
++			firstSegment = decodeURIComponent(pathname.split("/", 2)[1] ?? "").toLowerCase();
++		} catch {
++			return this.#branches;
++		}
++		return this.#branchesByFirstSegment.get(firstSegment) ?? this.#dynamicFirstSegmentBranches;
+ 	}
+ };
++const STATIC_SEGMENT_RE = /^[A-Za-z0-9_.~-]+$/;
++function staticFirstSegment(branch) {
++	let segment = branch.path.split("/").find((s) => s !== "");
++	return segment !== void 0 && STATIC_SEGMENT_RE.test(segment) ? segment.toLowerCase() : null;
++}
+ //#endregion
+ export { V6RegExMatcher };
+diff --git a/dist/production/lib/server-runtime/crypto.js b/dist/production/lib/server-runtime/crypto.js
+index a4f6c3f43084bfccf5d9ebe4908868502ce70b58..c0619093ba8a2763d523d5a868896626636123f4 100644
+--- a/dist/production/lib/server-runtime/crypto.js
++++ b/dist/production/lib/server-runtime/crypto.js
+@@ -10,7 +10,10 @@
+  */
+ //#region lib/server-runtime/crypto.ts
+ const encoder = /* @__PURE__ */ new TextEncoder();
++// patched: node:crypto HMAC is synchronous and ~10x faster than WebCrypto's importKey + sign/verify per cookie
++const nodeCrypto = typeof process !== "undefined" ? process.getBuiltinModule?.("node:crypto") : void 0;
+ const sign = async (value, secret) => {
++	if (nodeCrypto) return value + "." + nodeCrypto.createHmac("sha256", secret).update(value).digest("base64").replace(/=+$/, "");
+ 	let data = encoder.encode(value);
+ 	let key = await createKey(secret, ["sign"]);
+ 	let signature = await crypto.subtle.sign("HMAC", key, data);
+@@ -21,6 +24,13 @@ const unsign = async (cookie, secret) => {
+ 	let index = cookie.lastIndexOf(".");
+ 	let value = cookie.slice(0, index);
+ 	let hash = cookie.slice(index + 1);
++	if (nodeCrypto) try {
++		let signature = byteStringToUint8Array(atob(hash));
++		let expected = nodeCrypto.createHmac("sha256", secret).update(value).digest();
++		return signature.length === expected.length && nodeCrypto.timingSafeEqual(signature, expected) ? value : false;
++	} catch {
++		return false;
++	}
+ 	let data = encoder.encode(value);
+ 	let key = await createKey(secret, ["verify"]);
+ 	try {
+diff --git a/dist/production/lib/server-runtime/entry.js b/dist/production/lib/server-runtime/entry.js
+index e863c7243768adc4b6a73da7e485895249358bab..26aec6dfce410872389037706052ccaa8f71d570 100644
+--- a/dist/production/lib/server-runtime/entry.js
++++ b/dist/production/lib/server-runtime/entry.js
+@@ -9,7 +9,14 @@
+  * @license MIT
+  */
+ //#region lib/server-runtime/entry.ts
++// patched: memoized per build so the document render can reuse the server routes built from it
++const entryRouteModulesCache = /* @__PURE__ */ new WeakMap();
+ function createEntryRouteModules(manifest) {
++	let cached = entryRouteModulesCache.get(manifest);
++	if (!cached) entryRouteModulesCache.set(manifest, cached = createEntryRouteModulesUncached(manifest));
++	return cached;
++}
++function createEntryRouteModulesUncached(manifest) {
+ 	return Object.keys(manifest).reduce((memo, routeId) => {
+ 		let route = manifest[routeId];
+ 		if (route) memo[routeId] = route.module;
+diff --git a/dist/production/vendor/turbo-stream-v2/flatten.js b/dist/production/vendor/turbo-stream-v2/flatten.js
+index 61b8dbf73570da26728aada21ecdd5f3ed4a75cd..f27872d6b326e691eb00f9a5ecd3eb9bbf83d675 100644
+--- a/dist/production/vendor/turbo-stream-v2/flatten.js
++++ b/dist/production/vendor/turbo-stream-v2/flatten.js
+@@ -46,15 +46,16 @@ async function stringify(stack) {
+ 		stack.push([value, index]);
+ 		return index;
+ 	};
++	// patched: built once instead of once per value
++	const partsForObj = (obj) => Object.keys(obj).map((k) => `"_${flattenValue(k)}":${flattenValue(obj[k])}`).join(",");
+ 	let i = 0;
+ 	while (stack.length > 0) {
+-		const now = getNow();
+-		if (++i % 6e3 === 0 && now - lastYieldTime >= TIME_LIMIT_MS) {
++		// patched: reads the clock only when a yield is due instead of once per value
++		if (++i % 6e3 === 0 && getNow() - lastYieldTime >= TIME_LIMIT_MS) {
+ 			await yieldToMain();
+ 			lastYieldTime = getNow();
+ 		}
+ 		const [input, index] = stack.pop();
+-		const partsForObj = (obj) => Object.keys(obj).map((k) => `"_${flattenValue(k)}":${flattenValue(obj[k])}`).join(",");
+ 		let error = null;
+ 		switch (typeof input) {
+ 			case "boolean":

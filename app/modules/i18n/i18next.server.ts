@@ -98,9 +98,7 @@ export async function getFixedTForLanguage<
 		| FlatNamespace
 		| readonly [FlatNamespace, ...FlatNamespace[]] = DefaultNamespace,
 >(language: string, namespaces?: N): Promise<TFunction<FallbackNs<N>>> {
-	const instance = createInstance();
-	await instance.init({ ...config, resources, lng: language });
-	return instance.getFixedT(
+	return fixedLanguageInstance(language).getFixedT(
 		language,
 		namespaces as Namespace,
 	) as unknown as TFunction<FallbackNs<N>>;
@@ -110,6 +108,18 @@ function currentStore(): I18nStore {
 	const store = i18nAsyncLocalStorage.getStore();
 	invariant(store, "i18n store not found, is i18nMiddleware registered?");
 	return store;
+}
+
+const fixedLanguageInstances = new Map<string, i18n>();
+
+function fixedLanguageInstance(language: string): i18n {
+	let instance = fixedLanguageInstances.get(language);
+	if (!instance) {
+		instance = createInstance();
+		instance.init({ ...config, resources, lng: language, initAsync: false });
+		fixedLanguageInstances.set(language, instance);
+	}
+	return instance;
 }
 
 let sharedFallbackInstance: i18n | undefined;

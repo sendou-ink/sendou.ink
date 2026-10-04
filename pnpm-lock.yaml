@@ -5,11 +5,13 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@react-router/serve@8.1.0': 08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673
+  '@react-router/serve@8.1.0': f7425beb70a2ce35ca7235672d8df524901983a27c25aa7de489bc559d54d7f1
   '@techstark/opencv-js@5.0.0-release.1': 810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6
   i18next@26.3.6: 34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a
   kysely@0.29.0: c4db877b7832e81d7eb0b710c902cee526020b0bcd4f577c696f0935a2fd1364
   react-i18next@17.0.11: 1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269
+  react-router@8.4.0: 52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2
+  remix-i18next@8.0.0: 2e2cb4c9211d55a0d57b6812c2e31c41d3f17c2163db0f26ce8d941e91a66bae
 
 importers:
 
@@ -41,10 +43,10 @@ importers:
         version: 5.6.3
       '@react-router/node':
         specifier: 8.4.0
-        version: 8.4.0(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
+        version: 8.4.0(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
       '@react-router/serve':
         specifier: 8.1.0
-        version: 8.1.0(patch_hash=08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673)(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
+        version: 8.1.0(patch_hash=f7425beb70a2ce35ca7235672d8df524901983a27c25aa7de489bc559d54d7f1)(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
       '@techstark/opencv-js':
         specifier: 5.0.0-release.1
         version: 5.0.0-release.1(patch_hash=810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6)
@@ -134,7 +136,7 @@ importers:
         version: 17.0.11(patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269)(i18next@26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@7.0.2)
       react-router:
         specifier: 8.4.0
-        version: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       remeda:
         specifier: 2.50.0
         version: 2.50.0
@@ -146,7 +148,7 @@ importers:
         version: 3.4.1(remix-auth@4.2.0)
       remix-i18next:
         specifier: 8.0.0
-        version: 8.0.0(i18next@26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2))(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
+        version: 8.0.0(patch_hash=2e2cb4c9211d55a0d57b6812c2e31c41d3f17c2163db0f26ce8d941e91a66bae)(i18next@26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2))(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))
       slugify:
         specifier: 1.6.9
         version: 1.6.9
@@ -180,7 +182,7 @@ importers:
         version: 1.63.0
       '@react-router/dev':
         specifier: 8.4.0
-        version: 8.4.0(@react-router/serve@8.1.0(patch_hash=08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673)(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2))(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0)(yaml@2.9.1))
+        version: 8.4.0(@react-router/serve@8.1.0(patch_hash=f7425beb70a2ce35ca7235672d8df524901983a27c25aa7de489bc559d54d7f1)(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2))(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0)(yaml@2.9.1))
       '@types/node':
         specifier: 26.6.2
         version: 26.6.2
@@ -5641,14 +5643,14 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@react-router/dev@8.4.0(@react-router/serve@8.1.0(patch_hash=08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673)(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2))(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0)(yaml@2.9.1))':
+  '@react-router/dev@8.4.0(@react-router/serve@8.1.0(patch_hash=f7425beb70a2ce35ca7235672d8df524901983a27c25aa7de489bc559d54d7f1)(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2))(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)(vite@8.3.0(@types/node@26.6.2)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/generator': 7.29.8
       '@babel/parser': 7.29.9
       '@babel/traverse': 7.29.8
       '@babel/types': 7.29.8
-      '@react-router/node': 8.4.0(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
+      '@react-router/node': 8.4.0(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
       '@remix-run/node-fetch-server': 0.14.1
       babel-dead-code-elimination: 1.0.12
       chokidar: 5.0.0
@@ -5663,49 +5665,49 @@ snapshots:
       picocolors: 1.1.1
       pkg-types: 2.3.3
       react-refresh: 0.18.0
-      react-router: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react-router: 8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       semver: 7.8.5
       tinyglobby: 0.2.17
       valibot: 1.5.0(typescript@7.0.2)
       vite: 8.3.0(@types/node@26.6.2)(jiti@2.7.0)(yaml@2.9.1)
     optionalDependencies:
-      '@react-router/serve': 8.1.0(patch_hash=08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673)(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
+      '@react-router/serve': 8.1.0(patch_hash=f7425beb70a2ce35ca7235672d8df524901983a27c25aa7de489bc559d54d7f1)(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
       typescript: 7.0.2
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
 
-  '@react-router/express@8.1.0(express@5.2.1)(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)':
+  '@react-router/express@8.1.0(express@5.2.1)(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)':
     dependencies:
-      '@react-router/node': 8.1.0(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
+      '@react-router/node': 8.1.0(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
       express: 5.2.1
-      react-router: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react-router: 8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
     optionalDependencies:
       typescript: 7.0.2
 
-  '@react-router/node@8.1.0(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)':
+  '@react-router/node@8.1.0(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)':
     dependencies:
       '@remix-run/node-fetch-server': 0.13.3
-      react-router: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react-router: 8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
     optionalDependencies:
       typescript: 7.0.2
 
-  '@react-router/node@8.4.0(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)':
+  '@react-router/node@8.4.0(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)':
     dependencies:
       '@remix-run/node-fetch-server': 0.14.1
-      react-router: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react-router: 8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
     optionalDependencies:
       typescript: 7.0.2
 
-  '@react-router/serve@8.1.0(patch_hash=08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673)(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)':
+  '@react-router/serve@8.1.0(patch_hash=f7425beb70a2ce35ca7235672d8df524901983a27c25aa7de489bc559d54d7f1)(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)':
     dependencies:
-      '@react-router/express': 8.1.0(express@5.2.1)(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
-      '@react-router/node': 8.1.0(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
+      '@react-router/express': 8.1.0(express@5.2.1)(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
+      '@react-router/node': 8.1.0(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
       '@remix-run/node-fetch-server': 0.13.3
       compression: 1.8.1
       express: 5.2.1
       morgan: 1.10.1
-      react-router: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react-router: 8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       source-map-support: 0.5.21
     transitivePeerDependencies:
       - supports-color
@@ -8102,7 +8104,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
+  react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
     dependencies:
       '@remix-run/route-pattern': 0.22.1
       cookie-es: 3.1.1
@@ -8139,10 +8141,10 @@ snapshots:
 
   remix-auth@4.2.0: {}
 
-  remix-i18next@8.0.0(i18next@26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2))(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)):
+  remix-i18next@8.0.0(patch_hash=2e2cb4c9211d55a0d57b6812c2e31c41d3f17c2163db0f26ce8d941e91a66bae)(i18next@26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2))(react-router@8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)):
     dependencies:
       i18next: 26.3.6(patch_hash=34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a)(typescript@7.0.2)
-      react-router: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react-router: 8.4.0(patch_hash=52f9ae163e5f363aaf96cb27d110cfb1bd20c91f34ddcf5b2bf85ee1bc2d1cf2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
 
   require-directory@2.1.1: {}
 
