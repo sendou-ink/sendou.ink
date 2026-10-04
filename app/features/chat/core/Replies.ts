@@ -1,10 +1,10 @@
 const REPLY_TOKEN_REGEX = /<reply-(\d+)>/g;
 
-export function replyToken(messageId: number) {
+export function token(messageId: number) {
 	return `<reply-${messageId}>`;
 }
 
-export function messageReply(contents: string) {
+export function split(contents: string) {
 	const [match] = contents.matchAll(REPLY_TOKEN_REGEX);
 
 	return {
@@ -13,6 +13,6 @@ export function messageReply(contents: string) {
 	};
 }
 
-export function hasValidReplies(contents: string) {
+export function hasValid(contents: string) {
 	return Array.from(contents.matchAll(REPLY_TOKEN_REGEX)).length <= 1;
 }

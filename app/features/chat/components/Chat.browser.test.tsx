@@ -6,7 +6,7 @@ import { render } from "vitest-browser-react";
 import type { EventsReadyState } from "~/features/events/events-client";
 import type { ChatMessageAuthor, ClientChatMessage } from "../chat-types";
 import { Chat } from "./Chat";
-import styles from "./Chat.module.css";
+import styles from "./Message.module.css";
 
 const CONNECTION_STATUS_GRACE_MS = 1_500;
 

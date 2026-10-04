@@ -1,13 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-	activeMentionQuery,
-	encodeMentions,
-	mentionSuggestions,
-	mentionsUser,
-	shiftPickedMentions,
-	splitByMentions,
-	visibleLength,
-} from "./chat-mentions";
+import * as Mentions from "./Mentions";
 
 const USERS = [
 	{ id: 1, username: "Bob" },
@@ -15,7 +7,7 @@ const USERS = [
 	{ id: 3, username: "Ana Banana" },
 ];
 
-describe("encodeMentions", () => {
+describe("Mentions.encode", () => {
 	test.each([
 		{ why: "a typed name", text: "hi @Bob", expected: "hi <mention-1>" },
 		{
@@ -55,7 +47,7 @@ describe("encodeMentions", () => {
 		},
 		{ why: "a lone @", text: "@ @", expected: "@ @" },
 	])("$why", ({ text, expected }) => {
-		expect(encodeMentions(text, USERS)).toBe(expected);
+		expect(Mentions.encode(text, USERS)).toBe(expected);
 	});
 
 	const SAME_NAME_USERS = [
@@ -86,11 +78,11 @@ describe("encodeMentions", () => {
 			expected: "@Bobx",
 		},
 	])("$why", ({ text, picked, expected }) => {
-		expect(encodeMentions(text, SAME_NAME_USERS, picked)).toBe(expected);
+		expect(Mentions.encode(text, SAME_NAME_USERS, picked)).toBe(expected);
 	});
 });
 
-describe("shiftPickedMentions", () => {
+describe("Mentions.shiftPicked", () => {
 	const bobAt = (start: number) => ({ userId: 1, username: "Bob", start });
 
 	test.each([
@@ -127,15 +119,15 @@ describe("shiftPickedMentions", () => {
 	])("$why", ({ previous, next, expected }) => {
 		const start = previous.indexOf("@");
 
-		expect(shiftPickedMentions([bobAt(start)], previous, next)).toEqual(
+		expect(Mentions.shiftPicked([bobAt(start)], previous, next)).toEqual(
 			expected,
 		);
 	});
 });
 
-describe("splitByMentions", () => {
+describe("Mentions.split", () => {
 	test("splits text and mention tokens in order", () => {
-		expect(splitByMentions("hi <mention-1> and <mention-22>!")).toEqual([
+		expect(Mentions.split("hi <mention-1> and <mention-22>!")).toEqual([
 			{ type: "text", text: "hi " },
 			{ type: "mention", userId: 1 },
 			{ type: "text", text: " and " },
@@ -148,13 +140,13 @@ describe("splitByMentions", () => {
 		["plain text", "no mentions here"],
 		["a malformed token", "<mention-abc>"],
 	])("keeps %s as one text part", (_why, contents) => {
-		expect(splitByMentions(contents)).toEqual([
+		expect(Mentions.split(contents)).toEqual([
 			{ type: "text", text: contents },
 		]);
 	});
 });
 
-describe("mentionsUser", () => {
+describe("Mentions.mentionsUser", () => {
 	test.each([
 		{ why: "mentioned", contents: "hi <mention-1>", userId: 1, expected: true },
 		{
@@ -164,20 +156,20 @@ describe("mentionsUser", () => {
 			expected: false,
 		},
 	])("$why", ({ contents, userId, expected }) => {
-		expect(mentionsUser(contents, userId)).toBe(expected);
+		expect(Mentions.mentionsUser(contents, userId)).toBe(expected);
 	});
 });
 
-describe("visibleLength", () => {
+describe("Mentions.visibleLength", () => {
 	test.each([
 		{ why: "plain text", contents: "hello", expected: 5 },
 		{ why: "a token counts as one", contents: "hi <mention-123>", expected: 4 },
 	])("$why", ({ contents, expected }) => {
-		expect(visibleLength(contents)).toBe(expected);
+		expect(Mentions.visibleLength(contents)).toBe(expected);
 	});
 });
 
-describe("mentionSuggestions", () => {
+describe("Mentions.suggestions", () => {
 	const users = [
 		{ username: "Mobob" },
 		{ username: "Bobby" },
@@ -199,7 +191,7 @@ describe("mentionSuggestions", () => {
 		{ why: "no match", query: "zzz", expected: [] },
 	])("$why", ({ query, expected }) => {
 		expect(
-			mentionSuggestions(users, query).map((user) => user.username),
+			Mentions.suggestions(users, query).map((user) => user.username),
 		).toEqual(expected);
 	});
 
@@ -208,11 +200,11 @@ describe("mentionSuggestions", () => {
 			username: `User${i}`,
 		}));
 
-		expect(mentionSuggestions(many, "user")).toHaveLength(6);
+		expect(Mentions.suggestions(many, "user")).toHaveLength(6);
 	});
 });
 
-describe("activeMentionQuery", () => {
+describe("Mentions.activeQuery", () => {
 	test.each([
 		{
 			why: "just the @",
@@ -236,6 +228,6 @@ describe("activeMentionQuery", () => {
 		{ why: "an email address", text: "mail@Bo", caret: 7, expected: null },
 		{ why: "no @", text: "hello", caret: 5, expected: null },
 	])("$why", ({ text, caret, expected }) => {
-		expect(activeMentionQuery(text, caret)).toEqual(expected);
+		expect(Mentions.activeQuery(text, caret)).toEqual(expected);
 	});
 });

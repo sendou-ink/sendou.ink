@@ -15,11 +15,11 @@ export interface PickedMention {
 	start: number;
 }
 
-export function mentionToken(userId: number) {
+export function token(userId: number) {
 	return `<mention-${userId}>`;
 }
 
-export function splitByMentions(contents: string): MessagePart[] {
+export function split(contents: string): MessagePart[] {
 	const parts: MessagePart[] = [];
 	let lastIndex = 0;
 
@@ -50,14 +50,14 @@ export function mentionedUserIds(contents: string) {
 }
 
 export function mentionsUser(contents: string, userId: number) {
-	return contents.includes(mentionToken(userId));
+	return contents.includes(token(userId));
 }
 
 export function visibleLength(contents: string) {
 	return contents.replace(MENTION_TOKEN_REGEX, "@").length;
 }
 
-export function encodeMentions(
+export function encode(
 	text: string,
 	users: Array<{ id: number; username: string }>,
 	pickedMentions: PickedMention[] = [],
@@ -78,7 +78,7 @@ export function encodeMentions(
 			: mentionAt(text, atIndex, longestNameFirst, pickedMentions);
 
 		if (mention) {
-			result += mentionToken(mention.userId);
+			result += token(mention.userId);
 			index = atIndex + 1 + mention.username.length;
 		} else {
 			result += "@";
@@ -89,7 +89,7 @@ export function encodeMentions(
 	return result + text.slice(index);
 }
 
-export function shiftPickedMentions(
+export function shiftPicked(
 	pickedMentions: PickedMention[],
 	previousText: string,
 	nextText: string,
@@ -121,14 +121,14 @@ export function shiftPickedMentions(
 	});
 }
 
-export function activeMentionQuery(text: string, caret: number) {
+export function activeQuery(text: string, caret: number) {
 	const match = MENTION_QUERY_REGEX.exec(text.slice(0, caret));
 	if (!match) return null;
 
 	return { query: match[1], start: caret - match[1].length - 1 };
 }
 
-export function mentionSuggestions<T extends { username: string }>(
+export function suggestions<T extends { username: string }>(
 	users: T[],
 	query: string,
 ) {

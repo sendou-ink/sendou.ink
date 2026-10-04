@@ -2,8 +2,8 @@ import clsx from "clsx";
 import * as React from "react";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { chatStickerUrl } from "~/utils/urls";
-import { useIsAttending } from "../chat-attention";
-import type { ChatSticker } from "../chat-stickers";
+import { useIsAttending } from "../chat-hooks";
+import type * as Stickers from "../core/Stickers";
 import styles from "./StickerImage.module.css";
 
 export function StickerImage({
@@ -13,7 +13,7 @@ export function StickerImage({
 	className,
 	"data-testid": testId,
 }: {
-	sticker: ChatSticker;
+	sticker: Stickers.ChatSticker;
 	size: number;
 	alt?: string;
 	className?: string;

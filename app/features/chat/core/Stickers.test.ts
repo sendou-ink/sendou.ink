@@ -1,12 +1,7 @@
 import { describe, expect, test } from "vitest";
-import {
-	activeStickerQuery,
-	hasValidStickers,
-	messageSticker,
-	stickerSuggestions,
-} from "./chat-stickers";
+import * as Stickers from "./Stickers";
 
-describe("messageSticker", () => {
+describe("Stickers.split", () => {
 	test.each([
 		{
 			why: "text with a sticker",
@@ -29,13 +24,13 @@ describe("messageSticker", () => {
 			expected: { text: "hi", stickerId: undefined },
 		},
 	])("$why", ({ contents, expected }) => {
-		const { text, sticker } = messageSticker(contents);
+		const { text, sticker } = Stickers.split(contents);
 
 		expect({ text, stickerId: sticker?.id }).toEqual(expected);
 	});
 });
 
-describe("hasValidStickers", () => {
+describe("Stickers.hasValid", () => {
 	test.each([
 		{ why: "no sticker", contents: "hi", expected: true },
 		{
@@ -50,11 +45,11 @@ describe("hasValidStickers", () => {
 		},
 		{ why: "an unknown sticker", contents: "<sticker-gone>", expected: false },
 	])("$why", ({ contents, expected }) => {
-		expect(hasValidStickers(contents)).toBe(expected);
+		expect(Stickers.hasValid(contents)).toBe(expected);
 	});
 });
 
-describe("activeStickerQuery", () => {
+describe("Stickers.activeQuery", () => {
 	test.each([
 		{
 			why: "just the +",
@@ -71,13 +66,13 @@ describe("activeStickerQuery", () => {
 		{ why: "a sum", text: "1+1", caret: 3, expected: null },
 		{ why: "a space after the name", text: "+gg ", caret: 4, expected: null },
 	])("$why", ({ text, caret, expected }) => {
-		expect(activeStickerQuery(text, caret)).toEqual(expected);
+		expect(Stickers.activeQuery(text, caret)).toEqual(expected);
 	});
 });
 
-describe("stickerSuggestions", () => {
+describe("Stickers.suggestions", () => {
 	test("lists the stickers whose name contains the query", () => {
-		expect(stickerSuggestions("OO").map((sticker) => sticker.id)).toEqual([
+		expect(Stickers.suggestions("OO").map((sticker) => sticker.id)).toEqual([
 			"booyah",
 		]);
 	});

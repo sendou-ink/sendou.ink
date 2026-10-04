@@ -7,6 +7,7 @@ import {
 } from "~/features/events/events-hooks";
 import { useUser } from "../auth/core/user";
 import type { ClientChatMessage } from "./chat-types";
+import * as Attention from "./core/Attention";
 import {
 	revalidateWithScope,
 	scheduleBroadcastRevalidation,
@@ -226,4 +227,13 @@ export function useServerRevalidationEvents(userId: number) {
 		// every subscribed client refetch in the same instant
 		scheduleBroadcastRevalidation(revalidate, event.scope);
 	});
+}
+
+/** Whether the user is paying attention to this tab right now, `false` on the server. */
+export function useIsAttending() {
+	return React.useSyncExternalStore(
+		Attention.tracker.subscribe,
+		Attention.tracker.isAttending,
+		() => false,
+	);
 }

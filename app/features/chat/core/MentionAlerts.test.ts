@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { createMentionAlerts } from "./chat-mention-alerts";
+import * as MentionAlerts from "./MentionAlerts";
 
 function setup({
 	attending = true,
@@ -13,7 +13,7 @@ function setup({
 	const playSound = vi.fn();
 	const resolveMentions = vi.fn();
 
-	const alerts = createMentionAlerts({
+	const alerts = MentionAlerts.create({
 		attention: {
 			isAttending: () => state.attending,
 			isLastActiveTab: () => lastActiveTab,
@@ -37,7 +37,7 @@ function setup({
 	};
 }
 
-describe("createMentionAlerts", () => {
+describe("MentionAlerts.create", () => {
 	test("a mention in a viewed room needs no alert, reading resolves it", () => {
 		const { alerts, playSound, resolveMentions } = setup();
 

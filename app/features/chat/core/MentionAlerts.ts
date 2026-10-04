@@ -1,12 +1,12 @@
-import type { AttentionTracker } from "./chat-attention";
+import type * as Attention from "./Attention";
 
-export function createMentionAlerts({
+export function create({
 	attention,
 	playSound,
 	resolveMentions,
 }: {
 	attention: Pick<
-		AttentionTracker,
+		Attention.Tracker,
 		"isAttending" | "isLastActiveTab" | "subscribe"
 	>;
 	playSound: () => void;

@@ -1,4 +1,3 @@
-import * as React from "react";
 import { shortNanoid } from "~/utils/id";
 
 const IDLE_AFTER_MS = 3 * 60 * 1000;
@@ -19,10 +18,10 @@ interface AttentionEnvironment {
 	now: () => number;
 }
 
-export type AttentionTracker = ReturnType<typeof createAttentionTracker>;
+export type Tracker = ReturnType<typeof createTracker>;
 
 // Whether the user is paying attention to this tab. It has to be visible, window focused, and be interacted with in the last 3 minutes
-export function createAttentionTracker(
+export function createTracker(
 	getEnvironment: () => AttentionEnvironment,
 	{ idleAfterMs = IDLE_AFTER_MS }: { idleAfterMs?: number } = {},
 ) {
@@ -121,20 +120,12 @@ export function createAttentionTracker(
 	};
 }
 
-export const attention = createAttentionTracker(() => ({
+export const tracker = createTracker(() => ({
 	document,
 	window,
 	storage: browserStorage(),
 	now: () => Date.now(),
 }));
-
-export function useIsAttending() {
-	return React.useSyncExternalStore(
-		attention.subscribe,
-		attention.isAttending,
-		() => false,
-	);
-}
 
 function browserStorage() {
 	try {

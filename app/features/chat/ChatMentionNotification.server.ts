@@ -3,8 +3,8 @@ import * as NotificationRepository from "~/features/notifications/NotificationRe
 import { hasPermission } from "~/modules/permissions/utils";
 import { resolveAvatarUrl } from "~/utils/urls";
 import type * as ChatRoomResolver from "./ChatRoomResolver.server";
-import { mentionedUserIds } from "./chat-mentions";
 import type { ChatMessageWithAuthor } from "./chat-types";
+import * as Mentions from "./core/Mentions";
 
 export async function notifyMentioned({
 	room,
@@ -15,7 +15,7 @@ export async function notifyMentioned({
 }) {
 	if (!message.contents || !message.author) return;
 
-	const recipientIds = mentionedUserIds(message.contents).filter(
+	const recipientIds = Mentions.mentionedUserIds(message.contents).filter(
 		(userId) =>
 			userId !== message.authorUserId &&
 			hasPermission(room, "VIEW", { id: userId }),

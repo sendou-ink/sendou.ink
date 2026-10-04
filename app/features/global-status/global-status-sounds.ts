@@ -1,5 +1,5 @@
 import * as React from "react";
-import { playSound } from "~/features/chat/chat-utils";
+import * as Sounds from "~/features/chat/core/Sounds";
 import type { GlobalStatus, GlobalStatusState } from "./global-status-types";
 
 const SOUND_BY_STATE: Partial<Record<GlobalStatusState, string>> = {
@@ -27,7 +27,7 @@ export function useGlobalStatusSounds(status: GlobalStatus | null) {
 		if (previous === undefined || !status) return;
 
 		const sound = soundForTransition(previous, status);
-		if (sound) playSound(sound);
+		if (sound) Sounds.play(sound);
 	}, [status]);
 }
 

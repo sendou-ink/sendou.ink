@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { createAttentionTracker } from "./chat-attention";
+import * as Attention from "./Attention";
 
 const IDLE_AFTER_MS = 1_000;
 
@@ -43,12 +43,12 @@ function fakeEnvironment(storage = new Map<string, string>()) {
 }
 
 function trackerFor(env: ReturnType<typeof fakeEnvironment>) {
-	return createAttentionTracker(() => env.environment, {
+	return Attention.createTracker(() => env.environment, {
 		idleAfterMs: IDLE_AFTER_MS,
 	});
 }
 
-describe("createAttentionTracker", () => {
+describe("Attention.createTracker", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 	});
@@ -126,7 +126,7 @@ describe("createAttentionTracker", () => {
 
 	test("every tab counts as the last active one without storage", () => {
 		const env = fakeEnvironment();
-		const tracker = createAttentionTracker(() => ({
+		const tracker = Attention.createTracker(() => ({
 			...env.environment,
 			storage: null,
 		}));

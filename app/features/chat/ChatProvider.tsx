@@ -10,13 +10,12 @@ import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useLayoutSize";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { LoggedInUser } from "~/root";
-import { useIsAttending } from "./chat-attention";
 import {
 	type ChatSnapshot,
 	chatClient,
 	snapshotFromLoaderData,
 } from "./chat-client";
-import { useServerRevalidationEvents } from "./chat-hooks";
+import { useIsAttending, useServerRevalidationEvents } from "./chat-hooks";
 import { chatSearchParams } from "./chat-search-params";
 import type {
 	ChatRoomListItem,

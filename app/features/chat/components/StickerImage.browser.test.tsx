@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { CHAT_STICKERS } from "../chat-stickers";
+import * as Stickers from "../core/Stickers";
 import { StickerImage } from "./StickerImage";
 
 const state = vi.hoisted(() => ({ attending: true, reducedMotion: false }));
 
-vi.mock("../chat-attention", () => ({
+vi.mock("../chat-hooks", () => ({
 	useIsAttending: () => state.attending,
 }));
 
@@ -39,7 +39,7 @@ describe("StickerImage", () => {
 
 		const screen = await render(
 			<StickerImage
-				sticker={CHAT_STICKERS[0]}
+				sticker={Stickers.CHAT_STICKERS[0]}
 				size={96}
 				data-testid="sticker"
 			/>,

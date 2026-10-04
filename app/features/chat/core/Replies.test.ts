@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { hasValidReplies, messageReply } from "./chat-replies";
+import * as Replies from "./Replies";
 
-describe("messageReply", () => {
+describe("Replies.split", () => {
 	test.each([
 		{
 			why: "a reply with text",
@@ -19,16 +19,16 @@ describe("messageReply", () => {
 			expected: { rest: "hello", replyToMessageId: null },
 		},
 	])("$why", ({ contents, expected }) => {
-		expect(messageReply(contents)).toEqual(expected);
+		expect(Replies.split(contents)).toEqual(expected);
 	});
 });
 
-describe("hasValidReplies", () => {
+describe("Replies.hasValid", () => {
 	test.each([
 		{ why: "no reply", contents: "hi", expected: true },
 		{ why: "one reply", contents: "<reply-1> hi", expected: true },
 		{ why: "two replies", contents: "<reply-1><reply-2> hi", expected: false },
 	])("$why", ({ contents, expected }) => {
-		expect(hasValidReplies(contents)).toBe(expected);
+		expect(Replies.hasValid(contents)).toBe(expected);
 	});
 });

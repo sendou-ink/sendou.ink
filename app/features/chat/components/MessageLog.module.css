@@ -1,0 +1,59 @@
+.messages {
+	padding-block: var(--s-4) var(--s-2);
+	display: block;
+	height: 310px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+.unseenMessages {
+	position: absolute;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	border: none;
+	color: var(--color-text);
+	bottom: 60px;
+	right: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	height: 25px;
+	width: max-content;
+
+	&:active {
+		transform: translate(-50%, -50%);
+	}
+}
+
+.messagesSizer {
+	position: relative;
+}
+
+.messageRow {
+	--message-row-gap: 8px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	padding-block-start: var(--message-row-gap);
+}
+
+.messageRowContinuation {
+	--message-row-gap: 2px;
+}
+
+.messageRowFirst {
+	--message-row-gap: 0px;
+}
+
+.unreadDivider {
+	position: absolute;
+	inset-inline: 0;
+	top: max(0px, calc(var(--message-row-gap) / 2 - 1px));
+	height: 1px;
+	background-color: var(--color-fg-accent);
+	pointer-events: none;
+	border: none;
+}

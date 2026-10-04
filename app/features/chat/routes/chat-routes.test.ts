@@ -13,7 +13,7 @@ import { clearSentNotificationsForTesting } from "~/features/notifications/core/
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { withUserId } from "~/utils/Test";
 import * as ChatRepository from "../ChatRepository.server";
-import { mentionToken } from "../chat-mentions";
+import * as Mentions from "../core/Mentions";
 import { setupSqMatch } from "../tests/fixtures";
 import { loader as roomsLoader } from "./api.chat.rooms";
 import { loader as roomLoader } from "./api.chat.rooms.$id";
@@ -117,7 +117,7 @@ describe("chat messages action", () => {
 
 			const result = await sendMessage(alphaUserIds[0], match.chatRoomId!, {
 				publicId: "mmmmmmmmmm",
-				contents: `${"a".repeat(textLength)}${mentionToken(bravoUserIds[0])}`,
+				contents: `${"a".repeat(textLength)}${Mentions.token(bravoUserIds[0])}`,
 			});
 
 			expect("message" in result).toBe(sent);
@@ -253,7 +253,7 @@ describe("chat mention notifications", () => {
 		await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
 			publicId: "nnnnnnnnnn",
 			contents: [bravoUserIds[0], outsiderId(), alphaUserIds[0]]
-				.map(mentionToken)
+				.map(Mentions.token)
 				.join(" "),
 		});
 
@@ -275,7 +275,7 @@ describe("chat mention notifications", () => {
 		const mention = (publicId: string) =>
 			sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
 				publicId,
-				contents: mentionToken(bravoUserIds[0]),
+				contents: Mentions.token(bravoUserIds[0]),
 			});
 
 		await mention("oooooooooo");
@@ -298,7 +298,7 @@ describe("chat mention notifications", () => {
 		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
 		await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
 			publicId: "rrrrrrrrrr",
-			contents: mentionToken(bravoUserIds[0]),
+			contents: Mentions.token(bravoUserIds[0]),
 		});
 
 		await resolveMentions(bravoUserIds[0], match.chatRoomId!);

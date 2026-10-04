@@ -10,10 +10,7 @@ import {
 	chatRoomReadRoute,
 } from "~/utils/urls";
 import { eventsClient } from "../events/events-client";
-import { attention } from "./chat-attention";
 import { CHAT_MENTION_SOUND } from "./chat-constants";
-import { createMentionAlerts } from "./chat-mention-alerts";
-import { mentionsUser } from "./chat-mentions";
 import type {
 	ChatMessageAuthor,
 	ChatMessageWithAuthor,
@@ -22,7 +19,10 @@ import type {
 	RouteChatRoom,
 	UnreadDivider,
 } from "./chat-types";
-import { playSound } from "./chat-utils";
+import * as Attention from "./core/Attention";
+import * as MentionAlerts from "./core/MentionAlerts";
+import * as Mentions from "./core/Mentions";
+import * as Sounds from "./core/Sounds";
 
 const READ_DEBOUNCE_MS = 1_500;
 
@@ -259,7 +259,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			!isOwn &&
 			ownUserId !== null &&
 			message.contents !== null &&
-			mentionsUser(message.contents, ownUserId)
+			Mentions.mentionsUser(message.contents, ownUserId)
 		) {
 			deps.onMention({
 				roomId: message.roomId,
@@ -715,9 +715,9 @@ const fetchJson = async <T>(url: string): Promise<T | null> => {
 	return (await response.json()) as T;
 };
 
-const mentionAlerts = createMentionAlerts({
-	attention,
-	playSound: () => playSound(CHAT_MENTION_SOUND),
+const mentionAlerts = MentionAlerts.create({
+	attention: Attention.tracker,
+	playSound: () => Sounds.play(CHAT_MENTION_SOUND),
 	resolveMentions: (roomId) => {
 		void fetch(chatRoomMentionsSeenRoute(roomId), { method: "POST" }).catch(
 			(error) => logger.error("Resolving chat mentions failed", error),

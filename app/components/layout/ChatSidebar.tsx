@@ -21,8 +21,8 @@ import {
 	useCurrentRouteChatRooms,
 } from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
-import { firstUnreadMessageId } from "~/features/chat/chat-unread-divider";
 import { Chat } from "~/features/chat/components/Chat";
+import * as LogLayout from "~/features/chat/core/LogLayout";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import {
 	databaseTimestampToDate,
@@ -624,7 +624,7 @@ function RoomChat({ room }: { room: ChatRoomListItem }) {
 	return (
 		<Chat
 			messages={messages}
-			firstUnreadMessageId={firstUnreadMessageId({
+			firstUnreadMessageId={LogLayout.firstUnreadMessageId({
 				messages,
 				divider: chatContext.unreadDividerForRoom(room.id),
 				ownUserId: user?.id ?? 0,
