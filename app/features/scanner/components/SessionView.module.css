@@ -82,3 +82,9 @@
 .xSetLost {
 	color: var(--color-error-high);
 }
+
+.xRankPosition {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}

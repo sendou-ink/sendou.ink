@@ -10,7 +10,7 @@
  * way down to the clip cutter.
  */
 
-import { Eye, EyeOff } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, EyeOff, Minus } from "lucide-react";
 import type * as React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
@@ -22,7 +22,7 @@ import {
 } from "~/components/elements/Tabs";
 import { ModeImage } from "~/components/Image";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start";
-import { xRankPositionLabel } from "../core/labels";
+import type { XRankPositionData } from "../core/detectors/x-rank/position";
 import type { IngestSkipReason } from "../core/match-builder";
 import {
 	type BuiltMatch,
@@ -307,9 +307,39 @@ function XSetDivider({ cards }: { cards: XBattleCards }) {
 						) : null}
 					</span>
 				) : null}
-				{position ? <span>{xRankPositionLabel(position)}</span> : null}
+				{position ? <XRankPosition position={position} /> : null}
 			</span>
 		</div>
+	);
+}
+
+function XRankPosition({ position }: { position: XRankPositionData }) {
+	const Icon =
+		position.direction === "UP"
+			? ChevronUp
+			: position.direction === "DOWN"
+				? ChevronDown
+				: position.direction === "SAME"
+					? Minus
+					: null;
+	return (
+		<span className={styles.xRankPosition}>
+			#{position.position ?? "?"}
+			{Icon ? (
+				<Icon
+					size="1.25em"
+					strokeWidth={3}
+					aria-label={position.direction?.toLowerCase()}
+					className={
+						position.direction === "UP"
+							? "text-success"
+							: position.direction === "DOWN"
+								? "text-warning"
+								: undefined
+					}
+				/>
+			) : null}
+		</span>
 	);
 }
 
