@@ -285,12 +285,12 @@ function MessageLog({
 								style={{ transform: `translateY(${start}px)` }}
 							>
 								{index === firstUnreadIndex ? (
-									<div
+									<hr
+										aria-label={t("common:chat.newMessages")}
 										className={styles.unreadDivider}
+										style={{ top: index === 0 ? 0 : -MESSAGE_GAP / 2 - 1 }}
 										data-testid="chat-unread-divider"
-									>
-										{t("common:chat.newMessages")}
-									</div>
+									/>
 								) : null}
 								{systemMessage ? (
 									<SystemMessage message={msg} text={systemMessage} />

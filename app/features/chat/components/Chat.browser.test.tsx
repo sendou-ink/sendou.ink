@@ -657,6 +657,19 @@ describe("Chat", () => {
 			.toBeInTheDocument();
 	});
 
+	test("the unread divider sits outside the flow, leaving its row as tall as the message", async () => {
+		const screen = await renderChat(manyMessages(3), {
+			firstUnreadMessageId: 2,
+		});
+
+		const divider = screen.getByTestId("chat-unread-divider");
+		await expect.element(divider).toHaveAccessibleName("New messages");
+		const row = divider.element().parentElement!;
+		expect(row.offsetHeight).toBe(
+			(row.lastElementChild as HTMLElement).offsetHeight,
+		);
+	});
+
 	test("stays at the end with the divider in view when the unread messages fit on screen", async () => {
 		const screen = await renderChat(manyMessages(100), {
 			firstUnreadMessageId: 99,
