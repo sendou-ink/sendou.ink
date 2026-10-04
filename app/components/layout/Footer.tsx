@@ -8,7 +8,7 @@ import {
 	useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import * as R from "remeda";
 import { Config } from "~/config";
 import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
@@ -37,6 +37,7 @@ import {
 	PLANNER_URL,
 	PLUS_SUGGESTIONS_PAGE,
 	PLUS_VOTING_RESULTS_PAGE,
+	SCANNER_PAGE,
 	SENDOU_INK_DISCORD_URL,
 	SENDOU_INK_GITHUB_URL,
 	SENDOU_LOVE_EMOJI_PATH,
@@ -110,6 +111,7 @@ const SITEMAP_COLUMNS = [
 			{ name: "maps", url: MAPS_URL },
 			{ name: "tier-list-maker", url: TIER_LIST_MAKER_URL },
 			{ name: "xsearch", url: XSEARCH_PAGE },
+			{ name: "scanner", url: SCANNER_PAGE },
 			{ name: "settings", url: SETTINGS_PAGE },
 		],
 	},
@@ -285,6 +287,7 @@ type Patron = NonNullable<ReturnType<typeof usePatrons>["patrons"]>[number];
 function PatronMarquee() {
 	const ref = useRef<HTMLDivElement>(null);
 	const hasScrolledIntoView = useHasScrolledIntoView(ref);
+	useClientSideAnchorNavigation(ref);
 
 	return (
 		<div
@@ -324,15 +327,15 @@ function PatronChips({
 		<ul className={styles.marqueeGroup} aria-hidden={ariaHidden}>
 			{patrons.map((patron) => (
 				<li key={patron.id}>
-					<Link
-						to={userPage(patron)}
+					<a
+						href={userPage(patron)}
 						className={styles.chip}
 						data-custom-theme={patron.customTheme ? true : undefined}
 						style={customThemeChipStyle(patron.customTheme)}
 						tabIndex={ariaHidden ? -1 : undefined}
 					>
 						{patron.username}
-					</Link>
+					</a>
 				</li>
 			))}
 		</ul>
@@ -399,6 +402,39 @@ function useHasScrolledIntoView(ref: RefObject<HTMLElement | null>) {
 	}, [ref]);
 
 	return hasScrolledIntoView;
+}
+
+/** Navigates client side on clicks of the plain anchors inside, instead of hundreds of `<Link>`s re-rendering on every navigation. */
+function useClientSideAnchorNavigation(ref: RefObject<HTMLElement | null>) {
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		const element = ref.current;
+		if (!element) return;
+
+		const onClick = (event: MouseEvent) => {
+			if (
+				event.defaultPrevented ||
+				event.button !== 0 ||
+				event.metaKey ||
+				event.ctrlKey ||
+				event.shiftKey ||
+				event.altKey
+			) {
+				return;
+			}
+
+			const anchor = (event.target as Element).closest("a");
+			const href = anchor?.getAttribute("href");
+			if (!href) return;
+
+			event.preventDefault();
+			navigate(href);
+		};
+
+		element.addEventListener("click", onClick);
+		return () => element.removeEventListener("click", onClick);
+	}, [ref, navigate]);
 }
 
 function customThemeChipStyle(

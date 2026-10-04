@@ -6,13 +6,17 @@
 import {
 	CircleHelp,
 	Crosshair,
+	Hash,
 	History,
 	type LucideIcon,
 	Map as MapIcon,
 	Play,
 	RotateCcw,
+	Sidebar,
 	Skull,
+	Tally3,
 	Target,
+	TrendingUp,
 	Trophy,
 	User,
 } from "lucide-react";
@@ -21,10 +25,14 @@ import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/quick-scoreboard-battle-log/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
+import { X_RANK_POSITION_EVENT_TYPE } from "../core/detectors/x-rank/position";
+import { X_SET_COUNT_EVENT_TYPE } from "../core/detectors/x-rank/set-count";
+import { X_SET_RESULT_EVENT_TYPE } from "../core/detectors/x-rank/set-result";
 
 const EVENT_TYPE_ICONS: Record<string, LucideIcon> = {
 	[MAP_START_EVENT_TYPE]: Play,
@@ -35,7 +43,11 @@ const EVENT_TYPE_ICONS: Record<string, LucideIcon> = {
 	[SCOREBOARD_EVENT_TYPE]: Trophy,
 	[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: RotateCcw,
 	[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: History,
+	[QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: Sidebar,
 	[SCOREBOARD_OWN_EVENT_TYPE]: User,
+	[X_SET_COUNT_EVENT_TYPE]: Tally3,
+	[X_SET_RESULT_EVENT_TYPE]: TrendingUp,
+	[X_RANK_POSITION_EVENT_TYPE]: Hash,
 };
 
 export function EventTypeIcon({

@@ -19,6 +19,7 @@ import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { PageHeader } from "~/components/PageHeader";
+import type { WeaponLandingState } from "~/components/WeaponLanding";
 import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
 import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -145,6 +146,7 @@ export default function WeaponsBuildsPage() {
 						to={weaponLandingSearchParams.href(BUILDS_PAGE, {
 							category: weaponIdToCategory(data.weaponId),
 						})}
+						state={{ focusSearch: true } satisfies WeaponLandingState}
 					/>
 				}
 			/>

@@ -63,6 +63,18 @@ Note: it only works with Node 16.
 1. Run the .avif generating command in each image folder.
 2. Update manually any languages that use English `gear.json` and `weapons.json` files
 
+## Deploy to Render.com
+
+```bash
+pnpm run deploy:prod
+```
+
+Puts the service in maintenance mode, triggers a deploy and polls it every 10 seconds until it is live. Then pings `/health` on the new instance over SSH (public traffic only sees Render's 503 maintenance page) every 10 seconds until it returns 200, and finally turns maintenance mode off. On success it prints the `pnpm run changelog:image <sha>` command with the commit of the previous release filled in.
+
+If the build fails the previous version is still running, so maintenance mode is turned off again. Any other failure or timeout leaves maintenance mode on to be handled from the Render dashboard.
+
+Needs `RENDER_API_KEY` (Render Dashboard -> Account Settings -> API Keys), `RENDER_SERVICE_ID` and `PROD_SSH_TARGET` (see the one-time setup below) in `.env`.
+
 ## Download the production database from Render.com
 
 Note: This is only useful if you have access to a production running on Render.com

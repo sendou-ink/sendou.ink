@@ -58,6 +58,66 @@ export function meanInkColor(
 	};
 }
 
+/** Hue histogram bin width for dominantInkColor. */
+const HUE_BIN_DEGREES = 10;
+/** Pixels within this many degrees of the modal hue join its mean color. */
+const DOMINANT_HUE_TOLERANCE = 20;
+/** Value floor for dominantInkColor: dark saturated backdrop is not UI ink. */
+const DOMINANT_INK_MIN_VALUE = 105;
+
+/**
+ * Mean RGB of the ink pixels around the ROIs' modal hue: for regions where
+ * team ink dominates but other saturated art (weapon renders) is mixed in,
+ * which a plain mean would pull off the team's hue. Null on too little ink.
+ */
+export function dominantInkColor(
+	frame: Mat,
+	rois: readonly Roi[],
+): InkRgb | null {
+	const pixels: { r: number; g: number; b: number; hue: number }[] = [];
+	for (const roi of rois) {
+		const crop = copyRoi(frame, roi);
+		const { data } = crop;
+		const channels = crop.channels();
+		for (let i = 0; i < data.length; i += channels) {
+			const color = { r: data[i]!, g: data[i + 1]!, b: data[i + 2]! };
+			const max = Math.max(color.r, color.g, color.b);
+			const spread = max - Math.min(color.r, color.g, color.b);
+			if (spread < INK_MIN_SATURATION || max < DOMINANT_INK_MIN_VALUE) continue;
+			pixels.push({ ...color, hue: hueOf(color) });
+		}
+		crop.delete();
+	}
+	if (pixels.length < MIN_INK_PIXELS) return null;
+
+	const bins = new Array<number>(360 / HUE_BIN_DEGREES).fill(0);
+	for (const { hue } of pixels) {
+		bins[Math.floor(hue / HUE_BIN_DEGREES) % bins.length]!++;
+	}
+	let modeBin = 0;
+	let modeCount = -1;
+	for (let bin = 0; bin < bins.length; bin++) {
+		const count =
+			bins[(bin + bins.length - 1) % bins.length]! +
+			bins[bin]! +
+			bins[(bin + 1) % bins.length]!;
+		if (count > modeCount) {
+			modeCount = count;
+			modeBin = bin;
+		}
+	}
+	const modeHue = (modeBin + 0.5) * HUE_BIN_DEGREES;
+	const near = pixels.filter(
+		(pixel) => hueDistance(pixel.hue, modeHue) <= DOMINANT_HUE_TOLERANCE,
+	);
+	if (near.length < MIN_INK_PIXELS) return null;
+	return {
+		r: Math.round(near.reduce((sum, p) => sum + p.r, 0) / near.length),
+		g: Math.round(near.reduce((sum, p) => sum + p.g, 0) / near.length),
+		b: Math.round(near.reduce((sum, p) => sum + p.b, 0) / near.length),
+	};
+}
+
 /** Hue angle of an ink color, degrees on the 0-360 color wheel. */
 export function hueOf(color: InkRgb): number {
 	const max = Math.max(color.r, color.g, color.b);

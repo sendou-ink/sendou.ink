@@ -87,6 +87,20 @@ export function dayMonthYearToDate({ day, month, year }: DayMonthYear) {
 	return new Date(Date.UTC(year, month, day, 12));
 }
 
+/** Day/month/year to a Date at local midnight. */
+export function dayMonthYearToLocalDate({ day, month, year }: DayMonthYear) {
+	return new Date(year, month, day);
+}
+
+/** The local calendar day of a Date as day/month/year. */
+export function localDateToDayMonthYear(date: Date): DayMonthYear {
+	return {
+		day: date.getDate(),
+		month: date.getMonth(),
+		year: date.getFullYear(),
+	};
+}
+
 /** Day/month/year to a database timestamp, noon UTC. */
 export function dayMonthYearToDatabaseTimestamp(args: DayMonthYear) {
 	return dateToDatabaseTimestamp(dayMonthYearToDate(args));

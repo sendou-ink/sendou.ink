@@ -1,13 +1,16 @@
 import { RefreshCcw } from "lucide-react";
 import * as React from "react";
 import {
+	type ErrorResponse,
 	isRouteErrorResponse,
 	useLocation,
 	useNavigate,
 	useRevalidator,
 	useRouteError,
 } from "react-router";
+import * as v from "valibot";
 import { useUser } from "~/features/auth/core/user";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import * as Redirect from "~/modules/redirects/core/Redirect";
 import { getSessionId } from "~/utils/session-id";
 import {
@@ -18,6 +21,15 @@ import {
 import { SendouButton } from "./elements/Button";
 import { Image } from "./Image";
 import { Main } from "./Main";
+
+const MAINTENANCE_RELOAD_COOLDOWN_MS = 60_000;
+
+const maintenanceReloadedAtPersisted = PersistedState.define({
+	key: "maintenanceReloadedAt",
+	storage: "session",
+	schema: v.number(),
+	default: 0,
+});
 
 export function Catcher() {
 	const error = useRouteError();
@@ -91,6 +103,8 @@ export function Catcher() {
 	}
 
 	switch (error.status) {
+		case 503:
+			return <ServiceUnavailable error={error} />;
 		case 401:
 			if (!user) {
 				return (
@@ -125,22 +139,7 @@ export function Catcher() {
 		case 404:
 			return <PageNotFound />;
 		default:
-			return (
-				<ErrorMain>
-					<h2>Error {error.status}</h2>
-					<GetHelp />
-					<div className="text-sm text-lighter font-semi-bold">
-						Please include the session ID and message below if any and an
-						explanation on what you were doing:
-					</div>
-					<pre>
-						Session ID: {getSessionId()}
-						{error.data
-							? `\n${typeof error.data === "string" ? error.data : JSON.stringify(error.data, null, 2)}`
-							: null}
-					</pre>
-				</ErrorMain>
-			);
+			return <ErrorStatus error={error} />;
 	}
 }
 
@@ -162,6 +161,45 @@ function PageNotFound() {
 		<ErrorMain>
 			<h2>Error 404 - Page not found</h2>
 			<GetHelp />
+		</ErrorMain>
+	);
+}
+
+/** Render answers with 503 during maintenance, a full reload lets it serve its static "updating" page instead. */
+function ServiceUnavailable({ error }: { error: ErrorResponse }) {
+	const [shouldReload] = React.useState(
+		() =>
+			Date.now() - PersistedState.read(maintenanceReloadedAtPersisted) >
+			MAINTENANCE_RELOAD_COOLDOWN_MS,
+	);
+
+	React.useEffect(() => {
+		if (!shouldReload) return;
+
+		PersistedState.write(maintenanceReloadedAtPersisted, Date.now());
+		window.location.reload();
+	}, [shouldReload]);
+
+	if (shouldReload) return null;
+
+	return <ErrorStatus error={error} />;
+}
+
+function ErrorStatus({ error }: { error: ErrorResponse }) {
+	return (
+		<ErrorMain>
+			<h2>Error {error.status}</h2>
+			<GetHelp />
+			<div className="text-sm text-lighter font-semi-bold">
+				Please include the session ID and message below if any and an
+				explanation on what you were doing:
+			</div>
+			<pre>
+				Session ID: {getSessionId()}
+				{error.data
+					? `\n${typeof error.data === "string" ? error.data : JSON.stringify(error.data, null, 2)}`
+					: null}
+			</pre>
 		</ErrorMain>
 	);
 }

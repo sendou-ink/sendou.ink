@@ -15,6 +15,7 @@
 	"forms.action.setAsCurrent": "",
 	"forms.action.copyFromPrevious": "",
 	"noVods": "Видео, совпадающие с фильтрами, не найдены. Может, мы что-то упустили? Посмотрите страницу FAQ с информацией о получении прав на загрузку VoD.",
+	"scannerBanner": "",
 	"gainPerms": "Чтобы получить возможность загружать видео, пожалуйста, обратитесь в helpdesk на нашем Discord сервере",
 	"deleteConfirm": "Удалить видео под названием '{{title}}'?",
 	"errors.youtubePreviewFailed": "",

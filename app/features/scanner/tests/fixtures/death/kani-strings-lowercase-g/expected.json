@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponLabel": "N-ZAP '85",
+    "weaponId": 60,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "RSU",
+        "RSU",
+        "RSU",
+        "RSU"
+      ],
+      [
+        "SCU",
+        "SPU",
+        "SPU",
+        "SPU"
+      ],
+      [
+        "SJ",
+        "RES",
+        "QSJ",
+        "QSJ"
+      ]
+    ],
+    "name": "カニ strings"
+  }
+}

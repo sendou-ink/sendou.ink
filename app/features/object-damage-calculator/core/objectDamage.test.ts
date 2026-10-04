@@ -221,4 +221,23 @@ describe("calculateDamage()", () => {
 		expect(min).toBeGreaterThan(max);
 		expect(max).toBeGreaterThan(maxFullyCharged);
 	});
+
+	const REEFSLIDER_ID = 13;
+	test("Reefslider bump destroys a brella canopy in one hit but can't damage the Rainmaker shield", () => {
+		const damages = calculate({
+			specialWeaponId: REEFSLIDER_ID,
+			damageType: "SPECIAL_BUMP",
+			preAnalyzed: buildStats({
+				weaponSplId: exampleMainWeaponIdWithSpecialWeaponId(REEFSLIDER_ID),
+				hasTacticooler: false,
+			}),
+		});
+		const hitsToDestroy = (receiver: string) =>
+			damages
+				.find((d) => d.receiver === receiver)!
+				.damages.find((d) => !d.objectShredder)!.hitsToDestroy;
+
+		expect(hitsToDestroy("BulletUmbrellaCanopyWide")).toBe(1);
+		expect(hitsToDestroy("Gachihoko_Barrier")).toBe(Number.POSITIVE_INFINITY);
+	});
 });

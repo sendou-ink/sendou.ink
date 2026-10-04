@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"cast": null,
+		"time": 266,
+		"special": [
+			[false, false, false, true],
+			[true, false, false, false]
+		],
+		"dead": [
+			[false, false, true, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Triton cup VoD (v2811381928, 720p S3 POV), Brinewater Springs SZ at 4:26, t=6078.3. Same Nautilus wash as pov-brinewater-nautilus-wash-read-as-splat, this time at the narrow-right pitch (left apexes ~[543,641,737,829], right ~[1087,1162,1238,1313]) and diluted further by the drum: tint 0.26 at pale 0.15, read as a splat. Left slot 2 is a real splat on a dark backdrop (tint 0.07, pale 0.03) that must stay one, and left slot 3 holds a wash."
+	}
+}

@@ -19,11 +19,13 @@ function UnseenLikes({ status }: { status: GlobalStatus | null }) {
 function MarkSeen({
 	groupId,
 	receivedLikesCount,
+	status = null,
 }: {
 	groupId: number | undefined;
 	receivedLikesCount: number;
+	status?: GlobalStatus | null;
 }) {
-	useMarkSqLikesSeen(groupId, receivedLikesCount);
+	useMarkSqLikesSeen({ groupId, receivedLikesCount, status });
 
 	return null;
 }
@@ -112,6 +114,18 @@ describe("useMarkSqLikesSeen", () => {
 			<>
 				<MarkSeen groupId={GROUP_ID} receivedLikesCount={2} />
 				<UnseenLikes status={queuedStatus(2)} />
+			</>,
+		);
+
+		expect(unseenStatus(screen)).toBe("seen");
+	});
+
+	test("clears the highlight while the header's count is ahead of the likes shown", async () => {
+		const status = queuedStatus(2);
+		const screen = await render(
+			<>
+				<MarkSeen groupId={GROUP_ID} receivedLikesCount={1} status={status} />
+				<UnseenLikes status={status} />
 			</>,
 		);
 

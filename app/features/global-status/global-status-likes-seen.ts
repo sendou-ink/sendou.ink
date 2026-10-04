@@ -32,19 +32,28 @@ export function useHasUnseenSqLikes(status: GlobalStatus | null): boolean {
 }
 
 /**
- * Records the group's currently received likes as seen while the user is on
- * the page showing them, clearing the header badge highlight.
+ * Records the group's likes as seen while the user is on the page showing
+ * them, clearing the header badge highlight. The header's count is seen too as
+ * it can run ahead of the likes shown, e.g. a liker left the looking pool.
  */
-export function useMarkSqLikesSeen(
-	groupId: number | undefined,
-	receivedLikesCount: number,
-) {
+export function useMarkSqLikesSeen({
+	groupId,
+	receivedLikesCount,
+	status,
+}: {
+	groupId: number | undefined;
+	receivedLikesCount: number;
+	status: GlobalStatus | null;
+}) {
+	const headerCount =
+		status?.state === "SQ_QUEUED" && status.groupId === groupId
+			? (status.count ?? 0)
+			: 0;
+	const seenCount = Math.max(receivedLikesCount, headerCount);
+
 	React.useEffect(() => {
 		if (typeof groupId !== "number") return;
 
-		PersistedState.write(seenSqLikesPersisted, {
-			groupId,
-			seenCount: receivedLikesCount,
-		});
-	}, [groupId, receivedLikesCount]);
+		PersistedState.write(seenSqLikesPersisted, { groupId, seenCount });
+	}, [groupId, seenCount]);
 }

@@ -1,0 +1,19 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 237,
+		"score": [
+			100,
+			80
+		],
+		"penalty": [
+			null,
+			null
+		],
+		"control": 1
+	},
+	"options": {
+		"notes": "Bravo (lime) just scored: its plate fills team color while its attack window is open. CB draws the SZ plates overlay, so the read's mode is SZ; the match's mode tells them apart."
+	}
+}

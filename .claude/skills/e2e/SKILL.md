@@ -90,7 +90,7 @@ Other known sources, each handled once in the helpers or page objects:
 - dnd-kit stops every click in the document for 50ms after a drop; drag helpers end with `waitForDropToSettle` so the next click lands
 - A tab or link clicked before hydration (after a raw `page.reload()`, say) loads the target as a new document and the click after it is lost; reload through the page object's `reload()` which waits for hydration
 - Popovers close on navigation in a passive effect, so for a frame the old panel and the new page both show the same names; scope locators to `main` where a name can appear in both
-- React Router drops a fetcher's redirect when a navigation (a revalidation included) started after the submission; broadcast revalidations are jittered up to 1.5s after a live event, so one could land mid-submission and the action silently did nothing. `holdRevalidationsDuring` (used by `useActionSubmit` and `SendouForm`) defers them until the submission settles
+- React Router drops a fetcher's redirect when a navigation (a revalidation included) started after the submission; broadcast revalidations are jittered up to 1.5s after a live event, so one could land mid-submission and the action silently did nothing. `holdRevalidationsDuring` (used by `useActionSubmit` and `SendouForm`) defers them until the submission settles, and `useHoldRevalidationsDuringSubmissions` (mounted in `ChatProvider`) does the same for any other submission, e.g. a plain `<fetcher.Form>`
 
 ## Test pattern reference
 

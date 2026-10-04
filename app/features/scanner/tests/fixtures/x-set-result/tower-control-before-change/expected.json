@@ -1,0 +1,12 @@
+{
+  "event": "XSetResult",
+  "data": {
+    "mode": "TC",
+    "results": ["LOSE", "LOSE", "WIN", "WIN", "LOSE"],
+    "powerChange": null,
+    "power": 2752.4
+  },
+  "options": {
+    "notes": "the card before the change lands: X Power still shows the value before the set"
+  }
+}

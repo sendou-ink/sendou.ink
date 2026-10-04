@@ -463,6 +463,16 @@ export interface PrivateUserNote {
 	updatedAt: Generated<number>;
 }
 
+/** History of user written public texts, kept for moderators to review */
+export interface ModAuditLog {
+	id: GeneratedAlways<number>;
+	type: "SENDOUQ_PUBLIC_NOTE";
+	/** Author of the text */
+	userId: number;
+	text: string;
+	createdAt: Generated<number>;
+}
+
 /** Log-in links generated via the Lohi Discord bot commands. */
 export interface LogInLink {
 	code: string;
@@ -557,6 +567,8 @@ export interface ReportedWeapon {
 	userId: number;
 	weaponSplId: MainWeaponId;
 	createdAt: Generated<number>;
+	/** the scanner read this weapon was reported from, null when reported by hand */
+	ingestedMatchId: number | null;
 }
 
 export interface IngestedMatch {
@@ -1431,6 +1443,7 @@ export interface DB {
 	LFGPost: LFGPost;
 	MapPoolMap: MapPoolMap;
 	MapResult: MapResult;
+	ModAuditLog: ModAuditLog;
 	PlayerResult: PlayerResult;
 	PlusSuggestion: PlusSuggestion;
 	PlusTier: PlusTier;

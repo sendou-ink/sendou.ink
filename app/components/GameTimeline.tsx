@@ -1,7 +1,7 @@
 /**
- * A game's two scanned-timeline charts (player status bands above the objective-counter chart)
- * on one shared time axis. Hovering scrubs both: a cursor line spans the charts and a readout
- * shows the moment's state, replacing the chart's own tooltip.
+ * A game's scanned-timeline charts (player status bands above the objective-counter chart, plus a
+ * TC/RM objective's position along its track) on one shared time axis. Hovering scrubs both: a cursor line spans the charts and a readout
+ * shows the moment's state and any kills under the cursor, replacing the chart's own tooltip.
  */
 import clsx from "clsx";
 import { memo, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import styles from "./GameTimeline.module.css";
 import { Image, WeaponImage } from "./Image";
+import { ObjectivePositionTimeline } from "./ObjectivePositionTimeline";
 import {
 	ObjectiveTimeline,
 	type ObjectiveTimelineEvent,
@@ -19,10 +20,13 @@ import {
 	formatElapsed,
 	smoothPenalties,
 	TIMELINE_PLOT_GUTTER_PX,
+	withUnpushedTrackCounts,
 } from "./objective-timeline-utils";
 import {
 	PLAYER_STATUS_TAIL_SECONDS,
 	PlayerStatusTimeline,
+	type PlayerStatusTimelineKill,
+	type PlayerStatusTimelinePov,
 	type PlayerStatusTimelineSample,
 	type PlayerStatusTimelineTeam,
 	statusSpans,
@@ -31,11 +35,14 @@ import {
 /** Cursor position past this fraction of the plot flips the readout to its left side. */
 const READOUT_FLIP_RATIO = 0.55;
 const READOUT_CURSOR_GAP_PX = 12;
+/** Kill ticks this close to the cursor show up in the readout. */
+const KILL_READOUT_RADIUS_PX = 4;
 
 interface GameTimelineProps {
 	objectiveEvents?: readonly ObjectiveTimelineEvent[];
 	playerStatusSamples?: readonly PlayerStatusTimelineSample[];
 	teams: readonly [PlayerStatusTimelineTeam, PlayerStatusTimelineTeam];
+	pov?: PlayerStatusTimelinePov;
 }
 
 interface ScrubPosition {
@@ -52,13 +59,16 @@ export function GameTimeline({
 	objectiveEvents,
 	playerStatusSamples,
 	teams,
+	pov,
 }: GameTimelineProps) {
 	const [scrub, setScrub] = useState<ScrubPosition | null>(null);
 	const plotRef = useRef<HTMLDivElement>(null);
 
-	const objective = (objectiveEvents ?? []).toSorted((a, b) => a.t - b.t);
+	const objective = withUnpushedTrackCounts(
+		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
+	);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
-	const domain = timelineDomain(objective, samples);
+	const domain = timelineDomain(objective, samples, pov);
 	if (!domain) return null;
 
 	const handlePointer = (event: React.PointerEvent) => {
@@ -91,6 +101,7 @@ export function GameTimeline({
 				objectiveEvents={objectiveEvents}
 				playerStatusSamples={playerStatusSamples}
 				teams={teams}
+				pov={pov}
 			/>
 			<div className={styles.plotOverlay} ref={plotRef}>
 				{scrub ? (
@@ -100,6 +111,7 @@ export function GameTimeline({
 						objective={objective}
 						samples={samples}
 						teams={teams}
+						pov={samples.length > 0 ? pov : undefined}
 					/>
 				) : null}
 			</div>
@@ -114,16 +126,24 @@ const TimelineCharts = memo(function TimelineCharts({
 	objectiveEvents,
 	playerStatusSamples,
 	teams,
+	pov,
 }: GameTimelineProps) {
-	const objective = (objectiveEvents ?? []).toSorted((a, b) => a.t - b.t);
+	const objective = withUnpushedTrackCounts(
+		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
+	);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
-	const domain = timelineDomain(objective, samples);
+	const domain = timelineDomain(objective, samples, pov);
 	if (!domain) return null;
 
 	return (
 		<>
 			{samples.length > 0 ? (
-				<PlayerStatusTimeline samples={samples} teams={teams} domain={domain} />
+				<PlayerStatusTimeline
+					samples={samples}
+					teams={teams}
+					domain={domain}
+					pov={pov}
+				/>
 			) : null}
 			{objective.length > 0 ? (
 				<ObjectiveTimeline
@@ -132,6 +152,9 @@ const TimelineCharts = memo(function TimelineCharts({
 					domain={domain}
 					showTooltip={false}
 				/>
+			) : null}
+			{objective.some((event) => event.data.position !== undefined) ? (
+				<ObjectivePositionTimeline events={objective} domain={domain} />
 			) : null}
 		</>
 	);
@@ -143,18 +166,24 @@ function ScrubReadout({
 	objective,
 	samples,
 	teams,
+	pov,
 }: {
 	scrub: ScrubPosition;
 	domain: [number, number];
 	objective: readonly ObjectiveTimelineEvent[];
 	samples: readonly PlayerStatusTimelineSample[];
 	teams: GameTimelineProps["teams"];
+	pov?: PlayerStatusTimelinePov;
 }) {
 	const { t } = useTranslation(["common"]);
 	const [min, max] = domain;
 	const time = min + (scrub.x / scrub.width) * (max - min);
 	const objectiveNow = objectiveStateAt(objective, time);
 	const statusNow = playerStatusAt(samples, time);
+	const killRadius = (KILL_READOUT_RADIUS_PX / scrub.width) * (max - min);
+	const killsNow = (pov?.kills ?? []).filter(
+		(kill) => Math.abs(kill.t - time) <= killRadius,
+	);
 	const flipped = scrub.x > scrub.width * READOUT_FLIP_RATIO;
 
 	return (
@@ -208,9 +237,17 @@ function ScrubReadout({
 									})}
 								</span>
 							) : null}
-							{objectiveNow?.control[side] ? (
+							{objectiveNow?.control === side ? (
 								<span className={styles.readoutControl}>
 									{t("common:objectiveTimeline.inControl")}
+								</span>
+							) : null}
+							{objectiveNow?.position != null &&
+							pushingSide(objectiveNow.position) === side ? (
+								<span className={styles.readoutControl}>
+									{t("common:objectiveTimeline.pushed", {
+										value: Math.abs(objectiveNow.position),
+									})}
 								</span>
 							) : null}
 						</div>
@@ -230,6 +267,7 @@ function ScrubReadout({
 								/>
 							</>
 						) : null}
+						{pov?.side === side ? <KillsRow kills={killsNow} /> : null}
 					</div>
 				))}
 			</div>
@@ -284,19 +322,39 @@ function StatusWeaponsRow({
 	);
 }
 
+function KillsRow({ kills }: { kills: PlayerStatusTimelineKill[] }) {
+	const { t } = useTranslation(["common"]);
+	if (kills.length === 0) return null;
+
+	return (
+		<div className={styles.readoutStatusRow}>
+			<span className={clsx(styles.readoutStatusLabel, styles.statusLabelKill)}>
+				{t("common:playerStatusTimeline.kill")}
+			</span>
+			<span>{kills.map((kill) => kill.name ?? "?").join(" · ")}</span>
+		</div>
+	);
+}
+
+/** Spans every read and, when the status rows draw them, the POV's kill ticks — the feed can outlive the other reads. */
 function timelineDomain(
 	objective: readonly ObjectiveTimelineEvent[],
 	samples: readonly PlayerStatusTimelineSample[],
+	pov: PlayerStatusTimelinePov | undefined,
 ): [number, number] | null {
+	const killTimes =
+		samples.length > 0 ? (pov?.kills ?? []).map((kill) => kill.t) : [];
 	const start = Math.min(
 		objective[0]?.t ?? Number.POSITIVE_INFINITY,
 		samples[0]?.t ?? Number.POSITIVE_INFINITY,
+		...killTimes,
 	);
 	const end = Math.max(
 		objective[objective.length - 1]?.t ?? Number.NEGATIVE_INFINITY,
 		samples.length > 0
 			? samples[samples.length - 1]!.t + PLAYER_STATUS_TAIL_SECONDS
 			: Number.NEGATIVE_INFINITY,
+		...killTimes,
 	);
 	if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
 	return [start, Math.max(end, start + 1)];
@@ -308,7 +366,9 @@ interface ObjectiveStateAtTime {
 	/** last readable count per team at the scrubbed moment */
 	scores: [number | null, number | null];
 	penalties: [number | null, number | null];
-	control: [boolean, boolean];
+	control: 0 | 1 | null;
+	/** TC/RM: the last read objective position (see ObjectiveTimelineSample); null when none */
+	position: number | null;
 }
 
 /** State implied by the last objective read at or before `time`, scores carried across unreadable reads. */
@@ -338,13 +398,24 @@ function objectiveStateAt(
 			)[index] ?? null,
 	) as [number | null, number | null];
 	const latest = sorted[index]!;
+	let position: number | null = null;
+	for (let i = 0; i <= index; i++) {
+		position = sorted[i]!.data.position ?? position;
+	}
 
 	return {
 		clock: latest.data.time,
 		scores,
 		penalties,
-		control: [latest.data.control[0], latest.data.control[1]],
+		control: latest.data.control,
+		position,
 	};
+}
+
+/** The side a track position is progress for: past the middle toward bravo's end is alpha's. */
+function pushingSide(position: number): 0 | 1 | null {
+	if (position === 0) return null;
+	return position > 0 ? 0 : 1;
 }
 
 interface PlayerStatusAtTime {

@@ -19,6 +19,7 @@ import {
 	RESULTS_FIRST_YEAR,
 	SEASON_RESULT_SOURCES,
 	SEASON_STATS_TABS,
+	SEASONS_STAFF_DIALOGS,
 } from "./user-page-constants";
 
 const BUILD_FILTER_TABS = ["ALL", "PUBLIC", "PRIVATE"] as const;
@@ -106,6 +107,9 @@ const startedSeasonParam = SP.param(v.nullable(startedSeason), {
 
 export const userSeasonsSearchParams = SearchParams.define({
 	season: startedSeasonParam,
+	staffDialog: SP.param(v.nullable(v.picklist(SEASONS_STAFF_DIALOGS)), {
+		loader: true,
+	}),
 });
 
 export const userSeasonResultsSearchParams = SearchParams.define({

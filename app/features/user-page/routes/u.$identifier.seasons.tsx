@@ -39,6 +39,8 @@ import {
 	userSeasonsStatsPage,
 } from "~/features/user-page/user-page-urls";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
+import { useHasRole } from "~/modules/permissions/hooks";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	resolveAvatarUrl,
@@ -143,9 +145,10 @@ export default function UserSeasonsPage() {
 			) : (
 				<EmptyState navItem="sendouq">{t("user:seasons.noQ")}</EmptyState>
 			)}
-			{data.canceled ? (
-				<CanceledMatchesDialog canceledMatches={data.canceled} />
-			) : null}
+			<StaffDialogs
+				canceledMatches={data.canceled}
+				publicNotes={data.publicNotes}
+			/>
 		</div>
 	);
 }
@@ -558,26 +561,64 @@ function SeasonSummaryExportDialog({
 	);
 }
 
-/** Dialog for staff view all season's canceled matches per user */
+/** Staff views of the user's season, each loaded only once its dialog is opened */
+function StaffDialogs({
+	canceledMatches,
+	publicNotes,
+}: {
+	canceledMatches: UserSeasonsPageLoaderData["canceled"];
+	publicNotes: UserSeasonsPageLoaderData["publicNotes"];
+}) {
+	const isStaff = useHasRole("STAFF");
+	const [, setParams] = useSearchParamsTyped(userSeasonsSearchParams);
+
+	if (!isStaff) return null;
+
+	const closeDialog = () => setParams({ staffDialog: null });
+
+	return (
+		<div className="stack horizontal md justify-center">
+			<SendouButton
+				variant="minimal"
+				onClick={() => setParams({ staffDialog: "canceled-matches" })}
+			>
+				Canceled Matches
+			</SendouButton>
+			<SendouButton
+				variant="minimal"
+				onClick={() => setParams({ staffDialog: "public-notes" })}
+			>
+				Public Notes
+			</SendouButton>
+			{canceledMatches ? (
+				<CanceledMatchesDialog
+					canceledMatches={canceledMatches}
+					onClose={closeDialog}
+				/>
+			) : null}
+			{publicNotes ? (
+				<PublicNotesDialog publicNotes={publicNotes} onClose={closeDialog} />
+			) : null}
+		</div>
+	);
+}
+
 function CanceledMatchesDialog({
 	canceledMatches,
+	onClose,
 }: {
 	canceledMatches: NonNullable<UserSeasonsPageLoaderData["canceled"]>;
+	onClose: () => void;
 }) {
 	return (
 		<SendouDialog
-			trigger={
-				<SendouButton
-					variant="minimal"
-					isDisabled={canceledMatches.length === 0}
-					className="mx-auto"
-				>
-					Canceled Matches ({canceledMatches.length})
-				</SendouButton>
-			}
-			heading="Season's canceled matches for this user"
+			heading={`Season's canceled matches for this user (${canceledMatches.length})`}
+			onClose={onClose}
 		>
 			<div className="stack lg">
+				{canceledMatches.length === 0 ? (
+					<div className="text-lighter text-sm">No canceled matches</div>
+				) : null}
 				{canceledMatches.map((match) => (
 					<div key={match.id} className="stack sm">
 						<div>
@@ -594,6 +635,43 @@ function CanceledMatchesDialog({
 							/>
 						</div>
 						<CanceledMatchReports cancelReports={match.cancelReports} />
+					</div>
+				))}
+			</div>
+		</SendouDialog>
+	);
+}
+
+function PublicNotesDialog({
+	publicNotes,
+	onClose,
+}: {
+	publicNotes: NonNullable<UserSeasonsPageLoaderData["publicNotes"]>;
+	onClose: () => void;
+}) {
+	return (
+		<SendouDialog
+			heading={`Season's SendouQ public notes by this user (${publicNotes.length})`}
+			onClose={onClose}
+		>
+			<div className="stack md">
+				{publicNotes.length === 0 ? (
+					<div className="text-lighter text-sm">No public notes</div>
+				) : null}
+				{publicNotes.map((note) => (
+					<div key={note.id} className="stack xs">
+						<LocaleTime
+							date={note.createdAt}
+							className="text-lighter text-xs"
+							options={{
+								year: "numeric",
+								month: "numeric",
+								day: "numeric",
+								hour: "numeric",
+								minute: "numeric",
+							}}
+						/>
+						<div className="text-sm">{note.text}</div>
 					</div>
 				))}
 			</div>

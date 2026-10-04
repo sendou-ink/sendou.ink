@@ -6,10 +6,13 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { Dropzone, DropzoneAction } from "~/components/Dropzone";
+import { SendouButton } from "~/components/elements/Button";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl } from "~/utils/urls";
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
+import { eventsToCsv } from "../core/csv/events";
 import type { DeathData } from "../core/detectors/death/index";
 import * as death from "../core/detectors/death/rois";
 import type { KillData } from "../core/detectors/kill/index";
@@ -25,31 +28,53 @@ import {
 	type PlayerStatusLayout,
 } from "../core/detectors/objective/player-status";
 import * as objective from "../core/detectors/objective/rois";
+import {
+	RECTIFY as QUICK_RECTIFY,
+	ROIS as quick,
+} from "../core/detectors/quick-scoreboard-battle-log/rois";
 import type { ScoreboardRowDebug } from "../core/detectors/scoreboard/index";
 import * as sb from "../core/detectors/scoreboard/rois";
-import * as bl from "../core/detectors/scoreboard-battle-log/rois";
+import type { BattleLogRois } from "../core/detectors/scoreboard-battle-log/detector";
+import { ROIS as bl } from "../core/detectors/scoreboard-battle-log/rois";
 import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
 import type { DetectedEvent } from "../core/detectors/types";
-import { scannerSearchParams } from "../scanner-search-params";
-import { claimInspectFrame } from "../store/inspect";
-import { AnalyzerClient } from "../worker/client";
-import type { WorkerResponse } from "../worker/protocol";
-import { downloadEventsCsv } from "./events-csv";
-import { type CardData, downloadExpectedJson } from "./fixture-export";
+import type { XRankPositionData } from "../core/detectors/x-rank/position";
+import * as xRank from "../core/detectors/x-rank/rois";
+import type { XSetCountData } from "../core/detectors/x-rank/set-count";
+import type { XSetResultData } from "../core/detectors/x-rank/set-result";
 import {
 	lobbyLabel,
 	mainWeaponLabel,
 	modeLabel,
 	stageLabel,
 	weaponLabel,
-} from "./labels";
+	xRankPositionLabel,
+	xSetCountLabel,
+	xSetResultLabel,
+} from "../core/labels";
+import {
+	homographyFromQuad,
+	invertHomography,
+	projectedBounds,
+	projectRoi,
+} from "../core/rectify";
+import { scannerSearchParams } from "../scanner-search-params";
+import { claimInspectFrame } from "../store/inspect";
+import { AnalyzerClient } from "../worker/client";
+import type { WorkerResponse } from "../worker/protocol";
+import { downloadCsv } from "./download";
+import { type CardData, downloadExpectedJson } from "./fixture-export";
 import { drawNormalizedCanvas } from "./normalized-canvas";
-import { ScannerDropzone } from "./ScannerChrome";
 import styles from "./ScreenshotPage.module.css";
+import { SessionHeader } from "./SessionHeader";
 
 type Result = Extract<WorkerResponse, { kind: "result" }>;
+
+/** Maps the quick battle log's rectified ROIs back onto the raw frame this page draws. */
+const QUICK_TO_RAW = invertHomography(homographyFromQuad(QUICK_RECTIFY));
+const onRawFrame = (roi: Roi) => projectedBounds(QUICK_TO_RAW, roi);
 
 /** Draw a ROI crop from the normalized frame, scaled up. */
 export function RoiCrop(props: {
@@ -106,26 +131,26 @@ function LabeledCrop(props: {
 	);
 }
 
-/** One pill per player slot: number = alive, ★ = special held, ✗ = splatted. */
-function StatusSlots(props: { data: PlayerStatusData }) {
+/** One pill per player slot, both sides; a lit pill is a slot the flag was read on. */
+function StatusSlots(props: {
+	flags: PlayerStatusData["special"] | PlayerStatusData["dead"];
+	tone: "special" | "dead";
+}) {
 	return (
 		<span className={styles.statusSlots}>
-			{([0, 1] as const).map((side) => (
-				<span key={side} className={styles.statusSide}>
-					{props.data.dead[side].map((dead, slot) => {
-						const special = !dead && props.data.special[side][slot];
-						return (
-							<span
-								key={slot}
-								className={clsx(styles.statusSlot, {
-									[styles.dead]: dead,
-									[styles.special]: special,
-								})}
-							>
-								{dead ? "✗" : special ? "★" : slot + 1}
-							</span>
-						);
-					})}
+			{props.flags.map((side, sideIndex) => (
+				<span key={sideIndex} className={styles.statusSide}>
+					{side.map((on, slot) => (
+						<span
+							key={slot}
+							className={clsx(styles.statusSlot, {
+								[styles.dead]: on && props.tone === "dead",
+								[styles.special]: on && props.tone === "special",
+							})}
+						>
+							{slot + 1}
+						</span>
+					))}
 				</span>
 			))}
 		</span>
@@ -150,20 +175,26 @@ function scoreboardRows(): RowRois[] {
 }
 
 /** winnerSide comes from the event debug: players are ordered winners-first. */
-function battleLogRows(winnerSide: string): RowRois[] {
-	const panels = winnerSide === "bottom" ? [bl.PANEL_DY, 0] : [0, bl.PANEL_DY];
+/** Both stacked battle log layouts; `toRaw` maps a rectified ROI onto the raw frame for the crops. */
+function battleLogRows(
+	rois: BattleLogRois,
+	winnerSide: string,
+	toRaw: (roi: Roi) => Roi = (roi) => roi,
+): RowRois[] {
+	const panels =
+		winnerSide === "bottom" ? [rois.PANEL_DYS[1], 0] : [0, rois.PANEL_DYS[1]];
 	return panels.flatMap((dy) =>
-		bl.ROW_CENTERS.map((base) => {
+		rois.ROW_CENTERS.map((base) => {
 			const cy = base + dy;
 			return {
-				weapon: bl.weaponRoi(cy),
-				name: bl.nameRoi(cy),
-				paint: bl.paintRoi(cy),
-				stats: [bl.statRoi(cy, 0), bl.statRoi(cy, 1), bl.statRoi(cy, 2)] as [
-					Roi,
-					Roi,
-					Roi,
-				],
+				weapon: toRaw(rois.weaponRoi(cy)),
+				name: toRaw(rois.nameRoi(cy)),
+				paint: toRaw(rois.paintRoi(cy)),
+				stats: [
+					toRaw(rois.statRoi(cy, 0)),
+					toRaw(rois.statRoi(cy, 1)),
+					toRaw(rois.statRoi(cy, 2)),
+				] as [Roi, Roi, Roi],
 			};
 		}),
 	);
@@ -226,6 +257,18 @@ function gateSummary(result: Result): string | null {
 			const data = event.data as unknown as ObjectiveData;
 			return `${confidence} · ${formatTimer(data.time)} · score ${data.score[0] ?? "?"}–${data.score[1] ?? "?"}`;
 		}
+		case "x-set-count": {
+			const data = event.data as unknown as XSetCountData;
+			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · set ${xSetCountLabel(data)}`;
+		}
+		case "x-set-result": {
+			const data = event.data as unknown as XSetResultData;
+			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${xSetResultLabel(data)}`;
+		}
+		case "x-rank-position": {
+			const data = event.data as unknown as XRankPositionData;
+			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${xRankPositionLabel(data)}`;
+		}
 		case "kill": {
 			const data = event.data as unknown as KillData;
 			return `${confidence} · ${formatTimer(data.time)} · splatted ${data.names.map((name) => name ?? "?").join(", ")}`;
@@ -255,6 +298,39 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		ctx.strokeStyle = color;
 		ctx.lineWidth = 2;
 		ctx.strokeRect(roi.x, roi.y, roi.w, roi.h);
+	};
+	// the quick battle log's ROIs live in the rectified frame: draw them where
+	// they land on the raw one
+	const quad = (roi: Roi, color: string) => {
+		const corners = projectRoi(QUICK_TO_RAW, roi);
+		ctx.strokeStyle = color;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		for (const [i, [x, y]] of corners.entries()) {
+			if (i === 0) ctx.moveTo(x, y);
+			else ctx.lineTo(x, y);
+		}
+		ctx.closePath();
+		ctx.stroke();
+	};
+	const battleLog = (rois: BattleLogRois, draw: typeof rect) => {
+		for (const [panel, dy] of rois.PANEL_DYS.entries()) {
+			for (const base of rois.ROW_CENTERS) {
+				const cy = base + dy;
+				draw(rois.weaponRoi(cy), "#f87171");
+				draw(rois.nameRoi(cy), "#4ade80");
+				draw(rois.paintRoi(cy), "#60a5fa");
+				for (const i of [0, 1, 2] as const)
+					draw(rois.statRoi(cy, i), "#e879f9");
+				draw(rois.gateDarkProbe(cy), "#facc15");
+			}
+			draw(rois.teamScoreRoi(panel as 0 | 1), "#60a5fa");
+			draw(rois.resultTagRoi(panel as 0 | 1), "#fb923c");
+		}
+		for (const roi of rois.MATCH_SCORE_ROIS) draw(roi, "#60a5fa");
+		for (const roi of rois.GATE_COLOR_PROBES) draw(roi, "#facc15");
+		draw(rois.HEADER_TOP_BAND, "#34d399");
+		draw(rois.HEADER_BOTTOM_BAND, "#34d399");
 	};
 	if (detector === "death") {
 		rect(death.SPLAT_LINE1_ROI, "#34d399");
@@ -305,6 +381,60 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 			for (const roi of kill.darkProbes(row)) rect(roi, "#facc15");
 		}
 		rect(objective.TIMER_DIGIT_ROI, "#f87171");
+		return;
+	}
+	if (detector === "x-set-count") {
+		rect(xRank.CARD_ICON_ROI, "#34d399");
+		rect(xRank.COUNT_WINS_DIGIT_ROI, "#f87171");
+		rect(xRank.COUNT_LOSSES_DIGIT_ROI, "#f87171");
+		rect(xRank.COUNT_LABEL_BAND, "#e879f9");
+		for (const x of xRank.COUNT_WIN_SLOT_CENTERS_X) {
+			const half = xRank.COUNT_WIN_SLOT_HALF;
+			rect(
+				{
+					x: x - half,
+					y: xRank.COUNT_WIN_SLOT_Y - half,
+					w: 2 * half,
+					h: 2 * half,
+				},
+				"#60a5fa",
+			);
+		}
+		for (const x of xRank.COUNT_LOSS_SLOT_CENTERS_X) {
+			const half = xRank.COUNT_LOSS_SLOT_HALF;
+			rect(
+				{
+					x: x - half,
+					y: xRank.COUNT_LOSS_SLOT_Y - half,
+					w: 2 * half,
+					h: 2 * half,
+				},
+				"#60a5fa",
+			);
+		}
+		for (const roi of xRank.COUNT_DARK_PROBES) rect(roi, "#facc15");
+		return;
+	}
+	if (detector === "x-set-result") {
+		rect(xRank.CARD_ICON_ROI, "#34d399");
+		rect(xRank.RESULT_HEADER_ROI, "#f87171");
+		rect(xRank.RESULT_TILES_ROI, "#60a5fa");
+		rect(xRank.RESULT_POWER_ROI, "#f87171");
+		rect(xRank.RESULT_CHANGE_ROI, "#e879f9");
+		for (const roi of [
+			...xRank.RESULT_DARK_PROBES,
+			...xRank.RESULT_PANEL_PROBES,
+		]) {
+			rect(roi, "#facc15");
+		}
+		return;
+	}
+	if (detector === "x-rank-position") {
+		rect(xRank.POSITION_ICON_ROI, "#34d399");
+		rect(xRank.POSITION_LABEL_ROI, "#e879f9");
+		rect(xRank.POSITION_NUMBER_ROI, "#f87171");
+		rect(xRank.POSITION_ARROW_ROI, "#60a5fa");
+		for (const roi of xRank.POSITION_DARK_PROBES) rect(roi, "#facc15");
 		return;
 	}
 	if (detector === "map-start") {
@@ -360,22 +490,11 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		return;
 	}
 	if (detector === "scoreboard-battle-log") {
-		for (const dy of bl.PANEL_DYS) {
-			for (const base of bl.ROW_CENTERS) {
-				const cy = base + dy;
-				rect(bl.weaponRoi(cy), "#f87171");
-				rect(bl.nameRoi(cy), "#4ade80");
-				rect(bl.paintRoi(cy), "#60a5fa");
-				for (const i of [0, 1, 2] as const) rect(bl.statRoi(cy, i), "#e879f9");
-				rect(bl.gateDarkProbe(cy), "#facc15");
-			}
-			rect(bl.teamScoreRoi(dy), "#60a5fa");
-			rect(bl.resultTagRoi(dy), "#fb923c");
-		}
-		for (const roi of bl.MATCH_SCORE_ROIS) rect(roi, "#60a5fa");
-		for (const roi of bl.GATE_COLOR_PROBES) rect(roi, "#facc15");
-		rect(bl.HEADER_TOP_BAND, "#34d399");
-		rect(bl.HEADER_BOTTOM_BAND, "#34d399");
+		battleLog(bl, rect);
+		return;
+	}
+	if (detector === "quick-scoreboard-battle-log") {
+		battleLog(quick, quad);
 		return;
 	}
 	if (detector === "scoreboard-battle-log-replay") {
@@ -511,38 +630,36 @@ export function ScreenshotPage() {
 	const rows = (event?.debug?.rows ?? []) as ScoreboardRowDebug[];
 	const isReplay = activeDetector === "scoreboard-battle-log-replay";
 	const isScoreboardBattleLog = activeDetector === "scoreboard-battle-log";
+	const isQuickScoreboardBattleLog =
+		activeDetector === "quick-scoreboard-battle-log";
 	const isDeath = activeDetector === "death";
 	const isMapStart = activeDetector === "map-start";
 	const isOwn = activeDetector === "scoreboard-own";
 	const isMinimap = activeDetector === "minimap";
 	const isObjective = activeDetector === "objective";
 	const isKill = activeDetector === "kill";
+	const isXRank = activeDetector.startsWith("x-");
 	const winnerSide = String(event?.debug?.winnerSide ?? "left");
 	const rowRois = isReplay
 		? replayRows(winnerSide)
 		: isScoreboardBattleLog
-			? battleLogRows(winnerSide)
-			: scoreboardRows();
+			? battleLogRows(bl, winnerSide)
+			: isQuickScoreboardBattleLog
+				? battleLogRows(quick, winnerSide, onRawFrame)
+				: scoreboardRows();
 
 	return (
 		<div>
-			<ScannerDropzone onFile={(file) => void analyze(file)}>
-				Drop a frame (PNG/JPEG) here, or{" "}
-				<label>
-					pick a file
-					<input
-						type="file"
-						accept="image/png,image/jpeg"
-						style={{ display: "none" }}
-						onChange={(e) => {
-							const file = e.target.files?.[0];
-							e.target.value = ""; // allow re-picking the same file
-							if (file) void analyze(file);
-						}}
-					/>
-				</label>
-				{busy ? " — analyzing…" : null}
-			</ScannerDropzone>
+			<SessionHeader>
+				<Dropzone
+					accept="image/png,image/webp,image/jpeg"
+					onFile={(file) => void analyze(file)}
+				>
+					Drop a frame (PNG/WebP/JPEG) here, or{" "}
+					<DropzoneAction>pick a file</DropzoneAction>
+					{busy ? " — analyzing…" : null}
+				</Dropzone>
+			</SessionHeader>
 			{error ? <p className="text-error">{error}</p> : null}
 
 			<div
@@ -553,28 +670,30 @@ export function ScreenshotPage() {
 			</div>
 
 			{frame && !busy ? (
-				<p>
-					<button
-						type="button"
+				<div className={styles.downloads}>
+					<SendouButton
+						variant="outlined"
+						size="small"
 						onClick={() =>
 							downloadExpectedJson(event?.data ?? null, event?.type)
 						}
 					>
 						Download expected.json
-					</button>{" "}
-					<button
-						type="button"
-						disabled={!event}
+					</SendouButton>
+					<SendouButton
+						variant="outlined"
+						size="small"
+						isDisabled={!event}
 						onClick={() =>
-							downloadEventsCsv(
+							downloadCsv(
 								"screenshot-events.csv",
-								Object.values(results).flatMap((r) => r.events),
+								eventsToCsv(Object.values(results).flatMap((r) => r.events)),
 							)
 						}
 					>
 						Download CSV
-					</button>
-				</p>
+					</SendouButton>
+				</div>
 			) : null}
 
 			{Object.keys(results).length > 0 ? (
@@ -626,7 +745,9 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isScoreboardBattleLog ? (
+			{frame &&
+			event &&
+			(isScoreboardBattleLog || isQuickScoreboardBattleLog) ? (
 				<div className={styles.detail}>
 					<div className={styles.detailStats}>
 						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
@@ -639,12 +760,20 @@ export function ScreenshotPage() {
 						<LabeledCrop
 							label="header top"
 							frame={frame}
-							roi={bl.HEADER_TOP_BAND}
+							roi={
+								isQuickScoreboardBattleLog
+									? onRawFrame(quick.HEADER_TOP_BAND)
+									: bl.HEADER_TOP_BAND
+							}
 						/>
 						<LabeledCrop
 							label="header bottom"
 							frame={frame}
-							roi={bl.HEADER_BOTTOM_BAND}
+							roi={
+								isQuickScoreboardBattleLog
+									? onRawFrame(quick.HEADER_BOTTOM_BAND)
+									: bl.HEADER_BOTTOM_BAND
+							}
 						/>
 					</div>
 				</div>
@@ -820,21 +949,31 @@ export function ScreenshotPage() {
 									<Stat label="score">
 										{data.score[0] ?? "?"}–{data.score[1] ?? "?"}
 									</Stat>
-									<Stat label="penalty">
-										{data.penalty[0] ?? "—"} / {data.penalty[1] ?? "—"}
-									</Stat>
+									{data.mode === "SZ" ? (
+										<Stat label="penalty">
+											{data.penalty[0] ?? "—"} / {data.penalty[1] ?? "—"}
+										</Stat>
+									) : (
+										<Stat label="position">{data.position ?? "—"}</Stat>
+									)}
 									<Stat label="control">
-										{data.control[0]
+										{data.control === 0
 											? "left"
-											: data.control[1]
+											: data.control === 1
 												? "right"
 												: "none"}
 									</Stat>
 									{status ? (
 										<>
 											<Stat label="layout">{status.data.layout}</Stat>
-											<Stat label="players">
-												<StatusSlots data={status.data} />
+											<Stat label="special">
+												<StatusSlots
+													flags={status.data.special}
+													tone="special"
+												/>
+											</Stat>
+											<Stat label="splatted">
+												<StatusSlots flags={status.data.dead} tone="dead" />
 											</Stat>
 										</>
 									) : null}
@@ -922,7 +1061,8 @@ export function ScreenshotPage() {
 			!isOwn &&
 			!isMinimap &&
 			!isObjective &&
-			!isKill ? (
+			!isKill &&
+			!isXRank ? (
 				<table className={styles.inspector}>
 					<thead>
 						<tr>

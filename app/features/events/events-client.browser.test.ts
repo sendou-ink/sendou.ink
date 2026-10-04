@@ -1,6 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { createEventsClient } from "./events-client";
-import type { ServerEvent } from "./events-types";
+import { HEARTBEAT_INTERVAL_MS, type ServerEvent } from "./events-types";
+
+const clients: Array<ReturnType<typeof createEventsClient>> = [];
 
 function setUpClient({
 	replaceTopics,
@@ -14,13 +16,15 @@ function setUpClient({
 	const putStatuses: number[] = [];
 	let handlers: {
 		onMessage: (data: string) => void;
-		onError: () => void;
+		onError: (permanent: boolean) => void;
 	} | null = null;
 	let sourceClosed = false;
+	let openCount = 0;
 
 	const client = createEventsClient({
 		openEventSource: (newHandlers) => {
 			handlers = newHandlers;
+			openCount++;
 			sourceClosed = false;
 			return {
 				close: () => {
@@ -36,20 +40,35 @@ function setUpClient({
 			}),
 	});
 
+	clients.push(client);
+
 	return {
 		client,
 		putCalls,
 		putStatuses,
 		isSourceClosed: () => sourceClosed,
+		openCount: () => openCount,
 		emitHello: (connectionId: string) =>
 			handlers!.onMessage(JSON.stringify({ kind: "hello", connectionId })),
 		emitEvent: (event: ServerEvent) =>
 			handlers!.onMessage(JSON.stringify(event)),
-		emitError: () => handlers!.onError(),
+		emitHeartbeat: () =>
+			handlers!.onMessage(JSON.stringify({ kind: "heartbeat" })),
+		emitError: ({ permanent = false } = {}) => handlers!.onError(permanent),
 	};
 }
 
 const flushAsync = () => new Promise<void>((resolve) => setTimeout(resolve));
+
+const MAX_FIRST_REOPEN_DELAY_MS = 1_000;
+
+afterEach(() => {
+	for (const client of clients) {
+		client.disconnect();
+	}
+	clients.length = 0;
+	vi.useRealTimers();
+});
 
 describe("createEventsClient", () => {
 	test("reports CONNECTED once the hello event arrives", () => {
@@ -182,21 +201,153 @@ describe("createEventsClient", () => {
 		expect(putCalls[0].topics).toEqual(["match__9", "tournament__5"]);
 	});
 
-	test("a PUT that 404s against a dead connection is repaired by the next hello", async () => {
-		const { client, putCalls, putStatuses, emitHello } = setUpClient();
+	test("does not dispatch heartbeats to listeners", () => {
+		const { client, emitHello, emitHeartbeat } = setUpClient();
+		const events: ServerEvent[] = [];
+		client.addEventListener((event) => events.push(event));
+
+		client.connect();
+		emitHello("c1");
+		emitHeartbeat();
+
+		expect(events).toEqual([]);
+	});
+
+	test("reopens a connection that has gone silent", async () => {
+		vi.useFakeTimers();
+		const { client, openCount, isSourceClosed, emitHello } = setUpClient();
 		client.connect();
 		emitHello("c1");
 
-		putStatuses.push(404);
+		await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS * 3);
+
+		expect(openCount()).toBe(2);
+		expect(client.getReadyState()).toBe("CONNECTING");
+		expect(isSourceClosed()).toBe(false);
+	});
+
+	test("keeps a connection receiving heartbeats open", async () => {
+		vi.useFakeTimers();
+		const { client, openCount, emitHello, emitHeartbeat } = setUpClient();
+		client.connect();
+		emitHello("c1");
+
+		for (let i = 0; i < 4; i++) {
+			await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+			emitHeartbeat();
+		}
+
+		expect(openCount()).toBe(1);
+		expect(client.getReadyState()).toBe("CONNECTED");
+	});
+
+	test("reopens a source that gave up on reconnecting", async () => {
+		vi.useFakeTimers();
+		const { client, openCount, isSourceClosed, emitHello, emitError } =
+			setUpClient();
+		client.connect();
+		emitHello("c1");
+
+		emitError({ permanent: true });
+		expect(isSourceClosed()).toBe(true);
+		expect(client.getReadyState()).toBe("CONNECTING");
+
+		await vi.advanceTimersByTimeAsync(MAX_FIRST_REOPEN_DELAY_MS);
+		expect(openCount()).toBe(2);
+	});
+
+	test("leaves reconnecting to the source on a transient error", async () => {
+		vi.useFakeTimers();
+		const { client, openCount, isSourceClosed, emitHello, emitError } =
+			setUpClient();
+		client.connect();
+		emitHello("c1");
+
+		emitError();
+		await vi.advanceTimersByTimeAsync(MAX_FIRST_REOPEN_DELAY_MS);
+
+		expect(isSourceClosed()).toBe(false);
+		expect(openCount()).toBe(1);
+	});
+
+	test("disconnect cancels a scheduled reopen", async () => {
+		vi.useFakeTimers();
+		const { client, openCount, emitHello, emitError } = setUpClient();
+		client.connect();
+		emitHello("c1");
+
+		emitError({ permanent: true });
+		client.disconnect();
+		await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS * 3);
+
+		expect(openCount()).toBe(1);
+		expect(client.getReadyState()).toBe("CLOSED");
+	});
+
+	test.each([
+		{ why: "404 (server lost the connection)", status: 404 },
+		{ why: "server error", status: 502 },
+	])(
+		"reopens the connection when the topic PUT fails with a $why",
+		async ({ status }) => {
+			vi.useFakeTimers();
+			const { client, putCalls, putStatuses, openCount, emitHello } =
+				setUpClient();
+			client.connect();
+			emitHello("c1");
+
+			putStatuses.push(status);
+			client.subscribeTopic("tournament__5");
+			await vi.waitFor(() => expect(putCalls).toHaveLength(1));
+			expect(client.getReadyState()).toBe("CONNECTING");
+
+			await vi.advanceTimersByTimeAsync(MAX_FIRST_REOPEN_DELAY_MS);
+			expect(openCount()).toBe(2);
+			emitHello("c2");
+			await vi.waitFor(() => expect(putCalls).toHaveLength(2));
+			expect(putCalls[1]).toEqual({
+				connectionId: "c2",
+				topics: ["tournament__5"],
+			});
+		},
+	);
+
+	test("reopens the connection when the topic PUT does not reach the server", async () => {
+		vi.useFakeTimers();
+		const putCalls: string[] = [];
+		const { client, openCount, emitHello } = setUpClient({
+			replaceTopics: async (connectionId) => {
+				putCalls.push(connectionId);
+				if (connectionId === "c1") throw new TypeError("Failed to fetch");
+				return { status: 200 };
+			},
+		});
+		client.connect();
+		emitHello("c1");
+
 		client.subscribeTopic("tournament__5");
-		await vi.waitFor(() => expect(putCalls).toHaveLength(1));
+		await vi.waitFor(() => expect(putCalls).toEqual(["c1"]));
+		await vi.advanceTimersByTimeAsync(MAX_FIRST_REOPEN_DELAY_MS);
+		expect(openCount()).toBe(2);
 
 		emitHello("c2");
-		await vi.waitFor(() => expect(putCalls).toHaveLength(2));
-		expect(putCalls[1]).toEqual({
-			connectionId: "c2",
-			topics: ["tournament__5"],
-		});
+		await vi.waitFor(() => expect(putCalls).toEqual(["c1", "c2"]));
+		expect(client.getReadyState()).toBe("CONNECTED");
+	});
+
+	test("keeps the connection when the topic PUT is forbidden", async () => {
+		const { client, putCalls, putStatuses, openCount, emitHello } =
+			setUpClient();
+		client.connect();
+		emitHello("c1");
+
+		putStatuses.push(403);
+		client.subscribeTopic("tournament__5");
+		await vi.waitFor(() => expect(putCalls).toHaveLength(1));
+		await flushAsync();
+
+		expect(openCount()).toBe(1);
+		expect(client.getReadyState()).toBe("CONNECTED");
 	});
 
 	test("sends the latest set after an in-flight PUT resolves instead of interleaving", async () => {

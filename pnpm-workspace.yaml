@@ -8,3 +8,5 @@ patchedDependencies:
   i18next@26.3.6: patches/i18next@26.3.6.patch
   kysely@0.29.0: patches/kysely@0.29.0.patch
   react-i18next@17.0.11: patches/react-i18next@17.0.11.patch
+  react-router@8.4.0: patches/react-router@8.4.0.patch
+  remix-i18next@8.0.0: patches/remix-i18next@8.0.0.patch

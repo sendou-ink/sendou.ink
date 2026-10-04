@@ -15,6 +15,7 @@ import {
 	type Fixture,
 	isFieldSkipped,
 	loadFixtures,
+	loadScoreboardLookalikes,
 	runDetectorOnFixture,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
@@ -162,15 +163,8 @@ for (const fixture of fixtures) {
 }
 
 // Mirror of the cross-negative sweeps in suites/scoreboard-battle-log-replay.ts
-// and scoreboard-battle-log.test.ts: the live gate must stay quiet on their positives.
-for (const fixture of [
-	...loadFixtures("scoreboard-battle-log-replay").filter(
-		(f) => f.expected.event === "ScoreboardBattleLogReplay",
-	),
-	...loadFixtures("scoreboard-battle-log").filter(
-		(f) => f.expected.event === "ScoreboardBattleLog",
-	),
-]) {
+// and suites/scoreboard-battle-log.ts: the live gate must stay quiet on their positives.
+for (const fixture of loadScoreboardLookalikes("scoreboard")) {
 	test(`scoreboard gate stays quiet on ${fixture.name}`, async () => {
 		const { gate } = await runDetectorOnFixture(detector, fixture);
 		assert.equal(

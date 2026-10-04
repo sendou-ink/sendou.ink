@@ -1,0 +1,19 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 299,
+		"score": [
+			100,
+			100
+		],
+		"penalty": [
+			null,
+			null
+		],
+		"control": null
+	},
+	"options": {
+		"notes": "Clam Blitz opening: both plates dark at 100, the anchor disc between them. CB draws the SZ plates overlay, so the read's mode is SZ; the match's mode tells them apart."
+	}
+}

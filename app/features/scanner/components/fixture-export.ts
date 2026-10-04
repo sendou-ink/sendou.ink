@@ -1,5 +1,5 @@
 /**
- * "Save as fixture": downloads the raw captured frame as PNG plus an
+ * Fixture downloads: the raw captured frame as PNG, and for a detection an
  * expected.json prefilled from the detector's output, so labeling is review-and-correct.
  */
 
@@ -34,7 +34,20 @@ import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
-import { mainWeaponLabel, stageLabel, weaponLabel } from "./labels";
+import {
+	X_RANK_POSITION_EVENT_TYPE,
+	type XRankPositionData,
+} from "../core/detectors/x-rank/position";
+import {
+	X_SET_COUNT_EVENT_TYPE,
+	type XSetCountData,
+} from "../core/detectors/x-rank/set-count";
+import {
+	X_SET_RESULT_EVENT_TYPE,
+	type XSetResultData,
+} from "../core/detectors/x-rank/set-result";
+import { mainWeaponLabel, stageLabel, weaponLabel } from "../core/labels";
+import { downloadBlob as download } from "./download";
 
 /** Scoreboard data with the replay extras present when the event has them. */
 export type CardData = ScoreboardData &
@@ -50,27 +63,32 @@ export type FixtureData =
 	| ObjectiveData
 	| PlayerStatusData
 	| StripWeaponsData
-	| KillData;
+	| KillData
+	| XSetCountData
+	| XSetResultData
+	| XRankPositionData;
+
+/** The X Battle cards' data is already in its fixture form. */
+const AS_IS_EVENT_TYPES: readonly string[] = [
+	X_SET_COUNT_EVENT_TYPE,
+	X_SET_RESULT_EVENT_TYPE,
+	X_RANK_POSITION_EVENT_TYPE,
+];
 
 function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
 	return eventType === DEATH_EVENT_TYPE;
 }
 
-function download(name: string, blob: Blob): void {
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement("a");
-	a.href = url;
-	a.download = name;
-	a.click();
-	URL.revokeObjectURL(url);
-}
-
-function buildExpectedJson(
+/** A detection's expected.json, prefilled from the detector's output. Null data = negative-fixture form. */
+export function buildExpectedJson(
 	data: FixtureData | null,
 	eventType = "Scoreboard",
 ): string {
 	if (!data) {
 		return `${JSON.stringify({ event: "none" }, null, 2)}\n`;
+	}
+	if (AS_IS_EVENT_TYPES.includes(eventType)) {
+		return `${JSON.stringify({ event: eventType, data }, null, 2)}\n`;
 	}
 	if (isDeath(data, eventType)) {
 		const label = weaponLabel(data.weaponType, data.weaponId);
@@ -151,13 +169,22 @@ function buildExpectedJson(
 		return `${JSON.stringify(
 			{
 				event: eventType,
-				data: {
-					mode: objective.mode,
-					time: objective.time,
-					score: objective.score,
-					penalty: objective.penalty,
-					control: objective.control,
-				},
+				data:
+					objective.mode === "SZ"
+						? {
+								mode: objective.mode,
+								time: objective.time,
+								score: objective.score,
+								penalty: objective.penalty,
+								control: objective.control,
+							}
+						: {
+								mode: objective.mode,
+								time: objective.time,
+								score: objective.score,
+								control: objective.control,
+								position: objective.position,
+							},
 			},
 			null,
 			2,
@@ -272,25 +299,8 @@ export function downloadExpectedJson(
 	);
 }
 
-/** Fixture export for a live detection: the stored PNG is the byte-exact analyzed frame plus its parse output. */
-export function saveFixtureFromEvent(
-	frame: Blob,
-	data: FixtureData,
-	eventType: string,
-): void {
-	download("frame.png", frame);
-	download(
-		"expected.json",
-		new Blob([buildExpectedJson(data, eventType)], {
-			type: "application/json",
-		}),
-	);
-}
-
-export async function saveFixture(
-	video: HTMLVideoElement,
-	latest: { type: string; data: FixtureData } | null,
-): Promise<void> {
+/** The video's current frame as frame.png, the fixture's raw input. */
+export async function saveFrame(video: HTMLVideoElement): Promise<void> {
 	const canvas = document.createElement("canvas");
 	canvas.width = video.videoWidth;
 	canvas.height = video.videoHeight;
@@ -300,10 +310,4 @@ export async function saveFixture(
 	);
 	if (!blob) throw new Error("could not encode frame");
 	download("frame.png", blob);
-	download(
-		"expected.json",
-		new Blob([buildExpectedJson(latest?.data ?? null, latest?.type)], {
-			type: "application/json",
-		}),
-	);
 }

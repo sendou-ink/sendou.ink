@@ -21,7 +21,10 @@ import {
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { PageHeader } from "~/components/PageHeader";
-import { WeaponLanding } from "~/components/WeaponLanding";
+import {
+	WeaponLanding,
+	type WeaponLandingState,
+} from "~/components/WeaponLanding";
 import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import type {
@@ -264,6 +267,7 @@ function WeaponHeader({ weapon }: { weapon: AnyWeapon }) {
 						weapon: null,
 						category: weaponLandingCategory(weapon),
 					})}
+					state={{ focusSearch: true } satisfies WeaponLandingState}
 				/>
 			}
 		/>
@@ -536,7 +540,9 @@ function DamageReceiversGrid({
 													damage.objectShredder ? "-os" : ""
 												}-${damageToReceiver.receiver}`}
 											>
-												{damage.hitsToDestroy}
+												{Number.isFinite(damage.hitsToDestroy)
+													? damage.hitsToDestroy
+													: "∞"}
 											</div>
 										</div>
 										<div className={styles.multiplier}>

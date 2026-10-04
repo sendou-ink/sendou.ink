@@ -1,6 +1,8 @@
 /**
  * TimelineBuilder: same-type events within a merge window collapse into one
  * (highest confidence kept); events below a confidence floor are dropped.
+ * Sampled types (per-frame state reads) keep the ends of every same-state run
+ * instead, see `sampledTypes`.
  */
 
 import { KILL_EVENT_TYPE, sameKillData } from "../detectors/kill/index";
@@ -17,10 +19,23 @@ import {
 	samePlayerStatusData,
 } from "../detectors/objective/player-status";
 import { STRIP_WEAPONS_EVENT_TYPE } from "../detectors/objective/strip-weapons";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/quick-scoreboard-battle-log/index";
 import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-battle-log-replay/index";
 import type { DetectedEvent } from "../detectors/types";
+import {
+	X_RANK_POSITION_EVENT_TYPE,
+	xRankPositionProgress,
+} from "../detectors/x-rank/position";
+import {
+	X_SET_COUNT_EVENT_TYPE,
+	xSetCountProgress,
+} from "../detectors/x-rank/set-count";
+import {
+	X_SET_RESULT_EVENT_TYPE,
+	xSetResultProgress,
+} from "../detectors/x-rank/set-result";
 import { sameScoreboardMatch } from "./same-scoreboard";
 
 export interface TimelineOptions {
@@ -36,8 +51,33 @@ export interface TimelineOptions {
 	sameEventDataByType: Record<string, (a: unknown, b: unknown) => boolean>;
 	/** events below this confidence are dropped */
 	minConfidence: number;
-	/** per-type floor overrides: evidence events scored on a different scale (raw NCC peaks) opt out of the shared floor */
+	/** per-type floor overrides: evidence events scored on a different scale (raw NCC peaks) opt out of the shared floor, history screens raise it */
 	minConfidenceByType: Record<string, number>;
+	/**
+	 * per-frame state samples, where every read carries state at its instant
+	 * and a run of same-state reads is a series rather than one repeated
+	 * screen. Instead of collapsing the run into its first read, the builder
+	 * keeps that first read, the latest read (re-placed as the run grows —
+	 * `extended`) and one read per merge window in between, so the run's ends
+	 * are exact and a lone misread stays flanked by the reads either side of
+	 * it for the match builder's smoothing. Confidence never moves a sample.
+	 */
+	sampledTypes: readonly string[];
+	/**
+	 * types whose first read is the event: their content guard only merges
+	 * identical repeats, so a more confident one carries nothing new except a
+	 * later `t` — and a kill-feed row is re-read over its whole ~5s+ life, so
+	 * taking it over would move the kill to when the row was about to leave.
+	 */
+	firstReadTypes: readonly string[];
+	/**
+	 * per-type animation order for screens that count toward their final
+	 * value (X Battle cards): positive when `b` is further along than `a`.
+	 * Every frame of the count reads equally well, so instead of confidence a
+	 * further-along read replaces the kept one and an earlier one merges into
+	 * it; only reads level on the animation fall back to confidence.
+	 */
+	animationProgressByType: Record<string, (a: unknown, b: unknown) => number>;
 }
 
 const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
@@ -48,8 +88,9 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	// frames merge only within one open (a mid-open dead/special flip stays its
 	// own event via the content guard). Objective: reads repeat every second; the
 	// content guard keeps every change while static stretches collapse.
-	// PlayerStatus: a state can recur no sooner than a respawn (~9s), so the
-	// window stays under that. StripWeapons: sampled every ~5s, each distinct evidence.
+	// PlayerStatus: sampled (see `sampledTypes`); the window is how often a
+	// standing state is re-confirmed, under the renderer's 15s unknown-gap rule.
+	// StripWeapons: sampled every ~5s, each distinct evidence.
 	// Kill: the same stack re-read while it shows merges; a splatted player
 	// can't re-enter the feed before respawning (~8.5s), so the window stays
 	// under that and the content guard splits a growing stack.
@@ -65,20 +106,35 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
+		[QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
 		[MINIMAP_EVENT_TYPE]: sameMinimapStatusData,
 		[OBJECTIVE_EVENT_TYPE]: sameObjectiveData,
 		[PLAYER_STATUS_EVENT_TYPE]: samePlayerStatusData,
 		[KILL_EVENT_TYPE]: sameKillData,
 	},
 	minConfidence: 0.6,
+	// history screens: clean reads score 0.81+, and a read under that floor
+	// would form a card of its own when its fingerprint can't match the game
 	minConfidenceByType: {
 		[STRIP_WEAPONS_EVENT_TYPE]: 0,
+		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: 0.75,
+		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: 0.75,
+		[QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: 0.75,
+	},
+	sampledTypes: [PLAYER_STATUS_EVENT_TYPE],
+	firstReadTypes: [KILL_EVENT_TYPE],
+	animationProgressByType: {
+		[X_SET_COUNT_EVENT_TYPE]: xSetCountProgress,
+		[X_SET_RESULT_EVENT_TYPE]: xSetResultProgress,
+		[X_RANK_POSITION_EVENT_TYPE]: xRankPositionProgress,
 	},
 };
 
 export type TimelineAction =
 	| { action: "added"; event: DetectedEvent }
 	| { action: "replaced"; event: DetectedEvent; replaced: DetectedEvent }
+	/** a sampled run's trailing read moved forward: same stored slot, no new frame worth keeping */
+	| { action: "extended"; event: DetectedEvent; replaced: DetectedEvent }
 	| { action: "merged"; into: DetectedEvent }
 	| { action: "dropped"; reason: "low-confidence" };
 
@@ -104,6 +160,9 @@ export class TimelineBuilder {
 		const window =
 			this.#options.mergeWindowByType[event.type] ?? this.#options.mergeWindow;
 		const same = this.#options.sameEventDataByType[event.type];
+		if (this.#options.sampledTypes.includes(event.type)) {
+			return this.#pushSample(event, window, same);
+		}
 		const near = this.#events.find(
 			(e) =>
 				e.type === event.type &&
@@ -115,11 +174,57 @@ export class TimelineBuilder {
 			this.#events.sort((a, b) => a.t - b.t);
 			return { action: "added", event };
 		}
-		if (event.confidence > near.confidence) {
+		const progress =
+			this.#options.animationProgressByType[event.type]?.(
+				near.data,
+				event.data,
+			) ?? 0;
+		if (progress < 0) return { action: "merged", into: near };
+		if (
+			progress > 0 ||
+			(event.confidence > near.confidence &&
+				!this.#options.firstReadTypes.includes(event.type))
+		) {
 			this.#events[this.#events.indexOf(near)] = event;
 			this.#events.sort((a, b) => a.t - b.t);
 			return { action: "replaced", event, replaced: near };
 		}
 		return { action: "merged", into: near };
+	}
+
+	/**
+	 * Same-state neighbours (by `t`) decide a sample's fate: none within the
+	 * window → added; already bracketed by two → merged (a late-arriving VoD
+	 * read); following the run's trailing read while the kept read before it is
+	 * still within the window → extends, replacing that trailing read; otherwise
+	 * added as the run's new trailing read.
+	 */
+	#pushSample(
+		event: DetectedEvent,
+		window: number,
+		same: ((a: unknown, b: unknown) => boolean) | undefined,
+	): TimelineAction {
+		const continues = (earlier: DetectedEvent, later: DetectedEvent) =>
+			later.t - earlier.t <= window &&
+			(same?.(earlier.data, later.data) ?? true);
+		const sameType = this.#events.filter((e) => e.type === event.type);
+		const nextIndex = sameType.findIndex((e) => e.t > event.t);
+		const before = nextIndex === -1 ? sameType : sameType.slice(0, nextIndex);
+		const next = nextIndex === -1 ? undefined : sameType[nextIndex];
+		const prev = before.at(-1);
+		const kept = before.at(-2);
+		if (prev && continues(prev, event)) {
+			if (prev.t === event.t || (next && continues(event, next))) {
+				return { action: "merged", into: prev };
+			}
+			if (kept && continues(kept, prev) && continues(kept, event)) {
+				this.#events[this.#events.indexOf(prev)] = event;
+				this.#events.sort((a, b) => a.t - b.t);
+				return { action: "extended", event, replaced: prev };
+			}
+		}
+		this.#events.push(event);
+		this.#events.sort((a, b) => a.t - b.t);
+		return { action: "added", event };
 	}
 }

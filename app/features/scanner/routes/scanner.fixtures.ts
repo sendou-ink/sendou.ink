@@ -33,7 +33,9 @@ export const loader = ({ params }: LoaderFunctionArgs) => {
 		headers: {
 			"Content-Type": fixture.framePath.endsWith(".png")
 				? "image/png"
-				: "image/jpeg",
+				: fixture.framePath.endsWith(".webp")
+					? "image/webp"
+					: "image/jpeg",
 			"Cache-Control": "no-cache",
 		},
 	});

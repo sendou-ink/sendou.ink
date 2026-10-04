@@ -8,6 +8,7 @@ import {
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { UserMapModePreferences } from "~/db/tables-json";
+import * as ModAuditLogRepository from "~/features/admin/ModAuditLogRepository.server";
 import { actorId } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -469,20 +470,23 @@ export async function insertMember(
 	return { chatRoomIdToRevalidate };
 }
 
-/** Count of pending likes each non-inactive group has received, keyed by group id. */
-export async function findCurrentReceivedLikeCounts() {
+/** Ids of the groups that have pending likes on each non-inactive group, keyed by the liked group's id. */
+export async function findCurrentReceivedLikerGroupIds() {
 	const rows = await db
 		.selectFrom("GroupLike")
 		.innerJoin("Group", "Group.id", "GroupLike.targetGroupId")
-		.select((eb) => [
-			"GroupLike.targetGroupId",
-			eb.fn.countAll<number>().as("count"),
-		])
+		.select(["GroupLike.targetGroupId", "GroupLike.likerGroupId"])
 		.where("Group.status", "!=", "INACTIVE")
-		.groupBy("GroupLike.targetGroupId")
 		.execute();
 
-	return new Map(rows.map((row) => [row.targetGroupId, row.count]));
+	const likerGroupIdsByTarget = new Map<number, number[]>();
+	for (const row of rows) {
+		const likerGroupIds = likerGroupIdsByTarget.get(row.targetGroupId) ?? [];
+		likerGroupIds.push(row.likerGroupId);
+		likerGroupIdsByTarget.set(row.targetGroupId, likerGroupIds);
+	}
+
+	return likerGroupIdsByTarget;
 }
 
 export async function findAllLikesByGroupId(groupId: number) {
@@ -982,6 +986,13 @@ export function updateOwnMemberNote({
 			.where("groupId", "=", groupId)
 			.where("userId", "=", actorId())
 			.execute();
+
+		if (value) {
+			await ModAuditLogRepository.insert(
+				{ type: "SENDOUQ_PUBLIC_NOTE", text: value },
+				trx,
+			);
+		}
 
 		await refreshGroup(groupId, trx);
 	});

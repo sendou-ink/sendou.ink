@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"cast": null,
+		"time": 300,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Same VoD at the opening whistle (t=1066, clock 5:00): all eight alive and saturated, and nobody can hold a special yet — the strongest possible ground truth for a no-star frame. Holds the pale side of the pale-only ready guard: left slot 2's S-BLAST '91 render pales the body to 0.41 here while its ink stays at 0.33. Pale cannot separate the states at all — over 272 dense reads of that slot it runs 0.30-0.44 alive against 0.55-0.61 washed, overlapping the 0.30 ready floor throughout — so only the ink does (0.25-0.47 alive vs 0.01-0.09 washed, nothing between; 0.18 is the top of any attested pale-only wash). Shoulder ink does not separate them: 0.47 here against 0.83 at pov-alfonsino-sblast-render-read-as-ready, overlapping the 0.34 of a true wash."
+	}
+}

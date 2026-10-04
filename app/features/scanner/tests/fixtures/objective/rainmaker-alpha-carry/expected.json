@@ -1,0 +1,10 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "RM",
+		"time": 208,
+		"score": [44, 72],
+		"control": 0,
+		"position": 55
+	}
+}

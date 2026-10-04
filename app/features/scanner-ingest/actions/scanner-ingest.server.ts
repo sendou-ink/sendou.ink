@@ -1,12 +1,14 @@
 import { subDays } from "date-fns";
 import type { ActionFunction } from "react-router";
-import { Config } from "~/config";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
-import { isAdmin, isDev, isScannerTester } from "~/modules/permissions/utils";
+import {
+	isLinkableLobby,
+	isUploadedLobby,
+} from "~/features/scanner/scanner-types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { forbidden, parseBody } from "~/utils/remix.server";
+import { parseBody } from "~/utils/remix.server";
 import * as Scoreboards from "../core/Scoreboards";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import {
@@ -21,27 +23,19 @@ const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 
-	if (
-		!Config.scannerEnabled &&
-		!isAdmin(user) &&
-		!isDev(user) &&
-		!isScannerTester(user)
-	) {
-		forbidden();
-	}
-
 	const data = await parseBody({ request, schema: ingestBodySchema });
 
 	const povUserId = user.id;
 
-	const indexedMatches = data.matches
-		.map((match, requestIndex) => ({
-			match: withoutDisprovenCast(match),
-			requestIndex,
-		}))
-		.filter(({ match }) => match.lobby === null || match.lobby === "PRIVATE");
+	const requestMatches = data.matches.map(withoutDisprovenCast);
+	const indexedMatches = requestMatches
+		.map((match, requestIndex) => ({ match, requestIndex }))
+		.filter(({ match }) => isLinkableLobby(match.lobby));
 	const matches = indexedMatches.map(({ match }) => match);
-	if (matches.length === 0) {
+	const storeOnlyMatches = requestMatches.filter(
+		(match) => isUploadedLobby(match.lobby) && !isLinkableLobby(match.lobby),
+	);
+	if (matches.length === 0 && storeOnlyMatches.length === 0) {
 		return {
 			storedMatchesCount: 0,
 			mergedMatchesCount: 0,
@@ -51,19 +45,31 @@ export const action: ActionFunction = async ({ request }) => {
 		} satisfies IngestResponse;
 	}
 
-	const resolved = await resolveIngestContext({
-		matches,
+	const storedOnly = await ScannerIngestRepository.addOrMergeMatches({
 		povUserId,
-		casterUserId: user.id,
+		submitterUserId: user.id,
+		matches: storeOnlyMatches,
+		context: null,
 	});
 
-	const { insertedCount, mergedCount, effectiveMatches } =
-		await ScannerIngestRepository.addOrMergeMatches({
-			povUserId,
-			submitterUserId: user.id,
-			matches,
-			context: resolved?.context ?? null,
-		});
+	const resolved =
+		matches.length > 0
+			? await resolveIngestContext({
+					matches,
+					povUserId,
+					casterUserId: user.id,
+				})
+			: null;
+
+	const linkable = await ScannerIngestRepository.addOrMergeMatches({
+		povUserId,
+		submitterUserId: user.id,
+		matches,
+		context: resolved?.context ?? null,
+	});
+	const { effectiveMatches } = linkable;
+	const insertedCount = storedOnly.insertedCount + linkable.insertedCount;
+	const mergedCount = storedOnly.mergedCount + linkable.mergedCount;
 
 	let linkedGamesCount = 0;
 	let linkedMatches: IngestResponse["linkedMatches"] = [];
@@ -140,8 +146,8 @@ interface IngestContextCandidate {
  * activity around play time is the strong signal: their match running then (for cast footage,
  * the casted sets of tournaments they help run). Candidates are scored by how many matches would
  * link, but kept even when nothing links yet (a live minimap-only match still gets its hint).
- * Without activity the content decides: mode+stage sequence plus roster sides is near-unique in
- * a user's history.
+ * Without activity (a set that outlasted the activity window) the user's history decides: the
+ * context whose games were reported around the matches' play times.
  */
 async function resolveIngestContext({
 	matches,
@@ -294,7 +300,7 @@ function withoutDisprovenCast(match: ScannerMatch): ScannerMatch {
 	return { ...match, cast: false };
 }
 
-/** When the request's matches were probably played: the latest playedAt, else "now". */
+/** When the request's matches were probably played: the latest playedAt, else "now" (live reads without a scoreboard). */
 function anchorTime(matches: ScannerMatch[]): number {
 	const playedAts = matches
 		.map((match) => match.playedAt)

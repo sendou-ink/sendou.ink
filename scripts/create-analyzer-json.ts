@@ -641,7 +641,9 @@ function parametersToMainWeaponResult(
 		InkConsumeVariable: params.VariableWeaponParam?.InkConsume,
 		InkConsumeSlosher,
 		InkConsumeFullCharge: params.WeaponParam?.InkConsumeFullCharge,
-		InkConsumeMinCharge: params.WeaponParam?.InkConsumeMinCharge,
+		InkConsumeMinCharge:
+			params.WeaponParam?.InkConsumeMinCharge ??
+			params.spl__WeaponStringerParam?.ChargeParam?.InkConsumeMinCharge,
 		InkConsumeFullChargeSplatling,
 		InkConsume_WeaponSwingParam: params.WeaponSwingParam?.InkConsume,
 		InkConsume_WeaponVerticalSwingParam:
@@ -871,6 +873,8 @@ function parametersToSpecialWeaponResult(params: any) {
 	const isScreen = () => !!params.WallParam;
 	const isInkStorm = () => !!params.CloudParam;
 	const isInkstrike = () => !!params.MotherParam;
+	const isReefslider = () =>
+		params.BulletParam?.$type === "spl__BulletSpSkewerParam";
 	const isBooyahBomb = () =>
 		params.BlastParam?.$type === "spl__BulletSpNiceBallBlastParam";
 
@@ -970,7 +974,11 @@ function parametersToSpecialWeaponResult(params: any) {
 		BulletDamageMin: params.ShooterDamageParam?.ValueMin,
 		BulletDamageMax: params.ShooterDamageParam?.ValueMax,
 		CannonDamage: Cannon(),
-		BumpDamage: isCrabTank() ? 400 : undefined,
+		BumpDamage: isCrabTank()
+			? 400
+			: isReefslider()
+				? params.BulletParam.DamageValue
+				: undefined,
 		JumpDamage: params.BodyParam?.DamageJumpValue,
 		TickDamage:
 			BooyahBombTickDamage() ??

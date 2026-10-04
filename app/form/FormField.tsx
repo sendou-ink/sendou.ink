@@ -5,7 +5,11 @@ import type {
 	StageId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import type { AnySyncSchema } from "~/utils/schema";
+import {
+	dayMonthYearToLocalDate,
+	localDateToDayMonthYear,
+} from "~/utils/dates";
+import type { AnySyncSchema, DayMonthYear } from "~/utils/schema";
 import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
 import { BadgesFormField } from "./fields/BadgesFormField";
@@ -367,15 +371,31 @@ export function FormField({
 		);
 	}
 
-	if (formField.type === "datetime" || formField.type === "date") {
+	if (formField.type === "datetime") {
 		return (
 			<DatetimeFormField
 				{...commonProps}
 				{...formField}
 				disabled={isDisabled}
-				granularity={formField.type === "date" ? "day" : "minute"}
 				value={value as Date | undefined}
 				onChange={handleChange as (v: Date | undefined) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "date") {
+		return (
+			<DatetimeFormField
+				{...commonProps}
+				{...formField}
+				disabled={isDisabled}
+				granularity="day"
+				value={
+					value ? dayMonthYearToLocalDate(value as DayMonthYear) : undefined
+				}
+				onChange={(date) =>
+					handleChange(date ? localDateToDayMonthYear(date) : undefined)
+				}
 			/>
 		);
 	}

@@ -1,0 +1,84 @@
+.title {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	overflow-wrap: anywhere;
+}
+
+.partial {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.afterScan {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2) var(--s-3);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+
+	&:empty {
+		display: none;
+	}
+}
+
+.errorBox {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-3) var(--s-4);
+	border-radius: var(--radius-box);
+	background: var(--color-error-low);
+
+	& p {
+		margin: 0;
+	}
+}
+
+.error {
+	font-size: var(--font-xs);
+	color: var(--color-error);
+}
+
+.fileButton {
+	display: inline-flex;
+	align-items: center;
+	width: fit-content;
+	height: var(--field-size-sm);
+	padding: 0 var(--field-padding);
+	border: var(--border-width) solid var(--color-fill-accent);
+	border-radius: var(--radius-field);
+	background: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	cursor: pointer;
+
+	& input {
+		display: none;
+	}
+}
+
+.telemetry {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+
+	& summary {
+		cursor: pointer;
+	}
+
+	& table {
+		margin-top: var(--s-1-5);
+		border-collapse: collapse;
+
+		& th,
+		& td {
+			padding: var(--s-0-5) var(--s-2-5) var(--s-0-5) 0;
+			text-align: right;
+			font-variant-numeric: tabular-nums;
+
+			&:first-child {
+				text-align: left;
+			}
+		}
+	}
+}

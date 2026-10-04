@@ -181,9 +181,6 @@ function RoomList({
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
 
-	const byRecency = (a: ChatRoomListItem, b: ChatRoomListItem) =>
-		(b.latestMessageAt ?? 0) - (a.latestMessageAt ?? 0) || b.id - a.id;
-
 	// the context's copy of the room over the route's: it carries the live unread count
 	const routeRooms = useCurrentRouteChatRooms().flatMap((entry) => {
 		const room = chatContext.roomForId(entry.room.id);
@@ -637,4 +634,11 @@ function RoomChat({ room }: { room: ChatRoomListItem }) {
 			readOnly={!expired && !room.canPost}
 		/>
 	);
+}
+
+function byRecency(a: ChatRoomListItem, b: ChatRoomListItem) {
+	const recency = (b.latestMessageAt ?? 0) - (a.latestMessageAt ?? 0);
+	if (recency !== 0) return recency;
+
+	return b.id - a.id;
 }

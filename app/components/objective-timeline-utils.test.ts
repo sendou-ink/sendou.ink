@@ -4,6 +4,7 @@ import {
 	type ObjectiveScoreRead,
 	type PenaltyRead,
 	smoothPenalties,
+	withUnpushedTrackCounts,
 } from "./objective-timeline-utils";
 
 function reads(...pairs: Array<[t: number, penalty: number | null]>) {
@@ -49,6 +50,18 @@ describe("smoothPenalties", () => {
 			null,
 			null,
 		]);
+	});
+
+	test("keeps a steady value re-confirmed by sparse reads", () => {
+		expect(smoothPenalties(reads([0, 10], [14, 10], [27, 10]))).toEqual([
+			10, 10, 10,
+		]);
+	});
+
+	test("bridges a null gap of any length between equal values", () => {
+		expect(
+			smoothPenalties(reads([0, 10], [15, 10], [30, null], [50, 10])),
+		).toEqual([10, 10, 10, 10]);
 	});
 
 	test("does not extend past the last read", () => {
@@ -101,5 +114,39 @@ describe("matchScoresFromObjective", () => {
 			null,
 		]);
 		expect(matchScoresFromObjective([])).toEqual([null, null]);
+	});
+});
+
+describe("withUnpushedTrackCounts", () => {
+	const trackEvent = (alpha: number | null, bravo: number | null) => ({
+		data: {
+			score: [alpha, bravo] as [number | null, number | null],
+			position: 0,
+		},
+	});
+
+	test("shows a full count until a side's first plate read", () => {
+		const scores = withUnpushedTrackCounts([
+			trackEvent(null, null),
+			trackEvent(90, null),
+			trackEvent(null, 70),
+			trackEvent(null, null),
+		]).map((event) => event.data.score);
+
+		expect(scores).toEqual([
+			[100, 100],
+			[90, 100],
+			[null, 70],
+			[null, null],
+		]);
+	});
+
+	test("leaves splat zones counts alone", () => {
+		const events = [
+			{ data: { score: [null, null] as [number | null, number | null] } },
+			{ data: { score: [90, 80] as [number | null, number | null] } },
+		];
+
+		expect(withUnpushedTrackCounts(events)).toEqual(events);
 	});
 });

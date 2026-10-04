@@ -1,4 +1,4 @@
-import { subSeconds } from "date-fns";
+import { subMinutes, subSeconds } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
@@ -7,6 +7,7 @@ import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { UserMapModePreferences } from "~/db/tables-json";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import {
 	freshUserSkills,
@@ -28,6 +29,10 @@ const { mockSeasonCurrentOrPrevious } = vi.hoisted(() => ({
 
 vi.mock("~/features/mmr/core/Seasons", () => ({
 	currentOrPrevious: mockSeasonCurrentOrPrevious,
+}));
+
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	notifyStatusChanged: vi.fn(),
 }));
 
 /** Users are interchangeable here, so tests name them by 1-based position. */
@@ -131,6 +136,65 @@ describe("SendouQ", () => {
 
 			expect(SendouQ.likesReceivedCount(target.id)).toBe(2);
 			expect(SendouQ.likesReceivedCount(likerGroup.id)).toBe(0);
+		});
+	});
+
+	describe("refreshSendouQInstance", () => {
+		const notifyStatusChanged = () =>
+			vi.mocked(ChatSystemMessage.notifyStatusChanged);
+
+		beforeEach(async () => {
+			await users.create(8);
+			await refreshSendouQInstance();
+			notifyStatusChanged().mockClear();
+		});
+
+		test("notifies the members of a group that received a like", async () => {
+			const likerGroup = await SQGroupFactory.create({
+				memberUserIds: userIds([5]),
+			});
+			await SQGroupFactory.create(
+				{ memberUserIds: userIds([1, 2]) },
+				{ likedByGroupIds: [likerGroup.id] },
+			);
+			await refreshSendouQInstance();
+
+			expect(notifyStatusChanged()).toHaveBeenLastCalledWith(userIds([1, 2]));
+		});
+
+		test("notifies the members of a group whose liker went stale", async () => {
+			const likerGroup = await SQGroupFactory.create({
+				memberUserIds: userIds([5]),
+			});
+			await SQGroupFactory.create(
+				{ memberUserIds: userIds([1, 2]) },
+				{ likedByGroupIds: [likerGroup.id] },
+			);
+			await refreshSendouQInstance();
+			notifyStatusChanged().mockClear();
+
+			await backdate("Group", likerGroup.id, {
+				latestActionAt: subMinutes(new Date(), 45),
+			});
+			await refreshSendouQInstance();
+
+			expect(notifyStatusChanged()).toHaveBeenLastCalledWith(userIds([1, 2]));
+		});
+
+		test("notifies nobody when no group's received likes changed", async () => {
+			const likerGroup = await SQGroupFactory.create({
+				memberUserIds: userIds([5]),
+			});
+			await SQGroupFactory.create(
+				{ memberUserIds: userIds([1, 2]) },
+				{ likedByGroupIds: [likerGroup.id] },
+			);
+			await refreshSendouQInstance();
+			notifyStatusChanged().mockClear();
+
+			await refreshSendouQInstance();
+
+			expect(notifyStatusChanged()).toHaveBeenLastCalledWith([]);
 		});
 	});
 

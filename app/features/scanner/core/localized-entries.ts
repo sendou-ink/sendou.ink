@@ -60,6 +60,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 				text: "私人比赛",
 				lobby: "PRIVATE",
 			},
+			{
+				text: "一般比赛",
+				lobby: "REGULAR",
+			},
+			{
+				text: "活动比赛",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "祭典比赛（开放）",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "祭典比赛（挑战）",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "三色夺宝比赛",
+				lobby: "TRICOLOR",
+			},
 		],
 		modes: [
 			{
@@ -208,6 +228,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 			{
 				text: "Privater Kampf",
 				lobby: "PRIVATE",
+			},
+			{
+				text: "Standardkampf",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Event-Kampf",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Splatfestkampf (Offen)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Splatfestkampf (Profi)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Dreifarb-Match",
+				lobby: "TRICOLOR",
 			},
 		],
 		modes: [
@@ -367,6 +407,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 				text: "Private Battle",
 				lobby: "PRIVATE",
 			},
+			{
+				text: "Regular Battle",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Challenge",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Splatfest Battle (Open)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Splatfest Battle (Pro)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Tricolor Battle",
+				lobby: "TRICOLOR",
+			},
 		],
 		modes: [
 			{
@@ -515,6 +575,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 			{
 				text: "Combate privado",
 				lobby: "PRIVATE",
+			},
+			{
+				text: "Combate amistoso",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Combate evento",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Combate temático (informal)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Combate temático (formal)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Pugna tricolor",
+				lobby: "TRICOLOR",
 			},
 		],
 		modes: [
@@ -674,6 +754,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 				text: "Match privé",
 				lobby: "PRIVATE",
 			},
+			{
+				text: "Match classique",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Match Challenge",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Festimatch (ouvert)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Festimatch (défi)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Match tricolore",
+				lobby: "TRICOLOR",
+			},
 		],
 		modes: [
 			{
@@ -823,6 +923,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 				text: "Partita privata",
 				lobby: "PRIVATE",
 			},
+			{
+				text: "Partita amichevole",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Partita evento",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Partita tematica (Aperta)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Partita tematica (Sfida)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Scontro tricolore",
+				lobby: "TRICOLOR",
+			},
 		],
 		modes: [
 			{
@@ -971,6 +1091,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 			{
 				text: "Privégevecht",
 				lobby: "PRIVATE",
+			},
+			{
+				text: "Standaardgevecht",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Eventgevecht",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Splatfest-gevecht (open)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Splatfest-gevecht (pro)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Driekleurengevecht",
+				lobby: "TRICOLOR",
 			},
 		],
 		modes: [
@@ -1142,6 +1282,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 				text: "Частный бой",
 				lobby: "PRIVATE",
 			},
+			{
+				text: "Бой салаг",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Бой-событие",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Сплатфест-бой (открытый)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Сплатфест-бой (профи)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Трехцветная стычка",
+				lobby: "TRICOLOR",
+			},
 		],
 		modes: [
 			{
@@ -1296,6 +1456,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 				text: "プライベートマッチ",
 				lobby: "PRIVATE",
 			},
+			{
+				text: "レギュラーマッチ",
+				lobby: "REGULAR",
+			},
+			{
+				text: "イベントマッチ",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "フェスマッチ（オープン）",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "フェスマッチ（チャレンジ）",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "トリカラマッチ",
+				lobby: "TRICOLOR",
+			},
 		],
 		modes: [
 			{
@@ -1444,6 +1624,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 			{
 				text: "프라이빗 매치",
 				lobby: "PRIVATE",
+			},
+			{
+				text: "레귤러 매치",
+				lobby: "REGULAR",
+			},
+			{
+				text: "이벤트 매치",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "페스티벌 매치(오픈)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "페스티벌 매치(챌린지)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "트리컬러 매치",
+				lobby: "TRICOLOR",
 			},
 		],
 		modes: [
@@ -1594,6 +1794,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 				text: "私人比賽",
 				lobby: "PRIVATE",
 			},
+			{
+				text: "一般比賽",
+				lobby: "REGULAR",
+			},
+			{
+				text: "活動比賽",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "祭典比賽（開放）",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "祭典比賽（挑戰）",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "三色奪寶比賽",
+				lobby: "TRICOLOR",
+			},
 		],
 		modes: [
 			{
@@ -1742,6 +1962,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 			{
 				text: "Private Battle",
 				lobby: "PRIVATE",
+			},
+			{
+				text: "Regular Battle",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Challenge",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Splatfest Battle (Open)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Splatfest Battle (Pro)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Tricolor Battle",
+				lobby: "TRICOLOR",
 			},
 		],
 		modes: [
@@ -1892,6 +2132,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 				text: "Combate privado",
 				lobby: "PRIVATE",
 			},
+			{
+				text: "Combate amistoso",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Combate especial",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Combate temático (informal)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Combate temático (formal)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Combate tricolor",
+				lobby: "TRICOLOR",
+			},
 		],
 		modes: [
 			{
@@ -2040,6 +2300,26 @@ export const LANGUAGE_ENTRIES: readonly LanguageEntries[] = [
 			{
 				text: "Match privé",
 				lobby: "PRIVATE",
+			},
+			{
+				text: "Match classique",
+				lobby: "REGULAR",
+			},
+			{
+				text: "Match épreuve",
+				lobby: "CHALLENGE",
+			},
+			{
+				text: "Festimatch (ouvert)",
+				lobby: "SPLATFEST_OPEN",
+			},
+			{
+				text: "Festimatch (défi)",
+				lobby: "SPLATFEST_PRO",
+			},
+			{
+				text: "Match tricolore",
+				lobby: "TRICOLOR",
 			},
 		],
 		modes: [

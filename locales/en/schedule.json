@@ -32,7 +32,6 @@
 	"registration.summary.out": "{{amount}} out",
 	"registration.summary.unknown": "{{amount}} unknown",
 	"team.canPlay": "Team can play ({{players}}+)",
-	"team.legendFreeAtOnce": "free at the same time",
 	"team.currentWeek": "This week",
 	"team.editAvailability": "Edit my availability",
 	"team.hidden": "Only team members can see the team schedule",

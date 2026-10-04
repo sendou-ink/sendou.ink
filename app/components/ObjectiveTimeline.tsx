@@ -16,6 +16,7 @@ import {
 	formatElapsed,
 	smoothPenalties,
 	TIMELINE_PLOT_GUTTER_PX,
+	timelineTimeTicks,
 } from "./objective-timeline-utils";
 
 /** count-axis units of gutter kept below zero for the control lane */
@@ -28,11 +29,6 @@ const DEFAULT_HEIGHT = 240;
 const PLOT_TOP_PX = 6;
 const TIME_LABELS_HEIGHT_PX = 18;
 const Y_LABEL_GAP_PX = 6;
-const MAX_TIME_TICKS = 8;
-const PX_PER_TIME_TICK = 56;
-const TIME_TICK_STEPS_SECONDS = [
-	1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600,
-];
 /** Time labels closer than this to a plot edge are aligned inwards so they stay inside the card */
 const TIME_LABEL_EDGE_PX = 14;
 const TOOLTIP_CURSOR_GAP_PX = 12;
@@ -49,8 +45,13 @@ export interface ObjectiveTimelineSample {
 	score: [number | null, number | null];
 	/** penalty pill value per team; null = no pill (or unreadable) */
 	penalty: [number | null, number | null];
-	/** which team held the objective at the read */
-	control: [boolean, boolean];
+	/** which team held the objective at the read; null = neither */
+	control: 0 | 1 | null;
+	/**
+	 * TC/RM: the objective along its track, -100..100, positive toward the end
+	 * alpha pushes to; absent on SZ, null = unread
+	 */
+	position?: number | null;
 }
 
 export interface ObjectiveTimelineEvent {
@@ -126,13 +127,10 @@ export function ObjectiveTimeline({
 	const countTicks = R.range(0, Math.floor(maxCount / COUNT_TICK_STEP) + 1).map(
 		(multiple) => multiple * COUNT_TICK_STEP,
 	);
-	const timeTicks = timeTickValues({
+	const timeTicks = timelineTimeTicks({
 		min: xMin,
 		max: xMax,
-		maxCount: R.clamp(Math.floor((plotRight - plotLeft) / PX_PER_TIME_TICK), {
-			min: 2,
-			max: MAX_TIME_TICKS,
-		}),
+		plotWidth: plotRight - plotLeft,
 	});
 
 	const handlePointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
@@ -319,7 +317,7 @@ export function ObjectiveTimeline({
 													value: penalty[side],
 												})
 											: null,
-										control[side]
+										control === side
 											? t("common:objectiveTimeline.inControl")
 											: null,
 									]
@@ -446,7 +444,7 @@ function controlRuns(
 	let current: { start: number; end: number } | null = null;
 	for (const [i, event] of sorted.entries()) {
 		const inLane =
-			event.data.control[side] || sorted[i - 1]?.data.control[side];
+			event.data.control === side || sorted[i - 1]?.data.control === side;
 		if (inLane) {
 			current ??= { start: event.t, end: event.t };
 			current.end = event.t;
@@ -458,26 +456,6 @@ function controlRuns(
 	if (current) runs.push(current);
 
 	return runs;
-}
-
-function timeTickValues({
-	min,
-	max,
-	maxCount,
-}: {
-	min: number;
-	max: number;
-	maxCount: number;
-}) {
-	const range = Math.max(max - min, 1);
-	const step =
-		TIME_TICK_STEPS_SECONDS.find(
-			(candidate) => range / candidate <= maxCount - 1,
-		) ?? Math.ceil(range / (maxCount - 1) / 3600) * 3600;
-
-	return R.range(Math.ceil(min / step), Math.floor(max / step) + 1).map(
-		(multiple) => multiple * step,
-	);
 }
 
 function timeLabelAnchor({

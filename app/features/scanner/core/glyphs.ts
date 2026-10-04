@@ -13,6 +13,7 @@
  */
 import { getCV, type Mat } from "./cv";
 import type { FrameData } from "./image";
+import { all, type MatchSteps } from "./match-steps";
 
 interface AtlasGlyphMeta {
 	char: string;
@@ -38,12 +39,15 @@ interface Glyph {
 	char: string;
 	/** grayscale white-on-black, tight box */
 	mat: Mat;
+	/** `mat`'s dimensions, kept off the embind accessors in the matching loops */
+	rows: number;
+	cols: number;
 	/** count of pixels above the binarization threshold */
 	ink: number;
 	/** exact fixture crop vs font-rendered approximation */
 	source: "fixture" | "font";
 	/** lazily-built PRESCREEN_SCALE thumbnail for the eligibility prescreen */
-	small?: Mat;
+	small?: { mat: Mat; rows: number; cols: number };
 }
 
 export interface GlyphSet {
@@ -55,49 +59,103 @@ export interface GlyphSet {
 
 const TEMPLATE_BIN_THRESHOLD = 128;
 
-/** Slice glyph templates out of an atlas image using its metadata. */
-export function loadGlyphSet(atlas: FrameData, meta: AtlasMeta): GlyphSet {
-	const cv = getCV();
-	const full = cv.matFromImageData(atlas as unknown as ImageData);
-	const gray = new cv.Mat();
-	cv.cvtColor(full, gray, cv.COLOR_RGBA2GRAY);
-	full.delete();
-
-	const glyphs: Glyph[] = meta.glyphs.map((g) => {
-		// NB: .data/.clone() are broken on ROI views in this opencv.js build;
-		// always copyTo into a fresh mat before pixel access.
-		const view = gray.roi(new cv.Rect(g.x, g.y, g.w, g.h));
-		const cell = new cv.Mat();
-		view.copyTo(cell);
-		view.delete();
-		const mat = tightCropGray(cell, TEMPLATE_BIN_THRESHOLD);
-		cell.delete();
-		let ink = 0;
-		for (const v of mat.data) if (v > TEMPLATE_BIN_THRESHOLD) ink++;
-		// untagged glyphs predate hybrid atlases and were all fixture crops
-		return { char: g.char, mat, ink, source: g.source ?? "fixture" };
-	});
-	gray.delete();
-	const widths = glyphs.map((g) => g.mat.cols).sort((a, b) => a - b);
-	const medianWidth = widths[Math.floor(widths.length / 2)] ?? 8;
-	return { glyphs, height: meta.height, medianWidth };
+/**
+ * A GlyphSet whose glyphs (and median width) are built on first use: sets are
+ * made per detector at startup, most are read only when their screen shows
+ * up, and slicing or rescaling thousands of glyphs dominated worker startup.
+ */
+function lazyGlyphSet(
+	height: number,
+	build: () => { glyphs: Glyph[]; medianWidth: number },
+): GlyphSet {
+	let built: { glyphs: Glyph[]; medianWidth: number } | null = null;
+	return {
+		height,
+		get glyphs() {
+			built ??= build();
+			return built.glyphs;
+		},
+		get medianWidth() {
+			built ??= build();
+			return built.medianWidth;
+		},
+	};
 }
 
-/** Resize every glyph by `factor` (e.g. to reuse paint digits for team scores). */
-export function scaleGlyphSet(set: GlyphSet, factor: number): GlyphSet {
-	const cv = getCV();
-	const glyphs = set.glyphs.map((g) => {
-		const mat = new cv.Mat();
-		cv.resize(g.mat, mat, new cv.Size(0, 0), factor, factor, cv.INTER_CUBIC);
-		let ink = 0;
-		for (const v of mat.data) if (v > TEMPLATE_BIN_THRESHOLD) ink++;
-		return { char: g.char, mat, ink, source: g.source };
+/** Slice glyph templates out of an atlas image using its metadata (on first use). */
+export function loadGlyphSet(atlas: FrameData, meta: AtlasMeta): GlyphSet {
+	return lazyGlyphSet(meta.height, () => {
+		const cv = getCV();
+		const full = cv.matFromImageData(atlas as unknown as ImageData);
+		const gray = new cv.Mat();
+		cv.cvtColor(full, gray, cv.COLOR_RGBA2GRAY);
+		full.delete();
+
+		const glyphs: Glyph[] = meta.glyphs.map((g) => {
+			// NB: .data/.clone() are broken on ROI views in this opencv.js build;
+			// always copyTo into a fresh mat before pixel access.
+			const view = gray.roi(new cv.Rect(g.x, g.y, g.w, g.h));
+			const cell = new cv.Mat();
+			view.copyTo(cell);
+			view.delete();
+			const mat = tightCropGray(cell, TEMPLATE_BIN_THRESHOLD);
+			cell.delete();
+			// untagged glyphs predate hybrid atlases and were all fixture crops
+			return {
+				char: g.char,
+				mat,
+				rows: mat.rows,
+				cols: mat.cols,
+				ink: inkOf(mat),
+				source: g.source ?? "fixture",
+			};
+		});
+		gray.delete();
+		const widths = glyphs.map((g) => g.cols).sort((a, b) => a - b);
+		return { glyphs, medianWidth: widths[Math.floor(widths.length / 2)] ?? 8 };
 	});
-	return {
-		glyphs,
-		height: Math.round(set.height * factor),
-		medianWidth: Math.round(set.medianWidth * factor),
-	};
+}
+
+const scaledSets = new WeakMap<GlyphSet, Map<number, GlyphSet>>();
+
+/**
+ * Resize every glyph by `factor` (e.g. to reuse paint digits for team scores),
+ * on first use. The same set at the same factor is shared: its glyphs are
+ * read-only templates.
+ */
+export function scaleGlyphSet(set: GlyphSet, factor: number): GlyphSet {
+	let byFactor = scaledSets.get(set);
+	if (!byFactor) {
+		byFactor = new Map();
+		scaledSets.set(set, byFactor);
+	}
+	const known = byFactor.get(factor);
+	if (known) return known;
+	const scaled = lazyGlyphSet(Math.round(set.height * factor), () => {
+		const cv = getCV();
+		const glyphs = set.glyphs.map((g) => {
+			const mat = new cv.Mat();
+			cv.resize(g.mat, mat, new cv.Size(0, 0), factor, factor, cv.INTER_CUBIC);
+			return {
+				char: g.char,
+				mat,
+				rows: mat.rows,
+				cols: mat.cols,
+				ink: inkOf(mat),
+				source: g.source,
+			};
+		});
+		return { glyphs, medianWidth: Math.round(set.medianWidth * factor) };
+	});
+	byFactor.set(factor, scaled);
+	return scaled;
+}
+
+/** Count of pixels above the binarization threshold. */
+function inkOf(mat: Mat): number {
+	let ink = 0;
+	for (const v of mat.data as Uint8Array) if (v > TEMPLATE_BIN_THRESHOLD) ink++;
+	return ink;
 }
 
 /** Crop a grayscale mat to the tight bounds of its above-threshold pixels. */
@@ -165,6 +223,8 @@ export interface RecognizeOptions {
 	spaceGap?: number;
 	/** discard chars scoring below this */
 	minCharScore?: number;
+	/** runner-up candidates kept per segment */
+	maxCandidates?: number;
 }
 
 interface Segment {
@@ -294,6 +354,22 @@ function measureSegment(binary: Mat, seg: Segment): SegmentInfo {
  * crop of a different char ('h' vs 'b') can displace a correct font match.
  */
 const FIXTURE_TIEBREAK = 0.02;
+/**
+ * ...and the fixture must explain about as much of the segment's ink as the
+ * font glyph: an 'L' crop correlates 0.91 with the left stem and floor of a 'U'
+ * while covering 0.63 of its ink against the font 'U's 0.93.
+ */
+const FIXTURE_TIEBREAK_MAX_INK_GAP = 0.1;
+
+const DEFAULT_MAX_CANDIDATES = 5;
+/**
+ * A dot's template carries a pad row above and below its few ink rows, so on a
+ * soft capture (quick log "R.O.B.O.T": 4x3 dots) it outgrows the height ratio
+ * and only '_' was left to read them. Blobs no wider than they are tall (plus
+ * that pad) accept templates up to the pad taller; bars stay height-checked,
+ * which is what tells '_' from '-'.
+ */
+const DOT_TEMPLATE_PAD_ROWS = 2;
 
 /**
  * A CJK-charset segment leaves thousands of templates eligible with barely
@@ -315,7 +391,14 @@ const PRESCREEN_SCALE = 0.5;
 const PRESCREEN_MARGIN = 0.3;
 const PRESCREEN_MAX_KEEP = 1024;
 
-function classifySegment(
+type RankedCandidate = {
+	char: string;
+	score: number;
+	ncc: number;
+	source: "fixture" | "font";
+};
+
+function* classifySegment(
 	masked: Mat,
 	seg: SegmentInfo,
 	set: GlyphSet,
@@ -326,7 +409,10 @@ function classifySegment(
 	 * sub-floor candidates are omitted, so pass it only for probes.
 	 */
 	scoreFloor = Number.NEGATIVE_INFINITY,
-): { char: string; score: number; ncc: number; source: "fixture" | "font" }[] {
+	maxCandidates = DEFAULT_MAX_CANDIDATES,
+	/** identity of `masked`'s pixels, so a batching driver can reuse scores */
+	maskedKey?: string,
+): MatchSteps<RankedCandidate[]> {
 	const cv = getCV();
 	const segWidth = seg.x1 - seg.x0;
 	const pad = 5;
@@ -345,6 +431,10 @@ function classifySegment(
 	const y1 = Math.min(maskedRows, seg.y1 + vSlack);
 	const regionRows = y1 - y0;
 	const region = masked.roi(new cv.Rect(x0, y0, regionCols, regionRows));
+	const regionKey =
+		maskedKey === undefined
+			? undefined
+			: `${maskedKey}|${x0},${y0},${regionCols},${regionRows}`;
 
 	// Both penalty factors depend only on glyph and segment, and NCC <= 1, so
 	// their product bounds a glyph's score before matching. Matching in
@@ -352,16 +442,18 @@ function classifySegment(
 	// come within FIXTURE_TIEBREAK of the best.
 	const eligible: EligibleGlyph[] = [];
 	for (const glyph of set.glyphs) {
-		const t = glyph.mat;
-		const tRows = t.rows;
-		const tCols = t.cols;
+		const tRows = glyph.rows;
+		const tCols = glyph.cols;
 		if (tRows > regionRows || tCols > regionCols) continue;
 		const wRatio = tCols / Math.max(segWidth, 1);
 		if (wRatio < 0.4 || wRatio > 2.5) continue;
 		const hRatio = tRows / Math.max(seg.height, 1);
 		// a template sliding freely in a taller region can score high on a fragment
 		// of the segment (an 'l' bar inside a 'c'), so reject height mismatches
-		if (hRatio < 0.5 || hRatio > 1.3) continue;
+		const padded =
+			segWidth <= seg.height + DOT_TEMPLATE_PAD_ROWS &&
+			tRows - seg.height <= DOT_TEMPLATE_PAD_ROWS;
+		if (hRatio < 0.5 || (hRatio > 1.3 && !padded)) continue;
 		// ink-coverage penalty: templates should explain the segment's ink
 		const r =
 			Math.min(glyph.ink, seg.ink) / Math.max(Math.max(glyph.ink, seg.ink), 1);
@@ -378,14 +470,14 @@ function classifySegment(
 			bound: (0.7 + 0.3 * r) * (0.85 + 0.15 * hr),
 		});
 	}
-	eligible.sort((a, b) => b.bound - a.bound);
+	sortByBound(eligible);
 
-	const result = new cv.Mat();
 	const candidates: {
 		char: string;
 		score: number;
 		ncc: number;
 		source: "fixture" | "font";
+		inkCoverage: number;
 	}[] = [];
 	// Only placements covering most of the segment: the region is padded, so a
 	// free-sliding template can otherwise match the *neighboring* glyph inside
@@ -399,7 +491,7 @@ function classifySegment(
 	// every template whose loose bound exceeds it
 	const contenders =
 		eligible.length >= PRESCREEN_MIN_ELIGIBLE
-			? prescreen(
+			? yield* prescreen(
 					region,
 					eligible,
 					{
@@ -409,32 +501,46 @@ function classifySegment(
 						minOverlap,
 					},
 					probeMode ? scoreFloor : null,
+					regionKey,
 				)
 			: eligible;
+	// overlap(sx) is concave in sx, so the valid placements form one
+	// contiguous rx interval per template; empty ones are never matched
+	const requestIndex: number[] = [];
+	const templates: Mat[] = [];
+	const requestWindows: (readonly [number, number])[] = [];
+	for (const contender of contenders) {
+		const window = overlapWindow(
+			regionCols - contender.tCols + 1,
+			x0,
+			contender.tCols,
+			seg.x0,
+			seg.x1,
+			minOverlap,
+		);
+		requestIndex.push(window ? templates.length : -1);
+		if (!window) continue;
+		templates.push(contender.glyph.mat);
+		requestWindows.push(window);
+	}
+	const [scoreOf] =
+		templates.length > 0
+			? yield [
+					{
+						image: region,
+						templates,
+						windows: requestWindows,
+						key: regionKey,
+					},
+				]
+			: [() => Number.NEGATIVE_INFINITY];
 	let bestScore = scoreFloor;
-	for (const { glyph, tRows, tCols, r, hr, bound } of contenders) {
+	for (let i = 0; i < contenders.length; i++) {
+		const { glyph, r, hr, bound } = contenders[i]!;
 		if (bound < bestScore - FIXTURE_TIEBREAK) break;
 		if (probeMode && (bound <= scoreFloor || bestScore > scoreFloor)) break;
-		cv.matchTemplate(region, glyph.mat, result, cv.TM_CCOEFF_NORMED);
-		const rCols = regionCols - tCols + 1;
-		const rRows = regionRows - tRows + 1;
-		// overlap(sx) is concave in sx, so the valid placements form one
-		// contiguous rx interval — find its edges, then scan row-major
-		const overlapAt = (rx: number) =>
-			Math.min(x0 + rx + tCols, seg.x1) - Math.max(x0 + rx, seg.x0);
-		let lo = 0;
-		while (lo < rCols && overlapAt(lo) < minOverlap) lo++;
-		let hi = rCols - 1;
-		while (hi >= lo && overlapAt(hi) < minOverlap) hi--;
-		if (hi < lo) continue;
-		let maxVal = Number.NEGATIVE_INFINITY;
-		const scores = result.data32F;
-		for (let ry = 0, rowBase = 0; ry < rRows; ry++, rowBase += rCols) {
-			for (let rx = lo; rx <= hi; rx++) {
-				const v = scores[rowBase + rx]!;
-				if (v > maxVal) maxVal = v;
-			}
-		}
+		if (requestIndex[i] === -1) continue;
+		const maxVal = scoreOf!(requestIndex[i]!);
 		const score = maxVal * (0.7 + 0.3 * r) * (0.85 + 0.15 * hr);
 		if (Number.isFinite(score)) {
 			if (score > bestScore) bestScore = score;
@@ -443,12 +549,12 @@ function classifySegment(
 				score,
 				ncc: maxVal,
 				source: glyph.source,
+				inkCoverage: r,
 			});
 		}
 	}
-	result.delete();
 	region.delete();
-	candidates.sort((a, b) => b.score - a.score);
+	sortByScore(candidates);
 	const top = candidates[0];
 	if (top && top.source === "font") {
 		const fixture = candidates.find(
@@ -458,14 +564,15 @@ function classifySegment(
 				// ...only when the fixture's raw correlation is also competitive: a fixture
 				// crop of a *different* char landing near the top via the ink penalty must
 				// not displace a well-matching font glyph
-				top.ncc - c.ncc < FIXTURE_TIEBREAK,
+				top.ncc - c.ncc < FIXTURE_TIEBREAK &&
+				top.inkCoverage - c.inkCoverage < FIXTURE_TIEBREAK_MAX_INK_GAP,
 		);
 		if (fixture && fixture !== top) {
 			candidates.splice(candidates.indexOf(fixture), 1);
 			candidates.unshift(fixture);
 		}
 	}
-	return candidates.slice(0, 5);
+	return candidates.slice(0, maxCandidates);
 }
 
 interface EligibleGlyph {
@@ -483,13 +590,14 @@ interface EligibleGlyph {
  * without the same min-overlap restriction a template scoring on the neighbor
  * inside the pad inflates the front-runner and prunes the true glyph.
  */
-function prescreen(
+function* prescreen(
 	region: Mat,
 	eligible: EligibleGlyph[],
 	geometry: { x0: number; segX0: number; segX1: number; minOverlap: number },
 	/** probe mode: prune against this floor instead of the front-runner */
-	probeFloor: number | null = null,
-): EligibleGlyph[] {
+	probeFloor: number | null,
+	regionKey: string | undefined,
+): MatchSteps<EligibleGlyph[]> {
 	const cv = getCV();
 	const smallRegion = new cv.Mat();
 	cv.resize(
@@ -500,53 +608,63 @@ function prescreen(
 		0,
 		cv.INTER_AREA,
 	);
+	const smallRows = smallRegion.rows;
+	const smallCols = smallRegion.cols;
 	const x0 = geometry.x0 * PRESCREEN_SCALE;
 	const segX0 = geometry.segX0 * PRESCREEN_SCALE;
 	const segX1 = geometry.segX1 * PRESCREEN_SCALE;
 	// the slack pixel keeps quantized low-res placements from cutting a
 	// boundary placement the full-res window allows
 	const minOverlap = geometry.minOverlap * PRESCREEN_SCALE - 1;
-	const result = new cv.Mat();
 	// entries the low-res pass cannot estimate (degenerate template or no valid
 	// placement after scaling) are force-kept but stay out of the front-runner
 	// max, or their untightened bound (≈1) prunes every estimated glyph
 	const kept: EligibleGlyph[] = [];
-	const scored: { entry: EligibleGlyph; est: number }[] = [];
+	const estimable: {
+		entry: EligibleGlyph;
+		small: { mat: Mat; rows: number; cols: number };
+		window: readonly [number, number];
+	}[] = [];
 	for (const entry of eligible) {
 		const small = smallGlyph(entry.glyph);
 		if (
 			small.rows < 2 ||
 			small.cols < 2 ||
-			small.rows > smallRegion.rows ||
-			small.cols > smallRegion.cols
+			small.rows > smallRows ||
+			small.cols > smallCols
 		) {
 			kept.push(entry);
 			continue;
 		}
-		cv.matchTemplate(smallRegion, small, result, cv.TM_CCOEFF_NORMED);
-		const rCols = smallRegion.cols - small.cols + 1;
-		const rRows = smallRegion.rows - small.rows + 1;
-		const overlapAt = (rx: number) =>
-			Math.min(x0 + rx + small.cols, segX1) - Math.max(x0 + rx, segX0);
-		let lo = 0;
-		while (lo < rCols && overlapAt(lo) < minOverlap) lo++;
-		let hi = rCols - 1;
-		while (hi >= lo && overlapAt(hi) < minOverlap) hi--;
-		if (hi < lo) {
+		const window = overlapWindow(
+			smallCols - small.cols + 1,
+			x0,
+			small.cols,
+			segX0,
+			segX1,
+			minOverlap,
+		);
+		if (!window) {
 			kept.push(entry);
 			continue;
 		}
-		let maxVal = Number.NEGATIVE_INFINITY;
-		const scores = result.data32F;
-		for (let ry = 0, rowBase = 0; ry < rRows; ry++, rowBase += rCols) {
-			for (let rx = lo; rx <= hi; rx++) {
-				const v = scores[rowBase + rx]!;
-				if (v > maxVal) maxVal = v;
-			}
-		}
-		scored.push({ entry, est: maxVal * entry.bound });
+		estimable.push({ entry, small, window });
 	}
-	result.delete();
+	const [scoreOf] =
+		estimable.length > 0
+			? yield [
+					{
+						image: smallRegion,
+						templates: estimable.map((e) => e.small.mat),
+						windows: estimable.map((e) => e.window),
+						key: regionKey === undefined ? undefined : `${regionKey}|small`,
+					},
+				]
+			: [() => Number.NEGATIVE_INFINITY];
+	const scored = estimable.map(({ entry }, i) => ({
+		entry,
+		est: scoreOf!(i) * entry.bound,
+	}));
 	smallRegion.delete();
 	scored.sort((a, b) => b.est - a.est);
 	if (scored.length > 0) {
@@ -566,19 +684,19 @@ function prescreen(
 	return kept;
 }
 
-function smallGlyph(glyph: Glyph): Mat {
+function smallGlyph(glyph: Glyph): { mat: Mat; rows: number; cols: number } {
 	if (!glyph.small) {
 		const cv = getCV();
 		const small = new cv.Mat();
 		cv.resize(
 			glyph.mat,
 			small,
-			scaledSize(glyph.mat.cols, glyph.mat.rows),
+			scaledSize(glyph.cols, glyph.rows),
 			0,
 			0,
 			cv.INTER_AREA,
 		);
-		glyph.small = small;
+		glyph.small = { mat: small, rows: small.rows, cols: small.cols };
 	}
 	return glyph.small;
 }
@@ -591,9 +709,70 @@ function scaledSize(cols: number, rows: number) {
 	);
 }
 
+/**
+ * The contiguous [lo, hi] run of the `cols` result columns whose placement (a
+ * `width`-wide template at `offset + rx`) overlaps [segX0, segX1) by at least
+ * `minOverlap`; null when none does. Overlap is concave in rx, so the valid
+ * placements are one interval.
+ */
+function overlapWindow(
+	cols: number,
+	offset: number,
+	width: number,
+	segX0: number,
+	segX1: number,
+	minOverlap: number,
+): readonly [number, number] | null {
+	const valid = (rx: number) =>
+		Math.min(offset + rx + width, segX1) - Math.max(offset + rx, segX0) >=
+		minOverlap;
+	let lo = 0;
+	while (lo < cols && !valid(lo)) lo++;
+	let hi = cols - 1;
+	while (hi >= lo && !valid(hi)) hi--;
+	return hi < lo ? null : [lo, hi];
+}
+
+/**
+ * Stable in-place sorts, descending by one field: the order `Array.sort`
+ * with `(a, b) => b.field - a.field` gives, by insertion for the short lists
+ * here (the field read directly, so the loop stays monomorphic).
+ */
+function sortByBound(items: EligibleGlyph[]): void {
+	if (items.length > 64) {
+		items.sort((a, b) => b.bound - a.bound);
+		return;
+	}
+	for (let i = 1; i < items.length; i++) {
+		const item = items[i]!;
+		let j = i - 1;
+		while (j >= 0 && items[j]!.bound < item.bound) {
+			items[j + 1] = items[j]!;
+			j--;
+		}
+		items[j + 1] = item;
+	}
+}
+
+function sortByScore<T extends { score: number }>(items: T[]): void {
+	if (items.length > 64) {
+		items.sort((a, b) => b.score - a.score);
+		return;
+	}
+	for (let i = 1; i < items.length; i++) {
+		const item = items[i]!;
+		let j = i - 1;
+		while (j >= 0 && items[j]!.score < item.score) {
+			items[j + 1] = items[j]!;
+			j--;
+		}
+		items[j + 1] = item;
+	}
+}
+
 interface ClassifiedSegment {
 	seg: SegmentInfo;
-	ranked: ReturnType<typeof classifySegment>;
+	ranked: RankedCandidate[];
 }
 
 /**
@@ -607,39 +786,87 @@ interface ClassifiedSegment {
  */
 const MERGE_MAX_GAP_RATIO = 0.45;
 const MERGE_MARGIN = 0.02;
+/**
+ * A fragment no template explains (ル's left stroke reads ィ at 0.61) is itself
+ * evidence of a split glyph: the merge then only has to be a strong read that
+ * keeps up with the better fragment, which a fixture crop of a lookalike can
+ * outscore on its own stroke ('L' at 0.87 on ル's right stroke, ル at 0.86).
+ */
+const MERGE_WEAK_FRAGMENT = 0.65;
+const MERGE_STRONG_READ = 0.8;
+const MERGE_WEAK_SLACK = 0.03;
+/**
+ * Marks drawn at the cap line: a fragment read as one while its ink reaches the
+ * baseline is a stroke of a split glyph, however well the stroke matches (ル's
+ * left stroke reads ′ at 0.78 beside its right stroke as ι at 0.87, ル at 0.83),
+ * so its pair only needs the merge to be a strong read.
+ */
+const RAISED_MARKS = new Set([..."′″‘’‛“”'\"`´ªº°¹²³^˜¨¯"]);
+const RAISED_MARK_BASELINE_SLACK_PX = 2;
 
-function mergeSplitGlyphs(
+function* mergeSplitGlyphs(
 	items: ClassifiedSegment[],
-	binary: Mat,
-	masked: Mat,
-	set: GlyphSet,
-): void {
+	ctx: RecutContext,
+): MatchSteps<void> {
+	const { set, maxCandidates } = ctx;
 	const maxGap = Math.max(3, Math.round(set.medianWidth * MERGE_MAX_GAP_RATIO));
 	const maxCharWidth = Math.round(set.medianWidth * 1.5);
-	for (let i = 0; i + 1 < items.length; ) {
+	const bottoms = items.map((item) => item.seg.y1).sort((a, b) => a - b);
+	const baseline = bottoms[Math.floor(bottoms.length / 2)] ?? 0;
+	const strayMark = ({ seg, ranked }: ClassifiedSegment) =>
+		RAISED_MARKS.has(ranked[0]?.char ?? "") &&
+		baseline - seg.y1 <= RAISED_MARK_BASELINE_SLACK_PX;
+	const mergeCandidate = (i: number) => {
 		const a = items[i]!;
 		const b = items[i + 1]!;
 		const gap = b.seg.x0 - a.seg.x1;
 		const width = b.seg.x1 - a.seg.x0;
-		if (gap > maxGap || width > maxCharWidth) {
+		if (gap > maxGap || width > maxCharWidth) return null;
+		const seg = ctx.measure({ x0: a.seg.x0, x1: b.seg.x1 });
+		const aScore = a.ranked[0]?.score ?? 0;
+		const bScore = b.ranked[0]?.score ?? 0;
+		const fragmentBest = Math.max(aScore, bScore);
+		let floor = fragmentBest + MERGE_MARGIN;
+		if (strayMark(a) || strayMark(b)) {
+			floor = Math.min(floor, MERGE_STRONG_READ);
+		} else if (Math.min(aScore, bScore) < MERGE_WEAK_FRAGMENT) {
+			floor = Math.min(
+				floor,
+				Math.max(MERGE_STRONG_READ, fragmentBest - MERGE_WEAK_SLACK),
+			);
+		}
+		return { seg, floor };
+	};
+	if (ctx.speculative) {
+		// batching driver: every pair's probe and full read in one lockstep, so
+		// the sequential pass below mostly hits the driver's score cache
+		const pairs = items
+			.slice(0, -1)
+			.map((_, i) => mergeCandidate(i))
+			.filter((pair) => pair !== null);
+		yield* all(
+			pairs.flatMap(({ seg, floor }) => [
+				classify(ctx, seg, floor),
+				classify(ctx, seg, undefined, maxCandidates),
+			]),
+		);
+	}
+	for (let i = 0; i + 1 < items.length; ) {
+		const candidate = mergeCandidate(i);
+		if (!candidate) {
 			i++;
 			continue;
 		}
-		const seg = measureSegment(binary, { x0: a.seg.x0, x1: b.seg.x1 });
-		const fragmentBest = Math.max(
-			a.ranked[0]?.score ?? 0,
-			b.ranked[0]?.score ?? 0,
-		);
-		const floor = fragmentBest + MERGE_MARGIN;
+		const { seg, floor } = candidate;
 		// Probe with the floor first: most neighbor pairs are genuine letter pairs
 		// whose merge can't win, so the bound-sorted matching stops almost at once.
 		// Probe scores are exact, so "nothing beats the floor" is definitive.
-		const probe = classifySegment(masked, seg, set, floor);
+		const probe = yield* classify(ctx, seg, floor);
 		let merged = false;
 		if (probe.some((c) => c.score > floor)) {
 			// full run (rare): the winning merge's ranked list must also carry
 			// the sub-floor runner-up candidates downstream consumers see
-			const ranked = classifySegment(masked, seg, set);
+			const ranked = yield* classify(ctx, seg, undefined, maxCandidates);
 			if ((ranked[0]?.score ?? 0) > floor) {
 				// stay at i: the merged segment may absorb yet another stroke
 				items.splice(i, 2, { seg, ranked });
@@ -677,65 +904,282 @@ function dipCuts(profile: number[], x0: number, x1: number): number[] {
 	return [...cuts];
 }
 
-function recutMiscutPairs(
-	items: ClassifiedSegment[],
+/**
+ * The `count` lowest dips (ties broken by depth relative to the peaks either
+ * side), with each dip's far edge like dipCuts. Raw depth first: the junction
+ * of two fused glyphs is the sparsest column even when one of them is a low
+ * bar ("g_") whose own columns hold barely more ink.
+ */
+function deepestDipCuts(
 	profile: number[],
-	binary: Mat,
-	masked: Mat,
-	set: GlyphSet,
-): void {
-	const maxGap = Math.max(3, Math.round(set.medianWidth * MERGE_MAX_GAP_RATIO));
-	for (let i = 0; i + 1 < items.length; i++) {
+	x0: number,
+	x1: number,
+	count: number,
+): number[] {
+	const dips: { x: number; value: number; ratio: number }[] = [];
+	for (let x = x0 + 3; x <= x1 - 3; x++) {
+		const v = profile[x]!;
+		if (v > profile[x - 1]! || v > profile[x + 1]!) continue;
+		const peak = Math.min(
+			Math.max(...profile.slice(x0, x)),
+			Math.max(...profile.slice(x + 1, x1)),
+		);
+		dips.push({ x, value: v, ratio: v / Math.max(1, peak) });
+	}
+	dips.sort((a, b) => a.value - b.value || a.ratio - b.ratio);
+	const cuts = new Set<number>();
+	for (const { x } of dips.slice(0, count)) {
+		cuts.add(x);
+		if (x + 1 <= x1 - 3) cuts.add(x + 1);
+	}
+	return [...cuts];
+}
+
+interface RecutContext {
+	profile: number[];
+	/** measureSegment on the binarized crop, memoized: the prefetch and the sequential passes measure the same spans */
+	measure: (seg: Segment) => SegmentInfo;
+	masked: Mat;
+	set: GlyphSet;
+	maxCandidates: number;
+	maskedKey: string | undefined;
+	/** prefetch whole candidate sets in lockstep (batching drivers only: on the sync path it is wasted work) */
+	speculative: boolean;
+	/** `classify` results by span (x0 · 65536 + x1), then floor and candidate cap */
+	classified: Map<
+		number,
+		{ floor: number; maxCandidates: number; ranked: RankedCandidate[] }[]
+	>;
+}
+
+/**
+ * classifySegment within one recognition, memoized: a result is a pure
+ * function of the masked crop, the span, the floor and the candidate cap
+ * (scores are exact on every driver), and the speculative prefetch and the
+ * sequential pass after it ask for many spans more than once.
+ */
+function* classify(
+	ctx: RecutContext,
+	seg: SegmentInfo,
+	scoreFloor = Number.NEGATIVE_INFINITY,
+	maxCandidates = DEFAULT_MAX_CANDIDATES,
+): MatchSteps<RankedCandidate[]> {
+	const spanKey = seg.x0 * 65536 + seg.x1;
+	let results = ctx.classified.get(spanKey);
+	if (!results) {
+		results = [];
+		ctx.classified.set(spanKey, results);
+	}
+	for (const known of results) {
+		if (known.floor === scoreFloor && known.maxCandidates === maxCandidates)
+			return known.ranked;
+	}
+	const ranked = yield* classifySegment(
+		ctx.masked,
+		seg,
+		ctx.set,
+		scoreFloor,
+		maxCandidates,
+		ctx.maskedKey,
+	);
+	results.push({ floor: scoreFloor, maxCandidates, ranked });
+	return ranked;
+}
+
+/**
+ * Best two-way cut of `span` among `cuts` whose weaker half classifies above
+ * `minScore` (raised to each adopted cut's weaker score); cuts inside `skip` are
+ * the original segmentation and are not retried.
+ */
+function recutHalves(
+	ctx: RecutContext,
+	span: Segment,
+	cuts: number[],
+	skip: Segment | null,
+) {
+	return cuts
+		.filter((cut) => !(skip && cut >= skip.x0 && cut <= skip.x1))
+		.map((cut) => ({
+			left: ctx.measure({ x0: span.x0, x1: cut }),
+			right: ctx.measure({ x0: cut, x1: span.x1 }),
+		}));
+}
+
+/** Batching drivers only: every probe and full read `bestRecut` may ask for at `minScore`, in one lockstep. */
+function prefetchRecuts(
+	ctx: RecutContext,
+	recuts: { halves: ReturnType<typeof recutHalves>; minScore: number }[],
+): MatchSteps<unknown> {
+	return all(
+		recuts.flatMap(({ halves, minScore }) =>
+			halves.flatMap(({ left, right }) =>
+				[left, right].flatMap((seg) => [
+					classify(ctx, seg, minScore),
+					classify(ctx, seg, undefined, ctx.maxCandidates),
+				]),
+			),
+		),
+	);
+}
+
+function* bestRecut(
+	ctx: RecutContext,
+	span: Segment,
+	cuts: number[],
+	skip: Segment | null,
+	minScore: number,
+): MatchSteps<[ClassifiedSegment, ClassifiedSegment] | null> {
+	const { maxCandidates } = ctx;
+	let floor = minScore;
+	let best: [ClassifiedSegment, ClassifiedSegment] | null = null;
+	for (const { left, right } of recutHalves(ctx, span, cuts, skip)) {
+		// probe with the floor first (see mergeSplitGlyphs): most candidate
+		// cuts can't beat it and the probes early-stop almost immediately
+		const canWin = function* (seg: SegmentInfo): MatchSteps<boolean> {
+			const probe = yield* classify(ctx, seg, floor);
+			return probe.some((c) => c.score > floor);
+		};
+		if (!(yield* canWin(left)) || !(yield* canWin(right))) continue;
+		const leftRanked = yield* classify(ctx, left, undefined, maxCandidates);
+		const rightRanked = yield* classify(ctx, right, undefined, maxCandidates);
+		const weaker = Math.min(
+			leftRanked[0]?.score ?? 0,
+			rightRanked[0]?.score ?? 0,
+		);
+		if (weaker <= floor) continue;
+		floor = weaker;
+		best = [
+			{ seg: left, ranked: leftRanked },
+			{ seg: right, ranked: rightRanked },
+		];
+	}
+	return best;
+}
+
+function* recutMiscutPairs(
+	items: ClassifiedSegment[],
+	ctx: RecutContext,
+): MatchSteps<void> {
+	const maxGap = Math.max(
+		3,
+		Math.round(ctx.set.medianWidth * MERGE_MAX_GAP_RATIO),
+	);
+	const recut = (i: number) => {
 		const a = items[i]!;
 		const b = items[i + 1]!;
 		const aScore = a.ranked[0]?.score ?? 0;
 		const bScore = b.ranked[0]?.score ?? 0;
-		if (aScore >= RECUT_MAX_SCORE || bScore >= RECUT_MAX_SCORE) continue;
-		if (b.seg.x0 - a.seg.x1 > maxGap) continue;
-		let floor = Math.max(
+		if (aScore >= RECUT_MAX_SCORE || bScore >= RECUT_MAX_SCORE) return null;
+		if (b.seg.x0 - a.seg.x1 > maxGap) return null;
+		const floor = Math.max(
 			RECUT_MIN_SCORE,
 			Math.max(aScore, bScore) + RECUT_MARGIN,
 		);
-		let best: [ClassifiedSegment, ClassifiedSegment] | null = null;
-		for (const cut of dipCuts(profile, a.seg.x0, b.seg.x1)) {
-			// a cut inside the existing gap reproduces the original pair
-			if (cut >= a.seg.x1 && cut <= b.seg.x0) continue;
-			const left = measureSegment(binary, { x0: a.seg.x0, x1: cut });
-			const right = measureSegment(binary, { x0: cut, x1: b.seg.x1 });
-			// probe with the floor first (see mergeSplitGlyphs): most candidate
-			// cuts can't beat it and the probes early-stop almost immediately
-			const canWin = (seg: SegmentInfo) =>
-				classifySegment(masked, seg, set, floor).some((c) => c.score > floor);
-			if (!canWin(left) || !canWin(right)) continue;
-			const leftRanked = classifySegment(masked, left, set);
-			const rightRanked = classifySegment(masked, right, set);
-			const weaker = Math.min(
-				leftRanked[0]?.score ?? 0,
-				rightRanked[0]?.score ?? 0,
-			);
-			if (weaker <= floor) continue;
-			floor = weaker;
-			best = [
-				{ seg: left, ranked: leftRanked },
-				{ seg: right, ranked: rightRanked },
-			];
-		}
+		const span = { x0: a.seg.x0, x1: b.seg.x1 };
+		const cuts = dipCuts(ctx.profile, span.x0, span.x1);
+		const skip = { x0: a.seg.x1, x1: b.seg.x0 };
+		return { span, cuts, skip, floor };
+	};
+	if (ctx.speculative) {
+		yield* prefetchRecuts(
+			ctx,
+			items
+				.slice(0, -1)
+				.map((_, i) => recut(i))
+				.filter((r) => r !== null)
+				.map(({ span, cuts, skip, floor }) => ({
+					halves: recutHalves(ctx, span, cuts, skip),
+					minScore: floor,
+				})),
+		);
+	}
+	for (let i = 0; i + 1 < items.length; i++) {
+		const candidate = recut(i);
+		if (!candidate) continue;
+		const { span, cuts, skip, floor } = candidate;
+		const best = yield* bestRecut(ctx, span, cuts, skip, floor);
 		if (best) items.splice(i, 2, ...best);
 	}
 }
 
-/** Recognizes white-on-dark text in a grayscale crop tight to one text line. */
-export function recognizeText(
+/**
+ * Blur can also fuse two glyphs into one segment narrower than the wide-segment
+ * split's floor ("oj" reading as a lone パ, "fi" as ↑), which then classifies
+ * poorly as a whole. A low-scoring segment wider than a typical glyph is re-cut
+ * the same way, adopted under the same floor and margin. Unreadable text (a
+ * splash tag in a decorative face) is full of such segments, so only the three
+ * lowest dips are tried: the junction of two fused glyphs is always one.
+ */
+const FUSED_MIN_WIDTH_RATIO = 1.2;
+const FUSED_DIPS_TRIED = 3;
+
+function* splitFusedGlyphs(
+	items: ClassifiedSegment[],
+	ctx: RecutContext,
+): MatchSteps<void> {
+	const minWidth = ctx.set.medianWidth * FUSED_MIN_WIDTH_RATIO;
+	const fused = (item: ClassifiedSegment) => {
+		const score = item.ranked[0]?.score ?? 0;
+		if (score >= RECUT_MAX_SCORE || item.seg.x1 - item.seg.x0 < minWidth)
+			return null;
+		const floor = Math.max(RECUT_MIN_SCORE, score + RECUT_MARGIN);
+		const cuts = deepestDipCuts(
+			ctx.profile,
+			item.seg.x0,
+			item.seg.x1,
+			FUSED_DIPS_TRIED,
+		);
+		return { floor, cuts };
+	};
+	if (ctx.speculative) {
+		yield* prefetchRecuts(
+			ctx,
+			items.flatMap((item) => {
+				const f = fused(item);
+				return f
+					? [
+							{
+								halves: recutHalves(ctx, item.seg, f.cuts, null),
+								minScore: f.floor,
+							},
+						]
+					: [];
+			}),
+		);
+	}
+	for (let i = 0; i < items.length; i++) {
+		const item = items[i]!;
+		const candidate = fused(item);
+		if (!candidate) continue;
+		const { floor, cuts } = candidate;
+		const best = yield* bestRecut(ctx, item.seg, cuts, null, floor);
+		if (best) {
+			items.splice(i, 1, ...best);
+			i++;
+		}
+	}
+}
+
+let maskedKeySeq = 0;
+
+/**
+ * Recognizes white-on-dark text in a grayscale crop tight to one text line, as
+ * match steps; `speculative` prefetches whole candidate sets in lockstep, which
+ * only pays off under a batching driver.
+ */
+export function* recognizeTextSteps(
 	gray: Mat,
 	set: GlyphSet,
 	options: RecognizeOptions = {},
-): RecognizedText {
+	speculative = false,
+): MatchSteps<RecognizedText> {
 	const cv = getCV();
 	const {
 		binThreshold = 150,
 		minColumnPixels = 1,
 		spaceGap = Math.max(5, Math.round(set.medianWidth * 0.55)),
 		minCharScore = 0.4,
+		maxCandidates = DEFAULT_MAX_CANDIDATES,
 	} = options;
 
 	const binary = new cv.Mat();
@@ -751,17 +1195,41 @@ export function recognizeText(
 	gray.copyTo(masked, mask);
 	mask.delete();
 
+	const measured = new Map<number, SegmentInfo>();
+	const measure = (seg: Segment) => {
+		const spanKey = seg.x0 * 65536 + seg.x1;
+		let info = measured.get(spanKey);
+		if (!info) {
+			info = measureSegment(binary, seg);
+			measured.set(spanKey, info);
+		}
+		return info;
+	};
 	const profile = columnProfile(binary);
 	const segments = segmentColumns(profile, minColumnPixels)
 		.flatMap((s) => splitWideSegment(profile, s, set.medianWidth))
-		.map((s) => measureSegment(binary, s));
+		.map((s) => measure(s));
 
-	const items: ClassifiedSegment[] = segments.map((seg) => ({
+	const ctx: RecutContext = {
+		profile,
+		measure,
+		masked,
+		set,
+		maxCandidates,
+		maskedKey: speculative ? `m${maskedKeySeq++}` : undefined,
+		speculative,
+		classified: new Map(),
+	};
+	const rankedSegments = yield* all(
+		segments.map((seg) => classify(ctx, seg, undefined, maxCandidates)),
+	);
+	const items: ClassifiedSegment[] = segments.map((seg, i) => ({
 		seg,
-		ranked: classifySegment(masked, seg, set),
+		ranked: rankedSegments[i]!,
 	}));
-	mergeSplitGlyphs(items, binary, masked, set);
-	recutMiscutPairs(items, profile, binary, masked, set);
+	yield* mergeSplitGlyphs(items, ctx);
+	yield* recutMiscutPairs(items, ctx);
+	yield* splitFusedGlyphs(items, ctx);
 
 	const chars: RecognizedChar[] = [];
 	let text = "";

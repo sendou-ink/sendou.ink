@@ -15,6 +15,7 @@
 	"forms.action.setAsCurrent": "Set as current ({{time}})",
 	"forms.action.copyFromPrevious": "Copy from previous game",
 	"noVods": "No videos found matching this filter. Are we missing something? See the FAQ page for information on how to gain VoD uploading permissions.",
+	"scannerBanner": "Have the video file? Let the <scannerLink>Scanner</scannerLink> fill this in",
 	"gainPerms": "Please post on the helpdesk of our Discord to gain permissions to upload videos",
 	"deleteConfirm": "Delete video with the title '{{title}}'?",
 	"errors.youtubePreviewFailed": "Failed to load YouTube preview",

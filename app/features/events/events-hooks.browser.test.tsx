@@ -8,9 +8,10 @@ import {
 	useEventsTopic,
 	useServerEventListener,
 } from "./events-hooks";
-import type { ServerEvent } from "./events-types";
+import { HEARTBEAT_INTERVAL_MS, type ServerEvent } from "./events-types";
 
 class FakeEventSource {
+	static readonly CLOSED = 2;
 	static instances: FakeEventSource[] = [];
 
 	private readonly listeners = new Map<
@@ -19,6 +20,7 @@ class FakeEventSource {
 	>();
 
 	url: string;
+	readyState = 0;
 
 	constructor(url: string) {
 		this.url = url;
@@ -355,7 +357,14 @@ describe("useEventStreamCatchUp", () => {
 		await mountConnecting();
 		await helloArrives();
 
-		await advanceTimers(EVENTS_DOWN_CATCH_UP_MS * 3);
+		for (
+			let elapsed = 0;
+			elapsed < EVENTS_DOWN_CATCH_UP_MS * 3;
+			elapsed += HEARTBEAT_INTERVAL_MS
+		) {
+			await advanceTimers(HEARTBEAT_INTERVAL_MS);
+			FakeEventSource.instances.at(-1)?.emit({ kind: "heartbeat" });
+		}
 
 		expect(catchUps).toBe(0);
 	});

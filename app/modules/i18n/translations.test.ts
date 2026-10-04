@@ -22,7 +22,7 @@ const readNamespace = (language: string, file: string) => {
 const interpolatedVariables = (value: string) =>
 	Array.from(value.matchAll(/\{\{\s*([a-zA-Z0-9_.]+)\s*(?:,[^}]*)?\}\}/g))
 		.map((match) => match[1])
-		.sort();
+		.sort((a, b) => a.localeCompare(b));
 
 describe("translations", () => {
 	test.each(languages.filter(({ code }) => code !== DEFAULT_LANGUAGE))(

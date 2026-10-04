@@ -174,10 +174,14 @@ export const STATUS_INK_MIN_VALUE = 105;
 export const STATUS_GLOW_MIN_VALUE = 225;
 
 /**
- * Narrow-layout glow must be UNSATURATED: the wash is pale while backdrop leak
- * is colored (sky over a dead shoulder: 0.30 raw, 0.00 capped, spread >130;
- * lilac/pink washes spread 70-90, capped 0.46-0.61). Even ready icons light IN
- * team color (glow 0.94 saturated), so narrow layouts only.
+ * Ready glow must be UNSATURATED on every layout: the wash is pale while
+ * backdrop leak is colored (sky over a dead shoulder: 0.30 raw, 0.00 capped,
+ * spread >130; lilac/pink washes spread 70-90, capped 0.46-0.61). Even was
+ * exempt on the belief that its ready icons light in team color, but all seven
+ * attested even-layout washes glow unsaturated too (saturated fraction <=0.02),
+ * and taking raw brightness there starred a live ORANGE body whose ink clears
+ * the 225 floor unaided (Manta Maria scrim VoD: glow 0.48 at body ink 0.81).
+ * The 225 floor was set against lime, which peaks just under it.
  */
 export const STATUS_GLOW_MAX_SPREAD = 90;
 
@@ -211,11 +215,50 @@ export const STATUS_DEAD_MAX_SHOULDER_GLOW = 0.2;
 /**
  * Wash body: tinted past this on an ink-poor body means the special-ready
  * wash at any pulse phase (bright frames and the dim trough alike), under it
- * a splat. Splats read <=0.19 (SWS26 splat on a blown-out white sky: 0.07 at
+ * a splat. Splats read <=0.25 (SWS26 splat on a blown-out white sky: 0.07 at
  * pale 0.80), ink-poor washes >=0.45 (SWS26 even-layout trough: 0.57 at pale
  * 0.13, shoulder glow 0.20 — under both ready floors).
  */
 export const STATUS_WASH_MIN_BODY_TINT = 0.3;
+
+/**
+ * Grey pixel: neutral (the tint class's complement) at mid brightness — the
+ * splat's X strokes, which cross the whole body box on every splat whatever
+ * the backdrop does to the translucent plate under them.
+ */
+export const STATUS_GREY_MIN_VALUE = 90;
+export const STATUS_GREY_MAX_VALUE = 200;
+
+/** Dark pixel: the unlit plate of a splatted or vacant slot. */
+export const STATUS_DARK_MAX_VALUE = 70;
+
+/**
+ * ...or tinted past a lower floor on a body no X crosses: a large dark weapon
+ * render (Nautilus drum) fills the body box and dilutes the wash to 0.2-0.3
+ * tint (Triton cup VoD, S3 POV), where splats over a bright tinted backdrop
+ * land too (sky and sunlit walls through the translucent plate). The X strokes
+ * split them: splats in that band read grey >=0.17 (median ~0.35), the
+ * drum-diluted washes <=0.10. Grey renders (Painbrush) put other washes at
+ * 0.15-0.25, left to the main floor. The dark cap keeps out the unlit black
+ * squid a slot shows without any X (InTheZone VoD: dark >=0.57, drum-diluted
+ * washes 0.20-0.35).
+ */
+export const STATUS_UNCROSSED_WASH_MIN_BODY_TINT = 0.2;
+export const STATUS_UNCROSSED_WASH_MAX_BODY_GREY = 0.15;
+export const STATUS_UNCROSSED_WASH_MAX_BODY_DARK = 0.45;
+
+/**
+ * ...and a body the X does cross is never a wash, however tinted: a pale teal
+ * or sky backdrop through the translucent plate lifts a splat's tint to
+ * 0.30-0.46 (Triton cup VoD, 21 such splats over the whole VoD). Neither
+ * stroke class alone splits them from washes: grey or two-tone weapon renders
+ * put washes at grey up to 0.26, and dark renders (Nautilus drum, frying pan)
+ * at dark up to 0.35. Together they do: those splats read grey >=0.21 at dark
+ * >=0.17, while every wash reading grey >=0.2 reads dark <=0.16. Margins are
+ * THIN on dark (0.16 vs 0.17) — re-measure before moving either.
+ */
+export const STATUS_CROSSED_MIN_BODY_GREY = 0.2;
+export const STATUS_CROSSED_MIN_BODY_DARK = 0.17;
 
 /** Special ready: shoulder glow past this (attested >=0.40 vs <=0.06). */
 export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
@@ -227,24 +270,43 @@ export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
 export const STATUS_READY_MIN_BODY_PALE = 0.3;
 
 /**
+ * ...and only on a body the wash has emptied of ink. Pale alone cannot carry a
+ * ready read: a near-white weapon render (S-BLAST '91, Museum d'Alfonsino
+ * scrim VoD) pales a live body to 0.33-0.44 without touching its ink, which
+ * charted two whole matches as one unbroken special-ready band. Body ink over
+ * that footage splits cleanly — 272 dense reads of the slot land at 0.01-0.09
+ * washed and 0.25-0.47 alive, nothing in between — and every attested wash
+ * reaching ready off the pale body alone reads <=0.18. The graded
+ * STATUS_READY_*WASH* allowances above stay wider because they only ever apply
+ * to washes the shoulder glow corroborates (attested inky washes 0.30-0.40 all
+ * glow >=0.27, though the triton one clears the glow floor by only 0.03 — if
+ * footage ever drops it under, that wash needs this branch and would be lost).
+ */
+export const STATUS_READY_PALE_ONLY_MAX_BODY_INK = 0.22;
+
+/**
  * Narrow-layout ready guard: the wash REPLACES body ink, so an ink-heavy body
  * means backdrop leak (the overhead view's left column sits ~12px off, sliding
  * probes onto pale buildings / the lead banner: ink >=0.44). Graded: clean
  * washes ink <=0.303 (SWS26 pale pink on orange; nearest alive 0.33 has no
- * wash signal); inky washes (0.316/0.344) still read strongly pale
- * (>=0.399) while the Um'ami POV leak read ink 0.36 / pale 0.269. Even ready
- * icons light IN team color (ink up to 0.68), so narrow only. Margins are THIN
- * (ink 0.303 vs 0.32, 0.344 vs 0.4; pale 0.399 vs 0.35) — re-measure before moving any.
+ * wash signal); inky washes (0.316-0.41) still read strongly pale (>=0.36)
+ * while the Um'ami POV leak read ink 0.36 / pale 0.269. The ceiling sits above
+ * the pink pulse phase of a pale-pink wash on orange (Manta Maria scrim VoD:
+ * ink 0.41 at pale 0.36, glow 0.43), which the pitch fix brought under these
+ * guards; the nearest leak that also reads pale is 0.45. Even reads them too:
+ * its inkiest attested wash is 0.403 at pale 0.37, with a colored weapon
+ * render still in the box. Margins are THIN (ink 0.303 vs 0.32, 0.403/0.41 vs
+ * 0.42 vs 0.45; pale 0.36 vs 0.35) — re-measure before moving any.
  */
-export const STATUS_READY_WASH_MAX_BODY_INK = 0.4;
+export const STATUS_READY_WASH_MAX_BODY_INK = 0.42;
 export const STATUS_READY_CLEAN_WASH_MAX_BODY_INK = 0.32;
 export const STATUS_READY_INKY_WASH_MIN_BODY_PALE = 0.35;
 
 /**
- * Narrow ready reads also need a minimally pale body: every attested wash reads
+ * A ready read also needs a minimally pale body: every attested wash reads
  * >=0.22 (bright and trough) while a dead icon under skylight leak (2026-08-22
  * VoD: shoulder 0.26-0.35) reads pale <=0.15 — a dead body is ink-poor, so the
- * ink guards cannot catch it. Even reads skip this.
+ * ink guards cannot catch it.
  */
 export const STATUS_READY_MIN_WASH_BODY_PALE = 0.2;
 
@@ -261,12 +323,16 @@ export const STATUS_LAYOUT_STICKY_MARGIN = 0.04;
  * attested; busy backdrops mis-rank: sendou-triton match-start scores even
  * 0.278 / narrow-right 0.273 yet is narrow-right). Even wins only when
  * narrow-right reads under the floor (S2 POV fixture 0.198 vs true >=0.212) or
- * leads decisively (true narrow-right mis-leads even by at most 0.036). With even
- * at the SWS26 pitch, the badge-less AREA CUP trough frame (0.192 vs even 0.224)
- * lands on even too, where every slot still reads right.
+ * leads decisively. Every badge-less frame attested narrow-right hands even a
+ * lead of at most 0.016 (worst: pov-alfonsino-false-star-at-match-start),
+ * while the one attested badge-less even frame that clears the floor leads by
+ * 0.034 (pov-inkblot-even-pitch-read-as-narrow, whose sky backdrop lifts
+ * narrow-right to 0.239) — the threshold splits that gap. With even at the
+ * SWS26 pitch, the badge-less AREA CUP trough frame (0.192 vs even 0.224)
+ * lands on even through the floor instead, where every slot still reads right.
  */
 export const STATUS_FRESH_NARROW_RIGHT_MIN_DECISIVENESS = 0.21;
-export const STATUS_FRESH_EVEN_MIN_LEAD = 0.05;
+export const STATUS_FRESH_EVEN_MIN_LEAD = 0.025;
 
 /**
  * Fresh badge-less NARROW-LEFT pick (pickLayout): S3 POV draws it in steady
@@ -283,8 +349,17 @@ export const STATUS_FRESH_NARROW_LEFT_RIVAL_COMB_VETO = 0.3;
 /**
  * Slot-comb contrast (combContrast): a rigid comb exposes the pitch — badge-less
  * narrow-left scores 0.81 while narrow-right reads it at -0.07 (sendou-triton
- * MakoMart), so a decisive win proves narrow-left despite the shared right
- * column. Both gates needed: worst false narrow-left comb is 0.44 with a 0.24 lead.
+ * MakoMart), so a decisive win (past the floor AND leading both rivals) proves
+ * that geometry whatever came before. Both gates needed: worst false narrow-left
+ * comb is 0.44 with a 0.24 lead. S3 POV resizes each side's icons as the
+ * objective swings (there, a side both holding the zone and leading drew
+ * large), so one Splat Zones game cycles through all three geometries and some
+ * in-between pitches (Triton cup VoD, Brinewater Springs: a dozen switches),
+ * which only the comb follows. Even needs the stronger win: its columns sit between the narrow ones, so the
+ * comb's ±10px shift lets it half-fit either, and the AREA CUP overhead view
+ * (left column ~12px off narrow-right) combs even 0.77 with a 0.30 lead. Clean
+ * even frames in that Triton game comb 0.98 with a 0.40 lead at the median,
+ * and three in four clear both floors — enough, as the pick is sticky.
  */
 export const STATUS_COMB_BAND_Y = 35;
 export const STATUS_COMB_BAND_H = 61;
@@ -298,17 +373,32 @@ export const STATUS_COMB_SIDE_SPANS: readonly [
 export const STATUS_COMB_CENTER_HALF_WIDTH = 16;
 export const STATUS_COMB_GAP_HALF_WIDTH = 7;
 export const STATUS_COMB_MAX_SHIFT = 10;
-export const STATUS_NARROW_LEFT_COMB_MIN = 0.5;
-export const STATUS_NARROW_LEFT_COMB_LEAD = 0.25;
+export const STATUS_DECISIVE_COMB_MIN = 0.5;
+export const STATUS_DECISIVE_COMB_LEAD = 0.25;
+export const STATUS_DECISIVE_EVEN_COMB_MIN = 0.8;
+export const STATUS_DECISIVE_EVEN_COMB_LEAD = 0.35;
 
 /**
  * Sticky flips away from narrow-right need comb corroboration (past this floor
- * AND leading by STATUS_NARROW_LEFT_COMB_LEAD): while the S3 POV player is dead
+ * AND leading by STATUS_DECISIVE_COMB_LEAD): while the S3 POV player is dead
  * the strip shrinks ~0.77 toward the timer, landing near narrow-left pitches
  * (2026-08-11 Um'ami VoD locked 107 of 136 reads that way). True narrow-left
  * combs 0.41-0.81 with >=0.31 lead; worst POV false comb 0.20, negative lead.
  */
 export const STATUS_STICKY_FLIP_COMB_MIN = 0.3;
+
+/**
+ * Even loses to narrow-right on the comb alone (past this floor AND leading by
+ * this much), no score margin needed: a spectator toggling between the overhead
+ * map and a player POV swaps the two geometries mid-match, and even's columns
+ * sit between the narrow ones, so the mispicked geometry still scores within
+ * 0.001 of the right one (Manta Maria scrim VoD locked even for a whole match,
+ * starring the outer right slot 39% of its reads). True narrow-right stretches
+ * combed 0.27-0.78 over that footage, leading even by 0.29-0.45; the widest
+ * false lead on genuinely even footage is 0.15 (pov-wahoo-world-special-dead).
+ */
+export const STATUS_EVEN_FLIP_COMB_MIN = 0.3;
+export const STATUS_EVEN_FLIP_COMB_LEAD = 0.25;
 
 /** Layout carries forward only across reads this close (~1s apart in-match); longer means a new match. */
 export const STATUS_LAYOUT_STICKY_MAX_GAP_S = 30;
@@ -370,3 +460,134 @@ export const STATUS_DPAD_PROBES_EVEN: readonly Roi[] = [
 export const STATUS_WHITE_MIN_VALUE = 215;
 export const STATUS_WHITE_MAX_SPREAD = 40;
 export const STATUS_CAST_MIN_DPAD_WHITE = 0.25;
+
+// Tower Control / Rainmaker track overlay (track.ts): a dotted track under the
+// icon strip, end to end x514..1405 at y155 in both modes, with the objective's
+// icon riding it and each team's "Remaining" plate hanging under the point its
+// push reached (so a side's plate always sits on the half it pushes into:
+// the left team pushes right). Calibrated on the tower_control / rainmaker VoDs
+// (720p upscaled) and the TC/RM death fixtures (German, lime/magenta,
+// yellow/purple lobbies).
+
+export const TRACK_Y = 155;
+export const TRACK_CENTER_X = 959.5;
+export const TRACK_HALF_LENGTH = 445.5;
+
+/**
+ * Track dots sit at a fixed pitch and phase in every attested lobby and mode
+ * (DFT peak 14.10-14.15 px, dot centers x528.7 + k·14.13), whatever markers
+ * cover some of them.
+ */
+export const TRACK_DOT_PITCH = 14.13;
+export const TRACK_FIRST_DOT_X = 528.7;
+export const TRACK_COMB_SPAN: readonly [number, number] = [520, 1400];
+/** Rows above/below the line a dot stands out from: past its ~9px diameter. */
+export const TRACK_COMB_OFFSET_Y = 9;
+
+/**
+ * Comb projection at the dot phase: gameplay with the track reads >=17 (a
+ * dark backdrop leaves little between dots and ground), every other frame
+ * <=7 (SZ HUD, lobby, results, the intro).
+ */
+export const GATE_TRACK_MIN_COMB = 11;
+
+/**
+ * Held icon: team-ink disc (outer radius ~18) with a white squid glyph filling
+ * r7-11. Neutral (the anchor badge, dropped Rainmaker / idle tower): white
+ * ring r18-21 around an olive disc r13-16.
+ */
+export const TRACK_ICON_SPAN: readonly [number, number] = [505, 1415];
+export const TRACK_ICON_RING_RADII = [15.5, 16.5, 17.5] as const;
+export const TRACK_ICON_CORE_RADII = [8, 9.5, 11] as const;
+export const TRACK_NEUTRAL_RING_RADII = [18.5, 19.5, 20.5] as const;
+export const TRACK_NEUTRAL_DISC_RADII = [13.5, 14.5, 15.5] as const;
+export const TRACK_ICON_Y_JITTER = 1;
+
+/**
+ * Icon pixel classes: saturated ink / white glyph / the neutral badge's olive
+ * (~130,133,30 in every lobby). Pale sky (~188,220,252) must be neither ink nor
+ * white, or a sky backdrop scores as the neutral badge's white ring.
+ */
+export const TRACK_INK_MIN_SPREAD = 80;
+export const TRACK_INK_MIN_VALUE = 90;
+export const TRACK_WHITE_MIN_VALUE = 170;
+export const TRACK_WHITE_MAX_SPREAD = 55;
+/** Olive is duller than team ink: compressed footage reads it at spread ~60. */
+export const TRACK_OLIVE_HUE_RANGE: readonly [number, number] = [40, 75];
+export const TRACK_OLIVE_MIN_SPREAD = 45;
+export const TRACK_OLIVE_MAX_VALUE = 190;
+
+/**
+ * Checkpoint markers tell the modes apart: TC squares (31 or 40px, ~3px black
+ * frame, pale ink quadrants), RM pedestals (white base ~47px wide at y169, white cap y133-141, ink
+ * body above). Squares are scored off the ends (both modes draw rings there);
+ * pedestals up to them, as RM's goal pedestals replace the end rings.
+ */
+export const TRACK_SQUARE_SPAN: readonly [number, number] = [545, 1375];
+export const TRACK_PEDESTAL_SPAN: readonly [number, number] = [505, 1415];
+export const TRACK_SQUARE_SIZES = [31, 40] as const;
+export const TRACK_PEDESTAL = {
+	baseY: 169,
+	baseHalfWidth: 18,
+	bodyY: 160,
+	capY: 137,
+	capHalfWidth: 10,
+};
+export const TRACK_MARKER_MIN_SCORE = 0.75;
+export const TRACK_MARKER_ICON_CLEARANCE = 30;
+export const TRACK_DARK_MAX_VALUE = 60;
+
+/** Shape score (ring fraction × core fraction) an icon must reach. */
+export const TRACK_ICON_MIN_SCORE = 0.5;
+
+/** A held icon's ink hue must sit this close to its team's strip hue. */
+export const TRACK_ICON_MAX_TEAM_HUE_DIST = 40;
+
+/**
+ * "Remaining" plates: localized label over ~35px white digits with a dark
+ * outline; digits sit y220-255 wherever the plate slides. The band spans every
+ * plate position (centers x514..1405, ~90px wide).
+ */
+export const TRACK_PLATE_DIGIT_ROI: Roi = { x: 460, y: 214, w: 1000, h: 48 };
+export const TRACK_PLATE_TEXT_HEIGHTS = [33, 36] as const;
+export const TRACK_PLATE_BIN_THRESHOLD = 190;
+export const TRACK_PLATE_DIGIT_MIN_CONF = 0.75;
+/** Plate ink sampled beside a digit run: this far out and this tall. */
+export const TRACK_PLATE_INK_PAD_X = 10;
+/**
+ * A plate sits on the half its team pushes into; the tip can reach just past
+ * the center when a side's record is still ~100.
+ */
+export const TRACK_PLATE_CENTER_SLACK = 30;
+
+/**
+ * Each team's ink off its own end of the track: the end marker's core (TC
+ * ring center, RM pedestal body) and the first four dots are always drawn in
+ * the ink of the team defending that end. Kept tight: the backdrop around them
+ * is often inked too. The icon only covers them when pushed there by the other
+ * team, so they are skipped while it is within reach.
+ */
+export const TRACK_END_INK_ROIS: readonly [readonly Roi[], readonly Roi[]] =
+	(() => {
+		const dot = (k: number): Roi => ({
+			x: Math.round(TRACK_FIRST_DOT_X + k * TRACK_DOT_PITCH) - 2,
+			y: TRACK_Y - 2,
+			w: 4,
+			h: 4,
+		});
+		const lastDot = Math.floor((1400 - TRACK_FIRST_DOT_X) / TRACK_DOT_PITCH);
+		return [
+			[{ x: 508, y: 149, w: 12, h: 12 }, ...[0, 1, 2, 3].map(dot)],
+			[
+				{ x: 1399, y: 149, w: 12, h: 12 },
+				...[0, 1, 2, 3].map((k) => dot(lastDot - k)),
+			],
+		];
+	})();
+export const TRACK_END_INK_ICON_CLEARANCE = 25;
+
+/** Fallback: the icon strip (team-ink squid plates) per side; splats and backdrop can drown it. */
+export const TRACK_STRIP_INK_ROIS: readonly [Roi, Roi] = [
+	{ x: 520, y: 40, w: 370, h: 55 },
+	{ x: 1030, y: 40, w: 370, h: 55 },
+];

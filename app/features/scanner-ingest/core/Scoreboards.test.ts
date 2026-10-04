@@ -34,6 +34,7 @@ function testGame(
 		loserUserIds: [],
 		winnerInGameNames: [],
 		loserInGameNames: [],
+		inGameNameByUserId: new Map(),
 		playedAt: 1000,
 		linkedPlayerNames: null,
 		...rest,
@@ -53,7 +54,7 @@ function tournamentMatchIdOf(matched: Scoreboards.MatchedGame): number | null {
 }
 
 function testMatch({
-	t = 60,
+	playedAt = 1000,
 	mode = "SZ",
 	stage = 0,
 	lobby = "PRIVATE",
@@ -64,7 +65,8 @@ function testMatch({
 	objective = null,
 	playerStatus = null,
 }: {
-	t?: number;
+	/** database timestamp (seconds) like the games' `playedAt`; null for a read without a wall clock (VoD) */
+	playedAt?: number | null;
 	mode?: ModeShort | null;
 	stage?: StageId | null;
 	lobby?: ScannerLobby | null;
@@ -87,9 +89,9 @@ function testMatch({
 		}),
 	);
 	return {
-		startsAt: t,
-		endsAt: t,
-		playedAt: null,
+		startsAt: 60,
+		endsAt: 360,
+		playedAt: playedAt === null ? null : playedAt * 1000,
 		lobby,
 		mode,
 		stage,
@@ -117,14 +119,30 @@ function testObjective(): ScannerMatchObjective {
 				time: 300,
 				score: [100, 100],
 				penalty: [null, null],
-				control: [false, false],
+				control: null,
 			},
 			{
 				t: 630,
 				time: 270,
 				score: [80, 100],
 				penalty: [null, 12],
-				control: [true, false],
+				control: 0,
+			},
+		],
+	};
+}
+
+function testTrackObjective(): ScannerMatchObjective {
+	return {
+		mode: "RM",
+		samples: [
+			{
+				t: 600,
+				time: 300,
+				score: [75, null],
+				penalty: [null, null],
+				control: 0,
+				position: 25,
 			},
 		],
 	};
@@ -163,7 +181,11 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 							...sample,
 							score: [sample.score[1], sample.score[0]],
 							penalty: [sample.penalty[1], sample.penalty[0]],
-							control: [sample.control[1], sample.control[0]],
+							control:
+								sample.control === null ? null : sample.control === 0 ? 1 : 0,
+							...(sample.position != null
+								? { position: 0 - sample.position }
+								: null),
 						})),
 					},
 		playerStatus:
@@ -256,7 +278,7 @@ describe("matchedGames", () => {
 			games: [
 				testGame({
 					matchGameResultId: 11,
-					linkedPlayerNames: ["", "", "", "", "l1", "l2", "l3", "l4"],
+					linkedPlayerNames: ["", "", "w3", "w4", "l1", "l2", "l3", "l4"],
 				}),
 				testGame({ matchGameResultId: 12, playedAt: 2000 }),
 			],
@@ -267,7 +289,7 @@ describe("matchedGames", () => {
 
 	test("matches matches to games by mode and stage", () => {
 		const matched = Scoreboards.matchedGames({
-			matches: [testMatch({ mode: "RM", stage: 1, t: 60 })],
+			matches: [testMatch({ mode: "RM", stage: 1 })],
 			games: [
 				testGame({ mapIndex: 0, mode: "SZ", stageId: 0 as StageId }),
 				testGame({ mapIndex: 1, mode: "RM", stageId: 1 as StageId }),
@@ -281,11 +303,11 @@ describe("matchedGames", () => {
 		const matched = Scoreboards.matchedGames({
 			matches: [
 				testMatch({
-					t: 60,
+					playedAt: 1000,
 					names: ["a", "b", "c", "d", "e", "f", "g", "h"],
 				}),
 				testMatch({
-					t: 5000,
+					playedAt: 2000,
 					names: ["i", "j", "k", "l", "m", "n", "o", "p"],
 				}),
 			],
@@ -303,7 +325,7 @@ describe("matchedGames", () => {
 
 	test("skips duplicate detections of the same game", () => {
 		const matched = Scoreboards.matchedGames({
-			matches: [testMatch({ t: 60 }), testMatch({ t: 65 })],
+			matches: [testMatch(), testMatch({ playedAt: 1005 })],
 			games: [
 				testGame({ tournamentMatchId: 1, playedAt: 1000 }),
 				testGame({ tournamentMatchId: 2, playedAt: 2000 }),
@@ -317,9 +339,9 @@ describe("matchedGames", () => {
 	test("skips a duplicate detection despite a couple of OCR-misread names", () => {
 		const matched = Scoreboards.matchedGames({
 			matches: [
-				testMatch({ t: 60 }),
+				testMatch(),
 				testMatch({
-					t: 65,
+					playedAt: 1005,
 					names: ["w1", "vv2", "w3", "w4", "l1", "l2", "l3", "I4"],
 				}),
 			],
@@ -354,9 +376,9 @@ describe("matchedGames", () => {
 	test("skips matches that have no matching game left", () => {
 		const matched = Scoreboards.matchedGames({
 			matches: [
-				testMatch({ t: 60 }),
+				testMatch(),
 				testMatch({
-					t: 5000,
+					playedAt: 1300,
 					names: ["i", "j", "k", "l", "m", "n", "o", "p"],
 				}),
 			],
@@ -463,8 +485,8 @@ describe("matchedGames", () => {
 	test("does not assign a game played before the previously assigned one", () => {
 		const matched = Scoreboards.matchedGames({
 			matches: [
-				testMatch({ t: 60, mode: "RM", stage: 1 }),
-				testMatch({ t: 1000, mode: "SZ", stage: 0 }),
+				testMatch({ playedAt: 2000, mode: "RM", stage: 1 }),
+				testMatch({ playedAt: 2100, mode: "SZ", stage: 0 }),
 			],
 			games: [
 				testGame({
@@ -483,6 +505,36 @@ describe("matchedGames", () => {
 		});
 
 		expect(matched.map(tournamentMatchIdOf)).toEqual([2]);
+	});
+
+	test("never links a read without a play time", () => {
+		const matched = Scoreboards.matchedGames({
+			matches: [testMatch({ playedAt: null })],
+			games: [testGame()],
+		});
+
+		expect(matched).toHaveLength(0);
+	});
+
+	test("links the play of a map reported nearest the read", () => {
+		const matched = Scoreboards.matchedGames({
+			matches: [testMatch({ playedAt: 3900 })],
+			games: [
+				testGame({ tournamentMatchId: 1, playedAt: 2600 }),
+				testGame({ tournamentMatchId: 2, playedAt: 4000 }),
+			],
+		});
+
+		expect(matched.map(tournamentMatchIdOf)).toEqual([2]);
+	});
+
+	test("leaves a read unlinked when no game was reported within 30 minutes of it", () => {
+		const matched = Scoreboards.matchedGames({
+			matches: [testMatch({ playedAt: 1000 + 31 * 60 })],
+			games: [testGame({ playedAt: 1000 })],
+		});
+
+		expect(matched).toHaveLength(0);
 	});
 });
 
@@ -541,14 +593,14 @@ describe("deriveScoreboardData", () => {
 					time: 300,
 					score: [100, 100],
 					penalty: [null, null],
-					control: [false, false],
+					control: null,
 				},
 				{
 					t: 30,
 					time: 270,
 					score: [80, 100],
 					penalty: [null, 12],
-					control: [true, false],
+					control: 0,
 				},
 			],
 		});
@@ -565,6 +617,21 @@ describe("deriveScoreboardData", () => {
 			},
 		]);
 
+		expect(swapped!.objective).toEqual(straight!.objective);
+	});
+
+	test("derives track positions winner-first", () => {
+		const straight = derive([
+			{ data: testMatch({ objective: testTrackObjective() }), povUserId: null },
+		]);
+		const swapped = derive([
+			{
+				data: swapSides(testMatch({ objective: testTrackObjective() })),
+				povUserId: null,
+			},
+		]);
+
+		expect(straight!.objective!.samples[0]!.position).toBe(25);
 		expect(swapped!.objective).toEqual(straight!.objective);
 	});
 
@@ -719,9 +786,9 @@ describe("deriveScoreboardData", () => {
 	});
 });
 
-describe("winnerFirstPlayerNames", () => {
+describe("recognizablePlayerNames", () => {
 	test("returns names winner-first with unread names empty", () => {
-		const names = Scoreboards.winnerFirstPlayerNames(
+		const names = Scoreboards.recognizablePlayerNames(
 			swapSides(
 				testMatch({ names: ["w1", "", "w3", "w4", "l1", "l2", "l3", "l4"] }),
 			),
@@ -732,7 +799,103 @@ describe("winnerFirstPlayerNames", () => {
 
 	test("returns null for a match without a linkable scoreboard", () => {
 		expect(
-			Scoreboards.winnerFirstPlayerNames({ ...testMatch(), winner: null }),
+			Scoreboards.recognizablePlayerNames({ ...testMatch(), winner: null }),
+		).toBe(null);
+	});
+
+	test("returns null for a read with too few names to recognize a re-detection", () => {
+		expect(
+			Scoreboards.recognizablePlayerNames(
+				testMatch({ names: ["w1", "", "", "w4", "l1", "", "l3", "l4"] }),
+			),
+		).toBe(null);
+	});
+});
+
+describe("Scoreboards.povWeaponId", () => {
+	const SENDER_ID = 1;
+	const rosterGame = () =>
+		testGame({
+			winnerUserIds: [1, 2, 3, 4],
+			loserUserIds: [5, 6, 7, 8],
+			inGameNameByUserId: new Map(
+				NAMES.map((name, i) => [i + 1, `${name}#1234`]),
+			),
+		});
+	const weapons: MainWeaponId[] = [10, 20, 30, 40, 50, 60, 70, 80];
+
+	test.each([
+		{
+			why: "the sender's own seat",
+			povIndex: 0,
+			povUserId: SENDER_ID,
+			expected: 10,
+		},
+		{
+			why: "a losing sender's own seat",
+			povIndex: 4,
+			povUserId: 5,
+			expected: 50,
+		},
+		{
+			why: "no POV seat",
+			povIndex: null,
+			povUserId: SENDER_ID,
+			expected: null,
+		},
+		{
+			why: "a sender in neither roster (caster)",
+			povIndex: 0,
+			povUserId: 99,
+			expected: null,
+		},
+		{
+			why: "a seat on the sender's opponents' side",
+			povIndex: 4,
+			povUserId: SENDER_ID,
+			expected: null,
+		},
+		{
+			why: "a teammate's seat (their recording)",
+			povIndex: 1,
+			povUserId: SENDER_ID,
+			expected: null,
+		},
+	])("$why", ({ povIndex, povUserId, expected }) => {
+		expect(
+			Scoreboards.povWeaponId({
+				match: testMatch({ povIndex, weapons }),
+				game: rosterGame(),
+				povUserId,
+			}),
+		).toBe(expected);
+	});
+
+	test.each([
+		{ why: "unread", seatName: "" },
+		{ why: "garbled", seatName: "???1" },
+	])(
+		"a seat whose name is $why can't contradict the sender",
+		({ seatName }) => {
+			const names = NAMES.map((name, i) => (i === 0 ? seatName : name));
+
+			expect(
+				Scoreboards.povWeaponId({
+					match: testMatch({ povIndex: 0, names, weapons }),
+					game: rosterGame(),
+					povUserId: SENDER_ID,
+				}),
+			).toBe(10);
+		},
+	);
+
+	test("returns null when the seat's weapon was not read", () => {
+		expect(
+			Scoreboards.povWeaponId({
+				match: testMatch({ povIndex: 0, weapons: [null, ...weapons.slice(1)] }),
+				game: rosterGame(),
+				povUserId: SENDER_ID,
+			}),
 		).toBe(null);
 	});
 });
@@ -751,7 +914,7 @@ describe("resolveContext", () => {
 				mapIndex: i,
 				mode,
 				stageId: stageId as StageId,
-				playedAt: 1000 + i,
+				playedAt: 1000 + i * 600,
 				...partial,
 			}),
 			context: { type: "tournament", tournamentId },
@@ -768,7 +931,7 @@ describe("resolveContext", () => {
 				mapIndex: i,
 				mode,
 				stageId: stageId as StageId,
-				playedAt: 1000 + i,
+				playedAt: 1000 + i * 600,
 			}),
 			target: {
 				type: "sendouq",
@@ -780,8 +943,8 @@ describe("resolveContext", () => {
 	}
 
 	const seenSequence = [
-		testMatch({ t: 60, mode: "SZ", stage: 0 }),
-		testMatch({ t: 600, mode: "TC", stage: 1 }),
+		testMatch({ playedAt: 1000, mode: "SZ", stage: 0 }),
+		testMatch({ playedAt: 1600, mode: "TC", stage: 1 }),
 	];
 
 	test("resolves the tournament whose games match the seen sequence", () => {
@@ -859,7 +1022,7 @@ describe("resolveContext", () => {
 		const context = Scoreboards.resolveContext({
 			matches: [
 				seenSequence[0]!,
-				testMatch({ t: 300, stage: null }),
+				testMatch({ playedAt: 1300, stage: null }),
 				seenSequence[1]!,
 			],
 			games: [

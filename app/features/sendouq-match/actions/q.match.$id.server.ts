@@ -6,6 +6,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
+import { linkStoredMatches } from "~/features/scanner-ingest/core/relink.server";
 import {
 	refreshSendouQInstance,
 	SendouQ,
@@ -89,6 +90,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						"Score does not match the other team's report. Contact the other team to adjust.",
 					);
 				}
+
+				await linkStoredMatches({ type: "sendouq", groupMatchId: matchId });
 
 				if (result.status === "MATCH_FINALIZED") {
 					try {

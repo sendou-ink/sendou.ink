@@ -448,7 +448,8 @@ export async function addOrMergeMatches({
 /**
  * Links ingested matches to their matched game results. A row links to at most one game (re-sends
  * are no-ops); a game collects links from many rows (each POV's scan). A known POV player's
- * weapon is reported as a regular ReportedWeapon unless they already have one for that game.
+ * weapon (Scoreboards.povWeaponId) is reported as a ReportedWeapon tagged with its ingested match,
+ * unless they already have one for that game.
  *
  * @returns count of newly created links
  */
@@ -492,6 +493,61 @@ export async function addLinks({
 
 		return linkedCount;
 	});
+}
+
+/** Stored matches hinted to the context and played since `playedSince` that no game links yet, chronological. */
+export function findUnlinkedMatchesByHint({
+	context,
+	playedSince,
+}: {
+	context: IngestContext;
+	/** database timestamp (seconds) */
+	playedSince: number;
+}) {
+	return db
+		.selectFrom("IngestedMatch")
+		.select([
+			"IngestedMatch.id",
+			"IngestedMatch.data",
+			"IngestedMatch.povUserId",
+		])
+		.where(
+			context.type === "tournament"
+				? "IngestedMatch.tournamentIdHint"
+				: "IngestedMatch.groupMatchIdHint",
+			"=",
+			context.type === "tournament"
+				? context.tournamentId
+				: context.groupMatchId,
+		)
+		.where("IngestedMatch.playedAt", ">=", playedSince)
+		.where((eb) =>
+			eb.not(
+				eb.exists(
+					eb
+						.selectFrom("IngestedMatchLink")
+						.select("IngestedMatchLink.id")
+						.whereRef(
+							"IngestedMatchLink.ingestedMatchId",
+							"=",
+							"IngestedMatch.id",
+						),
+				),
+			),
+		)
+		.orderBy("IngestedMatch.playedAt", "asc")
+		.execute();
+}
+
+/** Unlinks every ingested match from a SendouQ map, as when its report is undone. */
+export async function deleteLinksByGroupMatchMapId(
+	groupMatchMapId: number,
+	trx?: Transaction<DB>,
+) {
+	await (trx ?? db)
+		.deleteFrom("IngestedMatchLink")
+		.where("IngestedMatchLink.groupMatchMapId", "=", groupMatchMapId)
+		.execute();
 }
 
 async function addOrMergeMatch(
@@ -782,6 +838,10 @@ async function tournamentGames({
 			loserUserIds: loserRoster?.userIds ?? [],
 			winnerInGameNames: winnerRoster?.inGameNames ?? [],
 			loserInGameNames: loserRoster?.inGameNames ?? [],
+			inGameNameByUserId: new Map([
+				...(winnerRoster?.inGameNameByUserId ?? []),
+				...(loserRoster?.inGameNameByUserId ?? []),
+			]),
 			playedAt: row.playedAt,
 			linkedPlayerNames: linkedNames.get(row.matchGameResultId) ?? null,
 		};
@@ -791,6 +851,7 @@ async function tournamentGames({
 interface Roster {
 	userIds: number[];
 	inGameNames: string[];
+	inGameNameByUserId: Map<number, string>;
 }
 
 async function teamRosters(teamIds: Array<number | null>) {
@@ -814,16 +875,20 @@ async function teamRosters(teamIds: Array<number | null>) {
 
 	const result = new Map<number, Roster>();
 	for (const member of members) {
-		const roster = result.get(member.tournamentTeamId) ?? {
-			userIds: [],
-			inGameNames: [],
-		};
+		const roster = result.get(member.tournamentTeamId) ?? emptyRoster();
 		roster.userIds.push(member.userId);
-		if (member.inGameName) roster.inGameNames.push(member.inGameName);
+		if (member.inGameName) {
+			roster.inGameNames.push(member.inGameName);
+			roster.inGameNameByUserId.set(member.userId, member.inGameName);
+		}
 		result.set(member.tournamentTeamId, roster);
 	}
 
 	return result;
+}
+
+function emptyRoster(): Roster {
+	return { userIds: [], inGameNames: [], inGameNameByUserId: new Map() };
 }
 
 async function sendouqGames({
@@ -918,6 +983,10 @@ async function sendouqGames({
 			loserUserIds: loserRoster?.userIds ?? [],
 			winnerInGameNames: winnerRoster?.inGameNames ?? [],
 			loserInGameNames: loserRoster?.inGameNames ?? [],
+			inGameNameByUserId: new Map([
+				...(winnerRoster?.inGameNameByUserId ?? []),
+				...(loserRoster?.inGameNameByUserId ?? []),
+			]),
 			playedAt: row.playedAt,
 			linkedPlayerNames: linkedNames.get(row.groupMatchMapId) ?? null,
 		};
@@ -937,19 +1006,19 @@ async function groupRosters(groupIds: number[]) {
 
 	const result = new Map<number, Roster>();
 	for (const member of members) {
-		const roster = result.get(member.groupId) ?? {
-			userIds: [],
-			inGameNames: [],
-		};
+		const roster = result.get(member.groupId) ?? emptyRoster();
 		roster.userIds.push(member.userId);
-		if (member.inGameName) roster.inGameNames.push(member.inGameName);
+		if (member.inGameName) {
+			roster.inGameNames.push(member.inGameName);
+			roster.inGameNameByUserId.set(member.userId, member.inGameName);
+		}
 		result.set(member.groupId, roster);
 	}
 
 	return result;
 }
 
-/** Winner-first player names of each game's earliest linked ingest, keyed by the link target column's value. */
+/** Winner-first player names of each game's earliest linked ingest with recognizable names, keyed by the link target column's value. */
 async function linkedPlayerNamesByTarget(
 	column: "tournamentMatchGameResultId" | "groupMatchMapId",
 	targetIds: number[],
@@ -972,7 +1041,7 @@ async function linkedPlayerNamesByTarget(
 
 	for (const row of rows) {
 		if (row.targetId === null || result.has(row.targetId)) continue;
-		const names = Scoreboards.winnerFirstPlayerNames(row.data);
+		const names = Scoreboards.recognizablePlayerNames(row.data);
 		if (names) result.set(row.targetId, names);
 	}
 
@@ -981,12 +1050,15 @@ async function linkedPlayerNamesByTarget(
 
 async function reportPovWeapon(
 	trx: Transaction<DB>,
-	{ match, game }: { match: ScannerMatch; game: IngestableGame },
+	{
+		ingestedMatchId,
+		match,
+		game,
+	}: { ingestedMatchId: number; match: ScannerMatch; game: IngestableGame },
 	povUserId: number | null,
 ) {
-	if (povUserId === null || match.pov === null) return;
-	const weaponSplId =
-		match.teams[match.pov.team]?.players[match.pov.index]?.weaponId ?? null;
+	if (povUserId === null) return;
+	const weaponSplId = Scoreboards.povWeaponId({ match, game, povUserId });
 	if (weaponSplId === null) return;
 
 	await trx
@@ -1001,6 +1073,9 @@ async function reportPovWeapon(
 			mapIndex: game.mapIndex,
 			userId: povUserId,
 			weaponSplId,
+			ingestedMatchId,
+			// season stats bucket by it, and a scan can arrive long after the game
+			createdAt: game.playedAt,
 		})
 		.onConflict((oc) =>
 			oc

@@ -1,0 +1,10 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 217,
+		"names": ["Safari", "Bandana"]
+	},
+	"options": {
+		"notes": "Frame shared with objective/tower-control-bravo-deep-push-sky (tower_control VoD, Tower Control overlay)."
+	}
+}

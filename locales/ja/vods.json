@@ -15,6 +15,7 @@
 	"forms.action.setAsCurrent": "",
 	"forms.action.copyFromPrevious": "",
 	"noVods": "",
+	"scannerBanner": "",
 	"gainPerms": "動画をアップロードする権限を取得するためディスコードのヘルプデスクにメッセージを送ってください。",
 	"deleteConfirm": "動画:'{{title}}'を消去しますか？?",
 	"errors.youtubePreviewFailed": "",

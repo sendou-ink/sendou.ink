@@ -22,6 +22,11 @@ const MIN_NAME_OVERLAP = 6;
 const MIN_WEAPON_OVERLAP = 7;
 const MIN_WEAPON_SLOTS_READ = 7;
 
+/** A team pair with at least this many names (else weapons) read on both sides can contradict identity... */
+const MIN_SLOTS_READ_TO_CONTRADICT = 3;
+/** ...when at most this many of them align: different players, so a different game. */
+const MAX_CONTRADICTING_OVERLAP = 1;
+
 const PLAYERS_PER_TEAM = 4;
 
 /** Rebuilds a match with a fixed key order so `JSON.stringify` is stable — the hashing and change-detection representation. */
@@ -65,10 +70,12 @@ export function canonicalMatch(match: ScannerMatch): ScannerMatch {
 
 /**
  * Whether two (possibly partial) matches describe the same game; callers pre-scope to the same
- * tournament + POV user. Contradicting mode/stage/replay-code/play-time rules identity out; then a
- * matching replay code, close play times, or an aligning roster (names, else weapons) rules it in.
+ * tournament + POV user. Contradicting lobby/mode/stage/replay-code/play-time rules identity out; then a
+ * matching replay code rules it in, contradicting rosters (a team pair of different players) rule it out,
+ * and close play times or an aligning roster (names, else weapons) rule it in.
  */
 export function isSameMatch(a: ScannerMatch, b: ScannerMatch): boolean {
+	if (a.lobby !== null && b.lobby !== null && a.lobby !== b.lobby) return false;
 	if (a.mode !== null && b.mode !== null && a.mode !== b.mode) return false;
 	if (a.stage !== null && b.stage !== null && a.stage !== b.stage) return false;
 
@@ -84,14 +91,16 @@ export function isSameMatch(a: ScannerMatch, b: ScannerMatch): boolean {
 	}
 
 	if (codeDiff !== null) return true;
-	if (playedDiff !== null && playedDiff <= PLAYED_AT_AFFINITY_MS) return true;
 
 	const aligned = bestAlignment(a, b);
+	if (rostersContradict(a, b, aligned.orientation)) return false;
+	if (playedDiff !== null && playedDiff <= PLAYED_AT_AFFINITY_MS) return true;
+
 	if (aligned.nameOverlap >= MIN_NAME_OVERLAP) return true;
 	if (
 		aligned.weaponOverlap >= MIN_WEAPON_OVERLAP &&
-		weaponSlotsRead(a) >= MIN_WEAPON_SLOTS_READ &&
-		weaponSlotsRead(b) >= MIN_WEAPON_SLOTS_READ
+		matchWeaponSlotsRead(a) >= MIN_WEAPON_SLOTS_READ &&
+		matchWeaponSlotsRead(b) >= MIN_WEAPON_SLOTS_READ
 	) {
 		return true;
 	}
@@ -161,7 +170,8 @@ function canonicalObjective(
 			time: sample.time,
 			score: [sample.score[0], sample.score[1]],
 			penalty: [sample.penalty[0], sample.penalty[1]],
-			control: [sample.control[0], sample.control[1]],
+			control: sample.control,
+			...(sample.position !== undefined ? { position: sample.position } : null),
 		})),
 	};
 }
@@ -266,10 +276,45 @@ function weaponOverlap(a: ScannerMatchTeam, b: ScannerMatchTeam): number {
 	return overlap;
 }
 
-function weaponSlotsRead(match: ScannerMatch): number {
-	return match.teams.flatMap((team) =>
-		team.players.filter((player) => player.weaponId !== null),
+function rostersContradict(
+	a: ScannerMatch,
+	b: ScannerMatch,
+	orientation: Alignment["orientation"],
+): boolean {
+	const [bFirst, bSecond] =
+		orientation === "straight"
+			? [b.teams[0], b.teams[1]]
+			: [b.teams[1], b.teams[0]];
+	return (
+		teamsContradict(a.teams[0], bFirst) || teamsContradict(a.teams[1], bSecond)
+	);
+}
+
+function teamsContradict(a: ScannerMatchTeam, b: ScannerMatchTeam): boolean {
+	if (Math.min(namesRead(a), namesRead(b)) >= MIN_SLOTS_READ_TO_CONTRADICT) {
+		return nameOverlap(a, b) <= MAX_CONTRADICTING_OVERLAP;
+	}
+	if (
+		Math.min(weaponSlotsRead(a), weaponSlotsRead(b)) >=
+		MIN_SLOTS_READ_TO_CONTRADICT
+	) {
+		return weaponOverlap(a, b) <= MAX_CONTRADICTING_OVERLAP;
+	}
+	return false;
+}
+
+function namesRead(team: ScannerMatchTeam): number {
+	return team.players.filter(
+		(player) => player.name && normalizeInGameName(player.name),
 	).length;
+}
+
+function weaponSlotsRead(team: ScannerMatchTeam): number {
+	return team.players.filter((player) => player.weaponId !== null).length;
+}
+
+function matchWeaponSlotsRead(match: ScannerMatch): number {
+	return weaponSlotsRead(match.teams[0]) + weaponSlotsRead(match.teams[1]);
 }
 
 function swapSides(match: ScannerMatch): ScannerMatch {
@@ -294,7 +339,11 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 							...sample,
 							score: [sample.score[1], sample.score[0]],
 							penalty: [sample.penalty[1], sample.penalty[0]],
-							control: [sample.control[1], sample.control[0]],
+							control:
+								sample.control === null ? null : sample.control === 0 ? 1 : 0,
+							...(sample.position != null
+								? { position: 0 - sample.position }
+								: null),
 						})),
 					},
 		playerStatus:

@@ -83,8 +83,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	useScrollLock(activePanel !== null);
 	useClosePopoversOnNavigation(rootRef);
 
-	const chatContextRef = React.useRef(chatContext);
-	chatContextRef.current = chatContext;
+	const openChat = React.useEffectEvent(() => chatContext?.setChatOpen(true));
 
 	React.useEffect(() => {
 		// a panel can be opened before hydration, its toggle event long gone
@@ -94,7 +93,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 		if (openPanel) {
 			setActivePanel(openPanel);
 			if (openPanel === "chat") {
-				chatContextRef.current?.setChatOpen(true);
+				openChat();
 			}
 		}
 

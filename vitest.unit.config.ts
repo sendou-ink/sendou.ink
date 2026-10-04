@@ -1,6 +1,9 @@
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
+	define: {
+		__GIT_COMMIT__: JSON.stringify(""),
+	},
 	test: {
 		name: "unit",
 		include: ["**/*.test.{ts,tsx}"],
@@ -12,10 +15,6 @@ export default defineConfig({
 			"app/features/scanner/tests/*.test.{ts,tsx}",
 		],
 		setupFiles: ["./app/test-setup.ts"],
-		// the scanner-ingest scenario suite's real ingest action is gated on Config.scannerEnabled
-		env: {
-			VITE_SCANNER_ENABLED: "true",
-		},
 	},
 	resolve: {
 		tsconfigPaths: true,

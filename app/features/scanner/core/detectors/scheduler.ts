@@ -118,14 +118,22 @@ export class DetectorScheduler {
 		}
 	}
 
-	/** Drop all session state; `t` seeds the activity clock (chunk start). */
-	reset(t = Number.NEGATIVE_INFINITY): void {
+	/**
+	 * Drop all session state; `t` seeds the activity clock (chunk start).
+	 * `midStream`: a VoD chunk starting inside the file may start inside a game
+	 * whose intro it never sees, so it counts as an open match until a
+	 * scoreboard closes it or matchOpenMaxS passes — else the game's last reads
+	 * turn the chunk calm and skimming hops over the short screens after it.
+	 */
+	reset(t = Number.NEGATIVE_INFINITY, { midStream = false } = {}): void {
 		for (const [id, state] of this.#states) {
 			this.#states.set(id, freshState(state.info));
 		}
 		this.#maxT = t;
 		this.#lastActivityT = t;
-		this.#matchOpenUntilT = Number.NEGATIVE_INFINITY;
+		this.#matchOpenUntilT = midStream
+			? t + this.#options.matchOpenMaxS
+			: Number.NEGATIVE_INFINITY;
 	}
 
 	/** Earliest t any detector wants a check; frames before it skip analysis and readback. */
@@ -134,6 +142,44 @@ export class DetectorScheduler {
 		for (const state of this.#states.values()) {
 			if (state.lastCheckT === undefined) return Number.NEGATIVE_INFINITY;
 			next = Math.min(next, state.lastCheckT + this.#interval(state));
+		}
+		return next;
+	}
+
+	/**
+	 * What `nextDueT()` can at the earliest return once the `pending`
+	 * detectors report their checks at `t` — gates, parses or both: whatever
+	 * they report only moves them between the refine and search cadences, so
+	 * every frame before this bound is certainly skipped.
+	 */
+	nextDueLowerBound(t: number, pending: readonly string[]): number {
+		let next = Number.POSITIVE_INFINITY;
+		for (const [id, state] of this.#states) {
+			if (pending.includes(id)) {
+				const fastest = Math.min(
+					this.#interval({ ...state, streak: null, gatePassing: true }),
+					this.#interval({ ...state, streak: null, gatePassing: false }),
+				);
+				next = Math.min(next, t + fastest);
+				continue;
+			}
+			if (state.lastCheckT === undefined) return Number.NEGATIVE_INFINITY;
+			next = Math.min(next, state.lastCheckT + this.#interval(state));
+		}
+		return next;
+	}
+
+	/**
+	 * `nextDueT()` once the `due` detectors are checked at `t`, guessing each
+	 * keeps its current cadence (gates mostly report what they did last
+	 * time); a hint for reading ahead, never a decision.
+	 */
+	predictNextDueT(t: number, due: readonly string[]): number {
+		let next = Number.POSITIVE_INFINITY;
+		for (const [id, state] of this.#states) {
+			const lastCheckT = due.includes(id) ? t : state.lastCheckT;
+			if (lastCheckT === undefined) return Number.NEGATIVE_INFINITY;
+			next = Math.min(next, lastCheckT + this.#interval(state));
 		}
 		return next;
 	}

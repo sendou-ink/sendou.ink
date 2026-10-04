@@ -1,0 +1,620 @@
+/**
+ * The running VoD scan, owned by a module singleton so moving between views
+ * never throws it away. On the primary (WebCodecs) path the duration is
+ * split into one contiguous slice per analyzer worker and each worker
+ * demuxes, decodes, schedules and analyzes its slice itself
+ * (worker/analyzer.worker.ts); the seek fallback drives a <video> element
+ * through a single worker. The finished scan persists under its file name
+ * (store/vods.ts), then the same path a live session takes runs: clips of
+ * the scored windows are cut off the file. Unlike a live session, a VoD's
+ * matches never upload: without a wall clock they can't be told apart from
+ * someone else's games. A scan is all or nothing: leaving the page cancels it and nothing is saved.
+ */
+import { useSyncExternalStore } from "react";
+import * as R from "remeda";
+import { extractVodClip, vodFrameThumbnail } from "../capture/vod-clips";
+import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
+import {
+	MAX_CLIP_SECONDS,
+	povDeathTimes,
+	scoreWindows,
+} from "../core/clips/scoring";
+import {
+	mergeScanTelemetry,
+	type ScanTelemetry,
+} from "../core/detectors/telemetry";
+import type { DetectedEvent } from "../core/detectors/types";
+import { formatPosition } from "../core/format";
+import {
+	buildScannerMatches,
+	invalidObjectiveEvents,
+} from "../core/match-builder";
+import { sessionSummary } from "../core/sessions";
+import { TimelineBuilder } from "../core/timeline/index";
+import { deleteVodClips, saveClip } from "../store/clips";
+import {
+	loadVodEventFrame,
+	loadVodEvents,
+	type StoredVodEvent,
+	saveVod,
+} from "../store/vods";
+import {
+	AnalyzerClient,
+	type DoneInfo,
+	defaultScanWorkerCount,
+} from "../worker/client";
+import { refreshClips } from "./clips-feed";
+import { describeError } from "./errors";
+import type { FixtureData } from "./fixture-export";
+import type { ScanEvent } from "./session-data";
+import { readSettings } from "./settings";
+import { holdVisitLock, isThisVisitsVodClip, VISIT_ID } from "./visit";
+import { refreshVods } from "./vods-feed";
+
+/** `video/*` alone hides containers the OS doesn't know as video (e.g. .mkv on macOS) */
+export const VOD_FILE_ACCEPT = "video/*,.mkv,.webm,.mov,.mp4,.ts";
+
+/** seek-fallback stride while the worker reports activity */
+const SEEK_ACTIVE_STRIDE_S = 0.25;
+/**
+ * seek-fallback stride over calm footage — small enough that the screens that
+ * start activity from dead air (results ~10s, match intro ~7s) still get sampled
+ */
+const SEEK_CALM_STRIDE_S = 2.5;
+
+/** A file's clips: the best windows over the whole scan, as many as fit history's cap. */
+const MAX_VOD_CLIPS = 20;
+
+const UI_UPDATE_INTERVAL_MS = 250;
+/**
+ * Each publish re-renders every match card (expanded ones draw whole charts),
+ * so found events reach the view at most this often, not per event.
+ */
+const EVENTS_PUBLISH_INTERVAL_MS = 1000;
+
+export type VodScanStatus = "idle" | "scanning" | "done" | "error";
+
+export type ClipsWork =
+	| { state: "cutting"; done: number; total: number }
+	| { state: "done"; saved: number; error: string | null };
+
+export type VodScanMode = "active" | "skim";
+
+/** One worker's slice of the file. */
+export interface VodScanLane {
+	tStart: number;
+	tEnd: number;
+	/** seconds of video the lane has reached */
+	t: number;
+	mode: VodScanMode;
+	done: boolean;
+	/** the lane gave up at `t`; the rest of its slice went unscanned */
+	failed: boolean;
+}
+
+export interface VodScanProgress {
+	t: number;
+	duration: number;
+	/** scan speed as a multiple of realtime */
+	rate: number;
+	lanes: VodScanLane[];
+}
+
+export interface VodScanSnapshot {
+	name: string | null;
+	status: VodScanStatus;
+	error: string | null;
+	/** what the scan found, chronological; reloaded from the store once saved */
+	events: ScanEvent[];
+	clipsWork: ClipsWork | null;
+}
+
+/** Kept apart from the snapshot: it ticks several times a second, which must not re-render the match cards. */
+export interface VodScanProgressSnapshot {
+	progress: VodScanProgress | null;
+	telemetry: ScanTelemetry | null;
+}
+
+const IDLE: VodScanSnapshot = {
+	name: null,
+	status: "idle",
+	error: null,
+	events: [],
+	clipsWork: null,
+};
+
+const IDLE_PROGRESS: VodScanProgressSnapshot = {
+	progress: null,
+	telemetry: null,
+};
+
+let snapshot = IDLE;
+const listeners = new Set<() => void>();
+let progressSnapshot = IDLE_PROGRESS;
+const progressListeners = new Set<() => void>();
+const laneCanvases = new Map<number, HTMLCanvasElement>();
+/** lossless images of the frames the detectors analyzed this scan, until saved */
+let frames = new WeakMap<ScanEvent, Blob>();
+let abortRef = { aborted: false };
+let abortChunks: (() => void) | null = null;
+/**
+ * Bumped per scan: a cancelled scan's workers settle asynchronously, so
+ * their writes must not land on the snapshot (or the preview canvas) of the
+ * scan that replaced it.
+ */
+let generation = 0;
+
+export function useVodScan(): VodScanSnapshot {
+	return useSyncExternalStore(
+		subscribe,
+		() => snapshot,
+		() => IDLE,
+	);
+}
+
+function subscribe(listener: () => void): () => void {
+	listeners.add(listener);
+	return () => listeners.delete(listener);
+}
+
+function set(patch: Partial<VodScanSnapshot>): void {
+	snapshot = { ...snapshot, ...patch };
+	for (const listener of listeners) listener();
+}
+
+export function useVodScanProgress(): VodScanProgressSnapshot {
+	return useSyncExternalStore(
+		subscribeProgress,
+		() => progressSnapshot,
+		() => IDLE_PROGRESS,
+	);
+}
+
+function subscribeProgress(listener: () => void): () => void {
+	progressListeners.add(listener);
+	return () => progressListeners.delete(listener);
+}
+
+function setProgress(patch: Partial<VodScanProgressSnapshot>): void {
+	progressSnapshot = { ...progressSnapshot, ...patch };
+	for (const listener of progressListeners) listener();
+}
+
+/** The view showing the scan hands over a canvas per lane (worker slice) for its frame preview. */
+export function setVodLaneCanvas(
+	lane: number,
+	canvas: HTMLCanvasElement | null,
+): void {
+	if (canvas) laneCanvases.set(lane, canvas);
+	else laneCanvases.delete(lane);
+}
+
+/** The frame an event of this scan was read from: in memory while scanning, the store once saved. */
+export function vodScanFrame(
+	event: ScanEvent,
+): (() => Promise<Blob | undefined>) | undefined {
+	const inMemory = frames.get(event);
+	if (inMemory) return () => Promise.resolve(inMemory);
+	if (event.hasFrame && event.id !== undefined) {
+		const id = event.id;
+		return () => loadVodEventFrame(id);
+	}
+	return undefined;
+}
+
+/** Stops a running scan; nothing of it is saved. */
+export function cancelVodScan(): void {
+	abortRef.aborted = true;
+	abortChunks?.();
+}
+
+/**
+ * Scans `file` as fast as decoding allows; a finished scan replaces any saved
+ * one of the same name. `saveFrames: false` skips keeping each event's
+ * analyzed frame, `clips: false` cutting clips of the scan.
+ */
+export async function startVodScan(
+	file: File,
+	{
+		telemetry,
+		saveFrames = true,
+		clips = true,
+	}: { telemetry: boolean; saveFrames?: boolean; clips?: boolean },
+): Promise<void> {
+	cancelVodScan();
+	const abort = { aborted: false };
+	abortRef = abort;
+	frames = new WeakMap();
+	const own = ++generation;
+	const update = (patch: Partial<VodScanSnapshot>) => {
+		if (own === generation) set(patch);
+	};
+	const updateProgress = (patch: Partial<VodScanProgressSnapshot>) => {
+		if (own === generation) setProgress(patch);
+	};
+	const preview = (frame: ImageBitmap | VideoFrame, lane: number) => {
+		if (own === generation) drawPreview(laneCanvases.get(lane), frame);
+	};
+	set({
+		...IDLE,
+		name: file.name,
+		status: "scanning",
+	});
+	setProgress(IDLE_PROGRESS);
+
+	const timeline = new TimelineBuilder();
+	let events: ScanEvent[] = [];
+	let clients: AnalyzerClient[] = [];
+	let publishTimer: ReturnType<typeof setTimeout> | null = null;
+	const publish = () => {
+		publishTimer ??= setTimeout(() => {
+			publishTimer = null;
+			update({ events });
+		}, EVENTS_PUBLISH_INTERVAL_MS);
+	};
+
+	try {
+		// seek fallback: latest per-frame done info + the waiter for the next one
+		const seek: { doneInfo: DoneInfo | null; frameDone: (() => void) | null } =
+			{ doneInfo: null, frameDone: null };
+		clients = Array.from(
+			{ length: defaultScanWorkerCount() },
+			() =>
+				new AnalyzerClient(
+					(result) => {
+						if (!result.gate.pass) return;
+						for (const event of result.events as DetectedEvent<FixtureData>[]) {
+							const action = timeline.push(event);
+							if (action.action === "merged" || action.action === "dropped")
+								continue;
+							const frame =
+								action.action === "extended" ? undefined : result.frame;
+							const replaced =
+								action.action === "added"
+									? undefined
+									: events.find((e) => sameEvent(e, action.replaced));
+							const scanEvent: ScanEvent = {
+								...event,
+								hasFrame: frame !== undefined,
+							};
+							if (frame) frames.set(scanEvent, frame);
+							events = events.filter((e) => e !== replaced);
+							events.push(scanEvent);
+							events.sort((a, b) => a.t - b.t);
+							publish();
+						}
+					},
+					(message) => {
+						seek.frameDone?.();
+						seek.frameDone = null;
+						if (!abort.aborted) {
+							update({ error: describeError(new Error(message)) });
+						}
+					},
+					(_t, info: DoneInfo) => {
+						seek.doneInfo = info;
+						seek.frameDone?.();
+						seek.frameDone = null;
+					},
+					{
+						collectTelemetry: telemetry,
+						webgpu: readSettings().webgpu,
+						attachFrames: saveFrames,
+					},
+				),
+		);
+		await Promise.all(clients.map((c) => c.whenReady()));
+		if (abort.aborted) return;
+
+		const started = performance.now();
+
+		const probe = await probeWebCodecs(file);
+		if (abort.aborted) return;
+
+		if (probe) {
+			// each worker demuxes, decodes and analyzes its own slice of
+			// the file; the main thread only aggregates progress
+			const { duration } = probe;
+			const span = duration / clients.length;
+			const chunks = clients.map((scanClient, i) => ({
+				client: scanClient,
+				tStart: i * span,
+				tEnd: i === clients.length - 1 ? duration : (i + 1) * span,
+				t: i * span,
+				mode: "active" as VodScanMode,
+				done: false,
+				failed: false,
+				telemetry: null as ScanTelemetry | null,
+			}));
+			abortChunks = () => {
+				for (const client of clients) client.abortChunk();
+			};
+			const mergedTelemetry = () => {
+				const parts = chunks.flatMap((c) => (c.telemetry ? [c.telemetry] : []));
+				return parts.length > 0 ? mergeScanTelemetry(parts) : null;
+			};
+			let lastUiUpdate = Number.NEGATIVE_INFINITY;
+			const pushUiUpdate = ({ force }: { force: boolean }) => {
+				const now = performance.now();
+				if (!force && now - lastUiUpdate < UI_UPDATE_INTERVAL_MS) return;
+				lastUiUpdate = now;
+				const covered = R.sumBy(
+					chunks,
+					(c) => Math.min(c.t, c.tEnd) - c.tStart,
+				);
+				const elapsed = (now - started) / 1000;
+				updateProgress({
+					progress: {
+						t: covered,
+						duration,
+						rate: elapsed > 0 ? covered / elapsed : 0,
+						lanes: chunks.map((c) => ({
+							tStart: c.tStart,
+							tEnd: c.tEnd,
+							t: Math.min(c.t, c.tEnd),
+							mode: c.mode,
+							done: c.done,
+							failed: c.failed,
+						})),
+					},
+					telemetry: mergedTelemetry(),
+				});
+			};
+			await Promise.allSettled(
+				chunks.map((chunk, chunkIndex) =>
+					chunk.client
+						.scanChunk(
+							{ file, chunkIndex, tStart: chunk.tStart, tEnd: chunk.tEnd },
+							(chunkProgress) => {
+								chunk.t = chunkProgress.t;
+								chunk.mode = chunkProgress.mode;
+								chunk.telemetry = chunkProgress.telemetry;
+								if (chunkProgress.preview) {
+									preview(chunkProgress.preview, chunkIndex);
+									chunkProgress.preview.close();
+								}
+								pushUiUpdate({ force: false });
+							},
+						)
+						.then(
+							(chunkTelemetry) => {
+								chunk.done = true;
+								chunk.t = chunk.tEnd;
+								chunk.telemetry = chunkTelemetry;
+								pushUiUpdate({ force: true });
+							},
+							(error) => {
+								chunk.done = true;
+								chunk.failed = true;
+								pushUiUpdate({ force: true });
+								update({
+									error: `Worker ${chunkIndex + 1} gave up, ${formatPosition(Math.min(chunk.t, chunk.tEnd))} – ${formatPosition(chunk.tEnd)} was not scanned (${describeError(error)})`,
+								});
+							},
+						),
+				),
+			);
+			abortChunks = null;
+			if (abort.aborted) return;
+			updateProgress({ telemetry: mergedTelemetry() });
+			await finalize(duration);
+			return;
+		}
+
+		// seek fallback: one worker, one frame in flight; the worker's calm
+		// signal widens the stride over dead air
+		const video = document.createElement("video");
+		video.muted = true;
+		video.playsInline = true;
+		const url = URL.createObjectURL(file);
+		video.src = url;
+		try {
+			const strideRef = { current: SEEK_ACTIVE_STRIDE_S };
+			const vod = await openSeekScan(video, () => strideRef.current);
+			if (abort.aborted) return;
+			const client = clients[0]!;
+			let lastUiUpdate = Number.NEGATIVE_INFINITY;
+			for await (const { frame, t } of vod.frames) {
+				if (abort.aborted) {
+					frame.close();
+					break;
+				}
+				const now = performance.now();
+				if (now - lastUiUpdate >= UI_UPDATE_INTERVAL_MS) {
+					lastUiUpdate = now;
+					// the preview draw must precede analyze — transferring the
+					// frame to the worker detaches it
+					preview(frame, 0);
+					const elapsed = (now - started) / 1000;
+					updateProgress({
+						progress: {
+							t,
+							duration: vod.duration,
+							rate: elapsed > 0 ? t / elapsed : 0,
+							lanes: [
+								{
+									tStart: 0,
+									tEnd: vod.duration,
+									t,
+									mode: seek.doneInfo?.calm ? "skim" : "active",
+									done: false,
+									failed: false,
+								},
+							],
+						},
+						telemetry: seek.doneInfo?.telemetry ?? null,
+					});
+				}
+				await new Promise<void>((resolve) => {
+					seek.frameDone = resolve;
+					if (!client.analyze(frame, t)) resolve();
+				});
+				strideRef.current = seek.doneInfo?.calm
+					? SEEK_CALM_STRIDE_S
+					: SEEK_ACTIVE_STRIDE_S;
+			}
+			if (!abort.aborted) await finalize(vod.duration);
+		} finally {
+			URL.revokeObjectURL(url);
+		}
+	} catch (error) {
+		if (!abort.aborted)
+			update({ status: "error", error: describeError(error) });
+	} finally {
+		if (publishTimer !== null) clearTimeout(publishTimer);
+		for (const client of clients) client.dispose();
+	}
+
+	async function finalize(duration: number): Promise<void> {
+		events = withoutInvalidObjectives(events);
+		update({ events });
+		updateProgress({
+			progress: {
+				t: duration,
+				duration,
+				rate: 0,
+				lanes: progressSnapshot.progress?.lanes ?? [],
+			},
+		});
+		await saveVod(
+			{
+				name: file.name,
+				savedAt: Date.now(),
+				duration,
+				summary: sessionSummary(
+					buildScannerMatches(events).map((built) => built.match),
+				),
+			},
+			events.map((event) => ({
+				type: event.type,
+				t: event.t,
+				confidence: event.confidence,
+				data: event.data,
+				frame: frames.get(event),
+			})),
+		);
+		events = (await loadVodEvents(file.name)).map(toScanEvent);
+		update({ events, status: "done" });
+		void refreshVods();
+		if (clips) await cutClips(file, events, update);
+	}
+}
+
+/** Objective reads that grouped into a match whose mode rules their overlay out (misreads) are dropped. */
+function withoutInvalidObjectives(events: ScanEvent[]): ScanEvent[] {
+	const invalid = new Set(invalidObjectiveEvents(buildScannerMatches(events)));
+	return invalid.size > 0 ? events.filter((e) => !invalid.has(e)) : events;
+}
+
+/** Clips the file's best scored windows, replacing any earlier clips of the same file. */
+async function cutClips(
+	file: File,
+	events: ScanEvent[],
+	update: (patch: Partial<VodScanSnapshot>) => void,
+): Promise<void> {
+	const windows = buildScannerMatches(events, undefined, { unbacked: true })
+		.flatMap((built) => {
+			return scoreWindows(built.match, povDeathTimes(built.sources), {
+				minKills: readSettings().clipMinKills,
+			}).map((window) => ({
+				window,
+				built,
+			}));
+		})
+		.sort((a, b) => b.window.score - a.window.score)
+		.slice(0, MAX_VOD_CLIPS);
+	// held before the first save, so another tab's page load never takes these for abandoned
+	await holdVisitLock();
+	await deleteVodClips((clip) => isThisVisitsVodClip(clip, file.name)).catch(
+		() => {},
+	);
+	if (windows.length === 0) {
+		await refreshClips();
+		return;
+	}
+	update({ clipsWork: { state: "cutting", done: 0, total: windows.length } });
+	let saved = 0;
+	let skipped = 0;
+	let error: string | null = null;
+	// best first: one clip failing (or not fitting) still leaves room to try the rest
+	for (const [index, { window, built }] of windows.entries()) {
+		try {
+			const clip = await extractVodClip(file, {
+				start: window.start,
+				end: window.end,
+				maxSeconds: MAX_CLIP_SECONDS,
+			});
+			const thumbnail = (await vodFrameThumbnail(file, window.t)) ?? undefined;
+			const stored = await saveClip(
+				{
+					createdAt: Date.now(),
+					bucket: "vod",
+					source: { kind: "vod", name: file.name, visit: VISIT_ID },
+					start: clip.start,
+					end: clip.end,
+					t: window.t,
+					time: window.time,
+					score: window.score,
+					kills: window.kills,
+					mode: built.match.mode,
+					stage: built.match.stage,
+					hasAudio: clip.hasAudio,
+					thumbnail,
+				},
+				clip.blob,
+			);
+			if (stored) {
+				saved++;
+				await refreshClips();
+			} else {
+				skipped++;
+			}
+		} catch (clipError) {
+			error ??= describeError(clipError);
+		}
+		update({
+			clipsWork: { state: "cutting", done: index + 1, total: windows.length },
+		});
+	}
+	update({
+		clipsWork: {
+			state: "done",
+			saved,
+			error:
+				error ??
+				(skipped > 0
+					? `${skipped} ${skipped === 1 ? "clip" : "clips"} left out, storage is full`
+					: null),
+		},
+	});
+}
+
+function toScanEvent(event: StoredVodEvent): ScanEvent {
+	return {
+		id: event.id,
+		type: event.type,
+		t: event.t,
+		confidence: event.confidence,
+		data: event.data,
+		hasFrame: event.hasFrame,
+	};
+}
+
+/** A stored event re-pushed into the timeline is a different object than the scan's copy. */
+function sameEvent(a: ScanEvent, b: DetectedEvent): boolean {
+	return a === b || (a.type === b.type && a.t === b.t && a.data === b.data);
+}
+
+function drawPreview(
+	canvas: HTMLCanvasElement | null | undefined,
+	frame: ImageBitmap | VideoFrame,
+): void {
+	if (!canvas) return;
+	const width = "displayWidth" in frame ? frame.displayWidth : frame.width;
+	const height = "displayHeight" in frame ? frame.displayHeight : frame.height;
+	if (canvas.width !== width || canvas.height !== height) {
+		canvas.width = width;
+		canvas.height = height;
+	}
+	canvas.getContext("2d")!.drawImage(frame, 0, 0);
+}

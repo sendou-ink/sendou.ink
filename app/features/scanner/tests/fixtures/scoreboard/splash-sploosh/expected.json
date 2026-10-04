@@ -1,10 +1,5 @@
 {
   "event": "Scoreboard",
-  "options": {
-    "skipFields": [
-      "players.2.name"
-    ]
-  },
   "data": {
     "lobby": "PRIVATE",
     "mode": "SZ",

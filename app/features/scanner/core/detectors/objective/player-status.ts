@@ -7,12 +7,18 @@
  * splatted = neutral grey plate under a grey X, ink-poor and untinted whatever
  * the backdrop brightness. Three geometries, named by which
  * side sits at the packed pitch: "even", "narrow-right" (usual spectator HUD;
- * S3 POV draws it too) and "narrow-left" (right column nearly coincides with
- * even's). Camera badges prove a broadcast, but broadcasts can hide them, so a
- * badge-less frame picks the geometry reading more decisively, with a slot-comb
- * win proving narrow-left and a history-less near-tie staying narrow-right
- * (pickLayout). On narrow layouts only the unsaturated glow counts toward ready
- * so saturated backdrop leaks cannot fake or suppress a state.
+ * S3 POV draws all three, resizing each side as the objective swings) and
+ * "narrow-left" (right column nearly coincides with even's). Camera badges
+ * prove a broadcast, but broadcasts can hide them, so a badge-less frame picks
+ * the geometry reading more decisively, with a decisive slot-comb win proving
+ * any geometry outright or unseating a latched even, and a history-less
+ * near-tie staying narrow-right (pickLayout). Only the unsaturated glow counts
+ * toward ready — saturated backdrop leaks and bright team ink alike must not
+ * fake a state — and a ready read the shoulder does not corroborate needs a
+ * body the wash has emptied of ink, not merely paled (a near-white weapon
+ * render pales one without the other). Every layout also demands a washed
+ * (ink-poor, pale) body, since backdrop leaking past an icon edge fakes the
+ * shoulder glow.
  */
 import type { Mat } from "../../cv";
 import { copyRoi, type Roi } from "../../image";
@@ -27,23 +33,32 @@ import {
 	STATUS_COMB_GAP_HALF_WIDTH,
 	STATUS_COMB_MAX_SHIFT,
 	STATUS_COMB_SIDE_SPANS,
+	STATUS_CROSSED_MIN_BODY_DARK,
+	STATUS_CROSSED_MIN_BODY_GREY,
+	STATUS_DARK_MAX_VALUE,
 	STATUS_DEAD_MAX_BODY_INK,
 	STATUS_DEAD_MAX_SHOULDER_GLOW,
+	STATUS_DECISIVE_COMB_LEAD,
+	STATUS_DECISIVE_COMB_MIN,
+	STATUS_DECISIVE_EVEN_COMB_LEAD,
+	STATUS_DECISIVE_EVEN_COMB_MIN,
 	STATUS_DPAD_PROBES_EVEN,
 	STATUS_DPAD_PROBES_NARROW_LEFT,
 	STATUS_DPAD_PROBES_NARROW_RIGHT,
+	STATUS_EVEN_FLIP_COMB_LEAD,
+	STATUS_EVEN_FLIP_COMB_MIN,
 	STATUS_FRESH_EVEN_MIN_LEAD,
 	STATUS_FRESH_NARROW_LEFT_MIN_LEFT_LEAD,
 	STATUS_FRESH_NARROW_LEFT_RIVAL_COMB_VETO,
 	STATUS_FRESH_NARROW_RIGHT_MIN_DECISIVENESS,
 	STATUS_GLOW_MAX_SPREAD,
 	STATUS_GLOW_MIN_VALUE,
+	STATUS_GREY_MAX_VALUE,
+	STATUS_GREY_MIN_VALUE,
 	STATUS_INK_MIN_SPREAD,
 	STATUS_INK_MIN_VALUE,
 	STATUS_LAYOUT_SCORE_CAP,
 	STATUS_LAYOUT_STICKY_MARGIN,
-	STATUS_NARROW_LEFT_COMB_LEAD,
-	STATUS_NARROW_LEFT_COMB_MIN,
 	STATUS_PALE_MAX_SPREAD,
 	STATUS_PALE_MIN_VALUE,
 	STATUS_READY_CLEAN_WASH_MAX_BODY_INK,
@@ -51,6 +66,7 @@ import {
 	STATUS_READY_MIN_BODY_PALE,
 	STATUS_READY_MIN_SHOULDER_GLOW,
 	STATUS_READY_MIN_WASH_BODY_PALE,
+	STATUS_READY_PALE_ONLY_MAX_BODY_INK,
 	STATUS_READY_WASH_MAX_BODY_INK,
 	STATUS_SHOULDER_BOX_EVEN,
 	STATUS_SHOULDER_BOX_NARROW,
@@ -60,12 +76,52 @@ import {
 	STATUS_STICKY_FLIP_COMB_MIN,
 	STATUS_TINT_MIN_SPREAD,
 	STATUS_TINT_MIN_VALUE,
+	STATUS_UNCROSSED_WASH_MAX_BODY_DARK,
+	STATUS_UNCROSSED_WASH_MAX_BODY_GREY,
+	STATUS_UNCROSSED_WASH_MIN_BODY_TINT,
 	STATUS_WASH_MIN_BODY_TINT,
 	STATUS_WHITE_MAX_SPREAD,
 	STATUS_WHITE_MIN_VALUE,
 } from "./rois";
 
 export const PLAYER_STATUS_EVENT_TYPE = "PlayerStatus";
+
+/**
+ * classFractions' per-pixel classes by (max, min) channel: bit 0 ink, 1 glow,
+ * 2 pale glow, 3 pale, 4 tint, 5 grey, 6 dark.
+ */
+const PIXEL_CLASSES = (() => {
+	const classes = new Uint8Array(1 << 16);
+	for (let value = 0; value < 256; value++) {
+		for (let low = 0; low <= value; low++) {
+			const spread = value - low;
+			let flags = 0;
+			if (spread >= STATUS_INK_MIN_SPREAD && value >= STATUS_INK_MIN_VALUE)
+				flags |= 1;
+			if (value >= STATUS_GLOW_MIN_VALUE) {
+				flags |= 2;
+				if (spread <= STATUS_GLOW_MAX_SPREAD) flags |= 4;
+			}
+			if (value >= STATUS_PALE_MIN_VALUE && spread <= STATUS_PALE_MAX_SPREAD)
+				flags |= 8;
+			if (
+				value >= STATUS_TINT_MIN_VALUE &&
+				spread > STATUS_TINT_MIN_SPREAD &&
+				spread < STATUS_INK_MIN_SPREAD
+			)
+				flags |= 16;
+			if (
+				value >= STATUS_GREY_MIN_VALUE &&
+				value <= STATUS_GREY_MAX_VALUE &&
+				spread <= STATUS_TINT_MIN_SPREAD
+			)
+				flags |= 32;
+			if (value <= STATUS_DARK_MAX_VALUE) flags |= 64;
+			classes[(value << 8) | low] = flags;
+		}
+	}
+	return classes;
+})();
 
 export type PlayerStatusFlags = [boolean, boolean, boolean, boolean];
 
@@ -113,6 +169,8 @@ interface SlotRead {
 	bodyInk: number;
 	bodyPale: number;
 	bodyTint: number;
+	bodyGrey: number;
+	bodyDark: number;
 	shoulderGlow: number;
 	shoulderPaleGlow: number;
 }
@@ -162,6 +220,8 @@ export function parsePlayerStatus(
 			bodyInk: reads.map((read) => Number(read.bodyInk.toFixed(2))),
 			bodyPale: reads.map((read) => Number(read.bodyPale.toFixed(2))),
 			bodyTint: reads.map((read) => Number(read.bodyTint.toFixed(2))),
+			bodyGrey: reads.map((read) => Number(read.bodyGrey.toFixed(2))),
+			bodyDark: reads.map((read) => Number(read.bodyDark.toFixed(2))),
 			shoulderGlow: reads.map((read) => Number(read.shoulderGlow.toFixed(2))),
 			shoulderPaleGlow: reads.map((read) =>
 				Number(read.shoulderPaleGlow.toFixed(2)),
@@ -203,6 +263,8 @@ function readSlots(
 				body.ink,
 				body.pale,
 				body.tint,
+				body.grey,
+				body.dark,
 				shoulder.glow,
 				shoulder.paleGlow,
 				layout,
@@ -239,10 +301,17 @@ const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
  * reads mid-range ink. Featureless dark backdrop still reads "decisively dead",
  * so the sticky margin stops one noisy frame flipping an established layout and
  * SCORED_FLIPS keeps the even/narrow-left false friends from trading places.
- * Three decisions decisiveness cannot make alone:
+ * Four decisions decisiveness cannot make alone:
  * - badge-less narrow-left (sendou-triton VoD) scores below narrow-right even
- *   when true, so a decisive slot-comb win (combContrast) overrides all but
- *   badges — positional, so only the differing left columns can lead;
+ *   when true, and S3 POV swaps geometries as the objective swings (Triton cup
+ *   VoD) while SCORED_FLIPS and the sticky margin hold the old one,
+ *   so a decisive slot-comb win (combContrast, STATUS_DECISIVE_*COMB_*)
+ *   overrides all but badges, fresh or sticky;
+ * - a spectator toggling between the overhead map and a player POV swaps even
+ *   for narrow-right mid-match, and even's columns sit between the narrow ones,
+ *   so the two score within 0.001 of each other and the wrong pick sticks for a
+ *   whole match; the comb sees the pitch and flips even outright
+ *   (STATUS_EVEN_FLIP_COMB_*), fresh or sticky;
  * - a history-less even-vs-narrow-right near-tie stays narrow-right unless it
  *   reads under the floor or even leads decisively (STATUS_FRESH_*);
  * - badge-less narrow-left POV over pale backdrops (2026-08-22 Sendou VoD)
@@ -282,14 +351,11 @@ function pickLayout(
 			sideCombs[layout][0] + sideCombs[layout][1],
 		]),
 	) as Record<PlayerStatusLayout, number>;
-	if (
-		combs["narrow-left"] >= STATUS_NARROW_LEFT_COMB_MIN &&
-		combs["narrow-left"] >=
-			combs["narrow-right"] + STATUS_NARROW_LEFT_COMB_LEAD &&
-		combs["narrow-left"] >= combs.even + STATUS_NARROW_LEFT_COMB_LEAD
-	) {
-		return { layout: "narrow-left", scores };
-	}
+	const combWinner = decisiveCombWinner(combs);
+	if (combWinner) return { layout: combWinner, scores };
+	const combFlipsEven =
+		combs["narrow-right"] >= STATUS_EVEN_FLIP_COMB_MIN &&
+		combs["narrow-right"] >= combs.even + STATUS_EVEN_FLIP_COMB_LEAD;
 	if (prevLayout) {
 		// flips away from narrow-right also need comb corroboration: on S3 POV the
 		// strip shrinks toward the timer while the POV player is dead, spiking the
@@ -298,13 +364,14 @@ function pickLayout(
 			(layout) =>
 				prevLayout !== "narrow-right" ||
 				(combs[layout] >= STATUS_STICKY_FLIP_COMB_MIN &&
-					combs[layout] >=
-						combs["narrow-right"] + STATUS_NARROW_LEFT_COMB_LEAD),
+					combs[layout] >= combs["narrow-right"] + STATUS_DECISIVE_COMB_LEAD),
 		);
 		const challenger =
 			challengers.length > 0
 				? challengers.reduce((a, b) => (scores[b] > scores[a] ? b : a))
 				: null;
+		if (prevLayout === "even" && combFlipsEven)
+			return { layout: "narrow-right", scores };
 		return {
 			layout:
 				challenger !== null &&
@@ -332,9 +399,32 @@ function pickLayout(
 		return { layout: "narrow-right", scores };
 	}
 	return {
-		layout: scores.even >= scores["narrow-right"] ? "even" : "narrow-right",
+		layout:
+			scores.even >= scores["narrow-right"] && !combFlipsEven
+				? "even"
+				: "narrow-right",
 		scores,
 	};
+}
+
+function decisiveCombWinner(
+	combs: Record<PlayerStatusLayout, number>,
+): PlayerStatusLayout | null {
+	for (const layout of ALL_LAYOUTS) {
+		const [min, lead] =
+			layout === "even"
+				? [STATUS_DECISIVE_EVEN_COMB_MIN, STATUS_DECISIVE_EVEN_COMB_LEAD]
+				: [STATUS_DECISIVE_COMB_MIN, STATUS_DECISIVE_COMB_LEAD];
+		if (
+			combs[layout] >= min &&
+			ALL_LAYOUTS.every(
+				(rival) => rival === layout || combs[layout] >= combs[rival] + lead,
+			)
+		) {
+			return layout;
+		}
+	}
+	return null;
 }
 
 function sideDecisiveness(reads: SlotRead[]): number {
@@ -357,24 +447,41 @@ function sideDecisiveness(reads: SlotRead[]): number {
  * splat or a wash, and its tint tells them apart: the wash is a pale team tint
  * at every pulse phase while the splat is neutral grey — even when a blown-out
  * backdrop turns the plate near-white, or the trough dims the wash under both
- * ready floors. On narrow layouts the wash replaces the body's ink, so an
- * ink-heavy body means backdrop leak unless strongly pale too (graded
- * STATUS_READY_*WASH* guards), and only unsaturated glow counts
- * (STATUS_GLOW_MAX_SPREAD). A pale backdrop can still light a DEAD icon's
- * shoulder, so narrow ready reads also need the wash's pale body and the
- * narrow dead read trusts the body classes alone.
+ * ready floors. Where a big dark weapon render dilutes the wash's tint as low
+ * as a splat over a bright tinted backdrop reads, the splat's grey X strokes
+ * still tell them apart, and they veto a tinted body outright when the dark
+ * squid shows under them (a splat over a pale tinted backdrop). Only unsaturated glow counts as the wash's
+ * (STATUS_GLOW_MAX_SPREAD): bright team ink lights the shoulder on its own
+ * once the ink is light enough (orange clears the glow floor, lime does not).
+ * The wash also replaces the body's ink, so an ink-heavy body means backdrop
+ * leak unless strongly pale too (graded STATUS_READY_*WASH* guards). A pale
+ * backdrop can still light a DEAD icon's shoulder, so a ready read also needs
+ * the wash's pale body, and the narrow dead read trusts the body classes
+ * alone. Without the shoulder's corroboration the graded allowances do not
+ * apply at all: a pale-only ready needs the ink gone (STATUS_READY_PALE_ONLY_MAX_BODY_INK), since a pale body
+ * over live ink is a weapon render, not a wash.
  */
 function classifySlot(
 	bodyInk: number,
 	bodyPale: number,
 	bodyTint: number,
+	bodyGrey: number,
+	bodyDark: number,
 	shoulderGlow: number,
 	shoulderPaleGlow: number,
 	layout: PlayerStatusLayout,
 ): SlotRead {
-	const washGlow = layout === "even" ? shoulderGlow : shoulderPaleGlow;
+	// the wash glows pale on every layout; raw brightness is team ink or backdrop
+	const washGlow = shoulderPaleGlow;
 	const inkPoor = bodyInk <= STATUS_DEAD_MAX_BODY_INK;
-	const tinted = bodyTint >= STATUS_WASH_MIN_BODY_TINT;
+	const crossed =
+		bodyGrey >= STATUS_CROSSED_MIN_BODY_GREY &&
+		bodyDark >= STATUS_CROSSED_MIN_BODY_DARK;
+	const tinted =
+		(bodyTint >= STATUS_WASH_MIN_BODY_TINT && !crossed) ||
+		(bodyTint >= STATUS_UNCROSSED_WASH_MIN_BODY_TINT &&
+			bodyGrey <= STATUS_UNCROSSED_WASH_MAX_BODY_GREY &&
+			bodyDark <= STATUS_UNCROSSED_WASH_MAX_BODY_DARK);
 	const dead =
 		inkPoor &&
 		!tinted &&
@@ -383,13 +490,15 @@ function classifySlot(
 		bodyInk <= STATUS_READY_CLEAN_WASH_MAX_BODY_INK ||
 		(bodyInk <= STATUS_READY_WASH_MAX_BODY_INK &&
 			bodyPale >= STATUS_READY_INKY_WASH_MIN_BODY_PALE);
+	const paleEmptiedBody =
+		bodyPale >= STATUS_READY_MIN_BODY_PALE &&
+		bodyInk <= STATUS_READY_PALE_ONLY_MAX_BODY_INK;
 	const special =
 		!dead &&
 		((inkPoor && tinted) ||
-			((washGlow >= STATUS_READY_MIN_SHOULDER_GLOW ||
-				bodyPale >= STATUS_READY_MIN_BODY_PALE) &&
-				(layout === "even" ||
-					(washedBody && bodyPale >= STATUS_READY_MIN_WASH_BODY_PALE))));
+			((washGlow >= STATUS_READY_MIN_SHOULDER_GLOW || paleEmptiedBody) &&
+				washedBody &&
+				bodyPale >= STATUS_READY_MIN_WASH_BODY_PALE));
 	const confidence = dead
 		? Math.min(
 				1,
@@ -412,53 +521,78 @@ function classifySlot(
 		bodyInk,
 		bodyPale,
 		bodyTint,
+		bodyGrey,
+		bodyDark,
 		shoulderGlow,
 		shoulderPaleGlow,
 	};
 }
 
-/** Ink, glow, pale, and tint pixel fractions of a ROI (see rois.ts for the classes). */
+/** Ink, glow, pale, tint, grey, and dark pixel fractions of a ROI (see rois.ts for the classes). */
 function classFractions(
 	frame: Mat,
 	roi: Roi,
-): { ink: number; glow: number; paleGlow: number; pale: number; tint: number } {
-	const crop = copyRoi(frame, roi);
-	const { data } = crop;
-	const channels = crop.channels();
+): {
+	ink: number;
+	glow: number;
+	paleGlow: number;
+	pale: number;
+	tint: number;
+	grey: number;
+	dark: number;
+} {
+	const cols = frame.cols;
+	const inside =
+		roi.x >= 0 &&
+		roi.y >= 0 &&
+		roi.w > 0 &&
+		roi.h > 0 &&
+		roi.x + roi.w <= cols &&
+		roi.y + roi.h <= frame.rows &&
+		frame.channels() === 4 &&
+		frame.isContinuous();
+	// read in place when possible: the frame is a continuous RGBA mat
+	const crop = inside ? null : copyRoi(frame, roi);
+	const data = (crop ?? frame).data as Uint8Array;
+	const channels = crop ? crop.channels() : 4;
+	const rowStride = crop ? roi.w * channels : cols * 4;
+	const start = crop ? 0 : (roi.y * cols + roi.x) * 4;
 	let ink = 0;
 	let glow = 0;
 	let paleGlow = 0;
 	let pale = 0;
 	let tint = 0;
-	let count = 0;
-	for (let i = 0; i < data.length; i += channels) {
-		const r = data[i]!;
-		const g = data[i + 1]!;
-		const b = data[i + 2]!;
-		const value = Math.max(r, g, b);
-		const spread = value - Math.min(r, g, b);
-		if (spread >= STATUS_INK_MIN_SPREAD && value >= STATUS_INK_MIN_VALUE) ink++;
-		if (value >= STATUS_GLOW_MIN_VALUE) {
-			glow++;
-			if (spread <= STATUS_GLOW_MAX_SPREAD) paleGlow++;
+	let grey = 0;
+	let dark = 0;
+	for (let y = 0; y < roi.h; y++) {
+		const rowStart = start + y * rowStride;
+		const rowEnd = rowStart + roi.w * channels;
+		for (let i = rowStart; i < rowEnd; i += channels) {
+			const r = data[i]!;
+			const g = data[i + 1]!;
+			const b = data[i + 2]!;
+			const high = r > g ? (r > b ? r : b) : g > b ? g : b;
+			const low = r < g ? (r < b ? r : b) : g < b ? g : b;
+			const flags = PIXEL_CLASSES[(high << 8) | low]!;
+			ink += flags & 1;
+			glow += (flags >> 1) & 1;
+			paleGlow += (flags >> 2) & 1;
+			pale += (flags >> 3) & 1;
+			tint += (flags >> 4) & 1;
+			grey += (flags >> 5) & 1;
+			dark += flags >> 6;
 		}
-		if (value >= STATUS_PALE_MIN_VALUE && spread <= STATUS_PALE_MAX_SPREAD)
-			pale++;
-		if (
-			value >= STATUS_TINT_MIN_VALUE &&
-			spread > STATUS_TINT_MIN_SPREAD &&
-			spread < STATUS_INK_MIN_SPREAD
-		)
-			tint++;
-		count++;
 	}
-	crop.delete();
+	crop?.delete();
+	const count = roi.w * roi.h;
 	return {
 		ink: ink / count,
 		glow: glow / count,
 		paleGlow: paleGlow / count,
 		pale: pale / count,
 		tint: tint / count,
+		grey: grey / count,
+		dark: dark / count,
 	};
 }
 
@@ -466,7 +600,7 @@ function classFractions(
  * Slot-comb contrast per layout and side: mean iconness (ink-or-pale column
  * fraction) at slot centers minus at gap midpoints, maximized over a small
  * shift. A rigid comb at the wrong pitch cannot score all four slots at once:
- * positional evidence orthogonal to body decisiveness (STATUS_NARROW_LEFT_COMB_*).
+ * positional evidence orthogonal to body decisiveness (STATUS_DECISIVE_*COMB_*).
  */
 function combScores(frame: Mat): Record<PlayerStatusLayout, [number, number]> {
 	const profiles = STATUS_COMB_SIDE_SPANS.map(([x0, x1]) =>
@@ -510,13 +644,10 @@ function iconnessProfile(frame: Mat, x0: number, x1: number): number[] {
 			const r = data[i]!;
 			const g = data[i + 1]!;
 			const b = data[i + 2]!;
-			const value = Math.max(r, g, b);
-			const spread = value - Math.min(r, g, b);
-			const isInk =
-				spread >= STATUS_INK_MIN_SPREAD && value >= STATUS_INK_MIN_VALUE;
-			const isPale =
-				value >= STATUS_PALE_MIN_VALUE && spread <= STATUS_PALE_MAX_SPREAD;
-			if (isInk || isPale) profile[x]! += 1 / height;
+			const high = r > g ? (r > b ? r : b) : g > b ? g : b;
+			const low = r < g ? (r < b ? r : b) : g < b ? g : b;
+			// ink or pale
+			if (PIXEL_CLASSES[(high << 8) | low]! & 9) profile[x]! += 1 / height;
 		}
 	}
 	crop.delete();

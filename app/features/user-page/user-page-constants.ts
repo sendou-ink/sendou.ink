@@ -46,6 +46,10 @@ export const SEASON_STATS_TABS = [
 ] as const;
 
 export type SeasonStatsTab = (typeof SEASON_STATS_TABS)[number];
+export const SEASONS_STAFF_DIALOGS = [
+	"canceled-matches",
+	"public-notes",
+] as const;
 export const RESULTS_PER_PAGE = 25;
 export const HIGHLIGHTS_RESULTS_MAX = 500;
 

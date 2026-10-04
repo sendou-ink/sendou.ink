@@ -43,6 +43,7 @@ const queued = (overrides: Partial<GlobalStatus> = {}): GlobalStatus => ({
 describe("useGlobalStatusSounds", () => {
 	beforeEach(() => {
 		mocks.playSound.mockClear();
+		localStorage.clear();
 	});
 
 	test.each([
@@ -98,5 +99,41 @@ describe("useGlobalStatusSounds", () => {
 		);
 
 		expect(mocks.playSound).not.toHaveBeenCalled();
+	});
+
+	test("stays silent for a moment another tab already announced", async () => {
+		const match: GlobalStatus = { state: "SQ_MATCH", url: sendouQMatchPage(1) };
+		const staleTab = await render(<Sounds status={queued()} />);
+		await transitionTo(queued(), match);
+		mocks.playSound.mockClear();
+
+		await staleTab.rerender(<Sounds status={match} />);
+
+		expect(mocks.playSound).not.toHaveBeenCalled();
+	});
+
+	test("stays silent for a like another tab already announced", async () => {
+		const staleTab = await render(<Sounds status={queued({ count: 1 })} />);
+		await transitionTo(queued({ count: 1 }), queued({ count: 2 }));
+		mocks.playSound.mockClear();
+
+		await staleTab.rerender(<Sounds status={queued({ count: 2 })} />);
+
+		expect(mocks.playSound).not.toHaveBeenCalled();
+	});
+
+	test("plays a repeated ready check after the queued status was seen in between", async () => {
+		const readyCheck: GlobalStatus = {
+			state: "SQ_READY_CHECK",
+			url: SENDOUQ_READY_PAGE,
+		};
+		const screen = await render(<Sounds status={queued()} />);
+		await screen.rerender(<Sounds status={readyCheck} />);
+		await screen.rerender(<Sounds status={queued()} />);
+		mocks.playSound.mockClear();
+
+		await screen.rerender(<Sounds status={{ ...readyCheck }} />);
+
+		expect(mocks.playSound).toHaveBeenCalledWith("sq_ready-check");
 	});
 });

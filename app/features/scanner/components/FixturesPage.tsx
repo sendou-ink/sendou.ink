@@ -1,17 +1,20 @@
 import clsx from "clsx";
+import { ExternalLink } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
+import { SendouButton } from "~/components/elements/Button";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl, SCANNER_PAGE } from "~/utils/urls";
 import type { Roi } from "../core/canonical";
 import type { PlayerStatusLayout } from "../core/detectors/objective/player-status";
 import * as objective from "../core/detectors/objective/rois";
+import { mainWeaponLabel } from "../core/labels";
 import type { FixtureListItem } from "../routes/scanner.fixtures";
 import { scannerSearchParams } from "../scanner-search-params";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
 import styles from "./FixturesPage.module.css";
-import { mainWeaponLabel } from "./labels";
 import { drawNormalizedCanvas } from "./normalized-canvas";
 import { formatTimer, RoiCrop } from "./ScreenshotPage";
+import { SessionHeader } from "./SessionHeader";
 
 const FIXTURES_ENDPOINT = "/scanner/fixtures";
 /** Filtering down to this many cases opens every card, for one-glance review */
@@ -76,25 +79,27 @@ export function FixturesPage() {
 
 	return (
 		<div className={styles.page}>
-			<div className={styles.controls}>
-				<input
-					type="search"
-					className={styles.filter}
-					value={q}
-					onChange={(e) => setQ(e.target.value)}
-					placeholder="Narrow by name substring — comma separates alternatives"
-				/>
-				<span className={styles.count}>
-					{fixtures
-						? `${filtered.length} / ${fixtures.length} fixtures`
-						: "loading…"}
-				</span>
-			</div>
-			<p className={styles.hint}>
-				Ground-truth review: check each expected label against its frame. The
-				filter lives in the URL, so a narrowed selection can be shared as a
-				link.
-			</p>
+			<SessionHeader>
+				<div className={styles.controls}>
+					<input
+						type="search"
+						className={styles.filter}
+						value={q}
+						onChange={(e) => setQ(e.target.value)}
+						placeholder="Narrow by name substring — comma separates alternatives"
+					/>
+					<span className={styles.count}>
+						{fixtures
+							? `${filtered.length} / ${fixtures.length} fixtures`
+							: "loading…"}
+					</span>
+				</div>
+				<p className={styles.hint}>
+					Ground-truth review: check each expected label against its frame. The
+					filter lives in the URL, so a narrowed selection can be shared as a
+					link.
+				</p>
+			</SessionHeader>
 			{error ? <p className="text-error">{error}</p> : null}
 			{[...groups.entries()].map(([detector, group]) => (
 				<section key={detector} className={styles.group}>
@@ -122,7 +127,7 @@ function frameUrl(fixture: FixtureListItem): string {
 function inspectFixture(url: string) {
 	const key = newInspectKey();
 	window.open(
-		scannerSearchParams.href(SCANNER_PAGE, { tab: "screenshot", inspect: key }),
+		scannerSearchParams.href(SCANNER_PAGE, { view: "debug", inspect: key }),
 		"_blank",
 	);
 	void fetch(url)
@@ -150,9 +155,14 @@ function FixtureCard(props: { fixture: FixtureListItem; autoExpand: boolean }) {
 					{fixture.name}
 				</button>
 				<span className={styles.cardEvent}>{fixture.expected.event}</span>
-				<button type="button" onClick={() => inspectFixture(url)}>
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={<ExternalLink />}
+					onClick={() => inspectFixture(url)}
+				>
 					Inspect
-				</button>
+				</SendouButton>
 			</header>
 			{open ? (
 				<div className={styles.cardBody}>
@@ -358,13 +368,18 @@ function ObjectiveExpected(props: {
 	data: ExpectedData;
 }) {
 	const { data } = props;
+	if (data.position !== undefined) return <TrackObjectiveExpected {...props} />;
 	return (
 		<div className={styles.rich}>
 			<div className={styles.richStats}>
 				<span>
 					control{" "}
 					<b>
-						{data.control?.[0] ? "left" : data.control?.[1] ? "right" : "none"}
+						{data.control === 0
+							? "left"
+							: data.control === 1
+								? "right"
+								: "none"}
 					</b>
 				</span>
 				<span>
@@ -389,6 +404,60 @@ function ObjectiveExpected(props: {
 						<figcaption>right count {data.score?.[1] ?? "?"}</figcaption>
 					</figure>
 				</div>
+			) : null}
+		</div>
+	);
+}
+
+/** TC/RM: the track with its icon and the plate band under it, whose plates slide with the pushes. */
+function TrackObjectiveExpected(props: {
+	frame: HTMLCanvasElement | null;
+	data: ExpectedData;
+}) {
+	const { data } = props;
+	return (
+		<div className={styles.rich}>
+			<div className={styles.richStats}>
+				<span>
+					mode <b>{data.mode ?? "?"}</b>
+				</span>
+				<span>
+					timer <b>{formatTimer(data.time ?? null)}</b>
+				</span>
+				<span>
+					control{" "}
+					<b>
+						{data.control === 0
+							? "left"
+							: data.control === 1
+								? "right"
+								: "none"}
+					</b>
+				</span>
+				<span>
+					position <b>{data.position ?? "—"}</b>
+				</span>
+				<span>
+					counts{" "}
+					<b>
+						{data.score?.[0] ?? "—"} / {data.score?.[1] ?? "—"}
+					</b>
+				</span>
+			</div>
+			{props.frame ? (
+				<RoiCrop
+					frame={props.frame}
+					roi={{
+						x: objective.TRACK_PLATE_DIGIT_ROI.x,
+						y: objective.TRACK_Y - 30,
+						w: objective.TRACK_PLATE_DIGIT_ROI.w,
+						h:
+							objective.TRACK_PLATE_DIGIT_ROI.y +
+							objective.TRACK_PLATE_DIGIT_ROI.h -
+							(objective.TRACK_Y - 30),
+					}}
+					scale={0.75}
+				/>
 			) : null}
 		</div>
 	);

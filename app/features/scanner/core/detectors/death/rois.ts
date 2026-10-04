@@ -77,9 +77,25 @@ export const TAG_TILT_DEG = 3.0;
 export const TAG_NAME_OUTER: Roi = { x: 1130, y: 770, w: 650, h: 140 };
 /**
  * Top edge must clear kana dakuten (y=34 clipped them, misreading こ for ご) yet stay below the title
- * line (ends y=17).
+ * line (ends y=17); the bottom keeps a 'p' tail at the long name's sagging right end off the border.
  */
-export const TAG_NAME_INNER: Roi = { x: 20, y: 21, w: 610, h: 87 };
+export const TAG_NAME_INNER: Roi = { x: 20, y: 21, w: 610, h: 91 };
+
+/**
+ * Replay playback draws button hint chips (R View Graph, L Pause, ...) over the
+ * tag's right end; the L chip reads as a trailing glyph ("カニ Jokera ¬").
+ * Probes: chip faces either side of the R and L letters, white (min channel
+ * 255) on replays, under 200 on every other fixture.
+ */
+export const REPLAY_HINT_CHIP_PROBES: readonly Roi[] = [
+	{ x: 1697, y: 752, w: 10, h: 12 },
+	{ x: 1730, y: 752, w: 10, h: 12 },
+	{ x: 1708, y: 809, w: 8, h: 12 },
+	{ x: 1733, y: 809, w: 10, h: 12 },
+];
+export const REPLAY_HINT_CHIP_MIN_CHANNEL = 220;
+/** The L chip with its shadow, blanked out of the tag band when the hints show. */
+export const REPLAY_HINT_L_CHIP: Roi = { x: 1684, y: 800, w: 74, h: 36 };
 
 /** Tight cap height of the tag name text (atlas nominal height). */
 export const TAG_NAME_TEXT_HEIGHT = 46;

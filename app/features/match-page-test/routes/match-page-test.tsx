@@ -27,7 +27,7 @@ import type { PlayerStatusTimelineSample } from "~/components/PlayerStatusTimeli
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
-/** Counter reads of a made-up zones game, for previewing the timeline chart. */
+/** Counter reads of a made-up Rainmaker game, for previewing the timeline charts. */
 const MOCK_OBJECTIVE_EVENTS = mockObjectiveEvents();
 
 /** Icon-strip reads of the same made-up game, for previewing the status bands. */
@@ -864,41 +864,37 @@ export default function MatchPageTestRoute() {
 }
 
 /**
- * Zones game second by second: the controlling side burns its penalty before its count moves,
- * and losing the zone after counting hands it a penalty to burn next time.
+ * Rainmaker game second by second: the carrier's team drags the objective toward the other end,
+ * a dropped Rainmaker sits neutral where it fell, and each team's count only falls past its best
+ * push so far.
  */
 function mockObjectiveEvents(): ObjectiveTimelineEvent[] {
-	const PHASES: Array<{ seconds: number; control: [boolean, boolean] }> = [
-		{ seconds: 12, control: [false, false] },
-		{ seconds: 30, control: [true, false] },
-		{ seconds: 14, control: [false, false] },
-		{ seconds: 44, control: [false, true] },
-		{ seconds: 10, control: [false, false] },
-		{ seconds: 80, control: [true, false] },
+	const PHASES: Array<{
+		seconds: number;
+		holder: 0 | 1 | null;
+		speed: number;
+	}> = [
+		{ seconds: 12, holder: null, speed: 0 },
+		{ seconds: 20, holder: 0, speed: 2 },
+		{ seconds: 14, holder: null, speed: 0 },
+		{ seconds: 40, holder: 1, speed: -2 },
+		{ seconds: 10, holder: null, speed: 0 },
+		{ seconds: 45, holder: 0, speed: 2 },
+		{ seconds: 20, holder: null, speed: 0 },
+		{ seconds: 29, holder: 1, speed: -2 },
 	];
-	const PENALTY_ON_LOSING_ZONE = 12;
 	const SAMPLE_EVERY_SECONDS = 2;
 
-	const score: [number, number] = [100, 100];
-	const penalty: [number, number] = [0, 0];
+	const best: [number, number] = [0, 0];
 	const events: ObjectiveTimelineEvent[] = [];
-	let previousControl: [boolean, boolean] = [false, false];
+	let position = 0;
 	let t = 0;
 
 	for (const phase of PHASES) {
-		for (const side of [0, 1] as const) {
-			if (previousControl[side] && !phase.control[side]) {
-				penalty[side] += PENALTY_ON_LOSING_ZONE;
-			}
-		}
-		previousControl = phase.control;
-
 		for (let second = 0; second < phase.seconds; second++) {
-			for (const side of [0, 1] as const) {
-				if (!phase.control[side]) continue;
-				if (penalty[side] > 0) penalty[side] -= 1;
-				else score[side] = Math.max(0, score[side] - 1);
-			}
+			position = Math.max(-100, Math.min(100, position + phase.speed));
+			best[0] = Math.max(best[0], position);
+			best[1] = Math.max(best[1], -position);
 
 			t += 1;
 			if (t % SAMPLE_EVERY_SECONDS !== 0) continue;
@@ -906,9 +902,13 @@ function mockObjectiveEvents(): ObjectiveTimelineEvent[] {
 				t,
 				data: {
 					time: 300 - t,
-					score: [score[0], score[1]],
-					penalty: [penalty[0] || null, penalty[1] || null],
-					control: [phase.control[0], phase.control[1]],
+					score: [
+						best[0] > 0 ? 100 - best[0] : null,
+						best[1] > 0 ? 100 - best[1] : null,
+					],
+					penalty: [null, null],
+					control: phase.holder,
+					position,
 				},
 			});
 		}

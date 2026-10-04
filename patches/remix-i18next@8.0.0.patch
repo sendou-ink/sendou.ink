@@ -1,0 +1,29 @@
+diff --git a/build/index.js b/build/index.js
+index a9437649528516ce80138ece72d3155f7e943f1c..4d5d9df4fb9728eb18575a114ad2d4ae8d76a875 100644
+--- a/build/index.js
++++ b/build/index.js
+@@ -5,14 +5,20 @@ export function createI18nextMiddleware({ detection, i18next = {}, plugins = [],
+     let localeContext = createContext();
+     let i18nextContext = createContext();
+     let languageDetector = new LanguageDetector(detection);
++    // patched: one instance per language reused across requests, creating and initializing one costs ~40-100µs
++    let instancesByLng = new Map();
+     return [
+         async function i18nextMiddleware(args, next) {
+             let lng = await languageDetector.detect(args);
+             args.context.set(localeContext, lng);
+-            let instance = createInstance(i18next);
+-            for (const plugin of plugins ?? [])
+-                instance.use(plugin);
+-            await instance.init({ lng });
++            let instance = instancesByLng.get(lng);
++            if (!instance) {
++                instance = createInstance(i18next);
++                for (const plugin of plugins ?? [])
++                    instance.use(plugin);
++                await instance.init({ lng });
++                instancesByLng.set(lng, instance);
++            }
+             args.context.set(i18nextContext, instance);
+             return await next();
+         },

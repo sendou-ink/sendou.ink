@@ -10,6 +10,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import { localDateToDayMonthYear } from "~/utils/dates";
 import { vodFormBaseSchema } from "../vods-schemas";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
@@ -59,7 +60,7 @@ function createDefaultValues(overrides?: {
 	return {
 		youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
 		title: "Test VOD",
-		date: new Date(),
+		date: localDateToDayMonthYear(new Date()),
 		type: "TOURNAMENT" as const,
 		pov: { type: "USER" as const },
 		...overrides,

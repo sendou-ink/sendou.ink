@@ -15,6 +15,7 @@
 	"forms.action.setAsCurrent": "Establecer como actual ({{time}})",
 	"forms.action.copyFromPrevious": "Copiar de la partida anterior",
 	"noVods": "No se encontraron videos que coincidan con este filtro. ¿Nos falta alguno? Consulta la página de preguntas frecuentes para saber cómo obtener permisos para subir videos (VoD).",
+	"scannerBanner": "",
 	"gainPerms": "Escribe en el canal #helpdesk de nuestro Discord para obtener permiso para subir videos.",
 	"deleteConfirm": "¿Borrar el video con el título '{{title}}'?",
 	"errors.youtubePreviewFailed": "Error al cargar la vista previa de YouTube",

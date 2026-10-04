@@ -15,7 +15,11 @@ import {
 	chatClient,
 	snapshotFromLoaderData,
 } from "./chat-client";
-import { useIsAttending, useServerRevalidationEvents } from "./chat-hooks";
+import {
+	useHoldRevalidationsDuringSubmissions,
+	useIsAttending,
+	useServerRevalidationEvents,
+} from "./chat-hooks";
 import { chatSearchParams } from "./chat-search-params";
 import type {
 	ChatRoomListItem,
@@ -293,8 +297,18 @@ function ChatProviderInner({
 	};
 
 	return (
-		<ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
+		<ChatContext.Provider value={contextValue}>
+			<SubmissionRevalidationHold />
+			{children}
+		</ChatContext.Provider>
 	);
+}
+
+// own component so fetcher state changes don't re-render the whole provider
+function SubmissionRevalidationHold() {
+	useHoldRevalidationsDuringSubmissions();
+
+	return null;
 }
 
 function useOpenChatFromSearchParam({

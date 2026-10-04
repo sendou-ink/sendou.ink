@@ -19,7 +19,10 @@ export const imageValue = v.nullable(
 			type: v.literal("NEW"),
 			dataUrl: v.pipe(
 				v.string(),
-				v.maxLength(IMAGE_FIELD_MAX_DATA_URL_LENGTH),
+				v.maxLength(
+					IMAGE_FIELD_MAX_DATA_URL_LENGTH,
+					"forms:errors.imageTooLarge",
+				),
 				v.regex(IMAGE_FIELD_DATA_URL_PREFIX_REGEX),
 			),
 		}),

@@ -8,17 +8,24 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
-import { getCV, type Mat } from "../../cv";
+import type { Mat } from "../../cv";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
-import { cropRoi, maxBrightness, meanBrightness } from "../../image";
+import {
+	cropRoi,
+	frameGray,
+	frameRgb,
+	maxBrightness,
+	meanBrightness,
+} from "../../image";
+import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
 	FULL_COUNT_TEAM_SCORE,
-	parseBannerScore,
+	parseBannerScoreSteps,
 	resolveMatchScores,
 } from "./banner";
-import { parseNumber } from "./digits";
-import { type ParsedHeader, parseHeader } from "./header";
+import { parseNumberSteps } from "./digits";
+import { parseHeaderSteps } from "./header";
 import { findPovIndex } from "./pov";
 import {
 	GATE_DARK_MAX_MEAN,
@@ -40,7 +47,7 @@ import {
 	TEAM_SCORE_ROIS,
 	weaponRoi,
 } from "./rois";
-import { parseScoreboardRow, type RowRois } from "./row";
+import { parseScoreboardRowSteps, type RowRois } from "./row";
 import type { SpecialMatch, SpecialTemplate } from "./specials";
 import type { WeaponMatch, WeaponTemplate } from "./weapons";
 
@@ -101,6 +108,9 @@ export interface ScoreboardResources {
 	/** header tag glyphs: lobby line, and the mode+stage line */
 	headerLobbyGlyphs: GlyphSet | null;
 	headerLineGlyphs: GlyphSet | null;
+	/** the same lines' kana for a Japanese header, read when the Latin read doesn't snap; without them JA headers read null */
+	headerLobbyJaGlyphs?: GlyphSet | null;
+	headerLineJaGlyphs?: GlyphSet | null;
 	/**
 	 * Replay-browser extras in FOT-RowdyStd (code line, VICTORY/DEFEAT tags); falls back to
 	 * rescaled name/header glyphs.
@@ -152,6 +162,8 @@ export interface ScoreboardResources {
 	minimapSubWeapons?: SpecialTemplate[] | null;
 	/** Planner-map signatures (assets/cv/planner) for minimap stage identification; without them `stage` stays null. */
 	plannerStages?: import("../minimap/stage").PlannerStage[] | null;
+	/** Ranked mode icons for the X Battle cards; without them their `mode` stays null. */
+	modeIcons?: import("../x-rank/shared").ModeIconTemplate[] | null;
 }
 
 export const SCOREBOARD_EVENT_TYPE = "Scoreboard";
@@ -159,7 +171,6 @@ export const SCOREBOARD_EVENT_TYPE = "Scoreboard";
 export function createScoreboardDetector(
 	resources: ScoreboardResources,
 ): Detector<ScoreboardData> {
-	const cv = getCV();
 	const teamDigits =
 		resources.teamDigits ??
 		(resources.paintDigits
@@ -175,8 +186,7 @@ export function createScoreboardDetector(
 		: [];
 
 	function gate(frame: Mat): GateResult {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const gray = frameGray(frame);
 
 		let darkOk = 0;
 		let suffixOk = 0;
@@ -190,7 +200,6 @@ export function createScoreboardDetector(
 		for (const roi of GATE_PANEL_PROBES) {
 			if (meanBrightness(frame, roi) < GATE_PANEL_MAX_MEAN) panelOk++;
 		}
-		gray.delete();
 
 		const score =
 			(darkOk / ROW_CENTERS.length +
@@ -201,15 +210,14 @@ export function createScoreboardDetector(
 		return { pass, score };
 	}
 
-	function parse(frame: Mat, t: number): DetectedEvent<ScoreboardData>[] {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-		const rgb = new cv.Mat();
-		cv.cvtColor(frame, rgb, cv.COLOR_RGBA2RGB);
-
-		const players: ScoreboardPlayer[] = [];
-		const rowDebug: ScoreboardRowDebug[] = [];
-		const confidences: number[] = [];
+	function* parseSteps(
+		frame: Mat,
+		t: number,
+		_gate: GateResult | undefined,
+		speculative: boolean,
+	): MatchSteps<DetectedEvent<ScoreboardData>[]> {
+		const gray = frameGray(frame);
+		const rgb = frameRgb(frame);
 
 		const rowRois: RowRois = {
 			weapon: weaponRoi,
@@ -219,57 +227,82 @@ export function createScoreboardDetector(
 			stat: statRoi,
 			povArrow: povArrowRoi,
 		};
-		for (const cy of ROW_CENTERS) {
-			const row = parseScoreboardRow(
-				gray,
-				rgb,
-				cy,
-				rowRois,
-				resources,
-				confidences,
-			);
-			players.push(row.player);
-			rowDebug.push(row.debug);
-		}
+		const { headerLobbyGlyphs, headerLineGlyphs } = resources;
+		// the total sits on the team-colored swirl box, so binarize higher than on black pills
+		const totalCrop = teamDigits ? cropRoi(gray, TEAM_SCORE_ROIS[0]) : null;
+		const [rows, header, winnerTotal, banners] = yield* all([
+			all(
+				ROW_CENTERS.map((cy) =>
+					parseScoreboardRowSteps(
+						gray,
+						rgb,
+						cy,
+						rowRois,
+						resources,
+						{},
+						speculative,
+					),
+				),
+			),
+			headerLobbyGlyphs && headerLineGlyphs
+				? parseHeaderSteps(
+						gray,
+						{
+							lobby: headerLobbyGlyphs,
+							line: headerLineGlyphs,
+							lobbyJa: resources.headerLobbyJaGlyphs,
+							lineJa: resources.headerLineJaGlyphs,
+						},
+						speculative,
+					)
+				: done(null),
+			teamDigits && totalCrop
+				? parseNumberSteps(
+						totalCrop,
+						teamDigits,
+						{ binThreshold: 175 },
+						speculative,
+					)
+				: done(null),
+			matchScoreSets.length > 0
+				? all([
+						parseBannerScoreSteps(
+							gray,
+							MATCH_SCORE_ROIS[0],
+							matchScoreSets,
+							speculative,
+						),
+						parseBannerScoreSteps(
+							gray,
+							MATCH_SCORE_ROIS[1],
+							matchScoreSets,
+							speculative,
+						),
+					])
+				: done(null),
+		]);
+		totalCrop?.delete();
+
+		const players = rows.map((row) => row.player);
+		const rowDebug = rows.map((row) => row.debug);
+		const confidences = rows.flatMap((row) => row.confidences);
 		const povIndex = findPovIndex(rowDebug.map((r) => r.povFraction));
 
-		let header: ParsedHeader | null = null;
-		if (resources.headerLobbyGlyphs && resources.headerLineGlyphs) {
-			header = parseHeader(
-				gray,
-				resources.headerLobbyGlyphs,
-				resources.headerLineGlyphs,
-			);
-			confidences.push(header.confidence);
-		}
+		if (header) confidences.push(header.confidence);
 
 		// the winner's total is read only to recognize a knockout: only a full 100
 		// count reaches 500, and the banner value is hidden under the KNOCKOUT! burst
-		let knockout = false;
-		let winnerTotalConf = 0;
-		if (teamDigits) {
-			// the total sits on the team-colored swirl box, so binarize higher than on black pills
-			const crop = cropRoi(gray, TEAM_SCORE_ROIS[0]);
-			const winnerTotal = parseNumber(crop, teamDigits, {
-				binThreshold: 175,
-			});
-			crop.delete();
-			knockout = winnerTotal.value === FULL_COUNT_TEAM_SCORE;
-			winnerTotalConf = winnerTotal.confidence;
-		}
+		const knockout = winnerTotal?.value === FULL_COUNT_TEAM_SCORE;
+		const winnerTotalConf = winnerTotal?.confidence ?? 0;
 
 		let matchScores: [number | null, number | null] = [null, null];
 		let bannerDebug: object | undefined;
-		if (matchScoreSets.length > 0) {
-			const left = parseBannerScore(gray, MATCH_SCORE_ROIS[0], matchScoreSets);
-			const right = parseBannerScore(gray, MATCH_SCORE_ROIS[1], matchScoreSets);
+		if (banners) {
+			const [left, right] = banners;
 			matchScores = resolveMatchScores({ left, right, knockout });
 			confidences.push(left.confidence, right.confidence);
 			bannerDebug = { left, right, knockout, winnerTotalConf };
 		}
-
-		gray.delete();
-		rgb.delete();
 
 		const confidence =
 			confidences.length > 0
@@ -303,6 +336,8 @@ export function createScoreboardDetector(
 		id: "scoreboard",
 		sufficientConfidence: 0.79,
 		gate,
-		parse,
+		parse: (frame, t, gateResult) =>
+			runSync(parseSteps(frame, t, gateResult, false)),
+		parseSteps,
 	};
 }

@@ -1,6 +1,7 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
+	holdRevalidations,
 	holdRevalidationsDuring,
 	isMatchResultsScopedRevalidation,
 	revalidateWithScope,
@@ -254,6 +255,34 @@ describe("holdRevalidationsDuring", () => {
 		const revalidate = vi.fn(() => Promise.resolve());
 
 		revalidateWithScope(revalidate, undefined);
+		expect(revalidate).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe("holdRevalidations", () => {
+	test("a revalidation requested during the hold runs on release", () => {
+		const revalidate = vi.fn(() => Promise.resolve());
+
+		const release = holdRevalidations();
+		revalidateWithScope(revalidate, undefined);
+		expect(revalidate).not.toHaveBeenCalled();
+
+		release();
+		expect(revalidate).toHaveBeenCalledTimes(1);
+	});
+
+	test("releasing twice does not release another hold", () => {
+		const revalidate = vi.fn(() => Promise.resolve());
+
+		const release = holdRevalidations();
+		const otherRelease = holdRevalidations();
+		revalidateWithScope(revalidate, undefined);
+
+		release();
+		release();
+		expect(revalidate).not.toHaveBeenCalled();
+
+		otherRelease();
 		expect(revalidate).toHaveBeenCalledTimes(1);
 	});
 });

@@ -9,8 +9,9 @@ import type { Roi } from "../../canonical";
 import type { Mat } from "../../cv";
 import type { GlyphSet } from "../../glyphs";
 import { ALL_STAGE_ENTRIES, LOBBY_MODE_COMBOS } from "../../localized";
+import { all, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
-import { readTagBand } from "../scoreboard/header";
+import { readTagBandSteps } from "../scoreboard/header";
 import { HEADER_BOTTOM_BAND, HEADER_TOP_BAND } from "./rois";
 
 export interface ParsedReplayHeader {
@@ -114,44 +115,69 @@ const REPLAY_BANDS: ReplayHeaderBands = {
 	bottom: HEADER_BOTTOM_BAND,
 };
 
-export function parseReplayHeader(
+/** The top and bottom bands read in one lockstep; each band's lifted-ceiling retry follows its own first read. */
+export function* parseReplayHeaderSteps(
 	gray: Mat,
 	topGlyphs: GlyphSet,
 	bottomGlyphs: GlyphSet,
 	bands: ReplayHeaderBands = REPLAY_BANDS,
-): ParsedReplayHeader {
+	speculative = false,
+): MatchSteps<ParsedReplayHeader> {
 	const leadIn = {
 		tagLeadInMax: bands.tagLeadInMax,
 		tagColumnFraction: bands.tagColumnFraction,
 	};
-	let top = parseTopBand(readTagBand(gray, bands.top, topGlyphs, leadIn));
-	if (top.stage === null) {
-		const retry = parseTopBand(
-			readTagBand(gray, bands.top, topGlyphs, {
-				...leadIn,
-				tagDarkMax: TAG_DARK_MAX_LIFTED,
-			}),
+	const readTop = function* (): MatchSteps<ReturnType<typeof parseTopBand>> {
+		let top = parseTopBand(
+			yield* readTagBandSteps(gray, bands.top, topGlyphs, leadIn, speculative),
 		);
-		if (retry.stageScore >= top.stageScore) top = retry;
-	}
-
-	let bottomReading = readTagBand(gray, bands.bottom, bottomGlyphs, leadIn);
-	let bottomMatch = bottomReading
-		? closestBy(bottomReading, LOBBY_MODE_COMBOS, (c) => c.text)
-		: null;
-	if (!bottomMatch || bottomMatch.score < MIN_MATCH_SCORE) {
-		const reading = readTagBand(gray, bands.bottom, bottomGlyphs, {
-			...leadIn,
-			tagDarkMax: TAG_DARK_MAX_LIFTED,
-		});
-		const match = reading
-			? closestBy(reading, LOBBY_MODE_COMBOS, (c) => c.text)
-			: null;
-		if ((match?.score ?? 0) >= (bottomMatch?.score ?? 0)) {
-			bottomReading = reading;
-			bottomMatch = match;
+		if (top.stage === null) {
+			const retry = parseTopBand(
+				yield* readTagBandSteps(
+					gray,
+					bands.top,
+					topGlyphs,
+					{ ...leadIn, tagDarkMax: TAG_DARK_MAX_LIFTED },
+					speculative,
+				),
+			);
+			if (retry.stageScore >= top.stageScore) top = retry;
 		}
-	}
+		return top;
+	};
+	const readBottom = function* () {
+		let bottomReading = yield* readTagBandSteps(
+			gray,
+			bands.bottom,
+			bottomGlyphs,
+			leadIn,
+			speculative,
+		);
+		let bottomMatch = bottomReading
+			? closestBy(bottomReading, LOBBY_MODE_COMBOS, (c) => c.text)
+			: null;
+		if (!bottomMatch || bottomMatch.score < MIN_MATCH_SCORE) {
+			const reading = yield* readTagBandSteps(
+				gray,
+				bands.bottom,
+				bottomGlyphs,
+				{ ...leadIn, tagDarkMax: TAG_DARK_MAX_LIFTED },
+				speculative,
+			);
+			const match = reading
+				? closestBy(reading, LOBBY_MODE_COMBOS, (c) => c.text)
+				: null;
+			if ((match?.score ?? 0) >= (bottomMatch?.score ?? 0)) {
+				bottomReading = reading;
+				bottomMatch = match;
+			}
+		}
+		return { bottomReading, bottomMatch };
+	};
+	const [top, { bottomReading, bottomMatch }] = yield* all([
+		readTop(),
+		readBottom(),
+	]);
 
 	let lobby: ScannerLobby | null = null;
 	let mode: ModeShort | null = null;

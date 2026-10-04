@@ -1,0 +1,19 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 41,
+		"score": [
+			54,
+			80
+		],
+		"penalty": [
+			null,
+			10
+		],
+		"control": 0
+	},
+	"options": {
+		"notes": "Alpha (pink) attack window open: filled plate and the pie timer replacing the anchor disc. CB draws the SZ plates overlay, so the read's mode is SZ; the match's mode tells them apart."
+	}
+}

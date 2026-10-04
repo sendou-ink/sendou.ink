@@ -3,6 +3,7 @@ import { redirect } from "react-router";
 import * as R from "remeda";
 import type { DBBoolean } from "~/db/tables";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
@@ -61,7 +62,7 @@ class SendouQClass {
 	readonly #isAccurateTiers;
 	readonly #userSkills;
 	readonly #intervals;
-	readonly #receivedLikeCounts;
+	readonly #receivedLikerGroupIds;
 	usersInQueue;
 
 	constructor(
@@ -72,9 +73,9 @@ class SendouQClass {
 			userSkills: calculatedUserSkills,
 			isAccurateTiers,
 		}: Awaited<ReturnType<typeof userSkills>>,
-		receivedLikeCounts: Map<number, number>,
+		receivedLikerGroupIds: Map<number, number[]>,
 	) {
-		this.#receivedLikeCounts = receivedLikeCounts;
+		this.#receivedLikerGroupIds = receivedLikerGroupIds;
 		this.#recentMatches = recentMatches;
 		this.#isAccurateTiers = isAccurateTiers;
 		this.#userSkills = calculatedUserSkills;
@@ -131,9 +132,28 @@ class SendouQClass {
 		);
 	}
 
-	/** Pending likes/challenges the group has received, 0 when none. */
+	/** Pending likes/challenges the group has received from groups it can see in the looking pool, 0 when none. */
 	likesReceivedCount(groupId: number) {
-		return this.#receivedLikeCounts.get(groupId) ?? 0;
+		const group = this.findUncensoredGroupById(groupId);
+		if (!group) return 0;
+
+		const visibleGroupIds = new Set(
+			this.#suitableLookingGroupsFor(group).map((visible) => visible.id),
+		);
+
+		return (this.#receivedLikerGroupIds.get(groupId) ?? []).filter(
+			(likerGroupId) => visibleGroupIds.has(likerGroupId),
+		).length;
+	}
+
+	/** {@link likesReceivedCount} of every group that has received any likes, keyed by group id. */
+	likesReceivedCounts() {
+		return new Map(
+			Array.from(this.#receivedLikerGroupIds.keys(), (groupId) => [
+				groupId,
+				this.likesReceivedCount(groupId),
+			]),
+		);
 	}
 
 	/** A group by id without censoring sensitive data. */
@@ -243,6 +263,14 @@ class SendouQClass {
 		const ownGroup = this.findOwnGroup(userId);
 		if (!ownGroup) return [];
 
+		return this.#suitableLookingGroupsFor(ownGroup)
+			.map(this.#getGroupReplayMapper(userId))
+			.sort(this.#getSkillSortComparator(ownGroup.tier))
+			.map(this.#getAddTierRangeMapper(ownGroup.tier))
+			.map((group) => this.#censorGroup(group));
+	}
+
+	#suitableLookingGroupsFor(ownGroup: SendouQClass["groups"][number]) {
 		const currentMemberCountOptions =
 			ownGroup.members.length === 4
 				? [4]
@@ -252,18 +280,13 @@ class SendouQClass {
 						? [1, 2]
 						: [1, 2, 3];
 
-		return this.groups
-			.filter((group) =>
-				this.#isSuitableLookingGroup({
-					group,
-					ownGroupId: ownGroup.id,
-					currentMemberCountOptions,
-				}),
-			)
-			.map(this.#getGroupReplayMapper(userId))
-			.sort(this.#getSkillSortComparator(ownGroup.tier))
-			.map(this.#getAddTierRangeMapper(ownGroup.tier))
-			.map((group) => this.#censorGroup(group));
+		return this.groups.filter((group) =>
+			this.#isSuitableLookingGroup({
+				group,
+				ownGroupId: ownGroup.id,
+				currentMemberCountOptions,
+			}),
+		);
 	}
 
 	#getGroupReplayMapper(userId: number) {
@@ -580,24 +603,46 @@ function matchMapPools(match: DBMatch) {
 /** Global SendouQ manager: all active groups and matchmaking state. */
 export let SendouQ = await freshSendouQInstance();
 
-/** Reloads the global SendouQ instance from the database; call after any change to groups or matches. */
+let likesReceivedCounts = SendouQ.likesReceivedCounts();
+
+/** Reloads the global SendouQ instance from the database; call after any change to groups or matches. Notifies the groups whose received likes count changed, e.g. a liker left the looking pool or went stale since the last reload. */
 export async function refreshSendouQInstance() {
 	SendouQ = await freshSendouQInstance();
+
+	const previousLikesReceivedCounts = likesReceivedCounts;
+	likesReceivedCounts = SendouQ.likesReceivedCounts();
+
+	const changedGroupIds = R.unique([
+		...previousLikesReceivedCounts.keys(),
+		...likesReceivedCounts.keys(),
+	]).filter(
+		(groupId) =>
+			(previousLikesReceivedCounts.get(groupId) ?? 0) !==
+			(likesReceivedCounts.get(groupId) ?? 0),
+	);
+
+	ChatSystemMessage.notifyStatusChanged(
+		changedGroupIds.flatMap(
+			(groupId) =>
+				SendouQ.findUncensoredGroupById(groupId)?.members.map(
+					(member) => member.id,
+				) ?? [],
+		),
+	);
 }
 
 async function freshSendouQInstance() {
 	const season = Seasons.currentOrPrevious();
 
-	const [groups, recentMatches, skills, receivedLikeCounts] = await Promise.all(
-		[
+	const [groups, recentMatches, skills, receivedLikerGroupIds] =
+		await Promise.all([
 			SQGroupRepository.findCurrentGroups(),
 			SQGroupRepository.findRecentlyFinishedMatches(),
 			userSkills(season!.nth),
-			SQGroupRepository.findCurrentReceivedLikeCounts(),
-		],
-	);
+			SQGroupRepository.findCurrentReceivedLikerGroupIds(),
+		]);
 
-	return new SendouQClass(groups, recentMatches, skills, receivedLikeCounts);
+	return new SendouQClass(groups, recentMatches, skills, receivedLikerGroupIds);
 }
 
 /** Throws a redirect when the user loads a page other than the one their SendouQ group status puts them on. */

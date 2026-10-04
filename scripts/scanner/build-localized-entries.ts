@@ -8,7 +8,7 @@
  * Sources per language:
  *   CommonMsg/VS/VSRuleName          modes (+ _2L two-line intro-splash wraps, "Muschel-\nchaos")
  *   CommonMsg/VS/VSStageName         stages (keyed via the USen values)
- *   CommonMsg/MatchMode              lobby tags (XMatch / Private)
+ *   CommonMsg/MatchMode              lobby tags (XMatch / Private / casual lobbies)
  *   LayoutMsg/Lobby_MenuMode_00      the intro splash's "MODE" label
  *   LayoutMsg/Mng_Result_00          replay-browser VICTORY / DEFEAT tags
  *   LayoutMsg/VS_Beaten_00 (999)     death-burst message; the weapon placeholder sits on
@@ -64,6 +64,11 @@ const LOBBY_KEYS: Record<string, ScannerLobby> = {
 	Bankara: "SERIES",
 	BankaraOpen: "OPEN",
 	Private: "PRIVATE",
+	Regular: "REGULAR",
+	League: "CHALLENGE",
+	FestRegular: "SPLATFEST_OPEN",
+	FestChallenge: "SPLATFEST_PRO",
+	FestTriColor: "TRICOLOR",
 };
 
 /** the English lobby tags as the game shows them, for USen validation */
@@ -72,6 +77,11 @@ const LOBBY_ENGLISH: Record<ScannerLobby, string> = {
 	SERIES: "Anarchy Battle (Series)",
 	OPEN: "Anarchy Battle (Open)",
 	PRIVATE: "Private Battle",
+	REGULAR: "Regular Battle",
+	CHALLENGE: "Challenge",
+	SPLATFEST_OPEN: "Splatfest Battle (Open)",
+	SPLATFEST_PRO: "Splatfest Battle (Pro)",
+	TRICOLOR: "Tricolor Battle",
 };
 
 type LangDump = Record<string, Record<string, string>>;

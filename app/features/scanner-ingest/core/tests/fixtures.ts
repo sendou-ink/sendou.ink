@@ -72,5 +72,21 @@ export function sideSwapped(match: ScannerMatch): ScannerMatch {
 			match.matchScores === null
 				? null
 				: [match.matchScores[1], match.matchScores[0]],
+		objective:
+			match.objective === null
+				? null
+				: {
+						...match.objective,
+						samples: match.objective.samples.map((sample) => ({
+							...sample,
+							score: [sample.score[1], sample.score[0]],
+							penalty: [sample.penalty[1], sample.penalty[0]],
+							control:
+								sample.control === null ? null : sample.control === 0 ? 1 : 0,
+							...(sample.position != null
+								? { position: 0 - sample.position }
+								: null),
+						})),
+					},
 	};
 }

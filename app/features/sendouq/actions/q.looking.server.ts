@@ -73,7 +73,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 				notifyLikeReceived(data.targetGroupId);
 				revalidateGroupTopic(currentGroup.id);
-				notifyGroupStatusChanged(data.targetGroupId);
 				notifyGroupStatusChanged(currentGroup.id);
 
 				break;
@@ -115,7 +114,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 				notifyLikeReceived(data.targetGroupId);
 				revalidateGroupTopic(currentGroup.id);
-				notifyGroupStatusChanged(data.targetGroupId);
 				break;
 			}
 			case "UNLIKE": {
@@ -128,7 +126,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 				revalidateGroupTopic(data.targetGroupId);
 				revalidateGroupTopic(currentGroup.id);
-				notifyGroupStatusChanged(data.targetGroupId);
 				notifyGroupStatusChanged(currentGroup.id);
 
 				break;

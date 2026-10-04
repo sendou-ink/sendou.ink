@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponLabel": "Cometz Octobrush",
+    "weaponId": 1112,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "CB",
+        "SCU",
+        "SPU",
+        "SPU"
+      ],
+      [
+        "NS",
+        "SCU",
+        "SS",
+        "SSU"
+      ],
+      [
+        "SJ",
+        "QSJ",
+        "RES",
+        "QSJ"
+      ]
+    ],
+    "name": "カニ Jokera"
+  }
+}

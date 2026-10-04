@@ -1,7 +1,7 @@
 /**
  * Fixture discovery and detector execution for tests and tools. A fixture is a
- * directory under tests/fixtures/<detector>/<case-name>/ holding frame.png or
- * frame.jpg (raw capture, any resolution) and expected.json.
+ * directory under tests/fixtures/<detector>/<case-name>/ holding frame.png,
+ * .webp or .jpg (raw capture, any resolution) and expected.json.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -65,6 +65,7 @@ interface ExpectedScoreboard {
 		| "Scoreboard"
 		| "ScoreboardBattleLogReplay"
 		| "ScoreboardBattleLog"
+		| "QuickScoreboardBattleLog"
 		| "ScoreboardOwn"
 		| "Death"
 		| "MapStart"
@@ -73,14 +74,18 @@ interface ExpectedScoreboard {
 		| "PlayerStatus"
 		| "StripWeapons"
 		| "Kill"
+		| "XSetCount"
+		| "XSetResult"
+		| "XRankPosition"
 		| "none";
 	data?: {
 		lobby?: ScannerLobby;
-		mode?: ModeShort;
+		/** Objective: null = a TC/RM track whose checkpoint markers could not tell */
+		mode?: ModeShort | null;
 		stage?: StageId;
 		/** informational for the human corrector; tests compare `stage` */
 		stageLabel?: string;
-		/** ScoreboardBattleLogReplay + ScoreboardBattleLog only */
+		/** ScoreboardBattleLogReplay + (Quick)ScoreboardBattleLog only */
 		timestamp?: string;
 		/** ScoreboardBattleLogReplay only */
 		replayCode?: string;
@@ -108,8 +113,20 @@ interface ExpectedScoreboard {
 		score?: [number | null, number | null];
 		/** Objective only: penalty pill value per team; null = no pill */
 		penalty?: [number | null, number | null];
-		/** Objective only: which team currently holds the objective */
-		control?: [boolean, boolean];
+		/** Objective only: which team currently holds the objective; null = neither */
+		control?: 0 | 1 | null;
+		/** Objective TC/RM: the icon along the track, -100 (left end) .. 100 (right end); null = no icon. XRankPosition: the X Rank position */
+		position?: number | null;
+		/** XRankPosition only: the arrow beside the position */
+		direction?: "UP" | "DOWN" | "SAME" | null;
+		/** XSetCount only */
+		wins?: number | null;
+		losses?: number | null;
+		/** XSetResult only: game results in play order */
+		results?: ("WIN" | "LOSE")[];
+		/** XSetResult only: signed X Power change, and the power after it */
+		powerChange?: number | null;
+		power?: number | null;
 		/** PlayerStatus only: special held per slot, [left team, right team] */
 		special?: [boolean[], boolean[]];
 		/** PlayerStatus only: splatted per slot, [left team, right team] */
@@ -133,6 +150,8 @@ interface ExpectedScoreboard {
 		skipFields?: string[];
 		/** free-form context for humans (why fields are skipped, capture quirks) */
 		notes?: string;
+		/** X Battle cards: a mid-animation frame whose read must score under the timeline floor */
+		untrusted?: boolean;
 	};
 }
 
@@ -150,16 +169,36 @@ export function loadFixtures(detector: string): Fixture[] {
 		.filter((e) => e.isDirectory())
 		.map((e) => {
 			const dir = join(root, e.name);
-			const framePath = ["frame.png", "frame.jpg", "frame.jpeg"]
+			const framePath = ["frame.png", "frame.webp", "frame.jpg", "frame.jpeg"]
 				.map((f) => join(dir, f))
 				.find(existsSync);
-			if (!framePath) throw new Error(`fixture ${e.name}: no frame.png/jpg`);
+			if (!framePath)
+				throw new Error(`fixture ${e.name}: no frame.png/webp/jpg`);
 			const expected = JSON.parse(
 				readFileSync(join(dir, "expected.json"), "utf8"),
 			) as ExpectedScoreboard;
 			return { name: e.name, dir, framePath, expected };
 		})
 		.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The scoreboard-shaped screens: each one's positives must leave the other detectors' gates quiet. */
+const SCOREBOARD_SHAPED: readonly [
+	dir: string,
+	event: ExpectedScoreboard["event"],
+][] = [
+	["scoreboard", "Scoreboard"],
+	["scoreboard-battle-log-replay", "ScoreboardBattleLogReplay"],
+	["scoreboard-battle-log", "ScoreboardBattleLog"],
+	["quick-scoreboard-battle-log", "QuickScoreboardBattleLog"],
+];
+
+/** Positive fixtures of every scoreboard-shaped screen but `ownDir`'s, for cross-negative gate sweeps. */
+export function loadScoreboardLookalikes(ownDir: string): Fixture[] {
+	return SCOREBOARD_SHAPED.filter(([dir]) => dir !== ownDir).flatMap(
+		([dir, event]) =>
+			loadFixtures(dir).filter((f) => f.expected.event === event),
+	);
 }
 
 export function isFieldSkipped(fixture: Fixture, field: string): boolean {

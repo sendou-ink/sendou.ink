@@ -4,7 +4,7 @@ const config = {
 		type: true,
 	},
 	tags: ["-lintignore"],
-	ignoreBinaries: ["ffmpeg", "ffprobe"],
+	ignoreBinaries: ["ffmpeg", "ffprobe", "yt-dlp"],
 	entry: [
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.ts",

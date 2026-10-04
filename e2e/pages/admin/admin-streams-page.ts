@@ -45,7 +45,11 @@ export class AdminStreamsPage {
 		await form.getByLabel("Name").fill(name);
 		await form.getByLabel("Link").fill(url);
 		await form.getByLabel("Logo").setInputFiles(logoPath);
-		// the logo compresses in the browser; submitting before the preview shows loses it
+		await this.page
+			.getByRole("dialog", { name: "Edit image" })
+			.getByRole("button", { name: "Apply" })
+			.click();
+		// the logo is cropped in the browser; submitting before the preview shows loses it
 		await expect(form.locator("img")).toBeVisible();
 		await fillDateTimeField({
 			scope: form,

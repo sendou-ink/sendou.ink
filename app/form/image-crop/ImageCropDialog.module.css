@@ -1,0 +1,114 @@
+.dialog {
+	max-width: 32rem;
+}
+
+.viewport {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	container-type: size;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-higher);
+	cursor: grab;
+	touch-action: none;
+	user-select: none;
+	-webkit-user-select: none;
+
+	&:active {
+		cursor: grabbing;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-fg-accent);
+		outline-offset: 2px;
+	}
+}
+
+.frame {
+	--frame-inset: var(--s-6);
+	--frame-width: min(
+		calc(100cqw - 2 * var(--frame-inset)),
+		calc((100cqh - 2 * var(--frame-inset)) * var(--aspect-ratio))
+	);
+
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	width: var(--frame-width);
+	height: calc(var(--frame-width) / var(--aspect-ratio));
+
+	@container (width < 400px) {
+		--frame-inset: var(--s-4);
+	}
+}
+
+.orientedImage {
+	position: absolute;
+	container-type: size;
+}
+
+.image {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 100cqw;
+	height: 100cqh;
+	max-width: none;
+	transform: translate(-50%, -50%) rotate(var(--rotation));
+	pointer-events: none;
+
+	&.sideways {
+		width: 100cqh;
+		height: 100cqw;
+	}
+}
+
+.frameOutline {
+	position: absolute;
+	inset: 0;
+	border: 4px solid var(--color-text-on-dark);
+	border-radius: var(--radius-box);
+	box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.6);
+	pointer-events: none;
+
+	&.circle {
+		border-radius: 50%;
+	}
+}
+
+.controls {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	margin-block-start: var(--s-4);
+	padding-inline: var(--s-8);
+	color: var(--color-text-high);
+
+	& input[type="range"] {
+		flex: 1;
+	}
+}
+
+.zoomOutIcon {
+	width: 1rem;
+	height: 1rem;
+	flex-shrink: 0;
+}
+
+.zoomInIcon {
+	width: 1.75rem;
+	height: 1.75rem;
+	flex-shrink: 0;
+}
+
+.rotateButton {
+	margin-inline-start: var(--s-2);
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	margin-block-start: var(--s-6);
+}

@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import { FULL_GROUP_SIZE, SENDOUQ } from "~/features/sendouq/q-constants";
 import { invariant } from "~/utils/invariant";
 import { faker } from "../core/faker";
+import * as ModAuditLogFactory from "../factories/ModAuditLogFactory";
 import * as SQGroupFactory from "../factories/SQGroupFactory";
 import * as SQMatchFactory from "../factories/SQMatchFactory";
 import * as SQReportedWeaponFactory from "../factories/SQReportedWeaponFactory";
@@ -55,6 +56,8 @@ export async function seedSendouQ(
 	await seedNzapReportedMatch(users, teams);
 	await seedNzapCanceledMatches(users, teams);
 	await seedLookingGroups(users);
+	// last, so the faker draws don't shift the rest of the module's data
+	await seedNzapPublicNotes(users);
 
 	return { recentMatchIds };
 }
@@ -163,6 +166,23 @@ async function seedNzapCanceledMatches(users: SeededUsers, teams: SeededTeams) {
 			createdAt: sub(new Date(), { days: 35, hours: 7 }),
 		},
 	);
+}
+
+/** Public notes history for the staff view, a max length one included. */
+async function seedNzapPublicNotes(users: SeededUsers) {
+	const texts = [
+		"Chill games, no tryhard pls",
+		"Main backline, can flex to support",
+		faker.lorem.paragraphs(3).slice(0, SENDOUQ.OWN_PUBLIC_NOTE_MAX_LENGTH),
+		"Have to leave in 30 min",
+	];
+
+	for (const [index, text] of texts.entries()) {
+		await ModAuditLogFactory.create(
+			{ userId: users.nzapId, text },
+			{ createdAt: sub(new Date(), { days: texts.length - index }) },
+		);
+	}
 }
 
 /** A reason at the exact max length, for how a wall of text lays out. */

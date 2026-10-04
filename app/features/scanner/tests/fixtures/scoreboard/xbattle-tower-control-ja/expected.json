@@ -1,0 +1,12 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "X",
+    "mode": "TC",
+    "stage": 16
+  },
+  "options": {
+    "skipFields": ["matchScores"],
+    "notes": "-I23PqqYtHQ VoD 0:56:52: Japanese header (Xマッチ / ガチヤグラ コンブトラック), read through the scoreboard-header-*-ja atlases; only the header is labeled"
+  }
+}

@@ -112,7 +112,16 @@ function toTimelineObjective(
 			time: sample.time,
 			score: alphaFirst(sample.score),
 			penalty: alphaFirst(sample.penalty),
-			control: alphaFirst(sample.control),
+			control:
+				alphaIsWinner || sample.control === null
+					? sample.control
+					: sample.control === 0
+						? 1
+						: 0,
+			position:
+				!alphaIsWinner && sample.position != null
+					? 0 - sample.position
+					: sample.position,
 		},
 	}));
 }

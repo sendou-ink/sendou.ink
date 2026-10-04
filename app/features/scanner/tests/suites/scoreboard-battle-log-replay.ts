@@ -18,6 +18,7 @@ import {
 	type Fixture,
 	isFieldSkipped,
 	loadFixtures,
+	loadScoreboardLookalikes,
 	runDetectorOnFixture,
 } from "../../node/fixtures";
 import { loadScoreboardResources } from "../../node/resources";
@@ -224,15 +225,10 @@ export async function runScoreboardBattleLogReplaySuite(
 	}
 
 	// The scoreboard-shaped screens must not trigger each other's detectors;
-	// the mirror sweeps live in scoreboard.test.ts and scoreboard-battle-log.test.ts.
-	for (const fixture of mine([
-		...loadFixtures("scoreboard").filter(
-			(f) => f.expected.event === "Scoreboard",
-		),
-		...loadFixtures("scoreboard-battle-log").filter(
-			(f) => f.expected.event === "ScoreboardBattleLog",
-		),
-	])) {
+	// the mirror sweeps live in scoreboard.test.ts and suites/scoreboard-battle-log.ts.
+	for (const fixture of mine(
+		loadScoreboardLookalikes("scoreboard-battle-log-replay"),
+	)) {
 		test(`replay gate stays quiet on ${fixture.name}`, async () => {
 			const { gate } = await runDetectorOnFixture(detector, fixture);
 			assert.equal(

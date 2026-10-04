@@ -3,6 +3,9 @@ import type {
 	RevalidateScope,
 } from "~/features/chat/chat-types";
 
+/** How often the server writes a heartbeat to an open SSE connection, so the client can tell a silently dead one apart. */
+export const HEARTBEAT_INTERVAL_MS = 25_000;
+
 /** Prefix of each entity scoped channel, joined to the entity's id by the channel's builder. */
 export const CHANNEL_PREFIX = {
 	user: "user__",

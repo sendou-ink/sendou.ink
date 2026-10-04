@@ -1,0 +1,11 @@
+{
+  "event": "XRankPosition",
+  "data": {
+    "mode": "TC",
+    "position": 1,
+    "direction": "SAME"
+  },
+  "options": {
+    "notes": "-I23PqqYtHQ VoD 1:01:53: Japanese card (white \"1位\"), position held (green → arrow)"
+  }
+}
