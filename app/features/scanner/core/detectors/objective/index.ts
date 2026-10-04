@@ -1,14 +1,15 @@
 /**
  * ObjectiveDetector: parses the ranked counter overlay top-center. Splat Zones
- * draws count plates, penalty pills, control (the controlling plate keeps its
- * team-color fill, the other is near-black with digits in team ink) and the
- * M:SS timer. Digits read as the trailing digit run (banner.ts) under several
+ * and Clam Blitz draw the same count plates, penalty pills, control (the
+ * controlling plate keeps its team-color fill, the other is near-black with
+ * digits in team ink; in CB the fill means that team's attack window is open)
+ * and the M:SS timer. Digits read as the trailing digit run (banner.ts) under several
  * channel extractions (ink on black needs the brightest channel, ink on a team
  * fill the darkest); best read wins. No readable count on either side =
  * lookalike, emits nothing. Tower Control and Rainmaker share a different
  * overlay, a track with the objective riding it (track.ts), which the gate
  * tells apart by the track's dot comb (`variant`). `ObjectiveData` is
- * discriminated on `mode`; Clam Blitz is not parsed. Each read also emits a
+ * discriminated on `mode`. Each read also emits a
  * PlayerStatus event (player-status.ts) off the same frame, paired downstream
  * by the shared timer value.
  */
@@ -60,9 +61,11 @@ import { parseStripWeaponsSteps, type StripWeaponsData } from "./strip-weapons";
 import { readMatchTimerSteps, timerBoxChecks, timerGlyphSets } from "./timer";
 import { readTrackSteps, trackComb } from "./track";
 
-export type ObjectiveData = SplatZonesObjectiveData | TrackObjectiveData;
+export type ObjectiveData = ZonesObjectiveData | TrackObjectiveData;
 
-export interface SplatZonesObjectiveData {
+/** Splat Zones / Clam Blitz plates. */
+export interface ZonesObjectiveData {
+	/** names the plates overlay: CB draws it too, so the match's mode tells the two apart */
 	mode: "SZ";
 	/** match timer seconds ("3:35" = 215); null = unreadable. Overtime display unattested so far. */
 	time: number | null;
@@ -72,7 +75,7 @@ export interface SplatZonesObjectiveData {
 	penalty: [number | null, number | null];
 	/**
 	 * which team is in control (its plate fills team color: it holds every
-	 * zone); null = neither
+	 * zone, or in CB its attack window is open); null = neither
 	 */
 	control: 0 | 1 | null;
 	/**
@@ -204,7 +207,7 @@ export function createObjectiveDetector(
 		return maxVal >= GATE_SCORE_MIN_MAX_BRIGHTNESS;
 	}
 
-	/** The timer box, then the track's dot comb (TC/RM) or the SZ plates. */
+	/** The timer box, then the track's dot comb (TC/RM) or the SZ/CB plates. */
 	function gate(frame: Mat): GateResult {
 		const gray = frameGray(frame);
 		const timerChecks = timerBoxChecks(gray);
@@ -394,11 +397,11 @@ export function createObjectiveDetector(
 		];
 	}
 
-	/** The SZ counter read; null = no readable count on either side (a lookalike). */
+	/** The SZ/CB plates read; null = no readable count on either side (a lookalike). */
 	function* parseZonesSteps(
 		frame: Mat,
 		speculative: boolean,
-	): MatchSteps<{ event: DetectedEvent<SplatZonesObjectiveData> } | null> {
+	): MatchSteps<{ event: DetectedEvent<ZonesObjectiveData> } | null> {
 		const gray = frameGray(frame);
 
 		const [scoreL, scoreR, penaltyL, penaltyR, timer] = yield* all([

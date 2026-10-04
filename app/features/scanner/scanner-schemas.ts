@@ -78,7 +78,7 @@ const scannerMatchObjectiveSampleSchema = v.object({
 });
 
 const scannerMatchObjectiveSchema = v.object({
-	mode: v.nullable(v.picklist(["SZ", "TC", "RM"])),
+	mode: v.nullable(v.picklist(["SZ", "TC", "RM", "CB"])),
 	samples: v.pipe(
 		v.array(scannerMatchObjectiveSampleSchema),
 		v.maxLength(MAX_OBJECTIVE_SAMPLES),

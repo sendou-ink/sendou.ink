@@ -59,10 +59,10 @@ export interface ScannerMatchObjectiveSample {
  */
 export interface ScannerMatchObjective {
 	/**
-	 * the counter's mode; null on a TC/RM track whose mode neither the match
-	 * nor the checkpoint markers told
+	 * the counter's mode; null when the match's mode is unknown and the overlay
+	 * doesn't tell (SZ/CB plates, a TC/RM track whose checkpoint markers never read)
 	 */
-	mode: "SZ" | "TC" | "RM" | null;
+	mode: "SZ" | "TC" | "RM" | "CB" | null;
 	samples: ScannerMatchObjectiveSample[];
 }
 

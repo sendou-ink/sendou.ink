@@ -23,7 +23,10 @@ export interface PenaltyRead {
 /**
  * The penalty pill flickers between a value and null and occasionally drops a digit ("36" → "6").
  * Median-filters outliers, drops one-off reads with no nearby confirmation and carries the previous
- * value across short null gaps so the band renders as one steady shape.
+ * value across short null gaps so the band renders as one steady shape. A value repeated by the
+ * neighboring pill read confirms itself at any distance, and a null gap between two equal values is
+ * bridged whatever its length: a pill only goes away worked off, so it can't come back unchanged
+ * (Clam Blitz holds one steady for minutes while reads re-confirm only every ~10s).
  *
  * @param reads one team's reads sorted by `t` ascending; result is index-aligned
  */
@@ -40,7 +43,7 @@ export function smoothPenalties(
 				other.penalty !== null &&
 				Math.abs(other.t - read.t) <= PENALTY_BRIDGE_SECONDS,
 		);
-		return hasNearbyRead ? value : null;
+		return hasNearbyRead || repeatsNeighboringRead(reads, i) ? value : null;
 	});
 
 	const result = [...kept];
@@ -53,7 +56,10 @@ export function smoothPenalties(
 		if (prev === -1) continue;
 		const next = result.findIndex((value, j) => j > i && value !== null);
 		if (next === -1) continue;
-		if (reads[next]!.t - reads[prev]!.t <= PENALTY_BRIDGE_SECONDS) {
+		if (
+			reads[next]!.t - reads[prev]!.t <= PENALTY_BRIDGE_SECONDS ||
+			result[next] === result[prev]
+		) {
 			result[i] = result[prev];
 		}
 	}
@@ -161,6 +167,16 @@ export function formatElapsed(seconds: number): string {
 	return hours > 0
 		? `${hours}:${String(minutes).padStart(2, "0")}:${rest}`
 		: `${minutes}:${rest}`;
+}
+
+/** The closest pill read before or after `index` shows the same value. */
+function repeatsNeighboringRead(reads: readonly PenaltyRead[], index: number) {
+	const value = reads[index]!.penalty;
+	const previous = reads.findLast(
+		(read, j) => j < index && read.penalty !== null,
+	);
+	const next = reads.find((read, j) => j > index && read.penalty !== null);
+	return previous?.penalty === value || next?.penalty === value;
 }
 
 function medianFilterValues(

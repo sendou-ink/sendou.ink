@@ -334,9 +334,11 @@ sequenceDiagram
   `scoreboard-battle-log/detector.ts` reads it), `scoreboard-own` (personal results), `death`
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay
   + casted 8-player spectator variant), `objective` (ranked counter overlay:
-  counts, penalties, holder, match timer — a mode-discriminated union: SZ
-  plates, and the Tower Control / Rainmaker track, see below; Clam Blitz is
-  not parsed), `kill` (the "Splatted <name>!" feed
+  counts, penalties, holder, match timer — a mode-discriminated union: the
+  plates, and the Tower Control / Rainmaker track, see below. Splat Zones and
+  Clam Blitz draw the same plates, so a CB read carries `mode: "SZ"` too and
+  the match's mode tells them apart; in CB a filled plate means that team's
+  attack window is open, charted as control), `kill` (the "Splatted <name>!" feed
   bottom-center). The feed is the POV player's — on the SWS26 broadcast the
   specced player's, so a cast's kills follow camera swaps. One `Kill` event
   per frame carries the whole visible stack newest-first, up to four rows,
@@ -421,20 +423,20 @@ sequenceDiagram
   player's team on the left plate, so the builder orients samples by ink
   hue and anchors them to `teams` order via the minimap sub-tile colors
   (casts never show a results screen). Reads of the overlay the match's
-  mode doesn't draw (SZ plates on TC/RM, a track on SZ) are lookalike
-  misreads the builder leaves out, and on Turf War / Clam Blitz every read
-  is: the builder nulls that match's `objective` and callers discard the
-  events (`invalidObjectiveEvents`; Live also stops collecting once a
-  MapStart reveals such a mode). A match with no mode read, or whose intro
-  and results screen disagree on it, builds from its majority overlay and
-  discards nothing. PlayerStatus reads follow the
+  mode doesn't draw (plates on TC/RM, a track on SZ/CB) are lookalike
+  misreads the builder leaves out, and on Turf War every read is: the
+  builder nulls that match's `objective` and callers discard the events
+  (`invalidObjectiveEvents`; Live also stops collecting once a MapStart
+  reveals Turf War). A match with no mode read, or whose intro and results
+  screen disagree on it, builds from its majority overlay (a plates
+  objective's `mode` then stays null: SZ or CB) and discards nothing. PlayerStatus reads follow the
   objective pipeline wholesale: same replay-wipe anchor, cast orientation
-  inherited from the nearest counter read, nulled together on TW/CB matches, and rendered as
+  inherited from the nearest counter read, nulled together on TW matches, and rendered as
   per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
   shared with the match page) above the objective chart. Minimap reads
   feed the same samples: every card/row carries `dead` (respawn
   cross-out) and `specialReady` (special camo) flags, merged in timerless
-  on the shared replay anchor — and mode-agnostic, so a known non-SZ
+  on the shared replay anchor — and mode-agnostic, so a Turf War
   match keeps its minimap-sourced samples while its counter/status
   misreads are voided. Parsing details
   are in each detector's module

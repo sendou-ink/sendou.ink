@@ -1,0 +1,19 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 235,
+		"score": [
+			100,
+			80
+		],
+		"penalty": [
+			null,
+			10
+		],
+		"control": null
+	},
+	"options": {
+		"notes": "Attack window closed, bravo carries a +10 penalty. CB draws the SZ plates overlay, so the read's mode is SZ; the match's mode tells them apart."
+	}
+}

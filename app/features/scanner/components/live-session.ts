@@ -156,9 +156,8 @@ let timeline = new TimelineBuilder();
 const storedIds = new WeakMap<DetectedEvent, number>();
 /** event saves in flight, so Stop's last clip pass sees the final kills */
 const persisting = new Set<Promise<void>>();
-// the open match is known to be a mode with no parsed counter overlay (Turf
-// War, Clam Blitz), so counter reads are lookalike misreads and are not
-// collected at all
+// the open match is known to be a mode with no counter overlay (Turf War), so
+// counter reads are lookalike misreads and are not collected at all
 let objectiveBlocked = false;
 /** windows already cut, `${match first source id}:${window t}` */
 /**
@@ -522,8 +521,7 @@ function onResult(
 		if (action.action === "merged" || action.action === "dropped") continue;
 		if (event.type === MAP_START_EVENT_TYPE) {
 			const mode = (event.data as MapStartData).mode;
-			objectiveBlocked =
-				mode !== null && mode !== "SZ" && mode !== "TC" && mode !== "RM";
+			objectiveBlocked = mode === "TW";
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 			objectiveBlocked = false;
 		}

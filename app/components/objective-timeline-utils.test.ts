@@ -52,6 +52,18 @@ describe("smoothPenalties", () => {
 		]);
 	});
 
+	test("keeps a steady value re-confirmed by sparse reads", () => {
+		expect(smoothPenalties(reads([0, 10], [14, 10], [27, 10]))).toEqual([
+			10, 10, 10,
+		]);
+	});
+
+	test("bridges a null gap of any length between equal values", () => {
+		expect(
+			smoothPenalties(reads([0, 10], [15, 10], [30, null], [50, 10])),
+		).toEqual([10, 10, 10, 10]);
+	});
+
 	test("does not extend past the last read", () => {
 		expect(smoothPenalties(reads([0, 10], [2, 10], [4, null]))).toEqual([
 			10,

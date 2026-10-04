@@ -466,8 +466,8 @@ export function isHistoryOnly<E extends DetectedEvent>(
 /**
  * Objective-counter reads on a match whose detected mode rules their overlay
  * out — lookalike misreads the builder already left out of the match's
- * `objective` — plus, on a mode with no parsed overlay (Turf War, Clam
- * Blitz), the player-status and strip-weapon reads riding along with them.
+ * `objective` — plus, on a mode with no counter overlay (Turf War), the
+ * player-status and strip-weapon reads riding along with them.
  * Callers should delete these from their stores. A match with no mode read
  * yet loses nothing: its minority overlay is only left out of the build.
  */
@@ -501,7 +501,7 @@ function matchCounterKind(
 	mode: ModeShort | null,
 	reads: readonly ObjectiveData[],
 ): CounterKind | null {
-	if (mode === "SZ") return "zones";
+	if (mode === "SZ" || mode === "CB") return "zones";
 	if (mode === "TC" || mode === "RM") return "track";
 	if (mode !== null) return null;
 	const trackReads = reads.filter(
@@ -517,14 +517,15 @@ function counterKindOfRead(data: ObjectiveData): CounterKind {
 
 /**
  * The objective's mode: the match's when known, else what most track reads'
- * checkpoint markers showed; null when a track match's markers never read.
+ * checkpoint markers showed; null when a track match's markers never read or
+ * a plates match's mode is unknown (SZ and CB draw the same plates).
  */
 function objectiveMode(
 	kind: CounterKind,
 	mode: ModeShort | null,
 	reads: readonly ObjectiveData[],
 ): ScannerMatchObjective["mode"] {
-	if (kind === "zones") return "SZ";
+	if (kind === "zones") return mode === "SZ" || mode === "CB" ? mode : null;
 	if (mode === "TC" || mode === "RM") return mode;
 	const votes = { TC: 0, RM: 0 };
 	for (const read of reads) {

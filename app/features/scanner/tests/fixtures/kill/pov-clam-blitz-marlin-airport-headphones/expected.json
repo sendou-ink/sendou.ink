@@ -1,0 +1,10 @@
+{
+	"event": "Kill",
+	"data": {
+		"time": 235,
+		"names": ["Headphones"]
+	},
+	"options": {
+		"notes": "Frame shared with objective/clam-blitz-marlin-airport-penalty (Clam Blitz POV)."
+	}
+}

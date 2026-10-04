@@ -1,0 +1,19 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 23,
+		"score": [
+			54,
+			80
+		],
+		"penalty": [
+			23,
+			10
+		],
+		"control": null
+	},
+	"options": {
+		"notes": "Penalty pills on both sides. CB draws the SZ plates overlay, so the read's mode is SZ; the match's mode tells them apart."
+	}
+}

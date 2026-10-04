@@ -456,16 +456,40 @@ test("an intro and results screen disagreeing on the mode leave it unknown and d
 	assert.deepEqual(invalidObjectiveEvents(built), []);
 });
 
-test("a known non-SZ match drops its objective reads", () => {
+test("a Turf War match drops its objective reads", () => {
 	const events = [
-		mapStart(0, { mode: "CB" }),
+		mapStart(0, { mode: "TW" }),
 		objective(60),
 		objective(120),
-		scoreboard(300, { mode: "CB" }),
+		scoreboard(300, { mode: "TW" }),
 	];
 	const built = buildScannerMatches(events);
 	assert.equal(built[0]!.match.objective, null);
 	assert.deepEqual(invalidObjectiveEvents(built), [events[1], events[2]]);
+});
+
+test("a Clam Blitz match keeps its plates reads", () => {
+	const events = [
+		mapStart(0, { mode: "CB" }),
+		objective(60, { score: [100, 80], penalty: [null, 10], control: null }),
+		playerStatus(61),
+		scoreboard(300, { mode: "CB" }),
+	];
+	const built = buildScannerMatches(events);
+	assert.deepEqual(built[0]!.match.objective, {
+		mode: "CB",
+		samples: [
+			{
+				t: 60,
+				time: 240,
+				score: [100, 80],
+				penalty: [null, 10],
+				control: null,
+			},
+		],
+	});
+	assert.equal(built[0]!.match.playerStatus!.samples.length, 1);
+	assert.deepEqual(invalidObjectiveEvents(built), []);
 });
 
 test("an unknown-mode match keeps its objective reads", () => {
@@ -475,6 +499,7 @@ test("an unknown-mode match keeps its objective reads", () => {
 		scoreboard(300, { mode: null }),
 	]);
 	assert.equal(built[0]!.match.objective!.samples.length, 1);
+	assert.equal(built[0]!.match.objective!.mode, null);
 	assert.deepEqual(invalidObjectiveEvents(built), []);
 });
 
@@ -1839,12 +1864,12 @@ test("a not-ready gap wide enough to regain a special is kept", () => {
 	assert.deepEqual(slot0Specials, [true, false, false, true]);
 });
 
-test("a known non-SZ match drops its player-status reads too", () => {
+test("a Turf War match drops its player-status reads too", () => {
 	const events = [
-		mapStart(0, { mode: "CB" }),
+		mapStart(0, { mode: "TW" }),
 		objective(60),
 		playerStatus(61),
-		scoreboard(300, { mode: "CB" }),
+		scoreboard(300, { mode: "TW" }),
 	];
 	const built = buildScannerMatches(events);
 	assert.equal(built[0]!.match.playerStatus, null);
@@ -1897,13 +1922,13 @@ test("minimap card states become timerless player-status samples", () => {
 	});
 });
 
-test("a known non-SZ match still gets its minimap-sourced status samples", () => {
+test("a Turf War match still gets its minimap-sourced status samples", () => {
 	const events = [
-		mapStart(0, { mode: "CB" }),
+		mapStart(0, { mode: "TW" }),
 		objective(60),
 		playerStatus(61),
 		minimap(90, { spectator: false, dead: [[0], []] }),
-		scoreboard(300, { mode: "CB" }),
+		scoreboard(300, { mode: "TW" }),
 	];
 	const built = buildScannerMatches(events);
 	assert.equal(built[0]!.match.objective, null);
