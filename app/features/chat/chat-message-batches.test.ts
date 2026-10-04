@@ -55,6 +55,12 @@ describe("continuesBatch", () => {
 			expected: false,
 		},
 		{
+			why: "a reply starts a new batch",
+			previous: message(),
+			next: message({ contents: "<reply-1> yes" }),
+			expected: false,
+		},
+		{
 			why: "the first message starts a batch",
 			previous: undefined,
 			next: message(),

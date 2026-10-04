@@ -63,6 +63,7 @@
 	"errors.invalidUrl": "请输入有效的 URL 地址",
 	"errors.messageTooLong": "",
 	"errors.invalidSticker": "",
+	"errors.invalidReply": "",
 	"errors.tierListUrlIncomplete": "",
 	"errors.imageTooLarge": "",
 	"errors.invalidTime": "",

@@ -63,6 +63,7 @@
 	"errors.invalidUrl": "Debe ser una URL válida",
 	"errors.messageTooLong": "",
 	"errors.invalidSticker": "",
+	"errors.invalidReply": "",
 	"errors.tierListUrlIncomplete": "La URL de la tier list está incompleta o la tier list está vacía",
 	"errors.imageTooLarge": "La imagen es demasiado grande. Prueba con un archivo más pequeño.",
 	"errors.invalidTime": "Debe ser una hora válida, ej. 18:30",

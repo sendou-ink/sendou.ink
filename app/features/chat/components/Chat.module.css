@@ -4,7 +4,7 @@
 }
 
 .messages {
-	padding: var(--s-2);
+	padding-block: var(--s-2);
 	display: block;
 	height: 310px;
 	overflow-x: hidden;
@@ -13,13 +13,92 @@
 }
 
 .message {
+	position: relative;
 	list-style: none;
 	display: flex;
-	gap: var(--s-3);
+	flex-wrap: wrap;
+	column-gap: var(--s-3);
+	padding-inline: var(--s-2);
 
 	&:focus-visible {
 		outline: none;
 	}
+}
+
+@media (hover: hover) {
+	.messageHoverable:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.messageBody {
+	flex: 1;
+	min-width: 0;
+}
+
+.replyButton {
+	position: absolute;
+	inset-block-start: 0;
+	inset-inline-end: var(--s-2);
+	opacity: 0;
+	background-color: var(--color-bg);
+	border-radius: var(--radius-selector);
+	margin-top: var(--s-0-5);
+
+	.message:hover > &,
+	&:focus-visible {
+		opacity: 1;
+	}
+
+	@media (hover: none) {
+		opacity: 1;
+	}
+}
+
+.replyReference {
+	flex-basis: 100%;
+	margin-block-end: var(--s-0-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	min-width: 0;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.replyReferenceGutter {
+	position: relative;
+	flex-shrink: 0;
+	align-self: stretch;
+	width: 36px;
+
+	&::before {
+		content: "";
+		position: absolute;
+		inset-block: 45% 0;
+		inset-inline: 45% 0;
+		border-block-start: 2px solid var(--color-border);
+		border-inline-start: 2px solid var(--color-border);
+		border-start-start-radius: 3px;
+	}
+}
+
+.replyReferenceContent {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	min-width: 0;
+}
+
+.replyReferenceAuthor {
+	flex-shrink: 0;
+	font-weight: var(--weight-semi);
+}
+
+.replyReferenceText {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .messageInfo {
@@ -33,6 +112,7 @@
 .avatarWrapper {
 	position: relative;
 	flex-shrink: 0;
+	margin-top: var(--s-0-5);
 }
 
 .avatarWrapperStaff {
@@ -139,8 +219,7 @@
 }
 
 .messageMentionsYou {
-	margin-inline: calc(var(--s-1) * -1);
-	padding: var(--s-1);
+	padding-block: var(--s-1);
 	border-inline-start: 2px solid var(--color-fg-second);
 	background-color: var(--color-bg-second);
 }
@@ -174,21 +253,31 @@
 	margin-block-start: var(--s-1);
 }
 
-.selectedSticker {
+.composerAttachment {
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	padding: var(--s-1-5) var(--s-3);
+	padding: var(--s-1-5);
 	border-top: 1.5px solid var(--color-border);
 }
 
-.selectedStickerName {
+.composerAttachmentLabel {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 }
 
-.selectedStickerRemove {
+.composerAttachmentIcon {
+	flex-shrink: 0;
+	color: var(--color-text-high);
+	width: 32px;
+}
+
+.composerAttachmentRemove {
 	margin-inline-start: auto;
 }
 

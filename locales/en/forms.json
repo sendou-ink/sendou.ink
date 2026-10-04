@@ -63,6 +63,7 @@
 	"errors.invalidUrl": "Must be a valid URL",
 	"errors.messageTooLong": "Message is too long",
 	"errors.invalidSticker": "Messages can have one sticker",
+	"errors.invalidReply": "Messages can only reply to one message",
 	"errors.tierListUrlIncomplete": "Tier list URL is incomplete or the tier list is empty",
 	"errors.imageTooLarge": "Image is too large. Try one with a smaller file size.",
 	"errors.invalidTime": "Must be a valid time, e.g. 18:30",

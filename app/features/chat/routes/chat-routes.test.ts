@@ -145,6 +145,26 @@ describe("chat messages action", () => {
 			contents: "<sticker-not-a-sticker>",
 			sent: false,
 		},
+		{
+			why: "a reply with text is sent",
+			contents: `<reply-1> ${"a".repeat(200)}`,
+			sent: true,
+		},
+		{
+			why: "a reply with only a sticker is sent",
+			contents: "<reply-1> <sticker-booyah>",
+			sent: true,
+		},
+		{
+			why: "a reply saying nothing is refused",
+			contents: "<reply-1>",
+			sent: false,
+		},
+		{
+			why: "replying to two messages is refused",
+			contents: "<reply-1> <reply-2> hi",
+			sent: false,
+		},
 	])("$why", async ({ contents, sent }) => {
 		const { match, alphaUserIds } = await setupSqMatch(users);
 

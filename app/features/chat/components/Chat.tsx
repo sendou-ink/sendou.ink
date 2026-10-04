@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { sub } from "date-fns";
-import { RotateCw, SendHorizontal, X } from "lucide-react";
+import { Reply, RotateCw, SendHorizontal, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
 import { browser, flushSync } from "react-dom";
@@ -40,6 +40,7 @@ import {
 } from "../chat-mentions";
 import { continuesBatch } from "../chat-message-batches";
 import { findRoomLinks } from "../chat-message-links";
+import { messageReply, replyToken } from "../chat-replies";
 import { sendChatMessageSchema } from "../chat-schemas";
 import {
 	activeStickerQuery,
@@ -63,7 +64,7 @@ const CONNECTION_STATUS_GRACE_MS = 1_500;
 /** The composer status shows the character count once this close to the limit. */
 const CHARACTER_COUNT_SHOWN_FROM = MESSAGE_MAX_LENGTH - 40;
 const STICKER_MESSAGE_SIZE = 96;
-const STICKER_PREVIEW_SIZE = 40;
+const STICKER_PREVIEW_SIZE = 32;
 const STICKER_SUGGESTION_SIZE = 24;
 
 export interface ChatProps {
@@ -83,10 +84,17 @@ export interface ChatProps {
 	readOnly?: boolean;
 }
 
-const MentionsContext = React.createContext<{
+const MessagesContext = React.createContext<{
 	usersById: Map<number, CommonUser>;
 	ownUserId: number | null;
-}>({ usersById: new Map(), ownUserId: null });
+	messagesById: Map<number, ClientChatMessage>;
+	onReply: ((message: ClientChatMessage) => void) | null;
+}>({
+	usersById: new Map(),
+	ownUserId: null,
+	messagesById: new Map(),
+	onReply: null,
+});
 
 export function Chat({
 	messages,
@@ -113,10 +121,27 @@ export function Chat({
 	const mentionCandidates = [...mentionableById.values()].filter(
 		(mentionable) => mentionable.id !== user?.id,
 	);
+	const [replyTo, setReplyTo] = React.useState<ClientChatMessage | null>(null);
+	const composerInputRef = React.useRef<HTMLInputElement>(null);
+	const canPost = !readOnly && !disabled;
 
 	return (
-		<MentionsContext
-			value={{ usersById: mentionableById, ownUserId: user?.id ?? null }}
+		<MessagesContext
+			value={{
+				usersById: mentionableById,
+				ownUserId: user?.id ?? null,
+				messagesById: new Map(
+					messages.flatMap((message) =>
+						message.pending ? [] : [[message.id, message]],
+					),
+				),
+				onReply: canPost
+					? (message) => {
+							setReplyTo(message);
+							composerInputRef.current?.focus();
+						}
+					: null,
+			}}
 		>
 			<section className={clsx(styles.container, className)}>
 				<div className={styles.inputContainer}>
@@ -152,11 +177,17 @@ export function Chat({
 							{t("common:chat.expired")}
 						</div>
 					) : (
-						<Composer onSend={onSend} mentionCandidates={mentionCandidates} />
+						<Composer
+							onSend={onSend}
+							mentionCandidates={mentionCandidates}
+							replyTo={replyTo}
+							onCancelReply={() => setReplyTo(null)}
+							inputRef={composerInputRef}
+						/>
 					)}
 				</div>
 			</section>
-		</MentionsContext>
+		</MessagesContext>
 	);
 }
 
@@ -329,9 +360,15 @@ function MessageLog({
 function Composer({
 	onSend,
 	mentionCandidates,
+	replyTo,
+	onCancelReply,
+	inputRef,
 }: {
 	onSend: ChatProps["onSend"];
 	mentionCandidates: CommonUser[];
+	replyTo: ClientChatMessage | null;
+	onCancelReply: () => void;
+	inputRef: React.RefObject<HTMLInputElement | null>;
 }) {
 	const { t } = useTranslation(["common", "forms"]);
 	const readyState = useEventsReadyState();
@@ -346,7 +383,6 @@ function Composer({
 		[],
 	);
 	const [sticker, setSticker] = React.useState<ChatSticker | null>(null);
-	const inputRef = React.useRef<HTMLInputElement>(null);
 	const composerRowRef = React.useRef<HTMLDivElement>(null);
 	const suggestionsId = React.useId();
 	const [connectionStatusShown, setConnectionStatusShown] =
@@ -461,12 +497,16 @@ function Composer({
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if (!suggestionsOpen) {
-			const removesSticker =
+			const removesAttachment =
 				event.key === "Escape" ||
 				(event.key === "Backspace" && contents.length === 0);
-			if (sticker && removesSticker) {
+			if (removesAttachment && (sticker || replyTo)) {
 				event.preventDefault();
-				setSticker(null);
+				if (sticker) {
+					setSticker(null);
+				} else {
+					onCancelReply();
+				}
 			}
 			return;
 		}
@@ -507,7 +547,11 @@ function Composer({
 
 		const parsed = v.safeParse(sendChatMessageSchema, {
 			publicId: shortNanoid(),
-			contents: [encodedText.trim(), sticker ? stickerToken(sticker.id) : null]
+			contents: [
+				replyTo ? replyToken(replyTo.id) : null,
+				encodedText.trim(),
+				sticker ? stickerToken(sticker.id) : null,
+			]
 				.filter(Boolean)
 				.join(" "),
 		});
@@ -524,16 +568,39 @@ function Composer({
 		setContents("");
 		setPickedMentions([]);
 		setSticker(null);
+		onCancelReply();
 		setDismissedQueryStart(null);
 		inputRef.current?.focus();
 	};
 
 	return (
 		<>
+			{replyTo ? (
+				<div className={styles.composerAttachment}>
+					<Reply size={18} className={styles.composerAttachmentIcon} />
+					<span className={styles.composerAttachmentLabel}>
+						{t("common:chat.reply.replyingTo", {
+							username: replyTo.author?.username ?? "???",
+						})}
+					</span>
+					<SendouButton
+						variant="minimal-destructive"
+						size="small"
+						shape="square"
+						icon={<X />}
+						aria-label={t("common:chat.reply.cancel")}
+						onClick={() => {
+							onCancelReply();
+							inputRef.current?.focus();
+						}}
+						className={styles.composerAttachmentRemove}
+					/>
+				</div>
+			) : null}
 			{sticker ? (
-				<div className={styles.selectedSticker}>
+				<div className={styles.composerAttachment}>
 					<StickerImage sticker={sticker} size={STICKER_PREVIEW_SIZE} />
-					<span className={styles.selectedStickerName}>{sticker.name}</span>
+					<span className={styles.composerAttachmentLabel}>{sticker.name}</span>
 					<SendouButton
 						variant="minimal-destructive"
 						size="small"
@@ -544,7 +611,7 @@ function Composer({
 							setSticker(null);
 							inputRef.current?.focus();
 						}}
-						className={styles.selectedStickerRemove}
+						className={styles.composerAttachmentRemove}
 					/>
 				</div>
 			) : null}
@@ -673,22 +740,29 @@ function Message({
 }) {
 	const { t } = useTranslation(["common"]);
 	const author = message.author;
-	const { ownUserId } = React.use(MentionsContext);
-	const mentionsYou =
+	const { ownUserId, messagesById, onReply } = React.use(MessagesContext);
+	const { rest, replyToMessageId } = messageReply(message.contents ?? "");
+	const { text, sticker } = messageSticker(rest);
+	const repliedMessage =
+		replyToMessageId !== null ? messagesById.get(replyToMessageId) : undefined;
+	const isOwn = ownUserId !== null && message.authorUserId === ownUserId;
+	const highlighted =
 		ownUserId !== null &&
-		message.contents !== null &&
-		mentionsUser(message.contents, ownUserId);
-	const { text, sticker } = message.contents
-		? messageSticker(message.contents)
-		: { text: "", sticker: null };
+		!isOwn &&
+		((message.contents !== null && mentionsUser(message.contents, ownUserId)) ||
+			repliedMessage?.authorUserId === ownUserId);
+	const canReply = onReply !== null && !message.pending;
 
 	return (
 		<div
-			className={clsx(styles.message, {
-				[styles.messageMentionsYou]: mentionsYou,
+			className={clsx(styles.message, styles.messageHoverable, {
+				[styles.messageMentionsYou]: highlighted,
 				[styles.messageFailed]: message.failed,
 			})}
 		>
+			{replyToMessageId !== null ? (
+				<ReplyReference message={repliedMessage} />
+			) : null}
 			{continuation ? (
 				<div className={styles.continuationGutter} />
 			) : author ? (
@@ -701,7 +775,7 @@ function Message({
 					{label ? <span className={styles.avatarBadge}>{label}</span> : null}
 				</div>
 			) : null}
-			<div>
+			<div className={styles.messageBody}>
 				{continuation ? null : (
 					<div className={styles.messageInfo}>
 						<div
@@ -748,6 +822,63 @@ function Message({
 					</SendouButton>
 				) : null}
 			</div>
+			{canReply ? (
+				<SendouButton
+					variant="minimal"
+					size="miniscule"
+					shape="square"
+					icon={<Reply />}
+					aria-label={t("common:chat.reply.action")}
+					onClick={() => onReply(message)}
+					className={styles.replyButton}
+				/>
+			) : null}
+		</div>
+	);
+}
+
+function ReplyReference({
+	message,
+}: {
+	message: ClientChatMessage | undefined;
+}) {
+	const { t } = useTranslation(["common"]);
+	const { usersById } = React.use(MessagesContext);
+
+	if (!message) {
+		return (
+			<div className={styles.replyReference}>
+				<span className={styles.replyReferenceGutter} />
+				<span className={styles.replyReferenceText}>
+					{t("common:chat.reply.unavailable")}
+				</span>
+			</div>
+		);
+	}
+
+	const { text, sticker } = messageSticker(
+		messageReply(message.contents ?? "").rest,
+	);
+	const snippet = splitByMentions(text)
+		.map((part) =>
+			part.type === "mention"
+				? `@${usersById.get(part.userId)?.username ?? t("common:chat.mention.unknownUser")}`
+				: part.text,
+		)
+		.join("");
+
+	return (
+		<div className={styles.replyReference}>
+			<span className={styles.replyReferenceGutter} />
+			<span className={styles.replyReferenceContent}>
+				{message.author ? <Avatar user={message.author} size="xxxs" /> : null}
+				<span className={styles.replyReferenceAuthor}>
+					@{message.author?.username ?? "???"}
+				</span>
+				<span className={styles.replyReferenceText}>
+					{snippet || sticker?.name}
+				</span>
+			</span>
 		</div>
 	);
 }
@@ -800,7 +931,7 @@ function MessageContents({ text }: { text: string }) {
 
 function Mention({ userId }: { userId: number }) {
 	const { t } = useTranslation(["common"]);
-	const { usersById, ownUserId } = React.use(MentionsContext);
+	const { usersById, ownUserId } = React.use(MessagesContext);
 
 	return (
 		<span

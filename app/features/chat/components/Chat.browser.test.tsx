@@ -6,11 +6,14 @@ import { render } from "vitest-browser-react";
 import type { EventsReadyState } from "~/features/events/events-client";
 import type { ChatMessageAuthor, ClientChatMessage } from "../chat-types";
 import { Chat } from "./Chat";
+import styles from "./Chat.module.css";
 
 const CONNECTION_STATUS_GRACE_MS = 1_500;
 
+const currentUser = vi.hoisted(() => ({ id: null as number | null }));
+
 vi.mock("~/features/auth/core/user", () => ({
-	useUser: () => null,
+	useUser: () => (currentUser.id === null ? null : { id: currentUser.id }),
 }));
 
 // the composer only sends over a live event stream, which the tests have none of
@@ -52,6 +55,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 afterEach(() => {
 	setReadyState("CONNECTED");
+	currentUser.id = null;
 });
 
 const ALICE: ChatMessageAuthor = {
@@ -291,6 +295,127 @@ describe("Chat", () => {
 
 		await retryButtons.click();
 		expect(onRetry).toHaveBeenCalledWith("failed1234");
+	});
+
+	describe("replies", () => {
+		const BOB: ChatMessageAuthor = { ...ALICE, id: 2, username: "Bob" };
+		const original = createMessage({
+			id: 5,
+			publicId: "original",
+			contents: "who is hosting?",
+		});
+
+		test("replies to a message, sending the reply with its token", async () => {
+			const onSend = vi.fn();
+			const screen = await renderChat([original], { onSend });
+
+			await screen.getByRole("button", { name: "Reply" }).click();
+			await expect
+				.element(screen.getByText("Replying to Alice"))
+				.toBeInTheDocument();
+			await expect
+				.element(screen.getByPlaceholder("Press enter to send"))
+				.toHaveFocus();
+
+			await userEvent.keyboard("me{Enter}");
+			expect(onSend).toHaveBeenCalledWith({
+				publicId: expect.any(String),
+				contents: "<reply-5> me",
+			});
+			expect(screen.getByText("Replying to Alice").elements()).toHaveLength(0);
+		});
+
+		test("cancels the reply with its button or escape", async () => {
+			const screen = await renderChat([original]);
+			const replyingTo = () => screen.getByText("Replying to Alice").elements();
+
+			await screen.getByRole("button", { name: "Reply" }).click();
+			await screen.getByRole("button", { name: "Cancel reply" }).click();
+			expect(replyingTo()).toHaveLength(0);
+
+			await screen.getByRole("button", { name: "Reply" }).click();
+			await userEvent.keyboard("{Escape}");
+			expect(replyingTo()).toHaveLength(0);
+		});
+
+		test("shows what a reply replies to above it", async () => {
+			const screen = await renderChat([
+				original,
+				createMessage({
+					id: 6,
+					publicId: "reply",
+					authorUserId: 2,
+					author: BOB,
+					contents: "<reply-5> me",
+				}),
+				createMessage({
+					id: 7,
+					publicId: "lost",
+					authorUserId: 2,
+					author: BOB,
+					contents: "<reply-1> long ago",
+				}),
+			]);
+
+			await expect.element(screen.getByText("@Alice")).toBeInTheDocument();
+			const [replyAuthorName] = screen
+				.getByText("Bob", { exact: true })
+				.elements();
+			expect(
+				screen
+					.getByText("@Alice")
+					.element()
+					.compareDocumentPosition(replyAuthorName) &
+					Node.DOCUMENT_POSITION_FOLLOWING,
+			).toBeTruthy();
+			expect(
+				screen.getByText("who is hosting?", { exact: true }).elements(),
+			).toHaveLength(2);
+			await expect
+				.element(screen.getByText("Original message not loaded"))
+				.toBeInTheDocument();
+		});
+
+		test("highlights a reply to the viewer", async () => {
+			currentUser.id = ALICE.id;
+			const screen = await renderChat([
+				original,
+				createMessage({
+					id: 6,
+					publicId: "reply",
+					authorUserId: 2,
+					author: BOB,
+					contents: "<reply-5> me",
+				}),
+			]);
+
+			const [originalRow, replyRow] = screen
+				.getByTestId("chat-message-row")
+				.elements();
+			await vi.waitFor(() => {
+				expect(
+					replyRow.firstElementChild?.classList.contains(
+						styles.messageMentionsYou,
+					),
+				).toBe(true);
+			});
+			expect(
+				originalRow.firstElementChild?.classList.contains(
+					styles.messageMentionsYou,
+				),
+			).toBe(false);
+		});
+
+		test("offers no reply where the viewer can not post", async () => {
+			const screen = await renderChat([original], { readOnly: true });
+
+			await expect
+				.element(screen.getByText("who is hosting?"))
+				.toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Reply" }).elements(),
+			).toHaveLength(0);
+		});
 	});
 
 	describe("stickers", () => {

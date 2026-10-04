@@ -63,6 +63,7 @@
 	"errors.invalidUrl": "",
 	"errors.messageTooLong": "",
 	"errors.invalidSticker": "",
+	"errors.invalidReply": "",
 	"errors.tierListUrlIncomplete": "",
 	"errors.imageTooLarge": "",
 	"errors.invalidTime": "",
