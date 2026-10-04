@@ -28,6 +28,7 @@ import {
 	buildScannerMatches,
 	ingestSkipReasons,
 	invalidObjectiveEvents,
+	isHistoryOnly,
 	type MatchBuildCache,
 } from "../../core/match-builder";
 import type { ScannerLobby } from "../../scanner-types";
@@ -1021,6 +1022,18 @@ test("a battle log view of the same paint totals on another stage forms its own 
 		battleLogScoreboard(900, { paints: GAME_PAINTS, stage: 1 as StageId }),
 	]);
 	assert.equal(built.length, 2);
+});
+
+test("a match only battle history screens back is history only", () => {
+	const [played, browsed, replay] = buildScannerMatches([
+		...playedGame(),
+		battleLogScoreboard(900, { paints: GAME_PAINTS }),
+		battleLogScoreboard(950, { paints: OTHER_GAME_PAINTS }),
+		replayScoreboard(1000),
+	]);
+	assert.equal(isHistoryOnly(played!), false);
+	assert.equal(isHistoryOnly(browsed!), true);
+	assert.equal(isHistoryOnly(replay!), true);
 });
 
 test("with a cache, a rebuild reuses each match whose events are unchanged", () => {

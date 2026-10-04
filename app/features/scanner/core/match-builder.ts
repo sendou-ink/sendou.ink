@@ -428,6 +428,18 @@ export function ingestSkipReasons<E extends DetectedEvent>(
 }
 
 /**
+ * Whether a match was built off battle history screens alone (a battle log or
+ * replay browser entry browsed later): it holds no read of the game being played.
+ */
+export function isHistoryOnly<E extends DetectedEvent>(
+	built: BuiltMatch<E>,
+): boolean {
+	return built.sources.every((event) =>
+		HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type),
+	);
+}
+
+/**
  * Objective-counter reads on a match whose detected mode rules their overlay
  * out — lookalike misreads the builder already left out of the match's
  * `objective` — plus, on a mode with no parsed overlay (Turf War, Clam

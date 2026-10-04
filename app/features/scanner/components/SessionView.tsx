@@ -4,12 +4,15 @@
  * (fed the built matches and the summary line), the clip strip, then the
  * match cards newest first. A session mixing lobbies (private battles beside
  * X or open play) splits into lobby tabs; sets are a private battle concept,
- * so only that list gets set dividers. Live and File share this all the way
- * down to the clip cutter.
+ * so only that list gets set dividers. Games known only from browsing the
+ * battle log stay hidden until asked for. Live and File share this all the
+ * way down to the clip cutter.
  */
 
+import { Eye, EyeOff } from "lucide-react";
 import type * as React from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouTab,
 	SendouTabList,
@@ -18,7 +21,11 @@ import {
 } from "~/components/elements/Tabs";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start";
 import type { IngestSkipReason } from "../core/match-builder";
-import { type BuiltMatch, ingestSkipReasons } from "../core/match-builder";
+import {
+	type BuiltMatch,
+	ingestSkipReasons,
+	isHistoryOnly,
+} from "../core/match-builder";
 import { assignMatchSets } from "../core/match-sets";
 import type { ScannerMatch } from "../core/scanner-match";
 import { kdRatio, type SessionSummary, sessionSummary } from "../core/sessions";
@@ -96,6 +103,8 @@ export function SessionView({
 	children?: React.ReactNode;
 }) {
 	const [playing, setPlaying] = useState<ScannerClip | null>(null);
+	const [selectedGroup, setSelectedGroup] = useState<LobbyGroup | null>(null);
+	const [showHistory, setShowHistory] = useState(false);
 
 	const skipReasons = ingestSkipReasons(built);
 	const clipsByMatch = built.map((b, index) =>
@@ -121,6 +130,12 @@ export function SessionView({
 		group,
 		matches: built.filter((b) => lobbyGroup(b.match.lobby) === group),
 	})).filter(({ matches }) => matches.length > 0);
+	const activeGroup =
+		groups.find(({ group }) => group === selectedGroup) ?? groups[0];
+	const historyCount = activeGroup?.matches.filter(isHistoryOnly).length ?? 0;
+	const isShown = (b: BuiltMatch<ScanEvent>) =>
+		showHistory || !isHistoryOnly(b);
+	const shownBuilt = built.filter(isShown);
 
 	const renderMatch = (b: BuiltMatch<ScanEvent>) => {
 		const index = built.indexOf(b);
@@ -129,7 +144,7 @@ export function SessionView({
 			<MatchCard
 				key={key}
 				built={b}
-				number={index + 1}
+				number={shownBuilt.indexOf(b) + 1}
 				originT={originT}
 				kind={kind}
 				justFormed={justFormedKeys.has(key)}
@@ -168,23 +183,37 @@ export function SessionView({
 				clips={clips}
 				onPlay={setPlaying}
 				sourceLabel={(clip) => {
-					const index = clipsByMatch.findIndex((matchClips) =>
-						matchClips.includes(clip),
+					const source = built.find((_, index) =>
+						clipsByMatch[index]!.includes(clip),
 					);
-					return index >= 0 ? `Game ${index + 1}` : "";
+					const number = source ? shownBuilt.indexOf(source) + 1 : 0;
+					return number > 0 ? `Game ${number}` : "";
 				}}
 			/>
-			{groups.length === 0 ? (
+			{!activeGroup ? (
 				<p className={styles.empty}>{emptyText}</p>
-			) : groups.length === 1 ? (
-				<MatchList
-					matches={groups[0]!.matches}
-					sets={groups[0]!.group === "private"}
-					renderMatch={renderMatch}
-				/>
 			) : (
-				<SendouTabs>
-					<SendouTabList>
+				<SendouTabs
+					selectedKey={activeGroup.group}
+					onSelectionChange={(key) => setSelectedGroup(key as LobbyGroup)}
+				>
+					<SendouTabList
+						actions={
+							historyCount > 0 ? (
+								<SendouButton
+									variant="minimal"
+									size="miniscule"
+									className={styles.historyButton}
+									icon={showHistory ? <EyeOff /> : <Eye />}
+									onClick={() => setShowHistory(!showHistory)}
+								>
+									{showHistory
+										? "Hide battle log"
+										: `Show battle log (${historyCount})`}
+								</SendouButton>
+							) : null
+						}
+					>
 						{groups.map(({ group, matches }) => (
 							<SendouTab key={group} id={group} number={matches.length}>
 								{LOBBY_GROUP_LABELS[group]}
@@ -194,7 +223,7 @@ export function SessionView({
 					{groups.map(({ group, matches }) => (
 						<SendouTabPanel key={group} id={group}>
 							<MatchList
-								matches={matches}
+								matches={matches.filter(isShown)}
 								sets={group === "private"}
 								renderMatch={renderMatch}
 							/>
