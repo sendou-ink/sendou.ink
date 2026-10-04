@@ -40,7 +40,11 @@ import {
 	type SourceItem,
 } from "./frame-source";
 import { createGpuFrameScaler, type GpuFrameScaler } from "./gpu-frame-scaler";
-import { createGpuMatcher, type GpuMatcher } from "./gpu-matcher";
+import {
+	createGpuMatcher,
+	type GpuMatcher,
+	hasFastReadback,
+} from "./gpu-matcher";
 import type {
 	AnalyzeRequest,
 	InitRequest,
@@ -126,6 +130,12 @@ async function init({
 				console.warn("scanner: WebGPU unavailable, matching on the CPU", error);
 				return null;
 			});
+			if (gpuMatcher && !(await hasFastReadback(gpuMatcher.device))) {
+				// biome-ignore lint/suspicious/noConsole: a missing GPU silently costs speed, so say why
+				console.warn("scanner: WebGPU readback too slow, matching on the CPU");
+				gpuMatcher.destroy();
+				gpuMatcher = null;
+			}
 			if (gpuMatcher) {
 				gpuScaler = await createGpuFrameScaler(gpuMatcher.device).catch(
 					() => null,

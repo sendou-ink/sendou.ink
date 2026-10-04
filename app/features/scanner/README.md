@@ -587,7 +587,10 @@ The GPU is an accelerator only: the same algorithms make the same decisions.
   its device) at init when enabled and an adapter exists; a failed creation
   or a device lost mid-run (`device.lost`, or a failed readback) hands the
   pending step to `runSync`, so the generators still run exactly once and no
-  event is dropped or duplicated, and later frames stay on the CPU.
+  event is dropped or duplicated, and later frames stay on the CPU. A device
+  whose submit → `mapAsync` round trip is slow (`hasFastReadback`; Firefox
+  resolves GPU promises on a ~100 ms timer, Chrome in ~0.2 ms) is dropped at
+  init: every step and upscale waits on one, so there the CPU is far faster.
 - **Node** (`node/webgpu.ts`): scripts get WebGPU from Dawn, the `webgpu` npm
   package — deliberately not a dependency: `npm i webgpu` anywhere and point
   `WEBGPU_NODE` at its package dir. `scanner:scan-vod --gpu` scans on it

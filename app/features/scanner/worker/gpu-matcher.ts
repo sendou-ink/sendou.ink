@@ -48,6 +48,9 @@ const MAX_IMAGE_COLS = 4096;
 const WINDOW_KEYS = MAX_IMAGE_COLS * MAX_IMAGE_COLS;
 /** Words after each packed image: the funnel-shifted reads run one word past a row (those bytes only meet zero template padding). */
 const IMAGE_PAD_WORDS = 2;
+/** readback round trips tried before the GPU is judged too slow, and the bar each is held to */
+const READBACK_PROBES = 3;
+const FAST_READBACK_MS = 20;
 /** GPUBufferUsage / GPUMapMode flags (spec values; the globals are missing from the TS DOM lib) */
 const BUFFER_MAP_READ = 0x0001;
 const BUFFER_COPY_SRC = 0x0004;
@@ -826,6 +829,31 @@ export async function createGpuMatcher(
 		stats,
 		destroy: () => device.destroy(),
 	};
+}
+
+/**
+ * Whether a submit → mapAsync round trip on `device` is fast enough for
+ * matching to pay off: every step and frame upscale waits on one. Firefox
+ * resolves GPU promises on a ~100 ms timer, which makes the GPU path far
+ * slower than the CPU. Returns on the first fast round trip.
+ */
+export async function hasFastReadback(device: GPUDevice): Promise<boolean> {
+	const buffer = device.createBuffer({
+		size: 4,
+		usage: BUFFER_MAP_READ | BUFFER_COPY_DST,
+	});
+	try {
+		for (let probe = 0; probe < READBACK_PROBES; probe++) {
+			const start = performance.now();
+			device.queue.writeBuffer(buffer, 0, new Uint32Array([probe]));
+			await buffer.mapAsync(MAP_MODE_READ);
+			buffer.unmap();
+			if (performance.now() - start < FAST_READBACK_MS) return true;
+		}
+		return false;
+	} finally {
+		buffer.destroy();
+	}
 }
 
 function entriesOf<V>(cache: Map<string, Map<number, V>>, key: string) {
