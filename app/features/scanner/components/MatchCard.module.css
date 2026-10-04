@@ -232,15 +232,6 @@
 	outline-offset: 1px;
 }
 
-.weaponUnknown {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-bold);
-	color: var(--color-text-high);
-}
-
 .foot {
 	display: flex;
 	align-items: center;

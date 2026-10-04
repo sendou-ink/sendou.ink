@@ -15,7 +15,12 @@ import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { GameTimeline } from "~/components/GameTimeline";
-import { Image, ModeImage, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	ModeImage,
+	OutlinedImage,
+	WeaponImage,
+} from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { matchScoresFromObjective } from "~/components/objective-timeline-utils";
 import { StageBannerBox } from "~/components/StageBannerBox";
@@ -24,7 +29,11 @@ import type {
 	AbilityWithUnknown,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { navIconUrl, SENDOU_INK_DISCORD_URL } from "~/utils/urls";
+import {
+	abilityImageUrl,
+	navIconUrl,
+	SENDOU_INK_DISCORD_URL,
+} from "~/utils/urls";
 import { clipCovers } from "../core/clips/scoring";
 import {
 	DEATH_EVENT_TYPE,
@@ -359,20 +368,35 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 								<WeaponImage weaponSplId={weaponId} variant="badge" size={32} />
 							</CircleBackdrop>
 						) : (
-							<span
+							<CircleBackdrop
 								key={index}
-								className={clsx(styles.weapon, styles.weaponUnknown, {
+								className={clsx(styles.weaponBackdrop, {
 									[styles.pov]: isPov,
 								})}
-								title="weapon not read"
 							>
-								?
-							</span>
+								<UnreadWeaponImage />
+							</CircleBackdrop>
 						);
 					})}
 				</span>
 			))}
 		</span>
+	);
+}
+
+function UnreadWeaponImage({
+	containerClassName,
+}: {
+	containerClassName?: string;
+}) {
+	return (
+		<OutlinedImage
+			path={abilityImageUrl("UNKNOWN")}
+			alt="weapon not read"
+			title="weapon not read"
+			size={32}
+			containerClassName={containerClassName}
+		/>
 	);
 }
 
@@ -412,14 +436,11 @@ function Scoreboard({
 													})}
 												/>
 											) : (
-												<span
-													className={clsx(styles.weapon, styles.weaponUnknown, {
+												<UnreadWeaponImage
+													containerClassName={clsx(styles.weapon, {
 														[styles.pov]: isPov,
 													})}
-													title="weapon not read"
-												>
-													?
-												</span>
+												/>
 											)}
 										</td>
 										<td className={styles.name}>{player.name ?? "?"}</td>
