@@ -1,9 +1,9 @@
 /**
  * One game of a session or file, the same card in every view. Collapsed it
  * is one row: mode and stage (plus the X Battle set count the game left),
- * the result, the POV weapon and K/D/S, then
- * the game's clips and, once the game is over, its upload state beside the
- * expand arrow. Expanded it shows the data and
+ * the game's clips, the result and the POV player's K/D/S, then the teams'
+ * weapons and, once the game is over, its upload state beside the expand
+ * arrow. Expanded it shows the data and
  * nothing interpreted: the scoreboard, the objective + player-status
  * timeline and deaths and kills (each with a ▶ when a clip covers it), and
  * the game's data as a zip to report a misread with.
@@ -190,6 +190,24 @@ export function MatchCard({
 					{meta ? <div className={styles.meta}>{meta}</div> : null}
 				</div>
 				<div className={styles.side}>
+					{clips.length > 0 ? (
+						<span className={styles.clips}>
+							{clips.map((clip) => (
+								<button
+									key={clip.id}
+									type="button"
+									className={styles.clipChip}
+									onClick={() => onPlayClip(clip)}
+								>
+									<Play size={11} aria-hidden />
+									{clip.kills}k
+									{clip.time !== null
+										? ` · ${formatClock(elapsed(match.mode, clip.time))}`
+										: null}
+								</button>
+							))}
+						</span>
+					) : null}
 					<Score match={match} result={result} />
 					{pov ? (
 						<span className={styles.kds}>
@@ -200,24 +218,6 @@ export function MatchCard({
 			</div>
 			<div className={styles.foot}>
 				<TeamWeapons match={match} />
-				{clips.length > 0 ? (
-					<span className={styles.clips}>
-						{clips.map((clip) => (
-							<button
-								key={clip.id}
-								type="button"
-								className={styles.clipChip}
-								onClick={() => onPlayClip(clip)}
-							>
-								<Play size={11} aria-hidden />
-								{clip.kills}k
-								{clip.time !== null
-									? ` · ${formatClock(elapsed(match.mode, clip.time))}`
-									: null}
-							</button>
-						))}
-					</span>
-				) : null}
 				{expandable ? (
 					<span className={styles.footEnd}>
 						{upload ? (
