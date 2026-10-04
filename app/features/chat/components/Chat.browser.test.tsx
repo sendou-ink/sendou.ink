@@ -325,6 +325,24 @@ describe("Chat", () => {
 			expect(screen.getByText("Replying to Alice").elements()).toHaveLength(0);
 		});
 
+		test("highlights the message being replied to while the reply is held", async () => {
+			const screen = await renderChat([original]);
+			const isReplyTarget = () =>
+				screen
+					.getByTestId("chat-message-row")
+					.element()
+					.firstElementChild?.classList.contains(styles.messageReplyTarget);
+
+			await expect.element(screen.getByText("who is hosting?")).toBeVisible();
+			expect(isReplyTarget()).toBe(false);
+
+			await screen.getByRole("button", { name: "Reply" }).click();
+			expect(isReplyTarget()).toBe(true);
+
+			await screen.getByRole("button", { name: "Cancel reply" }).click();
+			expect(isReplyTarget()).toBe(false);
+		});
+
 		test("cancels the reply with its button or escape", async () => {
 			const screen = await renderChat([original]);
 			const replyingTo = () => screen.getByText("Replying to Alice").elements();

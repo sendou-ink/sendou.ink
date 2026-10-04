@@ -31,6 +31,17 @@
 	}
 }
 
+@media (hover: none) {
+	.messageHoverable:focus-within {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.messageReplyTarget {
+	background-color: var(--color-bg-high);
+	box-shadow: inset 2px 0 0 var(--color-fg-accent);
+}
+
 .messageBody {
 	flex: 1;
 	min-width: 0;
@@ -43,7 +54,7 @@
 	opacity: 0;
 	background-color: var(--color-bg);
 	border-radius: var(--radius-selector);
-	margin-top: var(--s-0-5);
+	translate: 0 -50%;
 
 	.message:hover > &,
 	&:focus-visible {
@@ -52,6 +63,11 @@
 
 	@media (hover: none) {
 		opacity: 1;
+		visibility: hidden;
+
+		.message:focus-within > & {
+			visibility: visible;
+		}
 	}
 }
 
@@ -64,6 +80,7 @@
 	min-width: 0;
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
+	margin-top: var(--s-0-5);
 }
 
 .replyReferenceGutter {

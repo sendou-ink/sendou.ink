@@ -59,9 +59,7 @@ import {
 import { StickerImage } from "./StickerImage";
 
 const ESTIMATED_MESSAGE_HEIGHT = 44;
-/** How long the stream may be down before the composer says so, so a connect right after page load never flashes it. */
 const CONNECTION_STATUS_GRACE_MS = 1_500;
-/** The composer status shows the character count once this close to the limit. */
 const CHARACTER_COUNT_SHOWN_FROM = MESSAGE_MAX_LENGTH - 40;
 const STICKER_MESSAGE_SIZE = 96;
 const STICKER_PREVIEW_SIZE = 32;
@@ -89,11 +87,13 @@ const MessagesContext = React.createContext<{
 	ownUserId: number | null;
 	messagesById: Map<number, ClientChatMessage>;
 	onReply: ((message: ClientChatMessage) => void) | null;
+	replyingToMessageId: number | null;
 }>({
 	usersById: new Map(),
 	ownUserId: null,
 	messagesById: new Map(),
 	onReply: null,
+	replyingToMessageId: null,
 });
 
 export function Chat({
@@ -141,6 +141,7 @@ export function Chat({
 							composerInputRef.current?.focus();
 						}
 					: null,
+				replyingToMessageId: replyTo?.id ?? null,
 			}}
 		>
 			<section className={clsx(styles.container, className)}>
@@ -740,7 +741,8 @@ function Message({
 }) {
 	const { t } = useTranslation(["common"]);
 	const author = message.author;
-	const { ownUserId, messagesById, onReply } = React.use(MessagesContext);
+	const { ownUserId, messagesById, onReply, replyingToMessageId } =
+		React.use(MessagesContext);
 	const { rest, replyToMessageId } = messageReply(message.contents ?? "");
 	const { text, sticker } = messageSticker(rest);
 	const repliedMessage =
@@ -758,7 +760,10 @@ function Message({
 			className={clsx(styles.message, styles.messageHoverable, {
 				[styles.messageMentionsYou]: highlighted,
 				[styles.messageFailed]: message.failed,
+				[styles.messageReplyTarget]:
+					!message.pending && message.id === replyingToMessageId,
 			})}
+			tabIndex={-1}
 		>
 			{replyToMessageId !== null ? (
 				<ReplyReference message={repliedMessage} />
