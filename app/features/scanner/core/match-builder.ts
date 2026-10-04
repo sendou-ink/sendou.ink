@@ -190,7 +190,8 @@ export interface BuiltMatch<E extends DetectedEvent> {
  * Lets a caller rebuilding a growing timeline reuse each match whose input
  * events are the very same objects as last time, so the per-match work runs
  * only for matches that changed and unchanged ones keep their identity. Keyed
- * by a match's first input event; events must not be mutated in place.
+ * by a match's first input event (a match amended from the battle log by the
+ * history screen that amended it); events must not be mutated in place.
  */
 export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
 	E,
@@ -206,9 +207,12 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * forming a new one, as does a results screen read again with no match
  * opened since. Any other history screen closes the game being gathered (a
  * missed results screen amended from the log) unless its stage, mode or
- * recording time contradicts that game's reads; then it forms a match of its
- * own and the game stays open. A history screen with its stage unread and no
- * built match forms none. Every input event ends up in at most one match's `sources`.
+ * recording time contradicts that game's reads. Then (or with no game being
+ * gathered) it completes an earlier match whose results screen was missed
+ * instead, when one fits it (`scoreboardlessMatchShown`), else it forms a
+ * match of its own and the game being gathered stays open. A history screen
+ * with its stage unread and no built match forms none. Every input event ends
+ * up in at most one match's `sources`.
  *
  * `unbacked` also emits, flagged, the stretches with kill reads no scoreboard
  * or minimap backed (a results screen missed, the map never opened, a match
@@ -226,6 +230,8 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	const minimapLookahead = buildMinimapLookahead(sorted);
 
 	let open: OpenMatch<E> | null = null;
+	// matches finalized without a scoreboard, which a history screen may still complete
+	const scoreboardless = new Map<BuiltMatch<E>, OpenMatch<E>>();
 	// deaths/objective/status reads seen with no match open to anchor them yet
 	let orphanDeaths: E[] = [];
 	let orphanObjectives: E[] = [];
@@ -235,7 +241,9 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	const finalize = (): void => {
 		if (!open) return;
 		if (isBacked(open)) {
-			built.push(cachedBuiltMatch(open, cache));
+			const match = cachedBuiltMatch(open, cache);
+			built.push(match);
+			if (open.scoreboard === null) scoreboardless.set(match, open);
 		} else if (unbacked && open.kills.length > 0) {
 			unbackedBuilt.push(cachedBuiltMatch(open, cache));
 		}
@@ -291,6 +299,22 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				continue;
 			}
 			if (isStagelessHistoryRead(event)) continue;
+			const missedResults =
+				!open || isHistoryOfAnotherGame(event, open)
+					? scoreboardlessMatchShown(scoreboardless, event)
+					: undefined;
+			if (missedResults) {
+				const pending = scoreboardless.get(missedResults)!;
+				pending.scoreboard = event;
+				vote(pending.stageVotes, (event.data as ScoreboardData).stage);
+				built[built.indexOf(missedResults)] = cachedBuiltMatch(
+					pending,
+					cache,
+					event,
+				);
+				scoreboardless.delete(missedResults);
+				continue;
+			}
 			const closing: OpenMatch<E> = open ?? claimOrphans(event.t);
 			if (isHistoryOfAnotherGame(event, closing)) {
 				// the log shows another game: the one being gathered stays open
@@ -727,10 +751,13 @@ function openMatchInputs<E extends DetectedEvent>(open: OpenMatch<E>): E[] {
 function cachedBuiltMatch<E extends DetectedEvent>(
 	open: OpenMatch<E>,
 	cache: MatchBuildCache<E> | undefined,
+	// an amended match's own key, so the match as first built stays cached too
+	key?: E,
 ): BuiltMatch<E> {
 	if (!cache) return toBuiltMatch(open);
 	const inputs = openMatchInputs(open);
-	const cached = cache.get(inputs[0]!);
+	const cacheKey = key ?? inputs[0]!;
+	const cached = cache.get(cacheKey);
 	if (
 		cached &&
 		cached.inputs.length === inputs.length &&
@@ -739,7 +766,7 @@ function cachedBuiltMatch<E extends DetectedEvent>(
 		return cached.built;
 	}
 	const built = toBuiltMatch(open);
-	cache.set(inputs[0]!, { inputs, built });
+	cache.set(cacheKey, { inputs, built });
 	return built;
 }
 
@@ -1785,13 +1812,48 @@ function isHistoryOfAnotherGame<E extends DetectedEvent>(
 	if (mode !== null && board.mode !== null && mode !== board.mode) return true;
 
 	const recorded = recordedAt(event);
+	const firstRead = firstReadAt(pending);
+	if (recorded === null || firstRead === null) return false;
+	return Math.abs(recorded - firstRead) > REVISIT_PLAYED_AT_TOLERANCE_MS;
+}
+
+/**
+ * The earlier match a battle history screen completes, its results screen
+ * missed: one finalized without a scoreboard whose reads the screen doesn't
+ * contradict (`isHistoryOfAnotherGame`), the one first read closest to the
+ * recording time. Without times to compare (VoD scans, an unread timestamp)
+ * only a sole fitting match is taken.
+ */
+function scoreboardlessMatchShown<E extends DetectedEvent>(
+	scoreboardless: ReadonlyMap<BuiltMatch<E>, OpenMatch<E>>,
+	event: E,
+): BuiltMatch<E> | undefined {
+	if (!HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) return undefined;
+	const fitting = [...scoreboardless].filter(
+		([, pending]) => !isHistoryOfAnotherGame(event, pending),
+	);
+
+	const recorded = recordedAt(event);
+	let closest: { match: BuiltMatch<E>; distance: number } | undefined;
+	for (const [match, pending] of fitting) {
+		const firstRead = firstReadAt(pending);
+		if (recorded === null || firstRead === null) continue;
+		const distance = Math.abs(recorded - firstRead);
+		if (!closest || distance < closest.distance) closest = { match, distance };
+	}
+	if (closest) return closest.match;
+
+	return fitting.length === 1 ? fitting[0]![0] : undefined;
+}
+
+/** When the earliest of the match's reads was seen (wall clock); null on VoD scans. */
+function firstReadAt<E extends DetectedEvent>(
+	pending: OpenMatch<E>,
+): number | null {
 	const readTimes = openMatchInputs(pending)
 		.map(detectedAtOf)
 		.filter((t) => t !== null);
-	if (recorded === null || readTimes.length === 0) return false;
-	return (
-		Math.abs(recorded - Math.min(...readTimes)) > REVISIT_PLAYED_AT_TOLERANCE_MS
-	);
+	return readTimes.length > 0 ? Math.min(...readTimes) : null;
 }
 
 /**

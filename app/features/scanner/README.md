@@ -297,8 +297,13 @@ sequenceDiagram
   (the match was already sent). Any other history screen closes the game
   being gathered — a missed results screen amended from the log — unless
   the intro/minimap stage, intro mode or recording time (vs. the game's
-  first read) contradicts it; then it forms its own match and the game
-  stays open. A history screen with its stage unread
+  first read) contradicts it. Then, or with no game being gathered, it
+  completes an earlier match finalized without a results screen (the next
+  game's intro came first) when one fits — stage and mode not contradicting,
+  recording time within 20 min of its first read, the closest winning; on
+  VoD scans (no wall clock) only a sole stage/mode fit — so the card keeps
+  its place and a match first sent without a scoreboard is sent again.
+  Otherwise it forms its own match and the game stays open. A history screen with its stage unread
   (typically a frame caught mid-transition) forms no match of its own; the
   timeline also holds history screens to a 0.75 confidence floor (clean
   reads score 0.81+). Likewise a results screen read again with no

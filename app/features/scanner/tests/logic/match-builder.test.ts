@@ -1214,6 +1214,137 @@ test.each([
 	},
 );
 
+const MINUTE_MS = 60 * 1000;
+
+function seenAt<T extends DetectedEvent>(event: T, detectedAt: number): T {
+	return Object.assign(event, { detectedAt });
+}
+
+/** A game whose results screen was missed: minimaps back it, nothing closes it. */
+function gameMissingResults(t: number, detectedAt?: number): DetectedEvent[] {
+	const reads = [mapStart(t), minimap(t + 60), death(t + 100, "l1")];
+	if (detectedAt === undefined) return reads;
+	return reads.map((read) => seenAt(read, detectedAt));
+}
+
+function laterGameOnStage1(t: number, detectedAt?: number): DetectedEvent[] {
+	const reads = [
+		mapStart(t, { stage: 1 as StageId }),
+		minimap(t + 60, { stage: 1 as StageId }),
+	];
+	if (detectedAt === undefined) return reads;
+	return reads.map((read) => seenAt(read, detectedAt));
+}
+
+test.each([
+	{ why: "later game complete", closesLater: true },
+	{ why: "later game still open", closesLater: false },
+])(
+	"a battle log view completes an earlier match missing its results screen ($why)",
+	({ closesLater }) => {
+		const missed = gameMissingResults(0, PLAYED_AT);
+		const later = laterGameOnStage1(400, PLAYED_AT + 7 * MINUTE_MS);
+		const laterResults = scoreboard(700, {
+			stage: 1 as StageId,
+			paints: OTHER_GAME_PAINTS,
+		});
+		const view = battleLogScoreboard(900, {
+			timestamp: "25.12.2025 21:30",
+			paints: GAME_PAINTS,
+		});
+
+		const built = buildScannerMatches(
+			closesLater
+				? [...missed, ...later, laterResults, view]
+				: [
+						...missed,
+						...later,
+						view,
+						scoreboard(1000, { stage: 1 as StageId }),
+					],
+		);
+
+		assert.equal(built.length, 2);
+		assert.deepEqual(built[0]!.sources, [...missed, view]);
+		assert.deepEqual(built[0]!.match.matchScores, [100, 0]);
+		assert.equal(built[0]!.match.winner, 0);
+		assert.equal(built[0]!.match.playedAt, PLAYED_AT - 4 * MINUTE_MS);
+		assert.deepEqual(
+			built[1]!.sources.map((e) => e.t),
+			[400, 460, closesLater ? 700 : 1000],
+		);
+	},
+);
+
+test("a battle log view recorded long before an earlier match missing its results screen forms its own match", () => {
+	const built = buildScannerMatches([
+		...gameMissingResults(0, PLAYED_AT),
+		...laterGameOnStage1(400, PLAYED_AT + 7 * MINUTE_MS),
+		scoreboard(700, { stage: 1 as StageId }),
+		battleLogScoreboard(900, { timestamp: "25.12.2025 19:30" }),
+	]);
+	assert.deepEqual(
+		built.map((b) => b.sources.map((e) => e.t)),
+		[[0, 60, 100], [400, 460, 700], [900]],
+	);
+});
+
+test("a battle log view completes the earlier match missing its results screen closest to its recording time", () => {
+	const view = battleLogScoreboard(1300, { timestamp: "25.12.2025 21:40" });
+	const built = buildScannerMatches([
+		...gameMissingResults(0, PLAYED_AT),
+		...gameMissingResults(400, PLAYED_AT + 7 * MINUTE_MS),
+		...laterGameOnStage1(800, PLAYED_AT + 14 * MINUTE_MS),
+		scoreboard(1100, { stage: 1 as StageId }),
+		view,
+	]);
+	assert.equal(built.length, 3);
+	assert.equal(built[1]!.sources.at(-1), view);
+});
+
+test("without a wall clock a battle log view completes the sole earlier match missing its results screen", () => {
+	const view = battleLogScoreboard(900);
+	const built = buildScannerMatches([
+		...gameMissingResults(0),
+		...laterGameOnStage1(400),
+		scoreboard(700, { stage: 1 as StageId }),
+		view,
+	]);
+	assert.equal(built.length, 2);
+	assert.equal(built[0]!.sources.at(-1), view);
+});
+
+test("without a wall clock a battle log view fitting several earlier matches missing their results screens forms its own match", () => {
+	const built = buildScannerMatches([
+		...gameMissingResults(0),
+		...gameMissingResults(400),
+		...laterGameOnStage1(800),
+		scoreboard(1100, { stage: 1 as StageId }),
+		battleLogScoreboard(1300),
+	]);
+	assert.equal(built.length, 4);
+	assert.deepEqual(
+		built.at(-1)!.sources.map((e) => e.t),
+		[1300],
+	);
+});
+
+test("with a cache, an earlier match completed from the battle log keeps its identity across rebuilds", () => {
+	const cache: MatchBuildCache<DetectedEvent> = new WeakMap();
+	const played = [
+		...gameMissingResults(0),
+		...laterGameOnStage1(400),
+		scoreboard(700, { stage: 1 as StageId }),
+	];
+	const view = battleLogScoreboard(900);
+	const [missed] = buildScannerMatches(played, cache);
+	const [completed] = buildScannerMatches([...played, view], cache);
+	const [completedAgain] = buildScannerMatches([...played, view], cache);
+	assert.notEqual(completed, missed);
+	assert.equal(completedAgain, completed);
+	assert.equal(buildScannerMatches(played, cache)[0], missed);
+});
+
 test("a battle log view recorded long before the orphan reads leaves them unclaimed", () => {
 	const read = death(100, "l1") as DetectedEvent & { detectedAt?: number };
 	read.detectedAt = PLAYED_AT;

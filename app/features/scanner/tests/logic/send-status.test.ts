@@ -4,6 +4,7 @@ import {
 	retryDueMatches,
 	sendMatches,
 	unsentMatches,
+	unsentScoreboardMatches,
 } from "../../components/sendou-ingest";
 import type { ScanEvent } from "../../components/session-data";
 import type { BuiltMatch } from "../../core/match-builder";
@@ -60,6 +61,29 @@ describe("unsentMatches", () => {
 		expected: boolean;
 	}>)("$why", ({ send, expected }) => {
 		expect(unsentMatches(built([event(send)]))).toBe(expected);
+	});
+});
+
+describe("unsentScoreboardMatches", () => {
+	const SENT: SendStatus = { state: "sent", at: NOW };
+
+	test.each([
+		{ why: "never attempted", sources: [event(undefined)], expected: true },
+		{
+			why: "its scoreboard sent",
+			sources: [event(SENT, "Minimap"), event(SENT)],
+			expected: false,
+		},
+		{
+			why: "sent before its scoreboard was read",
+			sources: [
+				event(SENT, "Minimap"),
+				event(undefined, "ScoreboardBattleLog"),
+			],
+			expected: true,
+		},
+	])("$why", ({ sources, expected }) => {
+		expect(unsentScoreboardMatches(built(sources))).toBe(expected);
 	});
 });
 
@@ -168,8 +192,8 @@ describe("sendMatches", () => {
 	);
 });
 
-function event(send: SendStatus | undefined): ScanEvent {
-	return { type: "Scoreboard", t: 0, confidence: 1, data: null, send };
+function event(send: SendStatus | undefined, type = "Scoreboard"): ScanEvent {
+	return { type, t: 0, confidence: 1, data: null, send };
 }
 
 function built(sources: ScanEvent[]): BuiltMatch<ScanEvent> {

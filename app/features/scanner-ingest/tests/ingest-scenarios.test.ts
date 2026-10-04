@@ -1,4 +1,8 @@
 import { describe, expect, test } from "vitest";
+import type {
+	ScannerMatch,
+	ScannerMatchTeam,
+} from "~/features/scanner/core/scanner-match";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
@@ -717,7 +721,43 @@ describe("tournament flow", () => {
 			reReported.id,
 		]);
 	});
+
+	test("T9 minimaps-only read completed from the battle log: the resend merges into it and links", async () => {
+		const w = await tournamentWorld();
+		const finalMatch = w.matchesOfTeam(w.championTeamId).at(-1)!;
+		const [game1] = await w.games(finalMatch.id);
+		const completed = w.scanned(game1!);
+		const minimapsOnly: ScannerMatch = {
+			...completed,
+			playedAt: null,
+			lobby: null,
+			matchScores: null,
+			winner: null,
+			pov: null,
+			teams: [minimapTeam(completed.teams[0]), minimapTeam(completed.teams[1])],
+		};
+
+		await ingest(w.povUser, [minimapsOnly]);
+		const res = await ingest(w.povUser, [completed]);
+
+		expect(res.storedMatchesCount).toBe(0);
+		expect(res.mergedMatchesCount).toBe(1);
+		expect(res.linkedGamesCount).toBe(1);
+		expect(await fetchIngestedMatches()).toHaveLength(1);
+	});
 });
+
+function minimapTeam(team: ScannerMatchTeam): ScannerMatchTeam {
+	return {
+		players: team.players.map((player) => ({
+			...player,
+			paint: null,
+			ka: null,
+			d: null,
+			s: null,
+		})),
+	};
+}
 
 describe("response contract & idempotency", () => {
 	test("R1 no context: a scrim between unknown players is stored without hints or links", async () => {

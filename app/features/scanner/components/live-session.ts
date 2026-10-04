@@ -61,6 +61,7 @@ import {
 	retryDueMatches,
 	unsentClosedMatches,
 	unsentMatches,
+	unsentScoreboardMatches,
 } from "./sendou-ingest";
 import { audioDeviceIdOf, readSettings } from "./settings";
 import { sendLive, uploadEnabled } from "./upload";
@@ -547,10 +548,13 @@ async function persist(
 		const id = await saveEvent(event, frame, stale);
 		storedIds.set(event, id);
 		if (uploadEnabled() && SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-			// a scoreboard closes its match — send it
+			// a scoreboard closes its match — send it, again if it went out
+			// without one; a better read of an already sent scoreboard is not resent
+			const unsent =
+				stale === undefined ? unsentScoreboardMatches : unsentMatches;
 			refreshFeed();
 			await sendLive(
-				(built) => matchContaining(id)(built) && unsentMatches(built),
+				(built) => matchContaining(id)(built) && unsent(built),
 				newestSessionKey(),
 			);
 		}

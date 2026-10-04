@@ -149,10 +149,18 @@ export function aggregateSendStatus(
 
 /** Match selector: matches not yet sent (nor currently sending). */
 export function unsentMatches(built: BuiltMatch<ScanEvent>): boolean {
-	return !built.sources.some((e) => {
-		const state = currentSendStatus(e.send)?.state;
-		return state === "sent" || state === "sending";
-	});
+	return !built.sources.some(isSentOrSending);
+}
+
+/**
+ * Match selector: matches no scoreboard of which was sent yet — unsent ones,
+ * and ones sent before a battle log screen stood in for their missed results
+ * screen.
+ */
+export function unsentScoreboardMatches(built: BuiltMatch<ScanEvent>): boolean {
+	return !built.sources.some(
+		(e) => SCOREBOARD_EVENT_TYPES.includes(e.type) && isSentOrSending(e),
+	);
 }
 
 /** Match selector: matches stored without a game to link to, or whose send failed, with their next retry due. */
@@ -182,6 +190,11 @@ function nextAttempt(built: BuiltMatch<ScanEvent>): number {
 	return previous?.state === "unlinked" || previous?.state === "failed"
 		? (previous.attempts ?? 1) + 1
 		: 1;
+}
+
+function isSentOrSending(event: ScanEvent): boolean {
+	const state = currentSendStatus(event.send)?.state;
+	return state === "sent" || state === "sending";
 }
 
 function currentSendStatus(
