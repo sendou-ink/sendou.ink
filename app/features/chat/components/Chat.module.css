@@ -4,7 +4,7 @@
 }
 
 .messages {
-	padding-block: var(--s-2);
+	padding-block: var(--s-4) var(--s-2);
 	display: block;
 	height: 310px;
 	overflow-x: hidden;
