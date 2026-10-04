@@ -174,6 +174,7 @@
 	"actions.close": "Close",
 	"actions.dismiss": "Dismiss",
 	"actions.cancel": "Cancel",
+	"actions.apply": "Apply",
 	"actions.loading": "Loading...",
 	"actions.clear": "Clear",
 	"actions.selectAll": "Select All",

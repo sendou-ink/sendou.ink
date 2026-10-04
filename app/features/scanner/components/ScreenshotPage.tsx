@@ -6,6 +6,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { Dropzone, DropzoneAction } from "~/components/Dropzone";
 import { SendouButton } from "~/components/elements/Button";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -63,7 +64,6 @@ import { scannerSearchParams } from "../scanner-search-params";
 import { claimInspectFrame } from "../store/inspect";
 import { AnalyzerClient } from "../worker/client";
 import type { WorkerResponse } from "../worker/protocol";
-import { Dropzone } from "./Dropzone";
 import { downloadCsv } from "./download";
 import { type CardData, downloadExpectedJson } from "./fixture-export";
 import { drawNormalizedCanvas } from "./normalized-canvas";
@@ -651,21 +651,12 @@ export function ScreenshotPage() {
 	return (
 		<div>
 			<SessionHeader>
-				<Dropzone onFile={(file: File) => void analyze(file)}>
+				<Dropzone
+					accept="image/png,image/webp,image/jpeg"
+					onFile={(file) => void analyze(file)}
+				>
 					Drop a frame (PNG/WebP/JPEG) here, or{" "}
-					<label>
-						pick a file
-						<input
-							type="file"
-							accept="image/png,image/webp,image/jpeg"
-							style={{ display: "none" }}
-							onChange={(e) => {
-								const file = e.target.files?.[0];
-								e.target.value = ""; // allow re-picking the same file
-								if (file) void analyze(file);
-							}}
-						/>
-					</label>
+					<DropzoneAction>pick a file</DropzoneAction>
 					{busy ? " — analyzing…" : null}
 				</Dropzone>
 			</SessionHeader>

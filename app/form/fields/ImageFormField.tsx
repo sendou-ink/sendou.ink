@@ -1,9 +1,11 @@
 import clsx from "clsx";
-import Compressor from "compressorjs";
 import * as React from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { Dropzone, DropzoneAction } from "~/components/Dropzone";
 import { SendouButton } from "~/components/elements/Button";
 import { logger } from "~/utils/logger";
+import * as ImageCrop from "../image-crop/ImageCrop";
+import { ImageCropDialog } from "../image-crop/ImageCropDialog";
 import {
 	type ImageFieldValue,
 	resolveImageFieldDimensions,
@@ -11,6 +13,8 @@ import {
 import type { FormFieldProps } from "../types";
 import { FormFieldWrapper, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./ImageFormField.module.css";
+
+const IMAGE_QUALITY = 0.8;
 
 type ImageFormFieldProps = Omit<FormFieldProps<"image">, "onBlur"> & {
 	value: ImageFieldValue;
@@ -30,6 +34,11 @@ export function ImageFormField({
 	disabled,
 }: ImageFormFieldProps) {
 	const id = React.useId();
+	const [processingError, setProcessingError] = React.useState<string>();
+	const [pickedImage, setPickedImage] = React.useState<{
+		url: string;
+		image: HTMLImageElement;
+	} | null>(null);
 	const { t } = useTranslation(["common", "forms"]);
 	const resolvedDimensions = resolveImageFieldDimensions(dimensions);
 
@@ -53,29 +62,37 @@ export function ImageFormField({
 				? value.dataUrl
 				: null;
 
-	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const uploadedFile = event.target.files?.[0];
-		if (!uploadedFile) return;
+	const handleFile = async (file: File) => {
+		setProcessingError(undefined);
 
-		// biome-ignore lint/correctness/noUnusedInstantiation: Compressor does its work through the success/error callbacks
-		new Compressor(uploadedFile, {
-			width: resolvedDimensions.width,
-			height: resolvedDimensions.height,
-			maxWidth: resolvedDimensions.width,
-			maxHeight: resolvedDimensions.height,
-			resize: "cover",
-			mimeType: "image/webp",
-			success(result) {
-				const reader = new FileReader();
-				reader.onload = () =>
-					onChange({ type: "NEW", dataUrl: reader.result as string });
-				reader.onerror = () => logger.error("Failed to read compressed image");
-				reader.readAsDataURL(result);
-			},
-			error(err) {
-				logger.error(err.message);
-			},
-		});
+		try {
+			setPickedImage(await loadImage(file));
+		} catch (err) {
+			logger.error(err);
+			setProcessingError("forms:errors.imageProcessingFailed");
+		}
+	};
+
+	const closeCropDialog = () => {
+		if (pickedImage) URL.revokeObjectURL(pickedImage.url);
+		setPickedImage(null);
+	};
+
+	const handleCropApply = async (crop: ImageCrop.Crop) => {
+		if (!pickedImage) return;
+
+		try {
+			const dataUrl = await cropToDataUrl(
+				pickedImage.image,
+				crop,
+				resolvedDimensions,
+			);
+			onChange({ type: "NEW", dataUrl });
+		} catch (err) {
+			logger.error(err);
+			setProcessingError("forms:errors.imageProcessingFailed");
+		}
+		closeCropDialog();
 	};
 
 	const isBanner =
@@ -87,7 +104,7 @@ export function ImageFormField({
 			id={id}
 			name={name}
 			label={label}
-			error={error}
+			error={processingError ?? error}
 			bottomText={bottomTexts.join(" ")}
 		>
 			<div className="stack sm items-start">
@@ -108,15 +125,90 @@ export function ImageFormField({
 						{t("common:actions.remove")}
 					</SendouButton>
 				) : (
-					<input
+					<Dropzone
 						id={id}
-						type="file"
 						accept="image/png, image/jpeg, image/webp"
-						onChange={handleFileChange}
+						onFile={handleFile}
 						disabled={disabled}
-					/>
+					>
+						<Trans
+							t={t}
+							i18nKey="forms:imageDropzone"
+							components={{ action: <DropzoneAction /> }}
+						/>
+					</Dropzone>
 				)}
 			</div>
+			{pickedImage ? (
+				<ImageCropDialog
+					imageUrl={pickedImage.url}
+					imageSize={{
+						width: pickedImage.image.naturalWidth,
+						height: pickedImage.image.naturalHeight,
+					}}
+					aspectRatio={resolvedDimensions.width / resolvedDimensions.height}
+					shape={isBanner ? "rounded" : "circle"}
+					onApply={handleCropApply}
+					onClose={closeCropDialog}
+				/>
+			) : null}
 		</FormFieldWrapper>
 	);
+}
+
+function loadImage(file: File) {
+	const url = URL.createObjectURL(file);
+	const image = new Image();
+	image.src = url;
+
+	return image.decode().then(
+		() => ({ url, image }),
+		(err) => {
+			URL.revokeObjectURL(url);
+			throw err;
+		},
+	);
+}
+
+/** Draws the cropped part of `image` at exactly `width`x`height` as webp (png where the browser can't encode webp). */
+async function cropToDataUrl(
+	image: HTMLImageElement,
+	crop: ImageCrop.Crop,
+	{ width, height }: { width: number; height: number },
+) {
+	const imageSize = { width: image.naturalWidth, height: image.naturalHeight };
+	const visible = ImageCrop.sourceRect(crop, {
+		imageSize,
+		aspectRatio: width / height,
+	});
+	const oriented = ImageCrop.orientedSize(imageSize, crop.rotation);
+
+	const canvas = document.createElement("canvas");
+	canvas.width = width;
+	canvas.height = height;
+
+	const context = canvas.getContext("2d");
+	if (!context) throw new Error("Canvas 2D context not available");
+
+	context.imageSmoothingQuality = "high";
+	context.translate(width / 2, height / 2);
+	context.scale(width / visible.width, width / visible.width);
+	context.translate(
+		-(visible.x + visible.width / 2) + oriented.width / 2,
+		-(visible.y + visible.height / 2) + oriented.height / 2,
+	);
+	context.rotate((crop.rotation * Math.PI) / 180);
+	context.drawImage(image, -imageSize.width / 2, -imageSize.height / 2);
+
+	const blob = await new Promise<Blob | null>((resolve) =>
+		canvas.toBlob(resolve, "image/webp", IMAGE_QUALITY),
+	);
+	if (!blob) throw new Error("Failed to encode cropped image");
+
+	return new Promise<string>((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(reader.result as string);
+		reader.onerror = () => reject(new Error("Failed to read cropped image"));
+		reader.readAsDataURL(blob);
+	});
 }

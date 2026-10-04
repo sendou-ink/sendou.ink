@@ -241,6 +241,10 @@ export function createFormHelpers<T extends v.ObjectEntries>(
 		async setImage(name, filePath) {
 			const label = getLabel(String(name));
 			await page.getByLabel(label).setInputFiles(filePath);
+			await page
+				.getByRole("dialog", { name: "Edit image" })
+				.getByRole("button", { name: "Apply" })
+				.click();
 		},
 
 		async submit() {
