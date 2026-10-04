@@ -26,6 +26,75 @@ index a2b1aca6bfc6cb9a663596780167b58102beb361..2b29018c3bd23ba9bbb307debcf5b456
 +}
  //#endregion
  export { ServerRouter };
+diff --git a/dist/development/lib/dom-export/hydrated-router.js b/dist/development/lib/dom-export/hydrated-router.js
+index 4d0817136a6b1398fd80a0ea1cb864a01796f203..0e91eece494e1ac17a344670fd08404a89d63f1c 100644
+--- a/dist/development/lib/dom-export/hydrated-router.js
++++ b/dist/development/lib/dom-export/hydrated-router.js
+@@ -133,7 +133,8 @@ function HydratedRouter(props) {
+ 	}, [location]);
+ 	UNSAFE_invariant(ssrInfo, "ssrInfo unavailable for HydratedRouter");
+ 	UNSAFE_useFogOFWarDiscovery(router, ssrInfo.manifest, ssrInfo.routeModules, ssrInfo.context.ssr, ssrInfo.context.routeDiscovery, ssrInfo.context.isSpaMode);
+-	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: {
++	// patched: a stable value so every <Link> doesn't re-render whenever the location changes
++	let frameworkContext = React$1.useMemo(() => ({
+ 		manifest: ssrInfo.manifest,
+ 		routeModules: ssrInfo.routeModules,
+ 		future: ssrInfo.context.future,
+@@ -141,7 +142,13 @@ function HydratedRouter(props) {
+ 		ssr: ssrInfo.context.ssr,
+ 		isSpaMode: ssrInfo.context.isSpaMode,
+ 		routeDiscovery: ssrInfo.context.routeDiscovery
+-	} }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
++	}), [
++		ssrInfo.manifest,
++		ssrInfo.routeModules,
++		ssrInfo.context,
++		criticalCss
++	]);
++	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: frameworkContext }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
+ 		router,
+ 		useTransitions: props.useTransitions,
+ 		onError: props.onError
+diff --git a/dist/development/lib/hooks.js b/dist/development/lib/hooks.js
+index 18c69d42e36059faae18922046ea3cd7e9817722..f2c806583352aa61c38ec113c159f0b4a84cac8e 100644
+--- a/dist/development/lib/hooks.js
++++ b/dist/development/lib/hooks.js
+@@ -527,10 +527,11 @@ function useParams() {
+ *                         Set to `"path"` to make relative routing operate against path segments.
+ * @returns The resolved {@link Path} object with `pathname`, `search`, and `hash`
+ */
++// patched: the resolved-path inputs as a string, so links don't re-render when a router state change recreates the route context
++const RoutePathnamesContext = /* @__PURE__ */ React$1.createContext("[]");
+ function useResolvedPath(to, { relative } = {}) {
+-	let { matches } = React$1.useContext(RouteContext);
++	let routePathnamesJson = React$1.useContext(RoutePathnamesContext);
+ 	let { pathname: locationPathname } = useLocation();
+-	let routePathnamesJson = JSON.stringify(getResolveToMatches(matches));
+ 	return React$1.useMemo(() => resolveTo(to, JSON.parse(routePathnamesJson), locationPathname, relative === "path"), [
+ 		to,
+ 		routePathnamesJson,
+@@ -681,10 +682,10 @@ var RenderErrorBoundary = class extends React$1.Component {
+ 			const decoded = decodeRouteErrorResponseDigest(error.digest);
+ 			if (decoded) error = decoded;
+ 		}
+-		let result = error !== void 0 ? /* @__PURE__ */ React$1.createElement(RouteContext.Provider, { value: this.props.routeContext }, /* @__PURE__ */ React$1.createElement(IsDataRouteContext.Provider, { value: this.props.routeContext.isDataRoute }, /* @__PURE__ */ React$1.createElement(RouteIdContext.Provider, { value: this.props.routeContext.matches[this.props.routeContext.matches.length - 1]?.route.id }, /* @__PURE__ */ React$1.createElement(RouteErrorContext.Provider, {
++		let result = error !== void 0 ? /* @__PURE__ */ React$1.createElement(RouteContext.Provider, { value: this.props.routeContext }, /* @__PURE__ */ React$1.createElement(RoutePathnamesContext.Provider, { value: JSON.stringify(getResolveToMatches(this.props.routeContext.matches)) }, /* @__PURE__ */ React$1.createElement(IsDataRouteContext.Provider, { value: this.props.routeContext.isDataRoute }, /* @__PURE__ */ React$1.createElement(RouteIdContext.Provider, { value: this.props.routeContext.matches[this.props.routeContext.matches.length - 1]?.route.id }, /* @__PURE__ */ React$1.createElement(RouteErrorContext.Provider, {
+ 			value: error,
+ 			children: this.props.component
+-		})))) : this.props.children;
++		}))))) : this.props.children;
+ 		if (this.context) return /* @__PURE__ */ React$1.createElement(RSCErrorHandler, { error }, result);
+ 		return result;
+ 	}
+@@ -718,7 +719,7 @@ function RSCErrorHandler({ children, error }) {
+ function RenderedRoute({ routeContext, match, children }) {
+ 	let dataRouterContext = React$1.useContext(DataRouterContext);
+ 	if (dataRouterContext && dataRouterContext.static && dataRouterContext.staticContext && (match.route.errorElement || match.route.ErrorBoundary)) dataRouterContext.staticContext._deepestRenderedBoundaryId = match.route.id;
+-	return /* @__PURE__ */ React$1.createElement(RouteContext.Provider, { value: routeContext }, /* @__PURE__ */ React$1.createElement(IsDataRouteContext.Provider, { value: routeContext.isDataRoute }, /* @__PURE__ */ React$1.createElement(RouteIdContext.Provider, { value: match.route.id }, children)));
++	return /* @__PURE__ */ React$1.createElement(RouteContext.Provider, { value: routeContext }, /* @__PURE__ */ React$1.createElement(RoutePathnamesContext.Provider, { value: JSON.stringify(getResolveToMatches(routeContext.matches)) }, /* @__PURE__ */ React$1.createElement(IsDataRouteContext.Provider, { value: routeContext.isDataRoute }, /* @__PURE__ */ React$1.createElement(RouteIdContext.Provider, { value: match.route.id }, children))));
+ }
+ function _renderMatches(matches, parentMatches = [], dataRouterOpts) {
+ 	let dataRouterState = dataRouterOpts?.state;
 diff --git a/dist/development/lib/router/matcher.js b/dist/development/lib/router/matcher.js
 index 135d8da979b2a7c88c43f2f85c43de0ac6a49ad0..5eb2b3edfda349e5de531559c3313e4d0f4ac8e3 100644
 --- a/dist/development/lib/router/matcher.js
@@ -79,6 +148,50 @@ index 135d8da979b2a7c88c43f2f85c43de0ac6a49ad0..5eb2b3edfda349e5de531559c3313e4d
 +}
  //#endregion
  export { V6RegExMatcher };
+diff --git a/dist/development/lib/router/router.js b/dist/development/lib/router/router.js
+index b6faa6059480c74780c475ebdcf2f1061056328c..c4c2e41142500ffd6f6378daffdea7b98182647e 100644
+--- a/dist/development/lib/router/router.js
++++ b/dist/development/lib/router/router.js
+@@ -2725,7 +2725,7 @@ function processLoaderData(state, matches, results, pendingActionResult, revalid
+ }
+ function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
+ 	let mergedLoaderData = Object.entries(newLoaderData).filter(([, v]) => v !== ResetLoaderDataSymbol).reduce((merged, [k, v]) => {
+-		merged[k] = v;
++		merged[k] = loaderData.hasOwnProperty(k) ? replaceEqualDeep(loaderData[k], v) : v;
+ 		return merged;
+ 	}, {});
+ 	let preservedCount = 0;
+@@ -2739,6 +2739,30 @@ function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
+ 	}
+ 	return Object.keys(newLoaderData).length === 0 && preservedCount === Object.keys(loaderData).length ? loaderData : mergedLoaderData;
+ }
++// patched: a revalidation returning equal data keeps the previous data's identity (per unchanged subtree), so the UI reading it doesn't re-render
++function replaceEqualDeep(prev, next) {
++	if (prev === next) return prev;
++	if (prev instanceof Date && next instanceof Date) return prev.getTime() === next.getTime() ? prev : next;
++	let prevIsArray = Array.isArray(prev);
++	if (prevIsArray !== Array.isArray(next)) return next;
++	if (!prevIsArray && !(isPlainObject(prev) && isPlainObject(next))) return next;
++	let nextKeys = prevIsArray ? null : Object.keys(next);
++	let length = prevIsArray ? next.length : nextKeys.length;
++	let equal = length === (prevIsArray ? prev.length : Object.keys(prev).length);
++	let result = prevIsArray ? new Array(length) : {};
++	for (let i = 0; i < length; i++) {
++		let key = prevIsArray ? i : nextKeys[i];
++		let hasPrev = prevIsArray ? i < prev.length : Object.prototype.hasOwnProperty.call(prev, key);
++		result[key] = hasPrev ? replaceEqualDeep(prev[key], next[key]) : next[key];
++		if (!hasPrev || result[key] !== prev[key]) equal = false;
++	}
++	return equal ? prev : result;
++}
++function isPlainObject(value) {
++	if (value === null || typeof value !== "object") return false;
++	let proto = Object.getPrototypeOf(value);
++	return proto === Object.prototype || proto === null;
++}
+ function getActionDataForCommit(pendingActionResult) {
+ 	if (!pendingActionResult) return {};
+ 	return isErrorResult(pendingActionResult[1]) ? { actionData: {} } : { actionData: { [pendingActionResult[0]]: pendingActionResult[1].data } };
 diff --git a/dist/development/lib/server-runtime/crypto.js b/dist/development/lib/server-runtime/crypto.js
 index a4f6c3f43084bfccf5d9ebe4908868502ce70b58..c0619093ba8a2763d523d5a868896626636123f4 100644
 --- a/dist/development/lib/server-runtime/crypto.js
@@ -179,6 +292,75 @@ index a2b1aca6bfc6cb9a663596780167b58102beb361..2b29018c3bd23ba9bbb307debcf5b456
 +}
  //#endregion
  export { ServerRouter };
+diff --git a/dist/production/lib/dom-export/hydrated-router.js b/dist/production/lib/dom-export/hydrated-router.js
+index 4d0817136a6b1398fd80a0ea1cb864a01796f203..0e91eece494e1ac17a344670fd08404a89d63f1c 100644
+--- a/dist/production/lib/dom-export/hydrated-router.js
++++ b/dist/production/lib/dom-export/hydrated-router.js
+@@ -133,7 +133,8 @@ function HydratedRouter(props) {
+ 	}, [location]);
+ 	UNSAFE_invariant(ssrInfo, "ssrInfo unavailable for HydratedRouter");
+ 	UNSAFE_useFogOFWarDiscovery(router, ssrInfo.manifest, ssrInfo.routeModules, ssrInfo.context.ssr, ssrInfo.context.routeDiscovery, ssrInfo.context.isSpaMode);
+-	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: {
++	// patched: a stable value so every <Link> doesn't re-render whenever the location changes
++	let frameworkContext = React$1.useMemo(() => ({
+ 		manifest: ssrInfo.manifest,
+ 		routeModules: ssrInfo.routeModules,
+ 		future: ssrInfo.context.future,
+@@ -141,7 +142,13 @@ function HydratedRouter(props) {
+ 		ssr: ssrInfo.context.ssr,
+ 		isSpaMode: ssrInfo.context.isSpaMode,
+ 		routeDiscovery: ssrInfo.context.routeDiscovery
+-	} }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
++	}), [
++		ssrInfo.manifest,
++		ssrInfo.routeModules,
++		ssrInfo.context,
++		criticalCss
++	]);
++	return /* @__PURE__ */ React$1.createElement(React$1.Fragment, null, /* @__PURE__ */ React$1.createElement(UNSAFE_FrameworkContext.Provider, { value: frameworkContext }, /* @__PURE__ */ React$1.createElement(UNSAFE_RemixErrorBoundary, { location }, /* @__PURE__ */ React$1.createElement(RouterProvider$1, {
+ 		router,
+ 		useTransitions: props.useTransitions,
+ 		onError: props.onError
+diff --git a/dist/production/lib/hooks.js b/dist/production/lib/hooks.js
+index d83812a300d04b1301221b9f2650dc8197257cbb..4ebb1dd7321b19ab2aa1cd4f1784cb1b60be723e 100644
+--- a/dist/production/lib/hooks.js
++++ b/dist/production/lib/hooks.js
+@@ -527,10 +527,11 @@ function useParams() {
+ *                         Set to `"path"` to make relative routing operate against path segments.
+ * @returns The resolved {@link Path} object with `pathname`, `search`, and `hash`
+ */
++// patched: the resolved-path inputs as a string, so links don't re-render when a router state change recreates the route context
++const RoutePathnamesContext = /* @__PURE__ */ React$1.createContext("[]");
+ function useResolvedPath(to, { relative } = {}) {
+-	let { matches } = React$1.useContext(RouteContext);
++	let routePathnamesJson = React$1.useContext(RoutePathnamesContext);
+ 	let { pathname: locationPathname } = useLocation();
+-	let routePathnamesJson = JSON.stringify(getResolveToMatches(matches));
+ 	return React$1.useMemo(() => resolveTo(to, JSON.parse(routePathnamesJson), locationPathname, relative === "path"), [
+ 		to,
+ 		routePathnamesJson,
+@@ -666,10 +667,10 @@ var RenderErrorBoundary = class extends React$1.Component {
+ 			const decoded = decodeRouteErrorResponseDigest(error.digest);
+ 			if (decoded) error = decoded;
+ 		}
+-		let result = error !== void 0 ? /* @__PURE__ */ React$1.createElement(RouteContext.Provider, { value: this.props.routeContext }, /* @__PURE__ */ React$1.createElement(IsDataRouteContext.Provider, { value: this.props.routeContext.isDataRoute }, /* @__PURE__ */ React$1.createElement(RouteIdContext.Provider, { value: this.props.routeContext.matches[this.props.routeContext.matches.length - 1]?.route.id }, /* @__PURE__ */ React$1.createElement(RouteErrorContext.Provider, {
++		let result = error !== void 0 ? /* @__PURE__ */ React$1.createElement(RouteContext.Provider, { value: this.props.routeContext }, /* @__PURE__ */ React$1.createElement(RoutePathnamesContext.Provider, { value: JSON.stringify(getResolveToMatches(this.props.routeContext.matches)) }, /* @__PURE__ */ React$1.createElement(IsDataRouteContext.Provider, { value: this.props.routeContext.isDataRoute }, /* @__PURE__ */ React$1.createElement(RouteIdContext.Provider, { value: this.props.routeContext.matches[this.props.routeContext.matches.length - 1]?.route.id }, /* @__PURE__ */ React$1.createElement(RouteErrorContext.Provider, {
+ 			value: error,
+ 			children: this.props.component
+-		})))) : this.props.children;
++		}))))) : this.props.children;
+ 		if (this.context) return /* @__PURE__ */ React$1.createElement(RSCErrorHandler, { error }, result);
+ 		return result;
+ 	}
+@@ -703,7 +704,7 @@ function RSCErrorHandler({ children, error }) {
+ function RenderedRoute({ routeContext, match, children }) {
+ 	let dataRouterContext = React$1.useContext(DataRouterContext);
+ 	if (dataRouterContext && dataRouterContext.static && dataRouterContext.staticContext && (match.route.errorElement || match.route.ErrorBoundary)) dataRouterContext.staticContext._deepestRenderedBoundaryId = match.route.id;
+-	return /* @__PURE__ */ React$1.createElement(RouteContext.Provider, { value: routeContext }, /* @__PURE__ */ React$1.createElement(IsDataRouteContext.Provider, { value: routeContext.isDataRoute }, /* @__PURE__ */ React$1.createElement(RouteIdContext.Provider, { value: match.route.id }, children)));
++	return /* @__PURE__ */ React$1.createElement(RouteContext.Provider, { value: routeContext }, /* @__PURE__ */ React$1.createElement(RoutePathnamesContext.Provider, { value: JSON.stringify(getResolveToMatches(routeContext.matches)) }, /* @__PURE__ */ React$1.createElement(IsDataRouteContext.Provider, { value: routeContext.isDataRoute }, /* @__PURE__ */ React$1.createElement(RouteIdContext.Provider, { value: match.route.id }, children))));
+ }
+ function _renderMatches(matches, parentMatches = [], dataRouterOpts) {
+ 	let dataRouterState = dataRouterOpts?.state;
 diff --git a/dist/production/lib/router/matcher.js b/dist/production/lib/router/matcher.js
 index 135d8da979b2a7c88c43f2f85c43de0ac6a49ad0..5eb2b3edfda349e5de531559c3313e4d0f4ac8e3 100644
 --- a/dist/production/lib/router/matcher.js
@@ -232,6 +414,50 @@ index 135d8da979b2a7c88c43f2f85c43de0ac6a49ad0..5eb2b3edfda349e5de531559c3313e4d
 +}
  //#endregion
  export { V6RegExMatcher };
+diff --git a/dist/production/lib/router/router.js b/dist/production/lib/router/router.js
+index b6faa6059480c74780c475ebdcf2f1061056328c..c4c2e41142500ffd6f6378daffdea7b98182647e 100644
+--- a/dist/production/lib/router/router.js
++++ b/dist/production/lib/router/router.js
+@@ -2725,7 +2725,7 @@ function processLoaderData(state, matches, results, pendingActionResult, revalid
+ }
+ function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
+ 	let mergedLoaderData = Object.entries(newLoaderData).filter(([, v]) => v !== ResetLoaderDataSymbol).reduce((merged, [k, v]) => {
+-		merged[k] = v;
++		merged[k] = loaderData.hasOwnProperty(k) ? replaceEqualDeep(loaderData[k], v) : v;
+ 		return merged;
+ 	}, {});
+ 	let preservedCount = 0;
+@@ -2739,6 +2739,30 @@ function mergeLoaderData(loaderData, newLoaderData, matches, errors) {
+ 	}
+ 	return Object.keys(newLoaderData).length === 0 && preservedCount === Object.keys(loaderData).length ? loaderData : mergedLoaderData;
+ }
++// patched: a revalidation returning equal data keeps the previous data's identity (per unchanged subtree), so the UI reading it doesn't re-render
++function replaceEqualDeep(prev, next) {
++	if (prev === next) return prev;
++	if (prev instanceof Date && next instanceof Date) return prev.getTime() === next.getTime() ? prev : next;
++	let prevIsArray = Array.isArray(prev);
++	if (prevIsArray !== Array.isArray(next)) return next;
++	if (!prevIsArray && !(isPlainObject(prev) && isPlainObject(next))) return next;
++	let nextKeys = prevIsArray ? null : Object.keys(next);
++	let length = prevIsArray ? next.length : nextKeys.length;
++	let equal = length === (prevIsArray ? prev.length : Object.keys(prev).length);
++	let result = prevIsArray ? new Array(length) : {};
++	for (let i = 0; i < length; i++) {
++		let key = prevIsArray ? i : nextKeys[i];
++		let hasPrev = prevIsArray ? i < prev.length : Object.prototype.hasOwnProperty.call(prev, key);
++		result[key] = hasPrev ? replaceEqualDeep(prev[key], next[key]) : next[key];
++		if (!hasPrev || result[key] !== prev[key]) equal = false;
++	}
++	return equal ? prev : result;
++}
++function isPlainObject(value) {
++	if (value === null || typeof value !== "object") return false;
++	let proto = Object.getPrototypeOf(value);
++	return proto === Object.prototype || proto === null;
++}
+ function getActionDataForCommit(pendingActionResult) {
+ 	if (!pendingActionResult) return {};
+ 	return isErrorResult(pendingActionResult[1]) ? { actionData: {} } : { actionData: { [pendingActionResult[0]]: pendingActionResult[1].data } };
 diff --git a/dist/production/lib/server-runtime/crypto.js b/dist/production/lib/server-runtime/crypto.js
 index a4f6c3f43084bfccf5d9ebe4908868502ce70b58..c0619093ba8a2763d523d5a868896626636123f4 100644
 --- a/dist/production/lib/server-runtime/crypto.js

@@ -36,7 +36,7 @@ export const meta: MetaFunction = (args) => {
 
 	if (!rawData) return [];
 
-	const data = parseTournamentLoaderData(rawData);
+	const data = parseLoaderDataForHead(rawData);
 
 	return metaTags({
 		title: data.tournament.ctx.name,
@@ -56,7 +56,7 @@ export const handle: SendouRouteHandle = {
 
 		if (!rawData) return [];
 
-		const data = parseTournamentLoaderData(rawData);
+		const data = parseLoaderDataForHead(rawData);
 
 		return [
 			{
@@ -71,23 +71,17 @@ export const handle: SendouRouteHandle = {
 
 export default function TournamentLayout() {
 	const rawData = useLoaderData<typeof loader>();
-	const data = React.useMemo(
-		() => parseTournamentLoaderData(rawData),
-		[rawData],
-	);
-	const tournament = React.useMemo(
-		() => new Tournament(data.tournament),
-		[data],
-	);
+	const data = parseTournamentLoaderData(rawData);
+	const tournament = new Tournament(data.tournament);
 	const [bracketExpanded, setBracketExpanded] = React.useState(true);
 
 	// for debugging in the browser console
-	if (process.env.NODE_ENV === "development") {
-		React.useEffect(() => {
-			// @ts-expect-error for dev purposes
-			window.tourney = tournament;
-		}, [tournament]);
-	}
+	React.useEffect(() => {
+		if (process.env.NODE_ENV !== "development") return;
+		// @ts-expect-error for dev purposes
+		window.tourney = tournament;
+	}, [tournament]);
+
 	const content = (
 		<>
 			<TournamentNav tournament={tournament} streamsCount={data.streamsCount} />
@@ -125,6 +119,19 @@ type TournamentContext = {
 	preparedMaps: TournamentLoaderData["preparedMaps"];
 	vods: NonNullable<TournamentLoaderData["vods"]>;
 };
+
+let lastHeadRawData: string | null = null;
+let lastHeadData: TournamentLoaderData | null = null;
+
+/** Parses once per payload for `meta` and `breadcrumb`, which rerun on every navigation and revalidation (read-only use). */
+function parseLoaderDataForHead(rawData: string) {
+	if (rawData !== lastHeadRawData || !lastHeadData) {
+		lastHeadData = parseTournamentLoaderData(rawData);
+		lastHeadRawData = rawData;
+	}
+
+	return lastHeadData;
+}
 
 export function useBracketExpanded() {
 	const { bracketExpanded, setBracketExpanded } =

@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { UserProvider } from "~/features/auth/core/user";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import { PlusSuggestionComments } from "./plus.suggestions";
 
@@ -11,6 +12,10 @@ const AUTHOR = {
 	id: 5,
 	username: "Suggester",
 };
+
+type LoggedInUser = NonNullable<
+	React.ComponentProps<typeof UserProvider>["user"]
+>;
 
 const AUTHOR_AS_LOGGED_IN_USER = { id: AUTHOR.id, discordId: "1005" };
 
@@ -58,16 +63,17 @@ describe("PlusSuggestionComments", () => {
 		const router = createBrowserRouter([
 			{
 				path: "*",
-				loader: () => ({ user: AUTHOR_AS_LOGGED_IN_USER }),
 				element: (
-					<PlusSuggestionComments
-						suggestion={suggestions[0]}
-						deleteButtonArgs={{
-							suggested: suggestions[0].suggested,
-							tier: "2",
-						}}
-						defaultOpen
-					/>
+					<UserProvider user={AUTHOR_AS_LOGGED_IN_USER as LoggedInUser}>
+						<PlusSuggestionComments
+							suggestion={suggestions[0]}
+							deleteButtonArgs={{
+								suggested: suggestions[0].suggested,
+								tier: "2",
+							}}
+							defaultOpen
+						/>
+					</UserProvider>
 				),
 			},
 		]);

@@ -2,11 +2,17 @@ import * as React from "react";
 
 const listeners = new Set<() => void>();
 let observer: ResizeObserver | null = null;
+// read in the observer callback where layout is already clean, never during render
+let mainWidth = 0;
 
 function subscribe(listener: () => void) {
 	listeners.add(listener);
 	if (!observer) {
-		observer = new ResizeObserver(() => {
+		observer = new ResizeObserver(([entry]) => {
+			const width = (entry.target as HTMLElement).clientWidth;
+			if (width === mainWidth) return;
+
+			mainWidth = width;
 			for (const notify of listeners) {
 				notify();
 			}
@@ -25,7 +31,7 @@ function subscribe(listener: () => void) {
 }
 
 function getSnapshot() {
-	return document.querySelector("main")?.clientWidth ?? 0;
+	return mainWidth;
 }
 
 export function useMainContentWidth() {

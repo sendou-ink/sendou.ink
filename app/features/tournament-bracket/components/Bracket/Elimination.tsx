@@ -62,7 +62,6 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 			? firstVisibleRoundMatchCount / 2
 			: firstVisibleRoundMatchCount;
 
-	let atLeastOneColumnHidden = false;
 	return (
 		<BracketColumns roundCount={rounds.length - hiddenRoundIds.size}>
 			{rounds.flatMap((round, roundIdx) => {
@@ -92,10 +91,11 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 					(match) => match.opponent1 && match.opponent2 && !match.winnerSide,
 				);
 
-				if (hiddenRoundIds.has(round.id)) {
-					atLeastOneColumnHidden = true;
-					return null;
-				}
+				if (hiddenRoundIds.has(round.id)) return null;
+
+				const atLeastOneColumnHidden = rounds
+					.slice(0, roundIdx)
+					.some((previousRound) => hiddenRoundIds.has(previousRound.id));
 
 				return (
 					<BracketColumn key={round.id} roundId={round.id}>

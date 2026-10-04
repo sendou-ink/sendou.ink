@@ -35,6 +35,7 @@ import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { FusePageInit } from "./components/fuse/Fuse";
 import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
+import { UserProvider } from "./features/auth/core/user";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
@@ -264,23 +265,25 @@ function Document({
 			<body>
 				{IS_E2E_TEST_RUN ? <HydrationTestIndicator /> : null}
 				<React.StrictMode>
-					<SearchParamsProvider>
-						<SendouToastRegion />
-						<UnsavedChangesGuard />
-						<MyFuse data={rootData} />
-						<ChatProvider
-							user={rootData?.user}
-							roomList={rootData?.chatRoomList}
-						>
-							<NotificationsProvider user={rootData?.user}>
-								<LayoutDataProvider data={rootData}>
-									<GlobalStatusProvider user={rootData?.user}>
-										<Layout data={rootData}>{children}</Layout>
-									</GlobalStatusProvider>
-								</LayoutDataProvider>
-							</NotificationsProvider>
-						</ChatProvider>
-					</SearchParamsProvider>
+					<UserProvider user={rootData?.user}>
+						<SearchParamsProvider>
+							<SendouToastRegion />
+							<UnsavedChangesGuard />
+							<MyFuse data={rootData} />
+							<ChatProvider
+								user={rootData?.user}
+								roomList={rootData?.chatRoomList}
+							>
+								<NotificationsProvider user={rootData?.user}>
+									<LayoutDataProvider data={rootData}>
+										<GlobalStatusProvider user={rootData?.user}>
+											<Layout data={rootData}>{children}</Layout>
+										</GlobalStatusProvider>
+									</LayoutDataProvider>
+								</NotificationsProvider>
+							</ChatProvider>
+						</SearchParamsProvider>
+					</UserProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
 				<Scripts />

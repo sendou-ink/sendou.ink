@@ -849,7 +849,9 @@ function SelectOption(props: SendouSelectItemProps) {
 	);
 
 	const childrenRef = React.useRef(children);
-	childrenRef.current = children;
+	useIsomorphicLayoutEffect(() => {
+		childrenRef.current = children;
+	});
 	const elementRef = React.useRef<HTMLDivElement | null>(null);
 
 	React.useEffect(() => {
