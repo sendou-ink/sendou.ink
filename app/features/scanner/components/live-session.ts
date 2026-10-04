@@ -22,11 +22,11 @@ import {
 import {
 	type ClipWindow,
 	MAX_CLIP_SECONDS,
+	povDeathTimes,
 	STREAK_MAX_GAP_S,
 	scoreWindows,
 	windowClosed,
 } from "../core/clips/scoring";
-import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
@@ -636,12 +636,13 @@ function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
 			clipId: Promise.resolve(clip.id),
 		}));
 	for (const built of session.clipMatches) {
-		const deaths = built.sources
-			.filter((event) => event.type === DEATH_EVENT_TYPE)
-			.map((event) => event.t);
-		for (const window of scoreWindows(built.match, deaths, {
-			minKills: readSettings().clipMinKills,
-		})) {
+		for (const window of scoreWindows(
+			built.match,
+			povDeathTimes(built.sources),
+			{
+				minKills: readSettings().clipMinKills,
+			},
+		)) {
 			if (!windowClosed(window, nowT)) continue;
 			const overlapping = [...cuts, ...saved].filter(
 				(cut) => window.start < cut.end && window.end > cut.start,

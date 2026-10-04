@@ -6,9 +6,12 @@
 import assert from "node:assert/strict";
 import {
 	clipCovers,
+	povDeathTimes,
 	scoreWindows,
 	windowClosed,
 } from "../../core/clips/scoring";
+import { DEATH_EVENT_TYPE } from "../../core/detectors/death/index";
+import { MINIMAP_EVENT_TYPE } from "../../core/detectors/minimap/index";
 import type { ScannerMatchKill } from "../../core/scanner-match";
 import { test } from "../node-test-compat";
 
@@ -113,4 +116,34 @@ test("clipCovers is inclusive of both ends", () => {
 	assert.equal(clipCovers({ start: 95, end: 119 }, 95), true);
 	assert.equal(clipCovers({ start: 95, end: 119 }, 119), true);
 	assert.equal(clipCovers({ start: 95, end: 119 }, 120), false);
+});
+
+function minimapRead(t: number, cards: { self: boolean; dead: boolean }[]) {
+	return {
+		type: MINIMAP_EVENT_TYPE,
+		t,
+		confidence: 1,
+		data: {
+			teammates: cards.map((card) => ({ ...card, specialReady: false })),
+		},
+	};
+}
+
+test("a minimap read striking out the POV card is a POV death", () => {
+	const events = [
+		{ type: DEATH_EVENT_TYPE, t: 50, confidence: 1, data: {} },
+		minimapRead(107, [
+			{ self: true, dead: true },
+			{ self: false, dead: false },
+		]),
+		minimapRead(120, [
+			{ self: true, dead: false },
+			{ self: false, dead: true },
+		]),
+	];
+	assert.deepEqual(povDeathTimes(events), [50, 107]);
+	assert.deepEqual(
+		scoreWindows(kills(100, 105, 110, 115), povDeathTimes(events)),
+		[],
+	);
 });

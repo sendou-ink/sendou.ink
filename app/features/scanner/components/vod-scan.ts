@@ -14,8 +14,11 @@ import { useSyncExternalStore } from "react";
 import * as R from "remeda";
 import { extractVodClip, vodFrameThumbnail } from "../capture/vod-clips";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
-import { MAX_CLIP_SECONDS, scoreWindows } from "../core/clips/scoring";
-import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
+import {
+	MAX_CLIP_SECONDS,
+	povDeathTimes,
+	scoreWindows,
+} from "../core/clips/scoring";
 import {
 	mergeScanTelemetry,
 	type ScanTelemetry,
@@ -501,10 +504,7 @@ async function cutClips(
 ): Promise<void> {
 	const windows = buildScannerMatches(events, undefined, { unbacked: true })
 		.flatMap((built) => {
-			const deaths = built.sources
-				.filter((event) => event.type === DEATH_EVENT_TYPE)
-				.map((event) => event.t);
-			return scoreWindows(built.match, deaths, {
+			return scoreWindows(built.match, povDeathTimes(built.sources), {
 				minKills: readSettings().clipMinKills,
 			}).map((window) => ({
 				window,

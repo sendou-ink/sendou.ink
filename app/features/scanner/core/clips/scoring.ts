@@ -7,6 +7,12 @@
  * kill count stays honest. A streak of `MIN_KILLS` or more is a window,
  * scored by streak length first and density second.
  */
+import { DEATH_EVENT_TYPE } from "../detectors/death/index";
+import {
+	MINIMAP_EVENT_TYPE,
+	type MinimapData,
+} from "../detectors/minimap/index";
+import type { DetectedEvent } from "../detectors/types";
 import type { ScannerMatch, ScannerMatchKill } from "../scanner-match";
 
 /** the default; the settings popover lets the player pick 3, 4 or 5 */
@@ -66,6 +72,24 @@ export function scoreWindows(
 	}
 	flush();
 	return windows;
+}
+
+/**
+ * The POV player's death times among a match's events, for `scoreWindows`:
+ * each respawn overlay, plus each minimap read with the POV player's own card
+ * struck out — opening the map right after a splat hides the overlay.
+ */
+export function povDeathTimes(events: readonly DetectedEvent[]): number[] {
+	return events
+		.filter(
+			(event) =>
+				event.type === DEATH_EVENT_TYPE ||
+				(event.type === MINIMAP_EVENT_TYPE &&
+					(event.data as MinimapData).teammates.some(
+						(teammate) => teammate.self && teammate.dead,
+					)),
+		)
+		.map((event) => event.t);
 }
 
 /** `kills² + kills / span`: the streak decides, density breaks ties. */

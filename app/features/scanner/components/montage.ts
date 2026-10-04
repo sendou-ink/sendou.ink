@@ -24,7 +24,7 @@ import {
 	renderMontage,
 } from "../capture/montage-render";
 import { extractVodClip, vodFrameThumbnail } from "../capture/vod-clips";
-import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
+import { povDeathTimes } from "../core/clips/scoring";
 import { buildScannerMatches } from "../core/match-builder";
 import {
 	DEFAULT_MONTAGE_CRITERIA,
@@ -553,9 +553,7 @@ async function scannedGames(vod: MontageManifestVod): Promise<MontageGame[]> {
 					opponent: lineupOf(match.teams[match.pov.team === 0 ? 1 : 0]),
 				}
 			: null,
-		deaths: sources
-			.filter((event) => event.type === DEATH_EVENT_TYPE)
-			.map((event) => event.t),
+		deaths: povDeathTimes(sources),
 	}));
 }
 
