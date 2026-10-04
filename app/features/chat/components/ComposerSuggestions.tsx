@@ -1,28 +1,32 @@
 import clsx from "clsx";
 import * as React from "react";
-import { useTranslation } from "react-i18next";
-import { Avatar } from "~/components/Avatar";
 import { useFloatingLayer } from "~/components/elements/useFloatingLayer";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
-import type { CommonUser } from "~/utils/kysely.server";
-import styles from "./MentionSuggestions.module.css";
+import styles from "./ComposerSuggestions.module.css";
 
-export function MentionSuggestions({
+export interface ComposerSuggestion {
+	key: string;
+	label: string;
+	image: React.ReactNode;
+}
+
+export function ComposerSuggestions<T extends ComposerSuggestion>({
 	id,
 	anchorRef,
-	users,
-	activeUserId,
+	suggestions,
+	activeKey,
 	onSelect,
+	"aria-label": ariaLabel,
 }: {
 	id: string;
 	anchorRef: React.RefObject<HTMLElement | null>;
-	users: CommonUser[];
-	activeUserId: number | null;
-	onSelect: (user: CommonUser) => void;
+	suggestions: T[];
+	activeKey: string | null;
+	onSelect: (suggestion: T) => void;
+	"aria-label": string;
 }) {
-	const { t } = useTranslation(["common"]);
 	const popoverRef = React.useRef<HTMLDivElement>(null);
-	const isOpen = users.length > 0;
+	const isOpen = suggestions.length > 0;
 
 	useIsomorphicLayoutEffect(() => {
 		const popover = popoverRef.current;
@@ -44,26 +48,22 @@ export function MentionSuggestions({
 
 	return (
 		<div ref={popoverRef} popover="manual" className={styles.popover}>
-			<div
-				id={id}
-				role="listbox"
-				aria-label={t("common:chat.mention.suggestions")}
-			>
-				{users.map((user) => (
+			<div id={id} role="listbox" aria-label={ariaLabel}>
+				{suggestions.map((suggestion) => (
 					<div
-						key={user.id}
-						id={mentionSuggestionId(id, user.id)}
+						key={suggestion.key}
+						id={composerSuggestionId(id, suggestion.key)}
 						role="option"
 						tabIndex={-1}
-						aria-selected={user.id === activeUserId}
+						aria-selected={suggestion.key === activeKey}
 						className={clsx(styles.option, {
-							[styles.optionActive]: user.id === activeUserId,
+							[styles.optionActive]: suggestion.key === activeKey,
 						})}
 						onPointerDown={(event) => event.preventDefault()}
-						onClick={() => onSelect(user)}
+						onClick={() => onSelect(suggestion)}
 					>
-						<Avatar user={user} size="xxxs" />
-						<span className={styles.username}>{user.username}</span>
+						{suggestion.image}
+						<span className={styles.label}>{suggestion.label}</span>
 					</div>
 				))}
 			</div>
@@ -71,6 +71,6 @@ export function MentionSuggestions({
 	);
 }
 
-export function mentionSuggestionId(listboxId: string, userId: number) {
-	return `${listboxId}-${userId}`;
+export function composerSuggestionId(listboxId: string, key: string) {
+	return `${listboxId}-${key}`;
 }

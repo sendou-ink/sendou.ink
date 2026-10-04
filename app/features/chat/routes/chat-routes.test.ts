@@ -124,6 +124,38 @@ describe("chat messages action", () => {
 		},
 	);
 
+	test.each([
+		{
+			why: "a sticker alone is sent",
+			contents: "<sticker-booyah>",
+			sent: true,
+		},
+		{
+			why: "a full length text with a sticker is sent",
+			contents: `${"a".repeat(200)} <sticker-booyah>`,
+			sent: true,
+		},
+		{
+			why: "two stickers are refused",
+			contents: "<sticker-booyah> <sticker-sorry>",
+			sent: false,
+		},
+		{
+			why: "an unknown sticker is refused",
+			contents: "<sticker-not-a-sticker>",
+			sent: false,
+		},
+	])("$why", async ({ contents, sent }) => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
+
+		const result = await sendMessage(alphaUserIds[0], match.chatRoomId!, {
+			publicId: "ssssssssss",
+			contents,
+		});
+
+		expect("message" in result).toBe(sent);
+	});
+
 	test("403s a non-participant", async () => {
 		const { match } = await setupSqMatch(users);
 

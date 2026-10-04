@@ -1,5 +1,6 @@
-/** How long after mentioning someone mentioning them again is held back. */
-export const MENTION_COOLDOWN_MS = 15_000;
+export const MENTION_COOLDOWN_MS = 5_000;
+export const STICKER_COOLDOWN_MS = 15_000;
+export const STICKER_COOLDOWN_KEY = "sticker";
 
 const cooldownUntilByKey = new Map<string, number>();
 

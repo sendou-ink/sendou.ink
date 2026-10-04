@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { sub } from "date-fns";
-import { RotateCw, SendHorizontal } from "lucide-react";
+import { RotateCw, SendHorizontal, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
 import { browser, flushSync } from "react-dom";
@@ -15,6 +15,7 @@ import { useVirtualizer } from "~/modules/virtualizer/react";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import type { CommonUser } from "~/utils/kysely.server";
+import { chatStickerUrl } from "~/utils/urls";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
@@ -23,6 +24,8 @@ import {
 	cooldownUntil,
 	MENTION_COOLDOWN_MS,
 	mentionCooldownKey,
+	STICKER_COOLDOWN_KEY,
+	STICKER_COOLDOWN_MS,
 	startCooldowns,
 } from "../chat-cooldowns";
 import { useChatAutoScroll } from "../chat-hooks";
@@ -38,9 +41,20 @@ import {
 } from "../chat-mentions";
 import { findRoomLinks } from "../chat-message-links";
 import { sendChatMessageSchema } from "../chat-schemas";
+import {
+	activeStickerQuery,
+	type ChatSticker,
+	messageSticker,
+	stickerSuggestions,
+	stickerToken,
+} from "../chat-stickers";
 import type { ChatMessageAuthor, ClientChatMessage } from "../chat-types";
 import styles from "./Chat.module.css";
-import { MentionSuggestions, mentionSuggestionId } from "./MentionSuggestions";
+import {
+	type ComposerSuggestion,
+	ComposerSuggestions,
+	composerSuggestionId,
+} from "./ComposerSuggestions";
 
 const MESSAGE_GAP = 8;
 const ESTIMATED_MESSAGE_HEIGHT = 44;
@@ -48,6 +62,9 @@ const ESTIMATED_MESSAGE_HEIGHT = 44;
 const CONNECTION_STATUS_GRACE_MS = 1_500;
 /** The composer status shows the character count once this close to the limit. */
 const CHARACTER_COUNT_SHOWN_FROM = MESSAGE_MAX_LENGTH - 40;
+const STICKER_MESSAGE_SIZE = 96;
+const STICKER_PREVIEW_SIZE = 40;
+const STICKER_SUGGESTION_SIZE = 24;
 
 export interface ChatProps {
 	messages: ClientChatMessage[];
@@ -319,12 +336,13 @@ function Composer({
 	const [caret, setCaret] = React.useState(0);
 	const [isFocused, setIsFocused] = React.useState(false);
 	const [activeSuggestionIndex, setActiveSuggestionIndex] = React.useState(0);
-	const [dismissedMentionStart, setDismissedMentionStart] = React.useState<
+	const [dismissedQueryStart, setDismissedQueryStart] = React.useState<
 		number | null
 	>(null);
 	const [pickedMentions, setPickedMentions] = React.useState<PickedMention[]>(
 		[],
 	);
+	const [sticker, setSticker] = React.useState<ChatSticker | null>(null);
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const composerRowRef = React.useRef<HTMLDivElement>(null);
 	const suggestionsId = React.useId();
@@ -338,64 +356,98 @@ function Composer({
 
 	const sendingDisabled = readyState !== "CONNECTED";
 	const showConnectionStatus = sendingDisabled && connectionStatusShown;
-	const isEmpty = contents.trim().length === 0;
+	const isEmpty = contents.trim().length === 0 && !sticker;
 
-	const mentionQuery = isFocused ? activeMentionQuery(contents, caret) : null;
+	const activeQuery = isFocused ? composerQuery(contents, caret) : null;
 	const suggestions =
-		mentionQuery && mentionQuery.start !== dismissedMentionStart
-			? mentionSuggestions(mentionCandidates, mentionQuery.query)
+		activeQuery && activeQuery.start !== dismissedQueryStart
+			? suggestionsFor(activeQuery, mentionCandidates)
 			: [];
 	const suggestionsOpen = suggestions.length > 0;
 	const activeSuggestion =
 		suggestions[Math.min(activeSuggestionIndex, suggestions.length - 1)];
 
-	const encodedContents = encodeMentions(
+	const encodedText = encodeMentions(
 		contents,
 		mentionCandidates,
 		pickedMentions,
 	);
 	const mentionOnCooldown = R.firstBy(
-		mentionedUserIds(encodedContents).flatMap((userId) => {
+		mentionedUserIds(encodedText).flatMap((userId) => {
 			const until = cooldownUntil(mentionCooldownKey(userId));
 			return until === null ? [] : [{ userId, until }];
 		}),
 		[(cooldown) => cooldown.until, "desc"],
 	);
-	const cooldownSecondsLeft = useCooldown(mentionOnCooldown?.until ?? null);
-	const onCooldown = mentionOnCooldown !== undefined && cooldownSecondsLeft > 0;
+	const mentionCooldownSecondsLeft = useCooldown(
+		mentionOnCooldown?.until ?? null,
+	);
+	const stickerCooldownSecondsLeft = useCooldown(
+		sticker ? cooldownUntil(STICKER_COOLDOWN_KEY) : null,
+	);
+	const mentionOnCooldownShown =
+		mentionOnCooldown !== undefined && mentionCooldownSecondsLeft > 0;
+	const stickerOnCooldownShown =
+		sticker !== null && stickerCooldownSecondsLeft > 0;
+	const onCooldown = mentionOnCooldownShown || stickerOnCooldownShown;
 
-	const status = onCooldown
+	const status = mentionOnCooldownShown
 		? t("common:chat.status.mentionCooldown", {
 				username: mentionCandidates.find(
 					(user) => user.id === mentionOnCooldown.userId,
 				)?.username,
-				seconds: cooldownSecondsLeft,
+				seconds: mentionCooldownSecondsLeft,
 			})
-		: contents.length >= CHARACTER_COUNT_SHOWN_FROM
-			? t("common:chat.status.characterCount", {
-					used: contents.length,
-					max: MESSAGE_MAX_LENGTH,
+		: stickerOnCooldownShown
+			? t("common:chat.status.stickerCooldown", {
+					seconds: stickerCooldownSecondsLeft,
 				})
-			: null;
+			: contents.length >= CHARACTER_COUNT_SHOWN_FROM
+				? t("common:chat.status.characterCount", {
+						used: contents.length,
+						max: MESSAGE_MAX_LENGTH,
+					})
+				: null;
 
 	const syncCaret = (input: HTMLInputElement) =>
 		setCaret(input.selectionStart ?? input.value.length);
 
-	const selectSuggestion = (user: CommonUser) => {
+	const replaceQuery = (
+		query: { start: number },
+		replacement: string,
+		onReplaced?: (next: string) => void,
+	) => {
 		const input = inputRef.current;
-		if (!mentionQuery || !input) return;
+		if (!input) return;
 
-		const before = `${contents.slice(0, mentionQuery.start)}@${user.username} `;
+		const before = `${contents.slice(0, query.start)}${replacement}`;
 		const next = before + contents.slice(caret);
 		if (next.length > MESSAGE_MAX_LENGTH) return;
 
-		setPickedMentions([
-			...shiftPickedMentions(pickedMentions, contents, next),
-			{ userId: user.id, username: user.username, start: mentionQuery.start },
-		]);
+		onReplaced?.(next);
 		flushSync(() => setContents(next));
 		input.setSelectionRange(before.length, before.length);
 		setCaret(before.length);
+	};
+
+	const selectSuggestion = (suggestion: Suggestion) => {
+		if (!activeQuery) return;
+
+		if (suggestion.kind === "sticker") {
+			setSticker(suggestion.sticker);
+			replaceQuery(activeQuery, "", (next) =>
+				setPickedMentions(shiftPickedMentions(pickedMentions, contents, next)),
+			);
+			return;
+		}
+
+		const { user } = suggestion;
+		replaceQuery(activeQuery, `@${user.username} `, (next) =>
+			setPickedMentions([
+				...shiftPickedMentions(pickedMentions, contents, next),
+				{ userId: user.id, username: user.username, start: activeQuery.start },
+			]),
+		);
 	};
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -406,10 +458,15 @@ function Composer({
 			case "ArrowUp": {
 				event.preventDefault();
 				const step = event.key === "ArrowDown" ? 1 : -1;
-				setActiveSuggestionIndex(
+				const nextIndex =
 					(suggestions.indexOf(activeSuggestion) + step + suggestions.length) %
-						suggestions.length,
-				);
+					suggestions.length;
+				setActiveSuggestionIndex(nextIndex);
+				document
+					.getElementById(
+						composerSuggestionId(suggestionsId, suggestions[nextIndex].key),
+					)
+					?.scrollIntoView({ block: "nearest" });
 				break;
 			}
 			case "Enter":
@@ -420,7 +477,7 @@ function Composer({
 			}
 			case "Escape": {
 				event.preventDefault();
-				setDismissedMentionStart(mentionQuery!.start);
+				setDismissedQueryStart(activeQuery!.start);
 				break;
 			}
 		}
@@ -432,7 +489,9 @@ function Composer({
 
 		const parsed = v.safeParse(sendChatMessageSchema, {
 			publicId: shortNanoid(),
-			contents: encodedContents,
+			contents: [encodedText.trim(), sticker ? stickerToken(sticker.id) : null]
+				.filter(Boolean)
+				.join(" "),
 		});
 		if (!parsed.success) return;
 
@@ -441,14 +500,41 @@ function Composer({
 			mentionedUserIds(parsed.output.contents).map(mentionCooldownKey),
 			MENTION_COOLDOWN_MS,
 		);
+		if (sticker) {
+			startCooldowns([STICKER_COOLDOWN_KEY], STICKER_COOLDOWN_MS);
+		}
 		setContents("");
 		setPickedMentions([]);
-		setDismissedMentionStart(null);
+		setSticker(null);
+		setDismissedQueryStart(null);
 		inputRef.current?.focus();
 	};
 
 	return (
 		<>
+			{sticker ? (
+				<div className={styles.selectedSticker}>
+					<img
+						src={chatStickerUrl(sticker.id)}
+						alt=""
+						width={STICKER_PREVIEW_SIZE}
+						height={STICKER_PREVIEW_SIZE}
+					/>
+					<span className={styles.selectedStickerName}>{sticker.name}</span>
+					<SendouButton
+						variant="minimal-destructive"
+						size="small"
+						shape="square"
+						icon={<X />}
+						aria-label={t("common:chat.sticker.remove")}
+						onClick={() => {
+							setSticker(null);
+							inputRef.current?.focus();
+						}}
+						className={styles.selectedStickerRemove}
+					/>
+				</div>
+			) : null}
 			<div role="status" className={styles.composerStatus}>
 				{status}
 			</div>
@@ -480,10 +566,10 @@ function Composer({
 							syncCaret(input);
 							setActiveSuggestionIndex(0);
 							if (
-								activeMentionQuery(input.value, input.selectionStart ?? 0)
-									?.start !== dismissedMentionStart
+								composerQuery(input.value, input.selectionStart ?? 0)?.start !==
+								dismissedQueryStart
 							) {
-								setDismissedMentionStart(null);
+								setDismissedQueryStart(null);
 							}
 						}}
 						onSelect={(event) => syncCaret(event.currentTarget)}
@@ -499,16 +585,21 @@ function Composer({
 						aria-controls={suggestionsId}
 						aria-activedescendant={
 							suggestionsOpen
-								? mentionSuggestionId(suggestionsId, activeSuggestion.id)
+								? composerSuggestionId(suggestionsId, activeSuggestion.key)
 								: undefined
 						}
 					/>
-					<MentionSuggestions
+					<ComposerSuggestions
 						id={suggestionsId}
 						anchorRef={composerRowRef}
-						users={suggestions}
-						activeUserId={suggestionsOpen ? activeSuggestion.id : null}
+						suggestions={suggestions}
+						activeKey={suggestionsOpen ? activeSuggestion.key : null}
 						onSelect={selectSuggestion}
+						aria-label={t(
+							activeQuery?.kind === "sticker"
+								? "common:chat.sticker.suggestions"
+								: "common:chat.mention.suggestions",
+						)}
 					/>
 					<SendouButton
 						type="submit"
@@ -523,6 +614,52 @@ function Composer({
 			</form>
 		</>
 	);
+}
+
+type Suggestion = ComposerSuggestion &
+	(
+		| { kind: "mention"; user: CommonUser }
+		| { kind: "sticker"; sticker: ChatSticker }
+	);
+
+function composerQuery(text: string, caret: number) {
+	const mentionQuery = activeMentionQuery(text, caret);
+	if (mentionQuery) return { kind: "mention" as const, ...mentionQuery };
+
+	const stickerQuery = activeStickerQuery(text, caret);
+	if (stickerQuery) return { kind: "sticker" as const, ...stickerQuery };
+
+	return null;
+}
+
+function suggestionsFor(
+	query: NonNullable<ReturnType<typeof composerQuery>>,
+	mentionCandidates: CommonUser[],
+): Suggestion[] {
+	if (query.kind === "sticker") {
+		return stickerSuggestions(query.query).map((sticker) => ({
+			kind: "sticker",
+			key: `sticker-${sticker.id}`,
+			label: sticker.name,
+			image: (
+				<img
+					src={chatStickerUrl(sticker.id)}
+					alt=""
+					width={STICKER_SUGGESTION_SIZE}
+					height={STICKER_SUGGESTION_SIZE}
+				/>
+			),
+			sticker,
+		}));
+	}
+
+	return mentionSuggestions(mentionCandidates, query.query).map((user) => ({
+		kind: "mention",
+		key: `user-${user.id}`,
+		label: user.username,
+		image: <Avatar user={user} size="xxxs" />,
+		user,
+	}));
 }
 
 function Message({
@@ -541,6 +678,9 @@ function Message({
 		ownUserId !== null &&
 		message.contents !== null &&
 		mentionsUser(message.contents, ownUserId);
+	const { text, sticker } = message.contents
+		? messageSticker(message.contents)
+		: { text: "", sticker: null };
 
 	return (
 		<div
@@ -581,8 +721,17 @@ function Message({
 						[styles.messageContentsPending]: message.pending,
 					})}
 				>
-					{message.contents ? (
-						<MessageContents text={message.contents} />
+					{text ? <MessageContents text={text} /> : null}
+					{sticker ? (
+						<img
+							src={chatStickerUrl(sticker.id)}
+							alt={sticker.name}
+							title={sticker.name}
+							width={STICKER_MESSAGE_SIZE}
+							height={STICKER_MESSAGE_SIZE}
+							className={styles.sticker}
+							data-testid="chat-message-sticker"
+						/>
 					) : null}
 				</div>
 				{message.failed && onRetry ? (

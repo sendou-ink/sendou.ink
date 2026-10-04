@@ -26,7 +26,7 @@
 	background-color: var(--color-bg-high);
 }
 
-.username {
+.label {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

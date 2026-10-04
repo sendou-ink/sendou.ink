@@ -238,7 +238,7 @@
 	}
 }
 
-@container chat-split (height < 700px) {
+@container chat-split (height < 800px) {
 	.splitTabs {
 		display: grid;
 		grid-template-rows: auto minmax(0, 1fr);

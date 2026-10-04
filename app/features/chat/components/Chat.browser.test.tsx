@@ -293,6 +293,101 @@ describe("Chat", () => {
 		expect(onRetry).toHaveBeenCalledWith("failed1234");
 	});
 
+	describe("stickers", () => {
+		const renderComposer = async () => {
+			const onSend = vi.fn();
+			const screen = await renderChat([], { onSend });
+			const composer = screen.getByPlaceholder("Press enter to send");
+			await composer.click();
+
+			return { screen, composer, onSend };
+		};
+
+		test("picks a sticker with +, sends it after the text, then holds the next one back", async () => {
+			const { screen, composer, onSend } = await renderComposer();
+
+			await userEvent.keyboard("gg all +bo");
+			await expect
+				.element(screen.getByRole("option", { name: "Booyah", exact: true }))
+				.toBeVisible();
+			await userEvent.keyboard("{Enter}");
+
+			await expect.element(composer).toHaveValue("gg all ");
+			await expect
+				.element(screen.getByText("Booyah", { exact: true }))
+				.toBeVisible();
+
+			await userEvent.keyboard("{Enter}");
+			expect(onSend).toHaveBeenCalledWith({
+				publicId: expect.any(String),
+				contents: "gg all <sticker-booyah>",
+			});
+			expect(
+				screen.getByRole("button", { name: "Remove sticker" }).elements(),
+			).toHaveLength(0);
+
+			await userEvent.keyboard("+sorry{Enter}");
+			await expect
+				.element(screen.getByRole("status"))
+				.toHaveTextContent(/You can send a sticker again in \d+s/);
+			await expect
+				.element(screen.getByTestId("chat-submit-button"))
+				.toBeDisabled();
+		});
+
+		test("picking another sticker replaces the picked one, the remove button drops it", async () => {
+			const { screen } = await renderComposer();
+
+			await userEvent.keyboard("+booyah{Enter}");
+			await userEvent.keyboard("+stare{Enter}");
+			await expect
+				.element(screen.getByText("Stare", { exact: true }))
+				.toBeVisible();
+			expect(
+				screen.getByText("Booyah", { exact: true }).elements(),
+			).toHaveLength(0);
+
+			await screen.getByRole("button", { name: "Remove sticker" }).click();
+			expect(
+				screen.getByText("Stare", { exact: true }).elements(),
+			).toHaveLength(0);
+		});
+
+		test("scrolls the suggestion moved to with the keyboard into view", async () => {
+			const { screen } = await renderComposer();
+
+			await userEvent.keyboard("+");
+			const listbox = screen.getByRole("listbox");
+			await expect.element(listbox).toBeVisible();
+			await userEvent.keyboard("{ArrowUp}");
+
+			const lastOption = screen.getByRole("option").last();
+			await expect.element(lastOption).toHaveAttribute("aria-selected", "true");
+			await vi.waitFor(() => {
+				const popover = listbox
+					.element()
+					.parentElement!.getBoundingClientRect();
+				const option = lastOption.element().getBoundingClientRect();
+				expect(option.bottom).toBeLessThanOrEqual(popover.bottom + 1);
+				expect(option.top).toBeGreaterThanOrEqual(popover.top - 1);
+			});
+		});
+
+		test("renders a message's sticker below its text", async () => {
+			const screen = await renderChat([
+				createMessage({ contents: "gg all <sticker-booyah>" }),
+			]);
+
+			const text = screen.getByText("gg all");
+			const sticker = screen.getByTestId("chat-message-sticker");
+			await expect.element(sticker).toHaveAttribute("alt", "Booyah");
+			expect(
+				text.element().compareDocumentPosition(sticker.element()) &
+					Node.DOCUMENT_POSITION_FOLLOWING,
+			).toBeTruthy();
+		});
+	});
+
 	describe("mentions", () => {
 		const BOB = { ...ALICE, id: 2, username: "Bob", discordId: "2" };
 		const CAROL = { ...ALICE, id: 3, username: "Carol", discordId: "3" };

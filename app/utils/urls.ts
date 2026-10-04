@@ -210,6 +210,8 @@ export const pwaSplashScreenImageUrl = (fileName: string) =>
 
 export const soundPath = (fileName: string) =>
 	`${STATIC_ASSETS_URL}/sounds/${fileName}.wav`;
+export const chatStickerUrl = (stickerId: string) =>
+	`${STATIC_ASSETS_URL}/img/chat-stickers/${stickerId}.gif`;
 
 export const GET_FRIENDS_FOR_ADDING_ROUTE = "/friends-for-adding";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
