@@ -1,7 +1,7 @@
 // https://web.archive.org/web/20200601102344/https://tl.net/forum/sc2-tournaments/202139-superior-double-elimination-losers-bracket-seeding
 
 import { invariant } from "~/utils/invariant";
-import type { OrderingMap, Seeding, SeedOrdering } from "../types";
+import type { OrderingMap, SeedOrdering } from "../types";
 
 export const ordering: OrderingMap = {
 	natural: <T>(array: T[]) => [...array],
@@ -88,7 +88,7 @@ export const defaultMinorOrdering: { [key: number]: SeedOrdering[] } = {
 };
 
 /** Pads the seeding with BYEs (`null`) until its length is a power of two. */
-export function padSeedingToPowerOfTwo(seeding: Seeding): Seeding {
+export function padSeedingToPowerOfTwo<T>(seeding: (T | null)[]): (T | null)[] {
 	return setArraySize(seeding, getNearestPowerOfTwo(seeding.length), null);
 }
 

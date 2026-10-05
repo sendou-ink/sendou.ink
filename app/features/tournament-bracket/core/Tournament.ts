@@ -419,6 +419,7 @@ export class Tournament {
 			{
 				sources,
 				type,
+				settings: settings ?? null,
 			},
 		);
 
@@ -566,14 +567,20 @@ export class Tournament {
 		bracket: {
 			sources: Progression.ParsedBracket["sources"];
 			type: Tables["TournamentStage"]["type"];
+			settings: Progression.ParsedBracket["settings"] | null;
 		},
 	) {
-		// starting brackets need no adjusting, group stages pair via their own logic
+		// starting brackets need no adjusting, group stages (also elimination split into groups) pair via their own logic
 		if (!bracket.sources || bracket.sources.length === 0) return teams;
-		if (bracket.type === "round_robin" || bracket.type === "swiss") {
+		if (
+			bracket.type === "round_robin" ||
+			bracket.type === "swiss" ||
+			(bracket.settings?.groupCount ?? 1) > 1
+		) {
 			return teams;
 		}
 
+		// xxx: only direct sources are read, so e.g. Main -> Redemption -> Top cut misses rematches from Main. Read encounters from every bracket on the teams' path and spread by the earliest group (now the latest source's group wins)
 		const sources: Seeding.FollowUpBracketSource[] = [];
 		for (const source of Progression.sortedSourcesForSeeding(
 			bracket.sources,
@@ -1098,15 +1105,16 @@ export class Tournament {
 						bracket.type === "single_elimination" ||
 						bracket.type === "double_elimination"
 					) {
+						const roundsArgs = {
+							bracketData: bracket.data,
+							groupId: match.groupId,
+						};
 						const rounds =
 							bracket.type === "single_elimination"
-								? getRounds({ type: "single", bracketData: bracket.data })
+								? getRounds({ type: "single", ...roundsArgs })
 								: [
-										...getRounds({
-											type: "winners",
-											bracketData: bracket.data,
-										}),
-										...getRounds({ type: "losers", bracketData: bracket.data }),
+										...getRounds({ type: "winners", ...roundsArgs }),
+										...getRounds({ type: "losers", ...roundsArgs }),
 									];
 
 						const round = rounds.find(
@@ -1137,7 +1145,17 @@ export class Tournament {
 
 								return `.${match.number}`;
 							};
-							roundName = `${round.name}${specifier()}`;
+							const group =
+								bracket.data.group.length > 1
+									? bracket.data.group.find(
+											(candidate) => candidate.id === match.groupId,
+										)
+									: undefined;
+							const groupPrefix = group
+								? `Group ${groupNumberToLetters(group.number)} `
+								: "";
+
+							roundName = `${groupPrefix}${round.name}${specifier()}`;
 						}
 					} else {
 						assertUnreachable(bracket.type);

@@ -27,14 +27,14 @@ const RR_TO_SE_WITH_UNDERGROUND: Progression.ParsedBracket[] = [
 	{
 		name: "Top cut",
 		type: "single_elimination",
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 		requiresCheckIn: false,
 		sources: [{ bracketIdx: 0, placements: [1, 2] }],
 	},
 	{
 		name: "Underground bracket",
 		type: "single_elimination",
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 		requiresCheckIn: true,
 		sources: [{ bracketIdx: 0, placements: [3, 4] }],
 	},
@@ -50,7 +50,7 @@ const SWISS_EARLY_ADVANCE_TO_TOP_CUT: Progression.ParsedBracket[] = [
 	{
 		name: "Top cut",
 		type: "single_elimination",
-		settings: { thirdPlaceMatch: true },
+		settings: {},
 		requiresCheckIn: false,
 		sources: [{ bracketIdx: 0, placements: [] }],
 	},

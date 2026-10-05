@@ -350,17 +350,17 @@ describe("validatedSources - other rules", () => {
 		expect(Array.isArray(result)).toBe(true);
 	});
 
-	test("handles NOT_RESOLVING_WINNER (swiss with many groups)", () => {
-		const error = getValidatedBrackets([
+	test("allows ending with a format that has many winners (swiss with many groups)", () => {
+		const result = getValidatedBrackets([
 			{
 				settings: {
 					groupCount: 2,
 				},
 				type: "swiss",
 			},
-		]) as Progression.ValidationError;
+		]);
 
-		expect(error.type).toBe("NOT_RESOLVING_WINNER");
+		expect(Array.isArray(result)).toBe(true);
 	});
 
 	test("handles SAME_PLACEMENT_TO_MULTIPLE_BRACKETS", () => {
@@ -798,6 +798,25 @@ describe("validatedSources - other rules", () => {
 				type: "single_elimination",
 				sources: [{ bracketId: "0", placements: "1-2" }],
 			},
+		]);
+
+		expect(Array.isArray(result)).toBe(true);
+	});
+
+	test.each([
+		{ groupCount: 0, why: "no groups" },
+		{ groupCount: 17, why: "more groups than offered" },
+	])("handles INVALID_GROUP_COUNT ($why)", ({ groupCount }) => {
+		const error = getValidatedBrackets([
+			{ settings: { groupCount }, type: "double_elimination" },
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("INVALID_GROUP_COUNT");
+	});
+
+	test("accepts an elimination bracket split into groups", () => {
+		const result = getValidatedBrackets([
+			{ settings: { groupCount: 8 }, type: "double_elimination" },
 		]);
 
 		expect(Array.isArray(result)).toBe(true);

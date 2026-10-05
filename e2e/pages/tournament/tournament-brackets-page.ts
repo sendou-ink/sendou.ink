@@ -58,6 +58,11 @@ export class TournamentBracketsPage {
 		return this.page.getByText(name);
 	}
 
+	/** A team's name in the bracket, "Team 1" not matching "Team 10". */
+	bracketTeamName(name: string) {
+		return this.locators.bracketsViewer.getByText(name, { exact: true });
+	}
+
 	/** The tab labels drop the "bracket" suffix of the bracket's name. */
 	bracketTab(name: string) {
 		return this.page.getByRole("tab", { name });
@@ -167,6 +172,18 @@ export class TournamentBracketsPage {
 		return submit(this.page, "check-in-bracket-button");
 	}
 
+	groupButton(letter: string) {
+		return this.page.getByTestId(`group-${letter}-button`);
+	}
+
+	/** Label next to a match telling where its winner or loser goes, e.g. "Top Cut [W]". */
+	exitLabel(text: string) {
+		return this.locators.bracketsViewer
+			.getByTestId("match-exits")
+			.getByText(text, { exact: true })
+			.first();
+	}
+
 	async openGroup(letter: string) {
 		await this.page.getByTestId(`group-${letter}-button`).click();
 	}
@@ -272,6 +289,11 @@ class FinalizeTournamentDialog {
 		this.locators = {
 			assignBadgesLaterSwitch: page.getByTestId("assign-badges-later-switch"),
 		};
+	}
+
+	/** Heading of a 1st place team's trophy receiver picker, shown when there are co-winners. */
+	trophyTeamHeading(teamName: string) {
+		return this.page.getByRole("heading", { name: teamName });
 	}
 
 	async selectBadgeReceiver(nth: number, tournamentTeamId: number) {

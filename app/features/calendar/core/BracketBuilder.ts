@@ -1,5 +1,7 @@
 import * as R from "remeda";
+import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds";
 import {
 	type BracketFormValue,
 	newBracketFormValue,
@@ -50,9 +52,14 @@ export interface PlacementTier {
 		| "LOST_LOSERS_FINAL"
 		| "LOST_LOSERS_SEMIFINAL"
 		| "OUT_IN_LOSERS_BRACKET"
-		| "GROUP_PLACEMENT";
-	/** Most teams sharing the placement. In round robin per group. */
+		| "GROUP_PLACEMENT"
+		| "STILL_IN"
+		| "UNBEATEN"
+		| "ALIVE_WITH_ONE_LOSS";
+	/** Most teams sharing the placement, in round robin per group. */
 	maxTeams: number;
+	/** (Elimination split into groups) Most teams sharing the placement in one group. */
+	maxTeamsPerGroup?: number;
 	/** For `LOST_ROUND_OF`, e.g. 16 for the round of 16. */
 	roundOf?: number;
 }
@@ -316,9 +323,14 @@ export function defaultPlacements(
 			return `${next}-${next + 7}`;
 		default: {
 			if (highestTaken > 0) return `${next}+`;
+			if (
+				bracket.skippedRounds.some((round) => round !== "THIRD_PLACE_MATCH")
+			) {
+				return "1";
+			}
 
 			const topFourTierCount =
-				bracket.type === "single_elimination" && !bracket.thirdPlaceMatch
+				bracket.type === "single_elimination" && !hasThirdPlaceMatch(bracket)
 					? 3
 					: 4;
 			return `1-${topFourTierCount}`;
@@ -345,10 +357,64 @@ export function placementTiers(
 		case "swiss":
 			return [];
 		case "single_elimination":
-			return limitToTeamCount(singleEliminationTiers(bracket), maxTeams);
-		case "double_elimination":
-			return limitToTeamCount(doubleEliminationTiers(), maxTeams);
+		case "double_elimination": {
+			const tiers =
+				bracket.type === "single_elimination"
+					? singleEliminationTiers(bracket)
+					: doubleEliminationTiers(bracket);
+			if (!isGrouped(bracket)) return limitToTeamCount(tiers, maxTeams);
+
+			const groupCount =
+				maxTeams === null
+					? Number(bracket.eliminationGroupCount)
+					: Engine.eliminationGroupCount(
+							{ groupCount: Number(bracket.eliminationGroupCount) },
+							maxTeams,
+						);
+			const groupTiers = limitToTeamCount(
+				tiers,
+				maxTeams === null ? null : Math.ceil(maxTeams / groupCount),
+			);
+
+			return limitToTeamCount(
+				groupTiers.map((tier) => ({
+					...tier,
+					maxTeams: tier.maxTeams * groupCount,
+					maxTeamsPerGroup: tier.maxTeams,
+				})),
+				maxTeams,
+			);
+		}
 	}
+}
+
+/**
+ * Fewest teams a bracket (or a group of it) needs for any match to be played with its rounds skipped,
+ * e.g. skipping the semifinals of single elimination leaves nothing to play for four teams.
+ */
+export function fewestTeamsWithMatches(bracket: BracketFormValue): number {
+	if (
+		bracket.type !== "single_elimination" &&
+		bracket.type !== "double_elimination"
+	) {
+		return 2;
+	}
+
+	const skipped = SkippedRounds.normalized(bracket.type, bracket.skippedRounds);
+
+	if (skipped.includes("SEMIS")) return 5;
+	if (skipped.includes("FINALS") || skipped.includes("WB_FINALS")) return 3;
+
+	return 2;
+}
+
+/** Single or double elimination split into groups. */
+export function isGrouped(bracket: BracketFormValue) {
+	return (
+		(bracket.type === "single_elimination" ||
+			bracket.type === "double_elimination") &&
+		Number(bracket.eliminationGroupCount) > 1
+	);
 }
 
 /** Losers rounds an "knocked out early" line can take, `-1` being the first round. */
@@ -590,52 +656,121 @@ function maxAdvancing(
 }
 
 function singleEliminationTiers(bracket: BracketFormValue): PlacementTier[] {
-	const finalists: PlacementTier[] = [
-		{ placement: 1, kind: "WON_FINAL", maxTeams: 1 },
-		{ placement: 2, kind: "LOST_FINAL", maxTeams: 1 },
-	];
-	const semifinalists: PlacementTier[] = bracket.thirdPlaceMatch
-		? [
-				{ placement: 3, kind: "WON_THIRD_PLACE_MATCH", maxTeams: 1 },
-				{ placement: 4, kind: "LOST_THIRD_PLACE_MATCH", maxTeams: 1 },
-			]
-		: [{ placement: 3, kind: "LOST_SEMIFINALS", maxTeams: 2 }];
+	const skipped = SkippedRounds.normalized(
+		"single_elimination",
+		bracket.skippedRounds,
+	);
+	const skippedRoundCount = skipped.includes("SEMIS")
+		? 2
+		: skipped.includes("FINALS")
+			? 1
+			: 0;
 
-	const result = [...finalists, ...semifinalists];
-	for (let roundOf = 8; roundOf <= LARGEST_ROUND_LISTED; roundOf *= 2) {
+	const result: Array<Omit<PlacementTier, "placement">> =
+		skippedRoundCount === 0
+			? [
+					{ kind: "WON_FINAL", maxTeams: 1 },
+					{ kind: "LOST_FINAL", maxTeams: 1 },
+				]
+			: [{ kind: "STILL_IN", maxTeams: 2 ** skippedRoundCount }];
+
+	// rounds from the end: 0 = final, 1 = semifinals...
+	for (
+		let roundsFromEnd = Math.max(1, skippedRoundCount);
+		2 ** (roundsFromEnd + 1) <= LARGEST_ROUND_LISTED;
+		roundsFromEnd++
+	) {
+		const roundOf = 2 ** (roundsFromEnd + 1);
+
+		if (roundsFromEnd === 1) {
+			result.push(
+				...(hasThirdPlaceMatch(bracket)
+					? ([
+							{ kind: "WON_THIRD_PLACE_MATCH", maxTeams: 1 },
+							{ kind: "LOST_THIRD_PLACE_MATCH", maxTeams: 1 },
+						] as const)
+					: ([{ kind: "LOST_SEMIFINALS", maxTeams: 2 }] as const)),
+			);
+			continue;
+		}
+
 		result.push({
-			placement: result.length + 1,
 			kind: roundOf === 8 ? "LOST_QUARTERFINALS" : "LOST_ROUND_OF",
 			maxTeams: roundOf / 2,
 			roundOf,
 		});
 	}
 
-	return result;
+	return withPlacements(result);
 }
 
-function doubleEliminationTiers(): PlacementTier[] {
-	const result: PlacementTier[] = [
-		{ placement: 1, kind: "WON_GRAND_FINALS", maxTeams: 1 },
-		{ placement: 2, kind: "LOST_GRAND_FINALS", maxTeams: 1 },
-		{ placement: 3, kind: "LOST_LOSERS_FINAL", maxTeams: 1 },
-		{ placement: 4, kind: "LOST_LOSERS_SEMIFINAL", maxTeams: 1 },
-	];
+function doubleEliminationTiers(bracket: BracketFormValue): PlacementTier[] {
+	const skipped = SkippedRounds.normalized(
+		"double_elimination",
+		bracket.skippedRounds,
+	);
+	const skippedLosersRoundCount = skipped.includes("LB_SEMIS")
+		? 2
+		: skipped.includes("LB_FINALS")
+			? 1
+			: 0;
 
-	// losers rounds knock out 2, 2, 4, 4, 8, 8... teams
-	for (
-		let roundIdx = 0;
-		result.length < DOUBLE_ELIMINATION_TIERS_LISTED;
-		roundIdx++
-	) {
-		result.push({
-			placement: result.length + 1,
-			kind: "OUT_IN_LOSERS_BRACKET",
-			maxTeams: 2 ** (Math.floor(roundIdx / 2) + 1),
-		});
-	}
+	// losers rounds knock out 1, 1, 2, 2, 4, 4... teams counting from the losers final
+	const losersRounds = Array.from(
+		{ length: DOUBLE_ELIMINATION_TIERS_LISTED },
+		(_, roundsFromEnd) => ({
+			kind:
+				roundsFromEnd === 0
+					? ("LOST_LOSERS_FINAL" as const)
+					: roundsFromEnd === 1
+						? ("LOST_LOSERS_SEMIFINAL" as const)
+						: ("OUT_IN_LOSERS_BRACKET" as const),
+			maxTeams: 2 ** Math.floor(roundsFromEnd / 2),
+		}),
+	);
 
-	return result;
+	const unbeatenCount = skipped.includes("WB_FINALS") ? 2 : 1;
+	const stillIn: Array<Omit<PlacementTier, "placement">> = skipped.includes(
+		"GRAND_FINALS",
+	)
+		? [
+				{ kind: "UNBEATEN", maxTeams: unbeatenCount },
+				{
+					kind: "ALIVE_WITH_ONE_LOSS",
+					// grand finalists + the teams of the skipped losers rounds
+					maxTeams:
+						2 +
+						R.sumBy(
+							losersRounds.slice(0, skippedLosersRoundCount),
+							(round) => round.maxTeams,
+						) -
+						unbeatenCount,
+				},
+			]
+		: [
+				{ kind: "WON_GRAND_FINALS", maxTeams: 1 },
+				{ kind: "LOST_GRAND_FINALS", maxTeams: 1 },
+			];
+
+	return withPlacements(
+		[...stillIn, ...losersRounds.slice(skippedLosersRoundCount)].slice(
+			0,
+			DOUBLE_ELIMINATION_TIERS_LISTED,
+		),
+	);
+}
+
+function hasThirdPlaceMatch(bracket: BracketFormValue) {
+	return !SkippedRounds.normalized(
+		"single_elimination",
+		bracket.skippedRounds,
+	).includes("THIRD_PLACE_MATCH");
+}
+
+function withPlacements(
+	tiers: Array<Omit<PlacementTier, "placement">>,
+): PlacementTier[] {
+	return tiers.map((tier, idx) => ({ ...tier, placement: idx + 1 }));
 }
 
 function limitToTeamCount(tiers: PlacementTier[], maxTeams: number | null) {

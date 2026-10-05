@@ -45,6 +45,7 @@ export class CalendarNewEventPage {
 			}),
 			lastStepButton: page.getByTestId("form-step-button-prizes"),
 			mapPoolTemplateSelect: page.getByLabel("Template"),
+			groupCountSelect: page.getByLabel(/^Group count/),
 			clearMapPoolButton: page.getByRole("button", { name: "Clear" }),
 		};
 	}
@@ -170,6 +171,18 @@ export class CalendarNewEventPage {
 				to: this.locators.startingBracketsColumn,
 			});
 		}
+	}
+
+	/** Checkbox of a named round in the selected bracket's "Rounds played" list, e.g. "LB_SEMIS". */
+	roundPlayedCheckbox(round: string) {
+		return this.page.getByTestId(`round-played-${round}`);
+	}
+
+	/** Hint under a round left unplayed because a round feeding it is. */
+	roundNotPlayedHint(prerequisiteName: string) {
+		return this.page
+			.getByText(`Not played without ${prerequisiteName}`)
+			.first();
 	}
 
 	async clearMapPool() {

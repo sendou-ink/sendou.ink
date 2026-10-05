@@ -376,5 +376,69 @@ describe("TournamentRepository.finalize", () => {
 				}),
 			).toBe(TOP_DIVISION_TIER);
 		});
+
+		test("records each co-winner team's own division tier", async () => {
+			const { id: tournamentId } = await TournamentFactory.create(
+				{ authorId: users.id(1) },
+				{ tier: TOP_DIVISION_TIER },
+			);
+			const trophy = await TrophyFactory.create();
+			const topTeam = await TournamentTeamFactory.create({
+				tournamentId,
+				memberUserIds: [users.id(1)],
+			});
+			const lowTeam = await TournamentTeamFactory.create({
+				tournamentId,
+				memberUserIds: [users.id(2)],
+			});
+			await TournamentTeamRepository.updateStartingBrackets([
+				{ tournamentTeamId: topTeam.id, startingBracketIdx: 0 },
+				{ tournamentTeamId: lowTeam.id, startingBracketIdx: 1 },
+			]);
+			await TournamentRepository.upsertDivisionTier({
+				tournamentId,
+				bracketIdx: 1,
+				tier: LOW_DIVISION_TIER,
+			});
+
+			const firstPlaceResult = (userId: number, tournamentTeamId: number) => ({
+				userId,
+				placement: 1,
+				participantCount: 2,
+				tournamentTeamId,
+				div: null,
+			});
+			await TournamentRepository.finalize({
+				tournamentId,
+				season: undefined,
+				summary: {
+					...emptySummary([]),
+					tournamentResults: [
+						firstPlaceResult(users.id(1), topTeam.id),
+						firstPlaceResult(users.id(2), lowTeam.id),
+					],
+					setResults: new Map([
+						[users.id(1), ["W"]],
+						[users.id(2), ["W"]],
+					]),
+				},
+				trophyReceiver: {
+					trophyId: trophy.id,
+					userIds: [users.id(1), users.id(2)],
+				},
+			});
+
+			const owners = await db
+				.selectFrom("TrophyOwner")
+				.select(["userId", "tier"])
+				.where("tournamentId", "=", tournamentId)
+				.orderBy("userId", "asc")
+				.execute();
+
+			expect(owners).toEqual([
+				{ userId: users.id(1), tier: TOP_DIVISION_TIER },
+				{ userId: users.id(2), tier: LOW_DIVISION_TIER },
+			]);
+		});
 	});
 });

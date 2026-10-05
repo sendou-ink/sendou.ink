@@ -1,4 +1,4 @@
-.bracketNavLink {
+.groupTab {
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	border-color: var(--color-bg-higher);
@@ -24,11 +24,11 @@
 	}
 }
 
-.bracketNavLinkBig {
+.groupTabBig {
 	font-size: var(--font-lg);
 }
 
-.bracketNavLinkSelected {
+.groupTabSelected {
 	color: var(--color-text);
 	background-color: var(--color-bg-high);
 }

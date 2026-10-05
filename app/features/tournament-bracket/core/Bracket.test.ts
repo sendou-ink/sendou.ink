@@ -1662,13 +1662,13 @@ describe("single elimination sourcing - placements are tiers", () => {
 			type: "single_elimination" as const,
 			name: "Main Bracket",
 			requiresCheckIn: false,
-			settings: { thirdPlaceMatch: false },
+			settings: { skippedRounds: ["THIRD_PLACE_MATCH" as const] },
 		},
 		{
 			type: "single_elimination" as const,
 			name: "Top 4",
 			requiresCheckIn: false,
-			settings: { thirdPlaceMatch: false },
+			settings: { skippedRounds: ["THIRD_PLACE_MATCH" as const] },
 			sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
 		},
 	];
@@ -1718,6 +1718,141 @@ describe("single elimination sourcing - placements are tiers", () => {
 });
 
 /** Matches of a single group swiss where each round lists its sets as [winnerId, loserId] */
+describe("grouped elimination with skipped rounds", () => {
+	const TEAM_IDS = Array.from({ length: 16 }, (_, index) => index + 1);
+	const MAIN_SETTINGS = {
+		groupCount: 2,
+		skippedRounds: [
+			"LB_SEMIS" as const,
+			"LB_FINALS" as const,
+			"GRAND_FINALS" as const,
+			"BRACKET_RESET" as const,
+		],
+	};
+
+	const playedOutMain = () => {
+		let data = Engine.create({
+			type: "double_elimination",
+			seeding: TEAM_IDS,
+			settings: MAIN_SETTINGS,
+		});
+
+		let ready = readyMatches(data, () => true);
+		while (ready.length) {
+			for (const match of ready) {
+				data = reportLowerIdWinner(data, match.id);
+			}
+			ready = readyMatches(data, () => true);
+		}
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "double_elimination",
+							name: "Main",
+							requiresCheckIn: false,
+							settings: MAIN_SETTINGS,
+						},
+					],
+				},
+			},
+			data,
+		}).bracketByIdx(0)!;
+	};
+
+	test("every match of every group gets played", () => {
+		const bracket = playedOutMain();
+
+		expect(bracket.data.group.length).toBe(2);
+		expect(bracket.everyMatchOver).toBe(true);
+	});
+
+	test("unbeaten teams share the top, teams alive with one loss come next", () => {
+		const standings = playedOutMain().standings;
+
+		const countByPlacement = R.countBy(standings, (standing) =>
+			String(standing.placement),
+		);
+
+		expect(standings.length).toBe(16);
+		expect(countByPlacement).toEqual({ 1: 2, 3: 6, 9: 4, 13: 4 });
+		expect(
+			standings
+				.filter((standing) => standing.placement === 1)
+				.map((standing) => standing.team.id)
+				.sort((a, b) => a - b),
+		).toEqual([1, 2]);
+	});
+
+	test("cross group ties are ordered by seed", () => {
+		const standings = playedOutMain().standings;
+
+		expect(standings.slice(0, 2).map((standing) => standing.team.id)).toEqual([
+			1, 2,
+		]);
+	});
+
+	test("sources tiers of every group", () => {
+		const bracket = playedOutMain();
+
+		expect(bracket.source({ placements: [1] }).teams).toHaveLength(2);
+		expect(bracket.source({ placements: [2] }).teams).toHaveLength(6);
+		expect(bracket.source({ placements: [1] }).relevantMatchesFinished).toBe(
+			true,
+		);
+	});
+
+	test("knocked out teams are sourced from the first losers round of every group", () => {
+		const bracket = playedOutMain();
+
+		expect(bracket.source({ placements: [-1] }).teams).toHaveLength(4);
+	});
+
+	test("single elimination with skipped finals has co-winners per group", () => {
+		let data = Engine.create({
+			type: "single_elimination",
+			seeding: TEAM_IDS.slice(0, 12),
+			settings: {
+				groupCount: 2,
+				skippedRounds: ["FINALS", "THIRD_PLACE_MATCH"],
+			},
+		});
+
+		let ready = readyMatches(data, () => true);
+		while (ready.length) {
+			for (const match of ready) {
+				data = reportLowerIdWinner(data, match.id);
+			}
+			ready = readyMatches(data, () => true);
+		}
+
+		const standings = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "single_elimination",
+							name: "Redemption",
+							requiresCheckIn: false,
+							settings: {
+								groupCount: 2,
+								skippedRounds: ["FINALS", "THIRD_PLACE_MATCH"],
+							},
+						},
+					],
+				},
+			},
+			data,
+		}).bracketByIdx(0)!.standings;
+
+		expect(
+			standings.filter((standing) => standing.placement === 1),
+		).toHaveLength(4);
+	});
+});
+
 function playedSwissMatches(
 	data: BracketData,
 	rounds: Array<Array<[winnerId: number, loserId: number]>>,

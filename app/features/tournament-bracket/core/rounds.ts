@@ -1,86 +1,86 @@
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { TOURNAMENT } from "../../tournament/tournament-constants";
 
-/** Rounds of one side of an elimination bracket in play order with their display names. `winners` includes the grand finals, `single` the consolation final. */
+/**
+ * Rounds of one side of an elimination group in play order with their display names. `winners` includes the grand finals, `single` the consolation final.
+ * Names are positional in the full bracket, so with skipped rounds e.g. the last round played can still be "WB Semis".
+ *
+ * @param groupId Group whose rounds are returned, defaults to the group of the first round (bracket data usually holds one group).
+ */
 export function getRounds(args: {
 	bracketData: BracketData;
 	type: "winners" | "losers" | "single";
+	groupId?: number;
 }) {
-	let showingBracketReset = args.bracketData.round.length > 1;
-	const rounds = args.bracketData.round
+	const groupId = args.groupId ?? args.bracketData.round[0]?.groupId;
+	const groupRounds = args.bracketData.round.filter(
+		(round) => round.groupId === groupId,
+	);
+	const matchesOfRound = (roundId: number) =>
+		args.bracketData.match.filter((match) => match.roundId === roundId);
+
+	const firstRound = groupRounds.find(
+		(round) => round.section === "winners" && round.number === 1,
+	);
+	const upperBracketRoundCount = firstRound
+		? Math.log2(matchesOfRound(firstRound.id).length * 2)
+		: 0;
+	const losersRoundCount = Math.max(0, (upperBracketRoundCount - 1) * 2);
+
+	const grandFinal = groupRounds.find(
+		(round) => round.section === "finals" && round.number === 1,
+	);
+	const grandFinalsMatch = grandFinal
+		? matchesOfRound(grandFinal.id)[0]
+		: undefined;
+
+	const rounds = groupRounds
 		.filter((round) =>
 			args.type === "losers"
 				? round.section === "losers"
 				: round.section !== "losers",
 		)
-		.filter((round, i, allRounds) => {
+		.filter((round) => {
 			const isBracketReset =
-				args.type === "winners" && i === allRounds.length - 1;
-			const grandFinalsMatch =
-				args.type === "winners"
-					? args.bracketData.match.find(
-							(match) => match.roundId === allRounds[allRounds.length - 2]?.id,
-						)
-					: undefined;
+				args.type === "winners" &&
+				round.section === "finals" &&
+				round.number === 2;
 
 			if (isBracketReset && grandFinalsMatch?.winnerSide === "opponent1") {
-				showingBracketReset = false;
 				return false;
 			}
 
-			const matches = args.bracketData.match.filter(
-				(match) => match.roundId === round.id,
-			);
-
-			const atLeastOneNonByeMatch = matches.some(
-				(m) => m.opponent1 && m.opponent2,
-			);
-
-			return atLeastOneNonByeMatch;
+			return matchesOfRound(round.id).some((m) => m.opponent1 && m.opponent2);
 		});
 
-	const hasThirdPlaceMatch =
-		args.type === "single" &&
-		args.bracketData.round.some((round) => round.section === "finals");
 	const namedRounds = rounds.map((round, i) => {
 		const name = () => {
-			if (
-				showingBracketReset &&
-				args.type === "winners" &&
-				i === rounds.length - 2
-			) {
+			if (round.section === "finals") {
+				if (args.type === "single") {
+					return TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH;
+				}
+
+				return round.number === 1
+					? TOURNAMENT.ROUND_NAMES.GRAND_FINALS
+					: TOURNAMENT.ROUND_NAMES.BRACKET_RESET;
+			}
+
+			// only one match in the group, it decides the winner
+			if (args.type === "winners" && upperBracketRoundCount === 1) {
 				return TOURNAMENT.ROUND_NAMES.GRAND_FINALS;
-			}
-
-			if (hasThirdPlaceMatch && i === rounds.length - 2) {
-				return TOURNAMENT.ROUND_NAMES.FINALS;
-			}
-			if (hasThirdPlaceMatch && i === rounds.length - 1) {
-				return TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH;
-			}
-
-			if (args.type === "winners" && i === rounds.length - 1) {
-				return showingBracketReset
-					? TOURNAMENT.ROUND_NAMES.BRACKET_RESET
-					: TOURNAMENT.ROUND_NAMES.GRAND_FINALS;
 			}
 
 			const namePrefix =
 				args.type === "winners" ? "WB " : args.type === "losers" ? "LB " : "";
 
-			const finalsOffSet = () => {
-				if (args.type !== "winners") return 1;
-				if (showingBracketReset) return 3;
-				return 2;
-			};
-			const isFinals = i === rounds.length - finalsOffSet();
-
-			const semisOffSet = () => {
-				if (args.type !== "winners") return hasThirdPlaceMatch ? 3 : 2;
-				if (showingBracketReset) return 4;
-				return 3;
-			};
-			const isSemis = i === rounds.length - semisOffSet();
+			const sectionRoundCount = Math.max(
+				round.section === "losers" ? losersRoundCount : upperBracketRoundCount,
+				...groupRounds
+					.filter((candidate) => candidate.section === round.section)
+					.map((candidate) => candidate.number),
+			);
+			const isFinals = round.number === sectionRoundCount;
+			const isSemis = round.number === sectionRoundCount - 1;
 
 			return `${namePrefix}${
 				isFinals ? "Finals" : isSemis ? "Semis" : `Round ${i + 1}`

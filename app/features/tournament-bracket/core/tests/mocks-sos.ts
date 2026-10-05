@@ -1736,7 +1736,7 @@ export const SWIM_OR_SINK_167 = (
 					name: "Great White",
 					type: "single_elimination",
 					requiresCheckIn: false,
-					settings: { thirdPlaceMatch: true },
+					settings: {},
 					sources: [
 						{
 							bracketIdx: 0,
@@ -1748,7 +1748,7 @@ export const SWIM_OR_SINK_167 = (
 					name: "Hammerhead",
 					type: "single_elimination",
 					requiresCheckIn: false,
-					settings: { thirdPlaceMatch: true },
+					settings: {},
 					sources: [
 						{
 							bracketIdx: 0,
@@ -1760,7 +1760,7 @@ export const SWIM_OR_SINK_167 = (
 					name: "Mako",
 					type: "single_elimination",
 					requiresCheckIn: false,
-					settings: { thirdPlaceMatch: true },
+					settings: {},
 					sources: [
 						{
 							bracketIdx: 0,
@@ -1772,7 +1772,7 @@ export const SWIM_OR_SINK_167 = (
 					name: "Lantern",
 					type: "single_elimination",
 					requiresCheckIn: false,
-					settings: { thirdPlaceMatch: true },
+					settings: {},
 					sources: [
 						{
 							bracketIdx: 0,

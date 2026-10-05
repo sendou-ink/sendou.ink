@@ -29,9 +29,7 @@ const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
 						type: "single_elimination",
 						name: "Top Cut",
 						requiresCheckIn: false,
-						settings: {
-							thirdPlaceMatch: true,
-						},
+						settings: {},
 						sources: [
 							{
 								bracketIdx: 0,
@@ -43,9 +41,9 @@ const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
 						type: "single_elimination",
 						name: "Underground Bracket",
 						requiresCheckIn: false,
-						settings: {
-							thirdPlaceMatch: thirdPlaceMatchesForBoth,
-						},
+						settings: thirdPlaceMatchesForBoth
+							? {}
+							: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 						sources: [
 							{
 								bracketIdx: 0,
@@ -331,7 +329,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 				bracketProgression: [
 					{
 						type: "single_elimination",
-						settings: { thirdPlaceMatch: true },
+						settings: {},
 						name: "X",
 						requiresCheckIn: false,
 					},
@@ -466,7 +464,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 				bracketProgression: [
 					{
 						type: "double_elimination",
-						settings: { thirdPlaceMatch: true },
+						settings: {},
 						name: "X",
 						requiresCheckIn: false,
 					},

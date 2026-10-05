@@ -265,6 +265,72 @@ describe("Previous and next match update in double elimination stage", () => {
 	});
 });
 
+describe("Skipped rounds in double elimination", () => {
+	test("a winners bracket loser with no losers round to drop to stays alive", () => {
+		let data = createResolved({
+			type: "double_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: {
+				skippedRounds: [
+					"LB_SEMIS",
+					"LB_FINALS",
+					"GRAND_FINALS",
+					"BRACKET_RESET",
+				],
+			},
+		});
+
+		for (let i = 0; i < 20; i++) {
+			const playable = data.match.find(
+				(match) =>
+					!match.winnerSide &&
+					typeof match.opponent1?.id === "number" &&
+					typeof match.opponent2?.id === "number",
+			);
+			if (!playable) break;
+
+			data = Engine.reportResult(data, {
+				matchId: playable.id,
+				winnerSide: "opponent1",
+			}).data;
+		}
+
+		expect(
+			data.match.every(
+				(match) => match.winnerSide || !match.opponent1 || !match.opponent2,
+			),
+		).toBe(true);
+	});
+
+	test("grand finals decide the bracket when the bracket reset is skipped", () => {
+		let data = createResolved({
+			type: "double_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: { skippedRounds: ["BRACKET_RESET"] },
+		});
+
+		for (let i = 0; i < 20; i++) {
+			const playable = data.match.find(
+				(match) =>
+					!match.winnerSide &&
+					typeof match.opponent1?.id === "number" &&
+					typeof match.opponent2?.id === "number",
+			);
+			if (!playable) break;
+
+			data = Engine.reportResult(data, {
+				matchId: playable.id,
+				winnerSide: "opponent2",
+			}).data;
+		}
+
+		expect(
+			data.round.filter((round) => round.section === "finals").length,
+		).toBe(1);
+		expect(data.match.every((match) => match.winnerSide)).toBe(true);
+	});
+});
+
 function matchById(data: BracketData, id: number) {
 	const found = data.match.find((match) => match.id === id);
 	if (!found) throw new Error(`Match ${id} not found`);

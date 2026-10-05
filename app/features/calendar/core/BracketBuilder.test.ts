@@ -216,26 +216,41 @@ describe("BracketBuilder.defaultPlacements", () => {
 	test.each([
 		{
 			why: "single elimination top 4, semifinal losers sharing 3rd",
-			overrides: { type: "single_elimination", thirdPlaceMatch: false },
+			overrides: {
+				type: "single_elimination" as const,
+				skippedRounds: ["THIRD_PLACE_MATCH" as const],
+			},
 			expected: "1-3",
 		},
 		{
 			why: "single elimination top 4 with a third place match",
-			overrides: { type: "single_elimination", thirdPlaceMatch: true },
+			overrides: { type: "single_elimination" as const, skippedRounds: [] },
 			expected: "1-4",
 		},
 		{
+			why: "single elimination with skipped finals the teams still in",
+			overrides: {
+				type: "single_elimination" as const,
+				skippedRounds: ["FINALS" as const],
+			},
+			expected: "1",
+		},
+		{
 			why: "double elimination top 4",
-			overrides: { type: "double_elimination" },
+			overrides: { type: "double_elimination" as const },
 			expected: "1-4",
 		},
 		{
 			why: "round robin top 2 per group",
-			overrides: { type: "round_robin" },
+			overrides: { type: "round_robin" as const },
 			expected: "1-2",
 		},
-		{ why: "swiss top 8", overrides: { type: "swiss" }, expected: "1-8" },
-	] as const)("$why", ({ overrides, expected }) => {
+		{
+			why: "swiss top 8",
+			overrides: { type: "swiss" as const },
+			expected: "1-8",
+		},
+	])("$why", ({ overrides, expected }) => {
 		const values = progressionOf([{ name: "Main", ...overrides }]);
 
 		expect(BracketBuilder.defaultPlacements(values, 0)).toBe(expected);
@@ -243,7 +258,11 @@ describe("BracketBuilder.defaultPlacements", () => {
 
 	test("takes everyone below once the top placements are taken", () => {
 		const values = progressionOf([
-			{ name: "Main", type: "single_elimination", thirdPlaceMatch: false },
+			{
+				name: "Main",
+				type: "single_elimination",
+				skippedRounds: ["THIRD_PLACE_MATCH"],
+			},
 			{ name: "Top cut", sources: [[0, "1-3"]] },
 		]);
 
@@ -262,7 +281,10 @@ describe("BracketBuilder.defaultPlacements", () => {
 describe("BracketBuilder.placementTiers", () => {
 	test("both semifinal losers share a placement without a third place match", () => {
 		const tiers = BracketBuilder.placementTiers(
-			bracketValue({ type: "single_elimination", thirdPlaceMatch: false }),
+			bracketValue({
+				type: "single_elimination",
+				skippedRounds: ["THIRD_PLACE_MATCH"],
+			}),
 		);
 
 		expect(
@@ -286,6 +308,44 @@ describe("BracketBuilder.placementTiers", () => {
 		expect(tiers.map((tier) => tier.maxTeams)).toEqual([1, 1, 1, 1, 2]);
 	});
 
+	test("elimination split into groups has every group's tiers", () => {
+		const tiers = BracketBuilder.placementTiers(
+			bracketValue({
+				type: "double_elimination",
+				eliminationGroupCount: "8",
+				skippedRounds: [
+					"LB_SEMIS",
+					"LB_FINALS",
+					"GRAND_FINALS",
+					"BRACKET_RESET",
+				],
+			}),
+		);
+
+		expect(
+			tiers
+				.slice(0, 2)
+				.map((tier) => [tier.kind, tier.maxTeams, tier.maxTeamsPerGroup]),
+		).toEqual([
+			["UNBEATEN", 8, 1],
+			["ALIVE_WITH_ONE_LOSS", 24, 3],
+		]);
+	});
+
+	test("elimination split into more groups than its teams allow has fewer groups", () => {
+		const tiers = BracketBuilder.placementTiers(
+			bracketValue({ type: "single_elimination", eliminationGroupCount: "4" }),
+			6,
+		);
+
+		expect(
+			tiers.map((tier) => [tier.kind, tier.maxTeams, tier.maxTeamsPerGroup]),
+		).toEqual([
+			["WON_FINAL", 3, 1],
+			["LOST_FINAL", 3, 1],
+		]);
+	});
+
 	test("round robin has a placement per position in a group", () => {
 		const tiers = BracketBuilder.placementTiers(
 			bracketValue({ type: "round_robin", teamsPerGroup: "4" }),
@@ -305,6 +365,25 @@ describe("BracketBuilder.maxTeamCounts", () => {
 		]);
 
 		expect(BracketBuilder.maxTeamCounts(values)).toEqual([null, 8, 4, null]);
+	});
+
+	test("knows how many group winners advance before teams sign up", () => {
+		const values = progressionOf([
+			{
+				name: "Main",
+				type: "double_elimination",
+				eliminationGroupCount: "8",
+				skippedRounds: [
+					"LB_SEMIS",
+					"LB_FINALS",
+					"GRAND_FINALS",
+					"BRACKET_RESET",
+				],
+			},
+			{ name: "Top cut", sources: [[0, "1"]] },
+		]);
+
+		expect(BracketBuilder.maxTeamCounts(values)).toEqual([null, 8]);
 	});
 });
 

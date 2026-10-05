@@ -60,7 +60,7 @@ export const RR_TOP_4_TO_SE: BracketProgression = [
 		type: "single_elimination",
 		name: "Final stage",
 		requiresCheckIn: false,
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 		sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
 	},
 ];
@@ -73,6 +73,52 @@ export const RR_TO_SE_WITH_UNDERGROUND: BracketProgression = [
 		requiresCheckIn: true,
 		settings: {},
 		sources: [{ bracketIdx: 0, placements: [3, 4] }],
+	},
+];
+
+// xxx: lets have uneven number of teams
+/** With 16 teams: two double elimination groups of 8 ending once each has 1 unbeaten and 3 one loss teams.
+ * The unbeaten teams make the top cut, the one loss teams play a redemption of two single elimination
+ * groups of 3 whose co-winners (finals not played) make the top cut too. */
+export const DE_GROUPS_TO_REDEMPTION_AND_TOP_CUT: BracketProgression = [
+	{
+		type: "double_elimination",
+		name: "Main",
+		requiresCheckIn: false,
+		settings: {
+			groupCount: 2,
+			skippedRounds: ["LB_SEMIS", "LB_FINALS", "GRAND_FINALS", "BRACKET_RESET"],
+		},
+	},
+	{
+		type: "single_elimination",
+		name: "Redemption",
+		requiresCheckIn: false,
+		settings: {
+			groupCount: 2,
+			skippedRounds: ["FINALS", "THIRD_PLACE_MATCH"],
+		},
+		sources: [{ bracketIdx: 0, placements: [2] }],
+	},
+	{
+		type: "double_elimination",
+		name: "Top Cut",
+		requiresCheckIn: false,
+		settings: {},
+		sources: [
+			{ bracketIdx: 0, placements: [1] },
+			{ bracketIdx: 1, placements: [1] },
+		],
+	},
+];
+
+/** Single elimination without its finals: both semifinal winners share 1st place. */
+export const SE_WITHOUT_FINALS: BracketProgression = [
+	{
+		type: "single_elimination",
+		name: "Main bracket",
+		requiresCheckIn: false,
+		settings: { skippedRounds: ["FINALS", "THIRD_PLACE_MATCH"] },
 	},
 ];
 
@@ -124,7 +170,7 @@ export const SWISS_TO_TOP_CUT: BracketProgression = [
 		type: "single_elimination",
 		name: "Top Cut",
 		requiresCheckIn: false,
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 		sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
 	},
 ];
@@ -141,7 +187,7 @@ export const SWISS_EARLY_ADVANCE_TO_TOP_CUT: BracketProgression = [
 		type: "single_elimination",
 		name: "Top Cut",
 		requiresCheckIn: false,
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 		sources: [{ bracketIdx: 0, placements: [] }],
 	},
 ];

@@ -4,6 +4,7 @@ import {
 	tournamentBracketChannel,
 	tournamentChannel,
 	validateBadgeReceivers,
+	validateTrophyReceiver,
 } from "./tournament-bracket-utils";
 
 const groupNumberToLettersParamsToResult = [
@@ -89,5 +90,82 @@ describe("validateNewBadgeOwners", () => {
 			{ badgeId: 2, userIds: [20], tournamentTeamId: 101 },
 		];
 		expect(validateBadgeReceivers({ badgeReceivers, badges })).toBeNull();
+	});
+});
+
+describe("validateTrophyReceiver", () => {
+	const trophy = { id: 1 };
+	const soleWinner = [{ memberUserIds: [10, 11] }];
+	const coWinners = [{ memberUserIds: [10, 11] }, { memberUserIds: [20, 21] }];
+
+	test.each([
+		{
+			why: "sole winner's members receive",
+			trophyReceiver: { trophyId: 1, userIds: [10, 11] },
+			firstPlaceTeams: soleWinner,
+			expected: null,
+		},
+		{
+			why: "one receiver per co-winner team",
+			trophyReceiver: { trophyId: 1, userIds: [10, 21] },
+			firstPlaceTeams: coWinners,
+			expected: null,
+		},
+		{
+			why: "a 1st place team without members needs no receiver",
+			trophyReceiver: { trophyId: 1, userIds: [10] },
+			firstPlaceTeams: [...soleWinner, { memberUserIds: [] }],
+			expected: null,
+		},
+		{
+			why: "receiver missing",
+			trophyReceiver: null,
+			firstPlaceTeams: soleWinner,
+			expected: "TROPHY_NOT_FOUND",
+		},
+		{
+			why: "receiver for another trophy",
+			trophyReceiver: { trophyId: 2, userIds: [10] },
+			firstPlaceTeams: soleWinner,
+			expected: "TROPHY_NOT_FOUND",
+		},
+		{
+			why: "nobody picked",
+			trophyReceiver: { trophyId: 1, userIds: [] },
+			firstPlaceTeams: coWinners,
+			expected: "TROPHY_NOT_ASSIGNED",
+		},
+		{
+			why: "receiver not on a 1st place team",
+			trophyReceiver: { trophyId: 1, userIds: [10, 30] },
+			firstPlaceTeams: soleWinner,
+			expected: "TROPHY_RECEIVER_NOT_FIRST_PLACE",
+		},
+		{
+			why: "no 1st place teams",
+			trophyReceiver: { trophyId: 1, userIds: [10] },
+			firstPlaceTeams: [],
+			expected: "TROPHY_RECEIVER_NOT_FIRST_PLACE",
+		},
+		{
+			why: "a co-winner team has no receiver",
+			trophyReceiver: { trophyId: 1, userIds: [10, 11] },
+			firstPlaceTeams: coWinners,
+			expected: "TROPHY_TEAM_NOT_ASSIGNED",
+		},
+	])("$why -> $expected", ({ trophyReceiver, firstPlaceTeams, expected }) => {
+		expect(
+			validateTrophyReceiver({ trophyReceiver, trophy, firstPlaceTeams }),
+		).toBe(expected);
+	});
+
+	test("returns null when the tournament has no trophy", () => {
+		expect(
+			validateTrophyReceiver({
+				trophyReceiver: null,
+				trophy: null,
+				firstPlaceTeams: soleWinner,
+			}),
+		).toBeNull();
 	});
 });

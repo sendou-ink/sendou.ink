@@ -1,6 +1,7 @@
 import type { TournamentStageSettings } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { assertUnreachable } from "~/utils/types";
+import * as SkippedRounds from "../../SkippedRounds";
 import type {
 	BracketData,
 	CreateBracketInput,
@@ -20,10 +21,11 @@ export function resolveStageSettings(input: CreateBracketInput): StageSettings {
 					settings,
 					participantsCount: seeding.length,
 				}),
+				...eliminationGroupAndSkipSettings(type, settings, seeding.length),
 			};
 		}
 		case "double_elimination": {
-			return {};
+			return eliminationGroupAndSkipSettings(type, settings, seeding.length);
 		}
 		case "round_robin": {
 			return {
@@ -53,18 +55,54 @@ export function swissRoundCount(data: BracketData): number {
 	);
 }
 
-/** Only possible for single elimination with at least 4 participants. */
-export function hasThirdPlaceMatch(args: {
+/** Only possible for single elimination with at least 4 participants (in its biggest group when grouped) and the semifinals played. */
+function hasThirdPlaceMatch(args: {
 	type: StageType;
 	settings: TournamentStageSettings | null;
 	participantsCount: number;
 }): boolean {
 	if (args.type !== "single_elimination") return false;
-	if (args.participantsCount < 4) return false;
 
-	return (
-		args.settings?.thirdPlaceMatch ??
-		TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH
+	const biggestGroupSize = Math.ceil(
+		args.participantsCount /
+			eliminationGroupCount(args.settings, args.participantsCount),
+	);
+	if (biggestGroupSize < 4) return false;
+
+	const skipped = SkippedRounds.normalized(
+		args.type,
+		args.settings?.skippedRounds,
+	);
+	if (skipped.includes("THIRD_PLACE_MATCH")) return false;
+
+	return TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH;
+}
+
+/** Whether the third place match can share the finals' map list, i.e. both are played. */
+export function thirdPlaceMatchLinkable(args: {
+	type: StageType;
+	settings: TournamentStageSettings | null;
+	participantsCount: number;
+}): boolean {
+	if (!hasThirdPlaceMatch(args)) return false;
+
+	return !SkippedRounds.normalized(
+		"single_elimination",
+		args.settings?.skippedRounds,
+	).includes("FINALS");
+}
+
+/**
+ * Groups of a single or double elimination stage, 1 unless it is split into groups. Too few participants
+ * for the selected count leaves fewer groups, every group having at least 2 participants.
+ */
+export function eliminationGroupCount(
+	settings: TournamentStageSettings | null,
+	participantsCount: number,
+): number {
+	return Math.max(
+		1,
+		Math.min(settings?.groupCount ?? 1, Math.floor(participantsCount / 2)),
 	);
 }
 
@@ -77,4 +115,21 @@ export function roundRobinGroupCount(
 		settings?.teamsPerGroup ?? TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
 
 	return Math.ceil(participantsCount / teamsPerGroup);
+}
+
+function eliminationGroupAndSkipSettings(
+	type: "single_elimination" | "double_elimination",
+	settings: TournamentStageSettings | null,
+	participantsCount: number,
+): StageSettings {
+	const groupCount = eliminationGroupCount(settings, participantsCount);
+	const skippedRounds = SkippedRounds.normalized(
+		type,
+		settings?.skippedRounds,
+	).filter((round) => round !== "THIRD_PLACE_MATCH");
+
+	return {
+		...(groupCount > 1 ? { groupCount } : {}),
+		...(skippedRounds.length > 0 ? { skippedRounds } : {}),
+	};
 }

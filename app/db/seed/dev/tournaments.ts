@@ -117,7 +117,7 @@ const SINGLE_ELIMINATION: Progression = [
 		type: "single_elimination",
 		name: "Bracket",
 		requiresCheckIn: false,
-		settings: { thirdPlaceMatch: true },
+		settings: {},
 	},
 ];
 
@@ -161,6 +161,42 @@ const SWISS_TO_SINGLE_ELIMINATION: Progression = [
 		requiresCheckIn: false,
 		settings: {},
 		sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
+	},
+];
+
+// xxx: maybe for seed good to have the case where first round is not evenly distribued count of teams?
+/**
+ * Double elimination groups whose unbeaten teams make the top cut. The teams alive with one loss play a
+ * double elimination redemption without grand finals, its winners and losers bracket winners making the top cut too.
+ */
+const DOUBLE_ELIMINATION_GROUPS_WITH_REDEMPTION_AND_TOP_CUT: Progression = [
+	{
+		type: "double_elimination",
+		name: "Main",
+		requiresCheckIn: false,
+		settings: {
+			groupCount: 3,
+			skippedRounds: ["LB_SEMIS", "LB_FINALS", "GRAND_FINALS", "BRACKET_RESET"],
+		},
+	},
+	{
+		type: "double_elimination",
+		name: "Redemption",
+		requiresCheckIn: false,
+		settings: {
+			skippedRounds: ["GRAND_FINALS", "BRACKET_RESET"],
+		},
+		sources: [{ bracketIdx: 0, placements: [2] }],
+	},
+	{
+		type: "double_elimination",
+		name: "Top Cut",
+		requiresCheckIn: false,
+		settings: {},
+		sources: [
+			{ bracketIdx: 0, placements: [1] },
+			{ bracketIdx: 1, placements: [1, 2] },
+		],
 	},
 ];
 
@@ -221,6 +257,8 @@ export async function seedTournaments({
 		rosters,
 		seriesLogoImgIds,
 	});
+
+	await seedSuperjump({ users, organizations, rosters });
 
 	const nzapTeamIds = await seedHistoricalTournaments({
 		users,
@@ -692,6 +730,36 @@ async function seedLuti({
 }
 
 /** Every division is a round robin whose top two go on to its playoffs. */
+/**
+ * #6 double elimination groups → double elimination redemption → top cut, TO maps — the groups played
+ * out, the redemption started with nothing reported and the top cut waiting for its two finalists.
+ */
+async function seedSuperjump({ users, rosters }: Ctx) {
+	const tournament = await TournamentFactory.create({
+		name: nameFor("Superjump"),
+		authorId: users.adminId,
+		startTimes: [dateToDatabaseTimestamp(hoursAgo(3))],
+		mapPickingStyle: "TO",
+		mapPoolMaps: toSetMapPool(),
+		bracketProgression: DOUBLE_ELIMINATION_GROUPS_WITH_REDEMPTION_AND_TOP_CUT,
+	});
+
+	const teamRosters = rosters.take({
+		teamCount: 24,
+		teamSize: 4,
+		pinned: [{ teamIdx: 2, userId: users.nzapId }],
+	});
+
+	await registerTeams({
+		tournamentId: tournament.id,
+		rosters: teamRosters,
+		isCheckedIn: true,
+	});
+
+	await TournamentFactory.playOut(tournament.id, 0);
+	await TournamentFactory.startBracket(tournament.id, { bracketIdx: 1 });
+}
+
 function lutiProgression(): Progression {
 	return LUTI_DIVISIONS.flatMap((division, index) => [
 		{

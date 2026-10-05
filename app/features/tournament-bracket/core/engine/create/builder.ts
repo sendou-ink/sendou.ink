@@ -1,3 +1,4 @@
+import * as SkippedRounds from "../../SkippedRounds";
 import type {
 	BracketData,
 	Duel,
@@ -31,8 +32,10 @@ export class StageCreator {
 		this.input = input;
 		this.settings = structuredClone(input.settings) ?? {};
 		const seeding = [...input.seeding];
-		this.seeding =
-			input.type !== "round_robin" ? padSeedingToPowerOfTwo(seeding) : seeding;
+		// grouped elimination pads each group instead
+		const isPadded =
+			input.type !== "round_robin" && (this.settings.groupCount ?? 1) <= 1;
+		this.seeding = isPadded ? padSeedingToPowerOfTwo(seeding) : seeding;
 		this.data = { stage: [], group: [], round: [], match: [] };
 
 		if (input.type === "single_elimination")
@@ -112,13 +115,17 @@ export class StageCreator {
 			);
 	}
 
-	/** The winners section of an elimination group: the only bracket in single elimination, the upper one in double elimination. */
+	/**
+	 * The winners section of an elimination group: the only bracket in single elimination, the upper one in double elimination.
+	 * Skipped rounds are not created, but their losers and winner are still returned as the following sections are built off them.
+	 */
 	createStandardBracket(
 		stageId: number,
 		groupId: number,
 		slots: ParticipantSlot[],
 	): StandardBracketResults {
 		const roundCount = helpers.getUpperBracketRoundCount(slots.length);
+		const skipped = this.skippedRoundNumbers("winners", roundCount);
 
 		let duels = helpers.makePairs(slots);
 		let roundNumber = 1;
@@ -129,14 +136,17 @@ export class StageCreator {
 			const matchCount = 2 ** i;
 			duels = this.getCurrentDuels(duels, matchCount);
 			losers.push(duels.map(helpers.byeLoser));
-			this.createRound(
-				stageId,
-				groupId,
-				"winners",
-				roundNumber++,
-				matchCount,
-				duels,
-			);
+			if (!skipped.has(roundNumber)) {
+				this.createRound(
+					stageId,
+					groupId,
+					"winners",
+					roundNumber,
+					matchCount,
+					duels,
+				);
+			}
+			roundNumber++;
 		}
 
 		return { losers, winner: helpers.byeWinner(duels[0]) };
@@ -147,9 +157,10 @@ export class StageCreator {
 		stageId: number,
 		groupId: number,
 		losers: ParticipantSlot[][],
+		participantCount: number,
 	): ParticipantSlot {
-		const participantCount = this.seeding.length;
 		const roundPairCount = helpers.getRoundPairCount(participantCount);
+		const skipped = this.skippedRoundNumbers("losers", roundPairCount * 2);
 
 		let losersId = 0;
 
@@ -164,14 +175,17 @@ export class StageCreator {
 
 			// Major round.
 			duels = this.getCurrentDuels(duels, matchCount, true);
-			this.createRound(
-				stageId,
-				groupId,
-				"losers",
-				roundNumber++,
-				matchCount,
-				duels,
-			);
+			if (!skipped.has(roundNumber)) {
+				this.createRound(
+					stageId,
+					groupId,
+					"losers",
+					roundNumber,
+					matchCount,
+					duels,
+				);
+			}
+			roundNumber++;
 
 			// Minor round.
 			const minorOrdering = this.getMinorOrdering(
@@ -186,14 +200,17 @@ export class StageCreator {
 				losers[losersId++],
 				minorOrdering,
 			);
-			this.createRound(
-				stageId,
-				groupId,
-				"losers",
-				roundNumber++,
-				matchCount,
-				duels,
-			);
+			if (!skipped.has(roundNumber)) {
+				this.createRound(
+					stageId,
+					groupId,
+					"losers",
+					roundNumber,
+					matchCount,
+					duels,
+				);
+			}
+			roundNumber++;
 		}
 
 		return helpers.byeWinnerToGrandFinal(duels[0]);
@@ -201,8 +218,38 @@ export class StageCreator {
 
 	/** The finals section: rounds of 1 match each (grand finals + bracket reset, or a consolation final). */
 	createFinals(stageId: number, groupId: number, duels: Duel[]): void {
-		for (let i = 0; i < duels.length; i++)
+		const skipped = this.skippedRoundNumbers("finals", duels.length);
+
+		for (let i = 0; i < duels.length; i++) {
+			if (skipped.has(i + 1)) continue;
+
 			this.createRound(stageId, groupId, "finals", i + 1, 1, [duels[i]]);
+		}
+	}
+
+	/** Whether the round of the section is created, see {@link skippedRoundNumbers}. */
+	isRoundCreated(
+		section: RoundSection,
+		roundNumber: number,
+		roundCount: number,
+	): boolean {
+		return !this.skippedRoundNumbers(section, roundCount).has(roundNumber);
+	}
+
+	private skippedRoundNumbers(section: RoundSection, roundCount: number) {
+		if (
+			this.input.type !== "single_elimination" &&
+			this.input.type !== "double_elimination"
+		) {
+			return new Set<number>();
+		}
+
+		return SkippedRounds.skippedRoundNumbers({
+			type: this.input.type,
+			section,
+			roundCount,
+			skipped: this.settings.skippedRounds ?? [],
+		});
 	}
 
 	createRound(
@@ -296,6 +343,31 @@ export class StageCreator {
 		helpers.ensureNoDuplicates(this.seeding);
 
 		return this.getSlotsUsingIds(this.seeding);
+	}
+
+	/** Slots of each group of an elimination stage, distributed like round robin groups and each padded with BYEs to a power of two. */
+	getEliminationGroupSlots(): ParticipantSlot[][] {
+		const groupCount = this.settings.groupCount ?? 1;
+		if (groupCount <= 1) return [this.getSlots()];
+
+		helpers.ensureNoDuplicates(this.seeding);
+
+		const ordered = ordering["groups.seed_optimized"](
+			this.getSlotsUsingIds(this.seeding),
+			groupCount,
+		);
+
+		return helpers.makeGroups(ordered, groupCount).map((group) => {
+			// `undefined` = padding from seed ordering uneven groups
+			const slots = group.filter((slot) => slot !== undefined);
+			if (slots.length < 2) {
+				throw new Error(
+					"Impossible to create a group with less than 2 participants.",
+				);
+			}
+
+			return padSeedingToPowerOfTwo(slots);
+		});
 	}
 
 	private getSlotsUsingIds(seeding: Seeding): ParticipantSlot[] {

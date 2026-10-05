@@ -1,11 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { FormMessage } from "~/components/FormMessage";
 import { InfoPopover } from "~/components/InfoPopover";
+import type { SkippableRound } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import { FormField } from "~/form/FormField";
 import { useFormFieldContext, useFormValue } from "~/form/SendouForm";
-import type { ArrayItemRenderContext } from "~/form/types";
+import type {
+	ArrayItemRenderContext,
+	CustomFieldRenderProps,
+} from "~/form/types";
 import {
 	type BracketFormValue,
 	newFollowUpProgressionEntry,
@@ -14,7 +18,9 @@ import {
 	type ProgressionSourceFormValue,
 	sourceBracketHasEarlyAdvance,
 } from "../calendar-progression-form";
+import * as BracketBuilder from "../core/BracketBuilder";
 import styles from "./BracketProgressionFormFields.module.css";
+import { RoundsPlayedChecklist } from "./RoundsPlayedChecklist";
 
 const DEFAULT_ADVANCE_THRESHOLD = "3";
 
@@ -119,10 +125,21 @@ export function BracketFields({
 	return (
 		<div className="stack md items-start">
 			<FormField name={`${itemName}.name`} disabled={isDisabled} />
-			<FormField name={`${itemName}.type`} disabled={isDisabled} />
+			<FormField
+				name={`${itemName}.type`}
+				disabled={isDisabled}
+				// skippable rounds differ by format
+				onValueChange={() => setItemField("skippedRounds", [])}
+			/>
 
-			{bracket.type === "single_elimination" ? (
-				<FormField name={`${itemName}.thirdPlaceMatch`} disabled={isDisabled} />
+			{bracket.type === "single_elimination" ||
+			bracket.type === "double_elimination" ? (
+				<EliminationFields
+					type={bracket.type}
+					bracket={bracket}
+					itemName={itemName}
+					isDisabled={isDisabled}
+				/>
 			) : null}
 
 			{bracket.type === "round_robin" ? (
@@ -211,6 +228,57 @@ export function BracketFields({
 				</>
 			) : null}
 		</div>
+	);
+}
+
+/** Groups and rounds played of a single or double elimination bracket. */
+function EliminationFields({
+	type,
+	bracket,
+	itemName,
+	isDisabled,
+}: {
+	type: "single_elimination" | "double_elimination";
+	bracket: BracketFormValue;
+	itemName: string;
+	isDisabled: boolean;
+}) {
+	const { t } = useTranslation(["forms"]);
+
+	const fewestTeamsWithMatches = BracketBuilder.fewestTeamsWithMatches(bracket);
+
+	return (
+		<>
+			<FormField
+				name={`${itemName}.eliminationGroupCount`}
+				disabled={isDisabled}
+			/>
+			<FormField name={`${itemName}.skippedRounds`} disabled={isDisabled}>
+				{({
+					name,
+					value,
+					onChange,
+					error,
+					disabled,
+				}: CustomFieldRenderProps) => (
+					<RoundsPlayedChecklist
+						name={name}
+						type={type}
+						skipped={value as SkippableRound[]}
+						onChange={onChange}
+						error={error}
+						disabled={disabled}
+					/>
+				)}
+			</FormField>
+			{BracketBuilder.isGrouped(bracket) && fewestTeamsWithMatches > 2 ? (
+				<FormMessage type="info">
+					{t("forms:bottomTexts.groupsWithoutMatches", {
+						count: fewestTeamsWithMatches,
+					})}
+				</FormMessage>
+			) : null}
+		</>
 	);
 }
 

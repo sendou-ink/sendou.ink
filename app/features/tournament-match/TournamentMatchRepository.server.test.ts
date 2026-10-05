@@ -23,7 +23,7 @@ const POOLS_TO_FINAL: TournamentSettings["bracketProgression"] = [
 		name: "Final",
 		type: "single_elimination",
 		requiresCheckIn: false,
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 		sources: [{ bracketIdx: 0, placements: [1] }],
 	},
 ];

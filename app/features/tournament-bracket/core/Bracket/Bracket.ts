@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
+import * as Standings from "~/features/tournament/core/Standings";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type {
 	BracketData,
@@ -51,6 +52,20 @@ export interface Standing {
 		opponentSetWinPercentage?: number;
 		opponentMapWinPercentage?: number;
 	};
+}
+
+/** Teams leaving the bracket from a match: the placement tier (or for losers knocked out early, the elimination round) they leave with. */
+export interface MatchExit {
+	winnerTier?: number;
+	loserTier?: number;
+	/** 1 = the first round where teams get knocked out, see negative placements of `Progression.DBSource`. */
+	loserRound?: number;
+}
+
+/** Brackets the winner and loser of a match continue to, for the matches where teams leave the bracket. */
+export interface MatchExitDestinations {
+	winner: number | null;
+	loser: number | null;
 }
 
 export interface TeamTrackRecord {
@@ -150,6 +165,7 @@ export abstract class Bracket {
 			let data = this.data;
 
 			const teamOrder = this.teamOrderForSimulation();
+			const bracketResetMatchIds = this.bracketResetMatchIds();
 
 			let matchesToResolve = true;
 			let loopCount = 0;
@@ -171,11 +187,7 @@ export abstract class Bracket {
 						(match.opponent1 && !match.opponent1.id) ||
 						(match.opponent2 && !match.opponent2.id)
 					) {
-						const isBracketReset =
-							this.type === "double_elimination" &&
-							match.id === this.data.match[this.data.match.length - 1].id;
-
-						if (!isBracketReset) {
+						if (!bracketResetMatchIds.has(match.id)) {
 							matchesToResolve = true;
 						}
 
@@ -206,6 +218,23 @@ export abstract class Bracket {
 
 			return;
 		}
+	}
+
+	/** Double elimination bracket reset matches, played only if the losers bracket team wins the grand finals. */
+	protected bracketResetMatchIds() {
+		if (this.type !== "double_elimination") return new Set<number>();
+
+		const bracketResetRoundIds = new Set(
+			this.data.round
+				.filter((round) => round.section === "finals" && round.number === 2)
+				.map((round) => round.id),
+		);
+
+		return new Set(
+			this.data.match
+				.filter((match) => bracketResetRoundIds.has(match.roundId))
+				.map((match) => match.id),
+		);
 	}
 
 	private teamOrderForSimulation() {
@@ -297,6 +326,49 @@ export abstract class Bracket {
 		return;
 	}
 
+	protected matchesOfRound(roundId: number) {
+		return this.data.match.filter((match) => match.roundId === roundId);
+	}
+
+	protected hasNonByeMatch(roundId: number) {
+		return this.matchesOfRound(roundId).some(
+			(match) => match.opponent1 && match.opponent2,
+		);
+	}
+
+	/** Exits of the matches teams leave the bracket from, keyed by match id. Only elimination brackets have them. */
+	protected matchExits(): Map<number, MatchExit> {
+		return new Map();
+	}
+
+	/** Brackets the teams leaving the bracket from each match continue to, keyed by match id. Matches whose teams go nowhere are left out. */
+	matchExitDestinations(): Map<number, MatchExitDestinations> {
+		const progression = this.tournament.ctx.settings.bracketProgression;
+		const destination = (placement: number | undefined) =>
+			typeof placement === "number"
+				? Progression.destinationByPlacement({
+						sourceBracketIdx: this.idx,
+						placement,
+						progression,
+					})
+				: null;
+
+		const result = new Map<number, MatchExitDestinations>();
+		for (const [matchId, exit] of this.matchExits()) {
+			const winner = destination(exit.winnerTier);
+			const loser =
+				destination(
+					typeof exit.loserRound === "number" ? -exit.loserRound : undefined,
+				) ?? destination(exit.loserTier);
+
+			if (winner === null && loser === null) continue;
+
+			result.set(matchId, { winner, loser });
+		}
+
+		return result;
+	}
+
 	/** Teams start their tournament from this bracket. There can be more than one. */
 	get isStartingBracket() {
 		return !this.sources || this.sources.length === 0;
@@ -337,6 +409,105 @@ export abstract class Bracket {
 				teamSeed(tournamentTeamId),
 				bestBeatenSeed.get(tournamentTeamId) ?? Number.POSITIVE_INFINITY,
 			);
+	}
+
+	/**
+	 * One elimination group's standings as is. Many are merged like round robin groups: by placement,
+	 * then effective seed, then group. Placements are renumbered across the groups once every team is placed.
+	 */
+	protected mergedGroupStandings(standingsByGroup: Standing[][]): Standing[] {
+		if (standingsByGroup.length <= 1) return standingsByGroup[0] ?? [];
+
+		const effectiveSeed = this.effectiveSeedResolver();
+		const sorted = standingsByGroup
+			.flatMap((standings, groupIdx) =>
+				standings.map((standing) => ({
+					...standing,
+					groupId: this.data.group[groupIdx].id,
+				})),
+			)
+			.sort((a, b) => {
+				if (a.placement !== b.placement) return a.placement - b.placement;
+
+				const aEffectiveSeed = effectiveSeed(a.team.id);
+				const bEffectiveSeed = effectiveSeed(b.team.id);
+				if (aEffectiveSeed !== bEffectiveSeed) {
+					return aEffectiveSeed - bEffectiveSeed;
+				}
+
+				return a.groupId - b.groupId;
+			});
+
+		const everyTeamPlaced =
+			sorted.length === this.participantTournamentTeamIds.length;
+
+		return everyTeamPlaced ? Standings.reNumberPlacements(sorted) : sorted;
+	}
+
+	/**
+	 * Teams knocked out in the first `roundCount` rounds of the section of each group, the ones that made
+	 * it further first. A double elimination losers bracket's first round of only BYEs is not counted.
+	 */
+	protected sourceByElimination({
+		section,
+		roundCount,
+	}: {
+		section: "winners" | "losers";
+		roundCount: number;
+	}) {
+		const sourceRounds = this.data.group.flatMap((group, groupIdx) => {
+			const groupRounds = this.data.round
+				.filter(
+					(round) => round.groupId === group.id && round.section === section,
+				)
+				.sort((a, b) => a.number - b.number);
+
+			const firstRoundIsOnlyByes =
+				section === "losers" &&
+				groupRounds.length > 0 &&
+				this.data.match
+					.filter((match) => match.roundId === groupRounds[0].id)
+					.every(
+						(match) => match.opponent1 === null || match.opponent2 === null,
+					);
+
+			return groupRounds
+				.slice(0, roundCount + (firstRoundIsOnlyByes ? 1 : 0))
+				.map((round, roundIdx) => ({ round, roundIdx, groupIdx }));
+		});
+
+		const teams: number[] = [];
+		let relevantMatchesFinished = true;
+		for (const { round } of sourceRounds.sort(
+			// teams who made it further in the bracket get higher seed
+			(a, b) => b.roundIdx - a.roundIdx || a.groupIdx - b.groupIdx,
+		)) {
+			const roundsMatches = this.data.match.filter(
+				(match) => match.roundId === round.id,
+			);
+
+			for (const match of roundsMatches) {
+				// BYE
+				if (!match.opponent1 || !match.opponent2) {
+					continue;
+				}
+				if (!match.winnerSide) {
+					relevantMatchesFinished = false;
+					continue;
+				}
+
+				const loser =
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+				invariant(loser?.id, "Loser id not found");
+
+				teams.push(loser.id);
+			}
+		}
+
+		return {
+			relevantMatchesFinished,
+			teams,
+		};
 	}
 
 	protected standingsWithoutNonParticipants(standings: Standing[]): Standing[] {

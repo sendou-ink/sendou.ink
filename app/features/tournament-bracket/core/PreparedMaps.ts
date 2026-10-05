@@ -8,6 +8,7 @@ import type { Bracket } from "./Bracket";
 import * as Engine from "./engine";
 import type { BracketData } from "./engine/types";
 import * as Progression from "./Progression";
+import * as SkippedRounds from "./SkippedRounds";
 import type { BracketMeta, Tournament } from "./Tournament";
 
 /** Prepared maps of the bracket, or of a "sibling" bracket at the same progression depth. */
@@ -159,6 +160,41 @@ export function eliminationTeamCountPrefill({
 		: (nextUp?.max ?? smallestFitting.max);
 }
 
+/**
+ * Rounds that each get a map list. Groups of an elimination bracket share a map list per section and
+ * position from its end, so the rounds of the group with the most of them.
+ */
+export function mapListRounds(data: BracketData) {
+	const stageType = data.stage[0]?.type;
+	const isElimination =
+		stageType === "single_elimination" || stageType === "double_elimination";
+	if (!isElimination || data.group.length <= 1) return data.round;
+
+	const roundsByGroup = data.group.map((group) =>
+		data.round.filter((round) => round.groupId === group.id),
+	);
+
+	return roundsByGroup.reduce((most, rounds) =>
+		rounds.length > most.length ? rounds : most,
+	);
+}
+
+/** {@link mapListRounds} with only their group and matches, the shape a map list is picked against. */
+export function mapListData(data: BracketData): BracketData {
+	const rounds = mapListRounds(data);
+	if (rounds.length === data.round.length) return data;
+
+	const groupId = rounds[0]?.groupId;
+	const roundIds = new Set(rounds.map((round) => round.id));
+
+	return {
+		...data,
+		group: data.group.filter((group) => group.id === groupId),
+		round: rounds,
+		match: data.match.filter((match) => roundIds.has(match.roundId)),
+	};
+}
+
 interface TrimPreparedEliminationMapsAgs {
 	preparedMaps: PreparedMaps | null;
 	teamCount: number;
@@ -214,9 +250,11 @@ function trimMapsByTeamCount({
 	teamCount,
 	bracket,
 }: TrimPreparedEliminationMapsAgs & { preparedMaps: PreparedMaps }) {
-	const actualRounds = bracket.generateMatchesData(
-		nullFilledArray(teamCount).map((_, i) => i + 1),
-	).round;
+	const actualRounds = mapListRounds(
+		bracket.generateMatchesData(
+			nullFilledArray(teamCount).map((_, i) => i + 1),
+		),
+	);
 
 	const sections = R.unique(preparedMaps.maps.map((r) => r.section));
 
@@ -231,6 +269,8 @@ function trimMapsByTeamCount({
 		);
 
 		const actualRoundsCount = actualRoundsForSection.length;
+		// a grouped bracket's biggest group can grow with fewer teams, e.g. 9 teams as one group vs. 10 as two
+		if (preparedRoundsForSection.length < actualRoundsCount) return null;
 
 		const trimmedRounds = roundsWithVirtualIds(
 			preparedRoundsForSection.slice(
@@ -265,7 +305,10 @@ function thirdPlaceMatchDisappeared({
 }: TrimPreparedEliminationMapsAgs & { preparedMaps: PreparedMaps }) {
 	if (
 		bracket.type !== "single_elimination" ||
-		!bracket.settings?.thirdPlaceMatch
+		SkippedRounds.normalized(
+			bracket.type,
+			bracket.settings?.skippedRounds,
+		).includes("THIRD_PLACE_MATCH")
 	) {
 		return false;
 	}
@@ -474,26 +517,85 @@ function eliminationPlacementSizes({
 	type: "single_elimination" | "double_elimination";
 	data: BracketData;
 }): number[] {
-	// the winner is not eliminated in any round, in double elimination neither is the team that lost the grand finals
-	const winnersSizes = type === "double_elimination" ? [1, 1] : [1];
+	const sizes: number[] = [];
 
-	const sizes = [
-		...winnersSizes,
-		...eliminationRounds({ type, data })
-			.map((round) => nonByeMatchCount({ data, roundId: round.id }))
-			.reverse(),
-	].filter((size) => size > 0);
-
-	const thirdPlaceMatchExists =
-		type === "single_elimination" &&
-		data.round.some((round) => round.section === "finals");
-	const semiFinalLosersIdx = 2;
-	if (thirdPlaceMatchExists && sizes[semiFinalLosersIdx] === 2) {
-		// the third place match splits the semi final losers into 3rd and 4th
-		sizes.splice(semiFinalLosersIdx, 1, 1, 1);
+	for (const group of data.group) {
+		for (const [idx, size] of groupEliminationPlacementSizes({
+			type,
+			data,
+			groupId: group.id,
+		}).entries()) {
+			sizes[idx] = (sizes[idx] ?? 0) + size;
+		}
 	}
 
 	return sizes;
+}
+
+/** Teams still in once every match is played (the winner, unless rounds are skipped) followed by the teams knocked out in each round, latest first. */
+function groupEliminationPlacementSizes({
+	type,
+	data,
+	groupId,
+}: {
+	type: "single_elimination" | "double_elimination";
+	data: BracketData;
+	groupId: number;
+}): number[] {
+	const groupRounds = data.round.filter((round) => round.groupId === groupId);
+	const firstRound = groupRounds.find(
+		(round) => round.section === "winners" && round.number === 1,
+	);
+	if (!firstRound) return [];
+
+	const firstRoundMatches = data.match.filter(
+		(match) => match.roundId === firstRound.id,
+	);
+	const teamCount = firstRoundMatches
+		.flatMap((match) => [match.opponent1, match.opponent2])
+		.filter((opponent) => opponent !== null).length;
+	const upperBracketRoundCount = Math.log2(firstRoundMatches.length * 2);
+
+	const eliminations = eliminationRounds({ type, data, groupId }).map(
+		(round) => ({
+			number: round.number,
+			count: nonByeMatchCount({ data, roundId: round.id }),
+		}),
+	);
+	const stillInCount = teamCount - R.sumBy(eliminations, (e) => e.count);
+
+	const stillIn = (() => {
+		if (type === "single_elimination") return [stillInCount];
+
+		const hasGrandFinals = groupRounds.some(
+			(round) => round.section === "finals",
+		);
+		const unbeatenCount = hasGrandFinals
+			? 1
+			: teamCount -
+				R.sumBy(
+					groupRounds.filter((round) => round.section === "winners"),
+					(round) => nonByeMatchCount({ data, roundId: round.id }),
+				);
+
+		return [unbeatenCount, stillInCount - unbeatenCount];
+	})();
+
+	const thirdPlaceMatchExists =
+		type === "single_elimination" &&
+		groupRounds.some((round) => round.section === "finals");
+
+	return [
+		...stillIn,
+		...eliminations.toReversed().flatMap(({ number, count }) =>
+			// the third place match splits the semi final losers into 3rd and 4th
+			thirdPlaceMatchExists &&
+			number === upperBracketRoundCount - 1 &&
+			count === 2
+				? [1, 1]
+				: [count],
+		),
+	].filter((size) => size > 0);
 }
 
 /** How many teams the given negative placements (e.g. losers of the first two rounds) source. */
@@ -513,33 +615,39 @@ function eliminatedInFirstRoundsCount({
 		return null;
 	}
 
-	const rounds = eliminationRounds({ type: bracket.type, data });
-	const firstRoundIsOnlyByes =
-		bracket.type === "double_elimination" &&
-		rounds.length > 0 &&
-		nonByeMatchCount({ data, roundId: rounds[0].id }) === 0;
+	const type = bracket.type;
 
-	const roundCount =
-		Math.abs(Math.min(...source.placements)) + (firstRoundIsOnlyByes ? 1 : 0);
+	return R.sumBy(data.group, (group) => {
+		const rounds = eliminationRounds({ type, data, groupId: group.id });
+		const firstRoundIsOnlyByes =
+			type === "double_elimination" &&
+			rounds.length > 0 &&
+			nonByeMatchCount({ data, roundId: rounds[0].id }) === 0;
 
-	return R.sumBy(rounds.slice(0, roundCount), (round) =>
-		nonByeMatchCount({ data, roundId: round.id }),
-	);
+		const roundCount =
+			Math.abs(Math.min(...source.placements)) + (firstRoundIsOnlyByes ? 1 : 0);
+
+		return R.sumBy(rounds.slice(0, roundCount), (round) =>
+			nonByeMatchCount({ data, roundId: round.id }),
+		);
+	});
 }
 
-/** Rounds where the teams of the bracket get eliminated, in the order they are played. */
+/** Rounds of a group where the teams of the bracket get eliminated, in the order they are played. */
 function eliminationRounds({
 	type,
 	data,
+	groupId,
 }: {
 	type: "single_elimination" | "double_elimination";
 	data: BracketData;
+	groupId: number;
 }) {
 	const section = type === "double_elimination" ? "losers" : "winners";
 
 	return data.round
-		.filter((round) => round.section === section)
-		.sort((a, b) => a.id - b.id);
+		.filter((round) => round.section === section && round.groupId === groupId)
+		.sort((a, b) => a.number - b.number);
 }
 
 function nonByeMatchCount({

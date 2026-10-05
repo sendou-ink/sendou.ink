@@ -7,6 +7,7 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import { invariant } from "../../../utils/invariant";
+import * as SkippedRounds from "./SkippedRounds";
 
 export interface DBSource {
 	bracketIdx: number;
@@ -48,10 +49,6 @@ export type ValidationError =
 	| {
 			type: "PLACEMENTS_PARSE_ERROR";
 			bracketIdx: number;
-	  }
-	// tournament ends with a format that does not resolve a winner e.g. round robin or grouped swiss
-	| {
-			type: "NOT_RESOLVING_WINNER";
 	  }
 	// from each bracket one placement can lead to only one bracket
 	| {
@@ -131,6 +128,16 @@ export type ValidationError =
 	// teams that started in different brackets can never meet
 	| {
 			type: "MERGED_STARTING_BRACKETS";
+			bracketIdx: number;
+	  }
+	// skipped rounds must belong to the bracket's format and every round depending on a skipped one must be skipped too
+	| {
+			type: "INVALID_SKIPPED_ROUNDS";
+			bracketIdx: number;
+	  }
+	// elimination brackets can be split into a limited number of groups
+	| {
+			type: "INVALID_GROUP_COUNT";
 			bracketIdx: number;
 	  };
 
@@ -247,12 +254,6 @@ export function bracketsToValidationError(
 		};
 	}
 
-	if (!resolvesWinner(brackets)) {
-		return {
-			type: "NOT_RESOLVING_WINNER",
-		};
-	}
-
 	const duplicateSourceBracketIdx = duplicateSourceBracket(brackets);
 	if (typeof duplicateSourceBracketIdx === "number") {
 		return {
@@ -365,6 +366,22 @@ export function bracketsToValidationError(
 	if (typeof faultyBracketIdx === "number") {
 		return {
 			type: "AB_DIVISIONS_ODD_TEAMS_PER_GROUP",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = invalidSkippedRounds(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "INVALID_SKIPPED_ROUNDS",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = invalidEliminationGroupCount(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "INVALID_GROUP_COUNT",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -486,20 +503,6 @@ export function parsePlacements(
 	if (result.includes(0)) return null;
 
 	return { placements: result, rest };
-}
-
-function resolvesWinner(brackets: ParsedBracket[]) {
-	const finals = brackets.find((_, idx) => isFinals(idx, brackets));
-
-	if (!finals) return false;
-	if (
-		finals.type === "swiss" &&
-		(finals.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT) > 1
-	) {
-		return false;
-	}
-
-	return true;
 }
 
 function samePlacementToMultipleBrackets(brackets: ParsedBracket[]) {
@@ -755,6 +758,48 @@ function abDivisionsOddTeamsPerGroup(brackets: ParsedBracket[]) {
 			TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
 
 		if (teamsPerGroup % 2 !== 0) {
+			return bracketIdx;
+		}
+	}
+
+	return null;
+}
+
+function invalidSkippedRounds(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		const skipped = bracket.settings.skippedRounds;
+		if (!skipped) continue;
+
+		if (
+			bracket.type !== "single_elimination" &&
+			bracket.type !== "double_elimination"
+		) {
+			return bracketIdx;
+		}
+
+		if (!SkippedRounds.isValid(bracket.type, skipped)) return bracketIdx;
+	}
+
+	return null;
+}
+
+function invalidEliminationGroupCount(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (
+			bracket.type !== "single_elimination" &&
+			bracket.type !== "double_elimination"
+		) {
+			continue;
+		}
+
+		const groupCount = bracket.settings.groupCount;
+		if (groupCount === undefined) continue;
+
+		if (
+			!(
+				TOURNAMENT.ELIMINATION_GROUP_COUNT_OPTIONS as readonly number[]
+			).includes(groupCount)
+		) {
 			return bracketIdx;
 		}
 	}

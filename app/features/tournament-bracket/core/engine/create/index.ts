@@ -97,19 +97,45 @@ function attachRoundMaps(
 		return;
 	}
 
-	if (mapsInput.length !== data.round.length) {
-		throw new Error("Invalid map list count");
-	}
+	// groups share one map list per section and position from its end (a smaller group drops its earliest rounds),
+	// so one group's rounds having maps is enough
+	const keyOfRound = eliminationMapListKeys(data);
+	const inputByRoundId = new Map(
+		mapsInput.map((input) => [resolveRound(input.roundId).id, input]),
+	);
+	const inputByKey = new Map(
+		mapsInput.map((input) => [keyOfRound.get(input.roundId), input]),
+	);
 
-	for (const input of mapsInput) {
-		const round = resolveRound(input.roundId);
+	for (const round of data.round) {
+		const input =
+			inputByRoundId.get(round.id) ?? inputByKey.get(keyOfRound.get(round.id));
+		if (!input) throw new Error(`Round id ${round.id} is missing maps`);
+
 		round.maps = toRoundMaps(input);
 		round.isPlayableAt = input.isPlayableAt ?? null;
 	}
+}
+
+/** Round id -> key shared by the rounds of every group that use the same map list. */
+function eliminationMapListKeys(data: BracketData) {
+	const result = new Map<number, string>();
 
 	for (const round of data.round) {
-		if (!round.maps) throw new Error(`Round id ${round.id} is missing maps`);
+		const lastRoundNumber = Math.max(
+			...data.round
+				.filter(
+					(candidate) =>
+						candidate.groupId === round.groupId &&
+						candidate.section === round.section,
+				)
+				.map((candidate) => candidate.number),
+		);
+
+		result.set(round.id, `${round.section}-${lastRoundNumber - round.number}`);
 	}
+
+	return result;
 }
 
 function toRoundMaps(input: RoundMapsInput): TournamentRoundMaps {

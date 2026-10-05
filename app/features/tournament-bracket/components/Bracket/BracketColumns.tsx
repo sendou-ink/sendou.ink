@@ -21,14 +21,19 @@ export function BracketColumns({
 
 export function BracketColumn({
 	roundId,
+	hasExits = false,
 	children,
 }: {
 	roundId?: number;
+	/** Some match of the round shows where teams leaving the bracket go, which takes room right of it. */
+	hasExits?: boolean;
 	children: React.ReactNode;
 }) {
 	return (
 		<div
-			className={styles.elimRoundColumn}
+			className={clsx(styles.elimRoundColumn, {
+				[styles.elimRoundColumnWithExits]: hasExits,
+			})}
 			data-round-id={roundId}
 			data-testid="round-column"
 		>

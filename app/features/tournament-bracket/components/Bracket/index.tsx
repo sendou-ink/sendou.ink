@@ -5,6 +5,7 @@ import { useDragToScroll } from "~/hooks/useDragToScroll";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { EliminationBracketSide } from "./Elimination";
+import { GroupTabs } from "./GroupTabs";
 import styles from "./index.module.css";
 import { RoundRobinBracket } from "./RoundRobin";
 import { SwissBracket } from "./Swiss";
@@ -41,31 +42,40 @@ export function Bracket({
 		);
 	}
 
-	if (bracket.type === "single_elimination") {
-		return (
-			<BracketContainer scrollable>
-				<EliminationBracketSide
-					type="single"
-					bracket={bracket}
-					isExpanded={bracketExpanded}
-				/>
-			</BracketContainer>
-		);
-	}
+	// group of the shipped matches rather than the search param's, so a switch shows once its matches loaded
+	const selectedGroupId = groupId ?? bracket.data.group[0]?.id;
 
 	return (
-		<BracketContainer scrollable>
-			<EliminationBracketSide
-				type="winners"
-				bracket={bracket}
-				isExpanded={bracketExpanded}
-			/>
-			<EliminationBracketSide
-				type="losers"
-				bracket={bracket}
-				isExpanded={bracketExpanded}
-			/>
-		</BracketContainer>
+		<div className="stack lg">
+			{typeof selectedGroupId === "number" ? (
+				<GroupTabs bracket={bracket} selectedGroupId={selectedGroupId} />
+			) : null}
+			<BracketContainer scrollable>
+				{bracket.type === "single_elimination" ? (
+					<EliminationBracketSide
+						type="single"
+						bracket={bracket}
+						groupId={selectedGroupId}
+						isExpanded={bracketExpanded}
+					/>
+				) : (
+					<>
+						<EliminationBracketSide
+							type="winners"
+							bracket={bracket}
+							groupId={selectedGroupId}
+							isExpanded={bracketExpanded}
+						/>
+						<EliminationBracketSide
+							type="losers"
+							bracket={bracket}
+							groupId={selectedGroupId}
+							isExpanded={bracketExpanded}
+						/>
+					</>
+				)}
+			</BracketContainer>
+		</div>
 	);
 }
 

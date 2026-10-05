@@ -14,6 +14,8 @@ import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 interface EliminationBracketSideProps {
 	bracket: BracketType;
 	type: "winners" | "losers" | "single";
+	/** Group shown of a bracket split into groups, defaults to the first. */
+	groupId?: number;
 	isExpanded?: boolean;
 }
 
@@ -24,7 +26,15 @@ const MATCH_SPACING = MATCH_HEIGHT + GAP;
 
 export function EliminationBracketSide(props: EliminationBracketSideProps) {
 	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
-	const rounds = getRounds({ ...props, bracketData: props.bracket.data });
+	const rounds = getRounds({
+		type: props.type,
+		bracketData: props.bracket.data,
+		groupId: props.groupId ?? props.bracket.data.group[0]?.id,
+	});
+	const exitDestinations = props.bracket.matchExitDestinations();
+	const firstMatchOfGroup = props.bracket.data.match.find(
+		(match) => match.roundId === rounds[0]?.id,
+	);
 
 	const hiddenRoundIds = new Set(
 		rounds
@@ -97,8 +107,15 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 					.slice(0, roundIdx)
 					.some((previousRound) => hiddenRoundIds.has(previousRound.id));
 
+				const hasExits = matches.some(
+					(match) =>
+						match.opponent1 &&
+						match.opponent2 &&
+						exitDestinations.has(match.id),
+				);
+
 				return (
-					<BracketColumn key={round.id} roundId={round.id}>
+					<BracketColumn key={round.id} roundId={round.id} hasExits={hasExits}>
 						<RoundHeader
 							roundId={round.id}
 							bracketIdx={props.bracket.idx}
@@ -112,8 +129,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 								!atLeastOneColumnHidden &&
 								compactedFirstRoundId === null &&
 								(props.type === "winners" || props.type === "single") &&
-								(!props.bracket.data.match[0].opponent1 ||
-									!props.bracket.data.match[0].opponent2)
+								(!firstMatchOfGroup?.opponent1 || !firstMatchOfGroup?.opponent2)
 							}
 						>
 							{matches.map((match, matchIdx) => {
@@ -178,6 +194,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 										})}
 										lineType={lineType}
 										lineVerticalExtend={verticalExtend}
+										exitDestinations={exitDestinations.get(match.id)}
 									/>
 								);
 							})}

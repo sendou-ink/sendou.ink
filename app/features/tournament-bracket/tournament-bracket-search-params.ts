@@ -7,7 +7,7 @@ export const tournamentBracketsSearchParams = SearchParams.define({
 		loader: true,
 		resets: ["group"],
 	}),
-	/** Group of a swiss bracket, the only type whose groups are viewed one at a time. */
+	/** Group of a bracket whose groups are viewed one at a time (swiss, elimination split into groups). */
 	group: SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
 		loader: true,
 	}),

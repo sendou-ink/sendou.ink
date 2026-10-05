@@ -18,6 +18,7 @@ import clsx from "clsx";
 import { ArrowRight, Plus, Trash, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
@@ -610,6 +611,9 @@ export function BracketProgressionBuilder({
 										</span>
 										<span className={styles.cardMeta}>
 											{t(`forms:options.format.${bracket.type}`)}
+											{BracketBuilder.isGrouped(bracket)
+												? ` · ${t("calendar:builder.groupCount", { count: Number(bracket.eliminationGroupCount) })}`
+												: null}
 											{typeof maxTeams === "number"
 												? ` · ${t("calendar:builder.maxTeams", { count: maxTeams })}`
 												: null}
@@ -702,8 +706,11 @@ export function BracketProgressionBuilder({
 				</DndContext>
 			</section>
 
-			<aside className={styles.panel} aria-label={t("calendar:builder.panel")}>
-				{selectedBracketIdx !== null && values.brackets[selectedBracketIdx] ? (
+			{selectedBracketIdx !== null && values.brackets[selectedBracketIdx] ? (
+				<aside
+					className={styles.panel}
+					aria-label={t("calendar:builder.panel")}
+				>
 					<BracketPanel
 						key={selectedBracketIdx}
 						values={values}
@@ -713,7 +720,12 @@ export function BracketProgressionBuilder({
 						onClose={() => setSelection(null)}
 						onRemove={removeBracket}
 					/>
-				) : selectedLine ? (
+				</aside>
+			) : selectedLine ? (
+				<aside
+					className={styles.panel}
+					aria-label={t("calendar:builder.panel")}
+				>
 					<ConnectionPanel
 						key={`${selectedLine.toIdx}-${selectedLine.sourceIdx}`}
 						values={values}
@@ -743,10 +755,8 @@ export function BracketProgressionBuilder({
 							});
 						}}
 					/>
-				) : (
-					<OverviewPanel />
-				)}
-			</aside>
+				</aside>
+			) : null}
 		</div>
 	);
 }
@@ -1089,12 +1099,14 @@ function PlacementPicker({
 			{modeSwitcher}
 			{isRoundRobin ? null : (
 				<FormMessage type="info">
-					{maxTeams !== null
-						? t("calendar:builder.hint.eliminationBounded", {
-								name: sourceName,
-								count: maxTeams,
-							})
-						: t("calendar:builder.hint.elimination")}
+					{BracketBuilder.isGrouped(source)
+						? t("calendar:builder.hint.eliminationGroups")
+						: maxTeams !== null
+							? t("calendar:builder.hint.eliminationBounded", {
+									name: sourceName,
+									count: maxTeams,
+								})
+							: t("calendar:builder.hint.elimination")}
 				</FormMessage>
 			)}
 			<div className={styles.tiers}>
@@ -1138,33 +1150,23 @@ function PlacementPicker({
 											})}
 							</span>
 							<span className={styles.tierTeams}>
-								{isRoundRobin
+								{isRoundRobin || tier.maxTeamsPerGroup === 1
 									? t("calendar:builder.tierPerGroup")
-									: tier.maxTeams === 1
-										? t("calendar:builder.tierOneTeam")
-										: t("calendar:builder.tierTeams", { count: tier.maxTeams })}
+									: typeof tier.maxTeamsPerGroup === "number"
+										? t("calendar:builder.tierTeamsPerGroup", {
+												count: tier.maxTeamsPerGroup,
+											})
+										: tier.maxTeams === 1
+											? t("calendar:builder.tierOneTeam")
+											: t("calendar:builder.tierTeams", {
+													count: tier.maxTeams,
+												})}
 							</span>
 						</label>
 					);
 				})}
 			</div>
 			{restSwitch}
-		</div>
-	);
-}
-
-function OverviewPanel() {
-	const { t } = useTranslation(["calendar"]);
-
-	return (
-		<div className={styles.panelContent}>
-			<h3 className={styles.panelTitle}>{t("calendar:builder.overview")}</h3>
-			<ul className={styles.tips}>
-				<li>{t("calendar:builder.tip.add")}</li>
-				<li>{t("calendar:builder.tip.drag")}</li>
-				<li>{t("calendar:builder.tip.connect")}</li>
-				<li>{t("calendar:builder.tip.edit")}</li>
-			</ul>
 		</div>
 	);
 }
@@ -1244,10 +1246,20 @@ function ConnectionLabel({
 		return t("calendar:builder.label.top", { count: placements.length });
 	}
 
-	const topTeams = BracketBuilder.placementTiers(source)
-		.filter((tier) => placements.includes(tier.placement))
-		.reduce((sum, tier) => sum + tier.maxTeams, 0);
-	return t("calendar:builder.label.top", { count: topTeams });
+	const pickedTiers = BracketBuilder.placementTiers(source).filter((tier) =>
+		placements.includes(tier.placement),
+	);
+
+	if (BracketBuilder.isGrouped(source)) {
+		const topTeams = R.sumBy(pickedTiers, (tier) => tier.maxTeamsPerGroup ?? 0);
+		return topTeams === 1
+			? t("calendar:builder.label.groupWinners")
+			: t("calendar:builder.label.groupTop", { count: topTeams });
+	}
+
+	return t("calendar:builder.label.top", {
+		count: R.sumBy(pickedTiers, (tier) => tier.maxTeams),
+	});
 }
 
 function lineKey(line: BracketBuilder.Connection) {

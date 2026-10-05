@@ -146,7 +146,7 @@ a.match:hover {
 	position: absolute;
 	top: 0;
 	left: 100%;
-	width: var(--line-width);
+	width: calc(var(--line-width) + var(--exit-width, 0px));
 	height: 100%;
 	pointer-events: none;
 }
@@ -168,7 +168,7 @@ a.match:hover {
 	position: absolute;
 	top: 50%;
 	left: 0;
-	width: 50%;
+	width: calc(100% - var(--line-width) / 2);
 	height: 2px;
 	background: var(--color-border);
 	transform: translateY(-50%);
@@ -178,7 +178,7 @@ a.match:hover {
 	content: "";
 	position: absolute;
 	top: 50%;
-	left: calc(50% - 1px);
+	left: calc(100% - var(--line-width) / 2 - 1px);
 	width: 2px;
 	height: calc(50% + var(--bracket-vertical-extend, 50px));
 	background: var(--color-border);
@@ -188,7 +188,7 @@ a.match:hover {
 	content: "";
 	position: absolute;
 	bottom: 50%;
-	left: calc(50% - 1px);
+	left: calc(100% - var(--line-width) / 2 - 1px);
 	width: 2px;
 	height: calc(50% + var(--bracket-vertical-extend, 50px));
 	background: var(--color-border);
@@ -197,8 +197,8 @@ a.match:hover {
 .matchLineConnectorDown {
 	position: absolute;
 	top: calc(100% + var(--bracket-vertical-extend, 50px) - 1px);
-	left: calc(50% - 1px);
-	width: calc(50% + 1px);
+	left: calc(100% - var(--line-width) / 2 - 1px);
+	width: calc(var(--line-width) / 2 + 1px);
 	height: 2px;
 	background: var(--color-border);
 }
@@ -206,8 +206,50 @@ a.match:hover {
 .matchLineConnectorUp {
 	position: absolute;
 	bottom: calc(100% + var(--bracket-vertical-extend, 50px) - 1px);
-	left: calc(50% - 1px);
-	width: calc(50% + 1px);
+	left: calc(100% - var(--line-width) / 2 - 1px);
+	width: calc(var(--line-width) / 2 + 1px);
 	height: 2px;
 	background: var(--color-border);
+}
+
+.matchExits {
+	position: absolute;
+	top: 0;
+	left: 100%;
+	display: grid;
+	grid-template-rows: 1fr 1fr;
+	width: calc(var(--exit-width, 0px) - var(--s-2));
+	height: 100%;
+}
+
+.matchExitsSingle {
+	grid-template-rows: 1fr;
+}
+
+.matchExitRow {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.matchExitDots {
+	flex: 0 0 var(--s-5);
+	margin-inline: var(--s-1);
+	border-block-start: 3px dotted var(--color-border);
+}
+
+.matchExit {
+	flex: 1;
+	min-width: 0;
+	padding-inline: var(--s-2);
+	border: 1.5px solid var(--color-border);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg);
+	font-size: var(--font-2xs);
+	line-height: 1.6;
+	color: var(--color-text-high);
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }

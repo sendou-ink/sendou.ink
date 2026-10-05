@@ -70,6 +70,47 @@ describe("Create single elimination stage", () => {
 		expect(data.match.length).toBe(7);
 	});
 
+	test("skipped finals leave the third place match", () => {
+		const data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: { consolationFinal: true, skippedRounds: ["FINALS"] },
+		});
+
+		expect(data.round.map((round) => [round.section, round.number])).toEqual([
+			["winners", 1],
+			["winners", 2],
+			["finals", 1],
+		]);
+	});
+
+	test("skipped semifinals leave out the semifinals and everything after", () => {
+		const data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+			settings: { consolationFinal: true, skippedRounds: ["SEMIS"] },
+		});
+
+		expect(data.round.length).toBe(2);
+		expect(data.match.length).toBe(8 + 4);
+	});
+
+	test("groups get a third place match only with at least 4 teams", () => {
+		// groups of 3 and 4 teams
+		const data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7],
+			settings: { consolationFinal: true, groupCount: 2 },
+		});
+
+		expect(data.group.length).toBe(2);
+		expect(
+			data.round
+				.filter((round) => round.section === "finals")
+				.map((round) => round.groupId),
+		).toEqual([data.group[1].id]);
+	});
+
 	test("throws if the seeding has duplicate participants", () => {
 		expect(() =>
 			createResolved({
