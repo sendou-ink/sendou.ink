@@ -415,6 +415,8 @@ export interface GroupMatchMap {
 }
 
 export interface GroupMember {
+	/** Member who quick added this one as their friend, `null` if they joined on their own. */
+	addedByUserId: number | null;
 	createdAt: Generated<number>;
 	groupId: number;
 	/** When the member last let a {@link GroupReadyCheck} expire without confirming, letting the rest of the group kick them. `null` if they have not. */
