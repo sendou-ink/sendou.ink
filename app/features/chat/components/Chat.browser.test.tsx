@@ -425,6 +425,64 @@ describe("Chat", () => {
 			).toBe(false);
 		});
 
+		describe("jumping to the original", () => {
+			const history = [
+				...manyMessages(60),
+				createMessage({
+					id: 61,
+					publicId: "reply",
+					authorUserId: 2,
+					author: BOB,
+					contents: "<reply-3> answer",
+				}),
+			];
+
+			const isInView = (row: Element, log: Element) => {
+				const rowRect = row.getBoundingClientRect();
+				const logRect = log.getBoundingClientRect();
+				return rowRect.top >= logRect.top && rowRect.bottom <= logRect.bottom;
+			};
+
+			test("clicking a reply reference scrolls to the original and flashes it", async () => {
+				const screen = await renderChat(history);
+				const log = screen.getByRole("log").element();
+
+				await screen.getByRole("button", { name: /@Alice/ }).click();
+
+				await vi.waitFor(() => {
+					const originalMessage = screen
+						.getByText("Message 3", { exact: true })
+						.element()
+						.closest(`.${styles.message}`)!;
+					expect(isInView(originalMessage, log)).toBe(true);
+					expect(originalMessage.classList.contains(styles.messageFlash)).toBe(
+						true,
+					);
+				});
+			});
+
+			test("clicking 'replying to' scrolls back to the message being replied to", async () => {
+				const screen = await renderChat(history);
+				const log = screen.getByRole("log").element() as HTMLElement;
+
+				await expect.element(screen.getByText("answer")).toBeInTheDocument();
+				await screen.getByRole("button", { name: "Reply" }).last().click();
+				log.dispatchEvent(new WheelEvent("wheel", { deltaY: -100 }));
+				log.scrollTop = 0;
+				log.dispatchEvent(new Event("scroll"));
+				await expect
+					.element(screen.getByText("answer"))
+					.not.toBeInTheDocument();
+
+				await screen.getByRole("button", { name: "Replying to Bob" }).click();
+
+				await vi.waitFor(() => {
+					const reply = screen.getByText("answer").element();
+					expect(isInView(reply, log)).toBe(true);
+				});
+			});
+		});
+
 		test("offers no reply where the viewer can not post", async () => {
 			const screen = await renderChat([original], { readOnly: true });
 

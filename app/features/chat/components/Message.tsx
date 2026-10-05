@@ -24,11 +24,15 @@ export function Message({
 	label,
 	onRetry,
 	continuation,
+	flashing,
+	onFlashEnd,
 }: {
 	message: ClientChatMessage;
 	label?: string;
 	onRetry?: (publicId: string) => void;
 	continuation: boolean;
+	flashing: boolean;
+	onFlashEnd: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
 	const author = message.author;
@@ -54,8 +58,12 @@ export function Message({
 				[styles.messageFailed]: message.failed,
 				[styles.messageReplyTarget]:
 					!message.pending && message.id === replyingToMessageId,
+				[styles.messageFlash]: flashing,
 			})}
 			tabIndex={-1}
+			onAnimationEnd={(event) => {
+				if (event.target === event.currentTarget) onFlashEnd();
+			}}
 		>
 			{replyToMessageId !== null ? (
 				<ReplyReference message={repliedMessage} />
@@ -140,7 +148,7 @@ function ReplyReference({
 	message: ClientChatMessage | undefined;
 }) {
 	const { t } = useTranslation(["common"]);
-	const { usersById } = React.use(MessagesContext);
+	const { usersById, onJumpToMessage } = React.use(MessagesContext);
 
 	if (!message) {
 		return (
@@ -165,7 +173,11 @@ function ReplyReference({
 		.join("");
 
 	return (
-		<div className={styles.replyReference}>
+		<button
+			type="button"
+			className={clsx(styles.replyReference, styles.replyReferenceButton)}
+			onClick={() => onJumpToMessage(message.id)}
+		>
 			<span className={styles.replyReferenceGutter} />
 			<span className={styles.replyReferenceContent}>
 				{message.author ? <Avatar user={message.author} size="xxxs" /> : null}
@@ -176,7 +188,7 @@ function ReplyReference({
 					{snippet || sticker?.name}
 				</span>
 			</span>
-		</div>
+		</button>
 	);
 }
 

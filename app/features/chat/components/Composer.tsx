@@ -26,6 +26,7 @@ import {
 	ComposerSuggestions,
 	composerSuggestionId,
 } from "./ComposerSuggestions";
+import { MessagesContext } from "./MessagesContext";
 import { StickerImage } from "./StickerImage";
 
 const CONNECTION_STATUS_GRACE_MS = 1_500;
@@ -47,6 +48,7 @@ export function Composer({
 	inputRef: React.RefObject<HTMLInputElement | null>;
 }) {
 	const { t } = useTranslation(["common", "forms"]);
+	const { onJumpToMessage } = React.use(MessagesContext);
 	const readyState = useEventsReadyState();
 	const [contents, setContents] = React.useState("");
 	const [caret, setCaret] = React.useState(0);
@@ -261,11 +263,18 @@ export function Composer({
 			{replyTo ? (
 				<div className={styles.composerAttachment}>
 					<Reply size={18} className={styles.composerAttachmentIcon} />
-					<span className={styles.composerAttachmentLabel}>
+					<button
+						type="button"
+						className={clsx(
+							styles.composerAttachmentLabel,
+							styles.composerAttachmentLink,
+						)}
+						onClick={() => onJumpToMessage(replyTo.id)}
+					>
 						{t("common:chat.reply.replyingTo", {
 							username: replyTo.author?.username ?? "???",
 						})}
-					</span>
+					</button>
 					<SendouButton
 						variant="minimal-destructive"
 						size="small"

@@ -86,3 +86,17 @@
 		}
 	}
 }
+
+.composerAttachmentLink {
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font-family: inherit;
+	text-align: start;
+	cursor: pointer;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}

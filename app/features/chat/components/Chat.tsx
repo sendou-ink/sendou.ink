@@ -53,6 +53,7 @@ export function Chat({
 	);
 	const [replyTo, setReplyTo] = React.useState<ClientChatMessage | null>(null);
 	const composerInputRef = React.useRef<HTMLInputElement>(null);
+	const jumpToMessageRef = React.useRef<(messageId: number) => void>(null);
 	const canPost = !readOnly && !disabled;
 
 	return (
@@ -72,6 +73,7 @@ export function Chat({
 						}
 					: null,
 				replyingToMessageId: replyTo?.id ?? null,
+				onJumpToMessage: (messageId) => jumpToMessageRef.current?.(messageId),
 			}}
 		>
 			<section className={clsx(styles.container, className)}>
@@ -83,6 +85,7 @@ export function Chat({
 					>
 						<MessageLog
 							messages={messages}
+							jumpToMessageRef={jumpToMessageRef}
 							labelByUserId={labelByUserId}
 							firstUnreadMessageId={firstUnreadMessageId}
 							onRetry={onRetry}

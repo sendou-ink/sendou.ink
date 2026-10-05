@@ -18,8 +18,8 @@ import {
 const THRESHOLD = 100;
 // how long after wheel/touch/keyboard input a scroll event still counts as user-initiated
 const USER_SCROLL_INTENT_MS = 150;
-// room left above the "new messages" divider when scrolled to it
-const UNREAD_DIVIDER_MARGIN = 8;
+// room left above the message the view is held at (the first unread, a jumped-to one)
+const ANCHOR_MARGIN = 8;
 
 export function useChatAutoScroll(
 	messages: ClientChatMessage[],
@@ -35,7 +35,8 @@ export function useChatAutoScroll(
 	const user = useUser();
 	const [unseenMessages, setUnseenMessages] = React.useState(false);
 	const pinnedToBottomRef = React.useRef(true);
-	const pinnedToFirstUnreadRef = React.useRef(false);
+	/** Where the view is held (the first unread, a jumped-to message) until the user scrolls, while the virtualizer measures the rows above it. */
+	const anchorOffsetRef = React.useRef<(() => number | null) | null>(null);
 	const firstUnreadOffsetRef = React.useRef(firstUnreadOffset);
 	firstUnreadOffsetRef.current = firstUnreadOffset;
 	const lastUserScrollIntentRef = React.useRef(Number.NEGATIVE_INFINITY);
@@ -47,17 +48,17 @@ export function useChatAutoScroll(
 		if (!messagesContainer) return;
 
 		pinnedToBottomRef.current = true;
-		pinnedToFirstUnreadRef.current = false;
+		anchorOffsetRef.current = null;
 		messagesContainer.scrollTop = messagesContainer.scrollHeight;
 		setUnseenMessages(false);
 	}, [ref]);
 
-	const scrollToFirstUnread = React.useCallback(() => {
+	const scrollToAnchor = React.useCallback(() => {
 		const messagesContainer = ref.current;
-		const offset = firstUnreadOffsetRef.current();
+		const offset = anchorOffsetRef.current?.() ?? null;
 		if (!messagesContainer || offset === null) return;
 
-		const top = offset - UNREAD_DIVIDER_MARGIN;
+		const top = offset - ANCHOR_MARGIN;
 		const bottom =
 			messagesContainer.scrollHeight - messagesContainer.clientHeight;
 
@@ -92,10 +93,10 @@ export function useChatAutoScroll(
 			// they neither unpin the auto scroll nor yank the user out of the
 			// history they were reading
 			if (isUserScroll) {
-				pinnedToFirstUnreadRef.current = false;
+				anchorOffsetRef.current = null;
 			} else {
-				if (pinnedToFirstUnreadRef.current) {
-					scrollToFirstUnread();
+				if (anchorOffsetRef.current) {
+					scrollToAnchor();
 					return;
 				}
 				if (pinnedToBottomRef.current && !isScrolledToBottom) {
@@ -138,7 +139,7 @@ export function useChatAutoScroll(
 			window.removeEventListener("pointerup", handlePointerUp);
 			messagesContainer.removeEventListener("scroll", handleScroll);
 		};
-	}, [ref, scrollToFirstUnread]);
+	}, [ref, scrollToAnchor]);
 
 	const hasMessages = messages.length > 0;
 
@@ -152,8 +153,8 @@ export function useChatAutoScroll(
 		if (!scrollContent) return;
 
 		const observer = new ResizeObserver(() => {
-			if (pinnedToFirstUnreadRef.current) {
-				scrollToFirstUnread();
+			if (anchorOffsetRef.current) {
+				scrollToAnchor();
 			} else if (pinnedToBottomRef.current) {
 				messagesContainer.scrollTop = messagesContainer.scrollHeight;
 			}
@@ -161,7 +162,7 @@ export function useChatAutoScroll(
 		observer.observe(scrollContent);
 
 		return () => observer.disconnect();
-	}, [ref, hasMessages, scrollToFirstUnread]);
+	}, [ref, hasMessages, scrollToAnchor]);
 
 	const latestMessage = messages.at(-1);
 	const latestMessagePublicId = latestMessage?.publicId;
@@ -179,15 +180,25 @@ export function useChatAutoScroll(
 	}, [latestMessagePublicId, latestMessageIsOwn, scrollToBottom]);
 
 	React.useEffect(() => {
-		pinnedToFirstUnreadRef.current = firstUnreadMessageId !== null;
-		if (firstUnreadMessageId !== null) {
-			scrollToFirstUnread();
-		}
-	}, [firstUnreadMessageId, scrollToFirstUnread]);
+		anchorOffsetRef.current =
+			firstUnreadMessageId !== null
+				? () => firstUnreadOffsetRef.current()
+				: null;
+		scrollToAnchor();
+	}, [firstUnreadMessageId, scrollToAnchor]);
+
+	const scrollToOffset = React.useCallback(
+		(getOffset: () => number | null) => {
+			anchorOffsetRef.current = getOffset;
+			scrollToAnchor();
+		},
+		[scrollToAnchor],
+	);
 
 	return {
 		unseenMessagesInTheRoom: unseenMessages,
 		scrollToBottom,
+		scrollToOffset,
 	};
 }
 

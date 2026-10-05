@@ -18,11 +18,13 @@ export function MessageLog({
 	labelByUserId,
 	firstUnreadMessageId = null,
 	onRetry,
+	jumpToMessageRef,
 	className,
 }: Pick<
 	ChatProps,
 	"messages" | "labelByUserId" | "firstUnreadMessageId" | "onRetry"
 > & {
+	jumpToMessageRef: React.Ref<(messageId: number) => void>;
 	className?: string;
 }) {
 	React.use(browser("the chat log opens scrolled to its end"));
@@ -34,17 +36,17 @@ export function MessageLog({
 		firstUnreadMessageId === null
 			? -1
 			: messages.findIndex((msg) => msg.id === firstUnreadMessageId);
-	const { unseenMessagesInTheRoom, scrollToBottom } = useChatAutoScroll(
-		messages,
-		messagesContainerRef,
-		{
+	const [flashingMessageId, setFlashingMessageId] = React.useState<
+		number | null
+	>(null);
+	const { unseenMessagesInTheRoom, scrollToBottom, scrollToOffset } =
+		useChatAutoScroll(messages, messagesContainerRef, {
 			firstUnreadMessageId:
 				firstUnreadIndex === -1 ? null : firstUnreadMessageId,
 
 			firstUnreadOffset: () =>
 				firstUnreadIndex === -1 ? null : virtualizer.startOf(firstUnreadIndex),
-		},
-	);
+		});
 
 	const systemMessageText = (msg: ClientChatMessage) => {
 		const name = msg.author?.username ?? "";
@@ -110,6 +112,23 @@ export function MessageLog({
 		estimatedSize: ESTIMATED_MESSAGE_HEIGHT,
 	});
 
+	const messagesRef = React.useRef(messages);
+	messagesRef.current = messages;
+	React.useImperativeHandle(jumpToMessageRef, () => (messageId: number) => {
+		const indexOfMessage = () =>
+			messagesRef.current.findIndex((msg) => msg.id === messageId);
+		if (indexOfMessage() === -1) return;
+
+		scrollToOffset(() => {
+			const index = indexOfMessage();
+			const container = messagesContainerRef.current;
+			if (index === -1 || !container) return null;
+
+			return virtualizer.startOf(index) - container.clientHeight / 3;
+		});
+		setFlashingMessageId(messageId);
+	});
+
 	return (
 		<>
 			<div
@@ -160,6 +179,8 @@ export function MessageLog({
 										}
 										onRetry={onRetry}
 										continuation={continuation}
+										flashing={!msg.pending && msg.id === flashingMessageId}
+										onFlashEnd={() => setFlashingMessageId(null)}
 									/>
 								)}
 							</div>

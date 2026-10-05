@@ -236,3 +236,36 @@
 	flex-shrink: 0;
 	width: 36px;
 }
+
+.replyReferenceButton {
+	padding: 0;
+	border: none;
+	background: none;
+	font-family: inherit;
+	text-align: start;
+	cursor: pointer;
+
+	&:hover .replyReferenceAuthor,
+	&:hover .replyReferenceText {
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		border-radius: var(--radius-field);
+	}
+}
+
+.messageFlash {
+	animation: message-flash 1.5s ease-out;
+}
+
+@keyframes message-flash {
+	from {
+		background-color: var(--color-bg-accent);
+	}
+
+	to {
+		background-color: transparent;
+	}
+}

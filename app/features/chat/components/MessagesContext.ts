@@ -8,10 +8,12 @@ export const MessagesContext = React.createContext<{
 	messagesById: Map<number, ClientChatMessage>;
 	onReply: ((message: ClientChatMessage) => void) | null;
 	replyingToMessageId: number | null;
+	onJumpToMessage: (messageId: number) => void;
 }>({
 	usersById: new Map(),
 	ownUserId: null,
 	messagesById: new Map(),
 	onReply: null,
 	replyingToMessageId: null,
+	onJumpToMessage: () => {},
 });
