@@ -26,11 +26,14 @@ export class ChatSidebar {
 			headerLink: page.locator("a[class*='chatHeaderLink']:visible"),
 			/** Every chat open: one on its own, or one per panel of the split view. */
 			openChats: page.locator("[class*='chatContainer']:visible"),
-			// splitPanelHeader would match the panel selector too
+			/** Every panel of the split view, the ones behind an unselected tab included. */
 			splitPanels: page.locator(
-				"[class*='splitPanel']:not([class*='splitPanelHeader']):visible",
+				"[class*='splitView']:visible [role='tabpanel']",
 			),
+			/** Only shown while the panels stack, which takes a tall enough split view. */
 			splitPanelHeaders: page.locator("[class*='splitPanelHeader']:visible"),
+			/** Only shown while the split view is too short to stack its panels. */
+			roomTabs: page.locator("[class*='splitView']:visible").getByRole("tab"),
 		};
 	}
 
@@ -52,6 +55,11 @@ export class ChatSidebar {
 		await this.locators.headerLink.click();
 	}
 
+	/** Shows the split view's room behind the tab, e.g. "Group". */
+	async selectRoomTab(label: string) {
+		await this.locators.roomTabs.filter({ hasText: label }).click();
+	}
+
 	roomRow(title: string) {
 		return this.locators.roomRows.filter({ hasText: title });
 	}
@@ -64,7 +72,7 @@ export class ChatSidebar {
 		await this.roomRow(title).click();
 	}
 
-	/** One open chat: the only one, or the nth panel of the split view (match chat first, group chat below). */
+	/** One visible chat: the only one, the selected tab's, or the nth panel of a stacked split view (match chat first, group chat below). */
 	chat(nth = 0) {
 		return new ChatRoom(this.locators.openChats.nth(nth));
 	}
