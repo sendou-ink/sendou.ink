@@ -20,6 +20,7 @@ import {
 	storageUsage,
 } from "../store/clips";
 import styles from "./ClipsView.module.css";
+import { ClipVideo } from "./ClipVideo";
 import { refreshClips, useClips } from "./clips-feed";
 import { downloadBlob } from "./download";
 import { useEventDateTimeFormatter } from "./format";
@@ -102,14 +103,7 @@ function ClipCard({ clip }: { clip: ScannerClip }) {
 	return (
 		<div className={styles.card}>
 			{url ? (
-				// biome-ignore lint/a11y/useMediaCaption: game footage has no captions
-				<video
-					className={styles.video}
-					src={url}
-					controls
-					autoPlay
-					playsInline
-				/>
+				<ClipVideo className={styles.video} src={url} />
 			) : (
 				<button
 					type="button"
