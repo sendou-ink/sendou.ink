@@ -1,6 +1,6 @@
 {
 	"q1": "Qu'est-ce que le Plus Server ?",
-	"a1": "",
+	"a1": "Plus Server est un serveur Discord pour les joueurs de haut niveau cherchant d'autres joueurs de leur calibre pour jouer et s'affronter. Il a été créé en septembre 2017. Ce serveur est divisé en trois tiers, parmi lesquels +1 est le tier le plus haut. L'accès à ce serveur vous est octroyé lorsqu'un membre du serveur vous suggère et que vous remportez le vote mensuel ou que vous vous placez assez haut dans le classement SendouQ. \n\nDurant la phase de vote, vous recevez un pourcentage en fonction de votre résultat. 0% signifie que tous les votants ont refusé votre inclusion tandis que 100% signifie l'inverse. Pour être admis, il faut atteindre le seuil de 60%. Si l'un des membres obtient un pourcentage de moins de 60%, il baissera d'un tier, ou sera expulsé du Plus Serveur dans le cas ou il serait en +3.\n\nSe référer à la page des classements pour voir qui est en bonne voie pour accéder au serveur via cette méthode. 30 personnes au total par saison ont accès à ce serveur : 5 personnes au tier +1, 10 au +2 et 15 au +3.",
 	"q2": "Comment obtenir un badge pour mon événement ?",
 	"a2": "Depuis septembre 2024, toute personne ayant les compétences nécessaires peut réaliser un badge. Consultez le lien en bas de la page des badges pour plus d'informations.",
 	"q3": "Comment mettre à jour mon pseudo ou mon avatar ?",
@@ -12,11 +12,11 @@
 	"q6": "Comment puis-je ajouter mes liens Twitch/Bluesky/Youtube à mon profil ?",
 	"a6": "Nous utilisons le profil Discord pour ça. Connectez vos comptes sur Discord puis déconnectez et reconnectez vous sur sendou.ink pour les mettre à jour.",
 	"q7": "Comment puis-je ajouter des vidéos ?",
-	"a7": "Envoyez un message sur le channel helpdesk du discord sendou.ink pour demander l'accès. Ajouter également un lien d'un exemple de vidéo que vous publierez.",
+	"a7": "Envoyez un message sur le channel helpdesk du discord sendou.ink pour demander l'accès. Ajoutez également un lien d'un exemple de vidéo que vous publierez.",
 	"q8": "Comment puis-je montrer mes résultats de Match X sur mon profil ?",
-	"a8": "Trouvez votre page de joueur depuis la page Top 500. Postez le lien vers le channel helpdesk sur notre Discord en indiquant que vous souhaitez qu'il soit lié. Note: Le lien n'est pas possible si vous n'avez pas terminé une saison dans le Top 500.",
+	"a8": "Trouvez votre page de joueur depuis la page Top 500. Postez le lien vers le channel helpdesk sur notre Discord en indiquant que vous souhaitez qu'il soit lié. Note : Le lien n'est pas possible si vous n'avez pas terminé une saison dans le Top 500.",
 	"q9": "Comment puis-je publier une œuvre que j'ai commandé ?",
-	"a9": "Vous pouvez seulement publier une œuvre que vous avez réalisé. Il doit également y avoir un rapport avec Splatoon. Veuillez demander à l’artiste de la télécharger lui-même sur le site pour une œuvre commandée. Ils sont capables de lier votre profil d'utilisateur à leur œuvre et cela la fera apparaître sur votre profil.",
+	"a9": "Vous pouvez seulement publier une œuvre que vous avez réalisé. Elle doit également avoir un rapport avec Splatoon. Veuillez demander à l’artiste de la télécharger lui-même sur le site pour une œuvre commandée. Il pourra lier votre profil d'utilisateur à son œuvre et cela la fera apparaître sur votre profil.",
 	"q10": "",
 	"a10": ""
 }
