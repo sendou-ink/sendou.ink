@@ -1,0 +1,81 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 10,
+    "stageLabel": "MakoMart",
+    "timestamp": "9/11/2026 7:52 PM",
+    "replayCode": "R2JV-YCEM-212W-LYTP",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "orange",
+        "weaponId": 5011,
+        "paint": 607,
+        "ka": 10,
+        "d": 0,
+        "s": 2
+      },
+      {
+        "name": "Zara",
+        "weaponId": 3050,
+        "paint": 559,
+        "ka": 6,
+        "d": 1,
+        "s": 1
+      },
+      {
+        "name": "Topher",
+        "weaponId": 1011,
+        "paint": 207,
+        "ka": 1,
+        "d": 2,
+        "s": 0
+      },
+      {
+        "name": "rundomrun",
+        "weaponId": 2070,
+        "paint": 400,
+        "ka": 4,
+        "d": 0,
+        "s": 1
+      },
+      {
+        "name": "Calvin",
+        "weaponId": 72,
+        "paint": 304,
+        "ka": 2,
+        "d": 4,
+        "s": 0
+      },
+      {
+        "name": "~Via~",
+        "weaponId": 41,
+        "paint": 505,
+        "ka": 1,
+        "d": 4,
+        "s": 2
+      },
+      {
+        "name": "swagbeef",
+        "weaponId": 1020,
+        "paint": 526,
+        "ka": 0,
+        "d": 2,
+        "s": 2
+      },
+      {
+        "name": "Apples",
+        "weaponId": 5011,
+        "paint": 349,
+        "ka": 0,
+        "d": 3,
+        "s": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 293,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Same game as cast-areacup-sky-backdrop-false-star-at-match-start, 4:53 (7s into the game): the cloud is still behind left slot0 and it still read special ready. The false reads bridged into the real ready wash at 4:43, charting a 20s special. All eight players are alive."
+	}
+}

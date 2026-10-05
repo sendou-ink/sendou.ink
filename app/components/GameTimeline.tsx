@@ -20,6 +20,7 @@ import {
 	formatElapsed,
 	smoothPenalties,
 	TIMELINE_PLOT_GUTTER_PX,
+	withFullCountsAtGameStart,
 	withUnpushedTrackCounts,
 } from "./objective-timeline-utils";
 import {
@@ -64,10 +65,8 @@ export function GameTimeline({
 	const [scrub, setScrub] = useState<ScrubPosition | null>(null);
 	const plotRef = useRef<HTMLDivElement>(null);
 
-	const objective = withUnpushedTrackCounts(
-		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
-	);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
+	const objective = chartedObjective(objectiveEvents, samples);
 	const domain = timelineDomain(objective, samples, pov);
 	if (!domain) return null;
 
@@ -128,10 +127,8 @@ const TimelineCharts = memo(function TimelineCharts({
 	teams,
 	pov,
 }: GameTimelineProps) {
-	const objective = withUnpushedTrackCounts(
-		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
-	);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
+	const objective = chartedObjective(objectiveEvents, samples);
 	const domain = timelineDomain(objective, samples, pov);
 	if (!domain) return null;
 
@@ -337,6 +334,20 @@ function KillsRow({ kills }: { kills: PlayerStatusTimelineKill[] }) {
 }
 
 /** Spans every read and, when the status rows draw them, the POV's kill ticks — the feed can outlive the other reads. */
+function chartedObjective(
+	objectiveEvents: readonly ObjectiveTimelineEvent[] | undefined,
+	sortedSamples: readonly PlayerStatusTimelineSample[],
+): ObjectiveTimelineEvent[] {
+	const sorted = withUnpushedTrackCounts(
+		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
+	);
+	if (sorted.length === 0) return sorted;
+	return withFullCountsAtGameStart(
+		sorted,
+		Math.min(sorted[0]!.t, sortedSamples[0]?.t ?? Number.POSITIVE_INFINITY),
+	);
+}
+
 function timelineDomain(
 	objective: readonly ObjectiveTimelineEvent[],
 	samples: readonly PlayerStatusTimelineSample[],

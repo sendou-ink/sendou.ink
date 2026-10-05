@@ -51,7 +51,7 @@ import { parseReplayHeaderSteps } from "../scoreboard-battle-log-replay/header";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 
 export interface ScoreboardBattleLogData extends ScoreboardData {
-	/** recording timestamp as shown, e.g. "5/8/2026 19:16"; locale-formatted */
+	/** recording timestamp as shown, e.g. "5/8/2026 19:16" or "9/11/2026 7:52 PM"; locale-formatted */
 	timestamp: string | null;
 }
 

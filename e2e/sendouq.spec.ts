@@ -81,6 +81,50 @@ test.describe("SendouQ", () => {
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
+	test("Leaving takes the quick added friends along but not who joined on their own", async ({
+		page,
+		factories,
+	}) => {
+		const [adder, friend, joiner] = await factories.UserFactory.createMany(3);
+		await factories.FriendshipFactory.create({
+			userOneId: adder.id,
+			userTwoId: friend.id,
+		});
+		await factories.SQGroupFactory.create({ memberUserIds: [joiner.id] });
+
+		await impersonate(page, adder.id);
+
+		const q = new SendouQPage(page);
+		await q.goto();
+
+		const preparing = await q.joinWithMates();
+		await preparing.addFirstFriend();
+		await expect(preparing.groupCard.members).toHaveCount(2);
+
+		const looking = await preparing.joinQueue();
+		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
+		await looking.pressGroupAction();
+
+		await impersonate(page, joiner.id);
+		await looking.goto();
+		await looking.pressGroupAction();
+		await expect(looking.ownGroupCard.members).toHaveCount(3);
+
+		await impersonate(page, adder.id);
+		await looking.goto();
+		await looking.leaveGroup();
+		await expect(page).toHaveURL(SENDOUQ_PAGE);
+
+		// the one who joined by morphing stays in the queue
+		await impersonate(page, joiner.id);
+		await looking.goto();
+		await expect(looking.ownGroupCard.members).toHaveCount(1);
+
+		await impersonate(page, friend.id);
+		await looking.goto();
+		await expect(page).toHaveURL(SENDOUQ_PAGE);
+	});
+
 	test("Request flow - partial groups morph together", async ({
 		page,
 		factories,

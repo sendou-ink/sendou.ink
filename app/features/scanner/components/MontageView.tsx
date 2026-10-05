@@ -40,6 +40,7 @@ import {
 	type MontageCandidate,
 	maxSecondsFor,
 } from "../core/montage";
+import { ClipVideo } from "./ClipVideo";
 import { MontageGraphicStage } from "./MontageGraphics";
 import styles from "./MontageView.module.css";
 import {
@@ -527,14 +528,7 @@ function CandidateCard({
 	return (
 		<div className={styles.card}>
 			{previewUrl ? (
-				// biome-ignore lint/a11y/useMediaCaption: game footage has no captions
-				<video
-					className={styles.video}
-					src={previewUrl}
-					controls
-					autoPlay
-					playsInline
-				/>
+				<ClipVideo className={styles.video} src={previewUrl} />
 			) : (
 				<button
 					type="button"

@@ -287,7 +287,10 @@ sequenceDiagram
   the shapes).
 - `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart
   opens a match, a scoreboard closes one (claiming the last 8 min of deaths
-  when the intro was missed), minimaps group per map by confirmed stage
+  when the intro was missed). A match needs a scoreboard, a minimap or a
+  minute of counter reads after its intro to be kept (the last for footage
+  with neither, e.g. no results screen shown and the map never opened; it
+  has no players, so it is not uploaded). Minimaps group per map by confirmed stage
   change and >5 min gap — an intro's stage outranks minimap reads, so a
   match it opened splits only once no later minimap of that game reads it. A battle history screen (battle log, replay
   browser) showing a game already built — at least 6 paint totals shared
@@ -303,7 +306,10 @@ sequenceDiagram
   recording time within 20 min of its first read, the closest winning; on
   VoD scans (no wall clock) only a sole stage/mode fit — so the card keeps
   its place and a match first sent without a scoreboard is sent again.
-  Otherwise it forms its own match and the game stays open. A history screen with its stage unread
+  Otherwise it forms its own match and the game stays open. A MapStart within
+  30s of a replay-browser entry of its stage (and mode) is that replay played
+  back: the entry's match reopens with the intro, its gameplay joins it, and
+  the entry shown again after the replay closes it. A history screen with its stage unread
   (typically a frame caught mid-transition) forms no match of its own; the
   timeline also holds history screens to a 0.75 confidence floor (clean
   reads score 0.81+). Likewise a results screen read again with no
@@ -315,7 +321,8 @@ sequenceDiagram
   cards contribute everyone else's mains — so a card's Builds section
   covers both teams, each row rendered as far as it was read. Partial matches are fine —
   scanner-ingest merges them server-side. Senders filter with
-  `ingestSkipReasons`: private/unread lobby only, and no games a disconnect
+  `ingestSkipReasons`: private/unread lobby only, no games without a player
+  read, and no games a disconnect
   cut short (scoreless + counter left more time than the footage did, or
   with no counter read, results came before the clock could run out and the
   same map was replayed right after — the latter only resolves after the
@@ -389,7 +396,8 @@ sequenceDiagram
   the lead banner leaking past an icon edge fakes the shoulder glow, and a ready the shoulder glow does
   not corroborate needs the body's ink gone rather than merely paled,
   since a near-white weapon render (S-BLAST '91) pales a live body
-  without emptying it), with
+  without emptying it; an inky wash must also read tinted, which a white
+  cloud behind the icon does not), with
   the same `time` value so the two reads pair downstream; its fixtures
   live under `tests/fixtures/player-status/`. Within a side the strip's
   slot order is the lobby seating, while the results scoreboard re-sorts
@@ -412,7 +420,10 @@ sequenceDiagram
   outlasts the respawn wait, so those are misread blips (background ink
   bleeding through a crossed-out icon) — and bridges sub-10s not-ready
   gaps between ready reads when no death inside the gap explains them (no
-  special regains that fast, so the gap is the wash's dim pulse trough). Objective reads land on `ScannerMatch` as
+  special regains that fast, so the gap is the wash's dim pulse trough);
+  for the same reason ready reads in the clock's first 10s (5:00-4:51) or
+  before it starts are dropped before bridging, timerless minimap reads
+  timed by the match's dominant clock anchor. Objective reads land on `ScannerMatch` as
   progress samples anchored to the game clock; broadcast replay wipes re-run
   an earlier moment with the counter intact, so the builder keeps only the
   dominant cluster of clock-zero projections (`t + time`) and drops replay
@@ -467,7 +478,10 @@ sequenceDiagram
   ends a refinement streak on parse-count stagnation AND ~3s elapsed (the
   floor spans entry animations), or immediately at `sufficientConfidence`
   (set just under each detector's measured clean-read floor); death adds
-  `rearmCooldownS`. Battle-log/replay gates return a content `signature` so
+  `rearmCooldownS`. A spectator map read with any card's weapon unread
+  (the screen's opening wipe still crossing it) is capped under the minimap's
+  `sufficientConfidence`, so the open is read on until settled; a cast
+  match's players merge from its most confident minimap read first. Battle-log/replay gates return a content `signature` so
   browsing distinct entries re-parses once per battle instead of dropping
   the gate. `checkIntervalS` hard-caps both phases; `attachFrame: false`
   keeps continuously-firing events from storing a frame PNG each, and the
@@ -717,7 +731,10 @@ positive toward the end `teams[0]` pushes to: every side swap (cast
 orientation, winner-first ingest, display order) negates it and flips
 `control`. A team with no plate yet has
 never pushed past the middle: the charts show its full count until its
-first plate read (`withUnpushedTrackCounts`). Fixtures: `objective/tower-*`,
+first plate read (`withUnpushedTrackCounts`). In every mode, footage covering
+the game start charts both counts full from the clock's start until each
+side's first read (`withFullCountsAtGameStart`); later unread counts stay
+gaps, since a count never rises. Fixtures: `objective/tower-*`,
 `objective/rainmaker-*` (tower_control / rainmaker VoDs plus TC/RM death
 frames symlinked).
 

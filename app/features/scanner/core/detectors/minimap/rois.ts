@@ -153,6 +153,12 @@ export const SPECIAL_READY_INK_THRESHOLD = SPECIAL_READY_BACKGROUND + 50;
  */
 export const SPECIAL_READY_MIN_CORNER_MEAN = 120;
 export const SPECIAL_READY_MAX_CORNER_SATURATION = 60;
+/**
+ * Camo lights both corners evenly (attested 131-160); the spectator screen's
+ * opening wipe paints one near-white (253+) while the other can sit just over
+ * the camo floor.
+ */
+export const SPECIAL_READY_MAX_CORNER_MEAN = 200;
 /** Camo depresses NCC: correct matches 0.45-0.61 vs 0.77+ on dark surfaces. */
 export const WEAPON_MIN_SCORE = 0.55;
 export const SPECIAL_READY_WEAPON_MIN_SCORE = 0.42;

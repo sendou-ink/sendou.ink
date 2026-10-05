@@ -87,6 +87,22 @@ test("an old replay keeps the locale order when neither reading is recent", () =
 	);
 });
 
+test("AM/PM reads a 12h clock, month-first even under a day-first browser locale", () => {
+	const now = local(2026, 9, 12, 12, 0);
+	assert.equal(
+		parseReplayTimestamp("9/11/2026 7:52 PM", { locale: "fi-FI", now }),
+		local(2026, 9, 11, 19, 52),
+	);
+	assert.equal(
+		parseReplayTimestamp("9/11/2026 12:05 AM", { locale: "fi-FI", now }),
+		local(2026, 9, 11, 0, 5),
+	);
+	assert.equal(
+		parseReplayTimestamp("9/11/2026 12:05 PM", { locale: "fi-FI", now }),
+		local(2026, 9, 11, 12, 5),
+	);
+});
+
 test("a segment above 12 overrides every order signal", () => {
 	assert.equal(
 		parseReplayTimestamp("25/7/2026 9:05", { locale: "en-US" }),
@@ -138,5 +154,7 @@ test("invalid dates and times are rejected", () => {
 	assert.equal(parseReplayTimestamp("13/13/2026 10:00"), null);
 	assert.equal(parseReplayTimestamp("3/7/2026 25:00"), null);
 	assert.equal(parseReplayTimestamp("3/7/2026 10:60"), null);
+	assert.equal(parseReplayTimestamp("3/7/2026 13:00 PM"), null);
+	assert.equal(parseReplayTimestamp("3/7/2026 0:30 AM"), null);
 	assert.equal(parseReplayTimestamp("not a timestamp"), null);
 });

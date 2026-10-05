@@ -3,8 +3,8 @@ export const BAN_REASON_MAX_LENGTH = 200;
 export const ADMIN_DISCORD_ID = "79237403620945920";
 export const ADMIN_ID = process.env.NODE_ENV === "test" ? 1 : 274;
 
-//                        Panda  Scep  Acing Baja   Michi
-export const STAFF_IDS = [11329, 9719, 9342, 20774, 23094];
+//                        Panda  Scep  Acing Baja   Michi  hfcRed
+export const STAFF_IDS = [11329, 9719, 9342, 20774, 23094, 27883];
 //                      hfcRed
 export const DEV_IDS = [27883];
 //                               hfcRed Dreamy Cafy   Acing

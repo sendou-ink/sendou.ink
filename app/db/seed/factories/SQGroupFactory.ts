@@ -9,6 +9,8 @@ type InsertArgs = Omit<
 > & {
 	/** The group's members, the first of them its creator. */
 	memberUserIds: number[];
+	/** Members quick added by another member, joining after `memberUserIds`. */
+	quickAddedMembers?: Array<{ userId: number; addedByUserId: number }>;
 };
 
 type Options = {
@@ -23,7 +25,11 @@ export const { create } = defineFactory({
 	defaults: () => ({
 		status: "ACTIVE" as const,
 	}),
-	insert: async ({ memberUserIds, ...args }: InsertArgs) => {
+	insert: async ({
+		memberUserIds,
+		quickAddedMembers = [],
+		...args
+	}: InsertArgs) => {
 		const [creatorUserId, ...otherMemberUserIds] = memberUserIds;
 		invariant(creatorUserId, "A group needs at least one member");
 
@@ -36,7 +42,17 @@ export const { create } = defineFactory({
 			await SQGroupRepository.insertMember(group.id, { userId });
 		}
 
-		return { id: group.id, memberUserIds };
+		for (const member of quickAddedMembers) {
+			await SQGroupRepository.insertMember(group.id, member);
+		}
+
+		return {
+			id: group.id,
+			memberUserIds: [
+				...memberUserIds,
+				...quickAddedMembers.map((member) => member.userId),
+			],
+		};
 	},
 	applyOptions: async (group, { isMatchmade, likedByGroupIds }: Options) => {
 		for (const likerGroupId of likedByGroupIds ?? []) {

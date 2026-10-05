@@ -1,0 +1,64 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 7,
+    "spectator": true,
+    "teammates": [
+      {
+        "weaponLabel": null,
+        "weaponId": null,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Custom Blaster",
+        "weaponId": 211,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Splatana Stamper",
+        "weaponId": 8000,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Splash-o-matic",
+        "weaponId": 20,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "weaponLabel": "Heavy Splatling",
+        "weaponId": 4010,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Splash-o-matic",
+        "weaponId": 20,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Inkbrush Nouveau",
+        "weaponId": 1101,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Snipewriter 5H",
+        "weaponId": 2070,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "stageLabel": "Mahi-Mahi Resort"
+  },
+  "options": {
+    "unsettled": true,
+    "notes": "AREA CUP cast (area-cup-crown VoD, 3:43:34 (13414.75s)): the spectator map screen's opening wipe still crosses teammates.0, hiding the weapon icon — the first frame the gate passes on. Such a read must not end the scheduler's refinement (it once did, leaving the card's weapon unread for the whole game). Weapons of the wiped cards are null; the rest are the settled screen's reads a few frames later. Names/abilities are not asserted: the wipe garbles several."
+  }
+}

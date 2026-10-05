@@ -63,7 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				const { chatRoomIdToRevalidate } = await SQGroupRepository.insertMember(
 					ownGroup.id,
-					{ userId: data.id },
+					{ userId: data.id, addedByUserId: user.id },
 				);
 
 				if (chatRoomIdToRevalidate) {

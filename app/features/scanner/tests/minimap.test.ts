@@ -63,6 +63,15 @@ for (const fixture of fixtures) {
 			},
 		);
 
+		if (fixture.expected.options?.unsettled) {
+			await t.test("confidence stays under sufficientConfidence", () => {
+				assert.ok(
+					event.confidence < detector.sufficientConfidence!,
+					`confidence ${event.confidence.toFixed(3)} would end the refinement`,
+				);
+			});
+		}
+
 		await t.test(
 			"stage",
 			{ skip: expected.stage === undefined || skip(fixture, "stage") },

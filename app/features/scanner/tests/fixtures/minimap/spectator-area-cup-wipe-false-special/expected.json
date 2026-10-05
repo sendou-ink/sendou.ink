@@ -1,0 +1,62 @@
+{
+  "event": "Minimap",
+  "data": {
+    "spectator": true,
+    "teammates": [
+      {
+        "weaponLabel": "Slosher",
+        "weaponId": 3000,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Custom E-liter 4K",
+        "weaponId": 2031,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Tri-Slosher Nouveau",
+        "weaponId": 3011,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": ".96 Gal",
+        "weaponId": 80,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "weaponLabel": "Heavy Splatling",
+        "weaponId": 4010,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Slosher",
+        "weaponId": 3000,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": null,
+        "weaponId": null,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "S-BLAST '91",
+        "weaponId": 261,
+        "dead": false,
+        "specialReady": false
+      }
+    ]
+  },
+  "options": {
+    "unsettled": true,
+    "notes": "AREA CUP cast (area-cup-crown VoD 1:52:58, 6778.77s, Urchin Underpass): the spectator map screen's opening wipe crosses enemy row 0 (りうくん, Heavy Splatling), lighting one top corner of its weapon box white while the other stays just over the camo floor — read as the light camo of a charged special 12s before the clock started, and the icon under the stroke misread as Order Shot Replica. No special is held; real camo lights both corners evenly (140-165). Enemy row 0's icon still reads through the stroke on the dark-card templates; enemy row 2 (Tri-Slosher Nouveau) is under the wipe and expected unread. Stage not asserted."
+  }
+}
