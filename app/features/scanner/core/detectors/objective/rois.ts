@@ -301,6 +301,12 @@ export const STATUS_READY_PALE_ONLY_MAX_BODY_INK = 0.22;
 export const STATUS_READY_WASH_MAX_BODY_INK = 0.42;
 export const STATUS_READY_CLEAN_WASH_MAX_BODY_INK = 0.32;
 export const STATUS_READY_INKY_WASH_MIN_BODY_PALE = 0.35;
+/**
+ * An inky wash is tinted by the ink it leaks (attested >=0.28, Wahoo World
+ * even layout at ink 0.40); a white cloud behind an alive icon fakes the pale
+ * body and glow untinted (AREA CUP sky backdrop: 0.13-0.14 at ink 0.39).
+ */
+export const STATUS_READY_INKY_WASH_MIN_BODY_TINT = 0.2;
 
 /**
  * A ready read also needs a minimally pale body: every attested wash reads

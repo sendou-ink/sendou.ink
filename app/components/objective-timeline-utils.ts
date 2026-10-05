@@ -1,4 +1,5 @@
 import * as R from "remeda";
+import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 
 const PENALTY_BRIDGE_SECONDS = 6;
 const MAX_TIME_TICKS = 8;
@@ -12,6 +13,16 @@ export const TIMELINE_PLOT_GUTTER_PX = 36;
 
 /** The count a knockout wins at: the counter runs out and the team takes all of it. */
 const FULL_COUNT = 100;
+
+/** Every counter mode's clock starts at 5:00. */
+const GAME_CLOCK_SECONDS = 300;
+
+/**
+ * A game start projected further before the earliest read than this means the
+ * footage began mid-game; a cast's map screen can hide the whole HUD for the
+ * game's first ~10s.
+ */
+const GAME_START_MAX_LEAD_SECONDS = 15;
 
 /** One penalty read: when it was made and the pill value seen (null = no pill or unreadable). */
 export interface PenaltyRead {
@@ -129,6 +140,52 @@ export function withUnpushedTrackCounts<T extends TrackCountEvent>(
 		}) as [number | null, number | null];
 		return { ...event, data: { ...event.data, score } };
 	});
+}
+
+/**
+ * Both counts are full when the clock starts, so footage covering the game
+ * start (the clock projects it no further than GAME_START_MAX_LEAD_SECONDS
+ * before the earliest read) gets a full-count point there, and a side's reads
+ * before its first readable count read full. Later unread counts stay unread:
+ * a count only falls, so filling one mid-game would draw a jump up.
+ *
+ * @param sorted events sorted by `t` ascending
+ * @param earliestT when the earliest timeline read of any kind was made (the
+ * icon strip can be read while a map screen hides the counter)
+ */
+export function withFullCountsAtGameStart(
+	sorted: readonly ObjectiveTimelineEvent[],
+	earliestT: number,
+): ObjectiveTimelineEvent[] {
+	const clockRead = sorted.find((event) => event.data.time !== null);
+	if (!clockRead) return [...sorted];
+	const gameStartT = clockRead.t - (GAME_CLOCK_SECONDS - clockRead.data.time!);
+	if (gameStartT < earliestT - GAME_START_MAX_LEAD_SECONDS) return [...sorted];
+
+	const firstRead = ([0, 1] as const).map((side) =>
+		sorted.findIndex((event) => event.data.score[side] !== null),
+	);
+	const filled = sorted.map((event, i) => {
+		const score = event.data.score.map((value, side) =>
+			value === null && (firstRead[side] === -1 || i < firstRead[side]!)
+				? FULL_COUNT
+				: value,
+		) as [number | null, number | null];
+		return { ...event, data: { ...event.data, score } };
+	});
+	if (sorted[0]!.t <= gameStartT) return filled;
+
+	const start: ObjectiveTimelineEvent = {
+		t: gameStartT,
+		data: {
+			time: GAME_CLOCK_SECONDS,
+			score: [FULL_COUNT, FULL_COUNT],
+			penalty: [null, null],
+			control: null,
+			...(sorted[0]!.data.position !== undefined ? { position: 0 } : null),
+		},
+	};
+	return [start, ...filled];
 }
 
 /**

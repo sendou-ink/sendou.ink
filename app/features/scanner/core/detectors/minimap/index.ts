@@ -75,6 +75,7 @@ import {
 	NAME_TEXT_HEIGHT,
 	PRESENCE_MIN_LAPLACIAN,
 	SPECIAL_READY_INK_THRESHOLD,
+	SPECIAL_READY_MAX_CORNER_MEAN,
 	SPECIAL_READY_MAX_CORNER_SATURATION,
 	SPECIAL_READY_MIN_CORNER_MEAN,
 	SPECIAL_READY_WEAPON_MIN_SCORE,
@@ -160,17 +161,28 @@ export function sameMinimapStatusData(a: unknown, b: unknown): boolean {
 /** Badge match below this is reported as null (kept in debug). */
 const ABILITY_MIN_SCORE = 0.45;
 
+const SUFFICIENT_CONFIDENCE = 0.69;
+
 /**
- * Light-camo probe: brightness and saturation of the dimmer 8x8 top corner of
- * the weapon box. Camo brightens both corners (140-165) and is unsaturated; a
- * dark card keeps one corner dark despite bleed or a cross-out stroke, and
- * scene bleed lights both but stays colored.
+ * Cap for a spectator read with a present card's weapon unread (the screen's
+ * opening wipe still crossing it): under SUFFICIENT_CONFIDENCE so the scheduler
+ * reads on, over the timeline floor so it stands if nothing better follows.
  */
-function minTopCorner(
-	gray: Mat,
-	hsv: Mat,
-	roi: Roi,
-): { mean: number; saturation: number } {
+const UNSETTLED_SPECTATOR_MAX_CONFIDENCE = 0.65;
+
+/**
+ * Light-camo probe: brightness of both 8x8 top corners of the weapon box and
+ * saturation of the dimmer one. Camo brightens both corners (140-165) and is
+ * unsaturated; a dark card keeps one corner dark despite bleed or a cross-out
+ * stroke, and scene bleed lights both but stays colored.
+ */
+interface CornerProbe {
+	mean: number;
+	brighterMean: number;
+	saturation: number;
+}
+
+function minTopCorner(gray: Mat, hsv: Mat, roi: Roi): CornerProbe {
 	const corners: Roi[] = [
 		{ x: roi.x, y: roi.y, w: 8, h: 8 },
 		{ x: roi.x + roi.w - 8, y: roi.y, w: 8, h: 8 },
@@ -182,7 +194,19 @@ function minTopCorner(
 	let satSum = 0;
 	for (let i = 0; i < n; i++) satSum += crop.data[i * 3 + 1]!;
 	crop.delete();
-	return { mean: Math.min(...means), saturation: satSum / n };
+	return {
+		mean: Math.min(...means),
+		brighterMean: Math.max(...means),
+		saturation: satSum / n,
+	};
+}
+
+function onLightSurface(corner: CornerProbe): boolean {
+	return (
+		corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
+		corner.brighterMean <= SPECIAL_READY_MAX_CORNER_MEAN &&
+		corner.saturation <= SPECIAL_READY_MAX_CORNER_SATURATION
+	);
 }
 
 /** the cross probe's saturated strokes are crisp enough to be the X, not scene bleed */
@@ -460,6 +484,7 @@ export function createMinimapDetector(
 		const enemies: MinimapEnemy[] = [];
 		const sideSubTiles: [Roi[], Roi[]] = [[], []];
 		const cardDebug: Record<string, unknown>[] = [];
+		let weaponUnread = false;
 		const cards = [0, SPECTATOR_ENEMY_DX].flatMap((dx) =>
 			[0, 1, 2, 3].map((row) => {
 				const layout = spectatorCardLayout(row, dx);
@@ -471,9 +496,7 @@ export function createMinimapDetector(
 				const crossLap = meanBrightness(lap, layout.cross);
 				const occluded = crossedOut(crossFraction, crossLap);
 				const corner = minTopCorner(gray, hsv, layout.weapon);
-				const lightSurface =
-					corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
-					corner.saturation <= SPECIAL_READY_MAX_CORNER_SATURATION;
+				const lightSurface = onLightSurface(corner);
 				return {
 					dx,
 					row,
@@ -484,6 +507,7 @@ export function createMinimapDetector(
 						crossLap,
 						occluded,
 						cornerMin: corner.mean,
+						cornerMax: corner.brighterMean,
 						lightSurface,
 					},
 				};
@@ -525,8 +549,14 @@ export function createMinimapDetector(
 			}
 			const isTeammate = dx === 0;
 			sideSubTiles[isTeammate ? 0 : 1].push(layout.subTile);
-			const { crossFraction, crossLap, occluded, cornerMin, lightSurface } =
-				probes;
+			const {
+				crossFraction,
+				crossLap,
+				occluded,
+				cornerMin,
+				cornerMax,
+				lightSurface,
+			} = probes;
 			const [weapon, parsed, badgeMatches] = reads[i]!;
 
 			let name: string | null = null;
@@ -550,6 +580,7 @@ export function createMinimapDetector(
 				crossLap,
 				occluded,
 				cornerMin,
+				cornerMax,
 				lightSurface,
 				nameRaw,
 				weapon,
@@ -558,6 +589,7 @@ export function createMinimapDetector(
 
 			const floor = weaponScoreFloor(lightSurface, cornerMin);
 			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			if (!matched) weaponUnread = true;
 			const fields = {
 				name,
 				weaponId: matched ? toMainWeaponId(matched.id) : null,
@@ -583,10 +615,13 @@ export function createMinimapDetector(
 
 		lap.delete();
 
-		const confidence =
+		const meanConfidence =
 			confidences.length > 0
 				? confidences.reduce((a, b) => a + b, 0) / confidences.length
 				: 0;
+		const confidence = weaponUnread
+			? Math.min(meanConfidence, UNSETTLED_SPECTATOR_MAX_CONFIDENCE)
+			: meanConfidence;
 
 		return [
 			{
@@ -640,9 +675,7 @@ export function createMinimapDetector(
 			const crossLap = meanBrightness(lap, layout.cross);
 			const occluded = crossedOut(crossFraction, crossLap);
 			const corner = minTopCorner(gray, hsv, layout.weapon);
-			const lightSurface =
-				corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
-				corner.saturation <= SPECIAL_READY_MAX_CORNER_SATURATION;
+			const lightSurface = onLightSurface(corner);
 			return {
 				layout,
 				presence,
@@ -660,9 +693,7 @@ export function createMinimapDetector(
 			const occluded = crossedOut(crossFraction, crossLap);
 			// light camo rows: pick template variant by corner brightness, raise ink threshold past it
 			const corner = minTopCorner(gray, hsv, weaponRoi);
-			const lightSurface =
-				corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
-				corner.saturation <= SPECIAL_READY_MAX_CORNER_SATURATION;
+			const lightSurface = onLightSurface(corner);
 			return {
 				cy,
 				weaponRoi,
@@ -762,6 +793,7 @@ export function createMinimapDetector(
 				crossLap,
 				occluded,
 				cornerMin,
+				cornerMax: corner.brighterMean,
 				cornerSaturation: corner.saturation,
 				lightSurface,
 				nameRaw,
@@ -815,6 +847,7 @@ export function createMinimapDetector(
 				occluded,
 				lightSurface,
 				cornerMin,
+				cornerMax: corner.brighterMean,
 				cornerSaturation: corner.saturation,
 				weapon,
 				badges: badgeDebug,
@@ -874,7 +907,7 @@ export function createMinimapDetector(
 	return {
 		id: "minimap",
 		refineIntervalS: 0.4,
-		sufficientConfidence: 0.69,
+		sufficientConfidence: SUFFICIENT_CONFIDENCE,
 		rearmCooldownS: 5,
 		gate,
 		parse: (frame, t, gateResult) =>

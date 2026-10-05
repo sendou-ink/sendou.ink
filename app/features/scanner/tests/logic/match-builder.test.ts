@@ -204,6 +204,7 @@ function minimap(
 		teamColors = [null, null] as MinimapData["teamColors"],
 		dead = [[], []] as [number[], number[]],
 		specialReady = [[], []] as [number[], number[]],
+		confidence = 0.8,
 	} = {},
 ): DetectedEvent {
 	const data: MinimapData = {
@@ -221,7 +222,7 @@ function minimap(
 		})),
 		teamColors,
 	};
-	return { type: "Minimap", t, confidence: 0.8, data };
+	return { type: "Minimap", t, confidence, data };
 }
 
 function weapons(match: {
@@ -1549,6 +1550,15 @@ test("a spectator map's minimaps become one cast match: weapons + stage from the
 	assert.deepEqual(weapons(match), ALL);
 });
 
+test("a cast match's players come from its most confident minimap read first", () => {
+	const midWipe = [3010, ...ALPHA.slice(1)] as MainWeaponId[];
+	const built = buildScannerMatches([
+		minimap(70, { alpha: midWipe, confidence: 0.65 }),
+		minimap(71, { confidence: 0.78 }),
+	]);
+	assert.deepEqual(weapons(built[0]!.match), ALL);
+});
+
 test("a pov overlay minimap is not flagged as cast", () => {
 	const built = buildScannerMatches([minimap(70, { spectator: false })]);
 	assert.equal(built[0]!.match.cast, false);
@@ -1939,6 +1949,40 @@ test("a sub-10s not-ready gap between ready reads with no death bridges to ready
 	);
 	// the interior gap bridges; the trailing not-ready run is an edge and stays
 	assert.deepEqual(slot0Specials, [true, true, true, true, false]);
+});
+
+test("ready reads before a special could charge are dropped, not bridged into the first real one", () => {
+	const specialAt = (on: boolean) =>
+		[
+			[on, false, false, false],
+			[false, false, false, false],
+		] as PlayerStatusData["special"];
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(11, { time: 300, special: specialAt(true) }),
+		playerStatus(18, { time: 293, special: specialAt(true) }),
+		playerStatus(19, { time: 292, special: specialAt(false) }),
+		playerStatus(28, { time: 283, special: specialAt(true) }),
+		playerStatus(34, { time: 277, special: specialAt(true) }),
+		playerStatus(36, { time: 275, special: specialAt(false) }),
+		scoreboard(300),
+	]);
+	const slot0Specials = built[0]!.match.playerStatus!.samples.map(
+		(sample) => sample.special[0][0],
+	);
+	assert.deepEqual(slot0Specials, [false, false, false, true, true, false]);
+});
+
+test("a timerless minimap read before the clock starts carries no special", () => {
+	const built = buildScannerMatches([
+		minimap(10, { specialReady: [[], [0]] }),
+		playerStatus(20, { time: 292 }),
+		playerStatus(25, { time: 287 }),
+	]);
+	const anySpecial = built[0]!.match.playerStatus!.samples.map((sample) =>
+		sample.special.flat().some(Boolean),
+	);
+	assert.deepEqual(anySpecial, [false, false, false]);
 });
 
 test("a not-ready gap explained by a death inside it is kept", () => {

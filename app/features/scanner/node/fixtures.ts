@@ -152,6 +152,8 @@ interface ExpectedScoreboard {
 		notes?: string;
 		/** X Battle cards: a mid-animation frame whose read must score under the timeline floor */
 		untrusted?: boolean;
+		/** Minimap only: a frame caught mid-animation whose read must score under the detector's sufficientConfidence, so the scheduler keeps reading */
+		unsettled?: boolean;
 	};
 }
 

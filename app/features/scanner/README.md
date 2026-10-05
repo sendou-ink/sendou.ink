@@ -389,7 +389,8 @@ sequenceDiagram
   the lead banner leaking past an icon edge fakes the shoulder glow, and a ready the shoulder glow does
   not corroborate needs the body's ink gone rather than merely paled,
   since a near-white weapon render (S-BLAST '91) pales a live body
-  without emptying it), with
+  without emptying it; an inky wash must also read tinted, which a white
+  cloud behind the icon does not), with
   the same `time` value so the two reads pair downstream; its fixtures
   live under `tests/fixtures/player-status/`. Within a side the strip's
   slot order is the lobby seating, while the results scoreboard re-sorts
@@ -412,7 +413,10 @@ sequenceDiagram
   outlasts the respawn wait, so those are misread blips (background ink
   bleeding through a crossed-out icon) — and bridges sub-10s not-ready
   gaps between ready reads when no death inside the gap explains them (no
-  special regains that fast, so the gap is the wash's dim pulse trough). Objective reads land on `ScannerMatch` as
+  special regains that fast, so the gap is the wash's dim pulse trough);
+  for the same reason ready reads in the clock's first 10s (5:00-4:51) or
+  before it starts are dropped before bridging, timerless minimap reads
+  timed by the match's dominant clock anchor. Objective reads land on `ScannerMatch` as
   progress samples anchored to the game clock; broadcast replay wipes re-run
   an earlier moment with the counter intact, so the builder keeps only the
   dominant cluster of clock-zero projections (`t + time`) and drops replay
@@ -467,7 +471,10 @@ sequenceDiagram
   ends a refinement streak on parse-count stagnation AND ~3s elapsed (the
   floor spans entry animations), or immediately at `sufficientConfidence`
   (set just under each detector's measured clean-read floor); death adds
-  `rearmCooldownS`. Battle-log/replay gates return a content `signature` so
+  `rearmCooldownS`. A spectator map read with any card's weapon unread
+  (the screen's opening wipe still crossing it) is capped under the minimap's
+  `sufficientConfidence`, so the open is read on until settled; a cast
+  match's players merge from its most confident minimap read first. Battle-log/replay gates return a content `signature` so
   browsing distinct entries re-parses once per battle instead of dropping
   the gate. `checkIntervalS` hard-caps both phases; `attachFrame: false`
   keeps continuously-firing events from storing a frame PNG each, and the
@@ -717,7 +724,10 @@ positive toward the end `teams[0]` pushes to: every side swap (cast
 orientation, winner-first ingest, display order) negates it and flips
 `control`. A team with no plate yet has
 never pushed past the middle: the charts show its full count until its
-first plate read (`withUnpushedTrackCounts`). Fixtures: `objective/tower-*`,
+first plate read (`withUnpushedTrackCounts`). In every mode, footage covering
+the game start charts both counts full from the clock's start until each
+side's first read (`withFullCountsAtGameStart`); later unread counts stay
+gaps, since a count never rises. Fixtures: `objective/tower-*`,
 `objective/rainmaker-*` (tower_control / rainmaker VoDs plus TC/RM death
 frames symlinked).
 

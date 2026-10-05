@@ -1,0 +1,64 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 17,
+    "spectator": true,
+    "teammates": [
+      {
+        "weaponLabel": null,
+        "weaponId": null,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "E-liter 4K",
+        "weaponId": 2030,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Tri-Slosher Nouveau",
+        "weaponId": 3011,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": ".96 Gal",
+        "weaponId": 80,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "weaponLabel": null,
+        "weaponId": null,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "Slosher",
+        "weaponId": 3000,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "N-ZAP '85",
+        "weaponId": 60,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "weaponLabel": "S-BLAST '91",
+        "weaponId": 261,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "stageLabel": "Barnacle & Dime"
+  },
+  "options": {
+    "unsettled": true,
+    "notes": "AREA CUP cast (area-cup-crown VoD, 1:44:48 (6288.03s)): the spectator map screen's opening wipe still crosses teammates.0 and enemies.0, hiding the weapon icon — the first frame the gate passes on. Such a read must not end the scheduler's refinement (it once did, leaving the card's weapon unread for the whole game). Weapons of the wiped cards are null; the rest are the settled screen's reads a few frames later. Names/abilities are not asserted: the wipe garbles several."
+  }
+}

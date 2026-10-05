@@ -131,12 +131,12 @@ const DEAD_RUN_MIN_SECONDS = 3.5;
 const ALIVE_RUN_MIN_SECONDS = 2;
 
 /**
- * Regaining a used special takes at least this long (nothing charges off ~10s
+ * Regaining a used special takes at least this long (nothing charges off ~7s
  * of painting even with max Special Charge Up), so a not-ready run flanked by
  * ready reads closer than this, with no death inside, is a misread gap (the
  * ready wash pulses through a dim trough; overlays clip icons) and is bridged.
  */
-const SPECIAL_REGAIN_MIN_SECONDS = 10;
+const SPECIAL_REGAIN_MIN_SECONDS = 7;
 
 /**
  * Kill-feed stack reads further apart than this show independent rows even
@@ -923,7 +923,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		kills: progress.kills,
 		teams: board
 			? teamsFromScoreboard(board, deaths, minimaps, progress.minimapEnemySide)
-			: teamsFromMinimaps(minimaps, deaths),
+			: teamsFromMinimaps(mostConfidentFirst(open.minimaps), deaths),
 		winner: board ? 0 : null,
 		pov,
 	};
@@ -1095,7 +1095,12 @@ function buildProgress(
 								return {
 									t: Math.max(0, Math.floor(read.t)),
 									time: read.data.time,
-									special: arrange(read.data.special),
+									special: specialChargeable(
+										read.data.time ??
+											(dominant === null ? null : dominant - read.t),
+									)
+										? arrange(read.data.special)
+										: noSpecialsReady(),
 									dead: arrange(read.data.dead),
 								};
 							}),
@@ -1406,6 +1411,26 @@ function withImpossibleDeadRunsFlipped(
 		}
 	}
 	return smoothed;
+}
+
+/**
+ * No special charges within SPECIAL_REGAIN_MIN_SECONDS of the clock starting
+ * (or before it), so a ready read there is a misread (a pale backdrop behind
+ * the icon, the spectator map's opening wipe) that would otherwise bridge into
+ * the first real ready wash. Timerless reads take the clock the match's
+ * dominant anchor projects; Turf War's shorter clock never reaches this window.
+ */
+function specialChargeable(time: number | null): boolean {
+	return (
+		time === null || time <= RANKED_CLOCK_SECONDS - SPECIAL_REGAIN_MIN_SECONDS
+	);
+}
+
+function noSpecialsReady(): [PlayerStatusFlags, PlayerStatusFlags] {
+	return [
+		[false, false, false, false],
+		[false, false, false, false],
+	];
 }
 
 /**
@@ -1994,6 +2019,12 @@ function teamsFromScoreboard(
 		{ players: players.slice(0, PLAYERS_PER_TEAM) },
 		{ players: players.slice(PLAYERS_PER_TEAM) },
 	];
+}
+
+function mostConfidentFirst(events: readonly DetectedEvent[]): MinimapData[] {
+	return [...events]
+		.sort((a, b) => b.confidence - a.confidence)
+		.map((event) => event.data as MinimapData);
 }
 
 /**

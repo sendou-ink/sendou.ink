@@ -1,9 +1,11 @@
 import { describe, expect, test } from "vitest";
+import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 import {
 	matchScoresFromObjective,
 	type ObjectiveScoreRead,
 	type PenaltyRead,
 	smoothPenalties,
+	withFullCountsAtGameStart,
 	withUnpushedTrackCounts,
 } from "./objective-timeline-utils";
 
@@ -148,5 +150,93 @@ describe("withUnpushedTrackCounts", () => {
 		];
 
 		expect(withUnpushedTrackCounts(events)).toEqual(events);
+	});
+});
+
+describe("withFullCountsAtGameStart", () => {
+	const szEvent = (
+		t: number,
+		time: number | null,
+		alpha: number | null,
+		bravo: number | null,
+	): ObjectiveTimelineEvent => ({
+		t,
+		data: {
+			time,
+			score: [alpha, bravo],
+			penalty: [null, null],
+			control: null,
+		},
+	});
+	const points = (events: ObjectiveTimelineEvent[]) =>
+		events.map((event) => [event.t, ...event.data.score]);
+
+	test("starts the line at a full count when the counter was unread as the clock started", () => {
+		// clock started at t=12 (4:52 read at t=20), status reads go back to t=9
+		const events = withFullCountsAtGameStart(
+			[szEvent(20, 292, 100, 100), szEvent(23, 289, 100, 99)],
+			9,
+		);
+
+		expect(points(events)).toEqual([
+			[12, 100, 100],
+			[20, 100, 100],
+			[23, 100, 99],
+		]);
+		expect(events[0]!.data.time).toBe(300);
+	});
+
+	test("fills a side's unread counts before its first read", () => {
+		const events = withFullCountsAtGameStart(
+			[
+				szEvent(12, 300, null, null),
+				szEvent(15, 297, null, 98),
+				szEvent(16, 296, 100, 97),
+			],
+			12,
+		);
+
+		expect(points(events)).toEqual([
+			[12, 100, 100],
+			[15, 100, 98],
+			[16, 100, 97],
+		]);
+	});
+
+	test("never fills an unread count after the side's first read", () => {
+		const events = withFullCountsAtGameStart(
+			[
+				szEvent(20, 292, 100, 90),
+				szEvent(25, 287, null, null),
+				szEvent(30, 282, 95, 85),
+			],
+			20,
+		);
+
+		expect(points(events).slice(1)).toEqual([
+			[20, 100, 90],
+			[25, null, null],
+			[30, 95, 85],
+		]);
+	});
+
+	test("leaves footage that began mid-game alone", () => {
+		const events = [szEvent(20, 200, null, 60), szEvent(21, 199, 70, 60)];
+
+		expect(withFullCountsAtGameStart(events, 20)).toEqual(events);
+	});
+
+	test("starts a tower control line at the middle of the track", () => {
+		const [start] = withFullCountsAtGameStart(
+			[
+				{
+					t: 20,
+					data: { ...szEvent(20, 292, 100, 100).data, position: 10 },
+				},
+			],
+			20,
+		);
+
+		expect(start!.data.position).toBe(0);
 	});
 });
