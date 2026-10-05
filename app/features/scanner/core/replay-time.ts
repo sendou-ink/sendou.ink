@@ -1,17 +1,17 @@
 /**
  * Turns the replay browser's on-screen recording timestamp (console-locale
- * formatted: "3/7/2026 22:28", "7.3.2026 22:28", "2026/3/7 22:28") into a UTC
- * epoch in the local timezone. The string carries no timezone or day/month
- * marker, so an ambiguous day-vs-month (both ≤ 12) resolves in three steps:
- * hour 0 or ≥13 proves a 24h clock, and 24h locales are near-universally
- * day-first (en-US is 12h); failing that, the browser locale's date-part
- * order decides; finally a recency check swaps day/month when that reading
- * lands near now while the un-swapped one doesn't (replays are ingested soon
- * after recording).
+ * formatted: "3/7/2026 22:28", "7.3.2026 22:28", "2026/3/7 22:28",
+ * "9/11/2026 7:52 PM") into a UTC epoch in the local timezone. The string
+ * carries no timezone or day/month marker, so an ambiguous day-vs-month (both
+ * ≤ 12) resolves in three steps: hour 0 or ≥13 proves a 24h clock, and 24h
+ * locales are near-universally day-first, while AM/PM marks the month-first
+ * en-US clock; failing both, the browser locale's date-part order decides;
+ * finally a recency check swaps day/month when that reading lands near now
+ * while the un-swapped one doesn't (replays are ingested soon after recording).
  */
 
 const TIMESTAMP_RE =
-	/^(\d{1,4})[./-](\d{1,4})[./-](\d{1,4})\s+(\d{1,2}):(\d{2})$/;
+	/^(\d{1,4})[./-](\d{1,4})[./-](\d{1,4})\s+(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/;
 
 /** How far in the past a reading may land and still count as "recent". */
 const RECENT_PAST_MS = 30 * 24 * 60 * 60 * 1000;
@@ -32,16 +32,23 @@ export function parseReplayTimestamp(
 	const m = TIMESTAMP_RE.exec(raw.trim());
 	if (!m) return null;
 	const dateParts = [Number(m[1]!), Number(m[2]!), Number(m[3]!)];
-	const hours = Number(m[4]!);
+	const meridiem = m[6];
+	const clockHours = Number(m[4]!);
 	const minutes = Number(m[5]!);
-	if (hours > 23 || minutes > 59) return null;
+	if (minutes > 59) return null;
+	if (meridiem ? clockHours < 1 || clockHours > 12 : clockHours > 23) {
+		return null;
+	}
+	const hours = meridiem
+		? (clockHours % 12) + (meridiem === "PM" ? 12 : 0)
+		: clockHours;
 
 	// hour 0 or ≥13 only occurs on a 24h clock, and 24h locales are near-universally
-	// day-first; only an ambiguous hour falls back to the browser locale
+	// day-first; AM/PM is month-first; only an ambiguous hour falls back to the browser locale
 	const is24hClock = hours === 0 || hours >= 13;
 	const resolved = resolveDateParts(
 		dateParts,
-		is24hClock ? true : dayBeforeMonth(locale),
+		!meridiem && (is24hClock || dayBeforeMonth(locale)),
 	);
 	if (!resolved) return null;
 

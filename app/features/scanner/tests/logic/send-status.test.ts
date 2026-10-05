@@ -8,7 +8,10 @@ import {
 } from "../../components/sendou-ingest";
 import type { ScanEvent } from "../../components/session-data";
 import type { BuiltMatch } from "../../core/match-builder";
-import type { ScannerMatch } from "../../core/scanner-match";
+import type {
+	ScannerMatch,
+	ScannerMatchPlayer,
+} from "../../core/scanner-match";
 import type { SendStatus } from "../../store/events";
 
 const NOW = 1_800_000_000_000;
@@ -196,9 +199,23 @@ function event(send: SendStatus | undefined, type = "Scoreboard"): ScanEvent {
 	return { type, t: 0, confidence: 1, data: null, send };
 }
 
+const PLAYER: ScannerMatchPlayer = {
+	name: "a",
+	weaponId: null,
+	paint: null,
+	ka: null,
+	d: null,
+	s: null,
+};
+
 function built(sources: ScanEvent[]): BuiltMatch<ScanEvent> {
 	return {
-		match: { lobby: null, winner: null, matchScores: null } as ScannerMatch,
+		match: {
+			lobby: null,
+			winner: null,
+			matchScores: null,
+			teams: [{ players: [PLAYER] }, { players: [] }] as ScannerMatch["teams"],
+		} as ScannerMatch,
 		sources,
 	};
 }

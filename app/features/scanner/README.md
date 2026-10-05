@@ -287,7 +287,10 @@ sequenceDiagram
   the shapes).
 - `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart
   opens a match, a scoreboard closes one (claiming the last 8 min of deaths
-  when the intro was missed), minimaps group per map by confirmed stage
+  when the intro was missed). A match needs a scoreboard, a minimap or a
+  minute of counter reads after its intro to be kept (the last for footage
+  with neither, e.g. no results screen shown and the map never opened; it
+  has no players, so it is not uploaded). Minimaps group per map by confirmed stage
   change and >5 min gap — an intro's stage outranks minimap reads, so a
   match it opened splits only once no later minimap of that game reads it. A battle history screen (battle log, replay
   browser) showing a game already built — at least 6 paint totals shared
@@ -303,7 +306,10 @@ sequenceDiagram
   recording time within 20 min of its first read, the closest winning; on
   VoD scans (no wall clock) only a sole stage/mode fit — so the card keeps
   its place and a match first sent without a scoreboard is sent again.
-  Otherwise it forms its own match and the game stays open. A history screen with its stage unread
+  Otherwise it forms its own match and the game stays open. A MapStart within
+  30s of a replay-browser entry of its stage (and mode) is that replay played
+  back: the entry's match reopens with the intro, its gameplay joins it, and
+  the entry shown again after the replay closes it. A history screen with its stage unread
   (typically a frame caught mid-transition) forms no match of its own; the
   timeline also holds history screens to a 0.75 confidence floor (clean
   reads score 0.81+). Likewise a results screen read again with no
@@ -315,7 +321,8 @@ sequenceDiagram
   cards contribute everyone else's mains — so a card's Builds section
   covers both teams, each row rendered as far as it was read. Partial matches are fine —
   scanner-ingest merges them server-side. Senders filter with
-  `ingestSkipReasons`: private/unread lobby only, and no games a disconnect
+  `ingestSkipReasons`: private/unread lobby only, no games without a player
+  read, and no games a disconnect
   cut short (scoreless + counter left more time than the footage did, or
   with no counter read, results came before the clock could run out and the
   same map was replayed right after — the latter only resolves after the

@@ -183,11 +183,22 @@ function viewOf(state: UploadState): UploadView {
 				icon: <CloudOff aria-hidden />,
 				tone: "muted",
 				title: "Not uploaded",
-				detail:
-					state.reason === "disconnect"
-						? "A disconnect ended this game before it was decided, so there is no result to upload."
-						: `Only Private Battle and X Battle games are uploaded. This one was ${lobbyLabel(state.lobby) ?? "neither"}.`,
+				detail: skipDetail(state.reason, state.lobby),
 			};
+	}
+}
+
+function skipDetail(
+	reason: IngestSkipReason,
+	lobby: ScannerLobby | null,
+): string {
+	switch (reason) {
+		case "disconnect":
+			return "A disconnect ended this game before it was decided, so there is no result to upload.";
+		case "noPlayers":
+			return "No results screen or map was seen in this game, so there are no players to upload.";
+		case "lobby":
+			return `Only Private Battle and X Battle games are uploaded. This one was ${lobbyLabel(lobby) ?? "neither"}.`;
 	}
 }
 

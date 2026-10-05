@@ -92,6 +92,18 @@ const FALLBACK_WINDOW_SECONDS = 480;
 /** Minimaps further apart than this cannot be the same game, even on the same stage. */
 const MATCH_GAP_SECONDS = 300;
 
+/**
+ * Counter reads spanning this long after a map intro show a game being played,
+ * enough to back a match with no results screen or minimap read.
+ */
+const MIN_PLAYED_COUNTER_SECONDS = 60;
+
+/**
+ * A map intro this soon after a replay-browser entry is that replay being played
+ * back (attested 6-9s of loading).
+ */
+const REPLAY_LOAD_MAX_SECONDS = 30;
+
 const PLAYERS_PER_TEAM = 4;
 
 /**
@@ -191,8 +203,9 @@ export interface BuiltMatch<E extends DetectedEvent> {
 	/** input events the match was built from, chronological — the send-status unit for callers */
 	sources: E[];
 	/**
-	 * only built with `{ unbacked: true }`: no scoreboard or minimap backs the
-	 * match, so it is kill-feed material for clips, not a game to show or send
+	 * only built with `{ unbacked: true }`: no scoreboard, minimap or played
+	 * counter backs the match, so it is kill-feed material for clips, not a
+	 * game to show or send
 	 */
 	unbacked?: true;
 }
@@ -224,13 +237,15 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * gathered) it completes an earlier match whose results screen was missed
  * instead, when one fits it (`scoreboardlessMatchShown`), else it forms a
  * match of its own and the game being gathered stays open. A history screen
- * with its stage unread and no built match forms none. Every input event ends
- * up in at most one match's `sources`.
+ * with its stage unread and no built match forms none. A map intro right
+ * after a replay-browser entry of its stage and mode is that replay played
+ * back: its gameplay joins the entry's match. Every input event ends up in at
+ * most one match's `sources`.
  *
- * `unbacked` also emits, flagged, the stretches with kill reads no scoreboard
- * or minimap backed (a results screen missed, the map never opened, a match
- * still being played): the clip scorer needs their streaks, nothing else
- * should see them.
+ * `unbacked` also emits, flagged, the stretches with kill reads no scoreboard,
+ * minimap or played counter backed (a results screen missed, the map never
+ * opened, a match still being played): the clip scorer needs their streaks,
+ * nothing else should see them.
  */
 export function buildScannerMatches<E extends DetectedEvent>(
 	events: readonly E[],
@@ -243,6 +258,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	const minimapLookahead = buildMinimapLookahead(sorted);
 
 	let open: OpenMatch<E> | null = null;
+	let lastHistoryScreen: E | null = null;
 	// matches finalized without a scoreboard, which a history screen may still complete
 	const scoreboardless = new Map<BuiltMatch<E>, OpenMatch<E>>();
 	// deaths/objective/status reads seen with no match open to anchor them yet
@@ -303,7 +319,18 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			open = startMatch();
 			open.mapStart = event;
 			vote(open.stageVotes, (event.data as MapStartData).stage);
+			const replayed = replayedHistoryMatch(built, lastHistoryScreen, event);
+			if (replayed) {
+				built.splice(built.indexOf(replayed), 1);
+				const [board, ...revisits] = replayed.sources;
+				open.scoreboard = board!;
+				open.revisits = revisits;
+				vote(open.stageVotes, (board!.data as ScoreboardData).stage);
+			}
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+			if (HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+				lastHistoryScreen = event;
+			}
 			const revisited =
 				revisitedMatch(built, event) ??
 				(open ? undefined : reshownResultsMatch(built, event));
@@ -343,7 +370,9 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				continue;
 			}
 			open = closing;
-			open.scoreboard = event;
+			// a replay played back from its browser entry ends on that entry again
+			if (open.scoreboard) open.revisits.push(event);
+			else open.scoreboard = event;
 			vote(open.stageVotes, (event.data as ScoreboardData).stage);
 			finalize();
 			orphanDeaths = [];
@@ -474,11 +503,14 @@ export type IngestSkipReason =
 	/** not a Private Battle or X Battle game */
 	| "lobby"
 	/** a disconnect ended it before it could be decided */
-	| "disconnect";
+	| "disconnect"
+	/** built off gameplay alone: no scoreboard or minimap read a player */
+	| "noPlayers";
 
 /**
  * Which built matches are not worth sending to /ingest, and why: lobbies other
- * than Private and X Battle (unread lobbies get the benefit of the doubt), and games a disconnect
+ * than Private and X Battle (unread lobbies get the benefit of the doubt), games
+ * with no player read (nothing to link or merge them by), and games a disconnect
  * cut short — counter reads show the game couldn't have ended on its own
  * (`endedEarly`), or with no counter read to tell, a results screen came
  * before the clock could run out and the same map/mode was replayed right
@@ -494,6 +526,8 @@ export function ingestSkipReasons<E extends DetectedEvent>(
 		const { match } = candidate;
 		if (!isUploadedLobby(match.lobby)) {
 			reasons.set(candidate, "lobby");
+		} else if (match.teams.every((team) => team.players.length === 0)) {
+			reasons.set(candidate, "noPlayers");
 		} else if (
 			isScoreless(match) &&
 			(endedEarly(match) || wasReplayed(built, index))
@@ -701,7 +735,10 @@ interface OpenMatch<E extends DetectedEvent> {
 	kills: E[];
 	/** X Battle lobby cards reporting on this game; ride along in its sources */
 	xBattleCards: E[];
+	/** the board a replay was played back from, or the results screen that closed the game */
 	scoreboard: E | null;
+	/** history screens showing the game again; ride along in its sources */
+	revisits: E[];
 	/**
 	 * per-stage read counts (a MapStart's stage seeds it); without an intro
 	 * stage the plurality winner delimits same-vs-next map so one misread frame
@@ -712,7 +749,24 @@ interface OpenMatch<E extends DetectedEvent> {
 }
 
 function isBacked<E extends DetectedEvent>(open: OpenMatch<E>): boolean {
-	return open.scoreboard !== null || open.minimaps.length > 0;
+	return (
+		open.scoreboard !== null ||
+		open.minimaps.length > 0 ||
+		hasPlayedCounter(open)
+	);
+}
+
+/** An intro followed by counter reads spanning a stretch of game clock: the game was played, results screen or not. */
+function hasPlayedCounter<E extends DetectedEvent>(
+	open: OpenMatch<E>,
+): boolean {
+	const first = open.objectives[0];
+	const last = open.objectives.at(-1);
+	return (
+		open.mapStart !== null &&
+		first !== undefined &&
+		last!.t - first.t >= MIN_PLAYED_COUNTER_SECONDS
+	);
 }
 
 function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
@@ -726,6 +780,7 @@ function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 		kills: [],
 		xBattleCards: [],
 		scoreboard: null,
+		revisits: [],
 		stageVotes: new Map(),
 		lastMinimapT: null,
 	};
@@ -803,6 +858,7 @@ function openMatchInputs<E extends DetectedEvent>(open: OpenMatch<E>): E[] {
 		...open.kills,
 		...open.xBattleCards,
 		...(open.scoreboard ? [open.scoreboard] : []),
+		...open.revisits,
 	];
 }
 
@@ -899,7 +955,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 	const match: ScannerMatch = {
 		startsAt:
 			sources.length > 0 ? Math.max(0, Math.floor(sources[0]!.t)) : null,
-		endsAt: floorOrNull(open.scoreboard?.t ?? open.minimaps.at(-1)?.t),
+		endsAt: floorOrNull(sources.at(-1)?.t),
 		playedAt: playedAt(open.scoreboard),
 		// only X Battle shows its lobby cards: they tell a game whose results
 		// screen was missed (or its header unread) apart from other lobbies
@@ -1862,6 +1918,40 @@ function revisitedMatch<E extends DetectedEvent>(
 				REVISIT_PLAYED_AT_TOLERANCE_MS
 		);
 	});
+}
+
+/**
+ * The history-only match a map intro plays back: the last history screen
+ * before the intro was its replay-browser entry, shown at most
+ * `REPLAY_LOAD_MAX_SECONDS` earlier, and the intro's stage (or with that
+ * unread, its mode) agrees with the entry's.
+ */
+function replayedHistoryMatch<E extends DetectedEvent>(
+	built: readonly BuiltMatch<E>[],
+	lastHistoryScreen: E | null,
+	intro: E,
+): BuiltMatch<E> | undefined {
+	if (
+		lastHistoryScreen?.type !== SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE ||
+		intro.t - lastHistoryScreen.t > REPLAY_LOAD_MAX_SECONDS
+	) {
+		return undefined;
+	}
+	const shown = built.findLast(
+		(candidate) =>
+			isHistoryOnly(candidate) && candidate.sources.includes(lastHistoryScreen),
+	);
+	if (!shown) return undefined;
+
+	const { stage, mode } = intro.data as MapStartData;
+	if (mode !== null && shown.match.mode !== null && mode !== shown.match.mode) {
+		return undefined;
+	}
+	const agrees =
+		stage !== null
+			? stage === shown.match.stage
+			: mode !== null && mode === shown.match.mode;
+	return agrees ? shown : undefined;
 }
 
 /**

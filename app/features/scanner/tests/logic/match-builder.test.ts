@@ -143,9 +143,12 @@ function replayScoreboard(
 	{
 		timestamp = null as string | null,
 		replayCode = "RABC-DEFG-HIJK-LMNO" as string | null,
+		stage = 0 as StageId | null,
+		mode = "SZ" as ModeShort | null,
+		paints = [] as (number | null)[],
 	} = {},
 ): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t).data as ScoreboardData;
+	const base = scoreboard(t, { stage, mode, paints }).data as ScoreboardData;
 	const data: ScoreboardBattleLogReplayData = {
 		...base,
 		timestamp,
@@ -2416,4 +2419,71 @@ test("unbacked matches without kill reads are not emitted", () => {
 		unbacked: true,
 	});
 	assert.deepEqual(built, []);
+});
+
+function counterReads(from: number, to: number): DetectedEvent[] {
+	const reads: DetectedEvent[] = [];
+	for (let t = from; t <= to; t += 10) {
+		reads.push(objective(t, { time: 300 - (t - from) }));
+	}
+	return reads;
+}
+
+test("a map intro with a minute of counter reads backs a match without a results screen", () => {
+	const built = buildScannerMatches([mapStart(0), ...counterReads(10, 200)]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.match.winner, null);
+	assert.equal(built[0]!.match.endsAt, 200);
+	assert.equal(ingestSkipReasons(built).get(built[0]!), "noPlayers");
+});
+
+test("a map intro with under a minute of counter reads backs no match", () => {
+	assert.deepEqual(
+		buildScannerMatches([mapStart(0), ...counterReads(10, 60)]),
+		[],
+	);
+});
+
+test("a map intro right after a replay-browser entry plays that replay back", () => {
+	const built = buildScannerMatches([
+		replayScoreboard(0, { paints: GAME_PAINTS }),
+		mapStart(8),
+		...counterReads(20, 280),
+		replayScoreboard(290, { paints: GAME_PAINTS }),
+	]);
+	assert.equal(built.length, 1);
+	assert.equal(isHistoryOnly(built[0]!), false);
+	assert.equal(built[0]!.match.lobby, "PRIVATE");
+	assert.equal(built[0]!.match.replayCode, "RABC-DEFG-HIJK-LMNO");
+	assert.equal(built[0]!.match.endsAt, 290);
+	assert.ok(built[0]!.match.objective);
+});
+
+test("replays played back one after another each join their own entry", () => {
+	const built = buildScannerMatches([
+		replayScoreboard(0, { paints: GAME_PAINTS }),
+		mapStart(8),
+		...counterReads(20, 280),
+		replayScoreboard(290, { paints: OTHER_GAME_PAINTS, stage: 1 }),
+		mapStart(297, { stage: 1 }),
+		...counterReads(310, 570),
+	]);
+	assert.deepEqual(
+		built.map((b) => [b.match.stage, b.match.endsAt, isHistoryOnly(b)]),
+		[
+			[0, 280, false],
+			[1, 570, false],
+		],
+	);
+});
+
+test("a map intro of another stage or long after a replay-browser entry leaves the entry alone", () => {
+	for (const intro of [mapStart(8, { stage: 1 }), mapStart(120)]) {
+		const built = buildScannerMatches([
+			replayScoreboard(0, { paints: GAME_PAINTS }),
+			intro,
+			...counterReads(130, 300),
+		]);
+		assert.deepEqual(built.map(isHistoryOnly), [true, false]);
+	}
 });

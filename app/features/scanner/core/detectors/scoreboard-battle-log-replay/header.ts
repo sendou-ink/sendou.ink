@@ -1,6 +1,6 @@
 /**
  * Replay-browser header: same tag style as the live header, top line timestamp
- * ("3/7/2026 22:28") + stage, bottom line lobby + mode. The locale-formatted
+ * ("3/7/2026 22:28", "9/11/2026 7:52 PM") + stage, bottom line lobby + mode. The locale-formatted
  * timestamp is validated by shape and kept raw; the rest snaps to closed sets.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -39,12 +39,20 @@ const MIN_MATCH_SCORE = 0.62;
 const TAG_DARK_MAX_LIFTED = 120;
 
 /**
- * Locale date ("3/7/2026", "7.3.2026", "2026/3/7") + time, rest = stage. A lone
- * space between skinny time digits is tolerated ("14:1 1") and stripped. Not
- * left-anchored: the battle log's rank icon reads as a junk glyph before the date.
+ * Locale date ("3/7/2026", "7.3.2026", "2026/3/7") + time, 12h clocks with
+ * AM/PM ("9/11/2026 7:52PM"; P can read as "o"), rest = stage. A lone space between skinny time
+ * digits is tolerated ("14:1 1") and stripped. Not left-anchored: the battle
+ * log's rank icon reads as a junk glyph before the date.
  */
 const TIMESTAMP_RE =
-	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})\s+(\d(?: ?\d)?: ?\d ?\d)\s*(.*)$/;
+	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})\s+(\d(?: ?\d)?: ?\d ?\d)(?:\s*([AP0]M))?\s*(.*)$/;
+
+/**
+ * The same with lone spaces between skinny date digits too ("9/1 1/2026"),
+ * tried after it: a junk glyph before the date could pass as its first digit.
+ */
+const TIMESTAMP_GAPPED_DATE_RE =
+	/(\d(?: ?\d){0,3}[./-]\d(?: ?\d)?[./-]\d(?: ?\d){0,3})\s+(\d(?: ?\d)?: ?\d ?\d)(?:\s*([AP0]M))?\s*(.*)$/;
 
 /**
  * Fused date-time ("22/8/202620:37"), tried after the spaced form. The date's
@@ -52,7 +60,7 @@ const TIMESTAMP_RE =
  * 20:28); no spurious-gap tolerance or a lazy match could steal a year digit.
  */
 const TIMESTAMP_FUSED_RE =
-	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4}?)(\d{1,2}:\d\d)\s*(.*)$/;
+	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4}?)(\d{1,2}:\d\d)(?:\s*([AP0]M))?\s*(.*)$/;
 
 interface TopBandParse {
 	reading: string;
@@ -81,11 +89,17 @@ function parseTopBand(reading: string): TopBandParse {
 		.replace(/[Oo]/g, "0")
 		.replace(/S/g, "5");
 	const m =
-		TIMESTAMP_RE.exec(normalized) ?? TIMESTAMP_FUSED_RE.exec(normalized);
+		TIMESTAMP_RE.exec(normalized) ??
+		TIMESTAMP_GAPPED_DATE_RE.exec(normalized) ??
+		TIMESTAMP_FUSED_RE.exec(normalized);
 	const stageReading = m
-		? reading.slice(reading.length - m[3]!.length)
+		? reading.slice(reading.length - m[4]!.length)
 		: reading;
-	if (m) timestamp = `${m[1]!} ${m[2]!.replace(/ /g, "")}`;
+	if (m) {
+		// P's bowl can read as "o", folded to "0" above
+		const meridiem = m[3] ? ` ${m[3].replace("0", "P")}` : "";
+		timestamp = `${m[1]!.replace(/ /g, "")} ${m[2]!.replace(/ /g, "")}${meridiem}`;
+	}
 	if (stageReading) {
 		const match = closestBy(
 			foldDigitLookalikes(stageReading),
