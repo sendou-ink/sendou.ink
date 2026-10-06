@@ -52,7 +52,9 @@ export const GATE_SCORE_MIN_MAX_BRIGHTNESS = 200;
  * Gate anchor: the timer's white M:SS in a near-black box. In-match HUD reads
  * <=32 on each dark probe; closest lookalike is the replay-browser header's
  * stage tag ("Banlieue Balibot" ~48). Turf War and the death cam also show a
- * timer; the plate probes and no-readable-count rejection handle those.
+ * timer; the plate probes and no-readable-count rejection handle those. The
+ * last minute's digits are yellow, which peaks at 220-249 in gray against
+ * white's 255.
  */
 export const TIMER_DIGIT_ROI: Roi = { x: 908, y: 54, w: 100, h: 40 };
 export const TIMER_DARK_PROBES: readonly Roi[] = [
@@ -61,7 +63,7 @@ export const TIMER_DARK_PROBES: readonly Roi[] = [
 	{ x: 1012, y: 57, w: 7, h: 26 },
 ];
 export const GATE_TIMER_MAX_MEAN = 40;
-export const GATE_TIMER_MIN_MAX_BRIGHTNESS = 240;
+export const GATE_TIMER_MIN_MAX_BRIGHTNESS = 200;
 
 /**
  * Timer digits are 34px on native 1080p, ~40px on upscaled 720p; both tried,
