@@ -398,6 +398,7 @@
 	"chat.systemMsg.leagueRescheduleDeclined": "",
 	"chat.systemMsg.leagueTimeSetByOrganizer": "",
 	"chat.newMessages": "",
+	"chat.newLabel": "",
 	"chat.retrySend": "",
 	"chat.status.characterCount": "",
 	"chat.status.mentionCooldown": "",

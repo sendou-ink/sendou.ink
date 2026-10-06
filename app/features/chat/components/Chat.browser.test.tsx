@@ -859,17 +859,41 @@ describe("Chat", () => {
 			.toBeInTheDocument();
 	});
 
-	test("the unread divider sits outside the flow, leaving its row as tall as the message", async () => {
+	test("the unread divider takes its own space above the first unread message", async () => {
 		const screen = await renderChat(manyMessages(3), {
 			firstUnreadMessageId: 2,
 		});
 
+		await expect
+			.element(screen.getByRole("separator", { name: "New messages" }))
+			.toBeInTheDocument();
 		const divider = screen.getByTestId("chat-unread-divider");
-		await expect.element(divider).toHaveAccessibleName("New messages");
-		const row = divider.element().parentElement!;
-		expect(
-			row.offsetHeight - Number.parseFloat(getComputedStyle(row).paddingTop),
-		).toBe((row.lastElementChild as HTMLElement).offsetHeight);
+		await expect.element(divider).toHaveTextContent("New");
+		const dividerElement = divider.element() as HTMLElement;
+		const message = dividerElement.nextElementSibling as HTMLElement;
+		expect(dividerElement.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			message.getBoundingClientRect().top,
+		);
+	});
+
+	test("the unread divider leaves the batch it lands in whole", async () => {
+		const screen = await renderChat(
+			[
+				createMessage({ id: 1, publicId: "p1", contents: "read" }),
+				createMessage({
+					id: 2,
+					publicId: "p2",
+					contents: "unread",
+					createdAt: 1700000060,
+				}),
+			],
+			{ firstUnreadMessageId: 2 },
+		);
+
+		await expect.element(screen.getByText("unread")).toBeInTheDocument();
+		expect(screen.getByText("Alice", { exact: true }).elements()).toHaveLength(
+			1,
+		);
 	});
 
 	test("batches a chain of messages from one user, a long pause starting a new batch", async () => {

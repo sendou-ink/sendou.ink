@@ -49,11 +49,33 @@
 }
 
 .unreadDivider {
-	position: absolute;
-	inset-inline: 0;
-	top: max(0px, calc(var(--message-row-gap) / 2 - 1px));
-	height: 1px;
-	background-color: var(--color-fg-accent);
+	display: flex;
+	align-items: center;
+	padding-inline: var(--s-2);
 	pointer-events: none;
+}
+
+.unreadDividerLine {
+	flex: 1;
+	height: 2px;
+	margin: 0;
 	border: none;
+	background-color: var(--color-fg-accent);
+}
+
+.unreadDividerLabel {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 36px;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+	text-transform: uppercase;
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size-xs);
+	padding: 0 var(--s-1);
 }

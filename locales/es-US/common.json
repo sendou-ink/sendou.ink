@@ -398,6 +398,7 @@
 	"chat.systemMsg.leagueRescheduleDeclined": "{{name}} rechazó los nuevos horarios. El set mantiene su horario actual",
 	"chat.systemMsg.leagueTimeSetByOrganizer": "{{name}} (organizador) fijó el horario del set",
 	"chat.newMessages": "Nuevos mensajes",
+	"chat.newLabel": "",
 	"chat.retrySend": "",
 	"chat.status.characterCount": "",
 	"chat.status.mentionCooldown": "",

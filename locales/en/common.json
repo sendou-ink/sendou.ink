@@ -398,6 +398,7 @@
 	"chat.systemMsg.leagueRescheduleDeclined": "{{name}} declined the new times. The set keeps its current time",
 	"chat.systemMsg.leagueTimeSetByOrganizer": "{{name}} (organizer) set the time of the set",
 	"chat.newMessages": "New messages",
+	"chat.newLabel": "New",
 	"chat.retrySend": "Not sent, retry",
 	"chat.status.characterCount": "{{used}}/{{max}} characters",
 	"chat.status.mentionCooldown": "You can mention {{username}} again in {{seconds}}s",
