@@ -1160,6 +1160,143 @@ function* splitFusedGlyphs(
 	}
 }
 
+/**
+ * The wide-segment split cuts at the deepest column dips, but a glyph's own
+ * hollow can run deeper than the gap to its neighbor: at 360p a row of 'U's
+ * profiles its counters (floor ink only) below the blurred gaps between them
+ * ("AHOOUUUUUU" cut into "LduιU"). Pairwise re-cuts can't undo a whole run
+ * cut out of phase, so a run of touching segments holding a weak read is
+ * re-segmented as a whole: every way to cut it at its column dips into pieces
+ * of glyph width is scored by its weakest piece, and the best is adopted under
+ * the re-cut floor and margin. Pieces are probed against that floor first, so
+ * only the few that can take part are read in full.
+ */
+/** past this many candidate pieces a run is unreadable text (a decorative splash tag), not worth the reads */
+const RESEGMENT_MAX_PIECES = 96;
+
+function* resegmentWeakRuns(
+	items: ClassifiedSegment[],
+	ctx: RecutContext,
+): MatchSteps<void> {
+	const maxWidth = Math.round(ctx.set.medianWidth * 1.5);
+	const score = (item: ClassifiedSegment) => item.ranked[0]?.score ?? 0;
+	const runs: { start: number; end: number; floor: number }[] = [];
+	for (let start = 0; start < items.length; ) {
+		let end = start + 1;
+		while (
+			end < items.length &&
+			items[end]!.seg.x0 === items[end - 1]!.seg.x1
+		) {
+			end++;
+		}
+		const weakest = Math.min(...items.slice(start, end).map(score));
+		if (end - start >= 2 && weakest < RECUT_MAX_SCORE) {
+			runs.push({
+				start,
+				end,
+				floor: Math.max(RECUT_MIN_SCORE, weakest + RECUT_MARGIN),
+			});
+		}
+		start = end;
+	}
+	// right to left, so splicing a run keeps the earlier runs' indices
+	for (const { start, end, floor } of runs.reverse()) {
+		const run = items.slice(start, end);
+		const best = yield* bestSegmentation(ctx, run, floor, maxWidth);
+		if (best) items.splice(start, end - start, ...best);
+	}
+}
+
+/** One cut per column dip, at the middle of its flat bottom. */
+function dipCenters(profile: number[], x0: number, x1: number): number[] {
+	const centers: number[] = [];
+	let lo = -1;
+	for (let x = x0 + 3; x <= x1 - 2; x++) {
+		const v = profile[x]!;
+		const isDip = x <= x1 - 3 && v <= profile[x - 1]! && v <= profile[x + 1]!;
+		if (isDip && lo < 0) lo = x;
+		if (!isDip && lo >= 0) {
+			centers.push(Math.round((lo + x) / 2));
+			lo = -1;
+		}
+	}
+	return centers;
+}
+
+function* bestSegmentation(
+	ctx: RecutContext,
+	run: ClassifiedSegment[],
+	floor: number,
+	maxWidth: number,
+): MatchSteps<ClassifiedSegment[] | null> {
+	const x0 = run[0]!.seg.x0;
+	const x1 = run.at(-1)!.seg.x1;
+	const cuts = [
+		...new Set([
+			x0,
+			...run.map((item) => item.seg.x1),
+			...dipCenters(ctx.profile, x0, x1),
+		]),
+	].sort((a, b) => a - b);
+	const original = new Set(
+		run.map((item) => item.seg.x0 * 65536 + item.seg.x1),
+	);
+
+	// best[k]: the cut of the run's head up to cuts[k] whose weakest piece
+	// scores highest (higher total on ties); only cuts some such cut reaches
+	// are cut from, so pieces nothing leads up to are never read
+	const best: ({
+		weakest: number;
+		total: number;
+		path: ClassifiedSegment[];
+	} | null)[] = cuts.map((_, k) =>
+		k === 0 ? { weakest: 1, total: 0, path: [] } : null,
+	);
+	const piecesFrom = cuts.map((_, from) => {
+		const pieces: { to: number; seg: SegmentInfo }[] = [];
+		for (let to = from + 1; to < cuts.length; to++) {
+			const width = cuts[to]! - cuts[from]!;
+			if (width > maxWidth && !original.has(cuts[from]! * 65536 + cuts[to]!))
+				break;
+			if (width < 3) continue;
+			const seg = ctx.measure({ x0: cuts[from]!, x1: cuts[to]! });
+			if (seg.ink > 0) pieces.push({ to, seg });
+		}
+		return pieces;
+	});
+	if (piecesFrom.flat().length > RESEGMENT_MAX_PIECES) return null;
+	for (let from = 0; from < cuts.length - 1; from++) {
+		const head = best[from];
+		if (!head) continue;
+		const pieces = piecesFrom[from]!;
+		const probes = yield* all(
+			pieces.map(({ seg }) => classify(ctx, seg, floor)),
+		);
+		const viable = pieces.filter((_, i) =>
+			probes[i]!.some((c) => c.score > floor),
+		);
+		const reads = yield* all(
+			viable.map(({ seg }) => classify(ctx, seg, undefined, ctx.maxCandidates)),
+		);
+		for (const [i, { to, seg }] of viable.entries()) {
+			const ranked = reads[i]!;
+			const pieceScore = ranked[0]?.score ?? 0;
+			if (pieceScore <= floor) continue;
+			const weakest = Math.min(head.weakest, pieceScore);
+			const total = head.total + pieceScore;
+			const current = best[to];
+			if (
+				!current ||
+				weakest > current.weakest ||
+				(weakest === current.weakest && total > current.total)
+			) {
+				best[to] = { weakest, total, path: [...head.path, { seg, ranked }] };
+			}
+		}
+	}
+	return best.at(-1)?.path ?? null;
+}
+
 let maskedKeySeq = 0;
 
 /**
@@ -1230,6 +1367,7 @@ export function* recognizeTextSteps(
 	yield* mergeSplitGlyphs(items, ctx);
 	yield* recutMiscutPairs(items, ctx);
 	yield* splitFusedGlyphs(items, ctx);
+	yield* resegmentWeakRuns(items, ctx);
 
 	const chars: RecognizedChar[] = [];
 	let text = "";

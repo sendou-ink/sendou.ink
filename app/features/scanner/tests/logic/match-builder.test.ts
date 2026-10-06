@@ -1963,11 +1963,11 @@ test("ready reads before a special could charge are dropped, not bridged into th
 	const built = buildScannerMatches([
 		mapStart(0),
 		playerStatus(11, { time: 300, special: specialAt(true) }),
-		playerStatus(18, { time: 293, special: specialAt(true) }),
-		playerStatus(19, { time: 292, special: specialAt(false) }),
-		playerStatus(28, { time: 283, special: specialAt(true) }),
-		playerStatus(34, { time: 277, special: specialAt(true) }),
-		playerStatus(36, { time: 275, special: specialAt(false) }),
+		playerStatus(15, { time: 296, special: specialAt(true) }),
+		playerStatus(16, { time: 295, special: specialAt(false) }),
+		playerStatus(20, { time: 291, special: specialAt(true) }),
+		playerStatus(26, { time: 285, special: specialAt(true) }),
+		playerStatus(28, { time: 283, special: specialAt(false) }),
 		scoreboard(300),
 	]);
 	const slot0Specials = built[0]!.match.playerStatus!.samples.map(
