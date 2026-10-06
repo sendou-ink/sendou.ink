@@ -13,6 +13,7 @@ import {
 	hidden,
 	idConstantOptional,
 	image,
+	mapPoolOptional,
 	numberFieldOptional,
 	radioGroup,
 	select,
@@ -44,6 +45,7 @@ const calendarEventDateField = datetime({
 // extracted so the literal item values don't widen to `string` in the object's inferred value type
 const mapPickingStyleField = radioGroup({
 	label: "labels.mapPickingStyle",
+	variant: "chip",
 	items: [
 		{ value: "TO", label: "options.mapPickingStyle.TO" },
 		{ value: "AUTO", label: "options.mapPickingStyle.AUTO" },
@@ -162,7 +164,7 @@ export const calendarNewBaseSchema = v.object({
 	teamPickCounts: teamPickCountsField,
 	teamPickPool: teamPickPoolField,
 	// organizer's map pool: of a calendar event, a "TO" tournament or the custom pool of a team picked one
-	pool: customField({ initialValue: "" }, v.optional(v.string())),
+	pool: mapPoolOptional({ label: "labels.mapPool" }),
 	// only rendered (and validated) for tournaments, calendar events keep the empty initial values
 	brackets: bracketsFormField,
 	progression: progressionFormField,

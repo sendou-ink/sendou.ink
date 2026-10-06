@@ -23,6 +23,7 @@ import {
 	CheckboxGroupFormField,
 	RadioGroupFormField,
 } from "./fields/InputGroupFormField";
+import { MapPoolFormField } from "./fields/MapPoolFormField";
 import { SelectFormField } from "./fields/SelectFormField";
 import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SubSpecialSelectFormField } from "./fields/SubSpecialSelectFormField";
@@ -45,6 +46,7 @@ import type {
 	CustomFieldRenderProps,
 	FormFieldItemsWithImage,
 	FormField as FormFieldType,
+	MapPoolFieldOptions,
 	SelectOption,
 	TeamSearchFieldOptions,
 	TournamentSearchFieldOptions,
@@ -606,6 +608,19 @@ export function FormField({
 				disabled={isDisabled}
 				value={value as StageId | null}
 				onChange={handleChange as (v: StageId) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "map-pool") {
+		return (
+			<MapPoolFormField
+				{...commonProps}
+				{...formField}
+				{...(options as MapPoolFieldOptions | undefined)}
+				disabled={isDisabled}
+				value={value as string}
+				onChange={handleChange as (v: string) => void}
 			/>
 		);
 	}

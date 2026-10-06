@@ -1,5 +1,6 @@
 import { add, sub } from "date-fns";
 import * as v from "valibot";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
 	customField,
 	datetime,
@@ -32,7 +33,6 @@ import {
 } from "~/utils/schema";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
-import { parseMapPoolInput } from "./scrims-utils";
 
 const deletePostSchema = v.object({
 	_action: _action("DELETE_POST"),
@@ -199,7 +199,7 @@ export const submitMapListFormSchema = v.pipe(
 			placeholder: "placeholders.scrimMapPool",
 			maxLength: 500,
 			validate: {
-				func: (val) => parseMapPoolInput(val) !== null,
+				func: (val) => MapPool.fromUserInput(val) !== null,
 				message: "forms:errors.invalidMapPool",
 			},
 		}),

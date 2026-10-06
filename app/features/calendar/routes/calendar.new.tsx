@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { SquareArrowOutUpRight, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -11,8 +12,8 @@ import { ModeImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
-import { MapPoolSelector } from "~/components/MapPoolSelector";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { SENDOUQ_MAP_POOL } from "~/features/match-profile/banned-maps";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type {
 	TeamPickPool,
@@ -28,6 +29,7 @@ import {
 	useFormFieldContext,
 	useFormSteps,
 } from "~/form/SendouForm";
+import type { MapPoolQuickFill } from "~/form/types";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -312,6 +314,7 @@ function CopyTournamentPicker() {
 function CalendarEventFields() {
 	const data = useLoaderData<typeof loader>();
 	const organizationOptions = useOrganizationOptions();
+	const mapPoolQuickFill = useMapPoolQuickFill();
 
 	return (
 		<div className="stack md">
@@ -327,7 +330,7 @@ function CalendarEventFields() {
 			{data.badgeOptions.length > 0 ? (
 				<FormField name="badges" options={data.badgeOptions} />
 			) : null}
-			<CalendarMapPoolField />
+			<FormField name="pool" options={{ quickFill: mapPoolQuickFill }} />
 		</div>
 	);
 }
@@ -412,7 +415,7 @@ function TournamentSteps() {
 			</FormStep>
 
 			<FormStep name="maps">
-				<div className={styles.stepColumn}>
+				<div className={clsx(styles.stepColumn, styles.stepColumnWide)}>
 					<TournamentMapsFields />
 				</div>
 			</FormStep>
@@ -701,6 +704,7 @@ function TournamentMapsFields() {
 	const { t } = useTranslation(["forms"]);
 	const { values, setValue } = useFormFieldContext();
 	const data = useLoaderData<typeof loader>();
+	const mapPoolQuickFill = useMapPoolQuickFill();
 
 	const mapPickingStyle = values.mapPickingStyle as TournamentMapPickingStyle;
 
@@ -715,7 +719,7 @@ function TournamentMapsFields() {
 			{mapPickingStyle === "AUTO" ? (
 				<TeamPickFields />
 			) : (
-				<TournamentMapPoolField />
+				<FormField name="pool" options={{ quickFill: mapPoolQuickFill }} />
 			)}
 			{data.eventToEdit?.teamsHavePickedMaps ? (
 				<div className="text-warning text-sm">
@@ -877,139 +881,60 @@ function CustomTeamPickPoolField({
 }: {
 	pickedModes: ModeShort[];
 }) {
-	const { t } = useTranslation(["common", "calendar", "game-misc"]);
+	const { t } = useTranslation(["calendar", "game-misc"]);
 	const { values } = useFormFieldContext();
+	const quickFill = useMapPoolQuickFill();
+
+	if (pickedModes.length === 0) return null;
+
+	const teamPick = teamPickSettingsFromFormValues({
+		teamPickModes: pickedModes,
+		teamPickCounts: values.teamPickCounts as TeamPickCountsFormValue,
+		teamPickPool: "CUSTOM",
+	});
+	const shortfalls = TeamPick.poolShortfalls(
+		teamPick,
+		new MapPool(
+			customTeamPickPool({
+				teamPickModes: pickedModes,
+				pool: values.pool as string | undefined,
+			}),
+		),
+	);
 
 	return (
-		<FormField name="pool">
-			{({ value, onChange, error }: CustomFieldRenderProps) => {
-				const mapPool = new MapPool(
-					customTeamPickPool({
-						teamPickModes: pickedModes,
-						pool: value as string | undefined,
-					}),
-				);
-				const teamPick = teamPickSettingsFromFormValues({
-					teamPickModes: pickedModes,
-					teamPickCounts: values.teamPickCounts as TeamPickCountsFormValue,
-					teamPickPool: "CUSTOM",
-				});
-				const shortfalls = TeamPick.poolShortfalls(teamPick, mapPool);
-
-				return (
-					<>
-						<MapPoolSelector
-							className="w-full"
-							mapPool={mapPool}
-							title={t("common:maps.mapPool")}
-							modesToInclude={pickedModes}
-							handleMapPoolChange={(newPool) =>
-								onChange(
-									new MapPool(
-										customTeamPickPool({
-											teamPickModes: pickedModes,
-											pool: newPool.serialized,
-										}),
-									).serialized,
-								)
-							}
-							allowBulkEdit
-							info={
-								<div>
-									<Alert
-										variation={shortfalls.length === 0 ? "SUCCESS" : "WARNING"}
-										tiny
-									>
-										{shortfalls.length === 0
-											? t("calendar:forms.teamPick.poolOk")
-											: shortfalls
-													.map(({ mode, required, has }) =>
-														t("calendar:forms.teamPick.poolShortfall", {
-															mode: t(`game-misc:MODE_SHORT_${mode}`),
-															required,
-															has,
-														}),
-													)
-													.join(", ")}
-									</Alert>
-								</div>
-							}
-						/>
-						{error ? (
-							<FormMessage id={errorMessageId("pool")} type="error">
-								{t(error as never)}
-							</FormMessage>
-						) : null}
-					</>
-				);
-			}}
-		</FormField>
+		<div className="stack lg">
+			<FormField name="pool" options={{ modes: pickedModes, quickFill }} />
+			<Alert variation={shortfalls.length === 0 ? "SUCCESS" : "WARNING"} tiny>
+				{shortfalls.length === 0
+					? t("calendar:forms.teamPick.poolOk")
+					: shortfalls
+							.map(({ mode, required, has }) =>
+								t("calendar:forms.teamPick.poolShortfall", {
+									mode: t(`game-misc:MODE_SHORT_${mode}`),
+									required,
+									has,
+								}),
+							)
+							.join(", ")}
+			</Alert>
+		</div>
 	);
 }
 
-function CalendarMapPoolField() {
-	const { t } = useTranslation(["common"]);
-	const baseEvent = useBaseEvent();
-	const [include, setInclude] = React.useState(Boolean(baseEvent?.mapPool));
-	const id = React.useId();
+function useMapPoolQuickFill(): MapPoolQuickFill[] {
+	const { t } = useTranslation(["forms"]);
 
-	return (
-		<FormField name="pool">
-			{({ value, onChange }: CustomFieldRenderProps) => {
-				if (!include) {
-					return (
-						<div>
-							<label htmlFor={id}>{t("common:maps.mapPool")}</label>
-							<SendouButton
-								size="small"
-								variant="outlined"
-								id={id}
-								onClick={() => setInclude(true)}
-							>
-								{t("common:actions.add")}
-							</SendouButton>
-						</div>
-					);
-				}
-
-				const mapPool = value ? new MapPool(value as string) : MapPool.EMPTY;
-
-				return (
-					<MapPoolSelector
-						className="w-full"
-						mapPool={mapPool}
-						title={t("common:maps.mapPool")}
-						handleRemoval={() => {
-							onChange("");
-							setInclude(false);
-						}}
-						handleMapPoolChange={(newPool) => onChange(newPool.serialized)}
-						allowBulkEdit
-					/>
-				);
-			}}
-		</FormField>
-	);
-}
-
-function TournamentMapPoolField() {
-	const { t } = useTranslation(["common"]);
-
-	return (
-		<FormField name="pool">
-			{({ value, onChange }: CustomFieldRenderProps) => {
-				const mapPool = value ? new MapPool(value as string) : MapPool.EMPTY;
-
-				return (
-					<MapPoolSelector
-						className="w-full"
-						mapPool={mapPool}
-						title={t("common:maps.mapPool")}
-						handleMapPoolChange={(newPool) => onChange(newPool.serialized)}
-						allowBulkEdit
-					/>
-				);
-			}}
-		</FormField>
-	);
+	return [
+		{
+			label: t("forms:mapPool.quickFill.sendouQ"),
+			mapPool: new MapPool(
+				SENDOUQ_MAP_POOL.stageModePairs.filter((pair) => pair.mode !== "TW"),
+			),
+		},
+		{
+			label: t("forms:mapPool.quickFill.rankedModes"),
+			mapPool: MapPool.ANARCHY,
+		},
+	];
 }

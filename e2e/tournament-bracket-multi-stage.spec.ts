@@ -1,5 +1,6 @@
 import { subMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import {
 	createTeams,
@@ -327,7 +328,7 @@ test.describe("Tournament bracket multi stage", () => {
 
 		await newTournament.goToStep("maps");
 		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
-		await newTournament.selectMapPoolTemplate("preset:SZ");
+		await newTournament.pasteMapPool(MapPool.SZ);
 
 		// groups of 4: top 2 advance to the finals directly, 3rd placers get
 		// another shot at the last finals spot through the redemption bracket

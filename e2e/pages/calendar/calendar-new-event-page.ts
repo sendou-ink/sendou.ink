@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
 import { calendarNewBaseSchema } from "~/features/calendar/calendar-new-schemas";
+import type { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { CALENDAR_NEW_PAGE, TOURNAMENT_NEW_PAGE } from "~/utils/urls";
 import {
 	datetimeLocalValue,
@@ -44,9 +46,12 @@ export class CalendarNewEventPage {
 				exact: true,
 			}),
 			lastStepButton: page.getByTestId("form-step-button-prizes"),
-			mapPoolTemplateSelect: page.getByLabel("Template"),
 			groupCountSelect: page.getByLabel(/^Group count/),
 			clearMapPoolButton: page.getByRole("button", { name: "Clear" }),
+			pasteMapPoolLinkButton: page.getByRole("button", {
+				name: "Paste from a map pool link",
+			}),
+			mapPoolLinkInput: page.getByLabel("Map pool link"),
 		};
 	}
 
@@ -93,13 +98,14 @@ export class CalendarNewEventPage {
 		}
 	}
 
-	// the map pool grid exposes each map as a mode button inside a group labelled
-	// by its stage name, both for the TO pool and the custom team pick pool
+	// the map pool field has a tab per mode, each holding a checkbox per stage,
+	// both for the TO pool and the custom team pick pool
 	async pickMapPool(maps: Array<{ stage: string; mode: string }>) {
 		for (const { stage, mode } of maps) {
+			await this.page.getByRole("tab", { name: mode }).click();
 			await this.page
-				.getByRole("group", { name: stage })
-				.getByRole("button", { name: mode })
+				.getByRole("tabpanel")
+				.getByRole("checkbox", { name: stage, exact: true })
 				.click();
 		}
 	}
@@ -187,10 +193,15 @@ export class CalendarNewEventPage {
 
 	async clearMapPool() {
 		await this.locators.clearMapPoolButton.click();
+		await this.page.getByTestId("confirm-button").click();
 	}
 
-	async selectMapPoolTemplate(value: string) {
-		await this.locators.mapPoolTemplateSelect.selectOption(value);
+	/** Replaces the map pool by pasting a map pool link of it. */
+	async pasteMapPool(mapPool: MapPool) {
+		await this.locators.pasteMapPoolLinkButton.click();
+		await this.locators.mapPoolLinkInput.fill(
+			`https://sendou.ink${mapsPageWithMapPool(mapPool)}`,
+		);
 	}
 
 	/** Submits the form, from the last step when it is a tournament form of steps. */

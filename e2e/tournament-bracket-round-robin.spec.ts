@@ -1,4 +1,5 @@
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import {
 	createTeams,
@@ -93,7 +94,7 @@ test.describe("Tournament bracket round robin", () => {
 		const eventEdit = await admin.editEventInfo();
 		await eventEdit.goToStep("maps");
 		await eventEdit.clearMapPool();
-		await eventEdit.selectMapPoolTemplate("preset:CB");
+		await eventEdit.pasteMapPool(MapPool.CB);
 		await eventEdit.save();
 
 		const brackets = new TournamentBracketsPage(page);

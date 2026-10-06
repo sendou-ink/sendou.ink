@@ -53,6 +53,7 @@ export const myFormSchema = v.object({
 | `timeRangeOptional` | Start/end time range | `label` |
 | `weaponPool` | Weapon selection pool | `label`, `maxCount` |
 | `stageSelect` | Stage dropdown | `label` |
+| `mapPoolOptional` | Map pool picker (serialized `MapPool`), `options` takes `quickFill` presets and `modes` | - |
 | `weaponSelectOptional` | Weapon dropdown | `label` |
 | `userSearch` | User search autocomplete | `label` |
 | `userSearchOptional` | Optional user search | `label` |

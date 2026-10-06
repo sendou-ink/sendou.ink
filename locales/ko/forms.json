@@ -502,5 +502,12 @@
 	"steps.tournament.teams": "",
 	"steps.tournament.maps": "",
 	"steps.tournament.format": "",
-	"steps.tournament.prizes": ""
+	"steps.tournament.prizes": "",
+	"labels.mapPool": "",
+	"mapPool.quickFill": "",
+	"mapPool.quickFill.sendouQ": "",
+	"mapPool.quickFill.rankedModes": "",
+	"mapPool.pasteLink": "",
+	"mapPool.pasteLinkLabel": "",
+	"mapPool.clearConfirm": ""
 }

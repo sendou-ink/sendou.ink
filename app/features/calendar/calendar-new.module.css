@@ -11,6 +11,10 @@
 	margin-inline: auto;
 }
 
+.stepColumnWide {
+	max-width: 64rem;
+}
+
 .review {
 	display: flex;
 	flex-direction: column;
