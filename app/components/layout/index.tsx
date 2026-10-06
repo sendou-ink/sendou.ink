@@ -155,7 +155,7 @@ function useTabletModal(isTabletLayout: boolean, openRequest: number) {
 		React.useState(openRequest);
 	if (openRequest !== handledOpenRequest) {
 		setHandledOpenRequest(openRequest);
-		setOpenedOnPathname(location.pathname);
+		if (isTabletLayout) setOpenedOnPathname(location.pathname);
 	}
 
 	const isOpen = isTabletLayout && openedOnPathname === location.pathname;
