@@ -1,5 +1,9 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import type { FormFieldItemsWithImage, FormFieldProps } from "../types";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
@@ -8,6 +12,7 @@ type RadioGroupFormFieldProps<V extends string> = Omit<
 	"items"
 > & {
 	items: FormFieldItemsWithImage<V>;
+	variant?: "chip";
 	value: V;
 	onChange: (value: V) => void;
 	disabled?: boolean;
@@ -24,6 +29,7 @@ export function RadioGroupFormField<V extends string>({
 	onChange,
 	minLength,
 	disabled,
+	variant,
 }: RadioGroupFormFieldProps<V>) {
 	const id = React.useId();
 
@@ -40,36 +46,52 @@ export function RadioGroupFormField<V extends string>({
 			error={error}
 			bottomText={bottomText}
 		>
-			<div
-				role="radiogroup"
-				aria-orientation="vertical"
-				aria-labelledby={id}
-				className="stack sm items-start"
-			>
-				{itemsWithLabels.map((item) => (
-					<div key={item.value} className="stack horizontal sm items-center">
-						<input
-							type="radio"
-							id={`${id}-${item.value}`}
+			{variant === "chip" ? (
+				<SendouChipRadioGroup>
+					{itemsWithLabels.map((item) => (
+						<SendouChipRadio
+							key={item.value}
 							name={id}
 							value={item.value}
 							checked={value === item.value}
-							onChange={() => onChange(item.value)}
-							onBlur={() => onBlur?.()}
-							disabled={disabled}
-						/>
-						<label
-							htmlFor={`${id}-${item.value}`}
-							className="stack horizontal sm items-center mb-0 whitespace-nowrap"
+							onChange={(newValue) => onChange(newValue as V)}
 						>
-							{item.imgSrc ? (
-								<img src={item.imgSrc} width={24} height={24} alt="" />
-							) : null}
 							{item.resolvedLabel}
-						</label>
-					</div>
-				))}
-			</div>
+						</SendouChipRadio>
+					))}
+				</SendouChipRadioGroup>
+			) : (
+				<div
+					role="radiogroup"
+					aria-orientation="vertical"
+					aria-labelledby={id}
+					className="stack sm items-start"
+				>
+					{itemsWithLabels.map((item) => (
+						<div key={item.value} className="stack horizontal sm items-center">
+							<input
+								type="radio"
+								id={`${id}-${item.value}`}
+								name={id}
+								value={item.value}
+								checked={value === item.value}
+								onChange={() => onChange(item.value)}
+								onBlur={() => onBlur?.()}
+								disabled={disabled}
+							/>
+							<label
+								htmlFor={`${id}-${item.value}`}
+								className="stack horizontal sm items-center mb-0 whitespace-nowrap"
+							>
+								{item.imgSrc ? (
+									<img src={item.imgSrc} width={24} height={24} alt="" />
+								) : null}
+								{item.resolvedLabel}
+							</label>
+						</div>
+					))}
+				</div>
+			)}
 		</FormFieldWrapper>
 	);
 }

@@ -10,6 +10,10 @@
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
+
+	&.gapLg {
+		gap: var(--s-6);
+	}
 }
 
 .header {

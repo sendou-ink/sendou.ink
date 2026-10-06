@@ -251,9 +251,14 @@ function useDefaultValues() {
 
 function CopyTournamentPicker() {
 	const { t } = useTranslation(["calendar"]);
-	const { recentTournaments } = useLoaderData<typeof loader>();
+	const { recentTournaments, eventToCopy } = useLoaderData<typeof loader>();
 	const navigate = useNavigate();
-	const [eventId, setEventId] = React.useState("");
+	const [eventId, setEventId] = React.useState(() =>
+		eventToCopy &&
+		recentTournaments?.some((event) => event.id === eventToCopy.eventId)
+			? String(eventToCopy.eventId)
+			: "",
+	);
 	const id = React.useId();
 	const { formatter } = useDateTimeFormat({
 		month: "numeric",
@@ -263,7 +268,7 @@ function CopyTournamentPicker() {
 	if (!recentTournaments || recentTournaments.length === 0) return null;
 
 	return (
-		<SendouSection title={t("calendar:newTournament.copy")}>
+		<SendouSection gap="lg" title={t("calendar:newTournament.copy")}>
 			<div className="stack sm">
 				<label htmlFor={id}>{t("calendar:newTournament.copyLabel")}</label>
 				<div className="stack horizontal sm flex-wrap">
@@ -357,12 +362,16 @@ function TournamentSteps() {
 
 			<FormStep name="teams">
 				<div className={styles.stepColumn}>
-					<SendouSection title={t("calendar:newTournament.section.teamSize")}>
+					<SendouSection
+						gap="lg"
+						title={t("calendar:newTournament.section.teamSize")}
+					>
 						<div className="stack md">
 							<MemberCountFields />
 						</div>
 					</SendouSection>
 					<SendouSection
+						gap="lg"
 						title={t("calendar:newTournament.section.registration")}
 					>
 						<div className="stack md">
@@ -377,6 +386,7 @@ function TournamentSteps() {
 						</div>
 					</SendouSection>
 					<SendouSection
+						gap="lg"
 						title={t("calendar:newTournament.section.duringTournament")}
 					>
 						<div className="stack md">
@@ -385,6 +395,7 @@ function TournamentSteps() {
 						</div>
 					</SendouSection>
 					<SendouSection
+						gap="lg"
 						title={t("calendar:newTournament.section.typeAndVisibility")}
 					>
 						<div className="stack md">
@@ -412,7 +423,10 @@ function TournamentSteps() {
 
 			<FormStep name="prizes">
 				<div className={styles.stepColumn}>
-					<SendouSection title={t("calendar:newTournament.section.prizes")}>
+					<SendouSection
+						gap="lg"
+						title={t("calendar:newTournament.section.prizes")}
+					>
 						<div className="stack md">
 							{data.badgeOptions.length > 0 ? (
 								<FormField name="badges" options={data.badgeOptions} />
@@ -518,7 +532,7 @@ function TournamentReview() {
 	};
 
 	return (
-		<SendouSection title={t("calendar:newTournament.review")}>
+		<SendouSection gap="lg" title={t("calendar:newTournament.review")}>
 			<dl className={styles.review}>
 				{steps.flatMap((step) => {
 					const summary = summaries[step.name]?.filter(Boolean);

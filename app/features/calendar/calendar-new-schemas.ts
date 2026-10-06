@@ -145,8 +145,9 @@ export const calendarNewBaseSchema = v.object({
 			label: `options.regClosesAt.${option}` as const,
 		})),
 	}),
-	minMembersPerTeam: select({
+	minMembersPerTeam: radioGroup({
 		label: "labels.playersCount",
+		variant: "chip",
 		items: [4, 3, 2, 1].map((count) => ({
 			value: String(count),
 			label: () => `${count}v${count}`,

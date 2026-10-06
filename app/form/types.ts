@@ -103,6 +103,12 @@ export interface FormFieldInputGroup<T extends string, V extends string>
 	minLength?: number;
 }
 
+export interface FormFieldRadioGroup<T extends string, V extends string>
+	extends FormFieldInputGroup<T, V> {
+	/** "chip" renders the options as a horizontal row of toggle chips. */
+	variant?: "chip";
+}
+
 export interface FormFieldDatetime<T extends string> extends FormFieldBase<T> {
 	min?: () => Date;
 	max?: () => Date;
@@ -196,7 +202,7 @@ export type FormField<V extends string = string> =
 	| FormFieldSelect<"select", V>
 	| FormFieldSelectDynamic<"select-dynamic">
 	| FormFieldDualSelect<"dual-select", V>
-	| FormFieldInputGroup<"radio-group", V>
+	| FormFieldRadioGroup<"radio-group", V>
 	| FormFieldInputGroupDynamic<"radio-group-dynamic">
 	| FormFieldInputGroup<"checkbox-group", V>
 	| FormFieldInputGroupDynamic<"checkbox-group-dynamic">

@@ -41,6 +41,7 @@ import type {
 	FormFieldInputGroup,
 	FormFieldItems,
 	FormFieldItemsWithImage,
+	FormFieldRadioGroup,
 	FormFieldSelect,
 	FormsTranslationKey,
 	SelectOption,
@@ -564,7 +565,7 @@ export function dualSelectOptional<V extends string>(
 export function radioGroup<V extends string>(
 	args: WithTypedTranslationKeys<
 		WithTypedItemLabelsWithImage<
-			Omit<FormFieldInputGroup<"radio-group", V>, "type" | "initialValue">,
+			Omit<FormFieldRadioGroup<"radio-group", V>, "type" | "initialValue">,
 			V
 		>
 	> & {
