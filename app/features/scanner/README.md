@@ -235,6 +235,7 @@ pnpm test:unit:browser                  # includes tests/logic/ — the fixture-
 pnpm scanner:report                     # accuracy table + name character error rate across fixtures
 pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
 pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
+pnpm scanner:unpack-zip <zip> <new-dir> # validate + unpack a user's Game data zip (refuses anything matchZip doesn't write)
 pnpm scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out (--gpu, --record, see "WebGPU")
 pnpm scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
 pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
@@ -695,7 +696,10 @@ Negative cases
 detector's suite sweeps them. Every live misread should become a fixture —
 an expanded match card's `Game data` zip holds each analyzed frame
 (lossless WebP, pixel-exact) with a prefilled `expected.json` in a folder
-that drops into `tests/fixtures/<detector>/` as is. **Fixture ground-truth labels are
+that drops into `tests/fixtures/<detector>/` as is. A zip sent in by a user is
+untrusted: unpack it only with `pnpm scanner:unpack-zip`
+(`node/game-data-zip.ts`), which accepts nothing but that exact shape — the
+`scanner-misread` Claude skill drives the zip → fixtures → fix loop. **Fixture ground-truth labels are
 hand-corrected by the user (the Splatoon domain authority) — treat them as
 definitive over any matcher output.** The dev-only fixtures view
 (`/scanner?view=fixtures`) renders every fixture's frame beside its
