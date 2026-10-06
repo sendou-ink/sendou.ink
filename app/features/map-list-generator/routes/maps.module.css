@@ -1,9 +1,5 @@
 .container {
-	max-width: 38rem;
-}
-
-.poolSelector {
-	padding-block: var(--s-3);
+	max-width: 48rem;
 }
 
 .tournamentMapListLink {

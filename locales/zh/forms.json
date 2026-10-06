@@ -115,7 +115,7 @@
 	"labels.scrimMapPool": "场地池",
 	"labels.scrimMapsTournament": "赛事",
 	"placeholders.scrimMapPool": "https://sendou.ink/maps?pool=sz%3A3ffffff%3Btc%3A3555555",
-	"options.scrimMapSource.POOL": "场地池 URL",
+	"options.scrimMapSource.POOL": "",
 	"options.scrimMapSource.TOURNAMENT": "赛事",
 	"options.scrimFlexibility.notFlexible": "固定时间",
 	"options.scrimFlexibility.+30min": "+30 分钟",

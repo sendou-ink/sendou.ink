@@ -115,7 +115,7 @@
 	"labels.scrimMapPool": "Grupo de escenarios",
 	"labels.scrimMapsTournament": "Torneo",
 	"placeholders.scrimMapPool": "https://sendou.ink/maps?pool=sz%3A3ffffff%3Btc%3A3555555",
-	"options.scrimMapSource.POOL": "URL del grupo de escenarios",
+	"options.scrimMapSource.POOL": "",
 	"options.scrimMapSource.TOURNAMENT": "Torneo",
 	"options.scrimFlexibility.notFlexible": "Sin flexibilidad",
 	"options.scrimFlexibility.+30min": "+30 minutos",

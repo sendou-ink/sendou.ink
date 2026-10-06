@@ -3,7 +3,7 @@ import type * as v from "valibot";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
-import type { MapPool } from "~/features/map-list-generator/core/map-pool";
+import type { MapPoolQuickFill } from "~/components/MapPoolPicker";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { AnySyncSchema } from "~/utils/schema";
 import type forms from "../../locales/en/forms.json";
@@ -350,9 +350,6 @@ export type TeamSearchFieldOptions = {
 	onTeamSelected?: (team: TeamSearchResult | null) => void;
 	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
 };
-
-/** A preset the `map-pool` field offers in its quick fill row. */
-export type MapPoolQuickFill = { label: string; mapPool: MapPool };
 
 /** `options` prop config of the `map-pool` field. */
 export type MapPoolFieldOptions = {

@@ -1,11 +1,11 @@
 import { add, sub } from "date-fns";
 import * as v from "valibot";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
 	customField,
 	datetime,
 	dualSelectOptional,
 	idConstant,
+	mapPoolOptional,
 	radioGroupDynamic,
 	select,
 	selectDynamicOptional,
@@ -14,7 +14,6 @@ import {
 	stringConstant,
 	textArea,
 	textAreaOptional,
-	textFieldOptional,
 	toggle,
 	tournamentSearchOptional,
 } from "~/form/fields";
@@ -194,15 +193,7 @@ export const submitMapListFormSchema = v.pipe(
 		source: radioGroupDynamic({
 			label: "labels.scrimMapSource",
 		}),
-		serializedPool: textFieldOptional({
-			label: "labels.scrimMapPool",
-			placeholder: "placeholders.scrimMapPool",
-			maxLength: 500,
-			validate: {
-				func: (val) => MapPool.fromUserInput(val) !== null,
-				message: "forms:errors.invalidMapPool",
-			},
-		}),
+		serializedPool: mapPoolOptional({ label: "labels.scrimMapPool" }),
 		tournamentId: tournamentSearchOptional({
 			label: "labels.scrimMapsTournament",
 		}),

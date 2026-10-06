@@ -16,14 +16,11 @@ test.describe("Map List Generator", () => {
 		await mapListPage.toggleMode("Museum d'Alfonsino", "Splat Zones");
 		await mapListPage.toggleMode("Hagglefish Market", "Splat Zones");
 		await mapListPage.toggleMode("Manta Maria", "Tower Control");
-		await expect(
-			mapListPage.modeButton("Manta Maria", "Tower Control"),
-		).toHaveAttribute("aria-pressed", "true");
+		await expect(mapListPage.stageCheckbox("Manta Maria")).toBeChecked();
 
 		await mapListPage.reloadWithPersistedPool();
-		await expect(
-			mapListPage.modeButton("Museum d'Alfonsino", "Splat Zones"),
-		).toHaveAttribute("aria-pressed", "true");
+		// the picker opens on the first mode that has stages
+		await expect(mapListPage.stageCheckbox("Museum d'Alfonsino")).toBeChecked();
 
 		await mapListPage.createMapList();
 

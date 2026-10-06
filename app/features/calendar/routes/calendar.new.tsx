@@ -12,8 +12,8 @@ import { ModeImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
+import { useMapPoolQuickFill } from "~/components/MapPoolPicker";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { SENDOUQ_MAP_POOL } from "~/features/match-profile/banned-maps";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type {
 	TeamPickPool,
@@ -29,7 +29,6 @@ import {
 	useFormFieldContext,
 	useFormSteps,
 } from "~/form/SendouForm";
-import type { MapPoolQuickFill } from "~/form/types";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -920,21 +919,4 @@ function CustomTeamPickPoolField({
 			</Alert>
 		</div>
 	);
-}
-
-function useMapPoolQuickFill(): MapPoolQuickFill[] {
-	const { t } = useTranslation(["forms"]);
-
-	return [
-		{
-			label: t("forms:mapPool.quickFill.sendouQ"),
-			mapPool: new MapPool(
-				SENDOUQ_MAP_POOL.stageModePairs.filter((pair) => pair.mode !== "TW"),
-			),
-		},
-		{
-			label: t("forms:mapPool.quickFill.rankedModes"),
-			mapPool: MapPool.ANARCHY,
-		},
-	];
 }

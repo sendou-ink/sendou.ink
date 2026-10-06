@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
+import { useMapPoolQuickFill } from "~/components/MapPoolPicker";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type { loader } from "../loaders/scrims.$id.server";
@@ -70,9 +71,12 @@ function SourceField({
 
 function SourceDependentFields() {
 	const { values } = useFormFieldContext();
+	const quickFill = useMapPoolQuickFill();
 	const source = values.source as SourceValue;
 
-	if (source === "POOL") return <FormField name="serializedPool" />;
+	if (source === "POOL") {
+		return <FormField name="serializedPool" options={{ quickFill }} />;
+	}
 	if (source === "TOURNAMENT") return <FormField name="tournamentId" />;
 	return null;
 }

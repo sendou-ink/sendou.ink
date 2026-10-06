@@ -30,23 +30,21 @@ export class MapListGeneratorPage {
 		await expectIsHydrated(this.page);
 	}
 
-	stageRow(stageName: string) {
-		return this.page.getByRole("group", { name: stageName });
-	}
-
-	modeButton(stageName: string, modeName: string) {
-		return this.stageRow(stageName).getByRole("button", {
-			name: modeName,
-			exact: true,
-		});
+	/** Checkbox of a stage in the given mode's tab of the map pool picker. */
+	stageCheckbox(stageName: string) {
+		return this.page
+			.getByRole("tabpanel")
+			.getByRole("checkbox", { name: stageName, exact: true });
 	}
 
 	async toggleMode(stageName: string, modeName: string) {
-		await this.modeButton(stageName, modeName).click();
+		await this.page.getByRole("tab", { name: modeName }).click();
+		await this.stageCheckbox(stageName).click();
 	}
 
 	async clearMapPool() {
 		await this.locators.clearButton.click();
+		await this.page.getByTestId("confirm-button").click();
 	}
 
 	async createMapList() {

@@ -1,0 +1,40 @@
+.stageRow {
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+	gap: var(--s-2);
+}
+
+.stageNameRow {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	align-items: center;
+	justify-content: space-between;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-2);
+	padding-block: var(--s-1-5);
+	padding-inline: var(--s-3);
+}
+
+@container (width >= 560px) {
+	.stageNameRow {
+		flex-direction: row;
+	}
+}
+
+.stageImage {
+	border-radius: var(--radius-box);
+	height: 100%;
+	object-fit: cover;
+}
+
+.modes {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--s-1);
+}

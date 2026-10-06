@@ -76,8 +76,11 @@ export class ScrimPage {
 	}
 
 	async submitPoolMapList(serializedPool: string) {
-		await this.page.getByLabel("Pool URL").click();
-		await this.mapListForm.fill("serializedPool", serializedPool);
+		await this.page.getByRole("radio", { name: "Map pool" }).click();
+		await this.page
+			.getByRole("button", { name: "Paste from a map pool link" })
+			.click();
+		await this.page.getByLabel("Map pool link").fill(serializedPool);
 		await this.submitMapList();
 	}
 

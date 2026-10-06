@@ -115,7 +115,7 @@
 	"labels.scrimMapPool": "Map pool",
 	"labels.scrimMapsTournament": "Tournament",
 	"placeholders.scrimMapPool": "https://sendou.ink/maps?pool=sz%3A3ffffff%3Btc%3A3555555",
-	"options.scrimMapSource.POOL": "Pool URL",
+	"options.scrimMapSource.POOL": "Map pool",
 	"options.scrimMapSource.TOURNAMENT": "Tournament",
 	"options.scrimFlexibility.notFlexible": "Not flexible",
 	"options.scrimFlexibility.+30min": "+30 minutes",
