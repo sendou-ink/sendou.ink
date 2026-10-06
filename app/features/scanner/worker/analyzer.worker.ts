@@ -15,11 +15,14 @@ import {
 	BlobSource,
 	EncodedPacketSink,
 	Input,
-	type VideoSample,
 	VideoSampleSink,
 } from "mediabunny";
-import type { Mat } from "../core/cv";
-import { loadOpenCV } from "../core/cv";
+import {
+	CANONICAL_HEIGHT,
+	CANONICAL_WIDTH,
+	detectContentBox,
+} from "../core/canonical";
+import { getCV, loadOpenCV, type Mat } from "../core/cv";
 import { runDetectorPass } from "../core/detectors/frame-pass";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import {
@@ -32,10 +35,17 @@ import {
 	type ScanTelemetry,
 } from "../core/detectors/telemetry";
 import type { Detector } from "../core/detectors/types";
-import { type FrameData, normalizeFrame, toMat } from "../core/image";
-import { TimelineBuilder } from "../core/timeline/index";
 import {
-	MAX_OPEN_FRAMES,
+	type FrameData,
+	normalizeFrame,
+	provideFrameGray,
+	toMat,
+} from "../core/image";
+import { TimelineBuilder } from "../core/timeline/index";
+import { createFrameEncoder } from "./frame-encode";
+import {
+	type FrameSource,
+	maxOpenFrames,
 	openFrameSource,
 	type SourceItem,
 } from "./frame-source";
@@ -54,13 +64,23 @@ import type {
 } from "./protocol";
 import {
 	createCanvasReadback,
-	createFrameReader,
+	createFrameReaderPool,
 	type FrameReader,
+	type ReadbackPath,
+	type ReadFrame,
 } from "./readback";
+import { webGpuReadbackMatches } from "./readback-parity";
 import { fetchScoreboardResources } from "./resources";
 
 /** Widest skim hop, so long-GOP recordings can't slip a results screen (~10s) or intro (~7s) between samples. */
 const MAX_SKIM_STRIDE_S = 2.5;
+/**
+ * Frames read back ahead of their step at once: each frame the pass in
+ * flight can make due next (likeliest first), then the likeliest after it.
+ */
+const READ_AHEAD = 3;
+/** readback workers per analyzer, so reads ahead run side by side */
+const READERS = 2;
 const PROGRESS_POST_INTERVAL_MS = 400;
 const PREVIEW_POST_INTERVAL_MS = 600;
 const PREVIEW_WIDTH = 480;
@@ -80,6 +100,8 @@ const UNDECODABLE_SKIP_S = 5;
 interface PreparedFrame {
 	pixels: FrameData;
 	frame: Mat;
+	/** frameGray's conversion, computed with the readback */
+	gray?: Uint8Array;
 }
 
 /** A decoded VoD sample awaiting its step. */
@@ -113,11 +135,24 @@ const readFrame = createCanvasReadback();
 let frameReader: FrameReader | null = null;
 /** VoD scans decode their dense stretches in a helper worker, once it has booted; null where it cannot run. */
 let decoder: Promise<Worker | null> | null = null;
+/** analyzed frames' images are encoded in a helper worker, created on the first one */
+let encodeFrame: ((pixels: FrameData) => Promise<Blob>) | null = null;
 /** the last normalization queued: they run one at a time, as the GPU scaler reuses its buffers */
 let normalizing: Promise<unknown> = Promise.resolve();
 
-function post(message: WorkerResponse, transfer: Transferable[] = []): void {
-	self.postMessage(message, { transfer });
+/**
+ * Messages go out in call order; one still awaiting its frame's encode holds
+ * back the later ones, never the analysis of the next frame.
+ */
+let posting: Promise<void> = Promise.resolve();
+
+function post(
+	message: WorkerResponse | Promise<WorkerResponse>,
+	transfer: Transferable[] = [],
+): void {
+	posting = posting.then(async () => {
+		self.postMessage(await message, { transfer });
+	});
 }
 
 async function init({
@@ -130,7 +165,7 @@ async function init({
 	// VoD scans need the helper workers: start them booting alongside init
 	if (typeof VideoDecoder !== "undefined") {
 		void decodeWorker();
-		frameReader ??= createFrameReader(readFrame);
+		frameReader ??= createFrameReaderPool(READERS);
 	}
 	try {
 		await loadOpenCV();
@@ -191,9 +226,22 @@ async function analyzeFrame(
 }
 
 /** Normalizes read-back pixels (caller owns the frame), after any normalization already queued. */
-function prepareFrame(pixels: FrameData): Promise<PreparedFrame> {
+function prepareFrame({
+	canonical,
+	gray,
+	...pixels
+}: ReadFrame): Promise<PreparedFrame> {
+	if (canonical) {
+		// normalized along with the readback
+		const cv = getCV();
+		const frame = new cv.Mat(CANONICAL_HEIGHT, CANONICAL_WIDTH, cv.CV_8UC4);
+		frame.data.set(canonical);
+		return Promise.resolve({ pixels, frame, gray });
+	}
 	const prepared = normalizing.then(async () => {
 		const src = toMat(pixels);
+		// normalizing would only copy it
+		if (isCanonical(pixels)) return { pixels, frame: src, gray };
 		try {
 			const frame =
 				gpuScaler && gpuRunner()
@@ -214,17 +262,19 @@ function prepareFrame(pixels: FrameData): Promise<PreparedFrame> {
  * every gate is recorded.
  */
 async function analyzePrepared(
-	{ pixels, frame }: PreparedFrame,
+	{ pixels, frame, gray }: PreparedFrame,
 	t: number,
 	due: readonly string[],
 	onGated?: (parsing: readonly string[]) => void,
 ): Promise<void> {
 	if (telemetry) telemetry.analyzedFrames++;
+	if (gray) provideFrameGray(frame, gray);
 
 	// ship back the exact analyzed pixels (lossless, capture resolution) so the
 	// UI never re-grabs a later frame — encoded at most once per frame
 	let encoded: Promise<Blob> | null = null;
 	const frameBlob = () => {
+		encodeFrame ??= createFrameEncoder();
 		encoded ??= encodeFrame(pixels);
 		return encoded;
 	};
@@ -246,18 +296,21 @@ async function analyzePrepared(
 				const { action } = shadowTimeline.push(event);
 				if (action === "added" || action === "replaced") listed = true;
 			}
-			const blob =
-				attachFrames && listed && detector.attachFrame !== false
-					? await frameBlob()
-					: undefined;
-			post({
+			const result: WorkerResponse = {
 				kind: "result",
 				detector: detector.id,
 				t,
 				gate,
 				events,
-				frame: blob,
-			});
+			};
+			post(
+				attachFrames && listed && detector.attachFrame !== false
+					? frameBlob().then(
+							(image) => ({ ...result, frame: image }),
+							() => result,
+						)
+					: result,
+			);
 		}
 	} finally {
 		frame.delete();
@@ -312,28 +365,19 @@ async function scanChunk({
 		if (!track || !(await track.canDecode())) {
 			throw new Error("worker cannot decode this file");
 		}
-		let samples = new VideoSampleSink(track);
 		const packets = new EncodedPacketSink(track);
 
-		frameReader ??= createFrameReader(readFrame);
+		frameReader ??= createFrameReaderPool(READERS);
 		const reader = frameReader;
+		const path: ReadbackPath = (await webGpuReadbackMatches(
+			track,
+			(tStart + tEnd) / 2,
+			reader,
+		))
+			? "webgpu"
+			: "canvas";
+		let samples = new VideoSampleSink(track, { hardwareAcceleration });
 
-		/** A skimmed sample as a frame, plus a preview thumbnail every PREVIEW_POST_INTERVAL_MS. */
-		const pull = async (sample: VideoSample) => {
-			const t = sample.timestamp;
-			const frame = sample.toVideoFrame();
-			sample.close();
-			let preview: ImageBitmap | undefined;
-			const now = performance.now();
-			if (now - lastPreviewAt >= PREVIEW_POST_INTERVAL_MS) {
-				lastPreviewAt = now;
-				preview = await createImageBitmap(frame, {
-					resizeWidth: PREVIEW_WIDTH,
-					resizeHeight: PREVIEW_HEIGHT,
-				});
-			}
-			return { t, frame, preview };
-		};
 		/** A sample's place in the stream: telemetry and the cursor. */
 		const account = (t: number) => {
 			if (telemetry) {
@@ -361,17 +405,74 @@ async function scanChunk({
 				preview ? [preview] : [],
 			);
 		};
-		const readAndAnalyze = async (frame: VideoFrame, t: number) => {
-			const due = scheduler!.dueDetectors(t);
-			if (due.length === 0) {
-				frame.close();
-				return;
-			}
-			await analyzePrepared(
-				await reader.read(frame).then(prepareFrame),
-				t,
-				due,
+		const previewOptions = {
+			intervalMs: PREVIEW_POST_INTERVAL_MS,
+			width: PREVIEW_WIDTH,
+			height: PREVIEW_HEIGHT,
+		};
+		const resolution = await track.getTimeResolution();
+		const maxOpen = await maxOpenFrames(track);
+		/** a packet's timestamp as its decoded sample carries it */
+		const sampleT = (t: number) => Math.round(t * resolution) / resolution;
+		/**
+		 * The lane's one decode stream, dense and skim alike, so switching
+		 * between them never decodes a stretch twice; reopened at the cursor
+		 * after a failure.
+		 */
+		let source: FrameSource | null = null;
+		let upcoming: Promise<SourceItem | null> | null = null;
+		let exhausted = false;
+		/** decoded, stream order, steps not taken yet */
+		const queue: Pulled[] = [];
+		const worker = await decodeWorker();
+		const openSource = () => {
+			source ??= openFrameSource(
+				worker,
+				file,
+				cursor,
+				tEnd,
+				previewOptions,
+				hardwareAcceleration,
 			);
+			return source;
+		};
+		const next = async (): Promise<Pulled | null> => {
+			upcoming ??= source!.next();
+			const item = await upcoming;
+			upcoming = null;
+			if (!item) {
+				exhausted = true;
+				return null;
+			}
+			return { ...item, read: null };
+		};
+		/** Hands the item's frame to the reader: read back and normalized ahead of its step. */
+		const readAhead = (item: Pulled) => {
+			item.read = reader.read(item.frame!, { path }).then(prepareFrame);
+			item.frame = null;
+			source!.release(item);
+		};
+		const release = (item: Pulled) => {
+			if (item.frame) {
+				item.frame.close();
+				item.frame = null;
+				source!.release(item);
+			}
+			item.read?.then(
+				({ frame }) => frame.delete(),
+				() => {},
+			);
+			item.read = null;
+		};
+		const closeSource = () => {
+			for (const item of queue.splice(0)) {
+				release(item);
+				item.preview?.close();
+			}
+			source?.close();
+			source = null;
+			upcoming = null;
+			exhausted = false;
 		};
 
 		/**
@@ -382,54 +483,11 @@ async function scanChunk({
 		 * one frame at a time. What overlaps is only the wait: while a
 		 * detector pass runs (much of it awaiting the GPU), the following
 		 * samples are decoded and held, those certainly not due (before the
-		 * pass's lower bound on the next due time) released, and the one most
-		 * likely due read back in the helper worker.
+		 * pass's lower bound on the next due time) released, and the ones
+		 * most likely due next read back in the helper workers.
 		 */
 		const scanActive = async (): Promise<"calm" | "end"> => {
-			const source = openFrameSource(
-				await decodeWorker(),
-				file,
-				cursor,
-				tEnd,
-				{
-					intervalMs: PREVIEW_POST_INTERVAL_MS,
-					width: PREVIEW_WIDTH,
-					height: PREVIEW_HEIGHT,
-				},
-				hardwareAcceleration,
-			);
-			let upcoming: Promise<SourceItem | null> | null = null;
-			let exhausted = false;
-			/** decoded, stream order, steps not taken yet */
-			const queue: Pulled[] = [];
-			const next = async (): Promise<Pulled | null> => {
-				upcoming ??= source.next();
-				const item = await upcoming;
-				upcoming = null;
-				if (!item) {
-					exhausted = true;
-					return null;
-				}
-				return { ...item, read: null };
-			};
-			/** Hands the item's frame to the reader: read back and normalized ahead of its step. */
-			const readAhead = (item: Pulled) => {
-				item.read = reader.read(item.frame!).then(prepareFrame);
-				item.frame = null;
-				source.release();
-			};
-			const release = (item: Pulled) => {
-				if (item.frame) {
-					item.frame.close();
-					item.frame = null;
-					source.release();
-				}
-				item.read?.then(
-					({ frame }) => frame.delete(),
-					() => {},
-				);
-				item.read = null;
-			};
+			const stream = openSource();
 
 			/** Awaits the frame and runs its pass, reading ahead meanwhile. */
 			const analyzeAhead = async (
@@ -438,15 +496,22 @@ async function scanChunk({
 				due: readonly string[],
 			) => {
 				let bound = scheduler!.nextDueLowerBound(t, due);
-				let guess = scheduler!.predictNextDueT(t, due);
-				source.floor(bound);
+				const likely = scheduler!.predictDueTimes(t, due, 2);
+				let guesses = readAheadTimes(
+					likely,
+					scheduler!.nextDueCandidates(t, due),
+				);
+				stream.floor(bound);
 				let wake: () => void = () => {};
 				let finished = false;
 				const done = prepared.then((frame) =>
 					analyzePrepared(frame, t, due, (parsing) => {
 						bound = scheduler!.nextDueLowerBound(t, parsing);
-						guess = bound;
-						source.floor(bound);
+						guesses = readAheadTimes(
+							likely.filter((guess) => guess >= bound),
+							scheduler!.nextDueCandidates(t, parsing),
+						);
+						stream.floor(bound);
 						wake();
 					}),
 				);
@@ -463,15 +528,19 @@ async function scanChunk({
 				try {
 					while (!finished) {
 						for (const item of queue) if (item.t < bound) release(item);
-						const held = queue.filter((item) => item.frame || item.read);
-						if (!held.some((item) => item.read)) {
-							const likely = held.find((item) => item.t >= guess);
-							if (likely) readAhead(likely);
+						let reading = queue.filter((item) => item.read).length;
+						for (const guess of guesses) {
+							if (reading >= READ_AHEAD) break;
+							const candidate = queue.find((item) => item.t >= guess);
+							if (candidate?.frame) {
+								readAhead(candidate);
+								reading++;
+							}
 						}
+						const open = queue.filter((item) => item.frame).length;
 						const pulling =
 							!exhausted &&
-							held.length < MAX_OPEN_FRAMES &&
-							!held.some((item) => item.read) &&
+							open < maxOpen &&
 							queue.every((item) => item.t < tEnd);
 						const woken = new Promise<void>((resolve) => {
 							wake = resolve;
@@ -480,7 +549,7 @@ async function scanChunk({
 							await woken;
 							continue;
 						}
-						upcoming ??= source.next();
+						upcoming ??= stream.next();
 						if (
 							(await Promise.race([upcoming.then(() => true), woken])) !== true
 						)
@@ -496,98 +565,154 @@ async function scanChunk({
 				await done;
 			};
 
-			try {
-				for (;;) {
-					// every sample before the next due time is certainly skipped
-					source.floor(scheduler!.nextDueT());
-					const item = queue.shift() ?? (exhausted ? null : await next());
-					if (!item) return "end";
-					if (chunkAborted || item.t >= tEnd) {
-						release(item);
-						item.preview?.close();
-						return "end";
-					}
-					account(item.t);
-					const due =
-						item.t >= scheduler!.nextDueT()
-							? scheduler!.dueDetectors(item.t)
-							: [];
-					if (due.length > 0) {
-						if (!item.read) readAhead(item);
-						const read = item.read!;
-						item.read = null;
-						await analyzeAhead(read, item.t, due);
-					} else {
-						release(item);
-					}
-					report(item.preview);
-					if (scheduler!.calm(cursor)) return "calm";
-				}
-			} finally {
-				for (const item of queue) {
+			for (;;) {
+				// every sample before the next due time is certainly skipped
+				stream.floor(scheduler!.nextDueT());
+				const item = queue.shift() ?? (exhausted ? null : await next());
+				if (!item) return "end";
+				if (chunkAborted || item.t >= tEnd) {
 					release(item);
 					item.preview?.close();
+					return "end";
 				}
-				source.close();
+				account(item.t);
+				const due =
+					item.t >= scheduler!.nextDueT()
+						? scheduler!.dueDetectors(item.t)
+						: [];
+				if (due.length > 0) {
+					if (!item.read) readAhead(item);
+					const read = item.read!;
+					item.read = null;
+					await analyzeAhead(read, item.t, due);
+				} else {
+					release(item);
+				}
+				report(item.preview);
+				if (scheduler!.calm(cursor)) return "calm";
 			}
 		};
 
-		while (!chunkAborted && cursor < tEnd) {
-			try {
-				if (mode === "active") {
-					// dense sequential decode: every frame is seen, the scheduler
-					// decides which are worth analyzing
-					if ((await scanActive()) === "end") break;
-					mode = "skim";
-				} else {
-					// skim: hop keyframe to keyframe (single-frame decodes) while
-					// calm, capped so long GOPs cannot hide a short screen
-					const key = await packets.getKeyPacket(cursor + MAX_SKIM_STRIDE_S, {
-						verifyKeyPackets: true,
-					});
-					const target =
-						key && key.timestamp > cursor
-							? key.timestamp
-							: cursor + MAX_SKIM_STRIDE_S;
-					if (target >= tEnd) {
-						cursor = tEnd;
-						break;
-					}
-					const sample = await samples.getSample(target);
-					if (!sample) {
-						cursor = target;
-						continue;
-					}
-					const { t, frame, preview } = await pull(sample);
-					account(t);
-					if (t >= scheduler!.nextDueT()) await readAndAnalyze(frame, t);
-					else frame.close();
-					report(preview);
-					cursor = Math.max(cursor, target);
-					if (!scheduler!.calm(cursor)) mode = "active";
+		/**
+		 * The sample at `targetT` off the lane's stream, the samples before it
+		 * dropped; null when the stream let it go before it was asked for.
+		 */
+		const skimTo = async (targetT: number): Promise<Pulled | null> => {
+			const stream = openSource();
+			stream.seek(targetT);
+			for (;;) {
+				const item = queue.shift() ?? (exhausted ? null : await next());
+				if (!item) return null;
+				if (item.t < targetT) {
+					release(item);
+					item.preview?.close();
+					continue;
 				}
-			} catch (error) {
-				// resume at the cursor: a first failure there retries as is
-				// (a crashed GPU process is back by then), a second decodes in
-				// software from then on, a third hops over the spot
-				if (chunkAborted || ++failures > MAX_CHUNK_FAILURES) throw error;
-				failuresHere = cursor > failedAt ? 1 : failuresHere + 1;
-				failedAt = cursor;
-				// biome-ignore lint/suspicious/noConsole: the scan carries on, so say what it recovered from
-				console.warn(
-					`scanner: chunk ${chunkIndex} failed at ${cursor.toFixed(1)}s, resuming`,
-					error,
-				);
-				if (failuresHere >= 2 && hardwareAcceleration !== "prefer-software") {
-					hardwareAcceleration = "prefer-software";
-					samples = new VideoSampleSink(track, { hardwareAcceleration });
-				} else if (failuresHere >= 2) {
-					cursor = Math.min(tEnd, cursor + UNDECODABLE_SKIP_S);
-				}
-				await new Promise((resolve) =>
-					setTimeout(resolve, CHUNK_RETRY_DELAY_MS),
-				);
+				if (item.t === targetT && (item.frame || item.read)) return item;
+				if (item.t === targetT) item.preview?.close();
+				else queue.unshift(item);
+				return null;
 			}
+		};
+
+		try {
+			while (!chunkAborted && cursor < tEnd) {
+				try {
+					if (mode === "active") {
+						// dense sequential decode: every frame is seen, the scheduler
+						// decides which are worth analyzing
+						if ((await scanActive()) === "end") break;
+						mode = "skim";
+					} else {
+						// skim: hop keyframe to keyframe while calm, capped so long
+						// GOPs cannot hide a short screen
+						const key = await packets.getKeyPacket(cursor + MAX_SKIM_STRIDE_S, {
+							verifyKeyPackets: true,
+						});
+						const target =
+							key && key.timestamp > cursor
+								? key.timestamp
+								: cursor + MAX_SKIM_STRIDE_S;
+						if (target >= tEnd) {
+							cursor = tEnd;
+							break;
+						}
+						// the sample getSample(target) is: the last one at or before it
+						const targetPacket = await packets.getPacket(target, {
+							verifyKeyPackets: true,
+						});
+						if (!targetPacket) {
+							cursor = target;
+							continue;
+						}
+						let item = await skimTo(sampleT(targetPacket.timestamp));
+						if (!item) {
+							// gone by before the hop was known: decode it afresh
+							const sample = await samples.getSample(target);
+							if (!sample) {
+								cursor = target;
+								continue;
+							}
+							const t = sample.timestamp;
+							const frame = sample.toVideoFrame();
+							sample.close();
+							item = { t, frame, read: null };
+							// not the stream's: nothing to release on it
+							item.read = reader.read(frame, { path }).then(prepareFrame);
+							item.frame = null;
+						}
+						const { t } = item;
+						if (!item.preview && item.frame) {
+							const now = performance.now();
+							if (now - lastPreviewAt >= PREVIEW_POST_INTERVAL_MS) {
+								lastPreviewAt = now;
+								item.preview = await createImageBitmap(item.frame, {
+									resizeWidth: PREVIEW_WIDTH,
+									resizeHeight: PREVIEW_HEIGHT,
+								});
+							}
+						}
+						account(t);
+						const due =
+							t >= scheduler!.nextDueT() ? scheduler!.dueDetectors(t) : [];
+						if (due.length > 0) {
+							if (!item.read) readAhead(item);
+							const read = item.read!;
+							item.read = null;
+							await analyzePrepared(await read, t, due);
+						} else {
+							release(item);
+						}
+						report(item.preview);
+						cursor = Math.max(cursor, target);
+						if (!scheduler!.calm(cursor)) mode = "active";
+					}
+				} catch (error) {
+					closeSource();
+					// resume at the cursor: a first failure there retries as is
+					// (a crashed GPU process is back by then), a second decodes in
+					// software from then on, a third hops over the spot
+					if (chunkAborted || ++failures > MAX_CHUNK_FAILURES) throw error;
+					failuresHere = cursor > failedAt ? 1 : failuresHere + 1;
+					failedAt = cursor;
+					// biome-ignore lint/suspicious/noConsole: the scan carries on, so say what it recovered from
+					console.warn(
+						`scanner: chunk ${chunkIndex} failed at ${cursor.toFixed(1)}s, resuming`,
+						error,
+					);
+					if (failuresHere >= 2 && hardwareAcceleration !== "prefer-software") {
+						hardwareAcceleration = "prefer-software";
+						samples = new VideoSampleSink(track, { hardwareAcceleration });
+					} else if (failuresHere >= 2) {
+						cursor = Math.min(tEnd, cursor + UNDECODABLE_SKIP_S);
+					}
+					await new Promise((resolve) =>
+						setTimeout(resolve, CHUNK_RETRY_DELAY_MS),
+					);
+				}
+			}
+		} finally {
+			closeSource();
 		}
 
 		if (telemetry) {
@@ -645,23 +770,6 @@ function gpuRunner() {
 	return undefined;
 }
 
-/**
- * Lossless WebP of read-back pixels (half a PNG's size, exact pixels), the
- * frame a misread is reported and made into a fixture with. Browsers without
- * a WebP encoder fall back to PNG.
- */
-function encodeFrame({ width, height, data }: FrameData): Promise<Blob> {
-	const canvas = new OffscreenCanvas(width, height);
-	canvas
-		.getContext("2d")!
-		.putImageData(
-			new ImageData(data as Uint8ClampedArray<ArrayBuffer>, width, height),
-			0,
-			0,
-		);
-	return canvas.convertToBlob({ type: "image/webp", quality: 1 });
-}
-
 function freshTelemetry(): ScanTelemetry | null {
 	return collectTelemetry ? createScanTelemetry() : null;
 }
@@ -673,3 +781,28 @@ self.onmessage = (e: MessageEvent) => {
 	else if (msg.kind === "scanChunk") void scanChunk(msg);
 	else if (msg.kind === "abortChunk") chunkAborted = true;
 };
+
+/**
+ * What to read ahead, in order: the likeliest next due time, the other
+ * times the pass in flight can make due next, then the likeliest after that.
+ */
+function readAheadTimes(
+	likely: readonly number[],
+	candidates: readonly number[],
+): number[] {
+	const [first, ...later] = likely;
+	return [
+		...(first === undefined ? [] : [first]),
+		...candidates.filter((candidate) => candidate !== first),
+		...later,
+	];
+}
+
+/** A frame normalizeFrame would only copy: canonical size, no bars. */
+function isCanonical({ width, height, data }: FrameData): boolean {
+	return (
+		width === CANONICAL_WIDTH &&
+		height === CANONICAL_HEIGHT &&
+		detectContentBox(width, height, data) === null
+	);
+}

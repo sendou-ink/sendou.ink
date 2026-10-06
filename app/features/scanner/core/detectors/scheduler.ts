@@ -170,18 +170,57 @@ export class DetectorScheduler {
 	}
 
 	/**
-	 * `nextDueT()` once the `due` detectors are checked at `t`, guessing each
-	 * keeps its current cadence (gates mostly report what they did last
-	 * time); a hint for reading ahead, never a decision.
+	 * Every value `nextDueT()` can take once the `pending` detectors report
+	 * their checks at `t`, ascending: each of them lands on its refine or its
+	 * search cadence. The first is `nextDueLowerBound`.
 	 */
-	predictNextDueT(t: number, due: readonly string[]): number {
-		let next = Number.POSITIVE_INFINITY;
+	nextDueCandidates(t: number, pending: readonly string[]): number[] {
+		let settled = Number.POSITIVE_INFINITY;
+		const possible: number[] = [];
+		for (const [id, state] of this.#states) {
+			if (pending.includes(id)) {
+				possible.push(
+					t + this.#interval({ ...state, streak: null, gatePassing: true }),
+					t + this.#interval({ ...state, streak: null, gatePassing: false }),
+				);
+				continue;
+			}
+			if (state.lastCheckT === undefined) return [Number.NEGATIVE_INFINITY];
+			settled = Math.min(settled, state.lastCheckT + this.#interval(state));
+		}
+		const candidates = possible.filter((candidate) => candidate < settled);
+		if (Number.isFinite(settled)) candidates.push(settled);
+		return [...new Set(candidates)].sort((a, b) => a - b);
+	}
+
+	/**
+	 * The next `count` times `nextDueT()` reaches once the `due` detectors
+	 * are checked at `t`, guessing each detector keeps its current cadence
+	 * (gates mostly report what they did last time) and is checked right at
+	 * its due time; a hint for reading ahead, never a decision.
+	 */
+	predictDueTimes(t: number, due: readonly string[], count: number): number[] {
+		const checks: { lastCheckT: number; interval: number }[] = [];
 		for (const [id, state] of this.#states) {
 			const lastCheckT = due.includes(id) ? t : state.lastCheckT;
-			if (lastCheckT === undefined) return Number.NEGATIVE_INFINITY;
-			next = Math.min(next, lastCheckT + this.#interval(state));
+			if (lastCheckT === undefined) return [Number.NEGATIVE_INFINITY];
+			checks.push({ lastCheckT, interval: this.#interval(state) });
 		}
-		return next;
+		const times: number[] = [];
+		while (times.length < count) {
+			let next = Number.POSITIVE_INFINITY;
+			for (const check of checks) {
+				next = Math.min(next, check.lastCheckT + check.interval);
+			}
+			if (!Number.isFinite(next)) break;
+			times.push(next);
+			for (const check of checks) {
+				if (check.lastCheckT + check.interval <= next + INTERVAL_EPSILON_S) {
+					check.lastCheckT = next;
+				}
+			}
+		}
+		return times;
 	}
 
 	/** Detector ids that should gate the frame at `t`. */

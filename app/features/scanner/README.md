@@ -503,28 +503,52 @@ sequenceDiagram
   parse stall can no longer swallow a results screen whole (the exact
   failure that cost a live match its scoreboard on 2026-08-22).
 - VoD scans (`components/vod-scan.ts`): on the WebCodecs path each worker
-  scans its own contiguous slice (no frames cross the main thread), with two
-  helper workers of its own that keep the waits off its thread: the dense
-  stretches decode in `worker/decode.worker.ts` (mediabunny; the per-sample
-  bookkeeping of a 60 fps slice cost the analyzer ~0.15 ms a sample), and
-  frames are read back in `worker/readback.worker.ts` (the canvas readback
-  blocks its thread for 3-5 ms a frame). The analyzer takes every sample's
-  step strictly in stream order — bookkeeping, analysis when due, the calm
-  check — against the scheduler state the previous analysis left, so the
-  analyzed frames are exactly those of a one-frame-at-a-time scan. Only the
-  waits overlap: while a pass runs, the next samples are decoded and held,
-  those before `nextDueLowerBound` (certainly skipped: a gate or parse only
-  moves a detector between its refine and search cadences) released, and
-  the one `predictNextDueT` expects to be next read back and normalized
-  ahead. The decode worker is told that lower bound (`floor`) and closes the
-  samples before it itself, sending bare timestamps. When the scheduler
-  reports calm (no gate
-  pass for a quiet period, no open match), the worker skims
+  scans its own contiguous slice (no frames cross the main thread), with
+  helper workers of its own that keep the waits off its thread: its slice
+  decodes in `worker/decode.worker.ts` (mediabunny; the per-sample
+  bookkeeping of a 60 fps slice cost the analyzer ~0.15 ms a sample), frames
+  are read back in two `worker/readback.worker.ts` and the analyzed frames'
+  images encoded in `worker/frame-encode.worker.ts` (a lossless 1080p WebP
+  blocks its thread ~30 ms; the results still post in order). The analyzer
+  takes every sample's step strictly in stream order — bookkeeping, analysis
+  when due, the calm check — against the scheduler state the previous
+  analysis left, so the analyzed frames are exactly those of a
+  one-frame-at-a-time scan. Only the waits overlap: while a pass runs, the
+  next samples are decoded and held, those before `nextDueLowerBound`
+  (certainly skipped: a gate or parse only moves a detector between its
+  refine and search cadences) released, and the ones `predictDueTimes` and
+  `nextDueCandidates` expect next read back and normalized ahead. The decode
+  worker is told that lower bound (`floor`) and closes the samples before it
+  itself, sending bare timestamps — and on AV1 never decodes a sample before
+  it whose unit refreshes no reference slot (`core/av1-refs.ts`: such a unit
+  leaves the decoder as it found it). When the scheduler reports calm (no
+  gate pass for a quiet period, no open match), the worker skims
   keyframe-to-keyframe (hop capped at 2.5s so short screens can't hide),
-  snapping back to dense decode on any gate pass. The seek fallback drives
+  snapping back to dense decode on any gate pass. Dense and skim stretches
+  read one decode stream per slice (`worker/frame-source.ts`): a hop `seek`s
+  it to the sample `getSample` would return, decoding forward from where it
+  stands or jumping to the hop's keyframe when that lies ahead, rather than
+  starting a decoder at the keyframe for every hop. The seek fallback drives
   one worker and widens its stride over calm footage the same way; its
   metadata wait is bounded so an undecodable file errors instead of hanging.
   A scan is all or nothing: leaving the page cancels it and nothing is saved.
+  The hardware decoder caps a scan: Chromium serializes every hardware
+  decode of the page on one GPU-process thread (an M5 Pro decodes 1080p60
+  AV1 at ~2,700 frames a second, ~45× realtime, however many lanes share
+  it), and the slices' software decoders cost more CPU than they add.
+- VoD frame readback (`worker/readback.ts`): the 2D canvas readback is the
+  reference, but every canvas readback of a hardware frame is also served
+  one at a time on the GPU process's main thread, which the decoder needs
+  too. Where it reads the same pixels (`worker/readback-parity.ts` compares
+  one frame per slice) a scan reads through WebGPU instead: the frame's
+  planes are copied out to a CPU frame, which `copyExternalImageToTexture`
+  converts exactly as the canvas converts the hardware frame (the hardware
+  frame itself it converts differently), then mapped back asynchronously.
+  In the same submission the GPU upscales a sub-1080p picture
+  (`worker/cubic-upscaler.ts`, assuming no bars; a picture with bars takes a
+  second trip) and converts the canonical picture to gray
+  (`worker/gpu-gray.ts`, bit-identical to `frameGray`), so the analyzer
+  starts its gates with neither left to do.
 - Recognition is language-agnostic: OCR output snaps against every game
   language at once (`core/localized-entries.ts`, generated) and events carry
   sendou ids. English display names come from `core/labels.ts`.
@@ -594,12 +618,15 @@ The GPU is an accelerator only: the same algorithms make the same decisions.
   request the kernel cannot take, are finished on the CPU with the same exact
   arithmetic. Scores are cached per run by (`key`, template, window) — the
   window is part of a score's identity.
-- **Frame upscale** (`worker/gpu-frame-scaler.ts`): `normalizeFrame`'s
-  INTER_CUBIC upscale of sub-1080p pictures (13-25 ms of WASM per 720p frame)
-  as an integer kernel reproducing OpenCV's 8-bit cubic resize bit for bit;
-  1080p copies and INTER_AREA downscales stay on the CPU. Importing the
-  VideoFrame as a GPU texture was rejected: its YUV→RGB conversion differs
-  from the 2D canvas readback the CPU path sees.
+- **Frame upscale** (`worker/gpu-frame-scaler.ts`, kernel in
+  `worker/cubic-upscaler.ts`): `normalizeFrame`'s INTER_CUBIC upscale of
+  sub-1080p pictures (13-25 ms of WASM per 720p frame) as an integer kernel
+  reproducing OpenCV's 8-bit cubic resize bit for bit; 1080p copies and
+  INTER_AREA downscales stay on the CPU. A VoD scan reading back through
+  WebGPU runs the same kernel in its readback worker instead (see "VoD frame
+  readback"). Importing a hardware-decoded VideoFrame as a GPU texture
+  converts its YUV differently from the 2D canvas; a CPU copy of its planes
+  converts the same.
 - **Worker** (`worker/analyzer.worker.ts`): creates the matcher (and scaler on
   its device) at init when enabled and an adapter exists; a failed creation
   or a device lost mid-run (`device.lost`, or a failed readback) hands the
