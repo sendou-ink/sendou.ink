@@ -427,4 +427,78 @@ describe("Tournament match page", () => {
 			},
 		);
 	});
+
+	describe("chat rooms", () => {
+		const pickupTeamUserIds = () => users.ids(ROSTER_SIZE);
+		const opponentUserIds = () => users.ids(ROSTER_SIZE * 2).slice(ROSTER_SIZE);
+
+		/** Team one formed via LFG, so it has a chat room of its own, the opponent too if `opponentIsPickup`. */
+		const startMatchWithPickupTeam = async ({
+			opponentIsPickup = false,
+		} = {}) => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
+			});
+			const createTeam = (
+				name: string,
+				memberUserIds: number[],
+				isPickup: boolean,
+			) =>
+				TournamentTeamFactory.create(
+					{
+						tournamentId: tournament.id,
+						memberUserIds,
+						team: { name, prefersNotToHost: 0, teamId: null },
+					},
+					{ isCheckedIn: true, isLooking: isPickup },
+				);
+			await createTeam("Pickup One", pickupTeamUserIds(), true);
+			await createTeam("Opponent", opponentUserIds(), opponentIsPickup);
+
+			const [match] = await TournamentFactory.startBracket(tournament.id);
+
+			return { id: String(tournament.id), mid: String(match.id) };
+		};
+
+		const surfacedRooms = async (
+			user: number,
+			options?: Parameters<typeof startMatchWithPickupTeam>[0],
+		) => {
+			const data = await tournamentMatchLoader({
+				user,
+				params: await startMatchWithPickupTeam(options),
+			});
+
+			return data.chatRooms.map(({ room, autoOpen, label }) => ({
+				type: room.type,
+				autoOpen,
+				label,
+			}));
+		};
+
+		test("opens a participant's own pickup team chat after the match chat", async () => {
+			expect(
+				await surfacedRooms(pickupTeamUserIds()[1], { opponentIsPickup: true }),
+			).toEqual([
+				{ type: "TOURNAMENT_MATCH", autoOpen: true },
+				{ type: "TOURNAMENT_TEAM", autoOpen: true },
+			]);
+		});
+
+		test("opens only the match chat for a participant whose team has no chat", async () => {
+			expect(await surfacedRooms(opponentUserIds()[0])).toEqual([
+				{ type: "TOURNAMENT_MATCH", autoOpen: true },
+			]);
+		});
+
+		test("surfaces both team chats read-only to an organizer outside the match", async () => {
+			expect(
+				await surfacedRooms(organizerId, { opponentIsPickup: true }),
+			).toEqual([
+				{ type: "TOURNAMENT_MATCH", autoOpen: true },
+				{ type: "TOURNAMENT_TEAM", autoOpen: false, label: "Pickup One" },
+				{ type: "TOURNAMENT_TEAM", autoOpen: false, label: "Opponent" },
+			]);
+		});
+	});
 });

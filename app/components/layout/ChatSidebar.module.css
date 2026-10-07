@@ -207,8 +207,23 @@
 .splitView {
 	flex: 1;
 	min-height: 0;
+	container: chat-split / size;
+}
+
+.splitTabs {
+	height: 100%;
 	display: flex;
 	flex-direction: column;
+}
+
+.tabBar {
+	display: none;
+	flex-shrink: 0;
+	background-color: var(--color-bg-high);
+}
+
+.tabUnreadBadge {
+	margin-inline-start: var(--s-1-5);
 }
 
 .splitPanel {
@@ -221,14 +236,59 @@
 	& + & {
 		border-top: 1.5px solid var(--color-border);
 	}
+}
 
-	/* desktop splits evenly, mobile gives the match chat on top 3/5 */
-	@media (width < 600px) {
-		flex-grow: 3;
+@container chat-split (height < 800px) {
+	.splitTabs {
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+
+	.tabBar {
+		display: block;
+	}
+
+	.splitPanel {
+		grid-area: 2 / 1;
 
 		& + & {
-			flex-grow: 2;
+			border-top: none;
 		}
+	}
+
+	.backgroundPanel {
+		visibility: hidden;
+	}
+
+	.splitPanelHeader {
+		display: none;
+	}
+}
+
+@media (width < 600px) {
+	.splitTabs {
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+
+	.tabBar {
+		display: block;
+	}
+
+	.splitPanel {
+		grid-area: 2 / 1;
+
+		& + & {
+			border-top: none;
+		}
+	}
+
+	.backgroundPanel {
+		visibility: hidden;
+	}
+
+	.splitPanelHeader {
+		display: none;
 	}
 }
 
@@ -247,7 +307,6 @@
 	flex: 1;
 	min-height: 0;
 	overflow: hidden;
-	padding-block-start: var(--s-2);
 
 	/* Chat section.container */
 	& > section {
@@ -267,8 +326,6 @@
 
 	/* messages: no top padding, fill available space */
 	& [role="log"] {
-		padding-top: 0;
-		padding-inline: var(--s-2);
 		flex: 1;
 		height: auto;
 	}
@@ -282,16 +339,5 @@
 
 	& form input {
 		width: 100%;
-	}
-
-	& form button {
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		display: grid;
-		place-items: center;
-		flex-shrink: 0;
-		background-color: transparent;
-		mask-image: none;
 	}
 }

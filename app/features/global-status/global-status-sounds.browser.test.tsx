@@ -13,8 +13,8 @@ const mocks = vi.hoisted(() => ({
 	playSound: vi.fn(),
 }));
 
-vi.mock("~/features/chat/chat-utils", () => ({
-	playSound: mocks.playSound,
+vi.mock("~/features/chat/core/Sounds", () => ({
+	play: mocks.playSound,
 }));
 
 function Sounds({ status }: { status: GlobalStatus | null }) {

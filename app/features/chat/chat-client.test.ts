@@ -33,6 +33,7 @@ function room(overrides: Partial<ChatRoomListItem> = {}): ChatRoomListItem {
 		url: "/q/match/17",
 		imageUrl: null,
 		participantUserIds: [1, 2],
+		participants: [],
 		labelByUserId: {},
 		expiresAt: 2_000_000_000,
 		inactive: false,
@@ -90,7 +91,7 @@ function createHarness({
 		): Promise<{ messages: ChatMessageWithAuthor[] } | null> => ({ messages }),
 	);
 	const postRead = vi.fn(async () => {});
-	const onSendFailed = vi.fn();
+	const onMention = vi.fn();
 
 	const client = createChatClient({
 		fetchRooms,
@@ -98,7 +99,7 @@ function createHarness({
 		fetchMessages,
 		postMessage,
 		postRead,
-		onSendFailed,
+		onMention,
 		addServerEventListener: (listener) => {
 			eventListener = listener;
 			return () => {
@@ -115,7 +116,7 @@ function createHarness({
 		fetchMessages,
 		postMessage,
 		postRead,
-		onSendFailed,
+		onMention,
 		emit: (event: ServerEvent) => eventListener?.(event),
 		isListening: () => eventListener !== null,
 	};
@@ -267,6 +268,109 @@ describe("createChatClient", () => {
 		expect(harness.postRead).toHaveBeenCalledWith(1, 5);
 	});
 
+	test("a room coming into view keeps what was unread for the divider, cleared when nothing was", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 5 }),
+		});
+		client.setViewedRoomIds([1]);
+
+		expect(client.getSnapshot().unreadDividerByRoomId.get(1)).toEqual({
+			unreadCount: 1,
+			upToMessageId: 5,
+		});
+
+		client.setViewedRoomIds([]);
+		client.setViewedRoomIds([1]);
+
+		expect(client.getSnapshot().unreadDividerByRoomId.has(1)).toBe(false);
+	});
+
+	test("a message mentioning the user alerts, telling whether its room is viewed", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 5, contents: "gg <mention-1>" }),
+		});
+		client.setViewedRoomIds([1]);
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 6, contents: "<mention-1> again" }),
+		});
+
+		expect(harness.onMention.mock.calls).toEqual([
+			[{ roomId: 1, roomViewed: false }],
+			[{ roomId: 1, roomViewed: true }],
+		]);
+	});
+
+	test.each([
+		{
+			why: "the user's own message alerts not",
+			messages: [message({ id: 5, authorUserId: 1, contents: "<mention-1>" })],
+			alerts: 0,
+		},
+		{
+			why: "a mention of someone else alerts not",
+			messages: [message({ id: 5, contents: "<mention-3>" })],
+			alerts: 0,
+		},
+		{
+			why: "a repeated delivery alerts once",
+			messages: [
+				message({ id: 5, contents: "<mention-1>" }),
+				message({ id: 5, contents: "<mention-1>" }),
+			],
+			alerts: 1,
+		},
+	])("$why", async ({ messages, alerts }) => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		for (const incoming of messages) {
+			harness.emit({ kind: "chatMessage", roomId: 1, message: incoming });
+		}
+
+		expect(harness.onMention).toHaveBeenCalledTimes(alerts);
+	});
+
+	test("a message to a viewed but hidden room counts unread until the room is shown", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.ensureMessagesLoaded(1);
+		await flush();
+		client.setHiddenRoomIds([1]);
+		client.setViewedRoomIds([1]);
+
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 5 }),
+		});
+
+		expect(client.getSnapshot().totalUnreadCount).toBe(1);
+
+		client.setHiddenRoomIds([]);
+
+		expect(client.getSnapshot().totalUnreadCount).toBe(0);
+		await flushReadDebounce();
+		expect(harness.postRead).toHaveBeenCalledWith(1, 5);
+	});
+
 	test("the echo replaces the optimistic pending send with the same publicId", async () => {
 		const harness = createHarness();
 		const client = await startedClient(harness);
@@ -320,32 +424,45 @@ describe("createChatClient", () => {
 		expect(client.getSnapshot().rooms[0].latestMessageId).toBe(7);
 	});
 
-	test("a failed send's pending message is removed", async () => {
-		const harness = createHarness({
-			postMessage: vi.fn(async () => null),
-		});
-		const client = await startedClient(harness);
-		client.ensureMessagesLoaded(1);
-		await flush();
-
-		client.send(1, {
-			publicId: "abcdefghij",
-			contents: "hi there",
-			author: author(1),
-		});
-		expect(client.getSnapshot().messagesByRoomId.get(1)).toHaveLength(1);
-		await flush();
-
-		expect(client.getSnapshot().messagesByRoomId.get(1)).toHaveLength(0);
-		expect(harness.onSendFailed).toHaveBeenCalledTimes(1);
-	});
-
-	test("a send whose POST throws is removed like a failed one", async () => {
-		const harness = createHarness({
-			postMessage: vi.fn(async () => {
+	test.each([
+		{ why: "is refused", postMessage: async () => null },
+		{
+			why: "throws",
+			postMessage: async () => {
 				throw new Error("network down");
-			}),
-		});
+			},
+		},
+	])(
+		"a send whose POST $why stays as a failed pending message",
+		async ({ postMessage }) => {
+			const harness = createHarness({ postMessage: vi.fn(postMessage) });
+			const client = await startedClient(harness);
+			client.ensureMessagesLoaded(1);
+			await flush();
+
+			client.send(1, {
+				publicId: "abcdefghij",
+				contents: "hi there",
+				author: author(1),
+			});
+			expect(client.getSnapshot().messagesByRoomId.get(1)).toMatchObject([
+				{ pending: true },
+			]);
+			await flush();
+
+			expect(client.getSnapshot().messagesByRoomId.get(1)).toMatchObject([
+				{ publicId: "abcdefghij", pending: true, failed: true },
+			]);
+		},
+	);
+
+	test("retrying a failed send posts it again under the same publicId and settles it", async () => {
+		const sent = message({ id: 7, authorUserId: 1, publicId: "abcdefghij" });
+		const postMessage = vi
+			.fn<() => Promise<{ message: ChatMessageWithAuthor } | null>>()
+			.mockResolvedValueOnce(null)
+			.mockResolvedValueOnce({ message: sent });
+		const harness = createHarness({ postMessage });
 		const client = await startedClient(harness);
 		client.ensureMessagesLoaded(1);
 		await flush();
@@ -356,9 +473,20 @@ describe("createChatClient", () => {
 			author: author(1),
 		});
 		await flush();
+		client.retry(1, "abcdefghij");
 
-		expect(client.getSnapshot().messagesByRoomId.get(1)).toHaveLength(0);
-		expect(harness.onSendFailed).toHaveBeenCalledTimes(1);
+		expect(client.getSnapshot().messagesByRoomId.get(1)).toMatchObject([
+			{ pending: true, failed: false },
+		]);
+		await flush();
+
+		expect(postMessage).toHaveBeenLastCalledWith(1, {
+			publicId: "abcdefghij",
+			contents: "hi there",
+		});
+		const messages = client.getSnapshot().messagesByRoomId.get(1)!;
+		expect(messages).toMatchObject([{ id: 7, publicId: "abcdefghij" }]);
+		expect(messages[0].pending).toBeUndefined();
 	});
 
 	test("optimistic sends appended while the history fetch is in flight are kept", async () => {

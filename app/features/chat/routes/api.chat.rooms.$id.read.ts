@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { parseBody, parseParams } from "~/utils/remix.server";
 import { id, idObject } from "~/utils/schema";
 import * as ChatRepository from "../ChatRepository.server";
@@ -19,6 +20,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		userId: user.id,
 		roomId,
 		lastSeenMessageId: data.lastSeenMessageId,
+	});
+	await resolveNotifications({
+		userIds: [user.id],
+		type: "CHAT_MENTION",
+		meta: { roomId },
 	});
 
 	return null;

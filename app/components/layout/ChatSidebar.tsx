@@ -11,11 +11,18 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import {
+	SendouTab,
+	SendouTabList,
+	SendouTabs,
+} from "~/components/elements/Tabs";
+import { useUser } from "~/features/auth/core/user";
+import {
 	useChatContext,
 	useCurrentRouteChatRooms,
 } from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
+import * as LogLayout from "~/features/chat/core/LogLayout";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import {
 	databaseTimestampToDate,
@@ -115,11 +122,16 @@ function useRoomDisplay() {
 	};
 }
 
-/** Concise label for split view headers, e.g. "Match" / "Group". */
+/** Concise label for split view headers and tabs, e.g. "Match" / "Group". */
 function roomShortLabel(room: ChatRoomListItem, t: TFunction<["common"]>) {
-	return room.type === "SQ_GROUP"
-		? t("common:chat.room.groupShort")
-		: t("common:chat.room.matchShort");
+	switch (room.type) {
+		case "SQ_GROUP":
+			return t("common:chat.room.groupShort");
+		case "TOURNAMENT_TEAM":
+			return t("common:chat.room.teamShort");
+		default:
+			return t("common:chat.room.matchShort");
+	}
 }
 
 function roomIsInactive(room: ChatRoomListItem) {
@@ -202,7 +214,6 @@ function RoomList({
 	const openRooms = (roomIds: number[]) => {
 		for (const roomId of roomIds) {
 			chatContext.ensureMessagesLoaded(roomId);
-			chatContext.markAsRead(roomId);
 		}
 		chatContext.setActiveRoomIds(roomIds);
 	};
@@ -446,8 +457,42 @@ function CombinedChatView({
 	rooms: ChatRoomListItem[];
 	onClose?: () => void;
 }) {
+	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
 	const roomDisplay = useRoomDisplay();
+	const splitViewRef = React.useRef<HTMLDivElement>(null);
+	const tabBarRef = React.useRef<HTMLDivElement>(null);
+	const { selectedTabRoomId, setSelectedTabRoomId: setSelectedRoomId } =
+		chatContext;
+
+	const selectedRoomId =
+		rooms.find((room) => room.id === selectedTabRoomId)?.id ?? rooms[0].id;
+	const backgroundRoomIdsKey = rooms
+		.filter((room) => room.id !== selectedRoomId)
+		.map((room) => room.id)
+		.join(",");
+
+	const { setHiddenRoomIds } = chatContext;
+	React.useEffect(() => {
+		const splitView = splitViewRef.current!;
+		const tabBar = tabBarRef.current!;
+
+		const syncHiddenRoomIds = () => {
+			const tabbed = getComputedStyle(tabBar).display !== "none";
+			setHiddenRoomIds(
+				tabbed ? backgroundRoomIdsKey.split(",").map(Number) : [],
+			);
+		};
+
+		syncHiddenRoomIds();
+		const observer = new ResizeObserver(syncHiddenRoomIds);
+		observer.observe(splitView);
+
+		return () => {
+			observer.disconnect();
+			setHiddenRoomIds([]);
+		};
+	}, [backgroundRoomIdsKey, setHiddenRoomIds]);
 
 	const primary = rooms[0];
 	const display = roomDisplay(primary);
@@ -490,30 +535,75 @@ function CombinedChatView({
 					</button>
 				) : null}
 			</div>
-			<div className={styles.splitView}>
-				{rooms.map((room, index) => (
-					<SplitPanel key={room.id} room={room} showHeader={index > 0} />
-				))}
+			<div ref={splitViewRef} className={styles.splitView}>
+				<SendouTabs
+					selectedKey={roomTabId(selectedRoomId)}
+					onSelectionChange={(key) => {
+						const selected = rooms.find((room) => roomTabId(room.id) === key);
+						if (selected) setSelectedRoomId(selected.id);
+					}}
+					padded={false}
+					className={styles.splitTabs}
+				>
+					<div ref={tabBarRef} className={styles.tabBar}>
+						<SendouTabList fullWidth>
+							{rooms.map((room) => (
+								<SendouTab key={room.id} id={roomTabId(room.id)}>
+									{roomShortLabel(room, t)}
+									{room.unreadCount > 0 ? (
+										<span
+											className={clsx(
+												styles.unreadBadge,
+												styles.tabUnreadBadge,
+											)}
+										>
+											{room.unreadCount}
+										</span>
+									) : null}
+								</SendouTab>
+							))}
+						</SendouTabList>
+					</div>
+					{rooms.map((room) => (
+						<SplitPanel
+							key={room.id}
+							room={room}
+							isSelected={room.id === selectedRoomId}
+							onFocus={() => setSelectedRoomId(room.id)}
+						/>
+					))}
+				</SendouTabs>
 			</div>
 		</div>
 	);
 }
 
-/** The primary (match) room sits on top with its sub-header hidden, the main header already names it. */
+function roomTabId(roomId: number) {
+	return `chat-room-${roomId}`;
+}
+
+/** One room of the split view, the primary (match) room on top. As tabs only the selected panel shows. */
 function SplitPanel({
 	room,
-	showHeader,
+	isSelected,
+	onFocus,
 }: {
 	room: ChatRoomListItem;
-	showHeader: boolean;
+	isSelected: boolean;
+	onFocus: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
+	const tabId = roomTabId(room.id);
 
 	return (
-		<div className={styles.splitPanel}>
-			{showHeader ? (
-				<div className={styles.splitPanelHeader}>{roomShortLabel(room, t)}</div>
-			) : null}
+		<div
+			className={clsx(styles.splitPanel, !isSelected && styles.backgroundPanel)}
+			role="tabpanel"
+			id={`tabpanel-${tabId}`}
+			aria-labelledby={`tab-${tabId}`}
+			onFocus={onFocus}
+		>
+			<div className={styles.splitPanelHeader}>{roomShortLabel(room, t)}</div>
 			<div className={styles.chatContainer}>
 				<RoomChat room={room} />
 			</div>
@@ -523,14 +613,23 @@ function SplitPanel({
 
 function RoomChat({ room }: { room: ChatRoomListItem }) {
 	const chatContext = useChatContext()!;
+	const user = useUser();
 
 	const expired = room.expiresAt <= dateToDatabaseTimestamp(new Date());
+	const messages = chatContext.messagesForRoom(room.id);
 
 	return (
 		<Chat
-			messages={chatContext.messagesForRoom(room.id)}
+			messages={messages}
+			firstUnreadMessageId={LogLayout.firstUnreadMessageId({
+				messages,
+				divider: chatContext.unreadDividerForRoom(room.id),
+				ownUserId: user?.id ?? 0,
+			})}
 			onSend={(message) => chatContext.sendMessage(room.id, message)}
+			onRetry={(publicId) => chatContext.retryMessage(room.id, publicId)}
 			labelByUserId={room.labelByUserId}
+			mentionableUsers={room.participants}
 			disabled={expired}
 			readOnly={!expired && !room.canPost}
 		/>

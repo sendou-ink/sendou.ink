@@ -145,11 +145,18 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 }
 
 /** Open state of a tablet-layout-only modal; leaving that layout or navigating closes it. */
-function useTabletModal(isTabletLayout: boolean) {
+function useTabletModal(isTabletLayout: boolean, openRequest: number) {
 	const location = useLocation();
 	const [openedOnPathname, setOpenedOnPathname] = React.useState<string | null>(
 		null,
 	);
+
+	const [handledOpenRequest, setHandledOpenRequest] =
+		React.useState(openRequest);
+	if (openRequest !== handledOpenRequest) {
+		setHandledOpenRequest(openRequest);
+		if (isTabletLayout) setOpenedOnPathname(location.pathname);
+	}
 
 	const isOpen = isTabletLayout && openedOnPathname === location.pathname;
 	const setIsOpen = (open: boolean) =>
@@ -264,8 +271,10 @@ export function Layout({
 	useClosePopoversOnNavigation(sideNavRef);
 	useScrollLock(sideNavDrawerOpen);
 	useVisualViewport();
-	const [chatSidebarModalOpen, setChatSidebarModalOpen] =
-		useTabletModal(isTabletLayout);
+	const [chatSidebarModalOpen, setChatSidebarModalOpen] = useTabletModal(
+		isTabletLayout,
+		chatContext?.chatOpenRequest ?? 0,
+	);
 	const chatSidebarOpen = chatContext?.chatOpen ?? false;
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
 

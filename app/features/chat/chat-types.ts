@@ -72,9 +72,15 @@ export interface ChatMessageWithAuthor {
 	author: ChatMessageAuthor | null;
 }
 
+export interface UnreadDivider {
+	unreadCount: number;
+	upToMessageId: number;
+}
+
 /** A message as held client-side: a persisted row, or an optimistic send awaiting its echo. */
 export interface ClientChatMessage extends ChatMessageWithAuthor {
 	pending?: boolean;
+	failed?: boolean;
 }
 
 /** One room of the user's room list as served by `GET /api/chat/rooms`. */
@@ -86,6 +92,8 @@ export interface ChatRoomListItem {
 	url: string;
 	imageUrl: string | null;
 	participantUserIds: number[];
+	/** The participants as users, for mentioning them and naming them in mentions. */
+	participants: CommonUser[];
 	/** Role labels (e.g. "TO", "Stream") shown next to non-participant authors, keyed by user id. */
 	labelByUserId: Record<number, string>;
 	/** databaseTimestamp */

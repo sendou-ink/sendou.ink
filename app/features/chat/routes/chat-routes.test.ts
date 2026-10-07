@@ -9,11 +9,15 @@ import {
 	flushEvents,
 	subscribeTo,
 } from "~/features/events/tests/fixtures";
+import { clearSentNotificationsForTesting } from "~/features/notifications/core/notify.server";
+import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { withUserId } from "~/utils/Test";
 import * as ChatRepository from "../ChatRepository.server";
+import * as Mentions from "../core/Mentions";
 import { setupSqMatch } from "../tests/fixtures";
 import { loader as roomsLoader } from "./api.chat.rooms";
 import { loader as roomLoader } from "./api.chat.rooms.$id";
+import { action as mentionsSeenAction } from "./api.chat.rooms.$id.mentions.seen";
 import {
 	loader as messagesLoader,
 	action as sendAction,
@@ -28,6 +32,7 @@ const outsiderId = () => users.id(11);
 
 beforeEach(async () => {
 	await users.create(11);
+	clearSentNotificationsForTesting();
 });
 
 afterEach(() => {
@@ -102,6 +107,75 @@ describe("chat messages action", () => {
 		expect(result).toHaveProperty("fieldErrors");
 	});
 
+	test.each([
+		{ why: "at the limit is sent", textLength: 199, sent: true },
+		{ why: "over the limit is refused", textLength: 200, sent: false },
+	])(
+		"a message with a mention counting as one character $why",
+		async ({ textLength, sent }) => {
+			const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+
+			const result = await sendMessage(alphaUserIds[0], match.chatRoomId!, {
+				publicId: "mmmmmmmmmm",
+				contents: `${"a".repeat(textLength)}${Mentions.token(bravoUserIds[0])}`,
+			});
+
+			expect("message" in result).toBe(sent);
+		},
+	);
+
+	test.each([
+		{
+			why: "a sticker alone is sent",
+			contents: "<sticker-booyah>",
+			sent: true,
+		},
+		{
+			why: "a full length text with a sticker is sent",
+			contents: `${"a".repeat(200)} <sticker-booyah>`,
+			sent: true,
+		},
+		{
+			why: "two stickers are refused",
+			contents: "<sticker-booyah> <sticker-sorry>",
+			sent: false,
+		},
+		{
+			why: "an unknown sticker is refused",
+			contents: "<sticker-not-a-sticker>",
+			sent: false,
+		},
+		{
+			why: "a reply with text is sent",
+			contents: `<reply-1> ${"a".repeat(200)}`,
+			sent: true,
+		},
+		{
+			why: "a reply with only a sticker is sent",
+			contents: "<reply-1> <sticker-booyah>",
+			sent: true,
+		},
+		{
+			why: "a reply saying nothing is refused",
+			contents: "<reply-1>",
+			sent: false,
+		},
+		{
+			why: "replying to two messages is refused",
+			contents: "<reply-1> <reply-2> hi",
+			sent: false,
+		},
+	])("$why", async ({ contents, sent }) => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
+
+		const result = await sendMessage(alphaUserIds[0], match.chatRoomId!, {
+			publicId: "ssssssssss",
+			contents,
+		});
+
+		expect("message" in result).toBe(sent);
+	});
+
 	test("403s a non-participant", async () => {
 		const { match } = await setupSqMatch(users);
 
@@ -172,6 +246,73 @@ describe("chat messages action", () => {
 	});
 });
 
+describe("chat mention notifications", () => {
+	test("notifies the mentioned users who can read the room, not the author or outsiders", async () => {
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+
+		await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
+			publicId: "nnnnnnnnnn",
+			contents: [bravoUserIds[0], outsiderId(), alphaUserIds[0]]
+				.map(Mentions.token)
+				.join(" "),
+		});
+
+		expect(await mentionNotifications(bravoUserIds[0])).toMatchObject([
+			{
+				seen: 0,
+				meta: {
+					roomId: match.chatRoomId,
+					mentionerUsername: expect.any(String),
+				},
+			},
+		]);
+		expect(await mentionNotifications(outsiderId())).toHaveLength(0);
+		expect(await mentionNotifications(alphaUserIds[0])).toHaveLength(0);
+	});
+
+	test("holds one unseen notification per room, reading the room resolving it", async () => {
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+		const mention = (publicId: string) =>
+			sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
+				publicId,
+				contents: Mentions.token(bravoUserIds[0]),
+			});
+
+		await mention("oooooooooo");
+		const second = await mention("pppppppppp");
+		expect(await mentionNotifications(bravoUserIds[0])).toHaveLength(1);
+
+		await markRead(bravoUserIds[0], match.chatRoomId!, second.id);
+		expect(await mentionNotifications(bravoUserIds[0])).toMatchObject([
+			{ seen: 1 },
+		]);
+
+		await mention("qqqqqqqqqq");
+		expect(await mentionNotifications(bravoUserIds[0])).toMatchObject([
+			{ seen: 0 },
+			{ seen: 1 },
+		]);
+	});
+
+	test("resolving the mentions of a room marks them seen without reading it", async () => {
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+		await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
+			publicId: "rrrrrrrrrr",
+			contents: Mentions.token(bravoUserIds[0]),
+		});
+
+		await resolveMentions(bravoUserIds[0], match.chatRoomId!);
+
+		expect(await mentionNotifications(bravoUserIds[0])).toMatchObject([
+			{ seen: 1 },
+		]);
+		const data = await loadRooms(bravoUserIds[0]);
+		expect(
+			data.rooms.find((room) => room.id === match.chatRoomId)?.unreadCount,
+		).toBe(1);
+	});
+});
+
 describe("chat rooms loader", () => {
 	test("returns the user's rooms with server-computed unread counts", async () => {
 		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
@@ -189,6 +330,18 @@ describe("chat rooms loader", () => {
 			url: expect.stringContaining(String(match.id)),
 		});
 		expect(matchRoom?.participantUserIds).toHaveLength(8);
+	});
+
+	test("lists the room's participants by name for mentioning them", async () => {
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+
+		const data = await loadRooms(alphaUserIds[0]);
+		const matchRoom = data.rooms.find((room) => room.id === match.chatRoomId);
+
+		expect(matchRoom?.participants.map((user) => user.id).sort()).toEqual(
+			[...alphaUserIds, ...bravoUserIds].sort(),
+		);
+		expect(matchRoom?.participants[0].username).toEqual(expect.any(String));
 	});
 
 	test("exposes the room's inactive flag and latest message stats", async () => {
@@ -418,6 +571,31 @@ function markRead(userId: number, roomId: number, lastSeenMessageId: number) {
 			pattern: "",
 			url: new URL(request.url),
 		} as ActionFunctionArgs),
+	);
+}
+
+function resolveMentions(userId: number, roomId: number) {
+	const request = new Request(
+		`http://app.com/api/chat/rooms/${roomId}/mentions/seen`,
+		{ method: "POST" },
+	);
+
+	return withUserId(userId, () =>
+		mentionsSeenAction({
+			request,
+			params: { id: String(roomId) },
+			context: {} as any,
+			pattern: "",
+			url: new URL(request.url),
+		} as ActionFunctionArgs),
+	);
+}
+
+async function mentionNotifications(userId: number) {
+	const notifications = await NotificationRepository.findByUserId(userId);
+
+	return notifications.filter(
+		(notification) => notification.type === "CHAT_MENTION",
 	);
 }
 

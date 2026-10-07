@@ -153,12 +153,27 @@ test.describe("Chat", () => {
 
 		const chat = new ChatSidebar(page);
 
-		// the route opens its rooms itself, stacked: match on top, group below
+		// the route opens its rooms itself, as tabs while the view is too short to stack them
 		await expect(chat.locators.splitPanels).toHaveCount(2);
-		await expect(chat.locators.splitPanelHeaders).toHaveText(["Group"]);
+		await expect(chat.locators.roomTabs).toHaveText(["Match", "Group"]);
 
-		await chat.chat(1).send("only for my group");
+		await chat.selectRoomTab("Group");
+		await chat.chat().send("only for my group");
 
+		await expect(chat.chat().message("only for my group")).toBeVisible();
+
+		await chat.selectRoomTab("Match");
+
+		await expect(chat.chat().message("only for my group")).toHaveCount(0);
+
+		// given the height, they stack: match on top, group below
+		await page.setViewportSize({ width: 1280, height: 1200 });
+
+		await expect(chat.locators.roomTabs).toHaveCount(0);
+		await expect(chat.locators.splitPanelHeaders).toHaveText([
+			"Match",
+			"Group",
+		]);
 		await expect(chat.chat(1).message("only for my group")).toBeVisible();
 		await expect(chat.chat(0).message("only for my group")).toHaveCount(0);
 
@@ -309,7 +324,9 @@ test.describe("Chat", () => {
 		await new SendouQMatchPage(page).goto(match.id);
 
 		const participantChat = new ChatSidebar(page);
-		await participantChat.chat(1).send("our own plan");
+		await participantChat.selectRoomTab("Group");
+		await participantChat.chat().send("our own plan");
+		await participantChat.selectRoomTab("Match");
 
 		const observer = await openSecondUser(browser, workerBaseURL, staff.id);
 		try {
@@ -321,7 +338,7 @@ test.describe("Chat", () => {
 			await expect(staffChat.locators.openChats).toHaveCount(1);
 			await staffChat.chat().send("staff here");
 
-			await expect(participantChat.chat(0).message("staff here")).toBeVisible();
+			await expect(participantChat.chat().message("staff here")).toBeVisible();
 
 			await staffChat.backToRoomList();
 

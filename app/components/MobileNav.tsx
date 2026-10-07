@@ -21,6 +21,7 @@ import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
+import { useLayoutSize } from "~/hooks/useLayoutSize";
 import { useScrollLock } from "~/hooks/useScrollLock";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import type { RootLoaderData } from "~/root";
@@ -100,6 +101,22 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 		if (!root || root.matches(":popover-open")) return;
 		root.showPopover();
 	}, [uid]);
+
+	// currently only used to open chat when clicking on a mention notification
+	const chatOpenRequest = chatContext?.chatOpenRequest ?? 0;
+	const isMobileLayout = useLayoutSize() === "mobile";
+	const handledChatOpenRequestRef = React.useRef(chatOpenRequest);
+
+	React.useEffect(() => {
+		if (chatOpenRequest === handledChatOpenRequestRef.current) return;
+		handledChatOpenRequestRef.current = chatOpenRequest;
+		if (!isMobileLayout) return;
+
+		const chatPanel = document.getElementById(panelDomId(uid, "chat"));
+		if (chatPanel && !chatPanel.matches(":popover-open")) {
+			chatPanel.showPopover();
+		}
+	}, [chatOpenRequest, isMobileLayout, uid]);
 
 	const hasFriendInSendouQ =
 		sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??

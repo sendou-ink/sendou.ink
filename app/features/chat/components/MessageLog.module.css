@@ -1,0 +1,81 @@
+.messages {
+	padding-block: var(--s-4) var(--s-2);
+	display: block;
+	height: 310px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+.unseenMessages {
+	position: absolute;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	border: none;
+	color: var(--color-text);
+	bottom: 60px;
+	right: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	height: 25px;
+	width: max-content;
+
+	&:active {
+		transform: translate(-50%, -50%);
+	}
+}
+
+.messagesSizer {
+	position: relative;
+}
+
+.messageRow {
+	--message-row-gap: 8px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	padding-block-start: var(--message-row-gap);
+}
+
+.messageRowContinuation {
+	--message-row-gap: 2px;
+}
+
+.messageRowFirst {
+	--message-row-gap: 0px;
+}
+
+.unreadDivider {
+	display: flex;
+	align-items: center;
+	padding-inline: var(--s-2);
+	pointer-events: none;
+}
+
+.unreadDividerLine {
+	flex: 1;
+	height: 2px;
+	margin: 0;
+	border: none;
+	background-color: var(--color-fg-accent);
+}
+
+.unreadDividerLabel {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 36px;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+	text-transform: uppercase;
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
+	border-radius: var(--radius-selector);
+	height: var(--selector-size-xs);
+	padding: 0 var(--s-1);
+}

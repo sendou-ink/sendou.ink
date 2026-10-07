@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import type { WindowSchedule } from "~/features/availability/availability-types";
 import * as Availability from "~/features/availability/core/Availability";
 import * as VisibleSchedules from "~/features/availability/core/VisibleSchedules.server";
+import type { RouteChatRoomInput } from "~/features/chat/chat-types";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -29,6 +30,7 @@ import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { executeRoll } from "../core/executeRoll.server";
 import * as LeagueScheduling from "../core/LeagueScheduling";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
+import type { FindMatchById } from "../TournamentMatchRepository.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 
 export type TournamentMatchLoaderData = SerializeFrom<typeof loader>;
@@ -213,13 +215,18 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		// observers (TO/streamer/site staff) chat alongside the participants
 		chatRooms: await RouteChatRooms.resolve(
 			user,
-			match.chatRoomId &&
-				(isParticipant || isSiteStaff || tournament.isOrganizerOrStreamer(user))
-				? [{ roomId: match.chatRoomId, autoOpen: true }]
-				: [],
+			await chatRoomInputs({
+				match,
+				userId: user?.id,
+				canChatInMatch:
+					isParticipant ||
+					isSiteStaff ||
+					tournament.isOrganizerOrStreamer(user),
+				canReadTeamChats: isSiteStaff || isTournamentStaff,
+				teamName: (tournamentTeamId) => teamFullById(tournamentTeamId)?.name,
+			}),
 		),
 		canJoin,
 		schedule,
@@ -398,4 +405,55 @@ async function ownTeamAvailability({
 			};
 		}),
 	};
+}
+
+/** Team rooms are pickups only. A participant's opens with the match chat as tabs or split view, organizers read both. */
+async function chatRoomInputs({
+	match,
+	userId,
+	canChatInMatch,
+	canReadTeamChats,
+	teamName,
+}: {
+	match: Pick<
+		FindMatchById,
+		"chatRoomId" | "players" | "opponentOne" | "opponentTwo"
+	>;
+	userId: number | undefined;
+	canChatInMatch: boolean;
+	canReadTeamChats: boolean;
+	teamName: (tournamentTeamId: number) => string | undefined;
+}): Promise<RouteChatRoomInput[]> {
+	if (!match.chatRoomId || !canChatInMatch) return [];
+
+	const ownTeamId = match.players.find(
+		(player) => player.id === userId,
+	)?.tournamentTeamId;
+	const teamIds = ownTeamId
+		? [ownTeamId]
+		: canReadTeamChats
+			? [match.opponentOne?.id, match.opponentTwo?.id].filter(
+					(id): id is number => typeof id === "number",
+				)
+			: [];
+	const teamRooms =
+		await TournamentTeamRepository.findAllChatRoomIdsByIds(teamIds);
+
+	return [
+		{ roomId: match.chatRoomId, autoOpen: true },
+		...teamIds.flatMap((teamId) => {
+			const teamRoom = teamRooms.find((room) => room.id === teamId);
+			if (!teamRoom) return [];
+
+			return ownTeamId
+				? [{ roomId: teamRoom.chatRoomId, autoOpen: true }]
+				: [
+						{
+							roomId: teamRoom.chatRoomId,
+							autoOpen: false,
+							label: teamName(teamId),
+						},
+					];
+		}),
+	];
 }

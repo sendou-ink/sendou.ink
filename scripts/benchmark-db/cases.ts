@@ -325,6 +325,11 @@ export function buildCases(fx: Fixtures): {
 		ChatRepository.findMessageById(messageId),
 	);
 	add(
+		"ChatRepository.findAllParticipantsByUserIds",
+		fx.manyUserIds,
+		(userIds) => ChatRepository.findAllParticipantsByUserIds(userIds),
+	);
+	add(
 		"ChatRepository.findMessageStatsByRoomIds",
 		fx.heavyChatUsers,
 		(chatUsers) =>
@@ -518,6 +523,16 @@ export function buildCases(fx: Fixtures): {
 		"NotificationRepository.findAllSubscriptionsByUserIds",
 		fx.manyUserIds,
 		(userIds) => NotificationRepository.findAllSubscriptionsByUserIds(userIds),
+	);
+	add(
+		"NotificationRepository.findUserIdsWithUnseenByType",
+		both(fx.manyUserIds, fx.heavyChatRoomId),
+		([userIds, roomId]) =>
+			NotificationRepository.findUserIdsWithUnseenByType({
+				userIds,
+				type: "CHAT_MENTION",
+				meta: { roomId },
+			}),
 	);
 
 	add(
@@ -1366,6 +1381,12 @@ export function buildCases(fx: Fixtures): {
 		fx.heavyTournamentTeamId,
 		(tournamentTeamId) =>
 			TournamentTeamRepository.findInviteCodeById(tournamentTeamId),
+	);
+	add(
+		"TournamentTeamRepository.findAllChatRoomIdsByIds",
+		fx.heavyTournamentTeamId,
+		(tournamentTeamId) =>
+			TournamentTeamRepository.findAllChatRoomIdsByIds([tournamentTeamId]),
 	);
 	add("TournamentTeamRepository.isPickupAvatarImgId", fx.imageId, (imageId) =>
 		TournamentTeamRepository.isPickupAvatarImgId(imageId),

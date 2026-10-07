@@ -127,7 +127,16 @@ export type Notification =
 				teamCustomUrl: string;
 			}
 	  >
-	| NotificationItem<"SCHEDULE_TEAM_REMINDER">;
+	| NotificationItem<"SCHEDULE_TEAM_REMINDER">
+	| NotificationItem<
+			"CHAT_MENTION",
+			{
+				roomId: number;
+				messageId: number;
+				mentionerUsername: string;
+				roomUrl: string;
+			}
+	  >;
 
 type NotificationItem<
 	T extends string,

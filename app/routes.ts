@@ -353,6 +353,10 @@ export default [
 		"/api/chat/rooms/:id/read",
 		"features/chat/routes/api.chat.rooms.$id.read.ts",
 	),
+	route(
+		"/api/chat/rooms/:id/mentions/seen",
+		"features/chat/routes/api.chat.rooms.$id.mentions.seen.ts",
+	),
 	route("/api/layout", "features/layout/routes/api.layout.ts"),
 	route(
 		"/api/notifications",

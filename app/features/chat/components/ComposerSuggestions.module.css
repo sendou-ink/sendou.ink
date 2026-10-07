@@ -1,0 +1,33 @@
+.popover {
+	position: absolute;
+	margin: 0;
+	width: var(--floating-anchor-width);
+	max-height: var(--floating-available-height, none);
+	overflow: auto;
+	padding: var(--s-1);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+}
+
+.option {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5);
+	border-radius: var(--radius-field);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
+}
+
+.optionActive {
+	background-color: var(--color-bg-high);
+}
+
+.label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

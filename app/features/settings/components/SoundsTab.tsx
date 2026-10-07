@@ -1,12 +1,7 @@
 import { Volume2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import {
-	playSoundIgnoringSetting,
-	soundCodeToLocalStorageKey,
-	soundEnabled,
-	soundVolume,
-} from "~/features/chat/chat-utils";
+import * as Sounds from "~/features/chat/core/Sounds";
 import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./SoundsTab.module.css";
 
@@ -36,14 +31,14 @@ function SoundCheckboxes() {
 
 	const [soundValues, setSoundValues] = React.useState(
 		Object.fromEntries(
-			sounds.map((sound) => [sound.code, soundEnabled(sound.code)]),
+			sounds.map((sound) => [sound.code, Sounds.isEnabled(sound.code)]),
 		),
 	);
 
 	const toggleSound = (code: string) => {
 		localStorage.setItem(
-			soundCodeToLocalStorageKey(code),
-			String(!soundEnabled(code)),
+			Sounds.localStorageKey(code),
+			String(!Sounds.isEnabled(code)),
 		);
 		setSoundValues((prev) => ({
 			...prev,
@@ -70,7 +65,7 @@ function SoundCheckboxes() {
 }
 
 function SoundSlider() {
-	const [volume, setVolume] = React.useState(() => soundVolume() || 100);
+	const [volume, setVolume] = React.useState(() => Sounds.volume() || 100);
 
 	const changeVolume = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const newVolume = Number.parseFloat(event.target.value);
@@ -81,7 +76,7 @@ function SoundSlider() {
 		);
 	};
 
-	const previewVolume = () => playSoundIgnoringSetting("sq_like");
+	const previewVolume = () => Sounds.playIgnoringSetting("sq_like");
 
 	return (
 		<div className="stack horizontal xs items-center">

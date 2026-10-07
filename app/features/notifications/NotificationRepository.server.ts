@@ -125,6 +125,42 @@ export async function markAsSeenByType({
 	return R.unique(updated.map((row) => row.userId));
 }
 
+export async function findUserIdsWithUnseenByType({
+	userIds,
+	type,
+	meta,
+}: {
+	userIds: number[];
+	type: Notification["type"];
+	meta: Record<string, number | string>;
+}): Promise<number[]> {
+	if (userIds.length === 0) return [];
+
+	let query = db
+		.selectFrom("NotificationUser")
+		.innerJoin(
+			"Notification",
+			"Notification.id",
+			"NotificationUser.notificationId",
+		)
+		.select("NotificationUser.userId")
+		.where("NotificationUser.seen", "=", 0)
+		.where("NotificationUser.userId", "in", userIds)
+		.where("Notification.type", "=", type);
+
+	for (const [key, value] of Object.entries(meta)) {
+		query = query.where(
+			sql`json_extract("Notification"."meta", ${`$.${key}`})`,
+			"=",
+			value,
+		);
+	}
+
+	const rows = await query.execute();
+
+	return R.unique(rows.map((row) => row.userId));
+}
+
 /** Marks the actor's notifications as seen. Returns `[actorId]` if any row changed, else `[]`, shaped for `ChatSystemMessage.notifyNotificationsChanged`. */
 export async function markOwnAsSeen(notificationIds: number[]) {
 	const updated = await db

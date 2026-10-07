@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as v from "valibot";
-import { playSound } from "~/features/chat/chat-utils";
+import * as Sounds from "~/features/chat/core/Sounds";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import type { GlobalStatus, GlobalStatusState } from "./global-status-types";
 
@@ -39,7 +39,7 @@ export function useGlobalStatusSounds(status: GlobalStatus | null) {
 		if (previous === undefined || !status || seenByAnotherTab) return;
 
 		const sound = soundForTransition(previous, status);
-		if (sound) playSound(sound);
+		if (sound) Sounds.play(sound);
 	}, [status]);
 }
 

@@ -1,22 +1,28 @@
 import * as R from "remeda";
-import { toastQueue } from "~/components/elements/Toast";
 import type { ServerEvent } from "~/features/events/events-types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import {
 	CHAT_ROOMS_DATA_ROUTE,
 	chatRoomDataRoute,
+	chatRoomMentionsSeenRoute,
 	chatRoomMessagesRoute,
 	chatRoomReadRoute,
 } from "~/utils/urls";
 import { eventsClient } from "../events/events-client";
+import { CHAT_MENTION_SOUND } from "./chat-constants";
 import type {
 	ChatMessageAuthor,
 	ChatMessageWithAuthor,
 	ChatRoomListItem,
 	ClientChatMessage,
 	RouteChatRoom,
+	UnreadDivider,
 } from "./chat-types";
+import * as Attention from "./core/Attention";
+import * as MentionAlerts from "./core/MentionAlerts";
+import * as Mentions from "./core/Mentions";
+import * as Sounds from "./core/Sounds";
 
 const READ_DEBOUNCE_MS = 1_500;
 
@@ -32,8 +38,8 @@ interface ChatClientDeps {
 		message: { publicId: string; contents: string },
 	) => Promise<{ message: ChatMessageWithAuthor } | null>;
 	postRead: (roomId: number, lastSeenMessageId: number) => Promise<void>;
-	/** Called when a send did not reach the server, to tell the user their message was not delivered. */
-	onSendFailed: () => void;
+	/** A message mentioning the user arrived, `roomViewed` when it landed in a room they are viewing. */
+	onMention: (mention: { roomId: number; roomViewed: boolean }) => void;
 	addServerEventListener: (
 		listener: (event: ServerEvent) => void,
 	) => () => void;
@@ -55,6 +61,8 @@ export interface ChatSnapshot {
 	totalUnreadCount: number;
 	/** Loaded histories, oldest first, optimistic pending sends last. Absent key = history not fetched yet. */
 	messagesByRoomId: ReadonlyMap<number, ClientChatMessage[]>;
+	/** What was unread as each room last came into view, for the "new messages" divider. Absent key = nothing was. */
+	unreadDividerByRoomId: ReadonlyMap<number, UnreadDivider>;
 }
 
 export interface ChatClient {
@@ -74,17 +82,21 @@ export interface ChatClient {
 	ensureMessagesLoaded: (roomId: number) => void;
 	/** Reconnect catch-up: refetches the room list and every loaded history. */
 	catchUp: () => void;
-	/** Appends an optimistic pending message and POSTs the send; the pending row is replaced by the SSE echo or the POST response (whichever lands first), and removed with an error notice if the send fails. */
+	/** Appends an optimistic pending message and POSTs the send; the pending row is replaced by the SSE echo or the POST response (whichever lands first), and marked failed if the send fails. */
 	send: (
 		roomId: number,
 		message: { publicId: string; contents: string; author: ChatMessageAuthor },
 	) => void;
+	/** Sends a failed message again, pending until it lands or fails anew. */
+	retry: (roomId: number, publicId: string) => void;
 	/** Zeroes the room's unread count and debounces the read-indicator POST. */
 	markRead: (roomId: number) => void;
 	/** Posts every debounced read indicator right away, for a page that is going away. */
 	flushReads: () => void;
 	/** Rooms the user has on screen right now: incoming messages there are read immediately instead of counting unread. */
 	setViewedRoomIds: (roomIds: number[]) => void;
+	/** Viewed rooms that are still out of sight (a background tab of the split view), they count unread messages like closed ones. */
+	setHiddenRoomIds: (roomIds: number[]) => void;
 }
 
 export function createChatClient(deps: ChatClientDeps): ChatClient {
@@ -100,7 +112,11 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	/** The ids of the observed rooms in `roomsById`, kept in sync by `replaceRooms`. */
 	let observedRoomIds = new Set<number>();
 	let messagesByRoomId = new Map<number, ClientChatMessage[]>();
+	let openRoomIds = new Set<number>();
+	let hiddenRoomIds = new Set<number>();
+	/** `openRoomIds` without `hiddenRoomIds`, kept in sync by `updateViewedRoomIds`. */
 	let viewedRoomIds = new Set<number>();
+	let unreadDividerByRoomId = new Map<number, UnreadDivider>();
 	let snapshot: ChatSnapshot | null = null;
 
 	const loadingObservedRoomIds = new Set<number>();
@@ -235,6 +251,20 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 
 		if (viewedRoomIds.has(message.roomId)) {
 			markRead(message.roomId);
+		}
+
+		const isNew = message.id > (room.latestMessageId ?? 0);
+		if (
+			isNew &&
+			!isOwn &&
+			ownUserId !== null &&
+			message.contents !== null &&
+			Mentions.mentionsUser(message.contents, ownUserId)
+		) {
+			deps.onMention({
+				roomId: message.roomId,
+				roomViewed: viewedRoomIds.has(message.roomId),
+			});
 		}
 
 		// a system message accompanies an owner state change (a confirmed score
@@ -396,6 +426,36 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		}
 	};
 
+	const updateViewedRoomIds = () => {
+		const previous = viewedRoomIds;
+		viewedRoomIds = new Set(
+			[...openRoomIds].filter((roomId) => !hiddenRoomIds.has(roomId)),
+		);
+		for (const roomId of viewedRoomIds) {
+			if (!previous.has(roomId)) {
+				placeUnreadDivider(roomId);
+				markRead(roomId);
+			}
+		}
+	};
+
+	const placeUnreadDivider = (roomId: number) => {
+		const room = roomById(roomId);
+		const next = new Map(unreadDividerByRoomId);
+
+		if (room && room.unreadCount > 0 && room.latestMessageId !== null) {
+			next.set(roomId, {
+				unreadCount: room.unreadCount,
+				upToMessageId: room.latestMessageId,
+			});
+		} else if (!next.delete(roomId)) {
+			return;
+		}
+
+		unreadDividerByRoomId = next;
+		notify();
+	};
+
 	const loadMessages = async (roomId: number) => {
 		if (loadingMessageRoomIds.has(roomId)) return;
 		loadingMessageRoomIds.add(roomId);
@@ -424,6 +484,59 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		} finally {
 			loadingMessageRoomIds.delete(roomId);
 		}
+	};
+
+	const postPendingMessage = (
+		roomId: number,
+		message: { publicId: string; contents: string },
+	) => {
+		void deps
+			.postMessage(roomId, message)
+			.catch((error) => {
+				logger.error("Sending chat message failed", error);
+				return null;
+			})
+			.then((data) => {
+				if (!data) {
+					// a failed send stuck at pending forever would read as delivered
+					patchPendingMessage(roomId, message.publicId, { failed: true });
+					return;
+				}
+
+				// usually the SSE echo lands first, both reconcile by publicId
+				insertPersisted(data.message);
+				const room = roomById(roomId);
+				if (room) {
+					setRoom(roomId, {
+						latestMessageId: Math.max(
+							room.latestMessageId ?? 0,
+							data.message.id,
+						),
+						latestMessageAt: Math.max(
+							room.latestMessageAt ?? 0,
+							data.message.createdAt,
+						),
+					});
+				}
+				notify();
+			});
+	};
+
+	const patchPendingMessage = (
+		roomId: number,
+		publicId: string,
+		patch: Partial<ClientChatMessage>,
+	) => {
+		const messages = messagesByRoomId.get(roomId);
+		if (!messages) return;
+
+		const index = messages.findIndex(
+			(message) => message.pending && message.publicId === publicId,
+		);
+		if (index === -1) return;
+
+		setMessages(roomId, messages.with(index, { ...messages[index], ...patch }));
+		notify();
 	};
 
 	/** A failed fetch must not leave behind an empty history that reads as loaded. */
@@ -473,7 +586,9 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			roomsRefreshQueued = false;
 			replaceRooms(new Map());
 			messagesByRoomId = new Map();
+			openRoomIds = new Set();
 			viewedRoomIds = new Set();
+			unreadDividerByRoomId = new Map();
 			locallyReadByRoomId.clear();
 			loadingObservedRoomIds.clear();
 			refetchedUnknownRoomIds.clear();
@@ -490,6 +605,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 					0,
 				),
 				messagesByRoomId,
+				unreadDividerByRoomId,
 			};
 			return snapshot;
 		},
@@ -532,57 +648,26 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			]);
 			notify();
 
-			void deps
-				.postMessage(roomId, { publicId, contents })
-				.catch((error) => {
-					logger.error("Sending chat message failed", error);
-					return null;
-				})
-				.then((data) => {
-					if (data) {
-						// usually the SSE echo lands first; both reconcile by publicId
-						insertPersisted(data.message);
-						const room = roomById(roomId);
-						if (room) {
-							setRoom(roomId, {
-								latestMessageId: Math.max(
-									room.latestMessageId ?? 0,
-									data.message.id,
-								),
-								latestMessageAt: Math.max(
-									room.latestMessageAt ?? 0,
-									data.message.createdAt,
-								),
-							});
-						}
-						notify();
-						return;
-					}
+			postPendingMessage(roomId, { publicId, contents });
+		},
+		retry: (roomId, publicId) => {
+			const failed = messagesByRoomId
+				.get(roomId)
+				?.find((message) => message.failed && message.publicId === publicId);
+			if (!failed?.contents) return;
 
-					deps.onSendFailed();
-
-					// a failed send stuck at pending forever would read as delivered
-					const messages = messagesByRoomId.get(roomId);
-					if (!messages) return;
-					const withoutFailed = messages.filter(
-						(message) => !(message.pending && message.publicId === publicId),
-					);
-					if (withoutFailed.length !== messages.length) {
-						setMessages(roomId, withoutFailed);
-						notify();
-					}
-				});
+			patchPendingMessage(roomId, publicId, { failed: false });
+			postPendingMessage(roomId, { publicId, contents: failed.contents });
 		},
 		markRead,
 		flushReads,
 		setViewedRoomIds: (roomIds) => {
-			const previous = viewedRoomIds;
-			viewedRoomIds = new Set(roomIds);
-			for (const roomId of viewedRoomIds) {
-				if (!previous.has(roomId)) {
-					markRead(roomId);
-				}
-			}
+			openRoomIds = new Set(roomIds);
+			updateViewedRoomIds();
+		},
+		setHiddenRoomIds: (roomIds) => {
+			hiddenRoomIds = new Set(roomIds);
+			updateViewedRoomIds();
 		},
 	};
 }
@@ -606,7 +691,7 @@ const OFFLINE_DEPS: ChatClientDeps = {
 	fetchMessages: NEVER_RESOLVING,
 	postMessage: NEVER_RESOLVING,
 	postRead: NEVER_RESOLVING,
-	onSendFailed: () => {},
+	onMention: () => {},
 	addServerEventListener: () => () => {},
 };
 
@@ -630,6 +715,16 @@ const fetchJson = async <T>(url: string): Promise<T | null> => {
 	return (await response.json()) as T;
 };
 
+const mentionAlerts = MentionAlerts.create({
+	attention: Attention.tracker,
+	playSound: () => Sounds.play(CHAT_MENTION_SOUND),
+	resolveMentions: (roomId) => {
+		void fetch(chatRoomMentionsSeenRoute(roomId), { method: "POST" }).catch(
+			(error) => logger.error("Resolving chat mentions failed", error),
+		);
+	},
+});
+
 export const chatClient = createChatClient({
 	fetchRooms: () => fetchJson(CHAT_ROOMS_DATA_ROUTE),
 	fetchRoom: (roomId) => fetchJson(chatRoomDataRoute(roomId)),
@@ -650,11 +745,6 @@ export const chatClient = createChatClient({
 		};
 		return data.message ? { message: data.message } : null;
 	},
-	onSendFailed: () =>
-		toastQueue.add({
-			message: "Message could not be sent",
-			variant: "error",
-		}),
 	// keepalive: the flush on the way out of a page happens as the document is
 	// unloading, where an ordinary fetch is cancelled before it is sent
 	postRead: async (roomId, lastSeenMessageId) => {
@@ -665,5 +755,6 @@ export const chatClient = createChatClient({
 			keepalive: true,
 		});
 	},
+	onMention: mentionAlerts.handleMention,
 	addServerEventListener: (listener) => eventsClient.addEventListener(listener),
 });
