@@ -145,8 +145,9 @@
 
 .card {
 	position: absolute;
+	display: flex;
 	width: 224px;
-	height: 104px;
+	min-height: 104px;
 	border: var(--border-style);
 	border-width: 2px;
 	border-radius: var(--radius-box);
@@ -202,9 +203,9 @@
 
 .cardButton {
 	all: unset;
-	position: absolute;
-	inset: 0;
 	display: flex;
+	flex: 1;
+	min-width: 0;
 	flex-direction: column;
 	gap: var(--s-1);
 	box-sizing: border-box;
@@ -246,15 +247,28 @@
 	font-weight: var(--weight-bold);
 }
 
-.cardMeta,
+.cardMeta {
+	font-size: var(--font-2xs);
+}
+
+.cardFact {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	vertical-align: bottom;
+
+	&:first-child::first-letter {
+		text-transform: uppercase;
+	}
+}
+
 .cardSource {
 	overflow: hidden;
 	font-size: var(--font-2xs);
 	white-space: nowrap;
 	text-overflow: ellipsis;
-}
-
-.cardSource {
 	margin-block-start: auto;
 	color: var(--color-text-high);
 }
@@ -421,57 +435,23 @@
 	font-size: var(--font-sm);
 }
 
+/* a short name keeps its full width, the long one takes what is left */
 .route {
-	display: flex;
-	flex: 1;
+	display: grid;
+	grid-template-columns: minmax(0, max-content) auto minmax(0, max-content);
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--s-2);
-	padding: var(--s-1) var(--s-1) var(--s-1) var(--s-3);
-	border-radius: var(--radius-box);
-	background-color: var(--color-bg);
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
 }
 
 .routeBracket {
-	padding: 0;
-	border: none;
-	background: none;
-	color: var(--color-text);
-	font-size: var(--font-sm);
-	font-weight: var(--weight-semi);
-	cursor: pointer;
-
-	&:hover {
-		text-decoration: underline;
-	}
-}
-
-.modes {
-	display: flex;
-	gap: var(--s-1);
-	padding: var(--s-1);
-	border-radius: var(--radius-box);
-	background-color: var(--color-bg);
-}
-
-.mode {
-	flex: 1;
-	min-height: var(--field-size);
-	border: none;
-	border-radius: var(--radius-field);
-	background: none;
-	color: var(--color-text);
-	font-size: var(--font-xs);
-	cursor: pointer;
-
-	&:focus-visible {
-		outline: var(--focus-ring);
-	}
-}
-
-.modeActive {
-	background-color: var(--color-bg-higher);
-	font-weight: var(--weight-bold);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .tiers {

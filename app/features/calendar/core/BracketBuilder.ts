@@ -1,4 +1,5 @@
 import * as R from "remeda";
+import type { SkippableRound } from "~/db/tables-json";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds";
@@ -28,6 +29,15 @@ export interface Connection {
 	sourceIdx: number;
 	placements: string;
 }
+
+/** One setting shown on a bracket card, see {@link cardFacts}. */
+export type CardFact =
+	| { type: "GROUPS"; count: number }
+	| { type: "TEAMS_PER_GROUP"; count: number }
+	| { type: "AB_DIVISIONS" }
+	| { type: "ROUNDS"; count: number }
+	| { type: "EARLY_ADVANCE"; wins: number }
+	| { type: "SKIPPED"; round: SkippableRound };
 
 /** Reason a connection could not be made, see {@link connect}. */
 export type ConnectError =
@@ -317,8 +327,12 @@ export function defaultPlacements(
 	const next = highestTaken + 1;
 
 	switch (bracket.type) {
-		case "round_robin":
-			return `${next}-${next + 1}`;
+		case "round_robin": {
+			const last = Math.min(next + 1, Number(bracket.teamsPerGroup));
+			if (next > last) return "";
+
+			return Progression.placementsToString(R.range(next, last + 1));
+		}
 		case "swiss":
 			return `${next}-${next + 7}`;
 		default: {
@@ -417,6 +431,66 @@ export function isGrouped(bracket: BracketFormValue) {
 	);
 }
 
+/**
+ * Settings of a bracket worth showing on its card: the shape of its format and rounds left unplayed.
+ * A skipped round is listed only when the rounds it depends on are played, skipping the semifinals says
+ * enough without the finals.
+ */
+export function cardFacts(
+	bracket: BracketFormValue,
+	{ isStarting }: { isStarting: boolean },
+): CardFact[] {
+	switch (bracket.type) {
+		case "round_robin":
+			return [
+				{ type: "TEAMS_PER_GROUP", count: Number(bracket.teamsPerGroup) },
+				...(isStarting && bracket.hasAbDivisions
+					? [{ type: "AB_DIVISIONS" } as const]
+					: []),
+			];
+		case "swiss":
+			return [
+				...(Number(bracket.groupCount) > 1
+					? [{ type: "GROUPS", count: Number(bracket.groupCount) } as const]
+					: []),
+				{ type: "ROUNDS", count: Number(bracket.roundCount) },
+				...(bracket.earlyAdvance
+					? [
+							{
+								type: "EARLY_ADVANCE",
+								wins: Number(bracket.advanceThreshold),
+							} as const,
+						]
+					: []),
+			];
+		case "single_elimination":
+		case "double_elimination": {
+			const skipped = SkippedRounds.normalized(
+				bracket.type,
+				bracket.skippedRounds,
+			);
+
+			return [
+				...(isGrouped(bracket)
+					? [
+							{
+								type: "GROUPS",
+								count: Number(bracket.eliminationGroupCount),
+							} as const,
+						]
+					: []),
+				...skipped
+					.filter((round) =>
+						SkippedRounds.prerequisitesOf(round).every(
+							(prerequisite) => !skipped.includes(prerequisite),
+						),
+					)
+					.map((round) => ({ type: "SKIPPED", round }) as const),
+			];
+		}
+	}
+}
+
 /** Losers rounds an "knocked out early" line can take, `-1` being the first round. */
 export function knockedOutRoundOptions(bracket: BracketFormValue) {
 	return bracket.type === "single_elimination" ||
@@ -463,7 +537,8 @@ export function maxTeamCounts(values: BuilderValues): Array<number | null> {
 /** Pixel sizes of the builder's board. */
 export interface BoardDimensions {
 	cardWidth: number;
-	cardHeight: number;
+	/** Cards grow from this to fit their content */
+	minCardHeight: number;
 	columnGap: number;
 	rowGap: number;
 	headerHeight: number;
@@ -478,8 +553,8 @@ interface Point {
 }
 
 export interface BoardLayout {
-	/** Top left corner of each bracket's card */
-	cards: Point[];
+	/** Top left corner and height of each bracket's card */
+	cards: Array<Point & { height: number }>;
 	/** Per line of {@link connections}, in the same order */
 	lines: Array<{
 		/** Start port, both ends of each lane the line passes, end port */
@@ -493,16 +568,17 @@ export interface BoardLayout {
 /**
  * Positions of the cards and lines of the board. A line skipping columns passes each through a lane, an empty slot
  * between the column's cards, so that it never crosses a card. A lane goes where the line comes in, pushing the
- * cards below it down.
+ * cards below it down. Cards grow to fit their content, `cardHeights` being their measured heights.
  */
 export function boardLayout(
 	values: BuilderValues,
 	bracketColumns: number[],
 	dimensions: BoardDimensions,
+	cardHeights: Array<number | undefined> = [],
 ): BoardLayout {
 	const {
 		cardWidth,
-		cardHeight,
+		minCardHeight,
 		columnGap,
 		rowGap,
 		headerHeight,
@@ -512,14 +588,18 @@ export function boardLayout(
 	const lines = connections(values);
 	const columnX = (column: number) =>
 		padding + column * (cardWidth + columnGap);
-	const cards: Point[] = [];
+	const cards: BoardLayout["cards"] = [];
+	const heightOf = (bracketIdx: number) =>
+		Math.max(minCardHeight, cardHeights[bracketIdx] ?? 0);
+	const centerYOf = (bracketIdx: number) =>
+		cards[bracketIdx].y + cards[bracketIdx].height / 2;
 	const laneYs = lines.map(() => new Map<number, number>());
 	let height = headerHeight;
 
 	const lineYAt = (lineIdx: number, column: number) => {
 		const { fromIdx } = lines[lineIdx];
 		return column === bracketColumns[fromIdx]
-			? cards[fromIdx].y + cardHeight / 2
+			? centerYOf(fromIdx)
 			: laneYs[lineIdx].get(column)!;
 	};
 
@@ -544,10 +624,11 @@ export function boardLayout(
 		for (const [bracketIdx, bracketColumn] of bracketColumns.entries()) {
 			if (bracketColumn !== column) continue;
 
+			const cardHeight = heightOf(bracketIdx);
 			while (lanes.length > 0 && lanes[0].comesInAt <= y + cardHeight / 2) {
 				placeLane();
 			}
-			cards[bracketIdx] = { x: columnX(column), y };
+			cards[bracketIdx] = { x: columnX(column), y, height: cardHeight };
 			y += cardHeight + rowGap;
 		}
 		while (lanes.length > 0) placeLane();
@@ -562,11 +643,11 @@ export function boardLayout(
 			const toColumn = bracketColumns[line.toIdx];
 			const start = {
 				x: columnX(fromColumn) + cardWidth,
-				y: cards[line.fromIdx].y + cardHeight / 2,
+				y: centerYOf(line.fromIdx),
 			};
 			const end = {
 				x: columnX(toColumn),
-				y: cards[line.toIdx].y + cardHeight / 2,
+				y: centerYOf(line.toIdx),
 			};
 			const laneColumns = R.range(
 				fromColumn + 1,

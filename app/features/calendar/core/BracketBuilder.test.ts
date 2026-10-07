@@ -269,12 +269,98 @@ describe("BracketBuilder.defaultPlacements", () => {
 		expect(BracketBuilder.defaultPlacements(values, 0)).toBe("4+");
 	});
 
+	test.each([
+		{ why: "stops at the last group placement", taken: "1-3", expected: "4" },
+		{
+			why: "is empty once every group placement is taken",
+			taken: "1-4",
+			expected: "",
+		},
+	])("round robin $why", ({ taken, expected }) => {
+		const values = progressionOf([
+			{ name: "Groups", type: "round_robin", teamsPerGroup: "4" },
+			{ name: "Finals", sources: [[0, taken]] },
+		]);
+
+		expect(BracketBuilder.defaultPlacements(values, 0)).toBe(expected);
+	});
+
 	test("is empty from a Swiss bracket advancing teams early", () => {
 		const values = progressionOf([
 			{ name: "Swiss", type: "swiss", earlyAdvance: true },
 		]);
 
 		expect(BracketBuilder.defaultPlacements(values, 0)).toBe("");
+	});
+});
+
+describe("BracketBuilder.cardFacts", () => {
+	test.each([
+		{
+			why: "round robin with A/B divisions",
+			overrides: {
+				type: "round_robin" as const,
+				teamsPerGroup: "6",
+				hasAbDivisions: true,
+			},
+			isStarting: true,
+			expected: [
+				{ type: "TEAMS_PER_GROUP", count: 6 },
+				{ type: "AB_DIVISIONS" },
+			],
+		},
+		{
+			why: "follow-up round robin leaves out a lingering A/B divisions value",
+			overrides: {
+				type: "round_robin" as const,
+				teamsPerGroup: "4",
+				hasAbDivisions: true,
+			},
+			isStarting: false,
+			expected: [{ type: "TEAMS_PER_GROUP", count: 4 }],
+		},
+		{
+			why: "swiss in groups with early advance",
+			overrides: {
+				type: "swiss" as const,
+				groupCount: "2",
+				roundCount: "5",
+				earlyAdvance: true,
+				advanceThreshold: "3",
+			},
+			isStarting: true,
+			expected: [
+				{ type: "GROUPS", count: 2 },
+				{ type: "ROUNDS", count: 5 },
+				{ type: "EARLY_ADVANCE", wins: 3 },
+			],
+		},
+		{
+			why: "skipped semifinals without the rounds depending on them",
+			overrides: {
+				type: "single_elimination" as const,
+				skippedRounds: ["SEMIS" as const],
+			},
+			isStarting: true,
+			expected: [{ type: "SKIPPED", round: "SEMIS" }],
+		},
+		{
+			why: "grouped double elimination without bracket reset",
+			overrides: {
+				type: "double_elimination" as const,
+				eliminationGroupCount: "4",
+				skippedRounds: ["BRACKET_RESET" as const],
+			},
+			isStarting: true,
+			expected: [
+				{ type: "GROUPS", count: 4 },
+				{ type: "SKIPPED", round: "BRACKET_RESET" },
+			],
+		},
+	])("$why", ({ overrides, isStarting, expected }) => {
+		expect(
+			BracketBuilder.cardFacts(bracketValue(overrides), { isStarting }),
+		).toEqual(expected);
 	});
 });
 
@@ -419,7 +505,7 @@ function progressionOf(
 describe("BracketBuilder.boardLayout", () => {
 	const dimensions: BracketBuilder.BoardDimensions = {
 		cardWidth: 100,
-		cardHeight: 50,
+		minCardHeight: 50,
 		columnGap: 40,
 		rowGap: 10,
 		headerHeight: 20,
@@ -433,10 +519,22 @@ describe("BracketBuilder.boardLayout", () => {
 		const layout = BracketBuilder.boardLayout(values, [0, 0], dimensions);
 
 		expect(layout.cards).toEqual([
-			{ x: 0, y: 20 },
-			{ x: 0, y: 80 },
+			{ x: 0, y: 20, height: 50 },
+			{ x: 0, y: 80, height: 50 },
 		]);
 		expect(layout.height).toBe(130);
+	});
+
+	test("pushes the cards below a card grown to fit its content down", () => {
+		const values = progressionOf([{ name: "A" }, { name: "B" }]);
+
+		const layout = BracketBuilder.boardLayout(values, [0, 0], dimensions, [70]);
+
+		expect(layout.cards).toEqual([
+			{ x: 0, y: 20, height: 70 },
+			{ x: 0, y: 100, height: 50 },
+		]);
+		expect(layout.height).toBe(150);
 	});
 
 	test("passes a line skipping a column through a lane above the card it would cross", () => {
@@ -459,7 +557,7 @@ describe("BracketBuilder.boardLayout", () => {
 				BracketBuilder.connections(values)[lineIdx].toIdx === 2,
 		);
 
-		expect(layout.cards[1]).toEqual({ x: 140, y: 60 });
+		expect(layout.cards[1]).toEqual({ x: 140, y: 60, height: 50 });
 		expect(mainToFinals?.points).toEqual([
 			{ x: 100, y: 45 },
 			{ x: 140, y: 35 },

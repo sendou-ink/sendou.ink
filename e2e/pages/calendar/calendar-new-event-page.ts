@@ -40,7 +40,10 @@ export class CalendarNewEventPage {
 			// the builder's side panel edits one bracket or connection at a time
 			bracketNameInput: page.getByLabel(/^Bracket name *\*?$/),
 			bracketFormatSelect: page.getByLabel("Format", { exact: true }),
-			placementsInput: page.getByLabel("Placements"),
+			placementCheckboxes: page.getByRole("checkbox", { name: /^#\d+/ }),
+			// chip radios hide the input visually, so the label takes the click
+			bestFinishersModeChip: page.getByText("Best finishers", { exact: true }),
+			knockedOutModeChip: page.getByText("Knocked out early", { exact: true }),
 			deleteBracketButton: page.getByTestId("builder-delete-bracket-button"),
 			startingBracketsColumn: page.getByText("Starting brackets", {
 				exact: true,
@@ -132,8 +135,8 @@ export class CalendarNewEventPage {
 		await this.locators.bracketFormatSelect.selectOption(format);
 	}
 
-	/** Sends teams from one bracket to another, optionally typing out which placements. */
-	async connect(fromNth: number, toNth: number, placements?: string) {
+	/** Sends teams from one bracket to another, optionally picking which placements. */
+	async connect(fromNth: number, toNth: number, placements?: number[]) {
 		await this.goToStep("format");
 		await this.locators.bracketCards
 			.nth(fromNth)
@@ -146,7 +149,33 @@ export class CalendarNewEventPage {
 			.click();
 
 		if (placements !== undefined) {
-			await this.locators.placementsInput.fill(placements);
+			await this.pickPlacements(placements);
+		}
+	}
+
+	/** Picks exactly these placements in the open connection panel, negative ones being knocked out rounds. */
+	private async pickPlacements(placements: number[]) {
+		if (placements.every((placement) => placement < 0)) {
+			await this.locators.knockedOutModeChip.click();
+			await this.page
+				.getByRole("radio", {
+					name:
+						placements.length === 1
+							? "Lost in round 1"
+							: `Lost in rounds 1–${placements.length}`,
+				})
+				.check();
+			return;
+		}
+
+		if ((await this.locators.bestFinishersModeChip.count()) > 0) {
+			await this.locators.bestFinishersModeChip.click();
+		}
+		for (const checkbox of await this.locators.placementCheckboxes.all()) {
+			if (await checkbox.isDisabled()) continue;
+			const label = await checkbox.locator("xpath=..").innerText();
+			const placement = Number(label.match(/#(\d+)/)?.[1]);
+			await checkbox.setChecked(placements.includes(placement));
 		}
 	}
 
@@ -155,11 +184,11 @@ export class CalendarNewEventPage {
 		await this.locators.deleteBracketButton.click();
 	}
 
-	/** Types out the placements of the last connection of the format builder. */
-	async fillLastPlacements(placements: string) {
+	/** Picks the placements of the last connection of the format builder. */
+	async pickLastPlacements(placements: number[]) {
 		await this.goToStep("format");
 		await this.locators.connectionPills.last().click();
-		await this.locators.placementsInput.fill(placements);
+		await this.pickPlacements(placements);
 	}
 
 	async setBracketFormat(nth: number, formatLabel: string) {
@@ -221,7 +250,7 @@ export class CalendarNewEventPage {
 	}: {
 		name: string;
 		format: string;
-		placements: string;
+		placements: number[];
 	}) {
 		await this.addBracket({ name, format });
 		const lastNth = (await this.locators.bracketCards.count()) - 1;

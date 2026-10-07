@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Divider } from "~/components/Divider";
 import { FormMessage } from "~/components/FormMessage";
 import { InfoPopover } from "~/components/InfoPopover";
 import type { SkippableRound } from "~/db/tables-json";
@@ -220,6 +221,7 @@ export function BracketFields({
 
 			{isFollowUp ? (
 				<>
+					<Divider className={styles.divider} />
 					<FormField name={`${itemName}.startTime`} disabled={isDisabled} />
 					<FormField
 						name={`${itemName}.requiresCheckIn`}
@@ -406,7 +408,7 @@ function SourceFields({
 }
 
 /** Explains the syntax of the placements input. */
-export function PlacementsSyntaxPopover() {
+function PlacementsSyntaxPopover() {
 	return (
 		<InfoPopover tiny>
 			<div>

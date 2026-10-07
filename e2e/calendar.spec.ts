@@ -237,7 +237,7 @@ test.describe("Calendar", () => {
 		await newTournament.addFollowUpBracket({
 			name: "Underground bracket",
 			format: "Single elimination",
-			placements: "-1",
+			placements: [-1],
 		});
 
 		await newTournament.save();

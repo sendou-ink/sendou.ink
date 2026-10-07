@@ -196,7 +196,7 @@ test.describe("Tournament bracket multi stage", () => {
 
 		const eventEdit = await admin.editEventInfo();
 		await eventEdit.deleteLastBracket();
-		await eventEdit.fillLastPlacements("3,4");
+		await eventEdit.pickLastPlacements([3, 4]);
 		await eventEdit.save();
 
 		const brackets = new TournamentBracketsPage(page);
@@ -337,14 +337,14 @@ test.describe("Tournament bracket multi stage", () => {
 		await newTournament.addFollowUpBracket({
 			name: "Redemption",
 			format: "Single elimination",
-			placements: "3",
+			placements: [3],
 		});
 		await newTournament.addFollowUpBracket({
 			name: "Finals",
 			format: "Single elimination",
-			placements: "1-2",
+			placements: [1, 2],
 		});
-		await newTournament.connect(1, 2, "1");
+		await newTournament.connect(1, 2, [1]);
 
 		await newTournament.save();
 

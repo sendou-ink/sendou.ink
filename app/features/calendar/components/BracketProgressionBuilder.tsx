@@ -15,19 +15,24 @@ import {
 } from "@dnd-kit/core";
 import { getEventCoordinates } from "@dnd-kit/utilities";
 import clsx from "clsx";
+import type { TFunction } from "i18next";
 import { ArrowRight, Plus, Trash, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import { FormField } from "~/form/FormField";
 import { useFieldRevealer, useFormFieldContext } from "~/form/SendouForm";
 import type { ArrayItemRenderContext } from "~/form/types";
 import { errorMessageId, setNestedValue } from "~/form/utils";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import {
 	type BracketFormValue,
 	type ProgressionFormValue,
@@ -35,14 +40,11 @@ import {
 } from "../calendar-progression-form";
 import * as BracketBuilder from "../core/BracketBuilder";
 import styles from "./BracketProgressionBuilder.module.css";
-import {
-	BracketFields,
-	PlacementsSyntaxPopover,
-} from "./BracketProgressionFormFields";
+import { BracketFields } from "./BracketProgressionFormFields";
 
 // keep in sync with the card and column sizes in the CSS module
 const CARD_WIDTH = 224;
-const CARD_HEIGHT = 104;
+const CARD_MIN_HEIGHT = 104;
 const COLUMN_GAP = 128;
 const ROW_GAP = 16;
 const COLUMN_HEADER_HEIGHT = 64;
@@ -50,7 +52,7 @@ const BOARD_PADDING = 12;
 const LANE_HEIGHT = 36;
 const BOARD_DIMENSIONS: BracketBuilder.BoardDimensions = {
 	cardWidth: CARD_WIDTH,
-	cardHeight: CARD_HEIGHT,
+	minCardHeight: CARD_MIN_HEIGHT,
 	columnGap: COLUMN_GAP,
 	rowGap: ROW_GAP,
 	headerHeight: COLUMN_HEADER_HEIGHT,
@@ -101,6 +103,11 @@ export function BracketProgressionBuilder({
 	isInvitational: boolean;
 }) {
 	const { t } = useTranslation(["calendar", "common", "forms"]);
+	const { formatter: startTimeFormatter } = useDateTimeFormat({
+		weekday: "short",
+		hour: "numeric",
+		minute: "2-digit",
+	});
 	const {
 		values: formValues,
 		setValue,
@@ -125,6 +132,9 @@ export function BracketProgressionBuilder({
 	const [hoveredLineKey, setHoveredLineKey] = React.useState<string | null>(
 		null,
 	);
+	const [cardHeights, setCardHeights] = React.useState<
+		Array<number | undefined>
+	>([]);
 
 	const sensors = useSensors(
 		useSensor(MouseSensor, {
@@ -204,6 +214,7 @@ export function BracketProgressionBuilder({
 		values,
 		bracketColumns,
 		BOARD_DIMENSIONS,
+		cardHeights,
 	);
 	const positions = layout.cards;
 	const boardWidth =
@@ -553,6 +564,24 @@ export function BracketProgressionBuilder({
 								const hasError =
 									hasErrorWithin(`brackets[${bracketIdx}]`) ||
 									hasErrorWithin(`progression[${bracketIdx}]`);
+								const meta = [
+									...BracketBuilder.cardFacts(bracket, { isStarting }).map(
+										(fact) => cardFactText(fact, t),
+									),
+									typeof maxTeams === "number"
+										? t("calendar:builder.maxTeams", { count: maxTeams })
+										: null,
+								].filter((text) => text !== null);
+								const timing = isStarting
+									? []
+									: [
+											bracket.startTime
+												? startTimeFormatter.format(bracket.startTime)
+												: null,
+											bracket.requiresCheckIn
+												? t("calendar:builder.checkIn")
+												: null,
+										].filter((text) => text !== null);
 
 								return (
 									<BracketCard
@@ -560,6 +589,15 @@ export function BracketProgressionBuilder({
 										key={bracketIdx}
 										bracketIdx={bracketIdx}
 										position={positions[bracketIdx]}
+										onHeightChange={(height) =>
+											setCardHeights((heights) => {
+												if (heights[bracketIdx] === height) return heights;
+
+												const newHeights = [...heights];
+												newHeights[bracketIdx] = height;
+												return newHeights;
+											})
+										}
 										className={clsx({
 											[styles.cardSelected]: selectedBracketIdx === bracketIdx,
 											[styles.cardLinkTarget]: isLinkTarget,
@@ -599,6 +637,7 @@ export function BracketProgressionBuilder({
 										<span className={styles.cardTop}>
 											<span
 												className={clsx(styles.typeBadge, styles[bracket.type])}
+												title={t(`forms:options.format.${bracket.type}`)}
 											>
 												{BRACKET_TYPE_SHORT[bracket.type]}
 											</span>
@@ -609,15 +648,12 @@ export function BracketProgressionBuilder({
 												<span className={styles.cardErrorBadge}>!</span>
 											) : null}
 										</span>
-										<span className={styles.cardMeta}>
-											{t(`forms:options.format.${bracket.type}`)}
-											{BracketBuilder.isGrouped(bracket)
-												? ` · ${t("calendar:builder.groupCount", { count: Number(bracket.eliminationGroupCount) })}`
-												: null}
-											{typeof maxTeams === "number"
-												? ` · ${t("calendar:builder.maxTeams", { count: maxTeams })}`
-												: null}
-										</span>
+										{meta.length > 0 ? (
+											<CardFacts texts={meta} className={styles.cardMeta} />
+										) : null}
+										{timing.length > 0 ? (
+											<CardFacts texts={timing} className={styles.cardMeta} />
+										) : null}
 										<span
 											className={clsx(styles.cardSource, {
 												[styles.cardSourceWarning]:
@@ -738,9 +774,6 @@ export function BracketProgressionBuilder({
 							setPlacements(selectedLine, placements)
 						}
 						onClose={() => setSelection(null)}
-						onSelectBracket={(bracketIdx) =>
-							setSelection({ kind: "bracket", bracketIdx })
-						}
 						onRemove={() => {
 							commit(
 								BracketBuilder.disconnect(
@@ -833,7 +866,6 @@ function ConnectionPanel({
 	bracketName,
 	onPlacementsChange,
 	onClose,
-	onSelectBracket,
 	onRemove,
 }: {
 	values: BracketBuilder.BuilderValues;
@@ -844,47 +876,28 @@ function ConnectionPanel({
 	bracketName: (bracketIdx: number) => string;
 	onPlacementsChange: (placements: string) => void;
 	onClose: () => void;
-	onSelectBracket: (bracketIdx: number) => void;
 	onRemove: () => void;
 }) {
 	const { t } = useTranslation(["calendar"]);
 	const source = values.brackets[line.fromIdx];
 	const sourcesErrorName = `progression[${line.toIdx}].sources`;
 	const sourcesError = errors[sourcesErrorName];
+	const placementsErrorName = `${sourcesErrorName}[${line.sourceIdx}].placements`;
+	const placementsError = errors[placementsErrorName];
 	const isEarlyAdvance = sourceBracketHasEarlyAdvance(values.brackets, {
 		bracketIdx: String(line.fromIdx),
 		placements: line.placements,
 	});
 
-	// placements other lines from the same bracket already take, by the bracket they go to
-	const takenBy = new Map<number, string>();
-	for (const other of lines) {
-		if (other.fromIdx !== line.fromIdx || other === line) continue;
-		const parsed = Progression.parsePlacements(other.placements);
-		for (const placement of parsed?.placements ?? []) {
-			takenBy.set(placement, bracketName(other.toIdx));
-		}
-	}
+	const taken = takenPlacements(lines, line, bracketName);
 
 	return (
 		<div className={styles.panelContent}>
 			<PanelHeader title={t("calendar:builder.whoMovesOn")} onClose={onClose} />
 			<div className={styles.route}>
-				<button
-					type="button"
-					className={styles.routeBracket}
-					onClick={() => onSelectBracket(line.fromIdx)}
-				>
-					{bracketName(line.fromIdx)}
-				</button>
-				<ArrowRight size={16} aria-hidden="true" />
-				<button
-					type="button"
-					className={styles.routeBracket}
-					onClick={() => onSelectBracket(line.toIdx)}
-				>
-					{bracketName(line.toIdx)}
-				</button>
+				<span className={styles.routeBracket}>{bracketName(line.fromIdx)}</span>
+				<ArrowRight size={14} aria-hidden="true" />
+				<span className={styles.routeBracket}>{bracketName(line.toIdx)}</span>
 			</div>
 
 			{sourcesError ? (
@@ -906,13 +919,14 @@ function ConnectionPanel({
 						sourceName={bracketName(line.fromIdx)}
 						maxTeams={maxTeams}
 						placements={line.placements}
-						takenBy={takenBy}
+						taken={taken}
 						onChange={onPlacementsChange}
 					/>
-					<FormField
-						name={`progression[${line.toIdx}].sources[${line.sourceIdx}].placements`}
-						labelPopover={<PlacementsSyntaxPopover />}
-					/>
+					{placementsError ? (
+						<FormMessage id={errorMessageId(placementsErrorName)} type="error">
+							{t(placementsError as never)}
+						</FormMessage>
+					) : null}
 				</>
 			)}
 
@@ -933,14 +947,14 @@ function PlacementPicker({
 	sourceName,
 	maxTeams,
 	placements,
-	takenBy,
+	taken,
 	onChange,
 }: {
 	source: BracketFormValue;
 	sourceName: string;
 	maxTeams: number | null;
 	placements: string;
-	takenBy: Map<number, string>;
+	taken: TakenPlacements;
 	onChange: (placements: string) => void;
 }) {
 	const { t } = useTranslation(["calendar"]);
@@ -952,6 +966,8 @@ function PlacementPicker({
 	const picked = new Set(parsed.placements);
 	const highestPick = Math.max(0, ...parsed.placements);
 	const knockedOutRounds = BracketBuilder.knockedOutRoundOptions(source);
+	const tiers = BracketBuilder.placementTiers(source, maxTeams);
+	const firstFreeTier = tiers.find((tier) => !taken.nameOf(tier.placement));
 
 	const setPicks = (newPicks: number[], rest: boolean) =>
 		onChange(
@@ -965,7 +981,9 @@ function PlacementPicker({
 		<SendouSwitch
 			isSelected={parsed.rest}
 			onChange={(isSelected) => setPicks([...picked], isSelected)}
-			isDisabled={picked.size === 0}
+			isDisabled={
+				!parsed.rest && (picked.size === 0 || taken.isAnyAfter(highestPick))
+			}
 			size="small"
 		>
 			<span className={styles.switchText}>
@@ -979,28 +997,26 @@ function PlacementPicker({
 
 	const modeSwitcher =
 		knockedOutRounds.length > 0 ? (
-			<div className={styles.modes}>
-				<button
-					type="button"
-					className={clsx(styles.mode, { [styles.modeActive]: !isKnockedOut })}
-					aria-pressed={!isKnockedOut}
-					onClick={() => {
-						if (isKnockedOut) onChange("1");
-					}}
+			<SendouChipRadioGroup>
+				<SendouChipRadio
+					name="placement-mode"
+					value="top"
+					checked={!isKnockedOut}
+					onChange={() =>
+						onChange(firstFreeTier ? String(firstFreeTier.placement) : "")
+					}
 				>
 					{t("calendar:builder.mode.top")}
-				</button>
-				<button
-					type="button"
-					className={clsx(styles.mode, { [styles.modeActive]: isKnockedOut })}
-					aria-pressed={isKnockedOut}
-					onClick={() => {
-						if (!isKnockedOut) onChange("-1");
-					}}
+				</SendouChipRadio>
+				<SendouChipRadio
+					name="placement-mode"
+					value="knockedOut"
+					checked={isKnockedOut}
+					onChange={() => onChange("-1")}
 				>
 					{t("calendar:builder.mode.knockedOut")}
-				</button>
-			</div>
+				</SendouChipRadio>
+			</SendouChipRadioGroup>
 		) : null;
 
 	if (isKnockedOut) {
@@ -1091,7 +1107,6 @@ function PlacementPicker({
 		);
 	}
 
-	const tiers = BracketBuilder.placementTiers(source, maxTeams);
 	const isRoundRobin = source.type === "round_robin";
 
 	return (
@@ -1113,7 +1128,7 @@ function PlacementPicker({
 				{tiers.map((tier) => {
 					const isPicked = picked.has(tier.placement);
 					const isIncludedByRest = parsed.rest && tier.placement > highestPick;
-					const takenByName = takenBy.get(tier.placement);
+					const takenByName = taken.nameOf(tier.placement);
 					const isTaken = Boolean(takenByName) && !isPicked;
 
 					return (
@@ -1340,6 +1355,7 @@ function BracketCard({
 	hasInPort,
 	port,
 	onClick,
+	onHeightChange,
 	children,
 }: {
 	bracketIdx: number;
@@ -1348,6 +1364,7 @@ function BracketCard({
 	hasInPort: boolean;
 	port: { isActive: boolean; label: string; onClick: () => void } | null;
 	onClick: () => void;
+	onHeightChange: (height: number) => void;
 	children: React.ReactNode;
 }) {
 	const {
@@ -1369,6 +1386,17 @@ function BracketCard({
 			ref={(node) => {
 				setDraggableRef(node);
 				setDroppableRef(node);
+				if (!node) return;
+
+				const observer = new ResizeObserver(([entry]) =>
+					onHeightChange(entry.borderBoxSize[0].blockSize),
+				);
+				observer.observe(node);
+				return () => {
+					observer.disconnect();
+					setDraggableRef(null);
+					setDroppableRef(null);
+				};
 			}}
 			className={clsx(styles.card, className, {
 				[styles.cardMovable]: bracketIdx !== 0,
@@ -1433,17 +1461,18 @@ const cardsFirstCollisionDetection: CollisionDetection = (args) => {
 
 function draftLineOf(
 	drag: Extract<ActiveDrag, { kind: "connect" }>,
-	positions: Array<{ x: number; y: number }>,
+	positions: BracketBuilder.BoardLayout["cards"],
 ) {
 	const startX = positions[drag.fromIdx].x + CARD_WIDTH;
-	const startY = positions[drag.fromIdx].y + CARD_HEIGHT / 2;
+	const startY = positions[drag.fromIdx].y + positions[drag.fromIdx].height / 2;
 
 	if (drag.hoveredIdx !== null) {
 		return {
 			startX,
 			startY,
 			endX: positions[drag.hoveredIdx].x,
-			endY: positions[drag.hoveredIdx].y + CARD_HEIGHT / 2,
+			endY:
+				positions[drag.hoveredIdx].y + positions[drag.hoveredIdx].height / 2,
 		};
 	}
 
@@ -1453,4 +1482,83 @@ function draftLineOf(
 		endX: startX + drag.grabOffset.x + drag.delta.x,
 		endY: startY + drag.grabOffset.y + drag.delta.y,
 	};
+}
+
+interface TakenPlacements {
+	/** Bracket the placement already goes to through another line */
+	nameOf: (placement: number) => string | undefined;
+	isAnyAfter: (placement: number) => boolean;
+}
+
+/** Placements other lines from the same bracket already take. */
+function takenPlacements(
+	lines: BracketBuilder.Connection[],
+	line: BracketBuilder.Connection,
+	bracketName: (bracketIdx: number) => string,
+): TakenPlacements {
+	const byPlacement = new Map<number, string>();
+	let rest: { after: number; name: string } | null = null;
+
+	for (const other of lines) {
+		if (other.fromIdx !== line.fromIdx || other === line) continue;
+		const parsed = Progression.parsePlacements(other.placements);
+		if (!parsed) continue;
+
+		const name = bracketName(other.toIdx);
+		for (const placement of parsed.placements) {
+			byPlacement.set(placement, name);
+		}
+		if (parsed.rest) {
+			rest = { after: Math.max(...parsed.placements), name };
+		}
+	}
+
+	return {
+		nameOf: (placement) =>
+			byPlacement.get(placement) ??
+			(rest && placement > rest.after ? rest.name : undefined),
+		isAnyAfter: (placement) =>
+			rest !== null ||
+			[...byPlacement.keys()].some((taken) => taken > placement),
+	};
+}
+
+function CardFacts({
+	texts,
+	className,
+}: {
+	texts: string[];
+	className: string;
+}) {
+	return (
+		<span className={className}>
+			{texts.map((text, idx) => (
+				<React.Fragment key={text}>
+					{/* non-breaking space keeps the dot at the end of a line, never the start */}
+					{idx > 0 ? "\u00a0· " : null}
+					<span className={styles.cardFact}>{text}</span>
+				</React.Fragment>
+			))}
+		</span>
+	);
+}
+
+function cardFactText(
+	fact: BracketBuilder.CardFact,
+	t: TFunction<["calendar"]>,
+) {
+	switch (fact.type) {
+		case "GROUPS":
+			return t("calendar:builder.groupCount", { count: fact.count });
+		case "TEAMS_PER_GROUP":
+			return t("calendar:builder.fact.teamsPerGroup", { count: fact.count });
+		case "AB_DIVISIONS":
+			return t("calendar:builder.fact.abDivisions");
+		case "ROUNDS":
+			return t("calendar:builder.fact.rounds", { count: fact.count });
+		case "EARLY_ADVANCE":
+			return t("calendar:builder.fact.earlyAdvance", { wins: fact.wins });
+		case "SKIPPED":
+			return t(`calendar:builder.fact.skipped.${fact.round}`);
+	}
 }
