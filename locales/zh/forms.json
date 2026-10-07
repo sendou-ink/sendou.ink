@@ -159,6 +159,7 @@
 	"errors.staffCannotBeAuthor": "该赛事的创建者已经是组织者了",
 	"errors.divBothOrNeither": "最低级别和最高级别必须同时设置或同时不设置",
 	"errors.invalidMapPool": "无效的场地池",
+	"errors.bracketStartBeforeTournamentStart": "",
 	"errors.teamPick.noModes": "",
 	"errors.teamPick.poolTooSmall": "",
 	"errors.teamPick.countOutOfRange": "",

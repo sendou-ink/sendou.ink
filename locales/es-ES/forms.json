@@ -159,6 +159,7 @@
 	"errors.staffCannotBeAuthor": "El autor del torneo ya es organizador",
 	"errors.divBothOrNeither": "Deben establecerse tanto la div. mínima como la máxima, o ninguna",
 	"errors.invalidMapPool": "Grupo de mapas no válido",
+	"errors.bracketStartBeforeTournamentStart": "",
 	"errors.teamPick.noModes": "Elige al menos un modo",
 	"errors.teamPick.poolTooSmall": "En cada modo, el grupo de mapas personalizado necesita al menos un escenario más de los que eligen los equipos en él",
 	"errors.teamPick.countOutOfRange": "Los mapas por modo deben ser al menos 1 y menos que el número de escenarios del grupo",

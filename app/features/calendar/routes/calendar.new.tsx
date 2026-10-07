@@ -57,6 +57,7 @@ import {
 	type BracketFormValue,
 	defaultBracketsFormValues,
 	progressionToFormValues,
+	shiftBracketStartTimes,
 } from "../calendar-progression-form";
 import { calendarNewSearchParams } from "../calendar-search-params";
 import type { CalendarEventTag } from "../calendar-types";
@@ -185,11 +186,26 @@ function useDefaultValues() {
 		? new MapPool(baseEvent.mapPool).serialized
 		: "";
 
+	const startTime = data.isAddingTournament
+		? data.eventToEdit?.startTimes?.[0]
+			? databaseTimestampToDate(data.eventToEdit.startTimes[0])
+			: getDateAtNextFullHour(new Date())
+		: null;
+
 	const bracketProgressionValues = settings?.bracketProgression
 		? progressionToFormValues(settings.bracketProgression)
 		: data.isAddingTournament
 			? defaultBracketsFormValues()
 			: { brackets: [], progression: [] };
+	// a copy starts at a new time, follow-up brackets keep their distance to it
+	const brackets =
+		data.eventToCopy && tournamentCtx && startTime
+			? shiftBracketStartTimes(
+					bracketProgressionValues.brackets,
+					startTime.getTime() -
+						databaseTimestampToDate(tournamentCtx.startsAt).getTime(),
+				)
+			: bracketProgressionValues.brackets;
 
 	return {
 		toToolsEnabled: data.isAddingTournament,
@@ -206,11 +222,7 @@ function useDefaultValues() {
 			: (data.eventToEdit?.startTimes?.map((t) =>
 					databaseTimestampToDate(t),
 				) ?? [getDateAtNextFullHour(new Date())]),
-		startTime: data.isAddingTournament
-			? data.eventToEdit?.startTimes?.[0]
-				? databaseTimestampToDate(data.eventToEdit.startTimes[0])
-				: getDateAtNextFullHour(new Date())
-			: null,
+		startTime,
 		// tournaments hide this field, the action coalesces the empty value to the default
 		bracketUrl: data.isAddingTournament
 			? ""
@@ -235,7 +247,7 @@ function useDefaultValues() {
 		teamPickCounts: teamPick.modes,
 		teamPickPool: teamPick.pool,
 		pool,
-		brackets: bracketProgressionValues.brackets,
+		brackets,
 		progression: bracketProgressionValues.progression,
 		isRanked: settings?.isRanked ?? true,
 		enableNoScreenToggle: settings?.enableNoScreenToggle ?? true,

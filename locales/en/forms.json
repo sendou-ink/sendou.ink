@@ -159,6 +159,7 @@
 	"errors.staffCannotBeAuthor": "The tournament author is already an organizer",
 	"errors.divBothOrNeither": "Both min and max div must be set or neither",
 	"errors.invalidMapPool": "Invalid map pool",
+	"errors.bracketStartBeforeTournamentStart": "Can't start before the tournament starts",
 	"errors.teamPick.noModes": "Pick at least one mode",
 	"errors.teamPick.poolTooSmall": "For every mode, the custom map pool needs at least one more stage than teams pick in it",
 	"errors.teamPick.countOutOfRange": "Maps per mode must be at least 1 and less than the number of stages in the pool",

@@ -312,6 +312,7 @@ function calendarNewSyncRefine(
 				data.progression,
 				ctx,
 			);
+			validateBracketStartTimes(data, ctx);
 		}
 	}
 
@@ -336,6 +337,29 @@ function calendarNewSyncRefine(
 			path: ["maxMembersPerTeam"],
 			message: "forms:errors.maxMembersRange",
 		});
+	}
+}
+
+function validateBracketStartTimes(
+	data: Pick<
+		v.InferOutput<typeof calendarNewBaseSchema>,
+		"startTime" | "brackets" | "progression"
+	>,
+	ctx: ValidationCtx,
+) {
+	if (!data.startTime) return;
+
+	for (const [bracketIdx, bracket] of data.brackets.entries()) {
+		const isFollowUp =
+			bracketIdx > 0 && data.progression[bracketIdx]?.source === "BRACKET";
+		if (!isFollowUp || !bracket.startTime) continue;
+
+		if (bracket.startTime < data.startTime) {
+			ctx.addIssue({
+				path: ["brackets", bracketIdx, "startTime"],
+				message: "forms:errors.bracketStartBeforeTournamentStart",
+			});
+		}
 	}
 }
 

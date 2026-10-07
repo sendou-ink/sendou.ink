@@ -1,3 +1,4 @@
+import { addMilliseconds } from "date-fns";
 import * as v from "valibot";
 import type { Tables } from "~/db/tables";
 import type { SkippableRound, TournamentStageSettings } from "~/db/tables-json";
@@ -313,6 +314,18 @@ export function progressionToFormValues(
 				: [newProgressionSource()],
 		})),
 	};
+}
+
+/** Moves every bracket start time by `offsetMs`, e.g. by as much as a copied tournament's start time moved. */
+export function shiftBracketStartTimes(
+	brackets: BracketFormValue[],
+	offsetMs: number,
+): BracketFormValue[] {
+	return brackets.map((bracket) =>
+		bracket.startTime
+			? { ...bracket, startTime: addMilliseconds(bracket.startTime, offsetMs) }
+			: bracket,
+	);
 }
 
 /** Whether the source bracket advances teams via a Swiss early advance threshold (so placements are not specified). */

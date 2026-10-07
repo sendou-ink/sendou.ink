@@ -1,3 +1,4 @@
+import { addHours, subHours } from "date-fns";
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 import type { TeamPickSettings } from "~/db/tables-json";
@@ -8,6 +9,10 @@ import {
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
 } from "./calendar-new-schemas";
+import {
+	defaultBracketsFormValues,
+	newBracketFormValue,
+} from "./calendar-progression-form";
 import {
 	type CalendarNewFormValues,
 	calendarNewFormValues,
@@ -115,6 +120,49 @@ describe("calendarNewSchema team pick", () => {
 				}),
 			),
 		).toEqual([]);
+	});
+});
+
+describe("calendarNewSchema bracket start times", () => {
+	const tournamentStartTime = new Date(2027, 0, 15, 17, 0);
+
+	const withFollowUpStartingAt = (followUpStartTime: Date) => {
+		const defaults = defaultBracketsFormValues();
+
+		return calendarNewFormValues({
+			startTime: tournamentStartTime,
+			brackets: [
+				...defaults.brackets,
+				{
+					...newBracketFormValue(),
+					name: "Final Stage",
+					startTime: followUpStartTime,
+					requiresCheckIn: true,
+				},
+			],
+			progression: [
+				...defaults.progression,
+				{
+					source: "BRACKET",
+					sources: [{ bracketIdx: "0", placements: "1,2" }],
+				},
+			],
+		});
+	};
+
+	test("accepts a follow-up bracket starting after the tournament", () => {
+		expect(
+			issuesOf(withFollowUpStartingAt(addHours(tournamentStartTime, 3))),
+		).toEqual([]);
+	});
+
+	test("rejects a follow-up bracket starting before the tournament", () => {
+		expect(
+			issuesOf(withFollowUpStartingAt(subHours(tournamentStartTime, 1))),
+		).toContainEqual({
+			path: "brackets.1.startTime",
+			message: "forms:errors.bracketStartBeforeTournamentStart",
+		});
 	});
 });
 

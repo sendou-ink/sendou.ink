@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { parse } from "date-fns";
 import { calendarNewBaseSchema } from "~/features/calendar/calendar-new-schemas";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
@@ -39,6 +40,10 @@ export class CalendarNewEventPage {
 			connectionPills: page.getByTestId("builder-connection-pill"),
 			// the builder's side panel edits one bracket or connection at a time
 			bracketNameInput: page.getByLabel(/^Bracket name *\*?$/),
+			bracketStartTimeInput: page.getByLabel(/^Start time *\*?$/),
+			bracketStartBeforeTournamentError: page.getByText(
+				"Can't start before the tournament starts",
+			),
 			bracketFormatSelect: page.getByLabel("Format", { exact: true }),
 			placementCheckboxes: page.getByRole("checkbox", { name: /^#\d+/ }),
 			// chip radios hide the input visually, so the label takes the click
@@ -55,6 +60,8 @@ export class CalendarNewEventPage {
 				name: "Paste from a map pool link",
 			}),
 			mapPoolLinkInput: page.getByLabel("Map pool link"),
+			copyTournamentSelect: page.getByLabel("Tournament to copy"),
+			useTemplateButton: page.getByTestId("use-template-button"),
 		};
 	}
 
@@ -64,6 +71,27 @@ export class CalendarNewEventPage {
 
 	async gotoNewTournament() {
 		await navigate({ page: this.page, url: TOURNAMENT_NEW_PAGE });
+	}
+
+	/** Fills the form in with the settings of a previous tournament of the user. */
+	async copyTournament(eventId: number) {
+		await this.locators.copyTournamentSelect.selectOption(String(eventId));
+		await this.locators.useTemplateButton.click();
+		await this.page.waitForURL(/copyEventId=/);
+	}
+
+	/** Start time of the tournament as currently filled in. */
+	async tournamentStartTime() {
+		const value = await this.page
+			.getByLabel(/^Date *\*?$/)
+			.first()
+			.inputValue();
+
+		return parse(value, "yyyy-MM-dd'T'HH:mm", new Date());
+	}
+
+	bracketCard(name: string) {
+		return this.locators.bracketCards.filter({ hasText: name });
 	}
 
 	// the `date` inputs carry the array item's label ("Date"), not the array's, so the form helper can't drive them

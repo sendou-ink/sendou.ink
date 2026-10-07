@@ -15,6 +15,7 @@ import {
 } from "@dnd-kit/core";
 import { getEventCoordinates } from "@dnd-kit/utilities";
 import clsx from "clsx";
+import { isSameDay } from "date-fns";
 import type { TFunction } from "i18next";
 import { ArrowRight, Plus, Trash, X } from "lucide-react";
 import * as React from "react";
@@ -105,6 +106,13 @@ export function BracketProgressionBuilder({
 	const { t } = useTranslation(["calendar", "common", "forms"]);
 	const { formatter: startTimeFormatter } = useDateTimeFormat({
 		weekday: "short",
+		hour: "numeric",
+		minute: "2-digit",
+	});
+	const { formatter: startDateTimeFormatter } = useDateTimeFormat({
+		weekday: "short",
+		day: "numeric",
+		month: "short",
 		hour: "numeric",
 		minute: "2-digit",
 	});
@@ -201,6 +209,11 @@ export function BracketProgressionBuilder({
 		clearServerError("progression");
 		if (hasSubmitted) revalidateAll({ ...formValues, ...newValues });
 	};
+
+	const tournamentStartTime =
+		formValues.startTime instanceof Date ? formValues.startTime : null;
+	const isOnTournamentStartDay = (date: Date) =>
+		tournamentStartTime ? isSameDay(date, tournamentStartTime) : false;
 
 	const bracketColumns = BracketBuilder.columns(values, minColumns);
 	const lines = BracketBuilder.connections(values);
@@ -576,7 +589,10 @@ export function BracketProgressionBuilder({
 									? []
 									: [
 											bracket.startTime
-												? startTimeFormatter.format(bracket.startTime)
+												? (isOnTournamentStartDay(bracket.startTime)
+														? startTimeFormatter
+														: startDateTimeFormatter
+													).format(bracket.startTime)
 												: null,
 											bracket.requiresCheckIn
 												? t("calendar:builder.checkIn")

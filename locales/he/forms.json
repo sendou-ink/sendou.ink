@@ -159,6 +159,7 @@
 	"errors.staffCannotBeAuthor": "",
 	"errors.divBothOrNeither": "",
 	"errors.invalidMapPool": "",
+	"errors.bracketStartBeforeTournamentStart": "",
 	"errors.teamPick.noModes": "",
 	"errors.teamPick.poolTooSmall": "",
 	"errors.teamPick.countOutOfRange": "",
