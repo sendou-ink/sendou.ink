@@ -53,12 +53,21 @@ export function wrappedAction<T extends AnySchema>({
 }) {
 	return async (
 		args: v.InferOutput<T>,
-		{ user, params = {} }: { user?: TestUser; params?: Params<string> } = {},
+		{
+			user,
+			params = {},
+			url = "/path",
+		}: {
+			user?: TestUser;
+			params?: Params<string>;
+			/** Path with its search params, built with the route's search params definition. */
+			url?: string;
+		} = {},
 	) => {
 		const body = isJsonSubmission
 			? JSON.stringify(args)
 			: new URLSearchParams(args as any);
-		const request = new Request("http://app.com/path", {
+		const request = new Request(new URL(url, "http://app.com"), {
 			method: "POST",
 			body,
 			headers: [

@@ -79,6 +79,11 @@ export const action: ActionFunction = async ({ request, url }) => {
 				);
 			}
 			case "JOIN_TEAM": {
+				await sqRedirectIfNeeded({
+					ownGroup: SendouQ.findOwnGroup(user.id),
+					currentLocation: "default",
+				});
+
 				await validateCanJoinQ(user);
 
 				const { join: code } = qSearchParams.parse(url);
