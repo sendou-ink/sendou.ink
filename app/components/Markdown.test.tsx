@@ -120,4 +120,10 @@ describe("Markdown", () => {
 	])("renders $why", ({ markdown, expected }) => {
 		expect(render(markdown)).toBe(expected);
 	});
+
+	test("renders malformed html that overflows the parser", () => {
+		const html = render(`<div a's>x</div>\n![alt](https://x/a.png)`);
+
+		expect(html).toContain(`<img alt="alt" src="https://x/a.png"`);
+	});
 });
