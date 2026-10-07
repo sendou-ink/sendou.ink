@@ -150,6 +150,16 @@ describe("validatedSources - placements parsing", () => {
 	}[] = [
 		{ why: "invalid characters", placements: "1st,2nd,3rd,4th" },
 		{ why: "a zero placement", placements: "0", source: DOUBLE_ELIMINATION },
+		{
+			why: "a negative zero placement",
+			placements: "-0",
+			source: DOUBLE_ELIMINATION,
+		},
+		{
+			why: "a range starting from zero",
+			placements: "0-2",
+			source: DOUBLE_ELIMINATION,
+		},
 		{ why: "empty placements from a non-Swiss bracket", placements: "" },
 		{
 			why: "empty placements from a Swiss bracket without early advance",

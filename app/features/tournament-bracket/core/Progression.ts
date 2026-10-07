@@ -455,7 +455,7 @@ function parsePlacements(
 
 		const restMatch = part.match(/^(\d+)(?:-(\d+))?\+$/);
 		if (restMatch) {
-			if (!isLast || part === "0+") return null;
+			if (!isLast) return null;
 			rest = true;
 
 			const start = Number(restMatch[1]);
@@ -467,7 +467,7 @@ function parsePlacements(
 			continue;
 		}
 
-		const isValid = part.match(/^\d+(-\d+)?$/) && part !== "0";
+		const isValid = part.match(/^\d+(-\d+)?$/);
 		if (!isValid) return null;
 
 		if (part.includes("-")) {
@@ -481,6 +481,8 @@ function parsePlacements(
 			result.push(Number(part));
 		}
 	}
+
+	if (result.includes(0)) return null;
 
 	return { placements: result, rest };
 }
