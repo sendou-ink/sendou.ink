@@ -8,10 +8,12 @@ import styles from "./StageBannerBox.module.css";
 export function StageBannerBox({
 	stageId,
 	className,
+	style,
 	children,
 }: {
 	stageId: StageId;
 	className?: string;
+	style?: React.CSSProperties;
 	children: React.ReactNode;
 }) {
 	return (
@@ -19,6 +21,7 @@ export function StageBannerBox({
 			className={clsx(styles.banner, className)}
 			style={
 				{
+					...style,
 					"--stage-banner": `url(${stageBannerImageUrl(stageId)})`,
 				} as React.CSSProperties
 			}

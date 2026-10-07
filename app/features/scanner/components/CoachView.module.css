@@ -16,6 +16,19 @@
 	overflow-wrap: anywhere;
 }
 
+.games {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.gamesSummary {
+	margin-inline-start: auto;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
 .layout {
 	display: grid;
 	gap: var(--s-3);

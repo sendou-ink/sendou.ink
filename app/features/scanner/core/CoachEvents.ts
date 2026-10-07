@@ -298,7 +298,7 @@ function analyze(
  * results screen reorders `teams` winner-first — without the seat then, and on
  * a cast, there is no POV team.
  */
-function povTeamOf(match: ScannerMatch): Team | null {
+export function povTeamOf(match: ScannerMatch): Team | null {
 	if (match.pov) return match.pov.team;
 	if (match.cast || match.winner !== null) return null;
 	return 0;

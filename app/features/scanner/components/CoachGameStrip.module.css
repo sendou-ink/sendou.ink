@@ -1,0 +1,118 @@
+.strip {
+	--cutoff-width: 12px;
+	--game-width: 16rem;
+	--game-min-width: 8rem;
+
+	display: flex;
+	gap: var(--s-1-5);
+	overflow-x: auto;
+	padding-block-end: var(--s-1);
+}
+
+.game {
+	--result-color: var(--color-text-high);
+	--stage-banner-fade: var(--color-bg-high);
+
+	position: relative;
+	/* a full game is --game-width wide; spare room goes to games by length */
+	flex: var(--share) 0
+		max(var(--game-min-width), var(--duration) / 300 * var(--game-width));
+	min-width: max-content;
+	overflow: hidden;
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	/* StageBannerBox's fade, never fully clear so the label reads over the banner on narrow tiles */
+	background-image:
+		linear-gradient(
+			to right,
+			var(--stage-banner-fade) 20%,
+			color-mix(in oklch, var(--stage-banner-fade) 40%, transparent) 100%
+		),
+		var(--stage-banner);
+	transition: background-color 0.2s;
+
+	&:has(.gameButton:hover:enabled),
+	&.current {
+		--stage-banner-fade: var(--color-bg-higher);
+
+		background-color: var(--color-bg-higher);
+	}
+
+	&.current {
+		border: var(--border-style-accent);
+	}
+
+	&.win {
+		--result-color: var(--color-success);
+	}
+
+	&.loss {
+		--result-color: var(--color-error);
+	}
+}
+
+.gameButton {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	width: 100%;
+	height: 100%;
+	padding: var(--s-1-5) var(--s-2) var(--s-2-5);
+	border: none;
+	background: transparent;
+	color: var(--color-text);
+	text-align: start;
+	text-shadow: 0 1px 2px rgb(0 0 0 / 0.6);
+	cursor: pointer;
+
+	&:disabled {
+		cursor: default;
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+}
+
+.gameTop {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.gameNumber {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.stage {
+	overflow: hidden;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.progress {
+	position: absolute;
+	inset-inline: 0;
+	inset-block-end: 0;
+	height: 4px;
+	background: linear-gradient(
+		to right,
+		var(--result-color) calc(var(--progress) * 100%),
+		color-mix(in oklch, var(--result-color) 35%, transparent) 0
+	);
+}
+
+.cutoff {
+	flex: 0 0 var(--cutoff-width);
+	align-self: stretch;
+	height: auto;
+	color: var(--color-text-high);
+	opacity: 0.6;
+}
