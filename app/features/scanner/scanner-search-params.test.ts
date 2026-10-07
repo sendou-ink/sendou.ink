@@ -13,6 +13,7 @@ describe("scannerSearchParams", () => {
 				"live",
 				"session",
 				"vod",
+				"coach",
 				"clips",
 				"debug",
 				"fixtures",

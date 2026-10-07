@@ -30,7 +30,7 @@ running capture (`LiveView`), a past session (`PastSessionView`) and a
 scanned VoD (`VodView`): header, clip strip, then match cards
 (`components/MatchCard.tsx`) newest first. Views are picked by the `view`
 search param (`scanner-search-params.ts`: `live`, `session&id=`,
-`vod&name=`, `clips`, `debug` and the dev-only `fixtures` and `montage`). Nothing links to
+`vod&name=`, `coach&name=` (a scanned file's coach events beside its video), `clips`, `debug` and the dev-only `fixtures` and `montage`). Nothing links to
 the `debug` screenshot view: dropping an image on the landing's File card
 opens it, for anyone, through the same handoff Inspect uses.
 

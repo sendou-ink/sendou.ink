@@ -107,6 +107,8 @@ export interface VodScanSnapshot {
 	/** what the scan found, chronological; reloaded from the store once saved */
 	events: ScanEvent[];
 	clipsWork: ClipsWork | null;
+	/** seconds from the scan's start until it was saved; null until done */
+	tookSeconds: number | null;
 }
 
 /** Kept apart from the snapshot: it ticks several times a second, which must not re-render the match cards. */
@@ -121,6 +123,7 @@ const IDLE: VodScanSnapshot = {
 	error: null,
 	events: [],
 	clipsWork: null,
+	tookSeconds: null,
 };
 
 const IDLE_PROGRESS: VodScanProgressSnapshot = {
@@ -143,6 +146,8 @@ let abortChunks: (() => void) | null = null;
  * scan that replaced it.
  */
 let generation = 0;
+/** files scanned or opened this visit by name, so they can be played back */
+const visitFiles = new Map<string, File>();
 
 export function useVodScan(): VodScanSnapshot {
 	return useSyncExternalStore(
@@ -202,6 +207,16 @@ export function vodScanFrame(
 	return undefined;
 }
 
+/** The file named `name` scanned or opened this visit; null when it was scanned in an earlier one. */
+export function visitVodFile(name: string): File | null {
+	return visitFiles.get(name) ?? null;
+}
+
+/** Keeps a file the user opened again for playback until the page is left. */
+export function rememberVisitVodFile(file: File): void {
+	visitFiles.set(file.name, file);
+}
+
 /** Stops a running scan; nothing of it is saved. */
 export function cancelVodScan(): void {
 	abortRef.aborted = true;
@@ -225,6 +240,7 @@ export async function startVodScan(
 	const abort = { aborted: false };
 	abortRef = abort;
 	frames = new WeakMap();
+	visitFiles.set(file.name, file);
 	const own = ++generation;
 	const update = (patch: Partial<VodScanSnapshot>) => {
 		if (own === generation) set(patch);
@@ -235,6 +251,7 @@ export async function startVodScan(
 	const preview = (frame: ImageBitmap | VideoFrame, lane: number) => {
 		if (own === generation) drawPreview(laneCanvases.get(lane), frame);
 	};
+	const scanStartedAt = performance.now();
 	set({
 		...IDLE,
 		name: file.name,
@@ -494,7 +511,11 @@ export async function startVodScan(
 			})),
 		);
 		events = (await loadVodEvents(file.name)).map(toScanEvent);
-		update({ events, status: "done" });
+		update({
+			events,
+			status: "done",
+			tookSeconds: (performance.now() - scanStartedAt) / 1000,
+		});
 		void refreshVods();
 		if (clips) await cutClips(file, events, update);
 	}

@@ -10,6 +10,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { scannerSearchParams } from "../scanner-search-params";
 import { ClipsView } from "./ClipsView";
+import { CoachView } from "./CoachView";
 import { FixturesPage } from "./FixturesPage";
 import { LandingView } from "./LandingView";
 import { LiveView } from "./LiveView";
@@ -66,6 +67,8 @@ export function ScannerApp() {
 			<PastSessionView />
 		) : view === "vod" ? (
 			<VodView />
+		) : view === "coach" ? (
+			<CoachView />
 		) : view === "clips" ? (
 			<ClipsView />
 		) : view === "debug" ? (
