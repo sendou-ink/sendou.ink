@@ -521,10 +521,16 @@ sequenceDiagram
   worker is told that lower bound (`floor`) and closes the samples before it
   itself, sending bare timestamps — and on AV1 never decodes a sample before
   it whose unit refreshes no reference slot (`core/av1-refs.ts`: such a unit
-  leaves the decoder as it found it). When the scheduler reports calm (no
-  gate pass for a quiet period, no open match), the worker skims
-  keyframe-to-keyframe (hop capped at 2.5s so short screens can't hide),
-  snapping back to dense decode on any gate pass. Dense and skim stretches
+  leaves the decoder as it found it). It is also handed the scheduler's
+  check plan (`core/detectors/check-plan.ts`): each detector is checked at
+  the first sample its interval has elapsed by, and its interval is one of
+  its few cadences, so where its next checks can land branches over the
+  stream's real timestamps; such units no branch reaches go undecoded too
+  (~30% fewer decodes on a 1080p60 AV1 scan; non-reference frames are cheap
+  to decode, so the scan itself gains a few percent). When the scheduler
+  reports calm (no gate pass for a quiet period, no open match), the worker
+  skims keyframe-to-keyframe (hop capped at 2.5s so short screens can't
+  hide), snapping back to dense decode on any gate pass. Dense and skim stretches
   read one decode stream per slice (`worker/frame-source.ts`): a hop `seek`s
   it to the sample `getSample` would return, decoding forward from where it
   stands or jumping to the hop's keyframe when that lies ahead, rather than
@@ -540,10 +546,13 @@ sequenceDiagram
   reference, but every canvas readback of a hardware frame is also served
   one at a time on the GPU process's main thread, which the decoder needs
   too. Where it reads the same pixels (`worker/readback-parity.ts` compares
-  one frame per slice) a scan reads through WebGPU instead: the frame's
-  planes are copied out to a CPU frame, which `copyExternalImageToTexture`
-  converts exactly as the canvas converts the hardware frame (the hardware
-  frame itself it converts differently), then mapped back asynchronously.
+  one frame per slice) a scan reads through WebGPU instead. The hardware
+  frame itself `copyExternalImageToTexture` converts differently, but an
+  `ImageBitmap` of it is converted on the GPU exactly as the canvas converts
+  it; failing parity, the frame's planes copied out to a CPU frame are too
+  (two readbacks and an upload on the GPU process's main thread, ~45% of
+  its time on a 720p scan). Either is copied in and mapped back
+  asynchronously.
   In the same submission the GPU upscales a sub-1080p picture
   (`worker/cubic-upscaler.ts`, assuming no bars; a picture with bars takes a
   second trip) and converts the canonical picture to gray

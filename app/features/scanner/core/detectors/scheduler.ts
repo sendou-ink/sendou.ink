@@ -18,6 +18,7 @@
  * State keys to the scan's clock; `t` jumping backwards resets everything.
  */
 
+import type { CheckPlan } from "./check-plan";
 import type { DetectedEvent } from "./types";
 
 export interface SchedulingInfo {
@@ -223,6 +224,30 @@ export class DetectorScheduler {
 		return times;
 	}
 
+	/**
+	 * Each detector's last check and the cadences its next checks may take
+	 * once the `pending` detectors report their checks at `t` (see
+	 * check-plan.ts); null while some detector is due on any frame.
+	 */
+	checkPlan(t: number, pending: readonly string[]): CheckPlan | null {
+		if (!this.#options.suppressSteadyFrames) return null;
+		const detectors: CheckPlan["detectors"][number][] = [];
+		for (const [id, state] of this.#states) {
+			const later = this.#possibleIntervals(state);
+			if (pending.includes(id)) {
+				detectors.push({ lastCheckT: t, next: later, later });
+				continue;
+			}
+			if (state.lastCheckT === undefined) return null;
+			detectors.push({
+				lastCheckT: state.lastCheckT,
+				next: [this.#interval(state)],
+				later,
+			});
+		}
+		return { t, detectors };
+	}
+
 	/** Detector ids that should gate the frame at `t`. */
 	dueDetectors(t: number): string[] {
 		if (t + RESET_TOLERANCE_S < this.#maxT) this.reset(t);
@@ -362,6 +387,15 @@ export class DetectorScheduler {
 		if (state.streak?.suppressed) return search;
 		if (!state.gatePassing) return search;
 		return info.refineIntervalS ?? this.#options.refineIntervalS;
+	}
+
+	#possibleIntervals(state: DetectorState): number[] {
+		return [
+			...new Set([
+				this.#interval({ ...state, streak: null, gatePassing: true }),
+				this.#interval({ ...state, streak: null, gatePassing: false }),
+			]),
+		];
 	}
 
 	#recordMatchState(

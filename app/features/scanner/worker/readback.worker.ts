@@ -8,6 +8,7 @@ import {
 	createWebGpuReadback,
 	type ReadbackRequest,
 	type ReadbackResponse,
+	readThrough,
 } from "./readback";
 
 const readers = {
@@ -21,9 +22,7 @@ self.onmessage = async (e: MessageEvent<ReadbackRequest>) => {
 	try {
 		response = {
 			id,
-			...(path === "webgpu"
-				? await readers.webgpu(frame, { upscale })
-				: readers.canvas(frame)),
+			...(await readThrough(readers, frame, { path, upscale })),
 		};
 	} catch (error) {
 		frame.close();

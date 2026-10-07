@@ -2,11 +2,12 @@
  * Sequential decode of a VoD slice for the analyzer, one stream for a lane's
  * whole slice. The stream is every sample in presentation order, but a sample
  * the analyzer has proven it will skip — earlier than its `floor`, a lower
- * bound on the next frame any detector is due for — comes as a bare
- * timestamp: only frames at or past the floor are kept open for it. Over calm
- * footage the analyzer `seek`s instead, wanting one sample only: everything
- * before it may go undecoded, the decoder jumping straight to a keyframe at
- * or before it when that lies ahead.
+ * bound on the next frame any detector is due for — or that its check plan
+ * (check-plan.ts: where each detector's next checks can land) never reaches
+ * comes as a bare timestamp: only frames it may analyze are kept open for
+ * it. Over calm footage the analyzer `seek`s instead, wanting one sample
+ * only: everything before it may go undecoded, the decoder jumping straight
+ * to a keyframe at or before it when that lies ahead.
  *
  * Decoding a sample the analyzer does not want is skipped outright where the
  * codec proves it changes nothing later frames decode to (AV1 units that
@@ -27,6 +28,10 @@ import {
 	VideoSampleSink,
 } from "mediabunny";
 import { createAv1UnitClassifier } from "../core/av1-refs";
+import {
+	type CheckPlan,
+	createCheckTracker,
+} from "../core/detectors/check-plan";
 
 /**
  * Decoded 1080p frames the stream keeps open for the analyzer at once (more
@@ -63,6 +68,8 @@ export interface FrameSource {
 	floor(t: number): void;
 	/** Only the sample at `t` is wanted next: the ones before it may not come at all. */
 	seek(t: number): void;
+	/** Only samples `plan` lets through may be analyzed (null: any); a seek drops it. */
+	plan(plan: CheckPlan | null): void;
 	/** `item`'s frame is closed or handed on, making room for another. */
 	release(item: SourceItem): void;
 	/** Ends the stream; its unread frames are closed. */
@@ -89,6 +96,7 @@ export type DecodeRequest =
 	  }
 	| { kind: "floor"; session: number; t: number }
 	| { kind: "seek"; session: number; t: number }
+	| { kind: "plan"; session: number; plan: CheckPlan | null }
 	| { kind: "release"; session: number }
 	| { kind: "close"; session: number };
 
@@ -109,6 +117,8 @@ export interface PumpControl {
 	floor: () => number;
 	/** the time a `seek` asked for, -Infinity before any */
 	seekT: () => number;
+	/** the latest check plan, null when none holds */
+	plan: () => CheckPlan | null;
 	open: () => number;
 	stopped: () => boolean;
 	/** resolves on a release, a seek or a stop */
@@ -134,6 +144,8 @@ interface Pending {
 	t: number;
 	state: "decoding" | "previewing" | "ready";
 	item: SourceItem;
+	/** a detector pass may run on it */
+	wanted: boolean;
 }
 
 /**
@@ -221,7 +233,8 @@ export async function pumpFrames({
 	};
 	const settle = (entry: Pending, sample: VideoSample) => {
 		const { t } = entry;
-		const keep = t >= control.floor() && t >= control.seekT() && !ended;
+		const keep =
+			entry.wanted && t >= control.floor() && t >= control.seekT() && !ended;
 		const now = performance.now();
 		const wantsPreview = now - lastPreviewAt >= preview.intervalMs;
 		if (wantsPreview) lastPreviewAt = now;
@@ -261,7 +274,12 @@ export async function pumpFrames({
 			if (inDecodeOrder) {
 				entry = pending.find((p) => p.state === "decoding");
 			} else {
-				entry = { t, state: "decoding", item: { t, frame: null } };
+				entry = {
+					t,
+					state: "decoding",
+					item: { t, frame: null },
+					wanted: true,
+				};
 				pending.push(entry);
 			}
 			if (!entry || entry.t !== t) {
@@ -282,6 +300,8 @@ export async function pumpFrames({
 
 	const iterate = (from: EncodedPacket | null) =>
 		from ? packets.packets(from, undefined, PACKET_OPTIONS) : null;
+	const tracker = createCheckTracker();
+	let plan: CheckPlan | null = null;
 	let iterator = iterate(
 		(await packets.getKeyPacket(start, PACKET_OPTIONS)) ??
 			(await packets.getFirstKeyPacket(PACKET_OPTIONS)),
@@ -328,6 +348,7 @@ export async function pumpFrames({
 					await decoder.flush();
 					emitReady();
 					await iterator?.return(undefined);
+					tracker.clear();
 					iterator = iterate(key);
 					packet = (await iterator?.next())?.value ?? null;
 					continue;
@@ -335,15 +356,25 @@ export async function pumpFrames({
 			}
 			const t = roundT(packet.timestamp);
 			if (inDecodeOrder && t >= endT) break;
+			if (control.plan() !== plan) {
+				plan = control.plan();
+				tracker.setPlan(plan);
+				for (const entry of pending) {
+					if (entry.state === "decoding")
+						entry.wanted = tracker.wanted(entry.t);
+				}
+			}
+			const wanted = !inDecodeOrder || tracker.step(t);
 			const skip =
 				inDecodeOrder &&
 				!changesState(packet.data) &&
-				(t < control.floor() || t < seekT);
+				(t < control.floor() || t < seekT || !wanted);
 			if (inDecodeOrder) {
 				pending.push({
 					t,
 					state: skip ? "ready" : "decoding",
 					item: { t, frame: null },
+					wanted,
 				});
 			}
 			if (!skip) decoder.decode(packet);
@@ -547,6 +578,9 @@ function workerSource(
 			seekT = t;
 			send({ kind: "seek", session, t });
 		},
+		plan(plan) {
+			send({ kind: "plan", session, plan });
+		},
 		release() {
 			send({ kind: "release", session });
 		},
@@ -586,6 +620,7 @@ function localSource(
 	let failure: Error | null = null;
 	let floor = Number.NEGATIVE_INFINITY;
 	let seekT = Number.NEGATIVE_INFINITY;
+	let plan: CheckPlan | null = null;
 	let open = 0;
 	let waiter: (() => void) | null = null;
 	let room: (() => void) | null = null;
@@ -609,6 +644,7 @@ function localSource(
 			control: {
 				floor: () => floor,
 				seekT: () => seekT,
+				plan: () => plan,
 				open: () => open,
 				stopped: () => stopped,
 				waitForRoom: () =>
@@ -644,7 +680,11 @@ function localSource(
 		},
 		seek(t) {
 			seekT = Math.max(seekT, t);
+			plan = null;
 			wakeRoom();
+		},
+		plan(next) {
+			plan = next;
 		},
 		release() {
 			open--;

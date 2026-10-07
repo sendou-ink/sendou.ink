@@ -66,10 +66,9 @@ import {
 	createCanvasReadback,
 	createFrameReaderPool,
 	type FrameReader,
-	type ReadbackPath,
 	type ReadFrame,
 } from "./readback";
-import { webGpuReadbackMatches } from "./readback-parity";
+import { exactReadbackPath } from "./readback-parity";
 import { fetchScoreboardResources } from "./resources";
 
 /** Widest skim hop, so long-GOP recordings can't slip a results screen (~10s) or intro (~7s) between samples. */
@@ -369,13 +368,7 @@ async function scanChunk({
 
 		frameReader ??= createFrameReaderPool(READERS);
 		const reader = frameReader;
-		const path: ReadbackPath = (await webGpuReadbackMatches(
-			track,
-			(tStart + tEnd) / 2,
-			reader,
-		))
-			? "webgpu"
-			: "canvas";
+		const path = await exactReadbackPath(track, (tStart + tEnd) / 2, reader);
 		let samples = new VideoSampleSink(track, { hardwareAcceleration });
 
 		/** A sample's place in the stream: telemetry and the cursor. */
@@ -502,6 +495,7 @@ async function scanChunk({
 					scheduler!.nextDueCandidates(t, due),
 				);
 				stream.floor(bound);
+				stream.plan(scheduler!.checkPlan(t, due));
 				let wake: () => void = () => {};
 				let finished = false;
 				const done = prepared.then((frame) =>
@@ -512,6 +506,7 @@ async function scanChunk({
 							scheduler!.nextDueCandidates(t, parsing),
 						);
 						stream.floor(bound);
+						stream.plan(scheduler!.checkPlan(t, parsing));
 						wake();
 					}),
 				);
@@ -585,6 +580,7 @@ async function scanChunk({
 					const read = item.read!;
 					item.read = null;
 					await analyzeAhead(read, item.t, due);
+					stream.plan(scheduler!.checkPlan(item.t, []));
 				} else {
 					release(item);
 				}

@@ -1,35 +1,47 @@
 import { type InputVideoTrack, VideoSampleSink } from "mediabunny";
-import type { FrameReader } from "./readback";
+import type { FrameReader, ReadbackPath } from "./readback";
+
+/** The WebGPU readbacks, fastest first. */
+const WEBGPU_PATHS: readonly ReadbackPath[] = [
+	"webgpu-bitmap",
+	"webgpu-planes",
+];
 
 /**
- * Whether the WebGPU readback reads the sample at `t` exactly as the canvas
- * does, the pixels every analysis has always seen. A flat picture proves
- * nothing and a failing decode or read rules the path out.
+ * The fastest readback that reads the sample at `t` exactly as the canvas
+ * does, the pixels every analysis has always seen; the canvas itself when
+ * none does. A flat picture proves nothing and a failing decode or read
+ * rules a path out.
  */
-export async function webGpuReadbackMatches(
+export async function exactReadbackPath(
 	track: InputVideoTrack,
 	t: number,
 	reader: FrameReader,
-): Promise<boolean> {
+): Promise<ReadbackPath> {
 	let frame: VideoFrame;
 	try {
 		const sample = await new VideoSampleSink(track).getSample(t);
-		if (!sample) return false;
+		if (!sample) return "canvas";
 		frame = sample.toVideoFrame();
 		sample.close();
 	} catch {
-		return false;
+		return "canvas";
 	}
-	const [reference, viaWebGpu] = await Promise.allSettled([
-		reader.read(frame.clone()),
-		reader.read(frame, { path: "webgpu", upscale: false }),
-	]);
-	return (
-		reference.status === "fulfilled" &&
-		viaWebGpu.status === "fulfilled" &&
-		!isFlat(reference.value.data) &&
-		sameBytes(reference.value.data, viaWebGpu.value.data)
-	);
+	try {
+		const reference = await reader.read(frame.clone());
+		if (isFlat(reference.data)) return "canvas";
+		for (const path of WEBGPU_PATHS) {
+			const read = await reader
+				.read(frame.clone(), { path, upscale: false })
+				.catch(() => null);
+			if (read && sameBytes(reference.data, read.data)) return path;
+		}
+		return "canvas";
+	} catch {
+		return "canvas";
+	} finally {
+		frame.close();
+	}
 }
 
 function isFlat(data: Uint8ClampedArray): boolean {

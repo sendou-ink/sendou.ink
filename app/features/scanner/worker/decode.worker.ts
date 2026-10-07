@@ -6,6 +6,7 @@
  * number at a time.
  */
 import { ALL_FORMATS, BlobSource, Input } from "mediabunny";
+import type { CheckPlan } from "../core/detectors/check-plan";
 import {
 	type DecodeRequest,
 	type DecodeResponse,
@@ -17,6 +18,7 @@ interface Session {
 	id: number;
 	floor: number;
 	seekT: number;
+	plan: CheckPlan | null;
 	open: number;
 	stopped: boolean;
 	room: (() => void) | null;
@@ -37,7 +39,10 @@ self.onmessage = (e: MessageEvent<DecodeRequest>) => {
 		session.floor = Math.max(session.floor, request.t);
 	} else if (request.kind === "seek") {
 		session.seekT = Math.max(session.seekT, request.t);
+		session.plan = null;
 		wakeRoom(session);
+	} else if (request.kind === "plan") {
+		session.plan = request.plan;
 	} else if (request.kind === "release") {
 		session.open--;
 		wakeRoom(session);
@@ -64,6 +69,7 @@ async function decode(
 		id: request.session,
 		floor: Number.NEGATIVE_INFINITY,
 		seekT: Number.NEGATIVE_INFINITY,
+		plan: null,
 		open: 0,
 		stopped: false,
 		room: null,
@@ -92,6 +98,7 @@ async function decode(
 			control: {
 				floor: () => own.floor,
 				seekT: () => own.seekT,
+				plan: () => own.plan,
 				open: () => own.open,
 				stopped: () => own.stopped,
 				waitForRoom: () =>

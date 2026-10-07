@@ -9,10 +9,12 @@
  * main thread, which the hardware decoder needs too: with four lanes reading
  * back, that thread was the scan's ceiling. The VoD scan therefore reads
  * through WebGPU instead where it gives the same pixels (readback-parity.ts
- * checks per scan): the frame's planes are copied out to a CPU frame —
- * which, unlike a hardware frame, WebGPU converts exactly as the canvas
- * converts the hardware one — then uploaded, converted and mapped back
- * asynchronously, with no GPU-process round trip to wait on.
+ * picks per scan): a hardware frame imported directly converts differently,
+ * but an ImageBitmap of it is converted as the canvas converts it, on the
+ * GPU ("webgpu-bitmap"); failing that, the frame's planes copied out to a
+ * CPU frame are too, at the cost of two readbacks and an upload on the GPU
+ * process's main thread ("webgpu-planes"). Either is then copied in, mapped
+ * back asynchronously, with no GPU-process round trip to wait on.
  */
 import {
 	CANONICAL_HEIGHT,
@@ -38,7 +40,7 @@ const MAP_MODE_READ = 0x0001;
 /** WebGPU texture-to-buffer copies pad each row to this many bytes */
 const ROW_ALIGNMENT = 256;
 
-export type ReadbackPath = "canvas" | "webgpu";
+export type ReadbackPath = "canvas" | "webgpu-bitmap" | "webgpu-planes";
 
 /** Reads a frame back to RGBA on the calling thread, reusing one canvas; closes `bitmap`. */
 export function createCanvasReadback(): (
@@ -74,7 +76,7 @@ export interface ReadFrame extends FrameData {
 /** Reads frames back through WebGPU (see the module header); closes `frame`. Rejects when WebGPU is unavailable. */
 export function createWebGpuReadback(): (
 	frame: VideoFrame,
-	options?: { upscale?: boolean },
+	options: { source: "bitmap" | "planes"; upscale?: boolean },
 ) => Promise<ReadFrame> {
 	let device: Promise<{
 		gpu: GPUDevice;
@@ -109,13 +111,13 @@ export function createWebGpuReadback(): (
 		}
 		return device;
 	};
-	return async (frame, { upscale = true } = {}) => {
+	return async (frame, { source: from, upscale = true }) => {
 		const width = frame.displayWidth;
 		const height = frame.displayHeight;
 		try {
-			const [{ gpu, upscaler, grayKernel }, planes] = await Promise.all([
+			const [{ gpu, upscaler, grayKernel }, source] = await Promise.all([
 				getDevice(),
-				cpuCopy(frame),
+				from === "bitmap" ? createImageBitmap(frame) : cpuCopy(frame),
 			]);
 			const key = `${width}x${height}`;
 			let target = targets.get(key);
@@ -145,12 +147,12 @@ export function createWebGpuReadback(): (
 			};
 			try {
 				gpu.queue.copyExternalImageToTexture(
-					{ source: planes },
+					{ source },
 					{ texture: target.texture },
 					[width, height],
 				);
 			} finally {
-				planes.close();
+				source.close();
 			}
 			// a picture without bars is upscaled in the same submission, as it
 			// most likely is; one with bars takes a second round trip
@@ -235,6 +237,22 @@ export function createWebGpuReadback(): (
 			frame.close();
 		}
 	};
+}
+
+/** Reads `frame` back along `path` with a thread's readers; closes `frame`. */
+export function readThrough(
+	readers: {
+		canvas: ReturnType<typeof createCanvasReadback>;
+		webgpu: ReturnType<typeof createWebGpuReadback>;
+	},
+	frame: VideoFrame,
+	{ path, upscale }: Required<ReadOptions>,
+): Promise<ReadFrame> {
+	if (path === "canvas") return Promise.resolve(readers.canvas(frame));
+	return readers.webgpu(frame, {
+		source: path === "webgpu-bitmap" ? "bitmap" : "planes",
+		upscale,
+	});
 }
 
 export interface ReadbackRequest {
@@ -324,9 +342,7 @@ function createFrameReader(): FrameReader {
 		{ path, upscale }: Required<ReadOptions>,
 	) => {
 		try {
-			return path === "webgpu"
-				? local.webgpu(frame, { upscale })
-				: Promise.resolve(local.canvas(frame));
+			return readThrough(local, frame, { path, upscale });
 		} catch (error) {
 			return Promise.reject(error);
 		}
