@@ -123,6 +123,33 @@ describe("calendarNewSchema team pick", () => {
 	});
 });
 
+describe("calendarNewSchema organizer picked map pool", () => {
+	test.each([
+		{ why: "missing", pool: "" },
+		{ why: "with no maps", pool: MapPool.EMPTY.serialized },
+	])("rejects a pool $why", ({ pool }) => {
+		expect(
+			issuesOf(calendarNewFormValues({ mapPickingStyle: "TO", pool })),
+		).toContainEqual({
+			path: "pool",
+			message: "forms:errors.mapPoolRequired",
+		});
+	});
+
+	test("does not require a pool from a calendar event", () => {
+		expect(
+			issuesOf(
+				calendarNewFormValues({
+					toToolsEnabled: false,
+					date: [new Date(2027, 0, 15)],
+					bracketUrl: "https://sendou.ink",
+					pool: "",
+				}),
+			),
+		).toEqual([]);
+	});
+});
+
 describe("calendarNewSchema bracket start times", () => {
 	const tournamentStartTime = new Date(2027, 0, 15, 17, 0);
 

@@ -1,5 +1,6 @@
 import { addDays } from "date-fns";
 import type * as v from "valibot";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { calendarNewSchema } from "../calendar-new-schemas";
 import { defaultBracketsFormValues } from "../calendar-progression-form";
 
@@ -30,7 +31,7 @@ export function calendarNewFormValues(
 		teamPickModes: [],
 		teamPickCounts: [],
 		teamPickPool: "SENDOUQ",
-		pool: "",
+		pool: new MapPool({ TW: [], SZ: [1], TC: [], RM: [], CB: [] }).serialized,
 		...defaultBracketsFormValues(),
 		isRanked: true,
 		enableNoScreenToggle: true,

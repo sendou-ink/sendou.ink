@@ -159,6 +159,7 @@
 	"errors.staffCannotBeAuthor": "The tournament author is already an organizer",
 	"errors.divBothOrNeither": "Both min and max div must be set or neither",
 	"errors.invalidMapPool": "Invalid map pool",
+	"errors.mapPoolRequired": "Pick at least one map",
 	"errors.bracketStartBeforeTournamentStart": "Can't start before the tournament starts",
 	"errors.regClosesAfterTournamentStart": "Can't close after the tournament starts",
 	"errors.teamPick.noModes": "Pick at least one mode",

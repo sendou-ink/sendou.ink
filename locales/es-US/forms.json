@@ -159,6 +159,7 @@
 	"errors.staffCannotBeAuthor": "El autor del torneo ya es organizador",
 	"errors.divBothOrNeither": "Deben establecerse tanto la div. mínima como la máxima, o ninguna",
 	"errors.invalidMapPool": "Grupo de escenarios no válido",
+	"errors.mapPoolRequired": "",
 	"errors.bracketStartBeforeTournamentStart": "",
 	"errors.regClosesAfterTournamentStart": "",
 	"errors.teamPick.noModes": "Elige al menos un modo",

@@ -329,6 +329,17 @@ function calendarNewSyncRefine(
 		validateTeamPick(data, ctx);
 	}
 
+	if (
+		data.toToolsEnabled &&
+		data.mapPickingStyle === "TO" &&
+		(!data.pool || MapPool.toDbList(data.pool).length === 0)
+	) {
+		ctx.addIssue({
+			path: ["pool"],
+			message: "forms:errors.mapPoolRequired",
+		});
+	}
+
 	if (data.trophyId && data.badges.length > 0) {
 		ctx.addIssue({
 			path: ["badges"],
