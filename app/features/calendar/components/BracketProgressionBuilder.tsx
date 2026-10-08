@@ -1135,27 +1135,21 @@ function PlacementPicker({
 				<div className={styles.rangeInputs}>
 					<label>
 						{t("calendar:builder.fromPlace")}
-						<input
-							type="number"
+						<PlaceInput
 							min={1}
 							value={from}
-							onChange={(event) => {
-								const start = Math.max(1, Number(event.target.value) || 1);
-								setPicks(range(start, Math.max(start, to)), parsed.rest);
-							}}
+							onCommit={(start) =>
+								setPicks(range(start, Math.max(start, to)), parsed.rest)
+							}
 						/>
 					</label>
 					<label>
 						{t("calendar:builder.toPlace")}
-						<input
-							type="number"
+						<PlaceInput
 							min={from}
 							value={to}
 							disabled={parsed.rest}
-							onChange={(event) => {
-								const end = Math.max(from, Number(event.target.value) || from);
-								setPicks(range(from, end), parsed.rest);
-							}}
+							onCommit={(end) => setPicks(range(from, end), parsed.rest)}
 						/>
 					</label>
 				</div>
@@ -1240,6 +1234,46 @@ function PlacementPicker({
 			</div>
 			{restSwitch}
 		</div>
+	);
+}
+
+function PlaceInput({
+	value,
+	min,
+	disabled,
+	onCommit,
+}: {
+	value: number;
+	min: number;
+	disabled?: boolean;
+	onCommit: (value: number) => void;
+}) {
+	const [draft, setDraft] = React.useState<string | null>(null);
+
+	const parse = (raw: string) => {
+		const parsed = Number(raw);
+		return raw !== "" && Number.isInteger(parsed) ? parsed : null;
+	};
+
+	return (
+		<input
+			type="number"
+			min={min}
+			value={draft ?? value}
+			disabled={disabled}
+			onChange={(event) => {
+				setDraft(event.target.value);
+				const parsed = parse(event.target.value);
+				if (parsed !== null && parsed >= min) onCommit(parsed);
+			}}
+			onBlur={() => {
+				if (draft === null) return;
+				const parsed = parse(draft);
+				const clamped = Math.max(min, parsed ?? value);
+				if (clamped !== value) onCommit(clamped);
+				setDraft(null);
+			}}
+		/>
 	);
 }
 
