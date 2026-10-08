@@ -165,6 +165,22 @@ export function addBracket(
 }
 
 /**
+ * Default name for a new bracket, `nameOf` the lowest number not already taken by another bracket's name.
+ * Numbering starts from 2 as the first bracket exists already, unless there are no brackets.
+ */
+export function defaultBracketName(
+	values: BuilderValues,
+	nameOf: (number: number) => string,
+) {
+	const takenNames = new Set(values.brackets.map((bracket) => bracket.name));
+
+	let number = values.brackets.length === 0 ? 1 : 2;
+	while (takenNames.has(nameOf(number))) number++;
+
+	return nameOf(number);
+}
+
+/**
  * Moves a bracket to a column, the first one making it a starting bracket. Lines from brackets that would no
  * longer be on its left are removed, the count of them is returned. The first bracket always stays a starting bracket.
  */

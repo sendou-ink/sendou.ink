@@ -275,9 +275,9 @@ export function BracketProgressionBuilder({
 		const newBracketIdx = values.brackets.length;
 		const result = BracketBuilder.addBracket(
 			values,
-			t("calendar:builder.defaultBracketName", {
-				number: newBracketIdx + 1,
-			}),
+			BracketBuilder.defaultBracketName(values, (number) =>
+				t("calendar:builder.defaultBracketName", { number }),
+			),
 			minColumns,
 		);
 		commit(result.values);

@@ -145,6 +145,34 @@ describe("BracketBuilder.addBracket", () => {
 	});
 });
 
+describe("BracketBuilder.defaultBracketName", () => {
+	const nameOf = (number: number) => `Bracket ${number}`;
+
+	test.each([
+		{ why: "no brackets", names: [], expected: "Bracket 1" },
+		{ why: "only the first bracket", names: ["Main"], expected: "Bracket 2" },
+		{
+			why: "numbers in use",
+			names: ["Main", "Bracket 2", "Bracket 3"],
+			expected: "Bracket 4",
+		},
+		{
+			why: "gap left by a removed bracket",
+			names: ["Main", "Bracket 3"],
+			expected: "Bracket 2",
+		},
+		{
+			why: "lowest gap of several",
+			names: ["Main", "Bracket 2", "Bracket 4", "Other"],
+			expected: "Bracket 3",
+		},
+	])("$why -> $expected", ({ names, expected }) => {
+		const values = progressionOf(names.map((name) => ({ name })));
+
+		expect(BracketBuilder.defaultBracketName(values, nameOf)).toBe(expected);
+	});
+});
+
 describe("BracketBuilder.moveToColumn", () => {
 	test("moving to the first column makes it a starting bracket without lines", () => {
 		const values = progressionOf([
