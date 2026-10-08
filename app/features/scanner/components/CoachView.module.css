@@ -91,21 +91,6 @@
 	}
 }
 
-.nav {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--s-1);
-}
-
-.position {
-	min-width: 6ch;
-	text-align: center;
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-semi);
-	font-variant-numeric: tabular-nums;
-}
-
 .events {
 	display: flex;
 	flex-direction: column;

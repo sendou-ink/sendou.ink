@@ -1,4 +1,7 @@
 // xxx: maybe retake failed?
+// xxx: add kill streak (dynamic)
+// xxx: make death streak dynamic, 2,3,4...
+// xxx: special stack dynamic too
 
 /**
  * Coach events: the moments of a scanned match worth reviewing, always from the
@@ -129,6 +132,10 @@ const CONTROL_MERGE_GAP_S = 3;
 const SPECIAL_DEATH_LAG_S = 1.5;
 /** POV death reads this close together are one death (a minimap opened while splatted re-reads it) */
 const DEATH_MERGE_GAP_S = 6;
+/** a respawn the icon strip never showed is taken this long after the death */
+const RESPAWN_FALLBACK_S = 8;
+/** icon-strip reads further than this from a death say nothing of its respawn */
+const RESPAWN_MAX_WAIT_S = 20;
 
 type Side = "pov" | "enemy";
 
@@ -200,6 +207,27 @@ export function ofMatch(
 /** The definition's display label. */
 export function label(type: CoachEventType): string {
 	return DEFINITIONS.find((definition) => definition.type === type)!.label;
+}
+
+/**
+ * Seconds into the video/stream each of the POV player's lives in the match
+ * starts at: the game's start, then every respawn. A respawn is the first
+ * icon-strip read showing the player back after reading them splatted, else
+ * `RESPAWN_FALLBACK_S` after the death. `povDeaths` as in `ofMatch`; without a
+ * POV team only the game's start.
+ */
+export function lifeStarts(
+	match: ScannerMatch,
+	povDeaths: readonly number[],
+): number[] {
+	if (match.startsAt === null) return [];
+	const analysis = analyze(match, povDeaths);
+	if (!analysis) return [match.startsAt];
+
+	const respawns = analysis.povDeaths
+		.map((death) => respawnAfter(analysis, death))
+		.filter((t) => match.endsAt === null || t < match.endsAt);
+	return [match.startsAt, ...respawns];
 }
 
 type Team = 0 | 1;
@@ -468,6 +496,24 @@ function deathStreakMoments(minDeaths: number, analysis: Analysis): Moment[] {
 			start: deaths[0]! - DEATH_LEAD_S,
 			end: deaths.at(-1)! + DEATH_TAIL_S,
 		}));
+}
+
+function respawnAfter(analysis: Analysis, death: number): number {
+	const { povSlot, povTeam, statuses } = analysis;
+	const fallback = death + RESPAWN_FALLBACK_S;
+	if (povSlot === null) return fallback;
+
+	const isDead = (sample: ScannerMatchPlayerStatusSample) =>
+		sample.dead[povTeam][povSlot]!;
+	const nearby = statuses.filter(
+		(sample) => sample.t >= death && sample.t - death <= RESPAWN_MAX_WAIT_S,
+	);
+	const deadIndex = nearby.findIndex(isDead);
+	if (deadIndex === -1) return fallback;
+
+	return (
+		nearby.slice(deadIndex).find((sample) => !isDead(sample))?.t ?? fallback
+	);
 }
 
 /** Windows of one type that overlap (a push resumed right after a contest) are one moment to review. */

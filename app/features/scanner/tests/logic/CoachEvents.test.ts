@@ -422,3 +422,57 @@ describe("CoachEvents.ofMatch", () => {
 		expect(events).toEqual([]);
 	});
 });
+
+describe("CoachEvents.lifeStarts", () => {
+	const POV = { team: 0, index: 0 } as const;
+	const povDead = { dead: [[0, 0]] as [0 | 1, number][] };
+
+	test("a game without deaths is one life", () => {
+		expect(CoachEvents.lifeStarts(match({ pov: POV }), [])).toEqual([
+			GAME_START_T - 10,
+		]);
+	});
+
+	test("a respawn is the first icon-strip read showing the player back", () => {
+		const lives = CoachEvents.lifeStarts(
+			match({
+				pov: POV,
+				playerStatus: {
+					samples: [
+						status(120),
+						status(130, povDead),
+						status(136, povDead),
+						status(139),
+					],
+				},
+			}),
+			[129],
+		);
+
+		expect(lives).toEqual([GAME_START_T - 10, 139]);
+	});
+
+	test("a death the icon strip never showed respawns after the fallback", () => {
+		const lives = CoachEvents.lifeStarts(match({ pov: POV }), [150]);
+
+		expect(lives).toEqual([GAME_START_T - 10, 158]);
+	});
+
+	test("a death at the end of the game starts no life", () => {
+		const lives = CoachEvents.lifeStarts(
+			match({ pov: POV, endsAt: 200 }),
+			[195],
+		);
+
+		expect(lives).toEqual([GAME_START_T - 10]);
+	});
+
+	test("a cast has only the game's start", () => {
+		const lives = CoachEvents.lifeStarts(
+			match({ cast: true, winner: 0 }),
+			[150],
+		);
+
+		expect(lives).toEqual([GAME_START_T - 10]);
+	});
+});

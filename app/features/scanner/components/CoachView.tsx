@@ -4,12 +4,13 @@
  * filterable by type beside it — picking a game or an event jumps the video to
  * its start. Games the filters (core/CoachFilters.ts) hide drop their events,
  * and while any is set playback keeps to the games shown, jumping past the
- * hidden ones and the footage between games. The file is the one scanned or opened this
- * visit, else the user opens it again (only the scan was saved).
+ * hidden ones and the footage between games. A bar under the player
+ * (CoachControls) steps between the games, lives and events shown. The file is
+ * the one scanned or opened this visit, else the user opens it again (only the
+ * scan was saved).
  */
-import { ChevronLeft, ChevronRight, FolderOpen } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
@@ -18,11 +19,13 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import { SCANNER_PAGE } from "~/utils/urls";
 import * as CoachEvents from "../core/CoachEvents";
 import * as CoachFilters from "../core/CoachFilters";
+import * as CoachPlayback from "../core/CoachPlayback";
 import { povDeathTimes } from "../core/clips/scoring";
 import { formatClock, formatPosition } from "../core/format";
 import { modeLabel, stageLabel } from "../core/labels";
 import { type BuiltMatch, isHistoryOnly } from "../core/match-builder";
 import { scannerSearchParams } from "../scanner-search-params";
+import { CoachControls, type CoachJumps } from "./CoachControls";
 import { CoachFilterBar } from "./CoachFilterBar";
 import { type CoachGame, CoachGameStrip, gameAt } from "./CoachGameStrip";
 import styles from "./CoachView.module.css";
@@ -37,13 +40,25 @@ import {
 	visitVodFile,
 } from "./vod-scan";
 
+// xxx: show latest minimap + timestamp how long ago it was (optionally, drop in a live minimap that will be synced)
+// xxx: skip back/forward 5 sec? (arrows?)
+
 const ALL = "ALL";
 
 /** Coach data keyed by the build, so the player's time updates don't redo it. */
 const coachDataCache = new WeakMap<
 	readonly BuiltMatch<ScanEvent>[],
-	{ games: CoachGame[]; entries: CoachEntry[]; options: CoachFilters.Options }
+	{
+		games: CoachSessionGame[];
+		entries: CoachEntry[];
+		options: CoachFilters.Options;
+	}
 >();
+
+interface CoachSessionGame extends CoachGame {
+	/** seconds into the video each of the POV player's lives starts at */
+	lifeStarts: number[];
+}
 
 interface CoachEntry extends CoachEvents.CoachEvent {
 	game: CoachGame;
@@ -86,6 +101,8 @@ function CoachSession({
 	const [selectedKey, setSelectedKey] = useState<string | null>(null);
 	const [gameFilters, setGameFilters] = useState(CoachFilters.DEFAULT_FILTERS);
 	const [currentTime, setCurrentTime] = useState(0);
+	const [isPaused, setIsPaused] = useState(true);
+	const [speed, setSpeed] = useState(1);
 
 	const {
 		games,
@@ -94,7 +111,7 @@ function CoachSession({
 	} = coachData(cachedBuild(events));
 	const isShown = (game: CoachGame) =>
 		CoachFilters.passes(game.match, gameFilters);
-	const shownGameCount = games.filter(isShown).length;
+	const shownGames = games.filter(isShown);
 	const entries = allEntries.filter((entry) => isShown(entry.game));
 	const counts = new Map<CoachEvents.CoachEventType, number>();
 	for (const entry of entries) {
@@ -103,27 +120,58 @@ function CoachSession({
 	const shown = entries.filter(
 		(entry) => filter === ALL || entry.type === filter,
 	);
-	const selectedIndex = shown.findIndex(
-		(entry) => entryKey(entry) === selectedKey,
-	);
-	const previous = selectedIndex > 0 ? shown[selectedIndex - 1] : undefined;
-	const next = shown[selectedIndex + 1];
 
-	const seek = (t: number) => {
+	/** Picking from the lists starts the video; the bar's steps keep it paused or playing. */
+	const seek = (t: number, { play }: { play: boolean }) => {
 		const video = videoRef.current;
 		if (!video) return;
 		video.currentTime = t;
 		setCurrentTime(t);
-		void video.play().catch(() => {});
+		if (play) void video.play().catch(() => {});
 	};
 
-	const jumpTo = (entry: CoachEntry) => {
+	const jumpTo = (entry: CoachEntry, playback: { play: boolean }) => {
 		setSelectedKey(entryKey(entry));
-		seek(entry.start);
+		seek(entry.start, playback);
 	};
 
-	const selectGame = (game: CoachGame) => {
-		if (game.match.startsAt !== null) seek(game.match.startsAt);
+	const selectGame = (game: CoachGame, playback: { play: boolean }) => {
+		if (game.match.startsAt !== null) seek(game.match.startsAt, playback);
+	};
+
+	const togglePlay = () => {
+		const video = videoRef.current;
+		if (!video) return;
+		if (video.paused) void video.play().catch(() => {});
+		else video.pause();
+	};
+
+	const changeSpeed = (newSpeed: number) => {
+		const video = videoRef.current;
+		if (!video) return;
+		video.defaultPlaybackRate = newSpeed;
+		video.playbackRate = newSpeed;
+	};
+
+	const jumps: CoachJumps = {
+		GAME: stepsAlong(
+			shownGames.filter((game) => game.match.startsAt !== null),
+			(game) => game.match.startsAt!,
+			currentTime,
+			(game) => selectGame(game, { play: false }),
+		),
+		LIFE: stepsAlong(
+			shownGames.flatMap((game) => game.lifeStarts),
+			(start) => start,
+			currentTime,
+			(start) => seek(start, { play: false }),
+		),
+		EVENT: stepsAlong(
+			shown,
+			(entry) => entry.start,
+			currentTime,
+			(entry) => jumpTo(entry, { play: false }),
+		),
 	};
 
 	const followPlayback = (video: HTMLVideoElement) => {
@@ -166,7 +214,7 @@ function CoachSession({
 					onChange={setGameFilters}
 					summary={
 						<span className={styles.gamesSummary}>
-							{shownGameCount} of {games.length} games
+							{shownGames.length} of {games.length} games
 						</span>
 					}
 				/>
@@ -174,7 +222,7 @@ function CoachSession({
 					games={games}
 					isShown={isShown}
 					currentTime={currentTime}
-					onSelect={selectGame}
+					onSelect={(game) => selectGame(game, { play: true })}
 				/>
 			</div>
 			<div className={styles.layout}>
@@ -189,6 +237,9 @@ function CoachSession({
 							playsInline
 							onTimeUpdate={(e) => followPlayback(e.currentTarget)}
 							onSeeked={(e) => setCurrentTime(e.currentTarget.currentTime)}
+							onPlay={() => setIsPaused(false)}
+							onPause={() => setIsPaused(true)}
+							onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
 						/>
 					) : (
 						<div className={styles.openFile}>
@@ -213,29 +264,15 @@ function CoachSession({
 							</label>
 						</div>
 					)}
-					<div className={styles.nav}>
-						<SendouButton
-							variant="minimal"
-							size="small"
-							shape="circle"
-							icon={<ChevronLeft />}
-							aria-label="Previous event"
-							isDisabled={!previous}
-							onClick={previous ? () => jumpTo(previous) : undefined}
+					{url ? (
+						<CoachControls
+							isPaused={isPaused}
+							speed={speed}
+							jumps={jumps}
+							onTogglePlay={togglePlay}
+							onSpeedChange={changeSpeed}
 						/>
-						<span className={styles.position}>
-							{selectedIndex === -1 ? "–" : selectedIndex + 1} / {shown.length}
-						</span>
-						<SendouButton
-							variant="minimal"
-							size="small"
-							shape="circle"
-							icon={<ChevronRight />}
-							aria-label="Next event"
-							isDisabled={!next}
-							onClick={next ? () => jumpTo(next) : undefined}
-						/>
-					</div>
+					) : null}
 				</div>
 				<div className={styles.events}>
 					<SendouChipRadioGroup wrap>
@@ -275,7 +312,7 @@ function CoachSession({
 										type="button"
 										className={styles.entry}
 										aria-current={entryKey(entry) === selectedKey}
-										onClick={() => jumpTo(entry)}
+										onClick={() => jumpTo(entry, { play: true })}
 									>
 										<span className={styles.entryType}>
 											{CoachEvents.label(entry.type)}
@@ -309,12 +346,18 @@ function coachData(built: readonly BuiltMatch<ScanEvent>[]) {
 	const cached = coachDataCache.get(built);
 	if (cached) return cached;
 
-	const gameBuilds = built.filter((b) => !isHistoryOnly(b));
+	const gameBuilds = built
+		.filter((b) => !isHistoryOnly(b))
+		.map((b) => ({ match: b.match, povDeaths: povDeathTimes(b.sources) }));
 	const games = gameBuilds.map(
-		(b, index): CoachGame => ({ number: index + 1, match: b.match }),
+		(b, index): CoachSessionGame => ({
+			number: index + 1,
+			match: b.match,
+			lifeStarts: CoachEvents.lifeStarts(b.match, b.povDeaths),
+		}),
 	);
 	const entries = gameBuilds.flatMap((b, index) =>
-		CoachEvents.ofMatch(b.match, povDeathTimes(b.sources)).map(
+		CoachEvents.ofMatch(b.match, b.povDeaths).map(
 			(event): CoachEntry => ({ ...event, game: games[index]! }),
 		),
 	);
@@ -325,6 +368,19 @@ function coachData(built: readonly BuiltMatch<ScanEvent>[]) {
 	};
 	coachDataCache.set(built, data);
 	return data;
+}
+
+function stepsAlong<T>(
+	items: readonly T[],
+	startOf: (item: T) => number,
+	t: number,
+	onJump: (item: T) => void,
+): CoachJumps[keyof CoachJumps] {
+	const jumpFor = (direction: CoachPlayback.Direction) => {
+		const item = CoachPlayback.step(items, startOf, t, direction);
+		return item === undefined ? null : () => onJump(item);
+	};
+	return { previous: jumpFor("previous"), next: jumpFor("next") };
 }
 
 /** Entries are rebuilt with the scan's events, so selection goes by their fields. */
