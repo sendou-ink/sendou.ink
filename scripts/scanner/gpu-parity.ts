@@ -42,6 +42,10 @@ const SCORE_FIELDS = new Set([
 	"teamColor",
 	"debug",
 ]);
+/** GPUBufferUsage / GPUMapMode flags (spec values; the globals are missing from the TS DOM lib) */
+const BUFFER_COPY_DST = 0x0008;
+const BUFFER_STORAGE = 0x0080;
+const MAP_MODE_READ = 0x0001;
 
 const verbose = process.argv.includes("--verbose");
 
@@ -169,7 +173,7 @@ async function sameDownscale(frame: Mat): Promise<boolean> {
 		const data = src.data as Uint8Array;
 		const buffer = device.createBuffer({
 			size: data.byteLength,
-			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+			usage: BUFFER_STORAGE | BUFFER_COPY_DST,
 		});
 		device.queue.writeBuffer(buffer, 0, data);
 		const encoder = device.createCommandEncoder();
@@ -181,7 +185,7 @@ async function sameDownscale(frame: Mat): Promise<boolean> {
 		});
 		device.queue.submit([encoder.finish()]);
 		const [, sums] = await Promise.all([
-			read.mapAsync(GPUMapMode.READ),
+			read.mapAsync(MAP_MODE_READ),
 			lines.read(),
 		]);
 		const pixels = new Uint8Array(read.getMappedRange().slice(0));

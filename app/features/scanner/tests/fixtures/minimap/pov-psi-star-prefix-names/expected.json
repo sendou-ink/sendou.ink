@@ -1,0 +1,37 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 3,
+    "stageLabel": "Undertow Spillway",
+    "spectator": false,
+    "teammates": [
+      {
+        "self": false,
+        "name": "ψ★ train",
+        "dead": false
+      },
+      {
+        "self": false,
+        "dead": true
+      },
+      {
+        "self": false,
+        "name": "ψ★ ☆Nam★",
+        "dead": false
+      },
+      {
+        "self": true,
+        "dead": true
+      }
+    ],
+    "enemies": [
+      { "dead": false },
+      { "dead": false },
+      { "dead": false },
+      { "dead": false }
+    ]
+  },
+  "options": {
+    "notes": "User-submitted 720p VoD scan, Undertow Spillway RM at 1:02, the POV player (ψ★ Basalt) respawning, Sushifish? (left card) also struck out. Same team as scoreboard/private-battle-rainmaker-psi-star-prefix: the Greek small psi (ψ) tag read as \"y\" (\"y★ ☆Nam★\", \"yr★」traln\"). Only names and cross-outs are asserted; weapons, abilities and special flags are left out."
+  }
+}

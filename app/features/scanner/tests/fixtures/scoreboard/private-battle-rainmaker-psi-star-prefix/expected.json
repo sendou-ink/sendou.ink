@@ -1,0 +1,71 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "RM",
+    "stage": 3,
+    "stageLabel": "Undertow Spillway",
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 2,
+    "players": [
+      {
+        "name": "ψ★ ☆Nam★",
+        "paint": 621,
+        "ka": 7,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "ψ★ train",
+        "paint": 406,
+        "ka": 3,
+        "d": 1,
+        "s": 1
+      },
+      {
+        "name": "ψ★ Basalt",
+        "paint": 575,
+        "ka": 6,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "Sushifish?",
+        "paint": 479,
+        "ka": 3,
+        "d": 4,
+        "s": 1
+      },
+      {
+        "paint": 556,
+        "ka": 3,
+        "d": 3,
+        "s": 2
+      },
+      {
+        "paint": 348,
+        "ka": 3,
+        "d": 5,
+        "s": 1
+      },
+      {
+        "paint": 320,
+        "ka": 2,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "paint": 458,
+        "ka": 2,
+        "d": 4,
+        "s": 2
+      }
+    ]
+  },
+  "options": {
+    "notes": "User-submitted 720p VoD scan, Undertow Spillway RM private battle, KO win. The winning team's tag is the Greek small letter psi (ψ, U+03C8: x-height top with a descender, not the cap-height Ψ) before a star; the names atlas had no ψ, so it read as \"4\" (here), \"y\" or \"T\". Defeat-side names are left out: each has a tiny superscript between the dot and the name that isn't legible at 720p. Weapons are left out (kit variants not verifiable at this size)."
+  }
+}
