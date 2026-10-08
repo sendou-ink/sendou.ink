@@ -16,7 +16,6 @@ import {
 	mapPoolOptional,
 	numberFieldOptional,
 	radioGroup,
-	select,
 	selectDynamicOptional,
 	textAreaOptional,
 	textField,
@@ -27,7 +26,7 @@ import type { FormStepDefinition } from "~/form/types";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { id, modeShort, superRefine, type ValidationCtx } from "~/utils/schema";
-import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
+import { CALENDAR_EVENT } from "./calendar-constants";
 import {
 	bracketsFormField,
 	progressionFormField,
@@ -139,13 +138,11 @@ export const calendarNewBaseSchema = v.object({
 		bottomText: "bottomTexts.avatarValidation",
 		autoValidate: true,
 	}),
-	regClosesAt: select({
+	regClosesAt: datetimeOptional({
 		label: "labels.regClosesAt",
-		bottomText: "bottomTexts.regClosesAt",
-		items: REG_CLOSES_AT_OPTIONS.map((option) => ({
-			value: option,
-			label: `options.regClosesAt.${option}` as const,
-		})),
+		bottomText: "bottomTexts.regClosesAtDate",
+		min: calendarEventMinDate,
+		max: calendarEventMaxDate,
 	}),
 	minMembersPerTeam: radioGroup({
 		label: "labels.playersCount",
@@ -223,6 +220,7 @@ export const TOURNAMENT_FORM_STEPS: ReadonlyArray<
 		fields: [
 			"name",
 			"startTime",
+			"regClosesAt",
 			"organizationId",
 			"description",
 			"rules",
@@ -238,7 +236,6 @@ export const TOURNAMENT_FORM_STEPS: ReadonlyArray<
 			"minMembersPerTeam",
 			"maxMembersPerTeam",
 			"isInvitational",
-			"regClosesAt",
 			"requireInGameNames",
 			"enableSubs",
 			"autonomousSubs",
@@ -314,6 +311,18 @@ function calendarNewSyncRefine(
 			);
 			validateBracketStartTimes(data, ctx);
 		}
+	}
+
+	if (
+		data.toToolsEnabled &&
+		data.startTime &&
+		data.regClosesAt &&
+		data.regClosesAt > data.startTime
+	) {
+		ctx.addIssue({
+			path: ["regClosesAt"],
+			message: "forms:errors.regClosesAfterTournamentStart",
+		});
 	}
 
 	if (data.toToolsEnabled && data.mapPickingStyle === "AUTO") {

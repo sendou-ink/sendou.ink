@@ -16,10 +16,7 @@ import {
 	requirePermission,
 	requireRole,
 } from "~/modules/permissions/guards.server";
-import {
-	databaseTimestampToDate,
-	dateToDatabaseTimestamp,
-} from "~/utils/dates";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	badRequestIfFalsy,
 	errorToast,
@@ -34,7 +31,6 @@ import {
 	teamPickSettingsFromFormValues,
 } from "../calendar-new-schemas";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
-import { regClosesAtDate } from "../calendar-utils";
 import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action = defineAction(
@@ -161,12 +157,7 @@ export const action = defineAction(
 			tournamentToCopyId: data.tournamentToCopyId,
 			regClosesAt:
 				isAddingTournament && data.regClosesAt
-					? dateToDatabaseTimestamp(
-							regClosesAtDate({
-								startTime: databaseTimestampToDate(startTimes[0]),
-								closesAt: data.regClosesAt,
-							}),
-						)
+					? dateToDatabaseTimestamp(data.regClosesAt)
 					: undefined,
 		};
 		errorToastIfFalsy(

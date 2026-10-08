@@ -23,7 +23,7 @@ export function calendarNewFormValues(
 		badges: [],
 		trophyId: null,
 		avatarImgId: null,
-		regClosesAt: "0",
+		regClosesAt: null,
 		minMembersPerTeam: "4",
 		maxMembersPerTeam: undefined,
 		mapPickingStyle: "TO",

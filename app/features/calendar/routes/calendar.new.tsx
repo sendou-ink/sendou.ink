@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { addMilliseconds } from "date-fns";
 import { SquareArrowOutUpRight, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -43,7 +44,6 @@ import {
 	FAQ_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
-import type { RegClosesAtOption } from "../calendar-constants";
 import styles from "../calendar-new.module.css";
 import {
 	calendarNewBaseSchema,
@@ -61,7 +61,6 @@ import {
 } from "../calendar-progression-form";
 import { calendarNewSearchParams } from "../calendar-search-params";
 import type { CalendarEventTag } from "../calendar-types";
-import { datesToRegClosesAt } from "../calendar-utils";
 import { BracketProgressionBuilder } from "../components/BracketProgressionBuilder";
 import { loader } from "../loaders/calendar.new.server";
 
@@ -168,15 +167,6 @@ function useDefaultValues() {
 	const tournamentCtx = baseEvent?.tournament?.ctx;
 	const settings = tournamentCtx?.settings;
 
-	const regClosesAt: RegClosesAtOption = tournamentCtx?.settings.regClosesAt
-		? datesToRegClosesAt({
-				startTime: databaseTimestampToDate(tournamentCtx.startsAt),
-				regClosesAt: databaseTimestampToDate(
-					tournamentCtx.settings.regClosesAt,
-				),
-			})
-		: "0";
-
 	const mapPickingStyle: TournamentMapPickingStyle =
 		baseEvent?.mapPickingStyle ?? "AUTO";
 	const teamPick =
@@ -197,15 +187,24 @@ function useDefaultValues() {
 		: data.isAddingTournament
 			? defaultBracketsFormValues()
 			: { brackets: [], progression: [] };
-	// a copy starts at a new time, follow-up brackets keep their distance to it
-	const brackets =
+	// a copy starts at a new time, follow-up brackets and registration closing keep their distance to it
+	const copyOffsetMs =
 		data.eventToCopy && tournamentCtx && startTime
-			? shiftBracketStartTimes(
-					bracketProgressionValues.brackets,
-					startTime.getTime() -
-						databaseTimestampToDate(tournamentCtx.startsAt).getTime(),
+			? startTime.getTime() -
+				databaseTimestampToDate(tournamentCtx.startsAt).getTime()
+			: 0;
+	const brackets = shiftBracketStartTimes(
+		bracketProgressionValues.brackets,
+		copyOffsetMs,
+	);
+
+	const regClosesAt =
+		settings?.regClosesAt && settings.regClosesAt !== tournamentCtx?.startsAt
+			? addMilliseconds(
+					databaseTimestampToDate(settings.regClosesAt),
+					copyOffsetMs,
 				)
-			: bracketProgressionValues.brackets;
+			: null;
 
 	return {
 		toToolsEnabled: data.isAddingTournament,
@@ -363,6 +362,7 @@ function TournamentSteps() {
 					{isEditing ? null : <CopyTournamentPicker />}
 					<FormField name="name" />
 					<FormField name="startTime" />
+					{isInvitational ? null : <FormField name="regClosesAt" />}
 					{data.organizations.length > 0 ? (
 						<FormField name="organizationId" options={organizationOptions} />
 					) : null}
@@ -392,7 +392,6 @@ function TournamentSteps() {
 							<FormField name="isInvitational" />
 							{isInvitational ? null : (
 								<>
-									<FormField name="regClosesAt" />
 									<FormField name="requireInGameNames" />
 									<FormField name="enableSubs" />
 								</>
