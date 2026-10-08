@@ -9,38 +9,74 @@ const WEBGPU_PATHS: readonly ReadbackPath[] = [
 
 /**
  * The fastest readback that reads the sample at `t` exactly as the canvas
- * does, the pixels every analysis has always seen; the canvas itself when
- * none does. A flat picture proves nothing and a failing decode or read
- * rules a path out.
+ * reads its default decode, the pixels every analysis has always seen; the
+ * canvas itself when none does. A flat picture proves nothing and a failing
+ * decode or read rules a path out.
  */
 export async function exactReadbackPath(
 	track: InputVideoTrack,
 	t: number,
 	reader: FrameReader,
 ): Promise<ReadbackPath> {
-	let frame: VideoFrame;
+	return (
+		(await exactReadbackPathOf(track, t, reader, "no-preference")) ?? "canvas"
+	);
+}
+
+/**
+ * exactReadbackPath for the sample decoded with `hardwareAcceleration`, the
+ * canvas included as a candidate; null when no path reads it as the canvas
+ * reads the default decode.
+ */
+export async function exactReadbackPathOf(
+	track: InputVideoTrack,
+	t: number,
+	reader: FrameReader,
+	hardwareAcceleration: HardwareAcceleration,
+): Promise<ReadbackPath | null> {
+	const defaultDecode = hardwareAcceleration === "no-preference";
+	const frame = await decodeAt(track, t, "no-preference");
+	if (!frame) return null;
+	const candidate = defaultDecode
+		? frame
+		: await decodeAt(track, t, hardwareAcceleration);
 	try {
-		const sample = await new VideoSampleSink(track).getSample(t);
-		if (!sample) return "canvas";
-		frame = sample.toVideoFrame();
-		sample.close();
-	} catch {
-		return "canvas";
-	}
-	try {
+		if (!candidate) return null;
 		const reference = await reader.read(frame.clone());
-		if (isFlat(reference.data)) return "canvas";
-		for (const path of WEBGPU_PATHS) {
+		if (isFlat(reference.data)) return null;
+		const paths = defaultDecode
+			? WEBGPU_PATHS
+			: [...WEBGPU_PATHS, "canvas" as const];
+		for (const path of paths) {
 			const read = await reader
-				.read(frame.clone(), { path, upscale: false })
+				.read(candidate.clone(), { path, normalize: false })
 				.catch(() => null);
 			if (read && sameBytes(reference.data, read.data)) return path;
 		}
-		return "canvas";
+		return null;
 	} catch {
-		return "canvas";
+		return null;
 	} finally {
 		frame.close();
+		if (candidate !== frame) candidate?.close();
+	}
+}
+
+async function decodeAt(
+	track: InputVideoTrack,
+	t: number,
+	hardwareAcceleration: HardwareAcceleration,
+): Promise<VideoFrame | null> {
+	try {
+		const sample = await new VideoSampleSink(track, {
+			hardwareAcceleration,
+		}).getSample(t);
+		if (!sample) return null;
+		const frame = sample.toVideoFrame();
+		sample.close();
+		return frame;
+	} catch {
+		return null;
 	}
 }
 

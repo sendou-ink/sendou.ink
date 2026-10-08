@@ -17,24 +17,27 @@ const readers = {
 };
 
 self.onmessage = async (e: MessageEvent<ReadbackRequest>) => {
-	const { id, frame, path, upscale } = e.data;
+	const { id, frame, path, normalize } = e.data;
 	let response: ReadbackResponse;
 	try {
 		response = {
 			id,
-			...(await readThrough(readers, frame, { path, upscale })),
+			...(await readThrough(readers, frame, { path, normalize })),
 		};
 	} catch (error) {
 		frame.close();
 		response = { id, error: String(error) };
 	}
 	self.postMessage(response, {
+		// a 2160p picture's data is its canonical picture: transfer it once
 		transfer:
 			"data" in response
 				? [
-						response.data.buffer,
-						...(response.canonical ? [response.canonical.buffer] : []),
-						...(response.gray ? [response.gray.buffer] : []),
+						...new Set([
+							response.data.buffer,
+							...(response.canonical ? [response.canonical.buffer] : []),
+							...(response.gray ? [response.gray.buffer] : []),
+						]),
 					]
 				: [],
 	});

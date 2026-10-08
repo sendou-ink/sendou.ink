@@ -15,6 +15,7 @@ import {
 	BlobSource,
 	EncodedPacketSink,
 	Input,
+	type InputVideoTrack,
 	VideoSampleSink,
 } from "mediabunny";
 import {
@@ -68,7 +69,7 @@ import {
 	type FrameReader,
 	type ReadFrame,
 } from "./readback";
-import { exactReadbackPath } from "./readback-parity";
+import { exactReadbackPath, exactReadbackPathOf } from "./readback-parity";
 import { fetchScoreboardResources } from "./resources";
 
 /** Widest skim hop, so long-GOP recordings can't slip a results screen (~10s) or intro (~7s) between samples. */
@@ -78,6 +79,14 @@ const MAX_SKIM_STRIDE_S = 2.5;
  * flight can make due next (likeliest first), then the likeliest after it.
  */
 const READ_AHEAD = 3;
+/**
+ * 2160p AV1 is bound by the GPU process's one hardware decode thread, which
+ * every lane shares, so every other lane decodes on the CPU (dav1d) instead
+ * when there are cores to spare and a readback reads its frames as the
+ * canvas reads the hardware's.
+ */
+const SOFTWARE_LANE_MIN_PIXELS = 3840 * 2160;
+const SOFTWARE_LANE_MIN_THREADS = 8;
 /** readback workers per analyzer, so reads ahead run side by side */
 const READERS = 2;
 const PROGRESS_POST_INTERVAL_MS = 400;
@@ -368,7 +377,20 @@ async function scanChunk({
 
 		frameReader ??= createFrameReaderPool(READERS);
 		const reader = frameReader;
-		const path = await exactReadbackPath(track, (tStart + tEnd) / 2, reader);
+		const parityT = (tStart + tEnd) / 2;
+		let path = await exactReadbackPath(track, parityT, reader);
+		if (await decodesInSoftware(track, chunkIndex)) {
+			const softwarePath = await exactReadbackPathOf(
+				track,
+				parityT,
+				reader,
+				"prefer-software",
+			);
+			if (softwarePath) {
+				hardwareAcceleration = "prefer-software";
+				path = softwarePath;
+			}
+		}
 		let samples = new VideoSampleSink(track, { hardwareAcceleration });
 
 		/** A sample's place in the stream: telemetry and the cursor. */
@@ -792,6 +814,24 @@ function readAheadTimes(
 		...candidates.filter((candidate) => candidate !== first),
 		...later,
 	];
+}
+
+async function decodesInSoftware(
+	track: InputVideoTrack,
+	chunkIndex: number,
+): Promise<boolean> {
+	if (
+		chunkIndex % 2 === 0 ||
+		navigator.hardwareConcurrency < SOFTWARE_LANE_MIN_THREADS
+	) {
+		return false;
+	}
+	const [codec, width, height] = await Promise.all([
+		track.getCodec(),
+		track.getDisplayWidth(),
+		track.getDisplayHeight(),
+	]);
+	return codec === "av1" && width * height >= SOFTWARE_LANE_MIN_PIXELS;
 }
 
 /** A frame normalizeFrame would only copy: canonical size, no bars. */

@@ -20,14 +20,21 @@ import {
 	CANONICAL_HEIGHT,
 	CANONICAL_WIDTH,
 	detectContentBox,
+	detectContentBoxFromSums,
 } from "../core/canonical";
 import type { FrameData } from "../core/image";
+import {
+	type AreaDownscaler,
+	createAreaDownscaler,
+	halvesArea,
+} from "./area-downscaler";
 import {
 	type CubicUpscaler,
 	createCubicUpscaler,
 	upscalesCubic,
 } from "./cubic-upscaler";
 import { createGrayKernel, type GrayKernel } from "./gpu-gray";
+import { createLineSumsKernel, type LineSumsKernel } from "./gpu-line-sums";
 
 const TEXTURE_COPY_SRC = 0x01;
 const TEXTURE_COPY_DST = 0x02;
@@ -65,8 +72,9 @@ export function createCanvasReadback(): (
 
 /**
  * A read-back frame, plus what the GPU computes while it holds the pixels:
- * the canonical picture when normalizeFrame would upscale it, and the
- * canonical picture's gray (frameGray) when it has no bars to crop.
+ * the canonical picture when normalizeFrame would resize it there, and the
+ * canonical picture's gray (frameGray) when it has no bars to crop. A 2160p
+ * picture without bars comes back as that canonical picture alone.
  */
 export interface ReadFrame extends FrameData {
 	canonical?: Uint8Array;
@@ -76,11 +84,13 @@ export interface ReadFrame extends FrameData {
 /** Reads frames back through WebGPU (see the module header); closes `frame`. Rejects when WebGPU is unavailable. */
 export function createWebGpuReadback(): (
 	frame: VideoFrame,
-	options: { source: "bitmap" | "planes"; upscale?: boolean },
+	options: { source: "bitmap" | "planes"; normalize?: boolean },
 ) => Promise<ReadFrame> {
 	let device: Promise<{
 		gpu: GPUDevice;
 		upscaler: CubicUpscaler;
+		downscaler: AreaDownscaler;
+		lineSums: LineSumsKernel;
 		grayKernel: GrayKernel;
 	}> | null = null;
 	/** per frame size: a texture, and buffer pairs not in use */
@@ -101,6 +111,8 @@ export function createWebGpuReadback(): (
 				return {
 					gpu,
 					upscaler: await createCubicUpscaler(gpu),
+					downscaler: await createAreaDownscaler(gpu),
+					lineSums: await createLineSumsKernel(gpu),
 					grayKernel: await createGrayKernel(gpu),
 				};
 			})();
@@ -111,14 +123,15 @@ export function createWebGpuReadback(): (
 		}
 		return device;
 	};
-	return async (frame, { source: from, upscale = true }) => {
+	return async (frame, { source: from, normalize = true }) => {
 		const width = frame.displayWidth;
 		const height = frame.displayHeight;
 		try {
-			const [{ gpu, upscaler, grayKernel }, source] = await Promise.all([
-				getDevice(),
-				from === "bitmap" ? createImageBitmap(frame) : cpuCopy(frame),
-			]);
+			const [{ gpu, upscaler, downscaler, lineSums, grayKernel }, source] =
+				await Promise.all([
+					getDevice(),
+					from === "bitmap" ? createImageBitmap(frame) : cpuCopy(frame),
+				]);
 			const key = `${width}x${height}`;
 			let target = targets.get(key);
 			if (!target) {
@@ -154,10 +167,12 @@ export function createWebGpuReadback(): (
 			} finally {
 				source.close();
 			}
-			// a picture without bars is upscaled in the same submission, as it
-			// most likely is; one with bars takes a second round trip
+			// a picture without bars is resized in the same submission, as it
+			// most likely is; one with bars takes a second round trip. A 2160p
+			// picture maps only its downscale and line sums unless it has bars
 			const fullFrame = { x: 0, y: 0, w: width, h: height };
 			const stride = bytesPerRow / 4;
+			const halves = normalize && halvesArea(width, height);
 			gpu.pushErrorScope("validation");
 			const encoder = gpu.createCommandEncoder();
 			encoder.copyTextureToBuffer(
@@ -165,20 +180,21 @@ export function createWebGpuReadback(): (
 				{ buffer: buffers.pixels, bytesPerRow },
 				[width, height],
 			);
-			encoder.copyBufferToBuffer(
-				buffers.pixels,
-				0,
-				buffers.map,
-				0,
-				bytesPerRow * height,
-			);
-			const speculative =
-				upscale && upscalesCubic(width, height)
-					? upscaler.encode(encoder, {
-							buffer: buffers.pixels,
-							stride,
-							box: fullFrame,
-						})
+			if (!halves) copyToMap(encoder, buffers);
+			const speculative = halves
+				? {
+						...downscaler.encode(encoder, buffers.pixels, stride),
+						release: downscaler.release,
+					}
+				: normalize && upscalesCubic(width, height)
+					? {
+							...upscaler.encode(encoder, {
+								buffer: buffers.pixels,
+								stride,
+								box: fullFrame,
+							}),
+							release: upscaler.release,
+						}
 					: null;
 			const canonicalSource = speculative
 				? { buffer: speculative.canonical, stride: CANONICAL_WIDTH }
@@ -192,16 +208,47 @@ export function createWebGpuReadback(): (
 						canonicalSource.stride,
 					)
 				: null;
+			const lines = halves
+				? lineSums.encode(encoder, buffers.pixels, {
+						stride,
+						w: width,
+						h: height,
+					})
+				: null;
 			gpu.queue.submit([encoder.finish()]);
-			const [submitError, , upscaled, gray] = await Promise.all([
+			const [submitError, , scaled, gray, sums] = await Promise.all([
 				gpu.popErrorScope(),
-				buffers.map.mapAsync(MAP_MODE_READ),
+				halves ? null : buffers.map.mapAsync(MAP_MODE_READ),
 				speculative
-					? mapCopy(speculative.read, () => upscaler.release(speculative.read))
+					? mapCopy(speculative.read, () =>
+							speculative.release(speculative.read),
+						)
 					: null,
 				grayRead ? mapCopy(grayRead, () => grayKernel.release(grayRead)) : null,
+				lines?.read(),
 			]);
 			if (submitError) throw new Error(`readback: ${submitError.message}`);
+			if (sums && scaled && !detectContentBoxFromSums(width, height, sums)) {
+				target.buffers.push(buffers);
+				return {
+					width: CANONICAL_WIDTH,
+					height: CANONICAL_HEIGHT,
+					data: new Uint8ClampedArray(scaled.buffer),
+					canonical: scaled,
+					gray: gray ?? undefined,
+				};
+			}
+			if (halves) {
+				gpu.pushErrorScope("validation");
+				const mapEncoder = gpu.createCommandEncoder();
+				copyToMap(mapEncoder, buffers);
+				gpu.queue.submit([mapEncoder.finish()]);
+				const [mapError] = await Promise.all([
+					gpu.popErrorScope(),
+					buffers.map.mapAsync(MAP_MODE_READ),
+				]);
+				if (mapError) throw new Error(`readback: ${mapError.message}`);
+			}
 			const mapped = new Uint8Array(buffers.map.getMappedRange());
 			const data = new Uint8ClampedArray(width * height * 4);
 			if (bytesPerRow === width * 4) data.set(mapped);
@@ -216,8 +263,8 @@ export function createWebGpuReadback(): (
 			buffers.map.unmap();
 			const box = detectContentBox(width, height, data);
 			let canonical: Uint8Array | undefined;
-			if (!box) canonical = upscaled ?? undefined;
-			else if (upscale && upscalesCubic(box.w, box.h)) {
+			if (!box) canonical = scaled ?? undefined;
+			else if (normalize && upscalesCubic(box.w, box.h)) {
 				canonical = await upscaler.upscale({
 					buffer: buffers.pixels,
 					stride,
@@ -246,12 +293,12 @@ export function readThrough(
 		webgpu: ReturnType<typeof createWebGpuReadback>;
 	},
 	frame: VideoFrame,
-	{ path, upscale }: Required<ReadOptions>,
+	{ path, normalize }: Required<ReadOptions>,
 ): Promise<ReadFrame> {
 	if (path === "canvas") return Promise.resolve(readers.canvas(frame));
 	return readers.webgpu(frame, {
 		source: path === "webgpu-bitmap" ? "bitmap" : "planes",
-		upscale,
+		normalize,
 	});
 }
 
@@ -259,7 +306,7 @@ export interface ReadbackRequest {
 	id: number;
 	frame: VideoFrame;
 	path: ReadbackPath;
-	upscale: boolean;
+	normalize: boolean;
 }
 
 export type ReadbackResponse =
@@ -268,8 +315,8 @@ export type ReadbackResponse =
 
 export interface ReadOptions {
 	path?: ReadbackPath;
-	/** also return the canonical picture when the WebGPU path would upscale it (default true) */
-	upscale?: boolean;
+	/** also return the canonical picture when the WebGPU path would resize it (default true) */
+	normalize?: boolean;
 }
 
 export interface FrameReader {
@@ -298,6 +345,13 @@ export function createFrameReaderPool(count: number): FrameReader {
 			for (const { reader } of readers) reader.dispose();
 		},
 	};
+}
+
+function copyToMap(
+	encoder: GPUCommandEncoder,
+	{ pixels, map }: { pixels: GPUBuffer; map: GPUBuffer },
+) {
+	encoder.copyBufferToBuffer(pixels, 0, map, 0, pixels.size);
 }
 
 /** A mapped copy of `read`'s contents; `done` runs once it is unmapped (or failed). */
@@ -339,10 +393,10 @@ function createFrameReader(): FrameReader {
 	>();
 	const readLocally = (
 		frame: VideoFrame,
-		{ path, upscale }: Required<ReadOptions>,
+		{ path, normalize }: Required<ReadOptions>,
 	) => {
 		try {
-			return readThrough(local, frame, { path, upscale });
+			return readThrough(local, frame, { path, normalize });
 		} catch (error) {
 			return Promise.reject(error);
 		}
@@ -375,8 +429,8 @@ function createFrameReader(): FrameReader {
 		worker.onerror = abandonWorker;
 	}
 	return {
-		read(frame, { path = "canvas", upscale = true } = {}) {
-			const options = { path, upscale };
+		read(frame, { path = "canvas", normalize = true } = {}) {
+			const options = { path, normalize };
 			if (!worker) return readLocally(frame, options);
 			const id = nextId++;
 			const result = new Promise<ReadFrame>((resolve, reject) => {
