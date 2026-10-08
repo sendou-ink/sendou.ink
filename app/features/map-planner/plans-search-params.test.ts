@@ -16,6 +16,7 @@ describe("plansSearchParams", () => {
 			ranges: [false, true],
 			hideTop: [false, true],
 			hideWeapons: [false, true],
+			import: [null, "1759900000000-abc123"],
 		});
 	});
 

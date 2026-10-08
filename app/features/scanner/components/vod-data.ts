@@ -63,6 +63,7 @@ export interface VodMinimapUrl {
 	/** seconds into the VoD */
 	t: number;
 	url: string;
+	image: Blob;
 }
 
 /** A saved VoD's minimaps, chronological; their URLs are released when the name changes or the view goes away. */
@@ -79,7 +80,7 @@ export function useVodMinimaps(name: string): VodMinimapUrl[] {
 		void loadVodMinimaps(name).then((minimaps) => {
 			if (stale) return;
 			const withUrls = minimaps.map((minimap) => ({
-				t: minimap.t,
+				...minimap,
 				url: URL.createObjectURL(minimap.image),
 			}));
 			urls = withUrls.map((minimap) => minimap.url);

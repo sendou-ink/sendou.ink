@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { toastQueue } from "~/components/elements/Toast";
 import { getSpecialWeaponRange } from "~/features/comp-analyzer/core/special-weapon-range";
 import { getWeaponRange } from "~/features/comp-analyzer/core/weapon-range";
 import { useTheme } from "~/features/theme/core/provider";
@@ -68,6 +69,7 @@ import {
 } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { Image } from "../../../components/Image";
+import * as PlanImport from "../core/PlanImport";
 import {
 	PLANNER_BACKGROUND_STYLES,
 	PLANNER_PERSISTENCE_KEY,
@@ -78,6 +80,9 @@ import type { StageWaterLevel } from "../plans-types";
 import styles from "./Planner.module.css";
 
 const DROPPED_IMAGE_SIZE_PX = 45;
+const IMPORTED_WEAPON_GAP_PX = 8;
+const IMPORTED_TEAMS_GAP_PX = 40;
+const FIT_INSET_PX = 32;
 const BACKGROUND_WIDTH = 1127;
 const BACKGROUND_HEIGHT = 634;
 const GAME_UNITS_TO_PX: Record<"MINI" | "OVER", number> = {
@@ -114,7 +119,9 @@ export function Planner() {
 		plansSearchParams,
 		"ranges",
 	);
+	const [importKey, setImportKey] = useSearchParam(plansSearchParams, "import");
 	const rangeCleanupRef = React.useRef<(() => void) | null>(null);
+	const weaponsWrapperRef = React.useRef<HTMLDivElement>(null);
 	const [activeDragItem, setActiveDragItem] = React.useState<{
 		src: string;
 		previewPath: string;
@@ -258,45 +265,13 @@ export function Planner() {
 		}) => {
 			if (!editor) return;
 
-			// image shapes reference an asset by id, so copies of the same image only take up memory once
-			const assetId: TLAssetId = AssetRecordType.createId();
-
-			const srcWithOutline = imgOutlined ? `${src}?outline=red` : src;
-
-			// follows tldraw's own example, copes well with lots of shapes at once
-			const imageAsset: TLImageAsset = {
-				id: assetId,
-				type: "image",
-				typeName: "asset",
-				props: {
-					name: "img",
-					src: srcWithOutline,
-					w: size[0],
-					h: size[1],
-					mimeType: null,
-					isAnimated: false,
-				},
-				meta: {},
-			};
-
-			editor.createAssets([imageAsset]);
-
-			const shapeId: TLShapeId = createShapeId();
-
-			const shape = {
-				type: "image",
-				x: point[0],
-				y: point[1],
+			addImage(editor, {
+				src: imgOutlined ? `${src}?outline=red` : src,
+				size,
 				isLocked,
-				id: shapeId,
-				meta: meta ?? {},
-				props: {
-					assetId,
-					w: size[0],
-					h: size[1],
-				},
-			};
-			editor.createShape(shape);
+				point,
+				meta,
+			});
 
 			cb?.();
 		},
@@ -370,12 +345,7 @@ export function Planner() {
 			hideRanges(editor);
 			setRangesVisible(false);
 
-			const shapes = editor.getCurrentPageShapes();
-			// locked shapes can't be deleted
-			for (const value of shapes) {
-				editor.updateShape({ id: value.id, type: value.type, isLocked: false });
-			}
-			editor.deleteShapes(shapes);
+			clearCanvas(editor);
 
 			handleAddImage({
 				src: stageMinimapImageUrlWithEnding(urlArgs),
@@ -389,6 +359,26 @@ export function Planner() {
 		},
 		[editor, handleAddImage, hideRanges, setRangesVisible],
 	);
+
+	// a plan handed over from another tab, e.g. a scanner coach mode frame
+	React.useEffect(() => {
+		if (!editor || !importKey) return;
+
+		const plan = PlanImport.claim(importKey);
+		if (plan) {
+			addImportedPlan(editor, plan);
+			zoomToFitRightOf(
+				editor,
+				weaponsWrapperRef.current?.getBoundingClientRect().right ?? 0,
+			);
+		} else {
+			toastQueue.add({
+				message: t("common:plans.importFailed"),
+				variant: "error",
+			});
+		}
+		setImportKey(null);
+	}, [editor, importKey, setImportKey, t]);
 
 	// removes all tldraw ui that isnt needed
 	const tldrawComponents: TLComponents = {
@@ -437,6 +427,7 @@ export function Planner() {
 				</button>
 			</div>
 			<div
+				ref={weaponsWrapperRef}
 				className={clsx(
 					styles.weaponsWrapper,
 					weaponsCollapsed && styles.weaponsWrapperCollapsed,
@@ -964,6 +955,134 @@ function createCircle(
 		},
 		meta: { isRangeCircle: true, weaponShapeId },
 	});
+}
+
+function addImage(
+	editor: Editor,
+	{
+		src,
+		size,
+		isLocked,
+		point,
+		meta,
+	}: {
+		src: string;
+		size: number[];
+		isLocked: boolean;
+		point: number[];
+		meta?: { backgroundStyle?: "MINI" | "OVER" };
+	},
+) {
+	// image shapes reference an asset by id, so copies of the same image only take up memory once
+	const assetId: TLAssetId = AssetRecordType.createId();
+
+	// follows tldraw's own example, copes well with lots of shapes at once
+	const imageAsset: TLImageAsset = {
+		id: assetId,
+		type: "image",
+		typeName: "asset",
+		props: {
+			name: "img",
+			src,
+			w: size[0],
+			h: size[1],
+			mimeType: null,
+			isAnimated: false,
+		},
+		meta: {},
+	};
+
+	editor.createAssets([imageAsset]);
+
+	const shapeId: TLShapeId = createShapeId();
+
+	const shape = {
+		type: "image",
+		x: point[0],
+		y: point[1],
+		isLocked,
+		id: shapeId,
+		meta: meta ?? {},
+		props: {
+			assetId,
+			w: size[0],
+			h: size[1],
+		},
+	};
+	editor.createShape(shape);
+}
+
+/** The plan's background with its weapons in a column left of it, allies above the outlined enemies. */
+function addImportedPlan(editor: Editor, plan: PlanImport.ImportedPlan) {
+	editor.markHistoryStoppingPoint("pre-import");
+
+	clearCanvas(editor);
+
+	addImage(editor, {
+		src: plan.background,
+		size: [BACKGROUND_WIDTH, BACKGROUND_HEIGHT],
+		isLocked: true,
+		point: [0, 0],
+	});
+
+	const teamHeight = (count: number) =>
+		Math.max(
+			0,
+			count * (DROPPED_IMAGE_SIZE_PX + IMPORTED_WEAPON_GAP_PX) -
+				IMPORTED_WEAPON_GAP_PX,
+		);
+	const columnHeight =
+		teamHeight(plan.allies.length) +
+		IMPORTED_TEAMS_GAP_PX +
+		teamHeight(plan.enemies.length);
+	const x = -(DROPPED_IMAGE_SIZE_PX + IMPORTED_TEAMS_GAP_PX);
+	let y = (BACKGROUND_HEIGHT - columnHeight) / 2;
+
+	const addTeam = (weaponIds: MainWeaponId[], isEnemy: boolean) => {
+		for (const weaponId of weaponIds) {
+			const src = `${outlinedMainWeaponImageUrl(weaponId)}.avif`;
+			addImage(editor, {
+				src: isEnemy ? `${src}?outline=red` : src,
+				size: [DROPPED_IMAGE_SIZE_PX, DROPPED_IMAGE_SIZE_PX],
+				isLocked: false,
+				point: [x, y],
+			});
+			y += DROPPED_IMAGE_SIZE_PX + IMPORTED_WEAPON_GAP_PX;
+		}
+	};
+
+	addTeam(plan.allies, false);
+	y += IMPORTED_TEAMS_GAP_PX - IMPORTED_WEAPON_GAP_PX;
+	addTeam(plan.enemies, true);
+}
+
+/** Like `zoomToFit` but keeps the shapes clear of the overlay covering the viewport's left `coveredPx`. */
+function zoomToFitRightOf(editor: Editor, coveredPx: number) {
+	const bounds = editor.getCurrentPageBounds();
+	if (!bounds) return;
+
+	const viewport = editor.getViewportScreenBounds();
+	const left = coveredPx < viewport.w / 3 ? coveredPx : 0;
+	const zoom = Math.min(
+		(viewport.w - left - 2 * FIT_INSET_PX) / bounds.w,
+		(viewport.h - 2 * FIT_INSET_PX) / bounds.h,
+	);
+	const centerX = left + (viewport.w - left) / 2;
+
+	editor.setCamera({
+		x: centerX / zoom - bounds.midX,
+		y: viewport.h / 2 / zoom - bounds.midY,
+		z: zoom,
+	});
+}
+
+function clearCanvas(editor: Editor) {
+	const shapes = editor.getCurrentPageShapes();
+	// locked shapes can't be deleted
+	for (const value of shapes) {
+		editor.updateShape({ id: value.id, type: value.type, isLocked: false });
+	}
+	editor.deleteShapes(shapes);
 }
 
 function canvasBackgroundStyle(editor: Editor): "MINI" | "OVER" {

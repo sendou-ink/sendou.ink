@@ -9,7 +9,8 @@
  * game's timeline charts below it marking the video's moment; pressing them
  * jumps the video there. The map as last opened (CoachMinimap) tops the events,
  * following the video; clicking it swaps the two, the video playing on in the
- * map's place. The file is the one scanned or opened this visit, else the user
+ * map's place; paused with the map big, the map and the game's weapons can be
+ * opened in the map planner. The file is the one scanned or opened this visit, else the user
  * opens it again (only the scan was saved).
  */
 // xxx: last event we dont have win/loss
@@ -20,8 +21,11 @@ import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
+import { toastQueue } from "~/components/elements/Toast";
 import { GameTimeline } from "~/components/GameTimeline";
+import * as PlanImport from "~/features/map-planner/core/PlanImport";
 import { useSearchParam } from "~/modules/search-params/hooks";
+import { logger } from "~/utils/logger";
 import { SCANNER_PAGE } from "~/utils/urls";
 import * as CoachEvents from "../core/CoachEvents";
 import * as CoachFilters from "../core/CoachFilters";
@@ -247,12 +251,17 @@ function CoachSession({
 	};
 
 	const swapMapAndVideo = url ? () => setIsMapBig(!isMapBig) : undefined;
+	const openPlanner =
+		url && isMapBig && isPaused && minimap && currentGame
+			? () => openInPlanner(minimap.image, currentGame.match)
+			: undefined;
 	const minimapView = (
 		<CoachMinimap
 			minimap={minimap}
 			currentTime={currentTime}
 			isInGame={currentGame !== undefined}
 			onSwap={swapMapAndVideo}
+			onOpenPlanner={openPlanner}
 		/>
 	);
 	const videoSlot = <NodeSlot node={videoHost} />;
@@ -471,6 +480,27 @@ function stepsAlong<T>(
 		return item === undefined ? null : () => onJump(item);
 	};
 	return { previous: jumpFor("previous"), next: jumpFor("next") };
+}
+
+/** The map frame with the POV team's weapons as allies; casts have no POV team, so the first one is. */
+function openInPlanner(background: Blob, match: ScannerMatch) {
+	const allyTeam = CoachEvents.povTeamOf(match) ?? 0;
+	const weaponsOf = (team: ScannerMatch["teams"][number]) =>
+		team.players.flatMap((player) =>
+			player.weaponId === null ? [] : [player.weaponId],
+		);
+
+	PlanImport.openInNewTab({
+		background,
+		allies: weaponsOf(match.teams[allyTeam]),
+		enemies: weaponsOf(match.teams[allyTeam === 0 ? 1 : 0]),
+	}).catch((error) => {
+		logger.error("Opening the map in the planner failed", error);
+		toastQueue.add({
+			message: `Opening the map in the planner failed: ${error}`,
+			variant: "error",
+		});
+	});
 }
 
 /** Entries are rebuilt with the scan's events, so selection goes by their fields. */

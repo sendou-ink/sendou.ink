@@ -289,6 +289,7 @@
 	"plans.bgStyle.MINI": "",
 	"plans.adder.objective": "",
 	"plans.ranges": "",
+	"plans.importFailed": "",
 	"plans.waterLevel.up": "",
 	"plans.waterLevel.down": "",
 	"articles.by": "מאת {{author}}",

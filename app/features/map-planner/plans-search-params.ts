@@ -26,4 +26,8 @@ export const plansSearchParams = SearchParams.define({
 	ranges: SP.param(v.boolean(), { default: false, loader: false }),
 	hideTop: SP.param(v.boolean(), { default: false, loader: false }),
 	hideWeapons: SP.param(v.boolean(), { default: false, loader: false }),
+	/** PlanImport handoff key: the planner claims this plan on load */
+	import: SP.param(v.nullable(v.pipe(v.string(), v.maxLength(100))), {
+		loader: false,
+	}),
 });

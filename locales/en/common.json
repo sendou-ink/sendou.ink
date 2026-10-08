@@ -289,6 +289,7 @@
 	"plans.bgStyle.MINI": "Minimap",
 	"plans.adder.objective": "Objective",
 	"plans.ranges": "Ranges",
+	"plans.importFailed": "The map to plan on didn't arrive, try opening it again",
 	"plans.waterLevel.up": "Water up",
 	"plans.waterLevel.down": "Water down",
 	"articles.by": "by {{author}}",

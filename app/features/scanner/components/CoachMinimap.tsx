@@ -2,7 +2,10 @@
  * Coach mode's map as the POV player last opened it in the game the video is
  * in, and how long before the video's time that was. It fills whichever place
  * it has, beside the video or swapped into the video's; clicking it swaps.
+ * When given, a corner button opens the map in the map planner.
  */
+import { Image } from "~/components/Image";
+import { navIconUrl } from "~/utils/urls";
 import { formatClock } from "../core/format";
 import styles from "./CoachMinimap.module.css";
 import type { VodMinimapUrl } from "./vod-data";
@@ -12,6 +15,7 @@ export function CoachMinimap({
 	currentTime,
 	isInGame,
 	onSwap,
+	onOpenPlanner,
 }: {
 	/** the latest of the game's minimaps up to the video's time */
 	minimap: VodMinimapUrl | undefined;
@@ -20,6 +24,7 @@ export function CoachMinimap({
 	isInGame: boolean;
 	/** undefined when there's no video to swap with */
 	onSwap: (() => void) | undefined;
+	onOpenPlanner?: () => void;
 }) {
 	const content = minimap ? (
 		<>
@@ -38,17 +43,32 @@ export function CoachMinimap({
 		</span>
 	);
 
-	if (!onSwap) return <div className={styles.minimap}>{content}</div>;
-
 	return (
-		<button
-			type="button"
-			className={styles.minimap}
-			title="Swap with the video"
-			onClick={onSwap}
-		>
-			{content}
-		</button>
+		<div className={styles.minimap}>
+			{onSwap ? (
+				<button
+					type="button"
+					className={styles.swap}
+					title="Swap with the video"
+					onClick={onSwap}
+				>
+					{content}
+				</button>
+			) : (
+				content
+			)}
+			{onOpenPlanner ? (
+				<button
+					type="button"
+					className={styles.planner}
+					title="Open the map in the map planner in a new tab"
+					onClick={onOpenPlanner}
+				>
+					<Image path={navIconUrl("plans")} alt="" size={20} />
+					Planner
+				</button>
+			) : null}
+		</div>
 	);
 }
 
