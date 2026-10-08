@@ -111,9 +111,12 @@ export function BracketProgressionFormFields({
 export function BracketFields({
 	renderContext,
 	isDisabled,
+	onFormatChange,
 }: {
 	renderContext: ArrayItemRenderContext;
 	isDisabled: boolean;
+	/** Called after a change to the format or a setting that changes which placements the bracket has. */
+	onFormatChange?: () => void;
 }) {
 	const { t } = useTranslation(["forms"]);
 	const { index, itemName, values, setItemField } = renderContext;
@@ -130,7 +133,10 @@ export function BracketFields({
 				name={`${itemName}.type`}
 				disabled={isDisabled}
 				// skippable rounds differ by format
-				onValueChange={() => setItemField("skippedRounds", [])}
+				onValueChange={() => {
+					setItemField("skippedRounds", []);
+					onFormatChange?.();
+				}}
 			/>
 
 			{bracket.type === "single_elimination" ||
@@ -140,6 +146,7 @@ export function BracketFields({
 					bracket={bracket}
 					itemName={itemName}
 					isDisabled={isDisabled}
+					onFormatChange={onFormatChange}
 				/>
 			) : null}
 
@@ -147,6 +154,7 @@ export function BracketFields({
 				<FormField
 					name={`${itemName}.teamsPerGroup`}
 					disabled={isDisabled}
+					onValueChange={onFormatChange}
 					options={(!isFollowUp && bracket.hasAbDivisions
 						? TOURNAMENT.RR_AB_DIVISIONS_TEAMS_PER_GROUP_OPTIONS
 						: TOURNAMENT.RR_TEAMS_PER_GROUP_OPTIONS
@@ -169,6 +177,7 @@ export function BracketFields({
 						} else if (!isSelected && teamsPerGroup > maxWithoutAb) {
 							setItemField("teamsPerGroup", String(maxWithoutAb));
 						}
+						onFormatChange?.();
 					}}
 				/>
 			) : null}
@@ -239,11 +248,13 @@ function EliminationFields({
 	bracket,
 	itemName,
 	isDisabled,
+	onFormatChange,
 }: {
 	type: "single_elimination" | "double_elimination";
 	bracket: BracketFormValue;
 	itemName: string;
 	isDisabled: boolean;
+	onFormatChange?: () => void;
 }) {
 	const { t } = useTranslation(["forms"]);
 
@@ -254,8 +265,13 @@ function EliminationFields({
 			<FormField
 				name={`${itemName}.eliminationGroupCount`}
 				disabled={isDisabled}
+				onValueChange={onFormatChange}
 			/>
-			<FormField name={`${itemName}.skippedRounds`} disabled={isDisabled}>
+			<FormField
+				name={`${itemName}.skippedRounds`}
+				disabled={isDisabled}
+				onValueChange={onFormatChange}
+			>
 				{({
 					name,
 					value,

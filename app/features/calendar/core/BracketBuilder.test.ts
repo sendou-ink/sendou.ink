@@ -473,6 +473,69 @@ describe("BracketBuilder.maxTeamCounts", () => {
 	});
 });
 
+describe("BracketBuilder.fitPlacementsToSources", () => {
+	test("drops a group placement after the groups shrink", () => {
+		const values = progressionOf([
+			{ name: "Groups", type: "round_robin", teamsPerGroup: "3" },
+			{ name: "Finals", sources: [[0, "1-2,4"]] },
+		]);
+
+		expect(
+			BracketBuilder.fitPlacementsToSources(values).progression[1].sources[0]
+				.placements,
+		).toBe("1-2");
+	});
+
+	test("gives a line left with no placements the default picks", () => {
+		const values = progressionOf([
+			{ name: "Groups", type: "round_robin", teamsPerGroup: "4" },
+			{ name: "Finals", sources: [[0, "-1,-2"]] },
+		]);
+
+		expect(
+			BracketBuilder.fitPlacementsToSources(values).progression[1].sources[0]
+				.placements,
+		).toBe("1-2");
+	});
+
+	test("drops placements of a bracket getting fewer teams", () => {
+		const values = progressionOf([
+			{ name: "Main", type: "single_elimination", skippedRounds: [] },
+			{ name: "Top cut", sources: [[0, "1-2"]] },
+			{ name: "Finals", sources: [[1, "1-4"]] },
+		]);
+
+		expect(
+			BracketBuilder.fitPlacementsToSources(values).progression[2].sources[0]
+				.placements,
+		).toBe("1-2");
+	});
+
+	test("drops everyone below with the placement it counted from", () => {
+		const values = progressionOf([
+			{ name: "Main", type: "single_elimination", skippedRounds: [] },
+			{ name: "Top cut", sources: [[0, "1-2"]] },
+			{ name: "Finals", sources: [[1, "1,3+"]] },
+			{ name: "Consolation", sources: [[1, "2"]] },
+		]);
+
+		const fitted = BracketBuilder.fitPlacementsToSources(values);
+
+		expect(fitted.progression[2].sources[0].placements).toBe("1");
+		expect(fitted.progression[3].sources[0].placements).toBe("2");
+	});
+
+	test("keeps the values as they are when every placement exists", () => {
+		const values = progressionOf([
+			{ name: "Main", type: "double_elimination" },
+			{ name: "Underground", sources: [[0, "-1,-2"]] },
+			{ name: "Top cut", sources: [[0, "1-4"]] },
+		]);
+
+		expect(BracketBuilder.fitPlacementsToSources(values)).toBe(values);
+	});
+});
+
 function bracketValue(overrides: Partial<BracketFormValue>): BracketFormValue {
 	return { ...newBracketFormValue(), name: "Bracket", ...overrides };
 }

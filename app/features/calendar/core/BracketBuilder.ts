@@ -298,6 +298,33 @@ export function removeBracket(
 	};
 }
 
+/**
+ * Drops placements of lines their source bracket no longer has, e.g. a 4th place after its groups shrunk to 3
+ * or knocked out teams after it changed to round robin. A line left with none gets the default picks instead.
+ * Returns `values` as is when every placement still exists.
+ */
+export function fitPlacementsToSources(values: BuilderValues): BuilderValues {
+	let result = values;
+
+	// fitting a line can change how many teams later brackets get and so what placements they have, hence the passes
+	for (let pass = 0; pass <= values.brackets.length; pass++) {
+		const maxTeams = maxTeamCounts(result);
+		let hasChanged = false;
+
+		for (const line of connections(result)) {
+			const fitted = fittedPlacements(result, line, maxTeams[line.fromIdx]);
+			if (fitted === line.placements) continue;
+
+			result = withLinePlacements(result, line, fitted);
+			hasChanged = true;
+		}
+
+		if (!hasChanged) break;
+	}
+
+	return result;
+}
+
 /** Placements of `fromIdx` a new line takes by default: the top ones, or the next ones after what other lines already take. */
 export function defaultPlacements(
 	values: BuilderValues,
@@ -885,4 +912,77 @@ function withProgressionEntry(
 			idx === bracketIdx ? entry : existing,
 		),
 	};
+}
+
+function fittedPlacements(
+	values: BuilderValues,
+	line: Connection,
+	sourceMaxTeams: number | null,
+) {
+	const source = values.brackets[line.fromIdx];
+	if (
+		sourceBracketHasEarlyAdvance(values.brackets, {
+			bracketIdx: String(line.fromIdx),
+			placements: line.placements,
+		})
+	) {
+		return line.placements;
+	}
+
+	const parsed = Progression.parsePlacements(line.placements);
+	if (!parsed) return line.placements;
+
+	// none means the lines into the source have nothing picked yet, an error of their own and no reason to drop picks
+	const existing = existingPlacements(
+		source,
+		sourceMaxTeams === 0 ? null : sourceMaxTeams,
+	);
+	const kept = parsed.placements.filter(existing);
+	if (kept.length === parsed.placements.length) return line.placements;
+	if (kept.length > 0) {
+		// placements are dropped from the end, so "everyone below" would cover what other lines take in between
+		const keepsRest =
+			parsed.rest && Math.max(...kept) === Math.max(...parsed.placements);
+		return Progression.placementsToString(kept, keepsRest);
+	}
+
+	const defaults = Progression.parsePlacements(
+		defaultPlacements(withLinePlacements(values, line, ""), line.fromIdx),
+	);
+	return Progression.placementsToString(
+		(defaults?.placements ?? []).filter(existing),
+		defaults?.rest,
+	);
+}
+
+function existingPlacements(
+	source: BracketFormValue,
+	sourceMaxTeams: number | null,
+) {
+	const knockedOut = new Set(
+		knockedOutRoundOptions(source).map((rounds) => -rounds),
+	);
+	const tierPlacements = new Set(
+		placementTiers(source, sourceMaxTeams).map((tier) => tier.placement),
+	);
+
+	return (placement: number) =>
+		placement < 0
+			? knockedOut.has(placement)
+			: source.type === "swiss" || tierPlacements.has(placement);
+}
+
+function withLinePlacements(
+	values: BuilderValues,
+	line: Pick<Connection, "toIdx" | "sourceIdx">,
+	placements: string,
+): BuilderValues {
+	const entry = values.progression[line.toIdx];
+
+	return withProgressionEntry(values, line.toIdx, {
+		...entry,
+		sources: entry.sources.map((source, idx) =>
+			idx === line.sourceIdx ? { ...source, placements } : source,
+		),
+	});
 }

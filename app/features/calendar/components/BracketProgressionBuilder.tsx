@@ -30,7 +30,11 @@ import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import { useFieldRevealer, useFormFieldContext } from "~/form/SendouForm";
+import {
+	useFieldRevealer,
+	useFormFieldContext,
+	useOptionalFormFieldContext,
+} from "~/form/SendouForm";
 import type { ArrayItemRenderContext } from "~/form/types";
 import { errorMessageId, setNestedValue } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -125,6 +129,7 @@ export function BracketProgressionBuilder({
 		revalidateAll,
 		clearServerError,
 	} = useFormFieldContext();
+	const formContext = useOptionalFormFieldContext();
 	const values: BracketBuilder.BuilderValues = {
 		brackets: (formValues.brackets ?? []) as BracketFormValue[],
 		progression: (formValues.progression ?? []) as ProgressionFormValue[],
@@ -196,18 +201,45 @@ export function BracketProgressionBuilder({
 		placements: string,
 	) => {
 		const name = `progression[${line.toIdx}].sources[${line.sourceIdx}].placements`;
-		setValue(name, placements);
+		const updatedFormValues = setNestedValue(formValues, name, placements);
+		// fewer teams moving on can leave the brackets after with fewer placements
+		const fitted = BracketBuilder.fitPlacementsToSources({
+			brackets: values.brackets,
+			progression: updatedFormValues.progression as ProgressionFormValue[],
+		});
+		setValue("progression", fitted.progression);
 		clearServerError(name);
-		if (hasSubmitted)
-			revalidateAll(setNestedValue(formValues, name, placements));
+		if (hasSubmitted) {
+			revalidateAll({ ...updatedFormValues, progression: fitted.progression });
+		}
 	};
 
 	const commit = (newValues: BracketBuilder.BuilderValues) => {
-		setValue("brackets", newValues.brackets);
-		setValue("progression", newValues.progression);
+		const fitted = BracketBuilder.fitPlacementsToSources(newValues);
+		setValue("brackets", fitted.brackets);
+		setValue("progression", fitted.progression);
 		clearServerError("brackets");
 		clearServerError("progression");
-		if (hasSubmitted) revalidateAll({ ...formValues, ...newValues });
+		if (hasSubmitted) revalidateAll({ ...formValues, ...fitted });
+	};
+
+	// format and settings fields write the form values themselves, so the latest values are read from the store
+	const fitPlacementsToBracketSettings = () => {
+		if (!formContext) return;
+
+		const latestValues = formContext.store.values;
+		const latest: BracketBuilder.BuilderValues = {
+			brackets: latestValues.brackets as BracketFormValue[],
+			progression: latestValues.progression as ProgressionFormValue[],
+		};
+		const fitted = BracketBuilder.fitPlacementsToSources(latest);
+		if (fitted === latest) return;
+
+		setValue("progression", fitted.progression);
+		clearServerError("progression");
+		if (hasSubmitted) {
+			revalidateAll({ ...latestValues, progression: fitted.progression });
+		}
 	};
 
 	const tournamentStartTime =
@@ -771,6 +803,7 @@ export function BracketProgressionBuilder({
 						errors={errors}
 						onClose={() => setSelection(null)}
 						onRemove={removeBracket}
+						onFormatChange={fitPlacementsToBracketSettings}
 					/>
 				</aside>
 			) : selectedLine ? (
@@ -818,6 +851,7 @@ function BracketPanel({
 	errors,
 	onClose,
 	onRemove,
+	onFormatChange,
 }: {
 	values: BracketBuilder.BuilderValues;
 	bracketIdx: number;
@@ -825,6 +859,7 @@ function BracketPanel({
 	errors: Record<string, string | undefined>;
 	onClose: () => void;
 	onRemove: (bracketIdx: number) => void;
+	onFormatChange: () => void;
 }) {
 	const { t } = useTranslation(["calendar"]);
 	const { setValue } = useFormFieldContext();
@@ -857,7 +892,11 @@ function BracketPanel({
 						: t(sourcesError as never)}
 				</FormMessage>
 			) : null}
-			<BracketFields renderContext={renderContext} isDisabled={false} />
+			<BracketFields
+				renderContext={renderContext}
+				isDisabled={false}
+				onFormatChange={onFormatChange}
+			/>
 
 			{bracketIdx !== 0 ? (
 				<SendouButton
@@ -978,10 +1017,12 @@ function PlacementPicker({
 		placements: [],
 		rest: false,
 	};
-	const isKnockedOut = parsed.placements.some((placement) => placement < 0);
+	const knockedOutRounds = BracketBuilder.knockedOutRoundOptions(source);
+	const isKnockedOut =
+		knockedOutRounds.length > 0 &&
+		parsed.placements.some((placement) => placement < 0);
 	const picked = new Set(parsed.placements);
 	const highestPick = Math.max(0, ...parsed.placements);
-	const knockedOutRounds = BracketBuilder.knockedOutRoundOptions(source);
 	const tiers = BracketBuilder.placementTiers(source, maxTeams);
 	const firstFreeTier = tiers.find((tier) => !taken.nameOf(tier.placement));
 
