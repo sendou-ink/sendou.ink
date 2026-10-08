@@ -10,7 +10,8 @@
  * jumps the video there. The map as last opened (CoachMinimap) tops the events,
  * following the video; clicking it swaps the two, the video playing on in the
  * map's place; paused with the map big, the map and the game's weapons can be
- * opened in the map planner. The file is the one scanned or opened this visit, else the user
+ * opened in the map planner. Each life's first seconds carry its summary
+ * (CoachLifeCard) over the video. The file is the one scanned or opened this visit, else the user
  * opens it again (only the scan was saved).
  */
 // xxx: last event we dont have win/loss
@@ -39,6 +40,7 @@ import { scannerSearchParams } from "../scanner-search-params";
 import { CoachControls, type CoachJumps } from "./CoachControls";
 import { CoachFilterBar } from "./CoachFilterBar";
 import { type CoachGame, CoachGameStrip, gameAt } from "./CoachGameStrip";
+import { CoachLifeCard } from "./CoachLifeCard";
 import { CoachMinimap } from "./CoachMinimap";
 import styles from "./CoachView.module.css";
 import {
@@ -72,8 +74,8 @@ const coachDataCache = new WeakMap<
 >();
 
 interface CoachSessionGame extends CoachGame {
-	/** seconds into the video each of the POV player's lives starts at */
-	lifeStarts: number[];
+	/** the POV player's lives, chronological */
+	lives: CoachEvents.CoachLife[];
 	/** null when the game has no objective or player-status reads to chart */
 	timeline: {
 		/** seconds into the video the charts' 0 is at */
@@ -211,7 +213,7 @@ function CoachSession({
 			(game) => selectGame(game, { play: false }),
 		),
 		LIFE: stepsAlong(
-			shownGames.flatMap((game) => game.lifeStarts),
+			shownGames.flatMap((game) => game.lives.map((life) => life.start)),
 			(start) => start,
 			currentTime,
 			(start) => seek(start, { play: false }),
@@ -270,19 +272,28 @@ function CoachSession({
 		<div className={styles.view}>
 			{url
 				? createPortal(
-						// biome-ignore lint/a11y/useMediaCaption: game footage has no captions
-						<video
-							ref={videoRef}
-							className={styles.video}
-							src={url}
-							controls
-							playsInline
-							onTimeUpdate={(e) => followPlayback(e.currentTarget)}
-							onSeeked={(e) => setCurrentTime(e.currentTarget.currentTime)}
-							onPlay={() => setIsPaused(false)}
-							onPause={() => setIsPaused(true)}
-							onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
-						/>,
+						<>
+							{/* biome-ignore lint/a11y/useMediaCaption: game footage has no captions */}
+							<video
+								ref={videoRef}
+								className={styles.video}
+								src={url}
+								controls
+								playsInline
+								onTimeUpdate={(e) => followPlayback(e.currentTarget)}
+								onSeeked={(e) => setCurrentTime(e.currentTarget.currentTime)}
+								onPlay={() => setIsPaused(false)}
+								onPause={() => setIsPaused(true)}
+								onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
+							/>
+							{currentGame && !isMapBig ? (
+								<CoachLifeCard
+									lives={currentGame.lives}
+									match={currentGame.match}
+									currentTime={currentTime}
+								/>
+							) : null}
+						</>,
 						videoHost,
 					)
 				: null}
@@ -445,7 +456,7 @@ function coachData(built: readonly BuiltMatch<ScanEvent>[]) {
 		(b, index): CoachSessionGame => ({
 			number: index + 1,
 			match: b.match,
-			lifeStarts: CoachEvents.lifeStarts(b.match, b.povDeaths),
+			lives: CoachEvents.lives(b.match, b.povDeaths),
 			timeline:
 				b.match.objective || b.match.playerStatus ? timelineOf(b.match) : null,
 		}),

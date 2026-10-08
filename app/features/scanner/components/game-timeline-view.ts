@@ -102,7 +102,8 @@ export function gameTimelineProps(
 	};
 }
 
-function victimSlot(
+/** The enemy slot a kill-feed name belongs to; null when no row clearly matches. */
+export function victimSlot(
 	name: string | null,
 	enemies: readonly ScannerMatchPlayer[],
 ): number | null {

@@ -19,6 +19,7 @@
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	ScannerMatch,
+	ScannerMatchKill,
 	ScannerMatchObjectiveSample,
 	ScannerMatchPlayerStatusSample,
 } from "./scanner-match";
@@ -122,6 +123,8 @@ const SPECIAL_STACK_TAIL_S = 5;
 const CB_OPENING_S = 45;
 /** the opening needs footage from at most this far into the game */
 const OPENING_MAX_MISSED_S = 20;
+/** a team's count before any progress */
+const FULL_COUNT = 100;
 /** ranked modes run a 5:00 clock */
 const GAME_LENGTH_S = 300;
 /** consecutive samples further apart than this leave an unobserved gap */
@@ -210,24 +213,84 @@ export function label(type: CoachEventType): string {
 }
 
 /**
- * Seconds into the video/stream each of the POV player's lives in the match
- * starts at: the game's start, then every respawn. A respawn is the first
- * icon-strip read showing the player back after reading them splatted, else
+ * The POV player's lives in the match, chronological: the first starts at the
+ * game's start, then one at every respawn. A respawn is the first icon-strip
+ * read showing the player back after reading them splatted, else
  * `RESPAWN_FALLBACK_S` after the death. `povDeaths` as in `ofMatch`; without a
- * POV team only the game's start.
+ * POV team only the game's start, with no summary.
  */
-export function lifeStarts(
+export function lives(
 	match: ScannerMatch,
 	povDeaths: readonly number[],
-): number[] {
+): CoachLife[] {
 	if (match.startsAt === null) return [];
 	const analysis = analyze(match, povDeaths);
-	if (!analysis) return [match.startsAt];
+	if (!analysis) return [{ start: match.startsAt, summary: null }];
 
-	const respawns = analysis.povDeaths
-		.map((death) => respawnAfter(analysis, death))
-		.filter((t) => match.endsAt === null || t < match.endsAt);
-	return [match.startsAt, ...respawns];
+	const deaths = analysis.povDeaths;
+	const starts = [
+		match.startsAt,
+		...deaths
+			.map((death) => respawnAfter(analysis, death))
+			.filter((t) => match.endsAt === null || t < match.endsAt),
+	];
+	const specialDeaths = deathsWithSpecial(analysis);
+	const povUses =
+		analysis.povSlot === null ? null : specialUses(analysis, analysis.povSlot);
+
+	return starts.map((start, index): CoachLife => {
+		const death = deaths[index];
+		const end = death ?? Math.max(start, match.endsAt ?? start);
+		const aliveFrom =
+			index === 0 && analysis.gameStartT !== null
+				? Math.max(start, analysis.gameStartT)
+				: start;
+		const isOwn = (t: number) =>
+			t > (deaths[index - 1] ?? Number.NEGATIVE_INFINITY) &&
+			(death === undefined || t <= death);
+
+		return {
+			start,
+			summary: {
+				duration: Math.max(0, end - aliveFrom),
+				diedWithSpecial:
+					death !== undefined &&
+					specialDeaths.some(
+						(diedAt) => nearestDeath(deaths, diedAt) === death,
+					),
+				kills: match.kills?.filter((kill) => isOwn(kill.t)) ?? null,
+				specialsUsed: povUses?.filter(isOwn).length ?? null,
+				control: lifeControl(analysis, start, end),
+			},
+		};
+	});
+}
+
+export interface CoachLife {
+	/** seconds into the video/stream the life starts at: the game's start, else the respawn */
+	start: number;
+	/** what happened in the life; null without a POV team (a cast) */
+	summary: CoachLifeSummary | null;
+}
+
+export interface CoachLifeSummary {
+	/** seconds alive, the first life counted from the game clock's start when read */
+	duration: number;
+	/** splatted holding their special; false also when the icon strip can't tell */
+	diedWithSpecial: boolean;
+	/** the POV player's splats in the life (a trade on the death's second included); null without a kill feed read */
+	kills: ScannerMatchKill[] | null;
+	/** null without the POV seat */
+	specialsUsed: number | null;
+	/** null in Turf War or when no objective read falls in the life */
+	control: CoachLifeControl | null;
+}
+
+/** SZ: seconds each side held the zone; TC/RM/CB: how far each side's count went down. */
+export interface CoachLifeControl {
+	unit: "SECONDS" | "POINTS";
+	ours: number;
+	theirs: number;
 }
 
 type Team = 0 | 1;
@@ -442,9 +505,17 @@ function specialStackMoments(
 }
 
 function diedWithSpecialMoments(analysis: Analysis): Moment[] {
+	return deathsWithSpecial(analysis).map((diedAt) => ({
+		start: diedAt - DEATH_LEAD_S,
+		end: diedAt + DEATH_TAIL_S,
+	}));
+}
+
+/** Times the POV player was read splatted while holding their special. */
+function deathsWithSpecial(analysis: Analysis): number[] {
 	const { povSlot, povTeam, statuses } = analysis;
 	if (povSlot === null) return [];
-	const moments: Moment[] = [];
+	const diedAts: number[] = [];
 	for (const [index, sample] of statuses.entries()) {
 		const previous = statuses[index - 1];
 		if (
@@ -460,14 +531,9 @@ function diedWithSpecialMoments(analysis: Analysis): Moment[] {
 			: sample.special[povTeam][povSlot]
 				? null
 				: deadReadSoonAfter(statuses, index, povTeam, povSlot);
-		if (diedAt !== null) {
-			moments.push({
-				start: diedAt - DEATH_LEAD_S,
-				end: diedAt + DEATH_TAIL_S,
-			});
-		}
+		if (diedAt !== null) diedAts.push(diedAt);
 	}
-	return moments;
+	return diedAts;
 }
 
 function deathStreakMoments(minDeaths: number, analysis: Analysis): Moment[] {
@@ -514,6 +580,62 @@ function respawnAfter(analysis: Analysis, death: number): number {
 	return (
 		nearby.slice(deadIndex).find((sample) => !isDead(sample))?.t ?? fallback
 	);
+}
+
+function nearestDeath(deaths: readonly number[], t: number) {
+	return deaths.reduce<number | undefined>(
+		(nearest, death) =>
+			nearest === undefined || Math.abs(death - t) < Math.abs(nearest - t)
+				? death
+				: nearest,
+		undefined,
+	);
+}
+
+function lifeControl(
+	analysis: Analysis,
+	start: number,
+	end: number,
+): CoachLifeControl | null {
+	const { mode, objective, povTeam, enemyTeam } = analysis;
+	if (mode === null || mode === "TW") return null;
+	if (!objective.some((sample) => sample.t >= start && sample.t <= end)) {
+		return null;
+	}
+
+	if (mode === "SZ") {
+		const heldBy = (team: Team) =>
+			analysis.controlRuns
+				.filter((run) => run.team === team)
+				.reduce(
+					(sum, run) =>
+						sum +
+						Math.max(0, Math.min(run.end, end) - Math.max(run.start, start)),
+					0,
+				);
+		return {
+			unit: "SECONDS",
+			ours: heldBy(povTeam),
+			theirs: heldBy(enemyTeam),
+		};
+	}
+
+	// counts only fall, so a side's furthest point so far is its lowest read
+	const lowestBy = (team: Team, t: number) =>
+		Math.min(
+			FULL_COUNT,
+			...objective.flatMap((sample) =>
+				sample.t <= t && sample.score[team] !== null
+					? [sample.score[team]!]
+					: [],
+			),
+		);
+	const progress = (team: Team) => lowestBy(team, start) - lowestBy(team, end);
+	return {
+		unit: "POINTS",
+		ours: progress(povTeam),
+		theirs: progress(enemyTeam),
+	};
 }
 
 /** Windows of one type that overlap (a push resumed right after a contest) are one moment to review. */

@@ -423,18 +423,18 @@ describe("CoachEvents.ofMatch", () => {
 	});
 });
 
-describe("CoachEvents.lifeStarts", () => {
+describe("CoachEvents.lives", () => {
 	const POV = { team: 0, index: 0 } as const;
 	const povDead = { dead: [[0, 0]] as [0 | 1, number][] };
+	const lifeStarts = (...args: Parameters<typeof CoachEvents.lives>) =>
+		CoachEvents.lives(...args).map((life) => life.start);
 
 	test("a game without deaths is one life", () => {
-		expect(CoachEvents.lifeStarts(match({ pov: POV }), [])).toEqual([
-			GAME_START_T - 10,
-		]);
+		expect(lifeStarts(match({ pov: POV }), [])).toEqual([GAME_START_T - 10]);
 	});
 
 	test("a respawn is the first icon-strip read showing the player back", () => {
-		const lives = CoachEvents.lifeStarts(
+		const lives = lifeStarts(
 			match({
 				pov: POV,
 				playerStatus: {
@@ -453,26 +453,157 @@ describe("CoachEvents.lifeStarts", () => {
 	});
 
 	test("a death the icon strip never showed respawns after the fallback", () => {
-		const lives = CoachEvents.lifeStarts(match({ pov: POV }), [150]);
+		const lives = lifeStarts(match({ pov: POV }), [150]);
 
 		expect(lives).toEqual([GAME_START_T - 10, 158]);
 	});
 
 	test("a death at the end of the game starts no life", () => {
-		const lives = CoachEvents.lifeStarts(
-			match({ pov: POV, endsAt: 200 }),
-			[195],
-		);
+		const lives = lifeStarts(match({ pov: POV, endsAt: 200 }), [195]);
 
 		expect(lives).toEqual([GAME_START_T - 10]);
 	});
 
 	test("a cast has only the game's start", () => {
-		const lives = CoachEvents.lifeStarts(
-			match({ cast: true, winner: 0 }),
+		const lives = lifeStarts(match({ cast: true, winner: 0 }), [150]);
+
+		expect(lives).toEqual([GAME_START_T - 10]);
+	});
+
+	test("a cast's life has no summary", () => {
+		const lives = CoachEvents.lives(match({ cast: true, winner: 0 }), [150]);
+
+		expect(lives.map((life) => life.summary)).toEqual([null]);
+	});
+
+	test("the first life is timed from the game clock's start and ends at the death", () => {
+		const [first] = CoachEvents.lives(
+			match({
+				pov: POV,
+				playerStatus: { samples: [status(GAME_START_T + 5)] },
+			}),
 			[150],
 		);
 
-		expect(lives).toEqual([GAME_START_T - 10]);
+		expect(first!.summary).toMatchObject({ duration: 50 });
+	});
+
+	test("the last life ends with the game", () => {
+		const lives = CoachEvents.lives(match({ pov: POV, endsAt: 400 }), [150]);
+
+		expect(lives[1]!.summary!.duration).toBe(400 - 158);
+	});
+
+	test("a kill on the death's second belongs to the life that ended", () => {
+		const lives = CoachEvents.lives(
+			match({ pov: POV, kills: [kill(120), kill(150), kill(152), kill(170)] }),
+			[150],
+		);
+
+		expect(lives.map((life) => life.summary!.kills!.map(({ t }) => t))).toEqual(
+			[
+				[120, 150],
+				[152, 170],
+			],
+		);
+	});
+
+	test("no kills without a kill feed read", () => {
+		const [first] = CoachEvents.lives(match({ pov: POV, kills: null }), []);
+
+		expect(first!.summary!.kills).toBeNull();
+	});
+
+	test("counts the POV player's specials used and marks a death holding one", () => {
+		const povSpecial = { special: [[0, 0]] as [0 | 1, number][] };
+		const lives = CoachEvents.lives(
+			match({
+				pov: POV,
+				playerStatus: {
+					samples: [
+						status(110, povSpecial),
+						status(115),
+						status(130, povSpecial),
+						status(135, povDead),
+						status(145),
+						status(160, povSpecial),
+						status(165),
+					],
+				},
+			}),
+			[134],
+		);
+
+		expect(
+			lives.map(({ summary }) => [
+				summary!.specialsUsed,
+				summary!.diedWithSpecial,
+			]),
+		).toEqual([
+			[1, true],
+			[1, false],
+		]);
+	});
+
+	test("no specials count without the POV seat", () => {
+		const [first] = CoachEvents.lives(match(), []);
+
+		expect(first!.summary!.specialsUsed).toBeNull();
+	});
+
+	test("in a count mode, control is how far each side's count went down", () => {
+		const lives = CoachEvents.lives(
+			match({
+				pov: POV,
+				objective: objective(
+					"TC",
+					sample(110, [100, 90], 1),
+					sample(130, [80, 90], 0),
+					sample(160, [70, 85], 1),
+				),
+			}),
+			[140],
+		);
+
+		expect(lives.map((life) => life.summary!.control)).toEqual([
+			{ unit: "POINTS", ours: 20, theirs: 10 },
+			{ unit: "POINTS", ours: 10, theirs: 5 },
+		]);
+	});
+
+	test("in Splat Zones, control is how long each side held the zone", () => {
+		const [first] = CoachEvents.lives(
+			match({
+				pov: POV,
+				mode: "SZ",
+				objective: objective(
+					"SZ",
+					sample(110, [100, 100], 0),
+					sample(122, [88, 100], null),
+					sample(130, [88, 100], 1),
+					sample(135, [88, 95], 1),
+				),
+			}),
+			[132],
+		);
+
+		expect(first!.summary!.control).toEqual({
+			unit: "SECONDS",
+			ours: 12,
+			theirs: 2,
+		});
+	});
+
+	test("no control in Turf War", () => {
+		const [first] = CoachEvents.lives(
+			match({
+				pov: POV,
+				mode: "TW",
+				objective: objective("SZ", sample(110, [100, 100], 0)),
+			}),
+			[],
+		);
+
+		expect(first!.summary!.control).toBeNull();
 	});
 });
