@@ -319,6 +319,20 @@ export const STATUS_READY_INKY_WASH_MIN_BODY_TINT = 0.2;
 export const STATUS_READY_MIN_WASH_BODY_PALE = 0.2;
 
 /**
+ * The wash is a pale tint of the team's own ink, while a big cream weapon
+ * render (Order Shot Replica, 2026-10-07 Crableg VoD) pales and tints a live
+ * purple body just as much, its shoulder too. So a ready read on a body that
+ * still holds ink needs most of its tinted pixels within the hue tolerance of
+ * the side's ink (the team hue, from every slot's body ink): attested washes
+ * there read >=0.62, the cream render <=0.34. A pinkish wash on a purple team
+ * sits ~50° off the ink's hue, hence the wide tolerance. Ink-poor washes skip
+ * it, as does a side with too little ink to tell its hue.
+ */
+export const STATUS_READY_MIN_TEAM_TINT = 0.48;
+export const STATUS_TEAM_TINT_MAX_HUE_DIFF = 60;
+export const STATUS_TEAM_HUE_MIN_BODY_INK = 0.05;
+
+/**
  * Layout scoring: per-slot decisiveness is body-ink distance from the dead
  * threshold, capped so one saturated slot cannot carry a misaligned geometry.
  * Sticky margin: what a challenger must win by to switch an established layout.

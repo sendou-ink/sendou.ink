@@ -398,7 +398,8 @@ sequenceDiagram
   not corroborate needs the body's ink gone rather than merely paled,
   since a near-white weapon render (S-BLAST '91) pales a live body
   without emptying it; an inky wash must also read tinted, which a white
-  cloud behind the icon does not), with
+  cloud behind the icon does not, and tinted in the team's own hue, which a
+  big cream weapon render (Order Shot Replica) over a live body is not), with
   the same `time` value so the two reads pair downstream; its fixtures
   live under `tests/fixtures/player-status/`. Within a side the strip's
   slot order is the lobby seating, while the results scoreboard re-sorts
@@ -788,7 +789,9 @@ header, one VICTORY/DEFEAT tile per game in play order, X Power and its
 signed change) followed by `XRankPosition` ("#259" and an up/down arrow, or a
 flat one when the position held).
 Every card carries the mode off its icon (`img/modes/*`, RGB templates on
-black). Numbers are BlitzBold, read with the team-digit atlas rescaled;
+black). The Anarchy Series card after a series game draws the count card's
+layout too, but with five win slots: ink where only it has slots fails the
+count gate (`negative/anarchy-series-card-*`). Numbers are BlitzBold, read with the team-digit atlas rescaled;
 punctuation ("." "-" "+") is told apart by ink-run geometry since the digit
 templates can't match anything smaller than themselves.
 

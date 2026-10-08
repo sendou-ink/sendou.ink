@@ -48,6 +48,14 @@ export const COUNT_LOSS_SLOT_CENTERS_X: readonly number[] = [851, 925, 999];
 export const COUNT_LOSS_SLOT_Y = 686;
 export const COUNT_LOSS_SLOT_HALF = 26;
 export const COUNT_SIGNATURE_ROI: Roi = { x: 780, y: 390, w: 360, h: 340 };
+/**
+ * The Anarchy Series card draws the same "WINS LOSSES" layout with five win
+ * slots; its outer two fall here, where the X card stays black.
+ */
+export const COUNT_SERIES_SLOT_PROBES: readonly Roi[] = [
+	{ x: 700, y: 538, w: 80, h: 80 },
+	{ x: 1140, y: 538, w: 80, h: 80 },
+];
 
 // --- set result ("2 - 3", VICTORY/DEFEAT tiles, X Power and its change) ---
 

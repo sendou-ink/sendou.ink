@@ -4,15 +4,19 @@
  * bg + white text vs the mid-brightness thumbnail), OCR'd as one line and
  * snapped against every language's mode × stage combos (core/localized.ts).
  * The Latin atlases carry no kana, so a band that doesn't snap is read again
- * with the Japanese ones and the better snap wins.
+ * with the Japanese ones and the better snap wins. The lobby's parenthetical
+ * ("(Series)", "(Open)") is set smaller than the rest of the tag, so it is
+ * also read with the lobby glyphs scaled down to its size.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import { getCV, type Mat } from "../../cv";
 import {
 	type GlyphSet,
+	type RecognizedChar,
 	type RecognizeOptions,
 	recognizeTextSteps,
+	scaleGlyphSet,
 } from "../../glyphs";
 import { copyRoi } from "../../image";
 import { ALL_LOBBY_ENTRIES, MODE_STAGE_COMBOS } from "../../localized";
@@ -50,6 +54,12 @@ const TAG_DARK_MAX = 75;
 const TAG_BRIGHT_MIN = 165;
 /** Stop extending the tag after this many consecutive non-tag columns. */
 const TAG_GAP_TOLERANCE = 6;
+/** The lobby parenthetical's glyph size relative to the tag's main text. */
+const LOBBY_PARENTHETICAL_SCALE = 0.72;
+const TAG_RECOGNIZE_OPTIONS: RecognizeOptions = {
+	spaceGap: 9,
+	minCharScore: 0.3,
+};
 
 /**
  * Longest run of tag columns starting within `maxLeadIn` of the left edge (a
@@ -116,6 +126,56 @@ export function* readTagBandSteps(
 	options: TagBandOptions = {},
 	speculative = false,
 ): MatchSteps<string> {
+	const trimmed = trimTagBand(gray, band, options);
+	if (!trimmed) return "";
+	const result = yield* recognizeTextSteps(
+		trimmed,
+		glyphs,
+		{ ...TAG_RECOGNIZE_OPTIONS, ...options },
+		speculative,
+	);
+	trimmed.delete();
+	return result.text.trim();
+}
+
+/**
+ * The lobby band's candidate readings: the tag read at one size, then for each
+ * "(" the downscaled read finds, the main text up to it joined with the
+ * downscaled read from it on.
+ */
+function* readLobbyBandSteps(
+	gray: Mat,
+	glyphs: GlyphSet,
+	speculative: boolean,
+): MatchSteps<string[]> {
+	const trimmed = trimTagBand(gray, HEADER_LOBBY_BAND, {});
+	if (!trimmed) return [];
+	const [main, small] = yield* all([
+		recognizeTextSteps(trimmed, glyphs, TAG_RECOGNIZE_OPTIONS, speculative),
+		recognizeTextSteps(
+			trimmed,
+			scaleGlyphSet(glyphs, LOBBY_PARENTHETICAL_SCALE),
+			TAG_RECOGNIZE_OPTIONS,
+			speculative,
+		),
+	]);
+	trimmed.delete();
+	const joined = (chars: RecognizedChar[]) => chars.map((c) => c.char).join("");
+	const splits = small.chars.flatMap((paren, i) =>
+		paren.char === "("
+			? [
+					`${joined(main.chars.filter((c) => c.x1 <= paren.x0))} ${joined(small.chars.slice(i))}`,
+				]
+			: [],
+	);
+	return [main.text.trim(), ...splits];
+}
+
+function trimTagBand(
+	gray: Mat,
+	band: { x: number; y: number; w: number; h: number },
+	options: TagBandOptions,
+): Mat | null {
 	const crop = copyRoi(gray, band);
 	const { start, end } = tagExtent(
 		crop,
@@ -125,7 +185,7 @@ export function* readTagBandSteps(
 	);
 	if (end - start < 12) {
 		crop.delete();
-		return "";
+		return null;
 	}
 	const cv = getCV();
 	const view = crop.roi(new cv.Rect(start, 0, end - start, crop.rows));
@@ -133,18 +193,7 @@ export function* readTagBandSteps(
 	view.copyTo(trimmed);
 	view.delete();
 	crop.delete();
-	const result = yield* recognizeTextSteps(
-		trimmed,
-		glyphs,
-		{
-			spaceGap: 9,
-			minCharScore: 0.3,
-			...options,
-		},
-		speculative,
-	);
-	trimmed.delete();
-	return result.text.trim();
+	return trimmed;
 }
 
 export function* parseHeaderSteps(
@@ -152,15 +201,23 @@ export function* parseHeaderSteps(
 	glyphs: HeaderGlyphs,
 	speculative = false,
 ): MatchSteps<ParsedHeader> {
-	const [latinLobby, latinLine] = yield* all([
-		readTagBandSteps(gray, HEADER_LOBBY_BAND, glyphs.lobby, {}, speculative),
+	const [latinLobbyReadings, latinLine] = yield* all([
+		readLobbyBandSteps(gray, glyphs.lobby, speculative),
 		readTagBandSteps(gray, HEADER_LINE_BAND, glyphs.line, {}, speculative),
 	]);
 	const snapLobby = (reading: string) =>
 		reading ? closestBy(reading, ALL_LOBBY_ENTRIES, (e) => e.text) : null;
 	const snapLine = (reading: string) =>
 		reading ? closestBy(reading, MODE_STAGE_COMBOS, (c) => c.text) : null;
-	const latinLobbyMatch = snapLobby(latinLobby);
+	let latinLobby = "";
+	let latinLobbyMatch: ReturnType<typeof snapLobby> = null;
+	for (const reading of latinLobbyReadings) {
+		const match = snapLobby(reading);
+		if ((match?.score ?? 0) > (latinLobbyMatch?.score ?? 0)) {
+			latinLobby = reading;
+			latinLobbyMatch = match;
+		}
+	}
 	const latinLineMatch = snapLine(latinLine);
 
 	const unsnapped = (match: { score: number } | null) =>
