@@ -118,6 +118,7 @@ function scoreboard(
 		povIndex = 0 as number | null,
 		matchScores = [100, 47] as [number | null, number | null],
 		paints = [] as (number | null)[],
+		names = NAMES,
 	} = {},
 ): DetectedEvent {
 	const data: ScoreboardData = {
@@ -126,7 +127,7 @@ function scoreboard(
 		stage,
 		matchScores,
 		players: weaponIds.map((weaponId, i) => ({
-			name: NAMES[i] ?? `p${i}`,
+			name: names[i] ?? `p${i}`,
 			weaponId,
 			paint: paints.length > 0 ? (paints[i] ?? null) : 1000 + t,
 			ka: 10,
@@ -2217,6 +2218,61 @@ test("pov diamond cards map to scoreboard rows by name", () => {
 	const sample = built[0]!.match.playerStatus!.samples[0]!;
 	assert.deepEqual(sample.dead, [
 		[false, true, false, false],
+		[false, false, false, false],
+	]);
+});
+
+test("pov diamond cards match OCR-garbled names to their scoreboard rows", () => {
+	// attested (六兆年… VoD, Hagglefish TC): the scoreboard reads サンバイザー as
+	// サンバイザ_ and the first readable card name carries trailing noise, so no
+	// exact match placed either and the leftovers swapped by drawn order
+	const names = [
+		"ロブ",
+		"サンバイザ_",
+		"バンダナ",
+		"スウェット",
+		"l1",
+		"l2",
+		"l3",
+		"l4",
+	];
+	const diamond = (
+		t: number,
+		cards: { name: string | null; dead?: boolean; self?: boolean }[],
+	): DetectedEvent => {
+		const data: MinimapData = {
+			stage: 0 as StageId,
+			spectator: false,
+			teammates: cards.map((card) => ({
+				...teammate(null),
+				name: card.name,
+				dead: card.dead ?? false,
+				self: card.self ?? false,
+			})),
+			enemies: BRAVO.map((id) => enemy(id)),
+			teamColors: [null, null],
+		};
+		return { type: "Minimap", t, confidence: 0.8, data };
+	};
+	const built = buildScannerMatches([
+		mapStart(0),
+		diamond(90, [
+			{ name: null, dead: true },
+			{ name: "サンバイザー" },
+			{ name: "ロブ" },
+			{ name: null, dead: true, self: true },
+		]),
+		diamond(120, [
+			{ name: "スウェット ‘" },
+			{ name: "サンバイザー" },
+			{ name: "ロブ" },
+			{ name: "バンダナ", self: true },
+		]),
+		scoreboard(300, { names, povIndex: 2 }),
+	]);
+	const sample = built[0]!.match.playerStatus!.samples[0]!;
+	assert.deepEqual(sample.dead, [
+		[false, false, true, true],
 		[false, false, false, false],
 	]);
 });

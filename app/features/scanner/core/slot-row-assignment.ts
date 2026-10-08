@@ -15,6 +15,7 @@
  * keep their as-drawn order and thin evidence degrades to as-drawn, not a coin flip.
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { editDistance, matchKey } from "./text";
 
 /** A slot→row permutation: `perm[slot]` is the scoreboard row the slot feeds. */
 export type SlotRowPermutation = readonly [number, number, number, number];
@@ -29,6 +30,14 @@ export const IDENTITY_PERMUTATION: SlotRowPermutation = [0, 1, 2, 3];
  */
 const MIN_ASSIGNMENT_SCORE = 1.5;
 const MIN_ASSIGNMENT_MARGIN = 0.75;
+
+/**
+ * A card name must resemble a row's name at least this much (1 - normalized
+ * edit distance) to place the card: one garbled glyph of a five-char name
+ * stays at 0.8, while unrelated names of the short lengths players pick
+ * share at most a char or two.
+ */
+const MIN_NAME_SIMILARITY = 0.6;
 
 /** All 24 permutations, fewest-moved-slots first (ties resolve to earlier). */
 const PERMUTATIONS: SlotRowPermutation[] = (() => {
@@ -79,34 +88,42 @@ export function weaponSlotRowPermutation(
 
 /**
  * A card→row assignment from card names (the POV minimap's teammate diamond,
- * ordered like neither the strip nor the scoreboard): unique case-insensitive
- * name matches place their cards, leftovers keep their as-drawn order. Null
- * (keep as drawn) when fewer than two cards resolve.
+ * ordered like neither the strip nor the scoreboard): the best of the 24
+ * assignments by summed name similarity, each card scored by its closest read
+ * against the row's name. OCR garbles both sides (a scoreboard "サンバイザ_"
+ * for a card's "サンバイザー", trailing noise on a card), so matches are fuzzy;
+ * pairs under MIN_NAME_SIMILARITY count nothing. Null (keep as drawn) when
+ * fewer than two cards land on a row they resemble.
  */
 export function nameSlotRowPermutation(
-	cardNames: readonly (string | null)[],
+	cardNames: readonly (readonly string[])[],
 	rowNames: readonly (string | null)[],
 ): SlotRowPermutation | null {
-	const normalized = (name: string | null) =>
-		name?.trim().toLowerCase() || null;
-	const rows = rowNames.map(normalized);
-	const assignment: (number | null)[] = [null, null, null, null];
-	const takenRows = new Set<number>();
-	let resolved = 0;
-	for (const [slot, cardName] of cardNames.map(normalized).entries()) {
-		if (cardName === null) continue;
-		const matches = rows.flatMap((row, i) => (row === cardName ? [i] : []));
-		if (matches.length !== 1 || takenRows.has(matches[0]!)) continue;
-		assignment[slot] = matches[0]!;
-		takenRows.add(matches[0]!);
-		resolved++;
+	const similarity = cardNames.map((names) =>
+		rowNames.map((rowName) => {
+			if (rowName === null) return 0;
+			const best = Math.max(
+				0,
+				...names.map((name) => nameSimilarity(name, rowName)),
+			);
+			return best >= MIN_NAME_SIMILARITY ? best : 0;
+		}),
+	);
+	const scored = PERMUTATIONS.map((perm) => ({
+		perm,
+		score: perm.reduce(
+			(sum, row, card) => sum + (similarity[card]?.[row] ?? 0),
+			0,
+		),
+	}));
+	let best = scored[0]!;
+	for (const candidate of scored) {
+		if (candidate.score > best.score) best = candidate;
 	}
-	if (resolved < 2) return null;
-	const freeRows = [0, 1, 2, 3].filter((row) => !takenRows.has(row));
-	for (const [slot, row] of assignment.entries()) {
-		if (row === null) assignment[slot] = freeRows.shift()!;
-	}
-	return assignment as unknown as SlotRowPermutation;
+	const resolved = best.perm.filter(
+		(row, card) => (similarity[card]?.[row] ?? 0) > 0,
+	).length;
+	return resolved < 2 ? null : best.perm;
 }
 
 /** `flags` rearranged so slot `i`'s value lands at `perm[i]`. */
@@ -117,4 +134,10 @@ export function applyPermutation<T>(
 	const out = [...flags] as T[];
 	for (const [slot, row] of perm.entries()) out[row] = flags[slot]!;
 	return out;
+}
+
+function nameSimilarity(a: string, b: string): number {
+	const ka = matchKey(a);
+	const kb = matchKey(b);
+	return 1 - editDistance(ka, kb) / Math.max(ka.length, kb.length, 1);
 }

@@ -1378,14 +1378,15 @@ function slotRowPermutations(
 	) as [SlotRowPermutation, SlotRowPermutation];
 
 	const friendlySide = minimapSwapped ? 1 : 0;
-	const cardNames: (string | null)[] = [null, null, null, null];
+	const cardNames: string[][] = [[], [], [], []];
 	for (const read of minimapReads) {
 		if (read.data.spectator) continue;
 		for (const [slot, mate] of read.data.teammates.entries()) {
-			cardNames[slot] ??= mate.name?.trim() || null;
+			const name = mate.name?.trim();
+			if (name) cardNames[slot]!.push(name);
 		}
 	}
-	const diamond = cardNames.some((name) => name !== null)
+	const diamond = cardNames.some((names) => names.length > 0)
 		? nameSlotRowPermutation(
 				cardNames,
 				board.players
