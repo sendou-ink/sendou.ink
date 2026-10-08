@@ -16,6 +16,9 @@ const VICTIM_NAME_MIN_MARGIN = 0.25;
 
 const PLAYER_SLOTS = [0, 1, 2, 3] as const;
 
+/** The scan knows the on-screen sides only, not who is playing: left, right. */
+export const TEAM_LABELS = ["Alpha", "Bravo"] as const;
+
 /**
  * `teams` order is winner-first on a scoreboard-closed match, so it flips
  * between games. The card keeps the scan's own side left and the enemy right
@@ -24,6 +27,19 @@ const PLAYER_SLOTS = [0, 1, 2, 3] as const;
  */
 export function displayOrder(match: ScannerMatch): [0 | 1, 0 | 1] {
 	return match.pov?.team === 1 ? [1, 0] : [0, 1];
+}
+
+/**
+ * Live sessions stamp reads with wall-clock seconds and VoDs with file position;
+ * the timeline charts want seconds since the match began either way.
+ */
+export function timelineOrigin(match: ScannerMatch): number {
+	return (
+		match.startsAt ??
+		match.objective?.samples[0]?.t ??
+		match.playerStatus?.samples[0]?.t ??
+		0
+	);
 }
 
 /**

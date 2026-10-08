@@ -52,7 +52,12 @@ import { matchResult } from "../core/sessions";
 import { xBattleCards } from "../core/x-battle";
 import type { ScannerClip } from "../store/clips";
 import { downloadBlob } from "./download";
-import { displayOrder, gameTimelineProps } from "./game-timeline-view";
+import {
+	displayOrder,
+	gameTimelineProps,
+	TEAM_LABELS,
+	timelineOrigin,
+} from "./game-timeline-view";
 import styles from "./MatchCard.module.css";
 import { matchZip } from "./match-zip";
 import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
@@ -67,9 +72,6 @@ const KO_MATCH_SCORE = 100;
  */
 const MATCH_CLOCK_SECONDS: Partial<Record<ModeShort, number>> = { TW: 180 };
 const DEFAULT_MATCH_CLOCK_SECONDS = 300;
-
-/** The scan knows the on-screen sides only, not who is playing: left, right. */
-const TEAM_LABELS = ["Alpha", "Bravo"] as const;
 
 const GEAR_ROWS = 3;
 const SLOTS_PER_ROW = 4;
@@ -134,7 +136,6 @@ export function MatchCard({
 
 	const result = matchResult(match);
 	const pov = povPlayer(match);
-	const matchOrigin = timelineOrigin(match);
 	const scannedAt = built.sources.find(
 		(event) => event.detectedAt !== undefined,
 	)?.detectedAt;
@@ -245,7 +246,9 @@ export function MatchCard({
 		<div className={styles.summary}>
 			<Scoreboard match={match} result={result} />
 			{match.objective || match.playerStatus ? (
-				<GameTimeline {...gameTimelineProps(match, matchOrigin, TEAM_LABELS)} />
+				<GameTimeline
+					{...gameTimelineProps(match, timelineOrigin(match), TEAM_LABELS)}
+				/>
 			) : null}
 			<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
 			<ReportData
@@ -273,19 +276,6 @@ export function MatchCard({
 				<div className={styles.details}>{summary}</div>
 			) : null}
 		</div>
-	);
-}
-
-/**
- * Live sessions stamp reads with wall-clock seconds and VoDs with file position;
- * the timeline charts want seconds since the match began either way.
- */
-function timelineOrigin(match: ScannerMatch): number {
-	return (
-		match.startsAt ??
-		match.objective?.samples[0]?.t ??
-		match.playerStatus?.samples[0]?.t ??
-		0
 	);
 }
 

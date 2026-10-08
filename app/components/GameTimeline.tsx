@@ -2,6 +2,7 @@
  * A game's scanned-timeline charts (player status bands above the objective-counter chart, plus a
  * TC/RM objective's position along its track) on one shared time axis. Hovering scrubs both: a cursor line spans the charts and a readout
  * shows the moment's state and any kills under the cursor, replacing the chart's own tooltip.
+ * Given `onSeek`, releasing a press on the plot picks that moment, and `playhead` marks one.
  */
 import clsx from "clsx";
 import { memo, useRef, useState } from "react";
@@ -46,6 +47,13 @@ interface GameTimelineProps {
 	pov?: PlayerStatusTimelinePov;
 }
 
+interface SeekProps {
+	/** called with the time (on the charts' axis) the plot was pressed at */
+	onSeek?: (t: number) => void;
+	/** time on the charts' axis to mark with a line */
+	playhead?: number;
+}
+
 interface ScrubPosition {
 	/** px from the plot area's left edge */
 	x: number;
@@ -61,7 +69,9 @@ export function GameTimeline({
 	playerStatusSamples,
 	teams,
 	pov,
-}: GameTimelineProps) {
+	onSeek,
+	playhead,
+}: GameTimelineProps & SeekProps) {
 	const [scrub, setScrub] = useState<ScrubPosition | null>(null);
 	const plotRef = useRef<HTMLDivElement>(null);
 
@@ -81,9 +91,17 @@ export function GameTimeline({
 		});
 	};
 
+	const handleSeek = (event: React.PointerEvent) => {
+		const rect = plotRef.current?.getBoundingClientRect();
+		if (!onSeek || !rect || rect.width <= 0) return;
+		const x = event.clientX - rect.left;
+		if (x < 0 || x > rect.width) return;
+		onSeek(timeAt(domain, x / rect.width));
+	};
+
 	return (
 		<div
-			className={styles.root}
+			className={clsx(styles.root, { [styles.seekable]: onSeek !== undefined })}
 			style={
 				{
 					"--plot-gutter": `${TIMELINE_PLOT_GUTTER_PX}px`,
@@ -91,6 +109,7 @@ export function GameTimeline({
 			}
 			onPointerDown={handlePointer}
 			onPointerMove={handlePointer}
+			onPointerUp={handleSeek}
 			onPointerLeave={(event) => {
 				// touch fires a leave as the finger lifts; keep the readout up instead
 				if (event.pointerType !== "touch") setScrub(null);
@@ -103,6 +122,14 @@ export function GameTimeline({
 				pov={pov}
 			/>
 			<div className={styles.plotOverlay} ref={plotRef}>
+				{playhead !== undefined &&
+				playhead >= domain[0] &&
+				playhead <= domain[1] ? (
+					<div
+						className={styles.playhead}
+						style={{ left: `${ratioAt(domain, playhead) * 100}%` }}
+					/>
+				) : null}
 				{scrub ? (
 					<ScrubReadout
 						scrub={scrub}
@@ -174,7 +201,7 @@ function ScrubReadout({
 }) {
 	const { t } = useTranslation(["common"]);
 	const [min, max] = domain;
-	const time = min + (scrub.x / scrub.width) * (max - min);
+	const time = timeAt(domain, scrub.x / scrub.width);
 	const objectiveNow = objectiveStateAt(objective, time);
 	const statusNow = playerStatusAt(samples, time);
 	const killRadius = (KILL_READOUT_RADIUS_PX / scrub.width) * (max - min);
@@ -346,6 +373,15 @@ function chartedObjective(
 		sorted,
 		Math.min(sorted[0]!.t, sortedSamples[0]?.t ?? Number.POSITIVE_INFINITY),
 	);
+}
+
+/** `ratio` of the way across the plot (0 = left edge, 1 = right) as a time */
+function timeAt([min, max]: [number, number], ratio: number): number {
+	return min + ratio * (max - min);
+}
+
+function ratioAt([min, max]: [number, number], time: number): number {
+	return (time - min) / (max - min);
 }
 
 function timelineDomain(

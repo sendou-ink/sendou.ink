@@ -5,20 +5,22 @@
  * its start. Games the filters (core/CoachFilters.ts) hide drop their events,
  * and while any is set playback keeps to the games shown, jumping past the
  * hidden ones and the footage between games. A bar under the player
- * (CoachControls) steps between the games, lives and events shown, and the map
- * as last opened (CoachMinimap) tops the events, following the video; clicking
- * it swaps the two, the video playing on in the map's place. The file is
- * the one scanned or opened this visit, else the user opens it again (only the
- * scan was saved).
+ * (CoachControls) steps between the games, lives and events shown, with the
+ * game's timeline charts below it marking the video's moment; pressing them
+ * jumps the video there. The map as last opened (CoachMinimap) tops the events,
+ * following the video; clicking it swaps the two, the video playing on in the
+ * map's place. The file is the one scanned or opened this visit, else the user
+ * opens it again (only the scan was saved).
  */
 // xxx: last event we dont have win/loss
 import { FolderOpen } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
+import { GameTimeline } from "~/components/GameTimeline";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { SCANNER_PAGE } from "~/utils/urls";
 import * as CoachEvents from "../core/CoachEvents";
@@ -28,12 +30,18 @@ import { povDeathTimes } from "../core/clips/scoring";
 import { formatClock, formatPosition } from "../core/format";
 import { modeLabel, stageLabel } from "../core/labels";
 import { type BuiltMatch, isHistoryOnly } from "../core/match-builder";
+import type { ScannerMatch } from "../core/scanner-match";
 import { scannerSearchParams } from "../scanner-search-params";
 import { CoachControls, type CoachJumps } from "./CoachControls";
 import { CoachFilterBar } from "./CoachFilterBar";
 import { type CoachGame, CoachGameStrip, gameAt } from "./CoachGameStrip";
 import { CoachMinimap } from "./CoachMinimap";
 import styles from "./CoachView.module.css";
+import {
+	gameTimelineProps,
+	TEAM_LABELS,
+	timelineOrigin,
+} from "./game-timeline-view";
 import { NotFound } from "./NotFound";
 import { SessionHeader } from "./SessionHeader";
 import type { ScanEvent } from "./session-data";
@@ -62,6 +70,12 @@ const coachDataCache = new WeakMap<
 interface CoachSessionGame extends CoachGame {
 	/** seconds into the video each of the POV player's lives starts at */
 	lifeStarts: number[];
+	/** null when the game has no objective or player-status reads to chart */
+	timeline: {
+		/** seconds into the video the charts' 0 is at */
+		origin: number;
+		props: ComponentProps<typeof GameTimeline>;
+	} | null;
 }
 
 interface CoachEntry extends CoachEvents.CoachEvent {
@@ -140,6 +154,12 @@ function CoachSession({
 					candidate.t >= currentGame.match.startsAt!,
 			)
 		: undefined;
+	const timelineGame =
+		shownGames.findLast(
+			(game) =>
+				game.match.startsAt !== null && game.match.startsAt <= currentTime,
+		) ?? shownGames[0];
+	const timeline = timelineGame?.timeline;
 
 	/** Picking from the lists starts the video; the bar's steps keep it paused or playing. */
 	const seek = (t: number, { play }: { play: boolean }) => {
@@ -326,6 +346,15 @@ function CoachSession({
 							onSwapMap={() => setIsMapBig(!isMapBig)}
 						/>
 					) : null}
+					{url && timeline ? (
+						<GameTimeline
+							{...timeline.props}
+							playhead={currentTime - timeline.origin}
+							onSeek={(t) =>
+								seek(Math.max(0, timeline.origin + t), { play: false })
+							}
+						/>
+					) : null}
 				</div>
 				<div className={styles.events}>
 					{url && isMapBig ? videoSlot : minimapView}
@@ -408,6 +437,8 @@ function coachData(built: readonly BuiltMatch<ScanEvent>[]) {
 			number: index + 1,
 			match: b.match,
 			lifeStarts: CoachEvents.lifeStarts(b.match, b.povDeaths),
+			timeline:
+				b.match.objective || b.match.playerStatus ? timelineOf(b.match) : null,
 		}),
 	);
 	const entries = gameBuilds.flatMap((b, index) =>
@@ -422,6 +453,11 @@ function coachData(built: readonly BuiltMatch<ScanEvent>[]) {
 	};
 	coachDataCache.set(built, data);
 	return data;
+}
+
+function timelineOf(match: ScannerMatch): CoachSessionGame["timeline"] {
+	const origin = timelineOrigin(match);
+	return { origin, props: gameTimelineProps(match, origin, TEAM_LABELS) };
 }
 
 function stepsAlong<T>(
