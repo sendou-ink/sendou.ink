@@ -122,7 +122,7 @@ export function CheckboxGroupFormField<V extends string>({
 
 	const itemsWithLabels = useItemsWithResolvedLabels(items);
 
-	const required = typeof minLength !== "number" || minLength > 0;
+	const required = (minLength ?? 0) > 0;
 
 	const handleChange = (itemValue: V, checked: boolean) => {
 		const newValue = checked

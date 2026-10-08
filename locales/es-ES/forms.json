@@ -260,7 +260,7 @@
 	"labels.scrimCancelReason": "Motivo de la cancelación",
 	"bottomTexts.scrimCancelReasonHelp": "Explica por qué cancelas el scrim. Esto será visible para el otro equipo.",
 	"bottomTexts.bioMarkdown": "Compatible con Markdown",
-	"bottomTexts.tournamentStartTime": "La hora de inicio de los brackets adicionales se establece en la sección de formato del torneo a continuación",
+	"bottomTexts.tournamentStartTime": "",
 	"labels.division": "División",
 	"options.division.both": "Ambas divisiones",
 	"options.division.tentatek": "Solo Arome",

@@ -279,7 +279,7 @@
 	"progression.error.PLACEMENT_TOO_HIGH": "",
 	"progression.error.DUPLICATE_BRACKET_NAME": "Nome bracket duplicato",
 	"progression.error.NAME_MISSING": "Nome bracket mancante",
-	"progression.error.NEGATIVE_PROGRESSION": "La progressione negativa è disponibile solo in doppia eliminazione",
+	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "",

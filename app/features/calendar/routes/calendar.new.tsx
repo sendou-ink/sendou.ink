@@ -129,9 +129,7 @@ export default function CalendarNewEventPage() {
 		<Main halfWidth={!data.isAddingTournament} bigger={data.isAddingTournament}>
 			<div className="stack md">
 				<div className="stack horizontal md items-center">
-					<h1 className="text-lg">
-						{data.isAddingTournament ? "New tournament" : "New calendar event"}
-					</h1>
+					<h1 className="text-lg">{t(pageTitleKey(data))}</h1>
 					{data.isAddingTournament ? (
 						<a
 							href={CREATING_TOURNAMENT_DOC_LINK}
@@ -356,7 +354,7 @@ function CalendarEventFields() {
 }
 
 function TournamentSteps() {
-	const { t } = useTranslation(["calendar"]);
+	const { t } = useTranslation(["calendar", "forms"]);
 	const data = useLoaderData<typeof loader>();
 	const { values } = useFormFieldContext();
 	const isAdmin = useHasRole("ADMIN");
@@ -371,7 +369,7 @@ function TournamentSteps() {
 				<div className={styles.stepColumn}>
 					{isEditing ? null : <CopyTournamentPicker />}
 					<FormField name="name" />
-					<FormField name="startTime" />
+					<FormField name="startTime" required />
 					{isInvitational ? null : <FormField name="regClosesAt" />}
 					{data.organizations.length > 0 ? (
 						<FormField name="organizationId" options={organizationOptions} />
@@ -432,7 +430,11 @@ function TournamentSteps() {
 
 			<FormStep name="maps">
 				<div className={clsx(styles.stepColumn, styles.stepColumnWide)}>
-					<TournamentMapsFields />
+					<SendouSection gap="lg" title={t("forms:steps.tournament.maps")}>
+						<div className="stack md">
+							<TournamentMapsFields />
+						</div>
+					</SendouSection>
 				</div>
 			</FormStep>
 
@@ -946,4 +948,22 @@ function CustomTeamPickPoolField({
 			</Alert>
 		</div>
 	);
+}
+
+function pageTitleKey({
+	isAddingTournament,
+	eventToEdit,
+}: {
+	isAddingTournament: boolean;
+	eventToEdit: unknown;
+}) {
+	if (isAddingTournament) {
+		return eventToEdit
+			? "calendar:pageTitle.editTournament"
+			: "calendar:pageTitle.newTournament";
+	}
+
+	return eventToEdit
+		? "calendar:pageTitle.editEvent"
+		: "calendar:pageTitle.newEvent";
 }

@@ -280,7 +280,7 @@
 	"progression.error.PLACEMENT_TOO_HIGH": "",
 	"progression.error.DUPLICATE_BRACKET_NAME": "Дубликат имени сетки",
 	"progression.error.NAME_MISSING": "Имя сетки отсутствует",
-	"progression.error.NEGATIVE_PROGRESSION": "Отрицательная прогрессия возможна только в Double Elimination турнирах",
+	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "",

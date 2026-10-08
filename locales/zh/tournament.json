@@ -277,7 +277,7 @@
 	"progression.error.PLACEMENT_TOO_HIGH": "名次过高（最大值为 {{max}}）",
 	"progression.error.DUPLICATE_BRACKET_NAME": "对战表名称重复",
 	"progression.error.NAME_MISSING": "缺少对战表名称",
-	"progression.error.NEGATIVE_PROGRESSION": "负序晋级仅在双败淘汰赛中可行",
+	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "包含提前晋级/淘汰的瑞士轮对战表必须导向另一个对战表",
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "A/B 分组只能在循环赛对战表中启用",

@@ -260,7 +260,7 @@
 	"labels.scrimCancelReason": "Reason for cancellation",
 	"bottomTexts.scrimCancelReasonHelp": "Explain why you are cancelling the scrim. This will be visible to the other team.",
 	"bottomTexts.bioMarkdown": "Supports Markdown",
-	"bottomTexts.tournamentStartTime": "Start times for additional brackets are set in the tournament format section below",
+	"bottomTexts.tournamentStartTime": "Start times for additional brackets are set in the Format step",
 	"labels.division": "Division",
 	"options.division.both": "Both divisions",
 	"options.division.tentatek": "Tentatek only",

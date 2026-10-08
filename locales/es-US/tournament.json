@@ -279,7 +279,7 @@
 	"progression.error.PLACEMENT_TOO_HIGH": "La posición es demasiado alta (máximo {{max}})",
 	"progression.error.DUPLICATE_BRACKET_NAME": "Nombre de bracket duplicado",
 	"progression.error.NAME_MISSING": "Falta el nombre del bracket",
-	"progression.error.NEGATIVE_PROGRESSION": "La progresión negativa solo es posible en eliminación doble",
+	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "Una fuente no puede mezclar posiciones que avanzan con equipos eliminados",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El bracket suizo con avance/eliminación anticipada debe llevar a otro bracket",
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "Las divisiones A/B solo se pueden activar en brackets de todos contra todos",

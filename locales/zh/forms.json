@@ -260,7 +260,7 @@
 	"labels.scrimCancelReason": "取消原因",
 	"bottomTexts.scrimCancelReasonHelp": "请说明取消这场对抗战的原因。该内容将对另一支队伍公开。",
 	"bottomTexts.bioMarkdown": "支持 Markdown 语法",
-	"bottomTexts.tournamentStartTime": "其他对战表的开始时间请在下方的赛事赛制部分中设置",
+	"bottomTexts.tournamentStartTime": "",
 	"labels.division": "组别",
 	"options.division.both": "均可",
 	"options.division.tentatek": "仅限艾洛眼",

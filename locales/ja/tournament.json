@@ -276,7 +276,7 @@
 	"progression.error.PLACEMENT_TOO_HIGH": "",
 	"progression.error.DUPLICATE_BRACKET_NAME": "ブラケットの名前が重複しています",
 	"progression.error.NAME_MISSING": "ブラケットの名前がありません",
-	"progression.error.NEGATIVE_PROGRESSION": "逆の進行はダブルエリ三ネーションの時のみ可能です",
+	"progression.error.NEGATIVE_PROGRESSION": "",
 	"progression.error.MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "",

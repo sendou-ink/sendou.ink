@@ -1119,7 +1119,7 @@ function PlacementPicker({
 					name="placement-mode"
 					value="knockedOut"
 					checked={isKnockedOut}
-					onChange={() => onChange("-1")}
+					onChange={() => onChange("-1,-2")}
 				>
 					{t("calendar:builder.mode.knockedOut")}
 				</SendouChipRadio>

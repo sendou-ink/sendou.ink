@@ -79,6 +79,8 @@ interface FormFieldProps {
 	disabled?: boolean;
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
 	autoFocus?: boolean;
+	/** Marks the field required when only a cross-field refine enforces it, e.g. for one variant of the form. Only fields with a `required` setting support it. */
+	required?: boolean;
 	maxCount?: number;
 	field?: AnySyncSchema;
 	children?:
@@ -100,6 +102,7 @@ export function FormField({
 	labelPopover,
 	disabled,
 	autoFocus,
+	required,
 	maxCount,
 	field,
 	children,
@@ -138,9 +141,14 @@ export function FormField({
 			throw new Error(`Form field metadata not found for name: ${name}`);
 		}
 
-		const fieldWithLabel = label ? { ...result, label } : result;
-		return fieldWithLabel as FormFieldType;
-	}, [fieldSchema, name, label]);
+		return {
+			...result,
+			...(label ? { label } : {}),
+			...(typeof required === "boolean" && "required" in result
+				? { required }
+				: {}),
+		} as FormFieldType;
+	}, [fieldSchema, name, label, required]);
 
 	const isNestedPath = name.includes(".") || name.includes("[");
 	const store = context?.store ?? EMPTY_FORM_STORE;
