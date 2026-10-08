@@ -28,6 +28,7 @@
 }
 
 .stepper {
+	container-type: inline-size;
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--s-2);
@@ -39,11 +40,13 @@
 .stepperItem {
 	display: flex;
 	flex: 1 1 8rem;
+	min-width: 0;
 }
 
 .stepperButton {
 	display: flex;
 	flex: 1;
+	min-width: 0;
 	align-items: center;
 	gap: var(--s-2);
 	min-height: var(--field-size-lg);
@@ -63,6 +66,32 @@
 
 	&:focus-visible {
 		outline: var(--focus-ring);
+	}
+}
+
+.stepperLabel {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* below the width where all steps fit on one row, only the current step shows its label */
+@container (width < 42rem) {
+	.stepperItem:not(.stepperItemCurrent) {
+		flex: 0 0 auto;
+
+		& .stepperButton {
+			position: relative;
+			padding-inline: var(--s-2);
+		}
+
+		& .stepperLabel {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+		}
 	}
 }
 

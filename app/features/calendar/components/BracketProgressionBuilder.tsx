@@ -19,6 +19,7 @@ import { isSameDay } from "date-fns";
 import type { TFunction } from "i18next";
 import { ArrowRight, Plus, Trash, X } from "lucide-react";
 import * as React from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
@@ -148,6 +149,9 @@ export function BracketProgressionBuilder({
 	const [cardHeights, setCardHeights] = React.useState<
 		Array<number | undefined>
 	>([]);
+	const builderRef = React.useRef<HTMLElement>(null);
+	const scrollerRef = React.useRef<HTMLDivElement>(null);
+	const panelRef = React.useRef<HTMLElement>(null);
 
 	const sensors = useSensors(
 		useSensor(MouseSensor, {
@@ -271,6 +275,33 @@ export function BracketProgressionBuilder({
 	const bracketName = (bracketIdx: number) =>
 		values.brackets[bracketIdx]?.name || t("calendar:builder.unnamed");
 
+	// on narrow screens the panel is below the board, maybe out of view
+	const selectAndShowPanel = (newSelection: Selection) => {
+		flushSync(() => setSelection(newSelection));
+		scrollToStartIfOutOfView(panelRef.current);
+	};
+
+	const closePanel = () => {
+		flushSync(() => setSelection(null));
+		const builder = builderRef.current;
+		if (builder && builder.getBoundingClientRect().top < 0) {
+			builder.scrollIntoView({ behavior: "smooth", block: "start" });
+		}
+	};
+
+	const scrollColumnIntoBoardView = (column: number) => {
+		const scroller = scrollerRef.current;
+		if (!scroller) return;
+
+		const cardLeft = BOARD_PADDING + column * (CARD_WIDTH + COLUMN_GAP);
+		const isVisible =
+			cardLeft >= scroller.scrollLeft &&
+			cardLeft + CARD_WIDTH <= scroller.scrollLeft + scroller.clientWidth;
+		if (isVisible) return;
+
+		scroller.scrollTo({ left: cardLeft - BOARD_PADDING, behavior: "smooth" });
+	};
+
 	const addBracket = () => {
 		const newBracketIdx = values.brackets.length;
 		const result = BracketBuilder.addBracket(
@@ -286,8 +317,9 @@ export function BracketProgressionBuilder({
 			next[newBracketIdx] = result.column > 0 ? result.column : undefined;
 			return next;
 		});
-		setSelection({ kind: "bracket", bracketIdx: newBracketIdx });
 		setNotice(null);
+		selectAndShowPanel({ kind: "bracket", bracketIdx: newBracketIdx });
+		scrollColumnIntoBoardView(result.column);
 	};
 
 	const moveToColumn = (bracketIdx: number, column: number) => {
@@ -325,21 +357,21 @@ export function BracketProgressionBuilder({
 		const line = BracketBuilder.connections(result.values).find(
 			(candidate) => candidate.fromIdx === fromIdx && candidate.toIdx === toIdx,
 		);
+		setNotice(null);
 		if (line) {
-			setSelection({
+			selectAndShowPanel({
 				kind: "connection",
 				toIdx,
 				sourceIdx: line.sourceIdx,
 			});
 		}
-		setNotice(null);
 	};
 
 	const removeBracket = (bracketIdx: number) => {
 		commit(BracketBuilder.removeBracket(values, bracketIdx));
 		setMinColumns((prev) => prev.filter((_, idx) => idx !== bracketIdx));
-		setSelection(null);
 		setNotice(null);
+		closePanel();
 	};
 
 	const canConnect = (fromIdx: number, toIdx: number) =>
@@ -447,7 +479,7 @@ export function BracketProgressionBuilder({
 			: undefined;
 
 	const selectLine = (line: BracketBuilder.Connection) =>
-		setSelection({
+		selectAndShowPanel({
 			kind: "connection",
 			toIdx: line.toIdx,
 			sourceIdx: line.sourceIdx,
@@ -468,6 +500,7 @@ export function BracketProgressionBuilder({
 	return (
 		<div className={styles.container}>
 			<section
+				ref={builderRef}
 				className={styles.builder}
 				aria-label={t("calendar:builder.label")}
 			>
@@ -509,7 +542,12 @@ export function BracketProgressionBuilder({
 						</div>
 					) : (
 						<span className={styles.toolbarHint}>
-							{t("calendar:builder.toolbarHint")}
+							<span className={styles.pointerOnly}>
+								{t("calendar:builder.toolbarHint")}
+							</span>
+							<span className={styles.touchOnly}>
+								{t("calendar:builder.toolbarHintTouch")}
+							</span>
 						</span>
 					)}
 				</div>
@@ -534,7 +572,7 @@ export function BracketProgressionBuilder({
 					onDragEnd={handleDragEnd}
 					onDragCancel={() => setActiveDrag(null)}
 				>
-					<div className={styles.scroller}>
+					<div ref={scrollerRef} className={styles.scroller}>
 						<div
 							className={styles.board}
 							style={{ width: boardWidth, height: boardHeight }}
@@ -678,7 +716,8 @@ export function BracketProgressionBuilder({
 											if (linkFromIdx !== null) {
 												connect(linkFromIdx, bracketIdx);
 											} else {
-												setSelection({ kind: "bracket", bracketIdx });
+												selectAndShowPanel({ kind: "bracket", bracketIdx });
+												scrollColumnIntoBoardView(bracketColumns[bracketIdx]);
 											}
 										}}
 									>
@@ -792,6 +831,7 @@ export function BracketProgressionBuilder({
 
 			{selectedBracketIdx !== null && values.brackets[selectedBracketIdx] ? (
 				<aside
+					ref={panelRef}
 					className={styles.panel}
 					aria-label={t("calendar:builder.panel")}
 				>
@@ -801,13 +841,14 @@ export function BracketProgressionBuilder({
 						bracketIdx={selectedBracketIdx}
 						lines={lines}
 						errors={errors}
-						onClose={() => setSelection(null)}
+						onClose={closePanel}
 						onRemove={removeBracket}
 						onFormatChange={fitPlacementsToBracketSettings}
 					/>
 				</aside>
 			) : selectedLine ? (
 				<aside
+					ref={panelRef}
 					className={styles.panel}
 					aria-label={t("calendar:builder.panel")}
 				>
@@ -822,7 +863,7 @@ export function BracketProgressionBuilder({
 						onPlacementsChange={(placements) =>
 							setPlacements(selectedLine, placements)
 						}
-						onClose={() => setSelection(null)}
+						onClose={closePanel}
 						onRemove={() => {
 							commit(
 								BracketBuilder.disconnect(
@@ -887,9 +928,18 @@ function BracketPanel({
 			/>
 			{sourcesError ? (
 				<FormMessage id={errorMessageId(sourcesErrorName)} type="error">
-					{sourcesError === "forms:errors.required"
-						? t("calendar:builder.noSources")
-						: t(sourcesError as never)}
+					{sourcesError === "forms:errors.required" ? (
+						<>
+							<span className={styles.pointerOnly}>
+								{t("calendar:builder.noSources")}
+							</span>
+							<span className={styles.touchOnly}>
+								{t("calendar:builder.noSourcesTouch")}
+							</span>
+						</>
+					) : (
+						t(sourcesError as never)
+					)}
 				</FormMessage>
 			) : null}
 			<BracketFields
@@ -1366,6 +1416,16 @@ function ConnectionLabel({
 	return t("calendar:builder.label.top", {
 		count: R.sumBy(pickedTiers, (tier) => tier.maxTeams),
 	});
+}
+
+/** Scrolls the page so the element starts near the top, unless its start is already in the upper half of the viewport. */
+function scrollToStartIfOutOfView(element: HTMLElement | null) {
+	if (!element) return;
+
+	const { top } = element.getBoundingClientRect();
+	if (top >= 0 && top <= window.innerHeight / 2) return;
+
+	element.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function lineKey(line: BracketBuilder.Connection) {

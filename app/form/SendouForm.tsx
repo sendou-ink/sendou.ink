@@ -557,7 +557,12 @@ function FormStepper() {
 				const isDone = stepIdx < currentStepIdx && !hasErrors;
 
 				return (
-					<li key={step.name} className={styles.stepperItem}>
+					<li
+						key={step.name}
+						className={clsx(styles.stepperItem, {
+							[styles.stepperItemCurrent]: isCurrent,
+						})}
+					>
 						<button
 							type="button"
 							className={clsx(styles.stepperButton, {
@@ -571,7 +576,7 @@ function FormStepper() {
 							<span className={styles.stepperNumber} aria-hidden="true">
 								{hasErrors ? "!" : isDone ? <Check size={14} /> : stepIdx + 1}
 							</span>
-							{t(step.label)}
+							<span className={styles.stepperLabel}>{t(step.label)}</span>
 						</button>
 					</li>
 				);

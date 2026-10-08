@@ -6,6 +6,7 @@
 }
 
 .builder {
+	scroll-margin-block-start: calc(var(--layout-nav-height) + var(--s-3));
 	display: flex;
 	flex: 999 1 36rem;
 	flex-direction: column;
@@ -29,6 +30,20 @@
 	min-width: 0;
 	color: var(--color-text-high);
 	font-size: var(--font-xs);
+}
+
+.touchOnly {
+	display: none;
+}
+
+@media (pointer: coarse) {
+	.touchOnly {
+		display: revert;
+	}
+
+	.pointerOnly {
+		display: none;
+	}
 }
 
 .linkBar,
@@ -391,6 +406,7 @@
 }
 
 .panel {
+	scroll-margin-block-start: calc(var(--layout-nav-height) + var(--s-3));
 	flex: 1 1 20rem;
 	max-width: 28rem;
 	min-width: 0;
