@@ -219,6 +219,15 @@ export function pickRelevantSearch(keys: string[], search: string): string {
 	return picked.toString();
 }
 
+/** The search string without the given keys, e.g. to compare two URLs ignoring a param. */
+export function omitFromSearch(keys: string[], search: string): string {
+	const searchParams = new URLSearchParams(search);
+	for (const key of keys) {
+		searchParams.delete(key);
+	}
+	return searchParams.toString();
+}
+
 /** Bidirectional URL encoding for an `SP.custom` param. */
 export interface ParamCodec<Value> {
 	/** Decodes a plain URL value; `undefined` means malformed, resolving the param to its default. */

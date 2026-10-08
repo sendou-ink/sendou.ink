@@ -66,6 +66,8 @@ import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
 
+export const shouldRevalidate = calendarNewSearchParams.shouldRevalidate;
+
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.loaderData) return [];
 
@@ -91,7 +93,7 @@ const useBaseEvent = () => {
 
 // xxx: polish styles and overall flow
 export default function CalendarNewEventPage() {
-	const { t } = useTranslation(["calendar"]);
+	const { t } = useTranslation(["calendar", "common"]);
 	const baseEvent = useBaseEvent();
 	const isCalendarEventAdder = useHasRole("CALENDAR_EVENT_ADDER");
 	const data = useLoaderData<typeof loader>();
@@ -147,8 +149,16 @@ export default function CalendarNewEventPage() {
 					schema={calendarNewSchema}
 					defaultValues={defaultValues}
 					submitButtonTestId="submit-button"
+					submitButtonText={
+						data.eventToEdit
+							? t("common:actions.saveChanges")
+							: data.isAddingTournament
+								? t("calendar:newTournament.create")
+								: undefined
+					}
 					fullWidth
 					steps={data.isAddingTournament ? TOURNAMENT_FORM_STEPS : undefined}
+					submitOnEveryStep={Boolean(data.eventToEdit)}
 				>
 					{data.isAddingTournament ? (
 						<TournamentSteps />

@@ -324,7 +324,8 @@ Then pass them to `SendouForm` and wrap each step's fields in a `<FormStep>` of 
 </SendouForm>
 ```
 
-- A stepper on top and Back/Next buttons at the bottom are rendered automatically, only the last step has the submit button. Pressing enter in a field moves to the next step.
+- A stepper on top and Back/Next buttons at the bottom are rendered automatically. The submit button shows once the user has reached the last step, or on every step with `submitOnEveryStep` (e.g. when editing something already valid). Pressing enter in a field moves to the next step.
+- The current step is the `step` search param (`app/form/form-search-params.ts`), each step change being a navigation, so browser back goes to the previous step and a refresh keeps the step. The route needs a `shouldRevalidate` that ignores it (any definition's `shouldRevalidate` does) or every step change reruns its loader.
 - Moving forward (Next or a later step in the stepper) validates the fields of every step passed and stops at the first one with errors. Moving back never validates.
 - Errors are only shown for steps the user has tried to leave, so a step isn't full of errors when first opened. Errors of fields no step lists only show after submitting.
 - Steps stay mounted while hidden, so local state of their fields survives switching steps.

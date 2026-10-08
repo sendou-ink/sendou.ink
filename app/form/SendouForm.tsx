@@ -14,15 +14,21 @@ import {
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
 import { holdRevalidationsDuring } from "~/features/chat/revalidation-scope";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import * as SearchParams from "~/modules/search-params/search-params";
 import { FormField as FormFieldComponent } from "./FormField";
 import { getFormFieldMetadata } from "./fields";
+import { formSearchParams } from "./form-search-params";
 import styles from "./SendouForm.module.css";
 import type {
 	FormObjectSchema,
 	FormStepDefinition,
 	TypedFormFieldComponent,
 } from "./types";
-import { useUnsavedChangesChecker } from "./UnsavedChangesGuard";
+import {
+	type UnsavedChangesChecker,
+	useUnsavedChangesChecker,
+} from "./UnsavedChangesGuard";
 import {
 	buildFieldPath,
 	errorMessageId,
@@ -125,9 +131,11 @@ type BaseFormProps<T extends v.ObjectEntries> = {
 	onSuccess?: () => void;
 	/**
 	 * Splits the form into steps shown one at a time, each rendered by a `<FormStep>` of the same name.
-	 * Moving forward validates the fields of the steps passed and only the last step submits.
+	 * Moving forward validates the fields of the steps passed. The current step is kept in the `step` search param.
 	 */
 	steps?: ReadonlyArray<FormStepDefinition<keyof T & string>>;
+	/** Shows the submit button on every step, not only the last, e.g. when editing something already valid. */
+	submitOnEveryStep?: boolean;
 };
 
 /**
@@ -170,6 +178,7 @@ interface LatestFormProps {
 	t: (key: string) => string;
 	steps: ReadonlyArray<FormStepDefinition> | undefined;
 	currentStepIdx: number;
+	pushStepToUrl: (stepIdx: number) => void;
 }
 
 export function SendouForm<T extends v.ObjectEntries>(
@@ -177,10 +186,14 @@ export function SendouForm<T extends v.ObjectEntries>(
 ) {
 	// remount on URL change resets form state (edit → new transitions)
 	const location = useLocation();
+	const searchWithoutStep = SearchParams.omitFromSearch(
+		formSearchParams.keys,
+		location.search,
+	);
 
 	return (
 		<SendouFormInner
-			key={`${location.pathname}${location.search}`}
+			key={`${location.pathname}?${searchWithoutStep}`}
 			{...props}
 		/>
 	);
@@ -206,6 +219,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	hideSubmitButtonWhen,
 	onSuccess,
 	steps,
+	submitOnEveryStep = false,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -214,7 +228,22 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		Partial<Record<string, string>>
 	>(fetcher.data?.fieldErrors ?? {});
 	const [fallbackError, setFallbackError] = React.useState<string | null>(null);
-	const [currentStepIdx, setCurrentStepIdx] = React.useState(0);
+	const [stepInUrl, setStepInUrl] = useSearchParam(formSearchParams, "step");
+	const stepIdxInUrl = stepIdxByName(steps, stepInUrl);
+	const [currentStepIdx, setCurrentStepIdx] = React.useState(stepIdxInUrl);
+	// browser back/forward changes the step in the URL
+	const [syncedStepIdxInUrl, setSyncedStepIdxInUrl] =
+		React.useState(stepIdxInUrl);
+	if (stepIdxInUrl !== syncedStepIdxInUrl) {
+		setSyncedStepIdxInUrl(stepIdxInUrl);
+		setCurrentStepIdx(stepIdxInUrl);
+	}
+	const isOnLastStep = steps ? currentStepIdx === steps.length - 1 : false;
+	const [hasReachedLastStep, setHasReachedLastStep] =
+		React.useState(isOnLastStep);
+	if (isOnLastStep && !hasReachedLastStep) {
+		setHasReachedLastStep(true);
+	}
 	const formRef = React.useRef<HTMLElement | null>(null);
 
 	const storeRef = React.useRef<FormStore | null>(null);
@@ -239,6 +268,15 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		t: t as unknown as LatestFormProps["t"],
 		steps,
 		currentStepIdx,
+		// in a microtask: the navigation's transition, if started within the submit event, makes React treat the form as running an action
+		pushStepToUrl: (stepIdx) =>
+			queueMicrotask(() =>
+				setStepInUrl(stepIdx === 0 ? null : (steps?.[stepIdx]?.name ?? null), {
+					// a navigation, not a replace, so browser back goes to the previous step
+					loader: true,
+					replace: false,
+				}),
+			),
 	};
 	const latest = React.useRef(latestProps);
 	latest.current = latestProps;
@@ -273,9 +311,13 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		queueMicrotask(() => actions.focusServerErrors(errorEntries));
 	}, [fetcher.data, actions]);
 
-	const hasUnsavedChangesRef = React.useRef<() => boolean>(() => false);
-	hasUnsavedChangesRef.current = () =>
-		mode === "submit" && !readOnly && store.dirty && fetcher.state === "idle";
+	const hasUnsavedChangesRef = React.useRef<UnsavedChangesChecker>(() => false);
+	hasUnsavedChangesRef.current = (navigation) =>
+		mode === "submit" &&
+		!readOnly &&
+		store.dirty &&
+		fetcher.state === "idle" &&
+		!(navigation && isStepChangeOnly(navigation));
 	useUnsavedChangesChecker(hasUnsavedChangesRef);
 
 	const previousFetcherStateRef = React.useRef(fetcher.state);
@@ -338,6 +380,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		<SubmitButton
 			testId={submitButtonTestId}
 			state={fetcher.state}
+			data-form-submit=""
 			variant={submitButtonVariant}
 			size={submitButtonSize}
 		>
@@ -354,6 +397,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 				<FormStepFooter
 					submitButton={readOnly ? null : submitButton}
 					secondarySubmit={secondarySubmit}
+					isSubmitShownOnEveryStep={submitOnEveryStep || hasReachedLastStep}
 				/>
 			) : mode !== "submit" || readOnly ? null : (
 				<SubmitRow
@@ -539,9 +583,11 @@ function FormStepper() {
 function FormStepFooter({
 	submitButton,
 	secondarySubmit,
+	isSubmitShownOnEveryStep,
 }: {
 	submitButton: React.ReactNode;
 	secondarySubmit: React.ReactNode;
+	isSubmitShownOnEveryStep: boolean;
 }) {
 	const { t } = useTranslation(["forms", "common"]);
 	const context = React.useContext(FormContext);
@@ -568,21 +614,23 @@ function FormStepFooter({
 					step: t(steps[currentStepIdx].label),
 				})}
 			</span>
-			{isLastStep ? (
-				<>
-					{submitButton}
-					{secondarySubmit}
-				</>
-			) : (
+			{isLastStep ? null : (
 				// a submit button so pressing enter in a field moves on, see `handleSubmit`
 				<SendouButton
 					type="submit"
+					variant={isSubmitShownOnEveryStep ? "outlined" : undefined}
 					icon={<ArrowRight />}
 					testId="form-next-step-button"
 				>
 					{t("common:actions.next")}
 				</SendouButton>
 			)}
+			{isLastStep || isSubmitShownOnEveryStep ? (
+				<>
+					{submitButton}
+					{secondarySubmit}
+				</>
+			) : null}
 		</div>
 	);
 }
@@ -661,7 +709,10 @@ function createFormActions({
 
 	registerFieldRevealer((fieldName) => {
 		const stepIdx = stepIdxOfField(latest.current.steps, fieldName);
-		if (stepIdx !== -1) setCurrentStepIdx(stepIdx);
+		if (stepIdx === -1) return;
+
+		setCurrentStepIdx(stepIdx);
+		latest.current.pushStepToUrl(stepIdx);
 	});
 
 	const revealField = (fieldName: string) => {
@@ -689,6 +740,7 @@ function createFormActions({
 
 	const changeStep = (stepIdx: number) => {
 		flushSync(() => setCurrentStepIdx(stepIdx));
+		latest.current.pushStepToUrl(stepIdx);
 
 		const form = formRef.current;
 		if (form && form.getBoundingClientRect().top < 0) {
@@ -900,7 +952,11 @@ function createFormActions({
 
 		// pressing enter in a text input submits implicitly, before the last step that means moving on
 		const { steps, currentStepIdx } = latest.current;
-		if (steps && currentStepIdx < steps.length - 1) {
+		const submitter = (e.nativeEvent as SubmitEvent).submitter;
+		const isSubmitButtonPressed =
+			submitter instanceof HTMLElement &&
+			submitter.dataset.formSubmit !== undefined;
+		if (steps && currentStepIdx < steps.length - 1 && !isSubmitButtonPressed) {
 			goToStep(currentStepIdx + 1);
 			return;
 		}
@@ -930,6 +986,27 @@ function createFormActions({
 		registerFieldRevealer,
 		focusServerErrors,
 	};
+}
+
+function stepIdxByName(
+	steps: ReadonlyArray<FormStepDefinition> | undefined,
+	stepName: string | null,
+) {
+	return Math.max(steps?.findIndex((step) => step.name === stepName) ?? 0, 0);
+}
+
+function isStepChangeOnly({
+	currentLocation,
+	nextLocation,
+}: NonNullable<Parameters<UnsavedChangesChecker>[0]>) {
+	return (
+		currentLocation.pathname === nextLocation.pathname &&
+		SearchParams.omitFromSearch(
+			formSearchParams.keys,
+			currentLocation.search,
+		) ===
+			SearchParams.omitFromSearch(formSearchParams.keys, nextLocation.search)
+	);
 }
 
 /** Index of the step rendering the field (a top-level or nested name like `brackets[0].name`), -1 if none does. */

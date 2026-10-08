@@ -158,6 +158,7 @@
 	"footer.link.plusVotingResults": "Résultats des votes du Plus Server",
 	"actions.share": "Partager",
 	"actions.save": "Sauvegarder",
+	"actions.saveChanges": "",
 	"actions.unsave": "Annuler la sauvegarde",
 	"actions.submit": "Envoyer",
 	"actions.edit": "Éditer",

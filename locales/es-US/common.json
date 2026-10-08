@@ -158,6 +158,7 @@
 	"footer.link.plusVotingResults": "Resultados de la votación Plus",
 	"actions.share": "Compartir",
 	"actions.save": "Guardar",
+	"actions.saveChanges": "",
 	"actions.unsave": "Quitar de guardados",
 	"actions.submit": "Enviar",
 	"actions.edit": "Editar",

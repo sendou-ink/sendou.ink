@@ -268,6 +268,40 @@ test.describe("Calendar", () => {
 		}
 	});
 
+	test("browser back returns to the previous step of the tournament form", async ({
+		page,
+		factories,
+	}) => {
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+
+		await impersonate(page, organizer.id);
+
+		const newTournament = new CalendarNewEventPage(page);
+		await newTournament.gotoNewTournament();
+
+		await newTournament.form.fill("name", "Test Tournament");
+		await newTournament.form.fill("discordInviteCode", "test-invite");
+		await newTournament.goToStep("teams");
+		await expect(newTournament.stepButton("teams")).toHaveAttribute(
+			"aria-current",
+			"step",
+		);
+		await expect(page).toHaveURL(/step=teams/);
+
+		await page.goBack();
+
+		await expect(newTournament.stepButton("basics")).toHaveAttribute(
+			"aria-current",
+			"step",
+		);
+		await expect(newTournament.locators.nameInput).toHaveValue(
+			"Test Tournament",
+		);
+		await isNotVisible(newTournament.locators.discardChangesButton);
+	});
+
 	test("creates a team picked tournament with a custom map pool", async ({
 		page,
 		factories,

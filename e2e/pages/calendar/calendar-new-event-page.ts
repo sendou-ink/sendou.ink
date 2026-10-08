@@ -54,6 +54,7 @@ export class CalendarNewEventPage {
 				exact: true,
 			}),
 			lastStepButton: page.getByTestId("form-step-button-prizes"),
+			discardChangesButton: page.getByTestId("discard-changes-button"),
 			groupCountSelect: page.getByLabel(/^Group count/),
 			clearMapPoolButton: page.getByRole("button", { name: "Clear" }),
 			pasteMapPoolLinkButton: page.getByRole("button", {
@@ -143,7 +144,12 @@ export class CalendarNewEventPage {
 
 	/** Opens a step of the tournament form. Moving forward validates the steps passed. */
 	async goToStep(step: "basics" | "teams" | "maps" | "format" | "prizes") {
-		await this.page.getByTestId(`form-step-button-${step}`).click();
+		await this.stepButton(step).click();
+	}
+
+	/** The button of a step in the stepper, carrying `aria-current="step"` while it is open. */
+	stepButton(step: "basics" | "teams" | "maps" | "format" | "prizes") {
+		return this.page.getByTestId(`form-step-button-${step}`);
 	}
 
 	/** Selects a bracket of the format builder for editing in its side panel. */

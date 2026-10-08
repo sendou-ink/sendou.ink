@@ -158,6 +158,7 @@
 	"footer.link.plusVotingResults": "",
 	"actions.share": "共有",
 	"actions.save": "保存",
+	"actions.saveChanges": "",
 	"actions.unsave": "保存解除",
 	"actions.submit": "送信",
 	"actions.edit": "編集",

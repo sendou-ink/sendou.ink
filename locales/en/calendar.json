@@ -158,6 +158,7 @@
 	"builder.label.earlyAdvancers": "{{wins}}-win advancers",
 	"builder.label.pick": "Pick who moves on",
 	"newTournament.help": "Help",
+	"newTournament.create": "Create tournament",
 	"newTournament.copy": "Start from a previous tournament",
 	"newTournament.copyLabel": "Tournament to copy",
 	"newTournament.copyPlaceholder": "Pick a tournament",
