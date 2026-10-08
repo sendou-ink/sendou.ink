@@ -37,6 +37,7 @@ import {
 	loadVodEvents,
 	type StoredVodEvent,
 	saveVod,
+	type VodMinimap,
 } from "../store/vods";
 import {
 	AnalyzerClient,
@@ -226,7 +227,8 @@ export function cancelVodScan(): void {
 /**
  * Scans `file` as fast as decoding allows; a finished scan replaces any saved
  * one of the same name. `saveFrames: false` skips keeping each event's
- * analyzed frame, `clips: false` cutting clips of the scan.
+ * analyzed frame and the map opens' snapshots, `clips: false` cutting clips
+ * of the scan.
  */
 export async function startVodScan(
 	file: File,
@@ -261,6 +263,7 @@ export async function startVodScan(
 
 	const timeline = new TimelineBuilder();
 	let events: ScanEvent[] = [];
+	const minimaps: VodMinimap[] = [];
 	let clients: AnalyzerClient[] = [];
 	let publishTimer: ReturnType<typeof setTimeout> | null = null;
 	const publish = () => {
@@ -280,6 +283,9 @@ export async function startVodScan(
 				new AnalyzerClient(
 					(result) => {
 						if (!result.gate.pass) return;
+						if (result.minimapSnapshot) {
+							minimaps.push({ t: result.t, image: result.minimapSnapshot });
+						}
 						for (const event of result.events as DetectedEvent<FixtureData>[]) {
 							const action = timeline.push(event);
 							if (action.action === "merged" || action.action === "dropped")
@@ -317,6 +323,7 @@ export async function startVodScan(
 						collectTelemetry: telemetry,
 						webgpu: readSettings().webgpu,
 						attachFrames: saveFrames,
+						snapshotMinimaps: saveFrames,
 					},
 				),
 		);
@@ -509,6 +516,7 @@ export async function startVodScan(
 				data: event.data,
 				frame: frames.get(event),
 			})),
+			minimaps,
 		);
 		events = (await loadVodEvents(file.name)).map(toScanEvent);
 		update({

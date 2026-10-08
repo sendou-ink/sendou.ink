@@ -17,6 +17,8 @@ export interface InitRequest {
 	webgpu?: boolean;
 	/** encode the analyzed frame onto results whose events fired; default true */
 	attachFrames?: boolean;
+	/** downscale every frame of a map open onto the minimap's results (`minimapSnapshot`); default false */
+	snapshotMinimaps?: boolean;
 }
 
 export interface AnalyzeRequest {
@@ -65,6 +67,8 @@ export type WorkerResponse =
 			events: DetectedEvent<unknown>[];
 			/** lossless image of the exact frame that was analyzed; present when events fired */
 			frame?: Blob;
+			/** downscaled image of the frame, on every minimap gate pass of an open a read of it was kept from (`snapshotMinimaps`) */
+			minimapSnapshot?: Blob;
 	  }
 	/** frame t threw mid-analysis; the worker is still usable and a "done" follows */
 	| { kind: "frameError"; t: number; message: string }

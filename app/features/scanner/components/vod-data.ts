@@ -4,7 +4,12 @@
  */
 import { useEffect, useState } from "react";
 import { type BuiltMatch, buildScannerMatches } from "../core/match-builder";
-import { loadVod, loadVodEvents, type VodSummary } from "../store/vods";
+import {
+	loadVod,
+	loadVodEvents,
+	loadVodMinimaps,
+	type VodSummary,
+} from "../store/vods";
 import type { ScanEvent } from "./session-data";
 
 /**
@@ -51,6 +56,42 @@ export function useStoredVod(name: string): StoredVod {
 		summary: loaded.summary,
 		events: loaded.events,
 	};
+}
+
+/** A saved map-open frame, loaded as an object URL. */
+export interface VodMinimapUrl {
+	/** seconds into the VoD */
+	t: number;
+	url: string;
+}
+
+/** A saved VoD's minimaps, chronological; their URLs are released when the name changes or the view goes away. */
+export function useVodMinimaps(name: string): VodMinimapUrl[] {
+	const [loaded, setLoaded] = useState<{
+		name: string;
+		minimaps: VodMinimapUrl[];
+	} | null>(null);
+
+	// the store is outside React, and object URLs a resource kept until released
+	useEffect(() => {
+		let stale = false;
+		let urls: string[] = [];
+		void loadVodMinimaps(name).then((minimaps) => {
+			if (stale) return;
+			const withUrls = minimaps.map((minimap) => ({
+				t: minimap.t,
+				url: URL.createObjectURL(minimap.image),
+			}));
+			urls = withUrls.map((minimap) => minimap.url);
+			setLoaded({ name, minimaps: withUrls });
+		});
+		return () => {
+			stale = true;
+			for (const url of urls) URL.revokeObjectURL(url);
+		};
+	}, [name]);
+
+	return loaded?.name === name ? loaded.minimaps : [];
 }
 
 /** `events` built into matches, the same objects for the same array. */

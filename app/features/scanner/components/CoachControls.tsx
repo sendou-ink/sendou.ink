@@ -2,7 +2,7 @@
  * Coach mode's playback bar under the video: play/pause in the middle, steps
  * back through games, lives, events and a few seconds on its left mirrored by
  * steps forward on its right (the smaller the step the closer to the middle),
- * and the playback speed. Every control has a hotkey: under the left hand a
+ * the playback speed and swapping the map with the video. Every control has a hotkey: under the left hand a
  * keyboard row per step, its left key back and right key forward, and the
  * seconds on the arrow keys, as in most video players.
  */
@@ -11,6 +11,7 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	type LucideIcon,
+	MapIcon,
 	Pause,
 	Play,
 	RotateCcw,
@@ -86,6 +87,7 @@ const KEY_LABELS: Record<string, string> = {
 const PLAY_CODES = ["Space", "KeyK"];
 const SLOWER_CODE = "KeyS";
 const FASTER_CODE = "KeyW";
+const MAP_CODE = "KeyM";
 
 /** input types a key press doesn't type into */
 const KEYLESS_INPUT_TYPES = new Set(["button", "checkbox", "radio", "range"]);
@@ -103,13 +105,17 @@ export function CoachControls({
 	jumps,
 	onTogglePlay,
 	onSpeedChange,
+	isMapBig,
+	onSwapMap,
 }: {
 	isPaused: boolean;
 	speed: number;
+	isMapBig: boolean;
 	/** each step's jump; null where there's nowhere to go */
 	jumps: CoachJumps;
 	onTogglePlay: () => void;
 	onSpeedChange: (speed: number) => void;
+	onSwapMap: () => void;
 }) {
 	const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
 		if (!isHotkey(event)) return;
@@ -128,6 +134,7 @@ export function CoachControls({
 
 	const hotkeyAction = (code: string) => {
 		if (PLAY_CODES.includes(code)) return onTogglePlay;
+		if (code === MAP_CODE) return onSwapMap;
 		if (code === SLOWER_CODE || code === FASTER_CODE) {
 			return () =>
 				onSpeedChange(
@@ -179,7 +186,20 @@ export function CoachControls({
 							onPress={jumps[step].next}
 						/>
 					))}
-					<div className={styles.speed}>
+					<div className={styles.extras}>
+						<button
+							type="button"
+							className={styles.control}
+							aria-label={isMapBig ? "Show the video big" : "Show the map big"}
+							aria-pressed={isMapBig}
+							aria-keyshortcuts="M"
+							title={`${isMapBig ? "Show the video big" : "Show the map big"} (M)`}
+							onClick={onSwapMap}
+						>
+							<MapIcon />
+							<span className={styles.caption}>Map</span>
+							<Keycaps keys={["M"]} />
+						</button>
 						<SendouMenu
 							trigger={
 								<button

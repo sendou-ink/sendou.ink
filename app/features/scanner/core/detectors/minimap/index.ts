@@ -137,6 +137,8 @@ export interface MinimapData {
 
 export const MINIMAP_EVENT_TYPE = "Minimap";
 
+export const MINIMAP_DETECTOR_ID = "minimap";
+
 /**
  * Timeline content guard: frames in the merge window collapse only while every
  * card/row keeps its dead/special state, so each flip stays its own event.
@@ -923,7 +925,7 @@ export function createMinimapDetector(
 	// starved the frame queue (2026-08-23 Mincemeat: last 95s of counter reads
 	// lost). The rearm cooldown covers gate flicker like death's does.
 	return {
-		id: "minimap",
+		id: MINIMAP_DETECTOR_ID,
 		refineIntervalS: 0.4,
 		sufficientConfidence: SUFFICIENT_CONFIDENCE,
 		rearmCooldownS: 5,

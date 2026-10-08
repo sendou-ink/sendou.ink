@@ -72,6 +72,8 @@ export class AnalyzerClient {
 			webgpu?: boolean;
 			/** ship the analyzed frame's image on results (default true) */
 			attachFrames?: boolean;
+			/** ship a downscaled image of every frame a map open shows (default false) */
+			snapshotMinimaps?: boolean;
 			/** one frame's analysis threw; the worker carries on (default onError) */
 			onFrameError?: ErrorHandler;
 		} = {},
@@ -134,6 +136,7 @@ export class AnalyzerClient {
 			collectTelemetry: options.collectTelemetry ?? false,
 			webgpu: options.webgpu ?? false,
 			attachFrames: options.attachFrames ?? true,
+			snapshotMinimaps: options.snapshotMinimaps ?? false,
 		});
 	}
 

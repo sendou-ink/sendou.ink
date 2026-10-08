@@ -70,7 +70,11 @@ opens it, for anyone, through the same handoff Inspect uses.
   its full-res analyzed frame as a lossless WebP (~1.1 MB at 1080p, half a
   PNG; the montage's VoD scans skip it with `attachFrames: false`), live and
   VoD frames alike bounded by 72 h and a shared 500 MB budget, newest first
-  (`store/frames.ts`), the event staying with `hasFrame: false`. Clips have
+  (`store/frames.ts`), the event staying with `hasFrame: false`. A VoD scan
+  also keeps every frame of each map open from its first kept minimap read
+  on, downscaled to 960 px lossy WebP (`vod-minimaps`, `snapshotMinimaps`),
+  for coach mode's "map as last opened"; those live as long as the VoD and
+  are not trimmed. Clips have
   their own cap and outlive session deletion.
 - **Upload** is on by default when logged in (settings toggle, persisted).
   Live: a scoreboard closes its match and sends it, a 15 s tick retries

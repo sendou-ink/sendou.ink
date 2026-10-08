@@ -26,6 +26,7 @@ import {
 import { getCV, loadOpenCV, type Mat } from "../core/cv";
 import { runDetectorPass } from "../core/detectors/frame-pass";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
+import { MINIMAP_DETECTOR_ID } from "../core/detectors/minimap/index";
 import {
 	createAllDetectors,
 	SCOREBOARD_EVENT_TYPES,
@@ -93,6 +94,9 @@ const PROGRESS_POST_INTERVAL_MS = 400;
 const PREVIEW_POST_INTERVAL_MS = 600;
 const PREVIEW_WIDTH = 480;
 const PREVIEW_HEIGHT = 270;
+/** Minimap snapshots stay sharp in coach mode's side column on a 2x screen while a long VoD's hundreds of them stay small. */
+const SNAPSHOT_WIDTH = 960;
+const SNAPSHOT_QUALITY = 0.8;
 /**
  * Failures (decode errors, a crashed GPU process taking the hardware decoder
  * down) a chunk scan recovers from by resuming at its cursor before it gives
@@ -126,6 +130,9 @@ let scheduler: DetectorScheduler | null = null;
 let telemetry: ScanTelemetry | null = null;
 let collectTelemetry = false;
 let attachFrames = true;
+let snapshotMinimaps = false;
+/** the minimap gate's current pass streak (one map open) had a read the timeline kept */
+let minimapOpenConfirmed = false;
 let chunkAborted = false;
 /** last per-frame t, to reset telemetry when a new session rewinds the clock */
 let lastFrameT = Number.NEGATIVE_INFINITY;
@@ -169,6 +176,7 @@ async function init({
 	collectTelemetry: collect = false,
 	webgpu = false,
 	attachFrames: attach = true,
+	snapshotMinimaps: snapshot = false,
 }: InitRequest): Promise<void> {
 	// VoD scans need the helper workers: start them booting alongside init
 	if (typeof VideoDecoder !== "undefined") {
@@ -212,6 +220,7 @@ async function init({
 		});
 		collectTelemetry = collect;
 		attachFrames = attach;
+		snapshotMinimaps = snapshot;
 		telemetry = freshTelemetry();
 		post({ kind: "ready", missingAtlases });
 	} catch (error) {
@@ -283,7 +292,10 @@ async function analyzePrepared(
 	let encoded: Promise<Blob> | null = null;
 	const frameBlob = () => {
 		encodeFrame ??= createFrameEncoder();
-		encoded ??= encodeFrame(pixels);
+		// the encoder takes ownership; a minimap snapshot may still need them
+		encoded ??= encodeFrame(
+			snapshotMinimaps ? { ...pixels, data: pixels.data.slice() } : pixels,
+		);
 		return encoded;
 	};
 
@@ -300,9 +312,11 @@ async function analyzePrepared(
 		});
 		for (const { detector, gate, events } of outcomes) {
 			let listed = false;
+			let kept = false;
 			for (const event of events) {
 				const { action } = shadowTimeline.push(event);
 				if (action === "added" || action === "replaced") listed = true;
+				if (action !== "dropped") kept = true;
 			}
 			const result: WorkerResponse = {
 				kind: "result",
@@ -311,12 +325,24 @@ async function analyzePrepared(
 				gate,
 				events,
 			};
-			post(
+			const minimapSnapshot =
+				detector.id === MINIMAP_DETECTOR_ID
+					? snapshotMinimapFrame(gate.pass, kept, pixels)
+					: undefined;
+			const image =
 				attachFrames && listed && detector.attachFrame !== false
-					? frameBlob().then(
-							(image) => ({ ...result, frame: image }),
-							() => result,
-						)
+					? frameBlob()
+					: undefined;
+			post(
+				image || minimapSnapshot
+					? Promise.all([
+							image?.catch(() => undefined),
+							minimapSnapshot?.catch(() => undefined),
+						]).then(([frame, snapshot]) => ({
+							...result,
+							frame,
+							minimapSnapshot: snapshot,
+						}))
 					: result,
 			);
 		}
@@ -329,6 +355,7 @@ async function analyze({ bitmap, t }: AnalyzeRequest): Promise<void> {
 	if (t + 5 < lastFrameT) {
 		telemetry = freshTelemetry();
 		shadowTimeline = new TimelineBuilder();
+		minimapOpenConfirmed = false;
 	}
 	lastFrameT = t;
 	try {
@@ -353,6 +380,7 @@ async function scanChunk({
 	scheduler!.reset(tStart, { midStream: tStart > 0 });
 	telemetry = freshTelemetry();
 	shadowTimeline = new TimelineBuilder();
+	minimapOpenConfirmed = false;
 	const wallStart = performance.now();
 	const gpuWaitStart = gpuMatcher?.stats.gpuWaitMs ?? 0;
 	let lastProgressAt = 0;
@@ -786,6 +814,44 @@ function gpuRunner() {
 	gpuMatcher = null;
 	gpuScaler = null;
 	return undefined;
+}
+
+/**
+ * Every frame of a map open from its first kept read on, not just the reads
+ * themselves: coach mode shows the map as last seen. A gate pass before any
+ * read was kept may be a lookalike, so it gets none.
+ */
+function snapshotMinimapFrame(
+	gatePassed: boolean,
+	readKept: boolean,
+	pixels: FrameData,
+): Promise<Blob> | undefined {
+	minimapOpenConfirmed = gatePassed && (minimapOpenConfirmed || readKept);
+	return snapshotMinimaps && minimapOpenConfirmed
+		? encodeSnapshot(pixels)
+		: undefined;
+}
+
+async function encodeSnapshot({
+	width,
+	height,
+	data,
+}: FrameData): Promise<Blob> {
+	const bitmap = await createImageBitmap(
+		new ImageData(data as Uint8ClampedArray<ArrayBuffer>, width, height),
+		{
+			resizeWidth: SNAPSHOT_WIDTH,
+			resizeHeight: Math.round((height * SNAPSHOT_WIDTH) / width),
+			resizeQuality: "medium",
+		},
+	);
+	const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+	canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
+	bitmap.close();
+	return canvas.convertToBlob({
+		type: "image/webp",
+		quality: SNAPSHOT_QUALITY,
+	});
 }
 
 function freshTelemetry(): ScanTelemetry | null {

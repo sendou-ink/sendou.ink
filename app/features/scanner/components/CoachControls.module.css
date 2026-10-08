@@ -42,6 +42,10 @@
 		background-color: var(--color-bg-high);
 	}
 
+	&[aria-pressed="true"] {
+		color: var(--color-fg-accent);
+	}
+
 	&:focus-visible {
 		outline: var(--focus-ring);
 	}
@@ -88,7 +92,9 @@
 	}
 }
 
-.speed {
+.extras {
+	display: flex;
+	gap: var(--s-0-5);
 	margin-inline-start: auto;
 	padding-inline-start: var(--s-1);
 	border-inline-start: var(--border-style);

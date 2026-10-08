@@ -5,12 +5,16 @@
  * its start. Games the filters (core/CoachFilters.ts) hide drop their events,
  * and while any is set playback keeps to the games shown, jumping past the
  * hidden ones and the footage between games. A bar under the player
- * (CoachControls) steps between the games, lives and events shown. The file is
+ * (CoachControls) steps between the games, lives and events shown, and the map
+ * as last opened (CoachMinimap) tops the events, following the video; clicking
+ * it swaps the two, the video playing on in the map's place. The file is
  * the one scanned or opened this visit, else the user opens it again (only the
  * scan was saved).
  */
+// xxx: last event we dont have win/loss
 import { FolderOpen } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
@@ -28,11 +32,12 @@ import { scannerSearchParams } from "../scanner-search-params";
 import { CoachControls, type CoachJumps } from "./CoachControls";
 import { CoachFilterBar } from "./CoachFilterBar";
 import { type CoachGame, CoachGameStrip, gameAt } from "./CoachGameStrip";
+import { CoachMinimap } from "./CoachMinimap";
 import styles from "./CoachView.module.css";
 import { NotFound } from "./NotFound";
 import { SessionHeader } from "./SessionHeader";
 import type { ScanEvent } from "./session-data";
-import { cachedBuild, useStoredVod } from "./vod-data";
+import { cachedBuild, useStoredVod, useVodMinimaps } from "./vod-data";
 import {
 	rememberVisitVodFile,
 	useVodScan,
@@ -40,7 +45,7 @@ import {
 	visitVodFile,
 } from "./vod-scan";
 
-// xxx: show latest minimap + timestamp how long ago it was (optionally, drop in a live minimap that will be synced)
+// xxx: optionally, drop in a live minimap that will be synced
 
 const ALL = "ALL";
 
@@ -102,6 +107,14 @@ function CoachSession({
 	const [currentTime, setCurrentTime] = useState(0);
 	const [isPaused, setIsPaused] = useState(true);
 	const [speed, setSpeed] = useState(1);
+	const minimaps = useVodMinimaps(name);
+	const [isMapBig, setIsMapBig] = useState(false);
+	/** the video lives here, outside React's tree, so swapping places moves it instead of remounting it */
+	const [videoHost] = useState(() => {
+		const host = document.createElement("div");
+		host.className = styles.videoHost;
+		return host;
+	});
 
 	const {
 		games,
@@ -119,6 +132,14 @@ function CoachSession({
 	const shown = entries.filter(
 		(entry) => filter === ALL || entry.type === filter,
 	);
+	const currentGame = gameAt(games, currentTime);
+	const minimap = currentGame
+		? minimaps.findLast(
+				(candidate) =>
+					candidate.t <= currentTime &&
+					candidate.t >= currentGame.match.startsAt!,
+			)
+		: undefined;
 
 	/** Picking from the lists starts the video; the bar's steps keep it paused or playing. */
 	const seek = (t: number, { play }: { play: boolean }) => {
@@ -205,8 +226,37 @@ function CoachSession({
 		}
 	};
 
+	const swapMapAndVideo = url ? () => setIsMapBig(!isMapBig) : undefined;
+	const minimapView = (
+		<CoachMinimap
+			minimap={minimap}
+			currentTime={currentTime}
+			isInGame={currentGame !== undefined}
+			onSwap={swapMapAndVideo}
+		/>
+	);
+	const videoSlot = <NodeSlot node={videoHost} />;
+
 	return (
 		<div className={styles.view}>
+			{url
+				? createPortal(
+						// biome-ignore lint/a11y/useMediaCaption: game footage has no captions
+						<video
+							ref={videoRef}
+							className={styles.video}
+							src={url}
+							controls
+							playsInline
+							onTimeUpdate={(e) => followPlayback(e.currentTarget)}
+							onSeeked={(e) => setCurrentTime(e.currentTarget.currentTime)}
+							onPlay={() => setIsPaused(false)}
+							onPause={() => setIsPaused(true)}
+							onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
+						/>,
+						videoHost,
+					)
+				: null}
 			<SessionHeader
 				back={{
 					to: scannerSearchParams.href(SCANNER_PAGE, { view: "vod", name }),
@@ -237,19 +287,11 @@ function CoachSession({
 			<div className={styles.layout}>
 				<div className={styles.player}>
 					{url ? (
-						// biome-ignore lint/a11y/useMediaCaption: game footage has no captions
-						<video
-							ref={videoRef}
-							className={styles.video}
-							src={url}
-							controls
-							playsInline
-							onTimeUpdate={(e) => followPlayback(e.currentTarget)}
-							onSeeked={(e) => setCurrentTime(e.currentTarget.currentTime)}
-							onPlay={() => setIsPaused(false)}
-							onPause={() => setIsPaused(true)}
-							onRateChange={(e) => setSpeed(e.currentTarget.playbackRate)}
-						/>
+						isMapBig ? (
+							minimapView
+						) : (
+							videoSlot
+						)
 					) : (
 						<div className={styles.openFile}>
 							<p>
@@ -280,10 +322,13 @@ function CoachSession({
 							jumps={jumps}
 							onTogglePlay={togglePlay}
 							onSpeedChange={changeSpeed}
+							isMapBig={isMapBig}
+							onSwapMap={() => setIsMapBig(!isMapBig)}
 						/>
 					) : null}
 				</div>
 				<div className={styles.events}>
+					{url && isMapBig ? videoSlot : minimapView}
 					<SendouChipRadioGroup wrap>
 						<SendouChipRadio
 							name="coach-filter"
@@ -405,6 +450,18 @@ function gameLabel(entry: CoachEntry): string {
 	]
 		.filter(Boolean)
 		.join(" · ");
+}
+
+/** Holds `node`, a DOM node React doesn't own, for as long as it is rendered. */
+function NodeSlot({ node }: { node: HTMLElement }) {
+	return (
+		<div
+			className={styles.slot}
+			ref={(slot) => {
+				if (slot && node.parentElement !== slot) slot.appendChild(node);
+			}}
+		/>
+	);
 }
 
 /** The file as an object URL, released when it changes or the view goes away. */

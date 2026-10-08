@@ -34,7 +34,7 @@
 	gap: var(--s-3);
 
 	@container (min-width: 900px) {
-		grid-template-columns: minmax(0, 1fr) 22rem;
+		grid-template-columns: minmax(0, 3fr) minmax(22rem, 1fr);
 	}
 }
 
@@ -45,7 +45,13 @@
 	min-width: 0;
 }
 
+.slot,
+.videoHost {
+	width: 100%;
+}
+
 .video {
+	display: block;
 	width: 100%;
 	max-height: 70dvh;
 	aspect-ratio: 16 / 9;
