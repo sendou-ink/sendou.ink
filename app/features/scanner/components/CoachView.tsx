@@ -252,7 +252,8 @@ function CoachSession({
 		}
 	};
 
-	const swapMapAndVideo = url ? () => setIsMapBig(!isMapBig) : undefined;
+	const swapMapAndVideo =
+		url && (minimap || isMapBig) ? () => setIsMapBig(!isMapBig) : undefined;
 	const openPlanner =
 		url && isMapBig && isPaused && minimap && currentGame
 			? () => openInPlanner(minimap.image, currentGame.match)
@@ -278,8 +279,11 @@ function CoachSession({
 								ref={videoRef}
 								className={styles.video}
 								src={url}
-								controls
 								playsInline
+								onClick={(e) => {
+									// with controls shown from the context menu, the video toggles itself
+									if (!e.currentTarget.controls) togglePlay();
+								}}
 								onTimeUpdate={(e) => followPlayback(e.currentTarget)}
 								onSeeked={(e) => setCurrentTime(e.currentTarget.currentTime)}
 								onPlay={() => setIsPaused(false)}
@@ -363,7 +367,7 @@ function CoachSession({
 							onTogglePlay={togglePlay}
 							onSpeedChange={changeSpeed}
 							isMapBig={isMapBig}
-							onSwapMap={() => setIsMapBig(!isMapBig)}
+							onSwapMap={swapMapAndVideo ?? null}
 						/>
 					) : null}
 					{url && timeline ? (

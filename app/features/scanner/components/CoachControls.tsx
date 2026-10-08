@@ -115,7 +115,8 @@ export function CoachControls({
 	jumps: CoachJumps;
 	onTogglePlay: () => void;
 	onSpeedChange: (speed: number) => void;
-	onSwapMap: () => void;
+	/** null while there's no map to show */
+	onSwapMap: (() => void) | null;
 }) {
 	const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
 		if (!isHotkey(event)) return;
@@ -194,7 +195,8 @@ export function CoachControls({
 							aria-pressed={isMapBig}
 							aria-keyshortcuts="M"
 							title={`${isMapBig ? "Show the video big" : "Show the map big"} (M)`}
-							onClick={onSwapMap}
+							disabled={!onSwapMap}
+							onClick={onSwapMap ?? undefined}
 						>
 							<MapIcon />
 							<span className={styles.caption}>Map</span>

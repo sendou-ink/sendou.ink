@@ -22,7 +22,7 @@ export function CoachMinimap({
 	/** seconds into the video the player is at */
 	currentTime: number;
 	isInGame: boolean;
-	/** undefined when there's no video to swap with */
+	/** undefined when there's no video or no map to swap */
 	onSwap: (() => void) | undefined;
 	onOpenPlanner?: () => void;
 }) {
