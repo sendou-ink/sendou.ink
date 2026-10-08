@@ -389,18 +389,13 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 	);
 }
 
-function UnreadWeaponImage({
-	containerClassName,
-}: {
-	containerClassName?: string;
-}) {
+function UnreadWeaponImage({ size = 32 }: { size?: number }) {
 	return (
 		<OutlinedImage
 			path={abilityImageUrl("UNKNOWN")}
 			alt="weapon not read"
 			title="weapon not read"
-			size={32}
-			containerClassName={containerClassName}
+			size={size}
 		/>
 	);
 }
@@ -431,22 +426,21 @@ function Scoreboard({
 								return (
 									<tr key={index}>
 										<td className={styles.weaponCell}>
-											{player.weaponId !== null ? (
-												<WeaponImage
-													weaponSplId={player.weaponId}
-													variant="build"
-													size={32}
-													className={clsx(styles.weapon, {
-														[styles.pov]: isPov,
-													})}
-												/>
-											) : (
-												<UnreadWeaponImage
-													containerClassName={clsx(styles.weapon, {
-														[styles.pov]: isPov,
-													})}
-												/>
-											)}
+											<CircleBackdrop
+												className={clsx(styles.weaponBackdrop, {
+													[styles.pov]: isPov,
+												})}
+											>
+												{player.weaponId !== null ? (
+													<WeaponImage
+														weaponSplId={player.weaponId}
+														variant="build"
+														size={36}
+													/>
+												) : (
+													<UnreadWeaponImage size={36} />
+												)}
+											</CircleBackdrop>
 										</td>
 										<td className={styles.name}>{player.name ?? "?"}</td>
 										<td>
