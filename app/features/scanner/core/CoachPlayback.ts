@@ -1,11 +1,15 @@
 /**
  * Coach mode's playback steps: jumping back and forth between the games, lives
- * or events of a file from where the video is, and the speeds it plays at.
+ * or events of a file from where the video is, or a few seconds, and the
+ * speeds it plays at.
  * Stepping back restarts the one playing, as a music player's previous track
  * does, unless it began moments ago.
  */
 
 export const SPEEDS = [0.25, 0.5, 1, 1.5, 2] as const;
+
+/** how far the seconds step moves the video */
+export const SECONDS_STEP_S = 5;
 
 /** stepping back this far into a game, life or event restarts it rather than going to the one before */
 const RESTART_GRACE_S = 3;

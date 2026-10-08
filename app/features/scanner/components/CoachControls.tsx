@@ -1,9 +1,10 @@
 /**
  * Coach mode's playback bar under the video: play/pause in the middle, steps
- * back through games, lives and events on its left mirrored by steps forward
- * on its right (the smaller the step the closer to the middle), and the
- * playback speed. Every control has a hotkey under the left hand: a keyboard
- * row per step, its left key back and right key forward.
+ * back through games, lives, events and a few seconds on its left mirrored by
+ * steps forward on its right (the smaller the step the closer to the middle),
+ * and the playback speed. Every control has a hotkey: under the left hand a
+ * keyboard row per step, its left key back and right key forward, and the
+ * seconds on the arrow keys, as in most video players.
  */
 import clsx from "clsx";
 import {
@@ -12,6 +13,8 @@ import {
 	type LucideIcon,
 	Pause,
 	Play,
+	RotateCcw,
+	RotateCw,
 	SkipBack,
 	SkipForward,
 	StepBack,
@@ -22,7 +25,7 @@ import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import * as CoachPlayback from "../core/CoachPlayback";
 import styles from "./CoachControls.module.css";
 
-export type CoachStep = "GAME" | "LIFE" | "EVENT";
+export type CoachStep = "GAME" | "LIFE" | "EVENT" | "SECONDS";
 
 interface StepControl {
 	label: string;
@@ -56,7 +59,29 @@ const STEPS: ReadonlyArray<{
 		previous: { label: "Previous event", code: "KeyQ", icon: ChevronLeft },
 		next: { label: "Next event", code: "KeyE", icon: ChevronRight },
 	},
+	{
+		step: "SECONDS",
+		caption: `${CoachPlayback.SECONDS_STEP_S}s`,
+		previous: {
+			label: `Back ${CoachPlayback.SECONDS_STEP_S} seconds`,
+			code: "ArrowLeft",
+			icon: RotateCcw,
+		},
+		next: {
+			label: `Forward ${CoachPlayback.SECONDS_STEP_S} seconds`,
+			code: "ArrowRight",
+			icon: RotateCw,
+		},
+	},
 ];
+
+/** keys held down to keep stepping */
+const REPEATING_CODES = new Set(["ArrowLeft", "ArrowRight"]);
+
+const KEY_LABELS: Record<string, string> = {
+	ArrowLeft: "←",
+	ArrowRight: "→",
+};
 
 const PLAY_CODES = ["Space", "KeyK"];
 const SLOWER_CODE = "KeyS";
@@ -64,6 +89,8 @@ const FASTER_CODE = "KeyW";
 
 /** input types a key press doesn't type into */
 const KEYLESS_INPUT_TYPES = new Set(["button", "checkbox", "radio", "range"]);
+/** input types the arrow keys move the value of */
+const ARROW_INPUT_TYPES = new Set(["radio", "range"]);
 
 export type CoachJumps = Record<
 	CoachStep,
@@ -195,14 +222,14 @@ function StepButton({
 	onPress: (() => void) | null;
 }) {
 	const Icon = control.icon;
-	const key = control.code.replace("Key", "");
+	const key = KEY_LABELS[control.code] ?? control.code.replace("Key", "");
 
 	return (
 		<button
 			type="button"
 			className={styles.control}
 			aria-label={control.label}
-			aria-keyshortcuts={key}
+			aria-keyshortcuts={control.code.replace("Key", "")}
 			title={`${control.label} (${key})`}
 			disabled={!onPress}
 			onClick={onPress ?? undefined}
@@ -228,8 +255,9 @@ function Keycaps({ keys }: { keys: readonly string[] }) {
 
 /** A bare key press not meant for a field, menu or dialog that has focus. */
 function isHotkey(event: KeyboardEvent): boolean {
+	const isArrow = event.code.startsWith("Arrow");
 	if (
-		event.repeat ||
+		(event.repeat && !REPEATING_CODES.has(event.code)) ||
 		event.defaultPrevented ||
 		event.ctrlKey ||
 		event.metaKey ||
@@ -251,6 +279,7 @@ function isHotkey(event: KeyboardEvent): boolean {
 	}
 	return (
 		!(target instanceof HTMLInputElement) ||
-		KEYLESS_INPUT_TYPES.has(target.type)
+		(KEYLESS_INPUT_TYPES.has(target.type) &&
+			!(isArrow && ARROW_INPUT_TYPES.has(target.type)))
 	);
 }

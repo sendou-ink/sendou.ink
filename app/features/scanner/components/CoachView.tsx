@@ -41,7 +41,6 @@ import {
 } from "./vod-scan";
 
 // xxx: show latest minimap + timestamp how long ago it was (optionally, drop in a live minimap that will be synced)
-// xxx: skip back/forward 5 sec? (arrows?)
 
 const ALL = "ALL";
 
@@ -146,6 +145,12 @@ function CoachSession({
 		else video.pause();
 	};
 
+	const seekBy = (seconds: number) => {
+		const video = videoRef.current;
+		if (!video) return;
+		seek(Math.max(0, video.currentTime + seconds), { play: false });
+	};
+
 	const changeSpeed = (newSpeed: number) => {
 		const video = videoRef.current;
 		if (!video) return;
@@ -172,6 +177,10 @@ function CoachSession({
 			currentTime,
 			(entry) => jumpTo(entry, { play: false }),
 		),
+		SECONDS: {
+			previous: () => seekBy(-CoachPlayback.SECONDS_STEP_S),
+			next: () => seekBy(CoachPlayback.SECONDS_STEP_S),
+		},
 	};
 
 	const followPlayback = (video: HTMLVideoElement) => {
