@@ -390,12 +390,8 @@ function TournamentSteps() {
 					>
 						<div className="stack md">
 							<FormField name="isInvitational" />
-							{isInvitational ? null : (
-								<>
-									<FormField name="requireInGameNames" />
-									<FormField name="enableSubs" />
-								</>
-							)}
+							<FormField name="requireInGameNames" />
+							{isInvitational ? null : <FormField name="enableSubs" />}
 						</div>
 					</SendouSection>
 					<SendouSection
@@ -473,6 +469,7 @@ function useOrganizationOptions() {
 /** What the earlier steps were filled with, each with a way back to its step. */
 function TournamentReview() {
 	const { t } = useTranslation(["calendar", "forms", "common"]);
+	const data = useLoaderData<typeof loader>();
 	const { values } = useFormFieldContext();
 	const { steps, goToStep } = useFormSteps();
 	const organizationOptions = useOrganizationOptions();
@@ -487,8 +484,17 @@ function TournamentReview() {
 		return label ? t(label as never) : fieldName;
 	};
 	const enabledToggleLabels = (
-		fieldNames: Array<keyof typeof calendarNewBaseSchema.entries>,
-	) => fieldNames.filter((fieldName) => values[fieldName]).map(fieldLabel);
+		fieldNames: Array<keyof typeof calendarNewBaseSchema.entries | null>,
+	) =>
+		fieldNames
+			.filter(
+				(fieldName): fieldName is keyof typeof calendarNewBaseSchema.entries =>
+					fieldName !== null && Boolean(values[fieldName]),
+			)
+			.map(fieldLabel);
+
+	const isEditing = Boolean(data.eventToEdit);
+	const isInvitational = Boolean(values.isInvitational);
 
 	const brackets = values.brackets as BracketFormValue[];
 	const startTime = values.startTime instanceof Date ? values.startTime : null;
@@ -519,11 +525,11 @@ function TournamentReview() {
 			...enabledToggleLabels([
 				"isInvitational",
 				"requireInGameNames",
-				"enableSubs",
+				isInvitational ? null : "enableSubs",
 				"autonomousSubs",
 				"isRanked",
 				"isLeague",
-				"isTest",
+				isEditing ? null : "isTest",
 				"isDraft",
 			]),
 		],
