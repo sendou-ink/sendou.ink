@@ -50,7 +50,8 @@ function AddFriendRow({ groupMemberIds }: { groupMemberIds: number[] }) {
 	const [friend, setFriend] = React.useState<number>();
 	const fetcher = useFetcher<SendouQPreparingAction>();
 
-	const showMemberAddError = fetcher.data?.error === "taken";
+	const showMemberAddError =
+		fetcher.data && "error" in fetcher.data && fetcher.data.error === "taken";
 
 	return (
 		<>

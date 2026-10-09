@@ -4,7 +4,7 @@ import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { getServerTFunction } from "~/modules/i18n/i18next.server";
 import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { cache } from "~/utils/cache.server";
-import { notFoundIfNullish } from "~/utils/remix.server";
+import { notFound, notFoundIfNullish } from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { abilityPointCountsToAverages } from "../build-stats-utils";
 
@@ -13,7 +13,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const weaponId = notFoundIfNullish(weaponNameSlugToId(params.slug));
 
 	if (weaponIdToType(weaponId) === "ALT_SKIN") {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	const weaponName = t(`weapons:MAIN_${weaponId}`);

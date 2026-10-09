@@ -1,6 +1,7 @@
 import type { SidebarStream } from "~/features/core/streams/streams.server";
 import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
+import { databaseTimestampNow } from "~/utils/dates";
 
 type RankedStream = { stream: SidebarStream; score: number };
 
@@ -11,7 +12,7 @@ export function rank(
 	streams: RankedStream[],
 	maxStreams: number,
 ): SidebarStream[] {
-	const now = Math.floor(Date.now() / 1000);
+	const now = databaseTimestampNow();
 
 	const selected = streams
 		.sort((a, b) => a.score - b.score || a.stream.startsAt - b.stream.startsAt)

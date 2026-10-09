@@ -1,37 +1,38 @@
-import {
-	type ActionFunction,
-	data,
-	type LoaderFunction,
-	redirect,
-} from "react-router";
+import { data, type LoaderFunction, redirect } from "react-router";
+import * as v from "valibot";
+import { defineAction } from "~/form/define-action.server";
 import { isTheme } from "../core/provider";
 import { getThemeSession } from "../core/theme-session.server";
 
-export const action: ActionFunction = async ({ request }) => {
-	const themeSession = await getThemeSession(request);
-	const requestText = await request.text();
-	const form = new URLSearchParams(requestText);
-	const theme = form.get("theme");
+const themeActionSchema = v.object({
+	theme: v.optional(v.string()),
+});
 
-	if (theme === "auto") {
+export const action = defineAction(
+	{ body: themeActionSchema },
+	async ({ request, body: { theme } }) => {
+		const themeSession = await getThemeSession(request);
+
+		if (theme === "auto") {
+			return data(
+				{ success: true },
+				{ headers: { "Set-Cookie": await themeSession.destroy() } },
+			);
+		}
+
+		if (!isTheme(theme)) {
+			return {
+				success: false,
+				message: `theme value of ${theme ?? "null"} is not a valid theme`,
+			};
+		}
+
+		themeSession.setTheme(theme);
 		return data(
 			{ success: true },
-			{ headers: { "Set-Cookie": await themeSession.destroy() } },
+			{ headers: { "Set-Cookie": await themeSession.commit() } },
 		);
-	}
-
-	if (!isTheme(theme)) {
-		return {
-			success: false,
-			message: `theme value of ${theme ?? "null"} is not a valid theme`,
-		};
-	}
-
-	themeSession.setTheme(theme);
-	return data(
-		{ success: true },
-		{ headers: { "Set-Cookie": await themeSession.commit() } },
-	);
-};
+	},
+);
 
 export const loader: LoaderFunction = () => redirect("/", { status: 404 });

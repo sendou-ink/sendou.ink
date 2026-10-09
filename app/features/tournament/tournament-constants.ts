@@ -14,6 +14,9 @@ export const TOURNAMENT = {
 	SWISS_DEFAULT_GROUP_COUNT: 1,
 	SWISS_DEFAULT_ROUND_COUNT: 5,
 	SE_DEFAULT_HAS_THIRD_PLACE_MATCH: true,
+	ELIMINATION_GROUP_COUNT_OPTIONS: [
+		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+	],
 	MAX_SAVED_COUNT: 20,
 	/** How many days after a tournament ends VOD links are shown on the bracket */
 	VOD_VISIBILITY_DAYS: 7,

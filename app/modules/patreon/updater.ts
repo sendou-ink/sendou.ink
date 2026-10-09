@@ -2,7 +2,7 @@ import * as v from "valibot";
 import { ServerConfig } from "~/config.server";
 import { STAFF_DISCORD_IDS } from "~/features/admin/admin-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { fetchWithTimeout } from "~/utils/fetch";
 import { logger } from "~/utils/logger";
 import type { Unpacked } from "~/utils/types";
@@ -41,7 +41,7 @@ export async function updatePatreonData(): Promise<void> {
 		).map((discordId) => ({
 			discordId,
 			patronTier: 4,
-			patronStartedAt: dateToDatabaseTimestamp(new Date()),
+			patronStartedAt: databaseTimestampNow(),
 		})),
 	];
 

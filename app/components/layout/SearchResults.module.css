@@ -27,12 +27,6 @@
 	gap: var(--s-2);
 }
 
-.resultName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .emptyState {
 	padding: var(--s-8);
 	text-align: center;

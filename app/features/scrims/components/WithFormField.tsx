@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
@@ -169,7 +170,9 @@ export function WithFormField({
 						<div className={styles.option}>
 							{option.label}
 							{option.users ? (
-								<span className={styles.optionUsers}>{option.users}</span>
+								<span className={clsx(styles.optionUsers, "truncate")}>
+									{option.users}
+								</span>
 							) : null}
 						</div>
 					</SendouSelectItem>

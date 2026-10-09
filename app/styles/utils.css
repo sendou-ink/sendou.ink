@@ -304,6 +304,12 @@
 		white-space: nowrap;
 	}
 
+	.truncate {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
 	.overflow-x-auto {
 		overflow-x: auto;
 	}

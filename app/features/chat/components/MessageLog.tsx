@@ -144,6 +144,7 @@ export function MessageLog({
 					{virtualizer.items.map(({ index, start }) => {
 						const msg = messages[index];
 						const systemMessage = systemMessageText(msg);
+						const isFirstUnread = index === firstUnreadIndex;
 						const continuation = LogLayout.continuesBatch(
 							messages[index - 1],
 							msg,
@@ -160,12 +161,19 @@ export function MessageLog({
 								data-testid="chat-message-row"
 								style={{ transform: `translateY(${start}px)` }}
 							>
-								{index === firstUnreadIndex ? (
-									<hr
-										aria-label={t("common:chat.newMessages")}
+								{isFirstUnread ? (
+									<div
 										className={styles.unreadDivider}
 										data-testid="chat-unread-divider"
-									/>
+									>
+										<span aria-hidden className={styles.unreadDividerLabel}>
+											{t("common:chat.newLabel")}
+										</span>
+										<hr
+											aria-label={t("common:chat.newMessages")}
+											className={styles.unreadDividerLine}
+										/>
+									</div>
 								) : null}
 								{systemMessage ? (
 									<SystemMessage message={msg} text={systemMessage} />

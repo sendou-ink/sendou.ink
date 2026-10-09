@@ -3,6 +3,8 @@ import type * as v from "valibot";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
+import type { MapPoolQuickFill } from "~/components/MapPoolPicker";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { AnySyncSchema } from "~/utils/schema";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
@@ -103,6 +105,12 @@ export interface FormFieldInputGroup<T extends string, V extends string>
 	minLength?: number;
 }
 
+export interface FormFieldRadioGroup<T extends string, V extends string>
+	extends FormFieldInputGroup<T, V> {
+	/** "chip" renders the options as a horizontal row of toggle chips. */
+	variant?: "chip";
+}
+
 export interface FormFieldDatetime<T extends string> extends FormFieldBase<T> {
 	min?: () => Date;
 	max?: () => Date;
@@ -182,6 +190,9 @@ interface FormFieldStageSelect<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
+/** Value is a serialized `MapPool`, empty string when no stages are picked. */
+type FormFieldMapPool<T extends string> = FormFieldBase<T>;
+
 /** Shared by the main, sub and special weapon selects, which differ only in what they list. */
 interface FormFieldWeaponSelect<T extends string> extends FormFieldBase<T> {
 	required: boolean;
@@ -196,7 +207,7 @@ export type FormField<V extends string = string> =
 	| FormFieldSelect<"select", V>
 	| FormFieldSelectDynamic<"select-dynamic">
 	| FormFieldDualSelect<"dual-select", V>
-	| FormFieldInputGroup<"radio-group", V>
+	| FormFieldRadioGroup<"radio-group", V>
 	| FormFieldInputGroupDynamic<"radio-group-dynamic">
 	| FormFieldInputGroup<"checkbox-group", V>
 	| FormFieldInputGroupDynamic<"checkbox-group-dynamic">
@@ -214,6 +225,7 @@ export type FormField<V extends string = string> =
 	| FormFieldBadges<"badges">
 	| FormFieldTrophies<"trophies">
 	| FormFieldStageSelect<"stage-select">
+	| FormFieldMapPool<"map-pool">
 	| FormFieldWeaponSelect<"weapon-select">
 	| FormFieldWeaponSelect<"sub-weapon-select">
 	| FormFieldWeaponSelect<"special-weapon-select">;
@@ -260,6 +272,11 @@ export type SelectOption = {
 /** Brand type to encode required options directly in schema types */
 export type FieldWithOptions<TOptions> = { _requiredOptions: TOptions };
 
+/** Like {@link FieldWithOptions} but the field also works without the `options` prop. */
+export type FieldWithOptionalOptions<TOptions> = {
+	_optionalOptions: TOptions;
+};
+
 /** Render props for FormField children */
 export type CustomFieldRenderProps<TValue = unknown> = {
 	name: string;
@@ -296,7 +313,9 @@ export type TypedFormFieldProps<
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
 } & (TSchema[TName] extends FieldWithOptions<infer TOptions>
 	? { options: TOptions }
-	: { options?: never });
+	: TSchema[TName] extends FieldWithOptionalOptions<infer TOptions>
+		? { options?: TOptions }
+		: { options?: never });
 
 type NestedPath = `${string}.${string}` | `${string}[${string}`;
 
@@ -332,6 +351,14 @@ export type TeamSearchFieldOptions = {
 	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
 };
 
+/** `options` prop config of the `map-pool` field. */
+export type MapPoolFieldOptions = {
+	/** Shows a quick fill row with these presets plus clearing and pasting a map pool link. */
+	quickFill?: MapPoolQuickFill[];
+	/** Limits the pool to these modes, default every mode. */
+	modes?: readonly ModeShort[];
+};
+
 /** `options` prop config of the `user-search` field. `onUserSelected` exposes the resolved user; the stored value is only the id. */
 export type UserSearchFieldOptions = {
 	onUserSelected?: (user: UserSearchResult | null) => void;
@@ -344,6 +371,14 @@ export type TournamentSearchFieldOptions = {
 	/** Exposes the resolved tournament on selection — the stored form value is only the tournament id. */
 	onTournamentSelected?: (tournament: TournamentSearchItem | null) => void;
 };
+
+/** One step of a multi-step `SendouForm`, rendered by the `<FormStep>` of the same `name`. */
+export interface FormStepDefinition<TFieldName extends string = string> {
+	name: string;
+	label: FormsTranslationKey;
+	/** Top-level fields the step renders. Their errors keep the user from moving past the step. */
+	fields: readonly TFieldName[];
+}
 
 /** Object schema of a form or fieldset, plain or wrapped in a pipe (e.g. a cross-field `superRefine`). */
 export type FormObjectSchema<

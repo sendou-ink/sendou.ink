@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import {
 	type SelectKey,
@@ -72,7 +73,7 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 							className={styles.stageImg}
 						/>
 						<span
-							className={styles.stageLabel}
+							className={clsx(styles.stageLabel, "truncate")}
 							data-testid={`stage-select-option-${name}`}
 						>
 							{name}

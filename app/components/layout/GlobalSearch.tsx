@@ -125,7 +125,9 @@ export function GlobalSearch() {
 			>
 				<Search className={styles.searchIcon} />
 				<span className={styles.searchLabel}>
-					<span className={styles.searchPlaceholder}>{t("common:search")}</span>
+					<span className={clsx(styles.searchPlaceholder, "truncate")}>
+						{t("common:search")}
+					</span>
 					<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
 				</span>
 			</Link>
@@ -155,7 +157,9 @@ export function LoggedOutGlobalSearch() {
 		<LogInPopover>
 			<button type="button" className={styles.searchButton}>
 				<Search className={styles.searchIcon} />
-				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
+				<span className={clsx(styles.searchPlaceholder, "truncate")}>
+					{t("common:search")}
+				</span>
 			</button>
 		</LogInPopover>
 	);
@@ -469,7 +473,7 @@ function ResultItem({ result }: { result: SearchResult }) {
 					<div className={styles.resultTexts}>
 						<SearchResultsItemName>{result.name}</SearchResultsItemName>
 						{result.inGameName ? (
-							<span className={styles.resultSecondary}>
+							<span className={clsx(styles.resultSecondary, "truncate")}>
 								{result.inGameName}
 							</span>
 						) : null}
@@ -515,7 +519,7 @@ function ResultItem({ result }: { result: SearchResult }) {
 						<LocaleTime
 							date={result.startsAt}
 							options={{ day: "numeric", month: "long", year: "numeric" }}
-							className={styles.resultSecondary}
+							className={clsx(styles.resultSecondary, "truncate")}
 						/>
 					</div>
 				</SearchResultsItemRow>

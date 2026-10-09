@@ -1,20 +1,15 @@
-import clsx from "clsx";
 import { ActionButton } from "~/components/ActionButton";
-import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
 import { useTournament } from "~/features/tournament/tournament-context";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
-import { useSearchParam } from "~/modules/search-params/hooks";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { bracketSchema } from "../../tournament-bracket-schemas";
-import { tournamentBracketsSearchParams } from "../../tournament-bracket-search-params";
-import { groupNumberToLetters } from "../../tournament-bracket-utils";
+import { bracketGroups, GroupTabs } from "./GroupTabs";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
-import styles from "./Swiss.module.css";
 import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 
 export function SwissBracket({
@@ -32,11 +27,7 @@ export function SwissBracket({
 	const { bracketExpanded } = useBracketExpanded();
 	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
 
-	const groups = getGroups(bracket);
-	const [, setSelectedGroupId] = useSearchParam(
-		tournamentBracketsSearchParams,
-		"group",
-	);
+	const groups = bracketGroups(bracket);
 	// group of the shipped matches rather than the search param's, so a switch shows once its matches loaded
 	const selectedGroupId = groupId ?? groups[0].groupId;
 
@@ -98,27 +89,7 @@ export function SwissBracket({
 	return (
 		<div className="stack xl">
 			<div className="stack lg">
-				{groups.length > 1 ? (
-					<div className="stack horizontal">
-						{groups.map((g) => (
-							<SendouButton
-								key={g.groupId}
-								onClick={() => setSelectedGroupId(g.groupId)}
-								className={clsx(
-									styles.bracketNavLink,
-									styles.bracketNavLinkBig,
-									{
-										[styles.bracketNavLinkSelected]:
-											selectedGroupId === g.groupId,
-									},
-								)}
-								data-testid={`group-${g.groupName.split(" ")[1]}-button`}
-							>
-								{g.groupName.split(" ")[1]}
-							</SendouButton>
-						))}
-					</div>
-				) : null}
+				<GroupTabs bracket={bracket} selectedGroupId={selectedGroupId} />
 				<div className="stack lg">
 					{rounds.map((round, roundI) => {
 						const matches = bracket.data.match.filter(
@@ -225,7 +196,7 @@ export function SwissBracket({
 												showSimulation={false}
 												bracket={bracket}
 												type="groups"
-												group={selectedGroup.groupName.split(" ")[1]}
+												group={selectedGroup.letters}
 												hideMatchTimer
 												spoilerCensor={matchCensorLevel({
 													bracketType: "swiss",
@@ -259,11 +230,4 @@ export function SwissBracket({
 			</div>
 		</div>
 	);
-}
-
-function getGroups(bracket: BracketType) {
-	return bracket.data.group.map((group) => ({
-		groupName: `Group ${groupNumberToLetters(group.number)}`,
-		groupId: group.id,
-	}));
 }

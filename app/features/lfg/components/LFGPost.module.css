@@ -26,9 +26,6 @@
 
 .userName {
 	max-width: 125px;
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
 	color: var(--color-text);
 }
 
@@ -40,9 +37,6 @@
 
 .teamMemberName {
 	max-width: 64px;
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text);

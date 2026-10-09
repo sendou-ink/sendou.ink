@@ -199,7 +199,7 @@ export function TrackCommitment({
 			title={name}
 			data-testid="availability-commitment"
 		>
-			<span className={styles.commitmentName}>{name}</span>
+			<span className={clsx(styles.commitmentName, "truncate")}>{name}</span>
 		</div>
 	);
 }

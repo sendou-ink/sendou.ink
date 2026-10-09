@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { TierPill } from "~/components/TierPill";
@@ -100,7 +101,9 @@ export function TournamentGraphicHeader({
 			trailing={
 				organization ? (
 					<>
-						<span className={styles.organizationName}>{organization.name}</span>
+						<span className={clsx(styles.organizationName, "truncate")}>
+							{organization.name}
+						</span>
 						<Avatar
 							url={organization.avatarUrl}
 							identiconInput={organization.name}

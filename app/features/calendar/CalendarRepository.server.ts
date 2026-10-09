@@ -34,6 +34,7 @@ import {
 	tournamentMembersCount,
 	tournamentTeamsCount,
 } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
 	modesIncluded,
@@ -543,7 +544,6 @@ type CreateArgs = Pick<
 	teamsPerGroup?: number;
 	thirdPlaceMatch?: boolean;
 	requireInGameNames?: boolean;
-	requireSendouQParticipation?: boolean;
 	isRanked?: boolean;
 	isTest?: boolean;
 	isLeague?: boolean;
@@ -589,7 +589,6 @@ export async function insert(args: CreateArgs) {
 				autonomousSubs: args.autonomousSubs,
 				regClosesAt: args.regClosesAt,
 				requireInGameNames: args.requireInGameNames,
-				requireSendouQParticipation: args.requireSendouQParticipation,
 				minMembersPerTeam: args.minMembersPerTeam,
 				maxMembersPerTeam: args.maxMembersPerTeam,
 				swiss:
@@ -645,7 +644,7 @@ export async function insert(args: CreateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
-				hidden: args.isTest || args.isDraft ? 1 : 0,
+				hidden: toDBBoolean(Boolean(args.isTest || args.isDraft)),
 				tournamentId,
 				trophyId: args.trophyId ?? null,
 			})
@@ -717,7 +716,9 @@ export async function update(args: UpdateArgs) {
 				.where("id", "=", tournamentId)
 				.executeTakeFirstOrThrow();
 
-			const hidden = existingSettings.isTest || args.isDraft ? 1 : 0;
+			const hidden = toDBBoolean(
+				Boolean(existingSettings.isTest || args.isDraft),
+			);
 			await trx
 				.updateTable("CalendarEvent")
 				.set({ hidden })
@@ -777,7 +778,6 @@ async function updateTournamentTables(
 		autonomousSubs: args.autonomousSubs,
 		regClosesAt: args.regClosesAt,
 		requireInGameNames: args.requireInGameNames,
-		requireSendouQParticipation: args.requireSendouQParticipation,
 		minMembersPerTeam: args.minMembersPerTeam,
 		maxMembersPerTeam: args.maxMembersPerTeam,
 		swiss:

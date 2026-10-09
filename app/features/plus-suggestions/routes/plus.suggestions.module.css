@@ -61,12 +61,6 @@
 	max-width: 100%;
 }
 
-.suggestedUsername {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .comment {
 	white-space: pre-wrap;
 	overflow-wrap: break-word;

@@ -1,4 +1,3 @@
-import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
@@ -10,17 +9,15 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { tournamentPage, tournamentRegisterPage } from "~/utils/urls";
 import { tournamentJoinSearchParams } from "../tournament-search-params";
 import { validateCanJoinTeam } from "../tournament-utils";
-import {
-	requireNotBannedByOrganization,
-	requireSendouQParticipationIfNeeded,
-} from "../tournament-utils.server";
+import { requireNotBannedByOrganization } from "../tournament-utils.server";
 
-export const action: ActionFunction = async ({ params, url }) => {
+export const action = defineAction(async ({ params, url }) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
 		{ for: "action" },
@@ -35,10 +32,6 @@ export const action: ActionFunction = async ({ params, url }) => {
 	await requireNotBannedByOrganization({
 		tournament,
 		user,
-	});
-	await requireSendouQParticipationIfNeeded({
-		tournament,
-		userId: user.id,
 	});
 
 	const teamToJoin = tournament.ctx.teams.find(
@@ -100,4 +93,4 @@ export const action: ActionFunction = async ({ params, url }) => {
 			? tournamentRegisterPage(leanTeam.tournamentId)
 			: tournamentPage(leanTeam.tournamentId),
 	);
-};
+});

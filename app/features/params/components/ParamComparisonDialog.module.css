@@ -22,9 +22,6 @@
 
 .name {
 	font-size: var(--font-2xs);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .barTrack {

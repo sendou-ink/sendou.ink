@@ -155,7 +155,7 @@ function useTabletModal(isTabletLayout: boolean, openRequest: number) {
 		React.useState(openRequest);
 	if (openRequest !== handledOpenRequest) {
 		setHandledOpenRequest(openRequest);
-		setOpenedOnPathname(location.pathname);
+		if (isTabletLayout) setOpenedOnPathname(location.pathname);
 	}
 
 	const isOpen = isTabletLayout && openedOnPathname === location.pathname;
@@ -574,7 +574,9 @@ function SiteTitle() {
 					})}
 
 					{currentPageText ? (
-						<span className={styles.pageName}>{currentPageText}</span>
+						<span className={clsx(styles.pageName, "truncate")}>
+							{currentPageText}
+						</span>
 					) : null}
 				</>
 			) : null}
@@ -689,7 +691,7 @@ function SideNavUserPanel() {
 			<>
 				<Link to={userPage(user)} className={styles.sideNavFooterUser}>
 					<Avatar user={user} size="xs" />
-					<span className={styles.sideNavFooterUsername}>{user.username}</span>
+					<span className="truncate">{user.username}</span>
 				</Link>
 				<div className={styles.sideNavFooterActions}>
 					{user.team ? (

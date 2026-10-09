@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./SearchSelect.module.css";
@@ -143,7 +144,7 @@ export function SearchSelectItem({
 		<SendouSelectItem
 			id={id}
 			textValue={textValue}
-			className={styles.item}
+			className={clsx(styles.item, "truncate")}
 			data-testid={testId}
 		>
 			{leading}

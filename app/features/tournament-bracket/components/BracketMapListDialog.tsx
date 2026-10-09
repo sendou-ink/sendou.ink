@@ -119,7 +119,7 @@ export function BracketMapListDialog({
 	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] = React.useState(
 		() => {
 			if (
-				!Engine.hasThirdPlaceMatch({
+				!Engine.thirdPlaceMatchLinkable({
 					type: bracket.type,
 					settings: bracket.settings,
 					participantsCount: eliminationTeamCount ?? 2,
@@ -165,7 +165,7 @@ export function BracketMapListDialog({
 				bracket,
 				teamCount: eliminationTeamCount ?? 2,
 			})
-		: bracket.data;
+		: PreparedMaps.mapListData(bracket.data);
 	const rounds = bracketData.round;
 	const defaultRoundBestOfs = bracket.defaultRoundBestOfs(bracketData);
 
@@ -893,8 +893,11 @@ function teamCountAdjustedBracketData({
 			);
 		case "single_elimination":
 		case "double_elimination":
-			return bracket.generateMatchesData(
-				nullFilledArray(teamCount).map((_, i) => i + 1),
+			// groups share map lists
+			return PreparedMaps.mapListData(
+				bracket.generateMatchesData(
+					nullFilledArray(teamCount).map((_, i) => i + 1),
+				),
 			);
 	}
 }

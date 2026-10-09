@@ -1,10 +1,14 @@
+import { addMilliseconds } from "date-fns";
 import * as v from "valibot";
 import type { Tables } from "~/db/tables";
-import type { TournamentStageSettings } from "~/db/tables-json";
+import type { SkippableRound, TournamentStageSettings } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds";
+import { isEliminationType } from "~/features/tournament-bracket/tournament-bracket-utils";
 import {
 	array,
+	customField,
 	datetimeOptional,
 	fieldset,
 	radioGroup,
@@ -22,7 +26,10 @@ const SWISS_DEFAULT_ADVANCE_THRESHOLD = 3;
 export interface BracketFormValue {
 	name: string;
 	type: Tables["TournamentStage"]["type"];
-	thirdPlaceMatch: boolean;
+	/** (SE & DE) Rounds not played, see `SkippedRounds`. */
+	skippedRounds: SkippableRound[];
+	/** (SE & DE) More than 1 = split into groups, each playing its own elimination bracket. */
+	eliminationGroupCount: string;
 	teamsPerGroup: string;
 	hasAbDivisions: boolean;
 	groupCount: string;
@@ -77,9 +84,18 @@ const bracketFieldset = fieldset({
 			maxLength: TOURNAMENT.BRACKET_NAME_MAX_LENGTH,
 		}),
 		type: bracketTypeField,
-		thirdPlaceMatch: toggle({
-			label: "labels.thirdPlaceMatch",
-			initialValue: TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
+		skippedRounds: customField(
+			{ initialValue: [] },
+			v.array(v.picklist(SkippedRounds.ALL_SKIPPABLE_ROUNDS)),
+		),
+		eliminationGroupCount: select({
+			label: "labels.groupCount",
+			bottomText: "bottomTexts.eliminationGroupCount",
+			items: TOURNAMENT.ELIMINATION_GROUP_COUNT_OPTIONS.map((count) => ({
+				value: String(count),
+				label: () => String(count),
+			})),
+			initialValue: "1",
 		}),
 		teamsPerGroup: selectDynamic({
 			label: "labels.teamsPerGroup",
@@ -185,11 +201,13 @@ export function defaultBracketsFormValues(): {
 	};
 }
 
-function newBracketFormValue(): BracketFormValue {
+/** Form field values of a freshly added bracket, double elimination with the format defaults. */
+export function newBracketFormValue(): BracketFormValue {
 	return {
 		name: "",
 		type: "double_elimination",
-		thirdPlaceMatch: TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
+		skippedRounds: [],
+		eliminationGroupCount: "1",
 		teamsPerGroup: String(TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP),
 		hasAbDivisions: false,
 		groupCount: String(TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT),
@@ -260,9 +278,11 @@ export function progressionToFormValues(
 		brackets: input.map((bracket) => ({
 			name: bracket.name,
 			type: bracket.type,
-			thirdPlaceMatch: Boolean(
-				bracket.settings.thirdPlaceMatch ??
-					TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
+			skippedRounds: bracket.settings.skippedRounds ?? [],
+			eliminationGroupCount: String(
+				isEliminationType(bracket.type)
+					? (bracket.settings.groupCount ?? 1)
+					: 1,
 			),
 			teamsPerGroup: String(
 				bracket.settings.teamsPerGroup ??
@@ -270,7 +290,10 @@ export function progressionToFormValues(
 			),
 			hasAbDivisions: Boolean(bracket.settings.hasAbDivisions),
 			groupCount: String(
-				bracket.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
+				!isEliminationType(bracket.type)
+					? (bracket.settings.groupCount ??
+							TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT)
+					: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
 			),
 			roundCount: String(
 				bracket.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
@@ -292,6 +315,18 @@ export function progressionToFormValues(
 				: [newProgressionSource()],
 		})),
 	};
+}
+
+/** Moves every bracket start time by `offsetMs`, e.g. by as much as a copied tournament's start time moved. */
+export function shiftBracketStartTimes(
+	brackets: BracketFormValue[],
+	offsetMs: number,
+): BracketFormValue[] {
+	return brackets.map((bracket) =>
+		bracket.startTime
+			? { ...bracket, startTime: addMilliseconds(bracket.startTime, offsetMs) }
+			: bracket,
+	);
 }
 
 /** Whether the source bracket advances teams via a Swiss early advance threshold (so placements are not specified). */
@@ -356,8 +391,6 @@ function progressionErrorPaths(
 	error: Progression.ValidationError,
 ): Array<Array<string | number>> {
 	switch (error.type) {
-		case "NOT_RESOLVING_WINNER":
-			return [["progression"]];
 		case "NAME_MISSING":
 			return [["brackets", error.bracketIdx, "name"]];
 		case "DUPLICATE_BRACKET_NAME":
@@ -368,6 +401,10 @@ function progressionErrorPaths(
 		case "AB_DIVISIONS_NOT_STARTING":
 		case "AB_DIVISIONS_ODD_TEAMS_PER_GROUP":
 			return [["brackets", error.bracketIdx, "hasAbDivisions"]];
+		case "INVALID_SKIPPED_ROUNDS":
+			return [["brackets", error.bracketIdx, "skippedRounds"]];
+		case "INVALID_GROUP_COUNT":
+			return [["brackets", error.bracketIdx, "eliminationGroupCount"]];
 		case "SAME_PLACEMENT_TO_MULTIPLE_BRACKETS":
 		case "GAP_IN_PLACEMENTS":
 		case "CYCLIC_PROGRESSION":
@@ -393,9 +430,15 @@ function settingsFromFormValues(
 ): TournamentStageSettings {
 	switch (bracket.type) {
 		case "single_elimination":
-			return { thirdPlaceMatch: bracket.thirdPlaceMatch };
 		case "double_elimination":
-			return {};
+			return {
+				...(Number(bracket.eliminationGroupCount) > 1
+					? { groupCount: Number(bracket.eliminationGroupCount) }
+					: {}),
+				...(bracket.skippedRounds.length > 0
+					? { skippedRounds: bracket.skippedRounds }
+					: {}),
+			};
 		case "round_robin":
 			return {
 				teamsPerGroup: Number(bracket.teamsPerGroup),

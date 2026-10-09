@@ -106,6 +106,13 @@ export const MINIMAP_ABILITY_INK_THRESHOLD = 90;
 /** BlitzMain caps measure 28-29px on every card (self included). */
 export const NAME_TEXT_HEIGHT = 29;
 export const NAME_BIN_THRESHOLD = 170;
+/**
+ * Overlay cards are translucent: bright ink behind one lifts the name band's
+ * median (~180 vs <=144 clean), so the threshold rides above it. 26-36 reads
+ * the attested 720p card: under, backdrop specks read as glyphs; over, thin
+ * strokes break.
+ */
+export const NAME_BIN_SURFACE_MARGIN = 31;
 /** A fullwidth bracket reads level with its ASCII twin ("[K]yo!" 0.015 apart). */
 export const NAME_PLAIN_TIE_MARGIN = 0.02;
 

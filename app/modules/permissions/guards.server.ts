@@ -1,12 +1,13 @@
 import { requireUser } from "~/features/auth/core/user.server";
 import type { EntityWithPermissions, Role } from "~/modules/permissions/types";
+import { forbidden } from "~/utils/remix.server";
 import { hasPermission } from "./utils";
 
 /** @throws {Response} 403 if the user lacks the global role. */
 export function requireRole(role: Role) {
 	const user = requireUser();
 	if (!user.roles.includes(role)) {
-		throw new Response("Forbidden", { status: 403 });
+		forbidden();
 	}
 }
 
@@ -21,5 +22,5 @@ export function requirePermission<
 		return;
 	}
 
-	throw new Response("Forbidden", { status: 403 });
+	forbidden();
 }

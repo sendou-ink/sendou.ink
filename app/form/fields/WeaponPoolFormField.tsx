@@ -210,7 +210,7 @@ function StaticWeaponItem({
 				size={32}
 				className={styles.weaponImage}
 			/>
-			<span className={styles.weaponName}>
+			<span className={clsx(styles.weaponName, "truncate")}>
 				{t(`weapons:MAIN_${weapon.id}`)}
 			</span>
 			<div className={styles.actions}>
@@ -292,7 +292,7 @@ function SortableWeaponItem({
 				size={32}
 				className={styles.weaponImage}
 			/>
-			<span className={styles.weaponName}>
+			<span className={clsx(styles.weaponName, "truncate")}>
 				{t(`weapons:MAIN_${weapon.id}`)}
 			</span>
 			<div className={styles.actions}>

@@ -1,6 +1,6 @@
 import type { LoaderFunction } from "react-router";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { canAccessLohiEndpoint } from "~/utils/remix.server";
+import { canAccessLohiEndpoint, forbidden } from "~/utils/remix.server";
 
 export interface PlusListLoaderData {
 	users: Record<string, number>;
@@ -8,7 +8,7 @@ export interface PlusListLoaderData {
 
 export const loader: LoaderFunction = async ({ request }) => {
 	if (!canAccessLohiEndpoint(request)) {
-		throw new Response(null, { status: 403 });
+		forbidden();
 	}
 
 	return {

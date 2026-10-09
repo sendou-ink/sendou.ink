@@ -127,12 +127,6 @@
 	min-width: 0;
 }
 
-.teamName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .newBadge {
 	flex-shrink: 0;
 	background-color: var(--color-fill-second);

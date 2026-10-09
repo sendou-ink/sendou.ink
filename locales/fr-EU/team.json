@@ -1,6 +1,6 @@
 {
 	"newTeam.header": "Création d'une nouvelle équipe",
-	"editTeam.header": "",
+	"editTeam.header": "Edition de {{teamName}}",
 	"mapPreferences.header": "",
 	"mapPreferences.explanation": "",
 	"mapPreferences.remove.header": "",
@@ -29,17 +29,17 @@
 	"roles.SUB": "Sub",
 	"roles.COACH": "Coach",
 	"roles.CHEERLEADER": "Cheerleader",
-	"forms.customTheme.header": "",
+	"forms.customTheme.header": "Thème personnalisé",
 	"roster.teamFull": "L'équipe est complète",
-	"roster.inviteLink.header": "Partager le lien d'invitation pour ajouter des membres",
+	"roster.inviteLink.header": "Partagez le lien d'invitation pour ajouter des membres",
 	"roster.members.header": "Membres",
 	"roster.sections.players": "",
 	"roster.sections.other": "",
-	"validation.SHORT_CODE": "Le code d'invitation n'a pas la bonne longueur. Avez-vous bien copier l'URL au complet ?",
+	"validation.SHORT_CODE": "Le code d'invitation n'a pas la bonne longueur. Avez-vous bien copié l'URL au complet ?",
 	"validation.TEAM_FULL": "L'équipe que vous essayez de rejoindre est complète.",
 	"validation.INVITE_CODE_WRONG": "Le code d'invitation est incorrect.",
-	"validation.REACHED_TEAM_COUNT_LIMIT": "Vous avez atteint les nombre maximum de team que vous pouvez rejoindre. (Max 5 pour les Supporter patrons et 2 pour les autres)",
+	"validation.REACHED_TEAM_COUNT_LIMIT": "Vous avez atteint le nombre maximum de team que vous pouvez rejoindre. (Max 5 pour les Supporter patrons et 2 pour les autres)",
 	"validation.VALID": "Rejoindre {{teamName}} ?",
-	"editorsInfo.button": "Quesque les éditeurs peuvent faire?",
-	"editorsInfo.popover": "Les éditeurs peuvent faire les mêmes choses que le capitaine éxcepter expulsé des membres et supprimer la team."
+	"editorsInfo.button": "Qu'est-ce que les éditeurs peuvent faire?",
+	"editorsInfo.popover": "Les éditeurs peuvent faire les mêmes choses que le capitaine à l'exception de l'expulsion des membres et la suppression de l'équipe."
 }

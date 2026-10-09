@@ -1,28 +1,35 @@
-import type { ActionFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
+import { defineAction } from "~/form/define-action.server";
+import { badRequest } from "~/utils/remix.server";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		throw new Response(null, { status: 400 });
-	}
+const runRoutineSchema = v.object({
+	name: v.string(),
+});
 
-	const routineName = (await request.formData()).get("name");
+export const action = defineAction(
+	{ body: runRoutineSchema, onInvalidBody: "badRequest" },
+	async ({ body }) => {
+		if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
+			badRequest();
+		}
 
-	const { everyHourAt00, everyHourAt30, daily, weekly, everyTwoMinutes } =
-		await import("~/routines/list.server");
-	const routine = [
-		...everyHourAt00,
-		...everyHourAt30,
-		...daily,
-		...weekly,
-		...everyTwoMinutes,
-	].find((candidate) => candidate.name === routineName);
+		const { everyHourAt00, everyHourAt30, daily, weekly, everyTwoMinutes } =
+			await import("~/routines/list.server");
+		const routine = [
+			...everyHourAt00,
+			...everyHourAt30,
+			...daily,
+			...weekly,
+			...everyTwoMinutes,
+		].find((candidate) => candidate.name === body.name);
 
-	if (!routine) {
-		throw new Response(`Unknown routine: ${routineName}`, { status: 400 });
-	}
+		if (!routine) {
+			throw new Response(`Unknown routine: ${body.name}`, { status: 400 });
+		}
 
-	await routine.run();
+		await routine.run();
 
-	return Response.json(null);
-};
+		return Response.json(null);
+	},
+);

@@ -1,4 +1,3 @@
-import type { ActionFunctionArgs } from "react-router";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -19,90 +18,92 @@ import {
 	validateBadgeReceivers,
 	validateTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
 	errorToast,
 	errorToastIfFalsy,
-	parseRequestPayload,
 	successToastWithRedirect,
 } from "~/utils/remix.server";
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const { tournament, tournamentId, user } = await tournamentFromParams(
-		params,
-		{ for: "action" },
-	);
-	const data = await parseRequestPayload({
-		request,
-		schema: finalizeTournamentActionSchema,
-	});
+export const action = defineAction(
+	{ body: finalizeTournamentActionSchema },
+	async ({ params, body }) => {
+		const { tournament, tournamentId, user } = await tournamentFromParams(
+			params,
+			{ for: "action" },
+		);
 
-	errorToastIfFalsy(tournament.canFinalize(user), "Can't finalize tournament");
+		errorToastIfFalsy(
+			tournament.canFinalize(user),
+			"Can't finalize tournament",
+		);
 
-	const event = await CalendarRepository.findById(tournament.ctx.eventId, {
-		includeBadgePrizes: true,
-		includeTrophy: true,
-	});
-	invariant(event, "Event not found for tournament");
-
-	const badgeOwnersValid = data.badgeReceivers
-		? requireValidBadgeReceivers({
-				badgeReceivers: data.badgeReceivers,
-				badges: event.badgePrizes ?? [],
-				tournament,
-			})
-		: true;
-	if (!badgeOwnersValid) errorToast("New badge owners invalid");
-
-	const trophyReceiver = event.trophy ? (data.trophyReceiver ?? null) : null;
-	if (event.trophy) {
-		const trophyReceiverValid = requireValidTrophyReceiver({
-			trophyReceiver,
-			trophy: event.trophy,
-			finalStandings: Standings.flattenStandings(
-				Standings.tournamentStandings(tournament),
-			),
-			tournament,
+		const event = await CalendarRepository.findById(tournament.ctx.eventId, {
+			includeBadgePrizes: true,
+			includeTrophy: true,
 		});
-		if (!trophyReceiverValid) errorToast("Invalid trophy receiver");
-	}
+		invariant(event, "Event not found for tournament");
 
-	const finalized = await finalizeTournament({
-		tournament,
-		badgeReceivers: data.badgeReceivers ?? undefined,
-		trophyReceiver: trophyReceiver ?? undefined,
-	});
+		const badgeOwnersValid = body.badgeReceivers
+			? requireValidBadgeReceivers({
+					badgeReceivers: body.badgeReceivers,
+					badges: event.badgePrizes ?? [],
+					tournament,
+				})
+			: true;
+		if (!badgeOwnersValid) errorToast("New badge owners invalid");
 
-	if (!finalized) {
+		const trophyReceiver = event.trophy ? (body.trophyReceiver ?? null) : null;
+		if (event.trophy) {
+			const trophyReceiverValid = requireValidTrophyReceiver({
+				trophyReceiver,
+				trophy: event.trophy,
+				firstPlaceTeams: Standings.winners(
+					Standings.tournamentStandings(tournament),
+				).map((standing) => standing.team),
+				tournament,
+			});
+			if (!trophyReceiverValid) errorToast("Invalid trophy receiver");
+		}
+
+		const finalized = await finalizeTournament({
+			tournament,
+			badgeReceivers: body.badgeReceivers ?? undefined,
+			trophyReceiver: trophyReceiver ?? undefined,
+		});
+
+		if (!finalized) {
+			return successToastWithRedirect({
+				url: tournamentBracketsPage({ tournamentId }),
+				message: "Tournament was already finalized",
+			});
+		}
+
+		if (body.badgeReceivers) {
+			logger.info(
+				`Badge receivers for tournament id ${tournamentId}: ${JSON.stringify(body.badgeReceivers)}`,
+			);
+
+			notifyBadgeReceivers(body.badgeReceivers);
+		}
+
+		if (trophyReceiver) {
+			logger.info(
+				`Trophy receiver for tournament id ${tournamentId}: ${JSON.stringify(trophyReceiver)}`,
+			);
+		}
+
+		// ensure RunningTournament = sidebar updates
+		await tournamentFromDB(tournamentId);
+
 		return successToastWithRedirect({
 			url: tournamentBracketsPage({ tournamentId }),
-			message: "Tournament was already finalized",
+			message: "Tournament finalized",
 		});
-	}
-
-	if (data.badgeReceivers) {
-		logger.info(
-			`Badge receivers for tournament id ${tournamentId}: ${JSON.stringify(data.badgeReceivers)}`,
-		);
-
-		notifyBadgeReceivers(data.badgeReceivers);
-	}
-
-	if (trophyReceiver) {
-		logger.info(
-			`Trophy receiver for tournament id ${tournamentId}: ${JSON.stringify(trophyReceiver)}`,
-		);
-	}
-
-	// ensure RunningTournament = sidebar updates
-	await tournamentFromDB(tournamentId);
-
-	return successToastWithRedirect({
-		url: tournamentBracketsPage({ tournamentId }),
-		message: "Tournament finalized",
-	});
-};
+	},
+);
 
 function requireValidBadgeReceivers({
 	badgeReceivers,
@@ -131,45 +132,22 @@ function requireValidBadgeReceivers({
 function requireValidTrophyReceiver({
 	trophyReceiver,
 	trophy,
-	finalStandings,
+	firstPlaceTeams,
 	tournament,
 }: {
 	trophyReceiver: TournamentTrophyReceiver | null;
 	trophy: { id: number };
-	finalStandings: Array<{
-		placement: number;
-		team: { memberUserIds: number[] };
-	}>;
+	firstPlaceTeams: Array<{ memberUserIds: number[] }>;
 	tournament: Tournament;
 }) {
-	const error = validateTrophyReceiver({ trophyReceiver, trophy });
+	const error = validateTrophyReceiver({
+		trophyReceiver,
+		trophy,
+		firstPlaceTeams,
+	});
 	if (error) {
 		logger.warn(
 			`validateTrophyReceiver: Invalid trophy receiver for tournament ${tournament.ctx.id}: ${error}`,
-		);
-		return false;
-	}
-
-	if (!trophyReceiver) return true;
-
-	const firstPlace = finalStandings.find(
-		(standing) => standing.placement === 1,
-	);
-	if (!firstPlace) {
-		logger.warn(
-			`validateTrophyReceiver: No 1st place standing for tournament ${tournament.ctx.id}`,
-		);
-		return false;
-	}
-
-	const firstPlaceUserIds = new Set(firstPlace.team.memberUserIds);
-	const invalidUserId = trophyReceiver.userIds.find(
-		(userId) => !firstPlaceUserIds.has(userId),
-	);
-
-	if (invalidUserId !== undefined) {
-		logger.warn(
-			`validateTrophyReceiver: User ${invalidUserId} not in 1st place team for tournament ${tournament.ctx.id}`,
 		);
 		return false;
 	}

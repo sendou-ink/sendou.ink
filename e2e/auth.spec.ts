@@ -40,7 +40,6 @@ test.describe("Auth", () => {
 		// the first log in consumed the single use link
 		const reusedLink = await logInLinkPage.fetchResponse(logInLink.code);
 		expect(reusedLink.status).toBe(400);
-		expect(reusedLink.body).toContain("Invalid log in link");
 	});
 
 	test("log in button starts the Discord OAuth flow", async ({

@@ -96,15 +96,17 @@ describe("chat messages action", () => {
 		expect(count.count).toBe(1);
 	});
 
-	test("returns field errors for empty contents", async () => {
+	test("400s empty contents", async () => {
 		const { match, alphaUserIds } = await setupSqMatch(users);
 
-		const result = await sendMessage(alphaUserIds[0], match.chatRoomId!, {
-			publicId: "dddddddddd",
-			contents: "",
-		});
-
-		expect(result).toHaveProperty("fieldErrors");
+		expect(
+			await statusOf(
+				sendMessage(alphaUserIds[0], match.chatRoomId!, {
+					publicId: "dddddddddd",
+					contents: "",
+				}),
+			),
+		).toBe(400);
 	});
 
 	test.each([
@@ -115,12 +117,14 @@ describe("chat messages action", () => {
 		async ({ textLength, sent }) => {
 			const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
 
-			const result = await sendMessage(alphaUserIds[0], match.chatRoomId!, {
-				publicId: "mmmmmmmmmm",
-				contents: `${"a".repeat(textLength)}${Mentions.token(bravoUserIds[0])}`,
-			});
+			const status = await statusOf(
+				sendMessage(alphaUserIds[0], match.chatRoomId!, {
+					publicId: "mmmmmmmmmm",
+					contents: `${"a".repeat(textLength)}${Mentions.token(bravoUserIds[0])}`,
+				}),
+			);
 
-			expect("message" in result).toBe(sent);
+			expect(status).toBe(sent ? 200 : 400);
 		},
 	);
 
@@ -168,12 +172,14 @@ describe("chat messages action", () => {
 	])("$why", async ({ contents, sent }) => {
 		const { match, alphaUserIds } = await setupSqMatch(users);
 
-		const result = await sendMessage(alphaUserIds[0], match.chatRoomId!, {
-			publicId: "ssssssssss",
-			contents,
-		});
+		const status = await statusOf(
+			sendMessage(alphaUserIds[0], match.chatRoomId!, {
+				publicId: "ssssssssss",
+				contents,
+			}),
+		);
 
-		expect("message" in result).toBe(sent);
+		expect(status).toBe(sent ? 200 : 400);
 	});
 
 	test("403s a non-participant", async () => {

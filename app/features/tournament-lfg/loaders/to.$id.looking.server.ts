@@ -11,6 +11,7 @@ import * as UserCardRepository from "~/features/user-card/UserCardRepository.ser
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
+import { notFound } from "~/utils/remix.server";
 import type { LFGGroup, LFGGroupMember } from "../components/LFGGroupCard";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 
@@ -28,11 +29,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 
 	if (!tournament.lfgEnabled) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	if (tournament.isInvitational) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	if (user) {

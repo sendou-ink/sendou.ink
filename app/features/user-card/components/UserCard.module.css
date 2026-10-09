@@ -82,18 +82,12 @@
 	font-weight: var(--weight-bold);
 	line-height: 1.1;
 	max-width: 170px;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	overflow: hidden;
 }
 
 .subtitle {
 	max-width: 170px;
 	font-size: var(--font-xs);
 	color: var(--color-text-high);
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	overflow: hidden;
 }
 
 .friendCode {

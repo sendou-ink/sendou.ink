@@ -69,12 +69,9 @@
 	auto basis so the title still contributes to the row's intrinsic width */
 	flex: 1 1 auto;
 	min-width: 0;
-	overflow: hidden;
 	font-size: var(--font-lg);
 	font-weight: var(--weight-extra);
 	line-height: 1.15;
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .headerSubtitle {
@@ -162,11 +159,8 @@
 }
 
 .teamName {
-	overflow: hidden;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-extra);
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .avatarCell {

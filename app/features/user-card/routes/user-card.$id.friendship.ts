@@ -2,6 +2,8 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
+import { parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import { userCardFriendshipSearchParams } from "../user-card-search-params";
 import type { UserCardFriendship } from "../user-card-types";
 
@@ -16,9 +18,9 @@ export const loader = async ({
 	request,
 }: LoaderFunctionArgs): Promise<UserCardFriendship> => {
 	const viewer = getUser();
-	const targetUserId = Number(params.id);
+	const { id: targetUserId } = parseParams({ params, schema: idObject });
 
-	if (!viewer || Number.isNaN(targetUserId)) {
+	if (!viewer) {
 		return {
 			isFriend: false,
 			sentFriendRequest: false,

@@ -1,7 +1,11 @@
 import { type ComponentProps, Profiler } from "react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import {
+	createBrowserRouter,
+	createMemoryRouter,
+	RouterProvider,
+} from "react-router";
 import * as v from "valibot";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { FormField } from "./FormField";
@@ -22,7 +26,7 @@ import {
 	toggle as toggleField,
 	userSearch,
 } from "./fields";
-import { SendouForm, useFormFieldContext } from "./SendouForm";
+import { FormStep, SendouForm, useFormFieldContext } from "./SendouForm";
 import type { ArrayItemRenderContext, FormObjectSchema } from "./types";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
@@ -1662,6 +1666,169 @@ describe("SendouForm", () => {
 
 			expect(nameRenders).toBeGreaterThanOrEqual(5);
 			expect(bioRenders).toBe(0);
+		});
+	});
+
+	describe("steps", () => {
+		const STEPS_SCHEMA = v.object({
+			name: textField({ label: "labels.name", maxLength: 100 }),
+			bio: textField({ label: "labels.bio", maxLength: 100 }),
+		});
+		const STEPS = [
+			{ name: "first", label: "steps.tournament.basics", fields: ["name"] },
+			{ name: "second", label: "steps.tournament.teams", fields: ["bio"] },
+		] as const;
+
+		// a browser router since the current step lives in the URL
+		function renderStepsForm(
+			defaultValues?: Record<string, unknown>,
+			options?: {
+				submitOnEveryStep?: boolean;
+				onApply?: (values: unknown) => void;
+			},
+		) {
+			const form = (
+				<SendouForm
+					schema={STEPS_SCHEMA}
+					steps={STEPS}
+					defaultValues={defaultValues}
+					submitOnEveryStep={options?.submitOnEveryStep}
+					onApply={options?.onApply}
+				>
+					<FormStep name="first">
+						<FormField name="name" />
+					</FormStep>
+					<FormStep name="second">
+						<FormField name="bio" />
+					</FormStep>
+				</SendouForm>
+			);
+			const router = createBrowserRouter([{ path: "*", element: form }]);
+			return render(<RouterProvider router={router} />);
+		}
+
+		afterEach(() => {
+			window.history.replaceState(null, "", window.location.pathname);
+		});
+
+		test("shows only the current step's fields", async () => {
+			const screen = await renderStepsForm();
+
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+			await expect.element(screen.getByLabelText("Bio")).not.toBeVisible();
+		});
+
+		test("keeps the user on the step while its fields are invalid", async () => {
+			const screen = await renderStepsForm();
+
+			await userEvent.click(screen.getByTestId("form-next-step-button"));
+
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+		});
+
+		test("moves on without showing the next step's errors yet", async () => {
+			const screen = await renderStepsForm();
+
+			await userEvent.type(screen.getByLabelText("Name").element(), "Test");
+			await userEvent.click(screen.getByTestId("form-next-step-button"));
+
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+			await expect
+				.element(screen.getByText("This field is required"))
+				.not.toBeInTheDocument();
+		});
+
+		test("pressing enter in a field moves to the next step", async () => {
+			const screen = await renderStepsForm();
+
+			await userEvent.type(
+				screen.getByLabelText("Name").element(),
+				"Test{Enter}",
+			);
+
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+		});
+
+		test("shows the submit button only from the last step on", async () => {
+			const screen = await renderStepsForm({ name: "Test" });
+
+			await expect
+				.element(screen.getByRole("button", { name: "Submit" }))
+				.not.toBeInTheDocument();
+
+			await userEvent.click(screen.getByTestId("form-next-step-button"));
+
+			await expect
+				.element(screen.getByRole("button", { name: "Submit" }))
+				.toBeVisible();
+			await userEvent.click(screen.getByRole("button", { name: "Back" }));
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+			await expect
+				.element(screen.getByRole("button", { name: "Submit" }))
+				.toBeVisible();
+		});
+
+		test("submits from the first step with submitOnEveryStep", async () => {
+			const onApply = vi.fn();
+			const screen = await renderStepsForm(
+				{ name: "Test", bio: "Bio" },
+				{ submitOnEveryStep: true, onApply },
+			);
+
+			await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+			expect(onApply).toHaveBeenCalledWith(
+				expect.objectContaining({ name: "Test", bio: "Bio" }),
+			);
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+		});
+
+		test("pressing enter moves on even when the submit button is shown", async () => {
+			const onApply = vi.fn();
+			const screen = await renderStepsForm(
+				{ name: "Test", bio: "Bio" },
+				{ submitOnEveryStep: true, onApply },
+			);
+
+			await userEvent.type(screen.getByLabelText("Name").element(), "{Enter}");
+
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+			expect(onApply).not.toHaveBeenCalled();
+		});
+
+		test("browser back goes to the previous step", async () => {
+			const screen = await renderStepsForm({ name: "Test" });
+
+			await userEvent.click(screen.getByTestId("form-next-step-button"));
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+			expect(new URL(window.location.href).search).toBe("?step=second");
+
+			window.history.back();
+
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+			await expect.element(screen.getByLabelText("Bio")).not.toBeVisible();
+		});
+
+		test("starts on the step in the URL", async () => {
+			window.history.replaceState(null, "", "?step=second");
+
+			const screen = await renderStepsForm({ name: "Test" });
+
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+		});
+
+		test("switches to the step of a field the server returned an error for", async () => {
+			mockFetcherData = { fieldErrors: { bio: "forms:errors.required" } };
+
+			const screen = await renderStepsForm({ name: "Test", bio: "Bio" });
+
+			await expect.element(screen.getByLabelText("Bio")).toBeVisible();
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
 		});
 	});
 });

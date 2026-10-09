@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as LogInLinkFactory from "~/db/seed/factories/LogInLinkFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { databaseTimestampNow } from "~/utils/dates";
 import * as LogInLinkRepository from "./LogInLinkRepository.server";
 
 describe("create", () => {
@@ -17,7 +18,7 @@ describe("create", () => {
 	});
 
 	test("creates a login link with future expiration", async () => {
-		const beforeCreation = Math.floor(Date.now() / 1000);
+		const beforeCreation = databaseTimestampNow();
 		const link = await LogInLinkRepository.insert(userId);
 
 		expect(link.expiresAt).toBeGreaterThan(beforeCreation);

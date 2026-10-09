@@ -5,7 +5,7 @@ import type {
 	BuildAbilitiesTuple,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { filterBuilds } from "./filter.server";
 
 const createBuild = ({
@@ -28,8 +28,7 @@ const createBuild = ({
 			["SSU", "SSU", "SSU", "SSU"],
 		],
 		modes: modes === undefined ? ["SZ", "TC", "RM", "CB"] : modes,
-		updatedAt:
-			updatedAt === undefined ? dateToDatabaseTimestamp(new Date()) : updatedAt,
+		updatedAt: updatedAt === undefined ? databaseTimestampNow() : updatedAt,
 	};
 };
 

@@ -12,6 +12,7 @@ import {
 	weaponIdToBaseWeaponId,
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
+import { notFound } from "~/utils/remix.server";
 import {
 	specialWeaponNameSlugToId,
 	subWeaponNameSlugToId,
@@ -41,7 +42,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const mainWeaponId = weaponNameSlugToId(params.slug);
 	if (typeof mainWeaponId === "number") {
 		if (weaponIdToType(mainWeaponId) === "ALT_SKIN") {
-			throw new Response(null, { status: 404 });
+			notFound();
 		}
 		return mainWeaponData(
 			mainWeaponId,
@@ -68,7 +69,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		);
 	}
 
-	throw new Response(null, { status: 404 });
+	notFound();
 };
 
 function damageMultipliersByWeapon(

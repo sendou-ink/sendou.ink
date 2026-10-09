@@ -1,8 +1,8 @@
-import { type ActionFunction, redirect } from "react-router";
+import { redirect } from "react-router";
 import type { PeakXP } from "~/db/tables-json";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
-import { parseFormDataWithImages } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
 import { userPage } from "~/utils/urls";
 import * as UserCardRepository from "../UserCardRepository.server";
 import { updateUserCardSchema } from "../user-card-schemas";
@@ -10,55 +10,55 @@ import { userCardEditSearchParams } from "../user-card-search-params";
 import type { HideableUserCardStat } from "../user-card-types";
 import { isValidUnverifiedXp } from "../user-card-utils";
 
-export const action: ActionFunction = async ({ request }) => {
-	const user = requireUser();
+export const action = defineAction(
+	{ body: updateUserCardSchema },
+	async ({ request, body, resolveImages }) => {
+		const user = requireUser();
 
-	const { returnTo } = userCardEditSearchParams.parse(request);
+		const { returnTo } = userCardEditSearchParams.parse(request);
 
-	const result = await parseFormDataWithImages({
-		request,
-		schema: updateUserCardSchema,
-	});
+		const verifiedXp = body.unverifiedXpPoints
+			? await UserCardRepository.findVerifiedXpByUserId(
+					user.id,
+					body.xpDivision,
+				)
+			: null;
 
-	if (!result.success) {
-		return { fieldErrors: result.fieldErrors };
-	}
+		if (
+			body.unverifiedXpPoints &&
+			!isValidUnverifiedXp({
+				unverified: body.unverifiedXpPoints,
+				verified: verifiedXp?.points ?? null,
+			})
+		) {
+			return {
+				fieldErrors: {
+					unverifiedXpPoints: "forms:errors.unverifiedXpNotAboveVerified",
+				},
+			};
+		}
 
-	const data = result.data;
+		const data = await resolveImages();
 
-	const verifiedXp = data.unverifiedXpPoints
-		? await UserCardRepository.findVerifiedXpByUserId(user.id, data.xpDivision)
-		: null;
+		const isSupporter = Boolean(user.roles?.includes("SUPPORTER"));
 
-	if (
-		data.unverifiedXpPoints &&
-		!isValidUnverifiedXp({
-			unverified: data.unverifiedXpPoints,
-			verified: verifiedXp?.points ?? null,
-		})
-	) {
-		return {
-			fieldErrors: {
-				unverifiedXpPoints: "forms:errors.unverifiedXpNotAboveVerified",
-			},
-		};
-	}
+		await UserCardRepository.updateOwnCard({
+			shortBio: data.shortBio || null,
+			...resolveBanner({ ...data, isSupporter }),
+			xpDivision: data.xpDivision,
+			unverifiedPeakXP:
+				data.unverifiedXpPoints && verifiedXp
+					? peakXP(
+							data.unverifiedXpPoints,
+							data.xpDivision ?? verifiedXp.region,
+						)
+					: null,
+			hiddenCardStats: resolveHiddenStats(data),
+		});
 
-	const isSupporter = Boolean(user.roles?.includes("SUPPORTER"));
-
-	await UserCardRepository.updateOwnCard({
-		shortBio: data.shortBio || null,
-		...resolveBanner({ ...data, isSupporter }),
-		xpDivision: data.xpDivision,
-		unverifiedPeakXP:
-			data.unverifiedXpPoints && verifiedXp
-				? peakXP(data.unverifiedXpPoints, data.xpDivision ?? verifiedXp.region)
-				: null,
-		hiddenCardStats: resolveHiddenStats(data),
-	});
-
-	throw redirect(returnTo ?? userPage(user));
-};
+		throw redirect(returnTo ?? userPage(user));
+	},
+);
 
 function peakXP(points: number, region: XRankPlacementRegion): PeakXP {
 	return {

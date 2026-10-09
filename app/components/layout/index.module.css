@@ -120,9 +120,6 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	min-width: 0;
 	animation: fadeInFull 200ms ease-out 150ms both;
 }
@@ -373,12 +370,6 @@ shown, so the popover's user agent styles are reset here.
 	&:hover {
 		background-color: var(--color-bg-high);
 	}
-}
-
-.sideNavFooterUsername {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .sideNavFooterActions {

@@ -164,7 +164,7 @@ function SortableTrophyItem({
 			<div className={styles.preview}>
 				<Trophy model={trophy.model} code={trophy.code} preview />
 			</div>
-			<span className={styles.name}>{trophy.name}</span>
+			<span className={clsx(styles.name, "truncate")}>{trophy.name}</span>
 			<SendouButton
 				variant="minimal-destructive"
 				size="small"

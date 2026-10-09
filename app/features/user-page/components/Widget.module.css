@@ -496,9 +496,6 @@
 .liveStreamName {
 	margin-inline-start: auto;
 	color: var(--color-text-high);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .countdownTitle {

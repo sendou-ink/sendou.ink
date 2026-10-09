@@ -19,6 +19,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import { toDBBoolean } from "~/utils/sql";
 import type { ExtractWidgetSettings } from "./types";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
@@ -309,8 +310,8 @@ export const WIDGET_LOADERS = {
 
 		return settings.weaponPool.map((weapon) => ({
 			weaponSplId: weapon.id,
-			isFavorite: weapon.isFavorite ? 1 : 0,
-			isTenStar: tenStarWeaponSplIds.includes(weapon.id) ? 1 : 0,
+			isFavorite: toDBBoolean(weapon.isFavorite),
+			isTenStar: toDBBoolean(tenStarWeaponSplIds.includes(weapon.id)),
 		}));
 	},
 	"custom-kits": async (

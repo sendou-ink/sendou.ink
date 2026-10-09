@@ -91,7 +91,7 @@ export function TournamentNav({
 			>
 				<Avatar url={tournament.ctx.logoUrl} size="sm" alt="" />
 				<div className={styles.identityText}>
-					<span className={styles.identityName}>{name}</span>
+					<span className={clsx(styles.identityName, "truncate")}>{name}</span>
 					{subtext ? (
 						<span className={styles.identitySubtext}>{subtext}</span>
 					) : null}

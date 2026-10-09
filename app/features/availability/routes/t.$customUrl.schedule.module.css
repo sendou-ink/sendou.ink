@@ -155,15 +155,3 @@
 	color: var(--color-text-high);
 	white-space: nowrap;
 }
-
-.eventName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.eventParticipants {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}

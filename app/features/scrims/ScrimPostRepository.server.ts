@@ -20,6 +20,7 @@ import {
 	jsonBuildObject,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import { db } from "../../db/sql";
 import { invariant } from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
@@ -66,8 +67,8 @@ export function insert(args: InsertArgs) {
 				maps: args.maps,
 				mapsTournamentId: args.mapsTournamentId,
 				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
-				managedByAnyone: args.managedByAnyone ? 1 : 0,
-				isScheduledForFuture: args.isScheduledForFuture ? 1 : 0,
+				managedByAnyone: toDBBoolean(args.managedByAnyone),
+				isScheduledForFuture: toDBBoolean(args.isScheduledForFuture),
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -618,7 +619,7 @@ export async function findPendingOverlapsForUsers({
 		return { posts: [], requestIds: [] };
 	}
 
-	const now = dateToDatabaseTimestamp(new Date());
+	const now = databaseTimestampNow();
 
 	const rows = await baseFindQuery
 		.where("ScrimPost.canceledAt", "is", null)
@@ -701,7 +702,7 @@ export type SidebarScrim = {
 };
 
 export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
-	const now = dateToDatabaseTimestamp(new Date());
+	const now = databaseTimestampNow();
 
 	const rows = await baseFindQuery
 		.where("ScrimPost.canceledAt", "is", null)

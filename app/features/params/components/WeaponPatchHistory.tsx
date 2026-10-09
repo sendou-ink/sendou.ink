@@ -214,7 +214,7 @@ function SubWeaponDivider({ subWeaponId }: { subWeaponId: SubWeaponId }) {
 
 	return (
 		<Divider smallText className={styles.divider}>
-			<span className={styles.dividerLabel}>
+			<span className={clsx(styles.dividerLabel, "truncate")}>
 				<SubWeaponImage subWeaponId={subWeaponId} size={18} />
 				{t(`weapons:SUB_${subWeaponId}`)}
 			</span>
@@ -231,7 +231,7 @@ function SpecialWeaponDivider({
 
 	return (
 		<Divider smallText className={styles.divider}>
-			<span className={styles.dividerLabel}>
+			<span className={clsx(styles.dividerLabel, "truncate")}>
 				<SpecialWeaponImage specialWeaponId={specialWeaponId} size={18} />
 				{t(`weapons:SPECIAL_${specialWeaponId}`)}
 			</span>

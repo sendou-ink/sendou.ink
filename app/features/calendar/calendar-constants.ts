@@ -69,26 +69,6 @@ export const CALENDAR_EVENT = {
 	TAGS: Object.keys(tags) as Array<CalendarEventTag>,
 };
 
-export const REG_CLOSES_AT_OPTIONS = [
-	"0",
-	"5min",
-	"10min",
-	"15min",
-	"30min",
-	"1h",
-	"1h30min",
-	"2h",
-	"3h",
-	"6h",
-	"12h",
-	"18h",
-	"24h",
-	"48h",
-	"72h",
-] as const;
-
-export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
-
 /** Days shown on /calendar at a time (Monday to Sunday) */
 export const DAYS_SHOWN_AT_A_TIME = 7;
 

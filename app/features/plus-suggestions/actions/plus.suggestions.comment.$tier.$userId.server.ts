@@ -1,4 +1,3 @@
-import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -7,47 +6,41 @@ import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import { parseFormData } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
 import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
 import { followUpCommentFormSchema } from "../plus-suggestions-schemas";
 import { canAddCommentToSuggestionBE } from "../plus-suggestions-utils";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = requireUser();
+export const action = defineAction(
+	{ body: followUpCommentFormSchema },
+	async ({ body }) => {
+		const user = requireUser();
 
-	const result = await parseFormData({
-		request,
-		schema: followUpCommentFormSchema,
-	});
+		const votingMonthYear = rangeToMonthYear(
+			badRequestIfFalsy(nextNonCompletedVoting(new Date())),
+		);
 
-	if (!result.success) {
-		return { fieldErrors: result.fieldErrors };
-	}
+		const suggestions =
+			await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
 
-	const votingMonthYear = rangeToMonthYear(
-		badRequestIfFalsy(nextNonCompletedVoting(new Date())),
-	);
+		errorToastIfFalsy(
+			canAddCommentToSuggestionBE({
+				suggestions,
+				user,
+				suggested: { id: body.suggestedId },
+				targetPlusTier: body.tier,
+			}),
+			"No permissions to add this comment",
+		);
 
-	const suggestions =
-		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
+		await PlusSuggestionRepository.insert({
+			authorId: user.id,
+			suggestedId: body.suggestedId,
+			text: body.comment,
+			tier: body.tier,
+			...votingMonthYear,
+		});
 
-	errorToastIfFalsy(
-		canAddCommentToSuggestionBE({
-			suggestions,
-			user,
-			suggested: { id: result.data.suggestedId },
-			targetPlusTier: result.data.tier,
-		}),
-		"No permissions to add this comment",
-	);
-
-	await PlusSuggestionRepository.insert({
-		authorId: user.id,
-		suggestedId: result.data.suggestedId,
-		text: result.data.comment,
-		tier: result.data.tier,
-		...votingMonthYear,
-	});
-
-	throw redirect(plusSuggestionPage({ tier: result.data.tier }));
-};
+		throw redirect(plusSuggestionPage({ tier: body.tier }));
+	},
+);

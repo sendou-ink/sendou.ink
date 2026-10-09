@@ -1,7 +1,7 @@
 import { isFuture } from "date-fns";
-import { type ActionFunctionArgs, redirect } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { parseFormData } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
 import {
 	requirePermission,
 	requireRole,
@@ -18,120 +18,114 @@ import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 import { orgPageActionSchema } from "../tournament-organization-schemas";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = requireUser();
-	const organization = await organizationFromParams(params);
-	const result = await parseFormData({
-		request,
-		schema: orgPageActionSchema,
-	});
+export const action = defineAction(
+	{ body: orgPageActionSchema },
+	async ({ params, body }) => {
+		const user = requireUser();
+		const organization = await organizationFromParams(params);
 
-	if (!result.success) {
-		return { fieldErrors: result.fieldErrors };
-	}
+		switch (body._action) {
+			case "BAN_USER": {
+				requirePermission(organization, "BAN");
 
-	const data = result.data;
+				const allBannedUsers =
+					await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
+						organization.id,
+					);
+				const currentlyBannedUsers = allBannedUsers.filter(
+					(bu) =>
+						!bu.expiresAt || isFuture(databaseTimestampToDate(bu.expiresAt)),
+				);
 
-	switch (data._action) {
-		case "BAN_USER": {
-			requirePermission(organization, "BAN");
+				if (
+					currentlyBannedUsers.length >=
+					TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS
+				) {
+					errorToast(
+						`Organization cannot ban more than ${TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS} users`,
+					);
+				}
 
-			const allBannedUsers =
-				await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
+				await TournamentOrganizationRepository.upsertBannedUser({
+					organizationId: organization.id,
+					userId: body.userId,
+					privateNote: body.privateNote,
+					expiresAt: body.expiresAt
+						? dateToDatabaseTimestamp(body.expiresAt)
+						: null,
+				});
+
+				logger.info(
+					`User banned: organization=${organization.name} (${organization.id}), userId=${body.userId}, banned by userId=${user.id}`,
+				);
+
+				break;
+			}
+			case "UNBAN_USER": {
+				requirePermission(organization, "BAN");
+
+				await TournamentOrganizationRepository.unbanUser({
+					organizationId: organization.id,
+					userId: body.userId,
+				});
+
+				logger.info(
+					`User unbanned: organization=${organization.name} (${organization.id}), userId=${body.userId}, unbanned by userId=${user.id}`,
+				);
+
+				break;
+			}
+			case "UPDATE_IS_ESTABLISHED": {
+				requireRole("ADMIN");
+
+				await TournamentOrganizationRepository.updateIsEstablished(
+					organization.id,
+					body.isEstablished,
+				);
+
+				logger.info(
+					`Organization isEstablished updated: organization=${organization.name} (${organization.id}), isEstablished=${body.isEstablished}, updated by userId=${user.id}`,
+				);
+
+				break;
+			}
+			case "LEAVE_ORGANIZATION": {
+				const member = organization.members.find((m) => m.id === user.id);
+				errorToastIfFalsy(member, "You are not a member of this organization");
+
+				const adminCount = organization.members.filter(
+					(m) => m.role === "ADMIN",
+				).length;
+				if (member.role === "ADMIN" && adminCount === 1) {
+					errorToast("Cannot leave as the sole admin of the organization");
+				}
+
+				await TournamentOrganizationRepository.deleteOwnMembership(
 					organization.id,
 				);
-			const currentlyBannedUsers = allBannedUsers.filter(
-				(bu) =>
-					!bu.expiresAt || isFuture(databaseTimestampToDate(bu.expiresAt)),
-			);
 
-			if (
-				currentlyBannedUsers.length >= TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS
-			) {
-				errorToast(
-					`Organization cannot ban more than ${TOURNAMENT_ORGANIZATION.MAX_BANNED_USERS} users`,
+				logger.info(
+					`User left organization: organization=${organization.name} (${organization.id}), userId=${user.id}`,
 				);
+
+				break;
 			}
+			case "DELETE_ORGANIZATION": {
+				requireRole("ADMIN");
 
-			await TournamentOrganizationRepository.upsertBannedUser({
-				organizationId: organization.id,
-				userId: data.userId,
-				privateNote: data.privateNote,
-				expiresAt: data.expiresAt
-					? dateToDatabaseTimestamp(data.expiresAt)
-					: null,
-			});
+				await TournamentOrganizationRepository.deleteById(organization.id);
 
-			logger.info(
-				`User banned: organization=${organization.name} (${organization.id}), userId=${data.userId}, banned by userId=${user.id}`,
-			);
+				logger.info(
+					`Organization deleted: organization=${organization.name} (${organization.id}), deleted by userId=${user.id}`,
+				);
 
-			break;
-		}
-		case "UNBAN_USER": {
-			requirePermission(organization, "BAN");
-
-			await TournamentOrganizationRepository.unbanUser({
-				organizationId: organization.id,
-				userId: data.userId,
-			});
-
-			logger.info(
-				`User unbanned: organization=${organization.name} (${organization.id}), userId=${data.userId}, unbanned by userId=${user.id}`,
-			);
-
-			break;
-		}
-		case "UPDATE_IS_ESTABLISHED": {
-			requireRole("ADMIN");
-
-			await TournamentOrganizationRepository.updateIsEstablished(
-				organization.id,
-				data.isEstablished,
-			);
-
-			logger.info(
-				`Organization isEstablished updated: organization=${organization.name} (${organization.id}), isEstablished=${data.isEstablished}, updated by userId=${user.id}`,
-			);
-
-			break;
-		}
-		case "LEAVE_ORGANIZATION": {
-			const member = organization.members.find((m) => m.id === user.id);
-			errorToastIfFalsy(member, "You are not a member of this organization");
-
-			const adminCount = organization.members.filter(
-				(m) => m.role === "ADMIN",
-			).length;
-			if (member.role === "ADMIN" && adminCount === 1) {
-				errorToast("Cannot leave as the sole admin of the organization");
+				throw redirect("/");
 			}
-
-			await TournamentOrganizationRepository.deleteOwnMembership(
-				organization.id,
-			);
-
-			logger.info(
-				`User left organization: organization=${organization.name} (${organization.id}), userId=${user.id}`,
-			);
-
-			break;
+			default: {
+				assertUnreachable(body);
+			}
 		}
-		case "DELETE_ORGANIZATION": {
-			requireRole("ADMIN");
 
-			await TournamentOrganizationRepository.deleteById(organization.id);
-
-			logger.info(
-				`Organization deleted: organization=${organization.name} (${organization.id}), deleted by userId=${user.id}`,
-			);
-
-			throw redirect("/");
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-
-	return null;
-};
+		return null;
+	},
+);

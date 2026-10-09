@@ -35,11 +35,8 @@
 
 .seriesWinName {
 	width: 100%;
-	overflow: hidden;
 	font-size: var(--font-sm);
 	line-height: 1.2;
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .seriesWinDate {

@@ -18,7 +18,8 @@
  * body the wash has emptied of ink, not merely paled (a near-white weapon
  * render pales one without the other). Every layout also demands a washed
  * (ink-poor, pale) body, since backdrop leaking past an icon edge fakes the
- * shoulder glow.
+ * shoulder glow, and a body still holding ink must be tinted in its team's
+ * hue (a cream weapon render tints one in its own).
  */
 import type { Mat } from "../../cv";
 import { copyRoi, type Roi } from "../../image";
@@ -66,6 +67,7 @@ import {
 	STATUS_READY_INKY_WASH_MIN_BODY_TINT,
 	STATUS_READY_MIN_BODY_PALE,
 	STATUS_READY_MIN_SHOULDER_GLOW,
+	STATUS_READY_MIN_TEAM_TINT,
 	STATUS_READY_MIN_WASH_BODY_PALE,
 	STATUS_READY_PALE_ONLY_MAX_BODY_INK,
 	STATUS_READY_WASH_MAX_BODY_INK,
@@ -75,6 +77,8 @@ import {
 	STATUS_SLOT_CENTERS_NARROW_LEFT,
 	STATUS_SLOT_CENTERS_NARROW_RIGHT,
 	STATUS_STICKY_FLIP_COMB_MIN,
+	STATUS_TEAM_HUE_MIN_BODY_INK,
+	STATUS_TEAM_TINT_MAX_HUE_DIFF,
 	STATUS_TINT_MIN_SPREAD,
 	STATUS_TINT_MIN_VALUE,
 	STATUS_UNCROSSED_WASH_MAX_BODY_DARK,
@@ -86,6 +90,8 @@ import {
 } from "./rois";
 
 export const PLAYER_STATUS_EVENT_TYPE = "PlayerStatus";
+
+const HUE_BIN_DEGREES = 10;
 
 /**
  * classFractions' per-pixel classes by (max, min) channel: bit 0 ink, 1 glow,
@@ -172,6 +178,8 @@ interface SlotRead {
 	bodyTint: number;
 	bodyGrey: number;
 	bodyDark: number;
+	/** fraction of the body's tinted pixels in the team's hue; null when the side's hue is unknown */
+	bodyTeamTint: number | null;
 	shoulderGlow: number;
 	shoulderPaleGlow: number;
 }
@@ -223,6 +231,11 @@ export function parsePlayerStatus(
 			bodyTint: reads.map((read) => Number(read.bodyTint.toFixed(2))),
 			bodyGrey: reads.map((read) => Number(read.bodyGrey.toFixed(2))),
 			bodyDark: reads.map((read) => Number(read.bodyDark.toFixed(2))),
+			bodyTeamTint: reads.map((read) =>
+				read.bodyTeamTint === null
+					? null
+					: Number(read.bodyTeamTint.toFixed(2)),
+			),
 			shoulderGlow: reads.map((read) => Number(read.shoulderGlow.toFixed(2))),
 			shoulderPaleGlow: reads.map((read) =>
 				Number(read.shoulderPaleGlow.toFixed(2)),
@@ -246,32 +259,36 @@ function readSlots(
 	const bodyBox =
 		layout === "even" ? STATUS_BODY_BOX_EVEN : STATUS_BODY_BOX_NARROW;
 
-	return centers.map((sideCenters) =>
-		sideCenters.map((cx): SlotRead => {
-			const shoulder = classFractions(frame, {
+	return centers.map((sideCenters) => {
+		const slots = sideCenters.map((cx) => ({
+			shoulder: classFractions(frame, {
 				x: cx + shoulderBox.dx,
 				y: shoulderBox.y,
 				w: shoulderBox.w,
 				h: shoulderBox.h,
-			});
-			const body = classFractions(frame, {
+			}),
+			body: classFractions(frame, {
 				x: cx + bodyBox.dx,
 				y: bodyBox.y,
 				w: bodyBox.w,
 				h: bodyBox.h,
-			});
-			return classifySlot(
+			}),
+		}));
+		const teamHue = sideTeamHue(slots.map((slot) => slot.body));
+		return slots.map(({ shoulder, body }) =>
+			classifySlot(
 				body.ink,
 				body.pale,
 				body.tint,
 				body.grey,
 				body.dark,
+				teamHue === null ? null : teamTintFraction(body.tintHues, teamHue),
 				shoulder.glow,
 				shoulder.paleGlow,
 				layout,
-			);
-		}),
-	) as [SlotRead[], SlotRead[]];
+			),
+		);
+	}) as [SlotRead[], SlotRead[]];
 }
 
 const ALL_LAYOUTS: readonly PlayerStatusLayout[] = [
@@ -460,7 +477,8 @@ function sideDecisiveness(reads: SlotRead[]): number {
  * the wash's pale body, and the narrow dead read trusts the body classes
  * alone. Without the shoulder's corroboration the graded allowances do not
  * apply at all: a pale-only ready needs the ink gone (STATUS_READY_PALE_ONLY_MAX_BODY_INK), since a pale body
- * over live ink is a weapon render, not a wash.
+ * over live ink is a weapon render, not a wash. A body still holding ink is
+ * also only washed when tinted in its team's hue (STATUS_READY_MIN_TEAM_TINT).
  */
 function classifySlot(
 	bodyInk: number,
@@ -468,6 +486,7 @@ function classifySlot(
 	bodyTint: number,
 	bodyGrey: number,
 	bodyDark: number,
+	bodyTeamTint: number | null,
 	shoulderGlow: number,
 	shoulderPaleGlow: number,
 	layout: PlayerStatusLayout,
@@ -495,11 +514,16 @@ function classifySlot(
 	const paleEmptiedBody =
 		bodyPale >= STATUS_READY_MIN_BODY_PALE &&
 		bodyInk <= STATUS_READY_PALE_ONLY_MAX_BODY_INK;
+	const offTeamTint =
+		!inkPoor &&
+		bodyTeamTint !== null &&
+		bodyTeamTint < STATUS_READY_MIN_TEAM_TINT;
 	const special =
 		!dead &&
 		((inkPoor && tinted) ||
 			((washGlow >= STATUS_READY_MIN_SHOULDER_GLOW || paleEmptiedBody) &&
 				washedBody &&
+				!offTeamTint &&
 				bodyPale >= STATUS_READY_MIN_WASH_BODY_PALE));
 	const confidence = dead
 		? Math.min(
@@ -525,16 +549,13 @@ function classifySlot(
 		bodyTint,
 		bodyGrey,
 		bodyDark,
+		bodyTeamTint,
 		shoulderGlow,
 		shoulderPaleGlow,
 	};
 }
 
-/** Ink, glow, pale, tint, grey, and dark pixel fractions of a ROI (see rois.ts for the classes). */
-function classFractions(
-	frame: Mat,
-	roi: Roi,
-): {
+interface ClassFractions {
 	ink: number;
 	glow: number;
 	paleGlow: number;
@@ -542,7 +563,18 @@ function classFractions(
 	tint: number;
 	grey: number;
 	dark: number;
-} {
+	/** sum of the ink pixels' hue unit vectors */
+	inkHueX: number;
+	inkHueY: number;
+	/** tinted pixel counts per HUE_BIN_DEGREES hue bin */
+	tintHues: number[];
+}
+
+/**
+ * Ink, glow, pale, tint, grey, and dark pixel fractions of a ROI (see rois.ts
+ * for the classes), plus the hues of its ink and tinted pixels.
+ */
+function classFractions(frame: Mat, roi: Roi): ClassFractions {
 	const cols = frame.cols;
 	const inside =
 		roi.x >= 0 &&
@@ -566,6 +598,9 @@ function classFractions(
 	let tint = 0;
 	let grey = 0;
 	let dark = 0;
+	let inkHueX = 0;
+	let inkHueY = 0;
+	const tintHues = new Array<number>(360 / HUE_BIN_DEGREES).fill(0);
 	for (let y = 0; y < roi.h; y++) {
 		const rowStart = start + y * rowStride;
 		const rowEnd = rowStart + roi.w * channels;
@@ -576,6 +611,15 @@ function classFractions(
 			const high = r > g ? (r > b ? r : b) : g > b ? g : b;
 			const low = r < g ? (r < b ? r : b) : g < b ? g : b;
 			const flags = PIXEL_CLASSES[(high << 8) | low]!;
+			if (flags & 1) {
+				const radians = (hueDegrees(r, g, b, high, low) * Math.PI) / 180;
+				inkHueX += Math.cos(radians);
+				inkHueY += Math.sin(radians);
+			} else if (flags & 16) {
+				tintHues[
+					Math.floor(hueDegrees(r, g, b, high, low) / HUE_BIN_DEGREES)
+				]!++;
+			}
 			ink += flags & 1;
 			glow += (flags >> 1) & 1;
 			paleGlow += (flags >> 2) & 1;
@@ -595,7 +639,51 @@ function classFractions(
 		tint: tint / count,
 		grey: grey / count,
 		dark: dark / count,
+		inkHueX,
+		inkHueY,
+		tintHues,
 	};
+}
+
+/** HSV hue in [0, 360) of a pixel with spread (`high` > `low`). */
+function hueDegrees(
+	r: number,
+	g: number,
+	b: number,
+	high: number,
+	low: number,
+): number {
+	const spread = high - low;
+	const sector =
+		high === r
+			? ((g - b) / spread + 6) % 6
+			: high === g
+				? (b - r) / spread + 2
+				: (r - g) / spread + 4;
+	return sector * 60;
+}
+
+/** The side's team hue: the mean hue of its bodies' ink; null when they hold too little ink. */
+function sideTeamHue(bodies: ClassFractions[]): number | null {
+	const meanInk =
+		bodies.reduce((sum, body) => sum + body.ink, 0) / bodies.length;
+	if (meanInk < STATUS_TEAM_HUE_MIN_BODY_INK) return null;
+	const x = bodies.reduce((sum, body) => sum + body.inkHueX, 0);
+	const y = bodies.reduce((sum, body) => sum + body.inkHueY, 0);
+	return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+/** Fraction of tinted pixels whose hue bin centers within the tolerance of `teamHue`; null without any. */
+function teamTintFraction(tintHues: number[], teamHue: number): number | null {
+	let near = 0;
+	let total = 0;
+	for (const [bin, count] of tintHues.entries()) {
+		total += count;
+		const diff = Math.abs((bin + 0.5) * HUE_BIN_DEGREES - teamHue) % 360;
+		if (Math.min(diff, 360 - diff) <= STATUS_TEAM_TINT_MAX_HUE_DIFF)
+			near += count;
+	}
+	return total === 0 ? null : near / total;
 }
 
 /**

@@ -36,9 +36,6 @@
 
 .username {
 	font-weight: var(--weight-semi);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .iconYes {

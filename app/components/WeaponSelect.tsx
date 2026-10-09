@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -123,7 +124,7 @@ export function WeaponSelect<
 									className={styles.weaponImg}
 								/>
 								<span
-									className={styles.weaponLabel}
+									className={clsx(styles.weaponLabel, "truncate")}
 									data-testid={`weapon-select-option-${weaponName}`}
 								>
 									{weaponName}

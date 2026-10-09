@@ -471,6 +471,131 @@ function bottomInk(
 }
 
 /**
+ * A '!' is a cap-height stem with a dot on the baseline, but capture blur fills
+ * the gap between them (720p "BLUEYMOM!!" read "BLUEvMOMIl"), and a fading
+ * kill-feed row dims the dot under the binarization threshold so the segment
+ * ends at the stem ("!!!" read "!rr"). Either way the bar or 'r' read keeps the
+ * gap in the raw pixels: each row's brightest pixel across the segment's
+ * columns runs bright down the stem, dips, and rises again at the dot right
+ * under it. Measured on those rows the dip falls 40-66% under the stem and the
+ * dot climbs 0.2+ of the stem level back out of it; a bar or an 'r' stays
+ * level to the baseline. The stem must also start at the top of the line,
+ * where an 'r' starts at the x-height.
+ */
+const EXCLAMATION_STEM_READS = new Set([...BAR_CHARS, "r", "ι", "ィ"]);
+const EXCLAMATION_MIN_NOTCH_DEPTH = 0.3;
+const EXCLAMATION_MIN_DOT_RISE = 0.15;
+/** the dip sits below the stem's upper half */
+const EXCLAMATION_NOTCH_FROM = 0.55;
+/** the dot rises within this share of the height under the dip */
+const EXCLAMATION_DOT_MAX_DROP = 0.2;
+const EXCLAMATION_MAX_TOP_OFFSET = 0.12;
+
+function resolveExclamationByNotch(
+	raw: RecognizedText,
+	grayView: Mat,
+): RecognizedText {
+	if (!raw.chars.some((c) => EXCLAMATION_STEM_READS.has(c.char))) return raw;
+	const others = raw.chars.filter(
+		(c) => !EXCLAMATION_STEM_READS.has(c.char) && c.char !== "!",
+	);
+	if (others.length === 0) return raw;
+	const bottoms = others.map((c) => c.y1).sort((a, b) => a - b);
+	const baseline = bottoms[Math.floor(bottoms.length / 2)]!;
+	const lineTop = Math.min(...others.map((c) => c.y0));
+
+	const gray = new (getCV().Mat)();
+	grayView.copyTo(gray);
+	const { cols, rows, data } = gray;
+	const rowMax = (c: RecognizedChar, y: number) => {
+		let max = 0;
+		for (let x = c.x0; x < c.x1; x++) max = Math.max(max, data[y * cols + x]!);
+		return max;
+	};
+	const chars = raw.chars.map((c) => {
+		if (!EXCLAMATION_STEM_READS.has(c.char)) return c;
+		const h = baseline - c.y0;
+		if (h < 6 || c.y0 - lineTop > EXCLAMATION_MAX_TOP_OFFSET * h) return c;
+		const upper: number[] = [];
+		for (let y = c.y0; y < c.y0 + Math.round(h / 2); y++) {
+			upper.push(rowMax(c, y));
+		}
+		const stem = upper.sort((a, b) => a - b)[Math.floor(upper.length / 2)]!;
+		let notch = Number.POSITIVE_INFINITY;
+		let notchY = -1;
+		for (
+			let y = c.y0 + Math.round(h * EXCLAMATION_NOTCH_FROM);
+			y < baseline;
+			y++
+		) {
+			const v = rowMax(c, y);
+			if (v < notch) {
+				notch = v;
+				notchY = y;
+			}
+		}
+		if (notchY < 0) return c;
+		let dot = 0;
+		const dotEnd = Math.min(
+			rows,
+			notchY + 1 + Math.max(2, Math.round(h * EXCLAMATION_DOT_MAX_DROP)),
+		);
+		for (let y = notchY + 1; y < dotEnd; y++) dot = Math.max(dot, rowMax(c, y));
+		const isExclamation =
+			stem - notch >= EXCLAMATION_MIN_NOTCH_DEPTH * stem &&
+			dot - notch >= EXCLAMATION_MIN_DOT_RISE * stem;
+		return isExclamation ? { ...c, char: "!" } : c;
+	});
+	gray.delete();
+	return { ...raw, text: retext(raw.text, chars), chars };
+}
+
+/**
+ * Lowercase letters without ascenders stop at the x-height, a quarter of the
+ * cap height under the cap line, while tight cropping hides that from the
+ * templates: a 'Y' correlates with the 'v' its arms draw (720p "BLUEYMOM" read
+ * "BLUEvMOM"), a 'U' with 'u'. One whose ink starts at the cap line (the
+ * median top of the capitals, digits and ascenders beside it) is re-decided to
+ * the capital of the same shape when that is a near-tie candidate.
+ */
+const CAP_TWINS: Record<string, string> = {
+	c: "C",
+	o: "O0",
+	s: "S",
+	u: "UY",
+	v: "VY",
+	w: "W",
+	x: "X",
+	z: "Z",
+};
+const CAP_LINE_ANCHOR = /^[\p{Lu}\dbdfhkl]$/u;
+const CAP_LINE_MAX_OFFSET = 0.12;
+const CAP_LINE_SCORE_MARGIN = 0.06;
+
+function resolveCaseByCapLine(raw: RecognizedText): RecognizedText {
+	if (!raw.chars.some((c) => c.char in CAP_TWINS)) return raw;
+	const tops = raw.chars
+		.filter((c) => CAP_LINE_ANCHOR.test(c.char))
+		.map((c) => c.y0)
+		.sort((a, b) => a - b);
+	if (tops.length === 0) return raw;
+	const bottoms = raw.chars.map((c) => c.y1).sort((a, b) => a - b);
+	const capLine = tops[Math.floor(tops.length / 2)]!;
+	const capHeight = bottoms[Math.floor(bottoms.length / 2)]! - capLine;
+	if (capHeight <= 0) return raw;
+	const chars = raw.chars.map((c) => {
+		const twins = CAP_TWINS[c.char];
+		if (!twins || c.y0 - capLine > CAP_LINE_MAX_OFFSET * capHeight) return c;
+		const capital = c.candidates?.find(
+			(k) =>
+				twins.includes(k.char) && c.score - k.score <= CAP_LINE_SCORE_MARGIN,
+		);
+		return capital ? { ...c, char: capital.char, score: capital.score } : c;
+	});
+	return { ...raw, text: retext(raw.text, chars), chars };
+}
+
+/**
  * A (han)dakuten is two short ticks (or a ring) floating above the base kana's
  * upper right. Capture blur thins those ticks, so the ink-coverage penalty lets
  * the plain twin ('か') edge out the voiced glyph ('が') whose extra template ink
@@ -772,24 +897,31 @@ export function* parseNameSteps(
 		normalizeOhs(
 			normalizeBars(
 				resolveCaseByDescent(
-					resolveAccentByMark(
-						resolveVoicedByMark(
-							resolveBhByBowlFloor(
-								resolveStemTwins(
-									resolveDoByCorners(
-										fixDotsByPosition(resolveUnderscoreByBaseline(raw)),
+					resolveCaseByCapLine(
+						resolveAccentByMark(
+							resolveVoicedByMark(
+								resolveBhByBowlFloor(
+									resolveStemTwins(
+										resolveDoByCorners(
+											fixDotsByPosition(
+												resolveExclamationByNotch(
+													resolveUnderscoreByBaseline(raw),
+													gray,
+												),
+											),
+											gray,
+										),
 										gray,
+										binThreshold,
 									),
 									gray,
-									binThreshold,
 								),
 								gray,
+								binThreshold,
 							),
 							gray,
 							binThreshold,
 						),
-						gray,
-						binThreshold,
 					),
 				).trim(),
 			),

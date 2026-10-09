@@ -3,6 +3,7 @@ import gameMisc from "~/../locales/en/game-misc.json";
 import type { TablesInsertable } from "~/db/tables";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { SPLATOON3_INK_SCHEDULES_URL } from "~/utils/urls";
 
 const STAGE_NAME_TO_ID = Object.fromEntries(
@@ -106,8 +107,8 @@ export async function fetchRotations(): Promise<
 				mode,
 				stageId1,
 				stageId2,
-				startsAt: Math.floor(new Date(node.startTime).getTime() / 1000),
-				endsAt: Math.floor(new Date(node.endTime).getTime() / 1000),
+				startsAt: dateToDatabaseTimestamp(new Date(node.startTime)),
+				endsAt: dateToDatabaseTimestamp(new Date(node.endTime)),
 			});
 		}
 	}
@@ -127,8 +128,8 @@ export async function fetchRotations(): Promise<
 			mode,
 			stageId1,
 			stageId2,
-			startsAt: Math.floor(new Date(node.startTime).getTime() / 1000),
-			endsAt: Math.floor(new Date(node.endTime).getTime() / 1000),
+			startsAt: dateToDatabaseTimestamp(new Date(node.startTime)),
+			endsAt: dateToDatabaseTimestamp(new Date(node.endTime)),
 		});
 	}
 

@@ -110,7 +110,9 @@ export function GraphicHeader({
 }
 
 export function GraphicTitle({ children }: { children: React.ReactNode }) {
-	return <span className={styles.headerTitle}>{children}</span>;
+	return (
+		<span className={clsx(styles.headerTitle, "truncate")}>{children}</span>
+	);
 }
 
 export function GraphicDateSubtitle({ date }: { date: number | Date }) {
@@ -186,7 +188,7 @@ export function GraphicTeamRow({
 				) : null}
 			</div>
 			<div className={styles.teamInfo}>
-				<div className={styles.teamName}>{team.name}</div>
+				<div className={clsx(styles.teamName, "truncate")}>{team.name}</div>
 				<div className={styles.playersList}>
 					{team.players.map((player) => (
 						<GraphicPlayerChip key={player.name} player={player} />

@@ -201,7 +201,7 @@ export function SeasonSummaryGraphic({
 					<div className={styles.teamRankInfo}>
 						<div className={styles.teamRankTitle}>
 							{teamRank.team ? (
-								<span className={styles.teamRankName}>
+								<span className={clsx(styles.teamRankName, "truncate")}>
 									{teamRank.team.name}
 								</span>
 							) : null}
@@ -323,7 +323,7 @@ export function SeasonSummaryGraphic({
 											{mate.player.countryCode ? (
 												<Flag countryCode={mate.player.countryCode} tiny />
 											) : null}
-											<span className={styles.mateNameText}>
+											<span className={clsx(styles.mateNameText, "truncate")}>
 												{mate.player.name}
 											</span>
 										</div>
@@ -355,7 +355,7 @@ export function SeasonSummaryGraphic({
 									opponentScore={set.opponentScore}
 								/>
 								<div className={styles.setInfo}>
-									<GraphicBoxLabel className={styles.setContext}>
+									<GraphicBoxLabel className="truncate">
 										{set.context}
 									</GraphicBoxLabel>
 									<div
@@ -396,7 +396,9 @@ export function SeasonSummaryGraphic({
 							alt=""
 						/>
 						<div className={styles.tournamentInfo}>
-							<div className={styles.tournamentName}>{bestTournament.name}</div>
+							<div className={clsx(styles.tournamentName, "truncate")}>
+								{bestTournament.name}
+							</div>
 							<div className={styles.tournamentMeta}>
 								{t("calendar:count.teams", {
 									count: bestTournament.teamsCount,

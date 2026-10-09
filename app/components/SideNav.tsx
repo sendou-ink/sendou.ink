@@ -111,12 +111,14 @@ function ListItemContent({
 				</div>
 			) : null}
 			<div className={styles.listLinkContent}>
-				<span className={styles.listLinkTitle}>{children}</span>
+				<span className={clsx(styles.listLinkTitle, "truncate")}>
+					{children}
+				</span>
 				{subtitle || badge ? (
 					<div className={styles.listLinkSubtitleRow}>
 						{subtitle ? (
 							<span
-								className={styles.listLinkSubtitle}
+								className={clsx(styles.listLinkSubtitle, "truncate")}
 								suppressHydrationWarning={suppressSubtitleHydrationWarning}
 							>
 								{subtitle}
@@ -259,10 +261,16 @@ export function NavListTitle({
 	className?: string;
 }) {
 	return (
-		<span className={clsx(styles.listLinkTitle, className)}>{children}</span>
+		<span className={clsx(styles.listLinkTitle, "truncate", className)}>
+			{children}
+		</span>
 	);
 }
 
 export function NavListSubtitle({ children }: { children: React.ReactNode }) {
-	return <span className={styles.listLinkSubtitle}>{children}</span>;
+	return (
+		<span className={clsx(styles.listLinkSubtitle, "truncate")}>
+			{children}
+		</span>
+	);
 }

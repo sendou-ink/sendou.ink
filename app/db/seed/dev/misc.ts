@@ -3,6 +3,7 @@ import { Config } from "~/config";
 import type { Tables } from "~/db/tables";
 import type { Notification } from "~/features/notifications/notifications-types";
 import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
+import { toDBBoolean } from "~/utils/sql";
 import {
 	getArtFilename,
 	SEED_ART_URLS,
@@ -255,8 +256,8 @@ async function seedNotifications(
 			{
 				notification,
 				users: [
-					{ userId: users.adminId, seen: i <= 7 ? 1 : 0 },
-					{ userId: users.nzapId, seen: i <= 7 ? 1 : 0 },
+					{ userId: users.adminId, seen: toDBBoolean(i <= 7) },
+					{ userId: users.nzapId, seen: toDBBoolean(i <= 7) },
 				],
 			},
 			{ createdAt },

@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
@@ -264,7 +265,9 @@ function BackfillTournamentList({
 											aria-label={winner.username}
 										/>
 										<Avatar user={winner} size="xxs" />
-										<span className={styles.winnerName}>{winner.username}</span>
+										<span className={clsx(styles.winnerName, "truncate")}>
+											{winner.username}
+										</span>
 										<ParticipationPill setResults={winner.setResults} />
 									</li>
 								))}

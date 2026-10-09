@@ -1,11 +1,17 @@
 import { useTranslation } from "react-i18next";
+import { Divider } from "~/components/Divider";
 import { FormMessage } from "~/components/FormMessage";
 import { InfoPopover } from "~/components/InfoPopover";
+import type { SkippableRound } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
+import { isEliminationType } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { FormField } from "~/form/FormField";
 import { useFormFieldContext, useFormValue } from "~/form/SendouForm";
-import type { ArrayItemRenderContext } from "~/form/types";
+import type {
+	ArrayItemRenderContext,
+	CustomFieldRenderProps,
+} from "~/form/types";
 import {
 	type BracketFormValue,
 	newFollowUpProgressionEntry,
@@ -15,6 +21,7 @@ import {
 	sourceBracketHasEarlyAdvance,
 } from "../calendar-progression-form";
 import styles from "./BracketProgressionFormFields.module.css";
+import { RoundsPlayedChecklist } from "./RoundsPlayedChecklist";
 
 const DEFAULT_ADVANCE_THRESHOLD = "3";
 
@@ -100,12 +107,16 @@ export function BracketProgressionFormFields({
 	);
 }
 
-function BracketFields({
+/** Fields of one bracket: name, format and the settings of that format. Follow-ups also get a start time and check-in. */
+export function BracketFields({
 	renderContext,
 	isDisabled,
+	onFormatChange,
 }: {
 	renderContext: ArrayItemRenderContext;
 	isDisabled: boolean;
+	/** Called after a change to the format or a setting that changes which placements the bracket has. */
+	onFormatChange?: () => void;
 }) {
 	const { t } = useTranslation(["forms"]);
 	const { index, itemName, values, setItemField } = renderContext;
@@ -118,16 +129,30 @@ function BracketFields({
 	return (
 		<div className="stack md items-start">
 			<FormField name={`${itemName}.name`} disabled={isDisabled} />
-			<FormField name={`${itemName}.type`} disabled={isDisabled} />
+			<FormField
+				name={`${itemName}.type`}
+				disabled={isDisabled}
+				// skippable rounds differ by format
+				onValueChange={() => {
+					setItemField("skippedRounds", []);
+					onFormatChange?.();
+				}}
+			/>
 
-			{bracket.type === "single_elimination" ? (
-				<FormField name={`${itemName}.thirdPlaceMatch`} disabled={isDisabled} />
+			{isEliminationType(bracket.type) ? (
+				<EliminationFields
+					type={bracket.type}
+					itemName={itemName}
+					isDisabled={isDisabled}
+					onFormatChange={onFormatChange}
+				/>
 			) : null}
 
 			{bracket.type === "round_robin" ? (
 				<FormField
 					name={`${itemName}.teamsPerGroup`}
 					disabled={isDisabled}
+					onValueChange={onFormatChange}
 					options={(!isFollowUp && bracket.hasAbDivisions
 						? TOURNAMENT.RR_AB_DIVISIONS_TEAMS_PER_GROUP_OPTIONS
 						: TOURNAMENT.RR_TEAMS_PER_GROUP_OPTIONS
@@ -150,6 +175,7 @@ function BracketFields({
 						} else if (!isSelected && teamsPerGroup > maxWithoutAb) {
 							setItemField("teamsPerGroup", String(maxWithoutAb));
 						}
+						onFormatChange?.();
 					}}
 				/>
 			) : null}
@@ -202,6 +228,7 @@ function BracketFields({
 
 			{isFollowUp ? (
 				<>
+					<Divider className={styles.divider} />
 					<FormField name={`${itemName}.startTime`} disabled={isDisabled} />
 					<FormField
 						name={`${itemName}.requiresCheckIn`}
@@ -210,6 +237,51 @@ function BracketFields({
 				</>
 			) : null}
 		</div>
+	);
+}
+
+/** Groups and rounds played of a single or double elimination bracket. */
+function EliminationFields({
+	type,
+	itemName,
+	isDisabled,
+	onFormatChange,
+}: {
+	type: "single_elimination" | "double_elimination";
+	itemName: string;
+	isDisabled: boolean;
+	onFormatChange?: () => void;
+}) {
+	return (
+		<>
+			<FormField
+				name={`${itemName}.eliminationGroupCount`}
+				disabled={isDisabled}
+				onValueChange={onFormatChange}
+			/>
+			<FormField
+				name={`${itemName}.skippedRounds`}
+				disabled={isDisabled}
+				onValueChange={onFormatChange}
+			>
+				{({
+					name,
+					value,
+					onChange,
+					error,
+					disabled,
+				}: CustomFieldRenderProps) => (
+					<RoundsPlayedChecklist
+						name={name}
+						type={type}
+						skipped={value as SkippableRound[]}
+						onChange={onChange}
+						error={error}
+						disabled={disabled}
+					/>
+				)}
+			</FormField>
+		</>
 	);
 }
 
@@ -336,6 +408,7 @@ function SourceFields({
 	);
 }
 
+/** Explains the syntax of the placements input. */
 function PlacementsSyntaxPopover() {
 	return (
 		<InfoPopover tiny>

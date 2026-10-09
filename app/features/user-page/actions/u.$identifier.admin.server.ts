@@ -1,55 +1,44 @@
-import type { ActionFunctionArgs } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
 import { adminTabActionSchema } from "~/features/user-page/user-page-schemas";
-import { parseFormData } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { badRequestIfFalsy } from "~/utils/remix.server";
+import { badRequestIfFalsy, forbidden } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	const loggedInUser = requireUser();
+export const action = defineAction(
+	{ body: adminTabActionSchema },
+	async ({ body }) => {
+		const loggedInUser = requireUser();
 
-	requireRole("STAFF");
+		requireRole("STAFF");
 
-	const result = await parseFormData({
-		request,
-		schema: adminTabActionSchema,
-	});
-
-	if (!result.success) {
-		return { fieldErrors: result.fieldErrors };
-	}
-
-	const data = result.data;
-
-	switch (data._action) {
-		case "ADD_MOD_NOTE": {
-			await AdminRepository.addModNote({
-				userId: userPageUserId(),
-				text: data.value,
-			});
-			break;
-		}
-		case "DELETE_MOD_NOTE": {
-			const note = badRequestIfFalsy(
-				await AdminRepository.findModNoteById(data.noteId),
-			);
-
-			if (note.authorId !== loggedInUser.id) {
-				throw new Response(null, {
-					status: 401,
+		switch (body._action) {
+			case "ADD_MOD_NOTE": {
+				await AdminRepository.addModNote({
+					userId: userPageUserId(),
+					text: body.value,
 				});
+				break;
 			}
+			case "DELETE_MOD_NOTE": {
+				const note = badRequestIfFalsy(
+					await AdminRepository.findModNoteById(body.noteId),
+				);
 
-			await AdminRepository.deleteModNote(data.noteId);
-			break;
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
+				if (note.authorId !== loggedInUser.id) {
+					forbidden();
+				}
 
-	return null;
-};
+				await AdminRepository.deleteModNote(body.noteId);
+				break;
+			}
+			default: {
+				assertUnreachable(body);
+			}
+		}
+
+		return null;
+	},
+);

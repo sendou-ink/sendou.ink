@@ -320,7 +320,7 @@ describe("update", () => {
 			description: "Updated",
 			linkedUsers: [users.id(3)],
 			tags: [{ name: "Weapon" }],
-			isShowcase: 1,
+			isShowcase: true,
 		});
 
 		const result = await ArtRepository.findArtsByUserId(users.id(1));
@@ -341,7 +341,7 @@ describe("update", () => {
 			description: null,
 			linkedUsers: [],
 			tags: [],
-			isShowcase: 1,
+			isShowcase: true,
 		});
 
 		const result = await ArtRepository.findArtsByUserId(users.id(1));

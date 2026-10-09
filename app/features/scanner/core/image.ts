@@ -82,6 +82,21 @@ export function frameGray(frame: Mat): Mat {
 	return cached.gray;
 }
 
+/**
+ * Hands frameGray the conversion of `frame`, computed elsewhere (the same
+ * pixels: the GPU readback's exact kernel), so no caller converts. Call it
+ * when the frame's pass begins: it replaces the conversions held for any
+ * other frame.
+ */
+export function provideFrameGray(frame: Mat, gray: Uint8Array): void {
+	const cv = getCV();
+	const mat = new cv.Mat(frame.rows, frame.cols, cv.CV_8UC1);
+	(mat.data as Uint8Array).set(gray);
+	const cached = conversionsOf(frame);
+	cached.gray?.delete();
+	cached.gray = mat;
+}
+
 /** RGB of a canonical frame, shared like frameGray. */
 export function frameRgb(frame: Mat): Mat {
 	const cached = conversionsOf(frame);

@@ -5,6 +5,7 @@
  */
 import { readdirSync, readFileSync } from "node:fs";
 import type { LoaderFunctionArgs } from "react-router";
+import { notFound, notFoundIfNullish } from "~/utils/remix.server";
 import { FIXTURES_DIR, type Fixture, loadFixtures } from "../node/fixtures";
 
 export interface FixtureListItem {
@@ -23,11 +24,12 @@ export const loader = ({ params }: LoaderFunctionArgs) => {
 		!caseName ||
 		!PATH_SEGMENT_RE.test(caseName)
 	) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
-	const fixture = loadFixtures(detector).find((f) => f.name === caseName);
-	if (!fixture) throw new Response(null, { status: 404 });
+	const fixture = notFoundIfNullish(
+		loadFixtures(detector).find((f) => f.name === caseName),
+	);
 
 	return new Response(new Uint8Array(readFileSync(fixture.framePath)), {
 		headers: {

@@ -212,9 +212,7 @@ function TrophyWinDetails({
 								<UserCard data={userCards.get(member.id)}>
 									<span className={styles.winMemberUser}>
 										<Avatar size="xxxs" user={member} />
-										<span className={styles.winMemberName}>
-											{member.username}
-										</span>
+										<span className="truncate">{member.username}</span>
 									</span>
 								</UserCard>
 								<span className={styles.winMemberWeapons}>

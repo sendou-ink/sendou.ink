@@ -115,9 +115,6 @@
 .chip {
 	display: block;
 	max-width: 250px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	font-size: var(--font-xs);
 	padding: var(--s-1) var(--s-2-5);
 	border-radius: var(--radius-full);

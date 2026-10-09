@@ -7,6 +7,7 @@ import type {
 } from "~/features/tournament-bracket/core/engine/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { unwrap } from "~/utils/result";
+import { toDBBoolean } from "~/utils/sql";
 import * as Engine from "./engine";
 import type * as Progression from "./Progression";
 import { Tournament } from "./Tournament";
@@ -628,7 +629,7 @@ describe("teamMemberOfProgressStatus in swiss", () => {
 				teams: [1, 2, 3, 4].map((teamId) =>
 					tournamentCtxTeam(teamId, {
 						memberUserIds: [100 + teamId],
-						droppedOut: teamId === 4 ? 1 : 0,
+						droppedOut: toDBBoolean(teamId === 4),
 					}),
 				),
 			},

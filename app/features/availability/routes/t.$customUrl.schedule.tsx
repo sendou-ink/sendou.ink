@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { isSameDay } from "date-fns";
 import {
 	CalendarClock,
@@ -366,14 +365,9 @@ function TeamEvents({ week }: { week: WeekData }) {
 										)
 									: `${timeFormatter.format(databaseTimestampToDate(event.startsAt))} – ${timeFormatter.format(databaseTimestampToDate(event.endsAt))}`}
 							</span>
-							<span className={styles.eventName}>{event.name}</span>
+							<span className="truncate">{event.name}</span>
 							{event.participants.length > 0 ? (
-								<span
-									className={clsx(
-										styles.eventParticipants,
-										"text-lighter text-xs",
-									)}
-								>
+								<span className="truncate text-lighter text-xs">
 									{participantNames(event)}
 								</span>
 							) : null}

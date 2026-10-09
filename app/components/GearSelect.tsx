@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import {
 	SendouSelect,
@@ -70,7 +71,7 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 									className={styles.weaponImg}
 								/>
 								<span
-									className={styles.weaponLabel}
+									className={clsx(styles.weaponLabel, "truncate")}
 									data-testid={`gear-select-option-${name}`}
 								>
 									{name}

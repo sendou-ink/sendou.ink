@@ -1,18 +1,13 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as v from "valibot";
 import { db } from "~/db/sql";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/schema";
+import { idObject } from "~/utils/schema";
 import type { GetCastedTournamentMatchesResponse } from "../schema";
-
-const paramsSchema = v.object({
-	id,
-});
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({
 		params,
-		schema: paramsSchema,
+		schema: idObject,
 	});
 
 	const tournament = notFoundIfNullish(

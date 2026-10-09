@@ -68,7 +68,7 @@ export function VoiceCallStrip({
 				<StatusDot status={call.status} />
 				{t("common:chat.voice.inCall", { room: title })}
 			</button>
-			<MicButton call={call} />
+			<MicButton call={call} compact />
 			<LeaveButton />
 		</div>
 	);
@@ -195,7 +195,14 @@ function InCallControls({
 	);
 }
 
-function MicButton({ call }: { call: VoiceCall }) {
+function MicButton({
+	call,
+	compact = false,
+}: {
+	call: VoiceCall;
+	/** Push-to-talk as an icon only, where the bar has no room for its label. */
+	compact?: boolean;
+}) {
 	const { t } = useTranslation(["common"]);
 	const disabled = call.status !== "CONNECTED";
 
@@ -209,6 +216,8 @@ function MicButton({ call }: { call: VoiceCall }) {
 				size="small"
 				variant={call.micEnabled ? "success" : "outlined"}
 				icon={<Mic />}
+				shape={compact ? "square" : undefined}
+				aria-label={compact ? t("common:chat.voice.holdToTalk") : undefined}
 				isDisabled={disabled}
 				className={styles.pushToTalk}
 				onPointerDown={() => setTalking(true)}
@@ -221,7 +230,7 @@ function MicButton({ call }: { call: VoiceCall }) {
 				onKeyUp={() => setTalking(false)}
 				onContextMenu={(event) => event.preventDefault()}
 			>
-				{t("common:chat.voice.holdToTalk")}
+				{compact ? null : t("common:chat.voice.holdToTalk")}
 			</SendouButton>
 		);
 	}

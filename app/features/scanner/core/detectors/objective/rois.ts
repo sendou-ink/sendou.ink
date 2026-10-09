@@ -52,7 +52,9 @@ export const GATE_SCORE_MIN_MAX_BRIGHTNESS = 200;
  * Gate anchor: the timer's white M:SS in a near-black box. In-match HUD reads
  * <=32 on each dark probe; closest lookalike is the replay-browser header's
  * stage tag ("Banlieue Balibot" ~48). Turf War and the death cam also show a
- * timer; the plate probes and no-readable-count rejection handle those.
+ * timer; the plate probes and no-readable-count rejection handle those. The
+ * last minute's digits are yellow, which peaks at 220-249 in gray against
+ * white's 255.
  */
 export const TIMER_DIGIT_ROI: Roi = { x: 908, y: 54, w: 100, h: 40 };
 export const TIMER_DARK_PROBES: readonly Roi[] = [
@@ -61,7 +63,7 @@ export const TIMER_DARK_PROBES: readonly Roi[] = [
 	{ x: 1012, y: 57, w: 7, h: 26 },
 ];
 export const GATE_TIMER_MAX_MEAN = 40;
-export const GATE_TIMER_MIN_MAX_BRIGHTNESS = 240;
+export const GATE_TIMER_MIN_MAX_BRIGHTNESS = 200;
 
 /**
  * Timer digits are 34px on native 1080p, ~40px on upscaled 720p; both tried,
@@ -315,6 +317,20 @@ export const STATUS_READY_INKY_WASH_MIN_BODY_TINT = 0.2;
  * ink guards cannot catch it.
  */
 export const STATUS_READY_MIN_WASH_BODY_PALE = 0.2;
+
+/**
+ * The wash is a pale tint of the team's own ink, while a big cream weapon
+ * render (Order Shot Replica, 2026-10-07 Crableg VoD) pales and tints a live
+ * purple body just as much, its shoulder too. So a ready read on a body that
+ * still holds ink needs most of its tinted pixels within the hue tolerance of
+ * the side's ink (the team hue, from every slot's body ink): attested washes
+ * there read >=0.62, the cream render <=0.34. A pinkish wash on a purple team
+ * sits ~50° off the ink's hue, hence the wide tolerance. Ink-poor washes skip
+ * it, as does a side with too little ink to tell its hue.
+ */
+export const STATUS_READY_MIN_TEAM_TINT = 0.48;
+export const STATUS_TEAM_TINT_MAX_HUE_DIFF = 60;
+export const STATUS_TEAM_HUE_MIN_BODY_INK = 0.05;
 
 /**
  * Layout scoring: per-slot decisiveness is body-ink distance from the dead

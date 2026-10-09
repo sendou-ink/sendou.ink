@@ -876,6 +876,7 @@ export function findAllForShowcase() {
 						...commonUserSelect(placerEb, { inTournament: true }),
 						"User.country",
 						"TournamentResult.div",
+						"TournamentTeam.id as tournamentTeamId",
 						"TournamentTeam.name as teamName",
 						concatUserSubmittedImagePrefix(placerEb.ref("TeamAvatar.url")).as(
 							"teamLogoUrl",
@@ -1678,17 +1679,24 @@ export function finalize({
 		await trx.insertInto("TournamentBadgeOwner").values(badgeOwners).execute();
 
 		if (trophyReceiver) {
+			const receiverIdsByTeamId = new Map<number | undefined, number[]>();
+			for (const userId of trophyReceiver.userIds) {
+				const tournamentTeamId = summary.tournamentResults.find(
+					(result) => result.userId === userId,
+				)?.tournamentTeamId;
+				receiverIdsByTeamId.set(tournamentTeamId, [
+					...(receiverIdsByTeamId.get(tournamentTeamId) ?? []),
+					userId,
+				]);
+			}
+
 			await TrophyRepository.insertTournamentOwners(
-				[
-					{
-						tournamentId,
-						tournamentTeamId: summary.tournamentResults.find((result) =>
-							trophyReceiver.userIds.includes(result.userId),
-						)?.tournamentTeamId,
-						trophyId: trophyReceiver.trophyId,
-						userIds: trophyReceiver.userIds,
-					},
-				],
+				Array.from(receiverIdsByTeamId, ([tournamentTeamId, userIds]) => ({
+					tournamentId,
+					tournamentTeamId,
+					trophyId: trophyReceiver.trophyId,
+					userIds,
+				})),
 				trx,
 			);
 		}

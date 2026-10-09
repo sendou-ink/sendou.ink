@@ -235,6 +235,7 @@ pnpm test:unit:browser                  # includes tests/logic/ — the fixture-
 pnpm scanner:report                     # accuracy table + name character error rate across fixtures
 pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
 pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
+pnpm scanner:unpack-zip <zip> <new-dir> # validate + unpack a user's Game data zip (refuses anything matchZip doesn't write)
 pnpm scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out (--gpu, --record, see "WebGPU")
 pnpm scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
 pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
@@ -397,7 +398,8 @@ sequenceDiagram
   not corroborate needs the body's ink gone rather than merely paled,
   since a near-white weapon render (S-BLAST '91) pales a live body
   without emptying it; an inky wash must also read tinted, which a white
-  cloud behind the icon does not), with
+  cloud behind the icon does not, and tinted in the team's own hue, which a
+  big cream weapon render (Order Shot Replica) over a live body is not), with
   the same `time` value so the two reads pair downstream; its fixtures
   live under `tests/fixtures/player-status/`. Within a side the strip's
   slot order is the lobby seating, while the results scoreboard re-sorts
@@ -502,28 +504,61 @@ sequenceDiagram
   parse stall can no longer swallow a results screen whole (the exact
   failure that cost a live match its scoreboard on 2026-08-22).
 - VoD scans (`components/vod-scan.ts`): on the WebCodecs path each worker
-  scans its own contiguous slice (no frames cross the main thread), with two
-  helper workers of its own that keep the waits off its thread: the dense
-  stretches decode in `worker/decode.worker.ts` (mediabunny; the per-sample
-  bookkeeping of a 60 fps slice cost the analyzer ~0.15 ms a sample), and
-  frames are read back in `worker/readback.worker.ts` (the canvas readback
-  blocks its thread for 3-5 ms a frame). The analyzer takes every sample's
-  step strictly in stream order — bookkeeping, analysis when due, the calm
-  check — against the scheduler state the previous analysis left, so the
-  analyzed frames are exactly those of a one-frame-at-a-time scan. Only the
-  waits overlap: while a pass runs, the next samples are decoded and held,
-  those before `nextDueLowerBound` (certainly skipped: a gate or parse only
-  moves a detector between its refine and search cadences) released, and
-  the one `predictNextDueT` expects to be next read back and normalized
-  ahead. The decode worker is told that lower bound (`floor`) and closes the
-  samples before it itself, sending bare timestamps. When the scheduler
-  reports calm (no gate
-  pass for a quiet period, no open match), the worker skims
-  keyframe-to-keyframe (hop capped at 2.5s so short screens can't hide),
-  snapping back to dense decode on any gate pass. The seek fallback drives
+  scans its own contiguous slice (no frames cross the main thread), with
+  helper workers of its own that keep the waits off its thread: its slice
+  decodes in `worker/decode.worker.ts` (mediabunny; the per-sample
+  bookkeeping of a 60 fps slice cost the analyzer ~0.15 ms a sample), frames
+  are read back in two `worker/readback.worker.ts` and the analyzed frames'
+  images encoded in `worker/frame-encode.worker.ts` (a lossless 1080p WebP
+  blocks its thread ~30 ms; the results still post in order). The analyzer
+  takes every sample's step strictly in stream order — bookkeeping, analysis
+  when due, the calm check — against the scheduler state the previous
+  analysis left, so the analyzed frames are exactly those of a
+  one-frame-at-a-time scan. Only the waits overlap: while a pass runs, the
+  next samples are decoded and held, those before `nextDueLowerBound`
+  (certainly skipped: a gate or parse only moves a detector between its
+  refine and search cadences) released, and the ones `predictDueTimes` and
+  `nextDueCandidates` expect next read back and normalized ahead. The decode
+  worker is told that lower bound (`floor`) and closes the samples before it
+  itself, sending bare timestamps — and on AV1 never decodes a sample before
+  it whose unit refreshes no reference slot (`core/av1-refs.ts`: such a unit
+  leaves the decoder as it found it). It is also handed the scheduler's
+  check plan (`core/detectors/check-plan.ts`): each detector is checked at
+  the first sample its interval has elapsed by, and its interval is one of
+  its few cadences, so where its next checks can land branches over the
+  stream's real timestamps; such units no branch reaches go undecoded too
+  (~30% fewer decodes on a 1080p60 AV1 scan; non-reference frames are cheap
+  to decode, so the scan itself gains a few percent). When the scheduler
+  reports calm (no gate pass for a quiet period, no open match), the worker
+  skims keyframe-to-keyframe (hop capped at 2.5s so short screens can't
+  hide), snapping back to dense decode on any gate pass. Dense and skim stretches
+  read one decode stream per slice (`worker/frame-source.ts`): a hop `seek`s
+  it to the sample `getSample` would return, decoding forward from where it
+  stands or jumping to the hop's keyframe when that lies ahead, rather than
+  starting a decoder at the keyframe for every hop. The seek fallback drives
   one worker and widens its stride over calm footage the same way; its
   metadata wait is bounded so an undecodable file errors instead of hanging.
   A scan is all or nothing: leaving the page cancels it and nothing is saved.
+  The hardware decoder caps a scan: Chromium serializes every hardware
+  decode of the page on one GPU-process thread (an M5 Pro decodes 1080p60
+  AV1 at ~2,700 frames a second, ~45× realtime, however many lanes share
+  it), and the slices' software decoders cost more CPU than they add.
+- VoD frame readback (`worker/readback.ts`): the 2D canvas readback is the
+  reference, but every canvas readback of a hardware frame is also served
+  one at a time on the GPU process's main thread, which the decoder needs
+  too. Where it reads the same pixels (`worker/readback-parity.ts` compares
+  one frame per slice) a scan reads through WebGPU instead. The hardware
+  frame itself `copyExternalImageToTexture` converts differently, but an
+  `ImageBitmap` of it is converted on the GPU exactly as the canvas converts
+  it; failing parity, the frame's planes copied out to a CPU frame are too
+  (two readbacks and an upload on the GPU process's main thread, ~45% of
+  its time on a 720p scan). Either is copied in and mapped back
+  asynchronously.
+  In the same submission the GPU upscales a sub-1080p picture
+  (`worker/cubic-upscaler.ts`, assuming no bars; a picture with bars takes a
+  second trip) and converts the canonical picture to gray
+  (`worker/gpu-gray.ts`, bit-identical to `frameGray`), so the analyzer
+  starts its gates with neither left to do.
 - Recognition is language-agnostic: OCR output snaps against every game
   language at once (`core/localized-entries.ts`, generated) and events carry
   sendou ids. English display names come from `core/labels.ts`.
@@ -593,12 +628,15 @@ The GPU is an accelerator only: the same algorithms make the same decisions.
   request the kernel cannot take, are finished on the CPU with the same exact
   arithmetic. Scores are cached per run by (`key`, template, window) — the
   window is part of a score's identity.
-- **Frame upscale** (`worker/gpu-frame-scaler.ts`): `normalizeFrame`'s
-  INTER_CUBIC upscale of sub-1080p pictures (13-25 ms of WASM per 720p frame)
-  as an integer kernel reproducing OpenCV's 8-bit cubic resize bit for bit;
-  1080p copies and INTER_AREA downscales stay on the CPU. Importing the
-  VideoFrame as a GPU texture was rejected: its YUV→RGB conversion differs
-  from the 2D canvas readback the CPU path sees.
+- **Frame upscale** (`worker/gpu-frame-scaler.ts`, kernel in
+  `worker/cubic-upscaler.ts`): `normalizeFrame`'s INTER_CUBIC upscale of
+  sub-1080p pictures (13-25 ms of WASM per 720p frame) as an integer kernel
+  reproducing OpenCV's 8-bit cubic resize bit for bit; 1080p copies and
+  INTER_AREA downscales stay on the CPU. A VoD scan reading back through
+  WebGPU runs the same kernel in its readback worker instead (see "VoD frame
+  readback"). Importing a hardware-decoded VideoFrame as a GPU texture
+  converts its YUV differently from the 2D canvas; a CPU copy of its planes
+  converts the same.
 - **Worker** (`worker/analyzer.worker.ts`): creates the matcher (and scaler on
   its device) at init when enabled and an adapter exists; a failed creation
   or a device lost mid-run (`device.lost`, or a failed readback) hands the
@@ -695,7 +733,10 @@ Negative cases
 detector's suite sweeps them. Every live misread should become a fixture —
 an expanded match card's `Game data` zip holds each analyzed frame
 (lossless WebP, pixel-exact) with a prefilled `expected.json` in a folder
-that drops into `tests/fixtures/<detector>/` as is. **Fixture ground-truth labels are
+that drops into `tests/fixtures/<detector>/` as is. A zip sent in by a user is
+untrusted: unpack it only with `pnpm scanner:unpack-zip`
+(`node/game-data-zip.ts`), which accepts nothing but that exact shape — the
+`scanner-misread` Claude skill drives the zip → fixtures → fix loop. **Fixture ground-truth labels are
 hand-corrected by the user (the Splatoon domain authority) — treat them as
 definitive over any matcher output.** The dev-only fixtures view
 (`/scanner?view=fixtures`) renders every fixture's frame beside its
@@ -748,7 +789,9 @@ header, one VICTORY/DEFEAT tile per game in play order, X Power and its
 signed change) followed by `XRankPosition` ("#259" and an up/down arrow, or a
 flat one when the position held).
 Every card carries the mode off its icon (`img/modes/*`, RGB templates on
-black). Numbers are BlitzBold, read with the team-digit atlas rescaled;
+black). The Anarchy Series card after a series game draws the count card's
+layout too, but with five win slots: ink where only it has slots fails the
+count gate (`negative/anarchy-series-card-*`). Numbers are BlitzBold, read with the team-digit atlas rescaled;
 punctuation ("." "-" "+") is told apart by ink-run geometry since the digit
 templates can't match anything smaller than themselves.
 

@@ -41,7 +41,7 @@ import {
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import {
 	BLANK_IMAGE_URL,
@@ -302,7 +302,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 					? twitchUrl(row.twitchUsername)
 					: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
 				subtitle: "",
-				startsAt: Math.floor(Date.now() / 1000),
+				startsAt: databaseTimestampNow(),
 				tier: null,
 				peakXp: row.peakXp ?? undefined,
 			},
@@ -310,7 +310,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		});
 	}
 
-	const nowTimestamp = dateToDatabaseTimestamp(new Date());
+	const nowTimestamp = databaseTimestampNow();
 	const threeDaysFromNow = dateToDatabaseTimestamp(
 		addDays(new Date(), UPCOMING_TOURNAMENT_WINDOW_DAYS),
 	);

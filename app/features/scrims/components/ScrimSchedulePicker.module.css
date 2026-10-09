@@ -70,9 +70,6 @@
 	border-radius: var(--radius-full);
 	font-size: var(--font-3xs);
 	color: var(--color-text);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 	pointer-events: none;
 	z-index: 1;
 }

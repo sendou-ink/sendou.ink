@@ -5,7 +5,9 @@
  * one). The card opens on the score before the game, fills the new slot,
  * and only then flips the digits (~0.5s before it fades), so a read is only
  * trusted when the digits agree with the slots, and the timeline keeps the
- * furthest-along read (`xSetCountProgress`), never the first.
+ * furthest-along read (`xSetCountProgress`), never the first. The Anarchy
+ * Series card looks the same but for its five win slots, so ink where only it
+ * draws slots fails the gate.
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
@@ -24,6 +26,7 @@ import {
 	COUNT_LOSS_SLOT_HALF,
 	COUNT_LOSS_SLOT_Y,
 	COUNT_LOSSES_DIGIT_ROI,
+	COUNT_SERIES_SLOT_PROBES,
 	COUNT_SIGNATURE_ROI,
 	COUNT_WIN_SLOT_CENTERS_X,
 	COUNT_WIN_SLOT_HALF,
@@ -53,6 +56,8 @@ export interface XSetCountData {
 const DIGIT_MIN_FRACTION = 0.08;
 const DIGIT_MAX_FRACTION = 0.6;
 const LABEL_MIN_FRACTION = 0.04;
+/** The X card's black reads 0 where the Series card's outer win slots sit; a dashed ring reads ~0.04. */
+const SERIES_SLOT_MAX_FRACTION = 0.01;
 /** A win slot's VICTORY splat is saturated ink over most of its box; the dashed circle is white. */
 const WIN_SLOT_MIN_INK = 0.3;
 /** A lost squid's white X; the live squid is saturated orange, the empty card black. */
@@ -95,7 +100,17 @@ export function createXSetCountDetector(
 		const digitsOk = digitFractions.every(
 			(f) => f >= DIGIT_MIN_FRACTION && f <= DIGIT_MAX_FRACTION,
 		);
-		const checks = [dark, label >= LABEL_MIN_FRACTION, digitsOk];
+		const seriesSlotsEmpty = COUNT_SERIES_SLOT_PROBES.every(
+			(roi) =>
+				brightFraction(gray, roi, NUMBER_BIN_THRESHOLD) <
+				SERIES_SLOT_MAX_FRACTION,
+		);
+		const checks = [
+			dark,
+			label >= LABEL_MIN_FRACTION,
+			digitsOk,
+			seriesSlotsEmpty,
+		];
 		const pass = checks.every(Boolean);
 		return {
 			pass,

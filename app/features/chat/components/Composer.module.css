@@ -28,9 +28,6 @@
 
 .composerAttachmentLabel {
 	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 }

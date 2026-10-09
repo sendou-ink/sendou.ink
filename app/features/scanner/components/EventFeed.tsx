@@ -89,7 +89,7 @@ export function EventFeed({
 						<span className={styles.time}>
 							{formatPosition(item.t - originT)}
 						</span>
-						<span className={styles.label}>{item.label}</span>
+						<span className="truncate">{item.label}</span>
 					</li>
 				))
 			)}

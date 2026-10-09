@@ -1,0 +1,11 @@
+{
+  "event": "ScoreboardOwn",
+  "data": {
+    "lobby": "SERIES",
+    "mode": "SZ",
+    "stage": 18,
+    "weaponId": 210,
+    "stageLabel": "Crableg Capital",
+    "weaponLabel": "Blaster"
+  }
+}

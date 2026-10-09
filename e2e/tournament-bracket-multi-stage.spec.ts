@@ -1,5 +1,6 @@
 import { subMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import {
 	createTeams,
@@ -195,7 +196,7 @@ test.describe("Tournament bracket multi stage", () => {
 
 		const eventEdit = await admin.editEventInfo();
 		await eventEdit.deleteLastBracket();
-		await eventEdit.fillLastPlacements("3,4");
+		await eventEdit.pickLastPlacements([3, 4]);
 		await eventEdit.save();
 
 		const brackets = new TournamentBracketsPage(page);
@@ -325,8 +326,9 @@ test.describe("Tournament bracket multi stage", () => {
 		// start time in the past so the brackets can be started right away
 		await newTournament.setFirstDate(subMinutes(new Date(), 30));
 
+		await newTournament.goToStep("maps");
 		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
-		await newTournament.selectMapPoolTemplate("preset:SZ");
+		await newTournament.pasteMapPool(MapPool.SZ);
 
 		// groups of 4: top 2 advance to the finals directly, 3rd placers get
 		// another shot at the last finals spot through the redemption bracket
@@ -335,16 +337,16 @@ test.describe("Tournament bracket multi stage", () => {
 		await newTournament.addFollowUpBracket({
 			name: "Redemption",
 			format: "Single elimination",
-			placements: "3",
+			placements: [3],
 		});
 		await newTournament.addFollowUpBracket({
 			name: "Finals",
 			format: "Single elimination",
-			placements: "1-2",
+			placements: [1, 2],
 		});
-		await newTournament.addSourceToLastBracket("1");
+		await newTournament.connect(1, 2, [1]);
 
-		await newTournament.form.submit();
+		await newTournament.save();
 
 		await expect(page).toHaveURL(/\/to\/\d+/);
 		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)![1]);

@@ -1,9 +1,7 @@
-import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { logger } from "~/utils/logger";
-import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
-import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
+import { errorToast } from "~/utils/remix.server";
 import type { Tournament } from "../tournament-bracket/core/Tournament";
 
 export async function requireNotBannedByOrganization({
@@ -52,32 +50,6 @@ export function tournamentTeamNameTaken({
 	return tournament.ctx.teams.some(
 		(team) => team.name === name && team.id !== exceptTournamentTeamId,
 	);
-}
-
-export async function requireSendouQParticipationIfNeeded({
-	tournament,
-	userId,
-}: {
-	tournament: Tournament;
-	userId: number;
-}) {
-	errorToastIfFalsy(
-		await fulfillsSendouQParticipation({ tournament, userId }),
-		`Must have played ${MATCHES_COUNT_NEEDED_FOR_LEADERBOARD} SendouQ matches this season to join`,
-	);
-}
-
-/** Whether the user fulfills the tournament's SendouQ participation requirement (`true` if the tournament has none). */
-export async function fulfillsSendouQParticipation({
-	tournament,
-	userId,
-}: {
-	tournament: Tournament;
-	userId: number;
-}) {
-	if (!tournament.ctx.settings.requireSendouQParticipation) return true;
-
-	return LeaderboardRepository.hasEnoughSqMatchesByUserId(userId);
 }
 
 /**

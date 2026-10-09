@@ -5,7 +5,7 @@ import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
 import * as RosterSchedule from "~/features/availability/core/RosterSchedule.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
@@ -135,7 +135,7 @@ async function rosterAvailability({
 			Scrim.teamPlayers(team.members).map((member) => member.id),
 		),
 	);
-	const now = dateToDatabaseTimestamp(new Date());
+	const now = databaseTimestampNow();
 
 	return {
 		/** Server clock, so that the shown fit does not change on hydration. */

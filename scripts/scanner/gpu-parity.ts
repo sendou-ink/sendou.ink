@@ -6,20 +6,32 @@
  * drivers score exactly, so the two event lists must be byte-identical, raw
  * scores included. Also checks the GPU frame upscale
  * (worker/gpu-frame-scaler.ts) pixel-for-pixel against normalizeFrame on each
- * frame. WebGPU comes from Dawn (node/webgpu.ts: WEBGPU_NODE).
+ * frame, and the readback's 2160p downscale and bar detection
+ * (worker/area-downscaler.ts, worker/gpu-line-sums.ts) on each frame
+ * upscaled to 2160p. WebGPU comes from Dawn (node/webgpu.ts: WEBGPU_NODE).
  *
  * Usage: pnpm scanner:gpu-parity [--verbose]
  */
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV, type Mat } from "../../app/features/scanner/core/cv";
+import {
+	detectContentBox,
+	detectContentBoxFromSums,
+} from "../../app/features/scanner/core/canonical";
+import {
+	getCV,
+	loadOpenCV,
+	type Mat,
+} from "../../app/features/scanner/core/cv";
 import { createAllDetectors } from "../../app/features/scanner/core/detectors/registry";
 import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
 import { FIXTURES_DIR } from "../../app/features/scanner/node/fixtures";
 import { readImage } from "../../app/features/scanner/node/image-io";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
 import { nodeGpu } from "../../app/features/scanner/node/webgpu";
+import { createAreaDownscaler } from "../../app/features/scanner/worker/area-downscaler";
 import { createGpuFrameScaler } from "../../app/features/scanner/worker/gpu-frame-scaler";
+import { createLineSumsKernel } from "../../app/features/scanner/worker/gpu-line-sums";
 import { createGpuMatcher } from "../../app/features/scanner/worker/gpu-matcher";
 
 /** Fields that carry raw match scores; everything else is a decision. */
@@ -30,6 +42,10 @@ const SCORE_FIELDS = new Set([
 	"teamColor",
 	"debug",
 ]);
+/** GPUBufferUsage / GPUMapMode flags (spec values; the globals are missing from the TS DOM lib) */
+const BUFFER_COPY_DST = 0x0008;
+const BUFFER_STORAGE = 0x0080;
+const MAP_MODE_READ = 0x0001;
 
 const verbose = process.argv.includes("--verbose");
 
@@ -37,6 +53,8 @@ await loadOpenCV();
 const resources = await loadScoreboardResources();
 const matcher = await createGpuMatcher(nodeGpu());
 const scaler = await createGpuFrameScaler(matcher.device);
+const downscaler = await createAreaDownscaler(matcher.device);
+const lineSums = await createLineSumsKernel(matcher.device);
 
 let rows = 0;
 let identicalRows = 0;
@@ -60,6 +78,10 @@ for (const group of fixtureGroups()) {
 			failures.push(`${path}: GPU upscale differs from normalizeFrame`);
 		}
 		scaled.delete();
+		if (!(await sameDownscale(src))) {
+			pixelMismatchFrames++;
+			failures.push(`${path}: GPU 2160p downscale differs from normalizeFrame`);
+		}
 		src.delete();
 		for (const [i, cpuDetector] of cpuDetectors.entries()) {
 			const gpuDetector = gpuDetectors[i]!;
@@ -96,7 +118,7 @@ for (const group of fixtureGroups()) {
 
 for (const failure of failures) console.log(failure);
 console.log(
-	`${rows} detector × frame rows: ${identicalRows} byte-identical, ${decisionRows} with identical decisions; ${pixelMismatchFrames} frames with upscale mismatches`,
+	`${rows} detector × frame rows: ${identicalRows} byte-identical, ${decisionRows} with identical decisions; ${pixelMismatchFrames} frames with resize mismatches`,
 );
 console.log(
 	`parse time: CPU ${(cpuMs / 1000).toFixed(1)} s, GPU ${(gpuMs / 1000).toFixed(1)} s · ${JSON.stringify(matcher.stats)}`,
@@ -139,4 +161,48 @@ function samePixels(a: Mat, b: Mat): boolean {
 	if (x.length !== y.length) return false;
 	for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
 	return true;
+}
+
+/** The readback's 2160p path on `frame` upscaled to 2160p: same bars and, without bars, same pixels as normalizeFrame. */
+async function sameDownscale(frame: Mat): Promise<boolean> {
+	const cv = getCV();
+	const src = new cv.Mat();
+	cv.resize(frame, src, new cv.Size(3840, 2160), 0, 0, cv.INTER_CUBIC);
+	try {
+		const device = matcher.device;
+		const data = src.data as Uint8Array;
+		const buffer = device.createBuffer({
+			size: data.byteLength,
+			usage: BUFFER_STORAGE | BUFFER_COPY_DST,
+		});
+		device.queue.writeBuffer(buffer, 0, data);
+		const encoder = device.createCommandEncoder();
+		const { read } = downscaler.encode(encoder, buffer, src.cols);
+		const lines = lineSums.encode(encoder, buffer, {
+			stride: src.cols,
+			w: src.cols,
+			h: src.rows,
+		});
+		device.queue.submit([encoder.finish()]);
+		const [, sums] = await Promise.all([
+			read.mapAsync(MAP_MODE_READ),
+			lines.read(),
+		]);
+		const pixels = new Uint8Array(read.getMappedRange().slice(0));
+		read.unmap();
+		downscaler.release(read);
+		buffer.destroy();
+		const box = detectContentBox(src.cols, src.rows, data);
+		const gpuBox = detectContentBoxFromSums(src.cols, src.rows, sums);
+		if (JSON.stringify(box) !== JSON.stringify(gpuBox)) return false;
+		if (box) return true;
+		const expected = normalizeFrame(src);
+		const cpu = expected.data as Uint8Array;
+		const same =
+			cpu.length === pixels.length && cpu.every((v, i) => v === pixels[i]);
+		expected.delete();
+		return same;
+	} finally {
+		src.delete();
+	}
 }

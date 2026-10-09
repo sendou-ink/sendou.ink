@@ -1,5 +1,6 @@
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
@@ -39,8 +40,8 @@ if (activeMatchIds.length > 0) {
 	logger.info("No active matches found");
 }
 
-const seasonStartTimestamp = Math.floor(season.starts.getTime() / 1000);
-const seasonEndTimestamp = Math.floor(season.ends.getTime() / 1000);
+const seasonStartTimestamp = dateToDatabaseTimestamp(season.starts);
+const seasonEndTimestamp = dateToDatabaseTimestamp(season.ends);
 
 const tournaments = await db
 	.selectFrom("Tournament")

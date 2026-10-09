@@ -1,21 +1,24 @@
 /**
- * VodDecodeWorker: dense sequential decode of a VoD slice for an analyzer
- * worker (frame-source.ts), so demux and decode bookkeeping stay off the
- * analyzer's thread. Samples before the analyzer's floor are closed here and
- * sent as bare timestamps; frames from the floor on are transferred, at most
- * MAX_OPEN_FRAMES at a time.
+ * VodDecodeWorker: sequential decode of a VoD slice for an analyzer worker
+ * (frame-source.ts), so demux and decode bookkeeping stay off the analyzer's
+ * thread. Samples before the analyzer's floor are closed here and sent as
+ * bare timestamps; frames from the floor on are transferred, a bounded
+ * number at a time.
  */
-import { ALL_FORMATS, BlobSource, Input, VideoSampleSink } from "mediabunny";
+import { ALL_FORMATS, BlobSource, Input } from "mediabunny";
+import type { CheckPlan } from "../core/detectors/check-plan";
 import {
 	type DecodeRequest,
 	type DecodeResponse,
-	pumpSamples,
+	pumpFrames,
 	type SourceItem,
 } from "./frame-source";
 
 interface Session {
 	id: number;
 	floor: number;
+	seekT: number;
+	plan: CheckPlan | null;
 	open: number;
 	stopped: boolean;
 	room: (() => void) | null;
@@ -34,6 +37,12 @@ self.onmessage = (e: MessageEvent<DecodeRequest>) => {
 	if (!session || session.id !== request.session) return;
 	if (request.kind === "floor") {
 		session.floor = Math.max(session.floor, request.t);
+	} else if (request.kind === "seek") {
+		session.seekT = Math.max(session.seekT, request.t);
+		session.plan = null;
+		wakeRoom(session);
+	} else if (request.kind === "plan") {
+		session.plan = request.plan;
 	} else if (request.kind === "release") {
 		session.open--;
 		wakeRoom(session);
@@ -59,6 +68,8 @@ async function decode(
 	const own: Session = {
 		id: request.session,
 		floor: Number.NEGATIVE_INFINITY,
+		seekT: Number.NEGATIVE_INFINITY,
+		plan: null,
 		open: 0,
 		stopped: false,
 		room: null,
@@ -78,29 +89,33 @@ async function decode(
 	try {
 		const track = await input.getPrimaryVideoTrack();
 		if (!track) throw new Error("no video track");
-		await pumpSamples({
-			samples: new VideoSampleSink(track, {
-				hardwareAcceleration: request.hardwareAcceleration,
-			}).samples(request.start),
+		await pumpFrames({
+			track,
+			start: request.start,
 			end: request.end,
 			preview: request.preview,
-			floor: () => own.floor,
-			open: () => own.open,
-			stopped: () => own.stopped,
-			waitForRoom: () =>
-				new Promise<void>((resolve) => {
-					own.room = resolve;
-				}),
-			deliver: (items, end) => {
-				if (own.stopped) {
-					for (const item of items) {
-						item.frame?.close();
-						item.preview?.close();
+			hardwareAcceleration: request.hardwareAcceleration,
+			control: {
+				floor: () => own.floor,
+				seekT: () => own.seekT,
+				plan: () => own.plan,
+				open: () => own.open,
+				stopped: () => own.stopped,
+				waitForRoom: () =>
+					new Promise<void>((resolve) => {
+						own.room = resolve;
+					}),
+				deliver: (items, end) => {
+					if (own.stopped) {
+						for (const item of items) {
+							item.frame?.close();
+							item.preview?.close();
+						}
+						return;
 					}
-					return;
-				}
-				for (const item of items) if (item.frame) own.open++;
-				post({ kind: "items", session: own.id, items, end }, items);
+					for (const item of items) if (item.frame) own.open++;
+					post({ kind: "items", session: own.id, items, end }, items);
+				},
 			},
 		});
 	} catch (error) {

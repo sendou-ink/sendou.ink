@@ -6,10 +6,7 @@
 
 .organizationName {
 	max-width: 12rem;
-	overflow: hidden;
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	white-space: nowrap;
-	text-overflow: ellipsis;
 	color: var(--graphic-text-dim);
 }

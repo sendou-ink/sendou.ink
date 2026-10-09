@@ -25,9 +25,3 @@
 .optionActive {
 	background-color: var(--color-bg-high);
 }
-
-.label {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}

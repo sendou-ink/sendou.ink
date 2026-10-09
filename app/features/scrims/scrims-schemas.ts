@@ -5,6 +5,7 @@ import {
 	datetime,
 	dualSelectOptional,
 	idConstant,
+	mapPoolOptional,
 	radioGroupDynamic,
 	select,
 	selectDynamicOptional,
@@ -13,7 +14,6 @@ import {
 	stringConstant,
 	textArea,
 	textAreaOptional,
-	textFieldOptional,
 	toggle,
 	tournamentSearchOptional,
 } from "~/form/fields";
@@ -32,7 +32,6 @@ import {
 } from "~/utils/schema";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
-import { parseMapPoolInput } from "./scrims-utils";
 
 const deletePostSchema = v.object({
 	_action: _action("DELETE_POST"),
@@ -194,15 +193,7 @@ export const submitMapListFormSchema = v.pipe(
 		source: radioGroupDynamic({
 			label: "labels.scrimMapSource",
 		}),
-		serializedPool: textFieldOptional({
-			label: "labels.scrimMapPool",
-			placeholder: "placeholders.scrimMapPool",
-			maxLength: 500,
-			validate: {
-				func: (val) => parseMapPoolInput(val) !== null,
-				message: "forms:errors.invalidMapPool",
-			},
-		}),
+		serializedPool: mapPoolOptional({ label: "labels.scrimMapPool" }),
 		tournamentId: tournamentSearchOptional({
 			label: "labels.scrimMapsTournament",
 		}),

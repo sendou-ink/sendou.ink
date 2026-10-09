@@ -1,20 +1,15 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as v from "valibot";
 import { db } from "~/db/sql";
 import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 } from "~/utils/kysely.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/schema";
+import { idObject } from "~/utils/schema";
 import type { GetTournamentOrganizationResponse } from "../schema";
 
-const paramsSchema = v.object({
-	id,
-});
-
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const { id: organizationId } = parseParams({ params, schema: paramsSchema });
+	const { id: organizationId } = parseParams({ params, schema: idObject });
 
 	const organization = notFoundIfNullish(
 		await db

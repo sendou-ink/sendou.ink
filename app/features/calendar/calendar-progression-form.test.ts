@@ -5,6 +5,7 @@ import {
 	defaultBracketsFormValues,
 	formValuesToInputBrackets,
 	progressionToFormValues,
+	shiftBracketStartTimes,
 	validateBracketProgressionFormValues,
 } from "./calendar-progression-form";
 
@@ -27,14 +28,14 @@ const RR_TO_SE_WITH_UNDERGROUND: Progression.ParsedBracket[] = [
 	{
 		name: "Top cut",
 		type: "single_elimination",
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 		requiresCheckIn: false,
 		sources: [{ bracketIdx: 0, placements: [1, 2] }],
 	},
 	{
 		name: "Underground bracket",
 		type: "single_elimination",
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 		requiresCheckIn: true,
 		sources: [{ bracketIdx: 0, placements: [3, 4] }],
 	},
@@ -50,7 +51,7 @@ const SWISS_EARLY_ADVANCE_TO_TOP_CUT: Progression.ParsedBracket[] = [
 	{
 		name: "Top cut",
 		type: "single_elimination",
-		settings: { thirdPlaceMatch: true },
+		settings: {},
 		requiresCheckIn: false,
 		sources: [{ bracketIdx: 0, placements: [] }],
 	},
@@ -283,5 +284,23 @@ describe("validateBracketProgressionFormValues", () => {
 		expect(issues[0].message).toBe(
 			"tournament:progression.error.DUPLICATE_SOURCE_BRACKET",
 		);
+	});
+});
+
+describe("shiftBracketStartTimes", () => {
+	test("moves start times by the offset leaving brackets without one as is", () => {
+		const { brackets } = progressionToFormValues([
+			RR_TO_SE_WITH_UNDERGROUND[0],
+			{ ...RR_TO_SE_WITH_UNDERGROUND[1], startTime: 1735689600 },
+			RR_TO_SE_WITH_UNDERGROUND[2],
+		]);
+
+		const shifted = shiftBracketStartTimes(brackets, 7 * 24 * 60 * 60 * 1000);
+
+		expect(shifted.map((bracket) => bracket.startTime)).toEqual([
+			null,
+			new Date((1735689600 + 7 * 24 * 60 * 60) * 1000),
+			null,
+		]);
 	});
 });

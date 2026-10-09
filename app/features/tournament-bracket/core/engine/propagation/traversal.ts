@@ -137,7 +137,8 @@ export class Propagator {
 		winnerSide?: Side,
 	): void {
 		if (matchLocation === "final_group") {
-			if (!nextMatches[0]) throw new Error("First next match is null.");
+			// bracket reset skipped
+			if (!nextMatches[0]) return;
 			setNextOpponent(nextMatches[0], "opponent1", match, "opponent1");
 			setNextOpponent(nextMatches[0], "opponent2", match, "opponent2");
 			this.store.markMatchChanged(nextMatches[0]);
@@ -156,8 +157,8 @@ export class Propagator {
 			this.propagateByeWinners(nextMatches[0]);
 		}
 
-		if (nextMatches.length !== 2) return;
-		if (!nextMatches[1]) throw new Error("Second next match is null.");
+		// the round the loser would go to is skipped, the loser stays alive
+		if (!nextMatches[1]) return;
 
 		// Second match is the consolation final (SE) or a loser bracket match (DE).
 		if (matchLocation === "single_bracket") {
@@ -191,15 +192,41 @@ export class Propagator {
 		if (helpers.hasBye(match)) this.updateRelatedMatches(match);
 	}
 
-	/** Round number and count within the round's section (a round robin group's rounds, the losers bracket...). */
+	/**
+	 * Round number and count within the round's section (a round robin group's rounds, the losers bracket...).
+	 * In elimination the count includes skipped rounds, which are never created.
+	 */
 	getRoundPositionalInfo(roundId: number): RoundPositionalInfo {
 		const round = this.store.roundById(roundId);
 		if (!round) throw new Error("Round not found.");
 
+		const stage = this.store.stageById(round.stageId);
+		if (!stage) throw new Error("Stage not found.");
+
 		return {
 			roundNumber: round.number,
-			roundCount: this.store.roundCountInSection(round.groupId, round.section),
+			roundCount:
+				round.section === null
+					? this.store.roundCountInSection(round.groupId, round.section)
+					: this.eliminationRoundCount(stage, round.groupId, round.section),
 		};
+	}
+
+	private eliminationRoundCount(
+		stage: StageData,
+		groupId: number,
+		section: RoundSection,
+	): number {
+		const upperBracketRoundCount = Math.log2(this.participantCount(groupId));
+
+		switch (section) {
+			case "winners":
+				return upperBracketRoundCount;
+			case "losers":
+				return Math.max(0, (upperBracketRoundCount - 1) * 2);
+			case "finals":
+				return stage.type === "double_elimination" ? 2 : 1;
+		}
 	}
 
 	getNextMatches(
@@ -228,19 +255,28 @@ export class Propagator {
 		}
 	}
 
+	/** The match the winner goes to and the loser bracket match the loser drops to, `null` if skipped or nonexistent. */
 	private getNextMatchesWB(
 		match: MatchData,
 		stage: StageData,
 		roundNumber: number,
 		roundCount: number,
 	): (MatchData | null)[] {
-		if (!this.hasSection(match.groupId, "losers"))
-			// Only one match in the stage, there is no loser bracket.
-			return [];
+		const [winnerMatch] = this.getNextMatchesUpperBracket(
+			match,
+			stage.type,
+			roundNumber,
+			roundCount,
+		);
+
+		const participantCount = this.participantCount(match.groupId);
+		// two participants: only one match in the group, there is no loser bracket
+		if (participantCount <= 2) {
+			return [winnerMatch ?? null];
+		}
 
 		const roundNumberLB = roundNumber > 1 ? (roundNumber - 1) * 2 : 1;
 
-		const participantCount = this.participantCount(match.groupId);
 		const method = helpers.getLoserOrdering(participantCount, roundNumberLB);
 		const actualMatchNumberLB = helpers.findLoserMatchNumber(
 			participantCount,
@@ -250,13 +286,8 @@ export class Propagator {
 		);
 
 		return [
-			...this.getNextMatchesUpperBracket(
-				match,
-				stage.type,
-				roundNumber,
-				roundCount,
-			),
-			this.findMatch(
+			winnerMatch ?? null,
+			this.findMatchOrNull(
 				match.groupId,
 				"losers",
 				roundNumberLB,
@@ -288,7 +319,7 @@ export class Propagator {
 		match: MatchData,
 		roundNumber: number,
 		roundCount: number,
-	): MatchData[] {
+	): (MatchData | null)[] {
 		if (roundNumber === roundCount - 1) {
 			const final = this.getFirstMatchFinal(match);
 			return [
@@ -306,10 +337,9 @@ export class Propagator {
 		match: MatchData,
 		roundNumber: number,
 		roundCount: number,
-	): MatchData[] {
+	): (MatchData | null)[] {
 		if (roundNumber === roundCount) {
-			const final = this.getFirstMatchFinal(match);
-			return final ? [final] : [];
+			return [this.getFirstMatchFinal(match)];
 		}
 
 		if (roundNumber % 2 === 1)
@@ -320,16 +350,14 @@ export class Propagator {
 
 	/** First match of the finals section (consolation final or grand final) of the match's group. */
 	private getFirstMatchFinal(match: MatchData): MatchData | null {
-		if (!this.hasSection(match.groupId, "finals")) return null;
-
-		return this.findMatch(match.groupId, "finals", 1, 1);
+		return this.findMatchOrNull(match.groupId, "finals", 1, 1);
 	}
 
 	private getNextMatchesFinal(
 		match: MatchData,
 		roundNumber: number,
 		roundCount: number,
-	): MatchData[] {
+	): (MatchData | null)[] {
 		if (
 			roundNumber === roundCount ||
 			// avoid putting teams to bracket reset if tournament is over
@@ -338,7 +366,7 @@ export class Propagator {
 			return [];
 		}
 
-		return [this.findMatch(match.groupId, "finals", roundNumber + 1, 1)];
+		return [this.findMatchOrNull(match.groupId, "finals", roundNumber + 1, 1)];
 	}
 
 	/** Derived from the winners section's first round (two participants per match, BYEs included). */
@@ -349,10 +377,6 @@ export class Propagator {
 		return this.store.matchCountInRound(firstRound.id) * 2;
 	}
 
-	private hasSection(groupId: number, section: RoundSection): boolean {
-		return this.store.roundCountInSection(groupId, section) > 0;
-	}
-
 	private sectionOf(match: MatchData): RoundSection | null {
 		const round = this.store.roundById(match.roundId);
 		if (!round) throw new Error("Round not found.");
@@ -361,8 +385,11 @@ export class Propagator {
 	}
 
 	/** Corresponding match in the next round, like Round 1 to Round 2 in single elimination. */
-	private getDiagonalMatch(match: MatchData, roundNumber: number): MatchData {
-		return this.findMatch(
+	private getDiagonalMatch(
+		match: MatchData,
+		roundNumber: number,
+	): MatchData | null {
+		return this.findMatchOrNull(
 			match.groupId,
 			this.sectionOf(match),
 			roundNumber + 1,
@@ -371,8 +398,11 @@ export class Propagator {
 	}
 
 	/** Same match number in the next round, like major round to minor round in the loser bracket. */
-	private getParallelMatch(match: MatchData, roundNumber: number): MatchData {
-		return this.findMatch(
+	private getParallelMatch(
+		match: MatchData,
+		roundNumber: number,
+	): MatchData | null {
+		return this.findMatchOrNull(
 			match.groupId,
 			this.sectionOf(match),
 			roundNumber + 1,
@@ -380,18 +410,17 @@ export class Propagator {
 		);
 	}
 
-	findMatch(
+	/** `null` when the round was skipped (never created). */
+	private findMatchOrNull(
 		groupId: number,
 		section: RoundSection | null,
 		roundNumber: number,
 		matchNumber: number,
-	): MatchData {
+	): MatchData | null {
 		const round = this.store.roundByNumber(groupId, section, roundNumber);
-
-		if (!round) throw new Error("Round not found.");
+		if (!round) return null;
 
 		const match = this.store.matchByNumber(round.id, matchNumber);
-
 		if (!match) throw new Error("Match not found.");
 
 		return match;

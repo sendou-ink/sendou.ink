@@ -217,14 +217,6 @@
 	color: var(--color-text-high);
 }
 
-.weapon {
-	width: 32px;
-	height: 32px;
-	background: var(--color-bg-higher);
-	border-radius: var(--radius-full);
-	padding: 2px;
-}
-
 .weaponBackdrop {
 	border-radius: var(--radius-full);
 }
@@ -371,23 +363,21 @@ button.expand {
 		padding: var(--s-1);
 		vertical-align: middle;
 	}
+}
 
-	& .weapon {
-		width: 36px;
-		height: 36px;
+/* global img max-width: 100% would let the table shrink the badge to nothing */
+.weaponCell {
+	width: 48px;
+
+	& > * {
+		min-width: 36px;
 	}
 }
 
-/* the round weapon badge plus the cell padding, so the image is never squeezed */
-.weaponCell {
-	width: 48px;
-}
-
+/* zero max-width + full width: the name takes only the leftover space and truncates */
 .name {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	max-width: 12rem;
+	width: 100%;
+	max-width: 0;
 }
 
 .num {
@@ -434,9 +424,6 @@ button.expand {
 .rowLabel {
 	flex: 1;
 	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .streak {

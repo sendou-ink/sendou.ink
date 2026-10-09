@@ -1,20 +1,15 @@
 import { sql } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
-import * as v from "valibot";
 import { db } from "~/db/sql";
 import { jsonArrayFrom } from "~/utils/kysely.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/schema";
+import { idObject } from "~/utils/schema";
 import type { GetTournamentStreamsResponse } from "../schema";
-
-const paramsSchema = v.object({
-	id,
-});
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({
 		params,
-		schema: paramsSchema,
+		schema: idObject,
 	});
 
 	const tournament = notFoundIfNullish(

@@ -288,7 +288,7 @@ function TeamHeader({
 				>
 					<h2
 						className={clsx(
-							"text-main-forced font-bold",
+							"text-main-forced font-bold truncate",
 							styles.teamNameHeading,
 						)}
 						title={team.team.name}
@@ -313,7 +313,10 @@ function TeamHeader({
 				)}
 			>
 				<h2
-					className={clsx("text-main-forced font-bold", styles.teamNameHeading)}
+					className={clsx(
+						"text-main-forced font-bold truncate",
+						styles.teamNameHeading,
+					)}
 					title={team.defaultName}
 				>
 					{team.defaultName}

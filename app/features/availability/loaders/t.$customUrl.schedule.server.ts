@@ -1,7 +1,6 @@
 import { addWeeks } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
-import * as v from "valibot";
 import { getUser } from "~/features/auth/core/user.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -9,7 +8,7 @@ import { teamParamsSchema } from "~/features/team/team-schemas.server";
 import { getMemberRoleType, isTeamMember } from "~/features/team/team-utils";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfNullish } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
 import type {
@@ -24,7 +23,7 @@ import * as VisibleSchedules from "../core/VisibleSchedules.server";
 export type TeamScheduleLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const { customUrl } = v.parse(teamParamsSchema, params);
+	const { customUrl } = parseParams({ params, schema: teamParamsSchema });
 
 	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl),

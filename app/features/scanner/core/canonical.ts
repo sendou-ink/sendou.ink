@@ -45,21 +45,46 @@ export function detectContentBox(
 	height: number,
 	rgba: Uint8Array | Uint8ClampedArray,
 ): Roi | null {
-	const rowMean = (y: number) => {
+	const rowSum = (y: number) => {
 		let sum = 0;
 		const end = (y * width + width) * 4;
 		for (let i = y * width * 4; i < end; i += 4) {
 			sum += rgba[i]! + rgba[i + 1]! + rgba[i + 2]!;
 		}
-		return sum / (width * 3);
+		return sum;
 	};
-	const colMean = (x: number) => {
+	const colSum = (x: number) => {
 		let sum = 0;
 		for (let i = x * 4; i < rgba.length; i += width * 4) {
 			sum += rgba[i]! + rgba[i + 1]! + rgba[i + 2]!;
 		}
-		return sum / (height * 3);
+		return sum;
 	};
+	return contentBoxOfLines(width, height, rowSum, colSum);
+}
+
+/** detectContentBox from each row's and column's R+G+B sum. */
+export function detectContentBoxFromSums(
+	width: number,
+	height: number,
+	sums: { rows: ArrayLike<number>; cols: ArrayLike<number> },
+): Roi | null {
+	return contentBoxOfLines(
+		width,
+		height,
+		(y) => sums.rows[y]!,
+		(x) => sums.cols[x]!,
+	);
+}
+
+function contentBoxOfLines(
+	width: number,
+	height: number,
+	rowSum: (y: number) => number,
+	colSum: (x: number) => number,
+): Roi | null {
+	const rowMean = (y: number) => rowSum(y) / (width * 3);
+	const colMean = (x: number) => colSum(x) / (height * 3);
 	const barDepth = (
 		lineMean: (line: number) => number,
 		lineAt: (depth: number) => number,

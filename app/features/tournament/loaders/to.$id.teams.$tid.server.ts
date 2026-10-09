@@ -9,7 +9,7 @@ import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/to
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { invariant } from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseParams } from "~/utils/remix.server";
+import { notFound, parseParams } from "~/utils/remix.server";
 import * as Standings from "../core/Standings";
 import { type AllRoundsItem, tournamentTeamSets } from "../core/sets.server";
 import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
@@ -34,7 +34,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 	const tournamentHasStarted = data.stage.length > 0;
 	if (!team || (tournamentHasStarted && team.checkIns.length === 0)) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	const setHistory =

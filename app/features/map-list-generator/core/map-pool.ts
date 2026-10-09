@@ -37,6 +37,20 @@ export class MapPool {
 		return new MapPool(init).dbList;
 	}
 
+	/** Reads a map pool typed or pasted by a user: a link with a `pool` param, a query string or a bare serialized pool. Null if no stages could be read. */
+	static fromUserInput(input: string): MapPool | null {
+		const serialized = extractSerializedPool(input);
+		if (!serialized) return null;
+
+		try {
+			const pool = new MapPool(serialized);
+			if (pool.isEmpty()) return null;
+			return pool;
+		} catch {
+			return null;
+		}
+	}
+
 	get serialized(): string {
 		if (this.asSerialized !== undefined) {
 			return this.asSerialized;
@@ -198,4 +212,25 @@ export class MapPool {
 		...MapPool.EMPTY.parsed,
 		TW: [...stageIds],
 	});
+}
+
+function extractSerializedPool(input: string): string | null {
+	const trimmed = input.trim();
+	if (!trimmed) return null;
+
+	if (trimmed.includes("://")) {
+		try {
+			const url = new URL(trimmed);
+			// biome-ignore lint/plugin: URL pasted by the user, not one this app routed to
+			return url.searchParams.get("pool");
+		} catch {
+			return null;
+		}
+	}
+
+	if (trimmed.includes("pool=")) {
+		return new URLSearchParams(trimmed).get("pool");
+	}
+
+	return trimmed;
 }

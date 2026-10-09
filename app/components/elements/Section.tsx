@@ -7,6 +7,7 @@ export function SendouSection({
 	title,
 	icon: Icon,
 	action,
+	gap = "md",
 	className,
 	children,
 }: {
@@ -14,11 +15,19 @@ export function SendouSection({
 	icon?: LucideIcon;
 	/** Rendered at the end of the header row, e.g. a "Show all" button. Only shown together with `title`. */
 	action?: React.ReactNode;
+	/** Space between the header and the content. */
+	gap?: "md" | "lg";
 	className?: string;
 	children: React.ReactNode;
 }) {
 	return (
-		<section className={clsx(styles.section, className)}>
+		<section
+			className={clsx(
+				styles.section,
+				{ [styles.gapLg]: gap === "lg" },
+				className,
+			)}
+		>
 			{title ? (
 				<header className={styles.header}>
 					<h2 className={styles.title}>{title}</h2>

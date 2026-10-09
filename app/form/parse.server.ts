@@ -1,21 +1,21 @@
-import * as v from "valibot";
+import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { imageFieldValueToImgId } from "~/features/img-upload/image-field.server";
-import { formDataToObject } from "~/utils/remix.server";
+import { badRequest, formDataToObject } from "~/utils/remix.server";
 import type { AnySchema } from "~/utils/schema";
 import { formRegistry } from "./fields";
 import type { ImageFieldValue } from "./image-field";
-import { buildFieldPath, issuePathKeys } from "./utils";
-
-export type ParseResult<T> =
-	| { success: true; data: T }
-	| { success: false; fieldErrors: Record<string, string> };
+import {
+	buildFieldPath,
+	issuePathKeys,
+	RENDERS_FIELD_ERRORS_KEY,
+} from "./utils";
 
 /** Fits a couple of `image()` fields (~3M base64 chars each) plus the rest; forms needing more (e.g. art) pass `maxBodyBytes`. */
-const DEFAULT_MAX_BODY_BYTES = 8 * 1024 * 1024;
+export const DEFAULT_MAX_BODY_BYTES = 8 * 1024 * 1024;
 
 /** Errors keyed by field name (e.g. `members[0].userId`), first error per field. */
-function fieldErrorsFromIssues(
+export function fieldErrorsFromIssues(
 	issues: v.BaseIssue<unknown>[],
 ): Record<string, string> {
 	const fieldErrors: Record<string, string> = {};
@@ -29,77 +29,43 @@ function fieldErrorsFromIssues(
 	return fieldErrors;
 }
 
-/** Parses a JSON (SendouForm) or form data (FormWithConfirm) body by Content-Type into data or field errors. */
-export async function parseFormData<T extends AnySchema>({
-	request,
-	schema,
-	maxBodyBytes = DEFAULT_MAX_BODY_BYTES,
-}: {
-	request: Request;
-	schema: T;
-	/** Overrides {@link DEFAULT_MAX_BODY_BYTES} for forms that legitimately submit a bigger body. */
-	maxBodyBytes?: number;
-}): Promise<ParseResult<v.InferOutput<T>>> {
-	const data = await requestBodyToObject(request, maxBodyBytes);
-
-	const result = await v.safeParseAsync(schema, data);
-
-	if (result.success) {
-		return { success: true, data: result.output };
-	}
-
-	return {
-		success: false,
-		fieldErrors: fieldErrorsFromIssues([...result.issues]),
-	};
-}
-
 /** Image field values collapse to their stored id; everything else passes through. */
-type ResolvedImages<T> = T extends unknown
+export type ResolvedImages<T> = T extends unknown
 	? { [K in keyof T]: T[K] extends ImageFieldValue ? number | null : T[K] }
 	: never;
 
 /**
- * {@link parseFormData} plus every `image()` field resolved to the image id for the FK column via
+ * Every `image()` field of the parsed `data` resolved to the image id for the FK column via
  * {@link imageFieldValueToImgId} (uploading new, keeping unchanged, clearing removed). The schema may be an
  * object or a union of objects (e.g. `_action` discriminated).
  *
  * A kept (`EXISTING`) image must be the user's own upload unless `isCurrentImgId` says the edited
  * entity already holds it; forms that only ever keep the user's own images can leave it out.
  */
-export async function parseFormDataWithImages<T extends AnySchema>({
-	request,
+export async function resolveImageFields<T extends AnySchema>({
 	schema,
+	data,
 	isCurrentImgId,
 }: {
-	request: Request;
 	schema: T;
-	/** Whether the edited entity already holds this image (given the parsed form data to find the entity by). */
-	isCurrentImgId?: (
-		imgId: number,
-		data: v.InferOutput<T>,
-	) => boolean | Promise<boolean>;
-}): Promise<ParseResult<ResolvedImages<v.InferOutput<T>>>> {
-	const result = await parseFormData({ request, schema });
-	if (!result.success) return result;
-
+	data: v.InferOutput<T>;
+	isCurrentImgId?: (imgId: number) => boolean | Promise<boolean>;
+}): Promise<ResolvedImages<v.InferOutput<T>>> {
 	const user = requireUser();
-	const data = { ...(result.data as Record<string, unknown>) };
+	const resolved = { ...(data as Record<string, unknown>) };
 
 	for (const { key, autoValidate } of imageFields(schema)) {
-		if (key in data) {
-			data[key] = await imageFieldValueToImgId({
-				value: data[key] as ImageFieldValue,
+		if (key in resolved) {
+			resolved[key] = await imageFieldValueToImgId({
+				value: resolved[key] as ImageFieldValue,
 				user,
 				autoValidate,
-				isCurrentImgId: isCurrentImgId
-					? (imgId) => isCurrentImgId(imgId, result.data)
-					: undefined,
+				isCurrentImgId,
 			});
 		}
 	}
 
-	return { success: true, data: data as ResolvedImages<v.InferOutput<T>> };
+	return resolved as ResolvedImages<v.InferOutput<T>>;
 }
 
 /** Every `image()` field across an object or union/variant of objects, with its `autoValidate` flag. */
@@ -128,17 +94,46 @@ function imageFields(
 	return [...fields].map(([key, autoValidate]) => ({ key, autoValidate }));
 }
 
-/** Body → plain object, refusing over `maxBytes`. `Content-Length` is checked up front to reject before reading. */
-async function requestBodyToObject(request: Request, maxBytes: number) {
+/**
+ * Body → plain object, refusing over `maxBytes`. `Content-Length` is checked up front to reject before reading.
+ * Form data by `Content-Type`, anything else is read as JSON (`fetch` sends a string body as `text/plain`) and
+ * an empty body as an empty object. The {@link RENDERS_FIELD_ERRORS_KEY} marker is split off from the data.
+ */
+export async function requestBodyToObject(
+	request: Request,
+	maxBytes: number,
+): Promise<{ data: unknown; rendersFieldErrors: boolean }> {
 	if (Number(request.headers.get("Content-Length")) > maxBytes) {
 		throw payloadTooLarge();
 	}
 
-	if (request.headers.get("Content-Type") === "application/json") {
-		return JSON.parse(await readBodyText(request, maxBytes));
+	const body = await readBody(request, maxBytes);
+
+	if (!body || typeof body !== "object" || Array.isArray(body)) {
+		return { data: body, rendersFieldErrors: false };
 	}
 
-	return formDataToObject(await request.formData());
+	const { [RENDERS_FIELD_ERRORS_KEY]: marker, ...data } = body as Record<
+		string,
+		unknown
+	>;
+
+	return { data, rendersFieldErrors: marker === true || marker === "true" };
+}
+
+async function readBody(request: Request, maxBytes: number): Promise<unknown> {
+	if (request.headers.get("Content-Type")?.includes("form")) {
+		return formDataToObject(await request.formData());
+	}
+
+	const text = await readBodyText(request, maxBytes);
+	if (!text) return {};
+
+	try {
+		return JSON.parse(text);
+	} catch {
+		badRequest();
+	}
 }
 
 /** Aborts the stream past `maxBytes`, enforcing the running total so a chunked body understating `Content-Length` can't be buffered. */

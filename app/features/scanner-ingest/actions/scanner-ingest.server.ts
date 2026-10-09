@@ -1,14 +1,13 @@
 import { subDays } from "date-fns";
-import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import {
 	isLinkableLobby,
 	isUploadedLobby,
 } from "~/features/scanner/scanner-types";
+import { defineAction } from "~/form/define-action.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { parseBody } from "~/utils/remix.server";
 import * as Scoreboards from "../core/Scoreboards";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import {
@@ -20,99 +19,100 @@ import {
 /** How far back the POV user's reported games are content-resolution candidates */
 const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
 
-export const action: ActionFunction = async ({ request }) => {
-	const user = requireUser();
+export const action = defineAction(
+	{ body: ingestBodySchema, onInvalidBody: "badRequest" },
+	async ({ body }) => {
+		const user = requireUser();
 
-	const data = await parseBody({ request, schema: ingestBodySchema });
+		const povUserId = user.id;
 
-	const povUserId = user.id;
+		const requestMatches = body.matches.map(withoutDisprovenCast);
+		const indexedMatches = requestMatches
+			.map((match, requestIndex) => ({ match, requestIndex }))
+			.filter(({ match }) => isLinkableLobby(match.lobby));
+		const matches = indexedMatches.map(({ match }) => match);
+		const storeOnlyMatches = requestMatches.filter(
+			(match) => isUploadedLobby(match.lobby) && !isLinkableLobby(match.lobby),
+		);
+		if (matches.length === 0 && storeOnlyMatches.length === 0) {
+			return {
+				storedMatchesCount: 0,
+				mergedMatchesCount: 0,
+				linkedGamesCount: 0,
+				linkedMatches: [],
+				contextResolved: false,
+			} satisfies IngestResponse;
+		}
 
-	const requestMatches = data.matches.map(withoutDisprovenCast);
-	const indexedMatches = requestMatches
-		.map((match, requestIndex) => ({ match, requestIndex }))
-		.filter(({ match }) => isLinkableLobby(match.lobby));
-	const matches = indexedMatches.map(({ match }) => match);
-	const storeOnlyMatches = requestMatches.filter(
-		(match) => isUploadedLobby(match.lobby) && !isLinkableLobby(match.lobby),
-	);
-	if (matches.length === 0 && storeOnlyMatches.length === 0) {
+		const storedOnly = await ScannerIngestRepository.addOrMergeMatches({
+			povUserId,
+			submitterUserId: user.id,
+			matches: storeOnlyMatches,
+			context: null,
+		});
+
+		const resolved =
+			matches.length > 0
+				? await resolveIngestContext({
+						matches,
+						povUserId,
+						casterUserId: user.id,
+					})
+				: null;
+
+		const linkable = await ScannerIngestRepository.addOrMergeMatches({
+			povUserId,
+			submitterUserId: user.id,
+			matches,
+			context: resolved?.context ?? null,
+		});
+		const { effectiveMatches } = linkable;
+		const insertedCount = storedOnly.insertedCount + linkable.insertedCount;
+		const mergedCount = storedOnly.mergedCount + linkable.mergedCount;
+
+		let linkedGamesCount = 0;
+		let linkedMatches: IngestResponse["linkedMatches"] = [];
+		if (resolved) {
+			const matched = Scoreboards.matchedGames({
+				matches: effectiveMatches.map((effective) => effective.data),
+				games: resolved.games,
+				povUserId,
+			});
+
+			linkedGamesCount = await ScannerIngestRepository.addLinks({
+				links: matched.map(({ matchIndex, game }) => ({
+					ingestedMatchId: effectiveMatches[matchIndex]!.id,
+					match: effectiveMatches[matchIndex]!.data,
+					game,
+				})),
+				povUserId,
+			});
+
+			linkedMatches = matched.map(({ matchIndex, game }) => ({
+				matchIndex: indexedMatches[matchIndex]!.requestIndex,
+				link: ingestedMatchLink(resolved.context, game.target),
+			}));
+
+			logger.debug(
+				`ingest: ${Scoreboards.contextKey(resolved.context)} matched ${matched.length} games, ` +
+					`${linkedGamesCount} newly linked (stored ${insertedCount}, merged ${mergedCount})`,
+			);
+		} else {
+			logger.debug(
+				`ingest: stored ${insertedCount} matches (${mergedCount} merged) without a resolved context ` +
+					`(povUserId=${povUserId})`,
+			);
+		}
+
 		return {
-			storedMatchesCount: 0,
-			mergedMatchesCount: 0,
-			linkedGamesCount: 0,
-			linkedMatches: [],
-			contextResolved: false,
+			storedMatchesCount: insertedCount,
+			mergedMatchesCount: mergedCount,
+			linkedGamesCount,
+			linkedMatches,
+			contextResolved: resolved !== null,
 		} satisfies IngestResponse;
-	}
-
-	const storedOnly = await ScannerIngestRepository.addOrMergeMatches({
-		povUserId,
-		submitterUserId: user.id,
-		matches: storeOnlyMatches,
-		context: null,
-	});
-
-	const resolved =
-		matches.length > 0
-			? await resolveIngestContext({
-					matches,
-					povUserId,
-					casterUserId: user.id,
-				})
-			: null;
-
-	const linkable = await ScannerIngestRepository.addOrMergeMatches({
-		povUserId,
-		submitterUserId: user.id,
-		matches,
-		context: resolved?.context ?? null,
-	});
-	const { effectiveMatches } = linkable;
-	const insertedCount = storedOnly.insertedCount + linkable.insertedCount;
-	const mergedCount = storedOnly.mergedCount + linkable.mergedCount;
-
-	let linkedGamesCount = 0;
-	let linkedMatches: IngestResponse["linkedMatches"] = [];
-	if (resolved) {
-		const matched = Scoreboards.matchedGames({
-			matches: effectiveMatches.map((effective) => effective.data),
-			games: resolved.games,
-			povUserId,
-		});
-
-		linkedGamesCount = await ScannerIngestRepository.addLinks({
-			links: matched.map(({ matchIndex, game }) => ({
-				ingestedMatchId: effectiveMatches[matchIndex]!.id,
-				match: effectiveMatches[matchIndex]!.data,
-				game,
-			})),
-			povUserId,
-		});
-
-		linkedMatches = matched.map(({ matchIndex, game }) => ({
-			matchIndex: indexedMatches[matchIndex]!.requestIndex,
-			link: ingestedMatchLink(resolved.context, game.target),
-		}));
-
-		logger.debug(
-			`ingest: ${Scoreboards.contextKey(resolved.context)} matched ${matched.length} games, ` +
-				`${linkedGamesCount} newly linked (stored ${insertedCount}, merged ${mergedCount})`,
-		);
-	} else {
-		logger.debug(
-			`ingest: stored ${insertedCount} matches (${mergedCount} merged) without a resolved context ` +
-				`(povUserId=${povUserId})`,
-		);
-	}
-
-	return {
-		storedMatchesCount: insertedCount,
-		mergedMatchesCount: mergedCount,
-		linkedGamesCount,
-		linkedMatches,
-		contextResolved: resolved !== null,
-	} satisfies IngestResponse;
-};
+	},
+);
 
 function ingestedMatchLink(
 	context: Scoreboards.IngestContext,

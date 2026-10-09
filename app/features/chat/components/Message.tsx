@@ -84,7 +84,7 @@ export function Message({
 				{continuation ? null : (
 					<div className={styles.messageInfo}>
 						<div
-							className={styles.messageUser}
+							className={clsx(styles.messageUser, "truncate")}
 							style={
 								author?.chatNameHue
 									? { "--chat-hue": author.chatNameHue }
@@ -154,7 +154,7 @@ function ReplyReference({
 		return (
 			<div className={styles.replyReference}>
 				<span className={styles.replyReferenceGutter} />
-				<span className={styles.replyReferenceText}>
+				<span className={clsx(styles.replyReferenceText, "truncate")}>
 					{t("common:chat.reply.unavailable")}
 				</span>
 			</div>
@@ -184,7 +184,7 @@ function ReplyReference({
 				<span className={styles.replyReferenceAuthor}>
 					@{message.author?.username ?? "???"}
 				</span>
-				<span className={styles.replyReferenceText}>
+				<span className={clsx(styles.replyReferenceText, "truncate")}>
 					{snippet || sticker?.name}
 				</span>
 			</span>

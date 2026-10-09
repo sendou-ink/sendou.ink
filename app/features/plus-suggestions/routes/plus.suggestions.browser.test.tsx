@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { UserProvider } from "~/features/auth/core/user";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import { PlusSuggestionComments } from "./plus.suggestions";
 
 vi.mock("../actions/plus.suggestions.server", () => ({ action: vi.fn() }));
@@ -28,7 +29,7 @@ const suggestedUser = (id: number, username: string) => ({
 	customAvatarUrl: null,
 });
 
-const NOW_TIMESTAMP = Math.floor(Date.now() / 1000);
+const NOW_TIMESTAMP = databaseTimestampNow();
 
 const suggestionOf = (
 	suggested: ReturnType<typeof suggestedUser>,

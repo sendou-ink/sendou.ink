@@ -1,7 +1,7 @@
-import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { ServerConfig } from "~/config.server";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
+import { defineAction } from "~/form/define-action.server";
 import { logger } from "~/utils/logger";
 import * as Daily from "../core/Daily.server";
 import * as VoicePresence from "../core/VoicePresence.server";
@@ -32,7 +32,8 @@ const eventSchema = v.variant("type", [
 	}),
 ]);
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = defineAction(async ({ request }) => {
+	// biome-ignore lint/plugin: the signature covers the raw body bytes, which a parsed body can't reproduce
 	const rawBody = await request.text();
 	const secret = ServerConfig.daily.webhookSecret;
 
@@ -77,7 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	}
 
 	return null;
-};
+});
 
 function safeJsonParse(text: string): unknown {
 	try {

@@ -18,6 +18,7 @@
  * State keys to the scan's clock; `t` jumping backwards resets everything.
  */
 
+import type { CheckPlan } from "./check-plan";
 import type { DetectedEvent } from "./types";
 
 export interface SchedulingInfo {
@@ -170,18 +171,81 @@ export class DetectorScheduler {
 	}
 
 	/**
-	 * `nextDueT()` once the `due` detectors are checked at `t`, guessing each
-	 * keeps its current cadence (gates mostly report what they did last
-	 * time); a hint for reading ahead, never a decision.
+	 * Every value `nextDueT()` can take once the `pending` detectors report
+	 * their checks at `t`, ascending: each of them lands on its refine or its
+	 * search cadence. The first is `nextDueLowerBound`.
 	 */
-	predictNextDueT(t: number, due: readonly string[]): number {
-		let next = Number.POSITIVE_INFINITY;
+	nextDueCandidates(t: number, pending: readonly string[]): number[] {
+		let settled = Number.POSITIVE_INFINITY;
+		const possible: number[] = [];
+		for (const [id, state] of this.#states) {
+			if (pending.includes(id)) {
+				possible.push(
+					t + this.#interval({ ...state, streak: null, gatePassing: true }),
+					t + this.#interval({ ...state, streak: null, gatePassing: false }),
+				);
+				continue;
+			}
+			if (state.lastCheckT === undefined) return [Number.NEGATIVE_INFINITY];
+			settled = Math.min(settled, state.lastCheckT + this.#interval(state));
+		}
+		const candidates = possible.filter((candidate) => candidate < settled);
+		if (Number.isFinite(settled)) candidates.push(settled);
+		return [...new Set(candidates)].sort((a, b) => a - b);
+	}
+
+	/**
+	 * The next `count` times `nextDueT()` reaches once the `due` detectors
+	 * are checked at `t`, guessing each detector keeps its current cadence
+	 * (gates mostly report what they did last time) and is checked right at
+	 * its due time; a hint for reading ahead, never a decision.
+	 */
+	predictDueTimes(t: number, due: readonly string[], count: number): number[] {
+		const checks: { lastCheckT: number; interval: number }[] = [];
 		for (const [id, state] of this.#states) {
 			const lastCheckT = due.includes(id) ? t : state.lastCheckT;
-			if (lastCheckT === undefined) return Number.NEGATIVE_INFINITY;
-			next = Math.min(next, lastCheckT + this.#interval(state));
+			if (lastCheckT === undefined) return [Number.NEGATIVE_INFINITY];
+			checks.push({ lastCheckT, interval: this.#interval(state) });
 		}
-		return next;
+		const times: number[] = [];
+		while (times.length < count) {
+			let next = Number.POSITIVE_INFINITY;
+			for (const check of checks) {
+				next = Math.min(next, check.lastCheckT + check.interval);
+			}
+			if (!Number.isFinite(next)) break;
+			times.push(next);
+			for (const check of checks) {
+				if (check.lastCheckT + check.interval <= next + INTERVAL_EPSILON_S) {
+					check.lastCheckT = next;
+				}
+			}
+		}
+		return times;
+	}
+
+	/**
+	 * Each detector's last check and the cadences its next checks may take
+	 * once the `pending` detectors report their checks at `t` (see
+	 * check-plan.ts); null while some detector is due on any frame.
+	 */
+	checkPlan(t: number, pending: readonly string[]): CheckPlan | null {
+		if (!this.#options.suppressSteadyFrames) return null;
+		const detectors: CheckPlan["detectors"][number][] = [];
+		for (const [id, state] of this.#states) {
+			const later = this.#possibleIntervals(state);
+			if (pending.includes(id)) {
+				detectors.push({ lastCheckT: t, next: later, later });
+				continue;
+			}
+			if (state.lastCheckT === undefined) return null;
+			detectors.push({
+				lastCheckT: state.lastCheckT,
+				next: [this.#interval(state)],
+				later,
+			});
+		}
+		return { t, detectors };
 	}
 
 	/** Detector ids that should gate the frame at `t`. */
@@ -323,6 +387,15 @@ export class DetectorScheduler {
 		if (state.streak?.suppressed) return search;
 		if (!state.gatePassing) return search;
 		return info.refineIntervalS ?? this.#options.refineIntervalS;
+	}
+
+	#possibleIntervals(state: DetectorState): number[] {
+		return [
+			...new Set([
+				this.#interval({ ...state, streak: null, gatePassing: true }),
+				this.#interval({ ...state, streak: null, gatePassing: false }),
+			]),
+		];
 	}
 
 	#recordMatchState(

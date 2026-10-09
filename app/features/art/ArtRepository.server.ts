@@ -8,6 +8,7 @@ import {
 	jsonArrayFrom,
 } from "~/utils/kysely.server";
 import { seededRandom } from "~/utils/random";
+import { toDBBoolean } from "~/utils/sql";
 import type { ListedArt } from "./art-types";
 
 export function unlinkOwnFromArt(artId: number) {
@@ -394,7 +395,8 @@ export async function insert(args: InsertArtArgs) {
 	});
 }
 
-type UpdateArtArgs = Pick<Tables["Art"], "description" | "isShowcase"> & {
+type UpdateArtArgs = Pick<Tables["Art"], "description"> & {
+	isShowcase: boolean;
 	linkedUsers: number[];
 	tags: TagsToAdd;
 };
@@ -419,7 +421,7 @@ export async function update(id: number, args: UpdateArtArgs) {
 			.updateTable("Art")
 			.set({
 				description: args.description,
-				isShowcase: args.isShowcase ? 1 : 0,
+				isShowcase: toDBBoolean(args.isShowcase),
 			})
 			.where("id", "=", id)
 			.execute();

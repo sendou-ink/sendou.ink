@@ -539,7 +539,7 @@ export function SendouSelect<T extends object>({
 			>
 				<span
 					id={valueId}
-					className={styles.selectValue}
+					className={clsx(styles.selectValue, "truncate")}
 					data-placeholder={selectedContent === undefined ? "true" : undefined}
 				>
 					{selectedContent !== undefined ? selectedContent : placeholder}
@@ -881,7 +881,7 @@ function SelectOption(props: SendouSelectItemProps) {
 			data-disabled={isDisabled ? "true" : undefined}
 			data-testid={testId}
 			data-status={dataStatus}
-			className={clsx(styles.item, className, {
+			className={clsx(styles.item, "truncate", className, {
 				[styles.itemFocused]: isFocused,
 				[styles.itemSelected]: isSelected,
 			})}

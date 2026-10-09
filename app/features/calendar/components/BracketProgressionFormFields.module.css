@@ -20,3 +20,11 @@
 .syntaxExplanation {
 	flex: 1;
 }
+
+/* the default divider color is the panel's background */
+.divider {
+	&::before,
+	&::after {
+		border-color: var(--color-border);
+	}
+}

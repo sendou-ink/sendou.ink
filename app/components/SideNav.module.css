@@ -136,10 +136,6 @@
 }
 
 .listLinkTitle {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-
 	&:has(+ .listLinkSubtitle) {
 		color: var(--color-text);
 	}
@@ -156,9 +152,6 @@
 .listLinkSubtitle {
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .listLinkBadge {

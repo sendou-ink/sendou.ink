@@ -115,7 +115,7 @@ function resolveBracketIdx(
 }
 
 function resolveGroupId(bracket: Bracket | null, groupId: number | null) {
-	if (!bracket || !showsOneGroupAtATime(bracket.type)) return null;
+	if (!bracket || !showsOneGroupAtATime(bracket)) return null;
 
 	const groupIds = bracket.data.group.map((group) => group.id);
 

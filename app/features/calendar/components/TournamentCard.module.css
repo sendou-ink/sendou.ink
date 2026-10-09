@@ -75,10 +75,7 @@
 	text-align: center;
 	font-weight: var(--weight-semi);
 	font-size: var(--font-sm);
-	white-space: nowrap;
-	text-overflow: ellipsis;
 	max-width: 225px;
-	overflow: hidden;
 }
 
 .nameWithTier {
@@ -135,9 +132,6 @@
 
 .firstPlacersTeamName {
 	max-width: 150px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
 .badgeNavIcon {

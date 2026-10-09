@@ -322,7 +322,7 @@ function GroupMember({
 							>
 								<Avatar user={member} size="xs" />
 							</NoteAvatar>
-							<span className={styles.name}>
+							<span className={clsx(styles.name, "truncate")}>
 								{member.inGameName ? (
 									<>
 										<span className="text-lighter font-bold text-xxs">

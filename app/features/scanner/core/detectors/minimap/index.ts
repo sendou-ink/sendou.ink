@@ -70,6 +70,7 @@ import {
 	GATE_SPECTATOR_X_MIRRORED_DARK,
 	MINIMAP_ABILITY_INK_THRESHOLD,
 	MINIMAP_WEAPON_INK_THRESHOLD,
+	NAME_BIN_SURFACE_MARGIN,
 	NAME_BIN_THRESHOLD,
 	NAME_PLAIN_TIE_MARGIN,
 	NAME_TEXT_HEIGHT,
@@ -218,6 +219,18 @@ function crossedOut(crossFraction: number, crossLap: number): boolean {
 			? CROSS_BLEED_MIN_LAPLACIAN
 			: CROSS_MIN_LAPLACIAN)
 	);
+}
+
+function medianBrightness(gray: Mat): number {
+	const histogram = new Uint32Array(256);
+	const n = gray.rows * gray.cols;
+	for (let i = 0; i < n; i++) histogram[gray.data[i]!]!++;
+	let seen = 0;
+	for (let v = 0; v < 256; v++) {
+		seen += histogram[v]!;
+		if (seen * 2 >= n) return v;
+	}
+	return 255;
 }
 
 /** fraction of the probe that is saturated-and-bright (cross-out strokes) */
@@ -431,7 +444,12 @@ export function createMinimapDetector(
 		const parsed = yield* parseNameSteps(
 			band,
 			glyphs,
-			{ binThreshold: NAME_BIN_THRESHOLD },
+			{
+				binThreshold: Math.max(
+					NAME_BIN_THRESHOLD,
+					medianBrightness(band) + NAME_BIN_SURFACE_MARGIN,
+				),
+			},
 			speculative,
 		);
 		band.delete();

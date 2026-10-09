@@ -1,6 +1,5 @@
 import * as v from "valibot";
 import { select, textArea, textFieldOptional } from "~/form/fields";
-import { id } from "~/utils/schema";
 import {
 	INAPPROPRIATE_NICKNAME_CATEGORY,
 	USER_REPORT,
@@ -33,8 +32,4 @@ export const reportUserSchema = v.object({
 		bottomText: "bottomTexts.reportMatchId",
 		maxLength: USER_REPORT.MATCH_ID_MAX_LENGTH,
 	}),
-});
-
-export const reportUserParamsSchema = v.object({
-	id,
 });

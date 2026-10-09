@@ -24,6 +24,7 @@ import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerInges
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import {
+	databaseTimestampNow,
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
@@ -1037,7 +1038,7 @@ export function insert({
 				alphaGroupId,
 				bravoGroupId,
 				chatRoomId: chatRoom.id,
-				noScreen: memberPreferringNoScreen ? 1 : 0,
+				noScreen: toDBBoolean(Boolean(memberPreferringNoScreen)),
 			})
 			.returningAll()
 			.executeTakeFirstOrThrow();
@@ -1206,7 +1207,7 @@ export async function cancelMatch({
 				.updateTable("GroupMatchMap")
 				.set({
 					winnerGroupId: null,
-					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedAt: databaseTimestampNow(),
 					reportedByUserId,
 				})
 				.where("matchId", "=", matchId)
@@ -1258,7 +1259,7 @@ export async function cancelMatch({
 				.updateTable("GroupMatchMap")
 				.set({
 					winnerGroupId: null,
-					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedAt: databaseTimestampNow(),
 					reportedByUserId,
 				})
 				.where("matchId", "=", matchId)
@@ -1538,7 +1539,7 @@ export async function reportMapWinner({
 			.updateTable("GroupMatchMap")
 			.set({
 				winnerGroupId: winnerId,
-				reportedAt: dateToDatabaseTimestamp(new Date()),
+				reportedAt: databaseTimestampNow(),
 				reportedByUserId,
 			})
 			.where("id", "=", currentMap.id)
@@ -1568,7 +1569,7 @@ export async function reportMapWinner({
 			.updateTable("GroupMatchMap")
 			.set({
 				winnerGroupId: winnerId,
-				reportedAt: dateToDatabaseTimestamp(new Date()),
+				reportedAt: databaseTimestampNow(),
 				reportedByUserId,
 			})
 			.where("id", "=", currentMap.id)
@@ -1711,7 +1712,7 @@ async function handleStaffFinalization({
 				.updateTable("GroupMatchMap")
 				.set({
 					winnerGroupId,
-					reportedAt: dateToDatabaseTimestamp(new Date()),
+					reportedAt: databaseTimestampNow(),
 					reportedByUserId,
 				})
 				.where("id", "=", currentMap.id)
@@ -1774,7 +1775,7 @@ async function finalizeMatch({
 		await trx
 			.updateTable("GroupMatch")
 			.set({
-				confirmedAt: dateToDatabaseTimestamp(new Date()),
+				confirmedAt: databaseTimestampNow(),
 				confirmedByUserId,
 				cancelRequestedByUserId: null,
 			})

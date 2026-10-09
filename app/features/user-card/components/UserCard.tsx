@@ -352,9 +352,11 @@ function CardContent({
 					<Avatar user={data} size="md" className={styles.avatar} />
 				</NoteAvatar>
 				<div className={styles.nameGroup}>
-					<h2 className={styles.username}>{data.username}</h2>
+					<h2 className={clsx(styles.username, "truncate")}>{data.username}</h2>
 					{data.customUrl ? (
-						<div className={styles.subtitle}>{data.customUrl}</div>
+						<div className={clsx(styles.subtitle, "truncate")}>
+							{data.customUrl}
+						</div>
 					) : null}
 					{data.friendCode ? (
 						<span className={styles.friendCode}>SW-{data.friendCode}</span>

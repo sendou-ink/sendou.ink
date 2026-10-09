@@ -662,7 +662,7 @@ export function updateRoster({
 					role: member.role,
 					customRole: member.customRole,
 					roleType: member.roleType,
-					isManager: member.isManager ? 1 : 0,
+					isManager: toDBBoolean(member.isManager),
 					order: member.order,
 				})
 				.where("teamId", "=", teamId)

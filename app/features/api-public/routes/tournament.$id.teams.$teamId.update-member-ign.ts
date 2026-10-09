@@ -1,4 +1,3 @@
-import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -8,11 +7,8 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { inGameNameIsValid } from "~/features/user-page/in-game-name";
-import {
-	badRequestIfFalsy,
-	parseBody,
-	parseParams,
-} from "~/utils/remix.server";
+import { defineAction } from "~/form/define-action.server";
+import { badRequestIfFalsy } from "~/utils/remix.server";
 import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
@@ -26,33 +22,26 @@ const bodySchema = v.object({
 	inGameName: v.pipe(v.string(), v.check(inGameNameIsValid)),
 });
 
-export const action = async (args: ActionFunctionArgs) => {
-	const { id: tournamentId } = parseParams({
-		params: args.params,
-		schema: paramsSchema,
-	});
-	const { userId, inGameName } = await parseBody({
-		request: args.request,
-		schema: bodySchema,
-	});
+export const action = defineAction(
+	{ params: paramsSchema, body: bodySchema, onInvalidBody: "badRequest" },
+	async ({ params: { id: tournamentId }, body: { userId, inGameName } }) =>
+		wrapActionForApi(async () => {
+			const user = requireUser();
+			const tournament = await tournamentFromDB(tournamentId);
+			requireTournamentOrganizer(tournament, user);
 
-	return wrapActionForApi(async () => {
-		const user = requireUser();
-		const tournament = await tournamentFromDB(tournamentId);
-		requireTournamentOrganizer(tournament, user);
+			const teamMemberOf = badRequestIfFalsy(
+				tournament.teamMemberOfByUser({ id: userId }),
+			);
 
-		const teamMemberOf = badRequestIfFalsy(
-			tournament.teamMemberOfByUser({ id: userId }),
-		);
+			await TournamentTeamRepository.updateMemberInGameName({
+				userId,
+				inGameName,
+				tournamentTeamId: teamMemberOf.id,
+			});
 
-		await TournamentTeamRepository.updateMemberInGameName({
-			userId,
-			inGameName,
-			tournamentTeamId: teamMemberOf.id,
-		});
+			clearTournamentDataCache(tournamentId);
 
-		clearTournamentDataCache(tournamentId);
-
-		return null;
-	}, args);
-};
+			return null;
+		}),
+);

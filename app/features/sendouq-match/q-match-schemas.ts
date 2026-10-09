@@ -76,7 +76,3 @@ export const matchSchema = v.union([
 		_action: _action("ADMIN_CANCEL"),
 	}),
 ]);
-
-export const qMatchPageParamsSchema = v.object({
-	id,
-});

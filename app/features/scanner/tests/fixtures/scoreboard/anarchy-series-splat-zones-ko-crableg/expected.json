@@ -1,0 +1,11 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "SERIES",
+    "mode": "SZ",
+    "stage": 18,
+    "stageLabel": "Crableg Capital",
+    "matchScores": [100, 0],
+    "povIndex": 7
+  }
+}

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { checkBanStatus } from "./banned.server";
 
 describe("checkBanStatus", () => {
@@ -20,8 +21,8 @@ describe("checkBanStatus", () => {
 
 	test("returns true when ban expires in the future", () => {
 		const now = new Date("2025-01-01T12:00:00Z");
-		const futureTimestamp = Math.floor(
-			new Date("2025-01-01T13:00:00Z").getTime() / 1000,
+		const futureTimestamp = dateToDatabaseTimestamp(
+			new Date("2025-01-01T13:00:00Z"),
 		);
 
 		expect(checkBanStatus(futureTimestamp, now)).toBe(true);
@@ -29,8 +30,8 @@ describe("checkBanStatus", () => {
 
 	test("returns false when ban has expired", () => {
 		const now = new Date("2025-01-01T12:00:00Z");
-		const pastTimestamp = Math.floor(
-			new Date("2025-01-01T11:00:00Z").getTime() / 1000,
+		const pastTimestamp = dateToDatabaseTimestamp(
+			new Date("2025-01-01T11:00:00Z"),
 		);
 
 		expect(checkBanStatus(pastTimestamp, now)).toBe(false);
@@ -38,21 +39,21 @@ describe("checkBanStatus", () => {
 
 	test("returns false when ban expires exactly at current time", () => {
 		const now = new Date("2025-01-01T12:00:00Z");
-		const exactTimestamp = Math.floor(now.getTime() / 1000);
+		const exactTimestamp = dateToDatabaseTimestamp(now);
 
 		expect(checkBanStatus(exactTimestamp, now)).toBe(false);
 	});
 
 	test("returns true when ban expires 1 second in the future", () => {
 		const now = new Date("2025-01-01T12:00:00Z");
-		const oneSecondLater = Math.floor(now.getTime() / 1000) + 1;
+		const oneSecondLater = dateToDatabaseTimestamp(now) + 1;
 
 		expect(checkBanStatus(oneSecondLater, now)).toBe(true);
 	});
 
 	test("returns false when ban expired 1 second ago", () => {
 		const now = new Date("2025-01-01T12:00:00Z");
-		const oneSecondEarlier = Math.floor(now.getTime() / 1000) - 1;
+		const oneSecondEarlier = dateToDatabaseTimestamp(now) - 1;
 
 		expect(checkBanStatus(oneSecondEarlier, now)).toBe(false);
 	});

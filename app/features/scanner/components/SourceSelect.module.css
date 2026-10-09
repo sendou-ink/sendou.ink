@@ -24,9 +24,6 @@
 	height: var(--field-size);
 	padding: 0 calc(var(--field-size-icon) + var(--field-padding) + var(--s-2)) 0
 		var(--field-padding);
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	overflow: hidden;
 	outline: none;
 
 	&:focus-visible {

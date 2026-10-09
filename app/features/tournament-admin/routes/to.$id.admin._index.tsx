@@ -221,7 +221,7 @@ function TeamRow({
 							tournamentId: tournament.ctx.id,
 							tournamentTeamId: team.id,
 						})}
-						className={styles.teamName}
+						className={clsx(styles.teamName, "truncate")}
 						data-testid="team-name"
 					>
 						{team.name}

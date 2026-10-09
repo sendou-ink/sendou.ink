@@ -6,7 +6,4 @@
 	font-weight: var(--weight-semi);
 	font-size: var(--font-sm);
 	max-width: 10rem;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }

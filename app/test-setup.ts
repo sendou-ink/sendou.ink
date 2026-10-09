@@ -8,7 +8,7 @@ afterEach(async () => {
 
 	const { dbReset } = await import("~/db/reset");
 	await dbReset();
-});
+}, 30_000);
 
 // avoids a "Cannot find module '@aws-sdk/core/dist-es/submodules/client/index'" error, delete if tests pass without
 

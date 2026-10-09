@@ -4,6 +4,7 @@ import { type Urgency, WebPushError } from "web-push";
 import type { NotificationSubscription } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+import { toDBBoolean } from "~/utils/sql";
 import { APP_ICON_URL, type UserLinkArgs } from "~/utils/urls";
 import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
@@ -80,7 +81,7 @@ export async function notify({
 			notification,
 			dededuplicatedUserIds.map((userId) => ({
 				userId,
-				seen: defaultSeenUserIds?.includes(userId) ? 1 : 0,
+				seen: toDBBoolean(Boolean(defaultSeenUserIds?.includes(userId))),
 			})),
 		);
 		notificationId = inserted.id;

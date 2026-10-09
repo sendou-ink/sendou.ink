@@ -1,9 +1,15 @@
-import { subDays } from "date-fns";
+import { addDays, startOfHour, subDays } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { calendarEventPage } from "~/utils/urls";
-import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import {
+	datetimeLocalValue,
+	expect,
+	impersonate,
+	isNotVisible,
+	test,
+} from "./helpers/playwright";
 import { CalendarEventPage } from "./pages/calendar/calendar-event-page";
 import { CalendarNewEventPage } from "./pages/calendar/calendar-new-event-page";
 import { CalendarPage } from "./pages/calendar/calendar-page";
@@ -21,7 +27,7 @@ test.describe("Calendar", () => {
 		factories,
 	}) => {
 		// all of them at the same time so they share one clock header and its toggle
-		const startTimes = [dateToDatabaseTimestamp(new Date())];
+		const startTimes = [databaseTimestampNow()];
 		for (let i = 0; i < SENDOU_INK_TOURNAMENTS_COUNT; i++) {
 			await factories.TournamentFactory.create({
 				authorId: ADMIN_ID,
@@ -226,19 +232,21 @@ test.describe("Calendar", () => {
 		await newTournament.form.fill("discordInviteCode", "test-invite");
 
 		// flip a tournament setting away from its default
+		await newTournament.goToStep("teams");
 		await newTournament.form.check("requireInGameNames");
 
 		// "Organizer picked" allows an arbitrary map pool, unlike the validated team pick pools
+		await newTournament.goToStep("maps");
 		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
 		await newTournament.pickMapPool(mapPool);
 
 		await newTournament.addFollowUpBracket({
 			name: "Underground bracket",
 			format: "Single elimination",
-			placements: "-1",
+			placements: [-1],
 		});
 
-		await newTournament.form.submit();
+		await newTournament.save();
 
 		await expect(page).toHaveURL(/\/to\/\d+/);
 		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);
@@ -260,6 +268,40 @@ test.describe("Calendar", () => {
 		}
 	});
 
+	test("browser back returns to the previous step of the tournament form", async ({
+		page,
+		factories,
+	}) => {
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+
+		await impersonate(page, organizer.id);
+
+		const newTournament = new CalendarNewEventPage(page);
+		await newTournament.gotoNewTournament();
+
+		await newTournament.form.fill("name", "Test Tournament");
+		await newTournament.form.fill("discordInviteCode", "test-invite");
+		await newTournament.goToStep("teams");
+		await expect(newTournament.stepButton("teams")).toHaveAttribute(
+			"aria-current",
+			"step",
+		);
+		await expect(page).toHaveURL(/step=teams/);
+
+		await page.goBack();
+
+		await expect(newTournament.stepButton("basics")).toHaveAttribute(
+			"aria-current",
+			"step",
+		);
+		await expect(newTournament.locators.nameInput).toHaveValue(
+			"Test Tournament",
+		);
+		await isNotVisible(newTournament.locators.discardChangesButton);
+	});
+
 	test("creates a team picked tournament with a custom map pool", async ({
 		page,
 		factories,
@@ -276,6 +318,7 @@ test.describe("Calendar", () => {
 		await newTournament.form.fill("name", "Team Pick Tournament");
 		await newTournament.setFirstDate(new Date(2027, 0, 15, 17, 0));
 
+		await newTournament.goToStep("maps");
 		await newTournament.form.checkItems("mapPickingStyle", ["AUTO"]);
 		await newTournament.setTeamPickModes(["Splat Zones", "Tower Control"]);
 		await newTournament.teamPickCountInput("Splat Zones").fill("2");
@@ -305,7 +348,7 @@ test.describe("Calendar", () => {
 			),
 		).toBeVisible();
 
-		await newTournament.form.submit();
+		await newTournament.save();
 
 		await expect(page).toHaveURL(/\/to\/\d+/);
 		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);
@@ -320,6 +363,76 @@ test.describe("Calendar", () => {
 		for (const stage of stages) {
 			await expect(rules.stageName(stage)).toBeVisible();
 		}
+	});
+
+	test("copies a tournament keeping its follow-up bracket the same time after the start", async ({
+		page,
+		factories,
+	}) => {
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+		const copiedStartTime = startOfHour(subDays(new Date(), 7));
+		const copied = await factories.TournamentFactory.create({
+			authorId: organizer.id,
+			startTimes: [dateToDatabaseTimestamp(copiedStartTime)],
+			mapPickingStyle: "AUTO",
+			bracketProgression: [
+				{
+					name: "Groups",
+					type: "round_robin",
+					requiresCheckIn: false,
+					settings: { teamsPerGroup: 4 },
+				},
+				{
+					name: "Final Stage",
+					type: "single_elimination",
+					requiresCheckIn: true,
+					startTime: dateToDatabaseTimestamp(addDays(copiedStartTime, 1)),
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [1, 2] }],
+				},
+			],
+		});
+
+		await impersonate(page, organizer.id);
+
+		const newTournament = new CalendarNewEventPage(page);
+		await newTournament.gotoNewTournament();
+		await newTournament.copyTournament(copied.eventId);
+
+		await newTournament.form.fill("name", "Copied Tournament");
+		const startTime = await newTournament.tournamentStartTime();
+		const followUpStartTime = addDays(startTime, 1);
+
+		// starting on another day than the tournament, the card shows the date too
+		await newTournament.goToStep("format");
+		await expect(newTournament.bracketCard("Final Stage")).toContainText(
+			new Intl.DateTimeFormat("en-US", {
+				month: "short",
+				day: "numeric",
+			}).format(followUpStartTime),
+		);
+
+		await newTournament.selectBracket(1);
+		await expect(newTournament.locators.bracketStartTimeInput).toHaveValue(
+			datetimeLocalValue(followUpStartTime),
+		);
+
+		await newTournament.goToStep("basics");
+		await newTournament.setFirstDate(addDays(startTime, 2));
+		await newTournament.goToStep("prizes");
+
+		await expect(
+			newTournament.locators.bracketStartBeforeTournamentError,
+		).toBeVisible();
+
+		await newTournament.locators.bracketStartTimeInput.fill(
+			datetimeLocalValue(addDays(startTime, 3)),
+		);
+		await newTournament.save();
+
+		await expect(page).toHaveURL(/\/to\/\d+/);
 	});
 
 	test("reports winners of a past event", async ({ page, factories }) => {

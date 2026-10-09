@@ -42,9 +42,6 @@
 	align-items: center;
 	gap: var(--s-1);
 	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .column {

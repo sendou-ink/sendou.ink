@@ -2,9 +2,10 @@
 
 export { create } from "./create";
 export {
-	hasThirdPlaceMatch,
+	eliminationGroupCount,
 	roundRobinGroupCount,
 	swissRoundCount,
+	thirdPlaceMatchLinkable,
 } from "./create/settings";
 export { endDroppedTeamMatches } from "./propagation/dropped-teams";
 export { reportResult } from "./propagation/report-result";

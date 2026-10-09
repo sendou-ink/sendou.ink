@@ -43,7 +43,7 @@ export function UserPageIconNav({ items }: { items: UserPageNavItem[] }) {
 						height={24}
 						alt=""
 					/>
-					<span className={styles.label}>{item.label}</span>
+					<span className={clsx(styles.label, "truncate")}>{item.label}</span>
 				</NavLink>
 			))}
 		</nav>

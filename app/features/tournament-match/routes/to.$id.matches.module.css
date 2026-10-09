@@ -58,12 +58,6 @@
 	min-width: 0;
 }
 
-.teamName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .loser {
 	color: var(--color-text-high);
 }

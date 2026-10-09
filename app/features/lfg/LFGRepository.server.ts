@@ -144,7 +144,7 @@ export function updatePost(
 			type: args.type,
 			plusTierVisibility: args.plusTierVisibility,
 			languages: args.languages,
-			updatedAt: dateToDatabaseTimestamp(new Date()),
+			updatedAt: databaseTimestampNow(),
 		})
 		.where("id", "=", postId)
 		.execute();

@@ -1,15 +1,14 @@
-import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatRoomChannel } from "~/features/events/events-types";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
-import { parseFormData } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	errorToast,
 	errorToastIfFalsy,
 	notFoundIfNullish,
-	parseParams,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
@@ -21,194 +20,192 @@ import * as ScrimMapListRepository from "../ScrimMapListRepository.server";
 import * as ScrimMapRepository from "../ScrimMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { scrimIdActionSchema } from "../scrims-schemas";
-import { parseMapPoolInput } from "../scrims-utils";
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const { id } = parseParams({ params, schema: idObject });
-	const post = notFoundIfNullish(await ScrimPostRepository.findById(id));
-	const user = requireUser();
+export const action = defineAction(
+	{ params: idObject, body: scrimIdActionSchema },
+	async ({ params: { id }, body }) => {
+		const post = notFoundIfNullish(await ScrimPostRepository.findById(id));
+		const user = requireUser();
 
-	const result = await parseFormData({
-		request,
-		schema: scrimIdActionSchema,
-	});
+		requirePermission(post, "MANAGE_TRACKING");
 
-	if (!result.success) {
-		return { fieldErrors: result.fieldErrors };
-	}
+		switch (body._action) {
+			case "CANCEL_SCRIM": {
+				requirePermission(post, "CANCEL");
 
-	const data = result.data;
+				errorToastIfFalsy(Scrim.isAccepted(post), "Scrim is not accepted");
+				errorToastIfFalsy(!post.canceled, "Scrim is already canceled");
 
-	requirePermission(post, "MANAGE_TRACKING");
+				if (databaseTimestampToDate(Scrim.getStartTime(post)) < new Date()) {
+					errorToast(
+						"Cannot cancel a scrim that was already scheduled to start",
+					);
+				}
 
-	switch (data._action) {
-		case "CANCEL_SCRIM": {
-			requirePermission(post, "CANCEL");
+				await ScrimPostRepository.cancelScrim(id, body.reason);
 
-			errorToastIfFalsy(Scrim.isAccepted(post), "Scrim is not accepted");
-			errorToastIfFalsy(!post.canceled, "Scrim is already canceled");
+				if (post.chatRoomId) {
+					ChatSystemMessage.notifyRoomsChangedByRoomIds([post.chatRoomId]);
+				}
 
-			if (databaseTimestampToDate(Scrim.getStartTime(post)) < new Date()) {
-				errorToast("Cannot cancel a scrim that was already scheduled to start");
+				const acceptedRequest = post.requests.find((r) => r.isAccepted);
+				if (acceptedRequest) {
+					const postTeamName = Scrim.sideDisplayName(post);
+					const requestTeamName = Scrim.sideDisplayName(acceptedRequest);
+
+					notify({
+						userIds: post.users.map((m) => m.id),
+						defaultSeenUserIds: [user.id],
+						notification: {
+							type: "SCRIM_CANCELED",
+							meta: { id: post.id, opponentTeamName: requestTeamName },
+						},
+					});
+
+					notify({
+						userIds: acceptedRequest.users.map((m) => m.id),
+						defaultSeenUserIds: [user.id],
+						notification: {
+							type: "SCRIM_CANCELED",
+							meta: { id: post.id, opponentTeamName: postTeamName },
+						},
+					});
+
+					// the canceled scrim is no longer happening
+					const participantIds = [
+						...post.users.map((m) => m.id),
+						...acceptedRequest.users.map((m) => m.id),
+					];
+					await resolveNotifications({
+						userIds: participantIds,
+						type: "SCRIM_SCHEDULED",
+						meta: { id: post.id },
+					});
+					await resolveNotifications({
+						userIds: participantIds,
+						type: "SCRIM_STARTING_SOON",
+						meta: { id: post.id },
+					});
+				}
+
+				break;
 			}
+			case "SUBMIT_MAP_LIST": {
+				const { viewerSide } = await loadMapByMapContext({ post, user });
 
-			await ScrimPostRepository.cancelScrim(id, data.reason);
+				if (body.source === "FROM_POST") {
+					errorToastIfFalsy(
+						post.mapsTournament,
+						"Post has no tournament to use",
+					);
+				}
 
-			if (post.chatRoomId) {
-				ChatSystemMessage.notifyRoomsChangedByRoomIds([post.chatRoomId]);
-			}
+				const serializedPool =
+					body.source === "POOL"
+						? (MapPool.fromUserInput(body.serializedPool!)?.serialized ?? null)
+						: null;
 
-			const acceptedRequest = post.requests.find((r) => r.isAccepted);
-			if (acceptedRequest) {
-				const postTeamName = Scrim.sideDisplayName(post);
-				const requestTeamName = Scrim.sideDisplayName(acceptedRequest);
+				errorToastIfFalsy(
+					body.source !== "POOL" || serializedPool,
+					"Invalid map pool",
+				);
 
-				notify({
-					userIds: post.users.map((m) => m.id),
-					defaultSeenUserIds: [user.id],
-					notification: {
-						type: "SCRIM_CANCELED",
-						meta: { id: post.id, opponentTeamName: requestTeamName },
-					},
+				const resolvedSource: "POOL" | "TOURNAMENT" =
+					body.source === "POOL" ? "POOL" : "TOURNAMENT";
+
+				await ScrimMapListRepository.submitMapListAndGenerateIfNeeded({
+					scrimPostId: post.id,
+					side: viewerSide,
+					source: resolvedSource,
+					tournamentId:
+						body.source === "FROM_POST"
+							? post.mapsTournament!.id
+							: (body.tournamentId ?? null),
+					serializedPool,
 				});
 
-				notify({
-					userIds: acceptedRequest.users.map((m) => m.id),
-					defaultSeenUserIds: [user.id],
-					notification: {
-						type: "SCRIM_CANCELED",
-						meta: { id: post.id, opponentTeamName: postTeamName },
-					},
-				});
-
-				// the canceled scrim is no longer happening
-				const participantIds = [
-					...post.users.map((m) => m.id),
-					...acceptedRequest.users.map((m) => m.id),
-				];
-				await resolveNotifications({
-					userIds: participantIds,
-					type: "SCRIM_SCHEDULED",
-					meta: { id: post.id },
-				});
-				await resolveNotifications({
-					userIds: participantIds,
-					type: "SCRIM_STARTING_SOON",
-					meta: { id: post.id },
-				});
+				broadcastRevalidate(post);
+				break;
 			}
+			case "REMOVE_MAP_LIST": {
+				const { viewerSide } = await loadMapByMapContext({ post, user });
 
-			break;
-		}
-		case "SUBMIT_MAP_LIST": {
-			const { viewerSide } = await loadMapByMapContext({ post, user });
+				await ScrimMapListRepository.deleteMapList(post.id, viewerSide);
 
-			if (data.source === "FROM_POST") {
-				errorToastIfFalsy(post.mapsTournament, "Post has no tournament to use");
+				broadcastRevalidate(post);
+				break;
 			}
+			case "REPORT_MAP": {
+				const { maps } = await loadMapByMapContext({ post, user });
 
-			const serializedPool =
-				data.source === "POOL"
-					? (parseMapPoolInput(data.serializedPool!)?.serialized ?? null)
-					: null;
+				const target = maps.find((m) => m.id === body.mapId);
+				errorToastIfFalsy(target, "Map not found");
+				errorToastIfFalsy(target!.reportedAt === null, "Map already reported");
 
-			errorToastIfFalsy(
-				data.source !== "POOL" || serializedPool,
-				"Invalid map pool",
-			);
+				await ScrimMapRepository.reportMapAndGenerateNext({
+					scrimPostId: post.id,
+					mapId: body.mapId,
+					winnerSide: body.winnerSide,
+				});
 
-			const resolvedSource: "POOL" | "TOURNAMENT" =
-				data.source === "POOL" ? "POOL" : "TOURNAMENT";
+				broadcastRevalidate(post);
+				break;
+			}
+			case "UNDO_MAP": {
+				const { maps } = await loadMapByMapContext({ post, user });
 
-			await ScrimMapListRepository.submitMapListAndGenerateIfNeeded({
-				scrimPostId: post.id,
-				side: viewerSide,
-				source: resolvedSource,
-				tournamentId:
-					data.source === "FROM_POST"
-						? post.mapsTournament!.id
-						: (data.tournamentId ?? null),
-				serializedPool,
-			});
+				const latest = Scrim.lastReportedMap(maps);
+				errorToastIfFalsy(
+					ScrimMapByMap.canUndo(latest, maps),
+					"Nothing to undo",
+				);
 
-			broadcastRevalidate(post);
-			break;
+				await ScrimMapRepository.undoMostRecentMap(post.id);
+
+				broadcastRevalidate(post);
+				break;
+			}
+			case "REPLAY_MAP": {
+				const { maps } = await loadMapByMapContext({ post, user });
+
+				const latest = Scrim.lastReportedMap(maps);
+				errorToastIfFalsy(latest, "No map to replay");
+
+				const currentMap = maps.find((m) => m.reportedAt === null);
+				errorToastIfFalsy(currentMap, "No current map to replace");
+
+				await ScrimMapRepository.replaceCurrentMap({
+					scrimPostId: post.id,
+					mode: latest!.mode,
+					stageId: latest!.stageId,
+				});
+
+				broadcastMapChange({ post, type: "MAP_REPLAYED", user });
+				break;
+			}
+			case "PICK_MAP": {
+				const { maps } = await loadMapByMapContext({ post, user });
+
+				const currentMap = maps.find((m) => m.reportedAt === null);
+				errorToastIfFalsy(currentMap, "No current map to replace");
+
+				await ScrimMapRepository.replaceCurrentMap({
+					scrimPostId: post.id,
+					mode: body.mode,
+					stageId: body.stageId,
+				});
+
+				broadcastMapChange({ post, type: "MAP_PICKED", user });
+				break;
+			}
+			default: {
+				assertUnreachable(body);
+			}
 		}
-		case "REMOVE_MAP_LIST": {
-			const { viewerSide } = await loadMapByMapContext({ post, user });
 
-			await ScrimMapListRepository.deleteMapList(post.id, viewerSide);
-
-			broadcastRevalidate(post);
-			break;
-		}
-		case "REPORT_MAP": {
-			const { maps } = await loadMapByMapContext({ post, user });
-
-			const target = maps.find((m) => m.id === data.mapId);
-			errorToastIfFalsy(target, "Map not found");
-			errorToastIfFalsy(target!.reportedAt === null, "Map already reported");
-
-			await ScrimMapRepository.reportMapAndGenerateNext({
-				scrimPostId: post.id,
-				mapId: data.mapId,
-				winnerSide: data.winnerSide,
-			});
-
-			broadcastRevalidate(post);
-			break;
-		}
-		case "UNDO_MAP": {
-			const { maps } = await loadMapByMapContext({ post, user });
-
-			const latest = Scrim.lastReportedMap(maps);
-			errorToastIfFalsy(ScrimMapByMap.canUndo(latest, maps), "Nothing to undo");
-
-			await ScrimMapRepository.undoMostRecentMap(post.id);
-
-			broadcastRevalidate(post);
-			break;
-		}
-		case "REPLAY_MAP": {
-			const { maps } = await loadMapByMapContext({ post, user });
-
-			const latest = Scrim.lastReportedMap(maps);
-			errorToastIfFalsy(latest, "No map to replay");
-
-			const currentMap = maps.find((m) => m.reportedAt === null);
-			errorToastIfFalsy(currentMap, "No current map to replace");
-
-			await ScrimMapRepository.replaceCurrentMap({
-				scrimPostId: post.id,
-				mode: latest!.mode,
-				stageId: latest!.stageId,
-			});
-
-			broadcastMapChange({ post, type: "MAP_REPLAYED", user });
-			break;
-		}
-		case "PICK_MAP": {
-			const { maps } = await loadMapByMapContext({ post, user });
-
-			const currentMap = maps.find((m) => m.reportedAt === null);
-			errorToastIfFalsy(currentMap, "No current map to replace");
-
-			await ScrimMapRepository.replaceCurrentMap({
-				scrimPostId: post.id,
-				mode: data.mode,
-				stageId: data.stageId,
-			});
-
-			broadcastMapChange({ post, type: "MAP_PICKED", user });
-			break;
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-
-	return null;
-};
+		return null;
+	},
+);
 
 async function loadMapByMapContext({
 	post,

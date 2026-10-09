@@ -6,6 +6,9 @@ import { logger } from "~/utils/logger";
 import { VOICE_PRESENCE_RECONCILE_INTERVAL_MS } from "../voice-constants";
 import * as Daily from "./Daily.server";
 
+// Daily keeps listing a participant for a moment after they left
+const LEAVE_GRACE_MS = 15_000;
+
 type PresenceRoom = Pick<ResolvedRoom, "roomId" | "participantUserIds">;
 
 interface RoomPresence {
@@ -14,6 +17,7 @@ interface RoomPresence {
 }
 
 const presenceByRoomId = new Map<number, RoomPresence>();
+const leftAtByRoomUser = new Map<string, number>();
 
 export function allOccupiedRooms() {
 	return [...presenceByRoomId.entries()]
@@ -22,6 +26,7 @@ export function allOccupiedRooms() {
 }
 
 export function add(room: PresenceRoom, userId: number) {
+	leftAtByRoomUser.delete(roomUserKey(room.roomId, userId));
 	const presence = presenceOf(room.roomId);
 	if (presence.userIds.has(userId)) return;
 
@@ -32,6 +37,11 @@ export function add(room: PresenceRoom, userId: number) {
 export function remove(room: PresenceRoom, userIds: number[]) {
 	const presence = presenceByRoomId.get(room.roomId);
 	if (!presence) return;
+
+	pruneLeaves();
+	for (const userId of userIds) {
+		leftAtByRoomUser.set(roomUserKey(room.roomId, userId), Date.now());
+	}
 
 	const removed = userIds.filter((userId) => presence.userIds.delete(userId));
 	if (removed.length === 0) return;
@@ -51,7 +61,9 @@ export async function reconciledUserIdsOf(room: PresenceRoom) {
 	presence.reconciledAt = Date.now();
 
 	try {
-		const dailyUserIds = await Daily.findPresentUserIds(room.roomId);
+		const dailyUserIds = (await Daily.findPresentUserIds(room.roomId)).filter(
+			(userId) => !hasJustLeft(room.roomId, userId),
+		);
 		const changed = !R.isDeepEqual(
 			[...presence.userIds].sort(),
 			[...dailyUserIds].sort(),
@@ -63,6 +75,22 @@ export async function reconciledUserIdsOf(room: PresenceRoom) {
 	}
 
 	return [...presence.userIds];
+}
+
+function hasJustLeft(roomId: number, userId: number) {
+	const leftAt = leftAtByRoomUser.get(roomUserKey(roomId, userId));
+
+	return leftAt !== undefined && Date.now() - leftAt < LEAVE_GRACE_MS;
+}
+
+function pruneLeaves() {
+	for (const [key, leftAt] of leftAtByRoomUser) {
+		if (Date.now() - leftAt >= LEAVE_GRACE_MS) leftAtByRoomUser.delete(key);
+	}
+}
+
+function roomUserKey(roomId: number, userId: number) {
+	return `${roomId}:${userId}`;
 }
 
 function presenceOf(roomId: number) {

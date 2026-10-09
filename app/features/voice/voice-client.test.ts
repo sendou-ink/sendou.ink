@@ -159,6 +159,24 @@ describe("createVoiceClient", () => {
 		});
 	});
 
+	test("leaving reports the leave even when the call object never finishes leaving", async () => {
+		const { client, deps } = setup();
+		await client.join(ROOM_ID);
+		client.registerCallHandle({
+			setLocalAudio: () => {},
+			leave: () => new Promise(() => {}),
+			resumeAudio: () => {},
+		});
+
+		await client.leave();
+
+		expect(deps.postRoomAction).toHaveBeenCalledWith(ROOM_ID, {
+			_action: "LEAVE",
+			voiceSessionId: 10,
+			leaveReason: "LEFT",
+		});
+	});
+
 	test("the microphone follows the controls through the call handle", async () => {
 		const { client } = setup();
 		const setLocalAudio = vi.fn();

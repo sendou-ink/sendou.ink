@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SendouSwitch } from "~/components/elements/Switch";
@@ -149,7 +150,7 @@ function SegmentBar({
 			</div>
 			<button
 				type="button"
-				className={styles.damageTypeLabel}
+				className={clsx(styles.damageTypeLabel, "truncate")}
 				onClick={handleFilterClick}
 			>
 				{damageTypeLabel}

@@ -5,6 +5,7 @@ import {
 } from "~/features/tournament/tournament-constants";
 import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	_action,
@@ -75,7 +76,9 @@ const bracketProgressionSchema = preprocess(
 				),
 				settings: v.pipe(
 					v.object({
-						thirdPlaceMatch: v.optional(v.boolean()),
+						skippedRounds: v.optional(
+							v.array(v.picklist(SkippedRounds.ALL_SKIPPABLE_ROUNDS)),
+						),
 						teamsPerGroup: v.optional(v.pipe(v.number(), v.integer())),
 						hasAbDivisions: v.optional(v.boolean()),
 						groupCount: v.optional(v.pipe(v.number(), v.integer())),

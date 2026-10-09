@@ -1,28 +1,31 @@
-import type { ActionFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { DANGEROUS_setVotingActiveOverride } from "~/features/plus-voting/core/voting-time";
+import { defineAction } from "~/form/define-action.server";
+import { badRequest } from "~/utils/remix.server";
 import { refreshCaches } from "../core/refresh-caches.server";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		throw new Response(null, { status: 400 });
-	}
+const refreshCachesSchema = v.object({
+	resetDevOverrides: v.optional(v.string()),
+});
 
-	// only the start of an e2e test asks for this. mid-test cache flushes must
-	// leave what the running test set up alone
-	if (await wantsDevOverridesReset(request)) {
-		Seasons.DANGEROUS_setSeasonEndedOverride(false);
-		DANGEROUS_setVotingActiveOverride(false);
-	}
+export const action = defineAction(
+	{ body: refreshCachesSchema, onInvalidBody: "badRequest" },
+	async ({ body }) => {
+		if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
+			badRequest();
+		}
 
-	await refreshCaches();
+		// only the start of an e2e test asks for this. mid-test cache flushes must
+		// leave what the running test set up alone
+		if (body.resetDevOverrides === "true") {
+			Seasons.DANGEROUS_setSeasonEndedOverride(false);
+			DANGEROUS_setVotingActiveOverride(false);
+		}
 
-	return Response.json(null);
-};
+		await refreshCaches();
 
-async function wantsDevOverridesReset(request: Request) {
-	if (!request.headers.get("content-type")) return false;
-
-	return (await request.formData()).get("resetDevOverrides") === "true";
-}
+		return Response.json(null);
+	},
+);

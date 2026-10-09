@@ -1,11 +1,10 @@
 import { addDays } from "date-fns";
 import type * as v from "valibot";
-import type { calendarNewSchemaServer } from "../calendar-new-schemas.server";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import type { calendarNewSchema } from "../calendar-new-schemas";
 import { defaultBracketsFormValues } from "../calendar-progression-form";
 
-export type CalendarNewFormValues = v.InferOutput<
-	typeof calendarNewSchemaServer
->;
+export type CalendarNewFormValues = v.InferOutput<typeof calendarNewSchema>;
 
 /** Every field of the calendar new form filled in for a tournament starting in a week, override what the test is about. */
 export function calendarNewFormValues(
@@ -25,14 +24,14 @@ export function calendarNewFormValues(
 		badges: [],
 		trophyId: null,
 		avatarImgId: null,
-		regClosesAt: "0",
+		regClosesAt: null,
 		minMembersPerTeam: "4",
 		maxMembersPerTeam: undefined,
 		mapPickingStyle: "TO",
 		teamPickModes: [],
 		teamPickCounts: [],
 		teamPickPool: "SENDOUQ",
-		pool: "",
+		pool: new MapPool({ TW: [], SZ: [1], TC: [], RM: [], CB: [] }).serialized,
 		...defaultBracketsFormValues(),
 		isRanked: true,
 		enableNoScreenToggle: true,
@@ -43,7 +42,6 @@ export function calendarNewFormValues(
 		isTest: false,
 		isLeague: false,
 		isDraft: false,
-		requireSendouQParticipation: false,
 		...overrides,
 	};
 }

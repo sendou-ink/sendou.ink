@@ -1,5 +1,6 @@
 import type { Tables } from "~/db/tables";
 import type {
+	SkippableRound,
 	TournamentRoundMaps,
 	TournamentStageSettings,
 } from "~/db/tables-json";
@@ -33,8 +34,11 @@ export type Seeding = (number | null)[];
 
 /** Same shape as what is persisted in TournamentStage.settings. */
 export interface StageSettings {
-	/** Number of groups in a round robin or swiss stage. */
+	/** Number of groups in a round robin or swiss stage, or in a single or double elimination stage split into groups. */
 	groupCount?: number;
+
+	/** Elimination rounds not created, see `SkippedRounds`. */
+	skippedRounds?: SkippableRound[];
 
 	/** Number of rounds in a swiss stage. */
 	roundCount?: number;
@@ -156,6 +160,7 @@ export interface CreateBracketInput {
 	/**
 	 * Keyed by the local round ids of an identically created bracket (the preview the maps were
 	 * picked against). Round robin and swiss: one entry per round number, groups share map lists.
+	 * Elimination: one entry per section and position from its end, groups share map lists.
 	 */
 	maps?: RoundMapsInput[];
 }

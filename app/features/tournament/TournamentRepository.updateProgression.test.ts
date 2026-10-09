@@ -21,7 +21,7 @@ const UNLINKED: TournamentSettings["bracketProgression"] = [
 		name: "Playoffs",
 		type: "single_elimination",
 		requiresCheckIn: false,
-		settings: { thirdPlaceMatch: false },
+		settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 	},
 ];
 

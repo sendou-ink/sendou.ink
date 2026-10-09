@@ -1,10 +1,8 @@
 .elimContainer {
 	--line-width: 30px;
 	display: grid;
-	grid-template-columns: repeat(
-			var(--round-count),
-			calc(var(--match-width) + var(--line-width))
-		);
+	grid-template-columns: repeat(var(--round-count), auto);
+	justify-content: start;
 	overflow: visible;
 }
 
@@ -23,6 +21,13 @@
 }
 
 .elimRoundColumn {
+	/* room right of the matches for the brackets teams leave to, see `.matchExits` */
+	--exit-width: 0px;
 	display: flex;
 	flex-direction: column;
+	width: calc(var(--match-width) + var(--line-width) + var(--exit-width));
+}
+
+.elimRoundColumnWithExits {
+	--exit-width: 160px;
 }

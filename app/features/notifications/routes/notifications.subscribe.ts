@@ -1,18 +1,15 @@
-import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { parseRequestPayload } from "~/utils/remix.server";
+import { defineAction } from "~/form/define-action.server";
 import * as NotificationRepository from "../NotificationRepository.server";
 import { subscribeSchema } from "../notifications-schemas";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	requireUser();
+export const action = defineAction(
+	{ body: subscribeSchema, onInvalidBody: "badRequest" },
+	async ({ body }) => {
+		requireUser();
 
-	const data = await parseRequestPayload({
-		request,
-		schema: subscribeSchema,
-	});
+		await NotificationRepository.upsertOwnSubscription(body);
 
-	await NotificationRepository.upsertOwnSubscription(data);
-
-	return null;
-};
+		return null;
+	},
+);

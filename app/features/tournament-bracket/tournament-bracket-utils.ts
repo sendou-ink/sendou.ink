@@ -1,4 +1,5 @@
 import type { Tables } from "~/db/tables";
+import type { TournamentStageSettings } from "~/db/tables-json";
 import { CHANNEL_PREFIX } from "~/features/events/events-types";
 import type {
 	TournamentBadgeReceivers,
@@ -28,9 +29,19 @@ export const tournamentBracketChannel = ({
 		groupId !== null ? `__group__${groupId}` : ""
 	}`;
 
-/** Whether the brackets page shows one group of this bracket type at a time, rather than all of them. */
-export const showsOneGroupAtATime = (type: Tables["TournamentStage"]["type"]) =>
-	type === "swiss";
+/** Whether the brackets page shows one group of the bracket at a time, rather than all of them: swiss and elimination split into groups. */
+export const showsOneGroupAtATime = (bracket: {
+	type: Tables["TournamentStage"]["type"];
+	settings: TournamentStageSettings | null;
+}) =>
+	bracket.type === "swiss" ||
+	(isEliminationType(bracket.type) && (bracket.settings?.groupCount ?? 1) > 1);
+
+/** Single or double elimination. */
+export const isEliminationType = (
+	type: Tables["TournamentStage"]["type"],
+): type is "single_elimination" | "double_elimination" =>
+	type === "single_elimination" || type === "double_elimination";
 
 /** One-based group number to Excel column style letters: 1 -> 'A', 26 -> 'Z', 27 -> 'AA'. */
 export function groupNumberToLetters(groupNumber: number) {
@@ -120,12 +131,18 @@ export function validateBadgeReceivers({
 	return null;
 }
 
+/**
+ * The trophy goes only to members of the 1st place teams (several when co-winners) and every one
+ * of those teams has at least one receiver. Returns `null` when valid.
+ */
 export function validateTrophyReceiver({
 	trophyReceiver,
 	trophy,
+	firstPlaceTeams,
 }: {
 	trophyReceiver: TournamentTrophyReceiver | null;
 	trophy: { id: number } | null;
+	firstPlaceTeams: ReadonlyArray<{ memberUserIds: ReadonlyArray<number> }>;
 }) {
 	if (!trophy) return null;
 
@@ -135,6 +152,21 @@ export function validateTrophyReceiver({
 
 	if (trophyReceiver.userIds.length === 0) {
 		return "TROPHY_NOT_ASSIGNED";
+	}
+
+	const isFirstPlaceMember = (userId: number) =>
+		firstPlaceTeams.some((team) => team.memberUserIds.includes(userId));
+	if (!trophyReceiver.userIds.every(isFirstPlaceMember)) {
+		return "TROPHY_RECEIVER_NOT_FIRST_PLACE";
+	}
+
+	const teamHasReceiver = (team: { memberUserIds: ReadonlyArray<number> }) =>
+		team.memberUserIds.length === 0 ||
+		team.memberUserIds.some((userId) =>
+			trophyReceiver.userIds.includes(userId),
+		);
+	if (!firstPlaceTeams.every(teamHasReceiver)) {
+		return "TROPHY_TEAM_NOT_ASSIGNED";
 	}
 
 	return null;

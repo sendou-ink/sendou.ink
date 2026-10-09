@@ -32,9 +32,6 @@
 .hiddenBadgeName {
 	font-size: var(--font-2xs);
 	max-width: 90px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .hideButton {
@@ -98,9 +95,6 @@
 .weaponName {
 	font-size: var(--font-2xs);
 	max-width: 80px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .categoryHeader {

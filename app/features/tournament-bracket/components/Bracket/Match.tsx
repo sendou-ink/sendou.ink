@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { Eye } from "lucide-react";
 import type * as React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -19,6 +20,7 @@ import {
 	vodUrl,
 } from "~/utils/urls";
 import type { Bracket } from "../../core/Bracket";
+import type { MatchExitDestinations } from "../../core/Bracket/Bracket";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
 import type { VodsByTournamentId } from "../../TournamentMatchVodRepository.server";
@@ -38,6 +40,8 @@ interface MatchProps {
 	lineType?: LineType;
 	lineVerticalExtend?: number;
 	spoilerCensor?: "full" | "score-only";
+	/** Brackets the teams leaving the bracket from this match continue to. */
+	exitDestinations?: MatchExitDestinations;
 }
 
 export function Match(props: MatchProps) {
@@ -68,10 +72,72 @@ export function Match(props: MatchProps) {
 			{!props.hideMatchTimer ? (
 				<MatchTimer match={props.match} bracket={props.bracket} />
 			) : null}
+			{props.exitDestinations ? (
+				<MatchExitLabels
+					match={props.match}
+					destinations={props.exitDestinations}
+					hasLine={Boolean(props.lineType) && props.lineType !== "none"}
+				/>
+			) : null}
 			<MatchLine
 				lineType={props.lineType}
 				verticalExtend={props.lineVerticalExtend}
 			/>
+		</div>
+	);
+}
+
+/**
+ * Where the winner [W] and the loser [L] go when they leave the bracket from this match.
+ */
+function MatchExitLabels({
+	match,
+	destinations,
+	hasLine,
+}: {
+	match: MatchProps["match"];
+	destinations: MatchExitDestinations;
+	hasLine: boolean;
+}) {
+	const { t } = useTranslation(["tournament"]);
+	const tournament = useTournament();
+
+	const bracketName = (bracketIdx: number | null) =>
+		bracketIdx === null ? null : tournament.bracketsMeta[bracketIdx]?.name;
+
+	const winner = { type: "winner", bracket: bracketName(destinations.winner) };
+	const loser = { type: "loser", bracket: bracketName(destinations.loser) };
+	const rows = (
+		match.winnerSide === "opponent2" ? [loser, winner] : [winner, loser]
+	).filter((row) => hasLine || row.bracket);
+
+	return (
+		<div
+			className={clsx(styles.matchExits, {
+				[styles.matchExitsSingle]: rows.length === 1,
+			})}
+			data-testid="match-exits"
+		>
+			{rows.map(({ type, bracket }) => (
+				<div key={type} className={styles.matchExitRow}>
+					{bracket ? (
+						<>
+							<span className={styles.matchExitDots} aria-hidden="true" />
+							<span
+								className={styles.matchExit}
+								title={t(
+									type === "winner"
+										? "tournament:bracket.exit.winner"
+										: "tournament:bracket.exit.loser",
+									{ bracket },
+								)}
+							>
+								{bracket} {type === "winner" ? "[W]" : "[L]"}
+							</span>
+						</>
+					) : null}
+				</div>
+			))}
 		</div>
 	);
 }
@@ -290,7 +356,7 @@ function MatchRow({
 				/>
 			) : null}
 			<div
-				className={clsx(styles.matchTeamName, {
+				className={clsx(styles.matchTeamName, "truncate", {
 					"text-theme-secondary":
 						!simulated && ownTeam && ownTeam?.id === team?.id,
 					"text-lighter italic opaque": simulated,

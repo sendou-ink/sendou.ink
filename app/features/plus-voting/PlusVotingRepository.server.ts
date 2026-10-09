@@ -8,6 +8,7 @@ import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
+import { databaseTimestampNow } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { commonUserSelect } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -36,7 +37,7 @@ export async function findAllPlusTiersFromLatestVoting() {
 	const latestVoting = await db
 		.selectFrom("PlusVote")
 		.select(["PlusVote.year", "PlusVote.month"])
-		.where("PlusVote.becomesValidAt", "<", sql<number>`strftime('%s', 'now')`)
+		.where("PlusVote.becomesValidAt", "<", databaseTimestampNow())
 		.orderBy("PlusVote.year", "desc")
 		.orderBy("PlusVote.month", "desc")
 		.limit(1)

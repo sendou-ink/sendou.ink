@@ -277,10 +277,7 @@
 .leaderboardName {
 	font-size: var(--font-sm);
 	font-weight: var(--weight-bold);
-	white-space: nowrap;
 	max-width: 140px;
-	text-overflow: ellipsis;
-	overflow: hidden;
 }
 
 .leaderboardViewAll {

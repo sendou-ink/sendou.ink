@@ -156,12 +156,12 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		const call = snapshot.call;
 		if (!call) return;
 
-		const handle = callHandle;
 		sendSummary(false);
-		update({ call: null });
-		await handle?.leave().catch((error) => {
+		// not awaited: clearing the call unmounts its call object, whose leave then never settles
+		void callHandle?.leave().catch((error) => {
 			logger.error("Leaving the voice call failed", error);
 		});
+		update({ call: null });
 
 		if (!call.voiceSessionId) return;
 		const result = await deps.postRoomAction(call.roomId, {

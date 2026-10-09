@@ -2,7 +2,11 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import {
+	forbidden,
+	notFoundIfNullish,
+	parseParams,
+} from "~/utils/remix.server";
 import { id } from "~/utils/schema";
 import * as TrophyBackfill from "../core/TrophyBackfill.server";
 import * as TrophyRepository from "../TrophyRepository.server";
@@ -12,7 +16,7 @@ export type TrophyBackfillLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (!canBackfillTrophies(requireUser())) {
-		throw new Response(null, { status: 403 });
+		forbidden();
 	}
 
 	const { id: trophyId, seriesId } = parseParams({

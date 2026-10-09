@@ -1,5 +1,4 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as v from "valibot";
 import { db } from "~/db/sql";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -10,18 +9,14 @@ import { parseMaplistSource } from "~/modules/tournament-map-list-generator/sour
 import { jsonArrayFrom } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/schema";
+import { idObject } from "~/utils/schema";
 import type { GetTournamentMatchResponse } from "../schema";
-
-const paramsSchema = v.object({
-	id,
-});
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const t = await getFixedTForLanguage("en", ["game-misc"]);
 	const { id: matchId } = parseParams({
 		params,
-		schema: paramsSchema,
+		schema: idObject,
 	});
 
 	const match = notFoundIfNullish(

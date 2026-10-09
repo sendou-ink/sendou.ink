@@ -202,9 +202,7 @@ function SuggestedUser({
 					<UserCard userId={suggestion.suggested.id}>
 						<span className={styles.suggestedUserTrigger}>
 							<Avatar user={suggestion.suggested} size="md" />
-							<span className={styles.suggestedUsername}>
-								{suggestion.suggested.username}
-							</span>
+							<span className="truncate">{suggestion.suggested.username}</span>
 						</span>
 					</UserCard>
 				</h2>

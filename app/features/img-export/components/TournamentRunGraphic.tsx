@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { ArrowDown } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -214,7 +215,7 @@ function SeriesWinStat({
 	return (
 		<GraphicStat label={label}>
 			<div className={styles.seriesWin}>
-				<div className={styles.seriesWinName}>{win.name}</div>
+				<div className={clsx(styles.seriesWinName, "truncate")}>{win.name}</div>
 				<LocaleTime
 					date={win.startTime}
 					options={SERIES_WIN_DATE_FORMAT_OPTIONS}

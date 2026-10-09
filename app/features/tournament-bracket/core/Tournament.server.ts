@@ -21,6 +21,7 @@ import {
 } from "~/utils/dates";
 import {
 	errorToastIfFalsy,
+	notFound,
 	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
@@ -155,7 +156,7 @@ export function requireTournamentVisible({
 	if (!ctx.settings.isDraft) return;
 	if (hasPermission(ctx, "ORGANIZE", user)) return;
 
-	throw new Response(null, { status: 404 });
+	notFound();
 }
 
 type TournamentFriendCodeCtx = Pick<

@@ -105,8 +105,12 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	// currently only used to open chat when clicking on a mention notification
 	const chatOpenRequest = chatContext?.chatOpenRequest ?? 0;
 	const isMobileLayout = useLayoutSize() === "mobile";
+	const handledChatOpenRequestRef = React.useRef(chatOpenRequest);
+
 	React.useEffect(() => {
-		if (chatOpenRequest === 0 || !isMobileLayout) return;
+		if (chatOpenRequest === handledChatOpenRequestRef.current) return;
+		handledChatOpenRequestRef.current = chatOpenRequest;
+		if (!isMobileLayout) return;
 
 		const chatPanel = document.getElementById(panelDomId(uid, "chat"));
 		if (chatPanel && !chatPanel.matches(":popover-open")) {

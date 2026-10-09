@@ -41,6 +41,7 @@
 
 - forms are built with the `SendouForm` schema-based system: a valibot schema using field builders from `~/form/fields` generates both the UI and server-side validation, see [forms.md](./docs/dev/forms.md)
 - form label/help translations go in `locales/en/forms.json`
+- actions are defined with `defineAction` (`~/form/define-action.server`), which parses route params (404 on failure) and the body (`fieldErrors` for SendouForm, error toast otherwise) before the handler runs, see [forms.md](./docs/dev/forms.md); enforced by the `no-raw-actions` Biome plugin
 - fixed-field mutations (an `_action` plus hidden inputs) use `<ActionButton>` which type checks the action and fields against the route's action schema; real multi-input forms instead pass `schema` alongside `_action` to `SubmitButton`; enforced by the `no-raw-action-forms` Biome plugin
 
 ## Remix/React Router

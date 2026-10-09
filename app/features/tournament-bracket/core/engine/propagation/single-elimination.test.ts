@@ -86,6 +86,50 @@ describe("Previous and next match update", () => {
 	});
 });
 
+describe("Skipped rounds", () => {
+	test("semifinal losers go to the third place match while the finals are skipped", () => {
+		let data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: { consolationFinal: true, skippedRounds: ["FINALS"] },
+		});
+
+		data = Engine.reportResult(data, {
+			matchId: 0,
+			winnerSide: "opponent1",
+		}).data;
+		data = Engine.reportResult(data, {
+			matchId: 1,
+			winnerSide: "opponent1",
+		}).data;
+
+		const thirdPlaceMatch = matchById(data, 2);
+		expect(thirdPlaceMatch.opponent1?.id).toBe(
+			matchById(data, 0).opponent2?.id,
+		);
+		expect(thirdPlaceMatch.opponent2?.id).toBe(
+			matchById(data, 1).opponent2?.id,
+		);
+	});
+
+	test("reporting the last played round propagates nowhere", () => {
+		let data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: { skippedRounds: ["SEMIS"] },
+		});
+
+		for (const match of data.match) {
+			data = Engine.reportResult(data, {
+				matchId: match.id,
+				winnerSide: "opponent1",
+			}).data;
+		}
+
+		expect(data.match.every((match) => match.winnerSide)).toBe(true);
+	});
+});
+
 function matchById(data: BracketData, id: number) {
 	const found = data.match.find((match) => match.id === id);
 	if (!found) throw new Error(`Match ${id} not found`);

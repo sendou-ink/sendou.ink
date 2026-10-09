@@ -6,7 +6,7 @@ import { actorId } from "~/features/auth/core/user.server";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { flatZip } from "~/utils/arrays";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { invariant } from "~/utils/invariant";
 import {
@@ -195,7 +195,7 @@ export function insert({
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
-		const isSub = (await registrationClosedNow(trx, tournamentId)) ? 1 : 0;
+		const isSub = toDBBoolean(await registrationClosedNow(trx, tournamentId));
 
 		const inGameName = await resolveInGameName({ tournamentId, userId }, trx);
 
@@ -659,7 +659,7 @@ export function checkIn(
 		await trx
 			.insertInto("TournamentTeamCheckIn")
 			.values({
-				checkedInAt: dateToDatabaseTimestamp(new Date()),
+				checkedInAt: databaseTimestampNow(),
 				tournamentTeamId,
 				bracketIdx,
 			})
@@ -698,7 +698,7 @@ export function checkOut({
 			await trx
 				.insertInto("TournamentTeamCheckIn")
 				.values({
-					checkedInAt: dateToDatabaseTimestamp(new Date()),
+					checkedInAt: databaseTimestampNow(),
 					tournamentTeamId,
 					bracketIdx,
 					isCheckOut: 1,
@@ -815,7 +815,7 @@ export function join({
 		}
 
 		const inGameName = await resolveInGameName({ tournamentId, userId }, trx);
-		const isSub = (await registrationClosedNow(trx, tournamentId)) ? 1 : 0;
+		const isSub = toDBBoolean(await registrationClosedNow(trx, tournamentId));
 
 		await trx
 			.insertInto("TournamentTeamMember")

@@ -11,7 +11,7 @@ import {
 	clearAllTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import {
 	getLiveTournamentStreamerTwitchNames,
 	getLiveTournamentStreams,
@@ -48,7 +48,7 @@ async function runningLeagueSet({
 	const league = await TournamentFactory.create(
 		{
 			authorId: organizerId(),
-			startTimes: [dateToDatabaseTimestamp(new Date()) - 7 * DAY],
+			startTimes: [databaseTimestampNow() - 7 * DAY],
 			bracketProgression: ROUND_ROBIN,
 			minMembersPerTeam: 1,
 		},

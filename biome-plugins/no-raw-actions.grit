@@ -1,0 +1,33 @@
+language js
+
+// Route actions parse their inputs through `defineAction` (app/form/define-action.server.ts),
+// so params, body validation and its failure handling are declared the same way everywhere.
+or {
+	or {
+		`export const $name = $value`,
+		`export const $name: $_ = $value`
+	} as $export where {
+		$name <: r"^(?:action|[a-z][A-Za-z0-9]*Action)\z",
+		$value <: not `defineAction($...)`,
+		register_diagnostic(span=$export, message="Define route actions with `defineAction` from `~/form/define-action.server`. See docs/dev/forms.md.", severity="error")
+	},
+	or {
+		`export async function $name($...) { $... }`,
+		`export function $name($...) { $... }`
+	} as $export where {
+		$name <: r"^(?:action|[a-z][A-Za-z0-9]*Action)\z",
+		register_diagnostic(span=$export, message="Define route actions with `defineAction` from `~/form/define-action.server`. See docs/dev/forms.md.", severity="error")
+	},
+	`$request.$method()` as $read where {
+		$request <: or {
+			`request`,
+			`$_.request`
+		},
+		$method <: or {
+			`formData`,
+			`json`,
+			`text`
+		},
+		register_diagnostic(span=$read, message="Do not read the request body directly. Declare a `body` schema in `defineAction`. See docs/dev/forms.md.", severity="error")
+	}
+}

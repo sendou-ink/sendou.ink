@@ -1,4 +1,4 @@
-import MarkdownToJsx from "markdown-to-jsx";
+import { compiler, type MarkdownToJSX } from "markdown-to-jsx/react";
 import * as React from "react";
 import * as MarkdownHtml from "~/utils/markdown-html";
 
@@ -17,16 +17,17 @@ export function Markdown({ children }: { children: string }) {
 		})
 		.replace(/ +$/gm, "");
 
-	return (
-		<MarkdownToJsx
-			options={{
-				wrapper: React.Fragment,
-				createElement: createAllowlistedElement,
-			}}
-		>
-			{sanitized}
-		</MarkdownToJsx>
-	);
+	const options: MarkdownToJSX.Options = {
+		wrapper: React.Fragment,
+		createElement: createAllowlistedElement,
+	};
+
+	try {
+		return compiler(sanitized, options);
+	} catch {
+		// markdown-to-jsx can overflow the stack on malformed html e.g. `<div a's>x</div>\nhi`
+		return compiler(sanitized, { ...options, disableParsingRawHTML: true });
+	}
 }
 
 function createAllowlistedElement(

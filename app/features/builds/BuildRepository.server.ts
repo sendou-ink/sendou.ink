@@ -9,10 +9,11 @@ import type {
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import { invariant } from "~/utils/invariant";
 import { commonUserJsonObject, jsonArrayFrom } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import { MAIN_SLOT_AP } from "../build-analyzer/analyzer-constants";
 import {
 	buildToAbilityPoints,
@@ -85,7 +86,7 @@ interface CreateArgs {
 export async function insert(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
 		const computed = await computeBuildData(args, trx);
-		const updatedAt = dateToDatabaseTimestamp(new Date());
+		const updatedAt = databaseTimestampNow();
 
 		const { id: buildId } = await trx
 			.insertInto("Build")
@@ -124,7 +125,7 @@ export async function insert(args: CreateArgs) {
 export async function update(args: CreateArgs & { id: number }) {
 	return db.transaction().execute(async (trx) => {
 		const computed = await computeBuildData(args, trx);
-		const updatedAt = dateToDatabaseTimestamp(new Date());
+		const updatedAt = databaseTimestampNow();
 
 		await trx
 			.updateTable("Build")
@@ -417,7 +418,7 @@ function buildRowToResult<T extends BuildRowToResultInput>(
 			: row.abilities,
 		weapons: row.weapons.map((w) => ({
 			weaponSplId: w.weaponSplId,
-			isTop500: weaponIsTop500(w.sortValue) ? 1 : 0,
+			isTop500: toDBBoolean(weaponIsTop500(w.sortValue)),
 		})),
 	};
 }

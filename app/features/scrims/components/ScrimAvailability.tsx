@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -78,7 +79,9 @@ export function ScrimFitStripe({ post }: { post: ScrimPost }) {
 					className={styles.stripe}
 					testId="scrim-fit-indicator"
 				>
-					<span className={styles.stripeTeam}>{fit.team.name}</span>
+					<span className={clsx(styles.stripeTeam, "truncate")}>
+						{fit.team.name}
+					</span>
 					<AvailabilityStatusDots statuses={rosterStatuses(fit)} />
 					<span className={styles.stripeCount}>
 						{t("schedule:scrims.availableOfRoster", {

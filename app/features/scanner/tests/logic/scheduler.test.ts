@@ -344,3 +344,48 @@ test("nextDueLowerBound is exact for detectors without a pending parse", () => {
 	s.recordGate("b", 0, false);
 	assert.equal(s.nextDueLowerBound(0, []), s.nextDueT());
 });
+
+test("nextDueCandidates holds every value nextDueT can take, whatever the pending checks report", () => {
+	for (const pass of [false, true]) {
+		for (const confidence of [0.1, 0.95]) {
+			const s = new DetectorScheduler(
+				[
+					{ id: "a", searchIntervalS: 1, refineIntervalS: 0.25 },
+					{
+						id: "b",
+						searchIntervalS: 0.5,
+						refineIntervalS: 0.2,
+						sufficientConfidence: 0.9,
+					},
+					{ id: "c", searchIntervalS: 0.75 },
+				],
+				OPTS,
+			);
+			s.dueDetectors(0);
+			for (const id of ["a", "b", "c"]) s.recordGate(id, 0, false);
+			s.dueDetectors(0.5);
+			const candidates = s.nextDueCandidates(0.5, ["b"]);
+			s.recordGate("b", 0.5, pass);
+			if (pass) s.recordParse("b", 0.5, [{ type: "Event", confidence }]);
+			assert.ok(
+				candidates.includes(s.nextDueT()),
+				`${s.nextDueT()} not in ${candidates} (pass ${pass}, confidence ${confidence})`,
+			);
+			assert.equal(candidates[0], s.nextDueLowerBound(0.5, ["b"]));
+		}
+	}
+});
+
+test("predictDueTimes follows each detector's current cadence", () => {
+	const s = new DetectorScheduler(
+		[
+			{ id: "a", searchIntervalS: 0.25 },
+			{ id: "b", searchIntervalS: 0.5 },
+		],
+		OPTS,
+	);
+	s.dueDetectors(0);
+	s.recordGate("a", 0, false);
+	s.recordGate("b", 0, false);
+	assert.deepEqual(s.predictDueTimes(0, ["a", "b"], 3), [0.25, 0.5, 0.75]);
+});

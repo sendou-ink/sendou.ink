@@ -101,7 +101,6 @@ export interface TournamentSettings {
 	maxMembersPerTeam?: number;
 	isTest?: boolean;
 	isDraft?: boolean;
-	requireSendouQParticipation?: boolean;
 	/** Is this tournament a league? Leagues are played over many weeks, each starting bracket being a division. */
 	isLeague?: boolean;
 	/** Team picked map configuration, always set when `Tournament.mapPickingStyle` is "AUTO". */
@@ -168,15 +167,28 @@ export interface CustomPickBanFlow {
 	postGame: CustomPickBanStep[];
 }
 
+/** Named rounds of an elimination bracket that can be left unplayed, see `SkippedRounds`. */
+export type SkippableRound =
+	// SE
+	| "SEMIS"
+	| "FINALS"
+	| "THIRD_PLACE_MATCH"
+	// DE
+	| "WB_FINALS"
+	| "LB_SEMIS"
+	| "LB_FINALS"
+	| "GRAND_FINALS"
+	| "BRACKET_RESET";
+
 /** When updating this also update `settingsFromFormValues` in calendar-progression-form.ts */
 export interface TournamentStageSettings {
-	// SE
-	thirdPlaceMatch?: boolean;
 	// RR
 	teamsPerGroup?: number;
+	/** (SE & DE only) Rounds not played, the bracket stops once enough teams are resolved. */
+	skippedRounds?: SkippableRound[];
 	/** (RR only) When true, teams are split into A and B divisions and matches only pair A-vs-B. Only valid on starting brackets. */
 	hasAbDivisions?: boolean;
-	// SWISS
+	/** Swiss, SE & DE. SE & DE: more than 1 = the bracket is split into groups, each playing its own elimination bracket. */
 	groupCount?: number;
 	// SWISS
 	roundCount?: number;

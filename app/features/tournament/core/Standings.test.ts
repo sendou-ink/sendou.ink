@@ -16,6 +16,7 @@ import {
 	reNumberPlacements,
 	sprByTeamId,
 	tournamentStandings,
+	winners,
 } from "./Standings";
 
 describe("tournamentStandings", () => {
@@ -312,6 +313,64 @@ describe("sprByTeamId", () => {
 	});
 });
 
+describe("winners", () => {
+	const winnerIds = (result: Parameters<typeof winners>[0]) =>
+		winners(result).map((standing) => standing.team.id);
+
+	test("returns the only 1st place team", () => {
+		expect(
+			winnerIds({
+				type: "single",
+				standings: standings([
+					{ id: 1, seed: 1, placement: 1 },
+					{ id: 2, seed: 2, placement: 2 },
+				]),
+			}),
+		).toEqual([1]);
+	});
+
+	test("returns every team sharing 1st place", () => {
+		expect(
+			winnerIds({
+				type: "single",
+				standings: standings([
+					{ id: 1, seed: 1, placement: 1 },
+					{ id: 2, seed: 2, placement: 1 },
+					{ id: 3, seed: 3, placement: 3 },
+				]),
+			}),
+		).toEqual([1, 2]);
+	});
+
+	test("returns only the top division's 1st place teams", () => {
+		expect(
+			winnerIds({
+				type: "multi",
+				standings: [
+					{
+						div: "A",
+						standings: standings([
+							{ id: 1, seed: 1, placement: 1 },
+							{ id: 2, seed: 2, placement: 2 },
+						]),
+					},
+					{
+						div: "B",
+						standings: standings([
+							{ id: 3, seed: 3, placement: 1 },
+							{ id: 4, seed: 4, placement: 2 },
+						]),
+					},
+				],
+			}),
+		).toEqual([1]);
+	});
+
+	test("returns nothing without standings", () => {
+		expect(winnerIds({ type: "single", standings: [] })).toEqual([]);
+	});
+});
+
 describe("matchesPlayedByTeamId", () => {
 	test("tags each match with the bracket index it was actually played in", () => {
 		const tournament = roundRobinToSingleEliminationTournament();
@@ -548,7 +607,7 @@ function groupsToRedemptionAndConsolationTournament() {
 						type: "single_elimination",
 						name: "Consolation",
 						requiresCheckIn: false,
-						settings: { thirdPlaceMatch: true },
+						settings: {},
 						sources: [{ bracketIdx: 0, placements: [5, 6, 7, 8] }],
 					},
 				],
@@ -646,7 +705,7 @@ function singleEliminationWithPendingThirdPlaceMatch() {
 						type: "single_elimination",
 						name: "Main Bracket",
 						requiresCheckIn: false,
-						settings: { thirdPlaceMatch: true },
+						settings: {},
 					},
 				],
 			},
@@ -701,13 +760,13 @@ function singleEliminationWithUndergroundTournament({
 						type: "single_elimination",
 						name: "Main Bracket",
 						requiresCheckIn: false,
-						settings: { thirdPlaceMatch: true },
+						settings: {},
 					},
 					{
 						type: "single_elimination",
 						name: "Underground",
 						requiresCheckIn: false,
-						settings: { thirdPlaceMatch: true },
+						settings: {},
 						sources: [{ bracketIdx: 0, placements: [-1] }],
 					},
 				],

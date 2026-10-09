@@ -6,6 +6,7 @@ import {
 	getUsersByLogin,
 	parseTwitchDuration,
 } from "~/modules/twitch/vods";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { Routine } from "./routine.server";
 
@@ -212,9 +213,7 @@ function findMatchingVod(
 	videos: NonNullable<Awaited<ReturnType<typeof fetchArchiveVideos>>>,
 ) {
 	for (const video of videos) {
-		const vodStartSeconds = Math.floor(
-			new Date(video.created_at).getTime() / 1000,
-		);
+		const vodStartSeconds = dateToDatabaseTimestamp(new Date(video.created_at));
 		const vodDurationSeconds = parseTwitchDuration(video.duration);
 		const vodEndSeconds = vodStartSeconds + vodDurationSeconds;
 
