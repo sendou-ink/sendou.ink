@@ -1,0 +1,45 @@
+.facts {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: var(--s-1) var(--s-4);
+	margin: 0;
+
+	& dt {
+		color: var(--color-text-high);
+		font-weight: var(--weight-semi);
+	}
+
+	& dd {
+		margin: 0;
+	}
+}
+
+.budgetMeter {
+	width: 100%;
+	max-width: 32rem;
+	height: var(--s-4);
+}
+
+.table {
+	border-collapse: collapse;
+	font-size: var(--font-sm);
+
+	& th,
+	& td {
+		padding: var(--s-1) var(--s-3);
+		text-align: left;
+		border-bottom: var(--border-style);
+		white-space: nowrap;
+	}
+
+	& th {
+		font-weight: var(--weight-semi);
+	}
+}
+
+.listRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+}

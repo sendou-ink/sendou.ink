@@ -40,10 +40,15 @@ const schema = v.pipe(
 		// webPush.server.ts checks all three are set together
 		VAPID_PRIVATE_KEY: v.optional(v.string()),
 		VAPID_EMAIL: v.optional(v.string()),
+
+		DAILY_API_KEY: v.optional(v.string()),
+		DAILY_DOMAIN: v.optional(v.string()),
+		DAILY_WEBHOOK_SECRET: v.optional(v.string()),
 	}),
 	superRefine((val, ctx) => {
 		requireTogether(ctx, val, "TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET");
 		requireTogether(ctx, val, "VAPID_EMAIL", "VAPID_PRIVATE_KEY");
+		requireTogether(ctx, val, "DAILY_API_KEY", "DAILY_DOMAIN");
 	}),
 );
 
@@ -93,6 +98,13 @@ export const ServerConfig = {
 	vapid: {
 		privateKey: values.VAPID_PRIVATE_KEY,
 		email: values.VAPID_EMAIL,
+	},
+
+	/** Voice chat. Optional, voice is unavailable when unset. */
+	daily: {
+		apiKey: values.DAILY_API_KEY,
+		domain: values.DAILY_DOMAIN,
+		webhookSecret: values.DAILY_WEBHOOK_SECRET,
 	},
 };
 

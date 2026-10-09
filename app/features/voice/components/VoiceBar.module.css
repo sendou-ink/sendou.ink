@@ -1,0 +1,183 @@
+.voiceBar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	padding: var(--s-1-5) var(--s-2);
+	border-bottom: 1.5px solid var(--color-border);
+	background-color: var(--color-bg-high);
+	flex-shrink: 0;
+	font-size: var(--font-xs);
+}
+
+.strip {
+	flex-direction: row;
+	align-items: center;
+}
+
+.stripTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	flex: 1;
+	min-width: 0;
+	padding: 0;
+	background: none;
+	border: none;
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-align: start;
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.voiceIcon {
+	color: var(--color-text-high);
+}
+
+.label {
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.betaBadge {
+	padding: 0 var(--s-1);
+	border-radius: var(--radius-full);
+	background-color: var(--color-accent-low);
+	color: var(--color-accent-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+}
+
+.actions {
+	display: flex;
+	gap: var(--s-1);
+	margin-inline-start: auto;
+}
+
+.modeToggle {
+	padding: 0 var(--s-1-5);
+	border: var(--border-style);
+	border-radius: var(--radius-full);
+	background: none;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.pushToTalk {
+	user-select: none;
+	touch-action: none;
+	-webkit-touch-callout: none;
+}
+
+.participants {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.participant {
+	position: relative;
+	display: flex;
+}
+
+.participantButton {
+	position: relative;
+	display: flex;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-full);
+	background: none;
+	cursor: pointer;
+}
+
+.avatar {
+	border-radius: var(--radius-full);
+	outline: 2px solid transparent;
+	outline-offset: 1px;
+	transition: outline-color 0.1s;
+}
+
+.speaking {
+	outline-color: var(--color-success);
+}
+
+.mutedIcon {
+	position: absolute;
+	inset-block-end: -2px;
+	inset-inline-end: -2px;
+	padding: 1px;
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg);
+	color: var(--color-error);
+}
+
+.statusDot {
+	width: var(--s-2);
+	height: var(--s-2);
+	flex-shrink: 0;
+	border-radius: var(--radius-full);
+	background-color: var(--color-warning);
+}
+
+.statusConnected {
+	background-color: var(--color-success);
+}
+
+.statusFailed {
+	background-color: var(--color-error);
+}
+
+.feedback {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--s-1-5);
+}
+
+.stars {
+	display: flex;
+	gap: var(--s-0-5);
+}
+
+.star {
+	display: grid;
+	place-items: center;
+	padding: var(--s-0-5);
+	border: none;
+	background: none;
+	color: var(--color-text-high);
+	cursor: pointer;
+}
+
+.starSelected {
+	color: var(--color-warning);
+
+	& svg {
+		fill: currentColor;
+	}
+}
+
+.comment {
+	width: 100%;
+	min-height: 4rem;
+	font-size: var(--font-xs);
+}

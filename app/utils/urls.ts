@@ -234,6 +234,10 @@ export const chatRoomReadRoute = (roomId: number) =>
 export const chatRoomMentionsSeenRoute = (roomId: number) =>
 	`${chatRoomDataRoute(roomId)}/mentions/seen`;
 
+export const voiceRoomDataRoute = (roomId: number) =>
+	`/api/voice/rooms/${roomId}`;
+export const VOICE_TELEMETRY_ROUTE = "/api/voice/telemetry";
+
 export const userCardFriendshipPage = (userId: number) =>
 	`/user-card/${userId}/friendship`;
 

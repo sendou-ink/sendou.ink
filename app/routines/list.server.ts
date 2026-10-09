@@ -9,6 +9,7 @@ import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
 import { DeleteOldPendingFriendRequestsRoutine } from "./deleteOldPendingFriendRequests";
 import { DeleteOldScrimPickupRostersRoutine } from "./deleteOldScrimPickupRosters";
 import { DeleteOldTournamentAuditLogsRoutine } from "./deleteOldTournamentAuditLogs";
+import { DeleteOldVoiceTelemetryRoutine } from "./deleteOldVoiceTelemetry";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { EvictStaleRunningTournamentsRoutine } from "./evictStaleRunningTournaments";
 import { ExpireReadyChecksRoutine } from "./expireReadyChecks";
@@ -60,6 +61,7 @@ export const daily = [
 	NotifyScheduleTeamReminderRoutine,
 	CloseExpiredCommissionsRoutine,
 	CloseExpiredChatRoomsRoutine,
+	DeleteOldVoiceTelemetryRoutine,
 	DeleteOrphanArtTagsRoutine,
 	ComputeLutiDivsRoutine,
 	OptimizeDatabaseRoutine,

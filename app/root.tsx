@@ -55,6 +55,7 @@ import {
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { timezoneMiddleware } from "./features/timezone/timezone-middleware.server";
+import { VoiceCallHost } from "./features/voice/components/VoiceCallHost";
 import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useHydrated } from "./hooks/useHydrated";
 import {
@@ -274,6 +275,7 @@ function Document({
 								user={rootData?.user}
 								roomList={rootData?.chatRoomList}
 							>
+								{rootData?.user ? <VoiceCallHost /> : null}
 								<NotificationsProvider user={rootData?.user}>
 									<LayoutDataProvider data={rootData}>
 										<GlobalStatusProvider user={rootData?.user}>

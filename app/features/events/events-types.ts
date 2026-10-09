@@ -30,4 +30,5 @@ export type ServerEvent =
 	| { kind: "revalidate"; scope?: RevalidateScope; authorUserId?: number }
 	| { kind: "notificationsChanged" }
 	| { kind: "roomsChanged" }
-	| { kind: "statusChanged" };
+	| { kind: "statusChanged" }
+	| { kind: "voicePresence"; roomId: number; userIds: number[] };
