@@ -235,7 +235,10 @@ export function trimPreparedEliminationMaps({
 			currentCount: teamCount,
 		})[0].max;
 
-	if (isPerfectCountMatch) {
+	// group sizes, and with them the rounds, vary within a team count range so grouped brackets always get trimmed
+	const isGrouped = (rest.bracket.settings?.groupCount ?? 1) > 1;
+
+	if (isPerfectCountMatch && !isGrouped) {
 		if (thirdPlaceMatchDisappeared({ preparedMaps, teamCount, ...rest })) {
 			return filterOutThirdPlaceMatch(preparedMaps);
 		}
@@ -270,7 +273,7 @@ function trimMapsByTeamCount({
 		);
 
 		const actualRoundsCount = actualRoundsForSection.length;
-		// a grouped bracket's biggest group can grow with fewer teams, e.g. 9 teams as one group vs. 10 as two
+		// a grouped bracket's biggest group can grow with fewer teams, e.g. 3 teams as one group vs. 4 as two
 		if (preparedRoundsForSection.length < actualRoundsCount) return null;
 
 		const trimmedRounds = roundsWithVirtualIds(

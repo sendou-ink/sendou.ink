@@ -869,21 +869,21 @@ describe("validatedSources - other rules", () => {
 			skippedRounds: ["WB_FINALS", "BRACKET_RESET"],
 			why: "DE winners finals skipped while later rounds played",
 		},
-	] as const)("handles INVALID_SKIPPED_ROUNDS ($why)", ({
-		type,
-		skippedRounds,
-	}) => {
-		const error = getValidatedBrackets([
-			ROUND_ROBIN,
-			{
-				settings: { skippedRounds: [...skippedRounds] },
-				type,
-				sources: [{ bracketId: "0", placements: "1-2" }],
-			},
-		]) as Progression.ValidationError;
+	] as const)(
+		"handles INVALID_SKIPPED_ROUNDS ($why)",
+		({ type, skippedRounds }) => {
+			const error = getValidatedBrackets([
+				ROUND_ROBIN,
+				{
+					settings: { skippedRounds: [...skippedRounds] },
+					type,
+					sources: [{ bracketId: "0", placements: "1-2" }],
+				},
+			]) as Progression.ValidationError;
 
-		expect(error).toEqual({ type: "INVALID_SKIPPED_ROUNDS", bracketIdx: 1 });
-	});
+			expect(error).toEqual({ type: "INVALID_SKIPPED_ROUNDS", bracketIdx: 1 });
+		},
+	);
 
 	test.each([
 		{ type: "single_elimination", skippedRounds: [], why: "SE none skipped" },
@@ -907,16 +907,16 @@ describe("validatedSources - other rules", () => {
 			skippedRounds: ["LB_FINALS", "GRAND_FINALS", "BRACKET_RESET"],
 			why: "DE losers finals with dependents",
 		},
-	] as const)("accepts valid skipped rounds ($why)", ({
-		type,
-		skippedRounds,
-	}) => {
-		const result = getValidatedBrackets([
-			{ settings: { skippedRounds: [...skippedRounds] }, type },
-		]);
+	] as const)(
+		"accepts valid skipped rounds ($why)",
+		({ type, skippedRounds }) => {
+			const result = getValidatedBrackets([
+				{ settings: { skippedRounds: [...skippedRounds] }, type },
+			]);
 
-		expect(Array.isArray(result)).toBe(true);
-	});
+			expect(Array.isArray(result)).toBe(true);
+		},
+	);
 
 	test("handles EMPTY_PLACEMENTS_ON_NON_SWISS (DE source with empty placements)", () => {
 		const error = Progression.bracketsToValidationError([
