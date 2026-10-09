@@ -319,7 +319,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 				"",
 				"",
 				"",
-				`${clock}${formatPlayerStatusSide(d, 0)} vs ${formatPlayerStatusSide(d, 1)} (${d.layout})`,
+				`${clock}${formatPlayerStatusSide(d, 0)} vs ${formatPlayerStatusSide(d, 1)}`,
 				"",
 				"",
 			];
@@ -338,7 +338,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 				"",
 				"",
 				"",
-				`${clock}${formatStripWeaponsSide(d, 0)} vs ${formatStripWeaponsSide(d, 1)} (${d.layout})`,
+				`${clock}${formatStripWeaponsSide(d, 0)} vs ${formatStripWeaponsSide(d, 1)}`,
 				"",
 				"",
 			];

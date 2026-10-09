@@ -2,7 +2,7 @@
  * Coach mode (`view=coach&name=`): a scanned file's games in a strip above a
  * player of the file itself, with their coach events (core/CoachEvents.ts)
  * filterable by type beside it — picking a game or an event jumps the video to
- * its start (a category picked first, then a type within it). Games the filters (core/CoachFilters.ts) hide drop their events,
+ * its start (a category picked first, special uses by default, then a type within it). Games the filters (core/CoachFilters.ts) hide drop their events,
  * and while any is set playback keeps to the games shown, jumping past the
  * hidden ones and the footage between games. A bar under the player
  * (CoachControls) steps between the games, lives and events shown, with the
@@ -14,7 +14,7 @@
  * (CoachLifeCard) over the video. The file is the one scanned or opened this visit, else the user
  * opens it again (only the scan was saved).
  */
-// xxx: last event we dont have win/loss
+// xxx: coach mode button could be a bit more attention drawing!
 import { FolderOpen } from "lucide-react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -65,6 +65,8 @@ import {
 // xxx: optionally, drop in a live minimap that will be synced
 
 const ALL = "ALL";
+
+const DEFAULT_CATEGORY: CoachEvents.CoachEventCategory = "Special";
 
 const CATEGORIES = R.unique(
 	CoachEvents.DEFINITIONS.map((definition) => definition.category),
@@ -126,9 +128,8 @@ function CoachSession({
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [file, setFile] = useState(() => visitVodFile(name));
 	const url = useFileUrl(file);
-	const [category, setCategory] = useState<
-		CoachEvents.CoachEventCategory | typeof ALL
-	>(ALL);
+	const [category, setCategory] =
+		useState<CoachEvents.CoachEventCategory>(DEFAULT_CATEGORY);
 	const [type, setType] = useState<CoachEvents.CoachEventType | typeof ALL>(
 		ALL,
 	);
@@ -160,8 +161,7 @@ function CoachSession({
 		counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1);
 	}
 	const categoryEntries = entries.filter(
-		(entry) =>
-			category === ALL || CoachEvents.category(entry.type) === category,
+		(entry) => CoachEvents.category(entry.type) === category,
 	);
 	const shown = categoryEntries.filter(
 		(entry) => type === ALL || entry.type === type,
@@ -398,7 +398,6 @@ function CoachSession({
 					{url && isMapBig ? videoSlot : minimapView}
 					<CoachEventFilter
 						counts={counts}
-						total={entries.length}
 						categoryTotal={categoryEntries.length}
 						category={category}
 						type={type}
@@ -450,7 +449,6 @@ function CoachSession({
 /** The events shown: a category in the select, then a type of it as chips when it has more than one. */
 function CoachEventFilter({
 	counts,
-	total,
 	categoryTotal,
 	category,
 	type,
@@ -458,13 +456,10 @@ function CoachEventFilter({
 	onTypeChange,
 }: {
 	counts: Map<CoachEvents.CoachEventType, number>;
-	total: number;
 	categoryTotal: number;
-	category: CoachEvents.CoachEventCategory | typeof ALL;
+	category: CoachEvents.CoachEventCategory;
 	type: CoachEvents.CoachEventType | typeof ALL;
-	onCategoryChange: (
-		category: CoachEvents.CoachEventCategory | typeof ALL,
-	) => void;
+	onCategoryChange: (category: CoachEvents.CoachEventCategory) => void;
 	onTypeChange: (type: CoachEvents.CoachEventType | typeof ALL) => void;
 }) {
 	const countOf = (candidate: CoachEvents.CoachEventCategory) =>
@@ -474,16 +469,16 @@ function CoachEventFilter({
 			),
 			(definition) => counts.get(definition.type) ?? 0,
 		);
-	const categoryItems = [
-		{ id: ALL, label: "All events", count: total },
-		...CATEGORIES.filter(
-			(candidate) => candidate === category || countOf(candidate) > 0,
-		).map((candidate) => ({
-			id: candidate,
-			label: candidate,
-			count: countOf(candidate),
-		})),
-	];
+	const categoryItems = CATEGORIES.filter(
+		(candidate) =>
+			candidate === category ||
+			candidate === DEFAULT_CATEGORY ||
+			countOf(candidate) > 0,
+	).map((candidate) => ({
+		id: candidate,
+		label: candidate,
+		count: countOf(candidate),
+	}));
 	const variants = CoachEvents.DEFINITIONS.filter(
 		(definition) =>
 			definition.category === category &&
@@ -496,11 +491,11 @@ function CoachEventFilter({
 				aria-label="Event category"
 				items={categoryItems}
 				selectedKey={category}
-				onSelectionChange={(key) =>
-					onCategoryChange(
-						(key ?? ALL) as CoachEvents.CoachEventCategory | typeof ALL,
-					)
-				}
+				onSelectionChange={(key) => {
+					if (key !== null) {
+						onCategoryChange(key as CoachEvents.CoachEventCategory);
+					}
+				}}
 			>
 				{({ id, label, count }) => (
 					<SendouSelectItem key={id} id={id}>

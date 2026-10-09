@@ -232,7 +232,6 @@ function status(t: number, confidence = 0.8, dead = false): DetectedEvent {
 			[dead, false, false, false],
 			[false, false, false, false],
 		],
-		layout: "even",
 		cast: null,
 	};
 	return { type: "PlayerStatus", t, confidence, data };

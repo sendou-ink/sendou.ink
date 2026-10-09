@@ -71,6 +71,12 @@
 	font-variant-numeric: tabular-nums;
 }
 
-.warning {
-	color: var(--color-warning);
+.controlFlag {
+	&[data-outcome="better"] {
+		color: var(--color-success);
+	}
+
+	&[data-outcome="worse"] {
+		color: var(--color-error);
+	}
 }

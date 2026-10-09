@@ -1,10 +1,10 @@
 /**
  * The summary of the POV player's life the video is at, over its first
- * seconds: how long it lasted, who they splatted, the specials they used, how
- * the objective moved and whether they died holding their special. Tied to the video's time, so stepping
- * life to life while paused flips through the cards.
+ * seconds: how long it lasted, who they splatted, the specials they used and
+ * how the objective moved. Tied to the video's time, so stepping life to life
+ * while paused flips through the cards.
  */
-import { Crosshair, Flag, Skull, Zap } from "lucide-react";
+import { Crosshair, Flag, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import {
 	OutlinedImage,
@@ -104,11 +104,15 @@ export function CoachLifeCard({
 				</Row>
 			) : null}
 			{summary.control ? (
-				<Row icon={<Flag />}>{controlText(summary.control)}</Row>
-			) : null}
-			{summary.diedWithSpecial ? (
-				<Row icon={<Skull />}>
-					<span className={styles.warning}>Splatted with special</span>
+				<Row
+					icon={
+						<Flag
+							className={styles.controlFlag}
+							data-outcome={controlOutcome(summary.control)}
+						/>
+					}
+				>
+					{controlText(summary.control)}
 				</Row>
 			) : null}
 		</div>
@@ -128,6 +132,14 @@ function UnknownIcon() {
 	return (
 		<OutlinedImage path={abilityImageUrl("UNKNOWN")} alt="" size={ICON_SIZE} />
 	);
+}
+
+function controlOutcome(
+	control: CoachEvents.CoachLifeControl,
+): "better" | "worse" | "even" {
+	if (control.ours > control.theirs) return "better";
+	if (control.ours < control.theirs) return "worse";
+	return "even";
 }
 
 function controlText(control: CoachEvents.CoachLifeControl): string {

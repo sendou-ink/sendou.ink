@@ -18,6 +18,7 @@ import {
 	meanBrightness,
 } from "../../image";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
+import type { StripWeaponTemplate } from "../objective/strip-weapons";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
 	FULL_COUNT_TEAM_SCORE,
@@ -89,10 +90,10 @@ export interface ScoreboardRowDebug {
 export interface ScoreboardResources {
 	weapons: WeaponTemplate[];
 	/**
-	 * Renders for the in-match icon strip (StripWeapons); without them slot → row assignment falls
-	 * back to as-drawn order.
+	 * Masked icon art for the in-match icon strip (StripWeapons); without it slot → row assignment
+	 * leans on the other identity evidence alone.
 	 */
-	stripWeapons?: WeaponTemplate[] | null;
+	stripWeapons?: StripWeaponTemplate[] | null;
 	/**
 	 * Special silhouettes (assets/cv/specials); without them near-tied icons (Splash- vs
 	 * Sploosh-o-matic) stay decided by icon score.

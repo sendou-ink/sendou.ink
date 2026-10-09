@@ -196,7 +196,6 @@ export function buildExpectedJson(
 			{
 				event: eventType,
 				data: {
-					layout: status.layout,
 					cast: status.cast,
 					time: status.time,
 					special: status.special,
@@ -213,7 +212,6 @@ export function buildExpectedJson(
 			{
 				event: eventType,
 				data: {
-					layout: strip.layout,
 					time: strip.time,
 					// the top candidate per slot; hand-correct to the true weapons
 					weapons: strip.slots.map((side) =>

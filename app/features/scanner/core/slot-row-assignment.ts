@@ -1,20 +1,25 @@
 /**
  * Strip-slot → scoreboard-row assignment. The in-match icon strip (and the
- * minimap's card columns, which mirror it) keeps the lobby seating for the
- * whole set, while the results scoreboard re-sorts each team per game, so
- * per-slot status series pair with rows only through identity evidence:
+ * minimap's card columns, which mirror it) keeps its own seating, which can
+ * change every game, while the results scoreboard re-sorts each team, so
+ * per-slot status series pair with rows only through identity evidence. Every
+ * source adds to one slot × row evidence matrix per side, and the best of the
+ * 24 slot→row assignments wins:
  *
- * - weapon votes: per-slot candidate scores accumulated across a match's
- *   StripWeapons reads plus the minimap cards' parsed weapons. The best of the
- *   24 slot→row assignments against the scoreboard's four weapons wins — the
- *   global constraint corrects slots whose own evidence is wrong or missing
- *   (attested: a slot with zero readable votes still lands by elimination).
- * - card names (the POV minimap's teammate diamond): matched against row names.
+ * - weapons: per-slot candidate scores from the match's StripWeapons reads and
+ *   the minimap cards' parsed weapons, credited to every row playing that
+ *   weapon. The global constraint places a slot with no readable votes by
+ *   elimination.
+ * - statuses: a player known by name (a POV minimap card, the POV's own death
+ *   screen, a kill-feed victim) seen splatted, special-ready or neither at a
+ *   moment credits the slots drawn in that state then. This tells apart two
+ *   rows sharing a weapon, which the weapon evidence alone cannot.
  *
- * Ties resolve toward the fewest moved slots, so two rows sharing a weapon
- * keep their as-drawn order and thin evidence degrades to as-drawn, not a coin flip.
+ * Ties resolve toward the fewest moved slots, so thin evidence degrades to
+ * as-drawn, not a coin flip.
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { PlayerStatusFlags } from "./detectors/objective/player-status";
 import { editDistance, matchKey } from "./text";
 
 /** A slot→row permutation: `perm[slot]` is the scoreboard row the slot feeds. */
@@ -22,22 +27,45 @@ export type SlotRowPermutation = readonly [number, number, number, number];
 
 export const IDENTITY_PERMUTATION: SlotRowPermutation = [0, 1, 2, 3];
 
+/** One side's identity evidence: `evidence[slot][row]`. */
+export type SlotRowEvidence = number[][];
+
+/** One side's strip flags at a read. */
+export interface StripSnapshot {
+	t: number;
+	dead: PlayerStatusFlags;
+	special: PlayerStatusFlags;
+}
+
+/** A named player's state at a moment, the row already resolved. */
+export interface StatusObservation {
+	/** when the strip should show the state */
+	t: number;
+	row: number;
+	dead: boolean;
+	/** null = not observed */
+	special: boolean | null;
+}
+
 /**
- * Total vote score the winning assignment needs before it may reorder, and
- * its lead over the best differing assignment. Calibrated on the sendou-triton
- * VoD: correct assignments scored 10-33 with margins 2.2-5.3 over ~20 reads;
- * junk evidence (a strip geometry mispick, lookalikes) spreads flat and fails.
+ * Total evidence the winning assignment needs before it may reorder, and its
+ * lead over the best differing assignment. Strip votes run ~0.1-0.4 per read
+ * (score over the read's candidate floor) and a status observation at most 1,
+ * so the margin is two or three reads' worth.
  */
 const MIN_ASSIGNMENT_SCORE = 1.5;
 const MIN_ASSIGNMENT_MARGIN = 0.75;
 
 /**
- * A card name must resemble a row's name at least this much (1 - normalized
- * edit distance) to place the card: one garbled glyph of a five-char name
- * stays at 0.8, while unrelated names of the short lengths players pick
- * share at most a char or two.
+ * A name must resemble a row's name at least this much (1 - normalized edit
+ * distance) to place it: one garbled glyph of a five-char name stays at 0.8,
+ * while unrelated names of the short lengths players pick share at most a
+ * char or two.
  */
 const MIN_NAME_SIMILARITY = 0.6;
+
+/** How far from an observation the nearest strip read may sit (s); a splat outlasts it, a special-ready flip may not. */
+const OBSERVATION_MAX_GAP_SECONDS = 2;
 
 /** All 24 permutations, fewest-moved-slots first (ties resolve to earlier). */
 const PERMUTATIONS: SlotRowPermutation[] = (() => {
@@ -53,21 +81,66 @@ const PERMUTATIONS: SlotRowPermutation[] = (() => {
 	return all.sort((x, y) => displaced(x) - displaced(y));
 })();
 
-/**
- * The slot→row assignment best supported by one side's weapon votes against
- * its scoreboard row weapons; as-drawn when the evidence is too thin or too
- * close to call (MIN_ASSIGNMENT_SCORE/MARGIN).
- */
-export function weaponSlotRowPermutation(
-	votes: readonly ReadonlyMap<MainWeaponId, number>[],
+/** An all-zero evidence matrix. */
+export function emptySlotRowEvidence(): SlotRowEvidence {
+	return [0, 1, 2, 3].map(() => [0, 0, 0, 0]);
+}
+
+/** Credits `vote` for `slot` playing `weaponId` to every row whose scoreboard weapon it is. */
+export function addWeaponEvidence(
+	evidence: SlotRowEvidence,
+	slot: number,
+	weaponId: MainWeaponId,
+	vote: number,
 	rowWeapons: readonly (MainWeaponId | null)[],
+): void {
+	for (const [row, weapon] of rowWeapons.entries()) {
+		if (weapon === weaponId) evidence[slot]![row]! += vote;
+	}
+}
+
+/**
+ * Credits the observed row to the slots drawn in the observed state at the
+ * strip read nearest the observation, one unit split among them; nothing when
+ * no read is near or no slot (or every slot) matches.
+ */
+export function addStatusEvidence(
+	evidence: SlotRowEvidence,
+	snapshots: readonly StripSnapshot[],
+	observation: StatusObservation,
+): void {
+	let nearest: StripSnapshot | null = null;
+	for (const snapshot of snapshots) {
+		const gap = Math.abs(snapshot.t - observation.t);
+		if (gap > OBSERVATION_MAX_GAP_SECONDS) continue;
+		if (!nearest || gap < Math.abs(nearest.t - observation.t)) {
+			nearest = snapshot;
+		}
+	}
+	if (!nearest) return;
+	const matching = [0, 1, 2, 3].filter(
+		(slot) =>
+			nearest.dead[slot] === observation.dead &&
+			(observation.special === null ||
+				nearest.special[slot] === observation.special),
+	);
+	if (matching.length === 0 || matching.length === 4) return;
+	for (const slot of matching) {
+		evidence[slot]![observation.row]! += 1 / matching.length;
+	}
+}
+
+/**
+ * The slot→row assignment best supported by one side's evidence; as-drawn
+ * when the evidence is too thin or too close to call
+ * (MIN_ASSIGNMENT_SCORE/MARGIN).
+ */
+export function slotRowPermutation(
+	evidence: SlotRowEvidence,
 ): SlotRowPermutation {
 	const scored = PERMUTATIONS.map((perm) => ({
 		perm,
-		score: perm.reduce((sum, row, slot) => {
-			const weapon = rowWeapons[row];
-			return sum + (weapon === null ? 0 : (votes[slot]?.get(weapon!) ?? 0));
-		}, 0),
+		score: perm.reduce((sum, row, slot) => sum + evidence[slot]![row]!, 0),
 	}));
 	let best = scored[0]!;
 	for (const candidate of scored) {
@@ -84,6 +157,24 @@ export function weaponSlotRowPermutation(
 		return IDENTITY_PERMUTATION;
 	}
 	return best.perm;
+}
+
+/** The row whose name `name` most resembles, or null when none passes MIN_NAME_SIMILARITY. */
+export function rowByName(
+	name: string,
+	rowNames: readonly (string | null)[],
+): number | null {
+	let best: number | null = null;
+	let bestSimilarity = MIN_NAME_SIMILARITY;
+	for (const [row, rowName] of rowNames.entries()) {
+		if (rowName === null) continue;
+		const similarity = nameSimilarity(name, rowName);
+		if (similarity >= bestSimilarity) {
+			best = row;
+			bestSimilarity = similarity;
+		}
+	}
+	return best;
 }
 
 /**

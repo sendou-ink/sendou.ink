@@ -76,11 +76,17 @@ import type {
 	ScannerMatchTeam,
 } from "./scanner-match";
 import {
+	addStatusEvidence,
+	addWeaponEvidence,
 	applyPermutation,
+	emptySlotRowEvidence,
 	IDENTITY_PERMUTATION,
 	nameSlotRowPermutation,
+	rowByName,
 	type SlotRowPermutation,
-	weaponSlotRowPermutation,
+	type StatusObservation,
+	type StripSnapshot,
+	slotRowPermutation,
 } from "./slot-row-assignment";
 import { editDistance, matchKey } from "./text";
 import { multisetOverlap } from "./timeline/same-scoreboard";
@@ -942,6 +948,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		killReads,
 		board,
 		minimapTeamColors(minimaps),
+		open.deaths.map((event) => event.t),
 	);
 
 	const pov: ScannerMatch["pov"] =
@@ -1032,14 +1039,16 @@ function floorOrNull(t: number | undefined): number | null {
  * own/enemy — camera-stable — so they skip cluster orientation and map to
  * `teams` through the match's minimap ink anchor.
  *
- * Within a side the strip's slot order is the lobby seating while a results
- * scoreboard re-sorts rows per game (attested in the sendou-triton VoD), so on
- * a scoreboard-closed match each side's slots are reordered into row order via
- * slot-row-assignment.ts: weapon votes from StripWeapons evidence plus the
+ * Within a side the strip keeps its own slot order (it can change every
+ * game) while a results scoreboard re-sorts rows, so on a scoreboard-closed
+ * match each side's slots are reordered into row order once per game from
+ * the identity evidence in slot-row-assignment.ts: StripWeapons votes, the
  * minimap's card columns (mirror the strip seating; attested for the enemy
- * column, own column assumed symmetric). The POV diamond follows neither
- * order, so its flags map by card name and stay as drawn when too few names
- * resolve. A minimap-grouped match's samples stay as drawn by construction.
+ * column, own column assumed symmetric), and the strip states of players
+ * known by name (the POV's death screens, its kill-feed victims, named POV
+ * minimap cards). The POV diamond follows neither order, so its flags map by
+ * card name and stay as drawn when too few names resolve. A minimap-grouped
+ * match's samples stay as drawn by construction.
  *
  * Kill-feed stack reads share the replay-wipe anchor (they carry the same
  * clock) and reduce to one kill per row entering a stack (deriveKills); the
@@ -1055,6 +1064,7 @@ function buildProgress(
 	killReads: readonly { t: number; data: KillData }[],
 	board: ScoreboardData | undefined,
 	minimapColors: [InkRgb | null, InkRgb | null] | null,
+	deathTimes: readonly number[],
 ): {
 	objective: ScannerMatchObjective | null;
 	playerStatus: ScannerMatchPlayerStatus | null;
@@ -1092,16 +1102,20 @@ function buildProgress(
 		: minimapAnchorSwap(clusterHues, minimapColors);
 	const minimapSwapped = swap !== minimapAnchorSwap(clusterHues, minimapColors);
 
+	const kills = liveKills.length === 0 ? null : deriveKills(liveKills);
 	const perms = board
-		? slotRowPermutations(
+		? slotRowPermutations({
 				board,
+				playerStatuses: withoutReplayReads(playerStatuses, dominant),
 				stripWeapons,
 				minimapReads,
+				kills: kills ?? [],
+				deathTimes,
 				live,
 				swapFlags,
 				swap,
 				minimapSwapped,
-			)
+			})
 		: null;
 
 	const objective =
@@ -1167,7 +1181,7 @@ function buildProgress(
 	return {
 		objective,
 		playerStatus,
-		kills: liveKills.length === 0 ? null : deriveKills(liveKills),
+		kills,
 		minimapEnemySide: board ? (minimapSwapped ? 0 : 1) : null,
 	};
 }
@@ -1301,46 +1315,72 @@ interface SlotRowPerms {
 }
 
 /**
- * One minimap card's parsed weapon next to raw strip NCC scores (~0.3-0.6 per
- * candidate per read): the card parser is gated on a clean read, so one card
- * outweighs a single strip sample without drowning a match's worth of them.
+ * One minimap card's parsed weapon next to strip votes (a read's score over its
+ * candidate floor, ~0.1-0.4): the card parser is gated on a clean read, so one
+ * card outweighs a few strip samples without drowning a match's worth of them.
  */
 const MINIMAP_CARD_VOTE = 1;
 
+/** A kill-feed row comes up with the splat, the victim's strip cross-out a beat later (s). */
+const KILL_STRIP_DELAY_SECONDS = 1;
+
 /**
- * Accumulates the match's weapon votes (strip evidence oriented read-by-read,
- * minimap cards through the minimap anchor) and solves each side's slot→row
- * assignment against the scoreboard's weapons, plus the diamond's name-based one.
+ * Solves each side's slot→row assignment from the match's identity evidence
+ * (slot-row-assignment.ts), every source oriented into `teams` sides: strip
+ * weapon votes read-by-read, minimap card weapons through the minimap anchor,
+ * and the statuses of players known by name — the POV's own death screens, its
+ * kill-feed victims and the POV minimap's named teammate cards — against the
+ * strip reads around them. Plus the diamond's name-based assignment.
  */
-function slotRowPermutations(
-	board: ScoreboardData,
-	stripWeapons: readonly { t: number; data: StripWeaponsData }[],
-	minimapReads: readonly { t: number; data: MinimapData }[],
-	live: readonly { t: number; data: ObjectiveData }[],
-	swapFlags: readonly boolean[],
-	swap: boolean,
-	minimapSwapped: boolean,
-): SlotRowPerms {
-	const votes: Map<MainWeaponId, number>[][] = [0, 1].map(() =>
-		[0, 1, 2, 3].map(() => new Map<MainWeaponId, number>()),
+function slotRowPermutations({
+	board,
+	playerStatuses,
+	stripWeapons,
+	minimapReads,
+	kills,
+	deathTimes,
+	live,
+	swapFlags,
+	swap,
+	minimapSwapped,
+}: {
+	board: ScoreboardData;
+	playerStatuses: readonly { t: number; data: PlayerStatusData }[];
+	stripWeapons: readonly { t: number; data: StripWeaponsData }[];
+	minimapReads: readonly { t: number; data: MinimapData }[];
+	kills: readonly ScannerMatchKill[];
+	deathTimes: readonly number[];
+	live: readonly { t: number; data: ObjectiveData }[];
+	swapFlags: readonly boolean[];
+	swap: boolean;
+	minimapSwapped: boolean;
+}): SlotRowPerms {
+	const rows = (side: 0 | 1) =>
+		board.players.slice(side * PLAYERS_PER_TEAM, (side + 1) * PLAYERS_PER_TEAM);
+	const rowWeapons = [0, 1].map((side) =>
+		rows(side as 0 | 1).map((player) => player.weaponId),
 	);
-	const addVote = (
-		side: 0 | 1,
-		slot: number,
-		weaponId: MainWeaponId,
-		score: number,
-	): void => {
-		const slotVotes = votes[side]![slot]!;
-		slotVotes.set(weaponId, (slotVotes.get(weaponId) ?? 0) + score);
-	};
+	const rowNames = [0, 1].map((side) =>
+		rows(side as 0 | 1).map((player) => player.name.trim() || null),
+	);
+	const evidence = [emptySlotRowEvidence(), emptySlotRowEvidence()];
+	const sourceSide = (t: number, side: 0 | 1): 0 | 1 =>
+		nearestSwapFlag(live, swapFlags, t) !== swap ? ((1 - side) as 0 | 1) : side;
 
 	for (const read of stripWeapons) {
-		const swapped = nearestSwapFlag(live, swapFlags, read.t) !== swap;
 		for (const side of [0, 1] as const) {
-			const source = swapped ? ((1 - side) as 0 | 1) : side;
-			for (const [slot, candidates] of read.data.slots[source].entries()) {
-				for (const candidate of candidates ?? []) {
-					addVote(side, slot, candidate.weaponId, candidate.score);
+			const slots = read.data.slots[sourceSide(read.t, side)];
+			for (const [slot, candidates] of slots.entries()) {
+				if (!candidates || candidates.length === 0) continue;
+				const floor = candidates.at(-1)!.score;
+				for (const candidate of candidates) {
+					addWeaponEvidence(
+						evidence[side]!,
+						slot,
+						candidate.weaponId,
+						candidate.score - floor,
+						rowWeapons[side]!,
+					);
 				}
 			}
 		}
@@ -1350,34 +1390,92 @@ function slotRowPermutations(
 	// screen's own column is assumed symmetric. The POV diamond is not
 	// strip-seated and votes for nothing.
 	const enemySide = minimapSwapped ? 0 : 1;
+	const friendlySide = (1 - enemySide) as 0 | 1;
 	for (const read of minimapReads) {
-		for (const [slot, enemy] of read.data.enemies.entries()) {
-			if (enemy.weaponId !== null) {
-				addVote(enemySide, slot, enemy.weaponId, MINIMAP_CARD_VOTE);
-			}
-		}
-		if (!read.data.spectator) continue;
-		for (const [slot, mate] of read.data.teammates.entries()) {
-			if (mate.weaponId !== null) {
-				addVote(
-					(1 - enemySide) as 0 | 1,
+		const columns = [
+			{ side: enemySide, cards: read.data.enemies },
+			...(read.data.spectator
+				? [{ side: friendlySide, cards: read.data.teammates }]
+				: []),
+		];
+		for (const { side, cards } of columns) {
+			for (const [slot, card] of cards.entries()) {
+				if (card.weaponId === null) continue;
+				addWeaponEvidence(
+					evidence[side]!,
 					slot,
-					mate.weaponId,
+					card.weaponId,
 					MINIMAP_CARD_VOTE,
+					rowWeapons[side]!,
 				);
 			}
 		}
 	}
 
-	const rowWeapons = (side: 0 | 1) =>
-		board.players
-			.slice(side * PLAYERS_PER_TEAM, (side + 1) * PLAYERS_PER_TEAM)
-			.map((player) => player.weaponId);
-	const strip = [0, 1].map((side) =>
-		weaponSlotRowPermutation(votes[side]!, rowWeapons(side as 0 | 1)),
-	) as [SlotRowPermutation, SlotRowPermutation];
+	const snapshots = [0, 1].map((side) =>
+		playerStatuses.map(
+			(read): StripSnapshot => ({
+				t: read.t,
+				dead: read.data.dead[sourceSide(read.t, side as 0 | 1)],
+				special: read.data.special[sourceSide(read.t, side as 0 | 1)],
+			}),
+		),
+	);
+	const observe = (side: 0 | 1, observation: StatusObservation): void =>
+		addStatusEvidence(evidence[side]!, snapshots[side]!, observation);
+	const povSide =
+		board.povIndex === null
+			? null
+			: ((board.povIndex < PLAYERS_PER_TEAM ? 0 : 1) as 0 | 1);
+	const povRow =
+		board.povIndex === null ? null : board.povIndex % PLAYERS_PER_TEAM;
+	if (povSide !== null && povRow !== null) {
+		for (const t of deathTimes) {
+			observe(povSide, {
+				t,
+				row: povRow,
+				dead: true,
+				special: null,
+			});
+		}
+		const victimSide = (1 - povSide) as 0 | 1;
+		for (const kill of kills) {
+			const row =
+				kill.name === null ? null : rowByName(kill.name, rowNames[victimSide]!);
+			if (row === null) continue;
+			observe(victimSide, {
+				t: kill.t + KILL_STRIP_DELAY_SECONDS,
+				row,
+				dead: true,
+				special: null,
+			});
+		}
+	}
+	for (const read of minimapReads) {
+		if (read.data.spectator) continue;
+		for (const mate of read.data.teammates) {
+			const row = mate.self
+				? povSide === friendlySide
+					? povRow
+					: null
+				: mate.name === null
+					? null
+					: rowByName(mate.name, rowNames[friendlySide]!);
+			if (row === null) continue;
+			observe(friendlySide, {
+				t: read.t,
+				row,
+				dead: mate.dead,
+				special: mate.dead ? null : mate.specialReady,
+			});
+		}
+	}
 
-	const friendlySide = minimapSwapped ? 1 : 0;
+	const strip = evidence.map(slotRowPermutation) as [
+		SlotRowPermutation,
+		SlotRowPermutation,
+	];
+
 	const cardNames: string[][] = [[], [], [], []];
 	for (const read of minimapReads) {
 		if (read.data.spectator) continue;
@@ -1387,15 +1485,7 @@ function slotRowPermutations(
 		}
 	}
 	const diamond = cardNames.some((names) => names.length > 0)
-		? nameSlotRowPermutation(
-				cardNames,
-				board.players
-					.slice(
-						friendlySide * PLAYERS_PER_TEAM,
-						(friendlySide + 1) * PLAYERS_PER_TEAM,
-					)
-					.map((player) => player.name.trim() || null),
-			)
+		? nameSlotRowPermutation(cardNames, rowNames[friendlySide]!)
 		: null;
 
 	return { strip, diamond };

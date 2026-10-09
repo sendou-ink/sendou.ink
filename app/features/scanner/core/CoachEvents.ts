@@ -2,7 +2,6 @@
 // xxx: add kill streak (dynamic)
 // xxx: make death streak dynamic, 2,3,4...
 // xxx: special stack dynamic too
-// xxx: add plain special actually too (default)
 
 /**
  * Coach events: the moments of a scanned match worth reviewing, always from the
@@ -26,6 +25,13 @@ import type {
 } from "./scanner-match";
 
 export const DEFINITIONS = [
+	{
+		type: "SPECIAL_USED",
+		label: "Special used",
+		category: "Special",
+		variant: "Used",
+		rule: { kind: "specialUsed" },
+	},
 	{
 		type: "OPENING_WON",
 		label: "Opening won",
@@ -126,6 +132,34 @@ export const DEFINITIONS = [
 		variant: "Streak",
 		rule: { kind: "deathStreak", minDeaths: 3 },
 	},
+	{
+		type: "STAGGER_15",
+		label: "Staggered 15s+",
+		category: "Stagger",
+		variant: "15s+",
+		rule: { kind: "stagger", minSeconds: 15 },
+	},
+	{
+		type: "STAGGER_20",
+		label: "Staggered 20s+",
+		category: "Stagger",
+		variant: "20s+",
+		rule: { kind: "stagger", minSeconds: 20 },
+	},
+	{
+		type: "STAGGER_25",
+		label: "Staggered 25s+",
+		category: "Stagger",
+		variant: "25s+",
+		rule: { kind: "stagger", minSeconds: 25 },
+	},
+	{
+		type: "STAGGER_30",
+		label: "Staggered 30s+",
+		category: "Stagger",
+		variant: "30s+",
+		rule: { kind: "stagger", minSeconds: 30 },
+	},
 ] as const satisfies readonly CoachEventDefinition[];
 
 export type CoachEventType = (typeof DEFINITIONS)[number]["type"];
@@ -145,9 +179,14 @@ const LEAD_BUFFER_S = 5;
 /** footage kept before a death, to see what led to it */
 const DEATH_LEAD_S = 10;
 const DEATH_TAIL_S = 2;
+/** footage kept before the POV player's special use, to see what it was used into */
+const SPECIAL_USE_LEAD_S = 3;
+const SPECIAL_USE_TAIL_S = 5;
 /** specials used at most this far apart stack */
 const SPECIAL_STACK_MAX_GAP_S = 5;
 const SPECIAL_STACK_TAIL_S = 5;
+/** the POV team at least even with the enemy in players alive this long ends a stagger */
+const STAGGER_REGROUP_S = 5;
 /** Clam Blitz's opening is decided by the splats in its first seconds */
 const CB_OPENING_S = 45;
 /** the opening needs footage from at most this far into the game */
@@ -184,12 +223,16 @@ type CoachRule =
 	| { kind: "hold"; best: boolean }
 	/** the POV team taking the zone back from the enemy into a hold, cut like a push */
 	| { kind: "retake" }
+	/** the POV player using their special */
+	| { kind: "specialUsed" }
 	/** at least `minSpecials` POV team specials, each within `SPECIAL_STACK_MAX_GAP_S` of the previous */
 	| { kind: "specialStack"; minSpecials: number }
 	/** the POV player splatted while holding their special */
 	| { kind: "diedWithSpecial" }
 	/** at least `minDeaths` POV player deaths with no POV kill between them */
-	| { kind: "deathStreak"; minDeaths: number };
+	| { kind: "deathStreak"; minDeaths: number }
+	/** the POV team down players alive against the enemy for at least `minSeconds`, regroups shorter than `STAGGER_REGROUP_S` included */
+	| { kind: "stagger"; minSeconds: number };
 
 interface CoachEventDefinition {
 	type: string;
@@ -276,7 +319,6 @@ export function lives(
 			.map((death) => respawnAfter(analysis, death))
 			.filter((t) => match.endsAt === null || t < match.endsAt),
 	];
-	const specialDeaths = deathsWithSpecial(analysis);
 	const povUses =
 		analysis.povSlot === null ? null : specialUses(analysis, analysis.povSlot);
 
@@ -295,11 +337,6 @@ export function lives(
 			start,
 			summary: {
 				duration: Math.max(0, end - aliveFrom),
-				diedWithSpecial:
-					death !== undefined &&
-					specialDeaths.some(
-						(diedAt) => nearestDeath(deaths, diedAt) === death,
-					),
 				kills: match.kills?.filter((kill) => isOwn(kill.t)) ?? null,
 				specialsUsed: povUses?.filter(isOwn).length ?? null,
 				control: lifeControl(analysis, start, end),
@@ -318,8 +355,6 @@ export interface CoachLife {
 export interface CoachLifeSummary {
 	/** seconds alive, the first life counted from the game clock's start when read */
 	duration: number;
-	/** splatted holding their special; false also when the icon strip can't tell */
-	diedWithSpecial: boolean;
 	/** the POV player's splats in the life (a trade on the death's second included); null without a kill feed read */
 	kills: ScannerMatchKill[] | null;
 	/** null without the POV seat */
@@ -328,7 +363,7 @@ export interface CoachLifeSummary {
 	control: CoachLifeControl | null;
 }
 
-/** SZ: seconds each side held the zone; TC/RM/CB: how far each side's count went down. */
+/** SZ: whole seconds each side held the zone; TC/RM/CB: how far each side's count went down. */
 export interface CoachLifeControl {
 	unit: "SECONDS" | "POINTS";
 	ours: number;
@@ -381,12 +416,16 @@ function detectMoments(rule: CoachRule, analysis: Analysis): Moment[] {
 			return holdMoments(rule.best, analysis);
 		case "retake":
 			return retakeMoments(analysis);
+		case "specialUsed":
+			return specialUsedMoments(analysis);
 		case "specialStack":
 			return specialStackMoments(rule.minSpecials, analysis);
 		case "diedWithSpecial":
 			return diedWithSpecialMoments(analysis);
 		case "deathStreak":
 			return deathStreakMoments(rule.minDeaths, analysis);
+		case "stagger":
+			return staggerMoments(rule.minSeconds, analysis);
 	}
 }
 
@@ -556,6 +595,14 @@ function retakeMoments(analysis: Analysis): Moment[] {
 	});
 }
 
+function specialUsedMoments(analysis: Analysis): Moment[] {
+	if (analysis.povSlot === null) return [];
+	return specialUses(analysis, analysis.povSlot).map((usedAt) => ({
+		start: usedAt - SPECIAL_USE_LEAD_S,
+		end: usedAt + SPECIAL_USE_TAIL_S,
+	}));
+}
+
 function specialStackMoments(
 	minSpecials: number,
 	analysis: Analysis,
@@ -631,6 +678,54 @@ function deathStreakMoments(minDeaths: number, analysis: Analysis): Moment[] {
 		}));
 }
 
+function staggerMoments(minSeconds: number, analysis: Analysis): Moment[] {
+	return staggers(analysis)
+		.filter((stagger) => stagger.end - stagger.start >= minSeconds)
+		.map((stagger) => ({
+			start: stagger.start - LEAD_BUFFER_S,
+			end: stagger.end,
+		}));
+}
+
+/**
+ * Stretches the POV team had fewer players alive than the enemy, from the
+ * first read showing it to the read showing them even again (or the last read
+ * before an unobserved gap). A regroup (even or ahead) shorter than
+ * `STAGGER_REGROUP_S` doesn't end one.
+ */
+function staggers(analysis: Analysis): Moment[] {
+	const { povTeam, enemyTeam, statuses } = analysis;
+	const alive = (sample: ScannerMatchPlayerStatusSample, team: Team) =>
+		sample.dead[team].filter((dead) => !dead).length;
+	const spans: Moment[] = [];
+	let open: Moment | null = null;
+	for (const sample of statuses) {
+		if (open && sample.t - open.end > MAX_SAMPLE_GAP_S) {
+			spans.push(open);
+			open = null;
+		}
+		const isDown = alive(sample, povTeam) < alive(sample, enemyTeam);
+		if (open) {
+			open.end = sample.t;
+			if (!isDown) {
+				spans.push(open);
+				open = null;
+			}
+		} else if (isDown) {
+			open = { start: sample.t, end: sample.t };
+		}
+	}
+	if (open) spans.push(open);
+
+	const merged: Moment[] = [];
+	for (const span of spans) {
+		const last = merged.at(-1);
+		if (last && span.start - last.end < STAGGER_REGROUP_S) last.end = span.end;
+		else merged.push(span);
+	}
+	return merged;
+}
+
 function respawnAfter(analysis: Analysis, death: number): number {
 	const { povSlot, povTeam, statuses } = analysis;
 	const fallback = death + RESPAWN_FALLBACK_S;
@@ -646,16 +741,6 @@ function respawnAfter(analysis: Analysis, death: number): number {
 
 	return (
 		nearby.slice(deadIndex).find((sample) => !isDead(sample))?.t ?? fallback
-	);
-}
-
-function nearestDeath(deaths: readonly number[], t: number) {
-	return deaths.reduce<number | undefined>(
-		(nearest, death) =>
-			nearest === undefined || Math.abs(death - t) < Math.abs(nearest - t)
-				? death
-				: nearest,
-		undefined,
 	);
 }
 
@@ -682,8 +767,8 @@ function lifeControl(
 				);
 		return {
 			unit: "SECONDS",
-			ours: heldBy(povTeam),
-			theirs: heldBy(enemyTeam),
+			ours: Math.round(heldBy(povTeam)),
+			theirs: Math.round(heldBy(enemyTeam)),
 		};
 	}
 

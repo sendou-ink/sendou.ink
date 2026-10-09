@@ -40,7 +40,7 @@ test("player-status fixtures exist", () => {
 for (const fixture of fixtures) {
 	test(`player-status/${fixture.name}`, async (t) => {
 		// fresh detector per fixture: the objective detector carries sticky
-		// layout state across reads, and fixtures are unrelated frames
+		// strip-fit state across reads, and fixtures are unrelated frames
 		const { gate, events } = await runDetectorOnFixture(
 			createObjectiveDetector(resources),
 			fixture,
@@ -67,14 +67,6 @@ for (const fixture of fixtures) {
 		);
 		const expected = fixture.expected.data ?? {};
 		const debug = () => JSON.stringify(event.debug);
-
-		await t.test(
-			"layout",
-			{ skip: expected.layout === undefined || skip(fixture, "layout") },
-			() => {
-				assert.equal(event.data.layout, expected.layout);
-			},
-		);
 
 		await t.test(
 			"cast",

@@ -373,6 +373,36 @@ describe("CoachEvents.ofMatch", () => {
 		]);
 	});
 
+	test("the POV player's special uses start shortly before the use; teammates' and lost specials are left out", () => {
+		const events = CoachEvents.ofMatch(
+			match({
+				pov: { team: 0, index: 0 },
+				playerStatus: {
+					samples: [
+						status(150, {
+							special: [
+								[0, 0],
+								[0, 1],
+							],
+						}),
+						status(151),
+						status(180, { special: [[0, 0]] }),
+						status(181),
+						status(182, { dead: [[0, 0]] }),
+						status(200, { special: [[0, 0]] }),
+						status(201),
+					],
+				},
+			}),
+			[],
+		);
+
+		expect(ofType(events, "SPECIAL_USED")).toEqual([
+			{ start: 148, end: 156 },
+			{ start: 198, end: 206 },
+		]);
+	});
+
 	test("the POV player splatted while holding a special", () => {
 		const events = CoachEvents.ofMatch(
 			match({
@@ -411,6 +441,110 @@ describe("CoachEvents.ofMatch", () => {
 		);
 
 		expect(ofType(events, "DEATH_STREAK")).toEqual([{ start: 170, end: 222 }]);
+	});
+
+	test("a stagger lasts while the POV team is down players, a regroup shorter than 5s included", () => {
+		const events = CoachEvents.ofMatch(
+			match({
+				pov: { team: 0, index: 0 },
+				playerStatus: {
+					samples: [
+						status(150, { dead: [[0, 0]] }),
+						status(154),
+						status(157, { dead: [[0, 1]] }),
+						status(170),
+						status(175, { dead: [[1, 0]] }),
+						status(185),
+						status(200, { dead: [[0, 2]] }),
+						status(206),
+						status(212, { dead: [[0, 3]] }),
+						status(220),
+						status(240, { dead: [[0, 0]] }),
+						status(250, {
+							dead: [
+								[0, 0],
+								[0, 1],
+							],
+						}),
+						status(260, { dead: [[0, 1]] }),
+						status(270),
+					],
+				},
+			}),
+			[],
+		);
+
+		const both = [
+			{ start: 145, end: 170 },
+			{ start: 235, end: 270 },
+		];
+		expect(ofType(events, "STAGGER_15")).toEqual(both);
+		expect(ofType(events, "STAGGER_20")).toEqual(both);
+		expect(ofType(events, "STAGGER_25")).toEqual([{ start: 235, end: 270 }]);
+		expect(ofType(events, "STAGGER_30")).toEqual([{ start: 235, end: 270 }]);
+	});
+
+	test("even players alive with the enemy is no stagger and, 5s long, ends one", () => {
+		const events = CoachEvents.ofMatch(
+			match({
+				pov: { team: 0, index: 0 },
+				playerStatus: {
+					samples: [
+						status(150, { dead: [[0, 0]] }),
+						status(155, {
+							dead: [
+								[0, 0],
+								[1, 0],
+							],
+						}),
+						status(162, {
+							dead: [
+								[0, 0],
+								[0, 1],
+								[1, 0],
+							],
+						}),
+						status(170, {
+							dead: [
+								[0, 0],
+								[0, 1],
+								[1, 0],
+							],
+						}),
+						status(180),
+						status(200, {
+							dead: [
+								[0, 0],
+								[1, 0],
+							],
+						}),
+						status(215),
+						status(230, { dead: [[0, 0]] }),
+						status(236, {
+							dead: [
+								[0, 0],
+								[1, 0],
+							],
+						}),
+						status(239, {
+							dead: [
+								[0, 0],
+								[0, 1],
+								[1, 0],
+							],
+						}),
+						status(252),
+					],
+				},
+			}),
+			[],
+		);
+
+		expect(ofType(events, "STAGGER_15")).toEqual([
+			{ start: 157, end: 180 },
+			{ start: 225, end: 252 },
+		]);
+		expect(ofType(events, "STAGGER_20")).toEqual([{ start: 225, end: 252 }]);
 	});
 
 	test("no death streak without a kill feed read", () => {
@@ -514,7 +648,7 @@ describe("CoachEvents.lives", () => {
 		expect(first!.summary!.kills).toBeNull();
 	});
 
-	test("counts the POV player's specials used and marks a death holding one", () => {
+	test("counts the POV player's specials used", () => {
 		const povSpecial = { special: [[0, 0]] as [0 | 1, number][] };
 		const lives = CoachEvents.lives(
 			match({
@@ -534,15 +668,7 @@ describe("CoachEvents.lives", () => {
 			[134],
 		);
 
-		expect(
-			lives.map(({ summary }) => [
-				summary!.specialsUsed,
-				summary!.diedWithSpecial,
-			]),
-		).toEqual([
-			[1, true],
-			[1, false],
-		]);
+		expect(lives.map(({ summary }) => summary!.specialsUsed)).toEqual([1, 1]);
 	});
 
 	test("no specials count without the POV seat", () => {
@@ -591,6 +717,29 @@ describe("CoachEvents.lives", () => {
 			unit: "SECONDS",
 			ours: 12,
 			theirs: 2,
+		});
+	});
+
+	test("Splat Zones control is whole seconds", () => {
+		const [first] = CoachEvents.lives(
+			match({
+				pov: POV,
+				mode: "SZ",
+				objective: objective(
+					"SZ",
+					sample(110, [100, 100], 0),
+					sample(122.4, [88, 100], null),
+					sample(130.2, [88, 100], 1),
+					sample(135, [88, 95], 1),
+				),
+			}),
+			[132.9],
+		);
+
+		expect(first!.summary!.control).toEqual({
+			unit: "SECONDS",
+			ours: 12,
+			theirs: 3,
 		});
 	});
 

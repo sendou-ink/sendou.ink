@@ -1568,20 +1568,10 @@ test("a pov overlay minimap is not flagged as cast", () => {
 	assert.equal(built[0]!.match.cast, false);
 });
 
-test("a narrow-left strip layout alone is not flagged as cast", () => {
-	const built = buildScannerMatches([
-		minimap(70, { spectator: false }),
-		playerStatus(75, { layout: "narrow-left" }),
-		playerStatus(76, { layout: "narrow-left" }),
-		minimap(120, { spectator: false }),
-	]);
-	assert.equal(built[0]!.match.cast, false);
-});
-
 test("a badge-proven strip read flags the match as cast", () => {
 	const built = buildScannerMatches([
 		minimap(70, { spectator: false }),
-		playerStatus(75, { layout: "narrow-left", cast: true }),
+		playerStatus(75, { cast: true }),
 		minimap(120, { spectator: false }),
 	]);
 	assert.equal(built[0]!.match.cast, true);
@@ -1766,25 +1756,31 @@ function playerStatus(
 		time = (300 - Math.round(t)) as number | null,
 		special = ALL_FALSE,
 		dead = ALL_FALSE,
-		layout = "even" as PlayerStatusData["layout"],
 		cast = null as true | null,
 	} = {},
 ): DetectedEvent {
-	const data: PlayerStatusData = { time, special, dead, layout, cast };
+	const data: PlayerStatusData = { time, special, dead, cast };
 	return { type: "PlayerStatus", t, confidence: 0.9, data };
 }
+
+/** Each read slot ranks its weapon at `score` over a runner-up no row plays at FLOOR_SCORE. */
+const FLOOR_SCORE = 0.5;
 
 function stripWeaponsEvent(
 	t: number,
 	slots: [(MainWeaponId | null)[], (MainWeaponId | null)[]],
-	{ score = 0.6, time = (300 - Math.round(t)) as number | null } = {},
+	{ score = 0.9, time = (300 - Math.round(t)) as number | null } = {},
 ): DetectedEvent {
 	const data: StripWeaponsData = {
 		time,
-		layout: "narrow-right",
 		slots: slots.map((side) =>
 			side.map((weaponId) =>
-				weaponId === null ? null : [{ weaponId, score }],
+				weaponId === null
+					? null
+					: [
+							{ weaponId, score },
+							{ weaponId: 7010 as MainWeaponId, score: FLOOR_SCORE },
+						],
 			),
 		) as StripWeaponsData["slots"],
 	};
@@ -1847,7 +1843,6 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 				[true, false, false, false],
 				[false, false, false, false],
 			],
-			layout: "narrow-right",
 		}),
 		// the caster specs a purple player: sides swap
 		objective(120, {
@@ -1859,7 +1854,6 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 				[true, false, false, false],
 				[false, false, false, false],
 			],
-			layout: "narrow-right",
 		}),
 		minimap(180),
 	]);
@@ -2165,7 +2159,7 @@ test("weapon evidence below the assignment floor keeps the as-drawn order", () =
 				[null, null, null, null],
 			],
 			{
-				score: 0.5,
+				score: 0.6,
 			},
 		),
 		scoreboard(300),
@@ -2194,6 +2188,82 @@ test("minimap enemy-card weapons vote the strip assignment too", () => {
 		[false, false, false, false],
 		[false, false, true, false],
 	]);
+});
+
+/** One strip read with the given (side, slot) pairs splatted or special-ready. */
+function stripRead(
+	t: number,
+	{ dead = [] as [0 | 1, number][], special = [] as [0 | 1, number][] } = {},
+): DetectedEvent {
+	const flags = (marked: [0 | 1, number][]) =>
+		[0, 1].map((side) =>
+			[0, 1, 2, 3].map((slot) =>
+				marked.some(([s, k]) => s === side && k === slot),
+			),
+		) as PlayerStatusData["dead"];
+	return playerStatus(t, { dead: flags(dead), special: flags(special) });
+}
+
+test("a named card's state tells apart two rows sharing a weapon", () => {
+	// rows w1 and w2 both play 40; the strip seats w2 first
+	const card = (name: string, dead: boolean): MinimapTeammate => ({
+		...teammate(40),
+		name,
+		dead,
+	});
+	const built = buildScannerMatches([
+		mapStart(0),
+		stripWeaponsEvent(90, [
+			[40, 40, 2010, 3030],
+			[null, null, null, null],
+		]),
+		stripRead(100, { dead: [[0, 0]] }),
+		{
+			type: "Minimap",
+			t: 100,
+			confidence: 0.8,
+			data: {
+				stage: 0 as StageId,
+				spectator: false,
+				teammates: [card("w2", true), card("w1", false)],
+				enemies: [],
+				teamColors: [null, null],
+			},
+		} as DetectedEvent,
+		stripRead(150, { special: [[0, 0]] }),
+		scoreboard(300, { weapons: [40, 40, 2010, 3030, ...BRAVO] }),
+	]);
+	const sample = built[0]!.match.playerStatus!.samples.at(-1)!;
+	assert.equal(sample.t, 150);
+	assert.deepEqual(sample.special[0], [false, true, false, false]);
+});
+
+test("the pov's death screens place its strip slot", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		stripRead(100, { dead: [[0, 2]] }),
+		death(100, "l1"),
+		stripRead(150, { dead: [[0, 2]] }),
+		death(150, "l2"),
+		stripRead(200, { special: [[0, 2]] }),
+		scoreboard(300, { povIndex: 0 }),
+	]);
+	const sample = built[0]!.match.playerStatus!.samples.at(-1)!;
+	assert.deepEqual(sample.special[0], [true, false, false, false]);
+});
+
+test("kill-feed victims place the enemy strip slots", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		kill(100, ["l3"]),
+		stripRead(101, { dead: [[1, 0]] }),
+		kill(180, ["l3"]),
+		stripRead(181, { dead: [[1, 0]] }),
+		stripRead(220, { special: [[1, 0]] }),
+		scoreboard(300, { povIndex: 0 }),
+	]);
+	const sample = built[0]!.match.playerStatus!.samples.at(-1)!;
+	assert.deepEqual(sample.special[1], [false, false, true, false]);
 });
 
 test("pov diamond cards map to scoreboard rows by name", () => {

@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": null,
+		"time": 231,
+		"special": [
+			[true, false, true, false],
+			[false, true, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"skipFields": ["special.1.1"],
+		"notes": "六兆年… XP4526 VoD (-I23PqqYtHQ, 1080p S3 POV), game 1 Hagglefish Market TC at 3:51, t=236.4. The POV player (left slot 0, Blaster) holds a charged special from ~3:59 until dying with it at 3:46; the icon is washed pale peach the whole time, like left slot 2's. The browser scan (narrow-left) and a fresh read (narrow-right) both missed slot 0's wash and only a sticky even read caught it, so the timeline showed a 10s gap before the death and then a ★ straight after it. Even pitch on both sides (apexes ~[565,660,750,835 | 1095,1180,1270,1350]). Right slot 1 (Enperry) is washed pale lilac too, but at a pulse trough with its blue render in the box (ink 0.38, pale 0.27, pale glow 0.23) it reads like an alive body over sky, so it is skipped. Left slot 2 (Dapple Dualies Nouveau) is the render-diluted wash STATUS_READY_RENDER_WASH_* catches (ink 0.32, tint 0.53, pale glow 0.65). Layout fixed by the team-hue apex comb (STATUS_APEX_*: even 1.28 leading by 0.71)."
+	}
+}

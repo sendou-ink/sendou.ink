@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": null,
+		"time": 77,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, true]
+		],
+		"dead": [
+			[false, true, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "六兆年… XP4526 VoD (-I23PqqYtHQ, 1080p S3 POV), game 1 Hagglefish Market TC at 1:17, t=390.4. Left slot 0 is the POV player (Blaster), plainly alive in yellow team ink, but read as special-ready. Both sides sit at the even pitch (apexes ~[565,655,750,835 | 1090,1175,1270,1355]); the fresh pick went narrow-right, whose slot-0 shoulder box (x 513-537) lands on the pale \"リード!\" (lead) banner drawn left of the strip whenever the POV team leads. Right slot 3's pale lilac body is a real wash (missed under narrow-right). The same banner false star recurs across games 1, 5, 7 and 16 of this VoD and is the main source of the POV player's phantom specials. Fixed by the team-hue apex comb (STATUS_APEX_*: even 1.18 leading by 0.42); right slot 3's wash keeps its blue render in the body box (ink 0.48) and reads ready via STATUS_READY_RENDER_WASH_*."
+	}
+}

@@ -25,11 +25,7 @@ import {
 	SUB_TILE_TEMPLATE_SIZES,
 } from "./detectors/minimap/rois";
 import type { PlannerStage } from "./detectors/minimap/stage";
-import {
-	STRIP_WEAPON_INK_THRESHOLD,
-	STRIP_WEAPON_TEMPLATE_BACKGROUND,
-	STRIP_WEAPON_TEMPLATE_SIZES,
-} from "./detectors/objective/rois";
+import { prepareStripWeaponTemplates } from "./detectors/objective/strip-weapons";
 import type { ScoreboardResources } from "./detectors/scoreboard/index";
 import { prepareSpecialTemplates } from "./detectors/scoreboard/specials";
 import { prepareWeaponTemplates } from "./detectors/scoreboard/weapons";
@@ -161,13 +157,7 @@ export async function assembleScoreboardResources(
 			cropToArt: true,
 		}),
 	);
-	const stripWeapons = lazy(() =>
-		prepareWeaponTemplates(weaponIcons, STRIP_WEAPON_TEMPLATE_SIZES, {
-			background: STRIP_WEAPON_TEMPLATE_BACKGROUND,
-			inkThreshold: STRIP_WEAPON_INK_THRESHOLD,
-			cropToArt: true,
-		}),
-	);
+	const stripWeapons = lazy(() => prepareStripWeaponTemplates(weaponIcons));
 	const specials = lazy(() => prepareSpecialTemplates(specialIcons));
 	const minimapSubWeapons = lazy(() =>
 		prepareSpecialTemplates(subIcons, SUB_TILE_TEMPLATE_SIZES),

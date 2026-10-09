@@ -150,39 +150,39 @@ button.cardToggle {
 }
 
 .strip {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-2);
-}
-
-.slot {
 	margin: 0;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
 	gap: var(--s-1);
+	inline-size: fit-content;
 
 	& canvas {
 		display: block;
 		background: #000;
 		border-radius: var(--radius-selector);
 	}
+}
 
-	& figcaption {
+.stripCaptions {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+
+	& > span {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: var(--s-1);
-		font-size: var(--font-2xs);
-		color: var(--color-text-high);
 	}
 }
 
-.slotDead figcaption {
+.slotDead {
 	color: var(--color-error-high);
 	font-weight: var(--weight-bold);
 }
 
-.slotSpecial figcaption {
+.slotSpecial {
 	color: var(--color-warning-high);
 	font-weight: var(--weight-bold);
 }

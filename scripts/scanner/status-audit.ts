@@ -42,7 +42,6 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 	type PlayerStatusFlags,
-	type PlayerStatusLayout,
 } from "../../app/features/scanner/core/detectors/objective/player-status";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
@@ -268,10 +267,10 @@ function parseClock(m: string, s: string): number {
 
 function parsePlayerStatusCell(cell: string): PlayerStatusData {
 	const match = cell.match(
-		/^(?:(\d+):(\d{2}) · )?([✕★·]{4}) vs ([✕★·]{4}) \((even|narrow-right|narrow-left)\)$/u,
+		/^(?:(\d+):(\d{2}) · )?([✕★·]{4}) vs ([✕★·]{4})(?: \((?:even|narrow-right|narrow-left)\))?$/u,
 	);
 	if (!match) throw new Error(`bad PlayerStatus cell: ${cell}`);
-	const [, m, s, left, right, layout] = match;
+	const [, m, s, left, right] = match;
 	const sideFlags = (icons: string) => {
 		const chars = [...icons];
 		return {
@@ -285,7 +284,6 @@ function parsePlayerStatusCell(cell: string): PlayerStatusData {
 		time: m === undefined ? null : parseClock(m, s!),
 		special: [a.special, b.special],
 		dead: [a.dead, b.dead],
-		layout: layout as PlayerStatusLayout,
 		// the CSV carries no camera-badge evidence
 		cast: null,
 	};
@@ -328,10 +326,10 @@ function parseObjectiveCell(
 
 function parseStripWeaponsCell(cell: string): StripWeaponsData {
 	const match = cell.match(
-		/^(?:(\d+):(\d{2}) · )?(.*) vs (.*) \((even|narrow-right|narrow-left)\)$/u,
+		/^(?:(\d+):(\d{2}) · )?(.*) vs (.*?)(?: \((?:even|narrow-right|narrow-left)\))?$/u,
 	);
 	if (!match) throw new Error(`bad StripWeapons cell: ${cell}`);
-	const [, m, s, left, right, layout] = match;
+	const [, m, s, left, right] = match;
 	const side = (text: string) =>
 		text.split(" | ").map((entry) => {
 			if (entry === "✕") return null;
@@ -341,7 +339,6 @@ function parseStripWeaponsCell(cell: string): StripWeaponsData {
 		});
 	return {
 		time: m === undefined ? null : parseClock(m, s!),
-		layout: layout as PlayerStatusLayout,
 		slots: [side(left!), side(right!)],
 	};
 }
