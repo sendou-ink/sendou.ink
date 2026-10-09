@@ -1,0 +1,14 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"time": 259,
+		"dead": [
+			[false, false, false, true],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "六兆年と一ヤグラ物語 VoD [-I23PqqYtHQ], game 3, Humpback Pump Track TC at 4:19, t=918.867 (a browser-scan sample time). The POV (ロブ, Blaster, left slot 0) respawned at ~4:22 and is mid super jump: the camera looks straight down at the stage, and every strip icon but スウェット's (left slot 3, splatted) is alive. The objective gate misses the frame: the timer box passes, but the track's dot comb read 9.1, under GATE_TRACK_MIN_COMB 11. The windows over the left end marker and the right checkpoint run went into anti-phase, so the comb now drops the two worst 110px windows and reads 20.3. Every 1s sample from t=914.867 to t=926.867 misses the same way (comb -5..9.6), and t=927.867 reads 16.7. No strip read lands for 14s, so the respawn-map Minimap read at t=913.7 (self splatted, which is correct there) is the only sample. The coach timeline then draws the Blaster as dead through 4:10, past the POV's own kill at 4:17. Special flags are not asserted: left slot 0 and right slots 0-1 look washed, and the POV gauge shows the R-press prompt, but the gauge is pale mid-jump."
+	}
+}

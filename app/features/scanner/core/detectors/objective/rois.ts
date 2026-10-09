@@ -507,9 +507,20 @@ export const TRACK_COMB_SPAN: readonly [number, number] = [520, 1400];
 export const TRACK_COMB_OFFSET_Y = 9;
 
 /**
- * Comb projection at the dot phase: gameplay with the track reads >=17 (a
- * dark backdrop leaves little between dots and ground), every other frame
- * <=7 (SZ HUD, lobby, results, the intro).
+ * The comb projects each 110px window on its own and drops the two worst: a
+ * checkpoint square, an end marker or a backdrop edge along the line (the
+ * overhead super-jump camera on Humpback Pump Track) drives a window into
+ * anti-phase, which sank a whole-span projection under the floor.
+ */
+export const TRACK_COMB_WINDOW = 110;
+export const TRACK_COMB_DROPPED_WINDOWS = 2;
+
+/**
+ * Comb projection at the dot phase: gameplay with the track reads >=26 on
+ * every TC/RM fixture, though a low-contrast backdrop leaves little between
+ * dots and ground (Humpback Pump Track samples 8-20, purple dots over navy
+ * the lowest); every other frame <=7.5 (SZ HUD, lobby, results, the intro,
+ * the POV map).
  */
 export const GATE_TRACK_MIN_COMB = 11;
 

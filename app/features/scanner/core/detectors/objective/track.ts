@@ -30,8 +30,10 @@ import { all, type MatchSteps } from "../../match-steps";
 import type { BannerScoreRead } from "../scoreboard/banner";
 import {
 	TRACK_CENTER_X,
+	TRACK_COMB_DROPPED_WINDOWS,
 	TRACK_COMB_OFFSET_Y,
 	TRACK_COMB_SPAN,
+	TRACK_COMB_WINDOW,
 	TRACK_DARK_MAX_VALUE,
 	TRACK_DOT_PITCH,
 	TRACK_END_INK_ICON_CLEARANCE,
@@ -89,7 +91,7 @@ export interface TrackRead {
 	debug: Record<string, unknown>;
 }
 
-/** Comb projection of the track's dot row at its fixed phase; see GATE_TRACK_MIN_COMB. */
+/** Comb projection of the track's dot row at its fixed phase, per window with the worst dropped; see GATE_TRACK_MIN_COMB. */
 export function trackComb(frame: Mat): number {
 	const [x0, x1] = TRACK_COMB_SPAN;
 	const band = copyRoi(frame, {
@@ -121,14 +123,24 @@ export function trackComb(frame: Mat): number {
 	}
 	band.delete();
 
-	const mean = contrast.reduce((a, b) => a + b, 0) / contrast.length;
-	let projection = 0;
-	for (const [i, value] of contrast.entries()) {
-		const phase =
-			(2 * Math.PI * (x0 + i - TRACK_FIRST_DOT_X)) / TRACK_DOT_PITCH;
-		projection += (value - mean) * Math.cos(phase);
+	const windows: number[] = [];
+	for (
+		let start = 0;
+		start + TRACK_COMB_WINDOW <= contrast.length;
+		start += TRACK_COMB_WINDOW
+	) {
+		const window = contrast.slice(start, start + TRACK_COMB_WINDOW);
+		const mean = window.reduce((a, b) => a + b, 0) / window.length;
+		let projection = 0;
+		for (const [i, value] of window.entries()) {
+			const phase =
+				(2 * Math.PI * (x0 + start + i - TRACK_FIRST_DOT_X)) / TRACK_DOT_PITCH;
+			projection += (value - mean) * Math.cos(phase);
+		}
+		windows.push(projection / window.length);
 	}
-	return projection / contrast.length;
+	const kept = windows.sort((a, b) => a - b).slice(TRACK_COMB_DROPPED_WINDOWS);
+	return kept.reduce((a, b) => a + b, 0) / kept.length;
 }
 
 /** The track overlay's icon, holder, plates and team inks off one frame. */

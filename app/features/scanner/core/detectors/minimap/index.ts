@@ -59,6 +59,7 @@ import {
 	enemyWeaponRoi,
 	GATE_BRIGHT_MIN_MAX,
 	GATE_CLOSE_DARK_PROBES,
+	GATE_CLOSE_RING_MAX_BRIGHT_PROBES,
 	GATE_CLOSE_X_BRIGHT,
 	GATE_CLOSE_X_DARK,
 	GATE_DARK_MAX_MEAN,
@@ -306,15 +307,21 @@ export function createMinimapDetector(
 
 	/** POV overlay chrome: close-button disc + Spawn Point pill. */
 	function overlayGate(gray: Mat): GateResult {
-		return probeGate(
+		const chrome = probeGate(
 			gray,
-			[
-				...GATE_CLOSE_DARK_PROBES,
-				...GATE_CLOSE_X_DARK,
-				...GATE_SPAWN_DARK_PROBES,
-			],
+			[...GATE_CLOSE_X_DARK, ...GATE_SPAWN_DARK_PROBES],
 			[...GATE_CLOSE_X_BRIGHT, GATE_SPAWN_BRIGHT],
 		);
+		const darkRing = GATE_CLOSE_DARK_PROBES.filter(
+			(roi) => meanBrightness(gray, roi) <= GATE_DARK_MAX_MEAN,
+		).length;
+		return {
+			pass:
+				chrome.pass &&
+				darkRing >=
+					GATE_CLOSE_DARK_PROBES.length - GATE_CLOSE_RING_MAX_BRIGHT_PROBES,
+			score: (chrome.score + darkRing / GATE_CLOSE_DARK_PROBES.length) / 2,
+		};
 	}
 
 	/** Spectator screen: the X jump-button disc beside the 8th player card, in whichever column carries the face buttons. */

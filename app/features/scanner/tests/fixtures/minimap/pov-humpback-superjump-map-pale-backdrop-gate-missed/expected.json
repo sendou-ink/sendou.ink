@@ -1,0 +1,49 @@
+{
+	"event": "Minimap",
+	"data": {
+		"stage": 16,
+		"stageLabel": "Humpback Pump Track",
+		"spectator": false,
+		"teammates": [
+			{
+				"self": false,
+				"name": "マリン",
+				"dead": false
+			},
+			{
+				"self": false,
+				"name": "マスク",
+				"dead": false
+			},
+			{
+				"self": false,
+				"dead": true
+			},
+			{
+				"self": true,
+				"name": "ロブ",
+				"dead": false
+			}
+		],
+		"enemies": [
+			{
+				"dead": false
+			},
+			{
+				"dead": false
+			},
+			{
+				"dead": false
+			},
+			{
+				"dead": false
+			}
+		]
+	},
+	"options": {
+		"skipFields": [
+			"teammates.3.name"
+		],
+		"notes": "六兆年と一ヤグラ物語 VoD [-I23PqqYtHQ], game 3, Humpback Pump Track TC at ~4:20, t=917.375 (an 8 fps ffmpeg sample). The POV (ロブ, Blaster) respawned and super jumped from spawn, then opened the map mid jump. The self card is not struck through, and only スウェット (right card) is splatted. This is the only alive-self map between the respawn map at t=913.7 (self splatted, correct) and the next strip read at 4:10, and the gate misses it: the close-button probe below the disc ({x:88,y:132}) reads mean 158 over the pale green blurred backdrop, against the 85 dark ceiling. Every other probe passes (score 0.95). The disc is still popping in, so it is smaller than usual and the backdrop shows past its rim. One of the four ring probes may now miss (GATE_CLOSE_RING_MAX_BRIGHT_PROBES). Neighbouring frames are mid fade (t=917.25: spawn pill not yet up; t=917.5: the close X is fading). Had this frame read, the self card's alive flag would have ended the 14s phantom dead span on the coach timeline. Weapons, abilities and special flags are not asserted: the frame is for the gate and the dead flags. The self name is skipped too: the card's translucent pale surface lets ghost scene text through after \"ロブ\" (raw \"ロブ  . ▲ ” ▽\"), and the card→row name match is fuzzy over every read, so trailing noise is tolerated downstream."
+	}
+}

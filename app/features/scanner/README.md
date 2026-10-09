@@ -761,7 +761,8 @@ with the objective's icon riding it and a "Remaining" plate per team hanging
 under the furthest point that team pushed to — so a team's plate always sits
 on the half it pushes into, and the left team pushes right. The gate tells the
 track from the SZ plates by the dots, which sit at a fixed pitch and phase in
-every lobby (a comb projected at that phase). The icon is scored
+every lobby (a comb projected at that phase, per window, with the two
+worst windows dropped so a marker or backdrop edge can't sink it). The icon is scored
 procedurally (held: team-ink disc around a white glyph; neutral: white ring
 around an olive disc), its x mapped linearly to `position` -100..100; the
 holder is the icon's ink against each team's ink off its own track end (end

@@ -206,6 +206,11 @@ export const GATE_CLOSE_DARK_PROBES: readonly Roi[] = [
 	{ x: 58, y: 88, w: 14, h: 20 },
 	{ x: 132, y: 88, w: 14, h: 20 },
 ];
+/**
+ * A pale backdrop shows past the disc's rim while it pops in (tapped open
+ * mid super jump: the bottom probe reads 158), so one ring probe may miss.
+ */
+export const GATE_CLOSE_RING_MAX_BRIGHT_PROBES = 1;
 /** The white jump-arrows icon left of the (localized) pill label. */
 export const GATE_SPAWN_BRIGHT: Roi = { x: 888, y: 963, w: 60, h: 60 };
 export const GATE_SPAWN_DARK_PROBES: readonly Roi[] = [
