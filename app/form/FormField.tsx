@@ -23,6 +23,7 @@ import {
 	CheckboxGroupFormField,
 	RadioGroupFormField,
 } from "./fields/InputGroupFormField";
+import { MapPoolFormField } from "./fields/MapPoolFormField";
 import { SelectFormField } from "./fields/SelectFormField";
 import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SubSpecialSelectFormField } from "./fields/SubSpecialSelectFormField";
@@ -45,6 +46,7 @@ import type {
 	CustomFieldRenderProps,
 	FormFieldItemsWithImage,
 	FormField as FormFieldType,
+	MapPoolFieldOptions,
 	SelectOption,
 	TeamSearchFieldOptions,
 	TournamentSearchFieldOptions,
@@ -77,6 +79,8 @@ interface FormFieldProps {
 	disabled?: boolean;
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
 	autoFocus?: boolean;
+	/** Marks the field required when only a cross-field refine enforces it, e.g. for one variant of the form. Only fields with a `required` setting support it. */
+	required?: boolean;
 	maxCount?: number;
 	field?: AnySyncSchema;
 	children?:
@@ -98,6 +102,7 @@ export function FormField({
 	labelPopover,
 	disabled,
 	autoFocus,
+	required,
 	maxCount,
 	field,
 	children,
@@ -136,9 +141,14 @@ export function FormField({
 			throw new Error(`Form field metadata not found for name: ${name}`);
 		}
 
-		const fieldWithLabel = label ? { ...result, label } : result;
-		return fieldWithLabel as FormFieldType;
-	}, [fieldSchema, name, label]);
+		return {
+			...result,
+			...(label ? { label } : {}),
+			...(typeof required === "boolean" && "required" in result
+				? { required }
+				: {}),
+		} as FormFieldType;
+	}, [fieldSchema, name, label, required]);
 
 	const isNestedPath = name.includes(".") || name.includes("[");
 	const store = context?.store ?? EMPTY_FORM_STORE;
@@ -606,6 +616,19 @@ export function FormField({
 				disabled={isDisabled}
 				value={value as StageId | null}
 				onChange={handleChange as (v: StageId) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "map-pool") {
+		return (
+			<MapPoolFormField
+				{...commonProps}
+				{...formField}
+				{...(options as MapPoolFieldOptions | undefined)}
+				disabled={isDisabled}
+				value={value as string}
+				onChange={handleChange as (v: string) => void}
 			/>
 		);
 	}

@@ -1252,9 +1252,7 @@ export const PADDLING_POOL_257 = () =>
 						name: "Alpha Bracket",
 						type: "single_elimination",
 						requiresCheckIn: false,
-						settings: {
-							thirdPlaceMatch: true,
-						},
+						settings: {},
 						sources: [
 							{
 								bracketIdx: 0,
@@ -1266,9 +1264,7 @@ export const PADDLING_POOL_257 = () =>
 						name: "Beta Btacket",
 						type: "single_elimination",
 						requiresCheckIn: false,
-						settings: {
-							thirdPlaceMatch: true,
-						},
+						settings: {},
 						sources: [
 							{
 								bracketIdx: 0,

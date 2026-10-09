@@ -16,10 +16,7 @@ import {
 	requirePermission,
 	requireRole,
 } from "~/modules/permissions/guards.server";
-import {
-	databaseTimestampToDate,
-	dateToDatabaseTimestamp,
-} from "~/utils/dates";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	badRequestIfFalsy,
 	errorToast,
@@ -29,16 +26,15 @@ import { pathnameFromPotentialURL } from "~/utils/strings";
 import { calendarEventPage } from "~/utils/urls";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import {
+	calendarNewSchema,
 	customTeamPickPool,
 	teamPickSettingsFromFormValues,
 } from "../calendar-new-schemas";
-import { calendarNewSchemaServer } from "../calendar-new-schemas.server";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
-import { regClosesAtDate } from "../calendar-utils";
 import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action = defineAction(
-	{ body: calendarNewSchemaServer },
+	{ body: calendarNewSchema },
 	async ({ body, resolveImages }) => {
 		const user = requireUser();
 
@@ -156,17 +152,11 @@ export const action = defineAction(
 			enableNoScreenToggle: data.enableNoScreenToggle,
 			enableSubs: data.enableSubs,
 			requireInGameNames: data.requireInGameNames,
-			requireSendouQParticipation: data.requireSendouQParticipation,
 			autonomousSubs: data.autonomousSubs,
 			tournamentToCopyId: data.tournamentToCopyId,
 			regClosesAt:
-				isAddingTournament && data.regClosesAt
-					? dateToDatabaseTimestamp(
-							regClosesAtDate({
-								startTime: databaseTimestampToDate(startTimes[0]),
-								closesAt: data.regClosesAt,
-							}),
-						)
+				isAddingTournament && !data.isInvitational && data.regClosesAt
+					? dateToDatabaseTimestamp(data.regClosesAt)
 					: undefined,
 		};
 		errorToastIfFalsy(

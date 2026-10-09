@@ -1,4 +1,6 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
+import * as Engine from "./engine";
 import * as Seeding from "./Seeding";
 
 // first round lineups of the standard bracket ("space_between") by bracket size,
@@ -9,11 +11,11 @@ const LINEUP_16 = [1, 16, 8, 9, 4, 13, 5, 12, 2, 15, 7, 10, 3, 14, 6, 11];
 describe("Seeding.forFollowUpBracket()", () => {
 	describe("group spreading", () => {
 		test("spreads 4 groups of 4 across the quarters of a 16 bracket", () => {
-			const { teams, source } = groupsOfFour();
+			const { teams, input } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [source],
+				...input,
 			});
 
 			for (const quarter of sections(result, LINEUP_16, 4)) {
@@ -22,11 +24,11 @@ describe("Seeding.forFollowUpBracket()", () => {
 		});
 
 		test("keeps placement tiers intact while spreading", () => {
-			const { teams, source } = groupsOfFour();
+			const { teams, input } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [source],
+				...input,
 			});
 
 			for (const [seedIdx, teamId] of result.entries()) {
@@ -35,11 +37,11 @@ describe("Seeding.forFollowUpBracket()", () => {
 		});
 
 		test("does not reorder the group winners (best two can only meet in the finals)", () => {
-			const { teams, source } = groupsOfFour();
+			const { teams, input } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [source],
+				...input,
 			});
 
 			expect(result.slice(0, 4)).toEqual(teams.slice(0, 4));
@@ -56,7 +58,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			for (const half of sections(result, LINEUP_8, 4)) {
@@ -73,7 +75,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			for (const match of firstRoundMatches(result, LINEUP_8)) {
@@ -87,7 +89,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			expect(result).toEqual(teams);
@@ -105,7 +107,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			for (const quarter of sections(result, LINEUP_16, 4)) {
@@ -128,12 +130,34 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			for (const quarter of sections(result, LINEUP_16, 4)) {
 				const quarterGroups = quarter.map(groupOf);
 				expect(new Set(quarterGroups).size).toBe(quarterGroups.length);
+			}
+		});
+
+		test("spreads by the group given, not by the source a team's tier comes from", () => {
+			// group winners come from the main bracket, the runners-up through a redemption bracket
+			const teams = [101, 201, 301, 401, 102, 202, 302, 402];
+			const placementOne = (teamIds: number[]) =>
+				teamIds.map((tournamentTeamId) => ({ tournamentTeamId, placement: 1 }));
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [
+					{ standings: placementOne(teams.slice(0, 4)), encounters: [] },
+					{ standings: placementOne(teams.slice(4)), encounters: [] },
+				],
+				groupKeyByTeamId: new Map(
+					teams.map((teamId) => [teamId, String(groupOf(teamId))]),
+				),
+			});
+
+			for (const half of sections(result, LINEUP_8, 4)) {
+				expect(new Set(half.map(groupOf)).size).toBe(4);
 			}
 		});
 
@@ -151,7 +175,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			const quarters = sections(result, LINEUP_16, 4);
@@ -169,13 +193,176 @@ describe("Seeding.forFollowUpBracket()", () => {
 		});
 	});
 
+	describe("grouped elimination", () => {
+		// engine groups and round 1 matches are read from the bracket the engine creates with the
+		// result as its seeding, so they hold only if seeding lays out the groups like the engine.
+		// With a power of two group count the engine groups coincide with the sections of one bracket,
+		// 3 groups and groups padded to different sizes are where the grouped layout differs.
+		test.each([
+			{
+				why: "2 groups, 8 teams from 4 groups of 2",
+				type: "single_elimination" as const,
+				groupCount: 2,
+				groups: [
+					[101, 102],
+					[201, 202],
+					[301, 302],
+					[401, 402],
+				],
+			},
+			{
+				why: "2 groups of 3 and 4 teams, 7 teams from 5 groups",
+				type: "single_elimination" as const,
+				groupCount: 2,
+				groups: [[101, 102], [201, 202], [301], [401], [501]],
+			},
+			{
+				why: "3 groups, 12 teams from 4 groups of 3",
+				type: "single_elimination" as const,
+				groupCount: 3,
+				groups: [
+					[101, 102, 103],
+					[201, 202, 203],
+					[301, 302, 303],
+					[401, 402, 403],
+				],
+			},
+			{
+				why: "4 groups, 16 teams from 4 groups of 4",
+				type: "single_elimination" as const,
+				groupCount: 4,
+				groups: groupsOfFour().groups,
+			},
+			{
+				why: "4 groups of 3 and 4 teams, 14 teams from groups of 4 and 3",
+				type: "single_elimination" as const,
+				groupCount: 4,
+				groups: [
+					[101, 102, 103, 104],
+					[201, 202, 203, 204],
+					[301, 302, 303],
+					[401, 402, 403],
+				],
+			},
+			{
+				why: "4 groups, 16 teams from 4 groups of 4, double elimination",
+				type: "double_elimination" as const,
+				groupCount: 4,
+				groups: groupsOfFour().groups,
+			},
+		])(
+			"spreads each group's teams into separate engine groups ($why)",
+			({ type, groupCount, groups }) => {
+				const teams = teamsByTier(groups);
+
+				const result = Seeding.forFollowUpBracket({
+					teams,
+					...groupsInput(groups),
+					groupCount,
+				});
+
+				const engineGroups = engineFirstRoundLineups(result, type, groupCount);
+				expect(engineGroups).toHaveLength(groupCount);
+				for (const lineup of engineGroups) {
+					const lineupGroups = lineup.flatMap((teamId) =>
+						teamId === null ? [] : [groupOf(teamId)],
+					);
+					expect(new Set(lineupGroups).size).toBe(lineupGroups.length);
+				}
+
+				for (const [seedIdx, teamId] of result.entries()) {
+					expect(tierOf(teamId)).toBe(tierOf(teams[seedIdx]));
+				}
+			},
+		);
+
+		test.each([
+			{
+				why: "2 groups, 8 teams from 2 groups of 4 (Swiss top cut shape)",
+				groupCount: 2,
+				groups: [
+					[101, 102, 103, 104],
+					[201, 202, 203, 204],
+				],
+			},
+			{
+				why: "2 groups of 3 and 4 teams, 7 teams from groups of 3 and 2",
+				groupCount: 2,
+				groups: [
+					[101, 102, 103],
+					[201, 202],
+					[301, 302],
+				],
+			},
+			{
+				why: "4 groups of 2 and 3 teams, 10 teams from 2 groups of 5",
+				groupCount: 4,
+				groups: [
+					[101, 102, 103, 104, 105],
+					[201, 202, 203, 204, 205],
+				],
+			},
+		])(
+			"keeps teams of a group out of the same round 1 match when they outnumber the engine groups ($why)",
+			({ groupCount, groups }) => {
+				const teams = teamsByTier(groups);
+
+				const result = Seeding.forFollowUpBracket({
+					teams,
+					...groupsInput(groups),
+					groupCount,
+				});
+
+				for (const [one, two] of engineFirstRoundMatches(result, groupCount)) {
+					expect(groupOf(one)).not.toBe(groupOf(two));
+				}
+			},
+		);
+
+		test.each([
+			{
+				why: "2 groups, 9 teams: seeds 2 and 7 open the 4 team group",
+				groupCount: 2,
+				teamCount: 9,
+				encounter: [2, 7] as [number, number],
+			},
+			{
+				why: "4 groups, 10 teams: seeds 3 and 6 make up a 2 team group",
+				groupCount: 4,
+				teamCount: 10,
+				encounter: [3, 6] as [number, number],
+			},
+		])(
+			"avoids a round 1 rematch in a group padded smaller than the biggest one ($why)",
+			({ groupCount, teamCount, encounter }) => {
+				const teams = Array.from({ length: teamCount }, (_, i) => i + 1);
+				const isRematch = ([one, two]: [number, number]) =>
+					encounterKey(one, two) === encounterKey(...encounter);
+
+				expect(engineFirstRoundMatches(teams, groupCount).some(isRematch)).toBe(
+					true,
+				);
+
+				const result = Seeding.forFollowUpBracket({
+					teams,
+					...singleGroupInput(teams, [encounter]),
+					groupCount,
+				});
+
+				expect(
+					engineFirstRoundMatches(result, groupCount).some(isRematch),
+				).toBe(false);
+			},
+		);
+	});
+
 	describe("previous encounter avoidance", () => {
 		test("single group: avoids a round 1 rematch by reordering the bottom half", () => {
 			const teams = [1, 2, 3, 4, 5, 6, 7, 8];
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, [[1, 8]])],
+				...singleGroupInput(teams, [[1, 8]]),
 			});
 
 			expect(result).toEqual([1, 2, 3, 4, 5, 6, 8, 7]);
@@ -192,7 +379,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, naturalMatches)],
+				...singleGroupInput(teams, naturalMatches),
 			});
 
 			expect(result.slice(0, 4)).toEqual([1, 2, 3, 4]);
@@ -215,7 +402,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, everyPair)],
+				...singleGroupInput(teams, everyPair),
 			});
 
 			expect(result).toEqual(teams);
@@ -237,7 +424,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, encounters)],
+				...singleGroupInput(teams, encounters),
 			});
 
 			expect(result.slice(0, 6)).toEqual([1, 2, 3, 4, 5, 6]);
@@ -261,7 +448,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, encounters)],
+				...singleGroupInput(teams, encounters),
 			});
 
 			expect(result).toEqual(teams);
@@ -273,7 +460,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 		const result = Seeding.forFollowUpBracket({
 			teams,
-			sources: [singleGroupSource(teams, [[1, 2]])],
+			...singleGroupInput(teams, [[1, 2]]),
 		});
 
 		expect(result).toEqual(teams);
@@ -301,11 +488,71 @@ function groupsOfFour() {
 		404,
 	];
 
-	return { teams, source: groupsSource(groups) };
+	return { teams, groups, input: groupsInput(groups) };
 }
 
-function groupsSource(groups: number[][]): Seeding.FollowUpBracketSource {
+/** every group's winner first, then every group's runner-up and so on */
+function teamsByTier(groups: number[][]) {
+	const maxPlacements = Math.max(...groups.map((group) => group.length));
+
+	return Array.from({ length: maxPlacements }, (_, placementIdx) =>
+		groups.flatMap((group) =>
+			group[placementIdx] ? [group[placementIdx]] : [],
+		),
+	).flat();
+}
+
+function engineFirstRoundMatches(seeding: number[], groupCount: number) {
+	return engineFirstRoundLineups(
+		seeding,
+		"single_elimination",
+		groupCount,
+	).flatMap((lineup) =>
+		R.chunk(lineup, 2).flatMap(
+			([one, two]): Array<[number, number]> =>
+				typeof one === "number" && typeof two === "number" ? [[one, two]] : [],
+		),
+	);
+}
+
+function encounterKey(one: number, two: number) {
+	return one < two ? `${one}:${two}` : `${two}:${one}`;
+}
+
+/** each engine group's first round lineup (null = BYE) of the elimination bracket the engine creates from the seeding */
+function engineFirstRoundLineups(
+	seeding: number[],
+	type: "single_elimination" | "double_elimination",
+	groupCount: number,
+) {
+	const data = Engine.create({ type, seeding, settings: { groupCount } });
+
+	return data.group.map((group) => {
+		const firstRound = data.round.find(
+			(round) =>
+				round.groupId === group.id &&
+				round.section === "winners" &&
+				round.number === 1,
+		)!;
+
+		return data.match
+			.filter((match) => match.roundId === firstRound.id)
+			.toSorted((a, b) => a.number - b.number)
+			.flatMap((match) => [
+				match.opponent1?.id ?? null,
+				match.opponent2?.id ?? null,
+			]);
+	});
+}
+
+type FollowUpBracketInput = Pick<
+	Parameters<typeof Seeding.forFollowUpBracket>[0],
+	"sources" | "groupKeyByTeamId"
+>;
+
+function groupsInput(groups: number[][]): FollowUpBracketInput {
 	const standings: Seeding.FollowUpBracketSource["standings"] = [];
+	const groupKeyByTeamId = new Map<number, string>();
 
 	const maxPlacements = Math.max(...groups.map((group) => group.length));
 	for (let placement = 1; placement <= maxPlacements; placement++) {
@@ -313,7 +560,8 @@ function groupsSource(groups: number[][]): Seeding.FollowUpBracketSource {
 			const tournamentTeamId = group[placement - 1];
 			if (!tournamentTeamId) continue;
 
-			standings.push({ tournamentTeamId, placement, groupId: groupIdx + 1 });
+			standings.push({ tournamentTeamId, placement });
+			groupKeyByTeamId.set(tournamentTeamId, String(groupIdx + 1));
 		}
 	}
 
@@ -327,20 +575,24 @@ function groupsSource(groups: number[][]): Seeding.FollowUpBracketSource {
 		}
 	}
 
-	return { standings, encounters };
+	return { sources: [{ standings, encounters }], groupKeyByTeamId };
 }
 
-function singleGroupSource(
+function singleGroupInput(
 	teams: number[],
 	encounters: Array<[number, number]>,
-): Seeding.FollowUpBracketSource {
+): FollowUpBracketInput {
 	return {
-		standings: teams.map((tournamentTeamId, i) => ({
-			tournamentTeamId,
-			placement: i + 1,
-			groupId: null,
-		})),
-		encounters,
+		sources: [
+			{
+				standings: teams.map((tournamentTeamId, i) => ({
+					tournamentTeamId,
+					placement: i + 1,
+				})),
+				encounters,
+			},
+		],
+		groupKeyByTeamId: new Map(teams.map((teamId) => [teamId, "single"])),
 	};
 }
 

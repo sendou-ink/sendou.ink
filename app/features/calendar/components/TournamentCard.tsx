@@ -186,7 +186,7 @@ function TournamentFirstPlacers({
 				<div className="stack md items-start">
 					{firstPlacers.map((firstPlacer) => (
 						<TournamentFirstPlacerTeamNameOnly
-							key={firstPlacer.div ?? firstPlacer.teamName}
+							key={`${firstPlacer.div}-${firstPlacer.teamName}`}
 							placer={firstPlacer}
 							censored={censored}
 						/>

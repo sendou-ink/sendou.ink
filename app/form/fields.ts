@@ -32,6 +32,7 @@ import {
 import { imageValue } from "./image-field";
 import type {
 	BadgeOption,
+	FieldWithOptionalOptions,
 	FieldWithOptions,
 	FormField,
 	FormFieldArray,
@@ -41,8 +42,10 @@ import type {
 	FormFieldInputGroup,
 	FormFieldItems,
 	FormFieldItemsWithImage,
+	FormFieldRadioGroup,
 	FormFieldSelect,
 	FormsTranslationKey,
+	MapPoolFieldOptions,
 	SelectOption,
 	TeamSearchFieldOptions,
 	TournamentSearchFieldOptions,
@@ -564,7 +567,7 @@ export function dualSelectOptional<V extends string>(
 export function radioGroup<V extends string>(
 	args: WithTypedTranslationKeys<
 		WithTypedItemLabelsWithImage<
-			Omit<FormFieldInputGroup<"radio-group", V>, "type" | "initialValue">,
+			Omit<FormFieldRadioGroup<"radio-group", V>, "type" | "initialValue">,
 			V
 		>
 	> & {
@@ -997,6 +1000,22 @@ export function stageSelect(
 		initialValue: 1,
 		required: true,
 	}) as never;
+}
+
+/** Serialized map pool, empty string when no stages are picked. */
+export function mapPoolOptional(
+	args: WithTypedTranslationKeys<
+		Omit<Extract<FormField, { type: "map-pool" }>, "type" | "initialValue">
+	>,
+) {
+	return register(v.optional(v.string()), {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "map-pool",
+		initialValue: "",
+	}) as unknown as v.OptionalSchema<v.GenericSchema<string>, undefined> &
+		FieldWithOptionalOptions<MapPoolFieldOptions>;
 }
 
 type WeaponSelectArgs = WithTypedTranslationKeys<

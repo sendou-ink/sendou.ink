@@ -29,6 +29,7 @@ import { assertUnreachable } from "~/utils/types";
 import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
 import * as CheckIn from "./CheckIn";
+import { eliminationGroupCount } from "./engine/create/settings";
 import { calculateTeamStatus } from "./engine/swiss/team-status";
 import { getRounds } from "./rounds";
 import * as Seeding from "./Seeding";
@@ -419,6 +420,7 @@ export class Tournament {
 			{
 				sources,
 				type,
+				settings: settings ?? null,
 			},
 		);
 
@@ -566,6 +568,7 @@ export class Tournament {
 		bracket: {
 			sources: Progression.ParsedBracket["sources"];
 			type: Tables["TournamentStage"]["type"];
+			settings: Progression.ParsedBracket["settings"] | null;
 		},
 	) {
 		// starting brackets need no adjusting, group stages pair via their own logic
@@ -598,13 +601,46 @@ export class Tournament {
 				standings: sourceBracket.standings.map((standing) => ({
 					tournamentTeamId: standing.team.id,
 					placement: standing.placement,
-					groupId: standing.groupId ?? null,
 				})),
 				encounters,
 			});
 		}
 
-		return Seeding.forFollowUpBracket({ teams, sources });
+		const groupKeyByTeamId = new Map<number, string>();
+		for (const teamId of teams) {
+			const groupKey = this.firstGroupKey(teamId, bracket.sources);
+			if (groupKey) groupKeyByTeamId.set(teamId, groupKey);
+		}
+
+		return Seeding.forFollowUpBracket({
+			teams,
+			sources,
+			groupKeyByTeamId,
+			groupCount: eliminationGroupCount(bracket.settings, teams.length),
+		});
+	}
+
+	/** The group of the earliest bracket the team played on its way through the sources, e.g. its Main group when it came through a Redemption bracket. */
+	private firstGroupKey(
+		teamId: number,
+		sources: NonNullable<Progression.ParsedBracket["sources"]>,
+	): string | null {
+		for (const source of sources) {
+			const standing = this.bracketByIdx(source.bracketIdx)?.standings.find(
+				(candidate) => candidate.team.id === teamId,
+			);
+			if (!standing) continue;
+
+			const earlierSources =
+				this.ctx.settings.bracketProgression[source.bracketIdx]?.sources ?? [];
+
+			return (
+				this.firstGroupKey(teamId, earlierSources) ??
+				`${source.bracketIdx}:${standing.groupId ?? "single"}`
+			);
+		}
+
+		return null;
 	}
 
 	private divideTeamsToCheckedInAndNotCheckedIn({
@@ -1098,15 +1134,16 @@ export class Tournament {
 						bracket.type === "single_elimination" ||
 						bracket.type === "double_elimination"
 					) {
+						const roundsArgs = {
+							bracketData: bracket.data,
+							groupId: match.groupId,
+						};
 						const rounds =
 							bracket.type === "single_elimination"
-								? getRounds({ type: "single", bracketData: bracket.data })
+								? getRounds({ type: "single", ...roundsArgs })
 								: [
-										...getRounds({
-											type: "winners",
-											bracketData: bracket.data,
-										}),
-										...getRounds({ type: "losers", bracketData: bracket.data }),
+										...getRounds({ type: "winners", ...roundsArgs }),
+										...getRounds({ type: "losers", ...roundsArgs }),
 									];
 
 						const round = rounds.find(
@@ -1137,7 +1174,17 @@ export class Tournament {
 
 								return `.${match.number}`;
 							};
-							roundName = `${round.name}${specifier()}`;
+							const group =
+								bracket.data.group.length > 1
+									? bracket.data.group.find(
+											(candidate) => candidate.id === match.groupId,
+										)
+									: undefined;
+							const groupPrefix = group
+								? `Group ${groupNumberToLetters(group.number)} `
+								: "";
+
+							roundName = `${groupPrefix}${round.name}${specifier()}`;
 						}
 					} else {
 						assertUnreachable(bracket.type);

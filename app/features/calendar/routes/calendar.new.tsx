@@ -1,17 +1,23 @@
-import { Trash } from "lucide-react";
+import clsx from "clsx";
+import { addMilliseconds } from "date-fns";
+import { SquareArrowOutUpRight, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Form, Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useNavigate } from "react-router";
 import { Alert } from "~/components/Alert";
-import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
+import { SendouSection } from "~/components/elements/Section";
 import { FormMessage } from "~/components/FormMessage";
 import { ModeImage } from "~/components/Image";
 import { Label } from "~/components/Label";
+import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
-import { MapPoolSelector } from "~/components/MapPoolSelector";
-import { SubmitButton } from "~/components/SubmitButton";
+import { useMapPoolQuickFill } from "~/components/MapPoolPicker";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type {
@@ -20,36 +26,51 @@ import type {
 } from "~/features/tournament/tournament-constants";
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
+import { getFormFieldMetadata } from "~/form/fields";
 import { existingImage } from "~/form/image-field";
-import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import {
+	FormStep,
+	SendouForm,
+	useFormFieldContext,
+	useFormSteps,
+} from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
+import {
+	CALENDAR_NEW_PAGE,
+	CREATING_TOURNAMENT_DOC_LINK,
+	FAQ_PAGE,
+} from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
-import type { RegClosesAtOption } from "../calendar-constants";
 import styles from "../calendar-new.module.css";
 import {
 	calendarNewBaseSchema,
+	calendarNewSchema,
 	customTeamPickPool,
 	type TeamPickCountsFormValue,
+	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
 } from "../calendar-new-schemas";
 import {
+	type BracketFormValue,
 	defaultBracketsFormValues,
 	progressionToFormValues,
+	shiftBracketStartTimes,
 } from "../calendar-progression-form";
+import { calendarNewSearchParams } from "../calendar-search-params";
 import type { CalendarEventTag } from "../calendar-types";
-import { datesToRegClosesAt } from "../calendar-utils";
-import { BracketProgressionFormFields } from "../components/BracketProgressionFormFields";
+import { BracketProgressionBuilder } from "../components/BracketProgressionBuilder";
 import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
+
+export const shouldRevalidate = calendarNewSearchParams.shouldRevalidate;
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.loaderData) return [];
@@ -75,6 +96,7 @@ const useBaseEvent = () => {
 };
 
 export default function CalendarNewEventPage() {
+	const { t } = useTranslation(["calendar", "common"]);
 	const baseEvent = useBaseEvent();
 	const isCalendarEventAdder = useHasRole("CALENDAR_EVENT_ADDER");
 	const data = useLoaderData<typeof loader>();
@@ -107,33 +129,43 @@ export default function CalendarNewEventPage() {
 	}
 
 	return (
-		<Main halfWidth>
+		<Main halfWidth={!data.isAddingTournament} bigger={data.isAddingTournament}>
 			<div className="stack md">
 				<div className="stack horizontal md items-center">
-					<h1 className="text-lg">
-						{data.isAddingTournament ? "New tournament" : "New calendar event"}
-					</h1>
+					<h1 className="text-lg">{t(pageTitleKey(data))}</h1>
 					{data.isAddingTournament ? (
 						<a
 							href={CREATING_TOURNAMENT_DOC_LINK}
-							className="text-lg text-bold"
-							title="Documentation about creating tournaments"
+							className={styles.helpLink}
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							?
+							{t("calendar:newTournament.help")}
+							<SquareArrowOutUpRight className={styles.helpLinkIcon} />
 						</a>
 					) : null}
 				</div>
-				{data.isAddingTournament ? <TemplateTournamentForm /> : null}
 				<SendouForm
 					key={baseEvent?.eventId}
-					schema={calendarNewBaseSchema}
+					schema={calendarNewSchema}
 					defaultValues={defaultValues}
 					submitButtonTestId="submit-button"
+					submitButtonText={
+						data.eventToEdit
+							? t("common:actions.saveChanges")
+							: data.isAddingTournament
+								? t("calendar:newTournament.create")
+								: undefined
+					}
 					fullWidth
+					steps={data.isAddingTournament ? TOURNAMENT_FORM_STEPS : undefined}
+					submitOnEveryStep={Boolean(data.eventToEdit)}
 				>
-					<CalendarNewFields />
+					{data.isAddingTournament ? (
+						<TournamentSteps />
+					) : (
+						<CalendarEventFields />
+					)}
 				</SendouForm>
 			</div>
 		</Main>
@@ -146,15 +178,6 @@ function useDefaultValues() {
 	const tournamentCtx = baseEvent?.tournament?.ctx;
 	const settings = tournamentCtx?.settings;
 
-	const regClosesAt: RegClosesAtOption = tournamentCtx?.settings.regClosesAt
-		? datesToRegClosesAt({
-				startTime: databaseTimestampToDate(tournamentCtx.startsAt),
-				regClosesAt: databaseTimestampToDate(
-					tournamentCtx.settings.regClosesAt,
-				),
-			})
-		: "0";
-
 	const mapPickingStyle: TournamentMapPickingStyle =
 		baseEvent?.mapPickingStyle ?? "AUTO";
 	const teamPick =
@@ -164,11 +187,35 @@ function useDefaultValues() {
 		? new MapPool(baseEvent.mapPool).serialized
 		: "";
 
+	const startTime = data.isAddingTournament
+		? data.eventToEdit?.startTimes?.[0]
+			? databaseTimestampToDate(data.eventToEdit.startTimes[0])
+			: getDateAtNextFullHour(new Date())
+		: null;
+
 	const bracketProgressionValues = settings?.bracketProgression
 		? progressionToFormValues(settings.bracketProgression)
 		: data.isAddingTournament
 			? defaultBracketsFormValues()
 			: { brackets: [], progression: [] };
+	// a copy starts at a new time, follow-up brackets and registration closing keep their distance to it
+	const copyOffsetMs =
+		data.eventToCopy && tournamentCtx && startTime
+			? startTime.getTime() -
+				databaseTimestampToDate(tournamentCtx.startsAt).getTime()
+			: 0;
+	const brackets = shiftBracketStartTimes(
+		bracketProgressionValues.brackets,
+		copyOffsetMs,
+	);
+
+	const regClosesAt =
+		settings?.regClosesAt && settings.regClosesAt !== tournamentCtx?.startsAt
+			? addMilliseconds(
+					databaseTimestampToDate(settings.regClosesAt),
+					copyOffsetMs,
+				)
+			: null;
 
 	return {
 		toToolsEnabled: data.isAddingTournament,
@@ -185,11 +232,7 @@ function useDefaultValues() {
 			: (data.eventToEdit?.startTimes?.map((t) =>
 					databaseTimestampToDate(t),
 				) ?? [getDateAtNextFullHour(new Date())]),
-		startTime: data.isAddingTournament
-			? data.eventToEdit?.startTimes?.[0]
-				? databaseTimestampToDate(data.eventToEdit.startTimes[0])
-				: getDateAtNextFullHour(new Date())
-			: null,
+		startTime,
 		// tournaments hide this field, the action coalesces the empty value to the default
 		bracketUrl: data.isAddingTournament
 			? ""
@@ -214,7 +257,7 @@ function useDefaultValues() {
 		teamPickCounts: teamPick.modes,
 		teamPickPool: teamPick.pool,
 		pool,
-		brackets: bracketProgressionValues.brackets,
+		brackets,
 		progression: bracketProgressionValues.progression,
 		isRanked: settings?.isRanked ?? true,
 		enableNoScreenToggle: settings?.enableNoScreenToggle ?? true,
@@ -225,105 +268,317 @@ function useDefaultValues() {
 		isTest: settings?.isTest ?? false,
 		isLeague: settings?.isLeague ?? false,
 		isDraft: settings?.isDraft ?? false,
-		requireSendouQParticipation: settings?.requireSendouQParticipation ?? false,
 	};
 }
 
-function TemplateTournamentForm() {
-	const { recentTournaments } = useLoaderData<typeof loader>();
-	const [eventId, setEventId] = React.useState("");
+function CopyTournamentPicker() {
+	const { t } = useTranslation(["calendar"]);
+	const { recentTournaments, eventToCopy } = useLoaderData<typeof loader>();
+	const navigate = useNavigate();
+	const [eventId, setEventId] = React.useState(() =>
+		eventToCopy &&
+		recentTournaments?.some((event) => event.id === eventToCopy.eventId)
+			? String(eventToCopy.eventId)
+			: "",
+	);
+	const id = React.useId();
 	const { formatter } = useDateTimeFormat({
 		month: "numeric",
 		day: "numeric",
 	});
 
-	if (!recentTournaments) return null;
+	if (!recentTournaments || recentTournaments.length === 0) return null;
 
 	return (
-		<>
-			<div>
-				<Form className="stack horizontal sm flex-wrap">
+		<SendouSection gap="lg" title={t("calendar:newTournament.copy")}>
+			<div className="stack sm">
+				<label htmlFor={id}>{t("calendar:newTournament.copyLabel")}</label>
+				<div className="stack horizontal sm flex-wrap">
 					<select
-						name="copyEventId"
-						onChange={(event) => {
-							setEventId(event.target.value);
-						}}
+						id={id}
+						value={eventId}
+						onChange={(event) => setEventId(event.target.value)}
 					>
-						<option value="">Select a template</option>
+						<option value="">
+							{t("calendar:newTournament.copyPlaceholder")}
+						</option>
 						{recentTournaments.map((event) => (
 							<option key={event.id} value={event.id}>
 								{event.name} ({formatter.format(event.startsAt) ?? ""})
 							</option>
 						))}
 					</select>
-					<SubmitButton isDisabled={!eventId} testId="use-template-button">
-						Use template
-					</SubmitButton>
-				</Form>
+					<SendouButton
+						variant="outlined"
+						isDisabled={!eventId}
+						testId="use-template-button"
+						onClick={() =>
+							navigate(
+								calendarNewSearchParams.href(CALENDAR_NEW_PAGE, {
+									copyEventId: Number(eventId),
+								}),
+							)
+						}
+					>
+						{t("calendar:newTournament.copyButton")}
+					</SendouButton>
+				</div>
+				<FormMessage type="info">
+					{t("calendar:newTournament.copyInfo")}
+				</FormMessage>
 			</div>
-			<hr />
-		</>
+		</SendouSection>
 	);
 }
 
-function CalendarNewFields() {
+function CalendarEventFields() {
 	const data = useLoaderData<typeof loader>();
-	const { values } = useFormFieldContext();
-	const isAdmin = useHasRole("ADMIN");
-
-	const isTournament = Boolean(values.toToolsEnabled);
-	const isEditing = Boolean(data.eventToEdit);
-
-	const organizationOptions = data.organizations
-		.filter(
-			(org): org is Exclude<(typeof data.organizations)[number], string> =>
-				typeof org !== "string",
-		)
-		.map((org) => ({ value: String(org.id), label: org.name }));
+	const organizationOptions = useOrganizationOptions();
+	const mapPoolQuickFill = useMapPoolQuickFill();
 
 	return (
 		<div className="stack md">
 			<FormField name="name" />
-			<DescriptionField isTournament={isTournament} />
+			<DescriptionField isTournament={false} />
 			{data.organizations.length > 0 ? (
 				<FormField name="organizationId" options={organizationOptions} />
 			) : null}
-			{isTournament ? <FormField name="rules" /> : null}
-			{isTournament ? (
-				<FormField name="startTime" />
-			) : (
-				<FormField name="date" />
-			)}
-			{!isTournament ? <FormField name="bracketUrl" /> : null}
+			<FormField name="date" />
+			<FormField name="bracketUrl" />
 			<FormField name="discordInviteCode" />
 			<FormField name="tags" />
 			{data.badgeOptions.length > 0 ? (
 				<FormField name="badges" options={data.badgeOptions} />
 			) : null}
-			{isTournament ? <TrophyField /> : null}
-			{isTournament ? <FormField name="avatarImgId" /> : null}
-			{isTournament ? (
-				<>
-					<Divider smallText className="mt-4">
-						Tournament settings
-					</Divider>
-					<MemberCountFields />
-					<FormField name="regClosesAt" />
-					<FormField name="isRanked" />
-					<FormField name="enableNoScreenToggle" />
-					<FormField name="enableSubs" />
-					<FormField name="autonomousSubs" />
-					<FormField name="requireInGameNames" />
-					<FormField name="isInvitational" />
-					{!isEditing ? <FormField name="isTest" /> : null}
-					<FormField name="isLeague" />
-					<DraftField />
-					{isAdmin ? <FormField name="requireSendouQParticipation" /> : null}
-				</>
-			) : null}
-			<MapsSection isTournament={isTournament} />
-			{isTournament ? <BracketProgressionField /> : null}
+			<FormField name="pool" options={{ quickFill: mapPoolQuickFill }} />
 		</div>
+	);
+}
+
+function TournamentSteps() {
+	const { t } = useTranslation(["calendar", "forms"]);
+	const data = useLoaderData<typeof loader>();
+	const { values } = useFormFieldContext();
+	const organizationOptions = useOrganizationOptions();
+
+	const isEditing = Boolean(data.eventToEdit);
+	const isInvitational = Boolean(values.isInvitational);
+
+	return (
+		<>
+			<FormStep name="basics">
+				<div className={styles.stepColumn}>
+					{isEditing ? null : <CopyTournamentPicker />}
+					<FormField name="name" />
+					<FormField name="startTime" required />
+					{isInvitational ? null : <FormField name="regClosesAt" />}
+					{data.organizations.length > 0 ? (
+						<FormField name="organizationId" options={organizationOptions} />
+					) : null}
+					<DescriptionField isTournament />
+					<FormField name="rules" />
+					<FormField name="avatarImgId" />
+					<FormField name="discordInviteCode" />
+					<FormField name="tags" />
+				</div>
+			</FormStep>
+
+			<FormStep name="teams">
+				<div className={styles.stepColumn}>
+					<SendouSection
+						gap="lg"
+						title={t("calendar:newTournament.section.teamSize")}
+					>
+						<div className="stack md">
+							<MemberCountFields />
+						</div>
+					</SendouSection>
+					<SendouSection
+						gap="lg"
+						title={t("calendar:newTournament.section.registration")}
+					>
+						<div className="stack md">
+							<FormField name="isInvitational" />
+							<FormField name="requireInGameNames" />
+							{isInvitational ? null : <FormField name="enableSubs" />}
+						</div>
+					</SendouSection>
+					<SendouSection
+						gap="lg"
+						title={t("calendar:newTournament.section.duringTournament")}
+					>
+						<div className="stack md">
+							<FormField name="autonomousSubs" />
+							<FormField name="enableNoScreenToggle" />
+						</div>
+					</SendouSection>
+					<SendouSection
+						gap="lg"
+						title={t("calendar:newTournament.section.typeAndVisibility")}
+					>
+						<div className="stack md">
+							<FormField name="isRanked" />
+							<FormField name="isLeague" />
+							{isEditing ? null : <FormField name="isTest" />}
+							<DraftField />
+						</div>
+					</SendouSection>
+				</div>
+			</FormStep>
+
+			<FormStep name="maps">
+				<div className={clsx(styles.stepColumn, styles.stepColumnWide)}>
+					<SendouSection gap="lg" title={t("forms:steps.tournament.maps")}>
+						<div className="stack md">
+							<TournamentMapsFields />
+						</div>
+					</SendouSection>
+				</div>
+			</FormStep>
+
+			<FormStep name="format">
+				<BracketProgressionBuilder isInvitational={isInvitational} />
+			</FormStep>
+
+			<FormStep name="prizes">
+				<div className={styles.stepColumn}>
+					<SendouSection
+						gap="lg"
+						title={t("calendar:newTournament.section.prizes")}
+					>
+						<PrizeFields />
+					</SendouSection>
+					<TournamentReview />
+				</div>
+			</FormStep>
+		</>
+	);
+}
+
+function useOrganizationOptions() {
+	const data = useLoaderData<typeof loader>();
+
+	return data.organizations
+		.filter(
+			(org): org is Exclude<(typeof data.organizations)[number], string> =>
+				typeof org !== "string",
+		)
+		.map((org) => ({ value: String(org.id), label: org.name }));
+}
+
+/** What the earlier steps were filled with, each with a way back to its step. */
+function TournamentReview() {
+	const { t } = useTranslation(["calendar", "forms", "common"]);
+	const data = useLoaderData<typeof loader>();
+	const { values } = useFormFieldContext();
+	const { steps, goToStep } = useFormSteps();
+	const organizationOptions = useOrganizationOptions();
+
+	const fieldLabel = (
+		fieldName: keyof typeof calendarNewBaseSchema.entries,
+	) => {
+		const metadata = getFormFieldMetadata(
+			calendarNewBaseSchema.entries[fieldName],
+		);
+		const label = metadata && "label" in metadata ? metadata.label : undefined;
+		return label ? t(label as never) : fieldName;
+	};
+	const enabledToggleLabels = (
+		fieldNames: Array<keyof typeof calendarNewBaseSchema.entries | null>,
+	) =>
+		fieldNames
+			.filter(
+				(fieldName): fieldName is keyof typeof calendarNewBaseSchema.entries =>
+					fieldName !== null && Boolean(values[fieldName]),
+			)
+			.map(fieldLabel);
+
+	const isEditing = Boolean(data.eventToEdit);
+	const isInvitational = Boolean(values.isInvitational);
+
+	const brackets = values.brackets as BracketFormValue[];
+	const startTime = values.startTime instanceof Date ? values.startTime : null;
+	const organizationName = organizationOptions.find(
+		(option) => option.value === values.organizationId,
+	)?.label;
+	const playersCount = String(values.minMembersPerTeam);
+
+	const summaries: Record<string, React.ReactNode[]> = {
+		basics: [
+			(values.name as string) || t("calendar:newTournament.review.noName"),
+			startTime ? (
+				<LocaleTime
+					key="startTime"
+					date={startTime}
+					options={{
+						day: "numeric",
+						month: "short",
+						hour: "numeric",
+						minute: "numeric",
+					}}
+				/>
+			) : null,
+			organizationName ?? null,
+		],
+		teams: [
+			`${playersCount}v${playersCount}`,
+			...enabledToggleLabels([
+				"isInvitational",
+				"requireInGameNames",
+				isInvitational ? null : "enableSubs",
+				"autonomousSubs",
+				"isRanked",
+				"isLeague",
+				isEditing ? null : "isTest",
+				"isDraft",
+			]),
+		],
+		maps: [
+			t(
+				`forms:options.mapPickingStyle.${values.mapPickingStyle as "TO" | "AUTO"}`,
+			),
+			values.mapPickingStyle === "TO"
+				? t("calendar:newTournament.review.mapCount", {
+						count: values.pool
+							? MapPool.toDbList(values.pool as string).length
+							: 0,
+					})
+				: null,
+		],
+		format: brackets.map(
+			(bracket) => bracket.name || t("calendar:builder.unnamed"),
+		),
+	};
+
+	return (
+		<SendouSection gap="lg" title={t("calendar:newTournament.review")}>
+			<dl className={styles.review}>
+				{steps.flatMap((step) => {
+					const summary = summaries[step.name]?.filter(Boolean);
+					if (!summary) return [];
+
+					return (
+						<div key={step.name} className={styles.reviewRow}>
+							<dt className={styles.reviewStep}>{t(`forms:${step.label}`)}</dt>
+							<dd className={styles.reviewValues}>
+								{summary.map((item, idx) => (
+									<span key={idx} className={styles.reviewValue}>
+										{item}
+									</span>
+								))}
+							</dd>
+							<SendouButton
+								size="small"
+								variant="minimal"
+								onClick={() => goToStep(step.name)}
+							>
+								{t("common:actions.edit")}
+							</SendouButton>
+						</div>
+					);
+				})}
+			</dl>
+		</SendouSection>
 	);
 }
 
@@ -342,90 +597,145 @@ function DescriptionField({ isTournament }: { isTournament: boolean }) {
 	);
 }
 
-function TrophyField() {
+type PrizeKind = "badges" | "trophy";
+
+function PrizeFields() {
 	const { t } = useTranslation("calendar");
 	const data = useLoaderData<typeof loader>();
 	const { values, setValue } = useFormFieldContext();
-	const id = React.useId();
 
 	const organizationId = values.organizationId
 		? Number(values.organizationId)
 		: null;
 	const trophyId = typeof values.trophyId === "number" ? values.trophyId : null;
-	const badgeCount = (values.badges as number[]).length;
 
-	// clear the trophy when the selected organization or badges make it invalid
+	const [chosenPrizeKind, setChosenPrizeKind] = React.useState<PrizeKind>(
+		(values.badges as number[]).length > 0 ? "badges" : "trophy",
+	);
+
+	// clear the trophy when the selected organization makes it invalid
 	React.useEffect(() => {
 		if (!trophyId) return;
-		const trophyStillValid =
-			badgeCount === 0 &&
-			data.trophies.some(
-				(trophy) =>
-					trophy.id === trophyId && trophy.organizationId === organizationId,
-			);
+		const trophyStillValid = data.trophies.some(
+			(trophy) =>
+				trophy.id === trophyId && trophy.organizationId === organizationId,
+		);
 		if (!trophyStillValid) {
 			setValue("trophyId", null);
 		}
-	}, [trophyId, badgeCount, organizationId, data.trophies, setValue]);
+	}, [trophyId, organizationId, data.trophies, setValue]);
 
 	const availableTrophies = organizationId
 		? data.trophies.filter((trophy) => trophy.organizationId === organizationId)
 		: [];
 
-	if (availableTrophies.length === 0 && trophyId === null) return null;
+	const canAddBadges = data.badgeOptions.length > 0;
+	const canAddTrophy = availableTrophies.length > 0;
 
+	if (!canAddBadges && !canAddTrophy) {
+		return <FormMessage type="info">{t("newTournament.noPrizes")}</FormMessage>;
+	}
+
+	const prizeKind: PrizeKind =
+		canAddBadges && canAddTrophy
+			? chosenPrizeKind
+			: canAddTrophy
+				? "trophy"
+				: "badges";
+
+	const handlePrizeKindChange = (newPrizeKind: PrizeKind) => {
+		setChosenPrizeKind(newPrizeKind);
+		if (newPrizeKind === "trophy") {
+			setValue("badges", []);
+		} else {
+			setValue("trophyId", null);
+		}
+	};
+
+	return (
+		<div className="stack md">
+			{canAddBadges && canAddTrophy ? (
+				<SendouChipRadioGroup>
+					<SendouChipRadio
+						name="prize-kind"
+						value="trophy"
+						checked={prizeKind === "trophy"}
+						onChange={() => handlePrizeKindChange("trophy")}
+					>
+						{t("newTournament.prizeKind.trophy")}
+					</SendouChipRadio>
+					<SendouChipRadio
+						name="prize-kind"
+						value="badges"
+						checked={prizeKind === "badges"}
+						onChange={() => handlePrizeKindChange("badges")}
+					>
+						{t("newTournament.prizeKind.badges")}
+					</SendouChipRadio>
+				</SendouChipRadioGroup>
+			) : null}
+			{prizeKind === "badges" ? (
+				<FormField name="badges" options={data.badgeOptions} />
+			) : (
+				<TrophyField trophies={availableTrophies} />
+			)}
+		</div>
+	);
+}
+
+function TrophyField({
+	trophies,
+}: {
+	trophies: SerializeFrom<typeof loader>["trophies"];
+}) {
+	const { t } = useTranslation("calendar");
+	const { values } = useFormFieldContext();
+	const id = React.useId();
+
+	const trophyId = typeof values.trophyId === "number" ? values.trophyId : null;
 	const selectedTrophy = trophyId
-		? data.trophies.find((trophy) => trophy.id === trophyId)
+		? trophies.find((trophy) => trophy.id === trophyId)
 		: null;
 
 	return (
 		<FormField name="trophyId">
-			{({ onChange }: CustomFieldRenderProps) => {
-				const handleChange = (newTrophyId: number | null) => {
-					onChange(newTrophyId);
-					if (newTrophyId) {
-						setValue("badges", []);
-					}
-				};
-
-				return (
-					<div className="stack md">
-						<div>
-							<label htmlFor={id}>{t("forms.trophy")}</label>
-							<select
-								id={id}
-								value={trophyId ?? ""}
-								onChange={(e) => {
-									const value = e.target.value;
-									handleChange(value === "" ? null : Number(value));
-								}}
-							>
-								<option value="">{t("forms.trophy.placeholder")}</option>
-								{availableTrophies.map((trophy) => (
-									<option key={trophy.id} value={trophy.id}>
-										{trophy.name}
-									</option>
-								))}
-							</select>
-						</div>
-						{selectedTrophy ? (
-							<div className="stack md items-center">
-								<Trophy model={selectedTrophy.model} />
-								<div className="stack horizontal md items-center">
-									<span>{selectedTrophy.name}</span>
-									<SendouButton
-										className="ml-auto"
-										onClick={() => handleChange(null)}
-										icon={<Trash />}
-										variant="minimal-destructive"
-										aria-label="Remove trophy"
-									/>
-								</div>
-							</div>
-						) : null}
+			{({ onChange }: CustomFieldRenderProps) => (
+				<div className="stack md">
+					<div>
+						<label htmlFor={id}>{t("forms.trophy")}</label>
+						<select
+							id={id}
+							value={trophyId ?? ""}
+							onChange={(e) => {
+								const value = e.target.value;
+								onChange(value === "" ? null : Number(value));
+							}}
+						>
+							<option value="">{t("forms.trophy.placeholder")}</option>
+							{trophies.map((trophy) => (
+								<option key={trophy.id} value={trophy.id}>
+									{trophy.name}
+								</option>
+							))}
+						</select>
 					</div>
-				);
-			}}
+					{selectedTrophy ? (
+						<div className="stack md items-center">
+							<Trophy model={selectedTrophy.model} />
+							<div className="stack horizontal md items-center">
+								<span>{selectedTrophy.name}</span>
+								<SendouButton
+									className="ml-auto"
+									onClick={() => onChange(null)}
+									icon={<Trash />}
+									variant="minimal-destructive"
+									aria-label="Remove trophy"
+								/>
+							</div>
+						</div>
+					) : null}
+				</div>
+			)}
 		</FormField>
 	);
 }
@@ -461,22 +771,16 @@ function DraftField() {
 	return <FormField name="isDraft" />;
 }
 
-function MapsSection({ isTournament }: { isTournament: boolean }) {
+function TournamentMapsFields() {
 	const { t } = useTranslation(["forms"]);
 	const { values, setValue } = useFormFieldContext();
 	const data = useLoaderData<typeof loader>();
-
-	if (!isTournament) {
-		return <CalendarMapPoolField />;
-	}
+	const mapPoolQuickFill = useMapPoolQuickFill();
 
 	const mapPickingStyle = values.mapPickingStyle as TournamentMapPickingStyle;
 
 	return (
-		<div className="stack md w-full">
-			<Divider smallText className="mt-4">
-				Tournament maps
-			</Divider>
+		<>
 			{/* reset the (polymorphic) pool when switching map picking style so a
 			previous style's maps don't leak into the new one */}
 			<FormField
@@ -486,14 +790,14 @@ function MapsSection({ isTournament }: { isTournament: boolean }) {
 			{mapPickingStyle === "AUTO" ? (
 				<TeamPickFields />
 			) : (
-				<TournamentMapPoolField />
+				<FormField name="pool" options={{ quickFill: mapPoolQuickFill }} />
 			)}
 			{data.eventToEdit?.teamsHavePickedMaps ? (
 				<div className="text-warning text-sm">
 					{t("forms:bottomTexts.teamPickReset")}
 				</div>
 			) : null}
-		</div>
+		</>
 	);
 }
 
@@ -648,154 +952,61 @@ function CustomTeamPickPoolField({
 }: {
 	pickedModes: ModeShort[];
 }) {
-	const { t } = useTranslation(["common", "calendar", "game-misc"]);
+	const { t } = useTranslation(["calendar", "game-misc"]);
 	const { values } = useFormFieldContext();
+	const quickFill = useMapPoolQuickFill();
 
-	return (
-		<FormField name="pool">
-			{({ value, onChange, error }: CustomFieldRenderProps) => {
-				const mapPool = new MapPool(
-					customTeamPickPool({
-						teamPickModes: pickedModes,
-						pool: value as string | undefined,
-					}),
-				);
-				const teamPick = teamPickSettingsFromFormValues({
-					teamPickModes: pickedModes,
-					teamPickCounts: values.teamPickCounts as TeamPickCountsFormValue,
-					teamPickPool: "CUSTOM",
-				});
-				const shortfalls = TeamPick.poolShortfalls(teamPick, mapPool);
+	if (pickedModes.length === 0) return null;
 
-				return (
-					<>
-						<MapPoolSelector
-							className="w-full"
-							mapPool={mapPool}
-							title={t("common:maps.mapPool")}
-							modesToInclude={pickedModes}
-							handleMapPoolChange={(newPool) =>
-								onChange(
-									new MapPool(
-										customTeamPickPool({
-											teamPickModes: pickedModes,
-											pool: newPool.serialized,
-										}),
-									).serialized,
-								)
-							}
-							allowBulkEdit
-							info={
-								<div>
-									<Alert
-										variation={shortfalls.length === 0 ? "SUCCESS" : "WARNING"}
-										tiny
-									>
-										{shortfalls.length === 0
-											? t("calendar:forms.teamPick.poolOk")
-											: shortfalls
-													.map(({ mode, required, has }) =>
-														t("calendar:forms.teamPick.poolShortfall", {
-															mode: t(`game-misc:MODE_SHORT_${mode}`),
-															required,
-															has,
-														}),
-													)
-													.join(", ")}
-									</Alert>
-								</div>
-							}
-						/>
-						{error ? (
-							<FormMessage id={errorMessageId("pool")} type="error">
-								{t(error as never)}
-							</FormMessage>
-						) : null}
-					</>
-				);
-			}}
-		</FormField>
+	const teamPick = teamPickSettingsFromFormValues({
+		teamPickModes: pickedModes,
+		teamPickCounts: values.teamPickCounts as TeamPickCountsFormValue,
+		teamPickPool: "CUSTOM",
+	});
+	const shortfalls = TeamPick.poolShortfalls(
+		teamPick,
+		new MapPool(
+			customTeamPickPool({
+				teamPickModes: pickedModes,
+				pool: values.pool as string | undefined,
+			}),
+		),
 	);
-}
-
-function CalendarMapPoolField() {
-	const { t } = useTranslation(["common"]);
-	const baseEvent = useBaseEvent();
-	const [include, setInclude] = React.useState(Boolean(baseEvent?.mapPool));
-	const id = React.useId();
 
 	return (
-		<FormField name="pool">
-			{({ value, onChange }: CustomFieldRenderProps) => {
-				if (!include) {
-					return (
-						<div>
-							<label htmlFor={id}>{t("common:maps.mapPool")}</label>
-							<SendouButton
-								size="small"
-								variant="outlined"
-								id={id}
-								onClick={() => setInclude(true)}
-							>
-								{t("common:actions.add")}
-							</SendouButton>
-						</div>
-					);
-				}
-
-				const mapPool = value ? new MapPool(value as string) : MapPool.EMPTY;
-
-				return (
-					<MapPoolSelector
-						className="w-full"
-						mapPool={mapPool}
-						title={t("common:maps.mapPool")}
-						handleRemoval={() => {
-							onChange("");
-							setInclude(false);
-						}}
-						handleMapPoolChange={(newPool) => onChange(newPool.serialized)}
-						allowBulkEdit
-					/>
-				);
-			}}
-		</FormField>
-	);
-}
-
-function TournamentMapPoolField() {
-	const { t } = useTranslation(["common"]);
-
-	return (
-		<FormField name="pool">
-			{({ value, onChange }: CustomFieldRenderProps) => {
-				const mapPool = value ? new MapPool(value as string) : MapPool.EMPTY;
-
-				return (
-					<MapPoolSelector
-						className="w-full"
-						mapPool={mapPool}
-						title={t("common:maps.mapPool")}
-						handleMapPoolChange={(newPool) => onChange(newPool.serialized)}
-						allowBulkEdit
-					/>
-				);
-			}}
-		</FormField>
-	);
-}
-
-function BracketProgressionField() {
-	const { values } = useFormFieldContext();
-
-	return (
-		<div className="stack md w-full">
-			<Divider smallText className="mt-4">
-				Tournament format
-			</Divider>
-			<BracketProgressionFormFields
-				isInvitational={Boolean(values.isInvitational)}
-			/>
+		<div className="stack lg">
+			<FormField name="pool" options={{ modes: pickedModes, quickFill }} />
+			<Alert variation={shortfalls.length === 0 ? "SUCCESS" : "WARNING"} tiny>
+				{shortfalls.length === 0
+					? t("calendar:forms.teamPick.poolOk")
+					: shortfalls
+							.map(({ mode, required, has }) =>
+								t("calendar:forms.teamPick.poolShortfall", {
+									mode: t(`game-misc:MODE_SHORT_${mode}`),
+									required,
+									has,
+								}),
+							)
+							.join(", ")}
+			</Alert>
 		</div>
 	);
+}
+
+function pageTitleKey({
+	isAddingTournament,
+	eventToEdit,
+}: {
+	isAddingTournament: boolean;
+	eventToEdit: unknown;
+}) {
+	if (isAddingTournament) {
+		return eventToEdit
+			? "calendar:pageTitle.editTournament"
+			: "calendar:pageTitle.newTournament";
+	}
+
+	return eventToEdit
+		? "calendar:pageTitle.editEvent"
+		: "calendar:pageTitle.newEvent";
 }

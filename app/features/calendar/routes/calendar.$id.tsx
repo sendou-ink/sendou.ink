@@ -9,7 +9,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
-import { MapPoolStages } from "~/components/MapPoolSelector";
+import { MapPoolStages } from "~/components/MapPoolStages";
 import { Placement } from "~/components/Placement";
 import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";

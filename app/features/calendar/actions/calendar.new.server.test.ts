@@ -10,11 +10,11 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { invariant } from "~/utils/invariant";
 import { wrappedAction } from "~/utils/Test";
-import type { calendarNewSchemaServer } from "../calendar-new-schemas.server";
+import type { calendarNewSchema } from "../calendar-new-schemas";
 import { calendarNewFormValues } from "../tests/fixtures";
 import { action } from "./calendar.new.server";
 
-const editAction = wrappedAction<typeof calendarNewSchemaServer>({
+const editAction = wrappedAction<typeof calendarNewSchema>({
 	action,
 	isJsonSubmission: true,
 });

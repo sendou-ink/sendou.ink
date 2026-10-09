@@ -31,7 +31,7 @@ const SINGLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
 		type: "single_elimination",
 		requiresCheckIn: false,
 		settings: {
-			thirdPlaceMatch: false,
+			skippedRounds: ["THIRD_PLACE_MATCH"],
 		},
 	},
 ];
@@ -538,34 +538,36 @@ async function finalize(tournamentId: number) {
 		includeBadgePrizes: true,
 		includeTrophy: true,
 	});
-	const winner = winningTeam(tournament);
+	const winners = winningTeams(tournament);
 
 	await finalizeTournament({
 		tournament,
 		badgeReceivers: event?.badgePrizes?.length
-			? event.badgePrizes.map((badge) => ({
-					badgeId: badge.id,
-					tournamentTeamId: winner.team.id,
-					userIds: winner.team.memberUserIds,
-				}))
+			? event.badgePrizes.flatMap((badge) =>
+					winners.map((winner) => ({
+						badgeId: badge.id,
+						tournamentTeamId: winner.team.id,
+						userIds: winner.team.memberUserIds,
+					})),
+				)
 			: undefined,
 		trophyReceiver: event?.trophy
 			? {
 					trophyId: event.trophy.id,
-					userIds: winner.team.memberUserIds,
+					userIds: winners.flatMap((winner) => winner.team.memberUserIds),
 				}
 			: undefined,
 	});
 }
 
-/** Who the organizer typically assigns the prizes to. */
-function winningTeam(tournament: Awaited<ReturnType<typeof tournamentFromDB>>) {
-	const winner = Standings.flattenStandings(
-		Standings.tournamentStandings(tournament),
-	).find((standing) => standing.placement === 1);
-	invariant(winner, "Tournament to award prizes for has no winner");
+/** Who the organizer typically assigns the prizes to: every 1st place team. */
+function winningTeams(
+	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
+) {
+	const winners = Standings.winners(Standings.tournamentStandings(tournament));
+	invariant(winners.length > 0, "Tournament to award prizes for has no winner");
 
-	return winner;
+	return winners;
 }
 
 async function findMatch(matchId: number) {

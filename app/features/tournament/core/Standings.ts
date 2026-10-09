@@ -27,6 +27,21 @@ export function flattenStandings(
 }
 
 /**
+ * Teams sharing 1st place of the top division (the only one when the tournament isn't split into
+ * divisions). Several when the tournament ends with co-winners.
+ */
+export function winners(
+	standingsResult: TournamentStandingsResult,
+): Standing[] {
+	const topDivisionStandings =
+		standingsResult.type === "single"
+			? standingsResult.standings
+			: (standingsResult.standings[0]?.standings ?? []);
+
+	return topDivisionStandings.filter((standing) => standing.placement === 1);
+}
+
+/**
  * Re-numbers placements of sorted standings keeping ties grouped (`[1, 1, 3, 3, 5]`), for after
  * filtering or merging. `offset` shifts every placement down, for appending below another bracket's standings.
  */

@@ -27,10 +27,8 @@ import { assertUnreachable } from "~/utils/types";
 import * as TeamPick from "../core/TeamPick";
 import { registerSchema } from "../tournament-schemas.server";
 import {
-	fulfillsSendouQParticipation,
 	isBannedByOrganization,
 	requireNotBannedByOrganization,
-	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
 
 export const action = defineAction(
@@ -109,10 +107,6 @@ export const action = defineAction(
 					await requireNotBannedByOrganization({
 						tournament,
 						user,
-					});
-					await requireSendouQParticipationIfNeeded({
-						tournament,
-						userId: user.id,
 					});
 
 					errorToastIfFalsy(!tournament.isInvitational, "Event is invite only");
@@ -331,10 +325,6 @@ export const action = defineAction(
 					user: { id: data.userId },
 					message: "The user is banned from events hosted by this organization",
 				});
-				await requireSendouQParticipationIfNeeded({
-					tournament,
-					userId: data.userId,
-				});
 
 				await addPlayerToOwnTeam({
 					tournament,
@@ -466,10 +456,7 @@ export const action = defineAction(
 	},
 );
 
-type IneligibleReason =
-	| "no friend code"
-	| "banned by the organization"
-	| "not enough SendouQ participation";
+type IneligibleReason = "no friend code" | "banned by the organization";
 
 /** Why the "add all" bulk add has to pass a candidate over, or `null` if they can be added. */
 async function ineligibleReason({
@@ -484,9 +471,6 @@ async function ineligibleReason({
 	}
 	if (await isBannedByOrganization({ tournament, userId })) {
 		return "banned by the organization";
-	}
-	if (!(await fulfillsSendouQParticipation({ tournament, userId }))) {
-		return "not enough SendouQ participation";
 	}
 
 	return null;

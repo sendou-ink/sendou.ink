@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
@@ -33,7 +34,9 @@ export async function backfillableTournaments({
 			{
 				...tournament,
 				tournamentTeamId: winners[0].tournamentTeamId,
-				teamName: winners[0].teamName,
+				teamName: R.unique(winners.map((winner) => winner.teamName)).join(
+					" / ",
+				),
 				winners: winners.map(
 					({
 						div: _div,

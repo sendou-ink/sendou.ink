@@ -39,16 +39,28 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 
 	const badges = event.badgePrizes.sort((a, b) => a.id - b.id);
+	const standingsResult = Standings.tournamentStandings(tournament);
 
 	return {
 		badges,
 		trophy: event.trophy,
-		standings: await standingsWithSetParticipation(tournament),
+		standings: await standingsWithSetParticipation({
+			tournament,
+			standingsResult,
+		}),
+		winnerTournamentTeamIds: Standings.winners(standingsResult).map(
+			(standing) => standing.team.id,
+		),
 	};
 };
 
-async function standingsWithSetParticipation(tournament: Tournament) {
-	const standingsResult = Standings.tournamentStandings(tournament);
+async function standingsWithSetParticipation({
+	tournament,
+	standingsResult,
+}: {
+	tournament: Tournament;
+	standingsResult: Standings.TournamentStandingsResult;
+}) {
 	const finalStandings = Standings.flattenStandings(standingsResult);
 
 	const results = await TournamentMatchRepository.findAllResultsByTournamentId(

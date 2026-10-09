@@ -3,6 +3,7 @@ import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import type { PreparedMaps as PreparedMapsType } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import type { StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Engine from "./engine";
@@ -29,9 +30,7 @@ const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
 						type: "single_elimination",
 						name: "Top Cut",
 						requiresCheckIn: false,
-						settings: {
-							thirdPlaceMatch: true,
-						},
+						settings: {},
 						sources: [
 							{
 								bracketIdx: 0,
@@ -43,9 +42,9 @@ const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
 						type: "single_elimination",
 						name: "Underground Bracket",
 						requiresCheckIn: false,
-						settings: {
-							thirdPlaceMatch: thirdPlaceMatchesForBoth,
-						},
+						settings: thirdPlaceMatchesForBoth
+							? {}
+							: { skippedRounds: ["THIRD_PLACE_MATCH"] },
 						sources: [
 							{
 								bracketIdx: 0,
@@ -331,7 +330,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 				bracketProgression: [
 					{
 						type: "single_elimination",
-						settings: { thirdPlaceMatch: true },
+						settings: {},
 						name: "X",
 						requiresCheckIn: false,
 					},
@@ -466,7 +465,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 				bracketProgression: [
 					{
 						type: "double_elimination",
-						settings: { thirdPlaceMatch: true },
+						settings: {},
 						name: "X",
 						requiresCheckIn: false,
 					},
@@ -1258,3 +1257,394 @@ describe("PreparedMaps - eliminationTeamCountPrefill", () => {
 		).toBeNull();
 	});
 });
+
+describe("PreparedMaps.mapListRounds", () => {
+	test("returns every round of an elimination bracket without groups", () => {
+		const data = eliminationData({
+			type: "single_elimination",
+			teamCount: 8,
+			settings: {},
+		});
+
+		expect(PreparedMaps.mapListRounds(data)).toBe(data.round);
+	});
+
+	test("returns every round of a round robin bracket with many groups", () => {
+		const data = Engine.create({
+			type: "round_robin",
+			seeding: nullFilledArray(8).map((_, i) => i + 1),
+			settings: { teamsPerGroup: 4 },
+		});
+
+		expect(data.group.length).toBe(2);
+		expect(PreparedMaps.mapListRounds(data)).toBe(data.round);
+	});
+
+	test("returns every round when too few teams split a grouped bracket into groups", () => {
+		const data = eliminationData({
+			type: "single_elimination",
+			teamCount: 3,
+			settings: { groupCount: 2 },
+		});
+
+		expect(data.group.length).toBe(1);
+		expect(PreparedMaps.mapListRounds(data)).toBe(data.round);
+	});
+
+	test.each([
+		{
+			type: "single_elimination",
+			teamCount: 8,
+			groupIdx: 0,
+			rounds: ["winners 1", "winners 2", "finals 1"],
+			why: "SE, groups of 4 and 4",
+		},
+		{
+			type: "single_elimination",
+			teamCount: 7,
+			groupIdx: 1,
+			rounds: ["winners 1", "winners 2", "finals 1"],
+			why: "SE, groups of 3 and 4, only the bigger one has a third place match",
+		},
+		{
+			type: "single_elimination",
+			teamCount: 5,
+			groupIdx: 0,
+			rounds: ["winners 1", "winners 2"],
+			why: "SE, groups of 3 and 2",
+		},
+		{
+			type: "double_elimination",
+			teamCount: 14,
+			groupIdx: 0,
+			rounds: [
+				"winners 1",
+				"winners 2",
+				"winners 3",
+				"losers 1",
+				"losers 2",
+				"losers 3",
+				"losers 4",
+				"finals 1",
+				"finals 2",
+			],
+			why: "DE, groups of 7 and 7",
+		},
+		{
+			type: "double_elimination",
+			teamCount: 4,
+			groupIdx: 0,
+			rounds: ["winners 1"],
+			why: "DE, groups of 2 and 2",
+		},
+	] as const)(
+		"returns the rounds of the group with the most of them ($why)",
+		({ type, teamCount, groupIdx, rounds }) => {
+			const data = eliminationData({
+				type,
+				teamCount,
+				settings: { groupCount: 2 },
+			});
+
+			const result = PreparedMaps.mapListRounds(data);
+
+			expect(data.group.length).toBe(2);
+			expect(result.map(roundLabel)).toEqual(rounds);
+			expect(
+				result.every((round) => round.groupId === data.group[groupIdx].id),
+			).toBe(true);
+		},
+	);
+});
+
+describe("PreparedMaps.mapListData", () => {
+	test("returns the data untouched for a bracket without groups", () => {
+		const data = eliminationData({
+			type: "double_elimination",
+			teamCount: 8,
+			settings: {},
+		});
+
+		expect(PreparedMaps.mapListData(data)).toBe(data);
+	});
+
+	test("keeps only the group with the most rounds and its matches", () => {
+		const data = eliminationData({
+			type: "single_elimination",
+			teamCount: 7,
+			settings: { groupCount: 2 },
+		});
+		const biggestGroupId = data.group[1].id;
+
+		const result = PreparedMaps.mapListData(data);
+
+		expect(result.stage).toEqual(data.stage);
+		expect(result.group.map((group) => group.id)).toEqual([biggestGroupId]);
+		expect(result.round).toEqual(
+			data.round.filter((round) => round.groupId === biggestGroupId),
+		);
+		expect(result.match).toEqual(
+			data.match.filter((match) => match.groupId === biggestGroupId),
+		);
+	});
+});
+
+describe("PreparedMaps.trimPreparedEliminationMaps (grouped)", () => {
+	const groupedBracket = (type: PreparedMaps.EliminationBracketType) =>
+		testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type,
+							settings: { groupCount: 2 },
+							name: "Groups",
+							requiresCheckIn: false,
+						},
+					],
+				},
+			},
+		}).bracketByIdx(0)!;
+
+	test("trims the earliest rounds when the groups get smaller", () => {
+		const prepared = preparedMapsFor({
+			type: "single_elimination",
+			teamCount: 16,
+			settings: { groupCount: 2 },
+		});
+
+		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
+			preparedMaps: prepared,
+			teamCount: 8,
+			bracket: groupedBracket("single_elimination"),
+		});
+
+		const actualRounds = PreparedMaps.mapListRounds(
+			eliminationData({
+				type: "single_elimination",
+				teamCount: 8,
+				settings: { groupCount: 2 },
+			}),
+		);
+		expect(trimmed?.maps.map((map) => map.roundId)).toEqual(
+			actualRounds.map((round) => round.id),
+		);
+		expect(trimmed?.maps.map((map) => map.list)).toEqual(
+			prepared.maps.slice(1).map((map) => map.list),
+		);
+	});
+
+	test("trims a list prepared for two groups to the rounds of a single group", () => {
+		const prepared = preparedMapsFor({
+			type: "single_elimination",
+			teamCount: 8,
+			settings: { groupCount: 2 },
+		});
+
+		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
+			preparedMaps: prepared,
+			teamCount: 3,
+			bracket: groupedBracket("single_elimination"),
+		});
+
+		expect(trimmed?.maps.map((map) => [map.section, map.roundId])).toEqual([
+			["winners", 0],
+			["winners", 1],
+		]);
+		expect(trimmed?.maps.map((map) => map.list)).toEqual(
+			prepared.maps
+				.filter((map) => map.section === "winners")
+				.map((map) => map.list),
+		);
+	});
+
+	test("returns null when a single group of fewer teams has more rounds than the groups prepared for (DE)", () => {
+		const prepared = preparedMapsFor({
+			type: "double_elimination",
+			teamCount: 4,
+			settings: { groupCount: 2 },
+		});
+
+		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
+			preparedMaps: prepared,
+			teamCount: 3,
+			bracket: groupedBracket("double_elimination"),
+		});
+
+		expect(trimmed).toBeNull();
+	});
+
+	test("returns null when a single group of fewer teams has more rounds than the groups prepared for (SE)", () => {
+		const prepared = preparedMapsFor({
+			type: "single_elimination",
+			teamCount: 4,
+			settings: { groupCount: 2 },
+		});
+
+		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
+			preparedMaps: prepared,
+			teamCount: 3,
+			bracket: groupedBracket("single_elimination"),
+		});
+
+		expect(trimmed).toBeNull();
+	});
+
+	test("drops the third place match when the biggest group gets too small for it", () => {
+		const prepared = preparedMapsFor({
+			type: "single_elimination",
+			teamCount: 8,
+			settings: { groupCount: 2 },
+		});
+
+		const trimmed = PreparedMaps.trimPreparedEliminationMaps({
+			preparedMaps: prepared,
+			teamCount: 6,
+			bracket: groupedBracket("single_elimination"),
+		});
+
+		expect(trimmed?.maps.some((map) => map.section === "finals")).toBe(false);
+	});
+});
+
+describe("PreparedMaps.eliminationTeamCountPrefill (grouped source bracket)", () => {
+	test.each([
+		{
+			type: "single_elimination",
+			teamCount: 16,
+			skippedRounds: [],
+			placements: [1, 2],
+			expected: 4,
+			why: "SE groups of 8, a winner and a runner-up each",
+		},
+		{
+			type: "single_elimination",
+			teamCount: 16,
+			skippedRounds: ["SEMIS"],
+			placements: [1],
+			expected: 8,
+			why: "SE groups of 8 without semifinals, quarterfinal winners share 1st",
+		},
+		{
+			type: "single_elimination",
+			teamCount: 16,
+			skippedRounds: ["SEMIS"],
+			placements: [1, 2],
+			expected: 16,
+			why: "SE groups of 8 without semifinals, quarterfinal losers are 2nd",
+		},
+		{
+			type: "single_elimination",
+			teamCount: 7,
+			skippedRounds: ["FINALS"],
+			placements: [1],
+			expected: 4,
+			why: "SE groups of 4 and 3 without finals, semifinal winners share 1st",
+		},
+		{
+			type: "single_elimination",
+			teamCount: 7,
+			skippedRounds: ["FINALS"],
+			placements: [2, 3],
+			expected: 3,
+			why: "SE groups of 4 and 3 without finals, only the group of 4 has a third place match",
+		},
+		{
+			type: "double_elimination",
+			teamCount: 16,
+			skippedRounds: [],
+			placements: [1, 2],
+			expected: 4,
+			why: "DE groups of 8, a winner and a runner-up each",
+		},
+		{
+			type: "double_elimination",
+			teamCount: 16,
+			skippedRounds: ["GRAND_FINALS"],
+			placements: [1, 2],
+			expected: 4,
+			why: "DE groups of 8 without grand finals, winners and losers bracket winners",
+		},
+		{
+			type: "double_elimination",
+			teamCount: 16,
+			skippedRounds: ["LB_FINALS"],
+			placements: [1, 2],
+			expected: 6,
+			why: "DE groups of 8 without losers bracket finals, losers bracket semifinal winners share 2nd",
+		},
+	] as const)(
+		"prefills with the teams advancing from the groups ($why)",
+		({ type, teamCount, skippedRounds, placements, expected }) => {
+			const tournament = testTournament({
+				ctx: {
+					startsAt: dateToDatabaseTimestamp(subHours(new Date(), 1)),
+					teams: nullFilledArray(teamCount).map((_, i) =>
+						tournamentCtxTeam(i + 1, {
+							memberUserIds: [i * 10, i * 10 + 1, i * 10 + 2, i * 10 + 3],
+						}),
+					),
+					settings: {
+						bracketProgression: [
+							{
+								type,
+								name: "Groups",
+								requiresCheckIn: false,
+								settings: { groupCount: 2, skippedRounds: [...skippedRounds] },
+							},
+							{
+								type: "double_elimination",
+								name: "Final Stage",
+								requiresCheckIn: false,
+								settings: {},
+								sources: [{ bracketIdx: 0, placements: [...placements] }],
+							},
+						],
+					},
+				},
+			});
+
+			expect(
+				PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 1 }),
+			).toBe(expected);
+		},
+	);
+});
+
+function eliminationData({
+	type,
+	teamCount,
+	settings,
+}: {
+	type: PreparedMaps.EliminationBracketType;
+	teamCount: number;
+	settings: Parameters<typeof Engine.create>[0]["settings"];
+}) {
+	return Engine.create({
+		type,
+		seeding: nullFilledArray(teamCount).map((_, i) => i + 1),
+		settings,
+	});
+}
+
+function roundLabel(round: BracketData["round"][number]) {
+	return `${round.section} ${round.number}`;
+}
+
+/** Prepared maps picked against the bracket preview of the team count, every round with a distinct stage. */
+function preparedMapsFor(
+	args: Parameters<typeof eliminationData>[0],
+): PreparedMapsType {
+	return {
+		authorId: 1,
+		createdAt: 1,
+		eliminationTeamCount: args.teamCount,
+		maps: PreparedMaps.mapListRounds(eliminationData(args)).map((round, i) => ({
+			roundId: round.id,
+			section: round.section,
+			count: 3,
+			type: "BEST_OF",
+			list: [{ mode: "SZ", stageId: i as StageId }],
+		})),
+	};
+}

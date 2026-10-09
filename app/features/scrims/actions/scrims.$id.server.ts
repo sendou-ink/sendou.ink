@@ -1,5 +1,6 @@
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatRoomChannel } from "~/features/events/events-types";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { defineAction } from "~/form/define-action.server";
@@ -19,7 +20,6 @@ import * as ScrimMapListRepository from "../ScrimMapListRepository.server";
 import * as ScrimMapRepository from "../ScrimMapRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { scrimIdActionSchema } from "../scrims-schemas";
-import { parseMapPoolInput } from "../scrims-utils";
 
 export const action = defineAction(
 	{ params: idObject, body: scrimIdActionSchema },
@@ -102,7 +102,7 @@ export const action = defineAction(
 
 				const serializedPool =
 					body.source === "POOL"
-						? (parseMapPoolInput(body.serializedPool!)?.serialized ?? null)
+						? (MapPool.fromUserInput(body.serializedPool!)?.serialized ?? null)
 						: null;
 
 				errorToastIfFalsy(

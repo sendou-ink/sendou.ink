@@ -26,3 +26,12 @@ export function cumulativeEliminationsByRound(
 
 	return result;
 }
+
+/** Tournament team ids appearing in the matches. */
+export function participantIdsOf(matches: BracketData["match"]): number[] {
+	return R.unique(
+		matches
+			.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
+			.filter((id) => typeof id === "number"),
+	);
+}

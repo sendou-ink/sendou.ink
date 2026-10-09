@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useLocation } from "react-router";
+import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
@@ -35,15 +36,18 @@ export default function TournamentFinalizePage() {
 	const { t } = useTranslation(["tournament"]);
 	const location = useLocation();
 	const tournament = useTournament();
-	const firstPlaceStanding = data.standings.find(
-		(standing) => standing.placement === 1,
+	const winnerStandings = data.standings.filter((standing) =>
+		data.winnerTournamentTeamIds.includes(standing.tournamentTeamId),
 	);
-	const trophyDefaultUserIds =
-		data.trophy && firstPlaceStanding
-			? tournament.minMembersPerTeam === firstPlaceStanding.members.length
-				? firstPlaceStanding.members.map((m) => m.userId)
-				: []
-			: [];
+	const trophyDefaultUserIds = data.trophy
+		? R.unique(
+				winnerStandings.flatMap((standing) =>
+					tournament.minMembersPerTeam === standing.members.length
+						? standing.members.map((m) => m.userId)
+						: [],
+				),
+			)
+		: [];
 
 	const [isAssignBadgesLaterSelected, setIsAssignBadgesLaterSelected] =
 		React.useState(false);
@@ -58,7 +62,7 @@ export default function TournamentFinalizePage() {
 	const tournamentHasTrophy = Boolean(data.trophy);
 
 	const trophyReceiver: TournamentTrophyReceiver | null =
-		data.trophy && firstPlaceStanding
+		data.trophy && winnerStandings.length > 0
 			? { trophyId: data.trophy.id, userIds: trophyReceiverUserIds }
 			: null;
 
@@ -71,6 +75,9 @@ export default function TournamentFinalizePage() {
 		? validateTrophyReceiver({
 				trophyReceiver,
 				trophy: data.trophy ?? null,
+				firstPlaceTeams: winnerStandings.map((standing) => ({
+					memberUserIds: standing.members.map((member) => member.userId),
+				})),
 			})
 		: null;
 
@@ -96,10 +103,10 @@ export default function TournamentFinalizePage() {
 						: null
 				}
 			>
-				{tournamentHasTrophy && data.trophy && firstPlaceStanding ? (
+				{tournamentHasTrophy && data.trophy && winnerStandings.length > 0 ? (
 					<NewTrophyReceiversSelector
 						trophy={data.trophy}
-						firstPlaceStanding={firstPlaceStanding}
+						winnerStandings={winnerStandings}
 						trophyReceiverUserIds={trophyReceiverUserIds}
 						setTrophyReceiverUserIds={setTrophyReceiverUserIds}
 					/>
@@ -310,12 +317,12 @@ function NewBadgeReceiversSelector({
 
 function NewTrophyReceiversSelector({
 	trophy,
-	firstPlaceStanding,
+	winnerStandings,
 	trophyReceiverUserIds,
 	setTrophyReceiverUserIds,
 }: {
 	trophy: NonNullable<FinalizeTournamentLoaderData["trophy"]>;
-	firstPlaceStanding: FinalizeTournamentLoaderData["standings"][number];
+	winnerStandings: FinalizeTournamentLoaderData["standings"];
 	trophyReceiverUserIds: Array<number>;
 	setTrophyReceiverUserIds: (userIds: Array<number>) => void;
 }) {
@@ -332,27 +339,34 @@ function NewTrophyReceiversSelector({
 	return (
 		<div className="stack md">
 			<Trophy model={trophy.model} />
-			<Divider />
-			{firstPlaceStanding.members.map((member, i) => {
-				return (
-					<div key={member.userId} className="stack sm">
-						<div className="stack horizontal items-center">
-							<SendouSwitch
-								isSelected={trophyReceiverUserIds.includes(member.userId)}
-								onChange={handleReceiverSelected(member.userId)}
-							/>
-							<Avatar user={member} size="xxs" className="mr-2" />
-							{member.username}
-						</div>
-						<div className="stack horizontal sm items-end">
-							<ParticipationPill setResults={member.setResults} />
-						</div>
-						{i !== firstPlaceStanding.members.length - 1 ? (
-							<Divider className="mt-3" />
-						) : null}
-					</div>
-				);
-			})}
+			{winnerStandings.map((standing) => (
+				<React.Fragment key={standing.tournamentTeamId}>
+					<Divider />
+					{winnerStandings.length > 1 ? (
+						<h2 className="text-sm">{standing.name}</h2>
+					) : null}
+					{standing.members.map((member, i) => {
+						return (
+							<div key={member.userId} className="stack sm">
+								<div className="stack horizontal items-center">
+									<SendouSwitch
+										isSelected={trophyReceiverUserIds.includes(member.userId)}
+										onChange={handleReceiverSelected(member.userId)}
+									/>
+									<Avatar user={member} size="xxs" className="mr-2" />
+									{member.username}
+								</div>
+								<div className="stack horizontal sm items-end">
+									<ParticipationPill setResults={member.setResults} />
+								</div>
+								{i !== standing.members.length - 1 ? (
+									<Divider className="mt-3" />
+								) : null}
+							</div>
+						);
+					})}
+				</React.Fragment>
+			))}
 		</div>
 	);
 }

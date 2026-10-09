@@ -89,6 +89,8 @@ export function focusLeftTo(
  * Popover opened by `trigger` (a SendouButton); controlled or uncontrolled. Renders through the
  * native popover API, placed next to the trigger by `useFloatingLayer`.
  *
+ * Opening focuses the popover, or the element inside it marked with `data-autofocus`.
+ *
  * With `eager` the content is rendered while closed too, so it is in the server markup and there
  * is nothing left to mount when the popover opens.
  */
@@ -171,7 +173,9 @@ export function SendouPopover({
 			setOpen(next);
 		}
 		if (next) {
-			popoverRef.current?.focus();
+			const autoFocusTarget =
+				popoverRef.current?.querySelector<HTMLElement>("[data-autofocus]");
+			(autoFocusTarget ?? popoverRef.current)?.focus();
 		}
 	};
 
@@ -259,7 +263,9 @@ export function SendouAnchoredPopover({
 			onOpenChange(next);
 		}
 		if (next) {
-			popoverRef.current?.focus();
+			const autoFocusTarget =
+				popoverRef.current?.querySelector<HTMLElement>("[data-autofocus]");
+			(autoFocusTarget ?? popoverRef.current)?.focus();
 		}
 	};
 

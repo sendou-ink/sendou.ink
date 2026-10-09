@@ -476,3 +476,17 @@ describe("SearchParams.skipSearchOnlyRevalidation", () => {
 		expect(run("/x?page=2", "/x?page=2")).toBe(true);
 	});
 });
+
+describe("SearchParams.omitFromSearch", () => {
+	test.each([
+		{ why: "removes the key", search: "?a=1&step=x", expected: "a=1" },
+		{ why: "removes every value of it", search: "step=x&step=y", expected: "" },
+		{
+			why: "keeps a search without it",
+			search: "?a=1&b=2",
+			expected: "a=1&b=2",
+		},
+	])("$why", ({ search, expected }) => {
+		expect(SearchParams.omitFromSearch(["step"], search)).toBe(expected);
+	});
+});

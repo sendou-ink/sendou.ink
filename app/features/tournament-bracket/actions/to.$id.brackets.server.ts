@@ -62,7 +62,7 @@ export const action = defineAction(
 				const groupCount = new Set(bracket.data.round.map((r) => r.groupId))
 					.size;
 
-				const hasThirdPlaceMatch = Engine.hasThirdPlaceMatch({
+				const hasThirdPlaceMatch = Engine.thirdPlaceMatchLinkable({
 					type: bracket.type,
 					settings: bracket.settings,
 					participantsCount: seeding.length,
@@ -98,7 +98,8 @@ export const action = defineAction(
 				errorToastIfFalsy(
 					bracket.type === "round_robin" || bracket.type === "swiss"
 						? distinctRoundNumberCount === maps.length
-						: bracket.data.round.length === maps.length,
+						: PreparedMapsUtils.mapListRounds(bracket.data).length ===
+								maps.length,
 					"Invalid map count",
 				);
 
@@ -220,7 +221,7 @@ export const action = defineAction(
 					"Mode order includes a mode not played in the tournament",
 				);
 
-				const hasThirdPlaceMatch = Engine.hasThirdPlaceMatch({
+				const hasThirdPlaceMatch = Engine.thirdPlaceMatchLinkable({
 					type: bracket.type,
 					settings: bracket.settings,
 					participantsCount:

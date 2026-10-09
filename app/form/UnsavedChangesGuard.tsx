@@ -5,7 +5,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 
 /** In-app navigations pass the locations so same-route ones can be ignored; a page unload passes nothing. */
-type UnsavedChangesChecker = (navigation?: {
+export type UnsavedChangesChecker = (navigation?: {
 	currentLocation: Location;
 	nextLocation: Location;
 }) => boolean;

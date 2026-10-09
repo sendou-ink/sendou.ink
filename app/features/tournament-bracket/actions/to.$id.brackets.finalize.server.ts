@@ -60,9 +60,9 @@ export const action = defineAction(
 			const trophyReceiverValid = requireValidTrophyReceiver({
 				trophyReceiver,
 				trophy: event.trophy,
-				finalStandings: Standings.flattenStandings(
+				firstPlaceTeams: Standings.winners(
 					Standings.tournamentStandings(tournament),
-				),
+				).map((standing) => standing.team),
 				tournament,
 			});
 			if (!trophyReceiverValid) errorToast("Invalid trophy receiver");
@@ -132,45 +132,22 @@ function requireValidBadgeReceivers({
 function requireValidTrophyReceiver({
 	trophyReceiver,
 	trophy,
-	finalStandings,
+	firstPlaceTeams,
 	tournament,
 }: {
 	trophyReceiver: TournamentTrophyReceiver | null;
 	trophy: { id: number };
-	finalStandings: Array<{
-		placement: number;
-		team: { memberUserIds: number[] };
-	}>;
+	firstPlaceTeams: Array<{ memberUserIds: number[] }>;
 	tournament: Tournament;
 }) {
-	const error = validateTrophyReceiver({ trophyReceiver, trophy });
+	const error = validateTrophyReceiver({
+		trophyReceiver,
+		trophy,
+		firstPlaceTeams,
+	});
 	if (error) {
 		logger.warn(
 			`validateTrophyReceiver: Invalid trophy receiver for tournament ${tournament.ctx.id}: ${error}`,
-		);
-		return false;
-	}
-
-	if (!trophyReceiver) return true;
-
-	const firstPlace = finalStandings.find(
-		(standing) => standing.placement === 1,
-	);
-	if (!firstPlace) {
-		logger.warn(
-			`validateTrophyReceiver: No 1st place standing for tournament ${tournament.ctx.id}`,
-		);
-		return false;
-	}
-
-	const firstPlaceUserIds = new Set(firstPlace.team.memberUserIds);
-	const invalidUserId = trophyReceiver.userIds.find(
-		(userId) => !firstPlaceUserIds.has(userId),
-	);
-
-	if (invalidUserId !== undefined) {
-		logger.warn(
-			`validateTrophyReceiver: User ${invalidUserId} not in 1st place team for tournament ${tournament.ctx.id}`,
 		);
 		return false;
 	}

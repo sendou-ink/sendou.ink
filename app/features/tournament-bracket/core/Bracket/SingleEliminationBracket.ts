@@ -7,8 +7,8 @@ import type {
 } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
 import { type BracketMapCounts, roundSetKey } from "../toMapList";
-import { Bracket, type Standing } from "./Bracket";
-import { cumulativeEliminationsByRound } from "./utils";
+import { Bracket, type MatchExit, type Standing } from "./Bracket";
+import { cumulativeEliminationsByRound, participantIdsOf } from "./utils";
 
 export class SingleEliminationBracket extends Bracket {
 	get type(): Tables["TournamentStage"]["type"] {
@@ -56,36 +56,53 @@ export class SingleEliminationBracket extends Bracket {
 		return result;
 	}
 
-	private thirdPlaceRound() {
-		return this.data.round.find((round) => round.section === "finals");
-	}
+	private thirdPlaceMatches() {
+		const thirdPlaceRoundIds = new Set(
+			this.data.round
+				.filter((round) => round.section === "finals")
+				.map((round) => round.id),
+		);
 
-	private thirdPlaceMatch() {
-		const thirdPlaceRound = this.thirdPlaceRound();
-		if (!thirdPlaceRound) return undefined;
-
-		return this.data.match.find(
-			(match) => match.roundId === thirdPlaceRound.id,
+		return this.data.match.filter((match) =>
+			thirdPlaceRoundIds.has(match.roundId),
 		);
 	}
 
 	private thirdPlaceMatchUndecided() {
-		const thirdPlaceMatch = this.thirdPlaceMatch();
-
-		return (
-			Boolean(thirdPlaceMatch) && !winnerOfThirdPlaceMatch(thirdPlaceMatch)
+		return this.thirdPlaceMatches().some(
+			(match) => !winnerOfThirdPlaceMatch(match),
 		);
 	}
 
 	protected calculateStandings(): Standing[] {
+		const standingsByGroup = this.data.group.map((group) =>
+			this.groupStandings(group.id),
+		);
+
+		return this.standingsWithoutNonParticipants(
+			this.mergedGroupStandings(standingsByGroup),
+		);
+	}
+
+	/** Teams knocked out by the round they lost in. Teams still in once every bracket match is over (one, unless the finals are skipped) share the top. */
+	private groupStandings(groupId: number): Standing[] {
+		const groupRounds = this.data.round.filter(
+			(round) => round.groupId === groupId,
+		);
+		const groupMatches = this.data.match.filter(
+			(match) => match.groupId === groupId,
+		);
+		const thirdPlaceRound = groupRounds.find(
+			(round) => round.section === "finals",
+		);
+		const matches = groupMatches.filter(
+			(match) => match.roundId !== thirdPlaceRound?.id,
+		);
+		const participantIds = participantIdsOf(groupMatches);
+
 		const teams: { id: number; lostAt: number }[] = [];
 
-		const thirdPlaceRound = this.thirdPlaceRound();
-		const matches = thirdPlaceRound
-			? this.data.match.filter((m) => m.roundId !== thirdPlaceRound.id)
-			: this.data.match.slice();
-
-		for (const match of matches.sort((a, b) => a.roundId - b.roundId)) {
+		for (const match of matches.toSorted((a, b) => a.roundId - b.roundId)) {
 			if (!match.winnerSide) {
 				continue;
 			}
@@ -100,8 +117,12 @@ export class SingleEliminationBracket extends Bracket {
 			teams.push({ id: loser.id, lostAt: match.roundId });
 		}
 
-		const teamCountWhoDidntLoseYet =
-			this.participantTournamentTeamIds.length - teams.length;
+		const stillInIds = participantIds.filter((participantId) =>
+			teams.every((team) => team.id !== participantId),
+		);
+		const everyBracketMatchOver = matches.every(
+			(match) => !match.opponent1 || !match.opponent2 || match.winnerSide,
+		);
 
 		const eliminationsThroughRound = cumulativeEliminationsByRound(matches);
 
@@ -113,9 +134,7 @@ export class SingleEliminationBracket extends Bracket {
 			}
 
 			const placement =
-				this.participantTournamentTeamIds.length -
-				eliminationsThroughRound.get(roundId)! +
-				1;
+				participantIds.length - eliminationsThroughRound.get(roundId)! + 1;
 
 			for (const { id: teamId } of teamsLostThisRound) {
 				const team = this.tournament.teamById(teamId);
@@ -128,26 +147,26 @@ export class SingleEliminationBracket extends Bracket {
 			}
 		}
 
-		if (teamCountWhoDidntLoseYet === 1) {
-			const winnerId = this.participantTournamentTeamIds.find((participantId) =>
-				result.every(({ team }) => team.id !== participantId),
-			);
-			invariant(winnerId, "No winner identified");
+		if (
+			stillInIds.length === 1 ||
+			(stillInIds.length > 0 && everyBracketMatchOver)
+		) {
+			for (const stillInId of stillInIds) {
+				const stillInTeam = this.tournament.teamById(stillInId);
+				invariant(stillInTeam, `Team not found for id: ${stillInId}`);
 
-			const winnerTeam = this.tournament.teamById(winnerId);
-			invariant(winnerTeam, `Winner team not found for id: ${winnerId}`);
-
-			result.push({
-				team: winnerTeam,
-				placement: 1,
-			});
+				result.push({
+					team: stillInTeam,
+					placement: 1,
+				});
+			}
 		}
 
 		const thirdPlaceMatchWinner = winnerOfThirdPlaceMatch(
-			this.thirdPlaceMatch(),
+			groupMatches.find((match) => match.roundId === thirdPlaceRound?.id),
 		);
 
-		const resultWithThirdPlaceTiebroken = result
+		return result
 			.map((standing) => {
 				// semifinal losers stay tied until the third place match decides between them
 				if (standing.placement !== 3 || !thirdPlaceMatchWinner) return standing;
@@ -157,8 +176,66 @@ export class SingleEliminationBracket extends Bracket {
 					: { ...standing, placement: 4 };
 			})
 			.sort((a, b) => a.placement - b.placement);
+	}
 
-		return this.standingsWithoutNonParticipants(resultWithThirdPlaceTiebroken);
+	protected matchExits() {
+		const result = new Map<number, MatchExit>();
+
+		for (const group of this.data.group) {
+			const groupRounds = this.data.round.filter(
+				(round) => round.groupId === group.id,
+			);
+			const winnersRounds = groupRounds
+				.filter((round) => round.section === "winners")
+				.sort((a, b) => a.number - b.number);
+			const thirdPlaceRound = groupRounds.find(
+				(round) => round.section === "finals",
+			);
+			const firstRoundMatchCount = this.data.match.filter(
+				(match) => match.roundId === winnersRounds[0]?.id,
+			).length;
+			const semifinalsNumber = Math.log2(firstRoundMatchCount * 2) - 1;
+			const lastRound = winnersRounds.at(-1);
+
+			// tiers from the top: teams still in, then the losers of each round, latest first
+			let tier = 1;
+			const loserTierByRoundId = new Map<number, number>();
+			const thirdPlaceTiers = { winner: 0, loser: 0 };
+			for (const round of winnersRounds.toReversed()) {
+				if (!this.hasNonByeMatch(round.id)) continue;
+
+				if (thirdPlaceRound && round.number === semifinalsNumber) {
+					thirdPlaceTiers.winner = ++tier;
+					thirdPlaceTiers.loser = ++tier;
+					continue;
+				}
+
+				loserTierByRoundId.set(round.id, ++tier);
+			}
+
+			for (const [roundIdx, round] of winnersRounds.entries()) {
+				for (const match of this.matchesOfRound(round.id)) {
+					result.set(match.id, {
+						winnerTier: round === lastRound ? 1 : undefined,
+						loserTier: loserTierByRoundId.get(round.id),
+						loserRound: loserTierByRoundId.has(round.id)
+							? roundIdx + 1
+							: undefined,
+					});
+				}
+			}
+
+			for (const match of thirdPlaceRound
+				? this.matchesOfRound(thirdPlaceRound.id)
+				: []) {
+				result.set(match.id, {
+					winnerTier: thirdPlaceTiers.winner,
+					loserTier: thirdPlaceTiers.loser,
+				});
+			}
+		}
+
+		return result;
 	}
 
 	source({ placements, rest }: { placements: number[]; rest?: boolean }) {
@@ -178,47 +255,10 @@ export class SingleEliminationBracket extends Bracket {
 				: source;
 		}
 
-		const orderedRoundsIds = this.data.round
-			.filter((round) => round.section === "winners")
-			.map((round) => round.id)
-			.sort((a, b) => a - b);
-
-		const amountOfRounds = Math.abs(Math.min(...placements));
-
-		const sourceRoundsIds = orderedRoundsIds.slice(0, amountOfRounds).sort(
-			// teams who made it further in the bracket get higher seed
-			(a, b) => b - a,
-		);
-
-		const teams: number[] = [];
-		let relevantMatchesFinished = true;
-		for (const roundId of sourceRoundsIds) {
-			const roundsMatches = this.data.match.filter(
-				(match) => match.roundId === roundId,
-			);
-
-			for (const match of roundsMatches) {
-				// BYE
-				if (!match.opponent1 || !match.opponent2) {
-					continue;
-				}
-				if (!match.winnerSide) {
-					relevantMatchesFinished = false;
-					continue;
-				}
-
-				const loser =
-					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
-				invariant(loser?.id, "Loser id not found");
-
-				teams.push(loser.id);
-			}
-		}
-
-		return {
-			relevantMatchesFinished,
-			teams,
-		};
+		return this.sourceByElimination({
+			section: "winners",
+			roundCount: Math.abs(Math.min(...placements)),
+		});
 	}
 }
 

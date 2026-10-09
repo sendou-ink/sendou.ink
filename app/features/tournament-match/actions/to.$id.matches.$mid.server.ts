@@ -1056,12 +1056,13 @@ function matchResultsRoom(
 		return tournamentChannel(tournament.ctx.id);
 	}
 
-	const { type } = tournament.ctx.settings.bracketProgression[bracketIdx];
+	const { type, settings } =
+		tournament.ctx.settings.bracketProgression[bracketIdx];
 
 	return tournamentBracketChannel({
 		tournamentId: tournament.ctx.id,
 		bracketIdx,
-		groupId: showsOneGroupAtATime(type) ? match.groupId : null,
+		groupId: showsOneGroupAtATime({ type, settings }) ? match.groupId : null,
 	});
 }
 

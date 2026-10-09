@@ -15,10 +15,7 @@ import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { tournamentPage, tournamentRegisterPage } from "~/utils/urls";
 import { tournamentJoinSearchParams } from "../tournament-search-params";
 import { validateCanJoinTeam } from "../tournament-utils";
-import {
-	requireNotBannedByOrganization,
-	requireSendouQParticipationIfNeeded,
-} from "../tournament-utils.server";
+import { requireNotBannedByOrganization } from "../tournament-utils.server";
 
 export const action = defineAction(async ({ params, url }) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -35,10 +32,6 @@ export const action = defineAction(async ({ params, url }) => {
 	await requireNotBannedByOrganization({
 		tournament,
 		user,
-	});
-	await requireSendouQParticipationIfNeeded({
-		tournament,
-		userId: user.id,
 	});
 
 	const teamToJoin = tournament.ctx.teams.find(

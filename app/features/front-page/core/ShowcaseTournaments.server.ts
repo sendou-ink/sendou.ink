@@ -334,14 +334,24 @@ function resolveFirstPlacers(
 	if (
 		Progression.hasAbDivisionsFinals(tournament.settings.bracketProgression)
 	) {
-		const byDiv = R.groupBy(tournament.firstPlacers, (p) => p.div ?? "");
-		return Object.values(byDiv)
+		return rowsByTeam(tournament.firstPlacers)
 			.map((rows) => buildFirstPlacerEntry(rows, { withMembers: false }))
 			.sort((a, b) => (a.div ?? "").localeCompare(b.div ?? ""));
 	}
 
 	const winnerRows = winnersOfHighestDivision(tournament);
+	const winnerRowsByTeam = rowsByTeam(winnerRows);
+	if (winnerRowsByTeam.length > 1) {
+		return winnerRowsByTeam.map((rows) =>
+			buildFirstPlacerEntry(rows, { withMembers: false }),
+		);
+	}
+
 	return [buildFirstPlacerEntry(winnerRows, { withMembers: true })];
+}
+
+function rowsByTeam(rows: FirstPlacerRow[]) {
+	return Object.values(R.groupBy(rows, (row) => row.tournamentTeamId));
 }
 
 function winnersOfHighestDivision(

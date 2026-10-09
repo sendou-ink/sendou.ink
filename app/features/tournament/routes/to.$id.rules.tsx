@@ -4,7 +4,7 @@ import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { Image } from "~/components/Image";
 import { containerClassName } from "~/components/Main";
-import { MapPoolStages } from "~/components/MapPoolSelector";
+import { MapPoolStages } from "~/components/MapPoolStages";
 import { Section } from "~/components/Section";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
