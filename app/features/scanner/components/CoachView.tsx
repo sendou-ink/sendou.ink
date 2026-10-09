@@ -66,8 +66,6 @@ import {
 	visitVodFile,
 } from "./vod-scan";
 
-// xxx: optionally, drop in a live minimap that will be synced
-
 const ALL = "ALL";
 
 const DEFAULT_CATEGORY: CoachEvents.CoachEventCategory = "Special";

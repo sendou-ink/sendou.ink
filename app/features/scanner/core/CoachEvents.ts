@@ -1,6 +1,3 @@
-// xxx: maybe retake failed?
-// xxx: special stack dynamic too
-
 /**
  * Coach events: the moments of a scanned match worth reviewing, always from the
  * POV player's team's side (an enemy push is the POV team's PUSH_DEFENSE, an
