@@ -165,8 +165,8 @@ const SWISS_TO_SINGLE_ELIMINATION: Progression = [
 ];
 
 /**
- * Double elimination groups whose unbeaten teams make the top cut. The teams alive with one loss play a
- * double elimination redemption without grand finals, its winners and losers bracket winners making the top cut too.
+ * Double elimination pools whose unbeaten teams make the top cut. The teams alive with one loss play a
+ * double elimination redemption in groups without grand finals, each group's unbeaten team making the top cut too.
  */
 const DOUBLE_ELIMINATION_GROUPS_WITH_REDEMPTION_AND_TOP_CUT: Progression = [
 	{
@@ -174,7 +174,7 @@ const DOUBLE_ELIMINATION_GROUPS_WITH_REDEMPTION_AND_TOP_CUT: Progression = [
 		name: "Main",
 		requiresCheckIn: false,
 		settings: {
-			groupCount: 3,
+			groupCount: 8,
 			skippedRounds: ["LB_SEMIS", "LB_FINALS", "GRAND_FINALS", "BRACKET_RESET"],
 		},
 	},
@@ -183,6 +183,7 @@ const DOUBLE_ELIMINATION_GROUPS_WITH_REDEMPTION_AND_TOP_CUT: Progression = [
 		name: "Redemption",
 		requiresCheckIn: false,
 		settings: {
+			groupCount: 8,
 			skippedRounds: ["GRAND_FINALS", "BRACKET_RESET"],
 		},
 		sources: [{ bracketIdx: 0, placements: [2] }],
@@ -194,7 +195,7 @@ const DOUBLE_ELIMINATION_GROUPS_WITH_REDEMPTION_AND_TOP_CUT: Progression = [
 		settings: {},
 		sources: [
 			{ bracketIdx: 0, placements: [1] },
-			{ bracketIdx: 1, placements: [1, 2] },
+			{ bracketIdx: 1, placements: [1] },
 		],
 	},
 ];
@@ -745,7 +746,7 @@ async function seedSuperjump({ users, rosters }: Ctx) {
 	});
 
 	const teamRosters = rosters.take({
-		teamCount: 22,
+		teamCount: 64,
 		teamSize: 4,
 		pinned: [{ teamIdx: 2, userId: users.nzapId }],
 	});

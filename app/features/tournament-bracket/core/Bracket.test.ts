@@ -10,10 +10,16 @@ import type { BracketData, MatchData } from "./engine/types";
 import { Tournament } from "./Tournament";
 import { PADDLING_POOL_255 } from "./tests/mocks";
 import { LOW_INK_DECEMBER_2024 } from "./tests/mocks-li";
-import { testTournament, tournamentCtxTeam } from "./tests/test-utils";
+import {
+	mergeStages,
+	testTournament,
+	tournamentCtxTeam,
+} from "./tests/test-utils";
 
 const TEAM_ERROR_404_ID = 17354;
 const TEAM_THIS_IS_FINE_ID = 17513;
+// first round lineup of an 8 team bracket, 1-based seeds
+const LINEUP_8 = [1, 8, 4, 5, 2, 7, 3, 6];
 
 describe("swiss standings - losses against tied", () => {
 	test("calculates losses against tied", () => {
@@ -1997,13 +2003,90 @@ describe("grouped elimination - edge cases", () => {
 	});
 });
 
-/** Plays every match of the bracket, the lower team id winning. */
-function playedOut(data: BracketData): BracketData {
+describe("follow-up seeding through a redemption bracket", () => {
+	const TEAM_IDS = Array.from({ length: 32 }, (_, index) => index + 1);
+	const PROGRESSION: TournamentSettings["bracketProgression"] = [
+		{
+			type: "double_elimination",
+			name: "Main",
+			requiresCheckIn: false,
+			settings: {
+				groupCount: 4,
+				skippedRounds: [
+					"LB_SEMIS",
+					"LB_FINALS",
+					"GRAND_FINALS",
+					"BRACKET_RESET",
+				],
+			},
+		},
+		{
+			type: "double_elimination",
+			name: "Redemption",
+			requiresCheckIn: false,
+			settings: {
+				groupCount: 4,
+				skippedRounds: ["GRAND_FINALS", "BRACKET_RESET"],
+			},
+			sources: [{ bracketIdx: 0, placements: [2] }],
+		},
+		{
+			type: "double_elimination",
+			name: "Top Cut",
+			requiresCheckIn: false,
+			settings: {},
+			sources: [
+				{ bracketIdx: 0, placements: [1] },
+				{ bracketIdx: 1, placements: [1] },
+			],
+		},
+	];
+
+	const tournamentWith = (data: BracketData) =>
+		testTournament({
+			ctx: {
+				settings: { bracketProgression: PROGRESSION },
+				teams: TEAM_IDS.map((id) => tournamentCtxTeam(id, { seed: id })),
+			},
+			data,
+		});
+
+	test("keeps a main group's winner and the redemption winner from its group in different halves", () => {
+		const main = playedOut(
+			createResolved({
+				type: "double_elimination",
+				seeding: TEAM_IDS,
+				settings: PROGRESSION[0].settings,
+			}),
+		);
+		// 8 and 7 lost their main group's winners final to 1 and 2
+		const redemption = playedOut(
+			createResolved({
+				type: "double_elimination",
+				seeding: tournamentWith(main).bracketByIdx(1)!.seeding!,
+				settings: PROGRESSION[1].settings,
+			}),
+			[6, 7, 8, 11],
+		);
+		const seeding = tournamentWith(mergeStages(main, redemption)).bracketByIdx(
+			2,
+		)!.seeding!;
+		const half = (teamId: number) =>
+			LINEUP_8.indexOf(seeding.indexOf(teamId) + 1) < 4 ? "top" : "bottom";
+
+		expect(seeding.slice(4).toSorted((a, b) => a - b)).toEqual([6, 7, 8, 11]);
+		expect(half(1)).not.toBe(half(8));
+		expect(half(2)).not.toBe(half(7));
+	});
+});
+
+/** Plays every match of the bracket, the lower team id winning unless the other team is favored. */
+function playedOut(data: BracketData, favoredIds: number[] = []): BracketData {
 	let result = data;
 	let ready = readyMatches(result, () => true);
 	while (ready.length) {
 		for (const match of ready) {
-			result = reportLowerIdWinner(result, match.id);
+			result = reportLowerIdWinner(result, match.id, favoredIds);
 		}
 		ready = readyMatches(result, () => true);
 	}
@@ -2031,14 +2114,26 @@ function playedSwissMatches(
 	);
 }
 
-function reportLowerIdWinner(data: BracketData, matchId: number): BracketData {
+/** The lower team id wins, unless only the other team is favored. */
+function reportLowerIdWinner(
+	data: BracketData,
+	matchId: number,
+	favoredIds: number[] = [],
+): BracketData {
 	const match = matchById(data, matchId);
-	const opponent1Lower = match.opponent1!.id! < match.opponent2!.id!;
+	const opponent1Id = match.opponent1!.id!;
+	const opponent2Id = match.opponent2!.id!;
+	const opponent1Favored = favoredIds.includes(opponent1Id);
+	const opponent2Favored = favoredIds.includes(opponent2Id);
+	const opponent1Wins =
+		opponent1Favored === opponent2Favored
+			? opponent1Id < opponent2Id
+			: opponent1Favored;
 
 	return Engine.reportResult(data, {
 		matchId,
-		scores: [opponent1Lower ? 2 : 0, opponent1Lower ? 0 : 2],
-		winnerSide: opponent1Lower ? "opponent1" : "opponent2",
+		scores: [opponent1Wins ? 2 : 0, opponent1Wins ? 0 : 2],
+		winnerSide: opponent1Wins ? "opponent1" : "opponent2",
 	}).data;
 }
 

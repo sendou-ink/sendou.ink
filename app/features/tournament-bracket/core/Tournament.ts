@@ -577,7 +577,6 @@ export class Tournament {
 			return teams;
 		}
 
-		// xxx: only direct sources are read, so e.g. Main -> Redemption -> Top cut misses rematches from Main. Read encounters from every bracket on the teams' path and spread by the earliest group (now the latest source's group wins)
 		const sources: Seeding.FollowUpBracketSource[] = [];
 		for (const source of Progression.sortedSourcesForSeeding(
 			bracket.sources,
@@ -602,17 +601,46 @@ export class Tournament {
 				standings: sourceBracket.standings.map((standing) => ({
 					tournamentTeamId: standing.team.id,
 					placement: standing.placement,
-					groupId: standing.groupId ?? null,
 				})),
 				encounters,
 			});
 		}
 
+		const groupKeyByTeamId = new Map<number, string>();
+		for (const teamId of teams) {
+			const groupKey = this.firstGroupKey(teamId, bracket.sources);
+			if (groupKey) groupKeyByTeamId.set(teamId, groupKey);
+		}
+
 		return Seeding.forFollowUpBracket({
 			teams,
 			sources,
+			groupKeyByTeamId,
 			groupCount: eliminationGroupCount(bracket.settings, teams.length),
 		});
+	}
+
+	/** The group of the earliest bracket the team played on its way through the sources, e.g. its Main group when it came through a Redemption bracket. */
+	private firstGroupKey(
+		teamId: number,
+		sources: NonNullable<Progression.ParsedBracket["sources"]>,
+	): string | null {
+		for (const source of sources) {
+			const standing = this.bracketByIdx(source.bracketIdx)?.standings.find(
+				(candidate) => candidate.team.id === teamId,
+			);
+			if (!standing) continue;
+
+			const earlierSources =
+				this.ctx.settings.bracketProgression[source.bracketIdx]?.sources ?? [];
+
+			return (
+				this.firstGroupKey(teamId, earlierSources) ??
+				`${source.bracketIdx}:${standing.groupId ?? "single"}`
+			);
+		}
+
+		return null;
 	}
 
 	private divideTeamsToCheckedInAndNotCheckedIn({

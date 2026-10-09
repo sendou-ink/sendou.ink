@@ -9,11 +9,11 @@ const LINEUP_16 = [1, 16, 8, 9, 4, 13, 5, 12, 2, 15, 7, 10, 3, 14, 6, 11];
 describe("Seeding.forFollowUpBracket()", () => {
 	describe("group spreading", () => {
 		test("spreads 4 groups of 4 across the quarters of a 16 bracket", () => {
-			const { teams, source } = groupsOfFour();
+			const { teams, input } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [source],
+				...input,
 			});
 
 			for (const quarter of sections(result, LINEUP_16, 4)) {
@@ -22,11 +22,11 @@ describe("Seeding.forFollowUpBracket()", () => {
 		});
 
 		test("keeps placement tiers intact while spreading", () => {
-			const { teams, source } = groupsOfFour();
+			const { teams, input } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [source],
+				...input,
 			});
 
 			for (const [seedIdx, teamId] of result.entries()) {
@@ -35,11 +35,11 @@ describe("Seeding.forFollowUpBracket()", () => {
 		});
 
 		test("does not reorder the group winners (best two can only meet in the finals)", () => {
-			const { teams, source } = groupsOfFour();
+			const { teams, input } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [source],
+				...input,
 			});
 
 			expect(result.slice(0, 4)).toEqual(teams.slice(0, 4));
@@ -56,7 +56,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			for (const half of sections(result, LINEUP_8, 4)) {
@@ -73,7 +73,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			for (const match of firstRoundMatches(result, LINEUP_8)) {
@@ -87,7 +87,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			expect(result).toEqual(teams);
@@ -105,7 +105,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			for (const quarter of sections(result, LINEUP_16, 4)) {
@@ -128,12 +128,34 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			for (const quarter of sections(result, LINEUP_16, 4)) {
 				const quarterGroups = quarter.map(groupOf);
 				expect(new Set(quarterGroups).size).toBe(quarterGroups.length);
+			}
+		});
+
+		test("spreads by the group given, not by the source a team's tier comes from", () => {
+			// group winners come from the main bracket, the runners-up through a redemption bracket
+			const teams = [101, 201, 301, 401, 102, 202, 302, 402];
+			const placementOne = (teamIds: number[]) =>
+				teamIds.map((tournamentTeamId) => ({ tournamentTeamId, placement: 1 }));
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [
+					{ standings: placementOne(teams.slice(0, 4)), encounters: [] },
+					{ standings: placementOne(teams.slice(4)), encounters: [] },
+				],
+				groupKeyByTeamId: new Map(
+					teams.map((teamId) => [teamId, String(groupOf(teamId))]),
+				),
+			});
+
+			for (const half of sections(result, LINEUP_8, 4)) {
+				expect(new Set(half.map(groupOf)).size).toBe(4);
 			}
 		});
 
@@ -151,7 +173,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [groupsSource(groups)],
+				...groupsInput(groups),
 			});
 
 			const quarters = sections(result, LINEUP_16, 4);
@@ -175,7 +197,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, [[1, 8]])],
+				...singleGroupInput(teams, [[1, 8]]),
 			});
 
 			expect(result).toEqual([1, 2, 3, 4, 5, 6, 8, 7]);
@@ -192,7 +214,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, naturalMatches)],
+				...singleGroupInput(teams, naturalMatches),
 			});
 
 			expect(result.slice(0, 4)).toEqual([1, 2, 3, 4]);
@@ -215,7 +237,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, everyPair)],
+				...singleGroupInput(teams, everyPair),
 			});
 
 			expect(result).toEqual(teams);
@@ -237,7 +259,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, encounters)],
+				...singleGroupInput(teams, encounters),
 			});
 
 			expect(result.slice(0, 6)).toEqual([1, 2, 3, 4, 5, 6]);
@@ -261,7 +283,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 			const result = Seeding.forFollowUpBracket({
 				teams,
-				sources: [singleGroupSource(teams, encounters)],
+				...singleGroupInput(teams, encounters),
 			});
 
 			expect(result).toEqual(teams);
@@ -273,7 +295,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 
 		const result = Seeding.forFollowUpBracket({
 			teams,
-			sources: [singleGroupSource(teams, [[1, 2]])],
+			...singleGroupInput(teams, [[1, 2]]),
 		});
 
 		expect(result).toEqual(teams);
@@ -301,11 +323,17 @@ function groupsOfFour() {
 		404,
 	];
 
-	return { teams, source: groupsSource(groups) };
+	return { teams, input: groupsInput(groups) };
 }
 
-function groupsSource(groups: number[][]): Seeding.FollowUpBracketSource {
+type FollowUpBracketInput = Pick<
+	Parameters<typeof Seeding.forFollowUpBracket>[0],
+	"sources" | "groupKeyByTeamId"
+>;
+
+function groupsInput(groups: number[][]): FollowUpBracketInput {
 	const standings: Seeding.FollowUpBracketSource["standings"] = [];
+	const groupKeyByTeamId = new Map<number, string>();
 
 	const maxPlacements = Math.max(...groups.map((group) => group.length));
 	for (let placement = 1; placement <= maxPlacements; placement++) {
@@ -313,7 +341,8 @@ function groupsSource(groups: number[][]): Seeding.FollowUpBracketSource {
 			const tournamentTeamId = group[placement - 1];
 			if (!tournamentTeamId) continue;
 
-			standings.push({ tournamentTeamId, placement, groupId: groupIdx + 1 });
+			standings.push({ tournamentTeamId, placement });
+			groupKeyByTeamId.set(tournamentTeamId, String(groupIdx + 1));
 		}
 	}
 
@@ -327,20 +356,24 @@ function groupsSource(groups: number[][]): Seeding.FollowUpBracketSource {
 		}
 	}
 
-	return { standings, encounters };
+	return { sources: [{ standings, encounters }], groupKeyByTeamId };
 }
 
-function singleGroupSource(
+function singleGroupInput(
 	teams: number[],
 	encounters: Array<[number, number]>,
-): Seeding.FollowUpBracketSource {
+): FollowUpBracketInput {
 	return {
-		standings: teams.map((tournamentTeamId, i) => ({
-			tournamentTeamId,
-			placement: i + 1,
-			groupId: null,
-		})),
-		encounters,
+		sources: [
+			{
+				standings: teams.map((tournamentTeamId, i) => ({
+					tournamentTeamId,
+					placement: i + 1,
+				})),
+				encounters,
+			},
+		],
+		groupKeyByTeamId: new Map(teams.map((teamId) => [teamId, "single"])),
 	};
 }
 

@@ -76,9 +76,9 @@ export const RR_TO_SE_WITH_UNDERGROUND: BracketProgression = [
 	},
 ];
 
-/** With 15 teams: double elimination groups of 8 and 7 (a bye) ending once each has 1 unbeaten and 3 one loss teams.
- * The unbeaten teams make the top cut, the one loss teams play a redemption of two single elimination
- * groups of 3 whose co-winners (finals not played) make the top cut too. */
+/** With 16 teams: double elimination pools of 8 ending once each has 1 unbeaten and 3 one loss teams.
+ * The unbeaten teams make the top cut, the one loss teams play a double elimination redemption of two groups
+ * of 3 without grand finals, whose unbeaten teams make the top cut too. */
 export const DE_GROUPS_TO_REDEMPTION_AND_TOP_CUT: BracketProgression = [
 	{
 		type: "double_elimination",
@@ -90,12 +90,12 @@ export const DE_GROUPS_TO_REDEMPTION_AND_TOP_CUT: BracketProgression = [
 		},
 	},
 	{
-		type: "single_elimination",
+		type: "double_elimination",
 		name: "Redemption",
 		requiresCheckIn: false,
 		settings: {
 			groupCount: 2,
-			skippedRounds: ["FINALS", "THIRD_PLACE_MATCH"],
+			skippedRounds: ["GRAND_FINALS", "BRACKET_RESET"],
 		},
 		sources: [{ bracketIdx: 0, placements: [2] }],
 	},

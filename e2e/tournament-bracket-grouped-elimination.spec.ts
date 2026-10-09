@@ -20,8 +20,8 @@ test.describe("Tournament bracket grouped elimination", () => {
 			startTimes: startedTournamentTimes(),
 			bracketProgression: DE_GROUPS_TO_REDEMPTION_AND_TOP_CUT,
 		});
-		await createTeams(factories, tournament.id, teamSeeds(15));
-		// the higher seed wins every match: Team 1 and Team 2 win their groups unbeaten
+		await createTeams(factories, tournament.id, teamSeeds(16));
+		// the higher seed wins every match: Team 1 and Team 2 win their pools unbeaten
 		await factories.TournamentFactory.playOut(tournament.id, 0);
 
 		await impersonate(page);
@@ -40,18 +40,17 @@ test.describe("Tournament bracket grouped elimination", () => {
 		await expect(brackets.bracketTeamName("Team 2").first()).toBeVisible();
 		await isNotVisible(brackets.bracketTeamName("Team 1"));
 
-		// two redemption groups of 3, each has two co-winners: the winner of its only match and the team with a bye
+		// Team 3 (pool B) and Team 4 (pool A) win their redemption groups, having lost their pool's winners final
 		await factories.TournamentFactory.playOut(tournament.id, 1);
 
 		await brackets.goto(tournament.id, 2);
-		// the group winners get the byes as the top seeds, the redemption co-winners play the first round
-		const firstRound = await brackets.firstRoundTeamNames(4);
-		const redemptionCoWinners = firstRound.filter(Boolean);
-		expect(redemptionCoWinners).toHaveLength(4);
-		expect(redemptionCoWinners).not.toContain("Team 1");
-		expect(redemptionCoWinners).not.toContain("Team 2");
-		await expect(brackets.bracketTeamName("Team 1").first()).toBeVisible();
-		await expect(brackets.bracketTeamName("Team 2").first()).toBeVisible();
+		// pool winners take the top seeds and play a redemption winner from the other pool, not a rematch
+		expect(await brackets.firstRoundTeamNames(4)).toEqual([
+			"Team 1",
+			"Team 3",
+			"Team 2",
+			"Team 4",
+		]);
 
 		await factories.TournamentFactory.playOut(tournament.id, 2);
 

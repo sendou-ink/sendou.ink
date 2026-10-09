@@ -6,8 +6,6 @@ export interface FollowUpBracketSource {
 	standings: Array<{
 		tournamentTeamId: number;
 		placement: number;
-		/** `null` when the source bracket is not played in groups */
-		groupId: number | null;
 	}>;
 	/** Pairs of teams that already faced each other in the source bracket */
 	encounters: Array<[number, number]>;
@@ -30,7 +28,7 @@ const MAX_SEARCH_NODES = 10_000;
 /**
  * Reorders teams advancing into an elimination bracket so that:
  *
- * - teams sharing a source group spread evenly and can rematch only as late as the bracket allows
+ * - teams sharing a group spread evenly and can rematch only as late as the bracket allows
  *   (e.g. 4 groups of 4 into a 16 bracket: one team per group in every quarter, rematch in the semis at earliest)
  * - teams that already faced each other do not rematch in round 1 (e.g. a single Swiss group feeding a top cut)
  * - placement tiers stay intact: a team never takes a seed reserved for a better placement, except in
@@ -44,11 +42,14 @@ const MAX_SEARCH_NODES = 10_000;
 export function forFollowUpBracket({
 	teams,
 	sources,
+	groupKeyByTeamId,
 	groupCount = 1,
 }: {
 	/** tournament team ids in their incoming seed order (best placements first) */
 	teams: number[];
 	sources: FollowUpBracketSource[];
+	/** The group each team played in, teams sharing a key get spread. Teams without one are not spread. */
+	groupKeyByTeamId: Map<number, string>;
 	/** Groups the elimination bracket is split into */
 	groupCount?: number;
 }): number[] {
@@ -60,7 +61,7 @@ export function forFollowUpBracket({
 			? resolveGroupedLineupPositions(teams.length, groupCount)
 			: resolveLineupPositions(2 ** Math.ceil(Math.log2(teams.length)));
 
-	const metaByTeamId = resolveTeamMeta(teams, sources);
+	const metaByTeamId = resolveTeamMeta(teams, sources, groupKeyByTeamId);
 	const classes = resolveClasses(teams, metaByTeamId);
 	const encounterKeys = new Set(
 		sources.flatMap((source) =>
@@ -126,7 +127,11 @@ function resolveGroupedLineupPositions(teamCount: number, groupCount: number) {
 	};
 }
 
-function resolveTeamMeta(teams: number[], sources: FollowUpBracketSource[]) {
+function resolveTeamMeta(
+	teams: number[],
+	sources: FollowUpBracketSource[],
+	groupKeyByTeamId: Map<number, string>,
+) {
 	const metaByTeamId = new Map<number, TeamMeta>();
 
 	for (const [sourceIdx, source] of sources.entries()) {
@@ -135,10 +140,7 @@ function resolveTeamMeta(teams: number[], sources: FollowUpBracketSource[]) {
 
 			metaByTeamId.set(standing.tournamentTeamId, {
 				classKey: `${sourceIdx}:${standing.placement}`,
-				groupKey:
-					standing.groupId !== null
-						? `${sourceIdx}:${standing.groupId}`
-						: `${sourceIdx}:single`,
+				groupKey: groupKeyByTeamId.get(standing.tournamentTeamId) ?? null,
 			});
 		}
 	}
