@@ -84,7 +84,6 @@
 	"builder.column.followUpInfo": "",
 	"builder.column.new": "",
 	"builder.column.newInfo": "",
-	"builder.maxTeams": "",
 	"builder.groupCount": "",
 	"builder.fact.teamsPerGroup": "",
 	"builder.fact.abDivisions": "",
@@ -177,6 +176,5 @@
 	"newTournament.prizeKind.badges": "",
 	"newTournament.prizeKind.trophy": "",
 	"newTournament.review": "",
-	"newTournament.review.noName": "",
-	"newTournament.review.mapCount": ""
+	"newTournament.review.noName": ""
 }

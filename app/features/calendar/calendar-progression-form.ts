@@ -5,6 +5,7 @@ import type { SkippableRound, TournamentStageSettings } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds";
+import { isEliminationType } from "~/features/tournament-bracket/tournament-bracket-utils";
 import {
 	array,
 	customField,
@@ -456,8 +457,4 @@ function settingsFromFormValues(
 		default:
 			assertUnreachable(bracket.type);
 	}
-}
-
-function isEliminationType(type: Tables["TournamentStage"]["type"]) {
-	return type === "single_elimination" || type === "double_elimination";
 }

@@ -77,8 +77,8 @@
 	"builder.connectHint": "Click the bracket that teams from {{name}} move on to",
 	"builder.notice.FIRST_BRACKET": "The first bracket is always a starting bracket",
 	"builder.notice.SAME_BRACKET": "A bracket can't send teams to itself",
-	"builder.notice.EARLIER_BRACKET": "Teams move on from left to right, pick a bracket in the same column or further right",
-	"builder.notice.CYCLE": "That would send teams around in a loop, pick a bracket further along",
+	"builder.notice.EARLIER_BRACKET": "Teams move on from left to right. Pick a bracket in the same column or further right",
+	"builder.notice.CYCLE": "That would send teams around in a loop. Pick a bracket further along",
 	"builder.notice.removedConnections": "Removed lines that no longer went from left to right",
 	"builder.column.starting": "Starting brackets",
 	"builder.column.startingInfo": "Teams join from sign-up",
@@ -86,7 +86,8 @@
 	"builder.column.followUpInfo": "Teams come from earlier brackets",
 	"builder.column.new": "New column",
 	"builder.column.newInfo": "Drop a bracket here for a follow-up of a follow-up",
-	"builder.maxTeams": "up to {{count}} teams",
+	"builder.maxTeams_one": "up to {{count}} team",
+	"builder.maxTeams_other": "up to {{count}} teams",
 	"builder.groupCount": "{{count}} groups",
 	"builder.fact.teamsPerGroup": "{{count}} per group",
 	"builder.fact.abDivisions": "A/B divisions",
@@ -119,7 +120,7 @@
 	"builder.hint.eliminationBounded": "Teams knocked out in the same round share a placement. {{name}} has at most {{count}} teams, so these are all of its rounds.",
 	"builder.hint.eliminationGroups": "Placements apply to every group, e.g. #1 takes the top teams of each group. Teams knocked out in the same round share a placement.",
 	"builder.hint.swiss": "Final standings of {{name}}",
-	"builder.hint.swissGroups": "Standings within each of the {{count}} groups, the range applies to every group",
+	"builder.hint.swissGroups": "Standings within each of the {{count}} groups. The range applies to every group",
 	"builder.hint.knockedOut": "Teams that lose early, e.g. for an underground bracket",
 	"builder.hint.earlyAdvance": "Every team reaching {{wins}} wins moves on right away",
 	"builder.knockedOutFirst": "Lost in round 1",
@@ -180,5 +181,6 @@
 	"newTournament.prizeKind.trophy": "Trophy",
 	"newTournament.review": "Review",
 	"newTournament.review.noName": "No name yet",
-	"newTournament.review.mapCount": "{{count}} maps"
+	"newTournament.review.mapCount_one": "{{count}} map",
+	"newTournament.review.mapCount_other": "{{count}} maps"
 }

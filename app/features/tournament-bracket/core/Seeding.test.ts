@@ -1,4 +1,6 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
+import * as Engine from "./engine";
 import * as Seeding from "./Seeding";
 
 // first round lineups of the standard bracket ("space_between") by bracket size,
@@ -191,6 +193,157 @@ describe("Seeding.forFollowUpBracket()", () => {
 		});
 	});
 
+	describe("grouped elimination", () => {
+		// teams' engine group and round 1 opponent are read from the bracket the engine creates
+		// with the result as its seeding, so the expectations hold only if seeding lays out
+		// the groups like the engine does
+		test.each([
+			{
+				why: "2 groups, 8 teams from 4 groups of 2",
+				type: "single_elimination",
+				groupCount: 2,
+				groups: [
+					[101, 102],
+					[201, 202],
+					[301, 302],
+					[401, 402],
+				],
+			},
+			{
+				why: "2 groups of 3 and 4 teams, 7 teams from 5 groups",
+				type: "single_elimination",
+				groupCount: 2,
+				groups: [[101, 102], [201, 202], [301], [401], [501]],
+			},
+			{
+				why: "4 groups, 16 teams from 4 groups of 4",
+				type: "single_elimination",
+				groupCount: 4,
+				groups: groupsOfFour().groups,
+			},
+			{
+				why: "4 groups of 3 and 4 teams, 14 teams from groups of 4 and 3",
+				type: "single_elimination",
+				groupCount: 4,
+				groups: [
+					[101, 102, 103, 104],
+					[201, 202, 203, 204],
+					[301, 302, 303],
+					[401, 402, 403],
+				],
+			},
+			{
+				why: "4 groups, 16 teams from 4 groups of 4, double elimination",
+				type: "double_elimination",
+				groupCount: 4,
+				groups: groupsOfFour().groups,
+			},
+		] as const)("spreads each group's teams into separate engine groups ($why)", ({
+			type,
+			groupCount,
+			groups,
+		}) => {
+			const teams = teamsByTier(groups);
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				...groupsInput(groups),
+				groupCount,
+			});
+
+			const engineGroups = engineFirstRoundLineups(result, type, groupCount);
+			expect(engineGroups).toHaveLength(groupCount);
+			for (const lineup of engineGroups) {
+				const lineupGroups = lineup.flatMap((teamId) =>
+					teamId === null ? [] : [groupOf(teamId)],
+				);
+				expect(new Set(lineupGroups).size).toBe(lineupGroups.length);
+			}
+
+			for (const [seedIdx, teamId] of result.entries()) {
+				expect(tierOf(teamId)).toBe(tierOf(teams[seedIdx]));
+			}
+		});
+
+		test.each([
+			{
+				why: "2 groups, 8 teams from 2 groups of 4 (Swiss top cut shape)",
+				groupCount: 2,
+				groups: [
+					[101, 102, 103, 104],
+					[201, 202, 203, 204],
+				],
+			},
+			{
+				why: "2 groups of 3 and 4 teams, 7 teams from groups of 3 and 2",
+				groupCount: 2,
+				groups: [[101, 102, 103], [201, 202], [301, 302]],
+			},
+			{
+				why: "4 groups of 2 and 3 teams, 10 teams from 2 groups of 5",
+				groupCount: 4,
+				groups: [
+					[101, 102, 103, 104, 105],
+					[201, 202, 203, 204, 205],
+				],
+			},
+		])("keeps teams of a group out of the same round 1 match when they outnumber the engine groups ($why)", ({
+			groupCount,
+			groups,
+		}) => {
+			const teams = teamsByTier(groups);
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				...groupsInput(groups),
+				groupCount,
+			});
+
+			const engineGroups = engineFirstRoundLineups(
+				result,
+				"single_elimination",
+				groupCount,
+			);
+			expect(engineGroups).toHaveLength(groupCount);
+			for (const lineup of engineGroups) {
+				for (const match of R.chunk(lineup, 2)) {
+					const [one, two] = match;
+					if (one === null || two === null) continue;
+
+					expect(groupOf(one)).not.toBe(groupOf(two));
+				}
+			}
+		});
+
+		test("keeps an incoming order that already spreads the groups across engine groups", () => {
+			// the incoming order already spreads the groups (engine group 1 gets seeds 1, 4, 5 and 8),
+			// so nothing needs to change
+			const groups = [
+				[101, 102],
+				[201, 202],
+				[301, 302],
+				[401, 402],
+			];
+			const teams = [101, 201, 301, 401, 202, 102, 402, 302];
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				...groupsInput(groups),
+				groupCount: 2,
+			});
+
+			expect(result).toEqual(teams);
+			expect(
+				engineFirstRoundLineups(result, "single_elimination", 2).map((lineup) =>
+					lineup.toSorted((a, b) => a! - b!),
+				),
+			).toEqual([
+				[101, 202, 302, 401],
+				[102, 201, 301, 402],
+			]);
+		});
+	});
+
 	describe("previous encounter avoidance", () => {
 		test("single group: avoids a round 1 rematch by reordering the bottom half", () => {
 			const teams = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -323,7 +476,44 @@ function groupsOfFour() {
 		404,
 	];
 
-	return { teams, input: groupsInput(groups) };
+	return { teams, groups, input: groupsInput(groups) };
+}
+
+/** every group's winner first, then every group's runner-up and so on */
+function teamsByTier(groups: number[][]) {
+	const maxPlacements = Math.max(...groups.map((group) => group.length));
+
+	return Array.from({ length: maxPlacements }, (_, placementIdx) =>
+		groups.flatMap((group) =>
+			group[placementIdx] ? [group[placementIdx]] : [],
+		),
+	).flat();
+}
+
+/** each engine group's first round lineup (null = BYE) of the elimination bracket the engine creates from the seeding */
+function engineFirstRoundLineups(
+	seeding: number[],
+	type: "single_elimination" | "double_elimination",
+	groupCount: number,
+) {
+	const data = Engine.create({ type, seeding, settings: { groupCount } });
+
+	return data.group.map((group) => {
+		const firstRound = data.round.find(
+			(round) =>
+				round.groupId === group.id &&
+				round.section === "winners" &&
+				round.number === 1,
+		)!;
+
+		return data.match
+			.filter((match) => match.roundId === firstRound.id)
+			.toSorted((a, b) => a.number - b.number)
+			.flatMap((match) => [
+				match.opponent1?.id ?? null,
+				match.opponent2?.id ?? null,
+			]);
+	});
 }
 
 type FollowUpBracketInput = Pick<

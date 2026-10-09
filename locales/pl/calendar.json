@@ -90,7 +90,10 @@
 	"builder.column.followUpInfo": "",
 	"builder.column.new": "",
 	"builder.column.newInfo": "",
-	"builder.maxTeams": "",
+	"builder.maxTeams_one": "",
+	"builder.maxTeams_few": "",
+	"builder.maxTeams_many": "",
+	"builder.maxTeams_other": "",
 	"builder.groupCount": "",
 	"builder.fact.teamsPerGroup": "",
 	"builder.fact.abDivisions": "",
@@ -184,5 +187,8 @@
 	"newTournament.prizeKind.trophy": "",
 	"newTournament.review": "",
 	"newTournament.review.noName": "",
-	"newTournament.review.mapCount": ""
+	"newTournament.review.mapCount_one": "",
+	"newTournament.review.mapCount_few": "",
+	"newTournament.review.mapCount_many": "",
+	"newTournament.review.mapCount_other": ""
 }

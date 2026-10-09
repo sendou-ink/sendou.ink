@@ -155,7 +155,7 @@ export const action = defineAction(
 			autonomousSubs: data.autonomousSubs,
 			tournamentToCopyId: data.tournamentToCopyId,
 			regClosesAt:
-				isAddingTournament && data.regClosesAt
+				isAddingTournament && !data.isInvitational && data.regClosesAt
 					? dateToDatabaseTimestamp(data.regClosesAt)
 					: undefined,
 		};

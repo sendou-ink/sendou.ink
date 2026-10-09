@@ -310,6 +310,7 @@ function calendarNewSyncRefine(
 
 	if (
 		data.toToolsEnabled &&
+		!data.isInvitational &&
 		data.startTime &&
 		data.regClosesAt &&
 		data.regClosesAt > data.startTime

@@ -33,11 +33,6 @@ const DEPENDENTS: Record<SkippableRound, SkippableRound[]> = {
 	BRACKET_RESET: [],
 };
 
-/** Rounds that are skipped automatically when the given round is skipped. */
-function dependentsOf(round: SkippableRound): SkippableRound[] {
-	return DEPENDENTS[round];
-}
-
 /** Rounds that must be played for the given round to be played. */
 export function prerequisitesOf(round: SkippableRound): SkippableRound[] {
 	return (Object.keys(DEPENDENTS) as SkippableRound[]).filter((candidate) =>
@@ -51,7 +46,7 @@ export function withSkipped(
 	skipped: SkippableRound[],
 	round: SkippableRound,
 ): SkippableRound[] {
-	return inPlayOrder(type, [...skipped, round, ...dependentsOf(round)]);
+	return inPlayOrder(type, [...skipped, round, ...DEPENDENTS[round]]);
 }
 
 /** Skipped rounds after playing `round`, which also plays every round it depends on. */
@@ -77,7 +72,7 @@ export function isValid(
 	if (skipped.some((round) => !skippable.includes(round))) return false;
 
 	return skipped.every((round) =>
-		dependentsOf(round).every((dependent) => skipped.includes(dependent)),
+		DEPENDENTS[round].every((dependent) => skipped.includes(dependent)),
 	);
 }
 
@@ -90,7 +85,7 @@ export function normalized(
 
 	return inPlayOrder(
 		type,
-		skipped.flatMap((round) => [round, ...dependentsOf(round)]),
+		skipped.flatMap((round) => [round, ...DEPENDENTS[round]]),
 	);
 }
 

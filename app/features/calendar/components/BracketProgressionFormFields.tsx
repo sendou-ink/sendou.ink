@@ -5,6 +5,7 @@ import { InfoPopover } from "~/components/InfoPopover";
 import type { SkippableRound } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
+import { isEliminationType } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { FormField } from "~/form/FormField";
 import { useFormFieldContext, useFormValue } from "~/form/SendouForm";
 import type {
@@ -138,8 +139,7 @@ export function BracketFields({
 				}}
 			/>
 
-			{bracket.type === "single_elimination" ||
-			bracket.type === "double_elimination" ? (
+			{isEliminationType(bracket.type) ? (
 				<EliminationFields
 					type={bracket.type}
 					itemName={itemName}

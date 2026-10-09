@@ -3,6 +3,7 @@ import type { SkippableRound } from "~/db/tables-json";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds";
+import { isEliminationType } from "~/features/tournament-bracket/tournament-bracket-utils";
 import {
 	type BracketFormValue,
 	newBracketFormValue,
@@ -448,9 +449,7 @@ export function placementTiers(
 /** Single or double elimination split into groups. */
 export function isGrouped(bracket: BracketFormValue) {
 	return (
-		(bracket.type === "single_elimination" ||
-			bracket.type === "double_elimination") &&
-		Number(bracket.eliminationGroupCount) > 1
+		isEliminationType(bracket.type) && Number(bracket.eliminationGroupCount) > 1
 	);
 }
 
@@ -516,10 +515,7 @@ export function cardFacts(
 
 /** Losers rounds an "knocked out early" line can take, `-1` being the first round. */
 export function knockedOutRoundOptions(bracket: BracketFormValue) {
-	return bracket.type === "single_elimination" ||
-		bracket.type === "double_elimination"
-		? [1, 2, 3]
-		: [];
+	return isEliminationType(bracket.type) ? [1, 2, 3] : [];
 }
 
 /**

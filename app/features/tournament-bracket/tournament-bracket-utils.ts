@@ -38,7 +38,7 @@ export const showsOneGroupAtATime = (bracket: {
 	(isEliminationType(bracket.type) && (bracket.settings?.groupCount ?? 1) > 1);
 
 /** Single or double elimination. */
-const isEliminationType = (
+export const isEliminationType = (
 	type: Tables["TournamentStage"]["type"],
 ): type is "single_elimination" | "double_elimination" =>
 	type === "single_elimination" || type === "double_elimination";

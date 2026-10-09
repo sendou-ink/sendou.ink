@@ -4,6 +4,7 @@ import type { PreparedMaps } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { nullFilledArray } from "~/utils/arrays";
 import { invariant } from "~/utils/invariant";
+import { isEliminationType } from "../tournament-bracket-utils";
 import type { Bracket } from "./Bracket";
 import * as Engine from "./engine";
 import type { BracketData } from "./engine/types";
@@ -166,9 +167,9 @@ export function eliminationTeamCountPrefill({
  */
 export function mapListRounds(data: BracketData) {
 	const stageType = data.stage[0]?.type;
-	const isElimination =
-		stageType === "single_elimination" || stageType === "double_elimination";
-	if (!isElimination || data.group.length <= 1) return data.round;
+	if (!stageType || !isEliminationType(stageType) || data.group.length <= 1) {
+		return data.round;
+	}
 
 	const roundsByGroup = data.group.map((group) =>
 		data.round.filter((round) => round.groupId === group.id),
