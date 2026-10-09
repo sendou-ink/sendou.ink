@@ -10,9 +10,12 @@
  * jumps the video there. The map as last opened (CoachMinimap) tops the events,
  * following the video; clicking it swaps the two, the video playing on in the
  * map's place; paused with the map big, the map and the game's weapons can be
- * opened in the map planner. Each life's first seconds carry its summary
- * (CoachLifeCard) over the video. The file is the one scanned or opened this visit, else the user
- * opens it again (only the scan was saved).
+ * opened in the map planner. While paused, the big one can be drawn over
+ * (CoachDrawing) until playback continues or the video moves; clicks then draw
+ * instead of playing or swapping, Space still plays. Each life's first
+ * seconds carry its summary (CoachLifeCard) over the video. The file is the
+ * one scanned or opened this visit, else the user opens it again (only the
+ * scan was saved).
  */
 // xxx: coach mode button could be a bit more attention drawing!
 import { FolderOpen } from "lucide-react";
@@ -41,6 +44,7 @@ import type { ScannerMatch } from "../core/scanner-match";
 import { matchResult } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
 import { CoachControls, type CoachJumps } from "./CoachControls";
+import { CoachDrawing } from "./CoachDrawing";
 import { CoachFilterBar } from "./CoachFilterBar";
 import { type CoachGame, CoachGameStrip, gameAt } from "./CoachGameStrip";
 import { CoachLifeCard } from "./CoachLifeCard";
@@ -345,11 +349,12 @@ function CoachSession({
 			<div className={styles.layout}>
 				<div className={styles.player}>
 					{url ? (
-						isMapBig ? (
-							minimapView
-						) : (
-							videoSlot
-						)
+						<div className={styles.stage}>
+							{isMapBig ? minimapView : videoSlot}
+							{isPaused ? (
+								<CoachDrawing key={`${isMapBig}-${currentTime}`} />
+							) : null}
+						</div>
 					) : (
 						<div className={styles.openFile}>
 							<p>

@@ -45,6 +45,10 @@
 	min-width: 0;
 }
 
+.stage {
+	position: relative;
+}
+
 .slot,
 .videoHost {
 	width: 100%;

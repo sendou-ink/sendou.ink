@@ -30,6 +30,7 @@
 
 .planner {
 	position: absolute;
+	z-index: 1;
 	inset-block-end: var(--s-1-5);
 	inset-inline-start: var(--s-1-5);
 	display: flex;
