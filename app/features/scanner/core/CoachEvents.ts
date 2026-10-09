@@ -2,6 +2,7 @@
 // xxx: add kill streak (dynamic)
 // xxx: make death streak dynamic, 2,3,4...
 // xxx: special stack dynamic too
+// xxx: add plain special actually too (default)
 
 /**
  * Coach events: the moments of a scanned match worth reviewing, always from the
@@ -28,80 +29,108 @@ export const DEFINITIONS = [
 	{
 		type: "OPENING_WON",
 		label: "Opening won",
+		category: "Opening",
+		variant: "Won",
 		modes: ["SZ", "TC", "RM", "CB"],
 		rule: { kind: "opening", outcome: "won" },
 	},
 	{
 		type: "OPENING_LOST",
 		label: "Opening lost",
+		category: "Opening",
+		variant: "Lost",
 		modes: ["SZ", "TC", "RM", "CB"],
 		rule: { kind: "opening", outcome: "lost" },
 	},
 	{
 		type: "PUSH_OFFENSE",
 		label: "Push",
+		category: "Push",
+		variant: "Ours",
 		modes: ["TC", "RM", "CB"],
 		rule: { kind: "push", side: "pov" },
 	},
 	{
 		type: "PUSH_DEFENSE",
 		label: "Enemy push",
+		category: "Push",
+		variant: "Enemy",
 		modes: ["TC", "RM", "CB"],
 		rule: { kind: "push", side: "enemy" },
 	},
 	{
 		type: "PUSH_OFFENSE_GAME_WINNING",
 		label: "Game-winning push",
+		category: "Push",
+		variant: "Game-winning",
 		modes: ["TC", "RM"],
 		rule: { kind: "push", side: "pov", gameWinning: true },
 	},
 	{
 		type: "PUSH_DEFENSE_GAME_WINNING",
 		label: "Enemy game-winning push",
+		category: "Push",
+		variant: "Enemy game-winning",
 		modes: ["TC", "RM"],
 		rule: { kind: "push", side: "enemy", gameWinning: true },
 	},
 	{
 		type: "RETAKE",
 		label: "Retake",
+		category: "Zone",
+		variant: "Retake",
 		modes: ["SZ"],
 		rule: { kind: "retake" },
 	},
 	{
 		type: "HOLD",
 		label: "Hold",
+		category: "Zone",
+		variant: "Hold",
 		modes: ["SZ"],
 		rule: { kind: "hold", best: false },
 	},
 	{
 		type: "BEST_HOLD",
 		label: "Best hold",
+		category: "Zone",
+		variant: "Best hold",
 		modes: ["SZ"],
 		rule: { kind: "hold", best: true },
 	},
 	{
 		type: "SPECIAL_STACK_2",
 		label: "2 specials stacked",
+		category: "Special stack",
+		variant: "2 specials",
 		rule: { kind: "specialStack", minSpecials: 2 },
 	},
 	{
 		type: "SPECIAL_STACK_3",
 		label: "3 specials stacked",
+		category: "Special stack",
+		variant: "3 specials",
 		rule: { kind: "specialStack", minSpecials: 3 },
 	},
 	{
 		type: "DIED_WITH_SPECIAL",
 		label: "Died with special",
+		category: "Death",
+		variant: "With special",
 		rule: { kind: "diedWithSpecial" },
 	},
 	{
 		type: "DEATH_STREAK",
 		label: "Death streak",
+		category: "Death",
+		variant: "Streak",
 		rule: { kind: "deathStreak", minDeaths: 3 },
 	},
 ] as const satisfies readonly CoachEventDefinition[];
 
 export type CoachEventType = (typeof DEFINITIONS)[number]["type"];
+
+export type CoachEventCategory = (typeof DEFINITIONS)[number]["category"];
 
 /** a team holds the objective this long (TC/RM) … */
 const PUSH_MIN_CONTROL_S = 5;
@@ -161,6 +190,10 @@ type CoachRule =
 interface CoachEventDefinition {
 	type: string;
 	label: string;
+	/** the group the type is picked from first, e.g. "Opening" */
+	category: string;
+	/** the type within its category, e.g. "Won" */
+	variant: string;
 	/** modes the event exists in; omitted = every mode (Turf War and unknown included) */
 	modes?: readonly ModeShort[];
 	rule: CoachRule;
@@ -210,6 +243,11 @@ export function ofMatch(
 /** The definition's display label. */
 export function label(type: CoachEventType): string {
 	return DEFINITIONS.find((definition) => definition.type === type)!.label;
+}
+
+/** The category the type is grouped under. */
+export function category(type: CoachEventType): CoachEventCategory {
+	return DEFINITIONS.find((definition) => definition.type === type)!.category;
 }
 
 /**

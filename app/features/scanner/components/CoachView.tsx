@@ -2,7 +2,7 @@
  * Coach mode (`view=coach&name=`): a scanned file's games in a strip above a
  * player of the file itself, with their coach events (core/CoachEvents.ts)
  * filterable by type beside it — picking a game or an event jumps the video to
- * its start. Games the filters (core/CoachFilters.ts) hide drop their events,
+ * its start (a category picked first, then a type within it). Games the filters (core/CoachFilters.ts) hide drop their events,
  * and while any is set playback keeps to the games shown, jumping past the
  * hidden ones and the footage between games. A bar under the player
  * (CoachControls) steps between the games, lives and events shown, with the
@@ -18,10 +18,12 @@
 import { FolderOpen } from "lucide-react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import * as R from "remeda";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { toastQueue } from "~/components/elements/Toast";
 import { GameTimeline } from "~/components/GameTimeline";
 import * as PlanImport from "~/features/map-planner/core/PlanImport";
@@ -62,6 +64,10 @@ import {
 // xxx: optionally, drop in a live minimap that will be synced
 
 const ALL = "ALL";
+
+const CATEGORIES = R.unique(
+	CoachEvents.DEFINITIONS.map((definition) => definition.category),
+);
 
 /** Coach data keyed by the build, so the player's time updates don't redo it. */
 const coachDataCache = new WeakMap<
@@ -119,7 +125,10 @@ function CoachSession({
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [file, setFile] = useState(() => visitVodFile(name));
 	const url = useFileUrl(file);
-	const [filter, setFilter] = useState<CoachEvents.CoachEventType | typeof ALL>(
+	const [category, setCategory] = useState<
+		CoachEvents.CoachEventCategory | typeof ALL
+	>(ALL);
+	const [type, setType] = useState<CoachEvents.CoachEventType | typeof ALL>(
 		ALL,
 	);
 	const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -149,8 +158,12 @@ function CoachSession({
 	for (const entry of entries) {
 		counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1);
 	}
-	const shown = entries.filter(
-		(entry) => filter === ALL || entry.type === filter,
+	const categoryEntries = entries.filter(
+		(entry) =>
+			category === ALL || CoachEvents.category(entry.type) === category,
+	);
+	const shown = categoryEntries.filter(
+		(entry) => type === ALL || entry.type === type,
 	);
 	const currentGame = gameAt(games, currentTime);
 	const minimap = currentGame
@@ -382,29 +395,18 @@ function CoachSession({
 				</div>
 				<div className={styles.events}>
 					{url && isMapBig ? videoSlot : minimapView}
-					<SendouChipRadioGroup wrap>
-						<SendouChipRadio
-							name="coach-filter"
-							value={ALL}
-							checked={filter === ALL}
-							onChange={() => setFilter(ALL)}
-						>
-							All ({entries.length})
-						</SendouChipRadio>
-						{CoachEvents.DEFINITIONS.filter((definition) =>
-							counts.has(definition.type),
-						).map((definition) => (
-							<SendouChipRadio
-								key={definition.type}
-								name="coach-filter"
-								value={definition.type}
-								checked={filter === definition.type}
-								onChange={() => setFilter(definition.type)}
-							>
-								{definition.label} ({counts.get(definition.type)})
-							</SendouChipRadio>
-						))}
-					</SendouChipRadioGroup>
+					<CoachEventFilter
+						counts={counts}
+						total={entries.length}
+						categoryTotal={categoryEntries.length}
+						category={category}
+						type={type}
+						onCategoryChange={(picked) => {
+							setCategory(picked);
+							setType(ALL);
+						}}
+						onTypeChange={setType}
+					/>
 					{shown.length === 0 ? (
 						<p className={styles.empty}>
 							{allEntries.length === 0
@@ -441,6 +443,94 @@ function CoachSession({
 				</div>
 			</div>
 		</div>
+	);
+}
+
+/** The events shown: a category in the select, then a type of it as chips when it has more than one. */
+function CoachEventFilter({
+	counts,
+	total,
+	categoryTotal,
+	category,
+	type,
+	onCategoryChange,
+	onTypeChange,
+}: {
+	counts: Map<CoachEvents.CoachEventType, number>;
+	total: number;
+	categoryTotal: number;
+	category: CoachEvents.CoachEventCategory | typeof ALL;
+	type: CoachEvents.CoachEventType | typeof ALL;
+	onCategoryChange: (
+		category: CoachEvents.CoachEventCategory | typeof ALL,
+	) => void;
+	onTypeChange: (type: CoachEvents.CoachEventType | typeof ALL) => void;
+}) {
+	const countOf = (candidate: CoachEvents.CoachEventCategory) =>
+		R.sumBy(
+			CoachEvents.DEFINITIONS.filter(
+				(definition) => definition.category === candidate,
+			),
+			(definition) => counts.get(definition.type) ?? 0,
+		);
+	const categoryItems = [
+		{ id: ALL, label: "All events", count: total },
+		...CATEGORIES.filter(
+			(candidate) => candidate === category || countOf(candidate) > 0,
+		).map((candidate) => ({
+			id: candidate,
+			label: candidate,
+			count: countOf(candidate),
+		})),
+	];
+	const variants = CoachEvents.DEFINITIONS.filter(
+		(definition) =>
+			definition.category === category &&
+			(definition.type === type || counts.has(definition.type)),
+	);
+
+	return (
+		<>
+			<SendouSelect
+				aria-label="Event category"
+				items={categoryItems}
+				selectedKey={category}
+				onSelectionChange={(key) =>
+					onCategoryChange(
+						(key ?? ALL) as CoachEvents.CoachEventCategory | typeof ALL,
+					)
+				}
+			>
+				{({ id, label, count }) => (
+					<SendouSelectItem key={id} id={id}>
+						{`${label} (${count})`}
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
+			{variants.length > 1 ? (
+				<SendouChipRadioGroup wrap>
+					<SendouChipRadio
+						name="coach-type"
+						value={ALL}
+						checked={type === ALL}
+						onChange={() => onTypeChange(ALL)}
+					>
+						All ({categoryTotal})
+					</SendouChipRadio>
+					{variants.map((definition) => (
+						<SendouChipRadio
+							key={definition.type}
+							name="coach-type"
+							value={definition.type}
+							checked={type === definition.type}
+							onChange={() => onTypeChange(definition.type)}
+						>
+							{definition.variant} ({counts.get(definition.type) ?? 0})
+						</SendouChipRadio>
+					))}
+				</SendouChipRadioGroup>
+			) : null}
+		</>
 	);
 }
 
