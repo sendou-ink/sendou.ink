@@ -430,7 +430,7 @@ describe("CoachEvents.ofMatch", () => {
 		expect(typesOf(events)).not.toContain("SPECIAL_STACK_2");
 	});
 
-	test("a death streak needs three deaths without a kill; repeated reads of a death count once", () => {
+	test("a death streak counts deaths without a kill between them; repeated reads of a death count once", () => {
 		const events = CoachEvents.ofMatch(
 			match({
 				pov: { team: 0, index: 0 },
@@ -440,7 +440,14 @@ describe("CoachEvents.ofMatch", () => {
 			[110, 113, 130, 180, 200, 202, 220],
 		);
 
-		expect(ofType(events, "DEATH_STREAK")).toEqual([{ start: 170, end: 222 }]);
+		expect(ofType(events, "DEATH_STREAK_2")).toEqual([
+			{ start: 100, end: 132 },
+			{ start: 170, end: 222 },
+		]);
+		expect(ofType(events, "DEATH_STREAK_3")).toEqual([
+			{ start: 170, end: 222 },
+		]);
+		expect(typesOf(events)).not.toContain("DEATH_STREAK_4");
 	});
 
 	test("a kill streak counts the POV player's kills without a death between them, a trade before its death", () => {

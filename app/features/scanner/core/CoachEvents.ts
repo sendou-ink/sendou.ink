@@ -1,5 +1,4 @@
 // xxx: maybe retake failed?
-// xxx: make death streak dynamic, 2,3,4...
 // xxx: special stack dynamic too
 
 /**
@@ -121,16 +120,30 @@ export const DEFINITIONS = [
 	{
 		type: "DIED_WITH_SPECIAL",
 		label: "Died with special",
-		category: "Death",
+		category: "Died with special",
 		variant: "With special",
 		rule: { kind: "diedWithSpecial" },
 	},
 	{
-		type: "DEATH_STREAK",
-		label: "Death streak",
-		category: "Death",
-		variant: "Streak",
+		type: "DEATH_STREAK_2",
+		label: "Death streak 2+",
+		category: "Death streak",
+		variant: "2+",
+		rule: { kind: "deathStreak", minDeaths: 2 },
+	},
+	{
+		type: "DEATH_STREAK_3",
+		label: "Death streak 3+",
+		category: "Death streak",
+		variant: "3+",
 		rule: { kind: "deathStreak", minDeaths: 3 },
+	},
+	{
+		type: "DEATH_STREAK_4",
+		label: "Death streak 4+",
+		category: "Death streak",
+		variant: "4+",
+		rule: { kind: "deathStreak", minDeaths: 4 },
 	},
 	{
 		type: "KILL_STREAK_2",
