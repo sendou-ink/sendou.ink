@@ -15,7 +15,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import {
-	dateToDatabaseTimestamp,
+	databaseTimestampNow,
 	dayMonthYearToDatabaseTimestamp,
 } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
@@ -229,9 +229,7 @@ async function save(
 			youtubePublishedAt: dayMonthYearToDatabaseTimestamp(args.date),
 			eventId: args.eventId ?? null,
 			youtubeId,
-			validatedAt: args.isValidated
-				? dateToDatabaseTimestamp(new Date())
-				: null,
+			validatedAt: args.isValidated ? databaseTimestampNow() : null,
 		};
 		if (args.id) {
 			await trx

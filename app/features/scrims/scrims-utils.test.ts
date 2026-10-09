@@ -169,9 +169,7 @@ describe("generateTimeOptions", () => {
 
 describe("formatFlexTimeDisplay", () => {
 	test("returns null when totalMinutes is 0", () => {
-		const timestamp = Math.floor(
-			new Date("2025-01-15T14:00:00").getTime() / 1000,
-		);
+		const timestamp = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
 
 		const result = formatFlexTimeDisplay(timestamp, timestamp);
 
@@ -179,8 +177,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("returns null when endTimestamp is before startTimestamp", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T13:00:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T13:00:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -188,8 +186,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("returns formatted minutes when only minutes (no hours)", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T14:45:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T14:45:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -197,8 +195,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("returns formatted hours when exactly on the hour", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T16:00:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T16:00:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -206,8 +204,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("returns formatted hours and minutes when both present", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T15:30:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T15:30:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -215,8 +213,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("handles 1 minute difference", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T14:01:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T14:01:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -224,8 +222,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("handles 1 hour difference", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T15:00:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T15:00:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -233,8 +231,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("handles multiple hours and minutes", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T17:25:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T17:25:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -242,8 +240,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("handles 59 minutes", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T14:59:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T14:59:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -251,8 +249,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("handles exactly 60 minutes as 1 hour", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T15:00:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T15:00:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 
@@ -260,8 +258,8 @@ describe("formatFlexTimeDisplay", () => {
 	});
 
 	test("handles 61 minutes as 1 hour 1 minute", () => {
-		const start = Math.floor(new Date("2025-01-15T14:00:00").getTime() / 1000);
-		const end = Math.floor(new Date("2025-01-15T15:01:00").getTime() / 1000);
+		const start = dateToDatabaseTimestamp(new Date("2025-01-15T14:00:00"));
+		const end = dateToDatabaseTimestamp(new Date("2025-01-15T15:01:00"));
 
 		const result = formatFlexTimeDisplay(start, end);
 

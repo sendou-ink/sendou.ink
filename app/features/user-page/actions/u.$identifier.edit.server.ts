@@ -5,6 +5,7 @@ import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tou
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
+import { toDBBoolean } from "~/utils/sql";
 import { userPage } from "~/utils/urls";
 import { userEditProfileBaseSchema } from "../user-page-schemas";
 
@@ -58,7 +59,7 @@ export const action: ActionFunction = async ({ request }) => {
 		favoriteTrophyIds: limitedTrophyIds.length > 0 ? limitedTrophyIds : null,
 		hiddenTrophyIds:
 			data.hiddenTrophyIds.length > 0 ? data.hiddenTrophyIds : null,
-		commissionsOpen: isArtist && data.commissionsOpen ? 1 : 0,
+		commissionsOpen: toDBBoolean(Boolean(isArtist) && data.commissionsOpen),
 		commissionText: isArtist ? data.commissionText : null,
 		customAvatarImgId: isSupporter ? data.customAvatar : null,
 	});

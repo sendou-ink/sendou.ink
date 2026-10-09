@@ -34,6 +34,7 @@ import {
 	tournamentMembersCount,
 	tournamentTeamsCount,
 } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
 	modesIncluded,
@@ -645,7 +646,7 @@ export async function insert(args: CreateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
-				hidden: args.isTest || args.isDraft ? 1 : 0,
+				hidden: toDBBoolean(Boolean(args.isTest || args.isDraft)),
 				tournamentId,
 				trophyId: args.trophyId ?? null,
 			})
@@ -717,7 +718,9 @@ export async function update(args: UpdateArgs) {
 				.where("id", "=", tournamentId)
 				.executeTakeFirstOrThrow();
 
-			const hidden = existingSettings.isTest || args.isDraft ? 1 : 0;
+			const hidden = toDBBoolean(
+				Boolean(existingSettings.isTest || args.isDraft),
+			);
 			await trx
 				.updateTable("CalendarEvent")
 				.set({ hidden })

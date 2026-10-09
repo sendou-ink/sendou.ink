@@ -125,7 +125,7 @@ export const action: ActionFunction = async ({ request }) => {
 		trophyId: data.trophyId ?? null,
 		// resolved by parseFormDataWithImages from the `image()` field
 		avatarImgId: data.avatarImgId ?? undefined,
-		toToolsEnabled: Number(data.toToolsEnabled),
+		toToolsEnabled: data.toToolsEnabled,
 		mapPickingStyle: data.mapPickingStyle,
 		teamPick:
 			isAddingTournament && data.mapPickingStyle === "AUTO"

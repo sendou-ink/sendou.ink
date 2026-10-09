@@ -2,6 +2,7 @@
 // 150 average monthly active players to gain it, dropping below 100 loses it
 
 import { db } from "~/db/sql";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 
 interface MonthData {
@@ -32,12 +33,8 @@ function getLastSixFinishedMonths(): MonthData[] {
 		const year = date.getFullYear();
 		const month = date.getMonth();
 
-		const startTimestamp = Math.floor(
-			new Date(year, month, 1).getTime() / 1000,
-		);
-		const endTimestamp = Math.floor(
-			new Date(year, month + 1, 1).getTime() / 1000,
-		);
+		const startTimestamp = dateToDatabaseTimestamp(new Date(year, month, 1));
+		const endTimestamp = dateToDatabaseTimestamp(new Date(year, month + 1, 1));
 
 		months.push({
 			year,

@@ -10,9 +10,8 @@ import {
 	requirePermission,
 	requireRole,
 } from "~/modules/permissions/guards.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
-import { toDBBoolean } from "~/utils/sql";
 import { ART_FORM_MAX_BODY_BYTES } from "../art-image";
 import { uploadArtImage } from "../art-image.server";
 import { artFormSchema } from "../art-schemas";
@@ -44,7 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 		const editedArtId = await ArtRepository.update(data.artId, {
 			description: data.description,
-			isShowcase: toDBBoolean(data.isShowcase),
+			isShowcase: data.isShowcase,
 			linkedUsers,
 			tags: data.tags,
 		});
@@ -66,7 +65,7 @@ export const action: ActionFunction = async ({ request }) => {
 		const addedArt = await ArtRepository.insert({
 			description: data.description,
 			url: await uploadArtImage(data.img),
-			validatedAt: user.patronTier ? dateToDatabaseTimestamp(new Date()) : null,
+			validatedAt: user.patronTier ? databaseTimestampNow() : null,
 			linkedUsers,
 			tags: data.tags,
 		});

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { useShowUnseenDot } from "./notifications-hooks";
 
 const GRACE_MS = 10_000;
@@ -19,7 +20,7 @@ const dotStatus = (screen: Awaited<ReturnType<typeof render>>) =>
 
 /** Database timestamp (seconds) for a moment relative to the fake clock. */
 const createdAt = (offsetMs: number) =>
-	Math.floor((Date.now() + offsetMs) / 1000);
+	dateToDatabaseTimestamp(new Date(Date.now() + offsetMs));
 
 /** Runs the fake clock forward and lets React paint: renders go through a MessageChannel fake timers don't control, so a message of our own posted after signals the render happened. */
 const advanceTimers = async (ms: number) => {

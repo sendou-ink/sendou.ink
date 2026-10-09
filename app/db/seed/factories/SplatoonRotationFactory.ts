@@ -2,6 +2,7 @@ import type { TablesInsertable } from "~/db/tables";
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { databaseTimestampNow } from "~/utils/dates";
 import { faker } from "../core/faker";
 
 type Rotation = Omit<TablesInsertable["SplatoonRotation"], "id">;
@@ -12,7 +13,7 @@ const TWO_HOURS = 2 * 60 * 60;
 
 /** Schedule starting from the current two-hour slot, same write as the rotation sync routine. */
 export function replaceAll() {
-	const nowUnix = Math.floor(Date.now() / 1000);
+	const nowUnix = databaseTimestampNow();
 	const currentSlotStartsAt = nowUnix - (nowUnix % TWO_HOURS);
 
 	const rotations: Rotation[] = ROTATION_TYPES.flatMap((type) =>

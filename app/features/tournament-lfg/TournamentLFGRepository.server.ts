@@ -11,7 +11,10 @@ import {
 	concatUserSubmittedImagePrefix,
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
-import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
+import {
+	errorIsSqliteForeignKeyConstraintFailure,
+	toDBBoolean,
+} from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
 /** @returns user ids whose chat room set changed, for `notifyRoomsChanged`. */
@@ -57,7 +60,7 @@ export function insertPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 				tournamentTeamId: createdTeam.id,
 				userId: args.userId,
 				role: "OWNER",
-				isStayAsSub: args.isStayAsSub ? 1 : 0,
+				isStayAsSub: toDBBoolean(args.isStayAsSub ?? false),
 			})
 			.execute();
 
@@ -286,7 +289,7 @@ export function updateOwnStayAsSub({
 }) {
 	return db
 		.updateTable("TournamentTeamMember")
-		.set({ isStayAsSub: value ? 1 : 0 })
+		.set({ isStayAsSub: toDBBoolean(value) })
 		.where("tournamentTeamId", "=", teamId)
 		.where("userId", "=", actorId())
 		.execute();

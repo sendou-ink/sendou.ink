@@ -11,10 +11,7 @@ import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { DEV_IDS } from "~/features/admin/admin-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import {
-	databaseTimestampToDate,
-	dateToDatabaseTimestamp,
-} from "~/utils/dates";
+import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
 import {
 	calendarEventNameMatchesSeries,
@@ -81,7 +78,7 @@ function addEffectiveTier<
 }
 
 function nextUpcomingStartTime(tournaments: Array<TrophyRecentTournament>) {
-	const now = dateToDatabaseTimestamp(new Date());
+	const now = databaseTimestampNow();
 
 	// ordered newest first, so the last future start time is the next one up
 	const futureStartTimes = tournaments
@@ -759,7 +756,7 @@ async function replaceSpecialTrophyOwners({
 			userIds.map((userId) => ({
 				trophyId,
 				userId,
-				createdAt: dateToDatabaseTimestamp(new Date()),
+				createdAt: databaseTimestampNow(),
 			})),
 		)
 		.onConflict((oc) => oc.doNothing())
@@ -784,7 +781,7 @@ export async function createPending(args: {
 			description: args.description,
 			organizationId: args.organizationId,
 			submitterUserId: args.submitterUserId,
-			createdAt: dateToDatabaseTimestamp(new Date()),
+			createdAt: databaseTimestampNow(),
 			declineReason: null,
 			declinedAt: null,
 			declinedByUserId: null,
@@ -967,7 +964,7 @@ export async function declinePending(args: {
 			.updateTable("PendingTrophy")
 			.set({
 				declineReason: args.reason,
-				declinedAt: dateToDatabaseTimestamp(new Date()),
+				declinedAt: databaseTimestampNow(),
 				declinedByUserId: args.declinedByUserId,
 			})
 			.where("id", "=", args.id)
@@ -987,7 +984,7 @@ export async function addApproval(args: {
 			.values({
 				pendingTrophyId: args.pendingTrophyId,
 				userId: args.userId,
-				createdAt: dateToDatabaseTimestamp(new Date()),
+				createdAt: databaseTimestampNow(),
 			})
 			.onConflict((oc) => oc.doNothing())
 			.executeTakeFirst();
@@ -1027,7 +1024,7 @@ export async function addApproval(args: {
 
 		await trx
 			.updateTable("PendingTrophy")
-			.set({ acceptedAt: dateToDatabaseTimestamp(new Date()) })
+			.set({ acceptedAt: databaseTimestampNow() })
 			.where("id", "=", args.pendingTrophyId)
 			.execute();
 

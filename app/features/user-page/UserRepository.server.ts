@@ -1447,7 +1447,7 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 			})
 			.where((eb) =>
 				eb.or([
-					eb("patronExpiresAt", "<", dateToDatabaseTimestamp(new Date())),
+					eb("patronExpiresAt", "<", databaseTimestampNow()),
 					eb("patronExpiresAt", "is", null),
 				]),
 			)

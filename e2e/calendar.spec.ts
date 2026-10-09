@@ -1,7 +1,7 @@
 import { subDays } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { calendarEventPage } from "~/utils/urls";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { CalendarEventPage } from "./pages/calendar/calendar-event-page";
@@ -21,7 +21,7 @@ test.describe("Calendar", () => {
 		factories,
 	}) => {
 		// all of them at the same time so they share one clock header and its toggle
-		const startTimes = [dateToDatabaseTimestamp(new Date())];
+		const startTimes = [databaseTimestampNow()];
 		for (let i = 0; i < SENDOU_INK_TOURNAMENTS_COUNT; i++) {
 			await factories.TournamentFactory.create({
 				authorId: ADMIN_ID,

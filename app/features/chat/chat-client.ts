@@ -1,6 +1,6 @@
 import * as R from "remeda";
 import type { ServerEvent } from "~/features/events/events-types";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import {
 	CHAT_ROOMS_DATA_ROUTE,
@@ -641,7 +641,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 					type: null,
 					contents,
 					publicId,
-					createdAt: dateToDatabaseTimestamp(new Date()),
+					createdAt: databaseTimestampNow(),
 					author,
 					pending: true,
 				},

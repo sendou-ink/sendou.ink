@@ -1,5 +1,5 @@
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { expect, expectNoErrorPage, test } from "./helpers/playwright";
 import { ArticlesPage } from "./pages/articles/articles-page";
 import { BuildsPage } from "./pages/builds/builds-page";
@@ -46,7 +46,7 @@ test.describe("Public pages", () => {
 			ownerId: user.id,
 			weaponSplIds: [BUILD_WEAPON_ID],
 		});
-		const startTimes = [dateToDatabaseTimestamp(new Date())];
+		const startTimes = [databaseTimestampNow()];
 		await factories.CalendarEventFactory.create({
 			authorId: ADMIN_ID,
 			name: EVENT_NAME,
@@ -157,7 +157,7 @@ test.describe("Public pages", () => {
 		await factories.CalendarEventFactory.create({
 			authorId: ADMIN_ID,
 			name: ICS_EVENT_NAME,
-			startTimes: [dateToDatabaseTimestamp(new Date())],
+			startTimes: [databaseTimestampNow()],
 		});
 
 		const errorPage = new ErrorPage(page);

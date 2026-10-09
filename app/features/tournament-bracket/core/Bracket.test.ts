@@ -1,5 +1,6 @@
 import * as R from "remeda";
 import { describe, expect, test } from "vitest";
+import { toDBBoolean } from "~/utils/sql";
 import { invariant } from "../../../utils/invariant";
 import type { Standing } from "./Bracket";
 import * as Engine from "./engine";
@@ -135,7 +136,7 @@ describe("swiss standings - losses against tied", () => {
 					],
 				},
 				teams: [1, 2, 3, 4, 5, 6].map((teamId) =>
-					tournamentCtxTeam(teamId, { droppedOut: teamId === 6 ? 1 : 0 }),
+					tournamentCtxTeam(teamId, { droppedOut: toDBBoolean(teamId === 6) }),
 				),
 			},
 		});
@@ -245,7 +246,9 @@ describe("swiss standings - losses against tied", () => {
 						],
 					},
 					teams: [1, 2, 3, 4, 5, 6, 7, 8].map((teamId) =>
-						tournamentCtxTeam(teamId, { droppedOut: teamId === 3 ? 1 : 0 }),
+						tournamentCtxTeam(teamId, {
+							droppedOut: toDBBoolean(teamId === 3),
+						}),
 					),
 				},
 			});
@@ -829,7 +832,7 @@ describe("round robin standings - dropped out teams", () => {
 					teams: [1, 2, 3, 4, 5].map((teamId) =>
 						tournamentCtxTeam(teamId, {
 							seed: teamId,
-							droppedOut: teamId === droppedOutTeamId ? 1 : 0,
+							droppedOut: toDBBoolean(teamId === droppedOutTeamId),
 						}),
 					),
 				},

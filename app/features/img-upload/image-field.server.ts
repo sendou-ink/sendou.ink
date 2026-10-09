@@ -2,7 +2,7 @@ import { basename } from "node:path";
 import { Readable } from "node:stream";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import type { ImageFieldValue } from "~/form/image-field";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { invariant } from "~/utils/invariant";
 import { errorToastIfFalsy } from "~/utils/remix.server";
@@ -73,9 +73,7 @@ export async function imageFieldValueToImgId({
 	const img = await ImageRepository.insert({
 		submitterUserId: user.id,
 		url: fileName,
-		validatedAt: shouldAutoValidate
-			? dateToDatabaseTimestamp(new Date())
-			: null,
+		validatedAt: shouldAutoValidate ? databaseTimestampNow() : null,
 	});
 
 	return img.id;

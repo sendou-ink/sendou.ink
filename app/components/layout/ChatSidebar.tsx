@@ -24,10 +24,7 @@ import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
 import * as LogLayout from "~/features/chat/core/LogLayout";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import {
-	databaseTimestampToDate,
-	dateToDatabaseTimestamp,
-} from "~/utils/dates";
+import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import {
 	NavIconContainer,
@@ -135,7 +132,7 @@ function roomShortLabel(room: ChatRoomListItem, t: TFunction<["common"]>) {
 }
 
 function roomIsInactive(room: ChatRoomListItem) {
-	return room.inactive || room.expiresAt <= dateToDatabaseTimestamp(new Date());
+	return room.inactive || room.expiresAt <= databaseTimestampNow();
 }
 
 function SidebarHeader({ onClose }: { onClose?: () => void }) {
@@ -615,7 +612,7 @@ function RoomChat({ room }: { room: ChatRoomListItem }) {
 	const chatContext = useChatContext()!;
 	const user = useUser();
 
-	const expired = room.expiresAt <= dateToDatabaseTimestamp(new Date());
+	const expired = room.expiresAt <= databaseTimestampNow();
 	const messages = chatContext.messagesForRoom(room.id);
 
 	return (

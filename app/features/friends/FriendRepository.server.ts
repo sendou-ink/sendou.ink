@@ -3,7 +3,7 @@ import { type SelectQueryBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, DBBoolean } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { commonUserSelect } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import { FRIEND } from "./friends-constants";
@@ -73,7 +73,7 @@ export async function findByUserIdWithActivity(userId: number) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
-	const nowTimestamp = dateToDatabaseTimestamp(new Date());
+	const nowTimestamp = databaseTimestampNow();
 
 	return (qb as SelectQueryBuilder<DB, keyof DB, Record<string, never>>)
 		.leftJoin("TournamentTeamMember", (join) =>
