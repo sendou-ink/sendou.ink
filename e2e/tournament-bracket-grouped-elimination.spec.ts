@@ -20,7 +20,7 @@ test.describe("Tournament bracket grouped elimination", () => {
 			startTimes: startedTournamentTimes(),
 			bracketProgression: DE_GROUPS_TO_REDEMPTION_AND_TOP_CUT,
 		});
-		await createTeams(factories, tournament.id, teamSeeds(16));
+		await createTeams(factories, tournament.id, teamSeeds(15));
 		// the higher seed wins every match: Team 1 and Team 2 win their groups unbeaten
 		await factories.TournamentFactory.playOut(tournament.id, 0);
 

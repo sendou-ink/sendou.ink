@@ -76,8 +76,7 @@ export const RR_TO_SE_WITH_UNDERGROUND: BracketProgression = [
 	},
 ];
 
-// xxx: lets have uneven number of teams
-/** With 16 teams: two double elimination groups of 8 ending once each has 1 unbeaten and 3 one loss teams.
+/** With 15 teams: double elimination groups of 8 and 7 (a bye) ending once each has 1 unbeaten and 3 one loss teams.
  * The unbeaten teams make the top cut, the one loss teams play a redemption of two single elimination
  * groups of 3 whose co-winners (finals not played) make the top cut too. */
 export const DE_GROUPS_TO_REDEMPTION_AND_TOP_CUT: BracketProgression = [

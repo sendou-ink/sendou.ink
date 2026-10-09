@@ -7,7 +7,7 @@ export function SendouSection({
 	title,
 	icon: Icon,
 	action,
-	gap = "md", // xxx: consistent naming
+	gap = "md",
 	className,
 	children,
 }: {

@@ -164,7 +164,6 @@ const SWISS_TO_SINGLE_ELIMINATION: Progression = [
 	},
 ];
 
-// xxx: maybe for seed good to have the case where first round is not evenly distribued count of teams?
 /**
  * Double elimination groups whose unbeaten teams make the top cut. The teams alive with one loss play a
  * double elimination redemption without grand finals, its winners and losers bracket winners making the top cut too.
@@ -733,6 +732,7 @@ async function seedLuti({
 /**
  * #6 double elimination groups → double elimination redemption → top cut, TO maps — the groups played
  * out, the redemption started with nothing reported and the top cut waiting for its two finalists.
+ * 22 teams split 8/7/7, so two of the groups open with a bye.
  */
 async function seedSuperjump({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
@@ -745,7 +745,7 @@ async function seedSuperjump({ users, rosters }: Ctx) {
 	});
 
 	const teamRosters = rosters.take({
-		teamCount: 24,
+		teamCount: 22,
 		teamSize: 4,
 		pinned: [{ teamIdx: 2, userId: users.nzapId }],
 	});
