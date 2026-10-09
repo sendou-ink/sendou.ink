@@ -1,5 +1,4 @@
 // xxx: maybe retake failed?
-// xxx: add kill streak (dynamic)
 // xxx: make death streak dynamic, 2,3,4...
 // xxx: special stack dynamic too
 
@@ -16,6 +15,7 @@
  * first splat on the losing side within `KILL_LEAD_WINDOW_S` before it, less
  * `LEAD_BUFFER_S`.
  */
+import * as R from "remeda";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type {
 	ScannerMatch,
@@ -133,6 +133,27 @@ export const DEFINITIONS = [
 		rule: { kind: "deathStreak", minDeaths: 3 },
 	},
 	{
+		type: "KILL_STREAK_2",
+		label: "Kill streak 2+",
+		category: "Kill streak",
+		variant: "2+",
+		rule: { kind: "killStreak", minKills: 2 },
+	},
+	{
+		type: "KILL_STREAK_5",
+		label: "Kill streak 5+",
+		category: "Kill streak",
+		variant: "5+",
+		rule: { kind: "killStreak", minKills: 5 },
+	},
+	{
+		type: "KILL_STREAK_10",
+		label: "Kill streak 10+",
+		category: "Kill streak",
+		variant: "10+",
+		rule: { kind: "killStreak", minKills: 10 },
+	},
+	{
 		type: "STAGGER_15",
 		label: "Staggered 15s+",
 		category: "Stagger",
@@ -179,6 +200,7 @@ const LEAD_BUFFER_S = 5;
 /** footage kept before a death, to see what led to it */
 const DEATH_LEAD_S = 10;
 const DEATH_TAIL_S = 2;
+const KILL_STREAK_TAIL_S = 2;
 /** footage kept before the POV player's special use, to see what it was used into */
 const SPECIAL_USE_LEAD_S = 3;
 const SPECIAL_USE_TAIL_S = 5;
@@ -231,6 +253,8 @@ type CoachRule =
 	| { kind: "diedWithSpecial" }
 	/** at least `minDeaths` POV player deaths with no POV kill between them */
 	| { kind: "deathStreak"; minDeaths: number }
+	/** at least `minKills` POV player kills with no POV death between them */
+	| { kind: "killStreak"; minKills: number }
 	/** the POV team down players alive against the enemy for at least `minSeconds`, regroups shorter than `STAGGER_REGROUP_S` included */
 	| { kind: "stagger"; minSeconds: number };
 
@@ -424,6 +448,8 @@ function detectMoments(rule: CoachRule, analysis: Analysis): Moment[] {
 			return diedWithSpecialMoments(analysis);
 		case "deathStreak":
 			return deathStreakMoments(rule.minDeaths, analysis);
+		case "killStreak":
+			return killStreakMoments(rule.minKills, analysis);
 		case "stagger":
 			return staggerMoments(rule.minSeconds, analysis);
 	}
@@ -675,6 +701,22 @@ function deathStreakMoments(minDeaths: number, analysis: Analysis): Moment[] {
 		.map((deaths) => ({
 			start: deaths[0]! - DEATH_LEAD_S,
 			end: deaths.at(-1)! + DEATH_TAIL_S,
+		}));
+}
+
+function killStreakMoments(minKills: number, analysis: Analysis): Moment[] {
+	const { povKills, povDeaths } = analysis;
+	if (povKills === null) return [];
+
+	// a kill on a death's second (a trade) counts before that death
+	const lifeOf = (kill: number) =>
+		povDeaths.filter((death) => death < kill).length;
+
+	return Object.values(R.groupBy(povKills, lifeOf))
+		.filter((kills) => kills.length >= minKills)
+		.map((kills) => ({
+			start: kills[0]! - LEAD_BUFFER_S,
+			end: kills.at(-1)! + KILL_STREAK_TAIL_S,
 		}));
 }
 

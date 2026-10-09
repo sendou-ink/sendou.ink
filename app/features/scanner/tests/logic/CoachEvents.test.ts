@@ -443,6 +443,24 @@ describe("CoachEvents.ofMatch", () => {
 		expect(ofType(events, "DEATH_STREAK")).toEqual([{ start: 170, end: 222 }]);
 	});
 
+	test("a kill streak counts the POV player's kills without a death between them, a trade before its death", () => {
+		const events = CoachEvents.ofMatch(
+			match({
+				pov: { team: 0, index: 0 },
+				kills: [150, 155, 160, 170, 210, 215, 220, 225, 230].map(kill),
+				playerStatus: null,
+			}),
+			[160, 200],
+		);
+
+		expect(ofType(events, "KILL_STREAK_2")).toEqual([
+			{ start: 145, end: 162 },
+			{ start: 205, end: 232 },
+		]);
+		expect(ofType(events, "KILL_STREAK_5")).toEqual([{ start: 205, end: 232 }]);
+		expect(typesOf(events)).not.toContain("KILL_STREAK_10");
+	});
+
 	test("a stagger lasts while the POV team is down players, a regroup shorter than 5s included", () => {
 		const events = CoachEvents.ofMatch(
 			match({
