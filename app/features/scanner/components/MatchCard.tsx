@@ -134,7 +134,7 @@ export function MatchCard({
 		);
 	}
 
-	const result = matchResult(match);
+	const result = matchResult(built);
 	const pov = povPlayer(match);
 	const scannedAt = built.sources.find(
 		(event) => event.detectedAt !== undefined,

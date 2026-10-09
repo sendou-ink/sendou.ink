@@ -35,6 +35,10 @@ const BASE: ScannerMatch = {
 	pov: { team: 1, index: 0 },
 };
 
+function built(match: ScannerMatch) {
+	return { match, sources: [] };
+}
+
 function rows(csv: string): string[][] {
 	return csv
 		.trim()
@@ -44,7 +48,7 @@ function rows(csv: string): string[][] {
 
 test("one row per game with the POV side first", () => {
 	const [header, row] = rows(
-		matchesToCsv([BASE], { label: "sws26-finals.mkv", originT: 0 }, [
+		matchesToCsv([built(BASE)], { label: "sws26-finals.mkv", originT: 0 }, [
 			[
 				{ kills: 3, start: 3900, end: 3925 },
 				{ kills: 1, start: 3760, end: 3770 },
@@ -76,7 +80,7 @@ test("one row per game with the POV side first", () => {
 
 test("positions count from the session's origin", () => {
 	const [header, row] = rows(
-		matchesToCsv([BASE], { label: "2026-09-16 19:02", originT: 3700 }, [
+		matchesToCsv([built(BASE)], { label: "2026-09-16 19:02", originT: 3700 }, [
 			[{ kills: 4, start: 3760, end: 3790 }],
 		]),
 	);
@@ -89,7 +93,7 @@ test("positions count from the session's origin", () => {
 });
 
 test("teammates exclude the POV row and enemies pack the other side", () => {
-	const csv = matchesToCsv([BASE], { label: "x", originT: 0 });
+	const csv = matchesToCsv([built(BASE)], { label: "x", originT: 0 });
 	assert.match(csv, /Zed · Aerospray MG · 6\/2\/4 · 1310p/);
 	assert.match(csv, /Kirby · Carbon Roller · 6\/5\/2 · 980p/);
 	assert.doesNotMatch(csv, /You · Splattershot · 9\/4\/3/);
@@ -99,7 +103,7 @@ test("unread values are blank cells, not question marks", () => {
 	const [header, row] = rows(
 		matchesToCsv(
 			[
-				{
+				built({
 					...BASE,
 					playedAt: null,
 					mode: null,
@@ -109,7 +113,7 @@ test("unread values are blank cells, not question marks", () => {
 					winner: null,
 					pov: null,
 					teams: [{ players: [] }, { players: [] }],
-				},
+				}),
 			],
 			{ label: "x", originT: 0 },
 		),
@@ -134,13 +138,13 @@ test("text cells a spreadsheet would run as a formula are neutralized", () => {
 	const [header, row] = rows(
 		matchesToCsv(
 			[
-				{
+				built({
 					...BASE,
 					teams: [
 						{ players: [{ ...BASE.teams[0].players[0]!, name: "=1+1" }] },
 						BASE.teams[1],
 					],
-				},
+				}),
 			],
 			{ label: "@SUM(A1)", originT: 0 },
 		),

@@ -7,10 +7,13 @@
  * `SESSION_COMPACT_AFTER_MS` past its end is compacted: its games are frozen
  * as built and the per-second reads behind them dropped (`compactSources`).
  */
+import * as CoachEvents from "./CoachEvents";
 import { OBJECTIVE_EVENT_TYPE } from "./detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "./detectors/objective/player-status";
 import { STRIP_WEAPONS_EVENT_TYPE } from "./detectors/objective/strip-weapons";
+import type { DetectedEvent } from "./detectors/types";
 import type { ScannerMatch } from "./scanner-match";
+import { xBattleCards } from "./x-battle";
 
 export const SESSION_GAP_MS = 2 * 60 * 60 * 1000;
 export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -83,8 +86,14 @@ export function sessionByKey<S extends { key: number; endedAt: number }>(
 	return session;
 }
 
+/** A built match: the game and the events it was built from. */
+export interface MatchBuild {
+	match: ScannerMatch;
+	sources: readonly DetectedEvent[];
+}
+
 export interface SessionSummary {
-	/** matches whose winner was read */
+	/** matches whose winner was read or inferred */
 	games: number;
 	wins: number;
 	losses: number;
@@ -93,22 +102,38 @@ export interface SessionSummary {
 	d: number | null;
 }
 
-/** "win" / "loss" from the POV seat, null when either the seat or the winner is unread. */
-export function matchResult(match: ScannerMatch): "win" | "loss" | null {
-	if (match.winner === null || match.pov === null) return null;
-	return match.winner === match.pov.team ? "win" : "loss";
+/**
+ * "win" / "loss" for the POV side. A results screen decides it (null without
+ * the POV seat); a game whose results screen was missed goes by the X Battle
+ * set result's deciding tile, else by how far each side's count went down.
+ */
+export function matchResult({
+	match,
+	sources,
+}: MatchBuild): "win" | "loss" | null {
+	if (match.winner !== null) {
+		if (match.pov === null) return null;
+		return match.winner === match.pov.team ? "win" : "loss";
+	}
+
+	const decidingGame = xBattleCards(sources).result?.results.at(-1);
+	if (decidingGame) return decidingGame === "WIN" ? "win" : "loss";
+
+	const povTeam = CoachEvents.povTeamOf(match);
+	const winner = CoachEvents.winnerByCount(match.objective?.samples ?? []);
+	if (povTeam === null || winner === null) return null;
+	return winner === povTeam ? "win" : "loss";
 }
 
 /** The header line's numbers: games decided, W–L and K/D off the POV rows. */
-export function sessionSummary(
-	matches: readonly ScannerMatch[],
-): SessionSummary {
+export function sessionSummary(builds: readonly MatchBuild[]): SessionSummary {
 	let ka: number | null = null;
 	let d: number | null = null;
 	const summary: SessionSummary = { games: 0, wins: 0, losses: 0, ka, d };
-	for (const match of matches) {
-		if (match.winner !== null) summary.games++;
-		const result = matchResult(match);
+	for (const build of builds) {
+		const { match } = build;
+		const result = matchResult(build);
+		if (match.winner !== null || result !== null) summary.games++;
 		if (result === "win") summary.wins++;
 		if (result === "loss") summary.losses++;
 		const pov = match.pov

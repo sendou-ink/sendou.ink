@@ -114,7 +114,7 @@ export function SessionView({
 	const clipsByMatch = built.map((b, index) =>
 		clipsOf(b.match, built[index + 1]?.match, clips),
 	);
-	const summary = sessionSummary(built.map((b) => b.match));
+	const summary = sessionSummary(built);
 	const info: SessionInfo = {
 		built,
 		summary,

@@ -38,6 +38,7 @@ import { formatClock, formatPosition } from "../core/format";
 import { modeLabel, stageLabel } from "../core/labels";
 import { type BuiltMatch, isHistoryOnly } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
+import { matchResult } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
 import { CoachControls, type CoachJumps } from "./CoachControls";
 import { CoachFilterBar } from "./CoachFilterBar";
@@ -545,11 +546,16 @@ function coachData(built: readonly BuiltMatch<ScanEvent>[]) {
 
 	const gameBuilds = built
 		.filter((b) => !isHistoryOnly(b))
-		.map((b) => ({ match: b.match, povDeaths: povDeathTimes(b.sources) }));
+		.map((b) => ({
+			match: b.match,
+			result: matchResult(b),
+			povDeaths: povDeathTimes(b.sources),
+		}));
 	const games = gameBuilds.map(
 		(b, index): CoachSessionGame => ({
 			number: index + 1,
 			match: b.match,
+			result: b.result,
 			lives: CoachEvents.lives(b.match, b.povDeaths),
 			timeline:
 				b.match.objective || b.match.playerStatus ? timelineOf(b.match) : null,

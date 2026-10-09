@@ -12,7 +12,6 @@ import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { modeLabel, stageLabel } from "../core/labels";
 import type { ScannerMatch } from "../core/scanner-match";
-import { matchResult } from "../core/sessions";
 import styles from "./CoachGameStrip.module.css";
 
 /** room left before a tile scrolled into view, hinting at the games before it */
@@ -22,6 +21,7 @@ export interface CoachGame {
 	/** the game's number in the file's list */
 	number: number;
 	match: ScannerMatch;
+	result: "win" | "loss" | null;
 }
 
 export function CoachGameStrip({
@@ -89,9 +89,8 @@ function GameButton({
 	currentTime: number;
 	onSelect: (game: CoachGame) => void;
 }) {
-	const { match } = game;
+	const { match, result } = game;
 	const mode: ModeShort | null = match.mode ?? match.objective?.mode ?? null;
-	const result = matchResult(match);
 	const stage = stageLabel(match.stage);
 	const isCurrent = covers(match, currentTime);
 

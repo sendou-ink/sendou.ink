@@ -505,9 +505,7 @@ export async function startVodScan(
 				name: file.name,
 				savedAt: Date.now(),
 				duration,
-				summary: sessionSummary(
-					buildScannerMatches(events).map((built) => built.match),
-				),
+				summary: sessionSummary(buildScannerMatches(events)),
 			},
 			events.map((event) => ({
 				type: event.type,

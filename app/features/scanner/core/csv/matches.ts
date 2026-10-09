@@ -6,8 +6,8 @@
  */
 import { formatTime } from "../format";
 import { lobbyLabel, mainWeaponLabel, modeLabel, stageLabel } from "../labels";
-import type { ScannerMatch, ScannerMatchPlayer } from "../scanner-match";
-import { matchResult } from "../sessions";
+import type { ScannerMatchPlayer } from "../scanner-match";
+import { type MatchBuild, matchResult } from "../sessions";
 import { type CsvCell, toCsv } from "./csv";
 
 const HEADER = [
@@ -49,31 +49,32 @@ export interface ExportClip {
 	end: number;
 }
 
-/** `clipsByMatch` aligns by index with `matches`: the clips each game produced. */
+/** `clipsByMatch` aligns by index with `builds`: the clips each game produced. */
 export function matchesToCsv(
-	matches: readonly ScannerMatch[],
+	builds: readonly MatchBuild[],
 	source: MatchCsvSource,
 	clipsByMatch: readonly (readonly ExportClip[])[] = [],
 ): string {
 	return toCsv(
 		HEADER,
-		matches.map((match, index) =>
-			matchCells(match, source, clipsByMatch[index] ?? []),
+		builds.map((build, index) =>
+			matchCells(build, source, clipsByMatch[index] ?? []),
 		),
 	);
 }
 
 function matchCells(
-	match: ScannerMatch,
+	build: MatchBuild,
 	source: MatchCsvSource,
 	clips: readonly ExportClip[],
 ): CsvCell[] {
+	const { match } = build;
 	const at = match.startsAt === null ? null : match.startsAt - source.originT;
 	const povTeam = match.pov?.team ?? 0;
 	const pov = match.pov
 		? match.teams[match.pov.team].players[match.pov.index]
 		: undefined;
-	const result = matchResult(match);
+	const result = matchResult(build);
 	const scoreFor = match.matchScores?.[povTeam] ?? null;
 	const scoreAgainst = match.matchScores?.[povTeam === 0 ? 1 : 0] ?? null;
 	const teammates = match.teams[povTeam].players.filter(

@@ -168,6 +168,10 @@ const DEATH_MERGE_GAP_S = 6;
 const RESPAWN_FALLBACK_S = 8;
 /** icon-strip reads further than this from a death say nothing of its respawn */
 const RESPAWN_MAX_WAIT_S = 20;
+/** a side's last count read further than this below its previous one is a misread */
+const MAX_FINAL_COUNT_DROP = 20;
+/** the trailing side holding the objective with this little clock left sends the game to overtime */
+const OVERTIME_CLOCK_S = 5;
 
 type Side = "pov" | "enemy";
 
@@ -431,6 +435,31 @@ export function povTeamOf(match: ScannerMatch): Team | null {
 	if (match.pov) return match.pov.team;
 	if (match.cast || match.winner !== null) return null;
 	return 0;
+}
+
+/**
+ * The winner of a game whose results screen was missed, off its objective
+ * samples (chronological, `teams` order): the side whose count went further
+ * down. Null on a tie, and when the last read has the clock running out with
+ * the trailing side holding the objective — overtime, whose end the counter
+ * reads don't show.
+ */
+export function winnerByCount(
+	objective: readonly ScannerMatchObjectiveSample[],
+): Team | null {
+	const counts = [lowestCount(objective, 0), lowestCount(objective, 1)];
+	if (counts[0] === null || counts[1] === null || counts[0] === counts[1]) {
+		return null;
+	}
+	const leader: Team = counts[0] < counts[1] ? 0 : 1;
+	const last = objective.at(-1);
+	const isOvertime =
+		counts[leader] !== 0 &&
+		last !== undefined &&
+		last.time !== null &&
+		last.time <= OVERTIME_CLOCK_S &&
+		last.control === otherTeam(leader);
+	return isOvertime ? null : leader;
 }
 
 function openingMoments(outcome: "won" | "lost", analysis: Analysis): Moment[] {
@@ -861,6 +890,7 @@ function clusters(sorted: readonly number[], maxGap: number): number[][] {
 	return groups;
 }
 
+/** The lowest count a side showed, its last read left out when it plunged too far to be real. */
 function lowestCount(
 	objective: readonly ScannerMatchObjectiveSample[],
 	team: Team,
@@ -868,18 +898,15 @@ function lowestCount(
 	const counts = objective.flatMap((sample) =>
 		sample.score[team] === null ? [] : [sample.score[team]!],
 	);
-	return counts.length > 0 ? Math.min(...counts) : null;
-}
-
-/** Without a results screen the side whose count went further down won (a tie is unknown). */
-function winnerByCount(
-	objective: readonly ScannerMatchObjectiveSample[],
-): Team | null {
-	const counts = [lowestCount(objective, 0), lowestCount(objective, 1)];
-	if (counts[0] === null || counts[1] === null || counts[0] === counts[1]) {
-		return null;
+	const [previous, last] = counts.slice(-2);
+	if (
+		previous !== undefined &&
+		last !== undefined &&
+		previous - last > MAX_FINAL_COUNT_DROP
+	) {
+		counts.pop();
 	}
-	return counts[0] < counts[1] ? 0 : 1;
+	return counts.length > 0 ? Math.min(...counts) : null;
 }
 
 /** The median of every timed read's projected clock start: one misread clock can't move it. */

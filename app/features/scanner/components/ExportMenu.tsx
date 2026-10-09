@@ -56,11 +56,7 @@ export function ExportMenu({
 				onAction={() =>
 					downloadCsv(
 						`${fileBase}-matches.csv`,
-						matchesToCsv(
-							built.map((b) => b.match),
-							source,
-							clipsByMatch,
-						),
+						matchesToCsv(built, source, clipsByMatch),
 					)
 				}
 			>
