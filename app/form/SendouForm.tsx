@@ -229,15 +229,24 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	>(fetcher.data?.fieldErrors ?? {});
 	const [fallbackError, setFallbackError] = React.useState<string | null>(null);
 	const [stepInUrl, setStepInUrl] = useSearchParam(formSearchParams, "step");
-	const stepIdxInUrl = stepIdxByName(steps, stepInUrl);
-	const [currentStepIdx, setCurrentStepIdx] = React.useState(stepIdxInUrl);
-	// browser back/forward changes the step in the URL
-	const [syncedStepIdxInUrl, setSyncedStepIdxInUrl] =
-		React.useState(stepIdxInUrl);
-	if (stepIdxInUrl !== syncedStepIdxInUrl) {
-		setSyncedStepIdxInUrl(stepIdxInUrl);
-		setCurrentStepIdx(stepIdxInUrl);
-	}
+	const [currentStepIdx, setCurrentStepIdx] = React.useState(() =>
+		stepIdxByName(steps, stepInUrl),
+	);
+	const { pathname } = useLocation();
+	// browser back/forward changes the step in the URL. Not derived from `stepInUrl` during render: a step push popped before React rendered it never shows up there
+	React.useEffect(() => {
+		const followStepInUrl = () => {
+			if (window.location.pathname !== pathname) return;
+
+			const { step } = formSearchParams.parse(
+				new URLSearchParams(window.location.search),
+			);
+			setCurrentStepIdx(stepIdxByName(latest.current.steps, step));
+		};
+
+		window.addEventListener("popstate", followStepInUrl);
+		return () => window.removeEventListener("popstate", followStepInUrl);
+	}, [pathname]);
 	const isOnLastStep = steps ? currentStepIdx === steps.length - 1 : false;
 	const [hasReachedLastStep, setHasReachedLastStep] =
 		React.useState(isOnLastStep);

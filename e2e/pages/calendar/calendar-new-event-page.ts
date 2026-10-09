@@ -250,7 +250,7 @@ export class CalendarNewEventPage {
 	/** Hint under a round left unplayed because a round feeding it is. */
 	roundNotPlayedHint(prerequisiteName: string) {
 		return this.page
-			.getByText(`Not played without ${prerequisiteName}`)
+			.getByText(`Can't be played unless ${prerequisiteName} is played`)
 			.first();
 	}
 
