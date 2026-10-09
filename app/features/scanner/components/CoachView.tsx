@@ -14,7 +14,9 @@
  * (CoachDrawing) until playback continues or the video moves; clicks then draw
  * instead of playing or swapping, Space still plays. Each life's first
  * seconds carry its summary (CoachLifeCard) over the video, which opens at
- * `t` when a game card's link set it. The file is the
+ * `t` when a game card's link set it. A cast's events are told from the
+ * side of the team picked above the events (CoachCastSide); a pick carries over
+ * to the file's other casts by player names. The file is the
  * one scanned or opened this visit, else the user opens it again (only the
  * scan was saved).
  */
@@ -29,6 +31,7 @@ import {
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { toastQueue } from "~/components/elements/Toast";
 import { GameTimeline } from "~/components/GameTimeline";
+import { WeaponImage } from "~/components/Image";
 import * as PlanImport from "~/features/map-planner/core/PlanImport";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { logger } from "~/utils/logger";
@@ -77,14 +80,12 @@ const CATEGORIES = R.unique(
 /** Coach data keyed by the build, so the player's time updates don't redo it. */
 const coachDataCache = new WeakMap<
 	readonly BuiltMatch<ScanEvent>[],
-	{
-		games: CoachSessionGame[];
-		entries: CoachEntry[];
-		options: CoachFilters.Options;
-	}
+	CoachSessionGame[]
 >();
 
 interface CoachSessionGame extends CoachGame {
+	/** the game's coach events told from each team's side; POV footage's are its POV team's either way */
+	events: [CoachEvents.CoachEvent[], CoachEvents.CoachEvent[]];
 	/** the POV player's lives, chronological */
 	lives: CoachEvents.CoachLife[];
 	/** null when the game has no objective or player-status reads to chart */
@@ -97,6 +98,12 @@ interface CoachSessionGame extends CoachGame {
 
 interface CoachEntry extends CoachEvents.CoachEvent {
 	game: CoachGame;
+}
+
+/** A team picked to coach a cast from, by game number: the games are rebuilt with the scan's events. */
+interface CastPick {
+	gameNumber: number;
+	team: CoachEvents.Team;
 }
 
 export function CoachView() {
@@ -131,13 +138,20 @@ function CoachSession({
 	const [startAt] = useSearchParam(scannerSearchParams, "t");
 	const [file, setFile] = useState(() => visitVodFile(name));
 	const url = useFileUrl(file);
+	const games = coachData(cachedBuild(events));
+	const isCastsOnly =
+		games.length > 0 && games.every((game) => game.match.cast);
+	const [initialCategory] = useState(() =>
+		isCastsOnly ? firstCategoryOf(games) : DEFAULT_CATEGORY,
+	);
 	const [category, setCategory] =
-		useState<CoachEvents.CoachEventCategory>(DEFAULT_CATEGORY);
+		useState<CoachEvents.CoachEventCategory>(initialCategory);
 	const [type, setType] = useState<CoachEvents.CoachEventType | typeof ALL>(
 		ALL,
 	);
 	const [selectedKey, setSelectedKey] = useState<string | null>(null);
 	const [gameFilters, setGameFilters] = useState(CoachFilters.DEFAULT_FILTERS);
+	const [castPickState, setCastPicks] = useState<CastPick[]>([]);
 	const [currentTime, setCurrentTime] = useState(startAt ?? 0);
 	const [isPaused, setIsPaused] = useState(true);
 	const [speed, setSpeed] = useState(1);
@@ -150,15 +164,33 @@ function CoachSession({
 		return host;
 	});
 
-	const {
-		games,
-		entries: allEntries,
-		options,
-	} = coachData(cachedBuild(events));
+	const castPicks = castPickState.flatMap(
+		({ gameNumber, team }): CoachEvents.CastPick[] => {
+			const game = games.find((candidate) => candidate.number === gameNumber);
+			return game ? [{ match: game.match, team }] : [];
+		},
+	);
+	const teamOf = (game: CoachGame) =>
+		CoachEvents.coachedTeam(game.match, castPicks) ?? 0;
+	const resultOf = (game: CoachGame) =>
+		game.match.cast ? castResult(game.match, teamOf(game)) : game.result;
+	const stripGames = games.map((game) => ({
+		...game,
+		result: resultOf(game),
+	}));
+	const options = CoachFilters.options(
+		games.map((game) => game.match),
+		castPicks,
+	);
 	const isShown = (game: CoachGame) =>
-		CoachFilters.passes(game.match, gameFilters);
+		CoachFilters.passes(game.match, gameFilters, castPicks);
 	const shownGames = games.filter(isShown);
-	const entries = allEntries.filter((entry) => isShown(entry.game));
+	const hasEntries = games.some((game) =>
+		game.events.some((side) => side.length > 0),
+	);
+	const entries = shownGames.flatMap((game) =>
+		game.events[teamOf(game)].map((event): CoachEntry => ({ ...event, game })),
+	);
 	const counts = new Map<CoachEvents.CoachEventType, number>();
 	for (const entry of entries) {
 		counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1);
@@ -183,6 +215,17 @@ function CoachSession({
 				game.match.startsAt !== null && game.match.startsAt <= currentTime,
 		) ?? shownGames[0];
 	const timeline = timelineGame?.timeline;
+	const castGame = timelineGame?.match.cast ? timelineGame : undefined;
+	const isCategoryCastless =
+		shownGames.length > 0 &&
+		shownGames.every((game) => game.match.cast) &&
+		CoachEvents.followsPovPlayer(category);
+
+	const pickCastTeam = (game: CoachGame, team: CoachEvents.Team) =>
+		setCastPicks((picks) => [
+			...picks.filter((pick) => pick.gameNumber !== game.number),
+			{ gameNumber: game.number, team },
+		]);
 
 	/** Picking from the lists starts the video; the bar's steps keep it paused or playing. */
 	const seek = (t: number, { play }: { play: boolean }) => {
@@ -273,7 +316,8 @@ function CoachSession({
 		url && (minimap || isMapBig) ? () => setIsMapBig(!isMapBig) : undefined;
 	const openPlanner =
 		url && isMapBig && isPaused && minimap && currentGame
-			? () => openInPlanner(minimap.image, currentGame.match)
+			? () =>
+					openInPlanner(minimap.image, currentGame.match, teamOf(currentGame))
 			: undefined;
 	const minimapView = (
 		<CoachMinimap
@@ -342,7 +386,7 @@ function CoachSession({
 					}
 				/>
 				<CoachGameStrip
-					games={games}
+					games={stripGames}
 					isShown={isShown}
 					currentTime={currentTime}
 					onSelect={(game) => selectGame(game, { play: true })}
@@ -403,10 +447,18 @@ function CoachSession({
 				</div>
 				<div className={styles.events}>
 					{url && isMapBig ? videoSlot : minimapView}
+					{castGame ? (
+						<CoachCastSide
+							game={castGame}
+							team={teamOf(castGame)}
+							onPick={(team) => pickCastTeam(castGame, team)}
+						/>
+					) : null}
 					<CoachEventFilter
 						counts={counts}
 						categoryTotal={categoryEntries.length}
 						category={category}
+						pinnedCategory={initialCategory}
 						type={type}
 						onCategoryChange={(picked) => {
 							setCategory(picked);
@@ -416,9 +468,11 @@ function CoachSession({
 					/>
 					{shown.length === 0 ? (
 						<p className={styles.empty}>
-							{allEntries.length === 0
-								? "No events were found in this file."
-								: "No events in the games shown."}
+							{isCategoryCastless
+								? "Casts follow no single player, so they have none of these events."
+								: !hasEntries
+									? "No events were found in this file."
+									: "No events in the games shown."}
 						</p>
 					) : (
 						<ol className={styles.list}>
@@ -453,11 +507,64 @@ function CoachSession({
 	);
 }
 
+/**
+ * Which team a cast game is coached from, each told by its weapons. Its
+ * player-following events (special uses, deaths, kills) and life summaries
+ * are left out: the camera hops between players.
+ */
+function CoachCastSide({
+	game,
+	team,
+	onPick,
+}: {
+	game: CoachGame;
+	team: CoachEvents.Team;
+	onPick: (team: CoachEvents.Team) => void;
+}) {
+	return (
+		<div className={styles.castSide}>
+			<div className={styles.castSideHeader}>
+				<span className={styles.castSideTitle}>Cast · coaching</span>
+				<SendouChipRadioGroup>
+					{([0, 1] as const).map((side) => (
+						<SendouChipRadio
+							key={side}
+							name={`coach-cast-team-${game.number}`}
+							value={String(side)}
+							checked={team === side}
+							onChange={() => onPick(side)}
+						>
+							<span className={styles.castTeam}>
+								{TEAM_LABELS[side]}
+								{game.match.teams[side].players.map((player, slot) =>
+									player.weaponId === null ? null : (
+										<WeaponImage
+											key={slot}
+											weaponSplId={player.weaponId}
+											variant="badge"
+											size={18}
+										/>
+									),
+								)}
+							</span>
+						</SendouChipRadio>
+					))}
+				</SendouChipRadioGroup>
+			</div>
+			<p className={styles.castSideNote}>
+				Casts follow no single player: special uses, deaths, kills and lives are
+				left out.
+			</p>
+		</div>
+	);
+}
+
 /** The events shown: a category in the select, then a type of it as chips when it has more than one. */
 function CoachEventFilter({
 	counts,
 	categoryTotal,
 	category,
+	pinnedCategory,
 	type,
 	onCategoryChange,
 	onTypeChange,
@@ -465,6 +572,8 @@ function CoachEventFilter({
 	counts: Map<CoachEvents.CoachEventType, number>;
 	categoryTotal: number;
 	category: CoachEvents.CoachEventCategory;
+	/** listed even without events */
+	pinnedCategory: CoachEvents.CoachEventCategory;
 	type: CoachEvents.CoachEventType | typeof ALL;
 	onCategoryChange: (category: CoachEvents.CoachEventCategory) => void;
 	onTypeChange: (type: CoachEvents.CoachEventType | typeof ALL) => void;
@@ -479,7 +588,7 @@ function CoachEventFilter({
 	const categoryItems = CATEGORIES.filter(
 		(candidate) =>
 			candidate === category ||
-			candidate === DEFAULT_CATEGORY ||
+			candidate === pinnedCategory ||
 			countOf(candidate) > 0,
 	).map((candidate) => ({
 		id: candidate,
@@ -538,43 +647,64 @@ function CoachEventFilter({
 }
 
 /**
- * Every game with its coach events, chronological, and what the game filters
- * can pick from. Games known only from the battle log hold no gameplay and are
- * left out of the numbering, as on the cards.
+ * Every game with its coach events, chronological. Games known only from the
+ * battle log hold no gameplay and are left out of the numbering, as on the
+ * cards.
  */
 function coachData(built: readonly BuiltMatch<ScanEvent>[]) {
 	const cached = coachDataCache.get(built);
 	if (cached) return cached;
 
-	const gameBuilds = built
+	const games = built
 		.filter((b) => !isHistoryOnly(b))
-		.map((b) => ({
-			match: b.match,
-			result: matchResult(b),
-			povDeaths: povDeathTimes(b.sources),
-		}));
-	const games = gameBuilds.map(
-		(b, index): CoachSessionGame => ({
-			number: index + 1,
-			match: b.match,
-			result: b.result,
-			lives: CoachEvents.lives(b.match, b.povDeaths),
-			timeline:
-				b.match.objective || b.match.playerStatus ? timelineOf(b.match) : null,
-		}),
+		.map((b, index): CoachSessionGame => {
+			const povDeaths = povDeathTimes(b.sources);
+			const events = CoachEvents.ofMatch(b.match, povDeaths, 0);
+			return {
+				number: index + 1,
+				match: b.match,
+				result: matchResult(b),
+				events: [
+					events,
+					b.match.cast ? CoachEvents.ofMatch(b.match, povDeaths, 1) : events,
+				],
+				lives: CoachEvents.lives(b.match, povDeaths),
+				timeline:
+					b.match.objective || b.match.playerStatus
+						? timelineOf(b.match)
+						: null,
+			};
+		});
+	coachDataCache.set(built, games);
+	return games;
+}
+
+/** The first category a file of casts has events in, coached from `teams[0]` as it opens. */
+function firstCategoryOf(
+	games: readonly CoachSessionGame[],
+): CoachEvents.CoachEventCategory {
+	const types = new Set(
+		games.flatMap((game) => game.events[0].map((event) => event.type)),
 	);
-	const entries = gameBuilds.flatMap((b, index) =>
-		CoachEvents.ofMatch(b.match, b.povDeaths).map(
-			(event): CoachEntry => ({ ...event, game: games[index]! }),
-		),
+	return (
+		CATEGORIES.find((candidate) =>
+			CoachEvents.DEFINITIONS.some(
+				(definition) =>
+					definition.category === candidate && types.has(definition.type),
+			),
+		) ?? DEFAULT_CATEGORY
 	);
-	const data = {
-		games,
-		entries,
-		options: CoachFilters.options(games.map((game) => game.match)),
-	};
-	coachDataCache.set(built, data);
-	return data;
+}
+
+/** Casts show no results screen as a rule, so the counter usually decides. */
+function castResult(
+	match: ScannerMatch,
+	team: CoachEvents.Team,
+): CoachGame["result"] {
+	const winner =
+		match.winner ?? CoachEvents.winnerByCount(match.objective?.samples ?? []);
+	if (winner === null) return null;
+	return winner === team ? "win" : "loss";
 }
 
 function timelineOf(match: ScannerMatch): CoachSessionGame["timeline"] {
@@ -595,9 +725,12 @@ function stepsAlong<T>(
 	return { previous: jumpFor("previous"), next: jumpFor("next") };
 }
 
-/** The map frame with the POV team's weapons as allies; casts have no POV team, so the first one is. */
-function openInPlanner(background: Blob, match: ScannerMatch) {
-	const allyTeam = CoachEvents.povTeamOf(match) ?? 0;
+/** The map frame with the coached team's weapons as allies. */
+function openInPlanner(
+	background: Blob,
+	match: ScannerMatch,
+	allyTeam: CoachEvents.Team,
+) {
 	const weaponsOf = (team: ScannerMatch["teams"][number]) =>
 		team.players.flatMap((player) =>
 			player.weaponId === null ? [] : [player.weaponId],

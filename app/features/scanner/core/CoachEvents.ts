@@ -1,7 +1,10 @@
 /**
  * Coach events: the moments of a scanned match worth reviewing, always from the
  * POV player's team's side (an enemy push is the POV team's PUSH_DEFENSE, an
- * enemy death streak is nothing). Config driven: `DEFINITIONS`
+ * enemy death streak is nothing). A cast has no POV player: its events are told
+ * from the side of the team picked to coach, and the types that follow the POV
+ * player (`followsPovPlayer`) are left out, as the camera and its kill feed
+ * hop between players. Config driven: `DEFINITIONS`
  * names each event type and the rule it is detected by; the interpreter below
  * analyzes the match once and runs every definition whose modes apply. A new
  * type is a new row, a new kind of moment a new rule kind.
@@ -19,6 +22,7 @@ import type {
 	ScannerMatchObjectiveSample,
 	ScannerMatchPlayerStatusSample,
 } from "./scanner-match";
+import { matchKey } from "./text";
 
 export const DEFINITIONS = [
 	{
@@ -26,6 +30,7 @@ export const DEFINITIONS = [
 		label: "Special used",
 		category: "Special",
 		variant: "Used",
+		followsPovPlayer: true,
 		rule: { kind: "specialUsed" },
 	},
 	{
@@ -119,6 +124,7 @@ export const DEFINITIONS = [
 		label: "Died with special",
 		category: "Died with special",
 		variant: "With special",
+		followsPovPlayer: true,
 		rule: { kind: "diedWithSpecial" },
 	},
 	{
@@ -126,6 +132,7 @@ export const DEFINITIONS = [
 		label: "Death streak 2+",
 		category: "Death streak",
 		variant: "2+",
+		followsPovPlayer: true,
 		rule: { kind: "deathStreak", minDeaths: 2 },
 	},
 	{
@@ -133,6 +140,7 @@ export const DEFINITIONS = [
 		label: "Death streak 3+",
 		category: "Death streak",
 		variant: "3+",
+		followsPovPlayer: true,
 		rule: { kind: "deathStreak", minDeaths: 3 },
 	},
 	{
@@ -140,6 +148,7 @@ export const DEFINITIONS = [
 		label: "Death streak 4+",
 		category: "Death streak",
 		variant: "4+",
+		followsPovPlayer: true,
 		rule: { kind: "deathStreak", minDeaths: 4 },
 	},
 	{
@@ -147,6 +156,7 @@ export const DEFINITIONS = [
 		label: "Kill streak 2+",
 		category: "Kill streak",
 		variant: "2+",
+		followsPovPlayer: true,
 		rule: { kind: "killStreak", minKills: 2 },
 	},
 	{
@@ -154,6 +164,7 @@ export const DEFINITIONS = [
 		label: "Kill streak 5+",
 		category: "Kill streak",
 		variant: "5+",
+		followsPovPlayer: true,
 		rule: { kind: "killStreak", minKills: 5 },
 	},
 	{
@@ -161,6 +172,7 @@ export const DEFINITIONS = [
 		label: "Kill streak 10+",
 		category: "Kill streak",
 		variant: "10+",
+		followsPovPlayer: true,
 		rule: { kind: "killStreak", minKills: 10 },
 	},
 	{
@@ -277,6 +289,8 @@ interface CoachEventDefinition {
 	variant: string;
 	/** modes the event exists in; omitted = every mode (Turf War and unknown included) */
 	modes?: readonly ModeShort[];
+	/** needs the POV player, so casts have none */
+	followsPovPlayer?: boolean;
 	rule: CoachRule;
 }
 
@@ -293,20 +307,23 @@ export interface CoachEvent {
 /**
  * The match's coach events, ordered by `start`. `povDeaths` are the POV
  * player's death reads (seconds into the video/stream, e.g. `povDeathTimes`
- * of the match's sources); reads of one death may repeat. A match whose POV
- * team is unknown (a cast, a results screen without the POV seat) has none.
+ * of the match's sources); reads of one death may repeat. A cast's are told
+ * from `castTeam`'s side. POV footage whose POV team is unknown (a results
+ * screen without the POV seat) has none.
  */
 export function ofMatch(
 	match: ScannerMatch,
 	povDeaths: readonly number[],
+	castTeam: Team = 0,
 ): CoachEvent[] {
-	const analysis = analyze(match, povDeaths);
+	const analysis = analyze(match, povDeaths, castTeam);
 	if (!analysis) return [];
 
 	return DEFINITIONS.filter(
 		(definition: CoachEventDefinition) =>
-			!definition.modes ||
-			(analysis.mode !== null && definition.modes.includes(analysis.mode)),
+			(!definition.modes ||
+				(analysis.mode !== null && definition.modes.includes(analysis.mode))) &&
+			!(match.cast && definition.followsPovPlayer),
 	)
 		.flatMap((definition) =>
 			mergedOverlapping(detectMoments(definition.rule, analysis)).map(
@@ -331,6 +348,45 @@ export function category(type: CoachEventType): CoachEventCategory {
 	return DEFINITIONS.find((definition) => definition.type === type)!.category;
 }
 
+/** Whether every type of the category needs the POV player, so casts have none of it. */
+export function followsPovPlayer(eventCategory: CoachEventCategory): boolean {
+	return DEFINITIONS.filter(
+		(definition) => definition.category === eventCategory,
+	).every((definition: CoachEventDefinition) => definition.followsPovPlayer);
+}
+
+/** A team picked to coach a cast from, in the game it was picked in. */
+export interface CastPick {
+	match: ScannerMatch;
+	team: Team;
+}
+
+/**
+ * The team the match is coached from. POV footage: its POV team
+ * (`povTeamOf`). A cast: the team picked in it, else the side sharing more
+ * player names with the latest pick's team (casts keep `teams` by ink color,
+ * so a team can change sides between games), else the latest pick's side,
+ * else `teams[0]`. `castPicks` are oldest first.
+ */
+export function coachedTeam(
+	match: ScannerMatch,
+	castPicks: readonly CastPick[],
+): Team | null {
+	if (!match.cast) return povTeamOf(match);
+
+	const own = castPicks.findLast((pick) => pick.match === match);
+	if (own) return own.team;
+	const latest = castPicks.at(-1);
+	if (!latest) return 0;
+
+	const roster = nameKeys(latest.match.teams[latest.team]);
+	const shared = match.teams.map(
+		(team) => [...nameKeys(team)].filter((key) => roster.has(key)).length,
+	);
+	if (shared[0] === shared[1]) return latest.team;
+	return shared[0]! > shared[1]! ? 0 : 1;
+}
+
 /**
  * The POV player's lives in the match, chronological: the first starts at the
  * game's start, then one at every respawn. A respawn is the first icon-strip
@@ -343,7 +399,7 @@ export function lives(
 	povDeaths: readonly number[],
 ): CoachLife[] {
 	if (match.startsAt === null) return [];
-	const analysis = analyze(match, povDeaths);
+	const analysis = match.cast ? null : analyze(match, povDeaths, 0);
 	if (!analysis) return [{ start: match.startsAt, summary: null }];
 
 	const deaths = analysis.povDeaths;
@@ -404,7 +460,8 @@ export interface CoachLifeControl {
 	theirs: number;
 }
 
-type Team = 0 | 1;
+/** a side of the match, `teams` index */
+export type Team = 0 | 1;
 
 interface Moment {
 	start: number;
@@ -422,6 +479,7 @@ interface ControlRun {
 
 interface Analysis {
 	mode: ModeShort | null;
+	/** the POV team; on a cast the team coached */
 	povTeam: Team;
 	enemyTeam: Team;
 	/** the POV player's slot in the status samples; null without a POV seat */
@@ -432,9 +490,9 @@ interface Analysis {
 	controlRuns: ControlRun[];
 	/** each team's splat times off the icon strip, `teams` order */
 	splats: [number[], number[]];
-	/** the POV player's kills; null when the kill feed was never read */
+	/** the POV player's kills; null when the kill feed was never read, and on a cast */
 	povKills: number[] | null;
-	/** the POV player's deaths, one per death */
+	/** the POV player's deaths, one per death; none on a cast */
 	povDeaths: number[];
 	/** seconds into the video/stream the game clock starts at; null when never read */
 	gameStartT: number | null;
@@ -468,8 +526,9 @@ function detectMoments(rule: CoachRule, analysis: Analysis): Moment[] {
 function analyze(
 	match: ScannerMatch,
 	povDeaths: readonly number[],
+	castTeam: Team,
 ): Analysis | null {
-	const povTeam = povTeamOf(match);
+	const povTeam = match.cast ? castTeam : povTeamOf(match);
 	if (povTeam === null) return null;
 
 	const objective = (match.objective?.samples ?? []).toSorted(
@@ -494,8 +553,10 @@ function analyze(
 		statuses,
 		controlRuns: controlRuns(objective),
 		splats: [teamSplats(statuses, 0), teamSplats(statuses, 1)],
-		povKills: match.kills?.map((kill) => kill.t).sort((a, b) => a - b) ?? null,
-		povDeaths: mergedDeaths([...povDeaths, ...povDeadReads]),
+		povKills: match.cast
+			? null
+			: (match.kills?.map((kill) => kill.t).sort((a, b) => a - b) ?? null),
+		povDeaths: match.cast ? [] : mergedDeaths([...povDeaths, ...povDeadReads]),
 		gameStartT: projectedGameStartT(objective, statuses),
 	};
 }
@@ -1080,4 +1141,12 @@ function clockAt(analysis: Analysis, t: number): number | null {
 
 function otherTeam(team: Team): Team {
 	return team === 0 ? 1 : 0;
+}
+
+function nameKeys(team: ScannerMatch["teams"][number]): Set<string> {
+	return new Set(
+		team.players.flatMap((player) =>
+			player.name?.trim() ? [matchKey(player.name)] : [],
+		),
+	);
 }

@@ -96,18 +96,44 @@ const ofType = (
 		.map(({ start, end }) => ({ start, end }));
 
 describe("CoachEvents.ofMatch", () => {
-	test("a cast has no POV team and so no events", () => {
+	test.each([
+		{ castTeam: 0 as const, expected: "PUSH_OFFENSE" },
+		{ castTeam: 1 as const, expected: "PUSH_DEFENSE" },
+	])(
+		"a cast's push is told from the coached team $castTeam's side",
+		({ castTeam, expected }) => {
+			const events = CoachEvents.ofMatch(
+				match({
+					cast: true,
+					objective: objective(
+						"TC",
+						sample(100, [100, 100], null),
+						sample(110, [100, 100], 0, 0),
+						sample(120, [70, 100], 0, 30),
+					),
+				}),
+				[],
+				castTeam,
+			);
+
+			expect(typesOf(events)).toContain(expected);
+		},
+	);
+
+	test("a cast has no events that follow the POV player", () => {
 		const events = CoachEvents.ofMatch(
 			match({
 				cast: true,
-				objective: objective(
-					"TC",
-					sample(100, [100, 100], null),
-					sample(110, [100, 100], 0, 0),
-					sample(120, [70, 100], 0, 30),
-				),
+				kills: [kill(110), kill(115), kill(120)],
+				playerStatus: {
+					samples: [
+						status(110, { special: [[0, 0]] }),
+						status(112),
+						status(130, { dead: [[0, 0]] }),
+					],
+				},
 			}),
-			[],
+			[125, 140, 160],
 		);
 
 		expect(events).toEqual([]);
@@ -779,5 +805,60 @@ describe("CoachEvents.lives", () => {
 		);
 
 		expect(first!.summary!.control).toBeNull();
+	});
+});
+
+describe("CoachEvents.coachedTeam", () => {
+	const named = (...names: string[]) => ({
+		players: names.map((name) => ({
+			name,
+			weaponId: null,
+			paint: null,
+			ka: null,
+			d: null,
+			s: null,
+		})),
+	});
+	const cast = (alpha: string[], bravo: string[]) =>
+		match({ cast: true, teams: [named(...alpha), named(...bravo)] });
+
+	test("POV footage is coached from its POV team", () => {
+		expect(
+			CoachEvents.coachedTeam(match({ pov: { team: 1, index: 0 } }), []),
+		).toBe(1);
+	});
+
+	test("a cast without picks is coached from teams[0]", () => {
+		expect(CoachEvents.coachedTeam(cast(["a"], ["b"]), [])).toBe(0);
+	});
+
+	test("a cast keeps its own pick over a later one", () => {
+		const first = cast(["a"], ["b"]);
+		const second = cast(["c"], ["d"]);
+
+		expect(
+			CoachEvents.coachedTeam(first, [
+				{ match: first, team: 1 },
+				{ match: second, team: 0 },
+			]),
+		).toBe(1);
+	});
+
+	test("an unpicked cast follows the latest pick's team by names", () => {
+		const picked = cast(["Ace", "Bee", "Cee", "Dee"], ["W", "X", "Y", "Z"]);
+		const swapped = cast(["w", "x", "y", "zz"], ["ace", "Bee", "C ee", "Dee"]);
+
+		expect(CoachEvents.coachedTeam(swapped, [{ match: picked, team: 0 }])).toBe(
+			1,
+		);
+	});
+
+	test("an unpicked cast sharing no names takes the latest pick's side", () => {
+		const picked = cast(["Ace"], ["W"]);
+		const other = cast(["Foo"], ["Bar"]);
+
+		expect(CoachEvents.coachedTeam(other, [{ match: picked, team: 1 }])).toBe(
+			1,
+		);
 	});
 });

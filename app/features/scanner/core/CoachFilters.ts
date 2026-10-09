@@ -1,9 +1,10 @@
 /**
  * Coach mode's game filters: which of a scanned file's games stay in the
  * review, matched on what the scan read of them. Sides are told apart from the
- * POV team's view ("friendly" and "enemy"), so a game without a POV team (a
- * cast, a results screen without the POV seat) fails every side filter, as a
- * game whose value was never read fails that value's filter.
+ * coached team's view ("friendly" and "enemy": the POV team, on a cast the team
+ * picked, see `CoachEvents.coachedTeam`), so a game without one (a results
+ * screen without the POV seat) fails every side filter, as a game whose value
+ * was never read fails that value's filter.
  */
 import * as R from "remeda";
 import { matchScoresFromObjective } from "~/components/objective-timeline-utils";
@@ -63,7 +64,11 @@ export function isActive(filters: Filters): boolean {
 }
 
 /** Whether `match` passes every set filter. */
-export function passes(match: ScannerMatch, filters: Filters): boolean {
+export function passes(
+	match: ScannerMatch,
+	filters: Filters,
+	castPicks: readonly CoachEvents.CastPick[] = [],
+): boolean {
 	if (filters.lobby !== null && match.lobby !== filters.lobby) return false;
 	if (filters.mode !== null && modeOf(match) !== filters.mode) return false;
 	if (filters.stage !== null && match.stage !== filters.stage) return false;
@@ -77,7 +82,7 @@ export function passes(match: ScannerMatch, filters: Filters): boolean {
 	) {
 		return true;
 	}
-	const sides = sidesOf(match);
+	const sides = sidesOf(match, castPicks);
 	if (!sides) return false;
 	return (
 		(friendlyWeapon === null || hasWeapon(sides.friendly, friendlyWeapon)) &&
@@ -92,8 +97,13 @@ export function passes(match: ScannerMatch, filters: Filters): boolean {
  * `matches`. Names are listed in their first read spelling, the POV player's
  * own left out of the friendly ones.
  */
-export function options(matches: readonly ScannerMatch[]): Options {
-	const sides = matches.map(sidesOf).filter(R.isNonNull);
+export function options(
+	matches: readonly ScannerMatch[],
+	castPicks: readonly CoachEvents.CastPick[] = [],
+): Options {
+	const sides = matches
+		.map((match) => sidesOf(match, castPicks))
+		.filter(R.isNonNull);
 	const friendly = sides.flatMap((side) => side.friendly);
 	const enemy = sides.flatMap((side) => side.enemy);
 
@@ -143,12 +153,15 @@ interface Sides {
 	pov: ScannerMatchPlayer | undefined;
 }
 
-function sidesOf(match: ScannerMatch): Sides | null {
-	const povTeam = CoachEvents.povTeamOf(match);
-	if (povTeam === null) return null;
+function sidesOf(
+	match: ScannerMatch,
+	castPicks: readonly CoachEvents.CastPick[],
+): Sides | null {
+	const team = CoachEvents.coachedTeam(match, castPicks);
+	if (team === null) return null;
 	return {
-		friendly: match.teams[povTeam].players,
-		enemy: match.teams[povTeam === 0 ? 1 : 0].players,
+		friendly: match.teams[team].players,
+		enemy: match.teams[team === 0 ? 1 : 0].players,
 		pov: match.pov
 			? match.teams[match.pov.team].players[match.pov.index]
 			: undefined,

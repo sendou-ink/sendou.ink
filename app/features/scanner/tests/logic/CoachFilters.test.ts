@@ -88,12 +88,24 @@ describe("CoachFilters.passes", () => {
 	});
 
 	test("a game without a POV team fails side filters", () => {
-		const cast = match({ cast: true, pov: null });
+		const seatless = match({ pov: null });
 
-		expect(CoachFilters.passes(cast, filters({ enemyWeapon: 200 }))).toBe(
+		expect(CoachFilters.passes(seatless, filters({ enemyWeapon: 200 }))).toBe(
 			false,
 		);
-		expect(CoachFilters.passes(cast, filters({ mode: "SZ" }))).toBe(true);
+		expect(CoachFilters.passes(seatless, filters({ mode: "SZ" }))).toBe(true);
+	});
+
+	test("a cast's sides are told from the team picked", () => {
+		const cast = match({ cast: true, pov: null, winner: null });
+		const picks = [{ match: cast, team: 1 as const }];
+
+		expect(
+			CoachFilters.passes(cast, filters({ friendlyName: "Foe" }), picks),
+		).toBe(true);
+		expect(
+			CoachFilters.passes(cast, filters({ enemyWeapon: 200 }), picks),
+		).toBe(false);
 	});
 
 	test("a game with no score read fails the ending filter", () => {
