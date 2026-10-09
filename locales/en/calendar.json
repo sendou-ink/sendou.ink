@@ -176,6 +176,8 @@
 	"newTournament.section.typeAndVisibility": "Type & visibility",
 	"newTournament.section.prizes": "Prizes",
 	"newTournament.noPrizes": "Badge and trophy prizes are available for badges and trophies you manage",
+	"newTournament.prizeKind.badges": "Badges",
+	"newTournament.prizeKind.trophy": "Trophy",
 	"newTournament.review": "Review",
 	"newTournament.review.noName": "No name yet",
 	"newTournament.review.mapCount": "{{count}} maps"

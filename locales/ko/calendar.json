@@ -172,6 +172,8 @@
 	"newTournament.section.typeAndVisibility": "",
 	"newTournament.section.prizes": "",
 	"newTournament.noPrizes": "",
+	"newTournament.prizeKind.badges": "",
+	"newTournament.prizeKind.trophy": "",
 	"newTournament.review": "",
 	"newTournament.review.noName": "",
 	"newTournament.review.mapCount": ""

@@ -7,6 +7,10 @@ import type { MetaFunction } from "react-router";
 import { Link, useLoaderData, useNavigate } from "react-router";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouSection } from "~/components/elements/Section";
 import { FormMessage } from "~/components/FormMessage";
 import { ModeImage } from "~/components/Image";
@@ -36,7 +40,7 @@ import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	CALENDAR_NEW_PAGE,
@@ -443,17 +447,7 @@ function TournamentSteps() {
 						gap="lg"
 						title={t("calendar:newTournament.section.prizes")}
 					>
-						<div className="stack md">
-							{data.badgeOptions.length > 0 ? (
-								<FormField name="badges" options={data.badgeOptions} />
-							) : null}
-							<TrophyField />
-							{data.badgeOptions.length === 0 && data.trophies.length === 0 ? (
-								<FormMessage type="info">
-									{t("calendar:newTournament.noPrizes")}
-								</FormMessage>
-							) : null}
-						</div>
+						<PrizeFields />
 					</SendouSection>
 					<TournamentReview />
 				</div>
@@ -604,90 +598,145 @@ function DescriptionField({ isTournament }: { isTournament: boolean }) {
 	);
 }
 
-function TrophyField() {
+type PrizeKind = "badges" | "trophy";
+
+function PrizeFields() {
 	const { t } = useTranslation("calendar");
 	const data = useLoaderData<typeof loader>();
 	const { values, setValue } = useFormFieldContext();
-	const id = React.useId();
 
 	const organizationId = values.organizationId
 		? Number(values.organizationId)
 		: null;
 	const trophyId = typeof values.trophyId === "number" ? values.trophyId : null;
-	const badgeCount = (values.badges as number[]).length;
 
-	// clear the trophy when the selected organization or badges make it invalid
+	const [chosenPrizeKind, setChosenPrizeKind] = React.useState<PrizeKind>(
+		(values.badges as number[]).length > 0 ? "badges" : "trophy",
+	);
+
+	// clear the trophy when the selected organization makes it invalid
 	React.useEffect(() => {
 		if (!trophyId) return;
-		const trophyStillValid =
-			badgeCount === 0 &&
-			data.trophies.some(
-				(trophy) =>
-					trophy.id === trophyId && trophy.organizationId === organizationId,
-			);
+		const trophyStillValid = data.trophies.some(
+			(trophy) =>
+				trophy.id === trophyId && trophy.organizationId === organizationId,
+		);
 		if (!trophyStillValid) {
 			setValue("trophyId", null);
 		}
-	}, [trophyId, badgeCount, organizationId, data.trophies, setValue]);
+	}, [trophyId, organizationId, data.trophies, setValue]);
 
 	const availableTrophies = organizationId
 		? data.trophies.filter((trophy) => trophy.organizationId === organizationId)
 		: [];
 
-	if (availableTrophies.length === 0 && trophyId === null) return null;
+	const canAddBadges = data.badgeOptions.length > 0;
+	const canAddTrophy = availableTrophies.length > 0;
 
+	if (!canAddBadges && !canAddTrophy) {
+		return <FormMessage type="info">{t("newTournament.noPrizes")}</FormMessage>;
+	}
+
+	const prizeKind: PrizeKind =
+		canAddBadges && canAddTrophy
+			? chosenPrizeKind
+			: canAddTrophy
+				? "trophy"
+				: "badges";
+
+	const handlePrizeKindChange = (newPrizeKind: PrizeKind) => {
+		setChosenPrizeKind(newPrizeKind);
+		if (newPrizeKind === "trophy") {
+			setValue("badges", []);
+		} else {
+			setValue("trophyId", null);
+		}
+	};
+
+	return (
+		<div className="stack md">
+			{canAddBadges && canAddTrophy ? (
+				<SendouChipRadioGroup>
+					<SendouChipRadio
+						name="prize-kind"
+						value="trophy"
+						checked={prizeKind === "trophy"}
+						onChange={() => handlePrizeKindChange("trophy")}
+					>
+						{t("newTournament.prizeKind.trophy")}
+					</SendouChipRadio>
+					<SendouChipRadio
+						name="prize-kind"
+						value="badges"
+						checked={prizeKind === "badges"}
+						onChange={() => handlePrizeKindChange("badges")}
+					>
+						{t("newTournament.prizeKind.badges")}
+					</SendouChipRadio>
+				</SendouChipRadioGroup>
+			) : null}
+			{prizeKind === "badges" ? (
+				<FormField name="badges" options={data.badgeOptions} />
+			) : (
+				<TrophyField trophies={availableTrophies} />
+			)}
+		</div>
+	);
+}
+
+function TrophyField({
+	trophies,
+}: {
+	trophies: SerializeFrom<typeof loader>["trophies"];
+}) {
+	const { t } = useTranslation("calendar");
+	const { values } = useFormFieldContext();
+	const id = React.useId();
+
+	const trophyId = typeof values.trophyId === "number" ? values.trophyId : null;
 	const selectedTrophy = trophyId
-		? data.trophies.find((trophy) => trophy.id === trophyId)
+		? trophies.find((trophy) => trophy.id === trophyId)
 		: null;
 
 	return (
 		<FormField name="trophyId">
-			{({ onChange }: CustomFieldRenderProps) => {
-				const handleChange = (newTrophyId: number | null) => {
-					onChange(newTrophyId);
-					if (newTrophyId) {
-						setValue("badges", []);
-					}
-				};
-
-				return (
-					<div className="stack md">
-						<div>
-							<label htmlFor={id}>{t("forms.trophy")}</label>
-							<select
-								id={id}
-								value={trophyId ?? ""}
-								onChange={(e) => {
-									const value = e.target.value;
-									handleChange(value === "" ? null : Number(value));
-								}}
-							>
-								<option value="">{t("forms.trophy.placeholder")}</option>
-								{availableTrophies.map((trophy) => (
-									<option key={trophy.id} value={trophy.id}>
-										{trophy.name}
-									</option>
-								))}
-							</select>
-						</div>
-						{selectedTrophy ? (
-							<div className="stack md items-center">
-								<Trophy model={selectedTrophy.model} />
-								<div className="stack horizontal md items-center">
-									<span>{selectedTrophy.name}</span>
-									<SendouButton
-										className="ml-auto"
-										onClick={() => handleChange(null)}
-										icon={<Trash />}
-										variant="minimal-destructive"
-										aria-label="Remove trophy"
-									/>
-								</div>
-							</div>
-						) : null}
+			{({ onChange }: CustomFieldRenderProps) => (
+				<div className="stack md">
+					<div>
+						<label htmlFor={id}>{t("forms.trophy")}</label>
+						<select
+							id={id}
+							value={trophyId ?? ""}
+							onChange={(e) => {
+								const value = e.target.value;
+								onChange(value === "" ? null : Number(value));
+							}}
+						>
+							<option value="">{t("forms.trophy.placeholder")}</option>
+							{trophies.map((trophy) => (
+								<option key={trophy.id} value={trophy.id}>
+									{trophy.name}
+								</option>
+							))}
+						</select>
 					</div>
-				);
-			}}
+					{selectedTrophy ? (
+						<div className="stack md items-center">
+							<Trophy model={selectedTrophy.model} />
+							<div className="stack horizontal md items-center">
+								<span>{selectedTrophy.name}</span>
+								<SendouButton
+									className="ml-auto"
+									onClick={() => onChange(null)}
+									icon={<Trash />}
+									variant="minimal-destructive"
+									aria-label="Remove trophy"
+								/>
+							</div>
+						</div>
+					) : null}
+				</div>
+			)}
 		</FormField>
 	);
 }
