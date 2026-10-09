@@ -2,12 +2,8 @@ import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { action as adminAction } from "~/features/tournament-admin/actions/to.$id.admin.seeds.server";
 import { parseBody, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/schema";
+import { id, idObject } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
-
-const paramsSchema = v.object({
-	id,
-});
 
 const bodySchema = v.object({
 	tournamentTeamIds: v.array(id),
@@ -16,7 +12,7 @@ const bodySchema = v.object({
 export const action = async (args: ActionFunctionArgs) => {
 	const { id: tournamentId } = parseParams({
 		params: args.params,
-		schema: paramsSchema,
+		schema: idObject,
 	});
 	const { tournamentTeamIds } = await parseBody({
 		request: args.request,

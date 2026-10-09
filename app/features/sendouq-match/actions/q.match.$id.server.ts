@@ -26,16 +26,17 @@ import {
 	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
 import { sendMatchCanceledWebhook } from "../core/discord-webhook.server";
 import * as RejoinVote from "../core/RejoinVote";
 import * as SendouQMatch from "../core/SendouQMatch";
-import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
+import { matchSchema } from "../q-match-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const matchId = parseParams({
 		params,
-		schema: qMatchPageParamsSchema,
+		schema: idObject,
 	}).id;
 	const user = requireUser();
 	const parsed = await parseFormData({

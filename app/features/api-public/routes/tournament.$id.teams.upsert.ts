@@ -6,12 +6,8 @@ import { upsertRegistrationAction } from "~/features/tournament-admin/actions/to
 import { ADMIN_REGISTRATION_MAX_MEMBERS } from "~/features/tournament-admin/tournament-admin-registration-schemas";
 import { existingImage } from "~/form/image-field";
 import { parseBody, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/schema";
+import { id, idObject } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
-
-const paramsSchema = v.object({
-	id,
-});
 
 const bodySchema = v.object({
 	tournamentTeamId: v.optional(id),
@@ -35,7 +31,7 @@ const bodySchema = v.object({
 export const action = async (args: ActionFunctionArgs) => {
 	const { id: tournamentId } = parseParams({
 		params: args.params,
-		schema: paramsSchema,
+		schema: idObject,
 	});
 	const body = await parseBody({
 		request: args.request,

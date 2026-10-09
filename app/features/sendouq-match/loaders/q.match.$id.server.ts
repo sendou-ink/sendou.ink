@@ -11,13 +11,13 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { qMatchPageParamsSchema } from "../q-match-schemas";
+import { idObject } from "~/utils/schema";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const matchId = parseParams({
 		params,
-		schema: qMatchPageParamsSchema,
+		schema: idObject,
 	}).id;
 
 	const matchUnmapped = notFoundIfNullish(

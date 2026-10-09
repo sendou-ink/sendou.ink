@@ -1,6 +1,5 @@
 import { sql } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
-import * as v from "valibot";
 import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
@@ -29,12 +28,8 @@ import {
 	tournamentUsername,
 } from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/schema";
+import { idObject } from "~/utils/schema";
 import type { GetTournamentTeamsResponse } from "../schema";
-
-const paramsSchema = v.object({
-	id,
-});
 
 const ZERO_STATS: Standings.TeamRecord = {
 	setWins: 0,
@@ -48,7 +43,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const { id: tournamentId } = parseParams({
 		params,
-		schema: paramsSchema,
+		schema: idObject,
 	});
 
 	const tournament = await tournamentDataCached(tournamentId);

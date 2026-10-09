@@ -7,9 +7,9 @@ import {
 	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import { sendUserReportWebhook } from "../core/discord-webhook.server";
 import * as UserReportRepository from "../UserReportRepository.server";
-import { reportUserParamsSchema } from "../user-report-schemas";
 import { reportUserSchemaServer } from "../user-report-schemas.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -17,7 +17,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const reportedUserId = parseParams({
 		params,
-		schema: reportUserParamsSchema,
+		schema: idObject,
 	}).id;
 
 	errorToastIfFalsy(reportedUserId !== user.id, "Can't report yourself");

@@ -1,5 +1,4 @@
 import type { ActionFunction } from "react-router";
-import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -7,14 +6,18 @@ import { teamParamsSchema } from "~/features/team/team-schemas.server";
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
+import {
+	errorToastIfFalsy,
+	notFoundIfNullish,
+	parseParams,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { teamScheduleActionSchema } from "../availability-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
-	const { customUrl } = v.parse(teamParamsSchema, params);
+	const { customUrl } = parseParams({ params, schema: teamParamsSchema });
 
 	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl),

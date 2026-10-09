@@ -3,17 +3,15 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { parseParams } from "~/utils/remix.server";
-import {
-	userCardNoteParamsSchema,
-	userCardNoteSchema,
-} from "../user-card-schemas";
+import { idObject } from "~/utils/schema";
+import { userCardNoteSchema } from "../user-card-schemas";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	requireUser();
 
 	const targetId = parseParams({
 		params,
-		schema: userCardNoteParamsSchema,
+		schema: idObject,
 	}).id;
 	const result = await parseFormData({
 		request,

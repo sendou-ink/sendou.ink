@@ -1,11 +1,11 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	errorToastIfFalsy,
 	notFoundIfNullish,
+	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -21,7 +21,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: teamProfilePageActionSchema,
 	});
 
-	const { customUrl } = v.parse(teamParamsSchema, params);
+	const { customUrl } = parseParams({ params, schema: teamParamsSchema });
 	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl),
 	);
