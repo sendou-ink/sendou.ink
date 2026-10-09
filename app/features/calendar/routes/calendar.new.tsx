@@ -265,7 +265,6 @@ function useDefaultValues() {
 		isTest: settings?.isTest ?? false,
 		isLeague: settings?.isLeague ?? false,
 		isDraft: settings?.isDraft ?? false,
-		requireSendouQParticipation: settings?.requireSendouQParticipation ?? false,
 	};
 }
 
@@ -357,7 +356,6 @@ function TournamentSteps() {
 	const { t } = useTranslation(["calendar", "forms"]);
 	const data = useLoaderData<typeof loader>();
 	const { values } = useFormFieldContext();
-	const isAdmin = useHasRole("ADMIN");
 	const organizationOptions = useOrganizationOptions();
 
 	const isEditing = Boolean(data.eventToEdit);
@@ -420,9 +418,6 @@ function TournamentSteps() {
 							<FormField name="isLeague" />
 							{isEditing ? null : <FormField name="isTest" />}
 							<DraftField />
-							{isAdmin ? (
-								<FormField name="requireSendouQParticipation" />
-							) : null}
 						</div>
 					</SendouSection>
 				</div>

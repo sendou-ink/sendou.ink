@@ -42,7 +42,6 @@ export function calendarNewFormValues(
 		isTest: false,
 		isLeague: false,
 		isDraft: false,
-		requireSendouQParticipation: false,
 		...overrides,
 	};
 }

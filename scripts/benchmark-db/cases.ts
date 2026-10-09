@@ -423,9 +423,6 @@ export function buildCases(fx: Fixtures): {
 			onlyOneEntryPerUser: true,
 		}),
 	);
-	add("LeaderboardRepository.hasEnoughSqMatchesByUserId", fx.sq, (sq) =>
-		LeaderboardRepository.hasEnoughSqMatchesByUserId(sq.userId),
-	);
 	add("LeaderboardRepository.findSeasonsParticipatedInByUserId", fx.sq, (sq) =>
 		LeaderboardRepository.findSeasonsParticipatedInByUserId(sq.userId),
 	);

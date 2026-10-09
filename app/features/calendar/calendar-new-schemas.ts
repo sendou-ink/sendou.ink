@@ -198,10 +198,6 @@ export const calendarNewBaseSchema = v.object({
 		label: "labels.draft",
 		bottomText: "bottomTexts.draftInfo",
 	}),
-	requireSendouQParticipation: toggle({
-		label: "labels.requireSendouQ",
-		bottomText: "bottomTexts.requireSendouQ",
-	}),
 });
 
 /** {@link calendarNewBaseSchema} with its cross-field rules, so the form catches e.g. bracket progression errors before submitting. */
@@ -244,7 +240,6 @@ export const TOURNAMENT_FORM_STEPS: ReadonlyArray<
 			"isLeague",
 			"isTest",
 			"isDraft",
-			"requireSendouQParticipation",
 		],
 	},
 	{

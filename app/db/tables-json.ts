@@ -101,7 +101,6 @@ export interface TournamentSettings {
 	maxMembersPerTeam?: number;
 	isTest?: boolean;
 	isDraft?: boolean;
-	requireSendouQParticipation?: boolean;
 	/** Is this tournament a league? Leagues are played over many weeks, each starting bracket being a division. */
 	isLeague?: boolean;
 	/** Team picked map configuration, always set when `Tournament.mapPickingStyle` is "AUTO". */

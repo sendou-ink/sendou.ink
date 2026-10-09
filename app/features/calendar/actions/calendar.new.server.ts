@@ -152,7 +152,6 @@ export const action = defineAction(
 			enableNoScreenToggle: data.enableNoScreenToggle,
 			enableSubs: data.enableSubs,
 			requireInGameNames: data.requireInGameNames,
-			requireSendouQParticipation: data.requireSendouQParticipation,
 			autonomousSubs: data.autonomousSubs,
 			tournamentToCopyId: data.tournamentToCopyId,
 			regClosesAt:
