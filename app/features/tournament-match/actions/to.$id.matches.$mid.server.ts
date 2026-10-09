@@ -35,6 +35,7 @@ import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
+	notFound,
 	notFoundIfNullish,
 	parseParams,
 	parseRequestPayload,
@@ -63,7 +64,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	);
 
 	if (match.tournamentId !== tournamentId) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	const data = await parseRequestPayload({

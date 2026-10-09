@@ -10,7 +10,7 @@ import * as Series from "~/features/tournament-organization/core/Series";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
-import { forbidden, parseParams } from "~/utils/remix.server";
+import { forbidden, notFound, parseParams } from "~/utils/remix.server";
 
 export type TournamentTeamCompsLoaderData = SerializeFrom<typeof loader>;
 
@@ -26,11 +26,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		(candidate) => candidate.id === tournamentTeamId,
 	);
 	if (!tournament || !team) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	if (!team.memberUserIds.includes(user.id)) {
-		throw forbidden();
+		forbidden();
 	}
 
 	const minMembersPerTeam = tournament.ctx.settings.minMembersPerTeam ?? 4;

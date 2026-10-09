@@ -16,6 +16,6 @@ export class LogInLinkPage {
 	/** An invalid link is served as a plain-text error response, not an app page. */
 	async fetchResponse(code: string) {
 		const response = await this.page.request.get(`/auth/login?code=${code}`);
-		return { status: response.status(), body: await response.text() };
+		return { status: response.status() };
 	}
 }

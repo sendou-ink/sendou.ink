@@ -1,3 +1,4 @@
+import { unauthorized } from "~/utils/remix.server";
 import { IMPERSONATED_SESSION_KEY, SESSION_KEY } from "./authenticator.server";
 import { authSessionStorage } from "./session.server";
 import {
@@ -16,7 +17,7 @@ export function getUser(): AuthenticatedUser | undefined {
 export function requireUser(): AuthenticatedUser {
 	const user = getUser();
 
-	if (!user) throw new Response(null, { status: 401 });
+	if (!user) unauthorized();
 
 	return user;
 }

@@ -10,7 +10,11 @@ import { isVotingOpen } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
-import { badRequestIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import {
+	badRequest,
+	badRequestIfFalsy,
+	parseRequestPayload,
+} from "~/utils/remix.server";
 import { PLUS_UPVOTE } from "../plus-voting-constants";
 import { votingActionSchema } from "../plus-voting-schemas";
 
@@ -22,7 +26,7 @@ export const action: ActionFunction = async ({ request }) => {
 	});
 
 	if (!isVotingOpen()) {
-		throw new Response(null, { status: 400 });
+		badRequest();
 	}
 
 	invariant(user.plusTier, "User should have plusTier");
@@ -78,18 +82,18 @@ function validateVotes({
 	votes: PlusVoteFromFE[];
 	usersForVoting?: PlusVotingRepository.UsersForVoting;
 }) {
-	if (!usersForVoting) throw new Response(null, { status: 400 });
+	if (!usersForVoting) badRequest();
 
 	// converting it to set also handles the check for duplicate ids
 	const votedUserIds = new Set(votes.map((v) => v.votedId));
 
 	if (votedUserIds.size !== usersForVoting.length) {
-		throw new Response(null, { status: 400 });
+		badRequest();
 	}
 
 	for (const { user } of usersForVoting) {
 		if (!votedUserIds.has(user.id)) {
-			throw new Response(null, { status: 400 });
+			badRequest();
 		}
 	}
 }

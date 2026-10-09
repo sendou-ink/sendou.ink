@@ -3,12 +3,13 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { updatePatreonData } from "~/modules/patreon";
 import {
 	canAccessLohiEndpoint,
+	forbidden,
 	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
 
 export const action: ActionFunction = async ({ request }) => {
 	if (!canAccessLohiEndpoint(request)) {
-		throw new Response("Not authorized", { status: 403 });
+		forbidden();
 	}
 
 	await updatePatreonData();

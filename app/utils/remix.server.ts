@@ -9,29 +9,40 @@ import type { AnySchema, AnySyncSchema } from "~/utils/schema";
 import { logger } from "./logger";
 import { currentRequestPath } from "./request-context.server";
 
+/** Throws a HTTP 404 (Not Found) response, ending execution of the loader/action early */
+export function notFound(): never {
+	throw new Response(null, { status: 404 });
+}
+
+/** Throws a HTTP 400 (Bad Request) response, ending execution of the loader/action early */
+export function badRequest(): never {
+	throw new Response(null, { status: 400 });
+}
+
+/** Throws a HTTP 401 (Unauthorized) response, ending execution of the loader/action early */
+export function unauthorized(): never {
+	throw new Response(null, { status: 401 });
+}
+
+/** Throws a HTTP 403 (Forbidden) response, ending execution of the loader/action early */
+export function forbidden(): never {
+	throw new Response(null, { status: 403 });
+}
+
 export function notFoundIfNullish<T>(value: T | null | undefined): T {
-	if (value === null || value === undefined) {
-		throw new Response(null, { status: 404 });
-	}
+	if (value === null || value === undefined) notFound();
 
 	return value;
 }
 
 export function unauthorizedIfFalsy<T>(value: T | null | undefined): T {
-	if (!value) throw new Response(null, { status: 401 });
+	if (!value) unauthorized();
 
 	return value;
 }
 
-/** Throws a HTTP 403 (Forbidden) response, ending execution of the loader/action early */
-export function forbidden() {
-	throw new Response(null, { status: 403 });
-}
-
 export function badRequestIfFalsy<T>(value: T | null | undefined): T {
-	if (!value) {
-		throw new Response(null, { status: 400 });
-	}
+	if (!value) badRequest();
 
 	return value;
 }
@@ -92,9 +103,7 @@ export function parseParams<T extends AnySyncSchema>({
 	schema: T;
 }): v.InferOutput<T> {
 	const parsed = v.safeParse(schema, params);
-	if (!parsed.success) {
-		throw new Response(null, { status: 404 });
-	}
+	if (!parsed.success) notFound();
 
 	return parsed.output;
 }
@@ -108,9 +117,7 @@ export async function parseBody<T extends AnySyncSchema>({
 	schema: T;
 }): Promise<v.InferOutput<T>> {
 	const parsed = v.safeParse(schema, await request.json());
-	if (!parsed.success) {
-		throw new Response(null, { status: 400 });
-	}
+	if (!parsed.success) badRequest();
 
 	return parsed.output;
 }

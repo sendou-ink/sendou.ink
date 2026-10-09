@@ -3,7 +3,11 @@ import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { notFoundIfNullish } from "../../../utils/remix.server";
+import {
+	forbidden,
+	notFound,
+	notFoundIfNullish,
+} from "../../../utils/remix.server";
 import {
 	type AuthenticatedUser,
 	requireUser,
@@ -22,11 +26,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 
 	if (!Scrim.isAccepted(post)) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	if (!Scrim.isParticipating(post, user.id) && !user.roles.includes("STAFF")) {
-		throw new Response(null, { status: 403 });
+		forbidden();
 	}
 
 	await resolveNotifications({

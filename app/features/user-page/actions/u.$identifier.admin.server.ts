@@ -5,7 +5,7 @@ import { userPageUserId } from "~/features/user-page/user-page-context.server";
 import { adminTabActionSchema } from "~/features/user-page/user-page-schemas";
 import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { badRequestIfFalsy } from "~/utils/remix.server";
+import { badRequestIfFalsy, forbidden } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -38,9 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			);
 
 			if (note.authorId !== loggedInUser.id) {
-				throw new Response(null, {
-					status: 401,
-				});
+				forbidden();
 			}
 
 			await AdminRepository.deleteModNote(data.noteId);

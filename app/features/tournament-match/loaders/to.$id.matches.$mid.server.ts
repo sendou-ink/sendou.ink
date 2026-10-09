@@ -26,7 +26,7 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { notFound, notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { executeRoll } from "../core/executeRoll.server";
 import * as LeagueScheduling from "../core/LeagueScheduling";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
@@ -54,12 +54,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 
 	if (match.tournamentId !== tournamentId) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	const isBye = !match.opponentOne || !match.opponentTwo;
 	if (isBye) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	let pickBanEvents = match.roundMaps?.pickBan

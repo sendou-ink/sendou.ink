@@ -31,7 +31,7 @@ export const action: ActionFunction = async ({ params }) => {
 		const tournament = await tournamentFromDB(event.tournamentId);
 
 		if (!tournament.canEditEventInfo(user)) {
-			throw forbidden();
+			forbidden();
 		}
 
 		errorToastIfFalsy(!tournament.hasStarted, "Tournament has already started");

@@ -4,7 +4,7 @@ import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfNullish } from "~/utils/remix.server";
+import { notFound, notFoundIfNullish } from "~/utils/remix.server";
 import { sortBuilds } from "../core/build-sorting.server";
 
 export type UserBuildsPageData = SerializeFrom<typeof loader>;
@@ -24,7 +24,7 @@ export const loader = async () => {
 	});
 
 	if (builds.length === 0 && loggedInUser?.id !== userId) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	const sortedBuilds = sortBuilds({

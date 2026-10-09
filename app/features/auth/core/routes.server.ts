@@ -8,8 +8,10 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isStaff } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
 import {
+	badRequest,
 	canAccessLohiEndpoint,
 	errorToastRedirect,
+	forbidden,
 	safeReturnTo,
 } from "~/utils/remix.server";
 import type { AnySyncSchema } from "~/utils/schema";
@@ -76,14 +78,14 @@ export const impersonateAction: ActionFunction = async ({ request, url }) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		const user = requireUser();
 		if (!user.roles.includes("ADMIN") && !user.roles.includes("DEV")) {
-			throw new Response("Forbidden", { status: 403 });
+			forbidden();
 		}
 
 		if (user.roles.includes("DEV") && !user.roles.includes("ADMIN")) {
 			// biome-ignore lint/plugin: a missing or malformed `id` must 400, not fall back to a default
 			const targetId = Number(url.searchParams.get("id"));
 			if (isAdmin({ id: targetId }) || isStaff({ id: targetId })) {
-				throw new Response("Forbidden", { status: 403 });
+				forbidden();
 			}
 		}
 	}
@@ -101,7 +103,7 @@ export const impersonateAction: ActionFunction = async ({ request, url }) => {
 
 	const userId = Number(url.searchParams.get("id"));
 	// biome-ignore-end lint/plugin: a missing or malformed `id` must 400, not fall back to a default
-	if (!rawId || Number.isNaN(userId)) throw new Response(null, { status: 400 });
+	if (!rawId || Number.isNaN(userId)) badRequest();
 
 	logger.info(
 		`Impersonation: user ${realUserId} started impersonating user ${userId}`,
@@ -177,7 +179,7 @@ export const createLogInLinkAction: ActionFunction = async ({ request }) => {
 	});
 
 	if (!canAccessLohiEndpoint(request)) {
-		throw new Response(null, { status: 403 });
+		forbidden();
 	}
 
 	const user = await UserRepository.upsert({
@@ -219,7 +221,7 @@ export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
 
 	const result = await LogInLinkRepository.findValidByCode(data.code);
 	if (!result) {
-		throw new Response("Invalid log in link", { status: 400 });
+		badRequest();
 	}
 	const userId = result.userId;
 

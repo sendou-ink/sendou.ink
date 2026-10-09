@@ -2,11 +2,12 @@ import type { ActionFunctionArgs } from "react-router";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { DANGEROUS_setVotingActiveOverride } from "~/features/plus-voting/core/voting-time";
+import { badRequest } from "~/utils/remix.server";
 import { refreshCaches } from "../core/refresh-caches.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
-		throw new Response(null, { status: 400 });
+		badRequest();
 	}
 
 	// only the start of an e2e test asks for this. mid-test cache flushes must

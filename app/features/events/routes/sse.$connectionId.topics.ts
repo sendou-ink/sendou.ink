@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { invariant } from "~/utils/invariant";
-import { parseRequestPayload } from "~/utils/remix.server";
+import { forbidden, notFound, parseRequestPayload } from "~/utils/remix.server";
 import * as SseConnections from "../core/SseConnections.server";
 import * as TopicAccess from "../core/TopicAccess.server";
 
@@ -24,7 +24,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const data = await parseRequestPayload({ request, schema: topicsSchema });
 
 	if (!(await TopicAccess.canSubscribeToAll(user.id, data.topics))) {
-		throw new Response(null, { status: 403 });
+		forbidden();
 	}
 
 	const replaced = SseConnections.replaceTopics(
@@ -33,7 +33,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		data.topics,
 	);
 	if (!replaced) {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	return null;

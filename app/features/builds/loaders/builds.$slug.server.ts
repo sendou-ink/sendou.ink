@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
+import { notFound } from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import * as BuildRepository from "../BuildRepository.server";
@@ -15,7 +16,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const weaponId = weaponNameSlugToId(params.slug);
 
 	if (typeof weaponId !== "number" || weaponIdToType(weaponId) === "ALT_SKIN") {
-		throw new Response(null, { status: 404 });
+		notFound();
 	}
 
 	const { limit, abilities, mode, date } = buildsSearchParams.parse(url);

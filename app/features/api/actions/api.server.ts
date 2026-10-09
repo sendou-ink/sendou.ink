@@ -1,7 +1,11 @@
 import type { ActionFunctionArgs } from "react-router";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import { parseRequestPayload, successToast } from "~/utils/remix.server";
+import {
+	forbidden,
+	parseRequestPayload,
+	successToast,
+} from "~/utils/remix.server";
 import * as ApiRepository from "../ApiRepository.server";
 import { apiActionSchema } from "../api-schemas";
 import { checkUserHasApiAccess } from "../core/perms";
@@ -15,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const hasApiAccess = await checkUserHasApiAccess(user);
 	if (!hasApiAccess) {
-		throw new Response("Forbidden", { status: 403 });
+		forbidden();
 	}
 
 	switch (data._action) {
