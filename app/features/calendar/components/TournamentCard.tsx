@@ -91,7 +91,7 @@ export function TournamentCard({
 					})}
 				>
 					<div
-						className={clsx(styles.name, {
+						className={clsx(styles.name, "truncate", {
 							[styles.nameWithTier]:
 								tournament.tier || tournament.tentativeTier,
 						})}
@@ -227,7 +227,7 @@ function TournamentFirstPlacerWithMembers({
 					/>
 				) : null}{" "}
 				<div className="stack items-start">
-					<span className={styles.firstPlacersTeamName}>
+					<span className={clsx(styles.firstPlacersTeamName, "truncate")}>
 						{censored ? "???" : placer.teamName}
 					</span>
 					<div className="text-xxs text-lighter font-bold text-uppercase">
@@ -266,7 +266,7 @@ function TournamentFirstPlacerTeamNameOnly({
 
 	return (
 		<div className="stack items-start">
-			<span className={styles.firstPlacersTeamName}>
+			<span className={clsx(styles.firstPlacersTeamName, "truncate")}>
 				{censored ? "???" : placer.teamName}
 			</span>
 			<div className="text-xxs text-lighter font-bold text-uppercase">

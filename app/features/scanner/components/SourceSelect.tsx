@@ -1,3 +1,4 @@
+import clsx from "clsx";
 /**
  * The capture source: one select listing every video input, a capture card
  * (else OBS Virtual Camera) preselected and a webcam used only when picked
@@ -71,7 +72,7 @@ export function SourceSelect({ disabled }: { disabled?: boolean }) {
 	return (
 		<div className={styles.source}>
 			<select
-				className={styles.select}
+				className={clsx(styles.select, "truncate")}
 				aria-label="Source"
 				disabled={disabled}
 				onPointerDown={reveal}
@@ -91,7 +92,7 @@ export function SourceSelect({ disabled }: { disabled?: boolean }) {
 				))}
 			</select>
 			<select
-				className={styles.select}
+				className={clsx(styles.select, "truncate")}
 				aria-label="Audio for clips"
 				disabled={disabled}
 				onPointerDown={reveal}

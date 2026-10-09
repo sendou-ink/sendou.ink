@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Avatar } from "~/components/Avatar";
 import { BackLink } from "~/components/BackLink";
 import { PageHeader } from "~/components/PageHeader";
@@ -26,7 +27,9 @@ export function SubPageHeader({
 			back={
 				<BackLink to={userPage(user)} aria-label="Back to profile">
 					<Avatar user={user} size="xxs" className={styles.avatar} />
-					<span className={styles.username}>{user.username}</span>
+					<span className={clsx(styles.username, "truncate")}>
+						{user.username}
+					</span>
 				</BackLink>
 			}
 		>

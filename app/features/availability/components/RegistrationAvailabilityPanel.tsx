@@ -157,9 +157,13 @@ export function AvailabilityMemberRow({
 			{showAvailability ? <StatusIcon status={status} /> : null}
 			<Avatar user={user} size="xxs" />
 			<span className={styles.nameBlock} data-testid={nameTestId}>
-				<span className={styles.name}>{primaryName ?? user.username}</span>
+				<span className={clsx(styles.name, "truncate")}>
+					{primaryName ?? user.username}
+				</span>
 				{secondaryName ? (
-					<span className={styles.secondaryName}>{secondaryName}</span>
+					<span className={clsx(styles.secondaryName, "truncate")}>
+						{secondaryName}
+					</span>
 				) : null}
 			</span>
 			{showAvailability ? <AvailabilityRowDetail entry={entry} /> : null}

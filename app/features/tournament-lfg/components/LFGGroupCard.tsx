@@ -193,7 +193,9 @@ function LFGGroupMemberRow({
 							>
 								<Avatar user={member} size="xs" />
 							</NoteAvatar>
-							<span className={styles.name}>{member.username}</span>
+							<span className={clsx(styles.name, "truncate")}>
+								{member.username}
+							</span>
 						</span>
 					</UserCard>
 				</div>

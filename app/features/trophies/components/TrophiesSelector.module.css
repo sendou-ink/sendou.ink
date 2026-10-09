@@ -46,9 +46,6 @@
 .name {
 	flex: 1;
 	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 }

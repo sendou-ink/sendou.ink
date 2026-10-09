@@ -196,12 +196,6 @@
 	font-weight: var(--weight-bold);
 }
 
-.rowName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .tag {
 	padding: 0 var(--s-1-5);
 	border-radius: var(--radius-selector);

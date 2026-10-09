@@ -37,12 +37,6 @@
 	font-variant-numeric: tabular-nums;
 }
 
-.label {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .empty {
 	padding: var(--s-1) var(--s-2);
 	font-size: var(--font-xs);

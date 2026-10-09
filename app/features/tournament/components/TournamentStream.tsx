@@ -40,17 +40,20 @@ export function TournamentStream({
 			) : null}
 			<div className="stack md horizontal justify-between">
 				{stream.user ? (
-					<div className={styles.streamUserContainer}>
+					<div className={clsx(styles.streamUserContainer, "truncate")}>
 						<Avatar size="xxs" user={stream.user} /> {stream.user.username}
 						<span
-							className={clsx("text-theme-secondary", styles.streamTeamName)}
+							className={clsx(
+								"text-theme-secondary truncate",
+								styles.streamTeamName,
+							)}
 							title={stream.teamName ?? undefined}
 						>
 							{stream.teamName}
 						</span>
 					</div>
 				) : (
-					<div className={styles.streamUserContainer}>
+					<div className={clsx(styles.streamUserContainer, "truncate")}>
 						<Avatar size="xxs" url={tournament.ctx.logoUrl} />
 						{t("tournament:streams.cast")}{" "}
 						<span className="text-lighter">{stream.twitchUserName}</span>

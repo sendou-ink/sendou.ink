@@ -70,12 +70,6 @@
 	min-width: 0;
 }
 
-.winMemberName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .winMemberWeapons {
 	display: flex;
 	flex-wrap: wrap;

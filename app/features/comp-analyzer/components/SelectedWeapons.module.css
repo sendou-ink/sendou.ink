@@ -60,9 +60,6 @@
 .weaponName {
 	flex: 1;
 	font-weight: var(--weight-semi);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
 .weaponNamePillEmpty {

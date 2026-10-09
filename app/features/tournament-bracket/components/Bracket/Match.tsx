@@ -290,7 +290,7 @@ function MatchRow({
 				/>
 			) : null}
 			<div
-				className={clsx(styles.matchTeamName, {
+				className={clsx(styles.matchTeamName, "truncate", {
 					"text-theme-secondary":
 						!simulated && ownTeam && ownTeam?.id === team?.id,
 					"text-lighter italic opaque": simulated,

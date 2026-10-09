@@ -87,10 +87,7 @@
 }
 
 .teamMemberName {
-	overflow: hidden;
 	color: var(--color-text);
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	display: block;
 	padding-block: 1px;
 }

@@ -125,7 +125,7 @@ export function BuildCard({
 				<div className={styles.dateAuthorRow}>
 					{owner && showOwner ? (
 						<>
-							<Link to={userBuildsPage(owner)} className={styles.ownerLink}>
+							<Link to={userBuildsPage(owner)} className="truncate">
 								{owner.username}
 							</Link>
 							<div>•</div>

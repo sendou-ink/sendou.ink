@@ -308,7 +308,7 @@ function SlotBar({
 					}}
 				/>
 			) : null}
-			<span className={styles.slotLabel}>{label}</span>
+			<span className={clsx(styles.slotLabel, "truncate")}>{label}</span>
 		</button>
 	);
 }

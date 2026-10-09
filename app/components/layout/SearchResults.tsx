@@ -154,5 +154,5 @@ export function SearchResultsItemName({
 }: {
 	children: React.ReactNode;
 }) {
-	return <span className={styles.resultName}>{children}</span>;
+	return <span className="truncate">{children}</span>;
 }

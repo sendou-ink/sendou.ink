@@ -144,9 +144,6 @@
 .mateNameText {
 	/* claims .mateName's free space, see .headerTitle */
 	flex: 1 1 auto;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .mateSets {
@@ -178,11 +175,8 @@
 }
 
 .teamRankName {
-	overflow: hidden;
 	font-size: var(--font-md);
 	font-weight: var(--weight-extra);
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .teamRankSp {
@@ -229,12 +223,6 @@
 	min-width: 0;
 }
 
-.setContext {
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
 .setSp {
 	display: flex;
 	flex-direction: column;
@@ -261,11 +249,8 @@
 }
 
 .tournamentName {
-	overflow: hidden;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-extra);
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .tournamentMeta {

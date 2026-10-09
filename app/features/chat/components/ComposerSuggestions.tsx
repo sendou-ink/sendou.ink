@@ -63,7 +63,7 @@ export function ComposerSuggestions<T extends ComposerSuggestion>({
 						onClick={() => onSelect(suggestion)}
 					>
 						{suggestion.image}
-						<span className={styles.label}>{suggestion.label}</span>
+						<span className="truncate">{suggestion.label}</span>
 					</div>
 				))}
 			</div>

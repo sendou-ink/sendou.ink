@@ -122,9 +122,6 @@ a.match:hover {
 
 .matchTeamName {
 	max-width: 95px;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .matchTeamNameNarrow {

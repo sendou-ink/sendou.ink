@@ -1,3 +1,4 @@
+import clsx from "clsx";
 /**
  * A row of clip tiles (thumbnail, kill count, where it came from) with a
  * title and count, as shown on the landing, a session and a VoD. Tiles open
@@ -95,8 +96,10 @@ function ClipTile({
 					{formatPosition(clip.end - clip.start)}
 				</span>
 			</span>
-			<span className={styles.where}>{where || "Unknown stage"}</span>
-			<span className={styles.source}>
+			<span className={clsx(styles.where, "truncate")}>
+				{where || "Unknown stage"}
+			</span>
+			<span className={clsx(styles.source, "truncate")}>
 				{sourceLabel ? sourceLabel(clip) : formatDate(clip.createdAt)}
 			</span>
 		</button>

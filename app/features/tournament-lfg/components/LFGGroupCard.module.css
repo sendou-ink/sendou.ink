@@ -22,9 +22,6 @@
 }
 
 .name {
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	overflow: hidden;
 	max-width: 7.5rem;
 	font-size: var(--font-xs);
 	color: var(--color-text);

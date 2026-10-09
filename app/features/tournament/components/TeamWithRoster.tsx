@@ -102,7 +102,7 @@ export function TeamWithRoster({
 									/>
 									<Link
 										to={userPage(member)}
-										className={styles.teamMemberName}
+										className={clsx(styles.teamMemberName, "truncate")}
 										data-testid="team-member-name"
 									>
 										{name()}

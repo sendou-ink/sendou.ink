@@ -97,9 +97,6 @@
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 	text-align: center;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 	padding: var(--s-0-5) var(--s-0-5);
 	background: none;
 	border: 1px solid transparent;

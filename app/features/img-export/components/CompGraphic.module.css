@@ -64,11 +64,8 @@
 }
 
 .weaponName {
-	overflow: hidden;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-extra);
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .weaponRoles {

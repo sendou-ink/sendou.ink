@@ -4,16 +4,10 @@
 	gap: var(--s-2);
 	align-items: center;
 	font-weight: var(--weight-semi);
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
 	min-width: 0;
 }
 
 .streamTeamName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	min-width: 0;
 	max-width: 200px;
 }

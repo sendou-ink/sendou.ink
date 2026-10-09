@@ -694,7 +694,7 @@ function RowContents({
 			</div>
 			<div className={styles.nameArea}>
 				<div className={styles.teamNameContainer}>
-					<span className={styles.teamName}>{team.name}</span>
+					<span className="truncate">{team.name}</span>
 					{isNewTeam ? <span className={styles.newBadge}>NEW</span> : null}
 				</div>
 			</div>

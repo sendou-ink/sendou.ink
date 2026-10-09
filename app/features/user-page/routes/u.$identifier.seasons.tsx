@@ -331,7 +331,7 @@ function TeamRank({
 									className="rounded-full"
 								/>
 							) : null}
-							<span className={styles.statsPeekValue}>
+							<span className={clsx(styles.statsPeekValue, "truncate")}>
 								{teamEntry.team.name}
 							</span>
 						</span>
@@ -343,7 +343,9 @@ function TeamRank({
 					<li key={member.id}>
 						<Link to={userPage(member)} className={styles.teamRankMember}>
 							<Avatar user={member} size="xxs" />
-							<span className={styles.statsPeekValue}>{member.username}</span>
+							<span className={clsx(styles.statsPeekValue, "truncate")}>
+								{member.username}
+							</span>
 						</Link>
 					</li>
 				))}
@@ -373,7 +375,7 @@ function StatsPeek({
 							width={40}
 							className="rounded"
 						/>
-						<span className={styles.statsPeekValue}>
+						<span className={clsx(styles.statsPeekValue, "truncate")}>
 							{t(`game-misc:STAGE_${peek.bestStage.stageId}`)}
 						</span>
 						<span className="text-lighter">
@@ -388,7 +390,7 @@ function StatsPeek({
 							variant="badge"
 							size={24}
 						/>
-						<span className={styles.statsPeekValue}>
+						<span className={clsx(styles.statsPeekValue, "truncate")}>
 							{t(`weapons:MAIN_${peek.topWeapon.weaponSplId}`)}
 						</span>
 						<span className="text-lighter">
@@ -398,7 +400,7 @@ function StatsPeek({
 				) : peek.topMode ? (
 					<StatsPeekItem label={t("user:seasons.stats.mostPlayedMode")}>
 						<ModeImage mode={peek.topMode.mode} size={24} />
-						<span className={styles.statsPeekValue}>
+						<span className={clsx(styles.statsPeekValue, "truncate")}>
 							{t(`game-misc:MODE_LONG_${peek.topMode.mode}`)}
 						</span>
 						<span className="text-lighter">
@@ -409,7 +411,7 @@ function StatsPeek({
 				{peek.topMate ? (
 					<StatsPeekItem label={t("user:seasons.stats.topTeammate")}>
 						<Avatar user={peek.topMate.user} size="xxs" />
-						<span className={styles.statsPeekValue}>
+						<span className={clsx(styles.statsPeekValue, "truncate")}>
 							{peek.topMate.user.username}
 						</span>
 						<span className="text-lighter">

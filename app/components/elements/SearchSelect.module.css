@@ -4,9 +4,6 @@
 	padding: var(--s-1-5);
 	border-radius: var(--radius-field);
 	height: 33px;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	overflow: hidden;
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);

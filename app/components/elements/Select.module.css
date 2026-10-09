@@ -46,9 +46,6 @@
 
 .selectValue {
 	font-size: var(--font-sm);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	min-width: 0;
 	color: var(--color-text);
 	display: flex;
@@ -103,9 +100,6 @@
 	font-weight: var(--weight-semi);
 	padding: var(--s-1-5);
 	border-radius: var(--radius-field);
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	overflow: hidden;
 	cursor: pointer;
 	outline: none;
 	/* long lists (every weapon) skip laying out and painting the options

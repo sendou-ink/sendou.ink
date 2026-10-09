@@ -1171,7 +1171,9 @@ function LiveStreamWidget({
 						count: stream.viewerCount,
 					})}
 				</span>
-				<span className={styles.liveStreamName}>{stream.twitch}</span>
+				<span className={clsx(styles.liveStreamName, "truncate")}>
+					{stream.twitch}
+				</span>
 			</div>
 		</a>
 	);

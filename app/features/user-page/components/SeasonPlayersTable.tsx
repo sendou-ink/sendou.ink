@@ -81,7 +81,7 @@ export function SeasonPlayersTable({
 					>
 						<span className={styles.player}>
 							<Avatar user={player.user} size="xxsm" />
-							<span className={styles.playerName}>{player.user.username}</span>
+							<span className="truncate">{player.user.username}</span>
 						</span>
 						<span className={clsx(styles.numeric, "font-semi-bold")}>
 							{player.setWins}–{player.setLosses}

@@ -397,11 +397,13 @@ function SingleChatView({
 		<>
 			{display ? <NavListImage src={display.imageUrl} /> : null}
 			<div className={styles.chatHeaderInfo}>
-				<span className={styles.chatHeaderTitle}>
+				<span className={clsx(styles.chatHeaderTitle, "truncate")}>
 					{display?.title ?? t("common:chat.sidebar.title")}
 				</span>
 				{subtitle ? (
-					<span className={styles.chatHeaderSubtitle}>{subtitle}</span>
+					<span className={clsx(styles.chatHeaderSubtitle, "truncate")}>
+						{subtitle}
+					</span>
 				) : null}
 			</div>
 		</>
@@ -497,9 +499,13 @@ function CombinedChatView({
 		<>
 			<NavListImage src={display.imageUrl} />
 			<div className={styles.chatHeaderInfo}>
-				<span className={styles.chatHeaderTitle}>{display.title}</span>
+				<span className={clsx(styles.chatHeaderTitle, "truncate")}>
+					{display.title}
+				</span>
 				{display.subtitle ? (
-					<span className={styles.chatHeaderSubtitle}>{display.subtitle}</span>
+					<span className={clsx(styles.chatHeaderSubtitle, "truncate")}>
+						{display.subtitle}
+					</span>
 				) : null}
 			</div>
 		</>

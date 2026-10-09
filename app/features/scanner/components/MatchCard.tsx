@@ -442,7 +442,9 @@ function Scoreboard({
 												)}
 											</CircleBackdrop>
 										</td>
-										<td className={styles.name}>{player.name ?? "?"}</td>
+										<td className={clsx(styles.name, "truncate")}>
+											{player.name ?? "?"}
+										</td>
 										<td>
 											<PlayerAbilities abilities={player.abilities} />
 										</td>
@@ -505,7 +507,9 @@ function DeathsAndKills({
 								? formatClock(elapsed(match.mode, death.timeLeft))
 								: "–:––"}
 						</span>
-						<span className={styles.rowLabel}>{death.label}</span>
+						<span className={clsx(styles.rowLabel, "truncate")}>
+							{death.label}
+						</span>
 						<PlayButton clip={clipAt(death.t)} onPlayClip={onPlayClip} />
 					</div>
 				))}
@@ -519,7 +523,7 @@ function DeathsAndKills({
 								? formatClock(elapsed(match.mode, group[0]!.time))
 								: "–:––"}
 						</span>
-						<span className={styles.rowLabel}>
+						<span className={clsx(styles.rowLabel, "truncate")}>
 							{group.map((kill) => kill.name ?? "?").join(" · ")}
 							{group.length > 1 ? (
 								<span className={styles.streak}> {group.length}k</span>

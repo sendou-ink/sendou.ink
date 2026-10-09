@@ -189,7 +189,9 @@ export function WeaponParamsTable({
 											className={styles.weaponHeaderContent}
 										>
 											<WeaponParamImage kind={kind} id={weaponId} size={32} />
-											<span className={styles.weaponName}>{weaponName}</span>
+											<span className={clsx(styles.weaponName, "truncate")}>
+												{weaponName}
+											</span>
 										</Link>
 										{weaponId !== currentWeaponId ? (
 											<SendouButton
@@ -502,7 +504,7 @@ function HiddenWeaponsBar({
 					testId={`restore-weapon-${weaponId}`}
 				>
 					<WeaponParamImage kind={kind} id={weaponId} size={20} />
-					<span className={styles.hiddenBadgeName}>
+					<span className={clsx(styles.hiddenBadgeName, "truncate")}>
 						{naming.name(weaponId)}
 					</span>
 					<X size={12} />

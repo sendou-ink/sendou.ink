@@ -267,6 +267,7 @@ export function Composer({
 						type="button"
 						className={clsx(
 							styles.composerAttachmentLabel,
+							"truncate",
 							styles.composerAttachmentLink,
 						)}
 						onClick={() => onJumpToMessage(replyTo.id)}
@@ -292,7 +293,9 @@ export function Composer({
 			{sticker ? (
 				<div className={styles.composerAttachment}>
 					<StickerImage sticker={sticker} size={STICKER_PREVIEW_SIZE} />
-					<span className={styles.composerAttachmentLabel}>{sticker.name}</span>
+					<span className={clsx(styles.composerAttachmentLabel, "truncate")}>
+						{sticker.name}
+					</span>
 					<SendouButton
 						variant="minimal-destructive"
 						size="small"

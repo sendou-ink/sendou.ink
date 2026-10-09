@@ -267,7 +267,7 @@ function SessionRowItem({ row }: { row: SessionRow }) {
 					/>
 				) : (
 					<>
-						<span className={styles.rowName}>{row.name}</span>
+						<span className="truncate">{row.name}</span>
 						<span className={styles.tag}>VoD</span>
 						<LocaleTime
 							date={new Date(row.savedAt)}

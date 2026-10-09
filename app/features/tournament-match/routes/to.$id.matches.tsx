@@ -257,7 +257,7 @@ function SetRow({
 								url={team.logoUrl ?? undefined}
 								identiconInput={team.name}
 							/>
-							<span className={styles.teamName}>{team.name}</span>
+							<span className="truncate">{team.name}</span>
 							{showScore ? (
 								<span className={styles.score}>{team.score}</span>
 							) : null}

@@ -378,9 +378,6 @@ button.expand {
 .name {
 	width: 100%;
 	max-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .num {
@@ -427,9 +424,6 @@ button.expand {
 .rowLabel {
 	flex: 1;
 	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .streak {

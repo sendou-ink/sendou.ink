@@ -39,7 +39,9 @@ export function ParamComparisonDialog({
 					<div key={entry.weaponId} className={styles.row}>
 						<div className={styles.weapon}>
 							<WeaponParamImage kind={kind} id={entry.weaponId} size={28} />
-							<span className={styles.name}>{entry.name}</span>
+							<span className={clsx(styles.name, "truncate")}>
+								{entry.name}
+							</span>
 						</div>
 						<div className={styles.barTrack}>
 							<div

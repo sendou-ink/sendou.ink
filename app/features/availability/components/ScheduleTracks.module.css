@@ -140,9 +140,6 @@
 	padding-inline: var(--s-1);
 	font-size: var(--font-3xs);
 	color: var(--color-text-high);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 	background-color: var(--color-bg);
 	border-radius: var(--radius-full);
 }

@@ -124,7 +124,9 @@ function WeaponRow({
 				<WeaponImage weaponSplId={weaponId} variant="badge" size={44} />
 			</div>
 			<div className={styles.weaponInfo}>
-				<div className={styles.weaponName}>{t(`weapons:MAIN_${weaponId}`)}</div>
+				<div className={clsx(styles.weaponName, "truncate")}>
+					{t(`weapons:MAIN_${weaponId}`)}
+				</div>
 				<div className={styles.weaponRoles}>
 					<span>{t(`analyzer:comp.subCategory.${subCategory}`)}</span>
 					<span className={styles.weaponRoleSeparator}>·</span>

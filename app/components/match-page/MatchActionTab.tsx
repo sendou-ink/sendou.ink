@@ -302,7 +302,7 @@ function TeamRadioOption({
 						<Avatar url={team.avatar} identiconInput={team.name} size="xxs" />
 						<span className={styles.teamInfo}>
 							<span
-								className={clsx(styles.teamName, {
+								className={clsx(styles.teamName, "truncate", {
 									[styles.teamNameLong]: isLongName,
 								})}
 							>

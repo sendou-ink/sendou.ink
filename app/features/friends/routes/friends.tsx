@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { CalendarDays, Pin } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -108,7 +109,9 @@ function IncomingRequestsSection() {
 								}}
 								size="xxsm"
 							/>
-							<span className={styles.userName}>{request.sender.username}</span>
+							<span className={clsx(styles.userName, "truncate")}>
+								{request.sender.username}
+							</span>
 						</Link>
 						<div className="stack horizontal sm">
 							<ActionButton
@@ -156,7 +159,7 @@ function PendingRequestsSection() {
 								}}
 								size="xxsm"
 							/>
-							<span className={styles.userName}>
+							<span className={clsx(styles.userName, "truncate")}>
 								{request.receiver.username}
 							</span>
 						</Link>

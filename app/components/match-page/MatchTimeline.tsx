@@ -482,7 +482,10 @@ function ScoreboardTable({
 			<thead>
 				<tr className={styles.scoreboardHeaderRow}>
 					<th className={styles.scoreboardWeaponColumn} />
-					<th scope="col" className={styles.scoreboardTeamName}>
+					<th
+						scope="col"
+						className={clsx(styles.scoreboardTeamName, "truncate")}
+					>
 						{name}
 					</th>
 					<th scope="col" className={styles.scoreboardStatHeader}>
@@ -519,7 +522,10 @@ function ScoreboardTable({
 								/>
 							)}
 						</td>
-						<th scope="row" className={styles.scoreboardPlayerName}>
+						<th
+							scope="row"
+							className={clsx(styles.scoreboardPlayerName, "truncate")}
+						>
 							{player.name}
 						</th>
 						<td className={styles.scoreboardStat}>

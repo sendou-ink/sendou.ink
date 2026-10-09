@@ -329,7 +329,7 @@ function PatronChips({
 				<li key={patron.id}>
 					<a
 						href={userPage(patron)}
-						className={styles.chip}
+						className={clsx(styles.chip, "truncate")}
 						data-custom-theme={patron.customTheme ? true : undefined}
 						style={customThemeChipStyle(patron.customTheme)}
 						tabIndex={ariaHidden ? -1 : undefined}

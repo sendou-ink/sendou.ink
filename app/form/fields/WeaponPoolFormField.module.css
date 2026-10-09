@@ -46,9 +46,6 @@
 	font-size: var(--font-2xs);
 	flex: 1;
 	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .weaponImage {

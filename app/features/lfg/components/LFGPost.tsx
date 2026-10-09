@@ -186,7 +186,9 @@ function PostTeamMember({
 					<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
 						<Avatar size="xs" user={member} />
 					</NoteAvatar>
-					<span className={styles.teamMemberName}>{member.username}</span>
+					<span className={clsx(styles.teamMemberName, "truncate")}>
+						{member.username}
+					</span>
 				</span>
 			</UserCard>
 		</div>
@@ -214,7 +216,9 @@ function PostUserHeader({
 							>
 								<Avatar size="xsm" user={author} />
 							</NoteAvatar>
-							<span className={styles.userName}>{author.username}</span>
+							<span className={clsx(styles.userName, "truncate")}>
+								{author.username}
+							</span>
 						</span>
 					</UserCard>{" "}
 					{author.country ? <Flag countryCode={author.country} tiny /> : null}

@@ -38,12 +38,6 @@
 	gap: var(--s-1);
 }
 
-.ownerLink {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
 .modes {
 	position: absolute;
 	right: 0;

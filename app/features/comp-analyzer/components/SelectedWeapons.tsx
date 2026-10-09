@@ -191,7 +191,7 @@ function SortableWeaponRow({
 				<WeaponImage weaponSplId={weaponId} variant="build" size={48} />
 			</div>
 			<div className={styles.weaponNamePill}>
-				<span className={styles.weaponName}>
+				<span className={clsx(styles.weaponName, "truncate")}>
 					{t(`weapons:MAIN_${weaponId}`)}
 				</span>
 				{showDragHandle ? (

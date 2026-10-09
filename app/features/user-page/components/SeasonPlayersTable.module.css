@@ -48,12 +48,6 @@
 	min-width: 0;
 }
 
-.playerName {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .numeric {
 	text-align: end;
 	font-variant-numeric: tabular-nums;

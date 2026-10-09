@@ -1,3 +1,4 @@
+import clsx from "clsx";
 /**
  * Clip history: the best clips across sessions, sorted by score, playable
  * in place, each downloadable and deletable. The lowest-scoring one is
@@ -129,7 +130,7 @@ function ClipCard({ clip }: { clip: ScannerClip }) {
 				<div className={styles.cardMeta}>
 					<Link
 						to={sourceHref}
-						className={styles.sourceLink}
+						className={clsx(styles.sourceLink, "truncate")}
 						defaultShouldRevalidate={false}
 					>
 						{clip.source.kind === "vod"
