@@ -1,10 +1,11 @@
-import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
-import { invariant } from "~/utils/invariant";
-import { forbidden, notFound, parseRequestPayload } from "~/utils/remix.server";
+import { defineAction } from "~/form/define-action.server";
+import { forbidden, notFound } from "~/utils/remix.server";
 import * as SseConnections from "../core/SseConnections.server";
 import * as TopicAccess from "../core/TopicAccess.server";
+
+const paramsSchema = v.object({ connectionId: v.string() });
 
 const topicsSchema = v.object({
 	topics: v.pipe(
@@ -13,28 +14,28 @@ const topicsSchema = v.object({
 	),
 });
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-	if (request.method !== "PUT") {
-		throw new Response(null, { status: 405 });
-	}
+export const action = defineAction(
+	{ params: paramsSchema, body: topicsSchema, onInvalidBody: "badRequest" },
+	async ({ params: { connectionId }, body, request }) => {
+		if (request.method !== "PUT") {
+			throw new Response(null, { status: 405 });
+		}
 
-	const user = requireUser();
-	invariant(params.connectionId, "connectionId param is required");
+		const user = requireUser();
 
-	const data = await parseRequestPayload({ request, schema: topicsSchema });
+		if (!(await TopicAccess.canSubscribeToAll(user.id, body.topics))) {
+			forbidden();
+		}
 
-	if (!(await TopicAccess.canSubscribeToAll(user.id, data.topics))) {
-		forbidden();
-	}
+		const replaced = SseConnections.replaceTopics(
+			connectionId,
+			user.id,
+			body.topics,
+		);
+		if (!replaced) {
+			notFound();
+		}
 
-	const replaced = SseConnections.replaceTopics(
-		params.connectionId,
-		user.id,
-		data.topics,
-	);
-	if (!replaced) {
-		notFound();
-	}
-
-	return null;
-};
+		return null;
+	},
+);

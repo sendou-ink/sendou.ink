@@ -1,22 +1,21 @@
 ```ts
 // some-feature/actions/route.server.ts
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { requireUserId } from "~/features/auth/core/user.server";
-import { parseRequestPayload } from "~/utils/remix.server";
+import { requireUser } from "~/features/auth/core/user.server";
+import { defineAction } from "~/form/define-action.server";
+import { idObject } from "~/utils/schema";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = await requireUserId(request);
-	const data = await parseRequestPayload({
-		request,
-		schema: actionSchema,
-	});
+export const action = defineAction(
+	{ params: idObject, body: actionSchema },
+	async ({ params, body }) => {
+		const user = requireUser();
 
-	// check permissions via requirePermission
+		// check permissions via requirePermission
 
-	// update via Repository
+		// update via Repository
 
-	return null;
-};
+		return null;
+	},
+);
 
 // some-feature/routes/route.ts
 import { action } from "../actions/route.server.ts"

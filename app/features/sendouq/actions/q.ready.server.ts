@@ -1,8 +1,7 @@
-import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import { parseRequestPayload } from "~/utils/remix.server";
+import { defineAction } from "~/form/define-action.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE, sendouQMatchPage } from "~/utils/urls";
 import * as ReadyCheck from "../core/ready-check.server";
@@ -10,18 +9,14 @@ import { SendouQ } from "../core/SendouQ.server";
 import { readySchema } from "../q-action-schemas";
 import { SendouQError } from "../q-utils.server";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = defineAction({ body: readySchema }, async ({ body }) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
-		request,
-		schema: readySchema,
-	});
 
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 	if (!ownGroup) return null;
 
 	try {
-		switch (data._action) {
+		switch (body._action) {
 			case "CONFIRM_READY": {
 				const readyCheck = await SQGroupRepository.findReadyCheckByGroupId(
 					ownGroup.id,
@@ -46,7 +41,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				return null;
 			}
 			default: {
-				assertUnreachable(data._action);
+				assertUnreachable(body._action);
 			}
 		}
 	} catch (error) {
@@ -58,4 +53,4 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 		throw error;
 	}
-};
+});

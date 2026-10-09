@@ -1,47 +1,41 @@
-import type { ActionFunction } from "react-router";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import { defineAction } from "~/form/define-action.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import {
-	badRequestIfFalsy,
-	parseRequestPayload,
-	successToast,
-} from "~/utils/remix.server";
+import { badRequestIfFalsy, successToast } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as ImageRepository from "../ImageRepository.server";
 import { validateImageSchema } from "../upload-schemas";
 
-export const action: ActionFunction = async ({ request }) => {
-	requireRole("STAFF");
+export const action = defineAction(
+	{ body: validateImageSchema },
+	async ({ body }) => {
+		requireRole("STAFF");
 
-	const data = await parseRequestPayload({
-		schema: validateImageSchema,
-		request,
-	});
+		switch (body._action) {
+			case "VALIDATE": {
+				for (const imageId of body.imageIds) {
+					const image = badRequestIfFalsy(
+						await ImageRepository.findById(imageId),
+					);
 
-	switch (data._action) {
-		case "VALIDATE": {
-			for (const imageId of data.imageIds) {
-				const image = badRequestIfFalsy(
-					await ImageRepository.findById(imageId),
-				);
+					await ImageRepository.validateById(imageId);
 
-				await ImageRepository.validateById(imageId);
-
-				if (image.tournamentId) {
-					clearTournamentDataCache(image.tournamentId);
+					if (image.tournamentId) {
+						clearTournamentDataCache(image.tournamentId);
+					}
 				}
+				break;
 			}
-			break;
-		}
-		case "REJECT": {
-			await ImageRepository.deleteById(data.imageId);
+			case "REJECT": {
+				await ImageRepository.deleteById(body.imageId);
 
-			return successToast("The image was deleted");
+				return successToast("The image was deleted");
+			}
+			default: {
+				assertUnreachable(body);
+			}
 		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
 
-	return null;
-};
+		return null;
+	},
+);

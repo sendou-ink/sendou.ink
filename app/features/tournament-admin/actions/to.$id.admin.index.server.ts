@@ -1,4 +1,3 @@
-import type { ActionFunction } from "react-router";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -18,157 +17,156 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
+import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { adminTeamsActionSchema } from "../tournament-admin-schemas";
 
-export const action: ActionFunction = async ({ request, params }) => {
-	const data = await parseRequestPayload({
-		request,
-		schema: adminTeamsActionSchema,
-	});
+export const action = defineAction(
+	{ body: adminTeamsActionSchema },
+	async ({ params, body }) => {
+		const { tournament, tournamentId, user } = await tournamentFromParams(
+			params,
+			{ for: "action" },
+		);
 
-	const { tournament, tournamentId, user } = await tournamentFromParams(
-		params,
-		{ for: "action" },
-	);
+		let statusChangedUserIds: number[] = [];
 
-	let statusChangedUserIds: number[] = [];
+		switch (body._action) {
+			case "CHECK_IN": {
+				requireTournamentOrganizer(tournament, user);
+				const team = tournament.teamById(body.teamId);
+				errorToastIfFalsy(team, "Invalid team id");
+				errorToastIfFalsy(
+					body.bracketIdx !== 0 ||
+						tournament.checkInConditionsFulfilledByTeamId(team.id).isFulfilled,
+					`Can't check-in - ${tournament.checkInConditionsFulfilledByTeamId(team.id).reason}`,
+				);
+				errorToastIfFalsy(
+					team.checkIns.length > 0 || body.bracketIdx === 0,
+					"Can't check-in to follow up bracket if not checked in for the event itself",
+				);
 
-	switch (data._action) {
-		case "CHECK_IN": {
-			requireTournamentOrganizer(tournament, user);
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
-			errorToastIfFalsy(
-				data.bracketIdx !== 0 ||
-					tournament.checkInConditionsFulfilledByTeamId(team.id).isFulfilled,
-				`Can't check-in - ${tournament.checkInConditionsFulfilledByTeamId(team.id).reason}`,
-			);
-			errorToastIfFalsy(
-				team.checkIns.length > 0 || data.bracketIdx === 0,
-				"Can't check-in to follow up bracket if not checked in for the event itself",
-			);
+				const bracket = tournament.bracketByIdx(body.bracketIdx);
+				invariant(bracket, "Invalid bracket idx");
+				errorToastIfFalsy(bracket.preview, "Bracket has been started");
 
-			const bracket = tournament.bracketByIdx(data.bracketIdx);
-			invariant(bracket, "Invalid bracket idx");
-			errorToastIfFalsy(bracket.preview, "Bracket has been started");
-
-			await TournamentTeamRepository.checkIn(data.teamId, {
-				// no sources = regular check in
-				bracketIdx: bracket.sources ? data.bracketIdx : undefined,
-			});
-			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-
-			if (!bracket.sources) {
-				PendingCheckIns.clearCache();
-				await resolveNotifications({
-					userIds: team.memberUserIds,
-					type: "TO_CHECK_IN_OPENED",
-					meta: { tournamentId },
+				await TournamentTeamRepository.checkIn(body.teamId, {
+					// no sources = regular check in
+					bracketIdx: bracket.sources ? body.bracketIdx : undefined,
 				});
+				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+				if (!bracket.sources) {
+					PendingCheckIns.clearCache();
+					await resolveNotifications({
+						userIds: team.memberUserIds,
+						type: "TO_CHECK_IN_OPENED",
+						meta: { tournamentId },
+					});
+				}
+
+				statusChangedUserIds = team.memberUserIds;
+
+				break;
 			}
+			case "CHECK_OUT": {
+				requireTournamentOrganizer(tournament, user);
+				const team = tournament.teamById(body.teamId);
+				errorToastIfFalsy(team, "Invalid team id");
+				errorToastIfFalsy(
+					body.bracketIdx !== 0 || !tournament.hasStarted,
+					"Tournament has started",
+				);
 
-			statusChangedUserIds = team.memberUserIds;
+				const bracket = tournament.bracketByIdx(body.bracketIdx);
+				invariant(bracket, "Invalid bracket idx");
+				errorToastIfFalsy(bracket.preview, "Bracket has been started");
 
-			break;
-		}
-		case "CHECK_OUT": {
-			requireTournamentOrganizer(tournament, user);
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
-			errorToastIfFalsy(
-				data.bracketIdx !== 0 || !tournament.hasStarted,
-				"Tournament has started",
-			);
-
-			const bracket = tournament.bracketByIdx(data.bracketIdx);
-			invariant(bracket, "Invalid bracket idx");
-			errorToastIfFalsy(bracket.preview, "Bracket has been started");
-
-			await TournamentTeamRepository.checkOut({
-				tournamentTeamId: data.teamId,
-				// no sources = regular check in
-				bracketIdx: !bracket.sources ? null : data.bracketIdx,
-			});
-			if (!bracket.sources) {
-				PendingCheckIns.clearCache();
-			}
-			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-			logger.info(
-				`Checked out: tournament team id: ${data.teamId} - user id: ${user.id} - tournament id: ${tournamentId} - bracket idx: ${data.bracketIdx}`,
-			);
-
-			statusChangedUserIds = team.memberUserIds;
-
-			break;
-		}
-		case "DELETE_TEAM": {
-			requireTournamentOrganizer(tournament, user);
-			const team = tournament.teamById(data.teamId);
-			errorToastIfFalsy(team, "Invalid team id");
-			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
-
-			ChatSystemMessage.notifyRoomsChanged(
-				await TournamentTeamRepository.deleteById(team.id),
-			);
-
-			for (const userId of team.memberUserIds) {
-				ShowcaseTournaments.removeFromCached({
-					tournamentId,
-					type: "participant",
-					userId,
+				await TournamentTeamRepository.checkOut({
+					tournamentTeamId: body.teamId,
+					// no sources = regular check in
+					bracketIdx: !bracket.sources ? null : body.bracketIdx,
 				});
+				if (!bracket.sources) {
+					PendingCheckIns.clearCache();
+				}
+				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+				logger.info(
+					`Checked out: tournament team id: ${body.teamId} - user id: ${user.id} - tournament id: ${tournamentId} - bracket idx: ${body.bracketIdx}`,
+				);
+
+				statusChangedUserIds = team.memberUserIds;
+
+				break;
 			}
-			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+			case "DELETE_TEAM": {
+				requireTournamentOrganizer(tournament, user);
+				const team = tournament.teamById(body.teamId);
+				errorToastIfFalsy(team, "Invalid team id");
+				errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
-			statusChangedUserIds = team.memberUserIds;
+				ChatSystemMessage.notifyRoomsChanged(
+					await TournamentTeamRepository.deleteById(team.id),
+				);
 
-			break;
+				for (const userId of team.memberUserIds) {
+					ShowcaseTournaments.removeFromCached({
+						tournamentId,
+						type: "participant",
+						userId,
+					});
+				}
+				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+				statusChangedUserIds = team.memberUserIds;
+
+				break;
+			}
+			case "DROP_TEAM_OUT": {
+				requireTournamentOrganizer(tournament, user);
+				errorToastIfFalsy(tournament.teamById(body.teamId), "Invalid team id");
+
+				const { endedMatchIds, statusChangedTeamIds } = await dropTeamOut({
+					tournament,
+					teamId: body.teamId,
+				});
+
+				sendDroppedMatchChatMessages({
+					tournamentId: tournament.ctx.id,
+					endedMatchIds,
+				});
+
+				statusChangedUserIds = statusChangedTeamIds.flatMap(
+					(teamId) => tournament.teamById(teamId)?.memberUserIds ?? [],
+				);
+
+				break;
+			}
+			case "UNDO_DROP_TEAM_OUT": {
+				requireTournamentOrganizer(tournament, user);
+
+				await TournamentTeamRepository.undoDropOut(body.teamId);
+
+				statusChangedUserIds =
+					tournament.teamById(body.teamId)?.memberUserIds ?? [];
+
+				break;
+			}
+			default: {
+				assertUnreachable(body);
+			}
 		}
-		case "DROP_TEAM_OUT": {
-			requireTournamentOrganizer(tournament, user);
-			errorToastIfFalsy(tournament.teamById(data.teamId), "Invalid team id");
 
-			const { endedMatchIds, statusChangedTeamIds } = await dropTeamOut({
-				tournament,
-				teamId: data.teamId,
-			});
+		clearTournamentDataCache(tournamentId);
 
-			sendDroppedMatchChatMessages({
-				tournamentId: tournament.ctx.id,
-				endedMatchIds,
-			});
+		await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
 
-			statusChangedUserIds = statusChangedTeamIds.flatMap(
-				(teamId) => tournament.teamById(teamId)?.memberUserIds ?? [],
-			);
-
-			break;
-		}
-		case "UNDO_DROP_TEAM_OUT": {
-			requireTournamentOrganizer(tournament, user);
-
-			await TournamentTeamRepository.undoDropOut(data.teamId);
-
-			statusChangedUserIds =
-				tournament.teamById(data.teamId)?.memberUserIds ?? [];
-
-			break;
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-
-	clearTournamentDataCache(tournamentId);
-
-	await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
-
-	return null;
-};
+		return null;
+	},
+);
 
 /**
  * Drops a team out: random active roster for teams with subs, ends their in-progress matches,

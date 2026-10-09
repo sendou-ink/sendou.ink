@@ -1,44 +1,39 @@
-import type { ActionFunctionArgs } from "react-router";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import {
-	forbidden,
-	parseRequestPayload,
-	successToast,
-} from "~/utils/remix.server";
+import { defineAction } from "~/form/define-action.server";
+import { forbidden, successToast } from "~/utils/remix.server";
 import * as ApiRepository from "../ApiRepository.server";
 import { apiActionSchema } from "../api-schemas";
 import { checkUserHasApiAccess } from "../core/perms";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	const data = await parseRequestPayload({
-		request,
-		schema: apiActionSchema,
-	});
-	const user = requireUser();
+export const action = defineAction(
+	{ body: apiActionSchema },
+	async ({ body }) => {
+		const user = requireUser();
 
-	const hasApiAccess = await checkUserHasApiAccess(user);
-	if (!hasApiAccess) {
-		forbidden();
-	}
+		const hasApiAccess = await checkUserHasApiAccess(user);
+		if (!hasApiAccess) {
+			forbidden();
+		}
 
-	switch (data._action) {
-		case "GENERATE_READ": {
-			await ApiRepository.generateToken(user.id, "read");
-			await refreshApiTokensCache();
-			successToast("Read token generated successfully");
-			break;
+		switch (body._action) {
+			case "GENERATE_READ": {
+				await ApiRepository.generateToken(user.id, "read");
+				await refreshApiTokensCache();
+				successToast("Read token generated successfully");
+				break;
+			}
+			case "GENERATE_WRITE": {
+				await ApiRepository.generateToken(user.id, "write");
+				await refreshApiTokensCache();
+				successToast("Write token generated successfully");
+				break;
+			}
+			default: {
+				throw new Error("Invalid action");
+			}
 		}
-		case "GENERATE_WRITE": {
-			await ApiRepository.generateToken(user.id, "write");
-			await refreshApiTokensCache();
-			successToast("Write token generated successfully");
-			break;
-		}
-		default: {
-			throw new Error("Invalid action");
-		}
-	}
 
-	return null;
-};
+		return null;
+	},
+);

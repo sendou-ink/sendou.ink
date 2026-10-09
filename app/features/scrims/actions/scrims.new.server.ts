@@ -1,10 +1,10 @@
 import { add } from "date-fns";
-import { type ActionFunctionArgs, redirect } from "react-router";
+import { redirect } from "react-router";
 import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseFormData } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
@@ -25,82 +25,75 @@ import { type fromSchema, scrimsNewFormSchema } from "../scrims-schemas";
 import type { LutiDiv } from "../scrims-types";
 import { serializeLutiDiv } from "../scrims-utils";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = requireUser();
-	const result = await parseFormData({
-		request,
-		schema: scrimsNewFormSchema,
-	});
+export const action = defineAction(
+	{ body: scrimsNewFormSchema },
+	async ({ body }) => {
+		const user = requireUser();
 
-	if (!result.success) {
-		return { fieldErrors: result.fieldErrors };
-	}
-
-	const data = result.data;
-
-	if (data.from.mode === "PICKUP") {
-		const pickupUserError = await validatePickup(data.from.users, user.id);
-		if (pickupUserError) {
-			return { fieldErrors: { from: pickupUserError.error } };
+		if (body.from.mode === "PICKUP") {
+			const pickupUserError = await validatePickup(body.from.users, user.id);
+			if (pickupUserError) {
+				return { fieldErrors: { from: pickupUserError.error } };
+			}
 		}
-	}
 
-	const rangeEndDate = data.rangeEnd
-		? resolveRangeEndToDate(data.at, data.rangeEnd)
-		: null;
+		const rangeEndDate = body.rangeEnd
+			? resolveRangeEndToDate(body.at, body.rangeEnd)
+			: null;
 
-	const resolvedDivs = data.divs ? resolveDivs(data.divs) : null;
+		const resolvedDivs = body.divs ? resolveDivs(body.divs) : null;
 
-	await ScrimPostRepository.insert({
-		startsAt: dateToDatabaseTimestamp(data.at),
-		rangeEndsAt: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
-		maxDiv: resolvedDivs?.[0] ? serializeLutiDiv(resolvedDivs[0]) : null,
-		minDiv: resolvedDivs?.[1] ? serializeLutiDiv(resolvedDivs[1]) : null,
-		text: data.postText,
-		managedByAnyone: data.managedByAnyone,
-		maps:
-			data.maps === "NO_PREFERENCE" || data.maps === "TOURNAMENT"
-				? null
-				: data.maps,
-		mapsTournamentId: data.mapsTournamentId,
-		isScheduledForFuture:
-			data.at >
-			// 10 minutes is an arbitrary threshold
-			add(new Date(), {
-				minutes: 10,
-			}),
-		visibility:
-			data.baseVisibility !== "PUBLIC"
-				? {
-						forAssociation: data.baseVisibility,
-						notFoundInstructions: data.notFoundVisibility.at
-							? [
-									{
-										at: dateToDatabaseTimestamp(data.notFoundVisibility.at),
-										forAssociation:
-											data.notFoundVisibility.forAssociation !== "PUBLIC"
-												? data.notFoundVisibility.forAssociation
-												: null,
-									},
-								]
-							: undefined,
-					}
-				: null,
-		teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
-		users: (await usersListForPost({ authorId: user.id, from: data.from })).map(
-			(userId) => ({
+		await ScrimPostRepository.insert({
+			startsAt: dateToDatabaseTimestamp(body.at),
+			rangeEndsAt: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
+			maxDiv: resolvedDivs?.[0] ? serializeLutiDiv(resolvedDivs[0]) : null,
+			minDiv: resolvedDivs?.[1] ? serializeLutiDiv(resolvedDivs[1]) : null,
+			text: body.postText,
+			managedByAnyone: body.managedByAnyone,
+			maps:
+				body.maps === "NO_PREFERENCE" || body.maps === "TOURNAMENT"
+					? null
+					: body.maps,
+			mapsTournamentId: body.mapsTournamentId,
+			isScheduledForFuture:
+				body.at >
+				// 10 minutes is an arbitrary threshold
+				add(new Date(), {
+					minutes: 10,
+				}),
+			visibility:
+				body.baseVisibility !== "PUBLIC"
+					? {
+							forAssociation: body.baseVisibility,
+							notFoundInstructions: body.notFoundVisibility.at
+								? [
+										{
+											at: dateToDatabaseTimestamp(body.notFoundVisibility.at),
+											forAssociation:
+												body.notFoundVisibility.forAssociation !== "PUBLIC"
+													? body.notFoundVisibility.forAssociation
+													: null,
+										},
+									]
+								: undefined,
+						}
+					: null,
+			teamId: body.from.mode === "TEAM" ? body.from.teamId : null,
+			users: (
+				await usersListForPost({ authorId: user.id, from: body.from })
+			).map((userId) => ({
 				userId,
 				isOwner: toDBBoolean(user.id === userId),
-			}),
-		),
-	});
+			})),
+		});
 
-	if (data.from.mode === "PICKUP") {
-		await ScrimPickupRosterRepository.upsertOwn(data.from.users);
-	}
+		if (body.from.mode === "PICKUP") {
+			await ScrimPickupRosterRepository.upsertOwn(body.from.users);
+		}
 
-	return redirect(scrimsPage());
-};
+		return redirect(scrimsPage());
+	},
+);
 
 export const usersListForPost = async ({
 	from,

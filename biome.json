@@ -306,6 +306,14 @@
 		{
 			"includes": ["app/**"],
 			"plugins": ["./biome-plugins/no-and-conditional-rendering.grit"]
+		},
+		{
+			"includes": [
+				"app/**",
+				"!app/form/parse.server.ts",
+				"!app/form/define-action.server.ts"
+			],
+			"plugins": ["./biome-plugins/no-raw-actions.grit"]
 		}
 	]
 }

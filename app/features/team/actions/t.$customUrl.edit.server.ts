@@ -1,14 +1,9 @@
-import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ThemePalette from "~/features/theme/core/ThemePalette";
-import { parseFormDataWithImages } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
-import {
-	errorToastIfFalsy,
-	notFoundIfNullish,
-	parseParams,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { mySlugify, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
@@ -16,81 +11,76 @@ import { editTeamActionSchema } from "../team-schemas";
 import { teamParamsSchema } from "../team-schemas.server";
 import { canAddCustomizedColors } from "../team-utils";
 
-export const action: ActionFunction = async ({ request, params }) => {
-	requireUser();
-	const { customUrl } = parseParams({ params, schema: teamParamsSchema });
+export const action = defineAction(
+	{ params: teamParamsSchema, body: editTeamActionSchema },
+	async ({ params: { customUrl }, resolveImages }) => {
+		requireUser();
 
-	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl),
-	);
+		const team = notFoundIfNullish(
+			await TeamRepository.findByCustomUrl(customUrl),
+		);
 
-	requirePermission(team, "EDIT");
+		requirePermission(team, "EDIT");
 
-	const result = await parseFormDataWithImages({
-		request,
-		schema: editTeamActionSchema,
-		isCurrentImgId: (imgId) =>
-			imgId === team.avatarImgId || imgId === team.bannerImgId,
-	});
+		const data = await resolveImages({
+			isCurrentImgId: (imgId) =>
+				imgId === team.avatarImgId || imgId === team.bannerImgId,
+		});
 
-	if (!result.success) {
-		return { fieldErrors: result.fieldErrors };
-	}
+		switch (data._action) {
+			case "UPDATE_CUSTOM_THEME": {
+				errorToastIfFalsy(
+					canAddCustomizedColors(team),
+					"Team does not have custom theme access",
+				);
 
-	const data = result.data;
+				await TeamRepository.updateCustomTheme({
+					id: team.id,
+					customTheme: data.newValue ? ThemePalette.build(data.newValue) : null,
+				});
 
-	switch (data._action) {
-		case "UPDATE_CUSTOM_THEME": {
-			errorToastIfFalsy(
-				canAddCustomizedColors(team),
-				"Team does not have custom theme access",
-			);
-
-			await TeamRepository.updateCustomTheme({
-				id: team.id,
-				customTheme: data.newValue ? ThemePalette.build(data.newValue) : null,
-			});
-
-			return { ok: true };
-		}
-		case "UPDATE_MAP_MODE_PREFERENCES": {
-			await TeamRepository.updateMapModePreferences({
-				id: team.id,
-				mapModePreferences: data.mapModePreferences,
-			});
-
-			return { ok: true };
-		}
-		case "REMOVE_MAP_MODE_PREFERENCES": {
-			await TeamRepository.updateMapModePreferences({
-				id: team.id,
-				mapModePreferences: null,
-			});
-
-			return { ok: true };
-		}
-		case "EDIT": {
-			const newCustomUrl = mySlugify(data.name);
-			const duplicateTeam = await TeamRepository.findByCustomUrl(newCustomUrl);
-
-			if (duplicateTeam && duplicateTeam.id !== team.id) {
-				return { fieldErrors: { name: "forms:errors.duplicateName" } };
+				return { ok: true };
 			}
+			case "UPDATE_MAP_MODE_PREFERENCES": {
+				await TeamRepository.updateMapModePreferences({
+					id: team.id,
+					mapModePreferences: data.mapModePreferences,
+				});
 
-			const updatedTeam = await TeamRepository.update({
-				id: team.id,
-				name: data.name,
-				bio: data.bio,
-				bsky: data.bsky,
-				tag: data.tag,
-				avatarImgId: data.logo,
-				bannerImgId: data.banner,
-			});
+				return { ok: true };
+			}
+			case "REMOVE_MAP_MODE_PREFERENCES": {
+				await TeamRepository.updateMapModePreferences({
+					id: team.id,
+					mapModePreferences: null,
+				});
 
-			throw redirect(teamPage(updatedTeam.customUrl));
+				return { ok: true };
+			}
+			case "EDIT": {
+				const newCustomUrl = mySlugify(data.name);
+				const duplicateTeam =
+					await TeamRepository.findByCustomUrl(newCustomUrl);
+
+				if (duplicateTeam && duplicateTeam.id !== team.id) {
+					return { fieldErrors: { name: "forms:errors.duplicateName" } };
+				}
+
+				const updatedTeam = await TeamRepository.update({
+					id: team.id,
+					name: data.name,
+					bio: data.bio,
+					bsky: data.bsky,
+					tag: data.tag,
+					avatarImgId: data.logo,
+					bannerImgId: data.banner,
+				});
+
+				throw redirect(teamPage(updatedTeam.customUrl));
+			}
+			default: {
+				assertUnreachable(data);
+			}
 		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-};
+	},
+);

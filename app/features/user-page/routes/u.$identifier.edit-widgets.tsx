@@ -39,6 +39,7 @@ import type { WidgetId } from "~/features/user-page/core/widgets/types";
 import { getWidgetFormSchema } from "~/features/user-page/core/widgets/widget-form-schemas";
 import { USER } from "~/features/user-page/user-page-constants";
 import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
+import { RENDERS_FIELD_ERRORS_KEY } from "~/form/utils";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { navIconUrl, SUPPORT_PAGE } from "~/utils/urls";
@@ -167,7 +168,10 @@ export default function EditWidgetsPage() {
 		}
 
 		fetcher.submit(
-			{ widgets: selectedWidgets } as unknown as Record<string, string>,
+			{
+				widgets: selectedWidgets,
+				[RENDERS_FIELD_ERRORS_KEY]: true,
+			} as unknown as Record<string, string>,
 			{ method: "post", encType: "application/json" },
 		);
 	};

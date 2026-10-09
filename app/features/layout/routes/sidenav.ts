@@ -1,22 +1,29 @@
-import type { ActionFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
+import * as v from "valibot";
 import { getSidenavSession } from "~/features/layout/core/sidenav-session.server";
+import { defineAction } from "~/form/define-action.server";
 import { safeReturnTo } from "~/utils/remix.server";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-	const sidenavSession = await getSidenavSession(request);
-	const formData = await request.formData();
-	const collapsed = formData.get("collapsed") === "true";
+const sidenavActionSchema = v.object({
+	collapsed: v.optional(v.string()),
+	returnTo: v.optional(v.string()),
+});
 
-	sidenavSession.setCollapsed(collapsed);
+export const action = defineAction(
+	{ body: sidenavActionSchema },
+	async ({ request, body }) => {
+		const sidenavSession = await getSidenavSession(request);
 
-	const headers = { "Set-Cookie": await sidenavSession.commit() };
+		sidenavSession.setCollapsed(body.collapsed === "true");
 
-	// a document form post (no JavaScript) has nowhere to show the data
-	const returnTo = safeReturnTo(formData.get("returnTo"));
-	if (returnTo) {
-		return redirect(returnTo, { headers });
-	}
+		const headers = { "Set-Cookie": await sidenavSession.commit() };
 
-	return data({ success: true }, { headers });
-};
+		// a document form post (no JavaScript) has nowhere to show the data
+		const returnTo = safeReturnTo(body.returnTo ?? null);
+		if (returnTo) {
+			return redirect(returnTo, { headers });
+		}
+
+		return data({ success: true }, { headers });
+	},
+);

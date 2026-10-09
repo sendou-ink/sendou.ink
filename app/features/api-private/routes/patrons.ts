@@ -1,5 +1,6 @@
-import type { ActionFunction, LoaderFunctionArgs } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { defineAction } from "~/form/define-action.server";
 import { updatePatreonData } from "~/modules/patreon";
 import {
 	canAccessLohiEndpoint,
@@ -7,7 +8,7 @@ import {
 	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
 
-export const action: ActionFunction = async ({ request }) => {
+export const action = defineAction(async ({ request }) => {
 	if (!canAccessLohiEndpoint(request)) {
 		forbidden();
 	}
@@ -15,7 +16,7 @@ export const action: ActionFunction = async ({ request }) => {
 	await updatePatreonData();
 
 	return null;
-};
+});
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
 	unauthorizedIfFalsy(canAccessLohiEndpoint(request));

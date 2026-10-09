@@ -1,44 +1,30 @@
-import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
-import { parseFormData } from "~/form/parse.server";
-import { parseParams } from "~/utils/remix.server";
+import { defineAction } from "~/form/define-action.server";
 import { idObject } from "~/utils/schema";
 import { userCardNoteSchema } from "../user-card-schemas";
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-	requireUser();
+export const action = defineAction(
+	{ params: idObject, body: userCardNoteSchema },
+	async ({ params: { id: targetId }, body }) => {
+		requireUser();
 
-	const targetId = parseParams({
-		params,
-		schema: idObject,
-	}).id;
-	const result = await parseFormData({
-		request,
-		schema: userCardNoteSchema,
-	});
+		const isEmptySave =
+			body._action === "SAVE" &&
+			body.comment === null &&
+			body.sentiment === "NEUTRAL";
 
-	if (!result.success) {
-		return { fieldErrors: result.fieldErrors };
-	}
+		if (body._action === "DELETE" || isEmptySave) {
+			await PrivateUserNoteRepository.deleteOwnNoteById(targetId);
+			return null;
+		}
 
-	const data = result.data;
+		await PrivateUserNoteRepository.upsertOwnNote({
+			targetId,
+			sentiment: body.sentiment,
+			text: body.comment,
+		});
 
-	const isEmptySave =
-		data._action === "SAVE" &&
-		data.comment === null &&
-		data.sentiment === "NEUTRAL";
-
-	if (data._action === "DELETE" || isEmptySave) {
-		await PrivateUserNoteRepository.deleteOwnNoteById(targetId);
 		return null;
-	}
-
-	await PrivateUserNoteRepository.upsertOwnNote({
-		targetId,
-		sentiment: data.sentiment,
-		text: data.comment,
-	});
-
-	return null;
-};
+	},
+);

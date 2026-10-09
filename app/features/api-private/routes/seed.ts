@@ -1,9 +1,9 @@
-import type { ActionFunction } from "react-router";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
+import { defineAction } from "~/form/define-action.server";
 import { badRequest } from "~/utils/remix.server";
 import { refreshCaches } from "../core/refresh-caches.server";
 
-export const action: ActionFunction = async () => {
+export const action = defineAction(async () => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		badRequest();
 	}
@@ -14,4 +14,4 @@ export const action: ActionFunction = async () => {
 	await refreshCaches();
 
 	return Response.json(null);
-};
+});

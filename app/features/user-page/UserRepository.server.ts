@@ -1467,13 +1467,14 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 	});
 }
 
+/** Syncs Discord profile data by Discord id, a `null` name keeps the stored one. */
 export function updateMany(
-	argsArr: Array<
-		Pick<
-			Tables["User"],
-			"discordAvatar" | "discordName" | "discordUniqueName" | "discordId"
-		>
-	>,
+	argsArr: Array<{
+		discordId: string;
+		discordAvatar: string | null;
+		discordName: string | null;
+		discordUniqueName: string | null;
+	}>,
 ) {
 	return db.transaction().execute(async (trx) => {
 		for (const updateArgs of argsArr) {

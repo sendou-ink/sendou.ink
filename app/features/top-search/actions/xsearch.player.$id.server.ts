@@ -1,44 +1,42 @@
-import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import { defineAction } from "~/form/define-action.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
 	notFoundIfNullish,
-	parseParams,
 	successToast,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
-export const action = async ({ params }: ActionFunctionArgs) => {
-	const user = requireUser();
-	const { id } = parseParams({
-		params,
-		schema: idObject,
-	});
+export const action = defineAction(
+	{ params: idObject },
+	async ({ params: { id } }) => {
+		const user = requireUser();
 
-	const placements = notFoundIfNullish(
-		await XRankPlacementRepository.findPlacementsByPlayerId(id),
-	);
-	const currentLinkedUserDiscordId = placements[0].discordId;
+		const placements = notFoundIfNullish(
+			await XRankPlacementRepository.findPlacementsByPlayerId(id),
+		);
+		const currentLinkedUserDiscordId = placements[0].discordId;
 
-	errorToastIfFalsy(
-		currentLinkedUserDiscordId === user.discordId,
-		"This player is not linked to you",
-	);
+		errorToastIfFalsy(
+			currentLinkedUserDiscordId === user.discordId,
+			"This player is not linked to you",
+		);
 
-	logger.info("Unlinking player", {
-		id,
-		userId: user.id,
-	});
+		logger.info("Unlinking player", {
+			id,
+			userId: user.id,
+		});
 
-	await XRankPlacementRepository.unlinkPlayerByUserId(user.id);
+		await XRankPlacementRepository.unlinkPlayerByUserId(user.id);
 
-	await BadgeRepository.syncXPBadges();
-	await TrophyRepository.syncSpecialTrophies();
-	await XRankPlacementRepository.refreshTenStarWeapons(user.id);
+		await BadgeRepository.syncXPBadges();
+		await TrophyRepository.syncSpecialTrophies();
+		await XRankPlacementRepository.refreshTenStarWeapons(user.id);
 
-	return successToast("Unlink successful");
-};
+		return successToast("Unlink successful");
+	},
+);

@@ -373,23 +373,33 @@ type ImageFieldValue =
 
 ### Server helper
 
-Parse the action with `parseFormDataWithImages` instead of `parseFormData`. It resolves every
-`image()` field in the schema to a stored image id (`number | null`) in place, so the action just
-writes each id to its own FK column:
+`defineAction` hands the handler a `resolveImages` function. It resolves every `image()` field in
+the body to a stored image id (`number | null`), so the action just writes each id to its own FK
+column. Resolving uploads, so call it only after the authorization checks:
 
 ```ts
-import { parseFormDataWithImages } from "~/form/parse.server";
+export const action = defineAction(
+  { body: editTeamSchema },
+  async ({ resolveImages }) => {
+    const team = /* ... */;
+    requirePermission(team, "EDIT");
 
-const result = await parseFormDataWithImages({ request, schema: editTeamSchema });
-if (!result.success) return { fieldErrors: result.fieldErrors };
+    // data.logo / data.banner are now `number | null`
+    const data = await resolveImages({
+      isCurrentImgId: (imgId) => imgId === team.avatarImgId,
+    });
 
-// result.data.logo / result.data.banner are now `number | null`
-await TeamRepository.update({
-  id: data.teamId,
-  avatarImgId: result.data.logo,
-  bannerImgId: result.data.banner,
-});
+    await TeamRepository.update({
+      id: team.id,
+      avatarImgId: data.logo,
+      bannerImgId: data.banner,
+    });
+  },
+);
 ```
+
+A kept (`EXISTING`) image must be the user's own upload unless `isCurrentImgId` says the edited
+entity already holds it.
 
 Per field it resolves `null → null`, `EXISTING → imgId` (no bytes re-sent), `NEW → upload + insert
 → new id`. For a `NEW` value it decodes the base64, validates the bytes are a real webp (magic-byte
@@ -476,28 +486,38 @@ type CustomFieldRenderProps<TValue = unknown> = {
 
 ### Basic Action Handler
 
+Actions are defined with `defineAction`, which parses the route params and the body before the
+handler runs:
+
 ```ts
-// IMPORTANT: import path needs to be this exact one
-import { parseFormData } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
+import { idObject } from "~/utils/schema";
 import { myFormSchema } from "./my-schemas";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const result = await parseFormData({
-    request,
-    schema: myFormSchema,
-  });
-
-  if (!result.success) {
-    return { fieldErrors: result.fieldErrors };
-  }
-
-  const data = result.data;
-  // data is fully typed based on schema
-
-  await doSomething(data);
-  return redirect("/success");
-};
+export const action = defineAction(
+  { params: idObject, body: myFormSchema },
+  async ({ params, body }) => {
+    // params and body are fully typed based on their schemas
+    await doSomething(params.id, body);
+    return redirect("/success");
+  },
+);
 ```
+
+- `params` failing its schema throws a 404. Without a `params` schema the handler gets the raw params.
+- `body` failing its schema returns `{ fieldErrors }` when the submitter renders them, otherwise
+  it throws an error toast redirect. `SendouForm` marks its submissions with
+  `RENDERS_FIELD_ERRORS_KEY` (`~/form/utils`), so its fields show the errors, while e.g. an
+  `<ActionButton>` gets a toast. A custom submitter that renders `fieldErrors` sets the marker
+  itself.
+- Endpoints called with a plain `fetch()` or by external API clients can't show a toast, they pass
+  `onInvalidBody: "badRequest"` to answer an invalid body with a bare 400 instead.
+- Both are optional, e.g. `defineAction({ params: teamParamsSchema }, ...)` for an action without a body.
+  With nothing to parse, the handler is the only argument: `defineAction(async ({ request }) => ...)`.
+  The body is read as form data by `Content-Type`, otherwise as JSON (an empty body reads as an empty object).
+
+Every exported action (`action`, `logOutAction`, ...) is a `defineAction(...)` and never reads the
+request body itself, enforced by the `no-raw-actions` Biome plugin.
 
 ### Server-Only Schema Pattern
 
@@ -588,21 +608,15 @@ export const newBuildSchemaServer = v.pipeAsync(
 **Action using server schema:**
 
 ```ts
-import { parseFormData } from "~/form/parse.server";
+import { defineAction } from "~/form/define-action.server";
 import { newBuildSchemaServer } from "./feature-schemas.server";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const result = await parseFormData({
-    request,
-    schema: newBuildSchemaServer,
-  });
-
-  if (!result.success) {
-    return { fieldErrors: result.fieldErrors };
-  }
-
-  // ...
-};
+export const action = defineAction(
+  { body: newBuildSchemaServer },
+  async ({ body }) => {
+    // ...
+  },
+);
 ```
 
 ### Uniqueness Validation
@@ -810,24 +824,18 @@ export default function NewItemPage() {
 ### Action (`route.server.ts`)
 
 ```ts
-import { redirect, type ActionFunctionArgs } from "react-router";
-import { parseFormData } from "~/form/parse.server";
+import { redirect } from "react-router";
+import { defineAction } from "~/form/define-action.server";
 import { createItemSchema } from "./feature-schemas";
 import * as ItemRepository from "./ItemRepository.server";
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const result = await parseFormData({
-    request,
-    schema: createItemSchema,
-  });
-
-  if (!result.success) {
-    return { fieldErrors: result.fieldErrors };
-  }
-
-  await ItemRepository.create(result.data);
-  return redirect("/items");
-};
+export const action = defineAction(
+  { body: createItemSchema },
+  async ({ body }) => {
+    await ItemRepository.create(body);
+    return redirect("/items");
+  },
+);
 ```
 
 ### E2E Test (`feature.spec.ts`)

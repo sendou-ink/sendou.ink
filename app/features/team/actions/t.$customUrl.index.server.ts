@@ -1,69 +1,61 @@
-import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
-import {
-	errorToastIfFalsy,
-	notFoundIfNullish,
-	parseParams,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TeamRepository from "../TeamRepository.server";
 import { teamProfilePageActionSchema } from "../team-schemas";
 import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamMember, isTeamOwner, resolveNewOwner } from "../team-utils";
 
-export const action: ActionFunction = async ({ request, params }) => {
-	const user = requireUser();
-	const data = await parseRequestPayload({
-		request,
-		schema: teamProfilePageActionSchema,
-	});
+export const action = defineAction(
+	{ params: teamParamsSchema, body: teamProfilePageActionSchema },
+	async ({ params: { customUrl }, body }) => {
+		const user = requireUser();
+		const team = notFoundIfNullish(
+			await TeamRepository.findByCustomUrl(customUrl),
+		);
 
-	const { customUrl } = parseParams({ params, schema: teamParamsSchema });
-	const team = notFoundIfNullish(
-		await TeamRepository.findByCustomUrl(customUrl),
-	);
+		switch (body._action) {
+			case "LEAVE_TEAM": {
+				errorToastIfFalsy(
+					isTeamMember({ user, team }),
+					"You are not a member of this team",
+				);
 
-	switch (data._action) {
-		case "LEAVE_TEAM": {
-			errorToastIfFalsy(
-				isTeamMember({ user, team }),
-				"You are not a member of this team",
-			);
+				const newOwner = isTeamOwner({ user, team })
+					? resolveNewOwner(team.members)
+					: null;
+				errorToastIfFalsy(
+					!isTeamOwner({ user, team }) || newOwner,
+					"You can't leave the team if you are the owner and there is no other member to become the owner",
+				);
 
-			const newOwner = isTeamOwner({ user, team })
-				? resolveNewOwner(team.members)
-				: null;
-			errorToastIfFalsy(
-				!isTeamOwner({ user, team }) || newOwner,
-				"You can't leave the team if you are the owner and there is no other member to become the owner",
-			);
+				await TeamRepository.handleMemberLeaving({
+					teamId: team.id,
+					userId: user.id,
+					newOwnerUserId: newOwner?.id,
+				});
 
-			await TeamRepository.handleMemberLeaving({
-				teamId: team.id,
-				userId: user.id,
-				newOwnerUserId: newOwner?.id,
-			});
+				break;
+			}
+			case "MAKE_MAIN_TEAM": {
+				await TeamRepository.switchOwnMainTeam(team.id);
 
-			break;
+				break;
+			}
+			case "DELETE_TEAM": {
+				requirePermission(team, "DELETE");
+
+				await TeamRepository.deleteById(team.id);
+				throw redirect("/");
+			}
+			default: {
+				assertUnreachable(body);
+			}
 		}
-		case "MAKE_MAIN_TEAM": {
-			await TeamRepository.switchOwnMainTeam(team.id);
 
-			break;
-		}
-		case "DELETE_TEAM": {
-			requirePermission(team, "DELETE");
-
-			await TeamRepository.deleteById(team.id);
-			throw redirect("/");
-		}
-		default: {
-			assertUnreachable(data);
-		}
-	}
-
-	return null;
-};
+		return null;
+	},
+);

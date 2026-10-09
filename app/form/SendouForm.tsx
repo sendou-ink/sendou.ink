@@ -20,6 +20,7 @@ import {
 	errorMessageId,
 	getNestedValue,
 	issuePathKeys,
+	RENDERS_FIELD_ERRORS_KEY,
 	seedArrayItemDefaults,
 	setNestedValue,
 	validateField,
@@ -493,11 +494,13 @@ function createFormActions({
 
 	const submitValues = (values: Record<string, unknown>) => {
 		const { fetcher, action, revalidateRoot } = latest.current;
-		const submitted = revalidateRoot
-			? { ...values, revalidateRoot: true }
-			: values;
+		const submitted = {
+			...values,
+			[RENDERS_FIELD_ERRORS_KEY]: true,
+			...(revalidateRoot ? { revalidateRoot: true } : {}),
+		};
 		void holdRevalidationsDuring(() =>
-			fetcher.submit(submitted as Record<string, string>, {
+			fetcher.submit(submitted as unknown as Record<string, string>, {
 				method: "post",
 				action,
 				encType: "application/json",
