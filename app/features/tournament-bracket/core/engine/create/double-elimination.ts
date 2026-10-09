@@ -15,18 +15,20 @@ export function createDoubleElimination(creator: StageCreator): void {
 		});
 		const ordered = ordering[STANDARD_BRACKET_FIRST_ROUND_ORDERING](slots);
 
-		const { losers: losersWb, winner: winnerWb } =
-			creator.createStandardBracket(stage.id, groupId, ordered);
+		creator.createEliminationGroup("double_elimination", () => {
+			const { losers: losersWb, winner: winnerWb } =
+				creator.createStandardBracket(stage.id, groupId, ordered);
 
-		if (helpers.isDoubleEliminationNecessary(slots.length)) {
-			const winnerLb = creator.createLowerBracket(
-				stage.id,
-				groupId,
-				losersWb,
-				slots.length,
-			);
-			createGrandFinal(creator, stage.id, groupId, winnerWb, winnerLb);
-		}
+			if (helpers.isDoubleEliminationNecessary(slots.length)) {
+				const winnerLb = creator.createLowerBracket(
+					stage.id,
+					groupId,
+					losersWb,
+					slots.length,
+				);
+				createGrandFinal(creator, stage.id, groupId, winnerWb, winnerLb);
+			}
+		});
 	}
 }
 

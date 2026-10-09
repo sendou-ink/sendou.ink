@@ -1,5 +1,6 @@
 import * as R from "remeda";
 import { describe, expect, test } from "vitest";
+import type { TournamentSettings } from "~/db/tables-json";
 import { toDBBoolean } from "~/utils/sql";
 import { invariant } from "../../../utils/invariant";
 import type { Standing } from "./Bracket";
@@ -1852,6 +1853,163 @@ describe("grouped elimination with skipped rounds", () => {
 		).toHaveLength(4);
 	});
 });
+
+describe("grouped elimination - edge cases", () => {
+	const teamIds = (count: number) =>
+		Array.from({ length: count }, (_, index) => index + 1);
+
+	test("a follow-up with fewer teams than groups need still has matches to play", () => {
+		// 6 teams: Main groups of 3 leave 4 one loss teams, Redemption groups of 2 would have no matches
+		const progression: TournamentSettings["bracketProgression"] = [
+			{
+				type: "double_elimination",
+				name: "Main",
+				requiresCheckIn: false,
+				settings: {
+					groupCount: 2,
+					skippedRounds: [
+						"LB_SEMIS",
+						"LB_FINALS",
+						"GRAND_FINALS",
+						"BRACKET_RESET",
+					],
+				},
+			},
+			{
+				type: "single_elimination",
+				name: "Redemption",
+				requiresCheckIn: false,
+				settings: {
+					groupCount: 2,
+					skippedRounds: ["FINALS", "THIRD_PLACE_MATCH"],
+				},
+				sources: [{ bracketIdx: 0, placements: [2] }],
+			},
+		];
+
+		const redemption = testTournament({
+			ctx: { settings: { bracketProgression: progression } },
+			data: playedOut(
+				createResolved({
+					type: "double_elimination",
+					seeding: teamIds(6),
+					settings: progression[0].settings,
+				}),
+			),
+		}).bracketByIdx(1)!;
+
+		expect(redemption.seeding).toHaveLength(4);
+		expect(redemption.participantTournamentTeamIds).toHaveLength(4);
+	});
+
+	test("a grouped follow-up of a round robin avoids first round rematches", () => {
+		const progression: TournamentSettings["bracketProgression"] = [
+			{
+				type: "round_robin",
+				name: "Groups",
+				requiresCheckIn: false,
+				settings: { teamsPerGroup: 4 },
+			},
+			{
+				type: "single_elimination",
+				name: "Final",
+				requiresCheckIn: false,
+				settings: { groupCount: 2 },
+				sources: [{ bracketIdx: 0, placements: [1, 2, 3] }],
+			},
+		];
+
+		const roundRobin = playedOut(
+			Engine.create({
+				type: "round_robin",
+				seeding: teamIds(8),
+				settings: progression[0].settings,
+			}),
+		);
+		const final = testTournament({
+			ctx: { settings: { bracketProgression: progression } },
+			data: roundRobin,
+		}).bracketByIdx(1)!;
+
+		const pairKey = (match: MatchData) =>
+			[match.opponent1?.id, match.opponent2?.id].sort().join("-");
+		const roundRobinPairs = new Set(roundRobin.match.map(pairKey));
+		const firstRoundIds = new Set(
+			final.data.round
+				.filter((round) => round.section === "winners" && round.number === 1)
+				.map((round) => round.id),
+		);
+		const firstRoundRematches = final.data.match
+			.filter(
+				(match) =>
+					firstRoundIds.has(match.roundId) &&
+					match.opponent1?.id &&
+					match.opponent2?.id,
+			)
+			.map(pairKey)
+			.filter((pair) => roundRobinPairs.has(pair));
+
+		expect(firstRoundRematches).toEqual([]);
+	});
+
+	test("double elimination co-winners are ordered by seed and seeded so into the follow-up", () => {
+		const progression: TournamentSettings["bracketProgression"] = [
+			{
+				type: "double_elimination",
+				name: "Main",
+				requiresCheckIn: false,
+				settings: {
+					skippedRounds: [
+						"WB_FINALS",
+						"LB_FINALS",
+						"GRAND_FINALS",
+						"BRACKET_RESET",
+					],
+				},
+			},
+			{
+				type: "single_elimination",
+				name: "Top",
+				requiresCheckIn: false,
+				settings: {},
+				sources: [{ bracketIdx: 0, placements: [1, 2] }],
+			},
+		];
+
+		const tournament = testTournament({
+			ctx: { settings: { bracketProgression: progression } },
+			data: playedOut(
+				createResolved({
+					type: "double_elimination",
+					seeding: teamIds(8),
+					settings: progression[0].settings,
+				}),
+			),
+		});
+
+		expect(
+			tournament
+				.bracketByIdx(0)!
+				.standings.slice(0, 2)
+				.map((standing) => standing.team.id),
+		).toEqual([1, 2]);
+		expect(tournament.bracketByIdx(1)!.seeding?.slice(0, 2)).toEqual([1, 2]);
+	});
+});
+
+/** Plays every match of the bracket, the lower team id winning. */
+function playedOut(data: BracketData): BracketData {
+	let result = data;
+	let ready = readyMatches(result, () => true);
+	while (ready.length) {
+		for (const match of ready) {
+			result = reportLowerIdWinner(result, match.id);
+		}
+		ready = readyMatches(result, () => true);
+	}
+
+	return result;
+}
 
 function playedSwissMatches(
 	data: BracketData,

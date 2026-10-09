@@ -90,13 +90,6 @@ export const action = defineAction(
 						? abDivisionsForSeeding(seeding, tournament, groupCount)
 						: undefined;
 
-				errorToastIfFalsy(
-					bracket.data.group.every((group) =>
-						bracket.data.match.some((match) => match.groupId === group.id),
-					),
-					"A group would have no matches with these rounds skipped",
-				);
-
 				// rr/swiss groups share one map list per round number and can have different round counts
 				const distinctRoundNumberCount = new Set(
 					bracket.data.round.map((round) => round.number),

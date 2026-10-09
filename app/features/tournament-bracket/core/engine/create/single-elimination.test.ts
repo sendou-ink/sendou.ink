@@ -111,6 +111,56 @@ describe("Create single elimination stage", () => {
 		).toEqual([data.group[1].id]);
 	});
 
+	test.each([
+		{ teamCount: 4, why: "two groups of 2" },
+		{ teamCount: 5, why: "groups of 3 and 2" },
+	])(
+		"every group has a match with the finals skipped ($why)",
+		({ teamCount }) => {
+			const data = createResolved({
+				type: "single_elimination",
+				seeding: Array.from({ length: teamCount }, (_, i) => i + 1),
+				settings: {
+					groupCount: 2,
+					skippedRounds: ["FINALS", "THIRD_PLACE_MATCH"],
+				},
+			});
+
+			expect(groupIdsWithoutMatches(data)).toEqual([]);
+		},
+	);
+
+	test.each([
+		{
+			teamCount: 4,
+			skippedRounds: ["SEMIS", "FINALS", "THIRD_PLACE_MATCH"] as const,
+			why: "semis played, finals still skipped",
+		},
+		{
+			teamCount: 3,
+			skippedRounds: ["SEMIS", "FINALS", "THIRD_PLACE_MATCH"] as const,
+			why: "semis with a BYE played",
+		},
+		{
+			teamCount: 2,
+			skippedRounds: ["FINALS", "THIRD_PLACE_MATCH"] as const,
+			why: "finals played",
+		},
+	])(
+		"plays the fewest skipped rounds needed for a match with $teamCount teams ($why)",
+		({ teamCount, skippedRounds }) => {
+			const data = createResolved({
+				type: "single_elimination",
+				seeding: Array.from({ length: teamCount }, (_, i) => i + 1),
+				settings: { skippedRounds: [...skippedRounds] },
+			});
+
+			expect(data.round.map((round) => [round.section, round.number])).toEqual([
+				["winners", 1],
+			]);
+		},
+	);
+
 	test("throws if the seeding has duplicate participants", () => {
 		expect(() =>
 			createResolved({
@@ -132,4 +182,16 @@ function matchById(data: BracketData, id: number) {
 	if (!found) throw new Error(`Match ${id} not found`);
 
 	return found;
+}
+
+function groupIdsWithoutMatches(data: BracketData) {
+	return data.group
+		.filter(
+			(group) =>
+				!data.match.some(
+					(match) =>
+						match.groupId === group.id && match.opponent1 && match.opponent2,
+				),
+		)
+		.map((group) => group.id);
 }

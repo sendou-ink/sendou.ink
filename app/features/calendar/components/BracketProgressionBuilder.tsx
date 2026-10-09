@@ -1282,7 +1282,8 @@ function PlacementPicker({
 					);
 				})}
 			</div>
-			{restSwitch}
+			{/* round robin tiers already list every placement a group can have, kept to let a saved "+" be turned off */}
+			{isRoundRobin && !parsed.rest ? null : restSwitch}
 		</div>
 	);
 }

@@ -172,9 +172,13 @@ export class DoubleEliminationBracket extends Bracket {
 				.filter((teamId) => !eliminatedIds.has(teamId))
 				.map((teamId) => ({ teamId, losses: lossCount(teamId) }));
 			const unbeatenCount = stillIn.filter((team) => team.losses === 0).length;
+			const effectiveSeed = this.effectiveSeedResolver();
 
+			// reversed below: fewest losses, then best seed first
 			for (const { teamId, losses } of stillIn.toSorted(
-				(a, b) => b.losses - a.losses,
+				(a, b) =>
+					b.losses - a.losses ||
+					effectiveSeed(b.teamId) - effectiveSeed(a.teamId),
 			)) {
 				const team = this.tournament.teamById(teamId);
 				invariant(team, `Team not found for id: ${teamId}`);

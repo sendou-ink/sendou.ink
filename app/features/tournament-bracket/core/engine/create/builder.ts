@@ -1,3 +1,4 @@
+import type { SkippableRound } from "~/db/tables-json";
 import * as SkippedRounds from "../../SkippedRounds";
 import type {
 	BracketData,
@@ -27,6 +28,8 @@ export class StageCreator {
 	settings: StageSettings;
 	seeding: Seeding;
 	readonly data: BracketData;
+	/** Rounds skipped in the elimination group being created, see {@link createEliminationGroup}. */
+	private groupSkippedRounds: SkippableRound[];
 
 	constructor(input: ResolvedCreateBracketInput) {
 		this.input = input;
@@ -37,6 +40,7 @@ export class StageCreator {
 			input.type !== "round_robin" && (this.settings.groupCount ?? 1) <= 1;
 		this.seeding = isPadded ? padSeedingToPowerOfTwo(seeding) : seeding;
 		this.data = { stage: [], group: [], round: [], match: [] };
+		this.groupSkippedRounds = this.settings.skippedRounds ?? [];
 
 		if (input.type === "single_elimination")
 			this.settings.consolationFinal = this.settings.consolationFinal || false;
@@ -227,6 +231,39 @@ export class StageCreator {
 		}
 	}
 
+	/**
+	 * Creates the rounds of one elimination group. If the skipped rounds would leave the group without
+	 * a match, as few of them are played as needed, the earliest first.
+	 */
+	createEliminationGroup(
+		type: "single_elimination" | "double_elimination",
+		createRounds: () => void,
+	): void {
+		const skipped = this.settings.skippedRounds ?? [];
+		const candidates = [
+			skipped,
+			...skipped.map((round) => SkippedRounds.withPlayed(type, skipped, round)),
+			[],
+		];
+
+		const roundCountBefore = this.data.round.length;
+		const matchCountBefore = this.data.match.length;
+		for (const candidate of candidates) {
+			this.data.round.length = roundCountBefore;
+			this.data.match.length = matchCountBefore;
+			this.groupSkippedRounds = candidate;
+
+			createRounds();
+
+			const hasMatch = this.data.match
+				.slice(matchCountBefore)
+				.some((match) => match.opponent1 && match.opponent2);
+			if (hasMatch) break;
+		}
+
+		this.groupSkippedRounds = skipped;
+	}
+
 	/** Whether the round of the section is created, see {@link skippedRoundNumbers}. */
 	isRoundCreated(
 		section: RoundSection,
@@ -248,7 +285,7 @@ export class StageCreator {
 			type: this.input.type,
 			section,
 			roundCount,
-			skipped: this.settings.skippedRounds ?? [],
+			skipped: this.groupSkippedRounds,
 		});
 	}
 

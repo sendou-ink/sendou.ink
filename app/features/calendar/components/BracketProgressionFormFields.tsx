@@ -19,7 +19,6 @@ import {
 	type ProgressionSourceFormValue,
 	sourceBracketHasEarlyAdvance,
 } from "../calendar-progression-form";
-import * as BracketBuilder from "../core/BracketBuilder";
 import styles from "./BracketProgressionFormFields.module.css";
 import { RoundsPlayedChecklist } from "./RoundsPlayedChecklist";
 
@@ -143,7 +142,6 @@ export function BracketFields({
 			bracket.type === "double_elimination" ? (
 				<EliminationFields
 					type={bracket.type}
-					bracket={bracket}
 					itemName={itemName}
 					isDisabled={isDisabled}
 					onFormatChange={onFormatChange}
@@ -245,21 +243,15 @@ export function BracketFields({
 /** Groups and rounds played of a single or double elimination bracket. */
 function EliminationFields({
 	type,
-	bracket,
 	itemName,
 	isDisabled,
 	onFormatChange,
 }: {
 	type: "single_elimination" | "double_elimination";
-	bracket: BracketFormValue;
 	itemName: string;
 	isDisabled: boolean;
 	onFormatChange?: () => void;
 }) {
-	const { t } = useTranslation(["forms"]);
-
-	const fewestTeamsWithMatches = BracketBuilder.fewestTeamsWithMatches(bracket);
-
 	return (
 		<>
 			<FormField
@@ -289,13 +281,6 @@ function EliminationFields({
 					/>
 				)}
 			</FormField>
-			{BracketBuilder.isGrouped(bracket) && fewestTeamsWithMatches > 2 ? (
-				<FormMessage type="info">
-					{t("forms:bottomTexts.groupsWithoutMatches", {
-						count: fewestTeamsWithMatches,
-					})}
-				</FormMessage>
-			) : null}
 		</>
 	);
 }

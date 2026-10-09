@@ -445,26 +445,6 @@ export function placementTiers(
 	}
 }
 
-/**
- * Fewest teams a bracket (or a group of it) needs for any match to be played with its rounds skipped,
- * e.g. skipping the semifinals of single elimination leaves nothing to play for four teams.
- */
-export function fewestTeamsWithMatches(bracket: BracketFormValue): number {
-	if (
-		bracket.type !== "single_elimination" &&
-		bracket.type !== "double_elimination"
-	) {
-		return 2;
-	}
-
-	const skipped = SkippedRounds.normalized(bracket.type, bracket.skippedRounds);
-
-	if (skipped.includes("SEMIS")) return 5;
-	if (skipped.includes("FINALS") || skipped.includes("WB_FINALS")) return 3;
-
-	return 2;
-}
-
 /** Single or double elimination split into groups. */
 export function isGrouped(bracket: BracketFormValue) {
 	return (

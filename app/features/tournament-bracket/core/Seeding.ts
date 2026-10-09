@@ -1,4 +1,5 @@
-import { ordering } from "./engine/create/seeding";
+import { makeGroups } from "./engine/create/helpers";
+import { ordering, padSeedingToPowerOfTwo } from "./engine/create/seeding";
 
 export interface FollowUpBracketSource {
 	/** Best placements first. Tied placements (e.g. the winner of each group) form the tiers seeding keeps intact. */
@@ -37,20 +38,27 @@ const MAX_SEARCH_NODES = 10_000;
  *
  * The incoming order changes as little as possible. Unsatisfiable constraints are relaxed step by
  * step, as the last resort the incoming order is returned.
+ *
+ * An elimination bracket split into groups is treated as its groups' brackets side by side.
  */
 export function forFollowUpBracket({
 	teams,
 	sources,
+	groupCount = 1,
 }: {
 	/** tournament team ids in their incoming seed order (best placements first) */
 	teams: number[];
 	sources: FollowUpBracketSource[];
+	/** Groups the elimination bracket is split into */
+	groupCount?: number;
 }): number[] {
 	// with fewer than 4 teams every allowed order produces the same round 1 pairings
 	if (teams.length < 4) return [...teams];
 
-	const bracketSize = 2 ** Math.ceil(Math.log2(teams.length));
-	const lineupPosBySeedIdx = resolveLineupPositions(bracketSize);
+	const { bracketSize, lineupPosBySeedIdx } =
+		groupCount > 1
+			? resolveGroupedLineupPositions(teams.length, groupCount)
+			: resolveLineupPositions(2 ** Math.ceil(Math.log2(teams.length)));
 
 	const metaByTeamId = resolveTeamMeta(teams, sources);
 	const classes = resolveClasses(teams, metaByTeamId);
@@ -89,7 +97,33 @@ function resolveLineupPositions(bracketSize: number) {
 		positions[seedIdx] = position;
 	}
 
-	return positions;
+	return { bracketSize, lineupPosBySeedIdx: positions };
+}
+
+/** Seeds distributed to groups like the engine does, each group's lineup taking its own block of positions. */
+function resolveGroupedLineupPositions(teamCount: number, groupCount: number) {
+	const seedIndices = Array.from({ length: teamCount }, (_, i) => i);
+	const groups = makeGroups(
+		ordering["groups.seed_optimized"](seedIndices, groupCount),
+		groupCount,
+	).map((group) =>
+		padSeedingToPowerOfTwo(group.filter((seedIdx) => seedIdx !== undefined)),
+	);
+	const groupBracketSize = Math.max(...groups.map((group) => group.length));
+
+	const positions = Array.from({ length: teamCount }, () => 0);
+	for (const [groupIdx, group] of groups.entries()) {
+		for (const [position, seedIdx] of ordering.space_between(group).entries()) {
+			if (seedIdx === null) continue;
+
+			positions[seedIdx] = groupIdx * groupBracketSize + position;
+		}
+	}
+
+	return {
+		bracketSize: groupBracketSize * groups.length,
+		lineupPosBySeedIdx: positions,
+	};
 }
 
 function resolveTeamMeta(teams: number[], sources: FollowUpBracketSource[]) {

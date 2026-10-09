@@ -29,6 +29,7 @@ import { assertUnreachable } from "~/utils/types";
 import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
 import * as CheckIn from "./CheckIn";
+import { eliminationGroupCount } from "./engine/create/settings";
 import { calculateTeamStatus } from "./engine/swiss/team-status";
 import { getRounds } from "./rounds";
 import * as Seeding from "./Seeding";
@@ -570,13 +571,9 @@ export class Tournament {
 			settings: Progression.ParsedBracket["settings"] | null;
 		},
 	) {
-		// starting brackets need no adjusting, group stages (also elimination split into groups) pair via their own logic
+		// starting brackets need no adjusting, group stages pair via their own logic
 		if (!bracket.sources || bracket.sources.length === 0) return teams;
-		if (
-			bracket.type === "round_robin" ||
-			bracket.type === "swiss" ||
-			(bracket.settings?.groupCount ?? 1) > 1
-		) {
+		if (bracket.type === "round_robin" || bracket.type === "swiss") {
 			return teams;
 		}
 
@@ -611,7 +608,11 @@ export class Tournament {
 			});
 		}
 
-		return Seeding.forFollowUpBracket({ teams, sources });
+		return Seeding.forFollowUpBracket({
+			teams,
+			sources,
+			groupCount: eliminationGroupCount(bracket.settings, teams.length),
+		});
 	}
 
 	private divideTeamsToCheckedInAndNotCheckedIn({

@@ -409,7 +409,6 @@
 	"labels.roundsPlayed": "Rounds played",
 	"bottomTexts.roundsPlayed": "Unplayed rounds end the bracket early, the teams still in it share their placement",
 	"bottomTexts.roundNotPlayedWithout": "Not played without {{round}}",
-	"bottomTexts.groupsWithoutMatches": "Groups of fewer than {{count}} teams have no matches to play with these rounds unplayed",
 	"options.skippableRound.SEMIS": "Semifinals",
 	"options.skippableRound.FINALS": "Finals",
 	"options.skippableRound.THIRD_PLACE_MATCH": "3rd place match",

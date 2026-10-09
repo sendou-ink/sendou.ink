@@ -15,12 +15,14 @@ export function createSingleElimination(creator: StageCreator): void {
 		});
 		const ordered = ordering[STANDARD_BRACKET_FIRST_ROUND_ORDERING](slots);
 
-		const { losers } = creator.createStandardBracket(
-			stage.id,
-			groupId,
-			ordered,
-		);
-		createConsolationFinal(creator, stage.id, groupId, slots, losers);
+		creator.createEliminationGroup("single_elimination", () => {
+			const { losers } = creator.createStandardBracket(
+				stage.id,
+				groupId,
+				ordered,
+			);
+			createConsolationFinal(creator, stage.id, groupId, slots, losers);
+		});
 	}
 }
 
