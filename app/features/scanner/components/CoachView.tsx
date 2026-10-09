@@ -13,11 +13,11 @@
  * opened in the map planner. While paused, the big one can be drawn over
  * (CoachDrawing) until playback continues or the video moves; clicks then draw
  * instead of playing or swapping, Space still plays. Each life's first
- * seconds carry its summary (CoachLifeCard) over the video. The file is the
+ * seconds carry its summary (CoachLifeCard) over the video, which opens at
+ * `t` when a game card's link set it. The file is the
  * one scanned or opened this visit, else the user opens it again (only the
  * scan was saved).
  */
-// xxx: coach mode button could be a bit more attention drawing!
 import { FolderOpen } from "lucide-react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -130,6 +130,7 @@ function CoachSession({
 	events: readonly ScanEvent[];
 }) {
 	const videoRef = useRef<HTMLVideoElement>(null);
+	const [startAt] = useSearchParam(scannerSearchParams, "t");
 	const [file, setFile] = useState(() => visitVodFile(name));
 	const url = useFileUrl(file);
 	const [category, setCategory] =
@@ -139,7 +140,7 @@ function CoachSession({
 	);
 	const [selectedKey, setSelectedKey] = useState<string | null>(null);
 	const [gameFilters, setGameFilters] = useState(CoachFilters.DEFAULT_FILTERS);
-	const [currentTime, setCurrentTime] = useState(0);
+	const [currentTime, setCurrentTime] = useState(startAt ?? 0);
 	const [isPaused, setIsPaused] = useState(true);
 	const [speed, setSpeed] = useState(1);
 	const minimaps = useVodMinimaps(name);
@@ -301,6 +302,9 @@ function CoachSession({
 								onClick={(e) => {
 									// with controls shown from the context menu, the video toggles itself
 									if (!e.currentTarget.controls) togglePlay();
+								}}
+								onLoadedMetadata={(e) => {
+									if (startAt !== null) e.currentTarget.currentTime = startAt;
 								}}
 								onTimeUpdate={(e) => followPlayback(e.currentTarget)}
 								onSeeked={(e) => setCurrentTime(e.currentTarget.currentTime)}

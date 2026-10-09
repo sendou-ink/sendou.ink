@@ -25,6 +25,10 @@ export const scannerSearchParams = SearchParams.define({
 	name: SP.param(v.nullable(v.pipe(v.string(), v.maxLength(300))), {
 		loader: false,
 	}),
+	/** `view=coach`: the file second the video opens at (a game card's start) */
+	t: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))), {
+		loader: false,
+	}),
 	/** Fixtures view filter: comma-separated substrings, any match keeps a case */
 	q: SP.param(v.pipe(v.string(), v.maxLength(200)), {
 		default: "",

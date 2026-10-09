@@ -79,6 +79,7 @@ export function SessionView({
 	canUpload,
 	onUpload,
 	emptyText,
+	coachHref,
 	children,
 }: {
 	kind: SessionKind;
@@ -103,6 +104,8 @@ export function SessionView({
 	/** absent for sessions whose matches never upload (VoD scans): the cards show no upload state */
 	onUpload?: (built: BuiltMatch<ScanEvent>) => void;
 	emptyText: string;
+	/** where a card's coach mode link opens that game; absent or null: no link */
+	coachHref?: (built: BuiltMatch<ScanEvent>) => string | null;
 	/** rendered between the header and the clips (a scan's progress, an error) */
 	children?: React.ReactNode;
 }) {
@@ -172,6 +175,7 @@ export function SessionView({
 						: null
 				}
 				clips={clipsByMatch[index]!}
+				coachHref={coachHref?.(b) ?? null}
 				onPlayClip={setPlaying}
 				getFrame={getFrame}
 			/>

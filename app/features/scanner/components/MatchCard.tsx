@@ -2,18 +2,18 @@
  * One game of a session or file, the same card in every view. Collapsed it
  * is one row: mode and stage (plus the X Battle set count the game left),
  * the game's clips, the result and the POV player's K/D/S, then the teams'
- * weapons and, once the game is over, its upload state beside the expand
- * arrow. Expanded it shows the data and
+ * weapons and, once the game is over, its upload state and coach mode link
+ * beside the expand arrow. Expanded it shows the data and
  * nothing interpreted: the scoreboard, the objective + player-status
  * timeline and deaths and kills (each with a ▶ when a clip covers it), and
  * the game's data as a zip to report a misread with.
  */
 import clsx from "clsx";
-import { ChevronDown, Download, Play } from "lucide-react";
+import { ChevronDown, Download, GraduationCap, Play } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { GameTimeline } from "~/components/GameTimeline";
 import {
@@ -100,6 +100,7 @@ export function MatchCard({
 	expandable,
 	upload,
 	clips,
+	coachHref,
 	onPlayClip,
 	getFrame,
 }: {
@@ -117,6 +118,8 @@ export function MatchCard({
 	upload: UploadState | null;
 	/** the clips this game produced, best first */
 	clips: readonly ScannerClip[];
+	/** coach mode opened at this game; null: no link */
+	coachHref: string | null;
 	onPlayClip: (clip: ScannerClip) => void;
 	getFrame: (event: ScanEvent) => GetFrame | undefined;
 }) {
@@ -223,6 +226,17 @@ export function MatchCard({
 					<span className={styles.footEnd}>
 						{upload ? (
 							<UploadStatusButton state={upload} className={styles.circle} />
+						) : null}
+						{coachHref ? (
+							<LinkButton
+								to={coachHref}
+								variant="minimal"
+								size="small"
+								shape="circle"
+								icon={<GraduationCap />}
+								className={styles.circle}
+								aria-label="Open in coach mode"
+							/>
 						) : null}
 						<SendouButton
 							variant="minimal"

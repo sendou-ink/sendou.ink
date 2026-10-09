@@ -18,6 +18,7 @@ import {
 import { SCANNER_PAGE } from "~/utils/urls";
 import type { ScanTelemetry } from "../core/detectors/telemetry";
 import { formatTime } from "../core/format";
+import { isHistoryOnly } from "../core/match-builder";
 import { scannerSearchParams } from "../scanner-search-params";
 import { deleteVodClips } from "../store/clips";
 import { deleteVod, loadVodEventFrame } from "../store/vods";
@@ -184,17 +185,19 @@ function VodSessionView({
 					? "Games appear here as their results screens are found."
 					: "No games were found in this file."
 			}
+			coachHref={(b) =>
+				running || isHistoryOnly(b) || b.match.startsAt === null
+					? null
+					: scannerSearchParams.href(SCANNER_PAGE, {
+							view: "coach",
+							name,
+							t: Math.floor(b.match.startsAt),
+						})
+			}
 			header={(info) => (
 				<SessionHeader
 					actions={
 						<>
-							<ExportMenu
-								built={info.built}
-								events={events}
-								source={{ label: name, originT: 0 }}
-								clipsByMatch={info.clipsByMatch}
-								fileBase={name.replace(/\.[^.]+$/, "")}
-							/>
 							{!running && built.length > 0 ? (
 								<LinkButton
 									to={scannerSearchParams.href(SCANNER_PAGE, {
@@ -202,7 +205,6 @@ function VodSessionView({
 										name,
 									})}
 									size="small"
-									variant="outlined"
 									icon={<GraduationCap />}
 								>
 									Coach mode
@@ -230,6 +232,13 @@ function VodSessionView({
 									</LogInPopover>
 								)
 							) : null}
+							<ExportMenu
+								built={info.built}
+								events={events}
+								source={{ label: name, originT: 0 }}
+								clipsByMatch={info.clipsByMatch}
+								fileBase={name.replace(/\.[^.]+$/, "")}
+							/>
 							{!running ? (
 								<FormWithConfirm
 									dialogHeading={`Delete the scan of "${name}"?`}
