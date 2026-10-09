@@ -95,7 +95,6 @@ const useBaseEvent = () => {
 	return eventToCopy ?? eventToEdit;
 };
 
-// xxx: polish styles and overall flow
 export default function CalendarNewEventPage() {
 	const { t } = useTranslation(["calendar", "common"]);
 	const baseEvent = useBaseEvent();

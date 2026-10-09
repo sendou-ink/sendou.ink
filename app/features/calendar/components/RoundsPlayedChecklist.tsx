@@ -5,8 +5,6 @@ import * as SkippedRounds from "~/features/tournament-bracket/core/SkippedRounds
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import styles from "./RoundsPlayedChecklist.module.css";
 
-// xxx: some common component if we want this style than handrolled input, could be just a standard dynamic SendouForm FormField?
-
 /**
  * The named rounds of an elimination bracket, unchecking one leaves it (and every round fed by it) unplayed.
  * Checking a round that is unplayed because of another one plays that one too.
