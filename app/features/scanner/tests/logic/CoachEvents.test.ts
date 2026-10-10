@@ -679,6 +679,33 @@ describe("CoachEvents.lives", () => {
 		expect(lives[1]!.summary!.duration).toBe(400 - 158);
 	});
 
+	test("the last life ends at the last HUD read, not the results screen", () => {
+		const lives = CoachEvents.lives(
+			match({
+				pov: POV,
+				endsAt: 440,
+				objective: objective("TC", sample(120, [100, 90], 1)),
+				playerStatus: { samples: [status(120), status(380)] },
+			}),
+			[150],
+		);
+
+		expect(lives[1]!.summary!.duration).toBe(380 - 158);
+	});
+
+	test("a respawn after the last HUD read starts no life", () => {
+		const lives = lifeStarts(
+			match({
+				pov: POV,
+				endsAt: 440,
+				playerStatus: { samples: [status(120), status(380)] },
+			}),
+			[378],
+		);
+
+		expect(lives).toEqual([GAME_START_T - 10]);
+	});
+
 	test("a kill on the death's second belongs to the life that ended", () => {
 		const lives = CoachEvents.lives(
 			match({ pov: POV, kills: [kill(120), kill(150), kill(152), kill(170)] }),

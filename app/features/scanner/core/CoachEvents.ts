@@ -410,8 +410,11 @@ export function coachedTeam(
  * The POV player's lives in the match, chronological: the first starts at the
  * game's start, then one at every respawn. A respawn is the first icon-strip
  * read showing the player back after reading them splatted, else
- * `RESPAWN_FALLBACK_S` after the death. `povDeaths` as in `ofMatch`; without a
- * POV team only the game's start, with no summary.
+ * `RESPAWN_FALLBACK_S` after the death. The last life ends at the last HUD read
+ * (counter or icon strip, both re-confirmed every few seconds), else at
+ * `match.endsAt` — that is the results screen, often well after "Game!".
+ * `povDeaths` as in `ofMatch`; without a POV team only the game's start, with
+ * no summary.
  */
 export function lives(
 	match: ScannerMatch,
@@ -422,18 +425,19 @@ export function lives(
 	if (!analysis) return [{ start: match.startsAt, summary: null }];
 
 	const deaths = analysis.povDeaths;
+	const gameEnd = lastHudReadT(analysis) ?? match.endsAt;
 	const starts = [
 		match.startsAt,
 		...deaths
 			.map((death) => respawnAfter(analysis, death))
-			.filter((t) => match.endsAt === null || t < match.endsAt),
+			.filter((t) => gameEnd === null || t <= gameEnd),
 	];
 	const povUses =
 		analysis.povSlot === null ? null : specialUses(analysis, analysis.povSlot);
 
 	return starts.map((start, index): CoachLife => {
 		const death = deaths[index];
-		const end = death ?? Math.max(start, match.endsAt ?? start);
+		const end = death ?? Math.max(start, gameEnd ?? start);
 		const aliveFrom =
 			index === 0 && analysis.gameStartT !== null
 				? Math.max(start, analysis.gameStartT)
@@ -879,6 +883,12 @@ function staggers(analysis: Analysis): Moment[] {
 		else merged.push(span);
 	}
 	return merged;
+}
+
+function lastHudReadT(analysis: Analysis): number | null {
+	const reads = [analysis.objective.at(-1)?.t, analysis.statuses.at(-1)?.t];
+	const defined = reads.filter((t) => t !== undefined);
+	return defined.length > 0 ? Math.max(...defined) : null;
 }
 
 function respawnAfter(analysis: Analysis, death: number): number {
