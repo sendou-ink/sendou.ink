@@ -83,7 +83,7 @@ Note: This is only useful if you have access to a production running on Render.c
 pnpm run download-prod-db
 ```
 
-Takes a `VACUUM INTO` snapshot of the live database (compacted, and consistent unlike a `cp` of a WAL database), streams it down gzipped, and archives it as `../backups/db-<timestamp>.sqlite3.gz`. Once the snapshot has been verified it replaces `db-copy.sqlite3` in every local sendou.ink checkout, deletes the stale `db-prod.sqlite3` files, and rebuilds `db-prod.sqlite3` in the checkout you ran it from.
+Takes a `VACUUM INTO` snapshot of the live database (compacted, and consistent unlike a `cp` of a WAL database), streams it down gzipped, and archives it as `../backups/db-<timestamp>.sqlite3.gz`. Once the snapshot has been verified it replaces `db-snapshot.sqlite3` in every local sendou.ink checkout, deletes the stale `db-sandbox.sqlite3` files, and rebuilds `db-sandbox.sqlite3` in the checkout you ran it from (`pnpm run sandbox:reset` does that rebuild on its own).
 
 Flags: `--dry-run` prints what would happen, `--yes` skips the confirmation, `--keep <n>` prunes all but the newest `n` archives.
 
@@ -98,9 +98,9 @@ Flags: `--dry-run` prints what would happen, `--yes` skips the confirmation, `--
 If SSH is unavailable, the same thing through the dashboard "Shell" tab:
 
 1. `cd /var/data`
-2. `sqlite3 -readonly db.sqlite3 "VACUUM INTO '/var/data/db-copy.sqlite3'"`
-3. `gzip db-copy.sqlite3`
-4. `wormhole send db-copy.sqlite3.gz`
+2. `sqlite3 -readonly db.sqlite3 "VACUUM INTO '/var/data/db-snapshot.sqlite3'"`
+3. `gzip db-snapshot.sqlite3`
+4. `wormhole send db-snapshot.sqlite3.gz`
 5. On the receiving computer use the command shown.
-6. `gunzip db-copy.sqlite3.gz`
-7. `rm db-copy.sqlite3.gz` on the server, it is sharing the disk with production
+6. `gunzip db-snapshot.sqlite3.gz` in the checkout root, then `pnpm run sandbox:reset`
+7. `rm db-snapshot.sqlite3.gz` on the server, it is sharing the disk with production

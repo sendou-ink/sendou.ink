@@ -14,13 +14,16 @@ const REPO_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PACKAGE_NAME = "sendou.ink";
 
 const REMOTE_DB_PATH = "/var/data/db.sqlite3";
-const REMOTE_SNAPSHOT_PATH = "/var/data/db-copy.sqlite3";
+const REMOTE_SNAPSHOT_PATH = "/var/data/db-snapshot.sqlite3";
 
 /** STRICT tables (3.37) set the floor, not VACUUM INTO (3.27). */
 const MINIMUM_SQLITE_VERSION = { major: 3, minor: 37 };
 /** Guards against a snapshot that is technically valid but obviously truncated. */
 const MINIMUM_USER_COUNT = 10_000;
 
+const SNAPSHOT_DB = "db-snapshot.sqlite3";
+const SANDBOX_DB = "db-sandbox.sqlite3";
+const LEGACY_DB_NAMES = ["db-prod.sqlite3", "db-copy.sqlite3"];
 const DB_FILE_SUFFIXES = ["", "-shm", "-wal"];
 
 const PROBE_SCRIPT = `
@@ -91,9 +94,11 @@ async function main() {
 
 	log("");
 	log(
-		"Every checkout listed above loses its db-prod.sqlite3 and db-copy.sqlite3.",
+		"Every checkout listed above loses its db-sandbox.sqlite3 and db-snapshot.sqlite3.",
 	);
-	log("Stop any `pnpm dev:prod` or benchmark holding one of them open first.");
+	log(
+		"Stop any `pnpm dev:sandbox` or benchmark holding one of them open first.",
+	);
 
 	if (!options.yes && !(await confirm("Continue?"))) {
 		log("Aborted.");
@@ -114,7 +119,7 @@ async function main() {
 		removeRemoteSnapshot(target);
 	}
 
-	const stagedPath = path.join(REPO_ROOT, "db-copy.sqlite3.new");
+	const stagedPath = path.join(REPO_ROOT, `${SNAPSHOT_DB}.new`);
 	try {
 		log("Decompressing...");
 		await decompress(archivePath, stagedPath);
@@ -130,13 +135,13 @@ async function main() {
 	distribute({ checkouts, stagedPath });
 
 	log("");
-	log("Rebuilding db-prod.sqlite3 in this checkout...");
-	const refresh = spawnSync("pnpm", ["run", "refresh-prod-db"], {
+	log(`Rebuilding ${SANDBOX_DB} in this checkout...`);
+	const reset = spawnSync("pnpm", ["run", "sandbox:reset"], {
 		cwd: REPO_ROOT,
 		stdio: "inherit",
 	});
-	if (refresh.status !== 0) {
-		throw new Error("pnpm run refresh-prod-db failed");
+	if (reset.status !== 0) {
+		throw new Error("pnpm run sandbox:reset failed");
 	}
 
 	if (typeof options.keep === "number") {
@@ -387,20 +392,20 @@ function distribute({
 	stagedPath: string;
 }) {
 	for (const checkout of checkouts) {
-		for (const name of ["db-prod.sqlite3", "db-copy.sqlite3"]) {
+		for (const name of [SANDBOX_DB, SNAPSHOT_DB, ...LEGACY_DB_NAMES]) {
 			for (const suffix of DB_FILE_SUFFIXES) {
 				fs.rmSync(path.join(checkout, `${name}${suffix}`), { force: true });
 			}
 		}
 	}
 
-	const copyPath = path.join(REPO_ROOT, "db-copy.sqlite3");
-	fs.renameSync(stagedPath, copyPath);
+	const snapshotPath = path.join(REPO_ROOT, SNAPSHOT_DB);
+	fs.renameSync(stagedPath, snapshotPath);
 
 	for (const checkout of checkouts) {
-		const destination = path.join(checkout, "db-copy.sqlite3");
-		if (destination !== copyPath) {
-			fs.copyFileSync(copyPath, destination);
+		const destination = path.join(checkout, SNAPSHOT_DB);
+		if (destination !== snapshotPath) {
+			fs.copyFileSync(snapshotPath, destination);
 		}
 		log(`Copied      ${destination}`);
 	}

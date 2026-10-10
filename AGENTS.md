@@ -76,7 +76,8 @@
 - `/app/db/tables.ts` contains all tables and columns available, see [database-schemas.md](./docs/dev/database-schemas.md) for how columns should be typed (booleans, timestamps, JSON, enums, SQLite migration quirks)
 - `db.sqlite3` is development database
 - `db-test.sqlite3` is the unit test database (blank sans migrations; gitignored and created/migrated automatically when unit tests run)
-- `db-prod.sqlite3` is a copy of the production environment db which can be freely experimented with
+- `db-sandbox.sqlite3` is a local, disposable copy of production data. Read, write, migrate, run servers against it or delete it freely — it is not connected to production in any way. `pnpm run sandbox:reset` restores it
+- `db-snapshot.sqlite3` is the pristine source `db-sandbox.sqlite3` is reset from, never modify it
 
 ## Unit testing
 

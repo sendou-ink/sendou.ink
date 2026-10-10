@@ -179,7 +179,7 @@ Only real, exploitable vulnerabilities in the new code. Do not flag generic best
 ```
 You are reviewing code changes for database query performance (SQLite via Kysely).
 
-IMPORTANT: run all analysis against `db-prod.sqlite3` — a safe-to-experiment copy of production (~2GB). Do NOT use the tiny dev `db.sqlite3` if `db-prod.sqlite3` exists; its query plans and table sizes are meaningless.
+IMPORTANT: run all analysis against `db-sandbox.sqlite3` — a local, disposable copy of production data (~2GB). Do NOT use the tiny dev `db.sqlite3` if `db-sandbox.sqlite3` exists; its query plans and table sizes are meaningless.
 
 1. **Identify new/changed DB queries** in the diff (`*Repository.server.ts`, Kysely). Read the full changed Repository files.
 
@@ -189,10 +189,10 @@ IMPORTANT: run all analysis against `db-prod.sqlite3` — a safe-to-experiment c
    const compiled = db.selectFrom(/* rebuild from Repository code */).compile();
    console.log(compiled.sql, compiled.parameters);
 
-   Run: `DB_PATH=db-prod.sqlite3 VITE_PROD_MODE=true pnpm vite-node scripts/tmp-review-compile.ts`. Substitute realistic parameter values.
+   Run: `DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true pnpm vite-node scripts/tmp-review-compile.ts`. Substitute realistic parameter values.
 
 3. **For each query**:
-   a. `sqlite3 db-prod.sqlite3 "EXPLAIN QUERY PLAN <compiled SQL with params substituted>"`
+   a. `sqlite3 db-sandbox.sqlite3 "EXPLAIN QUERY PLAN <compiled SQL with params substituted>"`
    b. Measure, don't guess: `SELECT COUNT(*)` for every table touched.
    c. Missing indexes: "SCAN <table>" vs "SEARCH ... USING INDEX". A SCAN on a large table in a hot path is a red flag. Inspect with `.indexes <table>` and `PRAGMA index_info(<index>)`.
    d. Call frequency: hot path (loader on every page view, frequent API) vs cold (admin action, rare routine)? Check the caller. Also check N+1 patterns — queries in loops that could be batched.
