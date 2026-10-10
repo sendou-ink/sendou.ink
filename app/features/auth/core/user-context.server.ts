@@ -24,18 +24,22 @@ export function getUserContext(): UserContext {
 	return context;
 }
 
+/** `staleSessionCookie` is set when the session points at a user that no longer exists (e.g. merged away by an account migration) and clears it. */
 export async function getUserFromRequest(
 	request: Request,
 	url: URL,
-): Promise<AuthenticatedUser | undefined> {
+): Promise<{
+	user: AuthenticatedUser | undefined;
+	staleSessionCookie?: string;
+}> {
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
 	);
 
-	const userId =
-		session.get(IMPERSONATED_SESSION_KEY) ?? session.get(SESSION_KEY);
+	const impersonatedUserId = session.get(IMPERSONATED_SESSION_KEY);
+	const userId = impersonatedUserId ?? session.get(SESSION_KEY);
 
-	if (!userId) return undefined;
+	if (!userId) return { user: undefined };
 
 	if (userIsBanned(userId)) {
 		const isExemptPath =
@@ -47,5 +51,19 @@ export async function getUserFromRequest(
 		}
 	}
 
-	return UserRepository.findLeanById(userId);
+	const user = await UserRepository.findLeanById(userId);
+	if (user) return { user };
+
+	if (impersonatedUserId) {
+		session.unset(IMPERSONATED_SESSION_KEY);
+		return {
+			user: undefined,
+			staleSessionCookie: await authSessionStorage.commitSession(session),
+		};
+	}
+
+	return {
+		user: undefined,
+		staleSessionCookie: await authSessionStorage.destroySession(session),
+	};
 }

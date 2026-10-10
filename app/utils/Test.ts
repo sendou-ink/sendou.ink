@@ -82,7 +82,7 @@ export function wrappedAction<T extends AnySchema>({
 			],
 		});
 
-		const userFromRequest = await getUserFromRequest(
+		const { user: userFromRequest } = await getUserFromRequest(
 			request,
 			new URL(request.url),
 		);
@@ -142,7 +142,7 @@ export function wrappedLoader<T>({
 			],
 		});
 
-		const userFromRequest = await getUserFromRequest(
+		const { user: userFromRequest } = await getUserFromRequest(
 			request,
 			new URL(request.url),
 		);

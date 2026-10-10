@@ -3,10 +3,11 @@ import { ServerConfig } from "~/config.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 
 const ONE_YEAR_IN_SECONDS = 31_536_000;
+export const AUTH_SESSION_COOKIE_NAME = "__session";
 
 export const authSessionStorage = createCookieSessionStorage({
 	cookie: {
-		name: "__session",
+		name: AUTH_SESSION_COOKIE_NAME,
 		sameSite: "lax",
 		// need to specify domain so that sub-domains can access it
 		domain:
