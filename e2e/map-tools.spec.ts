@@ -76,4 +76,47 @@ test.describe("Map Planner", () => {
 			String(stagesObj.MUSEUM_D_ALFONSINO),
 		);
 	});
+
+	test("restores a downloaded plan file when it is opened", async ({
+		page,
+	}) => {
+		const planner = new MapPlannerPage(page);
+		await planner.goto();
+
+		await planner.setBackground("Museum d'Alfonsino");
+		await planner.openWeaponCategory("Shooters");
+		await planner.dragWeaponToCanvas("Splattershot");
+		await expect(planner.locators.imageShapes).toHaveCount(2);
+
+		const download = await planner.downloadPlanFile();
+		expect(download.suggestedFilename()).toBe("plan.tldr");
+
+		await planner.dragWeaponToCanvas("Splattershot");
+		await expect(planner.locators.imageShapes).toHaveCount(3);
+
+		await planner.openPlanFile(await download.path());
+
+		await expect(planner.locators.imageShapes).toHaveCount(2);
+		await expect(planner.locators.openFileErrorToast).toHaveCount(0);
+	});
+
+	test("shows an error when the opened plan file is invalid", async ({
+		page,
+	}) => {
+		const planner = new MapPlannerPage(page);
+		await planner.goto();
+
+		await planner.setBackground("Museum d'Alfonsino");
+		await expect(planner.locators.imageShapes).toHaveCount(1);
+
+		await planner.openPlanFile({
+			name: "plan.tldr",
+			mimeType: "application/json",
+			buffer: Buffer.from("not a plan"),
+		});
+
+		// toasts render hidden in e2e runs
+		await expect(planner.locators.openFileErrorToast).toBeAttached();
+		await expect(planner.locators.imageShapes).toHaveCount(1);
+	});
 });

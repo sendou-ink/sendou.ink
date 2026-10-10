@@ -30,6 +30,7 @@ import type {
 	AbilityWithUnknown,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
+import { downloadBlob } from "~/utils/download";
 import {
 	abilityImageUrl,
 	navIconUrl,
@@ -51,7 +52,6 @@ import type {
 import { matchResult } from "../core/sessions";
 import { xBattleCards } from "../core/x-battle";
 import type { ScannerClip } from "../store/clips";
-import { downloadBlob } from "./download";
 import {
 	displayOrder,
 	gameTimelineProps,

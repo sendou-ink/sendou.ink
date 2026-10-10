@@ -14,12 +14,17 @@ import {
 	createShapeId,
 	DefaultStylePanel,
 	type Editor,
+	parseTldrawJsonFile,
 	type TLAssetId,
 	type TLComponents,
+	TLDRAW_FILE_EXTENSION,
 	type TLImageAsset,
 	type TLShapeId,
+	type TLShapeUtilConstructor,
 	type TLUiStylePanelProps,
+	type TLUnknownShape,
 	Tldraw,
+	type TldrawFile,
 	type TldrawOptions,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
@@ -28,6 +33,10 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	ChevronUp,
+	Download,
+	FileDown,
+	FolderOpen,
+	ImageDown,
 	LogOut,
 	Radius,
 	Square,
@@ -57,6 +66,7 @@ import {
 	useSearchParam,
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
+import { downloadBlob } from "~/utils/download";
 import { logger } from "~/utils/logger";
 import {
 	mainWeaponImageUrl,
@@ -68,9 +78,13 @@ import {
 	weaponCategoryUrl,
 } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../../../components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "../../../components/elements/Menu";
 import { Image } from "../../../components/Image";
 import * as PlanImport from "../core/PlanImport";
+import { PlannerImageShapeUtil } from "../core/PlannerImageShapeUtil";
 import {
+	OUTLINED_IMAGE_SRC_SUFFIX,
+	PLAN_FILE_NAME,
 	PLANNER_BACKGROUND_STYLES,
 	PLANNER_PERSISTENCE_KEY,
 	STAGE_WATER_LEVELS,
@@ -93,6 +107,12 @@ const GAME_UNITS_TO_PX: Record<"MINI" | "OVER", number> = {
 const TLDRAW_OPTIONS: Partial<TldrawOptions> = {
 	actionShortcutsLocation: "toolbar",
 };
+const TLDRAW_SHAPE_UTILS: TLShapeUtilConstructor<TLUnknownShape>[] = [
+	PlannerImageShapeUtil,
+];
+// tldraw's own serializer inlines images as base64, but ranges and outlines are read off the image urls
+const TLDRAW_FILE_FORMAT_VERSION = 1;
+const TLDRAW_FILE_MIME_TYPE = "application/vnd.tldraw+json";
 const MAIN_WEAPON_URL_PATTERN = /main-weapons-outlined\/(\d+)/;
 const SPECIAL_WEAPON_URL_PATTERN = /special-weapons\/(\d+)/;
 
@@ -266,7 +286,7 @@ export function Planner() {
 			if (!editor) return;
 
 			addImage(editor, {
-				src: imgOutlined ? `${src}?outline=red` : src,
+				src: imgOutlined ? `${src}${OUTLINED_IMAGE_SRC_SUFFIX}` : src,
 				size,
 				isLocked,
 				point,
@@ -380,6 +400,77 @@ export function Planner() {
 		setImportKey(null);
 	}, [editor, importKey, setImportKey, t]);
 
+	const handleDownloadImage = async () => {
+		if (!editor) return;
+
+		const shapeIds = [...editor.getCurrentPageShapeIds()];
+		if (shapeIds.length === 0) return;
+
+		const backgroundShape = findBackgroundShape(editor);
+
+		try {
+			const { blob } = await editor.toImage(shapeIds, {
+				format: "png",
+				background: true,
+				darkMode: false,
+				padding: 0,
+				bounds: backgroundShape
+					? editor.getShapePageBounds(backgroundShape)
+					: undefined,
+			});
+			downloadBlob(`${PLAN_FILE_NAME}.png`, blob);
+		} catch (error) {
+			logger.error("Failed to export plan as image", error);
+			toastQueue.add({
+				message: t("common:plans.file.imageError"),
+				variant: "error",
+			});
+		}
+	};
+
+	const handleDownloadFile = () => {
+		if (!editor) return;
+
+		const file: TldrawFile = {
+			tldrawFileFormatVersion: TLDRAW_FILE_FORMAT_VERSION,
+			schema: editor.store.schema.serialize(),
+			records: editor.store.allRecords(),
+		};
+
+		downloadBlob(
+			`${PLAN_FILE_NAME}${TLDRAW_FILE_EXTENSION}`,
+			new Blob([JSON.stringify(file)], { type: TLDRAW_FILE_MIME_TYPE }),
+		);
+	};
+
+	const handleOpenFile = async (file: File) => {
+		if (!editor) return;
+
+		const parsed = parseTldrawJsonFile({
+			json: await file.text(),
+			schema: editor.store.schema,
+		});
+		if (!parsed.ok) {
+			toastQueue.add({
+				message: t("common:plans.file.openError"),
+				variant: "error",
+			});
+			return;
+		}
+
+		editor.loadSnapshot(parsed.value.getStoreSnapshot());
+		editor.clearHistory();
+		// the file's range circles were drawn for the toggle state it was saved with
+		editor.run(
+			() => {
+				hideRanges(editor);
+				if (rangesVisible) showRanges(editor);
+			},
+			{ history: "ignore" },
+		);
+		editor.zoomToFit();
+	};
+
 	// removes all tldraw ui that isnt needed
 	const tldrawComponents: TLComponents = {
 		ActionsMenu: null,
@@ -412,7 +503,12 @@ export function Planner() {
 					topCollapsed && styles.topWrapperCollapsed,
 				)}
 			>
-				<StageBackgroundSelector onAddBackground={handleAddBackgroundImage} />
+				<StageBackgroundSelector
+					onAddBackground={handleAddBackgroundImage}
+					onDownloadImage={handleDownloadImage}
+					onDownloadFile={handleDownloadFile}
+					onOpenFile={handleOpenFile}
+				/>
 				<button
 					type="button"
 					className={styles.topToggle}
@@ -470,6 +566,7 @@ export function Planner() {
 					onMount={handleMount}
 					components={tldrawComponents}
 					options={TLDRAW_OPTIONS}
+					shapeUtils={TLDRAW_SHAPE_UTILS}
 				/>
 			</div>
 			<DragOverlay dropAnimation={null} modifiers={[snapCenterToCursor]}>
@@ -711,6 +808,9 @@ function WeaponImageSelector() {
 const LAST_STAGE_ID_WITH_IMAGES = 24;
 function StageBackgroundSelector({
 	onAddBackground,
+	onDownloadImage,
+	onDownloadFile,
+	onOpenFile,
 }: {
 	onAddBackground: (args: {
 		stageId: StageId;
@@ -718,6 +818,9 @@ function StageBackgroundSelector({
 		style: "MINI" | "OVER";
 		waterLevel: StageWaterLevel;
 	}) => void;
+	onDownloadImage: () => void;
+	onDownloadFile: () => void;
+	onOpenFile: (file: File) => void;
 }) {
 	const { t } = useTranslation(["game-misc", "common"]);
 	const [
@@ -803,8 +906,69 @@ function StageBackgroundSelector({
 			>
 				{t("common:actions.setBg")}
 			</SendouButton>
+			<PlanFileMenu
+				onDownloadImage={onDownloadImage}
+				onDownloadFile={onDownloadFile}
+				onOpenFile={onOpenFile}
+			/>
 			<LinkButton to="/" icon={<LogOut />} variant="outlined" shape="square" />
 		</div>
+	);
+}
+
+function PlanFileMenu({
+	onDownloadImage,
+	onDownloadFile,
+	onOpenFile,
+}: {
+	onDownloadImage: () => void;
+	onDownloadFile: () => void;
+	onOpenFile: (file: File) => void;
+}) {
+	const { t } = useTranslation(["common"]);
+	const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		// cleared so picking the same file again still fires a change
+		event.target.value = "";
+		if (file) onOpenFile(file);
+	};
+
+	return (
+		<>
+			<SendouMenu
+				placement="bottom end"
+				trigger={
+					<SendouButton
+						icon={<Download />}
+						variant="outlined"
+						shape="square"
+						aria-label={t("common:plans.file.menu")}
+					/>
+				}
+			>
+				<SendouMenuItem icon={<ImageDown />} onAction={onDownloadImage}>
+					{t("common:plans.file.downloadImage")}
+				</SendouMenuItem>
+				<SendouMenuItem icon={<FileDown />} onAction={onDownloadFile}>
+					{t("common:plans.file.downloadFile")}
+				</SendouMenuItem>
+				<SendouMenuItem
+					icon={<FolderOpen />}
+					onAction={() => fileInputRef.current?.click()}
+				>
+					{t("common:plans.file.open")}
+				</SendouMenuItem>
+			</SendouMenu>
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept={TLDRAW_FILE_EXTENSION}
+				onChange={handleFileChange}
+				hidden
+			/>
+		</>
 	);
 }
 
@@ -1042,7 +1206,7 @@ function addImportedPlan(editor: Editor, plan: PlanImport.ImportedPlan) {
 		for (const weaponId of weaponIds) {
 			const src = `${outlinedMainWeaponImageUrl(weaponId)}.avif`;
 			addImage(editor, {
-				src: isEnemy ? `${src}?outline=red` : src,
+				src: isEnemy ? `${src}${OUTLINED_IMAGE_SRC_SUFFIX}` : src,
 				size: [DROPPED_IMAGE_SIZE_PX, DROPPED_IMAGE_SIZE_PX],
 				isLocked: false,
 				point: [x, y],
@@ -1086,12 +1250,20 @@ function clearCanvas(editor: Editor) {
 }
 
 function canvasBackgroundStyle(editor: Editor): "MINI" | "OVER" {
-	for (const shape of editor.getCurrentPageShapes()) {
-		const style = shape.meta.backgroundStyle;
-		if (style === "MINI" || style === "OVER") return style;
-	}
+	const style = findBackgroundShape(editor)?.meta.backgroundStyle;
+	if (style === "MINI" || style === "OVER") return style;
 
 	return "MINI";
+}
+
+function findBackgroundShape(editor: Editor) {
+	return editor
+		.getCurrentPageShapes()
+		.find(
+			(shape) =>
+				shape.meta.backgroundStyle === "MINI" ||
+				shape.meta.backgroundStyle === "OVER",
+		);
 }
 
 function removeRangeCircles(editor: Editor) {

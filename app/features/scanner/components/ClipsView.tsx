@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { downloadBlob } from "~/utils/download";
 import { SCANNER_PAGE } from "~/utils/urls";
 import { formatPosition } from "../core/format";
 import { modeLabel, stageLabel } from "../core/labels";
@@ -23,7 +24,6 @@ import {
 import styles from "./ClipsView.module.css";
 import { ClipVideo } from "./ClipVideo";
 import { refreshClips, useClips } from "./clips-feed";
-import { downloadBlob } from "./download";
 import { useEventDateTimeFormatter } from "./format";
 import { SessionHeader } from "./SessionHeader";
 

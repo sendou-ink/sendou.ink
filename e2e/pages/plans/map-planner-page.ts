@@ -19,6 +19,10 @@ export class MapPlannerPage {
 			setBackgroundButton: page.getByRole("button", {
 				name: "Set background",
 			}),
+			planFileMenuButton: page.getByRole("button", {
+				name: "Download or open plan",
+			}),
+			openFileErrorToast: page.getByText("Couldn't open the plan file"),
 		};
 	}
 
@@ -84,6 +88,25 @@ export class MapPlannerPage {
 		await this.page.reload();
 		await expectIsHydrated(this.page);
 		await expect(this.locators.canvas).toBeVisible();
+	}
+
+	async downloadPlanFile() {
+		await this.locators.planFileMenuButton.click();
+		const downloadPromise = this.page.waitForEvent("download");
+		await this.page
+			.getByRole("menuitem", { name: "Download plan file" })
+			.click();
+		return downloadPromise;
+	}
+
+	async openPlanFile(
+		file: string | { name: string; mimeType: string; buffer: Buffer },
+	) {
+		await this.locators.planFileMenuButton.click();
+		const fileChooserPromise = this.page.waitForEvent("filechooser");
+		await this.page.getByRole("menuitem", { name: "Open plan file" }).click();
+		const fileChooser = await fileChooserPromise;
+		await fileChooser.setFiles(file);
 	}
 
 	async openWeaponCategory(categoryName: string) {

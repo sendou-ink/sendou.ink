@@ -18,6 +18,7 @@
  */
 import { useSyncExternalStore } from "react";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { downloadBlob } from "~/utils/download";
 import {
 	type MontageClipSource,
 	type MontageRenderProgress,
@@ -46,7 +47,6 @@ import {
 	type StoredMontage,
 } from "../store/montages";
 import { listVods, loadVod, loadVodEvents } from "../store/vods";
-import { downloadBlob } from "./download";
 import { describeError } from "./errors";
 import { scannedTeamComps } from "./montage-comps";
 import { cancelVodScan, startVodScan } from "./vod-scan";

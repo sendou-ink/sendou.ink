@@ -3,6 +3,7 @@
  * expected.json prefilled from the detector's output, so labeling is review-and-correct.
  */
 
+import { downloadBlob as download } from "~/utils/download";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
@@ -47,7 +48,6 @@ import {
 	type XSetResultData,
 } from "../core/detectors/x-rank/set-result";
 import { mainWeaponLabel, stageLabel, weaponLabel } from "../core/labels";
-import { downloadBlob as download } from "./download";
 
 /** Scoreboard data with the replay extras present when the event has them. */
 export type CardData = ScoreboardData &

@@ -1,4 +1,4 @@
-/** Browser-side file saving for exports (CSV, clips, fixtures). */
+/** Browser-side file saving for exports. */
 
 export function downloadBlob(name: string, blob: Blob): void {
 	const url = URL.createObjectURL(blob);

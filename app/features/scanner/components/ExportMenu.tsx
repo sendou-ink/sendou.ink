@@ -7,6 +7,7 @@
 import { Download, FileText, ListTree } from "lucide-react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { downloadCsv } from "~/utils/download";
 import { eventsToCsv } from "../core/csv/events";
 import {
 	type ExportClip,
@@ -15,7 +16,6 @@ import {
 } from "../core/csv/matches";
 import type { BuiltMatch } from "../core/match-builder";
 import { SESSION_COMPACT_AFTER_MS } from "../core/sessions";
-import { downloadCsv } from "./download";
 import type { ScanEvent } from "./session-data";
 
 const RAW_KEPT_DAYS = SESSION_COMPACT_AFTER_MS / (24 * 60 * 60 * 1000);

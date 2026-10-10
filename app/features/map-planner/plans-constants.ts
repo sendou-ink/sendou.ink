@@ -13,3 +13,8 @@ export const STAGE_WATER_LEVELS = [
 	"up",
 	"down",
 ] as const satisfies readonly StageWaterLevel[];
+
+/** Appended to an image's src to mark it outlined, picked up by a CSS rule on the canvas and by the image export. */
+export const OUTLINED_IMAGE_SRC_SUFFIX = "?outline=red";
+
+export const PLAN_FILE_NAME = "plan";
