@@ -790,7 +790,10 @@ function TournamentMapsFields() {
 			{mapPickingStyle === "AUTO" ? (
 				<TeamPickFields />
 			) : (
-				<FormField name="pool" options={{ quickFill: mapPoolQuickFill }} />
+				<FormField
+					name="pool"
+					options={{ quickFill: mapPoolQuickFill, sendouQFilter: true }}
+				/>
 			)}
 			{data.eventToEdit?.teamsHavePickedMaps ? (
 				<div className="text-warning text-sm">
@@ -975,7 +978,10 @@ function CustomTeamPickPoolField({
 
 	return (
 		<div className="stack lg">
-			<FormField name="pool" options={{ modes: pickedModes, quickFill }} />
+			<FormField
+				name="pool"
+				options={{ modes: pickedModes, quickFill, sendouQFilter: true }}
+			/>
 			<Alert variation={shortfalls.length === 0 ? "SUCCESS" : "WARNING"} tiny>
 				{shortfalls.length === 0
 					? t("calendar:forms.teamPick.poolOk")

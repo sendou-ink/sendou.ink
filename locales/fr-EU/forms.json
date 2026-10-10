@@ -494,5 +494,7 @@
 	"mapPool.quickFill.rankedModes": "",
 	"mapPool.pasteLink": "",
 	"mapPool.pasteLinkLabel": "",
-	"mapPool.clearConfirm": ""
+	"mapPool.clearConfirm": "",
+	"mapPool.sendouQLegalOnly": "",
+	"mapPool.sendouQLegalOnlyConfirm": ""
 }

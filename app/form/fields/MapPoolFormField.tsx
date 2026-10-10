@@ -23,6 +23,7 @@ export function MapPoolFormField({
 	disabled,
 	quickFill,
 	modes,
+	sendouQFilter,
 }: MapPoolFormFieldProps) {
 	const { t } = useTranslation(["forms"]);
 	const id = React.useId();
@@ -45,6 +46,7 @@ export function MapPoolFormField({
 				onChange={handleChange}
 				quickFill={quickFill}
 				modes={modes}
+				sendouQFilter={sendouQFilter}
 				disabled={disabled}
 				aria-label={label ? t(label as never) : undefined}
 			/>

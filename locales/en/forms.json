@@ -494,5 +494,7 @@
 	"mapPool.quickFill.rankedModes": "Every stage, ranked modes",
 	"mapPool.pasteLink": "Paste from a map pool link",
 	"mapPool.pasteLinkLabel": "Map pool link",
-	"mapPool.clearConfirm": "Clear every stage from the map pool?"
+	"mapPool.clearConfirm": "Clear every stage from the map pool?",
+	"mapPool.sendouQLegalOnly": "Show only SendouQ legal stages",
+	"mapPool.sendouQLegalOnlyConfirm": "Remove the stages that are not legal in SendouQ from the map pool?"
 }

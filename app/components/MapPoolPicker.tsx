@@ -2,6 +2,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
 	SendouTabList,
@@ -28,6 +29,7 @@ export function MapPoolPicker({
 	onChange,
 	quickFill,
 	modes = modesShort,
+	sendouQFilter,
 	disabled,
 	"aria-label": ariaLabel,
 }: {
@@ -37,11 +39,18 @@ export function MapPoolPicker({
 	quickFill?: MapPoolQuickFill[];
 	/** Limits the pool to these modes, default every mode. */
 	modes?: readonly ModeShort[];
+	/** Shows a toggle below the picker that limits the listed stages to the ones legal in SendouQ. */
+	sendouQFilter?: boolean;
 	disabled?: boolean;
 	"aria-label"?: string;
 }) {
-	const { t } = useTranslation(["game-misc"]);
+	const { t } = useTranslation(["game-misc", "forms", "common"]);
 	const id = React.useId();
+	const [isSendouQLegalOnly, setIsSendouQLegalOnly] = React.useState(false);
+	const [
+		isSendouQIllegalRemovalConfirmOpen,
+		setIsSendouQIllegalRemovalConfirmOpen,
+	] = React.useState(false);
 
 	const [selectedMode, setSelectedMode] = React.useState(() =>
 		initialMode(mapPool, modes),
@@ -67,6 +76,29 @@ export function MapPoolPicker({
 					: [...stages, stageId],
 			}),
 		);
+	};
+
+	const sendouQIllegalPairs = mapPool.stageModePairs.filter(
+		(pair) => !SENDOUQ_MAP_POOL.has(pair),
+	);
+
+	const enableSendouQLegalOnly = () => {
+		setIsSendouQLegalOnly(true);
+		handleChange(
+			new MapPool(
+				mapPool.stageModePairs.filter((pair) => SENDOUQ_MAP_POOL.has(pair)),
+			),
+		);
+	};
+
+	const handleSendouQLegalOnlyChange = (isLegalOnly: boolean) => {
+		if (!isLegalOnly) {
+			setIsSendouQLegalOnly(false);
+		} else if (sendouQIllegalPairs.length > 0) {
+			setIsSendouQIllegalRemovalConfirmOpen(true);
+		} else {
+			enableSendouQLegalOnly();
+		}
 	};
 
 	const tabKey = (mode: ModeShort) => `${id}-${mode}`;
@@ -114,29 +146,60 @@ export function MapPoolPicker({
 				{modes.map((mode) => (
 					<SendouTabPanel key={mode} id={tabKey(mode)}>
 						<div className={styles.stages}>
-							{stageIds.map((stageId) => (
-								<label
-									key={stageId}
-									className={styles.stage}
-									style={
-										{
-											"--stage-banner": `url(${stageBannerImageUrl(stageId)})`,
-										} as React.CSSProperties
-									}
-								>
-									<input
-										type="checkbox"
-										checked={mapPool.has({ stageId, mode })}
-										onChange={() => toggleStage(mode, stageId)}
-										disabled={disabled}
-									/>
-									{t(`game-misc:STAGE_${stageId}`)}
-								</label>
-							))}
+							{stageIds
+								.filter(
+									(stageId) =>
+										!isSendouQLegalOnly ||
+										SENDOUQ_MAP_POOL.has({ stageId, mode }),
+								)
+								.map((stageId) => (
+									<label
+										key={stageId}
+										className={styles.stage}
+										style={
+											{
+												"--stage-banner": `url(${stageBannerImageUrl(stageId)})`,
+											} as React.CSSProperties
+										}
+									>
+										<input
+											type="checkbox"
+											checked={mapPool.has({ stageId, mode })}
+											onChange={() => toggleStage(mode, stageId)}
+											disabled={disabled}
+										/>
+										{t(`game-misc:STAGE_${stageId}`)}
+									</label>
+								))}
 						</div>
 					</SendouTabPanel>
 				))}
 			</SendouTabs>
+			{sendouQFilter ? (
+				<>
+					<SendouSwitch
+						size="small"
+						isSelected={isSendouQLegalOnly}
+						onChange={handleSendouQLegalOnlyChange}
+						isDisabled={disabled}
+					>
+						{t("forms:mapPool.sendouQLegalOnly")}
+					</SendouSwitch>
+					<FormWithConfirm
+						isOpen={isSendouQIllegalRemovalConfirmOpen}
+						onOpenChange={setIsSendouQIllegalRemovalConfirmOpen}
+						dialogHeading={t("forms:mapPool.sendouQLegalOnlyConfirm")}
+						description={sendouQIllegalPairs
+							.map(
+								(pair) =>
+									`${t(`game-misc:MODE_SHORT_${pair.mode}`)} ${t(`game-misc:STAGE_${pair.stageId}`)}`,
+							)
+							.join(", ")}
+						submitButtonText={t("common:actions.remove")}
+						onConfirm={enableSendouQLegalOnly}
+					/>
+				</>
+			) : null}
 		</div>
 	);
 }

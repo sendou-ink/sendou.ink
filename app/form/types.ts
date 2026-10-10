@@ -357,6 +357,8 @@ export type MapPoolFieldOptions = {
 	quickFill?: MapPoolQuickFill[];
 	/** Limits the pool to these modes, default every mode. */
 	modes?: readonly ModeShort[];
+	/** Shows a toggle that limits the listed stages to the ones legal in SendouQ. */
+	sendouQFilter?: boolean;
 };
 
 /** `options` prop config of the `user-search` field. `onUserSelected` exposes the resolved user; the stored value is only the id. */
