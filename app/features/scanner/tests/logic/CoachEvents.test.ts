@@ -598,6 +598,70 @@ describe("CoachEvents.ofMatch", () => {
 		expect(ofType(events, "STAGGER_20")).toEqual([{ start: 225, end: 252 }]);
 	});
 
+	test("a team wipe runs from the first of its splats to the read showing all four splatted, per side", () => {
+		const allOf = (team: 0 | 1): [0 | 1, number][] =>
+			[0, 1, 2, 3].map((slot) => [team, slot]);
+		const events = CoachEvents.ofMatch(
+			match({
+				pov: { team: 0, index: 0 },
+				playerStatus: {
+					samples: [
+						status(150, { dead: [[1, 0]] }),
+						status(153, {
+							dead: [
+								[1, 0],
+								[1, 1],
+							],
+						}),
+						status(156, { dead: allOf(1) }),
+						status(160, { dead: allOf(1) }),
+						status(165),
+						status(200, {
+							dead: [
+								[0, 0],
+								[0, 1],
+								[0, 2],
+							],
+						}),
+						status(210),
+						status(230, { dead: [[0, 0]] }),
+						status(234, { dead: allOf(0) }),
+						status(240),
+					],
+				},
+			}),
+			[],
+		);
+
+		expect(ofType(events, "TEAM_WIPE_ENEMY")).toEqual([
+			{ start: 145, end: 161 },
+		]);
+		expect(ofType(events, "TEAM_WIPE_OURS")).toEqual([
+			{ start: 225, end: 239 },
+		]);
+	});
+
+	test("a wipe read past an unobserved gap counts from the read after it", () => {
+		const events = CoachEvents.ofMatch(
+			match({
+				playerStatus: {
+					samples: [
+						status(150, { dead: [[1, 0]] }),
+						status(170, {
+							dead: [0, 1, 2, 3].map((slot) => [1, slot]),
+						}),
+						status(180),
+					],
+				},
+			}),
+			[],
+		);
+
+		expect(ofType(events, "TEAM_WIPE_ENEMY")).toEqual([
+			{ start: 165, end: 175 },
+		]);
+	});
+
 	test("no death streak without a kill feed read", () => {
 		const events = CoachEvents.ofMatch(
 			match({ pov: { team: 0, index: 0 }, kills: null }),

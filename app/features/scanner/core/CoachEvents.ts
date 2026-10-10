@@ -205,6 +205,20 @@ export const DEFINITIONS = [
 		variant: "30s+",
 		rule: { kind: "stagger", minSeconds: 30 },
 	},
+	{
+		type: "TEAM_WIPE_OURS",
+		label: "Our team wiped",
+		category: "Team wipe",
+		variant: "Our team",
+		rule: { kind: "wipe", side: "pov" },
+	},
+	{
+		type: "TEAM_WIPE_ENEMY",
+		label: "Enemy team wiped",
+		category: "Team wipe",
+		variant: "Enemy",
+		rule: { kind: "wipe", side: "enemy" },
+	},
 ] as const satisfies readonly CoachEventDefinition[];
 
 export type CoachEventType = (typeof DEFINITIONS)[number]["type"];
@@ -233,6 +247,8 @@ const SPECIAL_STACK_MAX_GAP_S = 5;
 const SPECIAL_STACK_TAIL_S = 5;
 /** the POV team at least even with the enemy in players alive this long ends a stagger */
 const STAGGER_REGROUP_S = 5;
+/** footage kept after a wipe, to see what the other team does with it */
+const WIPE_TAIL_S = 5;
 /** Clam Blitz's opening is decided by the splats in its first seconds */
 const CB_OPENING_S = 45;
 /** the opening needs footage from at most this far into the game */
@@ -280,7 +296,9 @@ type CoachRule =
 	/** at least `minKills` POV player kills with no POV death between them */
 	| { kind: "killStreak"; minKills: number }
 	/** the POV team down players alive against the enemy for at least `minSeconds`, regroups shorter than `STAGGER_REGROUP_S` included */
-	| { kind: "stagger"; minSeconds: number };
+	| { kind: "stagger"; minSeconds: number }
+	/** every player of the side splatted at once, from the first of their splats */
+	| { kind: "wipe"; side: Side };
 
 interface CoachEventDefinition {
 	type: string;
@@ -543,6 +561,8 @@ function detectMoments(rule: CoachRule, analysis: Analysis): Moment[] {
 			return killStreakMoments(rule.minKills, analysis);
 		case "stagger":
 			return staggerMoments(rule.minSeconds, analysis);
+		case "wipe":
+			return wipeMoments(rule.side, analysis);
 	}
 }
 
@@ -563,6 +583,7 @@ function tierLadder(rule: CoachRule) {
 		case "opening":
 			return `${rule.kind}:${rule.outcome}`;
 		case "push":
+		case "wipe":
 			return `${rule.kind}:${rule.side}`;
 		default:
 			return rule.kind;
@@ -883,6 +904,39 @@ function staggers(analysis: Analysis): Moment[] {
 		else merged.push(span);
 	}
 	return merged;
+}
+
+/**
+ * From the first splat of the side's wipe (less a buffer) to the read showing
+ * all four splatted, plus `WIPE_TAIL_S`. A splat already showing past an
+ * unobserved gap counts from the read after it.
+ */
+function wipeMoments(side: Side, analysis: Analysis): Moment[] {
+	const team = side === "pov" ? analysis.povTeam : analysis.enemyTeam;
+	const { statuses } = analysis;
+	const deadSince: (number | null)[] = [null, null, null, null];
+	const moments: Moment[] = [];
+	let wasWiped = false;
+	for (const [index, sample] of statuses.entries()) {
+		const previous = statuses[index - 1];
+		const isAfterGap = !previous || sample.t - previous.t > MAX_SAMPLE_GAP_S;
+		for (const slot of [0, 1, 2, 3]) {
+			if (!sample.dead[team][slot]) deadSince[slot] = null;
+			else if (deadSince[slot] === null || isAfterGap) {
+				deadSince[slot] = sample.t;
+			}
+		}
+		const splattedAts = deadSince.filter((t) => t !== null);
+		const isWiped = splattedAts.length === deadSince.length;
+		if (isWiped && (!wasWiped || isAfterGap)) {
+			moments.push({
+				start: Math.min(...splattedAts) - LEAD_BUFFER_S,
+				end: sample.t + WIPE_TAIL_S,
+			});
+		}
+		wasWiped = isWiped;
+	}
+	return moments;
 }
 
 function lastHudReadT(analysis: Analysis): number | null {
