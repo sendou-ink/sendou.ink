@@ -1,7 +1,6 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "narrow-left",
 		"cast": null,
 		"time": 219,
 		"special": [
@@ -14,7 +13,6 @@
 		]
 	},
 	"options": {
-		"skipFields": ["special.1.3"],
-		"notes": "Sendou POV, Crableg Capital SZ Anarchy Series at 3:39 (2026-10-07 VoD, t=1003). Narrow-left geometry (the leading purple side drawn wide). Left (yellow) slots 0 and 2 splatted, right slot 1 splatted, right slot 3 holds special (lavender wash). Right slot 0 is an alive Order Shot Replica: its big cream render covers the shoulder probe and about half the body box, so the body read pale 0.44-0.52, tinted 0.48-0.57 and glowed 0.38-0.54 at ink 0.36-0.44 across the game, the same numbers as an inky wash, and the slot charted special-ready for nearly the whole game. Its tinted pixels are cream, not a pale purple: 0.23-0.34 of them sit within 60° of the team's hue, against >=0.62 on attested washes that still hold ink. special.1.3 is skipped: that wash sits over a blue sky that reads as body ink (0.56), so it is still missed."
+		"notes": "Sendou POV, Crableg Capital SZ Anarchy Series at 3:39 (2026-10-07 VoD, t=1003). Narrow-left geometry (the leading purple side drawn wide). Left (yellow) slots 0 and 2 splatted, right slot 1 splatted, right slot 3 holds special (lavender wash). Right slot 0 is an alive Order Shot Replica: under the old body/shoulder probes its big cream render read like an inky wash and the slot charted special-ready for nearly the whole game. The fitted strip reads the kite apex, which the render does not cover. special.1.3 was skipped under the old probes (its wash sits over a blue sky that read as body ink); the apex reads it pale (2026-10-10)."
 	}
 }

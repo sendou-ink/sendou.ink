@@ -338,9 +338,9 @@ async function analyzePrepared(
 					? Promise.all([
 							image?.catch(() => undefined),
 							minimapSnapshot?.catch(() => undefined),
-						]).then(([frame, snapshot]) => ({
+						]).then(([encodedFrame, snapshot]) => ({
 							...result,
-							frame,
+							frame: encodedFrame,
 							minimapSnapshot: snapshot,
 						}))
 					: result,
