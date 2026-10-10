@@ -72,7 +72,7 @@
 		"@react-router/serve": "8.1.0",
 		"@techstark/opencv-js": "5.0.0-release.1",
 		"@tldraw/tldraw": "3.12.1",
-		"@zumer/snapdom": "2.24.18",
+		"@zumer/snapdom": "3.2.0",
 		"clsx": "2.1.1",
 		"compressorjs": "1.4.0",
 		"date-fns": "4.4.0",
