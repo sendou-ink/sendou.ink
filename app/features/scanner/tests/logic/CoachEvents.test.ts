@@ -862,3 +862,53 @@ describe("CoachEvents.coachedTeam", () => {
 		);
 	});
 });
+
+describe("CoachEvents.highestTiers", () => {
+	const event = (
+		type: CoachEvents.CoachEventType,
+		start: number,
+		end: number,
+	): CoachEvents.CoachEvent => ({ type, start, end, time: null });
+
+	test("a moment reaching several tiers is left once, under the highest", () => {
+		const events = [
+			event("STAGGER_15", 145, 170),
+			event("STAGGER_20", 145, 170),
+			event("STAGGER_15", 235, 270),
+			event("STAGGER_20", 235, 270),
+			event("STAGGER_25", 235, 270),
+			event("PUSH_OFFENSE", 100, 130),
+			event("PUSH_OFFENSE_GAME_WINNING", 100, 130),
+			event("HOLD", 40, 60),
+			event("BEST_HOLD", 40, 60),
+		];
+
+		expect(CoachEvents.highestTiers(events)).toEqual([
+			event("STAGGER_20", 145, 170),
+			event("STAGGER_25", 235, 270),
+			event("PUSH_OFFENSE_GAME_WINNING", 100, 130),
+			event("BEST_HOLD", 40, 60),
+		]);
+	});
+
+	test("keeps lower tiers at other moments and other rules' events over the same moment", () => {
+		const events = [
+			event("KILL_STREAK_2", 10, 20),
+			event("KILL_STREAK_2", 50, 70),
+			event("KILL_STREAK_5", 50, 70),
+			event("PUSH_OFFENSE", 100, 130),
+			event("PUSH_DEFENSE_GAME_WINNING", 120, 150),
+			event("RETAKE", 200, 220),
+			event("HOLD", 205, 220),
+		];
+
+		expect(CoachEvents.highestTiers(events)).toEqual([
+			event("KILL_STREAK_2", 10, 20),
+			event("KILL_STREAK_5", 50, 70),
+			event("PUSH_OFFENSE", 100, 130),
+			event("PUSH_DEFENSE_GAME_WINNING", 120, 150),
+			event("RETAKE", 200, 220),
+			event("HOLD", 205, 220),
+		]);
+	});
+});

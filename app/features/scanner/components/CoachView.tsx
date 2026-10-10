@@ -2,7 +2,7 @@
  * Coach mode (`view=coach&name=`): a scanned file's games in a strip above a
  * player of the file itself, with their coach events (core/CoachEvents.ts)
  * filterable by type beside it — picking a game or an event jumps the video to
- * its start (a category picked first, special uses by default, then a type within it). Games the filters (core/CoachFilters.ts) hide drop their events,
+ * its start (a category picked first, special uses by default, then a type within it, All listing a moment once under its highest tier). Games the filters (core/CoachFilters.ts) hide drop their events,
  * and while any is set playback keeps to the games shown, jumping past the
  * hidden ones and the footage between games. A bar under the player
  * (CoachControls) steps between the games, lives and events shown, with the
@@ -188,19 +188,29 @@ function CoachSession({
 	const hasEntries = games.some((game) =>
 		game.events.some((side) => side.length > 0),
 	);
-	const entries = shownGames.flatMap((game) =>
-		game.events[teamOf(game)].map((event): CoachEntry => ({ ...event, game })),
+	const entriesOf = (
+		eventsOf: (game: CoachSessionGame) => CoachEvents.CoachEvent[],
+	) =>
+		shownGames.flatMap((game) =>
+			eventsOf(game).map((event): CoachEntry => ({ ...event, game })),
+		);
+	const entries = entriesOf((game) => game.events[teamOf(game)]);
+	const momentEntries = entriesOf((game) =>
+		CoachEvents.highestTiers(game.events[teamOf(game)]),
 	);
 	const counts = new Map<CoachEvents.CoachEventType, number>();
 	for (const entry of entries) {
 		counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1);
 	}
-	const categoryEntries = entries.filter(
-		(entry) => CoachEvents.category(entry.type) === category,
+	const categoryCounts = R.countBy(momentEntries, (entry) =>
+		CoachEvents.category(entry.type),
 	);
-	const shown = categoryEntries.filter(
-		(entry) => type === ALL || entry.type === type,
-	);
+	const shown =
+		type === ALL
+			? momentEntries.filter(
+					(entry) => CoachEvents.category(entry.type) === category,
+				)
+			: entries.filter((entry) => entry.type === type);
 	const currentGame = gameAt(games, currentTime);
 	const minimap = currentGame
 		? minimaps.findLast(
@@ -456,7 +466,7 @@ function CoachSession({
 					) : null}
 					<CoachEventFilter
 						counts={counts}
-						categoryTotal={categoryEntries.length}
+						categoryCounts={categoryCounts}
 						category={category}
 						pinnedCategory={initialCategory}
 						type={type}
@@ -562,7 +572,7 @@ function CoachCastSide({
 /** The events shown: a category in the select, then a type of it as chips when it has more than one. */
 function CoachEventFilter({
 	counts,
-	categoryTotal,
+	categoryCounts,
 	category,
 	pinnedCategory,
 	type,
@@ -570,7 +580,8 @@ function CoachEventFilter({
 	onTypeChange,
 }: {
 	counts: Map<CoachEvents.CoachEventType, number>;
-	categoryTotal: number;
+	/** a moment reaching several tiers counts once */
+	categoryCounts: Partial<Record<CoachEvents.CoachEventCategory, number>>;
 	category: CoachEvents.CoachEventCategory;
 	/** listed even without events */
 	pinnedCategory: CoachEvents.CoachEventCategory;
@@ -579,12 +590,7 @@ function CoachEventFilter({
 	onTypeChange: (type: CoachEvents.CoachEventType | typeof ALL) => void;
 }) {
 	const countOf = (candidate: CoachEvents.CoachEventCategory) =>
-		R.sumBy(
-			CoachEvents.DEFINITIONS.filter(
-				(definition) => definition.category === candidate,
-			),
-			(definition) => counts.get(definition.type) ?? 0,
-		);
+		categoryCounts[candidate] ?? 0;
 	const categoryItems = CATEGORIES.filter(
 		(candidate) =>
 			candidate === category ||
@@ -627,7 +633,7 @@ function CoachEventFilter({
 						checked={type === ALL}
 						onChange={() => onTypeChange(ALL)}
 					>
-						All ({categoryTotal})
+						All ({countOf(category)})
 					</SendouChipRadio>
 					{variants.map((definition) => (
 						<SendouChipRadio

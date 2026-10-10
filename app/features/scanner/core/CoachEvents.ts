@@ -7,7 +7,9 @@
  * hop between players. Config driven: `DEFINITIONS`
  * names each event type and the rule it is detected by; the interpreter below
  * analyzes the match once and runs every definition whose modes apply. A new
- * type is a new row, a new kind of moment a new rule kind.
+ * type is a new row, a new kind of moment a new rule kind. Definitions of one
+ * rule differing only in how much it takes are its tiers, later ones stricter
+ * (STAGGER_20 over STAGGER_15): a moment shows under every tier it reaches.
  *
  * Every event is a window into the footage (`start`..`end`, seconds into the
  * video/stream) cut to show the lead-up: an objective taken counts from the
@@ -338,6 +340,23 @@ export function ofMatch(
 		.sort((a, b) => a.start - b.start);
 }
 
+/**
+ * The events less those a stricter tier of the same rule also covers, so each
+ * moment is left once, under the highest tier it reached (a 22s stagger as
+ * STAGGER_20, not also STAGGER_15). `events` of one match.
+ */
+export function highestTiers(events: readonly CoachEvent[]): CoachEvent[] {
+	return events.filter(
+		(event) =>
+			!events.some(
+				(other) =>
+					isStricterTier(other.type, event.type) &&
+					other.start <= event.end &&
+					event.start <= other.end,
+			),
+	);
+}
+
 /** The definition's display label. */
 export function label(type: CoachEventType): string {
 	return DEFINITIONS.find((definition) => definition.type === type)!.label;
@@ -520,6 +539,29 @@ function detectMoments(rule: CoachRule, analysis: Analysis): Moment[] {
 			return killStreakMoments(rule.minKills, analysis);
 		case "stagger":
 			return staggerMoments(rule.minSeconds, analysis);
+	}
+}
+
+function isStricterTier(type: CoachEventType, than: CoachEventType) {
+	const index = DEFINITIONS.findIndex((definition) => definition.type === type);
+	const thanIndex = DEFINITIONS.findIndex(
+		(definition) => definition.type === than,
+	);
+	return (
+		index > thanIndex &&
+		tierLadder(DEFINITIONS[index]!.rule) ===
+			tierLadder(DEFINITIONS[thanIndex]!.rule)
+	);
+}
+
+function tierLadder(rule: CoachRule) {
+	switch (rule.kind) {
+		case "opening":
+			return `${rule.kind}:${rule.outcome}`;
+		case "push":
+			return `${rule.kind}:${rule.side}`;
+		default:
+			return rule.kind;
 	}
 }
 
