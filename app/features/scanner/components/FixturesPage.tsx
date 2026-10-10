@@ -130,6 +130,7 @@ function FixtureCard(props: { fixture: FixtureListItem; autoExpand: boolean }) {
 	const url = frameUrl(fixture);
 	const notes = fixture.expected.options?.notes;
 	const skipFields = fixture.expected.options?.skipFields;
+	const misreadFields = fixture.expected.options?.misreadFields;
 
 	return (
 		<article className={styles.card}>
@@ -167,6 +168,11 @@ function FixtureCard(props: { fixture: FixtureListItem; autoExpand: boolean }) {
 						{skipFields && skipFields.length > 0 ? (
 							<p className={styles.skips}>
 								skipped fields: {skipFields.join(", ")}
+							</p>
+						) : null}
+						{misreadFields && misreadFields.length > 0 ? (
+							<p className={styles.skips}>
+								known misreads: {misreadFields.join(", ")}
 							</p>
 						) : null}
 						<ExpectedDetail fixture={fixture} url={url} />

@@ -19,8 +19,7 @@ import {
 	slotRowPermutation,
 } from "../core/slot-row-assignment";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../node/fixtures";
@@ -56,10 +55,11 @@ for (const fixture of fixtures) {
 				const truth = expected.weapons?.[side]?.[slot];
 				await t.test(
 					`slot[${side}][${slot}]`,
-					{
-						skip:
-							truth === undefined || skip(fixture, `weapons.${side}.${slot}`),
-					},
+					fieldTestOptions(
+						fixture,
+						`weapons.${side}.${slot}`,
+						truth !== undefined,
+					),
 					() => {
 						const candidates = event.data.slots[side][slot];
 						if (truth === null) {
@@ -110,7 +110,3 @@ test("aggregated votes assign every slot to its scoreboard row", () => {
 	assert.deepEqual(slotRowPermutation(evidence[0]!), [0, 2, 1, 3]);
 	assert.deepEqual(slotRowPermutation(evidence[1]!), [3, 0, 1, 2]);
 });
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
-}

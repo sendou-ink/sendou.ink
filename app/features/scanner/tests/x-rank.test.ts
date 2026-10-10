@@ -16,7 +16,7 @@ import { createXSetResultDetector } from "../core/detectors/x-rank/set-result";
 import {
 	FIXTURES_DIR,
 	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../node/fixtures";
@@ -96,11 +96,7 @@ for (const { dir, event: eventType, detector, fields } of CARDS) {
 			for (const field of fields) {
 				await t.test(
 					field,
-					{
-						skip:
-							expected[field] === undefined ||
-							(isFieldSkipped(fixture, field) ? "skipFields" : false),
-					},
+					fieldTestOptions(fixture, field, expected[field] !== undefined),
 					() => {
 						assert.deepEqual(
 							data[field],

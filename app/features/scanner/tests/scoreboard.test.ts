@@ -12,8 +12,7 @@ import {
 	type ScoreboardRowDebug,
 } from "../core/detectors/scoreboard/index";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	loadScoreboardLookalikes,
 	runDetectorOnFixture,
@@ -48,20 +47,24 @@ for (const fixture of fixtures) {
 		const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 		const expected = fixture.expected.data ?? {};
 
-		await t.test("matchScores", { skip: skip(fixture, "matchScores") }, () => {
-			const dbg = event.debug?.matchScore as
-				| { left?: { reading?: string }; right?: { reading?: string } }
-				| undefined;
-			assert.deepEqual(
-				event.data.matchScores,
-				expected.matchScores,
-				`matchScores mismatch (readings: "${dbg?.left?.reading}" / "${dbg?.right?.reading}")`,
-			);
-		});
+		await t.test(
+			"matchScores",
+			fieldTestOptions(fixture, "matchScores"),
+			() => {
+				const dbg = event.debug?.matchScore as
+					| { left?: { reading?: string }; right?: { reading?: string } }
+					| undefined;
+				assert.deepEqual(
+					event.data.matchScores,
+					expected.matchScores,
+					`matchScores mismatch (readings: "${dbg?.left?.reading}" / "${dbg?.right?.reading}")`,
+				);
+			},
+		);
 
 		await t.test(
 			"header",
-			{ skip: expected.mode === undefined || skip(fixture, "header") },
+			fieldTestOptions(fixture, "header", expected.mode !== undefined),
 			() => {
 				const dbg = event.debug?.header as
 					| { lobbyReading?: string; lineReading?: string }
@@ -84,7 +87,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"povIndex",
-			{ skip: expected.povIndex === undefined || skip(fixture, "povIndex") },
+			fieldTestOptions(fixture, "povIndex", expected.povIndex !== undefined),
 			() => {
 				const fractions = rows.map((r) => r.povFraction.toFixed(3)).join(",");
 				assert.equal(
@@ -103,11 +106,11 @@ for (const fixture of fixtures) {
 
 			await t.test(
 				`row ${i} weapon`,
-				{
-					skip:
-						want.weaponId === undefined ||
-						skip(fixture, `players.${i}.weaponId`),
-				},
+				fieldTestOptions(
+					fixture,
+					`players.${i}.weaponId`,
+					want.weaponId !== undefined,
+				),
 				() => {
 					const top = dbg?.weapon?.top
 						.map((c) => `${c.id}:${c.score.toFixed(3)}`)
@@ -122,7 +125,7 @@ for (const fixture of fixtures) {
 
 			await t.test(
 				`row ${i} name`,
-				{ skip: want.name === undefined || skip(fixture, `players.${i}.name`) },
+				fieldTestOptions(fixture, `players.${i}.name`, want.name !== undefined),
 				() => {
 					assert.equal(
 						got.name,
@@ -134,9 +137,11 @@ for (const fixture of fixtures) {
 
 			await t.test(
 				`row ${i} paint`,
-				{
-					skip: want.paint === undefined || skip(fixture, `players.${i}.paint`),
-				},
+				fieldTestOptions(
+					fixture,
+					`players.${i}.paint`,
+					want.paint !== undefined,
+				),
 				() => {
 					assert.equal(
 						got.paint,
@@ -148,7 +153,7 @@ for (const fixture of fixtures) {
 
 			await t.test(
 				`row ${i} stats`,
-				{ skip: want.ka === undefined || skip(fixture, `players.${i}.stats`) },
+				fieldTestOptions(fixture, `players.${i}.stats`, want.ka !== undefined),
 				() => {
 					const scores = dbg?.statScores.map((s) => s.toFixed(3)).join(",");
 					assert.deepEqual(
@@ -185,8 +190,4 @@ for (const fixture of loadFixtures("negative")) {
 			`scoreboard gate fired (score=${gate.score.toFixed(3)})`,
 		);
 	});
-}
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
 }
