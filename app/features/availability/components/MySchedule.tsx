@@ -222,10 +222,13 @@ function useSavedToast(fetcher: FetcherWithComponents<unknown>) {
 			fetcher.state === "idle" &&
 			fetcher.data === null
 		) {
-			toastQueue.add({
-				message: t("schedule:editor.saved"),
-				variant: "success",
-			});
+			toastQueue.add(
+				{
+					message: t("schedule:editor.saved"),
+					variant: "success",
+				},
+				{ timeout: 5000 },
+			);
 		}
 		previousStateRef.current = fetcher.state;
 	}, [fetcher.state, fetcher.data, t]);
