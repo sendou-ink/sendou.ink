@@ -38,6 +38,7 @@ export class TournamentRegisterPage {
 				"You were added to the team by the organizer. Contact the TO to leave the team.",
 			),
 			addPlayerButton: page.getByTestId("add-player-button"),
+			saveTeamButton: page.getByTestId("save-team-button"),
 			copyInviteLinkButton: page.getByRole("button", {
 				name: "Copy to clipboard",
 			}),

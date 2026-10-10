@@ -1,4 +1,4 @@
-import { addDays, startOfHour, subDays } from "date-fns";
+import { addDays, startOfHour, subDays, subHours } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -16,6 +16,7 @@ import { CalendarPage } from "./pages/calendar/calendar-page";
 import { ReportWinnersPage } from "./pages/calendar/report-winners-page";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentInfoPage } from "./pages/tournament/tournament-info-page";
+import { TournamentRegisterPage } from "./pages/tournament/tournament-register-page";
 import { TournamentRulesPage } from "./pages/tournament/tournament-rules-page";
 
 const SENDOU_INK_TOURNAMENTS_COUNT = 3;
@@ -433,6 +434,42 @@ test.describe("Calendar", () => {
 		await newTournament.save();
 
 		await expect(page).toHaveURL(/\/to\/\d+/);
+	});
+
+	test("copies a tournament keeping registration open until the same time before the new start", async ({
+		page,
+		factories,
+	}) => {
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+		const copiedStartTime = startOfHour(subDays(new Date(), 7));
+		const copied = await factories.TournamentFactory.create({
+			authorId: organizer.id,
+			startTimes: [dateToDatabaseTimestamp(copiedStartTime)],
+			mapPickingStyle: "AUTO",
+			regClosesAt: dateToDatabaseTimestamp(subHours(copiedStartTime, 1)),
+		});
+
+		await impersonate(page, organizer.id);
+
+		const newTournament = new CalendarNewEventPage(page);
+		await newTournament.gotoNewTournament();
+		await newTournament.copyTournament(copied.eventId);
+
+		await newTournament.form.fill("name", "Copied Tournament");
+		const startTime = await newTournament.tournamentStartTime();
+		await newTournament.setFirstDate(addDays(startTime, 7));
+		await newTournament.save();
+
+		await expect(page).toHaveURL(/\/to\/\d+/);
+		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);
+
+		const register = new TournamentRegisterPage(page);
+		await register.goto(tournamentId);
+
+		await expect(register.locators.saveTeamButton).toBeVisible();
+		await isNotVisible(register.locators.registrationClosedAlert);
 	});
 
 	test("reports winners of a past event", async ({ page, factories }) => {
