@@ -15,6 +15,13 @@
 		border: var(--border-width) dashed var(--color-border);
 		background: transparent;
 	}
+
+	/* below CoachView's side-by-side width it sits between the video and the events */
+	&.besideVideo:has(.empty) {
+		@container (width < 900px) {
+			display: none;
+		}
+	}
 }
 
 .swap {

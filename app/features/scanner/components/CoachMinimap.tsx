@@ -4,6 +4,7 @@
  * it has, beside the video or swapped into the video's; clicking it swaps.
  * When given, a corner button opens the map in the map planner.
  */
+import clsx from "clsx";
 import { Image } from "~/components/Image";
 import { navIconUrl } from "~/utils/urls";
 import { formatClock } from "../core/format";
@@ -14,6 +15,7 @@ export function CoachMinimap({
 	minimap,
 	currentTime,
 	isInGame,
+	isBesideVideo,
 	onSwap,
 	onOpenPlanner,
 }: {
@@ -22,6 +24,8 @@ export function CoachMinimap({
 	/** seconds into the video the player is at */
 	currentTime: number;
 	isInGame: boolean;
+	/** false when swapped into the video's place */
+	isBesideVideo: boolean;
 	/** undefined when there's no video or no map to swap */
 	onSwap: (() => void) | undefined;
 	onOpenPlanner?: () => void;
@@ -44,7 +48,7 @@ export function CoachMinimap({
 	);
 
 	return (
-		<div className={styles.minimap}>
+		<div className={clsx(styles.minimap, isBesideVideo && styles.besideVideo)}>
 			{onSwap ? (
 				<button
 					type="button"

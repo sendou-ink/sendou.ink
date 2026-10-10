@@ -325,6 +325,7 @@ function CoachSession({
 			minimap={minimap}
 			currentTime={currentTime}
 			isInGame={currentGame !== undefined}
+			isBesideVideo={!url || !isMapBig}
 			onSwap={swapMapAndVideo}
 			onOpenPlanner={openPlanner}
 		/>

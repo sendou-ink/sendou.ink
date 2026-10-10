@@ -4,7 +4,8 @@
  * steps forward on its right (the smaller the step the closer to the middle),
  * the playback speed and swapping the map with the video. Every control has a hotkey: under the left hand a
  * keyboard row per step, its left key back and right key forward, and the
- * seconds on the arrow keys, as in most video players.
+ * seconds on the arrow keys, as in most video players. On a narrow bar the
+ * game and life steps and the map swap give way, their hotkeys staying.
  */
 import clsx from "clsx";
 import {
@@ -155,6 +156,7 @@ export function CoachControls({
 					{STEPS.map(({ step, caption, previous }) => (
 						<StepButton
 							key={step}
+							step={step}
 							control={previous}
 							caption={caption}
 							onPress={jumps[step].previous}
@@ -178,6 +180,7 @@ export function CoachControls({
 					{STEPS.toReversed().map(({ step, caption, next }) => (
 						<StepButton
 							key={step}
+							step={step}
 							control={next}
 							caption={caption}
 							onPress={jumps[step].next}
@@ -186,7 +189,7 @@ export function CoachControls({
 					<div className={styles.extras}>
 						<button
 							type="button"
-							className={styles.control}
+							className={clsx(styles.control, styles.mapToggle)}
 							aria-label={isMapBig ? "Show the video big" : "Show the map big"}
 							aria-pressed={isMapBig}
 							aria-keyshortcuts="M"
@@ -202,7 +205,7 @@ export function CoachControls({
 							trigger={
 								<button
 									type="button"
-									className={styles.control}
+									className={clsx(styles.control, styles.speed)}
 									aria-label={`Playback speed ${speed}×`}
 									title="Playback speed (S slower, W faster)"
 								>
@@ -231,10 +234,12 @@ export function CoachControls({
 }
 
 function StepButton({
+	step,
 	control,
 	caption,
 	onPress,
 }: {
+	step: CoachStep;
 	control: StepControl;
 	caption: string;
 	onPress: (() => void) | null;
@@ -246,6 +251,7 @@ function StepButton({
 		<button
 			type="button"
 			className={styles.control}
+			data-step={step}
 			aria-label={control.label}
 			aria-keyshortcuts={control.code.replace("Key", "")}
 			title={`${control.label} (${key})`}
