@@ -1,4 +1,5 @@
 import { differenceInMinutes } from "date-fns";
+import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
@@ -22,6 +23,7 @@ async function syncLiveStreams() {
 
 	if (streams.length === 0) {
 		await LiveStreamRepository.replaceAll([]);
+		clearCombinedStreamsCache();
 		return;
 	}
 
@@ -44,6 +46,7 @@ async function syncLiveStreams() {
 	}));
 
 	await LiveStreamRepository.replaceAll(liveStreams);
+	clearCombinedStreamsCache();
 
 	await syncTournamentStreamers(streams);
 }

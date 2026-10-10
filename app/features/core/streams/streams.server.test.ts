@@ -13,6 +13,7 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import {
+	fetchRunningTournamentStreams,
 	getLiveTournamentStreamerTwitchNames,
 	getLiveTournamentStreams,
 	getUpcomingLeagueCastStreams,
@@ -104,7 +105,9 @@ describe("getLiveTournamentStreams", () => {
 		const scheduledAt = databaseTimestampNow() + 10 * 60;
 		const { league, match } = await runningLeagueSet({ scheduledAt });
 
-		const streams = getLiveTournamentStreams();
+		const streams = getLiveTournamentStreams(
+			await fetchRunningTournamentStreams(),
+		);
 
 		expect(streams).toHaveLength(1);
 		expect(streams[0]).toMatchObject({
@@ -114,16 +117,55 @@ describe("getLiveTournamentStreams", () => {
 			tier: 3,
 		});
 		expect(streams[0].subtitle).toContain("Division 1");
-		expect(getLiveTournamentStreamerTwitchNames()).toEqual([
-			"streamer_channel",
+		expect(
+			getLiveTournamentStreamerTwitchNames(
+				await fetchRunningTournamentStreams(),
+			),
+		).toEqual(["streamer_channel"]);
+	});
+
+	test("a tournament whose streamers stopped streaming after the registry filled is not live", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+			startTimes: [databaseTimestampNow() - HOUR],
+			bracketProgression: ROUND_ROBIN,
+			minMembersPerTeam: 1,
+		});
+		for (const userId of [streamerId(), opponentId()]) {
+			await TournamentTeamFactory.create(
+				{ tournamentId: tournament.id, memberUserIds: [userId] },
+				{ isCheckedIn: true },
+			);
+		}
+		await TournamentFactory.startBracket(tournament.id);
+		await LiveStreamFactory.replaceAll([
+			{ userId: streamerId(), twitch: "streamer_channel" },
 		]);
+		clearAllTournamentDataCache();
+		RunningTournaments.add(await tournamentFromDB(tournament.id));
+
+		expect(
+			getLiveTournamentStreams(await fetchRunningTournamentStreams()),
+		).toHaveLength(1);
+
+		await LiveStreamFactory.replaceAll([]);
+
+		expect(
+			getLiveTournamentStreams(await fetchRunningTournamentStreams()),
+		).toHaveLength(0);
 	});
 
 	test("a league set outside its live window is not live even with a member streaming", async () => {
 		await runningLeagueSet({ scheduledAt: databaseTimestampNow() + 2 * HOUR });
 
-		expect(getLiveTournamentStreams()).toHaveLength(0);
-		expect(getLiveTournamentStreamerTwitchNames()).toHaveLength(0);
+		expect(
+			getLiveTournamentStreams(await fetchRunningTournamentStreams()),
+		).toHaveLength(0);
+		expect(
+			getLiveTournamentStreamerTwitchNames(
+				await fetchRunningTournamentStreams(),
+			),
+		).toHaveLength(0);
 	});
 });
 
@@ -143,7 +185,9 @@ describe("getUpcomingLeagueCastStreams", () => {
 			castAccount: "league_cast",
 		});
 
-		expect(getUpcomingLeagueCastStreams()).toEqual([
+		expect(
+			getUpcomingLeagueCastStreams(await fetchRunningTournamentStreams()),
+		).toEqual([
 			expect.objectContaining({
 				id: `league-match-${match.id}`,
 				startsAt: scheduledAt,
@@ -154,7 +198,9 @@ describe("getUpcomingLeagueCastStreams", () => {
 	test("a set nobody marked for cast is not upcoming", async () => {
 		await runningLeagueSet({ scheduledAt: databaseTimestampNow() + DAY });
 
-		expect(getUpcomingLeagueCastStreams()).toHaveLength(0);
+		expect(
+			getUpcomingLeagueCastStreams(await fetchRunningTournamentStreams()),
+		).toHaveLength(0);
 	});
 
 	test("a set played before its agreed time is not upcoming", async () => {
@@ -164,7 +210,9 @@ describe("getUpcomingLeagueCastStreams", () => {
 			isPlayed: true,
 		});
 
-		expect(getUpcomingLeagueCastStreams()).toHaveLength(0);
+		expect(
+			getUpcomingLeagueCastStreams(await fetchRunningTournamentStreams()),
+		).toHaveLength(0);
 	});
 
 	test("a set further than three days away is not upcoming yet", async () => {
@@ -173,6 +221,8 @@ describe("getUpcomingLeagueCastStreams", () => {
 			castAccount: "league_cast",
 		});
 
-		expect(getUpcomingLeagueCastStreams()).toHaveLength(0);
+		expect(
+			getUpcomingLeagueCastStreams(await fetchRunningTournamentStreams()),
+		).toHaveLength(0);
 	});
 });

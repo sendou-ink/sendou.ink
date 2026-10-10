@@ -10,6 +10,7 @@ import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
 	COMBINED_STREAMS_KEY,
+	fetchRunningTournamentStreams,
 	getLiveTournamentStreamerTwitchNames,
 	getLiveTournamentStreams,
 	getUpcomingLeagueCastStreams,
@@ -206,7 +207,8 @@ function combinedStreamsCached(): Promise<SidebarStream[]> {
 }
 
 async function combinedStreams(): Promise<SidebarStream[]> {
-	const tournamentStreams = getLiveTournamentStreams();
+	const runningTournaments = await fetchRunningTournamentStreams();
+	const tournamentStreams = getLiveTournamentStreams(runningTournaments);
 	const sendouQEntries = await getSendouQSidebarStreams();
 	const xRankRows = await LiveStreamRepository.findXRankStreams(
 		Seasons.currentOrPrevious()!.nth,
@@ -215,7 +217,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	const externalStreams = await ExternalStreamRepository.findAllForSidebar();
 
 	const seenUsernames = new Set([
-		...getLiveTournamentStreamerTwitchNames(),
+		...getLiveTournamentStreamerTwitchNames(runningTournaments),
 		...sendouQEntries.flatMap((e) =>
 			e.twitchUsernames.map((t) => t.toLowerCase()),
 		),
@@ -248,7 +250,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		});
 	}
 
-	for (const stream of getUpcomingLeagueCastStreams()) {
+	for (const stream of getUpcomingLeagueCastStreams(runningTournaments)) {
 		ranked.push({
 			stream,
 			score: StreamRanking.upcomingTournamentTierToScore(

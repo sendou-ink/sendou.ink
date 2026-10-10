@@ -4,9 +4,11 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import { COMBINED_STREAMS_KEY } from "~/features/core/streams/streams.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import { testTournament } from "~/features/tournament-bracket/core/tests/test-utils";
+import { cache } from "~/utils/cache.server";
 import { withUserId } from "~/utils/Test";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 
@@ -214,5 +216,32 @@ describe("syncLiveStreams tournament streamers", () => {
 		const rowsAfterSecond = await findAllTournamentStreamers();
 		expect(rowsAfterSecond).toHaveLength(1);
 		expect(rowsAfterSecond[0].twitchAccount).toBe("streamer_a");
+	});
+});
+
+describe("syncLiveStreams combined streams cache", () => {
+	beforeEach(() => {
+		RunningTournaments.clear();
+		mockGetStreams.mockReset();
+	});
+
+	test.each([
+		{ why: "nobody is live", streams: [] },
+		{
+			why: "someone is live",
+			streams: [
+				{ twitchUserName: "streamer_one", viewerCount: 10, thumbnailUrl: "" },
+			],
+		},
+	])("clears the cached sidebar streams when $why", async ({ streams }) => {
+		mockGetStreams.mockResolvedValue(streams);
+		cache.set(COMBINED_STREAMS_KEY, {
+			value: [],
+			metadata: { createdTime: Date.now() },
+		});
+
+		await SyncLiveStreamsRoutine.run();
+
+		expect(cache.has(COMBINED_STREAMS_KEY)).toBe(false);
 	});
 });

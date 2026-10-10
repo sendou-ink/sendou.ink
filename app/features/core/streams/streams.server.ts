@@ -5,6 +5,7 @@ import type {
 	Tournament,
 	TournamentStream,
 } from "~/features/tournament-bracket/core/Tournament";
+import { fetchTournamentStreams } from "~/features/tournament-bracket/core/Tournament.server";
 import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
 import { cache } from "~/utils/cache.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -34,14 +35,31 @@ export type SidebarStream = {
 	twitchUsername?: string;
 };
 
-/** One entry per streamed tournament, and per streamed league set as those are played on their own schedule. */
-export function getLiveTournamentStreams(): SidebarStream[] {
-	const streams: SidebarStream[] = [];
+type RunningTournamentStreams = Array<{
+	tournament: Tournament;
+	streams: TournamentStream[];
+}>;
 
-	for (const tournament of RunningTournaments.all) {
+/** Running tournaments with their streams read fresh, as the copy on the registry's tournament is only as new as its last cache fill. */
+export async function fetchRunningTournamentStreams(): Promise<RunningTournamentStreams> {
+	return Promise.all(
+		RunningTournaments.all.map(async (tournament) => ({
+			tournament,
+			streams: await fetchTournamentStreams(tournament.ctx.id),
+		})),
+	);
+}
+
+/** One entry per streamed tournament, and per streamed league set as those are played on their own schedule. */
+export function getLiveTournamentStreams(
+	runningTournaments: RunningTournamentStreams,
+): SidebarStream[] {
+	const result: SidebarStream[] = [];
+
+	for (const { tournament, streams } of runningTournaments) {
 		if (tournament.isLeague) {
-			for (const set of liveLeagueSets(tournament)) {
-				streams.push({
+			for (const set of liveLeagueSets(tournament, streams)) {
+				result.push({
 					...leagueSetStream(tournament, set),
 					startsAt: LeagueScheduling.liveWindow(set.scheduledAt).startsAt,
 				});
@@ -49,9 +67,9 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 			continue;
 		}
 
-		if (tournament.streams.length === 0) continue;
+		if (streams.length === 0) continue;
 
-		streams.push({
+		result.push({
 			id: `tournament-${tournament.ctx.id}`,
 			name: tournament.ctx.name,
 			imageUrl: tournament.ctx.logoUrl,
@@ -63,20 +81,22 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 		});
 	}
 
-	return streams;
+	return result;
 }
 
 /** League sets the organizer marked for cast, coming up within days, so they show as upcoming even with nobody live yet. */
-export function getUpcomingLeagueCastStreams(): SidebarStream[] {
+export function getUpcomingLeagueCastStreams(
+	runningTournaments: RunningTournamentStreams,
+): SidebarStream[] {
 	const now = databaseTimestampNow();
 	const horizon = dateToDatabaseTimestamp(
 		addDays(new Date(), UPCOMING_LEAGUE_CAST_WINDOW_DAYS),
 	);
 	const liveIds = new Set(
-		getLiveTournamentStreams().map((stream) => stream.id),
+		getLiveTournamentStreams(runningTournaments).map((stream) => stream.id),
 	);
 
-	return RunningTournaments.all.flatMap((tournament) => {
+	return runningTournaments.flatMap(({ tournament }) => {
 		if (!tournament.isLeague) return [];
 
 		return leagueSets(tournament).flatMap((set) => {
@@ -92,15 +112,17 @@ export function getUpcomingLeagueCastStreams(): SidebarStream[] {
 }
 
 /** Lowercased Twitch usernames of all members and casters streaming a currently live tournament or league set. */
-export function getLiveTournamentStreamerTwitchNames(): string[] {
+export function getLiveTournamentStreamerTwitchNames(
+	runningTournaments: RunningTournamentStreams,
+): string[] {
 	const names: string[] = [];
 
-	for (const tournament of RunningTournaments.all) {
-		const streams = tournament.isLeague
-			? liveLeagueSets(tournament).flatMap((set) => set.streams)
-			: tournament.streams;
+	for (const { tournament, streams } of runningTournaments) {
+		const liveStreams = tournament.isLeague
+			? liveLeagueSets(tournament, streams).flatMap((set) => set.streams)
+			: streams;
 
-		for (const stream of streams) {
+		for (const stream of liveStreams) {
 			names.push(stream.twitchUserName.toLowerCase());
 		}
 	}
@@ -160,6 +182,7 @@ function leagueSets(tournament: Tournament): LeagueSet[] {
 /** League sets inside their live window that a member of either team, or their cast account, streams. */
 function liveLeagueSets(
 	tournament: Tournament,
+	tournamentStreams: TournamentStream[],
 ): Array<LeagueSet & { streams: TournamentStream[] }> {
 	const now = databaseTimestampNow();
 
@@ -174,7 +197,7 @@ function liveLeagueSets(
 			return [];
 		}
 
-		const streams = tournament.streams.filter(
+		const streams = tournamentStreams.filter(
 			(stream) =>
 				(stream.userId !== null && set.memberUserIds.includes(stream.userId)) ||
 				(set.castAccount !== null &&
