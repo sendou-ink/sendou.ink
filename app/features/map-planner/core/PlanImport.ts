@@ -1,10 +1,14 @@
 /**
  * Cross-tab handoff of a plan into the planner: the source tab stashes the
  * plan in localStorage under a fresh key, then opens the planner with
- * ?import=<key>. Claimed plans are removed; unclaimed leftovers (blocked
+ * ?import=<key> (plus the stage and mode its header shows). Claimed plans are removed; unclaimed leftovers (blocked
  * popup) are swept by key age next time.
  */
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import { PLANNER_URL } from "~/utils/urls";
 import { plansSearchParams } from "../plans-search-params";
 
@@ -32,7 +36,14 @@ export async function openInNewTab({
 	background,
 	allies,
 	enemies,
-}: Omit<ImportedPlan, "background"> & { background: Blob }): Promise<void> {
+	stageId,
+	mode,
+}: Omit<ImportedPlan, "background"> & {
+	background: Blob;
+	/** shown in the planner's header, null when unknown */
+	stageId: StageId | null;
+	mode: ModeShort | null;
+}): Promise<void> {
 	const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 	const plan: ImportedPlan = {
 		background: await blobToDataUrl(background),
@@ -44,7 +55,11 @@ export async function openInNewTab({
 	localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(plan));
 
 	window.open(
-		plansSearchParams.href(PLANNER_URL, { import: key }),
+		plansSearchParams.href(PLANNER_URL, {
+			import: key,
+			...(stageId !== null ? { stage: stageId } : {}),
+			...(mode !== null ? { mode } : {}),
+		}),
 		"_blank",
 		"noopener",
 	);

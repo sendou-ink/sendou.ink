@@ -6,16 +6,44 @@ const BACKGROUND = new Blob([new Uint8Array([1, 2, 3])], {
 	type: "image/webp",
 });
 
-async function openAndGetKey(): Promise<string> {
+async function openAndGetParams(
+	stageAndMode: Pick<
+		Parameters<typeof PlanImport.openInNewTab>[0],
+		"stageId" | "mode"
+	> = { stageId: 22, mode: "CB" },
+) {
 	const open = vi.spyOn(window, "open").mockReturnValue(null);
 	await PlanImport.openInNewTab({
 		background: BACKGROUND,
 		allies: [0, 10],
 		enemies: [40],
+		...stageAndMode,
 	});
 	const url = new URL(String(open.mock.calls[0]![0]), window.location.origin);
-	return plansSearchParams.parse(url).import!;
+	return plansSearchParams.parse(url);
 }
+
+async function openAndGetKey(): Promise<string> {
+	return (await openAndGetParams()).import!;
+}
+
+describe("PlanImport.openInNewTab", () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	test("opens the planner on the plan's stage and mode", async () => {
+		const params = await openAndGetParams();
+
+		expect([params.stage, params.mode]).toEqual([22, "CB"]);
+	});
+
+	test("leaves the planner's default stage and mode when unknown", async () => {
+		const params = await openAndGetParams({ stageId: null, mode: null });
+
+		expect([params.stage, params.mode]).toEqual([0, "SZ"]);
+	});
+});
 
 describe("PlanImport.claim", () => {
 	afterEach(() => {

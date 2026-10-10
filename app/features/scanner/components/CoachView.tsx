@@ -753,6 +753,8 @@ function openInPlanner(
 		background,
 		allies: weaponsOf(match.teams[allyTeam]),
 		enemies: weaponsOf(match.teams[allyTeam === 0 ? 1 : 0]),
+		stageId: match.stage,
+		mode: match.mode,
 	}).catch((error) => {
 		logger.error("Opening the map in the planner failed", error);
 		toastQueue.add({
