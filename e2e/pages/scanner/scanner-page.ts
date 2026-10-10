@@ -1,10 +1,13 @@
 import type { Page } from "@playwright/test";
 import { scannerSearchParams } from "~/features/scanner/scanner-search-params";
 import { SCANNER_PAGE } from "~/utils/urls";
-import { expectIsHydrated, navigate } from "../../helpers/playwright";
+import { expect, expectIsHydrated, navigate } from "../../helpers/playwright";
 
 /** The settings the scanner keeps in localStorage (`components/settings.ts`). */
 const SETTINGS_STORAGE_KEY = "scanner:settings";
+
+/** Loading OpenCV and scanning outlast the default timeout. */
+const SCAN_TIMEOUT = 45_000;
 
 /** `/scanner` */
 export class ScannerPage {
@@ -38,6 +41,10 @@ export class ScannerPage {
 			showDetailsButton: main.getByRole("button", { name: "Show details" }),
 			gameDataButton: main.getByRole("button", { name: "Game data" }),
 			notFound: main.getByText("This VoD is no longer saved."),
+			coachModeLink: main.getByRole("link", { name: "Coach mode" }),
+			openInCoachModeLink: main.getByRole("link", {
+				name: "Open in coach mode",
+			}),
 		};
 	}
 
@@ -64,6 +71,14 @@ export class ScannerPage {
 
 	async chooseFile(filePath: string) {
 		await this.locators.fileInput.setInputFiles(filePath);
+	}
+
+	/** Scans a video and waits until the scan finishes, which is when Delete appears. */
+	async scanFile(filePath: string) {
+		await this.chooseFile(filePath);
+		await expect(this.locators.deleteButton).toBeVisible({
+			timeout: SCAN_TIMEOUT,
+		});
 	}
 
 	/** A saved session or VoD in the landing's Sessions list. */

@@ -480,7 +480,7 @@ function CoachSession({
 									: "No events in the games shown."}
 						</p>
 					) : (
-						<ol className={styles.list}>
+						<ol className={styles.list} aria-label="Events">
 							{shown.map((entry) => (
 								<li key={entryKey(entry)}>
 									<button

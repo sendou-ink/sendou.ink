@@ -2,7 +2,8 @@
 # Builds e2e/fixtures/scanner-vod.webm, the VoD the scanner e2e tests scan: one
 # game stitched from two hand-labeled fixture frames of the same match (the
 # Undertow Spillway intro, then its results screen), separated by black. The
-# tests assert against those fixtures' expected.json values.
+# tests assert against those fixtures' expected.json values. Also builds
+# e2e/fixtures/scanner-coach-vod.webm, the coach mode tests' blank video.
 #
 # Usage: scripts/scanner/build-e2e-vod.sh (needs ffmpeg with libvpx-vp9)
 set -euo pipefail
@@ -31,3 +32,12 @@ ffmpeg -y -loglevel error \
 	-deadline good -cpu-used 4 "$OUT"
 
 echo "wrote $OUT ($(du -h "$OUT" | cut -f1))"
+
+# The coach mode e2e tests seed e2e/fixtures/scanner-coach-events.json as the
+# scan of this file instead of scanning it, so only its length matters
+COACH_OUT=e2e/fixtures/scanner-coach-vod.webm
+ffmpeg -y -loglevel error \
+	-f lavfi -t 315 -i color=c=black:s=320x180:r=2 \
+	-c:v libvpx-vp9 -crf 50 -b:v 0 -g 20 -deadline good -cpu-used 4 "$COACH_OUT"
+
+echo "wrote $COACH_OUT ($(du -h "$COACH_OUT" | cut -f1))"
