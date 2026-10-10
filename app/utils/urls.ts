@@ -57,12 +57,12 @@ export const resolveAvatarUrl = ({
 export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
 export const BADGES_DOC_LINK =
-	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/badges.md";
+	"https://github.com/sendou-ink/sendou.ink/blob/main/docs/badges.md";
 export const API_DOC_LINK =
-	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/dev/api.md";
+	"https://github.com/sendou-ink/sendou.ink/blob/main/docs/dev/api.md";
 
 export const CREATING_TOURNAMENT_DOC_LINK =
-	"https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/tournament-creation.md";
+	"https://github.com/sendou-ink/sendou.ink/blob/main/docs/tournament-creation.md";
 
 export const PLUS_SERVER_DISCORD_URL = "https://discord.gg/FW4dKrY";
 export const SENDOU_INK_DISCORD_URL = "https://discord.gg/sendou";

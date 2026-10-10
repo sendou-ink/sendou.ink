@@ -18,7 +18,7 @@ export default function SendouqRules() {
 			<br />
 			<p>
 				<a
-					href="https://github.com/sendou-ink/sendou.ink/blob/rewrite/docs/banning-policy.md"
+					href="https://github.com/sendou-ink/sendou.ink/blob/main/docs/banning-policy.md"
 					target="_blank"
 					rel="noopener noreferrer"
 				>
