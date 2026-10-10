@@ -1195,7 +1195,8 @@ const PARAM_EXPLANATIONS: Record<string, string> = {
 	// "spl__WeaponSaberParam.ShotGuideParam.HorizontalSphereIndex": "",
 	// "spl__WeaponSaberParam.ShotGuideParam.VerticalSightFrame": "",
 	// "spl__WeaponSaberParam.ShotGuideParam.VerticalSphereIndex": "",
-	// "spl__WeaponSaberParam.SwingParam.ChargeMoveVelLimit": "",
+	"spl__WeaponSaberParam.SwingParam.ChargeMoveVelLimit":
+		"Player movement speed while charging.",
 	// "spl__WeaponSaberParam.SwingParam.ChargeSwingASFrame": "",
 	// "spl__WeaponSaberParam.SwingParam.ChargeSwingFrame": "",
 	// "spl__WeaponSaberParam.SwingParam.ChargeSwingFrameStepAdd": "",

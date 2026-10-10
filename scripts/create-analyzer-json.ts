@@ -421,7 +421,10 @@ function parametersToMainWeaponResult(
 	const MoveSpeed_Charge = () => {
 		if (weapon.Id === 4010) return 0.062;
 
-		return params.WeaponParam?.MoveSpeed_Charge;
+		return (
+			params.WeaponParam?.MoveSpeed_Charge ??
+			params.spl__WeaponSaberParam?.SwingParam?.ChargeMoveVelLimit
+		);
 	};
 
 	const DamageParam_ValueMax = () => {
