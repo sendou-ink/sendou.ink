@@ -95,6 +95,7 @@
 	"stat.special.duration.inkStormExplanation": "Увеличивает прокрашиваемое расстояние, но не сам прокрас.",
 	"stat.special.duration.killerWail": "Длительность одного лазера. Общая длительность мегалофона дольше, так как лучи запускаются один за другим.",
 	"stat.special.damageDistance": "Расстояние урона: {{weapon}}",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "Радиус покраса: {{weapon}}",
 	"stat.special.shieldHp": "Прочность щита: {{weapon}}",
 	"stat.special.deviceHp": "Прочность устройства: {{weapon}}",

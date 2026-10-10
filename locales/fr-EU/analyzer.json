@@ -94,6 +94,7 @@
 	"stat.special.duration.inkStormExplanation": "Augmente la distance d'encrage mais pas le montant d'encre.",
 	"stat.special.duration.killerWail": "La durée indiquée correspond à un laser. La durée totale de la spéciale est plus longue car les lasers sont tirés les uns après les autres.",
 	"stat.special.damageDistance": "Distance des dégâts de {{weapon}}",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "Rayon d'encrage de {{weapon}}",
 	"stat.special.shieldHp": "Durabilité du {{weapon}}",
 	"stat.special.deviceHp": "Durabilité du point faible du {{weapon}}",

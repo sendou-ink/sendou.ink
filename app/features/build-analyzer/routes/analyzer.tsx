@@ -638,11 +638,18 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 							<StatCard
 								context={context}
 								stat={statKeyToTuple("specialDamageDistance")}
-								title={t("analyzer:stat.special.damageDistance", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
+								title={t(
+									specialHasLethalDamageDistance(
+										analyzed.stats.specialWeaponDamages,
+									)
+										? "analyzer:stat.special.nonLethalDamageDistance"
+										: "analyzer:stat.special.damageDistance",
+									{
+										weapon: t(
+											`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
+										),
+									},
+								)}
 							/>
 						) : null}
 						{analyzed.stats.specialPaintRadius ? (
@@ -883,6 +890,12 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 								),
 							})}
 							containerClassName={styles.tableContainer}
+							isHighlighted={
+								analyzed.stats.specialDamageDistance
+									? analyzed.stats.specialDamageDistance.value !==
+										analyzed.stats.specialDamageDistance.baseValue
+									: false
+							}
 						>
 							<DamageTable values={analyzed.stats.specialWeaponDamages} />
 						</StatCategory>
@@ -1552,6 +1565,7 @@ function StatCategory({
 	textBelow,
 	summaryRightContent,
 	testId,
+	isHighlighted = false,
 }: {
 	title: string;
 	children: React.ReactNode;
@@ -1559,10 +1573,16 @@ function StatCategory({
 	textBelow?: string;
 	summaryRightContent?: React.ReactNode;
 	testId?: string;
+	isHighlighted?: boolean;
 }) {
 	return (
 		<details className={styles.details}>
-			<summary className={styles.summary} data-testid={testId}>
+			<summary
+				className={clsx(styles.summary, {
+					[styles.summaryHighlighted]: isHighlighted,
+				})}
+				data-testid={testId}
+			>
 				{title}
 				{summaryRightContent}
 			</summary>
@@ -1987,5 +2007,16 @@ function ConsumptionTable({
 				</div>
 			) : null}
 		</>
+	);
+}
+
+function specialHasLethalDamageDistance(
+	damages: AnalyzedBuild["stats"]["specialWeaponDamages"],
+) {
+	return damages.some(
+		(damage) =>
+			damage.value >= 100 &&
+			typeof damage.distance === "number" &&
+			damage.distance > 0,
 	);
 }

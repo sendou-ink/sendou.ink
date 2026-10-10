@@ -94,6 +94,7 @@
 	"stat.special.duration.inkStormExplanation": "מגדיל את המרחק שנצבע אך לא את כמות הדיו.",
 	"stat.special.duration.killerWail": "",
 	"stat.special.damageDistance": "מרחק הנזק של {{weapon}}",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "רדיוס הצביעה של {{weapon}}",
 	"stat.special.shieldHp": "עמידות המגן של {{weapon}}",
 	"stat.special.deviceHp": "עמידות המכשיר של {{weapon}}",

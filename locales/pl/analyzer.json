@@ -95,6 +95,7 @@
 	"stat.special.duration.inkStormExplanation": "Zwiększa zasięg malowania ale nie ilość farby.",
 	"stat.special.duration.killerWail": "",
 	"stat.special.damageDistance": "Zasięg szkody {{weapon}}",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "Zasięg malowania {{weapon}}",
 	"stat.special.shieldHp": "Wytrzmałość tarczy {{weapon}}",
 	"stat.special.deviceHp": "Wytrzymałość urządzenia {{weapon}}",

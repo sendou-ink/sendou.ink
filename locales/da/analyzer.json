@@ -93,6 +93,7 @@
 	"stat.special.duration.inkStormExplanation": "Det regner med den samme mængde blæk ned på jorden, men blækket spredes over et større område.",
 	"stat.special.duration.killerWail": "Varigheden er kun vist for en stråle, den samlede varighed af specialet er længere, da flere stråler bliver affyret forskudt af hindanen.",
 	"stat.special.damageDistance": "{{weapon}}'s skaderadius",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "{{weapon}}'s farvningsradius",
 	"stat.special.shieldHp": "{{weapon}}'s skjoldholdbarhed",
 	"stat.special.deviceHp": "{{weapon}}'s apparatholdbarhed",

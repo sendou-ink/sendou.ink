@@ -94,6 +94,7 @@
 	"stat.special.duration.inkStormExplanation": "Augmente la distance d'encrage mais pas le montant d'encre.",
 	"stat.special.duration.killerWail": "",
 	"stat.special.damageDistance": "Distance des dégâts de {{weapon}}",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "Rayon d'encrage de {{weapon}}",
 	"stat.special.shieldHp": "Durabilité du bouclier de {{weapon}}",
 	"stat.special.deviceHp": "Durabilité du point faible de {{weapon}}",

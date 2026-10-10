@@ -93,6 +93,7 @@
 	"stat.special.duration.inkStormExplanation": "Vergroot het verfbereik maar niet de hoeveelheid inkt.",
 	"stat.special.duration.killerWail": "",
 	"stat.special.damageDistance": "{{weapon}} schade bereik",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "{{weapon}} verfradius",
 	"stat.special.shieldHp": "{{weapon}} schild bestendigheid",
 	"stat.special.deviceHp": "{{weapon}} apparaat bestendigheid",

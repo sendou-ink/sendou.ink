@@ -91,6 +91,7 @@
 	"stat.special.duration.inkStormExplanation": "塗り範囲の強化 (塗り量の変化なし)",
 	"stat.special.duration.killerWail": "表示されている時間はレーザー一つ分の時間です。レーザーが連続して打たれるため、スペシャル全体の時間はもっと長いです。",
 	"stat.special.damageDistance": "{{weapon}} 爆風範囲",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "{{weapon}} 塗り範囲",
 	"stat.special.shieldHp": "{{weapon}} バリア耐久値",
 	"stat.special.deviceHp": "{{weapon}} 装置耐久値",

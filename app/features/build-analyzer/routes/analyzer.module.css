@@ -105,7 +105,8 @@
 	position: relative;
 }
 
-.details:has(.statCardHighlighted) .summary {
+.details:has(.statCardHighlighted) .summary,
+.summaryHighlighted {
 	background-color: var(--color-bg-higher);
 }
 

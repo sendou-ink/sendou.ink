@@ -91,6 +91,7 @@
 	"stat.special.duration.inkStormExplanation": "칠하는 거리가 증가하지만 총량은 변하지 않습니다.",
 	"stat.special.duration.killerWail": "",
 	"stat.special.damageDistance": "{{weapon}} 피해 범위",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "{{weapon}} 칠 범위",
 	"stat.special.shieldHp": "{{weapon}} 실드 내구도",
 	"stat.special.deviceHp": "{{weapon}} 장치 내구도",

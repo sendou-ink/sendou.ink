@@ -94,6 +94,7 @@
 	"stat.special.duration.inkStormExplanation": "Aumenta la distancia pintada, pero no la cantidad de tinta.",
 	"stat.special.duration.killerWail": "El tiempo es para un láser individual. El especial dura más tiempo debido a que los láseres se disparan uno tras otro.",
 	"stat.special.damageDistance": "Distancia de daño de {{weapon}}",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "Radio de entintado de {{weapon}}",
 	"stat.special.shieldHp": "Durabilidad del escudo de {{weapon}}",
 	"stat.special.deviceHp": "Durabilidad del dispositivo de {{weapon}}",

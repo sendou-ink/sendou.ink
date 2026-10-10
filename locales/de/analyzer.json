@@ -93,6 +93,7 @@
 	"stat.special.duration.inkStormExplanation": "Erhöht die Reichweite der eingefärbten Tinte, aber nicht die Menge.",
 	"stat.special.duration.killerWail": "",
 	"stat.special.damageDistance": "{{weapon}} Schadensabstand",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "{{weapon}} Einfärberadius",
 	"stat.special.shieldHp": "{{weapon}} Schild-Haltbarkeit",
 	"stat.special.deviceHp": "{{weapon}} Gerät-Haltbarkeit",

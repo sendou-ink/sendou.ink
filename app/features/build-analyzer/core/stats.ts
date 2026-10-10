@@ -587,6 +587,7 @@ function specialWeaponDamages(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["specialWeaponDamages"] {
 	const result: AnalyzedBuild["stats"]["specialWeaponDamages"] = [];
+	const distanceRate = specialDamageDistance(args)?.value ?? 1;
 
 	for (const type of DAMAGE_TYPE) {
 		for (const key of [damageTypeToParamsKey[type]].flat()) {
@@ -594,10 +595,14 @@ function specialWeaponDamages(
 
 			if (Array.isArray(value)) {
 				for (const subValue of value.flat()) {
+					const isLethal = subValue.Damage >= 1000;
+
 					result.push({
 						type,
 						value: subValue.Damage / 10,
-						distance: subValue.Distance,
+						distance: isLethal
+							? subValue.Distance
+							: roundToNDecimalPlaces(subValue.Distance * distanceRate),
 						id: nanoid(),
 						multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 					});

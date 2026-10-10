@@ -94,6 +94,7 @@
 	"stat.special.duration.inkStormExplanation": "Aumenta la distanza dipinta ma non la quantità d'inchiostro.",
 	"stat.special.duration.killerWail": "La durata indicata è per uno dei laser. La durata totale della speciale è più estesa in quanto i laser sono attivati uno dopo l'altro.",
 	"stat.special.damageDistance": "Distanza danno {{weapon}}",
+	"stat.special.nonLethalDamageDistance": "",
 	"stat.special.paintRadius": "Raggio pittura {{weapon}}",
 	"stat.special.shieldHp": "Durata scudo {{weapon}}",
 	"stat.special.deviceHp": "Durata Aggeggio {{weapon}}",

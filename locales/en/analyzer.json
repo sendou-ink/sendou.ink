@@ -93,6 +93,7 @@
 	"stat.special.duration.inkStormExplanation": "Increases distance painted but not the amount of ink.",
 	"stat.special.duration.killerWail": "Duration reported is for one laser. The total duration of the special is longer as the lasers are fired one after another.",
 	"stat.special.damageDistance": "{{weapon}} damage distance",
+	"stat.special.nonLethalDamageDistance": "{{weapon}} non-lethal damage distance",
 	"stat.special.paintRadius": "{{weapon}} paint radius",
 	"stat.special.shieldHp": "{{weapon}} shield durability",
 	"stat.special.deviceHp": "{{weapon}} device durability",
