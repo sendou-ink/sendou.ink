@@ -58,7 +58,7 @@ const TRANSLATORS: Array<{
 		language: "fr-CA",
 	},
 	{
-		translators: ["Charakiga", "marie-maxime", "Filuz", "julufm"],
+		translators: ["Charakiga", "marie-maxime", "Filuz", "julufm", "IKEI"],
 		language: "fr-EU",
 	},
 	{
