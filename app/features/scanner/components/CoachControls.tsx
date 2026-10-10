@@ -105,6 +105,7 @@ export function CoachControls({
 	jumps,
 	onTogglePlay,
 	onSpeedChange,
+	onSpeedStep,
 	isMapBig,
 	onSwapMap,
 }: {
@@ -115,6 +116,7 @@ export function CoachControls({
 	jumps: CoachJumps;
 	onTogglePlay: () => void;
 	onSpeedChange: (speed: number) => void;
+	onSpeedStep: (direction: CoachPlayback.Direction) => void;
 	/** null while there's no map to show */
 	onSwapMap: (() => void) | null;
 }) {
@@ -137,13 +139,7 @@ export function CoachControls({
 		if (PLAY_CODES.includes(code)) return onTogglePlay;
 		if (code === MAP_CODE) return onSwapMap;
 		if (code === SLOWER_CODE || code === FASTER_CODE) {
-			return () =>
-				onSpeedChange(
-					CoachPlayback.speedStep(
-						speed,
-						code === FASTER_CODE ? "next" : "previous",
-					),
-				);
+			return () => onSpeedStep(code === FASTER_CODE ? "next" : "previous");
 		}
 		for (const { step, previous, next } of STEPS) {
 			if (code === previous.code) return jumps[step].previous;

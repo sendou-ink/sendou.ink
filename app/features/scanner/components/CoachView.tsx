@@ -275,6 +275,12 @@ function CoachSession({
 		video.playbackRate = newSpeed;
 	};
 
+	const stepSpeed = (direction: CoachPlayback.Direction) => {
+		const video = videoRef.current;
+		if (!video) return;
+		changeSpeed(CoachPlayback.speedStep(video.playbackRate, direction));
+	};
+
 	const jumps: CoachJumps = {
 		GAME: stepsAlong(
 			shownGames.filter((game) => game.match.startsAt !== null),
@@ -441,6 +447,7 @@ function CoachSession({
 							jumps={jumps}
 							onTogglePlay={togglePlay}
 							onSpeedChange={changeSpeed}
+							onSpeedStep={stepSpeed}
 							isMapBig={isMapBig}
 							onSwapMap={swapMapAndVideo ?? null}
 						/>
