@@ -1,7 +1,7 @@
 import * as R from "remeda";
 import * as v from "valibot";
-import { describe, expect, test } from "vitest";
-import { saveWeekSchema } from "./availability-schemas";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { addTeamEventSchema, saveWeekSchema } from "./availability-schemas";
 
 const DAY_MINUTES = 24 * 60;
 
@@ -44,4 +44,62 @@ describe("saveWeekSchema", () => {
 			v.safeParse(saveWeekSchema, weekWith([{ start, end }])).success,
 		).toBe(true);
 	});
+});
+
+describe("addTeamEventSchema", () => {
+	const originalTimezone = process.env.TZ;
+
+	afterEach(() => {
+		vi.useRealTimers();
+		if (originalTimezone === undefined) {
+			delete process.env.TZ;
+		} else {
+			process.env.TZ = originalTimezone;
+		}
+	});
+
+	const eventStartingAt = (startsAt: Date) => ({
+		_action: "ADD_EVENT",
+		name: "Practice",
+		startsAt: startsAt.getTime(),
+		duration: "60",
+		participants: "ALL",
+		participantUserIds: [],
+	});
+
+	test.each([
+		{
+			why: "Tokyo, Monday 08:00",
+			clientTimezone: "Asia/Tokyo",
+			now: "2026-10-11T23:00:00Z",
+			nextWeekSaturdayEvening: "2026-10-24T09:00:00Z",
+		},
+		{
+			why: "Sydney, Monday 09:00",
+			clientTimezone: "Australia/Sydney",
+			now: "2026-10-11T22:00:00Z",
+			nextWeekSaturdayEvening: "2026-10-24T08:00:00Z",
+		},
+		{
+			why: "Auckland, Monday 10:00",
+			clientTimezone: "Pacific/Auckland",
+			now: "2026-10-11T21:00:00Z",
+			nextWeekSaturdayEvening: "2026-10-24T06:00:00Z",
+		},
+	])(
+		"accepts an event next week on the server once the client's week rolled over ($why)",
+		({ clientTimezone, now, nextWeekSaturdayEvening }) => {
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date(now));
+			const event = eventStartingAt(new Date(nextWeekSaturdayEvening));
+
+			process.env.TZ = clientTimezone;
+			expect(v.safeParse(addTeamEventSchema, event).success).toBe(true);
+
+			process.env.TZ = "UTC";
+			const onServer = v.safeParse(addTeamEventSchema, event);
+
+			expect(onServer.issues?.map((issue) => issue.message)).toBeUndefined();
+		},
+	);
 });

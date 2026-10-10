@@ -20,6 +20,7 @@ import { AVAILABILITY } from "./availability-constants";
 
 const DAY_MINUTES = 24 * 60;
 const MAX_RANGES_PER_DAY = 24;
+const MAX_UTC_OFFSET_HOURS = 14;
 
 const dayTimeRangeSchema = v.pipe(
 	v.object({
@@ -99,13 +100,17 @@ const teamEventFields = {
 		label: "labels.start",
 		min: () => sub(new Date(), { hours: 1 }),
 		// end of the next week, the furthest the schedule shows, plus hours of slack for server-side
-		// validation running in another timezone than the viewer's
+		// validation running in another timezone than the viewer's (whose week may already have rolled over)
 		max: () =>
 			add(
-				startOfWeek(addWeeks(new Date(), AVAILABILITY.WEEK_HORIZON), {
-					weekStartsOn: 1,
-				}),
-				{ hours: 14 },
+				startOfWeek(
+					addWeeks(
+						add(new Date(), { hours: MAX_UTC_OFFSET_HOURS }),
+						AVAILABILITY.WEEK_HORIZON,
+					),
+					{ weekStartsOn: 1 },
+				),
+				{ hours: MAX_UTC_OFFSET_HOURS },
 			),
 		minMessage: "errors.dateInPast",
 		maxMessage: "errors.dateTooFarAway",
