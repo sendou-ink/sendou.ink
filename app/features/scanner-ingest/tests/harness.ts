@@ -195,6 +195,9 @@ export async function tournamentWorld(
 			invariant(startedAt, `Match ${matchId} is not part of the world`);
 			return startedAt.getTime();
 		},
+		/** Moves the set's `startedAt`, as when the previous set's deciding report starts it. */
+		startSetAt: (matchId: number, startedAt: Date) =>
+			backdate("TournamentMatch", matchId, { startedAt }),
 		games: async (matchId: number): Promise<ScannableGame[]> => {
 			const played = matches.find((match) => match.id === matchId);
 			invariant(played, `Match ${matchId} is not part of the world`);

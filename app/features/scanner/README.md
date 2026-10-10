@@ -279,7 +279,7 @@ sequenceDiagram
   UI->>ING: POST { matches } (live only: on match close / stop)
   ING->>ING: resolve context (current tournament/SendouQ activity, casts via staff roles, else games reported around the play times ≥2)
   ING->>DB: merge-store IngestedMatch (matchHash, isSameMatch + merge, context hints)
-  ING->>DB: link matches to game results → IngestedMatchLink (POV weapon → ReportedWeapon; scoreboards derived at read time)
+  ING->>DB: link matches to games the sender played (POV seat in the game's active roster) → IngestedMatchLink (POV weapon → ReportedWeapon; scoreboards derived at read time)
   Note over UI: VoD "Add to VoDs": ScannerMatch → slim prefill param → /vods/new
   Note over UI: scoreWindows(match) → ring buffer / file packet copy → clips store
 ```

@@ -15,6 +15,8 @@ const REPLAY_CODE_MAX_OCR_ERRORS = 3;
 const PLAYED_AT_AFFINITY_MS = 10 * 60 * 1000;
 /** Reads further apart than this cannot be the same few-minute game. */
 const PLAYED_AT_CONTRADICTION_MS = 20 * 60 * 1000;
+/** How long before its results screen a read's start can be and still be the game's (a 5 min game with overtime, intro and a missed intro's claimed reads) */
+const MAX_GAME_SPAN_MS = 15 * 60 * 1000;
 
 /** How many of the 8 rosters' readable names must align for identity. */
 const MIN_NAME_OVERLAP = 6;
@@ -150,6 +152,17 @@ export function mergeMatches(
 			JSON.stringify(canonicalMatch(merged)) !==
 			JSON.stringify(canonicalMatch(existing)),
 	};
+}
+
+/** Wall-clock ms of the game's first read (live reads count `startsAt` in wall-clock seconds), null when it isn't one shortly before its results screen. */
+export function gameStartedAt(match: ScannerMatch): number | null {
+	if (match.startsAt === null || match.playedAt === null) return null;
+
+	const startedAt = match.startsAt * 1000;
+	if (startedAt > match.playedAt) return null;
+	if (match.playedAt - startedAt > MAX_GAME_SPAN_MS) return null;
+
+	return startedAt;
 }
 
 /** Lowercased, width-normalized in-game name without the #discriminator. */

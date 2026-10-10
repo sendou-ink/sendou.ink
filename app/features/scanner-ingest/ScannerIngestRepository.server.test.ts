@@ -221,6 +221,47 @@ describe("addLinks", () => {
 		expect(reportedWeapons[0].createdAt).toBe(Math.floor(PLAYED_AT / 1000));
 	});
 
+	test("reports no weapon for a game other than the one the scan stays linked to", async () => {
+		const { maps, users } = await setupSendouqMatch();
+		const povUser = users[0]!;
+		const winnerUserIds = users
+			.slice(0, FULL_GROUP_SIZE)
+			.map((user) => user.id);
+
+		const { effectiveMatches } =
+			await ScannerIngestRepository.addOrMergeMatches({
+				povUserId: povUser.id,
+				submitterUserId: povUser.id,
+				matches: [testMatch({ pov: { team: 0, index: 0 } })],
+				context: null,
+			});
+		const linkTo = (map: (typeof maps)[number]) => ({
+			ingestedMatchId: effectiveMatches[0].id,
+			match: effectiveMatches[0].data,
+			game: sendouqGame(map, { winnerUserIds }),
+		});
+
+		await ScannerIngestRepository.addLinks({
+			links: [linkTo(maps[0])],
+			povUserId: null,
+		});
+		await ScannerIngestRepository.addLinks({
+			links: [linkTo(maps[1])],
+			povUserId: povUser.id,
+		});
+
+		expect(await fetchReportedWeapons()).toHaveLength(0);
+
+		await ScannerIngestRepository.addLinks({
+			links: [linkTo(maps[0])],
+			povUserId: povUser.id,
+		});
+
+		const reportedWeapons = await fetchReportedWeapons();
+		expect(reportedWeapons).toHaveLength(1);
+		expect(reportedWeapons[0].mapIndex).toBe(maps[0].index);
+	});
+
 	test("reports no weapon for a sender outside the game's rosters", async () => {
 		const outsider = await UserFactory.create();
 		const { maps, users } = await setupSendouqMatch();
@@ -341,7 +382,7 @@ describe("findScoreboardsByGroupMatchId", () => {
 	});
 });
 
-describe("gamesInTournamentMatch", () => {
+describe("gamesInTournamentMatches", () => {
 	test("returns the match's own games only, leaving the rest of the tournament out", async () => {
 		const users = await UserFactory.createMany(TOURNAMENT_TEAM_COUNT);
 		const tournament = await TournamentFactory.createPlayed(
@@ -360,9 +401,9 @@ describe("gamesInTournamentMatch", () => {
 					?.memberUserIds[0] === user.id,
 		)!.id;
 
-		const games = await ScannerIngestRepository.gamesInTournamentMatch(
+		const games = await ScannerIngestRepository.gamesInTournamentMatches([
 			firstMatch!.id,
-		);
+		]);
 
 		expect(games.length).toBeGreaterThan(0);
 		expect(
@@ -460,8 +501,6 @@ function sendouqGame(
 		stageId: map.stageId,
 		winnerUserIds: [],
 		loserUserIds: [],
-		winnerInGameNames: [],
-		loserInGameNames: [],
 		inGameNameByUserId: new Map(),
 		playedAt: Math.floor(PLAYED_AT / 1000),
 		linkedPlayerNames: null,

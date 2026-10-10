@@ -1,4 +1,5 @@
 import { subDays } from "date-fns";
+import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import {
@@ -8,6 +9,7 @@ import {
 import { defineAction } from "~/form/define-action.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
+import * as Matches from "../core/Matches";
 import * as Scoreboards from "../core/Scoreboards";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import {
@@ -143,9 +145,10 @@ interface IngestContextCandidate {
 
 /**
  * Resolves the context (tournament or SendouQ match) a request's matches belong to. The user's
- * activity around play time is the strong signal: their match running then (for cast footage,
- * the casted sets of tournaments they help run). Candidates are scored by how many matches would
- * link, but kept even when nothing links yet (a live minimap-only match still gets its hint).
+ * activity around play time is the strong signal: their match running when the game started and
+ * when its results showed (for cast footage, the casted sets of tournaments they help run).
+ * Candidates are scored by how many matches would link, but kept even when nothing links yet (a
+ * live minimap-only match still gets its hint).
  * Without activity (a set that outlasted the activity window) the user's history decides: the
  * context whose games were reported around the matches' play times.
  */
@@ -158,7 +161,8 @@ async function resolveIngestContext({
 	povUserId: number | null;
 	casterUserId: number | null;
 }): Promise<ResolvedIngestContext | null> {
-	const at = anchorTime(matches);
+	const anchors = activityAnchors(matches);
+	const at = anchors[0]!;
 	const hasPovMatches = matches.some((match) => !match.cast);
 	const hasCastMatches = matches.some((match) => match.cast);
 
@@ -172,25 +176,39 @@ async function resolveIngestContext({
 	};
 
 	if (povUserId && hasPovMatches) {
-		const groupMatchId = await ScannerIngestRepository.groupMatchIdAt({
-			userId: povUserId,
-			at,
-		});
-		if (groupMatchId) {
-			addCandidate({
-				context: { type: "sendouq", groupMatchId },
-				loadGames: () =>
-					ScannerIngestRepository.gamesInGroupMatch(groupMatchId),
+		for (const anchor of anchors) {
+			const groupMatchId = await ScannerIngestRepository.groupMatchIdAt({
+				userId: povUserId,
+				at: anchor,
 			});
+			if (groupMatchId) {
+				addCandidate({
+					context: { type: "sendouq", groupMatchId },
+					loadGames: () =>
+						ScannerIngestRepository.gamesInGroupMatch(groupMatchId),
+				});
+			}
 		}
 
-		const tournamentActivity =
-			await ScannerIngestRepository.tournamentActivityAt({
+		const tournamentMatchIdsByTournamentId = new Map<number, number[]>();
+		for (const anchor of anchors) {
+			const activity = await ScannerIngestRepository.tournamentActivityAt({
 				userId: povUserId,
-				at,
+				at: anchor,
 			});
-		if (tournamentActivity) {
-			const { tournamentId, tournamentMatchId } = tournamentActivity;
+			if (!activity) continue;
+
+			const matchIds =
+				tournamentMatchIdsByTournamentId.get(activity.tournamentId) ?? [];
+			if (!matchIds.includes(activity.tournamentMatchId)) {
+				matchIds.push(activity.tournamentMatchId);
+			}
+			tournamentMatchIdsByTournamentId.set(activity.tournamentId, matchIds);
+		}
+		for (const [
+			tournamentId,
+			tournamentMatchIds,
+		] of tournamentMatchIdsByTournamentId) {
 			addCandidate({
 				context: { type: "tournament", tournamentId },
 				loadGames: () =>
@@ -199,7 +217,9 @@ async function resolveIngestContext({
 					// the first free game on that map anywhere in the tournament —
 					// some earlier round's. Only the set being played can be meant.
 					matches.length === 1
-						? ScannerIngestRepository.gamesInTournamentMatch(tournamentMatchId)
+						? ScannerIngestRepository.gamesInTournamentMatches(
+								tournamentMatchIds,
+							)
 						: ScannerIngestRepository.gamesPlayedByUserInTournament({
 								userId: povUserId,
 								tournamentId,
@@ -300,12 +320,21 @@ function withoutDisprovenCast(match: ScannerMatch): ScannerMatch {
 	return { ...match, cast: false };
 }
 
-/** When the request's matches were probably played: the latest playedAt, else "now" (live reads without a scoreboard). */
-function anchorTime(matches: ScannerMatch[]): number {
-	const playedAts = matches
-		.map((match) => match.playedAt)
-		.filter((playedAt): playedAt is number => playedAt !== null);
-	if (playedAts.length > 0) return Math.max(...playedAts);
+/**
+ * Wall-clock ms to look the user's activity up at: the latest game's results screen, then its
+ * start, else "now" (live reads without a scoreboard). A set's last game is reported before its
+ * results screen shows and the report starts the team's next set, so only the game's start still
+ * falls inside the set it belongs to. Newest first, as a tie goes to the first candidate.
+ */
+function activityAnchors(matches: ScannerMatch[]): number[] {
+	const latest = R.firstBy(
+		matches.filter((match) => match.playedAt !== null),
+		[(match) => match.playedAt!, "desc"],
+	);
+	if (!latest) return [Date.now()];
 
-	return Date.now();
+	const startedAt = Matches.gameStartedAt(latest);
+	return startedAt === null
+		? [latest.playedAt!]
+		: [latest.playedAt!, startedAt];
 }

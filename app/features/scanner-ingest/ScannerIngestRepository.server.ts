@@ -73,9 +73,9 @@ export async function castedGamesInTournament(tournamentId: number) {
 	return tournamentGames({ tournamentId, tournamentMatchIds });
 }
 
-/** Reported games of one tournament match, chronological — candidates for a live send, which has no sequence to anchor on and must not see the rest of the tournament. */
-export function gamesInTournamentMatch(tournamentMatchId: number) {
-	return tournamentGames({ tournamentMatchIds: [tournamentMatchId] });
+/** Reported games of the given tournament matches, chronological — candidates for a live send, which has no sequence to anchor on and must not see the rest of the tournament. */
+export function gamesInTournamentMatches(tournamentMatchIds: number[]) {
+	return tournamentGames({ tournamentMatchIds });
 }
 
 /** A SendouQ match's reported games in map order. Unplayed maps are left out: a scan sent before its game's report stays unlinked until a resend. */
@@ -449,7 +449,7 @@ export async function addOrMergeMatches({
  * Links ingested matches to their matched game results. A row links to at most one game (re-sends
  * are no-ops); a game collects links from many rows (each POV's scan). A known POV player's
  * weapon (Scoreboards.povWeaponId) is reported as a ReportedWeapon tagged with its ingested match,
- * unless they already have one for that game.
+ * unless they already have one for that game or the row stays linked to another game.
  *
  * @returns count of newly created links
  */
@@ -484,10 +484,11 @@ export async function addLinks({
 				.onConflict((oc) => oc.column("ingestedMatchId").doNothing())
 				.executeTakeFirst();
 
-			await reportPovWeapon(trx, link, povUserId);
+			const inserted = Number(insertResult.numInsertedOrUpdatedRows ?? 0) > 0;
+			if (inserted) linkedCount++;
 
-			if (Number(insertResult.numInsertedOrUpdatedRows ?? 0) > 0) {
-				linkedCount++;
+			if (inserted || (await isLinkedToGame(trx, link))) {
+				await reportPovWeapon(trx, link, povUserId);
 			}
 		}
 
@@ -807,6 +808,9 @@ async function tournamentGames({
 	const rostersByTeamId = await teamRosters(
 		rows.flatMap((row) => [row.opponentOneId, row.opponentTwoId]),
 	);
+	const participants = await gameParticipants(
+		rows.map((row) => row.matchGameResultId),
+	);
 	const linkedNames = await linkedPlayerNamesByTarget(
 		"tournamentMatchGameResultId",
 		rows.map((row) => row.matchGameResultId),
@@ -823,6 +827,7 @@ async function tournamentGames({
 		const winnerRoster = rostersByTeamId.get(row.winnerTeamId);
 		const loserRoster =
 			loserTeamId !== null ? rostersByTeamId.get(loserTeamId) : undefined;
+		const activeRosters = participants.get(row.matchGameResultId);
 
 		return {
 			target: {
@@ -834,10 +839,9 @@ async function tournamentGames({
 			mapIndex: row.number - 1,
 			mode: row.mode,
 			stageId: row.stageId,
-			winnerUserIds: winnerRoster?.userIds ?? [],
-			loserUserIds: loserRoster?.userIds ?? [],
-			winnerInGameNames: winnerRoster?.inGameNames ?? [],
-			loserInGameNames: loserRoster?.inGameNames ?? [],
+			winnerUserIds: activeRosters?.get(row.winnerTeamId) ?? [],
+			loserUserIds:
+				loserTeamId !== null ? (activeRosters?.get(loserTeamId) ?? []) : [],
 			inGameNameByUserId: new Map([
 				...(winnerRoster?.inGameNameByUserId ?? []),
 				...(loserRoster?.inGameNameByUserId ?? []),
@@ -850,7 +854,6 @@ async function tournamentGames({
 
 interface Roster {
 	userIds: number[];
-	inGameNames: string[];
 	inGameNameByUserId: Map<number, string>;
 }
 
@@ -878,7 +881,6 @@ async function teamRosters(teamIds: Array<number | null>) {
 		const roster = result.get(member.tournamentTeamId) ?? emptyRoster();
 		roster.userIds.push(member.userId);
 		if (member.inGameName) {
-			roster.inGameNames.push(member.inGameName);
 			roster.inGameNameByUserId.set(member.userId, member.inGameName);
 		}
 		result.set(member.tournamentTeamId, roster);
@@ -888,7 +890,31 @@ async function teamRosters(teamIds: Array<number | null>) {
 }
 
 function emptyRoster(): Roster {
-	return { userIds: [], inGameNames: [], inGameNameByUserId: new Map() };
+	return { userIds: [], inGameNameByUserId: new Map() };
+}
+
+/** Each game's active rosters: the user ids who played it, keyed by game result id, then by tournament team id. */
+async function gameParticipants(matchGameResultIds: number[]) {
+	const result = new Map<number, Map<number, number[]>>();
+	if (matchGameResultIds.length === 0) return result;
+
+	const rows = await db
+		.selectFrom("TournamentMatchGameResultParticipant")
+		.select(["matchGameResultId", "tournamentTeamId", "userId"])
+		.where("matchGameResultId", "in", matchGameResultIds)
+		.execute();
+
+	for (const row of rows) {
+		const byTeamId =
+			result.get(row.matchGameResultId) ?? new Map<number, number[]>();
+		byTeamId.set(row.tournamentTeamId, [
+			...(byTeamId.get(row.tournamentTeamId) ?? []),
+			row.userId,
+		]);
+		result.set(row.matchGameResultId, byTeamId);
+	}
+
+	return result;
 }
 
 async function sendouqGames({
@@ -981,8 +1007,6 @@ async function sendouqGames({
 			stageId: row.stageId,
 			winnerUserIds: winnerRoster?.userIds ?? [],
 			loserUserIds: loserRoster?.userIds ?? [],
-			winnerInGameNames: winnerRoster?.inGameNames ?? [],
-			loserInGameNames: loserRoster?.inGameNames ?? [],
 			inGameNameByUserId: new Map([
 				...(winnerRoster?.inGameNameByUserId ?? []),
 				...(loserRoster?.inGameNameByUserId ?? []),
@@ -1009,7 +1033,6 @@ async function groupRosters(groupIds: number[]) {
 		const roster = result.get(member.groupId) ?? emptyRoster();
 		roster.userIds.push(member.userId);
 		if (member.inGameName) {
-			roster.inGameNames.push(member.inGameName);
 			roster.inGameNameByUserId.set(member.userId, member.inGameName);
 		}
 		result.set(member.groupId, roster);
@@ -1046,6 +1069,28 @@ async function linkedPlayerNamesByTarget(
 	}
 
 	return result;
+}
+
+async function isLinkedToGame(
+	trx: Transaction<DB>,
+	{ ingestedMatchId, game }: { ingestedMatchId: number; game: IngestableGame },
+) {
+	const existing = await trx
+		.selectFrom("IngestedMatchLink")
+		.select("IngestedMatchLink.id")
+		.where("IngestedMatchLink.ingestedMatchId", "=", ingestedMatchId)
+		.where(
+			game.target.type === "tournament"
+				? "IngestedMatchLink.tournamentMatchGameResultId"
+				: "IngestedMatchLink.groupMatchMapId",
+			"=",
+			game.target.type === "tournament"
+				? game.target.matchGameResultId
+				: game.target.groupMatchMapId,
+		)
+		.executeTakeFirst();
+
+	return existing !== undefined;
 }
 
 async function reportPovWeapon(

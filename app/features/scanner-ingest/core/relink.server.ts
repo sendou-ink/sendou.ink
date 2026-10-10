@@ -39,9 +39,9 @@ export async function linkStoredMatches(reported: ReportedMatch) {
 			// reloaded per sender: an earlier sender's links mark games as taken
 			const games =
 				reported.type === "tournament"
-					? await ScannerIngestRepository.gamesInTournamentMatch(
+					? await ScannerIngestRepository.gamesInTournamentMatches([
 							reported.tournamentMatchId,
-						)
+						])
 					: await ScannerIngestRepository.gamesInGroupMatch(
 							reported.groupMatchId,
 						);

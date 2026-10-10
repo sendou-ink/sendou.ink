@@ -327,6 +327,51 @@ describe("mergeMatches", () => {
 	});
 });
 
+describe("Matches.gameStartedAt", () => {
+	const PLAYED_AT = Date.UTC(2026, 7, 1, 18, 0, 0);
+
+	test.each([
+		{
+			why: "a start shortly before results",
+			startOffsetMs: -3 * 60_000,
+			expected: PLAYED_AT - 3 * 60_000,
+		},
+		{
+			why: "a start exactly 15 min before results",
+			startOffsetMs: -15 * 60_000,
+			expected: PLAYED_AT - 15 * 60_000,
+		},
+		{
+			why: "a start over 15 min before results",
+			startOffsetMs: -15 * 60_000 - 1000,
+			expected: null,
+		},
+		{ why: "a start after results", startOffsetMs: 1000, expected: null },
+		{ why: "a start at results", startOffsetMs: 0, expected: PLAYED_AT },
+	])("$why", ({ startOffsetMs, expected }) => {
+		const match = scannerMatch({
+			playedAt: PLAYED_AT,
+			startsAt: (PLAYED_AT + startOffsetMs) / 1000,
+		});
+
+		expect(Matches.gameStartedAt(match)).toBe(expected);
+	});
+
+	test.each([
+		{ why: "no start", partial: { playedAt: PLAYED_AT, startsAt: null } },
+		{
+			why: "no results time",
+			partial: { playedAt: null, startsAt: PLAYED_AT / 1000 },
+		},
+		{
+			why: "a video-relative start",
+			partial: { playedAt: PLAYED_AT, startsAt: 100 },
+		},
+	])("returns null for $why", ({ partial }) => {
+		expect(Matches.gameStartedAt(scannerMatch(partial))).toBeNull();
+	});
+});
+
 describe("playerStatus", () => {
 	const STATUS: NonNullable<ScannerMatch["playerStatus"]> = {
 		samples: [

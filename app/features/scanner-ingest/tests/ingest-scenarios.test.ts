@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { db } from "~/db/sql";
 import type {
 	ScannerMatch,
 	ScannerMatchTeam,
@@ -266,21 +267,18 @@ describe("SendouQ flow", () => {
 		]);
 	});
 
-	test("Q5 name normalization: a POV-less read links via case/width/discriminator-insensitive names", async () => {
+	test("Q5 a POV-less read: stored with its hint but never linked, even with the set's names", async () => {
 		const w = await sendouqWorld();
 		await w.conclude();
 
-		const scan = renamed(
-			w.scanned(w.maps[0]!, { pov: null }),
-			(name) => `${toFullWidth(name.toUpperCase())}#9999`,
-		);
-		const res = await ingest(w.povUser, [scan]);
+		const res = await ingest(w.povUser, [w.scanned(w.maps[0]!, { pov: null })]);
 
-		expect(res.linkedGamesCount).toBe(1);
-		expect(res.linkedMatches).toEqual([
-			{ matchIndex: 0, link: { type: "sendouq", groupMatchId: w.match.id } },
-		]);
-		expect(await fetchReportedWeapons()).toHaveLength(0);
+		expect(res.contextResolved).toBe(true);
+		expect(res.linkedGamesCount).toBe(0);
+		expect((await fetchIngestedMatches())[0]!.groupMatchIdHint).toBe(
+			w.match.id,
+		);
+		expect(await fetchLinks()).toHaveLength(0);
 	});
 
 	test("Q6 POV side contradiction: seating the sender on the wrong side blocks the link", async () => {
@@ -642,7 +640,7 @@ describe("tournament flow", () => {
 		expect(page.ingestedScoreboards.map((sb) => sb.mapIndex)).toEqual([0]);
 	});
 
-	test("T4 cast footage by staff links to the casted set without POV weapons", async () => {
+	test("T4 cast footage by staff: stored with the tournament hint but not linked", async () => {
 		const w = await tournamentWorld();
 		const finalMatch = w.matches.at(-1)!;
 		await w.cast(finalMatch.id);
@@ -656,38 +654,93 @@ describe("tournament flow", () => {
 		);
 
 		expect(res.contextResolved).toBe(true);
-		expect(res.linkedGamesCount).toBe(2);
-		expect(res.linkedMatches).toEqual(
-			games.map((_, matchIndex) => ({
-				matchIndex,
+		expect(res.linkedGamesCount).toBe(0);
+		expect(
+			(await fetchIngestedMatches()).map((row) => row.tournamentIdHint),
+		).toEqual(games.map(() => w.tournamentId));
+		expect(await fetchLinks()).toHaveLength(0);
+	});
+
+	test("T7 another set's report on the same map: a read of a game the sender didn't play there stays unlinked", async () => {
+		const w = await tournamentWorld();
+		const finalMatch = w.matches.at(-1)!;
+		const [finalGame] = await w.games(finalMatch.id);
+		const eliminatedSet = w.matches.find(
+			(match) =>
+				match.id !== finalMatch.id &&
+				match.loserTeamId !== finalMatch.winnerTeamId &&
+				match.loserTeamId !== finalMatch.loserTeamId,
+		)!;
+		const [ownGame] = await w.games(eliminatedSet.id);
+		const stranger = w.teams.find(
+			(team) => team.id === eliminatedSet.loserTeamId,
+		)!;
+		// their own game, but read with their seat on the winning side, so
+		// nothing of their set takes it and it waits unlinked with the hint
+		await ingest({ id: stranger.memberUserIds[0]! }, [
+			w.scanned({
+				...ownGame!,
+				mode: finalGame!.mode,
+				stage: finalGame!.stage,
+				playedAt: finalGame!.playedAt,
+			}),
+		]);
+		expect((await fetchIngestedMatches())[0]!.tournamentIdHint).toBe(
+			w.tournamentId,
+		);
+
+		await linkStoredMatches({
+			type: "tournament",
+			tournamentId: w.tournamentId,
+			tournamentMatchId: finalMatch.id,
+		});
+
+		expect(await fetchLinks()).toHaveLength(0);
+	});
+
+	test("T10 a set's deciding game: the next set its report started doesn't capture the read", async () => {
+		const { res, w, decidedSet } = await ingestDecidingGame({
+			startOffsetMs: -3 * 60_000,
+		});
+
+		expect(res.linkedMatches).toEqual([
+			{
+				matchIndex: 0,
 				link: {
 					type: "tournament",
 					tournamentId: w.tournamentId,
-					matchId: finalMatch.id,
+					matchId: decidedSet.id,
 				},
-			})),
-		);
-		expect(await fetchReportedWeapons()).toHaveLength(0);
-		const page = await tournamentMatchPage(w.tournamentId, finalMatch.id);
-		expect(page.ingestedScoreboards.map((sb) => sb.mapIndex)).toEqual([0, 1]);
-	});
-
-	test("T7 cast footage with a POV seat: the caster gets no weapon for a set they didn't play", async () => {
-		const w = await tournamentWorld();
-		const finalMatch = w.matches.at(-1)!;
-		await w.cast(finalMatch.id);
-		const caster = await createUser();
-		await w.staff(caster);
-		const [firstGame, secondGame] = await w.games(finalMatch.id);
-
-		const res = await ingest(caster, [
-			w.scanned(firstGame!, { cast: true }),
-			w.scanned(secondGame!, { cast: true, pov: { team: 0, index: 0 } }),
+			},
 		]);
-
-		expect(res.linkedGamesCount).toBe(2);
-		expect(await fetchReportedWeapons()).toHaveLength(0);
 	});
+
+	test.each([
+		{
+			why: "starting 15 min before its results",
+			startOffsetMs: -15 * 60_000,
+			linksDecidedSet: true,
+		},
+		{
+			why: "starting over 15 min before its results",
+			startOffsetMs: -15 * 60_000 - 1000,
+			linksDecidedSet: false,
+		},
+		{ why: "without a start", startOffsetMs: null, linksDecidedSet: false },
+	])(
+		"T11 a set's deciding game read $why: only a start within the game's span anchors its set",
+		async ({ startOffsetMs, linksDecidedSet }) => {
+			const { res, decidedSet, nextSet } = await ingestDecidingGame({
+				startOffsetMs,
+			});
+
+			expect(res.linkedMatches.map((linked) => linked.link)).toEqual([
+				expect.objectContaining({
+					matchId: linksDecidedSet ? decidedSet.id : nextSet.id,
+				}),
+			]);
+		},
+	);
 
 	test("T8 undone and re-reported game: the read relinks to the new result without a resend", async () => {
 		const w = await tournamentWorld();
@@ -710,6 +763,14 @@ describe("tournament flow", () => {
 			number: 1,
 			source: result!.source,
 		});
+		await db
+			.transaction()
+			.execute((trx) =>
+				TournamentMatchRepository.setParticipants(
+					{ resultId: reReported.id, participants: result!.participants },
+					trx,
+				),
+			);
 		await linkStoredMatches({
 			type: "tournament",
 			tournamentId: w.tournamentId,
@@ -810,13 +871,32 @@ describe("response contract & idempotency", () => {
 	});
 });
 
-function toFullWidth(name: string) {
-	return [...name]
-		.map((character) => {
-			const codePoint = character.codePointAt(0)!;
-			return codePoint >= 0x21 && codePoint <= 0x7e
-				? String.fromCodePoint(codePoint + 0xfee0)
-				: character;
-		})
-		.join("");
+async function ingestDecidingGame({
+	startOffsetMs,
+}: {
+	startOffsetMs: number | null;
+}) {
+	const w = await tournamentWorld();
+	const [decidedSet, nextSet] = w.matchesOfTeam(w.championTeamId);
+	const decidingGame = (await w.games(decidedSet!.id)).at(-1)!;
+	await w.startSetAt(
+		decidedSet!.id,
+		new Date(decidingGame.playedAt! - 20 * 60_000),
+	);
+	await w.startSetAt(nextSet!.id, new Date(decidingGame.playedAt!));
+	// the results screen shows after the game was already reported
+	const playedAt = decidingGame.playedAt! + 25_000;
+
+	const res = await ingest(w.povUser, [
+		w.scanned(decidingGame, {
+			playedAt,
+			startsAt:
+				startOffsetMs === null
+					? null
+					: Math.floor((playedAt + startOffsetMs) / 1000),
+			endsAt: Math.floor(playedAt / 1000),
+		}),
+	]);
+
+	return { res, w, decidedSet: decidedSet!, nextSet: nextSet! };
 }

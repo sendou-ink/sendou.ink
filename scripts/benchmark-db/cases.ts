@@ -650,10 +650,10 @@ export function buildCases(fx: Fixtures): {
 			ScannerIngestRepository.findScoreboardsByGroupMatchId(groupMatchId),
 	);
 	add(
-		"ScannerIngestRepository.gamesInTournamentMatch",
+		"ScannerIngestRepository.gamesInTournamentMatches",
 		fx.heavyTournamentMatchId,
 		(tournamentMatchId) =>
-			ScannerIngestRepository.gamesInTournamentMatch(tournamentMatchId),
+			ScannerIngestRepository.gamesInTournamentMatches([tournamentMatchId]),
 	);
 
 	add(

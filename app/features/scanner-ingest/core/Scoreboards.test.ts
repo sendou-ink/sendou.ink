@@ -17,6 +17,8 @@ import { NAMES } from "./tests/fixtures";
 
 const WINNER_TEAM_ID = 100;
 const LOSER_TEAM_ID = 200;
+/** The sender of every read unless a case says otherwise: on the winning seat 0, in the winning active roster. */
+const SENDER_ID = 1;
 
 function testGame(
 	partial: Partial<Scoreboards.IngestableGame> & {
@@ -30,10 +32,8 @@ function testGame(
 		mapIndex: 0,
 		mode: "SZ",
 		stageId: 0 as StageId,
-		winnerUserIds: [],
+		winnerUserIds: [SENDER_ID],
 		loserUserIds: [],
-		winnerInGameNames: [],
-		loserInGameNames: [],
 		inGameNameByUserId: new Map(),
 		playedAt: 1000,
 		linkedPlayerNames: null,
@@ -61,7 +61,7 @@ function testMatch({
 	names = NAMES,
 	weapons = [10, 10, 10, 10, 20, 20, 20, 20] as (MainWeaponId | null)[],
 	abilities = {},
-	povIndex = null,
+	povIndex = 0,
 	objective = null,
 	playerStatus = null,
 }: {
@@ -211,8 +211,16 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 }
 
 describe("matchedGames", () => {
+	function matchedGames(args: {
+		matches: ScannerMatch[];
+		games: Scoreboards.IngestableGame[];
+		povUserId?: number | null;
+	}) {
+		return Scoreboards.matchedGames({ povUserId: SENDER_ID, ...args });
+	}
+
 	test("matches a game's match and reports its index", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch()],
 			games: [testGame()],
 		});
@@ -223,7 +231,7 @@ describe("matchedGames", () => {
 	});
 
 	test("skips matches without a known winner", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [{ ...testMatch(), winner: null }],
 			games: [testGame()],
 		});
@@ -234,7 +242,7 @@ describe("matchedGames", () => {
 	test("skips matches whose teams were not fully seen", () => {
 		const partial = testMatch();
 		partial.teams[1].players.pop();
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [partial],
 			games: [testGame()],
 		});
@@ -243,7 +251,7 @@ describe("matchedGames", () => {
 	});
 
 	test("skips a game whose linked scoreboard has different players", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch()],
 			games: [
 				testGame({
@@ -258,7 +266,7 @@ describe("matchedGames", () => {
 	});
 
 	test("matches a re-detection of a linked scoreboard to the same game despite misread names", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch()],
 			games: [
 				testGame({
@@ -273,7 +281,7 @@ describe("matchedGames", () => {
 	});
 
 	test("does not count unreadable names towards linked scoreboard re-detection", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch({ names: ["", "", "", "", "l1", "l2", "l3", "l4"] })],
 			games: [
 				testGame({
@@ -288,7 +296,7 @@ describe("matchedGames", () => {
 	});
 
 	test("matches matches to games by mode and stage", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch({ mode: "RM", stage: 1 })],
 			games: [
 				testGame({ mapIndex: 0, mode: "SZ", stageId: 0 as StageId }),
@@ -300,7 +308,7 @@ describe("matchedGames", () => {
 	});
 
 	test("assigns two games on the same mode and stage in chronological order", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [
 				testMatch({
 					playedAt: 1000,
@@ -324,7 +332,7 @@ describe("matchedGames", () => {
 	});
 
 	test("skips duplicate detections of the same game", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch(), testMatch({ playedAt: 1005 })],
 			games: [
 				testGame({ tournamentMatchId: 1, playedAt: 1000 }),
@@ -337,7 +345,7 @@ describe("matchedGames", () => {
 	});
 
 	test("skips a duplicate detection despite a couple of OCR-misread names", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [
 				testMatch(),
 				testMatch({
@@ -356,7 +364,7 @@ describe("matchedGames", () => {
 	});
 
 	test("skips matches from other lobbies", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch({ lobby: "X" })],
 			games: [testGame()],
 		});
@@ -365,7 +373,7 @@ describe("matchedGames", () => {
 	});
 
 	test("skips matches with unreadable mode or stage", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch({ mode: null }), testMatch({ stage: null })],
 			games: [testGame()],
 		});
@@ -374,7 +382,7 @@ describe("matchedGames", () => {
 	});
 
 	test("skips matches that have no matching game left", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [
 				testMatch(),
 				testMatch({
@@ -388,102 +396,68 @@ describe("matchedGames", () => {
 		expect(matched).toHaveLength(1);
 	});
 
-	test("skips a game whose known rosters contradict the match sides", () => {
-		const matched = Scoreboards.matchedGames({
-			matches: [testMatch()],
-			games: [
-				testGame({
-					tournamentMatchId: 1,
-					// match winners are w1-w4 but this game was won by the l* players
-					winnerInGameNames: ["l1#1234", "l2"],
-					loserInGameNames: ["w1", "w2"],
-					playedAt: 1000,
-				}),
-				testGame({
-					tournamentMatchId: 2,
-					winnerInGameNames: ["w1", "w2"],
-					loserInGameNames: ["l1#1234", "l2"],
-					playedAt: 2000,
-				}),
-			],
-		});
-
-		expect(matched.map(tournamentMatchIdOf)).toEqual([2]);
-	});
-
-	test("pins the sides via the POV sender's roster, overruling contradicting names", () => {
-		const matched = Scoreboards.matchedGames({
+	test("links on the sender's seat whatever names were read", () => {
+		const matched = matchedGames({
 			matches: [
 				testMatch({
-					// names read flipped, but the sender's seat is on the winning rows
 					names: ["l1", "l2", "l3", "l4", "w1", "w2", "w3", "w4"],
-					povIndex: 0,
 				}),
 			],
-			games: [
-				testGame({
-					winnerUserIds: [77],
-					loserUserIds: [88],
-					winnerInGameNames: ["w1", "w2"],
-					loserInGameNames: ["l1", "l2"],
-				}),
-			],
-			povUserId: 77,
+			games: [testGame()],
 		});
 
 		expect(matched).toHaveLength(1);
 	});
 
 	test("skips a game seating the POV sender on the wrong side", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch({ povIndex: 4 })],
-			games: [testGame({ winnerUserIds: [77], loserUserIds: [88] })],
 			// the sender won the game, yet the read has their seat on the losing rows
-			povUserId: 77,
+			games: [testGame()],
 		});
 
 		expect(matched).toHaveLength(0);
 	});
 
-	test("falls back to the name check when the sender is in neither roster", () => {
-		const matched = Scoreboards.matchedGames({
-			matches: [testMatch({ povIndex: 0 })],
-			games: [
-				testGame({
-					winnerUserIds: [77],
-					loserUserIds: [88],
-					winnerInGameNames: ["l1", "l2"],
-					loserInGameNames: ["w1", "w2"],
-				}),
-			],
+	test("skips a game the sender didn't play", () => {
+		const matched = matchedGames({
+			matches: [testMatch()],
+			games: [testGame({ winnerUserIds: [77], loserUserIds: [88] })],
 			povUserId: 99,
 		});
 
 		expect(matched).toHaveLength(0);
 	});
 
-	test("matches known in-game names ignoring discriminator, case and unicode width", () => {
-		const matched = Scoreboards.matchedGames({
-			matches: [
-				testMatch({
-					names: ["Ｗ１", "w2", "w3", "w4", "l1", "l2", "l3", "l4"],
-				}),
-			],
-			games: [
-				testGame({
-					winnerInGameNames: ["w1#1234"],
-					loserInGameNames: ["W3#5678"],
-				}),
-			],
+	test("skips a game the sender's team played without them", () => {
+		const matched = matchedGames({
+			matches: [testMatch()],
+			// the sender's team won, but with a roster the sender sat out of
+			games: [testGame({ winnerUserIds: [2, 3, 4, 5], loserUserIds: [88] })],
 		});
 
-		// "Ｗ１" matches winner roster "w1#1234" straight (1) but "w3" on the
-		// winning side would match the loser roster flipped (1); straight wins ties
-		expect(matched).toHaveLength(1);
+		expect(matched).toHaveLength(0);
+	});
+
+	test.each([
+		{
+			why: "a read without a POV seat (cast footage)",
+			povIndex: null,
+			povUserId: SENDER_ID,
+		},
+		{ why: "a read without a sender", povIndex: 0, povUserId: null },
+	])("never links $why", ({ povIndex, povUserId }) => {
+		const matched = matchedGames({
+			matches: [testMatch({ povIndex })],
+			games: [testGame()],
+			povUserId,
+		});
+
+		expect(matched).toHaveLength(0);
 	});
 
 	test("does not assign a game played before the previously assigned one", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [
 				testMatch({ playedAt: 2000, mode: "RM", stage: 1 }),
 				testMatch({ playedAt: 2100, mode: "SZ", stage: 0 }),
@@ -508,7 +482,7 @@ describe("matchedGames", () => {
 	});
 
 	test("never links a read without a play time", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch({ playedAt: null })],
 			games: [testGame()],
 		});
@@ -517,7 +491,7 @@ describe("matchedGames", () => {
 	});
 
 	test("links the play of a map reported nearest the read", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch({ playedAt: 3900 })],
 			games: [
 				testGame({ tournamentMatchId: 1, playedAt: 2600 }),
@@ -529,7 +503,7 @@ describe("matchedGames", () => {
 	});
 
 	test("leaves a read unlinked when no game was reported within 30 minutes of it", () => {
-		const matched = Scoreboards.matchedGames({
+		const matched = matchedGames({
 			matches: [testMatch({ playedAt: 1000 + 31 * 60 })],
 			games: [testGame({ playedAt: 1000 })],
 		});
@@ -813,7 +787,6 @@ describe("recognizablePlayerNames", () => {
 });
 
 describe("Scoreboards.povWeaponId", () => {
-	const SENDER_ID = 1;
 	const rosterGame = () =>
 		testGame({
 			winnerUserIds: [1, 2, 3, 4],
@@ -949,6 +922,7 @@ describe("resolveContext", () => {
 
 	test("resolves the tournament whose games match the seen sequence", () => {
 		const context = Scoreboards.resolveContext({
+			povUserId: SENDER_ID,
 			matches: seenSequence,
 			games: [
 				...tournamentGames(1, [
@@ -967,6 +941,7 @@ describe("resolveContext", () => {
 
 	test("resolves a SendouQ match over a tournament when its games match better", () => {
 		const context = Scoreboards.resolveContext({
+			povUserId: SENDER_ID,
 			matches: seenSequence,
 			games: [
 				...tournamentGames(1, [
@@ -985,6 +960,7 @@ describe("resolveContext", () => {
 
 	test("does not resolve from a single matching match", () => {
 		const context = Scoreboards.resolveContext({
+			povUserId: SENDER_ID,
 			matches: [seenSequence[0]!],
 			games: tournamentGames(1, [
 				["SZ", 0],
@@ -995,23 +971,20 @@ describe("resolveContext", () => {
 		expect(context).toBe(null);
 	});
 
-	test("lets roster sides break a map-sequence tie", () => {
+	test("lets the sender's side break a map-sequence tie", () => {
 		const sharedMaplist: [ModeShort, number][] = [
 			["SZ", 0],
 			["TC", 1],
 		];
 		const context = Scoreboards.resolveContext({
+			povUserId: SENDER_ID,
 			matches: seenSequence,
 			games: [
-				...tournamentGames(1, sharedMaplist, {
-					winnerInGameNames: ["w1", "w2", "w3", "w4"],
-					loserInGameNames: ["l1", "l2", "l3", "l4"],
-				}),
-				// the other tournament's rosters contradict the match sides
 				...tournamentGames(2, sharedMaplist, {
-					winnerInGameNames: ["l1", "l2", "l3", "l4"],
-					loserInGameNames: ["w1", "w2", "w3", "w4"],
+					winnerUserIds: [77],
+					loserUserIds: [SENDER_ID],
 				}),
+				...tournamentGames(1, sharedMaplist),
 			],
 		});
 
@@ -1020,6 +993,7 @@ describe("resolveContext", () => {
 
 	test("skips unreadable matches but resolves from the rest", () => {
 		const context = Scoreboards.resolveContext({
+			povUserId: SENDER_ID,
 			matches: [
 				seenSequence[0]!,
 				testMatch({ playedAt: 1300, stage: null }),
