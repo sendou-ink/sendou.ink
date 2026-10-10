@@ -43,3 +43,4 @@ notepad.txt
 *.webm
 *.mov
 !/e2e/fixtures/scanner-vod.webm
+!/e2e/fixtures/scanner-coach-vod.webm

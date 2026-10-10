@@ -77,8 +77,12 @@ export class CalendarNewEventPage {
 	/** Fills the form in with the settings of a previous tournament of the user. */
 	async copyTournament(eventId: number) {
 		await this.locators.copyTournamentSelect.selectOption(String(eventId));
+		const formBeforeCopy =
+			await this.locators.copyTournamentSelect.elementHandle();
 		await this.locators.useTemplateButton.click();
 		await this.page.waitForURL(/copyEventId=/);
+		// the URL changes before the form remounts with the copied values, wiping anything filled in between
+		await formBeforeCopy?.waitForElementState("hidden");
 	}
 
 	/** Start time of the tournament as currently filled in. */

@@ -15,8 +15,7 @@ import type {
 } from "../../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	loadScoreboardLookalikes,
 	runDetectorOnFixture,
@@ -67,7 +66,7 @@ export async function runScoreboardBattleLogReplaySuite(
 
 			await t.test(
 				"matchScores",
-				{ skip: skip(fixture, "matchScores") },
+				fieldTestOptions(fixture, "matchScores"),
 				() => {
 					assert.deepEqual(event.data.matchScores, expected.matchScores);
 				},
@@ -75,7 +74,7 @@ export async function runScoreboardBattleLogReplaySuite(
 
 			await t.test(
 				"header",
-				{ skip: expected.mode === undefined || skip(fixture, "header") },
+				fieldTestOptions(fixture, "header", expected.mode !== undefined),
 				() => {
 					const dbg = event.debug?.header as
 						| { topReading?: string; bottomReading?: string }
@@ -98,9 +97,11 @@ export async function runScoreboardBattleLogReplaySuite(
 
 			await t.test(
 				"timestamp",
-				{
-					skip: expected.timestamp === undefined || skip(fixture, "timestamp"),
-				},
+				fieldTestOptions(
+					fixture,
+					"timestamp",
+					expected.timestamp !== undefined,
+				),
 				() => {
 					const dbg = event.debug?.header as
 						| { topReading?: string }
@@ -115,10 +116,11 @@ export async function runScoreboardBattleLogReplaySuite(
 
 			await t.test(
 				"replayCode",
-				{
-					skip:
-						expected.replayCode === undefined || skip(fixture, "replayCode"),
-				},
+				fieldTestOptions(
+					fixture,
+					"replayCode",
+					expected.replayCode !== undefined,
+				),
 				() => {
 					assert.equal(
 						event.data.replayCode,
@@ -130,7 +132,7 @@ export async function runScoreboardBattleLogReplaySuite(
 
 			await t.test(
 				"povIndex",
-				{ skip: expected.povIndex === undefined || skip(fixture, "povIndex") },
+				fieldTestOptions(fixture, "povIndex", expected.povIndex !== undefined),
 				() => {
 					const fractions = rows.map((r) => r.povFraction.toFixed(3)).join(",");
 					assert.equal(
@@ -147,7 +149,7 @@ export async function runScoreboardBattleLogReplaySuite(
 			// skipped by the parser, not emitted as phantom players.
 			await t.test(
 				"player count",
-				{ skip: expected.players === undefined || skip(fixture, "players") },
+				fieldTestOptions(fixture, "players", expected.players !== undefined),
 				() => {
 					assert.equal(event.data.players.length, players.length);
 				},
@@ -160,11 +162,11 @@ export async function runScoreboardBattleLogReplaySuite(
 
 				await t.test(
 					`row ${i} weapon`,
-					{
-						skip:
-							want.weaponId === undefined ||
-							skip(fixture, `players.${i}.weaponId`),
-					},
+					fieldTestOptions(
+						fixture,
+						`players.${i}.weaponId`,
+						want.weaponId !== undefined,
+					),
 					() => {
 						const top = dbg?.weapon?.top
 							.map((c) => `${c.id}:${c.score.toFixed(3)}`)
@@ -179,9 +181,11 @@ export async function runScoreboardBattleLogReplaySuite(
 
 				await t.test(
 					`row ${i} name`,
-					{
-						skip: want.name === undefined || skip(fixture, `players.${i}.name`),
-					},
+					fieldTestOptions(
+						fixture,
+						`players.${i}.name`,
+						want.name !== undefined,
+					),
 					() => {
 						assert.equal(
 							got.name,
@@ -193,10 +197,11 @@ export async function runScoreboardBattleLogReplaySuite(
 
 				await t.test(
 					`row ${i} paint`,
-					{
-						skip:
-							want.paint === undefined || skip(fixture, `players.${i}.paint`),
-					},
+					fieldTestOptions(
+						fixture,
+						`players.${i}.paint`,
+						want.paint !== undefined,
+					),
 					() => {
 						assert.equal(
 							got.paint,
@@ -208,9 +213,11 @@ export async function runScoreboardBattleLogReplaySuite(
 
 				await t.test(
 					`row ${i} stats`,
-					{
-						skip: want.ka === undefined || skip(fixture, `players.${i}.stats`),
-					},
+					fieldTestOptions(
+						fixture,
+						`players.${i}.stats`,
+						want.ka !== undefined,
+					),
 					() => {
 						const scores = dbg?.statScores.map((s) => s.toFixed(3)).join(",");
 						assert.deepEqual(
@@ -250,8 +257,4 @@ export async function runScoreboardBattleLogReplaySuite(
 			);
 		});
 	}
-}
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
 }

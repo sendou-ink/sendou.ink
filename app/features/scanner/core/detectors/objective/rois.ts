@@ -104,371 +104,156 @@ export const PENALTY_SINGLE_PROBE_MIN_CONF = 0.8;
 /** Control = saturated plate fill: even deep blue keeps ~130 spread; attested fills >=112 vs <=19. */
 export const CONTROL_PLATE_MIN_SATURATION = 60;
 
-// Player-status icon strips: eight squid/octo icons flank the timer (alive =
-// team-ink body, special held = pale wash, splatted = grey X). Three geometries
-// named by which side sits at the packed pitch: "even" draws both sides at
-// ~88px (the SWS26 broadcast draws it badges and all; the S2 POV fixture's
-// ~99px strip still reads at these centers); the spectator HUD draws bigger
-// icons (gauge digits top-RIGHT, camera badges below) at per-side pitches (~98
-// left vs ~76 right = "narrow-right"). Nothing is mirror-symmetric, so centers
-// are measured per side. Spectator icons ride ~20px left of their badge
-// centers; the narrow outer-right center sits past the measured icon (~1313)
-// because splat X's lean into inked backdrop on the left while alive bodies
-// extend right (dead <=0.16 vs alive >=0.33 at 1320).
-//
-// The spectator strip MIRRORS its pitches when the broadcast specs the other
-// team (AREA CUP VoD): "narrow-left", badges and all. Its right column lands
-// within px of even's, so it must be its own scored, badge-probed candidate or
-// the left column misreads. S3 POV draws both badge-less narrow arrangements
-// in steady state (2026-08-22 Sendou VoD = narrow-left, 2026-08-11 =
-// narrow-right), so no geometry implies a footage type; only badges prove a
-// broadcast (`cast`). Broadcasts can also hide badges while keeping geometry
-// (AREA CUP VoD), so player-status.ts scores the geometries by body-read
-// decisiveness; a mispicked layout flickers phantom deaths on the outer players.
+// Player-status icon strips (player-status.ts): four squid/octo icons per side
+// flank the timer, alive = team ink, special ready = a pale wash that pulses,
+// splatted = dark plate under a grey X, vacant seat = an opaque black squid. The game resizes each side
+// continuously (S3 POV swings it with the objective, a splatted POV player
+// shrinks it, spectators toggle views, broadcasts mirror it), so each side's
+// pitch is fitted per read. Icons scale with their pitch about a fixed center
+// line, the inner icon pinned beside the timer.
 
-/** Per-side slot center x's, slots left-to-right. */
-export const STATUS_SLOT_CENTERS_EVEN: readonly [
-	readonly number[],
-	readonly number[],
-] = [
-	[571, 657, 750, 839],
-	[1090, 1178, 1267, 1355],
+/** Each side's icon strip at any fitted pitch, for the debug views' crops. */
+export const STATUS_STRIP_ROIS: readonly [Roi, Roi] = [
+	{ x: 470, y: 10, w: 420, h: 115 },
+	{ x: 1030, y: 10, w: 425, h: 115 },
 ];
-export const STATUS_SLOT_CENTERS_NARROW_RIGHT: readonly [
-	readonly number[],
-	readonly number[],
+
+/** Band every fitted pitch's apexes, gaps, team-hue sample and body probe fall within. */
+export const STATUS_BAND: Roi = { x: 440, y: 10, w: 1040, h: 92 };
+
+/**
+ * Fitted pitches span every attested geometry and the tweens between (S3
+ * draws in-between pitches for seconds, e.g. ~81 beside ~91). The inner icon
+ * holds within a few px of these centers at every pitch.
+ */
+export const STATUS_PITCH_RANGE: readonly [number, number] = [72, 102];
+export const STATUS_INNER_CENTER_RANGES: readonly [
+	readonly [number, number],
+	readonly [number, number],
 ] = [
-	[543, 642, 741, 837],
-	[1085, 1161, 1237, 1320],
-];
-export const STATUS_SLOT_CENTERS_NARROW_LEFT: readonly [
-	readonly number[],
-	readonly number[],
-] = [
-	[605, 681, 757, 833],
-	[1090, 1187, 1283, 1381],
+	[830, 838],
+	[1082, 1092],
 ];
 
 /**
- * Shoulder probe (special-ready glow): upper-left body, clear of the weapon
- * silhouette, spectator gauge digits (top-right) and even trinkets (bottom).
- * Relative to a slot center.
+ * Icon model: at pitch p the icon scales by p / STATUS_REFERENCE_PITCH about
+ * y = STATUS_ICON_CENTER_Y, its kite apex STATUS_APEX_RISE (scaled) above that
+ * with 45° flanks. An octoling's dome contains the kite's apex triangle, so
+ * the triangle core reads either shape.
  */
-export const STATUS_SHOULDER_BOX_EVEN = { dx: -30, y: 38, w: 24, h: 20 };
-export const STATUS_SHOULDER_BOX_NARROW = { dx: -30, y: 35, w: 24, h: 30 };
+export const STATUS_REFERENCE_PITCH = 88;
+export const STATUS_ICON_CENTER_Y = 68;
+export const STATUS_APEX_RISE = 46;
 
 /**
- * Body probe (team ink = alive): widest band dodging camera badges (y>=100) and
- * even coin trinkets (y>=95). A slimmer box read alive 0.24 vs dead bleed 0.23
- * (AREA CUP VoD); this footprint separates them at 0.26 vs 0.20.
+ * Fit weights (player-status.ts fitSide): the apex edge contrast is the
+ * precise term; the gap corners (outside kite and dome alike) keep dome icons
+ * readable; team ink inside the apex vs beside it pins alive icons a white X
+ * or pale backdrop would otherwise outscore.
  */
-export const STATUS_BODY_BOX_EVEN = { dx: -40, y: 40, w: 80, h: 50 };
-export const STATUS_BODY_BOX_NARROW = { dx: -40, y: 45, w: 80, h: 50 };
-
-/** Ink pixel: saturated and bright; the value floor excludes dark saturated backdrops (blue walls v<=90). */
-export const STATUS_INK_MIN_SPREAD = 70;
-export const STATUS_INK_MIN_VALUE = 105;
+export const STATUS_GAP_WEIGHT = 0.5;
+export const STATUS_TEAM_WEIGHT = 1;
 
 /**
- * Glow pixel: 225 splits ready shoulders (>=0.40) from the brightest alive ink (even lime: 0.97 at
- * 215, 0.00 at 225).
+ * Search effort: fit statistics sample every STATUS_FIT_ROW_STEP-th row, and
+ * the coarse 2px grid's best few seeds are refined at 1px.
  */
-export const STATUS_GLOW_MIN_VALUE = 225;
+export const STATUS_FIT_ROW_STEP = 2;
+export const STATUS_FIT_REFINED_SEEDS = 3;
 
 /**
- * Ready glow must be UNSATURATED on every layout: the wash is pale while
- * backdrop leak is colored (sky over a dead shoulder: 0.30 raw, 0.00 capped,
- * spread >130; lilac/pink washes spread 70-90, capped 0.46-0.61). Even was
- * exempt on the belief that its ready icons light in team color, but all seven
- * attested even-layout washes glow unsaturated too (saturated fraction <=0.02),
- * and taking raw brightness there starred a live ORANGE body whose ink clears
- * the 225 floor unaided (Manta Maria scrim VoD: glow 0.48 at body ink 0.81).
- * The 225 floor was set against lime, which peaks just under it.
+ * The previous read's fit holds while it scores within this ratio of the best
+ * (single frames mislead: a splat's X stamping in oversized, a team wipe).
  */
-export const STATUS_GLOW_MAX_SPREAD = 90;
+export const STATUS_STICKY_SCORE_RATIO = 0.8;
+
+/** The fit carries forward only across reads this close (~1s apart in-match); longer means a new match. */
+export const STATUS_FIT_STICKY_MAX_GAP_S = 30;
 
 /**
- * Pale pixel: bright but unsaturated. The wash PULSES, dimming below the glow
- * floor (~190-220) at its trough; without this class a trough frame reads as a splat.
+ * Apex pixel classes, by value (max channel) and saturation (spread / max):
+ * ink = saturated team ink of any hue; pale = bright and not saturated (the
+ * wash, lilac to near-white); grey = the X strokes and the unlit plate.
+ * Saturation as a ratio is what tells a pale lavender wash (spread ~80 at
+ * value ~250) from team ink.
  */
-export const STATUS_PALE_MIN_VALUE = 185;
-export const STATUS_PALE_MAX_SPREAD = 70;
+export const STATUS_INK_MIN_SATURATION = 0.5;
+export const STATUS_INK_MIN_VALUE = 100;
+export const STATUS_PALE_MIN_VALUE = 160;
+export const STATUS_GREY_MAX_SATURATION = 0.15;
+export const STATUS_DARK_MAX_VALUE = 60;
 
 /**
- * Tinted pixel: bright-ish and unsaturated, but not neutral. The special-ready
- * wash is a pale team tint (lavender, pink, ...) at every pulse phase, while a
- * splatted icon is a neutral grey plate under a grey X — and under a blown-out
- * backdrop that plate reads near-white, so brightness alone cannot tell them
- * apart. Spread floor sits above chroma-subsampling noise on grey (splats
- * <=0.19 tinted) and the value floor above the dimmed plate.
+ * Team ink for the fit: within this hue distance of the side's modal ink hue
+ * (10° bins), sampled every other pixel over the icons' upper bodies.
  */
-export const STATUS_TINT_MIN_VALUE = 100;
-export const STATUS_TINT_MIN_SPREAD = 12;
-
-/**
- * Splatted: body ink under the floor (dead <=0.20 vs alive >=0.26) and a
- * neutral body (STATUS_WASH_MIN_BODY_TINT). Even reads add the shoulder-glow
- * guard (ready >=0.40 vs dead <=0.03); on narrow layouts backdrop leak past a
- * shrunken X reads 0.26-0.35 there, so only the body classes decide.
- */
-export const STATUS_DEAD_MAX_BODY_INK = 0.23;
-export const STATUS_DEAD_MAX_SHOULDER_GLOW = 0.2;
-
-/**
- * Wash body: tinted past this on an ink-poor body means the special-ready
- * wash at any pulse phase (bright frames and the dim trough alike), under it
- * a splat. Splats read <=0.25 (SWS26 splat on a blown-out white sky: 0.07 at
- * pale 0.80), ink-poor washes >=0.45 (SWS26 even-layout trough: 0.57 at pale
- * 0.13, shoulder glow 0.20 — under both ready floors).
- */
-export const STATUS_WASH_MIN_BODY_TINT = 0.3;
-
-/**
- * Grey pixel: neutral (the tint class's complement) at mid brightness — the
- * splat's X strokes, which cross the whole body box on every splat whatever
- * the backdrop does to the translucent plate under them.
- */
-export const STATUS_GREY_MIN_VALUE = 90;
-export const STATUS_GREY_MAX_VALUE = 200;
-
-/** Dark pixel: the unlit plate of a splatted or vacant slot. */
-export const STATUS_DARK_MAX_VALUE = 70;
-
-/**
- * ...or tinted past a lower floor on a body no X crosses: a large dark weapon
- * render (Nautilus drum) fills the body box and dilutes the wash to 0.2-0.3
- * tint (Triton cup VoD, S3 POV), where splats over a bright tinted backdrop
- * land too (sky and sunlit walls through the translucent plate). The X strokes
- * split them: splats in that band read grey >=0.17 (median ~0.35), the
- * drum-diluted washes <=0.10. Grey renders (Painbrush) put other washes at
- * 0.15-0.25, left to the main floor. The dark cap keeps out the unlit black
- * squid a slot shows without any X (InTheZone VoD: dark >=0.57, drum-diluted
- * washes 0.20-0.35).
- */
-export const STATUS_UNCROSSED_WASH_MIN_BODY_TINT = 0.2;
-export const STATUS_UNCROSSED_WASH_MAX_BODY_GREY = 0.15;
-export const STATUS_UNCROSSED_WASH_MAX_BODY_DARK = 0.45;
-
-/**
- * ...and a body the X does cross is never a wash, however tinted: a pale teal
- * or sky backdrop through the translucent plate lifts a splat's tint to
- * 0.30-0.46 (Triton cup VoD, 21 such splats over the whole VoD). Neither
- * stroke class alone splits them from washes: grey or two-tone weapon renders
- * put washes at grey up to 0.26, and dark renders (Nautilus drum, frying pan)
- * at dark up to 0.35. Together they do: those splats read grey >=0.21 at dark
- * >=0.17, while every wash reading grey >=0.2 reads dark <=0.16. Margins are
- * THIN on dark (0.16 vs 0.17) — re-measure before moving either.
- */
-export const STATUS_CROSSED_MIN_BODY_GREY = 0.2;
-export const STATUS_CROSSED_MIN_BODY_DARK = 0.17;
-
-/** Special ready: shoulder glow past this (attested >=0.40 vs <=0.06). */
-export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
-
-/**
- * Ready off the body when the shoulder misses the wash (trough, compressed
- * footage): ready >=0.31 (AREA CUP after a respawn) vs alive <=0.25 (silhouette whites).
- */
-export const STATUS_READY_MIN_BODY_PALE = 0.3;
-
-/**
- * ...and only on a body the wash has emptied of ink. Pale alone cannot carry a
- * ready read: a near-white weapon render (S-BLAST '91, Museum d'Alfonsino
- * scrim VoD) pales a live body to 0.33-0.44 without touching its ink, which
- * charted two whole matches as one unbroken special-ready band. Body ink over
- * that footage splits cleanly — 272 dense reads of the slot land at 0.01-0.09
- * washed and 0.25-0.47 alive, nothing in between — and every attested wash
- * reaching ready off the pale body alone reads <=0.18. The graded
- * STATUS_READY_*WASH* allowances above stay wider because they only ever apply
- * to washes the shoulder glow corroborates (attested inky washes 0.30-0.40 all
- * glow >=0.27, though the triton one clears the glow floor by only 0.03 — if
- * footage ever drops it under, that wash needs this branch and would be lost).
- */
-export const STATUS_READY_PALE_ONLY_MAX_BODY_INK = 0.22;
-
-/**
- * Narrow-layout ready guard: the wash REPLACES body ink, so an ink-heavy body
- * means backdrop leak (the overhead view's left column sits ~12px off, sliding
- * probes onto pale buildings / the lead banner: ink >=0.44). Graded: clean
- * washes ink <=0.303 (SWS26 pale pink on orange; nearest alive 0.33 has no
- * wash signal); inky washes (0.316-0.41) still read strongly pale (>=0.36)
- * while the Um'ami POV leak read ink 0.36 / pale 0.269. The ceiling sits above
- * the pink pulse phase of a pale-pink wash on orange (Manta Maria scrim VoD:
- * ink 0.41 at pale 0.36, glow 0.43), which the pitch fix brought under these
- * guards; the nearest leak that also reads pale is 0.45. Even reads them too:
- * its inkiest attested wash is 0.403 at pale 0.37, with a colored weapon
- * render still in the box. Margins are THIN (ink 0.303 vs 0.32, 0.403/0.41 vs
- * 0.42 vs 0.45; pale 0.36 vs 0.35) — re-measure before moving any.
- */
-export const STATUS_READY_WASH_MAX_BODY_INK = 0.42;
-export const STATUS_READY_CLEAN_WASH_MAX_BODY_INK = 0.32;
-export const STATUS_READY_INKY_WASH_MIN_BODY_PALE = 0.35;
-/**
- * An inky wash is tinted by the ink it leaks (attested >=0.28, Wahoo World
- * even layout at ink 0.40); a white cloud behind an alive icon fakes the pale
- * body and glow untinted (AREA CUP sky backdrop: 0.13-0.14 at ink 0.39).
- */
-export const STATUS_READY_INKY_WASH_MIN_BODY_TINT = 0.2;
-
-/**
- * A ready read also needs a minimally pale body: every attested wash reads
- * >=0.22 (bright and trough) while a dead icon under skylight leak (2026-08-22
- * VoD: shoulder 0.26-0.35) reads pale <=0.15 — a dead body is ink-poor, so the
- * ink guards cannot catch it.
- */
-export const STATUS_READY_MIN_WASH_BODY_PALE = 0.2;
-
-/**
- * The wash is a pale tint of the team's own ink, while a big cream weapon
- * render (Order Shot Replica, 2026-10-07 Crableg VoD) pales and tints a live
- * purple body just as much, its shoulder too. So a ready read on a body that
- * still holds ink needs most of its tinted pixels within the hue tolerance of
- * the side's ink (the team hue, from every slot's body ink): attested washes
- * there read >=0.62, the cream render <=0.34. A pinkish wash on a purple team
- * sits ~50° off the ink's hue, hence the wide tolerance. Ink-poor washes skip
- * it, as does a side with too little ink to tell its hue.
- */
-export const STATUS_READY_MIN_TEAM_TINT = 0.48;
-export const STATUS_TEAM_TINT_MAX_HUE_DIFF = 60;
-export const STATUS_TEAM_HUE_MIN_BODY_INK = 0.05;
-
-/**
- * Layout scoring: per-slot decisiveness is body-ink distance from the dead
- * threshold, capped so one saturated slot cannot carry a misaligned geometry.
- * Sticky margin: what a challenger must win by to switch an established layout.
- */
-export const STATUS_LAYOUT_SCORE_CAP = 0.3;
-export const STATUS_LAYOUT_STICKY_MARGIN = 0.04;
-
-/**
- * Fresh badge-less picks prefer narrow-right (badge-less even is barely
- * attested; busy backdrops mis-rank: sendou-triton match-start scores even
- * 0.278 / narrow-right 0.273 yet is narrow-right). Even wins only when
- * narrow-right reads under the floor (S2 POV fixture 0.198 vs true >=0.212) or
- * leads decisively. Every badge-less frame attested narrow-right hands even a
- * lead of at most 0.016 (worst: pov-alfonsino-false-star-at-match-start),
- * while the one attested badge-less even frame that clears the floor leads by
- * 0.034 (pov-inkblot-even-pitch-read-as-narrow, whose sky backdrop lifts
- * narrow-right to 0.239) — the threshold splits that gap. With even at the
- * SWS26 pitch, the badge-less AREA CUP trough frame (0.192 vs even 0.224)
- * lands on even through the floor instead, where every slot still reads right.
- */
-export const STATUS_FRESH_NARROW_RIGHT_MIN_DECISIVENESS = 0.21;
-export const STATUS_FRESH_EVEN_MIN_LEAD = 0.025;
-
-/**
- * Fresh badge-less NARROW-LEFT pick (pickLayout): S3 POV draws it in steady
- * state (2026-08-22 Sendou VoD, centers within ~10px) over pale backdrops that
- * drown the comb, so the LEFT column — the only one differing from even — must
- * win decisively: true frames lead by >=0.046, rival winners by <=0.001. The S2
- * POV fixture survives that (lead 0.052 off featureless backdrop) but its left
- * comb is strong at the rival pitch (0.326/0.325 vs <=0.220 on true frames), so
- * a readable rival left comb vetoes.
- */
-export const STATUS_FRESH_NARROW_LEFT_MIN_LEFT_LEAD = 0.025;
-export const STATUS_FRESH_NARROW_LEFT_RIVAL_COMB_VETO = 0.3;
-
-/**
- * Slot-comb contrast (combContrast): a rigid comb exposes the pitch — badge-less
- * narrow-left scores 0.81 while narrow-right reads it at -0.07 (sendou-triton
- * MakoMart), so a decisive win (past the floor AND leading both rivals) proves
- * that geometry whatever came before. Both gates needed: worst false narrow-left
- * comb is 0.44 with a 0.24 lead. S3 POV resizes each side's icons as the
- * objective swings (there, a side both holding the zone and leading drew
- * large), so one Splat Zones game cycles through all three geometries and some
- * in-between pitches (Triton cup VoD, Brinewater Springs: a dozen switches),
- * which only the comb follows. Even needs the stronger win: its columns sit between the narrow ones, so the
- * comb's ±10px shift lets it half-fit either, and the AREA CUP overhead view
- * (left column ~12px off narrow-right) combs even 0.77 with a 0.30 lead. Clean
- * even frames in that Triton game comb 0.98 with a 0.40 lead at the median,
- * and three in four clear both floors — enough, as the pick is sticky.
- */
-export const STATUS_COMB_BAND_Y = 35;
-export const STATUS_COMB_BAND_H = 61;
-export const STATUS_COMB_SIDE_SPANS: readonly [
-	[number, number],
-	[number, number],
-] = [
-	[440, 960],
-	[960, 1480],
+export const STATUS_TEAM_MAX_HUE_DIST = 25;
+export const STATUS_TEAM_HUE_ROIS: readonly [Roi, Roi] = [
+	{ x: 500, y: 45, w: 370, h: 41 },
+	{ x: 1050, y: 45, w: 370, h: 41 },
 ];
-export const STATUS_COMB_CENTER_HALF_WIDTH = 16;
-export const STATUS_COMB_GAP_HALF_WIDTH = 7;
-export const STATUS_COMB_MAX_SHIFT = 10;
-export const STATUS_DECISIVE_COMB_MIN = 0.5;
-export const STATUS_DECISIVE_COMB_LEAD = 0.25;
-export const STATUS_DECISIVE_EVEN_COMB_MIN = 0.8;
-export const STATUS_DECISIVE_EVEN_COMB_LEAD = 0.35;
 
 /**
- * Sticky flips away from narrow-right need comb corroboration (past this floor
- * AND leading by STATUS_DECISIVE_COMB_LEAD): while the S3 POV player is dead
- * the strip shrinks ~0.77 toward the timer, landing near narrow-left pitches
- * (2026-08-11 Um'ami VoD locked 107 of 136 reads that way). True narrow-left
- * combs 0.41-0.81 with >=0.31 lead; worst POV false comb 0.20, negative lead.
+ * Slot state off the apex fractions. Over every fixture slot: alive apexes
+ * read ink >=0.43 vs <=0.19 otherwise; ready read pale >=0.6 at grey <=0.14,
+ * splats grey >=0.18 at pale <=0.38 (a blown-out backdrop through the plate).
  */
-export const STATUS_STICKY_FLIP_COMB_MIN = 0.3;
+export const STATUS_ALIVE_MIN_INK = 0.3;
+export const STATUS_READY_MIN_PALE = 0.45;
+export const STATUS_READY_MAX_GREY = 0.2;
 
 /**
- * Even loses to narrow-right on the comb alone (past this floor AND leading by
- * this much), no score margin needed: a spectator toggling between the overhead
- * map and a player POV swaps the two geometries mid-match, and even's columns
- * sit between the narrow ones, so the mispicked geometry still scores within
- * 0.001 of the right one (Manta Maria scrim VoD locked even for a whole match,
- * starring the outer right slot 39% of its reads). True narrow-right stretches
- * combed 0.27-0.78 over that footage, leading even by 0.29-0.45; the widest
- * false lead on genuinely even footage is 0.15 (pov-wahoo-world-special-dead).
+ * Vacant seat (no player in a 1v1 lobby, or a disconnect): the body (reference
+ * px about the icon center line) all but black with no grey X stroke or weapon
+ * render in it. Switzerland 1v1 cast: every empty seat read black >=0.85 at
+ * grey 0; ~5000 splats elsewhere passed only on 12 frames of the X stamping in
+ * oversized and black (the death then starts a read later).
  */
-export const STATUS_EVEN_FLIP_COMB_MIN = 0.3;
-export const STATUS_EVEN_FLIP_COMB_LEAD = 0.25;
+export const STATUS_VACANT_BODY = { top: -20, bottom: 26, halfWidth: 28 };
+export const STATUS_VACANT_MIN_DARK = 0.85;
+export const STATUS_VACANT_MAX_GREY = 0.03;
 
-/** Layout carries forward only across reads this close (~1s apart in-match); longer means a new match. */
-export const STATUS_LAYOUT_STICKY_MAX_GAP_S = 30;
-
-// Strip weapon-icon evidence (strip-weapons.ts), calibrated on the sendou-triton
-// VoD (narrow-right, 720p upscaled to canonical).
+// Strip weapon-icon evidence (strip-weapons.ts): masked NCC at the fitted
+// scale, calibrated on the sendou-triton VoD (pitches 74-97).
 
 /**
- * Search window per slot center: holds the render at any geometry (~65px on narrow strips) without
- * a neighbor's art.
+ * Each slot's crop is resampled to the reference pitch: a square of this half
+ * size (reference px) about the icon center, nudged down STRIP_WEAPON_CENTER_DY.
+ * Leaves room for the template plus the search offsets.
  */
-export const STRIP_WEAPON_BOX = { dx: -50, y: 20, w: 100, h: 100 };
+export const STRIP_WEAPON_CROP_HALF = 52;
+export const STRIP_WEAPON_CENTER_DY = 1;
 
-/** Narrow strips draw renders at ~55-70px depending on the weapon's aspect. */
-export const STRIP_WEAPON_TEMPLATE_SIZES = [44, 52, 60, 68, 76] as const;
+/** The game icon's full canvas width at the reference pitch (its art drawn at ~1.05x the pitch). */
+export const STRIP_WEAPON_ICON_SIZE = 92;
+
+/** Template pixels count only where the icon art is this opaque, so the plate and backdrop never weigh in. */
+export const STRIP_WEAPON_MASK_MIN_ALPHA = 200;
 
 /**
- * Knocked-out plate pixels and template backgrounds: mid-grey so dark barrels and white bodies both
- * keep contrast.
+ * Template offsets searched about the crop center (reference px): the fitted
+ * centers wobble a few px across a strip, the icon's height barely.
  */
-export const STRIP_WEAPON_TEMPLATE_BACKGROUND = 90;
+export const STRIP_WEAPON_SEARCH = { x: 4, y: 1 };
 
-/** Ink floor for the NCC coverage penalty over that background. */
-export const STRIP_WEAPON_INK_THRESHOLD = 140;
+/** A half-resolution pass over every weapon shortlists this many for the full-resolution pass. */
+export const STRIP_WEAPON_SHORTLIST = 12;
 
-/**
- * Plate pixel: saturated, bright, near the region's modal saturated hue. Floors
- * sit under the modal-vote floors (+15 in strip-weapons.ts) to reach dimmer edge pixels.
- */
-export const STRIP_WEAPON_KNOCKOUT_MIN_SPREAD = 55;
-export const STRIP_WEAPON_KNOCKOUT_MIN_VALUE = 90;
-export const STRIP_WEAPON_MAX_PLATE_HUE_DIST = 30;
-
-/** Single reads rank the true weapon top-1 about half the time, but top-8 often enough for the aggregate. */
+/** The true weapon ranks top-1 on ~93% of single reads; the aggregate needs only the runners-up's score floor. */
 export const STRIP_WEAPON_TOP_K = 8;
 
-/**
- * Every Nth counter read samples strip weapons: ~20 samples over a short match assign correctly;
- * the sweep is too heavy per read.
- */
+/** Below this best score the slot holds no weapon render (an empty seat, a covered icon) and is skipped. */
+export const STRIP_WEAPON_MIN_SCORE = 0.5;
+
+/** Every Nth counter read samples strip weapons: identities hold all game, so dense reads add nothing. */
 export const STRIP_WEAPON_SAMPLE_INTERVAL = 5;
 
 /**
  * Broadcast discriminator (`cast`): the spectator HUD draws white camera badges
- * under the right team's icons, one row per geometry (even's at the ~88px
- * pitch, SWS26). All four probes must read white (bright AND unsaturated — sky
- * is saturated cyan). Badge frames read >=0.33 (AREA CUP faded row), every
- * badge-less frame <=0.004.
+ * under the right team's icons, one row per strip arrangement (the ~88px one
+ * on SWS26). All four probes must read white (bright AND unsaturated — sky is
+ * saturated cyan). Badge frames read >=0.33 (AREA CUP faded row); a white
+ * backdrop under a POV strip still fakes a row now and then.
  */
 export const STATUS_DPAD_PROBES_NARROW_RIGHT: readonly Roi[] = [
 	1105, 1180, 1256, 1332,
@@ -507,9 +292,20 @@ export const TRACK_COMB_SPAN: readonly [number, number] = [520, 1400];
 export const TRACK_COMB_OFFSET_Y = 9;
 
 /**
- * Comb projection at the dot phase: gameplay with the track reads >=17 (a
- * dark backdrop leaves little between dots and ground), every other frame
- * <=7 (SZ HUD, lobby, results, the intro).
+ * The comb projects each 110px window on its own and drops the two worst: a
+ * checkpoint square, an end marker or a backdrop edge along the line (the
+ * overhead super-jump camera on Humpback Pump Track) drives a window into
+ * anti-phase, which sank a whole-span projection under the floor.
+ */
+export const TRACK_COMB_WINDOW = 110;
+export const TRACK_COMB_DROPPED_WINDOWS = 2;
+
+/**
+ * Comb projection at the dot phase: gameplay with the track reads >=26 on
+ * every TC/RM fixture, though a low-contrast backdrop leaves little between
+ * dots and ground (Humpback Pump Track samples 8-20, purple dots over navy
+ * the lowest); every other frame <=7.5 (SZ HUD, lobby, results, the intro,
+ * the POV map).
  */
 export const GATE_TRACK_MIN_COMB = 11;
 

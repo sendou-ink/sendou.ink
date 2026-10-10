@@ -1,7 +1,6 @@
 {
   "event": "StripWeapons",
   "data": {
-    "layout": "narrow-right",
     "weapons": [
       [2070, 10, 211, 1010],
       [1042, 50, 21, 2070]

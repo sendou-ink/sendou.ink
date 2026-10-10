@@ -1,7 +1,6 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "narrow-right",
 		"time": 296,
 		"special": [
 			[false, false, false, false],
@@ -13,6 +12,6 @@
 		]
 	},
 	"options": {
-		"notes": "sendou-triton VoD (Hagglefish Market, match 1) spectator HUD at 4:56 — four seconds into the match, so no special can be charged, yet the live scan read left slot0 as special ready (★··· @ 0.971, cast layout). The slot's body is largely covered by the big white Splattershot Jr. silhouette, which fakes the ready wash's pale/glow classes; the bright sky backdrop pushes the layout scores into a near-tie (pov 0.278 / cast 0.273), so a history-less read flips to pov outright and stars five slots. All eight players are alive with saturated team-ink bodies."
+		"notes": "sendou-triton VoD (Hagglefish Market, match 1) spectator HUD at 4:56 — four seconds into the match, so no special can be charged, yet the live scan read left slot0 as special ready (★··· @ 0.971, cast layout). The slot's body is largely covered by the big white Splattershot Jr. silhouette, which fakes the ready wash's pale/glow classes; the bright sky backdrop pushes the layout scores into a near-tie (pov 0.278 / cast 0.273), so a history-less read flips to pov outright and stars five slots. All eight players are alive with saturated team-ink bodies. Layout relabeled narrow-right -> even (2026-10-09): the kite apexes sit at even's pitch on both sides (team-hue apex comb, STATUS_APEX_*); every slot reads the same under either geometry."
 	}
 }

@@ -33,8 +33,8 @@ import type { ScoreboardResources } from "../scoreboard/index";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
 	type PlayerStatusData,
-	type PlayerStatusLayout,
 	parsePlayerStatus,
+	type StripFit,
 } from "./player-status";
 import {
 	CONTROL_PLATE_MIN_SATURATION,
@@ -53,11 +53,11 @@ import {
 	SCORE_EXTEND_MIN_CONF,
 	SCORE_ROIS,
 	SCORE_TEXT_HEIGHTS,
-	STATUS_LAYOUT_STICKY_MAX_GAP_S,
+	STATUS_FIT_STICKY_MAX_GAP_S,
 	STRIP_WEAPON_SAMPLE_INTERVAL,
 	TRACK_PLATE_TEXT_HEIGHTS,
 } from "./rois";
-import { parseStripWeaponsSteps, type StripWeaponsData } from "./strip-weapons";
+import { parseStripWeapons, type StripWeaponsData } from "./strip-weapons";
 import { readMatchTimerSteps, timerBoxChecks, timerGlyphSets } from "./timer";
 import { readTrackSteps, trackComb } from "./track";
 
@@ -155,7 +155,7 @@ interface SideRead {
 export function createObjectiveDetector(
 	resources: ScoreboardResources,
 ): Detector<ObjectiveData | PlayerStatusData | StripWeaponsData> {
-	let lastStatus: { layout: PlayerStatusLayout; t: number } | undefined;
+	let lastStatus: { fit: StripFit; t: number } | undefined;
 	// primed so the very first read samples (short matches, single-frame fixtures)
 	let readsSinceWeaponSample = STRIP_WEAPON_SAMPLE_INTERVAL;
 
@@ -361,15 +361,15 @@ export function createObjectiveDetector(
 		if (!counter) return [];
 		const timeValue = counter.event.data.time;
 
-		const playerStatus = parsePlayerStatus(
+		const { event: playerStatus, fit } = parsePlayerStatus(
 			frame,
 			t,
 			timeValue,
-			lastStatus && t - lastStatus.t <= STATUS_LAYOUT_STICKY_MAX_GAP_S
-				? lastStatus.layout
+			lastStatus && t - lastStatus.t <= STATUS_FIT_STICKY_MAX_GAP_S
+				? lastStatus.fit
 				: undefined,
 		);
-		lastStatus = { layout: playerStatus.data.layout, t };
+		lastStatus = { fit, t };
 
 		// sampled slot-identity evidence for the strip → scoreboard-row assignment;
 		// identities are fixed so every read would re-measure at full sweep cost
@@ -380,10 +380,11 @@ export function createObjectiveDetector(
 			readsSinceWeaponSample >= STRIP_WEAPON_SAMPLE_INTERVAL
 		) {
 			readsSinceWeaponSample = 0;
-			stripWeapons = yield* parseStripWeaponsSteps(
+			stripWeapons = parseStripWeapons(
 				frame,
 				t,
 				playerStatus.data,
+				fit,
 				resources.stripWeapons,
 			);
 		}

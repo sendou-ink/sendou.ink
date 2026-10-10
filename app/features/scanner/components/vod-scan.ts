@@ -37,6 +37,7 @@ import {
 	loadVodEvents,
 	type StoredVodEvent,
 	saveVod,
+	type VodMinimap,
 } from "../store/vods";
 import {
 	AnalyzerClient,
@@ -107,6 +108,8 @@ export interface VodScanSnapshot {
 	/** what the scan found, chronological; reloaded from the store once saved */
 	events: ScanEvent[];
 	clipsWork: ClipsWork | null;
+	/** seconds from the scan's start until it was saved; null until done */
+	tookSeconds: number | null;
 }
 
 /** Kept apart from the snapshot: it ticks several times a second, which must not re-render the match cards. */
@@ -121,6 +124,7 @@ const IDLE: VodScanSnapshot = {
 	error: null,
 	events: [],
 	clipsWork: null,
+	tookSeconds: null,
 };
 
 const IDLE_PROGRESS: VodScanProgressSnapshot = {
@@ -143,6 +147,8 @@ let abortChunks: (() => void) | null = null;
  * scan that replaced it.
  */
 let generation = 0;
+/** files scanned or opened this visit by name, so they can be played back */
+const visitFiles = new Map<string, File>();
 
 export function useVodScan(): VodScanSnapshot {
 	return useSyncExternalStore(
@@ -202,6 +208,16 @@ export function vodScanFrame(
 	return undefined;
 }
 
+/** The file named `name` scanned or opened this visit; null when it was scanned in an earlier one. */
+export function visitVodFile(name: string): File | null {
+	return visitFiles.get(name) ?? null;
+}
+
+/** Keeps a file the user opened again for playback until the page is left. */
+export function rememberVisitVodFile(file: File): void {
+	visitFiles.set(file.name, file);
+}
+
 /** Stops a running scan; nothing of it is saved. */
 export function cancelVodScan(): void {
 	abortRef.aborted = true;
@@ -211,7 +227,8 @@ export function cancelVodScan(): void {
 /**
  * Scans `file` as fast as decoding allows; a finished scan replaces any saved
  * one of the same name. `saveFrames: false` skips keeping each event's
- * analyzed frame, `clips: false` cutting clips of the scan.
+ * analyzed frame and the map opens' snapshots, `clips: false` cutting clips
+ * of the scan.
  */
 export async function startVodScan(
 	file: File,
@@ -225,6 +242,7 @@ export async function startVodScan(
 	const abort = { aborted: false };
 	abortRef = abort;
 	frames = new WeakMap();
+	visitFiles.set(file.name, file);
 	const own = ++generation;
 	const update = (patch: Partial<VodScanSnapshot>) => {
 		if (own === generation) set(patch);
@@ -235,6 +253,7 @@ export async function startVodScan(
 	const preview = (frame: ImageBitmap | VideoFrame, lane: number) => {
 		if (own === generation) drawPreview(laneCanvases.get(lane), frame);
 	};
+	const scanStartedAt = performance.now();
 	set({
 		...IDLE,
 		name: file.name,
@@ -244,6 +263,7 @@ export async function startVodScan(
 
 	const timeline = new TimelineBuilder();
 	let events: ScanEvent[] = [];
+	const minimaps: VodMinimap[] = [];
 	let clients: AnalyzerClient[] = [];
 	let publishTimer: ReturnType<typeof setTimeout> | null = null;
 	const publish = () => {
@@ -263,6 +283,9 @@ export async function startVodScan(
 				new AnalyzerClient(
 					(result) => {
 						if (!result.gate.pass) return;
+						if (result.minimapSnapshot) {
+							minimaps.push({ t: result.t, image: result.minimapSnapshot });
+						}
 						for (const event of result.events as DetectedEvent<FixtureData>[]) {
 							const action = timeline.push(event);
 							if (action.action === "merged" || action.action === "dropped")
@@ -300,6 +323,7 @@ export async function startVodScan(
 						collectTelemetry: telemetry,
 						webgpu: readSettings().webgpu,
 						attachFrames: saveFrames,
+						snapshotMinimaps: saveFrames,
 					},
 				),
 		);
@@ -481,9 +505,7 @@ export async function startVodScan(
 				name: file.name,
 				savedAt: Date.now(),
 				duration,
-				summary: sessionSummary(
-					buildScannerMatches(events).map((built) => built.match),
-				),
+				summary: sessionSummary(buildScannerMatches(events)),
 			},
 			events.map((event) => ({
 				type: event.type,
@@ -492,9 +514,14 @@ export async function startVodScan(
 				data: event.data,
 				frame: frames.get(event),
 			})),
+			minimaps,
 		);
 		events = (await loadVodEvents(file.name)).map(toScanEvent);
-		update({ events, status: "done" });
+		update({
+			events,
+			status: "done",
+			tookSeconds: (performance.now() - scanStartedAt) / 1000,
+		});
 		void refreshVods();
 		if (clips) await cutClips(file, events, update);
 	}

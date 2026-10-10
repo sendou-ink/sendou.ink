@@ -22,8 +22,7 @@ import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/in
 import type { Detector } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../node/fixtures";
@@ -69,7 +68,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"time",
-			{ skip: expected.time === undefined || skip(fixture, "time") },
+			fieldTestOptions(fixture, "time", expected.time !== undefined),
 			() => {
 				assert.equal(
 					event.data.time,
@@ -81,7 +80,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"rows",
-			{ skip: expected.names === undefined || skip(fixture, "names") },
+			fieldTestOptions(fixture, "names", expected.names !== undefined),
 			() => {
 				assert.equal(
 					event.data.names.length,
@@ -94,7 +93,7 @@ for (const fixture of fixtures) {
 		for (const [row, want] of (expected.names ?? []).entries()) {
 			await t.test(
 				`names[${row}]`,
-				{ skip: skip(fixture, `names.${row}`) },
+				fieldTestOptions(fixture, `names.${row}`),
 				() => {
 					assert.equal(
 						event.data.names[row],
@@ -210,7 +209,3 @@ test("row reads are memoized across advancing frames only", async () => {
 		frame.delete();
 	}
 });
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
-}

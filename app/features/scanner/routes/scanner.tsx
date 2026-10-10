@@ -3,9 +3,11 @@ import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SCANNER_PAGE } from "~/utils/urls";
+import { scannerSearchParams } from "../scanner-search-params";
 
 // `builds` powers the empty/UNKNOWN ability label in <Ability />; the weapon
 // and game-misc namespaces the scanner cards rely on are always loaded.
@@ -38,6 +40,11 @@ const ScannerApp = lazy(() =>
 
 export default function ScannerPage() {
 	const isHydrated = useHydrated();
+	const [view] = useSearchParam(scannerSearchParams, "view");
 
-	return <Main bigger>{isHydrated ? <ScannerApp /> : <Placeholder />}</Main>;
+	return (
+		<Main bigger breakoutContainer={view === "coach"}>
+			{isHydrated ? <ScannerApp /> : <Placeholder />}
+		</Main>
+	);
 }

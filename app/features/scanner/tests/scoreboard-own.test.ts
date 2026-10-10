@@ -15,8 +15,7 @@ import {
 } from "../core/detectors/scoreboard-own/index";
 import type { Detector } from "../core/detectors/types";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../node/fixtures";
@@ -56,7 +55,7 @@ for (const fixture of fixtures) {
 		for (const field of ["lobby", "mode", "stage"] as const) {
 			await t.test(
 				field,
-				{ skip: expected[field] === undefined || skip(fixture, field) },
+				fieldTestOptions(fixture, field, expected[field] !== undefined),
 				() => {
 					assert.equal(
 						event.data[field],
@@ -69,7 +68,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"weapon",
-			{ skip: expected.weaponId === undefined || skip(fixture, "weapon") },
+			fieldTestOptions(fixture, "weapon", expected.weaponId !== undefined),
 			() => {
 				assert.equal(
 					event.data.weaponId,
@@ -82,7 +81,7 @@ for (const fixture of fixtures) {
 		for (const [row, wantRow] of (expected.abilities ?? []).entries()) {
 			await t.test(
 				`abilities row ${row}`,
-				{ skip: skip(fixture, `abilities.${row}`) },
+				fieldTestOptions(fixture, `abilities.${row}`),
 				() => {
 					assert.deepEqual(
 						event.data.abilities[row],
@@ -149,8 +148,4 @@ for (const fixture of fixtures.filter(
 			);
 		}
 	});
-}
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
 }

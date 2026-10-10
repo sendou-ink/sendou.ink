@@ -93,6 +93,10 @@ same trait.
      (`STAGE_<id>`), ability codes in `app/modules/in-game-lists/abilities.ts`.
    - What the frame does not show with certainty stays out, or goes in
      `options.skipFields` with the reason in `options.notes`. Never guess.
+   - A field whose label is certain but that the scanner can't read yet goes
+     in `options.misreadFields` (reason in `options.notes`): it must keep
+     failing, and the test goes red once it reads correctly so the entry
+     gets removed.
 4. Confirm it is red: `pnpm test:scanner -t "<case-name>"` must fail, on the
    misread field(s) only. If it passes it does not reproduce the report;
    look again.

@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": null,
+		"time": 211,
+		"special": [
+			[false, false, false, true],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"skipFields": ["special.0.3"],
+		"notes": "六兆年… XP4526 VoD (-I23PqqYtHQ, 1080p S3 POV), game 14 Hagglefish Market at 3:31, t=5001.4. No lead banner here: left slot 0 (POV, Blaster) is plain yellow and alive, yet a fresh read picks narrow-right and calls it ready. The strip is between geometries: the left column runs at a ~80px pitch (apexes ~[592,677,752,835], closest to narrow-left) while the right one is at even's ~88 (~[1090,1175,1260,1355]), so layout is skipped; narrow-right's slot-0 boxes sit ~50px left of the icon on the teal water. The team-hue apex comb reads narrow-right at ~0 against 1.07-1.18 for the other two (STATUS_APEX_VETO_*), which rules it out. Left slot 3's speckled render reads pale and the scan held it ★ for 20+ seconds — plausible but not confirmed, so skipped."
+	}
+}

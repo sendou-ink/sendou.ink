@@ -2,18 +2,18 @@
  * One game of a session or file, the same card in every view. Collapsed it
  * is one row: mode and stage (plus the X Battle set count the game left),
  * the game's clips, the result and the POV player's K/D/S, then the teams'
- * weapons and, once the game is over, its upload state beside the expand
- * arrow. Expanded it shows the data and
+ * weapons and, once the game is over, its upload state and coach mode link
+ * beside the expand arrow. Expanded it shows the data and
  * nothing interpreted: the scoreboard, the objective + player-status
  * timeline and deaths and kills (each with a ▶ when a clip covers it), and
  * the game's data as a zip to report a misread with.
  */
 import clsx from "clsx";
-import { ChevronDown, Download, Play } from "lucide-react";
+import { ChevronDown, Download, GraduationCap, Play } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { GameTimeline } from "~/components/GameTimeline";
 import {
@@ -52,7 +52,12 @@ import { matchResult } from "../core/sessions";
 import { xBattleCards } from "../core/x-battle";
 import type { ScannerClip } from "../store/clips";
 import { downloadBlob } from "./download";
-import { displayOrder, gameTimelineProps } from "./game-timeline-view";
+import {
+	displayOrder,
+	gameTimelineProps,
+	TEAM_LABELS,
+	timelineOrigin,
+} from "./game-timeline-view";
 import styles from "./MatchCard.module.css";
 import { matchZip } from "./match-zip";
 import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
@@ -67,9 +72,6 @@ const KO_MATCH_SCORE = 100;
  */
 const MATCH_CLOCK_SECONDS: Partial<Record<ModeShort, number>> = { TW: 180 };
 const DEFAULT_MATCH_CLOCK_SECONDS = 300;
-
-/** The scan knows the on-screen sides only, not who is playing: left, right. */
-const TEAM_LABELS = ["Alpha", "Bravo"] as const;
 
 const GEAR_ROWS = 3;
 const SLOTS_PER_ROW = 4;
@@ -98,6 +100,7 @@ export function MatchCard({
 	expandable,
 	upload,
 	clips,
+	coachHref,
 	onPlayClip,
 	getFrame,
 }: {
@@ -115,6 +118,8 @@ export function MatchCard({
 	upload: UploadState | null;
 	/** the clips this game produced, best first */
 	clips: readonly ScannerClip[];
+	/** coach mode opened at this game; null: no link */
+	coachHref: string | null;
 	onPlayClip: (clip: ScannerClip) => void;
 	getFrame: (event: ScanEvent) => GetFrame | undefined;
 }) {
@@ -132,9 +137,8 @@ export function MatchCard({
 		);
 	}
 
-	const result = matchResult(match);
+	const result = matchResult(built);
 	const pov = povPlayer(match);
-	const matchOrigin = timelineOrigin(match);
 	const scannedAt = built.sources.find(
 		(event) => event.detectedAt !== undefined,
 	)?.detectedAt;
@@ -223,6 +227,17 @@ export function MatchCard({
 						{upload ? (
 							<UploadStatusButton state={upload} className={styles.circle} />
 						) : null}
+						{coachHref ? (
+							<LinkButton
+								to={coachHref}
+								variant="minimal"
+								size="small"
+								shape="circle"
+								icon={<GraduationCap />}
+								className={styles.circle}
+								aria-label="Open in coach mode"
+							/>
+						) : null}
 						<SendouButton
 							variant="minimal"
 							size="small"
@@ -245,7 +260,9 @@ export function MatchCard({
 		<div className={styles.summary}>
 			<Scoreboard match={match} result={result} />
 			{match.objective || match.playerStatus ? (
-				<GameTimeline {...gameTimelineProps(match, matchOrigin, TEAM_LABELS)} />
+				<GameTimeline
+					{...gameTimelineProps(match, timelineOrigin(match), TEAM_LABELS)}
+				/>
 			) : null}
 			<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
 			<ReportData
@@ -273,19 +290,6 @@ export function MatchCard({
 				<div className={styles.details}>{summary}</div>
 			) : null}
 		</div>
-	);
-}
-
-/**
- * Live sessions stamp reads with wall-clock seconds and VoDs with file position;
- * the timeline charts want seconds since the match began either way.
- */
-function timelineOrigin(match: ScannerMatch): number {
-	return (
-		match.startsAt ??
-		match.objective?.samples[0]?.t ??
-		match.playerStatus?.samples[0]?.t ??
-		0
 	);
 }
 

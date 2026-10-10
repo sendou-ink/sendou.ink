@@ -1,0 +1,68 @@
+.drawing {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.canvas {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--radius-box);
+	touch-action: none;
+	pointer-events: auto;
+	cursor: crosshair;
+}
+
+.stroke {
+	fill: none;
+	stroke-width: 4px;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	vector-effect: non-scaling-stroke;
+}
+
+.tools {
+	position: absolute;
+	inset-block-start: var(--s-1-5);
+	inset-inline-end: var(--s-1-5);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-1) var(--s-1-5);
+	border-radius: var(--radius-field);
+	background: rgb(0 0 0 / 0.7);
+	pointer-events: auto;
+}
+
+.color {
+	width: 0.75rem;
+	height: 0.75rem;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+
+	&[aria-pressed="true"] {
+		box-shadow: 0 0 0 2px #fff;
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+}
+
+.clear {
+	display: grid;
+	place-items: center;
+	padding: 0;
+	border: none;
+	background: none;
+	color: #fff;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+}

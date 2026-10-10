@@ -289,6 +289,7 @@
 	"plans.bgStyle.MINI": "Minimapa",
 	"plans.adder.objective": "Objetivo",
 	"plans.ranges": "Alcances",
+	"plans.importFailed": "",
 	"plans.waterLevel.up": "Marea alta",
 	"plans.waterLevel.down": "Marea baja",
 	"articles.by": "por {{author}}",

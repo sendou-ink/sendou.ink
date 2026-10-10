@@ -15,8 +15,7 @@ import {
 import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../../node/fixtures";
@@ -63,7 +62,7 @@ export async function runDeathSuite(
 
 			await t.test(
 				"weapon",
-				{ skip: expected.weaponId === undefined || skip(fixture, "weapon") },
+				fieldTestOptions(fixture, "weapon", expected.weaponId !== undefined),
 				() => {
 					assert.equal(
 						event.data.weaponId,
@@ -79,7 +78,7 @@ export async function runDeathSuite(
 			for (const [row, wantRow] of (expected.abilities ?? []).entries()) {
 				await t.test(
 					`abilities row ${row}`,
-					{ skip: skip(fixture, `abilities.${row}`) },
+					fieldTestOptions(fixture, `abilities.${row}`),
 					() => {
 						assert.deepEqual(
 							event.data.abilities[row],
@@ -92,7 +91,7 @@ export async function runDeathSuite(
 
 			await t.test(
 				"name",
-				{ skip: expected.name === undefined || skip(fixture, "name") },
+				fieldTestOptions(fixture, "name", expected.name !== undefined),
 				() => {
 					assert.equal(
 						event.data.name,
@@ -158,8 +157,4 @@ export async function runDeathSuite(
 			});
 		}
 	}
-}
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
 }

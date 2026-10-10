@@ -4,7 +4,13 @@
  */
 
 import assert from "node:assert/strict";
-import type { ScannerMatch } from "../../core/scanner-match";
+import { describe, test } from "vitest";
+import type { DetectedEvent } from "../../core/detectors/types";
+import type { XSetResultData } from "../../core/detectors/x-rank/set-result";
+import type {
+	ScannerMatch,
+	ScannerMatchObjectiveSample,
+} from "../../core/scanner-match";
 import {
 	compactSources,
 	expiredCompactedSessionKeys,
@@ -12,6 +18,7 @@ import {
 	kdRatio,
 	MAX_SESSIONS,
 	MAX_STORED_EVENTS,
+	matchResult,
 	SESSION_GAP_MS,
 	SESSION_MAX_AGE_MS,
 	sessionByKey,
@@ -19,7 +26,6 @@ import {
 	sessionSummary,
 	splitSessions,
 } from "../../core/sessions";
-import { test } from "../node-test-compat";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -68,6 +74,32 @@ function match(
 	};
 }
 
+function built(game: ScannerMatch, sources: DetectedEvent[] = []) {
+	return { match: game, sources };
+}
+
+/** a game whose results screen was missed: no POV seat, no winner, POV side first */
+function scoreboardless(...samples: ScannerMatchObjectiveSample[]) {
+	return match({ pov: null, objective: { mode: "TC", samples } });
+}
+
+function counts(
+	t: number,
+	score: [number, number],
+	{ time = 120, control = null as 0 | 1 | null } = {},
+): ScannerMatchObjectiveSample {
+	return { t, time, score, penalty: [null, null], control };
+}
+
+function setResult(results: XSetResultData["results"]): DetectedEvent {
+	return {
+		type: "XSetResult",
+		t: 310,
+		confidence: 0.95,
+		data: { mode: "TC", results, powerChange: 15, power: 2500 },
+	};
+}
+
 test("events less than two hours apart share a session", () => {
 	const sessions = splitSessions(stamped(0, HOUR, 2 * HOUR - 1));
 	assert.equal(sessions.length, 1);
@@ -112,21 +144,85 @@ test("a gone session's key names no session", () => {
 });
 
 test("the summary counts decided games, the record and the POV K/D", () => {
-	const summary = sessionSummary([
-		match({ result: "win", ka: 8, d: 2 }),
-		match({ result: "loss", ka: 4, d: 6 }),
-		match(),
-	]);
+	const summary = sessionSummary(
+		[
+			match({ result: "win", ka: 8, d: 2 }),
+			match({ result: "loss", ka: 4, d: 6 }),
+			match(),
+		].map((game) => built(game)),
+	);
 	assert.deepEqual(summary, { games: 2, wins: 1, losses: 1, ka: 17, d: 11 });
 	assert.equal(kdRatio(summary)!.toFixed(2), "1.55");
 });
 
 test("a match without a POV seat counts as a game but not a result", () => {
-	const summary = sessionSummary([match({ result: "win", pov: null })]);
+	const summary = sessionSummary([built(match({ result: "win", pov: null }))]);
 	assert.equal(summary.games, 1);
 	assert.equal(summary.wins, 0);
 	assert.equal(summary.losses, 0);
 	assert.equal(kdRatio(summary), null);
+});
+
+describe("matchResult", () => {
+	test("a missed results screen goes by the X Battle set's deciding tile", () => {
+		const game = scoreboardless(counts(100, [38, 37]));
+		assert.equal(
+			matchResult(built(game, [setResult(["LOSE", "WIN", "WIN", "WIN"])])),
+			"win",
+		);
+		assert.equal(
+			matchResult(
+				built(game, [setResult(["WIN", "WIN", "LOSE", "LOSE", "LOSE"])]),
+			),
+			"loss",
+		);
+	});
+
+	test.each([
+		{
+			why: "the POV side's count went further down",
+			samples: [counts(100, [60, 80]), counts(110, [30, 80])],
+			expected: "win",
+		},
+		{
+			why: "the enemy's count went further down",
+			samples: [counts(100, [60, 50]), counts(110, [60, 20])],
+			expected: "loss",
+		},
+		{
+			why: "a last read plunging out of reach is a misread",
+			samples: [counts(100, [39, 48]), counts(101, [39, 4], { time: 1 })],
+			expected: "win",
+		},
+		{
+			why: "the trailing side holds the objective as the clock runs out",
+			samples: [counts(100, [38, 37], { time: 1, control: 0 })],
+			expected: null,
+		},
+		{
+			why: "a knockout ends it even with the clock out",
+			samples: [counts(100, [0, 37], { time: 1, control: 1 })],
+			expected: "win",
+		},
+		{
+			why: "the counts are tied",
+			samples: [counts(100, [50, 50])],
+			expected: null,
+		},
+	])(
+		"a missed results screen goes by the counts: $why",
+		({ samples, expected }) => {
+			assert.equal(matchResult(built(scoreboardless(...samples))), expected);
+		},
+	);
+});
+
+test("the summary counts games decided off the counts", () => {
+	const summary = sessionSummary([
+		built(scoreboardless(counts(100, [10, 80]))),
+	]);
+	assert.equal(summary.games, 1);
+	assert.equal(summary.wins, 1);
 });
 
 test("K/D never divides by zero deaths", () => {

@@ -131,8 +131,6 @@ interface ExpectedScoreboard {
 		special?: [boolean[], boolean[]];
 		/** PlayerStatus only: splatted per slot, [left team, right team] */
 		dead?: [boolean[], boolean[]];
-		/** PlayerStatus + StripWeapons: which icon-strip geometry the frame shows */
-		layout?: "even" | "narrow-right" | "narrow-left";
 		/** PlayerStatus only: white camera badges proved a casted spectator HUD */
 		cast?: true | null;
 		/** StripWeapons only: true weapon per slot, [left team, right team], null = splatted slot skipped */
@@ -146,8 +144,10 @@ interface ExpectedScoreboard {
 		enemies?: ExpectedMinimapEnemy[];
 	};
 	options?: {
-		/** glob-ish field paths to skip, e.g. "players.*.name", "scores" */
+		/** glob-ish field paths left unasserted (ground truth uncertain), e.g. "players.*.name", "scores" */
 		skipFields?: string[];
+		/** glob-ish field paths the detector is known to misread: each pattern fails the test once none of its fields misreads anymore */
+		misreadFields?: string[];
 		/** free-form context for humans (why fields are skipped, capture quirks) */
 		notes?: string;
 		/** X Battle cards: a mid-animation frame whose read must score under the timeline floor */
@@ -203,17 +203,17 @@ export function loadScoreboardLookalikes(ownDir: string): Fixture[] {
 	);
 }
 
-export function isFieldSkipped(fixture: Fixture, field: string): boolean {
-	const skips = fixture.expected.options?.skipFields ?? [];
-	return skips.some((pattern) => {
-		const re = new RegExp(
-			`^${pattern
-				.split("*")
-				.map((s) => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
-				.join("[^.]*")}$`,
-		);
-		return re.test(field);
-	});
+/** Subtest options for a fixture field: skipped when unlabeled or in `skipFields`, an expected failure when in `misreadFields`. */
+export function fieldTestOptions(
+	fixture: Fixture,
+	field: string,
+	labeled = true,
+): { skip?: boolean | string; expectFailure?: string } {
+	const { skipFields, misreadFields } = fixture.expected.options ?? {};
+	if (!labeled) return { skip: true };
+	if (matchingFieldPattern(skipFields, field)) return { skip: "skipFields" };
+	const misread = matchingFieldPattern(misreadFields, field);
+	return misread ? { expectFailure: `misreadFields "${misread}"` } : {};
 }
 
 export interface FixtureRun<TData = ScoreboardData> {
@@ -233,4 +233,18 @@ export async function runDetectorOnFixture<TData = ScoreboardData>(
 	const events = gate.pass ? detector.parse(frame, 0, gate) : [];
 	frame.delete();
 	return { gate, events };
+}
+
+function matchingFieldPattern(
+	patterns: string[] | undefined,
+	field: string,
+): string | undefined {
+	return patterns?.find((pattern) =>
+		new RegExp(
+			`^${pattern
+				.split("*")
+				.map((s) => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+				.join("[^.]*")}$`,
+		).test(field),
+	);
 }

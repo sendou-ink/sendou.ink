@@ -13,6 +13,7 @@ describe("scannerSearchParams", () => {
 				"live",
 				"session",
 				"vod",
+				"coach",
 				"clips",
 				"debug",
 				"fixtures",
@@ -20,6 +21,7 @@ describe("scannerSearchParams", () => {
 			],
 			id: [1758040920000, 0, null],
 			name: ["sws26-finals.mkv", "a b.mp4", null],
+			t: [754, 0, null],
 			q: ["", "gauge-overlay", "player-status/cast,ready-trough"],
 			inspect: ["1723456789012-abc123", null],
 			telemetry: [true, false],
@@ -33,5 +35,6 @@ describe("scannerSearchParams", () => {
 			["LIVE"],
 		]);
 		assertDecodesToDefault(scannerSearchParams, "id", [["-5"], ["1.5"]]);
+		assertDecodesToDefault(scannerSearchParams, "t", [["-5"], ["1.5"]]);
 	});
 });

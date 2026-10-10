@@ -173,13 +173,9 @@ test.describe("Scanner", () => {
 	});
 });
 
-/** Scans the test VoD and waits until the scan finishes, which is when Delete appears. */
 async function scanVod(scanner: ScannerPage) {
 	await scanner.goto();
-	await scanner.chooseFile(VOD_PATH);
-	await expect(scanner.locators.deleteButton).toBeVisible({
-		timeout: SCAN_TIMEOUT,
-	});
+	await scanner.scanFile(VOD_PATH);
 }
 
 async function expectScannedGame(scanner: ScannerPage) {

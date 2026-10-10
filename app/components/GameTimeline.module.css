@@ -9,6 +9,10 @@
 
 /* pinned to the shared plot area: both cards pad horizontally by --s-3 and
    keep their y-labels inside the same fixed gutter */
+.seekable {
+	cursor: pointer;
+}
+
 .plotOverlay {
 	position: absolute;
 	inset: 0 var(--s-3) 0 calc(var(--s-3) + var(--plot-gutter));
@@ -20,6 +24,13 @@
 	top: 0;
 	bottom: 0;
 	border-left: 2px dotted var(--color-text-high);
+}
+
+.playhead {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	border-left: 2px solid var(--color-fg-accent);
 }
 
 .readout {

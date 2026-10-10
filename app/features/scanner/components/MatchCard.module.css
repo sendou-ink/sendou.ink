@@ -274,16 +274,17 @@
 }
 
 /* the shared circle button, translucent over the banner */
-button.circle {
+:is(button, a).circle {
 	flex-shrink: 0;
 	width: 28px;
 	height: 28px;
 	padding: 0;
 	border: none;
 	border-radius: var(--radius-full);
-	background: color-mix(in oklab, var(--color-bg) 55%, transparent);
+	background: color-mix(in oklab, var(--color-bg) 85%, transparent);
 	backdrop-filter: blur(8px);
-	color: var(--color-text-high);
+	color: var(--color-text);
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-text) 20%, transparent);
 
 	& svg {
 		width: var(--field-size-icon);
@@ -291,8 +292,8 @@ button.circle {
 	}
 
 	&:hover {
-		color: var(--color-text);
-		background: color-mix(in oklab, var(--color-bg) 78%, transparent);
+		color: var(--color-fg-accent);
+		background: var(--color-bg);
 	}
 }
 

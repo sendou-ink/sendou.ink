@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": null,
+		"time": 207,
+		"special": [
+			[false, false, true, false],
+			[true, false, true, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "六兆年… XP4526 VoD (-I23PqqYtHQ, 1080p S3 POV), game 5 Hagglefish Market TC at 3:27, t=1869.4. Purple-team counterpart of pov-hagglefish-lead-banner-read-as-ready: left slot 0 (POV, Blaster) is alive and not ready, but the fresh narrow-right pick puts its shoulder box on the \"リード!\" banner and reads it ready. In the live scan this drew a ★ right after the POV's respawn (dead 3:33-3:29, ★ 3:28-3:27), one of the short death→special gaps. Even pitch on both sides (apexes ~[570,655,745,835 | 1090,1180,1270,1355]). Real washes: left slot 2 (E-liter, pale pink), right slot 0 (Blaster, pale peach) and right slot 2 (Bulbz, pale). Fixed by the team-hue apex comb (STATUS_APEX_*: even 0.89 leading by 0.46)."
+	}
+}

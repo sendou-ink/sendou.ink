@@ -3,18 +3,21 @@
  * their dynamic per-fixture tests with nested `t.test` subtests and `{ skip }`
  * options (no native Vitest equivalent). Subtests run inline; every failure is
  * collected and reported at once, so one field mismatch doesn't hide the next.
+ * Subtests sharing an `expectFailure` key are known failures: their errors are
+ * swallowed, and the test fails if none of them fails anymore.
  */
 import { test as vitestTest } from "vitest";
 
 type SubtestBody = () => void | Promise<void>;
 
+export interface SubtestOptions {
+	skip?: boolean | string;
+	expectFailure?: string;
+}
+
 export interface CompatTestContext {
 	test(name: string, fn: SubtestBody): Promise<void>;
-	test(
-		name: string,
-		opts: { skip?: boolean | string },
-		fn: SubtestBody,
-	): Promise<void>;
+	test(name: string, opts: SubtestOptions, fn: SubtestBody): Promise<void>;
 }
 
 export function test(
@@ -23,22 +26,35 @@ export function test(
 ): void {
 	vitestTest(name, async () => {
 		const failures: { name: string; error: unknown }[] = [];
+		const expectedFailureSeen = new Map<string, boolean>();
 		const subtest = async (
 			subName: string,
-			optsOrFn: { skip?: boolean | string } | SubtestBody,
+			optsOrFn: SubtestOptions | SubtestBody,
 			maybeFn?: SubtestBody,
 		): Promise<void> => {
 			const opts = typeof optsOrFn === "function" ? {} : optsOrFn;
 			const body = typeof optsOrFn === "function" ? optsOrFn : maybeFn;
 			if (opts.skip || !body) return;
+			const { expectFailure } = opts;
+			if (expectFailure && !expectedFailureSeen.has(expectFailure)) {
+				expectedFailureSeen.set(expectFailure, false);
+			}
 			try {
 				await body();
 			} catch (error) {
-				failures.push({ name: subName, error });
+				if (expectFailure) expectedFailureSeen.set(expectFailure, true);
+				else failures.push({ name: subName, error });
 			}
 		};
 		const t: CompatTestContext = { test: subtest };
 		await fn(t);
+		for (const [key, failed] of expectedFailureSeen) {
+			if (failed) continue;
+			failures.push({
+				name: key,
+				error: new Error("expected a failure but every subtest passed"),
+			});
+		}
 		if (failures.length === 0) return;
 		if (failures.length === 1 && failures[0]) {
 			const { name: subName, error } = failures[0];

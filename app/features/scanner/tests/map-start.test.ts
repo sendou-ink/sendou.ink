@@ -13,8 +13,7 @@ import {
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../node/fixtures";
@@ -58,7 +57,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"mode",
-			{ skip: expected.mode === undefined || skip(fixture, "mode") },
+			fieldTestOptions(fixture, "mode", expected.mode !== undefined),
 			() => {
 				assert.equal(
 					event.data.mode,
@@ -70,7 +69,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"stage",
-			{ skip: expected.stage === undefined || skip(fixture, "stage") },
+			fieldTestOptions(fixture, "stage", expected.stage !== undefined),
 			() => {
 				assert.equal(
 					event.data.stage,
@@ -140,8 +139,4 @@ for (const fixture of fixtures.filter((f) => f.expected.event === "MapStart")) {
 			`death gate fired (score=${death.gate.score.toFixed(3)})`,
 		);
 	});
-}
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
 }

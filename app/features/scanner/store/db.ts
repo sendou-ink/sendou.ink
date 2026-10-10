@@ -6,13 +6,14 @@
  *  - `vods`: one summary per scanned VoD, keyed by file name (vods.ts)
  *  - `vod-events`: each saved VoD's detections, indexed by VoD name
  *  - `vod-frames`: their frames, keyed by vod-event id
+ *  - `vod-minimaps`: each saved VoD's downscaled map-open frames for coach mode, indexed by VoD name
  *  - `clips`: clip records by auto id, indexed by bucket (clips.ts)
  *  - `clip-blobs`: the clips' MP4s, keyed by clip id
  *  - `inspect-frames`: one-shot Inspect handoffs into a new debug tab (inspect.ts)
  *  - `montages`: the dev-only tournament montage's state, keyed by tournament id (montages.ts)
  */
 const DB_NAME = "scanner";
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 export const EVENTS_STORE = "events";
 export const FRAMES_STORE = "frames";
@@ -20,6 +21,7 @@ export const COMPACTED_MATCHES_STORE = "compacted-matches";
 export const VODS_STORE = "vods";
 export const VOD_EVENTS_STORE = "vod-events";
 export const VOD_FRAMES_STORE = "vod-frames";
+export const VOD_MINIMAPS_STORE = "vod-minimaps";
 export const CLIPS_STORE = "clips";
 export const CLIP_BLOBS_STORE = "clip-blobs";
 export const INSPECT_FRAMES_STORE = "inspect-frames";
@@ -29,7 +31,8 @@ export const MONTAGES_STORE = "montages";
  * Adds the stores a DB_VERSION bump introduced, keeping the existing ones and
  * their data. v2 added the clip stores and moved live event times onto the
  * wall clock, so a v1 database's live events (stamped on the page clock)
- * are dropped; v3 added the compacted matches, v4 the montages. Changing an existing store's
+ * are dropped; v3 added the compacted matches, v4 the montages, v5 the VoD
+ * minimaps. Changing an existing store's
  * shape needs a real migration here.
  */
 function upgrade(database: IDBDatabase, oldVersion: number): void {
@@ -66,6 +69,13 @@ function upgrade(database: IDBDatabase, oldVersion: number): void {
 			autoIncrement: true,
 		});
 		vodEvents.createIndex("vod", "vod");
+	}
+
+	if (!has(VOD_MINIMAPS_STORE)) {
+		const vodMinimaps = database.createObjectStore(VOD_MINIMAPS_STORE, {
+			autoIncrement: true,
+		});
+		vodMinimaps.createIndex("vod", "vod");
 	}
 
 	if (!has(CLIPS_STORE)) {

@@ -1,7 +1,6 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "narrow-right",
 		"time": 255,
 		"special": [
 			[true, false, false, false],

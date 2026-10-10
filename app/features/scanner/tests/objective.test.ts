@@ -21,8 +21,7 @@ import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/in
 import type { DetectedEvent, Detector } from "../core/detectors/types";
 import { hueDistance, hueOf, type InkRgb } from "../core/ink-color";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../node/fixtures";
@@ -72,7 +71,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"mode",
-			{ skip: expected.mode === undefined || skip(fixture, "mode") },
+			fieldTestOptions(fixture, "mode", expected.mode !== undefined),
 			() => {
 				assert.equal(event.data.mode, expected.mode);
 			},
@@ -80,7 +79,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"time",
-			{ skip: expected.time === undefined || skip(fixture, "time") },
+			fieldTestOptions(fixture, "time", expected.time !== undefined),
 			() => {
 				assert.equal(
 					event.data.time,
@@ -93,9 +92,11 @@ for (const fixture of fixtures) {
 		for (const side of [0, 1] as const) {
 			await t.test(
 				`score[${side}]`,
-				{
-					skip: expected.score === undefined || skip(fixture, `score.${side}`),
-				},
+				fieldTestOptions(
+					fixture,
+					`score.${side}`,
+					expected.score !== undefined,
+				),
 				() => {
 					assert.equal(
 						event.data.score[side],
@@ -106,10 +107,11 @@ for (const fixture of fixtures) {
 			);
 			await t.test(
 				`penalty[${side}]`,
-				{
-					skip:
-						expected.penalty === undefined || skip(fixture, `penalty.${side}`),
-				},
+				fieldTestOptions(
+					fixture,
+					`penalty.${side}`,
+					expected.penalty !== undefined,
+				),
 				() => {
 					assert.equal(
 						event.data.mode === "SZ" ? event.data.penalty[side] : null,
@@ -122,7 +124,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"control",
-			{ skip: expected.control === undefined || skip(fixture, "control") },
+			fieldTestOptions(fixture, "control", expected.control !== undefined),
 			() => {
 				assert.equal(
 					event.data.control,
@@ -134,7 +136,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"position",
-			{ skip: expected.position === undefined || skip(fixture, "position") },
+			fieldTestOptions(fixture, "position", expected.position !== undefined),
 			() => {
 				const position =
 					event.data.mode === "SZ" ? undefined : event.data.position;
@@ -263,8 +265,4 @@ for (const fixture of fixtures.filter(
 			);
 		}
 	});
-}
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
 }

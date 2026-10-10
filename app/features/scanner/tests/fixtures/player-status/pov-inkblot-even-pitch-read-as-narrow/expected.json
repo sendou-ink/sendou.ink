@@ -1,7 +1,6 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "even",
 		"cast": null,
 		"time": 300,
 		"special": [

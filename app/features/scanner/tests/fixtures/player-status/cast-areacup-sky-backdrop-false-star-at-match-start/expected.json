@@ -1,7 +1,6 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "narrow-right",
 		"time": 300,
 		"special": [
 			[false, false, false, false],
@@ -13,6 +12,6 @@
 		]
 	},
 	"options": {
-		"notes": "AREA CUP cast (area-cup-crown VoD 2:31:55, Mahi-Mahi Resort) overhead strip at 5:00, before the clock starts, so no special can be charged — yet the scan read left slot0 (Splash-o-matic) as special ready. A white cloud in the bright sky backdrop sits behind the icon. All eight players are alive."
+		"notes": "AREA CUP cast (area-cup-crown VoD 2:31:55, Mahi-Mahi Resort) overhead strip at 5:00, before the clock starts, so no special can be charged — yet the scan read left slot0 (Splash-o-matic) as special ready. A white cloud in the bright sky backdrop sits behind the icon. All eight players are alive. Layout relabeled narrow-right -> even (2026-10-09): the kite apexes sit at even's pitch on both sides (team-hue apex comb, STATUS_APEX_*); every slot reads the same under either geometry."
 	}
 }

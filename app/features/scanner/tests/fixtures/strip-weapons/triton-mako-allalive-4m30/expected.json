@@ -1,0 +1,16 @@
+{
+  "event": "StripWeapons",
+  "data": {
+    "weapons": [
+      [2070, 10, 8002, 1010],
+      [2000, 50, 2070, 8000]
+    ],
+    "weaponLabels": [
+      ["Snipewriter 5H", "Splattershot Jr.", "Stickerz Splatana Stamper", "Splat Roller"],
+      ["Classic Squiffer", ".52 Gal", "Snipewriter 5H", "Splatana Stamper"]
+    ]
+  },
+  "options": {
+    "notes": "unmasked NCC never ranked the Snipewriter or either Splatana Stamper top-1; thin votes swapped the Jr. and roller timeline rows in a browser scan"
+  }
+}

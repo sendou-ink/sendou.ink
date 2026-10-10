@@ -25,7 +25,6 @@ import type { ObjectiveData } from "../core/detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
-	type PlayerStatusLayout,
 } from "../core/detectors/objective/player-status";
 import * as objective from "../core/detectors/objective/rois";
 import {
@@ -280,19 +279,6 @@ function gateSummary(result: Result): string | null {
 	}
 }
 
-/** Band covering one side's player-status icon strip, for the crop view. */
-function statusStripRoi(layout: PlayerStatusLayout, side: 0 | 1): Roi {
-	const centers =
-		layout === "even"
-			? objective.STATUS_SLOT_CENTERS_EVEN[side]
-			: layout === "narrow-right"
-				? objective.STATUS_SLOT_CENTERS_NARROW_RIGHT[side]
-				: objective.STATUS_SLOT_CENTERS_NARROW_LEFT[side];
-	const first = centers[0]!;
-	const last = centers[centers.length - 1]!;
-	return { x: first - 55, y: 25, w: last - first + 110, h: 115 };
-}
-
 function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 	const rect = (roi: Roi, color: string) => {
 		ctx.strokeStyle = color;
@@ -356,22 +342,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 			rect(objective.PENALTY_ROIS[side], "#fb923c");
 			rect(objective.PLATE_PROBE_ROIS[side], "#facc15");
 		}
-		for (const [centers, box, color] of [
-			[
-				objective.STATUS_SLOT_CENTERS_EVEN,
-				objective.STATUS_BODY_BOX_EVEN,
-				"#60a5fa",
-			],
-			[
-				objective.STATUS_SLOT_CENTERS_NARROW_RIGHT,
-				objective.STATUS_BODY_BOX_NARROW,
-				"#e879f9",
-			],
-		] as const) {
-			for (const cx of centers.flat()) {
-				rect({ x: cx + box.dx, y: box.y, w: box.w, h: box.h }, color);
-			}
-		}
+		rect(objective.STATUS_BAND, "#60a5fa");
 		return;
 	}
 	if (detector === "kill") {
@@ -965,7 +936,11 @@ export function ScreenshotPage() {
 									</Stat>
 									{status ? (
 										<>
-											<Stat label="layout">{status.data.layout}</Stat>
+											<Stat label="pitch">
+												{(status.debug?.pitches as number[] | undefined)?.join(
+													" / ",
+												) ?? "?"}
+											</Stat>
 											<Stat label="special">
 												<StatusSlots
 													flags={status.data.special}
@@ -1000,7 +975,7 @@ export function ScreenshotPage() {
 													key={side}
 													label={side === 0 ? "left team" : "right team"}
 													frame={frame}
-													roi={statusStripRoi(status.data.layout, side)}
+													roi={objective.STATUS_STRIP_ROIS[side]}
 													scale={0.75}
 												/>
 											))

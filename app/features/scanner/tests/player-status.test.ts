@@ -21,8 +21,7 @@ import { createScoreboardBattleLogReplayDetector } from "../core/detectors/score
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
 import type { DetectedEvent, Detector } from "../core/detectors/types";
 import {
-	type Fixture,
-	isFieldSkipped,
+	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
 } from "../node/fixtures";
@@ -40,7 +39,7 @@ test("player-status fixtures exist", () => {
 for (const fixture of fixtures) {
 	test(`player-status/${fixture.name}`, async (t) => {
 		// fresh detector per fixture: the objective detector carries sticky
-		// layout state across reads, and fixtures are unrelated frames
+		// strip-fit state across reads, and fixtures are unrelated frames
 		const { gate, events } = await runDetectorOnFixture(
 			createObjectiveDetector(resources),
 			fixture,
@@ -69,16 +68,8 @@ for (const fixture of fixtures) {
 		const debug = () => JSON.stringify(event.debug);
 
 		await t.test(
-			"layout",
-			{ skip: expected.layout === undefined || skip(fixture, "layout") },
-			() => {
-				assert.equal(event.data.layout, expected.layout);
-			},
-		);
-
-		await t.test(
 			"cast",
-			{ skip: expected.cast === undefined || skip(fixture, "cast") },
+			fieldTestOptions(fixture, "cast", expected.cast !== undefined),
 			() => {
 				assert.equal(event.data.cast, expected.cast);
 			},
@@ -86,7 +77,7 @@ for (const fixture of fixtures) {
 
 		await t.test(
 			"time",
-			{ skip: expected.time === undefined || skip(fixture, "time") },
+			fieldTestOptions(fixture, "time", expected.time !== undefined),
 			() => {
 				assert.equal(
 					event.data.time,
@@ -100,11 +91,11 @@ for (const fixture of fixtures) {
 			for (const slot of [0, 1, 2, 3] as const) {
 				await t.test(
 					`special[${side}][${slot}]`,
-					{
-						skip:
-							expected.special === undefined ||
-							skip(fixture, `special.${side}.${slot}`),
-					},
+					fieldTestOptions(
+						fixture,
+						`special.${side}.${slot}`,
+						expected.special !== undefined,
+					),
 					() => {
 						assert.equal(
 							event.data.special[side][slot],
@@ -115,11 +106,11 @@ for (const fixture of fixtures) {
 				);
 				await t.test(
 					`dead[${side}][${slot}]`,
-					{
-						skip:
-							expected.dead === undefined ||
-							skip(fixture, `dead.${side}.${slot}`),
-					},
+					fieldTestOptions(
+						fixture,
+						`dead.${side}.${slot}`,
+						expected.dead !== undefined,
+					),
 					() => {
 						assert.equal(
 							event.data.dead[side][slot],
@@ -168,7 +159,3 @@ for (const fixture of fixtures.filter(
 
 // Shared negatives: the objective gate guards PlayerStatus emission too,
 // and objective.test.ts already sweeps it over negative/ — no repeat here.
-
-function skip(fixture: Fixture, field: string): boolean | string {
-	return isFieldSkipped(fixture, field) ? "skipFields" : false;
-}

@@ -1,7 +1,6 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "narrow-right",
 		"time": 293,
 		"special": [
 			[false, false, false, false],
@@ -13,6 +12,6 @@
 		]
 	},
 	"options": {
-		"notes": "Same game as cast-areacup-sky-backdrop-false-star-at-match-start, 4:53 (7s into the game): the cloud is still behind left slot0 and it still read special ready. The false reads bridged into the real ready wash at 4:43, charting a 20s special. All eight players are alive."
+		"notes": "Same game as cast-areacup-sky-backdrop-false-star-at-match-start, 4:53 (7s into the game): the cloud is still behind left slot0 and it still read special ready. The false reads bridged into the real ready wash at 4:43, charting a 20s special. All eight players are alive. Layout relabeled narrow-right -> even (2026-10-09): the kite apexes sit at even's pitch on both sides (team-hue apex comb, STATUS_APEX_*); every slot reads the same under either geometry."
 	}
 }

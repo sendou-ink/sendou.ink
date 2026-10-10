@@ -1,11 +1,8 @@
-import clsx from "clsx";
 import { ExternalLink } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl, SCANNER_PAGE } from "~/utils/urls";
-import type { Roi } from "../core/canonical";
-import type { PlayerStatusLayout } from "../core/detectors/objective/player-status";
 import * as objective from "../core/detectors/objective/rois";
 import { mainWeaponLabel } from "../core/labels";
 import type { FixtureListItem } from "../routes/scanner.fixtures";
@@ -19,15 +16,6 @@ import { SessionHeader } from "./SessionHeader";
 const FIXTURES_ENDPOINT = "/scanner/fixtures";
 /** Filtering down to this many cases opens every card, for one-glance review */
 const AUTO_EXPAND_MAX = 8;
-
-const SLOT_CENTERS: Record<
-	PlayerStatusLayout,
-	readonly [readonly number[], readonly number[]]
-> = {
-	even: objective.STATUS_SLOT_CENTERS_EVEN,
-	"narrow-right": objective.STATUS_SLOT_CENTERS_NARROW_RIGHT,
-	"narrow-left": objective.STATUS_SLOT_CENTERS_NARROW_LEFT,
-};
 
 type ExpectedData = NonNullable<FixtureListItem["expected"]["data"]>;
 
@@ -142,6 +130,7 @@ function FixtureCard(props: { fixture: FixtureListItem; autoExpand: boolean }) {
 	const url = frameUrl(fixture);
 	const notes = fixture.expected.options?.notes;
 	const skipFields = fixture.expected.options?.skipFields;
+	const misreadFields = fixture.expected.options?.misreadFields;
 
 	return (
 		<article className={styles.card}>
@@ -179,6 +168,11 @@ function FixtureCard(props: { fixture: FixtureListItem; autoExpand: boolean }) {
 						{skipFields && skipFields.length > 0 ? (
 							<p className={styles.skips}>
 								skipped fields: {skipFields.join(", ")}
+							</p>
+						) : null}
+						{misreadFields && misreadFields.length > 0 ? (
+							<p className={styles.skips}>
+								known misreads: {misreadFields.join(", ")}
 							</p>
 						) : null}
 						<ExpectedDetail fixture={fixture} url={url} />
@@ -246,36 +240,29 @@ function useNormalizedFrame(
 	return frame;
 }
 
-function statusSlotRoi(cx: number): Roi {
-	return { x: cx - 55, y: 25, w: 110, h: 115 };
-}
-
-/** Both teams' icon strips cropped per slot, expected label under each icon. */
+/** Both teams' icon strips, the expected label of each slot (left-to-right) under it. */
 function SlotStrips(props: {
 	frame: HTMLCanvasElement;
-	layout: PlayerStatusLayout;
 	slotCaption: (side: 0 | 1, slot: number) => ReactNode;
 	slotClassName?: (side: 0 | 1, slot: number) => string | undefined;
 }) {
-	const centers = SLOT_CENTERS[props.layout];
 	return (
 		<div className={styles.strips}>
 			{([0, 1] as const).map((side) => (
-				<div key={side} className={styles.strip}>
-					{centers[side].map((cx, slot) => (
-						<figure
-							key={slot}
-							className={clsx(styles.slot, props.slotClassName?.(side, slot))}
-						>
-							<RoiCrop
-								frame={props.frame}
-								roi={statusSlotRoi(cx)}
-								scale={0.75}
-							/>
-							<figcaption>{props.slotCaption(side, slot)}</figcaption>
-						</figure>
-					))}
-				</div>
+				<figure key={side} className={styles.strip}>
+					<RoiCrop
+						frame={props.frame}
+						roi={objective.STATUS_STRIP_ROIS[side]}
+						scale={0.75}
+					/>
+					<figcaption className={styles.stripCaptions}>
+						{[0, 1, 2, 3].map((slot) => (
+							<span key={slot} className={props.slotClassName?.(side, slot)}>
+								{props.slotCaption(side, slot)}
+							</span>
+						))}
+					</figcaption>
+				</figure>
 			))}
 		</div>
 	);
@@ -286,13 +273,9 @@ function PlayerStatusExpected(props: {
 	data: ExpectedData;
 }) {
 	const { data } = props;
-	const layout = data.layout ?? "even";
 	return (
 		<div className={styles.rich}>
 			<div className={styles.richStats}>
-				<span>
-					layout <b>{layout}</b>
-				</span>
 				<span>
 					cast <b>{data.cast ? "yes" : "unknown"}</b>
 				</span>
@@ -305,7 +288,6 @@ function PlayerStatusExpected(props: {
 			{props.frame ? (
 				<SlotStrips
 					frame={props.frame}
-					layout={layout}
 					slotCaption={(side, slot) =>
 						data.dead?.[side]?.[slot]
 							? "✗ dead"
@@ -331,18 +313,11 @@ function StripWeaponsExpected(props: {
 	data: ExpectedData;
 }) {
 	const { data } = props;
-	const layout = data.layout ?? "even";
 	return (
 		<div className={styles.rich}>
-			<div className={styles.richStats}>
-				<span>
-					layout <b>{layout}</b>
-				</span>
-			</div>
 			{props.frame ? (
 				<SlotStrips
 					frame={props.frame}
-					layout={layout}
 					slotCaption={(side, slot) => {
 						const weaponId = data.weapons?.[side]?.[slot] ?? null;
 						if (weaponId === null) return "skipped";

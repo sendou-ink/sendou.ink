@@ -6,8 +6,7 @@
  * vod-scan.ts, or a saved one from the store) shows its numbers, Add to VoDs
  * and Delete.
  */
-import { Trash2, Video } from "lucide-react";
-import { useEffect, useState } from "react";
+import { GraduationCap, Trash2, Video } from "lucide-react";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { LogInPopover } from "~/components/LogInPopover";
@@ -16,29 +15,25 @@ import {
 	useSearchParam,
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
+import { SCANNER_PAGE } from "~/utils/urls";
 import type { ScanTelemetry } from "../core/detectors/telemetry";
 import { formatTime } from "../core/format";
-import { type BuiltMatch, buildScannerMatches } from "../core/match-builder";
+import { isHistoryOnly } from "../core/match-builder";
 import { scannerSearchParams } from "../scanner-search-params";
 import { deleteVodClips } from "../store/clips";
-import {
-	deleteVod,
-	loadVod,
-	loadVodEventFrame,
-	loadVodEvents,
-	type VodSummary,
-} from "../store/vods";
+import { deleteVod, loadVodEventFrame } from "../store/vods";
 import { refreshClips, useClips } from "./clips-feed";
 import { ExportMenu } from "./ExportMenu";
 import { NotFound } from "./NotFound";
 import { ScanWorkers } from "./ScanWorkers";
-import { SessionHeader } from "./SessionHeader";
+import { SessionHeader, StatusPill } from "./SessionHeader";
 import { SessionView } from "./SessionView";
 import { sendouUpload } from "./sendou-upload";
 import type { ScanEvent } from "./session-data";
 import { useDebug } from "./use-debug";
 import styles from "./VodView.module.css";
 import { isThisVisitsVodClip } from "./visit";
+import { cachedBuild, useStoredVod } from "./vod-data";
 import {
 	startVodScan,
 	useVodScan,
@@ -47,13 +42,6 @@ import {
 	vodScanFrame,
 } from "./vod-scan";
 import { refreshVods } from "./vods-feed";
-
-/**
- * Builds keyed by the events array: views re-render for reasons other than new
- * events (clips), and reusing the same `BuiltMatch` objects lets
- * the unchanged cards skip rendering.
- */
-const builtCache = new WeakMap<readonly ScanEvent[], BuiltMatch<ScanEvent>[]>();
 
 export function VodView() {
 	const [name] = useSearchParam(scannerSearchParams, "name");
@@ -103,6 +91,12 @@ function ScanVodView({ name }: { name: string }) {
 					</ScanWorkers>
 				) : (
 					<div className={styles.afterScan}>
+						{scan.tookSeconds !== null ? (
+							<>
+								<StatusPill tone="success">Done</StatusPill>
+								<span>Scanned in {Math.round(scan.tookSeconds)}s</span>
+							</>
+						) : null}
 						{scan.clipsWork?.state === "cutting"
 							? `Saving clip ${Math.min(scan.clipsWork.done + 1, scan.clipsWork.total)}/${scan.clipsWork.total}…`
 							: scan.clipsWork?.state === "done" && scan.clipsWork.error
@@ -147,45 +141,6 @@ function StoredVodView({ name }: { name: string }) {
 	);
 }
 
-type StoredVod =
-	| { state: "loading" }
-	| { state: "missing" }
-	| {
-			state: "ready";
-			summary: VodSummary;
-			events: ScanEvent[];
-	  };
-
-/** Loads a saved VoD's summary and events. */
-function useStoredVod(name: string): StoredVod {
-	const [loaded, setLoaded] = useState<{
-		name: string;
-		summary: VodSummary | undefined;
-		events: ScanEvent[];
-	} | null>(null);
-
-	// the store is outside React: read it when the name changes
-	useEffect(() => {
-		let stale = false;
-		void Promise.all([loadVod(name), loadVodEvents(name)]).then(
-			([summary, events]) => {
-				if (!stale) setLoaded({ name, summary, events });
-			},
-		);
-		return () => {
-			stale = true;
-		};
-	}, [name]);
-
-	if (!loaded || loaded.name !== name) return { state: "loading" };
-	if (!loaded.summary) return { state: "missing" };
-	return {
-		state: "ready",
-		summary: loaded.summary,
-		events: loaded.events,
-	};
-}
-
 function VodSessionView({
 	name,
 	events,
@@ -206,6 +161,7 @@ function VodSessionView({
 	const user = useUser();
 	const vodClips = clips.filter((clip) => isThisVisitsVodClip(clip, name));
 	const upload = running ? null : sendouUpload(events);
+	const built = cachedBuild(events);
 
 	const remove = async () => {
 		await deleteVod(name);
@@ -217,7 +173,7 @@ function VodSessionView({
 	return (
 		<SessionView
 			kind="vod"
-			built={cachedBuild(events)}
+			built={built}
 			events={events}
 			originT={0}
 			clips={vodClips}
@@ -229,17 +185,31 @@ function VodSessionView({
 					? "Games appear here as their results screens are found."
 					: "No games were found in this file."
 			}
+			coachHref={(b) =>
+				running || isHistoryOnly(b) || b.match.startsAt === null
+					? null
+					: scannerSearchParams.href(SCANNER_PAGE, {
+							view: "coach",
+							name,
+							t: Math.floor(b.match.startsAt),
+						})
+			}
 			header={(info) => (
 				<SessionHeader
 					actions={
 						<>
-							<ExportMenu
-								built={info.built}
-								events={events}
-								source={{ label: name, originT: 0 }}
-								clipsByMatch={info.clipsByMatch}
-								fileBase={name.replace(/\.[^.]+$/, "")}
-							/>
+							{!running && built.length > 0 ? (
+								<LinkButton
+									to={scannerSearchParams.href(SCANNER_PAGE, {
+										view: "coach",
+										name,
+									})}
+									size="small"
+									icon={<GraduationCap />}
+								>
+									Coach mode
+								</LinkButton>
+							) : null}
 							{upload?.url ? (
 								user ? (
 									<LinkButton
@@ -262,6 +232,13 @@ function VodSessionView({
 									</LogInPopover>
 								)
 							) : null}
+							<ExportMenu
+								built={info.built}
+								events={events}
+								source={{ label: name, originT: 0 }}
+								clipsByMatch={info.clipsByMatch}
+								fileBase={name.replace(/\.[^.]+$/, "")}
+							/>
 							{!running ? (
 								<FormWithConfirm
 									dialogHeading={`Delete the scan of "${name}"?`}
@@ -343,12 +320,4 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 			</table>
 		</details>
 	);
-}
-
-function cachedBuild(events: readonly ScanEvent[]): BuiltMatch<ScanEvent>[] {
-	const cached = builtCache.get(events);
-	if (cached) return cached;
-	const built = buildScannerMatches(events);
-	builtCache.set(events, built);
-	return built;
 }
