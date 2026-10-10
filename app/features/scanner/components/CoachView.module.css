@@ -31,17 +31,25 @@
 
 .layout {
 	display: grid;
-	gap: var(--s-3);
+	grid-template-areas: "player" "timeline" "events";
+	gap: var(--s-2) var(--s-3);
 
 	@container (min-width: 900px) {
+		grid-template-areas: "player events" "timeline .";
 		grid-template-columns: minmax(0, 3fr) minmax(22rem, 1fr);
 	}
 }
 
 .player {
+	grid-area: player;
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
+	min-width: 0;
+}
+
+.timeline {
+	grid-area: timeline;
 	min-width: 0;
 }
 
@@ -106,10 +114,16 @@
 }
 
 .events {
+	grid-area: events;
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
 	min-width: 0;
+
+	/* as tall as the player and its controls beside it, the list scrolling within */
+	@container (min-width: 900px) {
+		contain: size;
+	}
 }
 
 .list {
@@ -120,7 +134,14 @@
 	margin: 0;
 	padding: 0;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	list-style: none;
+
+	@container (min-width: 900px) {
+		flex: 1 1 0;
+		min-height: 12rem;
+		max-height: none;
+	}
 }
 
 .entry {

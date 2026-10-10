@@ -1,24 +1,9 @@
 /**
- * Coach mode (`view=coach&name=`): a scanned file's games in a strip above a
- * player of the file itself, with their coach events (core/CoachEvents.ts)
- * filterable by type beside it — picking a game or an event jumps the video to
- * its start (a category picked first, special uses by default, then a type within it, All listing a moment once under its highest tier). Games the filters (core/CoachFilters.ts) hide drop their events,
- * and while any is set playback keeps to the games shown, jumping past the
- * hidden ones and the footage between games. A bar under the player
- * (CoachControls) steps between the games, lives and events shown, with the
- * game's timeline charts below it marking the video's moment; pressing them
- * jumps the video there. The map as last opened (CoachMinimap) tops the events,
- * following the video; clicking it swaps the two, the video playing on in the
- * map's place; paused with the map big, the map and the game's weapons can be
- * opened in the map planner. While paused, the big one can be drawn over
- * (CoachDrawing) until playback continues or the video moves; clicks then draw
- * instead of playing or swapping, Space still plays. Each life's first
- * seconds carry its summary (CoachLifeCard) over the video, which opens at
- * `t` when a game card's link set it. A cast's events are told from the
- * side of the team picked above the events (CoachCastSide); a pick carries over
- * to the file's other casts by player names. The file is the
- * one scanned or opened this visit, else the user opens it again (only the
- * scan was saved).
+ * Coach mode (`view=coach&name=`): a scanned file's games and their coach
+ * events (core/CoachEvents.ts) beside a player of the file, each jumping the
+ * video to it. While game filters (core/CoachFilters.ts) are set, playback
+ * skips the hidden games and the footage between games. Only the scan is
+ * saved, so a file not opened this visit has to be picked again.
  */
 import { FolderOpen } from "lucide-react";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
@@ -100,7 +85,7 @@ interface CoachEntry extends CoachEvents.CoachEvent {
 	game: CoachGame;
 }
 
-/** A team picked to coach a cast from, by game number: the games are rebuilt with the scan's events. */
+/** A team picked to coach a cast from, by game number: the games are rebuilt with the scan's events. Carries over to the file's other casts by player names. */
 interface CastPick {
 	gameNumber: number;
 	team: CoachEvents.Team;
@@ -452,7 +437,9 @@ function CoachSession({
 							onSwapMap={swapMapAndVideo ?? null}
 						/>
 					) : null}
-					{url && timeline ? (
+				</div>
+				{url && timeline ? (
+					<div className={styles.timeline}>
 						<GameTimeline
 							{...timeline.props}
 							playhead={currentTime - timeline.origin}
@@ -460,8 +447,8 @@ function CoachSession({
 								seek(Math.max(0, timeline.origin + t), { play: false })
 							}
 						/>
-					) : null}
-				</div>
+					</div>
+				) : null}
 				<div className={styles.events}>
 					{url && isMapBig ? videoSlot : minimapView}
 					{castGame ? (
@@ -499,6 +486,9 @@ function CoachSession({
 										type="button"
 										className={styles.entry}
 										aria-current={entryKey(entry) === selectedKey}
+										ref={
+											entryKey(entry) === selectedKey ? revealInList : undefined
+										}
 										onClick={() => jumpTo(entry, { play: true })}
 									>
 										<span className={styles.entryType}>
@@ -767,6 +757,19 @@ function openInPlanner(
 /** Entries are rebuilt with the scan's events, so selection goes by their fields. */
 function entryKey(entry: CoachEntry): string {
 	return `${entry.game.number}-${entry.type}-${entry.start}`;
+}
+
+/** Scrolls the list (never the page) to an entry out of its view. */
+function revealInList(button: HTMLButtonElement | null) {
+	const list = button?.closest("ol");
+	if (!button || !list) return;
+
+	const entry = button.getBoundingClientRect();
+	const view = list.getBoundingClientRect();
+	const above = entry.top - view.top;
+	const below = entry.bottom - view.bottom;
+	if (above < 0) list.scrollBy({ top: above, behavior: "smooth" });
+	else if (below > 0) list.scrollBy({ top: below, behavior: "smooth" });
 }
 
 function gameLabel(entry: CoachEntry): string {
