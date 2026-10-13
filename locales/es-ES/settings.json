@@ -4,6 +4,7 @@
 	"tabs.locale": "Idioma",
 	"tabs.theme": "Tema",
 	"tabs.sounds": "Sonidos",
+	"refreshFromDiscord": "",
 	"matchProfile.maps.teamPreferencesHint": "¿Buscas las preferencias de mapas de tu equipo? Están en la página de Editar equipo.",
 	"matchProfile.maps.avoid": "Evitar",
 	"matchProfile.maps.prefer": "Preferir",

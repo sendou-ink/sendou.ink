@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Avatar } from "~/components/Avatar";
 import { BackLink } from "~/components/BackLink";
 import { PageHeader } from "~/components/PageHeader";
-import type { Tables } from "~/db/tables";
+import type { CommonUser } from "~/utils/kysely.server";
 import { userPage } from "~/utils/urls";
 import styles from "./SubPageHeader.module.css";
 
@@ -12,10 +12,7 @@ export function SubPageHeader({
 	subtitle,
 	children,
 }: {
-	user: Pick<
-		Tables["User"],
-		"username" | "discordId" | "discordAvatar" | "customUrl"
-	>;
+	user: CommonUser;
 	title: React.ReactNode;
 	subtitle?: React.ReactNode;
 	children?: React.ReactNode;

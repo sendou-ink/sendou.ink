@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import type { Tables } from "~/db/tables";
 import {
 	GraphicContainer,
 	GraphicDateSubtitle,
@@ -13,7 +12,7 @@ import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { LFG_PAGE, resolveAvatarUrl } from "~/utils/urls";
+import { avatarUrl, LFG_PAGE } from "~/utils/urls";
 import { Avatar } from "./Avatar";
 import { Flag } from "./Flag";
 import { WeaponImage } from "./Image";
@@ -24,10 +23,9 @@ const WEAPON_SIZE = 40;
 const MEMBER_WEAPON_SIZE = 28;
 
 interface LFGPostGraphicUser {
+	id: number;
 	username: string;
-	discordId: string;
-	discordAvatar: Tables["User"]["discordAvatar"];
-	customAvatarUrl: string | null;
+	avatar: string | null;
 	country: string | null;
 	weaponPool: Array<{
 		weaponSplId: MainWeaponId;
@@ -47,7 +45,7 @@ export interface LFGPostGraphicPost {
 	team: {
 		name: string;
 		avatarUrl: string | null;
-		members: Array<LFGPostGraphicUser & { id: number }>;
+		members: Array<LFGPostGraphicUser>;
 	} | null;
 }
 
@@ -82,7 +80,7 @@ function PostHeader({ post }: { post: LFGPostGraphicPost }) {
 			}
 		: {
 				avatarUrl: userAvatarUrl(post.author),
-				identiconInput: post.author.discordId,
+				identiconInput: String(post.author.id),
 			};
 
 	return (
@@ -147,7 +145,7 @@ function TeamMembersList({
 				<div key={member.id} className={styles.member}>
 					<Avatar
 						url={userAvatarUrl(member)}
-						identiconInput={member.discordId}
+						identiconInput={String(member.id)}
 						size="xxs"
 						alt=""
 					/>
@@ -163,12 +161,7 @@ function TeamMembersList({
 }
 
 function userAvatarUrl(user: LFGPostGraphicUser) {
-	return resolveAvatarUrl({
-		customAvatarUrl: user.customAvatarUrl,
-		discordId: user.discordId,
-		discordAvatar: user.discordAvatar,
-		size: "lg",
-	});
+	return user.avatar ? avatarUrl(user.avatar, "lg") : undefined;
 }
 
 function languagesLabel(languages: UnifiedLanguageCode[]) {

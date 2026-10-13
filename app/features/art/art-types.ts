@@ -13,10 +13,9 @@ export interface ListedArt {
 	}>;
 	linkedUsers?: Array<CommonUser>;
 	author?: {
-		discordId: Tables["User"]["discordId"];
+		id: Tables["User"]["id"];
 		username: Tables["User"]["username"];
-		discordAvatar: Tables["User"]["discordAvatar"];
-		customAvatarUrl: string | null;
+		avatar: CommonUser["avatar"];
 		commissionsOpen: Tables["User"]["commissionsOpen"];
 	};
 	permissions: {

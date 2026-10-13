@@ -109,7 +109,7 @@ export function GroupCard({
 						return (
 							<GroupMember
 								member={member}
-								key={member.discordId}
+								key={member.id}
 								hideVc={hideVc}
 								hideWeapons={hideWeapons}
 								hideNote={hideNote}

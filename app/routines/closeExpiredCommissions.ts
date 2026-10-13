@@ -10,7 +10,7 @@ export const CloseExpiredCommissionsRoutine = new Routine({
 	func: async () => {
 		const usersWithExpiredCommissions = await db
 			.selectFrom("User")
-			.select(["id", "discordId"])
+			.select("id")
 			.where("commissionsOpen", "=", 1)
 			.where("commissionsOpenedAt", "is not", null)
 			.where(
@@ -43,9 +43,6 @@ export const CloseExpiredCommissionsRoutine = new Routine({
 			await notify({
 				notification: {
 					type: "COMMISSIONS_CLOSED",
-					meta: {
-						discordId: user.discordId,
-					},
 				},
 				userIds: [user.id],
 			});

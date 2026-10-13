@@ -20,39 +20,34 @@ import type {
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
 import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import { IS_E2E_TEST_RUN } from "./e2e";
 
-export const discordAvatarUrl = ({
-	discordId,
-	discordAvatar,
-	size,
-}: {
-	discordId: string;
-	discordAvatar: string;
-	size: "lg" | "sm";
-}) =>
-	`https://cdn.discordapp.com/avatars/${discordId}/${
-		discordAvatar
-	}.webp${size === "lg" ? "?size=240" : "?size=80"}`;
+/** Root of the S3 bucket holding user submitted images and self-hosted Discord avatars. */
+export const USER_SUBMITTED_IMAGE_ROOT =
+	(process.env.NODE_ENV === "development" && !Config.prodMode) ||
+	IS_E2E_TEST_RUN ||
+	process.env.NODE_ENV === "test"
+		? "http://127.0.0.1:9000/sendou"
+		: "https://sendou.nyc3.cdn.digitaloceanspaces.com";
 
-/** Avatar url preferring the custom avatar over the Discord one; undefined without either. */
-export const resolveAvatarUrl = ({
-	customAvatarUrl,
-	discordId,
-	discordAvatar,
-	size,
-}: {
-	customAvatarUrl?: string | null;
-	discordId: string;
-	discordAvatar?: string | null;
-	size: "lg" | "sm";
-}) => {
-	if (customAvatarUrl) return customAvatarUrl;
-	if (discordAvatar) {
-		return discordAvatarUrl({ discordId, discordAvatar, size });
-	}
+/** Full URL of an image in the user submitted image storage by its file name. */
+export const userSubmittedImageUrl = (fileName: string) =>
+	`${USER_SUBMITTED_IMAGE_ROOT}/${fileName}`;
 
-	return undefined;
-};
+/** File name of an image's downscaled copy, stored next to it (art thumbnails, avatars). */
+export function smallImageFileName(fileName: string) {
+	const lastDotIndex = fileName.lastIndexOf(".");
+	if (lastDotIndex === -1) return fileName;
+
+	const withoutExtension = fileName.slice(0, lastDotIndex);
+	const extension = fileName.slice(lastDotIndex + 1);
+
+	return `${withoutExtension}-small.${extension}`;
+}
+
+/** URL of a user's avatar by its file name (`CommonUser["avatar"]`). */
+export const avatarUrl = (avatar: string, size: "lg" | "sm") =>
+	userSubmittedImageUrl(size === "sm" ? smallImageFileName(avatar) : avatar);
 
 export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
@@ -95,6 +90,7 @@ export const youtubeUrl = (channelId: string) =>
 
 export const LOG_IN_URL = "/auth";
 export const LOG_OUT_URL = "/auth/logout";
+export const DISCORD_REFRESH_URL = "/auth/refresh";
 export const ADMIN_PAGE = "/admin";
 export const API_PAGE = "/api";
 export const ARTICLES_MAIN_PAGE = "/a";
@@ -263,7 +259,7 @@ export const trophyBackfillPage = (args: {
 }) => `${TROPHIES_PAGE}/${args.trophyId}/backfill/${args.seriesId}`;
 
 export interface UserLinkArgs {
-	discordId: Tables["User"]["discordId"];
+	id: Tables["User"]["id"];
 	customUrl?: Tables["User"]["customUrl"];
 }
 
@@ -273,7 +269,7 @@ export const sourceFileUrl = (filePath: string) =>
 	`${SENDOU_INK_GITHUB_URL}/blob/main/${filePath}`;
 
 export const userPage = (user: UserLinkArgs) =>
-	`/u/${user.customUrl ?? user.discordId}`;
+	`/u/${user.customUrl ?? user.id}`;
 export const userEditProfilePage = (user: UserLinkArgs) =>
 	`${userPage(user)}/edit`;
 export const userBuildsPage = (user: UserLinkArgs) =>

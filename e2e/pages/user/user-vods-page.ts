@@ -10,8 +10,8 @@ export class UserVodsPage {
 		this.page = page;
 	}
 
-	async goto(discordId: string) {
-		await navigate({ page: this.page, url: userVodsPage({ discordId }) });
+	async goto(userId: number) {
+		await navigate({ page: this.page, url: userVodsPage({ id: userId }) });
 	}
 
 	vodTitle(title: string) {

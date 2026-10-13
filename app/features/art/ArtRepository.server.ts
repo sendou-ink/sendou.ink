@@ -73,9 +73,8 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 		isShowcase: Boolean(a.isShowcase),
 		author: {
 			commissionsOpen: a.commissionsOpen,
-			discordAvatar: a.discordAvatar,
-			customAvatarUrl: a.customAvatarUrl,
-			discordId: a.discordId,
+			avatar: a.avatar,
+			id: a.userId,
 			username: a.username,
 		},
 		permissions: artPermissions({
@@ -131,9 +130,8 @@ export async function findShowcaseArtsByTag(
 			isShowcase: Boolean(a.isShowcase),
 			author: {
 				commissionsOpen: a.commissionsOpen,
-				discordAvatar: a.discordAvatar,
-				customAvatarUrl: a.customAvatarUrl,
-				discordId: a.discordId,
+				avatar: a.avatar,
+				id: a.userId,
 				username: a.username,
 			},
 			permissions: artPermissions({
@@ -170,9 +168,8 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 		isShowcase: Boolean(a.isShowcase),
 		author: {
 			commissionsOpen: a.commissionsOpen,
-			discordAvatar: a.discordAvatar,
-			customAvatarUrl: a.customAvatarUrl,
-			discordId: a.discordId,
+			avatar: a.avatar,
+			id: a.userId,
 			username: a.username,
 		},
 		permissions: artPermissions({
@@ -312,10 +309,9 @@ export async function findArtsByUserId(
 			tags: row.tags.length > 0 ? row.tags : undefined,
 			linkedUsers: row.linkedUsers.length > 0 ? row.linkedUsers : undefined,
 			author: {
-				discordId: row.discordId,
+				id: row.userId,
 				username: row.username,
-				discordAvatar: row.discordAvatar,
-				customAvatarUrl: row.customAvatarUrl,
+				avatar: row.avatar,
 				commissionsOpen: row.commissionsOpen,
 			},
 			permissions: artPermissions({

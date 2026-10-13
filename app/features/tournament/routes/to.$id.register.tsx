@@ -779,9 +779,7 @@ function FillRoster({
 							user={{
 								id: member.userId,
 								username: member.username,
-								discordId: member.discordId,
-								discordAvatar: member.discordAvatar,
-								customAvatarUrl: member.customAvatarUrl,
+								avatar: member.avatar,
 							}}
 							entry={entryByUserId?.get(member.userId)}
 							showAvailability={Boolean(entryByUserId)}

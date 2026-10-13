@@ -62,10 +62,8 @@ afterEach(() => {
 const ALICE: ChatMessageAuthor = {
 	id: 1,
 	username: "Alice",
-	discordId: "1",
-	discordAvatar: null,
+	avatar: null,
 	customUrl: null,
-	customAvatarUrl: null,
 	pronouns: null,
 	chatNameHue: null,
 };
@@ -608,8 +606,8 @@ describe("Chat", () => {
 	});
 
 	describe("mentions", () => {
-		const BOB = { ...ALICE, id: 2, username: "Bob", discordId: "2" };
-		const CAROL = { ...ALICE, id: 3, username: "Carol", discordId: "3" };
+		const BOB = { ...ALICE, id: 2, username: "Bob" };
+		const CAROL = { ...ALICE, id: 3, username: "Carol" };
 
 		const renderComposer = async () => {
 			const onSend = vi.fn();
@@ -670,7 +668,7 @@ describe("Chat", () => {
 		});
 
 		test("sends the picked one of two users sharing a name", async () => {
-			const otherBob = { ...BOB, id: 5, discordId: "5" };
+			const otherBob = { ...BOB, id: 5 };
 			const onSend = vi.fn();
 			const screen = await renderChat([], {
 				onSend,
@@ -690,7 +688,7 @@ describe("Chat", () => {
 		});
 
 		test("holds back mentioning the same user again while on cooldown, telling how long", async () => {
-			const dave = { ...ALICE, id: 7, username: "Dave", discordId: "7" };
+			const dave = { ...ALICE, id: 7, username: "Dave" };
 			const onSend = vi.fn();
 			const screen = await renderChat([], {
 				onSend,

@@ -17,10 +17,8 @@ const READ_DEBOUNCE_MS = 20;
 const author = (id: number): ChatMessageAuthor => ({
 	id,
 	username: `user-${id}`,
-	discordId: String(id),
-	discordAvatar: null,
+	avatar: null,
 	customUrl: null,
-	customAvatarUrl: null,
 	pronouns: null,
 	chatNameHue: null,
 });

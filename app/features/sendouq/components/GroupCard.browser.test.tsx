@@ -18,10 +18,8 @@ vi.mock("~/features/auth/core/user", () => ({
 function createMember(overrides: Partial<SQGroupMember> = {}): SQGroupMember {
 	return {
 		id: 1,
-		discordId: "123456789",
 		username: "TestUser",
-		discordAvatar: null,
-		customAvatarUrl: null,
+		avatar: null,
 		customUrl: null,
 		vc: "NO",
 		languages: [],
@@ -78,10 +76,8 @@ function createOwnGroupMember(
 ): OwnGroupMember {
 	return {
 		id: 1,
-		discordId: "123456789",
 		username: "TestUser",
-		discordAvatar: null,
-		customAvatarUrl: null,
+		avatar: null,
 		customUrl: null,
 		vc: "NO",
 		languages: [],

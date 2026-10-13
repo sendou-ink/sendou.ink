@@ -21,6 +21,8 @@ import { pinUserId } from "../core/pinUserId";
 import * as SplatoonFaker from "../core/SplatoonFaker";
 
 type UpsertArgs = Parameters<typeof UserRepository.upsert>[0] & {
+	/** Discord avatar hash, stored as a synced avatar without copying any files to S3. */
+	discordAvatar?: string | null;
 	/** Profile fields, saved as the profile page saves them. `null` for a bare profile. */
 	profile?: Partial<ProfileArgs> | null;
 	/** Nintendo friend code, `null` for a user who never submitted one. */
@@ -100,8 +102,21 @@ export const { create, createMany } = defineFactory({
 		profile: fakeProfile(),
 		friendCode: fakeFriendCode(),
 	}),
-	insert: async ({ profile, friendCode, ...args }: UpsertArgs) => {
+	insert: async ({
+		profile,
+		friendCode,
+		discordAvatar,
+		...args
+	}: UpsertArgs) => {
 		const user = await UserRepository.upsert(args);
+
+		if (discordAvatar) {
+			await UserRepository.replaceSyncedAvatar({
+				userId: user.id,
+				discordAvatar,
+				fileName: `avatar-${user.id}-${discordAvatar}.webp`,
+			});
+		}
 
 		if (profile && Object.keys(profile).length > 0) {
 			await updateProfile(user.id, profile);
@@ -407,7 +422,6 @@ async function linkConnections(
 		.select([
 			"discordId",
 			"discordName",
-			"discordAvatar",
 			"discordUniqueName",
 			"twitch",
 			"youtubeId",

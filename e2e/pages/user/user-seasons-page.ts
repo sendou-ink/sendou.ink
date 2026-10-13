@@ -17,10 +17,10 @@ export class UserSeasonsPage {
 		};
 	}
 
-	async goto(discordId: string, season?: number) {
+	async goto(userId: number, season?: number) {
 		await navigate({
 			page: this.page,
-			url: userSeasonsPage({ user: { discordId }, season }),
+			url: userSeasonsPage({ user: { id: userId }, season }),
 		});
 	}
 

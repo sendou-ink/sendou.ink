@@ -1,4 +1,4 @@
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { userPage } from "~/utils/urls";
 import { expect, impersonate, navigate, test } from "./helpers/playwright";
@@ -22,7 +22,7 @@ test.describe("Global search", () => {
 		await search.selectType("users");
 		await search.search("sendou");
 		await search.selectOption("Sendou");
-		await expect(page).toHaveURL(userPage({ discordId: ADMIN_DISCORD_ID }));
+		await expect(page).toHaveURL(userPage({ id: ADMIN_ID }));
 
 		await search.open();
 		await search.selectType("organizations");

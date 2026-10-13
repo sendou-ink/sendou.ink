@@ -382,9 +382,7 @@ function buildFirstPlacerEntry(
 	const members = withMembers
 		? rows.slice(0, MEMBERS_TO_SHOW).map((row) => ({
 				customUrl: row.customUrl,
-				customAvatarUrl: row.customAvatarUrl,
-				discordAvatar: row.discordAvatar,
-				discordId: row.discordId,
+				avatar: row.avatar,
 				id: row.id,
 				username: row.username,
 				country: row.country,

@@ -296,7 +296,11 @@ function NewBadgeReceiversSelector({
 												userId: member.userId,
 											})}
 										/>
-										<Avatar user={member} size="xxs" className="mr-2" />
+										<Avatar
+											user={{ ...member, id: member.userId }}
+											size="xxs"
+											className="mr-2"
+										/>
 										{member.username}
 									</div>
 									<div className="stack horizontal sm items-end">
@@ -353,7 +357,11 @@ function NewTrophyReceiversSelector({
 										isSelected={trophyReceiverUserIds.includes(member.userId)}
 										onChange={handleReceiverSelected(member.userId)}
 									/>
-									<Avatar user={member} size="xxs" className="mr-2" />
+									<Avatar
+										user={{ ...member, id: member.userId }}
+										size="xxs"
+										className="mr-2"
+									/>
 									{member.username}
 								</div>
 								<div className="stack horizontal sm items-end">

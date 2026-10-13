@@ -81,7 +81,7 @@ export default function UserInfoPage() {
 					<LinkButton
 						to={href("/u/:identifier/edit-widgets", {
 							identifier:
-								layoutData.user.customUrl ?? layoutData.user.discordId,
+								layoutData.user.customUrl ?? String(layoutData.user.id),
 						})}
 						variant="outlined"
 						size="small"
@@ -92,7 +92,7 @@ export default function UserInfoPage() {
 					<LinkButton
 						to={href("/u/:identifier/edit", {
 							identifier:
-								layoutData.user.customUrl ?? layoutData.user.discordId,
+								layoutData.user.customUrl ?? String(layoutData.user.id),
 						})}
 						variant="outlined"
 						size="small"

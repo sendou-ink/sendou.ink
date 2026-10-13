@@ -64,7 +64,7 @@ test.describe("Public pages", () => {
 		await expect(front.locators.welcomeBanner).toBeVisible();
 
 		const userPage = new UserPage(page);
-		await userPage.goto(PUBLIC_USER.discordId);
+		await userPage.goto(user.id);
 		await expectNoErrorPage(page);
 		await expect(
 			userPage.usernameHeading(PUBLIC_USER.discordName),

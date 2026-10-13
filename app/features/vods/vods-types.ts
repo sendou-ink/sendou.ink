@@ -1,18 +1,14 @@
 import type * as v from "valibot";
 import type { Tables } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { CommonUser } from "~/utils/kysely.server";
 import type { videoSchema } from "./vods-schemas";
 
 export type VideoBeingAdded = v.InferOutput<typeof videoSchema>;
 
 export interface Vod {
 	id: Tables["Video"]["id"];
-	pov?:
-		| (Pick<
-				Tables["User"],
-				"username" | "discordId" | "discordAvatar" | "customUrl" | "id"
-		  > & { customAvatarUrl: string | null })
-		| string;
+	pov?: CommonUser | string;
 	title: Tables["Video"]["title"];
 	type: Tables["Video"]["type"];
 	youtubePublishedAt: Tables["Video"]["youtubePublishedAt"];

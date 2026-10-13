@@ -1,4 +1,7 @@
+import sharp from "sharp";
 import { invariant } from "~/utils/invariant";
+
+const SMALL_COPY_SIZE_PX = 80;
 
 export type ImageExtension = "webp" | "png" | "jpeg";
 
@@ -19,7 +22,20 @@ export function dataUrlToImageBuffer(
 	return { buffer, extension };
 }
 
-function imageExtensionFromMagicBytes(buffer: Buffer): ImageExtension | null {
+/** Square downscaled copy of an image in the same format, for small displays such as avatars. */
+export function smallImageCopy(
+	image: Buffer | Uint8Array,
+	extension: ImageExtension,
+) {
+	return sharp(image)
+		.resize(SMALL_COPY_SIZE_PX, SMALL_COPY_SIZE_PX, { fit: "cover" })
+		.toFormat(extension)
+		.toBuffer();
+}
+
+export function imageExtensionFromMagicBytes(
+	buffer: Buffer,
+): ImageExtension | null {
 	if (
 		buffer.length > 12 &&
 		buffer.toString("ascii", 0, 4) === "RIFF" &&

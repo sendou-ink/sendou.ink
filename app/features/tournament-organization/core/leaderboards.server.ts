@@ -11,14 +11,7 @@ const FIRST_PLACE_POINTS = SECOND_PLACE_POINTS * 2;
 
 const POINTS_TIE_EPSILON = 0.0001;
 
-const USER_KEYS = [
-	"id",
-	"username",
-	"discordId",
-	"discordAvatar",
-	"customUrl",
-	"customAvatarUrl",
-] as const;
+const USER_KEYS = ["id", "username", "customUrl", "avatar"] as const;
 
 type EventLeaderboardEvent = Unpacked<
 	Awaited<
@@ -120,7 +113,6 @@ function addCalendarEventPoints(
 				...R.pick(result, USER_KEYS),
 				id: result.id,
 				username: result.username!,
-				discordId: result.discordId!,
 			},
 			placement: result.placement,
 			teamSize: teamSizes[result.teamId],

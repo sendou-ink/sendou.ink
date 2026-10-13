@@ -9,7 +9,6 @@ import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { userPage } from "~/utils/urls";
-import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import { useTournamentFriendCodes } from "../routes/to.$id";
 import styles from "./TeamWithRoster.module.css";
 
@@ -93,7 +92,7 @@ export function TeamWithRoster({
 									})}
 								>
 									<Avatar
-										user={member}
+										user={{ ...member, id: member.userId }}
 										size="xxs"
 										className={clsx({
 											[styles.teamWithRosterMemberAvatarInactive]:
@@ -101,7 +100,7 @@ export function TeamWithRoster({
 										})}
 									/>
 									<Link
-										to={userPage(member)}
+										to={userPage({ ...member, id: member.userId })}
 										className={clsx(styles.teamMemberName, "truncate")}
 										data-testid="team-member-name"
 									>
@@ -110,8 +109,8 @@ export function TeamWithRoster({
 								</div>
 								{friendCode ? (
 									<div className="text-xs text-lighter">
-										{tournament.isOrganizer(user) ? (
-											<FreshAccountEmoji discordId={member.discordId} />
+										{tournament.isOrganizer(user) && member.isFreshAccount ? (
+											<FreshAccountEmoji />
 										) : null}
 										SW-{friendCode}
 									</div>
@@ -126,10 +125,8 @@ export function TeamWithRoster({
 	);
 }
 
-function FreshAccountEmoji({ discordId }: { discordId: string }) {
+function FreshAccountEmoji() {
 	const { t } = useTranslation(["tournament"]);
-
-	if (!accountCreatedInTheLastSixMonths(discordId)) return null;
 
 	return (
 		<span className="text-md mr-2" title={t("tournament:roster.freshAccount")}>

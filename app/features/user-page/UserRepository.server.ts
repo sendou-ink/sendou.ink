@@ -27,7 +27,6 @@ import {
 	asJson,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
-	customAvatarUrl,
 	jsonArrayFrom,
 	jsonObjectFrom,
 	tournamentLogoOrNull,
@@ -52,7 +51,7 @@ export function findIdByIdentifier(identifier: string) {
 /** Identity of the user a `/u/:identifier` page is about, incl. what their canonical page URL needs. */
 export function findPageUserByIdentifier(identifier: string) {
 	return userByIdentifierQuery(identifier)
-		.select(["User.discordId", "User.customUrl"])
+		.select("User.customUrl")
 		.executeTakeFirst();
 }
 
@@ -69,6 +68,19 @@ export async function findCountriesByUserIds(userIds: number[]) {
 		.execute();
 
 	return new Map(rows.map((row) => [row.id, row.country]));
+}
+
+/** Discord ids of the given users keyed by user id. Not for public responses. */
+export async function findDiscordIdsByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return new Map<number, string>();
+
+	const rows = await db
+		.selectFrom("User")
+		.select(["User.id", "User.discordId"])
+		.where("User.id", "in", userIds)
+		.execute();
+
+	return new Map(rows.map((row) => [row.id, row.discordId]));
 }
 
 /** Plus tiers of the given users keyed by user id, users without a tier absent. */
@@ -212,7 +224,13 @@ export async function findProfileByUserId(userId: number) {
 			"PlusTier.tier as plusTier",
 			"User.pronouns",
 			"User.customAvatarImgId",
-			customAvatarUrl(eb).as("customAvatarUrl"),
+			concatUserSubmittedImagePrefix(
+				eb
+					.selectFrom("UserSubmittedImage")
+					.select("UserSubmittedImage.url")
+					.whereRef("UserSubmittedImage.id", "=", "User.customAvatarImgId")
+					.$asScalar(),
+			).as("customAvatarUrl"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -323,7 +341,7 @@ export async function findWidgetsByUserId(
 export function findByCustomUrl(customUrl: string) {
 	return db
 		.selectFrom("User")
-		.select(["User.id", "User.discordId", "User.customUrl", "User.patronTier"])
+		.select(["User.id", "User.customUrl", "User.patronTier"])
 		.where("customUrl", "=", customUrl)
 		.executeTakeFirst();
 }
@@ -354,6 +372,7 @@ export async function findLeanById(id: number) {
 		.where("User.id", "=", id)
 		.select(({ eb }) => [
 			...commonUserSelect(eb),
+			"User.discordId",
 			"User.createdAt",
 			"User.customTheme",
 			"User.isArtist",
@@ -410,6 +429,7 @@ export function findModInfoById(id: number) {
 	return db
 		.selectFrom("User")
 		.select((eb) => [
+			"User.discordId",
 			"User.discordUniqueName",
 			"User.isVideoAdder",
 			"User.isArtist",
@@ -472,7 +492,6 @@ export async function findAllPatronsForFooter() {
 		.selectFrom("User")
 		.select([
 			"User.id",
-			"User.discordId",
 			"User.username",
 			asJson(
 				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
@@ -1232,12 +1251,12 @@ export function insertFriendCode(args: TablesInsertable["UserFriendCode"]) {
 	return db.insertInto("UserFriendCode").values(args).execute();
 }
 
+/** Inserts or updates the user by Discord id. The avatar is stored separately via {@link replaceSyncedAvatar}. */
 export function upsert(
 	args: Pick<
 		TablesInsertable["User"],
 		| "discordId"
 		| "discordName"
-		| "discordAvatar"
 		| "discordUniqueName"
 		| "twitch"
 		| "youtubeId"
@@ -1265,8 +1284,66 @@ export function upsert(
 				...R.omit(args, ["discordId"]),
 			});
 		})
-		.returning("id")
+		.returning(["id", "discordAvatar"])
 		.executeTakeFirstOrThrow();
+}
+
+/**
+ * Points the user's synced avatar at a newly stored image file (`null` = no avatar) and deletes the
+ * previous image row. Returns the previous file name so its files can be deleted from storage.
+ */
+export function replaceSyncedAvatar({
+	userId,
+	discordAvatar,
+	fileName,
+}: {
+	userId: number;
+	/** Hash of the Discord avatar the file was copied from. */
+	discordAvatar: string | null;
+	fileName: string | null;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const previous = await trx
+			.selectFrom("User")
+			.leftJoin(
+				"UnvalidatedUserSubmittedImage",
+				"UnvalidatedUserSubmittedImage.id",
+				"User.syncedAvatarImgId",
+			)
+			.select([
+				"UnvalidatedUserSubmittedImage.id",
+				"UnvalidatedUserSubmittedImage.url",
+			])
+			.where("User.id", "=", userId)
+			.executeTakeFirstOrThrow();
+
+		const image = fileName
+			? await trx
+					.insertInto("UnvalidatedUserSubmittedImage")
+					.values({
+						submitterUserId: userId,
+						url: fileName,
+						validatedAt: databaseTimestampNow(),
+					})
+					.returning("id")
+					.executeTakeFirstOrThrow()
+			: null;
+
+		await trx
+			.updateTable("User")
+			.set({ discordAvatar, syncedAvatarImgId: image?.id ?? null })
+			.where("id", "=", userId)
+			.execute();
+
+		if (previous.id) {
+			await trx
+				.deleteFrom("UnvalidatedUserSubmittedImage")
+				.where("id", "=", previous.id)
+				.execute();
+		}
+
+		return previous.url;
+	});
 }
 
 type UpdateProfileArgs = Pick<
@@ -1324,7 +1401,7 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				customAvatarImgId: args.customAvatarImgId ?? null,
 			})
 			.where("id", "=", userId)
-			.returning(["User.id", "User.customUrl", "User.discordId"])
+			.returning(["User.id", "User.customUrl"])
 			.executeTakeFirstOrThrow();
 	});
 }
@@ -1467,36 +1544,6 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 					patronExpiresAt: null,
 				})
 				.where("User.discordId", "=", user.discordId)
-				.execute();
-		}
-	});
-}
-
-/** Syncs Discord profile data by Discord id, a `null` name keeps the stored one. */
-export function updateMany(
-	argsArr: Array<{
-		discordId: string;
-		discordAvatar: string | null;
-		discordName: string | null;
-		discordUniqueName: string | null;
-	}>,
-) {
-	return db.transaction().execute(async (trx) => {
-		for (const updateArgs of argsArr) {
-			await trx
-				.updateTable("User")
-				.set((eb) => ({
-					discordAvatar: updateArgs.discordAvatar,
-					discordName: eb.fn.coalesce(
-						eb.val(updateArgs.discordName),
-						"User.discordName",
-					),
-					discordUniqueName: eb.fn.coalesce(
-						eb.val(updateArgs.discordUniqueName),
-						"User.discordUniqueName",
-					),
-				}))
-				.where("User.discordId", "=", updateArgs.discordId)
 				.execute();
 		}
 	});

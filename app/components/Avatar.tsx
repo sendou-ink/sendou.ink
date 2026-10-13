@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import * as React from "react";
-import type { Tables } from "~/db/tables";
 import { generateIdenticon } from "~/utils/identicon";
-import { resolveAvatarUrl } from "~/utils/urls";
+import type { CommonUser } from "~/utils/kysely.server";
+import { avatarUrl } from "~/utils/urls";
 import styles from "./Avatar.module.css";
 
 const dimensions = {
@@ -28,9 +28,7 @@ export function Avatar({
 	loading = "lazy",
 	...rest
 }: {
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
-		customAvatarUrl?: string | null;
-	};
+	user?: Pick<CommonUser, "id" | "avatar">;
 	url?: string | null;
 	identiconInput?: string;
 	className?: string;
@@ -46,21 +44,17 @@ export function Avatar({
 		if (img?.complete && img.naturalWidth === 0) setIsErrored(true);
 	};
 
-	const identiconSource = identiconInput ?? user?.discordId ?? "unknown";
+	const identiconSource =
+		identiconInput ?? (user ? String(user.id) : "unknown");
 
-	const userAvatarUrl = user
-		? resolveAvatarUrl({
-				customAvatarUrl: user.customAvatarUrl,
-				discordId: user.discordId,
-				discordAvatar: user.discordAvatar,
-				size: size === "lg" || size === "xmd" ? "lg" : "sm",
-			})
+	const userAvatarUrl = user?.avatar
+		? avatarUrl(user.avatar, size === "lg" || size === "xmd" ? "lg" : "sm")
 		: undefined;
 
-	const avatarUrl = url ?? userAvatarUrl;
+	const imageUrl = url ?? userAvatarUrl;
 
 	const src =
-		avatarUrl && !isErrored ? avatarUrl : generateIdenticon(identiconSource);
+		imageUrl && !isErrored ? imageUrl : generateIdenticon(identiconSource);
 
 	return (
 		<div className={clsx(styles.avatarWrapper, className)}>

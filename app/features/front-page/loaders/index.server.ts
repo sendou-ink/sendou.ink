@@ -10,7 +10,7 @@ import * as SplatoonRotationRepository from "~/features/splatoon-rotations/Splat
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
-import { discordAvatarUrl, teamPage, userPage } from "~/utils/urls";
+import { avatarUrl, teamPage, userPage } from "~/utils/urls";
 import * as ShowcaseTournaments from "../core/ShowcaseTournaments.server";
 
 export type FrontPageLoaderData = SerializeFrom<typeof loader>;
@@ -83,15 +83,7 @@ function cachedLeaderboards(): Promise<{
 					power: entry.power,
 					name: entry.username,
 					url: userPage(entry),
-					avatarUrl: entry.customAvatarUrl
-						? entry.customAvatarUrl
-						: entry.discordAvatar
-							? discordAvatarUrl({
-									discordAvatar: entry.discordAvatar,
-									discordId: entry.discordId,
-									size: "sm",
-								})
-							: null,
+					avatarUrl: entry.avatar ? avatarUrl(entry.avatar, "sm") : null,
 				})),
 				team: team
 					.filter((entry) => entry.team)

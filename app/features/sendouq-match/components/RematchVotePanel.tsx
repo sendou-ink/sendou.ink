@@ -14,8 +14,7 @@ import styles from "./RematchVotePanel.module.css";
 export type RematchVoteMember = {
 	id: number;
 	username: string;
-	discordId: string;
-	discordAvatar: string | null;
+	avatar: string | null;
 	customUrl: string | null;
 };
 

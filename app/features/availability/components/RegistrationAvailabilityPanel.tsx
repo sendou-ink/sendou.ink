@@ -21,9 +21,7 @@ import { useRangeText } from "./ScheduleDayCell";
 export interface AvailabilityPanelUser {
 	id: number;
 	username: string;
-	discordId: string;
-	discordAvatar: string | null;
-	customAvatarUrl?: string | null;
+	avatar: string | null;
 }
 
 export type AvailabilityPanelData = SerializeFrom<RegistrationAvailability>;

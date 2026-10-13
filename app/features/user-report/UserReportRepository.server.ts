@@ -67,7 +67,6 @@ export function findAllByReportedUserId(reportedUserId: number) {
 			"UserReport.createdAt",
 			"UserReport.reporterUserId",
 			"User.username as reporterUsername",
-			"User.discordId as reporterDiscordId",
 			"User.customUrl as reporterCustomUrl",
 		])
 		.where("UserReport.reportedUserId", "=", reportedUserId)

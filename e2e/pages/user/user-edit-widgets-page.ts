@@ -16,10 +16,10 @@ export class UserEditWidgetsPage {
 		};
 	}
 
-	async goto(discordId: string) {
+	async goto(userId: number) {
 		await navigate({
 			page: this.page,
-			url: `${userPage({ discordId })}/edit-widgets`,
+			url: `${userPage({ id: userId })}/edit-widgets`,
 		});
 	}
 

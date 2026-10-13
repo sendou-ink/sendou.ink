@@ -32,8 +32,8 @@ export class UserPage {
 		};
 	}
 
-	async goto(discordId: string) {
-		await navigate({ page: this.page, url: userPage({ discordId }) });
+	async goto(userId: number) {
+		await navigate({ page: this.page, url: userPage({ id: userId }) });
 	}
 
 	/** Navigates with any of the identifiers the page accepts: user id, Discord id or custom URL. */

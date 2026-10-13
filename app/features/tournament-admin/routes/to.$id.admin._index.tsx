@@ -58,7 +58,8 @@ type SortKey = "name" | "checkIn";
 
 export default function TournamentAdminTeamsPage() {
 	const tournament = useTournament();
-	const { teams } = useLoaderData<TournamentAdminTeamsLoaderData>();
+	const { teams, memberDiscordIds } =
+		useLoaderData<TournamentAdminTeamsLoaderData>();
 
 	const [search, setSearch] = React.useState("");
 	const [sort, setSort] = React.useState<SortState<SortKey>>(null);
@@ -69,7 +70,9 @@ export default function TournamentAdminTeamsPage() {
 		...teams.map((team) => team.members.length),
 	);
 
-	const filteredTeams = teams.filter((team) => teamMatchesQuery(team, search));
+	const filteredTeams = teams.filter((team) =>
+		teamMatchesQuery({ team, search, memberDiscordIds }),
+	);
 	const sortedTeams = sortTeams(filteredTeams, sort);
 
 	return (
@@ -155,7 +158,11 @@ export default function TournamentAdminTeamsPage() {
 			</Table>
 
 			{exportOpen ? (
-				<ExportDialog teams={teams} close={() => setExportOpen(false)} />
+				<ExportDialog
+					teams={teams}
+					memberDiscordIds={memberDiscordIds}
+					close={() => setExportOpen(false)}
+				/>
 			) : null}
 		</div>
 	);
@@ -244,7 +251,7 @@ function TeamRow({
 					<td key={`player-${i}`}>
 						{member ? (
 							<Link
-								to={userPage(member)}
+								to={userPage({ ...member, id: member.userId })}
 								className={clsx("stack horizontal xxs items-center", {
 									"font-bold": member.role === "OWNER",
 								})}
@@ -568,7 +575,15 @@ function activeCheckInCount(team: TournamentTeamFull) {
 	return activeCheckInLabels(team, () => "").length;
 }
 
-function teamMatchesQuery(team: TournamentTeamFull, search: string) {
+function teamMatchesQuery({
+	team,
+	search,
+	memberDiscordIds,
+}: {
+	team: TournamentTeamFull;
+	search: string;
+	memberDiscordIds: Record<number, string>;
+}) {
 	const query = search.trim();
 	if (!query) return true;
 
@@ -587,7 +602,7 @@ function teamMatchesQuery(team: TournamentTeamFull, search: string) {
 		return team.members.some((member) => {
 			if ("id" in identifier) return member.userId === identifier.id;
 			if ("discordId" in identifier) {
-				return member.discordId === identifier.discordId;
+				return memberDiscordIds[member.userId] === identifier.discordId;
 			}
 			return (
 				member.customUrl?.toLowerCase() === identifier.customUrl.toLowerCase()

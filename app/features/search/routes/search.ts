@@ -51,8 +51,7 @@ async function searchByType({
 				inGameName: u.inGameName,
 				tournamentName: u.tournamentName,
 				avatarUrl: null,
-				discordId: u.discordId,
-				discordAvatar: u.discordAvatar,
+				avatar: u.avatar,
 				customUrl: u.customUrl,
 				plusTier: u.plusTier,
 			}));

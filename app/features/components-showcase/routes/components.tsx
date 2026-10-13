@@ -1715,7 +1715,7 @@ function AvatarSection({ id }: { id: string }) {
 			<div className="stack md">
 				<ComponentRow label="Size xxxs">
 					<Avatar
-						user={{ discordId: "1", discordAvatar: null }}
+						user={{ id: 1, avatar: null }}
 						size="xxxs"
 						alt="User avatar"
 					/>
@@ -1723,58 +1723,34 @@ function AvatarSection({ id }: { id: string }) {
 
 				<ComponentRow label="Size xxxsm">
 					<Avatar
-						user={{ discordId: "22", discordAvatar: null }}
+						user={{ id: 2, avatar: null }}
 						size="xxxsm"
 						alt="User avatar"
 					/>
 				</ComponentRow>
 
 				<ComponentRow label="Size xxs">
-					<Avatar
-						user={{ discordId: "333", discordAvatar: null }}
-						size="xxs"
-						alt="User avatar"
-					/>
+					<Avatar user={{ id: 3, avatar: null }} size="xxs" alt="User avatar" />
 				</ComponentRow>
 
 				<ComponentRow label="Size xs">
-					<Avatar
-						user={{ discordId: "4444", discordAvatar: null }}
-						size="xs"
-						alt="User avatar"
-					/>
+					<Avatar user={{ id: 4, avatar: null }} size="xs" alt="User avatar" />
 				</ComponentRow>
 
 				<ComponentRow label="Size sm (default)">
-					<Avatar
-						user={{ discordId: "55555", discordAvatar: null }}
-						size="sm"
-						alt="User avatar"
-					/>
+					<Avatar user={{ id: 5, avatar: null }} size="sm" alt="User avatar" />
 				</ComponentRow>
 
 				<ComponentRow label="Size xsm">
-					<Avatar
-						user={{ discordId: "123456", discordAvatar: null }}
-						size="xsm"
-						alt="User avatar"
-					/>
+					<Avatar user={{ id: 6, avatar: null }} size="xsm" alt="User avatar" />
 				</ComponentRow>
 
 				<ComponentRow label="Size md">
-					<Avatar
-						user={{ discordId: "313762200286396416", discordAvatar: null }}
-						size="md"
-						alt="User avatar"
-					/>
+					<Avatar user={{ id: 7, avatar: null }} size="md" alt="User avatar" />
 				</ComponentRow>
 
 				<ComponentRow label="Size lg">
-					<Avatar
-						user={{ discordId: "79237403620945920", discordAvatar: null }}
-						size="lg"
-						alt="User avatar"
-					/>
+					<Avatar user={{ id: 8, avatar: null }} size="lg" alt="User avatar" />
 				</ComponentRow>
 			</div>
 		</Section>
@@ -1784,10 +1760,8 @@ function AvatarSection({ id }: { id: string }) {
 const USER_CARD_DATA = {
 	id: 1,
 	username: "Sendou",
-	discordId: "79237403620945920",
-	discordAvatar: null,
+	avatar: null,
 	customUrl: "sendou",
-	customAvatarUrl: null,
 	banner: { type: "STAGE", stageId: 5 },
 	shortBio: "Very show bio goes here maybe max two lines that gets clamped.",
 	customTheme: null,
@@ -2185,30 +2159,30 @@ const SEASON_SUMMARY_STATS: SeasonSummaryGraphicStats = {
 	topMates: [
 		{
 			player: { name: "Grey", countryCode: "FR" },
-			discordId: "289132480999030784",
+			userId: 2,
 			setsCount: 23,
 		},
 		{
 			player: { name: "sunni" },
-			discordId: "437750362188120075",
+			userId: 3,
 			setsCount: 17,
 		},
 		{
 			player: { name: "まるお", countryCode: "JP" },
-			discordId: "196628310288564224",
+			userId: 4,
 			setsCount: 9,
 		},
 		{
 			player: { name: "Chara", countryCode: "US" },
-			discordId: "455039198672814090",
+			userId: 5,
 			setsCount: 8,
 		},
 		{
 			player: { name: "Silver", countryCode: "FR" },
-			discordId: "224378380316540929",
+			userId: 6,
 			setsCount: 6,
 		},
-		{ player: { name: "Yeti" }, discordId: "153113232128507904", setsCount: 4 },
+		{ player: { name: "Yeti" }, userId: 7, setsCount: 4 },
 	],
 	bestStage: { stageId: 14, winratePercentage: 78 },
 	peakSp: Math.max(...SEASON_SUMMARY_DAYS.map(([, sp]) => sp)),
@@ -2241,8 +2215,8 @@ function SeasonSummaryGraphicSection({ id }: { id: string }) {
 				<ComponentRow label="Season summary export image">
 					<SeasonSummaryGraphic
 						user={{
+							id: 1,
 							name: "Sendou",
-							discordId: "79237403620945920",
 							customUrl: "sendou",
 							countryCode: "FI",
 							avatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/dBYwiLjlhVBwW-oyyNJkC-1721997877357.webp`,
@@ -2261,10 +2235,9 @@ function SeasonSummaryGraphicSection({ id }: { id: string }) {
 }
 
 const LFG_GRAPHIC_AUTHOR: LFGPostGraphicPost["author"] = {
+	id: 1,
 	username: "Sendou",
-	discordId: "79237403620945920",
-	discordAvatar: null,
-	customAvatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/dBYwiLjlhVBwW-oyyNJkC-1721997877357.webp`,
+	avatar: null,
 	country: "FI",
 	weaponPool: [
 		{ weaponSplId: 40, isFavorite: 1, isTenStar: 1 },

@@ -16,8 +16,8 @@ export class UserAdminPage {
 		};
 	}
 
-	async goto(discordId: string) {
-		await navigate({ page: this.page, url: userAdminPage({ discordId }) });
+	async goto(userId: number) {
+		await navigate({ page: this.page, url: userAdminPage({ id: userId }) });
 	}
 
 	totalReportsText(count: number) {

@@ -34,8 +34,7 @@ const GREY = {
 	name: "Grey",
 	inGameName: null,
 	avatarUrl: null,
-	discordId: "123",
-	discordAvatar: null,
+	avatar: null,
 	customUrl: null,
 	plusTier: null,
 };

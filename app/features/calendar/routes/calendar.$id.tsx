@@ -273,7 +273,10 @@ function Description() {
 		<Section title={t("forms.description")}>
 			<div className="stack sm">
 				<div className={styles.author}>
-					<Avatar user={data.event} size="xs" />
+					<Avatar
+						user={{ id: data.event.authorId, avatar: data.event.avatar }}
+						size="xs"
+					/>
 					{data.event.username}
 				</div>
 				{data.event.description ? (

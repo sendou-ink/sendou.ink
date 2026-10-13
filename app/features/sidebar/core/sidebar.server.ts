@@ -46,8 +46,8 @@ import { cache, ttl } from "~/utils/cache.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import {
+	avatarUrl,
 	BLANK_IMAGE_URL,
-	discordAvatarUrl,
 	navIconUrl,
 	teamSchedulePage,
 	tournamentMatchPage,
@@ -70,9 +70,7 @@ export type SidebarEvent = {
 export type SidebarFriend = {
 	id: number;
 	name: string;
-	discordId: string;
-	discordAvatar: string | null;
-	customAvatarUrl: string | null;
+	avatar: CommonUser["avatar"];
 	url: string;
 	subtitle: string;
 	badge: string;
@@ -292,15 +290,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 			stream: {
 				id: `xrank-${row.id}`,
 				name: row.username,
-				imageUrl: row.customAvatarUrl
-					? row.customAvatarUrl
-					: row.discordAvatar
-						? discordAvatarUrl({
-								discordId: row.discordId,
-								discordAvatar: row.discordAvatar,
-								size: "sm",
-							})
-						: BLANK_IMAGE_URL,
+				imageUrl: row.avatar ? avatarUrl(row.avatar, "sm") : BLANK_IMAGE_URL,
 				url: LiveStream.url(row),
 				subtitle: "",
 				startsAt: databaseTimestampNow(),
@@ -433,10 +423,8 @@ function rowToSidebarFriend(
 	return {
 		id: row.id,
 		name: row.username,
-		discordId: row.discordId,
-		discordAvatar: row.discordAvatar,
-		customAvatarUrl: row.customAvatarUrl,
-		url: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
+		avatar: row.avatar,
+		url: userPage({ id: row.id, customUrl: row.customUrl }),
 		subtitle: activity.subtitle ?? "",
 		badge: activity.badge ?? "",
 		activityType: activity.type,

@@ -27,8 +27,8 @@ export class UserBuildsPage {
 		};
 	}
 
-	async goto(discordId: string) {
-		await navigate({ page: this.page, url: userBuildsPage({ discordId }) });
+	async goto(userId: number) {
+		await navigate({ page: this.page, url: userBuildsPage({ id: userId }) });
 	}
 
 	buildCard(nth: number) {

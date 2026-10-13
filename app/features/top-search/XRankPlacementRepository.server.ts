@@ -123,7 +123,7 @@ function xRankPlacementsQueryBase() {
 		])
 		.innerJoin("SplatoonPlayer", "XRankPlacement.playerId", "SplatoonPlayer.id")
 		.leftJoin("User", "SplatoonPlayer.userId", "User.id")
-		.select(["User.discordId", "User.customUrl"]);
+		.select(["SplatoonPlayer.userId", "User.customUrl"]);
 }
 
 export async function findPlacementsOfMonth(

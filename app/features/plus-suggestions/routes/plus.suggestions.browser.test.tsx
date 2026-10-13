@@ -18,15 +18,13 @@ type LoggedInUser = NonNullable<
 	React.ComponentProps<typeof UserProvider>["user"]
 >;
 
-const AUTHOR_AS_LOGGED_IN_USER = { id: AUTHOR.id, discordId: "1005" };
+const AUTHOR_AS_LOGGED_IN_USER = { id: AUTHOR.id };
 
 const suggestedUser = (id: number, username: string) => ({
 	id,
 	username,
-	discordId: String(1000 + id),
-	discordAvatar: null,
 	customUrl: null,
-	customAvatarUrl: null,
+	avatar: null,
 });
 
 const NOW_TIMESTAMP = databaseTimestampNow();

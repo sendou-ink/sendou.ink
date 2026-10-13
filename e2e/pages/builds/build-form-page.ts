@@ -14,8 +14,8 @@ export class BuildFormPage {
 		this.form = createFormHelpers(page, newBuildBaseSchema);
 	}
 
-	async gotoNew(discordId: string) {
-		await navigate({ page: this.page, url: userNewBuildPage({ discordId }) });
+	async gotoNew(userId: number) {
+		await navigate({ page: this.page, url: userNewBuildPage({ id: userId }) });
 	}
 
 	gearSelect(type: GearType) {

@@ -52,11 +52,9 @@ export const loader = async () => {
 					id: friend.id,
 					friendshipId: friend.friendshipId as number,
 					username: friend.username,
-					discordId: friend.discordId,
-					discordAvatar: friend.discordAvatar,
-					customAvatarUrl: friend.customAvatarUrl,
+					avatar: friend.avatar,
 					url: userPage({
-						discordId: friend.discordId,
+						id: friend.id,
 						customUrl: friend.customUrl,
 					}),
 					subtitle: activity.subtitle,
@@ -92,11 +90,9 @@ export const loader = async () => {
 				return {
 					id: tm.id,
 					username: tm.username,
-					discordId: tm.discordId,
-					discordAvatar: tm.discordAvatar,
-					customAvatarUrl: tm.customAvatarUrl,
+					avatar: tm.avatar,
 					url: userPage({
-						discordId: tm.discordId,
+						id: tm.id,
 						customUrl: tm.customUrl,
 					}),
 					subtitle: activity.subtitle,
@@ -121,11 +117,9 @@ export const loader = async () => {
 			sender: {
 				id: req.senderId,
 				username: req.senderUsername,
-				discordId: req.senderDiscordId,
-				discordAvatar: req.senderDiscordAvatar,
-				customAvatarUrl: req.senderCustomAvatarUrl,
+				avatar: req.senderAvatar,
 				url: userPage({
-					discordId: req.senderDiscordId,
+					id: req.senderId,
 					customUrl: req.senderCustomUrl,
 				}),
 			},
@@ -136,11 +130,9 @@ export const loader = async () => {
 			receiver: {
 				id: req.receiverId,
 				username: req.receiverUsername,
-				discordId: req.receiverDiscordId,
-				discordAvatar: req.receiverDiscordAvatar,
-				customAvatarUrl: req.receiverCustomAvatarUrl,
+				avatar: req.receiverAvatar,
 				url: userPage({
-					discordId: req.receiverDiscordId,
+					id: req.receiverId,
 					customUrl: req.receiverCustomUrl,
 				}),
 			},

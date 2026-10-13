@@ -66,7 +66,7 @@ export default function TeamIndexPage() {
 	const showSections = playerMembers.length > 0 && otherMembers.length > 0;
 
 	const renderMember = (member: (typeof members)[number]) => (
-		<React.Fragment key={member.discordId}>
+		<React.Fragment key={member.id}>
 			<MemberRow member={member} number={members.indexOf(member)} />
 			<MobileMemberCard member={member} />
 		</React.Fragment>

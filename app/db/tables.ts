@@ -1002,8 +1002,12 @@ export interface User {
 	country: string | null;
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
+	/** Hash of the Discord avatar `syncedAvatarImgId` was copied from, for noticing when it changes. */
 	discordAvatar: string | null;
+	/** Avatar uploaded by the user, shown over `syncedAvatarImgId`. */
 	customAvatarImgId: number | null;
+	/** Avatar copied from the account the user logs in with. */
+	syncedAvatarImgId: number | null;
 	discordId: string;
 	discordName: string;
 	customName: string | null;

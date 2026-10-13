@@ -134,13 +134,13 @@ async function sendPushNotificationsToUnseen({
 	const limit = pLimit(50);
 
 	await Promise.all(
-		subscriptions.map(({ id, subscription, discordId, customUrl }) =>
+		subscriptions.map(({ id, subscription, userId, customUrl }) =>
 			limit(() =>
 				sendPushNotification({
 					subscription,
 					subscriptionId: id,
 					notification,
-					recipient: { discordId, customUrl },
+					recipient: { id: userId, customUrl },
 					t,
 				}),
 			),

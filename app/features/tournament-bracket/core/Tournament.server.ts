@@ -95,10 +95,8 @@ export async function fetchTournamentStreams(
 		user: {
 			id: stream.id,
 			username: stream.username,
-			discordId: stream.discordId,
-			discordAvatar: stream.discordAvatar,
 			customUrl: stream.customUrl,
-			customAvatarUrl: stream.customAvatarUrl,
+			avatar: stream.avatar,
 		},
 	}));
 

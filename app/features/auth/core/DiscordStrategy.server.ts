@@ -5,6 +5,8 @@ import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
+import { DISCORD_REFRESH_URL } from "~/utils/urls";
+import * as DiscordAvatar from "./DiscordAvatar.server";
 
 let discordApiCooldownUntil: number | null = null;
 
@@ -75,7 +77,7 @@ export const DiscordStrategy = () => {
 		]);
 	};
 
-	return new OAuth2Strategy(
+	return new DiscordOAuth2Strategy(
 		{
 			clientId: ServerConfig.discord.clientId,
 			clientSecret: ServerConfig.discord.clientSecret,
@@ -97,24 +99,7 @@ export const DiscordStrategy = () => {
 					discordResponses,
 				);
 
-				const isAlreadyRegistered = Boolean(
-					await UserRepository.findIdByIdentifier(user.id),
-				);
-
-				if (!isAlreadyRegistered && !user.verified) {
-					logger.info(`User is not verified with id: ${user.id}`);
-					throw new Error("Unverified user");
-				}
-
-				const userFromDb = await UserRepository.upsert({
-					discordAvatar: user.avatar ?? null,
-					discordId: user.id,
-					discordName: user.global_name ?? user.username,
-					discordUniqueName: user.global_name ? user.username : null,
-					...parseConnections(connections),
-				});
-
-				return userFromDb.id;
+				return { user, connections };
 			} catch (e) {
 				logger.error("Failed to finish authentication:\n", e);
 				throw e;
@@ -122,6 +107,56 @@ export const DiscordStrategy = () => {
 		},
 	);
 };
+
+export type DiscordProfile = {
+	user: v.InferOutput<typeof partialDiscordUserSchema>;
+	connections: v.InferOutput<typeof partialDiscordConnectionsSchema>;
+};
+
+class DiscordOAuth2Strategy extends OAuth2Strategy<DiscordProfile> {
+	protected override authorizationParams(
+		params: URLSearchParams,
+		request: Request,
+	) {
+		const result = new URLSearchParams(params);
+		// already authorized users skip the consent screen
+		if (new URL(request.url).pathname === DISCORD_REFRESH_URL) {
+			result.set("prompt", "none");
+		}
+
+		return result;
+	}
+}
+
+/**
+ * Creates or updates the user (name, avatar, connections) from their Discord profile and returns
+ * their id. Unverified Discord accounts can't register.
+ */
+export async function upsertUser({ user, connections }: DiscordProfile) {
+	const isAlreadyRegistered = Boolean(
+		await UserRepository.findIdByIdentifier(user.id),
+	);
+
+	if (!isAlreadyRegistered && !user.verified) {
+		logger.info(`User is not verified with id: ${user.id}`);
+		throw new Error("Unverified user");
+	}
+
+	const userFromDb = await UserRepository.upsert({
+		discordId: user.id,
+		discordName: user.global_name ?? user.username,
+		discordUniqueName: user.global_name ? user.username : null,
+		...parseConnections(connections),
+	});
+
+	await DiscordAvatar.syncForUser({
+		user: userFromDb,
+		discordId: user.id,
+		newHash: user.avatar ?? null,
+	});
+
+	return userFromDb.id;
+}
 
 function parseConnections(
 	connections: v.InferOutput<typeof partialDiscordConnectionsSchema>,
