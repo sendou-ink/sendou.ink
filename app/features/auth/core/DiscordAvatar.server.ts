@@ -36,7 +36,8 @@ export async function syncForUser({
 			fileName,
 		});
 
-		if (previousFileName) {
+		// an overlapping sync of the same hash already stored the same keys
+		if (previousFileName && previousFileName !== fileName) {
 			await deleteFromS3([
 				previousFileName,
 				smallImageFileName(previousFileName),

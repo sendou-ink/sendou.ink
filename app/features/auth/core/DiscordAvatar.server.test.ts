@@ -80,6 +80,17 @@ describe("DiscordAvatar.syncForUser", () => {
 		expect(deleteFromS3).not.toHaveBeenCalled();
 	});
 
+	test("keeps the stored files when an overlapping sync already stored the same avatar", async () => {
+		respondWith(200);
+
+		await sync("new");
+		vi.mocked(deleteFromS3).mockClear();
+		await sync("new");
+
+		expect(await avatarOf(userId())).toBe(`avatar-${userId()}-new.webp`);
+		expect(deleteFromS3).not.toHaveBeenCalled();
+	});
+
 	test("does nothing when the avatar is unchanged", async () => {
 		respondWith(200);
 
