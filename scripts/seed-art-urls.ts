@@ -1,4 +1,10 @@
 import { Config } from "~/config";
+import {
+	ADMIN_TEST_AVATAR,
+	NZAP_TEST_AVATAR,
+	NZAP_TEST_ID,
+} from "~/db/seed/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 
 export const SEED_ART_URLS = [
 	"https://images.unsplash.com/photo-1611627474565-2367887415d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8bmF0dXJlLDF8fHx8fHwxNjg4NTU1NTA2&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1080",
@@ -54,6 +60,19 @@ export const SEED_DEFAULT_TOURNAMENT_LOGO = {
 	sourceFilename: "default.png",
 	filename: Config.tournamentDefaultLogo,
 };
+
+/** Avatars in `app/db/seed/img`, uploaded under the file name the seeded users' synced avatar
+ * points to. */
+export const SEED_AVATARS = [
+	{
+		sourceFilename: "avatar-sendou.webp",
+		filename: `avatar-${ADMIN_ID}-${ADMIN_TEST_AVATAR}.webp`,
+	},
+	{
+		sourceFilename: "avatar-nzap.webp",
+		filename: `avatar-${NZAP_TEST_ID}-${NZAP_TEST_AVATAR}.webp`,
+	},
+];
 
 /** How many numbered logos are uploaded. A seed run needing more than this many
  * ends up with logos that 404 — raise it rather than reusing one, the url column
