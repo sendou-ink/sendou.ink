@@ -11,7 +11,8 @@ const DISCORD_CDN_SMALL_SIZE_PX = 80;
 
 /**
  * Brings the user's synced avatar up to date with their Discord avatar `newHash`: copies the new
- * avatar to S3 as an image and deletes the previous one. Never throws, a failed copy keeps the
+ * avatar to S3 as an image and deletes the previous one. Also copies an unchanged avatar that was
+ * never stored (users skipped by the avatar migration). Never throws, a failed copy keeps the
  * previous avatar.
  */
 export async function syncForUser({
@@ -19,11 +20,16 @@ export async function syncForUser({
 	discordId,
 	newHash,
 }: {
-	user: { id: number; discordAvatar: string | null };
+	user: {
+		id: number;
+		discordAvatar: string | null;
+		syncedAvatarImgId: number | null;
+	};
 	discordId: string;
 	newHash: string | null;
 }) {
-	if (user.discordAvatar === newHash) return;
+	const isStored = !newHash || user.syncedAvatarImgId !== null;
+	if (user.discordAvatar === newHash && isStored) return;
 
 	try {
 		const fileName = newHash
@@ -61,7 +67,7 @@ export async function store({
 	discordId: string;
 	hash: string;
 }): Promise<string | null> {
-	const fileName = `avatar-${userId}-${hash}.webp`;
+	const fileName = fileNameOf({ userId, hash });
 
 	const files: Array<{ key: string; body: Uint8Array }> = [];
 	for (const [key, sizePx] of [
@@ -85,6 +91,11 @@ export async function store({
 	}
 
 	return fileName;
+}
+
+/** File name a Discord avatar is stored under, its small copy is next to it. */
+export function fileNameOf({ userId, hash }: { userId: number; hash: string }) {
+	return `avatar-${userId}-${hash}.webp`;
 }
 
 /** Non-404 failure response from the Discord CDN. */

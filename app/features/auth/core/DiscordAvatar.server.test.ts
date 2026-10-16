@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
 import {
 	deleteFromS3,
 	uploadImmutableToS3,
@@ -25,11 +26,16 @@ const avatarOf = async (id: number) =>
 
 const users = UserFactory.pool();
 const userId = () => users.id(1);
-const syncedUser = () => ({ id: userId(), discordAvatar: "old" });
+const userAsLoggingIn = () =>
+	db
+		.selectFrom("User")
+		.select(["id", "discordAvatar", "syncedAvatarImgId"])
+		.where("id", "=", userId())
+		.executeTakeFirstOrThrow();
 
-const sync = (newHash: string) =>
+const sync = async (newHash: string) =>
 	DiscordAvatar.syncForUser({
-		user: syncedUser(),
+		user: await userAsLoggingIn(),
 		discordId: DISCORD_ID,
 		newHash,
 	});
@@ -98,5 +104,18 @@ describe("DiscordAvatar.syncForUser", () => {
 
 		expect(fetch).not.toHaveBeenCalled();
 		expect(deleteFromS3).not.toHaveBeenCalled();
+	});
+
+	test("stores an unchanged avatar that was never stored", async () => {
+		respondWith(200);
+
+		await DiscordAvatar.syncForUser({
+			user: { id: userId(), discordAvatar: "old", syncedAvatarImgId: null },
+			discordId: DISCORD_ID,
+			newHash: "old",
+		});
+
+		expect(fetch).toHaveBeenCalled();
+		expect(await avatarOf(userId())).toBe(`avatar-${userId()}-old.webp`);
 	});
 });

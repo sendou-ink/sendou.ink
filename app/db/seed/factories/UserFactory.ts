@@ -4,6 +4,7 @@ import type { Tables } from "~/db/tables";
 import type { CustomTheme, Pronouns, UserPreferences } from "~/db/tables-json";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import * as DiscordAvatar from "~/features/auth/core/DiscordAvatar.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -263,7 +264,7 @@ function insertSyncedAvatar(userId: number, discordAvatar: string) {
 	return UserRepository.replaceSyncedAvatar({
 		userId,
 		discordAvatar,
-		fileName: `avatar-${userId}-${discordAvatar}.webp`,
+		fileName: DiscordAvatar.fileNameOf({ userId, hash: discordAvatar }),
 	});
 }
 
