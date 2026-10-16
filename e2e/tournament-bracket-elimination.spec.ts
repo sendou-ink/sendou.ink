@@ -1,5 +1,5 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import {
@@ -184,7 +184,7 @@ test.describe("Tournament bracket elimination", () => {
 		await expect(results.locators.sprHeader).toBeVisible();
 
 		const userResults = new UserResultsPage(page);
-		await userResults.goto(ADMIN_DISCORD_ID);
+		await userResults.goto(ADMIN_ID);
 
 		await expect(userResults.tournamentName("In The Zone 22")).toBeVisible();
 

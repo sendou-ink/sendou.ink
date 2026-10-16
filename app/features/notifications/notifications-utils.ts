@@ -5,6 +5,7 @@ import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { assertUnreachable } from "~/utils/types";
 import {
+	ART_PAGE,
 	badgePage,
 	EVENTS_PAGE,
 	FRIENDS_PAGE,
@@ -114,7 +115,7 @@ export const notificationLink = (
 			return SENDOUQ_READY_PAGE;
 		case "TAGGED_TO_ART":
 			return userArtPage(
-				{ discordId: notification.meta.adderDiscordId },
+				{ id: notification.meta.adderId },
 				"MADE-BY",
 				notification.meta.artId,
 			);
@@ -141,7 +142,7 @@ export const notificationLink = (
 			return scrimPage(notification.meta.id);
 		}
 		case "COMMISSIONS_CLOSED": {
-			return userEditProfilePage({ discordId: notification.meta.discordId });
+			return recipient ? userEditProfilePage(recipient) : ART_PAGE;
 		}
 		case "FRIEND_REQUEST_RECEIVED": {
 			return FRIENDS_PAGE;

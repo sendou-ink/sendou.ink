@@ -22,8 +22,8 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { dateToDatabaseTimestamp } from "./dates";
-import { IS_E2E_TEST_RUN } from "./e2e";
 import { safeNumberParse } from "./number";
+import { USER_SUBMITTED_IMAGE_ROOT } from "./urls";
 
 /** Base query selecting the user by URL identifier (user id, Discord id or custom URL). */
 export function userByIdentifierQuery(identifier: string) {
@@ -89,15 +89,13 @@ type UserIdColumn<O> = O extends { idAs: infer I extends string }
 type CommonUserSelectResult<O> = readonly [
 	`${UserTableAlias<O>}.id as ${UserIdColumn<O>}`,
 	`${UserTableAlias<O>}.username as ${PrefixedUserColumn<O, "username">}`,
-	`${UserTableAlias<O>}.discordId as ${PrefixedUserColumn<O, "discordId">}`,
-	`${UserTableAlias<O>}.discordAvatar as ${PrefixedUserColumn<O, "discordAvatar">}`,
 	`${UserTableAlias<O>}.customUrl as ${PrefixedUserColumn<O, "customUrl">}`,
-	AliasedRawBuilder<string | null, PrefixedUserColumn<O, "customAvatarUrl">>,
+	AliasedRawBuilder<string | null, PrefixedUserColumn<O, "avatar">>,
 ];
 
 /**
- * Select list for the fields shared by every user representation, incl. `customAvatarUrl` (full
- * supporter avatar URL or `null`). Reads from `"User"` unless `alias` is given; `prefix` prefixes
+ * Select list for the fields shared by every user representation, incl. `avatar` (see
+ * {@link userAvatar}). Reads from `"User"` unless `alias` is given; `prefix` prefixes
  * every output column (`sender` → `senderId`, ...), `idAs` renames only the id column and
  * `inTournament` resolves `username` via {@link tournamentUsername}.
  */
@@ -117,38 +115,34 @@ export function commonUserSelect<const O extends CommonUserSelectOptions>(
 		options?.inTournament
 			? tournamentUsername(alias).as(outputName("username"))
 			: `${alias}.username as ${outputName("username")}`,
-		`${alias}.discordId as ${outputName("discordId")}`,
-		`${alias}.discordAvatar as ${outputName("discordAvatar")}`,
 		`${alias}.customUrl as ${outputName("customUrl")}`,
-		customAvatarUrl(eb, alias).as(outputName("customAvatarUrl")),
+		userAvatar(eb, alias).as(outputName("avatar")),
 	] as unknown as CommonUserSelectResult<O>;
 }
 
 /**
- * Full URL of a user's supporter custom avatar, or `null`. Alias it when selecting directly.
- * Prefer {@link commonUserSelect} / {@link commonUserJsonObject} when they fit.
+ * File name of the user's avatar (custom one over the one synced from their log in account) or
+ * `null`, the client builds the URL with `avatarUrl()`.
  */
-export function customAvatarUrl(
-	eb: ExpressionBuilder<DB, any>,
-	alias = "User",
-) {
-	return concatUserSubmittedImagePrefix(
+function userAvatar(eb: ExpressionBuilder<DB, any>, alias = "User") {
+	const imageUrlOf = (column: "customAvatarImgId" | "syncedAvatarImgId") =>
 		eb
 			.selectFrom("UserSubmittedImage")
 			.select("UserSubmittedImage.url")
-			.whereRef(
-				"UserSubmittedImage.id",
-				"=",
-				sql.ref(`${alias}.customAvatarImgId`),
-			)
-			.$asScalar(),
-	).$castTo<string | null>();
+			.whereRef("UserSubmittedImage.id", "=", sql.ref(`${alias}.${column}`))
+			.$asScalar();
+
+	return eb.fn
+		.coalesce(imageUrlOf("customAvatarImgId"), imageUrlOf("syncedAvatarImgId"))
+		.$castTo<string | null>();
 }
 
 export type CommonUser = Pick<
 	Tables["User"],
-	"id" | "username" | "discordId" | "discordAvatar" | "customUrl"
-> & { customAvatarUrl: string | null };
+	"id" | "username" | "customUrl"
+> & {
+	avatar: string | null;
+};
 
 /** Represents User joined with PlusTier table */
 export type UserWithPlusTier = Tables["User"] & {
@@ -170,10 +164,8 @@ export function commonUserObjectFields(eb: ExpressionBuilder<Tables, "User">) {
 	return {
 		id: eb.ref("User.id"),
 		username: eb.ref("User.username"),
-		discordId: eb.ref("User.discordId"),
-		discordAvatar: eb.ref("User.discordAvatar"),
 		customUrl: eb.ref("User.customUrl"),
-		customAvatarUrl: customAvatarUrl(eb),
+		avatar: userAvatar(eb),
 	};
 }
 
@@ -204,13 +196,6 @@ export function commonUserMembersAgg<
 		])
 		.$castTo<Array<CommonUser & ExtractedExpressionTypes<E>>>();
 }
-
-const USER_SUBMITTED_IMAGE_ROOT =
-	(process.env.NODE_ENV === "development" && !Config.prodMode) ||
-	IS_E2E_TEST_RUN ||
-	process.env.NODE_ENV === "test"
-		? "http://127.0.0.1:9000/sendou"
-		: "https://sendou.nyc3.cdn.digitaloceanspaces.com";
 
 /** Full URL of the tournament's custom logo (via `avatarImgId`), or null when it has none. */
 export function tournamentLogoOrNull(

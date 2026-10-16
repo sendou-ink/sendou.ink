@@ -62,10 +62,8 @@ interface BuildProps {
 		modes: ModeShort[] | null;
 		weapons: Array<BuildWeaponWithTop500Info>;
 	};
-	owner?: Pick<UserWithPlusTier, "discordId" | "username" | "plusTier"> &
-		Partial<
-			Pick<BuildGraphicOwner, "customUrl" | "discordAvatar" | "customAvatarUrl">
-		>;
+	owner?: Pick<UserWithPlusTier, "id" | "username" | "plusTier"> &
+		Partial<Pick<BuildGraphicOwner, "customUrl" | "avatar">>;
 	/** false when the page already shows the owner (e.g. their own builds page) */
 	showOwner?: boolean;
 	canEdit?: boolean;

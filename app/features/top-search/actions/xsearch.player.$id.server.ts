@@ -19,10 +19,8 @@ export const action = defineAction(
 		const placements = notFoundIfNullish(
 			await XRankPlacementRepository.findPlacementsByPlayerId(id),
 		);
-		const currentLinkedUserDiscordId = placements[0].discordId;
-
 		errorToastIfFalsy(
-			currentLinkedUserDiscordId === user.discordId,
+			placements[0].userId === user.id,
 			"This player is not linked to you",
 		);
 

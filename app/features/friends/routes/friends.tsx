@@ -104,9 +104,8 @@ function IncomingRequestsSection() {
 						<Link to={request.sender.url} className={styles.pendingUser}>
 							<Avatar
 								user={{
-									discordId: request.sender.discordId,
-									discordAvatar: request.sender.discordAvatar,
-									customAvatarUrl: request.sender.customAvatarUrl,
+									id: request.sender.id,
+									avatar: request.sender.avatar,
 								}}
 								size="xxsm"
 							/>
@@ -154,9 +153,8 @@ function PendingRequestsSection() {
 						<Link to={request.receiver.url} className={styles.pendingUser}>
 							<Avatar
 								user={{
-									discordId: request.receiver.discordId,
-									discordAvatar: request.receiver.discordAvatar,
-									customAvatarUrl: request.receiver.customAvatarUrl,
+									id: request.receiver.id,
+									avatar: request.receiver.avatar,
 								}}
 								size="xxsm"
 							/>

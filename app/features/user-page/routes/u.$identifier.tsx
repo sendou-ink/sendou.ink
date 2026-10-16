@@ -11,7 +11,7 @@ import * as SearchParams from "~/modules/search-params/search-params";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	discordAvatarUrl,
+	avatarUrl,
 	userAdminPage,
 	userBuildsPage,
 	userPage,
@@ -48,15 +48,7 @@ export const handle: SendouRouteHandle = {
 
 		if (!data) return [];
 
-		const imgPath = data.user.customAvatarUrl
-			? data.user.customAvatarUrl
-			: data.user.discordAvatar
-				? discordAvatarUrl({
-						discordId: data.user.discordId,
-						discordAvatar: data.user.discordAvatar,
-						size: "sm",
-					})
-				: null;
+		const imgPath = data.user.avatar ? avatarUrl(data.user.avatar, "sm") : null;
 
 		if (!imgPath) {
 			return {
@@ -71,7 +63,7 @@ export const handle: SendouRouteHandle = {
 			href: userPage(data.user),
 			type: "IMAGE",
 			text: data.user.username,
-			identiconInput: String(data.user.discordId),
+			identiconInput: String(data.user.id),
 		};
 	},
 };

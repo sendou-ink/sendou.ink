@@ -10,10 +10,10 @@ export class UserResultsHighlightsPage {
 		this.page = page;
 	}
 
-	async goto(discordId: string) {
+	async goto(userId: number) {
 		await navigate({
 			page: this.page,
-			url: userResultsEditHighlightsPage({ discordId }),
+			url: userResultsEditHighlightsPage({ id: userId }),
 		});
 	}
 

@@ -49,7 +49,6 @@ const withOwners = (eb: ExpressionBuilder<DB, "Badge">, badgeId: number) => {
 			.select(({ fn }) => [
 				fn.sum<number>("BadgeOwner.count").as("count"),
 				"User.id",
-				"User.discordId",
 				"User.username",
 			])
 			.where("BadgeOwner.badgeId", "=", badgeId)

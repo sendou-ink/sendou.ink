@@ -4,6 +4,7 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { SendouQ, sqRedirectIfNeeded } from "../core/SendouQ.server";
 import { qSearchParams } from "../q-search-params";
+import { userCanJoinQueueAt } from "../q-utils";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = getUser();
@@ -23,12 +24,16 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const season = Seasons.current();
 	const upcomingSeason = !season ? Seasons.next() : undefined;
 
+	const friendCode = user
+		? await UserRepository.findCurrentFriendCodeByUserId(user.id)
+		: undefined;
+
 	return {
 		season,
 		upcomingSeason,
 		groupInvitedTo,
-		friendCode: user
-			? await UserRepository.findCurrentFriendCodeByUserId(user.id)
-			: undefined,
+		friendCode,
+		queueJoinStatus:
+			user && friendCode ? userCanJoinQueueAt(user, friendCode) : null,
 	};
 };

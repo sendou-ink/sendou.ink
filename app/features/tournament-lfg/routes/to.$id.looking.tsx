@@ -237,7 +237,7 @@ function SubCard({ sub }: { sub: SubEntry }) {
 				<div className={styles.subsSectionAvatar}>
 					<UserCard userId={sub.userId} withMutualFriends>
 						<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
-							<Avatar user={sub} size="sm" />
+							<Avatar user={{ ...sub, id: sub.userId }} size="sm" />
 						</NoteAvatar>
 					</UserCard>
 				</div>

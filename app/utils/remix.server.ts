@@ -160,11 +160,25 @@ export function successToast(message: string) {
 export function successToastWithRedirect({
 	message,
 	url,
+	headers,
 }: {
 	message: string;
 	url: string;
+	headers?: HeadersInit;
 }) {
-	return redirect(urlWithToastParam(url, "__success", message));
+	return redirect(urlWithToastParam(url, "__success", message), { headers });
+}
+
+export function errorToastWithRedirect({
+	message,
+	url,
+	headers,
+}: {
+	message: string;
+	url: string;
+	headers?: HeadersInit;
+}) {
+	return redirect(urlWithToastParam(url, "__error", message), { headers });
 }
 
 function urlWithToastParam(

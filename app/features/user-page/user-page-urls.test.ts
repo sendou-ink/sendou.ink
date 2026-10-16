@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { userPageRedirectPath } from "./user-page-urls";
 
-const WITH_CUSTOM_URL = { customUrl: "sendou", discordId: "79237403620945920" };
-const WITHOUT_CUSTOM_URL = { customUrl: null, discordId: "79237403620945920" };
+const WITH_CUSTOM_URL = { id: 274, customUrl: "sendou" };
+const WITHOUT_CUSTOM_URL = { id: 274, customUrl: null };
 
 describe("userPageRedirectPath", () => {
 	test.each([
@@ -13,10 +13,10 @@ describe("userPageRedirectPath", () => {
 			expected: "/u/sendou",
 		},
 		{
-			why: "id -> discord id when no custom url",
-			url: "/u/274",
+			why: "discord id -> id when no custom url",
+			url: "/u/79237403620945920",
 			user: WITHOUT_CUSTOM_URL,
-			expected: "/u/79237403620945920",
+			expected: "/u/274",
 		},
 		{
 			why: "discord id -> custom url",
@@ -31,8 +31,8 @@ describe("userPageRedirectPath", () => {
 			expected: null,
 		},
 		{
-			why: "discord id stays when no custom url",
-			url: "/u/79237403620945920",
+			why: "id stays when no custom url",
+			url: "/u/274",
 			user: WITHOUT_CUSTOM_URL,
 			expected: null,
 		},

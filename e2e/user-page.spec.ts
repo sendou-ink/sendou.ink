@@ -38,12 +38,12 @@ test.describe("User page", () => {
 		);
 
 		const userPage = new UserPage(page);
-		await userPage.goto(NZAP_TEST_DISCORD_ID);
+		await userPage.goto(NZAP_TEST_ID);
 
 		await expect(userPage.locators.badgeDisplay).toBeVisible();
 		await isNotVisible(userPage.locators.badgePaginationButtons);
 
-		await userPage.goto(ADMIN_DISCORD_ID);
+		await userPage.goto(ADMIN_ID);
 
 		// badges are shown newest first, so the last created one is the big badge
 		await expect(userPage.badgeImage("Badge 12")).toBeVisible();
@@ -69,14 +69,14 @@ test.describe("User page", () => {
 		await impersonate(page, NZAP_TEST_ID);
 
 		const editWidgets = new UserEditWidgetsPage(page);
-		await editWidgets.goto(NZAP_TEST_DISCORD_ID);
+		await editWidgets.goto(NZAP_TEST_ID);
 
 		await editWidgets.openWidgetSettings("badges-owned");
 		await editWidgets.selectFavoriteBadge(firstBadge.id);
 		await editWidgets.save();
 
 		const userPage = new UserPage(page);
-		await userPage.goto(NZAP_TEST_DISCORD_ID);
+		await userPage.goto(NZAP_TEST_ID);
 		await expect(userPage.badgeImage("Badge 1")).toHaveAttribute(
 			"width",
 			"125",
@@ -97,7 +97,7 @@ test.describe("User page", () => {
 		await impersonate(page);
 
 		const editWidgets = new UserEditWidgetsPage(page);
-		await editWidgets.goto(ADMIN_DISCORD_ID);
+		await editWidgets.goto(ADMIN_ID);
 
 		await editWidgets.openWidgetSettings("badges-owned");
 		await editWidgets.selectFavoriteBadge(badges[0].id);
@@ -106,7 +106,7 @@ test.describe("User page", () => {
 		await editWidgets.save();
 
 		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
+		await userPage.goto(ADMIN_ID);
 		await expect(userPage.badgeImage("Badge 1")).toHaveAttribute(
 			"width",
 			"125",
@@ -120,7 +120,7 @@ test.describe("User page", () => {
 		await impersonate(page);
 
 		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
+		await userPage.goto(ADMIN_ID);
 
 		await expect(userPage.flag("FI")).toBeVisible();
 		const editProfile = await userPage.openEditProfile();
@@ -137,7 +137,7 @@ test.describe("User page", () => {
 		await impersonate(page, NZAP_TEST_ID);
 
 		const editProfile = new UserEditProfilePage(page);
-		await editProfile.goto(NZAP_TEST_DISCORD_ID);
+		await editProfile.goto(NZAP_TEST_ID);
 		await editProfile.setFriendCode("0123-4567-8901");
 
 		await expect(editProfile.friendCodeButton("0123-4567-8901")).toBeVisible();
@@ -179,7 +179,7 @@ test.describe("User page", () => {
 		await impersonate(page);
 
 		const seasonsPage = new UserSeasonsPage(page);
-		await seasonsPage.goto(ADMIN_DISCORD_ID);
+		await seasonsPage.goto(ADMIN_ID);
 		await seasonsPage.openExportDialog();
 
 		await expect(seasonsPage.exportDialogText("Best win streak")).toBeVisible();
@@ -199,7 +199,7 @@ test.describe("User page", () => {
 		await impersonate(page, NZAP_TEST_ID);
 
 		const seasonsPage = new UserSeasonsPage(page);
-		await seasonsPage.goto(NZAP_TEST_DISCORD_ID);
+		await seasonsPage.goto(NZAP_TEST_ID);
 		await seasonsPage.openExportDialog();
 
 		await expect(seasonsPage.locators.supporterPerkExplanation).toBeVisible();
@@ -219,7 +219,7 @@ test.describe("User page", () => {
 		await impersonate(page);
 
 		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
+		await userPage.goto(ADMIN_ID);
 
 		for (const [i, id] of [200, 1100, 2000, 4000].entries()) {
 			await expect(userPage.weaponPoolImage(id, i + 1)).toBeVisible();
@@ -239,14 +239,14 @@ test.describe("User page", () => {
 		await impersonate(page);
 
 		const editWidgetsPage = new UserEditWidgetsPage(page);
-		await editWidgetsPage.goto(ADMIN_DISCORD_ID);
+		await editWidgetsPage.goto(ADMIN_ID);
 		await editWidgetsPage.openWidgetSettings("weapon-pool");
 		await editWidgetsPage.selectWeaponPoolWeapon("Luna Blaster");
 		await editWidgetsPage.selectWeaponPoolWeapon("Splattershot");
 		await editWidgetsPage.save();
 
 		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
+		await userPage.goto(ADMIN_ID);
 
 		await expect(userPage.weaponPoolImage(200, 1)).toBeVisible();
 		await expect(userPage.weaponPoolImage(40, 2)).toBeVisible();
@@ -290,7 +290,7 @@ test.describe("User page", () => {
 		await impersonate(page);
 
 		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
+		await userPage.goto(ADMIN_ID);
 
 		const resultsPage = await userPage.openResults();
 		await expect(resultsPage.eventName("In The Zone 30")).toBeVisible();
@@ -304,7 +304,7 @@ test.describe("User page", () => {
 		await isNotVisible(resultsPage.eventName("Paddling Pool 253"));
 
 		await page.context().clearCookies();
-		await resultsPage.goto(ADMIN_DISCORD_ID);
+		await resultsPage.goto(ADMIN_ID);
 		await isNotVisible(resultsPage.eventName("Paddling Pool 253"));
 
 		await resultsPage.toggleHighlightsOnly();
@@ -351,7 +351,7 @@ test.describe("User page", () => {
 		await impersonate(page);
 
 		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
+		await userPage.goto(ADMIN_ID);
 
 		// no team, so the default layout's teams widget has nothing to show
 		await isNotVisible(userPage.widgetHeading("Teams"));
@@ -373,7 +373,7 @@ test.describe("User page", () => {
 		await expect(vodsPage.vodTitle("Ranked grind episode 2")).toBeVisible();
 
 		const seasonsPage = new UserSeasonsPage(page);
-		await seasonsPage.goto(ADMIN_DISCORD_ID);
+		await seasonsPage.goto(ADMIN_ID);
 		await seasonsPage.openStats();
 
 		await seasonsPage.openStatsTab("Weapons");
@@ -398,13 +398,13 @@ test.describe("User page", () => {
 		await impersonate(page);
 
 		const editWidgets = new UserEditWidgetsPage(page);
-		await editWidgets.goto(ADMIN_DISCORD_ID);
+		await editWidgets.goto(ADMIN_ID);
 
 		await expect(editWidgets.supporterOnlyLabel("bio-md")).toBeVisible();
 		await isNotVisible(editWidgets.addWidgetButton("bio-md"));
 
 		await factories.UserFactory.grant(ADMIN_ID, { patronTier: 2 });
-		await editWidgets.goto(ADMIN_DISCORD_ID);
+		await editWidgets.goto(ADMIN_ID);
 
 		await isNotVisible(editWidgets.supporterOnlyLabel("bio-md"));
 		await editWidgets.removeWidget("bio");
@@ -433,9 +433,9 @@ test.describe("User page", () => {
 		await userPage.gotoWithIdentifier(customUrl);
 		await expect(page).toHaveURL(`/u/${customUrl}`);
 
-		// without a custom URL the Discord id is the preferred identifier
-		await userPage.gotoWithIdentifier(ADMIN_ID);
-		await expect(page).toHaveURL(`/u/${ADMIN_DISCORD_ID}`);
+		// without a custom URL the user id is the preferred identifier
+		await userPage.gotoWithIdentifier(ADMIN_DISCORD_ID);
+		await expect(page).toHaveURL(`/u/${ADMIN_ID}`);
 	});
 });
 

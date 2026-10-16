@@ -772,12 +772,12 @@ function TrophyListRow({
 					) : null}
 					<span className={styles.pendingName}>{pending.name}</span>
 					<span className={styles.pendingMeta}>
-						{pending.manager?.discordId ? (
-							<Link to={userPage({ discordId: pending.manager.discordId })}>
+						{pending.manager ? (
+							<Link to={userPage({ id: pending.manager.id })}>
 								{pending.manager.username}
 							</Link>
-						) : pending.submitterDiscordId ? (
-							<Link to={userPage({ discordId: pending.submitterDiscordId })}>
+						) : pending.submitterUserId ? (
+							<Link to={userPage({ id: pending.submitterUserId })}>
 								{pending.submitterUsername}
 							</Link>
 						) : (
@@ -794,7 +794,7 @@ function TrophyListRow({
 									values={{ name: pending.creator.username }}
 								>
 									Created by
-									<Link to={userPage({ discordId: pending.creator.discordId })}>
+									<Link to={userPage({ id: pending.creator.id })}>
 										{pending.creator.username}
 									</Link>
 								</Trans>

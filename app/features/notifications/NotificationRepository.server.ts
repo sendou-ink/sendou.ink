@@ -222,7 +222,7 @@ export function findUnseenSubscriptionsByNotificationId(
 		.select([
 			"NotificationUserSubscription.id",
 			"NotificationUserSubscription.subscription",
-			"User.discordId",
+			"NotificationUser.userId",
 			"User.customUrl",
 		])
 		.where("NotificationUser.notificationId", "=", notificationId)

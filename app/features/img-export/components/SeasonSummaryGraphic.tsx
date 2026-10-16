@@ -72,7 +72,7 @@ export interface SeasonSummaryGraphicStats {
 	};
 	topMates: Array<{
 		player: GraphicPlayer;
-		discordId: string;
+		userId: number;
 		avatarUrl?: string;
 		setsCount: number;
 	}>;
@@ -101,8 +101,8 @@ export function SeasonSummaryGraphic({
 	stats,
 }: {
 	user: {
+		id: number;
 		name: string;
-		discordId: string;
 		customUrl?: string;
 		countryCode?: string;
 		avatarUrl?: string;
@@ -144,7 +144,7 @@ export function SeasonSummaryGraphic({
 		<GraphicContainer>
 			<GraphicHeader
 				avatarUrl={user.avatarUrl}
-				identiconInput={user.discordId}
+				identiconInput={String(user.id)}
 				titleRow={
 					<>
 						{user.countryCode ? (
@@ -315,7 +315,7 @@ export function SeasonSummaryGraphic({
 									<div key={mate.player.name} className={styles.mateRow}>
 										<Avatar
 											url={mate.avatarUrl}
-											identiconInput={mate.discordId}
+											identiconInput={String(mate.userId)}
 											size="xxs"
 											alt=""
 										/>

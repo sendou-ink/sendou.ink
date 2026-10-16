@@ -119,9 +119,7 @@ export const testTournamentData = ({
 		teams: nTeams(participant.length, Math.min(...participant)),
 		author: {
 			customUrl: null,
-			customAvatarUrl: null,
-			discordAvatar: null,
-			discordId: "123",
+			avatar: null,
 			username: "test",
 			pronouns: null,
 			id: 1,

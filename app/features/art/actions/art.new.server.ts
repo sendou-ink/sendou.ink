@@ -44,7 +44,7 @@ export const action = defineAction(
 					type: "TAGGED_TO_ART",
 					meta: {
 						adderUsername: user.username,
-						adderDiscordId: user.discordId,
+						adderId: user.id,
 						artId: editedArtId,
 					},
 				},
@@ -66,7 +66,7 @@ export const action = defineAction(
 					type: "TAGGED_TO_ART",
 					meta: {
 						adderUsername: user.username,
-						adderDiscordId: user.discordId,
+						adderId: user.id,
 						artId: addedArt.id,
 					},
 				},

@@ -4,6 +4,7 @@ import type { Tables } from "~/db/tables";
 import type { CustomTheme, Pronouns, UserPreferences } from "~/db/tables-json";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import * as DiscordAvatar from "~/features/auth/core/DiscordAvatar.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -21,6 +22,8 @@ import { pinUserId } from "../core/pinUserId";
 import * as SplatoonFaker from "../core/SplatoonFaker";
 
 type UpsertArgs = Parameters<typeof UserRepository.upsert>[0] & {
+	/** Discord avatar hash, stored as a synced avatar without copying any files to S3. */
+	discordAvatar?: string | null;
 	/** Profile fields, saved as the profile page saves them. `null` for a bare profile. */
 	profile?: Partial<ProfileArgs> | null;
 	/** Nintendo friend code, `null` for a user who never submitted one. */
@@ -100,8 +103,17 @@ export const { create, createMany } = defineFactory({
 		profile: fakeProfile(),
 		friendCode: fakeFriendCode(),
 	}),
-	insert: async ({ profile, friendCode, ...args }: UpsertArgs) => {
+	insert: async ({
+		profile,
+		friendCode,
+		discordAvatar,
+		...args
+	}: UpsertArgs) => {
 		const user = await UserRepository.upsert(args);
+
+		if (discordAvatar) {
+			await insertSyncedAvatar(user.id, discordAvatar);
+		}
 
 		if (profile && Object.keys(profile).length > 0) {
 			await updateProfile(user.id, profile);
@@ -248,19 +260,33 @@ export const createDev = (
 	options?: Options,
 ) => createPinned(DEV_TEST_ID, overrides, options);
 
+function insertSyncedAvatar(userId: number, discordAvatar: string) {
+	return UserRepository.replaceSyncedAvatar({
+		userId,
+		discordAvatar,
+		fileName: DiscordAvatar.fileNameOf({ userId, hash: discordAvatar }),
+	});
+}
+
 async function createPinned(
 	pinnedId: number,
 	overrides?: Partial<UpsertArgs> | null,
 	options?: Options,
 ) {
 	// rows keyed by the user id have to wait until after the pinning changes it
-	const { profile, friendCode, ...upsertOverrides } = overrides ?? {};
+	const { profile, friendCode, discordAvatar, ...upsertOverrides } =
+		overrides ?? {};
 	const user = await create({
 		...upsertOverrides,
+		discordAvatar: null,
 		profile: null,
 		friendCode: null,
 	});
 	const id = await pinUserId(user.id, pinnedId);
+
+	if (discordAvatar) {
+		await insertSyncedAvatar(id, discordAvatar);
+	}
 
 	if (profile && Object.keys(profile).length > 0) {
 		await updateProfile(id, profile);
@@ -407,7 +433,6 @@ async function linkConnections(
 		.select([
 			"discordId",
 			"discordName",
-			"discordAvatar",
 			"discordUniqueName",
 			"twitch",
 			"youtubeId",

@@ -1,4 +1,4 @@
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { expect, test } from "./helpers/playwright";
 import { TopSearchPage } from "./pages/top-search/top-search-page";
 import { UserPage } from "./pages/user/user-page";
@@ -52,7 +52,7 @@ test.describe("Top search", () => {
 		});
 
 		const user = new UserPage(page);
-		await user.goto(ADMIN_DISCORD_ID);
+		await user.goto(ADMIN_ID);
 
 		const playerPlacements = await user.openPlacements();
 		await expect(playerPlacements.locators.heading).toContainText("Sendou");

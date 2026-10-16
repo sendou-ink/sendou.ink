@@ -16,12 +16,11 @@ import { usePagination } from "~/hooks/usePagination";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { userPage } from "~/utils/urls";
+import { smallImageFileName, userPage } from "~/utils/urls";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
 import { ART_PER_PAGE } from "../art-constants";
 import { artGridSearchParams } from "../art-search-params";
 import type { ListedArt } from "../art-types";
-import { previewUrl } from "../art-utils";
 import styles from "./ArtGrid.module.css";
 
 const preloadedImageUrls = new Set<string>();
@@ -135,7 +134,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 				>
 					<img
 						alt=""
-						src={previewUrl(art.url)}
+						src={smallImageFileName(art.url)}
 						className={styles.lightboxPlaceholder}
 						ref={placeholderRef}
 					/>
@@ -170,7 +169,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 								{art.linkedUsers?.map((user) => (
 									<Link
 										to={userPage(user)}
-										key={user.discordId}
+										key={user.id}
 										className={clsx(styles.dialogTag, styles.dialogTagUser)}
 									>
 										{user.username}
@@ -214,7 +213,7 @@ function ImagePreview({
 	const image = (
 		<img
 			alt=""
-			src={previewUrl(art.url)}
+			src={smallImageFileName(art.url)}
 			loading="lazy"
 			ref={imageRef}
 			className={enablePreview ? styles.thumbnail : undefined}

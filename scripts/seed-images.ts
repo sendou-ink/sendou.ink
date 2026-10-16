@@ -7,6 +7,7 @@ import { logger } from "~/utils/logger";
 import {
 	getArtFilename,
 	SEED_ART_URLS,
+	SEED_AVATARS,
 	SEED_DEFAULT_TOURNAMENT_LOGO,
 	SEED_LOGO_FILENAMES,
 	SEED_NUMBERED_LOGOS,
@@ -158,6 +159,7 @@ export async function seedImages(): Promise<void> {
 		})),
 		SEED_DEFAULT_TOURNAMENT_LOGO,
 		...SEED_NUMBERED_LOGOS,
+		...SEED_AVATARS,
 	].map(({ filename, sourceFilename }) => ({
 		filename,
 		loadImage: () => readLocalImage(sourceFilename),

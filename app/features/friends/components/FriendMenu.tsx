@@ -34,9 +34,8 @@ const ACTIVITY_BADGE_TRANSLATION_KEY = {
 } as const satisfies Record<FriendActivityBadge, string>;
 
 export function FriendMenu({
-	discordId,
-	discordAvatar,
-	customAvatarUrl,
+	id,
+	avatar,
 	name,
 	subtitle,
 	badge,
@@ -48,9 +47,8 @@ export function FriendMenu({
 	friendshipId,
 	friendshipCreatedAt,
 }: {
-	discordId: string;
-	discordAvatar: string | null;
-	customAvatarUrl: string | null;
+	id: number;
+	avatar: string | null;
 	name: string;
 	subtitle: string | null;
 	badge: string | null;
@@ -86,7 +84,7 @@ export function FriendMenu({
 			<SendouMenu
 				trigger={
 					<ListButton
-						user={{ discordId, discordAvatar, customAvatarUrl }}
+						user={{ id, avatar }}
 						subtitle={subtitle}
 						badge={
 							stream

@@ -450,7 +450,7 @@ function getResultHref(result: SearchResult): string {
 	switch (result.type) {
 		case "user":
 			return userPage({
-				discordId: result.discordId,
+				id: result.id,
 				customUrl: result.customUrl,
 			});
 		case "team":
@@ -469,8 +469,8 @@ function ResultItem({ result }: { result: SearchResult }) {
 				<SearchResultsItemRow>
 					<Avatar
 						user={{
-							discordId: result.discordId,
-							discordAvatar: result.discordAvatar,
+							id: result.id,
+							avatar: result.avatar,
 						}}
 						size="xxs"
 					/>

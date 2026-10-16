@@ -33,15 +33,9 @@ export interface PlayedSet {
 		id: number;
 		name: string;
 		roster: Array<
-			Pick<
-				Tables["User"],
-				| "id"
-				| "username"
-				| "discordAvatar"
-				| "discordId"
-				| "customUrl"
-				| "country"
-			> & { customAvatarUrl: string | null }
+			Pick<Tables["User"], "id" | "username" | "customUrl" | "country"> & {
+				avatar: string | null;
+			}
 		>;
 	};
 }

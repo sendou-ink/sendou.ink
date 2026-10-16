@@ -1,6 +1,6 @@
 import { addDays, subDays } from "date-fns";
-import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { TROPHY_APPROVALS_REQUIRED } from "~/features/trophies/trophies-constants";
 import { decompressFromBase64 } from "~/utils/compression";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -42,7 +42,7 @@ test.describe("Trophies", () => {
 		await impersonate(page, NZAP_TEST_ID);
 
 		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
+		await userPage.goto(ADMIN_ID);
 
 		const display = page.getByTestId("trophy-display");
 		await expect(display).toBeVisible();
@@ -307,7 +307,7 @@ test.describe("Trophies", () => {
 		await expect(details.locators.weaponCounts).toHaveCount(1);
 
 		const userPage = new UserPage(page);
-		await userPage.goto(NZAP_TEST_DISCORD_ID);
+		await userPage.goto(NZAP_TEST_ID);
 		await expect(
 			userPage.locators.trophyDisplay.getByRole("button"),
 		).toHaveCount(2);

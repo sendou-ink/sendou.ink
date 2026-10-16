@@ -32,9 +32,7 @@ import styles from "./LFGGroupCard.module.css";
 export type LFGGroupMember = {
 	id: number;
 	username: string;
-	discordId: string;
-	discordAvatar: string | null;
-	customAvatarUrl: string | null;
+	avatar: string | null;
 	customUrl: string | null;
 	languages: UnifiedLanguageCode[];
 	vc: "YES" | "NO" | "LISTEN_ONLY" | null;
@@ -96,7 +94,7 @@ export function LFGGroupCard({
 			<div className="stack md">
 				{group.members.map((member) => (
 					<LFGGroupMemberRow
-						key={member.discordId}
+						key={member.id}
 						member={member}
 						showActions={showActions}
 						isOwnGroup={isOwnGroup}

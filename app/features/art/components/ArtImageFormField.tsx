@@ -5,13 +5,13 @@ import { useTranslation } from "react-i18next";
 import type { CustomFieldRenderProps } from "~/form";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { logger } from "~/utils/logger";
+import { smallImageFileName } from "~/utils/urls";
 import { ART } from "../art-constants";
 import {
 	ART_IMAGE_TOO_LARGE_ERROR,
 	type ArtImageValue,
 	isArtImageTooLarge,
 } from "../art-image";
-import { previewUrl } from "../art-utils";
 import styles from "./ArtImageFormField.module.css";
 
 type ArtImageFormFieldProps = Omit<
@@ -33,7 +33,7 @@ export function ArtImageFormField({
 	const { t } = useTranslation(["common"]);
 
 	if (value?.type === "EXISTING") {
-		return <img src={previewUrl(value.url)} alt="" />;
+		return <img src={smallImageFileName(value.url)} alt="" />;
 	}
 
 	const handleFileChange = async (

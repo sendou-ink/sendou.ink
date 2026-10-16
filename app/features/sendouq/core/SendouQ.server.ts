@@ -492,8 +492,7 @@ class SendouQClass {
 			members: Array<{
 				id: number;
 				username: string;
-				discordId: string;
-				discordAvatar: string | null;
+				avatar: string | null;
 			}>;
 		};
 		groupBravo: {
@@ -501,8 +500,7 @@ class SendouQClass {
 			members: Array<{
 				id: number;
 				username: string;
-				discordId: string;
-				discordAvatar: string | null;
+				avatar: string | null;
 			}>;
 		};
 		pools: ReturnType<typeof matchMapPools>;
@@ -522,8 +520,7 @@ class SendouQClass {
 					{
 						id: member.id,
 						username: member.username,
-						discordId: member.discordId,
-						discordAvatar: member.discordAvatar,
+						avatar: member.avatar,
 					},
 				];
 			}),

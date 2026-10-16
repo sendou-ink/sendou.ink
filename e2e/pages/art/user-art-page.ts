@@ -18,8 +18,8 @@ export class UserArtPage {
 		};
 	}
 
-	async goto(discordId: string) {
-		await navigate({ page: this.page, url: userArtPage({ discordId }) });
+	async goto(userId: number) {
+		await navigate({ page: this.page, url: userArtPage({ id: userId }) });
 	}
 
 	image(nth: number) {

@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import type * as React from "react";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
-import type { Tables } from "~/db/tables";
+import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "./Avatar";
 import styles from "./SideNav.module.css";
 
@@ -84,9 +84,7 @@ function ListItemContent({
 	suppressSubtitleHydrationWarning,
 }: {
 	children: React.ReactNode;
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
-		customAvatarUrl?: string | null;
-	};
+	user?: Pick<CommonUser, "id" | "avatar">;
 	imageUrl?: string;
 	overlayIconUrl?: string;
 	subtitle?: React.ReactNode;
@@ -158,9 +156,7 @@ export function ListLink({
 	isActive?: boolean;
 	imageUrl?: string;
 	overlayIconUrl?: string;
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
-		customAvatarUrl?: string | null;
-	};
+	user?: Pick<CommonUser, "id" | "avatar">;
 	subtitle?: React.ReactNode;
 	badge?: React.ReactNode;
 	badgeVariant?: "default" | "warning";
@@ -196,9 +192,7 @@ export function ListButton({
 	...rest
 }: {
 	children: React.ReactNode;
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
-		customAvatarUrl?: string | null;
-	};
+	user?: Pick<CommonUser, "id" | "avatar">;
 	subtitle?: string | null;
 	badge?: string | null;
 	badgeVariant?: "default" | "warning";

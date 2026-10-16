@@ -9,6 +9,7 @@ import { useTournament } from "~/features/tournament/tournament-context";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/features/tournament-organization/tournament-organization-constants";
 import { tournamentOrganizationEditPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { SendouForm } from "~/form/SendouForm";
+import type { CommonUser } from "~/utils/kysely.server";
 import { adminStaffFormSchema } from "../tournament-admin-staff-schemas";
 
 export { action } from "../actions/to.$id.admin.staff.server";
@@ -38,7 +39,7 @@ export default function TournamentAdminStaffPage() {
 }
 
 type EventStaff = Array<
-	Pick<Tables["User"], "id" | "username" | "discordId" | "discordAvatar"> & {
+	Pick<CommonUser, "id" | "username" | "avatar"> & {
 		role: Tables["TournamentStaff"]["role"];
 	}
 >;
@@ -194,7 +195,7 @@ function StaffInfoRow({
 	roleText,
 	testId,
 }: {
-	user: Pick<Tables["User"], "id" | "username" | "discordId" | "discordAvatar">;
+	user: Pick<CommonUser, "id" | "username" | "avatar">;
 	roleText: string;
 	testId?: string;
 }) {

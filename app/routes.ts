@@ -413,7 +413,6 @@ export default [
 		"/set-plus-voting-active",
 		"features/api-private/routes/set-plus-voting-active.ts",
 	),
-	route("/users", "features/api-private/routes/users.ts"),
 
 	route("/scanner", "features/scanner/routes/scanner.tsx"),
 	route("/ingest", "features/scanner-ingest/routes/scanner-ingest.ts"),
@@ -509,6 +508,7 @@ export default [
 	...prefix("/auth", [
 		index("features/auth/routes/auth.ts"),
 		route("callback", "features/auth/routes/auth.callback.ts"),
+		route("refresh", "features/auth/routes/auth.refresh.ts"),
 		route("create-link", "features/auth/routes/auth.create-link.ts"),
 		route("login", "features/auth/routes/auth.login.ts"),
 		route("logout", "features/auth/routes/auth.logout.ts"),

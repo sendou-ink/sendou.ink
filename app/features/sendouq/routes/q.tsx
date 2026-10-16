@@ -39,7 +39,6 @@ import { action } from "../actions/q.server";
 import { loader } from "../loaders/q.server";
 import { frontPageSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
-import { userCanJoinQueueAt } from "../q-utils";
 import styles from "./q.module.css";
 
 export { action, loader };
@@ -75,8 +74,7 @@ export default function QPage() {
 		minute: "numeric",
 	});
 
-	const queueJoinStatus =
-		user && data.friendCode ? userCanJoinQueueAt(user, data.friendCode) : null;
+	const { queueJoinStatus } = data;
 
 	return (
 		<Main halfWidth className="stack lg">

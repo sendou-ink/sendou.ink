@@ -93,10 +93,8 @@ export type TournamentStream = StreamAccount & {
 	user: {
 		id: number;
 		username: string;
-		discordId: string;
-		discordAvatar: string | null;
 		customUrl: string | null;
-		customAvatarUrl: string | null;
+		avatar: string | null;
 	} | null;
 };
 

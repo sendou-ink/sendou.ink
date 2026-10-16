@@ -254,17 +254,13 @@ function buildSetEndingData({
 	const memberToCommonUser = (m: {
 		userId: number;
 		username: string;
-		discordId: string;
-		discordAvatar: string | null;
 		customUrl: string | null;
-		customAvatarUrl: string | null;
+		avatar: string | null;
 	}): CommonUser => ({
 		id: m.userId,
 		username: m.username,
-		discordId: m.discordId,
-		discordAvatar: m.discordAvatar,
 		customUrl: m.customUrl,
-		customAvatarUrl: m.customAvatarUrl,
+		avatar: m.avatar,
 	});
 
 	const teamOneMembersMap = new Map(

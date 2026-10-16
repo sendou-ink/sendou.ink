@@ -103,10 +103,8 @@ export function resolveTimelineSpChanges(
 				user: {
 					id: m.id,
 					username: m.username,
-					discordId: m.discordId,
-					discordAvatar: m.discordAvatar,
 					customUrl: m.customUrl,
-					customAvatarUrl: m.customAvatarUrl,
+					avatar: m.avatar,
 				},
 				skillDifference: m.skillDifference!,
 			}));

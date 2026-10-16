@@ -1,6 +1,6 @@
 import { addWeeks } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	addTeamEventSchema,
 	editTeamEventSchema,
@@ -347,7 +347,7 @@ test.describe("Team page", () => {
 		await secondaryTeam.makeMainTeam();
 
 		const user = new UserPage(page);
-		await user.goto(ADMIN_DISCORD_ID);
+		await user.goto(ADMIN_ID);
 
 		await expect(user.teamLinks()).toHaveCount(2);
 		await expect(user.teamLinks().first()).not.toContainText(TEAM_NAME);
@@ -358,7 +358,7 @@ test.describe("Team page", () => {
 		await expect(mainTeam.locators.mainTeamIndicator).toBeVisible();
 		await mainTeam.leave();
 
-		await user.goto(ADMIN_DISCORD_ID);
+		await user.goto(ADMIN_ID);
 
 		await expect(user.teamLinks()).toHaveCount(1);
 		await expect(user.teamLinks().first()).toContainText(TEAM_NAME);

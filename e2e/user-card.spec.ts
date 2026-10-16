@@ -1,4 +1,4 @@
-import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { expect, impersonate, test } from "./helpers/playwright";
@@ -139,7 +139,7 @@ test.describe("User card friend request", () => {
 		await impersonate(page);
 
 		const userPage = new UserPage(page);
-		await userPage.goto(NZAP_TEST_DISCORD_ID);
+		await userPage.goto(NZAP_TEST_ID);
 
 		const nzapCard = await userPage.openUserCard("N-ZAP");
 		await nzapCard.sendFriendRequest();

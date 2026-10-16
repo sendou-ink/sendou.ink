@@ -625,10 +625,8 @@ function enrichUserCardData(
 	return {
 		id: cardData.id,
 		username: cardData.username,
-		discordId: cardData.discordId,
-		discordAvatar: cardData.discordAvatar,
 		customUrl: cardData.customUrl,
-		customAvatarUrl: cardData.customAvatarUrl,
+		avatar: cardData.avatar,
 		shortBio: cardData.shortBio,
 		customTheme: cardData.customTheme,
 		banner: enrichBanner(cardData.banner),

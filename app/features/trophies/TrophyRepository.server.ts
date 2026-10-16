@@ -843,7 +843,7 @@ const withTargetManager = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("User")
-			.select(["User.id", "User.username", "User.discordId"])
+			.select(["User.id", "User.username"])
 			.whereRef("User.id", "=", "PendingTrophy.managerId"),
 	).as("manager");
 };
@@ -852,7 +852,7 @@ const withPendingCreator = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("User")
-			.select(["User.id", "User.username", "User.discordId"])
+			.select(["User.id", "User.username"])
 			.whereRef("User.id", "=", "PendingTrophy.creatorId"),
 	).as("creator");
 };
@@ -891,7 +891,6 @@ function pendingBaseQuery() {
 			"PendingTrophy.managerId",
 			"PendingTrophy.creatorId",
 			"Submitter.username as submitterUsername",
-			"Submitter.discordId as submitterDiscordId",
 			"Decliner.username as declinedByUsername",
 			"TournamentOrganization.name as organizationName",
 			"TournamentOrganization.slug as organizationSlug",

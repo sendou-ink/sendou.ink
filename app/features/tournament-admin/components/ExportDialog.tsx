@@ -83,9 +83,11 @@ const DEFAULT_FIELDS: ExportField[] = [
 export function ExportDialog({
 	close,
 	teams: allTeams,
+	memberDiscordIds,
 }: {
 	close: () => void;
 	teams: TournamentTeamFull[];
+	memberDiscordIds: Record<number, string>;
 }) {
 	const tournament = useTournament();
 
@@ -128,6 +130,7 @@ export function ExportDialog({
 	});
 	const content = buildContent({
 		teams,
+		memberDiscordIds,
 		format,
 		fields,
 		captainsOnly: roster === "captains",
@@ -362,6 +365,7 @@ function teamFieldValue(
 function memberFieldValue(
 	member: TournamentTeamFull["members"][number],
 	field: (typeof MEMBER_FIELDS)[number],
+	memberDiscordIds: Record<number, string>,
 ) {
 	switch (field) {
 		case "memberUsername":
@@ -369,14 +373,17 @@ function memberFieldValue(
 		case "memberInGameName":
 			return member.inGameName ?? "";
 		case "memberDiscord":
-			return member.discordId ? `<@${member.discordId}>` : "";
+			return memberDiscordIds[member.userId]
+				? `<@${memberDiscordIds[member.userId]}>`
+				: "";
 		case "memberProfileUrl":
-			return `${BASE_URL}${userPage(member)}`;
+			return `${BASE_URL}${userPage({ ...member, id: member.userId })}`;
 	}
 }
 
 function buildContent({
 	teams,
+	memberDiscordIds,
 	format,
 	fields,
 	captainsOnly,
@@ -385,6 +392,7 @@ function buildContent({
 	notCheckedInLabel,
 }: {
 	teams: TournamentTeamFull[];
+	memberDiscordIds: Record<number, string>;
 	format: ExportFormat;
 	fields: Set<ExportField>;
 	captainsOnly: boolean;
@@ -425,7 +433,7 @@ function buildContent({
 			const memberValues = Array.from({ length: maxRoster }).flatMap((_, i) => {
 				const member = teamMembers[i];
 				return memberFields.map((field) =>
-					member ? memberFieldValue(member, field) : "",
+					member ? memberFieldValue(member, field, memberDiscordIds) : "",
 				);
 			});
 			return [...teamValues, ...memberValues];
@@ -447,7 +455,7 @@ function buildContent({
 		if (!hasMemberFields) return teamLine;
 		const memberLines = membersOf(team).map((member) => {
 			const memberLine = memberFields
-				.map((field) => memberFieldValue(member, field))
+				.map((field) => memberFieldValue(member, field, memberDiscordIds))
 				.filter(Boolean)
 				.join(" - ");
 			return groupByTeam ? `  ${memberLine}` : memberLine;

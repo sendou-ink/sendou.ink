@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
+import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
+import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -14,7 +17,6 @@ describe("UserRepository", () => {
 		await UserRepository.upsert({
 			discordId: "1",
 			discordName: "TestUser",
-			discordAvatar: null,
 		});
 
 		const user = await UserRepository.findModInfoById(1);
@@ -27,7 +29,6 @@ describe("UserRepository", () => {
 		const { id } = await UserRepository.upsert({
 			discordId: "1",
 			discordName: "TestUser",
-			discordAvatar: null,
 		});
 
 		const user = await UserRepository.findLayoutDataById(id);
@@ -37,7 +38,6 @@ describe("UserRepository", () => {
 		await UserRepository.upsert({
 			discordId: "1",
 			discordName: "UpdatedUser",
-			discordAvatar: null,
 		});
 
 		const updatedUser = await UserRepository.findLayoutDataById(id);
@@ -48,7 +48,6 @@ describe("UserRepository", () => {
 		await UserRepository.upsert({
 			discordId: "1",
 			discordName: "TestUser",
-			discordAvatar: null,
 		});
 
 		const user = await UserRepository.findModInfoById(1);
@@ -57,7 +56,6 @@ describe("UserRepository", () => {
 		await UserRepository.upsert({
 			discordId: "1",
 			discordName: "UpdatedUser",
-			discordAvatar: null,
 		});
 
 		const updatedUser = await UserRepository.findModInfoById(1);
@@ -68,7 +66,6 @@ describe("UserRepository", () => {
 		const { id } = await UserRepository.upsert({
 			discordId: "1",
 			discordName: "TestUser",
-			discordAvatar: null,
 		});
 
 		const result = await UserRepository.findJoinOrderByUserId(id);
@@ -80,13 +77,11 @@ describe("UserRepository", () => {
 		const { id: firstId } = await UserRepository.upsert({
 			discordId: "1",
 			discordName: "FirstUser",
-			discordAvatar: null,
 		});
 
 		const { id: secondId } = await UserRepository.upsert({
 			discordId: "2",
 			discordName: "SecondUser",
-			discordAvatar: null,
 		});
 
 		expect(
@@ -99,7 +94,6 @@ describe("UserRepository", () => {
 		await UserRepository.upsert({
 			discordId: "1",
 			discordName: "UpdatedFirstUser",
-			discordAvatar: null,
 		});
 
 		expect(
@@ -591,6 +585,61 @@ describe("UserRepository", () => {
 			expect(ids(today).sort((a, b) => a - b)).toEqual(
 				ids(tomorrow).sort((a, b) => a - b),
 			);
+		});
+	});
+
+	describe("avatar", () => {
+		const users = UserFactory.pool();
+		const userId = () => users.id(1);
+
+		beforeEach(async () => {
+			await users.create(1, { discordAvatar: "hash" });
+		});
+
+		test("resolves to the synced avatar when the user has no custom one", async () => {
+			const user = await UserRepository.findLeanById(userId());
+
+			expect(user?.avatar).toBe(`avatar-${userId()}-hash.webp`);
+		});
+
+		test("resolves to the custom avatar over the synced one", async () => {
+			const image = await ImageFactory.create(
+				{ submitterUserId: userId(), url: "custom.webp" },
+				{ isValidated: true },
+			);
+			await UserFactory.updateProfile(userId(), {
+				customAvatarImgId: image.id,
+			});
+
+			const user = await UserRepository.findLeanById(userId());
+
+			expect(user?.avatar).toBe("custom.webp");
+		});
+	});
+
+	describe("UserRepository.replaceSyncedAvatar", () => {
+		const users = UserFactory.pool();
+		const userId = () => users.id(1);
+
+		beforeEach(async () => {
+			await users.create(1, { discordAvatar: "old" });
+		});
+
+		test("returns the previous file name and deletes its image row", async () => {
+			const { syncedAvatarImgId: previousImgId } = await db
+				.selectFrom("User")
+				.select("syncedAvatarImgId")
+				.where("id", "=", userId())
+				.executeTakeFirstOrThrow();
+
+			const previousFileName = await UserRepository.replaceSyncedAvatar({
+				userId: userId(),
+				discordAvatar: "new",
+				fileName: `avatar-${userId()}-new.webp`,
+			});
+
+			expect(previousFileName).toBe(`avatar-${userId()}-old.webp`);
+			expect(await ImageRepository.findById(previousImgId!)).toBeUndefined();
 		});
 	});
 });

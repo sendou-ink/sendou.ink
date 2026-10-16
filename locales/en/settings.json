@@ -8,6 +8,7 @@
 	"locale.helpTranslate": "Help translate sendou.ink",
 	"locale.translatedPercentage": "{{percentage}}% translated",
 	"locale.gameLanguage.bottomText": "Language of weapon, gear, stage and mode names. Pick the one your game is set to.",
+	"refreshFromDiscord": "Refresh from Discord",
 	"matchProfile.maps.teamPreferencesHint": "Looking for your team's map preferences? They are on the Edit Team page.",
 	"matchProfile.maps.avoid": "Avoid",
 	"matchProfile.maps.prefer": "Prefer",

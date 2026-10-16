@@ -14,7 +14,7 @@ import type {
 	GearType,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { gearImageUrl, navIconUrl, resolveAvatarUrl } from "~/utils/urls";
+import { avatarUrl, gearImageUrl, navIconUrl } from "~/utils/urls";
 import styles from "./BuildGraphic.module.css";
 import {
 	GraphicContainer,
@@ -26,12 +26,11 @@ import {
 const BUILD_GRAPHIC_WIDTH = 380;
 
 export interface BuildGraphicOwner {
+	id: number;
 	username: string;
-	discordId: string;
 	plusTier: number | null;
 	customUrl?: Tables["User"]["customUrl"];
-	discordAvatar?: Tables["User"]["discordAvatar"];
-	customAvatarUrl?: string | null;
+	avatar?: string | null;
 }
 
 export function BuildGraphic({
@@ -72,13 +71,8 @@ export function BuildGraphic({
 	return (
 		<GraphicContainer width={BUILD_GRAPHIC_WIDTH}>
 			<GraphicHeader
-				avatarUrl={resolveAvatarUrl({
-					customAvatarUrl: owner.customAvatarUrl,
-					discordId: owner.discordId,
-					discordAvatar: owner.discordAvatar,
-					size: "lg",
-				})}
-				identiconInput={owner.discordId}
+				avatarUrl={owner.avatar ? avatarUrl(owner.avatar, "lg") : undefined}
+				identiconInput={String(owner.id)}
 				titleRow={
 					<GraphicTitle>
 						{owner.username}

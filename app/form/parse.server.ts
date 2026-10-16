@@ -54,12 +54,13 @@ export async function resolveImageFields<T extends AnySchema>({
 	const user = requireUser();
 	const resolved = { ...(data as Record<string, unknown>) };
 
-	for (const { key, autoValidate } of imageFields(schema)) {
+	for (const { key, autoValidate, withSmallCopy } of imageFields(schema)) {
 		if (key in resolved) {
 			resolved[key] = await imageFieldValueToImgId({
 				value: resolved[key] as ImageFieldValue,
 				user,
 				autoValidate,
+				withSmallCopy,
 				isCurrentImgId,
 			});
 		}
@@ -68,10 +69,10 @@ export async function resolveImageFields<T extends AnySchema>({
 	return resolved as ResolvedImages<v.InferOutput<T>>;
 }
 
-/** Every `image()` field across an object or union/variant of objects, with its `autoValidate` flag. */
+/** Every `image()` field across an object or union/variant of objects, with its upload flags. */
 function imageFields(
 	schema: AnySchema,
-): Array<{ key: string; autoValidate: boolean }> {
+): Array<{ key: string; autoValidate: boolean; withSmallCopy: boolean }> {
 	const objects =
 		schema.type === "union" || schema.type === "variant"
 			? ((schema as unknown as { options: AnySchema[] }).options.filter(
@@ -81,17 +82,23 @@ function imageFields(
 				? [schema as unknown as { entries: Record<string, AnySchema> }]
 				: [];
 
-	const fields = new Map<string, boolean>();
+	const fields = new Map<
+		string,
+		{ autoValidate: boolean; withSmallCopy: boolean }
+	>();
 	for (const object of objects) {
 		for (const [key, fieldSchema] of Object.entries(object.entries)) {
 			const meta = formRegistry.get(fieldSchema);
 			if (meta?.type === "image") {
-				fields.set(key, meta.autoValidate ?? false);
+				fields.set(key, {
+					autoValidate: meta.autoValidate ?? false,
+					withSmallCopy: meta.withSmallCopy ?? false,
+				});
 			}
 		}
 	}
 
-	return [...fields].map(([key, autoValidate]) => ({ key, autoValidate }));
+	return [...fields].map(([key, flags]) => ({ key, ...flags }));
 }
 
 /**

@@ -3,7 +3,6 @@ import type { LoaderFunction } from "react-router";
 import { redirect } from "react-router";
 import * as v from "valibot";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { isAdmin, isStaff } from "~/modules/permissions/utils";
@@ -12,22 +11,32 @@ import {
 	badRequest,
 	canAccessLohiEndpoint,
 	errorToastRedirect,
+	errorToastWithRedirect,
 	forbidden,
 	safeReturnTo,
+	successToastWithRedirect,
 } from "~/utils/remix.server";
 import type { AnySyncSchema } from "~/utils/schema";
-import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
+import { ADMIN_PAGE, authErrorUrl, SETTINGS_PAGE } from "~/utils/urls";
 import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
 	authenticator,
 	IMPERSONATED_SESSION_KEY,
 	SESSION_KEY,
 } from "./authenticator.server";
+import * as DiscordAvatar from "./DiscordAvatar.server";
+import * as DiscordRefresh from "./DiscordRefresh.server";
+import { upsertUser } from "./DiscordStrategy.server";
 import type { AuthErrorCode } from "./errors";
 import { authSessionStorage } from "./session.server";
-import { getUser } from "./user.server";
+import { getUser, isImpersonating, requireUser } from "./user.server";
 
 export const callbackLoader: LoaderFunction = async ({ request, url }) => {
+	const refreshingUserId = await DiscordRefresh.flaggedUserId(request);
+	if (refreshingUserId !== null) {
+		return refreshCallback({ request, url, refreshingUserId });
+	}
+
 	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
 	if (url.searchParams.get("error") === "access_denied") {
 		// https://www.oauth.com/oauth2-servers/server-side-apps/possible-errors/
@@ -36,7 +45,8 @@ export const callbackLoader: LoaderFunction = async ({ request, url }) => {
 	}
 
 	try {
-		const userId = await authenticator.authenticate("discord", request);
+		const profile = await authenticator.authenticate("discord", request);
+		const userId = await upsertUser(profile);
 
 		const session = await authSessionStorage.getSession(
 			request.headers.get(SESSION_KEY),
@@ -62,6 +72,38 @@ export const callbackLoader: LoaderFunction = async ({ request, url }) => {
 	}
 };
 
+export const refreshFromDiscordAction = defineAction(async ({ request }) => {
+	const user = requireUser();
+
+	if (await isImpersonating(request)) {
+		throw errorToastWithRedirect({
+			url: SETTINGS_PAGE,
+			message: "Can't refresh from Discord while impersonating",
+		});
+	}
+
+	if (DiscordRefresh.isOnCooldown(user.id)) {
+		throw errorToastWithRedirect({
+			url: SETTINGS_PAGE,
+			message: REFRESH_COOLDOWN_MESSAGE,
+		});
+	}
+
+	try {
+		return await authenticator.authenticate("discord", request);
+	} catch (error) {
+		// starting the OAuth flow always throws the redirect to Discord
+		if (error instanceof Response) {
+			error.headers.append(
+				"Set-Cookie",
+				await DiscordRefresh.flagCookieHeader(user.id),
+			);
+		}
+
+		throw error;
+	}
+});
+
 export const logOutAction = defineAction(async ({ request }) => {
 	const session = await authSessionStorage.getSession(
 		request.headers.get(SESSION_KEY),
@@ -72,7 +114,19 @@ export const logOutAction = defineAction(async ({ request }) => {
 });
 
 export const logInAction = defineAction(async ({ request }) => {
-	return await authenticator.authenticate("discord", request);
+	try {
+		return await authenticator.authenticate("discord", request);
+	} catch (error) {
+		// a refresh abandoned midway must not turn this log in into one
+		if (error instanceof Response) {
+			error.headers.append(
+				"Set-Cookie",
+				await DiscordRefresh.clearFlagCookieHeader(),
+			);
+		}
+
+		throw error;
+	}
 });
 
 const returnToSchema = v.object({
@@ -178,7 +232,8 @@ const createLogInLinkActionSchema = v.object({
 	discordAvatar: v.optional(v.nullable(v.string())),
 	discordName: v.string(),
 	discordUniqueName: v.string(),
-	updateOnly: v.picklist(["true", "false"]),
+	// the name & avatar sync it was used for is retired
+	updateOnly: v.optional(v.picklist(["true", "false"])),
 });
 
 export const createLogInLinkAction = defineAction(async ({ request }) => {
@@ -191,14 +246,19 @@ export const createLogInLinkAction = defineAction(async ({ request }) => {
 		forbidden();
 	}
 
+	if (data.updateOnly === "true") return null;
+
 	const user = await UserRepository.upsert({
-		discordAvatar: data.discordAvatar ?? null,
 		discordId: data.discordId,
 		discordName: data.discordName,
 		discordUniqueName: data.discordUniqueName,
 	});
 
-	if (data.updateOnly === "true") return null;
+	await DiscordAvatar.syncForUser({
+		user,
+		discordId: data.discordId,
+		newHash: data.discordAvatar ?? null,
+	});
 
 	const createdLink = await LogInLinkRepository.insert(user.id);
 
@@ -266,4 +326,68 @@ function classifyAuthError(error: Error): AuthErrorCode {
 	}
 
 	return "unknown";
+}
+
+const REFRESH_COOLDOWN_MESSAGE =
+	"You can refresh from Discord once every 10 minutes";
+
+async function refreshCallback({
+	request,
+	url,
+	refreshingUserId,
+}: {
+	request: Request;
+	url: URL;
+	refreshingUserId: number;
+}) {
+	const headers = {
+		"Set-Cookie": await DiscordRefresh.clearFlagCookieHeader(),
+	};
+	const failed = (message: string) =>
+		errorToastWithRedirect({ url: SETTINGS_PAGE, message, headers });
+
+	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
+	if (url.searchParams.has("error")) {
+		return failed("Refreshing from Discord was canceled");
+	}
+
+	const user = getUser();
+	if (
+		!user ||
+		user.id !== refreshingUserId ||
+		(await isImpersonating(request))
+	) {
+		return failed("Refreshing from Discord failed");
+	}
+
+	if (DiscordRefresh.isOnCooldown(user.id)) {
+		return failed(REFRESH_COOLDOWN_MESSAGE);
+	}
+	DiscordRefresh.startCooldown(user.id);
+
+	try {
+		const profile = await authenticator.authenticate("discord", request);
+
+		if (profile.user.id !== user.discordId) {
+			return failed(
+				"The Discord account you authorized is not the one linked to your sendou.ink account",
+			);
+		}
+
+		await upsertUser(profile);
+	} catch (error) {
+		logger.error("Error during refresh from Discord:", error);
+
+		return failed(
+			error instanceof Error && classifyAuthError(error) === "discordOverloaded"
+				? "Discord is overloaded right now, try again later"
+				: "Refreshing from Discord failed",
+		);
+	}
+
+	return successToastWithRedirect({
+		url: SETTINGS_PAGE,
+		message: "Your avatar, name and connections were refreshed from Discord",
+		headers,
+	});
 }

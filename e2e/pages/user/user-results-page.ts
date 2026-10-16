@@ -31,8 +31,8 @@ export class UserResultsPage {
 		await this.page.keyboard.press("Escape");
 	}
 
-	async goto(discordId: string) {
-		await navigate({ page: this.page, url: userResultsPage({ discordId }) });
+	async goto(userId: number) {
+		await navigate({ page: this.page, url: userResultsPage({ id: userId }) });
 	}
 
 	tournamentName(name: string) {

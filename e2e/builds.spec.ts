@@ -1,6 +1,6 @@
 import { subDays } from "date-fns";
-import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { BuildFormPage } from "./pages/builds/build-form-page";
@@ -40,7 +40,7 @@ test.describe("Builds", () => {
 		await impersonate(page, NZAP_TEST_ID);
 
 		const buildForm = new BuildFormPage(page);
-		await buildForm.gotoNew(NZAP_TEST_DISCORD_ID);
+		await buildForm.gotoNew(NZAP_TEST_ID);
 
 		await buildForm.form.selectWeapons("weapons", [
 			"Tenta Brella",
@@ -85,7 +85,7 @@ test.describe("Builds", () => {
 		await impersonate(page);
 
 		const userBuilds = new UserBuildsPage(page);
-		await userBuilds.goto(ADMIN_DISCORD_ID);
+		await userBuilds.goto(ADMIN_ID);
 
 		const buildIdBefore = await userBuilds.buildId(0);
 
@@ -100,7 +100,7 @@ test.describe("Builds", () => {
 		expect(buildIdAfter).toBe(buildIdBefore);
 
 		await impersonate(page, NZAP_TEST_ID);
-		await userBuilds.goto(ADMIN_DISCORD_ID);
+		await userBuilds.goto(ADMIN_ID);
 		await expect(userBuilds.locators.buildCards).toHaveCount(1);
 		await expect(userBuilds.buildCard(0).root).not.toContainText("Private");
 	});
@@ -215,7 +215,7 @@ test.describe("Builds", () => {
 		await impersonate(page);
 
 		const userBuilds = new UserBuildsPage(page);
-		await userBuilds.goto(ADMIN_DISCORD_ID);
+		await userBuilds.goto(ADMIN_ID);
 
 		await expect(userBuilds.buildCard(0).title).toContainText("Mid Build");
 
