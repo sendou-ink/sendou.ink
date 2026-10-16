@@ -4,8 +4,8 @@
  * (optionally scaled up) and/or a grid overlay for visual inspection.
  *
  * Usage:
- *   vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> grid
- *   vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> x,y,w,h[,scale][:label] ...
+ *   bun --preload ./scripts/preload.ts scripts/scanner/dump-crops.ts <image> <outdir> grid
+ *   bun --preload ./scripts/preload.ts scripts/scanner/dump-crops.ts <image> <outdir> x,y,w,h[,scale][:label] ...
  */
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -21,7 +21,7 @@ import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 const [imagePath, outDir, ...specs] = process.argv.slice(2);
 if (!imagePath || !outDir || specs.length === 0) {
 	console.error(
-		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> (grid | x,y,w,h[,scale][:label])...",
+		"usage: bun --preload ./scripts/preload.ts scripts/scanner/dump-crops.ts <image> <outdir> (grid | x,y,w,h[,scale][:label])...",
 	);
 	process.exit(1);
 }

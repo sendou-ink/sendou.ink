@@ -10,7 +10,7 @@
  * (worker/area-downscaler.ts, worker/gpu-line-sums.ts) on each frame
  * upscaled to 2160p. WebGPU comes from Dawn (node/webgpu.ts: WEBGPU_NODE).
  *
- * Usage: pnpm scanner:gpu-parity [--verbose]
+ * Usage: bun run scanner:gpu-parity [--verbose]
  */
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";

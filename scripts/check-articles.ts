@@ -1,4 +1,4 @@
-// validates all articles files in the project are following the correct .md + grey matter format
+// validates all articles files in the project are following the correct .md + frontmatter format
 
 import { mostRecentArticles } from "~/features/articles/core/list.server";
 import { logger } from "~/utils/logger";

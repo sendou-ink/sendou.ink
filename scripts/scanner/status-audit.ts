@@ -12,7 +12,7 @@
  * fallbacks; the output flags mismatches that look like slot-mapping artifacts.
  * Every discrepancy lists the read timestamps most likely to yield a fixture.
  *
- * Usage: pnpm scanner:status-audit <events.csv> [--all]
+ * Usage: bun run scanner:status-audit <events.csv> [--all]
  */
 import { readFileSync } from "node:fs";
 import {
@@ -118,7 +118,7 @@ const args = process.argv.slice(2);
 const csvPath = args.find((arg) => !arg.startsWith("--"));
 const showAllSpans = args.includes("--all");
 if (!csvPath) {
-	console.error("Usage: pnpm scanner:status-audit <events.csv> [--all]");
+	console.error("Usage: bun run scanner:status-audit <events.csv> [--all]");
 	process.exit(1);
 }
 
@@ -936,7 +936,7 @@ function printGuidance(): void {
 		"2. In the scanner UI, analyze that frame and use “Save fixture” — the misread frame lands byte-exact with a prefilled expected.json.",
 	);
 	console.log(
-		"3. Hand-correct expected.json (icon-strip states go under tests/fixtures/player-status/, minimap card states under tests/fixtures/minimap/), then run pnpm test:scanner.",
+		"3. Hand-correct expected.json (icon-strip states go under tests/fixtures/player-status/, minimap card states under tests/fixtures/minimap/), then run bun run test:scanner.",
 	);
 	console.log(
 		"Legend: a DEAD span shorter than 3.5s cannot be a real splat (min respawn); single-read spans are one frame's misread away from vanishing; EXTRA counts point at phantom bands, MISSING counts at undetected states or coverage gaps.",

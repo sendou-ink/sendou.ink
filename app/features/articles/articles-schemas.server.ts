@@ -10,5 +10,9 @@ const author = v.union([
 export const articleDataSchema = v.object({
 	title: v.pipe(v.string(), v.minLength(1)),
 	author: v.union([author, v.array(author)]),
-	date: v.date(),
+	date: v.pipe(
+		v.string(),
+		v.isoDate(),
+		v.transform((value) => new Date(value)),
+	),
 });

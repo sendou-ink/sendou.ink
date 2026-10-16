@@ -37,7 +37,7 @@ const config: PlaywrightTestConfig = {
 
 		// DOM snapshots are the expensive part of tracing (~17% of total test
 		// time); failures still retain screenshots, network and action logs
-		// `pnpm run docs:capture` keeps every trace for the living docs' storyboards
+		// `bun run docs:capture` keeps every trace for the living docs' storyboards
 		trace: {
 			mode: process.env.LIVING_DOCS_CAPTURE ? "on" : "retain-on-failure",
 			snapshots: false,

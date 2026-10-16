@@ -11,7 +11,7 @@
  * The fonts ship with the game and are not committed — drop them into
  * assets/fonts/ (see README); bootstrap-atlas-from-fixture.ts is the fallback.
  *
- * Usage: pnpm scanner:build-glyph-atlas
+ * Usage: bun run scanner:build-glyph-atlas
  * Writes SCANNER_ASSETS_DIR/glyphs/scoreboard-*.{png,json}
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -72,7 +72,7 @@ for (const [family, file] of Object.entries(FONT_FILES)) {
 				"The Splatoon fonts are proprietary and not committed. Get",
 				"Decrypted/BlitzMain.otf and Decrypted/BlitzBold.otf (e.g. from the",
 				"splatoon3-fonts repo) into assets/fonts/, or fall back to",
-				"  pnpm scanner:bootstrap-atlas",
+				"  bun run scanner:bootstrap-atlas",
 			].join("\n"),
 		);
 		process.exit(1);

@@ -35,7 +35,7 @@ export type TranslationUnit = {
 /**
  * Every translatable unit of the language derived from the English translations. A pluralized English
  * string (`x_one` & `x_other`) is expanded into the plural categories of the language, using the bare key
- * for languages with only one category (what `pnpm run i18n:sync` produces).
+ * for languages with only one category (what `bun run i18n:sync` produces).
  *
  * @example
  * TranslationUnits.fromEnglish({ english: { user: { "sets_one": "{{count}} set", "sets_other": "{{count}} sets" } }, language: "pl" });

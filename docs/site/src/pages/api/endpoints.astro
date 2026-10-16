@@ -117,7 +117,7 @@ function endpointHeading(endpoint: ApiEndpoint) {
 	<p>
 		The examples under an endpoint are real requests the e2e tests made against it (mostly{" "}
 		<a href={githubUrl("e2e/api-public.spec.ts", 1)}><code>e2e/api-public.spec.ts</code></a>), one
-		per status code, kept by the last <code>pnpm run docs:capture</code> in{" "}
+		per status code, kept by the last <code>bun run docs:capture</code> in{" "}
 		<code>docs/site/api-examples.json</code> with arrays cut to their first items. An endpoint
 		without examples has no test calling it.
 	</p>

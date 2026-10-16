@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.join(__dirname, "..");
 
 const MIGRATIONS_DIR = path.join(ROOT_DIR, "migrations");
+const MIGRATE_SCRIPT = path.join(ROOT_DIR, "scripts", "migrate.ts");
 const TEST_DB_PATH = path.join(ROOT_DIR, "db-test.sqlite3");
 
 export function setup() {
@@ -119,7 +120,7 @@ function deleteDbFiles(dbPath: string) {
 }
 
 function migrateUp(dbPath: string) {
-	execSync("pnpm run migrate up", {
+	execFileSync(process.execPath, [MIGRATE_SCRIPT, "up"], {
 		cwd: ROOT_DIR,
 		stdio: "inherit",
 		env: { ...process.env, DB_PATH: dbPath },

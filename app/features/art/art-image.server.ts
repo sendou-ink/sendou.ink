@@ -1,7 +1,5 @@
-import { basename } from "node:path";
-import { Readable } from "node:stream";
 import { dataUrlToImageBuffer } from "~/features/img-upload/image-bytes.server";
-import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
+import { uploadToS3 } from "~/features/img-upload/s3.server";
 import { shortNanoid } from "~/utils/id";
 import { invariant } from "~/utils/invariant";
 import { smallImageFileName } from "~/utils/urls";
@@ -29,14 +27,10 @@ export async function uploadArtImage({
 
 	const fileName = `art-${Date.now()}-${shortNanoid()}.${image.extension}`;
 
-	const [uploadedLocation] = await Promise.all([
-		uploadStreamToS3(Readable.from(image.buffer), fileName),
-		uploadStreamToS3(
-			Readable.from(thumbnail.buffer),
-			smallImageFileName(fileName),
-		),
+	await Promise.all([
+		uploadToS3(image.buffer, fileName),
+		uploadToS3(thumbnail.buffer, smallImageFileName(fileName)),
 	]);
-	invariant(uploadedLocation, "Art image upload failed");
 
-	return basename(uploadedLocation);
+	return fileName;
 }

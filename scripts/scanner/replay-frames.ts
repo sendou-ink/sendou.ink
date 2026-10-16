@@ -7,7 +7,7 @@
  *   ffmpeg -ss <startT> -i vod.mkv -t 30 -vf fps=6 frames/f%04d.png
  * then replay it and watch which checks the scheduler ran and what they saw.
  *
- * Usage: pnpm scanner:replay <framesDir> <startT> <fps>
+ * Usage: bun run scanner:replay <framesDir> <startT> <fps>
  * (frames are ffmpeg-numbered f0001.png..; t = startT + (n-1)/fps)
  */
 import { readdirSync } from "node:fs";
@@ -25,7 +25,7 @@ import { loadScoreboardResources } from "../../app/features/scanner/node/resourc
 
 const [framesDir, startTArg, fpsArg] = process.argv.slice(2);
 if (!framesDir || !startTArg || !fpsArg) {
-	console.error("usage: pnpm scanner:replay <framesDir> <startT> <fps>");
+	console.error("usage: bun run scanner:replay <framesDir> <startT> <fps>");
 	process.exit(1);
 }
 const startT = Number(startTArg);

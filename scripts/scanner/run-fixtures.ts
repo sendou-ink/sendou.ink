@@ -3,7 +3,7 @@
  * CLI harness: run the ScoreboardDetector over fixtures and print everything
  * it saw — gate result, parsed fields, per-field scores, top weapon candidates.
  *
- * Usage: pnpm scanner:fixtures [case-name-substring]
+ * Usage: bun run scanner:fixtures [case-name-substring]
  */
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {

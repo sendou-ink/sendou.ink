@@ -132,7 +132,7 @@ Writes block the whole server (see [architecture.md](/dev/architecture/)), and o
 
 - Every list read is bounded — a `limit` parameter or a key that limits the result set.
 - Check `EXPLAIN QUERY PLAN` for new queries: no unexpected full table scans, indexes actually used.
-- Read functions on hot paths get a case in `scripts/benchmark-db/cases.ts` (run with `pnpm run bench:db`).
+- Read functions on hot paths get a case in `scripts/benchmark-db/cases.ts` (run with `bun run bench:db`).
 
 ## Pagination
 

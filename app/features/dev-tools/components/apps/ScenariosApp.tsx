@@ -173,7 +173,7 @@ function ScenarioCard({
 		});
 
 	const cliCommand = [
-		`pnpm run dev:tools scenario ${scenario.id}`,
+		`bun run dev:tools scenario ${scenario.id}`,
 		...scenario.params
 			.filter((param) => params[param.key] !== param.default)
 			.map((param) => `--${param.key}=${params[param.key]}`),

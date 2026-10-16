@@ -86,7 +86,7 @@ const pageCount = routes.filter(({ route }) => !route.isLayout).length;
 					{feature.hasCapture ? (
 						<p>
 							<strong>{visitedCount}</strong> of {count(pageCount, "page")} rendered by an
-							e2e test in the last <code>pnpm run docs:capture</code>.
+							e2e test in the last <code>bun run docs:capture</code>.
 						</p>
 					) : null}
 					<RoutesTable routes={routes} hasCapture={feature.hasCapture} />

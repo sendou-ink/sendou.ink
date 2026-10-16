@@ -13,7 +13,7 @@ description: Help write, debug, and explore SQLite database queries using Kysely
 | `db-sandbox.sqlite3` | Local, disposable copy of production data | Exploring real data, investigating bugs, verifying assumptions about data shape |
 | `db-test.sqlite3` | Unit test database (blank + migrations, created automatically by test runs) | Unit tests only |
 
-`db-sandbox.sqlite3` is not connected to production, modify it freely when the task requires it (`pnpm run sandbox:reset` restores it). **Never modify `db-snapshot.sqlite3`** — it is the pristine source the sandbox is reset from.
+`db-sandbox.sqlite3` is not connected to production, modify it freely when the task requires it (`bun run sandbox:reset` restores it). **Never modify `db-snapshot.sqlite3`** — it is the pristine source the sandbox is reset from.
 
 ## Schema
 

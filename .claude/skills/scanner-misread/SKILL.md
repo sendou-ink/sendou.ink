@@ -18,7 +18,7 @@ cases** (a `frame.webp` + `expected.json` folder each), then fix the scanner.
 ## 1. Unpack it safely (never skip)
 
 ```sh
-pnpm scanner:unpack-zip <path/to/zip> <scratchpad>/game-data-<zip-basename>
+bun run scanner:unpack-zip <path/to/zip> <scratchpad>/game-data-<zip-basename>
 ```
 
 The output directory must not exist yet. The script
@@ -97,7 +97,7 @@ same trait.
      in `options.misreadFields` (reason in `options.notes`): it must keep
      failing, and the test goes red once it reads correctly so the entry
      gets removed.
-4. Confirm it is red: `pnpm test:scanner -t "<case-name>"` must fail, on the
+4. Confirm it is red: `bun run test:scanner -t "<case-name>"` must fail, on the
    misread field(s) only. If it passes it does not reproduce the report;
    look again.
 
@@ -105,16 +105,16 @@ same trait.
 
 - Read `docs/site/src/content/feature-readmes/scanner.mdx` before touching detector or
   recognition code, including its section on the detector involved.
-- Baseline first: `pnpm test:scanner` (green apart from the new cases; note any
+- Baseline first: `bun run test:scanner` (green apart from the new cases; note any
   failure that was already there) and
-  `pnpm scanner:report > <scratchpad>/report-before.txt`.
+  `bun run scanner:report > <scratchpad>/report-before.txt`.
 - Fix the cause in general terms, and be able to say what in the image the
   code now handles. No special cases keyed to this frame (its names, its exact
   pixel values, a threshold moved just past one score with no margin).
 - OpenCV gotcha: `.data`/`.clone()` are broken on ROI views, always
   `view.copyTo(freshMat)` before pixel access.
-- Debugging aids: `pnpm scanner:fixtures <case>` (scoreboard, verbose),
-  `pnpm scanner:report`, and the dev-only `/scanner?view=fixtures&q=<case>`
+- Debugging aids: `bun run scanner:fixtures <case>` (scoreboard, verbose),
+  `bun run scanner:report`, and the dev-only `/scanner?view=fixtures&q=<case>`
   view; `/scanner?view=debug` re-analyzes any frame.
 - **Never edit an existing fixture's `expected.json` to make it pass**: those
   labels are hand-corrected by the maintainer and definitive. If an old one
@@ -124,10 +124,10 @@ same trait.
 
 ## 6. Done when
 
-- the new cases pass and `pnpm test:scanner` is fully green
-- `pnpm scanner:report` is no worse than `report-before.txt` (accuracy, name
+- the new cases pass and `bun run test:scanner` is fully green
+- `bun run scanner:report` is no worse than `report-before.txt` (accuracy, name
   character error rate)
-- `pnpm run checks` passes
+- `bun run checks` passes
 - a changelog entry exists: `changelog/YYYY-MM-DD-scanner-<slug>.md`,
   `navItem: scanner`, `type: bug`, one line saying what now reads right, for
   players

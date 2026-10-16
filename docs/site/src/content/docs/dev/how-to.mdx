@@ -7,11 +7,11 @@ Guides on how to do different things when developing sendou.ink
 
 ## Fix style/lint errors (Biome)
 
-Run the `pnpm run biome:fix` command. Also you might want to set up Biome as an extension to your IDE and run automatically when you save a file.
+Run the `bun run biome:fix` command. Also you might want to set up Biome as an extension to your IDE and run automatically when you save a file.
 
 ## Add a new database migration
 
-1) Run `pnpm run migrate:new "my cool feature"`. This creates `migrations/<UTC timestamp>-my-cool-feature.ts` e.g. `migrations/20260803143000-my-cool-feature.ts`. Migrations run in filename order, and the timestamp keeps two branches from claiming the same slot.
+1) Run `bun run migrate:new "my cool feature"`. This creates `migrations/<UTC timestamp>-my-cool-feature.ts` e.g. `migrations/20260803143000-my-cool-feature.ts`. Migrations run in filename order, and the timestamp keeps two branches from claiming the same slot.
 2) Fill out the generated file, replacing the `TODO`s. Use the schema builder (`trx.schema`) rather than raw SQL:
 
 ```ts
@@ -65,14 +65,14 @@ Notes:
 - `migrations/20260803000000-initial.ts` is the collapsed history of the 165 migrations that came before it. It only ever runs against an empty database, so leave it alone.
 
 3) Update the typings in `app/db/tables.ts`
-4) Run `pnpm run migrate up` to apply your migration (the unit test database `db-test.sqlite3` is created and migrated automatically when unit tests run)
+4) Run `bun run migrate up` to apply your migration (the unit test database `db-test.sqlite3` is created and migrated automatically when unit tests run)
 
 ## Update the OG images
 
 OG images are the preview images shown when a page is shared on Discord, Bluesky etc. Every page listed in `OG_IMAGE_PAGES` (`app/utils/urls.ts`) has one of its own, the rest fall back to `default.png`.
 
 1) Preview and tweak them on the `/admin/og-images` page (dev only). They are regular React components rendered at the real 1200x630 size.
-2) With the dev server running, `pnpm run og:generate` screenshots each of them into the [assets repo](https://github.com/sendou-ink/assets) at `assets/img/og/`, expected to be a sibling folder of this one (pass a folder as an argument to write elsewhere).
+2) With the dev server running, `bun run og:generate` screenshots each of them into the [assets repo](https://github.com/sendou-ink/assets) at `assets/img/og/`, expected to be a sibling folder of this one (pass a folder as an argument to write elsewhere).
 3) Commit and push the images in the assets repo. They are live once its deploy workflow has run.
 
 New pages need to be added to `OG_IMAGE_PAGES` and to `PAGE_COLORS` on the preview page. Routes opt in via `image: ogPageImage("<page>")` given to `metaTags`.
@@ -83,7 +83,7 @@ The image posted on social media on update day is built from the entry files in 
 
 1) Every commit with a user facing change adds one `changelog/YYYY-MM-DD-<slug>.md` per change. Frontmatter is `navItem` (optional, one of `NAV_ICONS` or a list of them such as `navItem: [calendar, scrims]`, omitted = sendou.ink logo) and `type` (`feature` or `bug`). The body is a one line headline, optionally followed by a markdown bullet list for a bigger release. Entries are never deleted, they are the update history.
 2) Preview and tweak the graphic on the `/admin/changelog-image` page (dev only). Without a `?since=<sha>` it renders every entry ever committed.
-3) With the dev server running, `pnpm run changelog:image <sha-of-previous-update-commit>` (add `--port <port>` if the dev server is not on the default port) writes `scripts/output/update-<date>.png` from the entries added since that commit and copies it to the clipboard. The alt text and the Discord post text are written next to it (`update-<date>-alt.txt`, `update-<date>-discord.txt`) and printed.
+3) With the dev server running, `bun run changelog:image <sha-of-previous-update-commit>` (add `--port <port>` if the dev server is not on the default port) writes `scripts/output/update-<date>.png` from the entries added since that commit and copies it to the clipboard. The alt text and the Discord post text are written next to it (`update-<date>-alt.txt`, `update-<date>-discord.txt`) and printed.
 
 ## Add a new translation string
 
@@ -115,6 +115,6 @@ When utilizing feature specific translations ensure the json is loaded. This is 
 
 ### Sync
 
-Run `pnpm run i18n:sync` after changing English keys (`pnpm run checks` fails otherwise). It keeps the jsons minimal: untranslated keys are left out and fall back to the parent language (`es-US` → `es-ES`, `fr-CA` → `fr-EU`), then English.
+Run `bun run i18n:sync` after changing English keys (`bun run checks` fails otherwise). It keeps the jsons minimal: untranslated keys are left out and fall back to the parent language (`es-US` → `es-ES`, `fr-CA` → `fr-EU`), then English.
 
 Site languages are `languages` in `app/modules/i18n/config.ts`. In-game names (`weapons`, `gear`, `game-misc`, `game-badges`) use `gameLanguages`, picked separately by the user.

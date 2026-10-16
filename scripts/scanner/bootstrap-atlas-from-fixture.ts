@@ -7,7 +7,7 @@
  * recognition takes the best-scoring one. build-glyph-atlas.ts then fills the
  * rest of the charset from the fonts, preserving these fixture-tagged glyphs.
  *
- * Usage: pnpm scanner:bootstrap-atlas
+ * Usage: bun run scanner:bootstrap-atlas
  * Writes SCANNER_ASSETS_DIR/glyphs/*.{png,json}
  */
 import { mkdirSync, writeFileSync } from "node:fs";

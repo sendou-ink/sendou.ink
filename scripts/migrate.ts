@@ -10,12 +10,6 @@ const MIGRATION_FOLDER = fileURLToPath(
 	new URL("../migrations", import.meta.url),
 );
 
-try {
-	process.loadEnvFile();
-} catch {
-	// .env is optional; in production DB_PATH comes from the host environment
-}
-
 async function main() {
 	const command = process.argv[2] ?? "up";
 	if (command !== "up") {

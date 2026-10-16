@@ -19,12 +19,6 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-try {
-	process.loadEnvFile();
-} catch {
-	// .env is optional, the dev server port can also come from the environment
-}
-
 const { values: args, positionals } = parseArgs({
 	options: { port: { type: "string" } },
 	allowPositionals: true,
@@ -48,7 +42,7 @@ async function main() {
 	const since = positionals[0];
 	if (!since) {
 		throw new Error(
-			"Usage: pnpm run changelog:image <sha-of-previous-update-commit> [--port <dev-server-port>]",
+			"Usage: bun run changelog:image <sha-of-previous-update-commit> [--port <dev-server-port>]",
 		);
 	}
 

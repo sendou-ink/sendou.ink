@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
  * Draw all scoreboard ROIs on a (normalized) frame for visual calibration.
- * Usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|quick-scoreboard-battle-log|...]
+ * Usage: bun --preload ./scripts/preload.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|quick-scoreboard-battle-log|...]
  * The quick battle log's overlay is drawn on the rectified frame its ROIs apply to.
  */
 import {
@@ -36,7 +36,7 @@ const [imagePath, outPath = "roi-overlay.png", detector = "scoreboard"] =
 	process.argv.slice(2);
 if (!imagePath) {
 	console.error(
-		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|quick-scoreboard-battle-log|death|kill|map-start|minimap]",
+		"usage: bun --preload ./scripts/preload.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|quick-scoreboard-battle-log|death|kill|map-start|minimap]",
 	);
 	process.exit(1);
 }

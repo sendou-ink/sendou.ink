@@ -12,37 +12,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: ".bun-version"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
-          cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install chromium
+        run: bunx playwright install chromium
 
       - name: Formatter/Linter
-        run: pnpm run biome:check
+        run: bun run biome:check
       - name: Typecheck
-        run: pnpm run typecheck
+        run: bun run typecheck
       - name: Typecheck scripts
-        run: pnpm run typecheck:scripts
+        run: bun run typecheck:scripts
       - name: Typecheck docs site
-        run: pnpm run typecheck:docs
+        run: bun run typecheck:docs
       - name: Unit tests
-        run: pnpm run test:unit:browser
+        run: bun run test:unit:browser
       - name: Knip unused check
-        run: pnpm run knip
+        run: bun run knip
       - name: Check translations jsons
-        run: pnpm run check-translation-jsons:no-write
+        run: bun run check-translation-jsons:no-write
       - name: Check plural key collapse
-        run: pnpm run check-plural-collapse
+        run: bun run check-plural-collapse
       - name: Check articles
-        run: pnpm run check-articles
+        run: bun run check-articles
       - name: Build docs site
-        run: pnpm run docs:build
+        run: bun run docs:build

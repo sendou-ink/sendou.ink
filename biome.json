@@ -191,6 +191,9 @@
 	"formatter": {
 		"useEditorconfig": true
 	},
+	"javascript": {
+		"globals": ["Bun"]
+	},
 	"css": {
 		"formatter": {
 			"enabled": true

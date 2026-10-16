@@ -16,22 +16,22 @@ Hide it with the `–` button or `Alt+Shift+D` (it remembers), `Esc` closes the 
 | **Warnings** | Console errors & warnings, uncaught errors and hydration mismatches since the page loaded, deduplicated. Also the dev server's console errors & warnings (loader and action errors included) with the request they happened in. The badge counts them. |
 | **Server** | Which database file is in use, the in-memory switches (season ended, plus voting active), refreshing the caches, reseeding and running any routine now. |
 | **Triggers** | Toasts, error pages (each status, a render crash) and a sample notification of any type to yourself. |
-| **Links** | The local docs site (`pnpm run dev:docs`) and the dev only pages (OG images, changelog image, bracket test...). |
+| **Links** | The local docs site (`bun run dev:docs`) and the dev only pages (OG images, changelog image, bracket test...). |
 
 ## CLI
 
 Needs the dev server running. The server is found from `--url=...`, `DEV_SERVER_URL` or `PORT` (default 5173).
 
 ```bash
-pnpm run dev:tools scenarios                     # list, with parameters
-pnpm run dev:tools scenario tournament-organizer --teams=16 --format=swiss
-pnpm run dev:tools requests 10                   # latest requests with query counts
-pnpm run dev:tools request 42                    # every query of one request
-pnpm run dev:tools log-in-as 274 /admin          # link that logs in as user 274
-pnpm run dev:tools server                        # database, switches, routines
-pnpm run dev:tools switch seasonEnded on
-pnpm run dev:tools routine NotifyCheckInStart
-pnpm run dev:tools refresh-caches
+bun run dev:tools scenarios                     # list, with parameters
+bun run dev:tools scenario tournament-organizer --teams=16 --format=swiss
+bun run dev:tools requests 10                   # latest requests with query counts
+bun run dev:tools request 42                    # every query of one request
+bun run dev:tools log-in-as 274 /admin          # link that logs in as user 274
+bun run dev:tools server                        # database, switches, routines
+bun run dev:tools switch seasonEnded on
+bun run dev:tools routine NotifyCheckInStart
+bun run dev:tools refresh-caches
 ```
 
 A scenario prints a link that logs in as its user and opens its page, so it works for a person and for an agent driving a browser alike.
@@ -46,7 +46,7 @@ None of this exists in production, and nothing in it can reach production users:
 - **Reseed only `db.sqlite3`.** It wipes every row, so the sandbox, snapshot or any other file is refused.
 - **Fresh users only.** Scenarios create their own users (with Discord ids that can't collide with seeded ones) and never touch existing rows.
 
-Note that `pnpm run dev` listens on your network too (`--host`), so others on the same network can use these tools, as they already could use `/auth/impersonate` in development.
+Note that `bun run dev` listens on your network too (`--host`), so others on the same network can use these tools, as they already could use `/auth/impersonate` in development.
 
 ## Adding a scenario
 

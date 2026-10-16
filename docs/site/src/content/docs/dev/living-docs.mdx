@@ -14,9 +14,9 @@ The docs site (`docs/site/`, built with [Astro Starlight](https://starlight.astr
 
 Each feature has a page per source (`/features/<feature>/` for the overview, `/modules/`, `/repositories/`, `/permissions/`, `/search-params/`, `/e2e/`), the overview present when the feature has a README or routes. Nothing generated is committed, the pages are built from the code on demand:
 
-- `pnpm run dev:docs` serves the site at http://localhost:4321 (linked from the dev toolbar's Links app). It regenerates the living docs as files under `app/`, `e2e/` or `locales/en/` change. Search only works in a build.
-- `pnpm run docs:preview` builds the site and serves the build, search included.
-- `pnpm run docs:build` builds it into `docs/site/dist/` and checks every internal link of the build leads somewhere (`scripts/check-docs-links.ts`). CI runs it on pull requests and pushes to `main` (`.github/workflows/main.yml`). The site is a Render static site at https://docs.sendou.ink, deployed from every commit to `main` whose CI checks pass (see [Scripts](/dev/scripts/#the-docs-site)).
+- `bun run dev:docs` serves the site at http://localhost:4321 (linked from the dev toolbar's Links app). It regenerates the living docs as files under `app/`, `e2e/` or `locales/en/` change. Search only works in a build.
+- `bun run docs:preview` builds the site and serves the build, search included.
+- `bun run docs:build` builds it into `docs/site/dist/` and checks every internal link of the build leads somewhere (`scripts/check-docs-links.ts`). CI runs it on pull requests and pushes to `main` (`.github/workflows/main.yml`). The site is a Render static site at https://docs.sendou.ink, deployed from every commit to `main` whose CI checks pass (see [Scripts](/dev/scripts/#the-docs-site)).
 
 Besides the feature pages, the generated pages are:
 
@@ -44,7 +44,7 @@ They are React islands (`ShowcaseRoot` gives them the translations, router and t
 
 ## Capturing an e2e run
 
-`pnpm run docs:capture [specs…]` runs the e2e tests (all, or the given spec files) with tracing on and keeps two things from the run:
+`bun run docs:capture [specs…]` runs the e2e tests (all, or the given spec files) with tracing on and keeps two things from the run:
 
 - `docs/site/visits.json` (committed): the pathnames each test visited, the source of route coverage.
 - `docs/site/api-examples.json` (committed): the `/api/` requests each test made through `page.request`, shown as the example requests and responses of the Public API endpoints (one per status code, arrays cut to their first items). Every endpoint should have a test calling it in `e2e/api-public.spec.ts`.
@@ -54,7 +54,7 @@ Capturing a few specs only replaces their part of `visits.json` and `api-example
 
 ### Screenshots on the live site
 
-On pushes to `main` the e2e job (`.github/workflows/e2e-tests.yml`) runs `docs:capture` instead of plain `test:e2e`, and a job after it uploads the screenshots with `pnpm run docs:screenshots:publish` to the `sendou-docs` DigitalOcean Space, under the content hash of the spec they were captured from (`SPACES_ACCESS_KEY` and `SPACES_SECRET_KEY` repo secrets). A screenshot is named after its spec line, so it only fits the spec as it was: the docs site's build runs `pnpm run docs:screenshots:download`, which fetches those of the specs unchanged since their capture and leaves the rest without screenshots until the next capture.
+On pushes to `main` the e2e job (`.github/workflows/e2e-tests.yml`) runs `docs:capture` instead of plain `test:e2e`, and a job after it uploads the screenshots with `bun run docs:screenshots:publish` to the `sendou-docs` DigitalOcean Space, under the content hash of the spec they were captured from (`SPACES_ACCESS_KEY` and `SPACES_SECRET_KEY` repo secrets). A screenshot is named after its spec line, so it only fits the spec as it was: the docs site's build runs `bun run docs:screenshots:download`, which fetches those of the specs unchanged since their capture and leaves the rest without screenshots until the next capture.
 
 ## Writing code that documents well
 

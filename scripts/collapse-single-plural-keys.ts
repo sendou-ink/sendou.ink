@@ -10,7 +10,7 @@ const LOCALES_PATH = path.join(__dirname, "..", "locales");
 const PRIMARY_LANGUAGE = "en";
 
 // writes nothing and exits non-zero if any file would be collapsed, so CI can
-// fail a PR that committed suffixed plural keys without running `pnpm run i18n:sync`
+// fail a PR that committed suffixed plural keys without running `bun run i18n:sync`
 const CHECK_KEY = "--check";
 const checkOnly = process.argv.includes(CHECK_KEY);
 
@@ -62,7 +62,7 @@ for (const lang of languages) {
 if (checkOnly) {
 	if (wouldCollapse.length > 0) {
 		console.error(
-			"Found suffixed plural keys in single-plural languages that `pnpm run i18n:sync` would collapse. Run it and commit the result.",
+			"Found suffixed plural keys in single-plural languages that `bun run i18n:sync` would collapse. Run it and commit the result.",
 		);
 		for (const { lang, file, keys } of wouldCollapse) {
 			console.error(`  ${lang}/${file}: ${keys.join(", ")}`);

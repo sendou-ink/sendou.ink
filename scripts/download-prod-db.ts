@@ -97,7 +97,7 @@ async function main() {
 		"Every checkout listed above loses its db-sandbox.sqlite3 and db-snapshot.sqlite3.",
 	);
 	log(
-		"Stop any `pnpm dev:sandbox` or benchmark holding one of them open first.",
+		"Stop any `bun run dev:sandbox` or benchmark holding one of them open first.",
 	);
 
 	if (!options.yes && !(await confirm("Continue?"))) {
@@ -136,12 +136,12 @@ async function main() {
 
 	log("");
 	log(`Rebuilding ${SANDBOX_DB} in this checkout...`);
-	const reset = spawnSync("pnpm", ["run", "sandbox:reset"], {
+	const reset = spawnSync("bun", ["run", "sandbox:reset"], {
 		cwd: REPO_ROOT,
 		stdio: "inherit",
 	});
 	if (reset.status !== 0) {
-		throw new Error("pnpm run sandbox:reset failed");
+		throw new Error("bun run sandbox:reset failed");
 	}
 
 	if (typeof options.keep === "number") {
@@ -155,7 +155,7 @@ async function main() {
 
 function parseArgs(args: string[]) {
 	const { values } = parseNodeArgs({
-		// `pnpm run download-prod-db -- --dry-run` forwards the separator verbatim
+		// `bun run download-prod-db -- --dry-run` forwards the separator verbatim
 		args: args[0] === "--" ? args.slice(1) : args,
 		options: {
 			"dry-run": { type: "boolean" },

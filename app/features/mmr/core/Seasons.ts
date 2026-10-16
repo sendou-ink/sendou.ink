@@ -14,7 +14,7 @@ const GROUP_LIFETIME_MAX_DAYS = 7;
 
 /** Seasons (`nth` from 0) with their start and end dates. Outside production the list is a test set that keeps a season always open. */
 export const list =
-	// when we do pnpm run setup NODE_ENV is not set -> use test seasons
+	// when we do bun run setup NODE_ENV is not set -> use test seasons
 	!process.env.NODE_ENV ||
 	IS_E2E_TEST_RUN ||
 	(process.env.NODE_ENV === "development" && !Config.prodMode)

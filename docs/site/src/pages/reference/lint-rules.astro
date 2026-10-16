@@ -21,7 +21,7 @@ const rules = (await getCollection("lintRules"))
 	<p>
 		The repo's own lint rules: GritQL plugins in{" "}
 		<a href={githubUrl("biome-plugins", 1).replace(/#L1$/, "")}><code>biome-plugins/</code></a>,
-		enabled per path in <code>biome.json</code>. They run with <code>pnpm run biome:fix</code>.
+		enabled per path in <code>biome.json</code>. They run with <code>bun run biome:fix</code>.
 		Silence one where it's wrong with <code>// biome-ignore lint/plugin: &lt;why&gt;</code>.
 	</p>
 	{

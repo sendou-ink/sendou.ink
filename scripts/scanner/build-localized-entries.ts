@@ -17,7 +17,7 @@
  *                                    splits it into a per-language pre/post text pair
  *   CommonMsg/Weapon/WeaponName_*    weapon names, mapped to canonical entries via USen
  *
- * Usage: pnpm scanner:build-localized-entries [path-to-splat3]
+ * Usage: bun run scanner:build-localized-entries [path-to-splat3]
  * Writes app/features/scanner/core/localized-entries.ts
  *    and app/features/scanner/core/detectors/death/localized-messages.ts
  *    and app/features/scanner/core/detectors/kill/localized-messages.ts

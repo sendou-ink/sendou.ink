@@ -1,5 +1,5 @@
 // Command line client of the dev toolbar's API, talks to a running dev server.
-// Usage: pnpm run dev:tools <command> (run without a command for help)
+// Usage: bun run dev:tools <command> (run without a command for help)
 
 import { parseArgs } from "node:util";
 import { mapValues } from "remeda";
@@ -14,7 +14,7 @@ import type {
 	DevServerLoaderData,
 } from "~/features/dev-tools/routes/dev.server";
 
-const HELP = `Usage: pnpm run dev:tools <command> [--url=http://localhost:5173]
+const HELP = `Usage: bun run dev:tools <command> [--url=http://localhost:5173]
 
 Commands:
   scenarios                   List the scenarios and their parameters

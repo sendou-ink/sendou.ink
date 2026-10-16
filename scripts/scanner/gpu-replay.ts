@@ -7,7 +7,7 @@
  * result). Any kernel change must keep 0 mismatches. WebGPU comes from Dawn
  * (node/webgpu.ts: WEBGPU_NODE).
  *
- * Usage: pnpm scanner:gpu-replay <corpus-dir> [--check-every N] [--threads T] [--cpu]
+ * Usage: bun run scanner:gpu-replay <corpus-dir> [--check-every N] [--threads T] [--cpu]
  * --check-every: exact-check every N-th run (default 1 = all; the reference is slow)
  * --cpu: also run the CPU driver (runSync) on the same corpus: timed, and every
  *   score compared with the GPU's
@@ -105,7 +105,7 @@ parentPort.on("message", ({ run, steps }) => {
 const options = parseArgs(process.argv.slice(2));
 if (!options) {
 	console.error(
-		"usage: pnpm scanner:gpu-replay <corpus-dir> [--check-every N] [--threads T] [--cpu]",
+		"usage: bun run scanner:gpu-replay <corpus-dir> [--check-every N] [--threads T] [--cpu]",
 	);
 	process.exit(1);
 }

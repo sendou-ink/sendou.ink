@@ -38,7 +38,7 @@ If `review.patch` is empty (no diff, no untracked files) and `copy.patch` is emp
 
 Greppable rules — run them yourself against `$M/review.patch` (added lines start with `+`). Each hit is a **pre-confirmed finding** that skips verification and goes straight to synthesis.
 
-1. **Typecheck**: `pnpm run typecheck`. Errors in changed files → pre-confirmed findings the review should lead with. Continue regardless.
+1. **Typecheck**: `bun run typecheck`. Errors in changed files → pre-confirmed findings the review should lead with. Continue regardless.
 2. **Leftover debug code**: `grep -nE '^\+.*(console\.log|test\.only|describe\.only|it\.only)' $M/review.patch`.
 3. **Undefined CSS variables**: extract `var(--...)` names from added lines (`grep -oE` on the patch), check each is defined in `app/styles/vars.css` or locally in a changed file (grep, don't read). Undefined → finding.
 4. **Unregistered routes**: for each new file under a `routes/` directory, grep `app/routes.ts` for its path. Not referenced → finding.
@@ -183,13 +183,13 @@ IMPORTANT: run all analysis against `db-sandbox.sqlite3` — a local, disposable
 
 1. **Identify new/changed DB queries** in the diff (`*Repository.server.ts`, Kysely). Read the full changed Repository files.
 
-2. **Get the real SQL** — do not mentally compile Kysely. Write a throwaway script at `scripts/tmp-review-compile.ts` (must live inside the project so vite-node resolves the `~` alias; delete when done) that rebuilds the query with the project's `db` instance and prints `compiled.sql` and `compiled.parameters`:
+2. **Get the real SQL** — do not mentally compile Kysely. Write a throwaway script at `scripts/tmp-review-compile.ts` (must live inside the project so Bun resolves the `~` alias from `tsconfig.json`; delete when done) that rebuilds the query with the project's `db` instance and prints `compiled.sql` and `compiled.parameters`:
 
    import { db } from "~/db/sql";
    const compiled = db.selectFrom(/* rebuild from Repository code */).compile();
    console.log(compiled.sql, compiled.parameters);
 
-   Run: `DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true pnpm vite-node scripts/tmp-review-compile.ts`. Substitute realistic parameter values.
+   Run: `DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true bun --preload ./scripts/preload.ts scripts/tmp-review-compile.ts`. Substitute realistic parameter values.
 
 3. **For each query**:
    a. `sqlite3 db-sandbox.sqlite3 "EXPLAIN QUERY PLAN <compiled SQL with params substituted>"`
@@ -210,7 +210,7 @@ category: "db-performance"; detail = EXPLAIN output + measured row counts + call
 You are reviewing code changes for test coverage gaps (Vitest unit/browser tests, Playwright e2e). Compare what logic changed against what tests changed:
 
 1. Changed pure-logic Modules (imported as `* as Module`, JSDoc'd functions): do unit tests (`*.test.ts` nearby) exist and were they updated with the logic?
-2. New Repository READ functions: project convention gives these benchmark cases in `scripts/benchmark-db` (`pnpm run bench:db`). Flag new read functions without one.
+2. New Repository READ functions: project convention gives these benchmark cases in `scripts/benchmark-db` (`bun run bench:db`). Flag new read functions without one.
 3. New routes or significant user flows: any e2e spec covering them? Check the e2e directory.
 4. Bug-fix-shaped changes (tightened conditional, handled edge case): is there a regression test proving the fix?
 

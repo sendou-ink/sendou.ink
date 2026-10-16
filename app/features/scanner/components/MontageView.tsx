@@ -128,8 +128,8 @@ export function MontageView() {
 				</div>
 				{montage.folder ? null : (
 					<p className={styles.note}>
-						Download the VoDs with <code>pnpm vods:download &lt;id&gt;</code>,
-						then open <code>scripts/output/vods/&lt;id&gt;</code>.
+						Download the VoDs with <code>bun run vods:download &lt;id&gt;</code>
+						, then open <code>scripts/output/vods/&lt;id&gt;</code>.
 					</p>
 				)}
 				{disconnected ? (

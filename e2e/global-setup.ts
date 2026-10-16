@@ -19,7 +19,7 @@ const BUILD_INPUTS = [
 	"app",
 	"public",
 	"package.json",
-	"pnpm-lock.yaml",
+	"bun.lock",
 	"vite.config.ts",
 ];
 
@@ -162,7 +162,7 @@ async function globalSetup(config: FullConfig) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log("Building the application...");
 		fs.rmSync(BUILD_MARKER_FILE, { force: true });
-		execSync("pnpm run build", {
+		execSync("bun run build", {
 			stdio: "inherit",
 			env: {
 				...process.env,
@@ -201,37 +201,33 @@ async function globalSetup(config: FullConfig) {
 
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(`Starting server for worker ${i} on port ${port}...`);
-		// react-router-serve directly instead of `pnpm start`: ensureMigratedDb
+		// the server directly instead of `bun run start`: ensureMigratedDb
 		// above already migrated, making the script's `migrate up` step redundant
-		const serverProcess = spawn(
-			process.execPath,
-			["./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"],
-			{
-				env: {
-					...process.env,
-					NODE_ENV: "production",
-					DB_PATH: dbPath,
-					PORT: String(port),
-					DISCORD_CLIENT_ID: "123",
-					DISCORD_CLIENT_SECRET: "secret",
-					SESSION_SECRET: "secret",
-					VITE_SITE_DOMAIN: `http://localhost:${port}`,
-					VITE_E2E_TEST_RUN: "true",
-					STORAGE_END_POINT: "http://127.0.0.1:9000",
-					STORAGE_ACCESS_KEY: "seaweedfs-user",
-					STORAGE_SECRET: "seaweedfs-password",
-					STORAGE_REGION: "us-east-1",
-					STORAGE_BUCKET,
-					// creds from .env must not reach test servers (SyncLiveStreams would
-					// hit the real Twitch API and overwrite factory-seeded streams)
-					TWITCH_CLIENT_ID: "",
-					TWITCH_CLIENT_SECRET: "",
-					// tests assert webhook payloads by listening on the worker's webhook port
-					SQ_CANCEL_DISCORD_WEBHOOK_URL: `http://localhost:${e2eWebhookPort(i)}/sq-cancel`,
-				},
-				detached: false,
+		const serverProcess = spawn("bun", ["--no-env-file", "server.ts"], {
+			env: {
+				...process.env,
+				NODE_ENV: "production",
+				DB_PATH: dbPath,
+				PORT: String(port),
+				DISCORD_CLIENT_ID: "123",
+				DISCORD_CLIENT_SECRET: "secret",
+				SESSION_SECRET: "secret",
+				VITE_SITE_DOMAIN: `http://localhost:${port}`,
+				VITE_E2E_TEST_RUN: "true",
+				STORAGE_END_POINT: "http://127.0.0.1:9000",
+				STORAGE_ACCESS_KEY: "seaweedfs-user",
+				STORAGE_SECRET: "seaweedfs-password",
+				STORAGE_REGION: "us-east-1",
+				STORAGE_BUCKET,
+				// creds from .env must not reach test servers (SyncLiveStreams would
+				// hit the real Twitch API and overwrite factory-seeded streams)
+				TWITCH_CLIENT_ID: "",
+				TWITCH_CLIENT_SECRET: "",
+				// tests assert webhook payloads by listening on the worker's webhook port
+				SQ_CANCEL_DISCORD_WEBHOOK_URL: `http://localhost:${e2eWebhookPort(i)}/sq-cancel`,
 			},
-		);
+			detached: false,
+		});
 
 		SERVER_PROCESSES.push(serverProcess);
 

@@ -43,16 +43,21 @@ export default defineConfig((config) => {
 			cssModulesLayer(),
 			reactRouter(),
 			eagerlyCompileSharedChunks(),
-			// React Compiler is skipped in dev, its transform cost outweighs its value there
+			// React Compiler is skipped in dev, its transform cost outweighs its value there,
+			// and in the SSR build, where every component renders once per request
 			...(isBuild
 				? [
-						babel({
-							include: /\.[jt]sx?$/,
-							babelConfig: {
-								presets: ["@babel/preset-typescript"],
-								plugins: [["babel-plugin-react-compiler", {}]],
-							},
-						}),
+						{
+							...babel({
+								include: /\.[jt]sx?$/,
+								babelConfig: {
+									presets: ["@babel/preset-typescript"],
+									plugins: [["babel-plugin-react-compiler", {}]],
+								},
+							}),
+							applyToEnvironment: (environment: { name: string }) =>
+								environment.name === "client",
+						},
 					]
 				: []),
 		],
@@ -97,8 +102,6 @@ export default defineConfig((config) => {
 		optimizeDeps: {
 			// route-specific deps pre-bundled at startup to avoid mid-session re-optimization and full page reloads
 			include: [
-				"@aws-sdk/client-s3",
-				"@aws-sdk/lib-storage",
 				"@date-fns/tz",
 				"@techstark/opencv-js",
 				"@dnd-kit/core",
@@ -106,7 +109,6 @@ export default defineConfig((config) => {
 				"@dnd-kit/sortable",
 				"@dnd-kit/utilities",
 				"@epic-web/cachified",
-				"@react-router/node",
 				"@tldraw/tldraw",
 				"@zumer/snapdom",
 				"compressorjs",
@@ -127,7 +129,6 @@ export default defineConfig((config) => {
 				"date-fns/locale/zh-CN",
 				"edmonds-blossom-fixed",
 				"fflate",
-				"gray-matter",
 				"kysely",
 				"markdown-to-jsx",
 				"mediabunny",

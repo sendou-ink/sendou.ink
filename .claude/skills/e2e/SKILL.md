@@ -33,23 +33,23 @@ Stale worker databases (`db-test-e2e-*.sqlite3`) are handled automatically: glob
 
 ### Run all tests
 ```bash
-pnpm run test:e2e
+bun run test:e2e
 ```
 
 ### Run a specific test file
 ```bash
-pnpm exec playwright test e2e/<name>.spec.ts
+bunx playwright test e2e/<name>.spec.ts
 ```
 Batch multiple files into one invocation — every invocation pays global setup.
 
 ### Flaky detection (repeats each test 10 times, stops on first failure)
 ```bash
-pnpm run test:e2e:flaky-detect
+bun run test:e2e:flaky-detect
 ```
 
 ### Force a rebuild of the app
 ```bash
-E2E_FORCE_BUILD=true pnpm run test:e2e
+E2E_FORCE_BUILD=true bun run test:e2e
 ```
 Global setup reuses the previous build when nothing under `app/`, `public/`, the lockfile, or the vite/react-router configs changed. Use this override if you suspect a stale build (e.g. after changing env-dependent build behavior).
 
@@ -71,14 +71,14 @@ Common infrastructure errors and fixes:
 ### Step 3: Reduce to single debug worker
 If the error is unclear, re-run with debug output and a single worker to see server logs:
 ```bash
-E2E_DEBUG=true E2E_WORKERS=1 pnpm exec playwright test e2e/<failing-test>.spec.ts
+E2E_DEBUG=true E2E_WORKERS=1 bunx playwright test e2e/<failing-test>.spec.ts
 ```
 This shows stdout/stderr from the test server, which is hidden by default.
 
 ### Step 4: Examine trace artifacts
 Playwright is configured with `trace: { mode: "retain-on-failure", snapshots: false }` — failure traces carry screenshots, network and action logs but no DOM snapshots (recording those cost ~17% of total suite time). After a failure, check `test-results/<test-folder>/error-context.md` for the page's accessibility snapshot at failure time, or view the trace:
 ```bash
-pnpm exec playwright show-trace test-results/<test-folder>/trace.zip
+bunx playwright show-trace test-results/<test-folder>/trace.zip
 ```
 When a failure needs full DOM snapshots to understand, re-run just that test with `--trace retain-on-failure` (the CLI flag records complete traces).
 

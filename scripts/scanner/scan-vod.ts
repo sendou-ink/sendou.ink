@@ -8,13 +8,13 @@
  *
  * Requires ffmpeg (and ffprobe for the progress percentage) on PATH.
  *
- * Usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir]
+ * Usage: bun run scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir]
  * --telemetry prints the VoD tab's ?telemetry=true scan counters after the run.
  * --gpu matches templates on WebGPU (worker/gpu-matcher.ts) like the browser's
  *   GPU path; needs Dawn (node/webgpu.ts: WEBGPU_NODE). The CSV must stay
  *   byte-identical to a CPU scan's.
  * --record writes every template-match request as a replay corpus for
- *   `pnpm scanner:gpu-replay` (match-corpus.ts).
+ *   `bun run scanner:gpu-replay` (match-corpus.ts).
  */
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
@@ -50,7 +50,7 @@ const PROGRESS_INTERVAL_SECONDS = 60;
 const options = parseArgs(process.argv.slice(2));
 if (!options) {
 	console.error(
-		"usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir]",
+		"usage: bun run scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir]",
 	);
 	process.exit(1);
 }
@@ -307,7 +307,7 @@ function printSummary(): void {
 	if (telemetry) printTelemetry();
 	if (matcher) console.error(`GPU matcher: ${JSON.stringify(matcher.stats)}`);
 	if (recorder) console.error(recorder.save());
-	console.error(`next: pnpm scanner:status-audit ${outPath}`);
+	console.error(`next: bun run scanner:status-audit ${outPath}`);
 }
 
 /** The VoD tab's ?telemetry=true panel, as an aligned stderr table. */

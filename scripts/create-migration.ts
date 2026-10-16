@@ -19,7 +19,7 @@ function main() {
 	const description = toKebabCase(process.argv.slice(2).join(" "));
 	if (!description) {
 		throw new Error(
-			'Missing migration description e.g. pnpm run migrate:new "add user pronouns"',
+			'Missing migration description e.g. bun run migrate:new "add user pronouns"',
 		);
 	}
 

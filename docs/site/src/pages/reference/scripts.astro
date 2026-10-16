@@ -45,10 +45,10 @@ function scriptId(name: string) {
 >
 	<p>
 		Every script of <a href={githubUrl("package.json", 1)}><code>package.json</code></a>, run
-		with <code>pnpm run &lt;name&gt;</code>. A script running a repo script is described by the
+		with <code>bun run &lt;name&gt;</code>. A script running a repo script is described by the
 		comment at the top of that file, one running a tool by <code>DESCRIPTIONS</code> of{" "}
 		<a href={githubUrl("scripts/living-docs/package-scripts.ts", 1)}><code>scripts/living-docs/package-scripts.ts</code></a>.
-		The one-off admin scripts run with <code>pnpm exec vite-node</code> are in{" "}
+		The one-off admin scripts run with <code>bun --preload ./scripts/preload.ts</code> are in{" "}
 		<a href={sitePath("dev/scripts/")}>Scripts</a>.
 	</p>
 	{

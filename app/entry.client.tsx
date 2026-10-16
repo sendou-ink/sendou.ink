@@ -21,7 +21,8 @@ if (import.meta.env.DEV) ConsoleCapture.install();
 writeViewerTimezoneCookie();
 
 const originalFetch = window.fetch;
-window.fetch = (input, init) => {
+// cast as Bun's types declare a `fetch.preconnect` that browsers don't have
+window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
 	const url =
 		typeof input === "string"
 			? input
@@ -47,7 +48,7 @@ window.fetch = (input, init) => {
 	headers.set("Sendou-Session-Id", sessionId);
 
 	return fetchWithRetry(input, { ...init, headers });
-};
+}) as typeof window.fetch;
 
 /**
  * Hover-prefetched loader responses stay in the HTTP cache for a few seconds, varying by cookie

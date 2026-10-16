@@ -3,15 +3,13 @@ import path from "node:path";
 import { lineOf, parseFile, ROOT } from "./ast.ts";
 
 const PACKAGE_FILE = "package.json";
-/** A repo script a command runs, e.g. `vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/report.ts`. */
+/** A repo script a command runs, e.g. `bun --preload ./scripts/preload.ts scripts/scanner/report.ts`. */
 const SCRIPT_FILE_REGEX =
-	/\b(?:node|vite-node)\s+(?:-c\s+\S+\s+)?(?:\.\/)?((?:scripts|e2e|app)\/\S+\.ts)\b/;
+	/\bbun\s+(?:--preload\s+\S+\s+)?(?:\.\/)?((?:scripts|e2e|app)\/\S+\.ts)\b/;
 const ENV_ASSIGNMENT_REGEX = /(?:^|\s)([A-Z][A-Z0-9_]*)=("[^"]*"|\S*)/g;
-const CHAINED_SCRIPT_REGEX = /\bpnpm\s+(?:run\s+)?([a-z][\w:-]*)/g;
+const CHAINED_SCRIPT_REGEX = /\bbun\s+run\s+([a-z][\w:-]*)/g;
 const MAX_DESCRIPTION_LENGTH = 160;
 const MIN_SHORTENED_LENGTH = 25;
-/** pnpm's own commands, not package scripts. */
-const PNPM_COMMANDS = new Set(["install", "exec", "dlx", "add"]);
 
 /** For scripts that run a tool rather than a repo script, or whose script has no comment at its top saying what the package script does. Wins over the comment. */
 const DESCRIPTIONS: Record<string, string> = {
@@ -26,9 +24,9 @@ const DESCRIPTIONS: Record<string, string> = {
 		"Dev server against db-sandbox.sqlite3, the local copy of production data",
 	start: "Production server: migrates the database then serves the build",
 	migrate:
-		"Runs the Kysely migrations of /migrations, e.g. `pnpm run migrate up`",
+		"Runs the Kysely migrations of /migrations, e.g. `bun run migrate up`",
 	"migrate:new":
-		'Scaffolds a new migration file, e.g. `pnpm run migrate:new "add user bio"`',
+		'Scaffolds a new migration file, e.g. `bun run migrate:new "add user bio"`',
 	"migrate:sandbox": "Migrates db-sandbox.sqlite3",
 	"check-translation-jsons":
 		"Checks the translation jsons for missing keys and plural suffix clashes, fixing what it can",
@@ -117,7 +115,7 @@ export interface PackageScript {
 	/** The repo script it runs, null for one running a tool. */
 	file: string | null;
 	line: number;
-	/** Variables set for it, e.g. by `cross-env DB_PATH=db.sqlite3`. */
+	/** Variables set for it, e.g. by `DB_PATH=db.sqlite3`. */
 	env: Array<{ name: string; value: string }>;
 	/** Other package scripts it runs. */
 	runs: string[];
@@ -157,10 +155,7 @@ export function documentPackageScripts(): PackageScript[] {
 					[...command.matchAll(CHAINED_SCRIPT_REGEX)]
 						.map(([, script]) => script)
 						.filter(
-							(script) =>
-								!PNPM_COMMANDS.has(script) &&
-								script !== name &&
-								names.has(script),
+							(script) => script !== name && names.has(script),
 						),
 				),
 			],

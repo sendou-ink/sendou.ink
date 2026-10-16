@@ -71,7 +71,7 @@ async function main() {
 
 	if (previousReleaseCommit) {
 		log(
-			`\nChangelog image (dev server running): pnpm run changelog:image ${previousReleaseCommit}`,
+			`\nChangelog image (dev server running): bun run changelog:image ${previousReleaseCommit}`,
 		);
 	}
 }

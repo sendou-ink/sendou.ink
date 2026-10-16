@@ -55,27 +55,27 @@ Another key objective is to bridge the gap between casual and competitive player
 ### Prerequisites
 
 - [Git](https://git-scm.com/)
-- [Node.js v24](https://nodejs.org/en) (see [.nvmrc](./.nvmrc) for the exact version)
-- [pnpm](https://pnpm.io/installation)
+- [Bun](https://bun.com/docs/installation) (see [.bun-version](./.bun-version) for the exact version), installs dependencies and runs the production server, the build and the scripts
+- [Node.js](https://nodejs.org/en) (see [.nvmrc](./.nvmrc) for the exact version), runs the dev server and the unit and e2e tests
 
 Optionally [nvm](https://github.com/nvm-sh/nvm) can be convenient for managing multiple Node.js installs
 
 ### Commands
 
-First verify you have Node.js and git installed:
+First verify you have Bun, Node.js and git installed:
 
 ```bash
+bun --version
 node --version
 git --version
-pnpm --version
 ```
 
 You should see something like:
 
 ```
-v24.18.0
+1.4.3
+v26.7.0
 git version 2.39.5 (Apple Git-154)
-10.33.0
 ```
 (if not then go back to "Prerequisites" and install what is missing)
 
@@ -84,8 +84,8 @@ Then there is a sequence of commands you need to run:
 ```bash
 git clone https://github.com/sendou-ink/sendou.ink.git # Clones repository
 cd sendou.ink # Change to the project's folder
-pnpm install # Install dependencies
-pnpm dev # Setup the development environment and run the project
+bun install # Install dependencies
+bun run dev # Setup the development environment and run the project
 ```
 
 You should then be able to access the application by visiting http://localhost:5173
@@ -120,14 +120,14 @@ The dev server does many small file operations which are slower on Windows by de
 
 **Windows Defender exclusions**
 
-Excluding the project folder and the pnpm store from Windows Defender speeds up installs, dev server startup and first navigations. In a PowerShell ran as administrator:
+Excluding the project folder and the Bun install cache from Windows Defender speeds up installs, dev server startup and first navigations. In a PowerShell ran as administrator:
 
 ```powershell
 Add-MpPreference -ExclusionPath "C:\path\to\sendou.ink"
-Add-MpPreference -ExclusionPath "$(pnpm store path)"
+Add-MpPreference -ExclusionPath "$(bun pm cache)"
 ```
 
-Be aware that excluded folders are not scanned at all, and compromised npm packages can land in `node_modules`. This should not be much of an issue since pnpm does not allow running dependency lifecycle scripts unless explicitly allowed, and exact dependency versions are being pinned by the lockfile, but it should be kept in mind.  
+Be aware that excluded folders are not scanned at all, and compromised npm packages can land in `node_modules`. This should not be much of an issue since Bun does not run dependency lifecycle scripts unless the package is trusted, and exact dependency versions are being pinned by the lockfile, but it should be kept in mind.  
 Undo at any time with `Remove-MpPreference -ExclusionPath "..."`.
 
 **Dev Drive**

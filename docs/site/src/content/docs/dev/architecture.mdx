@@ -139,7 +139,7 @@ Unit testing "core logic" (i.e. no React, no DB calls) with Vitest is highly enc
 
 Vitest can also be used to write "integration tests" that call actions/loaders directly via the `wrappedAction` / `wrappedLoader` helpers from `~/utils/Test` (see `t.$customUrl.edit.test.ts` for example). These run against `db-test.sqlite3` and reset it between tests with `dbReset`. In practice this is best sparingly as they are typically slower than pure unit tests with more dependencies but also don't test the true end to end flow. Repository functions are tested the same way (`*Repository.server.test.ts`), wrapping calls in `withUserId` / `withNoUser` when the repository resolves an acting user.
 
-Components can be tested in a real browser with Vitest browser mode. These files are named `*.browser.test.tsx` and run together with the unit tests via `pnpm run test:unit:browser`. 
+Components can be tested in a real browser with Vitest browser mode. These files are named `*.browser.test.tsx` and run together with the unit tests via `bun run test:unit:browser`. 
 
 Which brings us to E2E tests. For new features at least testing the happy path is encouraged. For more critical features (mainly tournament related stuff) it makes sense to test a bit more rigorously.
 
@@ -220,7 +220,7 @@ Forms are defined as valibot schemas built from the field builders in `~/form/fi
 
 Keeping server performance in mind is always necessary. Due to the monolithic nature of the server one badly optimized endpoint impacts all other routes.
 
-Use a load testing tool like `autocannon` to ensure new features scale. For database queries there is `pnpm run bench:db` which runs the repository read functions listed in `scripts/benchmark-db` against a copy of the production database.
+Use a load testing tool like `autocannon` to ensure new features scale. For database queries there is `bun run bench:db` which runs the repository read functions listed in `scripts/benchmark-db` against a copy of the production database.
 
 ### Database
 

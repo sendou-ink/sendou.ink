@@ -5,7 +5,7 @@ description: Add or update repository READ function benchmark cases in the DB be
 
 # DB Benchmark Cases
 
-The DB benchmark (`pnpm bench:db`) times repository READ functions against `db-sandbox.sqlite3` (local copy of production data) to find the slowest queries. Every exported READ function in a `*Repository.server.ts` file should have a case registered — when adding a new read function to a repository, add a matching benchmark case.
+The DB benchmark (`bun run bench:db`) times repository READ functions against `db-sandbox.sqlite3` (local copy of production data) to find the slowest queries. Every exported READ function in a `*Repository.server.ts` file should have a case registered — when adding a new read function to a repository, add a matching benchmark case.
 
 ## Files
 
@@ -14,7 +14,7 @@ The DB benchmark (`pnpm bench:db`) times repository READ functions against `db-s
 | `scripts/benchmark-db.ts` | Harness: CLI, timing loop, stats, output. Rarely needs changes. |
 | `scripts/benchmark-db/cases.ts` | Case registry, grouped by repository file. **New cases go here.** |
 | `scripts/benchmark-db/fixtures.ts` | Resolves worst-case arguments (heavy rows) from the DB. New argument kinds go here. |
-| `scripts/seed-chat.ts` | Fills the production copy with chat data, which it ships without (`pnpm run bench:db:seed-chat`). Run once before the chat cases mean anything. |
+| `scripts/seed-chat.ts` | Fills the production copy with chat data, which it ships without (`bun run bench:db:seed-chat`). Run once before the chat cases mean anything. |
 
 ## Adding a case
 
@@ -73,9 +73,9 @@ async function resolveHeavyBuildUserId() {
 ## Verifying
 
 ```bash
-pnpm run typecheck:scripts
-pnpm exec biome check --error-on-warnings --write scripts/benchmark-db.ts scripts/benchmark-db
-DB_PATH=db-prod.sqlite3 pnpm exec vite-node scripts/benchmark-db.ts -- --filter <caseName> --iterations 3
+bun run typecheck:scripts
+bunx biome check --error-on-warnings --write scripts/benchmark-db.ts scripts/benchmark-db
+DB_PATH=db-prod.sqlite3 bun --preload ./scripts/preload.ts scripts/benchmark-db.ts -- --filter <caseName> --iterations 3
 ```
 
-The filtered run must show the new case with plausible timings — not in the "Skipped" list (fixture resolved null: check the fixture query against real data) and not in the "errored" list (the case threw: check argument shapes). Note `pnpm bench:db --filter x` also works but runs the full fixture resolution either way.
+The filtered run must show the new case with plausible timings — not in the "Skipped" list (fixture resolved null: check the fixture query against real data) and not in the "errored" list (the case threw: check argument shapes). Note `bun run bench:db --filter x` also works but runs the full fixture resolution either way.

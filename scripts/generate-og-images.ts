@@ -9,12 +9,6 @@ import { fileURLToPath } from "node:url";
 import { chromium, type Locator } from "@playwright/test";
 import sharp from "sharp";
 
-try {
-	process.loadEnvFile();
-} catch {
-	// .env is optional, the dev server port can also come from the environment
-}
-
 const OG_IMAGES_PAGE_URL = `http://localhost:${process.env.PORT ?? 5173}/admin/og-images`;
 
 const DEFAULT_OUT_DIR = fileURLToPath(

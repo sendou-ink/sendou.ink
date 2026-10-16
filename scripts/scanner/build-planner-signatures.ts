@@ -9,7 +9,7 @@
  * (keys "<stageId>-<MODE>"). Output goes to SCANNER_ASSETS_DIR/planner;
  * shipping a regen means pushing the assets repo.
  *
- *   pnpm scanner:build-planner-signatures
+ *   bun run scanner:build-planner-signatures
  */
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

@@ -62,8 +62,8 @@ function main() {
 	const specs = process.argv.slice(2);
 
 	const run = spawnSync(
-		"pnpm",
-		["exec", "playwright", "test", ...specs, "--reporter=list,json"],
+		"bunx",
+		["playwright", "test", ...specs, "--reporter=list,json"],
 		{
 			cwd: ROOT,
 			stdio: "inherit",
@@ -91,7 +91,7 @@ function main() {
 	const screenshotCount = saveScreenshots(reported, capturedSpecs);
 
 	console.log(
-		`Captured ${reported.length} tests of ${capturedSpecs.size} specs, ${screenshotCount} screenshots. A running pnpm run dev:docs picks them up, otherwise run it to see them.`,
+		`Captured ${reported.length} tests of ${capturedSpecs.size} specs, ${screenshotCount} screenshots. A running bun run dev:docs picks them up, otherwise run it to see them.`,
 	);
 
 	if (run.status !== 0) process.exitCode = 1;

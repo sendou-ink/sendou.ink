@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 
-// `publish` uploads the screenshots of a `pnpm run docs:capture` run to the docs' Space (CI, on pushes to main),
+// `publish` uploads the screenshots of a `bun run docs:capture` run to the docs' Space (CI, on pushes to main),
 // `download` fetches the published ones whose spec is unchanged since its capture into the docs site (its build on Render),
 // see docs/site/src/content/docs/dev/living-docs.mdx
 

@@ -54,7 +54,7 @@ export function sort({
 
 /**
  * Full translation jsons of the namespaces the pending drafts touch, the drafts written over the current
- * translations in English key order, as `pnpm run i18n:sync` writes them. A regional variant's files leave
+ * translations in English key order, as `bun run i18n:sync` writes them. A regional variant's files leave
  * out what equals its parent language's translation.
  */
 export function mergedFiles({

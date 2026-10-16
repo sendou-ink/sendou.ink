@@ -51,7 +51,7 @@ export interface Fixtures {
 	recentTournamentIds: number[] | null;
 	heavyTeam: { id: number; customUrl: string; memberUserId: number } | null;
 	heavyCalendarEventId: number | null;
-	/** Chat room with the most messages. Null until the prod copy has chat data (`pnpm run bench:db:seed-chat`). */
+	/** Chat room with the most messages. Null until the prod copy has chat data (`bun run bench:db:seed-chat`). */
 	heavyChatRoomId: number | null;
 	/** Newest chat message. Null until the prod copy has chat data. */
 	heavyChatMessageId: number | null;

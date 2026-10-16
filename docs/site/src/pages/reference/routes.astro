@@ -29,11 +29,11 @@ const visitedPages = pages.filter(({ visitedBy }) => visitedBy.length > 0);
 			hasCapture ? (
 				<>
 					<strong>{visitedPages.length}</strong> of {count(pages.length, "page")} are rendered
-					by an e2e test in the last <code>pnpm run docs:capture</code>.
+					by an e2e test in the last <code>bun run docs:capture</code>.
 				</>
 			) : (
 				<>
-					Run <code>pnpm run docs:capture</code> to see which e2e tests render each one.
+					Run <code>bun run docs:capture</code> to see which e2e tests render each one.
 				</>
 			)
 		}

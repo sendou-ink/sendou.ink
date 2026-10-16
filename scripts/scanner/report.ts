@@ -2,7 +2,7 @@
 /**
  * Accuracy report across all fixtures, separate from pass/fail testing:
  * aggregate per-field accuracy plus character error rate (CER) for names,
- * the metric that drives glyph atlas expansion. Usage: pnpm scanner:report
+ * the metric that drives glyph atlas expansion. Usage: bun run scanner:report
  */
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {

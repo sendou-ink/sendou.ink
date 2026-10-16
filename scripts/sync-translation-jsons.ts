@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 const LOCALES_PATH = path.join(__dirname, "..", "locales");
 
 // writes nothing and exits non-zero if any file would change, so CI can fail a PR
-// that didn't run `pnpm run i18n:sync`
+// that didn't run `bun run i18n:sync`
 const CHECK_KEY = "--check";
 const checkOnly = process.argv.includes(CHECK_KEY);
 
@@ -95,7 +95,7 @@ for (const language of languagesToSync) {
 if (checkOnly) {
 	if (changedFiles.length > 0) {
 		console.error(
-			"Found translation jsons out of sync with English. Run `pnpm run i18n:sync` and commit the result.",
+			"Found translation jsons out of sync with English. Run `bun run i18n:sync` and commit the result.",
 		);
 		for (const file of changedFiles) {
 			console.error(`  ${file}`);
