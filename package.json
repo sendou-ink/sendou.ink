@@ -62,8 +62,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "3.1146.0",
-		"@aws-sdk/lib-storage": "3.1146.0",
+		"@aws-sdk/client-s3": "3.1147.0",
+		"@aws-sdk/lib-storage": "3.1147.0",
 		"@daily-co/daily-js": "0.93.0",
 		"@daily-co/daily-react": "0.26.0",
 		"@date-fns/tz": "1.5.0",
@@ -87,7 +87,7 @@
 		"ics": "3.12.1",
 		"isbot": "5.2.2",
 		"kysely": "0.29.0",
-		"lucide-react": "1.52.0",
+		"lucide-react": "1.53.0",
 		"markdown-to-jsx": "9.10.3",
 		"mediabunny": "1.61.3",
 		"nanoid": "6.0.2",
@@ -116,7 +116,7 @@
 		"@biomejs/biome": "2.5.15",
 		"@faker-js/faker": "10.6.0",
 		"@napi-rs/canvas": "1.0.10",
-		"@playwright/test": "1.63.0",
+		"@playwright/test": "1.64.0",
 		"@react-router/dev": "8.4.0",
 		"@types/node": "26.6.4",
 		"@types/nprogress": "0.2.3",
