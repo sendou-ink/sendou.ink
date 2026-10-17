@@ -11,7 +11,6 @@ import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
 import { chromium, type Page } from "@playwright/test";
 import { format } from "date-fns";
-import sharp from "sharp";
 import {
 	DISCORD_EMOJI_NAMES,
 	DISCORD_FALLBACK_EMOJI_NAME,
@@ -90,9 +89,9 @@ async function main() {
 	const fileNameBase = `update-${format(date, "yyyy-MM-dd")}`;
 
 	const imagePath = path.join(OUT_DIR, `${fileNameBase}.png`);
-	await sharp(screenshot)
-		.png({ compressionLevel: 9, effort: 10 })
-		.toFile(imagePath);
+	await new Bun.Image(screenshot)
+		.png({ compressionLevel: 9, palette: true })
+		.write(imagePath);
 
 	const { size } = await fs.stat(imagePath);
 	console.log(`${imagePath} (${Math.round(size / 1024)} kB)`);

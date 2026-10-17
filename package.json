@@ -63,7 +63,6 @@
 		"docs:capture": "bun scripts/living-docs/capture.ts",
 		"docs:screenshots:publish": "bun scripts/living-docs/published-screenshots.ts publish",
 		"docs:screenshots:download": "bun scripts/living-docs/published-screenshots.ts download",
-		"ink-detail:generate": "bun scripts/create-ink-detail-images.ts",
 		"notification:test": "DB_PATH=db.sqlite3 bun --preload ./scripts/preload.ts ./scripts/send-test-notification.ts",
 		"i18n:usage": "bun scripts/generate-translation-usage.ts",
 		"i18n:sync": "bun scripts/collapse-single-plural-keys.ts && bun scripts/sync-translation-jsons.ts && bun run biome:fix",
@@ -140,7 +139,6 @@
 		"oxc-parser": "0.154.0",
 		"oxc-transform-react": "0.154.0",
 		"postcss": "8.5.31",
-		"sharp": "^0.35.5",
 		"sql-formatter": "15.9.0",
 		"vite": "8.3.4",
 		"vite-plugin-babel": "1.7.3"

@@ -16,10 +16,7 @@ const CONTENT_TYPES: Record<string, string> = {
 let client: Bun.S3Client | undefined;
 
 /** Uploads a publicly readable file to the S3 compatible object storage bucket under `fileName` */
-export async function uploadToS3(
-	data: Uint8Array<ArrayBuffer>,
-	fileName: string,
-) {
+export async function uploadToS3(data: Uint8Array, fileName: string) {
 	const extension = fileName.split(".").pop() ?? "";
 
 	await s3Client().write(fileName, data, {

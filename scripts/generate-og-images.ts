@@ -7,7 +7,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, type Locator } from "@playwright/test";
-import sharp from "sharp";
 
 const OG_IMAGES_PAGE_URL = `http://localhost:${process.env.PORT ?? 5173}/admin/og-images`;
 
@@ -68,9 +67,9 @@ async function main() {
 
 		const filePath = path.join(outDir, `${name}.png`);
 
-		await sharp(screenshot)
-			.png({ compressionLevel: 9, effort: 10 })
-			.toFile(filePath);
+		await new Bun.Image(screenshot)
+			.png({ compressionLevel: 9, palette: true })
+			.write(filePath);
 
 		const { size } = await fs.stat(filePath);
 		console.log(`${name}.png (${Math.round(size / 1024)} kB)`);

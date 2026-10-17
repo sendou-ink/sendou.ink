@@ -717,7 +717,7 @@ to start with any (its games would upload unread — an unread lobby passes
   `npx serve /Users/kalle/Developer/assets/assets -l 9100 --cors` and
   `VITE_STATIC_ASSETS_URL=http://localhost:9100` in `.env`.
 - Node (tests/scripts): both sets from the sibling `../assets` checkout,
-  never the CDN. AVIF decodes through `sharp` (`node/image-io.ts`) —
+  never the CDN. AVIF decodes through `Bun.Image` (`node/image-io.ts`, macOS/Windows only) —
   `@napi-rs/canvas` mis-decodes AVIF partial-alpha.
 - Atlas regens overwrite the checkout's `assets/scanner/v1` in place, so
   shipping one means pushing the assets repo (its deploy workflow mirrors

@@ -57,7 +57,7 @@ detector's output — it is what the scanner read, not the truth.**
   reads rather than opening all of them. Then check `match.json` against what
   the frames show (mode, stage, players, weapons, score, kills).
 - Small text and icons: crop and upscale into the scratchpad, then Read it:
-  `node -e "require('sharp')(process.argv[1]).extract({left:1100,top:740,width:700,height:200}).resize({width:2100,kernel:'nearest'}).png().toFile(process.argv[2])" <frame> <scratchpad>/crop.png`
+  `bun -e "const{createCanvas,loadImage}=require('@napi-rs/canvas');const[f,o]=process.argv.slice(1),[x,y,w,h,s]=[1100,740,700,200,3],c=createCanvas(w*s,h*s),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(await loadImage(f),x,y,w,h,0,0,w*s,h*s);await Bun.write(o,c.toBuffer('image/png'))" <frame> <scratchpad>/crop.png`
 - **Every frame read right but `match.json` is wrong** (games merged or split,
   kills missing, wrong winner): that is `core/match-builder.ts`, not a
   detector. Reproduce it as a `tests/logic/` test from the relevant
