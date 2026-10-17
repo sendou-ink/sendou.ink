@@ -13,9 +13,7 @@
 .paletteGroup {
 	--palette-gap: var(--s-1);
 	--marker-column-width: calc(
-		var(--row-marker-offset) *
-		2 +
-		var(--row-marker-width)
+		var(--row-marker-offset) * 2 + var(--row-marker-width)
 	);
 	position: relative;
 	display: flex;

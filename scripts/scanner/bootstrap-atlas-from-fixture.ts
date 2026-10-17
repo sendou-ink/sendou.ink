@@ -20,16 +20,16 @@ import {
 	TAG_TILT_DEG,
 } from "../../app/features/scanner/core/detectors/death/rois";
 import {
+	CODE_TEXT_HEIGHT,
+	REPLAY_CODE_ROI,
+} from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
+import {
 	nameRoi,
 	paintRoi,
 	ROW_CENTERS,
 	statRoi,
 	TEAM_SCORE_ROIS,
 } from "../../app/features/scanner/core/detectors/scoreboard/rois";
-import {
-	CODE_TEXT_HEIGHT,
-	REPLAY_CODE_ROI,
-} from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
 import type { AtlasMeta } from "../../app/features/scanner/core/glyphs";
 import {
 	normalizeFrame,
@@ -473,14 +473,14 @@ function harvest(
 		);
 		return;
 	}
-	runs.forEach((run, i) => {
+	for (const [i, run] of runs.entries()) {
 		const ch = chars[i]!;
 		if (Array.isArray(collected)) {
 			collected.push([ch, cropGlyph(run, roi, threshold)]);
 		} else if (!collected.has(ch)) {
 			collected.set(ch, cropGlyph(run, roi, threshold));
 		}
-	});
+	}
 }
 
 function writeAtlas(
@@ -550,7 +550,7 @@ for (const source of SOURCES) {
 	gray = await loadGray(source.frame);
 
 	const nameGlyphs: [string, Mat][] = [];
-	ROW_CENTERS.forEach((cy, row) => {
+	for (const [row, cy] of ROW_CENTERS.entries()) {
 		// name region may include paint digits for long names; stop where digits start
 		harvest(
 			{ ...nameRoi(cy), w: 196 },
@@ -558,27 +558,27 @@ for (const source of SOURCES) {
 			nameGlyphs,
 			source.nameSplitHints[row] ?? [],
 		);
-	});
+	}
 	nameEntries.push(...nameGlyphs);
 
 	const paintGlyphs = new Map<string, Mat>();
-	ROW_CENTERS.forEach((cy, row) => {
+	for (const [row, cy] of ROW_CENTERS.entries()) {
 		harvest(paintRoi(cy), source.paints[row]!, paintGlyphs);
-	});
+	}
 	paintEntries.push(...paintGlyphs.entries());
 
 	const statGlyphs = new Map<string, Mat>();
-	ROW_CENTERS.forEach((cy, row) => {
+	for (const [row, cy] of ROW_CENTERS.entries()) {
 		for (const i of [0, 1, 2] as const) {
 			harvest(statRoi(cy, i), source.stats[row]![i]!, statGlyphs);
 		}
-	});
+	}
 	statEntries.push(...statGlyphs.entries());
 
 	const teamGlyphs = new Map<string, Mat>();
-	TEAM_SCORE_ROIS.forEach((roi, i) => {
+	for (const [i, roi] of TEAM_SCORE_ROIS.entries()) {
 		harvest(roi, source.teamScores[i]!, teamGlyphs, [], TEAM_BIN_THRESHOLD);
-	});
+	}
 	teamEntries.push(...teamGlyphs.entries());
 
 	// Header tags: lobby line (BlitzMain ~24px), then mode (BlitzBold ~35px) and

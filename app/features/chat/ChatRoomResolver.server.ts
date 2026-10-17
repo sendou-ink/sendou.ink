@@ -4,25 +4,25 @@ import { ADMIN_ID, STAFF_IDS } from "~/features/admin/admin-constants";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import type { organizerPermissions } from "~/features/tournament/core/permissions";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import {
 	lobbyPage,
-	SENDOUQ_LOOKING_PAGE,
 	scrimPage,
+	SENDOUQ_LOOKING_PAGE,
 	sendouQMatchPage,
 	tournamentMatchPage,
 	tournamentSubsPage,
 } from "~/utils/urls";
-import * as ChatRepository from "./ChatRepository.server";
 import type { ChatRoomType } from "./chat-types";
+import * as ChatRepository from "./ChatRepository.server";
 
 /** Room types whose observers may also post: the shared spaces where a TO or staff member talks to the players. Group and team chats stay read-only — a private team space is only ever read for moderation. */
 const OBSERVER_POSTABLE_ROOM_TYPES: ChatRoomType[] = [

@@ -2,8 +2,8 @@ import {
 	type Expression,
 	type NotNull,
 	type SelectQueryBuilder,
-	type SqlBool,
 	sql,
+	type SqlBool,
 	type Transaction,
 } from "kysely";
 import * as R from "remeda";
@@ -423,9 +423,8 @@ export async function findPageByWeaponId({
 			.where("BuildWeapon.ownerId", "in", ownerIds),
 	).execute();
 	const ownerPosition = new Map(ownerIds.map((id, i) => [id, i]));
-	const buildIds = R.sortBy(
-		buildWeapons,
-		(buildWeapon) => ownerPosition.get(buildWeapon.ownerId)!,
+	const buildIds = R.sortBy(buildWeapons, (buildWeapon) =>
+		ownerPosition.get(buildWeapon.ownerId)!,
 	).map((buildWeapon) => buildWeapon.buildId);
 
 	const rows = await buildRowsByIds(buildIds)

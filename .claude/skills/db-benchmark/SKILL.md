@@ -9,12 +9,12 @@ The DB benchmark (`bun run bench:db`) times repository READ functions against `d
 
 ## Files
 
-| File | Purpose |
-|------|---------|
-| `scripts/benchmark-db.ts` | Harness: CLI, timing loop, stats, output. Rarely needs changes. |
-| `scripts/benchmark-db/cases.ts` | Case registry, grouped by repository file. **New cases go here.** |
-| `scripts/benchmark-db/fixtures.ts` | Resolves worst-case arguments (heavy rows) from the DB. New argument kinds go here. |
-| `scripts/seed-chat.ts` | Fills the production copy with chat data, which it ships without (`bun run bench:db:seed-chat`). Run once before the chat cases mean anything. |
+| File                               | Purpose                                                                                                                                        |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/benchmark-db.ts`          | Harness: CLI, timing loop, stats, output. Rarely needs changes.                                                                                |
+| `scripts/benchmark-db/cases.ts`    | Case registry, grouped by repository file. **New cases go here.**                                                                              |
+| `scripts/benchmark-db/fixtures.ts` | Resolves worst-case arguments (heavy rows) from the DB. New argument kinds go here.                                                            |
+| `scripts/seed-chat.ts`             | Fills the production copy with chat data, which it ships without (`bun run bench:db:seed-chat`). Run once before the chat cases mean anything. |
 
 ## Adding a case
 
@@ -74,7 +74,7 @@ async function resolveHeavyBuildUserId() {
 
 ```bash
 bun run typecheck:scripts
-bunx biome check --error-on-warnings --write scripts/benchmark-db.ts scripts/benchmark-db
+bun lint --fix scripts/benchmark-db.ts scripts/benchmark-db && bun fmt scripts/benchmark-db.ts scripts/benchmark-db
 DB_PATH=db-prod.sqlite3 bun --preload ./scripts/preload.ts scripts/benchmark-db.ts -- --filter <caseName> --iterations 3
 ```
 

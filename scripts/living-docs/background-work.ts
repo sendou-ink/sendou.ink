@@ -715,7 +715,7 @@ function callsIn(file: ParsedFile, name: string) {
 				callee.type === "Identifier"
 					? callee.name
 					: callee.type === "MemberExpression" &&
-							callee.property.type === "Identifier"
+						  callee.property.type === "Identifier"
 						? callee.property.name
 						: null;
 			if (calledName === name) line = lineOf(file, node.start);

@@ -29,7 +29,7 @@ export function frameKernels(): FrameKernels | null {
 		.wasmMemory;
 	try {
 		if (!memory) throw new Error("OpenCV memory not exposed");
-		const { exports } = new WebAssembly.Instance(
+		const { exports: kernels } = new WebAssembly.Instance(
 			new WebAssembly.Module(
 				Uint8Array.from(atob(FRAME_KERNELS_WASM), (c) => c.charCodeAt(0)),
 			),
@@ -47,7 +47,7 @@ export function frameKernels(): FrameKernels | null {
 			(name: string, type: number) =>
 			(src: Mat): Mat => {
 				const dst = new cv.Mat(src.rows, src.cols, type);
-				(exports[name] as (src: number, dst: number, n: number) => void)(
+				(kernels[name] as (src: number, dst: number, n: number) => void)(
 					(src.data as Uint8Array).byteOffset,
 					(dst.data as Uint8Array).byteOffset,
 					src.rows * src.cols,

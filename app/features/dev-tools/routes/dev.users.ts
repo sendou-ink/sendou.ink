@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as DevToolsRepository from "../DevToolsRepository.server";
 import { usersSearchParams } from "../dev-tools-search-params";
 import { requireDevTools } from "../dev-tools-utils.server";
+import * as DevToolsRepository from "../DevToolsRepository.server";
 
 export type DevUsersLoaderData = Awaited<ReturnType<typeof loader>>;
 

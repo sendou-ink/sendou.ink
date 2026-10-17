@@ -79,12 +79,10 @@ export const { create } = defineFactory({
 		}
 
 		// imported only here: the e2e process can't load what notifications pull in (locale JSON)
-		const LobbyProgression = await import(
-			"~/features/lobbies/core/LobbyProgression.server"
-		);
-		const LobbyMatchRepository = await import(
-			"~/features/lobbies/LobbyMatchRepository.server"
-		);
+		const LobbyProgression =
+			await import("~/features/lobbies/core/LobbyProgression.server");
+		const LobbyMatchRepository =
+			await import("~/features/lobbies/LobbyMatchRepository.server");
 
 		await LobbyProgression.advance(lobby.id);
 

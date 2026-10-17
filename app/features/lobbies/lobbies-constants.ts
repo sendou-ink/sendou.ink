@@ -45,7 +45,4 @@ export const LOBBY_SIDE_TEAM_ID = {
  * - `IN_ROOM`: playing or spectating in the room
  */
 export type LobbyParticipantStatus =
-	| "REGISTERED"
-	| "WAITLISTED"
-	| "CHECKED_IN"
-	| "IN_ROOM";
+	"REGISTERED" | "WAITLISTED" | "CHECKED_IN" | "IN_ROOM";

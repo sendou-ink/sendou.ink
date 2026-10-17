@@ -25,8 +25,7 @@ interface RegisteredSearchParams {
 }
 
 type AnyPersistedDefinition =
-	| PersistedDefinition<any>
-	| PersistedMapDefinition<any>;
+	PersistedDefinition<any> | PersistedMapDefinition<any>;
 
 /**
  * Explains the URL's search params: each definition declaring one of them, in use by the page (read by a mounted

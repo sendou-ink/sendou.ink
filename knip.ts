@@ -4,7 +4,7 @@ const config = {
 		type: true,
 	},
 	tags: ["-lintignore"],
-	ignoreBinaries: ["ffmpeg", "ffprobe", "yt-dlp", "check"],
+	ignoreBinaries: ["ffmpeg", "ffprobe", "yt-dlp", "check", "lint", "fmt"],
 	astro: {
 		config: ["docs/site/astro.config.ts"],
 		entry: [
@@ -17,6 +17,8 @@ const config = {
 			"docs/site/src/styles/theme.css",
 		],
 	},
+	// loaded by bun lint through bunfig.toml
+	ignoreDependencies: ["eslint-plugin-playwright"],
 	entry: [
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.ts",
@@ -24,6 +26,7 @@ const config = {
 		"public/sw-2.js",
 		// swapped in by vite.config.ts for production builds
 		"app/features/dev-tools/dev-tools-server-hooks.stub.ts",
+		"lint-plugins/index.ts",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

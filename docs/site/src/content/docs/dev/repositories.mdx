@@ -21,12 +21,12 @@ Plenty of older repositories don't follow this yet. Fix them as you touch them r
 
 Reads:
 
-| Returns | Name |
-| --- | --- |
+| Returns            | Name                                                         |
+| ------------------ | ------------------------------------------------------------ |
 | One row or nothing | `findById`, `findByUserId`, `findLookingTeamsByTournamentId` |
-| An array | `findAllByUserId`, `findAllByChatRoomIds` |
-| A number | `countVods` |
-| A boolean | `existsBySeason`, `hasHighlightedResultsByUserId` |
+| An array           | `findAllByUserId`, `findAllByChatRoomIds`                    |
+| A number           | `countVods`                                                  |
+| A boolean          | `existsBySeason`, `hasHighlightedResultsByUserId`            |
 
 Writes are named after the SQL verb: `insert`, `update`, `upsert`, `deleteById`. Not `create`, `del`, `remove`, `add`.
 
@@ -158,7 +158,7 @@ return Pagination.findPage({
 
 ## Documentation
 
-Repositories are modules, so exported functions get a JSDoc one-liner saying what they return, plus any scoping that isn't visible from the name ("excludes private builds", "latest row per season"). Non-obvious SQL gets a comment explaining *why* it's written that way — especially when the obvious form was rejected for performance reasons.
+Repositories are modules, so exported functions get a JSDoc one-liner saying what they return, plus any scoping that isn't visible from the name ("excludes private builds", "latest row per season"). Non-obvious SQL gets a comment explaining _why_ it's written that way — especially when the obvious form was rejected for performance reasons.
 
 Private helpers can skip the JSDoc or keep it to a line.
 
@@ -174,4 +174,4 @@ Not every function needs a test. Write one for:
 
 Plain `findById`-style queries don't need one. Tests run against `db-test.sqlite3`.
 
-A test's setup goes through the factories in `app/db/seed/factories`, never a raw `db.insertInto` / `db.updateTable` — a lint rule ([no-raw-db-writes-in-tests](https://github.com/sendou-ink/sendou.ink/blob/main/biome-plugins/no-raw-db-writes-in-tests.grit)) enforces this and explains the rare exceptions. Only the write a test is actually asserting about is called through its repository directly. There is no cleanup to write: the database is wiped after every test that wrote to it.
+A test's setup goes through the factories in `app/db/seed/factories`, never a raw `db.insertInto` / `db.updateTable` — a lint rule ([no-raw-db-writes-in-tests](https://github.com/sendou-ink/sendou.ink/blob/main/lint-plugins/no-raw-db-writes-in-tests.ts)) enforces this and explains the rare exceptions. Only the write a test is actually asserting about is called through its repository directly. There is no cleanup to write: the database is wiped after every test that wrote to it.

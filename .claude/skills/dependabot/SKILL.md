@@ -26,12 +26,12 @@ npm view <pkg>@<major> version            # releases available inside that major
 
 Each package then needs one of these fixes:
 
-| Situation | Fix |
-|---|---|
-| Direct dependency | Bump the exact version in `package.json` (deps are pinned, no `^`), then `bun install` |
-| Transitive, fixed version fits the parent's range | `bun update <pkg> <pkg2> ...`, or an `overrides` entry in `package.json` when that doesn't reach it |
-| Transitive, parent's range excludes the fix | Bump the parent to a minor/patch version whose range includes the fix (e.g. mermaid 12.1 → 12.2 to move katex 0.16 → 0.18) |
-| Fix only in a new major of the parent, or no fixed version | Not feasible as a dependency bump → step 4 |
+| Situation                                                  | Fix                                                                                                                        |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Direct dependency                                          | Bump the exact version in `package.json` (deps are pinned, no `^`), then `bun install`                                     |
+| Transitive, fixed version fits the parent's range          | `bun update <pkg> <pkg2> ...`, or an `overrides` entry in `package.json` when that doesn't reach it                        |
+| Transitive, parent's range excludes the fix                | Bump the parent to a minor/patch version whose range includes the fix (e.g. mermaid 12.1 → 12.2 to move katex 0.16 → 0.18) |
+| Fix only in a new major of the parent, or no fixed version | Not feasible as a dependency bump → step 4                                                                                 |
 
 Gotchas:
 

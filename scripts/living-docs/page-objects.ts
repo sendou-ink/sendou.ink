@@ -9,8 +9,8 @@ import {
 	walk,
 } from "./ast.ts";
 import {
-	type FormSchema,
 	formHelpersSchemaName,
+	type FormSchema,
 	formSchemaOf,
 } from "./forms.ts";
 import { allSourceFiles } from "./source-index.ts";

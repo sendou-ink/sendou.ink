@@ -13,16 +13,16 @@ const rules = (await getCollection("lintRules"))
 <StarlightPage
 	frontmatter={{
 		title: "Lint rules",
-		description: "The repo's own Biome lint rules, generated from biome-plugins/.",
+		description: "The repo's own lint rules, generated from lint-plugins/.",
 		editUrl: false,
 	}}
 	headings={rules.map((rule) => ({ depth: 2, slug: rule.name, text: rule.name }))}
 >
 	<p>
-		The repo's own lint rules: GritQL plugins in{" "}
-		<a href={githubUrl("biome-plugins", 1).replace(/#L1$/, "")}><code>biome-plugins/</code></a>,
-		enabled per path in <code>biome.json</code>. They run with <code>bun run biome:fix</code>.
-		Silence one where it's wrong with <code>// biome-ignore lint/plugin: &lt;why&gt;</code>.
+		The repo's own lint rules: the <code>sendou</code> plugin of{" "}
+		<a href={githubUrl("lint-plugins", 1).replace(/#L1$/, "")}><code>lint-plugins/</code></a>,
+		its rules enabled per path in <code>bunfig.toml</code>. They run with <code>bun run lint:fix</code>.
+		Silence one where it's wrong with <code>// eslint-disable-next-line sendou/&lt;rule&gt; -- &lt;why&gt;</code>.
 	</p>
 	{
 		rules.map((rule) => (
@@ -50,7 +50,7 @@ const rules = (await getCollection("lintRules"))
 					<summary>
 						Source (<a href={githubUrl(rule.file, 1)}>{rule.file}</a>)
 					</summary>
-					<Code code={rule.source} lang="txt" />
+					<Code code={rule.source} lang="ts" />
 				</details>
 			</>
 		))

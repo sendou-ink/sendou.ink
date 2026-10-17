@@ -5,9 +5,9 @@ import {
 	isImpersonating,
 } from "~/features/auth/core/user.server";
 import * as Scenarios from "../core/Scenarios.server";
-import * as DevToolsRepository from "../DevToolsRepository.server";
 import { QUICK_LOG_IN_USERS } from "../dev-tools-constants";
 import { requireDevTools } from "../dev-tools-utils.server";
+import * as DevToolsRepository from "../DevToolsRepository.server";
 
 export type DevIdentityLoaderData = Awaited<ReturnType<typeof loader>>;
 

@@ -7,8 +7,8 @@ import { clearCaches, ROOT } from "./ast.ts";
 import { type ClientStateDoc, documentClientState } from "./client-state.ts";
 import { buildCoverage, routeFeature, type TestLink } from "./coverage.ts";
 import {
-	type RepositoryCall,
 	reachableTables,
+	type RepositoryCall,
 	resolveDeclaration,
 	type TableAccess,
 	traceDeclaration,

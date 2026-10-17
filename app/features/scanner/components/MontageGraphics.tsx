@@ -39,10 +39,10 @@ import {
 	MONTAGE_WIDTH,
 	REVEAL_RISE_PX,
 	REVEAL_TIMINGS,
+	revealOrder,
 	type RevealStyle,
 	RIBBON_GLASS,
 	RIBBON_MARGIN_PX,
-	revealOrder,
 	riseOrder,
 } from "../capture/montage-overlays";
 import type {
@@ -50,12 +50,12 @@ import type {
 	MontageManifestTopTeam,
 	MontageManifestVod,
 } from "../core/montage";
-import styles from "./MontageGraphics.module.css";
 import {
 	type MontageGraphic,
 	montageImageUrl,
 	setMontageGraphicCapture,
 } from "./montage";
+import styles from "./MontageGraphics.module.css";
 
 /** the full-frame graphics' CSS size times this is 1920×1080 */
 const FRAME_SCALE: Record<MontageCard["kind"], number> = {

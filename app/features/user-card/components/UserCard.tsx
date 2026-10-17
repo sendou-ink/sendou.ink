@@ -53,8 +53,8 @@ import { userCardFriendshipSearchParams } from "../user-card-search-params";
 import type {
 	UserCardData,
 	UserCardFriendship,
-	UserCardStat,
 	UserCardsById,
+	UserCardStat,
 } from "../user-card-types";
 import styles from "./UserCard.module.css";
 
@@ -573,7 +573,7 @@ function CardMutualFriends({
 	return (
 		<div className={styles.mutualFriends}>
 			{friendship === undefined ? null : friendship.mutualFriends.length ===
-				0 ? (
+			  0 ? (
 				<span className={styles.noMutualFriends}>
 					{t("user:card.noMutualFriends")}
 				</span>

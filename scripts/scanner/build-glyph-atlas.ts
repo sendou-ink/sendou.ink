@@ -238,7 +238,7 @@ function writeAtlas(name: string, height: number, glyphs: GlyphBitmap[]): void {
 
 	const pixels = new Uint8ClampedArray(atlasW * atlasH * 4);
 	for (let i = 3; i < pixels.length; i += 4) pixels[i] = 255;
-	meta.glyphs.forEach((m, i) => {
+	for (const [i, m] of meta.glyphs.entries()) {
 		const g = glyphs[i]!;
 		for (let gy = 0; gy < g.h; gy++) {
 			for (let gx = 0; gx < g.w; gx++) {
@@ -249,7 +249,7 @@ function writeAtlas(name: string, height: number, glyphs: GlyphBitmap[]): void {
 				pixels[o + 2] = v;
 			}
 		}
-	});
+	}
 	writePng(join(OUT_DIR, `${name}.png`), {
 		width: atlasW,
 		height: atlasH,

@@ -46,8 +46,8 @@ import {
 	tournamentIsRanked,
 } from "../tournament/tournament-utils";
 import type {
-	CalendarEventTag,
 	CalendarEvent as CalendarEventType,
+	CalendarEventTag,
 } from "./calendar-types";
 import { calendarEventSorter } from "./calendar-utils";
 

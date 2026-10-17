@@ -564,8 +564,7 @@ export function createDeathDetector(
 		let refineThreshold = 0;
 		const ink = band.data;
 		let inkCount = 0;
-		for (let i = 0; i < ink.length; i++)
-			if (ink[i]! > TAG_NAME_BIN_THRESHOLD) inkCount++;
+		for (const value of ink) if (value > TAG_NAME_BIN_THRESHOLD) inkCount++;
 		if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
 			textColor = medianColor(inner, (i) => ink[i]! > TAG_NAME_BIN_THRESHOLD);
 			const contrast = colorContrast(textColor, backgrounds);

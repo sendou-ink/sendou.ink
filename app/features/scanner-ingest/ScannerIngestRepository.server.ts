@@ -988,9 +988,7 @@ function newestFirst<T extends { createdAt: number }>(a: T[], b: T[]): T[] {
  */
 function startedNearestBefore(
 	column:
-		| "TournamentMatch.startedAt"
-		| "GroupMatch.createdAt"
-		| "LobbySet.createdAt",
+		"TournamentMatch.startedAt" | "GroupMatch.createdAt" | "LobbySet.createdAt",
 	atSeconds: number,
 ) {
 	const start = sql.ref(column);

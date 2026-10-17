@@ -3,8 +3,8 @@ import path from "node:path";
 import {
 	type Comment,
 	type Node,
-	type Program,
 	parseSync,
+	type Program,
 	type StaticImport,
 	visitorKeys,
 } from "oxc-parser";

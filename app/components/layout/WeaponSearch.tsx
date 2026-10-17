@@ -40,17 +40,15 @@ import {
 } from "./SearchResults";
 import styles from "./WeaponSearch.module.css";
 
-const WEAPON_DESTINATIONS = [
-	"builds",
-	"popular",
-	"stats",
-	"analyzer",
-	"params",
-	"vods",
-	"art",
-	"lfg",
-] as const;
-export type WeaponDestination = (typeof WEAPON_DESTINATIONS)[number];
+export type WeaponDestination =
+	| "builds"
+	| "popular"
+	| "stats"
+	| "analyzer"
+	| "params"
+	| "vods"
+	| "art"
+	| "lfg";
 
 export interface SelectedWeapon {
 	id: MainWeaponId;

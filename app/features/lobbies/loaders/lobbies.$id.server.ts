@@ -14,9 +14,9 @@ import { idObject } from "~/utils/schema";
 import * as Leaderboard from "../core/Leaderboard";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
+import { lobbySearchParams } from "../lobbies-search-params";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
-import { lobbySearchParams } from "../lobbies-search-params";
 
 export type LobbyLoaderData = SerializeFrom<typeof loader>;
 

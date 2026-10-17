@@ -25,9 +25,9 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { toastQueue } from "~/components/elements/Toast";
+import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
-import { FilterBar } from "~/components/filter-bar/FilterBar";
 import {
 	ModeImage,
 	SpecialWeaponImage,
@@ -64,8 +64,8 @@ import {
 } from "~/features/changelog/components/ChangelogGraphic";
 import * as DamageCombos from "~/features/comp-analyzer/core/DamageCombos";
 import { GlobalStatusIndicator } from "~/features/global-status/components/GlobalStatusIndicator";
-import { GlobalStatusPreviewProvider } from "~/features/global-status/GlobalStatusProvider";
 import type { GlobalStatus } from "~/features/global-status/global-status-types";
+import { GlobalStatusPreviewProvider } from "~/features/global-status/GlobalStatusProvider";
 import { CompGraphic } from "~/features/img-export/components/CompGraphic";
 import {
 	SeasonSummaryGraphic,
@@ -87,8 +87,8 @@ import {
 } from "~/features/trophies/components/Trophy";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
-import type { CustomFieldRenderProps } from "~/form/FormField";
 import { DatetimeFormField } from "~/form/fields/DatetimeFormField";
+import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import {

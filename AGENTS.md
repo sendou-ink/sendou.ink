@@ -5,17 +5,17 @@
 - when a comment is needed, brevity is the key, less is more
 - task is not considered completely until `bun run checks` passes
 - normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (main implementation first, at the top of the file)
-- note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `bun run biome:fix` command
+- note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `bun run lint:fix` command
 - typical way to structure pure logic is into Modules divided by logical domains which are imported with the "* as Module" import and then used like so "Module.foo()". These functions always need JSDoc.
 - non-exported functions typically do not need JSDoc or at least it can be kept short
 - more topic docs live in `docs/site/src/content/docs/dev/` — notably [architecture.mdx](./docs/site/src/content/docs/dev/architecture.mdx) (feature folder layout), [request-flow.mdx](./docs/site/src/content/docs/dev/request-flow.mdx) (one request followed through every layer), [permissions.mdx](./docs/site/src/content/docs/dev/permissions.mdx) (authorization: global roles via `requireRole()`/`useHasRole()`, per-object `permissions` computed in repositories) and [overlays.mdx](./docs/site/src/content/docs/dev/overlays.mdx) (popovers, menus, selects and dialogs: the floating layer, scroll lock and mobile keyboard handling)
 
 ## Commands
 
-- `bun run checks` runs biome:fix, typegen and test db setup first, then unit and DOM tests, translation json checks, typecheck (app, scripts and the docs site) and knip in parallel (output is prefixed per check, every check runs to completion even if one fails) — knip means unused exports fail checks, so remove exports nothing imports
+- `bun run checks` runs lint:fix, typegen and test db setup first, then unit and DOM tests, translation json checks, typecheck (app, scripts and the docs site) and knip in parallel (output is prefixed per check, every check runs to completion even if one fails) — knip means unused exports fail checks, so remove exports nothing imports
 - `bun run dev:docs` serves the docs site (`docs/site/`, Astro Starlight, live at https://docs.sendou.ink): the MDX docs of `docs/site/src/content/docs/` plus the living docs generated from the core modules, e2e specs and routes; `bun run docs:capture` refreshes its route coverage and screenshots from an e2e run, see [living-docs.mdx](./docs/site/src/content/docs/dev/living-docs.mdx)
 - `bun run typecheck` runs TypeScript type checking
-- `bun run biome:fix` runs Biome code formatter and linter
+- `bun run lint:fix` runs the linter (`bun lint --fix`) and formatter (`bun fmt`), both built into Bun and configured in `bunfig.toml`; custom lint rules live in `lint-plugins/`
 - `bun run test:unit:dom` runs all unit and DOM tests (`bun run test:unit` / `bun run test:dom` for one half)
 - `bun run test:e2e` runs all e2e tests
 - `bun run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
@@ -42,15 +42,15 @@
 - state management is done via plain `useState` and React Context API
 - avoid using `useEffect`
 - all texts should be provided translations via the react-i18next library's `useTranslation` hook's `t` function
-- instead of `&&` operator for conditional rendering, use the ternary operator; enforced by the `no-and-conditional-rendering` Biome plugin
+- instead of `&&` operator for conditional rendering, use the ternary operator; enforced by the `no-and-conditional-rendering` lint rule
 - for localized user-readable time strings use `<LocaleTime />`, `<LocaleTimeRange>` or `useFormatDistanceToNow`. If needed use `useDateTimeFormat` directly. NEVER use e.g. `toLocaleString` directly as it does not include users' language selection.
 
 ## Forms
 
 - forms are built with the `SendouForm` schema-based system: a valibot schema using field builders from `~/form/fields` generates both the UI and server-side validation, see [forms.mdx](./docs/site/src/content/docs/dev/forms.mdx)
 - form label/help translations go in `locales/en/forms.json`
-- actions are defined with `defineAction` (`~/form/define-action.server`), which parses route params (404 on failure) and the body (`fieldErrors` for SendouForm, error toast otherwise) before the handler runs, see [forms.mdx](./docs/site/src/content/docs/dev/forms.mdx); enforced by the `no-raw-actions` Biome plugin
-- fixed-field mutations (an `_action` plus hidden inputs) use `<ActionButton>` which type checks the action and fields against the route's action schema; real multi-input forms instead pass `schema` alongside `_action` to `SubmitButton`; enforced by the `no-raw-action-forms` Biome plugin
+- actions are defined with `defineAction` (`~/form/define-action.server`), which parses route params (404 on failure) and the body (`fieldErrors` for SendouForm, error toast otherwise) before the handler runs, see [forms.mdx](./docs/site/src/content/docs/dev/forms.mdx); enforced by the `no-raw-actions` lint rule
+- fixed-field mutations (an `_action` plus hidden inputs) use `<ActionButton>` which type checks the action and fields against the route's action schema; real multi-input forms instead pass `schema` alongside `_action` to `SubmitButton`; enforced by the `no-raw-action-forms` lint rule
 
 ## Remix/React Router
 
@@ -59,12 +59,12 @@
 ## Search params
 
 - all URL search param handling goes through `app/modules/search-params/`, see [search-params.mdx](./docs/site/src/content/docs/dev/search-params.mdx) for the conventions
-- never use raw `useSearchParams` or `searchParams.get()`; declare params once per feature in a `<feature>-search-params.ts` definition (every param has a default, decode never fails). Enforced by the `no-raw-search-params` Biome plugin
+- never use raw `useSearchParams` or `searchParams.get()`; declare params once per feature in a `<feature>-search-params.ts` definition (every param has a default, decode never fails). Enforced by the `no-raw-search-params` lint rule
 - every definition gets a round-trip test via `assertRoundTrips`
 
 ## Web storage
 
-- all `localStorage` / `sessionStorage` access goes through `app/modules/persisted-state/`: declare the value once with `PersistedState.define` (or `defineMap` for a keyed family), typically in a `<feature>-persisted.ts` file, and use `usePersistedState` / `PersistedState.read` / `write`. Enforced by the `no-raw-web-storage` Biome plugin
+- all `localStorage` / `sessionStorage` access goes through `app/modules/persisted-state/`: declare the value once with `PersistedState.define` (or `defineMap` for a keyed family), typically in a `<feature>-persisted.ts` file, and use `usePersistedState` / `PersistedState.read` / `write`. Enforced by the `no-raw-web-storage` lint rule
 - every definition gets a round-trip test via `assertRoundTrips` from `persisted-state-test-utils.ts`
 
 ## Styling
@@ -76,13 +76,13 @@
 - for simple styling, prefer [utility classes](./app/styles/utils.css) over creating a new class
 - use CSS nesting with the `&` selector to group related selectors (pseudo-classes, pseudo-elements, child selectors, attribute selectors) under their parent instead of repeating the parent selector
 - prefer container queries over media queries
-- every CSS module is wrapped in a cascade layer by its path (`vite-css-plugins.ts`): `app/components/elements/**` → `elements`, `app/components/*.module.css` → `components`, everything else → `features`. A higher layer always beats a lower one, so a feature can override a shared component's class no matter what order the chunks load in — never reach for `!important` or a specificity hack to win that fight. Two modules in the *same* layer fall back to load order, so a variant of a component's own class (e.g. a divider row of a table) belongs in that component's module, not the caller's.
+- every CSS module is wrapped in a cascade layer by its path (`vite-css-plugins.ts`): `app/components/elements/**` → `elements`, `app/components/*.module.css` → `components`, everything else → `features`. A higher layer always beats a lower one, so a feature can override a shared component's class no matter what order the chunks load in — never reach for `!important` or a specificity hack to win that fight. Two modules in the _same_ layer fall back to load order, so a variant of a component's own class (e.g. a divider row of a table) belongs in that component's module, not the caller's.
 
 ## SQL
 
 - database is Sqlite3, driven by Node's built-in `node:sqlite` through a custom Kysely dialect (`app/db/node-sqlite-dialect.ts`)
 - database code should only be written in Repository files, see [repositories.mdx](./docs/site/src/content/docs/dev/repositories.mdx) for their conventions
-- import `jsonArrayFrom`/`jsonObjectFrom`/`jsonBuildObject` from `~/utils/kysely.server`, never from `kysely/helpers/sqlite` (enforced by the `no-kysely-sqlite-helpers` Biome plugin); JSON columns are registered in `app/db/json-columns.ts`
+- import `jsonArrayFrom`/`jsonObjectFrom`/`jsonBuildObject` from `~/utils/kysely.server`, never from `kysely/helpers/sqlite` (enforced by the `no-kysely-sqlite-helpers` lint rule); JSON columns are registered in `app/db/json-columns.ts`
 - migrations are Kysely migrations in `/migrations`, scaffolded with `bun run migrate:new "description"` and applied with `bun run migrate up`, see [how-to.mdx](./docs/site/src/content/docs/dev/how-to.mdx)
 - down migrations are not needed, only up migrations
 - if we are working on a branch by default we should add to the migration this branch added instead of creating a brand new one
@@ -103,7 +103,7 @@
 - name a test after the behaviour it establishes, with no `"should "` prefix (`test("returns null for an unknown id")`)
 - `describe` takes the bare function name, except for files consumed through a `* as Module` import, where it takes `Module.fn` — the way callers write it
 - when a test is `input -> expected output` with no setup, make it a `test.each` table rather than a run of near-identical `test` blocks; give every row a short label (`$why`, `%s`) so a failure names the case
-- test and dev-seed setup writes go through factories, never raw repository/db calls (enforced by the `no-raw-db-writes-in-tests` and `no-raw-db-writes-in-dev-seed` Biome plugins). Factories are setup only: the operation under test is called through its repository directly, never through a factory
+- test and dev-seed setup writes go through factories, never raw repository/db calls (enforced by the `no-raw-db-writes-in-tests` and `no-raw-db-writes-in-dev-seed` lint rules). Factories are setup only: the operation under test is called through its repository directly, never through a factory
 - users come from `UserFactory.pool()` declared at module scope and filled in `beforeEach` — never a module-level `let` reassigned per test. Where positions carry meaning, name them with accessors next to the pool (`const actorId = () => users.id(1)`)
 - fixture builders shared by more than one test file live in a `tests/` folder of the feature they belong to (`app/features/<feature>/**/tests/fixtures.ts`); don't copy a builder into a second file
 
@@ -129,6 +129,7 @@
 navItem: plans
 type: feature
 ---
+
 Map planner improvements
 
 - Plans are saved and restored when you come back to the page

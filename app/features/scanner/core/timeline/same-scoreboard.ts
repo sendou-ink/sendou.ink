@@ -1,3 +1,4 @@
+import type { ScoreboardBattleLogReplayData } from "../detectors/scoreboard-battle-log-replay/index";
 /**
  * Content guard for merging scoreboard-shaped events. The replay browser lets
  * users flip between matches' detail screens within seconds, so time alone
@@ -7,7 +8,6 @@
  * on some frames only).
  */
 import type { ScoreboardData } from "../detectors/scoreboard/index";
-import type { ScoreboardBattleLogReplayData } from "../detectors/scoreboard-battle-log-replay/index";
 import { nameSimilarity } from "../text";
 
 /**

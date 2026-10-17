@@ -2,13 +2,13 @@ import { CalendarClock, History, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
-import { EmptyState } from "~/components/EmptyState";
 import {
 	SendouTab,
 	SendouTabList,
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { EmptyState } from "~/components/EmptyState";
 import { Main } from "~/components/Main";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";

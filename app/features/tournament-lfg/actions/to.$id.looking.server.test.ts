@@ -6,8 +6,8 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
-import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import type { lookingSchema } from "../tournament-lfg-schemas";
+import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { action as lookingAction } from "./to.$id.looking.server";
 
 // likes and accepts notify the other group; not under test here

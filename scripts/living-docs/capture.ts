@@ -18,11 +18,11 @@ import { documentSpec, type TestDoc } from "./e2e.ts";
 import { indexPageObjects } from "./page-objects.ts";
 import {
 	readVisits,
-	SCREENSHOTS_DIR,
 	screenshotFile,
+	SCREENSHOTS_DIR,
 	testMatches,
-	VISITS_FILE,
 	type Visits,
+	VISITS_FILE,
 } from "./visits.ts";
 
 const REPORT_FILE = "test-results/living-docs-report.json";

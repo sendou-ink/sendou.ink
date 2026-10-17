@@ -1,6 +1,6 @@
 import {
-	type EventsReadyState,
 	eventsClient,
+	type EventsReadyState,
 } from "~/features/events/events-client";
 import type { ServerEvent } from "~/features/events/events-types";
 

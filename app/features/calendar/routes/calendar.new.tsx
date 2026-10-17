@@ -25,8 +25,8 @@ import type {
 	TournamentMapPickingStyle,
 } from "~/features/tournament/tournament-constants";
 import { Trophy } from "~/features/trophies/components/Trophy";
-import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { getFormFieldMetadata } from "~/form/fields";
+import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
 import {
 	FormStep,
@@ -48,16 +48,16 @@ import {
 	FAQ_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
-import styles from "../calendar-new.module.css";
 import {
 	calendarNewBaseSchema,
 	calendarNewSchema,
 	customTeamPickPool,
 	type TeamPickCountsFormValue,
-	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
+	TOURNAMENT_FORM_STEPS,
 	tournamentTagsField,
 } from "../calendar-new-schemas";
+import styles from "../calendar-new.module.css";
 import {
 	type BracketFormValue,
 	defaultBracketsFormValues,
@@ -248,10 +248,7 @@ function useDefaultValues() {
 		),
 		regClosesAt,
 		minMembersPerTeam: String(settings?.minMembersPerTeam ?? 4) as
-			| "1"
-			| "2"
-			| "3"
-			| "4",
+			"1" | "2" | "3" | "4",
 		maxMembersPerTeam: settings?.maxMembersPerTeam ?? undefined,
 		mapPickingStyle,
 		teamPickModes: TeamPick.pickedModes(teamPick),

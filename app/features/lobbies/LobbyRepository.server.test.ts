@@ -238,9 +238,8 @@ describe("LobbyRepository.findAllUpcomingOfFriendsByUserId", () => {
 		});
 		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
 
-		const rows = await LobbyRepository.findAllUpcomingOfFriendsByUserId(
-			memberId(),
-		);
+		const rows =
+			await LobbyRepository.findAllUpcomingOfFriendsByUserId(memberId());
 
 		expect(rows.map((row) => [row.friendId, row.lobbyId])).toEqual([
 			[hostId(), lobby.id],

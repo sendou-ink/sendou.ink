@@ -16,8 +16,8 @@ import {
 	textOf,
 } from "./ast.ts";
 import {
-	type FormSchema,
 	formHelpersSchemaName,
+	type FormSchema,
 	formSchemaOf,
 } from "./forms.ts";
 import { escapeHtml, highlight } from "./highlight.ts";

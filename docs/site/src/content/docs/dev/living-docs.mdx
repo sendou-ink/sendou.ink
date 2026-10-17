@@ -22,7 +22,7 @@ Besides the feature pages, the generated pages are:
 
 - **Routes**: every route with its e2e coverage and the repository functions and tables its loader and action reach.
 - **Database tables**: from `app/db/tables.ts`, their relations from the foreign keys of a database the migrations are applied to, and the repository functions and routes using each.
-- **Lint rules**: `biome-plugins/` and where `biome.json` enables them.
+- **Lint rules**: the rules of `lint-plugins/` and where `bunfig.toml` enables them.
 - **Permissions**: the global roles (the `userRoles()` condition granting each and every `requireRole`/`useHasRole` check), what each feature grants linking to its Permissions page, and everything going around the system or not matching up across the app.
 - **Search params & storage**: what each feature defines linking to its page, the definitions of shared code outside `app/features` (`app/components`, `app/hooks`…) and storage key collisions across the app.
 - **Background work**: the `Bun.cron` calls of `app/entry.server.tsx` and the routines of `app/routines/list.server.ts` they run with the tables each reaches, the routes called by machines (Lohi token, webhooks, dev controls), the Discord webhooks posted to, and every notification type with its meta, English texts, link and the `notify()` calls sending it.

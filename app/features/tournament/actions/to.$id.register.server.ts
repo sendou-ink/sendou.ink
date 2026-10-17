@@ -5,11 +5,8 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { getMemberRoleType } from "~/features/team/team-utils";
-import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
-import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
@@ -18,6 +15,9 @@ import {
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
@@ -478,9 +478,7 @@ export const action = defineAction(
 );
 
 type IneligibleReason =
-	| "no friend code"
-	| "banned by the organization"
-	| "already in a team";
+	"no friend code" | "banned by the organization" | "already in a team";
 
 /** Why the "add all" bulk add has to pass a candidate over, or `null` if they can be added. */
 async function ineligibleReason({

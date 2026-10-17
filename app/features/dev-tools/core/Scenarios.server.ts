@@ -17,16 +17,16 @@ import type { TournamentSettings } from "~/db/tables-json";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
-import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
-import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import {
 	CHECK_IN_LEAD_MINUTES,
 	LOBBY_LABELS,
 	type LobbyRoomSize,
 } from "~/features/lobbies/lobbies-constants";
+import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import { runWithoutWebPush } from "~/features/notifications/core/push-suppression.server";
-import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
@@ -35,9 +35,9 @@ import {
 	lobbiesPage,
 	lobbyPage,
 	PLUS_VOTING_PAGE,
-	SENDOUQ_LOOKING_PAGE,
 	scrimPage,
 	scrimsPage,
+	SENDOUQ_LOOKING_PAGE,
 	sendouQMatchPage,
 	teamPage,
 	tournamentMatchPage,

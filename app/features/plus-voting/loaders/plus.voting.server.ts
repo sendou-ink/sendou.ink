@@ -8,8 +8,8 @@ import {
 } from "~/features/plus-voting/core";
 import { isVotingOpen } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
-import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { UserCardsById } from "~/features/user-card/user-card-types";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as MarkdownHtml from "~/utils/markdown-html.server";
 
 type UserForVoting = PlusVotingRepository.UsersForVoting[number];

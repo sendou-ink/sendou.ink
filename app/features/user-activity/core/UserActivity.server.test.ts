@@ -5,11 +5,11 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
+import { runningTournamentWithMatch } from "~/features/tournament-bracket/core/tests/test-utils";
 import type {
 	Tournament,
 	TournamentTeamMemberProgressStatus,
 } from "~/features/tournament-bracket/core/Tournament";
-import { runningTournamentWithMatch } from "~/features/tournament-bracket/core/tests/test-utils";
 import * as UserActivity from "./UserActivity.server";
 
 const mockSeasonCurrentOrPrevious = vi.fn(() => ({

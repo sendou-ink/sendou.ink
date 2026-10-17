@@ -2,6 +2,7 @@
 navItem: settings
 type: feature
 ---
+
 Refresh your Discord avatar, name and connections
 
 - New "Refresh from Discord" button in settings updates your avatar, name and connections without logging out

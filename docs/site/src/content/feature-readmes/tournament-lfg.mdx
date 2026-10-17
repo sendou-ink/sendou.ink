@@ -6,7 +6,8 @@ A **group** is a `TournamentTeam` with `isLooking` set: either a **placeholder**
 
 ## Lifecycle
 
-<Mermaid code={`stateDiagram-v2
+<Mermaid
+	code={`stateDiagram-v2
 	[*] --> Placeholder: a player without a team joins the queue
 	[*] --> LookingTeam: a registered team looks for more members
 	Placeholder --> LookingTeam: an invitation accepted, merging two groups
@@ -16,7 +17,8 @@ A **group** is a `TournamentTeam` with `isLooking` set: either a **placeholder**
 	[*] --> SubPost: posted on the subs list
 	Placeholder --> [*]: stops looking, or joins a team another way
 	SubPost --> [*]: deleted, or the player joins a team
-	Team --> [*]`} />
+	Team --> [*]`}
+/>
 
 A group of two or more gets a chat room (`TOURNAMENT_TEAM`), lasting a week past the tournament's start. Registering or joining a team any other way (the register and join pages, an organizer adding the player, the public API) takes the player out of the queue first through `TournamentLFGRepository.leaveLfg`, and starting a bracket clears `isLooking` of every team.
 

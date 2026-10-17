@@ -15,9 +15,9 @@ export function canAddCommentToSuggestionFE(
 ) {
 	return Boolean(
 		!alreadyCommentedByUser(args) &&
-			isPlusServerMember(args.user) &&
-			args.user?.plusTier &&
-			args.targetPlusTier >= args.user.plusTier,
+		isPlusServerMember(args.user) &&
+		args.user?.plusTier &&
+		args.targetPlusTier >= args.user.plusTier,
 	);
 }
 
@@ -34,8 +34,8 @@ export function canAddCommentToSuggestionBE({
 			suggested,
 			targetPlusTier,
 		}) &&
-			playerAlreadySuggested({ suggestions, suggested, targetPlusTier }) &&
-			targetPlusTierIsSmallerOrEqual({ user, targetPlusTier }),
+		playerAlreadySuggested({ suggestions, suggested, targetPlusTier }) &&
+		targetPlusTierIsSmallerOrEqual({ user, targetPlusTier }),
 	);
 }
 
@@ -91,9 +91,9 @@ export function canSuggestNewUser({
 
 	return Boolean(
 		!votingActive &&
-			!hasSuggestedThisMonth &&
-			isPlusServerMember(user) &&
-			existsSeason,
+		!hasSuggestedThisMonth &&
+		isPlusServerMember(user) &&
+		existsSeason,
 	);
 }
 

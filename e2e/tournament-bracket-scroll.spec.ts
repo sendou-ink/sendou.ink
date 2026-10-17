@@ -4,10 +4,10 @@ import {
 	createTeams,
 	DOUBLE_ELIMINATION,
 	ROUND_ROBIN,
-	SWISS_TO_TOP_CUT,
 	startedTournamentTimes,
-	TO_MAP_POOL,
+	SWISS_TO_TOP_CUT,
 	teamSeeds,
+	TO_MAP_POOL,
 } from "./helpers/tournament";
 import { ChatSidebar } from "./pages/layout/chat-sidebar";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";

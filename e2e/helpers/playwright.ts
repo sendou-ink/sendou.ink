@@ -1,9 +1,9 @@
 import {
 	type BrowserContext,
-	test as base,
 	expect,
 	type Locator,
 	type Page,
+	test as base,
 } from "@playwright/test";
 import { format } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";

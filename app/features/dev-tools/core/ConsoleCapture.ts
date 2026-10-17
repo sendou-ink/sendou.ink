@@ -3,10 +3,7 @@ const MAX_ENTRIES = 200;
 export type CapturedLevel = "error" | "warn";
 
 export type CapturedSource =
-	| "console.error"
-	| "console.warn"
-	| "uncaught error"
-	| "unhandled rejection";
+	"console.error" | "console.warn" | "uncaught error" | "unhandled rejection";
 
 export interface CapturedEntry {
 	id: number;

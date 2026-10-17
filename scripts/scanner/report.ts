@@ -22,16 +22,16 @@ import {
 	type MinimapData,
 } from "../../app/features/scanner/core/detectors/minimap/index";
 import { createQuickScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/index";
-import { createScoreboardDetector } from "../../app/features/scanner/core/detectors/scoreboard/index";
-import { createScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import {
 	createScoreboardBattleLogReplayDetector,
 	type ScoreboardBattleLogReplayData,
 } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
+import { createScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import {
 	createScoreboardOwnDetector,
 	type ScoreboardOwnData,
 } from "../../app/features/scanner/core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../../app/features/scanner/core/detectors/scoreboard/index";
 import type { Detector } from "../../app/features/scanner/core/detectors/types";
 import {
 	loadFixtures,
@@ -167,9 +167,9 @@ for (const config of configs) {
 				tally.matchScores.ok++;
 			}
 		}
-		(expected.players ?? []).forEach((want, i) => {
+		for (const [i, want] of (expected.players ?? []).entries()) {
 			const got = event.data.players?.[i];
-			if (!got) return;
+			if (!got) continue;
 			if (want.weaponId !== undefined) {
 				tally.weapons.total++;
 				if (got.weaponId === want.weaponId) tally.weapons.ok++;
@@ -199,7 +199,7 @@ for (const config of configs) {
 					tally.stats.ok++;
 				}
 			}
-		});
+		}
 	}
 
 	console.info(`\n=== ${config.label} (${fixtures.length} fixtures) ===`);
@@ -323,8 +323,8 @@ for (const config of configs) {
 					`${fixture.name}: weapon ${event.data.weaponId} != ${expected.weaponId} ("${expected.weaponLabel ?? ""}")`,
 				);
 		}
-		(expected.abilities ?? []).forEach((wantRow, row) => {
-			wantRow.forEach((want, slot) => {
+		for (const [row, wantRow] of (expected.abilities ?? []).entries()) {
+			for (const [slot, want] of wantRow.entries()) {
 				tally.abilities.total++;
 				const got = event.data.abilities[row]?.[slot];
 				if (got === want) tally.abilities.ok++;
@@ -332,8 +332,8 @@ for (const config of configs) {
 					misses.push(
 						`${fixture.name}: ability [${row}][${slot}] "${got}" != "${want}"`,
 					);
-			});
-		});
+			}
+		}
 	}
 
 	console.info(`\n=== scoreboard-own (${fixtures.length} fixtures) ===`);
@@ -396,9 +396,9 @@ for (const config of configs) {
 			["enemy", expected.enemies ?? [], event.data.enemies],
 		];
 		for (const [side, wants, gots] of sides) {
-			wants.forEach((want, i) => {
+			for (const [i, want] of wants.entries()) {
 				const got = gots[i];
-				if (!got) return;
+				if (!got) continue;
 				if (want.weaponId !== undefined) {
 					tally.weapons.total++;
 					if (got.weaponId === want.weaponId) tally.weapons.ok++;
@@ -419,7 +419,7 @@ for (const config of configs) {
 							`${fixture.name} ${side}${i}: name "${gotName}" != "${want.name}"`,
 						);
 				}
-				(want.abilities ?? []).forEach((wantId, slot) => {
+				for (const [slot, wantId] of (want.abilities ?? []).entries()) {
 					tally.abilities.total++;
 					const gotId = got.abilities[slot] ?? null;
 					if (gotId === wantId) tally.abilities.ok++;
@@ -427,7 +427,7 @@ for (const config of configs) {
 						misses.push(
 							`${fixture.name} ${side}${i}: ability [${slot}] "${gotId}" != "${wantId}"`,
 						);
-				});
+				}
 				for (const flag of ["dead", "specialReady"] as const) {
 					if (want[flag] === undefined) continue;
 					tally.status.total++;
@@ -437,7 +437,7 @@ for (const config of configs) {
 							`${fixture.name} ${side}${i}: ${flag} ${got[flag]} != ${want[flag]}`,
 						);
 				}
-			});
+			}
 		}
 		if (expected.stage !== undefined) {
 			tally.stage.total++;
@@ -499,8 +499,8 @@ for (const config of configs) {
 					`${fixture.name}: weapon ${event.data.weaponId} != ${expected.weaponId} ("${expected.weaponLabel ?? ""}")`,
 				);
 		}
-		(expected.abilities ?? []).forEach((wantRow, row) => {
-			wantRow.forEach((want, slot) => {
+		for (const [row, wantRow] of (expected.abilities ?? []).entries()) {
+			for (const [slot, want] of wantRow.entries()) {
 				tally.abilities.total++;
 				const got = event.data.abilities[row]?.[slot];
 				if (got === want) tally.abilities.ok++;
@@ -508,8 +508,8 @@ for (const config of configs) {
 					misses.push(
 						`${fixture.name}: ability [${row}][${slot}] "${got}" != "${want}"`,
 					);
-			});
-		});
+			}
+		}
 		if (expected.name !== undefined) {
 			tally.names.total++;
 			const got = event.data.name ?? "";

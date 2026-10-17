@@ -27,9 +27,9 @@ import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import type {
 	HideableUserCardStat,
 	UserCardData,
+	UserCardsById,
 	UserCardStat,
 	UserCardStatXPValue,
-	UserCardsById,
 } from "./user-card-types";
 import { isValidUnverifiedXp } from "./user-card-utils";
 

@@ -6,7 +6,8 @@ A **lobby** (`Lobby`) has a host and **participants** (`LobbyParticipant`) who a
 
 ## Lifecycle
 
-<Mermaid code={`stateDiagram-v2
+<Mermaid
+	code={`stateDiagram-v2
 	[*] --> Upcoming: made on /lobbies/new
 	Upcoming --> CheckIn: check-in opens
 	CheckIn --> Pending: start time
@@ -19,13 +20,15 @@ A **lobby** (`Lobby`) has a host and **participants** (`LobbyParticipant`) who a
 	CheckIn --> Ended: ended by the host
 	Pending --> Ended: ended by the host
 	Active --> Ended: ended by the host
-	Ended --> [*]`} />
+	Ended --> [*]`}
+/>
 
 The statuses are `LobbyState.status`. Nothing is stored about which one a lobby is in, it is derived from its start time, its latest set and whether it has ended.
 
 ## A set
 
-<Mermaid code={`stateDiagram-v2
+<Mermaid
+	code={`stateDiagram-v2
 	[*] --> Reporting: teams shuffled, maps generated
 	Reporting --> Reporting: a map reported or undone
 	Reporting --> AwaitingConfirmation: the deciding map reported
@@ -37,7 +40,8 @@ The statuses are `LobbyState.status`. Nothing is stored about which one a lobby 
 	Reporting --> Forfeited: a player leaves, their side forfeits
 	Reporting --> [*]: a player leaves before any map is reported, the set is called off
 	Confirmed --> [*]
-	Forfeited --> [*]`} />
+	Forfeited --> [*]`}
+/>
 
 Only confirmed and forfeited sets count towards the lobby's ratings (`LobbyRating`) and rankings (`Leaderboard`). The ratings are lobby-local, recomputed from the sets every time, and never touch the SendouQ ones.
 

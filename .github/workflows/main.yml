@@ -12,9 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # bun lint and bun fmt are only in canary builds so far
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version-file: ".bun-version"
+          bun-version: canary
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,7 +26,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Formatter/Linter
-        run: bun run biome:check
+        run: bun run lint:check
       - name: Typecheck
         run: bun run typecheck
       - name: Typecheck scripts

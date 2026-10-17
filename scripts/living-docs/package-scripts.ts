@@ -41,16 +41,17 @@ const DESCRIPTIONS: Record<string, string> = {
 		"Deploys to Render with maintenance mode on until the new instance is healthy, see docs/site/src/content/docs/dev/scripts.mdx",
 	"sandbox:reset":
 		"Restores db-sandbox.sqlite3 from db-snapshot.sqlite3 and migrates it",
-	"biome:check": "Biome lint and format check",
-	"biome:fix": "Biome lint and format, applying the safe fixes",
-	"biome:fix:unsafe": "Biome lint and format, applying the unsafe fixes too",
+	"lint:check": "Lint (`bun lint`) and format check (`bun fmt --check`)",
+	"lint:fix": "Lint, applying the fixes, and format",
 	typecheck: "Type checks the app after generating the route types",
-	"typecheck:app": "Type checks the app without generating the route types first",
+	"typecheck:app":
+		"Type checks the app without generating the route types first",
 	"typecheck:scripts": "Type checks scripts/",
 	"typecheck:docs": "Type checks the docs site",
 	"test:unit":
 		"Runs the unit tests (`bun test`) after creating and migrating the test database",
-	"test:unit:run": "Runs the unit tests without preparing the test database first",
+	"test:unit:run":
+		"Runs the unit tests without preparing the test database first",
 	"test:dom": "Runs the DOM tests (happy-dom and Testing Library)",
 	"test:unit:dom": "Runs the unit tests, then the DOM tests",
 	"test:scanner": "Runs the scanner's fixture tests",
@@ -97,7 +98,7 @@ const GROUPS: Array<{ label: string; matches: (name: string) => boolean }> = [
 	},
 	{
 		label: "Checks",
-		matches: (name) => /^(checks|biome|typecheck|knip)\b/.test(name),
+		matches: (name) => /^(checks|lint|typecheck|knip)\b/.test(name),
 	},
 	{ label: "Tests", matches: (name) => name.startsWith("test:") },
 	{

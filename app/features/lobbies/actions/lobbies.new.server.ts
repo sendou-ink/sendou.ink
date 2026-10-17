@@ -10,9 +10,9 @@ import { errorToastIfFalsy } from "~/utils/remix.server";
 import { lobbyPage } from "~/utils/urls";
 import * as LobbyProgression from "../core/LobbyProgression.server";
 import * as LobbyState from "../core/LobbyState";
-import * as LobbyRepository from "../LobbyRepository.server";
 import type { LobbyBestOf, LobbyRoomSize } from "../lobbies-constants";
 import { newLobbySchema } from "../lobbies-schemas";
+import * as LobbyRepository from "../LobbyRepository.server";
 
 export const action = defineAction(
 	{ body: newLobbySchema },
