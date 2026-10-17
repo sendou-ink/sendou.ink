@@ -19,9 +19,7 @@ const mockSendNotification = vi.fn();
 const mockWebPushEnabled = (enabled: boolean) =>
 	vi.mock("./webPush.server", () => ({
 		webPushEnabled: enabled,
-		webPush: {
-			sendNotification: mockSendNotification,
-		},
+		sendNotification: mockSendNotification,
 	}));
 
 mockWebPushEnabled(false);

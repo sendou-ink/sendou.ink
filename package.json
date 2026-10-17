@@ -94,7 +94,6 @@
 		"nanoid": "6.0.2",
 		"nprogress": "0.2.0",
 		"openskill": "5.0.1",
-		"p-limit": "7.3.3",
 		"picocad2-web": "2.0.4",
 		"qrcode.react": "4.2.0",
 		"react": "19.3.1",
@@ -108,8 +107,7 @@
 		"slugify": "1.6.9",
 		"swr": "2.5.1",
 		"valibot": "^1.5.0",
-		"web-haptics": "0.0.6",
-		"web-push": "3.6.7"
+		"web-haptics": "0.0.6"
 	},
 	"devDependencies": {
 		"@astrojs/markdown-satteri": "0.4.5",
@@ -130,7 +128,6 @@
 		"@types/nprogress": "0.2.3",
 		"@types/react": "19.3.0",
 		"@types/react-dom": "19.3.0",
-		"@types/web-push": "3.6.4",
 		"astro": "7.4.2",
 		"babel-plugin-react-compiler": "19.1.0-rc.3",
 		"knip": "6.42.0",
