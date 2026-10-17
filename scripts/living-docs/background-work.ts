@@ -69,9 +69,9 @@ export interface CronSchedule {
 	expression: string;
 	/** The expression in words, e.g. "Every hour at :30". */
 	reading: string;
-	/** The `timezone` option, null for the server's own. */
+	/** The `tz` option, null for the server's own. */
 	timezone: string | null;
-	/** The comment above the `cron.schedule` call. */
+	/** The comment above the `Bun.cron` call. */
 	comment: string | null;
 	line: number;
 	/** The export of `list.server.ts` the schedule runs. */
@@ -209,9 +209,9 @@ function cronSchedules() {
 			call.type !== "CallExpression" ||
 			call.callee.type !== "MemberExpression" ||
 			call.callee.object.type !== "Identifier" ||
-			call.callee.object.name !== "cron" ||
+			call.callee.object.name !== "Bun" ||
 			call.callee.property.type !== "Identifier" ||
-			call.callee.property.name !== "schedule"
+			call.callee.property.name !== "cron"
 		) {
 			return;
 		}
@@ -220,7 +220,7 @@ function cronSchedules() {
 		const expression = stringValue(expressionArg) ?? "";
 		const timezone =
 			options?.type === "ObjectExpression"
-				? (stringValue(propertyValue(options, "timezone")) ?? null)
+				? (stringValue(propertyValue(options, "tz")) ?? null)
 				: null;
 
 		let listName: string | null = null;

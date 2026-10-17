@@ -157,7 +157,7 @@ export class Tournament {
 			? new Set(args.participatedUsers)
 			: null;
 		this._derivedMeta = bracketsMeta;
-		this.ctx = {
+		const tournamentCtx = {
 			...ctx,
 			teams: hasStarted
 				? // after the start the teams who did not check-in are irrelevant
@@ -165,6 +165,7 @@ export class Tournament {
 				: teamsInSeedOrder,
 			startsAt: databaseTimestampToDate(ctx.startsAt),
 		};
+		this.ctx = tournamentCtx;
 
 		for (const bracket of brackets ?? []) {
 			this._brackets[bracket.idx] = createBracket({
