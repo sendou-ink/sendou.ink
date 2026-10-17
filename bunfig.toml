@@ -29,20 +29,14 @@ ignorePatterns = [
 
 [lint.rules]
 "no-console" = "error"
-"no-var" = "error"
 "no-restricted-syntax" = ["error", "ForInStatement", "TSEnumDeclaration"]
-"guard-for-in" = "error"
-"no-constant-binary-expression" = "error"
-"no-unassigned-vars" = "error"
 "react/jsx-props-no-spread-multi" = "error"
 "react/no-unknown-property" = ["error", { ignore = ["closedby"] }]
 "unicorn/error-message" = "error"
 "unicorn/require-number-to-fixed-digits-argument" = "error"
-"bun:test/no-disabled-tests" = "error"
 "oxc/only-used-in-recursion" = "error"
 "no-return-assign" = "error"
 "promise/no-nesting" = "error"
-"no-unused-expressions" = "error"
 "no-shadow" = "error"
 "no-new" = "error"
 "react/no-unstable-nested-components" = ["error", { allowAsProps = true }]
@@ -51,15 +45,12 @@ ignorePatterns = [
 "unicorn/prefer-node-protocol" = "error"
 "prefer-template" = "error"
 "no-param-reassign" = "error"
-"typescript/prefer-as-const" = "error"
 "default-param-last" = "error"
-"typescript/prefer-enum-initializers" = "error"
 "react/self-closing-comp" = "error"
 "one-var" = ["error", "never"]
 "unicorn/prefer-number-properties" = "error"
 "typescript/no-inferrable-types" = "error"
 "no-else-return" = "error"
-"import/no-commonjs" = "error"
 "typescript/parameter-properties" = "error"
 "no-multi-assign" = "error"
 "no-multi-str" = "error"
@@ -69,7 +60,6 @@ ignorePatterns = [
 "no-lonely-if" = "error"
 "symbol-description" = "error"
 "grouped-accessor-pairs" = "error"
-"prefer-spread" = "error"
 "unicorn/no-lonely-if" = "error"
 "object-shorthand" = "error"
 "unicorn/throw-new-error" = "error"
@@ -78,9 +68,7 @@ ignorePatterns = [
 "unicorn/prefer-string-slice" = "error"
 "typescript/unified-signatures" = "error"
 "typescript/prefer-for-of" = "error"
-"preserve-caught-error" = "error"
 "no-throw-literal" = "error"
-"typescript/no-namespace" = "error"
 "import/no-default-export" = "error"
 "unicorn/filename-case" = [
 	"error",
@@ -119,7 +107,6 @@ ignorePatterns = [
 "react/no-danger-with-children" = "error"
 "react/void-dom-elements-no-children" = "error"
 "react/jsx-no-comment-textnodes" = "error"
-"react/jsx-no-duplicate-props" = "error"
 "react/jsx-no-target-blank" = "error"
 "react/jsx-no-useless-fragment" = ["error", { allowExpressions = true }]
 "jsx_a11y/alt-text" = "error"
@@ -165,10 +152,6 @@ rules = { "unicorn/filename-case" = "off" }
 [[lint.overrides]]
 files = ["**/*.ts"]
 rules = { "react/function-component-definition" = "off" }
-
-[[lint.overrides]]
-files = ["types/**/*.d.ts"]
-rules = { "typescript/no-namespace" = "off" }
 
 [[lint.overrides]]
 files = [
