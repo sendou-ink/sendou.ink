@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { addHours, subHours } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";

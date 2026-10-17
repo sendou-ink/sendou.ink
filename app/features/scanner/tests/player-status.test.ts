@@ -25,6 +25,7 @@ import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
@@ -146,15 +147,17 @@ for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "PlayerStatus",
 )) {
 	test(`other gates stay quiet on player-status/${fixture.name}`, async () => {
-		for (const [name, other] of otherDetectors) {
-			if (name === "death") continue;
-			const { gate } = await runDetectorOnFixture(other, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${name} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		await withFixtureFrame(fixture, (frame) => {
+			for (const [name, other] of otherDetectors) {
+				if (name === "death") continue;
+				const gate = other.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${name} gate fired (score=${gate.score.toFixed(3)})`,
+				);
+			}
+		});
 	});
 }
 

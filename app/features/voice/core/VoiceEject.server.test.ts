@@ -1,18 +1,18 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import * as ChatRoomFactory from "~/db/seed/factories/ChatRoomFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as VoiceSessionFactory from "~/db/seed/factories/VoiceSessionFactory";
 import { db } from "~/db/sql";
-import * as Daily from "./Daily.server";
+import type * as Daily from "./Daily.server";
 import * as VoiceEject from "./VoiceEject.server";
 import * as VoicePresence from "./VoicePresence.server";
 
+const ejectUsers = vi.fn<typeof Daily.ejectUsers>(async () => {});
+
 vi.mock("./Daily.server", () => ({
 	isConfigured: () => true,
-	ejectUsers: vi.fn(async () => {}),
+	ejectUsers,
 }));
-
-const ejectUsers = vi.mocked(Daily.ejectUsers);
 
 const users = UserFactory.pool();
 const leaverId = () => users.id(1);

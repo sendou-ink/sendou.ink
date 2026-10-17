@@ -1,6 +1,6 @@
+import { describe, expect, test } from "bun:test";
 import { addHours, subHours } from "date-fns";
 import * as v from "valibot";
-import { describe, expect, test } from "vitest";
 import type { TeamPickSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { StageId } from "~/modules/in-game-lists/types";

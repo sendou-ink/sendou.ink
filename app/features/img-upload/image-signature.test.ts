@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { imageExtensionFromMagicBytes } from "./image-signature";
 
 const header = (...parts: Array<string | number[]>) =>

@@ -1,6 +1,6 @@
+import { describe, expect, test } from "bun:test";
 import { addWeeks } from "date-fns";
 import * as R from "remeda";
-import { describe, expect, test } from "vitest";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";

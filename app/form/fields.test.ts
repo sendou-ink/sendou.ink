@@ -1,5 +1,5 @@
+import { afterEach, describe, expect, test } from "bun:test";
 import * as v from "valibot";
-import { afterEach, describe, expect, test } from "vitest";
 import { localDateToDayMonthYear } from "~/utils/dates";
 import { dayMonthYear, textField, textFieldOptional } from "./fields";
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { stripDisabledEffects } from "./model-analysis";
 
 const SOURCE = { graph: { children: [] }, texture: {}, metadata: {} };

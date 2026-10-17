@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as Visibility from "./Visibility";
 
 const CREATED_AT = 100;

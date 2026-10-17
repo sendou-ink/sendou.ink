@@ -1,10 +1,10 @@
+import { expect } from "bun:test";
 import type {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
 	Params,
 } from "react-router";
 import type * as v from "valibot";
-import { expect } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { actAs } from "~/db/seed/core/actAs";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
@@ -99,7 +99,7 @@ export function wrappedAction<T extends AnySchema>({
 
 				return response;
 			} catch (thrown) {
-				// vitest only shows logs for failed tests, so this just adds context
+				// adds context to the failure of a test
 				logger.error("Error in wrappedAction:", thrown);
 
 				if (thrown instanceof Response) {

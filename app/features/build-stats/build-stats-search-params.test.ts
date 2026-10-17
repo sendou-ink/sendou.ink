@@ -1,4 +1,4 @@
-import { describe, test } from "vitest";
+import { describe, test } from "bun:test";
 import { RECENT_PATCHES } from "~/features/builds/builds-constants";
 import {
 	assertDecodesToDefault,

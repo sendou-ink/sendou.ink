@@ -25,6 +25,7 @@ import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { readImage } from "../node/image-io";
 import { loadScoreboardResources } from "../node/resources";
@@ -173,14 +174,16 @@ const otherDetectors: readonly [string, Detector<unknown>][] = [
 ];
 for (const fixture of fixtures.filter((f) => f.expected.event === "Kill")) {
 	test(`other gates stay quiet on kill/${fixture.name}`, async () => {
-		for (const [name, other] of otherDetectors) {
-			const { gate } = await runDetectorOnFixture(other, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${name} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		await withFixtureFrame(fixture, (frame) => {
+			for (const [name, other] of otherDetectors) {
+				const gate = other.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${name} gate fired (score=${gate.score.toFixed(3)})`,
+				);
+			}
+		});
 	});
 }
 

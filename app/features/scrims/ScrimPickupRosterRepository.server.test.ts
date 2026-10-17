@@ -1,5 +1,12 @@
+import {
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { sub } from "date-fns";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { withUserId } from "~/utils/Test";
 import * as ScrimPickupRosterRepository from "./ScrimPickupRosterRepository.server";
@@ -61,14 +68,14 @@ describe("ScrimPickupRosterRepository", () => {
 		const now = new Date();
 		vi.useFakeTimers();
 
-		vi.setSystemTime(sub(now, { days: 3 }));
+		setSystemTime(sub(now, { days: 3 }));
 		await upsert([2, 3, 4]);
 		const [firstUsedRoster] = await findAllRecent();
 
-		vi.setSystemTime(sub(now, { days: 2 }));
+		setSystemTime(sub(now, { days: 2 }));
 		await upsert([2, 3, 5]);
 
-		vi.setSystemTime(now);
+		setSystemTime(now);
 		await upsert([2, 3, 4]);
 
 		const rosters = await findAllRecent();
@@ -97,7 +104,7 @@ describe("ScrimPickupRosterRepository", () => {
 	test("deletes expired rosters only", async () => {
 		const now = new Date();
 		vi.useFakeTimers();
-		vi.setSystemTime(
+		setSystemTime(
 			sub(now, {
 				months: SCRIM.PICKUP_ROSTER_EXPIRES_IN_MONTHS,
 				days: 1,

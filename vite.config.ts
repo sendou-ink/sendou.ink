@@ -67,14 +67,6 @@ export default defineConfig((config) => {
 				plugins: [hoverOnlyOnHoverDevices()],
 			},
 		},
-		test: {
-			globalSetup: ["./scripts/ensure-test-db.ts"],
-			projects: [
-				"./vitest.unit.config.ts",
-				"./vitest.browser.config.ts",
-				"./vitest.scanner.config.ts",
-			],
-		},
 		define: {
 			__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
 		},

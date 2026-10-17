@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as Matches from "./Matches";

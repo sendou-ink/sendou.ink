@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { RunningTournaments } from "./RunningTournaments.server";
 import { testTournament, tournamentCtxTeam } from "./tests/test-utils";
 

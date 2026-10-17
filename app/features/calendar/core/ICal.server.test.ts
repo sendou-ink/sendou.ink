@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { CalendarEvent } from "../calendar-types";
 import * as ICal from "./ICal.server";
 

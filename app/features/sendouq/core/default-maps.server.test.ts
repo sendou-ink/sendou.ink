@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -10,10 +10,8 @@ import {
 	getDefaultMapWeights,
 } from "./default-maps.server";
 
-const { mockSeasonCurrent, mockSeasonPrevious } = vi.hoisted(() => ({
-	mockSeasonCurrent: vi.fn(),
-	mockSeasonPrevious: vi.fn(),
-}));
+const mockSeasonCurrent = vi.fn();
+const mockSeasonPrevious = vi.fn();
 
 vi.mock("~/features/mmr/core/Seasons", () => ({
 	current: mockSeasonCurrent,

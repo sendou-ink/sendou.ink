@@ -1,6 +1,6 @@
+import { describe, expect, test } from "bun:test";
 import { addDays, subDays } from "date-fns";
 import type * as v from "valibot";
-import { describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";

@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { add, sub } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";

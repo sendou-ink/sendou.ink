@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";

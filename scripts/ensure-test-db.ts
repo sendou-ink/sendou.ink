@@ -13,7 +13,12 @@ const MIGRATIONS_DIR = path.join(ROOT_DIR, "migrations");
 const MIGRATE_SCRIPT = path.join(ROOT_DIR, "scripts", "migrate.ts");
 const TEST_DB_PATH = path.join(ROOT_DIR, "db-test.sqlite3");
 
-export function setup() {
+// run before `bun test`, as its parallel workers would race to migrate the same file
+if (import.meta.main) {
+	setupUnitTestDb();
+}
+
+function setupUnitTestDb() {
 	ensureMigratedDb(TEST_DB_PATH);
 
 	// test workers only read this file to copy its schema; out of WAL there are no

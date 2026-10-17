@@ -16,6 +16,7 @@ import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
@@ -120,23 +121,25 @@ const replayDetector = createScoreboardBattleLogReplayDetector(resources);
 const deathDetector = createDeathDetector(resources);
 for (const fixture of fixtures.filter((f) => f.expected.event === "MapStart")) {
 	test(`other gates stay quiet on map-start/${fixture.name}`, async () => {
-		const live = await runDetectorOnFixture(scoreboardDetector, fixture);
-		assert.equal(
-			live.gate.pass,
-			false,
-			`scoreboard gate fired (score=${live.gate.score.toFixed(3)})`,
-		);
-		const replay = await runDetectorOnFixture(replayDetector, fixture);
-		assert.equal(
-			replay.gate.pass,
-			false,
-			`replay gate fired (score=${replay.gate.score.toFixed(3)})`,
-		);
-		const death = await runDetectorOnFixture(deathDetector, fixture);
-		assert.equal(
-			death.gate.pass,
-			false,
-			`death gate fired (score=${death.gate.score.toFixed(3)})`,
-		);
+		await withFixtureFrame(fixture, (frame) => {
+			const live = scoreboardDetector.gate(frame);
+			assert.equal(
+				live.pass,
+				false,
+				`scoreboard gate fired (score=${live.score.toFixed(3)})`,
+			);
+			const replay = replayDetector.gate(frame);
+			assert.equal(
+				replay.pass,
+				false,
+				`replay gate fired (score=${replay.score.toFixed(3)})`,
+			);
+			const death = deathDetector.gate(frame);
+			assert.equal(
+				death.pass,
+				false,
+				`death gate fired (score=${death.score.toFixed(3)})`,
+			);
+		});
 	});
 }

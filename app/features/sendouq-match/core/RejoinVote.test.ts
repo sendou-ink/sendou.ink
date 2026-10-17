@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { SQMatch } from "~/features/sendouq/core/SendouQ.server";
 import * as RejoinVote from "./RejoinVote";
 

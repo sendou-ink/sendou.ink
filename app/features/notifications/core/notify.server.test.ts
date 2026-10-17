@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { withUserId } from "~/utils/Test";
+import { advanceTimersByTimeAsync } from "~/utils/test-helpers";
 import { APP_ICON_URL } from "~/utils/urls";
 import * as NotificationRepository from "../NotificationRepository.server";
 import { notificationMeta } from "../notifications-utils";
@@ -14,29 +14,29 @@ import { runWithoutWebPush } from "./push-suppression.server";
 
 const users = UserFactory.pool();
 
-const { mockSendNotification, mockWebPushEnabled } = vi.hoisted(() => ({
-	mockSendNotification: vi.fn(),
-	mockWebPushEnabled: { value: false },
-}));
+const mockSendNotification = vi.fn();
 
-vi.mock("./webPush.server", () => ({
-	get webPushEnabled() {
-		return mockWebPushEnabled.value;
-	},
-	webPush: {
-		sendNotification: mockSendNotification,
-	},
-}));
+const mockWebPushEnabled = (enabled: boolean) =>
+	vi.mock("./webPush.server", () => ({
+		webPushEnabled: enabled,
+		webPush: {
+			sendNotification: mockSendNotification,
+		},
+	}));
+
+mockWebPushEnabled(false);
+
+const mockNotifyNotificationsChanged = vi.fn();
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	notifyNotificationsChanged: vi.fn(),
+	notifyNotificationsChanged: mockNotifyNotificationsChanged,
 }));
 
 describe("notify()", () => {
 	beforeEach(async () => {
 		await users.create(20);
 		clearSentNotificationsForTesting();
-		vi.mocked(ChatSystemMessage.notifyNotificationsChanged).mockClear();
+		mockNotifyNotificationsChanged.mockClear();
 	});
 
 	test("different recipients receive same notification", async () => {
@@ -119,7 +119,7 @@ describe("notify()", () => {
 			},
 		});
 
-		expect(ChatSystemMessage.notifyNotificationsChanged).toHaveBeenCalledWith([
+		expect(mockNotifyNotificationsChanged).toHaveBeenCalledWith([
 			users.id(1),
 			users.id(2),
 		]);
@@ -133,9 +133,7 @@ describe("notify()", () => {
 			},
 		});
 
-		expect(ChatSystemMessage.notifyNotificationsChanged).toHaveBeenCalledTimes(
-			1,
-		);
+		expect(mockNotifyNotificationsChanged).toHaveBeenCalledTimes(1);
 	});
 
 	test("identical notification is delivered again when repeated a day later", async () => {
@@ -336,7 +334,7 @@ describe("notify() - web push notifications", () => {
 		await users.create(20);
 		clearSentNotificationsForTesting();
 		mockSendNotification.mockClear();
-		mockWebPushEnabled.value = false;
+		mockWebPushEnabled(false);
 	});
 
 	const subscribe = (userId: number, endpoint: string) =>
@@ -360,7 +358,7 @@ describe("notify() - web push notifications", () => {
 		try {
 			await notify(args);
 			await duringGracePeriod?.();
-			await vi.advanceTimersByTimeAsync(PUSH_NOTIFICATION_GRACE_PERIOD_MS);
+			await advanceTimersByTimeAsync(PUSH_NOTIFICATION_GRACE_PERIOD_MS);
 		} finally {
 			vi.useRealTimers();
 		}
@@ -368,7 +366,7 @@ describe("notify() - web push notifications", () => {
 
 	test("sends web push notification after the grace period", async () => {
 		await subscribe(users.id(1), "https://fcm.googleapis.com/fcm/send/1");
-		mockWebPushEnabled.value = true;
+		mockWebPushEnabled(true);
 
 		vi.useFakeTimers();
 		try {
@@ -382,7 +380,7 @@ describe("notify() - web push notifications", () => {
 
 			expect(mockSendNotification).not.toHaveBeenCalled();
 
-			await vi.advanceTimersByTimeAsync(PUSH_NOTIFICATION_GRACE_PERIOD_MS);
+			await advanceTimersByTimeAsync(PUSH_NOTIFICATION_GRACE_PERIOD_MS);
 		} finally {
 			vi.useRealTimers();
 		}
@@ -408,7 +406,7 @@ describe("notify() - web push notifications", () => {
 	test("sends web push to multiple subscriptions", async () => {
 		await subscribe(users.id(1), "https://fcm.googleapis.com/fcm/send/1");
 		await subscribe(users.id(2), "https://fcm.googleapis.com/fcm/send/2");
-		mockWebPushEnabled.value = true;
+		mockWebPushEnabled(true);
 
 		await notifyAndElapseGracePeriod({
 			userIds: [users.id(1), users.id(2)],
@@ -430,7 +428,7 @@ describe("notify() - web push notifications", () => {
 	test("deletes a subscription pointing outside the known push services instead of sending to it", async () => {
 		await subscribe(users.id(1), "https://attacker.example/push");
 		await subscribe(users.id(1), "https://fcm.googleapis.com/fcm/send/1");
-		mockWebPushEnabled.value = true;
+		mockWebPushEnabled(true);
 
 		await notifyAndElapseGracePeriod({
 			userIds: [users.id(1)],
@@ -466,7 +464,7 @@ describe("notify() - web push notifications", () => {
 
 	test("creates the notification but sends no web push under runWithoutWebPush", async () => {
 		await subscribe(users.id(1), "https://fcm.googleapis.com/fcm/send/1");
-		mockWebPushEnabled.value = true;
+		mockWebPushEnabled(true);
 
 		await notifyAndElapseGracePeriod({
 			userIds: [users.id(1)],
@@ -498,7 +496,7 @@ describe("notify() - web push notifications", () => {
 	test("skips the push for a user who saw the notification during the grace period", async () => {
 		await subscribe(users.id(1), "https://fcm.googleapis.com/fcm/send/1");
 		await subscribe(users.id(2), "https://fcm.googleapis.com/fcm/send/2");
-		mockWebPushEnabled.value = true;
+		mockWebPushEnabled(true);
 
 		await notifyAndElapseGracePeriod(
 			{
@@ -524,7 +522,7 @@ describe("notify() - web push notifications", () => {
 	test("skips the push for users who had the notification seen by default", async () => {
 		await subscribe(users.id(1), "https://fcm.googleapis.com/fcm/send/1");
 		await subscribe(users.id(2), "https://fcm.googleapis.com/fcm/send/2");
-		mockWebPushEnabled.value = true;
+		mockWebPushEnabled(true);
 
 		await notifyAndElapseGracePeriod({
 			userIds: [users.id(1), users.id(2)],
@@ -542,7 +540,7 @@ describe("notify() - web push notifications", () => {
 
 	test("includes opponent team name for scrim notifications", async () => {
 		await subscribe(users.id(1), "https://fcm.googleapis.com/fcm/send/1");
-		mockWebPushEnabled.value = true;
+		mockWebPushEnabled(true);
 
 		await notifyAndElapseGracePeriod({
 			userIds: [users.id(1)],

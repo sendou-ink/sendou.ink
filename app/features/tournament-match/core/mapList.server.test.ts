@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { SENDOUQ_MAP_POOL } from "~/features/match-profile/banned-maps";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";

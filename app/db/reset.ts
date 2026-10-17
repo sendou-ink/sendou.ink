@@ -5,7 +5,7 @@ import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/
 
 /**
  * Deletes all rows except migration bookkeeping. `app/test-setup.ts` runs it after every writing
- * vitest test and the e2e reset fixture before every test; call by hand only to wipe *within* a test.
+ * unit test and the e2e reset fixture before every test; call by hand only to wipe *within* a test.
  */
 export const dbReset = async () => {
 	await deleteAllRows();

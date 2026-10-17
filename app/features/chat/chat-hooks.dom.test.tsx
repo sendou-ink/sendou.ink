@@ -1,0 +1,193 @@
+import { afterEach, describe, expect, test, vi } from "bun:test";
+import { render, screen, waitFor } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
+import type * as React from "react";
+import { createMemoryRouter, RouterProvider, useFetcher } from "react-router";
+import type { ServerEvent } from "~/features/events/events-types";
+import {
+	useHoldRevalidationsDuringSubmissions,
+	useLiveRevalidation,
+	useServerRevalidationEvents,
+} from "./chat-hooks";
+
+const mocks = {
+	holdRevalidations: vi.fn(),
+	releaseHold: vi.fn(),
+	revalidateWithScope: vi.fn(),
+	scheduleBroadcastRevalidation: vi.fn(),
+	user: null as { id: number } | null,
+	catchUpOptions: null as {
+		enabled: boolean;
+		onCatchUp: () => void;
+	} | null,
+	serverEventListener: null as ((event: unknown) => void) | null,
+};
+
+vi.mock("~/features/auth/core/user", () => ({
+	useUser: () => mocks.user,
+}));
+
+vi.mock("./revalidation-scope", () => ({
+	holdRevalidations: mocks.holdRevalidations,
+	revalidateWithScope: mocks.revalidateWithScope,
+	scheduleBroadcastRevalidation: mocks.scheduleBroadcastRevalidation,
+}));
+
+vi.mock("~/features/events/events-hooks", () => ({
+	useEventsTopic: () => {},
+	useEventStreamCatchUp: (options: {
+		enabled: boolean;
+		onCatchUp: () => void;
+	}) => {
+		mocks.catchUpOptions = options;
+		return () => {};
+	},
+	useServerEventListener: (listener: (event: unknown) => void) => {
+		mocks.serverEventListener = listener;
+	},
+}));
+
+const renderWithRouter = (element: React.ReactElement) =>
+	render(
+		<RouterProvider router={createMemoryRouter([{ path: "/", element }])} />,
+	);
+
+afterEach(() => {
+	mocks.holdRevalidations.mockReset();
+	mocks.releaseHold.mockClear();
+	mocks.revalidateWithScope.mockClear();
+	mocks.scheduleBroadcastRevalidation.mockClear();
+	mocks.user = null;
+	mocks.catchUpOptions = null;
+	mocks.serverEventListener = null;
+});
+
+function LiveRevalidator({ enabled }: { enabled: boolean }) {
+	useLiveRevalidation(enabled);
+
+	return null;
+}
+
+describe("useLiveRevalidation", () => {
+	test.each([
+		{ why: "logged in and enabled", user: { id: 1 }, enabled: true, on: true },
+		{ why: "logged out visitor", user: null, enabled: true, on: false },
+		{ why: "explicitly disabled", user: { id: 1 }, enabled: false, on: false },
+	])("catching up is $on for a $why", ({ user, enabled, on }) => {
+		mocks.user = user;
+
+		renderWithRouter(<LiveRevalidator enabled={enabled} />);
+
+		expect(mocks.catchUpOptions?.enabled).toBe(on);
+	});
+
+	test("a catch-up revalidates unscoped, without the broadcast jitter on top", () => {
+		mocks.user = { id: 1 };
+
+		renderWithRouter(<LiveRevalidator enabled />);
+		mocks.catchUpOptions?.onCatchUp();
+
+		expect(mocks.revalidateWithScope).toHaveBeenCalledWith(
+			expect.any(Function),
+			undefined,
+		);
+		expect(mocks.scheduleBroadcastRevalidation).not.toHaveBeenCalled();
+	});
+});
+
+function RevalidationEvents() {
+	useServerRevalidationEvents(1);
+
+	return null;
+}
+
+const emitServerEvent = (event: ServerEvent) => {
+	mocks.serverEventListener?.(event);
+};
+
+describe("useServerRevalidationEvents", () => {
+	test("schedules a revalidation for another actor's broadcast", () => {
+		renderWithRouter(<RevalidationEvents />);
+
+		emitServerEvent({
+			kind: "revalidate",
+			scope: "MATCH_RESULTS",
+			authorUserId: 2,
+		});
+
+		expect(mocks.scheduleBroadcastRevalidation).toHaveBeenCalledWith(
+			expect.any(Function),
+			"MATCH_RESULTS",
+		);
+	});
+
+	test("skips the current user's own broadcast", () => {
+		renderWithRouter(<RevalidationEvents />);
+
+		emitServerEvent({ kind: "revalidate", authorUserId: 1 });
+
+		expect(mocks.scheduleBroadcastRevalidation).not.toHaveBeenCalled();
+	});
+
+	test("ignores events of other kinds", () => {
+		renderWithRouter(<RevalidationEvents />);
+
+		emitServerEvent({ kind: "notificationsChanged" });
+
+		expect(mocks.scheduleBroadcastRevalidation).not.toHaveBeenCalled();
+	});
+});
+
+function SubmittingFetcher({ method }: { method: "get" | "post" }) {
+	useHoldRevalidationsDuringSubmissions();
+	const fetcher = useFetcher();
+
+	return (
+		<fetcher.Form method={method} action="/action">
+			<button type="submit">Submit</button>
+		</fetcher.Form>
+	);
+}
+
+describe("useHoldRevalidationsDuringSubmissions", () => {
+	test("holds revalidations while a fetcher submission is in flight", async () => {
+		mocks.holdRevalidations.mockReturnValue(mocks.releaseHold);
+		let resolveAction!: () => void;
+		const router = createMemoryRouter([
+			{ path: "/", element: <SubmittingFetcher method="post" /> },
+			{
+				path: "/action",
+				action: () =>
+					new Promise<null>((resolve) => {
+						resolveAction = () => resolve(null);
+					}),
+			},
+		]);
+
+		render(<RouterProvider router={router} />);
+		await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+		await waitFor(() => expect(mocks.holdRevalidations).toHaveBeenCalled());
+		expect(mocks.releaseHold).not.toHaveBeenCalled();
+
+		resolveAction();
+		await waitFor(() => expect(mocks.releaseHold).toHaveBeenCalledTimes(1));
+	});
+
+	test("does not hold for a GET submission", async () => {
+		const router = createMemoryRouter([
+			{ path: "/", element: <SubmittingFetcher method="get" /> },
+			{ path: "/action", loader: () => new Promise<null>(() => {}) },
+		]);
+
+		render(<RouterProvider router={router} />);
+		await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+		await waitFor(() =>
+			expect(router.state.fetchers.values().next().value?.state).toBe(
+				"loading",
+			),
+		);
+		expect(mocks.holdRevalidations).not.toHaveBeenCalled();
+	});
+});

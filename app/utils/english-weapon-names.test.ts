@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import { englishWeaponName, weaponSlug } from "./english-weapon-names";
 

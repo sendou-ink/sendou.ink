@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
 	existsSync,
 	mkdtempSync,
@@ -8,7 +9,6 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { strToU8, type Zippable, zipSync } from "fflate";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { matchZip } from "../../components/match-zip";
 import type { ScanEvent } from "../../components/session-data";
 import type { DeathData } from "../../core/detectors/death/index";

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as CooldownsWithoutStorage from "./Cooldowns";
 
 describe("Cooldowns.until", () => {
@@ -27,23 +27,31 @@ describe("Cooldowns.until", () => {
 	describe("with local storage", () => {
 		const storage = new Map<string, string>();
 		let Cooldowns: typeof import("./Cooldowns");
+		let freshImports = 0;
 
 		beforeEach(async () => {
 			storage.clear();
-			vi.stubGlobal("window", {
+			(globalThis as { window?: unknown }).window = {
 				localStorage: {
 					getItem: (key: string) => storage.get(key) ?? null,
 					setItem: (key: string, value: string) => storage.set(key, value),
 				},
 				addEventListener: () => {},
-			});
-			// a fresh module, the tests above kept their cooldowns in memory without storage
-			vi.resetModules();
-			Cooldowns = await import("./Cooldowns");
+			};
+			// fresh modules, the tests above kept their cooldowns in memory without storage
+			freshImports++;
+			const freshPersistedState = await import(
+				`~/modules/persisted-state/persisted-state?fresh=${freshImports}`
+			);
+			vi.mock(
+				"~/modules/persisted-state/persisted-state",
+				() => freshPersistedState,
+			);
+			Cooldowns = await import(`./Cooldowns?fresh=${freshImports}`);
 		});
 
 		afterEach(() => {
-			vi.unstubAllGlobals();
+			delete (globalThis as { window?: unknown }).window;
 		});
 
 		test("reads a cooldown another tab started", () => {

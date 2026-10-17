@@ -20,6 +20,7 @@ import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
@@ -277,13 +278,15 @@ const otherDetectors: Detector<unknown>[] = [
 ];
 for (const fixture of fixtures.filter((f) => f.expected.event === "Minimap")) {
 	test(`other gates stay quiet on minimap/${fixture.name}`, async () => {
-		for (const other of otherDetectors) {
-			const { gate } = await runDetectorOnFixture(other, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${other.id} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		await withFixtureFrame(fixture, (frame) => {
+			for (const other of otherDetectors) {
+				const gate = other.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${other.id} gate fired (score=${gate.score.toFixed(3)})`,
+				);
+			}
+		});
 	});
 }

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { withUserId } from "~/utils/Test";
 import * as PrivateUserNoteRepository from "./PrivateUserNoteRepository.server";

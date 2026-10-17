@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { UserCardData, UserCardsById } from "./user-card-types";
 import { privateNoteSentimentScore } from "./user-card-utils";
 

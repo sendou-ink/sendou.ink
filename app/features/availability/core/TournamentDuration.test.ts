@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { Tables } from "~/db/tables";
 import * as TournamentDuration from "./TournamentDuration";
 

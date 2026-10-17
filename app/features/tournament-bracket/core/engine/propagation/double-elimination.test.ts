@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { createResolved } from "../create";
 import * as Engine from "../index";
 import type { BracketData } from "../types";

@@ -1,6 +1,6 @@
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { subHours } from "date-fns";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { chatRoomChannel, userChannel } from "~/features/events/events-types";

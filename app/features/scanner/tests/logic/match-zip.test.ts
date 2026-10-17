@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { strFromU8, unzipSync } from "fflate";
-import { describe, expect, test } from "vitest";
 import { matchZip } from "../../components/match-zip";
 import type { ScanEvent } from "../../components/session-data";
 import type { ExportClip } from "../../core/csv/matches";

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -14,6 +14,7 @@ import { reportScore } from "~/features/tournament-match/core/reportScore.server
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
+import { waitFor } from "~/utils/test-helpers";
 import * as BracketRepository from "./BracketRepository.server";
 import * as Engine from "./core/engine";
 import { executeBracketOperation } from "./core/executeBracketOperation.server";
@@ -161,9 +162,7 @@ describe("BracketRepository.applyMatchChanges", () => {
 
 		await playOutMatch(setup);
 
-		await vi.waitFor(() =>
-			expect(received).toEqual([{ kind: "roomsChanged" }]),
-		);
+		await waitFor(() => expect(received).toEqual([{ kind: "roomsChanged" }]));
 	});
 
 	test("reopening a completed match marks its chat room back active", async () => {

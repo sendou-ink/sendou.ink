@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { db } from "~/db/sql";
 import * as RequestLog from "./RequestLog.server";
 

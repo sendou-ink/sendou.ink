@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import * as AvailabilityWeekFactory from "~/db/seed/factories/AvailabilityWeekFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -7,9 +15,7 @@ import { NotifyScheduleTeamReminderRoutine } from "./notifyScheduleTeamReminder"
 
 const users = UserFactory.pool();
 
-const { mockNotify } = vi.hoisted(() => ({
-	mockNotify: vi.fn(),
-}));
+const mockNotify = vi.fn();
 
 vi.mock("~/features/notifications/core/notify.server", () => ({
 	notify: mockNotify,
@@ -28,7 +34,7 @@ const reportCurrentWeek = (userId: number) =>
 describe("NotifyScheduleTeamReminderRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(MONDAY);
+		setSystemTime(MONDAY);
 		await users.create(2);
 		mockNotify.mockClear();
 	});
@@ -58,7 +64,7 @@ describe("NotifyScheduleTeamReminderRoutine", () => {
 	});
 
 	test("does nothing on a day that is not the first of the week", async () => {
-		vi.setSystemTime(WEDNESDAY);
+		setSystemTime(WEDNESDAY);
 		await TeamFactory.create({ memberUserIds: [users.id(1), users.id(2)] });
 		await reportCurrentWeek(users.id(1));
 

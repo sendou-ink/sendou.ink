@@ -1,5 +1,13 @@
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { addDays, subDays } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
@@ -561,12 +569,12 @@ describe("UserRepository", () => {
 		});
 
 		test("returns the same order twice on the same UTC day", async () => {
-			vi.useFakeTimers({ toFake: ["Date"] });
-			vi.setSystemTime(new Date("2026-08-29T01:00:00Z"));
+			vi.useFakeTimers();
+			setSystemTime(new Date("2026-08-29T01:00:00Z"));
 
 			const first = await UserRepository.findAllPatronsForFooter();
 
-			vi.setSystemTime(new Date("2026-08-29T23:00:00Z"));
+			setSystemTime(new Date("2026-08-29T23:00:00Z"));
 
 			const second = await UserRepository.findAllPatronsForFooter();
 
@@ -574,12 +582,12 @@ describe("UserRepository", () => {
 		});
 
 		test("shuffles into a new order when the UTC day changes", async () => {
-			vi.useFakeTimers({ toFake: ["Date"] });
-			vi.setSystemTime(new Date("2026-08-29T23:00:00Z"));
+			vi.useFakeTimers();
+			setSystemTime(new Date("2026-08-29T23:00:00Z"));
 
 			const today = await UserRepository.findAllPatronsForFooter();
 
-			vi.setSystemTime(new Date("2026-08-30T01:00:00Z"));
+			setSystemTime(new Date("2026-08-30T01:00:00Z"));
 
 			const tomorrow = await UserRepository.findAllPatronsForFooter();
 

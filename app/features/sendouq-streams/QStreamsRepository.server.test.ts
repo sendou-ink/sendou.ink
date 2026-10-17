@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { sub } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as LiveStreamFactory from "~/db/seed/factories/LiveStreamFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";

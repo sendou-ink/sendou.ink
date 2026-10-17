@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import * as R from "remeda";
-import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import type {
 	ScannerMatch,

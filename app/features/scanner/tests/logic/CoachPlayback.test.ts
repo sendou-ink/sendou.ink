@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as CoachPlayback from "../../core/CoachPlayback";
 
 const STARTS = [100, 40, 10];

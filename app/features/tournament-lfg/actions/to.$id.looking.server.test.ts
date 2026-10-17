@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import { addDays, subDays } from "date-fns";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";

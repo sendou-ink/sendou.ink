@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { WhoSide } from "../tournament-bracket-constants";

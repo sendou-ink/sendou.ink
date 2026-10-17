@@ -153,4 +153,5 @@ For developers reading the [Architecture](https://docs.sendou.ink/dev/architectu
 - **Internationalization**: i18next
 - **Testing**:
    - End-to-End (E2E): Playwright
-   - Unit/Integration: Vitest
+   - Unit/Integration: bun:test
+   - Components: bun:test + happy-dom + Testing Library

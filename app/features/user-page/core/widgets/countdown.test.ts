@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as Countdown from "./countdown";
 
 const NOW = new Date("2026-09-05T12:00:00Z");

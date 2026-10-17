@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { HOURS_MINUTES_SECONDS_REGEX } from "../vods-schemas";
 import { formatTime } from "./vods.new";
 

@@ -1,6 +1,6 @@
+import { describe, expect, test } from "bun:test";
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, test } from "vitest";
 import { DEFAULT_LANGUAGE, gameLanguages } from "./config";
 
 const LOCALES_DIR = path.join(process.cwd(), "locales");

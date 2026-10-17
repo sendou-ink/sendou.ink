@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { ServerEvent } from "../events-types";
 import * as EventBus from "./EventBus.server";
 

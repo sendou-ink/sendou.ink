@@ -53,9 +53,9 @@ After updating, re-run `bun why <pkg>` for every alerted package and confirm eac
 2. Find how the package reaches our code (`bun why`) and where sendou.ink feeds that parent package data that an attacker could control (user content, uploaded/opened files, clipboard, URL params, other users' data from the DB).
 3. Read the vulnerable package's installed source in `node_modules/<pkg>/src` (or `node_modules/<parent>/node_modules/<pkg>/src` for a version nested under its parent) and every caller the parent wires up, and trace whether attacker input can satisfy the preconditions.
 4. Confirm empirically where practical: write a throwaway test reproducing the advisory's PoC against the installed version, then the same payloads through the path our app actually uses.
-   - Put it inside the repo (e.g. `app/zz-tmp/<name>.browser.test.ts` for anything needing a DOM) and run it with `bunx vitest run <file>`; delete it afterwards.
+   - Put it inside the repo (e.g. `app/zz-tmp/<name>.dom.test.ts` for anything needing a DOM) and run it with `bun test <file>` (`bun run test:dom <file>` for a DOM test); delete it afterwards.
    - A transitive package nested under its parent (not hoisted) is imported by absolute path into `node_modules/<parent>/node_modules/...`, the parent by the name `package.json` uses.
-   - To see output, fail a deliberate `expect(out).toEqual({})`; `console.log` isn't shown.
+   - To see output, run with `TEST_LOGS=all`; `console.log` of passing tests isn't shown otherwise.
 5. Report to the user: the preconditions, where untrusted input enters, why it does or doesn't reach the vulnerable code, what the test showed, and what future change would make it exploitable. Recommend either dismissing the alert (with the Dependabot dismissal reason that fits, e.g. "Vulnerable code is not actually used") or a mitigation (patch via `bun patch`, or the major upgrade as a separate task).
 
 Dismissing an alert is outward-facing; leave it to the user unless they ask you to do it.

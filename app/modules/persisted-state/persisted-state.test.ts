@@ -1,5 +1,5 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as v from "valibot";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as PersistedState from "./persisted-state";
 import {
 	assertDecodesToDefault,
@@ -106,16 +106,18 @@ describe("without web storage", () => {
 
 describe("dev tools registry", () => {
 	beforeEach(() => {
-		vi.stubGlobal("window", {
-			localStorage: memoryStorage(),
-			sessionStorage: memoryStorage(),
-			addEventListener: () => {},
-			removeEventListener: () => {},
+		Object.assign(globalThis, {
+			window: {
+				localStorage: memoryStorage(),
+				sessionStorage: memoryStorage(),
+				addEventListener: () => {},
+				removeEventListener: () => {},
+			},
 		});
 	});
 
 	afterEach(() => {
-		vi.unstubAllGlobals();
+		Reflect.deleteProperty(globalThis, "window");
 	});
 
 	test("lists every definition loaded so far", () => {
@@ -142,7 +144,7 @@ describe("dev tools registry", () => {
 		PersistedState.removeRawEntryForDevTools("local", "test-number-list");
 		unsubscribe();
 
-		expect(listener).toHaveBeenCalledOnce();
+		expect(listener).toHaveBeenCalledTimes(1);
 		expect(PersistedState.read(numberList)).toEqual([]);
 	});
 
@@ -156,7 +158,7 @@ describe("dev tools registry", () => {
 		PersistedState.removeRawEntryForDevTools("local", "test-counts__a");
 		unsubscribe();
 
-		expect(listener).toHaveBeenCalledOnce();
+		expect(listener).toHaveBeenCalledTimes(1);
 		expect(PersistedState.readMap(counts)).toEqual({ b: 2 });
 	});
 });

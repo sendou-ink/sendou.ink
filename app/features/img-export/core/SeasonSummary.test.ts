@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as SeasonSummary from "./SeasonSummary";
 
 const win = { ownScore: 4, opponentScore: 2 };

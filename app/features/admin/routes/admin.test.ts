@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as PlusVoteFactory from "~/db/seed/factories/PlusVoteFactory";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
@@ -64,7 +72,7 @@ describe("Plus voting", () => {
 	});
 
 	test("gives correct amount of plus tiers", async () => {
-		vi.setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
+		setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
 
 		await createUsers(10);
 		await PlusVoteFactory.createMany(10, (index) => ({
@@ -79,7 +87,7 @@ describe("Plus voting", () => {
 	});
 
 	test("60% or more guarantees pass", async () => {
-		vi.setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
+		setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
 
 		await createUsers(10);
 
@@ -96,7 +104,7 @@ describe("Plus voting", () => {
 	});
 
 	test("40% or less does not pass", async () => {
-		vi.setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
+		setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
 
 		await createUsers(10);
 
@@ -113,7 +121,7 @@ describe("Plus voting", () => {
 	});
 
 	test("middle zone (40-60%) passes when quota has room", async () => {
-		vi.setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
+		setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
 
 		await createUsers(10);
 
@@ -130,7 +138,7 @@ describe("Plus voting", () => {
 	});
 
 	test("combines leaderboard and voting results (after season over)", async () => {
-		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
+		setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers();
 		await PlusVoteFactory.create({
@@ -146,7 +154,7 @@ describe("Plus voting", () => {
 	});
 
 	test("skips users from leaderboard with the skip flag for the season", async () => {
-		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
+		setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers(11);
 		await createLeaderboard(users.ids());
@@ -160,7 +168,7 @@ describe("Plus voting", () => {
 	});
 
 	test("passes a banned leaderboard user's plus server spot to the next in line", async () => {
-		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
+		setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers(7);
 		await createLeaderboard(users.ids().slice(1));
@@ -175,7 +183,7 @@ describe("Plus voting", () => {
 	});
 
 	test("plus server skip flag ignored if for past season", async () => {
-		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
+		setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers(11);
 		await createLeaderboard(users.ids());
@@ -189,7 +197,7 @@ describe("Plus voting", () => {
 	});
 
 	test("ignores leaderboard while season is ongoing", async () => {
-		vi.setSystemTime(new Date("2024-02-15T00:00:00.000Z"));
+		setSystemTime(new Date("2024-02-15T00:00:00.000Z"));
 
 		await createUsers();
 		await PlusVoteFactory.create({
@@ -206,7 +214,7 @@ describe("Plus voting", () => {
 	});
 
 	test("leaderboard gives members to all tiers", async () => {
-		vi.setSystemTime(new Date("2023-11-20T00:00:00.000Z"));
+		setSystemTime(new Date("2023-11-20T00:00:00.000Z"));
 
 		await createUsers(60);
 		await createLeaderboard(users.ids());
@@ -219,7 +227,7 @@ describe("Plus voting", () => {
 	});
 
 	test("gives membership if failed voting and is on the leaderboard", async () => {
-		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
+		setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers(1);
 		await PlusVoteFactory.create({
@@ -235,7 +243,7 @@ describe("Plus voting", () => {
 	});
 
 	test("gives membership if failed voting and is on the leaderboard and season ended last month", async () => {
-		vi.setSystemTime(new Date("2023-12-29T00:00:00.000Z"));
+		setSystemTime(new Date("2023-12-29T00:00:00.000Z"));
 
 		await createUsers(1);
 		await PlusVoteFactory.create({
@@ -251,7 +259,7 @@ describe("Plus voting", () => {
 	});
 
 	test("members who fails voting drops one tier", async () => {
-		vi.setSystemTime(new Date("2024-02-15T00:00:00.000Z"));
+		setSystemTime(new Date("2024-02-15T00:00:00.000Z"));
 
 		await createUsers(1);
 		await PlusVoteFactory.create({

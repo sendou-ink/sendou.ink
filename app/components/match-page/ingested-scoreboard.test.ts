@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { IngestedScoreboardPlayer } from "~/features/scanner-ingest/core/Scoreboards";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { resolveTimelineWeapons } from "./ingested-scoreboard";

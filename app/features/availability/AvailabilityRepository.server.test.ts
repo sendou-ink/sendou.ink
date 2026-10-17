@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { actAs } from "~/db/seed/core/actAs";
 import * as AvailabilityWeekFactory from "~/db/seed/factories/AvailabilityWeekFactory";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { parseFrontmatter } from "./frontmatter.server";
 
 describe("parseFrontmatter", () => {

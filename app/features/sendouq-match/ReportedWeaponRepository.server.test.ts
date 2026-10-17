@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";

@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { addWeeks, subWeeks } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as AvailabilityWeekFactory from "~/db/seed/factories/AvailabilityWeekFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { databaseTimestampToDate } from "~/utils/dates";

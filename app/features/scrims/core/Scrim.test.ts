@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";

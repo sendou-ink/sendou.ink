@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { FindByTournamentTeamIdItem } from "~/features/tournament-match/TournamentMatchRepository.server";
 import { type AllRoundsItem, tournamentTeamSets } from "./sets.server";
 

@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
+import { mockFetch } from "~/utils/test-helpers";
 import { fetchWithTimeout } from "./fetch";
 import { logger } from "./logger";
 
@@ -15,19 +16,18 @@ const fetchMock = vi.fn(
 describe("fetchWithTimeout", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
-		vi.stubGlobal("fetch", fetchMock);
+		mockFetch(fetchMock);
 		vi.spyOn(logger, "error").mockImplementation(() => {});
 	});
 
 	afterEach(() => {
 		vi.useRealTimers();
-		vi.unstubAllGlobals();
 		vi.restoreAllMocks();
 	});
 
 	test("aborts with a TimeoutError once the timeout elapses", async () => {
 		const promise = fetchWithTimeout("https://example.com", undefined, 100);
-		await vi.advanceTimersByTimeAsync(100);
+		vi.advanceTimersByTime(100);
 
 		await expect(promise).rejects.toMatchObject({ name: "TimeoutError" });
 		expect(logger.error).toHaveBeenCalledWith("Fetch timed out");
@@ -39,7 +39,7 @@ describe("fetchWithTimeout", () => {
 			{ signal: new AbortController().signal },
 			100,
 		);
-		await vi.advanceTimersByTimeAsync(100);
+		vi.advanceTimersByTime(100);
 
 		await expect(promise).rejects.toMatchObject({ name: "TimeoutError" });
 	});
@@ -54,7 +54,7 @@ describe("fetchWithTimeout", () => {
 		controller.abort();
 
 		await expect(promise).rejects.toMatchObject({ name: "AbortError" });
-		await vi.advanceTimersByTimeAsync(200);
+		vi.advanceTimersByTime(200);
 		expect(logger.error).not.toHaveBeenCalled();
 	});
 
@@ -63,13 +63,13 @@ describe("fetchWithTimeout", () => {
 		const promise = fetchWithTimeout("https://example.com", undefined, 100);
 
 		await expect(promise).rejects.toThrow("fetch failed");
-		await vi.advanceTimersByTimeAsync(200);
+		vi.advanceTimersByTime(200);
 		expect(logger.error).not.toHaveBeenCalled();
 	});
 
 	test("resolves with the response when it arrives in time", async () => {
 		const promise = fetchWithTimeout("https://example.com", undefined, 5000);
-		await vi.advanceTimersByTimeAsync(1000);
+		vi.advanceTimersByTime(1000);
 
 		await expect(promise).resolves.toBeInstanceOf(Response);
 		expect(logger.error).not.toHaveBeenCalled();

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { ResolvedRoom } from "~/features/chat/ChatRoomResolver.server";
 import * as VoiceAccess from "./VoiceAccess";
 

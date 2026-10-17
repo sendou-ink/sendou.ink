@@ -1,18 +1,18 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import * as Daily from "./Daily.server";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
+import type * as Daily from "./Daily.server";
 import * as VoicePresence from "./VoicePresence.server";
 
-vi.mock("./Daily.server", () => ({
-	findPresentUserIds: vi.fn(),
-}));
+const findPresentUserIds = vi.fn<typeof Daily.findPresentUserIds>();
 
-const findPresentUserIds = vi.mocked(Daily.findPresentUserIds);
+vi.mock("./Daily.server", () => ({
+	findPresentUserIds,
+}));
 
 let nextRoomId = 1;
 const newRoom = () => ({ roomId: nextRoomId++, participantUserIds: [5, 6] });
 
 beforeEach(() => {
-	vi.useFakeTimers({ toFake: ["Date"] });
+	vi.useFakeTimers();
 });
 
 afterEach(() => {

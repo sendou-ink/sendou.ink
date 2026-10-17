@@ -24,9 +24,6 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Install Playwright browsers
-        run: bunx playwright install chromium
-
       - name: Formatter/Linter
         run: bun run biome:check
       - name: Typecheck
@@ -36,7 +33,7 @@ jobs:
       - name: Typecheck docs site
         run: bun run typecheck:docs
       - name: Unit tests
-        run: bun run test:unit:browser
+        run: bun run test:unit:dom
       - name: Knip unused check
         run: bun run knip
       - name: Check translations jsons

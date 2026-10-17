@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { sql } from "kysely";
-import { describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";

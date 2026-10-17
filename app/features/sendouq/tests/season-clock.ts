@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, vi } from "vitest";
+import { afterAll, beforeAll, setSystemTime, vi } from "bun:test";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { invariant } from "~/utils/invariant";
 
@@ -22,8 +22,8 @@ const insideASeason = new Date(
 /** Pins the suite's clock inside a season; seasons are a fixed list, so between the last ending and the next being added such tests would otherwise fail. */
 export function pinClockInsideSeason() {
 	beforeAll(() => {
-		vi.useFakeTimers({ toFake: ["Date"] });
-		vi.setSystemTime(insideASeason);
+		vi.useFakeTimers();
+		setSystemTime(insideASeason);
 	});
 
 	afterAll(() => {

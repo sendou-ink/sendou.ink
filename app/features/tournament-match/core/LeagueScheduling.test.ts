@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as LeagueScheduling from "./LeagueScheduling";
 
 const HOUR = 60 * 60;

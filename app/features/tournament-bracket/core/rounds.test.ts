@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { TournamentStageSettings } from "~/db/tables-json";
 import { nullFilledArray } from "~/utils/arrays";
 import * as Engine from "./engine";

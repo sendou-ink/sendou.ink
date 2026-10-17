@@ -1,6 +1,6 @@
+import { describe, expect, test, vi } from "bun:test";
 import type { ShouldRevalidateFunction } from "react-router";
 import * as v from "valibot";
-import { describe, expect, test, vi } from "vitest";
 import * as SearchParams from "./search-params";
 import { SP } from "./search-params";
 import {

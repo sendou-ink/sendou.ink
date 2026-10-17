@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { wrappedAction } from "~/utils/Test";
 import type { userEditProfileBaseSchema } from "../user-page-schemas";

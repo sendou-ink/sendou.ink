@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import * as v from "valibot";
-import { describe, expect, test } from "vitest";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";

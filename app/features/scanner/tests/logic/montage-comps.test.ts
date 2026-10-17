@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { scannedTeamComps } from "../../components/montage-comps";
 import type { MontageGame, MontageManifestVod } from "../../core/montage";
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeWithStage, StageId } from "~/modules/in-game-lists/types";
 import { unwrap } from "~/utils/result";

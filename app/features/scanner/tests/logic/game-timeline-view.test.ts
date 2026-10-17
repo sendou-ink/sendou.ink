@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { gameTimelineProps } from "../../components/game-timeline-view";
 import type { ScannerMatch, ScannerMatchKill } from "../../core/scanner-match";
 

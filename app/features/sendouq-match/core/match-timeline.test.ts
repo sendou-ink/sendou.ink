@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import type { TFunction } from "i18next";
-import { describe, expect, test } from "vitest";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import {
 	resolveGroupNames,

@@ -135,11 +135,11 @@ Module.doTheThing()
 
 Testing is important part of every feature work. The approach the project takes is pragmatic not super focused on writing test for every single thing but especially more mission critical features should have a better test coverage. E.g. if a tournament is canceled due to a bug that can mean a lot of lost confidence from users and waste of time but if some "edge of the system" type of feature has small graphical bugs we can just fix that on user feedback.
 
-Unit testing "core logic" (i.e. no React, no DB calls) with Vitest is highly encouraged whenever feasible. Most tests are like this.
+Unit testing "core logic" (i.e. no React, no DB calls) with `bun:test` is highly encouraged whenever feasible. Most tests are like this.
 
-Vitest can also be used to write "integration tests" that call actions/loaders directly via the `wrappedAction` / `wrappedLoader` helpers from `~/utils/Test` (see `t.$customUrl.edit.test.ts` for example). These run against `db-test.sqlite3` and reset it between tests with `dbReset`. In practice this is best sparingly as they are typically slower than pure unit tests with more dependencies but also don't test the true end to end flow. Repository functions are tested the same way (`*Repository.server.test.ts`), wrapping calls in `withUserId` / `withNoUser` when the repository resolves an acting user.
+`bun:test` can also be used to write "integration tests" that call actions/loaders directly via the `wrappedAction` / `wrappedLoader` helpers from `~/utils/Test` (see `t.$customUrl.edit.test.ts` for example). These run against `db-test.sqlite3` and reset it between tests with `dbReset`. In practice this is best sparingly as they are typically slower than pure unit tests with more dependencies but also don't test the true end to end flow. Repository functions are tested the same way (`*Repository.server.test.ts`), wrapping calls in `withUserId` / `withNoUser` when the repository resolves an acting user.
 
-Components can be tested in a real browser with Vitest browser mode. These files are named `*.browser.test.tsx` and run together with the unit tests via `bun run test:unit:browser`. 
+Components and hooks can be tested against a simulated DOM (happy-dom) with Testing Library. These files are named `*.dom.test.tsx` and run after the unit tests in `bun run test:unit:dom` (or alone via `bun run test:dom`). happy-dom has no Popover API, layout, CSS, IndexedDB, canvas or audio, so overlays, scrolling and the like are covered by E2E tests instead. 
 
 Which brings us to E2E tests. For new features at least testing the happy path is encouraged. For more critical features (mainly tournament related stuff) it makes sense to test a bit more rigorously.
 

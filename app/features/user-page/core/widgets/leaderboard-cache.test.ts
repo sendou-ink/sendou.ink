@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "bun:test";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
 // One finished season, one user sitting at rank 5 (so: top-10 AND top-100).

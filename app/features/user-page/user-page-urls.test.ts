@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { userPageRedirectPath } from "./user-page-urls";
 
 const WITH_CUSTOM_URL = { id: 274, customUrl: "sendou" };

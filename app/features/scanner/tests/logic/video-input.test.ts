@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { resolveVideoInput } from "../../capture/sampler";
 
 const WEBCAM = { deviceId: "webcam", label: "FaceTime HD Camera" };

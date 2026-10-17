@@ -1,5 +1,13 @@
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { sub } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -56,7 +64,7 @@ const fetchGroupStatuses = (groupIds: number[]) =>
 describe("ResolveStaleSQMatchesRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
+		setSystemTime(new Date("2026-01-15T12:00:00Z"));
 
 		await users.create(FULL_GROUP_SIZE * 2);
 	});

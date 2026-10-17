@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import * as R from "remeda";
-import { describe, expect, test } from "vitest";
 import type { TournamentSettings } from "~/db/tables-json";
 import { toDBBoolean } from "~/utils/sql";
 import { invariant } from "../../../utils/invariant";

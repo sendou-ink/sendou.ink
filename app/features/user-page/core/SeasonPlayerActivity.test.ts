@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { addDays, addWeeks, startOfWeek } from "date-fns";
-import { describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as SeasonPlayerActivity from "./SeasonPlayerActivity";
 

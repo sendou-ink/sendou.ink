@@ -1,0 +1,8 @@
+[test]
+preload = ["./app/test-console.ts", "./scripts/preload.ts", "./app/test-setup.ts"]
+# DOM tests need happy-dom (`bun run test:dom`), the scanner golden-file suite runs via `bun run test:scanner`
+pathIgnorePatterns = [
+	"e2e/**",
+	"**/*.dom.test.{ts,tsx}",
+	"app/features/scanner/tests/*.test.{ts,tsx}",
+]

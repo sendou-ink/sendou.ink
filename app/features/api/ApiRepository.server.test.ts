@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ApiRepository from "./ApiRepository.server";

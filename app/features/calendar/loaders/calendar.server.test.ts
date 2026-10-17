@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, setSystemTime, test, vi } from "bun:test";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -22,8 +22,8 @@ describe("calendar loader default view", () => {
 	// full week around the boundary for users ahead of UTC: in Auckland (UTC+13) Monday 2026-01-12
 	// 10:00 is still Sunday 21:00 UTC, so the user sees Jan 12–18 but the loader fetched up to ~Jan 13
 	test("fetches events for the whole week shown to a user ahead of UTC", async () => {
-		vi.useFakeTimers({ toFake: ["Date"] });
-		vi.setSystemTime(new Date("2026-01-11T21:00:00Z"));
+		vi.useFakeTimers();
+		setSystemTime(new Date("2026-01-11T21:00:00Z"));
 
 		const author = await UserFactory.createRegular();
 		await CalendarEventFactory.create({
@@ -39,8 +39,8 @@ describe("calendar loader default view", () => {
 	});
 
 	test("control: same event is returned once the server clock reaches the same week", async () => {
-		vi.useFakeTimers({ toFake: ["Date"] });
-		vi.setSystemTime(new Date("2026-01-12T12:00:00Z"));
+		vi.useFakeTimers();
+		setSystemTime(new Date("2026-01-12T12:00:00Z"));
 
 		const author = await UserFactory.createRegular();
 		await CalendarEventFactory.create({

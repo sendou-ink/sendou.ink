@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Engine from "./engine";
 import { RunningTournaments } from "./RunningTournaments.server";

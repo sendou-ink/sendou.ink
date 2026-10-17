@@ -207,7 +207,7 @@ category: "db-performance"; detail = EXPLAIN output + measured row counts + call
 ### Agent 8: Test Coverage
 
 ```
-You are reviewing code changes for test coverage gaps (Vitest unit/browser tests, Playwright e2e). Compare what logic changed against what tests changed:
+You are reviewing code changes for test coverage gaps (bun:test unit and DOM tests, Playwright e2e). Compare what logic changed against what tests changed:
 
 1. Changed pure-logic Modules (imported as `* as Module`, JSDoc'd functions): do unit tests (`*.test.ts` nearby) exist and were they updated with the logic?
 2. New Repository READ functions: project convention gives these benchmark cases in `scripts/benchmark-db` (`bun run bench:db`). Flag new read functions without one.

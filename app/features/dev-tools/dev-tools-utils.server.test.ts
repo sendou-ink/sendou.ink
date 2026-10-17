@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test } from "bun:test";
 import { requireDevTools } from "./dev-tools-utils.server";
 
+const originalNodeEnv = process.env.NODE_ENV;
+
 afterEach(() => {
-	vi.unstubAllEnvs();
+	process.env.NODE_ENV = originalNodeEnv;
 });
 
 const requestWith = (fetchSite: string | null) =>
@@ -40,7 +42,7 @@ describe("requireDevTools", () => {
 	);
 
 	test("responds 404 to a same-origin request in production", () => {
-		vi.stubEnv("NODE_ENV", "production");
+		process.env.NODE_ENV = "production";
 
 		expect(
 			thrownStatus(() => requireDevTools(requestWith("same-origin"))),

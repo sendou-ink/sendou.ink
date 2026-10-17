@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { authorizationHeader } from "./s3.server";
 
 describe("authorizationHeader", () => {

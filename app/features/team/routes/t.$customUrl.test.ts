@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";

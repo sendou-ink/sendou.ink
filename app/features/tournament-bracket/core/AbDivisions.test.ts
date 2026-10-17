@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { unwrap, unwrapErr } from "~/utils/result";
 import * as AbDivisions from "./AbDivisions";
 

@@ -1,25 +1,22 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import {
-	deleteFromS3,
-	uploadImmutableToS3,
-} from "~/features/img-upload/s3.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { mockFetch } from "~/utils/test-helpers";
 import * as DiscordAvatar from "./DiscordAvatar.server";
 
+const uploadImmutableToS3 = vi.fn();
+const deleteFromS3 = vi.fn();
+
 vi.mock("~/features/img-upload/s3.server", () => ({
-	uploadImmutableToS3: vi.fn(),
-	deleteFromS3: vi.fn(),
+	uploadImmutableToS3,
+	deleteFromS3,
 }));
 
 const DISCORD_ID = "79237403620945920";
 
 const respondWith = (status: number) =>
-	vi.stubGlobal(
-		"fetch",
-		vi.fn(async () => new Response(new Uint8Array([1, 2, 3]), { status })),
-	);
+	mockFetch(async () => new Response(new Uint8Array([1, 2, 3]), { status }));
 
 const avatarOf = async (id: number) =>
 	(await UserRepository.findLeanById(id))?.avatar;
@@ -46,8 +43,9 @@ describe("DiscordAvatar.syncForUser", () => {
 	});
 
 	afterEach(() => {
-		vi.unstubAllGlobals();
-		vi.clearAllMocks();
+		vi.restoreAllMocks();
+		uploadImmutableToS3.mockClear();
+		deleteFromS3.mockClear();
 	});
 
 	test("stores the new avatar with its small copy and deletes the previous one", async () => {
@@ -56,9 +54,7 @@ describe("DiscordAvatar.syncForUser", () => {
 		await sync("new");
 
 		expect(await avatarOf(userId())).toBe(`avatar-${userId()}-new.webp`);
-		expect(
-			vi.mocked(uploadImmutableToS3).mock.calls.map(([args]) => args.key),
-		).toEqual([
+		expect(uploadImmutableToS3.mock.calls.map(([args]) => args.key)).toEqual([
 			`avatar-${userId()}-new.webp`,
 			`avatar-${userId()}-new-small.webp`,
 		]);
@@ -90,7 +86,7 @@ describe("DiscordAvatar.syncForUser", () => {
 		respondWith(200);
 
 		await sync("new");
-		vi.mocked(deleteFromS3).mockClear();
+		deleteFromS3.mockClear();
 		await sync("new");
 
 		expect(await avatarOf(userId())).toBe(`avatar-${userId()}-new.webp`);

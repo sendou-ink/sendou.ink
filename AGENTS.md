@@ -12,11 +12,11 @@
 
 ## Commands
 
-- `bun run checks` runs, in order: biome:fix, unit/browser tests, translation json checks, typecheck (app, scripts and the docs site) and knip — knip means unused exports fail checks, so remove exports nothing imports
+- `bun run checks` runs, in order: biome:fix, unit and DOM tests, translation json checks, typecheck (app, scripts and the docs site) and knip — knip means unused exports fail checks, so remove exports nothing imports
 - `bun run dev:docs` serves the docs site (`docs/site/`, Astro Starlight, live at https://docs.sendou.ink): the MDX docs of `docs/site/src/content/docs/` plus the living docs generated from the core modules, e2e specs and routes; `bun run docs:capture` refreshes its route coverage and screenshots from an e2e run, see [living-docs.mdx](./docs/site/src/content/docs/dev/living-docs.mdx)
 - `bun run typecheck` runs TypeScript type checking
 - `bun run biome:fix` runs Biome code formatter and linter
-- `bun run test:unit:browser` runs all unit tests and browser tests
+- `bun run test:unit:dom` runs all unit and DOM tests (`bun run test:unit` / `bun run test:dom` for one half)
 - `bun run test:e2e` runs all e2e tests
 - `bun run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
 - `bun run i18n:sync` syncs translation jsons with English
@@ -26,7 +26,7 @@
 ## Runtime
 
 - Bun is the package manager and runs the dev server (`bun --bun react-router dev`), the production server (`server.ts`, `Bun.serve`), the build and the scripts (`bun scripts/foo.ts`; scripts importing app code that uses `import.meta.glob` need `--preload ./scripts/preload.ts`)
-- Vitest and Playwright run on Node (Vitest is ~3x slower on Bun), so app code reachable from tests must run on both: use web standard APIs and `node:` modules, `Bun.*` only in `server.ts`, scripts and code that has a Node fallback (see `MarkdownHtml.render`)
+- unit tests run on Bun (`bun test`), Playwright runs on Node, so app code reachable from e2e specs must run on both: use web standard APIs and `node:` modules, `Bun.*` only in `server.ts`, scripts and code that has a Node fallback (see `MarkdownHtml.render`)
 - the dev server only starts fast on Bun thanks to the `@react-router/dev` patch limiting its file watcher; Bun's macOS `fs.watch` gets slower with every watched path
 
 ## Typescript
@@ -95,8 +95,11 @@
 
 ## Unit testing
 
-- library used for unit testing is Vitest
-- Vitest browser mode can be used to write tests for components
+- unit tests use `bun:test`, run in parallel with every file isolated and without loading `.env`
+- console output is only shown for failing tests (`app/test-console.ts`); run with `TEST_LOGS=all` to see all of it
+- `vi.mock` is Bun's `mock.module`: not hoisted, so declare what its factory uses above it, and its factory's getters are read once; to change a mocked value mid-file call `vi.mock` again
+- what Bun lacks from Vitest (`waitFor`, async timer advancing, mocking `fetch`) is in `~/utils/test-helpers`
+- component and hook tests run in happy-dom with Testing Library (`*.dom.test.tsx`); happy-dom has no Popover API, layout, CSS, IndexedDB, canvas or audio, so behaviour depending on those belongs in e2e tests
 - name a test after the behaviour it establishes, with no `"should "` prefix (`test("returns null for an unknown id")`)
 - `describe` takes the bare function name, except for files consumed through a `* as Module` import, where it takes `Module.fn` — the way callers write it
 - when a test is `input -> expected output` with no setup, make it a `test.each` table rather than a run of near-identical `test` blocks; give every row a short label (`$why`, `%s`) so a failure names the case

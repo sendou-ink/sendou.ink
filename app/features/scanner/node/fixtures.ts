@@ -11,6 +11,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import type { Mat } from "../core/cv";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type {
 	DetectedEvent,
@@ -224,17 +225,33 @@ export interface FixtureRun<TData = ScoreboardData> {
 }
 
 /** Run gate+parse the way the live pipeline would. Caller must have loaded OpenCV. */
-export async function runDetectorOnFixture<TData = ScoreboardData>(
+export function runDetectorOnFixture<TData = ScoreboardData>(
 	detector: Detector<TData>,
 	fixture: Fixture,
 ): Promise<FixtureRun<TData>> {
+	return withFixtureFrame(fixture, (frame) => {
+		const gate = detector.gate(frame);
+		const events = gate.pass ? detector.parse(frame, 0, gate) : [];
+		return { gate, events };
+	});
+}
+
+/**
+ * Hands `fn` the fixture's normalized frame, decoded once, so a sweep gating several detectors on it
+ * shares one frame like the live pipeline does. Caller must have loaded OpenCV.
+ */
+export async function withFixtureFrame<T>(
+	fixture: Fixture,
+	fn: (frame: Mat) => T,
+): Promise<T> {
 	const src = toMat(await readImage(fixture.framePath));
 	const frame = normalizeFrame(src);
 	src.delete();
-	const gate = detector.gate(frame);
-	const events = gate.pass ? detector.parse(frame, 0, gate) : [];
-	frame.delete();
-	return { gate, events };
+	try {
+		return fn(frame);
+	} finally {
+		frame.delete();
+	}
 }
 
 function matchingFieldPattern(

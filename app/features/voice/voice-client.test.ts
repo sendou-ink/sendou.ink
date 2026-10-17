@@ -1,5 +1,6 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "bun:test";
 import type { ServerEvent } from "~/features/events/events-types";
+import { waitFor } from "~/utils/test-helpers";
 import {
 	createVoiceClient,
 	type VoiceCallParticipant,
@@ -49,7 +50,7 @@ function pendingJoins() {
 			return new Promise<unknown>((resolve) => resolvers.push(resolve));
 		},
 		sentCount: () => sentCount,
-		sent: (count: number) => vi.waitFor(() => expect(sentCount).toBe(count)),
+		sent: (count: number) => waitFor(() => expect(sentCount).toBe(count)),
 		resolveNext: async (result: unknown) => {
 			resolvers.shift()!(result);
 			await new Promise((resolve) => setTimeout(resolve));

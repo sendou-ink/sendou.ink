@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { ClientChatMessage } from "../chat-types";
 import * as LogLayout from "./LogLayout";
 

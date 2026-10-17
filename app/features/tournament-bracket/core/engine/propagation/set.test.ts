@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import { create } from "../create";
 import * as Engine from "../index";

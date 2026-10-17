@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
 
 describe("calendar-utils", () => {

@@ -1,6 +1,6 @@
+import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import type { RawPicoCAD2File } from "picocad2-web";
-import { describe, expect, test } from "vitest";
 import { analyzeTrophyModel } from "./model-analysis";
 import * as XpTrophy from "./XpTrophy";
 

@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { subDays } from "date-fns";
 import * as R from "remeda";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";

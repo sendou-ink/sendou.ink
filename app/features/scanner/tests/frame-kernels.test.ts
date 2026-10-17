@@ -2,7 +2,7 @@
  * Exactness of the scanner's replacements for OpenCV frame operations: each
  * must reproduce OpenCV's output bit for bit on the same input.
  */
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { unionRoi } from "../core/canonical";
 import { getCV, loadOpenCV, type Mat } from "../core/cv";
 import { ROIS as QUICK_BATTLE_LOG_ROIS } from "../core/detectors/quick-scoreboard-battle-log/rois";

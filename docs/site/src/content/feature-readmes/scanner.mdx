@@ -247,8 +247,8 @@ is built in memory and downloaded.
 ## Commands
 
 ```sh
-bun run test:scanner                       # golden-file suite over tests/fixtures/ (Vitest, Node)
-bun run test:unit:browser                  # includes tests/logic/ — the fixture-free half, see below
+bun run test:scanner                       # golden-file suite over tests/fixtures/
+bun run test:unit                          # includes tests/logic/ — the fixture-free half, see below
 bun run scanner:report                     # accuracy table + name character error rate across fixtures
 bun run scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
 bun run scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
@@ -742,11 +742,11 @@ then the atlas rebuild; planner atlas via `scanner:build-planner-signatures`
 
 `tests/*.test.ts` are the golden-file suites: they read frames from
 `tests/fixtures/` and need game icons from a sibling `sendou-ink/assets`
-checkout, so they run in their own Vitest project (`vitest.scanner.config.ts`)
-and stay out of CI.
+checkout, so `bun run test:scanner` runs them on their own (the unit run's
+`bunfig.toml` ignores them) and they stay out of CI.
 
 `tests/logic/*.test.ts` are pure logic over synthetic events — no images, no
-assets checkout — so they belong to the `unit` project and do run in CI. Put
+assets checkout — so they run with the unit tests and do run in CI. Put
 new tests there whenever they can be written without a frame.
 
 ## Fixtures

@@ -3,8 +3,8 @@
  * and which sessions retention evicts.
  */
 
+import { describe, test } from "bun:test";
 import assert from "node:assert/strict";
-import { describe, test } from "vitest";
 import type { DetectedEvent } from "../../core/detectors/types";
 import type { XSetResultData } from "../../core/detectors/x-rank/set-result";
 import type {

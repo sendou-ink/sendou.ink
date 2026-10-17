@@ -1,21 +1,26 @@
 /**
- * Preload (`bun --preload ./scripts/preload.ts`) for scripts that import app code
- * written for Vite: defaults NODE_ENV like Vite does and implements the eager
- * `import.meta.glob` forms the app uses.
+ * Preload for scripts (`bun --preload ./scripts/preload.ts`) and `bun test`
+ * (`bunfig.toml`) importing app code written for Vite: defaults NODE_ENV like
+ * Vite does, defines `import.meta.env.DEV` like Vite does from it and implements
+ * the eager `import.meta.glob` forms the app uses.
  */
 import path from "node:path";
 import { plugin } from "bun";
 
 const ROOT_DIR = path.join(import.meta.dir, "..");
 const GLOB_CALL_PATTERN = /import\.meta\.glob(?:<[^(]*>)?\(/g;
+const VITE_DEV_FLAG = "import.meta.env.DEV";
 
 process.env.NODE_ENV ??= "development";
 
 plugin({
-	name: "import-meta-glob",
+	name: "vite-import-meta",
 	setup(build) {
 		build.onLoad({ filter: /\/app\/.+\.tsx?$/ }, async ({ path: filePath }) => {
-			const source = await Bun.file(filePath).text();
+			const source = (await Bun.file(filePath).text()).replaceAll(
+				VITE_DEV_FLAG,
+				'(process.env.NODE_ENV !== "production")',
+			);
 			const loader = filePath.endsWith("x") ? "tsx" : "ts";
 			if (!source.includes("import.meta.glob")) {
 				return { contents: source, loader };

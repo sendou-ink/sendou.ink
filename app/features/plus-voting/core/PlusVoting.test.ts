@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { computeFreshPlusTiers, computePassedVoting } from "./PlusVoting";
 
 const result = (

@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { renderToString } from "react-dom/server";
-import { describe, expect, test } from "vitest";
 import { SendouTab, SendouTabList, SendouTabPanel, SendouTabs } from "./Tabs";
 
 describe("SendouTabs", () => {

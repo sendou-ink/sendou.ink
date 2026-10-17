@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { rating } from "openskill";
-import { describe, expect, test } from "vitest";
 import type { PlayerRole } from "./PlayerRoles";
 import * as TeamShuffle from "./TeamShuffle";
 

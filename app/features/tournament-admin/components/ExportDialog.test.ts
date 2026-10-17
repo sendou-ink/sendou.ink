@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { scopedAndSortedTeams } from "./ExportDialog";
 

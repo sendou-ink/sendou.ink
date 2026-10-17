@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { addWeeks } from "date-fns";
-import { describe, expect, test } from "vitest";
 import type { BusyBlock, TimeRange } from "../availability-types";
 import * as Availability from "./Availability";
 import * as ScheduleWeek from "./ScheduleWeek";

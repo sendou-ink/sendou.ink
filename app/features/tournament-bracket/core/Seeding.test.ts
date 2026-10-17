@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import * as R from "remeda";
-import { describe, expect, test } from "vitest";
 import * as Engine from "./engine";
 import * as Seeding from "./Seeding";
 

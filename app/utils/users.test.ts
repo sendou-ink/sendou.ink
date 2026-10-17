@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { queryToUserIdentifier, userDiscordIdIsAged } from "./users";
 
 describe("queryToUserIdentifier()", () => {
@@ -72,7 +80,7 @@ describe("queryToUserIdentifier()", () => {
 describe("userDiscordIdIsAged()", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2023-11-25T00:00:00.000Z"));
+		setSystemTime(new Date("2023-11-25T00:00:00.000Z"));
 	});
 
 	afterEach(() => {

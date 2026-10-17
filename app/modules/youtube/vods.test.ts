@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
+import { mockFetch } from "~/utils/test-helpers";
 import { findRecentLiveStreams } from "./vods";
 
 vi.mock("./utils.server", () => ({
@@ -37,7 +38,7 @@ const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
 
 describe("findRecentLiveStreams", () => {
 	beforeEach(() => {
-		vi.stubGlobal("fetch", fetchMock);
+		mockFetch(fetchMock);
 		fetchMock.mockClear();
 		playlistResponse = Response.json({
 			items: ["ended", "live", "upcoming", "upload"].map((videoId) => ({
@@ -47,7 +48,7 @@ describe("findRecentLiveStreams", () => {
 	});
 
 	afterEach(() => {
-		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
 	});
 
 	test("returns the started live streams among the channel's uploads", async () => {

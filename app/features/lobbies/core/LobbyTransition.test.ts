@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { LobbyParticipantStatus } from "../lobbies-constants";
 import * as LobbyTransition from "./LobbyTransition";
 import { setOf } from "./tests/fixtures";

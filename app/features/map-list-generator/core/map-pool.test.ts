@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { MapPool } from "./map-pool";
 
 describe("MapPool.fromUserInput", () => {

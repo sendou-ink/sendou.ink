@@ -1,24 +1,24 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { hasPermission } from "./utils";
 
-const e2e = vi.hoisted(() => ({ isTestRun: false }));
-
-vi.mock("~/utils/e2e", () => ({
-	get IS_E2E_TEST_RUN() {
-		return e2e.isTestRun;
-	},
-}));
+const mockIsE2eTestRun = (isTestRun: boolean) =>
+	vi.mock("~/utils/e2e", () => ({ IS_E2E_TEST_RUN: isTestRun }));
 
 const REGULAR_USER_ID = ADMIN_ID + 1;
 const OTHER_USER_ID = ADMIN_ID + 2;
 
 const entity = { permissions: { EDIT: [REGULAR_USER_ID] } };
 
+const originalNodeEnv = process.env.NODE_ENV;
+
 describe("hasPermission", () => {
 	beforeEach(() => {
-		e2e.isTestRun = false;
-		vi.unstubAllEnvs();
+		mockIsE2eTestRun(false);
+	});
+
+	afterEach(() => {
+		process.env.NODE_ENV = originalNodeEnv;
 	});
 
 	test("returns false for a logged out user", () => {
@@ -38,14 +38,14 @@ describe("hasPermission", () => {
 	});
 
 	test("admin bypasses the permission in production", () => {
-		vi.stubEnv("NODE_ENV", "production");
+		process.env.NODE_ENV = "production";
 
 		expect(hasPermission(entity, "EDIT", { id: ADMIN_ID })).toBe(true);
 	});
 
 	test("admin does not bypass the permission in an e2e test run", () => {
-		vi.stubEnv("NODE_ENV", "production");
-		e2e.isTestRun = true;
+		process.env.NODE_ENV = "production";
+		mockIsE2eTestRun(true);
 
 		expect(hasPermission(entity, "EDIT", { id: ADMIN_ID })).toBe(false);
 	});

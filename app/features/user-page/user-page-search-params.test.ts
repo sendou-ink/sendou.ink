@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, setSystemTime, test, vi } from "bun:test";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
 	BEST_TIER_NUMBER,
@@ -115,13 +115,13 @@ describe("userSeasonsSearchParams", () => {
 		vi.useFakeTimers();
 		try {
 			// crawler or a user replays ?season=1 a few days before season 1 opens
-			vi.setSystemTime(new Date("2023-09-01T00:00:00.000Z"));
+			setSystemTime(new Date("2023-09-01T00:00:00.000Z"));
 			expect(
 				userSeasonsSearchParams.parse(new URLSearchParams("season=1")).season,
 			).toBe(null);
 
 			// season 1 has now started; the same URL should decode to season 1
-			vi.setSystemTime(new Date("2023-09-20T00:00:00.000Z"));
+			setSystemTime(new Date("2023-09-20T00:00:00.000Z"));
 			expect(
 				userSeasonsSearchParams.parse(new URLSearchParams("season=1")).season,
 			).toBe(1);

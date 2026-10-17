@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { addMinutes } from "date-fns";
-import { describe, expect, test } from "vitest";
 import type {
 	BracketData,
 	GeneratedRound,

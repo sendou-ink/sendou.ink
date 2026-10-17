@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { mapSearchFilter } from "./BracketMapListDialog";
 
 const contains = (string: string, substring: string) =>

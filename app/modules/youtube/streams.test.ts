@@ -1,5 +1,14 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { logger } from "~/utils/logger";
+import { mockFetch } from "~/utils/test-helpers";
 
 vi.mock("./utils.server", () => ({
 	getYoutubeApiKey: () => "test-key",
@@ -8,6 +17,7 @@ vi.mock("./utils.server", () => ({
 const TAGGED_TITLE = "Splatoon 3 scrims #sendouink";
 
 let YoutubeStreams: typeof import("./streams");
+let freshImports = 0;
 let searchResults: string[];
 let videos: Map<string, VideoOptions>;
 const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
@@ -31,21 +41,23 @@ const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
 
 describe("getLiveStreams", () => {
 	beforeEach(async () => {
-		vi.useFakeTimers({ toFake: ["Date"] });
-		vi.setSystemTime(new Date("2026-10-10T12:00:00Z"));
-		vi.stubGlobal("fetch", fetchMock);
+		vi.useFakeTimers();
+		setSystemTime(new Date("2026-10-10T12:00:00Z"));
+		mockFetch(fetchMock);
 		vi.spyOn(logger, "error").mockImplementation(() => {});
 		fetchMock.mockClear();
 		searchResults = [];
 		videos = new Map();
 
-		vi.resetModules();
-		YoutubeStreams = await import("./streams");
+		// fresh modules, the tracked streams and the spent quota are module state
+		freshImports++;
+		const freshQuota = await import(`./quota?fresh=${freshImports}`);
+		vi.mock("./quota", () => freshQuota);
+		YoutubeStreams = await import(`./streams?fresh=${freshImports}`);
 	});
 
 	afterEach(() => {
 		vi.useRealTimers();
-		vi.unstubAllGlobals();
 		vi.restoreAllMocks();
 	});
 
@@ -145,11 +157,11 @@ describe("getLiveStreams", () => {
 
 		expect(searchCallCount()).toBe(90);
 
-		vi.setSystemTime(new Date("2026-10-11T06:59:00Z"));
+		setSystemTime(new Date("2026-10-11T06:59:00Z"));
 		await getLiveStreams({ searchIntervalMinutes: 0 });
 		expect(searchCallCount()).toBe(90);
 
-		vi.setSystemTime(new Date("2026-10-11T07:00:00Z"));
+		setSystemTime(new Date("2026-10-11T07:00:00Z"));
 		await getLiveStreams({ searchIntervalMinutes: 0 });
 		expect(searchCallCount()).toBe(91);
 	});
@@ -182,7 +194,7 @@ function getLiveStreams({ searchIntervalMinutes = 10 } = {}) {
 }
 
 function advanceMinutes(minutes: number) {
-	vi.setSystemTime(Date.now() + minutes * 60_000);
+	setSystemTime(Date.now() + minutes * 60_000);
 }
 
 function searchCallCount() {

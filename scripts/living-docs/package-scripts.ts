@@ -47,9 +47,10 @@ const DESCRIPTIONS: Record<string, string> = {
 	typecheck: "Type checks the app after generating the route types",
 	"typecheck:scripts": "Type checks scripts/",
 	"typecheck:docs": "Type checks the docs site",
-	"test:unit:browser": "Runs the unit and browser (Vitest browser mode) tests",
-	"test:browser:ui": "Browser tests in Vitest's UI",
-	"test:unit:browser:ui": "Unit and browser tests in Vitest's UI",
+	"test:unit":
+		"Runs the unit tests (`bun test`) after creating and migrating the test database",
+	"test:dom": "Runs the DOM tests (happy-dom and Testing Library)",
+	"test:unit:dom": "Runs the unit tests, then the DOM tests",
 	"test:scanner": "Runs the scanner's fixture tests",
 	"test:e2e": "Runs the Playwright e2e tests",
 	"test:e2e:flaky-detect":
@@ -59,7 +60,7 @@ const DESCRIPTIONS: Record<string, string> = {
 	"check-translation-sync":
 		"Fails when the translation jsons are out of sync with English",
 	checks:
-		"Everything CI checks: lint, unit and browser tests, translations, type checks and knip. A task isn't done until it passes",
+		"Everything CI checks: lint, unit and DOM tests, translations, type checks and knip. A task isn't done until it passes",
 	"checks:scanner": "`checks` plus the scanner tests",
 	seed: "Rebuilds the dev dataset of db.sqlite3",
 	setup:
@@ -154,9 +155,7 @@ export function documentPackageScripts(): PackageScript[] {
 				...new Set(
 					[...command.matchAll(CHAINED_SCRIPT_REGEX)]
 						.map(([, script]) => script)
-						.filter(
-							(script) => script !== name && names.has(script),
-						),
+						.filter((script) => script !== name && names.has(script)),
 				),
 			],
 		};

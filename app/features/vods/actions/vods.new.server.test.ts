@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { wrappedAction } from "~/utils/Test";

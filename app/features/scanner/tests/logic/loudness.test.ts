@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { integratedLoudness, limitPeaks } from "../../core/loudness";
 
 const SAMPLE_RATE = 48_000;

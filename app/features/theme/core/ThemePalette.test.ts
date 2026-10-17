@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { describe, expect, test } from "vitest";
 import type { CustomTheme } from "~/db/tables-json";
 import { isInSrgbGamut, type Oklch } from "~/utils/oklch-gamut";
 import { THEME_INPUT_LIMITS } from "~/utils/schema";

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as ChatMessageFactory from "~/db/seed/factories/ChatMessageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as RouteChatRooms from "./RouteChatRooms.server";

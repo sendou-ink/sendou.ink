@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { sub } from "date-fns";
-import { describe, expect, test } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";

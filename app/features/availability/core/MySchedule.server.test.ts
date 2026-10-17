@@ -1,7 +1,15 @@
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { addWeeks } from "date-fns";
 import * as R from "remeda";
 import * as v from "valibot";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { viewerTimezoneAsyncLocalStorage } from "~/features/timezone/timezone-context.server";
 import { wrappedAction } from "~/utils/Test";
@@ -122,8 +130,8 @@ describe("myScheduleData", () => {
 
 	describe("across the DST fall-back night", () => {
 		beforeEach(() => {
-			vi.useFakeTimers({ toFake: ["Date"] });
-			vi.setSystemTime(NOW);
+			vi.useFakeTimers();
+			setSystemTime(NOW);
 		});
 		afterEach(() => {
 			vi.useRealTimers();

@@ -24,6 +24,7 @@ import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
@@ -273,16 +274,18 @@ for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "Objective",
 )) {
 	test(`other gates stay quiet on objective/${fixture.name}`, async () => {
-		for (const [name, other] of otherDetectors) {
-			if (sharedFrames.get(name)?.has(realpathSync(fixture.framePath))) {
-				continue;
+		await withFixtureFrame(fixture, (frame) => {
+			for (const [name, other] of otherDetectors) {
+				if (sharedFrames.get(name)?.has(realpathSync(fixture.framePath))) {
+					continue;
+				}
+				const gate = other.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${name} gate fired (score=${gate.score.toFixed(3)})`,
+				);
 			}
-			const { gate } = await runDetectorOnFixture(other, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${name} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		});
 	});
 }

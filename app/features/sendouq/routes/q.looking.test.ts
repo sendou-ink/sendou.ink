@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, setSystemTime, test, vi } from "bun:test";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -117,7 +117,7 @@ describe("SendouQ match creation validation", () => {
 		vi.useFakeTimers();
 		try {
 			// both groups were queueing when the season ended a moment ago
-			vi.setSystemTime(new Date(season.ends.getTime() + 10 * 60 * 1000));
+			setSystemTime(new Date(season.ends.getTime() + 10 * 60 * 1000));
 			// biome-ignore lint/plugin: no production write reaches this state, it is produced by time passing while the group idles in the queue
 			await db
 				.updateTable("Group")

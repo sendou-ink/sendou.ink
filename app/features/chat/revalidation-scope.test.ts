@@ -1,5 +1,9 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+	advanceTimersByTimeAsync,
+	runAllTimersAsync,
+} from "~/utils/test-helpers";
 import {
 	holdRevalidations,
 	holdRevalidationsDuring,
@@ -134,7 +138,7 @@ describe("scheduleBroadcastRevalidation", () => {
 
 	test("a scoped broadcast does not narrow an unscoped revalidation still in flight", async () => {
 		// let anything still in flight from an earlier test settle first
-		await vi.runAllTimersAsync();
+		await runAllTimersAsync();
 
 		const unscoped = deferred();
 		revalidateWithScope(() => unscoped.promise, undefined);
@@ -144,12 +148,12 @@ describe("scheduleBroadcastRevalidation", () => {
 		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(false);
 
 		unscoped.resolve();
-		await vi.runAllTimersAsync();
+		await runAllTimersAsync();
 	});
 
 	test("a scope left stuck by a never settling revalidation is forgotten once stale", async () => {
 		// let anything still in flight from an earlier test settle first
-		await vi.runAllTimersAsync();
+		await runAllTimersAsync();
 
 		const neverSettles = new Promise<void>(() => {});
 
@@ -157,7 +161,7 @@ describe("scheduleBroadcastRevalidation", () => {
 		revalidateWithScope(() => neverSettles, "MATCH_RESULTS");
 		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(true);
 
-		await vi.advanceTimersByTimeAsync(PENDING_REVALIDATION_STALE_MS);
+		await advanceTimersByTimeAsync(PENDING_REVALIDATION_STALE_MS);
 
 		const unscoped = deferred();
 		scheduleBroadcastRevalidation(() => unscoped.promise, undefined);
@@ -165,7 +169,7 @@ describe("scheduleBroadcastRevalidation", () => {
 		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(false);
 
 		unscoped.resolve();
-		await vi.runAllTimersAsync();
+		await runAllTimersAsync();
 
 		const scoped = deferred();
 		scheduleBroadcastRevalidation(() => scoped.promise, "MATCH_RESULTS");
@@ -173,7 +177,7 @@ describe("scheduleBroadcastRevalidation", () => {
 		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(true);
 
 		scoped.resolve();
-		await vi.runAllTimersAsync();
+		await runAllTimersAsync();
 		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(false);
 	});
 });
