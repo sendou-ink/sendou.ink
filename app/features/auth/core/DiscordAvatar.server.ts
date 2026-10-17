@@ -69,7 +69,7 @@ async function store({
 }): Promise<string | null> {
 	const fileName = fileNameOf({ userId, hash });
 
-	const files: Array<{ key: string; body: Uint8Array }> = [];
+	const files: Array<{ key: string; body: Uint8Array<ArrayBuffer> }> = [];
 	for (const [key, sizePx] of [
 		[fileName, DISCORD_CDN_SIZE_PX],
 		[smallImageFileName(fileName), DISCORD_CDN_SMALL_SIZE_PX],

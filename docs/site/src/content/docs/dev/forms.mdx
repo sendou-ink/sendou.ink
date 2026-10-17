@@ -471,7 +471,7 @@ entity already holds it.
 
 Per field it resolves `null → null`, `EXISTING → imgId` (no bytes re-sent), `NEW → upload + insert
 → new id`. For a `NEW` value it decodes the base64, validates the bytes are a real webp or png
-(magic-byte check), uploads via `uploadStreamToS3`, and inserts an unvalidated image row
+(magic-byte check), uploads via `uploadToS3`, and inserts an unvalidated image row
 (auto-validated for supporters or with `autoValidate`). The schema may be a single object or an `_action`-discriminated union. (The underlying
 per-value helper `imageFieldValueToImgId` from `~/features/img-upload/image-field.server` can still
 be called directly if needed.)
