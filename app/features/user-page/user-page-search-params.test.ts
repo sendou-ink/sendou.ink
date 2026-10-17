@@ -21,9 +21,9 @@ import {
 	userBuildsSearchParams,
 	userResultsSearchParams,
 	userSeasonResultsSearchParams,
-	userSeasonSummaryGraphicSearchParams,
 	userSeasonsSearchParams,
 	userSeasonsStatsSearchParams,
+	userSeasonSummaryGraphicSearchParams,
 } from "./user-page-search-params";
 
 const startedSeasons = Seasons.allStarted(new Date());

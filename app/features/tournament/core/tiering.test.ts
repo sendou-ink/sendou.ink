@@ -8,8 +8,8 @@ import {
 	TIER_HISTORY_LENGTH,
 	TIER_THRESHOLDS,
 	TIER_TO_NUMBER,
-	type TournamentTierNumber,
 	tierNumberToName,
+	type TournamentTierNumber,
 	updateTierHistory,
 } from "./tiering";
 

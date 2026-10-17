@@ -4,8 +4,8 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { hasPermission } from "~/modules/permissions/utils";
 import type { SerializeFrom } from "~/utils/remix";
-import * as TrophyRepository from "../TrophyRepository.server";
 import { canBackfillTrophies, canReviewTrophies } from "../trophies-utils";
+import * as TrophyRepository from "../TrophyRepository.server";
 
 export type NewTrophyLoaderData = SerializeFrom<typeof loader>;
 

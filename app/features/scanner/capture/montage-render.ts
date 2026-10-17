@@ -29,7 +29,7 @@ import {
 	VideoSampleSink,
 } from "mediabunny";
 import { integratedLoudness, limitPeaks } from "../core/loudness";
-import { type PlaybackSegment, playbackDuration } from "../core/montage";
+import { playbackDuration, type PlaybackSegment } from "../core/montage";
 import {
 	type CardReveal,
 	drawCard,

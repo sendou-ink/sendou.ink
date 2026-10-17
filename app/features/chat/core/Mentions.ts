@@ -6,8 +6,7 @@ const WORD_CHARACTER_REGEX = /[\p{L}\p{N}_]/u;
 const MENTION_QUERY_REGEX = /(?:^|[^\p{L}\p{N}_])@([^\s@]*)$/u;
 
 type MessagePart =
-	| { type: "text"; text: string }
-	| { type: "mention"; userId: number };
+	{ type: "text"; text: string } | { type: "mention"; userId: number };
 
 export interface PickedMention {
 	userId: number;

@@ -1,14 +1,14 @@
 import * as R from "remeda";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { groupExpiresAt } from "~/features/sendouq/core/groups";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import type {
 	Tournament,
 	TournamentTeamMemberProgressStatus,
 } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { showsOneGroupAtATime } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import {
 	lobbyPage,

@@ -1,6 +1,7 @@
 ---
 type: feature
 ---
+
 Chat mention alerts
 
 - A sound plays when someone mentions you in a chat you're not looking at

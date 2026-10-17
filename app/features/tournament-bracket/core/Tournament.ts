@@ -6,6 +6,8 @@ import type {
 } from "~/db/tables-json";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -15,8 +17,6 @@ import {
 	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
-import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
-import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { hasPermission } from "~/modules/permissions/utils";

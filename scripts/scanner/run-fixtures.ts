@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * CLI harness: run the ScoreboardDetector over fixtures and print everything
  * it saw — gate result, parsed fields, per-field scores, top weapon candidates.

@@ -1,6 +1,7 @@
 ---
 type: feature
 ---
+
 Custom theme improvements
 
 - Yellow and other light accent colors are now vivid instead of muddy

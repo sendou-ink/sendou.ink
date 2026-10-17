@@ -24,8 +24,7 @@ import { decompressTrophyModel, useXpTrophyState } from "../trophies-utils";
 import style from "./Trophy.module.css";
 
 type TrophyCtxValue =
-	| { context: PicoCAD2Context }
-	| { context: undefined; isLoading: true };
+	{ context: PicoCAD2Context } | { context: undefined; isLoading: true };
 
 const TrophyCtx = createContext<TrophyCtxValue | undefined>(undefined);
 

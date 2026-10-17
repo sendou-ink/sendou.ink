@@ -10,8 +10,8 @@ import type { AnySchema, AnySyncSchema } from "~/utils/schema";
 import {
 	DEFAULT_MAX_BODY_BYTES,
 	fieldErrorsFromIssues,
-	type ResolvedImages,
 	requestBodyToObject,
+	type ResolvedImages,
 	resolveImageFields,
 } from "./parse.server";
 
@@ -59,7 +59,7 @@ type DefinedActionArgs<TParams extends AnySyncSchema | undefined, TBody> = Omit<
 					opts?: ResolveImagesOptions,
 				) => Promise<ResolvedImages<v.InferOutput<BodySchemaOf<TBody>>>>;
 			}
-		: // biome-ignore lint/complexity/noBannedTypes: {} models "no body"
+		: // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- {} models "no body"
 			{});
 
 /**

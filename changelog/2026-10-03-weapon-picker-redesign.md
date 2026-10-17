@@ -2,6 +2,7 @@
 navItem: [builds, analyzer, object-damage-calculator]
 type: feature
 ---
+
 New way to pick a weapon on the builds, build analyzer and object damage calculator pages
 
 - On phones, pick a category first and then the weapon from that category

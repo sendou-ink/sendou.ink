@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 import {
 	matchScoresFromObjective,
 	type ObjectiveScoreRead,
@@ -8,6 +7,7 @@ import {
 	withFullCountsAtGameStart,
 	withUnpushedTrackCounts,
 } from "./objective-timeline-utils";
+import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 
 function reads(...pairs: Array<[t: number, penalty: number | null]>) {
 	return pairs.map(([t, penalty]): PenaltyRead => ({ t, penalty }));
@@ -16,9 +16,10 @@ function reads(...pairs: Array<[t: number, penalty: number | null]>) {
 function counterReads(
 	...entries: Array<[t: number, alpha: number | null, bravo: number | null]>
 ) {
-	return entries.map(
-		([t, alpha, bravo]): ObjectiveScoreRead => ({ t, score: [alpha, bravo] }),
-	);
+	return entries.map(([t, alpha, bravo]): ObjectiveScoreRead => ({
+		t,
+		score: [alpha, bravo],
+	}));
 }
 
 describe("smoothPenalties", () => {

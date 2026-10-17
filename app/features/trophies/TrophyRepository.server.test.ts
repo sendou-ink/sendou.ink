@@ -10,8 +10,8 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
 import * as XpTrophy from "./core/XpTrophy";
-import * as TrophyRepository from "./TrophyRepository.server";
 import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
+import * as TrophyRepository from "./TrophyRepository.server";
 
 describe("trophy approvals", () => {
 	let pendingTrophyId: number;
@@ -161,7 +161,7 @@ describe("trophy approvals", () => {
 			await TrophyRepository.addApproval({ pendingTrophyId, userId });
 		}
 
-		// biome-ignore lint/plugin: simulates raising TROPHY_APPROVALS_REQUIRED after acceptance, which no production code path can do
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- simulates raising TROPHY_APPROVALS_REQUIRED after acceptance, which no production code path can do
 		await db
 			.deleteFrom("PendingTrophyApproval")
 			.where("pendingTrophyId", "=", pendingTrophyId)
@@ -397,7 +397,7 @@ describe("user deletion", () => {
 			{ approverUserIds: [deleted.id] },
 		);
 
-		// biome-ignore lint/plugin: no production code path deletes users, the test pins the schemas on-delete behavior
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- no production code path deletes users, the test pins the schemas on-delete behavior
 		await db.deleteFrom("User").where("id", "=", deleted.id).execute();
 
 		const orphaned = await db

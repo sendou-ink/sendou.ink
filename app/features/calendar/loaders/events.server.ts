@@ -13,8 +13,8 @@ import {
 	tournamentToSidebarEvent,
 } from "~/features/sidebar/core/sidebar.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
-import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 
 export type EventsLoaderData = typeof loader;
 

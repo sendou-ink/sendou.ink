@@ -2,9 +2,9 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import * as v from "valibot";
 import { safeJSONParse } from "~/utils/schema";
-import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarFiltersSearchParamsSchema } from "../calendar-schemas";
 import { calendarSearchParams } from "../calendar-search-params";
+import * as CalendarRepository from "../CalendarRepository.server";
 import * as CalendarEvent from "../core/CalendarEvent";
 import * as ICal from "../core/ICal.server";
 
@@ -46,7 +46,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 /** Subscribed feed URLs may still carry the pre-FilterBar `filters` JSON param. */
 function resolveFilters(request: Request) {
-	// biome-ignore lint/plugin: legacy param no current route produces
+	// eslint-disable-next-line sendou/no-raw-search-params -- legacy param no current route produces
 	const legacyFilters = new URL(request.url).searchParams.get("filters");
 	if (legacyFilters !== null) {
 		const parsed = v.safeParse(

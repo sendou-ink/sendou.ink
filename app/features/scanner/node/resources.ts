@@ -14,7 +14,7 @@ import {
 import type { ScoreboardResources } from "../core/detectors/scoreboard/index";
 import { type AtlasMeta, type GlyphSet, loadGlyphSet } from "../core/glyphs";
 import { assembleScoreboardResources } from "../core/resources";
-import { SCANNER_ASSETS_DIR as ASSETS_DIR, GAME_IMG_DIR } from "./assets-dir";
+import { GAME_IMG_DIR, SCANNER_ASSETS_DIR as ASSETS_DIR } from "./assets-dir";
 import { readImage } from "./image-io";
 
 /** Decode eagerly, defer the (CPU-heavy) glyph slicing to first access. */

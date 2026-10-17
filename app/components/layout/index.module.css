@@ -269,9 +269,7 @@ shown, so the popover's user agent styles are reset here.
 			@media screen and (display-mode: standalone) {
 				top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
 				height: calc(
-					100% -
-					var(--layout-nav-height) -
-					env(safe-area-inset-top)
+					100% - var(--layout-nav-height) - env(safe-area-inset-top)
 				);
 
 				&::backdrop {

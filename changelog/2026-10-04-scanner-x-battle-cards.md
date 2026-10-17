@@ -2,6 +2,7 @@
 navItem: scanner
 type: feature
 ---
+
 Scanner now reads your X Power and X Rank position after X Battle sets
 
 - Each game card shows the set's win-loss count after that game

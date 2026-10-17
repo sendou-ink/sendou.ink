@@ -23,8 +23,8 @@ import {
 	type ClipWindow,
 	MAX_CLIP_SECONDS,
 	povDeathTimes,
-	STREAK_MAX_GAP_S,
 	scoreWindows,
+	STREAK_MAX_GAP_S,
 	windowClosed,
 } from "../core/clips/scoring";
 import {
@@ -499,7 +499,7 @@ function onSourceEnded(stream: MediaStream): void {
 
 function onFrameError(message: string): void {
 	if (snapshot.failedFrames === 0) {
-		// biome-ignore lint/suspicious/noConsole: the capture carries on, so the console is where a failing frame shows why
+		// eslint-disable-next-line no-console -- the capture carries on, so the console is where a failing frame shows why
 		console.warn("scanner: frame analysis failed", message);
 	}
 	set({ failedFrames: snapshot.failedFrames + 1 });

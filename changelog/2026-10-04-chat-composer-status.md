@@ -1,6 +1,7 @@
 ---
 type: feature
 ---
+
 Chat message box status bar
 
 - Shows how many characters you've used once you get close to the limit

@@ -30,18 +30,18 @@ import {
 } from "../detectors/objective/strip-weapons";
 import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/quick-scoreboard-battle-log/index";
 import {
-	SCOREBOARD_EVENT_TYPE,
-	type ScoreboardData,
-} from "../detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
-import {
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 	type ScoreboardBattleLogReplayData,
 } from "../detectors/scoreboard-battle-log-replay/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../detectors/scoreboard-own/index";
+import {
+	SCOREBOARD_EVENT_TYPE,
+	type ScoreboardData,
+} from "../detectors/scoreboard/index";
 import {
 	X_RANK_POSITION_EVENT_TYPE,
 	type XRankPositionData,
@@ -347,9 +347,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 		case X_SET_RESULT_EVENT_TYPE:
 		case X_RANK_POSITION_EVENT_TYPE: {
 			const d = event.data as
-				| XSetCountData
-				| XSetResultData
-				| XRankPositionData;
+				XSetCountData | XSetResultData | XRankPositionData;
 			return [
 				...base,
 				"",

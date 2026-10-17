@@ -3,8 +3,8 @@ import type {
 	MemberRole,
 	MemberRoleType,
 } from "~/features/team/team-constants";
-import type * as TeamRepository from "./TeamRepository.server";
 import { NON_PLAYER_TEAM_ROLES, TEAM } from "./team-constants";
+import type * as TeamRepository from "./TeamRepository.server";
 
 export function isTeamOwner({
 	team,

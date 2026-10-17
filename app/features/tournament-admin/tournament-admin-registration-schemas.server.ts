@@ -2,10 +2,10 @@ import * as v from "valibot";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
-import * as TeamPick from "~/features/tournament/core/TeamPick";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
+import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { superRefineAsync } from "~/utils/schema";
 import {

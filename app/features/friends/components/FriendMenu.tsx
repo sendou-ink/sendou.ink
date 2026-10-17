@@ -11,8 +11,8 @@ import {
 import { ListButton } from "~/components/ListItem";
 import {
 	type FriendActivityBadge,
-	type FriendActivityType,
 	friendActivityBadge,
+	type FriendActivityType,
 } from "~/features/friends/friends-constants";
 import { deleteFriendSchema } from "~/features/friends/friends-schemas";
 import type { FriendActivity } from "~/features/friends/friends-utils.server";

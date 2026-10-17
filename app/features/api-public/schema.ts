@@ -381,13 +381,7 @@ interface SeasonalRank {
 }
 
 type RankTierName =
-	| "LEVIATHAN"
-	| "DIAMOND"
-	| "PLATINUM"
-	| "GOLD"
-	| "SILVER"
-	| "BRONZE"
-	| "IRON";
+	"LEVIATHAN" | "DIAMOND" | "PLATINUM" | "GOLD" | "SILVER" | "BRONZE" | "IRON";
 
 type Badge = {
 	/** @example "Monday Afterparty" */
@@ -423,13 +417,7 @@ export type MapListMap = {
 	 * - "ROLL" if it was randomly selected
 	 */
 	source:
-		| number
-		| "DEFAULT"
-		| "RANDOM"
-		| "BOTH"
-		| "TO"
-		| "COUNTERPICK"
-		| "ROLL";
+		number | "DEFAULT" | "RANDOM" | "BOTH" | "TO" | "COUNTERPICK" | "ROLL";
 	/** `null` if the map has not been played yet. */
 	winnerTeamId: number | null;
 	participatedUserIds: Array<number> | null;

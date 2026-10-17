@@ -2,6 +2,7 @@
 navItem: t
 type: feature
 ---
+
 Team schedule heatmap view (new deault)
 
 - Each day is a row of hour blocks shaded by how many members are free for that hour, so overlaps of any size stand out at a glance (not just the full-team ones)

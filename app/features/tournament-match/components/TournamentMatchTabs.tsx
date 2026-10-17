@@ -12,10 +12,10 @@ import type {
 } from "~/components/match-page/MatchTimeline";
 import type { WeaponPoolWeapon } from "~/components/match-page/WeaponPool";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";

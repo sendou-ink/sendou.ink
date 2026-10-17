@@ -11,13 +11,13 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import { useElementSize } from "~/hooks/useElementSize";
-import styles from "./ObjectiveTimeline.module.css";
 import {
 	formatElapsed,
 	smoothPenalties,
 	TIMELINE_PLOT_GUTTER_PX,
 	timelineTimeTicks,
 } from "./objective-timeline-utils";
+import styles from "./ObjectiveTimeline.module.css";
 
 /** count-axis units of gutter kept below zero for the control lane */
 const CONTROL_LANE_DEPTH = 13;

@@ -652,11 +652,10 @@ export async function countActiveParticipants({
 	return result?.count ?? 0;
 }
 
-interface UpdateArgs
-	extends Pick<
-		Tables["TournamentOrganization"],
-		"id" | "name" | "description" | "socials"
-	> {
+interface UpdateArgs extends Pick<
+	Tables["TournamentOrganization"],
+	"id" | "name" | "description" | "socials"
+> {
 	/** Omit to leave the current logo unchanged; `null` clears it. */
 	avatarImgId?: number | null;
 	members: Array<

@@ -160,7 +160,7 @@ function SaveTournamentStreamButton({
 		>
 			<input
 				type="hidden"
-				// biome-ignore lint/plugin: bare icon button that also posts revalidateRoot for the root loader
+				// eslint-disable-next-line sendou/no-raw-action-forms -- bare icon button that also posts revalidateRoot for the root loader
 				name="_action"
 				value={optimisticSaved ? "UNSAVE_TOURNAMENT" : "SAVE_TOURNAMENT"}
 			/>

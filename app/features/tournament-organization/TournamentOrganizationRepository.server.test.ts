@@ -9,9 +9,9 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "./test-utils";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
+import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 
 const users = UserFactory.pool();
 

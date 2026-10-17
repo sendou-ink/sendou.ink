@@ -14,9 +14,9 @@ import { createXRankPositionDetector } from "../core/detectors/x-rank/position";
 import { createXSetCountDetector } from "../core/detectors/x-rank/set-count";
 import { createXSetResultDetector } from "../core/detectors/x-rank/set-result";
 import {
-	FIXTURES_DIR,
-	type Fixture,
 	fieldTestOptions,
+	type Fixture,
+	FIXTURES_DIR,
 	loadFixtures,
 	runDetectorOnFixture,
 	withFixtureFrame,

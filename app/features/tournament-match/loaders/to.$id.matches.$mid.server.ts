@@ -9,8 +9,6 @@ import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRe
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -22,6 +20,8 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { showsOneGroupAtATime } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";

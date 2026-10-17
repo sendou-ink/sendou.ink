@@ -19,10 +19,10 @@ import {
 	MONTAGE_MANIFEST_FILE,
 	type MontageManifest,
 } from "~/features/scanner/core/montage";
-import * as Standings from "~/features/tournament/core/Standings";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
+import * as Standings from "~/features/tournament/core/Standings";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { vodTimestampOffsetSeconds } from "~/routines/syncTournamentVods";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";

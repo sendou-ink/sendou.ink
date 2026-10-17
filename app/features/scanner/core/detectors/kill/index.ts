@@ -23,9 +23,9 @@ import {
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import {
 	readMatchTimerSteps,
-	type TimerRead,
 	timerBoxChecks,
 	timerGlyphSets,
+	type TimerRead,
 } from "../objective/timer";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseNameSteps } from "../scoreboard/names";

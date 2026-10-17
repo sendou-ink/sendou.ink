@@ -472,7 +472,6 @@ export function SendouSelect<T extends object>({
 				: undefined;
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: only observes focus leaving the select
 		<div
 			className={clsx(className, styles.select)}
 			data-testid={testId}
@@ -544,7 +543,7 @@ export function SendouSelect<T extends object>({
 			{name ? (
 				<input type="hidden" name={name} value={currentKey ?? ""} />
 			) : null}
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: keydown steers the listbox inside */}
+			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- keydown steers the listbox inside */}
 			<div
 				ref={popoverRef}
 				id={popoverId}
@@ -962,7 +961,6 @@ export function SendouSelectItemSection({
 	if (!hasVisibleItems(state, children)) return null;
 
 	return (
-		// biome-ignore lint/a11y/useSemanticElements: a fieldset would carry form semantics this listbox section does not have
 		<div role="group" aria-label={heading}>
 			<div className={clsx(className, styles.categoryHeading)}>
 				{headingImg}

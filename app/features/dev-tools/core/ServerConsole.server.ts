@@ -45,9 +45,9 @@ export function install() {
 	}
 	globalThis.__devToolsServerConsole = { entries: [], nextId: 1, record };
 
-	// biome-ignore lint/suspicious/noConsole: wraps the console to record what is logged
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	const originalError = console.error;
-	// biome-ignore lint/suspicious/noConsole: wraps the console to record what is logged
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	const originalWarn = console.warn;
 
 	console.error = (...args: unknown[]) => {

@@ -68,7 +68,7 @@ describe("findRecentLiveStreams", () => {
 		]);
 
 		const playlistUrl = new URL(fetchMock.mock.calls[0][0].toString());
-		// biome-ignore lint/plugin: mocked YouTube API request
+		// eslint-disable-next-line sendou/no-raw-search-params -- mocked YouTube API request
 		expect(playlistUrl.searchParams.get("playlistId")).toBe("UUchannel1");
 	});
 

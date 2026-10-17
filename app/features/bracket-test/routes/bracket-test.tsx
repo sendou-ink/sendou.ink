@@ -6,11 +6,11 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
-import { TournamentProvider } from "~/features/tournament/tournament-context";
 import type { Bracket as BracketType } from "~/features/tournament-bracket/core/Bracket";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type { Tournament as TournamentClass } from "~/features/tournament-bracket/core/Tournament";
+import { TournamentProvider } from "~/features/tournament/tournament-context";
 import styles from "../bracket-test.module.css";
 
 type FormatType = Tables["TournamentStage"]["type"];

@@ -29,7 +29,7 @@ export function useActionSubmit<TSchema extends AnySchema>(
 
 	const submit = <const TAction extends ActionsOf<TSchema>>(
 		action: TAction,
-		// biome-ignore lint/complexity/noBannedTypes: {} models "branch with no extra fields"
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- {} models "branch with no extra fields"
 		...rest: {} extends FieldsOf<TSchema, TAction>
 			? [fields?: FieldsOf<TSchema, TAction>]
 			: [fields: FieldsOf<TSchema, TAction>]

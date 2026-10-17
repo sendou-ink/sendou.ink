@@ -9,7 +9,7 @@ declare global {
 }
 
 async function globalTeardown(_config: FullConfig) {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log("\nStopping e2e test servers...");
 
 	const servers = global.__E2E_SERVERS__ || [];
@@ -41,7 +41,7 @@ async function globalTeardown(_config: FullConfig) {
 
 	// only stop SeaweedFS if we started it
 	if (fs.existsSync(SEAWEEDFS_MARKER_FILE)) {
-		// biome-ignore lint/suspicious/noConsole: CLI script output
+		// eslint-disable-next-line no-console -- CLI script output
 		console.log("Stopping SeaweedFS...");
 		try {
 			execSync("docker compose stop seaweedfs", { stdio: "inherit" });
@@ -51,7 +51,7 @@ async function globalTeardown(_config: FullConfig) {
 		fs.unlinkSync(SEAWEEDFS_MARKER_FILE);
 	}
 
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log("All servers stopped.\n");
 }
 

@@ -12,8 +12,8 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { RelativeTime } from "~/components/RelativeTime";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import { plusSuggestionCommentPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
 	isVotingActive,
 	nextNonCompletedVoting,
@@ -33,8 +33,8 @@ import type { PlusTier } from "../plus-suggestions-constants";
 import { editSuggestionFormSchema } from "../plus-suggestions-schemas";
 import {
 	PLUS_TIER_PARAMS,
-	type PlusTierParam,
 	plusSuggestionsSearchParams,
+	type PlusTierParam,
 } from "../plus-suggestions-search-params";
 import {
 	canAddCommentToSuggestionFE,

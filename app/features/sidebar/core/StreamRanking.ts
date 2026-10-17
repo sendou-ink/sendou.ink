@@ -1,5 +1,5 @@
 import type { SidebarStream } from "~/features/core/streams/streams.server";
-import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
+import { type TierName, TIERS } from "~/features/mmr/mmr-constants";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { databaseTimestampNow } from "~/utils/dates";
 

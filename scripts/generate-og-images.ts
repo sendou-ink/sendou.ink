@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 
 // screenshots the canvases of the /admin/og-images page into the assets repo,
 // see docs/site/src/content/docs/dev/how-to.mdx

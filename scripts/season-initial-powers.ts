@@ -2,7 +2,7 @@ import { ordinal } from "openskill";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
+import { type TierName, TIERS } from "~/features/mmr/mmr-constants";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import { freshUserSkills } from "~/features/mmr/tiered.server";
 import { invariant } from "~/utils/invariant";

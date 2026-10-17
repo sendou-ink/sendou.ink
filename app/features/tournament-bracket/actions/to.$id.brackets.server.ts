@@ -2,13 +2,13 @@ import type { PreparedMaps, TournamentRoundMaps } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	calculateTournamentTierFromTeams,
 	MIN_TEAMS_FOR_TIERING,
 } from "~/features/tournament/core/tiering";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";

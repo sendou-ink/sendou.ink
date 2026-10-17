@@ -2,6 +2,7 @@
 navItem: u
 type: feature
 ---
+
 New profile widgets
 
 - LUTI Division: show your division from the latest LUTI season

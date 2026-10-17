@@ -19,15 +19,13 @@ function storageClient(): Bun.S3Client | null {
 		STORAGE_BUCKET,
 	} = process.env;
 
-	if (
-		!(
-			STORAGE_ACCESS_KEY &&
-			STORAGE_END_POINT &&
-			STORAGE_SECRET &&
-			STORAGE_REGION &&
-			STORAGE_BUCKET
-		)
-	) {
+	if (!(
+		STORAGE_ACCESS_KEY &&
+		STORAGE_END_POINT &&
+		STORAGE_SECRET &&
+		STORAGE_REGION &&
+		STORAGE_BUCKET
+	)) {
 		logger.warn("Storage configuration not found in environment");
 		return null;
 	}

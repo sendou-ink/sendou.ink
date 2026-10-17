@@ -6,12 +6,12 @@
 
 import clsx from "clsx";
 import { useElementSize } from "~/hooks/useElementSize";
-import styles from "./ObjectivePositionTimeline.module.css";
-import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 import {
 	TIMELINE_PLOT_GUTTER_PX,
 	timelineTimeTicks,
 } from "./objective-timeline-utils";
+import styles from "./ObjectivePositionTimeline.module.css";
+import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 
 const TRACK_END = 100;
 const POSITION_TICKS = [TRACK_END, 0, -TRACK_END];

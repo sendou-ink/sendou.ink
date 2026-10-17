@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Draw all scoreboard ROIs on a (normalized) frame for visual calibration.
  * Usage: bun --preload ./scripts/preload.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|quick-scoreboard-battle-log|...]
@@ -18,10 +18,10 @@ import {
 	RECTIFY as QUICK_RECTIFY,
 	ROIS as quick,
 } from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/rois";
-import * as sb from "../../app/features/scanner/core/detectors/scoreboard/rois";
+import * as replay from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
 import type { BattleLogRois } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/detector";
 import { ROIS as bl } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/rois";
-import * as replay from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
+import * as sb from "../../app/features/scanner/core/detectors/scoreboard/rois";
 import {
 	matToFrameData,
 	normalizeFrame,

@@ -6,8 +6,8 @@ import {
 	createTeams,
 	DOUBLE_ELIMINATION,
 	startedTournamentTimes,
-	TO_MAP_POOL,
 	teamSeeds,
+	TO_MAP_POOL,
 } from "./helpers/tournament";
 import { NotificationsPage } from "./pages/notifications/notifications-page";
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";

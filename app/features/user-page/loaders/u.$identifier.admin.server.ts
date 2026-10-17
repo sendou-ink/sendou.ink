@@ -1,7 +1,7 @@
 import { isSameMonth, startOfMonth, subMonths } from "date-fns";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as UserReportRepository from "~/features/user-report/UserReportRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { databaseTimestampToDate } from "~/utils/dates";

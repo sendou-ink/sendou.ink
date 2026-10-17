@@ -2,6 +2,7 @@
 navItem: [calendar, medal]
 type: feature
 ---
+
 Team picked map lists overhaul
 
 - Choose which modes teams pick maps for, Turf War included, and how many maps for each mode

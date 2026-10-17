@@ -17,9 +17,9 @@ import { holdRevalidationsDuring } from "~/features/chat/revalidation-scope";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import * as SearchParams from "~/modules/search-params/search-params";
-import { FormField as FormFieldComponent } from "./FormField";
 import { getFormFieldMetadata } from "./fields";
 import { formSearchParams } from "./form-search-params";
+import { FormField as FormFieldComponent } from "./FormField";
 import styles from "./SendouForm.module.css";
 import type {
 	FormObjectSchema,

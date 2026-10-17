@@ -9,9 +9,9 @@ import { viewerTimezoneAsyncLocalStorage } from "~/features/timezone/timezone-co
 import type { SerializeFrom } from "~/utils/remix";
 import { withNoUser, wrappedLoader } from "~/utils/Test";
 import { LFG_PAGE } from "~/utils/urls";
-import * as LFGRepository from "../LFGRepository.server";
 import { LFG } from "../lfg-constants";
 import { lfgSearchParams } from "../lfg-search-params";
+import * as LFGRepository from "../LFGRepository.server";
 import { loader } from "./lfg.server";
 
 const skillsBySeason = new Map<number, Record<number, TieredSkill>>();

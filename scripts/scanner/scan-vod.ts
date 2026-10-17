@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * CLI equivalent of the VoD tab: scans a video with the full detector registry
  * and writes the same events CSV the tab's Export menu downloads. ffmpeg

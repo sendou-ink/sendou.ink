@@ -6,8 +6,8 @@ import {
 	ROUND_ROBIN,
 	RR_TO_SE_WITH_UNDERGROUND,
 	startedTournamentTimes,
-	TO_MAP_POOL,
 	teamSeeds,
+	TO_MAP_POOL,
 } from "./helpers/tournament";
 import { MatchProfilePage } from "./pages/settings/match-profile-page";
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";

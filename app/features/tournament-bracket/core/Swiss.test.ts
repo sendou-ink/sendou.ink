@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import type { TournamentStageSettings } from "~/db/tables-json";
-import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	LOW_INK_AUGUST_2025,
 	LOW_INK_AUGUST_2026_ROUND_3,
 	RUSH_WEEKEND_3,
 } from "~/features/tournament-bracket/core/tests/mocks-swiss";
 import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
+import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { invariant } from "~/utils/invariant";
 import { unwrap } from "~/utils/result";
 import * as Engine from "./engine";

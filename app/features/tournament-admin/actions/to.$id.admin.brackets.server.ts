@@ -1,5 +1,4 @@
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
@@ -8,6 +7,7 @@ import {
 	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";

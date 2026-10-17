@@ -67,7 +67,7 @@ export function InputFormField({
 					maxLength={maxLength}
 					disabled={disabled}
 					autoComplete="off"
-					// biome-ignore lint/a11y/noAutofocus: opt-in per call site, used for inline edit forms
+					// eslint-disable-next-line jsx-a11y/no-autofocus -- opt-in per call site, used for inline edit forms
 					autoFocus={autoFocus}
 					placeholder={translatedPlaceholder}
 					{...ariaAttributes({

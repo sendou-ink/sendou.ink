@@ -12,8 +12,8 @@ import { useTranslation } from "react-i18next";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { invariant } from "~/utils/invariant";
 import { SendouTab, SendouTabList, SendouTabs } from "../elements/Tabs";
-import styles from "./MatchTabs.module.css";
 import { matchPageSearchParams } from "./match-page-search-params";
+import styles from "./MatchTabs.module.css";
 
 type MatchTabsKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 interface MatchTabsProps {

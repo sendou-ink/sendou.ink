@@ -121,6 +121,7 @@ export function YouTubeEmbed({
 
 	return (
 		<div className={styles.container}>
+			{/* eslint-disable-next-line react/iframe-missing-sandbox -- the YouTube player needs allow-scripts and allow-same-origin */}
 			<iframe
 				className={styles.iframe}
 				src={`https://www.youtube.com/embed/${id}?autoplay=${

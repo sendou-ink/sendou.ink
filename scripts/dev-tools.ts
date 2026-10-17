@@ -238,12 +238,12 @@ function formatMs(ms: number | null) {
 }
 
 function log(message: string) {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log(message);
 }
 
 function logError(message: string) {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.error(message);
 }
 

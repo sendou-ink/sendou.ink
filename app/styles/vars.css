@@ -319,17 +319,15 @@ html,
 	*/
 	--layout-nav-height: 55px;
 	--mobile-nav-height: calc(
-		var(--layout-nav-height) +
-		env(safe-area-inset-bottom)
+		var(--layout-nav-height) + env(safe-area-inset-bottom)
 	);
 	--mobile-tab-bar-display: flex;
 	--layout-sidenav-width: 250px;
 	--layout-fuse-bottom-height: 90px;
 	--layout-main-padding: var(--s-3);
 	--layout-sticky-top: calc(
-		var(--layout-nav-height) +
-		var(--layout-main-padding) +
-		env(safe-area-inset-top)
+		var(--layout-nav-height) + var(--layout-main-padding) +
+			env(safe-area-inset-top)
 	);
 
 	--popover-boundary-top: var(--layout-nav-height);
@@ -392,8 +390,7 @@ html,
 @media screen and (display-mode: standalone) {
 	html {
 		--popover-boundary-top: calc(
-			var(--layout-nav-height) +
-			env(safe-area-inset-top)
+			var(--layout-nav-height) + env(safe-area-inset-top)
 		);
 	}
 }
@@ -402,11 +399,10 @@ html,
 	html {
 		--modal-margin-block: calc(
 			var(--s-4) +
-			max(env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px))
+				max(env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px))
 		);
 		--popover-boundary-bottom: calc(
-			var(--layout-nav-height) +
-			env(safe-area-inset-bottom, 0px)
+			var(--layout-nav-height) + env(safe-area-inset-bottom, 0px)
 		);
 	}
 }

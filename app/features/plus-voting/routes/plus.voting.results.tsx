@@ -4,7 +4,6 @@ import { Link, useLoaderData } from "react-router";
 import { LocaleTime } from "~/components/LocaleTime";
 import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
-
 import { loader } from "../loaders/plus.voting.results.server";
 import styles from "../plus-voting-results.module.css";
 

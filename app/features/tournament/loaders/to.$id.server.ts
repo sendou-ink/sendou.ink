@@ -2,16 +2,16 @@ import { isAfter, subDays } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	bracketsMetaCached,
 	canSeeTournamentFriendCodes,
 	requireTournamentVisible,
-	type TournamentLayoutData,
 	tournamentDataCached,
+	type TournamentLayoutData,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { hasPermission } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";

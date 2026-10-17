@@ -11,8 +11,8 @@ import { formatPosition } from "../core/format";
 import { modeLabel, stageLabel } from "../core/labels";
 import { deleteClip, loadClipBlob, type ScannerClip } from "../store/clips";
 import styles from "./ClipDialog.module.css";
-import { ClipVideo } from "./ClipVideo";
 import { refreshClips } from "./clips-feed";
+import { ClipVideo } from "./ClipVideo";
 
 export function ClipDialog({
 	clip,

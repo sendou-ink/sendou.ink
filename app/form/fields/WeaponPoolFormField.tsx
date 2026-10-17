@@ -25,7 +25,6 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import type { FormFieldProps } from "../types";
 import { FormFieldWrapper } from "./FormFieldWrapper";
-
 import styles from "./WeaponPoolFormField.module.css";
 
 export type WeaponPoolItem = {

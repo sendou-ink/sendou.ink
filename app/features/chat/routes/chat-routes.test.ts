@@ -19,8 +19,8 @@ import { loader as roomsLoader } from "./api.chat.rooms";
 import { loader as roomLoader } from "./api.chat.rooms.$id";
 import { action as mentionsSeenAction } from "./api.chat.rooms.$id.mentions.seen";
 import {
-	loader as messagesLoader,
 	action as sendAction,
+	loader as messagesLoader,
 } from "./api.chat.rooms.$id.messages";
 import { action as readAction } from "./api.chat.rooms.$id.read";
 

@@ -6,9 +6,9 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import * as v from "valibot";
-import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import { EmptyState } from "~/components/EmptyState";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { LocaleTime } from "~/components/LocaleTime";
 import { associationsPage } from "~/features/associations/associations-urls";
@@ -618,9 +618,9 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 															postStartTime={post.startsAt}
 															canAccept={Boolean(
 																user &&
-																	post.permissions.MANAGE_REQUESTS.includes(
-																		user.id,
-																	),
+																post.permissions.MANAGE_REQUESTS.includes(
+																	user.id,
+																),
 															)}
 														/>
 													))}

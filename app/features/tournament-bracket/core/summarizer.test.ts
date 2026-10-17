@@ -5,8 +5,8 @@ import { invariant } from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type * as Progression from "./Progression";
 import { tournamentSummary } from "./summarizer.server";
-import type { TournamentDataTeam } from "./Tournament.server";
 import { tournamentCtxTeam } from "./tests/test-utils";
+import type { TournamentDataTeam } from "./Tournament.server";
 
 const createOpponent = (
 	id: number,

@@ -1108,8 +1108,7 @@ describe("bracketIdxsForStandings", () => {
 
 	test("handles low ink", () => {
 		expect(Progression.bracketIdxsForStandings(progressions.lowInk)).toEqual([
-			3, 2, 1,
-			0,
+			3, 2, 1, 0,
 			// NOTE: 2 is included so that teams eliminated in it are not dropped down to the starting bracket
 		]);
 	});

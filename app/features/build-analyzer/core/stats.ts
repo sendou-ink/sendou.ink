@@ -17,8 +17,8 @@ import {
 	SPLASH_WALL_ID,
 	SPLAT_BOMB_ID,
 	SPRINKLER_ID,
-	SUCTION_BOMB_ID,
 	subWeaponIds,
+	SUCTION_BOMB_ID,
 	TORPEDO_ID,
 	ZIPCASTER_ID,
 } from "~/modules/in-game-lists/weapon-ids";
@@ -48,9 +48,9 @@ import {
 	abilityPointsToEffects,
 	abilityValues,
 	apFromMap,
-	mainWeaponParams as getMainWeaponParams,
 	hasEffect,
 	hpDivided,
+	mainWeaponParams as getMainWeaponParams,
 	weaponIdToMultiShotCount,
 	weaponParams,
 } from "./utils";

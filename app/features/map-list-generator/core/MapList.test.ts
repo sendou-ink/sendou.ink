@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeWithStage, StageId } from "~/modules/in-game-lists/types";
 import { unwrap } from "~/utils/result";
-import * as MapList from "./MapList";
 import { MapPool } from "./map-pool";
+import * as MapList from "./MapList";
 
 const ALL_MODES_TEST_MAP_POOL = new MapPool({
 	TW: [1, 2, 3],

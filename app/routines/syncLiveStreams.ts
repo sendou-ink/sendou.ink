@@ -2,10 +2,10 @@ import { differenceInMinutes } from "date-fns";
 import type { Tables } from "~/db/tables";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
-import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getStreams } from "~/modules/twitch/streams";
 import { hasTwitchEnvVars } from "~/modules/twitch/utils.server";
@@ -39,24 +39,20 @@ async function syncLiveStreams() {
 	]);
 
 	const streams = [
-		...twitchStreams.map(
-			(stream): Omit<LiveStreamRow, "userId"> => ({
-				platform: "TWITCH",
-				account: stream.twitchUserName,
-				videoId: null,
-				viewerCount: stream.viewerCount,
-				thumbnailUrl: stream.thumbnailUrl,
-			}),
-		),
-		...youtubeStreams.map(
-			(stream): Omit<LiveStreamRow, "userId"> => ({
-				platform: "YOUTUBE",
-				account: stream.channelId,
-				videoId: stream.videoId,
-				viewerCount: stream.viewerCount,
-				thumbnailUrl: stream.thumbnailUrl,
-			}),
-		),
+		...twitchStreams.map((stream): Omit<LiveStreamRow, "userId"> => ({
+			platform: "TWITCH",
+			account: stream.twitchUserName,
+			videoId: null,
+			viewerCount: stream.viewerCount,
+			thumbnailUrl: stream.thumbnailUrl,
+		})),
+		...youtubeStreams.map((stream): Omit<LiveStreamRow, "userId"> => ({
+			platform: "YOUTUBE",
+			account: stream.channelId,
+			videoId: stream.videoId,
+			viewerCount: stream.viewerCount,
+			thumbnailUrl: stream.thumbnailUrl,
+		})),
 	];
 
 	if (streams.length === 0) {
@@ -66,12 +62,10 @@ async function syncLiveStreams() {
 	}
 
 	const accountToUserId = await streamAccountToUserId(streams);
-	const liveStreams = streams.map(
-		(stream): LiveStreamRow => ({
-			...stream,
-			userId: accountToUserId.get(LiveStream.key(stream)) ?? null,
-		}),
-	);
+	const liveStreams = streams.map((stream): LiveStreamRow => ({
+		...stream,
+		userId: accountToUserId.get(LiveStream.key(stream)) ?? null,
+	}));
 
 	await LiveStreamRepository.replaceAll(liveStreams);
 	clearCombinedStreamsCache();

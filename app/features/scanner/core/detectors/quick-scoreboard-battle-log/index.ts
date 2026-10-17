@@ -1,3 +1,7 @@
+import {
+	createBattleLogDetector,
+	type ScoreboardBattleLogData,
+} from "../scoreboard-battle-log/detector";
 /**
  * QuickScoreboardBattleLogDetector: parses the Recent Battles detail as the
  * lobby's quick view draws it (the menu overlay with the battle list on the
@@ -6,10 +10,6 @@
  * geometry (./rois.ts) is this screen's.
  */
 import type { ScoreboardResources } from "../scoreboard/index";
-import {
-	createBattleLogDetector,
-	type ScoreboardBattleLogData,
-} from "../scoreboard-battle-log/detector";
 import type { Detector } from "../types";
 import { ROIS } from "./rois";
 

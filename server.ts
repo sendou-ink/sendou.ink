@@ -22,7 +22,7 @@ const server = Bun.serve({
 	},
 });
 
-// biome-ignore lint/suspicious/noConsole: server startup log
+// eslint-disable-next-line no-console -- server startup log
 console.log(`[server] http://localhost:${server.port}`);
 
 /** Every client build file as an in-memory route; `/assets` is fingerprinted so it is cached forever */

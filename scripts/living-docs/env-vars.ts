@@ -588,7 +588,7 @@ function commentAbove(file: ParsedFile, line: number) {
 			.map((part) => part.replace(/^\s*\* ?/, "").trim())
 			.join(" ")
 			.trim();
-		if (text.startsWith("biome-ignore")) break;
+		if (text.startsWith("eslint-")) break;
 
 		parts.unshift(text);
 		if (comment.type !== "Line") break;

@@ -11,9 +11,9 @@ import {
 	createMinimapDetector,
 	type MinimapData,
 } from "../core/detectors/minimap/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { Detector } from "../core/detectors/types";
 import { hueDistance, hueOf } from "../core/ink-color";
 import {

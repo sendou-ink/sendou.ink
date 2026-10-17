@@ -17,15 +17,15 @@ import {
 	parseTldrawJsonFile,
 	type TLAssetId,
 	type TLComponents,
+	Tldraw,
 	TLDRAW_FILE_EXTENSION,
+	type TldrawFile,
+	type TldrawOptions,
 	type TLImageAsset,
 	type TLShapeId,
 	type TLShapeUtilConstructor,
 	type TLUiStylePanelProps,
 	type TLUnknownShape,
-	Tldraw,
-	type TldrawFile,
-	type TldrawOptions,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
 import {

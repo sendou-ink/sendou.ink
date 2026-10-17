@@ -106,9 +106,7 @@ export function ScrimRequestModal({
 function ScrimRequestAvailability({ post }: { post: ScrimPost }) {
 	const { t } = useTranslation(["schedule"]);
 	const from = useFormValue("from") as
-		| { mode: "TEAM"; teamId: number }
-		| { mode: "PICKUP" }
-		| null;
+		{ mode: "TEAM"; teamId: number } | { mode: "PICKUP" } | null;
 	const at = useFormValue("at") as string | null;
 
 	const teamId = from?.mode === "TEAM" ? from.teamId : undefined;

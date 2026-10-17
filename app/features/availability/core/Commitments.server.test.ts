@@ -349,7 +349,7 @@ async function setTournamentSettings(
 		.where("id", "=", tournamentId)
 		.executeTakeFirstOrThrow();
 
-	// biome-ignore lint/plugin: leagues are not created through app code, so no production write reaches isLeague
+	// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- leagues are not created through app code, so no production write reaches isLeague
 	await db
 		.updateTable("Tournament")
 		.set({ settings: JSON.stringify({ ...settings, ...patch }) })

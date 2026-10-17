@@ -11,8 +11,8 @@ import type { BracketData } from "./engine/types";
 import * as PreparedMaps from "./PreparedMaps";
 import type * as Progression from "./Progression";
 import { getRounds } from "./rounds";
-import type { TournamentData } from "./Tournament.server";
 import { testTournament, tournamentCtxTeam } from "./tests/test-utils";
+import type { TournamentData } from "./Tournament.server";
 
 const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
 	testTournament({
@@ -411,7 +411,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		});
 
 		expect(trimmed?.maps[0].list?.[0].stageId).toBe(
-			// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
+			// eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain -- Biome 2.3.1 upgrade
 			EIGHT_TEAM_SE_PREPARED.maps[1].list?.[0].stageId!,
 		);
 	});

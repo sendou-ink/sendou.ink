@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * GPU parity over every fixture frame: each detector gates the frame, then
  * parses it twice — synchronously on the CPU (runSync) and through the WebGPU

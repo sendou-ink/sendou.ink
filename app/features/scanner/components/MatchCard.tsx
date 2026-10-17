@@ -58,8 +58,8 @@ import {
 	TEAM_LABELS,
 	timelineOrigin,
 } from "./game-timeline-view";
-import styles from "./MatchCard.module.css";
 import { matchZip } from "./match-zip";
+import styles from "./MatchCard.module.css";
 import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
 import { type UploadState, UploadStatusButton } from "./UploadStatus";
 

@@ -137,8 +137,7 @@ export function seedArrayItemDefaults(
 	if (itemMeta?.type !== "fieldset") return values;
 
 	const existing = getNestedValue(values, itemPath) as
-		| Record<string, unknown>
-		| undefined;
+		Record<string, unknown> | undefined;
 	const merged = { ...fieldsetDefaults(itemMeta), ...(existing ?? {}) };
 	return setNestedValue(values, itemPath, merged);
 }

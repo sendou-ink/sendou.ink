@@ -46,7 +46,7 @@ export function extractYoutubeIdFromVideoUrl(url: string): string | null {
 	if (!YOUTUBE_HOSTS.includes(parsed.hostname)) return null;
 
 	if (pathSegments[0] === "watch") {
-		// biome-ignore lint/plugin: user-pasted YouTube URL
+		// eslint-disable-next-line sendou/no-raw-search-params -- user-pasted YouTube URL
 		return parsed.searchParams.get("v") || null;
 	}
 

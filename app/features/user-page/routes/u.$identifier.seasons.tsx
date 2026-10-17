@@ -10,11 +10,11 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSection } from "~/components/elements/Section";
+import { EmptyState } from "~/components/EmptyState";
 import {
 	Image,
 	ModeImage,
@@ -34,9 +34,9 @@ import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-util
 import { SeasonActivityCalendar } from "~/features/mmr/components/SeasonActivityCalendar";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
-	userSeasonSummaryGraphicPage,
 	userSeasonsPage,
 	userSeasonsStatsPage,
+	userSeasonSummaryGraphicPage,
 } from "~/features/user-page/user-page-urls";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHasRole } from "~/modules/permissions/hooks";

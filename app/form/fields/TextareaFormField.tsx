@@ -45,7 +45,7 @@ export function TextareaFormField({
 				onBlur={() => onBlur?.()}
 				disabled={disabled}
 				autoComplete="off"
-				// biome-ignore lint/a11y/noAutofocus: opt-in per call site, used for inline edit forms
+				// eslint-disable-next-line jsx-a11y/no-autofocus -- opt-in per call site, used for inline edit forms
 				autoFocus={autoFocus}
 				{...ariaAttributes({
 					name,

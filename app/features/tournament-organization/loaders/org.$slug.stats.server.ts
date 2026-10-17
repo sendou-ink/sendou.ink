@@ -3,12 +3,12 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import {
 	ESTABLISHED_ORG,
 	MONTH_PARAM_FORMAT,
 } from "../tournament-organization-constants";
 import { organizationFromParams } from "../tournament-organization-utils.server";
+import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const organization = await organizationFromParams(params);

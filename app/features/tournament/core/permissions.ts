@@ -1,6 +1,6 @@
 import * as R from "remeda";
-import type { TournamentStaffRole } from "~/features/tournament/tournament-constants";
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
+import type { TournamentStaffRole } from "~/features/tournament/tournament-constants";
 
 /**
  * The half of a tournament's permissions (docs/site/src/content/docs/dev/permissions.mdx) depending only on author,

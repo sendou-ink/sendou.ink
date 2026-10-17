@@ -3,8 +3,8 @@ import { act, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import * as ReactRouter from "react-router";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { FormField } from "~/form/FormField";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
+import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type {
 	MainWeaponId,

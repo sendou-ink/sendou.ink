@@ -108,9 +108,10 @@ describe("calculateDamage()", () => {
 		const hpWithoutBRU = withoutBRU.find(
 			(d) => d.receiver === "Wsb_Shield",
 		)?.hitPoints;
-		// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
-		const hpWithBRU = withBRU.find((d) => d.receiver === "Wsb_Shield")
-			?.hitPoints!;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain -- Biome 2.3.1 upgrade
+		const hpWithBRU = withBRU.find(
+			(d) => d.receiver === "Wsb_Shield",
+		)?.hitPoints!;
 
 		expect(typeof hpWithoutBRU).toBe("number");
 		expect(typeof hpWithBRU).toBe("number");
@@ -126,9 +127,10 @@ describe("calculateDamage()", () => {
 		const hpWithoutSPU = withoutSPU.find(
 			(d) => d.receiver === "GreatBarrier_Barrier",
 		)?.hitPoints;
-		// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
-		const hpWithSPU = withSPU.find((d) => d.receiver === "GreatBarrier_Barrier")
-			?.hitPoints!;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain -- Biome 2.3.1 upgrade
+		const hpWithSPU = withSPU.find(
+			(d) => d.receiver === "GreatBarrier_Barrier",
+		)?.hitPoints!;
 
 		expect(typeof hpWithoutSPU).toBe("number");
 		expect(typeof hpWithSPU).toBe("number");

@@ -7,10 +7,10 @@ import type {
 import * as Availability from "~/features/availability/core/Availability";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
-import * as TeamPick from "~/features/tournament/core/TeamPick";
-import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";

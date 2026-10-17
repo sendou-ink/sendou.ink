@@ -21,10 +21,10 @@ import * as PlanImport from "~/features/map-planner/core/PlanImport";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { logger } from "~/utils/logger";
 import { SCANNER_PAGE } from "~/utils/urls";
+import { povDeathTimes } from "../core/clips/scoring";
 import * as CoachEvents from "../core/CoachEvents";
 import * as CoachFilters from "../core/CoachFilters";
 import * as CoachPlayback from "../core/CoachPlayback";
-import { povDeathTimes } from "../core/clips/scoring";
 import { formatClock, formatPosition } from "../core/format";
 import { modeLabel, stageLabel } from "../core/labels";
 import { type BuiltMatch, isHistoryOnly } from "../core/match-builder";
@@ -44,14 +44,14 @@ import {
 	timelineOrigin,
 } from "./game-timeline-view";
 import { NotFound } from "./NotFound";
-import { SessionHeader } from "./SessionHeader";
 import type { ScanEvent } from "./session-data";
+import { SessionHeader } from "./SessionHeader";
 import { cachedBuild, useStoredVod, useVodMinimaps } from "./vod-data";
 import {
 	rememberVisitVodFile,
 	useVodScan,
-	VOD_FILE_ACCEPT,
 	visitVodFile,
+	VOD_FILE_ACCEPT,
 } from "./vod-scan";
 
 const ALL = "ALL";
@@ -337,7 +337,7 @@ function CoachSession({
 			{url
 				? createPortal(
 						<>
-							{/* biome-ignore lint/a11y/useMediaCaption: game footage has no captions */}
+							{/* eslint-disable-next-line jsx-a11y/media-has-caption -- game footage has no captions */}
 							<video
 								ref={videoRef}
 								className={styles.video}

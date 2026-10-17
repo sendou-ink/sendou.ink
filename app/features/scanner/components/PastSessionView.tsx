@@ -12,15 +12,15 @@ import { scannerSearchParams } from "../scanner-search-params";
 import { deleteCompactedSessions } from "../store/compacted-matches";
 import { deleteEvents, loadEventFrame } from "../store/events";
 import { useClips } from "./clips-feed";
-import { ExportMenu } from "./ExportMenu";
 import { findSession, refreshFeed, useFeed } from "./events-feed";
+import { ExportMenu } from "./ExportMenu";
 import { NotFound } from "./NotFound";
 import styles from "./PastSessionView.module.css";
+import { matchContaining } from "./sendou-ingest";
+import type { ScanEvent } from "./session-data";
 import { SessionHeader } from "./SessionHeader";
 import { SessionView } from "./SessionView";
 import { sessionLabel } from "./SettingsPopover";
-import { matchContaining } from "./sendou-ingest";
-import type { ScanEvent } from "./session-data";
 import { sendCompacted, sendLive } from "./upload";
 
 export function PastSessionView() {

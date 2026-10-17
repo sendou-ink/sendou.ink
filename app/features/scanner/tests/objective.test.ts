@@ -15,9 +15,9 @@ import {
 	createObjectiveDetector,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent, Detector } from "../core/detectors/types";
 import { hueDistance, hueOf, type InkRgb } from "../core/ink-color";
 import {
@@ -170,8 +170,7 @@ test("cast fixture pair: team ink hues identify sides across camera swaps", asyn
 		const { events } = await runDetectorOnFixture(detector, fixture!);
 		const teamColor = (
 			events.find((event) => event.type === "Objective") as
-				| DetectedEvent<ObjectiveData>
-				| undefined
+				DetectedEvent<ObjectiveData> | undefined
 		)?.data.teamColor;
 		assert.ok(teamColor?.[0] && teamColor[1], "side ink color unreadable");
 		colors.push([teamColor[0], teamColor[1]] as const);

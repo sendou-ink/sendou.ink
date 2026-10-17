@@ -18,8 +18,10 @@ type ButtonVariant =
 	| "minimal-destructive"
 	| "ghost";
 
-export interface SendouButtonProps
-	extends Omit<React.ComponentPropsWithRef<"button">, "disabled" | "children"> {
+export interface SendouButtonProps extends Omit<
+	React.ComponentPropsWithRef<"button">,
+	"disabled" | "children"
+> {
 	variant?: ButtonVariant;
 	size?: "miniscule" | "small" | "medium" | "big";
 	shape?: "circle" | "square";
@@ -47,6 +49,7 @@ export function SendouButton({
 	return (
 		<button
 			data-testid={testId}
+			// eslint-disable-next-line react/button-has-type -- defaults to "button" above
 			type={type}
 			{...rest}
 			disabled={isDisabled}

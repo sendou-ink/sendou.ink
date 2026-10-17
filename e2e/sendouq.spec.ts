@@ -29,9 +29,10 @@ import { SendouQReadyPage } from "./pages/sendouq/sendouq-ready-page";
 import { MatchProfilePage } from "./pages/settings/match-profile-page";
 
 const TEAM_MODE = "TC" as const;
-const TEAM_MAP_POOL = SENDOUQ_MAP_POOL.parsed[TEAM_MODE]
-	.slice(0, AMOUNT_OF_MAPS_IN_POOL_PER_MODE)
-	.map((stageId) => ({ mode: TEAM_MODE, stageId }));
+const TEAM_MAP_POOL = SENDOUQ_MAP_POOL.parsed[TEAM_MODE].slice(
+	0,
+	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
+).map((stageId) => ({ mode: TEAM_MODE, stageId }));
 
 test.describe("SendouQ", () => {
 	test("Group preparation flow - add friends and users via invite link", async ({

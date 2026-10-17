@@ -137,7 +137,7 @@ function PushNotificationsEnabler() {
 					{t("common:actions.enable")}
 				</SendouButton>
 			) : notificationsPermsGranted === "granted" &&
-				hasSubscription === false ? (
+			  hasSubscription === false ? (
 				<SendouButton size="small" variant="minimal" onClick={askPermission}>
 					{t("common:actions.enable")}
 				</SendouButton>
@@ -152,7 +152,7 @@ function PushNotificationsEnabler() {
 					{t("common:settings.notifications.disableInfo")}
 				</SendouPopover>
 			) : notificationsPermsGranted === "not-supported" ||
-				notificationsPermsGranted === "denied" ? (
+			  notificationsPermsGranted === "denied" ? (
 				<SendouPopover
 					trigger={
 						<SendouButton size="small" variant="minimal">
@@ -174,7 +174,7 @@ function PushNotificationsEnabler() {
 					{t("common:settings.notifications.subscribeFailed")}
 				</FormMessage>
 			) : notificationsPermsGranted === "granted" &&
-				hasSubscription === false ? (
+			  hasSubscription === false ? (
 				<FormMessage type="info">
 					{t("common:settings.notifications.resubscribeNeeded")}
 				</FormMessage>

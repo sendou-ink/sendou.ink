@@ -1,6 +1,7 @@
 ---
 type: feature
 ---
+
 Menus, dialogs and forms are faster and lighter across the site
 
 - Snappier performance with different UI elements

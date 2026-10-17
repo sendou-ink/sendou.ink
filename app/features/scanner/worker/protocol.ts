@@ -48,10 +48,7 @@ export interface AbortChunkRequest {
 }
 
 export type WorkerRequest =
-	| InitRequest
-	| AnalyzeRequest
-	| ScanChunkRequest
-	| AbortChunkRequest;
+	InitRequest | AnalyzeRequest | ScanChunkRequest | AbortChunkRequest;
 
 export type WorkerResponse =
 	| {

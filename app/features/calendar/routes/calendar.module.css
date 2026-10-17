@@ -2,10 +2,8 @@
 	--column-width: 225px;
 	--columns-gap: var(--s-6);
 	--columns-width: calc(
-		var(--columns-count) *
-		var(--column-width) +
-		(var(--columns-count) - 1) *
-		var(--columns-gap)
+		var(--columns-count) * var(--column-width) + (var(--columns-count) - 1) *
+			var(--columns-gap)
 	);
 }
 

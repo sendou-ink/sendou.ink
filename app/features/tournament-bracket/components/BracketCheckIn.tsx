@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/tournament-context";
 import { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { useTournament } from "~/features/tournament/tournament-context";
 import styles from "./BracketCheckIn.module.css";
 
 /** Prompts the viewer's team to check in to a follow-up bracket; other progress states live in the header status indicator. */

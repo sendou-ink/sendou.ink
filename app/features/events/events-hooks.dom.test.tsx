@@ -11,10 +11,10 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import { advanceTimersByTimeAsync, mockFetch } from "~/utils/test-helpers";
 import { eventsClient } from "./events-client";
 import {
-	useEventStreamCatchUp,
 	useEventsConnection,
 	useEventsReadyState,
 	useEventsTopic,
+	useEventStreamCatchUp,
 	useServerEventListener,
 } from "./events-hooks";
 import { HEARTBEAT_INTERVAL_MS, type ServerEvent } from "./events-types";

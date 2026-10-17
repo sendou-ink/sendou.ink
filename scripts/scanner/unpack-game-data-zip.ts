@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Validates a scanner `Game data` zip sent in by a user and unpacks it into a
  * fresh directory. Exits non-zero with the reason when the zip is not exactly

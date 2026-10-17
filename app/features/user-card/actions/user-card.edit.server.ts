@@ -4,11 +4,11 @@ import { requireUser } from "~/features/auth/core/user.server";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { defineAction } from "~/form/define-action.server";
 import { userPage } from "~/utils/urls";
-import * as UserCardRepository from "../UserCardRepository.server";
 import { updateUserCardSchema } from "../user-card-schemas";
 import { userCardEditSearchParams } from "../user-card-search-params";
 import type { HideableUserCardStat } from "../user-card-types";
 import { isValidUnverifiedXp } from "../user-card-utils";
+import * as UserCardRepository from "../UserCardRepository.server";
 
 export const action = defineAction(
 	{ body: updateUserCardSchema },

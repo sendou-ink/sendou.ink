@@ -22,8 +22,8 @@ import {
 	SENDOUQ_BEST_OF,
 } from "~/features/sendouq/q-constants";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { dateToYYYYMMDD } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";

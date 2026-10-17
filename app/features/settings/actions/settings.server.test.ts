@@ -66,9 +66,8 @@ describe("settings action: UPDATE_MATCH_PROFILE", () => {
 	test("updates the weapon pool of a user who is not queueing", async () => {
 		await updateWeaponPool(NEW_WEAPON_ID);
 
-		const weaponPool = await MatchProfileRepository.findWeaponPoolByUserId(
-			actorId(),
-		);
+		const weaponPool =
+			await MatchProfileRepository.findWeaponPoolByUserId(actorId());
 		expect(weaponPool.map((weapon) => weapon.weaponSplId)).toEqual([
 			NEW_WEAPON_ID,
 		]);

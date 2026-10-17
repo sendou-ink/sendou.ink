@@ -1,11 +1,11 @@
 import * as v from "valibot";
 import { mySlugify } from "~/utils/urls";
-import * as TeamRepository from "./TeamRepository.server";
 import {
 	createTeamSchema,
 	resetInviteLinkSchema,
 	updateRosterSchema,
 } from "./team-schemas";
+import * as TeamRepository from "./TeamRepository.server";
 
 export const createTeamSchemaServer = v.objectAsync({
 	...createTeamSchema.entries,

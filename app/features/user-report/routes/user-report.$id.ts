@@ -4,8 +4,8 @@ import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import { sendUserReportWebhook } from "../core/discord-webhook.server";
-import * as UserReportRepository from "../UserReportRepository.server";
 import { reportUserSchemaServer } from "../user-report-schemas.server";
+import * as UserReportRepository from "../UserReportRepository.server";
 
 export const action = defineAction(
 	{ params: idObject, body: reportUserSchemaServer },

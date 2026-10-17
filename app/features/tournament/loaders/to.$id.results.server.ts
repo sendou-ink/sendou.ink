@@ -1,10 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { Standing } from "~/features/tournament-bracket/core/Bracket";
 import {
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import * as Standings from "../core/Standings";
 

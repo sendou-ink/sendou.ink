@@ -32,9 +32,9 @@ export function install() {
 	if (isInstalled || typeof window === "undefined") return;
 	isInstalled = true;
 
-	// biome-ignore lint/suspicious/noConsole: wraps the console to record what is logged
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	const originalError = console.error;
-	// biome-ignore lint/suspicious/noConsole: wraps the console to record what is logged
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	const originalWarn = console.warn;
 
 	console.error = (...args: unknown[]) => {

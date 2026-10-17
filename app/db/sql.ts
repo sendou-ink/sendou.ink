@@ -65,7 +65,8 @@ function applyMigratedSchema(target: DatabaseSync) {
 	try {
 		// virtual tables create their own shadow tables (e.g. UserSearch_data)
 		const statements = source
-			.prepare(`
+			.prepare(
+				`
 				SELECT sql FROM sqlite_master m
 				WHERE sql IS NOT NULL
 				AND name NOT LIKE 'sqlite_%'
@@ -75,7 +76,8 @@ function applyMigratedSchema(target: DatabaseSync) {
 					AND m.name LIKE vt.name || '_%'
 				)
 				ORDER BY m.rowid
-			`)
+			`,
+			)
 			.all() as Array<{ sql: string }>;
 
 		for (const statement of statements) {
@@ -104,16 +106,16 @@ function logQuery(event: LogEvent) {
 			(event.query.query as any).from.froms.map(
 				(f: any) => f.table?.identifier?.name ?? f.alias?.name ?? "unknown",
 			);
-		// biome-ignore lint/suspicious/noConsole: dev only
+		// eslint-disable-next-line no-console -- dev only
 		console.log(styleText("blue", `-- SQLITE QUERY to "${from()}" --`));
-		// biome-ignore lint/suspicious/noConsole: dev only
+		// eslint-disable-next-line no-console -- dev only
 		console.log(
 			styleText(
 				millisToColor(event.queryDurationMillis),
 				`${roundToNDecimalPlaces(event.queryDurationMillis, 1)}ms`,
 			),
 		);
-		// biome-ignore lint/suspicious/noConsole: dev only
+		// eslint-disable-next-line no-console -- dev only
 		console.log(formatSql(event.query.sql, event.query.parameters));
 	} else {
 		logError(event);

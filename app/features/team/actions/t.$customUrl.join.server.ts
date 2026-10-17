@@ -4,10 +4,10 @@ import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import { validateInviteCode } from "../loaders/t.$customUrl.join.server";
-import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 import { teamJoinSearchParams } from "../team-search-params";
+import * as TeamRepository from "../TeamRepository.server";
 
 export const action = defineAction(
 	{ params: teamParamsSchema },

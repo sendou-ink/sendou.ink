@@ -4,7 +4,7 @@ import { Link, useLoaderData } from "react-router";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
+import { articlePage, ARTICLES_MAIN_PAGE, navIconUrl } from "~/utils/urls";
 import { metaTags, ogPageImage } from "../../../utils/remix";
 import { loader } from "../loaders/a.server";
 import styles from "./a.module.css";

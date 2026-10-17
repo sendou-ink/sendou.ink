@@ -29,8 +29,8 @@ import {
 	halvesArea,
 } from "./area-downscaler";
 import {
-	type CubicUpscaler,
 	createCubicUpscaler,
+	type CubicUpscaler,
 	upscalesCubic,
 } from "./cubic-upscaler";
 import { createGrayKernel, type GrayKernel } from "./gpu-gray";
@@ -310,8 +310,7 @@ export interface ReadbackRequest {
 }
 
 export type ReadbackResponse =
-	| ({ id: number } & ReadFrame)
-	| { id: number; error: string };
+	({ id: number } & ReadFrame) | { id: number; error: string };
 
 export interface ReadOptions {
 	path?: ReadbackPath;

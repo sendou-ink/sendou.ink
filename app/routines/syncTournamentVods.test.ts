@@ -328,7 +328,7 @@ describe("syncTournamentVods", () => {
 
 		// clear startedAt on all matches: a played match that was never started is a
 		// state no production write leaves behind
-		// biome-ignore lint/plugin: written rather than seeded, see above
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- written rather than seeded, see above
 		await db.updateTable("TournamentMatch").set({ startedAt: null }).execute();
 
 		await runProcessOneTournament();

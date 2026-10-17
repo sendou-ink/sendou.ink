@@ -10,19 +10,19 @@ import {
 	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
 } from "./quick-scoreboard-battle-log/index";
 import {
-	createScoreboardDetector,
-	SCOREBOARD_EVENT_TYPE,
-	type ScoreboardResources,
-} from "./scoreboard/index";
+	createScoreboardBattleLogReplayDetector,
+	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
+} from "./scoreboard-battle-log-replay/index";
 import {
 	createScoreboardBattleLogDetector,
 	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
 } from "./scoreboard-battle-log/index";
-import {
-	createScoreboardBattleLogReplayDetector,
-	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
-} from "./scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "./scoreboard-own/index";
+import {
+	createScoreboardDetector,
+	SCOREBOARD_EVENT_TYPE,
+	type ScoreboardResources,
+} from "./scoreboard/index";
 import type { Detector } from "./types";
 import { createXRankPositionDetector } from "./x-rank/position";
 import { createXSetCountDetector } from "./x-rank/set-count";

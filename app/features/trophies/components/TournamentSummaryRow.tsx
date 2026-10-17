@@ -36,7 +36,7 @@ export function TournamentSummaryRow({
 
 	const isUpcoming = Boolean(
 		tournament.startTime &&
-			databaseTimestampToDate(tournament.startTime) > new Date(),
+		databaseTimestampToDate(tournament.startTime) > new Date(),
 	);
 
 	return (

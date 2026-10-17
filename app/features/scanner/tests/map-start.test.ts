@@ -10,8 +10,8 @@ import {
 	createMapStartDetector,
 	type MapStartData,
 } from "../core/detectors/map-start/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import {
 	fieldTestOptions,
 	loadFixtures,

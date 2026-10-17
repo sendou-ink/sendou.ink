@@ -11,7 +11,6 @@ import {
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-
 import { loader } from "../loaders/tiers.server";
 
 export { loader };

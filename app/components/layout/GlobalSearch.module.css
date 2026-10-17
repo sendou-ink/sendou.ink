@@ -78,14 +78,11 @@
 	max-width: 36rem;
 	inset-block-start: var(--visual-viewport-offset-top, 0px);
 	inset-block-end: calc(
-		100% -
-		var(--visual-viewport-offset-top, 0px) -
-		var(--visual-viewport-height, 100%)
+		100% - var(--visual-viewport-offset-top, 0px) -
+			var(--visual-viewport-height, 100%)
 	);
 	max-height: calc(
-		var(--visual-viewport-height, 100dvh) -
-		2 *
-		var(--modal-margin-block)
+		var(--visual-viewport-height, 100dvh) - 2 * var(--modal-margin-block)
 	);
 	margin: var(--modal-margin-block) auto auto;
 	display: flex;

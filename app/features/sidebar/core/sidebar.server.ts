@@ -39,12 +39,12 @@ import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.serv
 import { scrimsSearchParams } from "~/features/scrims/scrims-search-params";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import {
 	type TournamentTierNumber,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
-import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";

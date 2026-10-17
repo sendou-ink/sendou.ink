@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 
 // `publish` uploads the screenshots of a `bun run docs:capture` run to the docs' Space (CI, on pushes to main),
 // `download` fetches the published ones whose spec is unchanged since its capture into the docs site (its build on Render),

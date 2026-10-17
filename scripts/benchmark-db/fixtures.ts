@@ -3,8 +3,8 @@ import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import * as Availability from "~/features/availability/core/Availability";
-import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import type { ChatRoomType } from "~/features/chat/chat-types";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { LFG } from "~/features/lfg/lfg-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type {

@@ -21,7 +21,6 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { stripDisabledEffects } from "../core/model-analysis";
 import * as TrophyBackfill from "../core/TrophyBackfill.server";
-import * as TrophyRepository from "../TrophyRepository.server";
 import { TROPHY_PENDING_PER_USER_LIMIT } from "../trophies-constants";
 import { trophyActionSchema, trophyFormSchema } from "../trophies-schemas";
 import {
@@ -29,6 +28,7 @@ import {
 	canReviewTrophies,
 	compressTrophyModel,
 } from "../trophies-utils";
+import * as TrophyRepository from "../TrophyRepository.server";
 
 export const action = defineAction(
 	{

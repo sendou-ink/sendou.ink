@@ -32,13 +32,13 @@ import {
 	RECTIFY as QUICK_RECTIFY,
 	ROIS as quick,
 } from "../core/detectors/quick-scoreboard-battle-log/rois";
-import type { ScoreboardRowDebug } from "../core/detectors/scoreboard/index";
-import * as sb from "../core/detectors/scoreboard/rois";
+import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { BattleLogRois } from "../core/detectors/scoreboard-battle-log/detector";
 import { ROIS as bl } from "../core/detectors/scoreboard-battle-log/rois";
-import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
+import type { ScoreboardRowDebug } from "../core/detectors/scoreboard/index";
+import * as sb from "../core/detectors/scoreboard/rois";
 import type { DetectedEvent } from "../core/detectors/types";
 import type { XRankPositionData } from "../core/detectors/x-rank/position";
 import * as xRank from "../core/detectors/x-rank/rois";

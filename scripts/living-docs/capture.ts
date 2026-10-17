@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 
 // runs e2e specs with tracing on and keeps what the living docs show from the run:
 // the pathnames each test visits and the /api/ requests it makes (committed) and a screenshot per page divider and test.step (gitignored),

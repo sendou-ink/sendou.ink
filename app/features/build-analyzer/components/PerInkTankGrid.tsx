@@ -91,7 +91,6 @@ function Grid({ weaponSplId }: PerInkTankGridProps) {
 					);
 				})}
 			</div>
-			{/** biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration */}
 			<div className="stack horizontal sm" onMouseLeave={handleMouseLeaveGrid}>
 				<div className={styles.inkGridHorizontalAbility}>
 					<Ability ability="ISS" size="SUBTINY" />
@@ -157,7 +156,6 @@ function InkGridRows({
 
 				if (typeof cell.shots !== "number") {
 					return (
-						// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 						<div
 							className={styles.inkGridCell}
 							key={key}
@@ -173,7 +171,6 @@ function InkGridRows({
 				}
 
 				return (
-					// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
 					<div
 						key={key}
 						className={styles.inkGridCell}

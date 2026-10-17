@@ -1,8 +1,8 @@
 import { requireUser } from "~/features/auth/core/user.server";
 import { defineAction } from "~/form/define-action.server";
 import { notFoundIfNullish } from "~/utils/remix.server";
-import * as VoiceRepository from "../VoiceRepository.server";
 import { voiceTelemetrySchema } from "../voice-schemas";
+import * as VoiceRepository from "../VoiceRepository.server";
 
 export const action = defineAction(
 	{ body: voiceTelemetrySchema, onInvalidBody: "badRequest" },

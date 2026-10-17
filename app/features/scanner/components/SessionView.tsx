@@ -38,9 +38,9 @@ import type { ScannerClip } from "../store/clips";
 import { ClipDialog } from "./ClipDialog";
 import { ClipStrip } from "./ClipStrip";
 import { MatchCard } from "./MatchCard";
-import styles from "./SessionView.module.css";
 import { aggregateSendStatus } from "./sendou-ingest";
 import type { GetFrame, ScanEvent, SessionKind } from "./session-data";
+import styles from "./SessionView.module.css";
 import { uploadStateOf } from "./UploadStatus";
 
 const NO_KEYS: ReadonlySet<React.Key> = new Set();

@@ -7,7 +7,6 @@ import type { Standing } from "./Bracket";
 import * as Engine from "./engine";
 import { createResolved } from "./engine/create";
 import type { BracketData, MatchData } from "./engine/types";
-import { Tournament } from "./Tournament";
 import { PADDLING_POOL_255 } from "./tests/mocks";
 import { LOW_INK_DECEMBER_2024 } from "./tests/mocks-li";
 import {
@@ -15,6 +14,7 @@ import {
 	testTournament,
 	tournamentCtxTeam,
 } from "./tests/test-utils";
+import { Tournament } from "./Tournament";
 
 const TEAM_ERROR_404_ID = 17354;
 const TEAM_THIS_IS_FINE_ID = 17513;
@@ -468,18 +468,16 @@ describe("swiss standings - rematches between tied teams", () => {
 		];
 
 		data.match = roundResults.flatMap((results, roundIdx) =>
-			results.map(
-				([winnerId, loserId], matchIdx): MatchData => ({
-					id: roundIdx * 2 + matchIdx,
-					stageId: data.stage[0].id,
-					groupId: data.group[0].id,
-					roundId: data.round[roundIdx].id,
-					number: matchIdx + 1,
-					opponent1: { id: winnerId, score: 2 },
-					opponent2: { id: loserId, score: 0 },
-					winnerSide: "opponent1",
-				}),
-			),
+			results.map(([winnerId, loserId], matchIdx): MatchData => ({
+				id: roundIdx * 2 + matchIdx,
+				stageId: data.stage[0].id,
+				groupId: data.group[0].id,
+				roundId: data.round[roundIdx].id,
+				number: matchIdx + 1,
+				opponent1: { id: winnerId, score: 2 },
+				opponent2: { id: loserId, score: 0 },
+				winnerSide: "opponent1",
+			})),
 		);
 
 		return testTournament({

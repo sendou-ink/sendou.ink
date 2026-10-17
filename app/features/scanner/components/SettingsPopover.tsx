@@ -19,13 +19,13 @@ import { MAX_SESSIONS } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
 import { LIVE_CLIPS_MAX_BYTES, MAX_HISTORY_CLIPS } from "../store/clips";
 import { FRAME_MAX_AGE_MS, MAX_FRAME_BYTES } from "../store/frames";
-import styles from "./SettingsPopover.module.css";
 import {
 	AUDIO_OFFSET_LIMIT_MS,
 	CLIP_MIN_KILLS_OPTIONS,
 	updateSettings,
 	useScannerSettings,
 } from "./settings";
+import styles from "./SettingsPopover.module.css";
 import { isLoggedIn } from "./upload";
 import { useDebug } from "./use-debug";
 

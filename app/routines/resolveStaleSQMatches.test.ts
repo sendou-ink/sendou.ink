@@ -11,8 +11,8 @@ import { sub } from "date-fns";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({

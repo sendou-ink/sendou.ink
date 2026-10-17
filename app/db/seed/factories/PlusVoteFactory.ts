@@ -2,9 +2,9 @@ import { sub } from "date-fns";
 import { db } from "~/db/sql";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { lastCompletedVoting } from "~/features/plus-voting/core/voting-time";
+import { PLUS_UPVOTE } from "~/features/plus-voting/plus-voting-constants";
 import type { UpsertManyPlusVotesArgs } from "~/features/plus-voting/PlusVotingRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
-import { PLUS_UPVOTE } from "~/features/plus-voting/plus-voting-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { defineFactory } from "../core/defineFactory";
 

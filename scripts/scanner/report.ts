@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Accuracy report across all fixtures, separate from pass/fail testing:
  * aggregate per-field accuracy plus character error rate (CER) for names,

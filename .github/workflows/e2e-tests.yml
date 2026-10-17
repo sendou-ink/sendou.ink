@@ -3,16 +3,16 @@ name: E2E Tests
 on:
   pull_request:
     paths-ignore:
-      - 'content/**'
-      - 'public/**'
-      - 'locales/**'
+      - "content/**"
+      - "public/**"
+      - "locales/**"
   push:
     branches:
       - main
     paths-ignore:
-      - 'content/**'
-      - 'public/**'
-      - 'locales/**'
+      - "content/**"
+      - "public/**"
+      - "locales/**"
 
 jobs:
   e2e:
@@ -45,7 +45,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - name: Install dependencies
         run: bun install --frozen-lockfile

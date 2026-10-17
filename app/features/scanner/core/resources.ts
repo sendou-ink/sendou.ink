@@ -26,10 +26,10 @@ import {
 } from "./detectors/minimap/rois";
 import type { PlannerStage } from "./detectors/minimap/stage";
 import { prepareStripWeaponTemplates } from "./detectors/objective/strip-weapons";
+import { prepareOwnAbilityTemplates } from "./detectors/scoreboard-own/abilities";
 import type { ScoreboardResources } from "./detectors/scoreboard/index";
 import { prepareSpecialTemplates } from "./detectors/scoreboard/specials";
 import { prepareWeaponTemplates } from "./detectors/scoreboard/weapons";
-import { prepareOwnAbilityTemplates } from "./detectors/scoreboard-own/abilities";
 import {
 	prepareModeIconTemplates,
 	X_RANK_MODES,

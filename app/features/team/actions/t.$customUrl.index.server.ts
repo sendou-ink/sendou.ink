@@ -4,10 +4,10 @@ import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import * as TeamRepository from "../TeamRepository.server";
 import { teamProfilePageActionSchema } from "../team-schemas";
 import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamMember, isTeamOwner, resolveNewOwner } from "../team-utils";
+import * as TeamRepository from "../TeamRepository.server";
 
 export const action = defineAction(
 	{ params: teamParamsSchema, body: teamProfilePageActionSchema },

@@ -35,8 +35,9 @@ export interface SearchSelectFieldProps {
 	"data-testid"?: string;
 }
 
-interface SearchSelectProps<TItem extends { id: number; name: string }>
-	extends SearchSelectFieldProps {
+interface SearchSelectProps<
+	TItem extends { id: number; name: string },
+> extends SearchSelectFieldProps {
 	ariaLabel: string;
 	inputTestId: string;
 	inputClassName?: string;

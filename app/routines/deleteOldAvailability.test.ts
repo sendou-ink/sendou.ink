@@ -12,8 +12,8 @@ import * as AvailabilityWeekFactory from "~/db/seed/factories/AvailabilityWeekFa
 import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import { AVAILABILITY } from "~/features/availability/availability-constants";
+import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import * as Availability from "~/features/availability/core/Availability";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { DeleteOldAvailabilityRoutine } from "./deleteOldAvailability";

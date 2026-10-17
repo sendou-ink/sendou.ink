@@ -12,8 +12,8 @@ import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
-import * as TeamRepository from "../../team/TeamRepository.server";
 import { getMemberRoleType } from "../../team/team-utils";
+import * as TeamRepository from "../../team/TeamRepository.server";
 import * as ScrimPickupRosterRepository from "../ScrimPickupRosterRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import {

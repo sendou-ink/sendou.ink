@@ -16,8 +16,8 @@
 import { useSyncExternalStore } from "react";
 import * as R from "remeda";
 import {
-	type BuiltMatch,
 	buildScannerMatches,
+	type BuiltMatch,
 	invalidObjectiveEvents,
 	type MatchBuildCache,
 } from "../core/match-builder";
@@ -26,15 +26,15 @@ import {
 	expiredCompactedSessionKeys,
 	SESSION_COMPACT_AFTER_MS,
 	SESSION_GAP_MS,
-	type SessionSummary,
 	sessionByKey,
 	sessionKey,
+	type SessionSummary,
 	sessionSummary,
 	splitSessions,
 } from "../core/sessions";
 import {
-	type CompactedMatch,
 	compactedBuilt,
+	type CompactedMatch,
 	compactSessions,
 	deleteCompactedSessions,
 	listCompactedMatches,

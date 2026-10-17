@@ -18,8 +18,8 @@ import {
 	STAFF_TEST_DISCORD_ID,
 } from "../constants";
 import { faker } from "../core/faker";
-import * as SplatoonFaker from "../core/SplatoonFaker";
 import * as showcaseNames from "../core/showcaseNames";
+import * as SplatoonFaker from "../core/SplatoonFaker";
 import * as UserFactory from "../factories/UserFactory";
 
 const SHOWCASE_COUNT = 100;

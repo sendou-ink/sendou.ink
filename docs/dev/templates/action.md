@@ -18,6 +18,6 @@ export const action = defineAction(
 );
 
 // some-feature/routes/route.ts
-import { action } from "../actions/route.server.ts"
-export { action }
+import { action } from "../actions/route.server.ts";
+export { action };
 ```

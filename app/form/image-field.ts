@@ -40,9 +40,7 @@ export function existingImage(
 }
 
 export type ImageFieldDimensions =
-	| "logo"
-	| "thick-banner"
-	| { width: number; height: number };
+	"logo" | "thick-banner" | { width: number; height: number };
 
 const IMAGE_FIELD_DIMENSION_PRESETS = {
 	logo: { width: 400, height: 400 },

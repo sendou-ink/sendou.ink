@@ -45,10 +45,12 @@ const DESCRIPTIONS: Record<string, string> = {
 	"biome:fix": "Biome lint and format, applying the safe fixes",
 	"biome:fix:unsafe": "Biome lint and format, applying the unsafe fixes too",
 	typecheck: "Type checks the app after generating the route types",
+	"typecheck:app": "Type checks the app without generating the route types first",
 	"typecheck:scripts": "Type checks scripts/",
 	"typecheck:docs": "Type checks the docs site",
 	"test:unit":
 		"Runs the unit tests (`bun test`) after creating and migrating the test database",
+	"test:unit:run": "Runs the unit tests without preparing the test database first",
 	"test:dom": "Runs the DOM tests (happy-dom and Testing Library)",
 	"test:unit:dom": "Runs the unit tests, then the DOM tests",
 	"test:scanner": "Runs the scanner's fixture tests",
@@ -60,7 +62,7 @@ const DESCRIPTIONS: Record<string, string> = {
 	"check-translation-sync":
 		"Fails when the translation jsons are out of sync with English",
 	checks:
-		"Everything CI checks: lint, unit and DOM tests, translations, type checks and knip. A task isn't done until it passes",
+		"Everything CI checks: lint, then unit and DOM tests, translations, type checks and knip in parallel. A task isn't done until it passes",
 	"checks:scanner": "`checks` plus the scanner tests",
 	seed: "Rebuilds the dev dataset of db.sqlite3",
 	setup:
@@ -170,7 +172,7 @@ function leadingComment(file: string) {
 	);
 	const comments = parsed.comments.filter(
 		(comment) =>
-			!comment.value.replace(/^\*/, "").trim().startsWith("biome-ignore") &&
+			!comment.value.replace(/^\*/, "").trim().startsWith("eslint-") &&
 			(!firstStatement || comment.end <= firstStatement.start),
 	);
 	const first = comments[0];

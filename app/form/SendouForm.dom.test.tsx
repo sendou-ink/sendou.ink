@@ -9,7 +9,6 @@ import {
 	RouterProvider,
 } from "react-router";
 import * as v from "valibot";
-import { FormField } from "./FormField";
 import {
 	array,
 	checkboxGroup,
@@ -27,6 +26,7 @@ import {
 	toggle as toggleField,
 	userSearch,
 } from "./fields";
+import { FormField } from "./FormField";
 import { FormStep, SendouForm, useFormFieldContext } from "./SendouForm";
 import type { ArrayItemRenderContext, FormObjectSchema } from "./types";
 

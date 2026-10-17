@@ -1,6 +1,6 @@
 import {
-	type PlusTierParam,
 	plusSuggestionsSearchParams,
+	type PlusTierParam,
 } from "./plus-suggestions-search-params";
 
 export const plusSuggestionPage = ({

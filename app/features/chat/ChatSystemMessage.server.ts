@@ -4,13 +4,13 @@ import * as EventBus from "~/features/events/core/EventBus.server";
 import { chatRoomChannel, userChannel } from "~/features/events/events-types";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import * as ChatRepository from "./ChatRepository.server";
-import * as ChatRoomResolver from "./ChatRoomResolver.server";
 import type {
 	PersistedSystemMessageType,
 	RevalidateScope,
 	UnthrottledSystemMessageType,
 } from "./chat-types";
+import * as ChatRepository from "./ChatRepository.server";
+import * as ChatRoomResolver from "./ChatRoomResolver.server";
 import { createRevalidateBroadcastThrottle } from "./revalidate-broadcast-throttle";
 
 type RevalidateBroadcast = {

@@ -9,8 +9,8 @@ import {
 } from "~/utils/remix.server";
 import { id } from "~/utils/schema";
 import * as TrophyBackfill from "../core/TrophyBackfill.server";
-import * as TrophyRepository from "../TrophyRepository.server";
 import { canBackfillTrophies } from "../trophies-utils";
+import * as TrophyRepository from "../TrophyRepository.server";
 
 export type TrophyBackfillLoaderData = SerializeFrom<typeof loader>;
 

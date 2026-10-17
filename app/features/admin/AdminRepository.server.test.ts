@@ -33,9 +33,9 @@ describe("migrate", () => {
 		tournamentId: number;
 		userId: number;
 	}) => {
-		// biome-ignore lint/plugin: awarding a trophy requires playing out a whole tournament; migrate only cares that the rows exist
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- awarding a trophy requires playing out a whole tournament; migrate only cares that the rows exist
 		await db.insertInto("TrophyOwner").values(args).execute();
-		// biome-ignore lint/plugin: special trophies are synced from X rank placements; migrate only cares that the rows exist
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- special trophies are synced from X rank placements; migrate only cares that the rows exist
 		await db
 			.insertInto("SpecialTrophyOwner")
 			.values({

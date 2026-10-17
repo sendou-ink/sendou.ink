@@ -1,9 +1,9 @@
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { adminStaffFormSchemaServer } from "../tournament-admin-schemas";
 

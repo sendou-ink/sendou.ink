@@ -2,9 +2,9 @@ import * as React from "react";
 import type { ChatRoomType } from "~/features/chat/chat-types";
 import { useEventStreamCatchUp } from "~/features/events/events-hooks";
 import {
+	voiceClient,
 	type VoiceRoomState,
 	type VoiceSnapshot,
-	voiceClient,
 } from "./voice-client";
 import { VOICE_ROOM_TYPES } from "./voice-constants";
 

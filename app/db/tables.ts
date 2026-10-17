@@ -53,6 +53,12 @@ import type {
 	MemberRoleType,
 } from "~/features/team/team-constants";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
+import type {
+	ParticipantResult,
+	Side,
+	StageSettings,
+} from "~/features/tournament-bracket/core/engine/types";
+import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import type {
 	TOURNAMENT_STAGE_TYPES,
@@ -61,12 +67,6 @@ import type {
 	TournamentRoundSection,
 	TournamentStaffRole,
 } from "~/features/tournament/tournament-constants";
-import type {
-	ParticipantResult,
-	Side,
-	StageSettings,
-} from "~/features/tournament-bracket/core/engine/types";
-import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 import type { HideableUserCardStat } from "~/features/user-card/user-card-types";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { BuildSort } from "~/features/user-page/user-page-constants";

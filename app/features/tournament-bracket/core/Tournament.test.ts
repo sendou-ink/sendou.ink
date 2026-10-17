@@ -10,7 +10,6 @@ import { unwrap } from "~/utils/result";
 import { toDBBoolean } from "~/utils/sql";
 import * as Engine from "./engine";
 import type * as Progression from "./Progression";
-import { Tournament } from "./Tournament";
 import {
 	IN_THE_ZONE_32,
 	PADDLING_POOL_255,
@@ -23,6 +22,7 @@ import {
 	testTournament,
 	tournamentCtxTeam,
 } from "./tests/test-utils";
+import { Tournament } from "./Tournament";
 
 describe("Follow-up bracket progression", () => {
 	const tournamentPP257 = new Tournament(PADDLING_POOL_257());

@@ -1,6 +1,7 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";

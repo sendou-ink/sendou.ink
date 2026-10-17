@@ -16,7 +16,6 @@ import {
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
 import { weaponCategoryUrl } from "~/utils/urls";
-
 import styles from "./WeaponSelect.module.css";
 
 interface WeaponSelectProps<Clearable extends boolean | undefined = undefined> {

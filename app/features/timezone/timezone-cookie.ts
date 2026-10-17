@@ -24,7 +24,7 @@ export function writeViewerTimezoneCookie() {
 		if (!timezone) return;
 
 		if (typeof cookieStore === "undefined") {
-			// biome-ignore lint/suspicious/noDocumentCookie: the Cookie Store API is only available in WebKit from iOS/Safari 18.4; this fallback keeps older iPhones working
+			// eslint-disable-next-line unicorn/no-document-cookie -- the Cookie Store API is only available in WebKit from iOS/Safari 18.4; this fallback keeps older iPhones working
 			document.cookie = `${COOKIE_NAME}=${timezone}; path=/; max-age=${
 				TEN_YEARS_IN_MS / 1000
 			}; samesite=lax`;

@@ -20,7 +20,7 @@ const skippedUserId = () => users.id(1);
 const skipPlusForSeason = (userId: number, seasonNth: number) =>
 	// the app only ever reads the column; the one thing that sets it is
 	// `scripts/skip-plus.ts`, itself a raw update with no repository function behind it
-	// biome-ignore lint/plugin: no production write reaches the column
+	// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- no production write reaches the column
 	db
 		.updateTable("User")
 		.set({ plusSkippedForSeasonNth: seasonNth })

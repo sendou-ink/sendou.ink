@@ -2,8 +2,8 @@ import {
 	index,
 	layout,
 	prefix,
-	type RouteConfig,
 	route,
+	type RouteConfig,
 } from "@react-router/dev/routes";
 
 const devOnlyRoutes =

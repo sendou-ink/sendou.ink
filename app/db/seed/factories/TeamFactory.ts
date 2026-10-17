@@ -1,6 +1,6 @@
 import type { UserMapModePreferences } from "~/db/tables-json";
-import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { type MemberRole, TEAM } from "~/features/team/team-constants";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { invariant } from "~/utils/invariant";
 import { actAs } from "../core/actAs";
 import { defineFactory } from "../core/defineFactory";

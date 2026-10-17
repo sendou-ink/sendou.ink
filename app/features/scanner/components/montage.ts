@@ -187,9 +187,7 @@ export async function openMontageFolder(): Promise<void> {
 /** Asks the browser again for the restored folder (needs the click's gesture). */
 export async function reconnectMontageFolder(): Promise<void> {
 	const directory = snapshot.folder?.directory as
-		| PermissionedDirectory
-		| null
-		| undefined;
+		PermissionedDirectory | null | undefined;
 	if (!directory) return;
 	if ((await directory.requestPermission({ mode: "read" })) !== "granted") {
 		return;

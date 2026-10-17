@@ -155,7 +155,7 @@ export function commentsBetween(file: ParsedFile, from: number, to: number) {
 			.map((line) => line.replace(/^\s*\* ?/, "").trim())
 			.join(" ")
 			.trim();
-		if (text.startsWith("biome-ignore")) continue;
+		if (text.startsWith("eslint-")) continue;
 
 		const continuesPrevious =
 			previousEnd !== -1 &&

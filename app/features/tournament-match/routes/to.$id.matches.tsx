@@ -22,8 +22,8 @@ import type {
 import {
 	ALL_DIVISIONS,
 	TOURNAMENT_MATCHES_TABS,
-	type TournamentMatchesTab,
 	tournamentMatchesSearchParams,
+	type TournamentMatchesTab,
 } from "../tournament-matches-search-params";
 import styles from "./to.$id.matches.module.css";
 

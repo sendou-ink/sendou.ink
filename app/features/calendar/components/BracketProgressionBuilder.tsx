@@ -29,8 +29,8 @@ import {
 } from "~/components/elements/ChipRadio";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	useFieldRevealer,
 	useFormFieldContext,
@@ -81,12 +81,10 @@ type Selection =
 	| { kind: "connection"; toIdx: number; sourceIdx: number };
 
 type DragData =
-	| { kind: "move"; bracketIdx: number }
-	| { kind: "connect"; fromIdx: number };
+	{ kind: "move"; bracketIdx: number } | { kind: "connect"; fromIdx: number };
 
 type DropData =
-	| { kind: "column"; column: number }
-	| { kind: "card"; bracketIdx: number };
+	{ kind: "column"; column: number } | { kind: "card"; bracketIdx: number };
 
 interface MoveTarget {
 	column: number;
@@ -689,7 +687,6 @@ export function BracketProgressionBuilder({
 												})}
 												d={d}
 											/>
-											{/* biome-ignore lint/a11y/noStaticElementInteractions: a wider target for the mouse, the line's label button does the same */}
 											<path
 												className={styles.lineHitArea}
 												d={d}

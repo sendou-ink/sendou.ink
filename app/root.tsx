@@ -36,10 +36,10 @@ import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { FusePageInit } from "./components/fuse/Fuse";
 import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { UserProvider } from "./features/auth/core/user";
-import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
-import { ChatProvider } from "./features/chat/ChatProvider";
+import { getUser } from "./features/auth/core/user.server";
 import { resolveRoomList } from "./features/chat/chat-room-list.server";
+import { ChatProvider } from "./features/chat/ChatProvider";
 import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
 import { GlobalStatusProvider } from "./features/global-status/GlobalStatusProvider";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
@@ -305,7 +305,7 @@ function Document({
 }
 
 function useTriggerToasts() {
-	// biome-ignore lint/plugin: app-wide toast params written by server redirects, belonging to no one feature
+	// eslint-disable-next-line sendou/no-raw-search-params -- app-wide toast params written by server redirects, belonging to no one feature
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const scrollBeforeToast = useScrollBeforeToast();
@@ -429,8 +429,7 @@ function useCustomThemeVars() {
 
 	for (const match of matches) {
 		const loaderData = match.loaderData as
-			| { customTheme?: CustomTheme }
-			| undefined;
+			{ customTheme?: CustomTheme } | undefined;
 
 		if (loaderData?.customTheme) {
 			for (const [key, value] of Object.entries(loaderData.customTheme)) {

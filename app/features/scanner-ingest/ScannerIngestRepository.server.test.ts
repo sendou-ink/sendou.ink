@@ -324,7 +324,7 @@ describe("addLinks", () => {
 		});
 		expect(await fetchReportedWeapons()).toHaveLength(1);
 
-		// biome-ignore lint/plugin: no production path deletes ingested matches yet
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- no production path deletes ingested matches yet
 		await db
 			.deleteFrom("IngestedMatch")
 			.where("id", "=", effectiveMatches[0].id)

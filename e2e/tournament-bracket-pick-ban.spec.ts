@@ -4,8 +4,8 @@ import {
 	createTeams,
 	ROUND_ROBIN,
 	startedTournamentTimes,
-	TO_MAP_POOL,
 	teamSeeds,
+	TO_MAP_POOL,
 } from "./helpers/tournament";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";

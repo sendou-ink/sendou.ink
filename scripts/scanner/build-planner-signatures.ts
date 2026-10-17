@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Builds the planner signature atlas from the assets repo's planner renders:
  * assets/planner-maps/ in the sendou-ink/assets checkout holds the full PNGs

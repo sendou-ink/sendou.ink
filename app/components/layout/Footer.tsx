@@ -40,13 +40,14 @@ import {
 	LUTI_PAGE,
 	lobbiesPage,
 	MAPS_URL,
-	NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
 	navIconUrl,
+	NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
 	OBJECT_DAMAGE_CALCULATOR_URL,
 	PLANNER_URL,
 	PLUS_SUGGESTIONS_PAGE,
 	PLUS_VOTING_RESULTS_PAGE,
 	SCANNER_PAGE,
+	scrimsPage,
 	SENDOU_INK_DISCORD_URL,
 	SENDOU_INK_GITHUB_URL,
 	SENDOU_LOVE_EMOJI_PATH,
@@ -54,21 +55,20 @@ import {
 	SENDOUQ_RULES_PAGE,
 	SETTINGS_PAGE,
 	SUPPORT_PAGE,
-	scrimsPage,
 	TIER_LIST_MAKER_URL,
 	TIERS_PAGE,
 	TROPHIES_PAGE,
 	userPage,
 	VODS_PAGE,
-	WELCOME_PAGE,
 	weaponParamsPage,
+	WELCOME_PAGE,
 	XSEARCH_PAGE,
 } from "~/utils/urls";
 import { LinkButton } from "../elements/Button";
-import { Image } from "../Image";
 import { DiscordIcon } from "../icons/Discord";
 import { GitHubIcon } from "../icons/GitHub";
 import { PatreonIcon } from "../icons/Patreon";
+import { Image } from "../Image";
 import styles from "./Footer.module.css";
 
 const MARQUEE_ROWS_COUNT = 3;

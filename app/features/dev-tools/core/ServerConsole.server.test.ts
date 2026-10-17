@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: logs to the console under test */
+/* eslint-disable no-console -- logs to the console under test */
 import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as RequestLog from "./RequestLog.server";
 import * as ServerConsole from "./ServerConsole.server";

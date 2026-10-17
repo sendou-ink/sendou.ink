@@ -119,8 +119,7 @@ export function AbilitiesSelector({
 	const handleDragEnd = (event: DragEndEvent) => {
 		const data = event.active.data.current as DragData;
 		const targetSlot = event.over?.data.current?.slot as
-			| AbilitySlots.Slot
-			| undefined;
+			AbilitySlots.Slot | undefined;
 
 		stopDragging();
 

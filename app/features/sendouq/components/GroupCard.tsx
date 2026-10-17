@@ -29,7 +29,7 @@ import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { nullFilledArray } from "~/utils/arrays";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
-import { SENDOUQ_LOOKING_PAGE, TIERS_PAGE, tierImageUrl } from "~/utils/urls";
+import { SENDOUQ_LOOKING_PAGE, tierImageUrl, TIERS_PAGE } from "~/utils/urls";
 import type {
 	SQGroup,
 	SQGroupMember,

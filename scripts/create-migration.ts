@@ -32,7 +32,7 @@ function main() {
 
 	fs.writeFileSync(filePath, TEMPLATE);
 
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log(`Created migrations/${fileName}`);
 }
 
@@ -60,7 +60,7 @@ function toKebabCase(input: string) {
 try {
 	main();
 } catch (error) {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.error((error as Error).message);
 	process.exit(1);
 }

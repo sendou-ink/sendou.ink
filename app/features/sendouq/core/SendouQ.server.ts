@@ -7,10 +7,10 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
-import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
 import type * as SkillDifference from "~/features/sendouq-match/core/SkillDifference";
 import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -91,8 +91,7 @@ class SendouQClass {
 			tier: this.#groupTier(group) as TieredSkill["tier"] | null,
 			tierRange: null as TierRange | null,
 			skillDifference: undefined as
-				| SkillDifference.GroupSkillDifference
-				| undefined,
+				SkillDifference.GroupSkillDifference | undefined,
 			isReplay: false,
 			members: group.members.map((member) => {
 				const skill = calculatedUserSkills[String(member.id)];
@@ -106,8 +105,7 @@ class SendouQClass {
 					friendCode: null as string | null,
 					inGameName: null as string | null,
 					skillDifference: undefined as
-						| SkillDifference.UserSkillDifference
-						| undefined,
+						SkillDifference.UserSkillDifference | undefined,
 				};
 			}),
 		}));

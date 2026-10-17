@@ -2,6 +2,7 @@
 navItem: u
 type: bug
 ---
+
 In-game names now should accept exactly the characters the game allows
 
 - More symbols such as ■, □, ● and ― are now allowed

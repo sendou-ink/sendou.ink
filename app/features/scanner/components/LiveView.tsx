@@ -13,25 +13,25 @@ import { scannerSearchParams } from "../scanner-search-params";
 import { loadEventFrame } from "../store/events";
 import { useClips } from "./clips-feed";
 import { EventFeed } from "./EventFeed";
-import { ExportMenu } from "./ExportMenu";
 import {
 	currentSession,
 	findSession,
 	newestSessionKey,
 	useFeed,
 } from "./events-feed";
-import styles from "./LiveView.module.css";
+import { ExportMenu } from "./ExportMenu";
 import {
 	saveCurrentFrameAsFixture,
 	stopCapture,
 	useLiveSession,
 } from "./live-session";
-import { SessionHeader } from "./SessionHeader";
-import { SessionView } from "./SessionView";
-import { SettingsPopover, sessionLabel } from "./SettingsPopover";
+import styles from "./LiveView.module.css";
 import { matchContaining } from "./sendou-ingest";
 import type { ScanEvent } from "./session-data";
+import { SessionHeader } from "./SessionHeader";
+import { SessionView } from "./SessionView";
 import { useScannerSettings } from "./settings";
+import { sessionLabel, SettingsPopover } from "./SettingsPopover";
 import { sendLive } from "./upload";
 
 /** a game is "being read" while its newest event is this fresh */

@@ -9,9 +9,9 @@ import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { teamPage } from "~/utils/urls";
-import * as TeamRepository from "../TeamRepository.server";
 import { CUSTOM_ROLE_VALUE } from "../team-schemas";
 import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
+import * as TeamRepository from "../TeamRepository.server";
 
 export const action = defineAction(
 	{ params: teamParamsSchema, body: manageRosterSchema },

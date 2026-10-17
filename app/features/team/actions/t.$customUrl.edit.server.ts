@@ -6,10 +6,10 @@ import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { mySlugify, teamPage } from "~/utils/urls";
-import * as TeamRepository from "../TeamRepository.server";
 import { editTeamActionSchema } from "../team-schemas";
 import { teamParamsSchema } from "../team-schemas.server";
 import { canAddCustomizedColors } from "../team-utils";
+import * as TeamRepository from "../TeamRepository.server";
 
 export const action = defineAction(
 	{ params: teamParamsSchema, body: editTeamActionSchema },

@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: holding back console output is the point */
+/* eslint-disable no-console -- holding back console output is the point */
 /**
  * Preload for `bun test` keeping passing tests quiet, like Vitest's `--silent=passed-only`: console output is
  * held back and printed only for a test that failed (setup output of its file included). Test files get the

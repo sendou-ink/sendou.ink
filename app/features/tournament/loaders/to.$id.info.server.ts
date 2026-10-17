@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { estimatedEndsAt } from "~/features/availability/core/TournamentDuration.server";
-import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
+import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import * as MarkdownHtml from "~/utils/markdown-html.server";

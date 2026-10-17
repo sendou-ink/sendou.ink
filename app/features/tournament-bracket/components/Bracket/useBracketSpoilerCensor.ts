@@ -33,10 +33,7 @@ export function useBracketSpoilerCensor() {
 interface MatchCensorLevelArgs {
 	censored: boolean;
 	bracketType:
-		| "double_elimination"
-		| "single_elimination"
-		| "swiss"
-		| "round_robin";
+		"double_elimination" | "single_elimination" | "swiss" | "round_robin";
 	roundName?: string;
 	roundNumber: number;
 	roundIdx: number;

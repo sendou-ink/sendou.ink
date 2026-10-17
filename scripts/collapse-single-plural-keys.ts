@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: script */
+/* eslint-disable no-console -- script */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

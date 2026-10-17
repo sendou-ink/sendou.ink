@@ -15,10 +15,10 @@ import {
 } from "../core/detectors/kill/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
-import { createScoreboardBattleLogDetector } from "../core/detectors/scoreboard-battle-log/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
+import { createScoreboardBattleLogDetector } from "../core/detectors/scoreboard-battle-log/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { Detector } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
 import {

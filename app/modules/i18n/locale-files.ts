@@ -1,8 +1,8 @@
 import {
 	GAME_NAMESPACES,
 	type GameLanguageCode,
-	type LanguageCode,
 	languageChain,
+	type LanguageCode,
 } from "./config";
 
 const localeFileUrls = import.meta.glob<string>("../../../locales/*/*.json", {

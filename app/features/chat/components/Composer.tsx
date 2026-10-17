@@ -23,8 +23,8 @@ import type { ChatProps } from "./Chat";
 import styles from "./Composer.module.css";
 import {
 	type ComposerSuggestion,
-	ComposerSuggestions,
 	composerSuggestionId,
+	ComposerSuggestions,
 } from "./ComposerSuggestions";
 import { MessagesContext } from "./MessagesContext";
 import { StickerImage } from "./StickerImage";

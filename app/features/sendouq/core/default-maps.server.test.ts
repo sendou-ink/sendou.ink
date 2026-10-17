@@ -426,7 +426,7 @@ async function createUserWithPoollessPreferences(seasonNth: number) {
 
 	// every write of the column since the map pool was added stores one, so only rows
 	// predating it can be missing it
-	// biome-ignore lint/plugin: no production write leaves out the pool
+	// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- no production write leaves out the pool
 	await db
 		.updateTable("User")
 		.set({ mapModePreferences: JSON.stringify({ modes: [] }) })

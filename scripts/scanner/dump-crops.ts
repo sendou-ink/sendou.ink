@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * ROI calibration helper: normalize a frame to 1080p, then dump crops
  * (optionally scaled up) and/or a grid overlay for visual inspection.

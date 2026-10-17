@@ -3,13 +3,13 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
-import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import {
 	matchMapList,
 	matchTiers,
 } from "~/features/sendouq-match/core/match.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	SENDOUQ,

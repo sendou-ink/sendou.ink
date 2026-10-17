@@ -35,14 +35,14 @@ import { deleteVodClips, saveClip } from "../store/clips";
 import {
 	loadVodEventFrame,
 	loadVodEvents,
-	type StoredVodEvent,
 	saveVod,
+	type StoredVodEvent,
 	type VodMinimap,
 } from "../store/vods";
 import {
 	AnalyzerClient,
-	type DoneInfo,
 	defaultScanWorkerCount,
+	type DoneInfo,
 } from "../worker/client";
 import { refreshClips } from "./clips-feed";
 import { describeError } from "./errors";

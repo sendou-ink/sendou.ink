@@ -35,7 +35,7 @@ type ActionButtonProps<
 	TSchema extends AnySchema,
 	TAction extends ActionsOf<TSchema>,
 > = ActionButtonBaseProps<TSchema, TAction> &
-	// biome-ignore lint/complexity/noBannedTypes: {} models "branch with no extra fields"
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- {} models "branch with no extra fields"
 	({} extends FieldsOf<TSchema, TAction>
 		? { fields?: FieldsOf<TSchema, TAction> }
 		: { fields: FieldsOf<TSchema, TAction> });

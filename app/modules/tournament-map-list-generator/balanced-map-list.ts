@@ -4,8 +4,8 @@ import { seededRandom } from "~/utils/random";
 import { err, ok, type Result } from "~/utils/result";
 import type { ModeShort, StageId } from "../in-game-lists/types";
 import type {
-	TournamentMapListMap,
 	TournamentMaplistInput,
+	TournamentMapListMap,
 	TournamentMaplistSource,
 } from "./types";
 

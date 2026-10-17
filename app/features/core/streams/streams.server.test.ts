@@ -5,12 +5,12 @@ import * as TournamentMatchScheduleFactory from "~/db/seed/factories/TournamentM
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import {
 	clearAllTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import {
 	fetchRunningTournamentStreams,

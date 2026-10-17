@@ -171,7 +171,6 @@ export function SendouPopover({
 
 	return (
 		<>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: only observes focus leaving the trigger */}
 			<span
 				ref={triggerContainerRef}
 				className={styles.triggerContainer}

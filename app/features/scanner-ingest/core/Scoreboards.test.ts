@@ -77,17 +77,15 @@ function testMatch({
 	objective?: ScannerMatchObjective | null;
 	playerStatus?: ScannerMatchPlayerStatus | null;
 } = {}): ScannerMatch {
-	const players = names.map(
-		(name, i): ScannerMatchPlayer => ({
-			name: name || null,
-			weaponId: weapons[i]!,
-			paint: 1000,
-			ka: 10,
-			d: 5,
-			s: 2,
-			...(abilities[i] ? { abilities: abilities[i] } : null),
-		}),
-	);
+	const players = names.map((name, i): ScannerMatchPlayer => ({
+		name: name || null,
+		weaponId: weapons[i]!,
+		paint: 1000,
+		ka: 10,
+		d: 5,
+		s: 2,
+		...(abilities[i] ? { abilities: abilities[i] } : null),
+	}));
 	return {
 		startsAt: 60,
 		endsAt: 360,

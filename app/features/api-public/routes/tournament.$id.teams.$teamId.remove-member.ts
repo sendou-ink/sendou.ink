@@ -1,12 +1,12 @@
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
 	requireTournamentOrganizer,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { id } from "~/utils/schema";

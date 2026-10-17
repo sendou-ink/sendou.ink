@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Builds glyph atlases by rendering the Splatoon fonts at the exact scoreboard
  * render sizes, calibrated against the reference fixture:

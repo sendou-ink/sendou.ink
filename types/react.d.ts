@@ -1,4 +1,4 @@
-// biome-ignore lint/correctness/noUnusedImports: needed for type augmentation
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- needed for type augmentation
 import type * as React from "react";
 
 type InvokerCommand =

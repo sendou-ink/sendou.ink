@@ -105,7 +105,7 @@ function openDb(): Promise<IDBDatabase> {
 		const req = indexedDB.open(DB_NAME, DB_VERSION);
 		req.onupgradeneeded = (event) => upgrade(req.result, event.oldVersion);
 		req.onblocked = () => {
-			// biome-ignore lint/suspicious/noConsole: the only diagnostic channel for a hang caused by other tabs
+			// eslint-disable-next-line no-console -- the only diagnostic channel for a hang caused by other tabs
 			console.warn(
 				"scanner database upgrade is blocked — close or reload other sendou.ink tabs",
 			);

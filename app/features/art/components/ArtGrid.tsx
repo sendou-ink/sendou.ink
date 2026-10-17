@@ -119,7 +119,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 			onClose={close}
 			aria-label={art.description || dateText}
 		>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: click-anywhere to close, Escape is handled by the dialog */}
+			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- click-anywhere to close, Escape is handled by the dialog */}
 			<div className={styles.lightboxBody} onClick={handleClick}>
 				<figure
 					className={clsx(styles.lightboxFigure, {

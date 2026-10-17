@@ -9,26 +9,26 @@ The custom theme system lets Patreon supporters customize the sites colors, bord
 
 ## Files
 
-| File | Purpose |
-| ------ | --------- |
-| `app/styles/vars.css` | Default CSS custom property values and semantic tokens |
+| File                                      | Purpose                                                                                              |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `app/styles/vars.css`                     | Default CSS custom property values and semantic tokens                                               |
 | `app/features/theme/core/ThemePalette.ts` | Expands the inputs into theme variables, `DEFAULT_THEME_INPUT`, lightness values, chroma multipliers |
-| `app/utils/oklch-gamut.ts` | Color math: sRGB gamut limits and WCAG contrast |
-| `app/utils/schema.ts` | `themeInputSchema` and `THEME_INPUT_LIMITS` for validation |
-| `app/features/theme/theme-constants.ts` | `CUSTOM_THEME_VARS` list |
-| `app/components/CustomThemeSelector.tsx` | UI component |
-| `app/root.tsx` | `useCustomThemeVars()` applies theme to `<html>` element |
+| `app/utils/oklch-gamut.ts`                | Color math: sRGB gamut limits and WCAG contrast                                                      |
+| `app/utils/schema.ts`                     | `themeInputSchema` and `THEME_INPUT_LIMITS` for validation                                           |
+| `app/features/theme/theme-constants.ts`   | `CUSTOM_THEME_VARS` list                                                                             |
+| `app/components/CustomThemeSelector.tsx`  | UI component                                                                                         |
+| `app/root.tsx`                            | `useCustomThemeVars()` applies theme to `<html>` element                                             |
 
 ## Semantic tokens
 
 Feature code never uses the palette slots (`--color-accent`, `--color-accent-low`...) directly. Accent and secondary colors are consumed through four kinds of tokens:
 
-| Token | Role | Example |
-| ------ | ----- | -------- |
-| `--color-bg-x` | Tinted surface | Container background, highlighted row |
-| `--color-fg-x` | Foreground on surfaces | Text, icons, borders, outlines, indicator dots and bars |
-| `--color-fill-x` | Fill that holds content | Button, badge background |
-| `--color-fg-on-x` | Foreground on a fill | Button label, badge text |
+| Token             | Role                    | Example                                                 |
+| ----------------- | ----------------------- | ------------------------------------------------------- |
+| `--color-bg-x`    | Tinted surface          | Container background, highlighted row                   |
+| `--color-fg-x`    | Foreground on surfaces  | Text, icons, borders, outlines, indicator dots and bars |
+| `--color-fill-x`  | Fill that holds content | Button, badge background                                |
+| `--color-fg-on-x` | Foreground on a fill    | Button label, badge text                                |
 
 `--color-fg-x` is readable on the page surfaces and on `--color-bg-x`. `--color-fg-on-x` is only readable on `--color-fill-x`, so always put a fill and its foreground together.
 

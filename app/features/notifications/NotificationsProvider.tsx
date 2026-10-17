@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useFetchers, useLocation, useNavigation } from "react-router";
 import {
-	useEventStreamCatchUp,
 	useEventsConnected,
+	useEventStreamCatchUp,
 	useServerEventListener,
 } from "~/features/events/events-hooks";
 import { useBackgroundResource } from "~/hooks/useBackgroundResource";

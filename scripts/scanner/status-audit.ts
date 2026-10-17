@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Audits death/special detection against scoreboard truth, from an events CSV
  * downloaded from the scanner UI. Rows are parsed back into DetectedEvents,
@@ -48,13 +48,13 @@ import {
 	type StripWeaponsData,
 } from "../../app/features/scanner/core/detectors/objective/strip-weapons";
 import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/index";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
 	type ScoreboardPlayer,
 } from "../../app/features/scanner/core/detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
-import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
 import type { DetectedEvent } from "../../app/features/scanner/core/detectors/types";
 import { formatTime } from "../../app/features/scanner/core/format";
 import {
@@ -64,8 +64,8 @@ import {
 	stageLabel,
 } from "../../app/features/scanner/core/labels";
 import {
-	type BuiltMatch,
 	buildScannerMatches,
+	type BuiltMatch,
 } from "../../app/features/scanner/core/match-builder";
 import type {
 	ScannerMatch,

@@ -6,7 +6,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import type { LoaderFunctionArgs } from "react-router";
 import { notFound, notFoundIfNullish } from "~/utils/remix.server";
-import { FIXTURES_DIR, type Fixture, loadFixtures } from "../node/fixtures";
+import { type Fixture, FIXTURES_DIR, loadFixtures } from "../node/fixtures";
 
 export interface FixtureListItem {
 	detector: string;

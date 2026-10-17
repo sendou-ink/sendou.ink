@@ -72,6 +72,7 @@ Your final message must be ONLY a JSON array of findings:
 **Sharding for large diffs**: if `review.patch` exceeds ~2000 lines, shard. Split the changed-file list into roughly equal chunks by line count and build per-shard patches (`git diff BASE -- <shard's files> > $M/shard-N.patch`, appending that shard's untracked files); each instance gets its shard patch plus the full file list for context. Findings merge into one pool.
 
 **Agent budget:**
+
 - Cap at **3 shards**.
 - Over ~4000 lines: shard only the high-signal finders (Spec, both Bug lenses, Security); run the rest as single instances over the full patch — they degrade gracefully.
 - Hard ceiling: **20 finder calls**. Drop shards from lowest-priority finders first (Conventions, then Abstraction).

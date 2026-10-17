@@ -12,6 +12,10 @@ import { BuildCard } from "~/components/BuildCard";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { BskyIcon } from "~/components/icons/Bsky";
+import { DiscordIcon } from "~/components/icons/Discord";
+import { TwitchIcon } from "~/components/icons/Twitch";
+import { YouTubeIcon } from "~/components/icons/YouTube";
 import {
 	Image,
 	ModeImage,
@@ -20,10 +24,6 @@ import {
 	SubWeaponImage,
 	WeaponImage,
 } from "~/components/Image";
-import { BskyIcon } from "~/components/icons/Bsky";
-import { DiscordIcon } from "~/components/icons/Discord";
-import { TwitchIcon } from "~/components/icons/Twitch";
-import { YouTubeIcon } from "~/components/icons/YouTube";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Markdown } from "~/components/Markdown";
 import { Pagination } from "~/components/Pagination";

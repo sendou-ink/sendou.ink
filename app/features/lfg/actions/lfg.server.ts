@@ -2,8 +2,8 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
-import * as LFGRepository from "../LFGRepository.server";
 import { lfgActionSchema } from "../lfg-schemas";
+import * as LFGRepository from "../LFGRepository.server";
 
 export const action = defineAction(
 	{ body: lfgActionSchema },

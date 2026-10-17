@@ -4,9 +4,9 @@ import { tournamentOrganizationPage } from "~/features/tournament-organization/t
 import { defineAction } from "~/form/define-action.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 import { newOrganizationSchemaServer } from "../tournament-organization-schemas.server";
+import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 
 export const action = defineAction(
 	{ body: newOrganizationSchemaServer },

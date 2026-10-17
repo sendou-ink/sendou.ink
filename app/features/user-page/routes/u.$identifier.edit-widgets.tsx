@@ -24,10 +24,10 @@ import * as R from "remeda";
 import * as v from "valibot";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
-import { Image } from "~/components/Image";
-import { Input } from "~/components/Input";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
 import { SideSlotIcon } from "~/components/icons/SideSlot";
+import { Image } from "~/components/Image";
+import { Input } from "~/components/Input";
 import { Placeholder } from "~/components/Placeholder";
 import type { Tables } from "~/db/tables";
 import {

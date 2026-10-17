@@ -21,9 +21,9 @@ import {
 	type ScannerClip,
 	storageUsage,
 } from "../store/clips";
+import { refreshClips, useClips } from "./clips-feed";
 import styles from "./ClipsView.module.css";
 import { ClipVideo } from "./ClipVideo";
-import { refreshClips, useClips } from "./clips-feed";
 import { useEventDateTimeFormatter } from "./format";
 import { SessionHeader } from "./SessionHeader";
 

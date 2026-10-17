@@ -17,8 +17,8 @@ import {
 	loader as backfillLoader,
 	type TrophyBackfillLoaderData,
 } from "../routes/trophies.$id.backfill.$seriesId";
-import * as TrophyRepository from "../TrophyRepository.server";
 import type { trophyFormSchema } from "../trophies-schemas";
+import * as TrophyRepository from "../TrophyRepository.server";
 import { action } from "./trophies.new.server";
 
 type BackfillFormFields = {

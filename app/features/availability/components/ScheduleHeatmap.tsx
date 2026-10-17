@@ -209,14 +209,12 @@ export function ScheduleHeatmap({
 					{dayViews.map(({ day, dayIndex, cells }) => (
 						<React.Fragment key={day.date}>
 							{dayLabel(dayIndex, { withTestId: true })}
-							{/** biome-ignore lint/a11y/noStaticElementInteractions: hover-only detail, the list view and summary carry the same info */}
 							<div
 								className={styles.cellRow}
 								style={{ "--cells": cells.length } as React.CSSProperties}
 								onMouseLeave={() => setHoveredCell(null)}
 							>
 								{cells.map((cell) => (
-									// biome-ignore lint/a11y/noStaticElementInteractions: hover-only detail, the list view and summary carry the same info
 									<div
 										key={cell.startsAt}
 										className={clsx(

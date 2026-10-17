@@ -1,8 +1,8 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
-import * as Standings from "~/features/tournament/core/Standings";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
+import * as Standings from "~/features/tournament/core/Standings";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { cutToNDecimalPlaces } from "../../../../utils/number";

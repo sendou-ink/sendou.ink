@@ -1,5 +1,5 @@
-import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { fetchRotations } from "~/features/splatoon-rotations/splatoon-rotations.server";
+import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
 import { Routine } from "./routine.server";
 
 export const SyncSplatoonRotationsRoutine = new Routine({

@@ -1,7 +1,7 @@
 import * as ChatSystemMessage from "../features/chat/ChatSystemMessage.server";
 import { notify } from "../features/notifications/core/notify.server";
-import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
 import { tournamentDataCached } from "../features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
 import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 

@@ -4,11 +4,10 @@ import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers"
 
 declare module "bun:test" {
 	// registered in app/dom-test-matchers.ts
-	interface Matchers<T = unknown>
-		extends TestingLibraryMatchers<
-			ReturnType<typeof expect.stringContaining>,
-			T
-		> {
+	interface Matchers<T = unknown> extends TestingLibraryMatchers<
+		ReturnType<typeof expect.stringContaining>,
+		T
+	> {
 		toBe(expected: unknown): void;
 		toEqual(expected: unknown): void;
 		toStrictEqual(expected: unknown): void;

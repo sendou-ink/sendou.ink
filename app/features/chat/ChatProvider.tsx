@@ -2,8 +2,8 @@ import * as React from "react";
 import { useLocation, useMatches } from "react-router";
 import { eventsClient } from "~/features/events/events-client";
 import {
-	useEventStreamCatchUp,
 	useEventsConnection,
+	useEventStreamCatchUp,
 } from "~/features/events/events-hooks";
 import { chatRoomChannel } from "~/features/events/events-types";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -12,8 +12,8 @@ import { type LayoutSize, useLayoutSize } from "~/hooks/useLayoutSize";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { LoggedInUser } from "~/root";
 import {
-	type ChatSnapshot,
 	chatClient,
+	type ChatSnapshot,
 	snapshotFromLoaderData,
 } from "./chat-client";
 import {
@@ -499,8 +499,7 @@ export function useCurrentRouteChatRooms(): RouteChatRoom[] {
 
 	for (const match of matches) {
 		const matchData = match.loaderData as
-			| { chatRooms?: RouteChatRoom[] }
-			| undefined;
+			{ chatRooms?: RouteChatRoom[] } | undefined;
 		if (matchData?.chatRooms && matchData.chatRooms.length > 0) {
 			return matchData.chatRooms;
 		}

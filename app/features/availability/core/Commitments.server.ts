@@ -1,12 +1,12 @@
 import * as R from "remeda";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as SeriesTeamCount from "~/features/tournament-organization/core/SeriesTeamCount.server";
-import * as AvailabilityRepository from "../AvailabilityRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { AVAILABILITY } from "../availability-constants";
 import type { BusyBlock } from "../availability-types";
+import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import * as Availability from "./Availability";
 import * as TournamentDuration from "./TournamentDuration";
 import { estimatedEndsAtWith } from "./TournamentDuration.server";

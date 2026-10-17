@@ -4,10 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
-import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
+import { EmptyState } from "~/components/EmptyState";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
@@ -32,8 +32,8 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LFGGroupCard } from "../components/LFGGroupCard";
 import * as TournamentLFG from "../core/TournamentLFG";
 import {
-	type LookingLoaderData,
 	loader,
+	type LookingLoaderData,
 	type SubEntry,
 } from "../loaders/to.$id.looking.server";
 import {

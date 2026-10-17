@@ -1,8 +1,8 @@
 import { BackLink } from "~/components/BackLink";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
-import { useTournament } from "~/features/tournament/tournament-context";
 import type { BracketsPageState } from "~/features/tournament-bracket/routes/to.$id.brackets";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 
 export function TournamentMatchHeader({

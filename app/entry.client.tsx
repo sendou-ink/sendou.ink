@@ -56,7 +56,7 @@ window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
  * keeps the revalidation that follows it, and the visits after, from being served one.
  */
 function invalidatePrefetchedLoaderData() {
-	// biome-ignore lint/suspicious/noDocumentCookie: has to be in place synchronously, before the mutation's revalidation requests go out
+	// eslint-disable-next-line unicorn/no-document-cookie -- has to be in place synchronously, before the mutation's revalidation requests go out
 	document.cookie = `${DATA_GENERATION_COOKIE}=${Date.now()}; path=/; samesite=lax`;
 }
 

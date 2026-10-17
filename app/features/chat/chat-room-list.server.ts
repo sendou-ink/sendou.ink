@@ -1,9 +1,9 @@
 import * as R from "remeda";
 import { hasPermission } from "~/modules/permissions/utils";
 import type { CommonUser } from "~/utils/kysely.server";
+import type { ChatRoomListItem } from "./chat-types";
 import * as ChatRepository from "./ChatRepository.server";
 import * as ChatRoomResolver from "./ChatRoomResolver.server";
-import type { ChatRoomListItem } from "./chat-types";
 
 type MessageStats = Awaited<
 	ReturnType<typeof ChatRepository.findMessageStatsByRoomIds>

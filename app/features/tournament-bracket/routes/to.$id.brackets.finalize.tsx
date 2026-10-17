@@ -10,7 +10,6 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Placement } from "~/components/Placement";
-import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
@@ -20,6 +19,7 @@ import {
 	validateBadgeReceivers,
 	validateTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
 import { invariant } from "~/utils/invariant";

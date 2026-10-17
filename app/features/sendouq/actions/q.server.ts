@@ -27,7 +27,7 @@ import { frontPageSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
 import { qSearchParams } from "../q-search-params";
 import { userCanJoinQueueAt } from "../q-utils";
-import { SendouQError, seasonInitialSkillsExist } from "../q-utils.server";
+import { seasonInitialSkillsExist, SendouQError } from "../q-utils.server";
 
 export const action = defineAction(
 	{ body: frontPageSchema },

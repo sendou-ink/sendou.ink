@@ -47,21 +47,21 @@ import {
 import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "./detectors/quick-scoreboard-battle-log/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import {
-	SCOREBOARD_EVENT_TYPE,
-	type ScoreboardData,
-} from "./detectors/scoreboard/index";
+	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
+	type ScoreboardBattleLogReplayData,
+} from "./detectors/scoreboard-battle-log-replay/index";
 import {
 	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
 	type ScoreboardBattleLogData,
 } from "./detectors/scoreboard-battle-log/index";
 import {
-	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
-	type ScoreboardBattleLogReplayData,
-} from "./detectors/scoreboard-battle-log-replay/index";
-import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "./detectors/scoreboard-own/index";
+import {
+	SCOREBOARD_EVENT_TYPE,
+	type ScoreboardData,
+} from "./detectors/scoreboard/index";
 import type { DetectedEvent } from "./detectors/types";
 import { hueDistance, hueOf, type InkRgb } from "./ink-color";
 import { parseReplayTimestamp } from "./replay-time";
@@ -85,9 +85,9 @@ import {
 	nameSlotRowPermutation,
 	rowByName,
 	type SlotRowPermutation,
+	slotRowPermutation,
 	type StatusObservation,
 	type StripSnapshot,
-	slotRowPermutation,
 } from "./slot-row-assignment";
 import { nameSimilarity } from "./text";
 import {
@@ -1087,13 +1087,11 @@ function buildProgress(
 	const live = withoutReplayReads(objectives, dominant);
 	const liveKills = withoutReplayReads(killReads, dominant);
 	const statusReads = [
-		...playerStatuses.map(
-			(read): StatusRead => ({
-				t: read.t,
-				fromMinimap: false,
-				data: read.data,
-			}),
-		),
+		...playerStatuses.map((read): StatusRead => ({
+			t: read.t,
+			fromMinimap: false,
+			data: read.data,
+		})),
 		...minimapStatusReads(minimapReads),
 	].sort((a, b) => a.t - b.t);
 	const liveStatuses = withoutReplayReads(statusReads, dominant);
@@ -1417,13 +1415,11 @@ function slotRowPermutations({
 	}
 
 	const snapshots = [0, 1].map((side) =>
-		playerStatuses.map(
-			(read): StripSnapshot => ({
-				t: read.t,
-				dead: read.data.dead[sourceSide(read.t, side as 0 | 1)],
-				special: read.data.special[sourceSide(read.t, side as 0 | 1)],
-			}),
-		),
+		playerStatuses.map((read): StripSnapshot => ({
+			t: read.t,
+			dead: read.data.dead[sourceSide(read.t, side as 0 | 1)],
+			special: read.data.special[sourceSide(read.t, side as 0 | 1)],
+		})),
 	);
 	const observe = (side: 0 | 1, observation: StatusObservation): void =>
 		addStatusEvidence(evidence[side]!, snapshots[side]!, observation);

@@ -13,7 +13,7 @@ import {
 import { COMPACTED_MATCHES_STORE, EVENTS_STORE } from "../store/db";
 import { type SendStatus, updateEventsSend } from "../store/events";
 import { getFeed, refreshFeed, refreshFeedEvents } from "./events-feed";
-import { type SendResult, sendMatches } from "./sendou-ingest";
+import { sendMatches, type SendResult } from "./sendou-ingest";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
 

@@ -7,12 +7,11 @@ import { Markdown } from "~/components/Markdown";
 import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	ARTICLES_MAIN_PAGE,
 	articlePreviewUrl,
+	ARTICLES_MAIN_PAGE,
 	navIconUrl,
 } from "~/utils/urls";
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
-
 import { loader } from "../loaders/a.$slug.server";
 
 export { loader };

@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as MarkdownHtml from "~/utils/markdown-html.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {

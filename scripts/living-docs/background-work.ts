@@ -656,7 +656,7 @@ function fileComment(file: ParsedFile) {
 				(!firstStatement || comment.end <= firstStatement.start),
 		)
 		.map((comment) => comment.value.trim())
-		.filter((line) => !line.startsWith("biome-ignore"));
+		.filter((line) => !line.startsWith("eslint-"));
 
 	return lines.length > 0 ? lines.join(" ") : null;
 }

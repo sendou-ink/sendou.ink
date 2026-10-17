@@ -118,7 +118,7 @@ describe("SendouQ match creation validation", () => {
 		try {
 			// both groups were queueing when the season ended a moment ago
 			setSystemTime(new Date(season.ends.getTime() + 10 * 60 * 1000));
-			// biome-ignore lint/plugin: no production write reaches this state, it is produced by time passing while the group idles in the queue
+			// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- no production write reaches this state, it is produced by time passing while the group idles in the queue
 			await db
 				.updateTable("Group")
 				.set({ latestActionAt: databaseTimestampNow() })

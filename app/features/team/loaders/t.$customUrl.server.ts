@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import * as TeamRepository from "../TeamRepository.server";
 import { teamParamsSchema } from "../team-schemas.server";
 import { canAddCustomizedColors } from "../team-utils";
+import * as TeamRepository from "../TeamRepository.server";
 
 export type TeamLoaderData = SerializeFrom<typeof loader>;
 

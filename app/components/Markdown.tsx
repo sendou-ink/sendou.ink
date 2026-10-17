@@ -7,7 +7,7 @@ export function Markdown({
 	className?: string;
 }) {
 	return (
-		// biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized on the server by `MarkdownHtml.render`
+		// eslint-disable-next-line react/no-danger -- sanitized on the server by `MarkdownHtml.render`
 		<div className={className} dangerouslySetInnerHTML={{ __html: html }} />
 	);
 }

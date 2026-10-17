@@ -29,12 +29,12 @@ import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
 } from "../core/detectors/objective/strip-weapons";
-import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
+import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import {
 	X_RANK_POSITION_EVENT_TYPE,
 	type XRankPositionData,

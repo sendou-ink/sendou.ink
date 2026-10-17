@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 
 // screenshots the canvas of the /admin/changelog-image page into a shareable PNG
 // and writes the same update as text, both as Bluesky alt text and as a Discord

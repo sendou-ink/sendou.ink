@@ -182,7 +182,6 @@ type MutuallyAssignable<A, B> = [A] extends [B]
 
 // `true satisfies …` fails to compile the moment a schema and its core
 // interface disagree in either direction.
-// biome-ignore-start lint/suspicious/noUnusedExpressions: type-level assertions, no runtime effect
 true satisfies MutuallyAssignable<
 	v.InferOutput<typeof scannerMatchPlayerSchema>,
 	ScannerMatchPlayer
@@ -207,4 +206,3 @@ true satisfies MutuallyAssignable<
 	v.InferOutput<typeof scannerMatchSchema>,
 	ScannerMatch
 >;
-// biome-ignore-end lint/suspicious/noUnusedExpressions: type-level assertions, no runtime effect

@@ -11,12 +11,12 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import * as Matches from "../core/Matches";
 import * as Scoreboards from "../core/Scoreboards";
-import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import {
+	ingestBodySchema,
 	type IngestedMatchLink,
 	type IngestResponse,
-	ingestBodySchema,
 } from "../scanner-ingest-schemas";
+import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 
 /** How far back the POV user's reported games are content-resolution candidates */
 const CONTENT_RESOLUTION_WINDOW_DAYS = 365;

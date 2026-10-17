@@ -63,12 +63,12 @@ async function main() {
 }
 
 function log(message: string) {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log(message);
 }
 
 main().catch((error) => {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.error(error);
 	process.exit(1);
 });

@@ -1,6 +1,6 @@
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 
 export const loader = async () => {
 	const userId = userPageUserId();

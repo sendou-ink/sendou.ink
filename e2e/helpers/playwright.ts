@@ -127,7 +127,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 		expect(hydrationErrors, "React hydration errors").toEqual([]);
 	},
 	workerPort: [
-		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
+		// eslint-disable-next-line no-empty-pattern -- Playwright requires object destructuring
 		async ({}, use, workerInfo) => {
 			const port = e2eWorkerPort(workerInfo.parallelIndex);
 			await use(port);
@@ -144,7 +144,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 		await use(workerBaseURL);
 	},
 	factories: [
-		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
+		// eslint-disable-next-line no-empty-pattern -- Playwright requires object destructuring
 		async ({}, use, workerInfo) => {
 			await use(await loadFactories(workerInfo.parallelIndex));
 		},
@@ -670,7 +670,7 @@ const DND_KIT_CLICK_SUPPRESSION_MS = 50;
 
 /** Waits out dnd-kit's post-drop click suppression, which nothing observable marks the end of. Call after the `mouse.up()` of a drag. */
 export async function waitForDropToSettle(page: Page) {
-	// biome-ignore lint/nursery/noPlaywrightWaitForTimeout: the suppression window has no observable end
+	// eslint-disable-next-line playwright/no-wait-for-timeout -- the suppression window has no observable end
 	await page.waitForTimeout(2 * DND_KIT_CLICK_SUPPRESSION_MS);
 }
 

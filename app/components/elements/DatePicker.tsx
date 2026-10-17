@@ -4,17 +4,16 @@ import { isValidDate } from "~/utils/dates";
 const DATE_INPUT_FORMAT = "yyyy-MM-dd";
 const DATETIME_INPUT_FORMAT = "yyyy-MM-dd'T'HH:mm";
 
-interface SendouDatePickerProps
-	extends Pick<
-		React.InputHTMLAttributes<HTMLInputElement>,
-		| "id"
-		| "disabled"
-		| "aria-label"
-		| "aria-invalid"
-		| "aria-describedby"
-		| "aria-errormessage"
-		| "aria-required"
-	> {
+interface SendouDatePickerProps extends Pick<
+	React.InputHTMLAttributes<HTMLInputElement>,
+	| "id"
+	| "disabled"
+	| "aria-label"
+	| "aria-invalid"
+	| "aria-describedby"
+	| "aria-errormessage"
+	| "aria-required"
+> {
 	value: Date | null;
 	/** `isBadInput` = the input holds a partial or impossible date, e.g. 31.9. */
 	onChange: (value: Date | null, meta: { isBadInput: boolean }) => void;

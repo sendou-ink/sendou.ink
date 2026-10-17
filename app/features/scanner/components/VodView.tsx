@@ -26,12 +26,11 @@ import { refreshClips, useClips } from "./clips-feed";
 import { ExportMenu } from "./ExportMenu";
 import { NotFound } from "./NotFound";
 import { ScanWorkers } from "./ScanWorkers";
-import { SessionHeader, StatusPill } from "./SessionHeader";
-import { SessionView } from "./SessionView";
 import { sendouUpload } from "./sendou-upload";
 import type { ScanEvent } from "./session-data";
+import { SessionHeader, StatusPill } from "./SessionHeader";
+import { SessionView } from "./SessionView";
 import { useDebug } from "./use-debug";
-import styles from "./VodView.module.css";
 import { isThisVisitsVodClip } from "./visit";
 import { cachedBuild, useStoredVod } from "./vod-data";
 import {
@@ -42,6 +41,7 @@ import {
 	vodScanFrame,
 } from "./vod-scan";
 import { refreshVods } from "./vods-feed";
+import styles from "./VodView.module.css";
 
 export function VodView() {
 	const [name] = useSearchParam(scannerSearchParams, "name");

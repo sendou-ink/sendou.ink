@@ -5,8 +5,7 @@ import { useDebounce } from "~/hooks/useDebounce";
 
 /** Sentinel items rendered in place of real results while loading or when empty. */
 export type EntitySearchPlaceholder =
-	| { id: "PLACEHOLDER" }
-	| { id: "NO_RESULTS" };
+	{ id: "PLACEHOLDER" } | { id: "NO_RESULTS" };
 
 export type EntitySearchItem<TItem> = TItem | EntitySearchPlaceholder;
 

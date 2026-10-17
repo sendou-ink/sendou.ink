@@ -3,8 +3,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { LoaderFunctionArgs } from "react-router";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { TournamentProvider } from "~/features/tournament/tournament-context";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import { TournamentProvider } from "~/features/tournament/tournament-context";
 import TournamentAdminRegistrationPage from "./to.$id.admin.registration.$tid";
 
 // stubbed so importing the route in a browser test doesn't pull in the database-backed action
@@ -71,7 +71,7 @@ function renderPage() {
 			{
 				path: "/search",
 				loader: ({ request }: LoaderFunctionArgs) => {
-					// biome-ignore lint/plugin: stub loader standing in for the real search route, reading the request the component built
+					// eslint-disable-next-line sendou/no-raw-search-params -- stub loader standing in for the real search route, reading the request the component built
 					const query = new URL(request.url).searchParams.get("q") ?? "";
 					return {
 						query,

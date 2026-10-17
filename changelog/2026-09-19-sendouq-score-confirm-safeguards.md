@@ -2,6 +2,7 @@
 navItem: sendouq
 type: feature
 ---
+
 SendouQ score reporting is harder to get wrong by accident
 
 - The confirm button is now disabled for a few seconds before it can be pressed

@@ -5,9 +5,9 @@ import {
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as CheckIn from "~/features/tournament-bracket/core/CheckIn";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import { useTournament } from "~/features/tournament/tournament-context";
 import * as CSV from "~/modules/csv";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { teamPage, userPage } from "~/utils/urls";
@@ -58,8 +58,7 @@ const MEMBER_FIELDS = [
 	"memberProfileUrl",
 ] as const;
 type ExportField =
-	| (typeof TEAM_FIELDS)[number]
-	| (typeof MEMBER_FIELDS)[number];
+	(typeof TEAM_FIELDS)[number] | (typeof MEMBER_FIELDS)[number];
 
 const FIELD_LABELS: Record<ExportField, string> = {
 	teamName: "Team",

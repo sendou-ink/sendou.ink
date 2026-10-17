@@ -2,6 +2,7 @@
 navItem: plans
 type: feature
 ---
+
 Map planner improvements
 
 - Plans are saved and restored when you come back to the page

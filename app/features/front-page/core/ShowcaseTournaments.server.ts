@@ -1,13 +1,13 @@
 import cachified from "@epic-web/cachified";
 import * as R from "remeda";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import {
 	getBracketProgressionLabel,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
-import * as Progression from "~/features/tournament-bracket/core/Progression";
-import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,

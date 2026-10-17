@@ -8,9 +8,9 @@ import type { TournamentMapListMap } from "~/modules/tournament-map-list-generat
 import { invariant } from "~/utils/invariant";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { errorIsSqliteUniqueConstraintFailure, toDBBoolean } from "~/utils/sql";
+import { matchIsLocked } from "../tournament-match-utils";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
-import { matchIsLocked } from "../tournament-match-utils";
 
 export interface ReportScoreResult {
 	/** Did this game end the set? */

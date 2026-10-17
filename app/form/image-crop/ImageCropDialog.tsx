@@ -109,7 +109,7 @@ export function ImageCropDialog({
 			<div
 				ref={viewportRef}
 				className={styles.viewport}
-				// biome-ignore lint/a11y/noNoninteractiveTabindex: arrow keys and +/- move and zoom the image
+				// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- arrow keys and +/- move and zoom the image
 				tabIndex={0}
 				role="application"
 				aria-label="Image crop area. Drag or use the arrow keys to move the image, + and - to zoom."

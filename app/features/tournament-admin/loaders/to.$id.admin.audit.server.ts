@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentAuditLogRepository from "~/features/tournament/TournamentAuditLogRepository.server";
 import { AUDIT_LOG_PAGE_SIZE } from "~/features/tournament/TournamentAuditLogRepository.server";
-import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import { paginate } from "~/utils/remix.server";
 import { tournamentAuditSearchParams } from "../tournament-admin-search-params";
 

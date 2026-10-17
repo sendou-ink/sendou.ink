@@ -45,8 +45,8 @@ import type {
 	ArrayItemRenderContext,
 	BadgeOption,
 	CustomFieldRenderProps,
-	FormFieldItemsWithImage,
 	FormField as FormFieldType,
+	FormFieldItemsWithImage,
 	MapPoolFieldOptions,
 	SelectOption,
 	TeamSearchFieldOptions,
@@ -436,8 +436,7 @@ export function FormField({
 
 	if (formField.type === "array") {
 		const innerFieldMeta = formRegistry.get(formField.field) as
-			| FormFieldType
-			| undefined;
+			FormFieldType | undefined;
 		const isObjectArray = innerFieldMeta?.type === "fieldset";
 		const hasCustomRender = typeof children === "function";
 		const itemInitialValue =
@@ -509,8 +508,7 @@ export function FormField({
 
 	if (formField.type === "tournament-search") {
 		const tournamentOptions = options as
-			| TournamentSearchFieldOptions
-			| undefined;
+			TournamentSearchFieldOptions | undefined;
 		return (
 			<TournamentSearchFormField
 				{...commonProps}
@@ -647,8 +645,7 @@ interface ArrayItemCustomRenderProps {
  * Memoized so an edit re-renders only the item whose slice changed. Anything the render reads outside its
  * own item must go through `useFormValue`; callbacks read the array via the store so a skipped render never acts on stale values.
  */
-// biome-ignore lint/nursery/useReactFunctionComponentDefinition: memo() takes a function expression
-// biome-ignore lint/suspicious/noShadow: the function expression is named for devtools, it is the same component
+// eslint-disable-next-line @typescript-eslint/no-shadow -- memo() takes a function expression; the function expression is named for devtools, it is the same component
 const ArrayItemCustomRender = React.memo(function ArrayItemCustomRender({
 	arrayName,
 	index,

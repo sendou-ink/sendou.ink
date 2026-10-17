@@ -7,12 +7,12 @@ import assert from "node:assert/strict";
 import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	createScoreboardOwnDetector,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { Detector } from "../core/detectors/types";
 import {
 	fieldTestOptions,

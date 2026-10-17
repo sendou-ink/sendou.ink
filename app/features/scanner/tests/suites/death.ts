@@ -12,8 +12,8 @@ import {
 	createDeathDetector,
 	type DeathData,
 } from "../../core/detectors/death/index";
-import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
+import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
 import type { Detector } from "../../core/detectors/types";
 import { type FrameData, normalizeFrame, toMat } from "../../core/image";
 import {

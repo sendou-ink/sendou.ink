@@ -17,9 +17,9 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent, Detector } from "../core/detectors/types";
 import {
 	fieldTestOptions,
@@ -58,8 +58,7 @@ for (const fixture of fixtures) {
 
 		if (!expectPositive) return;
 		const event = events.find((e) => e.type === PLAYER_STATUS_EVENT_TYPE) as
-			| DetectedEvent<PlayerStatusData>
-			| undefined;
+			DetectedEvent<PlayerStatusData> | undefined;
 		assert.ok(
 			event,
 			gate.pass

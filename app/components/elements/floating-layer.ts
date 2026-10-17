@@ -2,11 +2,7 @@ export type Side = "top" | "bottom" | "left" | "right";
 export type Align = "start" | "center" | "end";
 
 export type Placement =
-	| "top"
-	| "bottom"
-	| "right"
-	| "bottom start"
-	| "bottom end";
+	"top" | "bottom" | "right" | "bottom start" | "bottom end";
 
 export interface Size {
 	width: number;

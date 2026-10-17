@@ -486,7 +486,7 @@ describe("mergeTeams", () => {
 
 		// user 2 was looking before user 1 (older createdAt); the column defaults in SQL and the table
 		// has no id for `backdate` to key on
-		// biome-ignore lint/plugin: no production write sets the timestamp
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- no production write sets the timestamp
 		await db
 			.updateTable("TournamentTeamMember")
 			.set({ createdAt: 1000 })

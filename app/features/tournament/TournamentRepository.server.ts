@@ -19,7 +19,6 @@ import type {
 import { actorId } from "~/features/auth/core/user.server";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
-import { organizerPermissions } from "~/features/tournament/core/permissions";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type {
@@ -27,6 +26,7 @@ import type {
 	TournamentTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
+import { organizerPermissions } from "~/features/tournament/core/permissions";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { isSupporter } from "~/modules/permissions/utils";
@@ -197,7 +197,7 @@ export async function findById(id: number) {
 						concatUserSubmittedImagePrefix(innerEb.ref("PickupAvatar.url")).as(
 							"pickupAvatarUrl",
 						),
-						sql<boolean> /*sql*/`exists(
+						sql<boolean> /*sql*/ `exists(
               select 1 from "MapPoolMap"
               where "MapPoolMap"."tournamentTeamId" = "TournamentTeam"."id"
             )`.as("hasMapPool"),
@@ -543,7 +543,7 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 						"TournamentTeamMember.createdAt",
 						"TournamentTeamMember.isSub",
 						"TournamentTeamMember.isOrganizerAdded",
-						sql<string | null> /*sql*/`coalesce(
+						sql<string | null> /*sql*/ `coalesce(
               "TournamentTeamMember"."inGameName",
               "User"."inGameName"
             )`.as("inGameName"),

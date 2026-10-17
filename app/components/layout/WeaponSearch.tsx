@@ -137,7 +137,7 @@ export function WeaponDestinationMenu({
 	};
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: keyboard navigation for Escape to go back
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions -- keyboard navigation for Escape to go back
 		<div onKeyDown={handleKeyDown}>
 			<div className={styles.weaponDestinationHeader}>
 				<button

@@ -6,10 +6,10 @@ import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { badRequestIfFalsy, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
+import { sendChatMessageSchema } from "../chat-schemas";
 import * as ChatMentionNotification from "../ChatMentionNotification.server";
 import * as ChatRepository from "../ChatRepository.server";
 import * as ChatRoomResolver from "../ChatRoomResolver.server";
-import { sendChatMessageSchema } from "../chat-schemas";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	requireUser();

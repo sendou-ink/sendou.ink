@@ -12,11 +12,6 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import styles from "./GameTimeline.module.css";
 import { Image, WeaponImage } from "./Image";
-import { ObjectivePositionTimeline } from "./ObjectivePositionTimeline";
-import {
-	ObjectiveTimeline,
-	type ObjectiveTimelineEvent,
-} from "./ObjectiveTimeline";
 import {
 	formatElapsed,
 	smoothPenalties,
@@ -24,6 +19,11 @@ import {
 	withFullCountsAtGameStart,
 	withUnpushedTrackCounts,
 } from "./objective-timeline-utils";
+import { ObjectivePositionTimeline } from "./ObjectivePositionTimeline";
+import {
+	ObjectiveTimeline,
+	type ObjectiveTimelineEvent,
+} from "./ObjectiveTimeline";
 import {
 	PLAYER_STATUS_TAIL_SECONDS,
 	PlayerStatusTimeline,
@@ -146,8 +146,7 @@ export function GameTimeline({
 }
 
 /** Memoized so scrubbing re-renders only the overlay, not the chart canvas. */
-// biome-ignore lint/nursery/useReactFunctionComponentDefinition: memo() takes a function expression
-// biome-ignore lint/suspicious/noShadow: the function expression is named for devtools, it is the same component
+// eslint-disable-next-line @typescript-eslint/no-shadow -- memo() takes a function expression; the function expression is named for devtools, it is the same component
 const TimelineCharts = memo(function TimelineCharts({
 	objectiveEvents,
 	playerStatusSamples,

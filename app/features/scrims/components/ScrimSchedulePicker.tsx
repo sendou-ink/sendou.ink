@@ -13,7 +13,6 @@ import {
 	TrackTicks,
 	useClockWindow,
 } from "~/features/availability/components/ScheduleTracks";
-import trackStyles from "~/features/availability/components/ScheduleTracks.module.css";
 import { WeekToggle } from "~/features/availability/components/WeekToggle";
 import * as Availability from "~/features/availability/core/Availability";
 import type { RosterScheduleData } from "~/features/availability/core/RosterSchedule.server";
@@ -26,6 +25,7 @@ import * as Scrim from "../core/Scrim";
 import type { ScrimsNewLoaderData } from "../loaders/scrims.new.server";
 import { SCRIM } from "../scrims-constants";
 import styles from "./ScrimSchedulePicker.module.css";
+import trackStyles from "~/features/availability/components/ScheduleTracks.module.css";
 
 const MINUTE_IN_SECONDS = 60;
 

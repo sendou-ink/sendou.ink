@@ -106,7 +106,7 @@ export function* all<T>(steps: readonly MatchSteps<T>[]): MatchSteps<T[]> {
 }
 
 /** A step sequence that asks for nothing and returns `value`: an `all` slot whose read is skipped or already known. */
-// biome-ignore lint/correctness/useYield: completing without a request is the point
+// eslint-disable-next-line require-yield -- completing without a request is the point
 export function* done<T>(value: T): MatchSteps<T> {
 	return value;
 }

@@ -17,11 +17,10 @@ import {
 } from "~/features/user-page/in-game-name";
 import styles from "./IngameNameInput.module.css";
 
-interface IngameNameInputProps
-	extends Pick<
-		React.AriaAttributes,
-		"aria-invalid" | "aria-describedby" | "aria-errormessage" | "aria-required"
-	> {
+interface IngameNameInputProps extends Pick<
+	React.AriaAttributes,
+	"aria-invalid" | "aria-describedby" | "aria-errormessage" | "aria-required"
+> {
 	value: string;
 	onChange: (value: string) => void;
 	onBlur?: () => void;

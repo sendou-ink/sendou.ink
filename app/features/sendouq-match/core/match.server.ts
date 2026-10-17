@@ -1,7 +1,7 @@
 import * as R from "remeda";
 import type { UserMapModePreferences } from "~/db/tables-json";
-import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as MapList from "~/features/map-list-generator/core/MapList";
 import {
 	BANNED_MAPS,
 	SENDOUQ_MAP_POOL,

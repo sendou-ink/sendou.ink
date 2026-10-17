@@ -5,12 +5,12 @@ import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
-import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { SCHEDULE_VISIBILITY_FRIENDS_VALUE } from "../availability-constants";
 import type {
 	saveScheduleVisibilitySchema,
 	saveWeekSchema,
 } from "../availability-schemas";
+import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import * as Availability from "../core/Availability";
 import { action as eventsAction } from "./events.server";
 

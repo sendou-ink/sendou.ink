@@ -132,7 +132,7 @@ export function SendouCalendar({
 					<ChevronRight className={styles.navIcon} />
 				</button>
 			</header>
-			{/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a date grid per the ARIA date picker pattern */}
+			{/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- a date grid per the ARIA date picker pattern */}
 			<table className={styles.grid} role="grid" aria-labelledby={headingId}>
 				<thead>
 					<tr>
@@ -143,7 +143,7 @@ export function SendouCalendar({
 						))}
 					</tr>
 				</thead>
-				{/* biome-ignore-start lint/a11y/noNoninteractiveElementToInteractiveRole: gridcells of the date grid */}
+				{/* eslint-disable jsx-a11y/no-redundant-roles -- gridcells of the date grid */}
 				<tbody>
 					{weeks.map((week, weekIndex) => (
 						<tr key={weekIndex}>
@@ -153,7 +153,6 @@ export function SendouCalendar({
 								const isTabStop = day !== null && isSameDay(day, tabStop);
 
 								return (
-									// biome-ignore lint/a11y/useFocusableInteractive: the cell carries the selection, its button the focus
 									<td
 										key={dayIndex}
 										role="gridcell"
@@ -181,7 +180,7 @@ export function SendouCalendar({
 						</tr>
 					))}
 				</tbody>
-				{/* biome-ignore-end lint/a11y/noNoninteractiveElementToInteractiveRole: gridcells of the date grid */}
+				{/* eslint-enable jsx-a11y/no-redundant-roles */}
 			</table>
 		</div>
 	);

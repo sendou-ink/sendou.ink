@@ -13,8 +13,8 @@ import { FilterBar } from "~/components/filter-bar/FilterBar";
 import {
 	BEST_TIER_NUMBER,
 	TIER_NUMBERS,
-	type TournamentTierNumber,
 	tierNumberToName,
+	type TournamentTierNumber,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
 import { RadioGroupFormField } from "~/form/fields/InputGroupFormField";
@@ -24,8 +24,8 @@ import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.ser
 import {
 	RESULT_PLACEMENT_FILTERS,
 	RESULT_SOURCES,
-	RESULTS_FIRST_YEAR,
 	type ResultPlacementFilter,
+	RESULTS_FIRST_YEAR,
 } from "../user-page-constants";
 import { userResultsSearchParams } from "../user-page-search-params";
 

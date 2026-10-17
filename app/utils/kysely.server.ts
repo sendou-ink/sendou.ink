@@ -4,8 +4,8 @@ import {
 	type Expression,
 	type ExpressionBuilder,
 	type RawBuilder,
-	type SqlBool,
 	sql,
+	type SqlBool,
 } from "kysely";
 import type {
 	jsonArrayFrom as sqliteJsonArrayFrom,

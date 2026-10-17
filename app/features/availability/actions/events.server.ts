@@ -8,12 +8,12 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import {
 	AVAILABILITY,
 	SCHEDULE_VISIBILITY_FRIENDS_VALUE,
 } from "../availability-constants";
 import { eventsActionSchema } from "../availability-schemas";
+import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import * as Availability from "../core/Availability";
 
 const DAY_SECONDS = 24 * 60 * 60;

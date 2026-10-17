@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Generates the localized closed sets from the splat3 repo's language dumps
  * (https://github.com/Leanny/splat3, data/language/<Lang>_full.json) so

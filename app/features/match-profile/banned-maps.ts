@@ -1,4 +1,4 @@
-import { stagesObj as s, stageIds } from "~/modules/in-game-lists/stage-ids";
+import { stageIds, stagesObj as s } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 

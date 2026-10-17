@@ -6,6 +6,8 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Label } from "~/components/Label";
 import { useUser } from "~/features/auth/core/user";
+import { tournamentAdminImportTeamsPage } from "~/features/tournament-admin/tournament-admin-urls";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	type CounterPickMapPool,
 	CounterPickMapPoolPicker,
@@ -13,10 +15,8 @@ import {
 	useCounterPickMapPoolValidationStatus,
 } from "~/features/tournament/components/CounterPickMapPoolPicker";
 import { useTournament } from "~/features/tournament/tournament-context";
-import { tournamentAdminImportTeamsPage } from "~/features/tournament-admin/tournament-admin-urls";
-import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
-import { FormField } from "~/form/FormField";
 import { FormFieldMessages } from "~/form/fields/FormFieldWrapper";
+import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type {
 	ArrayItemRenderContext,
@@ -30,10 +30,10 @@ import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { tournamentAdminPage } from "~/utils/urls";
 import type { TournamentAdminRegistrationLoaderData } from "../loaders/to.$id.admin.registration.$tid.server";
 import {
-	type AdminRegistrationFormValues,
 	adminRegistrationFormSchema,
-	type ImportTeamFormValues,
+	type AdminRegistrationFormValues,
 	importTeamFormSchema,
+	type ImportTeamFormValues,
 } from "../tournament-admin-registration-schemas";
 import type { ImportTeamsLoaderData } from "./to.$id.admin.import-teams";
 

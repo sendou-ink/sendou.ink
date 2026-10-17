@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Replay benchmark for the GPU matcher: replays a recorded match-request
  * corpus (scan-vod --record) through worker/gpu-matcher.ts, times it, and

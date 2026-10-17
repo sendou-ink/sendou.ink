@@ -18,18 +18,18 @@ Another key objective is to bridge the gap between casual and competitive player
 <summary>Selected features</summary>
 
 - Full tournament system
-   - Automatic bracket progression
-   - Single Elimination, Double Elimination, Round Robin, Swiss
-   - Splatoon specific maplists (picked by the organizer or teams)
-   - Counterpicking of different styles
-   - Automatic seeding tool
-   - Ranked tournaments allowing users to climb the leaderboard
-   - View streams of tournament (both participants and the cast)
+  - Automatic bracket progression
+  - Single Elimination, Double Elimination, Round Robin, Swiss
+  - Splatoon specific maplists (picked by the organizer or teams)
+  - Counterpicking of different styles
+  - Automatic seeding tool
+  - Ranked tournaments allowing users to climb the leaderboard
+  - View streams of tournament (both participants and the cast)
 - Seasonal ladder system
-   - Join by yourself or with 1-3 of your mates, get a full group and challenge other teams
-   - View streams of ongoing matches
-   - Maplist generation based on given preferences
-   - Private notes
+  - Join by yourself or with 1-3 of your mates, get a full group and challenge other teams
+  - View streams of ongoing matches
+  - Maplist generation based on given preferences
+  - Private notes
 - Map planner that lets you draw on maps and insert weapons
 - Map list generation tool
 - Win badges from tournaments, management tools for TOs
@@ -77,6 +77,7 @@ You should see something like:
 v26.7.0
 git version 2.39.5 (Apple Git-154)
 ```
+
 (if not then go back to "Prerequisites" and install what is missing)
 
 Then there is a sequence of commands you need to run:
@@ -152,6 +153,6 @@ For developers reading the [Architecture](https://docs.sendou.ink/dev/architectu
 - **Validation**: Valibot
 - **Internationalization**: i18next
 - **Testing**:
-   - End-to-End (E2E): Playwright
-   - Unit/Integration: bun:test
-   - Components: bun:test + happy-dom + Testing Library
+  - End-to-End (E2E): Playwright
+  - Unit/Integration: bun:test
+  - Components: bun:test + happy-dom + Testing Library

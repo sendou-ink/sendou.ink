@@ -60,7 +60,7 @@ export class AnalyzerClient {
 
 	constructor(
 		onResult: ResultHandler,
-		// biome-ignore lint/suspicious/noConsole: default sink for worker errors when no handler is passed
+		// eslint-disable-next-line no-console -- default sink for worker errors when no handler is passed
 		onError: ErrorHandler = console.error,
 		onDone?: DoneHandler,
 		options: {

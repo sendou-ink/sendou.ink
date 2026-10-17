@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * CLI harness: replays a directory of extracted VoD frames through the full
  * detector registry driven by a DetectorScheduler, mirroring the worker's

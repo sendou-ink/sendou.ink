@@ -36,7 +36,7 @@ export function SendouSwitch({
 			<input
 				id={id}
 				type="checkbox"
-				// biome-ignore lint/a11y/useAriaPropsForRole: the native checked attribute supplies the switch state
+				// eslint-disable-next-line jsx-a11y/role-has-required-aria-props -- the native checked attribute supplies the switch state
 				role="switch"
 				className={styles.input}
 				checked={isSelected}

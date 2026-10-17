@@ -56,12 +56,12 @@ async function waitForSeaweedfs(timeout = 60000): Promise<boolean> {
 
 async function ensureSeaweedfsRunning(): Promise<boolean> {
 	if (await isSeaweedfsReady()) {
-		// biome-ignore lint/suspicious/noConsole: CLI script output
+		// eslint-disable-next-line no-console -- CLI script output
 		console.log("SeaweedFS is already running");
 		return false;
 	}
 
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log("Starting SeaweedFS...");
 	execSync("docker compose up -d seaweedfs", { stdio: "inherit" });
 
@@ -72,7 +72,7 @@ async function ensureSeaweedfsRunning(): Promise<boolean> {
 		);
 	}
 
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log("SeaweedFS is ready");
 
 	fs.writeFileSync(SEAWEEDFS_MARKER_FILE, "");
@@ -148,18 +148,18 @@ function isBuildFresh(): boolean {
 async function globalSetup(config: FullConfig) {
 	const workerCount = config.workers;
 
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log(`\nStarting e2e test setup with ${workerCount} workers...`);
 
 	await ensureSeaweedfsRunning();
 
 	if (isBuildFresh()) {
-		// biome-ignore lint/suspicious/noConsole: CLI script output
+		// eslint-disable-next-line no-console -- CLI script output
 		console.log(
 			"Reusing existing build (no source changes since last e2e build)",
 		);
 	} else {
-		// biome-ignore lint/suspicious/noConsole: CLI script output
+		// eslint-disable-next-line no-console -- CLI script output
 		console.log("Building the application...");
 		fs.rmSync(BUILD_MARKER_FILE, { force: true });
 		execSync("bun run build", {
@@ -182,7 +182,7 @@ async function globalSetup(config: FullConfig) {
 
 	// Kill any existing processes on our ports before starting; sweep beyond the
 	// current worker count so leftovers from a run with more workers also die
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log("Cleaning up any existing processes on e2e ports...");
 	const killedSomething = killProcessesOnPorts(
 		E2E_BASE_PORT,
@@ -199,7 +199,7 @@ async function globalSetup(config: FullConfig) {
 
 		ensureMigratedDb(dbPath);
 
-		// biome-ignore lint/suspicious/noConsole: CLI script output
+		// eslint-disable-next-line no-console -- CLI script output
 		console.log(`Starting server for worker ${i} on port ${port}...`);
 		// the server directly instead of `bun run start`: ensureMigratedDb
 		// above already migrated, making the script's `migrate up` step redundant
@@ -233,19 +233,19 @@ async function globalSetup(config: FullConfig) {
 
 		if (DEBUG) {
 			serverProcess.stdout?.on("data", (data) => {
-				// biome-ignore lint/suspicious/noConsole: CLI script output
+				// eslint-disable-next-line no-console -- CLI script output
 				console.log(`[Worker ${i}] ${data.toString()}`);
 			});
 
 			serverProcess.stderr?.on("data", (data) => {
-				// biome-ignore lint/suspicious/noConsole: CLI script output
+				// eslint-disable-next-line no-console -- CLI script output
 				console.error(`[Worker ${i} ERROR] ${data.toString()}`);
 			});
 		}
 
 		serverPromises.push(
 			waitForServer(port).then(() => {
-				// biome-ignore lint/suspicious/noConsole: CLI script output
+				// eslint-disable-next-line no-console -- CLI script output
 				console.log(`Server for worker ${i} is ready on port ${port}`);
 			}),
 		);
@@ -256,7 +256,7 @@ async function globalSetup(config: FullConfig) {
 
 	await Promise.all(serverPromises);
 
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log("\nAll servers started successfully!\n");
 }
 

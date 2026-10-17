@@ -2,6 +2,7 @@
 navItem: sendouq
 type: feature
 ---
+
 Voice chat in SendouQ (beta)
 
 - Join voice from your group's or match's chat to talk with your team or everyone in the match

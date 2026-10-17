@@ -23,8 +23,8 @@ import {
 	SubWeaponImage,
 	WeaponImage,
 } from "~/components/Image";
-import { LineChart, type LineChartSeries } from "~/components/LineChart";
 import { weaponToSelectedWeapon } from "~/components/layout/WeaponSearch";
+import { LineChart, type LineChartSeries } from "~/components/LineChart";
 import { Main } from "~/components/Main";
 import { PageHeader } from "~/components/PageHeader";
 import { Placeholder } from "~/components/Placeholder";

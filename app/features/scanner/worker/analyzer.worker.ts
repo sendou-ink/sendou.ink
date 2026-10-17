@@ -187,12 +187,12 @@ async function init({
 		await loadOpenCV();
 		if (webgpu && navigator.gpu) {
 			gpuMatcher = await createGpuMatcher(navigator.gpu).catch((error) => {
-				// biome-ignore lint/suspicious/noConsole: a missing GPU silently costs speed, so say why
+				// eslint-disable-next-line no-console -- a missing GPU silently costs speed, so say why
 				console.warn("scanner: WebGPU unavailable, matching on the CPU", error);
 				return null;
 			});
 			if (gpuMatcher && !(await hasFastReadback(gpuMatcher.device))) {
-				// biome-ignore lint/suspicious/noConsole: a missing GPU silently costs speed, so say why
+				// eslint-disable-next-line no-console -- a missing GPU silently costs speed, so say why
 				console.warn("scanner: WebGPU readback too slow, matching on the CPU");
 				gpuMatcher.destroy();
 				gpuMatcher = null;
@@ -206,7 +206,7 @@ async function init({
 		const { resources, missingAtlases, missingIcons } =
 			await fetchScoreboardResources(assetsBaseUrl);
 		if (missingAtlases.length > 0 || missingIcons.length > 0) {
-			// biome-ignore lint/suspicious/noConsole: the scan goes on with what loaded, so say what didn't
+			// eslint-disable-next-line no-console -- the scan goes on with what loaded, so say what didn't
 			console.warn("scanner: assets failed to load", {
 				missingAtlases,
 				missingIcons,
@@ -741,7 +741,7 @@ async function scanChunk({
 					if (chunkAborted || ++failures > MAX_CHUNK_FAILURES) throw error;
 					failuresHere = cursor > failedAt ? 1 : failuresHere + 1;
 					failedAt = cursor;
-					// biome-ignore lint/suspicious/noConsole: the scan carries on, so say what it recovered from
+					// eslint-disable-next-line no-console -- the scan carries on, so say what it recovered from
 					console.warn(
 						`scanner: chunk ${chunkIndex} failed at ${cursor.toFixed(1)}s, resuming`,
 						error,
@@ -806,7 +806,7 @@ function decodeWorker(): Promise<Worker | null> {
 function gpuRunner() {
 	if (!gpuMatcher) return undefined;
 	if (!gpuMatcher.lost) return gpuMatcher.run;
-	// biome-ignore lint/suspicious/noConsole: a lost device silently costs speed, so say so once
+	// eslint-disable-next-line no-console -- a lost device silently costs speed, so say so once
 	console.warn(
 		"scanner: WebGPU device lost, continuing on the CPU",
 		gpuMatcher.lostReason,

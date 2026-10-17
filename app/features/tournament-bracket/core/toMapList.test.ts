@@ -6,8 +6,8 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { RoundData } from "./engine/types";
 import {
 	type BracketMapCounts,
-	type GenerateTournamentRoundMaplistArgs,
 	generateTournamentRoundMaplist,
+	type GenerateTournamentRoundMaplistArgs,
 	roundSetKey,
 } from "./toMapList";
 

@@ -118,9 +118,8 @@ export function getGameLanguage(): GameLanguageCode {
 
 /** `TFunction` bound to the request's locale and the given namespaces (all in-memory, no async loading). */
 export function getServerTFunction<
-	N extends
-		| FlatNamespace
-		| readonly [FlatNamespace, ...FlatNamespace[]] = DefaultNamespace,
+	N extends FlatNamespace | readonly [FlatNamespace, ...FlatNamespace[]] =
+		DefaultNamespace,
 >(namespaces?: N): TFunction<FallbackNs<N>> {
 	const { instance, locale } = currentStore();
 	return instance.getFixedT(
@@ -146,9 +145,8 @@ export function getI18nInstance(
 
 /** `TFunction` bound to a fixed language, for outside a request (e.g. notifications) or a required language. */
 export async function getFixedTForLanguage<
-	N extends
-		| FlatNamespace
-		| readonly [FlatNamespace, ...FlatNamespace[]] = DefaultNamespace,
+	N extends FlatNamespace | readonly [FlatNamespace, ...FlatNamespace[]] =
+		DefaultNamespace,
 >(language: string, namespaces?: N): Promise<TFunction<FallbackNs<N>>> {
 	return fixedLanguageInstance(language).getFixedT(
 		language,

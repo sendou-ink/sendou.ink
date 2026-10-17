@@ -33,8 +33,8 @@ import {
 import type { ScoreboardResources } from "../scoreboard/index";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
-	type PlayerStatusData,
 	parsePlayerStatus,
+	type PlayerStatusData,
 	type StripFit,
 } from "./player-status";
 import {

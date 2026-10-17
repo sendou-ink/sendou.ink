@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 
 // checks that every internal link of the built docs site (docs/site/dist) leads to a page, and to an
 // element of it when it has a #hash, run by `bun run docs:build`

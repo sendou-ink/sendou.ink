@@ -19,10 +19,10 @@ import type {
 } from "../../core/detectors/objective/index";
 import type { PlayerStatusData } from "../../core/detectors/objective/player-status";
 import type { StripWeaponsData } from "../../core/detectors/objective/strip-weapons";
-import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
-import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
 import type { ScoreboardBattleLogReplayData } from "../../core/detectors/scoreboard-battle-log-replay/index";
+import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
 import type { ScoreboardOwnData } from "../../core/detectors/scoreboard-own/index";
+import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
 import type { DetectedEvent } from "../../core/detectors/types";
 import type { XRankPositionData } from "../../core/detectors/x-rank/position";
 import type { XSetCountData } from "../../core/detectors/x-rank/set-count";

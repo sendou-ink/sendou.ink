@@ -13,10 +13,10 @@ import { type FetcherWithComponents, Link, useFetcher } from "react-router";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { SendouDialog } from "~/components/elements/Dialog";
 import {
+	searchContains,
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
-	searchContains,
 } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { ModeImage, StageImage } from "~/components/Image";
@@ -27,15 +27,15 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables-json";
 import { calendarEditPage } from "~/features/calendar/calendar-urls";
-import { useTournamentPreparedMaps } from "~/features/tournament/routes/to.$id";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { useTournament } from "~/features/tournament/tournament-context";
 import type {
 	BracketData,
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
+import { useTournamentPreparedMaps } from "~/features/tournament/routes/to.$id";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
@@ -47,13 +47,13 @@ import type { Bracket } from "../core/Bracket";
 import * as Engine from "../core/engine";
 import * as PreparedMaps from "../core/PreparedMaps";
 import { getRounds } from "../core/rounds";
-import type { Tournament } from "../core/Tournament";
 import {
 	type BracketMapCounts,
 	generateTournamentRoundMaplist,
 	roundSetKey,
 	type TournamentRoundMapList,
 } from "../core/toMapList";
+import type { Tournament } from "../core/Tournament";
 import { bracketSchema } from "../tournament-bracket-schemas";
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
@@ -728,7 +728,7 @@ export function BracketMapListDialog({
 									</div>
 								) : !LeagueScheduling.playableAtsAreAscending(
 										roundMapsInput,
-									) ? (
+								  ) ? (
 									<div className="mt-4 text-warning text-center">
 										Invalid selection: a round is playable before the round
 										preceding it

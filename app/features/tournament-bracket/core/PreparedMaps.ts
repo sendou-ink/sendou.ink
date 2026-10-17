@@ -56,8 +56,7 @@ export function resolvePreparedForTheBracket({
 }
 
 export type EliminationBracketType =
-	| "single_elimination"
-	| "double_elimination";
+	"single_elimination" | "double_elimination";
 
 interface TeamCountRange {
 	min: number;

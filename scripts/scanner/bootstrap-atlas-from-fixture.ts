@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Bootstraps glyph atlases from labeled reference fixtures: slices templates
  * straight out of the frames, since the same scoreboard captured through

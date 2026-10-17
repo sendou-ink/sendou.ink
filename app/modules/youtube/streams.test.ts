@@ -29,7 +29,7 @@ const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
 		});
 	}
 
-	// biome-ignore lint/plugin: mocked YouTube API request
+	// eslint-disable-next-line sendou/no-raw-search-params -- mocked YouTube API request
 	const ids = url.searchParams.get("id")?.split(",") ?? [];
 	return Response.json({
 		items: ids.flatMap((id) => {

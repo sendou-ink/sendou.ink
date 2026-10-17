@@ -126,7 +126,7 @@ function JumpToEllipsis({
 				})}
 			>
 				<input
-					// biome-ignore lint/a11y/noAutofocus: valid use case
+					// eslint-disable-next-line jsx-a11y/no-autofocus -- valid use case
 					autoFocus
 					name="page"
 					type="text"

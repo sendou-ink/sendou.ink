@@ -851,7 +851,7 @@ function* mergeSplitGlyphs(
 			]),
 		);
 	}
-	for (let i = 0; i + 1 < items.length; ) {
+	for (let i = 0; i + 1 < items.length;) {
 		const candidate = mergeCandidate(i);
 		if (!candidate) {
 			i++;
@@ -1181,7 +1181,7 @@ function* resegmentWeakRuns(
 	const maxWidth = Math.round(ctx.set.medianWidth * 1.5);
 	const score = (item: ClassifiedSegment) => item.ranked[0]?.score ?? 0;
 	const runs: { start: number; end: number; floor: number }[] = [];
-	for (let start = 0; start < items.length; ) {
+	for (let start = 0; start < items.length;) {
 		let end = start + 1;
 		while (
 			end < items.length &&

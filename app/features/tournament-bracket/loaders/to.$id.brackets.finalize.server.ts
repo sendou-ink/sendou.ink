@@ -2,8 +2,6 @@ import { type LoaderFunctionArgs, redirect } from "react-router";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonRatings, seedingRatings } from "~/features/mmr/mmr-utils.server";
-import * as Standings from "~/features/tournament/core/Standings";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	summaryRatingTargets,
 	tournamentSummary,
@@ -12,6 +10,8 @@ import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import * as Standings from "~/features/tournament/core/Standings";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { invariant } from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
 

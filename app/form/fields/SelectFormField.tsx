@@ -48,8 +48,8 @@ export function SelectFormField<V extends string>({
 			typeof itemLabel === "function"
 				? itemLabel(i18n.language)
 				: typeof itemLabel === "string" &&
-						itemLabel.includes(":") &&
-						i18n.exists(itemLabel)
+					  itemLabel.includes(":") &&
+					  i18n.exists(itemLabel)
 					? t(itemLabel as never)
 					: String(itemLabel);
 

@@ -4,11 +4,11 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
-import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 import { teamJoinSearchParams } from "../team-search-params";
 import { isTeamFull, isTeamMember } from "../team-utils";
+import * as TeamRepository from "../TeamRepository.server";
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const user = requireUser();

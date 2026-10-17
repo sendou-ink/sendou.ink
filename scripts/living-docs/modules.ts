@@ -192,7 +192,7 @@ export function isTestFile(file: string) {
 function fileOverview(file: ParsedFile) {
 	const firstStatement = file.program.body[0];
 	const comment = file.comments.find(
-		(candidate) => !candidate.value.trim().startsWith("biome-ignore"),
+		(candidate) => !candidate.value.trim().startsWith("eslint-"),
 	);
 	if (!comment || !firstStatement || comment.start > firstStatement.start) {
 		return null;
