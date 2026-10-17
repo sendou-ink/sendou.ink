@@ -1,9 +1,9 @@
 .card {
 	--card-padding: var(--s-4);
-	--card-weapon-size: 32px;
-	--card-weapon-small-size: 20px;
+	--card-weapon-size: 40px;
+	--card-weapon-small-size: 22px;
 	--card-title-line-height: calc(var(--font-sm) * 1.25);
-	--card-patch-height: 16px;
+	--card-patch-height: 24px;
 	--card-gear-size: 48px;
 	--card-ability-main-size: 40px;
 	--card-ability-sub-size: 32px;
@@ -11,26 +11,36 @@
 	--card-gear-gap: var(--s-2);
 	--card-action-size: 32px;
 	--card-mode-size: 24px;
-	--card-header-spacing: var(--s-2);
+	--card-bar-height: 32px;
+	--card-header-spacing: var(--s-1);
 	--card-divider-spacing: var(--s-3);
-	--card-actions-spacing: var(--s-3);
+	--card-actions-spacing: var(--s-2);
 	--card-bg: var(--color-bg-high);
 	--card-ring: 2px solid var(--color-border);
 
 	/* in a grid of cards the header, gear and action rows are shared so the dividers line up */
 	display: grid;
+	overflow: clip;
+	position: relative;
 	padding: var(--card-padding);
-	padding-top: var(--s-5);
+	padding-top: calc(
+		var(--card-bar-height) +
+		var(--card-padding) +
+		var(--s-0-5)
+	);
 	padding-bottom: var(--card-actions-spacing);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--card-bg);
 	grid-row: span 3;
 	grid-template-rows: subgrid;
+	grid-template-columns: minmax(0, 1fr);
+	min-width: 0;
 	row-gap: 0;
 }
 
 .weapons {
+	position: relative;
 	display: flex;
 	flex-shrink: 0;
 	flex-direction: column;
@@ -39,27 +49,22 @@
 }
 
 .patch {
-	position: absolute;
-	top: calc(var(--border-width) / -2);
-	left: 50%;
-	padding: 0 var(--s-1);
+	padding: 0 var(--s-2);
 	border: var(--border-style);
 	border-radius: var(--radius-full);
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-high);
 	color: var(--color-text-high);
 	font-size: var(--font-3xs);
 	font-weight: var(--weight-bold);
 	height: var(--card-patch-height);
 	align-content: center;
 	text-box: trim-both cap alphabetic;
-	box-shadow: 0 0 0 var(--s-1) var(--card-bg);
 	cursor: pointer;
 	font-family: inherit;
-	translate: -50% -50%;
 	white-space: nowrap;
 
 	&:hover {
-		background-color: var(--color-bg-high);
+		background-color: var(--color-bg);
 	}
 
 	&:focus-visible {
@@ -69,6 +74,10 @@
 }
 
 .smallWeapons {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	translate: -30% 30%;
 	display: flex;
 	gap: var(--s-0-5);
 }
@@ -183,9 +192,9 @@
 	display: flex;
 	min-width: 0;
 	align-items: center;
-	font-size: var(--font-xs);
+	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
-	gap: var(--s-1);
+	gap: var(--s-1-5);
 }
 
 .ownerLink {
@@ -204,15 +213,20 @@
 	gap: var(--s-0-5);
 }
 
-.modes {
+.bar {
 	position: absolute;
-	top: calc(var(--border-width) / -2);
-	left: 50%;
+	inset: 0 0 auto;
 	display: flex;
-	padding-inline: var(--s-1);
-	background-color: var(--card-bg);
-	gap: var(--s-0-5);
-	translate: -50% -50%;
+	height: var(--card-bar-height);
+	align-items: center;
+	justify-content: center;
+	padding-inline: var(--card-padding);
+	gap: var(--s-1);
+	background-color: var(--color-border);
+}
+
+.modes {
+	display: contents;
 }
 
 .mode {
@@ -221,7 +235,7 @@
 	height: var(--card-mode-size);
 	border: var(--card-ring);
 	border-radius: 50%;
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-high);
 	place-items: center;
 }
 
@@ -269,19 +283,12 @@
 }
 
 .gearAbilities {
-	position: relative;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	margin-top: var(--card-header-spacing);
 	padding-top: var(--card-divider-spacing);
-	border-top: var(--border-style);
 	gap: var(--s-2);
-}
-
-.gearAbilitiesWithPatch {
-	margin-top: calc(var(--card-header-spacing) + var(--card-patch-height) / 2);
-	padding-top: calc(var(--card-divider-spacing) + var(--card-patch-height) / 2);
 }
 
 .gearRow {
@@ -334,14 +341,14 @@
 	height: 100%;
 }
 
-/* room for the mode icons is reserved even without them so the lines of cards in a row align */
 .actions {
-	position: relative;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
-	margin-top: calc(var(--card-divider-spacing) + var(--card-mode-size) / 2);
-	padding-top: calc(var(--card-actions-spacing) + var(--card-mode-size) / 2);
+	margin-top: var(--card-divider-spacing);
+	margin-inline: calc(var(--card-padding) * -1);
+	padding-top: var(--card-actions-spacing);
+	padding-inline: var(--card-padding);
 	border-top: var(--border-style);
 	gap: var(--s-2);
 }
@@ -350,11 +357,11 @@
 	width: var(--card-action-size);
 	height: var(--card-action-size);
 	border: var(--card-ring);
-	background-color: var(--color-bg);
+	background-color: var(--color-bg-high);
 	color: var(--color-text-high);
 
 	&:hover {
-		background-color: var(--color-bg-high);
+		background-color: var(--color-bg-higher);
 	}
 
 	& svg {

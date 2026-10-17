@@ -114,6 +114,41 @@ export function BuildCard({
 
 	return (
 		<div className={styles.card} data-testid="build-card">
+			<div className={styles.bar}>
+				{modes && modes.length > 0 ? (
+					<div className={styles.modes}>
+						{modes.map((mode) => (
+							<Image
+								key={mode}
+								alt={t(`game-misc:MODE_LONG_${mode}` as any)}
+								title={t(`game-misc:MODE_LONG_${mode}` as any)}
+								path={modeImageUrl(mode)}
+								containerClassName={styles.mode}
+								className={styles.modeImage}
+								testId={`build-mode-${mode}`}
+							/>
+						))}
+					</div>
+				) : null}
+				{patch ? (
+					<SendouPopover
+						trigger={
+							<button type="button" className={styles.patch}>
+								{patch}
+							</button>
+						}
+					>
+						<LocaleTime
+							date={updatedAt}
+							options={{
+								day: "numeric",
+								month: "long",
+								year: "numeric",
+							}}
+						/>
+					</SendouPopover>
+				) : null}
+			</div>
 			<div className={styles.header}>
 				<BuildWeapons weapons={isOwnerShown ? weapons : [mainWeapon]} />
 				<div className={styles.titleBlock}>
@@ -179,29 +214,7 @@ export function BuildCard({
 					</div>
 				</div>
 			</div>
-			<div
-				className={clsx(styles.gearAbilities, {
-					[styles.gearAbilitiesWithPatch]: patch,
-				})}
-			>
-				{patch ? (
-					<SendouPopover
-						trigger={
-							<button type="button" className={styles.patch}>
-								{patch}
-							</button>
-						}
-					>
-						<LocaleTime
-							date={updatedAt}
-							options={{
-								day: "numeric",
-								month: "long",
-								year: "numeric",
-							}}
-						/>
-					</SendouPopover>
-				) : null}
+			<div className={styles.gearAbilities}>
 				<AbilitiesRowWithGear
 					gearType="HEAD"
 					abilities={abilities[0]}
@@ -219,21 +232,6 @@ export function BuildCard({
 				/>
 			</div>
 			<div className={styles.actions}>
-				{modes && modes.length > 0 ? (
-					<div className={styles.modes}>
-						{modes.map((mode) => (
-							<Image
-								key={mode}
-								alt={t(`game-misc:MODE_LONG_${mode}` as any)}
-								title={t(`game-misc:MODE_LONG_${mode}` as any)}
-								path={modeImageUrl(mode)}
-								containerClassName={styles.mode}
-								className={styles.modeImage}
-								testId={`build-mode-${mode}`}
-							/>
-						))}
-					</div>
-				) : null}
 				<LinkButton
 					to={analyzerPage({
 						weaponId: weapons[0].weaponSplId,
