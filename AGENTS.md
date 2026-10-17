@@ -12,7 +12,7 @@
 
 ## Commands
 
-- `bun run checks` runs, in order: biome:fix, unit and DOM tests, translation json checks, typecheck (app, scripts and the docs site) and knip — knip means unused exports fail checks, so remove exports nothing imports
+- `bun run checks` runs biome:fix, typegen and test db setup first, then unit and DOM tests, translation json checks, typecheck (app, scripts and the docs site) and knip in parallel (output is prefixed per check, every check runs to completion even if one fails) — knip means unused exports fail checks, so remove exports nothing imports
 - `bun run dev:docs` serves the docs site (`docs/site/`, Astro Starlight, live at https://docs.sendou.ink): the MDX docs of `docs/site/src/content/docs/` plus the living docs generated from the core modules, e2e specs and routes; `bun run docs:capture` refreshes its route coverage and screenshots from an e2e run, see [living-docs.mdx](./docs/site/src/content/docs/dev/living-docs.mdx)
 - `bun run typecheck` runs TypeScript type checking
 - `bun run biome:fix` runs Biome code formatter and linter
