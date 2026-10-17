@@ -8,7 +8,7 @@ vi.mock("./utils.server", () => ({
 
 let playlistResponse: Response;
 const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-	const url = new URL(input.toString());
+	const url = requestUrl(input);
 
 	if (url.pathname.endsWith("/playlistItems")) return playlistResponse;
 
@@ -67,7 +67,7 @@ describe("findRecentLiveStreams", () => {
 			},
 		]);
 
-		const playlistUrl = new URL(fetchMock.mock.calls[0][0].toString());
+		const playlistUrl = requestUrl(fetchMock.mock.calls[0][0]);
 		// eslint-disable-next-line sendou/no-raw-search-params -- mocked YouTube API request
 		expect(playlistUrl.searchParams.get("playlistId")).toBe("UUchannel1");
 	});
@@ -79,3 +79,7 @@ describe("findRecentLiveStreams", () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 });
+
+function requestUrl(input: RequestInfo | URL) {
+	return new URL(input instanceof Request ? input.url : input);
+}

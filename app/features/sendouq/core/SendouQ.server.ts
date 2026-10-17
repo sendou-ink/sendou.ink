@@ -182,7 +182,7 @@ class SendouQClass {
 		});
 
 		const matchGroupCensorer = (
-			group: DBMatch["groupAlpha"] | DBMatch["groupBravo"],
+			group: DBMatch["groupAlpha"],
 			isTeamMember: boolean,
 		) => {
 			return {
@@ -522,7 +522,7 @@ class SendouQClass {
 	}
 
 	#groupTier(
-		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"],
+		group: DBGroupRow | DBMatch["groupAlpha"],
 	): TieredSkill["tier"] | undefined {
 		if (!group.members) return;
 

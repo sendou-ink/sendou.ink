@@ -949,8 +949,8 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 	test("restricts to picked mode even when bans happen after MODE_PICK", () => {
 		const pickBanEvents: PickBanEvent[] = [
 			{ type: "MODE_PICK", stageId: null, mode: SZ },
-			{ type: "BAN", stageId: 3 as StageId, mode: TC },
-			{ type: "BAN", stageId: 5 as StageId, mode: RM },
+			{ type: "BAN", stageId: 3, mode: TC },
+			{ type: "BAN", stageId: 5, mode: RM },
 		];
 
 		const result = mapsListWithLegality({
@@ -995,12 +995,12 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 		// postGame cycle 1: MODE_BAN(TC), now at PICK step with no MODE_PICK in this section
 		const pickBanEvents: PickBanEvent[] = [
 			{ type: "MODE_PICK", stageId: null, mode: SZ },
-			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
+			{ type: "PICK", stageId: 1, mode: SZ },
 			{ type: "MODE_BAN", stageId: null, mode: TC },
 		];
 
 		const result = mapsListWithLegality({
-			results: [{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 }],
+			results: [{ mode: SZ, stageId: 1, winnerTeamId: 200 }],
 			maps: mapsWithPostGameModePick,
 			mapList: null,
 			teams,
@@ -1056,11 +1056,11 @@ describe("mapsListWithLegality — pre-set MODE_PICK only restricts the first ma
 		// postGame cycle 1: LOSER (100) is now at PICK for game 2's map
 		const pickBanEvents: PickBanEvent[] = [
 			{ type: "MODE_PICK", stageId: null, mode: SZ },
-			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
+			{ type: "PICK", stageId: 1, mode: SZ },
 		];
 
 		const result = mapsListWithLegality({
-			results: [{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 }],
+			results: [{ mode: SZ, stageId: 1, winnerTeamId: 200 }],
 			maps: customMaps,
 			mapList: null,
 			teams,
@@ -1110,11 +1110,11 @@ describe("mapsListWithLegality — PICK_NO_MODE_REPEAT", () => {
 	test("excludes modes already played in the set", () => {
 		// game 1: SZ stage 1 played, now at PICK_NO_MODE_REPEAT for game 2's map
 		const pickBanEvents: PickBanEvent[] = [
-			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
+			{ type: "PICK", stageId: 1, mode: SZ },
 		];
 
 		const result = mapsListWithLegality({
-			results: [{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 }],
+			results: [{ mode: SZ, stageId: 1, winnerTeamId: 200 }],
 			maps: customMaps,
 			mapList: null,
 			teams,
@@ -1138,16 +1138,16 @@ describe("mapsListWithLegality — PICK_NO_MODE_REPEAT", () => {
 		// repeat is now unavoidable so the restriction lifts and the remaining
 		// stages of already-played modes become legal again
 		const pickBanEvents: PickBanEvent[] = [
-			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
-			{ type: "PICK", stageId: 3 as StageId, mode: TC },
-			{ type: "PICK", stageId: 5 as StageId, mode: RM },
+			{ type: "PICK", stageId: 1, mode: SZ },
+			{ type: "PICK", stageId: 3, mode: TC },
+			{ type: "PICK", stageId: 5, mode: RM },
 		];
 
 		const result = mapsListWithLegality({
 			results: [
-				{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 },
-				{ mode: TC, stageId: 3 as StageId, winnerTeamId: 100 },
-				{ mode: RM, stageId: 5 as StageId, winnerTeamId: 200 },
+				{ mode: SZ, stageId: 1, winnerTeamId: 200 },
+				{ mode: TC, stageId: 3, winnerTeamId: 100 },
+				{ mode: RM, stageId: 5, winnerTeamId: 200 },
 			],
 			maps: customMaps,
 			mapList: null,
@@ -1205,12 +1205,12 @@ describe("mapsListWithLegality — pre-set MODE_BAN persists into postGame", () 
 		// postGame cycle 1: WINNER (200) bans stage 4 (TC); LOSER (100) is now at PICK
 		const pickBanEvents: PickBanEvent[] = [
 			{ type: "MODE_BAN", stageId: null, mode: SZ },
-			{ type: "ROLL", stageId: 3 as StageId, mode: TC },
-			{ type: "BAN", stageId: 4 as StageId, mode: TC },
+			{ type: "ROLL", stageId: 3, mode: TC },
+			{ type: "BAN", stageId: 4, mode: TC },
 		];
 
 		const result = mapsListWithLegality({
-			results: [{ mode: TC, stageId: 3 as StageId, winnerTeamId: 200 }],
+			results: [{ mode: TC, stageId: 3, winnerTeamId: 200 }],
 			maps: customMaps,
 			mapList: null,
 			teams,

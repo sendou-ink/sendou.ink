@@ -39,19 +39,19 @@ const CARDS: {
 	{
 		dir: "x-set-count",
 		event: "XSetCount",
-		detector: createXSetCountDetector(resources) as Detector<unknown>,
+		detector: createXSetCountDetector(resources),
 		fields: ["mode", "wins", "losses"],
 	},
 	{
 		dir: "x-set-result",
 		event: "XSetResult",
-		detector: createXSetResultDetector(resources) as Detector<unknown>,
+		detector: createXSetResultDetector(resources),
 		fields: ["mode", "results", "powerChange", "power"],
 	},
 	{
 		dir: "x-rank-position",
 		event: "XRankPosition",
-		detector: createXRankPositionDetector(resources) as Detector<unknown>,
+		detector: createXRankPositionDetector(resources),
 		fields: ["mode", "position", "direction"],
 	},
 ];

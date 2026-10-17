@@ -94,7 +94,7 @@ function JumpToEllipsis({
 	onClose: () => void;
 	onJump: (page: number) => void;
 }) {
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		const formData = new FormData(e.currentTarget);
 		const value = formData.get("page") as string;

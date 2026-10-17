@@ -39,8 +39,9 @@ export function SendouSwitch({
 				// eslint-disable-next-line jsx-a11y/role-has-required-aria-props -- the native checked attribute supplies the switch state
 				role="switch"
 				className={styles.input}
-				checked={isSelected}
-				defaultChecked={isSelected === undefined ? defaultSelected : undefined}
+				{...(isSelected === undefined
+					? { defaultChecked: defaultSelected }
+					: { checked: isSelected })}
 				disabled={isDisabled}
 				aria-label={ariaLabel}
 				onChange={(event) => onChange?.(event.currentTarget.checked)}

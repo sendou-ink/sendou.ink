@@ -88,7 +88,7 @@ export const action = defineAction(
 
 					ChatSystemMessage.send({ channel: sqGroupChannel(ownGroup.id) });
 
-					notify({
+					void notify({
 						userIds: [body.id],
 						notification: {
 							type: "SQ_ADDED_TO_GROUP",

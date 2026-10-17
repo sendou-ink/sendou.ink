@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { subHours } from "date-fns";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { chatRoomChannel, userChannel } from "~/features/events/events-types";
@@ -545,7 +544,7 @@ function sendMessage(
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),
-		} as ActionFunctionArgs),
+		}),
 	);
 }
 
@@ -576,7 +575,7 @@ function markRead(userId: number, roomId: number, lastSeenMessageId: number) {
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),
-		} as ActionFunctionArgs),
+		}),
 	);
 }
 
@@ -593,7 +592,7 @@ function resolveMentions(userId: number, roomId: number) {
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),
-		} as ActionFunctionArgs),
+		}),
 	);
 }
 
@@ -619,7 +618,7 @@ function loadRoom(userId: number, roomId: number) {
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),
-		} as LoaderFunctionArgs),
+		}),
 	);
 }
 
@@ -635,7 +634,7 @@ function loadMessages(userId: number, roomId: number) {
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),
-		} as LoaderFunctionArgs),
+		}),
 	);
 }
 

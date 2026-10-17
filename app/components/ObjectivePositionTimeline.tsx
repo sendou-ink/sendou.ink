@@ -56,12 +56,12 @@ export function ObjectivePositionTimeline({
 	const withCrossings = withZeroCrossings(reads);
 	const areaPath = (clamp: (position: number) => number) =>
 		[
-			`M${xAt(withCrossings[0]!.t).toFixed(1)} ${yAt(0).toFixed(1)}`,
+			`M${xAt(withCrossings[0].t).toFixed(1)} ${yAt(0).toFixed(1)}`,
 			...withCrossings.map(
 				(read) =>
 					`L${xAt(read.t).toFixed(1)} ${yAt(clamp(read.position)).toFixed(1)}`,
 			),
-			`L${xAt(withCrossings[withCrossings.length - 1]!.t).toFixed(1)} ${yAt(0).toFixed(1)}`,
+			`L${xAt(withCrossings[withCrossings.length - 1].t).toFixed(1)} ${yAt(0).toFixed(1)}`,
 			"Z",
 		].join(" ");
 

@@ -803,6 +803,7 @@ function useFileUrl(file: File | null): string | null {
 	useEffect(() => {
 		if (!file) return;
 		const objectUrl = URL.createObjectURL(file);
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- the URL must be created and revoked with the effect
 		setUrl(objectUrl);
 		return () => {
 			URL.revokeObjectURL(objectUrl);

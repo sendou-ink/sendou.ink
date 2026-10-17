@@ -41,16 +41,14 @@ export function TopTenPlayer({
 					containerClassName={styles.imgContainer}
 					className={styles.img}
 					height={small ? 50 : 150}
-					containerStyle={
-						{
-							"--winner-top": transforms?.top
-								? `${transforms.top * transformMultiplier}px`
-								: undefined,
-							"--winner-left": transforms?.left
-								? `${transforms.left * transformMultiplier}px`
-								: undefined,
-						} as React.CSSProperties
-					}
+					containerStyle={{
+						"--winner-top": transforms?.top
+							? `${transforms.top * transformMultiplier}px`
+							: undefined,
+						"--winner-left": transforms?.left
+							? `${transforms.left * transformMultiplier}px`
+							: undefined,
+					}}
 				/>
 			</div>
 			<div>

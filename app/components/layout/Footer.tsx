@@ -445,7 +445,7 @@ function useClientSideAnchorNavigation(ref: RefObject<HTMLElement | null>) {
 			if (!href) return;
 
 			event.preventDefault();
-			navigate(href);
+			void navigate(href);
 		};
 
 		element.addEventListener("click", onClick);
@@ -456,5 +456,5 @@ function useClientSideAnchorNavigation(ref: RefObject<HTMLElement | null>) {
 function customThemeChipStyle(
 	customTheme: Patron["customTheme"],
 ): React.CSSProperties {
-	return (customTheme ?? {}) as React.CSSProperties;
+	return customTheme ?? {};
 }

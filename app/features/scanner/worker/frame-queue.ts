@@ -15,7 +15,7 @@ export function frameEvictionIndex(times: readonly number[]): number {
 	let best = 1;
 	let bestGap = Number.POSITIVE_INFINITY;
 	for (let i = 1; i < times.length - 1; i++) {
-		const gap = times[i + 1]! - times[i - 1]!;
+		const gap = times[i + 1] - times[i - 1];
 		if (gap < bestGap) {
 			bestGap = gap;
 			best = i;

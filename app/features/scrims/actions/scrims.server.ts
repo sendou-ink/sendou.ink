@@ -115,7 +115,7 @@ export const action = defineAction(
 					throw error;
 				}
 
-				notify({
+				void notify({
 					userIds: post.users
 						.filter((postUser) => postUser.isOwner)
 						.map((postUser) => postUser.id),
@@ -165,7 +165,7 @@ export const action = defineAction(
 				const postTeamName = Scrim.sideDisplayName(post);
 				const requestTeamName = Scrim.sideDisplayName(scrimRequest);
 
-				notify({
+				void notify({
 					userIds: post.users.map((m) => m.id),
 					defaultSeenUserIds: [user.id],
 					notification: {
@@ -174,7 +174,7 @@ export const action = defineAction(
 					},
 				});
 
-				notify({
+				void notify({
 					userIds: scrimRequest.users.map((m) => m.id),
 					defaultSeenUserIds: [user.id],
 					notification: {
@@ -214,7 +214,7 @@ export const action = defineAction(
 
 						for (const removed of posts) {
 							await ScrimPostRepository.deleteById(removed.id);
-							notify({
+							void notify({
 								userIds: removed.memberIds,
 								defaultSeenUserIds: [user.id],
 								notification: {

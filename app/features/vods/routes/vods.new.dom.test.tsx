@@ -41,8 +41,8 @@ interface MatchDefaults {
 function createDefaultMatch(overrides?: MatchDefaults) {
 	return {
 		startsAt: overrides?.startsAt ?? "0:00",
-		mode: overrides?.mode ?? ("SZ" as ModeShort),
-		stageId: overrides?.stageId ?? (1 as StageId),
+		mode: overrides?.mode ?? "SZ",
+		stageId: overrides?.stageId ?? 1,
 		weapon: overrides?.weapon,
 		weaponsTeamOne: overrides?.weaponsTeamOne ?? ([] as WeaponPoolItem[]),
 		weaponsTeamTwo: overrides?.weaponsTeamTwo ?? ([] as WeaponPoolItem[]),

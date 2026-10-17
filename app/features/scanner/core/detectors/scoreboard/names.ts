@@ -36,7 +36,7 @@ function normalizeBars(name: string): string {
 	// resolve from the same neighbor); underscores bound words like spaces
 	const neighbor = (i: number, step: -1 | 1): string | undefined => {
 		for (let j = i + step; j >= 0 && j < chars.length; j += step) {
-			const c = chars[j]!;
+			const c = chars[j];
 			if (c === " " || c === "_") return undefined;
 			if (!BAR_CHARS.has(c)) return c;
 		}
@@ -76,7 +76,7 @@ function normalizeLongBars(name: string): string {
 	const chars = [...name];
 	const neighbor = (i: number, step: -1 | 1): string | undefined => {
 		for (let j = i + step; j >= 0 && j < chars.length; j += step) {
-			const c = chars[j]!;
+			const c = chars[j];
 			if (c === " " || c === "_") return undefined;
 			if (!LONG_BAR_CHARS.has(c)) return c;
 		}
@@ -108,7 +108,7 @@ function normalizeOhs(name: string): string {
 	const ambiguous = (c: string | undefined) => c === "O" || c === "0";
 	const neighbor = (i: number, step: -1 | 1): string | undefined => {
 		for (let j = i + step; j >= 0 && j < chars.length; j += step) {
-			const c = chars[j]!;
+			const c = chars[j];
 			if (c === " ") return undefined;
 			if (!ambiguous(c)) return c;
 		}
@@ -154,7 +154,7 @@ function resolveUnderscoreByBaseline(raw: RecognizedText): RecognizedText {
 		.map((c) => c.y1)
 		.sort((a, b) => a - b);
 	if (anchors.length === 0) return raw;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
+	const baseline = anchors[Math.floor(anchors.length / 2)];
 	const chars = raw.chars.map((c) => {
 		if (!BASELINE_BAR_CHARS.has(c.char)) return c;
 		const onBaseline = baseline - c.y1 <= UNDERSCORE_BASELINE_SLACK_PX;
@@ -167,7 +167,7 @@ function resolveUnderscoreByBaseline(raw: RecognizedText): RecognizedText {
 /** Rebuild the text from re-decided chars, keeping the spaces where they were. */
 function retext(text: string, chars: RecognizedChar[]): string {
 	let ci = 0;
-	return [...text].map((ch) => (ch === " " ? ch : chars[ci++]!.char)).join("");
+	return [...text].map((ch) => (ch === " " ? ch : chars[ci++].char)).join("");
 }
 
 /**
@@ -188,7 +188,7 @@ function fixDotsByPosition(raw: RecognizedText): RecognizedText {
 		.map((c) => c.y1)
 		.sort((a, b) => a - b);
 	if (anchors.length === 0) return raw;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
+	const baseline = anchors[Math.floor(anchors.length / 2)];
 	const chars = raw.chars.map((c, i) => {
 		if (!DOT_CHARS.has(c.char)) return c;
 		const raised = baseline - c.y1 > DOT_BASELINE_SLACK_PX;
@@ -221,7 +221,7 @@ function resolveRingByPosition(raw: RecognizedText): RecognizedText {
 		.map((c) => c.y1)
 		.sort((a, b) => a - b);
 	if (anchors.length === 0) return raw;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
+	const baseline = anchors[Math.floor(anchors.length / 2)];
 	const chars = raw.chars.map((c) => {
 		if (!RING_CHARS.has(c.char)) return c;
 		const raised = baseline - c.y1 > DOT_BASELINE_SLACK_PX;
@@ -267,7 +267,7 @@ function resolveBhByBowlFloor(
 		let total = 0;
 		for (let y = y0; y < y1; y++) {
 			for (let x = x0; x < x1; x++) {
-				sum += data[y * cols + x]!;
+				sum += data[y * cols + x];
 				total++;
 			}
 		}
@@ -361,7 +361,7 @@ function cornerAsymmetry(
 	c: RecognizedChar,
 ): { top: number; bottom: number } {
 	const at = (x: number, y: number) =>
-		x >= c.x0 && x < c.x1 ? data[y * cols + x]! : 0;
+		x >= c.x0 && x < c.x1 ? data[y * cols + x] : 0;
 	const crossing = (x: number, y: number, step: -1 | 1) => {
 		const v = at(x, y);
 		const outside = at(x - step, y);
@@ -403,7 +403,7 @@ function cornerAsymmetry(
 	}
 	if (midRows.length === 0) return { top: Number.NaN, bottom: Number.NaN };
 	const median = (values: number[]) =>
-		values.sort((a, b) => a - b)[Math.floor(values.length / 2)]!;
+		values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
 	const leftMid = median(midRows.map(leftEdge));
 	const rightMid = median(midRows.map(rightEdge));
 	const endAsymmetry = (y: number) =>
@@ -483,7 +483,7 @@ function bottomInk(
 		let lo = -1;
 		let hi = -1;
 		for (let x = c.x0; x < c.x1; x++) {
-			const v = data[y * cols + x]!;
+			const v = data[y * cols + x];
 			if (v <= binThreshold) continue;
 			weight += v;
 			weightedX += v * (x + 0.5);
@@ -554,7 +554,7 @@ function maxLeftIndent(
 	for (let y = c.y0 + trim; y < c.y1 - trim; y++) {
 		let indent = w;
 		for (let x = c.x0; x < c.x1; x++) {
-			if (data[y * cols + x]! > binThreshold) {
+			if (data[y * cols + x] > binThreshold) {
 				indent = x - c.x0;
 				break;
 			}
@@ -595,7 +595,7 @@ function resolveExclamationByNotch(
 	);
 	if (others.length === 0) return raw;
 	const bottoms = others.map((c) => c.y1).sort((a, b) => a - b);
-	const baseline = bottoms[Math.floor(bottoms.length / 2)]!;
+	const baseline = bottoms[Math.floor(bottoms.length / 2)];
 	const lineTop = Math.min(...others.map((c) => c.y0));
 
 	const gray = new (getCV().Mat)();
@@ -603,7 +603,7 @@ function resolveExclamationByNotch(
 	const { cols, rows, data } = gray;
 	const rowMax = (c: RecognizedChar, y: number) => {
 		let max = 0;
-		for (let x = c.x0; x < c.x1; x++) max = Math.max(max, data[y * cols + x]!);
+		for (let x = c.x0; x < c.x1; x++) max = Math.max(max, data[y * cols + x]);
 		return max;
 	};
 	const chars = raw.chars.map((c) => {
@@ -614,7 +614,7 @@ function resolveExclamationByNotch(
 		for (let y = c.y0; y < c.y0 + Math.round(h / 2); y++) {
 			upper.push(rowMax(c, y));
 		}
-		const stem = upper.sort((a, b) => a - b)[Math.floor(upper.length / 2)]!;
+		const stem = upper.sort((a, b) => a - b)[Math.floor(upper.length / 2)];
 		let notch = Number.POSITIVE_INFINITY;
 		let notchY = -1;
 		for (
@@ -675,8 +675,8 @@ function resolveCaseByCapLine(raw: RecognizedText): RecognizedText {
 		.sort((a, b) => a - b);
 	if (tops.length === 0) return raw;
 	const bottoms = raw.chars.map((c) => c.y1).sort((a, b) => a - b);
-	const capLine = tops[Math.floor(tops.length / 2)]!;
-	const capHeight = bottoms[Math.floor(bottoms.length / 2)]! - capLine;
+	const capLine = tops[Math.floor(tops.length / 2)];
+	const capHeight = bottoms[Math.floor(bottoms.length / 2)] - capLine;
 	if (capHeight <= 0) return raw;
 	const chars = raw.chars.map((c) => {
 		const twins = CAP_TWINS[c.char];
@@ -720,7 +720,7 @@ for (const [plain, voiced] of [
 	["ハヒフヘホ", "パピプペポ"],
 ] as const) {
 	for (const [i, base] of [...plain].entries()) {
-		VOICED_TWINS[base] = [...(VOICED_TWINS[base] ?? []), [...voiced][i]!];
+		VOICED_TWINS[base] = [...(VOICED_TWINS[base] ?? []), [...voiced][i]];
 	}
 }
 const VOICED_SCORE_MARGIN = 0.1;
@@ -810,7 +810,7 @@ function hasFloatingMark(
 		let lo = -1;
 		let hi = -1;
 		for (let x = c.x0; x < c.x1; x++) {
-			if (data[y * cols + x]! > binThreshold) {
+			if (data[y * cols + x] > binThreshold) {
 				ink++;
 				if (lo < 0) lo = x;
 				hi = x;
@@ -829,7 +829,7 @@ function hasFloatingMark(
 	for (; y < c.y1; y++) {
 		let ink = 0;
 		for (let x = c.x0; x < c.x1; x++) {
-			if (data[y * cols + x]! > binThreshold) ink++;
+			if (data[y * cols + x] > binThreshold) ink++;
 		}
 		if (ink > gapMaxInk) break;
 	}
@@ -920,7 +920,7 @@ function resolveDescenderByBaseline(raw: RecognizedText): RecognizedText {
 		.map((c) => c.y1)
 		.sort((a, b) => a - b);
 	if (anchors.length === 0) return raw;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
+	const baseline = anchors[Math.floor(anchors.length / 2)];
 	const chars = raw.chars.map((c) => {
 		if (DESCENDER_LETTERS.has(c.char) || !LATIN_LETTER.test(c.char)) return c;
 		if (c.y1 - baseline < DESCENT_MIN_PX) return c;
@@ -959,12 +959,12 @@ function resolveCaseByDescent(raw: RecognizedText): string {
 		.map((c) => c.y1)
 		.sort((a, b) => a - b);
 	if (anchors.length === 0) return raw.text;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
+	const baseline = anchors[Math.floor(anchors.length / 2)];
 	let ci = 0;
 	return [...raw.text]
 		.map((ch) => {
 			if (ch === " ") return ch;
-			const rc: RecognizedChar = raw.chars[ci++]!;
+			const rc: RecognizedChar = raw.chars[ci++];
 			const twin = DESCENDER_TWINS[rc.char];
 			if (!twin) return rc.char;
 			return rc.y1 - baseline >= DESCENT_MIN_PX ? twin[1] : twin[0];
@@ -1078,7 +1078,7 @@ export function* parseNameSteps(
 				).trim(),
 			),
 		),
-	).replace(FULLWIDTH_LOOKALIKE_RE, (c) => FULLWIDTH_LOOKALIKES[c]!);
+	).replace(FULLWIDTH_LOOKALIKE_RE, (c) => FULLWIDTH_LOOKALIKES[c]);
 	return {
 		name,
 		confidence: raw.confidence,

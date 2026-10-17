@@ -46,17 +46,17 @@ function matchPlayer(
 	const indices = players.map((_, i) => i);
 	const byName = name
 		? indices.filter(
-				(i) => (players[i]!.name ?? "").trim().toLowerCase() === name,
+				(i) => (players[i].name ?? "").trim().toLowerCase() === name,
 			)
 		: [];
 	const byWeapon =
 		read.weaponId !== null
-			? indices.filter((i) => players[i]!.weaponId === read.weaponId)
+			? indices.filter((i) => players[i].weaponId === read.weaponId)
 			: [];
 	const both = byName.filter((i) => byWeapon.includes(i));
-	if (both.length > 0) return both[0]!;
-	if (byName.length === 1) return byName[0]!;
-	if (byWeapon.length === 1) return byWeapon[0]!;
+	if (both.length > 0) return both[0];
+	if (byName.length === 1) return byName[0];
+	if (byWeapon.length === 1) return byWeapon[0];
 	return null;
 }
 

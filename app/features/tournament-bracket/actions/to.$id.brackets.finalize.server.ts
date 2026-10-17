@@ -86,7 +86,7 @@ export const action = defineAction(
 				`Badge receivers for tournament id ${tournamentId}: ${JSON.stringify(body.badgeReceivers)}`,
 			);
 
-			notifyBadgeReceivers(body.badgeReceivers);
+			void notifyBadgeReceivers(body.badgeReceivers);
 		}
 
 		if (trophyReceiver) {
@@ -161,7 +161,7 @@ async function notifyBadgeReceivers(badgeReceivers: TournamentBadgeReceivers) {
 			const badge = await BadgeRepository.findById(receiver.badgeId);
 			invariant(badge, `Badge with id ${receiver.badgeId} not found`);
 
-			notify({
+			void notify({
 				userIds: receiver.userIds,
 				notification: {
 					type: "BADGE_ADDED",

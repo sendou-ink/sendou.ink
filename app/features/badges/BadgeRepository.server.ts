@@ -256,7 +256,7 @@ export async function syncXPBadges() {
 			.execute();
 
 		const badgeOwners = userTopXPowers.flatMap(({ userId, peakXp }) => {
-			const badgeValue = findSplatoon3XpBadgeValue(peakXp!);
+			const badgeValue = findSplatoon3XpBadgeValue(peakXp);
 			const badgeId = badgeValue ? badgeIdByValue.get(badgeValue) : undefined;
 
 			return badgeId ? [{ badgeId, userId }] : [];

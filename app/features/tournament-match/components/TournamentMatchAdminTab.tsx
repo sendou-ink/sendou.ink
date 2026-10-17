@@ -66,7 +66,7 @@ export function TournamentMatchAdminTab({
 					<div className={styles.buttonRow}>
 						<OrganizerMatchMapListDialog data={data} />
 						{canReopen ? <ReopenMatchButton /> : null}
-						{canEndSet ? <EndSetPopover teams={[teamOne!, teamTwo!]} /> : null}
+						{canEndSet ? <EndSetPopover teams={[teamOne, teamTwo]} /> : null}
 					</div>
 				) : null}
 				{scheduleSectionVisible ? (
@@ -79,7 +79,7 @@ export function TournamentMatchAdminTab({
 					/>
 				) : null}
 				{editScoresVisible ? (
-					<EditReportedScoresSection data={data} teams={[teamOne!, teamTwo!]} />
+					<EditReportedScoresSection data={data} teams={[teamOne, teamTwo]} />
 				) : null}
 			</div>
 		</SendouTabPanel>

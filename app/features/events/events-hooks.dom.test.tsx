@@ -66,7 +66,7 @@ beforeEach(() => {
 	globalThis.EventSource = FakeEventSource as unknown as typeof EventSource;
 	mockFetch(async (url, init) => {
 		putCalls.push({
-			url: String(url),
+			url: url instanceof Request ? url.url : String(url),
 			topics: JSON.parse(init!.body as string).topics,
 		});
 		return new Response(null, { status: 200 });
@@ -178,6 +178,7 @@ function CatchUpHarness({
 	heldSince?: number;
 }) {
 	useEventsConnection(true);
+	// eslint-disable-next-line react-hooks/globals -- test harness exposes the hook's trigger
 	triggerCatchUp = useEventStreamCatchUp({
 		enabled,
 		onCatchUp: () => {

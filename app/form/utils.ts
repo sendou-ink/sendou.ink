@@ -68,7 +68,7 @@ export function setNestedValue(
 	const parts = parsePath(path);
 	if (parts.length === 0) return obj;
 	if (parts.length === 1) {
-		const key = parts[0]!;
+		const key = parts[0];
 		if (typeof key === "number") {
 			const arr = Array.isArray(obj) ? [...obj] : [];
 			arr[key] = value;
@@ -138,7 +138,7 @@ export function seedArrayItemDefaults(
 
 	const existing = getNestedValue(values, itemPath) as
 		Record<string, unknown> | undefined;
-	const merged = { ...fieldsetDefaults(itemMeta), ...(existing ?? {}) };
+	const merged = { ...fieldsetDefaults(itemMeta), ...existing };
 	return setNestedValue(values, itemPath, merged);
 }
 

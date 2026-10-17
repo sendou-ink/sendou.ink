@@ -102,10 +102,10 @@ export function sendCompacted(
 				(await listCompactedMatches(from)).map(compactedBuilt),
 			writeSend: (matches, sendStatus) =>
 				updateCompactedMatchesSend(
-					matches.map((built) => built.sources[0]!.id!),
+					matches.map((built) => built.sources[0].id!),
 					sendStatus,
 				),
-			onStatus: refreshFeed,
+			onStatus: (since) => void refreshFeed(since),
 		},
 	);
 }

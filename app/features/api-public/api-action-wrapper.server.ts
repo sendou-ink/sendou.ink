@@ -15,15 +15,12 @@ export async function wrapActionForApi(
 		}
 
 		if (response && typeof response === "object" && "fieldErrors" in response) {
-			return new Response(
-				JSON.stringify({
+			return Response.json(
+				{
 					error: "Validation failed",
 					fieldErrors: response.fieldErrors,
-				}),
-				{
-					status: 400,
-					headers: { "Content-Type": "application/json" },
 				},
+				{ status: 400 },
 			);
 		}
 
@@ -34,10 +31,7 @@ export async function wrapActionForApi(
 			const search = location.slice(location.indexOf("?") + 1);
 			const errorMsg = new URLSearchParams(search).get("__error");
 			if (errorMsg !== null) {
-				return new Response(JSON.stringify({ error: errorMsg }), {
-					status: 400,
-					headers: { "Content-Type": "application/json" },
-				});
+				return Response.json({ error: errorMsg }, { status: 400 });
 			}
 		}
 

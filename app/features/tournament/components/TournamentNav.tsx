@@ -285,7 +285,7 @@ function useNavItems({
 		};
 	}
 
-	return PRIORITY_ORDER.flatMap((key) => (items[key] ? [items[key]!] : []));
+	return PRIORITY_ORDER.flatMap((key) => (items[key] ? [items[key]] : []));
 }
 
 function NavItemLink({

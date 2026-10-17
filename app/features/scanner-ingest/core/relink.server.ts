@@ -53,8 +53,8 @@ export async function linkStoredMatches(reported: ReportedMatch) {
 
 			await ScannerIngestRepository.addLinks({
 				links: matched.map(({ matchIndex, game }) => ({
-					ingestedMatchId: matches[matchIndex]!.id,
-					match: matches[matchIndex]!.data,
+					ingestedMatchId: matches[matchIndex].id,
+					match: matches[matchIndex].data,
 					game,
 				})),
 				povUserId,

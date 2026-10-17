@@ -19,7 +19,7 @@ async function openAndGetParams(
 		enemies: [40],
 		...stageAndMode,
 	});
-	const url = new URL(String(open.mock.calls[0]![0]), window.location.origin);
+	const url = new URL(String(open.mock.calls[0][0]), window.location.origin);
 	return plansSearchParams.parse(url);
 }
 

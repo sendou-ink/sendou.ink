@@ -91,7 +91,7 @@ export function SearchSelect<TItem extends { id: number; name: string }>({
 				typeof item.id === "string" ? (
 					<PlaceholderItem key={item.id} id={item.id} i18nKey={i18nKey} />
 				) : (
-					React.cloneElement(renderItem(item as TItem), { key: item.id })
+					React.cloneElement(renderItem(item), { key: item.id })
 				),
 			)}
 		</SendouSelect>

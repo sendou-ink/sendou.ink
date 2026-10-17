@@ -29,7 +29,7 @@ export function mainWeaponParams(weaponId: MainWeaponId): MainWeaponParams {
 	const baseStats = params.baseWeaponStats[baseId];
 	const kit = params.weaponKits[weaponId];
 
-	return { ...baseStats, ...kit } as MainWeaponParams;
+	return { ...baseStats, ...kit };
 }
 
 export function specialWeaponParams(
@@ -173,7 +173,5 @@ const rawMultiShot: Partial<Record<MainWeaponId, number>> = {
 
 /** Projectiles fired per trigger press (e.g. 3 for H-3 Nozzlenose), or `undefined` for single-shot weapons. */
 export const weaponIdToMultiShotCount = (weaponId: MainWeaponId) => {
-	return rawMultiShot[
-		weaponIdToBaseWeaponId(weaponId) as keyof typeof rawMultiShot
-	];
+	return rawMultiShot[weaponIdToBaseWeaponId(weaponId)];
 };

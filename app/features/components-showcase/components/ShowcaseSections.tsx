@@ -718,7 +718,7 @@ function CheckboxSection() {
 
 				<ComponentRow label="Disabled Checked">
 					<label className="stack horizontal sm items-center">
-						<input type="checkbox" disabled checked />
+						<input type="checkbox" disabled defaultChecked />
 						<span>Disabled but checked</span>
 					</label>
 				</ComponentRow>
@@ -785,6 +785,7 @@ function RadioButtonSection() {
 
 				<ComponentRow label="With Descriptions">
 					<div className="stack sm">
+						{/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- label text is nested deeper than the rule checks */}
 						<label className="stack horizontal sm items-start">
 							<input
 								type="radio"
@@ -800,6 +801,7 @@ function RadioButtonSection() {
 								</span>
 							</div>
 						</label>
+						{/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- label text is nested deeper than the rule checks */}
 						<label className="stack horizontal sm items-start">
 							<input
 								type="radio"
@@ -815,6 +817,7 @@ function RadioButtonSection() {
 								</span>
 							</div>
 						</label>
+						{/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- label text is nested deeper than the rule checks */}
 						<label className="stack horizontal sm items-start">
 							<input
 								type="radio"
@@ -854,7 +857,7 @@ function RadioButtonSection() {
 								name="disabled-group"
 								value="disabled-checked"
 								disabled
-								checked
+								defaultChecked
 							/>
 							<span>Disabled and checked</span>
 						</label>
@@ -3461,7 +3464,10 @@ function MiscSection() {
 				</ComponentRow>
 
 				<ComponentRow label="RelativeTime">
-					<RelativeTime timestamp={Date.now() - 3600000}>
+					<RelativeTime
+						// eslint-disable-next-line react-hooks/purity -- showcase demo timestamp
+						timestamp={Date.now() - 3600000}
+					>
 						1 hour ago
 					</RelativeTime>
 				</ComponentRow>

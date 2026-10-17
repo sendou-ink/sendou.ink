@@ -65,7 +65,7 @@ export function plannerSignature(frame: Mat): Float32Array {
 	const md = mask.data;
 	const hd = hsv.data;
 	for (let i = 0; i < n; i++) {
-		if (hd[i * 3 + 1]! >= INK_SATURATION_MIN) md[i] = 0;
+		if (hd[i * 3 + 1] >= INK_SATURATION_MIN) md[i] = 0;
 	}
 
 	const down = new cv.Mat();
@@ -87,11 +87,11 @@ export function plannerSignature(frame: Mat): Float32Array {
 	let sumSq = 0;
 	for (let i = 0; i < out.length; i++) {
 		out[i] = bd[i]!;
-		sumSq += out[i]! * out[i]!;
+		sumSq += out[i] * out[i];
 	}
 	blur.delete();
 	const norm = Math.sqrt(sumSq) || 1;
-	for (let i = 0; i < out.length; i++) out[i]! /= norm;
+	for (let i = 0; i < out.length; i++) out[i] /= norm;
 	return out;
 }
 
@@ -110,7 +110,7 @@ function shiftedDot(
 	for (let y = y0; y < y1; y++) {
 		const ar = y * PLANNER_SIG_W;
 		const br = (y + dy) * PLANNER_SIG_W + dx;
-		for (let x = x0; x < x1; x++) dot += a[ar + x]! * b[br + x]!;
+		for (let x = x0; x < x1; x++) dot += a[ar + x] * b[br + x];
 	}
 	return dot;
 }
@@ -185,13 +185,13 @@ export function loadPlannerStages(
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
 				// atlas is RGBA; the tiles are grayscale, so read the red channel
-				const v = data[((ty + y) * aw + (tx + x)) * 4]!;
+				const v = data[((ty + y) * aw + (tx + x)) * 4];
 				sig[y * width + x] = v;
 				sumSq += v * v;
 			}
 		}
 		const norm = Math.sqrt(sumSq) || 1;
-		for (let j = 0; j < sig.length; j++) sig[j]! /= norm;
+		for (let j = 0; j < sig.length; j++) sig[j] /= norm;
 		const stageId = Number(key.split("-")[0]) as StageId;
 		return { key, stageId, sig };
 	});

@@ -272,7 +272,7 @@ export async function findByOwnerUserId(userId: number) {
 	if (rows.length === 0) return [];
 
 	const { favoriteTrophyIds, hiddenTrophyIds, patronTier } = rows[0];
-	const hiddenSet = new Set(hiddenTrophyIds ?? []);
+	const hiddenSet = new Set(hiddenTrophyIds);
 
 	return sortTrophiesByFavorites({
 		favoriteTrophyIds,

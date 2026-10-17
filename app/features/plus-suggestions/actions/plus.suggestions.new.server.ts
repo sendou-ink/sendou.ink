@@ -60,7 +60,7 @@ export const action = defineAction(
 			...votingMonthYear,
 		});
 
-		notify({
+		void notify({
 			userIds: [suggested.id],
 			notification: {
 				type: "PLUS_SUGGESTION_ADDED",

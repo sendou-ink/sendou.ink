@@ -50,11 +50,11 @@ export function buildAbilityRole(
 		for (let y = 0; y < image.height; y++) {
 			for (let x = 0; x < image.width; x++) {
 				const si = (y * image.width + x) * 4;
-				const a = src[si + 3]! / 255;
+				const a = src[si + 3] / 255;
 				const di = ((y + offset) * side + x + offset) * 3;
-				dst[di] = Math.round(src[si]! * a + BADGE_BACKGROUND * (1 - a));
-				dst[di + 1] = Math.round(src[si + 1]! * a + BADGE_BACKGROUND * (1 - a));
-				dst[di + 2] = Math.round(src[si + 2]! * a + BADGE_BACKGROUND * (1 - a));
+				dst[di] = Math.round(src[si] * a + BADGE_BACKGROUND * (1 - a));
+				dst[di + 1] = Math.round(src[si + 1] * a + BADGE_BACKGROUND * (1 - a));
+				dst[di + 2] = Math.round(src[si + 2] * a + BADGE_BACKGROUND * (1 - a));
 			}
 		}
 		const templateSizes = buildTemplateSizes(padded, sizes, inkThreshold);

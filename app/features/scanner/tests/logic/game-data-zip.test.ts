@@ -235,7 +235,7 @@ describe("extractGameDataZip", () => {
 	test("refuses an encrypted entry", () => {
 		const zip = zipSync(validFiles());
 		const header = centralHeaderOf(zip, "match.json");
-		zip[header + 8] = zip[header + 8]! | 0x1;
+		zip[header + 8] = zip[header + 8] | 0x1;
 
 		expect(() => extract(zip)).toThrow(/encrypted/);
 	});
@@ -278,7 +278,7 @@ async function scannerZip() {
 		[scoreboard, new Blob([SCOREBOARD_FRAME], { type: "image/png" })],
 	]);
 	const [built] = buildScannerMatches([mapStart, death, scoreboard]);
-	return matchZip(built!, (event) => {
+	return matchZip(built, (event) => {
 		const frame = frames.get(event);
 		return frame ? () => Promise.resolve(frame) : undefined;
 	});

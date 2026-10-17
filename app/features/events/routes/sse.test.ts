@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test, vi } from "bun:test";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { withUserId } from "~/utils/Test";
 import { advanceTimersByTimeAsync, waitFor } from "~/utils/test-helpers";
 import * as EventBus from "../core/EventBus.server";
@@ -22,7 +21,7 @@ describe("sse loader", () => {
 
 		const hello = await stream.nextEvent();
 		expect(hello.kind).toBe("hello");
-		expect(typeof hello.connectionId).toBe("string");
+		expect(hello.connectionId).toBeTypeOf("string");
 	});
 
 	test("delivers events published to the user's own channel", async () => {
@@ -57,7 +56,7 @@ describe("sse loader", () => {
 		await waitFor(() => {
 			expect(EventBus.subscriberCount(userChannel(11))).toBe(0);
 		});
-		await expect(stream.ended()).resolves.toBe(true);
+		expect(await stream.ended()).toBe(true);
 		expect(await putTopicsStatus(11, hello.connectionId, ["sq-looking"])).toBe(
 			404,
 		);
@@ -90,7 +89,7 @@ describe("sse heartbeat", () => {
 		await advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS * 2);
 
 		expect(vi.getTimerCount()).toBe(idleTimerCount);
-		await expect(stream.ended()).resolves.toBe(true);
+		expect(await stream.ended()).toBe(true);
 	});
 });
 
@@ -179,7 +178,7 @@ describe("sse topics action", () => {
 						context: {} as any,
 						pattern: "",
 						url: new URL(request.url),
-					} as ActionFunctionArgs),
+					}),
 				),
 			),
 		).toBe(405);
@@ -191,15 +190,15 @@ function openStream(userId: number) {
 	const request = new Request("http://app.com/sse", {
 		signal: controller.signal,
 	});
-	const response = withUserId(userId, () =>
+	const response = withUserId<Response>(userId, () =>
 		loader({
 			request,
 			params: {},
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),
-		} as LoaderFunctionArgs),
-	) as Response;
+		}),
+	);
 	openedStreams.push(() => controller.abort());
 
 	const reader = response.body!.getReader();
@@ -271,7 +270,7 @@ function putTopicsStatus(
 				context: {} as any,
 				pattern: "",
 				url: new URL(request.url),
-			} as ActionFunctionArgs),
+			}),
 		),
 	);
 }

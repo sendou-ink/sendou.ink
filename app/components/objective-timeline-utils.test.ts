@@ -184,7 +184,7 @@ describe("withFullCountsAtGameStart", () => {
 			[20, 100, 100],
 			[23, 100, 99],
 		]);
-		expect(events[0]!.data.time).toBe(300);
+		expect(events[0].data.time).toBe(300);
 	});
 
 	test("fills a side's unread counts before its first read", () => {
@@ -238,6 +238,6 @@ describe("withFullCountsAtGameStart", () => {
 			20,
 		);
 
-		expect(start!.data.position).toBe(0);
+		expect(start.data.position).toBe(0);
 	});
 });

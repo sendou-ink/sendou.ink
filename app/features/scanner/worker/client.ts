@@ -124,7 +124,7 @@ export class AnalyzerClient {
 		// A throw outside the worker's own try/catch posts neither "error" nor "done";
 		// without these handlers `busy` would stay true and the scan silently freeze.
 		this.#worker.onerror = (e: ErrorEvent) => {
-			this.#fail(`worker error: ${e.message || String(e)}`);
+			this.#fail(`worker error: ${e.message || "unknown"}`);
 		};
 		this.#worker.onmessageerror = () => {
 			this.#fail("worker message deserialization failed");

@@ -29,9 +29,9 @@ export function povYellowFraction(rgb: Mat, roi: Roi): number {
 	const n = cont.rows * cont.cols;
 	let yellow = 0;
 	for (let i = 0; i < n; i++) {
-		const r = d[i * 3]!;
-		const g = d[i * 3 + 1]!;
-		const b = d[i * 3 + 2]!;
+		const r = d[i * 3];
+		const g = d[i * 3 + 1];
+		const b = d[i * 3 + 2];
 		if (
 			r > YELLOW_R_MIN &&
 			g > YELLOW_G_MIN &&
@@ -49,14 +49,11 @@ export function povYellowFraction(rgb: Mat, roi: Roi): number {
 export function findPovIndex(fractions: readonly number[]): number | null {
 	let best = -1;
 	for (let i = 0; i < fractions.length; i++) {
-		if (best < 0 || fractions[i]! > fractions[best]!) best = i;
+		if (best < 0 || fractions[i] > fractions[best]) best = i;
 	}
-	if (best < 0 || fractions[best]! < POV_MIN_FRACTION) return null;
+	if (best < 0 || fractions[best] < POV_MIN_FRACTION) return null;
 	for (let i = 0; i < fractions.length; i++) {
-		if (
-			i !== best &&
-			fractions[i]! > fractions[best]! * POV_RUNNER_UP_MAX_RATIO
-		)
+		if (i !== best && fractions[i] > fractions[best] * POV_RUNNER_UP_MAX_RATIO)
 			return null;
 	}
 	return best;

@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import type { IngestedScoreboardPlayer } from "~/features/scanner-ingest/core/Scoreboards";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { resolveTimelineWeapons } from "./ingested-scoreboard";
 
 const TEAM_ID = 1;
@@ -12,7 +11,7 @@ function ingestedPlayer(
 	return {
 		name: "player",
 		tournamentTeamId: TEAM_ID,
-		weaponSplId: 10 as MainWeaponId,
+		weaponSplId: 10,
 		ka: 10,
 		d: 5,
 		s: 2,

@@ -108,7 +108,7 @@ function setResult(results: XSetResultData["results"]): DetectedEvent {
 test("events less than two hours apart share a session", () => {
 	const sessions = splitSessions(stamped(0, HOUR, 2 * HOUR - 1));
 	assert.equal(sessions.length, 1);
-	assert.equal(sessions[0]!.length, 3);
+	assert.equal(sessions[0].length, 3);
 });
 
 test("a gap of two hours starts a new session", () => {
@@ -317,8 +317,8 @@ test("compacted retention counts the raw sessions against the session cap", () =
 		endedAt: now - (MAX_SESSIONS - i) * DAY + HOUR,
 	}));
 	assert.deepEqual(expiredCompactedSessionKeys(compacted, 2, now), [
-		compacted[1]!.key,
-		compacted[0]!.key,
+		compacted[1].key,
+		compacted[0].key,
 	]);
 });
 

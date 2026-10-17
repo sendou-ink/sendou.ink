@@ -549,7 +549,7 @@ async function addPlayerToOwnTeam({
 	});
 
 	if (!tournament.isTest && !tournament.isDraft) {
-		notify({
+		void notify({
 			userIds: [userId],
 			notification: {
 				type: "TO_ADDED_TO_TEAM",

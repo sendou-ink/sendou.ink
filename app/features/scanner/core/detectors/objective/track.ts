@@ -104,9 +104,9 @@ export function trackComb(frame: Mat): number {
 	const channels = band.channels();
 	const at = (x: number, y: number) => (y * cols + x) * channels;
 	const distance = (a: number, b: number) =>
-		Math.abs(data[a]! - data[b]!) +
-		Math.abs(data[a + 1]! - data[b + 1]!) +
-		Math.abs(data[a + 2]! - data[b + 2]!);
+		Math.abs(data[a] - data[b]) +
+		Math.abs(data[a + 1] - data[b + 1]) +
+		Math.abs(data[a + 2] - data[b + 2]);
 
 	const contrast: number[] = [];
 	for (let x = 0; x < cols; x++) {
@@ -285,9 +285,9 @@ function classifyPixels(frame: Mat, roi: Roi): PixelClasses {
 	const hue = new Float32Array(cols * rows);
 	for (let i = 0; i < cols * rows; i++) {
 		const color = {
-			r: data[i * channels]!,
-			g: data[i * channels + 1]!,
-			b: data[i * channels + 2]!,
+			r: data[i * channels],
+			g: data[i * channels + 1],
+			b: data[i * channels + 2],
 		};
 		const max = Math.max(color.r, color.g, color.b);
 		const min = Math.min(color.r, color.g, color.b);
@@ -333,7 +333,7 @@ function markerMode(
 			if (px < 0 || py < 0 || px >= classes.cols || py >= classes.rows) {
 				continue;
 			}
-			hits += mask[py * classes.cols + px]!;
+			hits += mask[py * classes.cols + px];
 		}
 		return hits / points.length;
 	};
@@ -435,7 +435,7 @@ function ringFraction(
 			if (px < 0 || py < 0 || px >= classes.cols || py >= classes.rows) {
 				continue;
 			}
-			hits += mask[py * classes.cols + px]!;
+			hits += mask[py * classes.cols + px];
 		}
 	}
 	return hits / total;
@@ -462,7 +462,7 @@ function meanInkHue(
 	let count = 0;
 	for (const index of indices) {
 		if (!classes.ink[index]) continue;
-		const angle = (classes.hue[index]! * Math.PI) / 180;
+		const angle = (classes.hue[index] * Math.PI) / 180;
 		sin += Math.sin(angle);
 		cos += Math.cos(angle);
 		count++;
@@ -479,8 +479,8 @@ function nearestSide(
 	const distances = teamHues.map((teamHue) =>
 		teamHue === null ? Number.POSITIVE_INFINITY : hueDistance(hue, teamHue),
 	);
-	const side: 0 | 1 = distances[0]! <= distances[1]! ? 0 : 1;
-	return distances[side]! <= TRACK_ICON_MAX_TEAM_HUE_DIST ? side : null;
+	const side: 0 | 1 = distances[0] <= distances[1] ? 0 : 1;
+	return distances[side] <= TRACK_ICON_MAX_TEAM_HUE_DIST ? side : null;
 }
 
 interface PlateRun {
@@ -529,7 +529,7 @@ function* readPlates(
 
 	const runs: PlateRun[] = [];
 	for (const [i, set] of digitSets.entries()) {
-		const raw = raws[i]!;
+		const raw = raws[i];
 		const maxGap = Math.max(
 			4,
 			Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO),
@@ -545,7 +545,7 @@ function* readPlates(
 			if (group.length > 0 && group.length <= 3) {
 				const value = Number.parseInt(group.map((c) => c.char).join(""), 10);
 				if (value <= MAX_COUNT) {
-					const x0 = TRACK_PLATE_DIGIT_ROI.x + group[0]!.x0;
+					const x0 = TRACK_PLATE_DIGIT_ROI.x + group[0].x0;
 					const x1 = TRACK_PLATE_DIGIT_ROI.x + group.at(-1)!.x1;
 					const hue = plateHue(frame, x0, x1);
 					const x = (x0 + x1) / 2;
@@ -619,5 +619,5 @@ function plateSide(
 	// no ink verdict to go on: the position decides when it allows one side only
 	const inkUnknown =
 		hue === null || teamHues.every((teamHue) => teamHue === null);
-	return inkUnknown && allowed.length === 1 ? allowed[0]! : null;
+	return inkUnknown && allowed.length === 1 ? allowed[0] : null;
 }

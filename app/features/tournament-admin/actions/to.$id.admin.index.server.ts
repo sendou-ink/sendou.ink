@@ -237,7 +237,7 @@ async function dropTeamOut({
 		});
 
 	// after the commit so the refetch it prompts can not read the pre-commit state
-	ChatSystemMessage.notifyRoomsChangedByRoomIds(changedChatRoomIds);
+	void ChatSystemMessage.notifyRoomsChangedByRoomIds(changedChatRoomIds);
 
 	await TournamentTeamRepository.dropOut({
 		tournamentTeamId: teamId,

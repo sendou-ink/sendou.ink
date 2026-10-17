@@ -96,7 +96,7 @@ test("aggregated votes assign every slot to its scoreboard row", () => {
 				const floor = candidates?.at(-1)?.score ?? 0;
 				for (const candidate of candidates ?? []) {
 					addWeaponEvidence(
-						evidence[side]!,
+						evidence[side],
 						slot,
 						candidate.weaponId,
 						candidate.score - floor,
@@ -106,6 +106,6 @@ test("aggregated votes assign every slot to its scoreboard row", () => {
 			}
 		}
 	}
-	assert.deepEqual(slotRowPermutation(evidence[0]!), [0, 2, 1, 3]);
-	assert.deepEqual(slotRowPermutation(evidence[1]!), [3, 0, 1, 2]);
+	assert.deepEqual(slotRowPermutation(evidence[0]), [0, 2, 1, 3]);
+	assert.deepEqual(slotRowPermutation(evidence[1]), [3, 0, 1, 2]);
 });

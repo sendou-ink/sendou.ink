@@ -244,7 +244,7 @@ function resolveTimelinePickBanData(
 	const pickedBySlot = new Map<number, "ALPHA" | "BRAVO">();
 
 	for (let i = 0; i < data.pickBanEvents.length; i++) {
-		const event = data.pickBanEvents[i]!;
+		const event = data.pickBanEvents[i];
 		if (event.type === "ROLL") continue;
 
 		const teamId = PickBan.teamOfEvent({
@@ -269,7 +269,7 @@ function resolveTimelinePickBanData(
 		const isPick = event.type === "PICK" || event.type === "MODE_PICK";
 		const kind: "PICK" | "BAN" = isPick ? "PICK" : "BAN";
 		const bucketIndex = Math.min(slot, rowsBySlot.length - 1);
-		const bucket = rowsBySlot[bucketIndex]!;
+		const bucket = rowsBySlot[bucketIndex];
 		const last = bucket[bucket.length - 1];
 		const entry = {
 			stageId: event.stageId ?? undefined,

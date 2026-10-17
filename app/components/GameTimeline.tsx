@@ -102,11 +102,9 @@ export function GameTimeline({
 	return (
 		<div
 			className={clsx(styles.root, { [styles.seekable]: onSeek !== undefined })}
-			style={
-				{
-					"--plot-gutter": `${TIMELINE_PLOT_GUTTER_PX}px`,
-				} as React.CSSProperties
-			}
+			style={{
+				"--plot-gutter": `${TIMELINE_PLOT_GUTTER_PX}px`,
+			}}
 			onPointerDown={handlePointer}
 			onPointerMove={handlePointer}
 			onPointerUp={handleSeek}
@@ -370,7 +368,7 @@ function chartedObjective(
 	if (sorted.length === 0) return sorted;
 	return withFullCountsAtGameStart(
 		sorted,
-		Math.min(sorted[0]!.t, sortedSamples[0]?.t ?? Number.POSITIVE_INFINITY),
+		Math.min(sorted[0].t, sortedSamples[0]?.t ?? Number.POSITIVE_INFINITY),
 	);
 }
 
@@ -398,7 +396,7 @@ function timelineDomain(
 	const end = Math.max(
 		objective[objective.length - 1]?.t ?? Number.NEGATIVE_INFINITY,
 		samples.length > 0
-			? samples[samples.length - 1]!.t + PLAYER_STATUS_TAIL_SECONDS
+			? samples[samples.length - 1].t + PLAYER_STATUS_TAIL_SECONDS
 			: Number.NEGATIVE_INFINITY,
 		...killTimes,
 	);
@@ -424,15 +422,15 @@ function objectiveStateAt(
 ): ObjectiveStateAtTime | null {
 	let index = -1;
 	for (let i = 0; i < sorted.length; i++) {
-		if (sorted[i]!.t > time) break;
+		if (sorted[i].t > time) break;
 		index = i;
 	}
 	if (index === -1) return null;
 
 	const scores: [number | null, number | null] = [null, null];
 	for (let i = 0; i <= index; i++) {
-		scores[0] = sorted[i]!.data.score[0] ?? scores[0];
-		scores[1] = sorted[i]!.data.score[1] ?? scores[1];
+		scores[0] = sorted[i].data.score[0] ?? scores[0];
+		scores[1] = sorted[i].data.score[1] ?? scores[1];
 	}
 	const penalties = ([0, 1] as const).map(
 		(side) =>
@@ -443,10 +441,10 @@ function objectiveStateAt(
 				})),
 			)[index] ?? null,
 	) as [number | null, number | null];
-	const latest = sorted[index]!;
+	const latest = sorted[index];
 	let position: number | null = null;
 	for (let i = 0; i <= index; i++) {
-		position = sorted[i]!.data.position ?? position;
+		position = sorted[i].data.position ?? position;
 	}
 
 	return {
@@ -480,7 +478,7 @@ function playerStatusAt(
 
 	const activeSlots = (side: 0 | 1, kind: "dead" | "special") =>
 		[0, 1, 2, 3].filter((slot) =>
-			statusSpans(sorted, (sample) => sample[kind][side][slot]!).some(
+			statusSpans(sorted, (sample) => sample[kind][side][slot]).some(
 				(span) => span.start <= time && time <= span.end,
 			),
 		);

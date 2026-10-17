@@ -1,8 +1,12 @@
 import * as v from "valibot";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import {
+	BUILD_SORT_IDENTIFIERS,
+	HIGHLIGHT_CHECKBOX_NAME,
+	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 	OBJECT_PRONOUNS,
 	SUBJECT_PRONOUNS,
+	USER,
 } from "~/features/user-page/user-page-constants";
 import {
 	checkboxGroup,
@@ -47,12 +51,6 @@ import {
 	findWidgetById,
 	maxWidgetsPerSlot,
 } from "./core/widgets/portfolio";
-import {
-	BUILD_SORT_IDENTIFIERS,
-	HIGHLIGHT_CHECKBOX_NAME,
-	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
-	USER,
-} from "./user-page-constants";
 
 export const userEditProfileBaseSchema = v.object({
 	customAvatar: image({

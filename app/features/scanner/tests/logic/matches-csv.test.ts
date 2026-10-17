@@ -55,8 +55,8 @@ test("one row per game with the POV side first", () => {
 			],
 		]),
 	);
-	assert.equal(header![0], "played_at");
-	const cell = (name: string) => row![header!.indexOf(name)];
+	assert.equal(header[0], "played_at");
+	const cell = (name: string) => row[header.indexOf(name)];
 	assert.equal(cell("source"), "sws26-finals.mkv");
 	assert.equal(cell("at"), "01:02:10");
 	assert.equal(cell("t_seconds"), "3730");
@@ -84,10 +84,10 @@ test("positions count from the session's origin", () => {
 			[{ kills: 4, start: 3760, end: 3790 }],
 		]),
 	);
-	assert.equal(row![header!.indexOf("at")], "00:00:30");
-	assert.equal(row![header!.indexOf("t_seconds")], "30");
+	assert.equal(row[header.indexOf("at")], "00:00:30");
+	assert.equal(row[header.indexOf("t_seconds")], "30");
 	assert.equal(
-		row![header!.indexOf("clip_times")],
+		row[header.indexOf("clip_times")],
 		"4 kills · 00:01:00–00:01:30",
 	);
 });
@@ -130,7 +130,7 @@ test("unread values are blank cells, not question marks", () => {
 		"replay_code",
 		"clip_times",
 	]) {
-		assert.equal(row![header!.indexOf(name)], "", name);
+		assert.equal(row[header.indexOf(name)], "", name);
 	}
 });
 
@@ -141,7 +141,7 @@ test("text cells a spreadsheet would run as a formula are neutralized", () => {
 				built({
 					...BASE,
 					teams: [
-						{ players: [{ ...BASE.teams[0].players[0]!, name: "=1+1" }] },
+						{ players: [{ ...BASE.teams[0].players[0], name: "=1+1" }] },
 						BASE.teams[1],
 					],
 				}),
@@ -149,6 +149,6 @@ test("text cells a spreadsheet would run as a formula are neutralized", () => {
 			{ label: "@SUM(A1)", originT: 0 },
 		),
 	);
-	assert.equal(row![header!.indexOf("source")], "'@SUM(A1)");
-	assert.match(row![header!.indexOf("enemies")]!, /^'=1\+1 · /);
+	assert.equal(row[header.indexOf("source")], "'@SUM(A1)");
+	assert.match(row[header.indexOf("enemies")], /^'=1\+1 · /);
 });

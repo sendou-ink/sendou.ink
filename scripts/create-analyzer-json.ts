@@ -212,7 +212,7 @@ function splitIntoBaseStatsAndKits(
 			}
 		}
 
-		baseWeaponStats[baseId] = sharedProps as BaseWeaponStats;
+		baseWeaponStats[baseId] = sharedProps;
 
 		for (const variant of variants) {
 			const kit: WeaponKit = {
@@ -1107,7 +1107,7 @@ function resolveOverwritesWithArbitraryKeys(
 
 			if (!result[abilityKey]) result[abilityKey] = {};
 
-			result[abilityKey]![type] = value;
+			result[abilityKey][type] = value;
 		}
 	}
 }

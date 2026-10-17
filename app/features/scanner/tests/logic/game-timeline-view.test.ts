@@ -87,7 +87,7 @@ describe("gameTimelineProps", () => {
 			LABELS,
 		);
 
-		expect(props.objectiveEvents![0]!.data).toMatchObject({
+		expect(props.objectiveEvents![0].data).toMatchObject({
 			score: [null, 60],
 			control: 1,
 			position: -40,

@@ -544,7 +544,7 @@ async function persist(
 			// without one; a better read of an already sent scoreboard is not resent
 			const unsent =
 				stale === undefined ? unsentScoreboardMatches : unsentMatches;
-			refreshFeed();
+			void refreshFeed();
 			await sendLive(
 				(built) => matchContaining(id)(built) && unsent(built),
 				newestSessionKey(),
@@ -553,7 +553,7 @@ async function persist(
 	} catch (error) {
 		set({ error: describeError(error) });
 	}
-	refreshFeed();
+	void refreshFeed();
 }
 
 /**

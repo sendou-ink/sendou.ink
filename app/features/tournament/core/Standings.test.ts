@@ -51,7 +51,7 @@ describe("tournamentStandings", () => {
 		invariant(result.type === "multi");
 		expect(result.standings).toHaveLength(2);
 		for (const { div } of result.standings) {
-			expect(typeof div).toBe("string");
+			expect(div).toBeTypeOf("string");
 			expect(div.length).toBeGreaterThan(0);
 		}
 		const divs = result.standings.map((s) => s.div);

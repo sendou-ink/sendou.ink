@@ -19,10 +19,7 @@
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { basename } from "node:path";
-import {
-	type CsvEvent,
-	eventsToCsv,
-} from "../../app/features/scanner/core/csv/events";
+import { eventsToCsv } from "../../app/features/scanner/core/csv/events";
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import { runDetectorPass } from "../../app/features/scanner/core/detectors/frame-pass";
 import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
@@ -142,7 +139,7 @@ if (exitCode !== 0) {
 	process.exit(1);
 }
 
-const csv = eventsToCsv(timeline.events as CsvEvent[]);
+const csv = eventsToCsv(timeline.events);
 writeFileSync(outPath, csv);
 printSummary();
 
@@ -165,7 +162,7 @@ function parseArgs(argv: string[]): {
 	let parsedGpu = false;
 	let parsedRecordDir: string | undefined;
 	for (let i = 0; i < argv.length; i++) {
-		const arg = argv[i]!;
+		const arg = argv[i];
 		if (arg === "--fps") parsedFps = Number(argv[++i]);
 		else if (arg === "--start") parsedStart = Number(argv[++i]);
 		else if (arg === "--duration") parsedDuration = Number(argv[++i]);
@@ -338,12 +335,12 @@ function printTelemetry(): void {
 			String(d.suppressedParses),
 		]);
 	const widths = header.map((h, i) =>
-		Math.max(h.length, ...rows.map((row) => row[i]!.length)),
+		Math.max(h.length, ...rows.map((row) => row[i].length)),
 	);
 	const line = (cells: string[]) =>
 		cells
 			.map((cell, i) =>
-				i === 0 ? cell.padEnd(widths[i]!) : cell.padStart(widths[i]!),
+				i === 0 ? cell.padEnd(widths[i]) : cell.padStart(widths[i]),
 			)
 			.join("  ");
 	console.error(line(header));
@@ -356,9 +353,9 @@ function printTelemetry(): void {
 		const sorted = [...list].sort((a, b) => a - b);
 		const mean = sorted.reduce((sum, ms) => sum + ms, 0) / sorted.length;
 		const p95 =
-			sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]!;
+			sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))];
 		console.error(
-			`frame pass with a ${id} parse: mean ${mean.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · max ${sorted[sorted.length - 1]!.toFixed(1)} ms (${sorted.length} frames)`,
+			`frame pass with a ${id} parse: mean ${mean.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · max ${sorted[sorted.length - 1].toFixed(1)} ms (${sorted.length} frames)`,
 		);
 	}
 }

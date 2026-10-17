@@ -51,7 +51,7 @@ export function ReportsBarChart({
 			Math.floor((plotBottom - plotTop) / PX_PER_COUNT_TICK),
 		),
 	});
-	const topCount = countTicks[countTicks.length - 1]!;
+	const topCount = countTicks[countTicks.length - 1];
 	const yAt = (count: number) =>
 		plotBottom - (count / topCount) * (plotBottom - plotTop);
 

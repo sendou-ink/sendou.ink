@@ -202,7 +202,7 @@ export function readMap<T>(
 
 	const unstored = unstoredMapEntries.get(definition);
 	if (typeof window === "undefined" && !unstored) {
-		return SERVER_MAP_SNAPSHOT as Record<string, T>;
+		return SERVER_MAP_SNAPSHOT;
 	}
 
 	const value = {

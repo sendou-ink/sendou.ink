@@ -120,7 +120,7 @@ describe("Swiss", () => {
 			const bracket = tournament.bracketByIdx(0)!;
 
 			const matches = unwrap(
-				Engine.generateRound(bracket.data as Engine.BracketData, {
+				Engine.generateRound(bracket.data, {
 					groupId: 4443,
 					standings: bracket.standings,
 					settings: bracket.settings,

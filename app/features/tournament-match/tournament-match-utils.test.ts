@@ -18,11 +18,12 @@ const mapCountParamsToResult: {
 ];
 
 describe("mapCountPlayedInSetWithCertainty()", () => {
-	for (const { bestOf, scores, expected } of mapCountParamsToResult) {
-		test(`bestOf=${bestOf}, scores=${scores.join(",")} -> ${expected}`, () => {
+	test.each(mapCountParamsToResult)(
+		"bestOf=$bestOf, scores=$scores -> $expected",
+		({ bestOf, scores, expected }) => {
 			expect(mapCountPlayedInSetWithCertainty({ bestOf, scores })).toBe(
 				expected,
 			);
-		});
-	}
+		},
+	);
 });

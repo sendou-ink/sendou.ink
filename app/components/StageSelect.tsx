@@ -55,9 +55,7 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 				placeholder: t("common:forms.stageSearch.search.placeholder"),
 			}}
 			selectedKey={isControlled ? value : undefined}
-			defaultSelectedKey={
-				isControlled ? undefined : (initialValue as SelectKey)
-			}
+			defaultSelectedKey={isControlled ? undefined : initialValue}
 			onSelectionChange={handleOnChange}
 			clearable={clearable}
 			data-testid={testId}
@@ -67,11 +65,7 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 			{({ id, name }) => (
 				<SendouSelectItem key={id} id={id} textValue={name}>
 					<div className={styles.item}>
-						<StageImage
-							stageId={id as StageId}
-							width={42}
-							className={styles.stageImg}
-						/>
+						<StageImage stageId={id} width={42} className={styles.stageImg} />
 						<span
 							className={clsx(styles.stageLabel, "truncate")}
 							data-testid={`stage-select-option-${name}`}

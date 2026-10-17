@@ -285,7 +285,7 @@ export function createObjectiveDetector(
 		for (const [i, { set }] of reads.entries()) {
 			// the band holds only the count, so a leading digit under the
 			// extension floor voids the read instead of truncating it
-			const read = trailingDigitRun(raws[i]!, set, {
+			const read = trailingDigitRun(raws[i], set, {
 				extendMinScore: SCORE_EXTEND_MIN_CONF,
 				rejectTruncated: true,
 			});
@@ -346,9 +346,9 @@ export function createObjectiveDetector(
 		let satSum = 0;
 		let count = 0;
 		for (let i = 0; i < data.length; i += channels) {
-			const r = data[i]!;
-			const g = data[i + 1]!;
-			const b = data[i + 2]!;
+			const r = data[i];
+			const g = data[i + 1];
+			const b = data[i + 2];
 			sum += Math.max(r, g, b);
 			satSum += Math.max(r, g, b) - Math.min(r, g, b);
 			count++;
@@ -436,7 +436,7 @@ export function createObjectiveDetector(
 			{ score: scoreR, penalty: penaltyR },
 		];
 		const sides = [0 as const, 1 as const].map((side): SideRead => {
-			const { score, penalty } = reads[side]!;
+			const { score, penalty } = reads[side];
 			const fill = plateFill(frame, side);
 			return {
 				score,

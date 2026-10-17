@@ -44,7 +44,7 @@ describe("createProbeWarp", () => {
 		const frame = noiseFrame(4);
 		const probe = { x: 3, y: 5, w: 2, h: 1 };
 		const actual = createProbeWarp(homography, region, [probe])(frame);
-		const data = actual.data as Uint8Array;
+		const data = actual.data;
 		const written = new Set([5 * region.w + 3, 5 * region.w + 4]);
 		for (let pixel = 0; pixel < region.w * region.h; pixel++) {
 			if (written.has(pixel)) continue;
@@ -68,7 +68,7 @@ describe("frameKernels", () => {
 		const cv = getCV();
 		// 4096 x 4096 pixels: every 24-bit color once, alpha varied
 		const src = new cv.Mat(4096, 4096, cv.CV_8UC4);
-		const data = src.data as Uint8Array;
+		const data = src.data;
 		for (let color = 0; color < 1 << 24; color++) {
 			data[color * 4] = color & 255;
 			data[color * 4 + 1] = (color >> 8) & 255;
@@ -118,7 +118,7 @@ function noiseFrame(seed: number): Mat {
 function noiseMat(rows: number, cols: number, seed: number): Mat {
 	const cv = getCV();
 	const frame = new cv.Mat(rows, cols, cv.CV_8UC4);
-	const data = frame.data as Uint8Array;
+	const data = frame.data;
 	let state = seed >>> 0;
 	for (let i = 0; i < data.length; i++) {
 		state = (Math.imul(state, 1664525) + 1013904223) >>> 0;

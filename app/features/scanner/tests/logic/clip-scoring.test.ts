@@ -94,8 +94,8 @@ test("the score ranks the longer streak first, the tighter one second", () => {
 	const [loose] = scoreWindows(kills(100, 110, 120, 130), []);
 	const [tight] = scoreWindows(kills(100, 102, 104, 106), []);
 	const [longer] = scoreWindows(kills(100, 110, 120, 130, 140), []);
-	assert.ok(tight!.score > loose!.score);
-	assert.ok(longer!.score > tight!.score);
+	assert.ok(tight.score > loose.score);
+	assert.ok(longer.score > tight.score);
 });
 
 test("the window carries its last kill's timer reading", () => {
@@ -103,13 +103,13 @@ test("the window carries its last kill's timer reading", () => {
 		{ kills: [kill(100, 200), kill(103, 197), kill(106, 194), kill(109, 191)] },
 		[],
 	);
-	assert.equal(window!.time, 191);
+	assert.equal(window.time, 191);
 });
 
 test("a window closes once the streak gap has passed its last kill", () => {
 	const [window] = scoreWindows(kills(100, 105, 110, 115), []);
-	assert.equal(windowClosed(window!, 129), false);
-	assert.equal(windowClosed(window!, 130), true);
+	assert.equal(windowClosed(window, 129), false);
+	assert.equal(windowClosed(window, 130), true);
 });
 
 test("clipCovers is inclusive of both ends", () => {

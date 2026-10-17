@@ -10,22 +10,16 @@ export function useHasSqGroupExpired(status: GlobalStatus | null): boolean {
 	const expiresAt =
 		status?.state === "SQ_QUEUED" ? status.expiresAt : undefined;
 
-	const [hasExpired, setHasExpired] = React.useState(false);
+	const [expiredAt, setExpiredAt] = React.useState<number | null>(null);
 
 	React.useEffect(() => {
 		if (expiresAt === undefined) return;
 
-		const msLeft = expiresAt - Date.now();
-		if (msLeft <= 0) {
-			setHasExpired(true);
-			return;
-		}
-
-		setHasExpired(false);
-		const timeout = setTimeout(() => setHasExpired(true), msLeft);
+		const msLeft = Math.max(0, expiresAt - Date.now());
+		const timeout = setTimeout(() => setExpiredAt(expiresAt), msLeft);
 
 		return () => clearTimeout(timeout);
 	}, [expiresAt]);
 
-	return expiresAt !== undefined && hasExpired;
+	return expiresAt !== undefined && expiredAt === expiresAt;
 }

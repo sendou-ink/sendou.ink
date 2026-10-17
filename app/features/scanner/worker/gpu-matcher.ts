@@ -321,7 +321,7 @@ interface Job {
 
 function resolveJob(job: Job, score: number) {
 	for (const [t, target] of job.targets.entries()) {
-		target[job.targetIndices[t]!] = score;
+		target[job.targetIndices[t]] = score;
 	}
 	job.cache?.set(job.cacheKey, score);
 }
@@ -533,7 +533,7 @@ export async function createGpuMatcher(
 		let total = 0;
 		let blocks = 0;
 		for (const [i, { image, template, lo, hi }] of jobs.entries()) {
-			const { offset, satOffset } = images[imageIndex.get(image)!]!;
+			const { offset, satOffset } = images[imageIndex.get(image)!];
 			const b = i * JOB_U32;
 			meta[b] = offset;
 			meta[b + 1] = image.rows;
@@ -664,13 +664,13 @@ export async function createGpuMatcher(
 			const read = pool.get("query")!;
 			await read.mapAsync(MAP_MODE_READ, 0, 16);
 			const [begin, end] = new BigUint64Array(read.getMappedRange(0, 16));
-			stats.kernelMs += Number(end! - begin!) / 1e6;
+			stats.kernelMs += Number(end - begin) / 1e6;
 			read.unmap();
 		}
 
 		for (const [i, job] of jobs.entries()) {
 			const b = i * OUT_U32;
-			const info = out[b]!;
+			const info = out[b];
 			const count = (info & ~ZERO_FLAG) >>> 0;
 			if (count > K || (count === 0 && !(info & ZERO_FLAG))) {
 				stats.cpuFallbacks++;
@@ -683,11 +683,11 @@ export async function createGpuMatcher(
 			let best = info & ZERO_FLAG ? 0 : Number.NEGATIVE_INFINITY;
 			for (let c = 0; c < count; c++) {
 				const o = b + 1 + c * 4;
-				const hi = out[o + 1]!;
-				const magnitude = (hi & 0x7fffffff) * 2 ** 32 + out[o]!;
+				const hi = out[o + 1];
+				const magnitude = (hi & 0x7fffffff) * 2 ** 32 + out[o];
 				const score = normalizeNcc(
 					hi & 0x80000000 ? -magnitude : magnitude,
-					out[o + 3]! * 2 ** 32 + out[o + 2]!,
+					out[o + 3] * 2 ** 32 + out[o + 2],
 					job.template.varInt,
 				);
 				if (score > best) best = score;
@@ -709,7 +709,7 @@ export async function createGpuMatcher(
 				layout: pipe.getBindGroupLayout(0),
 				entries: bindings.map((binding) => ({
 					binding,
-					resource: { buffer: byBinding[binding]! },
+					resource: { buffer: byBinding[binding] },
 				})),
 			});
 		}
@@ -744,7 +744,7 @@ export async function createGpuMatcher(
 					return runSync(steps, step);
 				}
 			}
-			step = steps.next(answers.map((scores) => (i: number) => scores[i]!));
+			step = steps.next(answers.map((scores) => (i: number) => scores[i]));
 		}
 		return step.value;
 	}
@@ -892,12 +892,12 @@ function templateStats(t: U8Image) {
 	const sq = new Array<number>(t.ch).fill(0);
 	for (let i = 0; i < n; i++) {
 		for (let c = 0; c < t.ch; c++) {
-			const v = t.data[i * t.ch + c]!;
-			sum[c]! += v;
-			sq[c]! += v * v;
+			const v = t.data[i * t.ch + c];
+			sum[c] += v;
+			sq[c] += v * v;
 		}
 	}
 	let varInt = 0;
-	for (let c = 0; c < t.ch; c++) varInt += n * sq[c]! - sum[c]! * sum[c]!;
+	for (let c = 0; c < t.ch; c++) varInt += n * sq[c] - sum[c] * sum[c];
 	return { n, sum, varInt };
 }

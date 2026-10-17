@@ -105,15 +105,20 @@ export function RoiCrop(props: {
 }
 
 function Stat(props: { label: string; raw?: unknown; children: ReactNode }) {
+	const raw = rawText(props.raw);
 	return (
 		<span className={styles.stat}>
 			<span className={styles.statLabel}>{props.label}</span>
 			<span className={styles.statValue}>{props.children}</span>
-			{props.raw != null && props.raw !== "" ? (
-				<span className={styles.statRaw}>raw: {String(props.raw)}</span>
-			) : null}
+			{raw ? <span className={styles.statRaw}>raw: {raw}</span> : null}
 		</span>
 	);
+}
+
+function rawText(raw: unknown) {
+	if (typeof raw === "string") return raw;
+	if (typeof raw === "number" || typeof raw === "boolean") return String(raw);
+	return raw == null ? null : JSON.stringify(raw);
 }
 
 function LabeledCrop(props: {
@@ -132,7 +137,7 @@ function LabeledCrop(props: {
 
 /** One pill per player slot, both sides; a lit pill is a slot the flag was read on. */
 function StatusSlots(props: {
-	flags: PlayerStatusData["special"] | PlayerStatusData["dead"];
+	flags: PlayerStatusData["special"];
 	tone: "special" | "dead";
 }) {
 	return (
@@ -253,23 +258,23 @@ function gateSummary(result: Result): string | null {
 			return `${confidence} · ${data.stage ?? "?"} · ${players}`;
 		}
 		case "objective": {
-			const data = event.data as unknown as ObjectiveData;
+			const data = event.data as ObjectiveData;
 			return `${confidence} · ${formatTimer(data.time)} · score ${data.score[0] ?? "?"}–${data.score[1] ?? "?"}`;
 		}
 		case "x-set-count": {
-			const data = event.data as unknown as XSetCountData;
+			const data = event.data as XSetCountData;
 			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · set ${xSetCountLabel(data)}`;
 		}
 		case "x-set-result": {
-			const data = event.data as unknown as XSetResultData;
+			const data = event.data as XSetResultData;
 			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${xSetResultLabel(data)}`;
 		}
 		case "x-rank-position": {
-			const data = event.data as unknown as XRankPositionData;
+			const data = event.data as XRankPositionData;
 			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${xRankPositionLabel(data)}`;
 		}
 		case "kill": {
-			const data = event.data as unknown as KillData;
+			const data = event.data as KillData;
 			return `${confidence} · ${formatTimer(data.time)} · splatted ${data.names.map((name) => name ?? "?").join(", ")}`;
 		}
 		default: {
@@ -610,7 +615,9 @@ export function ScreenshotPage() {
 	const isObjective = activeDetector === "objective";
 	const isKill = activeDetector === "kill";
 	const isXRank = activeDetector.startsWith("x-");
-	const winnerSide = String(event?.debug?.winnerSide ?? "left");
+	const debugWinnerSide = event?.debug?.winnerSide;
+	const winnerSide =
+		typeof debugWinnerSide === "string" ? debugWinnerSide : "left";
 	const rowRois = isReplay
 		? replayRows(winnerSide)
 		: isScoreboardBattleLog
@@ -844,7 +851,7 @@ export function ScreenshotPage() {
 											label={`gear ${row + 1}`}
 											frame={frame}
 											roi={{
-												x: own.GEAR_MAIN_CXS[row]! - 36,
+												x: own.GEAR_MAIN_CXS[row] - 36,
 												y: own.GEAR_BADGE_CY - 32,
 												w: 200,
 												h: 64,

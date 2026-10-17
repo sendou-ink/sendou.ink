@@ -149,11 +149,11 @@ function TrophyModal({
 		loadedRef.current = true;
 
 		if (XpTrophy.parseCode(trophy.code)) {
-			placementsFetcher.load(
+			void placementsFetcher.load(
 				trophyPlacementsPage({ trophyId: trophy.id, userId }),
 			);
 		} else {
-			fetcher.load(trophyWinsPage({ trophyId: trophy.id, userId }));
+			void fetcher.load(trophyWinsPage({ trophyId: trophy.id, userId }));
 		}
 	}, [fetcher.load, placementsFetcher.load, trophy.id, trophy.code, userId]);
 

@@ -369,7 +369,7 @@ export function latestSkillPerSeason<By extends "userId" | "identifier">({
 			fn.max("Skill.id").as("latestId"),
 			"Skill.ordinal" as const,
 			"Skill.matchesCount" as const,
-			`Skill.${by}` as `Skill.${By}`,
+			`Skill.${by}`,
 		])
 		.where("Skill.season", "=", season)
 		.where(`Skill.${by}`, "is not", null)
@@ -563,9 +563,7 @@ export function jsonArrayFrom<O>(
 ): ReturnType<typeof sqliteJsonArrayFrom<O>> {
 	return sql`(select coalesce(json_group_array(json_object(${sql.join(
 		jsonObjectArgs(expr, "agg"),
-	)})), '[]') from ${expr} as agg)` as ReturnType<
-		typeof sqliteJsonArrayFrom<O>
-	>;
+	)})), '[]') from ${expr} as agg)`;
 }
 
 /** Drop-in replacement for kysely's sqlite `jsonObjectFrom`, see {@link jsonArrayFrom}. */
@@ -574,7 +572,7 @@ export function jsonObjectFrom<O>(
 ): ReturnType<typeof sqliteJsonObjectFrom<O>> {
 	return sql`(select json_object(${sql.join(
 		jsonObjectArgs(expr, "obj"),
-	)}) from ${expr} as obj)` as ReturnType<typeof sqliteJsonObjectFrom<O>>;
+	)}) from ${expr} as obj)`;
 }
 
 /** Drop-in replacement for kysely's sqlite `jsonBuildObject`, see {@link jsonArrayFrom}. */
@@ -588,7 +586,7 @@ export function jsonBuildObject<O extends Record<string, Expression<unknown>>>(
 				? sql`json(${obj[key]})`
 				: obj[key],
 		]),
-	)})` as ReturnType<typeof sqliteJsonBuildObject<O>>;
+	)})`;
 }
 
 /**

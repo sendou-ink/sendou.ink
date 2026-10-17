@@ -573,7 +573,7 @@ async function scanChunk({
 				try {
 					while (!finished) {
 						for (const item of queue) if (item.t < bound) release(item);
-						let reading = queue.filter((item) => item.read).length;
+						let reading = queue.filter((item) => item.read !== null).length;
 						for (const guess of guesses) {
 							if (reading >= READ_AHEAD) break;
 							const candidate = queue.find((item) => item.t >= guess);

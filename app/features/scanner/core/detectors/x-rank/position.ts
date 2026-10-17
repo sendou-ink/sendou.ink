@@ -174,7 +174,7 @@ function arrowDirection(rgb: Mat): XRankPositionDirection | null {
 	const data = crop.data;
 	const isInk = (x: number, y: number) => {
 		const i = (y * cols + x) * 3;
-		return isArrowInk(data[i]!, data[i + 1]!, data[i + 2]!);
+		return isArrowInk(data[i], data[i + 1], data[i + 2]);
 	};
 	const inked = Array.from({ length: cols }, (_, x) => {
 		let ink = 0;
@@ -189,7 +189,7 @@ function arrowDirection(rgb: Mat): XRankPositionDirection | null {
 	const widths = new Array<number>(rows).fill(0);
 	for (let y = 0; y < rows; y++) {
 		for (let x = Math.max(0, x0); x <= x1; x++) {
-			if (isInk(x, y)) widths[y]!++;
+			if (isInk(x, y)) widths[y]++;
 		}
 	}
 	crop.delete();

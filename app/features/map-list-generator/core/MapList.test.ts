@@ -312,8 +312,8 @@ describe("MapList.generate()", () => {
 		test("cycles a single mode order continuously across sets", () => {
 			// 5 modes, Bo3 sets -> the order keeps rolling without resetting
 			const gen = initGenerator();
-			const first = gen.next({ amount: 3 }).value!.map((m) => m.mode);
-			const second = gen.next({ amount: 3 }).value!.map((m) => m.mode);
+			const first = gen.next({ amount: 3 }).value.map((m) => m.mode);
+			const second = gen.next({ amount: 3 }).value.map((m) => m.mode);
 
 			// set 2 continues where set 1 left off (positions 3, 4, 0)
 			expect(second[2]).toBe(first[0]);
@@ -322,8 +322,8 @@ describe("MapList.generate()", () => {
 		test("uses the same mode order when a set spans the whole rotation", () => {
 			// 5 modes, Bo5 sets -> each set is exactly one full rotation
 			const gen = initGenerator();
-			const first = gen.next({ amount: 5 }).value!.map((m) => m.mode);
-			const second = gen.next({ amount: 5 }).value!.map((m) => m.mode);
+			const first = gen.next({ amount: 5 }).value.map((m) => m.mode);
+			const second = gen.next({ amount: 5 }).value.map((m) => m.mode);
 
 			expect(second).toEqual(first);
 		});
@@ -874,7 +874,7 @@ describe("MapList.resume()", () => {
 		const gen = MapList.resume({ mapPool: POOL, history });
 		gen.next();
 		const result = gen.next({ amount: 1 }).value;
-		return result![0];
+		return result[0];
 	}
 
 	test("starts with the pool's first mode when history is empty", () => {
@@ -939,7 +939,7 @@ describe("MapList.resume()", () => {
 		) => {
 			const gen = MapList.resume({ mapPool: threeModePool, history });
 			gen.next();
-			return gen.next({ amount: 1 }).value![0].mode;
+			return gen.next({ amount: 1 }).value[0].mode;
 		};
 
 		expect(pickMode([])).toBe("SZ");
@@ -974,7 +974,7 @@ describe("MapList.resume()", () => {
 				history: [{ mode: "SZ", stageId: 1 }],
 			});
 			gen.next();
-			const next = gen.next({ amount: 1 }).value![0];
+			const next = gen.next({ amount: 1 }).value[0];
 			expect(next.mode).toBe("TC");
 			expect(
 				next.stageId,

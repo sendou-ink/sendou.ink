@@ -53,7 +53,7 @@ export function paintSuffixRoi(cy: number, dx: number): Roi {
 
 /** Stat digits ("x" prefix excluded); top edge must stay below the stat icons' ink bleed. */
 export function statRoi(cy: number, dx: number, index: 0 | 1 | 2): Roi {
-	const x = [1000, 1057, 1114][index]!;
+	const x = [1000, 1057, 1114][index];
 	return { x: x + dx, y: cy + 3, w: 36, h: 24 };
 }
 

@@ -95,7 +95,7 @@ interface Obu {
 function* readObus(data: Uint8Array): Generator<Obu> {
 	let offset = 0;
 	while (offset < data.length) {
-		const header = data[offset]!;
+		const header = data[offset];
 		const type = (header >> 3) & 0xf;
 		const hasExtension = (header >> 2) & 1;
 		const hasSize = (header >> 1) & 1;
@@ -103,7 +103,7 @@ function* readObus(data: Uint8Array): Generator<Obu> {
 		let temporalId = 0;
 		let spatialId = 0;
 		if (hasExtension) {
-			const extension = data[offset]!;
+			const extension = data[offset];
 			temporalId = extension >> 5;
 			spatialId = (extension >> 3) & 3;
 			offset++;
@@ -112,7 +112,7 @@ function* readObus(data: Uint8Array): Generator<Obu> {
 		if (hasSize) {
 			size = 0;
 			for (let i = 0; i < 8; i++) {
-				const byte = data[offset++]!;
+				const byte = data[offset++];
 				size |= (byte & 0x7f) << (i * 7);
 				if (!(byte & 0x80)) break;
 			}
@@ -268,7 +268,7 @@ function parseFrameHeader(
 	if (r.flag()) {
 		// show_existing_frame: showing a key frame reloads it into every slot
 		const slot = r.bits(3);
-		const frameType = slotFrameTypes[slot]!;
+		const frameType = slotFrameTypes[slot];
 		return {
 			frameType,
 			refreshFrameFlags: frameType === KEY_FRAME ? ALL_FRAMES : 0,

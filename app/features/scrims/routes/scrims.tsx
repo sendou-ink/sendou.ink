@@ -414,7 +414,7 @@ function ScrimsDaySeparatedCards({
 				.map(([day, dayPosts]) => (
 					<ScrimsDaySection
 						key={day}
-						posts={dayPosts!}
+						posts={dayPosts}
 						filters={filters}
 						pendingRequestPostId={pendingRequestPostId}
 						autoScrollToPostId={autoScrollToPostId}
@@ -585,7 +585,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
 								<LocaleTime
-									date={dayPosts![0].startsAt}
+									date={dayPosts[0].startsAt}
 									options={{
 										day: "numeric",
 										month: "numeric",
@@ -594,7 +594,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 								/>
 							</h2>
 							<div className="stack lg">
-								{dayPosts!.map((post) => {
+								{dayPosts.map((post) => {
 									const isAccepted = post.requests.some(
 										(request) => request.isAccepted,
 									);
@@ -655,7 +655,7 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
 								<LocaleTime
-									date={dayPosts![0].startsAt}
+									date={dayPosts[0].startsAt}
 									options={{
 										day: "numeric",
 										month: "numeric",
@@ -664,7 +664,7 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 								/>
 							</h2>
 							<div className="stack lg">
-								{dayPosts!.map((post) => {
+								{dayPosts.map((post) => {
 									const acceptedRequest = post.requests.find(
 										(request) => request.isAccepted,
 									);

@@ -88,9 +88,7 @@ export function WeaponSelect<
 			searchInputValue={filterValue}
 			onSearchInputChange={setFilterValue}
 			selectedKey={isControlled ? keyify(value) : undefined}
-			defaultSelectedKey={
-				isControlled ? undefined : (keyify(initialValue) as SelectKey)
-			}
+			defaultSelectedKey={isControlled ? undefined : keyify(initialValue)}
 			onSelectionChange={handleOnChange}
 			clearable={clearable}
 			data-testid={testId}
@@ -246,6 +244,7 @@ function useAllWeaponCategories() {
 function buildAllWeaponCategories(t: TFunction<["weapons"]>) {
 	return weaponCategories.map((category, idx) => ({
 		name: category.name,
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- widens the key so the quick-select category fits the same type
 		key: category.name as string,
 		idx,
 		items: category.weaponIds.map((id) => ({

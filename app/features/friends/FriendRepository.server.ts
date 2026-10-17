@@ -1,7 +1,7 @@
 import { sub } from "date-fns";
 import { type SelectQueryBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
-import type { DB, DBBoolean } from "~/db/tables";
+import type { DB } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { commonUserSelect } from "~/utils/kysely.server";
@@ -66,7 +66,7 @@ export async function findByUserIdWithActivity(userId: number) {
 			...row,
 			friendshipId: null as number | null,
 			friendshipCreatedAt: null as number | null,
-			isPinned: 0 as DBBoolean,
+			isPinned: 0,
 		})),
 	];
 }

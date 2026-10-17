@@ -51,7 +51,7 @@ export async function executeRoll({
 
 	const eventNumber = pickBanEvents.length + 1;
 	const { randomInteger } = seededRandom(`roll-${matchId}-${eventNumber}`);
-	const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
+	const selectedMap = legalMaps[randomInteger(legalMaps.length)];
 
 	try {
 		await TournamentRepository.insertPickBanEvent({

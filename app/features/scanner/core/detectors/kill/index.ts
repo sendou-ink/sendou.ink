@@ -121,8 +121,8 @@ export function createKillDetector(
 		const index = rowMemoIndex(rowMemo, signature);
 		if (index === -1) return null;
 		const [entry] = rowMemo.splice(index, 1);
-		rowMemo.push(entry!);
-		return entry!.read;
+		rowMemo.push(entry);
+		return entry.read;
 	}
 
 	function rowMemoStore(signature: number[], read: ParsedName): void {
@@ -242,7 +242,7 @@ export function createKillDetector(
 					? readMatchTimerSteps(gray, timerSets, speculative)
 					: noTimer(),
 			]);
-			for (const [i, row] of misses.entries()) prefetched.set(row, reads[i]!);
+			for (const [i, row] of misses.entries()) prefetched.set(row, reads[i]);
 			prefetchedTimer = timer;
 		}
 
@@ -317,7 +317,7 @@ function rowMemoIndex(
 		let sum = 0;
 		let cell = 0;
 		for (let k = 0; k < signature.length; k++) {
-			const diff = Math.abs(signature[k]! - entry.signature[k]!);
+			const diff = Math.abs(signature[k] - entry.signature[k]);
 			sum += diff;
 			if (diff > cell) cell = diff;
 		}

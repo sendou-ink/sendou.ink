@@ -185,8 +185,8 @@ export function playbackSegments(clip: {
 	let cursor = clip.start;
 	const kills = clip.killTimes.toSorted((a, b) => a - b);
 	for (let i = 1; i < kills.length; i++) {
-		const from = Math.max(cursor, kills[i - 1]! + KILL_MARGIN_S);
-		const to = Math.min(clip.end, kills[i]! - KILL_MARGIN_S);
+		const from = Math.max(cursor, kills[i - 1] + KILL_MARGIN_S);
+		const to = Math.min(clip.end, kills[i] - KILL_MARGIN_S);
 		if (to - from < MIN_FAST_FORWARD_S) continue;
 		if (from > cursor) segments.push({ from: cursor, to: from, speed: 1 });
 		segments.push({ from, to, speed: FAST_FORWARD_SPEED });
@@ -248,7 +248,7 @@ export function maxSecondsFor(
 	const counted = Math.min(kills, MONTAGE_KILL_COUNTS.at(-1)!);
 	return (
 		criteria.maxSecondsByKills[counted] ??
-		DEFAULT_MONTAGE_CRITERIA.maxSecondsByKills[counted]!
+		DEFAULT_MONTAGE_CRITERIA.maxSecondsByKills[counted]
 	);
 }
 

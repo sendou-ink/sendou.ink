@@ -86,7 +86,7 @@ function tagExtent(
 	for (let x = 0; x < cols; x++) {
 		let tagLike = 0;
 		for (let y = 0; y < rows; y++) {
-			const v = data[y * cols + x]!;
+			const v = data[y * cols + x];
 			if (v < darkMax || v > TAG_BRIGHT_MIN) tagLike++;
 		}
 		if (tagLike / rows >= columnFraction) {

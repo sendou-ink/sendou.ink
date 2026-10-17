@@ -966,12 +966,14 @@ function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 	const { submit, fetcher } = useActionSubmit(trophyActionSchema);
 	const id = React.useId();
 
-	React.useEffect(() => {
+	const [prevFetcherState, setPrevFetcherState] = React.useState(fetcher.state);
+	if (prevFetcherState !== fetcher.state) {
+		setPrevFetcherState(fetcher.state);
 		if (fetcher.state === "idle" && fetcher.data === null && isOpen) {
 			setIsOpen(false);
 			setReason("");
 		}
-	}, [fetcher.state, fetcher.data, isOpen]);
+	}
 
 	return (
 		<>

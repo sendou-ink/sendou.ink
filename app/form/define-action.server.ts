@@ -109,7 +109,7 @@ export function defineAction(
 
 		const bodySchema: AnySchema =
 			typeof inputs.body === "function"
-				? await inputs.body({ ...args, params } as never)
+				? await inputs.body({ ...args, params })
 				: inputs.body;
 
 		const { data, rendersFieldErrors } = await requestBodyToObject(

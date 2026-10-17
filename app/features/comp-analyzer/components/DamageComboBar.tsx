@@ -248,7 +248,7 @@ interface DamageComboListProps {
 export function DamageComboList({
 	weaponIds,
 	excludedKeys,
-	onExcludedKeysChange: setExcludedKeys,
+	onExcludedKeysChange,
 }: DamageComboListProps) {
 	const { t } = useTranslation(["analyzer"]);
 	const [initialTargetResAp, commitTargetResAp] = useTargetResAp();
@@ -287,20 +287,20 @@ export function DamageComboList({
 		const exists = excludedKeys.some((k) => filterKeyToString(k) === keyString);
 
 		if (exists) {
-			setExcludedKeys(
+			onExcludedKeysChange(
 				excludedKeys.filter((k) => filterKeyToString(k) !== keyString),
 			);
 		} else {
-			setExcludedKeys([...excludedKeys, key]);
+			onExcludedKeysChange([...excludedKeys, key]);
 		}
 	};
 
 	const handleRemoveAll = () => {
-		setExcludedKeys(allDamageKeys);
+		onExcludedKeysChange(allDamageKeys);
 	};
 
 	const handleClearAll = () => {
-		setExcludedKeys([]);
+		onExcludedKeysChange([]);
 	};
 
 	return (

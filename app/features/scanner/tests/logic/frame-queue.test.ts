@@ -43,7 +43,7 @@ test("a stall keeps thinned coverage of its whole span", () => {
 	assert.equal(queue.at(-1), stallS);
 	let maxGap = 0;
 	for (let i = 1; i < queue.length; i++) {
-		maxGap = Math.max(maxGap, queue[i]! - queue[i - 1]!);
+		maxGap = Math.max(maxGap, queue[i] - queue[i - 1]);
 	}
 	// drop-oldest would leave a 38.5s hole; decimation keeps every gap
 	// small enough that a ~10s results screen retains multiple frames

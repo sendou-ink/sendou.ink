@@ -734,13 +734,13 @@ describe("CoachEvents.lives", () => {
 			[150],
 		);
 
-		expect(first!.summary).toMatchObject({ duration: 50 });
+		expect(first.summary).toMatchObject({ duration: 50 });
 	});
 
 	test("the last life ends with the game", () => {
 		const lives = CoachEvents.lives(match({ pov: POV, endsAt: 400 }), [150]);
 
-		expect(lives[1]!.summary!.duration).toBe(400 - 158);
+		expect(lives[1].summary!.duration).toBe(400 - 158);
 	});
 
 	test("the last life ends at the last HUD read, not the results screen", () => {
@@ -754,7 +754,7 @@ describe("CoachEvents.lives", () => {
 			[150],
 		);
 
-		expect(lives[1]!.summary!.duration).toBe(380 - 158);
+		expect(lives[1].summary!.duration).toBe(380 - 158);
 	});
 
 	test("a respawn after the last HUD read starts no life", () => {
@@ -787,7 +787,7 @@ describe("CoachEvents.lives", () => {
 	test("no kills without a kill feed read", () => {
 		const [first] = CoachEvents.lives(match({ pov: POV, kills: null }), []);
 
-		expect(first!.summary!.kills).toBeNull();
+		expect(first.summary!.kills).toBeNull();
 	});
 
 	test("counts the POV player's specials used", () => {
@@ -816,7 +816,7 @@ describe("CoachEvents.lives", () => {
 	test("no specials count without the POV seat", () => {
 		const [first] = CoachEvents.lives(match(), []);
 
-		expect(first!.summary!.specialsUsed).toBeNull();
+		expect(first.summary!.specialsUsed).toBeNull();
 	});
 
 	test("in a count mode, control is how far each side's count went down", () => {
@@ -855,7 +855,7 @@ describe("CoachEvents.lives", () => {
 			[132],
 		);
 
-		expect(first!.summary!.control).toEqual({
+		expect(first.summary!.control).toEqual({
 			unit: "SECONDS",
 			ours: 12,
 			theirs: 2,
@@ -878,7 +878,7 @@ describe("CoachEvents.lives", () => {
 			[132.9],
 		);
 
-		expect(first!.summary!.control).toEqual({
+		expect(first.summary!.control).toEqual({
 			unit: "SECONDS",
 			ours: 12,
 			theirs: 3,
@@ -895,7 +895,7 @@ describe("CoachEvents.lives", () => {
 			[],
 		);
 
-		expect(first!.summary!.control).toBeNull();
+		expect(first.summary!.control).toBeNull();
 	});
 });
 

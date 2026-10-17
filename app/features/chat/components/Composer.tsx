@@ -221,7 +221,7 @@ export function Composer({
 		}
 	};
 
-	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		if (sendingDisabled || isEmpty || onCooldown) return;
 

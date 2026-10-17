@@ -43,7 +43,7 @@ export function prepareSpecialTemplates(
 		let yMax = -1;
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
-				if (data[(y * width + x) * 4 + 3]! > 128) {
+				if (data[(y * width + x) * 4 + 3] > 128) {
 					if (x < xMin) xMin = x;
 					if (x > xMax) xMax = x;
 					if (y < yMin) yMin = y;
@@ -57,7 +57,7 @@ export function prepareSpecialTemplates(
 		const dst = silhouette.data;
 		for (let y = 0; y < h; y++) {
 			for (let x = 0; x < w; x++) {
-				if (data[((y + yMin) * width + x + xMin) * 4 + 3]! > 128) {
+				if (data[((y + yMin) * width + x + xMin) * 4 + 3] > 128) {
 					dst[y * w + x] = 255;
 				}
 			}
@@ -105,7 +105,7 @@ export function* matchSpecialSteps(
 	const dst = binary.data;
 	let searchInk = 0;
 	for (let i = 0; i < rows * cols; i++) {
-		const v = Math.max(src[i * 3]!, src[i * 3 + 1]!, src[i * 3 + 2]!);
+		const v = Math.max(src[i * 3], src[i * 3 + 1], src[i * 3 + 2]);
 		if (v > SPECIAL_INK_THRESHOLD) {
 			dst[i] = 255;
 			searchInk++;
@@ -126,7 +126,7 @@ export function* matchSpecialSteps(
 	for (const template of templates) {
 		let score = -1;
 		for (const { ink } of sizesOf(template)) {
-			const maxVal = scoreOf!(index++);
+			const maxVal = scoreOf(index++);
 			const r =
 				Math.min(ink, searchInk) / Math.max(Math.max(ink, searchInk), 1);
 			const adjusted = maxVal * (0.75 + 0.25 * r);
@@ -219,7 +219,7 @@ function disambiguateWeaponByKit(
 		return evidence.top.find((t) => t.id === String(kit[part]))?.score ?? -1;
 	};
 	const ranked = [...tied].sort((a, b) => kitScore(b.id) - kitScore(a.id));
-	const winner = ranked[0]!;
+	const winner = ranked[0];
 	if (winner.id === match.id) return match;
 	const runnerUp = ranked.find((t) => kitScore(t.id) < kitScore(winner.id));
 	if (

@@ -26,7 +26,7 @@ import {
 } from "../../app/features/scanner/core/match-steps";
 import { nodeGpu } from "../../app/features/scanner/node/webgpu";
 import { createGpuMatcher } from "../../app/features/scanner/worker/gpu-matcher";
-import { type CorpusRequest, loadMatchCorpus } from "./match-corpus";
+import { loadMatchCorpus } from "./match-corpus";
 
 const EXACT_WORKER = /* js */ `
 const { parentPort, workerData } = require("node:worker_threads");
@@ -117,7 +117,7 @@ const mats = new Map<number, Mat>();
 const matOf = (id: number): Mat => {
 	let mat = mats.get(id);
 	if (!mat) {
-		const image = corpus.images[id]!;
+		const image = corpus.images[id];
 		mat = new cv.Mat(
 			image.rows,
 			image.cols,
@@ -162,7 +162,7 @@ if (options.cpu) {
 		const scores: number[] = [];
 		runSync(replay(run, scores));
 		for (const [i, score] of scores.entries()) {
-			if (!Object.is(score, gpuScores[run]![i])) cpuMismatches++;
+			if (!Object.is(score, gpuScores[run][i])) cpuMismatches++;
 		}
 	}
 	console.log(
@@ -177,10 +177,10 @@ const exact = await exactScores(checked);
 let compared = 0;
 let mismatches = 0;
 for (const [run, reference] of exact) {
-	const scores = gpuScores[run]!;
+	const scores = gpuScores[run];
 	for (let i = 0; i < reference.length; i++) {
 		compared++;
-		if (!Object.is(Math.fround(scores[i]!), reference[i]!)) {
+		if (!Object.is(Math.fround(scores[i]), reference[i])) {
 			mismatches++;
 			if (mismatches <= 5)
 				console.log(
@@ -196,7 +196,7 @@ matcher.destroy();
 process.exit(mismatches === 0 ? 0 : 1);
 
 function* replay(run: number, out: number[]): MatchSteps<void> {
-	for (const step of corpus.runs[run]!.steps) {
+	for (const step of corpus.runs[run].steps) {
 		const batch: MatchRequest[] = step.map((r) => ({
 			image: matOf(r.image),
 			templates: r.templates.map(matOf),
@@ -205,7 +205,7 @@ function* replay(run: number, out: number[]): MatchSteps<void> {
 		}));
 		const scores = yield batch;
 		for (const [i, r] of step.entries()) {
-			for (let k = 0; k < r.templates.length; k++) out.push(scores[i]!(k));
+			for (let k = 0; k < r.templates.length; k++) out.push(scores[i](k));
 		}
 	}
 }
@@ -234,7 +234,7 @@ async function exactScores(runs: number[]): Promise<Map<number, Float32Array>> {
 						}
 						worker.postMessage({
 							run,
-							steps: corpus.runs[run]!.steps as CorpusRequest[][],
+							steps: corpus.runs[run].steps,
 						});
 					};
 					worker.on("message", ({ run, scores }) => {
@@ -255,7 +255,7 @@ function parseArgs(argv: string[]) {
 	let threads = Math.max(1, cpus().length - 2);
 	let cpu = false;
 	for (let i = 0; i < argv.length; i++) {
-		const arg = argv[i]!;
+		const arg = argv[i];
 		if (arg === "--check-every") checkEvery = Number(argv[++i]);
 		else if (arg === "--threads") threads = Number(argv[++i]);
 		else if (arg === "--cpu") cpu = true;

@@ -193,9 +193,9 @@ export function createBattleLogDetector(
 		let g = 0;
 		let b = 0;
 		for (let i = 0; i < n; i++) {
-			r += d[i * 4]!;
-			g += d[i * 4 + 1]!;
-			b += d[i * 4 + 2]!;
+			r += d[i * 4];
+			g += d[i * 4 + 1];
+			b += d[i * 4 + 2];
 		}
 		cont.delete();
 		if (n === 0) return 0;

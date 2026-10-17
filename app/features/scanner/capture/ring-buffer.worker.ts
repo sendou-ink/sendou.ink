@@ -158,7 +158,7 @@ class Ring {
 		audioOffset: number,
 	): Promise<RingBufferClip | null> {
 		const gopIndex = this.#gops.findLastIndex(
-			(gop) => gop.packets[0]!.wall <= start,
+			(gop) => gop.packets[0].wall <= start,
 		);
 		const gops = this.#gops.slice(Math.max(0, gopIndex));
 		const firstGopAt = gops[0]?.packets[0]?.wall;
@@ -175,7 +175,7 @@ class Ring {
 		// the encoder stopped before the window: the ring only holds older footage
 		if (clipEnd < start) return null;
 		const thumbnail =
-			gops.findLast((gop) => gop.thumbnail && gop.packets[0]!.wall <= end)
+			gops.findLast((gop) => gop.thumbnail && gop.packets[0].wall <= end)
 				?.thumbnail ?? gops[0]?.thumbnail;
 
 		const format = new Mp4OutputFormat({ fastStart: "in-memory" });
@@ -358,14 +358,11 @@ class Ring {
 	/** Drops whole GOPs (and audio) older than the window, always keeping the newest two GOPs. */
 	#evict(now: number): void {
 		const horizon = now - this.#seconds;
-		while (
-			this.#gops.length > 2 &&
-			this.#gops[1]!.packets[0]!.wall <= horizon
-		) {
+		while (this.#gops.length > 2 && this.#gops[1].packets[0].wall <= horizon) {
 			this.#gops.shift();
 		}
 		const audioHorizon = this.#gops[0]?.packets[0]?.wall ?? horizon;
-		while (this.#audio.length > 0 && this.#audio[0]!.wall < audioHorizon) {
+		while (this.#audio.length > 0 && this.#audio[0].wall < audioHorizon) {
 			this.#audio.shift();
 		}
 	}
@@ -455,7 +452,7 @@ class SampleClock {
 	claim(frames: number, sampleRate: number): number {
 		const start = this.#samplesOut;
 		this.#samplesOut += frames;
-		while (this.#slices.length > 1 && this.#slices[0]!.endSample <= start) {
+		while (this.#slices.length > 1 && this.#slices[0].endSample <= start) {
 			this.#slices.shift();
 		}
 		const slice = this.#slices[0];

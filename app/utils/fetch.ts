@@ -3,7 +3,7 @@ import { logger } from "./logger";
 /** `fetch` that aborts after `timeout` ms, also honoring a caller supplied `init.signal`. */
 export async function fetchWithTimeout(
 	input: RequestInfo | URL,
-	init?: RequestInit | undefined,
+	init?: RequestInit,
 	timeout = 5000,
 ) {
 	const timeoutSignal = AbortSignal.timeout(timeout);

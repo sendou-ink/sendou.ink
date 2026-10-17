@@ -9,7 +9,6 @@ import * as v from "valibot";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { Ability } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type {
 	ScannerMatch,
@@ -34,7 +33,7 @@ export const modeShortSchema = v.picklist(modesShort);
 export const stageIdSchema = v.picklist(stageIds);
 export const mainWeaponIdSchema = v.picklist(mainWeaponIds);
 
-const abilityNames = abilities.map((ability) => ability.name) as Ability[];
+const abilityNames = abilities.map((ability) => ability.name);
 /** a sendou ability id, or the detectors' explicit unrecognized marker */
 const scannerAbilitySchema = v.union([
 	v.picklist(abilityNames),

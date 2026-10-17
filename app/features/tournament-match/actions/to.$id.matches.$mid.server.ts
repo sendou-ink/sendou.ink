@@ -749,7 +749,7 @@ export const action = defineAction(
 				) {
 					sendLeagueChatMessage(match, "LEAGUE_TIMES_PROPOSED", user.id);
 				}
-				notify({
+				void notify({
 					userIds: team.opponent.memberUserIds,
 					notification: {
 						type: "TO_LEAGUE_TIMES_PROPOSED",
@@ -1035,7 +1035,7 @@ async function notifyLeagueMatchScheduled({
 		const team = leagueTeamOfUser(tournament, match, player.id);
 		if (!team) continue;
 
-		notify({
+		void notify({
 			userIds: [player.id],
 			defaultSeenUserIds: [actorId],
 			notification: {

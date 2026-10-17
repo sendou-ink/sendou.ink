@@ -235,7 +235,7 @@ function RunImageExport() {
 
 	const handleOpen = () => {
 		if (fetcher.state === "idle" && !fetcher.data) {
-			fetcher.load(
+			void fetcher.load(
 				tournamentTeamCompsPage({
 					tournamentId: tournament.ctx.id,
 					tournamentTeamId: data.tournamentTeamId,

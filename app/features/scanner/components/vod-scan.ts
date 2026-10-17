@@ -340,16 +340,24 @@ export async function startVodScan(
 			// the file; the main thread only aggregates progress
 			const { duration } = probe;
 			const span = duration / clients.length;
-			const chunks = clients.map((scanClient, i) => ({
-				client: scanClient,
-				tStart: i * span,
-				tEnd: i === clients.length - 1 ? duration : (i + 1) * span,
-				t: i * span,
-				mode: "active" as VodScanMode,
-				done: false,
-				failed: false,
-				telemetry: null as ScanTelemetry | null,
-			}));
+			const chunks = clients.map(
+				(
+					scanClient,
+					i,
+				): VodScanLane & {
+					client: (typeof clients)[number];
+					telemetry: ScanTelemetry | null;
+				} => ({
+					client: scanClient,
+					tStart: i * span,
+					tEnd: i === clients.length - 1 ? duration : (i + 1) * span,
+					t: i * span,
+					mode: "active",
+					done: false,
+					failed: false,
+					telemetry: null,
+				}),
+			);
 			abortChunks = () => {
 				for (const client of clients) client.abortChunk();
 			};
@@ -436,7 +444,7 @@ export async function startVodScan(
 			const strideRef = { current: SEEK_ACTIVE_STRIDE_S };
 			const vod = await openSeekScan(video, () => strideRef.current);
 			if (abort.aborted) return;
-			const client = clients[0]!;
+			const client = clients[0];
 			let lastUiUpdate = Number.NEGATIVE_INFINITY;
 			for await (const { frame, t } of vod.frames) {
 				if (abort.aborted) {

@@ -38,7 +38,7 @@ export function integratedLoudness(
 		const weighted = filters.reduce(applyBiquad, channel);
 		const sums = new Float64Array(length + 1);
 		for (let i = 0; i < length; i++) {
-			sums[i + 1] = sums[i]! + weighted[i]! ** 2;
+			sums[i + 1] = sums[i] + weighted[i] ** 2;
 		}
 		return sums;
 	});
@@ -47,7 +47,7 @@ export function integratedLoudness(
 	for (let start = 0; start + blockLength <= length; start += step) {
 		blocks.push(
 			squaredPrefixSums.map(
-				(sums) => (sums[start + blockLength]! - sums[start]!) / blockLength,
+				(sums) => (sums[start + blockLength] - sums[start]) / blockLength,
 			),
 		);
 	}
@@ -80,8 +80,7 @@ export function limitPeaks(
 	const needed = new Float32Array(length);
 	for (let i = 0; i < length; i++) {
 		let peak = 0;
-		for (const channel of channels)
-			peak = Math.max(peak, Math.abs(channel[i]!));
+		for (const channel of channels) peak = Math.max(peak, Math.abs(channel[i]));
 		needed[i] = peak > ceiling ? ceiling / peak : 1;
 	}
 	const ahead = slidingMinimum(
@@ -92,10 +91,10 @@ export function limitPeaks(
 	const release = Math.exp(-1 / (LIMITER_RELEASE_SECONDS * sampleRate));
 	let gain = 1;
 	for (let i = 0; i < length; i++) {
-		const target = ahead[i]!;
+		const target = ahead[i];
 		gain = target + (target < gain ? attack : release) * (gain - target);
 		for (const channel of channels) {
-			channel[i] = Math.max(-ceiling, Math.min(ceiling, channel[i]! * gain));
+			channel[i] = Math.max(-ceiling, Math.min(ceiling, channel[i] * gain));
 		}
 	}
 }
@@ -106,12 +105,12 @@ function slidingMinimum(values: Float32Array, window: number): Float32Array {
 	const deque: number[] = [];
 	let head = 0;
 	for (let i = values.length - 1; i >= 0; i--) {
-		while (deque.length > head && values[deque.at(-1)!]! >= values[i]!) {
+		while (deque.length > head && values[deque.at(-1)!] >= values[i]) {
 			deque.pop();
 		}
 		deque.push(i);
-		while (deque[head]! > i + window) head++;
-		result[i] = values[deque[head]!]!;
+		while (deque[head] > i + window) head++;
+		result[i] = values[deque[head]]!;
 	}
 	return result;
 }
@@ -125,7 +124,7 @@ function gatedLoudness(blocks: readonly number[][], channelCount: number) {
 	let sum = 0;
 	for (let channel = 0; channel < channelCount; channel++) {
 		sum +=
-			blocks.reduce((total, block) => total + block[channel]!, 0) /
+			blocks.reduce((total, block) => total + block[channel], 0) /
 			blocks.length;
 	}
 	return LOUDNESS_OFFSET + 10 * Math.log10(sum);
@@ -198,7 +197,7 @@ function applyBiquad(input: Float32Array, { b, a }: Biquad): Float32Array {
 	let y1 = 0;
 	let y2 = 0;
 	for (let i = 0; i < input.length; i++) {
-		const x = input[i]!;
+		const x = input[i];
 		const y = b[0] * x + b[1] * x1 + b[2] * x2 - a[0] * y1 - a[1] * y2;
 		output[i] = y;
 		x2 = x1;

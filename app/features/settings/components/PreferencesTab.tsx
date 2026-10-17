@@ -103,7 +103,7 @@ function PushNotificationsEnabler() {
 		if (notificationsPermsGranted !== "granted") return;
 
 		let cancelled = false;
-		findPushSubscription().then((subscription) => {
+		void findPushSubscription().then((subscription) => {
 			if (!cancelled && !subscribeInFlight.current) {
 				setHasSubscription(Boolean(subscription));
 			}

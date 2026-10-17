@@ -124,11 +124,9 @@ export function MultiMatchBanner({ stageIds }: { stageIds: StageId[] }) {
 				<div
 					key={`${stageId}-${i}`}
 					className={styles.segment}
-					style={
-						{
-							"--stage-img": `url(${stageBannerImageUrl(stageId)})`,
-						} as React.CSSProperties
-					}
+					style={{
+						"--stage-img": `url(${stageBannerImageUrl(stageId)})`,
+					}}
 				/>
 			))}
 		</div>

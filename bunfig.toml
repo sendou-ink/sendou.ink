@@ -13,6 +13,7 @@ pathIgnorePatterns = [
 
 [lint]
 maxWarnings = 0
+typeAware = true
 plugins = ["playwright", "./lint-plugins/index.ts"]
 ignorePatterns = [
 	"scripts/dicts/**",
@@ -139,6 +140,125 @@ ignorePatterns = [
 "jsx_a11y/scope" = "error"
 "jsx_a11y/tabindex-no-positive" = "error"
 "typescript/no-explicit-any" = "off"
+"typescript/no-unsafe-argument" = "off"
+"typescript/no-unsafe-assignment" = "off"
+"typescript/no-unsafe-call" = "off"
+"typescript/no-unsafe-member-access" = "off"
+"typescript/no-unsafe-return" = "off"
+"typescript/only-throw-error" = "off"
+"typescript/prefer-promise-reject-errors" = "off"
+"typescript/require-await" = "off"
+"typescript/restrict-template-expressions" = "off"
+"typescript/unbound-method" = "off"
+"no-eval" = "error"
+"no-new-func" = "error"
+"no-template-curly-in-string" = "error"
+"no-self-compare" = "error"
+"array-callback-return" = "error"
+"no-constructor-return" = "error"
+"no-unreachable" = "error"
+"no-unreachable-loop" = "error"
+"no-sequences" = "error"
+"default-case-last" = "error"
+"oxc/bad-char-at-comparison" = "error"
+"oxc/bad-min-max-func" = "error"
+"oxc/bad-object-literal-comparison" = "error"
+"oxc/bad-replace-all-arg" = "error"
+"oxc/const-comparisons" = "error"
+"oxc/double-comparisons" = "error"
+"oxc/missing-throw" = "error"
+"oxc/uninvoked-array-callback" = "error"
+"oxc/misrefactored-assign-op" = "error"
+"oxc/bad-bitwise-operator" = "error"
+"unicorn/no-array-fill-with-reference-type" = "error"
+"unicorn/no-useless-length-check" = "error"
+"unicorn/no-thenable" = "error"
+"unicorn/no-accessor-recursion" = "error"
+"unicorn/no-invalid-fetch-options" = "error"
+"unicorn/no-invalid-remove-event-listener" = "error"
+"typescript/no-confusing-non-null-assertion" = "error"
+"typescript/no-non-null-asserted-nullish-coalescing" = "error"
+"import/no-self-import" = "error"
+"import/no-absolute-path" = "error"
+"import/no-duplicates" = "error"
+"promise/no-multiple-resolved" = "error"
+"promise/no-return-in-finally" = "error"
+"prefer-promise-reject-errors" = "error"
+"unicorn/no-await-in-promise-methods" = "error"
+"unicorn/no-single-promise-in-promise-methods" = "error"
+"unicorn/no-unnecessary-await" = "error"
+"react/hooks" = "error"
+"react/purity" = "error"
+"react/set-state-in-effect" = "error"
+"react/error-boundaries" = "error"
+"react/globals" = "error"
+"react/immutability" = "error"
+"react/static-components" = "error"
+"react/set-state-in-render" = "error"
+"react/use-memo" = "error"
+"react/void-use-memo" = "error"
+"react/unsupported-syntax" = "error"
+"react/no-deriving-state-in-effects" = "error"
+"react/jsx-no-script-url" = "error"
+"react/style-prop-object" = "error"
+"react/no-deprecated" = "error"
+"react/no-invalid-html-attribute" = "error"
+"react/checked-requires-onchange-or-readonly" = "error"
+"react/jsx-curly-brace-presence" = "error"
+"bun/jsx-no-forbidden-nesting" = "error"
+"bun/react-prefer-updater-function" = "error"
+"jsx_a11y/label-has-associated-control" = "error"
+"bun:test/no-identical-title" = "error"
+"bun:test/no-standalone-expect" = "error"
+"bun:test/no-conditional-tests" = "error"
+"bun:test/no-commented-out-tests" = "error"
+"bun:test/no-done-callback" = "error"
+"bun:test/no-duplicate-hooks" = "error"
+"bun:test/no-test-return-statement" = "error"
+"bun:test/valid-title" = "error"
+"bun:test/prefer-each" = "error"
+"bun:test/prefer-to-contain" = "error"
+"bun:test/no-alias-methods" = "error"
+"bun:test/prefer-expect-type-of" = "error"
+"no-useless-call" = "error"
+"no-useless-computed-key" = "error"
+"no-useless-rename" = "error"
+"typescript/no-useless-constructor" = "error"
+"no-unneeded-ternary" = "error"
+"logical-assignment-operators" = "error"
+"unicorn/prefer-array-find" = "error"
+"unicorn/prefer-array-flat" = "error"
+"unicorn/prefer-array-flat-map" = "error"
+"unicorn/prefer-set-size" = "error"
+"unicorn/prefer-string-starts-ends-with" = "error"
+"unicorn/prefer-includes" = "error"
+"unicorn/prefer-structured-clone" = "error"
+"unicorn/prefer-response-static-json" = "error"
+"unicorn/prefer-native-coercion-functions" = "error"
+"unicorn/no-useless-collection-argument" = "error"
+"unicorn/no-useless-fallback-in-spread" = "error"
+"unicorn/custom-error-definition" = "error"
+"typescript/prefer-ts-expect-error" = "error"
+"typescript/no-floating-promises" = [
+	"error",
+	{ allowForKnownSafeCalls = [
+		{ from = "package", name = "module", package = "bun-types" },
+	] },
+]
+"typescript/no-misused-promises" = "error"
+"typescript/await-thenable" = "error"
+"typescript/switch-exhaustiveness-check" = [
+	"error",
+	{ considerDefaultExhaustiveForUnions = true },
+]
+"typescript/no-deprecated" = "error"
+"typescript/no-base-to-string" = "error"
+"typescript/restrict-plus-operands" = "error"
+"typescript/no-unnecessary-type-assertion" = "error"
+"typescript/no-array-delete" = "error"
+"typescript/no-for-in-array" = "error"
+"typescript/no-unsafe-unary-minus" = "error"
+"typescript/no-unnecessary-boolean-literal-compare" = "error"
 
 [[lint.overrides]]
 files = [
@@ -171,7 +291,7 @@ rules = { "import/no-default-export" = "off" }
 
 [[lint.overrides]]
 files = ["**/*.test.ts", "**/*.test.tsx"]
-rules = { "bun:test/consistent-test-it" = ["error", { fn = "test", withinDescribe = "test" }], "bun:test/prefer-hooks-on-top" = "error", "bun:test/prefer-hooks-in-order" = "error", "sendou/no-raw-db-writes-in-tests" = "error" }
+rules = { "bun:test/consistent-test-it" = ["error", { fn = "test", withinDescribe = "test" }], "bun:test/prefer-hooks-on-top" = "error", "bun:test/prefer-hooks-in-order" = "error", "sendou/no-raw-db-writes-in-tests" = "error", "typescript/await-thenable" = "off" }
 
 [[lint.overrides]]
 files = ["e2e/**"]

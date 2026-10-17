@@ -199,7 +199,7 @@ export function BracketMapListDialog({
 				preparedMaps?.maps.map((map) => [
 					map.roundId,
 					map.isPlayableAt ?? null,
-				]) ?? [],
+				]),
 			),
 	);
 	const [isRealtime, setIsRealtime] = React.useState(false);
@@ -568,12 +568,12 @@ export function BracketMapListDialog({
 
 										const showUnlinkButton =
 											bracket.type === "single_elimination" &&
-											thirdPlaceMatchLinked === true &&
+											thirdPlaceMatchLinked &&
 											round.name ===
 												TOURNAMENT.ROUND_NAMES.FINALS_THIRD_PLACE_MATCH_UNIFIED;
 										const showLinkButton =
 											bracket.type === "single_elimination" &&
-											thirdPlaceMatchLinked === false &&
+											!thirdPlaceMatchLinked &&
 											round.name === TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH;
 
 										return (

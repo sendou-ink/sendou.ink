@@ -142,7 +142,7 @@ export const action = defineAction(
 				errorToastIfFalsy(declined, "Cannot decline an accepted trophy");
 
 				if (pending.submitterUserId !== user.id) {
-					notify({
+					void notify({
 						userIds: [pending.submitterUserId],
 						notification: {
 							type: "TROPHY_SUBMISSION_DECLINED",
@@ -182,7 +182,7 @@ export const action = defineAction(
 					clearTrophiesCache();
 
 					if (pending.submitterUserId !== user.id) {
-						notify({
+						void notify({
 							userIds: [pending.submitterUserId],
 							notification: {
 								type: "TROPHY_SUBMISSION_ACCEPTED",
@@ -281,7 +281,7 @@ async function notifyReviewersOfSubmission({
 		[ADMIN_ID, ...QA_IDS].filter((id) => id !== submitter.id),
 	);
 
-	notify({
+	void notify({
 		userIds: reviewerIds,
 		notification: {
 			type: "TROPHY_SUBMITTED",

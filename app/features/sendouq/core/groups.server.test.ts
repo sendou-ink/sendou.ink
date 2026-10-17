@@ -72,16 +72,14 @@ const paramsToExpected = new Map<
 	);
 
 describe("tierDifferenceToRangeOrExact()", () => {
-	for (const [input, expected] of paramsToExpected) {
-		test(`works for ${JSON.stringify(input)} -> ${JSON.stringify(expected)}`, () => {
-			const result = tierDifferenceToRangeOrExact({
-				ourTier: input[0],
-				theirTier: input[1],
-				hasLeviathan: true,
-			});
-			expect(result).toEqual(expected);
+	test.each([...paramsToExpected])("works for %j -> %j", (input, expected) => {
+		const result = tierDifferenceToRangeOrExact({
+			ourTier: input[0],
+			theirTier: input[1],
+			hasLeviathan: true,
 		});
-	}
+		expect(result).toEqual(expected);
+	});
 
 	test("works before leviathan", () => {
 		const result = tierDifferenceToRangeOrExact({

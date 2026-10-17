@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { hasPermission } from "./utils";
 
-const mockIsE2eTestRun = (isTestRun: boolean) =>
+const mockIsE2eTestRun = (isTestRun: boolean) => {
 	vi.mock("~/utils/e2e", () => ({ IS_E2E_TEST_RUN: isTestRun }));
+};
 
 const REGULAR_USER_ID = ADMIN_ID + 1;
 const OTHER_USER_ID = ADMIN_ID + 2;

@@ -16,11 +16,12 @@ const users = UserFactory.pool();
 
 const mockSendNotification = vi.fn();
 
-const mockWebPushEnabled = (enabled: boolean) =>
+const mockWebPushEnabled = (enabled: boolean) => {
 	vi.mock("./webPush.server", () => ({
 		webPushEnabled: enabled,
 		sendNotification: mockSendNotification,
 	}));
+};
 
 mockWebPushEnabled(false);
 

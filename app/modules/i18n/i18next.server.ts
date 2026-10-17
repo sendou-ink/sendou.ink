@@ -166,7 +166,7 @@ function requestInstance(
 	if (!instance) {
 		instance = createInstance();
 		instance.use(initReactI18next);
-		instance.init({
+		void instance.init({
 			...config,
 			resources: resourcesWithGameLanguage(gameLanguage),
 			lng: locale,
@@ -190,7 +190,12 @@ function fixedLanguageInstance(language: string): i18n {
 	let instance = fixedLanguageInstances.get(language);
 	if (!instance) {
 		instance = createInstance();
-		instance.init({ ...config, resources, lng: language, initAsync: false });
+		void instance.init({
+			...config,
+			resources,
+			lng: language,
+			initAsync: false,
+		});
 		fixedLanguageInstances.set(language, instance);
 	}
 	return instance;
@@ -203,7 +208,7 @@ function fallbackI18nInstance(): i18n {
 		const instance = createInstance();
 		instance.use(initReactI18next);
 		// initAsync: false is safe with in-memory resources and lets the sync getI18nInstance call this
-		instance.init({
+		void instance.init({
 			...config,
 			resources,
 			lng: DEFAULT_LANGUAGE,

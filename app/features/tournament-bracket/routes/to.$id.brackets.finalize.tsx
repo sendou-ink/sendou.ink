@@ -328,15 +328,13 @@ function NewTrophyReceiversSelector({
 	trophy: NonNullable<FinalizeTournamentLoaderData["trophy"]>;
 	winnerStandings: FinalizeTournamentLoaderData["standings"];
 	trophyReceiverUserIds: Array<number>;
-	setTrophyReceiverUserIds: (userIds: Array<number>) => void;
+	setTrophyReceiverUserIds: React.Dispatch<React.SetStateAction<number[]>>;
 }) {
 	const handleReceiverSelected = (userId: number) => (isSelected: boolean) => {
 		if (isSelected) {
-			setTrophyReceiverUserIds([...trophyReceiverUserIds, userId]);
+			setTrophyReceiverUserIds((prev) => [...prev, userId]);
 		} else {
-			setTrophyReceiverUserIds(
-				trophyReceiverUserIds.filter((id) => id !== userId),
-			);
+			setTrophyReceiverUserIds((prev) => prev.filter((id) => id !== userId));
 		}
 	};
 

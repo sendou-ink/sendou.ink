@@ -124,7 +124,7 @@ export function resolveContext({
 			povUserId,
 		}).length;
 		if (!best || matched > best.matched) {
-			best = { context: contextGames[0]!.context, matched };
+			best = { context: contextGames[0].context, matched };
 		}
 	}
 
@@ -181,7 +181,7 @@ export function matchedGames({
 		const gameIdx = pickGame(view, orderedGames, nextGameIdx, povUserId);
 		if (gameIdx === null) continue;
 
-		result.push({ matchIndex: view.matchIndex, game: orderedGames[gameIdx]! });
+		result.push({ matchIndex: view.matchIndex, game: orderedGames[gameIdx] });
 		nextGameIdx = gameIdx + 1;
 	}
 
@@ -206,7 +206,7 @@ export function povWeaponId({
 	if (!view || view.povIndex === null) return null;
 	if (!senderPlayedOnPovSide(view, game, povUserId)) return null;
 
-	const seat = view.players[view.povIndex]!;
+	const seat = view.players[view.povIndex];
 	const seatName = Matches.normalizeInGameName(seat.name);
 	const seatUserIds = [...game.inGameNameByUserId]
 		.filter(
@@ -475,12 +475,12 @@ function attributePovUsers(
 		if (players.some((player) => player.userId === povUserId)) continue;
 
 		const povName = Matches.normalizeInGameName(
-			view.players[view.povIndex]!.name,
+			view.players[view.povIndex].name,
 		);
 		const index = attributionIndex(players, povName, view.povIndex);
-		if (index === null || players[index]!.userId !== undefined) continue;
+		if (index === null || players[index].userId !== undefined) continue;
 
-		players[index] = { ...players[index]!, userId: povUserId };
+		players[index] = { ...players[index], userId: povUserId };
 	}
 }
 
@@ -493,7 +493,7 @@ function attributionIndex(
 		const hits = players.flatMap((player, index) =>
 			Matches.normalizeInGameName(player.name) === povName ? [index] : [],
 		);
-		if (hits.length === 1) return hits[0]!;
+		if (hits.length === 1) return hits[0];
 	}
 
 	const fallback = players[fallbackIndex];
@@ -537,7 +537,7 @@ function pickGame(
 	let best: { index: number; distance: number } | null = null;
 
 	for (let i = from; i < orderedGames.length; i++) {
-		const game = orderedGames[i]!;
+		const game = orderedGames[i];
 		if (!canLink(view, game, povUserId)) continue;
 
 		const distance = Math.abs(
@@ -589,7 +589,7 @@ function isLinkedDuplicate(view: WinnerFirstView, linkedPlayerNames: string[]) {
 	const matches = view.players.filter((player, i) => {
 		const name = Matches.normalizeInGameName(player.name);
 		const linkedName = linkedPlayerNames[i]
-			? Matches.normalizeInGameName(linkedPlayerNames[i]!)
+			? Matches.normalizeInGameName(linkedPlayerNames[i])
 			: "";
 		return name !== "" && name === linkedName;
 	}).length;

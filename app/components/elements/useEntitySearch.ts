@@ -49,7 +49,7 @@ export function useEntitySearch<TItem extends { id: number }>({
 	useDebounce(
 		() => {
 			if (!query) return;
-			queryFetcher.load(buildUrl(query));
+			void queryFetcher.load(buildUrl(query));
 			setSelectedKey(null);
 		},
 		SEARCH_DEBOUNCE_MS,

@@ -218,10 +218,10 @@ function GlobalSearchContent({
 		() => {
 			if (searchType === "weapons") return;
 			if (query.length < 3) return;
-			fetcher.load(
+			void fetcher.load(
 				searchSearchParams.href("/search", {
 					q: query,
-					type: searchType as Exclude<SearchType, "weapons">,
+					type: searchType,
 					limit: 10,
 				}),
 			);

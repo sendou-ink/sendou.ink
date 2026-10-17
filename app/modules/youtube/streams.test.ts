@@ -21,7 +21,7 @@ let freshImports = 0;
 let searchResults: string[];
 let videos: Map<string, VideoOptions>;
 const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-	const url = new URL(input.toString());
+	const url = requestUrl(input);
 
 	if (url.pathname.endsWith("/search")) {
 		return Response.json({
@@ -199,7 +199,7 @@ function advanceMinutes(minutes: number) {
 
 function searchCallCount() {
 	return fetchMock.mock.calls.filter(([input]) =>
-		input.toString().includes("/search"),
+		requestUrl(input).pathname.endsWith("/search"),
 	).length;
 }
 
@@ -221,4 +221,8 @@ function rawVideo(id: string, video: VideoOptions) {
 			concurrentViewers: video.ended ? undefined : String(video.viewers ?? 0),
 		},
 	};
+}
+
+function requestUrl(input: RequestInfo | URL) {
+	return new URL(input instanceof Request ? input.url : input);
 }

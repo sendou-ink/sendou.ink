@@ -90,11 +90,11 @@ describe("limitPeaks", () => {
 		);
 		expect(peak).toBeLessThanOrEqual(CEILING);
 		// both channels dip together
-		expect(other[SAMPLE_RATE / 2]!).toBeCloseTo(
-			(tone[SAMPLE_RATE / 2]! * CEILING) / 2,
+		expect(other[SAMPLE_RATE / 2]).toBeCloseTo(
+			(tone[SAMPLE_RATE / 2] * CEILING) / 2,
 			2,
 		);
 		const later = SAMPLE_RATE + 100;
-		expect(spiked[later]!).toBeCloseTo(tone[later]!, 2);
+		expect(spiked[later]).toBeCloseTo(tone[later], 2);
 	});
 });

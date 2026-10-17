@@ -3,11 +3,7 @@ import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { err, ok, type Result } from "~/utils/result";
 import type { ModeShort, StageId } from "../in-game-lists/types";
-import type {
-	TournamentMaplistInput,
-	TournamentMapListMap,
-	TournamentMaplistSource,
-} from "./types";
+import type { TournamentMaplistInput, TournamentMapListMap } from "./types";
 
 type ModeWithStageAndScore = TournamentMapListMap & {
 	score: number;
@@ -155,7 +151,7 @@ function generateWithInput(
 			sorted[0].maps.stageModePairs.map((pair) => ({
 				...pair,
 				score: 1,
-				source: sorted[0].id as TournamentMaplistSource,
+				source: sorted[0].id,
 			}));
 
 		for (const stage of sorted[1].maps.stageModePairs) {

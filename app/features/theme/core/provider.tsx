@@ -80,7 +80,7 @@ function ThemeProvider({
 
 	const handleSetUserTheme = (newTheme: Theme | "auto") => {
 		setUserPreference(newTheme);
-		persistThemeFetcher.submit(
+		void persistThemeFetcher.submit(
 			{ theme: newTheme },
 			{ action: "theme", method: "post" },
 		);

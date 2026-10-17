@@ -41,8 +41,13 @@ export function LayoutDataProvider({
 	const {
 		data: polledData,
 		isLoading,
-		refresh,
+		refresh: refreshResource,
 	} = useBackgroundResource<SerializeFrom<typeof loader>>(LAYOUT_DATA_ROUTE);
+	// stable so effects depending on it don't re-run every render
+	const refresh = React.useCallback(
+		() => void refreshResource(),
+		[refreshResource],
+	);
 
 	const lastRefreshedAtRef = React.useRef(0);
 
@@ -53,7 +58,7 @@ export function LayoutDataProvider({
 			if (Date.now() - lastRefreshedAtRef.current < ONE_MINUTE) return;
 
 			lastRefreshedAtRef.current = Date.now();
-			void refresh();
+			refresh();
 		};
 
 		const handleVisibilityChange = () => {

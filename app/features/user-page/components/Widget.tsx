@@ -49,11 +49,7 @@ import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { rawSensToString } from "~/utils/strings";
@@ -195,7 +191,7 @@ export function Widget({
 				if (!widget.data) return null;
 				return (
 					<PeakXpWeapon
-						weaponSplId={widget.data.weaponSplId as MainWeaponId}
+						weaponSplId={widget.data.weaponSplId}
 						peakXp={widget.data.peakXp}
 						leaderboardPosition={widget.data.leaderboardPosition}
 					/>
@@ -225,7 +221,7 @@ export function Widget({
 			case "timezone":
 				return <TimezoneWidget timezone={widget.data.timezone} />;
 			case "favorite-stage":
-				return <FavoriteStageWidget stageId={widget.data.stageId as StageId} />;
+				return <FavoriteStageWidget stageId={widget.data.stageId} />;
 			case "videos":
 				return widget.data.length === 0 ? null : (
 					<Videos videos={widget.data} />
@@ -582,7 +578,7 @@ function XRankPeaks({
 				<div key={peak.mode} className={styles.xRankPeakMode}>
 					<div className={styles.xRankPeakModeIconWrapper}>
 						<Image
-							path={modeImageUrl(peak.mode as ModeShort)}
+							path={modeImageUrl(peak.mode)}
 							alt=""
 							width={24}
 							height={24}
@@ -607,35 +603,35 @@ function XRankPeaks({
 function TimezoneWidget({ timezone }: { timezone: string }) {
 	const currentTime = useAutoRerender("second");
 
-	try {
-		return (
-			<div className="stack sm items-center">
-				<LocaleTime
-					date={currentTime}
-					options={{
-						timeZone: timezone,
-						hour: "numeric",
-						minute: "2-digit",
-						second: "2-digit",
-					}}
-					className={styles.widgetValueMain}
-				/>
-				<LocaleTime
-					date={currentTime}
-					options={{
-						timeZone: timezone,
-						weekday: "short",
-						day: "numeric",
-						month: "numeric",
-					}}
-					className={styles.widgetValueFooter}
-				/>
-			</div>
-		);
-	} catch {
+	if (!isValidTimezone(timezone)) {
 		logger.warn(`Failed to parse timezone: ${timezone}`);
 		return null;
 	}
+
+	return (
+		<div className="stack sm items-center">
+			<LocaleTime
+				date={currentTime}
+				options={{
+					timeZone: timezone,
+					hour: "numeric",
+					minute: "2-digit",
+					second: "2-digit",
+				}}
+				className={styles.widgetValueMain}
+			/>
+			<LocaleTime
+				date={currentTime}
+				options={{
+					timeZone: timezone,
+					weekday: "short",
+					day: "numeric",
+					month: "numeric",
+				}}
+				className={styles.widgetValueFooter}
+			/>
+		</div>
+	);
 }
 
 function FavoriteStageWidget({ stageId }: { stageId: StageId }) {
@@ -1241,4 +1237,12 @@ function CountdownWidget({
 			)}
 		</div>
 	);
+}
+
+function isValidTimezone(timeZone: string) {
+	try {
+		return Boolean(new Intl.DateTimeFormat(undefined, { timeZone }));
+	} catch {
+		return false;
+	}
 }

@@ -170,13 +170,13 @@ describe("generateYoutubeTimestamps", () => {
 				startsAt: 521,
 				mode: "SZ",
 				stageId: 7,
-				weapons: [40 as MainWeaponId],
+				weapons: [40],
 			}),
 			makeMatch({
 				startsAt: 759,
 				mode: "TC",
 				stageId: 2,
-				weapons: [7010 as MainWeaponId],
+				weapons: [7010],
 			}),
 		];
 
@@ -193,7 +193,7 @@ describe("generateYoutubeTimestamps", () => {
 				startsAt: 0,
 				mode: "RM",
 				stageId: 0,
-				weapons: [40 as MainWeaponId],
+				weapons: [40],
 			}),
 		];
 
@@ -208,7 +208,7 @@ describe("generateYoutubeTimestamps", () => {
 				startsAt: 25,
 				mode: "CB",
 				stageId: 10,
-				weapons: [200 as MainWeaponId, 6010 as MainWeaponId],
+				weapons: [200, 6010],
 			}),
 		];
 
@@ -223,13 +223,13 @@ describe("generateYoutubeTimestamps", () => {
 				startsAt: 521,
 				mode: "SZ",
 				stageId: 7,
-				weapons: [40 as MainWeaponId],
+				weapons: [40],
 			}),
 			makeMatch({
 				startsAt: 759,
 				mode: "RM",
 				stageId: 2,
-				weapons: [7010 as MainWeaponId],
+				weapons: [7010],
 			}),
 		];
 

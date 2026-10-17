@@ -443,7 +443,7 @@ function ImportTeamFields({
 						onTournamentSelected: (tournament) => {
 							if (!tournament) return;
 
-							fetcher.load(
+							void fetcher.load(
 								tournamentAdminImportTeamsPage({
 									tournamentId: currentTournamentId,
 									fromTournamentId: tournament.id,

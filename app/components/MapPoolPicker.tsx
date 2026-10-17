@@ -156,11 +156,9 @@ export function MapPoolPicker({
 									<label
 										key={stageId}
 										className={styles.stage}
-										style={
-											{
-												"--stage-banner": `url(${stageBannerImageUrl(stageId)})`,
-											} as React.CSSProperties
-										}
+										style={{
+											"--stage-banner": `url(${stageBannerImageUrl(stageId)})`,
+										}}
 									>
 										<input
 											type="checkbox"

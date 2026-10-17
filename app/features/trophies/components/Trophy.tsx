@@ -16,6 +16,7 @@ import {
 } from "react";
 import { TierPill } from "~/components/TierPill";
 import { useTheme } from "~/features/theme/core/provider";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
@@ -53,11 +54,8 @@ export function TrophyContextProvider({
 }: {
 	children: React.ReactNode;
 }) {
-	const [context, setContext] = useState<PicoCAD2Context | undefined>();
-
-	useEffect(() => {
-		setContext(getSharedTrophyContext());
-	}, []);
+	const isHydrated = useHydrated();
+	const context = isHydrated ? getSharedTrophyContext() : undefined;
 
 	const value: TrophyCtxValue = context
 		? { context }
@@ -76,11 +74,7 @@ export function TrophyGrid({
 	return (
 		<div
 			className={style.grid}
-			style={
-				columns
-					? ({ "--trophy-grid-columns": columns } as React.CSSProperties)
-					: undefined
-			}
+			style={columns ? { "--trophy-grid-columns": columns } : undefined}
 		>
 			{children}
 		</div>
@@ -204,7 +198,7 @@ export function Trophy({
 			// render loops starve the main thread on software WebGL, so surfaces
 			// showing many trophies without GPU acceleration draw a single static frame
 			if (preview || (staticOnSoftwareRendering && isSoftwareRendering())) {
-				viewer.whenReady().then(() =>
+				void viewer.whenReady().then(() =>
 					presentFrame(() => {
 						viewer.dispose();
 						viewerRef.current = null;
@@ -235,7 +229,7 @@ export function Trophy({
 				setDrawn(true);
 				setEverDrawn(true);
 			};
-			viewer.whenReady().then(() => {
+			void viewer.whenReady().then(() => {
 				if (viewerRef.current !== viewer) return;
 				if (pausedRef.current) {
 					presentFrame(markDrawn);

@@ -18,11 +18,12 @@ const groupNumberToLettersParamsToResult = [
 ];
 
 describe("groupNumberToLetters()", () => {
-	for (const { groupNumber, expected } of groupNumberToLettersParamsToResult) {
-		test(`groupNumber=${groupNumber} -> ${expected}`, () => {
+	test.each(groupNumberToLettersParamsToResult)(
+		"groupNumber=$groupNumber -> $expected",
+		({ groupNumber, expected }) => {
 			expect(groupNumberToLetters(groupNumber)).toBe(expected);
-		});
-	}
+		},
+	);
 });
 
 describe("tournamentBracketChannel()", () => {

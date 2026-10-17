@@ -341,7 +341,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				const [board, ...revisits] = replayed.sources;
 				open.scoreboard = board!;
 				open.revisits = revisits;
-				vote(open.stageVotes, (board!.data as ScoreboardData).stage);
+				vote(open.stageVotes, (board.data as ScoreboardData).stage);
 			}
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 			if ((event.data as ScoreboardData).noContest) {
@@ -460,7 +460,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 
 	// a history screen of another game is built before the open match it interrupted
 	return [...built, ...unbackedBuilt].sort(
-		(a, b) => a.sources[0]!.t - b.sources[0]!.t,
+		(a, b) => a.sources[0].t - b.sources[0].t,
 	);
 }
 
@@ -702,7 +702,7 @@ function wasReplayed<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
 	index: number,
 ): boolean {
-	const { match, sources } = built[index]!;
+	const { match, sources } = built[index];
 	if (match.mode === null || match.stage === null) return false;
 	// a counter read bounding the game's end settles it alone (`endedEarly`)
 	if (counterShortfallSeconds(match) !== null) return false;
@@ -819,7 +819,7 @@ function buildMinimapLookahead<E extends DetectedEvent>(
 	let laterStages = new Set<StageId>();
 	let laterMinimapT: number | null = null;
 	for (let i = sorted.length - 1; i >= 0; i--) {
-		const event = sorted[i]!;
+		const event = sorted[i];
 		if (
 			event.type === MAP_START_EVENT_TYPE ||
 			SCOREBOARD_EVENT_TYPES.includes(event.type)
@@ -884,7 +884,7 @@ function cachedBuiltMatch<E extends DetectedEvent>(
 ): BuiltMatch<E> {
 	if (!cache) return toBuiltMatch(open);
 	const inputs = openMatchInputs(open);
-	const cacheKey = key ?? inputs[0]!;
+	const cacheKey = key ?? inputs[0];
 	const cached = cache.get(cacheKey);
 	if (
 		cached &&
@@ -966,8 +966,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 			: null;
 
 	const match: ScannerMatch = {
-		startsAt:
-			sources.length > 0 ? Math.max(0, Math.floor(sources[0]!.t)) : null,
+		startsAt: sources.length > 0 ? Math.max(0, Math.floor(sources[0].t)) : null,
 		endsAt: floorOrNull(sources.at(-1)?.t),
 		playedAt: playedAt(open.scoreboard),
 		// only X Battle shows its lobby cards: they tell a game whose results
@@ -1163,7 +1162,7 @@ function buildProgress(
 								): [PlayerStatusFlags, PlayerStatusFlags] =>
 									[a, b].map((source, side) =>
 										applyPermutation(
-											flags[source]!,
+											flags[source],
 											readPermutation(perms, read, source, side as 0 | 1),
 										),
 									) as [PlayerStatusFlags, PlayerStatusFlags];
@@ -1278,10 +1277,10 @@ function alignKillRows(
 	for (let k = 1; k <= known.length; k++) {
 		for (let i = 1; i <= read.length; i++) {
 			const weight = weightOf(k - 1, i - 1);
-			best[k]![i] = Math.max(
-				best[k - 1]![i]!,
-				best[k]![i - 1]!,
-				weight > 0 ? best[k - 1]![i - 1]! + weight : 0,
+			best[k][i] = Math.max(
+				best[k - 1][i],
+				best[k][i - 1],
+				weight > 0 ? best[k - 1][i - 1] + weight : 0,
 			);
 		}
 	}
@@ -1291,11 +1290,11 @@ function alignKillRows(
 	let i = read.length;
 	while (k > 0 && i > 0) {
 		const weight = weightOf(k - 1, i - 1);
-		if (weight > 0 && best[k]![i] === best[k - 1]![i - 1]! + weight) {
+		if (weight > 0 && best[k][i] === best[k - 1][i - 1] + weight) {
 			matched.set(k - 1, i - 1);
 			k--;
 			i--;
-		} else if (best[k]![i] === best[k - 1]![i]) {
+		} else if (best[k][i] === best[k - 1][i]) {
 			k--;
 		} else {
 			i--;
@@ -1377,11 +1376,11 @@ function slotRowPermutations({
 				const floor = candidates.at(-1)!.score;
 				for (const candidate of candidates) {
 					addWeaponEvidence(
-						evidence[side]!,
+						evidence[side],
 						slot,
 						candidate.weaponId,
 						candidate.score - floor,
-						rowWeapons[side]!,
+						rowWeapons[side],
 					);
 				}
 			}
@@ -1404,11 +1403,11 @@ function slotRowPermutations({
 			for (const [slot, card] of cards.entries()) {
 				if (card.weaponId === null) continue;
 				addWeaponEvidence(
-					evidence[side]!,
+					evidence[side],
 					slot,
 					card.weaponId,
 					MINIMAP_CARD_VOTE,
-					rowWeapons[side]!,
+					rowWeapons[side],
 				);
 			}
 		}
@@ -1422,11 +1421,9 @@ function slotRowPermutations({
 		})),
 	);
 	const observe = (side: 0 | 1, observation: StatusObservation): void =>
-		addStatusEvidence(evidence[side]!, snapshots[side]!, observation);
+		addStatusEvidence(evidence[side], snapshots[side], observation);
 	const povSide =
-		board.povIndex === null
-			? null
-			: ((board.povIndex < PLAYERS_PER_TEAM ? 0 : 1) as 0 | 1);
+		board.povIndex === null ? null : board.povIndex < PLAYERS_PER_TEAM ? 0 : 1;
 	const povRow =
 		board.povIndex === null ? null : board.povIndex % PLAYERS_PER_TEAM;
 	if (povSide !== null && povRow !== null) {
@@ -1441,7 +1438,7 @@ function slotRowPermutations({
 		const victimSide = (1 - povSide) as 0 | 1;
 		for (const kill of kills) {
 			const row =
-				kill.name === null ? null : rowByName(kill.name, rowNames[victimSide]!);
+				kill.name === null ? null : rowByName(kill.name, rowNames[victimSide]);
 			if (row === null) continue;
 			observe(victimSide, {
 				t: kill.t + KILL_STRIP_DELAY_SECONDS,
@@ -1460,7 +1457,7 @@ function slotRowPermutations({
 					: null
 				: mate.name === null
 					? null
-					: rowByName(mate.name, rowNames[friendlySide]!);
+					: rowByName(mate.name, rowNames[friendlySide]);
 			if (row === null) continue;
 			observe(friendlySide, {
 				t: read.t,
@@ -1481,11 +1478,11 @@ function slotRowPermutations({
 		if (read.data.spectator) continue;
 		for (const [slot, mate] of read.data.teammates.entries()) {
 			const name = mate.name?.trim();
-			if (name) cardNames[slot]!.push(name);
+			if (name) cardNames[slot].push(name);
 		}
 	}
 	const diamond = cardNames.some((names) => names.length > 0)
-		? nameSlotRowPermutation(cardNames, rowNames[friendlySide]!)
+		? nameSlotRowPermutation(cardNames, rowNames[friendlySide])
 		: null;
 
 	return { strip, diamond };
@@ -1534,7 +1531,7 @@ function withImpossibleDeadRunsFlipped(
 					const interior = runStart > 0 && i < series.length;
 					const impossiblyShort =
 						interior &&
-						smoothed[i]!.t - smoothed[runStart - 1]!.t <=
+						smoothed[i].t - smoothed[runStart - 1].t <=
 							(series[runStart] ? DEAD_RUN_MIN_SECONDS : ALIVE_RUN_MIN_SECONDS);
 					if (impossiblyShort) {
 						if (smoothed === samples) {
@@ -1547,7 +1544,7 @@ function withImpossibleDeadRunsFlipped(
 							}));
 						}
 						for (let j = runStart; j < i; j++) {
-							smoothed[j]!.dead[side][slot] = !series[runStart];
+							smoothed[j].dead[side][slot] = !series[runStart];
 						}
 						changed = true;
 						break;
@@ -1604,7 +1601,7 @@ function withShortSpecialGapsBridged(
 					!series[runStart] && runStart > 0 && i < series.length;
 				const impossiblyShort =
 					interiorGap &&
-					samples[i]!.t - samples[runStart - 1]!.t < SPECIAL_REGAIN_MIN_SECONDS;
+					samples[i].t - samples[runStart - 1].t < SPECIAL_REGAIN_MIN_SECONDS;
 				const diedInside =
 					interiorGap &&
 					samples.slice(runStart, i).some((sample) => sample.dead[side][slot]);
@@ -1619,7 +1616,7 @@ function withShortSpecialGapsBridged(
 						}));
 					}
 					for (let j = runStart; j < i; j++) {
-						bridged[j]!.special[side][slot] = true;
+						bridged[j].special[side][slot] = true;
 					}
 				}
 				runStart = i;
@@ -1695,7 +1692,7 @@ function nearestSwapFlag(
 	for (const [i, read] of objectives.entries()) {
 		if (
 			best === -1 ||
-			Math.abs(read.t - t) < Math.abs(objectives[best]!.t - t)
+			Math.abs(read.t - t) < Math.abs(objectives[best].t - t)
 		) {
 			best = i;
 		}
@@ -1875,7 +1872,7 @@ function withoutReplayReads<
 		]),
 	);
 
-	let previousKept = keptAnchored.get(anchored[0]!.i)!;
+	let previousKept = keptAnchored.get(anchored[0].i)!;
 	return reads.filter((_, i) => {
 		previousKept = keptAnchored.get(i) ?? previousKept;
 		return previousKept;
@@ -1885,11 +1882,11 @@ function withoutReplayReads<
 /** The clock-zero projection supported by the most reads within tolerance. */
 function dominantAnchor(anchors: readonly number[]): number {
 	const sorted = anchors.toSorted((a, b) => a - b);
-	let best = sorted[0]!;
+	let best = sorted[0];
 	let bestRunLength = 0;
 	let lo = 0;
 	for (let hi = 0; hi < sorted.length; hi++) {
-		while (sorted[hi]! - sorted[lo]! > REPLAY_ANCHOR_TOLERANCE_SECONDS) lo++;
+		while (sorted[hi] - sorted[lo] > REPLAY_ANCHOR_TOLERANCE_SECONDS) lo++;
 		if (hi - lo + 1 > bestRunLength) {
 			bestRunLength = hi - lo + 1;
 			best = sorted[Math.floor((lo + hi) / 2)]!;
@@ -1916,10 +1913,10 @@ function withMonotonicScores(
 			read.score[side] !== null ? [i] : [],
 		);
 		const kept = longestNonIncreasingRun(
-			readIndices.map((i) => smoothed[i]!.score[side]!),
+			readIndices.map((i) => smoothed[i].score[side]!),
 		);
 		for (const [k, i] of readIndices.entries()) {
-			if (!kept.has(k)) smoothed[i]!.score[side] = null;
+			if (!kept.has(k)) smoothed[i].score[side] = null;
 		}
 	}
 	return smoothed;
@@ -1932,12 +1929,12 @@ function longestNonIncreasingRun(values: readonly number[]): Set<number> {
 	let bestEnd = values.length > 0 ? 0 : -1;
 	for (let i = 0; i < values.length; i++) {
 		for (let j = 0; j < i; j++) {
-			if (values[j]! >= values[i]! && lengths[j]! + 1 > lengths[i]!) {
-				lengths[i] = lengths[j]! + 1;
+			if (values[j] >= values[i] && lengths[j] + 1 > lengths[i]) {
+				lengths[i] = lengths[j] + 1;
 				prev[i] = j;
 			}
 		}
-		if (lengths[i]! > lengths[bestEnd]!) bestEnd = i;
+		if (lengths[i] > lengths[bestEnd]) bestEnd = i;
 	}
 	const kept = new Set<number>();
 	for (let i = bestEnd; i !== -1; i = prev[i]!) kept.add(i);
@@ -2115,7 +2112,7 @@ function scoreboardlessMatchShown<E extends DetectedEvent>(
 	}
 	if (closest) return closest.match;
 
-	return fitting.length === 1 ? fitting[0]![0] : undefined;
+	return fitting.length === 1 ? fitting[0][0] : undefined;
 }
 
 /** When the earliest of the match's reads was seen (wall clock); null on VoD scans. */

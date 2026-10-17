@@ -23,9 +23,9 @@ import {
 import { ModeImage } from "~/components/Image";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start";
 import type { XRankPositionData } from "../core/detectors/x-rank/position";
-import type { IngestSkipReason } from "../core/match-builder";
 import {
 	type BuiltMatch,
+	type IngestSkipReason,
 	ingestSkipReasons,
 	isHistoryOnly,
 } from "../core/match-builder";
@@ -174,7 +174,7 @@ export function SessionView({
 							})
 						: null
 				}
-				clips={clipsByMatch[index]!}
+				clips={clipsByMatch[index]}
 				coachHref={coachHref?.(b) ?? null}
 				onPlayClip={setPlaying}
 				getFrame={getFrame}
@@ -192,7 +192,7 @@ export function SessionView({
 				onPlay={setPlaying}
 				sourceLabel={(clip) => {
 					const source = built.find((_, index) =>
-						clipsByMatch[index]!.includes(clip),
+						clipsByMatch[index].includes(clip),
 					);
 					const number = source ? shownBuilt.indexOf(source) + 1 : 0;
 					return number > 0 ? `Game ${number}` : "";

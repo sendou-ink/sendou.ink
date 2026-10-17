@@ -394,6 +394,7 @@ class BadBracketError extends Error {
 
 	constructor(bracketIdx: number) {
 		super(`Bracket at index ${bracketIdx} has invalid placements`);
+		this.name = "BadBracketError";
 		this.bracketIdx = bracketIdx;
 	}
 }

@@ -79,8 +79,11 @@ describe("Create double elimination stage", () => {
 
 		for (const group of data.group) {
 			const groupTeamIds = data.match
-				.filter((match) => match.groupId === group.id)
-				.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
+				.flatMap((match) =>
+					match.groupId === group.id
+						? [match.opponent1?.id, match.opponent2?.id]
+						: [],
+				)
 				.filter((id) => typeof id === "number");
 
 			expect(new Set(groupTeamIds).size).toBe(7);
@@ -150,8 +153,11 @@ describe("Create double elimination stage", () => {
 			[
 				...new Set(
 					data.match
-						.filter((match) => match.groupId === groupId)
-						.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
+						.flatMap((match) =>
+							match.groupId === groupId
+								? [match.opponent1?.id, match.opponent2?.id]
+								: [],
+						)
 						.filter((id) => typeof id === "number"),
 				),
 			].sort((a, b) => a - b);

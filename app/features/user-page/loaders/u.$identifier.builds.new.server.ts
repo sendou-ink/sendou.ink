@@ -3,7 +3,7 @@ import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
-import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
+import type { Ability } from "~/modules/in-game-lists/types";
 import type { SearchParamsValues } from "~/modules/search-params/search-params";
 import type { newBuildBaseSchema } from "../user-page-schemas";
 import { userBuildsNewSearchParams } from "../user-page-search-params";
@@ -73,7 +73,7 @@ function resolveDefaultValues(
 		}
 
 		if (typeof params.weapon === "number") {
-			return [{ id: params.weapon as MainWeaponId, isFavorite: false }];
+			return [{ id: params.weapon, isFavorite: false }];
 		}
 
 		return [];

@@ -4,10 +4,11 @@ import NProgress from "nprogress";
 import * as React from "react";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import {
 	Links,
+	type LoaderFunctionArgs,
 	Meta,
+	type MetaFunction,
 	Outlet,
 	Scripts,
 	ScrollRestoration,
@@ -339,7 +340,7 @@ function useTriggerToasts() {
 			window.scrollTo(0, scrollBeforeToast.current.y);
 		}
 
-		navigate(
+		void navigate(
 			{ search: searchWithoutToastParams },
 			{
 				replace: true,

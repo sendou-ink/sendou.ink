@@ -183,8 +183,8 @@ test("cast fixture pair: team ink hues identify sides across camera swaps", asyn
 		);
 	}
 	const [specced, overhead] = colors;
-	assert.ok(hueDistance(hueOf(specced![0]), hueOf(overhead![1])) <= 20);
-	assert.ok(hueDistance(hueOf(specced![1]), hueOf(overhead![0])) <= 20);
+	assert.ok(hueDistance(hueOf(specced[0]), hueOf(overhead[1])) <= 20);
+	assert.ok(hueDistance(hueOf(specced[1]), hueOf(overhead[0])) <= 20);
 });
 
 // Screens that replace gameplay can never show the counters — the gate must
@@ -256,18 +256,15 @@ const sharedFrames = new Map(
 	]),
 );
 const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+	["scoreboard", createScoreboardDetector(resources)],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources),
 	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["death", createDeathDetector(resources) as Detector<unknown>],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-own", createScoreboardOwnDetector(resources)],
+	["death", createDeathDetector(resources)],
+	["map-start", createMapStartDetector(resources)],
+	["minimap", createMinimapDetector(resources)],
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "Objective",

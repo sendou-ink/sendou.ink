@@ -131,10 +131,10 @@ for (const fixture of loadFixtures("negative")) {
 }
 
 const otherDetectors: Detector<unknown>[] = [
-	createScoreboardDetector(resources) as Detector<unknown>,
-	createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
-	createDeathDetector(resources) as Detector<unknown>,
-	createMapStartDetector(resources) as Detector<unknown>,
+	createScoreboardDetector(resources),
+	createScoreboardBattleLogReplayDetector(resources),
+	createDeathDetector(resources),
+	createMapStartDetector(resources),
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "ScoreboardOwn",

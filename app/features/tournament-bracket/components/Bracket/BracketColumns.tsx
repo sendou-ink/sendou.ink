@@ -12,7 +12,7 @@ export function BracketColumns({
 	return (
 		<div
 			className={styles.elimContainer}
-			style={{ "--round-count": roundCount } as React.CSSProperties}
+			style={{ "--round-count": roundCount }}
 		>
 			{children}
 		</div>

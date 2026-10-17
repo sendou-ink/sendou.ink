@@ -123,7 +123,7 @@ export function ImageCropDialog({
 				<div
 					ref={frameRef}
 					className={styles.frame}
-					style={{ "--aspect-ratio": aspectRatio } as React.CSSProperties}
+					style={{ "--aspect-ratio": aspectRatio }}
 				>
 					<div
 						className={styles.orientedImage}
@@ -141,9 +141,7 @@ export function ImageCropDialog({
 							className={clsx(styles.image, {
 								[styles.sideways]: crop.rotation % 180 !== 0,
 							})}
-							style={
-								{ "--rotation": `${crop.rotation}deg` } as React.CSSProperties
-							}
+							style={{ "--rotation": `${crop.rotation}deg` }}
 						/>
 					</div>
 					<div

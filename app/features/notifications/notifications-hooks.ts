@@ -33,7 +33,7 @@ export function useMarkNotificationsAsSeen(unseenIds: number[]) {
 		}
 		refreshPendingRef.current = true;
 
-		submit(
+		void submit(
 			{ notificationIds: idsToSubmit },
 			{
 				method: "post",

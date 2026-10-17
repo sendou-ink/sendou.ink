@@ -26,23 +26,21 @@ describe("canonicalMatch", () => {
 				],
 			},
 		});
-		const reordered = JSON.parse(
-			JSON.stringify({
-				winner: match.winner,
-				objective: match.objective,
-				teams: match.teams,
-				cast: match.cast,
-				replayCode: match.replayCode,
-				matchScores: match.matchScores,
-				stage: match.stage,
-				mode: match.mode,
-				lobby: match.lobby,
-				playedAt: match.playedAt,
-				endsAt: match.endsAt,
-				startsAt: match.startsAt,
-				pov: match.pov,
-			}),
-		) as ScannerMatch;
+		const reordered = structuredClone({
+			winner: match.winner,
+			objective: match.objective,
+			teams: match.teams,
+			cast: match.cast,
+			replayCode: match.replayCode,
+			matchScores: match.matchScores,
+			stage: match.stage,
+			mode: match.mode,
+			lobby: match.lobby,
+			playedAt: match.playedAt,
+			endsAt: match.endsAt,
+			startsAt: match.startsAt,
+			pov: match.pov,
+		}) as ScannerMatch;
 
 		expect(JSON.stringify(Matches.canonicalMatch(reordered))).toBe(
 			JSON.stringify(Matches.canonicalMatch(match)),
@@ -108,9 +106,9 @@ describe("isSameMatch", () => {
 	test("close play times still identify a match with a couple of misread names per team", () => {
 		const playedAt = 1_700_000_000_000;
 		const b = scannerMatch({ playedAt: playedAt + 60 * 1000 });
-		b.teams[0].players[0] = scannerMatchPlayer("misread1", WEAPONS[0]!);
-		b.teams[0].players[1] = scannerMatchPlayer("misread2", WEAPONS[1]!);
-		b.teams[1].players[2] = scannerMatchPlayer("misread3", WEAPONS[6]!);
+		b.teams[0].players[0] = scannerMatchPlayer("misread1", WEAPONS[0]);
+		b.teams[0].players[1] = scannerMatchPlayer("misread2", WEAPONS[1]);
+		b.teams[1].players[2] = scannerMatchPlayer("misread3", WEAPONS[6]);
 		expect(Matches.isSameMatch(scannerMatch({ playedAt }), b)).toBe(true);
 	});
 
@@ -181,8 +179,8 @@ describe("isSameMatch", () => {
 
 	test("roster overlap survives a couple of misread names", () => {
 		const b = scannerMatch();
-		b.teams[0].players[0] = scannerMatchPlayer("misread", WEAPONS[0]!);
-		b.teams[1].players[3] = scannerMatchPlayer(null, WEAPONS[7]!);
+		b.teams[0].players[0] = scannerMatchPlayer("misread", WEAPONS[0]);
+		b.teams[1].players[3] = scannerMatchPlayer(null, WEAPONS[7]);
 		expect(Matches.isSameMatch(scannerMatch(), b)).toBe(true);
 	});
 
@@ -245,7 +243,7 @@ describe("mergeMatches", () => {
 
 		const { merged } = Matches.mergeMatches(existing, incoming);
 		expect(merged.stage).toBe(0);
-		expect(merged.teams[0].players[0]!.name).toBe("w1");
+		expect(merged.teams[0].players[0].name).toBe("w1");
 	});
 
 	test("flips a side-swapped track position back with its sides", () => {
@@ -295,14 +293,14 @@ describe("mergeMatches", () => {
 		existing.teams[1].players[1] = scannerMatchPlayer("l2", null);
 		const incoming = scannerMatch();
 		incoming.teams[1].players = [
-			scannerMatchPlayer("l2", WEAPONS[5]!, { ka: 12, abilities: [["ISM"]] }),
-			scannerMatchPlayer("l1", WEAPONS[4]!),
-			scannerMatchPlayer("l3", WEAPONS[6]!),
-			scannerMatchPlayer("l4", WEAPONS[7]!),
+			scannerMatchPlayer("l2", WEAPONS[5], { ka: 12, abilities: [["ISM"]] }),
+			scannerMatchPlayer("l1", WEAPONS[4]),
+			scannerMatchPlayer("l3", WEAPONS[6]),
+			scannerMatchPlayer("l4", WEAPONS[7]),
 		];
 
 		const { merged } = Matches.mergeMatches(existing, incoming);
-		const l2 = merged.teams[1].players[1]!;
+		const l2 = merged.teams[1].players[1];
 		expect(l2.weaponId).toBe(WEAPONS[5]);
 		expect(l2.ka).toBe(12);
 		expect(l2.abilities).toEqual([["ISM"]]);
@@ -411,11 +409,11 @@ describe("playerStatus", () => {
 			scannerMatch({ winner: null, matchScores: null, playerStatus: null }),
 			incoming,
 		);
-		expect(merged.playerStatus!.samples[0]!.dead).toEqual([
+		expect(merged.playerStatus!.samples[0].dead).toEqual([
 			[false, true, false, false],
 			[false, false, false, false],
 		]);
-		expect(merged.playerStatus!.samples[0]!.special).toEqual([
+		expect(merged.playerStatus!.samples[0].special).toEqual([
 			[false, false, false, false],
 			[true, false, false, false],
 		]);

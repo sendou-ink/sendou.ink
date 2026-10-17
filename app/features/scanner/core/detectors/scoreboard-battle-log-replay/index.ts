@@ -119,10 +119,7 @@ function greenFraction(frame: Mat, roi: Roi): number {
 	const n = cont.rows * cont.cols;
 	let green = 0;
 	for (let i = 0; i < n; i++) {
-		if (
-			d[i * 4 + 1]! > GATE_CODE_GREEN_MIN &&
-			d[i * 4 + 2]! < GATE_CODE_BLUE_MAX
-		)
+		if (d[i * 4 + 1] > GATE_CODE_GREEN_MIN && d[i * 4 + 2] < GATE_CODE_BLUE_MAX)
 			green++;
 	}
 	cont.delete();
@@ -240,7 +237,7 @@ export function createScoreboardBattleLogReplayDetector(
 		// knockout's full count reaches 500); never emitted as a score
 		const teamCrop = teamDigits ? cropRoi(gray, teamScoreRoi(dx)) : null;
 		const matchCrop = matchScoreDigits
-			? cropRoi(gray, MATCH_SCORE_ROIS[dx === 0 ? 0 : 1]!)
+			? cropRoi(gray, MATCH_SCORE_ROIS[dx === 0 ? 0 : 1])
 			: null;
 		const bright = resultGlyphs ? maxChannel(rgb, resultTagRoi(dx)) : null;
 		const [rowReads, teamScore, matchRead, resultRaw] = yield* all([
@@ -357,8 +354,8 @@ export function createScoreboardBattleLogReplayDetector(
 		const rgb = frameRgb(frame);
 
 		const [left, right, header, code] = yield* all([
-			parsePanelSteps(gray, rgb, PANEL_XS[0]!, speculative),
-			parsePanelSteps(gray, rgb, PANEL_XS[1]!, speculative),
+			parsePanelSteps(gray, rgb, PANEL_XS[0], speculative),
+			parsePanelSteps(gray, rgb, PANEL_XS[1], speculative),
 			headerTopGlyphs && headerBottomGlyphs
 				? parseReplayHeaderSteps(
 						gray,

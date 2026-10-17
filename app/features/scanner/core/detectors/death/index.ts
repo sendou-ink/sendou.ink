@@ -185,7 +185,7 @@ function candidatesFor(template: DeathMessageTemplate): WeaponCandidate[] {
 		const k = matchKey(text);
 		if (!entry || seen.has(k)) return;
 		seen.add(k);
-		candidates!.push({
+		candidates.push({
 			text: template.weaponPre + text + template.weaponPost,
 			entry,
 		});
@@ -252,7 +252,7 @@ export function createDeathDetector(
 			const n = probe.rows * probe.cols;
 			let maxCh = 0;
 			for (let i = 0; i < n; i++) {
-				const v = Math.max(d[i * ch]!, d[i * ch + 1]!, d[i * ch + 2]!);
+				const v = Math.max(d[i * ch], d[i * ch + 1], d[i * ch + 2]);
 				if (v > maxCh) maxCh = v;
 			}
 			probe.delete();
@@ -300,7 +300,7 @@ export function createDeathDetector(
 			const d = probe.data;
 			let min = 255;
 			for (let i = 0; i < probe.rows * probe.cols; i++) {
-				min = Math.min(min, d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
+				min = Math.min(min, d[i * 3], d[i * 3 + 1], d[i * 3 + 2]);
 			}
 			probe.delete();
 			return min >= REPLAY_HINT_CHIP_MIN_CHANNEL;
@@ -352,11 +352,11 @@ export function createDeathDetector(
 	/** Memoized read for a matching tag, freshened to the list's end. */
 	function tagMemoLookup(signature: Uint8Array): TagNameRead | null {
 		for (let i = 0; i < tagMemo.length; i++) {
-			const entry = tagMemo[i]!;
+			const entry = tagMemo[i];
 			let sum = 0;
 			let cell = 0;
 			for (let k = 0; k < signature.length; k++) {
-				const diff = Math.abs(signature[k]! - entry.signature[k]!);
+				const diff = Math.abs(signature[k] - entry.signature[k]);
 				sum += diff;
 				if (diff > cell) cell = diff;
 			}
@@ -390,13 +390,13 @@ export function createDeathDetector(
 			let total = 0;
 			for (let i = 0; i < n; i++) {
 				if (mask && !mask(i)) continue;
-				hist[px[i * 3 + c]!]!++;
+				hist[px[i * 3 + c]]++;
 				total++;
 			}
 			let acc = 0;
 			let v = 0;
 			for (; v < 255; v++) {
-				acc += hist[v]!;
+				acc += hist[v];
 				if (acc >= total / 2) break;
 			}
 			color[c] = v;
@@ -420,9 +420,9 @@ export function createDeathDetector(
 		const bins = new Map<number, number>();
 		for (let i = 0; i < n; i++) {
 			const key =
-				((px[i * 3]! >> 3) << 10) |
-				((px[i * 3 + 1]! >> 3) << 5) |
-				(px[i * 3 + 2]! >> 3);
+				((px[i * 3] >> 3) << 10) |
+				((px[i * 3 + 1] >> 3) << 5) |
+				(px[i * 3 + 2] >> 3);
 			bins.set(key, (bins.get(key) ?? 0) + 1);
 		}
 		// greedy cluster of the top bins by quantized-center proximity
@@ -442,7 +442,7 @@ export function createDeathDetector(
 			const c = centerOf(key);
 			const home = clusters.find((cl) =>
 				cl.seed.every(
-					(s, i) => Math.abs(s - c[i]!) <= CLUSTER_MAX_CHANNEL_DISTANCE,
+					(s, i) => Math.abs(s - c[i]) <= CLUSTER_MAX_CHANNEL_DISTANCE,
 				),
 			);
 			if (home) {
@@ -458,9 +458,9 @@ export function createDeathDetector(
 			.map(({ keys, count: clusterCount }) => {
 				const inCluster = (i: number) =>
 					keys.has(
-						((px[i * 3]! >> 3) << 10) |
-							((px[i * 3 + 1]! >> 3) << 5) |
-							(px[i * 3 + 2]! >> 3),
+						((px[i * 3] >> 3) << 10) |
+							((px[i * 3 + 1] >> 3) << 5) |
+							(px[i * 3 + 2] >> 3),
 					);
 				return {
 					color: medianColor(inner, inCluster),
@@ -489,9 +489,9 @@ export function createDeathDetector(
 			let d = 255;
 			for (const color of colors) {
 				const dc = Math.max(
-					Math.abs(px[i * 3]! - color[0]),
-					Math.abs(px[i * 3 + 1]! - color[1]),
-					Math.abs(px[i * 3 + 2]! - color[2]),
+					Math.abs(px[i * 3] - color[0]),
+					Math.abs(px[i * 3 + 1] - color[1]),
+					Math.abs(px[i * 3 + 2] - color[2]),
 				);
 				if (dc < d) d = dc;
 			}
@@ -524,10 +524,10 @@ export function createDeathDetector(
 		const s = stats.data32S;
 		const touchesBorder = new Uint8Array(count);
 		for (let i = 1; i < count; i++) {
-			const left = s[i * 5 + cv.CC_STAT_LEFT]!;
-			const top = s[i * 5 + cv.CC_STAT_TOP]!;
-			const right = left + s[i * 5 + cv.CC_STAT_WIDTH]!;
-			const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT]!;
+			const left = s[i * 5 + cv.CC_STAT_LEFT];
+			const top = s[i * 5 + cv.CC_STAT_TOP];
+			const right = left + s[i * 5 + cv.CC_STAT_WIDTH];
+			const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT];
 			touchesBorder[i] =
 				left === 0 || top === 0 || right === band.cols || bottom === band.rows
 					? 1
@@ -537,7 +537,7 @@ export function createDeathDetector(
 		const lab = labels.data32S;
 		const out = band.data;
 		for (let i = 0; i < out.length; i++) {
-			if (touchesBorder[lab[i]!]!) out[i] = 0;
+			if (touchesBorder[lab[i]]) out[i] = 0;
 		}
 		labels.delete();
 	}
@@ -566,7 +566,7 @@ export function createDeathDetector(
 		let inkCount = 0;
 		for (const value of ink) if (value > TAG_NAME_BIN_THRESHOLD) inkCount++;
 		if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
-			textColor = medianColor(inner, (i) => ink[i]! > TAG_NAME_BIN_THRESHOLD);
+			textColor = medianColor(inner, (i) => ink[i] > TAG_NAME_BIN_THRESHOLD);
 			const contrast = colorContrast(textColor, backgrounds);
 			refined = distanceBand(inner, [textColor], true, 255 / contrast);
 			refineThreshold =
@@ -600,7 +600,7 @@ export function createDeathDetector(
 			refinedParse && refinedParse.confidence > bandParse.confidence
 				? refinedParse
 				: bandParse;
-		return { parsed, background: backgrounds[0]!, textColor };
+		return { parsed, background: backgrounds[0], textColor };
 	}
 
 	/**
@@ -621,16 +621,16 @@ export function createDeathDetector(
 		if (read === null) {
 			const median = medianColor(inner);
 			const dominants = dominantColors(inner, 2);
-			const dominant = dominants[0]!.color;
+			const dominant = dominants[0].color;
 			const candidates: [number, number, number][][] = [[median]];
-			if (dominant.some((c, i) => Math.abs(c - median[i]!) > 8))
+			if (dominant.some((c, i) => Math.abs(c - median[i]) > 8))
 				candidates.push([dominant]);
 			const second = dominants[1];
 			if (
 				second &&
 				second.fraction >= TAG_SPLIT_MIN_FRACTION &&
 				second.color.some(
-					(c, i) => Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
+					(c, i) => Math.abs(c - dominant[i]) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
 				)
 			) {
 				candidates.push([dominant, second.color]);
@@ -662,7 +662,7 @@ export function createDeathDetector(
 					),
 				),
 			);
-			let best = reads[0]!;
+			let best = reads[0];
 			for (const alt of reads.slice(1)) {
 				if (beats(alt, best) > 0) best = alt;
 			}
@@ -691,7 +691,7 @@ export function createDeathDetector(
 				const n = crop.rows * crop.cols;
 				let ink = 0;
 				for (let i = 0; i < n; i++) {
-					const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
+					const v = Math.max(d[i * 3], d[i * 3 + 1], d[i * 3 + 2]);
 					if (v > ABILITY_INK_THRESHOLD) ink++;
 				}
 				if (ink < ABILITY_SLOT_MIN_INK) {
@@ -862,7 +862,7 @@ export function createDeathDetector(
 				candidatesFor(template),
 				(c) => c.text,
 			);
-			const top = latticeRanked[0]!;
+			const top = latticeRanked[0];
 			// margin vs the nearest *other* weapon: a weapon has both localized and English lines
 			const runner = latticeRanked.find(
 				(r) => r.entry.entry !== top.entry.entry,
@@ -896,10 +896,9 @@ export function createDeathDetector(
 					);
 				const supported =
 					(plainRanked.length > 0 &&
-						bestFor(plainRanked) >= plainRanked[0]!.score - CORROBORATE_EPS) ||
+						bestFor(plainRanked) >= plainRanked[0].score - CORROBORATE_EPS) ||
 					(latticeRanked.length > 0 &&
-						bestFor(latticeRanked) >=
-							latticeRanked[0]!.score - CORROBORATE_EPS);
+						bestFor(latticeRanked) >= latticeRanked[0].score - CORROBORATE_EPS);
 				if (supported) accept(entry, burstIcon.score);
 			}
 		}

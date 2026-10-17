@@ -219,7 +219,7 @@ export async function pumpFrames({
 	};
 	/** Hands on the samples whose pictures are in, in stream order. */
 	const emitReady = () => {
-		while (pending.length > 0 && pending[0]!.state === "ready") {
+		while (pending.length > 0 && pending[0].state === "ready") {
 			const { item } = pending.shift()!;
 			if (ended || item.t < firstT || item.t >= endT || control.stopped()) {
 				if (item.t >= endT) ended = true;

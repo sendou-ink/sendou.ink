@@ -575,7 +575,7 @@ const setupGroupWithChallenges = async () => {
 	await SQGroupLikeFactory.create({
 		likerGroupId: challengerGroup.id,
 		targetGroupId: ownGroup.id,
-		createdByUserId: challengerGroup.memberUserIds[0]!,
+		createdByUserId: challengerGroup.memberUserIds[0],
 	});
 	await SQGroupLikeFactory.create({
 		likerGroupId: ownGroup.id,

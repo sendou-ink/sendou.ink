@@ -156,21 +156,15 @@ for (const fixture of loadFixtures("negative")) {
 // double-row fixture shows a trade with the death cam up), so only the
 // screen-replacing detectors are swept the other way.
 const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+	["scoreboard", createScoreboardDetector(resources)],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources),
 	],
-	[
-		"scoreboard-battle-log",
-		createScoreboardBattleLogDetector(resources) as Detector<unknown>,
-	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-battle-log", createScoreboardBattleLogDetector(resources)],
+	["scoreboard-own", createScoreboardOwnDetector(resources)],
+	["map-start", createMapStartDetector(resources)],
+	["minimap", createMinimapDetector(resources)],
 ];
 for (const fixture of fixtures.filter((f) => f.expected.event === "Kill")) {
 	test(`other gates stay quiet on kill/${fixture.name}`, async () => {
@@ -200,9 +194,9 @@ test("row reads are memoized across advancing frames only", async () => {
 			(event.debug as { rows: { memoized: boolean }[] }).rows.map(
 				(row) => row.memoized,
 			);
-		const first = detector.parse(frame, 10)[0]!;
-		const repeat = detector.parse(frame, 10.5)[0]!;
-		const rewound = detector.parse(frame, 10.5)[0]!;
+		const first = detector.parse(frame, 10)[0];
+		const repeat = detector.parse(frame, 10.5)[0];
+		const rewound = detector.parse(frame, 10.5)[0];
 		assert.deepEqual(memoizedRows(first), [false, false]);
 		assert.deepEqual(memoizedRows(repeat), [true, true]);
 		assert.deepEqual(memoizedRows(rewound), [false, false]);

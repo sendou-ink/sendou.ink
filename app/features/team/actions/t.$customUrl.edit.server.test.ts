@@ -43,7 +43,7 @@ const VALID_CUSTOM_THEME = {
 } as const;
 
 const expectedStoredTheme = () =>
-	JSON.parse(JSON.stringify(ThemePalette.build(VALID_CUSTOM_THEME)));
+	structuredClone(ThemePalette.build(VALID_CUSTOM_THEME));
 
 const users = UserFactory.pool();
 const victimId = () => users.id(1);
@@ -91,7 +91,7 @@ describe("team page editing", () => {
 			);
 
 			// the team page renders bio directly as a React child; an object would 500 the page
-			expect(typeof (await teamRow()).bio).toBe("string");
+			expect((await teamRow()).bio).toBeTypeOf("string");
 		});
 	});
 

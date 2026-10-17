@@ -317,6 +317,7 @@ function TierListMakerContent() {
 											isSelected={isSelected}
 											onChange={(selected) => {
 												if (selected) {
+													// eslint-disable-next-line bun/react-prefer-updater-function -- search param setter takes no updater
 													setSelectedModes([...selectedModes, mode]);
 												} else {
 													setSelectedModes(

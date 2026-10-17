@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { stagesObj } from "~/modules/in-game-lists/stage-ids";
-import type { StageId } from "~/modules/in-game-lists/types";
 import { canUndo, generateNextMap, stats, unionPool } from "./ScrimMapByMap";
 
 type MapRow = Pick<
@@ -25,14 +24,14 @@ describe("ScrimMapByMap.unionPool", () => {
 		const pool = unionPool([
 			{
 				mapList: [
-					{ mode: "SZ", stageId: stagesObj.SCORCH_GORGE as StageId },
-					{ mode: "SZ", stageId: stagesObj.EELTAIL_ALLEY as StageId },
+					{ mode: "SZ", stageId: stagesObj.SCORCH_GORGE },
+					{ mode: "SZ", stageId: stagesObj.EELTAIL_ALLEY },
 				],
 			},
 			{
 				mapList: [
-					{ mode: "SZ", stageId: stagesObj.EELTAIL_ALLEY as StageId },
-					{ mode: "SZ", stageId: stagesObj.MAKOMART as StageId },
+					{ mode: "SZ", stageId: stagesObj.EELTAIL_ALLEY },
+					{ mode: "SZ", stageId: stagesObj.MAKOMART },
 				],
 			},
 		]);
@@ -50,8 +49,8 @@ describe("ScrimMapByMap.unionPool", () => {
 		const pool = unionPool([
 			{
 				mapList: [
-					{ mode: "SZ", stageId: stagesObj.HAMMERHEAD_BRIDGE as StageId },
-					{ mode: "TC", stageId: stagesObj.MAKOMART as StageId },
+					{ mode: "SZ", stageId: stagesObj.HAMMERHEAD_BRIDGE },
+					{ mode: "TC", stageId: stagesObj.MAKOMART },
 				],
 			},
 		]);

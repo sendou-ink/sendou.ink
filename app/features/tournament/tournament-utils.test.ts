@@ -720,7 +720,7 @@ describe("updatedCastedMatchesInfo", () => {
 
 describe("tournamentInWeaponReportingWindow", () => {
 	const anchorSeason = Seasons.list[2]!;
-	const previousSeason = Seasons.list[1]!;
+	const previousSeason = Seasons.list[1];
 
 	const dateInside = (range: { starts: Date; ends: Date }) =>
 		new Date((range.starts.getTime() + range.ends.getTime()) / 2);

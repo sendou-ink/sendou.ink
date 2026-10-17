@@ -71,7 +71,7 @@ export function gameTimelineProps(
 			dead: ordered(sample.dead),
 		})),
 		teams: ordered(match.teams).map((team, side): PlayerStatusTimelineTeam => ({
-			label: labels[side]!,
+			label: labels[side],
 			weapons: PLAYER_SLOTS.map((slot) => team.players[slot]?.weaponId ?? null),
 		})) as [PlayerStatusTimelineTeam, PlayerStatusTimelineTeam],
 		pov: match.pov

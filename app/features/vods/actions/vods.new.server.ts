@@ -3,7 +3,7 @@ import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { defineAction } from "~/form/define-action.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { vodVideoPage } from "~/utils/urls";
 import * as VodRepository from "../VodRepository.server";
@@ -53,7 +53,7 @@ function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
 		matches: data.matches.map((match) => ({
 			startsAt: match.startsAt,
 			mode: match.mode,
-			stageId: match.stageId as StageId,
+			stageId: match.stageId,
 			weapons:
 				data.type === "CAST"
 					? [
@@ -61,7 +61,7 @@ function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
 							...weaponPoolToIds(match.weaponsTeamTwo ?? []),
 						]
 					: typeof match.weapon === "number"
-						? [match.weapon as MainWeaponId]
+						? [match.weapon]
 						: [],
 		})),
 	};
@@ -90,7 +90,7 @@ function missingWeaponFieldErrors(data: VodFormData) {
 }
 
 function weaponPoolToIds(pool: WeaponPoolItem[]): MainWeaponId[] {
-	return pool.map((item) => item.id as MainWeaponId);
+	return pool.map((item) => item.id);
 }
 
 function transformPov(

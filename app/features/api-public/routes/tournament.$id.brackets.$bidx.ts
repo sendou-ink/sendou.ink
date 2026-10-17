@@ -28,16 +28,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			teamsPerGroup:
 				bracket.type === "round_robin"
 					? (bracket.settings?.teamsPerGroup ??
+						// eslint-disable-next-line @typescript-eslint/no-deprecated -- fallback for tournaments predating bracketProgression
 						tournament.ctx.settings.teamsPerGroup)
 					: undefined,
 			groupCount:
 				bracket.type === "swiss"
 					? (bracket.settings?.groupCount ??
+						// eslint-disable-next-line @typescript-eslint/no-deprecated -- fallback for tournaments predating bracketProgression
 						tournament.ctx.settings.swiss?.groupCount)
 					: undefined,
 			roundCount:
 				bracket.type === "swiss"
 					? (bracket.settings?.roundCount ??
+						// eslint-disable-next-line @typescript-eslint/no-deprecated -- fallback for tournaments predating bracketProgression
 						tournament.ctx.settings.swiss?.roundCount)
 					: undefined,
 		},

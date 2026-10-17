@@ -110,7 +110,7 @@ function parseTopBand(
 		TIMESTAMP_GAPPED_DATE_RE.exec(normalized) ??
 		TIMESTAMP_FUSED_RE.exec(normalized);
 	const stageReading = m
-		? reading.slice(reading.length - m[4]!.length)
+		? reading.slice(reading.length - m[4].length)
 		: reading;
 	if (m) {
 		const meridiem = m[3] ? ` ${probedMeridiem ?? m[3].replace("0", "P")}` : "";

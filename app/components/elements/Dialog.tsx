@@ -240,7 +240,7 @@ function TriggeredDialog({
 	const handleClosed = () => {
 		remountContent();
 		if (chrome.onCloseTo) {
-			navigate(chrome.onCloseTo);
+			void navigate(chrome.onCloseTo);
 		} else {
 			chrome.onClose?.();
 		}
@@ -325,7 +325,7 @@ function PortaledDialog({
 		if (onOpenChange) {
 			onOpenChange(false);
 		} else if (chrome.onCloseTo) {
-			navigate(chrome.onCloseTo);
+			void navigate(chrome.onCloseTo);
 		} else {
 			chrome.onClose?.();
 		}

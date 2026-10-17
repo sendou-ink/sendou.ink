@@ -19,16 +19,11 @@ export function YouTubeEmbed({
 	const { t } = useTranslation(["vods"]);
 	const playerRef = useRef<YT.Player | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const [isApiReady, setIsApiReady] = useState(false);
+	const [isApiReady, setIsApiReady] = useState(isYouTubeApiLoaded);
 	const [hasError, setHasError] = useState(false);
 
 	useEffect(() => {
-		if (!enableApi || typeof window === "undefined") return;
-
-		if (window.YT?.Player) {
-			setIsApiReady(true);
-			return;
-		}
+		if (!enableApi || isYouTubeApiLoaded()) return;
 
 		const tag = document.createElement("script");
 		tag.src = "https://www.youtube.com/iframe_api";
@@ -102,6 +97,7 @@ export function YouTubeEmbed({
 				message: t("vods:errors.youtubePreviewFailed"),
 				variant: "error",
 			});
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- fallback when the player constructor throws
 			setHasError(true);
 			return;
 		}
@@ -127,7 +123,6 @@ export function YouTubeEmbed({
 				src={`https://www.youtube.com/embed/${id}?autoplay=${
 					autoplay ? "1" : "0"
 				}&controls=1&rel=0&modestbranding=1&start=${start ?? 0}`}
-				frameBorder="0"
 				sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
 				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 				allowFullScreen
@@ -135,4 +130,8 @@ export function YouTubeEmbed({
 			/>
 		</div>
 	);
+}
+
+function isYouTubeApiLoaded() {
+	return typeof window !== "undefined" && Boolean(window.YT?.Player);
 }

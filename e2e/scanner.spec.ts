@@ -107,7 +107,7 @@ test.describe("Scanner", () => {
 		const download = await scanner.downloadGameData();
 		const files = unzipSync(await fs.readFile(await download.path()));
 		const names = Object.keys(files);
-		const events = JSON.parse(strFromU8(files["events.json"]!));
+		const events = JSON.parse(strFromU8(files["events.json"]));
 
 		expect(names).toContain("match.json");
 		expect(

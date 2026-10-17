@@ -53,7 +53,7 @@ export function PastSessionView() {
 					.filter((eventId): eventId is number => eventId !== undefined),
 			);
 		}
-		refreshFeed(session.key);
+		void refreshFeed(session.key);
 		setParams({ view: "home" });
 	};
 

@@ -236,7 +236,7 @@ export const action = defineAction(
 					);
 					if (remainingGroup?.chatRoomId) {
 						for (const leftUserId of leftUserIds) {
-							ChatSystemMessage.sendPersisted({
+							void ChatSystemMessage.sendPersisted({
 								roomId: remainingGroup.chatRoomId,
 								type: "USER_LEFT",
 								authorUserId: leftUserId,
@@ -281,7 +281,7 @@ export const action = defineAction(
 						currentGroup.id,
 					);
 					if (groupAfterKick?.chatRoomId && kickedMember) {
-						ChatSystemMessage.sendPersisted({
+						void ChatSystemMessage.sendPersisted({
 							roomId: groupAfterKick.chatRoomId,
 							type: "USER_LEFT",
 							authorUserId: kickedMember.id,

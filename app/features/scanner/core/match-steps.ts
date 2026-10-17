@@ -161,7 +161,7 @@ function exactScorer(request: MatchRequest): {
 			image ??= imagePixels(request.image);
 			return exactWindowMax(
 				image,
-				templateOf(request.templates[index]!),
+				templateOf(request.templates[index]),
 				request.windows?.[index],
 			);
 		},
@@ -186,7 +186,7 @@ function exactWindowMax(
 	const filtered =
 		work > DIRECT_MAX_WORK ? filteredCrossSums(image, template) : null;
 	// read in place: nothing below allocates on the WASM heap, so the view stays valid
-	const cross = filtered?.data64F as Float64Array | undefined;
+	const cross = filtered?.data64F;
 	const crossStride = cols * ch;
 	const direct = filtered
 		? null
@@ -198,26 +198,26 @@ function exactWindowMax(
 	for (let y = 0; y < placementRows; y++) {
 		for (let x = lo; x <= hi; x++) {
 			const P = cross
-				? Math.round(cross[y * crossStride + x * ch]!)
+				? Math.round(cross[y * crossStride + x * ch])
 				: direct
-					? direct[y * width + x - lo]!
+					? direct[y * width + x - lo]
 					: directCrossSum(image, template, x, y);
 			const x1 = x + template.cols;
 			const y1 = y + template.rows;
 			let num = template.n * P;
 			let windowVar =
 				template.n *
-				(squares[y1 * squareStride + x1]! -
-					squares[y1 * squareStride + x]! -
-					squares[y * squareStride + x1]! +
-					squares[y * squareStride + x]!);
+				(squares[y1 * squareStride + x1] -
+					squares[y1 * squareStride + x] -
+					squares[y * squareStride + x1] +
+					squares[y * squareStride + x]);
 			for (let c = 0; c < ch; c++) {
 				const S =
-					sum[y1 * sumStride + x1 * ch + c]! -
-					sum[y1 * sumStride + x * ch + c]! -
-					sum[y * sumStride + x1 * ch + c]! +
-					sum[y * sumStride + x * ch + c]!;
-				num -= S * template.sum[c]!;
+					sum[y1 * sumStride + x1 * ch + c] -
+					sum[y1 * sumStride + x * ch + c] -
+					sum[y * sumStride + x1 * ch + c] +
+					sum[y * sumStride + x * ch + c];
+				num -= S * template.sum[c];
 				windowVar -= S * S;
 			}
 			const score = normalizeNcc(num, windowVar, template.varInt);
@@ -243,7 +243,7 @@ function directCrossSum(
 		const ib = ((y + ty) * image.cols + x) * image.ch;
 		const tb = ty * rowLength;
 		for (let k = 0; k < rowLength; k++) {
-			P += imageData[ib + k]! * templateData[tb + k]!;
+			P += imageData[ib + k] * templateData[tb + k];
 		}
 	}
 	return P;
@@ -324,14 +324,14 @@ function integralPixels(pixels: Pixels): ImagePixels {
 		const rowSums = new Array<number>(ch).fill(0);
 		for (let x = 0; x < cols; x++) {
 			for (let c = 0; c < ch; c++) {
-				const v = data[(y * cols + x) * ch + c]!;
-				rowSums[c]! += v;
+				const v = data[(y * cols + x) * ch + c];
+				rowSums[c] += v;
 				squareRow += v * v;
 				sum[(y + 1) * sumStride + (x + 1) * ch + c] =
-					sum[y * sumStride + (x + 1) * ch + c]! + rowSums[c]!;
+					sum[y * sumStride + (x + 1) * ch + c] + rowSums[c];
 			}
 			squares[(y + 1) * (cols + 1) + x + 1] =
-				squares[y * (cols + 1) + x + 1]! + squareRow;
+				squares[y * (cols + 1) + x + 1] + squareRow;
 		}
 	}
 	return { ...pixels, sum, squares, plane: null };
@@ -352,12 +352,12 @@ function templateStats(pixels: Pixels): TemplatePixels {
 	const sq = new Array<number>(ch).fill(0);
 	for (let i = 0; i < n; i++) {
 		for (let c = 0; c < ch; c++) {
-			const v = data[i * ch + c]!;
-			sum[c]! += v;
-			sq[c]! += v * v;
+			const v = data[i * ch + c];
+			sum[c] += v;
+			sq[c] += v * v;
 		}
 	}
 	let varInt = 0;
-	for (let c = 0; c < ch; c++) varInt += n * sq[c]! - sum[c]! * sum[c]!;
+	for (let c = 0; c < ch; c++) varInt += n * sq[c] - sum[c] * sum[c];
 	return { ...pixels, n, sum, varInt };
 }

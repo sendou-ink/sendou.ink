@@ -200,7 +200,7 @@ function groupWeaponsByType(categorization: CategorizationType): WeaponGroup[] {
 				return {
 					key: `sub-${subId}`,
 					name: `SUB_${subId}`,
-					icon: { kind: "sub" as const, id: subId as SubWeaponId },
+					icon: { kind: "sub" as const, id: subId },
 					weaponIds: weaponsWithSub,
 				};
 			})
@@ -217,7 +217,7 @@ function groupWeaponsByType(categorization: CategorizationType): WeaponGroup[] {
 			return {
 				key: `special-${specialId}`,
 				name: `SPECIAL_${specialId}`,
-				icon: { kind: "special" as const, id: specialId as SpecialWeaponId },
+				icon: { kind: "special" as const, id: specialId },
 				weaponIds: weaponsWithSpecial,
 			};
 		})

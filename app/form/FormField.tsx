@@ -200,7 +200,7 @@ export function FormField({
 				autoFocus={autoFocus}
 				labelPopover={labelPopover}
 				value={value as string}
-				onChange={handleChange as (v: string) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -212,7 +212,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as string}
-				onChange={handleChange as (v: string) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -224,7 +224,7 @@ export function FormField({
 				{...formField}
 				isDisabled={isDisabled}
 				checked={value as boolean}
-				onChange={handleChange as (v: boolean) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -237,7 +237,7 @@ export function FormField({
 				disabled={isDisabled}
 				autoFocus={autoFocus}
 				value={value as string}
-				onChange={handleChange as (v: string) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -249,7 +249,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as string | null}
-				onChange={handleChange as (v: string | null) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -270,7 +270,7 @@ export function FormField({
 					description: opt.description,
 				}))}
 				value={value as string | null}
-				onChange={handleChange as (v: string | null) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -282,7 +282,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as [string | null, string | null]}
-				onChange={handleChange as (v: [string | null, string | null]) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -294,7 +294,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as string}
-				onChange={handleChange as (v: string) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -311,7 +311,7 @@ export function FormField({
 				disabled={isDisabled}
 				items={radioItems}
 				value={value as string}
-				onChange={handleChange as (v: string) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -323,7 +323,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as string[]}
-				onChange={handleChange as (v: string[]) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -342,7 +342,7 @@ export function FormField({
 				disabled={isDisabled}
 				items={checkboxItems}
 				value={value as string[]}
-				onChange={handleChange as (v: string[]) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -354,7 +354,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as Date | undefined}
-				onChange={handleChange as (v: Date | undefined) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -383,9 +383,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as { start: string; end: string } | null}
-				onChange={
-					handleChange as (v: { start: string; end: string } | null) => void
-				}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -397,7 +395,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as WeaponPoolItem[]}
-				onChange={handleChange as (v: WeaponPoolItem[]) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -409,7 +407,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as ImageFieldValue}
-				onChange={handleChange as (v: ImageFieldValue) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -435,8 +433,7 @@ export function FormField({
 	}
 
 	if (formField.type === "array") {
-		const innerFieldMeta = formRegistry.get(formField.field) as
-			FormFieldType | undefined;
+		const innerFieldMeta = formRegistry.get(formField.field);
 		const isObjectArray = innerFieldMeta?.type === "fieldset";
 		const hasCustomRender = typeof children === "function";
 		const itemInitialValue =
@@ -450,7 +447,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as unknown[]}
-				onChange={handleChange as (v: unknown[]) => void}
+				onChange={handleChange}
 				isObjectArray={isObjectArray}
 				itemInitialValue={itemInitialValue}
 				canRemoveItem={canRemoveItem}
@@ -465,7 +462,7 @@ export function FormField({
 								itemName={itemName}
 								itemValues={arrayValue[idx] ?? EMPTY_ITEM_VALUES}
 								canRemove={arrayValue.length > (formField.min ?? 0)}
-								onArrayChange={handleChange as (v: unknown[]) => void}
+								onArrayChange={handleChange}
 								renderChildren={
 									children as (props: ArrayItemRenderContext) => React.ReactNode
 								}
@@ -500,7 +497,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as number | null}
-				onChange={handleChange as (v: number | null) => void}
+				onChange={handleChange}
 				onUserSelected={userOptions?.onUserSelected}
 			/>
 		);
@@ -515,7 +512,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as number | null}
-				onChange={handleChange as (v: number | null) => void}
+				onChange={handleChange}
 				pastOnly={tournamentOptions?.pastOnly}
 				onTournamentSelected={tournamentOptions?.onTournamentSelected}
 			/>
@@ -529,7 +526,7 @@ export function FormField({
 				{...commonProps}
 				{...formField}
 				disabled={isDisabled}
-				onChange={handleChange as (v: number | null) => void}
+				onChange={handleChange}
 				onTeamSelected={teamOptions?.onTeamSelected}
 				initialTeam={teamOptions?.initialTeam}
 			/>
@@ -546,7 +543,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as number[]}
-				onChange={handleChange as (v: number[]) => void}
+				onChange={handleChange}
 				options={options as BadgeOption[]}
 				{...(maxCount !== undefined ? { maxCount } : {})}
 			/>
@@ -563,7 +560,7 @@ export function FormField({
 					{...commonProps}
 					{...formField}
 					value={value as number[]}
-					onChange={handleChange as (v: number[]) => void}
+					onChange={handleChange}
 					options={options as TrophyOption[]}
 					{...(maxCount !== undefined ? { maxCount } : {})}
 				/>
@@ -578,7 +575,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as StageId | null}
-				onChange={handleChange as (v: StageId) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -591,7 +588,7 @@ export function FormField({
 				{...(options as MapPoolFieldOptions | undefined)}
 				disabled={isDisabled}
 				value={value as string}
-				onChange={handleChange as (v: string) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -603,7 +600,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				value={value as MainWeaponId | null}
-				onChange={handleChange as (v: MainWeaponId | null) => void}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -619,9 +616,7 @@ export function FormField({
 				weaponType={formField.type === "sub-weapon-select" ? "SUB" : "SPECIAL"}
 				disabled={isDisabled}
 				value={value as SubWeaponId | SpecialWeaponId | null}
-				onChange={
-					handleChange as (v: SubWeaponId | SpecialWeaponId | null) => void
-				}
+				onChange={handleChange}
 			/>
 		);
 	}
@@ -742,7 +737,7 @@ function resolveFormField(
 	label: FormFieldProps["label"],
 	required: FormFieldProps["required"],
 ) {
-	const result = formRegistry.get(fieldSchema) as FormFieldType | undefined;
+	const result = formRegistry.get(fieldSchema);
 
 	if (!result) {
 		throw new Error(`Form field metadata not found for name: ${name}`);

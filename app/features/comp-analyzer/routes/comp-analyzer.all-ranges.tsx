@@ -14,7 +14,7 @@ export default function AllRangesPage() {
 			{weaponCategories.map((category) => {
 				const baseWeaponIds: MainWeaponId[] = category.weaponIds.flatMap(
 					(id): MainWeaponId[] => {
-						const weaponId = id as MainWeaponId;
+						const weaponId = id;
 						return weaponIdToType(weaponId) === "BASE" ? [weaponId] : [];
 					},
 				);

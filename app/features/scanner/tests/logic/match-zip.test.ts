@@ -60,7 +60,7 @@ const FRAMES = new Map<ScanEvent, Blob>([
 async function unzipMatch(clips: readonly ExportClip[] = []) {
 	const [built] = buildScannerMatches([mapStart, death, scoreboard]);
 	const zip = await matchZip(
-		built!,
+		built,
 		(event) => {
 			const frame = FRAMES.get(event);
 			return frame ? () => Promise.resolve(frame) : undefined;
@@ -81,7 +81,7 @@ describe("matchZip", () => {
 	test("prefills each frame's expected.json from its event", async () => {
 		const files = await unzipMatch();
 		const expected = JSON.parse(
-			strFromU8(files["frames/002-Death-1m02s/expected.json"]!),
+			strFromU8(files["frames/002-Death-1m02s/expected.json"]),
 		);
 
 		expect(expected.event).toBe("Death");
@@ -90,7 +90,7 @@ describe("matchZip", () => {
 
 	test("lists every source event with the folder of its frame", async () => {
 		const files = await unzipMatch();
-		const events = JSON.parse(strFromU8(files["events.json"]!));
+		const events = JSON.parse(strFromU8(files["events.json"]));
 
 		expect(
 			events.map((event: { type: string; frame?: string }) => [
@@ -106,7 +106,7 @@ describe("matchZip", () => {
 
 	test("includes the built match", async () => {
 		const files = await unzipMatch();
-		const match = JSON.parse(strFromU8(files["match.json"]!));
+		const match = JSON.parse(strFromU8(files["match.json"]));
 
 		expect(match.mode).toBe("SZ");
 	});
@@ -116,7 +116,7 @@ describe("matchZip", () => {
 			{ kills: 3, start: 300, end: 325 },
 			{ kills: 1, start: 160, end: 170 },
 		]);
-		const match = JSON.parse(strFromU8(files["match.json"]!));
+		const match = JSON.parse(strFromU8(files["match.json"]));
 
 		expect(match.clips).toEqual([
 			{ kills: 1, start: 160, end: 170 },

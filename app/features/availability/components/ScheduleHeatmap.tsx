@@ -211,7 +211,7 @@ export function ScheduleHeatmap({
 							{dayLabel(dayIndex, { withTestId: true })}
 							<div
 								className={styles.cellRow}
-								style={{ "--cells": cells.length } as React.CSSProperties}
+								style={{ "--cells": cells.length }}
 								onMouseLeave={() => setHoveredCell(null)}
 							>
 								{cells.map((cell) => (

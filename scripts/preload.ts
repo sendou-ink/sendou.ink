@@ -39,6 +39,7 @@ function withGlobsExpanded(source: string, filePath: string) {
 	for (const match of source.matchAll(GLOB_CALL_PATTERN)) {
 		const argsStart = match.index + match[0].length;
 		const argsEnd = closingParenIndex(source, argsStart);
+		// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval -- evaluates import.meta.glob literal arguments
 		const [patterns, options = {}] = new Function(
 			`return [${source.slice(argsStart, argsEnd)}]`,
 		)() as [string | string[], GlobOptions?];

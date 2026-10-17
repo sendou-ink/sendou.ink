@@ -90,8 +90,8 @@ export async function fetchTournamentStreams(
 		videoId: stream.videoId,
 		thumbnailUrl: stream.thumbnailUrl,
 		viewerCount: stream.viewerCount,
-		userId: stream.userId as number | null,
-		teamId: stream.teamId as number | null,
+		userId: stream.userId,
+		teamId: stream.teamId,
 		user: {
 			id: stream.id,
 			username: stream.username,

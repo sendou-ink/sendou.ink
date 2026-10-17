@@ -123,8 +123,8 @@ const FIT_ROWS =
 	Math.floor(
 		(Math.max(
 			...PITCH_GEOMETRY.flatMap(({ edge, corners }) => [
-				edge[edge.length - 4]!,
-				corners[corners.length - 1]!,
+				edge[edge.length - 4],
+				corners[corners.length - 1],
 			]),
 		) -
 			STATUS_BAND.y) /
@@ -273,24 +273,24 @@ function readBand(frame: Mat): Band {
 		const rowStart = row * STATUS_FIT_ROW_STEP * width;
 		for (let x = 0; x < width; x++, o += PREFIX_FIELDS) {
 			const i = (rowStart + x) * channels;
-			const red = pixels[i]!;
-			const green = pixels[i + 1]!;
-			const blue = pixels[i + 2]!;
+			const red = pixels[i];
+			const green = pixels[i + 1];
+			const blue = pixels[i + 2];
 			const value = maxOf(red, green, blue);
 			const ink =
 				value >= STATUS_INK_MIN_VALUE &&
 				value - minOf(red, green, blue) >= STATUS_INK_MIN_SATURATION * value;
 			const n = o + PREFIX_FIELDS;
-			prefix[n] = prefix[o]! + red;
-			prefix[n + 1] = prefix[o + 1]! + green;
-			prefix[n + 2] = prefix[o + 2]! + blue;
-			prefix[n + 3] = prefix[o + 3]! + red * red + green * green + blue * blue;
+			prefix[n] = prefix[o] + red;
+			prefix[n + 1] = prefix[o + 1] + green;
+			prefix[n + 2] = prefix[o + 2] + blue;
+			prefix[n + 3] = prefix[o + 3] + red * red + green * green + blue * blue;
 			prefix[n + 4] =
-				prefix[o + 4]! +
+				prefix[o + 4] +
 				(ink &&
 				hueDistance(
-					HUE_TABLE[((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3)]!,
-					teamHues[x < midline ? 0 : 1]!,
+					HUE_TABLE[((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3)],
+					teamHues[x < midline ? 0 : 1],
 				) <= STATUS_TEAM_MAX_HUE_DIST
 					? 1
 					: 0);
@@ -307,17 +307,17 @@ function modalInkHue(pixels: Uint8Array, channels: number, side: 0 | 1) {
 	for (let y = sample.y; y < sample.y + sample.h; y += 2) {
 		for (let x = sample.x; x < sample.x + sample.w; x += 2) {
 			const i = ((y - bandY) * width + (x - bandX)) * channels;
-			const red = pixels[i]!;
-			const green = pixels[i + 1]!;
-			const blue = pixels[i + 2]!;
+			const red = pixels[i];
+			const green = pixels[i + 1];
+			const blue = pixels[i + 2];
 			if (isInk(red, green, blue)) {
-				histogram[Math.min(35, Math.floor(hueOf(red, green, blue) / 10))]! += 1;
+				histogram[Math.min(35, Math.floor(hueOf(red, green, blue) / 10))] += 1;
 			}
 		}
 	}
 	let best = 0;
 	for (let bin = 1; bin < 36; bin++) {
-		if (histogram[bin]! > histogram[best]!) best = bin;
+		if (histogram[bin] > histogram[best]) best = bin;
 	}
 	return best * 10 + 5;
 }
@@ -351,7 +351,7 @@ function fitSide(band: Band, side: 0 | 1, prev?: StripSideFit): StripSideFit {
 			coarse.push(score(pitch, inner));
 		}
 	}
-	let best = coarse[0]!;
+	let best = coarse[0];
 	for (const seed of coarse
 		.sort((a, b) => b.score - a.score)
 		.slice(0, STATUS_FIT_REFINED_SEEDS)) {
@@ -400,7 +400,7 @@ function hypothesisScore(
 	pitch: number,
 	inner: number,
 ): number {
-	const geometry = PITCH_GEOMETRY[pitch - STATUS_PITCH_RANGE[0]]!;
+	const geometry = PITCH_GEOMETRY[pitch - STATUS_PITCH_RANGE[0]];
 	let score = 0;
 	for (let slot = 0; slot < 4; slot++) {
 		score += slotScore(
@@ -418,11 +418,11 @@ function slotScore(band: Band, cx: number, geometry: PitchGeometry): number {
 	const edgeOut = newStats();
 	const { edge, corners, cornerNear, cornerFar } = geometry;
 	for (let i = 0; i < edge.length; i += 4) {
-		const y = edge[i]!;
-		const half = edge[i + 1]!;
+		const y = edge[i];
+		const half = edge[i + 1];
 		addSegment(band, edgeIn, y, cx - half, cx + half);
-		addSegment(band, edgeOut, y, cx - edge[i + 3]!, cx - edge[i + 2]!);
-		addSegment(band, edgeOut, y, cx + edge[i + 2]!, cx + edge[i + 3]!);
+		addSegment(band, edgeOut, y, cx - edge[i + 3], cx - edge[i + 2]);
+		addSegment(band, edgeOut, y, cx + edge[i + 2], cx + edge[i + 3]);
 	}
 	const cornersOut = newStats();
 	for (const y of corners) {
@@ -460,15 +460,15 @@ function addSegment(
 ): void {
 	if (x1 < x0) return;
 	const { prefix } = band;
-	const row = ROW_BASE[y]!;
+	const row = ROW_BASE[y];
 	const from = (row + x0) * PREFIX_FIELDS;
 	const to = (row + x1 + 1) * PREFIX_FIELDS;
 	stats.count += x1 - x0 + 1;
-	stats.r += prefix[to]! - prefix[from]!;
-	stats.g += prefix[to + 1]! - prefix[from + 1]!;
-	stats.b += prefix[to + 2]! - prefix[from + 2]!;
-	stats.squares += prefix[to + 3]! - prefix[from + 3]!;
-	stats.team += prefix[to + 4]! - prefix[from + 4]!;
+	stats.r += prefix[to] - prefix[from];
+	stats.g += prefix[to + 1] - prefix[from + 1];
+	stats.b += prefix[to + 2] - prefix[from + 2];
+	stats.squares += prefix[to + 3] - prefix[from + 3];
+	stats.team += prefix[to + 4] - prefix[from + 4];
 }
 
 /** Mean color distance over the pooled spread: high only where two flat regions meet. */
@@ -501,21 +501,21 @@ function readSlot(
 	confidence: number;
 	fractions: [number, number, number];
 } {
-	const { state: rows } = PITCH_GEOMETRY[pitch - STATUS_PITCH_RANGE[0]]!;
+	const { state: rows } = PITCH_GEOMETRY[pitch - STATUS_PITCH_RANGE[0]];
 	let ink = 0;
 	let pale = 0;
 	let grey = 0;
 	let count = 0;
 	for (let row = 0; row < rows.length; row += 2) {
-		const y = rows[row]!;
-		const half = rows[row + 1]!;
+		const y = rows[row];
+		const half = rows[row + 1];
 		for (let x = cx - half; x <= cx + half; x++) {
 			const i =
 				((y - STATUS_BAND.y) * band.width + (x - STATUS_BAND.x)) *
 				band.channels;
-			const red = band.pixels[i]!;
-			const green = band.pixels[i + 1]!;
-			const blue = band.pixels[i + 2]!;
+			const red = band.pixels[i];
+			const green = band.pixels[i + 1];
+			const blue = band.pixels[i + 2];
 			const value = maxOf(red, green, blue);
 			const saturation = value ? (value - minOf(red, green, blue)) / value : 0;
 			if (isInk(red, green, blue)) ink++;
@@ -611,9 +611,9 @@ function isVacant(band: Band, cx: number, pitch: number): boolean {
 			const i =
 				((y - STATUS_BAND.y) * band.width + (x - STATUS_BAND.x)) *
 				band.channels;
-			const red = band.pixels[i]!;
-			const green = band.pixels[i + 1]!;
-			const blue = band.pixels[i + 2]!;
+			const red = band.pixels[i];
+			const green = band.pixels[i + 1];
+			const blue = band.pixels[i + 2];
 			const value = maxOf(red, green, blue);
 			if (value <= STATUS_DARK_MAX_VALUE) dark++;
 			else if (
@@ -673,10 +673,10 @@ function badgesVisible(frame: Mat, probes: readonly Roi[]): boolean {
 		let white = 0;
 		let count = 0;
 		for (let i = 0; i < data.length; i += channels) {
-			const value = Math.max(data[i]!, data[i + 1]!, data[i + 2]!);
+			const value = Math.max(data[i], data[i + 1], data[i + 2]);
 			if (
 				value >= STATUS_WHITE_MIN_VALUE &&
-				value - Math.min(data[i]!, data[i + 1]!, data[i + 2]!) <=
+				value - Math.min(data[i], data[i + 1], data[i + 2]) <=
 					STATUS_WHITE_MAX_SPREAD
 			) {
 				white++;

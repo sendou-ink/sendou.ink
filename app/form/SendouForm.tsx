@@ -300,17 +300,17 @@ function SendouFormInner<T extends v.ObjectEntries>({
 
 	const [shownActionData, setShownActionData] = React.useState(fetcher.data);
 	if (fetcher.data !== shownActionData) {
+		const serverFieldErrors = fetcher.data?.fieldErrors ?? {};
 		setShownActionData(fetcher.data);
-		setVisibleServerErrors(fetcher.data?.fieldErrors ?? {});
+		setVisibleServerErrors(serverFieldErrors);
+		if (Object.keys(serverFieldErrors).length === 0) {
+			setFallbackError(null);
+		}
 	}
 
 	React.useLayoutEffect(() => {
-		const serverFieldErrors = fetcher.data?.fieldErrors ?? {};
-		const errorEntries = Object.entries(serverFieldErrors);
-		if (errorEntries.length === 0) {
-			setFallbackError(null);
-			return;
-		}
+		const errorEntries = Object.entries(fetcher.data?.fieldErrors ?? {});
+		if (errorEntries.length === 0) return;
 
 		// revealing the field (e.g. switching to its step) updates state, which can't be flushed mid-commit
 		queueMicrotask(() => actions.focusServerErrors(errorEntries));
@@ -341,7 +341,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	const contextValue = React.useMemo<FormFieldContextValue>(
 		() => ({
 			schema: schema as FormObjectSchema,
-			defaultValues: defaultValues as FormFieldContextValue["defaultValues"],
+			defaultValues,
 			serverErrors: visibleServerErrors,
 			hasSubmitted,
 			setClientError: actions.setClientError,
@@ -354,7 +354,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 			submitToServer: actions.submitToServer,
 			fetcherState: fetcher.state,
 			store,
-			steps: steps as ReadonlyArray<FormStepDefinition> | undefined,
+			steps,
 			currentStepIdx,
 			goToStep: actions.goToStep,
 			registerFieldRevealer: actions.registerFieldRevealer,
@@ -863,7 +863,7 @@ function createFormActions({
 			...(revalidateRoot ? { revalidateRoot: true } : {}),
 		};
 		void holdRevalidationsDuring(() =>
-			fetcher.submit(submitted as unknown as Record<string, string>, {
+			fetcher.submit(submitted, {
 				method: "post",
 				action,
 				encType: "application/json",
@@ -961,12 +961,12 @@ function createFormActions({
 		}
 	};
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
 		// pressing enter in a text input submits implicitly, before the last step that means moving on
 		const { steps, currentStepIdx } = latest.current;
-		const submitter = (e.nativeEvent as SubmitEvent).submitter;
+		const submitter = e.nativeEvent.submitter;
 		const isSubmitButtonPressed =
 			submitter instanceof HTMLElement &&
 			submitter.dataset.formSubmit !== undefined;

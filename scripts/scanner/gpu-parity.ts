@@ -84,7 +84,7 @@ for (const group of fixtureGroups()) {
 		}
 		src.delete();
 		for (const [i, cpuDetector] of cpuDetectors.entries()) {
-			const gpuDetector = gpuDetectors[i]!;
+			const gpuDetector = gpuDetectors[i];
 			const gate = cpuDetector.gate(frame);
 			gpuDetector.gate(frame);
 			rows++;
@@ -156,8 +156,8 @@ function decisions(events: unknown): string {
 }
 
 function samePixels(a: Mat, b: Mat): boolean {
-	const x = a.data as Uint8Array;
-	const y = b.data as Uint8Array;
+	const x = a.data;
+	const y = b.data;
 	if (x.length !== y.length) return false;
 	for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
 	return true;
@@ -170,7 +170,7 @@ async function sameDownscale(frame: Mat): Promise<boolean> {
 	cv.resize(frame, src, new cv.Size(3840, 2160), 0, 0, cv.INTER_CUBIC);
 	try {
 		const device = matcher.device;
-		const data = src.data as Uint8Array;
+		const data = src.data;
 		const buffer = device.createBuffer({
 			size: data.byteLength,
 			usage: BUFFER_STORAGE | BUFFER_COPY_DST,
@@ -197,7 +197,7 @@ async function sameDownscale(frame: Mat): Promise<boolean> {
 		if (JSON.stringify(box) !== JSON.stringify(gpuBox)) return false;
 		if (box) return true;
 		const expected = normalizeFrame(src);
-		const cpu = expected.data as Uint8Array;
+		const cpu = expected.data;
 		const same =
 			cpu.length === pixels.length && cpu.every((v, i) => v === pixels[i]);
 		expected.delete();

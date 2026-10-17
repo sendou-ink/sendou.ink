@@ -518,7 +518,9 @@ function SeasonSummaryExportDialog({
 
 	const handleOpen = () => {
 		if (fetcher.state === "idle" && !fetcher.data) {
-			fetcher.load(userSeasonSummaryGraphicPage({ user: profileUser, season }));
+			void fetcher.load(
+				userSeasonSummaryGraphicPage({ user: profileUser, season }),
+			);
 		}
 	};
 

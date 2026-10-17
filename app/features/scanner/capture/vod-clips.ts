@@ -47,7 +47,7 @@ export async function extractVodClip(
 	});
 	try {
 		const videoTrack = await input.getPrimaryVideoTrack();
-		const videoCodec = videoTrack?.codec;
+		const videoCodec = videoTrack ? await videoTrack.getCodec() : null;
 		if (!videoTrack || !videoCodec) throw new Error("no video track");
 		const format = new Mp4OutputFormat({ fastStart: "in-memory" });
 		if (!format.getSupportedVideoCodecs().includes(videoCodec)) {
@@ -62,7 +62,7 @@ export async function extractVodClip(
 		const clipEnd = Math.min(end, start + maxSeconds);
 
 		const audioTrack = await input.getPrimaryAudioTrack();
-		const audioCodec = audioTrack?.codec;
+		const audioCodec = audioTrack ? await audioTrack.getCodec() : null;
 		const audioSource =
 			audioTrack &&
 			audioCodec &&
@@ -73,7 +73,9 @@ export async function extractVodClip(
 		const target = new BufferTarget();
 		const output = new Output({ format, target });
 		const videoSource = new EncodedVideoPacketSource(videoCodec);
-		output.addVideoTrack(videoSource, { rotation: videoTrack.rotation });
+		output.addVideoTrack(videoSource, {
+			rotation: await videoTrack.getRotation(),
+		});
 		if (audioSource) output.addAudioTrack(audioSource);
 		await output.start();
 		try {

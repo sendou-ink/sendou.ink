@@ -74,7 +74,7 @@ describe("generateToken", () => {
 		const result = await ApiRepository.generateToken(users.id(1), "read");
 
 		expect(result.token).toBeDefined();
-		expect(typeof result.token).toBe("string");
+		expect(result.token).toBeTypeOf("string");
 		expect(result.token.length).toBeGreaterThan(0);
 	});
 

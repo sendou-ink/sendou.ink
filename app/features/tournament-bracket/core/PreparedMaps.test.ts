@@ -248,8 +248,9 @@ describe("PreparedMaps - eliminationTeamCountOptions", () => {
 		).toBe(16);
 	});
 
-	for (const type of ELIMINATION_TYPES) {
-		test(`every ${type} team count plays the same rounds as the max of its range`, () => {
+	test.each(ELIMINATION_TYPES)(
+		"every %s team count plays the same rounds as the max of its range",
+		(type) => {
 			const mismatches: string[] = [];
 
 			for (
@@ -273,8 +274,8 @@ describe("PreparedMaps - eliminationTeamCountOptions", () => {
 			}
 
 			expect(mismatches).toEqual([]);
-		});
-	}
+		},
+	);
 
 	/** Round names as both the bracket and the prepared maps dialog show them. Third place match left out as it is trimmed separately. */
 	function playedRoundNames({

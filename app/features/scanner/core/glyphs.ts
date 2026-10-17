@@ -86,7 +86,7 @@ function lazyGlyphSet(
 export function loadGlyphSet(atlas: FrameData, meta: AtlasMeta): GlyphSet {
 	return lazyGlyphSet(meta.height, () => {
 		const cv = getCV();
-		const full = cv.matFromImageData(atlas as unknown as ImageData);
+		const full = cv.matFromImageData(atlas);
 		const gray = new cv.Mat();
 		cv.cvtColor(full, gray, cv.COLOR_RGBA2GRAY);
 		full.delete();
@@ -154,7 +154,7 @@ export function scaleGlyphSet(set: GlyphSet, factor: number): GlyphSet {
 /** Count of pixels above the binarization threshold. */
 function inkOf(mat: Mat): number {
 	let ink = 0;
-	for (const v of mat.data as Uint8Array) if (v > TEMPLATE_BIN_THRESHOLD) ink++;
+	for (const v of mat.data) if (v > TEMPLATE_BIN_THRESHOLD) ink++;
 	return ink;
 }
 
@@ -168,7 +168,7 @@ function tightCropGray(gray: Mat, threshold: number): Mat {
 	let yMax = -1;
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
-			if (data[y * cols + x]! > threshold) {
+			if (data[y * cols + x] > threshold) {
 				if (x < xMin) xMin = x;
 				if (x > xMax) xMax = x;
 				if (y < yMin) yMin = y;
@@ -237,7 +237,7 @@ function columnProfile(binary: Mat): number[] {
 	const profile = new Array<number>(cols).fill(0);
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
-			if (data[y * cols + x]! > 0) profile[x]!++;
+			if (data[y * cols + x] > 0) profile[x]++;
 		}
 	}
 	return profile;
@@ -247,7 +247,7 @@ function segmentColumns(profile: number[], minColumnPixels: number): Segment[] {
 	const segments: Segment[] = [];
 	let start = -1;
 	for (let x = 0; x < profile.length; x++) {
-		const on = profile[x]! > minColumnPixels;
+		const on = profile[x] > minColumnPixels;
 		if (on && start < 0) start = x;
 		if (!on && start >= 0) {
 			if (x - start >= 2) segments.push({ x0: start, x1: x });
@@ -281,18 +281,17 @@ function splitWideSegment(
 	let running = 0;
 	for (let i = seg.x0; i < seg.x1; i++) {
 		leftMax[i] = running;
-		running = Math.max(running, profile[i]!);
+		running = Math.max(running, profile[i]);
 	}
 	running = 0;
 	for (let i = seg.x1 - 1; i >= seg.x0; i--) {
 		rightMax[i] = running;
-		running = Math.max(running, profile[i]!);
+		running = Math.max(running, profile[i]);
 	}
 	let best = -1;
 	let bestRatio = Number.POSITIVE_INFINITY;
 	for (let i = seg.x0 + 3; i < seg.x1 - 3; i++) {
-		const ratio =
-			profile[i]! / Math.max(1, Math.min(leftMax[i]!, rightMax[i]!));
+		const ratio = profile[i] / Math.max(1, Math.min(leftMax[i], rightMax[i]));
 		if (ratio < bestRatio) {
 			bestRatio = ratio;
 			best = i;
@@ -304,8 +303,8 @@ function splitWideSegment(
 	// whole glyph width.
 	let lo = best;
 	let hi = best;
-	while (lo - 1 >= seg.x0 + 3 && profile[lo - 1]! <= profile[best]!) lo--;
-	while (hi + 1 < seg.x1 - 3 && profile[hi + 1]! <= profile[best]!) hi++;
+	while (lo - 1 >= seg.x0 + 3 && profile[lo - 1] <= profile[best]) lo--;
+	while (hi + 1 < seg.x1 - 3 && profile[hi + 1] <= profile[best]) hi++;
 	const cut =
 		widthError(lo - seg.x0, medianWidth) <=
 		widthError(hi + 1 - seg.x0, medianWidth)
@@ -332,7 +331,7 @@ function measureSegment(binary: Mat, seg: Segment): SegmentInfo {
 	let yMax = -1;
 	for (let y = 0; y < rows; y++) {
 		for (let x = seg.x0; x < seg.x1; x++) {
-			if (data[y * cols + x]! > 0) {
+			if (data[y * cols + x] > 0) {
 				ink++;
 				if (y < yMin) yMin = y;
 				if (y > yMax) yMax = y;
@@ -536,11 +535,11 @@ function* classifySegment(
 			: [() => Number.NEGATIVE_INFINITY];
 	let bestScore = scoreFloor;
 	for (let i = 0; i < contenders.length; i++) {
-		const { glyph, r, hr, bound } = contenders[i]!;
+		const { glyph, r, hr, bound } = contenders[i];
 		if (bound < bestScore - FIXTURE_TIEBREAK) break;
 		if (probeMode && (bound <= scoreFloor || bestScore > scoreFloor)) break;
 		if (requestIndex[i] === -1) continue;
-		const maxVal = scoreOf!(requestIndex[i]!);
+		const maxVal = scoreOf(requestIndex[i]);
 		const score = maxVal * (0.7 + 0.3 * r) * (0.85 + 0.15 * hr);
 		if (Number.isFinite(score)) {
 			if (score > bestScore) bestScore = score;
@@ -663,7 +662,7 @@ function* prescreen(
 			: [() => Number.NEGATIVE_INFINITY];
 	const scored = estimable.map(({ entry }, i) => ({
 		entry,
-		est: scoreOf!(i) * entry.bound,
+		est: scoreOf(i) * entry.bound,
 	}));
 	smallRegion.delete();
 	scored.sort((a, b) => b.est - a.est);
@@ -671,7 +670,7 @@ function* prescreen(
 		const floor =
 			probeFloor !== null
 				? probeFloor - PRESCREEN_MARGIN
-				: scored[0]!.est - PRESCREEN_MARGIN;
+				: scored[0].est - PRESCREEN_MARGIN;
 		let taken = 0;
 		for (const { entry, est } of scored) {
 			if (est < floor || taken >= PRESCREEN_MAX_KEEP) break;
@@ -744,9 +743,9 @@ function sortByBound(items: EligibleGlyph[]): void {
 		return;
 	}
 	for (let i = 1; i < items.length; i++) {
-		const item = items[i]!;
+		const item = items[i];
 		let j = i - 1;
-		while (j >= 0 && items[j]!.bound < item.bound) {
+		while (j >= 0 && items[j].bound < item.bound) {
 			items[j + 1] = items[j]!;
 			j--;
 		}
@@ -760,9 +759,9 @@ function sortByScore<T extends { score: number }>(items: T[]): void {
 		return;
 	}
 	for (let i = 1; i < items.length; i++) {
-		const item = items[i]!;
+		const item = items[i];
 		let j = i - 1;
-		while (j >= 0 && items[j]!.score < item.score) {
+		while (j >= 0 && items[j].score < item.score) {
 			items[j + 1] = items[j]!;
 			j--;
 		}
@@ -817,8 +816,8 @@ function* mergeSplitGlyphs(
 		RAISED_MARKS.has(ranked[0]?.char ?? "") &&
 		baseline - seg.y1 <= RAISED_MARK_BASELINE_SLACK_PX;
 	const mergeCandidate = (i: number) => {
-		const a = items[i]!;
-		const b = items[i + 1]!;
+		const a = items[i];
+		const b = items[i + 1];
 		const gap = b.seg.x0 - a.seg.x1;
 		const width = b.seg.x1 - a.seg.x0;
 		if (gap > maxGap || width > maxCharWidth) return null;
@@ -894,8 +893,8 @@ const RECUT_MIN_SCORE = 0.7;
 function dipCuts(profile: number[], x0: number, x1: number): number[] {
 	const cuts = new Set<number>();
 	for (let x = x0 + 3; x <= x1 - 3; x++) {
-		const v = profile[x]!;
-		if (v <= profile[x - 1]! && v <= profile[x + 1]!) {
+		const v = profile[x];
+		if (v <= profile[x - 1] && v <= profile[x + 1]) {
 			cuts.add(x);
 			// ink ownership over the dip is ambiguous; try its far edge too
 			if (x + 1 <= x1 - 3) cuts.add(x + 1);
@@ -918,8 +917,8 @@ function deepestDipCuts(
 ): number[] {
 	const dips: { x: number; value: number; ratio: number }[] = [];
 	for (let x = x0 + 3; x <= x1 - 3; x++) {
-		const v = profile[x]!;
-		if (v > profile[x - 1]! || v > profile[x + 1]!) continue;
+		const v = profile[x];
+		if (v > profile[x - 1] || v > profile[x + 1]) continue;
 		const peak = Math.min(
 			Math.max(...profile.slice(x0, x)),
 			Math.max(...profile.slice(x + 1, x1)),
@@ -1065,8 +1064,8 @@ function* recutMiscutPairs(
 		Math.round(ctx.set.medianWidth * MERGE_MAX_GAP_RATIO),
 	);
 	const recut = (i: number) => {
-		const a = items[i]!;
-		const b = items[i + 1]!;
+		const a = items[i];
+		const b = items[i + 1];
 		const aScore = a.ranked[0]?.score ?? 0;
 		const bScore = b.ranked[0]?.score ?? 0;
 		if (aScore >= RECUT_MAX_SCORE || bScore >= RECUT_MAX_SCORE) return null;
@@ -1148,7 +1147,7 @@ function* splitFusedGlyphs(
 		);
 	}
 	for (let i = 0; i < items.length; i++) {
-		const item = items[i]!;
+		const item = items[i];
 		const candidate = fused(item);
 		if (!candidate) continue;
 		const { floor, cuts } = candidate;
@@ -1183,10 +1182,7 @@ function* resegmentWeakRuns(
 	const runs: { start: number; end: number; floor: number }[] = [];
 	for (let start = 0; start < items.length;) {
 		let end = start + 1;
-		while (
-			end < items.length &&
-			items[end]!.seg.x0 === items[end - 1]!.seg.x1
-		) {
+		while (end < items.length && items[end].seg.x0 === items[end - 1].seg.x1) {
 			end++;
 		}
 		const weakest = Math.min(...items.slice(start, end).map(score));
@@ -1212,8 +1208,8 @@ function dipCenters(profile: number[], x0: number, x1: number): number[] {
 	const centers: number[] = [];
 	let lo = -1;
 	for (let x = x0 + 3; x <= x1 - 2; x++) {
-		const v = profile[x]!;
-		const isDip = x <= x1 - 3 && v <= profile[x - 1]! && v <= profile[x + 1]!;
+		const v = profile[x];
+		const isDip = x <= x1 - 3 && v <= profile[x - 1] && v <= profile[x + 1];
 		if (isDip && lo < 0) lo = x;
 		if (!isDip && lo >= 0) {
 			centers.push(Math.round((lo + x) / 2));
@@ -1229,7 +1225,7 @@ function* bestSegmentation(
 	floor: number,
 	maxWidth: number,
 ): MatchSteps<ClassifiedSegment[] | null> {
-	const x0 = run[0]!.seg.x0;
+	const x0 = run[0].seg.x0;
 	const x1 = run.at(-1)!.seg.x1;
 	const cuts = [
 		...new Set([
@@ -1255,11 +1251,11 @@ function* bestSegmentation(
 	const piecesFrom = cuts.map((_, from) => {
 		const pieces: { to: number; seg: SegmentInfo }[] = [];
 		for (let to = from + 1; to < cuts.length; to++) {
-			const width = cuts[to]! - cuts[from]!;
-			if (width > maxWidth && !original.has(cuts[from]! * 65536 + cuts[to]!))
+			const width = cuts[to] - cuts[from];
+			if (width > maxWidth && !original.has(cuts[from] * 65536 + cuts[to]))
 				break;
 			if (width < 3) continue;
-			const seg = ctx.measure({ x0: cuts[from]!, x1: cuts[to]! });
+			const seg = ctx.measure({ x0: cuts[from], x1: cuts[to] });
 			if (seg.ink > 0) pieces.push({ to, seg });
 		}
 		return pieces;
@@ -1268,18 +1264,18 @@ function* bestSegmentation(
 	for (let from = 0; from < cuts.length - 1; from++) {
 		const head = best[from];
 		if (!head) continue;
-		const pieces = piecesFrom[from]!;
+		const pieces = piecesFrom[from];
 		const probes = yield* all(
 			pieces.map(({ seg }) => classify(ctx, seg, floor)),
 		);
 		const viable = pieces.filter((_, i) =>
-			probes[i]!.some((c) => c.score > floor),
+			probes[i].some((c) => c.score > floor),
 		);
 		const reads = yield* all(
 			viable.map(({ seg }) => classify(ctx, seg, undefined, ctx.maxCandidates)),
 		);
 		for (const [i, { to, seg }] of viable.entries()) {
-			const ranked = reads[i]!;
+			const ranked = reads[i];
 			const pieceScore = ranked[0]?.score ?? 0;
 			if (pieceScore <= floor) continue;
 			const weakest = Math.min(head.weakest, pieceScore);
@@ -1362,7 +1358,7 @@ export function* recognizeTextSteps(
 	);
 	const items: ClassifiedSegment[] = segments.map((seg, i) => ({
 		seg,
-		ranked: rankedSegments[i]!,
+		ranked: rankedSegments[i],
 	}));
 	yield* mergeSplitGlyphs(items, ctx);
 	yield* recutMiscutPairs(items, ctx);

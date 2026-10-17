@@ -331,7 +331,7 @@ function useRevalidateOnUnknownTeams(bracket: BracketType | null) {
 		) ?? false;
 
 	React.useEffect(() => {
-		if (hasUnknownTeams) revalidate();
+		if (hasUnknownTeams) void revalidate();
 	}, [hasUnknownTeams, revalidate]);
 }
 

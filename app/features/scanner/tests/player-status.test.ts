@@ -100,7 +100,7 @@ for (const fixture of fixtures) {
 					() => {
 						assert.equal(
 							event.data.special[side][slot],
-							expected.special![side]![slot],
+							expected.special![side][slot],
 							`special[${side}][${slot}] mismatch (${debug()})`,
 						);
 					},
@@ -115,7 +115,7 @@ for (const fixture of fixtures) {
 					() => {
 						assert.equal(
 							event.data.dead[side][slot],
-							expected.dead![side]![slot],
+							expected.dead![side][slot],
 							`dead[${side}][${slot}] mismatch (${debug()})`,
 						);
 					},
@@ -129,18 +129,15 @@ for (const fixture of fixtures) {
 // other detector's screen — their gates must stay quiet on these frames
 // (death excepted: its overlay rides live gameplay, see objective.test.ts).
 const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+	["scoreboard", createScoreboardDetector(resources)],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources),
 	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["death", createDeathDetector(resources) as Detector<unknown>],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-own", createScoreboardOwnDetector(resources)],
+	["death", createDeathDetector(resources)],
+	["map-start", createMapStartDetector(resources)],
+	["minimap", createMinimapDetector(resources)],
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "PlayerStatus",

@@ -8,6 +8,7 @@ export class YoutubeApiError extends Error {
 
 	constructor(status: number) {
 		super(`YouTube API request failed with status: ${status}`);
+		this.name = "YoutubeApiError";
 		this.status = status;
 	}
 }

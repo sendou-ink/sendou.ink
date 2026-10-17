@@ -1,8 +1,6 @@
 // keeps `beforeinstallprompt` firing (Chrome installability still requires a fetch
 // handler); Chrome 115+ detects it as no-op and skips the worker on navigation
-self.addEventListener("fetch", () => {
-	return;
-});
+self.addEventListener("fetch", () => {});
 
 self.addEventListener("push", (event) => {
 	// a push that shows no notification can count against the subscription in

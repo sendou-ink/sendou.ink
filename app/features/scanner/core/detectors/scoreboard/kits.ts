@@ -20,8 +20,8 @@ export const WEAPON_KITS: ReadonlyMap<string, WeaponKit> = new Map(
 	Object.entries(weaponParams.weaponKits).map(([id, kit]) => [
 		id,
 		{
-			sub: kit.subWeaponId as SubWeaponId,
-			special: kit.specialWeaponId as SpecialWeaponId,
+			sub: kit.subWeaponId,
+			special: kit.specialWeaponId,
 		},
 	]),
 );

@@ -1,6 +1,6 @@
 import * as React from "react";
-import type { MetaFunction } from "react-router";
 import {
+	type MetaFunction,
 	Outlet,
 	type ShouldRevalidateFunction,
 	useLoaderData,

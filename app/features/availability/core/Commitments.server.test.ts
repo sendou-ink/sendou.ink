@@ -211,7 +211,7 @@ describe("Commitments.busyBlocksByUserIds", () => {
 		expect(blocks?.map((block) => block.name)).toEqual(["Elsewhere Open"]);
 	});
 
-	test("test and league tournaments are not blocks", async () => {
+	test("league and test tournaments are not blocks", async () => {
 		const testTournament = await TournamentFactory.create({
 			authorId: organizerId(),
 			startTimes: [WEEK_STARTS_AT + 3 * DAY],

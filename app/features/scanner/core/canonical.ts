@@ -77,7 +77,7 @@ export function detectContentBox(
 			i < end;
 			i += 4
 		) {
-			sum += rgba[i]! + rgba[i + 1]! + rgba[i + 2]!;
+			sum += rgba[i] + rgba[i + 1] + rgba[i + 2];
 		}
 		return sum;
 	};
@@ -89,7 +89,7 @@ export function detectContentBox(
 			i < end;
 			i += width * 4
 		) {
-			sum += rgba[i]! + rgba[i + 1]! + rgba[i + 2]!;
+			sum += rgba[i] + rgba[i + 1] + rgba[i + 2];
 		}
 		return sum;
 	};
@@ -105,8 +105,8 @@ export function detectContentBoxFromSums(
 	return contentBoxOfSegments(
 		width,
 		height,
-		(y, segment) => sums.rows[y * BORDER_SEGMENTS + segment]!,
-		(x, segment) => sums.cols[x * BORDER_SEGMENTS + segment]!,
+		(y, segment) => sums.rows[y * BORDER_SEGMENTS + segment],
+		(x, segment) => sums.cols[x * BORDER_SEGMENTS + segment],
 	);
 }
 
@@ -237,7 +237,7 @@ function barCandidates(
 	const byFrequency = R.pipe(
 		depths,
 		R.filter((depth) => depth >= minDepth && depth < maxDepth),
-		R.countBy((depth) => String(depth)),
+		R.countBy(String),
 		R.entries(),
 		R.sortBy(
 			[([, count]) => count, "desc"],

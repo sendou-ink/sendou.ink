@@ -67,7 +67,7 @@ export function wrappedAction<T extends AnySchema>({
 	) => {
 		const body = isJsonSubmission
 			? JSON.stringify({ ...args, [RENDERS_FIELD_ERRORS_KEY]: true })
-			: new URLSearchParams(args as any);
+			: new URLSearchParams(args);
 		const request = new Request(new URL(url, "http://app.com"), {
 			method: "POST",
 			body,

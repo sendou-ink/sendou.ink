@@ -30,7 +30,8 @@ export function CoachDrawing() {
 		if (event.button !== 0) return;
 		event.currentTarget.setPointerCapture(event.pointerId);
 		setIsDrawing(true);
-		setStrokes([...strokes, { color, points: [pointOf(event)] }]);
+		const point = pointOf(event);
+		setStrokes((current) => [...current, { color, points: [point] }]);
 	};
 
 	const continueStroke = (event: PointerEvent<SVGSVGElement>) => {

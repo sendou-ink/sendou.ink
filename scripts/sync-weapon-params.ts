@@ -205,9 +205,7 @@ function mergeWithHistory(
 	allVersionParams: Map<string, Record<string, unknown>>,
 	sortedVersions: string[],
 ): Record<string, unknown> {
-	const result: Record<string, unknown> = JSON.parse(
-		JSON.stringify(latestParams),
-	);
+	const result: Record<string, unknown> = structuredClone(latestParams);
 
 	const latestPaths = getLeafPaths(latestParams);
 

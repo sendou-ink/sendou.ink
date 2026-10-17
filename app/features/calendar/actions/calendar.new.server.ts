@@ -212,7 +212,7 @@ export const action = defineAction(
 			ShowcaseTournaments.clearCachedTournaments();
 
 			if (data.isTest) {
-				notify({
+				void notify({
 					notification: {
 						type: "TO_TEST_CREATED",
 						meta: {

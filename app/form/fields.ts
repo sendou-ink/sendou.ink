@@ -228,7 +228,7 @@ function textFieldRefined<T extends v.GenericSchema<any, string | null>>(
 			v.check((val) => {
 				if (val === null) return true;
 				return args.regExp!.pattern.test(val);
-			}, args.regExp!.message),
+			}, args.regExp.message),
 		);
 	}
 
@@ -240,7 +240,7 @@ function textFieldRefined<T extends v.GenericSchema<any, string | null>>(
 				return (args.validate as { func: (value: string) => boolean }).func(
 					val,
 				);
-			}, args.validate!.message),
+			}, args.validate.message),
 		);
 	}
 
@@ -550,7 +550,7 @@ export function dualSelectOptional<V extends string>(
 				tuple,
 				v.check(
 					([first, second]) => args.validate!.func([first, second]),
-					`forms:${args.validate!.message}`,
+					`forms:${args.validate.message}`,
 				),
 			)
 		: tuple;

@@ -1,4 +1,5 @@
 import { differenceInMinutes } from "date-fns";
+import type { TFunction } from "i18next";
 import {
 	CalendarClock,
 	Flag,
@@ -499,7 +500,7 @@ function resolveCurrentSessionStartedAt({
 function resolvePickBanBanner(
 	data: TournamentMatchLoaderData,
 	tournament: ReturnType<typeof useTournament>,
-	t: ReturnType<typeof useTranslation<["tournament"]>>["t"],
+	t: TFunction<["tournament"]>,
 ): { icon: React.ReactNode; header: string; subtitle: string } | null {
 	if (data.matchIsOver) return null;
 	if (!data.match.roundMaps?.pickBan) return null;
@@ -542,13 +543,13 @@ function resolvePickBanBanner(
 		switch (turnOfResult.action) {
 			case "PICK":
 			case "PICK_NO_MODE_REPEAT":
-				return t("tournament:pickBan.pickMap") + stepCounter;
+				return `${t("tournament:pickBan.pickMap")}${stepCounter}`;
 			case "BAN":
-				return t("tournament:pickBan.banMap") + stepCounter;
+				return `${t("tournament:pickBan.banMap")}${stepCounter}`;
 			case "MODE_PICK":
-				return t("tournament:pickBan.pickMode") + stepCounter;
+				return `${t("tournament:pickBan.pickMode")}${stepCounter}`;
 			case "MODE_BAN":
-				return t("tournament:pickBan.banMode") + stepCounter;
+				return `${t("tournament:pickBan.banMode")}${stepCounter}`;
 			default:
 				return "";
 		}
@@ -600,7 +601,7 @@ function resolveBannerGames({
 		data.mapList
 			?.filter((map) => !map.bannedByTournamentTeamId)
 			.map((map) => ({
-				mode: map.mode as ModeShort | null,
+				mode: map.mode,
 			})) ?? [];
 
 	const placeholderCount = Math.max(

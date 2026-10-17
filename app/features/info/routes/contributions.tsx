@@ -85,7 +85,7 @@ export default function ContributionsPage() {
 	return (
 		<Main>
 			<p>
-				<Trans i18nKey={"contributions:project"} t={t}>
+				<Trans i18nKey="contributions:project" t={t}>
 					Sendou.ink is a project by Sendou with help from contributors:
 				</Trans>
 			</p>

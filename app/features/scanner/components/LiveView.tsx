@@ -4,6 +4,7 @@
  * SessionView. The capture itself lives in live-session.ts and outlives this view.
  */
 import { Square } from "lucide-react";
+import { useEffect, useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
@@ -55,10 +56,12 @@ export function LiveView() {
 			findSession(feed, clip.source.sessionKey) === session,
 	);
 	const newest = session?.built.at(-1);
-	const reading =
-		newest !== undefined &&
-		newest.match.winner === null &&
-		Date.now() - (session?.endedAt ?? 0) < READING_WINDOW_MS;
+	const readingUntil =
+		newest !== undefined && newest.match.winner === null
+			? (session?.endedAt ?? 0) + READING_WINDOW_MS
+			: null;
+	const now = useNowAdvancedAt(readingUntil);
+	const reading = readingUntil !== null && now < readingUntil;
 	const uploadNote = !user
 		? "Upload off (log in)"
 		: settings.upload
@@ -120,7 +123,7 @@ export function LiveView() {
 									originT: session?.originT ?? 0,
 								}}
 								clipsByMatch={info.clipsByMatch}
-								fileBase={`scanner-${new Date(session?.startedAt ?? Date.now()).toISOString().slice(0, 10)}`}
+								fileBase={`scanner-${new Date(session?.startedAt ?? now).toISOString().slice(0, 10)}`}
 							/>
 							<SendouButton
 								size="small"
@@ -200,4 +203,20 @@ function frameLoader(event: ScanEvent) {
 	return event.hasFrame && event.id !== undefined
 		? () => loadEventFrame(event.id!)
 		: undefined;
+}
+
+function useNowAdvancedAt(deadline: number | null) {
+	// time lives in state because Date.now() during render would be frozen by the React Compiler
+	const [now, setNow] = useState(() => Date.now());
+
+	useEffect(() => {
+		if (deadline === null || now >= deadline) return;
+		const timeout = setTimeout(
+			() => setNow(Date.now()),
+			Math.max(0, deadline - Date.now()) + 100,
+		);
+		return () => clearTimeout(timeout);
+	}, [deadline, now]);
+
+	return now;
 }

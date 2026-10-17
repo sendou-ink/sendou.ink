@@ -3,14 +3,13 @@ import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Badge } from "~/components/Badge";
-import { LinkButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { Main } from "~/components/Main";
 import { metaTags } from "~/utils/remix";
 import {
 	PATREON_HOW_TO_CONNECT_DISCORD_URL,
 	SENDOU_INK_PATREON_URL,
 } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import styles from "./support.module.css";
 

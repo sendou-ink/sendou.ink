@@ -216,10 +216,7 @@ for (const fixture of fixtures) {
 test("spectator sub tiles read the two team ink colors", async () => {
 	const fixture = fixtures.find((f) => f.name === "spectator-sws26-swiss");
 	assert.ok(fixture, "spectator-sws26-swiss fixture missing");
-	const { events } = await runDetectorOnFixture<MinimapData>(
-		detector,
-		fixture!,
-	);
+	const { events } = await runDetectorOnFixture<MinimapData>(detector, fixture);
 	const teamColors = events[0]?.data.teamColors;
 	assert.ok(teamColors?.[0] && teamColors[1], "column ink color unreadable");
 	const [alpha, bravo] = teamColors;
@@ -270,11 +267,11 @@ for (const fixture of loadFixtures("negative")) {
 }
 
 const otherDetectors: Detector<unknown>[] = [
-	createScoreboardDetector(resources) as Detector<unknown>,
-	createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
-	createScoreboardOwnDetector(resources) as Detector<unknown>,
-	createDeathDetector(resources) as Detector<unknown>,
-	createMapStartDetector(resources) as Detector<unknown>,
+	createScoreboardDetector(resources),
+	createScoreboardBattleLogReplayDetector(resources),
+	createScoreboardOwnDetector(resources),
+	createDeathDetector(resources),
+	createMapStartDetector(resources),
 ];
 for (const fixture of fixtures.filter((f) => f.expected.event === "Minimap")) {
 	test(`other gates stay quiet on minimap/${fixture.name}`, async () => {

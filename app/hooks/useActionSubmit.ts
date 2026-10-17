@@ -39,9 +39,7 @@ export function useActionSubmit<TSchema extends AnySchema>(
 		if (opts?.encType === "application/json") {
 			void holdRevalidationsDuring(() =>
 				fetcher.submit(
-					{ _action: action, ...fields } as Parameters<
-						typeof fetcher.submit
-					>[0],
+					{ _action: action, ...fields },
 					{ method: "post", action: opts?.action, encType: "application/json" },
 				),
 			);

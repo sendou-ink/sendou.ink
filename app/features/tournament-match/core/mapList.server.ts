@@ -12,7 +12,6 @@ import { starterMap } from "~/modules/tournament-map-list-generator/starter-map"
 import type {
 	DBTournamentMaplistSource,
 	TournamentMapListMap,
-	TournamentMaplistSource,
 } from "~/modules/tournament-map-list-generator/types";
 import { syncCached } from "~/utils/cache.server";
 import { logger } from "~/utils/logger";
@@ -50,7 +49,7 @@ export function resolveMapList(
 
 	const baseMaps =
 		args.mapPickingStyle === "TO"
-			? args.maps!.list?.map((m) => ({ ...m, source: "TO" as const }))
+			? args.maps.list?.map((m) => ({ ...m, source: "TO" as const }))
 			: // include team ids in the key to handle a case where match was reopened causing one of the teams to change
 				syncCached(
 					`${args.matchId}-${args.teams[0]}-${args.teams[1]}-${args.maps?.count}-${args.maps?.pickBan}`,
@@ -86,7 +85,7 @@ export function resolveMapList(
 				.map((map) => ({
 					mode: map.mode,
 					stageId: map.stageId,
-					source: "COUNTERPICK" as TournamentMaplistSource,
+					source: "COUNTERPICK" as const,
 					bannedByTournamentTeamId: undefined,
 				})),
 		);
@@ -153,9 +152,7 @@ function resolveCustomMapList(
 		.map((event) => ({
 			mode: event.mode,
 			stageId: event.stageId,
-			source: (event.type === "ROLL"
-				? "ROLL"
-				: "COUNTERPICK") as TournamentMaplistSource,
+			source: event.type === "ROLL" ? "ROLL" : "COUNTERPICK",
 			bannedByTournamentTeamId: undefined,
 		}));
 }

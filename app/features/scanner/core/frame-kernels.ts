@@ -48,8 +48,8 @@ export function frameKernels(): FrameKernels | null {
 			(src: Mat): Mat => {
 				const dst = new cv.Mat(src.rows, src.cols, type);
 				(kernels[name] as (src: number, dst: number, n: number) => void)(
-					(src.data as Uint8Array).byteOffset,
-					(dst.data as Uint8Array).byteOffset,
+					src.data.byteOffset,
+					dst.data.byteOffset,
 					src.rows * src.cols,
 				);
 				return dst;

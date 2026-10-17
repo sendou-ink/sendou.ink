@@ -79,7 +79,7 @@ export async function start({
 		...theirGroup.members.map((m) => m.id),
 	]);
 
-	notify({
+	void notify({
 		userIds: [
 			...ownGroup.members.map((m) => m.id),
 			...theirGroup.members.map((m) => m.id),
@@ -234,7 +234,7 @@ async function createMatch({
 		readyCheck.members.map((member) => member.userId),
 	);
 
-	notify({
+	void notify({
 		userIds: readyCheck.members.map((member) => member.userId),
 		defaultSeenUserIds: [actorUserId],
 		notification: {

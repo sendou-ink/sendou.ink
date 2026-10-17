@@ -82,7 +82,7 @@ const getAllSkills = async () => {
 
 		const bestTier = toConsider.reduce<null | { name: TierName; idx: number }>(
 			(acc, cur, idx) => {
-				const seasonsSkill = cur[member.userId!];
+				const seasonsSkill = cur[member.userId];
 				if (!seasonsSkill || seasonsSkill.approximate) {
 					return acc;
 				}
@@ -100,7 +100,7 @@ const getAllSkills = async () => {
 		);
 
 		if (bestTier) {
-			result[member.userId] = toConsider[bestTier.idx][member.userId!];
+			result[member.userId] = toConsider[bestTier.idx][member.userId];
 		}
 	}
 

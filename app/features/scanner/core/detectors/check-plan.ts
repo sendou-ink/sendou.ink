@@ -63,7 +63,7 @@ export function createCheckTracker(): CheckTracker {
 					if (fires(branch.lastCheckT, interval, prevT, t)) {
 						wanted = true;
 						if (!spawned.some((b) => b.lastCheckT === t)) {
-							spawned.push({ lastCheckT: t, intervals: laters[i]! });
+							spawned.push({ lastCheckT: t, intervals: laters[i] });
 						}
 					}
 					if (!elapsed(branch.lastCheckT, interval, t)) settled = false;

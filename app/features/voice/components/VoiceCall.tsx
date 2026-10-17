@@ -308,12 +308,14 @@ function ScreenWakeLock() {
 			}
 		};
 
+		const onVisibilityChange = () => void acquire();
+
 		void acquire();
-		document.addEventListener("visibilitychange", acquire);
+		document.addEventListener("visibilitychange", onVisibilityChange);
 
 		return () => {
 			released = true;
-			document.removeEventListener("visibilitychange", acquire);
+			document.removeEventListener("visibilitychange", onVisibilityChange);
 			void sentinel?.release().catch(() => {});
 		};
 	}, []);

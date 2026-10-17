@@ -356,8 +356,13 @@ function twitchVideo({
 function youtubeStream({
 	videoId = "yt-video1",
 	startedAt = new Date((MATCH_START_SECONDS - 600) * 1000),
-	endedAt = new Date((MATCH_START_SECONDS + 2 * 60 * 60) * 1000) as Date | null,
+	endedAt = new Date((MATCH_START_SECONDS + 2 * 60 * 60) * 1000),
 	viewCount = 50,
+}: {
+	videoId?: string;
+	startedAt?: Date;
+	endedAt?: Date | null;
+	viewCount?: number;
 } = {}) {
 	return { videoId, startedAt, endedAt, viewCount };
 }

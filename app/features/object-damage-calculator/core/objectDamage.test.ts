@@ -113,8 +113,8 @@ describe("calculateDamage()", () => {
 			(d) => d.receiver === "Wsb_Shield",
 		)?.hitPoints!;
 
-		expect(typeof hpWithoutBRU).toBe("number");
-		expect(typeof hpWithBRU).toBe("number");
+		expect(hpWithoutBRU).toBeTypeOf("number");
+		expect(hpWithBRU).toBeTypeOf("number");
 		expect(hpWithoutBRU).toBeLessThan(hpWithBRU);
 	});
 
@@ -132,8 +132,8 @@ describe("calculateDamage()", () => {
 			(d) => d.receiver === "GreatBarrier_Barrier",
 		)?.hitPoints!;
 
-		expect(typeof hpWithoutSPU).toBe("number");
-		expect(typeof hpWithSPU).toBe("number");
+		expect(hpWithoutSPU).toBeTypeOf("number");
+		expect(hpWithSPU).toBeTypeOf("number");
 		expect(hpWithoutSPU).toBeLessThan(hpWithSPU);
 	});
 
@@ -216,9 +216,9 @@ describe("calculateDamage()", () => {
 			damageType: "NORMAL_MAX_FULL_CHARGE",
 		})[0]?.damages[0]?.hitsToDestroy;
 
-		expect(typeof min).toBe("number");
-		expect(typeof max).toBe("number");
-		expect(typeof maxFullyCharged).toBe("number");
+		expect(min).toBeTypeOf("number");
+		expect(max).toBeTypeOf("number");
+		expect(maxFullyCharged).toBeTypeOf("number");
 
 		expect(min).toBeGreaterThan(max);
 		expect(max).toBeGreaterThan(maxFullyCharged);

@@ -77,6 +77,6 @@ describe("PlusVotingRepository.findAllUsersForVoting", () => {
 		]);
 
 		expect(bio).toEqual({ text: '{"note":"gg"}', markdown: false });
-		expect(typeof bio?.text).toBe("string");
+		expect(bio?.text).toBeTypeOf("string");
 	});
 });

@@ -184,7 +184,7 @@ function SensFields() {
 							)
 						}
 					>
-						<option value="">{"-"}</option>
+						<option value="">-</option>
 						{SENS_OPTIONS.map((sens) => (
 							<option key={sens} value={sens}>
 								{rawSensToString(sens)}
@@ -204,7 +204,7 @@ function SensFields() {
 							)
 						}
 					>
-						<option value="">{"-"}</option>
+						<option value="">-</option>
 						{SENS_OPTIONS.map((sens) => (
 							<option key={sens} value={sens}>
 								{rawSensToString(sens)}

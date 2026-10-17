@@ -127,6 +127,7 @@ export function WeaponParamsTable({
 	const visibleWeaponIds = sortedWeaponIds.filter((id) => !hiddenSet.has(id));
 
 	const hideWeapon = (weaponId: number) =>
+		// eslint-disable-next-line bun/react-prefer-updater-function -- search param setter, takes no updater
 		setHiddenWeaponIds([...hiddenWeaponIds, weaponId]);
 	const restoreWeapon = (weaponId: number) =>
 		setHiddenWeaponIds(hiddenWeaponIds.filter((id) => id !== weaponId));

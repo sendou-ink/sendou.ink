@@ -60,7 +60,7 @@ describe("buildComp", () => {
 				...fullSet("b", ROLLER),
 				...fullSet("c", CHARGER),
 				...fullSet("d", TACTICOOLER_WEAPON),
-				observation("sub", 5010 as MainWeaponId, 1),
+				observation("sub", 5010, 1),
 			]),
 		).toEqual([SHOOTER, ROLLER, CHARGER, TACTICOOLER_WEAPON]);
 	});

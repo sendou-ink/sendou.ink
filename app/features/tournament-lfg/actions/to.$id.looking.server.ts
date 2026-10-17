@@ -122,7 +122,7 @@ export const action = defineAction(
 					targetTeamId: body.targetTeamId,
 				});
 
-				notify({
+				void notify({
 					userIds: targetGroup.members.map((m) => m.id),
 					notification: {
 						type: "TO_LIKE_RECEIVED",
@@ -216,7 +216,7 @@ export const action = defineAction(
 
 				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
-				notify({
+				void notify({
 					userIds: theirGroup.members.map((m) => m.id),
 					notification: {
 						type: "TO_LIKE_ACCEPTED",

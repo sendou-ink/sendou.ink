@@ -331,6 +331,7 @@ function varsCssColors() {
 			throw new Error(`cannot evaluate ${expression}`);
 		}
 
+		// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval -- input is validated to be plain arithmetic
 		return new Function(`return ${arithmetic}`)();
 	};
 

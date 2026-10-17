@@ -175,7 +175,7 @@ export const action = defineAction(
 				}
 
 				if (!tournament.isTest && !tournament.isDraft) {
-					notify({
+					void notify({
 						userIds: seeding.flatMap(
 							(tournamentTeamId) =>
 								tournament.teamById(tournamentTeamId)!.memberUserIds,

@@ -180,7 +180,7 @@ export function useFeed(): FeedSnapshot {
 }
 
 export function getFeed(): FeedSnapshot {
-	if (!snapshot.loaded && !running) refreshFeed();
+	if (!snapshot.loaded && !running) void refreshFeed();
 	return snapshot;
 }
 
@@ -242,7 +242,7 @@ async function compact(sessions: readonly LiveSession[]): Promise<void> {
 				hasFrame: false,
 			}));
 			return {
-				id: sources[0]!.id!,
+				id: sources[0].id!,
 				session: {
 					key: session.key,
 					endedAt: session.endedAt,
@@ -332,7 +332,7 @@ async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 			summary: sessionSummary(built),
 			startedAt: key,
 			endedAt: sessionEvents.at(-1)!.detectedAt,
-			originT: sorted[0]!.t,
+			originT: sorted[0].t,
 		};
 		buildCache.set(key, { signature: signatureOf(kept), built: session });
 		sessions.push(session);

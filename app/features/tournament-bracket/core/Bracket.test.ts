@@ -550,7 +550,7 @@ describe("round robin standings", () => {
 		const standings = bracket.standings;
 
 		const effectiveSeed = (tournamentTeamId: number) => {
-			let best = tournamentPP255.teamById(tournamentTeamId)!.seed!;
+			let best = tournamentPP255.teamById(tournamentTeamId)!.seed;
 			for (const match of bracket.data.match) {
 				if (!match.winnerSide) continue;
 
@@ -560,7 +560,7 @@ describe("round robin standings", () => {
 					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 				if (winner?.id !== tournamentTeamId || !loser?.id) continue;
 
-				const loserSeed = tournamentPP255.teamById(loser.id)!.seed!;
+				const loserSeed = tournamentPP255.teamById(loser.id)!.seed;
 				best = Math.min(best, loserSeed);
 			}
 			return best;

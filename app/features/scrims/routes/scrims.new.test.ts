@@ -65,7 +65,7 @@ describe("New scrim post action", () => {
 		const { posts } = await scrimPostsLoader();
 
 		expect(posts.neutral).toHaveLength(1);
-		expect(posts.neutral[0]!.isScheduledForFuture).toBe(false);
+		expect(posts.neutral[0].isScheduledForFuture).toBe(false);
 	});
 
 	test("scrim post made for future has isScheduledForFuture = true", async () => {
@@ -84,7 +84,7 @@ describe("New scrim post action", () => {
 		const { posts } = await scrimPostsLoader();
 
 		expect(posts.neutral).toHaveLength(1);
-		expect(posts.neutral[0]!.isScheduledForFuture).toBe(true);
+		expect(posts.neutral[0].isScheduledForFuture).toBe(true);
 	});
 
 	test("scrim post made as a pick-up saves the roster for reuse", async () => {
@@ -95,7 +95,7 @@ describe("New scrim post action", () => {
 		});
 
 		expect(recentPickupRosters).toHaveLength(1);
-		expect(recentPickupRosters[0]!.users.map((user) => user.id)).toEqual(
+		expect(recentPickupRosters[0].users.map((user) => user.id)).toEqual(
 			pickupMembers.ids().sort((a, b) => a - b),
 		);
 	});

@@ -60,8 +60,8 @@ export function SelectFormField<V extends string>({
 		};
 	});
 
-	const hasDescriptions = itemsWithResolvedLabels.some(
-		(item) => item.description,
+	const hasDescriptions = itemsWithResolvedLabels.some((item) =>
+		Boolean(item.description),
 	);
 
 	if (searchable || hasDescriptions) {
@@ -159,7 +159,7 @@ function CustomSelect<V extends string>({
 			? [{ id: "", textValue: "—", description: undefined }]
 			: []),
 		...items.map((item) => ({
-			id: item.value as string,
+			id: item.value,
 			textValue: item.resolvedLabel,
 			description: item.description,
 		})),

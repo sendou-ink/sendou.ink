@@ -108,8 +108,8 @@ export function ObjectiveTimeline({
 			),
 		),
 	);
-	const xMin = domain?.[0] ?? sorted[0]!.t;
-	const xMax = domain?.[1] ?? sorted[sorted.length - 1]!.t;
+	const xMin = domain?.[0] ?? sorted[0].t;
+	const xMax = domain?.[1] ?? sorted[sorted.length - 1].t;
 	const xRange = Math.max(xMax - xMin, 1);
 
 	const plotLeft = TIMELINE_PLOT_GUTTER_PX;
@@ -137,7 +137,7 @@ export function ObjectiveTimeline({
 		const rect = event.currentTarget.getBoundingClientRect();
 		const pointerX = ((event.clientX - rect.left) / rect.width) * width;
 		const closestIndex = R.firstBy(R.range(0, sorted.length), (index) =>
-			Math.abs(xAt(sorted[index]!.t) - pointerX),
+			Math.abs(xAt(sorted[index].t) - pointerX),
 		);
 
 		setHoveredIndex(closestIndex ?? null);
@@ -210,8 +210,8 @@ export function ObjectiveTimeline({
 						<g key={side} className={sideClassName(side)}>
 							<PenaltyBand
 								events={sorted}
-								carriedScores={series[side]!.carriedScores}
-								penalties={series[side]!.penalties}
+								carriedScores={series[side].carriedScores}
+								penalties={series[side].penalties}
 								xAt={xAt}
 								yAt={yAt}
 							/>
@@ -353,11 +353,11 @@ function PenaltyBand({
 		(i) => typeof carriedScores[i] === "number",
 	);
 	const topPoints = indexes.map((i) => ({
-		x: xAt(events[i]!.t),
+		x: xAt(events[i].t),
 		y: yAt(carriedScores[i]! + (penalties[i] ?? 0)),
 	}));
 	const bottomPoints = indexes.map((i) => ({
-		x: xAt(events[i]!.t),
+		x: xAt(events[i].t),
 		y: yAt(carriedScores[i]!),
 	}));
 	const topSegments = curveSegments(topPoints);
@@ -365,14 +365,14 @@ function PenaltyBand({
 	if (topSegments.length === 0) return null;
 
 	const areaPath = [
-		`M${point(topPoints[0]!)}`,
+		`M${point(topPoints[0])}`,
 		...topSegments.map(forwardSegment),
-		`L${point(bottomPoints[bottomPoints.length - 1]!)}`,
+		`L${point(bottomPoints[bottomPoints.length - 1])}`,
 		...bottomSegments.toReversed().map(backwardSegment),
 		"Z",
 	].join(" ");
 
-	const hasPenalty = (i: number) => (penalties[indexes[i]!] ?? 0) > 0;
+	const hasPenalty = (i: number) => (penalties[indexes[i]] ?? 0) > 0;
 	const edgePath = topSegments
 		.map((segment, i) =>
 			hasPenalty(i) || hasPenalty(i + 1)
@@ -495,7 +495,7 @@ function curvePath(points: Point[]) {
 	if (points.length === 0) return "";
 
 	return [
-		`M${point(points[0]!)}`,
+		`M${point(points[0])}`,
 		...curveSegments(points).map(forwardSegment),
 	].join(" ");
 }
@@ -504,14 +504,14 @@ function curvePath(points: Point[]) {
 function curveSegments(points: Point[]): CurveSegment[] {
 	if (points.length < 2) return [];
 
-	const secants = points.slice(1).map((to, i) => safeSlope(points[i]!, to));
+	const secants = points.slice(1).map((to, i) => safeSlope(points[i], to));
 	const tangents = points.map((current, i) => {
 		const previous = points[i - 1];
 		const next = points[i + 1];
-		if (!previous || !next) return secants[Math.min(i, secants.length - 1)]!;
+		if (!previous || !next) return secants[Math.min(i, secants.length - 1)];
 
-		const secantBefore = secants[i - 1]!;
-		const secantAfter = secants[i]!;
+		const secantBefore = secants[i - 1];
+		const secantAfter = secants[i];
 		const widthBefore = current.x - previous.x;
 		const widthAfter = next.x - current.x;
 		const weighted =
@@ -530,12 +530,12 @@ function curveSegments(points: Point[]): CurveSegment[] {
 	});
 
 	return points.slice(1).map((to, i) => {
-		const from = points[i]!;
+		const from = points[i];
 		const third = (to.x - from.x) / 3;
 		return {
 			from,
-			control1: { x: from.x + third, y: from.y + third * tangents[i]! },
-			control2: { x: to.x - third, y: to.y - third * tangents[i + 1]! },
+			control1: { x: from.x + third, y: from.y + third * tangents[i] },
+			control2: { x: to.x - third, y: to.y - third * tangents[i + 1] },
 			to,
 		};
 	});

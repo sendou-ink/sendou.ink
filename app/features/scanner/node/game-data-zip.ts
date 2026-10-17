@@ -522,7 +522,7 @@ function jpegDimensions(content: Buffer) {
 	let offset = 2;
 	while (offset + 9 < content.length) {
 		if (content[offset] !== 0xff) return null;
-		const marker = content[offset + 1]!;
+		const marker = content[offset + 1];
 		const isStartOfFrame =
 			marker >= 0xc0 &&
 			marker <= 0xcf &&

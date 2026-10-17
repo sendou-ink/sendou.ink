@@ -38,7 +38,7 @@ export const action = defineAction(
 				tags: body.tags,
 			});
 
-			notify({
+			void notify({
 				userIds: R.difference(linkedUsers, existingArt.linkedUserIds),
 				notification: {
 					type: "TAGGED_TO_ART",
@@ -60,7 +60,7 @@ export const action = defineAction(
 				tags: body.tags,
 			});
 
-			notify({
+			void notify({
 				userIds: linkedUsers,
 				notification: {
 					type: "TAGGED_TO_ART",

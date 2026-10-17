@@ -147,7 +147,7 @@ function UserCardPopover({
 		if (isOwnCard) return;
 
 		friendshipLoadedRef.current = true;
-		fetcher.load(
+		void fetcher.load(
 			userCardFriendshipSearchParams.href(userCardFriendshipPage(data.id), {
 				mutuals: withMutualFriends,
 			}),

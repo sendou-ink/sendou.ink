@@ -22,7 +22,7 @@ const divisionCodec = codec(
 	{
 		decode: (value) =>
 			value === ALL_DIVISIONS || value.trim() === "" ? value : Number(value),
-		encode: (value) => String(value),
+		encode: String,
 	},
 );
 

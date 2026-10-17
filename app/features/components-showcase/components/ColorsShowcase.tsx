@@ -743,7 +743,7 @@ function contrastRatio(first: string, second: string) {
 		relativeLuminance(second),
 	].sort((a, b) => b - a);
 
-	return (lighter! + 0.05) / (darker! + 0.05);
+	return (lighter + 0.05) / (darker + 0.05);
 }
 
 function relativeLuminance(color: string) {

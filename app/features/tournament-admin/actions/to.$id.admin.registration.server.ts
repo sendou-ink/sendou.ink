@@ -169,7 +169,7 @@ async function upsertRegistration(
 		!tournament.isTest &&
 		!tournament.isDraft
 	) {
-		notify({
+		void notify({
 			userIds: membersToAdd,
 			notification: {
 				type: "TO_ADDED_TO_TEAM",

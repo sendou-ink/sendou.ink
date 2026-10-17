@@ -70,7 +70,7 @@ export default function NewArtPage() {
 							{({ value, onChange, error }: CustomFieldRenderProps) => (
 								<ArtImageFormField
 									value={value as ArtImageValue}
-									onChange={onChange as (value: ArtImageValue) => void}
+									onChange={onChange}
 									error={error}
 								/>
 							)}
@@ -80,7 +80,7 @@ export default function NewArtPage() {
 							{({ value, onChange, error }: CustomFieldRenderProps) => (
 								<ArtTagsFormField
 									value={value as ArtTag[]}
-									onChange={onChange as (value: ArtTag[]) => void}
+									onChange={onChange}
 									error={error}
 									existingTags={data.tags}
 								/>

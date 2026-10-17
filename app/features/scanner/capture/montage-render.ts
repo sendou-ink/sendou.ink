@@ -211,7 +211,7 @@ export async function renderMontage({
 					sample.close();
 				}
 				if (clip.ribbon) drawRibbon(ctx, clip.ribbon, i / FPS);
-				const speed = frames[i]!.speed;
+				const speed = frames[i].speed;
 				if (speed !== 1) drawFastForwardBadge(ctx, speed);
 				await addFrame();
 				i++;
@@ -296,7 +296,7 @@ function normalized(buffer: AudioBuffer): AudioBuffer {
 	const gain =
 		10 ** (Math.min(MAX_GAIN_DB, TARGET_LOUDNESS_LUFS - loudness) / 20);
 	for (const channel of channels) {
-		for (let i = 0; i < channel.length; i++) channel[i] = channel[i]! * gain;
+		for (let i = 0; i < channel.length; i++) channel[i] *= gain;
 	}
 	limitPeaks(channels, buffer.sampleRate, PEAK_CEILING);
 	return buffer;

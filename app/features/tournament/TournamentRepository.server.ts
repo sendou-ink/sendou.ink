@@ -1357,18 +1357,17 @@ export function updateCastAccounts({
 const castedMatchesInfoByTournamentId = async (
 	trx: Transaction<DB>,
 	tournamentId: number,
-) =>
+): Promise<CastedMatchesInfo> =>
 	(
 		await trx
 			.selectFrom("Tournament")
 			.select("castedMatchesInfo")
 			.where("id", "=", tournamentId)
 			.executeTakeFirstOrThrow()
-	).castedMatchesInfo ??
-	({
+	).castedMatchesInfo ?? {
 		castedMatches: [],
 		lockedMatches: [],
-	} as CastedMatchesInfo);
+	};
 
 export function lockMatch({
 	matchId,

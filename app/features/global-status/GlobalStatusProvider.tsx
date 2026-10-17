@@ -46,14 +46,14 @@ export function GlobalStatusProvider({
 
 	useEventStreamCatchUp({
 		enabled: loggedIn,
-		onCatchUp: refresh,
+		onCatchUp: () => void refresh(),
 	});
 
 	// the event carries no data on purpose: it only says that the user's
 	// status changed server-side
 	useServerEventListener((event) => {
 		if (event.kind === "statusChanged") {
-			refresh();
+			void refresh();
 		}
 	});
 

@@ -68,7 +68,7 @@ export function prepareModeIconTemplates(
 		let yMax = -1;
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
-				if (data[(y * width + x) * 4 + 3]! > 32) {
+				if (data[(y * width + x) * 4 + 3] > 32) {
 					xMin = Math.min(xMin, x);
 					xMax = Math.max(xMax, x);
 					yMin = Math.min(yMin, y);
@@ -83,9 +83,9 @@ export function prepareModeIconTemplates(
 		for (let y = 0; y < h; y++) {
 			for (let x = 0; x < w; x++) {
 				const src = ((y + yMin) * width + x + xMin) * 4;
-				const alpha = data[src + 3]! / 255;
+				const alpha = data[src + 3] / 255;
 				for (let c = 0; c < 3; c++) {
-					dst[(y * w + x) * 3 + c] = Math.round(data[src + c]! * alpha);
+					dst[(y * w + x) * 3 + c] = Math.round(data[src + c] * alpha);
 				}
 			}
 		}
@@ -130,7 +130,7 @@ export function* readModeIconSteps(
 	let index = 0;
 	for (const template of templates) {
 		for (const _ of fitting(template)) {
-			const score = scoreOf!(index++);
+			const score = scoreOf(index++);
 			if (score > best.score) best = { mode: template.mode, score };
 		}
 	}
@@ -199,7 +199,7 @@ export function* readNumberSteps(
 
 	// a symbol can split into several runs (位's two radicals)
 	const isSymbol = (index: number) =>
-		minScore(reads[index]!.chars.map((c) => c.score)) < SYMBOL_MAX_SCORE;
+		minScore(reads[index].chars.map((c) => c.score)) < SYMBOL_MAX_SCORE;
 	let first = 0;
 	let last = tall.length - 1;
 	if (extras === "symbols") {
@@ -217,7 +217,7 @@ export function* readNumberSteps(
 		if (symbols.has(run)) continue;
 		const index = tall.indexOf(run);
 		if (index >= 0) {
-			for (const char of reads[index]!.chars) {
+			for (const char of reads[index].chars) {
 				text += char.char;
 				digitScores.push(char.score);
 			}
@@ -254,7 +254,7 @@ export function rgbFraction(
 	const data = crop.data;
 	let hits = 0;
 	for (let i = 0; i < data.length; i += 3) {
-		if (predicate(data[i]!, data[i + 1]!, data[i + 2]!)) hits++;
+		if (predicate(data[i], data[i + 1], data[i + 2])) hits++;
 	}
 	crop.delete();
 	return hits / (roi.w * roi.h);
@@ -286,7 +286,7 @@ function inkRuns(binary: Mat): InkRun[] {
 		let y1 = -1;
 		let ink = 0;
 		for (let y = 0; y < rows; y++) {
-			if (data[y * cols + x]! > 0) {
+			if (data[y * cols + x] > 0) {
 				if (y0 < 0) y0 = y;
 				y1 = y + 1;
 				ink++;

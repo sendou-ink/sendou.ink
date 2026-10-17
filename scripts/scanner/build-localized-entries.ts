@@ -131,25 +131,25 @@ const dumps = new Map<string, LangDump>(languages.map((l) => [l, loadLang(l)]));
 const usen = dumps.get(CANONICAL_LANG)!;
 
 for (const [key, mode] of Object.entries(RULE_KEYS)) {
-	const value = clean(usen["CommonMsg/VS/VSRuleName"]![key]!);
-	const expected = misc[`MODE_LONG_${mode}`]!;
+	const value = clean(usen["CommonMsg/VS/VSRuleName"][key]);
+	const expected = misc[`MODE_LONG_${mode}`];
 	if (value !== expected)
 		throw new Error(`USen rule ${key} is "${value}", expected "${expected}"`);
 }
 for (const [key, lobby] of Object.entries(LOBBY_KEYS)) {
-	const value = clean(usen["CommonMsg/MatchMode"]![key]!);
-	const expected = LOBBY_ENGLISH[lobby as ScannerLobby];
+	const value = clean(usen["CommonMsg/MatchMode"][key]);
+	const expected = LOBBY_ENGLISH[lobby];
 	if (value !== expected)
 		throw new Error(`USen lobby ${key} is "${value}", expected "${expected}"`);
 }
 
 /** English stage name (per the sendou.ink en locale) -> StageId. */
 const stageIdByEnglishName = new Map<string, StageId>(
-	stageIds.map((stageId) => [misc[`STAGE_${stageId}`]!, stageId]),
+	stageIds.map((stageId) => [misc[`STAGE_${stageId}`], stageId]),
 );
 /** VSStageName key -> StageId, via the USen values. */
 const stageKeys = new Map<string, StageId>();
-for (const [key, value] of Object.entries(usen["CommonMsg/VS/VSStageName"]!)) {
+for (const [key, value] of Object.entries(usen["CommonMsg/VS/VSStageName"])) {
 	const stageId = stageIdByEnglishName.get(value);
 	if (stageId !== undefined) stageKeys.set(key, stageId);
 }
@@ -188,29 +188,29 @@ interface LanguageEntries {
 const languageEntries: LanguageEntries[] = [];
 for (const lang of languages) {
 	const d = dumps.get(lang)!;
-	const rules = d["CommonMsg/VS/VSRuleName"]!;
+	const rules = d["CommonMsg/VS/VSRuleName"];
 	const modes: LocalizedMode[] = [];
 	const modeWraps: LocalizedMode[] = [];
 	for (const [key, mode] of Object.entries(RULE_KEYS)) {
-		modes.push({ text: clean(rules[key]!), mode });
+		modes.push({ text: clean(rules[key]), mode });
 		// the intro splash renders the _2L wrap variant, hyphens included
-		const wrap = clean(rules[`${key}_2L`]!.replace(/\n/g, " "));
-		if (foldKey(wrap) !== foldKey(rules[key]!))
+		const wrap = clean(rules[`${key}_2L`].replace(/\n/g, " "));
+		if (foldKey(wrap) !== foldKey(rules[key]))
 			modeWraps.push({ text: wrap, mode });
 	}
 	languageEntries.push({
 		lang,
-		modeLabel: clean(d["LayoutMsg/Lobby_MenuMode_00"]!.T_Rule_00!),
-		victory: clean(d["LayoutMsg/Mng_Result_00"]!.T_Win_00!),
-		defeat: clean(d["LayoutMsg/Mng_Result_00"]!.T_Lose_00!),
+		modeLabel: clean(d["LayoutMsg/Lobby_MenuMode_00"].T_Rule_00),
+		victory: clean(d["LayoutMsg/Mng_Result_00"].T_Win_00),
+		defeat: clean(d["LayoutMsg/Mng_Result_00"].T_Lose_00),
 		lobbies: Object.entries(LOBBY_KEYS).map(([key, lobby]) => ({
-			text: clean(d["CommonMsg/MatchMode"]![key]!),
+			text: clean(d["CommonMsg/MatchMode"][key]),
 			lobby,
 		})),
 		modes,
 		modeWraps,
 		stages: [...stageKeys.entries()].map(([key, stageId]) => ({
-			text: clean(d["CommonMsg/VS/VSStageName"]![key]!),
+			text: clean(d["CommonMsg/VS/VSStageName"][key]),
 			stageId,
 		})),
 	});
@@ -254,7 +254,7 @@ interface DeathTemplate {
 
 const templates: DeathTemplate[] = [];
 for (const lang of languages) {
-	const raw = dumps.get(lang)!["LayoutMsg/VS_Beaten_00"]!["999"]!;
+	const raw = dumps.get(lang)!["LayoutMsg/VS_Beaten_00"]["999"];
 	const lines = raw
 		.split("\n")
 		.map((l) => clean(l.replace(PLACEHOLDER, SENTINEL)));
@@ -264,11 +264,8 @@ for (const lang of languages) {
 	if (weaponIndex < 0)
 		throw new Error(`${lang}: no weapon placeholder: ${raw}`);
 	const weaponLine = (weaponIndex + 1) as 1 | 2;
-	const [pre, post] = lines[weaponLine - 1]!.split(SENTINEL) as [
-		string,
-		string,
-	];
-	const constText = lines[weaponLine % 2]!;
+	const [pre, post] = lines[weaponLine - 1].split(SENTINEL) as [string, string];
+	const constText = lines[weaponLine % 2];
 	const existing = templates.find(
 		(t) =>
 			t.weaponLine === weaponLine &&
@@ -297,7 +294,7 @@ interface KillTemplate {
 // chosen by the name's final syllable) that clean() drops along with markup
 const killTemplates: KillTemplate[] = [];
 for (const lang of languages) {
-	const raw = dumps.get(lang)!["LayoutMsg/VS_BeatMessage_00"]!["000"]!;
+	const raw = dumps.get(lang)!["LayoutMsg/VS_BeatMessage_00"]["000"];
 	const line = raw.replace(PLACEHOLDER, SENTINEL).replace(/\[[^\]]*\]/g, "");
 	if (!line.includes(SENTINEL) || line.includes("\n"))
 		throw new Error(
@@ -321,7 +318,7 @@ const canonicalWeaponNames = new Set(ALL_WEAPON_ENTRIES.map((e) => e.name));
 /** codename -> canonical entry name, via the USen value. */
 const weaponCodenames = new Map<string, string>();
 for (const msg of WEAPON_MSGS) {
-	for (const [codename, value] of Object.entries(usen[msg]!)) {
+	for (const [codename, value] of Object.entries(usen[msg])) {
 		const name = normalizeApostrophes(value);
 		if (canonicalWeaponNames.has(name))
 			weaponCodenames.set(`${msg} ${codename}`, name);
@@ -345,7 +342,7 @@ for (const lang of languages) {
 	const entries: { text: string; name: string }[] = [];
 	for (const [key, name] of weaponCodenames) {
 		const [msg, codename] = key.split(" ") as [string, string];
-		const text = clean(d[msg]![codename] ?? "");
+		const text = clean(d[msg][codename] ?? "");
 		if (!text || text === "-") continue;
 		const k = foldKey(text);
 		if (seen.has(k) || k === foldKey(name)) continue;

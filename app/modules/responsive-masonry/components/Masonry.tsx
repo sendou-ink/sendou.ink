@@ -62,7 +62,7 @@ export class Masonry extends React.Component<MasonryProps, MasonryState> {
 
 	distributeChildren() {
 		const { children, columnsCount } = this.props;
-		const columnHeights = Array(columnsCount!).fill(0);
+		const columnHeights = Array(columnsCount).fill(0);
 
 		const isReady = this.state.childRefs.every(
 			(ref) => ref.current?.getBoundingClientRect().height,

@@ -103,6 +103,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 			document.getElementById(panelDomId(uid, panel))?.matches(":popover-open"),
 		);
 		if (openPanel) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- mirrors DOM popover state that only exists after hydration
 			setActivePanel(openPanel);
 			if (openPanel === "chat") {
 				openChat();

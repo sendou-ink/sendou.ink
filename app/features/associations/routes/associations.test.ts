@@ -36,7 +36,7 @@ describe("Associations page action", () => {
 		);
 
 		const before = await associationsLoader({ user: memberId() });
-		expect(before.associations[0]!.inviteCode).toBeUndefined();
+		expect(before.associations[0].inviteCode).toBeUndefined();
 
 		await associationsAction(
 			{
@@ -48,7 +48,7 @@ describe("Associations page action", () => {
 		);
 
 		const after = await associationsLoader({ user: memberId() });
-		expect(after.associations[0]!.inviteCode).toBeTruthy();
+		expect(after.associations[0].inviteCode).toBeTruthy();
 	});
 
 	test("unstarring takes the invite link away again", async () => {
@@ -67,7 +67,7 @@ describe("Associations page action", () => {
 		);
 
 		const { associations } = await associationsLoader({ user: memberId() });
-		expect(associations[0]!.inviteCode).toBeUndefined();
+		expect(associations[0].inviteCode).toBeUndefined();
 	});
 
 	test("starred member can reset the invite link", async () => {
@@ -84,9 +84,9 @@ describe("Associations page action", () => {
 		);
 
 		const after = await associationsLoader({ user: memberId() });
-		expect(after.associations[0]!.inviteCode).toBeTruthy();
-		expect(after.associations[0]!.inviteCode).not.toBe(
-			before.associations[0]!.inviteCode,
+		expect(after.associations[0].inviteCode).toBeTruthy();
+		expect(after.associations[0].inviteCode).not.toBe(
+			before.associations[0].inviteCode,
 		);
 	});
 
@@ -120,7 +120,7 @@ describe("Associations page action", () => {
 		);
 
 		const { associations } = await associationsLoader({ user: memberId() });
-		expect(associations[0]!.members!.map((member) => member.id)).not.toContain(
+		expect(associations[0].members!.map((member) => member.id)).not.toContain(
 			otherMemberId(),
 		);
 	});
@@ -223,8 +223,8 @@ describe("Associations page action", () => {
 		);
 
 		const { associations } = await associationsLoader({ user: memberId() });
-		expect(associations[0]!.permissions.MANAGE).toEqual([memberId()]);
-		expect(associations[0]!.members!.map((member) => member.id)).not.toContain(
+		expect(associations[0].permissions.MANAGE).toEqual([memberId()]);
+		expect(associations[0].members!.map((member) => member.id)).not.toContain(
 			adminId(),
 		);
 	});

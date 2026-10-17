@@ -523,8 +523,8 @@ function DeathsAndKills({
 				{groupKills(kills).map((group, i) => (
 					<div key={i} className={styles.row}>
 						<span className={styles.clock}>
-							{group[0]!.time !== null
-								? formatClock(elapsed(match.mode, group[0]!.time))
+							{group[0].time !== null
+								? formatClock(elapsed(match.mode, group[0].time))
 								: "–:––"}
 						</span>
 						<span className={clsx(styles.rowLabel, "truncate")}>

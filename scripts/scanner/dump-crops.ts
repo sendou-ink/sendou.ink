@@ -66,13 +66,13 @@ for (const spec of specs) {
 		console.error(`bad spec: ${spec}`);
 		continue;
 	}
-	const cx = Math.max(0, Math.min(x!, frame.cols - 1));
-	const cy = Math.max(0, Math.min(y!, frame.rows - 1));
+	const cx = Math.max(0, Math.min(x, frame.cols - 1));
+	const cy = Math.max(0, Math.min(y, frame.rows - 1));
 	const crop = cropRoi(frame, {
 		x: cx,
 		y: cy,
-		w: Math.min(w!, frame.cols - cx),
-		h: Math.min(h!, frame.rows - cy),
+		w: Math.min(w, frame.cols - cx),
+		h: Math.min(h, frame.rows - cy),
 	});
 	const out = new cv.Mat();
 	cv.resize(

@@ -172,7 +172,7 @@ class BitWriter {
 	bytes(): Uint8Array {
 		const out = new Uint8Array(Math.ceil(this.#bits.length / 8));
 		for (const [i, bit] of this.#bits.entries()) {
-			if (bit) out[i >> 3]! |= 0x80 >> (i & 7);
+			if (bit) out[i >> 3] |= 0x80 >> (i & 7);
 		}
 		return out;
 	}

@@ -56,8 +56,8 @@ describe("dayMonthYear", () => {
 		{ clientTimezone: "Pacific/Kiritimati", why: "client far ahead of UTC" },
 	])("keeps the day picked on the client ($why)", ({ clientTimezone }) => {
 		process.env.TZ = clientTimezone;
-		const pickedOnClient = JSON.parse(
-			JSON.stringify(localDateToDayMonthYear(new Date(2026, 8, 28))),
+		const pickedOnClient = structuredClone(
+			localDateToDayMonthYear(new Date(2026, 8, 28)),
 		);
 
 		process.env.TZ = "UTC";

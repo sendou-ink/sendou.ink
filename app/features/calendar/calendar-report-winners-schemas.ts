@@ -60,9 +60,10 @@ const reportedTeamFieldset = fieldset({
 		}),
 		players: customField(
 			{
-				initialValue: new Array(
-					CALENDAR_EVENT_RESULT.DEFAULT_PLAYERS_LENGTH,
-				).fill(EMPTY_REPORTED_PLAYER),
+				initialValue: Array.from(
+					{ length: CALENDAR_EVENT_RESULT.DEFAULT_PLAYERS_LENGTH },
+					() => ({ ...EMPTY_REPORTED_PLAYER }),
+				),
 			},
 			reportedPlayersSchema,
 		),

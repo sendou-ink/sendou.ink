@@ -408,12 +408,12 @@ function mergeTeam(
 			(entry) => !entry.used && entry.player.weaponId === player.weaponId,
 		);
 		if (hits.length !== 1) continue;
-		hits[0]!.used = true;
-		counterparts[i] = hits[0]!.player;
+		hits[0].used = true;
+		counterparts[i] = hits[0].player;
 	}
 	for (const i of existing.players.keys()) {
 		if (counterparts[i]) continue;
-		const hit = pool[i]?.used === false ? pool[i]! : pool.find((e) => !e.used);
+		const hit = !pool[i]?.used ? pool[i] : pool.find((e) => !e.used);
 		if (!hit) continue;
 		hit.used = true;
 		counterparts[i] = hit.player;

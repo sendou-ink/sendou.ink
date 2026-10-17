@@ -88,17 +88,17 @@ function editDistance(a: string, b: string): number {
 		row[0] = i;
 		return row;
 	});
-	for (let j = 0; j <= b.length; j++) dp[0]![j] = j;
+	for (let j = 0; j <= b.length; j++) dp[0][j] = j;
 	for (let i = 1; i <= a.length; i++) {
 		for (let j = 1; j <= b.length; j++) {
-			dp[i]![j] = Math.min(
-				dp[i - 1]![j]! + 1,
-				dp[i]![j - 1]! + 1,
-				dp[i - 1]![j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1),
+			dp[i][j] = Math.min(
+				dp[i - 1][j] + 1,
+				dp[i][j - 1] + 1,
+				dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
 			);
 		}
 	}
-	return dp[a.length]![b.length]!;
+	return dp[a.length][b.length];
 }
 
 function pct(t: Tally): string {
@@ -114,15 +114,15 @@ for (const config of configs) {
 	];
 
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		header: { ok: 0, total: 0 } as Tally,
-		timestamp: { ok: 0, total: 0 } as Tally,
-		replayCode: { ok: 0, total: 0 } as Tally,
-		matchScores: { ok: 0, total: 0 } as Tally,
-		weapons: { ok: 0, total: 0 } as Tally,
-		names: { ok: 0, total: 0 } as Tally,
-		paint: { ok: 0, total: 0 } as Tally,
-		stats: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		header: { ok: 0, total: 0 },
+		timestamp: { ok: 0, total: 0 },
+		replayCode: { ok: 0, total: 0 },
+		matchScores: { ok: 0, total: 0 },
+		weapons: { ok: 0, total: 0 },
+		names: { ok: 0, total: 0 },
+		paint: { ok: 0, total: 0 },
+		stats: { ok: 0, total: 0 },
 	};
 	let charEdits = 0;
 	let charTotal = 0;
@@ -230,9 +230,9 @@ for (const config of configs) {
 	const detector = createMapStartDetector(resources);
 	const fixtures = loadFixtures("map-start");
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		mode: { ok: 0, total: 0 } as Tally,
-		stage: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		mode: { ok: 0, total: 0 },
+		stage: { ok: 0, total: 0 },
 	};
 	const misses: string[] = [];
 
@@ -283,10 +283,10 @@ for (const config of configs) {
 		...loadFixtures("negative"),
 	];
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		header: { ok: 0, total: 0 } as Tally,
-		weapon: { ok: 0, total: 0 } as Tally,
-		abilities: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		header: { ok: 0, total: 0 },
+		weapon: { ok: 0, total: 0 },
+		abilities: { ok: 0, total: 0 },
 	};
 	const misses: string[] = [];
 
@@ -352,12 +352,12 @@ for (const config of configs) {
 	const detector = createMinimapDetector(resources);
 	const fixtures = [...loadFixtures("minimap"), ...loadFixtures("negative")];
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		weapons: { ok: 0, total: 0 } as Tally,
-		names: { ok: 0, total: 0 } as Tally,
-		abilities: { ok: 0, total: 0 } as Tally,
-		stage: { ok: 0, total: 0 } as Tally,
-		status: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		weapons: { ok: 0, total: 0 },
+		names: { ok: 0, total: 0 },
+		abilities: { ok: 0, total: 0 },
+		stage: { ok: 0, total: 0 },
+		status: { ok: 0, total: 0 },
 	};
 	let charEdits = 0;
 	let charTotal = 0;
@@ -471,10 +471,10 @@ for (const config of configs) {
 	const detector = createDeathDetector(resources);
 	const fixtures = loadFixtures("death");
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		weapon: { ok: 0, total: 0 } as Tally,
-		abilities: { ok: 0, total: 0 } as Tally,
-		names: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		weapon: { ok: 0, total: 0 },
+		abilities: { ok: 0, total: 0 },
+		names: { ok: 0, total: 0 },
 	};
 	let charEdits = 0;
 	let charTotal = 0;
@@ -540,10 +540,10 @@ for (const config of configs) {
 	const detector = createKillDetector(resources);
 	const fixtures = loadFixtures("kill");
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		time: { ok: 0, total: 0 } as Tally,
-		rows: { ok: 0, total: 0 } as Tally,
-		names: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		time: { ok: 0, total: 0 },
+		rows: { ok: 0, total: 0 },
+		names: { ok: 0, total: 0 },
 	};
 	let charEdits = 0;
 	let charTotal = 0;

@@ -360,7 +360,7 @@ export function Planner() {
 		}) => {
 			if (!editor) return;
 
-			editor.mark("pre-background-change");
+			editor.markHistoryStoppingPoint("pre-background-change");
 
 			hideRanges(editor);
 			setRangesVisible(false);

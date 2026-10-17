@@ -164,14 +164,14 @@ function matchesFilter(
 			return tzDate.getHours() >= 16 && tzDate.getHours() <= 23;
 		}
 		case "isSendou": {
-			if (filters[key] !== true) {
+			if (!filters[key]) {
 				return true;
 			}
 
 			return event.isRanked !== null;
 		}
 		case "isRanked": {
-			if (filters[key] !== true) {
+			if (!filters[key]) {
 				return true;
 			}
 

@@ -14,7 +14,7 @@ function buildSlugToIdMap<T extends number>(prefix: string): Record<string, T> {
 				mySlugify(name),
 				Number(id.replace(`${prefix}_`, "")) as T,
 			]),
-	) as Record<string, T>;
+	);
 }
 
 const SLUG_TO_WEAPON_ID = buildSlugToIdMap<MainWeaponId>("MAIN");
