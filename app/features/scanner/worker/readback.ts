@@ -81,23 +81,31 @@ export interface ReadFrame extends FrameData {
 	gray?: Uint8Array;
 }
 
+interface ReadKernels {
+	upscaler: CubicUpscaler;
+	downscaler: AreaDownscaler;
+	lineSums: LineSumsKernel;
+	grayKernel: GrayKernel;
+}
+
+interface BufferPair {
+	pixels: GPUBuffer;
+	map: GPUBuffer;
+}
+
+interface ReadTarget {
+	texture: GPUTexture;
+	buffers: BufferPair[];
+}
+
 /** Reads frames back through WebGPU (see the module header); closes `frame`. Rejects when WebGPU is unavailable. */
 export function createWebGpuReadback(): (
 	frame: VideoFrame,
 	options: { source: "bitmap" | "planes"; normalize?: boolean },
 ) => Promise<ReadFrame> {
-	let device: Promise<{
-		gpu: GPUDevice;
-		upscaler: CubicUpscaler;
-		downscaler: AreaDownscaler;
-		lineSums: LineSumsKernel;
-		grayKernel: GrayKernel;
-	}> | null = null;
+	let device: Promise<{ gpu: GPUDevice } & ReadKernels> | null = null;
 	/** per frame size: a texture, and buffer pairs not in use */
-	const targets = new Map<
-		string,
-		{ texture: GPUTexture; buffers: { pixels: GPUBuffer; map: GPUBuffer }[] }
-	>();
+	const targets = new Map<string, ReadTarget>();
 	const getDevice = () => {
 		if (!device) {
 			const created = (async () => {
@@ -127,37 +135,16 @@ export function createWebGpuReadback(): (
 		const width = frame.displayWidth;
 		const height = frame.displayHeight;
 		try {
-			const [{ gpu, upscaler, downscaler, lineSums, grayKernel }, source] =
-				await Promise.all([
-					getDevice(),
-					from === "bitmap" ? createImageBitmap(frame) : cpuCopy(frame),
-				]);
-			const key = `${width}x${height}`;
-			let target = targets.get(key);
-			if (!target) {
-				target = {
-					texture: gpu.createTexture({
-						size: [width, height],
-						format: "rgba8unorm",
-						usage:
-							TEXTURE_COPY_SRC | TEXTURE_COPY_DST | TEXTURE_RENDER_ATTACHMENT,
-					}),
-					buffers: [],
-				};
-				targets.set(key, target);
-			}
+			const [{ gpu, ...kernels }, source] = await Promise.all([
+				getDevice(),
+				from === "bitmap" ? createImageBitmap(frame) : cpuCopy(frame),
+			]);
+			const { upscaler, grayKernel } = kernels;
+			const target = targetFor(targets, gpu, width, height);
 			const bytesPerRow =
 				Math.ceil((width * 4) / ROW_ALIGNMENT) * ROW_ALIGNMENT;
-			const buffers = target.buffers.pop() ?? {
-				pixels: gpu.createBuffer({
-					size: bytesPerRow * height,
-					usage: BUFFER_STORAGE | BUFFER_COPY_SRC | BUFFER_COPY_DST,
-				}),
-				map: gpu.createBuffer({
-					size: bytesPerRow * height,
-					usage: BUFFER_MAP_READ | BUFFER_COPY_DST,
-				}),
-			};
+			const buffers =
+				target.buffers.pop() ?? createBufferPair(gpu, bytesPerRow * height);
 			try {
 				gpu.queue.copyExternalImageToTexture(
 					{ source },
@@ -170,51 +157,16 @@ export function createWebGpuReadback(): (
 			// a picture without bars is resized in the same submission, as it
 			// most likely is; one with bars takes a second round trip. A 2160p
 			// picture maps only its downscale and line sums unless it has bars
-			const fullFrame = { x: 0, y: 0, w: width, h: height };
 			const stride = bytesPerRow / 4;
 			const halves = normalize && halvesArea(width, height);
 			gpu.pushErrorScope("validation");
 			const encoder = gpu.createCommandEncoder();
-			encoder.copyTextureToBuffer(
-				{ texture: target.texture },
-				{ buffer: buffers.pixels, bytesPerRow },
-				[width, height],
+			const { speculative, grayRead, lines } = encodeReadback(
+				encoder,
+				kernels,
+				{ texture: target.texture, buffers },
+				{ width, height, bytesPerRow, normalize, halves },
 			);
-			if (!halves) copyToMap(encoder, buffers);
-			const speculative = halves
-				? {
-						...downscaler.encode(encoder, buffers.pixels, stride),
-						release: downscaler.release,
-					}
-				: normalize && upscalesCubic(width, height)
-					? {
-							...upscaler.encode(encoder, {
-								buffer: buffers.pixels,
-								stride,
-								box: fullFrame,
-							}),
-							release: upscaler.release,
-						}
-					: null;
-			const canonicalSource = speculative
-				? { buffer: speculative.canonical, stride: CANONICAL_WIDTH }
-				: width === CANONICAL_WIDTH && height === CANONICAL_HEIGHT
-					? { buffer: buffers.pixels, stride }
-					: null;
-			const grayRead = canonicalSource
-				? grayKernel.encode(
-						encoder,
-						canonicalSource.buffer,
-						canonicalSource.stride,
-					)
-				: null;
-			const lines = halves
-				? lineSums.encode(encoder, buffers.pixels, {
-						stride,
-						w: width,
-						h: height,
-					})
-				: null;
 			gpu.queue.submit([encoder.finish()]);
 			const [submitError, , scaled, gray, sums] = await Promise.all([
 				gpu.popErrorScope(),
@@ -249,17 +201,12 @@ export function createWebGpuReadback(): (
 				]);
 				if (mapError) throw new Error(`readback: ${mapError.message}`);
 			}
-			const mapped = new Uint8Array(buffers.map.getMappedRange());
-			const data = new Uint8ClampedArray(width * height * 4);
-			if (bytesPerRow === width * 4) data.set(mapped);
-			else {
-				for (let y = 0; y < height; y++) {
-					data.set(
-						mapped.subarray(y * bytesPerRow, y * bytesPerRow + width * 4),
-						y * width * 4,
-					);
-				}
-			}
+			const data = unpaddedRows(
+				new Uint8Array(buffers.map.getMappedRange()),
+				width,
+				height,
+				bytesPerRow,
+			);
 			buffers.map.unmap();
 			const box = detectContentBox(width, height, data);
 			let canonical: Uint8Array | undefined;
@@ -469,4 +416,120 @@ async function cpuCopy(frame: VideoFrame): Promise<VideoFrame> {
 		displayWidth: frame.displayWidth,
 		displayHeight: frame.displayHeight,
 	});
+}
+
+/** The frame size's texture and spare buffer pairs, created on first use. */
+function targetFor(
+	targets: Map<string, ReadTarget>,
+	gpu: GPUDevice,
+	width: number,
+	height: number,
+): ReadTarget {
+	const key = `${width}x${height}`;
+	let target = targets.get(key);
+	if (!target) {
+		target = {
+			texture: gpu.createTexture({
+				size: [width, height],
+				format: "rgba8unorm",
+				usage: TEXTURE_COPY_SRC | TEXTURE_COPY_DST | TEXTURE_RENDER_ATTACHMENT,
+			}),
+			buffers: [],
+		};
+		targets.set(key, target);
+	}
+	return target;
+}
+
+function createBufferPair(gpu: GPUDevice, size: number): BufferPair {
+	return {
+		pixels: gpu.createBuffer({
+			size,
+			usage: BUFFER_STORAGE | BUFFER_COPY_SRC | BUFFER_COPY_DST,
+		}),
+		map: gpu.createBuffer({
+			size,
+			usage: BUFFER_MAP_READ | BUFFER_COPY_DST,
+		}),
+	};
+}
+
+/** Records the texture's copy out and the passes run on it while the GPU holds it: the speculative resize, its gray and a halving picture's line sums. */
+function encodeReadback(
+	encoder: GPUCommandEncoder,
+	{ upscaler, downscaler, lineSums, grayKernel }: ReadKernels,
+	{ texture, buffers }: { texture: GPUTexture; buffers: BufferPair },
+	{
+		width,
+		height,
+		bytesPerRow,
+		normalize,
+		halves,
+	}: {
+		width: number;
+		height: number;
+		bytesPerRow: number;
+		normalize: boolean;
+		halves: boolean;
+	},
+) {
+	const fullFrame = { x: 0, y: 0, w: width, h: height };
+	const stride = bytesPerRow / 4;
+	encoder.copyTextureToBuffer(
+		{ texture },
+		{ buffer: buffers.pixels, bytesPerRow },
+		[width, height],
+	);
+	if (!halves) copyToMap(encoder, buffers);
+	const speculative = halves
+		? {
+				...downscaler.encode(encoder, buffers.pixels, stride),
+				release: downscaler.release,
+			}
+		: normalize && upscalesCubic(width, height)
+			? {
+					...upscaler.encode(encoder, {
+						buffer: buffers.pixels,
+						stride,
+						box: fullFrame,
+					}),
+					release: upscaler.release,
+				}
+			: null;
+	const canonicalSource = speculative
+		? { buffer: speculative.canonical, stride: CANONICAL_WIDTH }
+		: width === CANONICAL_WIDTH && height === CANONICAL_HEIGHT
+			? { buffer: buffers.pixels, stride }
+			: null;
+	const grayRead = canonicalSource
+		? grayKernel.encode(encoder, canonicalSource.buffer, canonicalSource.stride)
+		: null;
+	const lines = halves
+		? lineSums.encode(encoder, buffers.pixels, {
+				stride,
+				w: width,
+				h: height,
+			})
+		: null;
+	return { speculative, grayRead, lines };
+}
+
+/** The mapped pixels without the rows' copy padding. */
+function unpaddedRows(
+	mapped: Uint8Array,
+	width: number,
+	height: number,
+	bytesPerRow: number,
+) {
+	const data = new Uint8ClampedArray(width * height * 4);
+	if (bytesPerRow === width * 4) data.set(mapped);
+	else {
+		for (let y = 0; y < height; y++) {
+			data.set(
+				mapped.subarray(y * bytesPerRow, y * bytesPerRow + width * 4),
+				y * width * 4,
+			);
+		}
+	}
+	return data;
 }

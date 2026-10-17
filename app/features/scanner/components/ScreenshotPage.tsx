@@ -75,6 +75,43 @@ type Result = Extract<WorkerResponse, { kind: "result" }>;
 const QUICK_TO_RAW = invertHomography(homographyFromQuad(QUICK_RECTIFY));
 const onRawFrame = (roi: Roi) => projectedBounds(QUICK_TO_RAW, roi);
 
+type DrawRoi = (roi: Roi, color: string) => void;
+
+/** `rect` outlines a ROI of the raw frame, `quad` one of the quick battle log's rectified frame. */
+interface OverlayPens {
+	rect: DrawRoi;
+	quad: DrawRoi;
+}
+
+/** Each detector's ROIs as the overlay outlines them; any other detector shows the scoreboard's. */
+const OVERLAY_DRAWERS = new Map<string, (pens: OverlayPens) => void>([
+	["death", drawDeathOverlay],
+	["objective", drawObjectiveOverlay],
+	["kill", drawKillOverlay],
+	["x-set-count", drawXSetCountOverlay],
+	["x-set-result", drawXSetResultOverlay],
+	["x-rank-position", drawXRankPositionOverlay],
+	["map-start", drawMapStartOverlay],
+	["scoreboard-own", drawScoreboardOwnOverlay],
+	["minimap", drawMinimapOverlay],
+	["scoreboard-battle-log", ({ rect }) => drawBattleLogOverlay(bl, rect)],
+	[
+		"quick-scoreboard-battle-log",
+		({ quad }) => drawBattleLogOverlay(quick, quad),
+	],
+	["scoreboard-battle-log-replay", drawReplayOverlay],
+]);
+
+/** Detectors with a detail of their own and no rows to inspect (as are the X Rank ones). */
+const ROWLESS_DETECTORS = new Set([
+	"death",
+	"map-start",
+	"scoreboard-own",
+	"minimap",
+	"objective",
+	"kill",
+]);
+
 /** Draw a ROI crop from the normalized frame, scaled up. */
 export function RoiCrop(props: {
 	frame: HTMLCanvasElement;
@@ -304,195 +341,186 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		ctx.closePath();
 		ctx.stroke();
 	};
-	const battleLog = (rois: BattleLogRois, draw: typeof rect) => {
-		for (const [panel, dy] of rois.PANEL_DYS.entries()) {
-			for (const base of rois.ROW_CENTERS) {
-				const cy = base + dy;
-				draw(rois.weaponRoi(cy), "#f87171");
-				draw(rois.nameRoi(cy), "#4ade80");
-				draw(rois.paintRoi(cy), "#60a5fa");
-				for (const i of [0, 1, 2] as const)
-					draw(rois.statRoi(cy, i), "#e879f9");
-				draw(rois.gateDarkProbe(cy), "#facc15");
-			}
-			draw(rois.teamScoreRoi(panel as 0 | 1), "#60a5fa");
-			draw(rois.resultTagRoi(panel as 0 | 1), "#fb923c");
+	const drawDetector = OVERLAY_DRAWERS.get(detector) ?? drawScoreboardOverlay;
+	drawDetector({ rect, quad });
+}
+
+function drawBattleLogOverlay(rois: BattleLogRois, draw: DrawRoi) {
+	for (const [panel, dy] of rois.PANEL_DYS.entries()) {
+		for (const base of rois.ROW_CENTERS) {
+			const cy = base + dy;
+			draw(rois.weaponRoi(cy), "#f87171");
+			draw(rois.nameRoi(cy), "#4ade80");
+			draw(rois.paintRoi(cy), "#60a5fa");
+			for (const i of [0, 1, 2] as const) draw(rois.statRoi(cy, i), "#e879f9");
+			draw(rois.gateDarkProbe(cy), "#facc15");
 		}
-		for (const roi of rois.MATCH_SCORE_ROIS) draw(roi, "#60a5fa");
-		for (const roi of rois.GATE_COLOR_PROBES) draw(roi, "#facc15");
-		draw(rois.HEADER_TOP_BAND, "#34d399");
-		draw(rois.HEADER_BOTTOM_BAND, "#34d399");
-	};
-	if (detector === "death") {
-		rect(death.SPLAT_LINE1_ROI, "#34d399");
-		rect(death.WEAPON_LINE_ROI, "#f87171");
-		for (let row = 0; row < death.ABILITY_ROWS; row++) {
-			rect(death.abilityMainRoi(row), "#60a5fa");
-			for (const slot of [0, 1, 2])
-				rect(death.abilitySubRoi(row, slot), "#e879f9");
-		}
-		rect(death.TAG_NAME_OUTER, "#4ade80");
-		for (const roi of [
-			...death.GATE_BURST_PROBES,
-			...death.GATE_PANEL_PROBES,
-		]) {
-			rect(roi, "#facc15");
-		}
-		return;
+		draw(rois.teamScoreRoi(panel as 0 | 1), "#60a5fa");
+		draw(rois.resultTagRoi(panel as 0 | 1), "#fb923c");
 	}
-	if (detector === "objective") {
-		rect(objective.TIMER_DIGIT_ROI, "#34d399");
-		for (const side of [0, 1] as const) {
-			rect(objective.SCORE_ROIS[side], "#f87171");
-			rect(objective.PENALTY_ROIS[side], "#fb923c");
-			rect(objective.PLATE_PROBE_ROIS[side], "#facc15");
-		}
-		rect(objective.STATUS_BAND, "#60a5fa");
-		return;
+	for (const roi of rois.MATCH_SCORE_ROIS) draw(roi, "#60a5fa");
+	for (const roi of rois.GATE_COLOR_PROBES) draw(roi, "#facc15");
+	draw(rois.HEADER_TOP_BAND, "#34d399");
+	draw(rois.HEADER_BOTTOM_BAND, "#34d399");
+}
+
+function drawDeathOverlay({ rect }: OverlayPens) {
+	rect(death.SPLAT_LINE1_ROI, "#34d399");
+	rect(death.WEAPON_LINE_ROI, "#f87171");
+	for (let row = 0; row < death.ABILITY_ROWS; row++) {
+		rect(death.abilityMainRoi(row), "#60a5fa");
+		for (const slot of [0, 1, 2])
+			rect(death.abilitySubRoi(row, slot), "#e879f9");
 	}
-	if (detector === "kill") {
-		for (let row = 0; row < kill.MAX_ROWS; row++) {
-			rect(kill.textRoi(row), "#34d399");
-			rect(kill.skullRoi(row), "#60a5fa");
-			for (const roi of kill.darkProbes(row)) rect(roi, "#facc15");
-		}
-		rect(objective.TIMER_DIGIT_ROI, "#f87171");
-		return;
+	rect(death.TAG_NAME_OUTER, "#4ade80");
+	for (const roi of [...death.GATE_BURST_PROBES, ...death.GATE_PANEL_PROBES]) {
+		rect(roi, "#facc15");
 	}
-	if (detector === "x-set-count") {
-		rect(xRank.CARD_ICON_ROI, "#34d399");
-		rect(xRank.COUNT_WINS_DIGIT_ROI, "#f87171");
-		rect(xRank.COUNT_LOSSES_DIGIT_ROI, "#f87171");
-		rect(xRank.COUNT_LABEL_BAND, "#e879f9");
-		for (const x of xRank.COUNT_WIN_SLOT_CENTERS_X) {
-			const half = xRank.COUNT_WIN_SLOT_HALF;
-			rect(
-				{
-					x: x - half,
-					y: xRank.COUNT_WIN_SLOT_Y - half,
-					w: 2 * half,
-					h: 2 * half,
-				},
-				"#60a5fa",
-			);
-		}
-		for (const x of xRank.COUNT_LOSS_SLOT_CENTERS_X) {
-			const half = xRank.COUNT_LOSS_SLOT_HALF;
-			rect(
-				{
-					x: x - half,
-					y: xRank.COUNT_LOSS_SLOT_Y - half,
-					w: 2 * half,
-					h: 2 * half,
-				},
-				"#60a5fa",
-			);
-		}
-		for (const roi of xRank.COUNT_DARK_PROBES) rect(roi, "#facc15");
-		return;
+}
+
+function drawObjectiveOverlay({ rect }: OverlayPens) {
+	rect(objective.TIMER_DIGIT_ROI, "#34d399");
+	for (const side of [0, 1] as const) {
+		rect(objective.SCORE_ROIS[side], "#f87171");
+		rect(objective.PENALTY_ROIS[side], "#fb923c");
+		rect(objective.PLATE_PROBE_ROIS[side], "#facc15");
 	}
-	if (detector === "x-set-result") {
-		rect(xRank.CARD_ICON_ROI, "#34d399");
-		rect(xRank.RESULT_HEADER_ROI, "#f87171");
-		rect(xRank.RESULT_TILES_ROI, "#60a5fa");
-		rect(xRank.RESULT_POWER_ROI, "#f87171");
-		rect(xRank.RESULT_CHANGE_ROI, "#e879f9");
-		for (const roi of [
-			...xRank.RESULT_DARK_PROBES,
-			...xRank.RESULT_PANEL_PROBES,
-		]) {
-			rect(roi, "#facc15");
+	rect(objective.STATUS_BAND, "#60a5fa");
+}
+
+function drawKillOverlay({ rect }: OverlayPens) {
+	for (let row = 0; row < kill.MAX_ROWS; row++) {
+		rect(kill.textRoi(row), "#34d399");
+		rect(kill.skullRoi(row), "#60a5fa");
+		for (const roi of kill.darkProbes(row)) rect(roi, "#facc15");
+	}
+	rect(objective.TIMER_DIGIT_ROI, "#f87171");
+}
+
+function drawXSetCountOverlay({ rect }: OverlayPens) {
+	rect(xRank.CARD_ICON_ROI, "#34d399");
+	rect(xRank.COUNT_WINS_DIGIT_ROI, "#f87171");
+	rect(xRank.COUNT_LOSSES_DIGIT_ROI, "#f87171");
+	rect(xRank.COUNT_LABEL_BAND, "#e879f9");
+	for (const x of xRank.COUNT_WIN_SLOT_CENTERS_X) {
+		const half = xRank.COUNT_WIN_SLOT_HALF;
+		rect(
+			{
+				x: x - half,
+				y: xRank.COUNT_WIN_SLOT_Y - half,
+				w: 2 * half,
+				h: 2 * half,
+			},
+			"#60a5fa",
+		);
+	}
+	for (const x of xRank.COUNT_LOSS_SLOT_CENTERS_X) {
+		const half = xRank.COUNT_LOSS_SLOT_HALF;
+		rect(
+			{
+				x: x - half,
+				y: xRank.COUNT_LOSS_SLOT_Y - half,
+				w: 2 * half,
+				h: 2 * half,
+			},
+			"#60a5fa",
+		);
+	}
+	for (const roi of xRank.COUNT_DARK_PROBES) rect(roi, "#facc15");
+}
+
+function drawXSetResultOverlay({ rect }: OverlayPens) {
+	rect(xRank.CARD_ICON_ROI, "#34d399");
+	rect(xRank.RESULT_HEADER_ROI, "#f87171");
+	rect(xRank.RESULT_TILES_ROI, "#60a5fa");
+	rect(xRank.RESULT_POWER_ROI, "#f87171");
+	rect(xRank.RESULT_CHANGE_ROI, "#e879f9");
+	for (const roi of [
+		...xRank.RESULT_DARK_PROBES,
+		...xRank.RESULT_PANEL_PROBES,
+	]) {
+		rect(roi, "#facc15");
+	}
+}
+
+function drawXRankPositionOverlay({ rect }: OverlayPens) {
+	rect(xRank.POSITION_ICON_ROI, "#34d399");
+	rect(xRank.POSITION_LABEL_ROI, "#e879f9");
+	rect(xRank.POSITION_NUMBER_ROI, "#f87171");
+	rect(xRank.POSITION_ARROW_ROI, "#60a5fa");
+	for (const roi of xRank.POSITION_DARK_PROBES) rect(roi, "#facc15");
+}
+
+function drawMapStartOverlay({ rect }: OverlayPens) {
+	rect(mapStart.MODE_LABEL_ROI, "#34d399");
+	rect(mapStart.MODE_BLOCK_ROI, "#f87171");
+	rect(mapStart.STAGE_ROI, "#60a5fa");
+	rect(mapStart.GATE_INK_BAND, "#e879f9");
+	for (const roi of mapStart.GATE_DARK_PROBES) rect(roi, "#facc15");
+}
+
+function drawScoreboardOwnOverlay({ rect }: OverlayPens) {
+	rect(own.WEAPON_TITLE_BAND, "#f87171");
+	for (let row = 0; row < own.GEAR_ROWS; row++) {
+		rect(own.gearMainRoi(row), "#60a5fa");
+		for (const slot of [0, 1, 2]) rect(own.gearSubRoi(row, slot), "#e879f9");
+		rect(own.gateStripProbe(row), "#facc15");
+	}
+	for (const roi of [...own.GATE_PANEL_PROBES, ...own.GATE_TITLE_TEXT_PROBES]) {
+		rect(roi, "#facc15");
+	}
+	rect(sb.HEADER_LOBBY_BAND, "#34d399");
+	rect(sb.HEADER_LINE_BAND, "#34d399");
+}
+
+function drawMinimapOverlay({ rect }: OverlayPens) {
+	for (const card of minimap.CARD_LAYOUTS) {
+		rect(card.name, "#4ade80");
+		rect(card.weapon, "#f87171");
+		rect(card.subTile, "#22d3ee");
+		for (const [cx, cy] of card.badges)
+			rect(minimap.badgeRoi(cx, cy), "#60a5fa");
+		rect(card.cross, "#e879f9");
+	}
+	for (const cy of minimap.ENEMY_ROW_CYS) {
+		rect(minimap.enemyWeaponRoi(cy), "#f87171");
+		rect(minimap.enemySubTileRoi(cy), "#22d3ee");
+		for (const cx of minimap.ENEMY_BADGE_XS)
+			rect(minimap.badgeRoi(cx, cy), "#60a5fa");
+		rect(minimap.enemyCrossRoi(cy), "#e879f9");
+	}
+	for (const roi of [
+		...minimap.GATE_CLOSE_X_BRIGHT,
+		minimap.GATE_SPAWN_BRIGHT,
+		...minimap.GATE_CLOSE_DARK_PROBES,
+		...minimap.GATE_CLOSE_X_DARK,
+		...minimap.GATE_SPAWN_DARK_PROBES,
+	]) {
+		rect(roi, "#facc15");
+	}
+}
+
+function drawReplayOverlay({ rect }: OverlayPens) {
+	for (const dx of replay.PANEL_XS) {
+		for (const cy of replay.ROW_CENTERS) {
+			rect(replay.weaponRoi(cy, dx), "#f87171");
+			rect(replay.nameRoi(cy, dx), "#4ade80");
+			rect(replay.paintRoi(cy, dx), "#60a5fa");
+			for (const i of [0, 1, 2] as const)
+				rect(replay.statRoi(cy, dx, i), "#e879f9");
+			rect(replay.gateFlatProbe(cy, dx), "#facc15");
 		}
-		return;
+		rect(replay.teamScoreRoi(dx), "#60a5fa");
+		rect(replay.resultTagRoi(dx), "#fb923c");
 	}
-	if (detector === "x-rank-position") {
-		rect(xRank.POSITION_ICON_ROI, "#34d399");
-		rect(xRank.POSITION_LABEL_ROI, "#e879f9");
-		rect(xRank.POSITION_NUMBER_ROI, "#f87171");
-		rect(xRank.POSITION_ARROW_ROI, "#60a5fa");
-		for (const roi of xRank.POSITION_DARK_PROBES) rect(roi, "#facc15");
-		return;
-	}
-	if (detector === "map-start") {
-		rect(mapStart.MODE_LABEL_ROI, "#34d399");
-		rect(mapStart.MODE_BLOCK_ROI, "#f87171");
-		rect(mapStart.STAGE_ROI, "#60a5fa");
-		rect(mapStart.GATE_INK_BAND, "#e879f9");
-		for (const roi of mapStart.GATE_DARK_PROBES) rect(roi, "#facc15");
-		return;
-	}
-	if (detector === "scoreboard-own") {
-		rect(own.WEAPON_TITLE_BAND, "#f87171");
-		for (let row = 0; row < own.GEAR_ROWS; row++) {
-			rect(own.gearMainRoi(row), "#60a5fa");
-			for (const slot of [0, 1, 2]) rect(own.gearSubRoi(row, slot), "#e879f9");
-			rect(own.gateStripProbe(row), "#facc15");
-		}
-		for (const roi of [
-			...own.GATE_PANEL_PROBES,
-			...own.GATE_TITLE_TEXT_PROBES,
-		]) {
-			rect(roi, "#facc15");
-		}
-		rect(sb.HEADER_LOBBY_BAND, "#34d399");
-		rect(sb.HEADER_LINE_BAND, "#34d399");
-		return;
-	}
-	if (detector === "minimap") {
-		for (const card of minimap.CARD_LAYOUTS) {
-			rect(card.name, "#4ade80");
-			rect(card.weapon, "#f87171");
-			rect(card.subTile, "#22d3ee");
-			for (const [cx, cy] of card.badges)
-				rect(minimap.badgeRoi(cx, cy), "#60a5fa");
-			rect(card.cross, "#e879f9");
-		}
-		for (const cy of minimap.ENEMY_ROW_CYS) {
-			rect(minimap.enemyWeaponRoi(cy), "#f87171");
-			rect(minimap.enemySubTileRoi(cy), "#22d3ee");
-			for (const cx of minimap.ENEMY_BADGE_XS)
-				rect(minimap.badgeRoi(cx, cy), "#60a5fa");
-			rect(minimap.enemyCrossRoi(cy), "#e879f9");
-		}
-		for (const roi of [
-			...minimap.GATE_CLOSE_X_BRIGHT,
-			minimap.GATE_SPAWN_BRIGHT,
-			...minimap.GATE_CLOSE_DARK_PROBES,
-			...minimap.GATE_CLOSE_X_DARK,
-			...minimap.GATE_SPAWN_DARK_PROBES,
-		]) {
-			rect(roi, "#facc15");
-		}
-		return;
-	}
-	if (detector === "scoreboard-battle-log") {
-		battleLog(bl, rect);
-		return;
-	}
-	if (detector === "quick-scoreboard-battle-log") {
-		battleLog(quick, quad);
-		return;
-	}
-	if (detector === "scoreboard-battle-log-replay") {
-		for (const dx of replay.PANEL_XS) {
-			for (const cy of replay.ROW_CENTERS) {
-				rect(replay.weaponRoi(cy, dx), "#f87171");
-				rect(replay.nameRoi(cy, dx), "#4ade80");
-				rect(replay.paintRoi(cy, dx), "#60a5fa");
-				for (const i of [0, 1, 2] as const)
-					rect(replay.statRoi(cy, dx, i), "#e879f9");
-				rect(replay.gateFlatProbe(cy, dx), "#facc15");
-			}
-			rect(replay.teamScoreRoi(dx), "#60a5fa");
-			rect(replay.resultTagRoi(dx), "#fb923c");
-		}
-		for (const roi of replay.MATCH_SCORE_ROIS) rect(roi, "#60a5fa");
-		for (const roi of replay.GATE_GAP_PROBES) rect(roi, "#facc15");
-		rect(replay.HEADER_TOP_BAND, "#34d399");
-		rect(replay.HEADER_BOTTOM_BAND, "#34d399");
-		rect(replay.REPLAY_CODE_ROI, "#34d399");
-		return;
-	}
+	for (const roi of replay.MATCH_SCORE_ROIS) rect(roi, "#60a5fa");
+	for (const roi of replay.GATE_GAP_PROBES) rect(roi, "#facc15");
+	rect(replay.HEADER_TOP_BAND, "#34d399");
+	rect(replay.HEADER_BOTTOM_BAND, "#34d399");
+	rect(replay.REPLAY_CODE_ROI, "#34d399");
+}
+
+function drawScoreboardOverlay({ rect }: OverlayPens) {
 	for (const cy of sb.ROW_CENTERS) {
 		rect(sb.weaponRoi(cy), "#f87171");
 		rect(sb.nameRoi(cy), "#4ade80");
@@ -603,28 +631,6 @@ export function ScreenshotPage() {
 	}, [inspectKey, setInspectKey, analyze]);
 
 	const event = active?.events[0] as DetectedEvent<CardData> | undefined;
-	const rows = (event?.debug?.rows ?? []) as ScoreboardRowDebug[];
-	const isReplay = activeDetector === "scoreboard-battle-log-replay";
-	const isScoreboardBattleLog = activeDetector === "scoreboard-battle-log";
-	const isQuickScoreboardBattleLog =
-		activeDetector === "quick-scoreboard-battle-log";
-	const isDeath = activeDetector === "death";
-	const isMapStart = activeDetector === "map-start";
-	const isOwn = activeDetector === "scoreboard-own";
-	const isMinimap = activeDetector === "minimap";
-	const isObjective = activeDetector === "objective";
-	const isKill = activeDetector === "kill";
-	const isXRank = activeDetector.startsWith("x-");
-	const debugWinnerSide = event?.debug?.winnerSide;
-	const winnerSide =
-		typeof debugWinnerSide === "string" ? debugWinnerSide : "left";
-	const rowRois = isReplay
-		? replayRows(winnerSide)
-		: isScoreboardBattleLog
-			? battleLogRows(bl, winnerSide)
-			: isQuickScoreboardBattleLog
-				? battleLogRows(quick, winnerSide, onRawFrame)
-				: scoreboardRows();
 
 	return (
 		<div>
@@ -696,431 +702,476 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isReplay ? (
-				<div className={styles.detail}>
-					<div className={styles.detailStats}>
-						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
-						<Stat label="code" raw={event.debug?.codeRaw}>
-							{event.data.replayCode ?? "?"}
-						</Stat>
-						<Stat label="match scores">
-							{JSON.stringify(event.data.matchScores)}
-						</Stat>
-						<Stat label="winner panel">{winnerSide}</Stat>
-					</div>
-					<div className={styles.detailCrops}>
-						<LabeledCrop
-							label="header"
+			{frame && event ? (
+				<>
+					<DetectorDetail
+						detector={activeDetector}
+						frame={frame}
+						event={event}
+						active={active}
+					/>
+					{showsRowInspector(activeDetector) ? (
+						<RowInspector
+							detector={activeDetector}
 							frame={frame}
-							roi={replay.HEADER_TOP_BAND}
+							event={event}
 						/>
-						<LabeledCrop
-							label="replay code"
-							frame={frame}
-							roi={replay.REPLAY_CODE_ROI}
-						/>
-					</div>
-				</div>
-			) : null}
-
-			{frame &&
-			event &&
-			(isScoreboardBattleLog || isQuickScoreboardBattleLog) ? (
-				<div className={styles.detail}>
-					<div className={styles.detailStats}>
-						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
-						<Stat label="match scores">
-							{JSON.stringify(event.data.matchScores)}
-						</Stat>
-						<Stat label="winner panel">{winnerSide}</Stat>
-					</div>
-					<div className={styles.detailCrops}>
-						<LabeledCrop
-							label="header top"
-							frame={frame}
-							roi={
-								isQuickScoreboardBattleLog
-									? onRawFrame(quick.HEADER_TOP_BAND)
-									: bl.HEADER_TOP_BAND
-							}
-						/>
-						<LabeledCrop
-							label="header bottom"
-							frame={frame}
-							roi={
-								isQuickScoreboardBattleLog
-									? onRawFrame(quick.HEADER_BOTTOM_BAND)
-									: bl.HEADER_BOTTOM_BAND
-							}
-						/>
-					</div>
-				</div>
-			) : null}
-
-			{frame && event && isDeath ? (
-				<div className={styles.detail}>
-					{(() => {
-						const data = event.data as unknown as DeathData;
-						return (
-							<>
-								<div className={styles.detailStats}>
-									<Stat label="weapon" raw={event.debug?.weaponRaw}>
-										{weaponLabel(data.weaponType, data.weaponId) ?? "?"}
-									</Stat>
-									<Stat label="name" raw={event.debug?.nameRaw}>
-										{data.name ?? "?"}
-									</Stat>
-									<Stat label="abilities">
-										{data.abilities.map((row) => row.join(" ")).join(" | ")}
-									</Stat>
-								</div>
-								<div className={styles.detailCrops}>
-									<LabeledCrop
-										label="weapon line"
-										frame={frame}
-										roi={death.WEAPON_LINE_ROI}
-									/>
-									<LabeledCrop
-										label="name tag"
-										frame={frame}
-										roi={death.TAG_NAME_OUTER}
-									/>
-								</div>
-							</>
-						);
-					})()}
-				</div>
-			) : null}
-
-			{frame && event && isMapStart ? (
-				<div className={styles.detail}>
-					{(() => {
-						const data = event.data as unknown as MapStartData;
-						return (
-							<>
-								<div className={styles.detailStats}>
-									<Stat label="mode" raw={event.debug?.modeReading}>
-										{modeLabel(data.mode) ?? "?"}
-									</Stat>
-									<Stat label="stage" raw={event.debug?.stageReading}>
-										{stageLabel(data.stage) ?? "?"}
-									</Stat>
-								</div>
-								<div className={styles.detailCrops}>
-									<LabeledCrop
-										label="mode block"
-										frame={frame}
-										roi={mapStart.MODE_BLOCK_ROI}
-										scale={0.75}
-									/>
-									<LabeledCrop
-										label="stage"
-										frame={frame}
-										roi={mapStart.STAGE_ROI}
-									/>
-								</div>
-							</>
-						);
-					})()}
-				</div>
-			) : null}
-
-			{frame && event && isOwn ? (
-				<div className={styles.detail}>
-					{(() => {
-						const data = event.data as unknown as ScoreboardOwnData;
-						return (
-							<>
-								<div className={styles.detailStats}>
-									<Stat label="weapon" raw={event.debug?.weaponReading}>
-										{mainWeaponLabel(data.weaponId) ?? "?"}
-									</Stat>
-									<Stat label="abilities">
-										{data.abilities.map((row) => row.join(" ")).join(" | ")}
-									</Stat>
-								</div>
-								<div className={styles.detailCrops}>
-									<LabeledCrop
-										label="title band"
-										frame={frame}
-										roi={own.WEAPON_TITLE_BAND}
-									/>
-									{[0, 1, 2].map((row) => (
-										<LabeledCrop
-											key={row}
-											label={`gear ${row + 1}`}
-											frame={frame}
-											roi={{
-												x: own.GEAR_MAIN_CXS[row] - 36,
-												y: own.GEAR_BADGE_CY - 32,
-												w: 200,
-												h: 64,
-											}}
-										/>
-									))}
-								</div>
-							</>
-						);
-					})()}
-				</div>
-			) : null}
-
-			{frame && event && isMinimap ? (
-				<div className={styles.detail}>
-					{(() => {
-						const data = event.data as unknown as MinimapData;
-						return (
-							<>
-								<div className={styles.detailStats}>
-									<Stat label="stage">{stageLabel(data.stage) ?? "?"}</Stat>
-									<Stat label="view">
-										{data.spectator ? "spectator map" : "POV overlay"}
-									</Stat>
-									<Stat label="team">
-										{data.teammates
-											.map(
-												(p) =>
-													`${p.self ? "self: " : ""}${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})${playerFlags(p)}`,
-											)
-											.join(", ") || "—"}
-									</Stat>
-									{data.enemies.length > 0 ? (
-										<Stat label="enemies">
-											{data.enemies
-												.map(
-													(p) =>
-														`${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})${playerFlags(p)}`,
-												)
-												.join(", ")}
-										</Stat>
-									) : null}
-								</div>
-								{!data.spectator ? (
-									<div className={styles.detailCrops}>
-										{minimap.CARD_LAYOUTS.map((card, i) => (
-											<LabeledCrop
-												key={i}
-												label={card.self ? "self card" : `card ${i + 1}`}
-												frame={frame}
-												roi={card.name}
-											/>
-										))}
-									</div>
-								) : null}
-							</>
-						);
-					})()}
-				</div>
-			) : null}
-
-			{frame && event && isObjective ? (
-				<div className={styles.detail}>
-					{(() => {
-						const data = event.data as unknown as ObjectiveData;
-						const status = active?.events.find(
-							(e) => e.type === PLAYER_STATUS_EVENT_TYPE,
-						) as DetectedEvent<PlayerStatusData> | undefined;
-						return (
-							<>
-								<div className={styles.detailStats}>
-									<Stat label="timer">{formatTimer(data.time)}</Stat>
-									<Stat label="score">
-										{data.score[0] ?? "?"}–{data.score[1] ?? "?"}
-									</Stat>
-									{data.mode === "SZ" ? (
-										<Stat label="penalty">
-											{data.penalty[0] ?? "—"} / {data.penalty[1] ?? "—"}
-										</Stat>
-									) : (
-										<Stat label="position">{data.position ?? "—"}</Stat>
-									)}
-									<Stat label="control">
-										{data.control === 0
-											? "left"
-											: data.control === 1
-												? "right"
-												: "none"}
-									</Stat>
-									{status ? (
-										<>
-											<Stat label="pitch">
-												{(status.debug?.pitches as number[] | undefined)?.join(
-													" / ",
-												) ?? "?"}
-											</Stat>
-											<Stat label="special">
-												<StatusSlots
-													flags={status.data.special}
-													tone="special"
-												/>
-											</Stat>
-											<Stat label="splatted">
-												<StatusSlots flags={status.data.dead} tone="dead" />
-											</Stat>
-										</>
-									) : null}
-								</div>
-								<div className={styles.detailCrops}>
-									<LabeledCrop
-										label="left count"
-										frame={frame}
-										roi={objective.SCORE_ROIS[0]}
-									/>
-									<LabeledCrop
-										label="timer"
-										frame={frame}
-										roi={objective.TIMER_DIGIT_ROI}
-									/>
-									<LabeledCrop
-										label="right count"
-										frame={frame}
-										roi={objective.SCORE_ROIS[1]}
-									/>
-									{status
-										? ([0, 1] as const).map((side) => (
-												<LabeledCrop
-													key={side}
-													label={side === 0 ? "left team" : "right team"}
-													frame={frame}
-													roi={objective.STATUS_STRIP_ROIS[side]}
-													scale={0.75}
-												/>
-											))
-										: null}
-								</div>
-							</>
-						);
-					})()}
-				</div>
-			) : null}
-
-			{frame && event && isKill ? (
-				<div className={styles.detail}>
-					{(() => {
-						const data = event.data as unknown as KillData;
-						const killRows = (event.debug?.rows ?? []) as { raw?: string }[];
-						return (
-							<>
-								<div className={styles.detailStats}>
-									<Stat label="timer" raw={event.debug?.timerRaw}>
-										{formatTimer(data.time)}
-									</Stat>
-									{data.names.map((name, row) => (
-										<Stat
-											key={row}
-											label={`row ${row}`}
-											raw={killRows[row]?.raw}
-										>
-											{name ?? "?"}
-										</Stat>
-									))}
-								</div>
-								<div className={styles.detailCrops}>
-									{data.names.map((_, row) => (
-										<LabeledCrop
-											key={row}
-											label={`row ${row}`}
-											frame={frame}
-											roi={kill.textRoi(row)}
-										/>
-									))}
-									<LabeledCrop
-										label="timer"
-										frame={frame}
-										roi={objective.TIMER_DIGIT_ROI}
-									/>
-								</div>
-							</>
-						);
-					})()}
-				</div>
-			) : null}
-
-			{frame &&
-			event &&
-			!isDeath &&
-			!isMapStart &&
-			!isOwn &&
-			!isMinimap &&
-			!isObjective &&
-			!isKill &&
-			!isXRank ? (
-				<table className={styles.inspector}>
-					<thead>
-						<tr>
-							<th>row</th>
-							<th>weapon crop</th>
-							<th>top candidates</th>
-							<th>name</th>
-							<th>paint</th>
-							<th>stats (splats / deaths / specials)</th>
-						</tr>
-					</thead>
-					<tbody>
-						{rowRois.map((roi, i) => {
-							const player = event.data.players[i];
-							const dbg = rows[i];
-							return (
-								<tr key={i}>
-									<td>{i}</td>
-									<td>
-										<RoiCrop frame={frame} roi={roi.weapon} />
-									</td>
-									<td>
-										<div
-											className={clsx(
-												styles.candidates,
-												styles.weaponCandidates,
-											)}
-										>
-											{dbg?.weapon?.top.map((c) => (
-												<span className={styles.candidate} key={c.id}>
-													<img
-														className={styles.weaponIcon}
-														src={`${mainWeaponImageUrl(Number(c.id) as MainWeaponId)}.avif`}
-														alt={c.id}
-													/>
-													{c.id}
-													<span className="text-xxs text-lighter">
-														{c.score.toFixed(3)}
-													</span>
-												</span>
-											))}
-										</div>
-									</td>
-									<td>
-										<RoiCrop frame={frame} roi={roi.name} />
-										<b>{player?.name || "—"}</b>{" "}
-										<span className="text-xxs text-lighter">
-											{dbg?.nameScore.toFixed(3)}
-										</span>
-									</td>
-									<td>
-										<RoiCrop frame={frame} roi={roi.paint} />
-										<b>{player?.paint ?? "—"}</b>{" "}
-										<span className="text-xxs text-lighter">
-											{dbg?.paintScore.toFixed(3)}
-										</span>
-									</td>
-									<td>
-										<div className={styles.candidates}>
-											{([0, 1, 2] as const).map((s) => (
-												<span className={styles.candidate} key={s}>
-													<RoiCrop frame={frame} roi={roi.stats[s]} scale={2} />
-													<b>{[player?.ka, player?.d, player?.s][s] ?? "—"}</b>
-													<span className="text-xxs text-lighter">
-														{dbg?.statScores[s].toFixed(2)}
-													</span>
-												</span>
-											))}
-										</div>
-									</td>
-								</tr>
-							);
-						})}
-					</tbody>
-				</table>
+					) : null}
+				</>
 			) : null}
 		</div>
 	);
+}
+
+interface DetailProps {
+	frame: HTMLCanvasElement;
+	event: DetectedEvent<CardData>;
+}
+
+/** The fired detector's reads beside the crops they were read from. */
+function DetectorDetail({
+	detector,
+	frame,
+	event,
+	active,
+}: DetailProps & { detector: string; active: Result | undefined }) {
+	switch (detector) {
+		case "scoreboard-battle-log-replay":
+			return <ReplayDetail frame={frame} event={event} />;
+		case "scoreboard-battle-log":
+		case "quick-scoreboard-battle-log":
+			return (
+				<BattleLogDetail
+					frame={frame}
+					event={event}
+					isQuick={detector === "quick-scoreboard-battle-log"}
+				/>
+			);
+		case "death":
+			return <DeathDetail frame={frame} event={event} />;
+		case "map-start":
+			return <MapStartDetail frame={frame} event={event} />;
+		case "scoreboard-own":
+			return <ScoreboardOwnDetail frame={frame} event={event} />;
+		case "minimap":
+			return <MinimapDetail frame={frame} event={event} />;
+		case "objective":
+			return <ObjectiveDetail frame={frame} event={event} active={active} />;
+		case "kill":
+			return <KillDetail frame={frame} event={event} />;
+		default:
+			return null;
+	}
+}
+
+function ReplayDetail({ frame, event }: DetailProps) {
+	return (
+		<div className={styles.detail}>
+			<div className={styles.detailStats}>
+				<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
+				<Stat label="code" raw={event.debug?.codeRaw}>
+					{event.data.replayCode ?? "?"}
+				</Stat>
+				<Stat label="match scores">
+					{JSON.stringify(event.data.matchScores)}
+				</Stat>
+				<Stat label="winner panel">{winnerSideOf(event)}</Stat>
+			</div>
+			<div className={styles.detailCrops}>
+				<LabeledCrop
+					label="header"
+					frame={frame}
+					roi={replay.HEADER_TOP_BAND}
+				/>
+				<LabeledCrop
+					label="replay code"
+					frame={frame}
+					roi={replay.REPLAY_CODE_ROI}
+				/>
+			</div>
+		</div>
+	);
+}
+
+function BattleLogDetail({
+	frame,
+	event,
+	isQuick,
+}: DetailProps & { isQuick: boolean }) {
+	return (
+		<div className={styles.detail}>
+			<div className={styles.detailStats}>
+				<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
+				<Stat label="match scores">
+					{JSON.stringify(event.data.matchScores)}
+				</Stat>
+				<Stat label="winner panel">{winnerSideOf(event)}</Stat>
+			</div>
+			<div className={styles.detailCrops}>
+				<LabeledCrop
+					label="header top"
+					frame={frame}
+					roi={isQuick ? onRawFrame(quick.HEADER_TOP_BAND) : bl.HEADER_TOP_BAND}
+				/>
+				<LabeledCrop
+					label="header bottom"
+					frame={frame}
+					roi={
+						isQuick
+							? onRawFrame(quick.HEADER_BOTTOM_BAND)
+							: bl.HEADER_BOTTOM_BAND
+					}
+				/>
+			</div>
+		</div>
+	);
+}
+
+function DeathDetail({ frame, event }: DetailProps) {
+	const data = event.data as unknown as DeathData;
+	return (
+		<div className={styles.detail}>
+			<div className={styles.detailStats}>
+				<Stat label="weapon" raw={event.debug?.weaponRaw}>
+					{weaponLabel(data.weaponType, data.weaponId) ?? "?"}
+				</Stat>
+				<Stat label="name" raw={event.debug?.nameRaw}>
+					{data.name ?? "?"}
+				</Stat>
+				<Stat label="abilities">
+					{data.abilities.map((row) => row.join(" ")).join(" | ")}
+				</Stat>
+			</div>
+			<div className={styles.detailCrops}>
+				<LabeledCrop
+					label="weapon line"
+					frame={frame}
+					roi={death.WEAPON_LINE_ROI}
+				/>
+				<LabeledCrop
+					label="name tag"
+					frame={frame}
+					roi={death.TAG_NAME_OUTER}
+				/>
+			</div>
+		</div>
+	);
+}
+
+function MapStartDetail({ frame, event }: DetailProps) {
+	const data = event.data as unknown as MapStartData;
+	return (
+		<div className={styles.detail}>
+			<div className={styles.detailStats}>
+				<Stat label="mode" raw={event.debug?.modeReading}>
+					{modeLabel(data.mode) ?? "?"}
+				</Stat>
+				<Stat label="stage" raw={event.debug?.stageReading}>
+					{stageLabel(data.stage) ?? "?"}
+				</Stat>
+			</div>
+			<div className={styles.detailCrops}>
+				<LabeledCrop
+					label="mode block"
+					frame={frame}
+					roi={mapStart.MODE_BLOCK_ROI}
+					scale={0.75}
+				/>
+				<LabeledCrop label="stage" frame={frame} roi={mapStart.STAGE_ROI} />
+			</div>
+		</div>
+	);
+}
+
+function ScoreboardOwnDetail({ frame, event }: DetailProps) {
+	const data = event.data as unknown as ScoreboardOwnData;
+	return (
+		<div className={styles.detail}>
+			<div className={styles.detailStats}>
+				<Stat label="weapon" raw={event.debug?.weaponReading}>
+					{mainWeaponLabel(data.weaponId) ?? "?"}
+				</Stat>
+				<Stat label="abilities">
+					{data.abilities.map((row) => row.join(" ")).join(" | ")}
+				</Stat>
+			</div>
+			<div className={styles.detailCrops}>
+				<LabeledCrop
+					label="title band"
+					frame={frame}
+					roi={own.WEAPON_TITLE_BAND}
+				/>
+				{[0, 1, 2].map((row) => (
+					<LabeledCrop
+						key={row}
+						label={`gear ${row + 1}`}
+						frame={frame}
+						roi={{
+							x: own.GEAR_MAIN_CXS[row] - 36,
+							y: own.GEAR_BADGE_CY - 32,
+							w: 200,
+							h: 64,
+						}}
+					/>
+				))}
+			</div>
+		</div>
+	);
+}
+
+function MinimapDetail({ frame, event }: DetailProps) {
+	const data = event.data as unknown as MinimapData;
+	return (
+		<div className={styles.detail}>
+			<div className={styles.detailStats}>
+				<Stat label="stage">{stageLabel(data.stage) ?? "?"}</Stat>
+				<Stat label="view">
+					{data.spectator ? "spectator map" : "POV overlay"}
+				</Stat>
+				<Stat label="team">
+					{data.teammates
+						.map(
+							(p) =>
+								`${p.self ? "self: " : ""}${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})${playerFlags(p)}`,
+						)
+						.join(", ") || "—"}
+				</Stat>
+				{data.enemies.length > 0 ? (
+					<Stat label="enemies">
+						{data.enemies
+							.map(
+								(p) =>
+									`${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})${playerFlags(p)}`,
+							)
+							.join(", ")}
+					</Stat>
+				) : null}
+			</div>
+			{!data.spectator ? (
+				<div className={styles.detailCrops}>
+					{minimap.CARD_LAYOUTS.map((card, i) => (
+						<LabeledCrop
+							key={i}
+							label={card.self ? "self card" : `card ${i + 1}`}
+							frame={frame}
+							roi={card.name}
+						/>
+					))}
+				</div>
+			) : null}
+		</div>
+	);
+}
+
+function ObjectiveDetail({
+	frame,
+	event,
+	active,
+}: DetailProps & { active: Result | undefined }) {
+	const data = event.data as unknown as ObjectiveData;
+	const status = active?.events.find(
+		(e) => e.type === PLAYER_STATUS_EVENT_TYPE,
+	) as DetectedEvent<PlayerStatusData> | undefined;
+	return (
+		<div className={styles.detail}>
+			<div className={styles.detailStats}>
+				<Stat label="timer">{formatTimer(data.time)}</Stat>
+				<Stat label="score">
+					{data.score[0] ?? "?"}–{data.score[1] ?? "?"}
+				</Stat>
+				{data.mode === "SZ" ? (
+					<Stat label="penalty">
+						{data.penalty[0] ?? "—"} / {data.penalty[1] ?? "—"}
+					</Stat>
+				) : (
+					<Stat label="position">{data.position ?? "—"}</Stat>
+				)}
+				<Stat label="control">
+					{data.control === 0 ? "left" : data.control === 1 ? "right" : "none"}
+				</Stat>
+				{status ? (
+					<>
+						<Stat label="pitch">
+							{(status.debug?.pitches as number[] | undefined)?.join(" / ") ??
+								"?"}
+						</Stat>
+						<Stat label="special">
+							<StatusSlots flags={status.data.special} tone="special" />
+						</Stat>
+						<Stat label="splatted">
+							<StatusSlots flags={status.data.dead} tone="dead" />
+						</Stat>
+					</>
+				) : null}
+			</div>
+			<div className={styles.detailCrops}>
+				<LabeledCrop
+					label="left count"
+					frame={frame}
+					roi={objective.SCORE_ROIS[0]}
+				/>
+				<LabeledCrop
+					label="timer"
+					frame={frame}
+					roi={objective.TIMER_DIGIT_ROI}
+				/>
+				<LabeledCrop
+					label="right count"
+					frame={frame}
+					roi={objective.SCORE_ROIS[1]}
+				/>
+				{status
+					? ([0, 1] as const).map((side) => (
+							<LabeledCrop
+								key={side}
+								label={side === 0 ? "left team" : "right team"}
+								frame={frame}
+								roi={objective.STATUS_STRIP_ROIS[side]}
+								scale={0.75}
+							/>
+						))
+					: null}
+			</div>
+		</div>
+	);
+}
+
+function KillDetail({ frame, event }: DetailProps) {
+	const data = event.data as unknown as KillData;
+	const killRows = (event.debug?.rows ?? []) as { raw?: string }[];
+	return (
+		<div className={styles.detail}>
+			<div className={styles.detailStats}>
+				<Stat label="timer" raw={event.debug?.timerRaw}>
+					{formatTimer(data.time)}
+				</Stat>
+				{data.names.map((name, row) => (
+					<Stat key={row} label={`row ${row}`} raw={killRows[row]?.raw}>
+						{name ?? "?"}
+					</Stat>
+				))}
+			</div>
+			<div className={styles.detailCrops}>
+				{data.names.map((_, row) => (
+					<LabeledCrop
+						key={row}
+						label={`row ${row}`}
+						frame={frame}
+						roi={kill.textRoi(row)}
+					/>
+				))}
+				<LabeledCrop
+					label="timer"
+					frame={frame}
+					roi={objective.TIMER_DIGIT_ROI}
+				/>
+			</div>
+		</div>
+	);
+}
+
+/** The scoreboard-like reads row by row: each row's crops beside what was read off them. */
+function RowInspector({
+	detector,
+	frame,
+	event,
+}: DetailProps & { detector: string }) {
+	const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
+	const rowRois = rowRoisOf(detector, winnerSideOf(event));
+	return (
+		<table className={styles.inspector}>
+			<thead>
+				<tr>
+					<th>row</th>
+					<th>weapon crop</th>
+					<th>top candidates</th>
+					<th>name</th>
+					<th>paint</th>
+					<th>stats (splats / deaths / specials)</th>
+				</tr>
+			</thead>
+			<tbody>
+				{rowRois.map((roi, i) => {
+					const player = event.data.players[i];
+					const dbg = rows[i];
+					return (
+						<tr key={i}>
+							<td>{i}</td>
+							<td>
+								<RoiCrop frame={frame} roi={roi.weapon} />
+							</td>
+							<td>
+								<div
+									className={clsx(styles.candidates, styles.weaponCandidates)}
+								>
+									{dbg?.weapon?.top.map((c) => (
+										<span className={styles.candidate} key={c.id}>
+											<img
+												className={styles.weaponIcon}
+												src={`${mainWeaponImageUrl(Number(c.id) as MainWeaponId)}.avif`}
+												alt={c.id}
+											/>
+											{c.id}
+											<span className="text-xxs text-lighter">
+												{c.score.toFixed(3)}
+											</span>
+										</span>
+									))}
+								</div>
+							</td>
+							<td>
+								<RoiCrop frame={frame} roi={roi.name} />
+								<b>{player?.name || "—"}</b>{" "}
+								<span className="text-xxs text-lighter">
+									{dbg?.nameScore.toFixed(3)}
+								</span>
+							</td>
+							<td>
+								<RoiCrop frame={frame} roi={roi.paint} />
+								<b>{player?.paint ?? "—"}</b>{" "}
+								<span className="text-xxs text-lighter">
+									{dbg?.paintScore.toFixed(3)}
+								</span>
+							</td>
+							<td>
+								<div className={styles.candidates}>
+									{([0, 1, 2] as const).map((s) => (
+										<span className={styles.candidate} key={s}>
+											<RoiCrop frame={frame} roi={roi.stats[s]} scale={2} />
+											<b>{[player?.ka, player?.d, player?.s][s] ?? "—"}</b>
+											<span className="text-xxs text-lighter">
+												{dbg?.statScores[s].toFixed(2)}
+											</span>
+										</span>
+									))}
+								</div>
+							</td>
+						</tr>
+					);
+				})}
+			</tbody>
+		</table>
+	);
+}
+
+function showsRowInspector(detector: string): boolean {
+	return !ROWLESS_DETECTORS.has(detector) && !detector.startsWith("x-");
+}
+
+function rowRoisOf(detector: string, winnerSide: string): RowRois[] {
+	switch (detector) {
+		case "scoreboard-battle-log-replay":
+			return replayRows(winnerSide);
+		case "scoreboard-battle-log":
+			return battleLogRows(bl, winnerSide);
+		case "quick-scoreboard-battle-log":
+			return battleLogRows(quick, winnerSide, onRawFrame);
+		default:
+			return scoreboardRows();
+	}
+}
+
+function winnerSideOf(event: DetectedEvent<CardData>): string {
+	const debugWinnerSide = event.debug?.winnerSide;
+	return typeof debugWinnerSide === "string" ? debugWinnerSide : "left";
 }

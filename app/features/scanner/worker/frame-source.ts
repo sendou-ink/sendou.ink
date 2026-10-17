@@ -30,6 +30,7 @@ import {
 import { createAv1UnitClassifier } from "../core/av1-refs";
 import {
 	type CheckPlan,
+	type CheckTracker,
 	createCheckTracker,
 } from "../core/detectors/check-plan";
 
@@ -148,6 +149,36 @@ interface Pending {
 	wanted: boolean;
 }
 
+/** One pumpFrames stream's state, shared by its feed loop and the decoder's callbacks. */
+interface PumpStream {
+	control: PumpControl;
+	preview: PreviewOptions;
+	/** the first packet's time and the slice's end, as decoded samples carry them */
+	firstT: number;
+	endT: number;
+	/** one shown frame per packet, in presentation order (AV1) */
+	inDecodeOrder: boolean;
+	pending: Pending[];
+	batch: SourceItem[];
+	ended: boolean;
+	failure: Error | null;
+	lastPreviewAt: number;
+	previews: Set<Promise<void>>;
+	/** packets the decoder may hold undecided, raised for decoders that need more */
+	depth: number;
+	emitted: number;
+	wakeFeeder: (() => void) | null;
+	tracker: CheckTracker;
+	/** the check plan `tracker` holds */
+	plan: CheckPlan | null;
+}
+
+/** Why the next packet has to wait: the decoder's or the consumer's backlog. */
+interface Congestion {
+	decoding: number;
+	queued: number;
+}
+
 /**
  * Decodes `[start, end)` of `track` in stream order under `control`. Shared by
  * the decode worker and the on-thread fallback.
@@ -195,150 +226,51 @@ export async function pumpFrames({
 		codec === "av1" ? await av1UnitClassifier(track) : () => true;
 	const packets = new EncodedPacketSink(track);
 	const firstPacket = await packets.getPacket(start, PACKET_OPTIONS);
-	const firstT = firstPacket
-		? roundT(firstPacket.timestamp)
-		: Number.NEGATIVE_INFINITY;
-
-	const pending: Pending[] = [];
-	let batch: SourceItem[] = [];
-	let ended = false;
-	let failure: Error | null = null;
-	let lastPreviewAt = Number.NEGATIVE_INFINITY;
-	const previews = new Set<Promise<void>>();
-	/** packets the decoder may hold undecided, raised for decoders that need more */
-	let depth = DECODE_QUEUE_SIZE;
-	let emitted = 0;
-	let wakeFeeder: (() => void) | null = null;
-	const wake = () => {
-		wakeFeeder?.();
-		wakeFeeder = null;
-	};
-	const flushBatch = (last: boolean) => {
-		if (batch.length > 0 || last) control.deliver(batch, last);
-		batch = [];
-	};
-	/** Hands on the samples whose pictures are in, in stream order. */
-	const emitReady = () => {
-		while (pending.length > 0 && pending[0].state === "ready") {
-			const { item } = pending.shift()!;
-			if (ended || item.t < firstT || item.t >= endT || control.stopped()) {
-				if (item.t >= endT) ended = true;
-				item.frame?.close();
-				item.preview?.close();
-				continue;
-			}
-			batch.push(item);
-			if (item.frame || batch.length >= TIMESTAMP_BATCH) flushBatch(false);
-		}
-	};
-	const settle = (entry: Pending, sample: VideoSample) => {
-		const { t } = entry;
-		const keep =
-			entry.wanted && t >= control.floor() && t >= control.seekT() && !ended;
-		const now = performance.now();
-		const wantsPreview = now - lastPreviewAt >= preview.intervalMs;
-		if (wantsPreview) lastPreviewAt = now;
-		if (keep) entry.item.frame = sample.toVideoFrame();
-		if (!wantsPreview) {
-			sample.close();
-			entry.state = "ready";
-			return;
-		}
-		entry.state = "previewing";
-		const frame = sample.toVideoFrame();
-		sample.close();
-		const made = createImageBitmap(frame, {
-			resizeWidth: preview.width,
-			resizeHeight: preview.height,
-		})
-			.then(
-				(bitmap) => {
-					entry.item.preview = bitmap;
-				},
-				() => {},
-			)
-			.finally(() => {
-				frame.close();
-				entry.state = "ready";
-				previews.delete(made);
-				emitReady();
-			});
-		previews.add(made);
+	const stream: PumpStream = {
+		control,
+		preview,
+		firstT: firstPacket
+			? roundT(firstPacket.timestamp)
+			: Number.NEGATIVE_INFINITY,
+		endT,
+		inDecodeOrder,
+		pending: [],
+		batch: [],
+		ended: false,
+		failure: null,
+		lastPreviewAt: Number.NEGATIVE_INFINITY,
+		previews: new Set(),
+		depth: DECODE_QUEUE_SIZE,
+		emitted: 0,
+		wakeFeeder: null,
+		tracker: createCheckTracker(),
+		plan: null,
 	};
 	const decoder = await createDecoder.call(
 		sink,
-		(sample) => {
-			emitted++;
-			const t = roundT(sample.timestamp);
-			let entry: Pending | undefined;
-			if (inDecodeOrder) {
-				entry = pending.find((p) => p.state === "decoding");
-			} else {
-				entry = {
-					t,
-					state: "decoding",
-					item: { t, frame: null },
-					wanted: true,
-				};
-				pending.push(entry);
-			}
-			if (!entry || entry.t !== t) {
-				sample.close();
-				failure ??= new Error(`decoder emitted ${t} out of order`);
-				wake();
-				return;
-			}
-			settle(entry, sample);
-			emitReady();
-			wake();
-		},
+		(sample) => onDecodedSample(stream, sample, roundT(sample.timestamp)),
 		(error) => {
-			failure ??= error;
-			wake();
+			stream.failure ??= error;
+			resumeFeeder(stream);
 		},
 	);
 
 	const iterate = (from: EncodedPacket | null) =>
 		from ? packets.packets(from, undefined, PACKET_OPTIONS) : null;
-	const tracker = createCheckTracker();
-	let plan: CheckPlan | null = null;
 	let iterator = iterate(
 		(await packets.getKeyPacket(start, PACKET_OPTIONS)) ??
 			(await packets.getFirstKeyPacket(PACKET_OPTIONS)),
 	);
 	try {
-		let packet = (await iterator?.next())?.value ?? null;
-		while (packet && !control.stopped() && !ended) {
-			if (failure) throw failure;
-			let decoding = 0;
-			for (const entry of pending) if (entry.state === "decoding") decoding++;
-			const queued = decoder.getDecodeQueueSize();
-			const room =
-				decoding < depth &&
-				queued < DECODE_QUEUE_SIZE &&
-				control.open() < maxOpen;
-			if (!room) {
-				flushBatch(false);
-				const emittedBefore = emitted;
-				const decoderBound = decoding >= depth || queued >= DECODE_QUEUE_SIZE;
-				await Promise.race([
-					new Promise<void>((resolve) => {
-						wakeFeeder = resolve;
-					}),
-					control.waitForRoom(),
-					...(decoderBound
-						? [new Promise((resolve) => setTimeout(resolve, DECODER_STALL_MS))]
-						: []),
-				]);
-				if (
-					emitted === emittedBefore &&
-					decoding >= depth &&
-					decoder.getDecodeQueueSize() === 0 &&
-					depth < MAX_DECODE_DEPTH &&
-					!failure
-				) {
-					depth++;
-				}
+		let packet = packetOf(await iterator?.next());
+		while (packet && !control.stopped() && !stream.ended) {
+			if (stream.failure) throw stream.failure;
+			const congestion = congestionOf(stream, decoder, maxOpen);
+			if (congestion) {
+				flushBatch(stream, false);
+				const emittedBefore = stream.emitted;
+				await roomOrStall(stream, congestion);
+				growStalledDepth(stream, decoder, congestion, emittedBefore);
 				continue;
 			}
 			const seekT = control.seekT();
@@ -346,54 +278,29 @@ export async function pumpFrames({
 				const key = await packets.getKeyPacket(seekT, PACKET_OPTIONS);
 				if (key && key.sequenceNumber > packet.sequenceNumber) {
 					await decoder.flush();
-					emitReady();
+					emitReady(stream);
 					await iterator?.return(undefined);
-					tracker.clear();
+					stream.tracker.clear();
 					iterator = iterate(key);
-					packet = (await iterator?.next())?.value ?? null;
+					packet = packetOf(await iterator?.next());
 					continue;
 				}
 			}
 			const t = roundT(packet.timestamp);
 			if (inDecodeOrder && t >= endT) break;
-			if (control.plan() !== plan) {
-				plan = control.plan();
-				tracker.setPlan(plan);
-				for (const entry of pending) {
-					if (entry.state === "decoding")
-						entry.wanted = tracker.wanted(entry.t);
-				}
-			}
-			const wanted = !inDecodeOrder || tracker.step(t);
-			const skip =
-				inDecodeOrder &&
-				!changesState(packet.data) &&
-				(t < control.floor() || t < seekT || !wanted);
-			if (inDecodeOrder) {
-				pending.push({
-					t,
-					state: skip ? "ready" : "decoding",
-					item: { t, frame: null },
-					wanted,
-				});
-			}
-			if (!skip) decoder.decode(packet);
-			emitReady();
-			packet = (await iterator?.next())?.value ?? null;
+			feedPacket(stream, decoder, packet, { t, seekT, changesState });
+			packet = packetOf(await iterator?.next());
 		}
 		await iterator?.return(undefined);
 		if (!control.stopped()) await decoder.flush();
-		await Promise.all(previews);
-		if (failure) throw failure;
-		emitReady();
-		flushBatch(true);
+		await Promise.all(stream.previews);
+		if (stream.failure) throw stream.failure;
+		emitReady(stream);
+		flushBatch(stream, true);
 	} finally {
 		decoder.close();
 		await iterator?.return(undefined);
-		for (const { item } of pending) {
-			item.frame?.close();
-			item.preview?.close();
-		}
+		closeItems(stream.pending.map(({ item }) => item));
 	}
 }
 
@@ -696,4 +603,206 @@ function localSource(
 			closeItems(queue.splice(0));
 		},
 	};
+}
+
+function packetOf(
+	result: IteratorResult<EncodedPacket, void> | undefined,
+): EncodedPacket | null {
+	return result?.value ?? null;
+}
+
+function resumeFeeder(stream: PumpStream): void {
+	stream.wakeFeeder?.();
+	stream.wakeFeeder = null;
+}
+
+function flushBatch(stream: PumpStream, last: boolean): void {
+	if (stream.batch.length > 0 || last)
+		stream.control.deliver(stream.batch, last);
+	stream.batch = [];
+}
+
+/** Hands on the samples whose pictures are in, in stream order. */
+function emitReady(stream: PumpStream): void {
+	const { pending, control } = stream;
+	while (pending.length > 0 && pending[0].state === "ready") {
+		const { item } = pending.shift()!;
+		if (
+			stream.ended ||
+			item.t < stream.firstT ||
+			item.t >= stream.endT ||
+			control.stopped()
+		) {
+			if (item.t >= stream.endT) stream.ended = true;
+			item.frame?.close();
+			item.preview?.close();
+			continue;
+		}
+		stream.batch.push(item);
+		if (item.frame || stream.batch.length >= TIMESTAMP_BATCH) {
+			flushBatch(stream, false);
+		}
+	}
+}
+
+/** The decoder emitted `sample` (at `t`): it settles its entry, or fails the stream when out of order. */
+function onDecodedSample(
+	stream: PumpStream,
+	sample: VideoSample,
+	t: number,
+): void {
+	stream.emitted++;
+	let entry: Pending | undefined;
+	if (stream.inDecodeOrder) {
+		entry = stream.pending.find((p) => p.state === "decoding");
+	} else {
+		entry = {
+			t,
+			state: "decoding",
+			item: { t, frame: null },
+			wanted: true,
+		};
+		stream.pending.push(entry);
+	}
+	if (!entry || entry.t !== t) {
+		sample.close();
+		stream.failure ??= new Error(`decoder emitted ${t} out of order`);
+		resumeFeeder(stream);
+		return;
+	}
+	settle(stream, entry, sample);
+	emitReady(stream);
+	resumeFeeder(stream);
+}
+
+function settle(stream: PumpStream, entry: Pending, sample: VideoSample): void {
+	const { control, preview } = stream;
+	const { t } = entry;
+	const keep =
+		entry.wanted &&
+		t >= control.floor() &&
+		t >= control.seekT() &&
+		!stream.ended;
+	const now = performance.now();
+	const wantsPreview = now - stream.lastPreviewAt >= preview.intervalMs;
+	if (wantsPreview) stream.lastPreviewAt = now;
+	if (keep) entry.item.frame = sample.toVideoFrame();
+	if (!wantsPreview) {
+		sample.close();
+		entry.state = "ready";
+		return;
+	}
+	entry.state = "previewing";
+	const frame = sample.toVideoFrame();
+	sample.close();
+	const made = createImageBitmap(frame, {
+		resizeWidth: preview.width,
+		resizeHeight: preview.height,
+	})
+		.then(
+			(bitmap) => {
+				entry.item.preview = bitmap;
+			},
+			() => {},
+		)
+		.finally(() => {
+			frame.close();
+			entry.state = "ready";
+			stream.previews.delete(made);
+			emitReady(stream);
+		});
+	stream.previews.add(made);
+}
+
+/** What keeps the next packet from going in; null when there is room for it. */
+function congestionOf(
+	stream: PumpStream,
+	decoder: SampleDecoder,
+	maxOpen: number,
+): Congestion | null {
+	let decoding = 0;
+	for (const entry of stream.pending)
+		if (entry.state === "decoding") decoding++;
+	const queued = decoder.getDecodeQueueSize();
+	const room =
+		decoding < stream.depth &&
+		queued < DECODE_QUEUE_SIZE &&
+		stream.control.open() < maxOpen;
+	return room ? null : { decoding, queued };
+}
+
+/** Resolves on a decoded sample, a release, a seek or a stop, or once a decoder-bound wait has stalled. */
+function roomOrStall(
+	stream: PumpStream,
+	{ decoding, queued }: Congestion,
+): Promise<unknown> {
+	const decoderBound = decoding >= stream.depth || queued >= DECODE_QUEUE_SIZE;
+	return Promise.race([
+		new Promise<void>((resolve) => {
+			stream.wakeFeeder = resolve;
+		}),
+		stream.control.waitForRoom(),
+		...(decoderBound
+			? [new Promise((resolve) => setTimeout(resolve, DECODER_STALL_MS))]
+			: []),
+	]);
+}
+
+/** A decoder that took every packet allowed yet emitted nothing over the wait gets one more in flight. */
+function growStalledDepth(
+	stream: PumpStream,
+	decoder: SampleDecoder,
+	{ decoding }: Congestion,
+	emittedBefore: number,
+): void {
+	if (
+		stream.emitted === emittedBefore &&
+		decoding >= stream.depth &&
+		decoder.getDecodeQueueSize() === 0 &&
+		stream.depth < MAX_DECODE_DEPTH &&
+		!stream.failure
+	) {
+		stream.depth++;
+	}
+}
+
+/** Takes `packet`'s place in the stream and decodes it, unless it is unwanted and leaving it out changes no later frame. */
+function feedPacket(
+	stream: PumpStream,
+	decoder: SampleDecoder,
+	packet: EncodedPacket,
+	{
+		t,
+		seekT,
+		changesState,
+	}: { t: number; seekT: number; changesState: (unit: Uint8Array) => boolean },
+): void {
+	const { control, tracker, inDecodeOrder } = stream;
+	if (control.plan() !== stream.plan) adoptPlan(stream, control.plan());
+	const wanted = !inDecodeOrder || tracker.step(t);
+	const skip =
+		inDecodeOrder &&
+		!changesState(packet.data) &&
+		(t < control.floor() || t < seekT || !wanted);
+	if (inDecodeOrder) {
+		stream.pending.push({
+			t,
+			state: skip ? "ready" : "decoding",
+			item: { t, frame: null },
+			wanted,
+		});
+	}
+	if (!skip) decoder.decode(packet);
+	emitReady(stream);
+}
+
+/** Switches the tracker to `plan`, re-deciding the samples still decoding. */
+function adoptPlan(stream: PumpStream, plan: CheckPlan | null): void {
+	stream.plan = plan;
+	stream.tracker.setPlan(plan);
+	for (const entry of stream.pending) {
+		if (entry.state === "decoding") {
+			entry.wanted = stream.tracker.wanted(entry.t);
+		}
+	}
 }

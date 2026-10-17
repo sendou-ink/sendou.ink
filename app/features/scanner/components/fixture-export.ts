@@ -85,203 +85,12 @@ export function buildExpectedJson(
 	eventType = "Scoreboard",
 ): string {
 	if (!data) {
-		return `${JSON.stringify({ event: "none" }, null, 2)}\n`;
+		return fixtureJson({ event: "none" });
 	}
-	if (AS_IS_EVENT_TYPES.includes(eventType)) {
-		return `${JSON.stringify({ event: eventType, data }, null, 2)}\n`;
-	}
-	if (isDeath(data, eventType)) {
-		const label = weaponLabel(data.weaponType, data.weaponId);
-		return `${JSON.stringify(
-			{
-				event: eventType,
-				data: {
-					...(label !== null && { weaponLabel: label }),
-					...(data.weaponId !== null && { weaponId: data.weaponId }),
-					...(data.weaponType !== null && { weaponType: data.weaponType }),
-					abilities: data.abilities,
-					...(data.name !== null && { name: data.name }),
-				},
-			},
-			null,
-			2,
-		)}\n`;
-	}
-	if (eventType === SCOREBOARD_OWN_EVENT_TYPE) {
-		const own = data as ScoreboardOwnData;
-		return `${JSON.stringify(
-			{
-				event: eventType,
-				data: {
-					...(own.lobby !== null && { lobby: own.lobby }),
-					...(own.mode !== null && { mode: own.mode }),
-					...(own.stage !== null && {
-						stage: own.stage,
-						stageLabel: stageLabel(own.stage),
-					}),
-					...(own.weaponId !== null && {
-						weaponLabel: mainWeaponLabel(own.weaponId),
-						weaponId: own.weaponId,
-					}),
-					abilities: own.abilities,
-				},
-			},
-			null,
-			2,
-		)}\n`;
-	}
-	if (eventType === MINIMAP_EVENT_TYPE) {
-		const minimap = data as MinimapData;
-		return `${JSON.stringify(
-			{
-				event: eventType,
-				data: {
-					...(minimap.stage !== null && {
-						stage: minimap.stage,
-						stageLabel: stageLabel(minimap.stage),
-					}),
-					...(minimap.spectator && { spectator: true }),
-					teammates: minimap.teammates.map((p) => ({
-						self: p.self,
-						name: p.name,
-						weaponLabel: mainWeaponLabel(p.weaponId),
-						weaponId: p.weaponId,
-						abilities: p.abilities,
-						dead: p.dead,
-						specialReady: p.specialReady,
-					})),
-					enemies: minimap.enemies.map((p) => ({
-						...(minimap.spectator && { name: p.name }),
-						weaponLabel: mainWeaponLabel(p.weaponId),
-						weaponId: p.weaponId,
-						abilities: p.abilities,
-						dead: p.dead,
-						specialReady: p.specialReady,
-					})),
-				},
-			},
-			null,
-			2,
-		)}\n`;
-	}
-	if (eventType === OBJECTIVE_EVENT_TYPE) {
-		const objective = data as ObjectiveData;
-		return `${JSON.stringify(
-			{
-				event: eventType,
-				data:
-					objective.mode === "SZ"
-						? {
-								mode: objective.mode,
-								time: objective.time,
-								score: objective.score,
-								penalty: objective.penalty,
-								control: objective.control,
-							}
-						: {
-								mode: objective.mode,
-								time: objective.time,
-								score: objective.score,
-								control: objective.control,
-								position: objective.position,
-							},
-			},
-			null,
-			2,
-		)}\n`;
-	}
-	if (eventType === PLAYER_STATUS_EVENT_TYPE) {
-		const status = data as PlayerStatusData;
-		return `${JSON.stringify(
-			{
-				event: eventType,
-				data: {
-					cast: status.cast,
-					time: status.time,
-					special: status.special,
-					dead: status.dead,
-				},
-			},
-			null,
-			2,
-		)}\n`;
-	}
-	if (eventType === STRIP_WEAPONS_EVENT_TYPE) {
-		const strip = data as StripWeaponsData;
-		return `${JSON.stringify(
-			{
-				event: eventType,
-				data: {
-					time: strip.time,
-					// the top candidate per slot; hand-correct to the true weapons
-					weapons: strip.slots.map((side) =>
-						side.map((candidates) => candidates?.[0]?.weaponId ?? null),
-					),
-					weaponLabels: strip.slots.map((side) =>
-						side.map((candidates) =>
-							mainWeaponLabel(candidates?.[0]?.weaponId ?? null),
-						),
-					),
-				},
-			},
-			null,
-			2,
-		)}\n`;
-	}
-	if (eventType === KILL_EVENT_TYPE) {
-		const kill = data as KillData;
-		return `${JSON.stringify(
-			{ event: eventType, data: { time: kill.time, names: kill.names } },
-			null,
-			2,
-		)}\n`;
-	}
-	// NB: not a type-predicate helper — CardData is structurally assignable to
-	// MapStartData, so a predicate would narrow the fall-through case to never
-	if (eventType === MAP_START_EVENT_TYPE) {
-		const mapStart = data as MapStartData;
-		return `${JSON.stringify(
-			{
-				event: eventType,
-				data: {
-					...(mapStart.mode !== null && { mode: mapStart.mode }),
-					...(mapStart.stage !== null && {
-						stage: mapStart.stage,
-						stageLabel: stageLabel(mapStart.stage),
-					}),
-				},
-			},
-			null,
-			2,
-		)}\n`;
-	}
-	const card = data as CardData;
-	return `${JSON.stringify(
-		{
-			event: eventType,
-			data: {
-				...(card.lobby !== null && { lobby: card.lobby }),
-				...(card.mode !== null && { mode: card.mode }),
-				...(card.stage !== null && {
-					stage: card.stage,
-					stageLabel: stageLabel(card.stage),
-				}),
-				...(card.timestamp != null && { timestamp: card.timestamp }),
-				...(card.replayCode != null && { replayCode: card.replayCode }),
-				matchScores: card.matchScores,
-				players: card.players.map((p) => ({
-					name: p.name,
-					weaponId: p.weaponId,
-					paint: p.paint,
-					ka: p.ka,
-					d: p.d,
-					s: p.s,
-				})),
-			},
-		},
-		null,
-		2,
-	)}\n`;
+	return fixtureJson({
+		event: eventType,
+		data: expectedFixtureData(data, eventType),
+	});
 }
 
 /** expected.json alone, for a frame already on disk (Screenshot page). Null data = negative-fixture form. */
@@ -308,4 +117,163 @@ export async function saveFrame(video: HTMLVideoElement): Promise<void> {
 	);
 	if (!blob) throw new Error("could not encode frame");
 	download("frame.png", blob);
+}
+
+function fixtureJson(value: unknown): string {
+	return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+function expectedFixtureData(data: FixtureData, eventType: string): unknown {
+	if (AS_IS_EVENT_TYPES.includes(eventType)) return data;
+	if (isDeath(data, eventType)) return deathFixtureData(data);
+	if (eventType === SCOREBOARD_OWN_EVENT_TYPE) {
+		return ownResultsFixtureData(data as ScoreboardOwnData);
+	}
+	if (eventType === MINIMAP_EVENT_TYPE) {
+		return minimapFixtureData(data as MinimapData);
+	}
+	if (eventType === OBJECTIVE_EVENT_TYPE) {
+		return objectiveFixtureData(data as ObjectiveData);
+	}
+	if (eventType === PLAYER_STATUS_EVENT_TYPE) {
+		const status = data as PlayerStatusData;
+		return {
+			cast: status.cast,
+			time: status.time,
+			special: status.special,
+			dead: status.dead,
+		};
+	}
+	if (eventType === STRIP_WEAPONS_EVENT_TYPE) {
+		return stripWeaponsFixtureData(data as StripWeaponsData);
+	}
+	if (eventType === KILL_EVENT_TYPE) {
+		const kill = data as KillData;
+		return { time: kill.time, names: kill.names };
+	}
+	// NB: not a type-predicate helper — CardData is structurally assignable to
+	// MapStartData, so a predicate would narrow the fall-through case to never
+	if (eventType === MAP_START_EVENT_TYPE) {
+		return mapStartFixtureData(data as MapStartData);
+	}
+	return cardFixtureData(data as CardData);
+}
+
+function deathFixtureData(data: DeathData) {
+	const label = weaponLabel(data.weaponType, data.weaponId);
+	return {
+		...(label !== null && { weaponLabel: label }),
+		...(data.weaponId !== null && { weaponId: data.weaponId }),
+		...(data.weaponType !== null && { weaponType: data.weaponType }),
+		abilities: data.abilities,
+		...(data.name !== null && { name: data.name }),
+	};
+}
+
+function ownResultsFixtureData(own: ScoreboardOwnData) {
+	return {
+		...(own.lobby !== null && { lobby: own.lobby }),
+		...(own.mode !== null && { mode: own.mode }),
+		...(own.stage !== null && {
+			stage: own.stage,
+			stageLabel: stageLabel(own.stage),
+		}),
+		...(own.weaponId !== null && {
+			weaponLabel: mainWeaponLabel(own.weaponId),
+			weaponId: own.weaponId,
+		}),
+		abilities: own.abilities,
+	};
+}
+
+function minimapFixtureData(minimap: MinimapData) {
+	return {
+		...(minimap.stage !== null && {
+			stage: minimap.stage,
+			stageLabel: stageLabel(minimap.stage),
+		}),
+		...(minimap.spectator && { spectator: true }),
+		teammates: minimap.teammates.map((p) => ({
+			self: p.self,
+			name: p.name,
+			weaponLabel: mainWeaponLabel(p.weaponId),
+			weaponId: p.weaponId,
+			abilities: p.abilities,
+			dead: p.dead,
+			specialReady: p.specialReady,
+		})),
+		enemies: minimap.enemies.map((p) => ({
+			...(minimap.spectator && { name: p.name }),
+			weaponLabel: mainWeaponLabel(p.weaponId),
+			weaponId: p.weaponId,
+			abilities: p.abilities,
+			dead: p.dead,
+			specialReady: p.specialReady,
+		})),
+	};
+}
+
+function objectiveFixtureData(objective: ObjectiveData) {
+	return objective.mode === "SZ"
+		? {
+				mode: objective.mode,
+				time: objective.time,
+				score: objective.score,
+				penalty: objective.penalty,
+				control: objective.control,
+			}
+		: {
+				mode: objective.mode,
+				time: objective.time,
+				score: objective.score,
+				control: objective.control,
+				position: objective.position,
+			};
+}
+
+function stripWeaponsFixtureData(strip: StripWeaponsData) {
+	return {
+		time: strip.time,
+		// the top candidate per slot; hand-correct to the true weapons
+		weapons: strip.slots.map((side) =>
+			side.map((candidates) => candidates?.[0]?.weaponId ?? null),
+		),
+		weaponLabels: strip.slots.map((side) =>
+			side.map((candidates) =>
+				mainWeaponLabel(candidates?.[0]?.weaponId ?? null),
+			),
+		),
+	};
+}
+
+function mapStartFixtureData(mapStart: MapStartData) {
+	return {
+		...(mapStart.mode !== null && { mode: mapStart.mode }),
+		...(mapStart.stage !== null && {
+			stage: mapStart.stage,
+			stageLabel: stageLabel(mapStart.stage),
+		}),
+	};
+}
+
+function cardFixtureData(card: CardData) {
+	return {
+		...(card.lobby !== null && { lobby: card.lobby }),
+		...(card.mode !== null && { mode: card.mode }),
+		...(card.stage !== null && {
+			stage: card.stage,
+			stageLabel: stageLabel(card.stage),
+		}),
+		...(card.timestamp != null && { timestamp: card.timestamp }),
+		...(card.replayCode != null && { replayCode: card.replayCode }),
+		matchScores: card.matchScores,
+		players: card.players.map((p) => ({
+			name: p.name,
+			weaponId: p.weaponId,
+			paint: p.paint,
+			ka: p.ka,
+			d: p.d,
+			s: p.s,
+		})),
+	};
 }

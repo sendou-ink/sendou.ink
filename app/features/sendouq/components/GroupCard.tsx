@@ -47,6 +47,10 @@ export type GroupCardTrail = {
 	username: string;
 };
 
+type GroupCardGroup = SQGroup | SQOwnGroup;
+type GroupCardAction =
+	"LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
+
 export function GroupCard({
 	group,
 	action,
@@ -61,8 +65,8 @@ export function GroupCard({
 	readyUserIds,
 	kickableUserIds,
 }: {
-	group: SQGroup | SQOwnGroup;
-	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
+	group: GroupCardGroup;
+	action?: GroupCardAction;
 	/** Can the viewer point their own teammates at this group? */
 	suggestable?: boolean;
 	trail?: GroupCardTrail;
@@ -78,8 +82,6 @@ export function GroupCard({
 	/** Members the viewer can kick out of the group. */
 	kickableUserIds?: number[];
 }) {
-	const { t } = useTranslation(["q"]);
-
 	const hideNote =
 		displayOnly ||
 		!group.members ||
@@ -120,7 +122,37 @@ export function GroupCard({
 					})}
 				</div>
 			) : null}
-			{futureMatchModesToShow && group.noScreen ? (
+			{futureMatchModesToShow ? (
+				<FutureMatchModes
+					modes={futureMatchModesToShow}
+					noScreen={group.noScreen}
+				/>
+			) : null}
+			<GroupTierInfo group={group} displayOnly={displayOnly} />
+			{actionToShow || suggestable || trail ? (
+				<GroupCardActions
+					group={group}
+					action={actionToShow}
+					suggestable={suggestable}
+					trail={trail}
+				/>
+			) : null}
+		</section>
+	);
+}
+
+function FutureMatchModes({
+	modes,
+	noScreen,
+}: {
+	modes: NonNullable<ReturnType<typeof resolveFutureMatchModes>>;
+	noScreen: GroupCardGroup["noScreen"];
+}) {
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<>
+			{noScreen ? (
 				<div className={styles.noScreen}>
 					<SpecialWeaponImage
 						specialWeaponId={SPLATTERCOLOR_SCREEN_ID}
@@ -130,21 +162,34 @@ export function GroupCard({
 					{t("q:looking.noScreen")}
 				</div>
 			) : null}
-			{futureMatchModesToShow ? (
-				<div className={styles.futureMatchModes}>
-					{futureMatchModesToShow.map((mode) => {
-						return (
-							<div
-								key={mode}
-								className={styles.futureMatchMode}
-								data-testid={`group-card-mode-${mode}`}
-							>
-								<ModeImage mode={mode} />
-							</div>
-						);
-					})}
-				</div>
-			) : null}
+			<div className={styles.futureMatchModes}>
+				{modes.map((mode) => {
+					return (
+						<div
+							key={mode}
+							className={styles.futureMatchMode}
+							data-testid={`group-card-mode-${mode}`}
+						>
+							<ModeImage mode={mode} />
+						</div>
+					);
+				})}
+			</div>
+		</>
+	);
+}
+
+function GroupTierInfo({
+	group,
+	displayOnly,
+}: {
+	group: GroupCardGroup;
+	displayOnly: boolean;
+}) {
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<>
 			{group.tier &&
 			(!group.members || group.members.length === FULL_GROUP_SIZE) ? (
 				<div className="stack xs text-lighter font-bold items-center justify-center text-xs">
@@ -171,95 +216,127 @@ export function GroupCard({
 				</div>
 			) : null}
 			{group.tierRange ? (
-				<div className="stack md items-center">
-					<div className="stack sm horizontal items-center justify-center">
-						<div className="stack xs items-center">
-							<TierImage tier={group.tierRange.range[0]} width={80} />
-							{group.tierRange.diff[0] ? (
-								<div className="text-lighter text-sm font-bold">
-									({group.tierRange.diff[0]})
-								</div>
-							) : null}
-						</div>
-						{/** in preview mode they don't see full group tiers (because they don't have a group to compare against) so it is a "true range" */}
-						{group.tierRange.diff[0] ? (
-							<SendouPopover
-								popoverClassName="text-main-forced"
-								trigger={
-									<SendouButton className={styles.popoverButton}>
-										{t("q:looking.range.or")}
-									</SendouButton>
-								}
-							>
-								{t("q:looking.range.or.explanation")}
-							</SendouPopover>
-						) : (
-							"—"
-						)}
-						<div className="stack xs items-center">
-							<TierImage tier={group.tierRange.range[1]} width={80} />
-							{group.tierRange.diff[1] ? (
-								<div className="text-lighter text-sm font-bold">
-									(+{group.tierRange.diff[1]})
-								</div>
-							) : null}
-						</div>
-					</div>
-					{group.isReplay ? (
-						<div className="text-theme-secondary text-uppercase text-xs font-bold">
-							{t("q:looking.replay")}
-						</div>
-					) : null}
-				</div>
+				<GroupTierRange tierRange={group.tierRange} isReplay={group.isReplay} />
 			) : null}
-			{actionToShow || suggestable || trail ? (
-				<div className="stack xs items-center">
-					<div className="stack sm horizontal items-center justify-center">
-						{actionToShow ? (
-							<ActionButton
-								schema={lookingSchema}
-								action={
-									actionToShow === "MATCH_UP_RECHALLENGE"
-										? "MATCH_UP"
-										: actionToShow
-								}
-								fields={{ targetGroupId: group.id }}
-								size="small"
-								variant={actionToShow === "UNLIKE" ? "destructive" : undefined}
-								testId="group-card-action-button"
-							>
-								{actionToShow === "MATCH_UP" ||
-								actionToShow === "MATCH_UP_RECHALLENGE"
-									? t("q:looking.groups.actions.startMatch")
-									: actionToShow === "LIKE" && !group.members
-										? t("q:looking.groups.actions.challenge")
-										: actionToShow === "LIKE"
-											? t("q:looking.groups.actions.invite")
-											: actionToShow === "GROUP_UP"
-												? t("q:looking.groups.actions.groupUp")
-												: t("q:looking.groups.actions.undo")}
-							</ActionButton>
-						) : null}
-						{suggestable ? (
-							<ActionButton
-								schema={lookingSchema}
-								action="SUGGEST"
-								fields={{ targetGroupId: group.id }}
-								size="small"
-								variant="outlined"
-								testId="group-card-suggest-button"
-							>
-								{t("q:looking.groups.actions.suggest")}
-							</ActionButton>
-						) : null}
-					</div>
-					{trail ? (
-						<GroupCardTrailText trail={trail} isFullGroup={!group.members} />
-					) : null}
-				</div>
-			) : null}
-		</section>
+		</>
 	);
+}
+
+function GroupTierRange({
+	tierRange,
+	isReplay,
+}: {
+	tierRange: NonNullable<GroupCardGroup["tierRange"]>;
+	isReplay: GroupCardGroup["isReplay"];
+}) {
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<div className="stack md items-center">
+			<div className="stack sm horizontal items-center justify-center">
+				<div className="stack xs items-center">
+					<TierImage tier={tierRange.range[0]} width={80} />
+					{tierRange.diff[0] ? (
+						<div className="text-lighter text-sm font-bold">
+							({tierRange.diff[0]})
+						</div>
+					) : null}
+				</div>
+				{/** in preview mode they don't see full group tiers (because they don't have a group to compare against) so it is a "true range" */}
+				{tierRange.diff[0] ? (
+					<SendouPopover
+						popoverClassName="text-main-forced"
+						trigger={
+							<SendouButton className={styles.popoverButton}>
+								{t("q:looking.range.or")}
+							</SendouButton>
+						}
+					>
+						{t("q:looking.range.or.explanation")}
+					</SendouPopover>
+				) : (
+					"—"
+				)}
+				<div className="stack xs items-center">
+					<TierImage tier={tierRange.range[1]} width={80} />
+					{tierRange.diff[1] ? (
+						<div className="text-lighter text-sm font-bold">
+							(+{tierRange.diff[1]})
+						</div>
+					) : null}
+				</div>
+			</div>
+			{isReplay ? (
+				<div className="text-theme-secondary text-uppercase text-xs font-bold">
+					{t("q:looking.replay")}
+				</div>
+			) : null}
+		</div>
+	);
+}
+
+function GroupCardActions({
+	group,
+	action,
+	suggestable,
+	trail,
+}: {
+	group: GroupCardGroup;
+	action?: GroupCardAction;
+	suggestable: boolean;
+	trail?: GroupCardTrail;
+}) {
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<div className="stack xs items-center">
+			<div className="stack sm horizontal items-center justify-center">
+				{action ? (
+					<ActionButton
+						schema={lookingSchema}
+						action={action === "MATCH_UP_RECHALLENGE" ? "MATCH_UP" : action}
+						fields={{ targetGroupId: group.id }}
+						size="small"
+						variant={action === "UNLIKE" ? "destructive" : undefined}
+						testId="group-card-action-button"
+					>
+						{t(groupCardActionTextKey(action, !group.members))}
+					</ActionButton>
+				) : null}
+				{suggestable ? (
+					<ActionButton
+						schema={lookingSchema}
+						action="SUGGEST"
+						fields={{ targetGroupId: group.id }}
+						size="small"
+						variant="outlined"
+						testId="group-card-suggest-button"
+					>
+						{t("q:looking.groups.actions.suggest")}
+					</ActionButton>
+				) : null}
+			</div>
+			{trail ? (
+				<GroupCardTrailText trail={trail} isFullGroup={!group.members} />
+			) : null}
+		</div>
+	);
+}
+
+function groupCardActionTextKey(action: GroupCardAction, isFullGroup: boolean) {
+	switch (action) {
+		case "MATCH_UP":
+		case "MATCH_UP_RECHALLENGE":
+			return "q:looking.groups.actions.startMatch";
+		case "LIKE":
+			return isFullGroup
+				? "q:looking.groups.actions.challenge"
+				: "q:looking.groups.actions.invite";
+		case "GROUP_UP":
+			return "q:looking.groups.actions.groupUp";
+		case "UNLIKE":
+			return "q:looking.groups.actions.undo";
+	}
 }
 
 function GroupCardTrailText({

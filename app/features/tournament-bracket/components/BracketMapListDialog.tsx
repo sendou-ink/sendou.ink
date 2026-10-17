@@ -25,7 +25,11 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables-json";
+import type {
+	CustomPickBanFlow,
+	PreparedMaps as PreparedMapsType,
+	TournamentRoundMaps,
+} from "~/db/tables-json";
 import { calendarEditPage } from "~/features/calendar/calendar-urls";
 import type {
 	BracketData,
@@ -55,6 +59,7 @@ import {
 } from "../core/toMapList";
 import type { Tournament } from "../core/Tournament";
 import { bracketSchema } from "../tournament-bracket-schemas";
+import { isEliminationType } from "../tournament-bracket-utils";
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
@@ -69,7 +74,6 @@ export function BracketMapListDialog({
 	bracketIdx: number;
 	isPreparing?: boolean;
 }) {
-	const { t } = useTranslation(["common", "tournament"]);
 	const fetcher = useFetcher();
 	const tournament = useTournament();
 	const untrimmedPreparedMaps = useBracketPreparedMaps(bracketIdx);
@@ -77,11 +81,11 @@ export function BracketMapListDialog({
 	useCloseModalOnSubmit(fetcher, close);
 
 	const bracketTeamsCount = bracket.participantTournamentTeamIds.length;
+	const eliminationType = isEliminationType(bracket.type) ? bracket.type : null;
+	const preparingEliminationType = isPreparing ? eliminationType : null;
 
 	const preparedMaps =
-		!isPreparing &&
-		(bracket.type === "single_elimination" ||
-			bracket.type === "double_elimination")
+		!isPreparing && eliminationType
 			? // we are about to start bracket, "trim" prepared map for actual
 				PreparedMaps.trimPreparedEliminationMaps({
 					preparedMaps: untrimmedPreparedMaps,
@@ -170,7 +174,7 @@ export function BracketMapListDialog({
 	const defaultRoundBestOfs = bracket.defaultRoundBestOfs(bracketData);
 
 	const [countType, setCountType] = React.useState<TournamentRoundMaps["type"]>(
-		preparedMaps?.maps[0].type ?? "BEST_OF",
+		initialCountType(preparedMaps),
 	);
 
 	const [maps, setMaps] = React.useState(() => {
@@ -205,11 +209,10 @@ export function BracketMapListDialog({
 	const [isRealtime, setIsRealtime] = React.useState(false);
 	const hasPlayableAts = tournament.isLeague && !isRealtime;
 	const [pickBanStyle, setPickBanStyle] = React.useState(
-		Array.from(maps.values()).find((round) => round.pickBan)?.pickBan ??
-			"COUNTERPICK",
+		initialPickBanStyle(maps),
 	);
 	const [customFlow, setCustomFlow] = React.useState<CustomPickBanFlow | null>(
-		preparedMaps?.maps.find((m) => m.customFlow)?.customFlow ?? null,
+		initialCustomFlow(preparedMaps),
 	);
 	const [hoveredMap, setHoveredMap] = React.useState<string | null>(null);
 
@@ -263,62 +266,6 @@ export function BracketMapListDialog({
 		return newRoundsWithPickBan;
 	};
 
-	const validateNoDecreasingCount = () => {
-		for (const roundSetCounts of mapCounts.values()) {
-			let roundPreviousValue = 0;
-			for (const [, roundValue] of Array.from(roundSetCounts.entries()).sort(
-				(a, b) => a[0] - b[0],
-			)) {
-				if (roundPreviousValue > roundValue.count) {
-					return false;
-				}
-
-				roundPreviousValue = roundValue.count;
-			}
-		}
-
-		// grands need at least as many maps as winners final (different sections)
-		if (bracket.type === "double_elimination") {
-			const sectionCounts = (section: RoundData["section"]) =>
-				rounds
-					.filter((round) => round.section === section)
-					.flatMap(
-						(round) =>
-							mapCounts.get(roundSetKey(round))?.get(round.number) ?? [],
-					);
-			const grandsCounts = sectionCounts("finals");
-			const winnersCounts = sectionCounts("winners");
-			const maxWinnersCount = Math.max(...winnersCounts.map((c) => c.count));
-
-			if (grandsCounts.some(({ count }) => count < maxWinnersCount)) {
-				return false;
-			}
-		}
-
-		return true;
-	};
-
-	const validateCustomFlow = () => {
-		if (pickBanStyle !== "CUSTOM") return true;
-		if (roundsWithPickBan.size === 0) return true;
-		if (!customFlow) return false;
-
-		return (
-			PickBan.validateCustomFlowSection(customFlow.preSet, "preSet").length ===
-				0 &&
-			PickBan.validateCustomFlowSection(customFlow.postGame, "postGame")
-				.length === 0
-		);
-	};
-
-	const validateCustomFlowRoundsSelected = () => {
-		if (globalSelections) return true;
-		if (pickBanStyle !== "CUSTOM") return true;
-		if (!customFlow) return true;
-
-		return roundsWithPickBan.size > 0;
-	};
-
 	const lacksToSetMapPool =
 		tournament.ctx.toSetMapPool.length === 0 &&
 		tournament.ctx.mapPickingStyle === "TO";
@@ -327,9 +274,7 @@ export function BracketMapListDialog({
 		bracket.type === "round_robin" || bracket.type === "swiss";
 
 	const needsToPickEliminationTeamCount =
-		(bracket.type === "single_elimination" ||
-			bracket.type === "double_elimination") &&
-		!eliminationTeamCount;
+		eliminationType !== null && !eliminationTeamCount;
 
 	const roundMapsInput = Array.from(maps.entries()).map(([key, value]) => ({
 		...value,
@@ -348,49 +293,16 @@ export function BracketMapListDialog({
 			isFullScreen
 		>
 			<fetcher.Form method="post" className={styles.container}>
-				<input type="hidden" name="bracketIdx" value={bracketIdx} />
-				<input
-					type="hidden"
-					name="thirdPlaceMatchLinked"
-					value={thirdPlaceMatchLinked ? "on" : "off"}
+				<HiddenInputs
+					bracketIdx={bracketIdx}
+					thirdPlaceMatchLinked={thirdPlaceMatchLinked}
+					isRealtime={isRealtime}
+					serializedMaps={JSON.stringify(roundMapsInput)}
+					eliminationTeamCount={eliminationTeamCount}
+					includeEliminationTeamCount={preparingEliminationType !== null}
 				/>
-				<input
-					type="hidden"
-					name="isRealtime"
-					value={isRealtime ? "on" : "off"}
-				/>
-				<input
-					type="hidden"
-					name="maps"
-					value={JSON.stringify(roundMapsInput)}
-				/>
-				{isPreparing &&
-				(bracket.type === "single_elimination" ||
-					bracket.type === "double_elimination") ? (
-					<input
-						type="hidden"
-						name="eliminationTeamCount"
-						value={eliminationTeamCount ?? -1}
-					/>
-				) : null}
 				<div>
-					{preparedMaps ? (
-						<div className="text-xs text-center text-lighter">
-							Prepared by{" "}
-							{authorIdToUsername(tournament, preparedMaps.authorId)} @{" "}
-							<LocaleTime
-								date={preparedMaps.createdAt}
-								options={{
-									day: "numeric",
-									month: "numeric",
-									year: "numeric",
-									hour: "numeric",
-									minute: "2-digit",
-								}}
-								inline
-							/>
-						</div>
-					) : null}
+					<PreparedByInfo preparedMaps={preparedMaps} />
 				</div>
 				{lacksToSetMapPool ? (
 					<div>
@@ -404,11 +316,9 @@ export function BracketMapListDialog({
 					<>
 						<div className="stack horizontal items-center justify-between">
 							<div className="stack horizontal lg flex-wrap">
-								{isPreparing &&
-								(bracket.type === "single_elimination" ||
-									bracket.type === "double_elimination") ? (
+								{preparingEliminationType ? (
 									<EliminationTeamCountSelect
-										type={bracket.type}
+										type={preparingEliminationType}
 										count={eliminationTeamCount}
 										realCount={bracketTeamsCount}
 										setCount={(newCount) => {
@@ -521,11 +431,8 @@ export function BracketMapListDialog({
 							</div>
 							{tournament.mapPool.length > 0 &&
 							!needsToPickEliminationTeamCount ? (
-								<SendouButton
-									size="small"
-									icon={<RefreshCcw />}
-									variant="outlined"
-									onClick={() =>
+								<RerollMapsButton
+									onReroll={() =>
 										setMaps(
 											generateTournamentRoundMaplist({
 												mapCounts,
@@ -540,11 +447,7 @@ export function BracketMapListDialog({
 											}),
 										)
 									}
-								>
-									{tournament.teamsPrePickMaps
-										? t("tournament:mapList.rerollModeOrder")
-										: t("tournament:mapList.rerollAllMaps")}
-								</SendouButton>
+								/>
 							) : null}
 						</div>
 						{pickBanStyle === "CUSTOM" && !needsToPickEliminationTeamCount ? (
@@ -721,39 +624,17 @@ export function BracketMapListDialog({
 										);
 									})}
 								</div>
-								{!validateNoDecreasingCount() ? (
-									<div className="mt-4 text-warning text-center">
-										Invalid selection: tournament progression decreases in map
-										count
-									</div>
-								) : !LeagueScheduling.playableAtsAreAscending(
-										roundMapsInput,
-								  ) ? (
-									<div className="mt-4 text-warning text-center">
-										Invalid selection: a round is playable before the round
-										preceding it
-									</div>
-								) : !validateCustomFlow() ? (
-									<div className="mt-4 text-warning text-center">
-										Invalid selection: custom pick/ban flow is invalid
-									</div>
-								) : !validateCustomFlowRoundsSelected() ? (
-									<div className="mt-4 text-warning text-center">
-										Custom flow is configured but no rounds have pick/ban
-										enabled
-									</div>
-								) : (
-									<SubmitButton
-										testId="confirm-finalize-bracket-button"
-										schema={bracketSchema}
-										_action={isPreparing ? "PREPARE_MAPS" : "START_BRACKET"}
-										className="mx-auto mt-4"
-									>
-										{isPreparing
-											? t("common:actions.save")
-											: "Start the bracket"}
-									</SubmitButton>
-								)}
+								<MapListSubmit
+									bracketType={bracket.type}
+									rounds={rounds}
+									mapCounts={mapCounts}
+									roundMapsInput={roundMapsInput}
+									pickBanStyle={pickBanStyle}
+									customFlow={customFlow}
+									roundsWithPickBan={roundsWithPickBan}
+									globalSelections={globalSelections}
+									isPreparing={isPreparing}
+								/>
 							</>
 						)}
 					</>
@@ -761,6 +642,265 @@ export function BracketMapListDialog({
 			</fetcher.Form>
 		</SendouDialog>
 	);
+}
+
+function PreparedByInfo({
+	preparedMaps,
+}: {
+	preparedMaps: PreparedMapsType | null;
+}) {
+	const tournament = useTournament();
+
+	if (!preparedMaps) return null;
+
+	return (
+		<div className="text-xs text-center text-lighter">
+			Prepared by {authorIdToUsername(tournament, preparedMaps.authorId)} @{" "}
+			<LocaleTime
+				date={preparedMaps.createdAt}
+				options={{
+					day: "numeric",
+					month: "numeric",
+					year: "numeric",
+					hour: "numeric",
+					minute: "2-digit",
+				}}
+				inline
+			/>
+		</div>
+	);
+}
+
+function RerollMapsButton({ onReroll }: { onReroll: () => void }) {
+	const { t } = useTranslation(["tournament"]);
+	const tournament = useTournament();
+
+	return (
+		<SendouButton
+			size="small"
+			icon={<RefreshCcw />}
+			variant="outlined"
+			onClick={onReroll}
+		>
+			{tournament.teamsPrePickMaps
+				? t("tournament:mapList.rerollModeOrder")
+				: t("tournament:mapList.rerollAllMaps")}
+		</SendouButton>
+	);
+}
+
+function HiddenInputs({
+	bracketIdx,
+	thirdPlaceMatchLinked,
+	isRealtime,
+	serializedMaps,
+	eliminationTeamCount,
+	includeEliminationTeamCount,
+}: {
+	bracketIdx: number;
+	thirdPlaceMatchLinked: boolean;
+	isRealtime: boolean;
+	serializedMaps: string;
+	eliminationTeamCount: number | null;
+	includeEliminationTeamCount: boolean;
+}) {
+	return (
+		<>
+			<input type="hidden" name="bracketIdx" value={bracketIdx} />
+			<input
+				type="hidden"
+				name="thirdPlaceMatchLinked"
+				value={thirdPlaceMatchLinked ? "on" : "off"}
+			/>
+			<input
+				type="hidden"
+				name="isRealtime"
+				value={isRealtime ? "on" : "off"}
+			/>
+			<input type="hidden" name="maps" value={serializedMaps} />
+			{includeEliminationTeamCount ? (
+				<input
+					type="hidden"
+					name="eliminationTeamCount"
+					value={eliminationTeamCount ?? -1}
+				/>
+			) : null}
+		</>
+	);
+}
+
+function MapListSubmit({
+	bracketType,
+	rounds,
+	mapCounts,
+	roundMapsInput,
+	pickBanStyle,
+	customFlow,
+	roundsWithPickBan,
+	globalSelections,
+	isPreparing,
+}: {
+	bracketType: Bracket["type"];
+	rounds: RoundData[];
+	mapCounts: BracketMapCounts;
+	roundMapsInput: Parameters<
+		typeof LeagueScheduling.playableAtsAreAscending
+	>[0];
+	pickBanStyle: NonNullable<TournamentRoundMaps["pickBan"]>;
+	customFlow: CustomPickBanFlow | null;
+	roundsWithPickBan: Set<number>;
+	globalSelections: boolean;
+	isPreparing?: boolean;
+}) {
+	const { t } = useTranslation(["common"]);
+
+	if (!hasNoDecreasingCount({ bracketType, rounds, mapCounts })) {
+		return (
+			<div className="mt-4 text-warning text-center">
+				Invalid selection: tournament progression decreases in map count
+			</div>
+		);
+	}
+
+	if (!LeagueScheduling.playableAtsAreAscending(roundMapsInput)) {
+		return (
+			<div className="mt-4 text-warning text-center">
+				Invalid selection: a round is playable before the round preceding it
+			</div>
+		);
+	}
+
+	if (!customFlowIsValid({ pickBanStyle, roundsWithPickBan, customFlow })) {
+		return (
+			<div className="mt-4 text-warning text-center">
+				Invalid selection: custom pick/ban flow is invalid
+			</div>
+		);
+	}
+
+	if (
+		!customFlowRoundsAreSelected({
+			globalSelections,
+			pickBanStyle,
+			customFlow,
+			roundsWithPickBan,
+		})
+	) {
+		return (
+			<div className="mt-4 text-warning text-center">
+				Custom flow is configured but no rounds have pick/ban enabled
+			</div>
+		);
+	}
+
+	return (
+		<SubmitButton
+			testId="confirm-finalize-bracket-button"
+			schema={bracketSchema}
+			_action={isPreparing ? "PREPARE_MAPS" : "START_BRACKET"}
+			className="mx-auto mt-4"
+		>
+			{isPreparing ? t("common:actions.save") : "Start the bracket"}
+		</SubmitButton>
+	);
+}
+
+function hasNoDecreasingCount({
+	bracketType,
+	rounds,
+	mapCounts,
+}: {
+	bracketType: Bracket["type"];
+	rounds: RoundData[];
+	mapCounts: BracketMapCounts;
+}) {
+	for (const roundSetCounts of mapCounts.values()) {
+		let roundPreviousValue = 0;
+		for (const [, roundValue] of Array.from(roundSetCounts.entries()).sort(
+			(a, b) => a[0] - b[0],
+		)) {
+			if (roundPreviousValue > roundValue.count) {
+				return false;
+			}
+
+			roundPreviousValue = roundValue.count;
+		}
+	}
+
+	// grands need at least as many maps as winners final (different sections)
+	if (bracketType === "double_elimination") {
+		const sectionCounts = (section: RoundData["section"]) =>
+			rounds
+				.filter((round) => round.section === section)
+				.flatMap(
+					(round) => mapCounts.get(roundSetKey(round))?.get(round.number) ?? [],
+				);
+		const grandsCounts = sectionCounts("finals");
+		const winnersCounts = sectionCounts("winners");
+		const maxWinnersCount = Math.max(...winnersCounts.map((c) => c.count));
+
+		if (grandsCounts.some(({ count }) => count < maxWinnersCount)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function customFlowIsValid({
+	pickBanStyle,
+	roundsWithPickBan,
+	customFlow,
+}: {
+	pickBanStyle: NonNullable<TournamentRoundMaps["pickBan"]>;
+	roundsWithPickBan: Set<number>;
+	customFlow: CustomPickBanFlow | null;
+}) {
+	if (pickBanStyle !== "CUSTOM") return true;
+	if (roundsWithPickBan.size === 0) return true;
+	if (!customFlow) return false;
+
+	return (
+		PickBan.validateCustomFlowSection(customFlow.preSet, "preSet").length ===
+			0 &&
+		PickBan.validateCustomFlowSection(customFlow.postGame, "postGame")
+			.length === 0
+	);
+}
+
+function customFlowRoundsAreSelected({
+	globalSelections,
+	pickBanStyle,
+	customFlow,
+	roundsWithPickBan,
+}: {
+	globalSelections: boolean;
+	pickBanStyle: NonNullable<TournamentRoundMaps["pickBan"]>;
+	customFlow: CustomPickBanFlow | null;
+	roundsWithPickBan: Set<number>;
+}) {
+	if (globalSelections) return true;
+	if (pickBanStyle !== "CUSTOM") return true;
+	if (!customFlow) return true;
+
+	return roundsWithPickBan.size > 0;
+}
+
+function initialCountType(
+	preparedMaps: PreparedMapsType | null,
+): TournamentRoundMaps["type"] {
+	return preparedMaps?.maps[0].type ?? "BEST_OF";
+}
+
+function initialPickBanStyle(maps: TournamentRoundMapList) {
+	return (
+		Array.from(maps.values()).find((round) => round.pickBan)?.pickBan ??
+		"COUNTERPICK"
+	);
+}
+
+function initialCustomFlow(preparedMaps: PreparedMapsType | null) {
+	return preparedMaps?.maps.find((m) => m.customFlow)?.customFlow ?? null;
 }
 
 function useCloseModalOnSubmit(

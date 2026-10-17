@@ -35,8 +35,6 @@ export function TournamentCard({
 	className?: string;
 	timeFormat?: "relative" | "absolute";
 }) {
-	const isHydrated = useHydrated();
-	const formatDistanceToNow = useFormatDistanceToNow();
 	const { isCensored, reveal } = useSpoilerFree();
 
 	const isShowcase = tournament.type === "showcase";
@@ -98,37 +96,13 @@ export function TournamentCard({
 					>
 						{tournament.name}
 					</div>
-					{tournament.tier ? (
-						<TierPill tier={tournament.tier} />
-					) : tournament.tentativeTier ? (
-						<TierPill tier={tournament.tentativeTier} isTentative />
-					) : null}
+					<TournamentTierPill
+						tier={tournament.tier}
+						tentativeTier={tournament.tentativeTier}
+					/>
 				</div>
 				{startDate ? (
-					timeFormat === "absolute" ? (
-						<LocaleTime
-							date={startDate}
-							className={styles.time}
-							options={{
-								month: "short",
-								day: "numeric",
-								weekday: "short",
-								hour: "numeric",
-								minute: "numeric",
-							}}
-						/>
-					) : (
-						<time
-							className={clsx(styles.time, {
-								invisible: !isHydrated,
-							})}
-							dateTime={startDate.toISOString()}
-						>
-							{isHydrated
-								? formatDistanceToNow(startDate, { addSuffix: true })
-								: "Placeholder"}
-						</time>
-					)
+					<TournamentStartTime startDate={startDate} timeFormat={timeFormat} />
 				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
@@ -153,8 +127,7 @@ export function TournamentCard({
 				) : null}
 				{modes ? <ModesRow modes={modes} /> : null}
 				<div className={styles.pillsContainer}>
-					{tournament.trophy ||
-					(tournament.badges && tournament.badges.length > 0) ? (
+					{hasPrizes(tournament) ? (
 						<PrizesPill
 							badges={tournament.badges}
 							trophy={tournament.trophy?.model}
@@ -170,6 +143,65 @@ export function TournamentCard({
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function TournamentTierPill({
+	tier,
+	tentativeTier,
+}: {
+	tier: number | null;
+	tentativeTier: number | null;
+}) {
+	if (tier) return <TierPill tier={tier} />;
+	if (tentativeTier) return <TierPill tier={tentativeTier} isTentative />;
+
+	return null;
+}
+
+function TournamentStartTime({
+	startDate,
+	timeFormat,
+}: {
+	startDate: Date;
+	timeFormat: "relative" | "absolute";
+}) {
+	const isHydrated = useHydrated();
+	const formatDistanceToNow = useFormatDistanceToNow();
+
+	if (timeFormat === "absolute") {
+		return (
+			<LocaleTime
+				date={startDate}
+				className={styles.time}
+				options={{
+					month: "short",
+					day: "numeric",
+					weekday: "short",
+					hour: "numeric",
+					minute: "numeric",
+				}}
+			/>
+		);
+	}
+
+	return (
+		<time
+			className={clsx(styles.time, {
+				invisible: !isHydrated,
+			})}
+			dateTime={startDate.toISOString()}
+		>
+			{isHydrated
+				? formatDistanceToNow(startDate, { addSuffix: true })
+				: "Placeholder"}
+		</time>
+	);
+}
+
+function hasPrizes(tournament: CalendarEvent | ShowcaseCalendarEvent) {
+	return Boolean(
+		tournament.trophy || (tournament.badges && tournament.badges.length > 0),
 	);
 }
 

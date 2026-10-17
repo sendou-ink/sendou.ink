@@ -152,6 +152,7 @@ ignorePatterns = [
 "typescript/unbound-method" = "off"
 "no-eval" = "error"
 "no-new-func" = "error"
+"complexity" = ["error", { max = 25, variant = "modified" }]
 "no-template-curly-in-string" = "error"
 "no-self-compare" = "error"
 "array-callback-return" = "error"

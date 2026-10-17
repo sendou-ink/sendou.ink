@@ -442,6 +442,15 @@ export function createMinimapDetector(
 			: WEAPON_MIN_SCORE;
 	}
 
+	function acceptedWeapon(
+		weapon: WeaponMatch | null,
+		lightSurface: boolean,
+		cornerMin: number,
+	): WeaponMatch | null {
+		const floor = weaponScoreFloor(lightSurface, cornerMin);
+		return weapon !== null && weapon.score >= floor ? weapon : null;
+	}
+
 	function* readCardName(
 		gray: Mat,
 		roi: Roi,
@@ -827,8 +836,7 @@ export function createMinimapDetector(
 				badges: badgeDebug,
 			});
 
-			const floor = weaponScoreFloor(lightSurface, cornerMin);
-			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			const matched = acceptedWeapon(weapon, lightSurface, cornerMin);
 			// an occluding cross-out is itself proof the card is drawn
 			const hasEvidence =
 				occluded ||
@@ -879,8 +887,7 @@ export function createMinimapDetector(
 				badges: badgeDebug,
 			});
 
-			const floor = weaponScoreFloor(lightSurface, cornerMin);
-			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			const matched = acceptedWeapon(weapon, lightSurface, cornerMin);
 			sideSubTiles[1].push(enemySubTileRoi(cy));
 			enemies.push({
 				name: null,

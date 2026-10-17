@@ -1,5 +1,7 @@
 import * as R from "remeda";
+import type * as v from "valibot";
 import { db } from "~/db/sql";
+import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import type { PersistedSystemMessageType } from "~/features/chat/chat-types";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -51,6 +53,42 @@ import { reportScore } from "../core/reportScore.server";
 import { tournamentMatchChannel } from "../tournament-match-utils";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 
+type MatchActionBody = v.InferOutput<typeof matchSchema>;
+type MatchActionBodyOf<Action extends MatchActionBody["_action"]> = Extract<
+	MatchActionBody,
+	{ _action: Action }
+>;
+
+interface MatchActionContext {
+	tournament: Tournament;
+	tournamentId: number;
+	user: AuthenticatedUser;
+	match: NonNullable<FindMatchById>;
+	matchId: number;
+	mapList: Awaited<ReturnType<typeof resolveMatchMapList>>;
+}
+
+interface MatchActionOutcome {
+	emitMatchUpdate: boolean;
+	emitTournamentUpdate: boolean;
+	/** lets broadcast receivers skip revalidating the tournament layout and root loaders */
+	onlyMatchResultsChanged: boolean;
+	setIsOver: boolean;
+	emitStatusUpdate: boolean;
+	endedDroppedMatchIds: number[];
+	followingMatchIds: number[];
+}
+
+const NO_UPDATES: MatchActionOutcome = {
+	emitMatchUpdate: false,
+	emitTournamentUpdate: false,
+	onlyMatchResultsChanged: false,
+	setIsOver: false,
+	emitStatusUpdate: false,
+	endedDroppedMatchIds: [],
+	followingMatchIds: [],
+};
+
 export const action = defineAction(
 	{ body: matchSchema },
 	async ({ params, body }) => {
@@ -70,872 +108,989 @@ export const action = defineAction(
 			notFound();
 		}
 
-		const validateCanReportScore = () => {
-			const isMemberOfATeamInTheMatch = match.players.some(
-				(p) => p.id === user?.id,
-			);
-
-			errorToastIfFalsy(
-				tournament.matchStatusById(match.id) !== "PENDING",
-				"Match is locked, waiting for teams to finish their previous matches",
-			);
-
-			errorToastIfFalsy(
-				canReportTournamentScore({
-					match,
-					isMemberOfATeamInTheMatch,
-					isOrganizer: tournament.isOrganizer(user),
-				}),
-				"Unauthorized",
-			);
-		};
-
-		const scores: [number, number] = [
-			match.opponentOne?.score ?? 0,
-			match.opponentTwo?.score ?? 0,
-		];
-
 		const mapList = await resolveMatchMapList({ match, tournament });
 
-		let emitMatchUpdate = false;
-		let emitTournamentUpdate = false;
-		// lets broadcast receivers skip revalidating the tournament layout and root loaders
-		let onlyMatchResultsChanged = false;
-		let setIsOver = false;
-		let emitStatusUpdate = false;
-		let endedDroppedMatchIds: number[] = [];
-		let followingMatchIds: number[] = [];
-
-		switch (body._action) {
-			case "REPORT_SCORE": {
-				const reported = await reportScore({
-					match,
-					tournament,
-					mapList,
-					user,
-					position: body.position,
-					winnerTeamId: body.winnerTeamId,
-					ko: body.ko,
-				});
-
-				// the game was already reported, let their page refresh to pick it up
-				if (!reported) return null;
-
-				await linkStoredMatches({
-					type: "tournament",
-					tournamentId,
-					tournamentMatchId: match.id,
-				});
-
-				endedDroppedMatchIds = reported.endedMatchIds;
-				setIsOver = reported.setOver;
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-				// a set ending (or dropped teams' matches ending) changes the layout's bracketsMeta
-				onlyMatchResultsChanged =
-					!setIsOver && endedDroppedMatchIds.length === 0;
-
-				break;
-			}
-			case "SET_ACTIVE_ROSTER": {
-				errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
-				errorToastIfFalsy(
-					tournament.isOrganizer(user) ||
-						tournament.teamMemberOfByUser(user)?.id === body.teamId,
-					"Unauthorized",
-				);
-				errorToastIfFalsy(
-					body.roster.length === tournament.minMembersPerTeam,
-					"Invalid roster length",
-				);
-
-				const team = tournament.teamById(body.teamId);
-				errorToastIfFalsy(team, "Invalid team id");
-				errorToastIfFalsy(
-					noDuplicates(body.roster) &&
-						body.roster.every((userId) => team.memberUserIds.includes(userId)),
-					"Invalid roster",
-				);
-
-				await TournamentTeamRepository.setActiveRoster({
-					teamId: body.teamId,
-					activeRosterUserIds: body.roster,
-				});
-
-				emitMatchUpdate = true;
-
-				break;
-			}
-			case "UNDO_REPORT_SCORE": {
-				validateCanReportScore();
-				// they are trying to remove score from the past
-				if (body.position !== scores[0] + scores[1] - 1) {
-					return null;
-				}
-
-				const results =
-					await TournamentMatchRepository.findResultsByMatchId(matchId);
-				const lastResult = results[results.length - 1];
-				invariant(lastResult, "Last result is missing");
-
-				logger.info(
-					`Undoing score: Position: ${body.position}; User ID: ${user.id}; Match ID: ${match.id}`,
-				);
-
-				const pickBanEventNumbersToDelete = await (async () => {
-					if (!match.roundMaps?.pickBan) return [];
-
-					const pickBanEvents =
-						await TournamentRepository.findPickBanEventsByMatchId(match.id);
-
-					if (match.roundMaps.pickBan === "CUSTOM") {
-						const customFlow = match.roundMaps.customFlow;
-						if (!customFlow) return [];
-
-						// event DB numbers are 1-indexed
-						const threshold =
-							customFlow.preSet.length +
-							(results.length - 1) * customFlow.postGame.length +
-							1;
-						return pickBanEvents
-							.filter((e) => e.number >= threshold)
-							.map((e) => e.number);
-					}
-
-					const unplayedPicks = pickBanEvents
-						.filter((e) => e.type === "PICK")
-						.filter(
-							(e) =>
-								!results.some(
-									(r) => r.stageId === e.stageId && r.mode === e.mode,
-								),
-						);
-					invariant(unplayedPicks.length <= 1, "Too many unplayed picks");
-
-					return unplayedPicks[0] ? [unplayedPicks[0].number] : [];
-				})();
-
-				await executeBracketOperation({
-					tournamentId,
-					tournament,
-					operation: (bracketData) =>
-						Engine.undoGameResult(bracketData, {
-							matchId: match.id,
-							lastGameWinnerTeamId: lastResult.winnerTeamId,
-						}),
-					endDroppedTeams: false,
-					inTransaction: async (_result, trx) => {
-						await TournamentMatchRepository.deleteResultById(
-							lastResult.id,
-							trx,
-						);
-
-						for (const number of pickBanEventNumbersToDelete) {
-							await TournamentMatchRepository.deletePickBanEvent(
-								{ matchId, number },
-								trx,
-							);
-						}
-					},
-				});
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-
-				break;
-			}
-			case "UPDATE_REPORTED_SCORE": {
-				requireTournamentOrganizer(tournament, user);
-				errorToastIfFalsy(
-					!tournament.ctx.isFinalized,
-					"Tournament is finalized",
-				);
-
-				const result = await TournamentMatchRepository.findResultById(
-					body.resultId,
-				);
-				errorToastIfFalsy(result, "Result not found");
-				errorToastIfFalsy(
-					result.matchId === matchId,
-					"Result does not belong to this match",
-				);
-				errorToastIfFalsy(
-					body.rosters[0].length === tournament.minMembersPerTeam &&
-						body.rosters[1].length === tournament.minMembersPerTeam,
-					"Invalid roster length",
-				);
-
-				const teamOne = tournament.teamById(match.opponentOne!.id!)!;
-				const teamTwo = tournament.teamById(match.opponentTwo!.id!)!;
-				errorToastIfFalsy(
-					body.rosters[0].every((userId) =>
-						teamOne.memberUserIds.includes(userId),
-					) &&
-						body.rosters[1].every((userId) =>
-							teamTwo.memberUserIds.includes(userId),
-						),
-					"Invalid roster",
-				);
-
-				const bracket = tournament.bracketByIdx(
-					tournament.matchIdToBracketIdx(match.id)!,
-				)!;
-				errorToastIfFalsy(
-					!bracket.collectsKos || typeof body.ko === "boolean",
-					"KO status is required for this bracket",
-				);
-
-				const wasKo = Boolean(result.ko);
-				if (typeof body.ko === "boolean" && body.ko !== wasKo) {
-					// changing the KO status at this point could retroactively change who advanced from the group
-					errorToastIfFalsy(
-						tournament.matchCanBeReopened(match.id),
-						"Bracket has progressed",
-					);
-				}
-
-				await db.transaction().execute(async (trx) => {
-					if (typeof body.ko === "boolean") {
-						await TournamentMatchRepository.updateResultKo(
-							{ id: result.id, ko: body.ko },
-							trx,
-						);
-					}
-
-					await TournamentMatchRepository.setParticipants(
-						{
-							resultId: result.id,
-							participants: [
-								...body.rosters[0].map((userId) => ({
-									userId,
-									tournamentTeamId: match.opponentOne!.id!,
-								})),
-								...body.rosters[1].map((userId) => ({
-									userId,
-									tournamentTeamId: match.opponentTwo!.id!,
-								})),
-							],
-						},
-						trx,
-					);
-				});
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-
-				break;
-			}
-			case "BAN_PICK": {
-				const results =
-					await TournamentMatchRepository.findResultsByMatchId(matchId);
-
-				invariant(
-					match.opponentOne?.id && match.opponentTwo?.id,
-					"Teams are missing",
-				);
-				const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds([
-					match.opponentOne.id,
-					match.opponentTwo.id,
-				]);
-				const teamOneCtx = tournament.teamById(match.opponentOne.id);
-				const teamTwoCtx = tournament.teamById(match.opponentTwo.id);
-				invariant(teamOneCtx && teamTwoCtx, "Teams are missing");
-				const teamOne = {
-					...teamOneCtx,
-					mapPool: mapPools.get(match.opponentOne.id) ?? [],
-				};
-				const teamTwo = {
-					...teamTwoCtx,
-					mapPool: mapPools.get(match.opponentTwo.id) ?? [],
-				};
-
-				invariant(match.roundMaps, "Missing fields to pick/ban");
-
-				const currentPickBanEvents =
-					await TournamentRepository.findPickBanEventsByMatchId(match.id);
-
-				const turnOfResult = PickBan.turnOf({
-					results,
-					maps: match.roundMaps,
-					teams: [
-						{ id: match.opponentOne.id, seed: teamOne.seed },
-						{ id: match.opponentTwo.id, seed: teamTwo.seed },
-					],
-					mapList,
-					pickBanEventCount: currentPickBanEvents.length,
-					matchId: match.id,
-				});
-				errorToastIfFalsy(turnOfResult, "Not time to pick/ban");
-				const pickerTeamId = turnOfResult.teamId;
-				const actionType = turnOfResult.action;
-				const pickerTeam = pickerTeamId === teamOne.id ? teamOne : teamTwo;
-				errorToastIfFalsy(
-					tournament.isOrganizer(user) ||
-						pickerTeam.memberUserIds.includes(user.id),
-					"Unauthorized",
-				);
-
-				const isModeAction =
-					actionType === "MODE_PICK" || actionType === "MODE_BAN";
-				const isCustomStageBan =
-					match.roundMaps.pickBan === "CUSTOM" && actionType === "BAN";
-
-				const pickBanLegalityArgs = {
-					results,
-					maps: match.roundMaps,
-					toSetMapPool: tournament.organizerPickedMapPool,
-					mapList,
-					teams: [teamOne, teamTwo] as [
-						PickBan.MapPoolTeam,
-						PickBan.MapPoolTeam,
-					],
-					pickerTeamId,
-					pickBanEvents: currentPickBanEvents,
-				};
-
-				if (isModeAction) {
-					errorToastIfFalsy(body.mode, "Mode is required for mode actions");
-					errorToastIfFalsy(
-						PickBan.isModeLegal({
-							mode: body.mode,
-							...pickBanLegalityArgs,
-						}),
-						"Illegal mode",
-					);
-				} else if (isCustomStageBan) {
-					errorToastIfFalsy(
-						typeof body.stageId === "number",
-						"Stage is required for stage ban",
-					);
-					errorToastIfFalsy(
-						PickBan.isStageLegal({
-							stageId: body.stageId,
-							...pickBanLegalityArgs,
-						}),
-						"Illegal stage ban",
-					);
-				} else {
-					errorToastIfFalsy(
-						typeof body.stageId === "number" && body.mode,
-						"Stage and mode are required for map actions",
-					);
-					errorToastIfFalsy(
-						PickBan.isLegal({
-							map: { stageId: body.stageId, mode: body.mode },
-							...pickBanLegalityArgs,
-						}),
-						"Illegal pick",
-					);
-				}
-
-				const eventType = (() => {
-					if (match.roundMaps.pickBan === "CUSTOM") {
-						// the no-mode-repeat restriction only applies while choosing, not to the stored event
-						return actionType === "PICK_NO_MODE_REPEAT"
-							? ("PICK" as const)
-							: actionType;
-					}
-					if (match.roundMaps.pickBan === "BAN_2") return "BAN" as const;
-					return "PICK" as const;
-				})();
-
-				try {
-					await TournamentRepository.insertPickBanEvent({
-						authorId: user.id,
-						matchId: match.id,
-						stageId: isModeAction ? null : body.stageId!,
-						mode: isCustomStageBan ? null : (body.mode ?? null),
-						number: currentPickBanEvents.length + 1,
-						type: eventType,
-					});
-				} catch (error) {
-					// another request already recorded this pick/ban, let their page refresh to pick it up
-					if (errorIsSqliteUniqueConstraintFailure(error)) {
-						return null;
-					}
-					throw error;
-				}
-
-				const chatMessageType = pickBanChatMessageType(actionType);
-				if (match.chatRoomId && chatMessageType) {
-					void ChatSystemMessage.sendPersisted({
-						roomId: match.chatRoomId,
-						type: chatMessageType,
-						authorUserId: user.id,
-					});
-				}
-
-				if (
-					match.roundMaps.pickBan === "CUSTOM" &&
-					match.roundMaps.customFlow
-				) {
-					const updatedEvents =
-						await TournamentRepository.findPickBanEventsByMatchId(match.id);
-					await executeRoll({
-						matchId: match.id,
-						maps: match.roundMaps,
-						pickBanEvents: updatedEvents,
-						results,
-						teams: [teamOne, teamTwo],
-						toSetMapPool: tournament.organizerPickedMapPool,
-					});
-				}
-
-				emitMatchUpdate = true;
-				onlyMatchResultsChanged = true;
-
-				break;
-			}
-			case "REOPEN_MATCH": {
-				requireTournamentOrganizer(tournament, user);
-				errorToastIfFalsy(
-					tournament.matchCanBeReopened(match.id),
-					"Match can't be reopened, bracket has progressed",
-				);
-
-				const results =
-					await TournamentMatchRepository.findResultsByMatchId(matchId);
-				const lastResult = results[results.length - 1];
-
-				const followingMatches = tournament.followingMatches(match.id);
-				const bracketFormat = tournament.bracketByIdx(
-					tournament.matchIdToBracketIdx(match.id)!,
-				)!.type;
-				const { result: reopened } = await executeBracketOperation({
-					tournamentId,
-					tournament,
-					operation: (bracketData) =>
-						Engine.reopenMatch(bracketData, {
-							matchId: match.id,
-							lastGameWinnerTeamId: lastResult?.winnerTeamId ?? null,
-						}),
-					endDroppedTeams: false,
-					inTransaction: async (result, trx) => {
-						// round robin edge case: leave the match as is, lock it and unlock later to continue (should not really ever happen)
-						if (bracketFormat !== "round_robin") {
-							for (const followingMatch of followingMatches) {
-								await TournamentMatchRepository.deletePickBanEventsByMatchId(
-									followingMatch.id,
-									trx,
-								);
-							}
-						}
-
-						// a force-ended set inserted no result for the forced win, so its last result is a
-						// played game that must stay or the score desyncs from the results
-						if (!result.endedEarly) {
-							invariant(lastResult, "Last result is missing");
-							await TournamentMatchRepository.deleteResultById(
-								lastResult.id,
-								trx,
-							);
-						}
-					},
-				});
-
-				logger.info(
-					`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${reopened.endedEarly}`,
-				);
-
-				// teams pulled back out of following matches: their "waiting for teams" pages revalidate too
-				followingMatchIds = followingMatches.map(
-					(followingMatch) => followingMatch.id,
-				);
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-				emitStatusUpdate = true;
-
-				break;
-			}
-			case "SET_AS_CASTED": {
-				errorToastIfFalsy(
-					tournament.isOrganizerOrStreamer(user),
-					"Not an organizer or streamer",
-				);
-				errorToastIfFalsy(
-					body.castAccount === null ||
-						isCastAccountOf(tournament, body.castAccount),
-					"Invalid cast account",
-				);
-
-				await TournamentRepository.setMatchAsCasted({
-					matchId: match.id,
-					tournamentId: tournament.ctx.id,
-					castAccount: body.castAccount,
-				});
-
-				emitTournamentUpdate = true;
-
-				break;
-			}
-			case "LOCK": {
-				errorToastIfFalsy(
-					tournament.isOrganizerOrStreamer(user),
-					"Not an organizer or streamer",
-				);
-				errorToastIfFalsy(
-					isCastAccountOf(tournament, body.castAccount),
-					"Invalid cast account",
-				);
-
-				// can't lock if the match can already be played, let's update their view to reflect that
-				if (tournament.matchStatusById(match.id) !== "PENDING") {
-					return null;
-				}
-
-				await TournamentRepository.lockMatch({
-					matchId: match.id,
-					tournamentId: tournament.ctx.id,
-					castAccount: body.castAccount,
-				});
-
-				emitMatchUpdate = true;
-				emitStatusUpdate = true;
-
-				break;
-			}
-			case "UNLOCK": {
-				errorToastIfFalsy(
-					tournament.isOrganizerOrStreamer(user),
-					"Not an organizer or streamer",
-				);
-
-				await TournamentRepository.unlockMatch({
-					matchId: match.id,
-					tournamentId: tournament.ctx.id,
-				});
-
-				emitMatchUpdate = true;
-				emitStatusUpdate = true;
-
-				break;
-			}
-			case "END_SET": {
-				requireTournamentOrganizer(tournament, user);
-				errorToastIfFalsy(
-					match.opponentOne?.id && match.opponentTwo?.id,
-					"Teams are missing",
-				);
-				errorToastIfFalsy(!match.winnerSide, "Match is already over");
-
-				const winnerTeamId = (() => {
-					if (body.winnerTeamId) {
-						errorToastIfFalsy(
-							body.winnerTeamId === match.opponentOne.id ||
-								body.winnerTeamId === match.opponentTwo.id,
-							"Invalid winner team id",
-						);
-						return body.winnerTeamId;
-					}
-
-					return Math.random() < 0.5
-						? match.opponentOne.id
-						: match.opponentTwo.id;
-				})();
-
-				logger.info(
-					`Ending set by organizer: User ID: ${user.id}; Match ID: ${match.id}; Winner: ${winnerTeamId}; Random: ${!body.winnerTeamId}`,
-				);
-
-				const { endedMatchIds } = await executeBracketOperation({
-					tournamentId,
-					tournament,
-					operation: (bracketData) =>
-						Engine.endSet(bracketData, {
-							matchId: match.id,
-							winnerTeamId,
-						}),
-					endDroppedTeams: true,
-				});
-				endedDroppedMatchIds = endedMatchIds;
-
-				// no further games: trim weapons reported in advance for maps beyond the games played
-				const playedResults =
-					await TournamentMatchRepository.findResultsByMatchId(matchId);
-				await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
-					tournamentMatchId: matchId,
-					gameCount: playedResults.length,
-				});
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-				setIsOver = true;
-
-				break;
-			}
-			case "REPORT_WEAPON": {
-				const isMemberOfATeamInTheMatch = match.players.some(
-					(p) => p.id === user.id,
-				);
-				errorToastIfFalsy(isMemberOfATeamInTheMatch, "Unauthorized");
-				errorToastIfFalsy(
-					tournament.weaponReportingOpen,
-					"Weapon reporting is closed",
-				);
-
-				await ReportedWeaponRepository.upsertOwnTournament({
-					tournamentMatchId: matchId,
-					mapIndex: body.mapIndex,
-					weaponSplId: body.weaponSplId,
-					createdAt: dateToDatabaseTimestamp(tournament.ctx.startsAt),
-				});
-
-				break;
-			}
-			case "UNDO_WEAPON_REPORT": {
-				const isMemberOfATeamInTheMatch = match.players.some(
-					(p) => p.id === user.id,
-				);
-				errorToastIfFalsy(isMemberOfATeamInTheMatch, "Unauthorized");
-				errorToastIfFalsy(
-					tournament.weaponReportingOpen,
-					"Weapon reporting is closed",
-				);
-
-				await ReportedWeaponRepository.deleteOwnByMapIndexTournament({
-					tournamentMatchId: matchId,
-					mapIndex: body.mapIndex,
-				});
-
-				break;
-			}
-			case "PROPOSE_TIMES": {
-				const team = leagueTeamOfUser(tournament, match, user.id);
-				errorToastIfFalsy(team, "Not a member of either team");
-
-				const schedule = leagueSchedule(tournament, match);
-				const proposals =
-					await TournamentMatchRepository.findScheduleProposalsByMatchId(
-						match.id,
-					);
-				const proposedAts = R.unique(body.times.map(dateToDatabaseTimestamp));
-				const error = LeagueScheduling.validateProposals({
-					proposedAts,
-					existingProposedAts: proposals
-						.filter((proposal) => proposal.tournamentTeamId === team.id)
-						.map((proposal) => proposal.proposedAt),
-					phase: schedule.phase,
-					isPlayableAt: match.roundIsPlayableAt,
-					now: schedule.now,
-					setByOrganizer: Boolean(match.scheduleSetByOrganizer),
-				});
-				errorToastIfFalsy(!error, PROPOSAL_ERROR_MESSAGES[error ?? "NOT_OPEN"]);
-
-				const added = await TournamentMatchRepository.replaceScheduleProposals({
-					matchId: match.id,
-					tournamentTeamId: team.id,
-					authorId: user.id,
-					proposedAts,
-				});
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-
-				if (added.length === 0) break;
-
-				const [latestMessage] = match.chatRoomId
-					? await ChatRepository.findAllMessagesByRoomId(match.chatRoomId, {
-							limit: 1,
-						})
-					: [];
-				if (
-					LeagueScheduling.shouldAnnounceProposals({
-						latestMessage,
-						teamMemberUserIds: team.memberUserIds,
-						now: schedule.now,
-					})
-				) {
-					sendLeagueChatMessage(match, "LEAGUE_TIMES_PROPOSED", user.id);
-				}
-				void notify({
-					userIds: team.opponent.memberUserIds,
-					notification: {
-						type: "TO_LEAGUE_TIMES_PROPOSED",
-						meta: {
-							tournamentId,
-							matchId: match.id,
-							opponentTeamName: team.name,
-						},
-						pictureUrl: tournament.ctx.logoUrl,
-					},
-				});
-
-				break;
-			}
-			case "ACCEPT_PROPOSAL": {
-				const schedule = leagueSchedule(tournament, match);
-				errorToastIfFalsy(
-					schedule.phase !== "CLOSED" && schedule.phase !== "NOT_OPEN",
-					"Set can't be scheduled",
-				);
-
-				const proposal = notFoundIfNullish(
-					await TournamentMatchRepository.findScheduleProposalById(
-						body.proposalId,
-					),
-				);
-				errorToastIfFalsy(
-					proposal.matchId === match.id,
-					"Not this set's candidate",
-				);
-
-				const team = leagueTeamOfUser(tournament, match, user.id);
-				const isOtherTeamsCandidate =
-					team !== null && proposal.tournamentTeamId !== team.id;
-				const isOrganizer = tournament.isOrganizer(user);
-				errorToastIfFalsy(
-					isOtherTeamsCandidate || isOrganizer,
-					"Only the other team can pick a candidate",
-				);
-				errorToastIfFalsy(
-					!match.scheduleSetByOrganizer || isOrganizer,
-					"The organizer set the time of this set",
-				);
-				errorToastIfFalsy(
-					LeagueScheduling.isAcceptableProposal({
-						proposedAt: proposal.proposedAt,
-						now: schedule.now,
-					}),
-					"The time has already passed",
-				);
-
-				const setByOrganizer = !isOtherTeamsCandidate;
-				await TournamentMatchRepository.scheduleMatch({
-					matchId: match.id,
-					scheduledAt: proposal.proposedAt,
-					setByOrganizer,
-				});
-
-				sendLeagueChatMessage(
-					match,
-					setByOrganizer
-						? "LEAGUE_TIME_SET_BY_ORGANIZER"
-						: "LEAGUE_TIME_PICKED",
-					user.id,
-				);
-				await notifyLeagueMatchScheduled({
-					tournament,
-					match,
-					actorId: user.id,
-				});
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-
-				break;
-			}
-			case "REJECT_RESCHEDULE": {
-				const team = leagueTeamOfUser(tournament, match, user.id);
-				errorToastIfFalsy(team, "Not a member of either team");
-				errorToastIfFalsy(match.scheduledAt !== null, "Set has no time yet");
-
-				const deletedCount =
-					await TournamentMatchRepository.deleteScheduleProposalsByTeam({
-						matchId: match.id,
-						tournamentTeamId: team.opponent.id,
-					});
-				if (deletedCount === 0) break;
-
-				sendLeagueChatMessage(match, "LEAGUE_RESCHEDULE_DECLINED", user.id);
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-
-				break;
-			}
-			case "ORGANIZER_SET_TIME": {
-				requireTournamentOrganizer(tournament, user);
-				errorToastIfFalsy(
-					leagueSchedule(tournament, match).phase !== "CLOSED",
-					"Set can't be scheduled",
-				);
-
-				await TournamentMatchRepository.scheduleMatch({
-					matchId: match.id,
-					scheduledAt: dateToDatabaseTimestamp(body.scheduledAt),
-					setByOrganizer: true,
-				});
-
-				sendLeagueChatMessage(match, "LEAGUE_TIME_SET_BY_ORGANIZER", user.id);
-				await notifyLeagueMatchScheduled({
-					tournament,
-					match,
-					actorId: user.id,
-				});
-
-				emitMatchUpdate = true;
-				emitTournamentUpdate = true;
-
-				break;
-			}
-			default: {
-				assertUnreachable(body);
-			}
-		}
+		const ctx: MatchActionContext = {
+			tournament,
+			tournamentId,
+			user,
+			match,
+			matchId,
+			mapList,
+		};
+
+		const changes = await runMatchAction(ctx, body);
+		if (!changes) return null;
+
+		const outcome = { ...NO_UPDATES, ...changes };
 
 		clearTournamentDataCache(tournamentId);
 
-		// refresh RunningTournaments so the sidebar doesn't show stale matches while the TO delays finalizing
-		if (setIsOver || emitStatusUpdate) {
-			const refreshedTournament = await tournamentFromDB(tournamentId);
-			const followingMatches = refreshedTournament.followingMatches(match.id);
+		const followingMatchIds = await refreshRunningTournamentStatus(
+			ctx,
+			outcome,
+		);
 
-			if (setIsOver) {
-				// teams just advanced into following matches: their "waiting for teams" pages revalidate too
-				followingMatchIds = followingMatches.map(
-					(followingMatch) => followingMatch.id,
-				);
-			}
-
-			ChatSystemMessage.notifyStatusChanged([
-				...match.players.map((player) => player.id),
-				...followingMatches.flatMap((followingMatch) =>
-					[followingMatch.opponent1?.id, followingMatch.opponent2?.id].flatMap(
-						(teamId) =>
-							typeof teamId === "number"
-								? (refreshedTournament.teamById(teamId)?.memberUserIds ?? [])
-								: [],
-					),
-				),
-			]);
-		}
-
-		const revalidateScope = onlyMatchResultsChanged
-			? ("MATCH_RESULTS" as const)
-			: undefined;
-
-		if (emitMatchUpdate) {
-			const otherMatchIdsToRevalidate = Array.from(
-				new Set([...endedDroppedMatchIds, ...followingMatchIds]),
-			).filter((id) => id !== matchId);
-
-			ChatSystemMessage.send([
-				{
-					channel: tournamentMatchChannel(matchId),
-					revalidateScope,
-				},
-				...otherMatchIdsToRevalidate.map((id) => ({
-					channel: tournamentMatchChannel(id),
-					revalidateScope,
-				})),
-			]);
-		}
-		if (emitTournamentUpdate) {
-			ChatSystemMessage.send([
-				{
-					channel: onlyMatchResultsChanged
-						? matchResultsRoom(tournament, match)
-						: tournamentChannel(tournament.ctx.id),
-					revalidateScope,
-				},
-			]);
-		}
+		broadcastMatchUpdates(ctx, { ...outcome, followingMatchIds });
 
 		return null;
 	},
 );
+
+function runMatchAction(
+	ctx: MatchActionContext,
+	body: MatchActionBody,
+): Promise<Partial<MatchActionOutcome> | null> {
+	switch (body._action) {
+		case "REPORT_SCORE":
+			return reportScoreAction(ctx, body);
+		case "SET_ACTIVE_ROSTER":
+			return setActiveRosterAction(ctx, body);
+		case "UNDO_REPORT_SCORE":
+			return undoReportScoreAction(ctx, body);
+		case "UPDATE_REPORTED_SCORE":
+			return updateReportedScoreAction(ctx, body);
+		case "BAN_PICK":
+			return banPickAction(ctx, body);
+		case "REOPEN_MATCH":
+			return reopenMatchAction(ctx);
+		case "SET_AS_CASTED":
+			return setAsCastedAction(ctx, body);
+		case "LOCK":
+			return lockAction(ctx, body);
+		case "UNLOCK":
+			return unlockAction(ctx);
+		case "END_SET":
+			return endSetAction(ctx, body);
+		case "REPORT_WEAPON":
+			return reportWeaponAction(ctx, body);
+		case "UNDO_WEAPON_REPORT":
+			return undoWeaponReportAction(ctx, body);
+		case "PROPOSE_TIMES":
+			return proposeTimesAction(ctx, body);
+		case "ACCEPT_PROPOSAL":
+			return acceptProposalAction(ctx, body);
+		case "REJECT_RESCHEDULE":
+			return rejectRescheduleAction(ctx);
+		case "ORGANIZER_SET_TIME":
+			return organizerSetTimeAction(ctx, body);
+		default: {
+			assertUnreachable(body);
+		}
+	}
+}
+
+async function reportScoreAction(
+	{ tournament, tournamentId, user, match, mapList }: MatchActionContext,
+	body: MatchActionBodyOf<"REPORT_SCORE">,
+): Promise<Partial<MatchActionOutcome> | null> {
+	const reported = await reportScore({
+		match,
+		tournament,
+		mapList,
+		user,
+		position: body.position,
+		winnerTeamId: body.winnerTeamId,
+		ko: body.ko,
+	});
+
+	// the game was already reported, let their page refresh to pick it up
+	if (!reported) return null;
+
+	await linkStoredMatches({
+		type: "tournament",
+		tournamentId,
+		tournamentMatchId: match.id,
+	});
+
+	const endedDroppedMatchIds = reported.endedMatchIds;
+	const setIsOver = reported.setOver;
+
+	return {
+		endedDroppedMatchIds,
+		setIsOver,
+		emitMatchUpdate: true,
+		emitTournamentUpdate: true,
+		// a set ending (or dropped teams' matches ending) changes the layout's bracketsMeta
+		onlyMatchResultsChanged: !setIsOver && endedDroppedMatchIds.length === 0,
+	};
+}
+
+async function setActiveRosterAction(
+	{ tournament, user }: MatchActionContext,
+	body: MatchActionBodyOf<"SET_ACTIVE_ROSTER">,
+): Promise<Partial<MatchActionOutcome>> {
+	errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
+	errorToastIfFalsy(
+		tournament.isOrganizer(user) ||
+			tournament.teamMemberOfByUser(user)?.id === body.teamId,
+		"Unauthorized",
+	);
+	errorToastIfFalsy(
+		body.roster.length === tournament.minMembersPerTeam,
+		"Invalid roster length",
+	);
+
+	const team = tournament.teamById(body.teamId);
+	errorToastIfFalsy(team, "Invalid team id");
+	errorToastIfFalsy(
+		noDuplicates(body.roster) &&
+			body.roster.every((userId) => team.memberUserIds.includes(userId)),
+		"Invalid roster",
+	);
+
+	await TournamentTeamRepository.setActiveRoster({
+		teamId: body.teamId,
+		activeRosterUserIds: body.roster,
+	});
+
+	return { emitMatchUpdate: true };
+}
+
+async function undoReportScoreAction(
+	ctx: MatchActionContext,
+	body: MatchActionBodyOf<"UNDO_REPORT_SCORE">,
+): Promise<Partial<MatchActionOutcome> | null> {
+	const { tournament, tournamentId, user, match, matchId } = ctx;
+
+	validateCanReportScore(ctx);
+	// they are trying to remove score from the past
+	if (body.position !== reportedGameCount(match) - 1) {
+		return null;
+	}
+
+	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
+	const lastResult = results[results.length - 1];
+	invariant(lastResult, "Last result is missing");
+
+	logger.info(
+		`Undoing score: Position: ${body.position}; User ID: ${user.id}; Match ID: ${match.id}`,
+	);
+
+	const pickBanEventNumbersToDelete = await pickBanEventNumbersToDeleteOnUndo(
+		match,
+		results,
+	);
+
+	await executeBracketOperation({
+		tournamentId,
+		tournament,
+		operation: (bracketData) =>
+			Engine.undoGameResult(bracketData, {
+				matchId: match.id,
+				lastGameWinnerTeamId: lastResult.winnerTeamId,
+			}),
+		endDroppedTeams: false,
+		inTransaction: async (_result, trx) => {
+			await TournamentMatchRepository.deleteResultById(lastResult.id, trx);
+
+			for (const number of pickBanEventNumbersToDelete) {
+				await TournamentMatchRepository.deletePickBanEvent(
+					{ matchId, number },
+					trx,
+				);
+			}
+		},
+	});
+
+	return { emitMatchUpdate: true, emitTournamentUpdate: true };
+}
+
+function validateCanReportScore({
+	tournament,
+	user,
+	match,
+}: MatchActionContext) {
+	const isMemberOfATeamInTheMatch = match.players.some((p) => p.id === user.id);
+
+	errorToastIfFalsy(
+		tournament.matchStatusById(match.id) !== "PENDING",
+		"Match is locked, waiting for teams to finish their previous matches",
+	);
+
+	errorToastIfFalsy(
+		canReportTournamentScore({
+			match,
+			isMemberOfATeamInTheMatch,
+			isOrganizer: tournament.isOrganizer(user),
+		}),
+		"Unauthorized",
+	);
+}
+
+function reportedGameCount(match: NonNullable<FindMatchById>) {
+	return (match.opponentOne?.score ?? 0) + (match.opponentTwo?.score ?? 0);
+}
+
+async function pickBanEventNumbersToDeleteOnUndo(
+	match: NonNullable<FindMatchById>,
+	results: Awaited<
+		ReturnType<typeof TournamentMatchRepository.findResultsByMatchId>
+	>,
+) {
+	if (!match.roundMaps?.pickBan) return [];
+
+	const pickBanEvents = await TournamentRepository.findPickBanEventsByMatchId(
+		match.id,
+	);
+
+	if (match.roundMaps.pickBan === "CUSTOM") {
+		const customFlow = match.roundMaps.customFlow;
+		if (!customFlow) return [];
+
+		// event DB numbers are 1-indexed
+		const threshold =
+			customFlow.preSet.length +
+			(results.length - 1) * customFlow.postGame.length +
+			1;
+		return pickBanEvents
+			.filter((e) => e.number >= threshold)
+			.map((e) => e.number);
+	}
+
+	const unplayedPicks = pickBanEvents
+		.filter((e) => e.type === "PICK")
+		.filter(
+			(e) => !results.some((r) => r.stageId === e.stageId && r.mode === e.mode),
+		);
+	invariant(unplayedPicks.length <= 1, "Too many unplayed picks");
+
+	return unplayedPicks[0] ? [unplayedPicks[0].number] : [];
+}
+
+async function updateReportedScoreAction(
+	{ tournament, user, match, matchId }: MatchActionContext,
+	body: MatchActionBodyOf<"UPDATE_REPORTED_SCORE">,
+): Promise<Partial<MatchActionOutcome>> {
+	requireTournamentOrganizer(tournament, user);
+	errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
+
+	const result = await TournamentMatchRepository.findResultById(body.resultId);
+	errorToastIfFalsy(result, "Result not found");
+	errorToastIfFalsy(
+		result.matchId === matchId,
+		"Result does not belong to this match",
+	);
+	errorToastIfFalsy(
+		body.rosters[0].length === tournament.minMembersPerTeam &&
+			body.rosters[1].length === tournament.minMembersPerTeam,
+		"Invalid roster length",
+	);
+
+	const teamOne = tournament.teamById(match.opponentOne!.id!)!;
+	const teamTwo = tournament.teamById(match.opponentTwo!.id!)!;
+	errorToastIfFalsy(
+		body.rosters[0].every((userId) => teamOne.memberUserIds.includes(userId)) &&
+			body.rosters[1].every((userId) => teamTwo.memberUserIds.includes(userId)),
+		"Invalid roster",
+	);
+
+	const bracket = tournament.bracketByIdx(
+		tournament.matchIdToBracketIdx(match.id)!,
+	)!;
+	errorToastIfFalsy(
+		!bracket.collectsKos || typeof body.ko === "boolean",
+		"KO status is required for this bracket",
+	);
+
+	const wasKo = Boolean(result.ko);
+	if (typeof body.ko === "boolean" && body.ko !== wasKo) {
+		// changing the KO status at this point could retroactively change who advanced from the group
+		errorToastIfFalsy(
+			tournament.matchCanBeReopened(match.id),
+			"Bracket has progressed",
+		);
+	}
+
+	await db.transaction().execute(async (trx) => {
+		if (typeof body.ko === "boolean") {
+			await TournamentMatchRepository.updateResultKo(
+				{ id: result.id, ko: body.ko },
+				trx,
+			);
+		}
+
+		await TournamentMatchRepository.setParticipants(
+			{
+				resultId: result.id,
+				participants: [
+					...body.rosters[0].map((userId) => ({
+						userId,
+						tournamentTeamId: match.opponentOne!.id!,
+					})),
+					...body.rosters[1].map((userId) => ({
+						userId,
+						tournamentTeamId: match.opponentTwo!.id!,
+					})),
+				],
+			},
+			trx,
+		);
+	});
+
+	return { emitMatchUpdate: true, emitTournamentUpdate: true };
+}
+
+async function banPickAction(
+	{ tournament, user, match, matchId, mapList }: MatchActionContext,
+	body: MatchActionBodyOf<"BAN_PICK">,
+): Promise<Partial<MatchActionOutcome> | null> {
+	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
+
+	invariant(
+		match.opponentOne?.id && match.opponentTwo?.id,
+		"Teams are missing",
+	);
+	const [teamOne, teamTwo] = await pickBanTeams(
+		tournament,
+		match.opponentOne.id,
+		match.opponentTwo.id,
+	);
+
+	invariant(match.roundMaps, "Missing fields to pick/ban");
+
+	const currentPickBanEvents =
+		await TournamentRepository.findPickBanEventsByMatchId(match.id);
+
+	const turnOfResult = PickBan.turnOf({
+		results,
+		maps: match.roundMaps,
+		teams: [
+			{ id: match.opponentOne.id, seed: teamOne.seed },
+			{ id: match.opponentTwo.id, seed: teamTwo.seed },
+		],
+		mapList,
+		pickBanEventCount: currentPickBanEvents.length,
+		matchId: match.id,
+	});
+	errorToastIfFalsy(turnOfResult, "Not time to pick/ban");
+	const pickerTeamId = turnOfResult.teamId;
+	const actionType = turnOfResult.action;
+	const pickerTeam = pickerTeamId === teamOne.id ? teamOne : teamTwo;
+	errorToastIfFalsy(
+		tournament.isOrganizer(user) || pickerTeam.memberUserIds.includes(user.id),
+		"Unauthorized",
+	);
+
+	const isModeAction = actionType === "MODE_PICK" || actionType === "MODE_BAN";
+	const isCustomStageBan =
+		match.roundMaps.pickBan === "CUSTOM" && actionType === "BAN";
+
+	validatePickBanSelection({
+		body,
+		isModeAction,
+		isCustomStageBan,
+		legalityArgs: {
+			results,
+			maps: match.roundMaps,
+			toSetMapPool: tournament.organizerPickedMapPool,
+			mapList,
+			teams: [teamOne, teamTwo] as [PickBan.MapPoolTeam, PickBan.MapPoolTeam],
+			pickerTeamId,
+			pickBanEvents: currentPickBanEvents,
+		},
+	});
+
+	const eventType = pickBanEventType(match.roundMaps.pickBan, actionType);
+
+	try {
+		await TournamentRepository.insertPickBanEvent({
+			authorId: user.id,
+			matchId: match.id,
+			stageId: isModeAction ? null : body.stageId!,
+			mode: isCustomStageBan ? null : (body.mode ?? null),
+			number: currentPickBanEvents.length + 1,
+			type: eventType,
+		});
+	} catch (error) {
+		// another request already recorded this pick/ban, let their page refresh to pick it up
+		if (errorIsSqliteUniqueConstraintFailure(error)) {
+			return null;
+		}
+		throw error;
+	}
+
+	const chatMessageType = pickBanChatMessageType(actionType);
+	if (match.chatRoomId && chatMessageType) {
+		void ChatSystemMessage.sendPersisted({
+			roomId: match.chatRoomId,
+			type: chatMessageType,
+			authorUserId: user.id,
+		});
+	}
+
+	if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
+		const updatedEvents = await TournamentRepository.findPickBanEventsByMatchId(
+			match.id,
+		);
+		await executeRoll({
+			matchId: match.id,
+			maps: match.roundMaps,
+			pickBanEvents: updatedEvents,
+			results,
+			teams: [teamOne, teamTwo],
+			toSetMapPool: tournament.organizerPickedMapPool,
+		});
+	}
+
+	return { emitMatchUpdate: true, onlyMatchResultsChanged: true };
+}
+
+async function pickBanTeams(
+	tournament: Tournament,
+	teamOneId: number,
+	teamTwoId: number,
+) {
+	const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds([
+		teamOneId,
+		teamTwoId,
+	]);
+	const teamOneCtx = tournament.teamById(teamOneId);
+	const teamTwoCtx = tournament.teamById(teamTwoId);
+	invariant(teamOneCtx && teamTwoCtx, "Teams are missing");
+	const teamOne = {
+		...teamOneCtx,
+		mapPool: mapPools.get(teamOneId) ?? [],
+	};
+	const teamTwo = {
+		...teamTwoCtx,
+		mapPool: mapPools.get(teamTwoId) ?? [],
+	};
+
+	return [teamOne, teamTwo] as const;
+}
+
+function validatePickBanSelection({
+	body,
+	isModeAction,
+	isCustomStageBan,
+	legalityArgs,
+}: {
+	body: MatchActionBodyOf<"BAN_PICK">;
+	isModeAction: boolean;
+	isCustomStageBan: boolean;
+	legalityArgs: Omit<Parameters<typeof PickBan.isModeLegal>[0], "mode">;
+}) {
+	if (isModeAction) {
+		errorToastIfFalsy(body.mode, "Mode is required for mode actions");
+		errorToastIfFalsy(
+			PickBan.isModeLegal({
+				mode: body.mode,
+				...legalityArgs,
+			}),
+			"Illegal mode",
+		);
+	} else if (isCustomStageBan) {
+		errorToastIfFalsy(
+			typeof body.stageId === "number",
+			"Stage is required for stage ban",
+		);
+		errorToastIfFalsy(
+			PickBan.isStageLegal({
+				stageId: body.stageId,
+				...legalityArgs,
+			}),
+			"Illegal stage ban",
+		);
+	} else {
+		errorToastIfFalsy(
+			typeof body.stageId === "number" && body.mode,
+			"Stage and mode are required for map actions",
+		);
+		errorToastIfFalsy(
+			PickBan.isLegal({
+				map: { stageId: body.stageId, mode: body.mode },
+				...legalityArgs,
+			}),
+			"Illegal pick",
+		);
+	}
+}
+
+function pickBanEventType(
+	pickBan: NonNullable<NonNullable<FindMatchById>["roundMaps"]>["pickBan"],
+	actionType: PickBan.TurnOfResult["action"],
+) {
+	if (pickBan === "CUSTOM") {
+		// the no-mode-repeat restriction only applies while choosing, not to the stored event
+		return actionType === "PICK_NO_MODE_REPEAT"
+			? ("PICK" as const)
+			: actionType;
+	}
+	if (pickBan === "BAN_2") return "BAN" as const;
+	return "PICK" as const;
+}
+
+async function reopenMatchAction({
+	tournament,
+	tournamentId,
+	user,
+	match,
+	matchId,
+}: MatchActionContext): Promise<Partial<MatchActionOutcome>> {
+	requireTournamentOrganizer(tournament, user);
+	errorToastIfFalsy(
+		tournament.matchCanBeReopened(match.id),
+		"Match can't be reopened, bracket has progressed",
+	);
+
+	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
+	const lastResult = results[results.length - 1];
+
+	const followingMatches = tournament.followingMatches(match.id);
+	const bracketFormat = tournament.bracketByIdx(
+		tournament.matchIdToBracketIdx(match.id)!,
+	)!.type;
+	const { result: reopened } = await executeBracketOperation({
+		tournamentId,
+		tournament,
+		operation: (bracketData) =>
+			Engine.reopenMatch(bracketData, {
+				matchId: match.id,
+				lastGameWinnerTeamId: lastResult?.winnerTeamId ?? null,
+			}),
+		endDroppedTeams: false,
+		inTransaction: async (result, trx) => {
+			// round robin edge case: leave the match as is, lock it and unlock later to continue (should not really ever happen)
+			if (bracketFormat !== "round_robin") {
+				for (const followingMatch of followingMatches) {
+					await TournamentMatchRepository.deletePickBanEventsByMatchId(
+						followingMatch.id,
+						trx,
+					);
+				}
+			}
+
+			// a force-ended set inserted no result for the forced win, so its last result is a
+			// played game that must stay or the score desyncs from the results
+			if (!result.endedEarly) {
+				invariant(lastResult, "Last result is missing");
+				await TournamentMatchRepository.deleteResultById(lastResult.id, trx);
+			}
+		},
+	});
+
+	logger.info(
+		`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${reopened.endedEarly}`,
+	);
+
+	return {
+		// teams pulled back out of following matches: their "waiting for teams" pages revalidate too
+		followingMatchIds: followingMatches.map(
+			(followingMatch) => followingMatch.id,
+		),
+		emitMatchUpdate: true,
+		emitTournamentUpdate: true,
+		emitStatusUpdate: true,
+	};
+}
+
+async function setAsCastedAction(
+	{ tournament, user, match }: MatchActionContext,
+	body: MatchActionBodyOf<"SET_AS_CASTED">,
+): Promise<Partial<MatchActionOutcome>> {
+	errorToastIfFalsy(
+		tournament.isOrganizerOrStreamer(user),
+		"Not an organizer or streamer",
+	);
+	errorToastIfFalsy(
+		body.castAccount === null || isCastAccountOf(tournament, body.castAccount),
+		"Invalid cast account",
+	);
+
+	await TournamentRepository.setMatchAsCasted({
+		matchId: match.id,
+		tournamentId: tournament.ctx.id,
+		castAccount: body.castAccount,
+	});
+
+	return { emitTournamentUpdate: true };
+}
+
+async function lockAction(
+	{ tournament, user, match }: MatchActionContext,
+	body: MatchActionBodyOf<"LOCK">,
+): Promise<Partial<MatchActionOutcome> | null> {
+	errorToastIfFalsy(
+		tournament.isOrganizerOrStreamer(user),
+		"Not an organizer or streamer",
+	);
+	errorToastIfFalsy(
+		isCastAccountOf(tournament, body.castAccount),
+		"Invalid cast account",
+	);
+
+	// can't lock if the match can already be played, let's update their view to reflect that
+	if (tournament.matchStatusById(match.id) !== "PENDING") {
+		return null;
+	}
+
+	await TournamentRepository.lockMatch({
+		matchId: match.id,
+		tournamentId: tournament.ctx.id,
+		castAccount: body.castAccount,
+	});
+
+	return { emitMatchUpdate: true, emitStatusUpdate: true };
+}
+
+async function unlockAction({
+	tournament,
+	user,
+	match,
+}: MatchActionContext): Promise<Partial<MatchActionOutcome>> {
+	errorToastIfFalsy(
+		tournament.isOrganizerOrStreamer(user),
+		"Not an organizer or streamer",
+	);
+
+	await TournamentRepository.unlockMatch({
+		matchId: match.id,
+		tournamentId: tournament.ctx.id,
+	});
+
+	return { emitMatchUpdate: true, emitStatusUpdate: true };
+}
+
+async function endSetAction(
+	{ tournament, tournamentId, user, match, matchId }: MatchActionContext,
+	body: MatchActionBodyOf<"END_SET">,
+): Promise<Partial<MatchActionOutcome>> {
+	requireTournamentOrganizer(tournament, user);
+	errorToastIfFalsy(
+		match.opponentOne?.id && match.opponentTwo?.id,
+		"Teams are missing",
+	);
+	errorToastIfFalsy(!match.winnerSide, "Match is already over");
+
+	const winnerTeamId = resolveEndSetWinnerTeamId(
+		[match.opponentOne.id, match.opponentTwo.id],
+		body.winnerTeamId,
+	);
+
+	logger.info(
+		`Ending set by organizer: User ID: ${user.id}; Match ID: ${match.id}; Winner: ${winnerTeamId}; Random: ${!body.winnerTeamId}`,
+	);
+
+	const { endedMatchIds } = await executeBracketOperation({
+		tournamentId,
+		tournament,
+		operation: (bracketData) =>
+			Engine.endSet(bracketData, {
+				matchId: match.id,
+				winnerTeamId,
+			}),
+		endDroppedTeams: true,
+	});
+
+	// no further games: trim weapons reported in advance for maps beyond the games played
+	const playedResults =
+		await TournamentMatchRepository.findResultsByMatchId(matchId);
+	await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
+		tournamentMatchId: matchId,
+		gameCount: playedResults.length,
+	});
+
+	return {
+		endedDroppedMatchIds: endedMatchIds,
+		emitMatchUpdate: true,
+		emitTournamentUpdate: true,
+		setIsOver: true,
+	};
+}
+
+function resolveEndSetWinnerTeamId(
+	[teamOneId, teamTwoId]: [number, number],
+	chosenWinnerTeamId: MatchActionBodyOf<"END_SET">["winnerTeamId"],
+) {
+	if (chosenWinnerTeamId) {
+		errorToastIfFalsy(
+			chosenWinnerTeamId === teamOneId || chosenWinnerTeamId === teamTwoId,
+			"Invalid winner team id",
+		);
+		return chosenWinnerTeamId;
+	}
+
+	return Math.random() < 0.5 ? teamOneId : teamTwoId;
+}
+
+async function reportWeaponAction(
+	{ tournament, user, match, matchId }: MatchActionContext,
+	body: MatchActionBodyOf<"REPORT_WEAPON">,
+): Promise<Partial<MatchActionOutcome>> {
+	validateCanReportWeapon({ tournament, user, match });
+
+	await ReportedWeaponRepository.upsertOwnTournament({
+		tournamentMatchId: matchId,
+		mapIndex: body.mapIndex,
+		weaponSplId: body.weaponSplId,
+		createdAt: dateToDatabaseTimestamp(tournament.ctx.startsAt),
+	});
+
+	return {};
+}
+
+async function undoWeaponReportAction(
+	{ tournament, user, match, matchId }: MatchActionContext,
+	body: MatchActionBodyOf<"UNDO_WEAPON_REPORT">,
+): Promise<Partial<MatchActionOutcome>> {
+	validateCanReportWeapon({ tournament, user, match });
+
+	await ReportedWeaponRepository.deleteOwnByMapIndexTournament({
+		tournamentMatchId: matchId,
+		mapIndex: body.mapIndex,
+	});
+
+	return {};
+}
+
+function validateCanReportWeapon({
+	tournament,
+	user,
+	match,
+}: Pick<MatchActionContext, "tournament" | "user" | "match">) {
+	const isMemberOfATeamInTheMatch = match.players.some((p) => p.id === user.id);
+	errorToastIfFalsy(isMemberOfATeamInTheMatch, "Unauthorized");
+	errorToastIfFalsy(
+		tournament.weaponReportingOpen,
+		"Weapon reporting is closed",
+	);
+}
+
+async function proposeTimesAction(
+	{ tournament, tournamentId, user, match }: MatchActionContext,
+	body: MatchActionBodyOf<"PROPOSE_TIMES">,
+): Promise<Partial<MatchActionOutcome>> {
+	const team = leagueTeamOfUser(tournament, match, user.id);
+	errorToastIfFalsy(team, "Not a member of either team");
+
+	const schedule = leagueSchedule(tournament, match);
+	const proposals =
+		await TournamentMatchRepository.findScheduleProposalsByMatchId(match.id);
+	const proposedAts = R.unique(body.times.map(dateToDatabaseTimestamp));
+	const error = LeagueScheduling.validateProposals({
+		proposedAts,
+		existingProposedAts: proposals
+			.filter((proposal) => proposal.tournamentTeamId === team.id)
+			.map((proposal) => proposal.proposedAt),
+		phase: schedule.phase,
+		isPlayableAt: match.roundIsPlayableAt,
+		now: schedule.now,
+		setByOrganizer: Boolean(match.scheduleSetByOrganizer),
+	});
+	errorToastIfFalsy(!error, PROPOSAL_ERROR_MESSAGES[error ?? "NOT_OPEN"]);
+
+	const added = await TournamentMatchRepository.replaceScheduleProposals({
+		matchId: match.id,
+		tournamentTeamId: team.id,
+		authorId: user.id,
+		proposedAts,
+	});
+
+	const outcome = { emitMatchUpdate: true, emitTournamentUpdate: true };
+
+	if (added.length === 0) return outcome;
+
+	const [latestMessage] = match.chatRoomId
+		? await ChatRepository.findAllMessagesByRoomId(match.chatRoomId, {
+				limit: 1,
+			})
+		: [];
+	if (
+		LeagueScheduling.shouldAnnounceProposals({
+			latestMessage,
+			teamMemberUserIds: team.memberUserIds,
+			now: schedule.now,
+		})
+	) {
+		sendLeagueChatMessage(match, "LEAGUE_TIMES_PROPOSED", user.id);
+	}
+	void notify({
+		userIds: team.opponent.memberUserIds,
+		notification: {
+			type: "TO_LEAGUE_TIMES_PROPOSED",
+			meta: {
+				tournamentId,
+				matchId: match.id,
+				opponentTeamName: team.name,
+			},
+			pictureUrl: tournament.ctx.logoUrl,
+		},
+	});
+
+	return outcome;
+}
+
+async function acceptProposalAction(
+	{ tournament, user, match }: MatchActionContext,
+	body: MatchActionBodyOf<"ACCEPT_PROPOSAL">,
+): Promise<Partial<MatchActionOutcome>> {
+	const schedule = leagueSchedule(tournament, match);
+	errorToastIfFalsy(
+		schedule.phase !== "CLOSED" && schedule.phase !== "NOT_OPEN",
+		"Set can't be scheduled",
+	);
+
+	const proposal = notFoundIfNullish(
+		await TournamentMatchRepository.findScheduleProposalById(body.proposalId),
+	);
+	errorToastIfFalsy(proposal.matchId === match.id, "Not this set's candidate");
+
+	const team = leagueTeamOfUser(tournament, match, user.id);
+	const isOtherTeamsCandidate =
+		team !== null && proposal.tournamentTeamId !== team.id;
+	const isOrganizer = tournament.isOrganizer(user);
+	errorToastIfFalsy(
+		isOtherTeamsCandidate || isOrganizer,
+		"Only the other team can pick a candidate",
+	);
+	errorToastIfFalsy(
+		!match.scheduleSetByOrganizer || isOrganizer,
+		"The organizer set the time of this set",
+	);
+	errorToastIfFalsy(
+		LeagueScheduling.isAcceptableProposal({
+			proposedAt: proposal.proposedAt,
+			now: schedule.now,
+		}),
+		"The time has already passed",
+	);
+
+	const setByOrganizer = !isOtherTeamsCandidate;
+	await TournamentMatchRepository.scheduleMatch({
+		matchId: match.id,
+		scheduledAt: proposal.proposedAt,
+		setByOrganizer,
+	});
+
+	sendLeagueChatMessage(
+		match,
+		setByOrganizer ? "LEAGUE_TIME_SET_BY_ORGANIZER" : "LEAGUE_TIME_PICKED",
+		user.id,
+	);
+	await notifyLeagueMatchScheduled({
+		tournament,
+		match,
+		actorId: user.id,
+	});
+
+	return { emitMatchUpdate: true, emitTournamentUpdate: true };
+}
+
+async function rejectRescheduleAction({
+	tournament,
+	user,
+	match,
+}: MatchActionContext): Promise<Partial<MatchActionOutcome>> {
+	const team = leagueTeamOfUser(tournament, match, user.id);
+	errorToastIfFalsy(team, "Not a member of either team");
+	errorToastIfFalsy(match.scheduledAt !== null, "Set has no time yet");
+
+	const deletedCount =
+		await TournamentMatchRepository.deleteScheduleProposalsByTeam({
+			matchId: match.id,
+			tournamentTeamId: team.opponent.id,
+		});
+	if (deletedCount === 0) return {};
+
+	sendLeagueChatMessage(match, "LEAGUE_RESCHEDULE_DECLINED", user.id);
+
+	return { emitMatchUpdate: true, emitTournamentUpdate: true };
+}
+
+async function organizerSetTimeAction(
+	{ tournament, user, match }: MatchActionContext,
+	body: MatchActionBodyOf<"ORGANIZER_SET_TIME">,
+): Promise<Partial<MatchActionOutcome>> {
+	requireTournamentOrganizer(tournament, user);
+	errorToastIfFalsy(
+		leagueSchedule(tournament, match).phase !== "CLOSED",
+		"Set can't be scheduled",
+	);
+
+	await TournamentMatchRepository.scheduleMatch({
+		matchId: match.id,
+		scheduledAt: dateToDatabaseTimestamp(body.scheduledAt),
+		setByOrganizer: true,
+	});
+
+	sendLeagueChatMessage(match, "LEAGUE_TIME_SET_BY_ORGANIZER", user.id);
+	await notifyLeagueMatchScheduled({
+		tournament,
+		match,
+		actorId: user.id,
+	});
+
+	return { emitMatchUpdate: true, emitTournamentUpdate: true };
+}
+
+/** Refreshes RunningTournaments so the sidebar doesn't show stale matches while the TO delays finalizing. Returns the following match ids whose pages should revalidate. */
+async function refreshRunningTournamentStatus(
+	{ tournamentId, match }: MatchActionContext,
+	outcome: MatchActionOutcome,
+) {
+	if (!outcome.setIsOver && !outcome.emitStatusUpdate) {
+		return outcome.followingMatchIds;
+	}
+
+	const refreshedTournament = await tournamentFromDB(tournamentId);
+	const followingMatches = refreshedTournament.followingMatches(match.id);
+
+	const followingMatchIds = outcome.setIsOver
+		? // teams just advanced into following matches: their "waiting for teams" pages revalidate too
+			followingMatches.map((followingMatch) => followingMatch.id)
+		: outcome.followingMatchIds;
+
+	ChatSystemMessage.notifyStatusChanged([
+		...match.players.map((player) => player.id),
+		...followingMatches.flatMap((followingMatch) =>
+			[followingMatch.opponent1?.id, followingMatch.opponent2?.id].flatMap(
+				(teamId) =>
+					typeof teamId === "number"
+						? (refreshedTournament.teamById(teamId)?.memberUserIds ?? [])
+						: [],
+			),
+		),
+	]);
+
+	return followingMatchIds;
+}
+
+function broadcastMatchUpdates(
+	{ tournament, match, matchId }: MatchActionContext,
+	outcome: MatchActionOutcome,
+) {
+	const revalidateScope = outcome.onlyMatchResultsChanged
+		? ("MATCH_RESULTS" as const)
+		: undefined;
+
+	if (outcome.emitMatchUpdate) {
+		const otherMatchIdsToRevalidate = Array.from(
+			new Set([...outcome.endedDroppedMatchIds, ...outcome.followingMatchIds]),
+		).filter((id) => id !== matchId);
+
+		ChatSystemMessage.send([
+			{
+				channel: tournamentMatchChannel(matchId),
+				revalidateScope,
+			},
+			...otherMatchIdsToRevalidate.map((id) => ({
+				channel: tournamentMatchChannel(id),
+				revalidateScope,
+			})),
+		]);
+	}
+	if (outcome.emitTournamentUpdate) {
+		ChatSystemMessage.send([
+			{
+				channel: outcome.onlyMatchResultsChanged
+					? matchResultsRoom(tournament, match)
+					: tournamentChannel(tournament.ctx.id),
+				revalidateScope,
+			},
+		]);
+	}
+}
 
 const PROPOSAL_ERROR_MESSAGES: Record<LeagueScheduling.ProposalError, string> =
 	{

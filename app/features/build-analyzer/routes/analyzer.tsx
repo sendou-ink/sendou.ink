@@ -217,124 +217,7 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 		abilityPoints,
 		abilityPoints2,
 	};
-
-	const mainWeaponCategoryItems = [
-		analyzed.stats.shotSpreadAir ? (
-			<StatCard
-				context={context}
-				key="jumpShotSpread"
-				stat={statKeyToTuple("shotSpreadAir")}
-				title={t("analyzer:stat.jumpShotSpread")}
-				suffix="°"
-			/>
-		) : null,
-		typeof analyzed.stats.shotSpreadGround === "number" ? (
-			<StatCard
-				context={context}
-				key="groundShotSpread"
-				stat={analyzed.stats.shotSpreadGround}
-				title={t("analyzer:stat.groundShotSpread")}
-				suffix="°"
-			/>
-		) : null,
-		// Squeezer
-		analyzed.stats.shotAutofireSpreadAir ? (
-			<StatCard
-				context={context}
-				key="shotAutofireSpreadAir"
-				stat={statKeyToTuple("shotAutofireSpreadAir")}
-				title={t("analyzer:stat.shotAutofireSpreadAir")}
-				suffix="°"
-			/>
-		) : null,
-		typeof analyzed.stats.shotAutofireSpreadGround === "number" ? (
-			<StatCard
-				context={context}
-				key="shotAutofireSpreadGround"
-				stat={analyzed.stats.shotAutofireSpreadGround}
-				title={t("analyzer:stat.shotAutofireSpreadGround")}
-				suffix="°"
-			/>
-		) : null,
-
-		...INK_CONSUME_TYPES.filter(
-			(type) => analyzed.stats[`mainWeaponInkConsumptionPercentage_${type}`],
-		).map((type) => (
-			<StatCard
-				context={context}
-				key={`mainWeaponInkConsumptionPercentage_${type}`}
-				stat={statKeyToTuple(`mainWeaponInkConsumptionPercentage_${type}`)}
-				title={t(`analyzer:stat.mainWeaponInkConsumptionPercentage.${type}`)}
-				suffix="%"
-			/>
-		)),
-		analyzed.stats.mainWeaponRollSeconds ? (
-			<StatCard
-				context={context}
-				key="mainWeaponRollSeconds"
-				stat={statKeyToTuple("mainWeaponRollSeconds")}
-				title={t("analyzer:stat.mainWeaponRollSeconds")}
-				suffix={t("analyzer:suffix.seconds")}
-				popoverInfo={t("analyzer:stat.mainWeaponRollSeconds.explanation")}
-			/>
-		) : null,
-		typeof analyzed.stats.mainWeaponWhiteInkSeconds === "number" ? (
-			<StatCard
-				context={context}
-				key="whiteInkSeconds"
-				stat={analyzed.stats.mainWeaponWhiteInkSeconds}
-				title={t("analyzer:stat.whiteInk")}
-				suffix={t("analyzer:suffix.seconds")}
-			/>
-		) : null,
-		typeof analyzed.stats.mainWeaponWhiteInkSecondsHorizontalSwing ===
-		"number" ? (
-			<StatCard
-				context={context}
-				key="whiteInkSecondsHorizontalSwing"
-				stat={analyzed.stats.mainWeaponWhiteInkSecondsHorizontalSwing}
-				title={t("analyzer:stat.whiteInk.horizontalSwing")}
-				suffix={t("analyzer:suffix.seconds")}
-			/>
-		) : null,
-		typeof analyzed.stats.mainWeaponWhiteInkSecondsVerticalSwing ===
-		"number" ? (
-			<StatCard
-				context={context}
-				key="whiteInkSecondsVerticalSwing"
-				stat={analyzed.stats.mainWeaponWhiteInkSecondsVerticalSwing}
-				title={t("analyzer:stat.whiteInk.verticalSwing")}
-				suffix={t("analyzer:suffix.seconds")}
-			/>
-		) : null,
-		typeof analyzed.weapon.brellaCanopyHp === "number" ? (
-			<StatCard
-				context={context}
-				key="brellaCanopyHp"
-				stat={analyzed.weapon.brellaCanopyHp}
-				title={t("analyzer:stat.canopyHp")}
-				suffix={t("analyzer:suffix.hp")}
-			/>
-		) : null,
-		typeof analyzed.weapon.fullChargeSeconds === "number" ? (
-			<StatCard
-				context={context}
-				key="fullChargeSeconds"
-				stat={analyzed.weapon.fullChargeSeconds}
-				title={t("analyzer:stat.fullChargeSeconds")}
-				suffix={t("analyzer:suffix.seconds")}
-			/>
-		) : null,
-		typeof analyzed.weapon.maxChargeHoldSeconds === "number" ? (
-			<StatCard
-				context={context}
-				key="maxChargeHoldSeconds"
-				stat={analyzed.weapon.maxChargeHoldSeconds}
-				title={t("analyzer:stat.maxChargeHoldSeconds")}
-				suffix={t("analyzer:suffix.seconds")}
-			/>
-		) : null,
-	].filter(Boolean);
+	const statSectionProps = { analyzed, context, statKeyToTuple };
 
 	// a primary slot-only ability (e.g. Ninja Squid) or Ability Doubler alone leaves abilityPoints at 0
 	const showAbilityChunksRequired: boolean = build.some(
@@ -449,363 +332,14 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 					</div>
 				</div>
 				<div className="stack md">
-					{mainWeaponCategoryItems.length > 0 ? (
-						<StatCategory
-							title={t("analyzer:stat.category.main")}
-							summaryRightContent={
-								<div className={styles.weaponInfoBadge}>
-									<Image
-										path={mainWeaponImageUrl(mainWeaponId)}
-										width={20}
-										height={20}
-										alt={t(`weapons:MAIN_${mainWeaponId}`)}
-									/>
-									<span className={styles.weaponInfoBadgeText}>
-										{t(`weapons:MAIN_${mainWeaponId}`)}
-									</span>
-								</div>
-							}
-						>
-							{mainWeaponCategoryItems}
-						</StatCategory>
-					) : null}
+					<MainWeaponStatCategory {...statSectionProps} />
 
-					<StatCategory
-						title={t("analyzer:stat.category.sub")}
-						summaryRightContent={
-							<div className={styles.weaponInfoBadge}>
-								<SubWeaponImage
-									subWeaponId={analyzed.weapon.subWeaponSplId}
-									size={20}
-								/>
-								{t(`weapons:SUB_${analyzed.weapon.subWeaponSplId}`)}
-							</div>
-						}
-					>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("subWeaponInkConsumptionPercentage")}
-							title={t("analyzer:stat.subWeaponInkConsumptionPercentage")}
-							suffix="%"
-						/>
-						<StatCard
-							context={context}
-							stat={analyzed.stats.subWeaponWhiteInkSeconds}
-							title={t("analyzer:stat.whiteInk")}
-							suffix={t("analyzer:suffix.seconds")}
-						/>
-						{analyzed.stats.subVelocity ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("subVelocity")}
-								title={t("analyzer:stat.sub.velocity")}
-							/>
-						) : null}
-						{analyzed.stats.subFirstPhaseDuration ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("subFirstPhaseDuration")}
-								title={t("analyzer:stat.sub.firstPhaseDuration")}
-								suffix={t("analyzer:suffix.seconds")}
-							/>
-						) : null}
-						{analyzed.stats.subSecondPhaseDuration ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("subSecondPhaseDuration")}
-								title={t("analyzer:stat.sub.secondPhaseDuration")}
-								suffix={t("analyzer:suffix.seconds")}
-							/>
-						) : null}
-						{analyzed.stats.subMarkingTimeInSeconds ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("subMarkingTimeInSeconds")}
-								title={t("analyzer:stat.sub.markingTimeInSeconds")}
-								suffix={t("analyzer:suffix.seconds")}
-							/>
-						) : null}
-						{analyzed.stats.subMarkingRadius ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("subMarkingRadius")}
-								title={t("analyzer:stat.sub.markingRadius")}
-							/>
-						) : null}
-						{analyzed.stats.subExplosionRadius ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("subExplosionRadius")}
-								title={t("analyzer:stat.sub.explosionRadius")}
-							/>
-						) : null}
-						{analyzed.stats.subHp ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("subHp")}
-								title={t("analyzer:stat.sub.hp")}
-								suffix={t("analyzer:suffix.hp")}
-							/>
-						) : null}
-						{analyzed.stats.subQsjBoost ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("subQsjBoost")}
-								title={t("analyzer:stat.sub.qsjBoost")}
-								suffix={t("analyzer:abilityPoints.short")}
-							/>
-						) : null}
-					</StatCategory>
+					<SubWeaponStatCategory {...statSectionProps} />
 
-					<StatCategory
-						title={t("analyzer:stat.category.special")}
-						summaryRightContent={
-							<div className={styles.weaponInfoBadge}>
-								<SpecialWeaponImage
-									specialWeaponId={analyzed.weapon.specialWeaponSplId}
-									size={20}
-								/>
-								{t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`)}
-							</div>
-						}
-						textBelow={
-							analyzed.weapon.specialWeaponSplId === BIG_BUBBLER_ID
-								? t("analyzer:bigBubblerExplanation", {
-										weapon: t(
-											`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-										),
-									})
-								: undefined
-						}
-					>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("specialPoint")}
-							title={t("analyzer:stat.specialPoints")}
-							suffix={t("analyzer:suffix.specialPointsShort")}
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("specialLost")}
-							title={t("analyzer:stat.specialLost")}
-							suffix="%"
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("specialLostSplattedByRP")}
-							title={t("analyzer:stat.specialLostSplattedByRP")}
-							suffix="%"
-						/>
-						{tenacitySecondsToSpecial
-							? TENACITY_PLAYER_DEFICITS.map((playerDeficit) => (
-									<StatCard
-										key={`tenacitySecondsToSpecial-${playerDeficit}`}
-										context={context}
-										stat={tenacitySecondsToSpecial[playerDeficit]}
-										title={t("analyzer:stat.tenacitySecondsToSpecial", {
-											count: playerDeficit,
-										})}
-										suffix={t("analyzer:suffix.seconds")}
-										staticValueAbility="T"
-										popoverInfo={t(
-											"analyzer:stat.tenacitySecondsToSpecial.explanation",
-											{
-												teamPlayerCount: FULL_GROUP_SIZE - playerDeficit,
-												opponentPlayerCount: FULL_GROUP_SIZE,
-											},
-										)}
-									/>
-								))
-							: null}
-						{analyzed.stats.specialDurationInSeconds ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialDurationInSeconds")}
-								title={t("analyzer:stat.special.duration", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-								suffix={t("analyzer:suffix.seconds")}
-								popoverInfo={
-									analyzed.weapon.specialWeaponSplId === INK_STORM_ID
-										? t("analyzer:stat.special.duration.inkStormExplanation")
-										: analyzed.weapon.specialWeaponSplId === KILLER_WAIL_ID
-											? t("analyzer:stat.special.duration.killerWail")
-											: undefined
-								}
-							/>
-						) : null}
-						{analyzed.stats.specialDamageDistance ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialDamageDistance")}
-								title={t(
-									specialHasLethalDamageDistance(
-										analyzed.stats.specialWeaponDamages,
-									)
-										? "analyzer:stat.special.nonLethalDamageDistance"
-										: "analyzer:stat.special.damageDistance",
-									{
-										weapon: t(
-											`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-										),
-									},
-								)}
-							/>
-						) : null}
-						{analyzed.stats.specialPaintRadius ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialPaintRadius")}
-								title={t("analyzer:stat.special.paintRadius", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-							/>
-						) : null}
-						{analyzed.stats.specialFieldHp ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialFieldHp")}
-								title={t("analyzer:stat.special.shieldHp", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-								suffix={t("analyzer:suffix.hp")}
-							/>
-						) : null}
-						{analyzed.stats.specialDeviceHp ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialDeviceHp")}
-								title={t("analyzer:stat.special.deviceHp", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-								suffix={t("analyzer:suffix.hp")}
-							/>
-						) : null}
-						{analyzed.stats.specialHookInkConsumptionPercentage ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialHookInkConsumptionPercentage")}
-								title={t("analyzer:stat.special.inkConsumptionHook", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-								suffix="%"
-							/>
-						) : null}
-						{analyzed.stats.specialInkConsumptionPerSecondPercentage ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple(
-									"specialInkConsumptionPerSecondPercentage",
-								)}
-								title={t("analyzer:stat.special.inkConsumptionPerSecond", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-								suffix="%"
-							/>
-						) : null}
-						{analyzed.stats.specialReticleRadius ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialReticleRadius")}
-								title={t("analyzer:stat.special.reticleRadius", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-							/>
-						) : null}
-						{analyzed.stats.specialThrowDistance ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialThrowDistance")}
-								title={t("analyzer:stat.special.throwDistance", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-							/>
-						) : null}
-						{analyzed.stats.specialMoveSpeed ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialMoveSpeed")}
-								title={t("analyzer:stat.special.moveSpeed", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-							/>
-						) : null}
-						{analyzed.stats.specialAutoChargeRate ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialAutoChargeRate")}
-								title={t("analyzer:stat.special.autoChargeRate", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-							/>
-						) : null}
-						{analyzed.stats.specialMaxRadius ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialMaxRadius")}
-								title={t("analyzer:stat.special.maxRadius", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-								popoverInfo={t("analyzer:stat.special.maxRadius.explanation")}
-							/>
-						) : null}
-						{analyzed.stats.specialRadiusRangeMin ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialRadiusRangeMin")}
-								title={t("analyzer:stat.special.radiusRangeMin", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-							/>
-						) : null}
-						{analyzed.stats.specialRadiusRangeMax ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialRadiusRangeMax")}
-								title={t("analyzer:stat.special.radiusRangeMax", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-							/>
-						) : null}
-						{analyzed.stats.specialPowerUpDuration ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("specialPowerUpDuration")}
-								title={t("analyzer:stat.special.powerUpDuration", {
-									weapon: t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									),
-								})}
-								suffix={t("analyzer:suffix.seconds")}
-							/>
-						) : null}
-					</StatCategory>
+					<SpecialWeaponStatCategory
+						{...statSectionProps}
+						tenacitySecondsToSpecial={tenacitySecondsToSpecial}
+					/>
 					<StatCategory
 						title={t("analyzer:stat.category.subDef")}
 						textBelow={t("analyzer:trackingSubDefExplanation")}
@@ -927,98 +461,7 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 						</StatCategory>
 					) : null}
 
-					<StatCategory
-						title={t("analyzer:stat.category.movement")}
-						testId="movement-category"
-					>
-						<StatCard
-							context={context}
-							title={t("analyzer:attribute.weight")}
-							stat={t(`analyzer:attribute.weight.${analyzed.weapon.speedType}`)}
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("swimSpeed")}
-							title={t("analyzer:stat.swimSpeed")}
-							testId="swim-speed"
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("swimSpeedHoldingRainmaker")}
-							title={t("analyzer:stat.swimSpeedHoldingRainmaker")}
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("runSpeed")}
-							title={t("analyzer:stat.runSpeed")}
-						/>
-						{analyzed.stats.shootingRunSpeed ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("shootingRunSpeed")}
-								title={t("analyzer:stat.shootingRunSpeed")}
-							/>
-						) : null}
-						{analyzed.stats.shootingRunSpeedCharging ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("shootingRunSpeedCharging")}
-								title={t("analyzer:stat.shootingRunSpeedCharging")}
-							/>
-						) : null}
-						{analyzed.stats.shootingRunSpeedFullCharge ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("shootingRunSpeedFullCharge")}
-								title={t("analyzer:stat.shootingRunSpeedFullCharge")}
-							/>
-						) : null}
-						{analyzed.stats.shootingRunSpeedSecondaryMode ? (
-							<StatCard
-								context={context}
-								stat={statKeyToTuple("shootingRunSpeedSecondaryMode")}
-								title={t("analyzer:stat.shootingRunSpeedSecondaryMode")}
-							/>
-						) : null}
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("squidSurgeChargeFrames")}
-							title={t("analyzer:stat.squidSurgeChargeFrames")}
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("squidRollSpeedRetained")}
-							title={t("analyzer:stat.squidRollSpeedRetained")}
-							suffix="%"
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("runSpeedInEnemyInk")}
-							title={t("analyzer:stat.runSpeedInEnemyInk")}
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("jumpHeightInEnemyInk")}
-							title={t("analyzer:stat.jumpHeightInEnemyInk")}
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("framesBeforeTakingDamageInEnemyInk")}
-							title={t("analyzer:stat.framesBeforeTakingDamageInEnemyInk")}
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("damageTakenInEnemyInkPerSecond")}
-							title={t("analyzer:stat.damageTakenInEnemyInkPerSecond")}
-							suffix={t("analyzer:suffix.hp")}
-						/>
-						<StatCard
-							context={context}
-							stat={statKeyToTuple("enemyInkDamageLimit")}
-							title={t("analyzer:stat.enemyInkDamageLimit")}
-							suffix={t("analyzer:suffix.hp")}
-						/>
-					</StatCategory>
+					<MovementStatCategory {...statSectionProps} />
 
 					<StatCategory title={t("analyzer:stat.category.misc")}>
 						<StatCard
@@ -1112,6 +555,595 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 				</div>
 			</div>
 		</Main>
+	);
+}
+
+interface StatSectionProps {
+	analyzed: AnalyzedBuild;
+	context: StatCardContext;
+	statKeyToTuple: (key: keyof AnalyzedBuild["stats"]) => StatTuple;
+}
+
+type StatCardContext = React.ComponentProps<typeof StatCard>["context"];
+
+function MainWeaponStatCategory({
+	analyzed,
+	context,
+	statKeyToTuple,
+}: StatSectionProps) {
+	const { t } = useTranslation(["analyzer", "weapons"]);
+	const { mainWeaponId } = context;
+
+	const mainWeaponCategoryItems = [
+		analyzed.stats.shotSpreadAir ? (
+			<StatCard
+				context={context}
+				key="jumpShotSpread"
+				stat={statKeyToTuple("shotSpreadAir")}
+				title={t("analyzer:stat.jumpShotSpread")}
+				suffix="°"
+			/>
+		) : null,
+		typeof analyzed.stats.shotSpreadGround === "number" ? (
+			<StatCard
+				context={context}
+				key="groundShotSpread"
+				stat={analyzed.stats.shotSpreadGround}
+				title={t("analyzer:stat.groundShotSpread")}
+				suffix="°"
+			/>
+		) : null,
+		// Squeezer
+		analyzed.stats.shotAutofireSpreadAir ? (
+			<StatCard
+				context={context}
+				key="shotAutofireSpreadAir"
+				stat={statKeyToTuple("shotAutofireSpreadAir")}
+				title={t("analyzer:stat.shotAutofireSpreadAir")}
+				suffix="°"
+			/>
+		) : null,
+		typeof analyzed.stats.shotAutofireSpreadGround === "number" ? (
+			<StatCard
+				context={context}
+				key="shotAutofireSpreadGround"
+				stat={analyzed.stats.shotAutofireSpreadGround}
+				title={t("analyzer:stat.shotAutofireSpreadGround")}
+				suffix="°"
+			/>
+		) : null,
+
+		...INK_CONSUME_TYPES.filter(
+			(type) => analyzed.stats[`mainWeaponInkConsumptionPercentage_${type}`],
+		).map((type) => (
+			<StatCard
+				context={context}
+				key={`mainWeaponInkConsumptionPercentage_${type}`}
+				stat={statKeyToTuple(`mainWeaponInkConsumptionPercentage_${type}`)}
+				title={t(`analyzer:stat.mainWeaponInkConsumptionPercentage.${type}`)}
+				suffix="%"
+			/>
+		)),
+		analyzed.stats.mainWeaponRollSeconds ? (
+			<StatCard
+				context={context}
+				key="mainWeaponRollSeconds"
+				stat={statKeyToTuple("mainWeaponRollSeconds")}
+				title={t("analyzer:stat.mainWeaponRollSeconds")}
+				suffix={t("analyzer:suffix.seconds")}
+				popoverInfo={t("analyzer:stat.mainWeaponRollSeconds.explanation")}
+			/>
+		) : null,
+		typeof analyzed.stats.mainWeaponWhiteInkSeconds === "number" ? (
+			<StatCard
+				context={context}
+				key="whiteInkSeconds"
+				stat={analyzed.stats.mainWeaponWhiteInkSeconds}
+				title={t("analyzer:stat.whiteInk")}
+				suffix={t("analyzer:suffix.seconds")}
+			/>
+		) : null,
+		typeof analyzed.stats.mainWeaponWhiteInkSecondsHorizontalSwing ===
+		"number" ? (
+			<StatCard
+				context={context}
+				key="whiteInkSecondsHorizontalSwing"
+				stat={analyzed.stats.mainWeaponWhiteInkSecondsHorizontalSwing}
+				title={t("analyzer:stat.whiteInk.horizontalSwing")}
+				suffix={t("analyzer:suffix.seconds")}
+			/>
+		) : null,
+		typeof analyzed.stats.mainWeaponWhiteInkSecondsVerticalSwing ===
+		"number" ? (
+			<StatCard
+				context={context}
+				key="whiteInkSecondsVerticalSwing"
+				stat={analyzed.stats.mainWeaponWhiteInkSecondsVerticalSwing}
+				title={t("analyzer:stat.whiteInk.verticalSwing")}
+				suffix={t("analyzer:suffix.seconds")}
+			/>
+		) : null,
+		typeof analyzed.weapon.brellaCanopyHp === "number" ? (
+			<StatCard
+				context={context}
+				key="brellaCanopyHp"
+				stat={analyzed.weapon.brellaCanopyHp}
+				title={t("analyzer:stat.canopyHp")}
+				suffix={t("analyzer:suffix.hp")}
+			/>
+		) : null,
+		typeof analyzed.weapon.fullChargeSeconds === "number" ? (
+			<StatCard
+				context={context}
+				key="fullChargeSeconds"
+				stat={analyzed.weapon.fullChargeSeconds}
+				title={t("analyzer:stat.fullChargeSeconds")}
+				suffix={t("analyzer:suffix.seconds")}
+			/>
+		) : null,
+		typeof analyzed.weapon.maxChargeHoldSeconds === "number" ? (
+			<StatCard
+				context={context}
+				key="maxChargeHoldSeconds"
+				stat={analyzed.weapon.maxChargeHoldSeconds}
+				title={t("analyzer:stat.maxChargeHoldSeconds")}
+				suffix={t("analyzer:suffix.seconds")}
+			/>
+		) : null,
+	].filter(Boolean);
+
+	if (mainWeaponCategoryItems.length === 0) return null;
+
+	return (
+		<StatCategory
+			title={t("analyzer:stat.category.main")}
+			summaryRightContent={
+				<div className={styles.weaponInfoBadge}>
+					<Image
+						path={mainWeaponImageUrl(mainWeaponId)}
+						width={20}
+						height={20}
+						alt={t(`weapons:MAIN_${mainWeaponId}`)}
+					/>
+					<span className={styles.weaponInfoBadgeText}>
+						{t(`weapons:MAIN_${mainWeaponId}`)}
+					</span>
+				</div>
+			}
+		>
+			{mainWeaponCategoryItems}
+		</StatCategory>
+	);
+}
+
+function SubWeaponStatCategory({
+	analyzed,
+	context,
+	statKeyToTuple,
+}: StatSectionProps) {
+	const { t } = useTranslation(["analyzer", "weapons"]);
+
+	return (
+		<StatCategory
+			title={t("analyzer:stat.category.sub")}
+			summaryRightContent={
+				<div className={styles.weaponInfoBadge}>
+					<SubWeaponImage
+						subWeaponId={analyzed.weapon.subWeaponSplId}
+						size={20}
+					/>
+					{t(`weapons:SUB_${analyzed.weapon.subWeaponSplId}`)}
+				</div>
+			}
+		>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("subWeaponInkConsumptionPercentage")}
+				title={t("analyzer:stat.subWeaponInkConsumptionPercentage")}
+				suffix="%"
+			/>
+			<StatCard
+				context={context}
+				stat={analyzed.stats.subWeaponWhiteInkSeconds}
+				title={t("analyzer:stat.whiteInk")}
+				suffix={t("analyzer:suffix.seconds")}
+			/>
+			{analyzed.stats.subVelocity ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("subVelocity")}
+					title={t("analyzer:stat.sub.velocity")}
+				/>
+			) : null}
+			{analyzed.stats.subFirstPhaseDuration ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("subFirstPhaseDuration")}
+					title={t("analyzer:stat.sub.firstPhaseDuration")}
+					suffix={t("analyzer:suffix.seconds")}
+				/>
+			) : null}
+			{analyzed.stats.subSecondPhaseDuration ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("subSecondPhaseDuration")}
+					title={t("analyzer:stat.sub.secondPhaseDuration")}
+					suffix={t("analyzer:suffix.seconds")}
+				/>
+			) : null}
+			{analyzed.stats.subMarkingTimeInSeconds ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("subMarkingTimeInSeconds")}
+					title={t("analyzer:stat.sub.markingTimeInSeconds")}
+					suffix={t("analyzer:suffix.seconds")}
+				/>
+			) : null}
+			{analyzed.stats.subMarkingRadius ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("subMarkingRadius")}
+					title={t("analyzer:stat.sub.markingRadius")}
+				/>
+			) : null}
+			{analyzed.stats.subExplosionRadius ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("subExplosionRadius")}
+					title={t("analyzer:stat.sub.explosionRadius")}
+				/>
+			) : null}
+			{analyzed.stats.subHp ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("subHp")}
+					title={t("analyzer:stat.sub.hp")}
+					suffix={t("analyzer:suffix.hp")}
+				/>
+			) : null}
+			{analyzed.stats.subQsjBoost ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("subQsjBoost")}
+					title={t("analyzer:stat.sub.qsjBoost")}
+					suffix={t("analyzer:abilityPoints.short")}
+				/>
+			) : null}
+		</StatCategory>
+	);
+}
+
+function SpecialWeaponStatCategory({
+	analyzed,
+	context,
+	statKeyToTuple,
+	tenacitySecondsToSpecial,
+}: StatSectionProps & {
+	tenacitySecondsToSpecial: AnalyzedBuild["stats"]["tenacitySecondsToSpecial"];
+}) {
+	const { t } = useTranslation(["analyzer", "weapons"]);
+
+	return (
+		<StatCategory
+			title={t("analyzer:stat.category.special")}
+			summaryRightContent={
+				<div className={styles.weaponInfoBadge}>
+					<SpecialWeaponImage
+						specialWeaponId={analyzed.weapon.specialWeaponSplId}
+						size={20}
+					/>
+					{t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`)}
+				</div>
+			}
+			textBelow={
+				analyzed.weapon.specialWeaponSplId === BIG_BUBBLER_ID
+					? t("analyzer:bigBubblerExplanation", {
+							weapon: t(
+								`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
+							),
+						})
+					: undefined
+			}
+		>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("specialPoint")}
+				title={t("analyzer:stat.specialPoints")}
+				suffix={t("analyzer:suffix.specialPointsShort")}
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("specialLost")}
+				title={t("analyzer:stat.specialLost")}
+				suffix="%"
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("specialLostSplattedByRP")}
+				title={t("analyzer:stat.specialLostSplattedByRP")}
+				suffix="%"
+			/>
+			{tenacitySecondsToSpecial
+				? TENACITY_PLAYER_DEFICITS.map((playerDeficit) => (
+						<StatCard
+							key={`tenacitySecondsToSpecial-${playerDeficit}`}
+							context={context}
+							stat={tenacitySecondsToSpecial[playerDeficit]}
+							title={t("analyzer:stat.tenacitySecondsToSpecial", {
+								count: playerDeficit,
+							})}
+							suffix={t("analyzer:suffix.seconds")}
+							staticValueAbility="T"
+							popoverInfo={t(
+								"analyzer:stat.tenacitySecondsToSpecial.explanation",
+								{
+									teamPlayerCount: FULL_GROUP_SIZE - playerDeficit,
+									opponentPlayerCount: FULL_GROUP_SIZE,
+								},
+							)}
+						/>
+					))
+				: null}
+			{analyzed.stats.specialDurationInSeconds ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialDurationInSeconds")}
+					title={t("analyzer:stat.special.duration", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+					suffix={t("analyzer:suffix.seconds")}
+					popoverInfo={
+						analyzed.weapon.specialWeaponSplId === INK_STORM_ID
+							? t("analyzer:stat.special.duration.inkStormExplanation")
+							: analyzed.weapon.specialWeaponSplId === KILLER_WAIL_ID
+								? t("analyzer:stat.special.duration.killerWail")
+								: undefined
+					}
+				/>
+			) : null}
+			{analyzed.stats.specialDamageDistance ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialDamageDistance")}
+					title={t(
+						specialHasLethalDamageDistance(analyzed.stats.specialWeaponDamages)
+							? "analyzer:stat.special.nonLethalDamageDistance"
+							: "analyzer:stat.special.damageDistance",
+						{
+							weapon: t(
+								`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
+							),
+						},
+					)}
+				/>
+			) : null}
+			{analyzed.stats.specialPaintRadius ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialPaintRadius")}
+					title={t("analyzer:stat.special.paintRadius", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+				/>
+			) : null}
+			{analyzed.stats.specialFieldHp ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialFieldHp")}
+					title={t("analyzer:stat.special.shieldHp", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+					suffix={t("analyzer:suffix.hp")}
+				/>
+			) : null}
+			{analyzed.stats.specialDeviceHp ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialDeviceHp")}
+					title={t("analyzer:stat.special.deviceHp", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+					suffix={t("analyzer:suffix.hp")}
+				/>
+			) : null}
+			{analyzed.stats.specialHookInkConsumptionPercentage ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialHookInkConsumptionPercentage")}
+					title={t("analyzer:stat.special.inkConsumptionHook", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+					suffix="%"
+				/>
+			) : null}
+			{analyzed.stats.specialInkConsumptionPerSecondPercentage ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialInkConsumptionPerSecondPercentage")}
+					title={t("analyzer:stat.special.inkConsumptionPerSecond", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+					suffix="%"
+				/>
+			) : null}
+			{analyzed.stats.specialReticleRadius ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialReticleRadius")}
+					title={t("analyzer:stat.special.reticleRadius", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+				/>
+			) : null}
+			{analyzed.stats.specialThrowDistance ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialThrowDistance")}
+					title={t("analyzer:stat.special.throwDistance", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+				/>
+			) : null}
+			{analyzed.stats.specialMoveSpeed ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialMoveSpeed")}
+					title={t("analyzer:stat.special.moveSpeed", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+				/>
+			) : null}
+			{analyzed.stats.specialAutoChargeRate ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialAutoChargeRate")}
+					title={t("analyzer:stat.special.autoChargeRate", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+				/>
+			) : null}
+			{analyzed.stats.specialMaxRadius ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialMaxRadius")}
+					title={t("analyzer:stat.special.maxRadius", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+					popoverInfo={t("analyzer:stat.special.maxRadius.explanation")}
+				/>
+			) : null}
+			{analyzed.stats.specialRadiusRangeMin ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialRadiusRangeMin")}
+					title={t("analyzer:stat.special.radiusRangeMin", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+				/>
+			) : null}
+			{analyzed.stats.specialRadiusRangeMax ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialRadiusRangeMax")}
+					title={t("analyzer:stat.special.radiusRangeMax", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+				/>
+			) : null}
+			{analyzed.stats.specialPowerUpDuration ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("specialPowerUpDuration")}
+					title={t("analyzer:stat.special.powerUpDuration", {
+						weapon: t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`),
+					})}
+					suffix={t("analyzer:suffix.seconds")}
+				/>
+			) : null}
+		</StatCategory>
+	);
+}
+
+function MovementStatCategory({
+	analyzed,
+	context,
+	statKeyToTuple,
+}: StatSectionProps) {
+	const { t } = useTranslation(["analyzer", "weapons"]);
+
+	return (
+		<StatCategory
+			title={t("analyzer:stat.category.movement")}
+			testId="movement-category"
+		>
+			<StatCard
+				context={context}
+				title={t("analyzer:attribute.weight")}
+				stat={t(`analyzer:attribute.weight.${analyzed.weapon.speedType}`)}
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("swimSpeed")}
+				title={t("analyzer:stat.swimSpeed")}
+				testId="swim-speed"
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("swimSpeedHoldingRainmaker")}
+				title={t("analyzer:stat.swimSpeedHoldingRainmaker")}
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("runSpeed")}
+				title={t("analyzer:stat.runSpeed")}
+			/>
+			{analyzed.stats.shootingRunSpeed ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("shootingRunSpeed")}
+					title={t("analyzer:stat.shootingRunSpeed")}
+				/>
+			) : null}
+			{analyzed.stats.shootingRunSpeedCharging ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("shootingRunSpeedCharging")}
+					title={t("analyzer:stat.shootingRunSpeedCharging")}
+				/>
+			) : null}
+			{analyzed.stats.shootingRunSpeedFullCharge ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("shootingRunSpeedFullCharge")}
+					title={t("analyzer:stat.shootingRunSpeedFullCharge")}
+				/>
+			) : null}
+			{analyzed.stats.shootingRunSpeedSecondaryMode ? (
+				<StatCard
+					context={context}
+					stat={statKeyToTuple("shootingRunSpeedSecondaryMode")}
+					title={t("analyzer:stat.shootingRunSpeedSecondaryMode")}
+				/>
+			) : null}
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("squidSurgeChargeFrames")}
+				title={t("analyzer:stat.squidSurgeChargeFrames")}
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("squidRollSpeedRetained")}
+				title={t("analyzer:stat.squidRollSpeedRetained")}
+				suffix="%"
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("runSpeedInEnemyInk")}
+				title={t("analyzer:stat.runSpeedInEnemyInk")}
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("jumpHeightInEnemyInk")}
+				title={t("analyzer:stat.jumpHeightInEnemyInk")}
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("framesBeforeTakingDamageInEnemyInk")}
+				title={t("analyzer:stat.framesBeforeTakingDamageInEnemyInk")}
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("damageTakenInEnemyInkPerSecond")}
+				title={t("analyzer:stat.damageTakenInEnemyInkPerSecond")}
+				suffix={t("analyzer:suffix.hp")}
+			/>
+			<StatCard
+				context={context}
+				stat={statKeyToTuple("enemyInkDamageLimit")}
+				title={t("analyzer:stat.enemyInkDamageLimit")}
+				suffix={t("analyzer:suffix.hp")}
+			/>
+		</StatCategory>
 	);
 }
 

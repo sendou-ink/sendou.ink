@@ -164,23 +164,14 @@ export function SendouSelect<T extends object>({
 	const hiddenAriaLabelId =
 		label && ariaLabel ? `${uid}-select-aria-label` : undefined;
 
-	const [isControlled] = React.useState(selectedKey !== undefined);
-	const [uncontrolledKey, setUncontrolledKey] =
-		React.useState<SelectKey | null>(defaultSelectedKey ?? null);
-	const currentKey = isControlled ? (selectedKey ?? null) : uncontrolledKey;
-
-	const isSearchControlled = !!onSearchInputChange;
-	const [uncontrolledSearch, setUncontrolledSearch] = React.useState("");
-	const searchValue = isSearchControlled
-		? (searchInputValue ?? "")
-		: uncontrolledSearch;
-	const setSearchValue = (value: string) => {
-		if (isSearchControlled) {
-			onSearchInputChange(value);
-		} else {
-			setUncontrolledSearch(value);
-		}
-	};
+	const { isControlled, currentKey, setUncontrolledKey } = useSelectedKey(
+		selectedKey,
+		defaultSelectedKey,
+	);
+	const { isSearchControlled, searchValue, setSearchValue } = useSearchValue(
+		searchInputValue,
+		onSearchInputChange,
+	);
 
 	const [open, setOpenState] = React.useState(false);
 
@@ -464,12 +455,10 @@ export function SendouSelect<T extends object>({
 		unresolvedSelectionContent,
 		unresolvedSelectionContent,
 	);
-	const selectedContent =
-		selectedItemContent !== undefined
-			? selectedItemContent
-			: registeredSelection
-				? (registeredSelection.getContent() ?? registeredSelection.textValue)
-				: undefined;
+	const selectedContent = resolveSelectedContent(
+		selectedItemContent,
+		registeredSelection,
+	);
 
 	return (
 		<div
@@ -506,13 +495,11 @@ export function SendouSelect<T extends object>({
 				aria-haspopup="listbox"
 				aria-expanded={open}
 				aria-label={label ? undefined : ariaLabel}
-				aria-labelledby={
-					labelId
-						? hiddenAriaLabelId
-							? `${labelId} ${hiddenAriaLabelId} ${valueId}`
-							: `${valueId} ${labelId}`
-						: undefined
-				}
+				aria-labelledby={triggerLabelledBy({
+					labelId,
+					hiddenAriaLabelId,
+					valueId,
+				})}
 				data-required={isRequired || undefined}
 				{...popoverTriggerProps}
 				onClick={onTriggerClick}
@@ -588,6 +575,63 @@ export function SendouSelect<T extends object>({
 			</div>
 		</div>
 	);
+}
+
+function useSelectedKey(
+	selectedKey: SelectKey | null | undefined,
+	defaultSelectedKey: SelectKey | null | undefined,
+) {
+	const [isControlled] = React.useState(selectedKey !== undefined);
+	const [uncontrolledKey, setUncontrolledKey] =
+		React.useState<SelectKey | null>(defaultSelectedKey ?? null);
+	const currentKey = isControlled ? (selectedKey ?? null) : uncontrolledKey;
+
+	return { isControlled, currentKey, setUncontrolledKey };
+}
+
+function useSearchValue(
+	searchInputValue: string | undefined,
+	onSearchInputChange: ((value: string) => void) | undefined,
+) {
+	const isSearchControlled = !!onSearchInputChange;
+	const [uncontrolledSearch, setUncontrolledSearch] = React.useState("");
+	const searchValue = isSearchControlled
+		? (searchInputValue ?? "")
+		: uncontrolledSearch;
+	const setSearchValue = (value: string) => {
+		if (isSearchControlled) {
+			onSearchInputChange(value);
+		} else {
+			setUncontrolledSearch(value);
+		}
+	};
+
+	return { isSearchControlled, searchValue, setSearchValue };
+}
+
+function resolveSelectedContent(
+	selectedItemContent: React.ReactNode | undefined,
+	registeredSelection: RegisteredContent | undefined,
+) {
+	if (selectedItemContent !== undefined) return selectedItemContent;
+	if (!registeredSelection) return undefined;
+
+	return registeredSelection.getContent() ?? registeredSelection.textValue;
+}
+
+function triggerLabelledBy({
+	labelId,
+	hiddenAriaLabelId,
+	valueId,
+}: {
+	labelId: string | undefined;
+	hiddenAriaLabelId: string | undefined;
+	valueId: string;
+}) {
+	if (!labelId) return undefined;
+	if (hiddenAriaLabelId) return `${labelId} ${hiddenAriaLabelId} ${valueId}`;
+
+	return `${valueId} ${labelId}`;
 }
 
 function assignRef<T>(ref: React.Ref<T> | undefined, value: T | null) {

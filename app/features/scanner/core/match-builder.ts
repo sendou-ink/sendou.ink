@@ -84,6 +84,7 @@ import {
 	IDENTITY_PERMUTATION,
 	nameSlotRowPermutation,
 	rowByName,
+	type SlotRowEvidence,
 	type SlotRowPermutation,
 	slotRowPermutation,
 	type StatusObservation,
@@ -196,6 +197,15 @@ const HISTORY_SCOREBOARD_EVENT_TYPES: readonly string[] = [
 	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
 ];
 
+/** Which accumulated list each gameplay read joins, on the open match or as an orphan. */
+const GAMEPLAY_READ_LISTS = new Map<string, keyof OrphanReads<DetectedEvent>>([
+	[DEATH_EVENT_TYPE, "deaths"],
+	[OBJECTIVE_EVENT_TYPE, "objectives"],
+	[PLAYER_STATUS_EVENT_TYPE, "playerStatuses"],
+	[STRIP_WEAPONS_EVENT_TYPE, "stripWeapons"],
+	[KILL_EVENT_TYPE, "kills"],
+]);
+
 /**
  * Paint totals two boards must share to show the same game: tolerates a couple
  * of misread or unread rows, while different games practically never share this many.
@@ -269,199 +279,285 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	{ unbacked = false }: { unbacked?: boolean } = {},
 ): BuiltMatch<E>[] {
 	const sorted = events.toSorted((a, b) => a.t - b.t);
-	const built: BuiltMatch<E>[] = [];
-	const unbackedBuilt: BuiltMatch<E>[] = [];
-	const minimapLookahead = buildMinimapLookahead(sorted);
-
-	let open: OpenMatch<E> | null = null;
-	let lastHistoryScreen: E | null = null;
-	// matches finalized without a scoreboard, which a history screen may still complete
-	const scoreboardless = new Map<BuiltMatch<E>, OpenMatch<E>>();
-	// deaths/objective/status reads seen with no match open to anchor them yet
-	let orphanDeaths: E[] = [];
-	let orphanObjectives: E[] = [];
-	let orphanPlayerStatuses: E[] = [];
-	let orphanStripWeapons: E[] = [];
-	let orphanKills: E[] = [];
-	let orphanXBattleCards: E[] = [];
-	const finalize = (): void => {
-		if (!open) return;
-		if (isBacked(open)) {
-			const match = cachedBuiltMatch(open, cache);
-			built.push(match);
-			if (open.scoreboard === null) scoreboardless.set(match, open);
-		} else if (unbacked && open.kills.length > 0) {
-			unbackedBuilt.push(cachedBuiltMatch(open, cache));
-		}
-		open = null;
-	};
-	const claimOrphans = (t: number): OpenMatch<E> => {
-		const withinWindow = (read: E) => t - read.t <= FALLBACK_WINDOW_SECONDS;
-		return {
-			...startMatch(),
-			deaths: orphanDeaths.filter(withinWindow),
-			objectives: orphanObjectives.filter(withinWindow),
-			playerStatuses: orphanPlayerStatuses.filter(withinWindow),
-			stripWeapons: orphanStripWeapons.filter(withinWindow),
-			kills: orphanKills.filter(withinWindow),
-			xBattleCards: orphanXBattleCards.filter(
-				(card) => t - card.t <= X_BATTLE_CARDS_WINDOW_SECONDS,
-			),
-		};
-	};
-	// orphan reads no scoreboard claimed are left behind
-	const dropOrphans = (): void => {
-		if (unbacked && orphanKills.length > 0) {
-			unbackedBuilt.push(
-				cachedBuiltMatch(
-					{ ...startMatch(), deaths: orphanDeaths, kills: orphanKills },
-					cache,
-				),
-			);
-		}
-		orphanDeaths = [];
-		orphanObjectives = [];
-		orphanPlayerStatuses = [];
-		orphanStripWeapons = [];
-		orphanKills = [];
-		orphanXBattleCards = [];
+	const walk: TimelineWalk<E> = {
+		cache,
+		unbacked,
+		minimapLookahead: buildMinimapLookahead(sorted),
+		built: [],
+		unbackedBuilt: [],
+		open: null,
+		lastHistoryScreen: null,
+		scoreboardless: new Map(),
+		orphans: noOrphanReads(),
 	};
 
 	for (const event of sorted) {
-		if (event.type === MAP_START_EVENT_TYPE) {
-			// a new match intro abandons any match whose scoreboard was missed
-			finalize();
-			dropOrphans();
-			open = startMatch();
-			open.mapStart = event;
-			vote(open.stageVotes, (event.data as MapStartData).stage);
-			const replayed = replayedHistoryMatch(built, lastHistoryScreen, event);
-			if (replayed) {
-				built.splice(built.indexOf(replayed), 1);
-				const [board, ...revisits] = replayed.sources;
-				open.scoreboard = board!;
-				open.revisits = revisits;
-				vote(open.stageVotes, (board.data as ScoreboardData).stage);
-			}
-		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-			if ((event.data as ScoreboardData).noContest) {
-				// ended undecided: the game being gathered has no result to keep
-				open = null;
-				dropOrphans();
-				continue;
-			}
-			if (HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-				lastHistoryScreen = event;
-			}
-			const revisited =
-				revisitedMatch(built, event) ??
-				(open ? undefined : reshownResultsMatch(built, event));
-			if (revisited) {
-				// the game already has its match, and the one being played (if
-				// any) keeps gathering events
-				built[built.indexOf(revisited)] = {
-					match: withRevealedNames(revisited, event),
-					sources: [...revisited.sources, event],
-				};
-				continue;
-			}
-			if (isStagelessHistoryRead(event)) continue;
-			const missedResults =
-				!open || isHistoryOfAnotherGame(event, open)
-					? scoreboardlessMatchShown(scoreboardless, event)
-					: undefined;
-			if (missedResults) {
-				const pending = scoreboardless.get(missedResults)!;
-				pending.scoreboard = event;
-				vote(pending.stageVotes, (event.data as ScoreboardData).stage);
-				built[built.indexOf(missedResults)] = cachedBuiltMatch(
-					pending,
-					cache,
-					event,
-				);
-				scoreboardless.delete(missedResults);
-				continue;
-			}
-			const closing: OpenMatch<E> = open ?? claimOrphans(event.t);
-			if (isHistoryOfAnotherGame(event, closing)) {
-				// the log shows another game: the one being gathered stays open
-				const shown = startMatch<E>();
-				shown.scoreboard = event;
-				vote(shown.stageVotes, (event.data as ScoreboardData).stage);
-				built.push(cachedBuiltMatch(shown, cache));
-				continue;
-			}
-			open = closing;
-			// a replay played back from its browser entry ends on that entry again
-			if (open.scoreboard) open.revisits.push(event);
-			else open.scoreboard = event;
-			vote(open.stageVotes, (event.data as ScoreboardData).stage);
-			finalize();
-			orphanDeaths = [];
-			orphanObjectives = [];
-			orphanPlayerStatuses = [];
-			orphanStripWeapons = [];
-			orphanKills = [];
-			orphanXBattleCards = [];
-		} else if (event.type === MINIMAP_EVENT_TYPE) {
-			const stage = (event.data as MinimapData).stage;
-			if (open) {
-				// a stage change only splits when the next read doesn't refute it: a
-				// lone disagreeing frame is a misread folded in as a minority vote.
-				// An intro's stage outranks minimap reads: it holds until no later
-				// read of this game shows it again (the next game's intro was missed)
-				const lookahead = minimapLookahead.get(event)!;
-				const introStage = open.mapStart
-					? (open.mapStart.data as MapStartData).stage
-					: null;
-				const current = introStage ?? leadingStage(open.stageVotes);
-				const stageChanged =
-					current !== null &&
-					stage !== null &&
-					stage !== current &&
-					(lookahead.nextStage ?? stage) === stage &&
-					(introStage === null || !lookahead.laterStages.has(introStage));
-				const gapTooBig =
-					open.lastMinimapT !== null &&
-					event.t - open.lastMinimapT > MATCH_GAP_SECONDS;
-				if (stageChanged || gapTooBig) finalize();
-			}
-			open ??= startMatch();
-			open.minimaps.push(event);
-			open.lastMinimapT = event.t;
-			vote(open.stageVotes, stage);
-		} else if (event.type === DEATH_EVENT_TYPE) {
-			(open?.deaths ?? orphanDeaths).push(event);
-		} else if (event.type === OBJECTIVE_EVENT_TYPE) {
-			(open?.objectives ?? orphanObjectives).push(event);
-		} else if (event.type === PLAYER_STATUS_EVENT_TYPE) {
-			(open?.playerStatuses ?? orphanPlayerStatuses).push(event);
-		} else if (event.type === STRIP_WEAPONS_EVENT_TYPE) {
-			(open?.stripWeapons ?? orphanStripWeapons).push(event);
-		} else if (event.type === KILL_EVENT_TYPE) {
-			(open?.kills ?? orphanKills).push(event);
-		} else if (event.type === SCOREBOARD_OWN_EVENT_TYPE) {
-			const completed = withOwnResults(built.at(-1), event);
-			if (completed) built[built.length - 1] = completed;
-		} else if (X_BATTLE_CARD_EVENT_TYPES.includes(event.type)) {
-			// the lobby shows the cards before the game's results screen, so
-			// they usually join the game still being gathered
-			if (open) {
-				open.xBattleCards.push(event);
-			} else {
-				const reported = withXBattleCard(built.at(-1), event);
-				if (reported) built[built.length - 1] = reported;
-				else orphanXBattleCards.push(event);
-			}
-		}
+		walkEvent(walk, event);
 	}
-	finalize();
-	dropOrphans();
+	finalizeOpenMatch(walk);
+	dropOrphanReads(walk);
 
 	// a history screen of another game is built before the open match it interrupted
-	return [...built, ...unbackedBuilt].sort(
+	return [...walk.built, ...walk.unbackedBuilt].sort(
 		(a, b) => a.sources[0].t - b.sources[0].t,
 	);
+}
+
+/** Gameplay reads a match accumulates, which wait as orphans while no match is open. */
+type OrphanReads<E extends DetectedEvent> = Pick<
+	OpenMatch<E>,
+	| "deaths"
+	| "objectives"
+	| "playerStatuses"
+	| "stripWeapons"
+	| "kills"
+	| "xBattleCards"
+>;
+
+/** What `buildScannerMatches` carries while walking the timeline. */
+interface TimelineWalk<E extends DetectedEvent> {
+	cache: MatchBuildCache<E> | undefined;
+	unbacked: boolean;
+	minimapLookahead: Map<E, MinimapLookahead>;
+	built: BuiltMatch<E>[];
+	unbackedBuilt: BuiltMatch<E>[];
+	open: OpenMatch<E> | null;
+	lastHistoryScreen: E | null;
+	/** matches finalized without a scoreboard, which a history screen may still complete */
+	scoreboardless: Map<BuiltMatch<E>, OpenMatch<E>>;
+	/** deaths/objective/status reads seen with no match open to anchor them yet */
+	orphans: OrphanReads<E>;
+}
+
+function walkEvent<E extends DetectedEvent>(
+	walk: TimelineWalk<E>,
+	event: E,
+): void {
+	const gameplayList = GAMEPLAY_READ_LISTS.get(event.type);
+	if (event.type === MAP_START_EVENT_TYPE) {
+		walkMapStart(walk, event);
+	} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+		walkScoreboard(walk, event);
+	} else if (event.type === MINIMAP_EVENT_TYPE) {
+		walkMinimap(walk, event);
+	} else if (gameplayList) {
+		(walk.open?.[gameplayList] ?? walk.orphans[gameplayList]).push(event);
+	} else if (event.type === SCOREBOARD_OWN_EVENT_TYPE) {
+		const completed = withOwnResults(walk.built.at(-1), event);
+		if (completed) walk.built[walk.built.length - 1] = completed;
+	} else if (X_BATTLE_CARD_EVENT_TYPES.includes(event.type)) {
+		walkXBattleCard(walk, event);
+	}
+}
+
+function walkMapStart<E extends DetectedEvent>(
+	walk: TimelineWalk<E>,
+	event: E,
+): void {
+	// a new match intro abandons any match whose scoreboard was missed
+	finalizeOpenMatch(walk);
+	dropOrphanReads(walk);
+	const open = startMatch<E>();
+	walk.open = open;
+	open.mapStart = event;
+	vote(open.stageVotes, (event.data as MapStartData).stage);
+	const replayed = replayedHistoryMatch(
+		walk.built,
+		walk.lastHistoryScreen,
+		event,
+	);
+	if (replayed) {
+		walk.built.splice(walk.built.indexOf(replayed), 1);
+		const [board, ...revisits] = replayed.sources;
+		open.scoreboard = board!;
+		open.revisits = revisits;
+		vote(open.stageVotes, (board.data as ScoreboardData).stage);
+	}
+}
+
+function walkScoreboard<E extends DetectedEvent>(
+	walk: TimelineWalk<E>,
+	event: E,
+): void {
+	if ((event.data as ScoreboardData).noContest) {
+		// ended undecided: the game being gathered has no result to keep
+		walk.open = null;
+		dropOrphanReads(walk);
+		return;
+	}
+	if (HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+		walk.lastHistoryScreen = event;
+	}
+	const revisited =
+		revisitedMatch(walk.built, event) ??
+		(walk.open ? undefined : reshownResultsMatch(walk.built, event));
+	if (revisited) {
+		// the game already has its match, and the one being played (if
+		// any) keeps gathering events
+		walk.built[walk.built.indexOf(revisited)] = {
+			match: withRevealedNames(revisited, event),
+			sources: [...revisited.sources, event],
+		};
+		return;
+	}
+	if (isStagelessHistoryRead(event)) return;
+	const missedResults =
+		!walk.open || isHistoryOfAnotherGame(event, walk.open)
+			? scoreboardlessMatchShown(walk.scoreboardless, event)
+			: undefined;
+	if (missedResults) {
+		completeMissedResults(walk, missedResults, event);
+		return;
+	}
+	const closing: OpenMatch<E> = walk.open ?? claimOrphanReads(walk, event.t);
+	if (isHistoryOfAnotherGame(event, closing)) {
+		// the log shows another game: the one being gathered stays open
+		const shown = startMatch<E>();
+		shown.scoreboard = event;
+		vote(shown.stageVotes, (event.data as ScoreboardData).stage);
+		walk.built.push(cachedBuiltMatch(shown, walk.cache));
+		return;
+	}
+	walk.open = closing;
+	// a replay played back from its browser entry ends on that entry again
+	if (closing.scoreboard) closing.revisits.push(event);
+	else closing.scoreboard = event;
+	vote(closing.stageVotes, (event.data as ScoreboardData).stage);
+	finalizeOpenMatch(walk);
+	walk.orphans = noOrphanReads();
+}
+
+function completeMissedResults<E extends DetectedEvent>(
+	walk: TimelineWalk<E>,
+	missedResults: BuiltMatch<E>,
+	event: E,
+): void {
+	const pending = walk.scoreboardless.get(missedResults)!;
+	pending.scoreboard = event;
+	vote(pending.stageVotes, (event.data as ScoreboardData).stage);
+	walk.built[walk.built.indexOf(missedResults)] = cachedBuiltMatch(
+		pending,
+		walk.cache,
+		event,
+	);
+	walk.scoreboardless.delete(missedResults);
+}
+
+function walkMinimap<E extends DetectedEvent>(
+	walk: TimelineWalk<E>,
+	event: E,
+): void {
+	const stage = (event.data as MinimapData).stage;
+	if (
+		walk.open &&
+		minimapEndsOpenMatch(walk.open, event, walk.minimapLookahead.get(event)!)
+	) {
+		finalizeOpenMatch(walk);
+	}
+	walk.open ??= startMatch();
+	walk.open.minimaps.push(event);
+	walk.open.lastMinimapT = event.t;
+	vote(walk.open.stageVotes, stage);
+}
+
+function minimapEndsOpenMatch<E extends DetectedEvent>(
+	open: OpenMatch<E>,
+	event: E,
+	lookahead: MinimapLookahead,
+): boolean {
+	const stage = (event.data as MinimapData).stage;
+	// a stage change only splits when the next read doesn't refute it: a
+	// lone disagreeing frame is a misread folded in as a minority vote.
+	// An intro's stage outranks minimap reads: it holds until no later
+	// read of this game shows it again (the next game's intro was missed)
+	const introStage = open.mapStart
+		? (open.mapStart.data as MapStartData).stage
+		: null;
+	const current = introStage ?? leadingStage(open.stageVotes);
+	const stageChanged =
+		current !== null &&
+		stage !== null &&
+		stage !== current &&
+		(lookahead.nextStage ?? stage) === stage &&
+		(introStage === null || !lookahead.laterStages.has(introStage));
+	const gapTooBig =
+		open.lastMinimapT !== null &&
+		event.t - open.lastMinimapT > MATCH_GAP_SECONDS;
+	return stageChanged || gapTooBig;
+}
+
+function walkXBattleCard<E extends DetectedEvent>(
+	walk: TimelineWalk<E>,
+	event: E,
+): void {
+	// the lobby shows the cards before the game's results screen, so
+	// they usually join the game still being gathered
+	if (walk.open) {
+		walk.open.xBattleCards.push(event);
+		return;
+	}
+	const reported = withXBattleCard(walk.built.at(-1), event);
+	if (reported) walk.built[walk.built.length - 1] = reported;
+	else walk.orphans.xBattleCards.push(event);
+}
+
+function finalizeOpenMatch<E extends DetectedEvent>(
+	walk: TimelineWalk<E>,
+): void {
+	const { open } = walk;
+	if (!open) return;
+	if (isBacked(open)) {
+		const match = cachedBuiltMatch(open, walk.cache);
+		walk.built.push(match);
+		if (open.scoreboard === null) walk.scoreboardless.set(match, open);
+	} else if (walk.unbacked && open.kills.length > 0) {
+		walk.unbackedBuilt.push(cachedBuiltMatch(open, walk.cache));
+	}
+	walk.open = null;
+}
+
+function claimOrphanReads<E extends DetectedEvent>(
+	walk: TimelineWalk<E>,
+	t: number,
+): OpenMatch<E> {
+	const { orphans } = walk;
+	const withinWindow = (read: E) => t - read.t <= FALLBACK_WINDOW_SECONDS;
+	return {
+		...startMatch(),
+		deaths: orphans.deaths.filter(withinWindow),
+		objectives: orphans.objectives.filter(withinWindow),
+		playerStatuses: orphans.playerStatuses.filter(withinWindow),
+		stripWeapons: orphans.stripWeapons.filter(withinWindow),
+		kills: orphans.kills.filter(withinWindow),
+		xBattleCards: orphans.xBattleCards.filter(
+			(card) => t - card.t <= X_BATTLE_CARDS_WINDOW_SECONDS,
+		),
+	};
+}
+
+// orphan reads no scoreboard claimed are left behind
+function dropOrphanReads<E extends DetectedEvent>(walk: TimelineWalk<E>): void {
+	const { orphans } = walk;
+	if (walk.unbacked && orphans.kills.length > 0) {
+		walk.unbackedBuilt.push(
+			cachedBuiltMatch(
+				{ ...startMatch(), deaths: orphans.deaths, kills: orphans.kills },
+				walk.cache,
+			),
+		);
+	}
+	walk.orphans = noOrphanReads();
+}
+
+function noOrphanReads<E extends DetectedEvent>(): OrphanReads<E> {
+	return {
+		deaths: [],
+		objectives: [],
+		playerStatuses: [],
+		stripWeapons: [],
+		kills: [],
+		xBattleCards: [],
+	};
 }
 
 /**
@@ -957,13 +1053,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		clockSecondsOf(mode),
 	);
 
-	const pov: ScannerMatch["pov"] =
-		board && board.povIndex !== null
-			? {
-					team: board.povIndex < PLAYERS_PER_TEAM ? 0 : 1,
-					index: board.povIndex % PLAYERS_PER_TEAM,
-				}
-			: null;
+	const pov = povOf(board);
 
 	const match: ScannerMatch = {
 		startsAt: sources.length > 0 ? Math.max(0, Math.floor(sources[0].t)) : null,
@@ -982,10 +1072,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		// strip geometries), so only the spectator map screen or badge-proven
 		// strips count; a results screen that identified the POV seat disproves
 		// them all — casts never see one
-		cast:
-			pov === null &&
-			(open.minimaps.some((event) => (event.data as MinimapData).spectator) ||
-				playerStatuses.some((read) => read.data.cast)),
+		cast: pov === null && hasCastEvidence(open.minimaps, playerStatuses),
 		objective: progress.objective,
 		playerStatus: progress.playerStatus,
 		kills: progress.kills,
@@ -999,6 +1086,24 @@ function toBuiltMatch<E extends DetectedEvent>(
 	return isBacked(open)
 		? { match, sources }
 		: { match, sources, unbacked: true };
+}
+
+function povOf(board: ScoreboardData | undefined): ScannerMatch["pov"] {
+	if (!board || board.povIndex === null) return null;
+	return {
+		team: board.povIndex < PLAYERS_PER_TEAM ? 0 : 1,
+		index: board.povIndex % PLAYERS_PER_TEAM,
+	};
+}
+
+function hasCastEvidence(
+	minimaps: readonly DetectedEvent[],
+	playerStatuses: readonly { data: PlayerStatusData }[],
+): boolean {
+	return (
+		minimaps.some((event) => (event.data as MinimapData).spectator) ||
+		playerStatuses.some((read) => read.data.cast)
+	);
 }
 
 /**
@@ -1368,6 +1473,65 @@ function slotRowPermutations({
 	const sourceSide = (t: number, side: 0 | 1): 0 | 1 =>
 		nearestSwapFlag(live, swapFlags, t) !== swap ? ((1 - side) as 0 | 1) : side;
 
+	addStripWeaponVotes(evidence, stripWeapons, rowWeapons, sourceSide);
+
+	// enemy cards mirror the strip seating (attested); the spectator
+	// screen's own column is assumed symmetric. The POV diamond is not
+	// strip-seated and votes for nothing.
+	const enemySide = minimapSwapped ? 0 : 1;
+	const friendlySide = (1 - enemySide) as 0 | 1;
+	addMinimapCardVotes(evidence, minimapReads, rowWeapons, {
+		enemySide,
+		friendlySide,
+	});
+
+	const snapshots = [0, 1].map((side) =>
+		playerStatuses.map((read): StripSnapshot => ({
+			t: read.t,
+			dead: read.data.dead[sourceSide(read.t, side as 0 | 1)],
+			special: read.data.special[sourceSide(read.t, side as 0 | 1)],
+		})),
+	);
+	const observe = (side: 0 | 1, observation: StatusObservation): void =>
+		addStatusEvidence(evidence[side], snapshots[side], observation);
+	const povSide =
+		board.povIndex === null ? null : board.povIndex < PLAYERS_PER_TEAM ? 0 : 1;
+	const povRow =
+		board.povIndex === null ? null : board.povIndex % PLAYERS_PER_TEAM;
+	if (povSide !== null && povRow !== null) {
+		observePovSplats(observe, {
+			povSide,
+			povRow,
+			deathTimes,
+			kills,
+			victimRowNames: rowNames[1 - povSide],
+		});
+	}
+	observeTeammateCards(observe, minimapReads, {
+		friendlySide,
+		selfRow: povSide === friendlySide ? povRow : null,
+		friendlyRowNames: rowNames[friendlySide],
+	});
+
+	const strip = evidence.map(slotRowPermutation) as [
+		SlotRowPermutation,
+		SlotRowPermutation,
+	];
+
+	return {
+		strip,
+		diamond: diamondPermutation(minimapReads, rowNames[friendlySide]),
+	};
+}
+
+type ObserveStatus = (side: 0 | 1, observation: StatusObservation) => void;
+
+function addStripWeaponVotes(
+	evidence: readonly SlotRowEvidence[],
+	stripWeapons: readonly { t: number; data: StripWeaponsData }[],
+	rowWeapons: readonly (readonly (MainWeaponId | null)[])[],
+	sourceSide: (t: number, side: 0 | 1) => 0 | 1,
+): void {
 	for (const read of stripWeapons) {
 		for (const side of [0, 1] as const) {
 			const slots = read.data.slots[sourceSide(read.t, side)];
@@ -1386,12 +1550,14 @@ function slotRowPermutations({
 			}
 		}
 	}
+}
 
-	// enemy cards mirror the strip seating (attested); the spectator
-	// screen's own column is assumed symmetric. The POV diamond is not
-	// strip-seated and votes for nothing.
-	const enemySide = minimapSwapped ? 0 : 1;
-	const friendlySide = (1 - enemySide) as 0 | 1;
+function addMinimapCardVotes(
+	evidence: readonly SlotRowEvidence[],
+	minimapReads: readonly { t: number; data: MinimapData }[],
+	rowWeapons: readonly (readonly (MainWeaponId | null)[])[],
+	{ enemySide, friendlySide }: { enemySide: 0 | 1; friendlySide: 0 | 1 },
+): void {
 	for (const read of minimapReads) {
 		const columns = [
 			{ side: enemySide, cards: read.data.enemies },
@@ -1412,52 +1578,69 @@ function slotRowPermutations({
 			}
 		}
 	}
+}
 
-	const snapshots = [0, 1].map((side) =>
-		playerStatuses.map((read): StripSnapshot => ({
-			t: read.t,
-			dead: read.data.dead[sourceSide(read.t, side as 0 | 1)],
-			special: read.data.special[sourceSide(read.t, side as 0 | 1)],
-		})),
-	);
-	const observe = (side: 0 | 1, observation: StatusObservation): void =>
-		addStatusEvidence(evidence[side], snapshots[side], observation);
-	const povSide =
-		board.povIndex === null ? null : board.povIndex < PLAYERS_PER_TEAM ? 0 : 1;
-	const povRow =
-		board.povIndex === null ? null : board.povIndex % PLAYERS_PER_TEAM;
-	if (povSide !== null && povRow !== null) {
-		for (const t of deathTimes) {
-			observe(povSide, {
-				t,
-				row: povRow,
-				dead: true,
-				special: null,
-			});
-		}
-		const victimSide = (1 - povSide) as 0 | 1;
-		for (const kill of kills) {
-			const row =
-				kill.name === null ? null : rowByName(kill.name, rowNames[victimSide]);
-			if (row === null) continue;
-			observe(victimSide, {
-				t: kill.t + KILL_STRIP_DELAY_SECONDS,
-				row,
-				dead: true,
-				special: null,
-			});
-		}
+/** The POV's own death screens on its row, and its kill-feed victims on theirs. */
+function observePovSplats(
+	observe: ObserveStatus,
+	{
+		povSide,
+		povRow,
+		deathTimes,
+		kills,
+		victimRowNames,
+	}: {
+		povSide: 0 | 1;
+		povRow: number;
+		deathTimes: readonly number[];
+		kills: readonly ScannerMatchKill[];
+		victimRowNames: readonly (string | null)[];
+	},
+): void {
+	for (const t of deathTimes) {
+		observe(povSide, {
+			t,
+			row: povRow,
+			dead: true,
+			special: null,
+		});
 	}
+	const victimSide = (1 - povSide) as 0 | 1;
+	for (const kill of kills) {
+		const row =
+			kill.name === null ? null : rowByName(kill.name, victimRowNames);
+		if (row === null) continue;
+		observe(victimSide, {
+			t: kill.t + KILL_STRIP_DELAY_SECONDS,
+			row,
+			dead: true,
+			special: null,
+		});
+	}
+}
+
+/** The POV minimap's teammate cards, by name (the POV's own card by its seat). */
+function observeTeammateCards(
+	observe: ObserveStatus,
+	minimapReads: readonly { t: number; data: MinimapData }[],
+	{
+		friendlySide,
+		selfRow,
+		friendlyRowNames,
+	}: {
+		friendlySide: 0 | 1;
+		selfRow: number | null;
+		friendlyRowNames: readonly (string | null)[];
+	},
+): void {
 	for (const read of minimapReads) {
 		if (read.data.spectator) continue;
 		for (const mate of read.data.teammates) {
 			const row = mate.self
-				? povSide === friendlySide
-					? povRow
-					: null
+				? selfRow
 				: mate.name === null
 					? null
-					: rowByName(mate.name, rowNames[friendlySide]);
+					: rowByName(mate.name, friendlyRowNames);
 			if (row === null) continue;
 			observe(friendlySide, {
 				t: read.t,
@@ -1467,12 +1650,12 @@ function slotRowPermutations({
 			});
 		}
 	}
+}
 
-	const strip = evidence.map(slotRowPermutation) as [
-		SlotRowPermutation,
-		SlotRowPermutation,
-	];
-
+function diamondPermutation(
+	minimapReads: readonly { t: number; data: MinimapData }[],
+	friendlyRowNames: readonly (string | null)[],
+): SlotRowPermutation | null {
 	const cardNames: string[][] = [[], [], [], []];
 	for (const read of minimapReads) {
 		if (read.data.spectator) continue;
@@ -1481,11 +1664,9 @@ function slotRowPermutations({
 			if (name) cardNames[slot].push(name);
 		}
 	}
-	const diamond = cardNames.some((names) => names.length > 0)
-		? nameSlotRowPermutation(cardNames, rowNames[friendlySide])
+	return cardNames.some((names) => names.length > 0)
+		? nameSlotRowPermutation(cardNames, friendlyRowNames)
 		: null;
-
-	return { strip, diamond };
 }
 
 /**

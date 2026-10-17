@@ -97,20 +97,9 @@ interface FormFieldProps {
 /** Field types that render `children`. Any other type would silently discard it. */
 const FIELD_TYPES_WITH_RENDER_PROP = ["custom", "array"];
 
-export function FormField({
-	name,
-	label,
-	labelPopover,
-	disabled,
-	autoFocus,
-	required,
-	maxCount,
-	field,
-	children,
-	options,
-	canRemoveItem,
-	onValueChange,
-}: FormFieldProps) {
+export function FormField(props: FormFieldProps) {
+	const { name, label, disabled, required, field, children, onValueChange } =
+		props;
 	const context = useOptionalFormFieldContext();
 	const isDisabled = disabled ?? context?.readOnly ?? false;
 
@@ -189,440 +178,447 @@ export function FormField({
 		);
 	}
 
-	const commonProps = { name, error: displayedError, onBlur: handleBlur };
+	return renderFormField({
+		props,
+		formField,
+		commonProps: { name, error: displayedError, onBlur: handleBlur },
+		value,
+		isDisabled,
+		handleChange,
+	});
+}
 
-	if (formField.type === "text-field") {
-		return (
-			<InputFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				autoFocus={autoFocus}
-				labelPopover={labelPopover}
-				value={value as string}
-				onChange={handleChange}
-			/>
-		);
-	}
+interface RenderFormFieldArgs {
+	props: FormFieldProps;
+	formField: FormFieldType;
+	commonProps: {
+		name: string;
+		error: string | undefined;
+		onBlur: (latestValue?: unknown) => void;
+	};
+	value: unknown;
+	isDisabled: boolean;
+	handleChange: (newValue: unknown) => void;
+}
 
-	if (formField.type === "in-game-name") {
-		return (
-			<InGameNameFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as string}
-				onChange={handleChange}
-			/>
-		);
-	}
+function renderFormField(args: RenderFormFieldArgs) {
+	const { props, formField, commonProps, value, isDisabled, handleChange } =
+		args;
+	const {
+		name,
+		labelPopover,
+		disabled,
+		autoFocus,
+		maxCount,
+		children,
+		options,
+	} = props;
 
-	if (formField.type === "switch") {
-		return (
-			<SwitchFormField
-				{...commonProps}
-				{...formField}
-				isDisabled={isDisabled}
-				checked={value as boolean}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "text-area") {
-		return (
-			<TextareaFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				autoFocus={autoFocus}
-				value={value as string}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "select") {
-		return (
-			<SelectFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as string | null}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "select-dynamic") {
-		if (!options) {
-			throw new Error("Dynamic select form field requires options prop");
-		}
-		const selectOptions = options as SelectOption[];
-		return (
-			<SelectFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				items={selectOptions.map((opt) => ({
-					value: opt.value,
-					label: opt.label,
-					description: opt.description,
-				}))}
-				value={value as string | null}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "dual-select") {
-		return (
-			<DualSelectFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as [string | null, string | null]}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "radio-group") {
-		return (
-			<RadioGroupFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as string}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "radio-group-dynamic") {
-		if (!options) {
-			throw new Error("Dynamic radio group form field requires options prop");
-		}
-		const radioItems = options as FormFieldItemsWithImage<string>;
-		return (
-			<RadioGroupFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				items={radioItems}
-				value={value as string}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "checkbox-group") {
-		return (
-			<CheckboxGroupFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as string[]}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "checkbox-group-dynamic") {
-		if (!options) {
-			throw new Error(
-				"Dynamic checkbox group form field requires options prop",
-			);
-		}
-		const checkboxItems = options as FormFieldItemsWithImage<string>;
-		return (
-			<CheckboxGroupFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				items={checkboxItems}
-				value={value as string[]}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "datetime") {
-		return (
-			<DatetimeFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as Date | undefined}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "date") {
-		return (
-			<DatetimeFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				granularity="day"
-				value={
-					value ? dayMonthYearToLocalDate(value as DayMonthYear) : undefined
-				}
-				onChange={(date) =>
-					handleChange(date ? localDateToDayMonthYear(date) : undefined)
-				}
-			/>
-		);
-	}
-
-	if (formField.type === "time-range") {
-		return (
-			<TimeRangeFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as { start: string; end: string } | null}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "weapon-pool") {
-		return (
-			<WeaponPoolFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as WeaponPoolItem[]}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "image") {
-		return (
-			<ImageFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as ImageFieldValue}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "custom") {
-		if (!children) {
-			throw new Error("Custom form field requires children render function");
-		}
-		return (
-			<CustomField
-				render={children as (props: CustomFieldRenderProps) => React.ReactNode}
-				name={name}
-				error={displayedError}
-				value={value}
-				onChange={handleChange}
-				disabled={isDisabled}
-			/>
-		);
-	}
-
-	if (formField.type === "hidden") {
-		return null;
-	}
-
-	if (formField.type === "array") {
-		const innerFieldMeta = formRegistry.get(formField.field);
-		const isObjectArray = innerFieldMeta?.type === "fieldset";
-		const hasCustomRender = typeof children === "function";
-		const itemInitialValue =
-			isObjectArray && innerFieldMeta
-				? fieldsetDefaults(innerFieldMeta)
-				: innerFieldMeta?.initialValue;
-
-		return (
-			<ArrayFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as unknown[]}
-				onChange={handleChange}
-				isObjectArray={isObjectArray}
-				itemInitialValue={itemInitialValue}
-				canRemoveItem={canRemoveItem}
-				renderItem={(idx, itemName) => {
-					if (hasCustomRender && isObjectArray) {
-						const arrayValue = value as Record<string, unknown>[];
-
-						return (
-							<ArrayItemCustomRender
-								arrayName={name}
-								index={idx}
-								itemName={itemName}
-								itemValues={arrayValue[idx] ?? EMPTY_ITEM_VALUES}
-								canRemove={arrayValue.length > (formField.min ?? 0)}
-								onArrayChange={handleChange}
-								renderChildren={
-									children as (props: ArrayItemRenderContext) => React.ReactNode
-								}
-							/>
-						);
-					}
-
-					return (
-						<FormField
-							key={idx}
-							name={itemName}
-							field={formField.field}
-							disabled={disabled}
-						/>
-					);
-				}}
-			/>
-		);
-	}
-
-	if (formField.type === "fieldset") {
-		return (
-			<FieldsetFormField {...commonProps} {...formField} disabled={disabled} />
-		);
-	}
-
-	if (formField.type === "user-search") {
-		const userOptions = options as UserSearchFieldOptions | undefined;
-		return (
-			<UserSearchFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as number | null}
-				onChange={handleChange}
-				onUserSelected={userOptions?.onUserSelected}
-			/>
-		);
-	}
-
-	if (formField.type === "tournament-search") {
-		const tournamentOptions = options as
-			TournamentSearchFieldOptions | undefined;
-		return (
-			<TournamentSearchFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as number | null}
-				onChange={handleChange}
-				pastOnly={tournamentOptions?.pastOnly}
-				onTournamentSelected={tournamentOptions?.onTournamentSelected}
-			/>
-		);
-	}
-
-	if (formField.type === "team-search") {
-		const teamOptions = options as TeamSearchFieldOptions | undefined;
-		return (
-			<TeamSearchFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				onChange={handleChange}
-				onTeamSelected={teamOptions?.onTeamSelected}
-				initialTeam={teamOptions?.initialTeam}
-			/>
-		);
-	}
-
-	if (formField.type === "badges") {
-		if (!options) {
-			throw new Error("Badges form field requires options prop");
-		}
-		return (
-			<BadgesFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as number[]}
-				onChange={handleChange}
-				options={options as BadgeOption[]}
-				{...(maxCount !== undefined ? { maxCount } : {})}
-			/>
-		);
-	}
-
-	if (formField.type === "trophies") {
-		if (!options) {
-			throw new Error("Trophies form field requires options prop");
-		}
-		return (
-			<React.Suspense>
-				<TrophiesFormField
+	switch (formField.type) {
+		case "text-field":
+			return (
+				<InputFormField
 					{...commonProps}
 					{...formField}
+					disabled={isDisabled}
+					autoFocus={autoFocus}
+					labelPopover={labelPopover}
+					value={value as string}
+					onChange={handleChange}
+				/>
+			);
+		case "in-game-name":
+			return (
+				<InGameNameFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as string}
+					onChange={handleChange}
+				/>
+			);
+		case "switch":
+			return (
+				<SwitchFormField
+					{...commonProps}
+					{...formField}
+					isDisabled={isDisabled}
+					checked={value as boolean}
+					onChange={handleChange}
+				/>
+			);
+		case "text-area":
+			return (
+				<TextareaFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					autoFocus={autoFocus}
+					value={value as string}
+					onChange={handleChange}
+				/>
+			);
+		case "select":
+			return (
+				<SelectFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as string | null}
+					onChange={handleChange}
+				/>
+			);
+		case "select-dynamic": {
+			if (!options) {
+				throw new Error("Dynamic select form field requires options prop");
+			}
+			const selectOptions = options as SelectOption[];
+			return (
+				<SelectFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					items={selectOptions.map((opt) => ({
+						value: opt.value,
+						label: opt.label,
+						description: opt.description,
+					}))}
+					value={value as string | null}
+					onChange={handleChange}
+				/>
+			);
+		}
+		case "dual-select":
+			return (
+				<DualSelectFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as [string | null, string | null]}
+					onChange={handleChange}
+				/>
+			);
+		case "radio-group":
+			return (
+				<RadioGroupFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as string}
+					onChange={handleChange}
+				/>
+			);
+		case "radio-group-dynamic": {
+			if (!options) {
+				throw new Error("Dynamic radio group form field requires options prop");
+			}
+			const radioItems = options as FormFieldItemsWithImage<string>;
+			return (
+				<RadioGroupFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					items={radioItems}
+					value={value as string}
+					onChange={handleChange}
+				/>
+			);
+		}
+		case "checkbox-group":
+			return (
+				<CheckboxGroupFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as string[]}
+					onChange={handleChange}
+				/>
+			);
+		case "checkbox-group-dynamic": {
+			if (!options) {
+				throw new Error(
+					"Dynamic checkbox group form field requires options prop",
+				);
+			}
+			const checkboxItems = options as FormFieldItemsWithImage<string>;
+			return (
+				<CheckboxGroupFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					items={checkboxItems}
+					value={value as string[]}
+					onChange={handleChange}
+				/>
+			);
+		}
+		case "datetime":
+			return (
+				<DatetimeFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as Date | undefined}
+					onChange={handleChange}
+				/>
+			);
+		case "date":
+			return (
+				<DatetimeFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					granularity="day"
+					value={
+						value ? dayMonthYearToLocalDate(value as DayMonthYear) : undefined
+					}
+					onChange={(date) =>
+						handleChange(date ? localDateToDayMonthYear(date) : undefined)
+					}
+				/>
+			);
+		case "time-range":
+			return (
+				<TimeRangeFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as { start: string; end: string } | null}
+					onChange={handleChange}
+				/>
+			);
+		case "weapon-pool":
+			return (
+				<WeaponPoolFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as WeaponPoolItem[]}
+					onChange={handleChange}
+				/>
+			);
+		case "image":
+			return (
+				<ImageFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as ImageFieldValue}
+					onChange={handleChange}
+				/>
+			);
+		case "custom":
+			if (!children) {
+				throw new Error("Custom form field requires children render function");
+			}
+			return (
+				<CustomField
+					render={
+						children as (props: CustomFieldRenderProps) => React.ReactNode
+					}
+					name={name}
+					error={commonProps.error}
+					value={value}
+					onChange={handleChange}
+					disabled={isDisabled}
+				/>
+			);
+		case "hidden":
+			return null;
+		case "array":
+			return renderArrayFormField({ ...args, formField });
+		case "fieldset":
+			return (
+				<FieldsetFormField
+					{...commonProps}
+					{...formField}
+					disabled={disabled}
+				/>
+			);
+		case "user-search": {
+			const userOptions = options as UserSearchFieldOptions | undefined;
+			return (
+				<UserSearchFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as number | null}
+					onChange={handleChange}
+					onUserSelected={userOptions?.onUserSelected}
+				/>
+			);
+		}
+		case "tournament-search": {
+			const tournamentOptions = options as
+				TournamentSearchFieldOptions | undefined;
+			return (
+				<TournamentSearchFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as number | null}
+					onChange={handleChange}
+					pastOnly={tournamentOptions?.pastOnly}
+					onTournamentSelected={tournamentOptions?.onTournamentSelected}
+				/>
+			);
+		}
+		case "team-search": {
+			const teamOptions = options as TeamSearchFieldOptions | undefined;
+			return (
+				<TeamSearchFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					onChange={handleChange}
+					onTeamSelected={teamOptions?.onTeamSelected}
+					initialTeam={teamOptions?.initialTeam}
+				/>
+			);
+		}
+		case "badges":
+			if (!options) {
+				throw new Error("Badges form field requires options prop");
+			}
+			return (
+				<BadgesFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
 					value={value as number[]}
 					onChange={handleChange}
-					options={options as TrophyOption[]}
+					options={options as BadgeOption[]}
 					{...(maxCount !== undefined ? { maxCount } : {})}
 				/>
-			</React.Suspense>
-		);
+			);
+		case "trophies":
+			if (!options) {
+				throw new Error("Trophies form field requires options prop");
+			}
+			return (
+				<React.Suspense>
+					<TrophiesFormField
+						{...commonProps}
+						{...formField}
+						value={value as number[]}
+						onChange={handleChange}
+						options={options as TrophyOption[]}
+						{...(maxCount !== undefined ? { maxCount } : {})}
+					/>
+				</React.Suspense>
+			);
+		case "stage-select":
+			return (
+				<StageSelectFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as StageId | null}
+					onChange={handleChange}
+				/>
+			);
+		case "map-pool":
+			return (
+				<MapPoolFormField
+					{...commonProps}
+					{...formField}
+					{...(options as MapPoolFieldOptions | undefined)}
+					disabled={isDisabled}
+					value={value as string}
+					onChange={handleChange}
+				/>
+			);
+		case "weapon-select":
+			return (
+				<WeaponSelectFormField
+					{...commonProps}
+					{...formField}
+					disabled={isDisabled}
+					value={value as MainWeaponId | null}
+					onChange={handleChange}
+				/>
+			);
+		case "sub-weapon-select":
+		case "special-weapon-select":
+			return (
+				<SubSpecialSelectFormField
+					{...commonProps}
+					{...formField}
+					weaponType={
+						formField.type === "sub-weapon-select" ? "SUB" : "SPECIAL"
+					}
+					disabled={isDisabled}
+					value={value as SubWeaponId | SpecialWeaponId | null}
+					onChange={handleChange}
+				/>
+			);
+		default:
+			return (
+				<div>
+					Unsupported form field type: {(formField as FormFieldType).type}
+				</div>
+			);
 	}
+}
 
-	if (formField.type === "stage-select") {
-		return (
-			<StageSelectFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as StageId | null}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "map-pool") {
-		return (
-			<MapPoolFormField
-				{...commonProps}
-				{...formField}
-				{...(options as MapPoolFieldOptions | undefined)}
-				disabled={isDisabled}
-				value={value as string}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (formField.type === "weapon-select") {
-		return (
-			<WeaponSelectFormField
-				{...commonProps}
-				{...formField}
-				disabled={isDisabled}
-				value={value as MainWeaponId | null}
-				onChange={handleChange}
-			/>
-		);
-	}
-
-	if (
-		formField.type === "sub-weapon-select" ||
-		formField.type === "special-weapon-select"
-	) {
-		return (
-			<SubSpecialSelectFormField
-				{...commonProps}
-				{...formField}
-				weaponType={formField.type === "sub-weapon-select" ? "SUB" : "SPECIAL"}
-				disabled={isDisabled}
-				value={value as SubWeaponId | SpecialWeaponId | null}
-				onChange={handleChange}
-			/>
-		);
-	}
+function renderArrayFormField({
+	props,
+	formField,
+	commonProps,
+	value,
+	isDisabled,
+	handleChange,
+}: RenderFormFieldArgs & {
+	formField: Extract<FormFieldType, { type: "array" }>;
+}) {
+	const { name, disabled, children, canRemoveItem } = props;
+	const innerFieldMeta = formRegistry.get(formField.field);
+	const isObjectArray = innerFieldMeta?.type === "fieldset";
+	const hasCustomRender = typeof children === "function";
+	const itemInitialValue =
+		isObjectArray && innerFieldMeta
+			? fieldsetDefaults(innerFieldMeta)
+			: innerFieldMeta?.initialValue;
 
 	return (
-		<div>Unsupported form field type: {(formField as FormFieldType).type}</div>
+		<ArrayFormField
+			{...commonProps}
+			{...formField}
+			disabled={isDisabled}
+			value={value as unknown[]}
+			onChange={handleChange}
+			isObjectArray={isObjectArray}
+			itemInitialValue={itemInitialValue}
+			canRemoveItem={canRemoveItem}
+			renderItem={(idx, itemName) => {
+				if (hasCustomRender && isObjectArray) {
+					const arrayValue = value as Record<string, unknown>[];
+
+					return (
+						<ArrayItemCustomRender
+							arrayName={name}
+							index={idx}
+							itemName={itemName}
+							itemValues={arrayValue[idx] ?? EMPTY_ITEM_VALUES}
+							canRemove={arrayValue.length > (formField.min ?? 0)}
+							onArrayChange={handleChange}
+							renderChildren={
+								children as (props: ArrayItemRenderContext) => React.ReactNode
+							}
+						/>
+					);
+				}
+
+				return (
+					<FormField
+						key={idx}
+						name={itemName}
+						field={formField.field}
+						disabled={disabled}
+					/>
+				);
+			}}
+		/>
 	);
 }
 

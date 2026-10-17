@@ -1,10 +1,12 @@
 import clsx from "clsx";
+import type { TFunction } from "i18next";
 import { Reply, SendHorizontal, X } from "lucide-react";
 import * as React from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import * as v from "valibot";
+import type { EventsReadyState } from "~/features/events/events-client";
 import { useEventsReadyState } from "~/features/events/events-hooks";
 import { useCooldown } from "~/hooks/useCooldown";
 import { useDebounce } from "~/hooks/useDebounce";
@@ -91,48 +93,22 @@ export function Composer({
 		mentionCandidates,
 		pickedMentions,
 	);
-	const mentionOnCooldown = R.firstBy(
-		Mentions.mentionedUserIds(encodedText).flatMap((userId) => {
-			const until = Cooldowns.until(Cooldowns.mentionKey(userId));
-			return until === null ? [] : [{ userId, until }];
-		}),
-		[(cooldown) => cooldown.until, "desc"],
+	const { mentionCooldown, stickerCooldownSecondsLeft } = useComposerCooldowns(
+		encodedText,
+		sticker,
 	);
-	const mentionCooldownSecondsLeft = useCooldown(
-		mentionOnCooldown?.until ?? null,
-	);
-	const stickerCooldownSecondsLeft = useCooldown(
-		sticker ? Cooldowns.until(Cooldowns.STICKER_COOLDOWN_KEY) : null,
-	);
-	const mentionOnCooldownShown =
-		mentionOnCooldown !== undefined && mentionCooldownSecondsLeft > 0;
-	const stickerOnCooldownShown =
-		sticker !== null && stickerCooldownSecondsLeft > 0;
-	const onCooldown = mentionOnCooldownShown || stickerOnCooldownShown;
+	const onCooldown =
+		mentionCooldown !== null || stickerCooldownSecondsLeft !== null;
 
-	const status = showConnectionStatus
-		? t(
-				readyState === "CONNECTING"
-					? "common:chat.connecting"
-					: "common:chat.disconnected",
-			)
-		: mentionOnCooldownShown
-			? t("common:chat.status.mentionCooldown", {
-					username: mentionCandidates.find(
-						(user) => user.id === mentionOnCooldown.userId,
-					)?.username,
-					seconds: mentionCooldownSecondsLeft,
-				})
-			: stickerOnCooldownShown
-				? t("common:chat.status.stickerCooldown", {
-						seconds: stickerCooldownSecondsLeft,
-					})
-				: contents.length >= CHARACTER_COUNT_SHOWN_FROM
-					? t("common:chat.status.characterCount", {
-							used: contents.length,
-							max: MESSAGE_MAX_LENGTH,
-						})
-					: null;
+	const status = composerStatus({
+		t,
+		readyState,
+		showConnectionStatus,
+		mentionCooldown,
+		stickerCooldownSecondsLeft,
+		mentionCandidates,
+		contentsLength: contents.length,
+	});
 
 	const syncCaret = (input: HTMLInputElement) =>
 		setCaret(input.selectionStart ?? input.value.length);
@@ -388,6 +364,89 @@ type Suggestion = ComposerSuggestion &
 		| { kind: "mention"; user: CommonUser }
 		| { kind: "sticker"; sticker: Stickers.ChatSticker }
 	);
+
+function useComposerCooldowns(
+	encodedText: string,
+	sticker: Stickers.ChatSticker | null,
+) {
+	const mentionOnCooldown = R.firstBy(
+		Mentions.mentionedUserIds(encodedText).flatMap((userId) => {
+			const until = Cooldowns.until(Cooldowns.mentionKey(userId));
+			return until === null ? [] : [{ userId, until }];
+		}),
+		[(cooldown) => cooldown.until, "desc"],
+	);
+	const mentionCooldownSecondsLeft = useCooldown(
+		mentionOnCooldown?.until ?? null,
+	);
+	const stickerCooldownSecondsLeft = useCooldown(
+		sticker ? Cooldowns.until(Cooldowns.STICKER_COOLDOWN_KEY) : null,
+	);
+
+	return {
+		mentionCooldown:
+			mentionOnCooldown !== undefined && mentionCooldownSecondsLeft > 0
+				? {
+						userId: mentionOnCooldown.userId,
+						secondsLeft: mentionCooldownSecondsLeft,
+					}
+				: null,
+		stickerCooldownSecondsLeft:
+			sticker !== null && stickerCooldownSecondsLeft > 0
+				? stickerCooldownSecondsLeft
+				: null,
+	};
+}
+
+function composerStatus({
+	t,
+	readyState,
+	showConnectionStatus,
+	mentionCooldown,
+	stickerCooldownSecondsLeft,
+	mentionCandidates,
+	contentsLength,
+}: {
+	t: TFunction<["common", "forms"]>;
+	readyState: EventsReadyState;
+	showConnectionStatus: boolean;
+	mentionCooldown: { userId: number; secondsLeft: number } | null;
+	stickerCooldownSecondsLeft: number | null;
+	mentionCandidates: CommonUser[];
+	contentsLength: number;
+}) {
+	if (showConnectionStatus) {
+		return t(
+			readyState === "CONNECTING"
+				? "common:chat.connecting"
+				: "common:chat.disconnected",
+		);
+	}
+
+	if (mentionCooldown) {
+		return t("common:chat.status.mentionCooldown", {
+			username: mentionCandidates.find(
+				(user) => user.id === mentionCooldown.userId,
+			)?.username,
+			seconds: mentionCooldown.secondsLeft,
+		});
+	}
+
+	if (stickerCooldownSecondsLeft !== null) {
+		return t("common:chat.status.stickerCooldown", {
+			seconds: stickerCooldownSecondsLeft,
+		});
+	}
+
+	if (contentsLength >= CHARACTER_COUNT_SHOWN_FROM) {
+		return t("common:chat.status.characterCount", {
+			used: contentsLength,
+			max: MESSAGE_MAX_LENGTH,
+		});
+	}
+
+	return null;
+}
 
 function composerQuery(text: string, caret: number) {
 	const mentionQuery = Mentions.activeQuery(text, caret);

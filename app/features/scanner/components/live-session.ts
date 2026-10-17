@@ -13,6 +13,7 @@ import {
 	audioInputFor,
 	inputsRevealed,
 	listMediaInputs,
+	type MediaInputs,
 	openCapture,
 	openDesktopAudio,
 	requestInputAccess,
@@ -62,7 +63,7 @@ import {
 	unsentMatches,
 	unsentScoreboardMatches,
 } from "./sendou-ingest";
-import { audioDeviceIdOf, readSettings } from "./settings";
+import { audioDeviceIdOf, type AudioSource, readSettings } from "./settings";
 import { sendLive, uploadEnabled } from "./upload";
 import { deleteClosedVisitsVodClips } from "./visit";
 
@@ -231,25 +232,19 @@ export async function startCapture(): Promise<void> {
 		// first thing, while the click's activation still covers the share picker
 		const desktop =
 			settings.audioSource === "desktop" ? await openDesktopAudio() : null;
-		const noInputs = { video: [], audio: [] };
-		let inputs = await listMediaInputs().catch(() => noInputs);
-		// the source's audio side is only listed with the microphone permission
-		if (!inputsRevealed(inputs) && (await requestInputAccess())) {
-			inputs = await listMediaInputs().catch(() => noInputs);
-		}
+		const inputs = await listRevealedInputs();
 		const videoInput = resolveVideoInput(inputs.video, settings.sourceDeviceId);
 		if (!videoInput) {
 			desktop?.track?.stop();
 			throw new Error(NO_SOURCE_ERROR);
 		}
-		const sourceAudio =
-			settings.audioSource === "source"
-				? audioInputFor(videoInput, inputs.audio)
-				: null;
 		const opened = await openCapture({
 			videoDeviceId: videoInput.deviceId,
-			audioDeviceId:
-				sourceAudio?.deviceId ?? audioDeviceIdOf(settings.audioSource),
+			audioDeviceId: captureAudioDeviceId(
+				settings.audioSource,
+				videoInput,
+				inputs.audio,
+			),
 		});
 		stream = opened.stream;
 		if (desktop?.track) stream.addTrack(desktop.track);
@@ -262,42 +257,10 @@ export async function startCapture(): Promise<void> {
 		await video.play();
 
 		// the worker first: a failed init must not leave the camera on
-		const starting = new AnalyzerClient(onResult, onWorkerError, undefined, {
-			frameQueueLimit: FRAME_QUEUE_LIMIT,
-			webgpu: settings.webgpu,
-			onFrameError,
-		});
-		client = starting;
-		try {
-			await starting.whenReady();
-			if (starting.missingAtlases.length > 0) {
-				throw new Error(MISSING_ATLASES_ERROR);
-			}
-		} catch (error) {
-			starting.dispose();
-			if (client === starting) client = null;
-			throw error;
-		}
-
-		let clips: ClipsState = "off";
-		if (settings.saveClips) {
-			if (!supportsRingBuffer()) {
-				clips = "unsupported";
-			} else {
-				const startingRing = new ClipRingBuffer(RING_BUFFER_SECONDS, () =>
-					onClipsFailed(startingRing),
-				);
-				ring = startingRing;
-				try {
-					await startingRing.start(stream);
-					clips = "on";
-				} catch {
-					startingRing.stop();
-					if (ring === startingRing) ring = null;
-					clips = "failed";
-				}
-			}
-		}
+		const starting = await startAnalyzer(settings.webgpu);
+		const clips: ClipsState = settings.saveClips
+			? await startClipRing(stream)
+			: "off";
 
 		// the worker died while the ring started and onWorkerError tore down what it could
 		if (client !== starting) throw new Error("The analyzer worker stopped");
@@ -424,6 +387,65 @@ export function retryUploadsWhileOpen(): () => void {
 export function saveCurrentFrameAsFixture(): void {
 	if (!video) return;
 	void saveFrame(video);
+}
+
+/** The media inputs, asking for the permission that lists the source's audio side when they come without it. */
+async function listRevealedInputs(): Promise<MediaInputs> {
+	const noInputs = { video: [], audio: [] };
+	let inputs = await listMediaInputs().catch(() => noInputs);
+	// the source's audio side is only listed with the microphone permission
+	if (!inputsRevealed(inputs) && (await requestInputAccess())) {
+		inputs = await listMediaInputs().catch(() => noInputs);
+	}
+	return inputs;
+}
+
+function captureAudioDeviceId(
+	audioSource: AudioSource,
+	videoInput: MediaDeviceInfo,
+	audioInputs: MediaDeviceInfo[],
+) {
+	const sourceAudio =
+		audioSource === "source" ? audioInputFor(videoInput, audioInputs) : null;
+	return sourceAudio?.deviceId ?? audioDeviceIdOf(audioSource);
+}
+
+/** The capture's analyzer once its worker is up with every atlas; torn down when it is not. */
+async function startAnalyzer(webgpu: boolean): Promise<AnalyzerClient> {
+	const starting = new AnalyzerClient(onResult, onWorkerError, undefined, {
+		frameQueueLimit: FRAME_QUEUE_LIMIT,
+		webgpu,
+		onFrameError,
+	});
+	client = starting;
+	try {
+		await starting.whenReady();
+		if (starting.missingAtlases.length > 0) {
+			throw new Error(MISSING_ATLASES_ERROR);
+		}
+	} catch (error) {
+		starting.dispose();
+		if (client === starting) client = null;
+		throw error;
+	}
+	return starting;
+}
+
+/** Starts the clip ring on `stream`; what clips get from it. */
+async function startClipRing(stream: MediaStream): Promise<ClipsState> {
+	if (!supportsRingBuffer()) return "unsupported";
+	const startingRing = new ClipRingBuffer(RING_BUFFER_SECONDS, () =>
+		onClipsFailed(startingRing),
+	);
+	ring = startingRing;
+	try {
+		await startingRing.start(stream);
+		return "on";
+	} catch {
+		startingRing.stop();
+		if (ring === startingRing) ring = null;
+		return "failed";
+	}
 }
 
 function release(): void {

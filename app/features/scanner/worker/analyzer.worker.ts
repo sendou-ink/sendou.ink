@@ -13,6 +13,7 @@
 import {
 	ALL_FORMATS,
 	BlobSource,
+	type EncodedPacket,
 	EncodedPacketSink,
 	Input,
 	type InputVideoTrack,
@@ -68,6 +69,7 @@ import {
 	createCanvasReadback,
 	createFrameReaderPool,
 	type FrameReader,
+	type ReadbackPath,
 	type ReadFrame,
 } from "./readback";
 import { exactReadbackPath, exactReadbackPathOf } from "./readback-parity";
@@ -382,7 +384,7 @@ async function scanChunk({
 	shadowTimeline = new TimelineBuilder();
 	minimapOpenConfirmed = false;
 	const wallStart = performance.now();
-	const gpuWaitStart = gpuMatcher?.stats.gpuWaitMs ?? 0;
+	const gpuWaitStart = gpuWaitMs();
 	let lastProgressAt = 0;
 	let lastPreviewAt = 0;
 	let cursor = tStart;
@@ -397,28 +399,19 @@ async function scanChunk({
 		source: new BlobSource(file),
 	});
 	try {
-		const track = await input.getPrimaryVideoTrack();
-		if (!track || !(await track.canDecode())) {
-			throw new Error("worker cannot decode this file");
-		}
+		const track = await decodableTrack(input);
 		const packets = new EncodedPacketSink(track);
 
 		frameReader ??= createFrameReaderPool(READERS);
 		const reader = frameReader;
-		const parityT = (tStart + tEnd) / 2;
-		let path = await exactReadbackPath(track, parityT, reader);
-		if (await decodesInSoftware(track, chunkIndex)) {
-			const softwarePath = await exactReadbackPathOf(
-				track,
-				parityT,
-				reader,
-				"prefer-software",
-			);
-			if (softwarePath) {
-				hardwareAcceleration = "prefer-software";
-				path = softwarePath;
-			}
-		}
+		const lane = await laneReadback(
+			track,
+			chunkIndex,
+			(tStart + tEnd) / 2,
+			reader,
+		);
+		const { path } = lane;
+		hardwareAcceleration = lane.hardwareAcceleration;
 		let samples = new VideoSampleSink(track, { hardwareAcceleration });
 
 		/** A sample's place in the stream: telemetry and the cursor. */
@@ -621,10 +614,7 @@ async function scanChunk({
 					return "end";
 				}
 				account(item.t);
-				const due =
-					item.t >= scheduler!.nextDueT()
-						? scheduler!.dueDetectors(item.t)
-						: [];
+				const due = dueAt(item.t);
 				if (due.length > 0) {
 					if (!item.read) readAhead(item);
 					const read = item.read!;
@@ -675,10 +665,7 @@ async function scanChunk({
 						const key = await packets.getKeyPacket(cursor + MAX_SKIM_STRIDE_S, {
 							verifyKeyPackets: true,
 						});
-						const target =
-							key && key.timestamp > cursor
-								? key.timestamp
-								: cursor + MAX_SKIM_STRIDE_S;
+						const target = skimTargetT(key, cursor);
 						if (target >= tEnd) {
 							cursor = tEnd;
 							break;
@@ -719,8 +706,7 @@ async function scanChunk({
 							}
 						}
 						account(t);
-						const due =
-							t >= scheduler!.nextDueT() ? scheduler!.dueDetectors(t) : [];
+						const due = dueAt(t);
 						if (due.length > 0) {
 							if (!item.read) readAhead(item);
 							const read = item.read!;
@@ -746,10 +732,11 @@ async function scanChunk({
 						`scanner: chunk ${chunkIndex} failed at ${cursor.toFixed(1)}s, resuming`,
 						error,
 					);
-					if (failuresHere >= 2 && hardwareAcceleration !== "prefer-software") {
+					const recovery = recoveryAt(failuresHere, hardwareAcceleration);
+					if (recovery === "software") {
 						hardwareAcceleration = "prefer-software";
 						samples = new VideoSampleSink(track, { hardwareAcceleration });
-					} else if (failuresHere >= 2) {
+					} else if (recovery === "skip") {
 						cursor = Math.min(tEnd, cursor + UNDECODABLE_SKIP_S);
 					}
 					await new Promise((resolve) =>
@@ -761,11 +748,7 @@ async function scanChunk({
 			closeSource();
 		}
 
-		if (telemetry) {
-			telemetry.wallMs = performance.now() - wallStart;
-			telemetry.gpuScans = gpuMatcher ? 1 : 0;
-			telemetry.gpuWaitMs = (gpuMatcher?.stats.gpuWaitMs ?? 0) - gpuWaitStart;
-		}
+		finishChunkTelemetry(wallStart, gpuWaitStart);
 		post({ kind: "chunkDone", chunkIndex, telemetry });
 	} catch (error) {
 		post({
@@ -898,6 +881,69 @@ async function decodesInSoftware(
 		track.getDisplayHeight(),
 	]);
 	return codec === "av1" && width * height >= SOFTWARE_LANE_MIN_PIXELS;
+}
+
+/** The file's video track, when this worker can decode it. */
+async function decodableTrack(input: Input): Promise<InputVideoTrack> {
+	const track = await input.getPrimaryVideoTrack();
+	if (!track || !(await track.canDecode())) {
+		throw new Error("worker cannot decode this file");
+	}
+	return track;
+}
+
+/** The lane's exact readback path, decoding in software where decodesInSoftware asks for it and that path exists. */
+async function laneReadback(
+	track: InputVideoTrack,
+	chunkIndex: number,
+	parityT: number,
+	reader: FrameReader,
+): Promise<{ path: ReadbackPath; hardwareAcceleration: HardwareAcceleration }> {
+	const path = await exactReadbackPath(track, parityT, reader);
+	if (await decodesInSoftware(track, chunkIndex)) {
+		const softwarePath = await exactReadbackPathOf(
+			track,
+			parityT,
+			reader,
+			"prefer-software",
+		);
+		if (softwarePath) {
+			return { path: softwarePath, hardwareAcceleration: "prefer-software" };
+		}
+	}
+	return { path, hardwareAcceleration: "no-preference" };
+}
+
+/** The detectors due at `t`; none before the scheduler's next due time. */
+function dueAt(t: number): string[] {
+	return t >= scheduler!.nextDueT() ? scheduler!.dueDetectors(t) : [];
+}
+
+/** The next skim hop: the keyframe after the cursor, or the widest hop when there is none that close. */
+function skimTargetT(key: EncodedPacket | null, cursor: number): number {
+	return key && key.timestamp > cursor
+		? key.timestamp
+		: cursor + MAX_SKIM_STRIDE_S;
+}
+
+/** How a chunk resumes after its `failuresHere`-th failure at the cursor. */
+function recoveryAt(
+	failuresHere: number,
+	hardwareAcceleration: HardwareAcceleration,
+): "retry" | "software" | "skip" {
+	if (failuresHere < 2) return "retry";
+	return hardwareAcceleration !== "prefer-software" ? "software" : "skip";
+}
+
+function gpuWaitMs(): number {
+	return gpuMatcher?.stats.gpuWaitMs ?? 0;
+}
+
+function finishChunkTelemetry(wallStart: number, gpuWaitStart: number): void {
+	if (!telemetry) return;
+	telemetry.wallMs = performance.now() - wallStart;
+	telemetry.gpuScans = gpuMatcher ? 1 : 0;
+	telemetry.gpuWaitMs = gpuWaitMs() - gpuWaitStart;
 }
 
 /** A frame normalizeFrame would only copy: canonical size, no bars. */

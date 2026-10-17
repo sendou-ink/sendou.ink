@@ -280,10 +280,9 @@ function parseFrameHeader(
 	if (!showFrame) r.bits(1); // showable_frame
 	const frameIsIntra =
 		frameType === KEY_FRAME || frameType === INTRA_ONLY_FRAME;
-	const errorResilient =
-		frameType === SWITCH_FRAME || (frameType === KEY_FRAME && showFrame)
-			? true
-			: r.flag();
+	const errorResilient = refreshesAllSlots(frameType, showFrame)
+		? true
+		: r.flag();
 	r.bits(1); // disable_cdf_update
 	const allowScreenContentTools =
 		sequence.seqForceScreenContentTools === SELECT_SCREEN_CONTENT_TOOLS
@@ -300,18 +299,31 @@ function parseFrameHeader(
 	r.bits(sequence.orderHintBits);
 	if (!frameIsIntra && !errorResilient) r.bits(3); // primary_ref_frame
 	if (sequence.decoderModelInfoPresent && r.flag()) {
-		for (const point of sequence.operatingPoints) {
-			if (!point.decoderModelPresent) continue;
-			const inTemporalLayer = (point.idc >> temporalId) & 1;
-			const inSpatialLayer = (point.idc >> (spatialId + 8)) & 1;
-			if (point.idc === 0 || (inTemporalLayer && inSpatialLayer)) {
-				r.bits(sequence.bufferRemovalTimeLength);
-			}
+		skipBufferRemovalTimes(r, sequence, temporalId, spatialId);
+	}
+	const refreshFrameFlags = refreshesAllSlots(frameType, showFrame)
+		? ALL_FRAMES
+		: r.bits(8);
+	return { frameType, refreshFrameFlags };
+}
+
+/** A switch frame or a shown key frame: error resilient and refreshing every slot. */
+function refreshesAllSlots(frameType: number, showFrame: boolean): boolean {
+	return frameType === SWITCH_FRAME || (frameType === KEY_FRAME && showFrame);
+}
+
+function skipBufferRemovalTimes(
+	r: BitReader,
+	sequence: SequenceHeader,
+	temporalId: number,
+	spatialId: number,
+): void {
+	for (const point of sequence.operatingPoints) {
+		if (!point.decoderModelPresent) continue;
+		const inTemporalLayer = (point.idc >> temporalId) & 1;
+		const inSpatialLayer = (point.idc >> (spatialId + 8)) & 1;
+		if (point.idc === 0 || (inTemporalLayer && inSpatialLayer)) {
+			r.bits(sequence.bufferRemovalTimeLength);
 		}
 	}
-	const refreshFrameFlags =
-		frameType === SWITCH_FRAME || (frameType === KEY_FRAME && showFrame)
-			? ALL_FRAMES
-			: r.bits(8);
-	return { frameType, refreshFrameFlags };
 }

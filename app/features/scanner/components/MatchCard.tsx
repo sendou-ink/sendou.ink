@@ -132,9 +132,7 @@ export function MatchCard({
 	const [flash, setFlash] = useState<"uploaded" | "failed" | null>(null);
 	if (prevUploadKind !== uploadKind) {
 		setPrevUploadKind(uploadKind);
-		setFlash(
-			uploadKind === "uploaded" || uploadKind === "failed" ? uploadKind : null,
-		);
+		setFlash(flashOf(uploadKind));
 	}
 
 	const result = matchResult(built);
@@ -142,17 +140,7 @@ export function MatchCard({
 	const scannedAt = built.sources.find(
 		(event) => event.detectedAt !== undefined,
 	)?.detectedAt;
-	const setCount = xBattleCards(built.sources).count;
-	const meta = [
-		match.lobby !== null && match.lobby !== "PRIVATE"
-			? lobbyLabel(match.lobby)
-			: null,
-		setCount ? `Set ${setCount.wins ?? "?"}–${setCount.losses ?? "?"}` : null,
-		match.replayCode,
-		match.cast ? "cast" : null,
-	]
-		.filter(Boolean)
-		.join(" · ");
+	const meta = metaLine(match, xBattleCards(built.sources).count);
 
 	const className = clsx(styles.matchCard, {
 		[styles.enter]: enter,
@@ -165,19 +153,12 @@ export function MatchCard({
 			<div className={styles.main}>
 				<div className={clsx(styles.numberColumn, "line-height-tight")}>
 					<span className={styles.number}>Game {number}</span>
-					{kind === "vod" ? (
-						match.startsAt !== null ? (
-							<span className={styles.scannedAt}>
-								{formatPosition(match.startsAt - originT)}
-							</span>
-						) : null
-					) : scannedAt !== undefined ? (
-						<LocaleTime
-							date={new Date(scannedAt)}
-							options={{ timeStyle: "short" }}
-							className={styles.scannedAt}
-						/>
-					) : null}
+					<GameTime
+						kind={kind}
+						startsAt={match.startsAt}
+						originT={originT}
+						scannedAt={scannedAt}
+					/>
 				</div>
 				{match.mode !== null ? (
 					<ModeImage mode={match.mode} size={26} className={styles.mode} />
@@ -215,7 +196,7 @@ export function MatchCard({
 					<Score match={match} result={result} />
 					{pov ? (
 						<span className={styles.kds}>
-							{pov.ka ?? "?"}/{pov.d ?? "?"}/{pov.s ?? "?"}
+							<Kds player={pov} />
 						</span>
 					) : null}
 				</div>
@@ -269,7 +250,7 @@ export function MatchCard({
 				built={built}
 				clips={clips}
 				getFrame={getFrame}
-				fileName={`scanner-${scannedAt !== undefined ? new Date(scannedAt).toISOString().slice(0, 10) : kind}-game-${number}.zip`}
+				fileName={zipFileName(scannedAt, kind, number)}
 			/>
 		</div>
 	);
@@ -291,6 +272,75 @@ export function MatchCard({
 			) : null}
 		</div>
 	);
+}
+
+/** When the game was: its position in the file, or the time a live game was scanned. */
+function GameTime({
+	kind,
+	startsAt,
+	originT,
+	scannedAt,
+}: {
+	kind: SessionKind;
+	startsAt: number | null;
+	originT: number;
+	scannedAt: number | undefined;
+}) {
+	if (kind === "vod") {
+		return startsAt !== null ? (
+			<span className={styles.scannedAt}>
+				{formatPosition(startsAt - originT)}
+			</span>
+		) : null;
+	}
+	return scannedAt !== undefined ? (
+		<LocaleTime
+			date={new Date(scannedAt)}
+			options={{ timeStyle: "short" }}
+			className={styles.scannedAt}
+		/>
+	) : null;
+}
+
+function Kds({ player }: { player: ScannerMatchPlayer }) {
+	return (
+		<>
+			{player.ka ?? "?"}/{player.d ?? "?"}/{player.s ?? "?"}
+		</>
+	);
+}
+
+function flashOf(
+	uploadKind: UploadState["kind"] | null,
+): "uploaded" | "failed" | null {
+	return uploadKind === "uploaded" || uploadKind === "failed"
+		? uploadKind
+		: null;
+}
+
+/** The lobby, the X Battle set count the game left, the replay code and whether it was a cast. */
+function metaLine(
+	match: ScannerMatch,
+	setCount: ReturnType<typeof xBattleCards>["count"],
+): string {
+	return [
+		match.lobby !== null && match.lobby !== "PRIVATE"
+			? lobbyLabel(match.lobby)
+			: null,
+		setCount ? `Set ${setCount.wins ?? "?"}–${setCount.losses ?? "?"}` : null,
+		match.replayCode,
+		match.cast ? "cast" : null,
+	]
+		.filter(Boolean)
+		.join(" · ");
+}
+
+function zipFileName(
+	scannedAt: number | undefined,
+	kind: SessionKind,
+	number: number,
+): string {
+	return `scanner-${scannedAt !== undefined ? new Date(scannedAt).toISOString().slice(0, 10) : kind}-game-${number}.zip`;
 }
 
 function povPlayer(match: ScannerMatch): ScannerMatchPlayer | undefined {
@@ -453,7 +503,7 @@ function Scoreboard({
 											<PlayerAbilities abilities={player.abilities} />
 										</td>
 										<td className={styles.num}>
-											{player.ka ?? "?"}/{player.d ?? "?"}/{player.s ?? "?"}
+											<Kds player={player} />
 										</td>
 										<td className={styles.num}>
 											{player.paint !== null ? `${player.paint}p` : ""}

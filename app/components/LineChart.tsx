@@ -94,26 +94,22 @@ export function LineChart({
 	const minY = Math.min(...ys);
 	const maxY = Math.max(...ys);
 
-	const marginTop = sparkline
-		? SPARKLINE_MARGIN
-		: showPeak
-			? MARGIN_TOP_WITH_PEAK_LABEL
-			: MARGIN.top;
-	const marginBottom = sparkline ? SPARKLINE_MARGIN : MARGIN.bottom;
+	const {
+		top: marginTop,
+		bottom: marginBottom,
+		inline: plotInset,
+	} = plotMargins({ sparkline, showPeak });
 	const innerHeight = height - marginTop - marginBottom;
 	const yRange = maxY - minY || 1;
 	const yPercent = (value: number) => (1 - (value - minY) / yRange) * 100;
 
-	const yTicks = niceTicks({
-		min: minY,
-		max: maxY,
-		targetCount: sparkline ? 0 : Y_TICKS_TARGET_COUNT,
-	}).filter(
-		(tick) =>
-			((yPercent(minY) - yPercent(tick.value)) / 100) * innerHeight >=
-			Y_TICK_MIN_GAP_FROM_BASELINE,
-	);
-	const plotInset = sparkline ? SPARKLINE_MARGIN : MARGIN.inline;
+	const yTicks = visibleYTicks({
+		minY,
+		maxY,
+		sparkline,
+		innerHeight,
+		yPercent,
+	});
 	const innerWidth = width - plotInset * 2;
 	const xRange = maxX - minX || 1;
 	const xPercent = (value: number) => ((value - minX) / xRange) * 100;
@@ -129,25 +125,14 @@ export function LineChart({
 	const middleXLabels =
 		!size || sparkline
 			? []
-			: xAxis.type === "date"
-				? middleDates({
-						first: new Date(minX),
-						last: new Date(maxX),
-						count: Math.floor(innerWidth / PX_PER_DATE_LABEL) - 1,
-					}).map((date) => ({
-						value: date.getTime(),
-						label: dateLabelFormatter.format(date),
-					}))
-				: niceTicks({
-						min: minX,
-						max: maxX,
-						targetCount: Math.floor(innerWidth / PX_PER_NUMBER_LABEL),
-					})
-						.filter((tick) => isFarEnoughFromEdges(tick.value))
-						.map((tick) => ({
-							...tick,
-							label: `${tick.label}${xAxis.suffix ?? ""}`,
-						}));
+			: middleXAxisLabels({
+					xAxis,
+					minX,
+					maxX,
+					innerWidth,
+					formatDate: (date) => dateLabelFormatter.format(date),
+					isFarEnoughFromEdges,
+				});
 
 	const peak = showPeak
 		? R.firstBy(series[0].points, [(point) => point.y, "desc"])
@@ -164,25 +149,13 @@ export function LineChart({
 		);
 	};
 
-	const hoveredPoints =
-		typeof hoveredX === "number"
-			? series.flatMap((s, seriesIndex) => {
-					const point = s.points.find((p) => p.x === hoveredX);
-					return point ? [{ ...point, seriesIndex, label: s.label }] : [];
-				})
-			: [];
-	const tooltipAnchor =
-		typeof hoveredX === "number" && hoveredPoints.length > 0
-			? {
-					xPercent: xPercent(hoveredX),
-					yPercent: Math.min(
-						...hoveredPoints.map((point) => yPercent(point.y)),
-					),
-				}
-			: null;
-	const tooltipAnchorX = tooltipAnchor
-		? (tooltipAnchor.xPercent / 100) * innerWidth
-		: 0;
+	const hoveredPoints = pointsAtX(series, hoveredX);
+	const tooltipAnchor = tooltipAnchorFor({
+		hoveredX,
+		hoveredPoints,
+		xPercent,
+		yPercent,
+	});
 
 	return (
 		<div
@@ -362,45 +335,197 @@ export function LineChart({
 					</div>
 				) : null}
 				{tooltipAnchor ? (
-					<div
-						className={styles.tooltip}
-						style={{
-							left: `${tooltipAnchor.xPercent}%`,
-							top: `${tooltipAnchor.yPercent}%`,
-							// centered on the point but kept inside the chart's edges
-							translate: `clamp(${-plotInset - tooltipAnchorX}px, -50%, calc(${innerWidth + plotInset - tooltipAnchorX}px - 100%)) calc(-100% - var(--s-3))`,
-						}}
-					>
-						<div className={styles.tooltipHeader}>
-							{xAxis.type === "date"
+					<LineChartTooltip
+						anchor={tooltipAnchor}
+						plotInset={plotInset}
+						innerWidth={innerWidth}
+						header={
+							xAxis.type === "date"
 								? tooltipDateFormatter.format(new Date(hoveredX!))
-								: formatX(hoveredX!)}
-						</div>
-						{series.length === 1 ? (
-							<div className={styles.tooltipValue}>
-								{formatValue(hoveredPoints[0].y)}
-							</div>
-						) : (
-							hoveredPoints.map((point) => (
-								<div key={point.seriesIndex} className={styles.tooltipRow}>
-									<div
-										className={clsx(
-											styles.tooltipDot,
-											seriesColorClass(point.seriesIndex),
-										)}
-									/>
-									{point.label}
-									<div className={styles.tooltipRowValue}>
-										{formatValue(point.y)}
-									</div>
-								</div>
-							))
-						)}
-					</div>
+								: formatX(hoveredX!)
+						}
+						isSingleSeries={series.length === 1}
+						hoveredPoints={hoveredPoints}
+						formatValue={formatValue}
+					/>
 				) : null}
 			</div>
 		</div>
 	);
+}
+
+function LineChartTooltip({
+	anchor,
+	plotInset,
+	innerWidth,
+	header,
+	isSingleSeries,
+	hoveredPoints,
+	formatValue,
+}: {
+	anchor: { xPercent: number; yPercent: number };
+	plotInset: number;
+	innerWidth: number;
+	header: string;
+	isSingleSeries: boolean;
+	hoveredPoints: HoveredPoint[];
+	formatValue: (value: number) => string;
+}) {
+	const anchorX = (anchor.xPercent / 100) * innerWidth;
+
+	return (
+		<div
+			className={styles.tooltip}
+			style={{
+				left: `${anchor.xPercent}%`,
+				top: `${anchor.yPercent}%`,
+				// centered on the point but kept inside the chart's edges
+				translate: `clamp(${-plotInset - anchorX}px, -50%, calc(${innerWidth + plotInset - anchorX}px - 100%)) calc(-100% - var(--s-3))`,
+			}}
+		>
+			<div className={styles.tooltipHeader}>{header}</div>
+			{isSingleSeries ? (
+				<div className={styles.tooltipValue}>
+					{formatValue(hoveredPoints[0].y)}
+				</div>
+			) : (
+				hoveredPoints.map((point) => (
+					<div key={point.seriesIndex} className={styles.tooltipRow}>
+						<div
+							className={clsx(
+								styles.tooltipDot,
+								seriesColorClass(point.seriesIndex),
+							)}
+						/>
+						{point.label}
+						<div className={styles.tooltipRowValue}>{formatValue(point.y)}</div>
+					</div>
+				))
+			)}
+		</div>
+	);
+}
+
+interface HoveredPoint {
+	x: number;
+	y: number;
+	seriesIndex: number;
+	label: React.ReactNode;
+}
+
+function pointsAtX(
+	series: LineChartSeries[],
+	hoveredX: number | null,
+): HoveredPoint[] {
+	if (typeof hoveredX !== "number") return [];
+
+	return series.flatMap((s, seriesIndex) => {
+		const point = s.points.find((p) => p.x === hoveredX);
+		return point ? [{ ...point, seriesIndex, label: s.label }] : [];
+	});
+}
+
+function tooltipAnchorFor({
+	hoveredX,
+	hoveredPoints,
+	xPercent,
+	yPercent,
+}: {
+	hoveredX: number | null;
+	hoveredPoints: HoveredPoint[];
+	xPercent: (value: number) => number;
+	yPercent: (value: number) => number;
+}) {
+	if (typeof hoveredX !== "number" || hoveredPoints.length === 0) return null;
+
+	return {
+		xPercent: xPercent(hoveredX),
+		yPercent: Math.min(...hoveredPoints.map((point) => yPercent(point.y))),
+	};
+}
+
+function visibleYTicks({
+	minY,
+	maxY,
+	sparkline,
+	innerHeight,
+	yPercent,
+}: {
+	minY: number;
+	maxY: number;
+	sparkline: boolean;
+	innerHeight: number;
+	yPercent: (value: number) => number;
+}) {
+	return niceTicks({
+		min: minY,
+		max: maxY,
+		targetCount: sparkline ? 0 : Y_TICKS_TARGET_COUNT,
+	}).filter(
+		(tick) =>
+			((yPercent(minY) - yPercent(tick.value)) / 100) * innerHeight >=
+			Y_TICK_MIN_GAP_FROM_BASELINE,
+	);
+}
+
+function plotMargins({
+	sparkline,
+	showPeak,
+}: {
+	sparkline: boolean;
+	showPeak: boolean;
+}) {
+	if (sparkline) {
+		return {
+			top: SPARKLINE_MARGIN,
+			bottom: SPARKLINE_MARGIN,
+			inline: SPARKLINE_MARGIN,
+		};
+	}
+
+	return {
+		top: showPeak ? MARGIN_TOP_WITH_PEAK_LABEL : MARGIN.top,
+		bottom: MARGIN.bottom,
+		inline: MARGIN.inline,
+	};
+}
+
+function middleXAxisLabels({
+	xAxis,
+	minX,
+	maxX,
+	innerWidth,
+	formatDate,
+	isFarEnoughFromEdges,
+}: {
+	xAxis: { type: "date" } | { type: "number"; suffix?: string };
+	minX: number;
+	maxX: number;
+	innerWidth: number;
+	formatDate: (date: Date) => string;
+	isFarEnoughFromEdges: (value: number) => boolean;
+}) {
+	if (xAxis.type === "date") {
+		return middleDates({
+			first: new Date(minX),
+			last: new Date(maxX),
+			count: Math.floor(innerWidth / PX_PER_DATE_LABEL) - 1,
+		}).map((date) => ({
+			value: date.getTime(),
+			label: formatDate(date),
+		}));
+	}
+
+	return niceTicks({
+		min: minX,
+		max: maxX,
+		targetCount: Math.floor(innerWidth / PX_PER_NUMBER_LABEL),
+	})
+		.filter((tick) => isFarEnoughFromEdges(tick.value))
+		.map((tick) => ({
+			...tick,
+			label: `${tick.label}${xAxis.suffix ?? ""}`,
+		}));
 }
 
 function seriesColorClass(seriesIndex: number) {

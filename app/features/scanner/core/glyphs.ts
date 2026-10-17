@@ -397,6 +397,8 @@ type RankedCandidate = {
 	source: "fixture" | "font";
 };
 
+type ScoredCandidate = RankedCandidate & { inkCoverage: number };
+
 function* classifySegment(
 	masked: Mat,
 	seg: SegmentInfo,
@@ -439,45 +441,10 @@ function* classifySegment(
 	// their product bounds a glyph's score before matching. Matching in
 	// descending-bound order lets the loop stop once no remaining glyph could
 	// come within FIXTURE_TIEBREAK of the best.
-	const eligible: EligibleGlyph[] = [];
-	for (const glyph of set.glyphs) {
-		const tRows = glyph.rows;
-		const tCols = glyph.cols;
-		if (tRows > regionRows || tCols > regionCols) continue;
-		const wRatio = tCols / Math.max(segWidth, 1);
-		if (wRatio < 0.4 || wRatio > 2.5) continue;
-		const hRatio = tRows / Math.max(seg.height, 1);
-		// a template sliding freely in a taller region can score high on a fragment
-		// of the segment (an 'l' bar inside a 'c'), so reject height mismatches
-		const padded =
-			segWidth <= seg.height + DOT_TEMPLATE_PAD_ROWS &&
-			tRows - seg.height <= DOT_TEMPLATE_PAD_ROWS;
-		if (hRatio < 0.5 || (hRatio > 1.3 && !padded)) continue;
-		// ink-coverage penalty: templates should explain the segment's ink
-		const r =
-			Math.min(glyph.ink, seg.ink) / Math.max(Math.max(glyph.ink, seg.ink), 1);
-		// height-mismatch penalty: an x-height template on an ascender/descender
-		// glyph ('o' on 'b') correlates well on the bowl alone
-		const hr =
-			Math.min(tRows, seg.height) / Math.max(tRows, Math.max(seg.height, 1));
-		eligible.push({
-			glyph,
-			tRows,
-			tCols,
-			r,
-			hr,
-			bound: (0.7 + 0.3 * r) * (0.85 + 0.15 * hr),
-		});
-	}
+	const eligible = eligibleGlyphs(set, seg, regionRows, regionCols);
 	sortByBound(eligible);
 
-	const candidates: {
-		char: string;
-		score: number;
-		ncc: number;
-		source: "fixture" | "font";
-		inkCoverage: number;
-	}[] = [];
+	const candidates: ScoredCandidate[] = [];
 	// Only placements covering most of the segment: the region is padded, so a
 	// free-sliding template can otherwise match the *neighboring* glyph inside
 	// the pad ('l' next to a narrow 'i' at 0.97+) or a fragment ('t' stem on 'b').
@@ -554,6 +521,56 @@ function* classifySegment(
 	}
 	region.delete();
 	sortByScore(candidates);
+	preferFixtureOnTie(candidates);
+	return candidates.slice(0, maxCandidates);
+}
+
+/**
+ * Templates whose size can match the segment, each with its ink and height
+ * penalty factors and their product, the score's upper bound.
+ */
+function eligibleGlyphs(
+	set: GlyphSet,
+	seg: SegmentInfo,
+	regionRows: number,
+	regionCols: number,
+): EligibleGlyph[] {
+	const segWidth = seg.x1 - seg.x0;
+	const eligible: EligibleGlyph[] = [];
+	for (const glyph of set.glyphs) {
+		const tRows = glyph.rows;
+		const tCols = glyph.cols;
+		if (tRows > regionRows || tCols > regionCols) continue;
+		const wRatio = tCols / Math.max(segWidth, 1);
+		if (wRatio < 0.4 || wRatio > 2.5) continue;
+		const hRatio = tRows / Math.max(seg.height, 1);
+		// a template sliding freely in a taller region can score high on a fragment
+		// of the segment (an 'l' bar inside a 'c'), so reject height mismatches
+		const padded =
+			segWidth <= seg.height + DOT_TEMPLATE_PAD_ROWS &&
+			tRows - seg.height <= DOT_TEMPLATE_PAD_ROWS;
+		if (hRatio < 0.5 || (hRatio > 1.3 && !padded)) continue;
+		// ink-coverage penalty: templates should explain the segment's ink
+		const r =
+			Math.min(glyph.ink, seg.ink) / Math.max(Math.max(glyph.ink, seg.ink), 1);
+		// height-mismatch penalty: an x-height template on an ascender/descender
+		// glyph ('o' on 'b') correlates well on the bowl alone
+		const hr =
+			Math.min(tRows, seg.height) / Math.max(tRows, Math.max(seg.height, 1));
+		eligible.push({
+			glyph,
+			tRows,
+			tCols,
+			r,
+			hr,
+			bound: (0.7 + 0.3 * r) * (0.85 + 0.15 * hr),
+		});
+	}
+	return eligible;
+}
+
+/** Moves a near-tied fixture crop ahead of a font glyph top; see FIXTURE_TIEBREAK. */
+function preferFixtureOnTie(candidates: ScoredCandidate[]): void {
 	const top = candidates[0];
 	if (top && top.source === "font") {
 		const fixture = candidates.find(
@@ -571,7 +588,6 @@ function* classifySegment(
 			candidates.unshift(fixture);
 		}
 	}
-	return candidates.slice(0, maxCandidates);
 }
 
 interface EligibleGlyph {

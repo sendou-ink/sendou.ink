@@ -78,24 +78,10 @@ export function TournamentMatchBanner({
 		);
 	}
 
-	const [teamOne, teamTwo] = teams;
-	const hostingTeam =
-		teamOne && teamTwo ? resolveHostingTeam([teamOne, teamTwo]) : null;
-	const host = hostingTeam
-		? {
-				name: hostingTeam.name,
-				avatarUrl: hostingTeam.logoUrl ?? undefined,
-			}
-		: null;
+	const host = resolveBannerHost(teams);
 
-	const opponentOne = data.match.opponentOne;
-	const opponentTwo = data.match.opponentTwo;
-	const isMissingTeam = !opponentOne?.id || !opponentTwo?.id;
-
-	const droppedOutTeamName = resolveDroppedOutTeamName({
-		data,
-		tournament,
-	});
+	const opponentIds = matchOpponentIds(data.match);
+	const isMissingTeam = !opponentIds;
 
 	const { schedule } = data;
 	const leagueRoundStartDate =
@@ -127,25 +113,7 @@ export function TournamentMatchBanner({
 		<MatchBannerContainer>
 			<TournamentMatchBannerTopRow data={data} />
 			{data.matchIsOver ? (
-				droppedOutTeamName ? (
-					<IconBanner
-						icon={<Flag size={32} />}
-						header={t("tournament:match.droppedOut.header")}
-						subtitle={t("tournament:match.droppedOut.subtitle", {
-							team: droppedOutTeamName,
-						})}
-					/>
-				) : data.endedEarly ? (
-					<IconBanner
-						icon={<Gavel size={32} />}
-						header={t("tournament:match.endedEarly.header")}
-						subtitle={t("tournament:match.endedEarly.subtitle")}
-					/>
-				) : (
-					<MultiMatchBanner
-						stageIds={data.results.map((result) => result.stageId)}
-					/>
-				)
+				<MatchOverBanner data={data} />
 			) : schedule.phase === "NOT_OPEN" ? (
 				<IconBanner
 					icon={<CalendarClock size={32} />}
@@ -241,11 +209,7 @@ export function TournamentMatchBanner({
 					<CurrentMapPickInfo
 						source={currentMap.source}
 						results={data.results}
-						opponentIds={
-							opponentOne?.id && opponentTwo?.id
-								? [opponentOne.id, opponentTwo.id]
-								: null
-						}
+						opponentIds={opponentIds}
 						pickBan={data.match.roundMaps?.pickBan ?? null}
 					/>
 				</MatchBanner>
@@ -254,16 +218,52 @@ export function TournamentMatchBanner({
 				<MatchBannerBottomRow
 					games={resolveBannerGames({ data })}
 					activeRosters={
-						opponentOne?.id && opponentTwo?.id
+						opponentIds
 							? {
-									alpha: activeRosterByTeamId(opponentOne.id),
-									bravo: activeRosterByTeamId(opponentTwo.id),
+									alpha: activeRosterByTeamId(opponentIds[0]),
+									bravo: activeRosterByTeamId(opponentIds[1]),
 								}
 							: null
 					}
 				/>
 			)}
 		</MatchBannerContainer>
+	);
+}
+
+function MatchOverBanner({ data }: { data: TournamentMatchLoaderData }) {
+	const { t } = useTranslation(["tournament"]);
+	const tournament = useTournament();
+
+	const droppedOutTeamName = resolveDroppedOutTeamName({
+		data,
+		tournament,
+	});
+
+	if (droppedOutTeamName) {
+		return (
+			<IconBanner
+				icon={<Flag size={32} />}
+				header={t("tournament:match.droppedOut.header")}
+				subtitle={t("tournament:match.droppedOut.subtitle", {
+					team: droppedOutTeamName,
+				})}
+			/>
+		);
+	}
+
+	if (data.endedEarly) {
+		return (
+			<IconBanner
+				icon={<Gavel size={32} />}
+				header={t("tournament:match.endedEarly.header")}
+				subtitle={t("tournament:match.endedEarly.subtitle")}
+			/>
+		);
+	}
+
+	return (
+		<MultiMatchBanner stageIds={data.results.map((result) => result.stageId)} />
 	);
 }
 
@@ -615,4 +615,26 @@ function resolveBannerGames({
 			mode: null,
 		})),
 	];
+}
+
+function resolveBannerHost(teams: ReturnType<typeof useMatch>["teams"]) {
+	const [teamOne, teamTwo] = teams;
+	const hostingTeam =
+		teamOne && teamTwo ? resolveHostingTeam([teamOne, teamTwo]) : null;
+
+	return hostingTeam
+		? {
+				name: hostingTeam.name,
+				avatarUrl: hostingTeam.logoUrl ?? undefined,
+			}
+		: null;
+}
+
+function matchOpponentIds(
+	match: TournamentMatchLoaderData["match"],
+): [number, number] | null {
+	const opponentOneId = match.opponentOne?.id;
+	const opponentTwoId = match.opponentTwo?.id;
+
+	return opponentOneId && opponentTwoId ? [opponentOneId, opponentTwoId] : null;
 }

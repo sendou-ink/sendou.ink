@@ -7,7 +7,7 @@ import * as TeamPick from "~/features/tournament/core/TeamPick";
 import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { superRefineAsync } from "~/utils/schema";
+import { superRefineAsync, type ValidationCtx } from "~/utils/schema";
 import {
 	ADMIN_REGISTRATION_MAX_MEMBERS,
 	adminRegistrationFormSchema,
@@ -25,24 +25,7 @@ export function adminRegistrationFormSchemaServer({
 	return v.pipeAsync(
 		adminRegistrationFormSchema,
 		superRefineAsync(async (data, ctx) => {
-			const name = data.linkedTeam
-				? typeof data.teamId === "number"
-					? (await TeamRepository.findById(data.teamId))?.name
-					: undefined
-				: data.pickUpName;
-			if (
-				name != null &&
-				tournamentTeamNameTaken({
-					tournament,
-					name,
-					exceptTournamentTeamId: data.tournamentTeamId ?? undefined,
-				})
-			) {
-				ctx.addIssue({
-					message: "forms:errors.regTeamNameTaken",
-					path: [data.linkedTeam ? "teamId" : "pickUpName"],
-				});
-			}
+			await validateTeamNameAvailable({ tournament, data, ctx });
 
 			if (data.members.length > ADMIN_REGISTRATION_MAX_MEMBERS) {
 				ctx.addIssue({
@@ -51,37 +34,7 @@ export function adminRegistrationFormSchemaServer({
 				});
 			}
 
-			// the map pool is only written while it can still be changed, matching the field's visibility
-			const teamPick = tournament.teamPickSettings;
-			if (teamPick && !tournament.hasStarted) {
-				const currentMapPool =
-					typeof data.tournamentTeamId === "number"
-						? ((
-								await TournamentTeamRepository.findMapPoolsByTeamIds([
-									data.tournamentTeamId,
-								])
-							).get(data.tournamentTeamId) ?? [])
-						: [];
-				// a pool can stop being valid after picking (map banned, pool changed), so only
-				// a changed pool is validated and an untouched one can't block unrelated edits
-				const mapPoolChanged =
-					MapPool.serialize(data.mapPool) !== MapPool.serialize(currentMapPool);
-
-				if (mapPoolChanged) {
-					const status = TeamPick.validateTeamPool({
-						mapPool: new MapPool(data.mapPool),
-						teamPick,
-						pool: tournament.mapPool,
-					});
-
-					if (status !== "VALID") {
-						ctx.addIssue({
-							message: "forms:errors.invalidMapPool",
-							path: ["mapPool"],
-						});
-					}
-				}
-			}
+			await validateChangedMapPool({ tournament, data, ctx });
 
 			const team =
 				typeof data.tournamentTeamId === "number"
@@ -90,90 +43,199 @@ export function adminRegistrationFormSchemaServer({
 			const currentMemberIds = team?.memberUserIds ?? [];
 
 			if (team) {
-				const submittedMemberIds = data.members.map((member) => member.userId);
-				const membersToRemove = currentMemberIds.filter(
-					(memberId) => !submittedMemberIds.includes(memberId),
-				);
-
-				if (tournament.hasStarted) {
-					const participatedPlayerIds =
-						tournament.participatedPlayerUserIdsByTeamId(team.id);
-					const removingParticipatedPlayer = membersToRemove.some((memberId) =>
-						participatedPlayerIds.includes(memberId),
-					);
-					if (removingParticipatedPlayer) {
-						ctx.addIssue({
-							message: "forms:errors.regCannotRemoveParticipatedPlayer",
-							path: ["members"],
-						});
-					}
-				}
-
-				if (
-					team.checkIns.length > 0 &&
-					data.members.length < tournament.minMembersPerTeam
-				) {
-					ctx.addIssue({
-						message: "forms:errors.regCheckedInBelowMinRoster",
-						path: ["members"],
-					});
-				}
+				validateRosterChange({ tournament, data, ctx, team, currentMemberIds });
 			}
 
 			for (const [index, member] of data.members.entries()) {
-				const path = ["members", index, "userId"];
-
-				const memberUser = await UserRepository.findLeanById(member.userId);
-				if (!memberUser) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberInvalid",
-						path,
-					});
-					continue;
-				}
-
-				if (!memberUser.friendCode) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberNoFriendCode",
-						path,
-					});
-				}
-
-				if (
-					tournament.ctx.settings.requireInGameNames &&
-					!member.inGameName &&
-					!memberUser.inGameName
-				) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberNoInGameName",
-						path,
-					});
-				}
-
-				// only members not already on the team are subject to ban / other-team checks
-				if (currentMemberIds.includes(member.userId)) continue;
-
-				if (userIsBanned(member.userId)) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberBanned",
-						path,
-					});
-				}
-
-				const previousTeam = tournament.teamMemberOfByUser({
-					id: member.userId,
+				await validateMember({
+					tournament,
+					ctx,
+					member,
+					path: ["members", index, "userId"],
+					currentMemberIds,
+					teamId: team?.id,
 				});
-				if (
-					previousTeam &&
-					previousTeam.id !== team?.id &&
-					!tournament.hasStarted
-				) {
-					ctx.addIssue({
-						message: "forms:errors.regMemberOnAnotherTeam",
-						path,
-					});
-				}
 			}
 		}),
 	);
+}
+
+type AdminRegistrationData = v.InferOutput<typeof adminRegistrationFormSchema>;
+
+async function validateTeamNameAvailable({
+	tournament,
+	data,
+	ctx,
+}: {
+	tournament: Tournament;
+	data: AdminRegistrationData;
+	ctx: ValidationCtx;
+}) {
+	const name = data.linkedTeam
+		? typeof data.teamId === "number"
+			? (await TeamRepository.findById(data.teamId))?.name
+			: undefined
+		: data.pickUpName;
+	if (
+		name != null &&
+		tournamentTeamNameTaken({
+			tournament,
+			name,
+			exceptTournamentTeamId: data.tournamentTeamId ?? undefined,
+		})
+	) {
+		ctx.addIssue({
+			message: "forms:errors.regTeamNameTaken",
+			path: [data.linkedTeam ? "teamId" : "pickUpName"],
+		});
+	}
+}
+
+/** The map pool is only written while it can still be changed, matching the field's visibility. */
+async function validateChangedMapPool({
+	tournament,
+	data,
+	ctx,
+}: {
+	tournament: Tournament;
+	data: AdminRegistrationData;
+	ctx: ValidationCtx;
+}) {
+	const teamPick = tournament.teamPickSettings;
+	if (!teamPick || tournament.hasStarted) return;
+
+	const currentMapPool =
+		typeof data.tournamentTeamId === "number"
+			? ((
+					await TournamentTeamRepository.findMapPoolsByTeamIds([
+						data.tournamentTeamId,
+					])
+				).get(data.tournamentTeamId) ?? [])
+			: [];
+	// a pool can stop being valid after picking (map banned, pool changed), so only
+	// a changed pool is validated and an untouched one can't block unrelated edits
+	const mapPoolChanged =
+		MapPool.serialize(data.mapPool) !== MapPool.serialize(currentMapPool);
+
+	if (!mapPoolChanged) return;
+
+	const status = TeamPick.validateTeamPool({
+		mapPool: new MapPool(data.mapPool),
+		teamPick,
+		pool: tournament.mapPool,
+	});
+
+	if (status !== "VALID") {
+		ctx.addIssue({
+			message: "forms:errors.invalidMapPool",
+			path: ["mapPool"],
+		});
+	}
+}
+
+function validateRosterChange({
+	tournament,
+	data,
+	ctx,
+	team,
+	currentMemberIds,
+}: {
+	tournament: Tournament;
+	data: AdminRegistrationData;
+	ctx: ValidationCtx;
+	team: NonNullable<ReturnType<Tournament["teamById"]>>;
+	currentMemberIds: number[];
+}) {
+	const submittedMemberIds = data.members.map((member) => member.userId);
+	const membersToRemove = currentMemberIds.filter(
+		(memberId) => !submittedMemberIds.includes(memberId),
+	);
+
+	if (tournament.hasStarted) {
+		const participatedPlayerIds = tournament.participatedPlayerUserIdsByTeamId(
+			team.id,
+		);
+		const removingParticipatedPlayer = membersToRemove.some((memberId) =>
+			participatedPlayerIds.includes(memberId),
+		);
+		if (removingParticipatedPlayer) {
+			ctx.addIssue({
+				message: "forms:errors.regCannotRemoveParticipatedPlayer",
+				path: ["members"],
+			});
+		}
+	}
+
+	if (
+		team.checkIns.length > 0 &&
+		data.members.length < tournament.minMembersPerTeam
+	) {
+		ctx.addIssue({
+			message: "forms:errors.regCheckedInBelowMinRoster",
+			path: ["members"],
+		});
+	}
+}
+
+async function validateMember({
+	tournament,
+	ctx,
+	member,
+	path,
+	currentMemberIds,
+	teamId,
+}: {
+	tournament: Tournament;
+	ctx: ValidationCtx;
+	member: AdminRegistrationData["members"][number];
+	path: Array<string | number>;
+	currentMemberIds: number[];
+	teamId: number | undefined;
+}) {
+	const memberUser = await UserRepository.findLeanById(member.userId);
+	if (!memberUser) {
+		ctx.addIssue({
+			message: "forms:errors.regMemberInvalid",
+			path,
+		});
+		return;
+	}
+
+	if (!memberUser.friendCode) {
+		ctx.addIssue({
+			message: "forms:errors.regMemberNoFriendCode",
+			path,
+		});
+	}
+
+	if (
+		tournament.ctx.settings.requireInGameNames &&
+		!member.inGameName &&
+		!memberUser.inGameName
+	) {
+		ctx.addIssue({
+			message: "forms:errors.regMemberNoInGameName",
+			path,
+		});
+	}
+
+	// only members not already on the team are subject to ban / other-team checks
+	if (currentMemberIds.includes(member.userId)) return;
+
+	if (userIsBanned(member.userId)) {
+		ctx.addIssue({
+			message: "forms:errors.regMemberBanned",
+			path,
+		});
+	}
+
+	const previousTeam = tournament.teamMemberOfByUser({
+		id: member.userId,
+	});
+	if (previousTeam && previousTeam.id !== teamId && !tournament.hasStarted) {
+		ctx.addIssue({
+			message: "forms:errors.regMemberOnAnotherTeam",
+			path,
+		});
+	}
 }

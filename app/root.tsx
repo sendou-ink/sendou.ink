@@ -210,11 +210,12 @@ function Document({
 	useLoadingIndicator();
 	useTriggerToasts();
 
+	const isMinorSupporter = rootData?.user?.roles.includes("MINOR_SUPPORT");
+	const showFuse = Config.fuseEnabled && !isMinorSupporter;
+
 	const htmlStyle: Record<string, string | number> = {
 		...Object.fromEntries(customThemeStyle),
-		...(rootData?.user?.roles.includes("MINOR_SUPPORT")
-			? { "--layout-fuse-bottom-height": "0px" }
-			: {}),
+		...(isMinorSupporter ? { "--layout-fuse-bottom-height": "0px" } : {}),
 	};
 
 	return (
@@ -224,19 +225,13 @@ function Document({
 			dir={i18n.dir()}
 			className={clsx(htmlThemeClass, "scrollbar")}
 			style={htmlStyle}
-			data-fuse={
-				Config.fuseEnabled && !rootData?.user?.roles.includes("MINOR_SUPPORT")
-					? "true"
-					: undefined
-			}
+			data-fuse={showFuse ? "true" : undefined}
 			suppressHydrationWarning
 		>
 			<head>
 				<meta charSet="utf-8" />
-				{Config.fuseEnabled &&
-				// check for data so supporters don't see ads on error page
-				rootData &&
-				!rootData.user?.roles.includes("MINOR_SUPPORT") ? (
+				{/* check for data so supporters don't see ads on error page */}
+				{showFuse && rootData ? (
 					<script
 						async
 						src="https://cdn.fuseplatform.net/publift/tags/2/4242/fuse.js"

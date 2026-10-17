@@ -268,29 +268,10 @@ export function Trophy({
 		],
 	);
 
-	const effectiveTier = tier ?? tentativeTier ?? null;
-	const containerStyle = effectiveTier
-		? ({
-				"--tier-bg": `var(--tier-bg-${effectiveTier})`,
-				"--tier-text": `var(--tier-text-${effectiveTier})`,
-			} as React.CSSProperties)
-		: undefined;
+	const containerStyle = tierContainerStyle(tier ?? tentativeTier ?? null);
 
-	const tierPill = tier ? (
-		<div className={style.tierPill}>
-			<TierPill tier={tier} />
-		</div>
-	) : tentativeTier ? (
-		<div className={style.tierPill}>
-			<TierPill tier={tentativeTier} isTentative />
-		</div>
-	) : null;
-
-	const cornerPill = pill ? (
-		<div className={style.cornerPill} data-testid="trophy-corner-pill">
-			{pill}
-		</div>
-	) : null;
+	const tierPill = <TrophyTierPill tier={tier} tentativeTier={tentativeTier} />;
+	const cornerPill = <TrophyCornerPill pill={pill} />;
 
 	if (error || (modelState === null && !isLoadingXpState)) {
 		return (
@@ -337,6 +318,51 @@ export function Trophy({
 			)}
 			{tierPill}
 			{cornerPill}
+		</div>
+	);
+}
+
+function tierContainerStyle(effectiveTier: number | null) {
+	if (!effectiveTier) return undefined;
+
+	return {
+		"--tier-bg": `var(--tier-bg-${effectiveTier})`,
+		"--tier-text": `var(--tier-text-${effectiveTier})`,
+	} as React.CSSProperties;
+}
+
+function TrophyTierPill({
+	tier,
+	tentativeTier,
+}: {
+	tier?: number | null;
+	tentativeTier?: number | null;
+}) {
+	if (tier) {
+		return (
+			<div className={style.tierPill}>
+				<TierPill tier={tier} />
+			</div>
+		);
+	}
+
+	if (tentativeTier) {
+		return (
+			<div className={style.tierPill}>
+				<TierPill tier={tentativeTier} isTentative />
+			</div>
+		);
+	}
+
+	return null;
+}
+
+function TrophyCornerPill({ pill }: { pill?: React.ReactNode }) {
+	if (!pill) return null;
+
+	return (
+		<div className={style.cornerPill} data-testid="trophy-corner-pill">
+			{pill}
 		</div>
 	);
 }

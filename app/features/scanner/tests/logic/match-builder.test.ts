@@ -123,6 +123,10 @@ function scoreboard(
 		paints = [],
 		names = NAMES,
 		noContest = false,
+	}: Partial<Omit<ScoreboardData, "players">> & {
+		weapons?: (MainWeaponId | null)[];
+		paints?: (number | null)[];
+		names?: string[];
 	} = {},
 ): DetectedEvent {
 	const data: ScoreboardData = {
@@ -172,12 +176,16 @@ function replayScoreboard(
 function battleLogScoreboard(
 	t: number,
 	{
-		timestamp = null as string | null,
-		paints = [] as (number | null)[],
-		stage = 0 as StageId | null,
-		mode = "SZ" as ModeShort | null,
+		timestamp = null,
+		paints = [],
+		stage = 0,
+		mode = "SZ",
 		names = NAMES,
-		ka = 10 as number | null,
+		ka = 10,
+	}: Partial<Pick<ScoreboardBattleLogData, "timestamp" | "stage" | "mode">> & {
+		paints?: (number | null)[];
+		names?: string[];
+		ka?: number | null;
 	} = {},
 ): DetectedEvent & { detectedAt?: number } {
 	const base = scoreboard(t, { paints, stage, mode, names })

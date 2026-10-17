@@ -81,24 +81,7 @@ export function Message({
 				</div>
 			) : null}
 			<div className={styles.messageBody}>
-				{continuation ? null : (
-					<div className={styles.messageInfo}>
-						<div
-							className={clsx(styles.messageUser, "truncate")}
-							style={
-								author?.chatNameHue
-									? { "--chat-hue": author.chatNameHue }
-									: undefined
-							}
-						>
-							{author?.username ?? "???"}
-						</div>
-						<PronounsTag author={author} />
-						{!message.pending ? (
-							<MessageTimestamp createdAt={message.createdAt} />
-						) : null}
-					</div>
-				)}
+				{continuation ? null : <MessageInfo message={message} />}
 				<div
 					className={clsx(styles.messageContents, {
 						[styles.messageContentsPending]: message.pending,
@@ -137,6 +120,27 @@ export function Message({
 					onClick={() => onReply(message)}
 					className={styles.replyButton}
 				/>
+			) : null}
+		</div>
+	);
+}
+
+function MessageInfo({ message }: { message: ClientChatMessage }) {
+	const author = message.author;
+
+	return (
+		<div className={styles.messageInfo}>
+			<div
+				className={clsx(styles.messageUser, "truncate")}
+				style={
+					author?.chatNameHue ? { "--chat-hue": author.chatNameHue } : undefined
+				}
+			>
+				{author?.username ?? "???"}
+			</div>
+			<PronounsTag author={author} />
+			{!message.pending ? (
+				<MessageTimestamp createdAt={message.createdAt} />
 			) : null}
 		</div>
 	);

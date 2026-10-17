@@ -175,38 +175,8 @@ function readZipFile(zipPath: string): Buffer {
 }
 
 function readCentralDirectory(zip: Buffer): ZipEntry[] {
-	const eocd = zip.length - END_OF_CENTRAL_DIRECTORY_SIZE;
-	if (zip.readUInt32LE(eocd) !== SIG_END_OF_CENTRAL_DIRECTORY) {
-		fail(
-			"end of central directory record not at the end of the file (archive comment or trailing data)",
-		);
-	}
-	const diskNumber = zip.readUInt16LE(eocd + 4);
-	const centralDirectoryDisk = zip.readUInt16LE(eocd + 6);
-	const entriesOnDisk = zip.readUInt16LE(eocd + 8);
-	const entryCount = zip.readUInt16LE(eocd + 10);
-	const centralDirectorySize = zip.readUInt32LE(eocd + 12);
-	const centralDirectoryOffset = zip.readUInt32LE(eocd + 16);
-
-	if (
-		diskNumber !== 0 ||
-		centralDirectoryDisk !== 0 ||
-		entriesOnDisk !== entryCount
-	) {
-		fail("multi-disk archive");
-	}
-	if (
-		entryCount === 0xffff ||
-		centralDirectoryOffset === 0xffffffff ||
-		centralDirectorySize === 0xffffffff
-	) {
-		fail("zip64 archive");
-	}
-	if (entryCount > MAX_ENTRIES)
-		fail(`${entryCount} entries, over the ${MAX_ENTRIES} limit`);
-	if (centralDirectoryOffset + centralDirectorySize !== eocd) {
-		fail("central directory does not end where the end record begins");
-	}
+	const { eocd, entryCount, centralDirectoryOffset } =
+		readEndOfCentralDirectory(zip);
 
 	const entries: ZipEntry[] = [];
 	const names = new Set<string>();
@@ -241,29 +211,14 @@ function readCentralDirectory(zip: Buffer): ZipEntry[] {
 		const name = entryName(nameBytes);
 		if (names.has(name)) fail(`duplicate entry ${name}`);
 		names.add(name);
-		if (flags & (FLAG_ENCRYPTED | FLAG_STRONG_ENCRYPTION))
-			fail(`${name} is encrypted`);
-		if (method !== METHOD_STORED && method !== METHOD_DEFLATE) {
-			fail(`${name} uses compression method ${method}`);
-		}
-		if (method === METHOD_STORED && compressedSize !== size) {
-			fail(`${name} is stored but its sizes differ`);
-		}
-		if (diskStart !== 0) fail(`${name} starts on another disk`);
-		const unixFileType = (externalAttributes >>> 16) & UNIX_FILE_TYPE_MASK;
-		if (unixFileType !== 0 && unixFileType !== UNIX_REGULAR_FILE) {
-			fail(`${name} is not a regular file (symlink, directory or device)`);
-		}
-
-		const limit = sizeLimit(name);
-		if (size > limit)
-			fail(`${name} inflates to ${size} bytes, over its ${limit} limit`);
-		if (
-			size > COMPRESSION_RATIO_FLOOR_BYTES &&
-			size > compressedSize * MAX_COMPRESSION_RATIO
-		) {
-			fail(`${name} compression ratio is over ${MAX_COMPRESSION_RATIO}x`);
-		}
+		checkCentralHeader(name, {
+			flags,
+			method,
+			compressedSize,
+			size,
+			diskStart,
+			externalAttributes,
+		});
 		totalSize += size;
 		if (totalSize > MAX_TOTAL_UNCOMPRESSED_BYTES) {
 			fail(`inflates to over ${MAX_TOTAL_UNCOMPRESSED_BYTES} bytes in total`);
@@ -288,6 +243,85 @@ function readCentralDirectory(zip: Buffer): ZipEntry[] {
 
 	checkNoOverlap(entries, centralDirectoryOffset);
 	return entries;
+}
+
+function readEndOfCentralDirectory(zip: Buffer) {
+	const eocd = zip.length - END_OF_CENTRAL_DIRECTORY_SIZE;
+	if (zip.readUInt32LE(eocd) !== SIG_END_OF_CENTRAL_DIRECTORY) {
+		fail(
+			"end of central directory record not at the end of the file (archive comment or trailing data)",
+		);
+	}
+	const diskNumber = zip.readUInt16LE(eocd + 4);
+	const centralDirectoryDisk = zip.readUInt16LE(eocd + 6);
+	const entriesOnDisk = zip.readUInt16LE(eocd + 8);
+	const entryCount = zip.readUInt16LE(eocd + 10);
+	const centralDirectorySize = zip.readUInt32LE(eocd + 12);
+	const centralDirectoryOffset = zip.readUInt32LE(eocd + 16);
+
+	if (
+		diskNumber !== 0 ||
+		centralDirectoryDisk !== 0 ||
+		entriesOnDisk !== entryCount
+	) {
+		fail("multi-disk archive");
+	}
+	if (
+		entryCount === 0xffff ||
+		centralDirectoryOffset === 0xffffffff ||
+		centralDirectorySize === 0xffffffff
+	) {
+		fail("zip64 archive");
+	}
+	if (entryCount > MAX_ENTRIES)
+		fail(`${entryCount} entries, over the ${MAX_ENTRIES} limit`);
+	if (centralDirectoryOffset + centralDirectorySize !== eocd) {
+		fail("central directory does not end where the end record begins");
+	}
+	return { eocd, entryCount, centralDirectoryOffset };
+}
+
+function checkCentralHeader(
+	name: string,
+	{
+		flags,
+		method,
+		compressedSize,
+		size,
+		diskStart,
+		externalAttributes,
+	}: {
+		flags: number;
+		method: number;
+		compressedSize: number;
+		size: number;
+		diskStart: number;
+		externalAttributes: number;
+	},
+) {
+	if (flags & (FLAG_ENCRYPTED | FLAG_STRONG_ENCRYPTION))
+		fail(`${name} is encrypted`);
+	if (method !== METHOD_STORED && method !== METHOD_DEFLATE) {
+		fail(`${name} uses compression method ${method}`);
+	}
+	if (method === METHOD_STORED && compressedSize !== size) {
+		fail(`${name} is stored but its sizes differ`);
+	}
+	if (diskStart !== 0) fail(`${name} starts on another disk`);
+	const unixFileType = (externalAttributes >>> 16) & UNIX_FILE_TYPE_MASK;
+	if (unixFileType !== 0 && unixFileType !== UNIX_REGULAR_FILE) {
+		fail(`${name} is not a regular file (symlink, directory or device)`);
+	}
+
+	const limit = sizeLimit(name);
+	if (size > limit)
+		fail(`${name} inflates to ${size} bytes, over its ${limit} limit`);
+	if (
+		size > COMPRESSION_RATIO_FLOOR_BYTES &&
+		size > compressedSize * MAX_COMPRESSION_RATIO
+	) {
+		fail(`${name} compression ratio is over ${MAX_COMPRESSION_RATIO}x`);
+	}
 }
 
 function entryName(nameBytes: Buffer): string {
@@ -555,21 +589,7 @@ function summarize(
 	const referencedFolders = new Set<string>();
 	let eventsWithoutFrame = 0;
 	for (const [index, event] of events.entries()) {
-		if (!isRecord(event)) fail(`events.json[${index}] is not an object`);
-		for (const key of Object.keys(event)) {
-			if (!EVENT_KEYS.has(key))
-				fail(`events.json[${index}] has an unexpected key ${key}`);
-		}
-		const { type, t, confidence, detectedAt, data, frame } = event;
-		if (!isEventType(type)) fail(`events.json[${index}] has an unknown type`);
-		if (typeof t !== "number" || typeof confidence !== "number") {
-			fail(`events.json[${index}] lacks a numeric t/confidence`);
-		}
-		if (detectedAt !== undefined && typeof detectedAt !== "number") {
-			fail(`events.json[${index}] has a non-numeric detectedAt`);
-		}
-		if (data !== null && !isRecord(data))
-			fail(`events.json[${index}] data is not an object`);
+		const { type, t, confidence, frame } = checkedEvent(event, index);
 		eventCounts[type] = (eventCounts[type] ?? 0) + 1;
 
 		if (frame === undefined) {
@@ -584,18 +604,7 @@ function summarize(
 		if (referencedFolders.has(frame)) fail(`${frame} is named by two events`);
 		referencedFolders.add(frame);
 
-		const frameFile = frameFiles.get(frame);
-		if (!frameFile) fail(`${frame} named by events.json is missing`);
-		const expected = jsonByName.get(`${frame}/expected.json`);
-		if (!isRecord(expected)) fail(`${frame}/expected.json is not an object`);
-		for (const key of Object.keys(expected)) {
-			if (!EXPECTED_KEYS.has(key))
-				fail(`${frame}/expected.json has an unexpected key ${key}`);
-		}
-		if (expected.event !== type && expected.event !== "none") {
-			fail(`${frame}/expected.json names another event`);
-		}
-
+		const frameFile = checkedFrameFile(frame, type, frameFiles, jsonByName);
 		frames.push({
 			folder: frame,
 			eventType: type,
@@ -613,6 +622,45 @@ function summarize(
 	}
 
 	return { outDir: root, frames, eventCounts, eventsWithoutFrame };
+}
+
+function checkedEvent(event: unknown, index: number) {
+	if (!isRecord(event)) fail(`events.json[${index}] is not an object`);
+	for (const key of Object.keys(event)) {
+		if (!EVENT_KEYS.has(key))
+			fail(`events.json[${index}] has an unexpected key ${key}`);
+	}
+	const { type, t, confidence, detectedAt, data, frame } = event;
+	if (!isEventType(type)) fail(`events.json[${index}] has an unknown type`);
+	if (typeof t !== "number" || typeof confidence !== "number") {
+		fail(`events.json[${index}] lacks a numeric t/confidence`);
+	}
+	if (detectedAt !== undefined && typeof detectedAt !== "number") {
+		fail(`events.json[${index}] has a non-numeric detectedAt`);
+	}
+	if (data !== null && !isRecord(data))
+		fail(`events.json[${index}] data is not an object`);
+	return { type, t, confidence, frame };
+}
+
+function checkedFrameFile(
+	frame: string,
+	type: (typeof EVENT_TYPES)[number],
+	frameFiles: Map<string, FrameFile>,
+	jsonByName: Map<string, unknown>,
+): FrameFile {
+	const frameFile = frameFiles.get(frame);
+	if (!frameFile) fail(`${frame} named by events.json is missing`);
+	const expected = jsonByName.get(`${frame}/expected.json`);
+	if (!isRecord(expected)) fail(`${frame}/expected.json is not an object`);
+	for (const key of Object.keys(expected)) {
+		if (!EXPECTED_KEYS.has(key))
+			fail(`${frame}/expected.json has an unexpected key ${key}`);
+	}
+	if (expected.event !== type && expected.event !== "none") {
+		fail(`${frame}/expected.json names another event`);
+	}
+	return frameFile;
 }
 
 function isEventType(value: unknown): value is (typeof EVENT_TYPES)[number] {

@@ -143,25 +143,7 @@ function matchesFilter(
 ): boolean {
 	switch (key) {
 		case "preferredStartTime": {
-			const preferredStartTime = filters[key];
-			if (preferredStartTime === "ANY") {
-				return true;
-			}
-
-			const timeZone =
-				preferredStartTime === "EU"
-					? "Europe/Paris"
-					: preferredStartTime === "NA"
-						? "America/Winnipeg"
-						: "Australia/Perth";
-
-			const tzDate = new TZDate(startTime, timeZone);
-
-			if (isWeekend(tzDate)) {
-				return tzDate.getHours() >= 10 && tzDate.getHours() <= 24;
-			}
-
-			return tzDate.getHours() >= 16 && tzDate.getHours() <= 23;
+			return matchesPreferredStartTime(filters[key], startTime);
 		}
 		case "isSendou": {
 			if (!filters[key]) {
@@ -194,64 +176,13 @@ function matchesFilter(
 			return !event.tags.some((tag) => tags.includes(tag));
 		}
 		case "games": {
-			const games = filters[key];
-			if (!games.length || games.length === gamesShort.length) {
-				return true;
-			}
-			const isSplatoonOne = event.tags.includes("S1");
-			const isSplatoonTwo = event.tags.includes("S2");
-			const isSplatoonThree = !isSplatoonOne && !isSplatoonTwo;
-
-			for (const game of games) {
-				if (game === "S1" && isSplatoonOne) {
-					return true;
-				}
-				if (game === "S2" && isSplatoonTwo) {
-					return true;
-				}
-				if (game === "S3" && isSplatoonThree) {
-					return true;
-				}
-			}
-
-			return false;
+			return matchesGames(event, filters[key]);
 		}
 		case "preferredVersus": {
-			const preferredVersus = filters[key];
-			if (
-				!preferredVersus.length ||
-				preferredVersus.length === versusShort.length
-			) {
-				return true;
-			}
-
-			const tag = event.tags.find(isVersusTag);
-			const membersPerTeam = tag
-				? MEMBERS_PER_TEAM_BY_VERSUS_TAG[tag]
-				: event.minMembersPerTeam;
-
-			const versus = `${membersPerTeam}v${membersPerTeam}`;
-
-			return preferredVersus.some((preferred) => preferred === versus);
+			return matchesPreferredVersus(event, filters[key]);
 		}
 		case "modes": {
-			const modes = filters[key];
-			if (!modes.length || modes.length === modesShortWithSpecial.length) {
-				return true;
-			}
-
-			if (!event.modes) {
-				return false;
-			}
-
-			if (filters.modesExact) {
-				return (
-					event.modes.length === modes.length &&
-					event.modes.every((mode) => modes.includes(mode))
-				);
-			}
-
-			return event.modes.some((mode) => modes.includes(mode));
+			return matchesModes(event, filters[key], filters.modesExact);
 		}
 		case "modesExact": {
 			// handled in the modes filter
@@ -266,53 +197,17 @@ function matchesFilter(
 			return event.teamsCount >= minTeamCount;
 		}
 		case "minTier": {
-			const { minTier, maxTier } = filters;
-			if (minTier === BEST_TIER_NUMBER && maxTier === WORST_TIER_NUMBER) {
-				return true;
-			}
-
-			const tier = event.tier ?? event.tentativeTier;
-			if (tier === null) {
-				return false;
-			}
-
-			return tier >= minTier && tier <= maxTier;
+			return matchesTierRange(event, filters);
 		}
 		case "maxTier": {
 			// handled in the minTier filter
 			return true;
 		}
 		case "orgsIncluded": {
-			const orgsIncluded = filters[key];
-			if (orgsIncluded.length === 0) {
-				return true;
-			}
-
-			const org = event.organization;
-
-			if (!org) {
-				return false;
-			}
-
-			return orgsIncluded.some((orgName) =>
-				orgNameMatches({ orgName: org.name, value: orgName }),
-			);
+			return matchesOrgsIncluded(event, filters[key]);
 		}
 		case "orgsExcluded": {
-			const orgsExcluded = filters[key];
-			if (orgsExcluded.length === 0) {
-				return true;
-			}
-
-			const org = event.organization;
-
-			if (!org) {
-				return true;
-			}
-
-			return !orgsExcluded.some((orgName) =>
-				orgNameMatches({ orgName: org.name, value: orgName }),
-			);
+			return matchesOrgsExcluded(event, filters[key]);
 		}
 		case "authorIdsExcluded": {
 			const authorIds = filters[key];
@@ -323,6 +218,151 @@ function matchesFilter(
 			return !authorIds.some((id) => event.authorId === id);
 		}
 	}
+}
+
+function matchesPreferredStartTime(
+	preferredStartTime: CalendarFilters["preferredStartTime"],
+	startTime: number,
+) {
+	if (preferredStartTime === "ANY") {
+		return true;
+	}
+
+	const timeZone =
+		preferredStartTime === "EU"
+			? "Europe/Paris"
+			: preferredStartTime === "NA"
+				? "America/Winnipeg"
+				: "Australia/Perth";
+
+	const tzDate = new TZDate(startTime, timeZone);
+
+	if (isWeekend(tzDate)) {
+		return tzDate.getHours() >= 10 && tzDate.getHours() <= 24;
+	}
+
+	return tzDate.getHours() >= 16 && tzDate.getHours() <= 23;
+}
+
+function matchesGames(event: CalendarEvent, games: CalendarFilters["games"]) {
+	if (!games.length || games.length === gamesShort.length) {
+		return true;
+	}
+	const isSplatoonOne = event.tags.includes("S1");
+	const isSplatoonTwo = event.tags.includes("S2");
+	const isSplatoonThree = !isSplatoonOne && !isSplatoonTwo;
+
+	for (const game of games) {
+		if (game === "S1" && isSplatoonOne) {
+			return true;
+		}
+		if (game === "S2" && isSplatoonTwo) {
+			return true;
+		}
+		if (game === "S3" && isSplatoonThree) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function matchesPreferredVersus(
+	event: CalendarEvent,
+	preferredVersus: CalendarFilters["preferredVersus"],
+) {
+	if (
+		!preferredVersus.length ||
+		preferredVersus.length === versusShort.length
+	) {
+		return true;
+	}
+
+	const tag = event.tags.find(isVersusTag);
+	const membersPerTeam = tag
+		? MEMBERS_PER_TEAM_BY_VERSUS_TAG[tag]
+		: event.minMembersPerTeam;
+
+	const versus = `${membersPerTeam}v${membersPerTeam}`;
+
+	return preferredVersus.some((preferred) => preferred === versus);
+}
+
+function matchesModes(
+	event: CalendarEvent,
+	modes: CalendarFilters["modes"],
+	modesExact: CalendarFilters["modesExact"],
+) {
+	if (!modes.length || modes.length === modesShortWithSpecial.length) {
+		return true;
+	}
+
+	if (!event.modes) {
+		return false;
+	}
+
+	if (modesExact) {
+		return (
+			event.modes.length === modes.length &&
+			event.modes.every((mode) => modes.includes(mode))
+		);
+	}
+
+	return event.modes.some((mode) => modes.includes(mode));
+}
+
+function matchesTierRange(
+	event: CalendarEvent,
+	{ minTier, maxTier }: Pick<CalendarFilters, "minTier" | "maxTier">,
+) {
+	if (minTier === BEST_TIER_NUMBER && maxTier === WORST_TIER_NUMBER) {
+		return true;
+	}
+
+	const tier = event.tier ?? event.tentativeTier;
+	if (tier === null) {
+		return false;
+	}
+
+	return tier >= minTier && tier <= maxTier;
+}
+
+function matchesOrgsIncluded(
+	event: CalendarEvent,
+	orgsIncluded: CalendarFilters["orgsIncluded"],
+) {
+	if (orgsIncluded.length === 0) {
+		return true;
+	}
+
+	const org = event.organization;
+
+	if (!org) {
+		return false;
+	}
+
+	return orgsIncluded.some((orgName) =>
+		orgNameMatches({ orgName: org.name, value: orgName }),
+	);
+}
+
+function matchesOrgsExcluded(
+	event: CalendarEvent,
+	orgsExcluded: CalendarFilters["orgsExcluded"],
+) {
+	if (orgsExcluded.length === 0) {
+		return true;
+	}
+
+	const org = event.organization;
+
+	if (!org) {
+		return true;
+	}
+
+	return !orgsExcluded.some((orgName) =>
+		orgNameMatches({ orgName: org.name, value: orgName }),
+	);
 }
 
 function orgNameMatches({

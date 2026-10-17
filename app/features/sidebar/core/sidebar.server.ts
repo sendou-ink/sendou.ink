@@ -243,7 +243,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		].map(LiveStream.key),
 	);
 
-	const ranked: { stream: SidebarStream; score: number }[] = [];
+	const ranked: RankedSidebarStream[] = [];
 
 	for (const externalStream of externalStreams) {
 		ranked.push({
@@ -285,7 +285,27 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		ranked.push({ stream: sidebarStream, score });
 	}
 
-	const xRankByStream = new Map<string, (typeof xRankRows)[number]>();
+	ranked.push(
+		...xRankStreamEntries(xRankRows, seenStreamKeys),
+		...upcomingTournamentStreamEntries(upcomingTournaments),
+	);
+
+	return StreamRanking.rank(ranked, MAX_STREAMS_VISIBLE);
+}
+
+type RankedSidebarStream = { stream: SidebarStream; score: number };
+
+type XRankStreamRow = Awaited<
+	ReturnType<typeof LiveStreamRepository.findXRankStreams>
+>[number];
+
+function xRankStreamEntries(
+	xRankRows: XRankStreamRow[],
+	seenStreamKeys: Set<string>,
+): RankedSidebarStream[] {
+	const result: RankedSidebarStream[] = [];
+
+	const xRankByStream = new Map<string, XRankStreamRow>();
 	for (const row of xRankRows) {
 		const key = LiveStream.key(row);
 		const existing = xRankByStream.get(key);
@@ -308,7 +328,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		const score = StreamRanking.xpToScore(row.peakXp ?? 0);
 		if (score === null) continue;
 
-		ranked.push({
+		result.push({
 			stream: {
 				id: `xrank-${row.id}`,
 				name: row.username,
@@ -323,6 +343,16 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		});
 	}
 
+	return result;
+}
+
+function upcomingTournamentStreamEntries(
+	upcomingTournaments: Awaited<
+		ReturnType<typeof ShowcaseTournaments.upcomingTournaments>
+	>,
+): RankedSidebarStream[] {
+	const result: RankedSidebarStream[] = [];
+
 	const nowTimestamp = databaseTimestampNow();
 	const threeDaysFromNow = dateToDatabaseTimestamp(
 		addDays(new Date(), UPCOMING_TOURNAMENT_WINDOW_DAYS),
@@ -336,7 +366,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 
 		const membersPerTeam = event.minMembersPerTeam ?? 4;
 
-		ranked.push({
+		result.push({
 			stream: {
 				id: `upcoming-${event.id}`,
 				name: event.name,
@@ -355,7 +385,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		});
 	}
 
-	return StreamRanking.rank(ranked, MAX_STREAMS_VISIBLE);
+	return result;
 }
 
 type FriendWithActivity = Awaited<

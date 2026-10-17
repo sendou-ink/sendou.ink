@@ -234,21 +234,27 @@ function splitIntoBaseStatsAndKits(
 	return { baseWeaponStats, weaponKits };
 }
 
-function getWeaponCategoryName(weaponId: number): string | undefined {
-	for (const category of [
-		{ name: "SHOOTERS", range: [0, 199] },
-		{ name: "BLASTERS", range: [200, 299] },
-		{ name: "SHOOTERS", range: [300, 499] },
-		{ name: "ROLLERS", range: [1000, 1099] },
-		{ name: "BRUSHES", range: [1100, 1199] },
-		{ name: "CHARGERS", range: [2000, 2099] },
-		{ name: "SLOSHERS", range: [3000, 3099] },
-		{ name: "SPLATLINGS", range: [4000, 4099] },
-		{ name: "DUALIES", range: [5000, 5099] },
-		{ name: "BRELLAS", range: [6000, 6099] },
-		{ name: "STRINGERS", range: [7000, 7099] },
-		{ name: "SPLATANAS", range: [8000, 8099] },
-	]) {
+const WEAPON_CATEGORY_RANGES = [
+	{ name: "SHOOTERS", range: [0, 199] },
+	{ name: "BLASTERS", range: [200, 299] },
+	{ name: "SHOOTERS", range: [300, 499] },
+	{ name: "ROLLERS", range: [1000, 1099] },
+	{ name: "BRUSHES", range: [1100, 1199] },
+	{ name: "CHARGERS", range: [2000, 2099] },
+	{ name: "SLOSHERS", range: [3000, 3099] },
+	{ name: "SPLATLINGS", range: [4000, 4099] },
+	{ name: "DUALIES", range: [5000, 5099] },
+	{ name: "BRELLAS", range: [6000, 6099] },
+	{ name: "STRINGERS", range: [7000, 7099] },
+	{ name: "SPLATANAS", range: [8000, 8099] },
+] as const;
+
+type WeaponCategoryName = (typeof WEAPON_CATEGORY_RANGES)[number]["name"];
+
+function getWeaponCategoryName(
+	weaponId: number,
+): WeaponCategoryName | undefined {
+	for (const category of WEAPON_CATEGORY_RANGES) {
 		if (weaponId >= category.range[0] && weaponId <= category.range[1]) {
 			return category.name;
 		}
@@ -256,10 +262,40 @@ function getWeaponCategoryName(weaponId: number): string | undefined {
 	return undefined;
 }
 
+const BLOBLOBBER_IDS: number[] = [3030, 3031];
+const BALLPOINT_SPLATLING_IDS: number[] = [4030, 4031];
+const REEF_LUX_IDS: number[] = [7020, 7021, 7022];
+const DREAD_WRINGER_IDS: number[] = [3050, 3051, 3052];
+const SLOSHING_MACHINE_IDS: number[] = [3020, 3021];
+const DEFAULT_CANOPY_HP_BRELLA_IDS: number[] = [6000, 6001, 6005];
+
+const SPLATLING_WEAPON_PARAM_TYPE = "spl__WeaponSpinnerParam";
+const SLOSHER_WEAPON_PARAM_TYPE = "spl__WeaponSlosherParam";
+
+type RangeParamsExtractor = (
+	weapon: MainWeapon,
+	params: any,
+) => Partial<MainWeaponParams>;
+
+const RANGE_PARAMS_BY_CATEGORY: Record<
+	WeaponCategoryName,
+	RangeParamsExtractor
+> = {
+	SHOOTERS: shotRangeParams,
+	BLASTERS: shotRangeParams,
+	ROLLERS: rollerRangeParams,
+	BRUSHES: brushRangeParams,
+	CHARGERS: shotRangeParams,
+	SLOSHERS: slosherRangeParams,
+	SPLATLINGS: splatlingRangeParams,
+	DUALIES: shotRangeParams,
+	BRELLAS: brellaRangeParams,
+	STRINGERS: stringerRangeParams,
+	SPLATANAS: splatanaRangeParams,
+};
+
 function extractRangeParams(weapon: MainWeapon, params: any) {
 	const category = getWeaponCategoryName(weapon.Id);
-	const isBrella = category === "BRELLAS";
-	const isSlosher = category === "SLOSHERS";
 
 	if (!category) {
 		return {};
@@ -275,259 +311,143 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 		};
 	}
 
-	if (isSlosher) {
-		const units = params.UnitGroupParam?.Unit;
-		const unitForRange = units?.reduce(
-			(best: any, unit: any) =>
-				(unit?.SpawnSpeedGround ?? 0) > (best?.SpawnSpeedGround ?? 0)
-					? unit
-					: best,
-			units?.[0],
-		);
-		const moveParam = unitForRange?.MoveParam;
-		const isBloblobber = weapon.Id === 3030 || weapon.Id === 3031;
-		return {
-			Range_SpawnSpeed: unitForRange?.SpawnSpeedGround,
-			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_FreeGravity: moveParam?.FreeGravity,
-			Range_BrakeAirResist: moveParam?.BrakeAirResist,
-			Range_BrakeGravity: moveParam?.BrakeGravity,
-			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
-			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
-			Range_BounceAfterMaxSpeed: isBloblobber ? 0.6 : undefined,
-			Range_BurstFrame: isBloblobber ? 3 : undefined,
-		};
-	}
-
-	const isRoller = category === "ROLLERS";
-	if (isRoller) {
-		const unit = params.VerticalSwingUnitGroupParam?.Unit?.[0];
-		const moveParam = unit?.UnitParam?.MoveParam;
-		return {
-			Range_SpawnSpeed: unit?.SpawnSpeedBase,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_FreeGravity: moveParam?.FreeGravity,
-			Range_FreeAirResist: moveParam?.FreeAirResist,
-			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
-		};
-	}
-
-	const isBrush = category === "BRUSHES";
-	if (isBrush) {
-		const unit = params.SwingUnitGroupParam?.Unit?.[0];
-		const moveParam = unit?.UnitParam?.MoveParam;
-		return {
-			Range_SpawnSpeed: unit?.SpawnSpeedBase,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
-		};
-	}
-
-	const isSplatana = category === "SPLATANAS";
-	if (isSplatana) {
-		const bulletParam = params.BulletSaberVerticalParam;
-		const moveParam = bulletParam?.MoveParam;
-		return {
-			Range_SpawnSpeed: moveParam?.SpawnSpeed,
-			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_FreeGravity: moveParam?.FreeGravity,
-			Range_BrakeAirResist: moveParam?.BrakeAirResist,
-			Range_BrakeGravity: moveParam?.BrakeGravity,
-			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
-			Range_BurstFrame: bulletParam?.BurstParam?.BurstFrame,
-		};
-	}
-
-	const isStringer = category === "STRINGERS";
-	if (isStringer) {
-		const bulletParam = params.spl__BulletStringerParam;
-		const moveParam = bulletParam?.MoveParam;
-		const isReefLux =
-			weapon.Id === 7020 || weapon.Id === 7021 || weapon.Id === 7022;
-		const blastRadius = isReefLux
-			? undefined
-			: bulletParam?.DetonationParam?.BlastParam?.DistanceDamage?.[0]?.Distance;
-		return {
-			Range_SpawnSpeed: moveParam?.SpawnSpeedMax,
-			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_FreeGravity: moveParam?.FreeGravity,
-			Range_FreeAirResist: moveParam?.FreeAirResist,
-			Range_BrakeAirResist: moveParam?.BrakeAirResist,
-			Range_BrakeGravity: moveParam?.BrakeGravity,
-			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
-			BlastRadius: blastRadius,
-		};
-	}
-
-	const isSplatling = category === "SPLATLINGS";
-	if (isSplatling) {
-		const isBallpoint = weapon.Id === 4030 || weapon.Id === 4031;
-		const moveParam = isBallpoint ? params.VariableMoveParam : params.MoveParam;
-		return {
-			Range_SpawnSpeed: isBallpoint
-				? moveParam?.SpawnSpeed
-				: moveParam?.SpawnSpeedFirstLastAndSecond,
-			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-		};
-	}
-
-	const isBlaster = params.BlastParam?.DistanceDamage !== undefined;
-	const blastRadius = isBlaster
-		? params.BlastParam?.DistanceDamage?.[1]?.Distance
-		: undefined;
-
-	const moveParam = isBrella
-		? params.spl__BulletShelterShotgunParam?.GroupParams?.[0]?.MoveParam
-		: params.MoveParam;
-
-	return {
-		Range_SpawnSpeed: moveParam?.SpawnSpeed,
-		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-		Range_FreeGravity: moveParam?.FreeGravity,
-		Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
-		BlastRadius: blastRadius,
-	};
+	return RANGE_PARAMS_BY_CATEGORY[category](weapon, params);
 }
+
+/** Param paths are dot-separated keys read with optional chaining, e.g. "UnitGroupParam.Unit.0". */
+type MainWeaponParamResolver =
+	readonly string[] | ((params: any, weapon: MainWeapon) => unknown);
+
+const MAIN_WEAPON_SPEED_AND_DAMAGE_PARAMS: Record<
+	string,
+	MainWeaponParamResolver
+> = {
+	TripleShotSpanFrame: ["WeaponParam.TripleShotSpanFrame"],
+	WeaponSpeedType: weaponSpeedType,
+	MoveSpeed: [
+		"WeaponParam.MoveSpeed",
+		"spl__WeaponShelterShotgunParam.MoveSpeed",
+	],
+	MoveSpeed_Charge: moveSpeedCharge,
+	MoveSpeedFullCharge: [
+		"WeaponParam.MoveSpeedFullCharge",
+		"spl__WeaponStringerParam.ChargeParam.MoveSpeedFullCharge",
+	],
+	MoveSpeedVariable: [
+		"VariableWeaponParam.MoveSpeed",
+		"VariableShotParam.MoveSpeed",
+	],
+	DamageParam_ValueMax: damageValueMax,
+	DamageParam_ValueMin: damageValueMin,
+	DamageParam_ValueDirect: directDamageValue,
+};
+
+const MAIN_WEAPON_OTHER_PARAMS: Record<string, MainWeaponParamResolver> = {
+	// Glooga turret mode damage
+	DamageLapOverParam_ValueMax: ["DamageLapOverParam.ValueMax"],
+	DamageLapOverParam_ValueMin: ["DamageLapOverParam.ValueMin"],
+	BlastParam_SplashDamage: sloshingMachineSplashDamage,
+	BlastParam_DistanceDamage: blastDistanceDamage,
+	BlastJumpParam_DistanceDamage: ["BlastJumpParam.DistanceDamage"],
+	DamageParam_ValueFullCharge: ["DamageParam.ValueFullCharge"],
+	DamageParam_ValueFullChargeMax: fullChargeMaxDamage,
+	DamageParam_ValueMaxCharge: ["DamageParam.ValueMaxCharge"],
+	DamageParam_ValueMinCharge: ["DamageParam.ValueMinCharge"],
+	DamageParam_SplatanaVerticalDirect: [
+		"BulletSaberSlashVerticalParam.DamageParam.DamageValue",
+	],
+	DamageParam_SplatanaVertical: [
+		"BulletSaberVerticalParam.DamageParam.HitDamage",
+	],
+	DamageParam_SplatanaHorizontalDirect: splatanaHorizontalDirectDamage,
+	DamageParam_SplatanaHorizontal: [
+		"BulletSaberHorizontalParam.DamageParam.HitDamage",
+	],
+	BodyParam_Damage: ["BodyParam.Damage"],
+	Variable_Damage_ValueMax: ["VariableDamageParam.ValueMax"],
+	Variable_Damage_ValueMin: ["VariableDamageParam.ValueMin"],
+	SwingUnitGroupParam_DamageParam_DamageMinValue: swingSplashDamage(
+		"SwingUnitGroupParam",
+		"Min",
+	),
+	SwingUnitGroupParam_DamageParam_DamageMaxValue: swingSplashDamage(
+		"SwingUnitGroupParam",
+		"Max",
+	),
+	// roller splash damages
+	VerticalSwingUnitGroupParam_DamageParam_DamageMinValue: swingSplashDamage(
+		"VerticalSwingUnitGroupParam",
+		"Min",
+	),
+	VerticalSwingUnitGroupParam_DamageParam_DamageMaxValue: swingSplashDamage(
+		"VerticalSwingUnitGroupParam",
+		"Max",
+	),
+	WideSwingUnitGroupParam_DamageParam_DamageMinValue: swingSplashDamage(
+		"WideSwingUnitGroupParam",
+		"Min",
+	),
+	WideSwingUnitGroupParam_DamageParam_DamageMaxValue: swingSplashDamage(
+		"WideSwingUnitGroupParam",
+		"Max",
+	),
+	CanopyHP: canopyHp,
+	ChargeFrameFullCharge: [
+		"WeaponParam.ChargeFrameFullCharge",
+		"spl__WeaponStringerParam.ChargeParam.ChargeFrameFullCharge",
+	],
+	KeepChargeFullFrame: keepChargeFullFrame,
+	Jump_DegSwerve: ["WeaponParam.Jump_DegSwerve"],
+	Stand_DegSwerve: ["WeaponParam.Stand_DegSwerve"],
+	Variable_Jump_DegSwerve: [
+		"VariableWeaponParam.Jump_DegSwerve",
+		"VariableShotParam.Jump_DegSwerve",
+	],
+	Variable_Stand_DegSwerve: [
+		"VariableWeaponParam.Stand_DegSwerve",
+		"VariableShotParam.Stand_DegSwerve",
+	],
+	InkRecoverStop: [
+		"WeaponParam.InkRecoverStop",
+		"WeaponSwingParam.InkRecoverStop",
+		"spl__WeaponSaberParam.SwingParam.InkRecoverStop",
+		"spl__WeaponShelterShotgunParam.InkRecoverStop",
+	],
+	InkRecoverStop_WeaponVerticalSwingParam: [
+		"WeaponVerticalSwingParam.InkRecoverStop",
+	],
+	InkRecoverStop_WeaponWideSwingParam: ["WeaponWideSwingParam.InkRecoverStop"],
+	InkConsume: defaultInkConsume,
+	InkConsumeVariable: ["VariableWeaponParam.InkConsume"],
+	InkConsumeSlosher: slosherInkConsume,
+	InkConsumeFullCharge: ["WeaponParam.InkConsumeFullCharge"],
+	InkConsumeMinCharge: [
+		"WeaponParam.InkConsumeMinCharge",
+		"spl__WeaponStringerParam.ChargeParam.InkConsumeMinCharge",
+	],
+	InkConsumeFullChargeSplatling: splatlingInkConsume,
+	InkConsume_WeaponSwingParam: ["WeaponSwingParam.InkConsume"],
+	InkConsume_WeaponVerticalSwingParam: ["WeaponVerticalSwingParam.InkConsume"],
+	InkConsume_WeaponWideSwingParam: ["WeaponWideSwingParam.InkConsume"],
+	InkConsumeUmbrella_WeaponShelterCanopyParam: brellaShieldInkConsume,
+	InkConsume_WeaponShelterShotgunParam: [
+		"spl__WeaponShelterShotgunParam.InkConsume",
+	],
+	InkConsume_SideStepParam: ["SideStepParam.InkConsume"],
+	InkConsumeMaxPerFrame_WeaponRollParam: [
+		"WeaponRollParam.InkConsumeMaxPerFrame",
+	],
+	InkConsume_SwingParam: ["spl__WeaponSaberParam.SwingParam.InkConsume"],
+	InkConsumeFullCharge_ChargeParam: [
+		"spl__WeaponSaberParam.ChargeParam.InkConsumeFullCharge",
+		"spl__WeaponStringerParam.ChargeParam.InkConsumeFullCharge",
+	],
+};
 
 function parametersToMainWeaponResult(
 	weapon: MainWeapon,
 	params: any,
 ): MainWeaponParams {
-	const isSplatling = params.WeaponParam?.$type === "spl__WeaponSpinnerParam";
-	const isSlosher = params.WeaponParam?.$type === "spl__WeaponSlosherParam";
-
-	const InkConsume =
-		!isSplatling && !isSlosher ? params.WeaponParam?.InkConsume : undefined;
-	const InkConsumeFullChargeSplatling = isSplatling
-		? params.WeaponParam?.InkConsume
-		: undefined;
-
-	const InkConsumeSlosher = isSlosher
-		? params.WeaponParam?.InkConsume
-		: undefined;
-
-	// for blasters these values are the same and represent damage caused by direct
-	const DamageParam_ValueDirect =
-		params.DamageParam?.ValueMax &&
-		params.DamageParam?.ValueMax === params.DamageParam?.ValueMin
-			? params.DamageParam?.ValueMax
-			: undefined;
-
-	const MoveSpeed_Charge = () => {
-		if (weapon.Id === 4010) return 0.062;
-
-		return (
-			params.WeaponParam?.MoveSpeed_Charge ??
-			params.spl__WeaponSaberParam?.SwingParam?.ChargeMoveVelLimit
-		);
-	};
-
-	const DamageParam_ValueMax = () => {
-		if (DamageParam_ValueDirect) return undefined;
-
-		return (
-			params.DamageParam?.ValueMax ??
-			params.spl__BulletStringerParam?.DamageParam?.DirectHitDamageMax ??
-			params.spl__BulletShelterShotgunParam?.DamageEffectiveTotalMax
-		);
-	};
-
-	const InkConsume_WeaponShelterShotgunParam = () => {
-		return params.spl__WeaponShelterShotgunParam?.InkConsume;
-	};
-
-	const BlastParam_DistanceDamage = () => {
-		// REEF-LUX has distance damage listed in params
-		// but actually doesn't deal it in game
-		if (weapon.Id === 7020 || weapon.Id === 7021 || weapon.Id === 7022)
-			return undefined;
-
-		return (
-			params.BlastParam?.DistanceDamage ??
-			params.BlastParam?.BlastParam?.DistanceDamage ??
-			params.spl__BulletStringerParam?.DetonationParam?.BlastParam
-				?.DistanceDamage
-		);
-	};
-
-	const slosherDirectDamage = () => {
-		const DamageParam_ValueDirectMax =
-			params.UnitGroupParam?.Unit?.[0]?.DamageParam?.ValueMax;
-		const DamageParam_ValueDirectMin =
-			params.UnitGroupParam?.Unit?.[0]?.DamageParam?.ValueMin;
-
-		if (
-			DamageParam_ValueDirectMax &&
-			DamageParam_ValueDirectMax === DamageParam_ValueDirectMin
-		) {
-			return {
-				DamageParam_ValueDirect: DamageParam_ValueDirectMax,
-			};
-		}
-
-		return {
-			DamageParam_ValueDirectMax,
-			DamageParam_ValueDirectMin,
-		};
-	};
-
-	const slosherDirectDamageSecondary = () => {
-		const isDreadWringer =
-			weapon.Id === 3050 || weapon.Id === 3051 || weapon.Id === 3052;
-		if (!isDreadWringer) return;
-
-		const DamageParam_Secondary_ValueDirectMax =
-			params.UnitGroupParam?.Unit?.[1]?.DamageParam?.ValueMax;
-		const DamageParam_Secondary_ValueDirectMin =
-			params.UnitGroupParam?.Unit?.[1]?.DamageParam?.ValueMin;
-
-		return {
-			DamageParam_Secondary_ValueDirectMax,
-			DamageParam_Secondary_ValueDirectMin,
-		};
-	};
-
-	const KeepChargeFullFrame =
-		params.WeaponKeepChargeParam?.KeepChargeFullFrame ??
-		params.spl__WeaponStringerParam?.ChargeKeepParam?.KeepChargeFullFrame;
-
-	const isSloshingMachine = weapon.Id === 3020 || weapon.Id === 3021;
-
-	const DamageParam_SplatanaHorizontalDirect =
-		params.BulletSaberHorizontalParam?.DamageParam?.HitDamage +
-		params.BulletSaberSlashHorizontalParam?.DamageParam?.DamageValue;
-
-	const resolveMin = (
-		valueOne: number | null | undefined,
-		valueTwo: number | null | undefined,
-	): number | undefined => {
-		if (typeof valueOne !== "number" && typeof valueTwo !== "number")
-			return undefined;
-
-		if (typeof valueOne !== "number") return valueTwo as number;
-		if (typeof valueTwo !== "number") return valueOne;
-
-		return Math.min(valueOne, valueTwo);
-	};
-
-	const resolveMax = (
-		valueOne: number | null | undefined,
-		valueTwo: number | null | undefined,
-	): number | undefined => {
-		if (typeof valueOne !== "number" && typeof valueTwo !== "number")
-			return undefined;
-
-		if (typeof valueOne !== "number") return valueTwo as number;
-		if (typeof valueTwo !== "number") return valueOne;
-
-		return Math.max(valueOne, valueTwo);
-	};
-
 	const rangeParams = extractRangeParams(weapon, params);
 
 	return {
@@ -536,135 +456,14 @@ function parametersToMainWeaponResult(
 		specialWeaponId: resolveSpecialWeaponId(weapon),
 		overwrites: resolveOverwrites(params),
 		...rangeParams,
-		TripleShotSpanFrame: params.WeaponParam?.TripleShotSpanFrame,
-		WeaponSpeedType:
-			params.MainWeaponSetting?.WeaponSpeedType === "Mid"
-				? undefined
-				: params.MainWeaponSetting?.WeaponSpeedType,
-		MoveSpeed:
-			params.WeaponParam?.MoveSpeed ??
-			params.spl__WeaponShelterShotgunParam?.MoveSpeed,
-		MoveSpeed_Charge: MoveSpeed_Charge(),
-		MoveSpeedFullCharge:
-			params.WeaponParam?.MoveSpeedFullCharge ??
-			params.spl__WeaponStringerParam?.ChargeParam?.MoveSpeedFullCharge,
-		MoveSpeedVariable:
-			params.VariableWeaponParam?.MoveSpeed ??
-			params.VariableShotParam?.MoveSpeed,
-		DamageParam_ValueMax: DamageParam_ValueMax(),
-		DamageParam_ValueMin: !DamageParam_ValueDirect
-			? (params.DamageParam?.ValueMin ??
-				params.spl__BulletStringerParam?.DamageParam?.DirectHitDamageMin)
-			: undefined,
-		DamageParam_ValueDirect,
-		...slosherDirectDamage(),
-		...slosherDirectDamageSecondary(),
-		// Glooga turret mode damage
-		DamageLapOverParam_ValueMax: params.DamageLapOverParam?.ValueMax,
-		DamageLapOverParam_ValueMin: params.DamageLapOverParam?.ValueMin,
-		BlastParam_SplashDamage: isSloshingMachine
-			? params.UnitGroupParam?.Unit?.[1]?.DamageParam?.ValueMax
-			: undefined,
-		BlastParam_DistanceDamage: BlastParam_DistanceDamage(),
-		BlastJumpParam_DistanceDamage: params.BlastJumpParam?.DistanceDamage,
-		DamageParam_ValueFullCharge: params.DamageParam?.ValueFullCharge,
-		DamageParam_ValueFullChargeMax:
-			params.DamageParam?.ValueFullChargeMax !== DamageParam_ValueMax()
-				? params.DamageParam?.ValueFullChargeMax
-				: undefined,
-		DamageParam_ValueMaxCharge: params.DamageParam?.ValueMaxCharge,
-		DamageParam_ValueMinCharge: params.DamageParam?.ValueMinCharge,
-		DamageParam_SplatanaVerticalDirect:
-			params.BulletSaberSlashVerticalParam?.DamageParam?.DamageValue,
-		DamageParam_SplatanaVertical:
-			params.BulletSaberVerticalParam?.DamageParam?.HitDamage,
-		DamageParam_SplatanaHorizontalDirect: Number.isNaN(
-			DamageParam_SplatanaHorizontalDirect,
-		)
-			? undefined
-			: DamageParam_SplatanaHorizontalDirect,
-		DamageParam_SplatanaHorizontal:
-			params.BulletSaberHorizontalParam?.DamageParam?.HitDamage,
-		BodyParam_Damage: params.BodyParam?.Damage,
-		Variable_Damage_ValueMax: params.VariableDamageParam?.ValueMax,
-		Variable_Damage_ValueMin: params.VariableDamageParam?.ValueMin,
-		SwingUnitGroupParam_DamageParam_DamageMinValue: resolveMin(
-			params.SwingUnitGroupParam?.DamageParam?.Inside?.DamageMinValue,
-			params.SwingUnitGroupParam?.DamageParam?.Outside?.DamageMinValue,
+		...resolveMainWeaponParams(
+			weapon,
+			params,
+			MAIN_WEAPON_SPEED_AND_DAMAGE_PARAMS,
 		),
-		SwingUnitGroupParam_DamageParam_DamageMaxValue: resolveMax(
-			params.SwingUnitGroupParam?.DamageParam?.Inside?.DamageMaxValue,
-			params.SwingUnitGroupParam?.DamageParam?.Outside?.DamageMaxValue,
-		),
-		// roller splash damages
-		VerticalSwingUnitGroupParam_DamageParam_DamageMinValue: resolveMin(
-			params.VerticalSwingUnitGroupParam?.DamageParam?.Inside?.DamageMinValue,
-			params.VerticalSwingUnitGroupParam?.DamageParam?.Outside?.DamageMinValue,
-		),
-		VerticalSwingUnitGroupParam_DamageParam_DamageMaxValue: resolveMax(
-			params.VerticalSwingUnitGroupParam?.DamageParam?.Inside?.DamageMaxValue,
-			params.VerticalSwingUnitGroupParam?.DamageParam?.Outside?.DamageMaxValue,
-		),
-		WideSwingUnitGroupParam_DamageParam_DamageMinValue: resolveMin(
-			params.WideSwingUnitGroupParam?.DamageParam?.Inside?.DamageMinValue,
-			params.WideSwingUnitGroupParam?.DamageParam?.Outside?.DamageMinValue,
-		),
-		WideSwingUnitGroupParam_DamageParam_DamageMaxValue: resolveMax(
-			params.WideSwingUnitGroupParam?.DamageParam?.Inside?.DamageMaxValue,
-			params.WideSwingUnitGroupParam?.DamageParam?.Outside?.DamageMaxValue,
-		),
-		CanopyHP:
-			params.spl__BulletShelterCanopyParam?.CanopyHP ??
-			(weapon.Id === 6000 || weapon.Id === 6001 || weapon.Id === 6005
-				? 5000
-				: undefined),
-		ChargeFrameFullCharge:
-			params.WeaponParam?.ChargeFrameFullCharge ??
-			params.spl__WeaponStringerParam?.ChargeParam?.ChargeFrameFullCharge,
-		KeepChargeFullFrame:
-			KeepChargeFullFrame !== 1 ? KeepChargeFullFrame : undefined,
-		Jump_DegSwerve: params.WeaponParam?.Jump_DegSwerve,
-		Stand_DegSwerve: params.WeaponParam?.Stand_DegSwerve,
-		Variable_Jump_DegSwerve:
-			params.VariableWeaponParam?.Jump_DegSwerve ??
-			params.VariableShotParam?.Jump_DegSwerve,
-		Variable_Stand_DegSwerve:
-			params.VariableWeaponParam?.Stand_DegSwerve ??
-			params.VariableShotParam?.Stand_DegSwerve,
-		InkRecoverStop:
-			params.WeaponParam?.InkRecoverStop ??
-			params.WeaponSwingParam?.InkRecoverStop ??
-			params.spl__WeaponSaberParam?.SwingParam?.InkRecoverStop ??
-			params.spl__WeaponShelterShotgunParam?.InkRecoverStop,
-		InkRecoverStop_WeaponVerticalSwingParam:
-			params.WeaponVerticalSwingParam?.InkRecoverStop,
-		InkRecoverStop_WeaponWideSwingParam:
-			params.WeaponWideSwingParam?.InkRecoverStop,
-		InkConsume,
-		InkConsumeVariable: params.VariableWeaponParam?.InkConsume,
-		InkConsumeSlosher,
-		InkConsumeFullCharge: params.WeaponParam?.InkConsumeFullCharge,
-		InkConsumeMinCharge:
-			params.WeaponParam?.InkConsumeMinCharge ??
-			params.spl__WeaponStringerParam?.ChargeParam?.InkConsumeMinCharge,
-		InkConsumeFullChargeSplatling,
-		InkConsume_WeaponSwingParam: params.WeaponSwingParam?.InkConsume,
-		InkConsume_WeaponVerticalSwingParam:
-			params.WeaponVerticalSwingParam?.InkConsume,
-		InkConsume_WeaponWideSwingParam: params.WeaponWideSwingParam?.InkConsume,
-		InkConsumeUmbrella_WeaponShelterCanopyParam:
-			params.spl__WeaponShelterCanopyParam?.InkConsumeUmbrella !== 0
-				? params.spl__WeaponShelterCanopyParam?.InkConsumeUmbrella
-				: undefined,
-		InkConsume_WeaponShelterShotgunParam:
-			InkConsume_WeaponShelterShotgunParam(),
-		InkConsume_SideStepParam: params.SideStepParam?.InkConsume,
-		InkConsumeMaxPerFrame_WeaponRollParam:
-			params.WeaponRollParam?.InkConsumeMaxPerFrame,
-		InkConsume_SwingParam: params.spl__WeaponSaberParam?.SwingParam?.InkConsume,
-		InkConsumeFullCharge_ChargeParam:
-			params.spl__WeaponSaberParam?.ChargeParam?.InkConsumeFullCharge ??
-			params.spl__WeaponStringerParam?.ChargeParam?.InkConsumeFullCharge,
+		...slosherDirectDamage(params),
+		...slosherDirectDamageSecondary(weapon, params),
+		...resolveMainWeaponParams(weapon, params, MAIN_WEAPON_OTHER_PARAMS),
 	};
 }
 
@@ -800,194 +599,40 @@ function specialWeaponRangeParams(
 	}
 }
 
+const SPECIAL_DISTANCE_DAMAGE_PARAM_PATHS = [
+	"BlastParam.DistanceDamage",
+	"HookBlastParam.DistanceDamage",
+	"spl__BulletBlastParam.DistanceDamage",
+	"BulletBlastParam.DistanceDamage",
+	"IceParam.BlastParam.DistanceDamage",
+	"BlastParamNormal.DistanceDamage",
+];
+
 // some specials lack damage values in the params, so they are hardcoded here
 function parametersToSpecialWeaponResult(params: any) {
-	const result: any = {};
-
-	for (const parentValue of Object.values(params)) {
-		for (const entries of Object.entries(parentValue as any)) {
-			const [key, value]: any = entries;
-			if (
-				key === "SubSpecialSpecUpList" ||
-				value.High !== value.Mid ||
-				value.Mid !== value.Low
-			) {
-				result[key] = value;
-			}
-
-			for (const innerEntries of Object.entries(value)) {
-				const [innerMostKey, innerMostValue]: any = innerEntries;
-				if (typeof innerMostValue !== "object") continue;
-				if (
-					innerMostKey === "SubSpecialSpecUpList" ||
-					innerMostValue.High !== innerMostValue.Mid ||
-					innerMostValue.Mid !== innerMostValue.Low
-				) {
-					result[innerMostKey] = innerMostValue;
-				}
-			}
-		}
-	}
-
-	const resultUnwrapped = unwrapSubSpecialSpecUpList(result);
-
-	const specialDurationFrameKeyAlises = [
-		"LaserFrame",
-		"RainyFrame",
-		"SpecialTotalFrame",
-	];
-
-	for (const key of specialDurationFrameKeyAlises) {
-		if (!resultUnwrapped[key]) continue;
-
-		resultUnwrapped.SpecialDurationFrame = resultUnwrapped[key];
-		resultUnwrapped[key] = undefined;
-	}
-
-	if (resultUnwrapped.SplashAroundPaintRadius) {
-		resultUnwrapped.PaintRadius = {
-			High:
-				resultUnwrapped.SplashAroundPaintRadius.High +
-				resultUnwrapped.PaintRadius.High,
-			Mid:
-				resultUnwrapped.SplashAroundPaintRadius.Mid +
-				resultUnwrapped.PaintRadius.Mid,
-			Low:
-				resultUnwrapped.SplashAroundPaintRadius.Low +
-				resultUnwrapped.PaintRadius.Low,
-		};
-
-		resultUnwrapped.SplashAroundPaintRadius = undefined;
-	}
-
-	// Bubble Patch 7.2.0 change hack
-	if (resultUnwrapped.MaxFieldHP) {
-		resultUnwrapped.MaxFieldHP = {
-			High: 28800,
-			Low: 24000,
-			Mid: 26400,
-		};
-	}
-
-	const isUltraStamp = () => !!params.SwingBigBlastParam;
-	const isCrabTank = () => !!params.CannonParam;
-	const isKraken = () => !!params.BodyParam?.DamageJumpValue;
-	const isInkjet = () => !!params.JetParam;
-	const isScreen = () => !!params.WallParam;
-	const isInkStorm = () => !!params.CloudParam;
-	const isInkstrike = () => !!params.MotherParam;
-	const isReefslider = () =>
-		params.BulletParam?.$type === "spl__BulletSpSkewerParam";
-	const isBooyahBomb = () =>
-		params.BlastParam?.$type === "spl__BulletSpNiceBallBlastParam";
-
-	const SwingDamage = () => {
-		if (!isUltraStamp()) return;
-
-		return [
-			{ Damage: 1000, Distance: 0 },
-			...params.SwingBigBlastParam.DistanceDamage,
-		];
-	};
-
-	const ThrowDamage = () => {
-		if (!isUltraStamp()) return;
-
-		return params.ThrowBlastParam.DistanceDamage;
-	};
-
-	const Cannon = () => {
-		if (!isCrabTank()) return;
-
-		invariant(
-			params.CannonParam.BlastParam.DistanceDamage,
-			"Could not find cannon distance damage",
-		);
-
-		return [
-			{
-				Damage: 500,
-				Distance: 1,
-			},
-			...params.CannonParam.BlastParam.DistanceDamage,
-		];
-	};
-
-	const KrakenDirectDamage = () => {
-		if (!isKraken()) return;
-
-		return 1200;
-	};
-
-	const InkjetDirectDamage = () => {
-		if (!isInkjet()) return;
-
-		return 1200;
-	};
-
-	const ScreenDirectDamage = () => {
-		if (!isScreen()) return;
-
-		return 400;
-	};
-
-	const BooyahBombTickDamage = () => {
-		if (!isBooyahBomb()) return;
-
-		return 33;
-	};
-
-	const InkStormTickDamage = () => {
-		if (!isInkStorm()) return;
-
-		return 4;
-	};
-
-	const InkstrikeTickDamage = () => {
-		if (!isInkstrike()) return;
-
-		return 75;
-	};
-
 	return {
 		ArmorHP: params.WeaponSpChariotParam?.ArmorHP,
-		overwrites: resultUnwrapped,
-		DistanceDamage:
-			params.BlastParam?.DistanceDamage ??
-			params.HookBlastParam?.DistanceDamage ??
-			params.spl__BulletBlastParam?.DistanceDamage ??
-			params.BulletBlastParam?.DistanceDamage ??
-			params.IceParam?.BlastParam?.DistanceDamage ??
-			params.BlastParamNormal?.DistanceDamage,
-		DirectDamage:
-			params.DamageParam?.DirectHitDamage ??
-			params.spl__BulletSpShockSonarParam?.GeneratorParam?.HitDamage ??
-			KrakenDirectDamage() ??
-			InkjetDirectDamage() ??
-			ScreenDirectDamage(),
+		overwrites: resolveSpecialWeaponOverwrites(params),
+		DistanceDamage: firstDefinedParam(
+			params,
+			SPECIAL_DISTANCE_DAMAGE_PARAM_PATHS,
+		),
+		DirectDamage: specialDirectDamage(params),
 		WaveDamage: params.spl__BulletSpShockSonarParam?.WaveParam?.Damage,
 		ExhaleBlastParamMinChargeDistanceDamage:
 			params.ExhaleBlastParamMinCharge?.DistanceDamage,
 		ExhaleBlastParamMaxChargeDistanceDamage:
 			params.ExhaleBlastParamMaxCharge?.DistanceDamage,
 		InhaleDamage: params.InhaleParam?.DamagePerFrameByObject,
-		SwingDamage: SwingDamage(),
-		ThrowDamage: ThrowDamage(),
+		SwingDamage: ultraStampSwingDamage(params),
+		ThrowDamage: ultraStampThrowDamage(params),
 		ThrowDirectDamage: params.ThrowMoveParam?.DirectDamageValue,
 		BulletDamageMin: params.ShooterDamageParam?.ValueMin,
 		BulletDamageMax: params.ShooterDamageParam?.ValueMax,
-		CannonDamage: Cannon(),
-		BumpDamage: isCrabTank()
-			? 400
-			: isReefslider()
-				? params.BulletParam.DamageValue
-				: undefined,
+		CannonDamage: crabTankCannonDamage(params),
+		BumpDamage: specialBumpDamage(params),
 		JumpDamage: params.BodyParam?.DamageJumpValue,
-		TickDamage:
-			BooyahBombTickDamage() ??
-			InkStormTickDamage() ??
-			InkstrikeTickDamage() ??
-			params.spl__BulletSpMicroLaserBitParam?.LaserParam?.LaserDamage,
+		TickDamage: specialTickDamage(params),
 	};
 }
 
@@ -1265,6 +910,507 @@ function writeTranslationsJsons(arr: TranslationArray) {
 
 function logWeaponIds(weaponKits: Record<number, WeaponKit>) {
 	logger.info(JSON.stringify(Object.keys(weaponKits).map(Number)));
+}
+
+function shotRangeParams(_weapon: MainWeapon, params: any) {
+	return projectileRangeParams(params, params.MoveParam);
+}
+
+function brellaRangeParams(_weapon: MainWeapon, params: any) {
+	return projectileRangeParams(
+		params,
+		params.spl__BulletShelterShotgunParam?.GroupParams?.[0]?.MoveParam,
+	);
+}
+
+function projectileRangeParams(params: any, moveParam: any) {
+	const isBlaster = params.BlastParam?.DistanceDamage !== undefined;
+	const blastRadius = isBlaster
+		? params.BlastParam?.DistanceDamage?.[1]?.Distance
+		: undefined;
+
+	return {
+		Range_SpawnSpeed: moveParam?.SpawnSpeed,
+		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_FreeGravity: moveParam?.FreeGravity,
+		Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+		BlastRadius: blastRadius,
+	};
+}
+
+function slosherRangeParams(weapon: MainWeapon, params: any) {
+	const units = params.UnitGroupParam?.Unit;
+	const unitForRange = units?.reduce(
+		(best: any, unit: any) =>
+			(unit?.SpawnSpeedGround ?? 0) > (best?.SpawnSpeedGround ?? 0)
+				? unit
+				: best,
+		units?.[0],
+	);
+	const moveParam = unitForRange?.MoveParam;
+	const isBloblobber = BLOBLOBBER_IDS.includes(weapon.Id);
+	return {
+		Range_SpawnSpeed: unitForRange?.SpawnSpeedGround,
+		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_FreeGravity: moveParam?.FreeGravity,
+		Range_BrakeAirResist: moveParam?.BrakeAirResist,
+		Range_BrakeGravity: moveParam?.BrakeGravity,
+		Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+		Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+		Range_BounceAfterMaxSpeed: isBloblobber ? 0.6 : undefined,
+		Range_BurstFrame: isBloblobber ? 3 : undefined,
+	};
+}
+
+function rollerRangeParams(_weapon: MainWeapon, params: any) {
+	const unit = params.VerticalSwingUnitGroupParam?.Unit?.[0];
+	const moveParam = unit?.UnitParam?.MoveParam;
+	return {
+		Range_SpawnSpeed: unit?.SpawnSpeedBase,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_FreeGravity: moveParam?.FreeGravity,
+		Range_FreeAirResist: moveParam?.FreeAirResist,
+		Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+	};
+}
+
+function brushRangeParams(_weapon: MainWeapon, params: any) {
+	const unit = params.SwingUnitGroupParam?.Unit?.[0];
+	const moveParam = unit?.UnitParam?.MoveParam;
+	return {
+		Range_SpawnSpeed: unit?.SpawnSpeedBase,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+	};
+}
+
+function splatanaRangeParams(_weapon: MainWeapon, params: any) {
+	const bulletParam = params.BulletSaberVerticalParam;
+	const moveParam = bulletParam?.MoveParam;
+	return {
+		Range_SpawnSpeed: moveParam?.SpawnSpeed,
+		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_FreeGravity: moveParam?.FreeGravity,
+		Range_BrakeAirResist: moveParam?.BrakeAirResist,
+		Range_BrakeGravity: moveParam?.BrakeGravity,
+		Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+		Range_BurstFrame: bulletParam?.BurstParam?.BurstFrame,
+	};
+}
+
+function stringerRangeParams(weapon: MainWeapon, params: any) {
+	const bulletParam = params.spl__BulletStringerParam;
+	const moveParam = bulletParam?.MoveParam;
+	const blastRadius = REEF_LUX_IDS.includes(weapon.Id)
+		? undefined
+		: bulletParam?.DetonationParam?.BlastParam?.DistanceDamage?.[0]?.Distance;
+	return {
+		Range_SpawnSpeed: moveParam?.SpawnSpeedMax,
+		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_FreeGravity: moveParam?.FreeGravity,
+		Range_FreeAirResist: moveParam?.FreeAirResist,
+		Range_BrakeAirResist: moveParam?.BrakeAirResist,
+		Range_BrakeGravity: moveParam?.BrakeGravity,
+		Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+		BlastRadius: blastRadius,
+	};
+}
+
+function splatlingRangeParams(weapon: MainWeapon, params: any) {
+	const isBallpoint = BALLPOINT_SPLATLING_IDS.includes(weapon.Id);
+	const moveParam = isBallpoint ? params.VariableMoveParam : params.MoveParam;
+	return {
+		Range_SpawnSpeed: isBallpoint
+			? moveParam?.SpawnSpeed
+			: moveParam?.SpawnSpeedFirstLastAndSecond,
+		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+	};
+}
+
+function resolveMainWeaponParams(
+	weapon: MainWeapon,
+	params: any,
+	resolvers: Record<string, MainWeaponParamResolver>,
+) {
+	const result: Record<string, any> = {};
+	for (const [key, resolver] of Object.entries(resolvers)) {
+		result[key] =
+			typeof resolver === "function"
+				? resolver(params, weapon)
+				: firstDefinedParam(params, resolver);
+	}
+	return result;
+}
+
+/** Same as chaining the paths with `??`: the first non-nullish value, else the last path's value. */
+function firstDefinedParam(params: any, paramPaths: readonly string[]): any {
+	let value: any;
+	for (const paramPath of paramPaths) {
+		value = paramAt(params, paramPath);
+		if (value !== null && value !== undefined) return value;
+	}
+	return value;
+}
+
+function paramAt(params: any, paramPath: string): any {
+	let value = params;
+	for (const key of paramPath.split(".")) {
+		if (value === null || value === undefined) return undefined;
+		value = value[key];
+	}
+	return value;
+}
+
+function weaponSpeedType(params: any) {
+	return params.MainWeaponSetting?.WeaponSpeedType === "Mid"
+		? undefined
+		: params.MainWeaponSetting?.WeaponSpeedType;
+}
+
+function moveSpeedCharge(params: any, weapon: MainWeapon) {
+	if (weapon.Id === 4010) return 0.062;
+
+	return (
+		params.WeaponParam?.MoveSpeed_Charge ??
+		params.spl__WeaponSaberParam?.SwingParam?.ChargeMoveVelLimit
+	);
+}
+
+// for blasters these values are the same and represent damage caused by direct
+function directDamageValue(params: any) {
+	return params.DamageParam?.ValueMax &&
+		params.DamageParam?.ValueMax === params.DamageParam?.ValueMin
+		? params.DamageParam?.ValueMax
+		: undefined;
+}
+
+function damageValueMax(params: any) {
+	if (directDamageValue(params)) return undefined;
+
+	return (
+		params.DamageParam?.ValueMax ??
+		params.spl__BulletStringerParam?.DamageParam?.DirectHitDamageMax ??
+		params.spl__BulletShelterShotgunParam?.DamageEffectiveTotalMax
+	);
+}
+
+function damageValueMin(params: any) {
+	return !directDamageValue(params)
+		? (params.DamageParam?.ValueMin ??
+				params.spl__BulletStringerParam?.DamageParam?.DirectHitDamageMin)
+		: undefined;
+}
+
+function slosherDirectDamage(params: any) {
+	const DamageParam_ValueDirectMax =
+		params.UnitGroupParam?.Unit?.[0]?.DamageParam?.ValueMax;
+	const DamageParam_ValueDirectMin =
+		params.UnitGroupParam?.Unit?.[0]?.DamageParam?.ValueMin;
+
+	if (
+		DamageParam_ValueDirectMax &&
+		DamageParam_ValueDirectMax === DamageParam_ValueDirectMin
+	) {
+		return {
+			DamageParam_ValueDirect: DamageParam_ValueDirectMax,
+		};
+	}
+
+	return {
+		DamageParam_ValueDirectMax,
+		DamageParam_ValueDirectMin,
+	};
+}
+
+function slosherDirectDamageSecondary(weapon: MainWeapon, params: any) {
+	if (!DREAD_WRINGER_IDS.includes(weapon.Id)) return;
+
+	const DamageParam_Secondary_ValueDirectMax =
+		params.UnitGroupParam?.Unit?.[1]?.DamageParam?.ValueMax;
+	const DamageParam_Secondary_ValueDirectMin =
+		params.UnitGroupParam?.Unit?.[1]?.DamageParam?.ValueMin;
+
+	return {
+		DamageParam_Secondary_ValueDirectMax,
+		DamageParam_Secondary_ValueDirectMin,
+	};
+}
+
+function sloshingMachineSplashDamage(params: any, weapon: MainWeapon) {
+	return SLOSHING_MACHINE_IDS.includes(weapon.Id)
+		? params.UnitGroupParam?.Unit?.[1]?.DamageParam?.ValueMax
+		: undefined;
+}
+
+function blastDistanceDamage(params: any, weapon: MainWeapon) {
+	// REEF-LUX has distance damage listed in params
+	// but actually doesn't deal it in game
+	if (REEF_LUX_IDS.includes(weapon.Id)) return undefined;
+
+	return (
+		params.BlastParam?.DistanceDamage ??
+		params.BlastParam?.BlastParam?.DistanceDamage ??
+		params.spl__BulletStringerParam?.DetonationParam?.BlastParam?.DistanceDamage
+	);
+}
+
+function fullChargeMaxDamage(params: any) {
+	return params.DamageParam?.ValueFullChargeMax !== damageValueMax(params)
+		? params.DamageParam?.ValueFullChargeMax
+		: undefined;
+}
+
+function splatanaHorizontalDirectDamage(params: any) {
+	const damage =
+		params.BulletSaberHorizontalParam?.DamageParam?.HitDamage +
+		params.BulletSaberSlashHorizontalParam?.DamageParam?.DamageValue;
+
+	return Number.isNaN(damage) ? undefined : damage;
+}
+
+function swingSplashDamage(swingGroupKey: string, bound: "Min" | "Max") {
+	const pickBound = bound === "Min" ? Math.min : Math.max;
+
+	return (params: any) => {
+		const damageParam = params[swingGroupKey]?.DamageParam;
+
+		return resolveBound(
+			damageParam?.Inside?.[`Damage${bound}Value`],
+			damageParam?.Outside?.[`Damage${bound}Value`],
+			pickBound,
+		);
+	};
+}
+
+function resolveBound(
+	valueOne: number | null | undefined,
+	valueTwo: number | null | undefined,
+	pickBound: (valueOne: number, valueTwo: number) => number,
+): number | undefined {
+	if (typeof valueOne !== "number" && typeof valueTwo !== "number")
+		return undefined;
+
+	if (typeof valueOne !== "number") return valueTwo as number;
+	if (typeof valueTwo !== "number") return valueOne;
+
+	return pickBound(valueOne, valueTwo);
+}
+
+function canopyHp(params: any, weapon: MainWeapon) {
+	return (
+		params.spl__BulletShelterCanopyParam?.CanopyHP ??
+		(DEFAULT_CANOPY_HP_BRELLA_IDS.includes(weapon.Id) ? 5000 : undefined)
+	);
+}
+
+function keepChargeFullFrame(params: any) {
+	const KeepChargeFullFrame =
+		params.WeaponKeepChargeParam?.KeepChargeFullFrame ??
+		params.spl__WeaponStringerParam?.ChargeKeepParam?.KeepChargeFullFrame;
+
+	return KeepChargeFullFrame !== 1 ? KeepChargeFullFrame : undefined;
+}
+
+function defaultInkConsume(params: any) {
+	const weaponParamType = params.WeaponParam?.$type;
+
+	return weaponParamType !== SPLATLING_WEAPON_PARAM_TYPE &&
+		weaponParamType !== SLOSHER_WEAPON_PARAM_TYPE
+		? params.WeaponParam?.InkConsume
+		: undefined;
+}
+
+function slosherInkConsume(params: any) {
+	return params.WeaponParam?.$type === SLOSHER_WEAPON_PARAM_TYPE
+		? params.WeaponParam?.InkConsume
+		: undefined;
+}
+
+function splatlingInkConsume(params: any) {
+	return params.WeaponParam?.$type === SPLATLING_WEAPON_PARAM_TYPE
+		? params.WeaponParam?.InkConsume
+		: undefined;
+}
+
+function brellaShieldInkConsume(params: any) {
+	return params.spl__WeaponShelterCanopyParam?.InkConsumeUmbrella !== 0
+		? params.spl__WeaponShelterCanopyParam?.InkConsumeUmbrella
+		: undefined;
+}
+
+function collectLevelDependentParams(params: any) {
+	const result: any = {};
+
+	for (const parentValue of Object.values(params)) {
+		for (const entries of Object.entries(parentValue as any)) {
+			const [key, value]: any = entries;
+			if (
+				key === "SubSpecialSpecUpList" ||
+				value.High !== value.Mid ||
+				value.Mid !== value.Low
+			) {
+				result[key] = value;
+			}
+
+			for (const innerEntries of Object.entries(value)) {
+				const [innerMostKey, innerMostValue]: any = innerEntries;
+				if (typeof innerMostValue !== "object") continue;
+				if (
+					innerMostKey === "SubSpecialSpecUpList" ||
+					innerMostValue.High !== innerMostValue.Mid ||
+					innerMostValue.Mid !== innerMostValue.Low
+				) {
+					result[innerMostKey] = innerMostValue;
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
+function resolveSpecialWeaponOverwrites(params: any) {
+	const resultUnwrapped = unwrapSubSpecialSpecUpList(
+		collectLevelDependentParams(params),
+	);
+
+	const specialDurationFrameKeyAlises = [
+		"LaserFrame",
+		"RainyFrame",
+		"SpecialTotalFrame",
+	];
+
+	for (const key of specialDurationFrameKeyAlises) {
+		if (!resultUnwrapped[key]) continue;
+
+		resultUnwrapped.SpecialDurationFrame = resultUnwrapped[key];
+		resultUnwrapped[key] = undefined;
+	}
+
+	if (resultUnwrapped.SplashAroundPaintRadius) {
+		resultUnwrapped.PaintRadius = {
+			High:
+				resultUnwrapped.SplashAroundPaintRadius.High +
+				resultUnwrapped.PaintRadius.High,
+			Mid:
+				resultUnwrapped.SplashAroundPaintRadius.Mid +
+				resultUnwrapped.PaintRadius.Mid,
+			Low:
+				resultUnwrapped.SplashAroundPaintRadius.Low +
+				resultUnwrapped.PaintRadius.Low,
+		};
+
+		resultUnwrapped.SplashAroundPaintRadius = undefined;
+	}
+
+	// Bubble Patch 7.2.0 change hack
+	if (resultUnwrapped.MaxFieldHP) {
+		resultUnwrapped.MaxFieldHP = {
+			High: 28800,
+			Low: 24000,
+			Mid: 26400,
+		};
+	}
+
+	return resultUnwrapped;
+}
+
+function specialDirectDamage(params: any) {
+	return (
+		params.DamageParam?.DirectHitDamage ??
+		params.spl__BulletSpShockSonarParam?.GeneratorParam?.HitDamage ??
+		(isKraken(params) ? 1200 : undefined) ??
+		(isInkjet(params) ? 1200 : undefined) ??
+		(isScreen(params) ? 400 : undefined)
+	);
+}
+
+function ultraStampSwingDamage(params: any) {
+	if (!isUltraStamp(params)) return;
+
+	return [
+		{ Damage: 1000, Distance: 0 },
+		...params.SwingBigBlastParam.DistanceDamage,
+	];
+}
+
+function ultraStampThrowDamage(params: any) {
+	if (!isUltraStamp(params)) return;
+
+	return params.ThrowBlastParam.DistanceDamage;
+}
+
+function crabTankCannonDamage(params: any) {
+	if (!isCrabTank(params)) return;
+
+	invariant(
+		params.CannonParam.BlastParam.DistanceDamage,
+		"Could not find cannon distance damage",
+	);
+
+	return [
+		{
+			Damage: 500,
+			Distance: 1,
+		},
+		...params.CannonParam.BlastParam.DistanceDamage,
+	];
+}
+
+function specialBumpDamage(params: any) {
+	if (isCrabTank(params)) return 400;
+
+	return isReefslider(params) ? params.BulletParam.DamageValue : undefined;
+}
+
+function specialTickDamage(params: any) {
+	return (
+		(isBooyahBomb(params) ? 33 : undefined) ??
+		(isInkStorm(params) ? 4 : undefined) ??
+		(isInkstrike(params) ? 75 : undefined) ??
+		params.spl__BulletSpMicroLaserBitParam?.LaserParam?.LaserDamage
+	);
+}
+
+function isUltraStamp(params: any) {
+	return !!params.SwingBigBlastParam;
+}
+
+function isCrabTank(params: any) {
+	return !!params.CannonParam;
+}
+
+function isKraken(params: any) {
+	return !!params.BodyParam?.DamageJumpValue;
+}
+
+function isInkjet(params: any) {
+	return !!params.JetParam;
+}
+
+function isScreen(params: any) {
+	return !!params.WallParam;
+}
+
+function isInkStorm(params: any) {
+	return !!params.CloudParam;
+}
+
+function isInkstrike(params: any) {
+	return !!params.MotherParam;
+}
+
+function isReefslider(params: any) {
+	return params.BulletParam?.$type === "spl__BulletSpSkewerParam";
+}
+
+function isBooyahBomb(params: any) {
+	return params.BlastParam?.$type === "spl__BulletSpNiceBallBlastParam";
 }
 
 void main();

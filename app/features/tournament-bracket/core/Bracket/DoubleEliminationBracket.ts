@@ -2,6 +2,7 @@ import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type {
 	BracketData,
+	MatchData,
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
@@ -161,49 +162,14 @@ export class DoubleEliminationBracket extends Bracket {
 				return result.reverse();
 			}
 
-			const lossCount = (teamId: number) =>
-				groupMatches.filter(
-					(match) =>
-						match.winnerSide &&
-						match[match.winnerSide === "opponent1" ? "opponent2" : "opponent1"]
-							?.id === teamId,
-				).length;
-
-			const stillIn = participantIds
-				.filter((teamId) => !eliminatedIds.has(teamId))
-				.map((teamId) => ({ teamId, losses: lossCount(teamId) }));
-			const unbeatenCount = stillIn.filter((team) => team.losses === 0).length;
-			const winnersFinal = this.winnersFinalMatch(groupId);
-			const winnersFinalLoserId = winnersFinal?.winnerSide
-				? winnersFinal[
-						winnersFinal.winnerSide === "opponent1" ? "opponent2" : "opponent1"
-					]?.id
-				: undefined;
-			const winnersFinalLoserStillIn = stillIn.some(
-				(team) => team.teamId === winnersFinalLoserId,
+			result.push(
+				...this.stillInTeamsStandings({
+					groupId,
+					groupMatches,
+					participantIds,
+					eliminatedIds,
+				}),
 			);
-			const placementOf = ({ teamId, losses }: (typeof stillIn)[number]) => {
-				if (losses === 0) return 1;
-				if (teamId === winnersFinalLoserId) return unbeatenCount + 1;
-
-				return unbeatenCount + 1 + (winnersFinalLoserStillIn ? 1 : 0);
-			};
-			const effectiveSeed = this.effectiveSeedResolver();
-
-			// reversed below: best placement, then best seed first
-			for (const stillInTeam of stillIn.toSorted(
-				(a, b) =>
-					placementOf(b) - placementOf(a) ||
-					effectiveSeed(b.teamId) - effectiveSeed(a.teamId),
-			)) {
-				const team = this.tournament.teamById(stillInTeam.teamId);
-				invariant(team, `Team not found for id: ${stillInTeam.teamId}`);
-
-				result.push({
-					team,
-					placement: placementOf(stillInTeam),
-				});
-			}
 
 			return result.reverse();
 		}
@@ -323,17 +289,7 @@ export class DoubleEliminationBracket extends Bracket {
 				}
 			}
 
-			const grandFinalMatch = grandFinal
-				? this.matchesOfRound(grandFinal.id)[0]
-				: undefined;
-			const decidingRounds = [
-				...(grandFinal &&
-				(!bracketReset || grandFinalMatch?.winnerSide === "opponent1")
-					? [grandFinal]
-					: []),
-				...(bracketReset ? [bracketReset] : []),
-			];
-			for (const round of decidingRounds) {
+			for (const round of this.decidingRounds(grandFinal, bracketReset)) {
 				for (const match of this.matchesOfRound(round.id)) {
 					result.set(match.id, { winnerTier: 1, loserTier: 2 });
 				}
@@ -341,6 +297,82 @@ export class DoubleEliminationBracket extends Bracket {
 		}
 
 		return result;
+	}
+
+	private stillInTeamsStandings({
+		groupId,
+		groupMatches,
+		participantIds,
+		eliminatedIds,
+	}: {
+		groupId: number;
+		groupMatches: MatchData[];
+		participantIds: number[];
+		eliminatedIds: Set<number>;
+	}): Standing[] {
+		const lossCount = (teamId: number) =>
+			groupMatches.filter(
+				(match) =>
+					match.winnerSide &&
+					match[match.winnerSide === "opponent1" ? "opponent2" : "opponent1"]
+						?.id === teamId,
+			).length;
+
+		const stillIn = participantIds
+			.filter((teamId) => !eliminatedIds.has(teamId))
+			.map((teamId) => ({ teamId, losses: lossCount(teamId) }));
+		const unbeatenCount = stillIn.filter((team) => team.losses === 0).length;
+		const winnersFinal = this.winnersFinalMatch(groupId);
+		const winnersFinalLoserId = winnersFinal?.winnerSide
+			? winnersFinal[
+					winnersFinal.winnerSide === "opponent1" ? "opponent2" : "opponent1"
+				]?.id
+			: undefined;
+		const winnersFinalLoserStillIn = stillIn.some(
+			(team) => team.teamId === winnersFinalLoserId,
+		);
+		const placementOf = ({ teamId, losses }: (typeof stillIn)[number]) => {
+			if (losses === 0) return 1;
+			if (teamId === winnersFinalLoserId) return unbeatenCount + 1;
+
+			return unbeatenCount + 1 + (winnersFinalLoserStillIn ? 1 : 0);
+		};
+		const effectiveSeed = this.effectiveSeedResolver();
+
+		const result: Standing[] = [];
+		// reversed by the caller: best placement, then best seed first
+		for (const stillInTeam of stillIn.toSorted(
+			(a, b) =>
+				placementOf(b) - placementOf(a) ||
+				effectiveSeed(b.teamId) - effectiveSeed(a.teamId),
+		)) {
+			const team = this.tournament.teamById(stillInTeam.teamId);
+			invariant(team, `Team not found for id: ${stillInTeam.teamId}`);
+
+			result.push({
+				team,
+				placement: placementOf(stillInTeam),
+			});
+		}
+
+		return result;
+	}
+
+	private decidingRounds(
+		grandFinal: RoundData | undefined,
+		bracketReset: RoundData | undefined,
+	) {
+		const grandFinalMatch = grandFinal
+			? this.matchesOfRound(grandFinal.id)[0]
+			: undefined;
+
+		return [
+			...(grandFinal &&
+			(!bracketReset || grandFinalMatch?.winnerSide === "opponent1")
+				? [grandFinal]
+				: []),
+			...(bracketReset ? [bracketReset] : []),
+		];
 	}
 
 	/** The match of the group's last winners round when it is a single match, i.e. the winners final is played. */

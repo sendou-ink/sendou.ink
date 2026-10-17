@@ -46,7 +46,12 @@ import {
 import { NotFound } from "./NotFound";
 import type { ScanEvent } from "./session-data";
 import { SessionHeader } from "./SessionHeader";
-import { cachedBuild, useStoredVod, useVodMinimaps } from "./vod-data";
+import {
+	cachedBuild,
+	useStoredVod,
+	useVodMinimaps,
+	type VodMinimapUrl,
+} from "./vod-data";
 import {
 	rememberVisitVodFile,
 	useVodScan,
@@ -124,11 +129,7 @@ function CoachSession({
 	const [file, setFile] = useState(() => visitVodFile(name));
 	const url = useFileUrl(file);
 	const games = coachData(cachedBuild(events));
-	const isCastsOnly =
-		games.length > 0 && games.every((game) => game.match.cast);
-	const [initialCategory] = useState(() =>
-		isCastsOnly ? firstCategoryOf(games) : DEFAULT_CATEGORY,
-	);
+	const [initialCategory] = useState(() => initialCategoryOf(games));
 	const [category, setCategory] =
 		useState<CoachEvents.CoachEventCategory>(initialCategory);
 	const [type, setType] = useState<CoachEvents.CoachEventType | typeof ALL>(
@@ -183,38 +184,16 @@ function CoachSession({
 	const momentEntries = entriesOf((game) =>
 		CoachEvents.highestTiers(game.events[teamOf(game)]),
 	);
-	const counts = new Map<CoachEvents.CoachEventType, number>();
-	for (const entry of entries) {
-		counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1);
-	}
+	const counts = countsByType(entries);
 	const categoryCounts = R.countBy(momentEntries, (entry) =>
 		CoachEvents.category(entry.type),
 	);
-	const shown =
-		type === ALL
-			? momentEntries.filter(
-					(entry) => CoachEvents.category(entry.type) === category,
-				)
-			: entries.filter((entry) => entry.type === type);
+	const shown = shownEntries({ type, category, entries, momentEntries });
 	const currentGame = gameAt(games, currentTime);
-	const minimap = currentGame
-		? minimaps.findLast(
-				(candidate) =>
-					candidate.t <= currentTime &&
-					candidate.t >= currentGame.match.startsAt!,
-			)
-		: undefined;
-	const timelineGame =
-		shownGames.findLast(
-			(game) =>
-				game.match.startsAt !== null && game.match.startsAt <= currentTime,
-		) ?? shownGames[0];
+	const minimap = minimapAt(minimaps, currentGame, currentTime);
+	const timelineGame = timelineGameAt(shownGames, currentTime);
 	const timeline = timelineGame?.timeline;
 	const castGame = timelineGame?.match.cast ? timelineGame : undefined;
-	const isCategoryCastless =
-		shownGames.length > 0 &&
-		shownGames.every((game) => game.match.cast) &&
-		CoachEvents.followsPovPlayer(category);
 
 	const pickCastTeam = (game: CoachGame, team: CoachEvents.Team) =>
 		setCastPicks((picks) => [
@@ -313,19 +292,19 @@ function CoachSession({
 		}
 	};
 
+	const isMapBigShown = Boolean(url && isMapBig);
 	const swapMapAndVideo =
 		url && (minimap || isMapBig) ? () => setIsMapBig(!isMapBig) : undefined;
 	const openPlanner =
-		url && isMapBig && isPaused && minimap && currentGame
-			? () =>
-					openInPlanner(minimap.image, currentGame.match, teamOf(currentGame))
+		isMapBigShown && isPaused
+			? plannerOpener(minimap, currentGame, teamOf)
 			: undefined;
 	const minimapView = (
 		<CoachMinimap
 			minimap={minimap}
 			currentTime={currentTime}
 			isInGame={currentGame !== undefined}
-			isBesideVideo={!url || !isMapBig}
+			isBesideVideo={!isMapBigShown}
 			onSwap={swapMapAndVideo}
 			onOpenPlanner={openPlanner}
 		/>
@@ -451,7 +430,7 @@ function CoachSession({
 					</div>
 				) : null}
 				<div className={styles.events}>
-					{url && isMapBig ? videoSlot : minimapView}
+					{isMapBigShown ? videoSlot : minimapView}
 					{castGame ? (
 						<CoachCastSide
 							game={castGame}
@@ -471,47 +450,59 @@ function CoachSession({
 						}}
 						onTypeChange={setType}
 					/>
-					{shown.length === 0 ? (
-						<p className={styles.empty}>
-							{isCategoryCastless
-								? "Casts follow no single player, so they have none of these events."
-								: !hasEntries
-									? "No events were found in this file."
-									: "No events in the games shown."}
-						</p>
-					) : (
-						<ol className={styles.list} aria-label="Events">
-							{shown.map((entry) => (
-								<li key={entryKey(entry)}>
-									<button
-										type="button"
-										className={styles.entry}
-										aria-current={entryKey(entry) === selectedKey}
-										ref={
-											entryKey(entry) === selectedKey ? revealInList : undefined
-										}
-										onClick={() => jumpTo(entry, { play: true })}
-									>
-										<span className={styles.entryType}>
-											{CoachEvents.label(entry.type)}
-										</span>
-										<span className={styles.entryTime}>
-											{entry.time !== null ? formatClock(entry.time) : null}
-										</span>
-										<span className={styles.entryWhere}>
-											{gameLabel(entry)}
-										</span>
-										<span className={styles.entryPosition}>
-											{formatPosition(entry.start)}
-										</span>
-									</button>
-								</li>
-							))}
-						</ol>
-					)}
+					<CoachEventList
+						entries={shown}
+						emptyMessage={emptyListMessage(shownGames, category, hasEntries)}
+						selectedKey={selectedKey}
+						onJump={(entry) => jumpTo(entry, { play: true })}
+					/>
 				</div>
 			</div>
 		</div>
+	);
+}
+
+/** The shown events, each jumping the video to it. */
+function CoachEventList({
+	entries,
+	emptyMessage,
+	selectedKey,
+	onJump,
+}: {
+	entries: CoachEntry[];
+	emptyMessage: string;
+	selectedKey: string | null;
+	onJump: (entry: CoachEntry) => void;
+}) {
+	if (entries.length === 0) {
+		return <p className={styles.empty}>{emptyMessage}</p>;
+	}
+
+	return (
+		<ol className={styles.list} aria-label="Events">
+			{entries.map((entry) => (
+				<li key={entryKey(entry)}>
+					<button
+						type="button"
+						className={styles.entry}
+						aria-current={entryKey(entry) === selectedKey}
+						ref={entryKey(entry) === selectedKey ? revealInList : undefined}
+						onClick={() => onJump(entry)}
+					>
+						<span className={styles.entryType}>
+							{CoachEvents.label(entry.type)}
+						</span>
+						<span className={styles.entryTime}>
+							{entry.time !== null ? formatClock(entry.time) : null}
+						</span>
+						<span className={styles.entryWhere}>{gameLabel(entry)}</span>
+						<span className={styles.entryPosition}>
+							{formatPosition(entry.start)}
+						</span>
+					</button>
+				</li>
+			))}
+		</ol>
 	);
 }
 
@@ -698,6 +689,96 @@ function firstCategoryOf(
 			),
 		) ?? DEFAULT_CATEGORY
 	);
+}
+
+/** A file of casts opens on the first category it has events in. */
+function initialCategoryOf(
+	games: readonly CoachSessionGame[],
+): CoachEvents.CoachEventCategory {
+	const isCastsOnly =
+		games.length > 0 && games.every((game) => game.match.cast);
+	return isCastsOnly ? firstCategoryOf(games) : DEFAULT_CATEGORY;
+}
+
+function countsByType(entries: readonly CoachEntry[]) {
+	const counts = new Map<CoachEvents.CoachEventType, number>();
+	for (const entry of entries) {
+		counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1);
+	}
+	return counts;
+}
+
+/** All of the category's moments, or every entry of the type picked. */
+function shownEntries({
+	type,
+	category,
+	entries,
+	momentEntries,
+}: {
+	type: CoachEvents.CoachEventType | typeof ALL;
+	category: CoachEvents.CoachEventCategory;
+	entries: CoachEntry[];
+	momentEntries: CoachEntry[];
+}) {
+	return type === ALL
+		? momentEntries.filter(
+				(entry) => CoachEvents.category(entry.type) === category,
+			)
+		: entries.filter((entry) => entry.type === type);
+}
+
+/** The latest of the game's minimaps up to `currentTime`. */
+function minimapAt(
+	minimaps: readonly VodMinimapUrl[],
+	currentGame: CoachSessionGame | undefined,
+	currentTime: number,
+) {
+	return currentGame
+		? minimaps.findLast(
+				(candidate) =>
+					candidate.t <= currentTime &&
+					candidate.t >= currentGame.match.startsAt!,
+			)
+		: undefined;
+}
+
+/** The shown game last started by `currentTime`, else the first shown. */
+function timelineGameAt(
+	shownGames: readonly CoachSessionGame[],
+	currentTime: number,
+): CoachSessionGame | undefined {
+	return (
+		shownGames.findLast(
+			(game) =>
+				game.match.startsAt !== null && game.match.startsAt <= currentTime,
+		) ?? shownGames[0]
+	);
+}
+
+function emptyListMessage(
+	shownGames: readonly CoachSessionGame[],
+	category: CoachEvents.CoachEventCategory,
+	hasEntries: boolean,
+): string {
+	const isCategoryCastless =
+		shownGames.length > 0 &&
+		shownGames.every((game) => game.match.cast) &&
+		CoachEvents.followsPovPlayer(category);
+	if (isCategoryCastless) {
+		return "Casts follow no single player, so they have none of these events.";
+	}
+	return !hasEntries
+		? "No events were found in this file."
+		: "No events in the games shown.";
+}
+
+function plannerOpener(
+	minimap: VodMinimapUrl | undefined,
+	game: CoachSessionGame | undefined,
+	teamOf: (game: CoachGame) => CoachEvents.Team,
+) {
+	if (!minimap || !game) return undefined;
+	return () => openInPlanner(minimap.image, game.match, teamOf(game));
 }
 
 /** Casts show no results screen as a rule, so the counter usually decides. */
