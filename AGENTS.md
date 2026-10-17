@@ -26,7 +26,7 @@
 ## Runtime
 
 - Bun is the package manager and runs the dev server (`bun --bun react-router dev`), the production server (`server.ts`, `Bun.serve`), the build and the scripts (`bun scripts/foo.ts`; scripts importing app code that uses `import.meta.glob` need `--preload ./scripts/preload.ts`)
-- unit tests run on Bun (`bun test`), Playwright runs on Node, so app code reachable from e2e specs must run on both: use web standard APIs and `node:` modules, `Bun.*` only in `server.ts`, scripts and code that has a Node fallback (see `MarkdownHtml.render`)
+- unit tests run on Bun (`bun test`), Playwright runs on Node, so app code reachable from e2e specs must run on both: use web standard APIs and `node:` modules, `Bun.*` only in `server.ts`, scripts and code e2e specs never import (e.g. loaders and actions, which run in the Bun server)
 - the dev server only starts fast on Bun thanks to the `@react-router/dev` patch limiting its file watcher; Bun's macOS `fs.watch` gets slower with every watched path
 
 ## Typescript

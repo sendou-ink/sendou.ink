@@ -1,6 +1,3 @@
-import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-
 const BUN_MARKDOWN_OPTIONS = {
 	headings: { ids: true },
 	autolinks: true,
@@ -256,23 +253,8 @@ const NEW_TAB_LINK_REL = "noopener noreferrer";
  * // -> '<p><strong>hi</strong> <img src=x referrerpolicy="no-referrer"></p>'
  */
 export function render(markdown: string): string {
-	if (typeof Bun === "undefined") return renderInBunProcess(markdown);
-
 	return sanitize(
 		Bun.markdown.html(markdown.replace(/ +$/gm, ""), BUN_MARKDOWN_OPTIONS),
-	);
-}
-
-/** Bun.markdown and HTMLRewriter are Bun only but unit tests run on Node */
-function renderInBunProcess(markdown: string) {
-	return execFileSync(
-		"bun",
-		[
-			"--no-env-file",
-			"--eval",
-			`import { render } from ${JSON.stringify(fileURLToPath(import.meta.url))}; process.stdout.write(render(await Bun.stdin.text()))`,
-		],
-		{ input: markdown, encoding: "utf8" },
 	);
 }
 
