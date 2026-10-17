@@ -55,8 +55,8 @@ Another key objective is to bridge the gap between casual and competitive player
 ### Prerequisites
 
 - [Git](https://git-scm.com/)
-- [Bun](https://bun.com/docs/installation) (see [.bun-version](./.bun-version) for the exact version), installs dependencies and runs the production server, the build and the scripts
-- [Node.js](https://nodejs.org/en) (see [.nvmrc](./.nvmrc) for the exact version), runs the dev server and the unit and e2e tests
+- [Bun](https://bun.com/docs/installation) (see [.bun-version](./.bun-version) for the exact version), installs dependencies and runs the dev and production servers, the build and the scripts
+- [Node.js](https://nodejs.org/en) (see [.nvmrc](./.nvmrc) for the exact version), runs the unit and e2e tests
 
 Optionally [nvm](https://github.com/nvm-sh/nvm) can be convenient for managing multiple Node.js installs
 

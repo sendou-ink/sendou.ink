@@ -1,0 +1,14 @@
+diff --git a/dist/typegen-WywajSVn.js b/dist/typegen-WywajSVn.js
+index 1fd1a2a70a21b938adf5441353f95ecdc1aa5acd..25b63935d98577002a704c480a67c79103c9220d 100644
+--- a/dist/typegen-WywajSVn.js
++++ b/dist/typegen-WywajSVn.js
+@@ -362,6 +362,9 @@ async function createConfigLoader({ rootDirectory: root, watch, mode, skipRoutes
+ 			changeHandlers.push(handler);
+ 			if (!fsWatcher) {
+ 				fsWatcher = chokidar.watch([root, appDirectory], {
++					// sendou.ink: Bun's fs.watch on macOS re-registers every watched path on each new watch so
++					// watching all of app/ took minutes, routes are configured in app/routes.ts so its top level is enough
++					depth: 0,
+ 					ignoreInitial: true,
+ 					ignored: (path) => isIgnoredByWatcher(path, {
+ 						root,

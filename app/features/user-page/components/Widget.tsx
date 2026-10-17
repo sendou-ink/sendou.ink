@@ -95,9 +95,9 @@ export function Widget({
 			case "bio":
 				return widget.data.bio ? <article>{widget.data.bio}</article> : null;
 			case "bio-md":
-				return widget.data.bio ? (
+				return widget.data ? (
 					<article className={styles.mdBio}>
-						<Markdown>{widget.data.bio}</Markdown>
+						<Markdown html={widget.data} />
 					</article>
 				) : null;
 			case "trophies-owned":
@@ -328,9 +328,9 @@ export function Widget({
 					<CountdownWidget title={widget.data.title} date={widget.data.date} />
 				);
 			case "markdown":
-				return widget.data.content ? (
+				return widget.data ? (
 					<article>
-						<Markdown>{widget.data.content}</Markdown>
+						<Markdown html={widget.data} />
 					</article>
 				) : null;
 			default:

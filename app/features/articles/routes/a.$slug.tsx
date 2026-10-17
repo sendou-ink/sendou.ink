@@ -39,11 +39,9 @@ export const meta: MetaFunction = (args) => {
 
 	if (!data) return [];
 
-	const description = data.content.trim().split("\n")[0];
-
 	return metaTags({
 		title: data.title,
-		description,
+		description: data.description,
 		image: {
 			url: articlePreviewUrl(args.params.slug),
 		},
@@ -55,7 +53,7 @@ export default function ArticlePage() {
 	const data = useLoaderData<typeof loader>();
 	return (
 		<Main>
-			<article className="article">
+			<article>
 				<h1>{data.title}</h1>
 				<div className="text-sm text-lighter">
 					by <Author /> •{" "}
@@ -71,36 +69,10 @@ export default function ArticlePage() {
 						}}
 					/>
 				</div>
-				<Markdown>
-					{contentWithoutLeadingTitle(data.content, data.title)}
-				</Markdown>
+				<Markdown html={data.html} className="article" />
 			</article>
 		</Main>
 	);
-}
-
-function normalizeText(text: string) {
-	return text
-		.replace(/\*+/g, "")
-		.replace(/…/g, "...")
-		.replace(/\\!/g, "!")
-		.trim();
-}
-
-function contentWithoutLeadingTitle(content: string, title: string) {
-	const trimmed = content.trimStart();
-	const firstLineEnd = trimmed.indexOf("\n");
-	const firstLine =
-		firstLineEnd === -1 ? trimmed : trimmed.slice(0, firstLineEnd);
-
-	if (
-		firstLine.startsWith("# ") &&
-		normalizeText(firstLine.slice(2)) === normalizeText(title)
-	) {
-		return trimmed.slice(firstLine.length).trimStart();
-	}
-
-	return content;
 }
 
 function Author() {

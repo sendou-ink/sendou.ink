@@ -27,7 +27,6 @@
         "isbot": "5.2.2",
         "kysely": "0.29.0",
         "lucide-react": "1.59.0",
-        "markdown-to-jsx": "9.10.3",
         "mediabunny": "1.61.6",
         "nanoid": "6.0.2",
         "nprogress": "0.2.0",
@@ -85,6 +84,7 @@
   },
   "patchedDependencies": {
     "react-i18next@17.0.11": "patches/react-i18next@17.0.11.patch",
+    "@react-router/dev@8.4.0": "patches/@react-router%2Fdev@8.4.0.patch",
     "i18next@26.3.6": "patches/i18next@26.3.6.patch",
     "react-router@8.4.0": "patches/react-router@8.4.0.patch",
     "@techstark/opencv-js@5.0.0-release.1": "patches/@techstark__opencv-js@5.0.0-release.1.patch",
@@ -1722,8 +1722,6 @@
     "magicast": ["magicast@0.5.5", "", { "dependencies": { "@babel/parser": "^7.29.7", "@babel/types": "^7.29.7", "source-map-js": "^1.2.1" } }, "sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA=="],
 
     "markdown-it": ["markdown-it@14.1.1", "", { "dependencies": { "argparse": "2.0.1", "entities": "4.5.0", "linkify-it": "5.0.0", "mdurl": "2.0.0", "punycode.js": "2.3.1", "uc.micro": "2.1.0" }, "bin": { "markdown-it": "bin/markdown-it.mjs" } }, "sha512-BuU2qnTti9YKgK5N+IeMubp14ZUKUUw7yeJbkjtosvHiP0AZ5c8IAgEMk79D0eC8F23r4Ac/q8cAIFdm2FtyoA=="],
-
-    "markdown-to-jsx": ["markdown-to-jsx@9.10.3", "", { "peerDependencies": { "react": ">= 16.0.0", "react-native": "*", "solid-js": ">=1.0.0", "vue": ">=3.0.0" }, "optionalPeers": ["react", "react-native", "solid-js", "vue"] }, "sha512-J5/NCmNYQ0ExsnThzvF3F1fSzNYLgROcW2diUqRqoIoiyhoy8DSI06jLuMYk0c86SQd/FiVYJrV6tIgci9S2tQ=="],
 
     "marked": ["marked@16.4.2", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-TI3V8YYWvkVf3KJe1dRkpnjs68JUPyEa5vjKrp1XEEJUAOaQc+Qj+L1qWbPd0SJuAdQkFU0h73sXXqwDYxsiDA=="],
 

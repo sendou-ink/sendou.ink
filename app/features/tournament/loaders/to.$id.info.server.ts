@@ -6,6 +6,8 @@ import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
+import * as MarkdownHtml from "~/utils/markdown-html.server";
+import { removeMarkdown } from "~/utils/strings";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -23,8 +25,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		}) ?? null,
 	]);
 
+	const descriptionData = description
+		? {
+				descriptionHtml: MarkdownHtml.render(description),
+				metaDescription: removeMarkdown(description),
+			}
+		: { descriptionHtml: null, metaDescription: null };
+
 	if (!user) {
-		return { isSaved: false, description, endsAt };
+		return { isSaved: false, ...descriptionData, endsAt };
 	}
 
 	return {
@@ -32,7 +41,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			userId: user.id,
 			tournamentId,
 		}),
-		description,
+		...descriptionData,
 		endsAt,
 	};
 };

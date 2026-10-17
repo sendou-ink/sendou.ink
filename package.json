@@ -8,11 +8,11 @@
 	"scripts": {
 		"deploy": "bun install --frozen-lockfile && bun run build",
 		"build": "bun run i18n:usage && bun --bun react-router build",
-		"dev": "DB_PATH=db.sqlite3 bun run migrate up && bun run setup && bun run i18n:usage && react-router dev --host",
-		"dev:fast": "react-router dev --host",
+		"dev": "DB_PATH=db.sqlite3 bun run migrate up && bun run setup && bun run i18n:usage && bun --bun react-router dev --host",
+		"dev:fast": "bun --bun react-router dev --host",
 		"dev:docs": "astro dev --root docs/site",
 		"dev:tools": "bun scripts/dev-tools.ts",
-		"dev:sandbox": "DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true react-router dev --host",
+		"dev:sandbox": "DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true bun --bun react-router dev --host",
 		"start": "bun run migrate up && NODE_ENV=production bun --no-env-file server.ts",
 		"migrate": "bun scripts/migrate.ts",
 		"migrate:new": "bun scripts/create-migration.ts",
@@ -92,7 +92,6 @@
 		"isbot": "5.2.2",
 		"kysely": "0.29.0",
 		"lucide-react": "1.59.0",
-		"markdown-to-jsx": "9.10.3",
 		"mediabunny": "1.61.6",
 		"nanoid": "6.0.2",
 		"nprogress": "0.2.0",
@@ -151,6 +150,7 @@
 		"i18next@26.3.6": "patches/i18next@26.3.6.patch",
 		"kysely@0.29.0": "patches/kysely@0.29.0.patch",
 		"react-i18next@17.0.11": "patches/react-i18next@17.0.11.patch",
-		"react-router@8.4.0": "patches/react-router@8.4.0.patch"
+		"react-router@8.4.0": "patches/react-router@8.4.0.patch",
+		"@react-router/dev@8.4.0": "patches/@react-router%2Fdev@8.4.0.patch"
 	}
 }
