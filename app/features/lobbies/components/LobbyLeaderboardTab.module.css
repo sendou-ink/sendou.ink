@@ -1,0 +1,38 @@
+.number {
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.player {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.weapons {
+	display: inline-flex;
+	gap: var(--s-1);
+}
+
+.waitlist {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-block-start: var(--s-6);
+}
+
+.waitlistHeader {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+}
+
+.waitlistList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: 0;
+	list-style: none;
+	font-size: var(--font-sm);
+	font-variant-numeric: tabular-nums;
+}

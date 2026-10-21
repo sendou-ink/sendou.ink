@@ -7,7 +7,9 @@ export type GlobalStatusState =
 	| "TO_CHECKIN"
 	| "TO_MATCH"
 	| "TO_WAITING_FOR_MATCH"
-	| "TO_WAITING_FOR_CAST";
+	| "TO_WAITING_FOR_CAST"
+	| "LOBBY_WAITING"
+	| "LOBBY_IN_ROOM";
 
 export interface GlobalStatus {
 	state: GlobalStatusState;

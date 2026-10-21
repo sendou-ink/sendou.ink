@@ -1,0 +1,35 @@
+.root {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2) var(--s-4);
+	padding: var(--s-3) var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.text {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.buttons {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.readyCheck {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2) var(--s-3);
+	width: 100%;
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--radius-field);
+	background-color: var(--color-success-low);
+	font-size: var(--font-sm);
+}

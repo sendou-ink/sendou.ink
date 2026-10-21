@@ -21,6 +21,7 @@ import { frontPageSchema } from "~/features/sendouq/q-action-schemas";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import {
+	lobbyPage,
 	SENDOUQ_PAGE,
 	sendouQMatchPage,
 	tournamentMatchPage,
@@ -43,6 +44,7 @@ export function FriendMenu({
 	activityType,
 	matchId,
 	tournamentId,
+	lobbyId,
 	stream,
 	friendshipId,
 	friendshipCreatedAt,
@@ -56,6 +58,7 @@ export function FriendMenu({
 	activityType: FriendActivityType | null;
 	matchId: number | null;
 	tournamentId: number | null;
+	lobbyId: number | null;
 	stream: FriendActivity["stream"];
 	friendshipId?: number;
 	friendshipCreatedAt?: number | null;
@@ -77,7 +80,12 @@ export function FriendMenu({
 		: null;
 
 	const activityBadge = friendActivityBadge(activityType);
-	const activity = resolveActivity({ activityType, matchId, tournamentId });
+	const activity = resolveActivity({
+		activityType,
+		matchId,
+		tournamentId,
+		lobbyId,
+	});
 
 	return (
 		<>
@@ -126,6 +134,11 @@ export function FriendMenu({
 					{activity?.type === "view-match" ? (
 						<SendouMenuItem href={activity.url} icon={<Swords />}>
 							{t("friends:friendsList.viewMatch")}
+						</SendouMenuItem>
+					) : null}
+					{activity?.type === "view-lobby" ? (
+						<SendouMenuItem href={activity.url} icon={<Swords />}>
+							{t("friends:friendsList.viewLobby")}
 						</SendouMenuItem>
 					) : null}
 					{activity?.type === "view-tournament" ? (
@@ -177,8 +190,14 @@ function resolveActivity(friend: {
 	activityType: FriendActivityType | null;
 	matchId: number | null;
 	tournamentId: number | null;
+	lobbyId: number | null;
 }) {
 	switch (friend.activityType) {
+		case "LOBBY":
+		case "LOBBY_UPCOMING":
+			return friend.lobbyId
+				? ({ type: "view-lobby", url: lobbyPage(friend.lobbyId) } as const)
+				: null;
 		case "SENDOUQ_MATCH":
 			return friend.matchId
 				? ({

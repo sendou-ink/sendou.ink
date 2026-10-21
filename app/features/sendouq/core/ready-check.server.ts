@@ -13,6 +13,7 @@ import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.ser
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	SENDOUQ,
+	SENDOUQ_BEST_OF,
 	SENDOUQ_LOOKING_CHANNEL,
 	sqGroupChannel,
 } from "../q-constants";
@@ -204,6 +205,7 @@ async function createMatch({
 			preferences: bravoPreferences,
 		},
 		modesIncluded,
+		SENDOUQ_BEST_OF,
 	);
 
 	const createdMatch = await SQMatchRepository.insert({

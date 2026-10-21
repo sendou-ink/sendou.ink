@@ -1,6 +1,8 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import { ADMIN_ID, STAFF_IDS } from "~/features/admin/admin-constants";
+import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -12,6 +14,7 @@ import { requirePermission } from "~/modules/permissions/guards.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import {
+	lobbyPage,
 	SENDOUQ_LOOKING_PAGE,
 	scrimPage,
 	sendouQMatchPage,
@@ -104,6 +107,8 @@ export async function resolveAll(roomIds: number[]): Promise<ResolvedRoom[]> {
 			resolveTournamentMatchRooms(byType("TOURNAMENT_MATCH")),
 			resolveTournamentTeamRooms(byType("TOURNAMENT_TEAM")),
 			resolveScrimRooms(byType("SCRIM")),
+			resolveLobbyRooms(byType("LOBBY")),
+			resolveLobbyTeamRooms(byType("LOBBY_TEAM")),
 		])
 	).flat();
 
@@ -248,6 +253,46 @@ async function resolveScrimRooms(
 			...owner.acceptedRequestUsers.map((user) => user.userId),
 		],
 		observerUserIds: [],
+	}));
+}
+
+async function resolveLobbyRooms(
+	rooms: ChatRoomRow[],
+): Promise<ResolvedRoom[]> {
+	if (rooms.length === 0) return [];
+
+	const owners = await LobbyRepository.findAllByChatRoomIds(
+		rooms.map((room) => room.id),
+	);
+
+	return joinOwners(rooms, owners, (owner) => ({
+		titleParams: { name: owner.name },
+		url: lobbyPage(owner.id),
+		imageUrl: null,
+		participantUserIds: owner.participants.map(
+			(participant) => participant.userId,
+		),
+		observerUserIds: [],
+		inactive: owner.endedAt !== null,
+	}));
+}
+
+async function resolveLobbyTeamRooms(
+	rooms: ChatRoomRow[],
+): Promise<ResolvedRoom[]> {
+	if (rooms.length === 0) return [];
+
+	const owners = await LobbyMatchRepository.findAllTeamChatsByChatRoomIds(
+		rooms.map((room) => room.id),
+	);
+
+	return joinOwners(rooms, owners, (owner) => ({
+		titleParams: { name: owner.lobbyName, side: owner.side },
+		url: lobbyPage(owner.lobbyId),
+		imageUrl: null,
+		participantUserIds: owner.userIds,
+		observerUserIds: [],
+		inactive: owner.isInactive,
 	}));
 }
 

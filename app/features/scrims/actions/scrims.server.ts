@@ -1,7 +1,5 @@
 import { add, sub } from "date-fns";
 import { redirect } from "react-router";
-import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
-import * as Association from "~/features/associations/core/Association";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -61,18 +59,6 @@ export const action = defineAction(
 				const post = await findPost({
 					postId: body.scrimPostId,
 				});
-
-				if (post.visibility) {
-					const associations = await AssociationsRepository.findByMemberUserId(
-						user.id,
-					);
-					const canSeePost = Association.isVisible({
-						associations,
-						visibility: post.visibility,
-						contentOwnerUserId: post.users.find((u) => u.isOwner)?.id,
-					});
-					errorToastIfFalsy(canSeePost, "Post not found");
-				}
 
 				if (body.from.mode === "PICKUP") {
 					const pickupUserError = await validatePickup(

@@ -12,6 +12,7 @@ import gameBadges from "../../../locales/en/game-badges.json";
 import gameMisc from "../../../locales/en/game-misc.json";
 import gear from "../../../locales/en/gear.json";
 import lfg from "../../../locales/en/lfg.json";
+import lobbies from "../../../locales/en/lobbies.json";
 import org from "../../../locales/en/org.json";
 import params from "../../../locales/en/params.json";
 import q from "../../../locales/en/q.json";
@@ -42,6 +43,7 @@ export const resources = {
 		"game-misc": gameMisc,
 		gear,
 		lfg,
+		lobbies,
 		org,
 		params,
 		q,

@@ -352,6 +352,12 @@ export default [
 		route("new", "features/lfg/routes/lfg.new.tsx"),
 	]),
 
+	...prefix("/lobbies", [
+		index("features/lobbies/routes/lobbies.tsx"),
+		route("new", "features/lobbies/routes/lobbies.new.tsx"),
+		route(":id", "features/lobbies/routes/lobbies.$id.tsx"),
+	]),
+
 	...prefix("/scrims", [
 		index("features/scrims/routes/scrims.tsx"),
 		route("new", "features/scrims/routes/scrims.new.tsx"),

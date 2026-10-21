@@ -129,6 +129,17 @@ export type Notification =
 	  >
 	| NotificationItem<"SCHEDULE_TEAM_REMINDER">
 	| NotificationItem<
+			"LOBBY_CHECK_IN_OPENED",
+			{ lobbyId: number; lobbyName: string }
+	  >
+	| NotificationItem<"LOBBY_STARTED", { lobbyId: number; lobbyName: string }>
+	| NotificationItem<"LOBBY_PROMOTED", { lobbyId: number; lobbyName: string }>
+	| NotificationItem<"LOBBY_HOST", { lobbyId: number; lobbyName: string }>
+	| NotificationItem<
+			"LOBBY_READY_CHECK",
+			{ lobbyId: number; lobbyName: string }
+	  >
+	| NotificationItem<
 			"CHAT_MENTION",
 			{
 				roomId: number;

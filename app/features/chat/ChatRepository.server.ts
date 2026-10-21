@@ -128,6 +128,49 @@ export async function findAllOpenRoomIdsByUserId(
 			.where("ScrimPostRequest.isAccepted", "=", 1)
 			.where(openRoom("ScrimPost.chatRoomId"))
 			.execute(),
+		db
+			.selectFrom("LobbyParticipant")
+			.innerJoin("Lobby", "Lobby.id", "LobbyParticipant.lobbyId")
+			.select("Lobby.chatRoomId as id")
+			.where("LobbyParticipant.userId", "=", userId)
+			.where(openRoom("Lobby.chatRoomId"))
+			.execute(),
+		// the team chat of the side the user plays in the latest set of the lobby they're in the room of
+		db
+			.selectFrom("LobbyParticipant")
+			.innerJoin("Lobby", "Lobby.id", "LobbyParticipant.lobbyId")
+			.innerJoin("LobbySetParticipant", (join) =>
+				join
+					.onRef("LobbySetParticipant.userId", "=", "LobbyParticipant.userId")
+					.on("LobbySetParticipant.side", "is not", null),
+			)
+			.innerJoin("LobbySet", (join) =>
+				join
+					.onRef("LobbySet.id", "=", "LobbySetParticipant.setId")
+					.onRef("LobbySet.lobbyId", "=", "Lobby.id"),
+			)
+			.select((eb) =>
+				eb
+					.case()
+					.when("LobbySetParticipant.side", "=", "ALPHA")
+					.then(eb.ref("Lobby.alphaChatRoomId"))
+					.else(eb.ref("Lobby.bravoChatRoomId"))
+					.end()
+					.as("id"),
+			)
+			.where("LobbyParticipant.userId", "=", userId)
+			.where("LobbyParticipant.status", "=", "IN_ROOM")
+			.where((eb) =>
+				eb(
+					"LobbySet.id",
+					"=",
+					eb
+						.selectFrom("LobbySet as Latest")
+						.select((innerEb) => innerEb.fn.max("Latest.id").as("id"))
+						.whereRef("Latest.lobbyId", "=", "Lobby.id"),
+				),
+			)
+			.execute(),
 	]);
 
 	return R.unique(
@@ -392,8 +435,8 @@ export async function deleteOrphanedRooms() {
 		.deleteFrom("ChatRoom")
 		.where((eb) =>
 			eb.or(
-				R.entries(OWNER_TABLE_BY_ROOM_TYPE).map(([type, table]) =>
-					eb.and([eb("ChatRoom.type", "=", type), noOwner(eb, table)]),
+				R.entries(OWNER_COLUMNS_BY_ROOM_TYPE).map(([type, columns]) =>
+					eb.and([eb("ChatRoom.type", "=", type), noOwner(eb, columns)]),
 				),
 			),
 		)
@@ -402,33 +445,37 @@ export async function deleteOrphanedRooms() {
 	return Number(result.numDeletedRows);
 }
 
-type ChatRoomOwnerTable =
-	| "Group"
-	| "GroupMatch"
-	| "TournamentMatch"
-	| "TournamentTeam"
-	| "ScrimPost";
+type ChatRoomOwnerColumn =
+	| "Group.chatRoomId"
+	| "GroupMatch.chatRoomId"
+	| "TournamentMatch.chatRoomId"
+	| "TournamentTeam.chatRoomId"
+	| "ScrimPost.chatRoomId"
+	| "Lobby.chatRoomId"
+	| "Lobby.alphaChatRoomId"
+	| "Lobby.bravoChatRoomId";
 
-/** The one table that can own a room of each type. */
-const OWNER_TABLE_BY_ROOM_TYPE = {
-	SQ_GROUP: "Group",
-	SQ_MATCH: "GroupMatch",
-	TOURNAMENT_MATCH: "TournamentMatch",
-	TOURNAMENT_TEAM: "TournamentTeam",
-	SCRIM: "ScrimPost",
-} as const satisfies Record<ChatRoomType, ChatRoomOwnerTable>;
+/** The one table that can own a room of each type, and the columns of it that point to the room. */
+const OWNER_COLUMNS_BY_ROOM_TYPE = {
+	SQ_GROUP: ["Group.chatRoomId"],
+	SQ_MATCH: ["GroupMatch.chatRoomId"],
+	TOURNAMENT_MATCH: ["TournamentMatch.chatRoomId"],
+	TOURNAMENT_TEAM: ["TournamentTeam.chatRoomId"],
+	SCRIM: ["ScrimPost.chatRoomId"],
+	LOBBY: ["Lobby.chatRoomId"],
+	LOBBY_TEAM: ["Lobby.alphaChatRoomId", "Lobby.bravoChatRoomId"],
+} as const satisfies Record<ChatRoomType, ReadonlyArray<ChatRoomOwnerColumn>>;
 
 function noOwner(
 	eb: ExpressionBuilder<DB, "ChatRoom">,
-	table: ChatRoomOwnerTable,
+	columns: ReadonlyArray<ChatRoomOwnerColumn>,
 ) {
-	return eb.not(
-		eb.exists(
-			eb
-				.selectFrom(table)
-				.select(sql<number>`1`.as("one"))
-				.whereRef(`${table}.chatRoomId`, "=", "ChatRoom.id"),
-		),
+	return eb.and(
+		columns.map((column) => {
+			const [table] = column.split(".");
+
+			return sql<SqlBool>`not exists (select 1 from ${sql.table(table)} where ${sql.ref(column)} = "ChatRoom"."id")`;
+		}),
 	);
 }
 

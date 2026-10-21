@@ -7,7 +7,11 @@ export type ChatRoomType =
 	| "SQ_MATCH"
 	| "TOURNAMENT_MATCH"
 	| "TOURNAMENT_TEAM"
-	| "SCRIM";
+	| "SCRIM"
+	/** A lobby's common room: everyone signed up */
+	| "LOBBY"
+	/** One side of a lobby room's current set */
+	| "LOBBY_TEAM";
 
 export type SystemMessageType =
 	| "USER_LEFT"

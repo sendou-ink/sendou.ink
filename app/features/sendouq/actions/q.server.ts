@@ -7,6 +7,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
@@ -173,6 +174,11 @@ export const action = defineAction(
 );
 
 async function validateCanJoinQ(user: { id: number; discordId: string }) {
+	errorToastIfFalsy(
+		!UserActivity.resolve(user.id).lobby,
+		"Leave the lobby you are in first",
+	);
+
 	const friendCode = await UserRepository.findCurrentFriendCodeByUserId(
 		user.id,
 	);

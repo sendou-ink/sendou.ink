@@ -500,5 +500,18 @@
 	"mapPool.pasteLinkLabel": "Map pool link",
 	"mapPool.clearConfirm": "Clear every stage from the map pool?",
 	"mapPool.sendouQLegalOnly": "Show only SendouQ legal stages",
-	"mapPool.sendouQLegalOnlyConfirm": "Remove the stages that are not legal in SendouQ from the map pool?"
+	"mapPool.sendouQLegalOnlyConfirm": "Remove the stages that are not legal in SendouQ from the map pool?",
+	"labels.lobbyLabel": "Label",
+	"bottomTexts.lobbyLabel": "How seriously the lobby is played",
+	"options.lobbyLabel.CASUAL": "Casual",
+	"options.lobbyLabel.FOCUSED": "Focused",
+	"options.lobbyLabel.TRYHARD": "Tryhard",
+	"bottomTexts.lobbyName": "Leave empty to call it \"<your name>'s lobby\"",
+	"bottomTexts.lobbyStart": "Check-in opens 10 minutes before the start",
+	"labels.lobbyBestOf": "Best of",
+	"labels.lobbyModes": "Modes",
+	"labels.lobbyRoomSize": "Room size",
+	"bottomTexts.lobbyRoomSize": "8 players play each set, the rest of the room spectates and rotates in. Everyone else joins the waitlist",
+	"errors.dateAfterLobbyStart": "Date can not be after the lobby's start",
+	"errors.canNotSetIfStartingNow": "Can not be set if starting now"
 }

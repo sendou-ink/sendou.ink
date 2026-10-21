@@ -1,12 +1,14 @@
 import * as R from "remeda";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
+import { assertUnreachable } from "~/utils/types";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import * as Scoreboards from "./Scoreboards";
 
 type ReportedMatch =
 	| { type: "tournament"; tournamentId: number; tournamentMatchId: number }
-	| { type: "sendouq"; groupMatchId: number };
+	| { type: "sendouq"; groupMatchId: number }
+	| { type: "lobby"; lobbySetId: number };
 
 /**
  * Links stored matches to a game reported just now. Senders stop resending once sendou.ink has
@@ -23,10 +25,7 @@ export async function linkStoredMatches(reported: ReportedMatch) {
 			...game.loserUserIds,
 		]);
 		const stored = await ScannerIngestRepository.findUnlinkedMatchesByHint({
-			context:
-				reported.type === "tournament"
-					? { type: "tournament", tournamentId: reported.tournamentId }
-					: { type: "sendouq", groupMatchId: reported.groupMatchId },
+			context: reportedContext(reported),
 			playedSince: dateToDatabaseTimestamp(
 				new Date(Date.now() - Scoreboards.PLAYED_AT_TOLERANCE_MS),
 			),
@@ -66,10 +65,30 @@ export async function linkStoredMatches(reported: ReportedMatch) {
 	}
 }
 
+function reportedContext(reported: ReportedMatch): Scoreboards.IngestContext {
+	switch (reported.type) {
+		case "tournament":
+			return { type: "tournament", tournamentId: reported.tournamentId };
+		case "sendouq":
+			return { type: "sendouq", groupMatchId: reported.groupMatchId };
+		case "lobby":
+			return { type: "lobby", lobbySetId: reported.lobbySetId };
+		default:
+			assertUnreachable(reported);
+	}
+}
+
 function reportedGames(reported: ReportedMatch) {
-	return reported.type === "tournament"
-		? ScannerIngestRepository.gamesInTournamentMatches([
+	switch (reported.type) {
+		case "tournament":
+			return ScannerIngestRepository.gamesInTournamentMatches([
 				reported.tournamentMatchId,
-			])
-		: ScannerIngestRepository.gamesInGroupMatch(reported.groupMatchId);
+			]);
+		case "sendouq":
+			return ScannerIngestRepository.gamesInGroupMatch(reported.groupMatchId);
+		case "lobby":
+			return ScannerIngestRepository.gamesInLobbySet(reported.lobbySetId);
+		default:
+			assertUnreachable(reported);
+	}
 }

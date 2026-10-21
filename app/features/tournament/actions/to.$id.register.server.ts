@@ -18,6 +18,7 @@ import {
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { logger } from "~/utils/logger";
@@ -261,6 +262,10 @@ export const action = defineAction(
 				errorToastIfFalsy(
 					teamMemberOf.checkIns.length === 0,
 					"You have already checked in",
+				);
+				errorToastIfFalsy(
+					!UserActivity.resolve(user.id).lobby,
+					"Leave the lobby you are in first",
 				);
 
 				errorToastIfFalsy(

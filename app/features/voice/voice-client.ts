@@ -102,6 +102,8 @@ export interface VoiceClient {
 	start: () => () => void;
 	loadRoom: (roomId: number) => Promise<void>;
 	join: (roomId: number) => Promise<void>;
+	/** Moves a call in one of `roomIds` to `targetRoomId`, e.g. when the user's team changes. Starts no call. */
+	follow: (args: { roomIds: number[]; targetRoomId: number }) => Promise<void>;
 	rejoinAfterReload: () => Promise<void>;
 	leave: (reason?: VoiceLeaveReason) => Promise<void>;
 	leaveOnPageClose: () => void;
@@ -296,6 +298,13 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			if (room) setRoom(roomId, room);
 		},
 		join: (roomId) => join(roomId),
+		follow: async ({ roomIds, targetRoomId }) => {
+			const call = snapshot.call;
+			if (!call || call.roomId === targetRoomId) return;
+			if (!roomIds.includes(call.roomId)) return;
+
+			await join(targetRoomId);
+		},
 		rejoinAfterReload: async () => {
 			const roomId = deps.takeCallToRejoin();
 			if (roomId !== null) await join(roomId, { isAutomatic: true });

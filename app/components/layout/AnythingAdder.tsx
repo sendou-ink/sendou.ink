@@ -14,6 +14,7 @@ import {
 	NEW_TROPHY_PAGE,
 	navIconUrl,
 	newAssociationsPage,
+	newLobbyPage,
 	newScrimPostPage,
 	ORGANIZATION_NEW_PAGE,
 	TOURNAMENT_NEW_PAGE,
@@ -71,6 +72,12 @@ export function AnythingAdder() {
 			children: t("header.adder.scrimPost"),
 			imagePath: navIconUrl("scrims"),
 			href: newScrimPostPage(),
+		},
+		{
+			id: "lobby",
+			children: t("header.adder.lobby"),
+			imagePath: navIconUrl("lobbies"),
+			href: newLobbyPage(),
 		},
 		{
 			id: "association",

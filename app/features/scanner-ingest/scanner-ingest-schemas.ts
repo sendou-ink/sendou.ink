@@ -15,7 +15,8 @@ export const ingestBodySchema = v.object({
 /** The sendou.ink match an ingested match's scoreboard was linked to. */
 export type IngestedMatchLink =
 	| { type: "tournament"; tournamentId: number; matchId: number }
-	| { type: "sendouq"; groupMatchId: number };
+	| { type: "sendouq"; groupMatchId: number }
+	| { type: "lobby"; lobbyId: number };
 
 export interface IngestResponse {
 	storedMatchesCount: number;

@@ -8,6 +8,7 @@ import { seedBadges } from "./dev/badges";
 import { seedBuilds } from "./dev/builds";
 import { seedCalendarEvents } from "./dev/calendar";
 import { seedResultHighlights } from "./dev/highlights";
+import { seedLobbies } from "./dev/lobbies";
 import { seedMisc } from "./dev/misc";
 import { seedOrganizations } from "./dev/organizations";
 import { seedPlus } from "./dev/plus";
@@ -43,6 +44,7 @@ export async function seed() {
 	await runModule(() => seedPlus(users));
 	await runModule(() => seedBuilds(users));
 	const scrims = await runModule(() => seedScrimsAndLFG(users, teams));
+	await runModule(() => seedLobbies(users));
 	await runModule(() => seedVods(users));
 	const misc = await runModule(() => seedMisc({ users, sendouq, tournaments }));
 	await runModule(() => seedSpecialTrophies());

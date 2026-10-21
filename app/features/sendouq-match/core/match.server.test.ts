@@ -260,6 +260,7 @@ describe("matchMapList()", () => {
 				id: 2,
 			},
 			["SZ"],
+			SENDOUQ_BEST_OF,
 		);
 
 		const szMaps = result.filter((m) => m.mode === "SZ");
@@ -314,6 +315,7 @@ describe("matchMapList()", () => {
 				id: 2,
 			},
 			["SZ"],
+			SENDOUQ_BEST_OF,
 		);
 
 		const szMaps = result.filter((m) => m.mode === "SZ");
@@ -331,6 +333,7 @@ describe("matchMapList()", () => {
 				szGroup(1, [0, 2, 3, 4, 5, 6, 7]),
 				szGroup(2, [8, 10, 11, 12, 13, 14, 15]),
 				["SZ"],
+				SENDOUQ_BEST_OF,
 			);
 
 			const sources = result.map((m) => m.source);
@@ -347,6 +350,7 @@ describe("matchMapList()", () => {
 				szGroup(1, [0, 2, 3, 4, 5, 6, 7]),
 				szGroup(2, [7, 8, 10, 11, 12, 13, 14]),
 				["SZ"],
+				SENDOUQ_BEST_OF,
 			);
 
 			expect(result.map((m) => m.stageId)).toContain(7);
@@ -367,6 +371,7 @@ describe("matchMapList()", () => {
 				szGroup(1, []),
 				szGroup(2, otherTeamStageIds),
 				["SZ"],
+				SENDOUQ_BEST_OF,
 			);
 
 			for (const map of result) {

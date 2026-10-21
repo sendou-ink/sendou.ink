@@ -29,7 +29,6 @@ import type {
 	WinLossParticipationArray,
 } from "~/db/tables-json";
 import type { ApiTokenType } from "~/features/api/api-types";
-import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type {
 	ChatRoomType,
@@ -37,6 +36,13 @@ import type {
 } from "~/features/chat/chat-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
+import type {
+	LobbyBestOf,
+	LobbyLabel,
+	LobbyParticipantStatus,
+	LobbyRoomSize,
+	LobbySide,
+} from "~/features/lobbies/lobbies-constants";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
@@ -587,9 +593,11 @@ export interface PlusVotingResult {
 	wasSuggested: DBBoolean;
 }
 
+/** Exactly one of `groupMatchId`, `tournamentMatchId` and `lobbySetId` is set. */
 export interface ReportedWeapon {
 	groupMatchId: number | null;
 	tournamentMatchId: number | null;
+	lobbySetId: number | null;
 	mapIndex: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
@@ -610,6 +618,8 @@ export interface IngestedMatch {
 	tournamentIdHint: number | null;
 	/** server-resolved SendouQ match the match probably belongs to; aids future linking */
 	groupMatchIdHint: number | null;
+	/** server-resolved lobby set the match probably belongs to; aids future linking */
+	lobbySetIdHint: number | null;
 	createdAt: Generated<number>;
 }
 
@@ -619,6 +629,7 @@ export interface IngestedMatchLink {
 	ingestedMatchId: number;
 	tournamentMatchGameResultId: number | null;
 	groupMatchMapId: number | null;
+	lobbyGameId: number | null;
 	createdAt: Generated<number>;
 }
 
@@ -1326,7 +1337,6 @@ export interface ScrimPost {
 	maxDiv: number | null;
 	/** Lowest LUTI div accepted */
 	minDiv: number | null;
-	visibility: JSONColumnTypeNullable<AssociationVisibility>;
 	text: string | null;
 	chatRoomId: number | null;
 	/** Refers to the team looking for the team (can also be a pick-up) */
@@ -1400,6 +1410,109 @@ export interface ScrimPostRequestUser {
 	scrimPostRequestId: number;
 	userId: number;
 	isOwner: DBBoolean;
+}
+
+export interface Lobby {
+	id: GeneratedAlways<number>;
+	/** Plays like everyone else and is the lobby's sole admin. Passed on to the longest-tenured participant when they leave. */
+	hostUserId: number;
+	name: string;
+	label: LobbyLabel;
+	startsAt: number;
+	bestOf: LobbyBestOf;
+	modes: JSONColumnType<ModeShort[]>;
+	/** How many fit in the room: 8 players plus up to 2 spectators, the rest are waitlisted */
+	roomSize: LobbyRoomSize;
+	/** Common chat used while pending and by spectators */
+	chatRoomId: number | null;
+	/** Team chat of the alpha side of the current set */
+	alphaChatRoomId: number | null;
+	bravoChatRoomId: number | null;
+	/** Marker for the check-in opened notification having been sent */
+	checkInNotifiedAt: number | null;
+	/** Since when the started lobby has had no set being played, `null` while one is (or before the start) */
+	pendingSince: number | null;
+	endedAt: number | null;
+	createdAt: Generated<number>;
+}
+
+export interface LobbyParticipant {
+	id: GeneratedAlways<number>;
+	lobbyId: number;
+	userId: number;
+	status: LobbyParticipantStatus;
+	/** Leaves the lobby once the current set is confirmed */
+	isDroppingAfterSet: Generated<DBBoolean>;
+	/** Set by the host, sits out every set until the host resumes them */
+	isSittingOut: Generated<DBBoolean>;
+	/** Order of the waitlist and of host succession. Reset when signing up again. */
+	joinedAt: Generated<number>;
+}
+
+/** One best-of, teams shuffled from the participants in the room. */
+export interface LobbySet {
+	id: GeneratedAlways<number>;
+	lobbyId: number;
+	bestOf: LobbyBestOf;
+	/** A player of this side left mid-set, so the set is over and lost for them without confirmation */
+	forfeitingSide: LobbySide | null;
+	/** The team asked to confirm the result said it is wrong, cleared when the result changes */
+	disputedAt: number | null;
+	confirmedAt: number | null;
+	confirmedByUserId: number | null;
+	createdAt: Generated<number>;
+}
+
+export interface LobbySetParticipant {
+	setId: number;
+	userId: number;
+	/** `null` = sat the set out */
+	side: LobbySide | null;
+}
+
+/** A map of a set, generated with the set and reported as it is played */
+export interface LobbyGame {
+	id: GeneratedAlways<number>;
+	setId: number;
+	index: number;
+	mode: ModeShort;
+	stageId: StageId;
+	winnerSide: LobbySide | null;
+	reportedAt: number | null;
+	reportedByUserId: number | null;
+}
+
+/** Asking the waitlist to confirm they are present, to fill vacant slots of the room. */
+export interface LobbyReadyCheck {
+	id: GeneratedAlways<number>;
+	lobbyId: number;
+	/** End of the waitlist's priority, after it slots are first come, first served */
+	expiresAt: number;
+	createdAt: Generated<number>;
+}
+
+export interface LobbyReadyCheckUser {
+	readyCheckId: number;
+	userId: number;
+	confirmedAt: number | null;
+}
+
+/**
+ * One audience step of a scrim post's or a lobby's visibility schedule (exactly one of the entity columns is set).
+ * The entity is visible to a viewer when a row with `visibleFrom` in the past matches them.
+ */
+export interface ContentVisibility {
+	id: GeneratedAlways<number>;
+	scrimPostId: number | null;
+	lobbyId: number | null;
+	visibleFrom: number;
+	/** Exactly one of `associationId`, `plusTier`, `friendsOfUserId` and `isPublic` describes the audience */
+	associationId: number | null;
+	/** Plus Server members of this tier or a higher one (lower number) */
+	plusTier: number | null;
+	/** Friends of this user and the user themselves, the content's creator */
+	friendsOfUserId: number | null;
+	isPublic: Generated<DBBoolean>;
 }
 
 export interface Association {
@@ -1635,6 +1748,14 @@ export interface DB {
 	ScrimMap: ScrimMap;
 	Association: Association;
 	AssociationMember: AssociationMember;
+	ContentVisibility: ContentVisibility;
+	Lobby: Lobby;
+	LobbyGame: LobbyGame;
+	LobbyParticipant: LobbyParticipant;
+	LobbyReadyCheck: LobbyReadyCheck;
+	LobbyReadyCheckUser: LobbyReadyCheckUser;
+	LobbySet: LobbySet;
+	LobbySetParticipant: LobbySetParticipant;
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;

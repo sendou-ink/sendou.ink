@@ -30,7 +30,11 @@ import {
 	superRefine,
 	timeString,
 } from "~/utils/schema";
-import { associationIdentifierSchema } from "../associations/associations-schemas";
+import {
+	baseVisibilityField,
+	notFoundVisibilityField,
+	visibilityIssues,
+} from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 
 const deletePostSchema = v.object({
@@ -309,24 +313,8 @@ export const scrimsNewFormSchema = v.pipe(
 			bottomText: "bottomTexts.scrimStartFlexibility",
 			items: [...rangeEndItems],
 		}),
-		baseVisibility: customField(
-			{ initialValue: "PUBLIC" },
-			associationIdentifierSchema,
-		),
-		notFoundVisibility: customField(
-			{ initialValue: { at: null, forAssociation: "PUBLIC" } },
-			v.object({
-				at: v.pipe(
-					v.nullish(preprocess(date, v.date())),
-					v.check((at) => {
-						if (!at) return true;
-						if (at < sub(new Date(), { days: 1 })) return false;
-						return true;
-					}, "forms:errors.dateInPast"),
-				),
-				forAssociation: associationIdentifierSchema,
-			}),
-		),
+		baseVisibility: baseVisibilityField,
+		notFoundVisibility: notFoundVisibilityField,
 		divs: divsFormField,
 		from: customField({ initialValue: null }, fromSchema),
 		postText: textAreaOptional({
@@ -360,35 +348,8 @@ export const scrimsNewFormSchema = v.pipe(
 			});
 		}
 
-		if (
-			post.notFoundVisibility.at &&
-			post.notFoundVisibility.forAssociation === post.baseVisibility
-		) {
-			ctx.addIssue({
-				path: ["notFoundVisibility"],
-				message: "forms:errors.visibilityMustBeDifferent",
-			});
-		}
-
-		if (post.baseVisibility === "PUBLIC" && post.notFoundVisibility.at) {
-			ctx.addIssue({
-				path: ["notFoundVisibility"],
-				message: "forms:errors.visibilityNotAllowedWhenPublic",
-			});
-		}
-
-		if (post.notFoundVisibility.at && post.notFoundVisibility.at > post.at) {
-			ctx.addIssue({
-				path: ["notFoundVisibility"],
-				message: "forms:errors.dateAfterScrimDate",
-			});
-		}
-
-		if (post.notFoundVisibility.at && post.at < new Date()) {
-			ctx.addIssue({
-				path: ["notFoundVisibility"],
-				message: "forms:errors.canNotSetIfLookingNow",
-			});
+		for (const issue of visibilityIssues(post, { startsAt: post.at })) {
+			ctx.addIssue(issue);
 		}
 	}),
 );

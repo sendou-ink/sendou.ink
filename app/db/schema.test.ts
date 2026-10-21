@@ -8,6 +8,7 @@ const NATURAL_PRIMARY_KEYS = ["PlusTier"];
 /** Integer `...Id` columns that intentionally have no foreign key. Game data ids ending in `SplId` are always exempt. */
 const NOT_FOREIGN_KEYS: Record<string, string> = {
 	"GroupMatchMap.stageId": "game data",
+	"LobbyGame.stageId": "game data",
 	"MapPoolMap.stageId": "game data",
 	"MapResult.stageId": "game data",
 	"ScrimMap.stageId": "game data",

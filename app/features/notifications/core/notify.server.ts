@@ -52,6 +52,11 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	TEAM_EVENT_ADDED: "normal",
 	SCHEDULE_TEAM_REMINDER: "normal",
 	CHAT_MENTION: "high",
+	LOBBY_CHECK_IN_OPENED: "high",
+	LOBBY_STARTED: "high",
+	LOBBY_PROMOTED: "high",
+	LOBBY_HOST: "normal",
+	LOBBY_READY_CHECK: "high",
 };
 
 /** How long a push is held back; anything marking the notification seen meanwhile (addressing it, opening the list, `defaultSeenUserIds`) cancels it for that user. */

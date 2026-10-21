@@ -5,6 +5,10 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
+import type {
+	Tournament,
+	TournamentTeamMemberProgressStatus,
+} from "~/features/tournament-bracket/core/Tournament";
 import { runningTournamentWithMatch } from "~/features/tournament-bracket/core/tests/test-utils";
 import * as UserActivity from "./UserActivity.server";
 
@@ -126,3 +130,81 @@ describe("UserActivity.resolve", () => {
 		expect(activity.tournaments).toHaveLength(1);
 	});
 });
+
+describe("UserActivity.lobbyConflict", () => {
+	test.each([
+		{ why: "no activity", activity: activityOf({}), expected: null },
+		{
+			why: "a live SendouQ group",
+			activity: activityOf({ isSendouQExpired: false }),
+			expected: "SENDOUQ",
+		},
+		{
+			why: "an expired SendouQ group",
+			activity: activityOf({ isSendouQExpired: true }),
+			expected: null,
+		},
+		{
+			why: "a tournament match",
+			activity: activityOf({ tournamentStatus: "MATCH" }),
+			expected: "TOURNAMENT",
+		},
+		{
+			why: "waiting for the next tournament round",
+			activity: activityOf({ tournamentStatus: "WAITING_FOR_ROUND" }),
+			expected: "TOURNAMENT",
+		},
+		{
+			why: "a tournament check-in",
+			activity: activityOf({ tournamentStatus: "CHECKIN" }),
+			expected: null,
+		},
+		{
+			why: "waiting for a later tournament bracket",
+			activity: activityOf({ tournamentStatus: "WAITING_FOR_BRACKET" }),
+			expected: null,
+		},
+		{
+			why: "a live SendouQ group and a tournament match",
+			activity: activityOf({
+				isSendouQExpired: false,
+				tournamentStatus: "MATCH",
+			}),
+			expected: "SENDOUQ",
+		},
+	])("$why -> $expected", ({ activity, expected }) => {
+		expect(UserActivity.lobbyConflict(activity)).toBe(expected);
+	});
+});
+
+function activityOf({
+	isSendouQExpired,
+	tournamentStatus,
+}: {
+	isSendouQExpired?: boolean;
+	tournamentStatus?: TournamentTeamMemberProgressStatus["type"];
+}): UserActivity.UserActivity {
+	return {
+		sendouq:
+			isSendouQExpired === undefined
+				? null
+				: {
+						group: {} as NonNullable<
+							UserActivity.UserActivity["sendouq"]
+						>["group"],
+						likesReceivedCount: 0,
+						expired: isSendouQExpired,
+					},
+		tournaments: tournamentStatus
+			? [
+					{
+						tournament: {} as Tournament,
+						status: {
+							type: tournamentStatus,
+						} as TournamentTeamMemberProgressStatus,
+					},
+				]
+			: [],
+		lobby: null,
+	};
+}
