@@ -98,11 +98,13 @@ function parseTopBand(
 	let stage: StageId | null = null;
 	let stageScore = 0;
 	// BlitzMain lookalikes ("I9:04", "O9/OS/2Oo6") fold to digits for the
-	// timestamp; the stage part keeps its original reading (1:1 replacements, offsets line up)
+	// timestamp, and "*" (the colon's runner-up template) to the colon; the stage
+	// part keeps its original reading (1:1 replacements, offsets line up)
 	const normalized = reading
 		.replace(/[Il|]/g, "1")
 		.replace(/[Oo]/g, "0")
-		.replace(/S/g, "5");
+		.replace(/S/g, "5")
+		.replace(/\*/g, ":");
 	const m =
 		TIMESTAMP_RE.exec(normalized) ??
 		TIMESTAMP_GAPPED_DATE_RE.exec(normalized) ??
