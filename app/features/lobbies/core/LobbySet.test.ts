@@ -72,95 +72,159 @@ describe("LobbySet.currentGameIndex", () => {
 	});
 });
 
-describe("LobbySet permissions", () => {
-	const decided = setOf({ winners: ["ALPHA", "ALPHA"] });
+const decided = setOf({ winners: ["ALPHA", "ALPHA"] });
 
+describe("LobbySet.canReport", () => {
 	test.each([
-		{
-			why: "player reports",
-			fn: LobbySet.canReport,
-			set: setOf(),
-			userId: 1,
-			expected: true,
-		},
+		{ why: "player reports", set: setOf(), userId: 1, expected: true },
 		{
 			why: "sitting out can't report",
-			fn: LobbySet.canReport,
 			set: setOf({ sittingOut: [9] }),
 			userId: 9,
 			expected: false,
 		},
 		{
 			why: "no reports after decided",
-			fn: LobbySet.canReport,
 			set: decided,
 			userId: 1,
 			expected: false,
 		},
-		{
-			why: "nothing to undo",
-			fn: LobbySet.canUndo,
-			set: setOf(),
-			userId: 1,
-			expected: false,
-		},
+	])("$why", ({ set, userId, expected }) => {
+		expect(LobbySet.canReport(set, userId)).toBe(expected);
+	});
+});
+
+describe("LobbySet.canUndo", () => {
+	test.each([
+		{ why: "nothing to undo", set: setOf(), userId: 1, expected: false },
 		{
 			why: "anyone playing undoes while reporting",
-			fn: LobbySet.canUndo,
 			set: setOf({ winners: ["ALPHA"] }),
 			userId: 5,
 			expected: true,
 		},
 		{
 			why: "reporter side undoes the deciding report",
-			fn: LobbySet.canUndo,
 			set: decided,
 			userId: 2,
 			expected: true,
 		},
 		{
 			why: "confirming side doesn't undo",
-			fn: LobbySet.canUndo,
 			set: decided,
 			userId: 5,
 			expected: false,
 		},
-		{
-			why: "other side confirms",
-			fn: LobbySet.canConfirm,
-			set: decided,
-			userId: 6,
-			expected: true,
-		},
+	])("$why", ({ set, userId, expected }) => {
+		expect(LobbySet.canUndo(set, userId)).toBe(expected);
+	});
+});
+
+describe("LobbySet.canConfirm", () => {
+	test.each([
+		{ why: "other side confirms", set: decided, userId: 6, expected: true },
 		{
 			why: "reporter side doesn't confirm",
-			fn: LobbySet.canConfirm,
 			set: decided,
 			userId: 3,
 			expected: false,
 		},
 		{
-			why: "other side disputes",
-			fn: LobbySet.canDispute,
-			set: decided,
+			why: "disputed can still be confirmed",
+			set: setOf({ winners: ["ALPHA", "ALPHA"], disputed: true }),
 			userId: 7,
 			expected: true,
 		},
+	])("$why", ({ set, userId, expected }) => {
+		expect(LobbySet.canConfirm(set, userId)).toBe(expected);
+	});
+});
+
+describe("LobbySet.canDispute", () => {
+	test.each([
+		{ why: "other side disputes", set: decided, userId: 7, expected: true },
 		{
 			why: "no second dispute",
-			fn: LobbySet.canDispute,
 			set: setOf({ winners: ["ALPHA", "ALPHA"], disputed: true }),
 			userId: 7,
 			expected: false,
 		},
+	])("$why", ({ set, userId, expected }) => {
+		expect(LobbySet.canDispute(set, userId)).toBe(expected);
+	});
+});
+
+describe("LobbySet.score", () => {
+	test.each([
 		{
-			why: "disputed can still be confirmed",
-			fn: LobbySet.canConfirm,
-			set: setOf({ winners: ["ALPHA", "ALPHA"], disputed: true }),
-			userId: 7,
+			why: "best of 3",
+			set: setOf({ winners: ["ALPHA", "BRAVO"] }),
+			expected: { alpha: 1, bravo: 1, mapsToWin: 2 },
+		},
+		{
+			why: "best of 5",
+			set: setOf({ winners: ["BRAVO"], bestOf: 5 }),
+			expected: { alpha: 0, bravo: 1, mapsToWin: 3 },
+		},
+	])("$why", ({ set, expected }) => {
+		expect(LobbySet.score(set)).toEqual(expected);
+	});
+});
+
+describe("LobbySet.isFinished", () => {
+	test.each([
+		{
+			why: "decided but not confirmed",
+			set: setOf({ winners: ["ALPHA", "ALPHA"] }),
+			expected: false,
+		},
+		{
+			why: "confirmed",
+			set: setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true }),
 			expected: true,
 		},
-	])("$why", ({ fn, set, userId, expected }) => {
-		expect(fn(set, userId)).toBe(expected);
+		{
+			why: "forfeited",
+			set: setOf({ forfeitingSide: "BRAVO" }),
+			expected: true,
+		},
+	] as const)("$why", ({ set, expected }) => {
+		expect(LobbySet.isFinished(set)).toBe(expected);
+	});
+});
+
+describe("LobbySet.reportedCount", () => {
+	test("counts the maps with a winner", () => {
+		expect(LobbySet.reportedCount(setOf({ winners: ["ALPHA", "BRAVO"] }))).toBe(
+			2,
+		);
+	});
+});
+
+describe("LobbySet.sideOf", () => {
+	test.each([
+		{ why: "alpha player", userId: 1, expected: "ALPHA" },
+		{ why: "bravo player", userId: 5, expected: "BRAVO" },
+		{ why: "sitting out", userId: 9, expected: null },
+		{ why: "not in the set", userId: 10, expected: null },
+	])("$why", ({ userId, expected }) => {
+		expect(LobbySet.sideOf(setOf({ sittingOut: [9] }), userId)).toBe(expected);
+	});
+});
+
+describe("LobbySet.playersOf", () => {
+	test("leaves out who sat the set out", () => {
+		expect(LobbySet.playersOf(setOf({ sittingOut: [9] }), "BRAVO")).toEqual([
+			5, 6, 7, 8,
+		]);
+	});
+});
+
+describe("LobbySet.otherSide", () => {
+	test.each([
+		{ side: "ALPHA", expected: "BRAVO" },
+		{ side: "BRAVO", expected: "ALPHA" },
+	] as const)("%s", ({ side, expected }) => {
+		expect(LobbySet.otherSide(side)).toBe(expected);
 	});
 });

@@ -26,6 +26,7 @@ import {
 
 const INDEX_LIST_LIMIT = 50;
 
+/** The lobby with its participants, see {@link findById}. */
 export type LobbyById = NonNullable<Unwrapped<typeof findById>>;
 
 /**

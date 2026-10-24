@@ -1,3 +1,7 @@
+/**
+ * Applies the transitions `LobbyTransition` decides on to the database, then publishes the change to
+ * the lobby's page, updates the chat rooms and sends the notifications.
+ */
 import { addMinutes } from "date-fns";
 import * as R from "remeda";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";

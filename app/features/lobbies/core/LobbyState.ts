@@ -1,3 +1,7 @@
+/**
+ * Lobby status over time (upcoming, check-in, pending, active, ended), when an idle lobby closes,
+ * who takes over as host and what the viewer may do on the lobby page.
+ */
 import {
 	AUTO_CLOSE_MINUTES,
 	CHECK_IN_LEAD_MINUTES,
@@ -79,6 +83,7 @@ export function nextHost<T extends { userId: number; joinedAt: number }>(
 	return first?.userId ?? null;
 }
 
+/** What the viewer may do on the lobby page, see {@link viewerActions}. */
 export interface ViewerActions {
 	SIGN_UP: boolean;
 	CHECK_IN: boolean;

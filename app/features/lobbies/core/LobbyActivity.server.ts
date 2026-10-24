@@ -1,3 +1,7 @@
+/**
+ * In-memory index of the lobby each user is active in, read through `UserActivity`: shown to friends
+ * and checked so a user isn't in SendouQ or a tournament at the same time.
+ */
 import * as LobbyRepository from "../LobbyRepository.server";
 
 type ActiveParticipation = Awaited<

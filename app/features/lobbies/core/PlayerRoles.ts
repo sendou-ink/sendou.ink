@@ -1,3 +1,7 @@
+/**
+ * Role tags of a player (Tacticooler, backline) from their weapon pool, which `TeamShuffle` spreads
+ * evenly across the teams.
+ */
 import * as WeaponRange from "~/features/comp-analyzer/core/WeaponRange";
 import { hasTacticooler } from "~/features/img-export/core/RunComps";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";

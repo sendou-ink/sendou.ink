@@ -1,3 +1,8 @@
+/**
+ * Decides the next change a lobby goes through (starting, promoting from the waitlist, filling the
+ * room, ready checks, starting a set, passing on the host, ending) from its current state. Pure,
+ * applied by `LobbyProgression`.
+ */
 import {
 	type LobbyParticipantStatus,
 	PLAYERS_PER_SET,

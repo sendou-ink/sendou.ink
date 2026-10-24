@@ -1,3 +1,7 @@
+/**
+ * Lobby-local skill ratings, rebuilt from the lobby's finished sets, that `TeamShuffle` balances the
+ * teams with.
+ */
 import { predictWin, type Rating, rating } from "openskill";
 import { rate } from "~/features/mmr/mmr-utils";
 import type { LobbySide } from "../lobbies-constants";

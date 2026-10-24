@@ -188,3 +188,9 @@ describe("LobbyState.viewerActions", () => {
 		);
 	});
 });
+
+describe("LobbyState.checkInOpensAt", () => {
+	test("opens check-in 10 minutes before the start", () => {
+		expect(LobbyState.checkInOpensAt(STARTS_AT)).toBe(STARTS_AT - 10 * MINUTE);
+	});
+});

@@ -37,6 +37,7 @@ const NAV_ICONS: Record<string, string> = {
 	leaderboards: "leaderboards",
 	lfg: "lfg",
 	links: "links",
+	lobbies: "lobbies",
 	"map-list-generator": "maps",
 	"map-planner": "plans",
 	"object-damage-calculator": "object-damage-calculator",

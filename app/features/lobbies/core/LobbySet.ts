@@ -1,3 +1,7 @@
+/**
+ * Rules of a lobby set (a best-of between two shuffled teams): the score, its status from reporting
+ * through confirmation and who of the players may report, undo, confirm or dispute.
+ */
 import type { LobbySide } from "../lobbies-constants";
 
 /** What a set's state is derived from: its games (maps) in order and who played on which side. */

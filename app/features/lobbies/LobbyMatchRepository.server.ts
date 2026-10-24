@@ -11,6 +11,7 @@ import type { Unwrapped } from "~/utils/types";
 import * as LobbySet from "./core/LobbySet";
 import type { LobbySide } from "./lobbies-constants";
 
+/** A set of the lobby with its games and participants, see {@link findAllSetsByLobbyId}. */
 export type LobbySetWithGames = Unwrapped<typeof findAllSetsByLobbyId>;
 
 /** Every set of the lobby, oldest first, with its maps and who played on which side (with their user info). */
@@ -404,6 +405,7 @@ export async function confirmReadyChecks({
 	});
 }
 
+/** Deletes the ready check, as when the room's open slots have been filled. */
 export async function deleteReadyCheck(readyCheckId: number) {
 	await db
 		.deleteFrom("LobbyReadyCheck")

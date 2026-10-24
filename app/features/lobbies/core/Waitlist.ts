@@ -1,3 +1,6 @@
+/**
+ * Who of the waitlist gets the room's open slots when a ready check asks them to confirm.
+ */
 import * as R from "remeda";
 
 /**

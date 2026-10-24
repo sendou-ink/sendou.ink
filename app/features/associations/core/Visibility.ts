@@ -1,8 +1,13 @@
+/**
+ * Who sees content limited to an audience (scrim posts, lobbies): an association, friends or a Plus
+ * tier, optionally widening at a later time when nobody was found. Stored as `ContentVisibility` rows.
+ */
 import type { Tables } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { AssociationIdentifier } from "../associations-constants";
 import type { AssociationVisibility } from "../associations-types";
 
+/** A `ContentVisibility` row without the entity it is about. */
 export type VisibilityRow = Pick<
 	Tables["ContentVisibility"],
 	"visibleFrom" | "associationId" | "plusTier" | "friendsOfUserId"

@@ -51,3 +51,50 @@ describe("Visibility.toRows", () => {
 		).toEqual(expected);
 	});
 });
+
+describe("Visibility.fromForm", () => {
+	const at = new Date(1_000_000);
+
+	test.each([
+		{
+			why: "public",
+			form: {
+				baseVisibility: "PUBLIC" as const,
+				notFoundVisibility: { forAssociation: "PUBLIC" as const },
+			},
+			expected: null,
+		},
+		{
+			why: "association without a later step",
+			form: {
+				baseVisibility: 3,
+				notFoundVisibility: { at: null, forAssociation: "PUBLIC" as const },
+			},
+			expected: { forAssociation: 3, notFoundInstructions: undefined },
+		},
+		{
+			why: "association widening to public",
+			form: {
+				baseVisibility: 3,
+				notFoundVisibility: { at, forAssociation: "PUBLIC" as const },
+			},
+			expected: {
+				forAssociation: 3,
+				notFoundInstructions: [{ at: 1000, forAssociation: null }],
+			},
+		},
+		{
+			why: "friends widening to a plus tier",
+			form: {
+				baseVisibility: "FRIENDS" as const,
+				notFoundVisibility: { at, forAssociation: "+2" as const },
+			},
+			expected: {
+				forAssociation: "FRIENDS",
+				notFoundInstructions: [{ at: 1000, forAssociation: "+2" }],
+			},
+		},
+	])("$why", ({ form, expected }) => {
+		expect(Visibility.fromForm(form)).toEqual(expected);
+	});
+});

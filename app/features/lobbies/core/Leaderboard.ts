@@ -1,7 +1,12 @@
+/**
+ * Rankings tab of a lobby: each player's set and map record over the lobby's finished sets and the
+ * weapons they played.
+ */
 import * as R from "remeda";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as LobbySet from "./LobbySet";
 
+/** A player's record over the lobby's finished sets. */
 export interface LeaderboardRow {
 	userId: number;
 	setWins: number;

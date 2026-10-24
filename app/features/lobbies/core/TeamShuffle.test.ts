@@ -26,6 +26,20 @@ const sameTeam = (result: TeamShuffle.ShuffleResult, a: number, b: number) =>
 	(result.alpha.includes(a) && result.alpha.includes(b)) ||
 	(result.bravo.includes(a) && result.bravo.includes(b));
 
+const split = (alpha: TeamShuffle.ShufflePlayer[]) => {
+	const all = players(8).map(
+		(p) => alpha.find((a) => a.userId === p.userId) ?? p,
+	);
+	const alphaIds = alpha.map((p) => p.userId);
+
+	return {
+		alpha: all.filter((p) => alphaIds.includes(p.userId)),
+		bravo: all.filter((p) => !alphaIds.includes(p.userId)),
+	};
+};
+
+const evenSplit = split(players(4));
+
 describe("TeamShuffle.shuffle", () => {
 	test("splits 8 players 4v4 with nobody sitting out", () => {
 		const result = TeamShuffle.shuffle({
@@ -183,20 +197,7 @@ describe("TeamShuffle.teammateHistory", () => {
 	});
 });
 
-describe("TeamShuffle cost terms", () => {
-	const split = (alpha: TeamShuffle.ShufflePlayer[]) => {
-		const all = players(8).map(
-			(p) => alpha.find((a) => a.userId === p.userId) ?? p,
-		);
-		const alphaIds = alpha.map((p) => p.userId);
-
-		return {
-			alpha: all.filter((p) => alphaIds.includes(p.userId)),
-			bravo: all.filter((p) => !alphaIds.includes(p.userId)),
-		};
-	};
-	const evenSplit = split(players(4));
-
+describe("TeamShuffle.balanceCost", () => {
 	test("an even split has no balance cost", () => {
 		expect(TeamShuffle.balanceCost(evenSplit)).toBeCloseTo(0);
 	});
@@ -209,7 +210,9 @@ describe("TeamShuffle cost terms", () => {
 
 		expect(TeamShuffle.balanceCost(stacked)).toBeGreaterThan(0.3);
 	});
+});
 
+describe("TeamShuffle.teammateRepeatCost", () => {
 	test("repeat teammates cost per set together, more for the previous set", () => {
 		const history = TeamShuffle.teammateHistory([
 			{ alpha: [1, 2, 5, 6], bravo: [3, 4, 7, 8] },
@@ -223,8 +226,10 @@ describe("TeamShuffle cost terms", () => {
 					TeamShuffle.PREVIOUS_SET_TEAMMATE_WEIGHT),
 		);
 	});
+});
 
-	test("the split cost weighs the terms", () => {
+describe("TeamShuffle.splitCost", () => {
+	test("weighs the cost terms", () => {
 		const coolers = split([
 			player(1, { roles: ["TACTICOOLER"] }),
 			player(2, { roles: ["TACTICOOLER"] }),

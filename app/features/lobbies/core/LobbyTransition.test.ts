@@ -395,3 +395,19 @@ describe("LobbyTransition.next", () => {
 		expect(result).toBeNull();
 	});
 });
+
+describe("LobbyTransition.waitlist", () => {
+	test("is everyone not in the room, in sign-up order", () => {
+		expect(
+			LobbyTransition.waitlist(
+				state({
+					participants: [
+						...inRoom(8),
+						...participants(1, { status: "WAITLISTED" }, 9),
+						...participants(1, { status: "CHECKED_IN" }, 10),
+					],
+				}),
+			),
+		).toEqual([9, 10]);
+	});
+});

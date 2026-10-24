@@ -1,4 +1,4 @@
-import { ordinal } from "openskill";
+import { ordinal, rating } from "openskill";
 import { describe, expect, test } from "vitest";
 import * as LobbyRating from "./LobbyRating";
 import { setOf } from "./tests/fixtures";
@@ -87,5 +87,15 @@ describe("LobbyRating.winProbability", () => {
 		const bravo = [5, 6, 7, 8].map((id) => LobbyRating.ratingOf(ratings, id));
 
 		expect(LobbyRating.winProbability(alpha, bravo)).toBeGreaterThan(0.5);
+	});
+});
+
+describe("LobbyRating.ratingOf", () => {
+	test("is the default rating for someone without a rated set", () => {
+		const ratings = LobbyRating.ratings([
+			setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true }),
+		]);
+
+		expect(LobbyRating.ratingOf(ratings, 9)).toEqual(rating());
 	});
 });

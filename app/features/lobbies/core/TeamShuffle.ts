@@ -57,11 +57,13 @@ export interface TeammateHistory {
 	previousSetPairs: Set<string>;
 }
 
+/** A candidate split of the players into two teams, scored by {@link splitCost}. */
 export interface Split {
 	alpha: ShufflePlayer[];
 	bravo: ShufflePlayer[];
 }
 
+/** User ids of the teams of the next set and of who sits it out. */
 export interface ShuffleResult {
 	alpha: number[];
 	bravo: number[];
