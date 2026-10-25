@@ -1,4 +1,6 @@
+import { subDays, subMonths } from "date-fns";
 import { describe, expect, test } from "vitest";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as SendouQMatch from "./SendouQMatch";
 
 const ALPHA_ID = 1;
@@ -40,5 +42,49 @@ describe("SendouQMatch.score()", () => {
 
 		expect(result.alphaWins).toBe(result.mapsToWin);
 		expect(result.isDecisive).toBe(true);
+	});
+});
+
+describe("SendouQMatch.canSeeFriendCodes()", () => {
+	const recent = dateToDatabaseTimestamp(subDays(new Date(), 1));
+	const old = dateToDatabaseTimestamp(subMonths(new Date(), 2));
+
+	test.each([
+		{
+			why: "participant, recent",
+			createdAt: recent,
+			isParticipant: true,
+			isStaff: false,
+			expected: true,
+		},
+		{
+			why: "participant, old",
+			createdAt: old,
+			isParticipant: true,
+			isStaff: false,
+			expected: false,
+		},
+		{
+			why: "staff, old",
+			createdAt: old,
+			isParticipant: false,
+			isStaff: true,
+			expected: true,
+		},
+		{
+			why: "outsider, recent",
+			createdAt: recent,
+			isParticipant: false,
+			isStaff: false,
+			expected: false,
+		},
+	])("$why", ({ createdAt, isParticipant, isStaff, expected }) => {
+		expect(
+			SendouQMatch.canSeeFriendCodes({
+				matchCreatedAt: createdAt,
+				isParticipant,
+				isStaff,
+			}),
+		).toBe(expected);
 	});
 });

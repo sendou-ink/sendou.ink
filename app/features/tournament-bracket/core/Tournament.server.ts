@@ -163,8 +163,10 @@ export function requireTournamentVisible({
 
 type TournamentFriendCodeCtx = Pick<
 	TournamentData["ctx"],
-	"permissions" | "settings" | "startsAt"
->;
+	"permissions" | "settings"
+> & {
+	startsAt: number | Date;
+};
 
 /** Organizers see the participants' friend codes only for a while after the start. Leagues run for many weeks, so theirs stay visible for longer. */
 export function canSeeTournamentFriendCodes({
@@ -175,8 +177,12 @@ export function canSeeTournamentFriendCodes({
 	user: OptionalIdObject;
 }) {
 	const friendCodeVisibilityDays = ctx.settings.isLeague ? 120 : 30;
+	const startsAt =
+		ctx.startsAt instanceof Date
+			? ctx.startsAt
+			: databaseTimestampToDate(ctx.startsAt);
 	const tournamentStartedRecently = isAfter(
-		databaseTimestampToDate(ctx.startsAt),
+		startsAt,
 		subDays(new Date(), friendCodeVisibilityDays),
 	);
 

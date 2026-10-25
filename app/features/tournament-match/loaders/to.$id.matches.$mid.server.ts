@@ -16,6 +16,7 @@ import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
+	canSeeTournamentFriendCodes,
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -196,7 +197,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		...(await UserCardRepository.findAllByUserIdsCached({
 			userIds: match.players.map((p) => p.id),
 			include: {
-				friendCode: isParticipant || isSiteStaff || isTournamentStaff,
+				friendCode:
+					isParticipant ||
+					isSiteStaff ||
+					canSeeTournamentFriendCodes({ ctx: tournament.ctx, user }),
 			},
 		})),
 		match: {
