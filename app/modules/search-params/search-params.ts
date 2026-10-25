@@ -2,6 +2,7 @@ import type { ShouldRevalidateFunction } from "react-router";
 import { isDeepEqual } from "remeda";
 import * as v from "valibot";
 import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
+import { IS_DEV_BUILD } from "~/utils/dev-build";
 
 type AnySchema = v.GenericSchema<any, any>;
 
@@ -124,7 +125,88 @@ export function define<Shape extends AnyShape>(
 		shouldRevalidate: createShouldRevalidate(shape),
 	};
 
+	if (IS_DEV_BUILD)
+		registerForDevTools(definition, new Error("declared here").stack);
+
 	return definition;
+}
+
+const devToolsRegistry = new Map<
+	string,
+	{
+		definition: SearchParamsDefinition<any>;
+		source: string | null;
+		/** The served module and line of the `define()` call, from the browser's stack trace. */
+		declaredAt: { url: string; line: number } | null;
+	}
+>();
+const devToolsReaders = new Map<SearchParamsDefinition<any>, number>();
+const devToolsListeners = new Set<() => void>();
+let devToolsVersion = 0;
+
+/**
+ * Dev tools only: every definition loaded so far, the module declaring it and how many mounted components read it.
+ * Always empty in production builds.
+ */
+export function definitionsForDevTools() {
+	return [...devToolsRegistry.values()].map((entry) => ({
+		...entry,
+		readers: devToolsReaders.get(entry.definition) ?? 0,
+	}));
+}
+
+/** Dev tools only: counts a mounted component reading the definition, returns the cleanup uncounting it. */
+export function trackReaderForDevTools(
+	definition: SearchParamsDefinition<any>,
+) {
+	updateReaders(definition, 1);
+
+	return () => updateReaders(definition, -1);
+}
+
+/** Dev tools only: fires when the readers counted by `trackReaderForDevTools` change. */
+export function subscribeDevTools(listener: () => void) {
+	devToolsListeners.add(listener);
+
+	return () => {
+		devToolsListeners.delete(listener);
+	};
+}
+
+/** Dev tools only: snapshot for `subscribeDevTools`, bumped on every change. */
+export function devToolsSnapshot() {
+	return devToolsVersion;
+}
+
+function updateReaders(definition: SearchParamsDefinition<any>, by: number) {
+	devToolsReaders.set(definition, (devToolsReaders.get(definition) ?? 0) + by);
+	devToolsVersion++;
+	for (const listener of devToolsListeners) listener();
+}
+
+function registerForDevTools(
+	definition: SearchParamsDefinition<any>,
+	stack: string | undefined,
+) {
+	const declaringFrame = stack
+		?.split("\n")
+		.slice(1)
+		.find(
+			(frame) =>
+				/\/app\/[^?:)\s]+\.tsx?/.test(frame) &&
+				!frame.includes("modules/search-params/search-params.ts"),
+		);
+	const source = declaringFrame?.match(/\/(app\/[^?:)\s]+\.tsx?)/)?.[1] ?? null;
+	const location = declaringFrame?.match(/(https?:\/\/[^\s()]+?):(\d+):\d+/);
+
+	// keyed so a module re-evaluated by HMR replaces its earlier definitions
+	devToolsRegistry.set(`${source} ${definition.keys.join(",")}`, {
+		definition,
+		source,
+		declaredAt: location
+			? { url: location[1], line: Number(location[2]) }
+			: null,
+	});
 }
 
 /** `shouldRevalidate` for a route whose loader reads no search params: search-only navigations never rerun it. */

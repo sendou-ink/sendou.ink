@@ -35,6 +35,31 @@ const devOnlyRoutes =
 					"/scanner/fixtures/:detector?/:caseName?",
 					"features/scanner/routes/scanner.fixtures.ts",
 				),
+				...prefix("/dev", [
+					route("/identity", "features/dev-tools/routes/dev.identity.ts"),
+					route("/scenarios", "features/dev-tools/routes/dev.scenarios.ts"),
+					route("/requests", "features/dev-tools/routes/dev.requests.ts"),
+					route(
+						"/requests/:id",
+						"features/dev-tools/routes/dev.requests.$id.ts",
+					),
+					route("/log-in-as", "features/dev-tools/routes/dev.log-in-as.ts"),
+					route("/server", "features/dev-tools/routes/dev.server.ts"),
+					route(
+						"/notifications",
+						"features/dev-tools/routes/dev.notifications.ts",
+					),
+					route("/events", "features/dev-tools/routes/dev.events.ts"),
+					route(
+						"/server-console",
+						"features/dev-tools/routes/dev.server-console.ts",
+					),
+					route("/users", "features/dev-tools/routes/dev.users.ts"),
+					route(
+						"/errors/:kind",
+						"features/dev-tools/routes/dev.errors.$kind.tsx",
+					),
+				]),
 			] satisfies RouteConfig)
 		: [];
 
@@ -400,7 +425,6 @@ export default [
 	route("/patrons", "features/api-private/routes/patrons.ts"),
 	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
 	route("/run-routine", "features/api-private/routes/run-routine.ts"),
-	route("/seed", "features/api-private/routes/seed.ts"),
 	route(
 		"/set-plus-voting-active",
 		"features/api-private/routes/set-plus-voting-active.ts",

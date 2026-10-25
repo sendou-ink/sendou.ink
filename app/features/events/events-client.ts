@@ -40,6 +40,8 @@ export interface EventsClient {
 	subscribeToReadyState: (listener: () => void) => () => void;
 	/** Registers a listener for all incoming server events. Returns an unsubscribe function. */
 	addEventListener: (listener: (event: ServerEvent) => void) => () => void;
+	/** The topics currently subscribed to, sorted. */
+	getTopics: () => string[];
 	/** Adds the topic to the desired set (reference counted, replayed on every reconnect). Returns an unsubscribe function. */
 	subscribeTopic: (topic: string) => () => void;
 }
@@ -225,6 +227,7 @@ export function createEventsClient(deps: EventsClientDeps): EventsClient {
 			setReadyState("CLOSED");
 		},
 		getReadyState: () => readyState,
+		getTopics: desiredTopics,
 		subscribeToReadyState: (listener) => {
 			readyStateListeners.add(listener);
 			return () => readyStateListeners.delete(listener);

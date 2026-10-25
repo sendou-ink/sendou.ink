@@ -10,6 +10,7 @@ import {
 	notify,
 	PUSH_NOTIFICATION_GRACE_PERIOD_MS,
 } from "./notify.server";
+import { runWithoutWebPush } from "./push-suppression.server";
 
 const users = UserFactory.pool();
 
@@ -461,6 +462,37 @@ describe("notify() - web push notifications", () => {
 		});
 
 		expect(mockSendNotification).not.toHaveBeenCalled();
+	});
+
+	test("creates the notification but sends no web push under runWithoutWebPush", async () => {
+		await subscribe(users.id(1), "https://fcm.googleapis.com/fcm/send/1");
+		mockWebPushEnabled.value = true;
+
+		await notifyAndElapseGracePeriod({
+			userIds: [users.id(1)],
+			notification: {
+				type: "BADGE_ADDED",
+				meta: { badgeName: "Test", badgeId: 1 },
+			},
+		});
+		expect(mockSendNotification).toHaveBeenCalledTimes(1);
+		mockSendNotification.mockClear();
+
+		// the push is scheduled on a timer, which has to inherit the suppression too
+		await runWithoutWebPush(() =>
+			notifyAndElapseGracePeriod({
+				userIds: [users.id(1)],
+				notification: {
+					type: "BADGE_ADDED",
+					meta: { badgeName: "Other", badgeId: 2 },
+				},
+			}),
+		);
+
+		expect(mockSendNotification).not.toHaveBeenCalled();
+		expect(await NotificationRepository.findByUserId(users.id(1))).toHaveLength(
+			2,
+		);
 	});
 
 	test("skips the push for a user who saw the notification during the grace period", async () => {

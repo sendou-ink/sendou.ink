@@ -1,0 +1,38 @@
+.topics {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.entry {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--s-2-5);
+	padding: var(--s-1-5) 0;
+	border-top: var(--border-style);
+}
+
+.time {
+	width: 3.75rem;
+	flex-shrink: 0;
+	color: var(--color-text-high);
+	font-family: monospace;
+	font-size: var(--font-xs);
+	font-variant-numeric: tabular-nums;
+}
+
+.eventSummary {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: var(--s-2);
+}

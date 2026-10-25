@@ -1,0 +1,81 @@
+.panel {
+	padding-top: var(--s-3);
+}
+
+.card {
+	padding: var(--s-2) var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.routeSummary {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.routeName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+}
+
+.permissionName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	white-space: nowrap;
+
+	& svg {
+		flex-shrink: 0;
+	}
+}
+
+.valueButton {
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--color-text);
+	text-align: left;
+	cursor: text;
+
+	&:hover code {
+		text-decoration: underline dotted;
+	}
+}
+
+.storageValue {
+	width: 100%;
+	max-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.groupTitle {
+	margin: 0;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.definitionHeader {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.definitionName {
+	font-weight: var(--weight-semi);
+}

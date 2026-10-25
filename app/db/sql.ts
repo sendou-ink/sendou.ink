@@ -3,6 +3,7 @@ import { styleText } from "node:util";
 import { Kysely, type LogEvent } from "kysely";
 import { format } from "sql-formatter";
 import { ServerConfig } from "~/config.server";
+import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
@@ -86,6 +87,8 @@ function applyMigratedSchema(target: DatabaseSync) {
 }
 
 function log(event: LogEvent) {
+	devToolsServerHooks?.recordQuery(event);
+
 	if (ServerConfig.sqlLog === "trunc" || ServerConfig.sqlLog === "full") {
 		logQuery(event);
 	} else {

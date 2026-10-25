@@ -1,0 +1,77 @@
+.tree {
+	font-family: monospace;
+	font-size: var(--font-xs);
+	line-height: 1.6;
+}
+
+.summary {
+	cursor: pointer;
+	list-style: none;
+
+	&::-webkit-details-marker {
+		display: none;
+	}
+
+	&::before {
+		display: inline-block;
+		width: var(--s-3);
+		color: var(--color-text-high);
+		content: "▸";
+		font-size: var(--font-3xs);
+		transition: transform 100ms;
+	}
+
+	details[open] > &::before {
+		transform: rotate(90deg);
+	}
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.children {
+	padding-left: var(--s-3);
+	border-left: 1px solid var(--color-border);
+	margin-left: var(--s-1);
+}
+
+.leaf {
+	padding-left: var(--s-3);
+	overflow-wrap: anywhere;
+}
+
+.key {
+	color: var(--color-fg-accent);
+}
+
+.preview,
+.count,
+.more,
+.null {
+	color: var(--color-text-high);
+}
+
+.count {
+	margin-left: var(--s-1-5);
+}
+
+.null {
+	font-style: italic;
+}
+
+.string {
+	color: var(--color-success-high);
+}
+
+.number {
+	color: var(--color-info-high);
+}
+
+.boolean {
+	color: var(--color-warning-high);
+}
+
+.more {
+	padding-left: var(--s-3);
+}

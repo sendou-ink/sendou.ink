@@ -24,6 +24,7 @@ import {
 } from "react-router";
 import { Config } from "~/config";
 import type { CustomTheme } from "~/db/tables-json";
+import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { resolveLayoutData } from "~/features/layout/core/layout.server";
 import { useDebounce } from "~/hooks/useDebounce";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
@@ -89,6 +90,7 @@ import "nprogress/nprogress.css";
 const PRELOAD_TRANSLATION_TIMEOUT_MS = 3000;
 
 export const middleware: Route.MiddlewareFunction[] = [
+	...(devToolsServerHooks ? [devToolsServerHooks.middleware] : []),
 	redirectsMiddleware,
 	requestContextMiddleware,
 	sessionIdMiddleware,
@@ -96,6 +98,14 @@ export const middleware: Route.MiddlewareFunction[] = [
 	i18nMiddleware,
 	timezoneMiddleware,
 ];
+
+const DevToolbar = import.meta.env.DEV
+	? React.lazy(() =>
+			import("./features/dev-tools/components/DevToolbar").then((module) => ({
+				default: module.DevToolbar,
+			})),
+		)
+	: null;
 
 // anchors the loading bar to the header (between the sidebars); at module scope so
 // even the very first navigation's NProgress.start doesn't render over the sidebar
@@ -269,6 +279,7 @@ function Document({
 							<SendouToastRegion />
 							<UnsavedChangesGuard />
 							<TranslationPreview />
+							{DevToolbar ? <DevToolbarMount Toolbar={DevToolbar} /> : null}
 							<MyFuse data={rootData} />
 							<ChatProvider
 								user={rootData?.user}
@@ -476,6 +487,18 @@ export function ErrorBoundary() {
 				<Catcher />
 			</Document>
 		</ThemeProvider>
+	);
+}
+
+function DevToolbarMount({ Toolbar }: { Toolbar: React.ComponentType }) {
+	const isHydrated = useHydrated();
+
+	if (!isHydrated) return null;
+
+	return (
+		<React.Suspense fallback={null}>
+			<Toolbar />
+		</React.Suspense>
 	);
 }
 

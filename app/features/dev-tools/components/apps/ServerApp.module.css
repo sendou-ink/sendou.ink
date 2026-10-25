@@ -1,0 +1,21 @@
+.switchRow {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.routine {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-inline-start: var(--s-2);
+	border-radius: var(--radius-field);
+
+	& > code {
+		flex: 1;
+	}
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}

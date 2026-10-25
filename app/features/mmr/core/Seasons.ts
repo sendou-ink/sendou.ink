@@ -131,6 +131,11 @@ export function DANGEROUS_setSeasonEndedOverride(seasonEnded: boolean) {
 	seasonEndedOverride = seasonEnded;
 }
 
+/** Whether {@link DANGEROUS_setSeasonEndedOverride} is in effect. */
+export function isSeasonEndedOverridden() {
+	return seasonEndedOverride;
+}
+
 /** The ongoing season at `date` (default now), if any. */
 export function current(date?: Date): ListItem | null {
 	if (seasonEndedOverride && !date) return null;

@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as PersistedState from "./persisted-state";
 import {
 	assertDecodesToDefault,
@@ -103,3 +103,78 @@ describe("without web storage", () => {
 		expect(PersistedState.readMap(unstoredCounts)).toEqual({ b: 2 });
 	});
 });
+
+describe("dev tools registry", () => {
+	beforeEach(() => {
+		vi.stubGlobal("window", {
+			localStorage: memoryStorage(),
+			sessionStorage: memoryStorage(),
+			addEventListener: () => {},
+			removeEventListener: () => {},
+		});
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	test("lists every definition loaded so far", () => {
+		expect(PersistedState.definitionsForDevTools()).toEqual(
+			expect.arrayContaining([numberList, counts]),
+		);
+	});
+
+	test("lists raw entries of both storages, undeclared keys included", () => {
+		PersistedState.write(dismissed, true);
+		window.sessionStorage.setItem("undeclared", "raw");
+
+		expect(PersistedState.rawEntriesForDevTools()).toEqual([
+			{ storage: "local", key: "test-dismissed", raw: "true" },
+			{ storage: "session", key: "undeclared", raw: "raw" },
+		]);
+	});
+
+	test("removing an exact key notifies subscribers and resets the value", () => {
+		PersistedState.write(numberList, [1, 2]);
+		const listener = vi.fn();
+		const unsubscribe = PersistedState.subscribe(numberList, listener);
+
+		PersistedState.removeRawEntryForDevTools("local", "test-number-list");
+		unsubscribe();
+
+		expect(listener).toHaveBeenCalledOnce();
+		expect(PersistedState.read(numberList)).toEqual([]);
+	});
+
+	test("removing a prefixed key notifies map subscribers and drops the entry", () => {
+		PersistedState.writeMapEntry(counts, "a", 1);
+		PersistedState.writeMapEntry(counts, "b", 2);
+		expect(PersistedState.readMap(counts)).toEqual({ a: 1, b: 2 });
+		const listener = vi.fn();
+		const unsubscribe = PersistedState.subscribeMap(counts, listener);
+
+		PersistedState.removeRawEntryForDevTools("local", "test-counts__a");
+		unsubscribe();
+
+		expect(listener).toHaveBeenCalledOnce();
+		expect(PersistedState.readMap(counts)).toEqual({ b: 2 });
+	});
+});
+
+function memoryStorage() {
+	const items = new Map<string, string>();
+
+	return {
+		get length() {
+			return items.size;
+		},
+		key: (index: number) => [...items.keys()][index] ?? null,
+		getItem: (key: string) => items.get(key) ?? null,
+		setItem: (key: string, value: string) => {
+			items.set(key, value);
+		},
+		removeItem: (key: string) => {
+			items.delete(key);
+		},
+	};
+}

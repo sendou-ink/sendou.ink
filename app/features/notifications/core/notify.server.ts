@@ -3,6 +3,7 @@ import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
 import type { NotificationSubscription } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { IS_DEV_BUILD } from "~/utils/dev-build";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { toDBBoolean } from "~/utils/sql";
 import { APP_ICON_URL, type UserLinkArgs } from "~/utils/urls";
@@ -15,6 +16,7 @@ import {
 	notificationLink,
 	notificationMeta,
 } from "../notifications-utils";
+import { isWebPushSuppressed } from "./push-suppression.server";
 import { webPush, webPushEnabled } from "./webPush.server";
 
 const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
@@ -111,7 +113,7 @@ function schedulePushNotifications({
 	notificationId: number;
 	notification: Notification;
 }) {
-	if (!webPushEnabled) return;
+	if (!webPushEnabled || (IS_DEV_BUILD && isWebPushSuppressed())) return;
 
 	setTimeout(() => {
 		sendPushNotificationsToUnseen({ notificationId, notification }).catch(
@@ -127,7 +129,7 @@ async function sendPushNotificationsToUnseen({
 	notificationId: number;
 	notification: Notification;
 }) {
-	if (!webPushEnabled) return;
+	if (!webPushEnabled || (IS_DEV_BUILD && isWebPushSuppressed())) return;
 
 	const subscriptions =
 		await NotificationRepository.findUnseenSubscriptionsByNotificationId(

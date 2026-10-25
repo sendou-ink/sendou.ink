@@ -11,6 +11,7 @@ import {
 	ServerRouter,
 } from "react-router";
 import { ServerConfig } from "~/config.server";
+import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { getI18nInstance } from "~/modules/i18n/i18next.server";
 import {
 	daily,
@@ -158,6 +159,11 @@ process.on("uncaughtException", (error) => {
 export const handleError: HandleErrorFunction = (error, { request }) => {
 	if (request.signal.aborted) return;
 	if (isRouteErrorResponse(error) && error.status < 500) return;
+
+	if (devToolsServerHooks) {
+		devToolsServerHooks.logRequestError(request, () => logger.error(error));
+		return;
+	}
 
 	logger.error(error);
 };

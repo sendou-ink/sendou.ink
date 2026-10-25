@@ -11,6 +11,7 @@
 		"dev": "cross-env DB_PATH=db.sqlite3 pnpm run migrate up && pnpm run setup && pnpm run i18n:usage && react-router dev --host",
 		"dev:fast": "react-router dev --host",
 		"dev:docs": "astro dev --root docs/site",
+		"dev:tools": "node --env-file-if-exists=.env scripts/dev-tools.ts",
 		"dev:sandbox": "cross-env DB_PATH=db-sandbox.sqlite3 VITE_PROD_MODE=true react-router dev --host",
 		"start": "pnpm run migrate up && NODE_ENV=production react-router-serve ./build/server/index.js",
 		"migrate": "node scripts/migrate.ts",

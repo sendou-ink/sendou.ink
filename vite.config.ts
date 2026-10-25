@@ -82,6 +82,17 @@ export default defineConfig((config) => {
 		},
 		resolve: {
 			tsconfigPaths: true,
+			// keeps every dev tools module out of production builds, the stub's hooks are `null`
+			alias: isBuild
+				? [
+						{
+							find: /^~\/features\/dev-tools\/dev-tools-server-hooks\.server$/,
+							replacement: path.resolve(
+								"app/features/dev-tools/dev-tools-server-hooks.stub.ts",
+							),
+						},
+					]
+				: [],
 		},
 		optimizeDeps: {
 			// route-specific deps pre-bundled at startup to avoid mid-session re-optimization and full page reloads

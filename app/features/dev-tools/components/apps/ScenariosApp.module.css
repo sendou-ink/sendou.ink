@@ -1,0 +1,26 @@
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-4);
+}
+
+.filter {
+	min-width: 12rem;
+	flex: 1;
+}
+
+.params {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2) var(--s-3);
+
+	& select {
+		width: auto;
+		min-width: 8rem;
+	}
+}
+
+.numberInput {
+	width: 6rem;
+}

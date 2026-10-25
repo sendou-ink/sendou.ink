@@ -1,0 +1,62 @@
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.row {
+	cursor: pointer;
+}
+
+.number {
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.path {
+	max-width: 30rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.stats {
+	display: grid;
+	gap: var(--s-2);
+	grid-template-columns: repeat(4, 1fr);
+}
+
+.stat {
+	display: flex;
+	flex-direction: column;
+	padding: var(--s-2) var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-variant-numeric: tabular-nums;
+}
+
+.queries {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.query {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding: var(--s-2) 0;
+	border-top: var(--border-style);
+}
+
+.sql {
+	font-size: var(--font-xs);
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}

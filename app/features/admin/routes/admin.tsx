@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { MetaFunction } from "react-router";
-import { Form, useFetcher, useLoaderData } from "react-router";
+import { Form, useLoaderData } from "react-router";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
 import {
@@ -11,13 +11,12 @@ import {
 } from "~/components/elements/Tabs";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import { UserLink } from "~/components/UserLink";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
-import { impersonateUrl, SEED_URL, STOP_IMPERSONATING_URL } from "~/utils/urls";
+import { impersonateUrl, STOP_IMPERSONATING_URL } from "~/utils/urls";
 import { action } from "../actions/admin.server";
 import {
 	banUserSchema,
@@ -111,10 +110,7 @@ function AdminActions() {
 
 	return (
 		<div className="stack lg">
-			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS ? <Seed /> : null}
-			{DANGEROUS_CAN_ACCESS_DEV_CONTROLS || isAdmin || isDev ? (
-				<Impersonate />
-			) : null}
+			{isAdmin || isDev ? <Impersonate /> : null}
 
 			{isStaff ? <LinkPlayer /> : null}
 			{isStaff ? <GiveArtist /> : null}
@@ -313,20 +309,6 @@ function RefreshPlusTiers() {
 		>
 			{null}
 		</SendouForm>
-	);
-}
-
-function Seed() {
-	const fetcher = useFetcher();
-
-	return (
-		<fetcher.Form
-			className="stack md items-start"
-			method="post"
-			action={SEED_URL}
-		>
-			<SubmitButton state={fetcher.state}>Seed</SubmitButton>
-		</fetcher.Form>
 	);
 }
 

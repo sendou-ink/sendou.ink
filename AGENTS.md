@@ -21,6 +21,7 @@
 - `pnpm run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
 - `pnpm run i18n:sync` syncs translation jsons with English
 - `pnpm run dev` starts the dev server (also runs migrations and setup first); `pnpm run seed` rebuilds the dev dataset. The dev admin user ("Sendou") has id 274 (`ADMIN_ID`)
+- `pnpm run dev:tools` talks to a running dev server: `scenario <id> [--param=value]` builds a ready state (e.g. a tournament match to play) and prints a link that logs in as its user, `requests` lists recent requests with their SQL queries, `routine`/`switch` control the server, see [dev-tools.md](./docs/dev/dev-tools.md)
 
 ## Typescript
 

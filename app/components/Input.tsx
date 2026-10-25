@@ -22,8 +22,10 @@ export function Input({
 	placeholder,
 	onChange,
 	onKeyDown,
+	onBlur,
 	disableAutoComplete = false,
 	readOnly,
+	autoFocus,
 	ref,
 }: {
 	name?: string;
@@ -46,8 +48,10 @@ export function Input({
 	placeholder?: string;
 	onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+	onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 	disableAutoComplete?: boolean;
 	readOnly?: boolean;
+	autoFocus?: boolean;
 	ref?: React.Ref<HTMLInputElement>;
 }) {
 	return (
@@ -73,6 +77,7 @@ export function Input({
 				value={value}
 				onChange={onChange}
 				onKeyDown={onKeyDown}
+				onBlur={onBlur}
 				aria-label={ariaLabel}
 				required={required}
 				placeholder={placeholder}
@@ -80,6 +85,8 @@ export function Input({
 				enterKeyHint={type === "search" ? "search" : undefined}
 				autoComplete={disableAutoComplete ? "one-time-code" : undefined}
 				readOnly={readOnly}
+				// biome-ignore lint/a11y/noAutofocus: opt-in per call site
+				autoFocus={autoFocus}
 			/>
 			{icon}
 		</div>

@@ -73,6 +73,11 @@ export function DANGEROUS_setVotingActiveOverride(votingActive: boolean) {
 	votingActiveOverride = votingActive;
 }
 
+/** Whether {@link DANGEROUS_setVotingActiveOverride} is in effect. */
+export function isVotingActiveOverridden() {
+	return votingActiveOverride;
+}
+
 export function isVotingActive() {
 	if (votingActiveOverride) return true;
 

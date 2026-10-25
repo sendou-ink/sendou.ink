@@ -22,6 +22,8 @@ const config = {
 		"migrations/**/*.ts",
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
 		"public/sw-2.js",
+		// swapped in by vite.config.ts for production builds
+		"app/features/dev-tools/dev-tools-server-hooks.stub.ts",
 	],
 	compilers: {
 		css: (text: string, path: string) => {
