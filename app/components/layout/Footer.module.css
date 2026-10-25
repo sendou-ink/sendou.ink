@@ -127,17 +127,15 @@
 }
 
 .cards {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	max-width: 48rem;
+	display: grid;
+	width: 100%;
+	max-width: 60rem;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: var(--s-2);
 	padding-inline: var(--s-4);
 
-	@container (max-width: 640px) {
-		display: grid;
-		align-self: stretch;
-		max-width: none;
+	@container (max-width: 60rem) {
+		max-width: 36rem;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
@@ -149,16 +147,20 @@
 .card {
 	display: flex;
 	align-items: center;
-	min-width: 10.5rem;
 	gap: var(--s-2);
 	padding: var(--s-2) var(--s-4);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-higher);
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
+	transition: background-color 0.15s;
 
-	@container (max-width: 640px) {
-		min-width: 0;
+	&:hover {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher),
+			var(--color-fg-accent) 12%
+		);
 	}
 }
 

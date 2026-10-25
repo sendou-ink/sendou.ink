@@ -163,16 +163,40 @@ export function Footer() {
 		<footer className={styles.footer}>
 			<div className={styles.cards}>
 				<FooterCard
-					icon={<GitHubIcon className={styles.cardIcon} />}
-					title="GitHub"
-					subtitle={t("common:footer.github.subtitle")}
-					href={SENDOU_INK_GITHUB_URL}
+					icon={<Hand className={styles.cardIcon} />}
+					title={t("common:pages.welcome")}
+					subtitle={t("common:footer.welcome.subtitle")}
+					to={WELCOME_PAGE}
+				/>
+				<FooterCard
+					icon={<CircleHelp className={styles.cardIcon} />}
+					title={t("common:pages.faq")}
+					subtitle={t("common:footer.faq.subtitle")}
+					to={FAQ_PAGE}
+				/>
+				<FooterCard
+					icon={<BookOpen className={styles.cardIcon} />}
+					title={t("common:pages.docs")}
+					subtitle={t("common:footer.docs.subtitle")}
+					href={DOCS_SITE_URL}
+				/>
+				<FooterCard
+					icon={<Braces className={styles.cardIcon} />}
+					title={t("common:pages.api")}
+					subtitle={t("common:footer.api.subtitle")}
+					to={API_PAGE}
 				/>
 				<FooterCard
 					icon={<DiscordIcon className={styles.cardIcon} />}
 					title="Discord"
 					subtitle={t("common:footer.discord.subtitle")}
 					href={SENDOU_INK_DISCORD_URL}
+				/>
+				<FooterCard
+					icon={<GitHubIcon className={styles.cardIcon} />}
+					title="GitHub"
+					subtitle={t("common:footer.github.subtitle")}
+					href={SENDOU_INK_GITHUB_URL}
 				/>
 				<FooterCard
 					icon={<PatreonIcon className={styles.cardIcon} />}
@@ -185,30 +209,6 @@ export function Footer() {
 					title={t("common:pages.contributors")}
 					subtitle={t("common:footer.contributors.subtitle")}
 					to={CONTRIBUTIONS_PAGE}
-				/>
-				<FooterCard
-					icon={<CircleHelp className={styles.cardIcon} />}
-					title={t("common:pages.faq")}
-					subtitle={t("common:footer.faq.subtitle")}
-					to={FAQ_PAGE}
-				/>
-				<FooterCard
-					icon={<Hand className={styles.cardIcon} />}
-					title={t("common:pages.welcome")}
-					subtitle={t("common:footer.welcome.subtitle")}
-					to={WELCOME_PAGE}
-				/>
-				<FooterCard
-					icon={<Braces className={styles.cardIcon} />}
-					title={t("common:pages.api")}
-					subtitle={t("common:footer.api.subtitle")}
-					to={API_PAGE}
-				/>
-				<FooterCard
-					icon={<BookOpen className={styles.cardIcon} />}
-					title={t("common:pages.docs")}
-					subtitle={t("common:footer.docs.subtitle")}
-					href={DOCS_SITE_URL}
 				/>
 			</div>
 			<div className={styles.thanks}>
