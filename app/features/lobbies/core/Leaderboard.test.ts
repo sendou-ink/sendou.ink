@@ -25,6 +25,26 @@ describe("Leaderboard.rows", () => {
 		});
 	});
 
+	test("a forfeit is a set win for the other side, the maps played counting as reported", () => {
+		const rows = Leaderboard.rows({
+			sets: [setOf({ winners: ["ALPHA"], forfeitingSide: "ALPHA" })],
+			weapons: [],
+		});
+
+		expect(rows.find((row) => row.userId === 1)).toMatchObject({
+			setWins: 0,
+			setLosses: 1,
+			mapWins: 1,
+			mapLosses: 0,
+		});
+		expect(rows.find((row) => row.userId === 5)).toMatchObject({
+			setWins: 1,
+			setLosses: 0,
+			mapWins: 0,
+			mapLosses: 1,
+		});
+	});
+
 	test("sorts by set wins, then map win percentage", () => {
 		const rows = Leaderboard.rows({
 			sets: [

@@ -4,6 +4,7 @@ import {
 	expect,
 	modalClickConfirmButton,
 	navigate,
+	selectWeapon,
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
 
@@ -29,6 +30,9 @@ export class LobbyPage {
 			leaveButton: page.getByTestId("lobby-leave-button"),
 			dropAfterSetButton: page.getByTestId("lobby-drop-after-set-button"),
 			viewerStatus: page.getByTestId("lobby-viewer-status"),
+			friendCodeNeededText: page.getByText("Set your friend code to sign up"),
+			readyCheck: page.getByTestId("lobby-ready-check"),
+			confirmReadyButton: page.getByTestId("lobby-confirm-ready-button"),
 			participants: page.getByTestId("lobby-participant"),
 			winnerRadios: page.locator('[data-testid^="winner-radio-"]'),
 			reportScoreButton: page.getByTestId("report-score-button"),
@@ -36,10 +40,17 @@ export class LobbyPage {
 			confirmSetButton: page.getByTestId("lobby-confirm-set-button"),
 			disputeButton: page.getByRole("button", { name: "Score is wrong" }),
 			undoReportButton: page.getByRole("button", { name: "Undo report" }),
+			reportWeaponsButton: page.getByTestId("expand-secondary-action-button"),
+			// the weapon reporter's own submit, which has no test id of its own
+			submitWeaponButton: page
+				.getByRole("button", { name: "Submit", exact: true })
+				.last(),
+			settingsButton: page.getByTestId("lobby-settings-button"),
 			disputedText: page.getByText("The result was disputed"),
 			leaderboardRows: page.getByTestId("lobby-leaderboard-row"),
 			endLobbyButton: page.getByTestId("lobby-end-button"),
 			endedStatus: page.getByText("· Ended"),
+			forfeitNote: page.getByTestId("lobby-forfeit-note"),
 			waitingBanner: page.getByTestId("lobby-waiting-banner"),
 			tabPanel: page.getByRole("tabpanel"),
 			selectedWinner: page.locator(
@@ -59,6 +70,21 @@ export class LobbyPage {
 	/** The page heading with the lobby's name. */
 	heading(name: string) {
 		return this.page.getByRole("heading", { name, exact: true });
+	}
+
+	/** The match page tab, shown only once there is something on it. */
+	tab(tab: Tab) {
+		return this.page.getByRole("tab", { name: TAB_NAMES[tab] });
+	}
+
+	/** The banner's "Best of" of the set being played. */
+	bestOf(count: number) {
+		return this.page.getByText(`Best of ${count}`, { exact: true });
+	}
+
+	/** A weapon's image, e.g. on the Result timeline or a Rankings row. */
+	weaponImage(name: string) {
+		return this.page.getByRole("img", { name }).first();
 	}
 
 	/** Switches to one of the match page tabs. */
@@ -93,6 +119,13 @@ export class LobbyPage {
 		);
 	}
 
+	/** Confirms being ready to take a spot that opened up in the room. */
+	async confirmReady() {
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.confirmReadyButton.click(),
+		);
+	}
+
 	/** Leaves the lobby through the confirmation dialog. */
 	async leave() {
 		await this.locators.leaveButton.click();
@@ -108,21 +141,43 @@ export class LobbyPage {
 
 	/** Reports the viewer's own team as the winner of every map until the set is decided. */
 	async reportOwnTeamSweep(mapsToWin: number) {
-		for (let i = 0; i < mapsToWin; i++) {
-			await this.locators.winnerRadios.filter({ hasText: "My team" }).click();
-			if (i < mapsToWin - 1) {
-				await waitForPOSTResponse(this.page, () =>
-					this.locators.reportScoreButton.click(),
-				);
-				await expect(this.locators.selectedWinner).toHaveCount(0);
-				continue;
-			}
+		for (let i = 0; i < mapsToWin - 1; i++) {
+			await this.reportOwnTeamWin();
+		}
 
-			await this.locators.reportScoreButton.click();
+		await this.locators.winnerRadios.filter({ hasText: "My team" }).click();
+		await this.locators.reportScoreButton.click();
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.confirmSetEndButton.click(),
+		);
+	}
+
+	/** Reports the viewer's own team as the winner of the current map, one that doesn't decide the set. */
+	async reportOwnTeamWin() {
+		await this.locators.winnerRadios.filter({ hasText: "My team" }).click();
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.reportScoreButton.click(),
+		);
+		await expect(this.locators.selectedWinner).toHaveCount(0);
+	}
+
+	/** The player's row on the Rankings tab. */
+	rankingsRow(username: string) {
+		return this.locators.leaderboardRows.filter({ hasText: username });
+	}
+
+	/** Reports the weapon the viewer plays on the current map. */
+	async reportWeapon(name: string) {
+		// already expanded when the viewer's preference says so, a click would collapse it
+		if (await this.locators.reportWeaponsButton.isVisible()) {
 			await waitForPOSTResponse(this.page, () =>
-				this.locators.confirmSetEndButton.click(),
+				this.locators.reportWeaponsButton.click(),
 			);
 		}
+		await selectWeapon({ page: this.page, name });
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.submitWeaponButton.click(),
+		);
 	}
 
 	/** Confirms the result the other side reported. */
@@ -148,14 +203,45 @@ export class LobbyPage {
 
 	/** As the host, removes the participant from the lobby through their player menu. */
 	async removeParticipant(userId: number) {
-		await this.page.getByTestId(`lobby-player-menu-${userId}`).click();
+		await this.openPlayerMenu(userId);
 		await this.page.getByRole("menuitem", { name: "Remove" }).click();
 		await modalClickConfirmButton(this.page);
+	}
+
+	/** As the host, keeps a player of the room out of the sets until resumed, through their player menu on the Rankings tab. */
+	async sitOut(userId: number) {
+		await this.openPlayerMenu(userId);
+		await waitForPOSTResponse(this.page, () =>
+			this.page.getByRole("menuitem", { name: "Sit out" }).click(),
+		);
+	}
+
+	/** As the host, lets a player sitting out play again, through their player menu on the Rankings tab. */
+	async resume(userId: number) {
+		await this.openPlayerMenu(userId);
+		await waitForPOSTResponse(this.page, () =>
+			this.page.getByRole("menuitem", { name: "Resume" }).click(),
+		);
+	}
+
+	/** As the host, changes how many maps the sets are a best of, from the next set on. */
+	async changeBestOf(count: number) {
+		await this.locators.settingsButton.click();
+		await waitForPOSTResponse(this.page, () =>
+			this.page
+				.getByRole("dialog")
+				.getByText(`Bo${count}`, { exact: true })
+				.click(),
+		);
 	}
 
 	/** As the host, ends the lobby for everyone. */
 	async endLobby() {
 		await this.locators.endLobbyButton.click();
 		await modalClickConfirmButton(this.page);
+	}
+
+	private async openPlayerMenu(userId: number) {
+		await this.page.getByTestId(`lobby-player-menu-${userId}`).click();
 	}
 }

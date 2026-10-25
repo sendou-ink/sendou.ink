@@ -87,7 +87,7 @@ describe("LobbyTransition.next", () => {
 		});
 	});
 
-	test("removes those who didn't check in before starting", () => {
+	test("removes those with a spot who didn't check in before starting", () => {
 		const result = LobbyTransition.next(
 			state({
 				participants: [
@@ -99,7 +99,24 @@ describe("LobbyTransition.next", () => {
 			STARTS_AT,
 		);
 
-		expect(result).toEqual({ type: "REMOVE", userIds: [9, 10] });
+		expect(result).toEqual({ type: "REMOVE", userIds: [9] });
+	});
+
+	test("starts with the waitlisted left on the waitlist", () => {
+		const result = LobbyTransition.next(
+			state({
+				participants: [
+					...participants(8),
+					...participants(1, { status: "WAITLISTED" }, 9),
+				],
+			}),
+			STARTS_AT,
+		);
+
+		expect(result).toEqual({
+			type: "START",
+			userIds: [1, 2, 3, 4, 5, 6, 7, 8],
+		});
 	});
 
 	test("starts with as many checked in as fit the room", () => {
@@ -335,6 +352,34 @@ describe("LobbyTransition.next", () => {
 		);
 
 		expect(result).toEqual({ type: "FILL_SLOTS", userIds: [20] });
+	});
+
+	test("a confirmer below the first on the waitlist waits out their priority", () => {
+		const check = {
+			id: 1,
+			expiresAt: STARTS_AT + 3 * MINUTE,
+			users: [
+				{ userId: 20, confirmedAt: null },
+				{ userId: 21, confirmedAt: STARTS_AT },
+			],
+		};
+		const lobbyState = state({
+			lobby: { roomSize: 8, pendingSince: STARTS_AT },
+			participants: [
+				...inRoom(7),
+				...participants(1, { status: "WAITLISTED" }, 20),
+				// confirming checks them in
+				...participants(1, { status: "CHECKED_IN" }, 21),
+			],
+			latestSet: finishedSet(),
+			readyChecks: [check],
+		});
+
+		expect(LobbyTransition.next(lobbyState, STARTS_AT)).toBeNull();
+		expect(LobbyTransition.next(lobbyState, check.expiresAt)).toEqual({
+			type: "FILL_SLOTS",
+			userIds: [21],
+		});
 	});
 
 	test("closes the ready check once the room is full", () => {

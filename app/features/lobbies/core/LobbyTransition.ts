@@ -48,7 +48,7 @@ export type Transition =
 	| { type: "TRANSFER_HOST"; userId: number }
 	/** Before the start: waitlisted get spots freed in the room */
 	| { type: "PROMOTE"; userIds: number[] }
-	/** Fills the room with the checked in, once those who didn't check in are removed */
+	/** Fills the room with the checked in, once those with a spot who didn't check in are removed */
 	| { type: "START"; userIds: number[] }
 	| { type: "REMOVE"; userIds: number[] }
 	| { type: "START_SET" }
@@ -99,7 +99,7 @@ export function next(state: ProgressionState, now: number): Transition | null {
 			.map((p) => p.userId);
 		if (checkedIn.length >= PLAYERS_PER_SET) {
 			const notCheckedIn = participants
-				.filter((p) => p.status === "REGISTERED" || p.status === "WAITLISTED")
+				.filter((p) => p.status === "REGISTERED")
 				.map((p) => p.userId);
 			if (notCheckedIn.length > 0) {
 				return { type: "REMOVE", userIds: notCheckedIn };
@@ -127,7 +127,7 @@ export function next(state: ProgressionState, now: number): Transition | null {
 
 	return (
 		readyCheckTransition(state, memberIds, now) ??
-		placementTransition(state, memberIds) ??
+		placementTransition(state, memberIds, now) ??
 		slotCheckTransition(state, memberIds, isPlaying) ??
 		setTransition(state, isPlaying) ??
 		pendingSinceTransition(state, isPlaying, now)
@@ -195,13 +195,15 @@ function readyCheckTransition(
 	return null;
 }
 
-/** Present participants waiting for a spot fill the room's free slots. */
+/** Present participants waiting for a spot fill the room's free slots, unless a ready check gives them out in waitlist order. */
 function placementTransition(
 	state: ProgressionState,
 	memberIds: number[],
+	now: number,
 ): Transition | null {
 	const slotCount = state.lobby.roomSize - memberIds.length;
 	if (slotCount <= 0) return null;
+	if (state.readyChecks.some((check) => now < check.expiresAt)) return null;
 
 	const userIds = state.participants
 		.filter((p) => p.status === "CHECKED_IN")

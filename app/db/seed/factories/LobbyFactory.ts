@@ -1,4 +1,5 @@
 import { addHours } from "date-fns";
+import { db } from "~/db/sql";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import type * as LobbyMatchRepositoryModule from "~/features/lobbies/LobbyMatchRepository.server";
 import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
@@ -109,6 +110,34 @@ export const { create } = defineFactory({
 		if (isEnded) await LobbyRepository.end(lobby.id);
 	},
 });
+
+/** Moves the start and map reports of the lobby's sets to `at`, as if nothing had happened in the room since. */
+export async function backdateSets(lobbyId: number, at: Date) {
+	const timestamp = dateToDatabaseTimestamp(at);
+
+	await db
+		.updateTable("LobbySet")
+		.set({ createdAt: timestamp })
+		.where("lobbyId", "=", lobbyId)
+		.execute();
+	await db
+		.updateTable("LobbyGame")
+		.set({ reportedAt: timestamp })
+		.where("reportedAt", "is not", null)
+		.where("setId", "in", (eb) =>
+			eb.selectFrom("LobbySet").select("id").where("lobbyId", "=", lobbyId),
+		)
+		.execute();
+}
+
+/** Ends the priority window of the lobby's open ready checks, as if it had run out. */
+export async function expireReadyChecks(lobbyId: number) {
+	await db
+		.updateTable("LobbyReadyCheck")
+		.set({ expiresAt: dateToDatabaseTimestamp(new Date()) - 1 })
+		.where("lobbyId", "=", lobbyId)
+		.execute();
+}
 
 async function unfinishedSets(
 	LobbyMatchRepository: typeof LobbyMatchRepositoryModule,

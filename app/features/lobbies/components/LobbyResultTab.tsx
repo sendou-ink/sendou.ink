@@ -29,7 +29,11 @@ export function LobbyResultTab() {
 
 	const playedSets = data.sets
 		.map((set, i) => ({ set, number: i + 1 }))
-		.filter(({ set }) => set.games.some((game) => game.winnerSide !== null))
+		.filter(
+			({ set }) =>
+				set.forfeitingSide !== null ||
+				set.games.some((game) => game.winnerSide !== null),
+		)
 		.toReversed();
 	const selected =
 		playedSets.find(({ set }) => set.id === selectedSetId) ?? playedSets[0];
@@ -62,21 +66,34 @@ function SetTimeline({ set }: { set: LobbySetData }) {
 	const { t } = useTranslation(["lobbies"]);
 	const { data } = useLobbyView();
 	const { alpha, bravo } = LobbySet.score(set);
+	const winner = LobbySet.winnerSide(set);
 
 	return (
-		<MatchTimeline
-			teams={{
-				alpha: { name: t("lobbies:side.ALPHA") },
-				bravo: { name: t("lobbies:side.BRAVO") },
-			}}
-			score={{ alpha, bravo }}
-			isOngoing={!LobbySet.isFinished(set) && data.lobby.endedAt === null}
-			maps={timelineMaps({
-				set,
-				reportedWeapons: data.reportedWeapons,
-				ingestedScoreboards: data.ingestedScoreboards,
-			})}
-		/>
+		<>
+			{set.forfeitingSide && winner ? (
+				<p
+					className="text-sm text-lighter text-center"
+					data-testid="lobby-forfeit-note"
+				>
+					{t("lobbies:result.forfeit", {
+						side: t(`lobbies:side.${winner}`),
+					})}
+				</p>
+			) : null}
+			<MatchTimeline
+				teams={{
+					alpha: { name: t("lobbies:side.ALPHA") },
+					bravo: { name: t("lobbies:side.BRAVO") },
+				}}
+				score={{ alpha, bravo }}
+				isOngoing={!LobbySet.isFinished(set) && data.lobby.endedAt === null}
+				maps={timelineMaps({
+					set,
+					reportedWeapons: data.reportedWeapons,
+					ingestedScoreboards: data.ingestedScoreboards,
+				})}
+			/>
+		</>
 	);
 }
 

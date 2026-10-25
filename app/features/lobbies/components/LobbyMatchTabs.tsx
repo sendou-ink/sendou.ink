@@ -18,8 +18,10 @@ export function LobbyMatchTabs() {
 		currentSet !== null &&
 		viewerSide !== null &&
 		!LobbySet.isFinished(currentSet);
-	const hasReportedMaps = data.sets.some((set) =>
-		set.games.some((game) => game.winnerSide !== null),
+	const hasPlayedSets = data.sets.some(
+		(set) =>
+			set.forfeitingSide !== null ||
+			set.games.some((game) => game.winnerSide !== null),
 	);
 	const viewerMustConfirm =
 		isPlaying &&
@@ -29,7 +31,7 @@ export function LobbyMatchTabs() {
 	const tabs: TabKey[] = [];
 	if (currentSet) tabs.push(TAB_KEYS.ROSTERS);
 	if (isPlaying) tabs.push(TAB_KEYS.ACTION);
-	if (hasReportedMaps) tabs.push(TAB_KEYS.RESULT);
+	if (hasPlayedSets) tabs.push(TAB_KEYS.RESULT);
 	if (data.leaderboard.length > 0) tabs.push(TAB_KEYS.LEADERBOARD);
 
 	if (tabs.length === 0) return null;
@@ -59,7 +61,7 @@ export function LobbyMatchTabs() {
 				/>
 			) : null}
 			{isPlaying ? <LobbyActionTab /> : null}
-			{hasReportedMaps ? <LobbyResultTab /> : null}
+			{hasPlayedSets ? <LobbyResultTab /> : null}
 			{data.leaderboard.length > 0 ? <LobbyLeaderboardTab /> : null}
 		</MatchTabs>
 	);

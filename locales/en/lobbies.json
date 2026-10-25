@@ -44,6 +44,7 @@
 	"participants.waitlist": "Waitlist",
 	"readyCheck.confirmed": "Confirmed, waiting for the others",
 	"readyCheck.slot": "A spot opened up, confirm you're ready to play!",
+	"result.forfeit": "{{side}} won by forfeit",
 	"result.set": "Set {{number}}",
 	"settings.appliesFromNextSet": "Applies from the next set onward",
 	"side.ALPHA": "Alpha",
