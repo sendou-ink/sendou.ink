@@ -52,7 +52,14 @@ export class LobbyPage {
 			endedStatus: page.getByText("· Ended"),
 			forfeitNote: page.getByTestId("lobby-forfeit-note"),
 			waitingBanner: page.getByTestId("lobby-waiting-banner"),
-			tabPanel: page.getByRole("tabpanel"),
+			leavingAfterSetMarkers: page.getByRole("button", {
+				name: "Leaving after this set",
+			}),
+			leavingAfterSetPopover: page.getByTestId("roster-leaving-popover"),
+			leftLobbyMarkers: page.getByRole("button", { name: "Left the lobby" }),
+			leftLobbyPopover: page.getByTestId("lobby-left-popover"),
+			// scoped to the page, the chat's split view has tab panels of its own
+			tabPanel: page.getByRole("main").getByRole("tabpanel"),
 			selectedWinner: page.locator(
 				'[data-testid^="winner-radio-"][data-selected="true"]',
 			),
@@ -80,6 +87,14 @@ export class LobbyPage {
 	/** The banner's "Best of" of the set being played. */
 	bestOf(count: number) {
 		return this.page.getByText(`Best of ${count}`, { exact: true });
+	}
+
+	/** The mark on the player's row of the Rosters tab, shown while they are leaving once the set is confirmed. */
+	leavingAfterSetMarker(username: string) {
+		return this.locators.tabPanel
+			.getByRole("listitem")
+			.filter({ hasText: username })
+			.getByRole("button", { name: "Leaving after this set" });
 	}
 
 	/** A weapon's image, e.g. on the Result timeline or a Rankings row. */
@@ -164,6 +179,13 @@ export class LobbyPage {
 	/** The player's row on the Rankings tab. */
 	rankingsRow(username: string) {
 		return this.locators.leaderboardRows.filter({ hasText: username });
+	}
+
+	/** The mark on a Rankings row of a player no longer in the lobby. */
+	leftLobbyMarker(username: string) {
+		return this.rankingsRow(username).getByRole("button", {
+			name: "Left the lobby",
+		});
 	}
 
 	/** Reports the weapon the viewer plays on the current map. */

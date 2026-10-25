@@ -1,4 +1,4 @@
-import { Pause } from "lucide-react";
+import { LogOut, Pause } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -56,6 +56,7 @@ export function LobbyLeaderboardTab() {
 											<Avatar user={user} size="xxs" />
 											{user.username}
 											<SittingOutIndicator userId={row.userId} />
+											<LeftIndicator userId={row.userId} />
 										</span>
 									) : null}
 								</td>
@@ -112,6 +113,33 @@ export function LobbyLeaderboardTab() {
 				</section>
 			) : null}
 		</SendouTabPanel>
+	);
+}
+
+function LeftIndicator({ userId }: { userId: number }) {
+	const { t } = useTranslation(["lobbies"]);
+	const { data } = useLobbyView();
+
+	const hasLeft = data.lobby.participants.every(
+		(participant) => participant.id !== userId,
+	);
+	if (!hasLeft || data.lobby.endedAt !== null) return null;
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					size="miniscule"
+					variant="minimal"
+					icon={<LogOut />}
+					aria-label="Left the lobby"
+				/>
+			}
+		>
+			<span className="text-xs" data-testid="lobby-left-popover">
+				{t("lobbies:leaderboard.left")}
+			</span>
+		</SendouPopover>
 	);
 }
 

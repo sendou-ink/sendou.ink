@@ -1,4 +1,5 @@
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { linkStoredMatches } from "~/features/scanner-ingest/core/relink.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
@@ -153,6 +154,13 @@ export const action = defineAction(
 					userId: user.id,
 					isDroppingAfterSet: !viewer.isDroppingAfterSet,
 				});
+				if (!viewer.isDroppingAfterSet && lobby.chatRoomId) {
+					void ChatSystemMessage.sendPersisted({
+						roomId: lobby.chatRoomId,
+						type: "LEAVING_AFTER_SET",
+						authorUserId: user.id,
+					});
+				}
 				break;
 			}
 			case "REPORT_MAP": {

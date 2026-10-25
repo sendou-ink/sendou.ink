@@ -5,6 +5,7 @@ import {
 } from "~/modules/persisted-state/persisted-state-test-utils";
 import {
 	devToolbarPersisted,
+	scenarioFilterPersisted,
 	scenarioLogInPersisted,
 	scenarioParamsPersisted,
 } from "./dev-tools-persisted";
@@ -32,6 +33,16 @@ describe("scenarioLogInPersisted", () => {
 
 	test("malformed values decode to the default", () => {
 		assertDecodesToDefault(scenarioLogInPersisted, ["yes", "1"]);
+	});
+});
+
+describe("scenarioFilterPersisted", () => {
+	test("round-trips", () => {
+		assertRoundTrips(scenarioFilterPersisted, ["", "lobbies", " lobby open "]);
+	});
+
+	test("malformed values decode to the default", () => {
+		assertDecodesToDefault(scenarioFilterPersisted, ["12", "null"]);
 	});
 });
 

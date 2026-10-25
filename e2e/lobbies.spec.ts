@@ -665,6 +665,9 @@ test.describe("Lobbies", () => {
 			await test.step("The third on the waitlist confirms first and waits", async () => {
 				await impersonate(page, third.id);
 				await lobbyPage.goto(lobby.id);
+				await expect(lobbyPage.locators.waitingBanner).toContainText(
+					"The waitlist has been asked to fill the open spots",
+				);
 				await lobbyPage.confirmReady();
 
 				await expect(lobbyPage.locators.readyCheck).toContainText(
@@ -730,17 +733,20 @@ test.describe("Lobbies", () => {
 	 * Leaving mid-set forfeits it for the leaver's team, whatever the score: the set shows as
 	 * won by forfeit and counts as a set win and loss on the Rankings, the room left short of
 	 * players. A player can instead ask to leave once the set is confirmed, leaving the lobby
-	 * then.
+	 * then. Asking to is told in the lobby's chat and marked on the Rosters tab, the mark
+	 * explaining itself when clicked.
 	 */
 	test.describe("Leaving", () => {
 		test("leaving mid-set forfeits it and the room waits for players", async ({
 			page,
 			factories,
 		}) => {
-			const { lobby, alphaPlayer, bravoPlayer } = await startedLobby(
+			const { lobby, host, alphaPlayers, bravoPlayer } = await startedLobby(
 				page,
 				factories,
 			);
+			// not the host, who ends the lobby in the end
+			const alphaPlayer = alphaPlayers.find((player) => player.id !== host.id)!;
 			const lobbyPage = new LobbyPage(page);
 
 			await test.step("Alpha wins the first map, then an Alpha player leaves", async () => {
@@ -750,13 +756,18 @@ test.describe("Lobbies", () => {
 				await lobbyPage.leave();
 			});
 
-			await test.step("The others wait for an eighth player", async () => {
+			await test.step("The others wait for an eighth player, no one on the waitlist to ask", async () => {
 				await impersonate(page, bravoPlayer.id);
 				await lobbyPage.goto(lobby.id);
 
 				await expect(lobbyPage.locators.waitingBanner).toContainText(
 					"Waiting for players (7/8)",
 				);
+				await expect(lobbyPage.locators.waitingBanner).not.toContainText(
+					"The waitlist has been asked to fill the open spots",
+				);
+				// no set being played, so no rosters to show
+				await isNotVisible(lobbyPage.tab("rosters"));
 			});
 
 			await test.step("Bravo is awarded the set on the Result and Rankings tabs", async () => {
@@ -777,6 +788,25 @@ test.describe("Lobbies", () => {
 						.getByRole("cell", { name: "0-1", exact: true }),
 				).toBeVisible();
 			});
+
+			await test.step("The Rankings tell who has left the lobby", async () => {
+				await expect(lobbyPage.locators.leftLobbyMarkers).toHaveCount(1);
+				await lobbyPage.leftLobbyMarker(alphaPlayer.name).click();
+				await expect(lobbyPage.locators.leftLobbyPopover).toHaveText(
+					"Left the lobby",
+				);
+			});
+
+			await test.step("Once the lobby has ended no one is marked as left", async () => {
+				await impersonate(page, host.id);
+				await lobbyPage.goto(lobby.id);
+				await lobbyPage.endLobby();
+				await expect(lobbyPage.locators.endedStatus).toBeVisible();
+
+				await lobbyPage.openTab("leaderboard");
+				await expect(lobbyPage.rankingsRow(alphaPlayer.name)).toBeVisible();
+				await expect(lobbyPage.locators.leftLobbyMarkers).toHaveCount(0);
+			});
 		});
 
 		test("a player asks to leave once the set is confirmed", async ({
@@ -788,6 +818,7 @@ test.describe("Lobbies", () => {
 				factories,
 			);
 			const lobbyPage = new LobbyPage(page);
+			const chat = new ChatSidebar(page);
 
 			await test.step("An Alpha player asks to leave after the set and plays it out", async () => {
 				await impersonate(page, alphaPlayer.id);
@@ -801,9 +832,23 @@ test.describe("Lobbies", () => {
 				await lobbyPage.reportOwnTeamSweep(MAPS_TO_WIN);
 			});
 
-			await test.step("A Bravo player confirms the set", async () => {
+			await test.step("A Bravo player sees they are leaving and confirms the set", async () => {
 				await impersonate(page, bravoPlayer.id);
 				await lobbyPage.goto(lobby.id, "action");
+
+				await lobbyPage.openTab("rosters");
+				await expect(lobbyPage.locators.leavingAfterSetMarkers).toHaveCount(1);
+				await lobbyPage.leavingAfterSetMarker(alphaPlayer.name).click();
+				await expect(lobbyPage.locators.leavingAfterSetPopover).toContainText(
+					`${alphaPlayer.name} leaves the lobby once this set is confirmed`,
+				);
+				await lobbyPage.openTab("action");
+
+				await chat.selectRoomTab("Lobby");
+				await expect(
+					chat.chat().message(`${alphaPlayer.name} will leave after this set`),
+				).toBeVisible();
+
 				await lobbyPage.confirmSet();
 
 				await expect(lobbyPage.locators.waitingBanner).toContainText(
@@ -982,7 +1027,7 @@ test.describe("Lobbies", () => {
 
 	/**
 	 * A lobby has a chat for everyone in it and one per team, a team's chat reaching only its
-	 * players.
+	 * players. The lobby page opens a player's two chats side by side.
 	 */
 	test.describe("Chat", () => {
 		test("a team's chat reaches only its players", async ({
@@ -1001,21 +1046,25 @@ test.describe("Lobbies", () => {
 				await impersonate(page, sender.id);
 				await lobbyPage.goto(lobby.id);
 
-				// the lobby page opens the chat of the viewer's team
-				await expect(chat.locators.headerTitle).toHaveText("Team Alpha");
+				// as tabs while the view is too short to stack them
+				await expect(chat.locators.splitPanels).toHaveCount(2);
+				await expect(chat.locators.roomTabs).toHaveText(["Lobby", "Team"]);
+
+				await chat.selectRoomTab("Team");
 				await chat.chat().send("alpha only");
 				await expect(chat.chat().message("alpha only")).toBeVisible();
 
-				await chat.backToRoomList();
-				await chat.openRoom("Lobby");
+				await chat.selectRoomTab("Lobby");
 				await chat.chat().send("hello lobby");
 				await expect(chat.chat().message("hello lobby")).toBeVisible();
+				await expect(chat.chat().message("alpha only")).toHaveCount(0);
 			});
 
 			await test.step("Their teammate reads the team message", async () => {
 				await impersonate(page, teammate.id);
 				await lobbyPage.goto(lobby.id);
 
+				await chat.selectRoomTab("Team");
 				await expect(chat.chat().message("alpha only")).toBeVisible();
 			});
 
@@ -1023,12 +1072,18 @@ test.describe("Lobbies", () => {
 				await impersonate(page, bravoPlayer.id);
 				await lobbyPage.goto(lobby.id);
 
-				await expect(chat.locators.headerTitle).toHaveText("Team Bravo");
+				await chat.selectRoomTab("Team");
 				await expect(chat.chat().message("alpha only")).toHaveCount(0);
 
-				await chat.backToRoomList();
-				await chat.openRoom("Lobby");
+				await chat.selectRoomTab("Lobby");
 				await expect(chat.chat().message("hello lobby")).toBeVisible();
+			});
+
+			await test.step("The two chats are one row of the room list", async () => {
+				await chat.backToRoomList();
+
+				await expect(chat.locators.roomRows).toHaveCount(1);
+				await expect(chat.locators.roomRows).toContainText("Lobby · Team");
 			});
 		});
 	});

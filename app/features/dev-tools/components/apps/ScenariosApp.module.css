@@ -10,6 +10,18 @@
 	flex: 1;
 }
 
+.clearButton {
+	display: flex;
+	background-color: transparent;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+
+	& svg {
+		margin-right: var(--s-2);
+	}
+}
+
 .params {
 	display: flex;
 	flex-wrap: wrap;

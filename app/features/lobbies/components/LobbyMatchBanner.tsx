@@ -21,7 +21,8 @@ import { type LobbySetData, useLobbyView } from "../lobbies-hooks";
 
 export function LobbyMatchBanner() {
 	const { t } = useTranslation(["lobbies"]);
-	const { data, currentSet, roomMembers, isViewerInRoom } = useLobbyView();
+	const { data, currentSet, roomMembers, waitlist, isViewerInRoom } =
+		useLobbyView();
 
 	if (data.lobby.endedAt !== null) {
 		return (
@@ -58,7 +59,9 @@ export function LobbyMatchBanner() {
 							: t("lobbies:banner.nextSet")
 					}
 					subtitle={
-						isShort ? t("lobbies:banner.waitingForPlayers.subtitle") : undefined
+						isShort && waitlist.length > 0
+							? t("lobbies:banner.waitingForPlayers.subtitle")
+							: undefined
 					}
 					joinPool={joinPool}
 					testId="lobby-waiting-banner"

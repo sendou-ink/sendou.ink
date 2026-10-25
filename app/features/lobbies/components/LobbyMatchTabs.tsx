@@ -28,8 +28,10 @@ export function LobbyMatchTabs() {
 		data.viewer !== null &&
 		LobbySet.canConfirm(currentSet, data.viewer.id);
 
+	const isSetOngoing = currentSet !== null && !LobbySet.isFinished(currentSet);
+
 	const tabs: TabKey[] = [];
-	if (currentSet) tabs.push(TAB_KEYS.ROSTERS);
+	if (isSetOngoing) tabs.push(TAB_KEYS.ROSTERS);
 	if (isPlaying) tabs.push(TAB_KEYS.ACTION);
 	if (hasPlayedSets) tabs.push(TAB_KEYS.RESULT);
 	if (data.leaderboard.length > 0) tabs.push(TAB_KEYS.LEADERBOARD);
@@ -39,11 +41,24 @@ export function LobbyMatchTabs() {
 	const roster = (side: "ALPHA" | "BRAVO") =>
 		(currentSet?.participants ?? [])
 			.filter((participant) => participant.side === side)
-			.map((participant) => ({
-				...participant,
-				weaponPool: data.lobby.participants.find((p) => p.id === participant.id)
-					?.weaponPool,
-			}));
+			.map((participant) => {
+				const lobbyParticipant = data.lobby.participants.find(
+					(p) => p.id === participant.id,
+				);
+
+				return {
+					...participant,
+					weaponPool: lobbyParticipant?.weaponPool,
+					leaving: lobbyParticipant?.isDroppingAfterSet
+						? {
+								label: t("lobbies:rosters.leavingAfterSet"),
+								explanation: t("lobbies:rosters.leavingAfterSet.explanation", {
+									name: participant.username,
+								}),
+							}
+						: undefined,
+				};
+			});
 
 	return (
 		<MatchTabs
@@ -51,7 +66,7 @@ export function LobbyMatchTabs() {
 			alertTabs={viewerMustConfirm ? [TAB_KEYS.ACTION] : undefined}
 			defaultTab={isPlaying ? TAB_KEYS.ACTION : undefined}
 		>
-			{currentSet ? (
+			{isSetOngoing ? (
 				<MatchRosterTab
 					minMembersPerTeam={4}
 					teams={[
