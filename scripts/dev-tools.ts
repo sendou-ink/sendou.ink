@@ -1,6 +1,8 @@
 // Command line client of the dev toolbar's API, talks to a running dev server.
 // Usage: pnpm run dev:tools <command> (run without a command for help)
 
+import { parseArgs } from "node:util";
+import { mapValues } from "remeda";
 import type { DevRequestsLoaderData } from "~/features/dev-tools/routes/dev.requests";
 import type { DevRequestLoaderData } from "~/features/dev-tools/routes/dev.requests.$id";
 import type {
@@ -28,20 +30,21 @@ Commands:
 
 The server is found from --url, the DEV_SERVER_URL env var or PORT (default 5173).`;
 
-const args = process.argv.slice(2);
-const urlFlag = args.find((arg) => arg.startsWith("--url="));
-const flags = Object.fromEntries(
-	args
-		.filter((arg) => arg.startsWith("--") && arg !== urlFlag)
-		.map((arg) => {
-			const [key, ...value] = arg.slice(2).split("=");
-			return [key, value.join("=")];
-		}),
+const {
+	values: { url: urlFlag, ...flagValues },
+	positionals: [command, ...rest],
+} = parseArgs({
+	options: { url: { type: "string" } },
+	strict: false,
+	allowPositionals: true,
+});
+// a bare `--key` means the param's default, like `--key=`
+const flags = mapValues(flagValues, (value) =>
+	typeof value === "string" ? value : "",
 );
-const [command, ...rest] = args.filter((arg) => !arg.startsWith("--"));
 
 const baseUrl = (
-	urlFlag?.slice("--url=".length) ??
+	(typeof urlFlag === "string" ? urlFlag : undefined) ??
 	process.env.DEV_SERVER_URL ??
 	`http://localhost:${process.env.PORT ?? 5173}`
 ).replace(/\/$/, "");

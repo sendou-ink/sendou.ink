@@ -295,16 +295,22 @@ const SCENARIOS: Scenario[] = [
 				bracketProgression: BRACKET_FORMATS[format],
 				startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
 			});
-			const [team] = await registerTeams(tournament.id, teams, {
+			const registeredTeams = await registerTeams(tournament.id, teams, {
 				isCheckedIn: true,
 			});
 			await TournamentFactory.startBracket(tournament.id);
+
+			const match = await firstPlayableMatch(tournament.id);
+			const team = registeredTeams.find(
+				(registeredTeam) => registeredTeam.id === match.teamId,
+			);
+			invariant(team, "Match team is not one of the registered teams");
 
 			return {
 				userId: team.ownerUserId,
 				path: tournamentMatchPage({
 					tournamentId: tournament.id,
-					matchId: await firstMatchIdOfTeam(tournament.id, team.id),
+					matchId: match.matchId,
 				}),
 			};
 		},
@@ -889,18 +895,22 @@ async function lookingGroupIds(
 	return groupIds;
 }
 
-async function firstMatchIdOfTeam(tournamentId: number, teamId: number) {
+/** First match of the started bracket with two teams, i.e. not a BYE. */
+async function firstPlayableMatch(tournamentId: number) {
 	const tournament = await tournamentFromDB(tournamentId);
 	const match = tournament
 		.bracketByIdx(0)
 		?.data.match.find(
 			(candidate) =>
-				candidate.opponent1?.id === teamId ||
-				candidate.opponent2?.id === teamId,
+				typeof candidate.opponent1?.id === "number" &&
+				typeof candidate.opponent2?.id === "number",
 		);
-	invariant(match, "Team has no match in the started bracket");
+	invariant(
+		typeof match?.opponent1?.id === "number",
+		"Started bracket has no playable match",
+	);
 
-	return match.id;
+	return { matchId: match.id, teamId: match.opponent1.id };
 }
 
 function scrimUsers(userIds: number[]) {

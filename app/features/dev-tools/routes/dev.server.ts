@@ -115,7 +115,9 @@ export const action = defineAction(
 );
 
 function isReseedable() {
-	return path.basename(ServerConfig.dbPath) === RESEEDABLE_DATABASE_FILE;
+	return (
+		path.resolve(ServerConfig.dbPath) === path.resolve(RESEEDABLE_DATABASE_FILE)
+	);
 }
 
 async function timed(fn: () => Promise<void>) {

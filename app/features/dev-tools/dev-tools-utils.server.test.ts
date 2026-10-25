@@ -1,10 +1,25 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { requireDevTools } from "./dev-tools-utils.server";
+
+afterEach(() => {
+	vi.unstubAllEnvs();
+});
 
 const requestWith = (fetchSite: string | null) =>
 	new Request("http://localhost:5173/dev/server", {
 		headers: fetchSite ? { "Sec-Fetch-Site": fetchSite } : {},
 	});
+
+const thrownStatus = (fn: () => void) => {
+	try {
+		fn();
+	} catch (error) {
+		if (error instanceof Response) return error.status;
+		throw error;
+	}
+
+	return null;
+};
 
 describe("requireDevTools", () => {
 	test.each([
@@ -18,7 +33,17 @@ describe("requireDevTools", () => {
 	test.each(["cross-site", "same-site"])(
 		"rejects a request another site's page made (%s)",
 		(fetchSite) => {
-			expect(() => requireDevTools(requestWith(fetchSite))).toThrow();
+			expect(thrownStatus(() => requireDevTools(requestWith(fetchSite)))).toBe(
+				403,
+			);
 		},
 	);
+
+	test("responds 404 to a same-origin request in production", () => {
+		vi.stubEnv("NODE_ENV", "production");
+
+		expect(
+			thrownStatus(() => requireDevTools(requestWith("same-origin"))),
+		).toBe(404);
+	});
 });

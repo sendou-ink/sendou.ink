@@ -44,6 +44,27 @@ describe("Scenarios.run", () => {
 		},
 	);
 
+	test.each(["single_elimination", "round_robin"])(
+		"tournament-player lands on a match with an opponent when the team count leaves BYEs (%s)",
+		async (format) => {
+			const outcome = await Scenarios.run("tournament-player", {
+				teams: 5,
+				format,
+			});
+			if (outcome.status !== "ok") throw new Error(outcome.status);
+
+			const matchId = Number(outcome.result.path.split("/").at(-1));
+			const match = await db
+				.selectFrom("TournamentMatch")
+				.select(["opponentOne", "opponentTwo"])
+				.where("id", "=", matchId)
+				.executeTakeFirstOrThrow();
+
+			expect(typeof match.opponentOne?.id).toBe("number");
+			expect(typeof match.opponentTwo?.id).toBe("number");
+		},
+	);
+
 	test("accepts numbers given as strings, like the CLI sends them", async () => {
 		const outcome = await Scenarios.run("tournament-registration", {
 			registeredTeams: "2",
