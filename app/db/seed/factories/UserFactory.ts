@@ -120,17 +120,22 @@ export const { create, createMany } = defineFactory({
 		}
 
 		if (friendCode) {
-			await UserRepository.insertFriendCode({
-				userId: user.id,
-				submitterUserId: user.id,
-				friendCode,
-			});
+			await setFriendCode(user.id, friendCode);
 		}
 
 		return user;
 	},
 	applyOptions: (user, options: Options) => grant(user.id, options),
 });
+
+/** Sets the user's friend code as submitted by themselves. */
+export function setFriendCode(userId: number, friendCode = fakeFriendCode()) {
+	return UserRepository.insertFriendCode({
+		userId,
+		submitterUserId: userId,
+		friendCode,
+	});
+}
 
 function fakeFriendCode() {
 	return `${faker.string.numeric(4)}-${faker.string.numeric(4)}-${faker.string.numeric(4)}`;
@@ -293,11 +298,7 @@ async function createPinned(
 	}
 
 	if (friendCode) {
-		await UserRepository.insertFriendCode({
-			userId: id,
-			submitterUserId: id,
-			friendCode,
-		});
+		await setFriendCode(id, friendCode);
 	}
 
 	if (options) {

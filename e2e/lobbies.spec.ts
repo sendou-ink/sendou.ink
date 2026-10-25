@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { addMinutes, subHours, subMinutes } from "date-fns";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { LobbyRoomSize } from "~/features/lobbies/lobbies-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { Factories } from "./helpers/factories";
@@ -28,7 +29,7 @@ const WEAPON_NAME = "Splattershot";
 
 test.describe("Lobbies", () => {
 	/**
-	 * Anyone can make a lobby and others sign up for it. Signing up before the start reserves
+	 * For now only an admin can make a lobby, others sign up for it. Signing up before the start reserves
 	 * a spot, check-in opening 10 minutes before the start with a notification to the signed
 	 * up, and once the lobby has started signing up checks in right away. Past the room size
 	 * sign-ups go to the waitlist, the first on it taking a spot someone frees and being
@@ -41,10 +42,10 @@ test.describe("Lobbies", () => {
 			page,
 			factories,
 		}) => {
-			const host = await factories.UserFactory.create();
 			const visitor = await factories.UserFactory.create();
+			await factories.UserFactory.setFriendCode(ADMIN_ID);
 
-			await impersonate(page, host.id);
+			await impersonate(page, ADMIN_ID);
 			const newLobby = new NewLobbyPage(page);
 			await newLobby.goto();
 			await newLobby.form.fill("name", LOBBY_NAME);
@@ -239,8 +240,8 @@ test.describe("Lobbies", () => {
 	});
 
 	/**
-	 * Signing up and making a lobby take a friend code, and a user in SendouQ can't check in
-	 * to a lobby until they leave it.
+	 * Signing up and making a lobby take a friend code, making one is for now only for an
+	 * admin, and a user in SendouQ can't check in to a lobby until they leave it.
 	 */
 	test.describe("Who can join", () => {
 		test("without a friend code a user can't sign up or make a lobby", async ({
@@ -262,10 +263,21 @@ test.describe("Lobbies", () => {
 			await expect(lobbyPage.locators.friendCodeNeededText).toBeVisible();
 			await isNotVisible(lobbyPage.locators.signUpButton);
 
+			await impersonate(page, ADMIN_ID);
 			const newLobby = new NewLobbyPage(page);
 			await newLobby.goto();
 
 			await expect(newLobby.locators.friendCodeNeededText).toBeVisible();
+		});
+
+		test("only an admin can make a lobby", async ({ page, factories }) => {
+			const user = await factories.UserFactory.create();
+
+			await impersonate(page, user.id);
+			const errorPage = new ErrorPage(page);
+			await new NewLobbyPage(page).goto();
+
+			await expect(errorPage.locators.forbiddenHeading).toBeVisible();
 		});
 
 		test("a user in SendouQ can't check in", async ({ page, factories }) => {

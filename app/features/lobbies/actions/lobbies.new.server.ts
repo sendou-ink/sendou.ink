@@ -4,6 +4,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
+import { requireRole } from "~/modules/permissions/guards.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { lobbyPage } from "~/utils/urls";
@@ -13,12 +14,11 @@ import * as LobbyRepository from "../LobbyRepository.server";
 import type { LobbyBestOf, LobbyRoomSize } from "../lobbies-constants";
 import { newLobbySchema } from "../lobbies-schemas";
 
-// xxx: supporters only for now
-
 export const action = defineAction(
 	{ body: newLobbySchema },
 	async ({ body }) => {
 		const user = requireUser();
+		requireRole("ADMIN");
 
 		errorToastIfFalsy(
 			await UserRepository.findCurrentFriendCodeByUserId(user.id),

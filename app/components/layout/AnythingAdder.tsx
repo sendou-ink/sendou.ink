@@ -8,6 +8,7 @@ import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
 import { plusSuggestionsNewPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import { userNewBuildPage } from "~/features/user-page/user-page-urls";
 import { newVodPage } from "~/features/vods/vods-urls";
+import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	CALENDAR_NEW_PAGE,
 	NEW_TEAM_PAGE,
@@ -30,6 +31,7 @@ import styles from "./AnythingAdder.module.css";
 export function AnythingAdder() {
 	const { t } = useTranslation(["common"]);
 	const user = useUser();
+	const isAdmin = useHasRole("ADMIN");
 	const { status: globalStatus } = useGlobalStatus();
 
 	if (!user) {
@@ -73,12 +75,16 @@ export function AnythingAdder() {
 			imagePath: navIconUrl("scrims"),
 			href: newScrimPostPage(),
 		},
-		{
-			id: "lobby",
-			children: t("header.adder.lobby"),
-			imagePath: navIconUrl("lobbies"),
-			href: newLobbyPage(),
-		},
+		...(isAdmin
+			? [
+					{
+						id: "lobby",
+						children: t("header.adder.lobby"),
+						imagePath: navIconUrl("lobbies"),
+						href: newLobbyPage(),
+					},
+				]
+			: []),
 		{
 			id: "association",
 			children: t("header.adder.association"),
