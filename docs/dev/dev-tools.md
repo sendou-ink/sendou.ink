@@ -16,6 +16,7 @@ Hide it with the `–` button or `Alt+Shift+D` (it remembers), `Esc` closes the 
 | **Warnings** | Console errors & warnings, uncaught errors and hydration mismatches since the page loaded, deduplicated. Also the dev server's console errors & warnings (loader and action errors included) with the request they happened in. The badge counts them. |
 | **Server** | Which database file is in use, the in-memory switches (season ended, plus voting active), refreshing the caches, reseeding and running any routine now. |
 | **Triggers** | Toasts, error pages (each status, a render crash) and a sample notification of any type to yourself. |
+| **Links** | The local docs site (`pnpm run dev:docs`) and the dev only pages (OG images, changelog image, bracket test...). |
 
 ## CLI
 

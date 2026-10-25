@@ -69,19 +69,6 @@
 	}
 }
 
-.menuItemForm {
-	display: contents;
-}
-
-.menuItemButton {
-	width: 100%;
-	border: none;
-	background: transparent;
-	font: inherit;
-	text-align: start;
-	cursor: pointer;
-}
-
 .menuItemIcon {
 	flex-shrink: 0;
 }
@@ -135,10 +122,4 @@
 	&:hover {
 		background-color: var(--color-bg-higher);
 	}
-}
-
-.previewIconButton {
-	border: none;
-	background: transparent;
-	cursor: pointer;
 }

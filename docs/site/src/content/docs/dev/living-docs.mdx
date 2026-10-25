@@ -14,7 +14,7 @@ The docs site (`docs/site/`, built with [Astro Starlight](https://starlight.astr
 
 Each feature has a page per source (`/features/<feature>/` for the overview, `/modules/`, `/repositories/`, `/permissions/`, `/search-params/`, `/e2e/`), the overview present when the feature has a README or routes. Nothing generated is committed, the pages are built from the code on demand:
 
-- `pnpm run dev:docs` serves the site at http://localhost:4321 (linked from the app's dev menu). It regenerates the living docs as files under `app/`, `e2e/` or `locales/en/` change. Search only works in a build.
+- `pnpm run dev:docs` serves the site at http://localhost:4321 (linked from the dev toolbar's Links app). It regenerates the living docs as files under `app/`, `e2e/` or `locales/en/` change. Search only works in a build.
 - `pnpm run docs:preview` builds the site and serves the build, search included.
 - `pnpm run docs:build` builds it into `docs/site/dist/` and checks every internal link of the build leads somewhere (`scripts/check-docs-links.ts`). CI runs it on pull requests and pushes to `main` (`.github/workflows/main.yml`). The site is a Render static site at https://docs.sendou.ink, deployed from every commit to `main` whose CI checks pass (see [Scripts](/dev/scripts/#the-docs-site)).
 

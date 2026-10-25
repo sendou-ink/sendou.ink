@@ -7,6 +7,7 @@ import { devToolbarPersisted } from "../dev-tools-persisted";
 import type { DevApp } from "../dev-tools-types";
 import { eventsDevApp } from "./apps/EventsApp";
 import { identityDevApp } from "./apps/IdentityApp";
+import { linksDevApp } from "./apps/LinksApp";
 import { pageDevApp } from "./apps/PageApp";
 import { requestsDevApp } from "./apps/RequestsApp";
 import { scenariosDevApp } from "./apps/ScenariosApp";
@@ -15,11 +16,11 @@ import { triggersDevApp } from "./apps/TriggersApp";
 import { warningsDevApp } from "./apps/WarningsApp";
 import styles from "./DevToolbar.module.css";
 
-/** Grouped by what they are for: setting up state, inspecting the page, controlling the server and browser. */
+/** Grouped by what they are for: setting up state, inspecting the page, controlling the server and browser, links. */
 const APP_GROUPS: DevApp[][] = [
 	[scenariosDevApp, identityDevApp],
 	[pageDevApp, requestsDevApp, eventsDevApp, warningsDevApp],
-	[serverDevApp, triggersDevApp],
+	[serverDevApp, triggersDevApp, linksDevApp],
 ];
 
 const APPS = APP_GROUPS.flat();

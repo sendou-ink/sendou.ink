@@ -109,7 +109,6 @@ export const CALENDAR_NEW_PAGE = "/calendar/new";
 export const TOURNAMENT_NEW_PAGE = "/calendar/new?tournament=true";
 export const ORGANIZATION_NEW_PAGE = "/org/new";
 export const STOP_IMPERSONATING_URL = "/auth/impersonate/stop";
-export const SEED_URL = "/seed";
 export const PLANNER_URL = "/plans";
 export const MAPS_URL = "/maps";
 export const TIER_LIST_MAKER_URL = "/tier-list-maker";
