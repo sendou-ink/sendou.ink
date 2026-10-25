@@ -1,6 +1,7 @@
 const VARIABLE_REGEX = /\{\{\s*([^{}]+?)\s*\}\}/g;
 const NESTING_REGEX = /\$t\([^)]*\)/g;
 const TAG_REGEX = /<(\/?)([a-zA-Z0-9]+)\s*(\/?)>/g;
+const HTML_MARKUP_REGEX = /<[a-zA-Z/!?]/;
 const PLACEHOLDER_REGEX = new RegExp(
 	[VARIABLE_REGEX.source, NESTING_REGEX.source, TAG_REGEX.source].join("|"),
 	"g",
@@ -13,7 +14,8 @@ export type SyntaxIssue =
 	| { type: "MISSING_PLACEHOLDER"; placeholder: string }
 	| { type: "UNKNOWN_PLACEHOLDER"; placeholder: string }
 	| { type: "BROKEN_TAGS" }
-	| { type: "TAG_MUST_BE_EMPTY"; placeholder: string };
+	| { type: "TAG_MUST_BE_EMPTY"; placeholder: string }
+	| { type: "UNSUPPORTED_MARKUP" };
 
 export type TextSegment = {
 	text: string;
@@ -23,8 +25,9 @@ export type TextSegment = {
 /**
  * Validates that a translation keeps the special syntax of its English source: every `{{variable}}`,
  * `$t(nesting)` and `<tag>` of the source and nothing else. Tags may wrap different words but must stay
- * balanced, and a tag the source leaves empty (`<0></0>`) must stay empty. In plural forms `{{count}}`
- * is optional since many languages spell out e.g. the singular form.
+ * balanced, and a tag the source leaves empty (`<0></0>`) must stay empty. Any other HTML-like markup
+ * (attributes, comments) is rejected. In plural forms `{{count}}` is optional since many languages spell
+ * out e.g. the singular form.
  *
  * @example
  * TranslationSyntax.validate({ source: "by {{author}}", translation: "von {{author}}" }); // []
@@ -43,6 +46,10 @@ export function validate({
 	if (translation.trim() === "") return [{ type: "EMPTY" }];
 
 	const issues: SyntaxIssue[] = [];
+
+	if (HTML_MARKUP_REGEX.test(translation.replace(TAG_REGEX, " "))) {
+		issues.push({ type: "UNSUPPORTED_MARKUP" });
+	}
 
 	const ignored = isPlural ? [PLURAL_COUNT_VARIABLE] : [];
 	const sourceTokens = inlineTokens(source).filter((t) => !ignored.includes(t));

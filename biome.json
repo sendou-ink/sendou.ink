@@ -167,6 +167,9 @@
 			"performance": {
 				"noSyncScripts": "error"
 			},
+			"security": {
+				"noDangerouslySetInnerHtml": "error"
+			},
 			"nursery": {
 				"useImportsFirst": "error",
 				"useReactFunctionComponentDefinition": "error",

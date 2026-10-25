@@ -376,6 +376,8 @@ function issueMessage(issue: TranslationSyntax.SyntaxIssue) {
 			return "Tags must be closed in the reverse order they were opened";
 		case "TAG_MUST_BE_EMPTY":
 			return `Leave ${issue.placeholder} empty`;
+		case "UNSUPPORTED_MARKUP":
+			return "Tags can't have attributes or other HTML syntax";
 	}
 }
 

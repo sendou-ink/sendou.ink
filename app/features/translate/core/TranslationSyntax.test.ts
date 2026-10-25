@@ -49,6 +49,16 @@ describe("TranslationSyntax.validate", () => {
 			source: "a < b",
 			translation: "a < b",
 		},
+		{
+			why: "angle bracket quotes",
+			source: "Browse >>lfg<<",
+			translation: "Consultez >>lfg<<",
+		},
+		{
+			why: "less-than sign before a digit",
+			source: "I love it",
+			translation: "I <3 it",
+		},
 	])("accepts $why", ({ source, translation }) => {
 		expect(TranslationSyntax.validate({ source, translation })).toEqual([]);
 	});
@@ -110,6 +120,31 @@ describe("TranslationSyntax.validate", () => {
 			source: "$t(common:x) and more",
 			translation: "und mehr",
 			expected: [{ type: "MISSING_PLACEHOLDER", placeholder: "$t(common:x)" }],
+		},
+		{
+			why: "tag with attributes",
+			source: "See <1>FAQ</1>",
+			translation: "<img src=x onerror=alert(1)>Siehe <1>FAQ</1>",
+			expected: [{ type: "UNSUPPORTED_MARKUP" }],
+		},
+		{
+			why: "source tag with attributes",
+			source: "Let the <scannerLink>Scanner</scannerLink> fill this in",
+			translation:
+				'Lass den <scannerLink onclick="x">Scanner</scannerLink> das ausfüllen',
+			expected: [{ type: "UNSUPPORTED_MARKUP" }, { type: "BROKEN_TAGS" }],
+		},
+		{
+			why: "tag without a closing bracket",
+			source: "See FAQ",
+			translation: "Siehe <svg/onload=alert(1) FAQ",
+			expected: [{ type: "UNSUPPORTED_MARKUP" }],
+		},
+		{
+			why: "HTML comment",
+			source: "See FAQ",
+			translation: "Siehe <!-- x --> FAQ",
+			expected: [{ type: "UNSUPPORTED_MARKUP" }],
 		},
 	])("rejects $why", ({ source, translation, expected }) => {
 		expect(TranslationSyntax.validate({ source, translation })).toEqual(

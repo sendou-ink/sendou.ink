@@ -32,12 +32,9 @@ export default function FAQPage() {
 						<summary className={styles.summary}>
 							{t(`faq:q${questionNumber}` as any)}
 						</summary>
-						<p
-							className={styles.details}
-							dangerouslySetInnerHTML={{
-								__html: t(`faq:a${questionNumber}` as any),
-							}}
-						/>
+						<p className={styles.details}>
+							{t(`faq:a${questionNumber}` as any)}
+						</p>
 					</details>
 				);
 			})}

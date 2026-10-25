@@ -187,6 +187,7 @@ function ComponentRow({
 				{codeHtml ? (
 					<details className={styles.code}>
 						<summary>Code</summary>
+						{/* biome-ignore lint/security/noDangerouslySetInnerHtml: highlighted at docs build time from our own source */}
 						<div dangerouslySetInnerHTML={{ __html: codeHtml }} />
 					</details>
 				) : null}
