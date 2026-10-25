@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
+import * as LobbySet from "~/features/lobbies/core/LobbySet";
+import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import * as Scenarios from "./Scenarios.server";
 
 const userExists = async (userId: number) =>
@@ -10,6 +12,8 @@ const userExists = async (userId: number) =>
 			.where("User.id", "=", userId)
 			.executeTakeFirst(),
 	);
+
+const lobbyIdOf = (path: string) => Number(path.split("/").at(-1));
 
 const paramVariants = Scenarios.list().flatMap((scenario) =>
 	scenario.params.flatMap((param) =>
@@ -64,6 +68,58 @@ describe("Scenarios.run", () => {
 			expect(typeof match.opponentTwo?.id).toBe("number");
 		},
 	);
+
+	test.each([
+		{ state: "reporting", can: LobbySet.canReport },
+		{ state: "awaiting-confirmation", can: LobbySet.canConfirm },
+		{ state: "disputed", can: LobbySet.canUndo },
+	])(
+		"lobby-set lands a player on the side the set waits on ($state)",
+		async ({ state, can }) => {
+			const outcome = await Scenarios.run("lobby-set", { state });
+			if (outcome.status !== "ok") throw new Error(outcome.status);
+
+			const set = (
+				await LobbyMatchRepository.findAllSetsByLobbyId(
+					lobbyIdOf(outcome.result.path),
+				)
+			).at(-1)!;
+
+			expect(can(set, outcome.result.userId)).toBe(true);
+		},
+	);
+
+	test("lobby-set sitting out lands a room member without a side", async () => {
+		const outcome = await Scenarios.run("lobby-set", { you: "sitting-out" });
+		if (outcome.status !== "ok") throw new Error(outcome.status);
+
+		const set = (
+			await LobbyMatchRepository.findAllSetsByLobbyId(
+				lobbyIdOf(outcome.result.path),
+			)
+		).at(-1)!;
+
+		expect(LobbySet.sideOf(set, outcome.result.userId)).toBeNull();
+	});
+
+	test("lobby-open-spot asks the viewer whether they are ready", async () => {
+		const outcome = await Scenarios.run("lobby-open-spot", { position: 2 });
+		if (outcome.status !== "ok") throw new Error(outcome.status);
+
+		const readyCheckUser = await db
+			.selectFrom("LobbyReadyCheckUser")
+			.innerJoin(
+				"LobbyReadyCheck",
+				"LobbyReadyCheck.id",
+				"LobbyReadyCheckUser.readyCheckId",
+			)
+			.select("LobbyReadyCheckUser.confirmedAt")
+			.where("LobbyReadyCheck.lobbyId", "=", lobbyIdOf(outcome.result.path))
+			.where("LobbyReadyCheckUser.userId", "=", outcome.result.userId)
+			.executeTakeFirst();
+
+		expect(readyCheckUser).toEqual({ confirmedAt: null });
+	});
 
 	test("accepts numbers given as strings, like the CLI sends them", async () => {
 		const outcome = await Scenarios.run("tournament-registration", {
