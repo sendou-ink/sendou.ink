@@ -21,12 +21,15 @@ const createTournament = () =>
 const createTournamentTeam = (
 	tournamentId: number,
 	name: string,
-	options?: { isCheckedIn: boolean },
+	{
+		ownerUserId = actorId(),
+		...options
+	}: { isCheckedIn?: boolean; ownerUserId?: number } = {},
 ) =>
 	TournamentTeamFactory.create(
 		{
 			tournamentId,
-			memberUserIds: [actorId()],
+			memberUserIds: [ownerUserId],
 			team: { name, prefersNotToHost: 0, teamId: null },
 		},
 		options,
@@ -151,7 +154,9 @@ describe("TournamentAuditLogRepository", () => {
 		const teamA = await createTournamentTeam(tournament.id, "Team A", {
 			isCheckedIn: true,
 		});
-		await createTournamentTeam(tournament.id, "Team B");
+		await createTournamentTeam(tournament.id, "Team B", {
+			ownerUserId: subjectId(),
+		});
 
 		const byType = await TournamentAuditLogRepository.findByTournamentId({
 			tournamentId: tournament.id,

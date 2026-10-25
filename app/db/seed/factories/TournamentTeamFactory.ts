@@ -74,6 +74,7 @@ export const { create } = defineFactory({
 				additionalMemberUserIds,
 			}),
 		);
+		invariant(team, "Owner is already in a team of the tournament");
 
 		if (mapPool) {
 			await TournamentTeamRepository.upsertCounterpickMaps({

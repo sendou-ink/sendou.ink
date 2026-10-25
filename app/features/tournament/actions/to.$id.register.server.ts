@@ -44,7 +44,7 @@ export const action = defineAction(
 			});
 		},
 	},
-	async ({ params, resolveImages }) => {
+	async ({ params, body: data, resolveImages }) => {
 		const { tournament, tournamentId, user } = await tournamentFromParams(
 			params,
 			{ for: "action" },
@@ -55,14 +55,6 @@ export const action = defineAction(
 			!tournament.hasStarted,
 			"Tournament has started, cannot make edits to registration",
 		);
-
-		const data = await resolveImages({
-			isCurrentImgId: async (imgId) =>
-				Boolean(ownTeam) &&
-				(await tournamentTeamsFullCached({ tournamentId, user })).some(
-					(team) => team.id === ownTeam?.id && team.avatarImgId === imgId,
-				),
-		});
 
 		const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
 		let statusChangedUserIds: number[] = [];
@@ -86,23 +78,11 @@ export const action = defineAction(
 						: data.pickUpName
 				)!;
 
-				const avatarImgId = linkedTeamId ? null : data.logo;
-
 				if (ownTeam) {
 					errorToastIfFalsy(
 						tournament.registrationOpen || name === ownTeam.name,
 						"Can't change team name after registration has closed",
 					);
-
-					await TournamentTeamRepository.update({
-						avatarImgId,
-						team: {
-							id: ownTeam.id,
-							name,
-							prefersNotToHost: toDBBoolean(data.prefersNotToHost),
-							teamId: linkedTeamId,
-						},
-					});
 				} else {
 					await requireNotBannedByOrganization({
 						tournament,
@@ -122,23 +102,52 @@ export const action = defineAction(
 						tournament.registrationOpen,
 						"Registration is closed",
 					);
+				}
 
+				// after the checks so a rejected request doesn't upload the logo
+				const resolved = linkedTeamId
+					? null
+					: await resolveImages({
+							isCurrentImgId: async (imgId) =>
+								Boolean(ownTeam) &&
+								(await tournamentTeamsFullCached({ tournamentId, user })).some(
+									(team) =>
+										team.id === ownTeam?.id && team.avatarImgId === imgId,
+								),
+						});
+				const avatarImgId =
+					resolved?._action === "UPSERT_TEAM" ? resolved.logo : null;
+
+				if (ownTeam) {
+					await TournamentTeamRepository.update({
+						avatarImgId,
+						team: {
+							id: ownTeam.id,
+							name,
+							prefersNotToHost: toDBBoolean(data.prefersNotToHost),
+							teamId: linkedTeamId,
+						},
+					});
+				} else {
 					ChatSystemMessage.notifyRoomsChanged(
 						await TournamentLFGRepository.leaveLfg({
 							userId: user.id,
 							tournamentId,
 						}),
 					);
-					await TournamentTeamRepository.insert({
-						team: {
-							name,
-							prefersNotToHost: toDBBoolean(data.prefersNotToHost),
-							teamId: linkedTeamId,
-						},
-						userId: user.id,
-						tournamentId,
-						avatarImgId,
-					});
+					errorToastIfFalsy(
+						await TournamentTeamRepository.insert({
+							team: {
+								name,
+								prefersNotToHost: toDBBoolean(data.prefersNotToHost),
+								teamId: linkedTeamId,
+							},
+							userId: user.id,
+							tournamentId,
+							avatarImgId,
+						}),
+						"You are already in a team",
+					);
 					await SavedCalendarEventRepository.unsaveByUserId({
 						userId: user.id,
 						tournamentId,
@@ -326,13 +335,16 @@ export const action = defineAction(
 					message: "The user is banned from events hosted by this organization",
 				});
 
-				await addPlayerToOwnTeam({
-					tournament,
-					tournamentId,
-					ownTeam,
-					adder: user,
-					userId: data.userId,
-				});
+				errorToastIfFalsy(
+					await addPlayerToOwnTeam({
+						tournament,
+						tournamentId,
+						ownTeam,
+						adder: user,
+						userId: data.userId,
+					}),
+					"User is already in a team",
+				);
 
 				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
@@ -383,13 +395,17 @@ export const action = defineAction(
 						continue;
 					}
 
-					await addPlayerToOwnTeam({
+					const added = await addPlayerToOwnTeam({
 						tournament,
 						tournamentId,
 						ownTeam,
 						adder: user,
 						userId: candidate.id,
 					});
+					if (!added) {
+						skippedReasons.push("already in a team");
+						continue;
+					}
 					addedCount++;
 				}
 
@@ -456,7 +472,10 @@ export const action = defineAction(
 	},
 );
 
-type IneligibleReason = "no friend code" | "banned by the organization";
+type IneligibleReason =
+	| "no friend code"
+	| "banned by the organization"
+	| "already in a team";
 
 /** Why the "add all" bulk add has to pass a candidate over, or `null` if they can be added. */
 async function ineligibleReason({
@@ -487,6 +506,7 @@ function skippedSummary(reasons: Array<IneligibleReason>) {
 		.join(", ")}`;
 }
 
+/** @returns `false` when the user turned out to be in a team already. */
 async function addPlayerToOwnTeam({
 	tournament,
 	tournamentId,
@@ -500,16 +520,19 @@ async function addPlayerToOwnTeam({
 	adder: { username: string };
 	userId: number;
 }) {
+	const leftLfgUserIds = await TournamentLFGRepository.leaveLfg({
+		userId,
+		tournamentId,
+	});
+	const joinedUserIds = await TournamentTeamRepository.join({
+		userId,
+		newTeamId: ownTeam.id,
+	});
 	ChatSystemMessage.notifyRoomsChanged([
-		...(await TournamentLFGRepository.leaveLfg({
-			userId,
-			tournamentId,
-		})),
-		...(await TournamentTeamRepository.join({
-			userId,
-			newTeamId: ownTeam.id,
-		})),
+		...leftLfgUserIds,
+		...(joinedUserIds ?? []),
 	]);
+	if (!joinedUserIds) return false;
 
 	await SavedCalendarEventRepository.unsaveByUserId({
 		userId,
@@ -538,4 +561,6 @@ async function addPlayerToOwnTeam({
 			},
 		});
 	}
+
+	return true;
 }
