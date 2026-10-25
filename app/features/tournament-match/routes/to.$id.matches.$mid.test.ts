@@ -209,6 +209,23 @@ describe("Tournament match page", () => {
 			assertResponseErrored(res, "Invalid roster");
 		});
 
+		test("returns error if submitted team is of another tournament", async () => {
+			const otherTournament = await TournamentFactory.create({
+				authorId: organizerId,
+			});
+			const otherTeam = await createTournamentTeam(
+				otherTournament.id,
+				users.ids(ROSTER_SIZE),
+			);
+
+			const res = await setActiveRosterAction(
+				otherTeam.id,
+				users.ids(ROSTER_SIZE),
+			);
+
+			assertResponseErrored(res, "Invalid team id");
+		});
+
 		test("returns error if submitted active roster has the same player twice", async () => {
 			const res = await setActiveRosterAction(teamOne.id, [
 				organizerId,

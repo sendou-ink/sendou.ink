@@ -150,7 +150,8 @@ export const action = defineAction(
 					"Invalid roster length",
 				);
 
-				const team = tournament.teamById(body.teamId)!;
+				const team = tournament.teamById(body.teamId);
+				errorToastIfFalsy(team, "Invalid team id");
 				errorToastIfFalsy(
 					noDuplicates(body.roster) &&
 						body.roster.every((userId) => team.memberUserIds.includes(userId)),

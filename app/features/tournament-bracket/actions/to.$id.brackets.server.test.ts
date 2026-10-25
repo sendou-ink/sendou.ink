@@ -357,6 +357,56 @@ describe("Brackets action PREPARE_MAPS", () => {
 	});
 });
 
+describe("Brackets action OVERRIDE_BRACKET_PROGRESSION", () => {
+	beforeEach(async () => {
+		await users.create(TEAM_COUNT + 1);
+	});
+
+	test("organizer of one tournament cannot override the progression of a team of another tournament", async () => {
+		const own = await TournamentFactory.create({
+			authorId: organizerId(),
+			bracketProgression: POOLS_TO_SWISS,
+			minMembersPerTeam: 1,
+		});
+		const other = await TournamentFactory.create({
+			authorId: otherOrganizerId(),
+			bracketProgression: POOLS_TO_SWISS,
+			minMembersPerTeam: 1,
+		});
+		const otherTeam = await TournamentTeamFactory.create({
+			tournamentId: other.id,
+			memberUserIds: [users.id(2)],
+		});
+		const otherOverride = {
+			tournamentTeamId: otherTeam.id,
+			sourceBracketIdx: 0,
+			destinationBracketIdx: 1,
+		};
+		await bracketsAction(
+			{ _action: "OVERRIDE_BRACKET_PROGRESSION", ...otherOverride },
+			{ user: otherOrganizerId(), params: { id: String(other.id) } },
+		);
+
+		const response = await bracketsAction(
+			{
+				_action: "OVERRIDE_BRACKET_PROGRESSION",
+				tournamentTeamId: otherTeam.id,
+				sourceBracketIdx: 0,
+				destinationBracketIdx: -1,
+			},
+			{ user: organizerId(), params: { id: String(own.id) } },
+		);
+
+		assertResponseErrored(response as Response, "Invalid team id");
+		expect(
+			(await tournamentFromDB(other.id)).ctx.bracketProgressionOverrides,
+		).toEqual([otherOverride]);
+		expect(
+			(await tournamentFromDB(own.id)).ctx.bracketProgressionOverrides,
+		).toEqual([]);
+	});
+});
+
 /** Single elimination tournament whose teams pick their own maps, every team checked in and ready to start. */
 async function createTeamPickedTournament(
 	authorId: number,

@@ -334,6 +334,8 @@ export const action = defineAction(
 			}
 			case "OVERRIDE_BRACKET_PROGRESSION": {
 				requireTournamentOrganizer(tournament, user);
+				const team = tournament.teamById(body.tournamentTeamId);
+				errorToastIfFalsy(team, "Invalid team id");
 
 				const allDestinationBrackets = Progression.destinationsFromBracketIdx(
 					body.sourceBracketIdx,
@@ -352,15 +354,14 @@ export const action = defineAction(
 				);
 
 				await TournamentRepository.overrideTeamBracketProgression({
-					tournamentTeamId: body.tournamentTeamId,
+					tournamentTeamId: team.id,
 					sourceBracketIdx: body.sourceBracketIdx,
 					destinationBracketIdx: body.destinationBracketIdx,
 					tournamentId,
 				});
 
 				emitTournamentUpdate = true;
-				statusChangedUserIds =
-					tournament.teamById(body.tournamentTeamId)?.memberUserIds ?? [];
+				statusChangedUserIds = team.memberUserIds;
 
 				break;
 			}
