@@ -2,6 +2,7 @@ import clsx from "clsx";
 import Compressor from "compressorjs";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { imageExtensionFromMagicBytes } from "~/features/img-upload/image-signature";
 import type { CustomFieldRenderProps } from "~/form";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { logger } from "~/utils/logger";
@@ -29,7 +30,7 @@ export function ArtImageFormField({
 	error,
 }: ArtImageFormFieldProps) {
 	const id = React.useId();
-	const [tooLargeError, setTooLargeError] = React.useState<string>();
+	const [pickError, setPickError] = React.useState<string>();
 	const { t } = useTranslation(["common"]);
 
 	if (value?.type === "EXISTING") {
@@ -39,7 +40,7 @@ export function ArtImageFormField({
 	const handleFileChange = async (
 		event: React.ChangeEvent<HTMLInputElement>,
 	) => {
-		setTooLargeError(undefined);
+		setPickError(undefined);
 
 		const uploadedFile = event.target.files?.[0];
 		if (!uploadedFile) {
@@ -48,13 +49,17 @@ export function ArtImageFormField({
 		}
 
 		try {
+			const formatOptions = await compressorFormatOptions(uploadedFile);
 			const [dataUrl, thumbnailDataUrl] = await Promise.all([
-				compressToDataUrl(uploadedFile, {}),
-				compressToDataUrl(uploadedFile, { maxWidth: ART.THUMBNAIL_WIDTH }),
+				compressToDataUrl(uploadedFile, formatOptions),
+				compressToDataUrl(uploadedFile, {
+					...formatOptions,
+					maxWidth: ART.THUMBNAIL_WIDTH,
+				}),
 			]);
 
 			if (isArtImageTooLarge({ dataUrl, thumbnailDataUrl })) {
-				setTooLargeError(ART_IMAGE_TOO_LARGE_ERROR);
+				setPickError(ART_IMAGE_TOO_LARGE_ERROR);
 				onChange(null);
 				return;
 			}
@@ -62,6 +67,7 @@ export function ArtImageFormField({
 			onChange({ type: "NEW", dataUrl, thumbnailDataUrl });
 		} catch (err) {
 			logger.error(err);
+			setPickError("forms:errors.imageProcessingFailed");
 			onChange(null);
 		}
 	};
@@ -71,7 +77,7 @@ export function ArtImageFormField({
 			id={id}
 			name="img"
 			label={t("common:upload.imageToUpload")}
-			error={tooLargeError ?? error}
+			error={pickError ?? error}
 			required
 		>
 			<div className="stack sm items-start">
@@ -91,6 +97,19 @@ export function ArtImageFormField({
 			</div>
 		</FormFieldWrapper>
 	);
+}
+
+/** Compressor may pass the original bytes through under the extension-derived `file.type`, so target the real format to force a re-encode when they disagree (e.g. a GIF named `.png`). */
+async function compressorFormatOptions(
+	file: File,
+): Promise<Compressor.Options> {
+	const extension = imageExtensionFromMagicBytes(
+		new Uint8Array(await file.slice(0, 16).arrayBuffer()),
+	);
+
+	if (!extension) return { mimeType: "image/png", strict: false };
+
+	return { mimeType: `image/${extension}` };
 }
 
 function compressToDataUrl(
