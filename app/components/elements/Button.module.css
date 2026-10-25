@@ -16,6 +16,18 @@
 	outline-color: var(--color-fg-accent);
 	height: var(--field-size);
 	white-space: nowrap;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+	--button-hover-bg: color-mix(
+		in oklch,
+		var(--color-fill-accent),
+		var(--color-text) 15%
+	);
+
+	&:hover:not(:disabled, [data-pending]) {
+		background-color: var(--button-hover-bg);
+	}
 
 	&:focus-visible {
 		outline-style: solid;
@@ -63,6 +75,7 @@
 	border-color: var(--color-fg-accent);
 	background-color: transparent;
 	color: var(--color-fg-accent);
+	--button-hover-bg: var(--color-bg-accent);
 }
 
 .outlinedSuccess {
@@ -70,6 +83,7 @@
 	background-color: transparent;
 	color: var(--color-success);
 	outline-color: var(--color-success);
+	--button-hover-bg: var(--color-success-low);
 }
 
 .outlinedDestructive {
@@ -77,6 +91,7 @@
 	background-color: transparent;
 	color: var(--color-error);
 	outline-color: var(--color-error);
+	--button-hover-bg: var(--color-error-low);
 }
 
 .small {
@@ -111,6 +126,11 @@
 	background-color: transparent;
 	color: var(--color-fg-accent);
 	outline: initial;
+	--button-hover-bg: transparent;
+
+	&:hover:not(:disabled, [data-pending]) {
+		color: color-mix(in oklch, var(--color-fg-accent), var(--color-text) 40%);
+	}
 
 	&:focus-visible {
 		outline: var(--focus-ring);
@@ -123,6 +143,11 @@
 	background-color: transparent;
 	color: var(--color-success);
 	outline-color: var(--color-success);
+	--button-hover-bg: transparent;
+
+	&:hover:not(:disabled, [data-pending]) {
+		color: color-mix(in oklch, var(--color-success), var(--color-text) 40%);
+	}
 }
 
 .success {
@@ -130,6 +155,11 @@
 	background-color: var(--color-success);
 	color: var(--color-text-inverse);
 	outline-color: var(--color-success);
+	--button-hover-bg: color-mix(
+		in oklch,
+		var(--color-success),
+		var(--color-text) 15%
+	);
 }
 
 .destructive {
@@ -137,6 +167,11 @@
 	background-color: var(--color-error);
 	color: var(--color-text-inverse);
 	outline-color: var(--color-error);
+	--button-hover-bg: color-mix(
+		in oklch,
+		var(--color-error),
+		var(--color-text) 15%
+	);
 }
 
 .minimalDestructive {
@@ -145,6 +180,11 @@
 	background-color: transparent;
 	color: var(--color-error);
 	outline-color: var(--color-error);
+	--button-hover-bg: transparent;
+
+	&:hover:not(:disabled, [data-pending]) {
+		color: color-mix(in oklch, var(--color-error), var(--color-text) 40%);
+	}
 }
 
 /* borderless and in the text color, gets a background on hover */
@@ -152,10 +192,7 @@
 	border-color: transparent;
 	background-color: transparent;
 	color: var(--color-text);
-
-	&:hover {
-		background-color: var(--color-bg-high);
-	}
+	--button-hover-bg: var(--color-bg-high);
 }
 
 .buttonIcon {
