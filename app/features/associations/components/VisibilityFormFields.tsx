@@ -20,15 +20,20 @@ const DEFAULT_NOT_FOUND_VISIBILITY = {
 	forAssociation: "PUBLIC",
 } as const;
 
-/** Picks who sees the content at first, for a form schema using `baseVisibilityField`. Uses the "scrims" namespace. */
+/**
+ * Picks who sees the content at first, for a form schema using `baseVisibilityField` (or
+ * `baseVisibilityWithLinkOnlyField` with `isLinkOnlyAvailable`). Uses the "scrims" namespace.
+ */
 export function BaseVisibilityFormField({
 	associations,
+	isLinkOnlyAvailable = false,
 	name,
 	value,
 	onChange,
 	error,
 }: {
 	associations: VisibilityAssociations;
+	isLinkOnlyAvailable?: boolean;
 	name: string;
 	value: unknown;
 	onChange: (value: unknown) => void;
@@ -48,18 +53,19 @@ export function BaseVisibilityFormField({
 			label={t("scrims:forms.visibility.title")}
 			error={error}
 		>
-			{noAssociations ? (
+			{noAssociations && !isLinkOnlyAvailable ? (
 				<FormMessage type="info">
 					{t("scrims:forms.visibility.noneAvailable")}
 				</FormMessage>
 			) : (
 				<AssociationSelect
 					associations={associations}
+					isLinkOnlyAvailable={isLinkOnlyAvailable}
 					id={id}
 					value={String(value)}
 					onChange={(e) => {
 						onChange(e.target.value);
-						if (e.target.value === "PUBLIC") {
+						if (e.target.value === "PUBLIC" || e.target.value === "LINK_ONLY") {
 							setValue("notFoundVisibility", DEFAULT_NOT_FOUND_VISIBILITY);
 						}
 					}}
@@ -92,7 +98,13 @@ export function NotFoundVisibilityFormField({
 	const noAssociations =
 		associations.virtual.length === 0 && associations.actual.length === 0;
 
-	if (noAssociations || baseVisibility === "PUBLIC") return null;
+	if (
+		noAssociations ||
+		baseVisibility === "PUBLIC" ||
+		baseVisibility === "LINK_ONLY"
+	) {
+		return null;
+	}
 
 	const handleDateChange = (val: Date | undefined) => {
 		setValue("notFoundVisibility", {
@@ -150,11 +162,13 @@ export function NotFoundVisibilityFormField({
 
 function AssociationSelect({
 	associations,
+	isLinkOnlyAvailable = false,
 	id,
 	value,
 	onChange,
 }: {
 	associations: VisibilityAssociations;
+	isLinkOnlyAvailable?: boolean;
 	id: string;
 	value: string;
 	onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -164,6 +178,11 @@ function AssociationSelect({
 	return (
 		<select id={id} className="w-full" value={value} onChange={onChange}>
 			<option value="PUBLIC">{t("scrims:forms.visibility.public")}</option>
+			{isLinkOnlyAvailable ? (
+				<option value="LINK_ONLY">
+					{t("scrims:forms.visibility.linkOnly")}
+				</option>
+			) : null}
 			{associations.virtual.map((association) => (
 				<option key={association} value={association}>
 					{association === "FRIENDS"

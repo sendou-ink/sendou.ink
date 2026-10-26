@@ -75,6 +75,12 @@ export const baseVisibilityField = customField(
 	associationIdentifierSchema,
 );
 
+/** `baseVisibilityField` with the option of content seen only through its share link, see `BaseVisibilityFormField`. */
+export const baseVisibilityWithLinkOnlyField = customField(
+	{ initialValue: "PUBLIC" },
+	v.union([associationIdentifierSchema, v.literal("LINK_ONLY")]),
+);
+
 /** Who sees the content in addition from a later time on ("if not found by then"), see `NotFoundVisibilityFormField`. */
 export const notFoundVisibilityField = customField(
 	{ initialValue: { at: null, forAssociation: "PUBLIC" } },
@@ -92,7 +98,7 @@ export const notFoundVisibilityField = customField(
 );
 
 type VisibilityFormValues = {
-	baseVisibility: v.InferOutput<typeof baseVisibilityField>;
+	baseVisibility: v.InferOutput<typeof baseVisibilityWithLinkOnlyField>;
 	notFoundVisibility: v.InferOutput<typeof notFoundVisibilityField>;
 };
 
@@ -125,7 +131,11 @@ export function visibilityIssues(
 		issues.push(issue("forms:errors.visibilityMustBeDifferent"));
 	}
 
-	if (values.baseVisibility === "PUBLIC" && at) {
+	if (
+		(values.baseVisibility === "PUBLIC" ||
+			values.baseVisibility === "LINK_ONLY") &&
+		at
+	) {
 		issues.push(issue("forms:errors.visibilityNotAllowedWhenPublic"));
 	}
 

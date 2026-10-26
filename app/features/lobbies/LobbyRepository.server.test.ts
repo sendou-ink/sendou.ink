@@ -76,6 +76,62 @@ describe("LobbyRepository visibility", () => {
 
 		expect(found?.id).toBe(lobby.id);
 	});
+
+	test.each([
+		{ why: "an outsider with the key sees it", withKey: true, expected: true },
+		{
+			why: "an outsider without the key doesn't",
+			withKey: false,
+			expected: false,
+		},
+	])("link-only: $why", async ({ withKey, expected }) => {
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			visibility: "LINK_ONLY",
+		});
+		const shareKey = (
+			await withUserId(hostId(), () => LobbyRepository.findById(lobby.id))
+		)?.shareKey;
+
+		const found = await withUserId(outsiderId(), () =>
+			LobbyRepository.findById(lobby.id, {
+				shareKey: withKey ? shareKey : "wrongKey12",
+			}),
+		);
+		const listed = await withUserId(outsiderId(), () =>
+			LobbyRepository.findAllForIndex(),
+		);
+
+		expect(Boolean(found)).toBe(expected);
+		expect(listed.upcoming).toEqual([]);
+	});
+
+	test("link-only: a participant other than the host gets no share key", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId(), visibility: "LINK_ONLY" },
+			{ signedUpUserIds: [memberId()] },
+		);
+
+		const asHost = await withUserId(hostId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+		const asParticipant = await withUserId(memberId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+
+		expect(asHost?.shareKey).toEqual(expect.any(String));
+		expect(asParticipant?.shareKey).toBeNull();
+	});
+
+	test("link-only: a lobby with visibility has no share key", async () => {
+		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
+
+		const found = await withUserId(hostId(), () =>
+			LobbyRepository.findById(lobby.id),
+		);
+
+		expect(found?.shareKey).toBeNull();
+	});
 });
 
 describe("LobbyRepository.findAllForIndex", () => {

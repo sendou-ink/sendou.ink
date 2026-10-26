@@ -25,6 +25,11 @@ export class NewLobbyPage {
 		await navigate({ page: this.page, url: newLobbyPage() });
 	}
 
+	/** Picks who sees the lobby, by the option's label. */
+	async selectVisibility(label: string) {
+		await this.page.getByLabel("Visibility").selectOption({ label });
+	}
+
 	/** Makes the lobby, the maker becoming its host. */
 	async save() {
 		await submit(this.page);

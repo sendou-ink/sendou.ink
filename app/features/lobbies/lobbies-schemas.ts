@@ -15,7 +15,7 @@ import {
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { _action, coerceNumber, id, superRefine } from "~/utils/schema";
 import {
-	baseVisibilityField,
+	baseVisibilityWithLinkOnlyField,
 	notFoundVisibilityField,
 	visibilityIssues,
 } from "../associations/associations-schemas";
@@ -79,7 +79,7 @@ export const newLobbySchema = v.pipe(
 				value: String(roomSize) as `${(typeof LOBBY_ROOM_SIZES)[number]}`,
 			})),
 		}),
-		baseVisibility: baseVisibilityField,
+		baseVisibility: baseVisibilityWithLinkOnlyField,
 		notFoundVisibility: notFoundVisibilityField,
 	}),
 	superRefine((lobby, ctx) => {

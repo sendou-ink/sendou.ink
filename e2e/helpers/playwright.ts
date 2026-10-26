@@ -742,6 +742,19 @@ export async function expectNoErrorPage(page: Page) {
 	await expect(page.getByTestId("error-page")).toHaveCount(0);
 }
 
+/** The loader data of every route rendered on the page, as JSON, e.g. to assert a secret never reaches the client. */
+export function loaderDataJson(page: Page): Promise<string> {
+	return page.evaluate(() =>
+		JSON.stringify(
+			(
+				window as unknown as {
+					__reactRouterDataRouter: { state: { loaderData: unknown } };
+				}
+			).__reactRouterDataRouter.state.loaderData,
+		),
+	);
+}
+
 export function isNotVisible(locator: Locator) {
 	return expect(locator).toHaveCount(0);
 }

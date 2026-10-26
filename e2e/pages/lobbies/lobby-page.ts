@@ -46,6 +46,7 @@ export class LobbyPage {
 				.getByRole("button", { name: "Submit", exact: true })
 				.last(),
 			settingsButton: page.getByTestId("lobby-settings-button"),
+			copyShareLinkButton: page.getByTestId("lobby-copy-share-link-button"),
 			disputedText: page.getByText("The result was disputed"),
 			leaderboardRows: page.getByTestId("lobby-leaderboard-row"),
 			endLobbyButton: page.getByTestId("lobby-end-button"),
@@ -72,6 +73,18 @@ export class LobbyPage {
 			page: this.page,
 			url: tab ? `${lobbyPage(lobbyId)}?tab=${tab}` : lobbyPage(lobbyId),
 		});
+	}
+
+	/** Share links carry the production domain; only their path is navigated to. */
+	async gotoViaShareLink(shareLink: string) {
+		const url = new URL(shareLink);
+		await navigate({ page: this.page, url: url.pathname + url.search });
+	}
+
+	/** Copies the link a link-only lobby is found with and reads it off the clipboard. */
+	async copyShareLink(): Promise<string> {
+		await this.locators.copyShareLinkButton.click();
+		return this.page.evaluate("navigator.clipboard.readText()");
 	}
 
 	/** The page heading with the lobby's name. */

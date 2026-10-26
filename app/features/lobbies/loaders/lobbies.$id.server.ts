@@ -16,6 +16,7 @@ import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
+import { lobbySearchParams } from "../lobbies-search-params";
 
 export type LobbyLoaderData = SerializeFrom<typeof loader>;
 
@@ -27,11 +28,15 @@ const RESOLVED_NOTIFICATION_TYPES = [
 	"LOBBY_READY_CHECK",
 ] as const;
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const { id } = parseParams({ params, schema: idObject });
 
-	const lobby = notFoundIfNullish(await LobbyRepository.findById(id));
+	const lobby = notFoundIfNullish(
+		await LobbyRepository.findById(id, {
+			shareKey: lobbySearchParams.parse(request).key,
+		}),
+	);
 
 	const sets = await LobbyMatchRepository.findAllSetsByLobbyId(id);
 	const reportedWeapons = await ReportedWeaponRepository.findAllByLobbyId(id);

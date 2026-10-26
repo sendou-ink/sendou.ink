@@ -80,6 +80,7 @@ export default function NewLobbyPage() {
 							{(props: CustomFieldRenderProps) => (
 								<BaseVisibilityFormField
 									associations={data.associations}
+									isLinkOnlyAvailable
 									{...props}
 								/>
 							)}

@@ -8,6 +8,7 @@ import * as Visibility from "~/features/associations/core/Visibility";
 import { actorIdOrNull } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import {
 	commonUserSelect,
 	isPublicNow,
@@ -30,11 +31,14 @@ const INDEX_LIST_LIMIT = 50;
 export type LobbyById = NonNullable<Unwrapped<typeof findById>>;
 
 /**
- * The lobby with its participants, if the actor may see it: by its visibility, or as a participant or player of
- * one of its sets.
- * `permissions.MANAGE` is the host.
+ * The lobby with its participants, if the actor may see it: by its visibility, its share key, or as a participant
+ * or player of one of its sets.
+ * `permissions.MANAGE` is the host, the only one getting the `shareKey`.
  */
-export async function findById(id: number) {
+export async function findById(
+	id: number,
+	{ shareKey = null }: { shareKey?: string | null } = {},
+) {
 	const viewerId = actorIdOrNull();
 	const now = databaseTimestampNow();
 
@@ -54,6 +58,7 @@ export async function findById(id: number) {
 			"Lobby.hostUserId",
 			"Lobby.pendingSince",
 			"Lobby.endedAt",
+			"Lobby.shareKey",
 			"Lobby.createdAt",
 			eb.not(isPublicNow({ entity: "Lobby", now })).as("isPrivate"),
 			jsonArrayFrom(
@@ -76,12 +81,11 @@ export async function findById(id: number) {
 		])
 		.where("Lobby.id", "=", id)
 		.where((eb) =>
-			viewerId === null
-				? visibleTo({ entity: "Lobby", viewerId, now })
-				: eb.or([
-						visibleTo({ entity: "Lobby", viewerId, now }),
-						playedIn(eb, viewerId),
-					]),
+			eb.or([
+				visibleTo({ entity: "Lobby", viewerId, now }),
+				...(shareKey === null ? [] : [eb("Lobby.shareKey", "=", shareKey)]),
+				...(viewerId === null ? [] : [playedIn(eb, viewerId)]),
+			]),
 		)
 		.executeTakeFirst();
 
@@ -89,6 +93,7 @@ export async function findById(id: number) {
 
 	return {
 		...row,
+		shareKey: row.hostUserId === viewerId ? row.shareKey : null,
 		isPrivate: Boolean(row.isPrivate),
 		participants: row.participants.map((participant) => ({
 			...participant,
@@ -457,10 +462,11 @@ export async function findAllUnendedIdsCheckInOpened() {
 
 type InsertArgs = Omit<
 	TablesInsertable["Lobby"],
-	"chatRoomId" | "alphaChatRoomId" | "bravoChatRoomId" | "modes"
+	"chatRoomId" | "alphaChatRoomId" | "bravoChatRoomId" | "modes" | "shareKey"
 > & {
 	modes: Tables["Lobby"]["modes"];
-	visibility: AssociationVisibility | null;
+	/** `LINK_ONLY` = seen only through the share link, by those not participating */
+	visibility: AssociationVisibility | "LINK_ONLY" | null;
 	/** `CHECKED_IN` when the lobby is made with check-in already open, the host being present */
 	hostStatus?: Extract<LobbyParticipantStatus, "REGISTERED" | "CHECKED_IN">;
 };
@@ -494,19 +500,22 @@ export function insert({
 				chatRoomId: chatRoom.id,
 				alphaChatRoomId,
 				bravoChatRoomId,
+				shareKey: visibility === "LINK_ONLY" ? shortNanoid() : null,
 			})
 			.returning(["id", "createdAt"])
 			.executeTakeFirstOrThrow();
 
-		await trx
-			.insertInto("ContentVisibility")
-			.values(
-				Visibility.toRows(visibility, {
-					createdAt: lobby.createdAt,
-					ownerId: args.hostUserId,
-				}).map((row) => ({ ...row, lobbyId: lobby.id })),
-			)
-			.execute();
+		if (visibility !== "LINK_ONLY") {
+			await trx
+				.insertInto("ContentVisibility")
+				.values(
+					Visibility.toRows(visibility, {
+						createdAt: lobby.createdAt,
+						ownerId: args.hostUserId,
+					}).map((row) => ({ ...row, lobbyId: lobby.id })),
+				)
+				.execute();
+		}
 
 		await trx
 			.insertInto("LobbyParticipant")

@@ -21,13 +21,18 @@ import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import type { LobbyBestOf } from "../lobbies-constants";
 import { lobbyActionSchema } from "../lobbies-schemas";
+import { lobbySearchParams } from "../lobbies-search-params";
 
 export const action = defineAction(
 	{ params: idObject, body: lobbyActionSchema },
-	async ({ params: { id }, body }) => {
+	async ({ params: { id }, body, request }) => {
 		const user = requireUser();
 
-		const lobby = notFoundIfNullish(await LobbyRepository.findById(id));
+		const lobby = notFoundIfNullish(
+			await LobbyRepository.findById(id, {
+				shareKey: lobbySearchParams.parse(request).key,
+			}),
+		);
 		errorToastIfFalsy(lobby.endedAt === null, "The lobby has ended");
 
 		const sets = await LobbyMatchRepository.findAllSetsByLobbyId(id);

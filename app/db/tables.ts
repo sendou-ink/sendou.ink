@@ -1433,6 +1433,8 @@ export interface Lobby {
 	/** Since when the started lobby has had no set being played, `null` while one is (or before the start) */
 	pendingSince: number | null;
 	endedAt: number | null;
+	/** Secret of a link-only lobby: it has no `ContentVisibility` rows, so only participants and those with the link see it */
+	shareKey: string | null;
 	createdAt: Generated<number>;
 }
 

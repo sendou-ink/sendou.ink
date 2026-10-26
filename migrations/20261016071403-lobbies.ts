@@ -66,6 +66,7 @@ async function createLobbyTables(trx: Kysely<any>) {
 		.addColumn("checkInNotifiedAt", "integer")
 		.addColumn("pendingSince", "integer")
 		.addColumn("endedAt", "integer")
+		.addColumn("shareKey", "text")
 		.addColumn("createdAt", "integer", (col) =>
 			col.notNull().defaultTo(sql`(strftime('%s', 'now'))`),
 		)

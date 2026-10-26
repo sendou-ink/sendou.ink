@@ -52,6 +52,7 @@
 	"result.forfeit": "{{side}} won by forfeit",
 	"result.set": "Set {{number}}",
 	"settings.appliesFromNextSet": "Applies from the next set onward",
+	"shareLink.copy": "Copy invite link",
 	"side.ALPHA": "Alpha",
 	"side.BRAVO": "Bravo",
 	"sittingOut": "Sitting out until the host resumes them",

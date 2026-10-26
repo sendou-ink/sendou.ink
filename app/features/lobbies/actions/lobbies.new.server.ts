@@ -39,7 +39,13 @@ export const action = defineAction(
 			bestOf: Number(body.bestOf) as LobbyBestOf,
 			modes: body.modes,
 			roomSize: Number(body.roomSize) as LobbyRoomSize,
-			visibility: Visibility.fromForm(body),
+			visibility:
+				body.baseVisibility === "LINK_ONLY"
+					? "LINK_ONLY"
+					: Visibility.fromForm({
+							baseVisibility: body.baseVisibility,
+							notFoundVisibility: body.notFoundVisibility,
+						}),
 			hostStatus: isHostPresent ? "CHECKED_IN" : "REGISTERED",
 		});
 

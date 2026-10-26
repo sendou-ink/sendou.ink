@@ -8,6 +8,7 @@ import {
 	expect,
 	impersonate,
 	isNotVisible,
+	loaderDataJson,
 	navigate,
 	runRoutine,
 	test,
@@ -307,7 +308,9 @@ test.describe("Lobbies", () => {
 
 	/**
 	 * A lobby limited to an association is listed only to its members, its card marked as
-	 * such, and its page is not found for others.
+	 * such, and its page is not found for others. A link-only lobby is listed to no one but
+	 * its participants: others find it only through the link its host shares, and once
+	 * signed up they find it without the link too. Only the host gets the link to share.
 	 */
 	test.describe("Visibility", () => {
 		test("a lobby limited to an association is hidden from outsiders", async ({
@@ -345,6 +348,64 @@ test.describe("Lobbies", () => {
 				const errorPage = new ErrorPage(page);
 				await new LobbyPage(page).goto(lobby.id);
 				await expect(errorPage.locators.notFoundHeading).toBeVisible();
+			});
+		});
+
+		test("a link-only lobby is found only through its shared link", async ({
+			page,
+			factories,
+		}) => {
+			const [visitor, outsider] = await factories.UserFactory.createMany(2);
+			await factories.UserFactory.setFriendCode(ADMIN_ID);
+			const lobbyPage = new LobbyPage(page);
+			const lobbies = new LobbiesPage(page);
+			const errorPage = new ErrorPage(page);
+
+			await impersonate(page, ADMIN_ID);
+			const newLobby = new NewLobbyPage(page);
+			await newLobby.goto();
+			await newLobby.form.fill("name", LOBBY_NAME);
+			await newLobby.selectVisibility("Only with the link");
+			await newLobby.save();
+
+			await expect(lobbyPage.heading(LOBBY_NAME)).toBeVisible();
+			const lobbyId = Number(new URL(page.url()).pathname.split("/").at(-1));
+			const shareLink = await lobbyPage.copyShareLink();
+
+			await test.step("Without the link an outsider neither sees it listed nor finds its page", async () => {
+				await impersonate(page, outsider.id);
+				await lobbies.goto();
+				await lobbies.openTab("running");
+
+				await expect(lobbies.card(LOBBY_NAME)).toHaveCount(0);
+
+				await lobbyPage.goto(lobbyId);
+				await expect(errorPage.locators.notFoundHeading).toBeVisible();
+			});
+
+			await test.step("Through the link a visitor opens it and signs up", async () => {
+				await impersonate(page, visitor.id);
+				await lobbyPage.gotoViaShareLink(shareLink);
+				await lobbyPage.signUp();
+
+				await expect(lobbyPage.locators.participants).toHaveCount(2);
+			});
+
+			await test.step("Signed up, the visitor finds it without the link", async () => {
+				await lobbies.goto();
+				await lobbies.openTab("running");
+
+				await expect(lobbies.card(LOBBY_NAME)).toBeVisible();
+
+				await lobbyPage.goto(lobbyId);
+				await expect(lobbyPage.heading(LOBBY_NAME)).toBeVisible();
+			});
+
+			await test.step("Not being the host, the visitor gets no link to share", async () => {
+				const shareKey = new URL(shareLink).searchParams.get("key")!;
+
+				await isNotVisible(lobbyPage.locators.copyShareLinkButton);
+				expect(await loaderDataJson(page)).not.toContain(shareKey);
 			});
 		});
 	});
