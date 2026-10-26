@@ -12,12 +12,12 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
+import * as TournamentLFG from "../core/TournamentLFG";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { lookingSchema } from "../tournament-lfg-schemas";
-import { survivingTeamId } from "../tournament-lfg-utils";
-import { pickupChatRoomExpiresAt } from "../tournament-lfg-utils.server";
 
 export const action = defineAction(
 	{ body: lookingSchema },
@@ -33,18 +33,6 @@ export const action = defineAction(
 					tournamentId,
 				);
 			return groups.find((g) => g.members.some((m) => m.id === user.id));
-		};
-
-		const isGroupManager = (
-			group: Awaited<ReturnType<typeof findOwnGroup>>,
-		) => {
-			const member = group?.members.find((m) => m.id === user.id);
-			return member?.role === "OWNER" || member?.role === "MANAGER";
-		};
-
-		const isGroupOwner = (group: Awaited<ReturnType<typeof findOwnGroup>>) => {
-			const member = group?.members.find((m) => m.id === user.id);
-			return member?.role === "OWNER";
 		};
 
 		switch (body._action) {
@@ -68,10 +56,8 @@ export const action = defineAction(
 					const member = teams
 						.find((t) => t.id === team.id)
 						?.members.find((m) => m.userId === user.id);
-					const canManageTeam =
-						member?.role === "OWNER" || member?.role === "MANAGER";
 					errorToastIfFalsy(
-						canManageTeam,
+						TournamentLFG.canPutTeamInQueue(member?.role),
 						"Only team owners and managers can join the queue",
 					);
 
@@ -82,7 +68,7 @@ export const action = defineAction(
 					const roomsChangedUserIds =
 						await TournamentLFGRepository.startLooking({
 							teamId: team.id,
-							chatRoomExpiresAt: pickupChatRoomExpiresAt(
+							chatRoomExpiresAt: TournamentLFG.pickupChatRoomExpiresAt(
 								tournament.ctx.startsAt,
 							),
 						});
@@ -111,7 +97,8 @@ export const action = defineAction(
 				const ownGroup = groups.find((g) =>
 					g.members.some((m) => m.id === user.id),
 				);
-				if (!ownGroup || !isGroupManager(ownGroup)) return null;
+				if (!ownGroup) return null;
+				requirePermission(ownGroup, "MANAGE_INVITATIONS");
 
 				const targetGroup = groups.find((g) => g.id === body.targetTeamId);
 				if (!targetGroup) return null;
@@ -138,7 +125,8 @@ export const action = defineAction(
 			}
 			case "UNLIKE": {
 				const ownGroup = await findOwnGroup();
-				if (!ownGroup || !isGroupManager(ownGroup)) return null;
+				if (!ownGroup) return null;
+				requirePermission(ownGroup, "MANAGE_INVITATIONS");
 
 				await TournamentLFGRepository.deleteLike({
 					likerTeamId: ownGroup.id,
@@ -160,7 +148,8 @@ export const action = defineAction(
 				const ownGroup = groups.find((g) =>
 					g.members.some((m) => m.id === user.id),
 				);
-				if (!ownGroup || !isGroupManager(ownGroup)) return null;
+				if (!ownGroup) return null;
+				requirePermission(ownGroup, "MANAGE_INVITATIONS");
 
 				const theirGroup = groups.find((g) => g.id === body.targetTeamId);
 				if (!theirGroup) return null;
@@ -172,24 +161,14 @@ export const action = defineAction(
 					return null;
 				}
 
-				const surviving = survivingTeamId({
+				const surviving = TournamentLFG.survivingTeamId({
 					ourGroup: {
 						id: ownGroup.id,
 						isPlaceholder: Boolean(ownGroup.isPlaceholder),
-						teamName: null,
-						teamAvatarUrl: null,
-						note: null,
-						members: [],
-						usersRole: null,
 					},
 					theirGroup: {
 						id: theirGroup.id,
 						isPlaceholder: Boolean(theirGroup.isPlaceholder),
-						teamName: null,
-						teamAvatarUrl: null,
-						note: null,
-						members: [],
-						usersRole: null,
 					},
 				});
 
@@ -211,7 +190,9 @@ export const action = defineAction(
 					requireInGameNames: Boolean(
 						tournament.ctx.settings.requireInGameNames,
 					),
-					chatRoomExpiresAt: pickupChatRoomExpiresAt(tournament.ctx.startsAt),
+					chatRoomExpiresAt: TournamentLFG.pickupChatRoomExpiresAt(
+						tournament.ctx.startsAt,
+					),
 				});
 				ChatSystemMessage.notifyRoomsChanged(roomsChangedUserIds);
 
@@ -240,10 +221,11 @@ export const action = defineAction(
 			}
 			case "GIVE_MANAGER": {
 				const ownGroup = await findOwnGroup();
-				errorToastIfFalsy(ownGroup && isGroupOwner(ownGroup), "Not owner");
+				errorToastIfFalsy(ownGroup, "Not in a group");
+				requirePermission(ownGroup, "MANAGE_ROLES");
 
 				await TournamentLFGRepository.updateMemberRole({
-					teamId: ownGroup!.id,
+					teamId: ownGroup.id,
 					userId: body.userId,
 					role: "MANAGER",
 				});
@@ -252,10 +234,11 @@ export const action = defineAction(
 			}
 			case "REMOVE_MANAGER": {
 				const ownGroup = await findOwnGroup();
-				errorToastIfFalsy(ownGroup && isGroupOwner(ownGroup), "Not owner");
+				errorToastIfFalsy(ownGroup, "Not in a group");
+				requirePermission(ownGroup, "MANAGE_ROLES");
 
 				await TournamentLFGRepository.updateMemberRole({
-					teamId: ownGroup!.id,
+					teamId: ownGroup.id,
 					userId: body.userId,
 					role: "REGULAR",
 				});
@@ -265,6 +248,7 @@ export const action = defineAction(
 			case "UPDATE_GROUP": {
 				const ownGroup = await findOwnGroup();
 				if (!ownGroup) return null;
+				requirePermission(ownGroup, "EDIT_NOTE");
 
 				await TournamentLFGRepository.updateTeamNote({
 					teamId: ownGroup.id,

@@ -22,6 +22,7 @@ import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import { navIconUrl } from "~/utils/urls";
 import {
 	lookingSchema,
@@ -46,6 +47,7 @@ export type LFGGroupMember = {
 	plusTier: number | null;
 };
 
+/** A group in the queue. */
 export type LFGGroup = {
 	id: number;
 	isPlaceholder: boolean;
@@ -53,7 +55,16 @@ export type LFGGroup = {
 	teamAvatarUrl: string | null;
 	note: string | null;
 	members: LFGGroupMember[];
-	usersRole: "OWNER" | "MANAGER" | "REGULAR" | null;
+	permissions: {
+		MANAGE_INVITATIONS: number[];
+		MANAGE_ROLES: number[];
+		EDIT_NOTE: number[];
+	};
+};
+
+/** The user's registered team while it isn't in the queue. */
+export type LFGOwnTeam = Omit<LFGGroup, "permissions"> & {
+	usersRole: LFGGroupMember["role"] | null;
 };
 
 export function LFGGroupCard({
@@ -61,7 +72,7 @@ export function LFGGroupCard({
 	action,
 	ownGroup,
 }: {
-	group: LFGGroup;
+	group: LFGGroup | LFGOwnTeam;
 	action?: "LIKE" | "UNLIKE" | "ACCEPT";
 	ownGroup?: LFGGroup;
 }) {
@@ -70,7 +81,10 @@ export function LFGGroupCard({
 	const tournament = useTournament();
 
 	const isOwnGroup = group.id === ownGroup?.id;
-	const showActions = isOwnGroup && group.usersRole === "OWNER";
+	const canManageInvitations = useHasPermission(ownGroup, "MANAGE_INVITATIONS");
+	const canManageRoles = useHasPermission(ownGroup, "MANAGE_ROLES");
+	const canEditNote = useHasPermission(ownGroup, "EDIT_NOTE");
+	const showActions = isOwnGroup && canManageRoles;
 
 	const currentMember = user
 		? group.members.find((m) => m.id === user.id)
@@ -81,6 +95,7 @@ export function LFGGroupCard({
 	return (
 		<section
 			className={styles.group}
+			data-testid="lfg-group-card"
 			data-flip-id={isOwnGroup ? undefined : group.id}
 		>
 			{group.teamName ? (
@@ -105,7 +120,7 @@ export function LFGGroupCard({
 				<LFGOwnGroupControls
 					key={group.note ?? ""}
 					note={group.note}
-					editable={group.usersRole === "OWNER"}
+					editable={canEditNote}
 					isStayAsSub={currentMember?.isStayAsSub ?? false}
 					memberCount={group.members.length}
 				/>
@@ -114,8 +129,7 @@ export function LFGGroupCard({
 					{group.note}
 				</div>
 			) : null}
-			{action &&
-			(ownGroup?.usersRole === "OWNER" || ownGroup?.usersRole === "MANAGER") ? (
+			{action && canManageInvitations ? (
 				<ActionButton
 					schema={lookingSchema}
 					action={action}
@@ -136,7 +150,7 @@ export function LFGGroupCard({
 	);
 }
 
-function LFGOrganizerGroupRemover({ group }: { group: LFGGroup }) {
+function LFGOrganizerGroupRemover({ group }: { group: LFGGroup | LFGOwnTeam }) {
 	const { t } = useTranslation(["common", "q"]);
 
 	const targetUserId = (
@@ -429,6 +443,7 @@ function LFGVoiceChatInfo({
 				<SendouButton
 					variant="minimal"
 					size="miniscule"
+					aria-label={t(`q:vc.${member.vc}`)}
 					icon={<Icon className={clsx(styles.vcIcon, color())} />}
 				/>
 			}

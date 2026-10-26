@@ -271,3 +271,84 @@ describe("Tournament LFG JOIN_QUEUE", () => {
 		expect(await memberCountsOfGroups(tournament.id)).toEqual([]);
 	});
 });
+
+describe("Tournament LFG group permissions", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	const ownerId = () => users.id(1);
+	const memberId = () => users.id(2);
+
+	/** A registered team of the owner and a regular member in the queue, and a placeholder it could invite. */
+	const createGroups = async () => {
+		const tournament = await createOpenTournament();
+		const group = await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds: [ownerId(), memberId()] },
+			{ isLooking: true },
+		);
+		const target = await TournamentLFGTeamFactory.create({
+			tournamentId: tournament.id,
+			userId: users.id(3),
+		});
+
+		return { tournament, group, target };
+	};
+
+	const act = (
+		args: Parameters<typeof looking>[0],
+		{ tournamentId, userId }: { tournamentId: number; userId: number },
+	) => looking(args, { user: userId, params: { id: String(tournamentId) } });
+
+	test("a regular member can't invite for the group", async () => {
+		const { tournament, group, target } = await createGroups();
+
+		await expect(
+			act(
+				{ _action: "LIKE", targetTeamId: target.id },
+				{ tournamentId: tournament.id, userId: memberId() },
+			),
+		).rejects.toThrow("403");
+
+		expect(
+			(await TournamentLFGRepository.findAllLikesByTeamId(group.id)).given,
+		).toHaveLength(0);
+	});
+
+	test("a member the owner made a manager can invite for the group", async () => {
+		const { tournament, group, target } = await createGroups();
+
+		await act(
+			{ _action: "GIVE_MANAGER", userId: memberId() },
+			{ tournamentId: tournament.id, userId: ownerId() },
+		);
+		await act(
+			{ _action: "LIKE", targetTeamId: target.id },
+			{ tournamentId: tournament.id, userId: memberId() },
+		);
+
+		expect(
+			(await TournamentLFGRepository.findAllLikesByTeamId(group.id)).given,
+		).toEqual([{ teamId: target.id }]);
+	});
+
+	test("only the owner edits the group's note", async () => {
+		const { tournament } = await createGroups();
+
+		await expect(
+			act(
+				{ _action: "UPDATE_GROUP", note: "From the member" },
+				{ tournamentId: tournament.id, userId: memberId() },
+			),
+		).rejects.toThrow("403");
+		await act(
+			{ _action: "UPDATE_GROUP", note: "From the owner" },
+			{ tournamentId: tournament.id, userId: ownerId() },
+		);
+
+		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
+			tournament.id,
+		);
+		expect(groups.map((group) => group.note)).toContain("From the owner");
+	});
+});

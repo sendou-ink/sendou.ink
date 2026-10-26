@@ -29,6 +29,7 @@ import { privateNoteSentimentScore } from "~/features/user-card/user-card-utils"
 import { SendouForm } from "~/form/SendouForm";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LFGGroupCard } from "../components/LFGGroupCard";
+import * as TournamentLFG from "../core/TournamentLFG";
 import {
 	type LookingLoaderData,
 	loader,
@@ -327,8 +328,7 @@ function TeamQueueSection() {
 
 	const isAtMaxMembers =
 		data.ownTeam.members.length >= tournament.maxMembersPerTeam;
-	const canJoinQueue =
-		data.ownTeam.usersRole === "OWNER" || data.ownTeam.usersRole === "MANAGER";
+	const canJoinQueue = TournamentLFG.canPutTeamInQueue(data.ownTeam.usersRole);
 
 	return (
 		<div className="stack md">

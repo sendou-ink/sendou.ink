@@ -13,7 +13,11 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFound } from "~/utils/remix.server";
-import type { LFGGroup, LFGGroupMember } from "../components/LFGGroupCard";
+import type {
+	LFGGroup,
+	LFGGroupMember,
+	LFGOwnTeam,
+} from "../components/LFGGroupCard";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 
 export type SubEntry = Extract<
@@ -77,7 +81,7 @@ async function lookingMode({
 			teamAvatarUrl: group.isPlaceholder ? null : (group.teamAvatarUrl ?? null),
 			note: group.note ?? null,
 			members,
-			usersRole: members.find((m) => m.id === user?.id)?.role ?? null,
+			permissions: group.permissions,
 		};
 	});
 
@@ -167,7 +171,7 @@ async function resolveOwnTeam({
 	user: ReturnType<typeof getUser>;
 	tournamentId: number;
 	ownGroup: LFGGroup | null;
-}): Promise<LFGGroup | null> {
+}): Promise<LFGOwnTeam | null> {
 	if (!user) return null;
 	if (ownGroup) return null;
 

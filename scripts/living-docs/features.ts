@@ -74,6 +74,7 @@ const LABELS: Record<string, string> = {
 	sendouq: "SendouQ",
 	"sendouq-match": "SendouQ match",
 	"sendouq-streams": "SendouQ streams",
+	"tournament-lfg": "Tournament LFG",
 };
 
 export interface FeatureConfig {

@@ -135,7 +135,7 @@ describe("findLookingTeamsByTournamentId", () => {
 	});
 });
 
-describe("insertLike / deleteLike", () => {
+describe("insertLike", () => {
 	beforeEach(async () => {
 		await users.create(2);
 	});
@@ -174,8 +174,14 @@ describe("insertLike / deleteLike", () => {
 
 		expect(likes.given).toHaveLength(1);
 	});
+});
 
-	test("deleteLike removes the like", async () => {
+describe("deleteLike", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("removes the like", async () => {
 		const tournament = await createTournament();
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
@@ -577,7 +583,7 @@ describe("updateMemberRole", () => {
 	});
 });
 
-describe("updateStayAsSub", () => {
+describe("updateOwnStayAsSub", () => {
 	beforeEach(async () => {
 		await users.create(1);
 	});
@@ -659,6 +665,31 @@ describe("leaveLfg", () => {
 			.executeTakeFirstOrThrow();
 
 		expect(teamRow.isLooking).toBe(0);
+	});
+});
+
+describe("findSubGroups", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("returns only the placeholders of players who stay as sub", async () => {
+		const tournament = await createTournament();
+		const subPost = await TournamentLFGTeamFactory.create({
+			tournamentId: tournament.id,
+			userId: users.id(1),
+			isStayAsSub: true,
+			lfgNote: "Free all day",
+		});
+		await createPlaceholder(tournament.id, users.id(2));
+
+		const subGroups = await TournamentLFGRepository.findSubGroups(
+			tournament.id,
+		);
+
+		expect(subGroups).toHaveLength(1);
+		expect(subGroups[0].id).toBe(subPost.id);
+		expect(subGroups[0].message).toBe("Free all day");
 	});
 });
 

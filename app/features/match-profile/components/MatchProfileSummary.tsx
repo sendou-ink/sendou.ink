@@ -49,7 +49,7 @@ export function MatchProfileSummary({
 	}
 
 	return (
-		<div className="stack xs">
+		<div className="stack xs" data-testid="match-profile-summary">
 			{items.length > 0 ? (
 				<div className={styles.values}>
 					{items.map(({ key, element }, i) => (
