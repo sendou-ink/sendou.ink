@@ -461,6 +461,10 @@ export default [
 			),
 			route("/tournament/:id", "features/api-public/routes/tournament.$id.ts"),
 			route(
+				"/tournament/:id/matches",
+				"features/api-public/routes/tournament.$id.matches.ts",
+			),
+			route(
 				"/tournament/:id/teams",
 				"features/api-public/routes/tournament.$id.teams.ts",
 			),

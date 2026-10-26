@@ -41,4 +41,50 @@ describe("GET /api/tournament/:id", () => {
 
 		expect(logoUrl).toMatch(/^https?:\/\/.+\/tournament-logo-abc-123\.webp$/);
 	});
+
+	test("returns how teams progress between brackets", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId(),
+			bracketProgression: [
+				{
+					type: "round_robin",
+					name: "Groups",
+					requiresCheckIn: false,
+					settings: {},
+				},
+				{
+					type: "single_elimination",
+					name: "Top Cut",
+					requiresCheckIn: true,
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [1, 2] }],
+				},
+				{
+					type: "single_elimination",
+					name: "Redemption",
+					requiresCheckIn: false,
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [3], rest: true }],
+				},
+			],
+		});
+
+		const { brackets } = await fetchTournament(tournament.id);
+
+		expect(brackets).toEqual([
+			{ name: "Groups", type: "round_robin", requiresCheckIn: false },
+			{
+				name: "Top Cut",
+				type: "single_elimination",
+				requiresCheckIn: true,
+				sources: [{ bracketIdx: 0, placements: [1, 2] }],
+			},
+			{
+				name: "Redemption",
+				type: "single_elimination",
+				requiresCheckIn: false,
+				sources: [{ bracketIdx: 0, placements: [3], rest: true }],
+			},
+		]);
+	});
 });

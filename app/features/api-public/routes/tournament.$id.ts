@@ -74,6 +74,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		brackets: tournament.settings.bracketProgression.map((bp) => ({
 			name: bp.name,
 			type: bp.type,
+			sources: bp.sources?.map((source) => ({
+				bracketIdx: source.bracketIdx,
+				placements: source.placements,
+				rest: source.rest,
+			})),
+			startTime: bp.startTime
+				? databaseTimestampToDate(bp.startTime).toISOString()
+				: undefined,
+			requiresCheckIn: bp.requiresCheckIn,
 		})),
 		organizationId: tournament.organizationId,
 		isFinalized: Boolean(tournament.isFinalized),
