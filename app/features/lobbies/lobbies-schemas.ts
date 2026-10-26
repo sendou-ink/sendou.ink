@@ -128,5 +128,6 @@ export const lobbyActionSchema = v.union([
 	lobbySettingsSchema,
 	v.object({ _action: _action("KICK"), userId: id }),
 	v.object({ _action: _action("TOGGLE_SIT_OUT"), userId: id }),
+	v.object({ _action: _action("MAKE_HOST"), userId: id }),
 	v.object({ _action: _action("END_LOBBY") }),
 ]);

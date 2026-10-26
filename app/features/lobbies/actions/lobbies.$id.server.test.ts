@@ -150,4 +150,21 @@ describe("lobby action", () => {
 			(await LobbyRepository.findProgressionStateById(lobby.id))?.endedAt,
 		).not.toBeNull();
 	});
+
+	test("a participant can't make themselves the host", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: [visitorId()] },
+		);
+
+		await expect(
+			lobbyAction(
+				{ _action: "MAKE_HOST", userId: visitorId() },
+				{ user: visitorId(), params: { id: String(lobby.id) } },
+			),
+		).rejects.toBeTruthy();
+		expect(
+			(await LobbyRepository.findProgressionStateById(lobby.id))?.hostUserId,
+		).toBe(hostId());
+	});
 });

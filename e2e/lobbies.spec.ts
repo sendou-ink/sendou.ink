@@ -880,7 +880,8 @@ test.describe("Lobbies", () => {
 	/**
 	 * The host removes participants, a player removed mid-set forfeiting it for their team,
 	 * sits players of the room out of the sets until resumed, changes the best of from the
-	 * next set on and ends the lobby. When the host leaves, the participant who signed up the
+	 * next set on and ends the lobby. The host can hand hosting over to another participant, which
+	 * the lobby's chat tells everyone. When the host leaves, the participant who signed up the
 	 * earliest becomes the host and is notified of it.
 	 */
 	test.describe("Hosting", () => {
@@ -988,6 +989,38 @@ test.describe("Lobbies", () => {
 
 			await test.step("The next set is a best of 5", async () => {
 				await expect(lobbyPage.bestOf(5)).toBeVisible();
+			});
+		});
+
+		test("the host makes another participant the host", async ({
+			page,
+			factories,
+		}) => {
+			const { lobby, host, players } = await startedLobby(page, factories);
+			// not the earliest to sign up, who'd be the host anyway were the host to leave
+			const newHost = players.at(-1)!;
+			const lobbyPage = new LobbyPage(page);
+			const chat = new ChatSidebar(page);
+
+			await test.step("The host hands hosting over, the lobby's chat telling of it", async () => {
+				await impersonate(page, host.id);
+				await lobbyPage.goto(lobby.id, "leaderboard");
+				await lobbyPage.makeHost(newHost.id);
+
+				await isNotVisible(lobbyPage.locators.endLobbyButton);
+				await chat.selectRoomTab("Lobby");
+				await expect(
+					chat.chat().message(`${newHost.name} is now the host`),
+				).toBeVisible();
+			});
+
+			await test.step("The new host is marked on the Rankings tab and can manage the lobby", async () => {
+				await impersonate(page, newHost.id);
+				await lobbyPage.goto(lobby.id, "leaderboard");
+
+				await expect(lobbyPage.hostMarker(newHost.name)).toBeVisible();
+				await isNotVisible(lobbyPage.hostMarker(host.name));
+				await expect(lobbyPage.locators.endLobbyButton).toBeVisible();
 			});
 		});
 

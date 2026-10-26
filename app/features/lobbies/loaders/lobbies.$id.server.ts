@@ -27,7 +27,6 @@ const RESOLVED_NOTIFICATION_TYPES = [
 	"LOBBY_READY_CHECK",
 ] as const;
 
-// xxx: permission check for VIEW and other permissions too?
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const { id } = parseParams({ params, schema: idObject });

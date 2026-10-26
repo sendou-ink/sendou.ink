@@ -1,4 +1,4 @@
-import { MoreHorizontal, Pause, Play, UserX } from "lucide-react";
+import { Crown, MoreHorizontal, Pause, Play, UserX } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -9,12 +9,13 @@ import { useHasPermission } from "~/modules/permissions/hooks";
 import { useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
 
-/** The host's actions for a participant: sitting them out of the next set and removing them. */
+/** The host's actions for a participant: sitting them out of the next set, making them the host and removing them. */
 export function LobbyPlayerMenu({ userId }: { userId: number }) {
 	const { t } = useTranslation(["lobbies"]);
 	const { data } = useLobbyView();
 	const isHost = useHasPermission(data.lobby, "MANAGE");
 	const [isConfirmingKick, setIsConfirmingKick] = React.useState(false);
+	const [isConfirmingMakeHost, setIsConfirmingMakeHost] = React.useState(false);
 	const { submit } = useActionSubmit(lobbyActionSchema);
 
 	const participant = data.lobby.participants.find(
@@ -23,9 +24,9 @@ export function LobbyPlayerMenu({ userId }: { userId: number }) {
 	if (!isHost || !participant || data.lobby.endedAt !== null) return null;
 
 	const canSitOut = participant.status === "IN_ROOM";
-	const canKick = participant.id !== data.lobby.hostUserId;
+	const isOtherThanHost = participant.id !== data.lobby.hostUserId;
 
-	if (!canSitOut && !canKick) return null;
+	if (!canSitOut && !isOtherThanHost) return null;
 
 	return (
 		<>
@@ -52,7 +53,15 @@ export function LobbyPlayerMenu({ userId }: { userId: number }) {
 							: t("lobbies:admin.sitOut")}
 					</SendouMenuItem>
 				) : null}
-				{canKick ? (
+				{isOtherThanHost ? (
+					<SendouMenuItem
+						icon={<Crown />}
+						onAction={() => setIsConfirmingMakeHost(true)}
+					>
+						{t("lobbies:admin.makeHost")}
+					</SendouMenuItem>
+				) : null}
+				{isOtherThanHost ? (
 					<SendouMenuItem
 						icon={<UserX />}
 						isDestructive
@@ -62,6 +71,16 @@ export function LobbyPlayerMenu({ userId }: { userId: number }) {
 					</SendouMenuItem>
 				) : null}
 			</SendouMenu>
+			<FormWithConfirm
+				isOpen={isConfirmingMakeHost}
+				onOpenChange={setIsConfirmingMakeHost}
+				dialogHeading={t("lobbies:admin.makeHost.heading", {
+					user: participant.username,
+				})}
+				description={t("lobbies:admin.makeHost.explanation")}
+				submitButtonText={t("lobbies:admin.makeHost")}
+				onConfirm={() => submit("MAKE_HOST", { userId: participant.id })}
+			/>
 			<FormWithConfirm
 				isOpen={isConfirmingKick}
 				onOpenChange={setIsConfirmingKick}

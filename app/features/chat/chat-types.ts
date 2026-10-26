@@ -16,6 +16,7 @@ export type ChatRoomType =
 export type SystemMessageType =
 	| "USER_LEFT"
 	| "LEAVING_AFTER_SET"
+	| "HOST_CHANGED"
 	| "MATCH_STARTED"
 	| "READY_CHECK_STARTED"
 	| "LIKE_RECEIVED"
@@ -45,6 +46,7 @@ export type PersistedSystemMessageType = Extract<
 	| "CANCEL_REFUSED"
 	| "USER_LEFT"
 	| "LEAVING_AFTER_SET"
+	| "HOST_CHANGED"
 	| "MAP_REPLAYED"
 	| "MAP_PICKED"
 	| "MAP_BANNED"

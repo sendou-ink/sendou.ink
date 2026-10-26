@@ -181,6 +181,14 @@ export class LobbyPage {
 		return this.locators.leaderboardRows.filter({ hasText: username });
 	}
 
+	/** The mark on the host's Rankings row. */
+	hostMarker(username: string) {
+		return this.rankingsRow(username).getByRole("button", {
+			name: "Host",
+			exact: true,
+		});
+	}
+
 	/** The mark on a Rankings row of a player no longer in the lobby. */
 	leftLobbyMarker(username: string) {
 		return this.rankingsRow(username).getByRole("button", {
@@ -227,6 +235,13 @@ export class LobbyPage {
 	async removeParticipant(userId: number) {
 		await this.openPlayerMenu(userId);
 		await this.page.getByRole("menuitem", { name: "Remove" }).click();
+		await modalClickConfirmButton(this.page);
+	}
+
+	/** As the host, hands hosting over to the participant through their player menu, confirming it. */
+	async makeHost(userId: number) {
+		await this.openPlayerMenu(userId);
+		await this.page.getByRole("menuitem", { name: "Make host" }).click();
 		await modalClickConfirmButton(this.page);
 	}
 

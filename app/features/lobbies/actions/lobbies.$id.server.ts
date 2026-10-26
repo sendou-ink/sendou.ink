@@ -258,6 +258,28 @@ export const action = defineAction(
 				});
 				break;
 			}
+			case "MAKE_HOST": {
+				requirePermission(lobby, "MANAGE");
+				const target = notFoundIfNullish(
+					lobby.participants.find(
+						(participant) => participant.id === body.userId,
+					),
+				);
+				errorToastIfFalsy(
+					target.id !== lobby.hostUserId,
+					"They are already the host",
+				);
+
+				await LobbyRepository.update({ id, hostUserId: target.id });
+				if (lobby.chatRoomId) {
+					void ChatSystemMessage.sendPersisted({
+						roomId: lobby.chatRoomId,
+						type: "HOST_CHANGED",
+						authorUserId: target.id,
+					});
+				}
+				break;
+			}
 			case "END_LOBBY": {
 				requirePermission(lobby, "MANAGE");
 

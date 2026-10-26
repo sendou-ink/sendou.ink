@@ -409,6 +409,7 @@
 	"chat.systemMsg.cancelRefused": "{{name}} refused canceling the match",
 	"chat.systemMsg.userLeft": "{{name}} left the group",
 	"chat.systemMsg.leavingAfterSet": "{{name}} will leave after this set",
+	"chat.systemMsg.hostChanged": "{{name}} is now the host",
 	"chat.systemMsg.mapReplayed": "{{name}} replayed the previous map",
 	"chat.systemMsg.mapPicked": "{{name}} picked a map",
 	"chat.systemMsg.mapBanned": "{{name}} banned a map",

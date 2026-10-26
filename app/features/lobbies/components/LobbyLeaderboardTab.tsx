@@ -1,4 +1,4 @@
-import { LogOut, Pause } from "lucide-react";
+import { Crown, LogOut, Pause } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -55,6 +55,7 @@ export function LobbyLeaderboardTab() {
 										<span className={styles.player}>
 											<Avatar user={user} size="xxs" />
 											{user.username}
+											<HostIndicator userId={row.userId} />
 											<SittingOutIndicator userId={row.userId} />
 											<LeftIndicator userId={row.userId} />
 										</span>
@@ -107,12 +108,35 @@ export function LobbyLeaderboardTab() {
 								<LobbyPlayerMenu userId={participant.id} />
 								<Avatar user={participant} size="xxs" />
 								{participant.username}
+								<HostIndicator userId={participant.id} />
 							</li>
 						))}
 					</ol>
 				</section>
 			) : null}
 		</SendouTabPanel>
+	);
+}
+
+function HostIndicator({ userId }: { userId: number }) {
+	const { t } = useTranslation(["lobbies"]);
+	const { data } = useLobbyView();
+
+	if (userId !== data.lobby.hostUserId) return null;
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					size="miniscule"
+					variant="minimal"
+					icon={<Crown className="text-theme" />}
+					aria-label="Host"
+				/>
+			}
+		>
+			<span className="text-xs">{t("lobbies:leaderboard.host")}</span>
+		</SendouPopover>
 	);
 }
 
