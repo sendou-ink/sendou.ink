@@ -6,8 +6,6 @@ import * as WeaponRange from "~/features/comp-analyzer/core/WeaponRange";
 import { hasTacticooler } from "~/features/img-export/core/RunComps";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
-// xxx: take into account order?
-
 /** Roles that make a team lopsided when stacked on one side, see `TeamShuffle`. */
 export type PlayerRole = "TACTICOOLER" | "BACKLINE";
 
