@@ -1,5 +1,10 @@
 import * as v from "valibot";
-import { envBoolean, formatEnvErrors, requiredInProd } from "./config-helpers";
+import {
+	assertE2EFlagSafe,
+	envBoolean,
+	formatEnvErrors,
+	requiredInProd,
+} from "./config-helpers";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { superRefine, type ValidationCtx } from "./utils/schema";
 
@@ -10,6 +15,12 @@ import { superRefine, type ValidationCtx } from "./utils/schema";
 
 const isProd = process.env.NODE_ENV === "production" && !IS_E2E_TEST_RUN;
 
+assertE2EFlagSafe({
+	nodeEnv: process.env.NODE_ENV,
+	isE2E: IS_E2E_TEST_RUN,
+	siteDomain: process.env.VITE_SITE_DOMAIN,
+});
+
 const schema = v.pipe(
 	v.object({
 		NODE_ENV: v.optional(
@@ -17,8 +28,10 @@ const schema = v.pipe(
 			"development",
 		),
 		DB_PATH: requiredInProd(isProd, "db.sqlite3"),
-		SESSION_SECRET: requiredInProd(isProd, "secret"),
-		LOHI_TOKEN: requiredInProd(isProd, "salmon"),
+		SESSION_SECRET: requiredInProd(isProd, "secret", {
+			rejectDevFallback: true,
+		}),
+		LOHI_TOKEN: requiredInProd(isProd, "salmon", { rejectDevFallback: true }),
 		SQL_LOG: v.optional(v.picklist(["none", "trunc", "full"]), "none"),
 		DISABLE_CACHE: v.optional(envBoolean, "false"),
 
