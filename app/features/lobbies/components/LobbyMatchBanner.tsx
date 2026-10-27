@@ -70,7 +70,7 @@ export function LobbyMatchBanner() {
 		);
 	}
 
-	const joinPass = isViewerInRoom ? resolveRoomPass(currentSet.id) : null;
+	const joinPass = isViewerInRoom ? resolveRoomPass(data.lobby.id) : null;
 	const currentIndex = LobbySet.currentGameIndex(currentSet);
 	const currentGame =
 		currentIndex !== null ? currentSet.games[currentIndex] : null;
