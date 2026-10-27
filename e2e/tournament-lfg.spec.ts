@@ -2,6 +2,7 @@ import { addDays, addHours, subDays, subHours } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { openSecondUser } from "./helpers/chat";
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
@@ -269,6 +270,125 @@ test.describe("Tournament LFG", () => {
 			await looking.undoInvitationOf(INVITEE_NAME);
 
 			await expect(looking.inviteButtonOf(INVITEE_NAME)).toBeVisible();
+		});
+	});
+
+	/**
+	 * The page stays current without a reload, the way the SendouQ looking page does: groups
+	 * joining and leaving the queue, invitations given and withdrawn, and an accepted invitation
+	 * merging the inviter's group show up for everyone viewing it.
+	 */
+	test.describe("Live updates", () => {
+		test("a group joining and leaving the queue shows up for others without a reload", async ({
+			page,
+			browser,
+			workerBaseURL,
+			factories,
+		}) => {
+			const tournament = await createOpenTournament(factories);
+			const viewer = await createNamedUser(factories, INVITER_NAME);
+			const joiner = await createNamedUser(factories, SOLO_NAME);
+
+			await impersonate(page, viewer.id);
+			const looking = new TournamentLookingPage(page);
+			await looking.goto(tournament.id);
+
+			await isNotVisible(looking.groupOf(SOLO_NAME));
+
+			const other = await openSecondUser(browser, workerBaseURL, joiner.id);
+			try {
+				const otherLooking = new TournamentLookingPage(other.page);
+				await otherLooking.goto(tournament.id);
+
+				await otherLooking.joinQueueForm.fill("note", GROUP_NOTE);
+				await otherLooking.joinQueueForm.submit();
+				await expect(otherLooking.ownGroupCard).toContainText(GROUP_NOTE);
+
+				await expect(looking.groupOf(SOLO_NAME)).toContainText(GROUP_NOTE);
+
+				await otherLooking.stopLooking();
+
+				await isNotVisible(looking.groupOf(SOLO_NAME));
+			} finally {
+				await other.close();
+			}
+		});
+
+		test("an invitation shows up for the invited group without a reload", async ({
+			page,
+			browser,
+			workerBaseURL,
+			factories,
+		}) => {
+			const tournament = await createOpenTournament(factories);
+			const inviter = await createNamedUser(factories, INVITER_NAME);
+			const invitee = await createNamedUser(factories, INVITEE_NAME);
+			for (const userId of [inviter.id, invitee.id]) {
+				await factories.TournamentLFGTeamFactory.create({
+					tournamentId: tournament.id,
+					userId,
+				});
+			}
+
+			await impersonate(page, invitee.id);
+			const looking = new TournamentLookingPage(page);
+			await looking.goto(tournament.id);
+
+			await expect(looking.inviteButtonOf(INVITER_NAME)).toBeVisible();
+
+			const other = await openSecondUser(browser, workerBaseURL, inviter.id);
+			try {
+				const otherLooking = new TournamentLookingPage(other.page);
+				await otherLooking.goto(tournament.id);
+
+				await otherLooking.inviteGroupOf(INVITEE_NAME);
+
+				await expect(looking.acceptButtonOf(INVITER_NAME)).toBeVisible();
+
+				await otherLooking.undoInvitationOf(INVITEE_NAME);
+
+				await expect(looking.inviteButtonOf(INVITER_NAME)).toBeVisible();
+				await isNotVisible(looking.acceptButtonOf(INVITER_NAME));
+			} finally {
+				await other.close();
+			}
+		});
+
+		test("accepting an invitation shows the merged group to the inviter without a reload", async ({
+			page,
+			browser,
+			workerBaseURL,
+			factories,
+		}) => {
+			const tournament = await createOpenTournament(factories);
+			const inviter = await createNamedUser(factories, INVITER_NAME);
+			const invitee = await createNamedUser(factories, INVITEE_NAME);
+			const inviteeGroup = await factories.TournamentLFGTeamFactory.create({
+				tournamentId: tournament.id,
+				userId: invitee.id,
+			});
+			await factories.TournamentLFGTeamFactory.create(
+				{ tournamentId: tournament.id, userId: inviter.id },
+				{ likedTeamIds: [inviteeGroup.id] },
+			);
+
+			await impersonate(page, inviter.id);
+			const looking = new TournamentLookingPage(page);
+			await looking.goto(tournament.id);
+
+			await expect(looking.undoButtonOf(INVITEE_NAME)).toBeVisible();
+
+			const other = await openSecondUser(browser, workerBaseURL, invitee.id);
+			try {
+				const otherLooking = new TournamentLookingPage(other.page);
+				await otherLooking.goto(tournament.id);
+
+				await otherLooking.acceptInvitationOf(INVITER_NAME);
+
+				await expect(looking.ownGroupCard).toContainText(INVITEE_NAME);
+			} finally {
+				await other.close();
+			}
 		});
 	});
 

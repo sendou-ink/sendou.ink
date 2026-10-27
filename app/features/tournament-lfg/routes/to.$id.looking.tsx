@@ -12,6 +12,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { useUser } from "~/features/auth/core/user";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import {
 	MatchProfileSummary,
 	VcStatus,
@@ -40,6 +41,10 @@ import {
 	joinQueueFormSchema,
 	lookingSchema,
 } from "../tournament-lfg-schemas";
+import {
+	tournamentLFGChannel,
+	tournamentLFGGroupChannel,
+} from "../tournament-lfg-utils";
 import styles from "./to.$id.looking.module.css";
 
 export { action } from "../actions/to.$id.looking.server";
@@ -52,6 +57,11 @@ export const handle: SendouRouteHandle = {
 
 export default function TournamentLFGPage() {
 	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+
+	// queue-shape changes (a group joining/leaving, a merge, a note edit, a sub post)
+	useTopicRevalidation(tournamentLFGChannel(tournament.ctx.id));
+
 	if (data.mode === "subs") {
 		return <SubsView data={data} />;
 	}
@@ -65,6 +75,17 @@ function GroupsView({
 	data: Extract<LookingLoaderData, { mode: "looking" }>;
 }) {
 	const tournament = useTournament();
+
+	// group-specific updates (e.g. a received invitation)
+	useTopicRevalidation(
+		data.ownGroup
+			? tournamentLFGGroupChannel({
+					tournamentId: tournament.ctx.id,
+					groupId: data.ownGroup.id,
+				})
+			: "",
+		Boolean(data.ownGroup),
+	);
 
 	const ownMemberCount =
 		data.ownGroup?.members.length ?? data.ownTeam?.members.length ?? 0;

@@ -105,9 +105,14 @@ export class TournamentLookingPage {
 		return submit(this.page, this.undoButtonOf(username));
 	}
 
+	/** Shown on the card of a group that has invited the own group. */
+	acceptButtonOf(username: string) {
+		return this.groupButton(username, "Accept");
+	}
+
 	/** Accepts the invitation of the user's group, merging it with the own group. */
 	acceptInvitationOf(username: string) {
-		return submit(this.page, this.groupButton(username, "Accept"));
+		return submit(this.page, this.acceptButtonOf(username));
 	}
 
 	/** Takes the user's group out of the queue, as an organizer. */

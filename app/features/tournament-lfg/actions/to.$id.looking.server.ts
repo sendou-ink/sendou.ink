@@ -18,6 +18,10 @@ import { assertUnreachable } from "~/utils/types";
 import * as TournamentLFG from "../core/TournamentLFG";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { lookingSchema } from "../tournament-lfg-schemas";
+import {
+	tournamentLFGChannel,
+	tournamentLFGGroupChannel,
+} from "../tournament-lfg-utils";
 
 export const action = defineAction(
 	{ body: lookingSchema },
@@ -34,6 +38,15 @@ export const action = defineAction(
 				);
 			return groups.find((g) => g.members.some((m) => m.id === user.id));
 		};
+
+		// sent once the data cache is cleared, so the pages refetching see the change
+		const broadcasts: Array<{ channel: string }> = [];
+		const broadcastLookingUpdate = () =>
+			broadcasts.push({ channel: tournamentLFGChannel(tournamentId) });
+		const revalidateGroupTopic = (groupId: number) =>
+			broadcasts.push({
+				channel: tournamentLFGGroupChannel({ tournamentId, groupId }),
+			});
 
 		switch (body._action) {
 			case "JOIN_QUEUE": {
@@ -82,6 +95,7 @@ export const action = defineAction(
 					});
 				}
 
+				broadcastLookingUpdate();
 				break;
 			}
 			case "LIKE": {
@@ -121,6 +135,8 @@ export const action = defineAction(
 					},
 				});
 
+				revalidateGroupTopic(ownGroup.id);
+				revalidateGroupTopic(targetGroup.id);
 				break;
 			}
 			case "UNLIKE": {
@@ -133,6 +149,8 @@ export const action = defineAction(
 					targetTeamId: body.targetTeamId,
 				});
 
+				revalidateGroupTopic(ownGroup.id);
+				revalidateGroupTopic(body.targetTeamId);
 				break;
 			}
 			case "ACCEPT": {
@@ -217,6 +235,7 @@ export const action = defineAction(
 					meta: { tournamentId },
 				});
 
+				broadcastLookingUpdate();
 				break;
 			}
 			case "GIVE_MANAGER": {
@@ -230,6 +249,7 @@ export const action = defineAction(
 					role: "MANAGER",
 				});
 
+				revalidateGroupTopic(ownGroup.id);
 				break;
 			}
 			case "REMOVE_MANAGER": {
@@ -243,6 +263,7 @@ export const action = defineAction(
 					role: "REGULAR",
 				});
 
+				revalidateGroupTopic(ownGroup.id);
 				break;
 			}
 			case "UPDATE_GROUP": {
@@ -255,6 +276,7 @@ export const action = defineAction(
 					value: body.note ?? null,
 				});
 
+				broadcastLookingUpdate();
 				break;
 			}
 			case "SET_STAY_AS_SUB": {
@@ -276,6 +298,7 @@ export const action = defineAction(
 					}),
 				);
 
+				broadcastLookingUpdate();
 				break;
 			}
 			case "DELETE_GROUP": {
@@ -292,6 +315,7 @@ export const action = defineAction(
 					}),
 				);
 
+				broadcastLookingUpdate();
 				break;
 			}
 			case "ADD_SUB": {
@@ -319,6 +343,7 @@ export const action = defineAction(
 					lfgNote: body.message ?? undefined,
 				});
 
+				broadcastLookingUpdate();
 				break;
 			}
 			case "ADD_SUB_FOR_USER": {
@@ -359,6 +384,7 @@ export const action = defineAction(
 					lfgNote: body.message ?? undefined,
 				});
 
+				broadcastLookingUpdate();
 				break;
 			}
 			case "DELETE_SUB": {
@@ -374,6 +400,7 @@ export const action = defineAction(
 					}),
 				);
 
+				broadcastLookingUpdate();
 				break;
 			}
 			default: {
@@ -382,6 +409,7 @@ export const action = defineAction(
 		}
 
 		clearTournamentDataCache(tournamentId);
+		ChatSystemMessage.send(broadcasts);
 
 		return null;
 	},
