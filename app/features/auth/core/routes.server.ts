@@ -97,7 +97,12 @@ export const refreshFromDiscordAction = defineAction(
 		}
 
 		try {
-			return await authenticator.authenticate("discord", request);
+			// remix-auth copies the request, which fails once defineAction has consumed its body
+			const bodylessRequest = new Request(request.url, {
+				method: request.method,
+				headers: request.headers,
+			});
+			return await authenticator.authenticate("discord", bodylessRequest);
 		} catch (error) {
 			// starting the OAuth flow always throws the redirect to Discord
 			if (error instanceof Response) {
