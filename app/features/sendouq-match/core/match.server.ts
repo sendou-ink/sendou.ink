@@ -152,7 +152,7 @@ function countVotesForTeam(
 }
 
 /**
- * @param playedMaps maps the players have already played together, each play weighing the map down further
+ * @param playedMaps maps the players have already played together, oldest first: the list continues from them and each play weighs the map down further
  */
 export async function matchMapList(
 	groupOne: {
@@ -194,6 +194,7 @@ export async function matchMapList(
 			teamTwoVotedKeys,
 			bestOf,
 		}),
+		history: playedMaps,
 	});
 	generator.next();
 

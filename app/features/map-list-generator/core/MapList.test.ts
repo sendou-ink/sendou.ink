@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { StageId } from "~/modules/in-game-lists/types";
+import type { ModeWithStage, StageId } from "~/modules/in-game-lists/types";
 import { unwrap } from "~/utils/result";
 import * as MapList from "./MapList";
 import { MapPool } from "./map-pool";
@@ -733,6 +733,128 @@ describe("MapList.generate() with candidateFilters", () => {
 			const maps = gen.next({ amount: 3 }).value;
 
 			expect(maps.map((m) => m.stageId)).toEqual([1, 2, 3]);
+		}
+	});
+});
+
+describe("MapList.generate() with history", () => {
+	const SZ_ONLY_MAP_POOL = new MapPool({
+		SZ: [1, 2, 3, 4, 5, 6],
+		TC: [],
+		RM: [],
+		CB: [],
+		TW: [],
+	});
+
+	const EVERY_MODE_ONCE_HISTORY: ModeWithStage[] = [
+		{ mode: "TW", stageId: 1 },
+		{ mode: "TC", stageId: 7 },
+		{ mode: "RM", stageId: 10 },
+		{ mode: "CB", stageId: 13 },
+		{ mode: "SZ", stageId: 4 },
+	];
+
+	function nextList({
+		mapPool = ALL_MODES_TEST_MAP_POOL,
+		history,
+		amount,
+	}: {
+		mapPool?: MapPool;
+		history: ModeWithStage[];
+		amount: number;
+	}) {
+		const gen = MapList.generate({ mapPool, history });
+		gen.next();
+		return gen.next({ amount }).value;
+	}
+
+	function szHistory(stageIds: StageId[]): ModeWithStage[] {
+		return stageIds.map((stageId) => ({ mode: "SZ", stageId }));
+	}
+
+	test("does not start with the last played mode", () => {
+		for (let i = 0; i < 20; i++) {
+			const [map] = nextList({ history: EVERY_MODE_ONCE_HISTORY, amount: 3 });
+
+			expect(map.mode).not.toBe("SZ");
+		}
+	});
+
+	test("starts with the least played modes", () => {
+		for (let i = 0; i < 20; i++) {
+			const maps = nextList({
+				history: EVERY_MODE_ONCE_HISTORY.slice(0, 3),
+				amount: 3,
+			});
+
+			expect(
+				maps
+					.slice(0, 2)
+					.map((m) => m.mode)
+					.sort(),
+			).toEqual(["CB", "SZ"]);
+		}
+	});
+
+	test("varies the mode order", () => {
+		const firstModes = new Set<string>();
+		for (let i = 0; i < 20; i++) {
+			const [map] = nextList({ history: EVERY_MODE_ONCE_HISTORY, amount: 3 });
+			firstModes.add(map.mode);
+		}
+
+		expect(firstModes.size).toBeGreaterThan(1);
+	});
+
+	test("avoids recently played maps", () => {
+		for (let i = 0; i < 20; i++) {
+			const maps = nextList({
+				mapPool: SZ_ONLY_MAP_POOL,
+				history: szHistory([1, 2, 3]),
+				amount: 3,
+			});
+
+			expect(maps.map((m) => m.stageId).sort()).toEqual([4, 5, 6]);
+		}
+	});
+
+	test("prefers a map played long ago over a recently played one", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2],
+			TC: [],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		for (let i = 0; i < 20; i++) {
+			const [map] = nextList({
+				mapPool,
+				history: szHistory([1, 2, 2, 2, 2, 2]),
+				amount: 1,
+			});
+
+			expect(map.stageId).toBe(1);
+		}
+	});
+
+	test("avoids a recently played stage in another mode", () => {
+		const mapPool = new MapPool({
+			SZ: [1, 2],
+			TC: [1, 2],
+			RM: [],
+			CB: [],
+			TW: [],
+		});
+
+		for (let i = 0; i < 20; i++) {
+			const [map] = nextList({
+				mapPool,
+				history: [{ mode: "SZ", stageId: 1 }],
+				amount: 1,
+			});
+
+			expect(map).toEqual({ mode: "TC", stageId: 2 });
 		}
 	});
 });
