@@ -31,7 +31,7 @@ import styles from "./AnythingAdder.module.css";
 export function AnythingAdder() {
 	const { t } = useTranslation(["common"]);
 	const user = useUser();
-	const isAdmin = useHasRole("ADMIN");
+	const isLobbyAdder = useHasRole("LOBBY_ADDER");
 	const { status: globalStatus } = useGlobalStatus();
 
 	if (!user) {
@@ -75,7 +75,7 @@ export function AnythingAdder() {
 			imagePath: navIconUrl("scrims"),
 			href: newScrimPostPage(),
 		},
-		...(isAdmin
+		...(isLobbyAdder
 			? [
 					{
 						id: "lobby",

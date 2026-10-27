@@ -5,7 +5,7 @@ import { requireRole } from "~/modules/permissions/guards.server";
 
 export const loader = async () => {
 	const user = requireUser();
-	requireRole("ADMIN");
+	requireRole("LOBBY_ADDER");
 
 	return {
 		associations: await AssociationRepository.findByMemberUserId(user.id),

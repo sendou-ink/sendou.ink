@@ -18,7 +18,7 @@ export const action = defineAction(
 	{ body: newLobbySchema },
 	async ({ body }) => {
 		const user = requireUser();
-		requireRole("ADMIN");
+		requireRole("LOBBY_ADDER");
 
 		errorToastIfFalsy(
 			await UserRepository.findCurrentFriendCodeByUserId(user.id),
