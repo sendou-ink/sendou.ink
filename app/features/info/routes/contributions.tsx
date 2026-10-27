@@ -58,6 +58,7 @@ const TRANSLATORS: Array<{
 			"julufm",
 			"IKEI",
 			"mewpower",
+			"Babagass"
 		],
 		language: "fr-EU",
 	},
