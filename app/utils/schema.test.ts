@@ -113,6 +113,15 @@ describe("actuallyNonEmptyStringOrNull", () => {
 		expect(actuallyNonEmptyStringOrNull("\ufe0e")).toBeNull();
 		expect(actuallyNonEmptyStringOrNull("\ufe0e\ufe0e")).toBeNull();
 	});
+
+	test.each([
+		{ why: "rainbow flag", value: "she/her \ud83c\udff3\ufe0f\u200d\ud83c\udf08" },
+		{ why: "transgender flag", value: "\ud83c\udff3\ufe0f\u200d\u26a7\ufe0f" },
+		{ why: "family", value: "\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67" },
+		{ why: "emoji presentation heart", value: "GG \u2764\ufe0f" },
+	])("keeps the joiners and selectors of an emoji ($why)", ({ value }) => {
+		expect(actuallyNonEmptyStringOrNull(value)).toBe(value);
+	});
 });
 
 describe("hexCodeWithoutAlpha", () => {
