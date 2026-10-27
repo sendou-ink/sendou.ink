@@ -150,6 +150,13 @@ describe("LobbyProgression.advance", () => {
 		const lobbyId = await startedLobby({ checkedInCount: 8 });
 		const set = await latestSet(lobbyId);
 		const leaverId = LobbySet.playersOf(set, "BRAVO")[0];
+		await withUserId(leaverId, () =>
+			LobbyMatchRepository.reportGame({
+				setId: set.id,
+				winnerSide: "BRAVO",
+				reportedCount: 0,
+			}),
+		);
 
 		await LobbyRepository.removeParticipant({
 			lobbyId,
@@ -161,6 +168,22 @@ describe("LobbyProgression.advance", () => {
 		const sets = await LobbyMatchRepository.findAllSetsByLobbyId(lobbyId);
 		expect(LobbySet.status(sets[0])).toBe("FORFEITED");
 		expect(LobbySet.winnerSide(sets[0])).toBe("ALPHA");
+	});
+
+	test("leaving before a map is reported calls the set off", async () => {
+		const lobbyId = await startedLobby({ checkedInCount: 8 });
+		const set = await latestSet(lobbyId);
+
+		await LobbyRepository.removeParticipant({
+			lobbyId,
+			userId: LobbySet.playersOf(set, "BRAVO")[0],
+			unfinishedSetId: set.id,
+		});
+		await LobbyProgression.advance(lobbyId);
+
+		expect(
+			await LobbyMatchRepository.findAllSetsByLobbyId(lobbyId),
+		).toHaveLength(0);
 	});
 
 	test("a room short of players pings the waitlist", async () => {

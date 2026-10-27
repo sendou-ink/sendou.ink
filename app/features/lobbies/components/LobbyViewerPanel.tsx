@@ -1,8 +1,14 @@
+import clsx from "clsx";
+import { differenceInSeconds } from "date-fns";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { useUser } from "~/features/auth/core/user";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
+import { databaseTimestampToDate } from "~/utils/dates";
+import * as LobbySet from "../core/LobbySet";
+import type { LobbyLoaderData } from "../loaders/lobbies.$id.server";
 import { PLAYERS_PER_SET } from "../lobbies-constants";
 import { useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
@@ -12,7 +18,7 @@ import styles from "./LobbyViewerPanel.module.css";
 export function LobbyViewerPanel() {
 	const { t } = useTranslation(["lobbies", "common"]);
 	const user = useUser();
-	const { data } = useLobbyView();
+	const { data, currentSet } = useLobbyView();
 
 	if (!user || data.status === "ENDED") return null;
 
@@ -21,12 +27,16 @@ export function LobbyViewerPanel() {
 	if (!viewer) {
 		return (
 			<div className={styles.root}>
-				<div className={styles.text}>
-					{data.hasFriendCode
-						? t("lobbies:viewer.notSignedUp")
-						: t("lobbies:viewer.friendCodeNeeded")}
+				<div className={styles.text} data-testid="lobby-viewer-status">
+					{data.lobby.isViewerKicked
+						? t("lobbies:viewer.kicked")
+						: data.hasFriendCode
+							? t("lobbies:viewer.notSignedUp")
+							: t("lobbies:viewer.friendCodeNeeded")}
 				</div>
-				{!data.hasFriendCode ? <FriendCodePopover size="small" /> : null}
+				{!data.hasFriendCode && !data.lobby.isViewerKicked ? (
+					<FriendCodePopover size="small" />
+				) : null}
 				{viewerActions.SIGN_UP ? (
 					<div className={styles.buttons}>
 						<ActionButton
@@ -43,14 +53,42 @@ export function LobbyViewerPanel() {
 		);
 	}
 
+	const openReadyCheck =
+		viewer.status === "IN_ROOM" ? undefined : data.readyChecks.at(0);
+	const hasConfirmedReady =
+		openReadyCheck?.users.some(
+			(checkUser) =>
+				checkUser.userId === viewer.id && checkUser.confirmedAt !== null,
+		) ?? false;
+	const isLeaveForfeiting =
+		viewer.isPlayingUnfinishedSet &&
+		currentSet !== null &&
+		LobbySet.reportedCount(currentSet) > 0;
+
 	return (
 		<div className={styles.root}>
 			<div className={styles.text} data-testid="lobby-viewer-status">
-				<ViewerStatusText />
+				{openReadyCheck ? (
+					<ReadyCheckText
+						check={openReadyCheck}
+						hasConfirmed={hasConfirmedReady}
+					/>
+				) : (
+					<ViewerStatusText />
+				)}
 			</div>
-			<ReadyCheckPrompt />
 			<div className={styles.buttons}>
-				{viewerActions.CHECK_IN ? (
+				{openReadyCheck && !hasConfirmedReady ? (
+					<ActionButton
+						schema={lobbyActionSchema}
+						action="CONFIRM_READY"
+						size="small"
+						testId="lobby-confirm-ready-button"
+					>
+						{t("lobbies:actions.ready")}
+					</ActionButton>
+				) : null}
+				{viewerActions.CHECK_IN && !openReadyCheck ? (
 					<ActionButton
 						schema={lobbyActionSchema}
 						action="CHECK_IN"
@@ -73,24 +111,42 @@ export function LobbyViewerPanel() {
 							: t("lobbies:actions.dropAfterSet")}
 					</ActionButton>
 				) : null}
-				<ActionButton
-					schema={lobbyActionSchema}
-					action="LEAVE"
-					size="small"
-					variant="outlined-destructive"
-					icon={<LogOut />}
-					testId="lobby-leave-button"
-					confirm={{
-						dialogHeading: t("lobbies:leave.heading"),
-						description: viewer.isPlayingUnfinishedSet
-							? t("lobbies:leave.forfeitWarning")
-							: undefined,
-						submitButtonText: t("lobbies:actions.leave"),
-						submitButtonVariant: "destructive",
-					}}
-				>
-					{t("lobbies:actions.leave")}
-				</ActionButton>
+				{isLeaveForfeiting ? (
+					<ActionButton
+						schema={lobbyActionSchema}
+						action="LEAVE"
+						size="small"
+						variant="minimal-destructive"
+						icon={<LogOut />}
+						aria-label={t("lobbies:actions.forfeitAndLeave")}
+						testId="lobby-leave-button"
+						confirm={{
+							dialogHeading: t("lobbies:leave.forfeitHeading"),
+							description: t("lobbies:leave.forfeitWarning"),
+							submitButtonText: t("lobbies:actions.forfeitAndLeave"),
+							submitButtonVariant: "destructive",
+						}}
+					/>
+				) : (
+					<ActionButton
+						schema={lobbyActionSchema}
+						action="LEAVE"
+						size="small"
+						variant="outlined-destructive"
+						icon={<LogOut />}
+						testId="lobby-leave-button"
+						confirm={{
+							dialogHeading: t("lobbies:leave.heading"),
+							description: viewer.isPlayingUnfinishedSet
+								? t("lobbies:leave.callOffWarning")
+								: undefined,
+							submitButtonText: t("lobbies:actions.leave"),
+							submitButtonVariant: "destructive",
+						}}
+					>
+						{t("lobbies:actions.leave")}
+					</ActionButton>
+				)}
 			</div>
 		</div>
 	);
@@ -133,39 +189,49 @@ function ViewerStatusText() {
 	}
 }
 
-/** Asks the viewer waiting for a spot to confirm they're ready when one opens up. */
-function ReadyCheckPrompt() {
+/** Tells the viewer waiting for a spot that one opened up and how long their priority lasts. */
+function ReadyCheckText({
+	check,
+	hasConfirmed,
+}: {
+	check: LobbyLoaderData["readyChecks"][number];
+	hasConfirmed: boolean;
+}) {
 	const { t } = useTranslation(["lobbies"]);
-	const { data } = useLobbyView();
-	const viewer = data.viewer!;
 
-	const openCheck =
-		viewer.status === "IN_ROOM" ? undefined : data.readyChecks.at(0);
-	if (!openCheck) return null;
+	return (
+		<div className="stack xxxs" data-testid="lobby-ready-check">
+			<div>
+				{hasConfirmed
+					? t("lobbies:readyCheck.confirmed")
+					: t("lobbies:readyCheck.slot")}
+			</div>
+			<PriorityCountdown endsAt={check.expiresAt} />
+		</div>
+	);
+}
 
-	const hasConfirmed = openCheck.users.some(
-		(checkUser) =>
-			checkUser.userId === viewer.id && checkUser.confirmedAt !== null,
+function PriorityCountdown({ endsAt }: { endsAt: number }) {
+	const { t } = useTranslation(["lobbies"]);
+	const now = useAutoRerender("second");
+
+	const secondsLeft = Math.max(
+		0,
+		differenceInSeconds(databaseTimestampToDate(endsAt), now),
 	);
 
 	return (
-		<div className={styles.readyCheck} data-testid="lobby-ready-check">
-			<div>{t("lobbies:readyCheck.slot")}</div>
-			{hasConfirmed ? (
-				<div className="text-lighter text-sm">
-					{t("lobbies:readyCheck.confirmed")}
-				</div>
-			) : (
-				<ActionButton
-					schema={lobbyActionSchema}
-					action="CONFIRM_READY"
-					size="small"
-					variant="success"
-					testId="lobby-confirm-ready-button"
-				>
-					{t("lobbies:actions.ready")}
-				</ActionButton>
-			)}
+		<div
+			className={clsx(styles.countdown, "text-lighter text-xs font-body")}
+			data-testid="lobby-ready-check-countdown"
+			// the clock has moved on since the server rendered
+			suppressHydrationWarning
+		>
+			{secondsLeft > 0
+				? t("lobbies:readyCheck.priorityEndsIn", {
+						time: `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`,
+					})
+				: t("lobbies:readyCheck.firstComeFirstServed")}
 		</div>
 	);
 }

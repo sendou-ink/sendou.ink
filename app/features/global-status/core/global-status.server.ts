@@ -58,10 +58,22 @@ export async function resolveGlobalStatus(
 function resolveLobbyStatus(
 	activity: UserActivity.UserActivity,
 ): GlobalStatus | null {
+	const readyCheckLobbyId = activity.lobbyReadyCheckLobbyId;
+	// active in another lobby, they couldn't confirm
+	const canConfirmReadyCheck =
+		!activity.lobby || activity.lobby.lobbyId === readyCheckLobbyId;
+	if (readyCheckLobbyId !== null && canConfirmReadyCheck) {
+		return { state: "LOBBY_READY_CHECK", url: lobbyPage(readyCheckLobbyId) };
+	}
+
 	if (!activity.lobby) return null;
 
 	return {
-		state: activity.lobby.isInRoom ? "LOBBY_IN_ROOM" : "LOBBY_WAITING",
+		state: activity.lobby.isPlayingSet
+			? "LOBBY_MATCH"
+			: activity.lobby.isInRoom
+				? "LOBBY_IN_ROOM"
+				: "LOBBY_WAITING",
 		url: lobbyPage(activity.lobby.lobbyId),
 	};
 }

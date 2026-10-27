@@ -49,6 +49,7 @@ async function createLobbyTables(trx: Kysely<any>) {
 			col.notNull().references("User.id").onDelete("cascade"),
 		)
 		.addColumn("name", "text", (col) => col.notNull())
+		.addColumn("description", "text")
 		.addColumn("label", "text", (col) => col.notNull())
 		.addColumn("startsAt", "integer", (col) => col.notNull())
 		.addColumn("bestOf", "integer", (col) => col.notNull())
@@ -128,6 +129,30 @@ async function createLobbyTables(trx: Kysely<any>) {
 	await trx.schema
 		.createIndex("lobby_participant_user_id")
 		.on("LobbyParticipant")
+		.column("userId")
+		.execute();
+
+	await trx.schema
+		.createTable("LobbyKickedUser")
+		.addColumn("lobbyId", "integer", (col) =>
+			col.notNull().references("Lobby.id").onDelete("cascade"),
+		)
+		.addColumn("userId", "integer", (col) =>
+			col.notNull().references("User.id").onDelete("cascade"),
+		)
+		.addColumn("createdAt", "integer", (col) =>
+			col.notNull().defaultTo(sql`(strftime('%s', 'now'))`),
+		)
+		.addUniqueConstraint("lobby_kicked_user_lobby_id_user_id", [
+			"lobbyId",
+			"userId",
+		])
+		.modifyEnd(sql`strict`)
+		.execute();
+
+	await trx.schema
+		.createIndex("lobby_kicked_user_user_id")
+		.on("LobbyKickedUser")
 		.column("userId")
 		.execute();
 

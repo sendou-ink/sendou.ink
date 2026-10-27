@@ -38,6 +38,7 @@ export class LobbyPage {
 			reportScoreButton: page.getByTestId("report-score-button"),
 			confirmSetEndButton: page.getByTestId("confirm-set-end-button"),
 			confirmSetButton: page.getByTestId("lobby-confirm-set-button"),
+			hostConfirmSetButton: page.getByTestId("lobby-host-confirm-set-button"),
 			disputeButton: page.getByRole("button", { name: "Score is wrong" }),
 			undoReportButton: page.getByRole("button", { name: "Undo report" }),
 			reportWeaponsButton: page.getByTestId("expand-secondary-action-button"),
@@ -53,6 +54,8 @@ export class LobbyPage {
 			endedStatus: page.getByText("· Ended"),
 			forfeitNote: page.getByTestId("lobby-forfeit-note"),
 			waitingBanner: page.getByTestId("lobby-waiting-banner"),
+			startBanner: page.getByTestId("lobby-start-banner"),
+			description: page.getByTestId("lobby-description"),
 			leavingAfterSetMarkers: page.getByRole("button", {
 				name: "Leaving after this set",
 			}),
@@ -230,6 +233,12 @@ export class LobbyPage {
 		);
 	}
 
+	/** As the host, confirms a disputed result on the teams' behalf, through the confirmation dialog. */
+	async confirmSetAsHost() {
+		await this.locators.hostConfirmSetButton.click();
+		await modalClickConfirmButton(this.page);
+	}
+
 	/** Says the result the other side reported is wrong. */
 	async disputeResult() {
 		await waitForPOSTResponse(this.page, () =>
@@ -244,10 +253,10 @@ export class LobbyPage {
 		);
 	}
 
-	/** As the host, removes the participant from the lobby through their player menu. */
-	async removeParticipant(userId: number) {
+	/** As the host, kicks the participant out of the lobby for good through their player menu. */
+	async kick(userId: number) {
 		await this.openPlayerMenu(userId);
-		await this.page.getByRole("menuitem", { name: "Remove" }).click();
+		await this.page.getByRole("menuitem", { name: "Kick" }).click();
 		await modalClickConfirmButton(this.page);
 	}
 

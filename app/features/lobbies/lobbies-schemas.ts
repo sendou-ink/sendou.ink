@@ -10,6 +10,7 @@ import {
 	radioGroup,
 	select,
 	stringConstant,
+	textAreaOptional,
 	textFieldOptional,
 } from "~/form/fields";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -21,6 +22,7 @@ import {
 } from "../associations/associations-schemas";
 import {
 	LOBBY_BEST_OFS,
+	LOBBY_DESCRIPTION_MAX_LENGTH,
 	LOBBY_LABELS,
 	LOBBY_NAME_MAX_LENGTH,
 	LOBBY_ROOM_SIZES,
@@ -52,6 +54,10 @@ export const newLobbySchema = v.pipe(
 			label: "labels.name",
 			bottomText: "bottomTexts.lobbyName",
 			maxLength: LOBBY_NAME_MAX_LENGTH,
+		}),
+		description: textAreaOptional({
+			label: "labels.description",
+			maxLength: LOBBY_DESCRIPTION_MAX_LENGTH,
 		}),
 		label: select({
 			label: "labels.lobbyLabel",
@@ -123,6 +129,7 @@ export const lobbyActionSchema = v.union([
 	}),
 	v.object({ _action: _action("CONFIRM_SET"), setId: id }),
 	v.object({ _action: _action("DISPUTE_SET"), setId: id }),
+	v.object({ _action: _action("HOST_CONFIRM_SET"), setId: id }),
 	reportWeaponSchema,
 	undoWeaponReportSchema,
 	lobbySettingsSchema,

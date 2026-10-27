@@ -35,6 +35,14 @@ describe("findAllTeamChatsByChatRoomIds", () => {
 			LobbyRepository.findById(lobby.id),
 		))!;
 		const [leaverId, ...stayingIds] = LobbySet.playersOf(set, "ALPHA");
+		// a set without a map reported would be called off
+		await withUserId(leaverId, () =>
+			LobbyMatchRepository.reportGame({
+				setId: set.id,
+				winnerSide: "ALPHA",
+				reportedCount: 0,
+			}),
+		);
 
 		await LobbyRepository.removeParticipant({
 			lobbyId: lobby.id,

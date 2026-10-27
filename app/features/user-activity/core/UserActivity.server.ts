@@ -20,7 +20,15 @@ export interface UserActivity {
 		status: TournamentTeamMemberProgressStatus;
 	}>;
 	/** The lobby the user is present in (checked in or in a room, not dropping). */
-	lobby: { lobbyId: number; lobbyName: string; isInRoom: boolean } | null;
+	lobby: {
+		lobbyId: number;
+		lobbyName: string;
+		isInRoom: boolean;
+		/** Plays a side of the lobby's unfinished set */
+		isPlayingSet: boolean;
+	} | null;
+	/** Id of the lobby whose ready check asks the user to confirm they're ready to take a vacant spot. */
+	lobbyReadyCheckLobbyId: number | null;
 }
 
 /**
@@ -48,6 +56,7 @@ export function resolve(userId: number): UserActivity {
 			return status ? [{ tournament, status }] : [];
 		}),
 		lobby: resolveLobby(userId),
+		lobbyReadyCheckLobbyId: LobbyActivity.findReadyCheckLobbyIdByUserId(userId),
 	};
 }
 
@@ -59,16 +68,20 @@ function resolveLobby(userId: number): UserActivity["lobby"] {
 		lobbyId: participation.lobbyId,
 		lobbyName: participation.lobbyName,
 		isInRoom: participation.status === "IN_ROOM",
+		isPlayingSet: participation.isPlayingSet,
 	};
 }
 
 /**
- * What keeps the user from being active in a lobby: a live SendouQ group or match, or playing in a running
- * tournament. `null` when nothing does.
+ * What keeps the user from being active in a lobby: a live SendouQ group or match, playing in a running
+ * tournament or being active in another lobby. `null` when nothing does.
+ *
+ * @param lobbyId the lobby to be active in, already being active in it is no conflict
  */
 export function lobbyConflict(
 	activity: UserActivity,
-): "SENDOUQ" | "TOURNAMENT" | null {
+	lobbyId?: number,
+): "SENDOUQ" | "TOURNAMENT" | "LOBBY" | null {
 	if (activity.sendouq && !activity.sendouq.expired) return "SENDOUQ";
 
 	const isPlayingTournament = activity.tournaments.some(
@@ -76,8 +89,11 @@ export function lobbyConflict(
 			status.type !== "CHECKIN" &&
 			TOURNAMENT_STATUS_IS_IN_PROGRESS[status.type],
 	);
+	if (isPlayingTournament) return "TOURNAMENT";
 
-	return isPlayingTournament ? "TOURNAMENT" : null;
+	if (activity.lobby && activity.lobby.lobbyId !== lobbyId) return "LOBBY";
+
+	return null;
 }
 
 /**

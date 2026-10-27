@@ -233,15 +233,20 @@ export function reportGame({
 export function undoLatestReport({
 	setId,
 	reportedCount,
+	isHost,
 }: {
 	setId: number;
 	reportedCount: number;
+	/** The actor hosts the lobby, undoing for either side */
+	isHost: boolean;
 }): Promise<ReportResult> {
 	const userId = actorId();
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
-		if (!set || !LobbySet.canUndo(set, userId)) return "NOT_ALLOWED";
+		if (!set || !LobbySet.canUndo(set, userId, { isHost })) {
+			return "NOT_ALLOWED";
+		}
 		if (LobbySet.reportedCount(set) !== reportedCount) return "STALE";
 
 		const game = set.games.findLast(
@@ -288,6 +293,24 @@ export function confirmSet(setId: number): Promise<ReportResult> {
 	});
 }
 
+/** Confirms a disputed result as the actor (`confirmedByUserId`), the host settling the dispute. */
+export function confirmDisputedSet(setId: number): Promise<ReportResult> {
+	const userId = actorId();
+
+	return db.transaction().execute(async (trx) => {
+		const set = await findSetForUpdate(setId, trx);
+		if (!set || LobbySet.status(set) !== "DISPUTED") return "NOT_ALLOWED";
+
+		await trx
+			.updateTable("LobbySet")
+			.set({ confirmedAt: databaseTimestampNow(), confirmedByUserId: userId })
+			.where("LobbySet.id", "=", setId)
+			.execute();
+
+		return "REPORTED";
+	});
+}
+
 /** Marks the decided result disputed by the actor's side. */
 export function disputeSet(setId: number): Promise<ReportResult> {
 	const userId = actorId();
@@ -307,10 +330,11 @@ export function disputeSet(setId: number): Promise<ReportResult> {
 }
 
 /**
- * Ends the user's unfinished set because they left: a decided result stands as if confirmed, otherwise their
- * side forfeits. Does nothing if they aren't playing an unfinished set.
+ * Ends the user's unfinished set because they left: a decided result stands as if confirmed, a set without a
+ * map reported is called off (deleted), otherwise their side forfeits. Does nothing if they aren't playing an
+ * unfinished set.
  */
-export async function forfeitOrConfirmLeftSet(
+export async function endLeftSet(
 	{ setId, userId }: { setId: number; userId: number },
 	trx?: Transaction<DB>,
 ) {
@@ -320,6 +344,14 @@ export async function forfeitOrConfirmLeftSet(
 
 	const side = LobbySet.sideOf(set, userId);
 	if (!side) return;
+
+	if (LobbySet.reportedCount(set) === 0) {
+		await executor
+			.deleteFrom("LobbySet")
+			.where("LobbySet.id", "=", setId)
+			.execute();
+		return;
+	}
 
 	await executor
 		.updateTable("LobbySet")

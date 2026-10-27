@@ -168,6 +168,7 @@ export const OG_IMAGE_PAGES = [
 	"tier-list-maker",
 	"links",
 	"maps",
+	"lobbies",
 ] as const;
 
 export type OgImagePage = (typeof OG_IMAGE_PAGES)[number];
@@ -182,7 +183,6 @@ export const NAV_ICONS = [
 	"badges",
 	"luti",
 	"scanner",
-	"lobbies",
 ] as const;
 
 export type NavIcon = (typeof NAV_ICONS)[number];

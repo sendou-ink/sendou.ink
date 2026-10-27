@@ -34,6 +34,7 @@ export const action = defineAction(
 		const lobbyId = await LobbyRepository.insert({
 			hostUserId: user.id,
 			name: body.name ?? `${user.username}'s lobby`,
+			description: body.description,
 			label: body.label,
 			startsAt,
 			bestOf: Number(body.bestOf) as LobbyBestOf,

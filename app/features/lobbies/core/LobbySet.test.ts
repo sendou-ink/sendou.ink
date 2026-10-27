@@ -118,6 +118,18 @@ describe("LobbySet.canUndo", () => {
 	])("$why", ({ set, userId, expected }) => {
 		expect(LobbySet.canUndo(set, userId)).toBe(expected);
 	});
+
+	test.each([
+		{ why: "a decided result", set: decided, expected: true },
+		{ why: "nothing to undo", set: setOf(), expected: false },
+		{
+			why: "a confirmed set",
+			set: setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true }),
+			expected: false,
+		},
+	])("the host undoes $why from any side -> $expected", ({ set, expected }) => {
+		expect(LobbySet.canUndo(set, 5, { isHost: true })).toBe(expected);
+	});
 });
 
 describe("LobbySet.canConfirm", () => {

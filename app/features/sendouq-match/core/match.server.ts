@@ -25,6 +25,9 @@ import type { MatchTiers } from "../SQMatchRepository.server";
 
 type WeightsMap = Map<string, number>;
 
+/** How much each earlier play of a map multiplies its weight by, see `playedMaps` of {@link matchMapList}. */
+const PLAYED_MAP_WEIGHT_MULTIPLIER = 0.25;
+
 async function calculateMapWeights(
 	groupOnePreferences: UserMapModePreferences[],
 	groupTwoPreferences: UserMapModePreferences[],
@@ -148,6 +151,9 @@ function countVotesForTeam(
 	}
 }
 
+/**
+ * @param playedMaps maps the players have already played together, each play weighing the map down further
+ */
 export async function matchMapList(
 	groupOne: {
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
@@ -159,6 +165,7 @@ export async function matchMapList(
 	},
 	modesIncluded: readonly ModeShort[],
 	bestOf: number,
+	playedMaps: ModeWithStage[] = [],
 ): Promise<TournamentMapListMap[]> {
 	const { weights, teamOneVotedKeys, teamTwoVotedKeys } =
 		await calculateMapWeights(
@@ -166,6 +173,7 @@ export async function matchMapList(
 			groupTwo.preferences.map((p) => p.preferences),
 			modesIncluded,
 		);
+	weighDownPlayedMaps(weights, playedMaps);
 
 	logger.info(
 		`[matchMapList] Generated map weights: ${JSON.stringify(
@@ -225,6 +233,20 @@ export async function matchMapList(
 	}
 
 	return result;
+}
+
+/** Only positive weights are scaled down, scaling a negative one would raise it. */
+function weighDownPlayedMaps(weights: WeightsMap, playedMaps: ModeWithStage[]) {
+	const playCounts = R.countBy(playedMaps, (map) =>
+		MapList.modeStageKey(map.mode, map.stageId),
+	);
+
+	for (const [key, count] of Object.entries(playCounts)) {
+		const weight = weights.get(key);
+		if (weight === undefined || weight <= 0) continue;
+
+		weights.set(key, weight * PLAYED_MAP_WEIGHT_MULTIPLIER ** count);
+	}
 }
 
 /** Teams alternate picking from maps they voted for, the last map preferably one both voted for. */

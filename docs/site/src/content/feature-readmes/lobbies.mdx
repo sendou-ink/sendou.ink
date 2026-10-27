@@ -33,8 +33,9 @@ The statuses are `LobbyState.status`. Nothing is stored about which one a lobby 
 	AwaitingConfirmation --> Reporting: the reporting side undoes
 	Disputed --> Reporting: the reporting side undoes
 	AwaitingConfirmation --> Confirmed: the other side confirms, or a player leaves
-	Disputed --> Confirmed: the other side confirms, or a player leaves
+	Disputed --> Confirmed: the other side or the host confirms, or a player leaves
 	Reporting --> Forfeited: a player leaves, their side forfeits
+	Reporting --> [*]: a player leaves before any map is reported, the set is called off
 	Confirmed --> [*]
 	Forfeited --> [*]`} />
 

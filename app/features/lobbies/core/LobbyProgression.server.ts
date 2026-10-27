@@ -339,6 +339,11 @@ async function startSet({ lobby, sets }: LoadedState) {
 		bravo: preferencesOf(result.bravo),
 		modes: lobby.modes,
 		bestOf: lobby.bestOf,
+		playedMaps: sets.flatMap((set) =>
+			set.games.flatMap((game) =>
+				game.winnerSide ? [{ mode: game.mode, stageId: game.stageId }] : [],
+			),
+		),
 	});
 
 	await LobbyMatchRepository.insertSet({

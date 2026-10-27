@@ -621,8 +621,6 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 
 	const lastPathSegment = crumb.imgPath.split("/").pop() ?? "";
 	const isExternal = lastPathSegment.includes(".");
-	const iconClass = clsx(styles.pageIcon, "rounded");
-
 	// an <img> can finish loading (and fail) before React hydrates and attaches onError, so that
 	// error is missed — re-check on mount and fall back manually so SSR'd icons still heal
 	const checkAlreadyErrored = (img: HTMLImageElement | null) => {
@@ -641,7 +639,7 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 					ref={checkAlreadyErrored}
 					src={identiconSrc ?? crumb.imgPath}
 					alt=""
-					className={iconClass}
+					className={clsx(styles.pageIcon, "rounded")}
 					width={28}
 					height={28}
 					onError={() => setIsErrored(true)}
@@ -650,7 +648,7 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 				<Image
 					path={crumb.imgPath}
 					alt=""
-					className={iconClass}
+					className={styles.pageIcon}
 					width={20}
 					height={20}
 				/>

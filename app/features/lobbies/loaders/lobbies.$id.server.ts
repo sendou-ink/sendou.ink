@@ -122,6 +122,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			viewer,
 			isPlayingUnfinishedSet,
 			hasFriendCode,
+			isKicked: lobby.isViewerKicked,
 			activeCount,
 			roomSize: lobby.roomSize,
 			now,

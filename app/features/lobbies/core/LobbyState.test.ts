@@ -110,6 +110,7 @@ describe("LobbyState.viewerActions", () => {
 	const base = {
 		isPlayingUnfinishedSet: false,
 		hasFriendCode: true,
+		isKicked: false,
 		activeCount: 8,
 		roomSize: 10,
 		startsAt: STARTS_AT,
@@ -131,6 +132,15 @@ describe("LobbyState.viewerActions", () => {
 			now: 0,
 			action: "SIGN_UP",
 			hasFriendCode: false,
+			expected: false,
+		},
+		{
+			why: "kicked, no sign up",
+			status: "ACTIVE",
+			viewer: null,
+			now: 0,
+			action: "SIGN_UP",
+			isKicked: true,
 			expected: false,
 		},
 		{

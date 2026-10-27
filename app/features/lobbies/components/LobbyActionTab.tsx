@@ -1,5 +1,6 @@
 import { Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
@@ -8,6 +9,7 @@ import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import * as LobbySet from "../core/LobbySet";
 import { LOBBY_SIDE_TEAM_ID, type LobbySide } from "../lobbies-constants";
 import { type LobbySetData, useLobbyView } from "../lobbies-hooks";
@@ -125,7 +127,7 @@ function ConfirmationTab({
 	set: LobbySetData;
 	viewerSide: LobbySide;
 }) {
-	const { t } = useTranslation(["lobbies", "q"]);
+	const { t } = useTranslation(["lobbies", "q", "common"]);
 	const { data } = useLobbyView();
 	const confirmSet = useActionSubmit(lobbyActionSchema);
 	const disputeSet = useActionSubmit(lobbyActionSchema);
@@ -139,6 +141,10 @@ function ConfirmationTab({
 	const ownScore =
 		viewerSide === "ALPHA" ? `${alpha}-${bravo}` : `${bravo}-${alpha}`;
 	const isDisputed = LobbySet.status(set) === "DISPUTED";
+	const isHost = useHasPermission(data.lobby, "MANAGE");
+	const canConfirm = LobbySet.canConfirm(set, viewerId);
+	const canUndo = LobbySet.canUndo(set, viewerId, { isHost });
+	const canHostConfirm = isHost && isDisputed && !canConfirm;
 
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
@@ -157,11 +163,18 @@ function ConfirmationTab({
 						{t("lobbies:confirm.disputed")}
 					</p>
 				) : null}
-				{LobbySet.canConfirm(set, viewerId) ? (
-					<div className="stack md items-center">
-						<p className="text-lighter text-xs text-center">
-							{t("q:match.confirmScore.check")}
-						</p>
+				{canConfirm ? (
+					<p className="text-lighter text-xs text-center">
+						{t("q:match.confirmScore.check")}
+					</p>
+				) : null}
+				{LobbySet.canUndo(set, viewerId) && !isDisputed ? (
+					<p className="text-lighter text-sm text-center">
+						{t("q:match.waitingForConfirmation")}
+					</p>
+				) : null}
+				<div className="stack horizontal sm justify-center flex-wrap">
+					{canConfirm ? (
 						<SendouButton
 							variant={winner === viewerSide ? "success" : "destructive"}
 							isPending={confirmSet.state !== "idle"}
@@ -174,28 +187,10 @@ function ConfirmationTab({
 								? t("q:match.confirmScore.win", { score: ownScore })
 								: t("q:match.confirmScore.loss", { score: ownScore })}
 						</SendouButton>
-						{LobbySet.canDispute(set, viewerId) ? (
-							<SendouButton
-								variant="minimal-destructive"
-								size="small"
-								isPending={disputeSet.state !== "idle"}
-								onClick={() =>
-									disputeSet.submit("DISPUTE_SET", { setId: set.id })
-								}
-							>
-								{t("q:match.confirmScore.wrong")}
-							</SendouButton>
-						) : null}
-					</div>
-				) : null}
-				{LobbySet.canUndo(set, viewerId) ? (
-					<div className="stack md items-center">
-						<p className="text-lighter text-sm">
-							{t("q:match.waitingForConfirmation")}
-						</p>
+					) : null}
+					{canUndo ? (
 						<SendouButton
 							variant="outlined"
-							size="small"
 							isPending={undoReport.state !== "idle"}
 							onClick={() =>
 								undoReport.submit("UNDO_MAP_REPORT", {
@@ -206,9 +201,44 @@ function ConfirmationTab({
 						>
 							{t("q:match.undoReport")}
 						</SendouButton>
+					) : null}
+					{canHostConfirm ? (
+						<ActionButton
+							schema={lobbyActionSchema}
+							action="HOST_CONFIRM_SET"
+							fields={{ setId: set.id }}
+							testId="lobby-host-confirm-set-button"
+							confirm={{
+								dialogHeading: t("lobbies:hostDispute.heading", {
+									side: t(`lobbies:side.${winner!}`),
+									score:
+										winner === "ALPHA"
+											? `${alpha}-${bravo}`
+											: `${bravo}-${alpha}`,
+								}),
+								description: t("lobbies:hostDispute.explanation"),
+								submitButtonText: t("common:actions.confirm"),
+							}}
+						>
+							{t("lobbies:hostDispute.confirm")}
+						</ActionButton>
+					) : null}
+				</div>
+				{LobbySet.canDispute(set, viewerId) ? (
+					<div className="stack items-center">
+						<SendouButton
+							variant="minimal-destructive"
+							size="small"
+							isPending={disputeSet.state !== "idle"}
+							onClick={() =>
+								disputeSet.submit("DISPUTE_SET", { setId: set.id })
+							}
+						>
+							{t("q:match.confirmScore.wrong")}
+						</SendouButton>
 					</div>
 				) : null}
-				<WeaponReporter {...weaponReport} standalone />
+				<WeaponReporter {...weaponReport} />
 			</div>
 		</SendouTabPanel>
 	);

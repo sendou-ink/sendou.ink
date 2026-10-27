@@ -1,11 +1,10 @@
 import clsx from "clsx";
 import { Check, Crown } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Avatar } from "~/components/Avatar";
-import { LocaleTime } from "~/components/LocaleTime";
 import type { LobbyParticipantStatus } from "../lobbies-constants";
 import { useLobbyView } from "../lobbies-hooks";
 import styles from "./LobbyParticipants.module.css";
+import { LobbyPlayer } from "./LobbyPlayer";
 import { LobbyPlayerMenu } from "./LobbyPlayerMenu";
 
 /** Everyone in the lobby before the room forms: who checked in, who signed up and the waitlist. */
@@ -25,23 +24,10 @@ export function LobbyParticipants() {
 	return (
 		<div className={styles.root}>
 			<div className={styles.summary}>
-				<span>
-					{t("lobbies:participants.count", {
-						count: spotsTaken,
-						cap: data.lobby.roomSize,
-					})}
-				</span>
-				<span className="text-lighter">
-					<LocaleTime
-						inline
-						date={data.lobby.startsAt}
-						options={{
-							weekday: "short",
-							hour: "numeric",
-							minute: "numeric",
-						}}
-					/>
-				</span>
+				{t("lobbies:participants.count", {
+					count: spotsTaken,
+					cap: data.lobby.roomSize,
+				})}
 			</div>
 			<ParticipantGroup
 				title={t("lobbies:participants.checkedIn")}
@@ -89,8 +75,7 @@ function ParticipantGroup({
 						data-testid="lobby-participant"
 					>
 						<LobbyPlayerMenu userId={participant.id} />
-						<Avatar user={participant} size="xxs" />
-						<span>{participant.username}</span>
+						<LobbyPlayer user={participant} />
 						{participant.id === data.lobby.hostUserId ? (
 							<Crown size={14} className="text-theme" aria-label="Host" />
 						) : null}

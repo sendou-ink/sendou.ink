@@ -56,7 +56,7 @@ export function LobbyCard({ lobby }: { lobby: LobbyListItem }) {
 				<LobbyInfoItem label={t("lobbies:card.host")}>
 					{lobby.hostUsername}
 				</LobbyInfoItem>
-				{lobby.viewerStatus ? (
+				{lobby.viewerStatus && lobby.endedAt === null ? (
 					<LobbyInfoItem label={t("lobbies:card.status")}>
 						<span className={styles.viewerStatus}>
 							{t(`lobbies:viewerStatus.${lobby.viewerStatus}`)}
@@ -96,7 +96,10 @@ function LobbyCardActions({ lobby }: { lobby: LobbyListItem }) {
 		isOpen && Boolean(user) && !lobby.viewerStatus && data.hasFriendCode;
 	// in the room leaving might forfeit a set, done from the lobby page instead
 	const canLeave =
-		isOpen && lobby.viewerStatus !== null && lobby.viewerStatus !== "IN_ROOM";
+		isOpen &&
+		lobby.viewerStatus !== null &&
+		lobby.viewerStatus !== "IN_ROOM" &&
+		lobby.viewerStatus !== "SPECTATING";
 
 	return (
 		<>

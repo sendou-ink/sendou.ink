@@ -6,6 +6,7 @@ import * as UserActivity from "~/features/user-activity/core/UserActivity.server
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
+import { hasPermission } from "~/modules/permissions/utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import {
 	errorToast,
@@ -53,6 +54,7 @@ export const action = defineAction(
 		const requireNoConflict = () => {
 			const conflict = UserActivity.lobbyConflict(
 				UserActivity.resolve(user.id),
+				id,
 			);
 			errorToastIfFalsy(
 				conflict !== "SENDOUQ",
@@ -61,6 +63,10 @@ export const action = defineAction(
 			errorToastIfFalsy(
 				conflict !== "TOURNAMENT",
 				"You can't check in to a lobby while playing in a tournament",
+			);
+			errorToastIfFalsy(
+				conflict !== "LOBBY",
+				"Leave the other lobby before checking in to this one",
 			);
 		};
 		const activeCount = lobby.participants.filter(
@@ -71,6 +77,10 @@ export const action = defineAction(
 		switch (body._action) {
 			case "SIGN_UP": {
 				errorToastIfFalsy(!viewer, "Already signed up");
+				errorToastIfFalsy(
+					!lobby.isViewerKicked,
+					"The host kicked you from this lobby",
+				);
 				errorToastIfFalsy(
 					await UserRepository.findCurrentFriendCodeByUserId(user.id),
 					"Set your friend code first",
@@ -91,6 +101,12 @@ export const action = defineAction(
 							? "REGISTERED"
 							: "WAITLISTED",
 				});
+				if (isPresentRightAway) {
+					await LobbyMatchRepository.confirmReadyChecks({
+						lobbyId: id,
+						userId: user.id,
+					});
+				}
 				break;
 			}
 			case "CHECK_IN": {
@@ -186,6 +202,7 @@ export const action = defineAction(
 				const result = await LobbyMatchRepository.undoLatestReport({
 					setId: set.id,
 					reportedCount: body.reportedCount,
+					isHost: hasPermission(lobby, "MANAGE", user),
 				});
 				if (result === "STALE") return null;
 				if (result === "NOT_ALLOWED") return errorToast("Can't undo");
@@ -201,6 +218,13 @@ export const action = defineAction(
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.disputeSet(set.id);
 				if (result === "NOT_ALLOWED") return errorToast("Can't dispute");
+				break;
+			}
+			case "HOST_CONFIRM_SET": {
+				requirePermission(lobby, "MANAGE");
+				const set = setOfLobby(body.setId);
+				const result = await LobbyMatchRepository.confirmDisputedSet(set.id);
+				if (result === "NOT_ALLOWED") return errorToast("Can't confirm");
 				break;
 			}
 			case "REPORT_WEAPON": {
@@ -241,7 +265,7 @@ export const action = defineAction(
 					),
 				);
 
-				await LobbyRepository.removeParticipant({
+				await LobbyRepository.kickParticipant({
 					lobbyId: id,
 					userId: target.id,
 					unfinishedSetId: unfinishedSetIdOf(target),
@@ -340,6 +364,7 @@ function viewerActions({
 		viewer,
 		isPlayingUnfinishedSet: false,
 		hasFriendCode: true,
+		isKicked: lobby.isViewerKicked,
 		activeCount,
 		roomSize: lobby.roomSize,
 		now,

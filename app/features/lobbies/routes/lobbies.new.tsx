@@ -10,7 +10,7 @@ import {
 } from "~/features/associations/components/VisibilityFormFields";
 import type { CustomFieldRenderProps } from "~/form";
 import { SendouForm } from "~/form/SendouForm";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { lobbiesPage, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/lobbies.new.server";
@@ -22,6 +22,7 @@ export { action, loader };
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "New lobby",
+		image: ogPageImage("lobbies"),
 		location: args.location,
 	});
 };
@@ -59,6 +60,7 @@ export default function NewLobbyPage() {
 				title={t("lobbies:new.title")}
 				defaultValues={{
 					name: null,
+					description: null,
 					label: "CASUAL",
 					startsAt: new Date(),
 					bestOf: "3",
@@ -71,6 +73,7 @@ export default function NewLobbyPage() {
 				{({ FormField }) => (
 					<>
 						<FormField name="name" />
+						<FormField name="description" />
 						<FormField name="label" />
 						<FormField name="startsAt" />
 						<FormField name="bestOf" />

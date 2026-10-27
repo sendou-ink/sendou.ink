@@ -11,7 +11,7 @@ import {
 } from "~/components/elements/Tabs";
 import { Main } from "~/components/Main";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { lobbiesPage, navIconUrl } from "~/utils/urls";
 import { LobbyCard } from "../components/LobbyCard";
@@ -27,6 +27,7 @@ export const meta: MetaFunction = (args) => {
 		title: "Lobbies",
 		description:
 			"Play 8s: sign up, check in and play best-ofs with teams reshuffled after every set.",
+		image: ogPageImage("lobbies"),
 		location: args.location,
 	});
 };

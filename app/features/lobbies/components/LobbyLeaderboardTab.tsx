@@ -1,6 +1,5 @@
 import { Crown, LogOut, Pause } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouTabPanel } from "~/components/elements/Tabs";
@@ -10,6 +9,7 @@ import { Table } from "~/components/Table";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { useLobbyView } from "../lobbies-hooks";
 import styles from "./LobbyLeaderboardTab.module.css";
+import { LobbyPlayer } from "./LobbyPlayer";
 import { LobbyPlayerMenu } from "./LobbyPlayerMenu";
 
 const WEAPONS_SHOWN = 4;
@@ -53,8 +53,7 @@ export function LobbyLeaderboardTab() {
 								<td>
 									{user ? (
 										<span className={styles.player}>
-											<Avatar user={user} size="xxs" />
-											{user.username}
+											<LobbyPlayer user={user} />
 											<HostIndicator userId={row.userId} />
 											<SittingOutIndicator userId={row.userId} />
 											<LeftIndicator userId={row.userId} />
@@ -106,8 +105,7 @@ export function LobbyLeaderboardTab() {
 							>
 								<span className="text-lighter">{i + 1}.</span>
 								<LobbyPlayerMenu userId={participant.id} />
-								<Avatar user={participant} size="xxs" />
-								{participant.username}
+								<LobbyPlayer user={participant} />
 								<HostIndicator userId={participant.id} />
 							</li>
 						))}

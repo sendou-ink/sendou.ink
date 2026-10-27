@@ -22,14 +22,6 @@
 	gap: var(--s-2);
 }
 
-.readyCheck {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--s-2) var(--s-3);
-	width: 100%;
-	padding: var(--s-2) var(--s-3);
-	border-radius: var(--radius-field);
-	background-color: var(--color-success-low);
-	font-size: var(--font-sm);
+.countdown {
+	font-variant-numeric: tabular-nums;
 }

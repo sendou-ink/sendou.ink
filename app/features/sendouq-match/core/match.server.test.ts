@@ -357,6 +357,25 @@ describe("matchMapList()", () => {
 		}
 	});
 
+	test("maps played before come up less often", async () => {
+		vi.mocked(getDefaultMapWeights).mockResolvedValue(new Map());
+		const playedMap = { mode: "SZ" as const, stageId: 0 as const };
+
+		let playedMapCount = 0;
+		for (let i = 0; i < 100; i++) {
+			const [map] = await matchMapList(
+				szGroup(1, [0, 2]),
+				szGroup(2, [0, 2]),
+				["SZ"],
+				1,
+				[playedMap, playedMap],
+			);
+			if (map.stageId === playedMap.stageId) playedMapCount++;
+		}
+
+		expect(playedMapCount).toBeLessThan(25);
+	});
+
 	test("plays only on the other team's maps when a team has no pool", async () => {
 		const otherTeamStageIds: StageId[] = [8, 10, 11, 12, 13, 14, 15];
 		vi.mocked(getDefaultMapWeights).mockResolvedValue(

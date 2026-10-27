@@ -13,24 +13,28 @@ type TeamPreferences = Array<{
 
 /**
  * Maps of a set between two shuffled teams, picked like SendouQ's from the players' match profile map
- * preferences, among the modes the host picked.
+ * preferences, among the modes the host picked. Maps already played in the lobby are less likely to come up.
  */
 export async function generate({
 	alpha,
 	bravo,
 	modes,
 	bestOf,
+	playedMaps,
 }: {
 	alpha: TeamPreferences;
 	bravo: TeamPreferences;
 	modes: ModeShort[];
 	bestOf: number;
+	/** Maps reported in the lobby's earlier sets, a map once per time played */
+	playedMaps: ModeWithStage[];
 }): Promise<ModeWithStage[]> {
 	const maps = await matchMapList(
 		{ id: 1, preferences: withPreferences(alpha) },
 		{ id: 2, preferences: withPreferences(bravo) },
 		modes,
 		bestOf,
+		playedMaps,
 	);
 
 	return maps.map(({ mode, stageId }) => ({ mode, stageId }));

@@ -6,6 +6,9 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { wrappedAction } from "~/utils/Test";
+import * as LobbyActivity from "../core/LobbyActivity.server";
+import * as LobbySet from "../core/LobbySet";
+import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import type { lobbyActionSchema } from "../lobbies-schemas";
 import { action } from "./lobbies.$id.server";
@@ -127,6 +130,82 @@ describe("lobby action", () => {
 		expect(
 			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
 		).toBe(false);
+	});
+
+	test("signing up to a started lobby while in another lobby is rejected", async () => {
+		const startedAt = dateToDatabaseTimestamp(subMinutes(new Date(), 1));
+		await LobbyFactory.create(
+			{ hostUserId: visitorId(), startsAt: startedAt },
+			{ checkedInUserIds: [visitorId()] },
+		);
+		const lobby = await LobbyFactory.create({
+			hostUserId: hostId(),
+			startsAt: startedAt,
+		});
+		await LobbyActivity.refresh();
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
+		).toBe(false);
+	});
+
+	test("a kicked player can't sign up again", async () => {
+		const lobby = await LobbyFactory.create(
+			{ hostUserId: hostId() },
+			{ signedUpUserIds: [visitorId()] },
+		);
+		await lobbyAction(
+			{ _action: "KICK", userId: visitorId() },
+			{ user: hostId(), params: { id: String(lobby.id) } },
+		);
+
+		await lobbyAction(
+			{ _action: "SIGN_UP" },
+			{ user: visitorId(), params: { id: String(lobby.id) } },
+		);
+
+		expect(
+			(await participantsOf(lobby.id)).some((p) => p.userId === visitorId()),
+		).toBe(false);
+	});
+
+	test("only the host confirms a disputed set", async () => {
+		const playerIds = users.ids(8);
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: playerIds[0],
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 30)),
+			},
+			{
+				signedUpUserIds: playerIds.slice(1),
+				checkedInUserIds: playerIds,
+				reportedMapCount: 2,
+				isDisputed: true,
+			},
+		);
+		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+		const nonHostId = playerIds[1];
+
+		await expect(
+			lobbyAction(
+				{ _action: "HOST_CONFIRM_SET", setId: set.id },
+				{ user: nonHostId, params: { id: String(lobby.id) } },
+			),
+		).rejects.toBeTruthy();
+
+		await lobbyAction(
+			{ _action: "HOST_CONFIRM_SET", setId: set.id },
+			{ user: playerIds[0], params: { id: String(lobby.id) } },
+		);
+		const [confirmed] = await LobbyMatchRepository.findAllSetsByLobbyId(
+			lobby.id,
+		);
+		expect(LobbySet.status(confirmed)).toBe("CONFIRMED");
 	});
 
 	test("only the host can end the lobby", async () => {

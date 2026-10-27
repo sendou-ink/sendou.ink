@@ -20,6 +20,8 @@ type Options = {
 	playedSetCount?: number;
 	/** Maps reported in the set after the played ones */
 	reportedMapCount?: number;
+	/** Bravo disputes the set after the played ones, needs `reportedMapCount` to decide it */
+	isDisputed?: boolean;
 	isEnded?: boolean;
 };
 
@@ -46,6 +48,7 @@ export const { create } = defineFactory({
 			lateWaitlistedUserIds = [],
 			playedSetCount = 0,
 			reportedMapCount = 0,
+			isDisputed,
 			isEnded,
 		}: Options,
 	) => {
@@ -105,6 +108,11 @@ export const { create } = defineFactory({
 
 		for (const set of await unfinishedSets(LobbyMatchRepository, lobby.id)) {
 			await reportMaps(LobbyMatchRepository, set, reportedMapCount);
+			if (isDisputed) {
+				await actAs(LobbySet.playersOf(set, "BRAVO")[0], () =>
+					LobbyMatchRepository.disputeSet(set.id),
+				);
+			}
 		}
 
 		if (isEnded) await LobbyRepository.end(lobby.id);

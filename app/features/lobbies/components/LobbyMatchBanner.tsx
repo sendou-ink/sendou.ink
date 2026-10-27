@@ -37,7 +37,7 @@ export function LobbyMatchBanner() {
 		);
 	}
 
-	const joinPool = isViewerInRoom ? `8S${(data.lobby.id % 9) + 1}` : null;
+	const joinPool = isViewerInRoom ? `LB${(data.lobby.id % 9) + 1}` : null;
 
 	if (!currentSet || LobbySet.isFinished(currentSet)) {
 		const playableCount = roomMembers.filter(

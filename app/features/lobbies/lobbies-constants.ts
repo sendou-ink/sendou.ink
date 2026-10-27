@@ -15,6 +15,7 @@ export const PLAYERS_PER_SET = 8;
 export const PLAYERS_PER_TEAM = 4;
 
 export const LOBBY_NAME_MAX_LENGTH = 50;
+export const LOBBY_DESCRIPTION_MAX_LENGTH = 500;
 
 /** How long before the start check-in opens */
 export const CHECK_IN_LEAD_MINUTES = 10;

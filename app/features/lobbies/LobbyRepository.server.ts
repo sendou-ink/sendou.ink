@@ -27,12 +27,18 @@ import {
 
 const INDEX_LIST_LIMIT = 50;
 
+interface ParticipantRemoval {
+	lobbyId: number;
+	userId: number;
+	unfinishedSetId: number | null;
+}
+
 /** The lobby with its participants, see {@link findById}. */
 export type LobbyById = NonNullable<Unwrapped<typeof findById>>;
 
 /**
  * The lobby with its participants, if the actor may see it: by its visibility, its share key, or as a participant
- * or player of one of its sets.
+ * or player of one of its sets. `isViewerKicked` is whether the host kicked the actor out of it.
  * `permissions.MANAGE` is the host, the only one getting the `shareKey`.
  */
 export async function findById(
@@ -44,9 +50,11 @@ export async function findById(
 
 	const row = await db
 		.selectFrom("Lobby")
+		.innerJoin("User as Host", "Host.id", "Lobby.hostUserId")
 		.select((eb) => [
 			"Lobby.id",
 			"Lobby.name",
+			"Lobby.description",
 			"Lobby.label",
 			"Lobby.startsAt",
 			"Lobby.bestOf",
@@ -60,6 +68,7 @@ export async function findById(
 			"Lobby.endedAt",
 			"Lobby.shareKey",
 			"Lobby.createdAt",
+			"Host.username as hostUsername",
 			eb.not(isPublicNow({ entity: "Lobby", now })).as("isPrivate"),
 			jsonArrayFrom(
 				eb
@@ -78,6 +87,17 @@ export async function findById(
 					.orderBy("LobbyParticipant.joinedAt", "asc")
 					.orderBy("LobbyParticipant.id", "asc"),
 			).as("participants"),
+			viewerId === null
+				? sql<number>`0`.as("isViewerKicked")
+				: eb
+						.exists(
+							eb
+								.selectFrom("LobbyKickedUser")
+								.select("LobbyKickedUser.userId")
+								.whereRef("LobbyKickedUser.lobbyId", "=", "Lobby.id")
+								.where("LobbyKickedUser.userId", "=", viewerId),
+						)
+						.as("isViewerKicked"),
 		])
 		.where("Lobby.id", "=", id)
 		.where((eb) =>
@@ -95,6 +115,7 @@ export async function findById(
 		...row,
 		shareKey: row.hostUserId === viewerId ? row.shareKey : null,
 		isPrivate: Boolean(row.isPrivate),
+		isViewerKicked: Boolean(row.isViewerKicked),
 		participants: row.participants.map((participant) => ({
 			...participant,
 			isDroppingAfterSet: Boolean(participant.isDroppingAfterSet),
@@ -255,19 +276,66 @@ function listQuery({
 						.whereRef("LobbyParticipant.lobbyId", "=", "Lobby.id")
 						.where("LobbyParticipant.userId", "=", viewerId)
 						.as("viewerStatus"),
+			viewerId === null
+				? sql<number>`0`.as("isViewerPlaying")
+				: isPlaying(eb, viewerId).as("isViewerPlaying"),
 		]);
 }
 
 /**
+ * Whether the user plays in the room rather than spectates: on a side of the latest set, unless sitting out with
+ * that set finished.
+ */
+function isPlaying(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {
+	return eb.exists(
+		eb
+			.selectFrom("LobbySetParticipant")
+			.innerJoin("LobbySet", "LobbySet.id", "LobbySetParticipant.setId")
+			.innerJoin("LobbyParticipant", (join) =>
+				join
+					.onRef("LobbyParticipant.lobbyId", "=", "LobbySet.lobbyId")
+					.onRef("LobbyParticipant.userId", "=", "LobbySetParticipant.userId"),
+			)
+			.select("LobbySetParticipant.setId")
+			.where("LobbySetParticipant.userId", "=", userId)
+			.where("LobbySetParticipant.side", "is not", null)
+			.where("LobbySet.id", "=", (innerEb) =>
+				innerEb
+					.selectFrom("LobbySet as LatestSet")
+					.select("LatestSet.id")
+					.whereRef("LatestSet.lobbyId", "=", "Lobby.id")
+					.orderBy("LatestSet.id", "desc")
+					.limit(1),
+			)
+			.where((innerEb) =>
+				innerEb.or([
+					innerEb("LobbyParticipant.isSittingOut", "=", 0),
+					innerEb.and([
+						innerEb("LobbySet.confirmedAt", "is", null),
+						innerEb("LobbySet.forfeitingSide", "is", null),
+					]),
+				]),
+			),
+	);
+}
+
+/**
  * Lobbies for the index page: running and upcoming ones visible to the actor, with the actor's own (participating)
- * lobbies first, and ended ones the actor played in.
+ * lobbies first, and ended ones the actor played in. `viewerStatus` tells apart spectating from playing in the room.
  */
 export async function findAllForIndex() {
 	const viewerId = actorIdOrNull();
 	const now = databaseTimestampNow();
 	const visible = visibleTo({ entity: "Lobby", viewerId, now });
-	const mapRow = (row: Unwrapped<ReturnType<typeof listQuery>["execute"]>) => ({
+	const mapRow = ({
+		isViewerPlaying,
+		...row
+	}: Unwrapped<ReturnType<typeof listQuery>["execute"]>) => ({
 		...row,
+		viewerStatus:
+			row.viewerStatus === "IN_ROOM" && !isViewerPlaying
+				? ("SPECTATING" as const)
+				: row.viewerStatus,
 		isPrivate: Boolean(row.isPrivate),
 		playerCount: row.playerCount ?? 0,
 	});
@@ -345,20 +413,65 @@ export function findAllUpcomingByUserId({
 		.execute();
 }
 
-/** Who is active in a lobby (present: checked in or in the room, not dropping) and in which, across unended lobbies. */
-export function findAllActiveParticipants() {
-	return db
+/**
+ * Who is active in a lobby (present: checked in or in the room, not dropping) and in which, across unended
+ * lobbies. `isPlayingSet` is whether they play a side of the lobby's unfinished set.
+ */
+export async function findAllActiveParticipants() {
+	const rows = await db
 		.selectFrom("LobbyParticipant")
 		.innerJoin("Lobby", "Lobby.id", "LobbyParticipant.lobbyId")
-		.select([
+		.select((eb) => [
 			"LobbyParticipant.userId",
 			"LobbyParticipant.status",
 			"Lobby.id as lobbyId",
 			"Lobby.name as lobbyName",
+			eb
+				.exists(
+					eb
+						.selectFrom("LobbySetParticipant")
+						.innerJoin("LobbySet", "LobbySet.id", "LobbySetParticipant.setId")
+						.select("LobbySetParticipant.setId")
+						.whereRef("LobbySet.lobbyId", "=", "Lobby.id")
+						.where("LobbySet.confirmedAt", "is", null)
+						.where("LobbySet.forfeitingSide", "is", null)
+						.whereRef(
+							"LobbySetParticipant.userId",
+							"=",
+							"LobbyParticipant.userId",
+						)
+						.where("LobbySetParticipant.side", "is not", null),
+				)
+				.as("isPlayingSet"),
 		])
 		.where("Lobby.endedAt", "is", null)
 		.where("LobbyParticipant.status", "in", ["CHECKED_IN", "IN_ROOM"])
 		.where("LobbyParticipant.isDroppingAfterSet", "=", 0)
+		.execute();
+
+	return rows.map((row) => ({
+		...row,
+		isPlayingSet: Boolean(row.isPlayingSet),
+	}));
+}
+
+/** Who a lobby's open ready check is waiting on: asked to take a vacant spot in its room and not confirmed yet. */
+export function findAllUnconfirmedReadyCheckUsers() {
+	return db
+		.selectFrom("LobbyReadyCheckUser")
+		.innerJoin(
+			"LobbyReadyCheck",
+			"LobbyReadyCheck.id",
+			"LobbyReadyCheckUser.readyCheckId",
+		)
+		.innerJoin("LobbyParticipant", (join) =>
+			join
+				.onRef("LobbyParticipant.lobbyId", "=", "LobbyReadyCheck.lobbyId")
+				.onRef("LobbyParticipant.userId", "=", "LobbyReadyCheckUser.userId"),
+		)
+		.select(["LobbyReadyCheckUser.userId", "LobbyReadyCheck.lobbyId"])
+		.where("LobbyReadyCheckUser.confirmedAt", "is", null)
+		.where("LobbyParticipant.status", "!=", "IN_ROOM")
 		.execute();
 }
 
@@ -625,26 +738,23 @@ export async function deleteParticipants(
 
 /**
  * Removes the user from the lobby right away. If they are playing an unfinished set (`unfinishedSetId`) it ends:
- * a decided result stands, otherwise their side forfeits.
+ * a decided result stands, one without a map reported is called off, otherwise their side forfeits.
  */
-export function removeParticipant({
-	lobbyId,
-	userId,
-	unfinishedSetId,
-}: {
-	lobbyId: number;
-	userId: number;
-	unfinishedSetId: number | null;
-}) {
-	return db.transaction().execute(async (trx) => {
-		if (unfinishedSetId !== null) {
-			await LobbyMatchRepository.forfeitOrConfirmLeftSet(
-				{ setId: unfinishedSetId, userId },
-				trx,
-			);
-		}
+export function removeParticipant(args: ParticipantRemoval) {
+	return db
+		.transaction()
+		.execute((trx) => deleteParticipantEndingSet(args, trx));
+}
 
-		await deleteParticipants({ lobbyId, userIds: [userId] }, trx);
+/** Removes the user from the lobby like {@link removeParticipant} and keeps them from signing up for it again. */
+export function kickParticipant(args: ParticipantRemoval) {
+	return db.transaction().execute(async (trx) => {
+		await deleteParticipantEndingSet(args, trx);
+		await trx
+			.insertInto("LobbyKickedUser")
+			.values({ lobbyId: args.lobbyId, userId: args.userId })
+			.onConflict((oc) => oc.columns(["lobbyId", "userId"]).doNothing())
+			.execute();
 	});
 }
 
@@ -756,4 +866,18 @@ function playedIn(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {
 				.where("LobbySetParticipant.userId", "=", userId),
 		),
 	]);
+}
+
+async function deleteParticipantEndingSet(
+	{ lobbyId, userId, unfinishedSetId }: ParticipantRemoval,
+	trx: Transaction<DB>,
+) {
+	if (unfinishedSetId !== null) {
+		await LobbyMatchRepository.endLeftSet(
+			{ setId: unfinishedSetId, userId },
+			trx,
+		);
+	}
+
+	await deleteParticipants({ lobbyId, userIds: [userId] }, trx);
 }

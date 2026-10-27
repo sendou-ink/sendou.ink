@@ -646,6 +646,9 @@ export function buildCases(fx: Fixtures): {
 	addStatic("LobbyRepository.findAllActiveParticipants", () =>
 		LobbyRepository.findAllActiveParticipants(),
 	);
+	addStatic("LobbyRepository.findAllUnconfirmedReadyCheckUsers", () =>
+		LobbyRepository.findAllUnconfirmedReadyCheckUsers(),
+	);
 	add(
 		"LobbyRepository.findAllUpcomingOfFriendsByUserId",
 		fx.heavyUser,

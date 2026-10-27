@@ -105,13 +105,20 @@ export function canReport(set: SetLike, userId: number) {
 
 /**
  * Whether the user may undo the latest map report. While reporting anyone playing may, once decided only the
- * side that reported the deciding map (the other side confirms or disputes instead).
+ * side that reported the deciding map (the other side confirms or disputes instead). The host may any time
+ * before the set is finished.
  */
-export function canUndo(set: SetLike, userId: number) {
+export function canUndo(
+	set: SetLike,
+	userId: number,
+	{ isHost = false }: { isHost?: boolean } = {},
+) {
+	const current = status(set);
+	if (isHost && !isFinished(set)) return reportedCount(set) > 0;
+
 	const side = sideOf(set, userId);
 	if (!side) return false;
 
-	const current = status(set);
 	if (current === "REPORTING") return reportedCount(set) > 0;
 	if (current === "AWAITING_CONFIRMATION" || current === "DISPUTED") {
 		return reporterSide(set) === side;

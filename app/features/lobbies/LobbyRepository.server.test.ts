@@ -156,6 +156,37 @@ describe("LobbyRepository.findAllForIndex", () => {
 		expect(outsiderListed.ended).toEqual([]);
 	});
 
+	test("tells apart spectating from playing in the room", async () => {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+				roomSize: 9,
+			},
+			{
+				signedUpUserIds: users.ids(9).slice(1),
+				checkedInUserIds: users.ids(9),
+				reportedMapCount: 1,
+			},
+		);
+		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+		const spectatorId = set.participants.find(
+			(participant) => participant.side === null,
+		)!.userId;
+		const playerId = LobbySet.playersOf(set, "ALPHA")[0];
+
+		const statusOf = async (userId: number) => {
+			const listed = await withUserId(userId, () =>
+				LobbyRepository.findAllForIndex(),
+			);
+			return listed.running.find((listedLobby) => listedLobby.id === lobby.id)
+				?.viewerStatus;
+		};
+
+		expect(await statusOf(spectatorId)).toBe("SPECTATING");
+		expect(await statusOf(playerId)).toBe("IN_ROOM");
+	});
+
 	test("a player who left after a set still sees the ended private lobby", async () => {
 		const association = await AssociationFactory.create({ userId: hostId() });
 		const lobby = await LobbyFactory.create(

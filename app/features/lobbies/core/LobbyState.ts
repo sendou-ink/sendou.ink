@@ -99,6 +99,7 @@ export function viewerActions({
 	viewer,
 	isPlayingUnfinishedSet,
 	hasFriendCode,
+	isKicked,
 	activeCount,
 	roomSize,
 	now,
@@ -108,6 +109,8 @@ export function viewerActions({
 	viewer: { status: LobbyParticipantStatus } | null;
 	isPlayingUnfinishedSet: boolean;
 	hasFriendCode: boolean;
+	/** The host kicked the viewer out of the lobby */
+	isKicked: boolean;
 	/** Participants present (checked in or in the room) */
 	activeCount: number;
 	roomSize: number;
@@ -125,7 +128,7 @@ export function viewerActions({
 
 	if (!viewer) {
 		return {
-			SIGN_UP: hasFriendCode,
+			SIGN_UP: hasFriendCode && !isKicked,
 			CHECK_IN: false,
 			LEAVE: false,
 			DROP_AFTER_SET: false,

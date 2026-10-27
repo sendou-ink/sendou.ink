@@ -27,6 +27,9 @@ vi.mock("~/features/mmr/core/Seasons", () => ({
 /** Users are interchangeable here, so tests name them by 1-based position. */
 const users = UserFactory.pool();
 
+const LOBBY_ID = 1;
+const OTHER_LOBBY_ID = 2;
+
 describe("UserActivity.resolve", () => {
 	beforeEach(async () => {
 		await users.create(8);
@@ -172,17 +175,35 @@ describe("UserActivity.lobbyConflict", () => {
 			}),
 			expected: "SENDOUQ",
 		},
+		{
+			why: "active in another lobby",
+			activity: activityOf({ activeLobbyId: OTHER_LOBBY_ID }),
+			expected: "LOBBY",
+		},
+		{
+			why: "active in the lobby itself",
+			activity: activityOf({ activeLobbyId: LOBBY_ID }),
+			expected: null,
+		},
 	])("$why -> $expected", ({ activity, expected }) => {
-		expect(UserActivity.lobbyConflict(activity)).toBe(expected);
+		expect(UserActivity.lobbyConflict(activity, LOBBY_ID)).toBe(expected);
+	});
+
+	test("being active in any lobby conflicts when no lobby is given", () => {
+		expect(
+			UserActivity.lobbyConflict(activityOf({ activeLobbyId: LOBBY_ID })),
+		).toBe("LOBBY");
 	});
 });
 
 function activityOf({
 	isSendouQExpired,
 	tournamentStatus,
+	activeLobbyId,
 }: {
 	isSendouQExpired?: boolean;
 	tournamentStatus?: TournamentTeamMemberProgressStatus["type"];
+	activeLobbyId?: number;
 }): UserActivity.UserActivity {
 	return {
 		sendouq:
@@ -205,6 +226,14 @@ function activityOf({
 					},
 				]
 			: [],
-		lobby: null,
+		lobby: activeLobbyId
+			? {
+					lobbyId: activeLobbyId,
+					lobbyName: "Lobby",
+					isInRoom: true,
+					isPlayingSet: false,
+				}
+			: null,
+		lobbyReadyCheckLobbyId: null,
 	};
 }

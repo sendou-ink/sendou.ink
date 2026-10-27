@@ -1417,6 +1417,7 @@ export interface Lobby {
 	/** Plays like everyone else and is the lobby's sole admin. Passed on to the longest-tenured participant when they leave. */
 	hostUserId: number;
 	name: string;
+	description: string | null;
 	label: LobbyLabel;
 	startsAt: number;
 	bestOf: LobbyBestOf;
@@ -1449,6 +1450,13 @@ export interface LobbyParticipant {
 	isSittingOut: Generated<DBBoolean>;
 	/** Order of the waitlist and of host succession. Reset when signing up again. */
 	joinedAt: Generated<number>;
+}
+
+/** Kicked out of the lobby by the host, can't sign up for it again. */
+export interface LobbyKickedUser {
+	lobbyId: number;
+	userId: number;
+	createdAt: Generated<number>;
 }
 
 /** One best-of, teams shuffled from the participants in the room. */
@@ -1753,6 +1761,7 @@ export interface DB {
 	ContentVisibility: ContentVisibility;
 	Lobby: Lobby;
 	LobbyGame: LobbyGame;
+	LobbyKickedUser: LobbyKickedUser;
 	LobbyParticipant: LobbyParticipant;
 	LobbyReadyCheck: LobbyReadyCheck;
 	LobbyReadyCheckUser: LobbyReadyCheckUser;

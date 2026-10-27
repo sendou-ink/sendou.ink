@@ -9,7 +9,7 @@ import { useHasPermission } from "~/modules/permissions/hooks";
 import { useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
 
-/** The host's actions for a participant: sitting them out of the next set, making them the host and removing them. */
+/** The host's actions for a participant: sitting them out of the next set, making them the host and kicking them. */
 export function LobbyPlayerMenu({ userId }: { userId: number }) {
 	const { t } = useTranslation(["lobbies"]);
 	const { data } = useLobbyView();
