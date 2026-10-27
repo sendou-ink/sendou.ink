@@ -440,8 +440,9 @@ const EMPTY_CHARACTERS = [
 ];
 const EMOJI_PART = "\\p{Extended_Pictographic}(?:\\uFE0F|\\p{Emoji_Modifier})?";
 const EMOJI_SEQUENCE = `${EMOJI_PART}(?:\\u200D${EMOJI_PART})*`;
+const KEYCAP_SEQUENCE = "[0-9#*]\\uFE0F?\\u20E3";
 const EMOJI_SEQUENCE_OR_EMPTY_CHARACTER_REGEX = new RegExp(
-	`(${EMOJI_SEQUENCE})|${EMPTY_CHARACTERS.join("|")}`,
+	`(${EMOJI_SEQUENCE}|${KEYCAP_SEQUENCE})|${EMPTY_CHARACTERS.join("|")}`,
 	"gu",
 );
 
