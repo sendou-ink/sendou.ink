@@ -31,9 +31,6 @@ describe("findAllTeamChatsByChatRoomIds", () => {
 		);
 		await LobbyProgression.advance(lobby.id);
 		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
-		const { alphaChatRoomId } = (await withUserId(hostId(), () =>
-			LobbyRepository.findById(lobby.id),
-		))!;
 		const [leaverId, ...stayingIds] = LobbySet.playersOf(set, "ALPHA");
 		// a set without a map reported would be called off
 		await withUserId(leaverId, () =>
@@ -51,10 +48,44 @@ describe("findAllTeamChatsByChatRoomIds", () => {
 		});
 
 		const [teamChat] = await LobbyMatchRepository.findAllTeamChatsByChatRoomIds(
-			[alphaChatRoomId!],
+			[set.alphaChatRoomId!],
 		);
 		expect(teamChat.userIds).toEqual(expect.arrayContaining(stayingIds));
 		expect(teamChat.userIds).toHaveLength(stayingIds.length);
+	});
+
+	test("every set has its own team chats, the finished set's inactive", async () => {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{
+				signedUpUserIds: users.ids(8).slice(1),
+				checkedInUserIds: users.ids(8),
+				playedSetCount: 1,
+			},
+		);
+		const [previousSet, currentSet] =
+			await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+
+		const teamChats = await LobbyMatchRepository.findAllTeamChatsByChatRoomIds([
+			previousSet.alphaChatRoomId!,
+			currentSet.alphaChatRoomId!,
+		]);
+
+		expect(currentSet.alphaChatRoomId).not.toBe(previousSet.alphaChatRoomId);
+		expect(
+			teamChats.map(({ chatRoomId, isInactive }) => ({
+				chatRoomId,
+				isInactive,
+			})),
+		).toEqual(
+			expect.arrayContaining([
+				{ chatRoomId: previousSet.alphaChatRoomId, isInactive: true },
+				{ chatRoomId: currentSet.alphaChatRoomId, isInactive: false },
+			]),
+		);
 	});
 });
 

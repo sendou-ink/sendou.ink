@@ -81,8 +81,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	const viewerTeamChatRoomId = isPlayingUnfinishedSet
 		? viewerSide === "ALPHA"
-			? lobby.alphaChatRoomId
-			: lobby.bravoChatRoomId
+			? latestSet.alphaChatRoomId
+			: latestSet.bravoChatRoomId
 		: null;
 
 	const userIds = R.unique([

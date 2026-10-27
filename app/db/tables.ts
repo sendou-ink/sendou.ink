@@ -1426,9 +1426,6 @@ export interface Lobby {
 	roomSize: LobbyRoomSize;
 	/** Common chat used while pending and by spectators */
 	chatRoomId: number | null;
-	/** Team chat of the alpha side of the current set */
-	alphaChatRoomId: number | null;
-	bravoChatRoomId: number | null;
 	/** Marker for the check-in opened notification having been sent */
 	checkInNotifiedAt: number | null;
 	/** Since when the started lobby has had no set being played, `null` while one is (or before the start) */
@@ -1470,6 +1467,9 @@ export interface LobbySet {
 	disputedAt: number | null;
 	confirmedAt: number | null;
 	confirmedByUserId: number | null;
+	/** Team chat of the set's alpha side */
+	alphaChatRoomId: number | null;
+	bravoChatRoomId: number | null;
 	createdAt: Generated<number>;
 }
 

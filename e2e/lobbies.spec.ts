@@ -1338,7 +1338,8 @@ test.describe("Lobbies", () => {
 
 	/**
 	 * A lobby has a chat for everyone in it and one per team, a team's chat reaching only its
-	 * players. The lobby page opens a player's two chats side by side.
+	 * players. Every set starts with fresh team chats while the lobby's chat carries on. The
+	 * lobby page opens a player's two chats side by side.
 	 */
 	test.describe("Chat", () => {
 		test("a team's chat reaches only its players", async ({
@@ -1395,6 +1396,85 @@ test.describe("Lobbies", () => {
 
 				await expect(chat.locators.roomRows).toHaveCount(1);
 				await expect(chat.locators.roomRows).toContainText("Lobby · Team");
+			});
+		});
+
+		test("every set starts with fresh team chats", async ({
+			page,
+			factories,
+		}) => {
+			const { lobby, players, alphaPlayers, bravoPlayers } = await startedLobby(
+				page,
+				factories,
+			);
+			const sender = alphaPlayers[0];
+			const lobbyPage = new LobbyPage(page);
+			const chat = new ChatSidebar(page);
+
+			await test.step("An Alpha player writes to their team and to the lobby in the first set", async () => {
+				await impersonate(page, sender.id);
+				await lobbyPage.goto(lobby.id);
+
+				await chat.selectRoomTab("Team");
+				await chat.chat().send("first set plan");
+				await expect(chat.chat().message("first set plan")).toBeVisible();
+
+				await chat.selectRoomTab("Lobby");
+				await chat.chat().send("hello lobby");
+				await expect(chat.chat().message("hello lobby")).toBeVisible();
+			});
+
+			await playSet(page, {
+				lobbyId: lobby.id,
+				alphaPlayer: sender,
+				bravoPlayer: bravoPlayers[0],
+			});
+
+			await expect(lobbyPage.locators.reportScoreButton).toBeVisible();
+			const nextAlphaIds = await rosterIds(lobbyPage, "Alpha", players);
+			const senderTeamIds = nextAlphaIds.includes(sender.id)
+				? nextAlphaIds
+				: idsOf(players).filter((id) => !nextAlphaIds.includes(id));
+			const newTeammate = players.find(
+				(player) =>
+					player.id !== sender.id && senderTeamIds.includes(player.id),
+			)!;
+			// the teams were reshuffled, so someone of the first set's team now plays against the sender
+			const formerTeammate = alphaPlayers.find(
+				(player) => !senderTeamIds.includes(player.id),
+			)!;
+
+			await test.step("The sender's team chat of the next set starts empty", async () => {
+				await impersonate(page, sender.id);
+				await lobbyPage.goto(lobby.id);
+
+				await chat.selectRoomTab("Team");
+				await chat.chat().send("second set plan");
+				await expect(chat.chat().message("second set plan")).toBeVisible();
+				await expect(chat.chat().message("first set plan")).toHaveCount(0);
+
+				await chat.selectRoomTab("Lobby");
+				await expect(chat.chat().message("hello lobby")).toBeVisible();
+			});
+
+			await test.step("Their new teammate reads only the next set's message", async () => {
+				await impersonate(page, newTeammate.id);
+				await lobbyPage.goto(lobby.id);
+
+				await chat.selectRoomTab("Team");
+				await expect(chat.chat().message("second set plan")).toBeVisible();
+				await expect(chat.chat().message("first set plan")).toHaveCount(0);
+			});
+
+			await test.step("A former teammate now on the other team reads neither", async () => {
+				await impersonate(page, formerTeammate.id);
+				await lobbyPage.goto(lobby.id);
+
+				await chat.selectRoomTab("Team");
+				await chat.chat().send("other team plan");
+				await expect(chat.chat().message("other team plan")).toBeVisible();
+				await expect(chat.chat().message("second set plan")).toHaveCount(0);
+				await expect(chat.chat().message("first set plan")).toHaveCount(0);
 			});
 		});
 	});

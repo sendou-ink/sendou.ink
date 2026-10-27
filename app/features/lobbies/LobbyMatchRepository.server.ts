@@ -2,6 +2,7 @@ import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
@@ -10,6 +11,7 @@ import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import * as LobbySet from "./core/LobbySet";
 import type { LobbySide } from "./lobbies-constants";
+import { lobbyChatRoomExpiresAt } from "./lobbies-utils";
 
 /** A set of the lobby with its games and participants, see {@link findAllSetsByLobbyId}. */
 export type LobbySetWithGames = Unwrapped<typeof findAllSetsByLobbyId>;
@@ -24,6 +26,8 @@ export function findAllSetsByLobbyId(lobbyId: number) {
 			"LobbySet.forfeitingSide",
 			"LobbySet.disputedAt",
 			"LobbySet.confirmedAt",
+			"LobbySet.alphaChatRoomId",
+			"LobbySet.bravoChatRoomId",
 			"LobbySet.createdAt",
 			jsonArrayFrom(
 				eb
@@ -59,32 +63,28 @@ export function findAllSetsByLobbyId(lobbyId: number) {
 }
 
 /**
- * Lobbies owning the given team chat rooms, with the players of the side the chat room is for in the latest
- * set who are still in the room: team chats follow the current set.
+ * Sets owning the given team chat rooms, with the players of the side the chat room is for who are still in the
+ * lobby's room. A finished set's team chats are inactive.
  */
 export async function findAllTeamChatsByChatRoomIds(chatRoomIds: number[]) {
 	if (chatRoomIds.length === 0) return [];
 
-	const lobbies = await db
-		.selectFrom("Lobby")
+	const sets = await db
+		.selectFrom("LobbySet")
+		.innerJoin("Lobby", "Lobby.id", "LobbySet.lobbyId")
 		.select((eb) => [
-			"Lobby.id",
-			"Lobby.name",
-			"Lobby.alphaChatRoomId",
-			"Lobby.bravoChatRoomId",
+			"Lobby.id as lobbyId",
+			"Lobby.name as lobbyName",
 			"Lobby.endedAt",
+			"LobbySet.alphaChatRoomId",
+			"LobbySet.bravoChatRoomId",
+			"LobbySet.confirmedAt",
+			"LobbySet.forfeitingSide",
 			jsonArrayFrom(
 				eb
 					.selectFrom("LobbySetParticipant")
 					.select(["LobbySetParticipant.userId", "LobbySetParticipant.side"])
-					.where(
-						"LobbySetParticipant.setId",
-						"=",
-						eb
-							.selectFrom("LobbySet")
-							.select((innerEb) => innerEb.fn.max("LobbySet.id").as("id"))
-							.whereRef("LobbySet.lobbyId", "=", "Lobby.id"),
-					)
+					.whereRef("LobbySetParticipant.setId", "=", "LobbySet.id")
 					.where((innerEb) =>
 						innerEb.exists(
 							innerEb
@@ -99,30 +99,33 @@ export async function findAllTeamChatsByChatRoomIds(chatRoomIds: number[]) {
 								.where("LobbyParticipant.status", "=", "IN_ROOM"),
 						),
 					),
-			).as("latestSetParticipants"),
+			).as("participants"),
 		])
 		.where((eb) =>
 			eb.or([
-				eb("Lobby.alphaChatRoomId", "in", chatRoomIds),
-				eb("Lobby.bravoChatRoomId", "in", chatRoomIds),
+				eb("LobbySet.alphaChatRoomId", "in", chatRoomIds),
+				eb("LobbySet.bravoChatRoomId", "in", chatRoomIds),
 			]),
 		)
 		.execute();
 
-	return lobbies.flatMap((lobby) =>
+	return sets.flatMap((set) =>
 		(["ALPHA", "BRAVO"] as const).flatMap((side) => {
 			const chatRoomId =
-				side === "ALPHA" ? lobby.alphaChatRoomId : lobby.bravoChatRoomId;
+				side === "ALPHA" ? set.alphaChatRoomId : set.bravoChatRoomId;
 			if (chatRoomId === null || !chatRoomIds.includes(chatRoomId)) return [];
 
 			return [
 				{
 					chatRoomId,
 					side,
-					lobbyId: lobby.id,
-					lobbyName: lobby.name,
-					isInactive: lobby.endedAt !== null,
-					userIds: lobby.latestSetParticipants
+					lobbyId: set.lobbyId,
+					lobbyName: set.lobbyName,
+					isInactive:
+						set.endedAt !== null ||
+						set.confirmedAt !== null ||
+						set.forfeitingSide !== null,
+					userIds: set.participants
 						.filter((participant) => participant.side === side)
 						.map((participant) => participant.userId),
 				},
@@ -132,7 +135,7 @@ export async function findAllTeamChatsByChatRoomIds(chatRoomIds: number[]) {
 }
 
 /**
- * Starts a set in the room: who plays on which side (the rest sit out) and the maps. Returns the set id.
+ * Starts a set in the room: who plays on which side (the rest sit out), the maps and fresh team chats. Returns the set id.
  */
 export function insertSet({
 	lobbyId,
@@ -150,9 +153,23 @@ export function insertSet({
 	sittingOut: number[];
 }) {
 	return db.transaction().execute(async (trx) => {
+		const lobby = await trx
+			.selectFrom("Lobby")
+			.select("Lobby.startsAt")
+			.where("Lobby.id", "=", lobbyId)
+			.executeTakeFirstOrThrow();
+		const [alphaChatRoomId, bravoChatRoomId] = await ChatRepository.insertRooms(
+			{
+				type: "LOBBY_TEAM",
+				expiresAt: lobbyChatRoomExpiresAt(lobby.startsAt),
+				count: 2,
+			},
+			trx,
+		);
+
 		const set = await trx
 			.insertInto("LobbySet")
-			.values({ lobbyId, bestOf })
+			.values({ lobbyId, bestOf, alphaChatRoomId, bravoChatRoomId })
 			.returning("id")
 			.executeTakeFirstOrThrow();
 

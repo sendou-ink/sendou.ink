@@ -1,4 +1,3 @@
-import { addHours } from "date-fns";
 import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
@@ -7,7 +6,7 @@ import type { AssociationVisibility } from "~/features/associations/associations
 import * as Visibility from "~/features/associations/core/Visibility";
 import { actorIdOrNull } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
-import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import {
 	commonUserSelect,
@@ -20,10 +19,10 @@ import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
 import * as LobbyMatchRepository from "./LobbyMatchRepository.server";
 import {
-	CHAT_ROOM_LIFESPAN_HOURS,
 	CHECK_IN_LEAD_MINUTES,
 	type LobbyParticipantStatus,
 } from "./lobbies-constants";
+import { lobbyChatRoomExpiresAt } from "./lobbies-utils";
 
 const INDEX_LIST_LIMIT = 50;
 
@@ -61,8 +60,6 @@ export async function findById(
 			"Lobby.modes",
 			"Lobby.roomSize",
 			"Lobby.chatRoomId",
-			"Lobby.alphaChatRoomId",
-			"Lobby.bravoChatRoomId",
 			"Lobby.hostUserId",
 			"Lobby.pendingSince",
 			"Lobby.endedAt",
@@ -591,7 +588,7 @@ export async function findAllUnendedIdsCheckInOpened() {
 
 type InsertArgs = Omit<
 	TablesInsertable["Lobby"],
-	"chatRoomId" | "alphaChatRoomId" | "bravoChatRoomId" | "modes" | "shareKey"
+	"chatRoomId" | "modes" | "shareKey"
 > & {
 	modes: Tables["Lobby"]["modes"];
 	/** `LINK_ONLY` = seen only through the share link, by those not participating */
@@ -600,7 +597,7 @@ type InsertArgs = Omit<
 	hostStatus?: Extract<LobbyParticipantStatus, "REGISTERED" | "CHECKED_IN">;
 };
 
-/** Inserts the lobby with its chat rooms and visibility, the host as its first participant. Returns the id. */
+/** Inserts the lobby with its chat room and visibility, the host as its first participant. Returns the id. */
 export function insert({
 	visibility,
 	modes,
@@ -608,16 +605,8 @@ export function insert({
 	...args
 }: InsertArgs) {
 	return db.transaction().execute(async (trx) => {
-		const expiresAt = addHours(
-			databaseTimestampToDate(args.startsAt),
-			CHAT_ROOM_LIFESPAN_HOURS,
-		);
 		const chatRoom = await ChatRepository.insertRoom(
-			{ type: "LOBBY", expiresAt },
-			trx,
-		);
-		const [alphaChatRoomId, bravoChatRoomId] = await ChatRepository.insertRooms(
-			{ type: "LOBBY_TEAM", expiresAt, count: 2 },
+			{ type: "LOBBY", expiresAt: lobbyChatRoomExpiresAt(args.startsAt) },
 			trx,
 		);
 
@@ -627,8 +616,6 @@ export function insert({
 				...args,
 				modes: JSON.stringify(modes),
 				chatRoomId: chatRoom.id,
-				alphaChatRoomId,
-				bravoChatRoomId,
 				shareKey: visibility === "LINK_ONLY" ? shortNanoid() : null,
 			})
 			.returning(["id", "createdAt"])
@@ -825,16 +812,20 @@ export function end(id: number) {
 
 		const lobby = await trx
 			.selectFrom("Lobby")
-			.select([
-				"Lobby.chatRoomId",
-				"Lobby.alphaChatRoomId",
-				"Lobby.bravoChatRoomId",
-			])
+			.select("Lobby.chatRoomId")
 			.where("Lobby.id", "=", id)
 			.executeTakeFirstOrThrow();
+		const sets = await trx
+			.selectFrom("LobbySet")
+			.select(["LobbySet.alphaChatRoomId", "LobbySet.bravoChatRoomId"])
+			.where("LobbySet.lobbyId", "=", id)
+			.execute();
 
 		await ChatRepository.updateRoomsInactive(
-			[lobby.chatRoomId, lobby.alphaChatRoomId, lobby.bravoChatRoomId],
+			[
+				lobby.chatRoomId,
+				...sets.flatMap((set) => [set.alphaChatRoomId, set.bravoChatRoomId]),
+			],
 			true,
 			trx,
 		);

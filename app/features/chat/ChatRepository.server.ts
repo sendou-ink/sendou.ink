@@ -153,8 +153,8 @@ export async function findAllOpenRoomIdsByUserId(
 				eb
 					.case()
 					.when("LobbySetParticipant.side", "=", "ALPHA")
-					.then(eb.ref("Lobby.alphaChatRoomId"))
-					.else(eb.ref("Lobby.bravoChatRoomId"))
+					.then(eb.ref("LobbySet.alphaChatRoomId"))
+					.else(eb.ref("LobbySet.bravoChatRoomId"))
 					.end()
 					.as("id"),
 			)
@@ -452,8 +452,8 @@ type ChatRoomOwnerColumn =
 	| "TournamentTeam.chatRoomId"
 	| "ScrimPost.chatRoomId"
 	| "Lobby.chatRoomId"
-	| "Lobby.alphaChatRoomId"
-	| "Lobby.bravoChatRoomId";
+	| "LobbySet.alphaChatRoomId"
+	| "LobbySet.bravoChatRoomId";
 
 /** The one table that can own a room of each type, and the columns of it that point to the room. */
 const OWNER_COLUMNS_BY_ROOM_TYPE = {
@@ -463,7 +463,7 @@ const OWNER_COLUMNS_BY_ROOM_TYPE = {
 	TOURNAMENT_TEAM: ["TournamentTeam.chatRoomId"],
 	SCRIM: ["ScrimPost.chatRoomId"],
 	LOBBY: ["Lobby.chatRoomId"],
-	LOBBY_TEAM: ["Lobby.alphaChatRoomId", "Lobby.bravoChatRoomId"],
+	LOBBY_TEAM: ["LobbySet.alphaChatRoomId", "LobbySet.bravoChatRoomId"],
 } as const satisfies Record<ChatRoomType, ReadonlyArray<ChatRoomOwnerColumn>>;
 
 function noOwner(

@@ -49,8 +49,8 @@ export default function LobbyPage() {
 	useVoiceFollow({
 		roomIds: [
 			data.lobby.chatRoomId,
-			data.lobby.alphaChatRoomId,
-			data.lobby.bravoChatRoomId,
+			data.sets.at(-1)?.alphaChatRoomId ?? null,
+			data.sets.at(-1)?.bravoChatRoomId ?? null,
 		].filter((id) => id !== null),
 		targetRoomId: data.voiceRoomId,
 	});

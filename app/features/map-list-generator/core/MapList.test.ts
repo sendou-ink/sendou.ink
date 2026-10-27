@@ -768,8 +768,8 @@ describe("MapList.generate() with history", () => {
 		return gen.next({ amount }).value;
 	}
 
-	function szHistory(stageIds: StageId[]): ModeWithStage[] {
-		return stageIds.map((stageId) => ({ mode: "SZ", stageId }));
+	function szHistory(historyStageIds: StageId[]): ModeWithStage[] {
+		return historyStageIds.map((stageId) => ({ mode: "SZ", stageId }));
 	}
 
 	test("does not start with the last played mode", () => {
