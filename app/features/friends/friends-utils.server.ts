@@ -1,5 +1,7 @@
+import * as R from "remeda";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import type {
@@ -18,6 +20,7 @@ export interface FriendActivity {
 	badge: string | null;
 	matchId: number | null;
 	tournamentId: number | null;
+	lobbyId: number | null;
 	/** Set when the friend's current match can be watched, making the activity show up as "LIVE". */
 	stream: FriendActivityStream | null;
 }
@@ -25,6 +28,39 @@ export interface FriendActivity {
 interface FriendActivityStream {
 	url: string;
 	platform: StreamPlatform;
+}
+
+/** The soonest upcoming lobby each friend of the viewer signed up for that the viewer may see and join, keyed by friend id. */
+export async function resolveUpcomingLobbiesOfFriends(viewerId: number) {
+	const rows = await LobbyRepository.findAllUpcomingOfFriendsByUserId(viewerId);
+
+	const result = new Map<number, (typeof rows)[number]>();
+	for (const row of rows.toSorted((a, b) => a.startsAt - b.startsAt)) {
+		if (!result.has(row.friendId)) result.set(row.friendId, row);
+	}
+
+	return result;
+}
+
+/** Ids of the lobbies the friends are present in that the viewer may see. */
+export async function resolveVisibleActiveLobbyIdsOfFriends({
+	viewerId,
+	friendIds,
+}: {
+	viewerId: number;
+	friendIds: number[];
+}) {
+	const lobbyIds = R.unique(
+		friendIds.flatMap((friendId) => {
+			const lobby = UserActivity.resolve(friendId).lobby;
+
+			return lobby ? [lobby.lobbyId] : [];
+		}),
+	);
+
+	return new Set(
+		await LobbyRepository.findAllVisibleIds({ userId: viewerId, lobbyIds }),
+	);
 }
 
 /** Stream of each ongoing SendouQ match, keyed by match id. Resolved once per request, activity being resolved per friend. */
@@ -41,7 +77,10 @@ export async function resolveSendouQMatchStreams() {
 	return result;
 }
 
-/** What a friend is currently doing, an ongoing SendouQ or tournament match taking priority over looking for members. */
+/**
+ * What a friend is currently doing: an ongoing SendouQ or tournament match first, then being in a lobby, then
+ * looking for members and last an upcoming lobby the viewer could join.
+ */
 export function resolveFriendActivity({
 	friendId,
 	tournamentId,
@@ -49,6 +88,8 @@ export function resolveFriendActivity({
 	teamMemberCount,
 	tournamentMinTeamSize,
 	sendouQMatchStreams,
+	visibleLobbyIds,
+	upcomingLobby,
 }: {
 	friendId: number;
 	tournamentId: number | null;
@@ -56,6 +97,15 @@ export function resolveFriendActivity({
 	teamMemberCount: number | null;
 	tournamentMinTeamSize: number | null;
 	sendouQMatchStreams: ReadonlyMap<number, FriendActivityStream>;
+	/** Lobbies the viewer may see, see `resolveVisibleActiveLobbyIdsOfFriends` */
+	visibleLobbyIds: ReadonlySet<number>;
+	/** Upcoming lobby the friend signed up for, visible to the viewer, see `LobbyRepository.findAllUpcomingOfFriendsByUserId` */
+	upcomingLobby?: {
+		lobbyId: number;
+		lobbyName: string;
+		participantCount: number | null;
+		roomSize: number;
+	};
 }): FriendActivity {
 	const activity = UserActivity.resolve(friendId);
 	const ownGroup = activity.sendouq?.group;
@@ -67,12 +117,25 @@ export function resolveFriendActivity({
 			badge: null,
 			matchId: ownGroup.matchId,
 			tournamentId: null,
+			lobbyId: null,
 			stream: sendouQMatchStreams.get(ownGroup.matchId) ?? null,
 		};
 	}
 
 	const tournamentActivity = resolveTournamentActivity(activity, friendId);
 	if (tournamentActivity) return tournamentActivity;
+
+	if (activity.lobby && visibleLobbyIds.has(activity.lobby.lobbyId)) {
+		return {
+			type: "LOBBY",
+			subtitle: activity.lobby.lobbyName,
+			badge: null,
+			matchId: null,
+			tournamentId: null,
+			lobbyId: activity.lobby.lobbyId,
+			stream: null,
+		};
+	}
 
 	if (
 		ownGroup &&
@@ -85,6 +148,7 @@ export function resolveFriendActivity({
 			badge: `${ownGroup.members.length}/${FULL_GROUP_SIZE}`,
 			matchId: null,
 			tournamentId: null,
+			lobbyId: null,
 			stream: null,
 		};
 	}
@@ -96,6 +160,19 @@ export function resolveFriendActivity({
 			badge: `${teamMemberCount ?? 1}/${tournamentMinTeamSize ?? FULL_GROUP_SIZE}`,
 			matchId: null,
 			tournamentId,
+			lobbyId: null,
+			stream: null,
+		};
+	}
+
+	if (upcomingLobby) {
+		return {
+			type: "LOBBY_UPCOMING",
+			subtitle: upcomingLobby.lobbyName,
+			badge: `${upcomingLobby.participantCount ?? 1}/${upcomingLobby.roomSize}`,
+			matchId: null,
+			tournamentId: null,
+			lobbyId: upcomingLobby.lobbyId,
 			stream: null,
 		};
 	}
@@ -106,6 +183,7 @@ export function resolveFriendActivity({
 		badge: null,
 		matchId: null,
 		tournamentId: null,
+		lobbyId: null,
 		stream: null,
 	};
 }
@@ -130,6 +208,7 @@ function resolveTournamentActivity(
 			badge: null,
 			matchId: isInMatch ? status.matchId : null,
 			tournamentId: tournament.ctx.id,
+			lobbyId: null,
 			stream: isInMatch
 				? tournamentMatchStream({
 						tournament,

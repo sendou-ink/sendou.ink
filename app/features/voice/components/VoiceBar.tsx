@@ -470,7 +470,7 @@ function RemoteUserControls({
 						user: user?.username ?? "?",
 					})}
 					description={
-						roomType === "SQ_MATCH"
+						roomType === "SQ_MATCH" || roomType === "LOBBY_TEAM"
 							? t("common:chat.voice.kickConfirm.set")
 							: t("common:chat.voice.kickConfirm.group")
 					}

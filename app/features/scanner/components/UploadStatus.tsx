@@ -17,7 +17,8 @@ import type { JSX } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
-import { sendouQMatchPage, tournamentMatchPage } from "~/utils/urls";
+import { assertUnreachable } from "~/utils/types";
+import { lobbyPage, sendouQMatchPage, tournamentMatchPage } from "~/utils/urls";
 import { lobbyLabel } from "../core/labels";
 import type { IngestSkipReason } from "../core/match-builder";
 import type { ScannerLobby } from "../scanner-types";
@@ -207,10 +208,17 @@ function retryAction(onRetry: (() => void) | undefined) {
 }
 
 function linkUrl(link: IngestedMatchLink): string {
-	return link.type === "tournament"
-		? tournamentMatchPage({
+	switch (link.type) {
+		case "tournament":
+			return tournamentMatchPage({
 				tournamentId: link.tournamentId,
 				matchId: link.matchId,
-			})
-		: sendouQMatchPage(link.groupMatchId);
+			});
+		case "sendouq":
+			return sendouQMatchPage(link.groupMatchId);
+		case "lobby":
+			return lobbyPage(link.lobbyId);
+		default:
+			assertUnreachable(link);
+	}
 }

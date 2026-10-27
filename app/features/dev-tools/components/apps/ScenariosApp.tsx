@@ -1,4 +1,4 @@
-import { Play, Search, WandSparkles } from "lucide-react";
+import { Play, Search, WandSparkles, X } from "lucide-react";
 import * as React from "react";
 import { useFetcher } from "react-router";
 import { Alert } from "~/components/Alert";
@@ -15,6 +15,7 @@ import {
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { postDev } from "../../core/dev-api";
 import {
+	scenarioFilterPersisted,
 	scenarioLogInPersisted,
 	scenarioParamsPersisted,
 } from "../../dev-tools-persisted";
@@ -41,7 +42,8 @@ type ParamValues = Record<string, string | number>;
 
 function ScenariosApp() {
 	const { load, data } = useFetcher<DevScenariosLoaderData>();
-	const [filter, setFilter] = React.useState("");
+	const [filter, setFilter] = usePersistedState(scenarioFilterPersisted);
+	const filterInputRef = React.useRef<HTMLInputElement>(null);
 	const [logIn, setLogIn] = usePersistedState(scenarioLogInPersisted);
 	const [runningId, setRunningId] = React.useState<string | null>(null);
 	const [error, setError] = React.useState<{ id: string; message: string }>();
@@ -89,7 +91,25 @@ function ScenariosApp() {
 					aria-label="Filter scenarios"
 					value={filter}
 					onChange={(event) => setFilter(event.target.value)}
-					icon={<Search />}
+					ref={filterInputRef}
+					icon={
+						<>
+							{filter ? (
+								<button
+									type="button"
+									className={styles.clearButton}
+									aria-label="Clear filter"
+									onClick={() => {
+										setFilter("");
+										filterInputRef.current?.focus();
+									}}
+								>
+									<X />
+								</button>
+							) : null}
+							<Search />
+						</>
+					}
 					autoFocus
 				/>
 				<SendouSwitch isSelected={logIn} onChange={setLogIn} size="small">

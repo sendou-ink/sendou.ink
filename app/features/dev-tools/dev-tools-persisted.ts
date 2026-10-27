@@ -16,6 +16,14 @@ export const scenarioLogInPersisted = PersistedState.define({
 	default: true,
 });
 
+/** What the scenario list was last filtered by. */
+export const scenarioFilterPersisted = PersistedState.define({
+	key: "dev-scenario-filter",
+	storage: "local",
+	schema: v.string(),
+	default: "",
+});
+
 /** The parameters each scenario was last run with, keyed by scenario id. */
 export const scenarioParamsPersisted = PersistedState.defineMap({
 	keyPrefix: "dev-scenario-params__",

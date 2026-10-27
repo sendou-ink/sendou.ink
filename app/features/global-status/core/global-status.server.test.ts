@@ -1,6 +1,7 @@
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
+import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReadyCheckFactory from "~/db/seed/factories/SQReadyCheckFactory";
@@ -8,6 +9,9 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
+import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
@@ -19,6 +23,7 @@ import {
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
+	lobbyPage,
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PREPARING_PAGE,
 	SENDOUQ_READY_PAGE,
@@ -64,7 +69,7 @@ const runningTournamentWithOpenCheckIn = ({
 
 describe("resolveGlobalStatus", () => {
 	beforeEach(async () => {
-		await users.create(8);
+		await users.create(9);
 		RunningTournaments.clear();
 		PendingCheckIns.clearCache();
 		await refreshSendouQInstance();
@@ -376,5 +381,51 @@ describe("resolveGlobalStatus", () => {
 		);
 
 		expect((await resolveGlobalStatus(users.id(1)))?.state).toBe("TO_MATCH");
+	});
+
+	/** A started lobby of users 1-8 playing its first set, user 9 on the waitlist. */
+	const lobbyPlayingSet = async () => {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: users.id(1),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{
+				signedUpUserIds: userIds([2, 3, 4, 5, 6, 7, 8]),
+				checkedInUserIds: userIds([1, 2, 3, 4, 5, 6, 7, 8]),
+				lateWaitlistedUserIds: userIds([9]),
+			},
+		);
+		await LobbyProgression.advance(lobby.id);
+
+		return lobby.id;
+	};
+
+	test("playing a lobby's set is being in a lobby match", async () => {
+		const lobbyId = await lobbyPlayingSet();
+
+		const status = await resolveGlobalStatus(users.id(1));
+
+		expect(status?.state).toBe("LOBBY_MATCH");
+		expect(status?.url).toBe(lobbyPage(lobbyId));
+	});
+
+	test("a spot opening in a lobby asks its waitlist to confirm being ready", async () => {
+		const lobbyId = await lobbyPlayingSet();
+		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobbyId);
+
+		await LobbyRepository.removeParticipant({
+			lobbyId,
+			userId: users.id(8),
+			unfinishedSetId: set.id,
+		});
+		await LobbyProgression.advance(lobbyId);
+
+		expect((await resolveGlobalStatus(users.id(9)))?.state).toBe(
+			"LOBBY_READY_CHECK",
+		);
+		expect((await resolveGlobalStatus(users.id(1)))?.state).toBe(
+			"LOBBY_IN_ROOM",
+		);
 	});
 });

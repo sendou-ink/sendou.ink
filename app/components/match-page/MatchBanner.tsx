@@ -137,7 +137,7 @@ export function MultiMatchBanner({ stageIds }: { stageIds: StageId[] }) {
 
 interface IconBannerProps {
 	icon: React.ReactNode;
-	header: string;
+	header: React.ReactNode;
 	subtitle?: string;
 	screenLegal?: boolean;
 	joinPool?: string | null;

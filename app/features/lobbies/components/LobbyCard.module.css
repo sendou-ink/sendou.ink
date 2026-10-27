@@ -1,0 +1,96 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-4);
+	padding-bottom: var(--s-3);
+}
+
+.name {
+	flex: 1;
+	margin: 0;
+	overflow: hidden;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-semi);
+	line-height: 1.2;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.headerRight {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	align-self: flex-start;
+	gap: var(--s-2);
+	color: var(--color-text-high);
+}
+
+.label {
+	padding: 0 var(--s-2);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+
+	&[data-label="TRYHARD"] {
+		background-color: var(--color-error-low);
+	}
+
+	&[data-label="CASUAL"] {
+		background-color: var(--color-success-low);
+	}
+}
+
+.infoRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3) var(--s-6);
+	padding-inline: var(--s-4);
+	padding-bottom: var(--s-3);
+}
+
+.infoItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.infoLabel {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+}
+
+.infoValue {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.viewerStatus {
+	color: var(--color-fg-accent);
+}
+
+.footer {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-2);
+	margin-block-start: auto;
+	padding: var(--s-2) var(--s-4);
+	background-color: var(--color-bg-high);
+}

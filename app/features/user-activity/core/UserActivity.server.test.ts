@@ -5,6 +5,10 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
+import type {
+	Tournament,
+	TournamentTeamMemberProgressStatus,
+} from "~/features/tournament-bracket/core/Tournament";
 import { runningTournamentWithMatch } from "~/features/tournament-bracket/core/tests/test-utils";
 import * as UserActivity from "./UserActivity.server";
 
@@ -22,6 +26,9 @@ vi.mock("~/features/mmr/core/Seasons", () => ({
 
 /** Users are interchangeable here, so tests name them by 1-based position. */
 const users = UserFactory.pool();
+
+const LOBBY_ID = 1;
+const OTHER_LOBBY_ID = 2;
 
 describe("UserActivity.resolve", () => {
 	beforeEach(async () => {
@@ -126,3 +133,107 @@ describe("UserActivity.resolve", () => {
 		expect(activity.tournaments).toHaveLength(1);
 	});
 });
+
+describe("UserActivity.lobbyConflict", () => {
+	test.each([
+		{ why: "no activity", activity: activityOf({}), expected: null },
+		{
+			why: "a live SendouQ group",
+			activity: activityOf({ isSendouQExpired: false }),
+			expected: "SENDOUQ",
+		},
+		{
+			why: "an expired SendouQ group",
+			activity: activityOf({ isSendouQExpired: true }),
+			expected: null,
+		},
+		{
+			why: "a tournament match",
+			activity: activityOf({ tournamentStatus: "MATCH" }),
+			expected: "TOURNAMENT",
+		},
+		{
+			why: "waiting for the next tournament round",
+			activity: activityOf({ tournamentStatus: "WAITING_FOR_ROUND" }),
+			expected: "TOURNAMENT",
+		},
+		{
+			why: "a tournament check-in",
+			activity: activityOf({ tournamentStatus: "CHECKIN" }),
+			expected: null,
+		},
+		{
+			why: "waiting for a later tournament bracket",
+			activity: activityOf({ tournamentStatus: "WAITING_FOR_BRACKET" }),
+			expected: null,
+		},
+		{
+			why: "a live SendouQ group and a tournament match",
+			activity: activityOf({
+				isSendouQExpired: false,
+				tournamentStatus: "MATCH",
+			}),
+			expected: "SENDOUQ",
+		},
+		{
+			why: "active in another lobby",
+			activity: activityOf({ activeLobbyId: OTHER_LOBBY_ID }),
+			expected: "LOBBY",
+		},
+		{
+			why: "active in the lobby itself",
+			activity: activityOf({ activeLobbyId: LOBBY_ID }),
+			expected: null,
+		},
+	])("$why -> $expected", ({ activity, expected }) => {
+		expect(UserActivity.lobbyConflict(activity, LOBBY_ID)).toBe(expected);
+	});
+
+	test("being active in any lobby conflicts when no lobby is given", () => {
+		expect(
+			UserActivity.lobbyConflict(activityOf({ activeLobbyId: LOBBY_ID })),
+		).toBe("LOBBY");
+	});
+});
+
+function activityOf({
+	isSendouQExpired,
+	tournamentStatus,
+	activeLobbyId,
+}: {
+	isSendouQExpired?: boolean;
+	tournamentStatus?: TournamentTeamMemberProgressStatus["type"];
+	activeLobbyId?: number;
+}): UserActivity.UserActivity {
+	return {
+		sendouq:
+			isSendouQExpired === undefined
+				? null
+				: {
+						group: {} as NonNullable<
+							UserActivity.UserActivity["sendouq"]
+						>["group"],
+						likesReceivedCount: 0,
+						expired: isSendouQExpired,
+					},
+		tournaments: tournamentStatus
+			? [
+					{
+						tournament: {} as Tournament,
+						status: {
+							type: tournamentStatus,
+						} as TournamentTeamMemberProgressStatus,
+					},
+				]
+			: [],
+		lobby: activeLobbyId
+			? {
+					lobbyId: activeLobbyId,
+					lobbyName: "Lobby",
+					isInRoom: true,
+					isPlayingSet: false,
+				}
+			: null,
+		lobbyReadyCheckLobbyId: null,
+	};
+}

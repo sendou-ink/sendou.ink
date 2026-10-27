@@ -2,10 +2,14 @@
 import { addHours, addMinutes, subDays, subMinutes } from "date-fns";
 import * as R from "remeda";
 import { backdate } from "~/db/seed/core/backdate";
+import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
+import * as LobbySet from "~/features/lobbies/core/LobbySet";
+import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import {
 	loader as qMatchLoader,
@@ -23,9 +27,12 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToJavascriptTimestamp,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
-import { wrappedAction, wrappedLoader } from "~/utils/Test";
+import { withUserId, wrappedAction, wrappedLoader } from "~/utils/Test";
 import { action } from "../actions/scanner-ingest.server";
 import type {
 	IngestResponse,
@@ -36,6 +43,8 @@ import type {
 export const ALPHA_NAMES = ["Alpha1", "Alpha2", "Alpha3", "Alpha4"];
 /** In-game names of the SendouQ world's bravo group, in member order. */
 export const BRAVO_NAMES = ["Bravo1", "Bravo2", "Bravo3", "Bravo4"];
+/** In-game names of the lobby world's players; which side each plays is up to the lobby's team making. */
+const LOBBY_NAMES = ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8"];
 /** Weapons `scanned()` reads, winner rows first — row 0 is the default POV seat. */
 export const WEAPONS: MainWeaponId[] = [10, 20, 30, 40, 50, 60, 70, 80];
 /** One weapon per tournament-world player, so no two rosters read alike. */
@@ -124,6 +133,69 @@ export async function sendouqWorld(
 					order: map.index,
 					winnerNames: ALPHA_NAMES,
 					loserNames: BRAVO_NAMES,
+				},
+				scannedOptions,
+			),
+	};
+}
+
+/** 8 users with deterministic in-game names (`L1#1111`, …) checked in to a started lobby playing its first set; `report()` reports its next map (alpha winning) and `undo()` takes the latest report back, both returning the refreshed maps. */
+export async function lobbyWorld() {
+	const users = await createNamedUsers(LOBBY_NAMES);
+	const userIds = users.map((user) => user.id);
+	const lobby = await LobbyFactory.create(
+		{
+			hostUserId: userIds[0]!,
+			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+		},
+		{ signedUpUserIds: userIds.slice(1), checkedInUserIds: userIds },
+	);
+	await LobbyProgression.advance(lobby.id);
+
+	const firstSet = await lobbySet(lobby.id);
+	const nameOf = (userId: number) => LOBBY_NAMES[userIds.indexOf(userId)]!;
+	const alphaUserIds = LobbySet.playersOf(firstSet, "ALPHA");
+	const bravoUserIds = LobbySet.playersOf(firstSet, "BRAVO");
+	const reporterId = alphaUserIds[0]!;
+
+	return {
+		lobbyId: lobby.id,
+		setId: firstSet.id,
+		maps: firstSet.games,
+		povUser: { id: reporterId },
+		report: async () => {
+			const set = await lobbySet(lobby.id);
+			await withUserId(reporterId, () =>
+				LobbyMatchRepository.reportGame({
+					setId: set.id,
+					winnerSide: "ALPHA",
+					reportedCount: LobbySet.reportedCount(set),
+				}),
+			);
+			return (await lobbySet(lobby.id)).games;
+		},
+		undo: async () => {
+			const set = await lobbySet(lobby.id);
+			await withUserId(reporterId, () =>
+				LobbyMatchRepository.undoLatestReport({
+					setId: set.id,
+					reportedCount: LobbySet.reportedCount(set),
+					isHost: false,
+				}),
+			);
+			return (await lobbySet(lobby.id)).games;
+		},
+		scanned: (
+			map: { mode: ModeShort; stageId: StageId; index: number },
+			scannedOptions?: ScannedOptions,
+		) =>
+			scannedGame(
+				{
+					mode: map.mode,
+					stage: map.stageId,
+					order: map.index,
+					winnerNames: alphaUserIds.map(nameOf),
+					loserNames: bravoUserIds.map(nameOf),
 				},
 				scannedOptions,
 			),
@@ -401,6 +473,12 @@ async function createNamedUsers(names: string[]) {
 		);
 	}
 	return users;
+}
+
+async function lobbySet(lobbyId: number) {
+	const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobbyId);
+	invariant(set, "Lobby has no set");
+	return set;
 }
 
 function groupMatchMaps(matchId: number) {

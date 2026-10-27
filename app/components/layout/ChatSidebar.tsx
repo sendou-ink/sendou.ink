@@ -117,6 +117,23 @@ function useRoomDisplay() {
 					imageUrl: `${navIconUrl("scrims")}.avif`,
 				};
 			}
+			case "LOBBY": {
+				return {
+					title: room.titleParams.name,
+					subtitle: t("common:chat.room.lobby"),
+					imageUrl: `${navIconUrl("lobbies")}.avif`,
+				};
+			}
+			case "LOBBY_TEAM": {
+				return {
+					title:
+						room.titleParams.side === "ALPHA"
+							? t("common:chat.room.lobbyTeamAlpha")
+							: t("common:chat.room.lobbyTeamBravo"),
+					subtitle: room.titleParams.name,
+					imageUrl: `${navIconUrl("lobbies")}.avif`,
+				};
+			}
 		}
 	};
 }
@@ -127,7 +144,10 @@ function roomShortLabel(room: ChatRoomListItem, t: TFunction<["common"]>) {
 		case "SQ_GROUP":
 			return t("common:chat.room.groupShort");
 		case "TOURNAMENT_TEAM":
+		case "LOBBY_TEAM":
 			return t("common:chat.room.teamShort");
+		case "LOBBY":
+			return t("common:chat.room.lobby");
 		default:
 			return t("common:chat.room.matchShort");
 	}

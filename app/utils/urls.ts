@@ -168,6 +168,7 @@ export const OG_IMAGE_PAGES = [
 	"tier-list-maker",
 	"links",
 	"maps",
+	"lobbies",
 ] as const;
 
 export type OgImagePage = (typeof OG_IMAGE_PAGES)[number];
@@ -372,6 +373,18 @@ export const scrimPage = (id: number) => {
 
 export const newScrimPostPage = () => {
 	return "/scrims/new";
+};
+
+export const lobbiesPage = () => {
+	return "/lobbies";
+};
+
+export const lobbyPage = (id: number) => {
+	return `${lobbiesPage()}/${id}`;
+};
+
+export const newLobbyPage = () => {
+	return "/lobbies/new";
 };
 
 export const newAssociationsPage = () => {

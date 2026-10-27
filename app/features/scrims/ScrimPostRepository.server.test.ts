@@ -1,12 +1,15 @@
 import { add, sub } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
+import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { DuplicateEntryError } from "~/utils/errors";
-import { withUserId } from "~/utils/Test";
+import { withNoUser, withUserId } from "~/utils/Test";
+import type { AssociationVisibility } from "../associations/associations-types";
 import * as ScrimPostRepository from "./ScrimPostRepository.server";
 
 const users = UserFactory.pool();
@@ -538,4 +541,164 @@ describe("cancelScrim", () => {
 			.executeTakeFirstOrThrow();
 		expect(room.inactive).toBe(1);
 	});
+});
+
+describe("findAllRelevant visibility", () => {
+	const ownerId = () => users.id(1);
+	const viewerId = () => users.id(2);
+
+	const past = () => dbTs(sub(new Date(), { hours: 1 }));
+	const future = () => dbTs(add(new Date(), { hours: 1 }));
+
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test.each<{
+		why: string;
+		visibility: (associationId: number) => AssociationVisibility | null;
+		viewer?: { isMember?: boolean; plusTier?: number; isFriend?: boolean };
+		isLoggedOut?: boolean;
+		expected: boolean;
+	}>([
+		{ why: "public", visibility: () => null, expected: true },
+		{
+			why: "public when logged out",
+			visibility: () => null,
+			isLoggedOut: true,
+			expected: true,
+		},
+		{
+			why: "association, not a member",
+			visibility: (id) => ({ forAssociation: id }),
+			expected: false,
+		},
+		{
+			why: "association, a member",
+			visibility: (id) => ({ forAssociation: id }),
+			viewer: { isMember: true },
+			expected: true,
+		},
+		{
+			why: "+2 for a +1 member",
+			visibility: () => ({ forAssociation: "+2" }),
+			viewer: { plusTier: 1 },
+			expected: true,
+		},
+		{
+			why: "+1 for a +2 member",
+			visibility: () => ({ forAssociation: "+1" }),
+			viewer: { plusTier: 2 },
+			expected: false,
+		},
+		{
+			why: "association later in the schedule, not yet",
+			visibility: (id) => ({
+				forAssociation: "+1",
+				notFoundInstructions: [{ at: future(), forAssociation: id }],
+			}),
+			viewer: { isMember: true },
+			expected: false,
+		},
+		{
+			why: "association later in the schedule, already",
+			visibility: (id) => ({
+				forAssociation: "+1",
+				notFoundInstructions: [{ at: past(), forAssociation: id }],
+			}),
+			viewer: { isMember: true },
+			expected: true,
+		},
+		{
+			why: "has become public, logged out",
+			visibility: () => ({
+				forAssociation: "+1",
+				notFoundInstructions: [{ at: past(), forAssociation: null }],
+			}),
+			isLoggedOut: true,
+			expected: true,
+		},
+		{
+			why: "friends, a friend",
+			visibility: () => ({ forAssociation: "FRIENDS" }),
+			viewer: { isFriend: true },
+			expected: true,
+		},
+		{
+			why: "friends, not a friend",
+			visibility: () => ({ forAssociation: "FRIENDS" }),
+			expected: false,
+		},
+		{
+			why: "friends, logged out",
+			visibility: () => ({ forAssociation: "FRIENDS" }),
+			isLoggedOut: true,
+			expected: false,
+		},
+	])("$why", async ({ visibility, viewer, isLoggedOut, expected }) => {
+		const association = await AssociationFactory.create(
+			{ userId: ownerId() },
+			{ memberUserIds: viewer?.isMember ? [viewerId()] : [] },
+		);
+		if (viewer?.plusTier) {
+			await UserFactory.grant(viewerId(), { plusTier: viewer.plusTier });
+		}
+		if (viewer?.isFriend) {
+			await FriendshipFactory.create({
+				userOneId: Math.min(ownerId(), viewerId()),
+				userTwoId: Math.max(ownerId(), viewerId()),
+			});
+		}
+
+		const { id } = await ScrimPostFactory.create({
+			users: [{ userId: ownerId(), isOwner: 1 }],
+			startsAt: future(),
+			visibility: visibility(association.id),
+		});
+
+		const posts = await (isLoggedOut
+			? withNoUser(() => ScrimPostRepository.findAllRelevant())
+			: withUserId(viewerId(), () => ScrimPostRepository.findAllRelevant()));
+
+		expect(posts.some((post) => post.id === id)).toBe(expected);
+	});
+
+	test("the owner always sees their own post", async () => {
+		const association = await AssociationFactory.create({ userId: viewerId() });
+		const { id } = await ScrimPostFactory.create({
+			users: [{ userId: ownerId(), isOwner: 1 }],
+			startsAt: future(),
+			visibility: { forAssociation: association.id },
+		});
+
+		const posts = await withUserId(ownerId(), () =>
+			ScrimPostRepository.findAllRelevant(),
+		);
+
+		expect(posts.map((post) => post.id)).toEqual([id]);
+	});
+
+	test.each([
+		{ why: "public", visibility: null, isPrivate: false },
+		{
+			why: "friends only",
+			visibility: { forAssociation: "FRIENDS" as const },
+			isPrivate: true,
+		},
+	])(
+		"marks $why posts private: $isPrivate",
+		async ({ visibility, isPrivate }) => {
+			await ScrimPostFactory.create({
+				users: [{ userId: ownerId(), isOwner: 1 }],
+				startsAt: future(),
+				visibility,
+			});
+
+			const [post] = await withUserId(ownerId(), () =>
+				ScrimPostRepository.findAllRelevant(),
+			);
+
+			expect(post.isPrivate).toBe(isPrivate);
+		},
+	);
 });

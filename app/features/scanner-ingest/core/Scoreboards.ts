@@ -14,6 +14,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
+import { assertUnreachable } from "~/utils/types";
 import * as Matches from "./Matches";
 
 /** Of 8 player rows, how many must share name and position for a match to count as a re-detection (tolerates a couple of OCR misreads). */
@@ -36,7 +37,8 @@ export const PLAYED_AT_TOLERANCE_MS = 30 * 60 * 1000;
 /** The match context an ingest request was resolved to belong to. */
 export type IngestContext =
 	| { type: "tournament"; tournamentId: number }
-	| { type: "sendouq"; groupMatchId: number };
+	| { type: "sendouq"; groupMatchId: number }
+	| { type: "lobby"; lobbySetId: number };
 
 /** The reported game result an ingested match can link to. */
 export type IngestableGameTarget =
@@ -45,7 +47,8 @@ export type IngestableGameTarget =
 			matchGameResultId: number;
 			tournamentMatchId: number;
 	  }
-	| { type: "sendouq"; groupMatchMapId: number; groupMatchId: number };
+	| { type: "sendouq"; groupMatchMapId: number; groupMatchId: number }
+	| { type: "lobby"; lobbyGameId: number; lobbySetId: number; lobbyId: number };
 
 /** A game of a tournament or SendouQ match that ingested matches can be linked to. */
 export interface IngestableGame {
@@ -79,9 +82,16 @@ export interface MatchedGame {
 
 /** Stable grouping/equality key for an {@link IngestContext}. */
 export function contextKey(context: IngestContext): string {
-	return context.type === "tournament"
-		? `tournament:${context.tournamentId}`
-		: `sendouq:${context.groupMatchId}`;
+	switch (context.type) {
+		case "tournament":
+			return `tournament:${context.tournamentId}`;
+		case "sendouq":
+			return `sendouq:${context.groupMatchId}`;
+		case "lobby":
+			return `lobby:${context.lobbySetId}`;
+		default:
+			assertUnreachable(context);
+	}
 }
 
 /**

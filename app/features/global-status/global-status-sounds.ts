@@ -9,6 +9,8 @@ const SOUND_BY_STATE: Partial<Record<GlobalStatusState, string>> = {
 	SQ_READY_CHECK: "sq_ready-check",
 	SQ_MATCH: "sq_match",
 	TO_MATCH: "tournament_match",
+	LOBBY_READY_CHECK: "sq_ready-check",
+	LOBBY_MATCH: "sq_match",
 };
 
 const lastSeenStatusPersisted = PersistedState.define({

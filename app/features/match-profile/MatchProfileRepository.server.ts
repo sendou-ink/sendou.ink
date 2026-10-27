@@ -42,6 +42,26 @@ export function findWeaponPoolByUserId(userId: number) {
 		.then((row) => row.weaponPool);
 }
 
+/** Map/mode preferences and weapon pools of the users, for the users that exist. */
+export async function findAllByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return [];
+
+	const rows = await db
+		.selectFrom("User")
+		.select(({ eb }) => [
+			"User.id as userId",
+			"User.mapModePreferences",
+			matchProfileWeapons(eb).as("weaponPool"),
+		])
+		.where("User.id", "in", userIds)
+		.execute();
+
+	return rows.map((row) => ({
+		...row,
+		weaponPool: row.weaponPool.map((weapon) => weapon.weaponSplId),
+	}));
+}
+
 export async function updateOwnMatchProfile({
 	mapModePreferences,
 	vc,

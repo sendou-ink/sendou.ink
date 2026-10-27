@@ -4,6 +4,7 @@ import {
 	Key,
 	ScrollText,
 	Tally5,
+	Trophy,
 	Users,
 } from "lucide-react";
 import type * as React from "react";
@@ -30,6 +31,7 @@ export const TAB_KEYS = {
 	ACTION: "action",
 	RESULT: "result",
 	STATS: "stats",
+	LEADERBOARD: "leaderboard",
 	ADMIN: "admin",
 } as const;
 
@@ -39,6 +41,7 @@ const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	action: <Tally5 />,
 	result: <ScrollText />,
 	stats: <BarChart3 />,
+	leaderboard: <Trophy />,
 	admin: <Key />,
 };
 
@@ -48,6 +51,7 @@ const TAB_TRANSLATION_KEYS = {
 	action: "q:match.tabs.action",
 	result: "q:match.tabs.result",
 	stats: "q:match.tabs.stats",
+	leaderboard: "common:pages.leaderboards",
 	admin: "common:pages.admin",
 } as const;
 

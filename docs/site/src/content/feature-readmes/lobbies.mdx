@@ -1,0 +1,46 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+Lobbies are for playing 8s: a host makes a lobby for now or later, others sign up and check in, and the room plays best-of sets 4v4 with the teams reshuffled after every set. Unlike SendouQ nothing is matched across lobbies, everyone plays with the people of their lobby, and the lobby keeps its own ratings and rankings.
+
+A **lobby** (`Lobby`) has a host and **participants** (`LobbyParticipant`) who are signed up, waitlisted, checked in or in the **room**: the players playing or spectating, up to the room size. Each **set** (`LobbySet`) is played by eight of the room split into `ALPHA` and `BRAVO` (`LobbySetParticipant`, whoever sits it out has no side), its maps being **games** (`LobbyGame`). When the room is short a **ready check** (`LobbyReadyCheck`) asks the waitlist who is ready to take the open spots. The rules are listed under Behaviour below, each with the tests that establish it.
+
+## Lifecycle
+
+<Mermaid code={`stateDiagram-v2
+	[*] --> Upcoming: made on /lobbies/new
+	Upcoming --> CheckIn: check-in opens
+	CheckIn --> Pending: start time
+	Pending --> Active: 8 in the room, a set starts
+	Active --> Pending: set confirmed or forfeited, room short
+	Active --> Active: set confirmed, teams reshuffled
+	Pending --> Ended: idle for too long, or everyone left
+	Active --> Ended: idle for too long
+	Upcoming --> Ended: ended by the host
+	CheckIn --> Ended: ended by the host
+	Pending --> Ended: ended by the host
+	Active --> Ended: ended by the host
+	Ended --> [*]`} />
+
+The statuses are `LobbyState.status`. Nothing is stored about which one a lobby is in, it is derived from its start time, its latest set and whether it has ended.
+
+## A set
+
+<Mermaid code={`stateDiagram-v2
+	[*] --> Reporting: teams shuffled, maps generated
+	Reporting --> Reporting: a map reported or undone
+	Reporting --> AwaitingConfirmation: the deciding map reported
+	AwaitingConfirmation --> Disputed: the other side says it's wrong
+	AwaitingConfirmation --> Reporting: the reporting side undoes
+	Disputed --> Reporting: the reporting side undoes
+	AwaitingConfirmation --> Confirmed: the other side confirms, or a player leaves
+	Disputed --> Confirmed: the other side or the host confirms, or a player leaves
+	Reporting --> Forfeited: a player leaves, their side forfeits
+	Reporting --> [*]: a player leaves before any map is reported, the set is called off
+	Confirmed --> [*]
+	Forfeited --> [*]`} />
+
+Only confirmed and forfeited sets count towards the lobby's ratings (`LobbyRating`) and rankings (`Leaderboard`). The ratings are lobby-local, recomputed from the sets every time, and never touch the SendouQ ones.
+
+## Where to start reading
+
+Everything a lobby does on its own is decided in one place: `LobbyTransition.next` looks at the lobby's state and returns the next change due (starting, filling the room, opening a ready check, starting a set, passing on the host, ending), and `LobbyProgression.advance` applies it and asks again until nothing is due. It runs after every action of the lobby page and from the Lobbies routine, so a lobby moves along even when nobody acts. Before a set starts `TeamShuffle` splits the room into teams, its top comment explains how.

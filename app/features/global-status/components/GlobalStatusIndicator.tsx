@@ -18,6 +18,10 @@ const STATE_NAV_ICON: Record<GlobalStatusState, string> = {
 	TO_MATCH: "medal",
 	TO_WAITING_FOR_MATCH: "medal",
 	TO_WAITING_FOR_CAST: "medal",
+	LOBBY_WAITING: "lobbies",
+	LOBBY_READY_CHECK: "lobbies",
+	LOBBY_IN_ROOM: "lobbies",
+	LOBBY_MATCH: "lobbies",
 };
 
 const ALERT_BADGE_STATES: GlobalStatusState[] = ["SQ_EXPIRED", "TO_CHECKIN"];

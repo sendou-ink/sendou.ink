@@ -1,7 +1,9 @@
-import { addDays, addHours, subMinutes } from "date-fns";
+import { addDays, addHours, addMinutes, subMinutes } from "date-fns";
+import { actAs } from "~/db/seed/core/actAs";
 import * as showcaseNames from "~/db/seed/core/showcaseNames";
 import { showcaseOptions } from "~/db/seed/dev/users";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
+import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as PlusSuggestionFactory from "~/db/seed/factories/PlusSuggestionFactory";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
@@ -13,6 +15,15 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
+import * as LobbySet from "~/features/lobbies/core/LobbySet";
+import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
+import {
+	CHECK_IN_LEAD_MINUTES,
+	LOBBY_LABELS,
+	type LobbyRoomSize,
+} from "~/features/lobbies/lobbies-constants";
 import { runWithoutWebPush } from "~/features/notifications/core/push-suppression.server";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -21,6 +32,8 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { toDBBoolean } from "~/utils/sql";
 import {
+	lobbiesPage,
+	lobbyPage,
 	PLUS_VOTING_PAGE,
 	SENDOUQ_LOOKING_PAGE,
 	scrimPage,
@@ -41,6 +54,7 @@ const SCENARIO_CATEGORIES = [
 	"Tournaments",
 	"Tournament LFG",
 	"Scrims",
+	"Lobbies",
 	"Users & teams",
 	"Plus server",
 ] as const;
@@ -139,6 +153,9 @@ const teamsParam = numberParam("Teams", { min: 4, max: 64, default: 8 });
 
 /** Mostly solo players, now and then a team short of players. */
 const LOOKING_GROUP_SIZES = [1, 1, 2, 1, 3];
+
+const LOBBY_ROOM_SIZE = 8;
+const LOBBY_BEST_OF = 3;
 
 const SCENARIOS: Scenario[] = [
 	defineScenario({
@@ -520,6 +537,244 @@ const SCENARIOS: Scenario[] = [
 				userId: ownerUserIds[0],
 				path: state === "scheduled" ? scrimPage(post.id) : scrimsPage(),
 			};
+		},
+	}),
+	defineScenario({
+		id: "lobby-sign-up",
+		title: "Lobby open for sign-ups",
+		description:
+			"A lobby starting later that others have signed up for. Being on the waitlist fills the room first.",
+		category: "Lobbies",
+		params: {
+			starts: selectParam(
+				"Starts",
+				[
+					{ value: "in-an-hour", label: "In an hour" },
+					{ value: "check-in-open", label: "Soon, check-in open" },
+				],
+				"in-an-hour",
+			),
+			signedUp: numberParam("Others signed up", {
+				min: 0,
+				max: 20,
+				default: 5,
+			}),
+			you: selectParam(
+				"You are",
+				[
+					{ value: "not-signed-up", label: "Not signed up" },
+					{ value: "signed-up", label: "Signed up" },
+					{ value: "waitlisted", label: "On the waitlist" },
+					{ value: "host", label: "Its host" },
+				],
+				"not-signed-up",
+			),
+		},
+		run: async ({ starts, signedUp, you }) => {
+			const othersCount =
+				you === "waitlisted"
+					? Math.max(signedUp, LOBBY_ROOM_SIZE - 1)
+					: signedUp;
+			const [hostId, ...otherIds] = await freshShowcaseUserIds(othersCount + 1);
+			const [viewerId] =
+				you === "host" ? [hostId] : await freshShowcaseUserIds(1);
+
+			const signedUpUserIds =
+				you === "signed-up"
+					? [viewerId, ...otherIds]
+					: you === "waitlisted"
+						? [...otherIds, viewerId]
+						: otherIds;
+			const isCheckInOpen = starts === "check-in-open";
+			const withSpotIds = [hostId, ...signedUpUserIds].slice(
+				0,
+				LOBBY_ROOM_SIZE,
+			);
+
+			const lobby = await LobbyFactory.create(
+				{
+					hostUserId: hostId,
+					name: `Dev 8s ${freshSuffix()}`,
+					startsAt: dateToDatabaseTimestamp(
+						isCheckInOpen
+							? addMinutes(new Date(), CHECK_IN_LEAD_MINUTES / 2)
+							: addHours(new Date(), 1),
+					),
+				},
+				{
+					signedUpUserIds,
+					checkedInUserIds: isCheckInOpen
+						? withSpotIds.filter(
+								(userId, i) => userId !== viewerId && i % 2 === 0,
+							)
+						: [],
+				},
+			);
+
+			return { userId: viewerId, path: lobbyPage(lobby.id) };
+		},
+	}),
+	defineScenario({
+		id: "lobby-set",
+		title: "Playing a lobby set",
+		description:
+			"A running lobby in the middle of a set. As a player you are on the side the set waits on.",
+		category: "Lobbies",
+		params: {
+			state: selectParam(
+				"State",
+				[
+					{ value: "reporting", label: "Just started" },
+					{ value: "map-reported", label: "A map reported" },
+					{ value: "awaiting-confirmation", label: "Opponent reported" },
+					{ value: "disputed", label: "Result disputed" },
+				],
+				"reporting",
+			),
+			you: selectParam(
+				"You are",
+				[
+					{ value: "player", label: "A player" },
+					{ value: "host", label: "Its host" },
+					{ value: "sitting-out", label: "Sitting the set out" },
+					{ value: "outsider", label: "Not in the lobby" },
+				],
+				"player",
+			),
+			playedSets: numberParam("Sets played before", {
+				min: 0,
+				max: 10,
+				default: 2,
+			}),
+		},
+		run: async ({ state, you, playedSets }) => {
+			const roomSize =
+				you === "sitting-out" ? LOBBY_ROOM_SIZE + 1 : LOBBY_ROOM_SIZE;
+			const playerIds = await freshShowcaseUserIds(roomSize);
+			const mapsToWin = Math.ceil(LOBBY_BEST_OF / 2);
+
+			const lobby = await runningLobby(playerIds, {
+				playedSetCount: playedSets,
+				reportedMapCount:
+					state === "reporting" ? 0 : state === "map-reported" ? 1 : mapsToWin,
+			});
+			const set = await currentSet(lobby.id);
+			const [alphaId] = LobbySet.playersOf(set, "ALPHA");
+			const [bravoId] = LobbySet.playersOf(set, "BRAVO");
+
+			if (state === "disputed") {
+				await actAs(bravoId, () => LobbyMatchRepository.disputeSet(set.id));
+			}
+
+			const sittingOutId = playerIds.find(
+				(playerId) => !LobbySet.sideOf(set, playerId),
+			);
+			const userIdByRole = {
+				player: state === "awaiting-confirmation" ? bravoId : alphaId,
+				host: playerIds[0],
+				"sitting-out": sittingOutId,
+				outsider: (await freshShowcaseUserIds(1))[0],
+			};
+			const userId = userIdByRole[you];
+			invariant(userId, "Nobody in the room sits the set out");
+
+			return { userId, path: lobbyPage(lobby.id) };
+		},
+	}),
+	defineScenario({
+		id: "lobby-open-spot",
+		title: "Spot open in a lobby",
+		description:
+			"A player left mid-set, forfeiting it, and the waitlist is asked who is ready to take the spot. You are on the waitlist.",
+		category: "Lobbies",
+		params: {
+			position: numberParam("Your place on the waitlist", {
+				min: 1,
+				max: 5,
+				default: 1,
+			}),
+			priority: selectParam(
+				"First's priority",
+				[
+					{ value: "running", label: "Running" },
+					{ value: "expired", label: "Run out" },
+				],
+				"running",
+			),
+		},
+		run: async ({ position, priority }) => {
+			const playerIds = await freshShowcaseUserIds(LOBBY_ROOM_SIZE);
+			const waitlistedIds = await freshShowcaseUserIds(position + 1);
+
+			const lobby = await runningLobby(playerIds, {
+				playedSetCount: 1,
+				lateWaitlistedUserIds: waitlistedIds,
+			});
+			const set = await currentSet(lobby.id);
+			const leaverId = LobbySet.playersOf(set, "ALPHA").find(
+				(userId) => userId !== playerIds[0],
+			);
+			invariant(leaverId, "Alpha has no player besides the host");
+
+			await LobbyRepository.removeParticipant({
+				lobbyId: lobby.id,
+				userId: leaverId,
+				unfinishedSetId: set.id,
+			});
+			await LobbyProgression.advance(lobby.id, {
+				hasChanged: true,
+				affectedUserIds: [leaverId],
+			});
+			if (priority === "expired") {
+				await LobbyFactory.expireReadyChecks(lobby.id);
+			}
+
+			return { userId: waitlistedIds[position - 1], path: lobbyPage(lobby.id) };
+		},
+	}),
+	defineScenario({
+		id: "lobbies-index",
+		title: "Browsing lobbies",
+		description:
+			"Running and upcoming lobbies to join, and ended ones you played in.",
+		category: "Lobbies",
+		params: {
+			running: numberParam("Running", { min: 0, max: 5, default: 2 }),
+			upcoming: numberParam("Upcoming", { min: 0, max: 10, default: 3 }),
+			ended: numberParam("Ended", { min: 0, max: 5, default: 2 }),
+		},
+		run: async ({ running, upcoming, ended }) => {
+			const [viewerId] = await freshShowcaseUserIds(1);
+
+			for (let i = 0; i < running; i++) {
+				await runningLobby(await freshUserIds(LOBBY_ROOM_SIZE), {
+					playedSetCount: i % 3,
+				});
+			}
+
+			for (let i = 0; i < upcoming; i++) {
+				const [hostId, ...signedUpUserIds] = await freshUserIds(
+					1 + ((i * 3) % LOBBY_ROOM_SIZE),
+				);
+				await LobbyFactory.create(
+					{
+						hostUserId: hostId,
+						name: `Dev 8s ${freshSuffix()}`,
+						label: LOBBY_LABELS[i % LOBBY_LABELS.length],
+						startsAt: dateToDatabaseTimestamp(addHours(new Date(), i + 1)),
+					},
+					{ signedUpUserIds },
+				);
+			}
+
+			for (let i = 0; i < ended; i++) {
+				await runningLobby(
+					[viewerId, ...(await freshUserIds(LOBBY_ROOM_SIZE - 1))],
+					{ playedSetCount: 1 + (i % 3), isEnded: true },
+				);
+			}
+
+			return { userId: viewerId, path: lobbiesPage() };
 		},
 	}),
 	defineScenario({
@@ -911,6 +1166,37 @@ async function firstPlayableMatch(tournamentId: number) {
 	);
 
 	return { matchId: match.id, teamId: match.opponent1.id };
+}
+
+/** A lobby that started half an hour ago with everyone in `playerIds` checked in, the first hosting. */
+function runningLobby(
+	playerIds: number[],
+	options: Omit<
+		NonNullable<Parameters<typeof LobbyFactory.create>[1]>,
+		"signedUpUserIds" | "checkedInUserIds"
+	>,
+) {
+	return LobbyFactory.create(
+		{
+			hostUserId: playerIds[0],
+			name: `Dev 8s ${freshSuffix()}`,
+			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 30)),
+			roomSize: playerIds.length as LobbyRoomSize,
+			bestOf: LOBBY_BEST_OF,
+		},
+		{
+			signedUpUserIds: playerIds.slice(1),
+			checkedInUserIds: playerIds,
+			...options,
+		},
+	);
+}
+
+async function currentSet(lobbyId: number) {
+	const set = (await LobbyMatchRepository.findAllSetsByLobbyId(lobbyId)).at(-1);
+	invariant(set && !LobbySet.isFinished(set), "Lobby is not playing a set");
+
+	return set;
 }
 
 function scrimUsers(userIds: number[]) {

@@ -8,6 +8,7 @@ const MATCH_PAGE_TABS = [
 	"action",
 	"result",
 	"stats",
+	"leaderboard",
 	"admin",
 ] as const;
 

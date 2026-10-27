@@ -4,8 +4,10 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import {
 	findUpcomingLeagueMatches,
+	findUpcomingLobbies,
 	findUpcomingTeamEvents,
 	leagueMatchToSidebarEvent,
+	lobbyToSidebarEvent,
 	scrimToSidebarEvent,
 	teamEventToSidebarEvent,
 	tournamentToSidebarEvent,
@@ -31,11 +33,13 @@ export const loader = async () => {
 	const mySchedule = await myScheduleData(user.id);
 	const teamEvents = await findUpcomingTeamEvents(user.id);
 	const leagueMatches = await findUpcomingLeagueMatches(user.id);
+	const lobbies = await findUpcomingLobbies(user.id);
 	const myTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
 
 	const registered = [
 		...tournamentsData.participatingFor.map(tournamentToSidebarEvent),
 		...leagueMatches.map(leagueMatchToSidebarEvent),
+		...lobbies.map(lobbyToSidebarEvent),
 	].sort((a, b) => a.startsAt - b.startsAt);
 
 	const hosting = tournamentsData.organizingFor

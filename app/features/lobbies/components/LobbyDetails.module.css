@@ -1,0 +1,39 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.infoRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3) var(--s-6);
+}
+
+.infoItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.infoLabel {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+}
+
+.infoValue {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	min-height: 20px;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.description {
+	font-size: var(--font-sm);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}

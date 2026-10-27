@@ -13,6 +13,7 @@ export const CHANNEL_PREFIX = {
 	tournament: "tournament__",
 	tournamentMatch: "match__",
 	sqGroup: "sq-group__",
+	lobby: "lobby__",
 } as const;
 
 /** Channel delivering events addressed to the user across all of their connections. */

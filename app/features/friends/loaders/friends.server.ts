@@ -11,6 +11,8 @@ import {
 import {
 	resolveFriendActivity,
 	resolveSendouQMatchStreams,
+	resolveUpcomingLobbiesOfFriends,
+	resolveVisibleActiveLobbyIdsOfFriends,
 } from "../friends-utils.server";
 
 export type FriendsLoaderData = typeof loader;
@@ -23,17 +25,28 @@ export const loader = async () => {
 	);
 	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
 
-	const [pendingRequests, incomingRequests, streamedSendouQMatches, schedules] =
-		await Promise.all([
-			FriendRepository.findPendingSentRequests(user.id),
-			FriendRepository.findPendingReceivedRequests(user.id),
-			resolveSendouQMatchStreams(),
-			FriendSchedule.findByUserIds({
-				userIds: unique.map((f) => f.id),
-				timezone: getViewerTimezone() ?? "UTC",
-				viewerId: user.id,
-			}),
-		]);
+	const [
+		pendingRequests,
+		incomingRequests,
+		streamedSendouQMatches,
+		upcomingLobbiesOfFriends,
+		visibleLobbyIds,
+		schedules,
+	] = await Promise.all([
+		FriendRepository.findPendingSentRequests(user.id),
+		FriendRepository.findPendingReceivedRequests(user.id),
+		resolveSendouQMatchStreams(),
+		resolveUpcomingLobbiesOfFriends(user.id),
+		resolveVisibleActiveLobbyIdsOfFriends({
+			viewerId: user.id,
+			friendIds: unique.map((f) => f.id),
+		}),
+		FriendSchedule.findByUserIds({
+			userIds: unique.map((f) => f.id),
+			timezone: getViewerTimezone() ?? "UTC",
+			viewerId: user.id,
+		}),
+	]);
 
 	const friends = R.sortBy(
 		unique
@@ -46,6 +59,8 @@ export const loader = async () => {
 					teamMemberCount: friend.teamMemberCount,
 					tournamentMinTeamSize: friend.tournamentMinTeamSize,
 					sendouQMatchStreams: streamedSendouQMatches,
+					visibleLobbyIds,
+					upcomingLobby: upcomingLobbiesOfFriends.get(friend.id),
 				});
 
 				return {
@@ -62,6 +77,7 @@ export const loader = async () => {
 					activityType: activity.type,
 					matchId: activity.matchId,
 					tournamentId: activity.tournamentId ?? friend.tournamentId,
+					lobbyId: activity.lobbyId,
 					stream: activity.stream,
 					friendshipCreatedAt: friend.friendshipCreatedAt,
 					isPinned: Boolean(friend.isPinned),
@@ -85,6 +101,8 @@ export const loader = async () => {
 					teamMemberCount: tm.teamMemberCount,
 					tournamentMinTeamSize: tm.tournamentMinTeamSize,
 					sendouQMatchStreams: streamedSendouQMatches,
+					visibleLobbyIds,
+					upcomingLobby: upcomingLobbiesOfFriends.get(tm.id),
 				});
 
 				return {
@@ -100,6 +118,7 @@ export const loader = async () => {
 					activityType: activity.type,
 					matchId: activity.matchId,
 					tournamentId: activity.tournamentId ?? tm.tournamentId,
+					lobbyId: activity.lobbyId,
 					stream: activity.stream,
 					isPinned: false,
 					schedule: schedules.get(tm.id) ?? null,

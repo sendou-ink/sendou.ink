@@ -110,6 +110,14 @@ export interface Fixtures {
 		inviteCode: string;
 	} | null;
 	lfgAuthorId: number | null;
+	/** The lobby with the most sets, its latest set and a player of it */
+	heavyLobby: {
+		id: number;
+		setId: number;
+		userId: number;
+		atMs: number;
+		sinceTimestamp: number;
+	} | null;
 	lfgPostId: number | null;
 	lfgTournament: { tournamentId: number; teamId: number } | null;
 	auditTournamentId: number | null;
@@ -210,6 +218,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		notification: await resolveNotification(),
 		heavyAssociation: await resolveHeavyAssociation(),
 		lfgAuthorId: await resolveLfgAuthorId(),
+		heavyLobby: await resolveHeavyLobby(),
 		lfgPostId: await resolveLfgPostId(),
 		lfgTournament: await resolveLfgTournament(),
 		auditTournamentId: (await resolveAuditTournamentId()) ?? heavyTournamentId,
@@ -1516,4 +1525,37 @@ async function resolveCastedTournamentId() {
 		.executeTakeFirst();
 
 	return row?.id ?? null;
+}
+
+async function resolveHeavyLobby() {
+	const row = await db
+		.selectFrom("LobbySet")
+		.select(({ fn }) => [
+			"LobbySet.lobbyId",
+			fn.max("LobbySet.id").as("setId"),
+			fn.max("LobbySet.createdAt").as("createdAt"),
+			fn.countAll<number>().as("count"),
+		])
+		.groupBy("LobbySet.lobbyId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!row) return null;
+
+	const player = await db
+		.selectFrom("LobbySetParticipant")
+		.select("LobbySetParticipant.userId")
+		.where("LobbySetParticipant.setId", "=", row.setId)
+		.where("LobbySetParticipant.side", "is not", null)
+		.limit(1)
+		.executeTakeFirst();
+	if (!player) return null;
+
+	return {
+		id: row.lobbyId,
+		setId: row.setId,
+		userId: player.userId,
+		atMs: row.createdAt * 1000,
+		sinceTimestamp: row.createdAt - 7 * 24 * 60 * 60,
+	};
 }

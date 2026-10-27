@@ -134,7 +134,7 @@ describe("Scrim.applyFilters", () => {
 			requests: [],
 			canceled: null,
 			createdAt: databaseTimestampNow(),
-			visibility: null,
+			isPrivate: false,
 			chatRoomId: null,
 			text: "",
 			maps: null,

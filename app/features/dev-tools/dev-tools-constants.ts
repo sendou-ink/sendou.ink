@@ -24,6 +24,7 @@ export const RESEEDABLE_DATABASE_FILE = "db.sqlite3";
 
 const SAMPLE_TOURNAMENT = { tournamentId: 1, tournamentName: "In The Zone 42" };
 const SAMPLE_OPPONENT = { opponentTeamName: "Team Olive" };
+const SAMPLE_LOBBY = { lobbyId: 1, lobbyName: "Evening 8s" };
 
 /** A plausible instance of every notification type, sent by the dev toolbar to check how each renders. Ids may point to nothing. */
 export const SAMPLE_NOTIFICATIONS: {
@@ -133,6 +134,11 @@ export const SAMPLE_NOTIFICATIONS: {
 		},
 	},
 	SCHEDULE_TEAM_REMINDER: { type: "SCHEDULE_TEAM_REMINDER" },
+	LOBBY_CHECK_IN_OPENED: { type: "LOBBY_CHECK_IN_OPENED", meta: SAMPLE_LOBBY },
+	LOBBY_STARTED: { type: "LOBBY_STARTED", meta: SAMPLE_LOBBY },
+	LOBBY_PROMOTED: { type: "LOBBY_PROMOTED", meta: SAMPLE_LOBBY },
+	LOBBY_HOST: { type: "LOBBY_HOST", meta: SAMPLE_LOBBY },
+	LOBBY_READY_CHECK: { type: "LOBBY_READY_CHECK", meta: SAMPLE_LOBBY },
 	CHAT_MENTION: {
 		type: "CHAT_MENTION",
 		meta: {

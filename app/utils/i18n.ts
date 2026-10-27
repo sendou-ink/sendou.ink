@@ -27,6 +27,7 @@ const ALL_NAMESPACES = [
 	"art",
 	"q",
 	"lfg",
+	"lobbies",
 	"org",
 	"front",
 	"friends",
