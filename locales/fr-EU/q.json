@@ -73,6 +73,7 @@
 	"looking.joinQPrompt": "Rejoindre la queue pour trouvez un groupe",
 	"looking.range.or": "ou",
 	"match.header": "Match #{{number}}",
+	"match.subtitle": "Saison {{nth}} SendouQ",
 	"match.actions.lookAgain": "Retourner dans la queue avec les même groupe",
 	"match.actions.reportWeapons": "Reporter les armes utilisées",
 	"match.sides.alpha": "Alpha",
