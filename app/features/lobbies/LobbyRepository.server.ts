@@ -340,10 +340,10 @@ export async function findAllForIndex() {
 		playerCount: row.playerCount ?? 0,
 	});
 
-	const [own, running, upcoming, ended] = await Promise.all([
+	const own =
 		viewerId === null
 			? []
-			: listQuery({ viewerId, now })
+			: await listQuery({ viewerId, now })
 					.where("Lobby.endedAt", "is", null)
 					.where("Lobby.id", "in", (eb) =>
 						eb
@@ -353,31 +353,47 @@ export async function findAllForIndex() {
 					)
 					.orderBy("Lobby.startsAt", "asc")
 					.limit(INDEX_LIST_LIMIT)
-					.execute(),
-		listQuery({ viewerId, now })
-			.where("Lobby.endedAt", "is", null)
-			.where("Lobby.startsAt", "<=", now)
-			.where(visible)
-			.orderBy("Lobby.startsAt", "desc")
-			.limit(INDEX_LIST_LIMIT)
-			.execute(),
-		listQuery({ viewerId, now })
-			.where("Lobby.endedAt", "is", null)
-			.where("Lobby.startsAt", ">", now)
-			.where(visible)
-			.orderBy("Lobby.startsAt", "asc")
-			.limit(INDEX_LIST_LIMIT)
-			.execute(),
-		// TODO: paginate, only the latest INDEX_LIST_LIMIT ended lobbies are listed
+					.execute();
+	const running = await listQuery({ viewerId, now })
+		.where("Lobby.endedAt", "is", null)
+		.where("Lobby.startsAt", "<=", now)
+		.where(visible)
+		.orderBy("Lobby.startsAt", "desc")
+		.limit(INDEX_LIST_LIMIT)
+		.execute();
+	const upcoming = await listQuery({ viewerId, now })
+		.where("Lobby.endedAt", "is", null)
+		.where("Lobby.startsAt", ">", now)
+		.where(visible)
+		.orderBy("Lobby.startsAt", "asc")
+		.limit(INDEX_LIST_LIMIT)
+		.execute();
+	// TODO: paginate, only the latest INDEX_LIST_LIMIT ended lobbies are listed
+	const ended =
 		viewerId === null
 			? []
-			: listQuery({ viewerId, now })
+			: await listQuery({ viewerId, now })
 					.where("Lobby.endedAt", "is not", null)
-					.where((eb) => playedIn(eb, viewerId))
+					.where("Lobby.id", "in", (eb) =>
+						eb
+							.selectFrom("LobbyParticipant")
+							.select("LobbyParticipant.lobbyId")
+							.where("LobbyParticipant.userId", "=", viewerId)
+							.union(
+								eb
+									.selectFrom("LobbySetParticipant")
+									.innerJoin(
+										"LobbySet",
+										"LobbySet.id",
+										"LobbySetParticipant.setId",
+									)
+									.select("LobbySet.lobbyId")
+									.where("LobbySetParticipant.userId", "=", viewerId),
+							),
+					)
 					.orderBy("Lobby.endedAt", "desc")
 					.limit(INDEX_LIST_LIMIT)
-					.execute(),
-	]);
+					.execute();
 
 	const ownIds = new Set(own.map((row) => row.id));
 	const notOwn = (row: { id: number }) => !ownIds.has(row.id);

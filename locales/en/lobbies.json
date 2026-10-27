@@ -58,7 +58,7 @@
 	"participants.waitlist": "Waitlist",
 	"readyCheck.confirmed": "Confirmed, waiting for the others",
 	"readyCheck.firstComeFirstServed": "The spot goes to whoever confirms first",
-	"readyCheck.priorityEndsIn": "The waitlist order decides, first come, first served in {{time}}",
+	"readyCheck.priorityEndsIn": "Waitlist order decides the spot, then it's first come, first served in {{time}}",
 	"readyCheck.slot": "A spot opened up, confirm you're ready to play!",
 	"result.forfeit": "{{side}} won by forfeit",
 	"result.set": "Set {{number}}",

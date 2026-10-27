@@ -20,6 +20,7 @@ import {
 	fetchReportedWeapons,
 	hoursLater,
 	ingest,
+	lobbyWorld,
 	minutesAgo,
 	qMatchPage,
 	renamed,
@@ -517,6 +518,49 @@ describe("SendouQ flow", () => {
 		await reportFirstMap(w.match.alphaGroup.id);
 		expect(await fetchLinks()).toHaveLength(1);
 		expect((await qMatchPage(w.match.id)).ingestedScoreboards).toHaveLength(1);
+	});
+});
+
+describe("lobby flow", () => {
+	test("L1 live send, map already reported: stored + linked to the lobby's set", async () => {
+		const w = await lobbyWorld();
+		const [map] = await w.report();
+
+		const res = await ingest(w.povUser, [w.scanned(map!)]);
+
+		expect(res.linkedMatches).toEqual([
+			{ matchIndex: 0, link: { type: "lobby", lobbyId: w.lobbyId } },
+		]);
+		const rows = await fetchIngestedMatches();
+		expect(rows[0]!.lobbySetIdHint).toBe(w.setId);
+		const links = await fetchLinks();
+		expect(links.map((link) => link.lobbyGameId)).toEqual([map!.id]);
+	});
+
+	test("L2 send before report: the report links the stored read without a resend", async () => {
+		const w = await lobbyWorld();
+		const res = await ingest(w.povUser, [w.scanned(w.maps[0]!)]);
+		expect(res.linkedGamesCount).toBe(0);
+
+		await w.report();
+		await linkStoredMatches({ type: "lobby", lobbySetId: w.setId });
+
+		const links = await fetchLinks();
+		expect(links.map((link) => link.lobbyGameId)).toEqual([w.maps[0]!.id]);
+	});
+
+	test("L3 undone map report: the undo unlinks the read, the re-report links it again", async () => {
+		const w = await lobbyWorld();
+		const [map] = await w.report();
+		await ingest(w.povUser, [w.scanned(map!)]);
+		expect(await fetchLinks()).toHaveLength(1);
+
+		await w.undo();
+		expect(await fetchLinks()).toHaveLength(0);
+
+		await w.report();
+		await linkStoredMatches({ type: "lobby", lobbySetId: w.setId });
+		expect(await fetchLinks()).toHaveLength(1);
 	});
 });
 
