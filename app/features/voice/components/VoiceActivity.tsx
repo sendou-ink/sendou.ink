@@ -25,7 +25,7 @@ import {
 	ActivityPanelHeader,
 } from "~/components/layout/ActivityPanel";
 import {
-	useVoiceActivity,
+	useVoiceActivities,
 	type VoiceActivityParticipant,
 	type VoiceActivityState,
 	type VoiceActivity as VoiceActivityValue,
@@ -33,49 +33,95 @@ import {
 import styles from "./VoiceActivity.module.css";
 import { VoiceSettingsPanel } from "./VoiceSettingsPanel";
 
-/** The voice call the user is in, or the one they can join, in the header. */
+/** The voice call the user is in and the ones they can join, in the header. */
 export function VoiceActivity() {
 	const { t } = useTranslation(["common"]);
-	const voice = useVoiceActivity();
+	const voices = useVoiceActivities();
 
-	if (!voice) return null;
+	if (voices.length === 0) return null;
 
-	const { state } = voice;
-	const isConnected = state.status === "CONNECTED";
+	const call = callOf(voices);
+	const isConnected = call?.state.status === "CONNECTED";
 	const isSilenced =
-		state.deafened || (!state.micEnabled && state.inputMode === "OPEN_MIC");
+		call &&
+		(call.state.deafened ||
+			(!call.state.micEnabled && call.state.inputMode === "OPEN_MIC"));
 
 	return (
 		<ActivityButton
 			label={t("common:chat.voice.title")}
-			icon={<VoiceStateIcon state={state} />}
-			dot={state.status === "AVAILABLE" && state.participants.length > 0}
+			icon={<VoiceStateIcon state={call?.state ?? null} />}
+			dot={!call && voices.some((voice) => voice.state.participants.length > 0)}
 			tone={
-				state.status === "FAILED" || (isConnected && isSilenced)
+				call?.state.status === "FAILED" || (isConnected && isSilenced)
 					? "error"
 					: isConnected
 						? "success"
 						: undefined
 			}
 		>
-			<VoicePanel voice={voice} />
+			<VoicePanel voices={voices} />
 		</ActivityButton>
 	);
 }
 
-function VoicePanel({ voice }: { voice: VoiceActivityValue }) {
+function VoicePanel({ voices }: { voices: VoiceActivityValue[] }) {
 	const [view, setView] = React.useState<"main" | "settings">("main");
+	const call = callOf(voices);
 
-	if (view === "settings") {
-		return <VoiceSettingsPanel voice={voice} onBack={() => setView("main")} />;
+	if (view === "settings" && call) {
+		return <VoiceSettingsPanel voice={call} onBack={() => setView("main")} />;
 	}
 
 	return (
-		<VoiceMainPanel voice={voice} onOpenSettings={() => setView("settings")} />
+		<ActivityPanel>
+			{voices.map((voice) => (
+				<section key={voice.state.roomId} className={styles.room}>
+					{voice === call ? (
+						<VoiceCallSection
+							voice={voice}
+							onOpenSettings={() => setView("settings")}
+						/>
+					) : (
+						<JoinableVoiceSection voice={voice} />
+					)}
+				</section>
+			))}
+		</ActivityPanel>
 	);
 }
 
-function VoiceMainPanel({
+function callOf(voices: VoiceActivityValue[]) {
+	return voices[0]?.state.status === "AVAILABLE" ? null : (voices[0] ?? null);
+}
+
+function JoinableVoiceSection({
+	voice: { state, actions },
+}: {
+	voice: VoiceActivityValue;
+}) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<>
+			<ActivityPanelHeader
+				icon={<StatusDot status={state.status} />}
+				title={t("common:chat.voice.available")}
+				subtitle={state.roomTitle}
+			/>
+			<ParticipantList voice={{ state, actions }} />
+			<SendouButton
+				size="small"
+				icon={<Phone />}
+				onClick={actions.join}
+			>
+				{t("common:chat.voice.join")}
+			</SendouButton>
+		</>
+	);
+}
+
+function VoiceCallSection({
 	voice: { state, actions },
 	onOpenSettings,
 }: {
@@ -84,29 +130,8 @@ function VoiceMainPanel({
 }) {
 	const { t } = useTranslation(["common"]);
 
-	if (state.status === "AVAILABLE") {
-		return (
-			<ActivityPanel>
-				<ActivityPanelHeader
-					icon={<StatusDot status={state.status} />}
-					title={t("common:chat.voice.available")}
-					subtitle={state.roomTitle}
-				/>
-				<ParticipantList voice={{ state, actions }} />
-				<SendouButton
-					size="small"
-					variant="success"
-					icon={<Phone />}
-					onClick={actions.join}
-				>
-					{t("common:chat.voice.join")}
-				</SendouButton>
-			</ActivityPanel>
-		);
-	}
-
 	return (
-		<ActivityPanel>
+		<>
 			<ActivityPanelHeader
 				icon={<StatusDot status={state.status} />}
 				title={
@@ -183,23 +208,23 @@ function VoiceMainPanel({
 				<SendouButton
 					size="small"
 					shape="square"
-					variant="outlined-destructive"
+					variant="minimal-destructive"
 					icon={<PhoneOff />}
 					aria-label={t("common:chat.voice.leave")}
 					title={t("common:chat.voice.leave")}
 					onClick={actions.leave}
 				/>
 			</ActivityPanelControls>
-		</ActivityPanel>
+		</>
 	);
 }
 
-function VoiceStateIcon({ state }: { state: VoiceActivityState }) {
-	if (state.status === "CONNECTED" && state.deafened) {
+function VoiceStateIcon({ state }: { state: VoiceActivityState | null }) {
+	if (state?.status === "CONNECTED" && state.deafened) {
 		return <HeadphoneOff className={styles.mirrored} />;
 	}
 	if (
-		state.status === "CONNECTED" &&
+		state?.status === "CONNECTED" &&
 		!state.micEnabled &&
 		state.inputMode === "OPEN_MIC"
 	) {

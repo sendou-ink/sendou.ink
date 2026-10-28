@@ -2,6 +2,18 @@
 	transform: scaleX(-1);
 }
 
+.room {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+
+	& + & {
+		margin-inline: calc(var(--s-2) * -1);
+		padding: var(--s-2) var(--s-2) 0;
+		border-block-start: var(--border-width) solid var(--color-border);
+	}
+}
+
 .latency {
 	display: flex;
 	align-items: center;
@@ -64,7 +76,7 @@
 	align-items: center;
 	gap: var(--s-2);
 	width: 100%;
-	padding: var(--s-1) var(--s-1-5);
+	padding: var(--s-1);
 	border: none;
 	border-radius: var(--radius-field);
 	background: none;

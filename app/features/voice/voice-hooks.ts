@@ -24,31 +24,39 @@ export function useVoiceSnapshot(): VoiceSnapshot {
 	);
 }
 
-export function useVoiceRoom(
-	room: {
+export function useVoiceRooms(
+	rooms: Array<{
 		id: number;
 		type: ChatRoomType;
-	} | null,
-): VoiceRoomState | null {
+	}>,
+): Map<number, VoiceRoomState> {
 	const snapshot = useVoiceSnapshot();
-	const hasVoice = VOICE_ROOM_TYPES.some((type) => type === room?.type);
-	const roomId = room?.id;
+	const voiceRoomIds = rooms
+		.filter((room) => VOICE_ROOM_TYPES.some((type) => type === room.type))
+		.map((room) => room.id);
+	const voiceRoomIdsKey = voiceRoomIds.join(",");
 
 	React.useEffect(() => {
-		if (!hasVoice || roomId === undefined) return;
-		void voiceClient.loadRoom(roomId);
-	}, [hasVoice, roomId]);
+		if (!voiceRoomIdsKey) return;
+		for (const roomId of voiceRoomIdsKey.split(",")) {
+			void voiceClient.loadRoom(Number(roomId));
+		}
+	}, [voiceRoomIdsKey]);
 
 	useEventStreamCatchUp({
-		enabled: hasVoice,
+		enabled: voiceRoomIds.length > 0,
 		onCatchUp: () => {
-			if (roomId !== undefined) void voiceClient.loadRoom(roomId);
+			for (const roomId of voiceRoomIds) void voiceClient.loadRoom(roomId);
 		},
 	});
 
-	return hasVoice && roomId !== undefined
-		? (snapshot.roomsById.get(roomId) ?? null)
-		: null;
+	const roomsById = new Map<number, VoiceRoomState>();
+	for (const roomId of voiceRoomIds) {
+		const room = snapshot.roomsById.get(roomId);
+		if (room) roomsById.set(roomId, room);
+	}
+
+	return roomsById;
 }
 
 /**

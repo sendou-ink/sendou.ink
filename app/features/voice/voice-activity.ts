@@ -4,13 +4,14 @@ import { useTranslation } from "react-i18next";
 import { useChatContext } from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import type { CommonUser } from "~/utils/kysely.server";
-import { type VoiceCallStatus, voiceClient } from "./voice-client";
 import {
-	VOICE_ROOM_TYPES,
-	type VoiceClientErrorKind,
-	type VoiceInputMode,
-} from "./voice-constants";
-import { useVoiceRoom, useVoiceSnapshot } from "./voice-hooks";
+	type VoiceCall,
+	type VoiceCallStatus,
+	type VoiceRoomState,
+	voiceClient,
+} from "./voice-client";
+import type { VoiceClientErrorKind, VoiceInputMode } from "./voice-constants";
+import { useVoiceRooms, useVoiceSnapshot } from "./voice-hooks";
 
 export type VoiceActivityStatus = "AVAILABLE" | VoiceCallStatus;
 
@@ -26,7 +27,7 @@ export interface VoiceActivityParticipant {
 	volume: number;
 }
 
-/** What the header's voice button and panel show, from the voice client or the components showcase. */
+/** One voice chat of the header's voice panel, from the voice client or the components showcase. */
 export interface VoiceActivityState {
 	status: VoiceActivityStatus;
 	roomId: number;
@@ -82,34 +83,55 @@ export function useVoiceActivityOverride() {
 }
 
 /**
- * The voice call the user is in, else the voice chat of their SendouQ
- * match or group they can join. Null when there is neither.
+ * The voice chats of the user's rooms: the call they are in first, then the
+ * ones they can join. Empty when there is none.
  */
-export function useVoiceActivity(): VoiceActivity | null {
+export function useVoiceActivities(): VoiceActivity[] {
 	const overridden = useVoiceActivityOverride();
-	const real = useRealVoiceActivity();
+	const real = useRealVoiceActivities();
 
 	if (overridden === undefined) return real;
-	if (overridden === null) return null;
+	if (overridden === null) return [];
 
-	return { state: overridden, actions: OVERRIDE_ACTIONS };
+	return [{ state: overridden, actions: OVERRIDE_ACTIONS }];
 }
 
-function useRealVoiceActivity(): VoiceActivity | null {
+function useRealVoiceActivities(): VoiceActivity[] {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext();
 	const { call, volumeByUserId } = useVoiceSnapshot();
 
-	const room = call
-		? (chatContext?.roomForId(call.roomId) ?? null)
-		: joinableRoomCandidate(chatContext?.rooms ?? []);
-	const voiceRoom = useVoiceRoom(room);
-
-	if (!room) return null;
-	if (!call && !(voiceRoom?.available && voiceRoom.canJoin)) return null;
-
-	const userById = new Map(room.participants.map((user) => [user.id, user]));
+	const callRoom = call ? chatContext?.roomForId(call.roomId) : undefined;
+	const joinableRooms = (chatContext?.rooms ?? []).filter(
+		(room) => !room.inactive && room.id !== callRoom?.id,
+	);
+	const rooms = callRoom ? [callRoom, ...joinableRooms] : joinableRooms;
+	const voiceRoomsById = useVoiceRooms(rooms);
 	const volumeOf = (userId: number) => volumeByUserId.get(userId) ?? 1;
+
+	return rooms.flatMap((room) => {
+		const voiceRoom = voiceRoomsById.get(room.id) ?? null;
+		const roomCall = room === callRoom ? call : null;
+		if (!roomCall && !(voiceRoom?.available && voiceRoom.canJoin)) return [];
+
+		return [toVoiceActivity({ room, call: roomCall, voiceRoom, volumeOf, t })];
+	});
+}
+
+function toVoiceActivity({
+	room,
+	call,
+	voiceRoom,
+	volumeOf,
+	t,
+}: {
+	room: ChatRoomListItem;
+	call: VoiceCall | null;
+	voiceRoom: VoiceRoomState | null;
+	volumeOf: (userId: number) => number;
+	t: TFunction<["common"]>;
+}): VoiceActivity {
+	const userById = new Map(room.participants.map((user) => [user.id, user]));
 
 	const participants: VoiceActivityParticipant[] = call
 		? call.participants.map((participant) => ({
@@ -181,19 +203,6 @@ function voiceRoomTitle(room: ChatRoomListItem, t: TFunction<["common"]>) {
 				members: room.participantUserIds.length,
 			});
 	}
-}
-
-/** The SendouQ match's room beats the group's: during a match it is the one the players talk in. */
-function joinableRoomCandidate(rooms: ChatRoomListItem[]) {
-	const voiceRooms = rooms.filter(
-		(room) =>
-			!room.inactive &&
-			VOICE_ROOM_TYPES.some((voiceRoomType) => voiceRoomType === room.type),
-	);
-
-	return (
-		voiceRooms.find((room) => room.type === "SQ_MATCH") ?? voiceRooms[0] ?? null
-	);
 }
 
 function subscribeOverride(listener: () => void) {
