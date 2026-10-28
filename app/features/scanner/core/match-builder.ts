@@ -65,15 +65,16 @@ import {
 import type { DetectedEvent } from "./detectors/types";
 import { hueDistance, hueOf, type InkRgb } from "./ink-color";
 import { parseReplayTimestamp } from "./replay-time";
-import type {
-	ScannerMatch,
-	ScannerMatchKill,
-	ScannerMatchObjective,
-	ScannerMatchObjectiveSample,
-	ScannerMatchPlayer,
-	ScannerMatchPlayerStatus,
-	ScannerMatchPlayerStatusSample,
-	ScannerMatchTeam,
+import {
+	type ScannerMatch,
+	type ScannerMatchKill,
+	type ScannerMatchObjective,
+	type ScannerMatchObjectiveSample,
+	type ScannerMatchPlayer,
+	type ScannerMatchPlayerStatus,
+	type ScannerMatchPlayerStatusSample,
+	type ScannerMatchTeam,
+	victimSlot,
 } from "./scanner-match";
 import {
 	addStatusEvidence,
@@ -88,8 +89,13 @@ import {
 	type StripSnapshot,
 	slotRowPermutation,
 } from "./slot-row-assignment";
-import { editDistance, matchKey } from "./text";
-import { multisetOverlap } from "./timeline/same-scoreboard";
+import { nameSimilarity } from "./text";
+import {
+	multisetOverlap,
+	renamedRows,
+	SAME_GAME_MIN_SHARED_STAT_LINES,
+	sharedStatLines,
+} from "./timeline/same-scoreboard";
 import { X_BATTLE_CARD_EVENT_TYPES } from "./x-battle";
 
 /** How far back a scoreboard with no MapStart claims deaths: matches run well under 8 min. */
@@ -200,7 +206,8 @@ const SAME_GAME_MIN_SHARED_PAINTS = 6;
  * How far a history screen's recording time may sit from the earlier read of
  * the same game, or from the first read of the game it closes: it is on the
  * console clock and marks the game's start, while a results screen's time is
- * the PC clock at the game's end.
+ * the PC clock at the game's end. Boards sharing whole stat lines skip it: the
+ * console clock can be hours off the PC's (another timezone, a misread AM/PM).
  */
 const REVISIT_PLAYED_AT_TOLERANCE_MS = 20 * 60 * 1000;
 
@@ -235,9 +242,10 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * Battle lobby cards (shown before that game's results screen) join the
  * sources of the game they report on. A battle
  * history screen showing an already built game (≥6 shared paint totals, stage
- * and recording time not contradicting it) joins that match's `sources` instead of
- * forming a new one, as does a results screen read again with no match
- * opened since. Any other history screen closes the game being gathered (a
+ * not contradicting it, and ≥6 shared whole stat lines or a recording time not
+ * contradicting it) joins that match's `sources` instead of forming a new one,
+ * putting the real names it reveals on an X Battle's aliased results, as does
+ * a results screen read again with no match opened since. Any other history screen closes the game being gathered (a
  * missed results screen amended from the log) unless its stage, mode or
  * recording time contradicts that game's reads. Then (or with no game being
  * gathered) it completes an earlier match whose results screen was missed
@@ -245,8 +253,10 @@ export type MatchBuildCache<E extends DetectedEvent> = WeakMap<
  * match of its own and the game being gathered stays open. A history screen
  * with its stage unread and no built match forms none. A map intro right
  * after a replay-browser entry of its stage and mode is that replay played
- * back: its gameplay joins the entry's match. Every input event ends up in at
- * most one match's `sources`.
+ * back: its gameplay joins the entry's match. A results screen of a no contest
+ * (DRAW tags: the host ended the game, an early disconnect) discards the game
+ * being gathered: it has no result, and its replay forms the real match. Every
+ * input event ends up in at most one match's `sources`.
  *
  * `unbacked` also emits, flagged, the stretches with kill reads no scoreboard,
  * minimap or played counter backed (a results screen missed, the map never
@@ -334,6 +344,12 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				vote(open.stageVotes, (board!.data as ScoreboardData).stage);
 			}
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+			if ((event.data as ScoreboardData).noContest) {
+				// ended undecided: the game being gathered has no result to keep
+				open = null;
+				dropOrphans();
+				continue;
+			}
 			if (HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 				lastHistoryScreen = event;
 			}
@@ -344,7 +360,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				// the game already has its match, and the one being played (if
 				// any) keeps gathering events
 				built[built.indexOf(revisited)] = {
-					...revisited,
+					match: withRevealedNames(revisited, event),
 					sources: [...revisited.sources, event],
 				};
 				continue;
@@ -548,9 +564,9 @@ export function ingestSkipReasons<E extends DetectedEvent>(
  * Whether a match was built off battle history screens alone (a battle log or
  * replay browser entry browsed later): it holds no read of the game being played.
  */
-export function isHistoryOnly<E extends DetectedEvent>(
-	built: BuiltMatch<E>,
-): boolean {
+export function isHistoryOnly(built: {
+	sources: readonly DetectedEvent[];
+}): boolean {
 	return built.sources.every((event) =>
 		HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type),
 	);
@@ -1291,11 +1307,7 @@ function alignKillRows(
 }
 
 function sameRowName(a: string, b: string): boolean {
-	const ka = matchKey(a);
-	const kb = matchKey(b);
-	const similarity =
-		1 - editDistance(ka, kb) / Math.max(ka.length, kb.length, 1);
-	return similarity >= KILL_SAME_ROW_MIN_SIMILARITY;
+	return nameSimilarity(a, b) >= KILL_SAME_ROW_MIN_SIMILARITY;
 }
 
 /** The slot→row permutations of a scoreboard-closed match, per source. */
@@ -1984,8 +1996,9 @@ function historyData(
 
 /**
  * The earlier match a battle history screen shows again: its closing board
- * shows the same game and its play time doesn't contradict the screen's
- * recording time (either may be unknown, e.g. on VoD scans).
+ * shows the same game and either shares whole stat lines with the screen or
+ * its play time doesn't contradict the screen's recording time (either may be
+ * unknown, e.g. on VoD scans).
  */
 function revisitedMatch<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
@@ -1998,6 +2011,8 @@ function revisitedMatch<E extends DetectedEvent>(
 	return built.findLast((candidate) => {
 		if (!closesSameGame(candidate, board)) return false;
 		return (
+			sharedStatLines(closingBoardOf(candidate)!, board) >=
+				SAME_GAME_MIN_SHARED_STAT_LINES ||
 			shownPlayedAt === null ||
 			candidate.match.playedAt === null ||
 			Math.abs(shownPlayedAt - candidate.match.playedAt) <=
@@ -2143,9 +2158,7 @@ function closesSameGame<E extends DetectedEvent>(
 	built: BuiltMatch<E>,
 	board: ScoreboardData,
 ): boolean {
-	const closingBoard = built.sources.find((source) =>
-		SCOREBOARD_EVENT_TYPES.includes(source.type),
-	);
+	const closingBoard = closingBoardOf(built);
 	if (!closingBoard) return false;
 	if (
 		board.stage !== null &&
@@ -2155,11 +2168,58 @@ function closesSameGame<E extends DetectedEvent>(
 		return false;
 	}
 	return (
-		multisetOverlap(
-			paintsRead(closingBoard.data as ScoreboardData),
-			paintsRead(board),
-		) >= SAME_GAME_MIN_SHARED_PAINTS
+		multisetOverlap(paintsRead(closingBoard), paintsRead(board)) >=
+		SAME_GAME_MIN_SHARED_PAINTS
 	);
+}
+
+function closingBoardOf<E extends DetectedEvent>(
+	built: BuiltMatch<E>,
+): ScoreboardData | undefined {
+	return built.sources.find((source) =>
+		SCOREBOARD_EVENT_TYPES.includes(source.type),
+	)?.data as ScoreboardData | undefined;
+}
+
+/**
+ * The match with the real names a battle log screen revealed: X Battle's
+ * results screen shows every player under a random alias, which the log
+ * swaps for the real names when asked. Only a results screen's names are
+ * taken for aliases — on a match closed by a history screen it can't be told
+ * which of two name sets is the real one. The POV player's splats follow
+ * their victims' rows.
+ */
+function withRevealedNames<E extends DetectedEvent>(
+	built: BuiltMatch<E>,
+	history: E,
+): ScannerMatch {
+	const results = built.sources.find(
+		(source) => source.type === SCOREBOARD_EVENT_TYPE,
+	);
+	const realNames = results
+		? renamedRows(
+				results.data as ScoreboardData,
+				history.data as ScoreboardData,
+			)
+		: null;
+	if (!realNames) return built.match;
+
+	const { match } = built;
+	const teams = match.teams.map((team, side) => ({
+		players: team.players.map((player, index) => {
+			const name = realNames.get(side * PLAYERS_PER_TEAM + index);
+			return name ? { ...player, name } : player;
+		}),
+	})) as ScannerMatch["teams"];
+	const enemySide = match.pov?.team === 1 ? 0 : 1;
+	const kills =
+		match.kills?.map((kill) => {
+			const slot = victimSlot(kill.name, match.teams[enemySide].players);
+			if (slot === null) return kill;
+			return { ...kill, name: teams[enemySide].players[slot]!.name };
+		}) ?? null;
+
+	return { ...match, teams, kills };
 }
 
 function paintsRead(board: ScoreboardData): number[] {

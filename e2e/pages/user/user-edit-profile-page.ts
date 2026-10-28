@@ -14,10 +14,10 @@ export class UserEditProfilePage {
 		this.form = createFormHelpers(page, userEditProfileBaseSchema);
 	}
 
-	async goto(discordId: string) {
+	async goto(userId: number) {
 		await navigate({
 			page: this.page,
-			url: userEditProfilePage({ discordId }),
+			url: userEditProfilePage({ id: userId }),
 		});
 	}
 

@@ -29,6 +29,13 @@ export function matchKey(s: string): string {
 		.replace(/\s+/g, "");
 }
 
+/** 1 = the same name (after `matchKey`), 0 = nothing in common. */
+export function nameSimilarity(a: string, b: string): number {
+	const ka = matchKey(a);
+	const kb = matchKey(b);
+	return 1 - editDistance(ka, kb) / Math.max(ka.length, kb.length, 1);
+}
+
 export interface ClosestMatch<T> {
 	entry: T;
 	/** 1 = exact (ignoring case/spaces/diacritics), 0 = nothing in common */

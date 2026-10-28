@@ -1,0 +1,129 @@
+---
+import type {
+	FeatureDoc,
+	RouteData,
+} from "../../../../../scripts/living-docs/document.ts";
+import {
+	githubUrl,
+	routeAnchor,
+} from "../../../../../scripts/living-docs/links.ts";
+import {
+	count,
+	routePathHtml,
+	routeTables,
+	viewHref,
+} from "../../living/format.ts";
+import DataTrace from "./DataTrace.astro";
+
+interface Props {
+	routes: Array<FeatureDoc["routes"][number] & { feature: FeatureDoc }>;
+	hasCapture: boolean;
+	/** Whether to show the feature each route belongs to, left out on a feature's own page. */
+	showsFeature?: boolean;
+}
+
+const { routes, hasCapture, showsFeature = false } = Astro.props;
+
+function dataSummary(data: RouteData) {
+	const tables = routeTables(data);
+	const writtenCount = tables.filter((access) => access.writes).length;
+
+	return [
+		count(tables.length, "table"),
+		writtenCount > 0 ? `${writtenCount} written` : null,
+	]
+		.filter((part) => part !== null)
+		.join(" · ");
+}
+---
+
+<table class="routes-table">
+	<thead>
+		<tr>
+			<th>Path</th>
+			{showsFeature ? <th>Feature</th> : null}
+			<th>Kind</th>
+			<th>Data</th>
+			{hasCapture ? <th>E2E tests</th> : null}
+		</tr>
+	</thead>
+	<tbody>
+		{
+			routes.map(({ route, visitedBy, data, feature }) => (
+				<tr id={routeAnchor(route)}>
+					<td>
+						<a href={githubUrl(route.file, 1)}>
+							<code set:html={routePathHtml(route.path)} />
+						</a>
+					</td>
+					{showsFeature ? (
+						<td>
+							{feature.views.length > 0 ? (
+								<a href={viewHref(feature.config.id, feature.views[0])}>
+									{feature.config.label}
+								</a>
+							) : (
+								feature.config.label
+							)}
+						</td>
+					) : null}
+					<td>
+						{[
+							route.isLayout ? "layout" : route.hasComponent ? "page" : "resource",
+							route.hasLoader ? "loader" : null,
+							route.hasAction ? "action" : null,
+						]
+							.filter((kind) => kind !== null)
+							.join(", ")}
+					</td>
+					<td>
+						{route.hasLoader || route.hasAction ? (
+							<details class="route-data">
+								<summary>{dataSummary(data)}</summary>
+								{(
+									[
+										["Loader", data.loader],
+										["Action", data.action],
+									] as const
+								).map(([label, trace]) =>
+									trace ? (
+										<div class="route-data-trace">
+											<a class="route-data-title" href={githubUrl(trace.file, trace.line)}>
+												{label}
+											</a>
+											<DataTrace trace={trace} />
+										</div>
+									) : null,
+								)}
+							</details>
+						) : (
+							""
+						)}
+					</td>
+					{hasCapture ? (
+						<td>
+							{visitedBy.length > 0 ? (
+								<details class="route-tests">
+									<summary>{count(visitedBy.length, "test")}</summary>
+									<ul>
+										{visitedBy.map((test) => (
+											<li>
+												<a href={viewHref(test.featureId, "e2e", test.anchor)}>
+													{test.name}
+												</a>
+											</li>
+										))}
+									</ul>
+								</details>
+							) : route.isLayout ? (
+								""
+							) : (
+								"none"
+							)}
+						</td>
+					) : null}
+				</tr>
+			))
+		}
+	</tbody>
+</table>

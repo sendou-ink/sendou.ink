@@ -469,14 +469,23 @@ export async function findWinsByOwner({
 	});
 }
 
-export async function findOrganizationIdById(trophyId: number) {
+/** Whether the trophy is a regular (not special) trophy of the organization, i.e. one its tournaments can award. */
+export async function isAwardableByOrganization({
+	trophyId,
+	organizationId,
+}: {
+	trophyId: number;
+	organizationId: number;
+}) {
 	const row = await db
 		.selectFrom("Trophy")
-		.select("organizationId")
+		.select("id")
 		.where("id", "=", trophyId)
+		.where("organizationId", "=", organizationId)
+		.where("code", "is", null)
 		.executeTakeFirst();
 
-	return row?.organizationId ?? null;
+	return Boolean(row);
 }
 
 /** Whether the name is taken by a trophy or a submission still awaiting review. */
@@ -634,10 +643,29 @@ export async function insertTournamentOwners(
 	awards: TournamentOwnersArgs[],
 	trx: Transaction<DB>,
 ) {
+	if (awards.length === 0) return;
+
+	const regularTrophyIds = new Set(
+		(
+			await trx
+				.selectFrom("Trophy")
+				.select("id")
+				.where(
+					"id",
+					"in",
+					awards.map((award) => award.trophyId),
+				)
+				.where("code", "is", null)
+				.execute()
+		).map((trophy) => trophy.id),
+	);
+
 	const tieredAwards: Array<
 		TournamentOwnersArgs & { tier: Awaited<ReturnType<typeof trophyTier>> }
 	> = [];
 	for (const award of awards) {
+		if (!regularTrophyIds.has(award.trophyId)) continue;
+
 		tieredAwards.push({ ...award, tier: await trophyTier(trx, award) });
 	}
 
@@ -843,7 +871,7 @@ const withTargetManager = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("User")
-			.select(["User.id", "User.username", "User.discordId"])
+			.select(["User.id", "User.username"])
 			.whereRef("User.id", "=", "PendingTrophy.managerId"),
 	).as("manager");
 };
@@ -852,7 +880,7 @@ const withPendingCreator = (eb: ExpressionBuilder<DB, "PendingTrophy">) => {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("User")
-			.select(["User.id", "User.username", "User.discordId"])
+			.select(["User.id", "User.username"])
 			.whereRef("User.id", "=", "PendingTrophy.creatorId"),
 	).as("creator");
 };
@@ -891,7 +919,6 @@ function pendingBaseQuery() {
 			"PendingTrophy.managerId",
 			"PendingTrophy.creatorId",
 			"Submitter.username as submitterUsername",
-			"Submitter.discordId as submitterDiscordId",
 			"Decliner.username as declinedByUsername",
 			"TournamentOrganization.name as organizationName",
 			"TournamentOrganization.slug as organizationSlug",

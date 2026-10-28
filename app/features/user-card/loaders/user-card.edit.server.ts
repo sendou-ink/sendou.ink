@@ -15,7 +15,7 @@ export const loader = async () => {
 		XRankPlacementRepository.isPlayerLinkedByUserId(user.id),
 	]);
 
-	const card = userCards.get(user.id);
+	const card = userCards[user.id];
 	invariant(card, "card data not found for own user");
 
 	// the division the card settled on is what a self-reported peak XP is judged against

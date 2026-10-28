@@ -2,12 +2,12 @@ import { addWeeks } from "date-fns";
 import type { RawPicoCAD2File } from "picocad2-web";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import type { Role } from "~/modules/permissions/types";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
 import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 import { databaseTimestampToDate } from "~/utils/dates";
 import * as XpTrophy from "./core/XpTrophy";
 import { TROPHY_UPCOMING_HIGHLIGHT_WEEKS } from "./trophies-constants";
-
-const TERMS_AGREED_SESSION_STORAGE_KEY = "trophyTermsAgreed";
+import { trophyTermsAgreedPersisted } from "./trophies-persisted";
 
 const DECOMPRESSED_MODEL_CACHE_MAX_CHARS = 16 * 1024 * 1024;
 
@@ -119,35 +119,11 @@ export function decompressTrophyModel(modelBase64: string) {
 }
 
 export function useTrophyTermsAgreement() {
-	const hasAgreedToTerms = useSyncExternalStore(
-		subscribeToTermsAgreed,
-		getTermsAgreedSnapshot,
-		getTermsAgreedServerSnapshot,
+	const [hasAgreedToTerms, setHasAgreedToTerms] = usePersistedState(
+		trophyTermsAgreedPersisted,
 	);
 
-	const agreeToTerms = () => {
-		sessionStorage.setItem(TERMS_AGREED_SESSION_STORAGE_KEY, "true");
-		for (const listener of termsAgreedListeners) {
-			listener();
-		}
-	};
-
-	return { hasAgreedToTerms, agreeToTerms };
-}
-
-const termsAgreedListeners = new Set<() => void>();
-
-function subscribeToTermsAgreed(listener: () => void) {
-	termsAgreedListeners.add(listener);
-	return () => termsAgreedListeners.delete(listener);
-}
-
-function getTermsAgreedSnapshot() {
-	return sessionStorage.getItem(TERMS_AGREED_SESSION_STORAGE_KEY) === "true";
-}
-
-function getTermsAgreedServerSnapshot() {
-	return false;
+	return { hasAgreedToTerms, agreeToTerms: () => setHasAgreedToTerms(true) };
 }
 
 function cacheEntryChars(key: string, value: string | null) {

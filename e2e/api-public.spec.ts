@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { addHours, subHours } from "date-fns";
+import { addHours, getISOWeek, getISOWeekYear, subHours } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { GetTournamentTeamsResponse } from "~/features/api-public/schema";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -149,6 +149,73 @@ test.describe("Public API", () => {
 			mapWins: 0,
 			mapLosses: 2,
 		});
+	});
+
+	/** Its requests are where the docs' example response of each endpoint comes from. */
+	test("every read endpoint responds to a read token", async ({
+		page,
+		factories,
+	}) => {
+		const players = await factories.UserFactory.createMany(
+			TEAM_COUNT * ROSTER_SIZE,
+		);
+		const startedAt = subHours(new Date(), 2);
+		const tournament = await factories.TournamentFactory.createPlayed(
+			{
+				authorId: ADMIN_ID,
+				startTimes: [dateToDatabaseTimestamp(startedAt)],
+			},
+			{
+				teamRosters: Array.from({ length: TEAM_COUNT }, (_, i) =>
+					players
+						.slice(i * ROSTER_SIZE, (i + 1) * ROSTER_SIZE)
+						.map((p) => p.id),
+				),
+			},
+		);
+		const tournamentMatchId = tournament.matches[0].id;
+		await factories.TournamentFactory.castMatch({
+			tournamentId: tournament.id,
+			matchId: tournamentMatchId,
+			twitchAccount: "sendouq",
+		});
+		const team = await factories.TeamFactory.create({
+			memberUserIds: players.slice(0, ROSTER_SIZE).map((p) => p.id),
+		});
+		const organization = await factories.TournamentOrganizationFactory.create({
+			ownerId: ADMIN_ID,
+		});
+		const alpha = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const bravo = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const sqMatch = await factories.SQMatchFactory.create({
+			alphaUserIds: alpha.map((user) => user.id),
+			bravoUserIds: bravo.map((user) => user.id),
+		});
+		const token = await readToken(factories, ADMIN_ID);
+
+		await impersonate(page);
+
+		const paths = [
+			`/api/tournament/${tournament.id}`,
+			`/api/tournament/${tournament.id}/players`,
+			`/api/tournament/${tournament.id}/casted`,
+			`/api/tournament/${tournament.id}/streams`,
+			`/api/tournament/${tournament.id}/brackets/0`,
+			`/api/tournament/${tournament.id}/brackets/0/standings`,
+			`/api/tournament-match/${tournamentMatchId}`,
+			`/api/calendar/${getISOWeekYear(startedAt)}/${getISOWeek(startedAt)}`,
+			`/api/team/${team.id}`,
+			`/api/org/${organization.id}`,
+			`/api/sendouq/active-match/${alpha[0].id}`,
+			`/api/sendouq/match/${sqMatch.id}`,
+		];
+		for (const path of paths) {
+			const response = await page.request.fetch(path, {
+				headers: authorized(token),
+			});
+
+			expect(response.status(), path).toBe(200);
+		}
 	});
 
 	test("hides private team fields from a read token that does not organize the tournament", async ({

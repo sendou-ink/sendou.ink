@@ -74,6 +74,7 @@
 		white-space: nowrap;
 		flex: 1;
 		transform: none !important;
+		--button-hover-bg: transparent;
 
 		& img {
 			min-width: 16px;
@@ -87,9 +88,13 @@
 		outline-offset: -2px;
 	}
 
+	&:hover:not([aria-disabled]) .tabButton,
+	&[data-selected] .tabButton {
+		color: var(--color-text);
+	}
+
 	&[data-selected] .tabButton {
 		border-color: var(--color-fg-accent);
-		color: var(--color-text);
 	}
 
 	&:focus-visible .tabButton {

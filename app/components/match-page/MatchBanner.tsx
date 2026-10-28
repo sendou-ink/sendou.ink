@@ -47,7 +47,7 @@ export function MatchBanner({
 	host,
 	children,
 }: MatchBannerProps) {
-	const { t } = useTranslation(["game-misc"]);
+	const { t } = useTranslation(["game-misc", "common"]);
 	const stageKey = `${mode}-${stageId}`;
 	const [shown, setShown] = React.useState({
 		stageKey,
@@ -87,7 +87,7 @@ export function MatchBanner({
 				data-testid={`banner-map-${mode}-${stageId}`}
 			>
 				<ModeImage mode={mode} size={24} />
-				{t(`game-misc:MODE_SHORT_${mode}`)} {t(`game-misc:STAGE_${stageId}`)}
+				{t(`common:modes.short.${mode}`)} {t(`game-misc:STAGE_${stageId}`)}
 			</div>
 			<div
 				className={clsx(styles.info, styles.thickText, {
@@ -137,7 +137,7 @@ export function MultiMatchBanner({ stageIds }: { stageIds: StageId[] }) {
 
 interface IconBannerProps {
 	icon: React.ReactNode;
-	header: string;
+	header: React.ReactNode;
 	subtitle?: string;
 	screenLegal?: boolean;
 	joinPool?: string | null;

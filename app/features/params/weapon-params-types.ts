@@ -1,3 +1,4 @@
+import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -18,7 +19,7 @@ export interface ParamValueWithHistory {
 
 export type WeaponParamKind = "main" | "sub" | "special";
 
-const WEAPON_PARAM_KIND_KEY_PREFIX: Record<WeaponParamKind, string> = {
+const WEAPON_PARAM_KIND_TYPE: Record<WeaponParamKind, AnyWeapon["type"]> = {
 	main: "MAIN",
 	sub: "SUB",
 	special: "SPECIAL",
@@ -26,7 +27,12 @@ const WEAPON_PARAM_KIND_KEY_PREFIX: Record<WeaponParamKind, string> = {
 
 /** The i18next `weapons` namespace key for a weapon of the given {@link WeaponParamKind}. */
 export function weaponTranslationKey(kind: WeaponParamKind, id: number) {
-	return `weapons:${WEAPON_PARAM_KIND_KEY_PREFIX[kind]}_${id}`;
+	return `weapons:${WEAPON_PARAM_KIND_TYPE[kind]}_${id}`;
+}
+
+/** The weapon of the given {@link WeaponParamKind} and id. */
+export function weaponOfKind(kind: WeaponParamKind, id: number): AnyWeapon {
+	return { type: WEAPON_PARAM_KIND_TYPE[kind], id } as AnyWeapon;
 }
 
 export interface ParsedWeaponParams {

@@ -34,7 +34,7 @@ function eventInfoAsICalEvent(event: CalendarEvent): ics.EventAttributes {
 	const eventLink = `${SENDOU_INK_BASE_URL}${event.url}`;
 
 	return {
-		uid: `event-${event.id}@sendou.ink`,
+		uid: `event-${event.id}-${event.at}@sendou.ink`,
 		title: event.name,
 		start: [
 			startDate.getUTCFullYear(),

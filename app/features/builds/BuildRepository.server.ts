@@ -1,6 +1,19 @@
-import { type NotNull, sql, type Transaction } from "kysely";
+import {
+	type Expression,
+	type NotNull,
+	type SelectQueryBuilder,
+	type SqlBool,
+	sql,
+	type Transaction,
+} from "kysely";
+import * as R from "remeda";
+import * as Pagination from "~/db/pagination.server";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, TablesInsertable } from "~/db/tables";
+import {
+	type BuildSort,
+	DEFAULT_BUILD_SORT,
+} from "~/features/user-page/user-page-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type {
 	Ability,
@@ -8,18 +21,26 @@ import type {
 	MainWeaponId,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
-import { databaseTimestampNow } from "~/utils/dates";
+import {
+	canonicalWeaponSplId,
+	weaponIdToBaseWeaponId,
+} from "~/modules/in-game-lists/weapon-ids";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import { invariant } from "~/utils/invariant";
 import { commonUserJsonObject, jsonArrayFrom } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
-import { MAIN_SLOT_AP } from "../build-analyzer/analyzer-constants";
+import { assertUnreachable } from "~/utils/types";
+import {
+	MAIN_SLOT_AP,
+	SUB_SLOT_AP,
+} from "../build-analyzer/analyzer-constants";
 import {
 	buildToAbilityPoints,
 	isStackableAbility,
 } from "../build-analyzer/core/ability-points";
-import { BUILD } from "./builds-constants";
+import { BUILD, BUILDS_PAGE_SIZE } from "./builds-constants";
+import type { AbilityFilter } from "./builds-types";
 import { sortAbilities } from "./core/ability-sorting.server";
 
 export async function findAllByUserId(
@@ -178,128 +199,371 @@ export async function findOwnerIdById(buildId: number) {
 	return result?.ownerId ?? null;
 }
 
-export async function findAllAbilityPointAverages(
-	weaponSplId?: MainWeaponId | null,
-) {
-	// sum tables only hold public builds, so no private filter or `Build` join is needed
-	if (typeof weaponSplId === "number") {
-		return db
-			.selectFrom("BuildWeaponAbility")
-			.select(({ fn }) => [
-				"BuildWeaponAbility.ability",
-				fn
-					.sum<number>("BuildWeaponAbility.abilityPoints")
-					.as("abilityPointsSum"),
-			])
-			.where(
-				"BuildWeaponAbility.canonicalWeaponSplId",
-				"=",
-				canonicalWeaponSplId(weaponSplId),
-			)
-			.groupBy("BuildWeaponAbility.ability")
-			.execute();
-	}
-
-	return db
+/** Ability point sums of every public build updated after the date (`YYYY-MM-DD`, all when null), a build counted once however many weapons it lists. */
+export async function findAllAbilityPointSums(updatedSince: string | null) {
+	// sum tables only hold public builds, so no private filter is needed
+	const sums = db
 		.selectFrom("BuildAbilitySum")
+		.$if(updatedSince !== null, (qb) =>
+			qb.where(
+				"BuildAbilitySum.buildId",
+				"in",
+				db
+					.selectFrom("Build")
+					.select("Build.id")
+					.where("Build.updatedAt", ">", toTimestamp(updatedSince!)),
+			),
+		);
+
+	const abilities = await sums
 		.select(({ fn }) => [
 			"BuildAbilitySum.ability",
 			fn.sum<number>("BuildAbilitySum.abilityPoints").as("abilityPointsSum"),
 		])
 		.groupBy("BuildAbilitySum.ability")
 		.execute();
-}
 
-export async function findAllPopularAbilitiesByWeaponId(
-	weaponSplId: MainWeaponId,
-) {
-	// one signature per user so several builds for the same weapon don't inflate several buckets;
-	// the CTE picks the most recently updated one via SQLite's MAX() + bare columns rule
-	// (https://www.sqlite.org/lang_select.html#bareagg)
-	return db
-		.with("UserSignature", (cte) =>
-			cte
-				.selectFrom("Build")
-				.innerJoin("BuildWeapon", "BuildWeapon.buildId", "Build.id")
-				.select(({ fn }) => [
-					"Build.abilitiesSignature",
-					fn.max("Build.updatedAt").as("latestUpdatedAt"),
-				])
-				.where(
-					"BuildWeapon.canonicalWeaponSplId",
-					"=",
-					canonicalWeaponSplId(weaponSplId),
-				)
-				.where("Build.isPrivate", "=", 0)
-				.where("Build.abilitiesSignature", "is not", null)
-				.groupBy("Build.ownerId"),
+	const { buildsCount } = await sums
+		.select(({ fn }) =>
+			fn.count<number>("BuildAbilitySum.buildId").distinct().as("buildsCount"),
 		)
-		.selectFrom("UserSignature")
-		.select(({ fn }) => [
-			"UserSignature.abilitiesSignature",
-			fn.count<number>("UserSignature.abilitiesSignature").as("count"),
-		])
-		.groupBy("UserSignature.abilitiesSignature")
-		.having((eb) => eb(eb.fn.count("UserSignature.abilitiesSignature"), ">", 1))
-		.orderBy("count", "desc")
-		.orderBy("UserSignature.abilitiesSignature", "asc")
-		.limit(25)
-		.$narrowType<{ abilitiesSignature: NotNull }>()
-		.execute();
+		.executeTakeFirstOrThrow();
+
+	return { abilities, buildsCount };
 }
 
-export type AverageAbilityPointsResult = Awaited<
-	ReturnType<typeof findAllAbilityPointAverages>
->[number];
+/**
+ * For each of the weapons (alt skins folded), how many public builds updated after the date (`YYYY-MM-DD`, all when null)
+ * run each amount of AP of each ability, plus their build counts.
+ */
+export async function findAbilityPointCountsByWeaponIds({
+	weaponIds,
+	updatedSince,
+}: {
+	weaponIds: MainWeaponId[];
+	updatedSince: string | null;
+}) {
+	const rows = db
+		.selectFrom("BuildWeaponAbility")
+		.where(
+			"BuildWeaponAbility.canonicalWeaponSplId",
+			"in",
+			R.unique(weaponIds.map(canonicalWeaponSplId)),
+		)
+		.$if(updatedSince !== null, (qb) =>
+			qb.where((eb) =>
+				eb.exists(
+					eb
+						.selectFrom("BuildWeapon")
+						.select("BuildWeapon.buildId")
+						.whereRef("BuildWeapon.buildId", "=", "BuildWeaponAbility.buildId")
+						.whereRef(
+							"BuildWeapon.canonicalWeaponSplId",
+							"=",
+							"BuildWeaponAbility.canonicalWeaponSplId",
+						)
+						.where("BuildWeapon.updatedAt", ">", toTimestamp(updatedSince!)),
+				),
+			),
+		);
 
-export type PopularBuildsRow = Awaited<
-	ReturnType<typeof findAllPopularAbilitiesByWeaponId>
->[number];
+	const abilityPointCounts = await rows
+		.select(({ fn }) => [
+			"BuildWeaponAbility.canonicalWeaponSplId as weaponSplId",
+			"BuildWeaponAbility.ability",
+			"BuildWeaponAbility.abilityPoints",
+			fn.countAll<number>().as("buildsCount"),
+		])
+		.groupBy([
+			"BuildWeaponAbility.canonicalWeaponSplId",
+			"BuildWeaponAbility.ability",
+			"BuildWeaponAbility.abilityPoints",
+		])
+		.execute();
 
-export async function findAllByWeaponId(
-	weaponId: MainWeaponId,
-	options: { limit: number; sortAbilities?: boolean },
-) {
-	const { limit, sortAbilities: shouldSortAbilities = false } = options;
+	const buildCounts = await rows
+		.select(({ fn }) => [
+			"BuildWeaponAbility.canonicalWeaponSplId as weaponSplId",
+			fn
+				.count<number>("BuildWeaponAbility.buildId")
+				.distinct()
+				.as("buildsCount"),
+		])
+		.groupBy("BuildWeaponAbility.canonicalWeaponSplId")
+		.execute();
 
+	return { abilityPointCounts, buildCounts };
+}
+
+/** The newest public build of each owner listing the weapon (alt skins folded), if updated after the date (`YYYY-MM-DD`, any time when null). */
+export async function findNewestBuildPerOwnerByWeaponId({
+	weaponId,
+	updatedSince,
+}: {
+	weaponId: MainWeaponId;
+	updatedSince: string | null;
+}) {
+	// picks the most recently updated build via SQLite's MAX() + bare columns rule
+	// (https://www.sqlite.org/lang_select.html#bareagg)
 	const rows = await db
-		.selectFrom("BuildWeapon")
-		.innerJoin("Build", "Build.id", "BuildWeapon.buildId")
-		.innerJoin("User", "User.id", "Build.ownerId")
-		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
-		.select(({ eb }) => [
-			"Build.id",
-			"Build.title",
-			"Build.description",
-			"Build.modes",
-			"Build.headGearSplId",
-			"Build.clothesGearSplId",
-			"Build.shoesGearSplId",
-			"Build.updatedAt",
-			"Build.isPrivate",
+		.selectFrom("Build")
+		.innerJoin("BuildWeapon", "BuildWeapon.buildId", "Build.id")
+		.select(({ fn }) => [
+			"Build.abilitiesSignature",
 			"Build.abilities",
-			"PlusTier.tier as plusTier",
-			commonUserJsonObject(eb).as("owner"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("BuildWeapon as bw_inner")
-					.select(["bw_inner.weaponSplId", "bw_inner.sortValue"])
-					.orderBy("bw_inner.weaponSplId", "asc")
-					.whereRef("bw_inner.buildId", "=", "Build.id"),
-			).as("weapons"),
+			"Build.modes",
+			fn.max("Build.updatedAt").as("latestUpdatedAt"),
 		])
 		.where(
 			"BuildWeapon.canonicalWeaponSplId",
 			"=",
 			canonicalWeaponSplId(weaponId),
 		)
-		.where("BuildWeapon.sortValue", "is not", null)
-		.orderBy("BuildWeapon.sortValue", "asc")
-		.orderBy("BuildWeapon.updatedAt", "desc")
-		.limit(limit)
+		.where("Build.isPrivate", "=", 0)
+		.where("Build.abilitiesSignature", "is not", null)
+		.$if(updatedSince !== null, (qb) =>
+			qb.where("Build.updatedAt", ">", toTimestamp(updatedSince!)),
+		)
+		.groupBy("Build.ownerId")
+		.$narrowType<{ abilitiesSignature: NotNull }>()
 		.execute();
 
-	return rows.map((row) => buildRowToResult(row, shouldSortAbilities));
+	return rows.map((row) => {
+		invariant(row.abilities, "expected build abilities to be populated");
+
+		return {
+			abilitiesSignature: row.abilitiesSignature,
+			abilities: sortAbilities(row.abilities),
+			modes: row.modes,
+		};
+	});
+}
+
+/** Filters shared by the build lists, each a no-op when unset. */
+export interface BuildListFilters {
+	/** Every one has to hold, AP counted like the analyzer does (ability doubler included). */
+	abilities: AbilityFilter[];
+	mode: ModeShort | null;
+	/** `YYYY-MM-DD`, only builds updated after it. */
+	date: string | null;
+}
+
+/**
+ * A page of the authors of public builds listing the weapon (alt skins folded) that match the filters, with
+ * all of their matching builds. Authors rank by their best ranked build and their builds come together, best first.
+ * `buildCount` counts every matching build but only while filtering (null otherwise, as it would cost an extra read).
+ */
+export async function findPageByWeaponId({
+	weaponId,
+	filters,
+	page,
+	sortAbilities: shouldSortAbilities,
+}: {
+	weaponId: MainWeaponId;
+	filters: BuildListFilters;
+	page: number;
+	sortAbilities: boolean;
+}) {
+	const canonicalId = canonicalWeaponSplId(weaponId);
+
+	// `Build` is only read for the mode filter: a row lookup per build is most of an unfiltered count's cost
+	const matchingBuildWeapons = db
+		.selectFrom("BuildWeapon")
+		.where("BuildWeapon.canonicalWeaponSplId", "=", canonicalId)
+		.where("BuildWeapon.sortValue", "is not", null)
+		.where((eb) =>
+			eb.and(
+				filterConditions(filters, {
+					abilityPointsAtLeast: (ability, ap) =>
+						// an index probe (only public builds have these rows, as only they are listed here)
+						eb.exists(
+							eb
+								.selectFrom("BuildWeaponAbility")
+								.select("BuildWeaponAbility.buildId")
+								.where(
+									"BuildWeaponAbility.canonicalWeaponSplId",
+									"=",
+									canonicalId,
+								)
+								.whereRef(
+									"BuildWeaponAbility.buildId",
+									"=",
+									"BuildWeapon.buildId",
+								)
+								.where("BuildWeaponAbility.ability", "=", ability)
+								.where("BuildWeaponAbility.abilityPoints", ">=", ap),
+						),
+					onBuild: (condition) =>
+						eb.exists(
+							eb
+								.selectFrom("Build")
+								.select("Build.id")
+								.whereRef("Build.id", "=", "BuildWeapon.buildId")
+								.where(condition),
+						),
+					updatedAt: "BuildWeapon.updatedAt",
+				}),
+			),
+		);
+
+	const { ownerIds, ownerCount, buildCount } = await findOwnersPage({
+		query: matchingBuildWeapons,
+		page,
+		isFiltered:
+			filters.abilities.length > 0 ||
+			filters.mode !== null ||
+			filters.date !== null,
+	});
+
+	if (ownerIds.length === 0) return { builds: [], ownerCount, buildCount };
+
+	const buildWeapons = await bestRankedFirst(
+		matchingBuildWeapons
+			.select(["BuildWeapon.buildId", "BuildWeapon.ownerId"])
+			.where("BuildWeapon.ownerId", "in", ownerIds),
+	).execute();
+	const ownerPosition = new Map(ownerIds.map((id, i) => [id, i]));
+	const buildIds = R.sortBy(
+		buildWeapons,
+		(buildWeapon) => ownerPosition.get(buildWeapon.ownerId)!,
+	).map((buildWeapon) => buildWeapon.buildId);
+
+	const rows = await buildRowsByIds(buildIds)
+		.innerJoin("User", "User.id", "Build.ownerId")
+		.leftJoin("PlusTier", "PlusTier.userId", "Build.ownerId")
+		.select(({ eb }) => [
+			"PlusTier.tier as plusTier",
+			commonUserJsonObject(eb).as("owner"),
+		])
+		.execute();
+	const rowsById = new Map(rows.map((row) => [row.id, row]));
+
+	return {
+		builds: buildIds.map((id) =>
+			buildRowToResult(rowsById.get(id)!, shouldSortAbilities),
+		),
+		ownerCount,
+		buildCount,
+	};
+}
+
+/** A page of the user's builds matching the filters, in their chosen sort order. */
+export async function findPageByUserId({
+	userId,
+	showPrivate,
+	filters,
+	sorting,
+	page,
+	sortAbilities: shouldSortAbilities,
+}: {
+	userId: number;
+	showPrivate: boolean;
+	filters: BuildListFilters & {
+		/** Exact weapon id, alt skins and kits not folded. */
+		weaponId: MainWeaponId | null;
+		visibility: "PUBLIC" | "PRIVATE" | null;
+	};
+	sorting: {
+		buildSorting: BuildSort[] | null;
+		weaponPool: MainWeaponId[];
+	};
+	page: number;
+	sortAbilities: boolean;
+}) {
+	const { items, totalCount } = await Pagination.findPage({
+		query: db
+			.selectFrom("Build")
+			.where("Build.ownerId", "=", userId)
+			.$if(!showPrivate, (qb) => qb.where("Build.isPrivate", "=", 0))
+			.where((eb) =>
+				eb.and([
+					...filterConditions(filters, {
+						// private builds have no ability sum rows to probe
+						abilityPointsAtLeast: (ability, ap) =>
+							sql<SqlBool>`(select coalesce(sum(case when "slot"."key" = 0 then ${MAIN_SLOT_AP} when json_extract("gear"."value", '$[0]') = 'AD' then ${SUB_SLOT_AP * 2} else ${SUB_SLOT_AP} end), 0) from json_each("Build"."abilities") as "gear", json_each("gear"."value") as "slot" where "slot"."value" = ${ability}) >= ${ap}`,
+						onBuild: (condition) => condition,
+						updatedAt: "Build.updatedAt",
+					}),
+					...(filters.weaponId !== null
+						? [
+								eb.exists(
+									eb
+										.selectFrom("BuildWeapon")
+										.select("BuildWeapon.buildId")
+										.whereRef("BuildWeapon.buildId", "=", "Build.id")
+										.where("BuildWeapon.weaponSplId", "=", filters.weaponId),
+								),
+							]
+						: []),
+					...(filters.visibility !== null
+						? [
+								eb(
+									"Build.isPrivate",
+									"=",
+									filters.visibility === "PRIVATE" ? 1 : 0,
+								),
+							]
+						: []),
+				]),
+			),
+		id: "Build.id",
+		orderBy: [
+			...(sorting.buildSorting ?? DEFAULT_BUILD_SORT).flatMap((sort) =>
+				userBuildSortKeys(sort, sorting.weaponPool),
+			),
+			// ties keep the newest first
+			["Build.updatedAt", "desc"],
+		],
+		page,
+		pageSize: BUILDS_PAGE_SIZE,
+		rowsByIds: (ids) => buildRowsByIds(ids).execute(),
+	});
+
+	return {
+		builds: items.map((row) => ({
+			...buildRowToResult(row, shouldSortAbilities),
+			permissions: {
+				EDIT: [userId],
+			},
+		})),
+		totalCount,
+	};
+}
+
+/** How many builds the user has, how many of them are private and the count per (exact) weapon id. */
+export async function countsByUserId(
+	userId: number,
+	{ showPrivate }: { showPrivate: boolean },
+) {
+	const totals = await db
+		.selectFrom("Build")
+		.select(({ fn }) => [
+			fn.countAll<number>().as("total"),
+			fn.sum<number | null>("Build.isPrivate").as("private"),
+		])
+		.where("Build.ownerId", "=", userId)
+		.$if(!showPrivate, (qb) => qb.where("Build.isPrivate", "=", 0))
+		.executeTakeFirstOrThrow();
+
+	const weaponCounts = await db
+		.selectFrom("Build")
+		.innerJoin("BuildWeapon", "BuildWeapon.buildId", "Build.id")
+		.select(({ fn }) => [
+			"BuildWeapon.weaponSplId",
+			fn.countAll<number>().as("count"),
+		])
+		.where("Build.ownerId", "=", userId)
+		.$if(!showPrivate, (qb) => qb.where("Build.isPrivate", "=", 0))
+		.groupBy("BuildWeapon.weaponSplId")
+		.execute();
+
+	return {
+		total: totals.total,
+		private: totals.private ?? 0,
+		byWeaponId: Object.fromEntries(
+			weaponCounts.map((row) => [row.weaponSplId, row.count]),
+		) as Partial<Record<MainWeaponId, number>>,
+	};
 }
 
 /** Public build count per canonical weapon id (alt skins folded), weapons without builds omitted. */
@@ -386,6 +650,221 @@ async function recalculateSortValues(trx: Transaction<DB>, userId?: number) {
 			),
 		)
 		.execute();
+}
+
+/** The filters as SQL conditions, each list checking abilities and reaching the `Build` row its own way. */
+function filterConditions(
+	{ abilities, mode, date }: BuildListFilters,
+	{
+		abilityPointsAtLeast,
+		onBuild,
+		updatedAt,
+	}: {
+		abilityPointsAtLeast: (ability: Ability, ap: number) => Expression<SqlBool>;
+		/** Applies a condition on the build's `Build` row. */
+		onBuild: (condition: Expression<SqlBool>) => Expression<SqlBool>;
+		updatedAt: "Build.updatedAt" | "BuildWeapon.updatedAt";
+	},
+): Array<Expression<SqlBool>> {
+	return [
+		...abilities.map((filter) =>
+			abilityFilterCondition(filter, abilityPointsAtLeast),
+		),
+		...(mode !== null
+			? [
+					// a quoted two letter code can't match inside another, and a substring search is far cheaper than `json_each`
+					onBuild(
+						sql<SqlBool>`instr("Build"."modes", ${JSON.stringify(mode)}) > 0`,
+					),
+				]
+			: []),
+		...(date !== null
+			? [
+					sql<SqlBool>`${sql.ref(updatedAt)} > ${dateToDatabaseTimestamp(new Date(date))}`,
+				]
+			: []),
+	];
+}
+
+function toTimestamp(date: string) {
+	return dateToDatabaseTimestamp(new Date(date));
+}
+
+function abilityFilterCondition(
+	filter: AbilityFilter,
+	abilityPointsAtLeast: (ability: Ability, ap: number) => Expression<SqlBool>,
+): Expression<SqlBool> {
+	switch (filter.type) {
+		case "HAS":
+			return abilityPointsAtLeast(filter.ability, 1);
+		case "HAS_NOT":
+			return sql<SqlBool>`not (${abilityPointsAtLeast(filter.ability, 1)})`;
+		case "AT_LEAST":
+			return abilityPointsAtLeast(filter.ability, filter.ap);
+		case "AT_MOST":
+			return sql<SqlBool>`not (${abilityPointsAtLeast(filter.ability, filter.ap + 1)})`;
+		default:
+			assertUnreachable(filter);
+	}
+}
+
+function userBuildSortKeys(
+	sort: BuildSort,
+	weaponPool: MainWeaponId[],
+): Array<Pagination.SortKey<"Build">> {
+	switch (sort) {
+		case "UPDATED_AT":
+			return [["Build.updatedAt", "desc"]];
+		case "ALPHABETICAL_TITLE":
+			return [[sql`"Build"."title" collate nocase`, "asc"]];
+		case "WEAPON_IN_GAME_ORDER":
+			return [
+				[
+					sql`(select min("weaponSplId") from "BuildWeapon" where "buildId" = "Build"."id")`,
+					"asc",
+				],
+			];
+		case "WEAPON_POOL":
+			return nullsLast(weaponPoolIndex(weaponPool));
+		case "MODE":
+			return nullsLast(
+				sql`(select min(case "value" ${sql.join(
+					modesShort.map((mode, i) => sql`when ${mode} then ${i}`),
+					sql` `,
+				)} end) from json_each("Build"."modes"))`,
+			);
+		case "TOP_500":
+			return [
+				[
+					sql`exists (select 1 from "BuildWeapon" where "buildId" = "Build"."id" and "sortValue" % 2 = 0)`,
+					"desc",
+				],
+			];
+		case "HEADGEAR_ID":
+			return nullsLast(sql.ref("Build.headGearSplId"));
+		case "CLOTHES_ID":
+			return nullsLast(sql.ref("Build.clothesGearSplId"));
+		case "SHOES_ID":
+			return nullsLast(sql.ref("Build.shoesGearSplId"));
+		case "PUBLIC_BUILD":
+			return [["Build.isPrivate", "asc"]];
+		case "PRIVATE_BUILD":
+			return [["Build.isPrivate", "desc"]];
+		default:
+			assertUnreachable(sort);
+	}
+}
+
+/** Index in the pool of the build's first weapon there, kits of the same base weapon counting as one. */
+function weaponPoolIndex(weaponPool: MainWeaponId[]) {
+	const poolIndexByBaseWeaponId = new Map<MainWeaponId, number>();
+	for (const [i, weaponId] of weaponPool.entries()) {
+		const baseWeaponId = weaponIdToBaseWeaponId(weaponId);
+		if (!poolIndexByBaseWeaponId.has(baseWeaponId)) {
+			poolIndexByBaseWeaponId.set(baseWeaponId, i);
+		}
+	}
+
+	if (poolIndexByBaseWeaponId.size === 0) return sql`null`;
+
+	return sql`(select min(case "weaponSplId" - "weaponSplId" % 10 ${sql.join(
+		[...poolIndexByBaseWeaponId].map(
+			([baseWeaponId, i]) => sql`when ${baseWeaponId} then ${i}`,
+		),
+		sql` `,
+	)} end) from "BuildWeapon" where "buildId" = "Build"."id")`;
+}
+
+function nullsLast(
+	expression: Expression<unknown>,
+): Array<Pagination.SortKey<"Build">> {
+	return [
+		[sql`${expression} is null`, "asc"],
+		[expression, "asc"],
+	];
+}
+
+/** The page's owners in the order their best ranked build comes, how many owners there are in all and, when filtered, how many builds. */
+async function findOwnersPage({
+	query,
+	page,
+	isFiltered,
+}: {
+	query: SelectQueryBuilder<DB, "BuildWeapon", Record<never, never>>;
+	page: number;
+	isFiltered: boolean;
+}) {
+	const pageStart = (page - 1) * BUILDS_PAGE_SIZE;
+	const pageEnd = page * BUILDS_PAGE_SIZE;
+
+	// checking the filters is most of a row's cost, so the matching rows are read once and the owners counted off them
+	if (isFiltered) {
+		const rows = await bestRankedFirst(
+			query.select("BuildWeapon.ownerId"),
+		).execute();
+		const ownerIds = R.unique(rows.map((row) => row.ownerId));
+
+		return {
+			ownerIds: ownerIds.slice(pageStart, pageEnd),
+			ownerCount: ownerIds.length,
+			buildCount: rows.length,
+		};
+	}
+
+	// both index only reads, the ranked one fetched in growing batches until the page's owners have shown up
+	const rankedOwnerIds = bestRankedFirst(query.select("BuildWeapon.ownerId"));
+	let ownerIds: number[] = [];
+	for (let limit = pageEnd * 2; ; limit *= 2) {
+		const rows = await rankedOwnerIds.limit(limit).execute();
+		ownerIds = R.unique(rows.map((row) => row.ownerId));
+
+		if (ownerIds.length >= pageEnd || rows.length < limit) break;
+	}
+
+	const { ownerCount } = await query
+		.select(({ fn }) =>
+			fn.count<number>("BuildWeapon.ownerId").distinct().as("ownerCount"),
+		)
+		.executeTakeFirstOrThrow();
+
+	return {
+		ownerIds: ownerIds.slice(pageStart, pageEnd),
+		ownerCount,
+		buildCount: null,
+	};
+}
+
+/** Matches the `build_weapon_lookup` index. */
+function bestRankedFirst<O>(query: SelectQueryBuilder<DB, "BuildWeapon", O>) {
+	return query
+		.orderBy("BuildWeapon.sortValue", "asc")
+		.orderBy("BuildWeapon.updatedAt", "desc")
+		.orderBy("BuildWeapon.buildId", "asc");
+}
+
+function buildRowsByIds(ids: number[]) {
+	return db
+		.selectFrom("Build")
+		.select(({ eb }) => [
+			"Build.id",
+			"Build.title",
+			"Build.description",
+			"Build.modes",
+			"Build.headGearSplId",
+			"Build.clothesGearSplId",
+			"Build.shoesGearSplId",
+			"Build.updatedAt",
+			"Build.isPrivate",
+			"Build.abilities",
+			jsonArrayFrom(
+				eb
+					.selectFrom("BuildWeapon")
+					.select(["BuildWeapon.weaponSplId", "BuildWeapon.sortValue"])
+					.orderBy("BuildWeapon.weaponSplId", "asc")
+					.whereRef("BuildWeapon.buildId", "=", "Build.id"),
+			).as("weapons"),
+		])
+		.where("Build.id", "in", ids);
 }
 
 function weaponIsTop500(sortValue: number | null): boolean {
@@ -534,6 +1013,7 @@ async function insertBuildChildren(
 				canonicalWeaponSplId: canonicalWeaponSplId(weaponSplId),
 				sortValue: computed.sortValueByWeaponSplId.get(weaponSplId) ?? null,
 				updatedAt,
+				ownerId: args.ownerId,
 			})),
 		)
 		.execute();

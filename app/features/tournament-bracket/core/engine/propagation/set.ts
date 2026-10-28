@@ -72,13 +72,13 @@ export function endSet(
 
 /**
  * Reopens a completed match, clearing the set result. A force-ended set keeps its scores, otherwise
- * the deciding game's score is removed and the caller deletes its game result row (see `endedEarly`).
+ * the last game's score is removed and the caller deletes its game result row (see `endedEarly`).
  */
 export function reopenMatch(
 	data: BracketData,
-	matchId: number,
+	input: { matchId: number; lastGameWinnerTeamId: number | null },
 ): EngineResult & { endedEarly: boolean } {
-	const { match, maps } = findMatchWithMaps(data, matchId);
+	const { match, maps } = findMatchWithMaps(data, input.matchId);
 
 	invariant(match.winnerSide, "Match has no result to reopen");
 
@@ -92,11 +92,13 @@ export function reopenMatch(
 
 	const scores = currentScores(match);
 	if (!endedEarly) {
-		invariant(scores[0] !== scores[1], "Scores are equal");
-		scores[SIDES.indexOf(match.winnerSide)]--;
+		invariant(input.lastGameWinnerTeamId, "Last game winner is missing");
+		const side = sideOfTeam(match, input.lastGameWinnerTeamId);
+		invariant(scores[side] > 0, "No game to remove for the given team");
+		scores[side]--;
 	}
 
-	const reported = reportResult(data, { matchId, scores });
+	const reported = reportResult(data, { matchId: input.matchId, scores });
 
 	return { ...reported, endedEarly };
 }

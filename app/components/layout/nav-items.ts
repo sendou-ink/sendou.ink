@@ -40,6 +40,10 @@ export const navItems = [
 		url: "scrims",
 	},
 	{
+		name: "lobbies",
+		url: "lobbies",
+	},
+	{
 		name: "lfg",
 		url: "lfg",
 	},

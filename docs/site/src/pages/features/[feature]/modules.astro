@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+import type { InferGetStaticPropsType } from "astro";
+import DependencyGraph from "../../../components/living/DependencyGraph.astro";
+import FeaturePage from "../../../components/living/FeaturePage.astro";
+import ModuleArticle from "../../../components/living/ModuleArticle.astro";
+import { modulesHeadings } from "../../../living/format.ts";
+
+export async function getStaticPaths() {
+	const features = await getCollection("features");
+
+	return features
+		.filter((entry) => entry.data.views.includes("modules"))
+		.map((entry) => ({
+			params: { feature: entry.id },
+			props: { feature: entry.data },
+		}));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { feature } = Astro.props;
+---
+
+<FeaturePage feature={feature} view="modules" headings={modulesHeadings(feature)}>
+	<DependencyGraph feature={feature} />
+	{feature.modules.map((module) => <ModuleArticle module={module} />)}
+</FeaturePage>

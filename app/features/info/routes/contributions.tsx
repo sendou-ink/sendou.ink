@@ -1,14 +1,15 @@
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
-import type { MetaFunction } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
-import { languages } from "~/modules/i18n/config";
+import { type LanguageCode, languages } from "~/modules/i18n/config";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	GITHUB_CONTRIBUTORS_URL,
 	RHODESMAS_FREESOUND_PROFILE_URL,
 	SPLATOON_3_INK,
+	TRANSLATE_PAGE,
 } from "~/utils/urls";
 
 export const meta: MetaFunction = (args) => {
@@ -35,12 +36,8 @@ const PROGRAMMERS = [
 
 const TRANSLATORS: Array<{
 	translators: Array<string>;
-	language: (typeof languages)[number]["code"];
+	language: LanguageCode;
 }> = [
-	{
-		translators: ["Frederik"],
-		language: "da",
-	},
 	{
 		translators: ["NoAim™bUrn", "Alice", "jgiefer"],
 		language: "de",
@@ -54,44 +51,20 @@ const TRANSLATORS: Array<{
 		language: "es-US",
 	},
 	{
-		translators: ["Charakiga", "marie-maxime", "Filuz", "julufm"],
-		language: "fr-CA",
-	},
-	{
-		translators: ["Charakiga", "marie-maxime", "Filuz", "julufm", "IKEI"],
+		translators: [
+			"Charakiga",
+			"marie-maxime",
+			"Filuz",
+			"julufm",
+			"IKEI",
+			"mewpower",
+			"Babagass",
+		],
 		language: "fr-EU",
-	},
-	{
-		translators: ["shachar700"],
-		language: "he",
-	},
-	{
-		translators: ["Mar.io"],
-		language: "it",
 	},
 	{
 		translators: ["funyaaa", "taqm", "yutarour", "Koreki"],
 		language: "ja",
-	},
-	{
-		translators: ["niLPotential"],
-		language: "ko",
-	},
-	{
-		translators: ["diamo"],
-		language: "pl",
-	},
-	{
-		translators: ["Ant"],
-		language: "pt-BR",
-	},
-	{
-		translators: ["Ferrari"],
-		language: "nl",
-	},
-	{
-		translators: ["DoubleCookies", "yaga"],
-		language: "ru",
 	},
 	{
 		translators: [
@@ -160,6 +133,11 @@ export default function ContributionsPage() {
 					- {t("contributions:sounds")}
 				</li>
 			</ul>
+			<p className="mt-4">
+				<Link to={TRANSLATE_PAGE}>
+					Want to see sendou.ink in your language? Help translate it!
+				</Link>
+			</p>
 		</Main>
 	);
 }

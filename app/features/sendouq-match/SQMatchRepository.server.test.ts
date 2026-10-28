@@ -4,6 +4,7 @@ import { backdate } from "~/db/seed/core/backdate";
 import * as SplatoonFaker from "~/db/seed/core/SplatoonFaker";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -20,6 +21,7 @@ import { dateToYYYYMMDD } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
 import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepository.server";
+import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
 const setupMatch = async ({
@@ -200,6 +202,19 @@ describe("lockMatchWithoutSkillChange", () => {
 		await SQMatchRepository.lockMatchWithoutSkillChange(match);
 
 		expect((await fetchChatRoom(match.chatRoomId!)).inactive).toBe(1);
+	});
+
+	test("deletes the match's reported weapons", async () => {
+		const { match, alphaMembers } = await setupMatch();
+		await SQReportedWeaponFactory.createMany(1, () => ({
+			groupMatchId: match.id,
+			mapIndex: 0,
+			userId: alphaMembers[0].id,
+		}));
+
+		await SQMatchRepository.lockMatchWithoutSkillChange(match);
+
+		expect(await ReportedWeaponRepository.findByMatchId(match.id)).toBeNull();
 	});
 });
 

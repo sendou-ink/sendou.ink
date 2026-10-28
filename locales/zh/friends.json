@@ -10,9 +10,6 @@
 	"friendsList.viewTournament": "查看赛事",
 	"friendsList.viewMatch": "查看对局",
 	"friendsList.live": "直播中",
-	"friendsList.inMatch": "",
-	"friendsList.nextMatch": "",
-	"friendsList.watchStream": "",
 	"friendsList.joinSendouQ": "加入 SendouQ",
 	"friendsList.deleteFriend": "删除好友",
 	"friendsList.deleteConfirm": "确定要删除好友 {{name}} 吗？",
@@ -20,7 +17,5 @@
 	"view.teamMembers": "队伍成员",
 	"view.all": "全部",
 	"teamMembers.empty": "暂无队伍成员",
-	"unseenRequests": "有 {{count}} 条未查看的好友请求",
-	"friendsList.pin": "",
-	"friendsList.unpin": ""
+	"unseenRequests": "有 {{count}} 条未查看的好友请求"
 }

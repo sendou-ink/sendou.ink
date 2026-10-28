@@ -1,0 +1,254 @@
+---
+import { getCollection } from "astro:content";
+import { Badge } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import type {
+	EnvVar,
+	EnvVarSection,
+} from "../../../../../scripts/living-docs/env-vars.ts";
+import { anchor, githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import FileLink from "../../components/living/FileLink.astro";
+import { count, markdown } from "../../living/format.ts";
+import "../../styles/living.css";
+
+/** Past this the read sites are folded away. */
+const MAX_OPEN_READS = 6;
+
+const SECTIONS: Array<{ id: EnvVarSection; title: string; intro: string }> = [
+	{
+		id: "server",
+		title: "Server",
+		intro:
+			"Read on the server only, validated by the schema of <code>app/config.server.ts</code> and read through <code>ServerConfig</code> (a few are read straight from <code>process.env</code>).",
+	},
+	{
+		id: "client",
+		title: "Client",
+		intro:
+			"<code>VITE_*</code> variables, built into the client bundle by Vite so never secrets. Validated by the schema of <code>app/config.ts</code> and read through <code>Config</code>.",
+	},
+	{
+		id: "scripts",
+		title: "Scripts & build config",
+		intro:
+			"Listed in <code>.env.example</code> but read only outside the app: by scripts of <code>scripts/</code> and the root config files.",
+	},
+	{
+		id: "tooling",
+		title: "Tooling",
+		intro:
+			"Not in <code>.env.example</code> nor the config schemas: set by CI, package scripts or by hand to tweak a tool.",
+	},
+];
+
+const envVars = (await getCollection("envVars")).map((entry) => entry.data);
+const sections = SECTIONS.map((section) => ({
+	...section,
+	envVars: envVars.filter((envVar) => envVar.section === section.id),
+})).filter((section) => section.envVars.length > 0);
+const neverRead = envVars.filter((envVar) => envVar.reads.length === 0);
+const notInExample = envVars.filter(
+	(envVar) => !envVar.example && envVar.section !== "tooling",
+);
+
+function sectionId(section: EnvVarSection) {
+	return anchor(section, "variables");
+}
+
+function envVarId(envVar: EnvVar) {
+	return anchor("env", envVar.name);
+}
+
+function defaultLabel(envVar: EnvVar) {
+	const schema = envVar.schema;
+	if (!schema) return null;
+	if (schema.requiredInProd) {
+		return schema.default
+			? `required in production, "${schema.default}" elsewhere`
+			: "required in production, empty elsewhere";
+	}
+
+	return schema.default === null ? "optional, unset" : `"${schema.default}"`;
+}
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Environment variables",
+		description: "Every environment variable: .env.example, the app's config schemas and where the code reads each one.",
+		editUrl: false,
+		tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
+	}}
+	headings={sections.flatMap((section) => [
+		{ depth: 2, slug: sectionId(section.id), text: section.title },
+		...section.envVars.map((envVar) => ({
+			depth: 3,
+			slug: envVarId(envVar),
+			text: envVar.name,
+		})),
+	])}
+>
+	<p>
+		Every environment variable the code reads, generated from{" "}
+		<a href={githubUrl(".env.example", 1)}><code>.env.example</code></a> (copy it to{" "}
+		<code>.env</code> to get started), the schemas of{" "}
+		<a href={githubUrl("app/config.server.ts", 1)}><code>app/config.server.ts</code></a> and{" "}
+		<a href={githubUrl("app/config.ts", 1)}><code>app/config.ts</code></a>, which fail the start
+		with a list of what is wrong, and the code reading <code>process.env</code> or{" "}
+		<code>import.meta.env</code> directly.
+	</p>
+	{
+		neverRead.length > 0 || notInExample.length > 0 ? (
+			<ul>
+				{notInExample.length > 0 ? (
+					<li>
+						<Badge text="not in .env.example" variant="caution" size="small" />{" "}
+						{notInExample.map((envVar, index) => (
+							<>
+								{index > 0 ? ", " : ""}
+								<a href={`#${envVarId(envVar)}`}>
+									<code>{envVar.name}</code>
+								</a>
+							</>
+						))}
+					</li>
+				) : null}
+				{neverRead.length > 0 ? (
+					<li>
+						<Badge text="never read" variant="caution" size="small" />{" "}
+						{neverRead.map((envVar, index) => (
+							<>
+								{index > 0 ? ", " : ""}
+								<a href={`#${envVarId(envVar)}`}>
+									<code>{envVar.name}</code>
+								</a>
+							</>
+						))}
+					</li>
+				) : null}
+			</ul>
+		) : null
+	}
+
+	{
+		sections.map((section) => (
+			<>
+				<h2 id={sectionId(section.id)}>{section.title}</h2>
+				<p set:html={section.intro} />
+				<div class="living routes">
+					{section.envVars.map((envVar) => {
+						const defaultText = defaultLabel(envVar);
+						const reads = envVar.reads.map((read) => (
+							<a
+								class="chip file-chip"
+								href={githubUrl(read.file, read.line)}
+								title={[read.via, read.note].filter(Boolean).join("\n")}
+							>
+								{read.file}:{read.line}
+							</a>
+						));
+
+						return (
+							<article class="route">
+								<header class="route-head">
+									<h3 class="route-path" id={envVarId(envVar)}>
+										<code>{envVar.name}</code>
+									</h3>
+									{envVar.schema?.requiredInProd ? (
+										<Badge text="required in production" variant="caution" size="small" />
+									) : null}
+									{envVar.schema?.isBoolean ? <Badge text="boolean" size="small" /> : null}
+									{!envVar.example && envVar.section !== "tooling" ? (
+										<Badge text="not in .env.example" variant="caution" size="small" />
+									) : null}
+									{envVar.reads.length === 0 ? <Badge text="never read" variant="caution" size="small" /> : null}
+									{envVar.example ? (
+										<FileLink file=".env.example" line={envVar.example.line} label=".env.example" />
+									) : envVar.schema ? (
+										<FileLink
+											file={envVar.schema.file}
+											line={envVar.schema.line}
+											label={envVar.schema.file.replace(/^app\//, "")}
+										/>
+									) : null}
+								</header>
+								{[envVar.description, envVar.schema?.comment]
+									.filter((text) => Boolean(text))
+									.map((text) => (
+										<div class="doc" set:html={markdown(text!)} />
+									))}
+								{!envVar.description && !envVar.schema?.comment
+									? [...new Set(envVar.reads.map((read) => read.note).filter(Boolean))].map(
+											(note) => <div class="doc" set:html={markdown(note!)} />,
+										)
+									: null}
+								<div class="usages">
+									{defaultText ? (
+										<div class="usage-row">
+											<span class="usage-kind">Default</span>
+											<span>{defaultText}</span>
+										</div>
+									) : null}
+									{envVar.schema?.values ? (
+										<div class="usage-row">
+											<span class="usage-kind">Values</span>
+											<span>
+												{envVar.schema.values.map((value) => (
+													<code class="chip">{value}</code>
+												))}
+											</span>
+										</div>
+									) : null}
+									{envVar.example?.value ? (
+										<div class="usage-row">
+											<span class="usage-kind">Example</span>
+											<code>{envVar.example.value}</code>
+										</div>
+									) : null}
+									{envVar.schema && envVar.schema.requiredWith.length > 0 ? (
+										<div class="usage-row">
+											<span class="usage-kind">Set together</span>
+											<span>
+												{envVar.schema.requiredWith.map((name) => (
+													<a class="chip" href={`#${anchor("env", name)}`}>
+														<code>{name}</code>
+													</a>
+												))}
+											</span>
+										</div>
+									) : null}
+									{envVar.configProperties.map((property) => (
+										<div class="usage-row">
+											<span class="usage-kind">Config</span>
+											<span>
+												<a href={githubUrl(property.file, property.line)}>
+													<code>{property.path}</code>
+												</a>
+												{property.doc ? (
+													<span class="muted" set:html={` ${markdown(property.doc).replace(/<\/?p>/g, " ")}`} />
+												) : null}
+											</span>
+										</div>
+									))}
+									{envVar.reads.length > 0 ? (
+										<div class="usage-row">
+											<span class="usage-kind">Read in</span>
+											{envVar.reads.length > MAX_OPEN_READS ? (
+												<details>
+													<summary>{count(envVar.reads.length, "place")}</summary>
+													{reads}
+												</details>
+											) : (
+												<span>{reads}</span>
+											)}
+										</div>
+									) : null}
+								</div>
+							</article>
+						);
+					})}
+				</div>
+			</>
+		))
+	}
+</StarlightPage>

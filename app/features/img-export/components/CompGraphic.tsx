@@ -16,7 +16,7 @@ import type {
 	DamageCombo,
 	DamageSegment,
 } from "~/features/comp-analyzer/comp-analyzer-types";
-import { getWeaponsWithRange } from "~/features/comp-analyzer/core/weapon-range";
+import * as WeaponRange from "~/features/comp-analyzer/core/WeaponRange";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { COMP_ANALYZER_URL, navIconUrl } from "~/utils/urls";
 import styles from "./CompGraphic.module.css";
@@ -51,7 +51,7 @@ export function CompGraphic({
 }) {
 	const { t } = useTranslation(["analyzer"]);
 
-	const weaponsWithRange = getWeaponsWithRange(weaponIds);
+	const weaponsWithRange = WeaponRange.ofWeapons(weaponIds);
 	const topCombos = combos.slice(0, MAX_COMBOS);
 
 	return (

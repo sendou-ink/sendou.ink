@@ -1,0 +1,31 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+Teams post when they are looking for a scrim (a practice match), other teams request to play and the poster accepts one. The accepted pairing gets a match page with a chat and map-by-map tracking.
+
+A **post** (`ScrimPost`) is made by a **side**: a team or a pick-up of users. Another side makes a **request** (`ScrimPostRequest`) to it and accepting one books the scrim, the post's side playing as `ALPHA` and the request's as `BRAVO`. The rules are listed under Behaviour below, each with the tests that establish it.
+
+## Lifecycle
+
+<Mermaid code={`stateDiagram-v2
+	[*] --> Open: posted on /scrims/new
+	Open --> Open: requests sent and withdrawn
+	Open --> [*]: deleted, or another scrim of its players booked
+	Open --> Booked: a request accepted
+	Booked --> Canceled: canceled before the start
+	Booked --> Locked: tracking idle long enough after the start
+	Canceled --> [*]
+	Locked --> [*]`} />
+
+`/scrims` lists posts until 3 hours past their start, booked ones only to their players. A post nobody accepted is never deleted, it just stops being listed.
+
+## Map-by-map
+
+<Mermaid code={`flowchart LR
+	submit["A side submits its map list"] --> pool["Pool: union of the submitted lists"]
+	pool --> next["Next map generated, avoiding played ones"]
+	next --> report["Winner reported"]
+	report --> next
+	next -. "pick or replay a map" .-> next
+	report -. "undo the latest report" .-> next`} />
+
+Every change is broadcast through the scrim's chat room so both sides' pages update.

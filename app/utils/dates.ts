@@ -8,21 +8,12 @@ import type { DayMonthYear } from "./schema";
 
 // en-US ships with date-fns core as the default locale, so it costs no extra bytes
 const LOCALE_LOADERS: Record<LanguageCode, () => Promise<Locale>> = {
-	da: () => import("date-fns/locale/da").then((module) => module.da),
 	de: () => import("date-fns/locale/de").then((module) => module.de),
 	en: () => Promise.resolve(enUS),
 	"es-ES": () => import("date-fns/locale/es").then((module) => module.es),
 	"es-US": () => import("date-fns/locale/es").then((module) => module.es),
-	"fr-CA": () => import("date-fns/locale/fr-CA").then((module) => module.frCA),
 	"fr-EU": () => import("date-fns/locale/fr").then((module) => module.fr),
-	he: () => import("date-fns/locale/he").then((module) => module.he),
-	it: () => import("date-fns/locale/it").then((module) => module.it),
 	ja: () => import("date-fns/locale/ja").then((module) => module.ja),
-	ko: () => import("date-fns/locale/ko").then((module) => module.ko),
-	nl: () => import("date-fns/locale/nl").then((module) => module.nl),
-	pl: () => import("date-fns/locale/pl").then((module) => module.pl),
-	"pt-BR": () => import("date-fns/locale/pt-BR").then((module) => module.ptBR),
-	ru: () => import("date-fns/locale/ru").then((module) => module.ru),
 	zh: () => import("date-fns/locale/zh-CN").then((module) => module.zhCN),
 };
 

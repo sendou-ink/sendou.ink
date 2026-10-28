@@ -9,10 +9,11 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { PLANNER_URL } from "~/utils/urls";
+import { importedPlansPersisted } from "../plans-persisted";
 import { plansSearchParams } from "../plans-search-params";
 
-const STORAGE_KEY_PREFIX = "plans-import:";
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
 export interface ImportedPlan {
@@ -52,7 +53,10 @@ export async function openInNewTab({
 	};
 
 	sweepStale();
-	localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(plan));
+	if (!PersistedState.writeMapEntry(importedPlansPersisted, key, plan)) {
+		PersistedState.removeMapEntry(importedPlansPersisted, key);
+		throw new Error("Couldn't stash the plan");
+	}
 
 	window.open(
 		plansSearchParams.href(PLANNER_URL, {
@@ -69,23 +73,22 @@ export async function openInNewTab({
 export function claim(key: string): ImportedPlan | null {
 	if (claims.has(key)) return claims.get(key)!;
 
-	const storageKey = STORAGE_KEY_PREFIX + key;
-	const stashed = localStorage.getItem(storageKey);
-	localStorage.removeItem(storageKey);
+	const plan = PersistedState.readMap(importedPlansPersisted)[key] ?? null;
+	PersistedState.removeMapEntry(importedPlansPersisted, key);
 
-	const plan = stashed ? (JSON.parse(stashed) as ImportedPlan) : null;
 	claims.set(key, plan);
 	return plan;
 }
 
 function sweepStale() {
 	const staleBefore = Date.now() - STALE_AFTER_MS;
-	for (const storageKey of Object.keys(localStorage)) {
-		if (!storageKey.startsWith(STORAGE_KEY_PREFIX)) continue;
-		const stashedAt = Number(
-			storageKey.slice(STORAGE_KEY_PREFIX.length).split("-")[0],
-		);
-		if (stashedAt < staleBefore) localStorage.removeItem(storageKey);
+	for (const key of Object.keys(
+		PersistedState.readMap(importedPlansPersisted),
+	)) {
+		const stashedAt = Number(key.split("-")[0]);
+		if (stashedAt < staleBefore) {
+			PersistedState.removeMapEntry(importedPlansPersisted, key);
+		}
 	}
 }
 

@@ -1,0 +1,30 @@
+---
+import { highlight } from "../../../../../scripts/living-docs/highlight.ts";
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import type { SourceRef } from "../../../../../scripts/living-docs/page-objects.ts";
+import { markdown } from "../../living/format.ts";
+
+interface Props {
+	/** What hovering a `.ref` with the matching `data-ref` shows, by ref id. */
+	refs: Map<string, SourceRef>;
+}
+
+const { refs } = Astro.props;
+---
+
+{
+	[...refs].map(([id, ref]) => (
+		<template data-ref-id={id} data-href={githubUrl(ref.file, ref.line)}>
+			<div class="tooltip-head">
+				<code>{ref.title}</code>
+				<span>{`${ref.file}:${ref.line}`}</span>
+			</div>
+			{ref.doc ? (
+				<div class="tooltip-doc" set:html={markdown(ref.doc)} />
+			) : (
+				<div class="tooltip-doc muted">No JSDoc</div>
+			)}
+			{ref.code ? <pre class="code scrollbar" set:html={highlight(ref.code)} /> : null}
+		</template>
+	))
+}

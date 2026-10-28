@@ -90,7 +90,7 @@ export default function BracketTestLayout() {
 		tournament: mockTournament,
 		settings: format === "swiss" ? { roundCount: 5 } : null,
 		sources: undefined,
-		seeding: undefined,
+		previewSeeding: undefined,
 		createdAt: null,
 		requiresCheckIn: false,
 		startTime: null,

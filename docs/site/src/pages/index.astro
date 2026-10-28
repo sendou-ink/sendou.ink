@@ -1,0 +1,185 @@
+---
+import { getCollection } from "astro:content";
+import { CardGrid, LinkCard } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import FeatureIcon from "../components/living/FeatureIcon.astro";
+import { count, sitePath, testsOf, viewHref } from "../living/format.ts";
+import "../styles/living.css";
+
+const docs = (await getCollection("docs")).sort((a, b) =>
+	a.data.title.localeCompare(b.data.title),
+);
+const contributorDocs = docs.filter((doc) => doc.id.startsWith("dev/"));
+const projectDocs = docs.filter((doc) => doc.id.startsWith("project/"));
+const guides = docs.filter((doc) => doc.id.startsWith("guides/"));
+const publicApi = [
+	{
+		title: "Overview",
+		path: "api/",
+		description: docs.find((doc) => doc.id === "api")?.data.description,
+	},
+	{
+		title: "Endpoints",
+		path: "api/endpoints/",
+		description: "Every endpoint with its types and real example requests.",
+	},
+];
+const reference = [
+	{
+		title: "Routes",
+		path: "reference/routes/",
+		description: "Every route and the e2e tests that render it.",
+	},
+	{
+		title: "Database tables",
+		path: "reference/db-tables/",
+		description: "The tables and views of the database and how they relate.",
+	},
+	{
+		title: "Lint rules",
+		path: "reference/lint-rules/",
+		description: "The repo's own Biome lint rules.",
+	},
+	{
+		title: "Permissions",
+		path: "reference/permissions/",
+		description: "The roles and per-object permissions each feature checks.",
+	},
+	{
+		title: "Search params & storage",
+		path: "reference/search-params/",
+		description: "Every search param and web storage definition.",
+	},
+	{
+		title: "Background work",
+		path: "reference/background-work/",
+		description:
+			"Scheduled routines, machine endpoints, webhooks and notifications.",
+	},
+	{
+		title: "Environment variables",
+		path: "reference/env-vars/",
+		description: "Every environment variable and where the code reads it.",
+	},
+	{
+		title: "Package scripts",
+		path: "reference/scripts/",
+		description: "Every script of package.json and what it runs.",
+	},
+	{
+		title: "Components",
+		path: "components/buttons/",
+		description: "The shared UI components, rendered live.",
+	},
+];
+const features = (await getCollection("features"))
+	.map((entry) => entry.data)
+	.filter((feature) => feature.views.length > 0)
+	.sort((a, b) => a.config.label.localeCompare(b.config.label));
+---
+
+<StarlightPage
+	frontmatter={{ title: "sendou.ink docs", editUrl: false }}
+	headings={[
+		{ depth: 2, slug: "contributor-docs", text: "Contributor docs" },
+		{ depth: 2, slug: "project", text: "Project" },
+		{ depth: 2, slug: "guides", text: "Guides" },
+		{ depth: 2, slug: "public-api", text: "Public API" },
+		{ depth: 2, slug: "reference", text: "Reference" },
+		{ depth: 2, slug: "features", text: "Features" },
+	]}
+>
+	<p>
+		The repo's markdown docs and the living docs generated from the code: every feature's core
+		modules, repositories, e2e tests and routes, the components, database tables and lint rules. Runs locally
+		with <code>pnpm dev:docs</code>, see <a href={sitePath("dev/living-docs/")}>Living docs</a>.
+	</p>
+
+	<h2 id="contributor-docs">Contributor docs</h2>
+	<CardGrid>
+		{
+			contributorDocs.map((doc) => (
+				<LinkCard
+					title={doc.data.title}
+					href={sitePath(`${doc.id}/`)}
+					description={doc.data.description}
+				/>
+			))
+		}
+	</CardGrid>
+
+	<h2 id="project">Project</h2>
+	<ul>
+		{projectDocs.map((doc) => <li><a href={sitePath(`${doc.id}/`)}>{doc.data.title}</a></li>)}
+	</ul>
+
+	<h2 id="guides">Guides</h2>
+	<ul>
+		{guides.map((doc) => <li><a href={sitePath(`${doc.id}/`)}>{doc.data.title}</a></li>)}
+	</ul>
+
+	<h2 id="public-api">Public API</h2>
+	<CardGrid>
+		{
+			publicApi.map((page) => (
+				<LinkCard title={page.title} href={sitePath(page.path)} description={page.description} />
+			))
+		}
+	</CardGrid>
+
+	<h2 id="reference">Reference</h2>
+	<CardGrid>
+		{
+			reference.map((page) => (
+				<LinkCard title={page.title} href={sitePath(page.path)} description={page.description} />
+			))
+		}
+	</CardGrid>
+
+	<h2 id="features">Features</h2>
+	<div class="living not-content">
+		<div class="feature-grid">
+			{
+				features.map((feature) => {
+					const testCount = testsOf(feature).length;
+					const visitedCount = feature.routes.filter(
+						({ visitedBy }) => visitedBy.length > 0,
+					).length;
+					const counts = [
+						feature.modules.length > 0 ? count(feature.modules.length, "module") : null,
+						testCount > 0 ? count(testCount, "e2e test") : null,
+					].filter((stat) => stat !== null);
+					const showsCoverage = feature.routes.length > 0 && feature.hasCapture;
+
+					return (
+						<a class="feature-card" href={viewHref(feature.config.id, feature.views[0])}>
+							<span class="feature-card-head">
+								<FeatureIcon config={feature.config} size={36} />
+								<span class="feature-card-label">{feature.config.label}</span>
+							</span>
+							{counts.length > 0 ? (
+								<span class="feature-card-stats">
+									{counts.map((stat) => (
+										<span>{stat}</span>
+									))}
+								</span>
+							) : null}
+							{showsCoverage ? (
+								<span
+									class="feature-card-coverage"
+									title={`${visitedCount} of ${count(feature.routes.length, "route")} rendered by an e2e test`}
+								>
+									<span
+										class="coverage-meter"
+										style={`--coverage: ${(visitedCount / feature.routes.length) * 100}%`}
+									/>
+									{visitedCount}/{count(feature.routes.length, "route")}
+								</span>
+							) : null}
+						</a>
+					);
+				})
+			}
+		</div>
+	</div>
+</StarlightPage>

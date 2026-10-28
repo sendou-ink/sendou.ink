@@ -17,7 +17,5 @@
 	"filters.MinTier": "最小ティア",
 	"filters.orAbove": "より上",
 	"new.noMorePosts": "これ以上ポーストは作れません",
-	"new.editOn": "編集する",
-	"new.weaponPool.header": "武器プール",
-	"new.weaponPool.matchProfile": ""
+	"new.weaponPool.header": "武器プール"
 }

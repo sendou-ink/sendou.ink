@@ -126,6 +126,25 @@ const playOutMatch = async (
 	clearTournamentDataCache(setup.tournamentId);
 };
 
+const reopenMatch = async (
+	setup: Awaited<ReturnType<typeof setupStartedMatch>>,
+) => {
+	const results = await TournamentMatchRepository.findResultsByMatchId(
+		setup.matchId,
+	);
+
+	await executeBracketOperation({
+		tournamentId: setup.tournamentId,
+		tournament: await tournamentFromDB(setup.tournamentId),
+		operation: (bracketData) =>
+			Engine.reopenMatch(bracketData, {
+				matchId: setup.matchId,
+				lastGameWinnerTeamId: results.at(-1)?.winnerTeamId ?? null,
+			}),
+		endDroppedTeams: false,
+	});
+};
+
 describe("BracketRepository.applyMatchChanges", () => {
 	test("completing a match marks its chat room inactive", async () => {
 		const setup = await setupStartedMatch();
@@ -151,14 +170,7 @@ describe("BracketRepository.applyMatchChanges", () => {
 		const setup = await setupStartedMatch();
 		await playOutMatch(setup);
 
-		const tournament = await tournamentFromDB(setup.tournamentId);
-		await executeBracketOperation({
-			tournamentId: setup.tournamentId,
-			tournament,
-			operation: (bracketData) =>
-				Engine.reopenMatch(bracketData, setup.matchId),
-			endDroppedTeams: false,
-		});
+		await reopenMatch(setup);
 
 		expect((await roomById(setup.chatRoomId)).inactive).toBe(0);
 	});
@@ -201,13 +213,7 @@ describe("BracketRepository league chat room expiry", () => {
 		const setup = await setupLeagueMatch();
 		await playOutMatch(setup);
 
-		await executeBracketOperation({
-			tournamentId: setup.tournamentId,
-			tournament: await tournamentFromDB(setup.tournamentId),
-			operation: (bracketData) =>
-				Engine.reopenMatch(bracketData, setup.matchId),
-			endDroppedTeams: false,
-		});
+		await reopenMatch(setup);
 
 		expect(await roomLifespanDays(setup.chatRoomId)).toBe(60);
 	});
@@ -221,13 +227,7 @@ describe("BracketRepository league chat room expiry", () => {
 		expect(await roomLifespanDays(setup.chatRoomId)).toBe(7);
 
 		await playOutMatch(setup);
-		await executeBracketOperation({
-			tournamentId: setup.tournamentId,
-			tournament: await tournamentFromDB(setup.tournamentId),
-			operation: (bracketData) =>
-				Engine.reopenMatch(bracketData, setup.matchId),
-			endDroppedTeams: false,
-		});
+		await reopenMatch(setup);
 
 		expect(await roomLifespanDays(setup.chatRoomId)).toBe(7);
 	});

@@ -49,6 +49,13 @@ export async function replaceByMatchId(
 	await executor.insertInto("ReportedWeapon").values(weapons).execute();
 }
 
+export async function deleteByMatchId(matchId: number, trx?: Transaction<DB>) {
+	await (trx ?? db)
+		.deleteFrom("ReportedWeapon")
+		.where("groupMatchId", "=", matchId)
+		.execute();
+}
+
 export async function deleteOwnByMapIndex({
 	matchId,
 	mapIndex,
@@ -99,6 +106,76 @@ export async function findByMatchId(matchId: number) {
 	if (rows.length === 0) return null;
 
 	return rows;
+}
+
+/** Reports the actor's weapon for a map of a lobby set, replacing an earlier report. */
+export async function upsertOwnLobby({
+	lobbySetId,
+	mapIndex,
+	weaponSplId,
+}: {
+	lobbySetId: number;
+	mapIndex: number;
+	weaponSplId: MainWeaponId;
+}) {
+	const userId = actorId();
+
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("ReportedWeapon")
+			.where("lobbySetId", "=", lobbySetId)
+			.where("mapIndex", "=", mapIndex)
+			.where("userId", "=", userId)
+			.execute();
+
+		await trx
+			.insertInto("ReportedWeapon")
+			.values({ lobbySetId, mapIndex, userId, weaponSplId })
+			.execute();
+	});
+}
+
+export async function deleteOwnByLobbySetMapIndex({
+	lobbySetId,
+	mapIndex,
+}: {
+	lobbySetId: number;
+	mapIndex: number;
+}) {
+	await db
+		.deleteFrom("ReportedWeapon")
+		.where("lobbySetId", "=", lobbySetId)
+		.where("mapIndex", "=", mapIndex)
+		.where("userId", "=", actorId())
+		.execute();
+}
+
+/** Deletes everyone's weapons of the map, e.g. when its report is undone. */
+export async function deleteByLobbySetMapIndex(
+	{ lobbySetId, mapIndex }: { lobbySetId: number; mapIndex: number },
+	trx?: Transaction<DB>,
+) {
+	await (trx ?? db)
+		.deleteFrom("ReportedWeapon")
+		.where("lobbySetId", "=", lobbySetId)
+		.where("mapIndex", "=", mapIndex)
+		.execute();
+}
+
+/** Weapons reported (by hand or by the scanner) for the maps of the lobby's sets. */
+export function findAllByLobbyId(lobbyId: number) {
+	return db
+		.selectFrom("ReportedWeapon")
+		.innerJoin("LobbySet", "LobbySet.id", "ReportedWeapon.lobbySetId")
+		.select([
+			"ReportedWeapon.lobbySetId",
+			"ReportedWeapon.mapIndex",
+			"ReportedWeapon.weaponSplId",
+			"ReportedWeapon.userId",
+		])
+		.where("LobbySet.lobbyId", "=", lobbyId)
+		.$narrowType<{ lobbySetId: NotNull }>()
+		.execute();
 }
 
 export async function upsertOwnTournament({

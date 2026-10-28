@@ -20,7 +20,7 @@ test.describe("Navigation", () => {
 
 // the mobile nav menu is a native popover of links, so it works before
 // hydration too, or with scripts turned off altogether; the other mobile panels
-// and the top nav menus open only once hydrated (see docs/dev/overlays.md)
+// and the top nav menus open only once hydrated (see docs/site/src/content/docs/dev/overlays.mdx)
 test.describe("Navigation without JavaScript", () => {
 	test.use({ javaScriptEnabled: false });
 

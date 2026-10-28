@@ -19,15 +19,10 @@ import {
 	useTargetSubDefenseAp,
 } from "../comp-analyzer-hooks";
 import type { DamageCombo, DamageSegment } from "../comp-analyzer-types";
-import {
-	calculateDamageCombos,
-	calculateInkTimeToKill,
-	type ExcludedDamageKey,
-	getAllDamageKeys,
-} from "../core/damage-combinations";
+import * as DamageCombos from "../core/DamageCombos";
 import styles from "./DamageComboBar.module.css";
 
-function filterKeyToString(key: ExcludedDamageKey): string {
+function filterKeyToString(key: DamageCombos.ExcludedDamageKey): string {
 	return `${key.weaponId}-${key.weaponType}-${key.damageType}`;
 }
 
@@ -44,7 +39,7 @@ const SLOT_COLORS = ["yellow", "pink", "green", "blue"] as const;
 interface DamageComboBarProps {
 	combo: DamageCombo;
 	inkTimeFrames: number | null;
-	onToggleFilter: (key: ExcludedDamageKey) => void;
+	onToggleFilter: (key: DamageCombos.ExcludedDamageKey) => void;
 }
 
 function DamageComboBar({
@@ -102,7 +97,7 @@ interface SegmentBarProps {
 	segment: DamageSegment;
 	totalDamage: number;
 	damageTypeLabel: string;
-	onToggleFilter: (key: ExcludedDamageKey) => void;
+	onToggleFilter: (key: DamageCombos.ExcludedDamageKey) => void;
 }
 
 function SegmentBar({
@@ -221,8 +216,8 @@ function WeaponIcon({
 }
 
 interface FilteredItemProps {
-	filterKey: ExcludedDamageKey;
-	onRestore: (key: ExcludedDamageKey) => void;
+	filterKey: DamageCombos.ExcludedDamageKey;
+	onRestore: (key: DamageCombos.ExcludedDamageKey) => void;
 }
 
 function FilteredItem({ filterKey, onRestore }: FilteredItemProps) {
@@ -246,8 +241,8 @@ function FilteredItem({ filterKey, onRestore }: FilteredItemProps) {
 
 interface DamageComboListProps {
 	weaponIds: MainWeaponId[];
-	excludedKeys: ExcludedDamageKey[];
-	onExcludedKeysChange: (keys: ExcludedDamageKey[]) => void;
+	excludedKeys: DamageCombos.ExcludedDamageKey[];
+	onExcludedKeysChange: (keys: DamageCombos.ExcludedDamageKey[]) => void;
 }
 
 export function DamageComboList({
@@ -269,13 +264,13 @@ export function DamageComboList({
 	const singleWeaponOnly = weaponIds.length === 1;
 	const includeSingleWeaponCombos = singleWeaponOnly || singleWeaponCombos;
 
-	const allDamageKeys = getAllDamageKeys(weaponIds, targetSubDefenseAp);
+	const allDamageKeys = DamageCombos.damageKeys(weaponIds, targetSubDefenseAp);
 	const allDamageKeyStrings = new Set(allDamageKeys.map(filterKeyToString));
 	const validExcludedKeys = excludedKeys.filter((key) =>
 		allDamageKeyStrings.has(filterKeyToString(key)),
 	);
 
-	const combos = calculateDamageCombos(
+	const combos = DamageCombos.calculate(
 		weaponIds,
 		validExcludedKeys,
 		targetSubDefenseAp,
@@ -287,7 +282,7 @@ export function DamageComboList({
 		return null;
 	}
 
-	const handleToggleFilter = (key: ExcludedDamageKey) => {
+	const handleToggleFilter = (key: DamageCombos.ExcludedDamageKey) => {
 		const keyString = filterKeyToString(key);
 		const exists = excludedKeys.some((k) => filterKeyToString(k) === keyString);
 
@@ -398,7 +393,7 @@ export function DamageComboList({
 						</div>
 					) : null}
 					{combos.map((combo, index) => {
-						const inkTimeFrames = calculateInkTimeToKill(
+						const inkTimeFrames = DamageCombos.inkTimeToKill(
 							combo.totalDamage,
 							targetResAp,
 						);

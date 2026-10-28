@@ -1,0 +1,23 @@
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.filters {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.filterRow {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--s-3);
+
+	@container (width >= 32rem) {
+		grid-template-columns: 1fr 1fr;
+	}
+}

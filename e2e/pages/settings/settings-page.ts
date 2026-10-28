@@ -41,6 +41,7 @@ export class SettingsPage {
 			// can switch back after leaving the UI in Japanese
 			pageHeading: page.getByRole("heading", { name: /^(Settings|設定)$/ }),
 			languageSelect: page.getByLabel(/^(Language|言語) *$/),
+			gameLanguageSelect: page.getByLabel("In-game names"),
 			themeSelect: page.getByRole("combobox", { name: "Theme" }),
 			htmlRoot: page.locator("html"),
 			volumeSlider: page.getByRole("slider"),
@@ -97,6 +98,12 @@ export class SettingsPage {
 	/** Selects an interface language on the locale tab by its native name. */
 	async selectLanguage(name: "English" | "日本語") {
 		await this.locators.languageSelect.selectOption({ label: name });
+	}
+
+	/** Selects the language of in-game names on the locale tab by its native name. */
+	async selectGameLanguage(name: "English" | "日本語") {
+		await this.locators.gameLanguageSelect.selectOption({ label: name });
+		await this.page.waitForURL(/gameLng=/);
 	}
 
 	/** Selects dark/light/auto on the theme tab; persisted via a POST to /theme. */

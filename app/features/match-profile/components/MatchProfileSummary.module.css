@@ -1,0 +1,18 @@
+.values {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+}
+
+.vc {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+
+	& > svg {
+		width: 18px;
+	}
+}

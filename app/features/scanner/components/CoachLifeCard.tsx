@@ -16,8 +16,8 @@ import * as CoachEvents from "../core/CoachEvents";
 import { WEAPON_KITS } from "../core/detectors/scoreboard/kits";
 import { formatClock } from "../core/format";
 import type { ScannerMatch } from "../core/scanner-match";
+import { victimSlot } from "../core/scanner-match";
 import styles from "./CoachLifeCard.module.css";
-import { victimSlot } from "./game-timeline-view";
 
 const SHOWN_S = 5;
 /** kept mounted past the fade, as the video's time updates only a few times a second */

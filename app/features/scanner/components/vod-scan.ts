@@ -297,7 +297,7 @@ export async function startVodScan(
 									? undefined
 									: events.find((e) => sameEvent(e, action.replaced));
 							const scanEvent: ScanEvent = {
-								...event,
+								...action.event,
 								hasFrame: frame !== undefined,
 							};
 							if (frame) frames.set(scanEvent, frame);

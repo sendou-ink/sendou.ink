@@ -21,8 +21,17 @@ export class PlusVotingPage {
 		await navigate({ page: this.page, url: PLUS_VOTING_PAGE });
 	}
 
+	progress({ voted, total }: { voted: number; total: number }) {
+		return this.page.getByTitle(`Voting progress ${voted} out of ${total}`);
+	}
+
 	async upvoteCurrent() {
 		await this.locators.upvoteButton.click();
+	}
+
+	/** Votes with the desktop keyboard shortcuts: S for -1, K for +1. */
+	async voteWithKey(type: "upvote" | "downvote") {
+		await this.page.keyboard.press(type === "upvote" ? "k" : "s");
 	}
 
 	async submitVotes() {

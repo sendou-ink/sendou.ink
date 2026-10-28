@@ -1,0 +1,29 @@
+---
+import type { Step } from "../../../../../scripts/living-docs/e2e.ts";
+import { highlight } from "../../../../../scripts/living-docs/highlight.ts";
+import { markdown } from "../../living/format.ts";
+
+interface Props {
+	step: Step;
+}
+
+const { step } = Astro.props;
+---
+
+<li class:list={["step", step.phase ? `phase-${step.phase}` : null, { "step-naming": step.isNaming }]}>
+	{step.notes.map((note) => <div class="step-note" set:html={markdown(note)} />)}
+	<div class="step-line">
+		<span class="phase-icon"></span>
+		<span class="step-text" set:html={step.html} />
+	</div>
+	<pre class="code step-code scrollbar" data-pagefind-ignore set:html={highlight(step.code)} />
+	{
+		step.children.length > 0 ? (
+			<ol class="steps nested">
+				{step.children.map((child) => (
+					<Astro.self step={child} />
+				))}
+			</ol>
+		) : null
+	}
+</li>

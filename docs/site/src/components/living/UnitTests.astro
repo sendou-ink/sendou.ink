@@ -1,0 +1,44 @@
+---
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import type { UnitTestCase } from "../../../../../scripts/living-docs/unit-tests.ts";
+import { groupByLeadingWord } from "../../living/format.ts";
+
+interface Props {
+	tests: UnitTestCase[];
+	title?: string;
+}
+
+const { tests, title = "Unit tests" } = Astro.props;
+---
+
+<details class="unit-tests">
+	<summary class="unit-tests-title">{title} ({tests.length})</summary>
+	<ul class="unit-test-list">
+		{
+			groupByLeadingWord(tests).map(({ heading, cases }) =>
+				heading ? (
+					<li class="unit-test-group">
+						<span class="unit-test-heading">{heading}</span>
+						<ul>
+							{cases.map(({ test, rest }) => (
+								<li>
+									<a href={githubUrl(test.file, test.line)}>{rest}</a>
+									{test.caseCount ? <span class="muted">× {test.caseCount}</span> : null}
+								</li>
+							))}
+						</ul>
+					</li>
+				) : (
+					<li>
+						<a href={githubUrl(cases[0].test.file, cases[0].test.line)}>
+							{cases[0].test.name}
+						</a>
+						{cases[0].test.caseCount ? (
+							<span class="muted">× {cases[0].test.caseCount}</span>
+						) : null}
+					</li>
+				),
+			)
+		}
+	</ul>
+</details>

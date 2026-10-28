@@ -1,22 +1,13 @@
 import * as React from "react";
-import type { Tables } from "~/db/tables";
 import type * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { useHydrated } from "~/hooks/useHydrated";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "../plus-voting-constants";
+import { plusVotingPersisted } from "../plus-voting-persisted";
 import type { PlusVoteFromFE } from "./types";
 import { nextNonCompletedVoting, rangeToMonthYear } from "./voting-time";
-
-const LOCAL_STORAGE_KEY = "plusVoting";
-
-interface VotingLocalStorageData {
-	month: number;
-	year: number;
-	votes: PlusVoteFromFE[];
-	/** User id -> order for sorting */
-	usersForVotingOrder: Record<Tables["User"]["id"], number>;
-}
 
 interface VotingState {
 	usersForVoting: PlusVotingRepository.UsersForVoting;
@@ -97,18 +88,10 @@ function resolveInitialVotingState(
 	invariant(range, "No next voting found");
 	const { month, year } = rangeToMonthYear(range);
 
-	const usersForVotingFromLocalStorage =
-		localStorage.getItem(LOCAL_STORAGE_KEY);
-
-	if (!usersForVotingFromLocalStorage) {
-		return { usersForVoting: usersForVotingFromServer, votes: [] };
-	}
-
-	const parsedUsersForVoting = JSON.parse(
-		usersForVotingFromLocalStorage,
-	) as VotingLocalStorageData;
+	const parsedUsersForVoting = PersistedState.read(plusVotingPersisted);
 
 	if (
+		!parsedUsersForVoting ||
 		parsedUsersForVoting.month !== month ||
 		parsedUsersForVoting.year !== year
 	) {
@@ -144,6 +127,8 @@ function resolveInitialVotingState(
 function useVoteWithKeysEffect(vote: (type: "upvote" | "downvote") => void) {
 	React.useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!isVoteHotkey(e)) return;
+
 			if (e.code === "KeyS") {
 				vote("downvote");
 			} else if (e.code === "KeyK") {
@@ -157,6 +142,24 @@ function useVoteWithKeysEffect(vote: (type: "upvote" | "downvote") => void) {
 			window.removeEventListener("keydown", handleKeyDown);
 		};
 	}, [vote]);
+}
+
+/** A bare key press not meant for a shortcut, a text field or an open dialog. */
+function isVoteHotkey(e: KeyboardEvent) {
+	if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
+		return false;
+	}
+
+	const target = e.target;
+	if (!(target instanceof HTMLElement)) return true;
+
+	return !(
+		target.isContentEditable ||
+		target instanceof HTMLInputElement ||
+		target instanceof HTMLTextAreaElement ||
+		target instanceof HTMLSelectElement ||
+		target.closest("[popover], dialog")
+	);
 }
 
 function previousUser({
@@ -192,13 +195,12 @@ function votesToLocalStorage({
 
 	const { month, year } = rangeToMonthYear(range);
 
-	const toLocalStorage: VotingLocalStorageData = {
+	PersistedState.write(plusVotingPersisted, {
 		month,
 		year,
 		votes,
 		usersForVotingOrder: Object.fromEntries(
 			usersForVoting.map(({ user }, i) => [user.id, i]),
 		),
-	};
-	localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toLocalStorage));
+	});
 }

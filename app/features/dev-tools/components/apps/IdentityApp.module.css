@@ -1,0 +1,43 @@
+.roles {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1);
+}
+
+.userGrid {
+	display: grid;
+	gap: var(--s-1-5);
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+
+.userLink {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	text-decoration: none;
+
+	&:hover {
+		border-color: var(--color-border-high);
+	}
+
+	&[aria-current] {
+		border-color: var(--color-fg-accent);
+		background-color: var(--color-bg-accent);
+	}
+}
+
+.userLinkText {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+}
+
+.toolbarAvatar {
+	border-radius: 50%;
+}

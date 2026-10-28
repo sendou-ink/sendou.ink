@@ -1,7 +1,8 @@
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { shortNanoid } from "~/utils/id";
+import { lastActiveTabPersisted } from "../chat-persisted";
 
 const IDLE_AFTER_MS = 3 * 60 * 1000;
-const LAST_ACTIVE_TAB_KEY = "chat__last-active-tab";
 const LAST_ACTIVE_TAB_WRITE_INTERVAL_MS = 5_000;
 const ACTIVITY_EVENTS = [
 	"pointerdown",
@@ -14,7 +15,11 @@ const ACTIVITY_EVENTS = [
 interface AttentionEnvironment {
 	document: Pick<Document, "visibilityState" | "hasFocus"> & EventTarget;
 	window: EventTarget;
-	storage: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
+	/** Id of the tab the user last paid attention to, shared between tabs */
+	lastActiveTab: {
+		read: () => string | null;
+		write: (tabId: string | null) => void;
+	};
 	now: () => number;
 }
 
@@ -90,22 +95,14 @@ export function createTracker(
 		}
 
 		lastActiveTabWrittenAt = env.now();
-		try {
-			env.storage?.setItem(LAST_ACTIVE_TAB_KEY, tabId);
-		} catch {
-			// storage blocked
-		}
+		env.lastActiveTab.write(tabId);
 	}
 
 	// a closed tab can't play anything, so every other tab goes back to counting as the last active one
 	function releaseLastActiveTab() {
 		const env = environment!;
-		try {
-			if (env.storage?.getItem(LAST_ACTIVE_TAB_KEY) === tabId) {
-				env.storage.removeItem(LAST_ACTIVE_TAB_KEY);
-			}
-		} catch {
-			// storage blocked
+		if (env.lastActiveTab.read() === tabId) {
+			env.lastActiveTab.write(null);
 		}
 	}
 
@@ -115,13 +112,8 @@ export function createTracker(
 			return attending;
 		},
 		isLastActiveTab: () => {
-			const env = started();
-			try {
-				const lastActiveTabId = env.storage?.getItem(LAST_ACTIVE_TAB_KEY);
-				return !lastActiveTabId || lastActiveTabId === tabId;
-			} catch {
-				return true;
-			}
+			const lastActiveTabId = started().lastActiveTab.read();
+			return !lastActiveTabId || lastActiveTabId === tabId;
 		},
 		subscribe: (listener: () => void) => {
 			started();
@@ -136,14 +128,9 @@ export function createTracker(
 export const tracker = createTracker(() => ({
 	document,
 	window,
-	storage: browserStorage(),
+	lastActiveTab: {
+		read: () => PersistedState.read(lastActiveTabPersisted),
+		write: (tabId) => PersistedState.write(lastActiveTabPersisted, tabId),
+	},
 	now: () => Date.now(),
 }));
-
-function browserStorage() {
-	try {
-		return window.localStorage;
-	} catch {
-		return null;
-	}
-}

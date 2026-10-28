@@ -237,7 +237,9 @@ async function postIngestMatches(
 			throw new Error(
 				res.status === 401
 					? "not logged in to sendou.ink"
-					: await errorText(res),
+					: res.status === 429
+						? "sendou.ink upload limit reached, try again later"
+						: await errorText(res),
 			);
 		}
 		return await res.json();

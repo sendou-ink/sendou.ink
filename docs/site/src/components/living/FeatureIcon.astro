@@ -1,0 +1,32 @@
+---
+import type { FeatureConfig } from "../../../../../scripts/living-docs/features.ts";
+import { STATIC_ASSETS_URL } from "../../living/format.ts";
+
+interface Props {
+	config: FeatureConfig;
+	size: number;
+}
+
+const { config, size } = Astro.props;
+---
+
+{
+	config.navIcon ? (
+		<img
+			class="feature-icon"
+			src={`${STATIC_ASSETS_URL}/img/layout/${config.navIcon}.avif`}
+			alt=""
+			width={size}
+			height={size}
+			loading="lazy"
+		/>
+	) : (
+		<span
+			class="feature-icon letter-icon"
+			style={`--size: ${size}px`}
+			aria-hidden="true"
+		>
+			{config.label.charAt(0)}
+		</span>
+	)
+}

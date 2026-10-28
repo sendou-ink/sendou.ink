@@ -9,6 +9,7 @@ import { cutToNDecimalPlaces } from "../../../../utils/number";
 import { calculateTeamStatus } from "../engine/swiss/team-status";
 import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type Standing, type TeamTrackRecord } from "./Bracket";
+import * as Tiebreakers from "./Tiebreakers";
 
 export class SwissBracket extends Bracket {
 	source({
@@ -378,6 +379,23 @@ export class SwissBracket extends Bracket {
 				...teams
 					// client-side the layout's teams can lag behind freshly loaded match data, mostly preview tournaments (prevent crash)
 					.filter((team) => this.tournament.teamById(team.id))
+					.map((team) => ({
+						id: team.id,
+						stats: {
+							setWins: team.setWins,
+							setLosses: team.setLosses,
+							mapWins: team.mapWins,
+							mapLosses: team.mapLosses,
+							winsAgainstTied: team.winsAgainstTied,
+							lossesAgainstTied: team.lossesAgainstTied,
+							opponentSetWinPercentage: this.trackRecordToWinPercentage(
+								team.opponentSets,
+							),
+							opponentMapWinPercentage: this.trackRecordToWinPercentage(
+								team.opponentMaps,
+							),
+						},
+					}))
 					.sort((a, b) => {
 						// TIEBREAKER 0) dropped out teams are always last
 						const aDroppedOut = droppedOutTeams.includes(a.id);
@@ -386,55 +404,14 @@ export class SwissBracket extends Bracket {
 						if (aDroppedOut && !bDroppedOut) return 1;
 						if (!aDroppedOut && bDroppedOut) return -1;
 
-						// TIEBREAKER 1) set wins
-						if (a.setWins > b.setWins) return -1;
-						if (a.setWins < b.setWins) return 1;
-
-						// also set losses because we want a team who dropped more sets ranked lower (early advance format)
-						if (a.setLosses < b.setLosses) return -1;
-						if (a.setLosses > b.setLosses) return 1;
-
-						// TIEBREAKER 2) losses against tied. Unlike round robin (wins against tied), Swiss counts
-						// losses because not every tied team has played each other: wins would favor teams who
-						// faced more tied peers, losses are schedule-independent. winsAgainstTied is display only.
-						if (a.lossesAgainstTied > b.lossesAgainstTied) return 1;
-						if (a.lossesAgainstTied < b.lossesAgainstTied) return -1;
-
-						// TIEBREAKER 3) opponent set win %
-						const aOpponentSetWinPercentage = this.trackRecordToWinPercentage(
-							a.opponentSets,
+						const tiebreakerResult = Tiebreakers.compare(
+							this.tiebreakers,
+							a.stats,
+							b.stats,
 						);
-						const bOpponentSetWinPercentage = this.trackRecordToWinPercentage(
-							b.opponentSets,
-						);
+						if (tiebreakerResult !== 0) return tiebreakerResult;
 
-						if (aOpponentSetWinPercentage > bOpponentSetWinPercentage) {
-							return -1;
-						}
-						if (aOpponentSetWinPercentage < bOpponentSetWinPercentage) return 1;
-
-						// TIEBREAKER 4) map wins
-						if (a.mapWins > b.mapWins) return -1;
-						if (a.mapWins < b.mapWins) return 1;
-
-						// also map losses because we want a team who dropped more maps ranked lower
-						if (a.mapLosses < b.mapLosses) return -1;
-						if (a.mapLosses > b.mapLosses) return 1;
-
-						// TIEBREAKER 5) map wins against tied OW% (M), must rank below map wins so throwing maps is not optimal
-						const aOpponentMapWinPercentage = this.trackRecordToWinPercentage(
-							a.opponentMaps,
-						);
-						const bOpponentMapWinPercentage = this.trackRecordToWinPercentage(
-							b.opponentMaps,
-						);
-
-						if (aOpponentMapWinPercentage > bOpponentMapWinPercentage) {
-							return -1;
-						}
-						if (aOpponentMapWinPercentage < bOpponentMapWinPercentage) return 1;
-
-						// TIEBREAKER 6) initial seeding made by the TO
+						// initial seeding made by the TO
 						const aSeed = Number(this.tournament.teamById(a.id)?.seed);
 						const bSeed = Number(this.tournament.teamById(b.id)?.seed);
 
@@ -448,20 +425,7 @@ export class SwissBracket extends Bracket {
 							team: this.tournament.teamById(team.id)!,
 							placement: i + 1,
 							groupId,
-							stats: {
-								setWins: team.setWins,
-								setLosses: team.setLosses,
-								mapWins: team.mapWins,
-								mapLosses: team.mapLosses,
-								winsAgainstTied: team.winsAgainstTied,
-								lossesAgainstTied: team.lossesAgainstTied,
-								opponentSetWinPercentage: this.trackRecordToWinPercentage(
-									team.opponentSets,
-								),
-								opponentMapWinPercentage: this.trackRecordToWinPercentage(
-									team.opponentMaps,
-								),
-							},
+							stats: team.stats,
 						};
 					}),
 			);
@@ -526,6 +490,10 @@ export class SwissBracket extends Bracket {
 
 	get type(): Tables["TournamentStage"]["type"] {
 		return "swiss";
+	}
+
+	get tiebreakers() {
+		return Tiebreakers.SWISS;
 	}
 
 	defaultRoundBestOfs(data: BracketData) {

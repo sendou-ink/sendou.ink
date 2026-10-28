@@ -1,11 +1,3 @@
-// TODO: when more examples of permissions profile difference between
-// this implementation and one that takes arrays
-
-// (not all arrays need to necessarily run but they need to be defined)
-export function allTruthy(arr: unknown[]) {
-	return arr.every(Boolean);
-}
-
 export function normalizeFormFieldArray(
 	value: undefined | null | string | string[],
 ): string[] {

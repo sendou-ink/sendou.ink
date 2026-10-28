@@ -1,0 +1,25 @@
+{
+	"event": "Scoreboard",
+	"data": {
+		"lobby": "PRIVATE",
+		"mode": "CB",
+		"stage": 8,
+		"stageLabel": "Inkblot Art Academy",
+		"matchScores": [null, null],
+		"noContest": true,
+		"povIndex": 1,
+		"players": [
+			{ "name": "Mini Kagu", "paint": 4, "ka": 0, "d": 0, "s": 0 },
+			{ "name": "Sendou", "weaponId": 4001, "paint": 0, "ka": 0, "d": 0, "s": 0 },
+			{ "paint": 41, "ka": 0, "d": 0, "s": 0 },
+			{ "name": "Moonluck?", "paint": 0, "ka": 0, "d": 0, "s": 0 },
+			{ "paint": 0, "ka": 0, "d": 0, "s": 0 },
+			{ "paint": 8, "ka": 0, "d": 0, "s": 0 },
+			{ "name": "lidloite", "paint": 0, "ka": 0, "d": 0, "s": 0 },
+			{ "paint": 0, "ka": null, "d": null, "s": null }
+		]
+	},
+	"options": {
+		"notes": "gacha-tournament VoD, t=4149.5 (1:09:09). The host ended the battle ~10s in (\"Mini Kagu has ended the battle.\"), so the results screen is a no contest: \"No contest.\" where the Score: banner goes and both team boxes flat grey with DRAW tags instead of team ink and VICTORY/DEFEAT, no team totals. The game was then replayed on the same map and built as a duplicate card. Row 7's stats show \"x --\" (unread by the game). Weapons other than the POV's and the decorated names are left unlabeled."
+	}
+}

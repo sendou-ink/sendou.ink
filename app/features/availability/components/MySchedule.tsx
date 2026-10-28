@@ -5,6 +5,7 @@ import type { FetcherWithComponents } from "react-router";
 import * as R from "remeda";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { toastQueue } from "~/components/elements/Toast";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { useUser } from "~/features/auth/core/user";
 import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -32,13 +33,14 @@ export function MySchedule({
 	data: MyScheduleData;
 	teams: Array<ScheduleAudienceTeam>;
 }) {
-	const { t } = useTranslation(["schedule"]);
+	const { t } = useTranslation(["schedule", "common"]);
 	const user = useUser();
 	const [{ week }, setParams] = useSearchParamsTyped(scheduleWeekSearchParams);
 	const [weeks, setWeeks] = React.useState<Array<AvailabilityEditorWeek>>(() =>
 		data.weeks.map((editorWeek) => editorWeek.days),
 	);
 	const [visibilityDialogOpen, setVisibilityDialogOpen] = React.useState(false);
+	const [emptyWeekConfirmOpen, setEmptyWeekConfirmOpen] = React.useState(false);
 	const hiddenFrom = scheduleAudiencesHiddenFrom({
 		visibility: user?.preferences.scheduleVisibility,
 		teams,
@@ -194,12 +196,23 @@ export function MySchedule({
 				<SendouButton
 					size="small"
 					isDisabled={state !== "idle"}
-					onClick={saveWeek}
+					onClick={() =>
+						shownDays.every((day) => day.ranges.length === 0)
+							? setEmptyWeekConfirmOpen(true)
+							: saveWeek()
+					}
 					testId="save-week-button"
 				>
 					{t("schedule:editor.saveWeek")}
 				</SendouButton>
 			</div>
+			<FormWithConfirm
+				isOpen={emptyWeekConfirmOpen}
+				onOpenChange={setEmptyWeekConfirmOpen}
+				dialogHeading={t("schedule:editor.emptyWeekConfirm")}
+				submitButtonText={t("common:actions.confirm")}
+				onConfirm={saveWeek}
+			/>
 			{visibilityDialogOpen ? (
 				<ScheduleVisibilityDialog
 					teams={teams}

@@ -4,14 +4,8 @@
 	"tabs.locale": "Langues",
 	"tabs.theme": "Thème",
 	"tabs.sounds": "Notifications",
-	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "Eviter",
 	"matchProfile.maps.prefer": "Préférer",
 	"matchProfile.maps.neutral": "Neutre",
-	"sounds.likeReceived": "Vous avez reçu une invitation de groupe",
-	"sounds.readyCheckStarted": "",
-	"sounds.matchStarted": "",
-	"sounds.tournamentMatchStarted": "",
-	"sounds.voiceJoin": "",
-	"sounds.voiceLeave": ""
+	"sounds.likeReceived": "Vous avez reçu une invitation de groupe"
 }

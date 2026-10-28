@@ -1,9 +1,6 @@
 {
 	"newTeam.header": "创建新队伍",
 	"editTeam.header": "正在编辑 {{teamName}}",
-	"mapPreferences.header": "",
-	"mapPreferences.explanation": "",
-	"mapPreferences.remove.header": "",
 	"teamSearch.placeholder": "搜索队伍或玩家...",
 	"actionButtons.leaveTeam": "退出队伍",
 	"actionButtons.makeMainTeam": "设置为主要队伍",
@@ -14,7 +11,6 @@
 	"actionButtons.leaveTeam.confirm": "退出",
 	"actionButtons.editTeam": "编辑队伍",
 	"actionButtons.manageRoster": "管理队员",
-	"actionButtons.schedule": "",
 	"actionButtons.deleteTeam": "删除队伍",
 	"deleteTeam.header": "您确定要删除队伍 {{teamName}} 吗？",
 	"roles.CAPTAIN": "队长",

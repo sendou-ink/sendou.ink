@@ -1,4 +1,5 @@
 import {
+	type BrowserContext,
 	test as base,
 	expect,
 	type Locator,
@@ -85,7 +86,7 @@ type TestFixtures = {
 };
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
-	context: async ({ context }, use) => {
+	context: async ({ context }, use, testInfo) => {
 		// The VoD pages embed a YouTube player, which loads from the internet
 		// (player, ads, telemetry) at a pace of its own. Under load it landed
 		// mid-test, and the frame arriving closed the select being filled in.
@@ -101,7 +102,26 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 			if (HYDRATION_ERROR_REGEX.test(message)) hydrationErrors.push(message);
 		});
 
+		const visitedPathnames = trackVisitedPathnames(context);
+		const apiExchanges = recordApiExchanges(context);
+		if (process.env.LIVING_DOCS_CAPTURE) livingDocsContext = context;
+
 		await use(context);
+
+		livingDocsContext = null;
+
+		if (visitedPathnames) {
+			await testInfo.attach(LIVING_DOCS_VISITS_ATTACHMENT, {
+				body: JSON.stringify([...visitedPathnames]),
+				contentType: "application/json",
+			});
+		}
+		if (apiExchanges && apiExchanges.length > 0) {
+			await testInfo.attach(LIVING_DOCS_API_ATTACHMENT, {
+				body: JSON.stringify(apiExchanges),
+				contentType: "application/json",
+			});
+		}
 
 		// React recovers from these silently by rendering the boundary again on the client
 		expect(hydrationErrors, "React hydration errors").toEqual([]);
@@ -143,7 +163,99 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 	],
 });
 
+if (process.env.LIVING_DOCS_CAPTURE) screenshotEachStep();
+
 export { expect };
+
+/** Name of the test attachment listing the pathnames a test visited, read by `scripts/living-docs/capture.ts`. */
+const LIVING_DOCS_VISITS_ATTACHMENT = "living-docs-visits";
+/** Name prefix of the screenshot attached after each `test.step`, read by `scripts/living-docs/capture.ts`. */
+const LIVING_DOCS_STEP_ATTACHMENT = "living-docs-step";
+/** Name of the test attachment listing the `/api/` requests a test made through `page.request`, read by `scripts/living-docs/capture.ts`. */
+const LIVING_DOCS_API_ATTACHMENT = "living-docs-api";
+
+/** Context of the running test, only while capturing for the living docs. */
+let livingDocsContext: BrowserContext | null = null;
+
+/** Attaches a screenshot of the page as each `test.step` leaves it, the trace's screencast lags too far behind for it. */
+function screenshotEachStep() {
+	const step = test.step;
+	const withScreenshot = async <T>(
+		...[title, body, options]: Parameters<typeof step<T>>
+	) => {
+		const result = await step(title, body, options);
+
+		const page = livingDocsContext?.pages().at(-1);
+		if (page) {
+			await test.info().attach(`${LIVING_DOCS_STEP_ATTACHMENT}: ${title}`, {
+				body: await page.screenshot({
+					type: "jpeg",
+					quality: 80,
+					animations: "disabled",
+				}),
+				contentType: "image/jpeg",
+			});
+		}
+
+		return result;
+	};
+
+	test.step = Object.assign(withScreenshot, step);
+}
+
+/** Pathnames every page of the context navigates to, only while capturing for the living docs. */
+function trackVisitedPathnames(context: BrowserContext) {
+	if (!process.env.LIVING_DOCS_CAPTURE) return null;
+
+	const pathnames = new Set<string>();
+	const track = (page: Page) => {
+		page.on("framenavigated", (frame) => {
+			if (frame !== page.mainFrame()) return;
+			const url = new URL(frame.url());
+			if (url.protocol.startsWith("http")) pathnames.add(url.pathname);
+		});
+	};
+	for (const page of context.pages()) track(page);
+	context.on("page", track);
+
+	return pathnames;
+}
+
+/** The `/api/` requests made through the context's `request` (what `page.request` is), only while capturing for the living docs. */
+function recordApiExchanges(context: BrowserContext) {
+	if (!process.env.LIVING_DOCS_CAPTURE) return null;
+
+	const exchanges: Array<{
+		method: string;
+		path: string;
+		status: number;
+		requestBody: unknown;
+		responseBody: unknown;
+	}> = [];
+	const request = context.request;
+	const fetch = request.fetch.bind(request);
+
+	request.fetch = async (urlOrRequest, options) => {
+		const response = await fetch(urlOrRequest, options);
+
+		const url = new URL(response.url());
+		if (url.pathname.startsWith("/api/")) {
+			const isJson = response.headers()["content-type"]?.includes("json");
+			const body = await response.text();
+			exchanges.push({
+				method: options?.method?.toUpperCase() ?? "GET",
+				path: `${url.pathname}${url.search}`,
+				status: response.status(),
+				requestBody: options?.data ?? null,
+				responseBody: isJson && body ? JSON.parse(body) : null,
+			});
+		}
+
+		return response;
+	};
+
+	return exchanges;
+}
 
 export async function selectWeapon({
 	page,
@@ -628,6 +740,19 @@ export async function trackScrollYAtPress(page: Page) {
 /** Asserts the page rendered rather than the error boundary catching something. */
 export async function expectNoErrorPage(page: Page) {
 	await expect(page.getByTestId("error-page")).toHaveCount(0);
+}
+
+/** The loader data of every route rendered on the page, as JSON, e.g. to assert a secret never reaches the client. */
+export function loaderDataJson(page: Page): Promise<string> {
+	return page.evaluate(() =>
+		JSON.stringify(
+			(
+				window as unknown as {
+					__reactRouterDataRouter: { state: { loaderData: unknown } };
+				}
+			).__reactRouterDataRouter.state.loaderData,
+		),
+	);
 }
 
 export function isNotVisible(locator: Locator) {

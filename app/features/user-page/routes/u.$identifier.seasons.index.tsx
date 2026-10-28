@@ -298,7 +298,7 @@ function MatchMembers({
 		<div className={styles.members}>
 			{members.map((member) => (
 				<Avatar
-					key={member.discordId}
+					key={member.id}
 					user={member}
 					size="xxsm"
 					alt={member.username}

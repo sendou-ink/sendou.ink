@@ -14,8 +14,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
 import { isRevalidation, metaTags } from "../../../utils/remix";
 import { TournamentNav } from "../components/TournamentNav";
-import { parseTournamentLoaderData } from "../core/layout-payload";
-
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 
 export { loader };
@@ -32,11 +30,9 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 };
 
 export const meta: MetaFunction = (args) => {
-	const rawData = args.loaderData as string | undefined;
+	const data = args.loaderData as TournamentLoaderData | undefined;
 
-	if (!rawData) return [];
-
-	const data = parseLoaderDataForHead(rawData);
+	if (!data) return [];
 
 	return metaTags({
 		title: data.tournament.ctx.name,
@@ -52,11 +48,9 @@ export const meta: MetaFunction = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["tournament", "calendar"],
 	breadcrumb: ({ match }) => {
-		const rawData = match.loaderData as string | undefined;
+		const data = match.loaderData as TournamentLoaderData | undefined;
 
-		if (!rawData) return [];
-
-		const data = parseLoaderDataForHead(rawData);
+		if (!data) return [];
 
 		return [
 			{
@@ -70,8 +64,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TournamentLayout() {
-	const rawData = useLoaderData<typeof loader>();
-	const data = parseTournamentLoaderData(rawData);
+	const data = useLoaderData<typeof loader>();
 	const tournament = new Tournament(data.tournament);
 	const [bracketExpanded, setBracketExpanded] = React.useState(true);
 
@@ -119,19 +112,6 @@ type TournamentContext = {
 	preparedMaps: TournamentLoaderData["preparedMaps"];
 	vods: NonNullable<TournamentLoaderData["vods"]>;
 };
-
-let lastHeadRawData: string | null = null;
-let lastHeadData: TournamentLoaderData | null = null;
-
-/** Parses once per payload for `meta` and `breadcrumb`, which rerun on every navigation and revalidation (read-only use). */
-function parseLoaderDataForHead(rawData: string) {
-	if (rawData !== lastHeadRawData || !lastHeadData) {
-		lastHeadData = parseTournamentLoaderData(rawData);
-		lastHeadRawData = rawData;
-	}
-
-	return lastHeadData;
-}
 
 export function useBracketExpanded() {
 	const { bracketExpanded, setBracketExpanded } =

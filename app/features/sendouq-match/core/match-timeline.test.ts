@@ -19,8 +19,7 @@ function member(overrides: Record<string, unknown> = {}) {
 	return {
 		id: 1,
 		username: "user",
-		discordId: "d",
-		discordAvatar: null,
+		avatar: null,
 		customUrl: null,
 		skillDifference: undefined,
 		...overrides,

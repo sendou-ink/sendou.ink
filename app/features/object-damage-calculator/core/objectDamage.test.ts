@@ -15,7 +15,7 @@ import {
 	mainWeaponIds,
 	specialWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-import { calculateDamage } from "./objectDamage";
+import { calculateDamage, resolveAllUniqueDamageTypes } from "./objectDamage";
 
 function calculate({
 	mainWeaponId = 10,
@@ -240,4 +240,63 @@ describe("calculateDamage()", () => {
 		expect(hitsToDestroy("BulletUmbrellaCanopyWide")).toBe(1);
 		expect(hitsToDestroy("Gachihoko_Barrier")).toBe(Number.POSITIVE_INFINITY);
 	});
+});
+
+const SQUEEZER_ID = 400;
+const BALLPOINT_SPLATLING_ID = 4030;
+
+describe("resolveAllUniqueDamageTypes()", () => {
+	test.each([
+		["Squeezer", SQUEEZER_ID],
+		["Ballpoint Splatling", BALLPOINT_SPLATLING_ID],
+	] as const)("%s includes its secondary mode damage", (_, mainWeaponId) => {
+		const damageTypes = resolveAllUniqueDamageTypes({
+			analyzed: buildStats({
+				weaponSplId: mainWeaponId,
+				hasTacticooler: false,
+			}),
+			anyWeapon: { type: "MAIN", id: mainWeaponId },
+		});
+
+		expect(damageTypes).toContain("SECONDARY_MODE_MAX");
+	});
+});
+
+const WAVE_BREAKER_ID = 7;
+const CRAB_TANK_ID = 12;
+
+describe("calculateDamage() special weapon damage rates", () => {
+	// only the cannon (ExtraBombCore) and the wave use their own damage rate row, everything else is Default
+	test.each([
+		{
+			why: "Crab Tank bullets",
+			specialWeaponId: CRAB_TANK_ID,
+			damageType: "SPECIAL_BULLET_MAX",
+			receiver: "BulletUmbrellaCanopyNormal",
+		},
+		{
+			why: "Wave Breaker device hits",
+			specialWeaponId: WAVE_BREAKER_ID,
+			damageType: "BOMB_DIRECT",
+			receiver: "GreatBarrier_Barrier",
+		},
+	] as const)(
+		"$why use the default damage rate",
+		({ specialWeaponId, damageType, receiver }) => {
+			const damages = calculate({
+				specialWeaponId,
+				damageType,
+				preAnalyzed: buildStats({
+					weaponSplId: exampleMainWeaponIdWithSpecialWeaponId(specialWeaponId),
+					hasTacticooler: false,
+				}),
+			});
+
+			const multiplier = damages
+				.find((d) => d.receiver === receiver)!
+				.damages.find((d) => !d.objectShredder)!.multiplier;
+
+			expect(multiplier).toBe(1);
+		},
+	);
 });

@@ -12,9 +12,11 @@ import type { WeaponReporterMap, WeaponReporterProps } from "./WeaponReporter";
 export function useMatchWeaponReport({
 	maps,
 	pastReported,
+	weaponPoolIds,
 }: {
 	maps: WeaponReporterMap[];
 	pastReported: { mapIndex: number; weaponSplId: MainWeaponId }[];
+	weaponPoolIds?: MainWeaponId[];
 }): WeaponReporterProps {
 	const weaponReport = useActionSubmit(weaponReportActionSchema);
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
@@ -35,6 +37,7 @@ export function useMatchWeaponReport({
 			.map((w) => w.weaponSplId),
 		nextMapIndex,
 		quickSelectWeaponIds: recentlyReportedWeapons,
+		weaponPoolIds,
 		isSubmitting: weaponReport.state !== "idle",
 		onSubmit: (weaponSplId) => {
 			addRecentlyReportedWeapon(weaponSplId);

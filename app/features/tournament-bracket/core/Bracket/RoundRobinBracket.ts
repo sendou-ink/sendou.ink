@@ -5,6 +5,7 @@ import type { BracketData } from "~/features/tournament-bracket/core/engine/type
 import { invariant } from "~/utils/invariant";
 import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
+import * as Tiebreakers from "./Tiebreakers";
 
 export class RoundRobinBracket extends Bracket {
 	get collectsKos() {
@@ -281,6 +282,17 @@ export class RoundRobinBracket extends Bracket {
 				...teams
 					// client-side the layout's teams can lag behind freshly loaded match data, mostly preview tournaments (prevent crash)
 					.filter((team) => this.tournament.teamById(team.id))
+					.map((team) => ({
+						id: team.id,
+						stats: {
+							setWins: team.setWins,
+							setLosses: team.setLosses,
+							mapWins: team.mapWins,
+							mapLosses: team.mapLosses,
+							koCount: team.koCount,
+							winsAgainstTied: team.winsAgainstTied,
+						},
+					}))
 					.sort((a, b) => {
 						// TIEBREAKER 0) dropped out teams are always last
 						const aDroppedOut = droppedOutTeams.includes(a.id);
@@ -289,20 +301,12 @@ export class RoundRobinBracket extends Bracket {
 						if (aDroppedOut && !bDroppedOut) return 1;
 						if (!aDroppedOut && bDroppedOut) return -1;
 
-						if (a.setWins > b.setWins) return -1;
-						if (a.setWins < b.setWins) return 1;
-
-						if (a.winsAgainstTied > b.winsAgainstTied) return -1;
-						if (a.winsAgainstTied < b.winsAgainstTied) return 1;
-
-						if (a.mapWins > b.mapWins) return -1;
-						if (a.mapWins < b.mapWins) return 1;
-
-						if (a.mapLosses < b.mapLosses) return -1;
-						if (a.mapLosses > b.mapLosses) return 1;
-
-						if (a.koCount > b.koCount) return -1;
-						if (a.koCount < b.koCount) return 1;
+						const tiebreakerResult = Tiebreakers.compare(
+							this.tiebreakers,
+							a.stats,
+							b.stats,
+						);
+						if (tiebreakerResult !== 0) return tiebreakerResult;
 
 						const aSeed = Number(this.tournament.teamById(a.id)?.seed);
 						const bSeed = Number(this.tournament.teamById(b.id)?.seed);
@@ -317,14 +321,7 @@ export class RoundRobinBracket extends Bracket {
 							team: this.tournament.teamById(team.id)!,
 							placement: i + 1,
 							groupId,
-							stats: {
-								setWins: team.setWins,
-								setLosses: team.setLosses,
-								mapWins: team.mapWins,
-								mapLosses: team.mapLosses,
-								koCount: team.koCount,
-								winsAgainstTied: team.winsAgainstTied,
-							},
+							stats: team.stats,
 						};
 					}),
 			);
@@ -353,6 +350,10 @@ export class RoundRobinBracket extends Bracket {
 
 	get type(): Tables["TournamentStage"]["type"] {
 		return "round_robin";
+	}
+
+	get tiebreakers() {
+		return Tiebreakers.ROUND_ROBIN;
 	}
 
 	defaultRoundBestOfs(data: BracketData) {

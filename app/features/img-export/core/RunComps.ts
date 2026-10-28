@@ -118,7 +118,8 @@ function mostPlayedWeapon(playerObservations: CompObservation[]): MainWeaponId {
 	)[0];
 }
 
-function hasTacticooler(weaponSplId: MainWeaponId) {
+/** Whether the weapon's kit has Tacticooler as its special. */
+export function hasTacticooler(weaponSplId: MainWeaponId) {
 	return (
 		weaponParams().weaponKits[weaponSplId].specialWeaponId ===
 		TACTICOOLER_SPECIAL_WEAPON_ID

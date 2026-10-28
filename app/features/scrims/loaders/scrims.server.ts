@@ -1,7 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
-import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
 import * as RosterSchedule from "~/features/availability/core/RosterSchedule.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
@@ -37,33 +36,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			(association) => association.id === associationId,
 		) ?? null;
 
-	const visiblePosts = (await ScrimPostRepository.findAllRelevant()).filter(
-		(post) =>
-			(user && Scrim.isParticipating(post, user.id)) ||
-			Association.isVisible({
-				associations,
-				visibility: post.visibility,
-				contentOwnerUserId: post.users.find((u) => u.isOwner)?.id,
-			}),
-	);
-
-	const divided = dividePosts(visiblePosts, user?.id);
-
 	// the association filter narrows browsing only, the viewer's own and booked posts stay listed
-	const dividedPosts = {
-		neutral: divided.neutral
-			.filter(
-				(post) =>
-					!associationFilter ||
-					Association.mentionsAssociation({
-						visibility: post.visibility,
-						associationId: associationFilter.id,
-					}),
-			)
-			.map(censorVisibility),
-		owned: divided.owned.map(censorVisibility),
-		booked: divided.booked.map(censorVisibility),
-	};
+	const dividedPosts = dividePosts(
+		await ScrimPostRepository.findAllRelevant(associationFilter?.id ?? null),
+		user?.id,
+	);
 
 	const cardUserIds = R.unique(
 		[
@@ -108,17 +85,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			),
 	};
 };
-
-/** Replaces the raw visibility with a flag, so that association details do not reach the client. */
-function censorVisibility(post: ScrimPost): ScrimPost {
-	return {
-		...post,
-		visibility: null,
-		isPrivate: !Association.isPublic({
-			visibility: post.visibility,
-		}),
-	};
-}
 
 /** How the viewer's teams relate to the requestable posts, one entry per post: what the fit indicators on cards and in the request dialog resolve from. */
 async function rosterAvailability({

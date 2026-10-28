@@ -113,6 +113,10 @@ async function main() {
 					tournamentId,
 				}),
 		);
+		invariant(
+			tournamentTeam,
+			`${owner.username} is already in a team of the tournament`,
+		);
 
 		for (const member of entry.members.slice(1)) {
 			await userAsyncLocalStorage.run({ user: adminUser }, () =>

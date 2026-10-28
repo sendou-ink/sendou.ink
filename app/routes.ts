@@ -19,14 +19,6 @@ const devOnlyRoutes =
 					"features/changelog/routes/changelog-image.tsx",
 				),
 				route(
-					"/components",
-					"features/components-showcase/routes/components.tsx",
-				),
-				route(
-					"/components/colors",
-					"features/components-showcase/routes/components.colors.tsx",
-				),
-				route(
 					"/comp-analyzer/all-ranges",
 					"features/comp-analyzer/routes/comp-analyzer.all-ranges.tsx",
 				),
@@ -43,6 +35,31 @@ const devOnlyRoutes =
 					"/scanner/fixtures/:detector?/:caseName?",
 					"features/scanner/routes/scanner.fixtures.ts",
 				),
+				...prefix("/dev", [
+					route("/identity", "features/dev-tools/routes/dev.identity.ts"),
+					route("/scenarios", "features/dev-tools/routes/dev.scenarios.ts"),
+					route("/requests", "features/dev-tools/routes/dev.requests.ts"),
+					route(
+						"/requests/:id",
+						"features/dev-tools/routes/dev.requests.$id.ts",
+					),
+					route("/log-in-as", "features/dev-tools/routes/dev.log-in-as.ts"),
+					route("/server", "features/dev-tools/routes/dev.server.ts"),
+					route(
+						"/notifications",
+						"features/dev-tools/routes/dev.notifications.ts",
+					),
+					route("/events", "features/dev-tools/routes/dev.events.ts"),
+					route(
+						"/server-console",
+						"features/dev-tools/routes/dev.server-console.ts",
+					),
+					route("/users", "features/dev-tools/routes/dev.users.ts"),
+					route(
+						"/errors/:kind",
+						"features/dev-tools/routes/dev.errors.$kind.tsx",
+					),
+				]),
 			] satisfies RouteConfig)
 		: [];
 
@@ -258,6 +275,13 @@ export default [
 	route("/faq", "features/info/routes/faq.tsx"),
 	route("/welcome", "features/info/routes/welcome.tsx"),
 	route("/contributions", "features/info/routes/contributions.tsx"),
+
+	route("/translate", "features/translate/routes/translate.tsx"),
+	route(
+		"/translate/:language",
+		"features/translate/routes/translate.$language.tsx",
+		[index("features/translate/routes/translate.$language.index.tsx")],
+	),
 	route("/support", "features/info/routes/support.tsx"),
 
 	route("/t/new", "features/team/routes/t.new.tsx"),
@@ -326,6 +350,12 @@ export default [
 	...prefix("/lfg", [
 		index("features/lfg/routes/lfg.tsx"),
 		route("new", "features/lfg/routes/lfg.new.tsx"),
+	]),
+
+	...prefix("/lobbies", [
+		index("features/lobbies/routes/lobbies.tsx"),
+		route("new", "features/lobbies/routes/lobbies.new.tsx"),
+		route(":id", "features/lobbies/routes/lobbies.$id.tsx"),
 	]),
 
 	...prefix("/scrims", [
@@ -401,12 +431,10 @@ export default [
 	route("/patrons", "features/api-private/routes/patrons.ts"),
 	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
 	route("/run-routine", "features/api-private/routes/run-routine.ts"),
-	route("/seed", "features/api-private/routes/seed.ts"),
 	route(
 		"/set-plus-voting-active",
 		"features/api-private/routes/set-plus-voting-active.ts",
 	),
-	route("/users", "features/api-private/routes/users.ts"),
 
 	route("/scanner", "features/scanner/routes/scanner.tsx"),
 	route("/ingest", "features/scanner-ingest/routes/scanner-ingest.ts"),
@@ -438,6 +466,10 @@ export default [
 				"features/api-public/routes/sendouq.match.$matchId.ts",
 			),
 			route("/tournament/:id", "features/api-public/routes/tournament.$id.ts"),
+			route(
+				"/tournament/:id/matches",
+				"features/api-public/routes/tournament.$id.matches.ts",
+			),
 			route(
 				"/tournament/:id/teams",
 				"features/api-public/routes/tournament.$id.teams.ts",
@@ -502,6 +534,7 @@ export default [
 	...prefix("/auth", [
 		index("features/auth/routes/auth.ts"),
 		route("callback", "features/auth/routes/auth.callback.ts"),
+		route("refresh", "features/auth/routes/auth.refresh.ts"),
 		route("create-link", "features/auth/routes/auth.create-link.ts"),
 		route("login", "features/auth/routes/auth.login.ts"),
 		route("logout", "features/auth/routes/auth.logout.ts"),

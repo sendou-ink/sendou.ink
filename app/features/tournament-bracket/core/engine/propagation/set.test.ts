@@ -84,7 +84,10 @@ describe("Set results in a bracket with map info", () => {
 			}).data;
 		}
 
-		const reopened = Engine.reopenMatch(data, 0);
+		const reopened = Engine.reopenMatch(data, {
+			matchId: 0,
+			lastGameWinnerTeamId: TEAM_ONE,
+		});
 		data = reopened.data;
 
 		expect(reopened.endedEarly).toBe(false);
@@ -99,12 +102,32 @@ describe("Set results in a bracket with map info", () => {
 		}).data;
 		data = Engine.endSet(data, { matchId: 0, winnerTeamId: TEAM_ONE }).data;
 
-		const reopened = Engine.reopenMatch(data, 0);
+		const reopened = Engine.reopenMatch(data, {
+			matchId: 0,
+			lastGameWinnerTeamId: TEAM_ONE,
+		});
 		data = reopened.data;
 
 		expect(reopened.endedEarly).toBe(true);
 		expect(matchById(data, 0).winnerSide).toBeFalsy();
 		expect(matchById(data, 0).opponent1?.score).toBe(1);
+	});
+
+	test("removes the last game's score when the set loser won it in a play all set", () => {
+		data = bracketWithMaps({ count: 3, type: "PLAY_ALL" });
+		for (const winnerTeamId of [TEAM_ONE, TEAM_ONE, TEAM_TWO]) {
+			data = Engine.reportGameResult(data, { matchId: 0, winnerTeamId }).data;
+		}
+
+		data = Engine.reopenMatch(data, {
+			matchId: 0,
+			lastGameWinnerTeamId: TEAM_TWO,
+		}).data;
+
+		const after = matchById(data, 0);
+		expect(after.winnerSide).toBeFalsy();
+		expect(after.opponent1?.score).toBe(2);
+		expect(after.opponent2?.score).toBe(0);
 	});
 });
 

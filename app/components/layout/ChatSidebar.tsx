@@ -29,13 +29,13 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import {
-	NavIconContainer,
-	NavListButton,
-	NavListImage,
-	NavListSubtitle,
-	NavListTexts,
-	NavListTitle,
-} from "../SideNav";
+	ListItemButton,
+	ListItemImage,
+	ListItemSubtitle,
+	ListItemTexts,
+	ListItemTitle,
+} from "../ListItem";
+import { NavIconContainer } from "../SideNav";
 import styles from "./ChatSidebar.module.css";
 
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
@@ -117,6 +117,23 @@ function useRoomDisplay() {
 					imageUrl: `${navIconUrl("scrims")}.avif`,
 				};
 			}
+			case "LOBBY": {
+				return {
+					title: room.titleParams.name,
+					subtitle: t("common:chat.room.lobby"),
+					imageUrl: `${navIconUrl("lobbies")}.avif`,
+				};
+			}
+			case "LOBBY_TEAM": {
+				return {
+					title:
+						room.titleParams.side === "ALPHA"
+							? t("common:chat.room.lobbyTeamAlpha")
+							: t("common:chat.room.lobbyTeamBravo"),
+					subtitle: room.titleParams.name,
+					imageUrl: `${navIconUrl("lobbies")}.avif`,
+				};
+			}
 		}
 	};
 }
@@ -127,7 +144,10 @@ function roomShortLabel(room: ChatRoomListItem, t: TFunction<["common"]>) {
 		case "SQ_GROUP":
 			return t("common:chat.room.groupShort");
 		case "TOURNAMENT_TEAM":
+		case "LOBBY_TEAM":
 			return t("common:chat.room.teamShort");
+		case "LOBBY":
+			return t("common:chat.room.lobby");
 		default:
 			return t("common:chat.room.matchShort");
 	}
@@ -311,15 +331,15 @@ function RoomListItem({
 	const subtitle = subtitleOverride ?? roomSubtitle;
 
 	return (
-		<NavListButton
+		<ListItemButton
 			className={clsx(styles.roomItem, inactive ? "opaque" : null)}
 			onClick={onClick}
 		>
-			<NavListImage src={imageUrl} />
-			<NavListTexts>
-				<NavListTitle className={styles.roomName}>{title}</NavListTitle>
-				<NavListSubtitle>{subtitle}</NavListSubtitle>
-			</NavListTexts>
+			<ListItemImage src={imageUrl} />
+			<ListItemTexts>
+				<ListItemTitle className={styles.roomName}>{title}</ListItemTitle>
+				<ListItemSubtitle>{subtitle}</ListItemSubtitle>
+			</ListItemTexts>
 			{room.unreadCount > 0 ? (
 				<span className={styles.unreadBadge}>{room.unreadCount}</span>
 			) : room.latestMessageAt !== null ? (
@@ -329,7 +349,7 @@ function RoomListItem({
 					)}
 				</span>
 			) : null}
-		</NavListButton>
+		</ListItemButton>
 	);
 }
 
@@ -348,16 +368,16 @@ function CombinedRoomListItem({
 	const unread = rooms.reduce((sum, room) => sum + room.unreadCount, 0);
 
 	return (
-		<NavListButton className={styles.roomItem} onClick={onClick}>
-			<NavListImage src={imageUrl} />
-			<NavListTexts>
-				<NavListTitle className={styles.roomName}>{title}</NavListTitle>
-				<NavListSubtitle>
+		<ListItemButton className={styles.roomItem} onClick={onClick}>
+			<ListItemImage src={imageUrl} />
+			<ListItemTexts>
+				<ListItemTitle className={styles.roomName}>{title}</ListItemTitle>
+				<ListItemSubtitle>
 					{rooms.map((room) => roomShortLabel(room, t)).join(" · ")}
-				</NavListSubtitle>
-			</NavListTexts>
+				</ListItemSubtitle>
+			</ListItemTexts>
 			{unread > 0 ? <span className={styles.unreadBadge}>{unread}</span> : null}
-		</NavListButton>
+		</ListItemButton>
 	);
 }
 
@@ -398,7 +418,7 @@ function SingleChatView({
 
 	const headerContent = (
 		<>
-			{display ? <NavListImage src={display.imageUrl} /> : null}
+			{display ? <ListItemImage src={display.imageUrl} /> : null}
 			<div className={styles.chatHeaderInfo}>
 				<span className={clsx(styles.chatHeaderTitle, "truncate")}>
 					{display?.title ?? t("common:chat.sidebar.title")}
@@ -508,7 +528,7 @@ function CombinedChatView({
 	const display = roomDisplay(primary);
 	const headerContent = (
 		<>
-			<NavListImage src={display.imageUrl} />
+			<ListItemImage src={display.imageUrl} />
 			<div className={styles.chatHeaderInfo}>
 				<span className={clsx(styles.chatHeaderTitle, "truncate")}>
 					{display.title}

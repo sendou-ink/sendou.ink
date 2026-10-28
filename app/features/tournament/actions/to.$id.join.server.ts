@@ -66,16 +66,22 @@ export const action = defineAction(async ({ params, url }) => {
 		"No friend code",
 	);
 
+	const leftLfgUserIds = await TournamentLFGRepository.leaveLfg({
+		userId: user.id,
+		tournamentId,
+	});
+	const joinedUserIds = await TournamentTeamRepository.join({
+		userId: user.id,
+		newTeamId: teamToJoin.id,
+	});
 	ChatSystemMessage.notifyRoomsChanged([
-		...(await TournamentLFGRepository.leaveLfg({
-			userId: user.id,
-			tournamentId,
-		})),
-		...(await TournamentTeamRepository.join({
-			userId: user.id,
-			newTeamId: teamToJoin.id,
-		})),
+		...leftLfgUserIds,
+		...(joinedUserIds ?? []),
 	]);
+	errorToastIfFalsy(
+		joinedUserIds,
+		"Leave your current team before joining another",
+	);
 
 	ShowcaseTournaments.addToCached({
 		tournamentId,

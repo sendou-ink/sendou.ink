@@ -16,7 +16,6 @@ import { hasPermission } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
-import { serializeTournamentLoaderData } from "../core/layout-payload";
 
 export type TournamentLoaderData = {
 	tournament: TournamentLayoutData;
@@ -33,7 +32,9 @@ export type TournamentLoaderData = {
 	vods: TournamentMatchVodRepository.VodsByTournamentId | undefined;
 };
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({
+	params,
+}: LoaderFunctionArgs): Promise<TournamentLoaderData> => {
 	const user = getUser();
 	const { id: tournamentId } = parseParams({
 		params,
@@ -55,7 +56,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
 		);
 
-	return serializeTournamentLoaderData({
+	return {
 		tournament: {
 			ctx: tournament.ctx,
 			bracketsMeta: await bracketsMetaCached(tournamentId),
@@ -72,5 +73,5 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		vods: showVods
 			? await TournamentMatchVodRepository.findVodsByTournamentId(tournamentId)
 			: undefined,
-	});
+	};
 };

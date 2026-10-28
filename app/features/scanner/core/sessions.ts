@@ -12,6 +12,7 @@ import { OBJECTIVE_EVENT_TYPE } from "./detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "./detectors/objective/player-status";
 import { STRIP_WEAPONS_EVENT_TYPE } from "./detectors/objective/strip-weapons";
 import type { DetectedEvent } from "./detectors/types";
+import { isHistoryOnly } from "./match-builder";
 import type { ScannerMatch } from "./scanner-match";
 import { xBattleCards } from "./x-battle";
 
@@ -125,12 +126,17 @@ export function matchResult({
 	return winner === povTeam ? "win" : "loss";
 }
 
-/** The header line's numbers: games decided, W–L and K/D off the POV rows. */
+/**
+ * The header line's numbers: games decided, W–L and K/D off the POV rows.
+ * Games only seen in the battle log were not played in the session and are
+ * left out, as they are hidden from its cards.
+ */
 export function sessionSummary(builds: readonly MatchBuild[]): SessionSummary {
 	let ka: number | null = null;
 	let d: number | null = null;
 	const summary: SessionSummary = { games: 0, wins: 0, losses: 0, ka, d };
 	for (const build of builds) {
+		if (isHistoryOnly(build)) continue;
 		const { match } = build;
 		const result = matchResult(build);
 		if (match.winner !== null || result !== null) summary.games++;

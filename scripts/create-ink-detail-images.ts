@@ -2,7 +2,7 @@
 
 // Splits sub & special weapon icons into the layers that let them take the
 // user's accent color as their ink color, writing them into the assets repo,
-// see docs/dev/how-to.md
+// see docs/site/src/content/docs/dev/how-to.mdx
 //
 // The source icons are painted in exactly three tones (ink purple, teal,
 // white), variants can add a color of their own (the coral of Big Bubbler's

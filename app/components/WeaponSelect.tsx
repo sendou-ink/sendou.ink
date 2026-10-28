@@ -81,6 +81,7 @@ export function WeaponSelect<
 			isDisabled={isDisabled}
 			items={items}
 			label={label}
+			labelRequired={isRequired}
 			placeholder={placeholder ?? t("common:forms.weaponSearch.placeholder")}
 			search={{
 				placeholder: t("common:forms.weaponSearch.search.placeholder"),

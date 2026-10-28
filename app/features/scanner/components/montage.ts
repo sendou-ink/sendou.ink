@@ -5,22 +5,24 @@
  * VoD in it is scanned in turn through `startVodScan` (saved like any file
  * scan, no clips cut) and its streaks meeting the criteria (`montageWindows`:
  * min splats and a length cap per splat count, kept in localStorage) become
- * candidates. Picking one hides the rest of that team's candidates — a cast
- * has no team, so only its own VoD's go. The scanned games, the picks and
+ * candidates of the top teams they can play under (a cast's go under
+ * either side). Each pick plays under one team's card. The scanned games, the picks and
  * the folder's handle live in IndexedDB (`store/montages.ts`): a reload
  * restores the latest montage at once, and the folder reconnects on its own
  * when the browser kept the permission, else with one click. Rendering
- * stitches the picks between the title and standings cards
- * (`capture/montage-render.ts`); the cards and each clip's ribbon are drawn
+ * stitches the intro card, then each top team's card and picks counting
+ * down to the winner (`capture/montage-render.ts`); the cards and each clip's ribbon are drawn
  * by the page (`MontageGraphics.tsx`), which registers how through
  * `setMontageGraphicCapture`. An optional music file replaces the game
  * sound for the whole video.
  */
 import { useSyncExternalStore } from "react";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { downloadBlob } from "~/utils/download";
+import type { CardRevealRect, RevealStyle } from "../capture/montage-overlays";
 import {
-	type MontageClipSource,
+	type MontagePart,
 	type MontageRenderProgress,
 	renderMontage,
 } from "../capture/montage-render";
@@ -28,18 +30,25 @@ import { extractVodClip, vodFrameThumbnail } from "../capture/vod-clips";
 import { povDeathTimes } from "../core/clips/scoring";
 import { buildScannerMatches } from "../core/match-builder";
 import {
+	candidateTeamIds,
 	DEFAULT_MONTAGE_CRITERIA,
+	INTRO_CARD_SECONDS,
 	MONTAGE_MANIFEST_FILE,
 	type MontageCandidate,
 	type MontageCriteria,
 	type MontageGame,
 	type MontageManifest,
 	type MontageManifestVod,
+	type MontagePick,
+	montageDuration,
+	montageTeamSections,
 	montageWindows,
 	playbackDuration,
 	playbackSegments,
+	TEAM_CARD_SECONDS,
 } from "../core/montage";
 import type { ScannerMatch } from "../core/scanner-match";
+import { montageCriteriaPersisted } from "../scanner-persisted";
 import {
 	latestMontage,
 	loadMontage,
@@ -50,8 +59,6 @@ import { listVods, loadVod, loadVodEvents } from "../store/vods";
 import { describeError } from "./errors";
 import { scannedTeamComps } from "./montage-comps";
 import { cancelVodScan, startVodScan } from "./vod-scan";
-
-const CRITERIA_STORAGE_KEY = "scanner:montage-criteria";
 
 export interface MontageFolder {
 	manifest: MontageManifest;
@@ -68,8 +75,10 @@ export type MontageScan =
 
 /** What the page draws for the video; see `MontageGraphics.tsx`. */
 export type MontageGraphic =
-	| { kind: "title" }
-	| { kind: "standings" }
+	/** `hideRevealed`: the team avatars' places left empty, for the renderer to reveal them in */
+	| { kind: "intro"; hideRevealed?: boolean }
+	/** a top team's card: placement, roster and comp; `hideRevealed` as for the intro, the roster's */
+	| { kind: "team"; teamId: number; hideRevealed?: boolean }
 	/** the results image on its own: every top team's roster and comp */
 	| { kind: "results" }
 	| {
@@ -78,8 +87,11 @@ export type MontageGraphic =
 			weaponId: MainWeaponId | null;
 	  };
 
-/** resolves to the graphic as a PNG */
-type GraphicCapture = (graphic: MontageGraphic) => Promise<Blob>;
+/** resolves to the graphic as a PNG, with where its revealed items are */
+type GraphicCapture = (graphic: MontageGraphic) => Promise<{
+	image: Blob;
+	revealRects: CardRevealRect[];
+}>;
 
 export type MontageRender =
 	| ({ state: "rendering" } & MontageRenderProgress)
@@ -93,8 +105,8 @@ export interface MontageSnapshot {
 	criteria: MontageCriteria;
 	/** every candidate meeting the criteria, best first */
 	candidates: MontageCandidate[];
-	/** in montage order */
-	picks: MontageCandidate[];
+	/** in montage order within each team */
+	picks: MontagePick[];
 	/** plays under the whole video instead of the game sound */
 	music: File | null;
 	scan: MontageScan | null;
@@ -116,6 +128,8 @@ type SaveFilePicker = (options: {
 	suggestedName: string;
 	types: Array<{ description: string; accept: Record<string, string[]> }>;
 }) => Promise<FileSystemFileHandle>;
+
+const PREVIEW_FRAME_WIDTH = 960;
 
 const EMPTY: MontageSnapshot = {
 	folder: null,
@@ -146,14 +160,10 @@ export function useMontage(): MontageSnapshot {
 	return useSyncExternalStore(subscribe, getSnapshot, () => EMPTY);
 }
 
-/** Candidates still pickable: none from a team (or a cast VoD) already picked. */
+/** Candidates not picked yet. */
 export function availableCandidates(state: MontageSnapshot) {
-	const pickedTeams = new Set(
-		state.picks.map((candidate) => teamKey(candidate.vod)),
-	);
-	return state.candidates.filter(
-		(candidate) => !pickedTeams.has(teamKey(candidate.vod)),
-	);
+	const pickedKeys = new Set(state.picks.map((pick) => pick.key));
+	return state.candidates.filter((candidate) => !pickedKeys.has(candidate.key));
 }
 
 /** Opens a folder written by `pnpm vods:download` through the directory picker. */
@@ -229,11 +239,7 @@ export function cancelMontageScan(): void {
 export function updateMontageCriteria(patch: Partial<MontageCriteria>): void {
 	const criteria = { ...snapshot.criteria, ...patch };
 	set({ criteria });
-	try {
-		localStorage.setItem(CRITERIA_STORAGE_KEY, JSON.stringify(criteria));
-	} catch {
-		// private mode or a full quota: the criteria still hold for this visit
-	}
+	PersistedState.write(montageCriteriaPersisted, criteria);
 }
 
 /** Sets or clears the music that replaces the game sound. */
@@ -242,42 +248,46 @@ export function setMontageMusic(music: File | null): void {
 	persist();
 }
 
-export function pickCandidate(candidate: MontageCandidate): void {
-	setPicks([...snapshot.picks, candidate]);
+/** Adds the candidate after the team's other picks. */
+export function pickCandidate(
+	candidate: MontageCandidate,
+	teamId: number,
+): void {
+	setPicks([...snapshot.picks, { ...candidate, teamId }]);
 }
 
 export function unpickCandidate(key: string): void {
 	setPicks(snapshot.picks.filter((pick) => pick.key !== key));
 }
 
-/** Moves a pick `delta` places, clamped to the list. */
-export function movePick(key: string, delta: number): void {
-	const index = snapshot.picks.findIndex((pick) => pick.key === key);
-	if (index === -1) return;
-	const picks = snapshot.picks.toSpliced(index, 1);
-	picks.splice(
-		Math.max(0, Math.min(picks.length, index + delta)),
-		0,
-		snapshot.picks[index]!,
+/** Swaps the pick with its neighbor among its team's picks, earlier (-1) or later (1). */
+export function movePick(key: string, delta: -1 | 1): void {
+	const pick = snapshot.picks.find((candidate) => candidate.key === key);
+	if (!pick) return;
+	const teamPicks = snapshot.picks.filter(
+		(candidate) => candidate.teamId === pick.teamId,
 	);
-	setPicks(picks);
+	const neighbor = teamPicks[teamPicks.indexOf(pick) + delta];
+	if (!neighbor) return;
+	setPicks(
+		snapshot.picks.map((candidate) =>
+			candidate === pick ? neighbor : candidate === neighbor ? pick : candidate,
+		),
+	);
 }
 
 /** A small JPEG data URL of the candidate's last kill; decoded once, one at a time. */
 export function candidateThumbnail(
 	candidate: MontageCandidate,
 ): Promise<string | null> {
-	const file = snapshot.folder?.files?.get(candidate.vod.file);
-	if (!file) return Promise.resolve(null);
-	let thumbnail = thumbnails.get(candidate.key);
-	if (!thumbnail) {
-		thumbnail = thumbnailQueue.then(() =>
-			vodFrameThumbnail(file, candidate.window.t),
-		);
-		thumbnailQueue = thumbnail;
-		thumbnails.set(candidate.key, thumbnail);
-	}
-	return thumbnail;
+	return candidateFrame(candidate, undefined);
+}
+
+/** The candidate's last kill at `PREVIEW_FRAME_WIDTH`, for the ribbon preview to sit on. */
+export function candidatePreviewFrame(
+	candidate: MontageCandidate,
+): Promise<string | null> {
+	return candidateFrame(candidate, PREVIEW_FRAME_WIDTH);
 }
 
 /** The candidate's footage as it is in the VoD (no fast-forward), for watching before picking. */
@@ -295,7 +305,7 @@ export async function candidatePreview(
 }
 
 /**
- * Renders the picks into an MP4, saved where the user picks (Chrome's save
+ * Renders the cards and picks into an MP4, saved where the user picks (Chrome's save
  * dialog, opened first so the click still counts as the user's gesture) or,
  * without one, downloaded once done.
  */
@@ -303,16 +313,10 @@ export async function renderMontageVideo(): Promise<void> {
 	const folder = snapshot.folder;
 	const files = folder?.files;
 	const picks = snapshot.picks;
-	if (
-		!folder ||
-		!files ||
-		picks.length === 0 ||
-		snapshot.render?.state === "rendering"
-	) {
-		return;
-	}
+	if (!folder || !files || snapshot.render?.state === "rendering") return;
 	const { manifest } = folder;
 	const fileName = `${fileSlug(manifest)}-montage.mp4`;
+	const total = montageDuration(manifest.topTeams.length, picks);
 
 	let writable: FileSystemWritableFileStream | null;
 	try {
@@ -324,39 +328,58 @@ export async function renderMontageVideo(): Promise<void> {
 	const controller = new AbortController();
 	renderAbort = controller;
 	set({
-		render: {
-			state: "rendering",
-			done: 0,
-			total: montageDuration(picks),
-		},
+		render: { state: "rendering", done: 0, total },
 	});
 	try {
-		const captureBlob = captureGraphic;
-		if (!captureBlob) throw new Error("the montage view isn't mounted");
+		const captureCurrent = captureGraphic;
+		if (!captureCurrent) throw new Error("the montage view isn't mounted");
 		const capture = async (graphic: MontageGraphic) =>
-			createImageBitmap(await captureBlob(graphic));
-		const title = await capture({ kind: "title" });
-		const standings = await capture({ kind: "standings" });
-		const clips: MontageClipSource[] = [];
-		for (const candidate of picks) {
-			const file = files.get(candidate.vod.file);
-			if (!file) {
-				throw new Error(`${candidate.vod.file} is not in the folder`);
+			createImageBitmap((await captureCurrent(graphic)).image);
+		const captureCard = async (
+			card: Extract<MontageGraphic, { kind: "intro" | "team" }>,
+			style: RevealStyle,
+			seconds: number,
+		): Promise<MontagePart> => {
+			const shown = await captureCurrent(card);
+			return {
+				kind: "card",
+				image: await capture({ ...card, hideRevealed: true }),
+				seconds,
+				reveal: {
+					style,
+					image: await createImageBitmap(shown.image),
+					rects: shown.revealRects,
+				},
+			};
+		};
+		const parts: MontagePart[] = [
+			await captureCard({ kind: "intro" }, "pop", INTRO_CARD_SECONDS),
+		];
+		for (const section of montageTeamSections(manifest.topTeams, picks)) {
+			parts.push(
+				await captureCard(
+					{ kind: "team", teamId: section.team.id },
+					"rise",
+					TEAM_CARD_SECONDS,
+				),
+			);
+			for (const pick of section.picks) {
+				const file = files.get(pick.vod.file);
+				if (!file) throw new Error(`${pick.vod.file} is not in the folder`);
+				parts.push({
+					kind: "clip",
+					file,
+					segments: playbackSegments(pick.window),
+					ribbon: await capture({
+						kind: "ribbon",
+						vod: pick.vod,
+						weaponId: pick.weaponId,
+					}),
+				});
 			}
-			clips.push({
-				file,
-				segments: playbackSegments(candidate.window),
-				ribbon: await capture({
-					kind: "ribbon",
-					vod: candidate.vod,
-					weaponId: candidate.weaponId,
-				}),
-			});
 		}
 		const blob = await renderMontage({
-			title,
-			clips,
-			standings,
+			parts,
 			music: snapshot.music,
 			writable,
 			signal: controller.signal,
@@ -396,14 +419,17 @@ export function montageImageUrl(name: string | null): string | undefined {
 	return url;
 }
 
-/** Downloads the results image (every top team's roster and comp) as a PNG. */
-export async function downloadMontageResults(): Promise<void> {
+/** Downloads the graphic as a PNG, as the video (or for `results`, the image export) captures it. */
+export async function downloadMontageGraphic(
+	graphic: MontageGraphic,
+	name: string,
+): Promise<void> {
 	const folder = snapshot.folder;
 	if (!folder?.files) throw new Error("reconnect the folder first");
 	if (!captureGraphic) throw new Error("the montage view isn't mounted");
 	downloadBlob(
-		`${fileSlug(folder.manifest)}-results.png`,
-		await captureGraphic({ kind: "results" }),
+		`${fileSlug(folder.manifest)}-${name}.png`,
+		(await captureGraphic(graphic)).image,
 	);
 }
 
@@ -418,9 +444,22 @@ export function montageTeamComps(state: MontageSnapshot) {
 		: new Map<number, MainWeaponId[]>();
 }
 
-/** Seconds of montage the clips make, fast-forwarded (cards excluded). */
-export function montageDuration(candidates: readonly MontageCandidate[]) {
-	return candidates.reduce((sum, candidate) => sum + candidate.duration, 0);
+function candidateFrame(
+	candidate: MontageCandidate,
+	width: number | undefined,
+): Promise<string | null> {
+	const file = snapshot.folder?.files?.get(candidate.vod.file);
+	if (!file) return Promise.resolve(null);
+	const key = `${candidate.key}@${width ?? "thumbnail"}`;
+	let frame = thumbnails.get(key);
+	if (!frame) {
+		frame = thumbnailQueue.then(() =>
+			vodFrameThumbnail(file, candidate.window.t, width),
+		);
+		thumbnailQueue = frame;
+		thumbnails.set(key, frame);
+	}
+	return frame;
 }
 
 function getSnapshot(): MontageSnapshot {
@@ -437,6 +476,10 @@ async function restore(): Promise<void> {
 	const stored = await latestMontage().catch(() => undefined);
 	if (!stored || snapshot.folder) {
 		set({ criteria });
+		return;
+	}
+	if (isOutdatedManifest(stored.manifest)) {
+		set({ criteria, folderError: outdatedManifestError(stored.manifest) });
 		return;
 	}
 	set({
@@ -513,16 +556,18 @@ async function readFolder(directory: FileSystemDirectoryHandle) {
 		);
 	}
 	const manifest = JSON.parse(await manifestFile.text()) as MontageManifest;
-	if (manifest.vods.some((vod) => !vod.teams)) {
-		throw new Error(
-			`${MONTAGE_MANIFEST_FILE} is from an older version: run pnpm vods:download ${manifest.tournamentId} again`,
-		);
+	if (isOutdatedManifest(manifest)) {
+		throw new Error(outdatedManifestError(manifest));
 	}
 	const names = new Set(
 		[
 			manifest.logo,
 			manifest.organization?.logo ?? null,
-			...manifest.topTeams.map((team) => team.logo),
+			...manifest.teams.map((team) => team.logo),
+			...manifest.topTeams.flatMap((team) => [
+				team.logo,
+				...team.players.map((player) => player.avatar),
+			]),
 			...manifest.vods.flatMap((vod) => [
 				vod.file,
 				vod.pov?.avatar ?? null,
@@ -536,6 +581,21 @@ async function readFolder(directory: FileSystemDirectoryHandle) {
 		if (file) files.set(name, file);
 	}
 	return { manifest, files };
+}
+
+/** Written by an older `pnpm vods:download`, missing fields the montage needs. */
+function isOutdatedManifest(manifest: MontageManifest): boolean {
+	return (
+		!manifest.teams ||
+		manifest.vods.some((vod) => !vod.teams) ||
+		manifest.topTeams.some((team) =>
+			team.players.some((player) => !("avatar" in player)),
+		)
+	);
+}
+
+function outdatedManifestError(manifest: MontageManifest): string {
+	return `${MONTAGE_MANIFEST_FILE} is from an older version: run pnpm vods:download ${manifest.tournamentId} again`;
 }
 
 async function scannedGames(vod: MontageManifestVod): Promise<MontageGame[]> {
@@ -563,9 +623,14 @@ function candidatesOf(
 	scanned: MontageSnapshot["scanned"],
 	criteria: MontageCriteria,
 ): MontageCandidate[] {
+	const topTeamIds = new Set(
+		(folder?.manifest.topTeams ?? []).map((team) => team.id),
+	);
 	return (folder?.vods ?? [])
-		.flatMap((vod) =>
-			(scanned.get(vod.file) ?? []).flatMap((game) =>
+		.flatMap((vod) => {
+			const teamIds = candidateTeamIds(vod, topTeamIds);
+			if (teamIds.length === 0) return [];
+			return (scanned.get(vod.file) ?? []).flatMap((game) =>
 				montageWindows(game, criteria).map((window) => ({
 					key: `${vod.file}@${window.start}-${window.end}`,
 					vod,
@@ -574,9 +639,10 @@ function candidatesOf(
 					stage: game.stage,
 					weaponId: game.povWeaponId,
 					duration: playbackDuration(playbackSegments(window)),
+					teamIds,
 				})),
-			),
-		)
+			);
+		})
 		.sort((a, b) => b.window.score - a.window.score);
 }
 
@@ -590,25 +656,32 @@ function lineupOf(team: ScannerMatch["teams"][number]) {
 /**
  * Picks point at the folder's current manifest entry and candidate: a pick
  * is stored whole, so one made by an older version carries that version's
- * shape. Picks of VoDs no longer in the folder go.
+ * shape (one from before team sections plays under its POV team). Picks of
+ * VoDs no longer in the folder or of no top team go.
  */
-function currentPicks(picks: readonly MontageCandidate[]): MontageCandidate[] {
+function currentPicks(
+	picks: ReadonlyArray<MontageCandidate & { teamId?: number }>,
+): MontagePick[] {
 	const vodByFile = new Map(
 		(snapshot.folder?.vods ?? []).map((vod) => [vod.file, vod]),
+	);
+	const topTeamIds = new Set(
+		(snapshot.folder?.manifest.topTeams ?? []).map((team) => team.id),
 	);
 	const candidateByKey = new Map(
 		snapshot.candidates.map((candidate) => [candidate.key, candidate]),
 	);
 	return picks.flatMap((pick) => {
 		const vod = vodByFile.get(pick.vod.file);
-		if (!vod) return [];
-		return [
-			candidateByKey.get(pick.key) ?? {
-				...pick,
-				vod,
-				weaponId: pick.weaponId ?? null,
-			},
-		];
+		const teamId = pick.teamId ?? pick.vod.team?.id;
+		if (!vod || teamId === undefined || !topTeamIds.has(teamId)) return [];
+		const candidate = candidateByKey.get(pick.key) ?? {
+			...pick,
+			vod,
+			weaponId: pick.weaponId ?? null,
+			teamIds: candidateTeamIds(vod, topTeamIds),
+		};
+		return [{ ...candidate, teamId }];
 	});
 }
 
@@ -616,11 +689,7 @@ function fileSlug(manifest: MontageManifest): string {
 	return manifest.name.replace(/[^\p{L}\p{N}]+/gu, "-");
 }
 
-function teamKey(vod: MontageManifestVod): string {
-	return vod.team ? `team:${vod.team.id}` : `vod:${vod.file}`;
-}
-
-function setPicks(picks: MontageCandidate[]): void {
+function setPicks(picks: MontagePick[]): void {
 	set({ picks });
 	persist();
 }
@@ -643,20 +712,15 @@ function persist(): void {
 }
 
 function loadCriteria(): MontageCriteria {
-	try {
-		const stored: Partial<MontageCriteria> = JSON.parse(
-			localStorage.getItem(CRITERIA_STORAGE_KEY) ?? "{}",
-		);
-		return {
-			minKills: stored.minKills ?? DEFAULT_MONTAGE_CRITERIA.minKills,
-			maxSecondsByKills: {
-				...DEFAULT_MONTAGE_CRITERIA.maxSecondsByKills,
-				...stored.maxSecondsByKills,
-			},
-		};
-	} catch {
-		return DEFAULT_MONTAGE_CRITERIA;
-	}
+	const stored = PersistedState.read(montageCriteriaPersisted);
+
+	return {
+		minKills: stored.minKills,
+		maxSecondsByKills: {
+			...DEFAULT_MONTAGE_CRITERIA.maxSecondsByKills,
+			...stored.maxSecondsByKills,
+		},
+	};
 }
 
 /** A writable for a file the user picks; null when the browser has no save dialog (the render then downloads). */

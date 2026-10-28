@@ -58,6 +58,10 @@ export function userRoles(
 		result.push("TOURNAMENT_ADDER");
 	}
 
+	if (isAdmin(user) || isDev(user)) {
+		result.push("LOBBY_ADDER");
+	}
+
 	if (userDiscordIdIsAged(user) || isSupporter(user)) {
 		result.push("CALENDAR_EVENT_ADDER");
 	}

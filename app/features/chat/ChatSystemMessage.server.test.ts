@@ -132,6 +132,22 @@ describe("ChatSystemMessage.sendPersisted", () => {
 		]);
 	});
 
+	test("does not count the message as unread for its author", async () => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
+
+		await ChatSystemMessage.sendPersisted({
+			roomId: match.chatRoomId!,
+			type: "SCORE_REPORTED",
+			authorUserId: alphaUserIds[0],
+		});
+
+		const [authorStats] = await ChatRepository.findMessageStatsByRoomIds(
+			alphaUserIds[0],
+			[match.chatRoomId!],
+		);
+		expect(authorStats.unreadCount).toBe(0);
+	});
+
 	test("does nothing for a room that no longer resolves", async () => {
 		const received = subscribeTo(chatRoomChannel(9999));
 

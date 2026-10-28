@@ -1,9 +1,11 @@
 import type { ChatRoomType } from "~/features/chat/chat-types";
 
-/** SendouQ only during the beta. */
+/** SendouQ and lobbies only during the beta. */
 export const VOICE_ROOM_TYPES = [
 	"SQ_GROUP",
 	"SQ_MATCH",
+	"LOBBY",
+	"LOBBY_TEAM",
 ] as const satisfies ChatRoomType[];
 
 export const VOICE_TOKEN_LIFETIME_MINUTES = 120;

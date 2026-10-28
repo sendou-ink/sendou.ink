@@ -76,7 +76,7 @@ export function MatchActionPickBanTab({
 			selected.mode !== undefined
 				? t(
 						selected.stageId !== undefined
-							? `game-misc:MODE_SHORT_${selected.mode}`
+							? `common:modes.short.${selected.mode}`
 							: `game-misc:MODE_LONG_${selected.mode}`,
 					)
 				: null;

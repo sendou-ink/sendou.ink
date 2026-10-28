@@ -82,12 +82,14 @@ export const action = defineAction(
 				newTeamId: team.id,
 				previousTeamIdToDelete,
 				isOrganizerAdded: true,
+				allowOtherTeamMembership: tournament.hasStarted,
 			});
 
 			ChatSystemMessage.notifyRoomsChanged([
 				...leftLfgUserIds,
-				...joinedUserIds,
+				...(joinedUserIds ?? []),
 			]);
+			errorToastIfFalsy(joinedUserIds, "User is already in a team");
 
 			ShowcaseTournaments.addToCached({
 				tournamentId,

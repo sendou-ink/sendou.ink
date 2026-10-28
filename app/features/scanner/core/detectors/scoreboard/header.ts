@@ -126,16 +126,37 @@ export function* readTagBandSteps(
 	options: TagBandOptions = {},
 	speculative = false,
 ): MatchSteps<string> {
+	const read = yield* readTagBandGlyphsSteps(
+		gray,
+		band,
+		glyphs,
+		options,
+		speculative,
+		() => null,
+	);
+	return read.text;
+}
+
+/** `readTagBandSteps` that also hands the trimmed band and its recognized glyphs to `inspect` before the band is freed. */
+export function* readTagBandGlyphsSteps<T>(
+	gray: Mat,
+	band: { x: number; y: number; w: number; h: number },
+	glyphs: GlyphSet,
+	options: TagBandOptions,
+	speculative: boolean,
+	inspect: (trimmed: Mat, chars: readonly RecognizedChar[]) => T,
+): MatchSteps<{ text: string; inspected: T | null }> {
 	const trimmed = trimTagBand(gray, band, options);
-	if (!trimmed) return "";
+	if (!trimmed) return { text: "", inspected: null };
 	const result = yield* recognizeTextSteps(
 		trimmed,
 		glyphs,
 		{ ...TAG_RECOGNIZE_OPTIONS, ...options },
 		speculative,
 	);
+	const inspected = inspect(trimmed, result.chars);
 	trimmed.delete();
-	return result.text.trim();
+	return { text: result.text.trim(), inspected };
 }
 
 /**

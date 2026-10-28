@@ -1,4 +1,4 @@
-import { isWithinInterval, sub } from "date-fns";
+import { sub } from "date-fns";
 import { redirect } from "react-router";
 import * as R from "remeda";
 import type { DBBoolean } from "~/db/tables";
@@ -175,14 +175,13 @@ class SendouQClass {
 		});
 		const isTeamAlphaMember = viewerSide === "ALPHA";
 		const isTeamBravoMember = viewerSide === "BRAVO";
-		const isMatchInsider = viewerSide !== null || user?.roles.includes("STAFF");
-		const happenedInLastMonth = isWithinInterval(
-			databaseTimestampToDate(match.createdAt),
-			{
-				start: sub(new Date(), { months: 1 }),
-				end: new Date(),
-			},
-		);
+		const isStaff = user?.roles.includes("STAFF") ?? false;
+		const isMatchInsider = viewerSide !== null || isStaff;
+		const showFriendCodes = SendouQMatch.canSeeFriendCodes({
+			matchCreatedAt: match.createdAt,
+			isParticipant: viewerSide !== null,
+			isStaff,
+		});
 
 		const matchGroupCensorer = (
 			group: DBMatch["groupAlpha"] | DBMatch["groupBravo"],
@@ -204,10 +203,7 @@ class SendouQClass {
 							typeof member.isContinuing === "number"
 								? Boolean(member.isContinuing)
 								: null,
-						friendCode:
-							isMatchInsider && happenedInLastMonth
-								? member.friendCode
-								: undefined,
+						friendCode: showFriendCodes ? member.friendCode : undefined,
 					};
 				}),
 			};
@@ -492,8 +488,7 @@ class SendouQClass {
 			members: Array<{
 				id: number;
 				username: string;
-				discordId: string;
-				discordAvatar: string | null;
+				avatar: string | null;
 			}>;
 		};
 		groupBravo: {
@@ -501,8 +496,7 @@ class SendouQClass {
 			members: Array<{
 				id: number;
 				username: string;
-				discordId: string;
-				discordAvatar: string | null;
+				avatar: string | null;
 			}>;
 		};
 		pools: ReturnType<typeof matchMapPools>;
@@ -522,8 +516,7 @@ class SendouQClass {
 					{
 						id: member.id,
 						username: member.username,
-						discordId: member.discordId,
-						discordAvatar: member.discordAvatar,
+						avatar: member.avatar,
 					},
 				];
 			}),

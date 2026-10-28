@@ -136,11 +136,11 @@ Alternatively, keep the repository on a [Dev Drive](https://learn.microsoft.com/
 
 ## Contributing
 
-- **Developers**: Read [CONTRIBUTING.md](./CONTRIBUTING.md)
-- **Translation**: Read [translation.md](./docs/translation.md)
-- **Article writing**: Read [articles.md](./docs/articles.md)
+- **Developers**: Read [Contributing](https://docs.sendou.ink/project/contributing/)
+- **Translation**: Read [Translation](https://docs.sendou.ink/dev/translation/)
+- **Article writing**: Read [Articles](https://docs.sendou.ink/guides/articles/)
 
-For developers reading the [architecture.md](./docs/dev/architecture.md) file is highly recommended to get up to the speed with how the project folder structure works and getting familiar with its concepts.
+For developers reading the [Architecture](https://docs.sendou.ink/dev/architecture/) page is highly recommended to get up to the speed with how the project folder structure works and getting familiar with its concepts.
 
 ## Tech stack
 

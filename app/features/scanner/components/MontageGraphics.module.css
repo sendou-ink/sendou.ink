@@ -12,16 +12,18 @@
 }
 
 .frame {
+	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background:
-		radial-gradient(
-			ellipse 80% 55% at 50% -10%,
-			color-mix(in oklch, var(--color-fg-accent) 22%, transparent),
-			transparent 70%
-		),
-		var(--color-bg);
+	background: var(--color-bg);
+
+	/* the graphic's own box is a bordered gradient, the cards are flat and open */
+	& > div {
+		position: relative;
+		background: var(--color-bg);
+		border: none;
+	}
 }
 
 .ribbon {
@@ -29,6 +31,18 @@
 	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 	align-items: center;
 	gap: var(--s-6);
+	width: 1400px;
+	padding: var(--s-4) var(--s-6);
+	color: var(--color-text);
+	white-space: nowrap;
+}
+
+.ribbonLabel {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	color: color-mix(in oklch, var(--color-text) 65%, transparent);
 }
 
 .ribbonRound {
@@ -45,25 +59,22 @@
 	text-overflow: ellipsis;
 }
 
+/* both sides' pills as wide as the wider one */
 .ribbonTeams {
-	display: flex;
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
 	align-items: center;
 	gap: var(--s-3);
 }
 
-.ribbonTeam,
-.ribbonTeamPov {
+.ribbonTeam {
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: var(--s-2);
-	padding: var(--s-1-5) var(--s-3);
-	background-color: var(--color-bg-high);
-	border: 1.5px solid color-mix(in oklch, var(--color-text) 8%, transparent);
-	border-radius: var(--radius-box);
-}
-
-.ribbonTeamPov {
-	border-color: color-mix(in oklch, var(--color-fg-accent) 60%, transparent);
+	padding: var(--s-1-5) var(--s-4) var(--s-1-5) var(--s-1-5);
+	background-color: oklch(0% 0 0 / 0.3);
+	border-radius: var(--radius-full);
 }
 
 .ribbonTeamName {
@@ -78,7 +89,7 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-extra);
 	text-transform: uppercase;
-	color: var(--color-text-high);
+	color: color-mix(in oklch, var(--color-text) 65%, transparent);
 }
 
 .ribbonPov {
@@ -92,23 +103,232 @@
 .ribbonPovText {
 	display: flex;
 	flex-direction: column;
+	align-items: flex-end;
 	gap: var(--s-0-5);
 	min-width: 0;
-	font-size: var(--font-xs);
-	font-weight: var(--weight-extra);
-	color: var(--color-text-high);
 }
 
 .ribbonPovName {
 	overflow: hidden;
-	font-size: var(--font-md);
-	color: var(--color-text);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
 	text-overflow: ellipsis;
 }
 
+/* a circle the size of the POV avatar beside it, the weapon spilling over its edge */
 .ribbonWeapon {
 	display: flex;
-	padding: var(--s-1);
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	background-color: oklch(0% 0 0 / 0.3);
+	border-radius: var(--radius-full);
+
+	& > * {
+		flex-shrink: 0;
+	}
+}
+
+.ribbonPreviewFrame {
+	position: relative;
+	background: var(--color-bg-high) center / cover no-repeat;
+	overflow: hidden;
+}
+
+/* the renderer's ribbon timing: 0.4 s fade and rise in, out at 5 s, looped with a pause */
+.ribbonPreviewGlass {
+	position: absolute;
+	inset-inline: 0;
+	width: fit-content;
+	margin-inline: auto;
+	animation: ribbon-loop 6s infinite;
+}
+
+@keyframes ribbon-loop {
+	0% {
+		opacity: 0;
+		translate: 0 19px;
+	}
+
+	6.7% {
+		opacity: 1;
+		translate: 0 0;
+	}
+
+	76.7% {
+		opacity: 1;
+	}
+
+	83.3%,
+	100% {
+		opacity: 0;
+	}
+}
+
+.preview {
+	position: relative;
+	width: fit-content;
+	max-width: 100%;
+	overflow-x: auto;
+	border: var(--border-width) solid var(--color-border-high);
+	border-radius: var(--radius-box);
+}
+
+.previewWave {
+	position: absolute;
+	inset: auto 0 0;
+	width: 100%;
+	height: auto;
+	pointer-events: none;
+}
+
+.teamWall {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--team-wall-gap);
+	overflow: hidden;
+
+	& img {
+		width: var(--team-wall-avatar);
+		height: var(--team-wall-avatar);
+	}
+}
+
+.teamWallItem {
+	display: block;
+}
+
+/* the renderer's reveals (`REVEAL_TIMINGS` in montage-overlays.ts) played back by the preview */
+[data-reveal-state="hidden"] [data-reveal] {
+	visibility: hidden;
+}
+
+[data-reveal-state="playing"] [data-reveal="pop"] {
+	animation: reveal-pop var(--reveal-duration) cubic-bezier(0.34, 1.56, 0.64, 1)
+		var(--reveal-delay) both;
+}
+
+[data-reveal-state="playing"] [data-reveal="rise"] {
+	animation: reveal-rise var(--reveal-duration) cubic-bezier(0.33, 1, 0.68, 1)
+		var(--reveal-delay) both;
+}
+
+@keyframes reveal-pop {
+	from {
+		scale: 0;
+	}
+
+	to {
+		scale: 1;
+	}
+}
+
+@keyframes reveal-rise {
+	from {
+		opacity: 0;
+		translate: 0 var(--reveal-rise);
+	}
+
+	to {
+		opacity: 1;
+		translate: 0 0;
+	}
+}
+
+.teamLeading {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.teamSubtitle {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.teamSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+}
+
+.teamRoster {
+	display: grid;
+	gap: var(--s-2);
+}
+
+.teamPlayer {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
+	min-width: 0;
+	padding: var(--s-1-5) var(--s-3) var(--s-1-5) var(--s-1-5);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-full);
+}
+
+.teamPlayerName {
+	overflow: hidden;
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	text-overflow: ellipsis;
+}
+
+.teamWeapons {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-3);
+	padding: var(--s-2);
 	background-color: oklch(0% 0 0 / 0.3);
 	border-radius: var(--radius-field);
+}
+
+.teamWeaponKit {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.introTier {
+	display: inline-flex;
+	vertical-align: middle;
+	margin-inline-start: var(--s-2);
+}
+
+.introSubtitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.introPill {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+	padding: var(--s-1-5) var(--s-3);
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+}
+
+.introPillItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+
+	& svg {
+		width: 1.1em;
+		height: 1.1em;
+		color: var(--color-fg-accent);
+	}
 }

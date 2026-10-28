@@ -12,6 +12,7 @@ import type {
 import { abilityImageUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../elements/Button";
 import { Image, StageImage, WeaponImage } from "../Image";
+import { WeaponPoolBanner } from "../WeaponPoolBanner";
 import { WeaponSelect } from "../WeaponSelect";
 import { SecondaryAction } from "./SecondaryAction";
 import styles from "./WeaponReporter.module.css";
@@ -29,6 +30,8 @@ export interface WeaponReporterProps {
 	pastReported: MainWeaponId[];
 	nextMapIndex: number;
 	quickSelectWeaponIds?: MainWeaponId[];
+	/** The viewer's match profile weapon pool, offered as one click picks below the select. */
+	weaponPoolIds?: MainWeaponId[];
 	onSubmit: (weaponSplId: MainWeaponId) => void;
 	onUndo: () => void;
 	isSubmitting?: boolean;
@@ -40,6 +43,7 @@ export function WeaponReporter({
 	pastReported,
 	nextMapIndex,
 	quickSelectWeaponIds,
+	weaponPoolIds,
 	onSubmit,
 	onUndo,
 	isSubmitting,
@@ -53,9 +57,6 @@ export function WeaponReporter({
 	});
 	const [isOpen, setIsOpen] = useState(
 		() => user?.preferences.weaponReportDefaultOpen ?? false,
-	);
-	const [selectedWeapon, setSelectedWeapon] = useState<MainWeaponId | null>(
-		null,
 	);
 
 	const inputTargetMap = maps.find((map) => map.mapIndex === nextMapIndex);
@@ -82,30 +83,14 @@ export function WeaponReporter({
 			alwaysOpen={allReported}
 		>
 			{inputTargetMap ? (
-				<div className={styles.mapRow}>
-					<MapInfo map={inputTargetMap} />
-					<div className={styles.inputRow}>
-						<div className={styles.weaponSelectContainer}>
-							<WeaponSelect
-								label={`${t("q:match.weapon.yourWeapon")} #${nextMapIndex + 1}`}
-								value={selectedWeapon}
-								onChange={setSelectedWeapon}
-								quickSelectWeaponsIds={quickSelectWeaponIds}
-							/>
-						</div>
-						<SendouButton
-							variant="primary"
-							isDisabled={selectedWeapon === null || isSubmitting}
-							onClick={() => {
-								if (selectedWeapon === null) return;
-								onSubmit(selectedWeapon);
-								setSelectedWeapon(null);
-							}}
-						>
-							{t("common:actions.submit")}
-						</SendouButton>
-					</div>
-				</div>
+				<WeaponInput
+					key={nextMapIndex}
+					map={inputTargetMap}
+					quickSelectWeaponIds={quickSelectWeaponIds}
+					weaponPoolIds={weaponPoolIds}
+					isSubmitting={isSubmitting}
+					onSubmit={onSubmit}
+				/>
 			) : null}
 			{pastReported.length > 0 ? (
 				<div className={styles.pastRow}>
@@ -140,6 +125,60 @@ export function WeaponReporter({
 				</div>
 			) : null}
 		</SecondaryAction>
+	);
+}
+
+/** Keyed by map so the selection stays put while submitting and resets once the report lands. */
+function WeaponInput({
+	map,
+	quickSelectWeaponIds,
+	weaponPoolIds,
+	isSubmitting,
+	onSubmit,
+}: {
+	map: WeaponReporterMap;
+	quickSelectWeaponIds?: MainWeaponId[];
+	weaponPoolIds?: MainWeaponId[];
+	isSubmitting?: boolean;
+	onSubmit: (weaponSplId: MainWeaponId) => void;
+}) {
+	const { t } = useTranslation(["q", "common"]);
+	const [selectedWeapon, setSelectedWeapon] = useState<MainWeaponId | null>(
+		null,
+	);
+
+	return (
+		<div className={styles.mapRow}>
+			<MapInfo map={map} />
+			<div className={styles.inputRow}>
+				<div className={styles.weaponSelectContainer}>
+					<WeaponSelect
+						label={`${t("q:match.weapon.yourWeapon")} #${map.mapIndex + 1}`}
+						value={selectedWeapon}
+						onChange={setSelectedWeapon}
+						quickSelectWeaponsIds={quickSelectWeaponIds}
+					/>
+				</div>
+				<SendouButton
+					variant="primary"
+					isDisabled={selectedWeapon === null || isSubmitting}
+					onClick={() => {
+						if (selectedWeapon === null) return;
+						onSubmit(selectedWeapon);
+					}}
+				>
+					{t("common:actions.submit")}
+				</SendouButton>
+			</div>
+			{weaponPoolIds && weaponPoolIds.length > 0 ? (
+				<WeaponPoolBanner
+					weaponIds={weaponPoolIds}
+					onWeaponPress={setSelectedWeapon}
+					className={styles.weaponPool}
+					mini
+				/>
+			) : null}
+		</div>
 	);
 }
 

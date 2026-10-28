@@ -11,6 +11,10 @@ export class BuildCard {
 		return this.root.getByTestId("build-title");
 	}
 
+	get privateIndicator() {
+		return this.root.getByTestId("build-private");
+	}
+
 	weaponImage(weaponName: string) {
 		return this.root.getByAltText(weaponName);
 	}

@@ -5,7 +5,7 @@
 		"**/*.tsx",
 		".react-router/types/**/*"
 	],
-	"exclude": ["scripts/**/*"],
+	"exclude": ["scripts/**/*", "docs/**/*"],
 	"compilerOptions": {
 		"types": ["@react-router/node", "vite/client"],
 		"rootDirs": [".", "./.react-router/types"],
@@ -23,6 +23,7 @@
 			"~/*": ["./app/*"]
 		},
 		"noEmit": true,
+		"allowImportingTsExtensions": true,
 		"forceConsistentCasingInFileNames": true,
 		"allowJs": false,
 		"noUncheckedIndexedAccess": false,

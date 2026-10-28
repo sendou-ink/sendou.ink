@@ -1,0 +1,116 @@
+/* the app's layers rank above Starlight's, their order is declared in the head (`CASCADE_LAYERS` of astro.config.ts) */
+@import "../../../../app/styles/vars.css";
+
+/* Starlight's tokens mapped onto the app's default theme, both follow Starlight's [data-theme] on <html> */
+:root {
+	--sl-text-2xs: var(--font-2xs);
+	--sl-text-xs: var(--font-xs);
+	--sl-text-sm: var(--font-sm);
+	--sl-text-base: var(--font-md);
+	--sl-text-lg: var(--font-lg);
+	--sl-text-2xl: var(--font-xl);
+	--sl-line-height: 1.75;
+
+	--sl-nav-height: var(--layout-nav-height);
+	--sl-nav-pad-x: var(--s-4);
+	--sl-nav-pad-y: var(--s-3);
+	--sl-sidebar-width: var(--layout-sidenav-width);
+	--sl-sidebar-pad-x: var(--s-4);
+	--sl-content-pad-x: var(--s-4);
+	--sl-content-gap-y: var(--s-4);
+	--sl-menu-button-size: var(--field-size-sm);
+
+	--sl-color-text: var(--color-base-2);
+	--sl-color-banner-bg: var(--color-fill-accent);
+	--sl-color-banner-text: var(--color-fg-on-accent);
+
+	--sl-color-white: var(--color-base-0);
+	--sl-color-gray-1: var(--color-base-1);
+	--sl-color-gray-2: var(--color-base-2);
+	--sl-color-gray-3: var(--color-base-3);
+	--sl-color-gray-4: var(--color-base-4);
+	--sl-color-gray-5: var(--color-base-5);
+	--sl-color-gray-6: var(--color-base-6);
+	--sl-color-gray-7: color-mix(
+		in oklch,
+		var(--color-base-6) 50%,
+		var(--color-base-7) 50%
+	);
+	--sl-color-black: var(--color-base-7);
+
+	--sl-color-accent-low: var(--color-accent-low);
+	--sl-color-accent: var(--color-accent);
+	--sl-color-accent-high: var(--color-accent-high);
+
+	--sl-color-blue-low: var(--color-info-low);
+	--sl-color-blue: var(--color-info);
+	--sl-color-blue-high: var(--color-info-high);
+	--sl-color-purple-low: var(--color-bg-accent);
+	--sl-color-purple: var(--color-accent);
+	--sl-color-purple-high: var(--color-fg-accent);
+	--sl-color-green-low: var(--color-success-low);
+	--sl-color-green: var(--color-success);
+	--sl-color-green-high: var(--color-success-high);
+	--sl-color-orange-low: var(--color-warning-low);
+	--sl-color-orange: var(--color-warning);
+	--sl-color-orange-high: var(--color-warning-high);
+	--sl-color-red-low: var(--color-error-low);
+	--sl-color-red: var(--color-error);
+	--sl-color-red-high: var(--color-error-high);
+
+	--sl-badge-default-bg: var(--color-bg-accent);
+	--sl-badge-default-border: var(--color-accent);
+	--sl-badge-default-text: var(--color-fg-accent);
+	--sl-badge-tip-bg: var(--color-bg-accent);
+	--sl-badge-tip-border: var(--color-accent);
+	--sl-badge-tip-text: var(--color-fg-accent);
+	--sl-badge-note-bg: var(--color-info-low);
+	--sl-badge-note-border: var(--color-info);
+	--sl-badge-note-text: var(--color-info-high);
+	--sl-badge-success-bg: var(--color-success-low);
+	--sl-badge-success-border: var(--color-success);
+	--sl-badge-success-text: var(--color-success-high);
+	--sl-badge-caution-bg: var(--color-warning-low);
+	--sl-badge-caution-border: var(--color-warning);
+	--sl-badge-caution-text: var(--color-warning-high);
+	--sl-badge-danger-bg: var(--color-error-low);
+	--sl-badge-danger-border: var(--color-error);
+	--sl-badge-danger-text: var(--color-error-high);
+
+	--sl-color-text-accent: var(--color-fg-accent);
+	--sl-color-text-invert: var(--color-fg-on-accent);
+	--sl-color-bg: var(--color-bg);
+	--sl-color-bg-nav: var(--color-bg-nav);
+	--sl-color-bg-sidebar: var(--color-bg-nav);
+	--sl-color-bg-inline-code: var(--color-bg-higher);
+	--sl-color-bg-accent: var(--color-fill-accent);
+	--sl-color-hairline-light: var(--color-border);
+	--sl-color-hairline: var(--color-border);
+	--sl-color-hairline-shade: var(--color-bg);
+	--sl-color-backdrop-overlay: var(--color-bg-overlay);
+}
+
+@media (min-width: 50em) {
+	:root {
+		--sl-nav-pad-x: var(--s-6);
+	}
+}
+
+@media (min-width: 72rem) {
+	:root {
+		--sl-content-pad-x: var(--s-6);
+	}
+}
+
+pre.mermaid {
+	display: flex;
+	justify-content: center;
+	background: transparent;
+	border: none;
+}
+
+ul ul .group-label .large {
+	font-size: var(--sl-text-sm);
+	font-weight: 500;
+	color: var(--sl-color-gray-2);
+}

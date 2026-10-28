@@ -1,0 +1,55 @@
+---
+import type { FeatureDoc } from "../../../../../scripts/living-docs/document.ts";
+import { KNOWN_USERS } from "../../../../../scripts/living-docs/known-users.ts";
+import { initials, testsOf } from "../../living/format.ts";
+
+interface Props {
+	feature: FeatureDoc;
+}
+
+const { feature } = Astro.props;
+const tests = testsOf(feature);
+const actors = tests.flatMap((test) => test.actors);
+const knownActors = new Map(
+	actors
+		.filter((actor) => KNOWN_USERS[actor.key])
+		.map((actor) => [actor.label, actor]),
+);
+const hasOtherActors = actors.some((actor) => !KNOWN_USERS[actor.key]);
+const hasStepTitles = tests.some((test) =>
+	test.chapters.some((chapter) => chapter.title),
+);
+---
+
+<div class="e2e-toolbar" data-pagefind-ignore>
+	{
+		actors.length > 0 ? (
+			<ul class="legend" aria-label="Users">
+				{[...knownActors.values()].map((actor) => (
+					<li style={`--actor: ${actor.color}`} title={actor.key}>
+						<span class="avatar">{initials(actor.label)}</span>
+						{actor.label}
+					</li>
+				))}
+				{hasOtherActors ? (
+					<li class="legend-note">Users a test creates itself are coloured per test</li>
+				) : null}
+			</ul>
+		) : null
+	}
+	<ul class="legend phases" aria-label="Phases">
+		<li class="phase-arrange"><span class="phase-icon"></span>Arrange <small>data setup</small></li>
+		<li class="phase-act"><span class="phase-icon"></span>Act <small>what the user does</small></li>
+		<li class="phase-assert"><span class="phase-icon"></span>Assert <small>what is expected</small></li>
+	</ul>
+	<div class="toggles">
+		<label class="toggle"><input type="checkbox" data-toggle-class="show-code" /> Show code of each step</label>
+		{
+			hasStepTitles ? (
+				<label class="toggle">
+					<input type="checkbox" data-toggle-class="outline-only" /> Only step titles
+				</label>
+			) : null
+		}
+	</div>
+</div>

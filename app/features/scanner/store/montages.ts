@@ -19,8 +19,8 @@ export interface StoredMontage {
 	vods: MontageManifestVod[];
 	/** scanned games by VoD file name */
 	games: Record<string, MontageGame[]>;
-	/** in montage order */
-	picks: MontageCandidate[];
+	/** in montage order within each team; `teamId` is absent in records from before team sections */
+	picks: Array<MontageCandidate & { teamId?: number }>;
 	/** plays under the whole video instead of the game sound; absent in records from before it existed */
 	music?: File | null;
 	/** null when the folder was opened without the File System Access API */

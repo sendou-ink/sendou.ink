@@ -209,7 +209,7 @@ function TrophyWinDetails({
 					<div className={styles.winMembers}>
 						{win.members.map((member) => (
 							<div key={member.id} className={styles.winMember}>
-								<UserCard data={userCards.get(member.id)}>
+								<UserCard data={userCards[member.id]}>
 									<span className={styles.winMemberUser}>
 										<Avatar size="xxxs" user={member} />
 										<span className="truncate">{member.username}</span>

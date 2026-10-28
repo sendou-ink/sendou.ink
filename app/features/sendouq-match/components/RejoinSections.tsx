@@ -44,8 +44,7 @@ export function MatchmadeRejoinSection({
 			members={viewerGroup.members.map((m) => ({
 				id: m.id,
 				username: m.username,
-				discordId: m.discordId,
-				discordAvatar: m.discordAvatar,
+				avatar: m.avatar,
 				customUrl: m.customUrl,
 			}))}
 			votes={votes}

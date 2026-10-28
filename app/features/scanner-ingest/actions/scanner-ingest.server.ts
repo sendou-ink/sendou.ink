@@ -1,4 +1,4 @@
-import { subDays } from "date-fns";
+import { subDays, subHours } from "date-fns";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
@@ -20,6 +20,11 @@ import {
 
 /** How far back the POV user's reported games are content-resolution candidates */
 const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
+
+/** Real senders store a few dozen matches an hour at most. */
+const MAX_STORED_MATCHES_PER_HOUR = 200;
+/** Real senders store a megabyte or two a day at most. */
+const MAX_STORED_BYTES_PER_DAY = 20 * 1024 * 1024;
 
 export const action = defineAction(
 	{ body: ingestBodySchema, onInvalidBody: "badRequest" },
@@ -45,6 +50,8 @@ export const action = defineAction(
 				contextResolved: false,
 			} satisfies IngestResponse;
 		}
+
+		await requireIngestQuota(povUserId);
 
 		const storedOnly = await ScannerIngestRepository.addOrMergeMatches({
 			povUserId,
@@ -116,6 +123,24 @@ export const action = defineAction(
 	},
 );
 
+async function requireIngestQuota(povUserId: number) {
+	const now = new Date();
+	const usage = await ScannerIngestRepository.findIngestQuotaUsage({
+		povUserId,
+		hourStart: dateToDatabaseTimestamp(subHours(now, 1)),
+		dayStart: dateToDatabaseTimestamp(subDays(now, 1)),
+	});
+
+	if (
+		usage.matchesInHour >= MAX_STORED_MATCHES_PER_HOUR ||
+		usage.bytesInDay >= MAX_STORED_BYTES_PER_DAY
+	) {
+		throw new Response("Upload limit reached, try again later", {
+			status: 429,
+		});
+	}
+}
+
 function ingestedMatchLink(
 	context: Scoreboards.IngestContext,
 	target: Scoreboards.IngestableGameTarget,
@@ -129,6 +154,9 @@ function ingestedMatchLink(
 	}
 	if (target.type === "sendouq") {
 		return { type: "sendouq", groupMatchId: target.groupMatchId };
+	}
+	if (target.type === "lobby") {
+		return { type: "lobby", lobbyId: target.lobbyId };
 	}
 	throw new Error("ingest link target does not match its resolved context");
 }
@@ -186,6 +214,19 @@ async function resolveIngestContext({
 					context: { type: "sendouq", groupMatchId },
 					loadGames: () =>
 						ScannerIngestRepository.gamesInGroupMatch(groupMatchId),
+				});
+			}
+		}
+
+		for (const anchor of anchors) {
+			const lobbySetId = await ScannerIngestRepository.lobbySetIdAt({
+				userId: povUserId,
+				at: anchor,
+			});
+			if (lobbySetId) {
+				addCandidate({
+					context: { type: "lobby", lobbySetId },
+					loadGames: () => ScannerIngestRepository.gamesInLobbySet(lobbySetId),
 				});
 			}
 		}
@@ -281,6 +322,10 @@ async function resolveIngestContext({
 					since,
 				}),
 				ScannerIngestRepository.sendouqGamesPlayedByUserSince({
+					userId: povUserId,
+					since,
+				}),
+				ScannerIngestRepository.lobbyGamesPlayedByUserSince({
 					userId: povUserId,
 					since,
 				}),

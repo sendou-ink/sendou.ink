@@ -271,10 +271,8 @@ function ChatProviderInner({
 			author: {
 				id: user.id,
 				username: user.username,
-				discordId: user.discordId,
-				discordAvatar: user.discordAvatar,
 				customUrl: user.customUrl ?? null,
-				customAvatarUrl: user.customAvatarUrl ?? null,
+				avatar: user.avatar ?? null,
 				pronouns: null,
 				chatNameHue: null,
 			},

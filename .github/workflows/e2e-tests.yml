@@ -53,7 +53,21 @@ jobs:
         run: pnpm exec playwright install --with-deps
 
       - name: Run E2E tests
+        if: github.event_name != 'push'
         run: pnpm run test:e2e
+
+      # on main the run also captures the living docs' screenshots, published by the job below
+      - name: Run E2E tests and capture the living docs
+        if: github.event_name == 'push'
+        run: pnpm run docs:capture
+
+      - name: Upload the living docs' screenshots
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-screenshots
+          path: docs/site/public/screenshots
+          retention-days: 1
 
       - name: Stop SeaweedFS
         if: always()
@@ -72,3 +86,36 @@ jobs:
           name: playwright-traces
           path: test-results/
           retention-days: 30
+
+  # the docs site's Render build (auto-deploy after CI checks pass) downloads them, see docs/site/src/content/docs/dev/living-docs.mdx
+  publish-docs-screenshots:
+    needs: e2e
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # each publish merges into the manifest the previous one wrote
+    concurrency:
+      group: docs-screenshots
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs-screenshots
+          path: docs/site/public/screenshots
+
+      - name: Publish the living docs' screenshots
+        env:
+          SPACES_ACCESS_KEY: ${{ secrets.SPACES_ACCESS_KEY }}
+          SPACES_SECRET_KEY: ${{ secrets.SPACES_SECRET_KEY }}
+        run: pnpm run docs:screenshots:publish

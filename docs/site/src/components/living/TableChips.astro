@@ -1,0 +1,22 @@
+---
+import type { TableAccess } from "../../../../../scripts/living-docs/data-access.ts";
+import { dbTableHref } from "../../living/format.ts";
+
+interface Props {
+	tables: TableAccess[];
+}
+
+const { tables } = Astro.props;
+---
+
+{
+	tables.map((access) => (
+		<a
+			class:list={["chip", "access-chip", { "access-write": access.writes }]}
+			href={dbTableHref(access.table)}
+			title={access.writes ? (access.reads ? "reads and writes" : "writes") : "reads"}
+		>
+			{access.table}
+		</a>
+	))
+}

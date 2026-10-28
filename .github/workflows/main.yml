@@ -32,6 +32,8 @@ jobs:
         run: pnpm run typecheck
       - name: Typecheck scripts
         run: pnpm run typecheck:scripts
+      - name: Typecheck docs site
+        run: pnpm run typecheck:docs
       - name: Unit tests
         run: pnpm run test:unit:browser
       - name: Knip unused check
@@ -42,3 +44,5 @@ jobs:
         run: pnpm run check-plural-collapse
       - name: Check articles
         run: pnpm run check-articles
+      - name: Build docs site
+        run: pnpm run docs:build

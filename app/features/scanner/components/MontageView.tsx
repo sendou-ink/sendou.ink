@@ -1,10 +1,11 @@
 /**
  * Dev-only tournament montage builder: open a tournament's VoD folder, scan
- * it, then pick clips one by one — the best first, a picked team's other
- * clips hidden — and render them into one video between a title card and
- * the top 8. The work itself lives in `montage.ts`; a reload restores the
- * latest montage, and scanning, previews and rendering wait for its folder
- * to be reconnected.
+ * it, then pick clips — the best first, filterable by team — for the top
+ * teams and render one video: the intro card, then each top team counting
+ * down to the winner, its card followed by its clips. The cards can be
+ * previewed on the page. The work itself lives in `montage.ts`; a reload
+ * restores the latest montage, and scanning, previews and rendering wait
+ * for its folder to be reconnected.
  */
 import {
 	ArrowDown,
@@ -20,17 +21,21 @@ import {
 	Play,
 	Plus,
 	RefreshCw,
+	RotateCcw,
 	ScanSearch,
 	Square,
 	X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { WeaponImage } from "~/components/Image";
+import { Placement } from "~/components/Placement";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
 import { formatPosition } from "../core/format";
 import { mainWeaponLabel, modeLabel, stageLabel } from "../core/labels";
 import {
@@ -38,20 +43,32 @@ import {
 	MONTAGE_KILL_COUNTS,
 	MONTAGE_MAX_SECONDS_OPTIONS,
 	type MontageCandidate,
+	type MontageManifestTopTeam,
+	type MontageManifestVod,
 	maxSecondsFor,
+	montageDuration,
+	montageTeamSections,
 } from "../core/montage";
+import { montageCollapsedGroupsPersisted } from "../scanner-persisted";
 import { ClipVideo } from "./ClipVideo";
-import { MontageGraphicStage } from "./MontageGraphics";
+import {
+	type MontageCard,
+	MontageCardPreview,
+	MontageGraphicStage,
+	MontageRibbonPreview,
+} from "./MontageGraphics";
 import styles from "./MontageView.module.css";
 import {
 	availableCandidates,
 	cancelMontageRender,
 	cancelMontageScan,
 	candidatePreview,
+	candidatePreviewFrame,
 	candidateThumbnail,
-	downloadMontageResults,
+	downloadMontageGraphic,
+	type MontageGraphic,
 	type MontageSnapshot,
-	montageDuration,
+	montageImageUrl,
 	montageTeamComps,
 	movePick,
 	openMontageFolder,
@@ -67,8 +84,6 @@ import {
 import { ScanWorkers } from "./ScanWorkers";
 import { SessionHeader } from "./SessionHeader";
 import { useVodScan } from "./vod-scan";
-
-const COLLAPSED_GROUPS_STORAGE_KEY = "scanner:montage-collapsed-groups";
 
 export function MontageView() {
 	const montage = useMontage();
@@ -88,7 +103,14 @@ export function MontageView() {
 								Reconnect folder
 							</SendouButton>
 						) : null}
-						{montage.folder?.files ? <ResultsImageButton /> : null}
+						{montage.folder?.files ? (
+							<GraphicDownloadButton
+								graphic={{ kind: "results" }}
+								name="results"
+							>
+								Results image
+							</GraphicDownloadButton>
+						) : null}
 						<SendouButton
 							size="small"
 							variant={disconnected ? "outlined" : "primary"}
@@ -123,6 +145,7 @@ export function MontageView() {
 			{montage.folder ? (
 				<>
 					<ScanPanel montage={montage} />
+					<CardsPanel montage={montage} />
 					<PicksPanel montage={montage} />
 					<CandidatesPanel montage={montage} />
 					<MontageGraphicStage
@@ -135,13 +158,24 @@ export function MontageView() {
 	);
 }
 
-function ResultsImageButton() {
+/** Downloads the graphic as captured for the video. */
+function GraphicDownloadButton({
+	graphic,
+	name,
+	isDisabled = false,
+	children,
+}: {
+	graphic: MontageGraphic;
+	name: string;
+	isDisabled?: boolean;
+	children: React.ReactNode;
+}) {
 	const [state, setState] = useState<"idle" | "capturing" | "failed">("idle");
 
 	const download = async () => {
 		setState("capturing");
 		try {
-			await downloadMontageResults();
+			await downloadMontageGraphic(graphic, name);
 			setState("idle");
 		} catch {
 			setState("failed");
@@ -153,11 +187,124 @@ function ResultsImageButton() {
 			size="small"
 			variant="outlined"
 			icon={<ImageDown />}
-			isDisabled={state === "capturing"}
+			isDisabled={isDisabled || state === "capturing"}
 			onClick={() => void download()}
 		>
-			{state === "failed" ? "Results image failed, retry" : "Results image"}
+			{state === "failed" ? "Failed, retry" : children}
 		</SendouButton>
+	);
+}
+
+/** The video's cards as they are, to tweak them by. */
+function CardsPanel({ montage }: { montage: MontageSnapshot }) {
+	const [cardKey, setCardKey] = useState("intro");
+	const [replayCount, setReplayCount] = useState(0);
+	const manifest = montage.folder!.manifest;
+	const teams = manifest.topTeams.toReversed();
+	const team = teams.find((candidate) => String(candidate.id) === cardKey);
+	const card: MontageCard = team
+		? { kind: "team", teamId: team.id }
+		: { kind: "intro" };
+	const ribbonSample = montage.picks[0] ?? availableCandidates(montage)[0];
+	const ribbonVod =
+		ribbonSample?.vod ??
+		manifest.vods.find((vod) => vod.pov) ??
+		manifest.vods[0];
+	const showsRibbon = cardKey === "ribbon" && ribbonVod !== undefined;
+	const graphic: MontageGraphic = showsRibbon
+		? {
+				kind: "ribbon",
+				vod: ribbonVod,
+				weaponId: ribbonSample?.weaponId ?? null,
+			}
+		: card;
+
+	return (
+		<section className={styles.panel}>
+			<div className={styles.panelHeader}>
+				<span className={styles.panelTitle}>Cards</span>
+				<SendouButton
+					size="small"
+					variant="minimal"
+					icon={<RotateCcw />}
+					className="ml-auto"
+					onClick={() => setReplayCount((count) => count + 1)}
+				>
+					Replay
+				</SendouButton>
+				<GraphicDownloadButton
+					graphic={graphic}
+					name={showsRibbon ? "ribbon" : team ? `team-${team.id}` : "intro"}
+					isDisabled={!montage.folder?.files}
+				>
+					PNG
+				</GraphicDownloadButton>
+			</div>
+			<SendouChipRadioGroup wrap>
+				<SendouChipRadio
+					name="montage-card"
+					value="intro"
+					checked={cardKey === "intro"}
+					onChange={setCardKey}
+				>
+					Intro
+				</SendouChipRadio>
+				{teams.map((candidate) => (
+					<SendouChipRadio
+						key={candidate.id}
+						name="montage-card"
+						value={String(candidate.id)}
+						checked={candidate === team}
+						onChange={setCardKey}
+					>
+						<Placement placement={candidate.placement} plain /> {candidate.name}
+					</SendouChipRadio>
+				))}
+				{ribbonVod ? (
+					<SendouChipRadio
+						name="montage-card"
+						value="ribbon"
+						checked={showsRibbon}
+						onChange={setCardKey}
+					>
+						POV ribbon
+					</SendouChipRadio>
+				) : null}
+			</SendouChipRadioGroup>
+			{showsRibbon ? (
+				<RibbonPreview
+					key={replayCount}
+					sample={ribbonSample}
+					vod={ribbonVod}
+				/>
+			) : (
+				<MontageCardPreview
+					key={`${cardKey}-${replayCount}`}
+					card={card}
+					manifest={manifest}
+					comps={montageTeamComps(montage)}
+				/>
+			)}
+		</section>
+	);
+}
+
+/** The ribbon over the sample clip's frame (the first pick or best candidate), when there is one. */
+function RibbonPreview({
+	sample,
+	vod,
+}: {
+	sample: MontageCandidate | undefined;
+	vod: MontageManifestVod;
+}) {
+	const background = useCandidateFrame(sample, candidatePreviewFrame);
+
+	return (
+		<MontageRibbonPreview
+			vod={vod}
+			weaponId={sample?.weaponId ?? null}
+			background={background}
+		/>
 	);
 }
 
@@ -223,13 +370,14 @@ function PicksPanel({ montage }: { montage: MontageSnapshot }) {
 	const picks = montage.picks;
 	const render = montage.render;
 	const rendering = render?.state === "rendering";
+	const topTeams = montage.folder?.manifest.topTeams ?? [];
 
 	return (
 		<section className={styles.panel}>
 			<div className={styles.panelHeader}>
 				<span className={styles.panelTitle}>
 					Montage · {picks.length} {picks.length === 1 ? "clip" : "clips"} ·{" "}
-					{formatPosition(montageDuration(picks))}
+					{formatPosition(montageDuration(topTeams.length, picks))}
 				</span>
 				{rendering ? (
 					<SendouButton
@@ -244,7 +392,7 @@ function PicksPanel({ montage }: { montage: MontageSnapshot }) {
 					<SendouButton
 						size="small"
 						icon={<Film />}
-						isDisabled={picks.length === 0 || !montage.folder?.files}
+						isDisabled={!montage.folder?.files}
 						onClick={() => void renderMontageVideo()}
 					>
 						Render video
@@ -266,51 +414,73 @@ function PicksPanel({ montage }: { montage: MontageSnapshot }) {
 				)
 			) : null}
 			<MusicPicker music={montage.music} isDisabled={rendering} />
-			{picks.length === 0 ? (
-				<p className={styles.note}>
-					Pick clips below; they play in this order, between the title card and
-					the top {montage.folder?.manifest.topTeams.length}.
-				</p>
-			) : (
-				<ol className={styles.picks}>
-					{picks.map((candidate, i) => (
-						<li key={candidate.key} className={styles.pick}>
-							<span className={styles.pickIndex}>{i + 1}</span>
-							<CandidateSummary candidate={candidate} />
-							<span className={styles.pickActions}>
-								<SendouButton
-									size="small"
-									variant="minimal"
-									shape="circle"
-									icon={<ArrowUp />}
-									aria-label="Move earlier"
-									isDisabled={rendering || i === 0}
-									onClick={() => movePick(candidate.key, -1)}
-								/>
-								<SendouButton
-									size="small"
-									variant="minimal"
-									shape="circle"
-									icon={<ArrowDown />}
-									aria-label="Move later"
-									isDisabled={rendering || i === picks.length - 1}
-									onClick={() => movePick(candidate.key, 1)}
-								/>
-								<SendouButton
-									size="small"
-									variant="minimal-destructive"
-									shape="circle"
-									icon={<X />}
-									aria-label="Remove from montage"
-									isDisabled={rendering}
-									onClick={() => unpickCandidate(candidate.key)}
-								/>
-							</span>
-						</li>
-					))}
-				</ol>
-			)}
+			<p className={styles.note}>
+				The intro, then the top {topTeams.length} counting down to the winner:
+				each team's card, then its clips in this order.
+			</p>
+			{montageTeamSections(topTeams, picks).map((section) => (
+				<div key={section.team.id} className={styles.teamSection}>
+					<TeamLabel team={section.team} />
+					{section.picks.length === 0 ? (
+						<p className={styles.note}>No clips, only the card</p>
+					) : (
+						<ol className={styles.picks}>
+							{section.picks.map((pick, i) => (
+								<li key={pick.key} className={styles.pick}>
+									<span className={styles.pickIndex}>{i + 1}</span>
+									<CandidateSummary candidate={pick} />
+									<span className={styles.pickActions}>
+										<SendouButton
+											size="small"
+											variant="minimal"
+											shape="circle"
+											icon={<ArrowUp />}
+											aria-label="Move earlier"
+											isDisabled={rendering || i === 0}
+											onClick={() => movePick(pick.key, -1)}
+										/>
+										<SendouButton
+											size="small"
+											variant="minimal"
+											shape="circle"
+											icon={<ArrowDown />}
+											aria-label="Move later"
+											isDisabled={rendering || i === section.picks.length - 1}
+											onClick={() => movePick(pick.key, 1)}
+										/>
+										<SendouButton
+											size="small"
+											variant="minimal-destructive"
+											shape="circle"
+											icon={<X />}
+											aria-label="Remove from montage"
+											isDisabled={rendering}
+											onClick={() => unpickCandidate(pick.key)}
+										/>
+									</span>
+								</li>
+							))}
+						</ol>
+					)}
+				</div>
+			))}
 		</section>
+	);
+}
+
+function TeamLabel({ team }: { team: MontageManifestTopTeam }) {
+	return (
+		<span className={styles.teamLabel}>
+			<span className={styles.teamPlacement}>
+				<Placement placement={team.placement} plain />
+			</span>
+			<Avatar
+				url={montageImageUrl(team.logo)}
+				identiconInput={team.name}
+				size="xxxsm"
+			/>
+			{team.name}
+		</span>
 	);
 }
 
@@ -362,9 +532,18 @@ function MusicPicker({
 }
 
 function CandidatesPanel({ montage }: { montage: MontageSnapshot }) {
-	const candidates = availableCandidates(montage);
+	const [teamFilter, setTeamFilter] = useState<number | null>(null);
+	const topTeams = montage.folder?.manifest.topTeams ?? [];
+	const available = availableCandidates(montage);
+	const candidates =
+		teamFilter === null
+			? available
+			: available.filter((candidate) => candidate.teamIds.includes(teamFilter));
 	const groups = candidatesByBaseWeapon(candidates);
-	const [collapsed, setCollapsed] = useState(loadCollapsedGroups);
+	const [collapsedGroups, setCollapsedGroups] = usePersistedState(
+		montageCollapsedGroupsPersisted,
+	);
+	const collapsed = new Set(collapsedGroups);
 	const allCollapsed =
 		groups.length > 0 &&
 		groups.every((group) => collapsed.has(String(group.baseWeaponId)));
@@ -375,8 +554,7 @@ function CandidatesPanel({ montage }: { montage: MontageSnapshot }) {
 			if (expand) next.delete(groupKey);
 			else next.add(groupKey);
 		}
-		setCollapsed(next);
-		saveCollapsedGroups(next);
+		setCollapsedGroups([...next]);
 	};
 
 	return (
@@ -400,6 +578,35 @@ function CandidatesPanel({ montage }: { montage: MontageSnapshot }) {
 				) : null}
 			</div>
 			<div className={styles.criteria}>
+				<span className={styles.criterion}>
+					<span className={styles.criterionLabel}>Team</span>
+					<SendouChipRadioGroup wrap>
+						<SendouChipRadio
+							name="montage-team-filter"
+							value="all"
+							checked={teamFilter === null}
+							onChange={() => setTeamFilter(null)}
+						>
+							All · {available.length}
+						</SendouChipRadio>
+						{topTeams.map((team) => (
+							<SendouChipRadio
+								key={team.id}
+								name="montage-team-filter"
+								value={String(team.id)}
+								checked={teamFilter === team.id}
+								onChange={() => setTeamFilter(team.id)}
+							>
+								{team.name} ·{" "}
+								{
+									available.filter((candidate) =>
+										candidate.teamIds.includes(team.id),
+									).length
+								}
+							</SendouChipRadio>
+						))}
+					</SendouChipRadioGroup>
+				</span>
 				<span className={styles.criterion}>
 					<span className={styles.criterionLabel}>Min splats</span>
 					<SendouChipRadioGroup>
@@ -451,7 +658,7 @@ function CandidatesPanel({ montage }: { montage: MontageSnapshot }) {
 				<p className={styles.note}>
 					{montage.candidates.length === 0
 						? "No clips yet: they appear as VoDs are scanned."
-						: "Every team with a clip is in the montage."}
+						: "No clips left to pick."}
 				</p>
 			) : (
 				groups.map((group) => {
@@ -489,6 +696,11 @@ function CandidatesPanel({ montage }: { montage: MontageSnapshot }) {
 										<CandidateCard
 											key={candidate.key}
 											candidate={candidate}
+											teams={topTeams.filter((team) =>
+												teamFilter === null
+													? candidate.teamIds.includes(team.id)
+													: team.id === teamFilter,
+											)}
 											isDisabled={montage.render?.state === "rendering"}
 										/>
 									))}
@@ -504,12 +716,15 @@ function CandidatesPanel({ montage }: { montage: MontageSnapshot }) {
 
 function CandidateCard({
 	candidate,
+	teams,
 	isDisabled,
 }: {
 	candidate: MontageCandidate;
+	/** the teams it can be added under, a button each */
+	teams: MontageManifestTopTeam[];
 	isDisabled: boolean;
 }) {
-	const thumbnail = useThumbnail(candidate);
+	const thumbnail = useCandidateFrame(candidate, candidateThumbnail);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
 	// the preview's URL is released with the card
@@ -546,15 +761,20 @@ function CandidateCard({
 			)}
 			<div className={styles.cardBody}>
 				<CandidateSummary candidate={candidate} />
-				<SendouButton
-					size="small"
-					variant="outlined"
-					icon={<Plus />}
-					isDisabled={isDisabled}
-					onClick={() => pickCandidate(candidate)}
-				>
-					Add
-				</SendouButton>
+				<span className={styles.addButtons}>
+					{teams.map((team) => (
+						<SendouButton
+							key={team.id}
+							size="small"
+							variant="outlined"
+							icon={<Plus />}
+							isDisabled={isDisabled}
+							onClick={() => pickCandidate(candidate, team.id)}
+						>
+							{teams.length === 1 ? "Add" : team.name}
+						</SendouButton>
+					))}
+				</span>
 			</div>
 		</div>
 	);
@@ -590,43 +810,24 @@ function CandidateSummary({ candidate }: { candidate: MontageCandidate }) {
 	);
 }
 
-/** Base weapon ids (as strings, "null" for unknown) of the collapsed clip groups. */
-function loadCollapsedGroups(): Set<string> {
-	try {
-		const stored = JSON.parse(
-			localStorage.getItem(COLLAPSED_GROUPS_STORAGE_KEY) ?? "[]",
-		);
-		return new Set(Array.isArray(stored) ? stored.map(String) : []);
-	} catch {
-		return new Set();
-	}
-}
-
-function saveCollapsedGroups(collapsed: Set<string>): void {
-	try {
-		localStorage.setItem(
-			COLLAPSED_GROUPS_STORAGE_KEY,
-			JSON.stringify([...collapsed]),
-		);
-	} catch {
-		// private mode or a full quota: the groups stay collapsed for this visit
-	}
-}
-
-/** The candidate's thumbnail once decoded (they queue up, one VoD open at a time). */
-function useThumbnail(candidate: MontageCandidate): string | null {
-	const [thumbnail, setThumbnail] = useState<string | null>(null);
+/** A frame of the candidate once decoded (they queue up, one VoD open at a time). */
+function useCandidateFrame(
+	candidate: MontageCandidate | undefined,
+	decode: (candidate: MontageCandidate) => Promise<string | null>,
+): string | null {
+	const [frame, setFrame] = useState<string | null>(null);
 
 	// decoding a frame is async work outside React
 	useEffect(() => {
+		if (!candidate) return;
 		let stale = false;
-		void candidateThumbnail(candidate).then((next) => {
-			if (!stale) setThumbnail(next);
+		void decode(candidate).then((next) => {
+			if (!stale) setFrame(next);
 		});
 		return () => {
 			stale = true;
 		};
-	}, [candidate]);
+	}, [candidate, decode]);
 
-	return thumbnail;
+	return frame;
 }

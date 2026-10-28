@@ -78,6 +78,44 @@ describe("TimelineBuilder X Battle cards", () => {
 		]);
 	});
 
+	test.each([
+		{ why: "caught mid-count", power: 2411.3 },
+		{ why: "unread", power: null },
+	])(
+		"settles an X Power $why to the power before the change plus the change",
+		({ power }) => {
+			const timeline = new TimelineBuilder();
+			timeline.push(result(0, { powerChange: null, power: 2373.8 }));
+			timeline.push(result(0.5, { powerChange: null, power: 2373.8 }));
+			timeline.push(result(1, { powerChange: 75, power }));
+
+			expect(timeline.events.map((e) => e.data)).toMatchObject([
+				{ powerChange: 75, power: 2448.8 },
+			]);
+		},
+	);
+
+	test("keeps the settled X Power over a later read still counting", () => {
+		const timeline = new TimelineBuilder();
+		timeline.push(result(0, { powerChange: null, power: 2752.4 }));
+		timeline.push(result(0.5, { powerChange: -29.2, power: 2752.4 }));
+
+		const action = timeline.push(
+			result(1, { powerChange: -29.2, power: 2742.6 }),
+		);
+
+		expect(action.action).toBe("merged");
+		expect(timeline.events[0]!.data).toMatchObject({ power: 2723.2 });
+	});
+
+	test("leaves an X Power read off the count from the power before the change as read", () => {
+		const timeline = new TimelineBuilder();
+		timeline.push(result(0, { powerChange: null, power: 2373.8 }));
+		timeline.push(result(1, { powerChange: 75, power: 2911.3 }));
+
+		expect(timeline.events[0]!.data).toMatchObject({ power: 2911.3 });
+	});
+
 	test("ignores an X Power read further away than the whole change", () => {
 		const timeline = new TimelineBuilder();
 		timeline.push(result(1.4, { powerChange: -29.2, power: 2728.0 }));

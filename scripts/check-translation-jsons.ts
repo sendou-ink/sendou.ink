@@ -3,6 +3,13 @@ import fs from "node:fs";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import * as TranslationSyntax from "../app/features/translate/core/TranslationSyntax.ts";
+import {
+	DEFAULT_LANGUAGE,
+	gameLanguages,
+	languageChain,
+	languages,
+} from "../app/modules/i18n/config.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,8 +24,7 @@ const KNOWN_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
 const ZERO_SUFFIX = "_zero";
 const PLURAL_SUFFIXES = KNOWN_SUFFIXES.filter((sfx) => sfx !== ZERO_SUFFIX);
 
-const REPO_TRANSLATIONS_INFO_URL =
-	"https://github.com/sendou-ink/sendou.ink/blob/main/docs/translation.md";
+const REPO_TRANSLATIONS_INFO_URL = "https://docs.sendou.ink/dev/translation/";
 
 const MD = {
 	inlineCode: (s: string) => `\`${s}\``,
@@ -32,14 +38,17 @@ const otherLanguageTranslationPath = (code?: string, fileName?: string) =>
 		),
 	);
 
-const allOtherLanguages = fs
-	.readdirSync(otherLanguageTranslationPath())
-	.filter((lang) => lang !== "en");
+const siteLanguages = languages
+	.map((lang) => lang.code)
+	.filter((code) => code !== DEFAULT_LANGUAGE);
+const otherLanguages = gameLanguages
+	.map((lang) => lang.code)
+	.filter((code) => code !== DEFAULT_LANGUAGE);
 
 const missingTranslations: Record<
 	string,
 	Record<string, Array<string>>
-> = Object.fromEntries(allOtherLanguages.map((lang) => [lang, {}]));
+> = Object.fromEntries(siteLanguages.map((lang) => [lang, {}]));
 
 const totalTranslationCounts: Record<string, number> = {};
 
@@ -56,54 +65,54 @@ for (const file of fileNames) {
 		totalTranslationCounts[key] = englishContentKeys.length;
 	}
 
-	for (const lang of allOtherLanguages) {
-		// .DS_STORE
-		if (lang.startsWith(".")) continue;
+	const translatedKeysByLanguage = new Map<string, string[]>();
+	for (const lang of otherLanguages) {
+		const filePath = otherLanguageTranslationPath(lang, file);
+		if (!fs.existsSync(filePath)) continue;
 
+		const otherRawContent = fs.readFileSync(filePath, "utf8").trim();
+		let otherLanguageContent: Record<string, string>;
 		try {
-			const otherRawContent = fs
-				.readFileSync(otherLanguageTranslationPath(lang, file), "utf8")
-				.trim();
-			let otherLanguageContent: Record<string, string>;
-			try {
-				otherLanguageContent = JSON.parse(otherRawContent);
-			} catch (error) {
-				throw new Error(`failed to parse ${lang}/${file}`, { cause: error });
+			otherLanguageContent = JSON.parse(otherRawContent);
+		} catch (error) {
+			throw new Error(`failed to parse ${lang}/${file}`, { cause: error });
+		}
+
+		validateSyntax({
+			english: englishContent,
+			other: otherLanguageContent,
+			lang,
+			file,
+		});
+		validateNoDuplicateKeys({
+			otherRawContent,
+			file,
+			lang,
+		});
+
+		translatedKeysByLanguage.set(
+			lang,
+			getKeysWithoutSuffix(otherLanguageContent, lang, file),
+		);
+	}
+
+	for (const lang of otherLanguages) {
+		// a regional variant inherits what it doesn't translate from its parent language
+		const translatedKeys = new Set(
+			languageChain(lang).flatMap(
+				(chainLang) => translatedKeysByLanguage.get(chainLang) ?? [],
+			),
+		);
+		const missingKeys = englishContentKeys.filter(
+			(missingKey) => !translatedKeys.has(missingKey),
+		);
+
+		if (key === "weapons" || key === "gear") {
+			if (missingKeys.length > 0) {
+				throw new Error(`missing keys in ${lang}/${file}`);
 			}
-
-			const otherLanguageContentKeys = getKeysWithoutSuffix(
-				otherLanguageContent,
-				lang,
-				file,
-			);
-
-			validateVariables({
-				english: englishContent,
-				other: otherLanguageContent,
-				lang,
-				file,
-			});
-			validateNoDuplicateKeys({
-				otherRawContent,
-				file,
-				lang,
-			});
-
-			const missingKeys = englishContentKeys.filter(
-				(missingKey) => !otherLanguageContentKeys.includes(missingKey),
-			);
-
-			if (key === "weapons" || key === "gear") {
-				if (missingKeys.length > 0) {
-					throw new Error(`missing keys in ${lang}/${file}`);
-				}
-			} else {
-				missingTranslations[lang][key] = missingKeys;
-			}
-		} catch (e) {
-			if ((e as { code: string }).code !== "ENOENT") throw e;
-
-			missingTranslations[lang][key] = englishContentKeys;
+		} else if (lang in missingTranslations) {
+			missingTranslations[lang][key] = missingKeys;
 		}
 	}
 }
@@ -126,7 +135,7 @@ const translationProgressPath = path.join(
 
 fs.writeFileSync(translationProgressPath, markdown);
 
-function validateVariables({
+function validateSyntax({
 	english,
 	other,
 	lang,
@@ -137,23 +146,40 @@ function validateVariables({
 	lang: string;
 	file: string;
 }) {
-	for (const [key, value] of Object.entries(english)) {
-		const otherValue = other[key];
-		if (!otherValue) continue;
+	for (const [key, value] of Object.entries(other)) {
+		if (!value.trim()) continue;
 
-		const englishMatches = value.match(/{{(.*?)}}/g);
-		const otherMatches = otherValue.match(/{{(.*?)}}/g);
+		const { source, isPlural } = englishSourceOf(english, key);
+		if (source === undefined) continue;
 
-		if (!englishMatches && !otherMatches) continue;
-
-		for (const englishVar of englishMatches ?? []) {
-			if (!otherMatches?.includes(englishVar)) {
-				throw new Error(
-					`variable mismatch in ${lang}/${file}: ${englishVar} is missing in ${otherValue}`,
-				);
-			}
+		const issues = TranslationSyntax.validate({
+			source,
+			translation: value,
+			isPlural,
+		});
+		if (issues.length > 0) {
+			throw new Error(
+				`invalid translation in ${lang}/${file} for "${key}": ${JSON.stringify(issues)} in ${value}`,
+			);
 		}
 	}
+}
+
+// plural forms a language has but English doesn't (e.g. `_few`) are translated from the `_other` form
+function englishSourceOf(english: Record<string, string>, key: string) {
+	const suffix = PLURAL_SUFFIXES.find((sfx) => key.endsWith(sfx));
+	const baseKey = suffix ? key.slice(0, -suffix.length) : key;
+
+	const singular = english[`${baseKey}_one`];
+	const plural = english[`${baseKey}_other`];
+	if (singular === undefined && plural === undefined) {
+		return { source: english[key], isPlural: false };
+	}
+
+	return {
+		source: suffix === "_one" ? (singular ?? plural) : (plural ?? singular),
+		isPlural: true,
+	};
 }
 
 function validateNoDuplicateKeys({

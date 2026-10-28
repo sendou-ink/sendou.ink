@@ -5,6 +5,7 @@ import * as Availability from "~/features/availability/core/Availability";
 import * as VisibleSchedules from "~/features/availability/core/VisibleSchedules.server";
 import type { RouteChatRoomInput } from "~/features/chat/chat-types";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -15,6 +16,7 @@ import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
+	canSeeTournamentFriendCodes,
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -195,7 +197,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		...(await UserCardRepository.findAllByUserIdsCached({
 			userIds: match.players.map((p) => p.id),
 			include: {
-				friendCode: isParticipant || isSiteStaff || isTournamentStaff,
+				friendCode:
+					isParticipant ||
+					isSiteStaff ||
+					canSeeTournamentFriendCodes({ ctx: tournament.ctx, user }),
 			},
 		})),
 		match: {
@@ -205,6 +210,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		},
 		results,
 		reportedWeapons,
+		viewerWeaponPoolIds:
+			user && isParticipant
+				? (await MatchProfileRepository.findWeaponPoolByUserId(user.id)).map(
+						(weapon) => weapon.weaponSplId,
+					)
+				: null,
 		ingestedScoreboards,
 		mapList,
 		teams: [match.opponentOne?.id, match.opponentTwo?.id].flatMap(

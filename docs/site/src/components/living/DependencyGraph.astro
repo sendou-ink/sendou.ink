@@ -1,0 +1,74 @@
+---
+import type { FeatureDoc } from "../../../../../scripts/living-docs/document.ts";
+import { dependencyGraph } from "../../living/graph.ts";
+
+interface Props {
+	feature: FeatureDoc;
+}
+
+const graph = dependencyGraph(Astro.props.feature);
+---
+
+<figure class="graph-card">
+	<figcaption>Who imports who <span class="muted">· hover a node</span></figcaption>
+	<div class="graph-scroll scrollbar">
+		<svg
+			class="graph"
+			viewBox={`0 0 ${graph.width} ${graph.height}`}
+			style={`max-width: ${graph.width}px`}
+			role="img"
+			aria-label="Module dependency graph"
+		>
+			<defs>
+				<marker
+					id="arrow"
+					viewBox="0 0 8 8"
+					refX="7"
+					refY="4"
+					markerWidth="7"
+					markerHeight="7"
+					orient="auto-start-reverse"
+				>
+					<path d="M0 0 L8 4 L0 8 z" class="arrowhead"></path>
+				</marker>
+			</defs>
+			{
+				graph.columnTitles.map(({ title, x }) => (
+					<text class="column-title" x={x} y={graph.padding}>
+						{title}
+					</text>
+				))
+			}
+			{
+				graph.edges.map((edge) => (
+					<path
+						class="edge"
+						data-from={edge.from}
+						data-to={edge.to}
+						d={edge.d}
+						marker-end="url(#arrow)"
+					/>
+				))
+			}
+			{
+				graph.nodes.map((node) => (
+					<g class={`node node-${node.kind}`} data-node={node.id}>
+						<rect
+							x={node.x}
+							y={node.y}
+							width={graph.nodeWidth}
+							height={graph.nodeHeight}
+							rx="8"
+						/>
+						<text x={node.x + 12} y={node.y + 21}>
+							<tspan class="node-label">{node.label}</tspan>
+							<tspan class="node-sublabel" dx="8">
+								{node.sublabel}
+							</tspan>
+						</text>
+					</g>
+				))
+			}
+		</svg>
+	</div>
+</figure>

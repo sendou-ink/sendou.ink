@@ -7,4 +7,4 @@ description: Work with URL search param state via the unified app/modules/search
 
 All URL search param handling goes through `app/modules/search-params/`.
 
-**Read [docs/dev/search-params.md](../../../docs/dev/search-params.md) now** — it is the single source of truth for the conventions (hard rules, defining params, the codec derivation table, loader/client APIs, href building, revalidation, testing).
+**Read [docs/site/src/content/docs/dev/search-params.mdx](../../../docs/site/src/content/docs/dev/search-params.mdx) now** — it is the single source of truth for the conventions (hard rules, defining params, the codec derivation table, loader/client APIs, href building, revalidation, testing).

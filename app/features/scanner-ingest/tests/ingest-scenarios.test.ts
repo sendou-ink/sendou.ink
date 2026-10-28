@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 import type {
@@ -19,6 +20,7 @@ import {
 	fetchReportedWeapons,
 	hoursLater,
 	ingest,
+	lobbyWorld,
 	minutesAgo,
 	qMatchPage,
 	renamed,
@@ -519,6 +521,49 @@ describe("SendouQ flow", () => {
 	});
 });
 
+describe("lobby flow", () => {
+	test("L1 live send, map already reported: stored + linked to the lobby's set", async () => {
+		const w = await lobbyWorld();
+		const [map] = await w.report();
+
+		const res = await ingest(w.povUser, [w.scanned(map!)]);
+
+		expect(res.linkedMatches).toEqual([
+			{ matchIndex: 0, link: { type: "lobby", lobbyId: w.lobbyId } },
+		]);
+		const rows = await fetchIngestedMatches();
+		expect(rows[0]!.lobbySetIdHint).toBe(w.setId);
+		const links = await fetchLinks();
+		expect(links.map((link) => link.lobbyGameId)).toEqual([map!.id]);
+	});
+
+	test("L2 send before report: the report links the stored read without a resend", async () => {
+		const w = await lobbyWorld();
+		const res = await ingest(w.povUser, [w.scanned(w.maps[0]!)]);
+		expect(res.linkedGamesCount).toBe(0);
+
+		await w.report();
+		await linkStoredMatches({ type: "lobby", lobbySetId: w.setId });
+
+		const links = await fetchLinks();
+		expect(links.map((link) => link.lobbyGameId)).toEqual([w.maps[0]!.id]);
+	});
+
+	test("L3 undone map report: the undo unlinks the read, the re-report links it again", async () => {
+		const w = await lobbyWorld();
+		const [map] = await w.report();
+		await ingest(w.povUser, [w.scanned(map!)]);
+		expect(await fetchLinks()).toHaveLength(1);
+
+		await w.undo();
+		expect(await fetchLinks()).toHaveLength(0);
+
+		await w.report();
+		await linkStoredMatches({ type: "lobby", lobbySetId: w.setId });
+		expect(await fetchLinks()).toHaveLength(1);
+	});
+});
+
 describe("tournament flow", () => {
 	test("T1 live send links inside the current set only", async () => {
 		const w = await tournamentWorld();
@@ -871,6 +916,53 @@ describe("response contract & idempotency", () => {
 	});
 });
 
+describe("abuse limits", () => {
+	test("A1 a sender's rescans of one game that don't merge still link it once", async () => {
+		const w = await sendouqWorld();
+		await w.conclude();
+		await ingest(w.povUser, [
+			w.scanned(w.maps[0]!, { replayCode: distinctReplayCode(1) }),
+		]);
+
+		const rescan = await ingest(w.povUser, [
+			w.scanned(w.maps[0]!, { replayCode: distinctReplayCode(2) }),
+		]);
+
+		expect(rescan.storedMatchesCount).toBe(1);
+		expect(rescan.linkedGamesCount).toBe(0);
+		expect(await fetchLinks()).toHaveLength(1);
+		expect((await qMatchPage(w.match.id)).ingestedScoreboards).toHaveLength(1);
+	});
+
+	test("A2 past the hourly match quota: the send is refused and nothing more is stored", async () => {
+		const user = await createUser();
+		const scans = R.range(0, 201).map((i) =>
+			scannedGame(QUOTA_GAME, {
+				lobby: "X",
+				replayCode: distinctReplayCode(i),
+			}),
+		);
+		for (const request of R.chunk(scans.slice(0, 200), 50)) {
+			await ingest(user, request);
+		}
+
+		await expect(ingest(user, [scans[200]!])).rejects.toThrow("429");
+		expect(await fetchIngestedMatches()).toHaveLength(200);
+	});
+
+	test("A3 max-size sends: refused once the daily size quota is used up", async () => {
+		const user = await createUser();
+		const request = (requestIndex: number) =>
+			R.range(0, 32).map((i) => maxSizeScan(requestIndex * 32 + i));
+		await ingest(user, request(0));
+		await ingest(user, request(1));
+		await ingest(user, request(2));
+
+		await expect(ingest(user, request(3))).rejects.toThrow("429");
+		expect(await fetchIngestedMatches()).toHaveLength(96);
+	});
+});
+
 async function ingestDecidingGame({
 	startOffsetMs,
 }: {
@@ -899,4 +991,52 @@ async function ingestDecidingGame({
 	]);
 
 	return { res, w, decidedSet: decidedSet!, nextSet: nextSet! };
+}
+
+const QUOTA_GAME = {
+	mode: "SZ",
+	stage: 1,
+	order: 0,
+	winnerNames: ALPHA_NAMES,
+	loserNames: BRAVO_NAMES,
+} as const;
+
+/** Replay codes of different `i` differ in more places than OCR errors explain, so their reads never merge. */
+function distinctReplayCode(i: number) {
+	return String(i).padStart(4, "0").repeat(4);
+}
+
+/** An X battle read with every sample list as long as the schema allows. */
+function maxSizeScan(i: number): ScannerMatch {
+	const flags: [boolean, boolean, boolean, boolean] = [
+		true,
+		false,
+		true,
+		false,
+	];
+
+	return scannedGame(QUOTA_GAME, {
+		lobby: "X",
+		replayCode: distinctReplayCode(i),
+		objective: {
+			mode: "SZ",
+			samples: R.range(0, 1000).map((t) => ({
+				t: t * 1000,
+				time: 1000 - t,
+				score: [50, 60],
+				penalty: [0, 0],
+				control: 0,
+				position: 12.5,
+			})),
+		},
+		playerStatus: {
+			samples: R.range(0, 1000).map((t) => ({
+				t: t * 1000,
+				time: 1000 - t,
+				special: [flags, flags],
+				dead: [flags, flags],
+			})),
+		},
+		kills: R.range(0, 200).map((t) => ({ t, time: t, name: "x".repeat(32) })),
+	});
 }

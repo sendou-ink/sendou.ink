@@ -1042,6 +1042,7 @@ function RoundMapList({
 	hoveredMap: string | null;
 }) {
 	const { t } = useTranslation(["forms"]);
+	const playableAtId = React.useId();
 	const minCount = TOURNAMENT.AVAILABLE_BEST_OF[0];
 	const maxCount = TOURNAMENT.AVAILABLE_BEST_OF.at(-1)!;
 
@@ -1050,8 +1051,11 @@ function RoundMapList({
 			<h3>{name}</h3>
 			{playableAt ? (
 				<div className={styles.playableAt}>
+					<Label htmlFor={playableAtId}>
+						{t("forms:labels.roundPlayableFrom")}
+					</Label>
 					<SendouDatePicker
-						label={t("forms:labels.roundPlayableFrom")}
+						id={playableAtId}
 						granularity="day"
 						value={
 							playableAt.value !== null

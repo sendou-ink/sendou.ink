@@ -2,6 +2,7 @@ import i18next from "i18next";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
+import * as ConsoleCapture from "~/features/dev-tools/core/ConsoleCapture";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { writeViewerTimezoneCookie } from "./features/timezone/timezone-cookie";
 import { i18nLoader } from "./modules/i18n/loader";
@@ -13,6 +14,9 @@ const FETCH_RETRY_DELAYS_MS = [0, 5000, 15000];
 /** avoids a thundering herd against a struggling server */
 const FETCH_RETRY_JITTER_MS = 1000;
 const DATA_GENERATION_COOKIE = "dataGeneration";
+
+// before hydration so the dev toolbar sees hydration mismatches too
+if (import.meta.env.DEV) ConsoleCapture.install();
 
 writeViewerTimezoneCookie();
 

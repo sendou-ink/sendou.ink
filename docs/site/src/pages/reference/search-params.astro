@@ -1,0 +1,167 @@
+---
+import { getCollection } from "astro:content";
+import { Badge } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import type { ClientStateDoc } from "../../../../../scripts/living-docs/client-state.ts";
+import { anchor, githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import ClientStateDefinition from "../../components/living/ClientStateDefinition.astro";
+import { count, sitePath, viewHref } from "../../living/format.ts";
+import "../../styles/living.css";
+
+const PERSISTED_STATE_DIR = "app/modules/persisted-state";
+
+const definitions = (await getCollection("clientState")).map(
+	(entry) => entry.data,
+);
+const features = (await getCollection("features"))
+	.map((entry) => entry.data)
+	.filter((feature) => feature.clientState.length > 0)
+	.sort((a, b) => a.config.label.localeCompare(b.config.label));
+const featureIds = new Set(features.map((feature) => feature.config.id));
+/** Definitions of shared code (`app/components`, `app/hooks`…), which has no feature page to show them on. */
+const shared = [
+	...Map.groupBy(
+		definitions.filter((definition) => !featureIds.has(definition.feature)),
+		(definition) => definition.feature,
+	),
+]
+	.map(([directory, inDirectory]) => ({
+		directory,
+		definitions: inDirectory.sort(
+			(a, b) =>
+				a.kind.localeCompare(b.kind) ||
+				a.file.localeCompare(b.file) ||
+				a.line - b.line,
+		),
+	}))
+	.sort((a, b) => a.directory.localeCompare(b.directory));
+const collisions = definitions.filter(
+	(definition) =>
+		definition.kind === "persisted" && definition.collidesWith.length > 0,
+);
+const searchParamsCount = definitions.filter(
+	(definition) => definition.kind === "searchParams",
+).length;
+
+function sharedAnchor(definition: ClientStateDoc) {
+	return anchor(definition.feature, definition.name);
+}
+
+function definitionHref(definition: ClientStateDoc) {
+	return featureIds.has(definition.feature)
+		? viewHref(definition.feature, "search-params", anchor(definition.name))
+		: `#${sharedAnchor(definition)}`;
+}
+
+function untestedCount(inFeature: ClientStateDoc[]) {
+	return inFeature.filter((definition) => definition.testFiles.length === 0)
+		.length;
+}
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Search params & storage",
+		description: "Every search param and web storage definition of the app, generated from their SearchParams.define and PersistedState.define calls.",
+		editUrl: false,
+		tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
+	}}
+	headings={[
+		...(collisions.length > 0
+			? [{ depth: 2, slug: "storage-key-collisions", text: "Storage key collisions" }]
+			: []),
+		{ depth: 2, slug: "features", text: "By feature" },
+		...shared.flatMap(({ directory, definitions: inDirectory }) => [
+			{ depth: 2, slug: anchor(directory), text: directory },
+			...inDirectory.map((definition) => ({
+				depth: 3,
+				slug: sharedAnchor(definition),
+				text: definition.name,
+			})),
+		]),
+	]}
+>
+	<p>
+		The state the app keeps in the URL and in the browser's storage:{" "}
+		{count(searchParamsCount, "search params definition")} (<code>SearchParams.define</code>, see{" "}
+		<a href={sitePath("dev/search-params/")}>Search params</a>) and{" "}
+		{count(definitions.length - searchParamsCount, "web storage definition")} (
+		<code>PersistedState.define</code> / <code>defineMap</code> of{" "}
+		<a href={githubUrl(`${PERSISTED_STATE_DIR}/persisted-state.ts`, 1)}><code>{PERSISTED_STATE_DIR}</code></a>).
+		A feature's definitions are on its own Search params & storage page, those of shared code below.
+		Each should have an <code>assertRoundTrips</code> test, definitions no test imports are marked.
+	</p>
+
+	{
+		collisions.length > 0 ? (
+			<>
+				<h2 id="storage-key-collisions">Storage key collisions</h2>
+				<p>These definitions share a storage key (or one falls within a map's key prefix), so they overwrite each other.</p>
+				<ul>
+					{collisions.map((definition) => (
+						<li>
+							<a href={definitionHref(definition)}><code>{definition.name}</code></a>{" "}
+							collides with {definition.collidesWith.map((other) => <code>{other}</code>)}
+						</li>
+					))}
+				</ul>
+			</>
+		) : null
+	}
+
+	<h2 id="features">By feature</h2>
+	<table>
+		<thead>
+			<tr>
+				<th>Feature</th>
+				<th>Search params</th>
+				<th>Web storage</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				features.map((feature) => {
+					const kinds = (["searchParams", "persisted"] as const).map((kind) =>
+						feature.clientState.filter((definition) => definition.kind === kind),
+					);
+					return (
+						<tr>
+							<td>
+								<a href={viewHref(feature.config.id, "search-params")}>{feature.config.label}</a>
+							</td>
+							{kinds.map((inKind) => (
+								<td>
+									{inKind.map((definition, index) => (
+										<>
+											{index > 0 ? ", " : ""}
+											<a href={definitionHref(definition)}>
+												<code>{definition.name}</code>
+											</a>
+										</>
+									))}
+									{untestedCount(inKind) > 0 ? (
+										<>
+											{" "}
+											<Badge text={`${untestedCount(inKind)} untested`} variant="caution" size="small" />
+										</>
+									) : null}
+								</td>
+							))}
+						</tr>
+					);
+				})
+			}
+		</tbody>
+	</table>
+
+	{
+		shared.map(({ directory, definitions: inDirectory }) => (
+			<>
+				<h2 id={anchor(directory)}>{directory}</h2>
+				{inDirectory.map((definition) => (
+					<ClientStateDefinition definition={definition} id={sharedAnchor(definition)} />
+				))}
+			</>
+		))
+	}
+</StarlightPage>

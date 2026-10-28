@@ -4,9 +4,9 @@
  * saved and whether matching runs on the GPU. Read through a store so the controllers (outside React) and
  * the views see one value.
  */
-import { useSyncExternalStore } from "react";
-
-const STORAGE_KEY = "scanner:settings";
+import * as v from "valibot";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 
 export interface ScannerSettings {
 	/** `deviceId` of the video input; empty or unplugged = the first capture card or OBS Virtual Camera */
@@ -48,27 +48,52 @@ const DEFAULT_SETTINGS: ScannerSettings = {
 	webgpu: true,
 };
 
-let settings: ScannerSettings | null = null;
-const listeners = new Set<() => void>();
+/** An unreadable setting falls back to its default on its own */
+export const scannerSettingsPersisted = PersistedState.define({
+	key: "scanner:settings",
+	storage: "local",
+	schema: v.object({
+		sourceDeviceId: v.fallback(v.string(), DEFAULT_SETTINGS.sourceDeviceId),
+		audioSource: v.fallback(
+			v.custom<AudioSource>(isAudioSource),
+			DEFAULT_SETTINGS.audioSource,
+		),
+		upload: v.fallback(v.boolean(), DEFAULT_SETTINGS.upload),
+		saveClips: v.fallback(v.boolean(), DEFAULT_SETTINGS.saveClips),
+		clipMinKills: v.fallback(
+			v.picklist(CLIP_MIN_KILLS_OPTIONS),
+			DEFAULT_SETTINGS.clipMinKills,
+		),
+		audioOffsetMs: v.fallback(
+			v.pipe(
+				v.number(),
+				v.finite(),
+				v.transform((ms) =>
+					Math.max(-AUDIO_OFFSET_LIMIT_MS, Math.min(AUDIO_OFFSET_LIMIT_MS, ms)),
+				),
+			),
+			DEFAULT_SETTINGS.audioOffsetMs,
+		),
+		webgpu: v.fallback(v.boolean(), DEFAULT_SETTINGS.webgpu),
+	}),
+	default: DEFAULT_SETTINGS,
+});
 
-/** The current settings (loaded on first access). */
+/** The current settings. */
 export function readSettings(): ScannerSettings {
-	settings ??= load();
-	return settings;
+	return PersistedState.read(scannerSettingsPersisted);
 }
 
+/** Private mode or a full quota keep the settings for this visit only. */
 export function updateSettings(patch: Partial<ScannerSettings>): void {
-	settings = { ...readSettings(), ...patch };
-	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-	} catch {
-		// private mode or a full quota: the in-memory value still applies this visit
-	}
-	for (const listener of listeners) listener();
+	PersistedState.write(scannerSettingsPersisted, {
+		...readSettings(),
+		...patch,
+	});
 }
 
 export function useScannerSettings(): ScannerSettings {
-	return useSyncExternalStore(subscribe, readSettings, () => DEFAULT_SETTINGS);
+	return usePersistedState(scannerSettingsPersisted)[0];
 }
 
 /** The `deviceId` a `device:<id>` audio source names; null for the other kinds. */
@@ -83,51 +108,4 @@ function isAudioSource(value: unknown): value is AudioSource {
 		value === "off" ||
 		(typeof value === "string" && value.startsWith("device:"))
 	);
-}
-
-function subscribe(listener: () => void): () => void {
-	listeners.add(listener);
-	return () => listeners.delete(listener);
-}
-
-function load(): ScannerSettings {
-	try {
-		const raw = localStorage.getItem(STORAGE_KEY);
-		if (!raw) return DEFAULT_SETTINGS;
-		const parsed = JSON.parse(raw) as Partial<ScannerSettings>;
-		return {
-			sourceDeviceId:
-				typeof parsed.sourceDeviceId === "string"
-					? parsed.sourceDeviceId
-					: DEFAULT_SETTINGS.sourceDeviceId,
-			audioSource: isAudioSource(parsed.audioSource)
-				? parsed.audioSource
-				: DEFAULT_SETTINGS.audioSource,
-			upload:
-				typeof parsed.upload === "boolean"
-					? parsed.upload
-					: DEFAULT_SETTINGS.upload,
-			saveClips:
-				typeof parsed.saveClips === "boolean"
-					? parsed.saveClips
-					: DEFAULT_SETTINGS.saveClips,
-			clipMinKills:
-				CLIP_MIN_KILLS_OPTIONS.find((n) => n === parsed.clipMinKills) ??
-				DEFAULT_SETTINGS.clipMinKills,
-			audioOffsetMs:
-				typeof parsed.audioOffsetMs === "number" &&
-				Number.isFinite(parsed.audioOffsetMs)
-					? Math.max(
-							-AUDIO_OFFSET_LIMIT_MS,
-							Math.min(AUDIO_OFFSET_LIMIT_MS, parsed.audioOffsetMs),
-						)
-					: DEFAULT_SETTINGS.audioOffsetMs,
-			webgpu:
-				typeof parsed.webgpu === "boolean"
-					? parsed.webgpu
-					: DEFAULT_SETTINGS.webgpu,
-		};
-	} catch {
-		return DEFAULT_SETTINGS;
-	}
 }

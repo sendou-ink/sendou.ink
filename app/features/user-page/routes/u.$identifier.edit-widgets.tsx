@@ -14,6 +14,7 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import clsx from "clsx";
 import { Search as SearchIcon, Trash } from "lucide-react";
 import { useState } from "react";
 import { flushSync } from "react-dom";
@@ -65,16 +66,18 @@ export default function EditWidgetsPage() {
 	const isSupporter = useHasRole("SUPPORTER");
 	const maxWidgets = maxWidgetsPerSlot(isSupporter);
 
-	const [selectedWidgets, setSelectedWidgets] = useState<
-		Array<Tables["UserWidget"]["widget"]>
-	>(data.currentWidgets);
+	// countdown dates are ISO strings in the db, typed as the form's Date output
+	const currentWidgets = data.currentWidgets as unknown as Array<
+		Tables["UserWidget"]["widget"]
+	>;
+	const [selectedWidgets, setSelectedWidgets] = useState(currentWidgets);
 	const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
 	const [emptySaveAttempted, setEmptySaveAttempted] = useState(false);
 
 	useUnsavedChangesChecker(
 		() =>
 			fetcher.state === "idle" &&
-			!R.isDeepEqual(selectedWidgets, data.currentWidgets),
+			!R.isDeepEqual(selectedWidgets, currentWidgets),
 	);
 
 	const mainWidgets = selectedWidgets.filter((w) => {
@@ -217,7 +220,7 @@ export default function EditWidgetsPage() {
 
 			<div className={styles.content}>
 				<div className={styles.grid}>
-					<section className={styles.selected}>
+					<section className={clsx(styles.selected, "scrollbar")}>
 						<DndContext
 							sensors={sensors}
 							onDragStart={handleDragStart}

@@ -1,0 +1,11 @@
+{
+	// TODO: type-check the .astro files too once TypeScript 7.1 is stable: `astro check` doesn't support
+	// TypeScript 7, its replacement @astrojs/ts-content-mapper needs 7.1 (tried with 7.1.0-beta, it still
+	// trips on Starlight's own .astro files and loses the props types of getStaticPaths)
+	"extends": "astro/tsconfigs/strict",
+	"include": [".astro/types.d.ts", "**/*"],
+	"exclude": ["dist"],
+	"compilerOptions": {
+		"allowImportingTsExtensions": true
+	}
+}

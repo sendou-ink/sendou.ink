@@ -1,5 +1,12 @@
 import clsx from "clsx";
-import { Braces, CircleHelp, Hand, Heart, HeartHandshake } from "lucide-react";
+import {
+	BookOpen,
+	Braces,
+	CircleHelp,
+	Hand,
+	Heart,
+	HeartHandshake,
+} from "lucide-react";
 import {
 	type ReactNode,
 	type RefObject,
@@ -25,11 +32,13 @@ import {
 	CALENDAR_PAGE,
 	COMP_ANALYZER_URL,
 	CONTRIBUTIONS_PAGE,
+	DOCS_SITE_URL,
 	EVENTS_PAGE,
 	FAQ_PAGE,
 	LFG_PAGE,
 	LINKS_PAGE,
 	LUTI_PAGE,
+	lobbiesPage,
 	MAPS_URL,
 	NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
 	navIconUrl,
@@ -73,6 +82,7 @@ const SITEMAP_COLUMNS = [
 			{ name: "sendouq", url: SENDOUQ_RULES_PAGE, label: "footer.link.qRules" },
 			{ name: "sendouq", url: TIERS_PAGE, label: "footer.link.tiers" },
 			{ name: "scrims", url: scrimsPage() },
+			{ name: "lobbies", url: lobbiesPage() },
 			{ name: "lfg", url: LFG_PAGE },
 			{ name: "calendar", url: CALENDAR_PAGE },
 			{ name: "calendar", url: EVENTS_PAGE, label: "footer.link.events" },
@@ -155,16 +165,40 @@ export function Footer() {
 		<footer className={styles.footer}>
 			<div className={styles.cards}>
 				<FooterCard
-					icon={<GitHubIcon className={styles.cardIcon} />}
-					title="GitHub"
-					subtitle={t("common:footer.github.subtitle")}
-					href={SENDOU_INK_GITHUB_URL}
+					icon={<Hand className={styles.cardIcon} />}
+					title={t("common:pages.welcome")}
+					subtitle={t("common:footer.welcome.subtitle")}
+					to={WELCOME_PAGE}
+				/>
+				<FooterCard
+					icon={<CircleHelp className={styles.cardIcon} />}
+					title={t("common:pages.faq")}
+					subtitle={t("common:footer.faq.subtitle")}
+					to={FAQ_PAGE}
+				/>
+				<FooterCard
+					icon={<BookOpen className={styles.cardIcon} />}
+					title={t("common:pages.docs")}
+					subtitle={t("common:footer.docs.subtitle")}
+					href={DOCS_SITE_URL}
+				/>
+				<FooterCard
+					icon={<Braces className={styles.cardIcon} />}
+					title={t("common:pages.api")}
+					subtitle={t("common:footer.api.subtitle")}
+					to={API_PAGE}
 				/>
 				<FooterCard
 					icon={<DiscordIcon className={styles.cardIcon} />}
 					title="Discord"
 					subtitle={t("common:footer.discord.subtitle")}
 					href={SENDOU_INK_DISCORD_URL}
+				/>
+				<FooterCard
+					icon={<GitHubIcon className={styles.cardIcon} />}
+					title="GitHub"
+					subtitle={t("common:footer.github.subtitle")}
+					href={SENDOU_INK_GITHUB_URL}
 				/>
 				<FooterCard
 					icon={<PatreonIcon className={styles.cardIcon} />}
@@ -177,24 +211,6 @@ export function Footer() {
 					title={t("common:pages.contributors")}
 					subtitle={t("common:footer.contributors.subtitle")}
 					to={CONTRIBUTIONS_PAGE}
-				/>
-				<FooterCard
-					icon={<CircleHelp className={styles.cardIcon} />}
-					title={t("common:pages.faq")}
-					subtitle={t("common:footer.faq.subtitle")}
-					to={FAQ_PAGE}
-				/>
-				<FooterCard
-					icon={<Hand className={styles.cardIcon} />}
-					title={t("common:pages.welcome")}
-					subtitle={t("common:footer.welcome.subtitle")}
-					to={WELCOME_PAGE}
-				/>
-				<FooterCard
-					icon={<Braces className={styles.cardIcon} />}
-					title={t("common:pages.api")}
-					subtitle={t("common:footer.api.subtitle")}
-					to={API_PAGE}
 				/>
 			</div>
 			<div className={styles.thanks}>

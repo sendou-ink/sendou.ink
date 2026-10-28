@@ -1,0 +1,25 @@
+:root:has(.app-root) {
+	--sl-content-width: 72rem;
+}
+
+/* the app's `body` styles land on .app-root (see scopeAppStyles), only the look of a page is wanted */
+.app-root {
+	display: block;
+	width: auto;
+	min-height: 0;
+	overflow-x: auto;
+	padding: 1.5rem;
+	border: 1px solid var(--color-border, var(--sl-color-hairline));
+	border-radius: 12px;
+}
+
+.usages {
+	& summary {
+		cursor: pointer;
+	}
+
+	& ul {
+		font-size: var(--sl-text-sm);
+		columns: 2 22rem;
+	}
+}

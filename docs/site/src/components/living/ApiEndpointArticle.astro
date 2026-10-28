@@ -1,0 +1,79 @@
+---
+import { Badge } from "@astrojs/starlight/components";
+import type { ApiExchange } from "../../../../../scripts/living-docs/api-examples.ts";
+import {
+	escapeHtml,
+	highlight,
+} from "../../../../../scripts/living-docs/highlight.ts";
+import { apiEndpointAnchor } from "../../../../../scripts/living-docs/links.ts";
+import type {
+	ApiEndpoint,
+	ApiType,
+} from "../../../../../scripts/living-docs/public-api.ts";
+import FileLink from "./FileLink.astro";
+
+interface Props {
+	endpoint: ApiEndpoint;
+	/** Its response (GET) or request body (POST). */
+	type: ApiType;
+	/** Link to the e2e test an example was captured from. */
+	testHref: (example: ApiExchange) => string;
+}
+
+const { endpoint, type, testHref } = Astro.props;
+const pathHtml = escapeHtml(endpoint.path).replace(
+	/(\{[^}]+\})/g,
+	`<span class="route-param">$1</span>`,
+);
+
+function json(value: unknown) {
+	return highlight(JSON.stringify(value, null, 2));
+}
+---
+
+<article class="route">
+	<header class="route-head">
+		<Badge
+			text={endpoint.method}
+			variant={endpoint.method === "GET" ? "success" : "caution"}
+			size="small"
+		/>
+		<h3 class="route-path" id={apiEndpointAnchor(endpoint)}>
+			<code set:html={pathHtml} />
+		</h3>
+		<FileLink file={type.file} line={type.line} label={type.name} />
+	</header>
+	<pre class="code scrollbar" set:html={type.html} />
+	{
+		endpoint.examples.map((example) => (
+			<details class="source" data-pagefind-ignore>
+				<summary>
+					Example{" "}
+					<Badge
+						text={String(example.status)}
+						variant={example.status >= 400 ? "danger" : "success"}
+						size="small"
+					/>{" "}
+					<code>{example.path}</code>
+				</summary>
+				<p class="muted">
+					From <a href={testHref(example)}>{example.test.titlePath.at(-1)}</a>
+				</p>
+				{example.requestBody !== null ? (
+					<>
+						<p class="muted">Request body</p>
+						<pre class="code scrollbar" set:html={json(example.requestBody)} />
+					</>
+				) : null}
+				{example.responseBody !== null ? (
+					<>
+						<p class="muted">Response</p>
+						<pre class="code scrollbar" set:html={json(example.responseBody)} />
+					</>
+				) : (
+					<p class="muted">Empty response</p>
+				)}
+			</details>
+		))
+	}
+</article>

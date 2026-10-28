@@ -1,0 +1,12 @@
+---
+import Default from "@astrojs/starlight/components/MarkdownContent.astro";
+---
+
+<Default><slot /></Default>
+
+<script>
+	import { drawMermaid } from "../living/mermaid.ts";
+
+	const diagrams = [...document.querySelectorAll<HTMLElement>("pre.mermaid")];
+	if (diagrams.length > 0) await drawMermaid(diagrams);
+</script>

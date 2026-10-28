@@ -1,57 +1,258 @@
 .card {
+	--card-padding: var(--s-4);
+	--card-weapon-size: var(--s-10);
+	--card-weapon-small-size: 22px;
+	--card-title-line-height: calc(var(--font-sm) * 1.25);
+	--card-patch-height: var(--selector-size);
+	--card-gear-size: var(--s-12);
+	--card-ability-main-size: var(--s-10);
+	--card-ability-sub-size: var(--s-8);
+	--card-ability-gap: var(--s-1);
+	--card-gear-gap: var(--s-2);
+	--card-action-size: var(--field-size-sm);
+	--card-mode-size: var(--selector-size);
+	--card-bar-height: var(--s-8);
+	--card-header-spacing: var(--s-1);
+	--card-divider-spacing: var(--s-3);
+	--card-actions-spacing: var(--s-2);
+	--card-bg: var(--color-bg-high);
+
+	/* in a grid of cards the header, gear and action rows are shared so the dividers line up */
+	display: grid;
+	overflow: clip;
+	position: relative;
+	padding: var(--card-padding);
+	padding-top: calc(
+		var(--card-bar-height) +
+		var(--card-padding) +
+		var(--s-0-5)
+	);
+	padding-bottom: var(--card-actions-spacing);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--card-bg);
+	grid-row: span 3;
+	grid-template-rows: subgrid;
+	grid-template-columns: minmax(0, 1fr);
+	min-width: 0;
+	row-gap: 0;
+}
+
+.weapons {
 	position: relative;
 	display: flex;
+	flex-shrink: 0;
 	flex-direction: column;
-	padding: var(--s-3);
-	border-radius: var(--radius-box);
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.patch {
+	padding: 0 var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-full);
 	background-color: var(--color-bg-high);
+	color: var(--color-text-high);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	height: var(--card-patch-height);
+	align-content: center;
+	text-box: trim-both cap alphabetic;
+	cursor: pointer;
+	font-family: inherit;
+	white-space: nowrap;
+
+	&:hover {
+		background-color: var(--color-bg);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.smallWeapons {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	translate: -30% 30%;
+	display: flex;
+	gap: var(--s-0-5);
+}
+
+.otherWeapons {
+	display: flex;
+	flex-wrap: wrap;
+	margin-top: var(--s-1-5);
+	gap: var(--s-1);
+}
+
+.moreWeapons {
+	display: grid;
+	width: var(--card-weapon-small-size);
+	height: var(--card-weapon-small-size);
+	padding: 0;
+	border: var(--border-style-high);
+	border-radius: 50%;
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	cursor: pointer;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	place-items: center;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.allWeapons {
+	display: flex;
+	flex-direction: column;
+	white-space: normal;
+}
+
+.header {
+	display: flex;
+	align-items: flex-start;
 	gap: var(--s-3);
 }
 
-.private {
-	background-color: var(--color-bg-higher);
+.titleBlock {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
 }
 
-.privateText {
+.details {
 	display: flex;
-	justify-content: center;
-	font-weight: var(--weight-semi);
-	gap: var(--s-1);
+	min-width: 0;
+	flex-direction: column;
+	margin-top: var(--s-0-5);
+	gap: var(--s-0-5);
 }
 
 .title {
+	display: -webkit-box;
 	overflow: hidden;
-	height: 2.5rem;
 	font-size: var(--font-sm);
-	line-height: 1.25;
-	word-wrap: break-word;
+	font-weight: var(--weight-bold);
+	line-height: var(--card-title-line-height);
+	overflow-wrap: anywhere;
+	text-box: trim-start cap alphabetic;
+	/* room above the trimmed cap height for glyphs reaching higher (e.g. Japanese), which the clamp would clip */
+	padding-top: 0.3em;
+	margin-top: -0.3em;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
 }
 
-.topRow {
-	display: flex;
-	justify-content: space-between;
+.titleText {
+	display: inline;
+	font-size: inherit;
 }
 
-.dateAuthorRow {
+.privateButton {
+	display: inline;
+	margin-inline-start: var(--s-1);
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--color-text-high);
+	cursor: pointer;
+	font: inherit;
+
+	&:hover {
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+
+	/* the title is trimmed to cap height and clips its overflow, so the icon must fit within its 0.3em top padding */
+	& svg {
+		width: 1.25cap;
+		height: 1.25cap;
+		vertical-align: baseline;
+	}
+}
+
+.owner {
 	display: flex;
+	min-width: 0;
+	align-items: center;
 	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-1-5);
+}
+
+.ownerLink {
+	display: flex;
+	min-width: 0;
+	align-items: center;
 	gap: var(--s-1);
+}
+
+.plusTier {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	gap: var(--s-0-5);
+}
+
+.bar {
+	position: absolute;
+	inset: 0 0 auto;
+	display: flex;
+	height: var(--card-bar-height);
+	align-items: center;
+	justify-content: center;
+	padding-inline: var(--card-padding);
+	gap: var(--s-1);
+	background-color: var(--color-border);
 }
 
 .modes {
-	position: absolute;
-	right: 0;
-	display: flex;
-	min-width: max-content;
-	margin-top: -21px;
-	gap: var(--s-1);
+	display: contents;
+}
+
+.mode {
+	display: grid;
+	width: var(--card-mode-size);
+	height: var(--card-mode-size);
+	border: var(--border-style);
+	border-radius: 50%;
+	background-color: var(--color-bg-high);
+	place-items: center;
+}
+
+.modeImage {
+	display: block;
+	width: 70%;
+	height: 70%;
 }
 
 .weapon {
 	position: relative;
+	flex-shrink: 0;
+}
+
+.weaponLink {
 	border-radius: 50%;
 
-	&:focus-within {
+	&:focus-visible {
 		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
@@ -59,57 +260,115 @@
 
 .weaponBackdrop {
 	--circle-backdrop-color: var(--color-bg);
+	--circle-backdrop-content-scale: 1.2;
+
+	& img {
+		width: var(--card-weapon-size);
+		height: var(--card-weapon-size);
+	}
+
+	.weaponSmall & img {
+		width: var(--card-weapon-small-size);
+		height: var(--card-weapon-small-size);
+	}
 }
 
 .top500 {
 	position: absolute;
 	z-index: 1;
-	top: -11px;
-	right: 12px;
-}
-
-.weaponText {
-	padding-left: var(--s-1);
-	color: var(--color-text-high);
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-semi);
-}
-
-.weapons {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: center;
-	gap: var(--s-1-5);
+	top: 0;
+	left: 50%;
+	translate: -50% -60%;
 }
 
 .gearAbilities {
-	display: grid;
-	gap: var(--s-2) var(--s-1);
-	grid-template-columns: repeat(5, max-content);
-	place-items: center;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	margin-top: var(--card-header-spacing);
+	padding-top: var(--card-divider-spacing);
+	gap: var(--s-2);
 }
 
-.noGear {
-	grid-template-columns: repeat(4, max-content);
-	margin: 0 auto;
-	margin-top: 10px;
-	margin-bottom: 1rem;
-	row-gap: 28px;
+.gearRow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--card-ability-gap);
 }
 
 .gearBackdrop {
 	--circle-backdrop-color: var(--color-bg);
+	--circle-backdrop-content-scale: 1.05;
+
+	margin-inline-end: calc(var(--card-gear-gap) - var(--card-ability-gap));
+
+	& img {
+		width: var(--card-gear-size);
+		height: var(--card-gear-size);
+	}
+
+	&::before {
+		border: var(--border-style);
+	}
 }
 
-.bottomRow {
-	display: flex;
+.ability {
+	display: grid;
+	width: var(--card-ability-sub-size);
+	height: var(--card-ability-sub-size);
+	flex-shrink: 0;
+	border: var(--border-style);
+	border-radius: 50%;
+	background-color: var(--color-bg-ability);
+	place-items: center;
+
+	& > * {
+		width: 100%;
+		height: 100%;
+	}
+}
+
+.abilityMain {
+	width: var(--card-ability-main-size);
+	height: var(--card-ability-main-size);
+}
+
+.abilityImage {
+	display: block;
+	width: 100%;
 	height: 100%;
-	align-items: flex-end;
+}
+
+.actions {
+	display: flex;
+	flex-wrap: wrap;
 	justify-content: center;
+	margin-top: var(--card-divider-spacing);
+	margin-inline: calc(var(--card-padding) * -1);
+	padding-top: var(--card-actions-spacing);
+	padding-inline: var(--card-padding);
+	border-top: var(--border-style);
 	gap: var(--s-2);
 }
 
-.smallText {
-	font-size: var(--font-2xs) !important;
+.action {
+	width: var(--card-action-size);
+	height: var(--card-action-size);
+	border: var(--border-style);
+	background-color: var(--color-bg-high);
+	color: var(--color-text-high);
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+
+	& svg {
+		min-width: var(--s-4);
+		max-width: var(--s-4);
+	}
+}
+
+.actionDestructive {
+	color: var(--color-error);
 }

@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": null,
+		"time": 119,
+		"special": [
+			[false, false, false, true],
+			[false, true, false, false]
+		],
+		"dead": [
+			[false, false, true, false],
+			[true, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Sendou POV, Museum d'Alfonsino RM at 1:59 (gacha-tournament VoD, t=5630), the same game as pov-alfonsino-painbrush-render-read-as-ready. Right slot 1 is the Painbrush really holding its special: the wash pales the whole icon, body sides included (ink 0 on both), not just the apex its head covers. Left slot 3 (blaster) holds its special too; left slot 2 and right slot 0 splatted."
+	}
+}

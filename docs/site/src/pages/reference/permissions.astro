@@ -1,0 +1,220 @@
+---
+import { getCollection, getEntry } from "astro:content";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import type { PermissionsDoc } from "../../../../../scripts/living-docs/permissions.ts";
+import { PERMISSIONS_DIR } from "../../../../../scripts/living-docs/permissions.ts";
+import ChecksBySide from "../../components/living/ChecksBySide.astro";
+import { count, markdown, sitePath, viewHref } from "../../living/format.ts";
+import "../../styles/living.css";
+
+const doc = (await getEntry("permissions", "permissions"))!
+	.data as PermissionsDoc;
+const features = (await getCollection("features"))
+	.map((entry) => entry.data)
+	.filter((feature) => feature.permissions !== null)
+	.sort((a, b) => a.config.label.localeCompare(b.config.label));
+const labels = new Map(
+	features.map((feature) => [feature.config.id, feature.config.label]),
+);
+
+const roleChecks = doc.checks.filter((check) => check.subject === null);
+const permissionChecks = doc.checks.filter((check) => check.subject !== null);
+const ungrantedChecks = permissionChecks.filter(
+	(check) => check.grantedIn === null,
+);
+const unchecked = doc.grants.filter(
+	(grant) =>
+		grant.kind === "built" &&
+		!permissionChecks.some(
+			(check) => check.grantedIn === grant.feature && check.name === grant.name,
+		) &&
+		!doc.directReads.some(
+			(read) => read.feature === grant.feature && read.name === grant.name,
+		),
+);
+const uncheckedNames = [
+	...new Set(unchecked.map((grant) => `${grant.feature}: ${grant.name}`)),
+];
+
+function labelOf(feature: string) {
+	return labels.get(feature) ?? feature;
+}
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Permissions",
+		description: "Which global roles and per-object permissions each feature checks, generated from the code.",
+		editUrl: false,
+	}}
+	headings={[
+		{ depth: 2, slug: "global-roles", text: "Global roles" },
+		{ depth: 2, slug: "features", text: "By feature" },
+		{ depth: 2, slug: "outside-the-system", text: "Outside the system" },
+	]}
+>
+	<p>
+		Who may do what, generated from the code: the global roles of{" "}
+		<a href={githubUrl(`${PERMISSIONS_DIR}/types.ts`, 1)}><code>{PERMISSIONS_DIR}</code></a> and
+		the per-object <code>permissions</code> the repositories build, each with every place checking
+		it. See <a href={sitePath("dev/permissions/")}>Permissions</a> for how the two work and where a
+		new check goes. Server checks throw a 403 (<code>requireRole</code>,{" "}
+		<code>requirePermission</code>), client ones only decide what is shown (<code>useHasRole</code>,{" "}
+		<code>useHasPermission</code>), and <code>hasPermission</code> / <code>roles.includes</code>{" "}
+		outside <code>.server</code> files may run on either side.
+	</p>
+
+	<h2 id="global-roles">Global roles</h2>
+	<p>
+		Granted to the logged in user by <code>userRoles()</code> of{" "}
+		<a href={githubUrl(`${PERMISSIONS_DIR}/mapper.server.ts`, 1)}><code>mapper.server.ts</code></a>.
+	</p>
+	<table>
+		<thead>
+			<tr>
+				<th>Role</th>
+				<th>Granted when</th>
+				<th>Checked in</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				doc.roles.map((role) => {
+					const checks = roleChecks.filter((check) => check.name === role.name);
+					return (
+						<tr>
+							<td>
+								<code>{role.name}</code>
+								{role.comment ? <Fragment set:html={markdown(role.comment)} /> : null}
+							</td>
+							<td>
+								{role.grantedWhen.map((condition) => (
+									<code>{condition}</code>
+								))}
+							</td>
+							<td class="living">
+								<ChecksBySide checks={checks} chipBy="feature" featureLabel={labelOf} />
+							</td>
+						</tr>
+					);
+				})
+			}
+		</tbody>
+	</table>
+
+	<h2 id="features">By feature</h2>
+	<p>
+		Each feature's Permissions page lists the per-object permissions it grants, who each is granted
+		to and every check of it (other features' included), and the roles its code checks.
+	</p>
+	<table>
+		<thead>
+			<tr>
+				<th>Feature</th>
+				<th>Grants</th>
+				<th>Checks in its code</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				features.map((feature) => (
+					<tr>
+						<td>
+							<a href={viewHref(feature.config.id, "permissions")}>{feature.config.label}</a>
+						</td>
+						<td>
+							{[...new Set(feature.permissions!.granted.map((granted) => granted.name))].map((name, index) => (
+								<>
+									{index > 0 ? ", " : ""}
+									<code>{name}</code>
+								</>
+							))}
+						</td>
+						<td>
+							{count(
+								doc.checks.filter((check) => check.feature === feature.config.id).length,
+								"check",
+							)}
+						</td>
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+
+	<h2 id="outside-the-system">Outside the system</h2>
+	<p>Best-effort flags, some of them deliberate: the permissions doc lists the boundaries.</p>
+
+	<p>
+		<strong>Granted but never checked</strong> ({count(uncheckedNames.length, "permission")}): no
+		check of that name matches the feature and nothing reads it directly.
+	</p>
+	{
+		uncheckedNames.length > 0 ? (
+			<ul>
+				{uncheckedNames.map((name) => (
+					<li>
+						<code>{name}</code>
+					</li>
+				))}
+			</ul>
+		) : null
+	}
+
+	<p>
+		<strong>Checked but never granted</strong> ({count(ungrantedChecks.length, "check")}): no
+		feature, or no single one, grants a permission of that name.
+	</p>
+	{
+		ungrantedChecks.length > 0 ? (
+			<ul>
+				{ungrantedChecks.map((check) => (
+					<li>
+						<code>{check.name}</code> on <code>{check.subject}</code> in{" "}
+						<a href={githubUrl(check.file, check.line)}>{`${check.file}:${check.line}`}</a>
+					</li>
+				))}
+			</ul>
+		) : null
+	}
+
+	<p>
+		<strong>Read directly</strong> ({count(doc.directReads.length, "read")}):{" "}
+		<code>x.permissions.NAME.includes(…)</code> skips <code>hasPermission</code> and with it the
+		admin bypass.
+	</p>
+	{
+		doc.directReads.length > 0 ? (
+			<ul>
+				{doc.directReads.map((read) => (
+					<li>
+						<a href={githubUrl(read.file, read.line)}>{`${read.file}:${read.line}`}</a>{" "}
+						<code>{read.code}</code>
+					</li>
+				))}
+			</ul>
+		) : null
+	}
+
+	<p>
+		<strong>Checks of who the user is</strong> ({count(doc.directChecks.length, "call")}):{" "}
+		<code>isAdmin</code>, <code>isStaff</code>, <code>isDev</code>, <code>isQa</code> and{" "}
+		<code>isSupporter</code> called outside <code>{PERMISSIONS_DIR}</code>. Authorizing an action on
+		an object with one is a bug, a role or permission should decide it.
+	</p>
+	{
+		doc.directChecks.length > 0 ? (
+			<ul>
+				{doc.directChecks.map((site) => (
+					<li>
+						<code>{site.name}</code> in{" "}
+						<a href={githubUrl(site.file, site.line)}>{`${site.file}:${site.line}`}</a>{" "}
+						<code>{site.code}</code>
+					</li>
+				))}
+			</ul>
+		) : null
+	}
+</StarlightPage>
+

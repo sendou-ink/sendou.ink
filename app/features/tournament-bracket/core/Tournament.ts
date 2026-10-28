@@ -47,7 +47,7 @@ export type BracketDerivedMeta = {
 	everyMatchOver: boolean;
 	participantTournamentTeamIds: number[];
 	teamsPendingCheckIn: number[] | null;
-	seeding: number[] | null;
+	previewSeeding: number[] | null;
 };
 
 /** A bracket's identity and state without its match data. See {@link Tournament.bracketsMeta}. */
@@ -77,7 +77,7 @@ export type SerializedBracket = {
 	teamsPendingCheckIn?: number[];
 	createdAt: number | null;
 	sources?: { bracketIdx: number; placements: number[] }[];
-	seeding?: number[];
+	previewSeeding?: number[];
 	settings: TournamentStageSettings | null;
 	requiresCheckIn: boolean;
 	startTime: number | null;
@@ -93,10 +93,8 @@ export type TournamentStream = StreamAccount & {
 	user: {
 		id: number;
 		username: string;
-		discordId: string;
-		discordAvatar: string | null;
 		customUrl: string | null;
-		customAvatarUrl: string | null;
+		avatar: string | null;
 	} | null;
 };
 
@@ -332,7 +330,7 @@ export class Tournament {
 				everyMatchOver: bracket.everyMatchOver,
 				participantTournamentTeamIds: bracket.participantTournamentTeamIds,
 				teamsPendingCheckIn: bracket.teamsPendingCheckIn ?? null,
-				seeding: bracket.seeding ?? null,
+				previewSeeding: bracket.previewSeeding ?? null,
 			}));
 		}
 
@@ -431,7 +429,7 @@ export class Tournament {
 			id: -1 * bracketIdx,
 			idx: bracketIdx,
 			tournament: this,
-			seeding: checkedInTeamsWithReplaysAvoided,
+			previewSeeding: checkedInTeamsWithReplaysAvoided,
 			preview: true,
 			name,
 			requiresCheckIn,
@@ -1345,7 +1343,6 @@ export class Tournament {
 			// dropped out teams and runs ended early by the advance threshold get no further rounds
 			if (bracket.everyMatchOver || team.droppedOut) continue;
 
-			// TODO: both seeding and participantTournamentTeamIds are used for the same thing
 			const isParticipant = bracket.participantTournamentTeamIds.includes(
 				team.id,
 			);
@@ -1374,7 +1371,9 @@ export class Tournament {
 		for (const bracket of this.brackets) {
 			if (!bracket.preview) continue;
 
-			const isParticipant = bracket.seeding?.includes(team.id);
+			const isParticipant = bracket.participantTournamentTeamIds.includes(
+				team.id,
+			);
 
 			if (isParticipant) {
 				return { type: "WAITING_FOR_BRACKET" } as const;

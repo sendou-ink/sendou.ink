@@ -444,7 +444,7 @@ function StageModeHeatmap({
 	stages: OverviewData["stages"];
 	limit?: number;
 }) {
-	const { t } = useTranslation(["user", "game-misc"]);
+	const { t } = useTranslation(["user", "game-misc", "common"]);
 	const data = useStatsLoaderData();
 	const layoutData = useUserPageLayoutData();
 
@@ -470,7 +470,7 @@ function StageModeHeatmap({
 				{modesShort.map((mode) => (
 					<div key={mode} className={styles.heatmapModeHeader}>
 						<ModeImage mode={mode} size={20} />
-						<span>{t(`game-misc:MODE_SHORT_${mode}`)}</span>
+						<span>{t(`common:modes.short.${mode}`)}</span>
 					</div>
 				))}
 				{playedStageIds.map((stageId) => (
@@ -528,7 +528,7 @@ function HeatmapCell({
 	season: number;
 	userId: number;
 }) {
-	const { t } = useTranslation(["user", "game-misc"]);
+	const { t } = useTranslation(["user", "game-misc", "common"]);
 
 	const winRate = stats ? winPercentage(stats.wins, stats.losses) : null;
 
@@ -548,7 +548,7 @@ function HeatmapCell({
 					data-few={String(
 						stats.wins + stats.losses < HEATMAP_FEW_MAPS_THRESHOLD,
 					)}
-					aria-label={`${t(`game-misc:MODE_SHORT_${mode}`)} ${t(`game-misc:STAGE_${stageId}`)}`}
+					aria-label={`${t(`common:modes.short.${mode}`)} ${t(`game-misc:STAGE_${stageId}`)}`}
 				>
 					<span className="font-bold">{Math.round(winRate)}%</span>
 					<span className="text-xxs">

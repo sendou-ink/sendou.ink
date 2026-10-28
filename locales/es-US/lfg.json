@@ -1,23 +1,3 @@
 {
-	"types.PLAYER_FOR_TEAM": "Buscando equipo",
-	"types.PLAYER_FOR_COACH": "Buscando entrenador personal",
-	"types.TEAM_FOR_PLAYER": "Buscando jugadores",
-	"types.TEAM_FOR_COACH": "Buscando entrenador de equipo",
-	"types.TEAM_FOR_SCRIM": "Buscando rivales para scrims",
-	"types.COACH_FOR_TEAM": "Ofreciendo entrenamiento",
-	"post.lastActive": "actualizado",
-	"noPosts": "Sin publicaciones que coincidan con el filtro",
-	"expiring": "La publicación está por expirar. ¿Sigues buscando?",
-	"filters.Weapon": "Grupo de armas",
-	"filters.Type": "Tipo de publicación",
-	"filters.Timezone": "Diferencia horaria",
-	"filters.Language": "Idioma hablado",
-	"filters.PlusTier": "Nivel Plus",
-	"filters.MaxTier": "Nivel máximo",
-	"filters.MinTier": "Nivel mínimo",
-	"filters.orAbove": "o más",
-	"new.noMorePosts": "No puedes crear más publicaciones",
-	"new.editOn": "Editar en tu",
-	"new.weaponPool.header": "Grupo de armas",
-	"new.weaponPool.matchProfile": "perfil de partida"
+	"expiring": "La publicación está por expirar. ¿Sigues buscando?"
 }

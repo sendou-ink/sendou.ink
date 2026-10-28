@@ -20,16 +20,48 @@ export function formatEnvErrors(
 	);
 }
 
-/** Non-empty string in production, `devFallback` elsewhere. */
-export function requiredInProd(isProd: boolean, devFallback: string) {
+/**
+ * Non-empty string in production, `devFallback` elsewhere. With `rejectDevFallback` production
+ * also refuses `devFallback` itself, for secrets whose development default is public.
+ */
+export function requiredInProd(
+	isProd: boolean,
+	devFallback: string,
+	{ rejectDevFallback = false } = {},
+) {
 	// defaults to `""` so a missing variable reaches `minLength` and gets the same
 	// actionable message as an empty one, instead of valibot's "Invalid key"
 	return isProd
 		? v.pipe(
 				v.optional(v.string(), ""),
 				v.minLength(1, "required in production"),
+				v.check(
+					(value) => !rejectDevFallback || value !== devFallback,
+					"must not be the development default in production",
+				),
 			)
 		: v.optional(v.string(), devFallback);
+}
+
+/**
+ * Throws when the e2e flag is set in a production build served from anywhere but localhost: the
+ * flag enables dev controls (seeding & user impersonation) and turns off production config
+ * validation.
+ */
+export function assertE2EFlagSafe({
+	nodeEnv,
+	isE2E,
+	siteDomain,
+}: {
+	nodeEnv: string | undefined;
+	isE2E: boolean;
+	siteDomain: string | undefined;
+}) {
+	if (nodeEnv !== "production" || !isE2E || isLocalhostUrl(siteDomain)) return;
+
+	throw new Error(
+		"VITE_E2E_TEST_RUN must not be set in production: it enables dev controls (seeding & user impersonation) and turns off production config validation. It is only allowed when VITE_SITE_DOMAIN is localhost.",
+	);
 }
 
 /** Boolean parsed from a boolean-like string environment variable (e.g. `"true"`, `"0"`, `"on"`). */
@@ -48,4 +80,10 @@ function isTruthyEnvValue(value: string) {
 
 function isFalsyEnvValue(value: string) {
 	return FALSY_ENV_VALUES.includes(value.toLowerCase());
+}
+
+function isLocalhostUrl(url: string | undefined) {
+	if (!url || !URL.canParse(url)) return false;
+
+	return ["localhost", "127.0.0.1"].includes(new URL(url).hostname);
 }

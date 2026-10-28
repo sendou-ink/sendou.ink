@@ -510,6 +510,27 @@ describe("getBracketProgressionLabel", () => {
 
 		expect(result).toBe("C");
 	});
+
+	test("numbers starting brackets whose labels would otherwise collide", () => {
+		const progression: ParsedBracket[] = [
+			createBracket("Swiss 1"),
+			createBracket("Swiss 2"),
+			createBracket("SE1"),
+			createBracket("SE2"),
+			createBracket("SE3"),
+			createBracket("SE4"),
+		];
+
+		progression[2].sources = [{ bracketIdx: 0, placements: [1, 2, 3, 4] }];
+		progression[4].sources = [{ bracketIdx: 0, placements: [5, 6, 7, 8] }];
+		progression[5].sources = [{ bracketIdx: 1, placements: [1, 2, 3, 4] }];
+
+		const labels = [0, 1, 3].map((bracketIdx) =>
+			getBracketProgressionLabel(bracketIdx, progression),
+		);
+
+		expect(labels).toEqual(["S 1", "S 2", "SE2"]);
+	});
 });
 
 const twitch = (account: string) => ({ platform: "TWITCH" as const, account });

@@ -15,6 +15,7 @@ export class Routine {
 		this.func = func;
 	}
 
+	/** Resolves to whether the routine finished without throwing, errors are logged rather than rethrown. */
 	async run() {
 		logger.info(`Running routine: ${this.name}`);
 		const startTime = performance.now();
@@ -22,9 +23,10 @@ export class Routine {
 			await this.func();
 		} catch (error) {
 			logger.error(`Error running routine ${this.name}: ${error}`);
-			return;
+			return false;
 		}
 		const endTime = performance.now();
 		logger.info(`Routine ${this.name} completed in ${endTime - startTime}ms`);
+		return true;
 	}
 }

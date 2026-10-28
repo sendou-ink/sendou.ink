@@ -1,12 +1,5 @@
 .buildsContainer {
 	display: grid;
-	justify-content: center;
 	gap: var(--s-4) var(--s-3);
-	grid-template-columns: repeat(auto-fit, 240px);
-}
-
-.buildFilterButton {
-	padding: 0 var(--s-1-5) !important;
-	gap: var(--s-1);
-	min-height: 32px;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
 }

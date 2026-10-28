@@ -56,6 +56,7 @@ import {
 	type TeamPickCountsFormValue,
 	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
+	tournamentTagsField,
 } from "../calendar-new-schemas";
 import {
 	type BracketFormValue,
@@ -403,7 +404,7 @@ function TournamentSteps() {
 					<FormField name="rules" />
 					<FormField name="avatarImgId" />
 					<FormField name="discordInviteCode" />
-					<FormField name="tags" />
+					<FormField name="tags" field={tournamentTagsField} />
 				</div>
 			</FormStep>
 
@@ -979,7 +980,7 @@ function CustomTeamPickPoolField({
 }: {
 	pickedModes: ModeShort[];
 }) {
-	const { t } = useTranslation(["calendar", "game-misc"]);
+	const { t } = useTranslation(["calendar", "game-misc", "common"]);
 	const { values } = useFormFieldContext();
 	const quickFill = useMapPoolQuickFill();
 
@@ -1012,7 +1013,7 @@ function CustomTeamPickPoolField({
 					: shortfalls
 							.map(({ mode, required, has }) =>
 								t("calendar:forms.teamPick.poolShortfall", {
-									mode: t(`game-misc:MODE_SHORT_${mode}`),
+									mode: t(`common:modes.short.${mode}`),
 									required,
 									has,
 								}),

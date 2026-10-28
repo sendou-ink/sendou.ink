@@ -119,6 +119,7 @@ function scoreboard(
 		matchScores = [100, 47] as [number | null, number | null],
 		paints = [] as (number | null)[],
 		names = NAMES,
+		noContest = false,
 	} = {},
 ): DetectedEvent {
 	const data: ScoreboardData = {
@@ -126,6 +127,7 @@ function scoreboard(
 		mode,
 		stage,
 		matchScores,
+		noContest,
 		players: weaponIds.map((weaponId, i) => ({
 			name: names[i] ?? `p${i}`,
 			weaponId,
@@ -166,11 +168,15 @@ function battleLogScoreboard(
 		paints = [] as (number | null)[],
 		stage = 0 as StageId | null,
 		mode = "SZ" as ModeShort | null,
+		names = NAMES,
+		ka = 10 as number | null,
 	} = {},
 ): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t, { paints, stage, mode }).data as ScoreboardData;
+	const base = scoreboard(t, { paints, stage, mode, names })
+		.data as ScoreboardData;
 	const data: ScoreboardBattleLogData = {
 		...base,
+		players: base.players.map((player) => ({ ...player, ka })),
 		timestamp,
 		matchScores: [100, 0],
 	};
@@ -978,6 +984,21 @@ test("a scoreless match replayed on the same map is a disconnect", () => {
 	assert.equal(skipped.get(built[1]!), undefined);
 });
 
+test("a game ended as a no contest builds no match", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(13, { time: 287, score: [100, 100] }),
+		death(14, "l1"),
+		scoreboard(35, { matchScores: [null, null], noContest: true }),
+		scoreboard(38, { matchScores: [null, null], noContest: true }),
+		mapStart(140),
+		scoreboard(440),
+	]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.match.startsAt, 140);
+	assert.deepEqual(built[0]!.match.matchScores, [100, 47]);
+});
+
 test("a full-length match whose score went unread is kept when the same map follows", () => {
 	const built = buildScannerMatches([
 		mapStart(0),
@@ -1271,15 +1292,84 @@ test("a battle log view with its stage unread does not close the match still gat
 	);
 });
 
-test("a battle log view whose recording time contradicts the earlier read forms its own match", () => {
+test("a battle log view sharing only paint totals whose recording time contradicts the earlier read forms its own match", () => {
 	const built = buildScannerMatches([
 		...playedGame(),
 		battleLogScoreboard(900, {
 			timestamp: "25.12.2025 19:30",
 			paints: GAME_PAINTS,
+			ka: null,
 		}),
 	]);
 	assert.equal(built.length, 2);
+});
+
+test("a battle log view sharing whole stat lines joins its match though its recording time is hours off", () => {
+	const view = battleLogScoreboard(900, {
+		timestamp: "25.12.2025 9:30",
+		paints: GAME_PAINTS,
+	});
+	const built = buildScannerMatches([...playedGame(), view]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.sources.at(-1), view);
+});
+
+const ALIASES = [
+	"Mesh Cap",
+	"Slugger",
+	"Sunshield",
+	"Bandana",
+	"Headband",
+	"Capped",
+	"Headphones",
+	"Now or Never Seven",
+];
+
+function xBattleGame(): DetectedEvent[] {
+	return [
+		mapStart(0),
+		kill(60, ["Headband"]),
+		kill(90, ["Capped"]),
+		scoreboard(300, { lobby: "X", paints: GAME_PAINTS, names: ALIASES }),
+	];
+}
+
+test("a battle log view revealing an X Battle's real names puts them on its match", () => {
+	const built = buildScannerMatches([
+		...xBattleGame(),
+		battleLogScoreboard(900, { paints: GAME_PAINTS, names: ALIASES }),
+		battleLogScoreboard(905, { paints: GAME_PAINTS }),
+	]);
+	assert.equal(built.length, 1);
+	assert.deepEqual(
+		built[0]!.match.teams.flatMap((team) =>
+			team.players.map((player) => player.name),
+		),
+		NAMES,
+	);
+	assert.deepEqual(
+		built[0]!.match.kills!.map((read) => read.name),
+		["l1", "l2"],
+	);
+});
+
+test("an X Battle's revealed names stay when the battle log shows the aliases again", () => {
+	const built = buildScannerMatches([
+		...xBattleGame(),
+		battleLogScoreboard(900, { paints: GAME_PAINTS }),
+		battleLogScoreboard(905, { paints: GAME_PAINTS, names: ALIASES }),
+	]);
+	assert.equal(built[0]!.match.teams[0].players[0]!.name, NAMES[0]);
+});
+
+test("a battle log view with other names keeps the names of a match a history screen closed", () => {
+	const built = buildScannerMatches([
+		battleLogScoreboard(900, { paints: GAME_PAINTS, names: ALIASES }),
+		battleLogScoreboard(905, { paints: GAME_PAINTS }),
+	]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.sources.length, 2);
+	assert.equal(built[0]!.match.teams[0].players[0]!.name, ALIASES[0]);
 });
 
 test("a battle log view with too few paint totals read forms its own match", () => {

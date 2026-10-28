@@ -192,7 +192,7 @@ export function MapPoolPicker({
 						description={sendouQIllegalPairs
 							.map(
 								(pair) =>
-									`${t(`game-misc:MODE_SHORT_${pair.mode}`)} ${t(`game-misc:STAGE_${pair.stageId}`)}`,
+									`${t(`common:modes.short.${pair.mode}`)} ${t(`game-misc:STAGE_${pair.stageId}`)}`,
 							)
 							.join(", ")}
 						submitButtonText={t("common:actions.remove")}

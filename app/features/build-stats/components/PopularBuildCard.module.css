@@ -1,0 +1,78 @@
+.card {
+	--card-padding: var(--s-3);
+	--card-action-size: var(--field-size-sm);
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--card-padding);
+	padding-bottom: var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	min-height: var(--selector-size);
+}
+
+.rank {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+	color: var(--color-text-high);
+
+	&[data-top="true"] {
+		color: var(--color-fg-accent);
+	}
+}
+
+.modes {
+	display: flex;
+	gap: var(--s-1);
+}
+
+.playersBar {
+	height: var(--s-1);
+	background-color: var(--color-bg-higher);
+}
+
+.abilities {
+	display: grid;
+	grid-template-columns: repeat(4, max-content);
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-3) var(--s-1-5);
+	padding-block: var(--s-1);
+}
+
+.actions {
+	display: flex;
+	justify-content: center;
+	margin-inline: calc(var(--card-padding) * -1);
+	padding-top: var(--s-2);
+	padding-inline: var(--card-padding);
+	border-top: var(--border-style);
+	gap: var(--s-2);
+}
+
+.action {
+	width: var(--card-action-size);
+	height: var(--card-action-size);
+	border: var(--border-style);
+	background-color: var(--color-bg-high);
+	color: var(--color-text-high);
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+
+	& svg {
+		min-width: var(--s-4);
+		max-width: var(--s-4);
+	}
+}

@@ -27,6 +27,7 @@ const ALL_NAMESPACES = [
 	"art",
 	"q",
 	"lfg",
+	"lobbies",
 	"org",
 	"front",
 	"friends",
@@ -74,21 +75,12 @@ const ORDINAL_SUFFIXES: Record<
 	LanguageCode,
 	Partial<Record<Intl.LDMLPluralRule, string>> | null
 > = {
-	da: null,
-	he: null,
-	nl: null,
 	en: { one: "^st", two: "^nd", few: "^rd", other: "^th" },
 	"es-ES": { other: "º" },
 	"es-US": { other: "^o" },
-	"fr-CA": { one: "^er", other: "^ème" },
 	"fr-EU": { one: "^er", other: "^ème" },
 	de: { other: "^." },
-	it: { many: "^o", other: "^o" },
 	ja: { other: "位" },
-	ko: { other: "^등" },
-	pl: { other: "^." },
-	"pt-BR": { other: "^º" },
-	ru: { other: "^ое" },
 	zh: { other: "名" },
 };
 

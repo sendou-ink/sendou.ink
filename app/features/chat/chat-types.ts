@@ -7,10 +7,16 @@ export type ChatRoomType =
 	| "SQ_MATCH"
 	| "TOURNAMENT_MATCH"
 	| "TOURNAMENT_TEAM"
-	| "SCRIM";
+	| "SCRIM"
+	/** A lobby's common room: everyone signed up */
+	| "LOBBY"
+	/** One side of a lobby room's current set */
+	| "LOBBY_TEAM";
 
 export type SystemMessageType =
 	| "USER_LEFT"
+	| "LEAVING_AFTER_SET"
+	| "HOST_CHANGED"
 	| "MATCH_STARTED"
 	| "READY_CHECK_STARTED"
 	| "LIKE_RECEIVED"
@@ -39,6 +45,8 @@ export type PersistedSystemMessageType = Extract<
 	| "CANCEL_CONFIRMED"
 	| "CANCEL_REFUSED"
 	| "USER_LEFT"
+	| "LEAVING_AFTER_SET"
+	| "HOST_CHANGED"
 	| "MAP_REPLAYED"
 	| "MAP_PICKED"
 	| "MAP_BANNED"

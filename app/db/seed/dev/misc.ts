@@ -8,7 +8,7 @@ import {
 	getArtFilename,
 	SEED_ART_URLS,
 } from "../../../../scripts/seed-art-urls";
-import { NZAP_TEST_DISCORD_ID, NZAP_YOUTUBE_ID } from "../constants";
+import { NZAP_TEST_ID, NZAP_YOUTUBE_ID } from "../constants";
 import { faker } from "../core/faker";
 import placements from "../data/placements.json";
 import * as ArtFactory from "../factories/ArtFactory";
@@ -122,6 +122,7 @@ async function seedXRankPlacements(users: SeededUsers) {
 	}
 
 	for (const [i, placement] of NZAP_XP_TROPHY_PLACEMENTS.entries()) {
+		const isLast = i === NZAP_XP_TROPHY_PLACEMENTS.length - 1;
 		await XRankPlacementFactory.create(
 			{
 				...placement,
@@ -130,7 +131,7 @@ async function seedXRankPlacements(users: SeededUsers) {
 				playerSplId: NZAP_PLAYER_SPL_ID,
 				playerUserId: users.nzapId,
 			},
-			{ refreshPeakXp: i === NZAP_XP_TROPHY_PLACEMENTS.length - 1 },
+			{ refreshPeakXp: isLast, recalculateBuildSortValues: isLast },
 		);
 	}
 }
@@ -237,7 +238,7 @@ async function seedNotifications(
 			type: "TAGGED_TO_ART",
 			meta: {
 				adderUsername: "N-ZAP",
-				adderDiscordId: NZAP_TEST_DISCORD_ID,
+				adderId: NZAP_TEST_ID,
 				artId: 1,
 			},
 		},

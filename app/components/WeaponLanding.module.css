@@ -86,6 +86,7 @@
 }
 
 .category {
+	position: relative;
 	display: flex;
 	flex-shrink: 0;
 	align-items: center;
@@ -114,7 +115,16 @@
 .categoryActive {
 	@container (width >= 40rem) {
 		background-color: var(--color-bg-higher);
-		box-shadow: inset 3px 0 0 var(--color-fg-accent);
+
+		&::before {
+			position: absolute;
+			inset-block: var(--radius-box);
+			left: 0;
+			width: 3px;
+			border-radius: 0 3px 3px 0;
+			background-color: var(--color-fg-accent);
+			content: "";
+		}
 	}
 }
 

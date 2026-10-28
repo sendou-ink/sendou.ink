@@ -1,27 +1,33 @@
 import * as v from "valibot";
 import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
-import { isValidDate } from "~/utils/dates";
+import { isStackableAbility } from "~/features/build-analyzer/core/ability-points";
 import { ability } from "~/utils/schema";
-import { MAX_BUILD_FILTERS } from "./builds-constants";
+import { MAX_BUILD_FILTERS, RECENT_PATCHES } from "./builds-constants";
 
-const abilityConditionSchema = v.object({
-	ability: v.pipe(v.string(), v.toUpperCase(), ability),
-	value: v.union([
-		v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(MAX_AP)),
-		v.boolean(),
-	]),
-	comparison: v.optional(
-		v.pipe(v.string(), v.toUpperCase(), v.picklist(["AT_LEAST", "AT_MOST"])),
-	),
-});
+const abilityFilterSchema = v.union([
+	v.object({
+		type: v.picklist(["HAS", "HAS_NOT"]),
+		ability,
+	}),
+	v.object({
+		type: v.picklist(["AT_LEAST", "AT_MOST"]),
+		ability: v.pipe(
+			ability,
+			v.check((value) => isStackableAbility(value)),
+		),
+		ap: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(MAX_AP)),
+	}),
+]);
 
-export const abilityConditionsSchema = v.pipe(
-	v.array(abilityConditionSchema),
+export const abilityFiltersSchema = v.pipe(
+	v.array(abilityFilterSchema),
 	v.maxLength(MAX_BUILD_FILTERS),
+	v.check(
+		(filters) =>
+			new Set(filters.map((filter) => filter.ability)).size === filters.length,
+	),
 );
 
-export const buildsDateFilterSchema = v.pipe(
-	v.string(),
-	v.regex(/^\d{4}-\d{2}-\d{2}$/),
-	v.check((value) => isValidDate(new Date(value))),
+export const buildsDateFilterSchema = v.picklist(
+	RECENT_PATCHES.map((patch) => patch.date),
 );

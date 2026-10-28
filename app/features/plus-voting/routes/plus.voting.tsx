@@ -7,6 +7,7 @@ import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { Markdown } from "~/components/Markdown";
 import { RelativeTime } from "~/components/RelativeTime";
+import { SubmitButton } from "~/components/SubmitButton";
 import { usePlusVoting } from "~/features/plus-voting/core";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { metaTags, ogPageImage } from "~/utils/remix";
@@ -173,9 +174,9 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 			) : (
 				<Form method="post">
 					<input type="hidden" name="votes" value={JSON.stringify(votes)} />
-					<SendouButton className={styles.votingSubmitButton} type="submit">
+					<SubmitButton className={styles.votingSubmitButton}>
 						Submit votes
-					</SendouButton>
+					</SubmitButton>
 				</Form>
 			)}
 		</div>

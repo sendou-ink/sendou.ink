@@ -4,14 +4,10 @@
 	"tabs.locale": "本地化",
 	"tabs.theme": "主题",
 	"tabs.sounds": "提示音",
-	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "避开",
 	"matchProfile.maps.prefer": "偏好",
 	"matchProfile.maps.neutral": "中立",
 	"sounds.likeReceived": "收到小组邀请",
-	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "SendouQ 对局开始",
-	"sounds.tournamentMatchStarted": "赛事对局开始",
-	"sounds.voiceJoin": "",
-	"sounds.voiceLeave": ""
+	"sounds.tournamentMatchStarted": "赛事对局开始"
 }

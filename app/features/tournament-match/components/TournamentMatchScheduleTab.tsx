@@ -18,6 +18,7 @@ import {
 } from "~/features/availability/components/PlayableWindowsSummary";
 import {
 	AvailabilityMemberRow,
+	AvailabilityMemberRows,
 	type AvailabilityPanelUser,
 	AvailabilitySummary,
 	availabilityRowStatus,
@@ -386,7 +387,7 @@ function OwnTeamAvailability({
 					)}
 				</span>
 			</h3>
-			<ul className={styles.rows}>
+			<AvailabilityMemberRows>
 				{roster.map((member) => (
 					<AvailabilityMemberRow
 						key={member.id}
@@ -394,7 +395,7 @@ function OwnTeamAvailability({
 						entry={entryOf(scheduleByUserId.get(member.id))}
 					/>
 				))}
-			</ul>
+			</AvailabilityMemberRows>
 			<AvailabilitySummary
 				statuses={roster.map((member) =>
 					availabilityRowStatus(entryOf(scheduleByUserId.get(member.id))),

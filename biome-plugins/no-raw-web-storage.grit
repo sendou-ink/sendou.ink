@@ -1,0 +1,10 @@
+language js
+
+// All localStorage / sessionStorage access goes through `app/modules/persisted-state`,
+// so a stored value's schema, default and cross-tab sync are declared once.
+or {
+	`localStorage` as $storage,
+	`sessionStorage` as $storage
+} where {
+	register_diagnostic(span=$storage, message="Do not use web storage directly. Declare the value with `PersistedState.define` / `defineMap` (app/modules/persisted-state) and read it with `usePersistedState` / `PersistedState.read`. Suppress with `// biome-ignore lint/plugin: <reason>` if it can't go through the module.", severity="error")
+}

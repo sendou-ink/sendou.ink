@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { UserCardData } from "./user-card-types";
+import type { UserCardData, UserCardsById } from "./user-card-types";
 import { privateNoteSentimentScore } from "./user-card-utils";
 
 const cardWithSentiment = (sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE") =>
@@ -7,11 +7,11 @@ const cardWithSentiment = (sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE") =>
 		privateNote: { text: "", sentiment, updatedAt: 0 },
 	}) as unknown as UserCardData;
 
-const userCards = new Map<number, UserCardData>([
-	[1, cardWithSentiment("POSITIVE")],
-	[2, cardWithSentiment("NEGATIVE")],
-	[3, cardWithSentiment("NEUTRAL")],
-]);
+const userCards: UserCardsById = {
+	1: cardWithSentiment("POSITIVE"),
+	2: cardWithSentiment("NEGATIVE"),
+	3: cardWithSentiment("NEUTRAL"),
+};
 
 describe("privateNoteSentimentScore", () => {
 	test.each([

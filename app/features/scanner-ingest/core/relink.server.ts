@@ -1,11 +1,14 @@
+import * as R from "remeda";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
+import { assertUnreachable } from "~/utils/types";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import * as Scoreboards from "./Scoreboards";
 
 type ReportedMatch =
 	| { type: "tournament"; tournamentId: number; tournamentMatchId: number }
-	| { type: "sendouq"; groupMatchId: number };
+	| { type: "sendouq"; groupMatchId: number }
+	| { type: "lobby"; lobbySetId: number };
 
 /**
  * Links stored matches to a game reported just now. Senders stop resending once sendou.ink has
@@ -16,14 +19,17 @@ type ReportedMatch =
  */
 export async function linkStoredMatches(reported: ReportedMatch) {
 	try {
+		// only the match's players' scans can link to its games
+		const players = (await reportedGames(reported)).flatMap((game) => [
+			...game.winnerUserIds,
+			...game.loserUserIds,
+		]);
 		const stored = await ScannerIngestRepository.findUnlinkedMatchesByHint({
-			context:
-				reported.type === "tournament"
-					? { type: "tournament", tournamentId: reported.tournamentId }
-					: { type: "sendouq", groupMatchId: reported.groupMatchId },
+			context: reportedContext(reported),
 			playedSince: dateToDatabaseTimestamp(
 				new Date(Date.now() - Scoreboards.PLAYED_AT_TOLERANCE_MS),
 			),
+			povUserIds: R.unique(players),
 		});
 
 		// sides are pinned by the sender's seat, so each sender's scans match on their own
@@ -37,14 +43,7 @@ export async function linkStoredMatches(reported: ReportedMatch) {
 
 		for (const [povUserId, matches] of byPovUserId) {
 			// reloaded per sender: an earlier sender's links mark games as taken
-			const games =
-				reported.type === "tournament"
-					? await ScannerIngestRepository.gamesInTournamentMatches([
-							reported.tournamentMatchId,
-						])
-					: await ScannerIngestRepository.gamesInGroupMatch(
-							reported.groupMatchId,
-						);
+			const games = await reportedGames(reported);
 			const matched = Scoreboards.matchedGames({
 				matches: matches.map((match) => match.data),
 				games,
@@ -63,5 +62,33 @@ export async function linkStoredMatches(reported: ReportedMatch) {
 		}
 	} catch (error) {
 		logger.error("Linking stored scanner matches failed", error);
+	}
+}
+
+function reportedContext(reported: ReportedMatch): Scoreboards.IngestContext {
+	switch (reported.type) {
+		case "tournament":
+			return { type: "tournament", tournamentId: reported.tournamentId };
+		case "sendouq":
+			return { type: "sendouq", groupMatchId: reported.groupMatchId };
+		case "lobby":
+			return { type: "lobby", lobbySetId: reported.lobbySetId };
+		default:
+			assertUnreachable(reported);
+	}
+}
+
+function reportedGames(reported: ReportedMatch) {
+	switch (reported.type) {
+		case "tournament":
+			return ScannerIngestRepository.gamesInTournamentMatches([
+				reported.tournamentMatchId,
+			]);
+		case "sendouq":
+			return ScannerIngestRepository.gamesInGroupMatch(reported.groupMatchId);
+		case "lobby":
+			return ScannerIngestRepository.gamesInLobbySet(reported.lobbySetId);
+		default:
+			assertUnreachable(reported);
 	}
 }

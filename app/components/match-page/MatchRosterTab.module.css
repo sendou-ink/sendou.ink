@@ -74,7 +74,8 @@
 	}
 }
 
-.tierBadge {
+.tierBadge,
+.leavingBadge {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -86,6 +87,19 @@
 	padding: 0;
 	cursor: pointer;
 	flex-shrink: 0;
+}
+
+.leavingBadge {
+	background-color: var(--color-warning-low);
+	color: var(--color-warning);
+}
+
+.leavingPopover {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	max-width: 200px;
+	font-size: var(--font-xs);
 }
 
 .tierPopover {

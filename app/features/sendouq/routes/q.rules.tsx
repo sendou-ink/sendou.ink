@@ -1,6 +1,7 @@
 import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { metaTags, ogPageImage } from "~/utils/remix";
+import { BANNING_POLICY_DOC_LINK } from "~/utils/urls";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -18,7 +19,7 @@ export default function SendouqRules() {
 			<br />
 			<p>
 				<a
-					href="https://github.com/sendou-ink/sendou.ink/blob/main/docs/banning-policy.md"
+					href={BANNING_POLICY_DOC_LINK}
 					target="_blank"
 					rel="noopener noreferrer"
 				>

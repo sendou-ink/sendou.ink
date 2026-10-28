@@ -79,14 +79,6 @@
 	cursor: pointer;
 }
 
-.mapButtonText {
-	position: absolute;
-	top: 14px;
-	text-transform: uppercase;
-	font-weight: var(--weight-bold);
-	cursor: not-allowed;
-}
-
 .mapButtonLabel {
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
@@ -108,44 +100,5 @@
 	&::before,
 	&::after {
 		border-bottom: 2px dotted var(--color-bg-higher);
-	}
-}
-
-.modeTabs {
-	display: flex;
-	gap: var(--s-1);
-}
-
-.modeTab {
-	display: grid;
-	place-items: center;
-	padding: var(--s-1-5);
-	border: var(--border-style);
-	border-radius: var(--radius-full);
-	background-color: transparent;
-
-	& img {
-		filter: grayscale(100%);
-		opacity: 0.5;
-		transition:
-			filter 0.2s,
-			opacity 0.2s;
-	}
-
-	&:hover img {
-		opacity: 0.8;
-	}
-
-	&:focus-visible {
-		outline: var(--focus-ring);
-	}
-}
-
-.modeTabActive {
-	background-color: var(--color-bg-higher);
-
-	& img {
-		filter: none;
-		opacity: 1;
 	}
 }

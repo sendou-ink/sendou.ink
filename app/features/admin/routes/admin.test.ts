@@ -5,6 +5,7 @@ import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -53,8 +54,9 @@ const skipPlusForSeason = (userId: number, seasonNth: number) =>
 		.execute();
 
 describe("Plus voting", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		vi.useFakeTimers();
+		await refreshBannedCache();
 	});
 
 	afterEach(async () => {
@@ -155,6 +157,21 @@ describe("Plus voting", () => {
 
 		expect(await countPlusTierMembers(1)).toBe(5);
 		expect(await countPlusTierMembers(2)).toBe(5);
+	});
+
+	test("passes a banned leaderboard user's plus server spot to the next in line", async () => {
+		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
+
+		await createUsers(7);
+		await createLeaderboard(users.ids().slice(1));
+		await UserFactory.grant(users.id(2), {
+			ban: { banned: 1, bannedReason: null, bannedByUserId: null },
+		});
+		await refreshBannedCache();
+
+		await adminAction({ _action: "REFRESH" }, { user: "admin" });
+
+		expect(await countPlusTierMembers(1)).toBe(5);
 	});
 
 	test("plus server skip flag ignored if for past season", async () => {

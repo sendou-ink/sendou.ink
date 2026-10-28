@@ -20,7 +20,7 @@
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { PlayerStatusFlags } from "./detectors/objective/player-status";
-import { editDistance, matchKey } from "./text";
+import { nameSimilarity } from "./text";
 
 /** A slot→row permutation: `perm[slot]` is the scoreboard row the slot feeds. */
 export type SlotRowPermutation = readonly [number, number, number, number];
@@ -225,10 +225,4 @@ export function applyPermutation<T>(
 	const out = [...flags] as T[];
 	for (const [slot, row] of perm.entries()) out[row] = flags[slot]!;
 	return out;
-}
-
-function nameSimilarity(a: string, b: string): number {
-	const ka = matchKey(a);
-	const kb = matchKey(b);
-	return 1 - editDistance(ka, kb) / Math.max(ka.length, kb.length, 1);
 }

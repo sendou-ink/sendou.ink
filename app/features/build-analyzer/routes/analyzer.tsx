@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { FlaskConical, SlidersHorizontal } from "lucide-react";
+import { ChartSpline, SlidersHorizontal } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
@@ -1157,6 +1157,7 @@ interface StatChartProps {
 	simple?: boolean;
 	/** Marks where the current build(s) sit on the curve: `x` ability points, `y` stat value. */
 	highlight?: Array<{ x: number; y: number }>;
+	triggerClassName?: string;
 }
 
 function StatChartPopover(props: StatChartProps) {
@@ -1168,7 +1169,8 @@ function StatChartPopover(props: StatChartProps) {
 					shape="circle"
 					variant="minimal"
 					size={props.simple ? "miniscule" : "small"}
-					icon={<FlaskConical />}
+					icon={<ChartSpline />}
+					className={props.triggerClassName}
 				/>
 			}
 		>
@@ -1744,6 +1746,8 @@ function StatCard({
 							valueSuffix={suffix}
 							mainWeaponId={mainWeaponId}
 							highlight={highlight}
+							triggerClassName={styles.statCardAction}
+							simple
 						/>
 					</>
 				)}
@@ -1845,7 +1849,7 @@ function DamageTable({
 			</thead>
 			<tbody>
 				{values.map((val, i) => {
-					if (val.type.includes("SECONDARY")) return null;
+					if (val.type.startsWith("DIRECT_SECONDARY")) return null;
 
 					const damage = (
 						damageValue: AnalyzedBuild["stats"]["damages"][number],

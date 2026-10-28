@@ -1,7 +1,7 @@
 .container {
 	display: grid;
 	gap: var(--s-10);
-	grid-template-columns: 1fr 2fr;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
 }
 
 .leftColumn {
@@ -16,7 +16,7 @@
 
 @container (width < 640px) {
 	.container {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.leftColumn {
@@ -140,18 +140,21 @@
 .statCollection {
 	display: grid;
 	gap: var(--s-2);
-	grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+	grid-template-columns: repeat(auto-fill, 10rem);
 	margin-block-start: var(--s-4);
 }
 
 .statCard {
+	--stat-card-padding: var(--s-2);
+
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	padding: var(--s-2);
+	padding: var(--stat-card-padding);
+	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	gap: var(--s-4);
+	gap: var(--s-3);
 }
 
 .statCardHighlighted {
@@ -174,10 +177,26 @@
 }
 
 .statCardAbilityContainer {
-	min-height: 22px;
+	box-sizing: content-box;
+	/* fits both the SUBTINY ability icons and the chart button so every footer is the same height */
+	min-height: max(26px, var(--field-size-xs));
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	margin-inline: calc(var(--stat-card-padding) * -1);
+	padding-top: var(--stat-card-padding);
+	padding-inline: var(--stat-card-padding);
+	border-top: var(--border-style);
+}
+
+.statCardAction {
+	border: var(--border-style);
+	background-color: var(--color-bg-high);
+	color: var(--color-text-high);
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .statCardPopoverTrigger {

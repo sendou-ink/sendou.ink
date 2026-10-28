@@ -1,0 +1,71 @@
+---
+import { getCollection } from "astro:content";
+import type { InferGetStaticPropsType } from "astro";
+import type { ClientStateDoc } from "../../../../../../scripts/living-docs/client-state.ts";
+import { anchor } from "../../../../../../scripts/living-docs/links.ts";
+import ClientStateDefinition from "../../../components/living/ClientStateDefinition.astro";
+import FeaturePage from "../../../components/living/FeaturePage.astro";
+import { sitePath } from "../../../living/format.ts";
+
+const SECTIONS = [
+	{ kind: "searchParams", slug: "search-params", text: "Search params" },
+	{ kind: "persisted", slug: "web-storage", text: "Web storage" },
+] as const;
+
+export async function getStaticPaths() {
+	const features = await getCollection("features");
+
+	return features
+		.filter((entry) => entry.data.views.includes("search-params"))
+		.map((entry) => ({
+			params: { feature: entry.id },
+			props: { feature: entry.data },
+		}));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { feature } = Astro.props;
+const sections = SECTIONS.map((section) => ({
+	...section,
+	definitions: feature.clientState
+		.filter((definition) => definition.kind === section.kind)
+		.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line),
+})).filter((section) => section.definitions.length > 0);
+
+function definitionAnchor(definition: ClientStateDoc) {
+	return anchor(definition.name);
+}
+---
+
+<FeaturePage
+	feature={feature}
+	view="search-params"
+	headings={sections.flatMap((section) => [
+		{ depth: 2, slug: section.slug, text: section.text },
+		...section.definitions.map((definition) => ({
+			depth: 3,
+			slug: definitionAnchor(definition),
+			text: definition.name,
+		})),
+	])}
+>
+	<Fragment slot="markdown">
+		<p>
+			The state {feature.config.label} keeps in the URL and in the browser's storage. Every param
+			has a default and never fails to decode, see <a href={sitePath("dev/search-params/")}>Search params</a>,
+			and each definition should have an <code>assertRoundTrips</code> test. The definitions of the
+			whole app are listed in <a href={sitePath("reference/search-params/")}>the reference</a>.
+		</p>
+		{
+			sections.map((section) => (
+				<>
+					<h2 id={section.slug}>{section.text}</h2>
+					{section.definitions.map((definition) => (
+						<ClientStateDefinition definition={definition} id={definitionAnchor(definition)} />
+					))}
+				</>
+			))
+		}
+	</Fragment>
+</FeaturePage>

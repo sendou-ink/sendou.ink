@@ -208,9 +208,7 @@ export function validateField(
 	name: string,
 	value: unknown,
 ): string | undefined {
-	const fieldSchema = name.includes(".")
-		? getNestedSchema(schema, name)
-		: (schema.entries[name] as AnySyncSchema | undefined);
+	const fieldSchema = getNestedSchema(schema, name);
 	if (!fieldSchema) return undefined;
 
 	const result = v.safeParse(fieldSchema, value);

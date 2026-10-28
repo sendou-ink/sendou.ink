@@ -9,59 +9,111 @@ import {
 } from "i18next";
 import { type FallbackNs, initReactI18next } from "react-i18next";
 import {
+	createContext,
 	createCookie,
 	type MiddlewareFunction,
 	type RouterContextProvider,
 } from "react-router";
-import { createI18nextMiddleware } from "remix-i18next";
 import { invariant } from "~/utils/invariant";
-import { config } from "./config";
-import { resources } from "./resources.server";
+import {
+	config,
+	DEFAULT_LANGUAGE,
+	type GameLanguageCode,
+	gameLanguages,
+	type LanguageCode,
+	languages,
+} from "./config";
+import { languageSearchParams } from "./i18n-search-params";
+import * as LanguageDetection from "./LanguageDetection";
+import { resources, resourcesWithGameLanguage } from "./resources.server";
 
 const TEN_YEARS_IN_SECONDS = 31_536_000 * 10;
 
-export const i18nCookie = createCookie("i18n", {
+const COOKIE_OPTIONS = {
 	sameSite: "lax",
 	path: "/",
 	maxAge: TEN_YEARS_IN_SECONDS,
-});
+} as const;
 
-const [remixI18nextMiddleware, getLocaleFromContext, getInstanceFromContext] =
-	createI18nextMiddleware({
-		detection: {
-			cookie: i18nCookie,
-			supportedLanguages: config.supportedLngs,
-			fallbackLanguage: config.fallbackLng,
-		},
-		i18next: {
-			...config,
-			resources,
-		},
-		plugins: [initReactI18next],
-	});
+const languageCookie = createCookie("i18n-site", COOKIE_OPTIONS);
+const gameLanguageCookie = createCookie("i18n-game", COOKIE_OPTIONS);
+
+const languageCodes = languages.map((lang) => lang.code);
+const gameLanguageCodes = gameLanguages.map((lang) => lang.code);
+
+const i18nextContext = createContext<i18n>();
 
 interface I18nStore {
-	locale: string;
+	locale: LanguageCode;
+	gameLanguage: GameLanguageCode;
 	instance: i18n;
 }
 
 const i18nAsyncLocalStorage = new AsyncLocalStorage<I18nStore>();
 
-/** Detects the locale and sets up the request-scoped i18next instance behind {@link getLocale} and {@link getServerTFunction}. */
-export const i18nMiddleware: MiddlewareFunction<Response> = (args, next) =>
-	remixI18nextMiddleware(args, () =>
-		i18nAsyncLocalStorage.run(
-			{
-				locale: getLocaleFromContext(args.context),
-				instance: getInstanceFromContext(args.context),
-			},
-			() => next(),
+/**
+ * Detects the site's language and the language of in-game names, then sets up the request-scoped i18next
+ * instance behind {@link getLocale} and {@link getServerTFunction}. A language picked via search param is
+ * remembered in a cookie. Without an explicit pick in-game names follow the site's language preferences, which
+ * can have a game language even when the site has no translation for it.
+ */
+export const i18nMiddleware: MiddlewareFunction<Response> = async (
+	{ request, context },
+	next,
+) => {
+	const cookieHeader = request.headers.get("Cookie");
+	const { lng, gameLng } = languageSearchParams.parse(request);
+
+	const preferences = [
+		lng,
+		await languageCookie.parse(cookieHeader),
+		...LanguageDetection.acceptedLanguages(
+			request.headers.get("Accept-Language"),
 		),
+	];
+	const locale =
+		LanguageDetection.match(preferences, languageCodes) ?? DEFAULT_LANGUAGE;
+	const gameLanguage =
+		gameLng ??
+		LanguageDetection.match(
+			[await gameLanguageCookie.parse(cookieHeader)],
+			gameLanguageCodes,
+		) ??
+		LanguageDetection.match(preferences, gameLanguageCodes) ??
+		DEFAULT_LANGUAGE;
+
+	const instance = requestInstance(locale, gameLanguage);
+	context.set(i18nextContext, instance);
+
+	const response = await i18nAsyncLocalStorage.run(
+		{ locale, gameLanguage, instance },
+		() => next(),
 	);
 
-/** The locale detected for the current request. */
-export function getLocale(): string {
+	if (lng) {
+		response.headers.append(
+			"Set-Cookie",
+			await languageCookie.serialize(locale),
+		);
+	}
+	if (gameLng) {
+		response.headers.append(
+			"Set-Cookie",
+			await gameLanguageCookie.serialize(gameLanguage),
+		);
+	}
+
+	return response;
+};
+
+/** The site's language detected for the current request. */
+export function getLocale(): LanguageCode {
 	return currentStore().locale;
+}
+
+/** The language of in-game names (weapons, stages etc.) detected for the current request. */
+export function getGameLanguage(): GameLanguageCode {
+	return currentStore().gameLanguage;
 }
 
 /** `TFunction` bound to the request's locale and the given namespaces (all in-memory, no async loading). */
@@ -86,7 +138,7 @@ export function getI18nInstance(
 	context: Readonly<RouterContextProvider>,
 ): i18n {
 	try {
-		return getInstanceFromContext(context);
+		return context.get(i18nextContext);
 	} catch {
 		return fallbackI18nInstance();
 	}
@@ -102,6 +154,30 @@ export async function getFixedTForLanguage<
 		language,
 		namespaces as Namespace,
 	) as unknown as TFunction<FallbackNs<N>>;
+}
+
+// one instance per language pair reused across requests, creating and initializing one costs ~40-100µs
+const requestInstances = new Map<string, i18n>();
+
+function requestInstance(
+	locale: LanguageCode,
+	gameLanguage: GameLanguageCode,
+): i18n {
+	const key = `${locale}:${gameLanguage}`;
+	let instance = requestInstances.get(key);
+	if (!instance) {
+		instance = createInstance();
+		instance.use(initReactI18next);
+		instance.init({
+			...config,
+			resources: resourcesWithGameLanguage(gameLanguage),
+			lng: locale,
+			initAsync: false,
+		});
+		requestInstances.set(key, instance);
+	}
+
+	return instance;
 }
 
 function currentStore(): I18nStore {
@@ -132,7 +208,7 @@ function fallbackI18nInstance(): i18n {
 		instance.init({
 			...config,
 			resources,
-			lng: config.fallbackLng,
+			lng: DEFAULT_LANGUAGE,
 			initAsync: false,
 		});
 		sharedFallbackInstance = instance;

@@ -11,6 +11,8 @@ import {
 import {
 	resolveFriendActivity,
 	resolveSendouQMatchStreams,
+	resolveUpcomingLobbiesOfFriends,
+	resolveVisibleActiveLobbyIdsOfFriends,
 } from "../friends-utils.server";
 
 export type FriendsLoaderData = typeof loader;
@@ -23,17 +25,28 @@ export const loader = async () => {
 	);
 	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
 
-	const [pendingRequests, incomingRequests, streamedSendouQMatches, schedules] =
-		await Promise.all([
-			FriendRepository.findPendingSentRequests(user.id),
-			FriendRepository.findPendingReceivedRequests(user.id),
-			resolveSendouQMatchStreams(),
-			FriendSchedule.findByUserIds({
-				userIds: unique.map((f) => f.id),
-				timezone: getViewerTimezone() ?? "UTC",
-				viewerId: user.id,
-			}),
-		]);
+	const [
+		pendingRequests,
+		incomingRequests,
+		streamedSendouQMatches,
+		upcomingLobbiesOfFriends,
+		visibleLobbyIds,
+		schedules,
+	] = await Promise.all([
+		FriendRepository.findPendingSentRequests(user.id),
+		FriendRepository.findPendingReceivedRequests(user.id),
+		resolveSendouQMatchStreams(),
+		resolveUpcomingLobbiesOfFriends(user.id),
+		resolveVisibleActiveLobbyIdsOfFriends({
+			viewerId: user.id,
+			friendIds: unique.map((f) => f.id),
+		}),
+		FriendSchedule.findByUserIds({
+			userIds: unique.map((f) => f.id),
+			timezone: getViewerTimezone() ?? "UTC",
+			viewerId: user.id,
+		}),
+	]);
 
 	const friends = R.sortBy(
 		unique
@@ -46,17 +59,17 @@ export const loader = async () => {
 					teamMemberCount: friend.teamMemberCount,
 					tournamentMinTeamSize: friend.tournamentMinTeamSize,
 					sendouQMatchStreams: streamedSendouQMatches,
+					visibleLobbyIds,
+					upcomingLobby: upcomingLobbiesOfFriends.get(friend.id),
 				});
 
 				return {
 					id: friend.id,
 					friendshipId: friend.friendshipId as number,
 					username: friend.username,
-					discordId: friend.discordId,
-					discordAvatar: friend.discordAvatar,
-					customAvatarUrl: friend.customAvatarUrl,
+					avatar: friend.avatar,
 					url: userPage({
-						discordId: friend.discordId,
+						id: friend.id,
 						customUrl: friend.customUrl,
 					}),
 					subtitle: activity.subtitle,
@@ -64,6 +77,7 @@ export const loader = async () => {
 					activityType: activity.type,
 					matchId: activity.matchId,
 					tournamentId: activity.tournamentId ?? friend.tournamentId,
+					lobbyId: activity.lobbyId,
 					stream: activity.stream,
 					friendshipCreatedAt: friend.friendshipCreatedAt,
 					isPinned: Boolean(friend.isPinned),
@@ -87,16 +101,16 @@ export const loader = async () => {
 					teamMemberCount: tm.teamMemberCount,
 					tournamentMinTeamSize: tm.tournamentMinTeamSize,
 					sendouQMatchStreams: streamedSendouQMatches,
+					visibleLobbyIds,
+					upcomingLobby: upcomingLobbiesOfFriends.get(tm.id),
 				});
 
 				return {
 					id: tm.id,
 					username: tm.username,
-					discordId: tm.discordId,
-					discordAvatar: tm.discordAvatar,
-					customAvatarUrl: tm.customAvatarUrl,
+					avatar: tm.avatar,
 					url: userPage({
-						discordId: tm.discordId,
+						id: tm.id,
 						customUrl: tm.customUrl,
 					}),
 					subtitle: activity.subtitle,
@@ -104,6 +118,7 @@ export const loader = async () => {
 					activityType: activity.type,
 					matchId: activity.matchId,
 					tournamentId: activity.tournamentId ?? tm.tournamentId,
+					lobbyId: activity.lobbyId,
 					stream: activity.stream,
 					isPinned: false,
 					schedule: schedules.get(tm.id) ?? null,
@@ -121,11 +136,9 @@ export const loader = async () => {
 			sender: {
 				id: req.senderId,
 				username: req.senderUsername,
-				discordId: req.senderDiscordId,
-				discordAvatar: req.senderDiscordAvatar,
-				customAvatarUrl: req.senderCustomAvatarUrl,
+				avatar: req.senderAvatar,
 				url: userPage({
-					discordId: req.senderDiscordId,
+					id: req.senderId,
 					customUrl: req.senderCustomUrl,
 				}),
 			},
@@ -136,11 +149,9 @@ export const loader = async () => {
 			receiver: {
 				id: req.receiverId,
 				username: req.receiverUsername,
-				discordId: req.receiverDiscordId,
-				discordAvatar: req.receiverDiscordAvatar,
-				customAvatarUrl: req.receiverCustomAvatarUrl,
+				avatar: req.receiverAvatar,
 				url: userPage({
-					discordId: req.receiverDiscordId,
+					id: req.receiverId,
 					customUrl: req.receiverCustomUrl,
 				}),
 			},

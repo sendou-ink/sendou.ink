@@ -1,0 +1,48 @@
+.bar {
+	--bar-height: var(--s-2-5);
+	--marker-overhang: var(--s-1);
+
+	position: relative;
+	height: var(--bar-height);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg-higher);
+
+	&[data-size="small"] {
+		--bar-height: var(--s-1-5);
+		--marker-overhang: 3px;
+	}
+}
+
+.fill,
+.fillSwatch {
+	border-radius: var(--radius-full);
+	background-color: var(--color-fg-accent);
+}
+
+.fill {
+	height: 100%;
+}
+
+.marker,
+.markerSwatch {
+	width: 3px;
+	border-radius: var(--radius-full);
+	background-color: var(--color-text);
+}
+
+.marker {
+	position: absolute;
+	top: calc(-1 * var(--marker-overhang));
+	height: calc(var(--bar-height) + 2 * var(--marker-overhang));
+	margin-inline-start: -1px;
+	box-shadow: 0 0 0 2px var(--color-bg-high);
+}
+
+.fillSwatch {
+	width: 14px;
+	height: var(--s-2);
+}
+
+.markerSwatch {
+	height: 14px;
+}

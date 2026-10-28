@@ -68,6 +68,11 @@ async function persistAndPublish(args: {
 	if (!room) return;
 
 	const inserted = await ChatRepository.insertSystemMessage(args);
+	await ChatRepository.upsertReadIndicator({
+		userId: args.authorUserId,
+		roomId: args.roomId,
+		lastSeenMessageId: inserted.id,
+	});
 	const message = await ChatRepository.findMessageById(inserted.id);
 	invariant(message, "inserted system message not found");
 

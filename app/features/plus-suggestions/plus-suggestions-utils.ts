@@ -1,6 +1,5 @@
 import type { Tables } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
-import { allTruthy } from "~/utils/arrays";
 import type { UserWithPlusTier } from "~/utils/kysely.server";
 import * as Seasons from "../mmr/core/Seasons";
 import { isVotingActive } from "../plus-voting/core";
@@ -14,11 +13,12 @@ interface CanAddCommentToSuggestionArgs {
 export function canAddCommentToSuggestionFE(
 	args: CanAddCommentToSuggestionArgs,
 ) {
-	return allTruthy([
-		!alreadyCommentedByUser(args),
-		isPlusServerMember(args.user),
-		args.user?.plusTier && args.targetPlusTier >= args.user?.plusTier,
-	]);
+	return Boolean(
+		!alreadyCommentedByUser(args) &&
+			isPlusServerMember(args.user) &&
+			args.user?.plusTier &&
+			args.targetPlusTier >= args.user.plusTier,
+	);
 }
 
 export function canAddCommentToSuggestionBE({
@@ -27,16 +27,16 @@ export function canAddCommentToSuggestionBE({
 	suggested,
 	targetPlusTier,
 }: CanAddCommentToSuggestionArgs) {
-	return allTruthy([
+	return Boolean(
 		canAddCommentToSuggestionFE({
 			user,
 			suggestions,
 			suggested,
 			targetPlusTier,
-		}),
-		playerAlreadySuggested({ suggestions, suggested, targetPlusTier }),
-		targetPlusTierIsSmallerOrEqual({ user, targetPlusTier }),
-	]);
+		}) &&
+			playerAlreadySuggested({ suggestions, suggested, targetPlusTier }) &&
+			targetPlusTierIsSmallerOrEqual({ user, targetPlusTier }),
+	);
 }
 
 function alreadyCommentedByUser({
@@ -89,12 +89,12 @@ export function canSuggestNewUser({
 
 	const existsSeason = Seasons.current() || Seasons.next();
 
-	return allTruthy([
-		!votingActive,
-		!hasSuggestedThisMonth,
-		isPlusServerMember(user),
-		existsSeason,
-	]);
+	return Boolean(
+		!votingActive &&
+			!hasSuggestedThisMonth &&
+			isPlusServerMember(user) &&
+			existsSeason,
+	);
 }
 
 function isPlusServerMember(user?: Pick<UserWithPlusTier, "plusTier">) {

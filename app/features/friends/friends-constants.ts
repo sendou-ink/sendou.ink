@@ -10,7 +10,11 @@ export type FriendActivityType =
 	| "TOURNAMENT_MATCH"
 	| "TOURNAMENT_WAITING"
 	| "SENDOUQ"
-	| "TOURNAMENT_SUB";
+	| "TOURNAMENT_SUB"
+	/** Present in a lobby, i.e. checked in or playing */
+	| "LOBBY"
+	/** Signed up for an upcoming lobby the viewer could join too */
+	| "LOBBY_UPCOMING";
 
 export type FriendActivityBadge = "MATCH" | "NEXT";
 
@@ -20,6 +24,8 @@ const ACTIVITY_BADGE: Record<FriendActivityType, FriendActivityBadge | null> = {
 	TOURNAMENT_WAITING: "NEXT",
 	SENDOUQ: null,
 	TOURNAMENT_SUB: null,
+	LOBBY: null,
+	LOBBY_UPCOMING: null,
 };
 
 export function friendActivityBadge(type: FriendActivityType | null) {
@@ -33,8 +39,8 @@ export function isInProgressFriendActivity(type: FriendActivityType | null) {
 }
 
 export function friendActivitySortValue(type: FriendActivityType | null) {
-	if (type === "SENDOUQ") return 4;
-	if (type === "TOURNAMENT_SUB") return 3;
+	if (type === "SENDOUQ" || type === "LOBBY") return 4;
+	if (type === "TOURNAMENT_SUB" || type === "LOBBY_UPCOMING") return 3;
 	if (isInProgressFriendActivity(type)) return 2;
 	return 0;
 }

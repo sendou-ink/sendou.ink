@@ -1,0 +1,25 @@
+---
+import type { FeatureDoc } from "../../../../../scripts/living-docs/document.ts";
+import type { SpecDoc } from "../../../../../scripts/living-docs/e2e.ts";
+import { screenshotSrc } from "../../living/format.ts";
+
+interface Props {
+	feature: FeatureDoc;
+	spec: SpecDoc;
+	line: number;
+	label: string;
+	variant: "storyboard-frame" | "divider-shot";
+}
+
+const { feature, spec, line, label, variant } = Astro.props;
+const src = screenshotSrc(feature, spec.path, line);
+---
+
+{
+	src ? (
+		<button type="button" class={variant} data-shot={src} data-caption={label}>
+			<img src={src} alt={label} loading="lazy" />
+			{variant === "storyboard-frame" ? <span>{label}</span> : null}
+		</button>
+	) : null
+}

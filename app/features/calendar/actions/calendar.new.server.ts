@@ -31,6 +31,8 @@ import {
 	teamPickSettingsFromFormValues,
 } from "../calendar-new-schemas";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
+import type { CalendarEventTag } from "../calendar-types";
+import * as CalendarEvent from "../core/CalendarEvent";
 import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action = defineAction(
@@ -38,32 +40,11 @@ export const action = defineAction(
 	async ({ body, resolveImages }) => {
 		const user = requireUser();
 
-		const isEditing = Boolean(body.eventToEditId);
 		const isAddingTournament = body.toToolsEnabled;
 		const isTournamentAdder = user.roles.includes("TOURNAMENT_ADDER");
 		const organizationId = body.organizationId
 			? Number(body.organizationId)
 			: null;
-
-		if (organizationId) {
-			await validateOrganization({
-				userId: user.id,
-				organizationId,
-				isTournamentAdder,
-			});
-		} else if (!isEditing) {
-			requireRole(
-				isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
-			);
-		}
-
-		if (body.trophyId) {
-			const trophyOrganizationId =
-				await TrophyRepository.findOrganizationIdById(body.trophyId);
-			if (trophyOrganizationId !== organizationId) {
-				errorToast("Trophy does not belong to the selected organization");
-			}
-		}
 
 		const eventToEdit = body.eventToEditId
 			? badRequestIfFalsy(
@@ -72,6 +53,34 @@ export const action = defineAction(
 					}),
 				)
 			: null;
+
+		const isKeepingCurrentOrganization =
+			eventToEdit !== null &&
+			(eventToEdit.organization?.id ?? null) === organizationId;
+
+		if (!isKeepingCurrentOrganization && organizationId) {
+			await validateOrganization({
+				userId: user.id,
+				organizationId,
+				isTournamentAdder,
+			});
+		} else if (!isKeepingCurrentOrganization) {
+			requireRole(
+				isAddingTournament ? "TOURNAMENT_ADDER" : "CALENDAR_EVENT_ADDER",
+			);
+		}
+
+		if (body.trophyId) {
+			const isAwardable =
+				organizationId !== null &&
+				(await TrophyRepository.isAwardableByOrganization({
+					trophyId: body.trophyId,
+					organizationId,
+				}));
+			if (!isAwardable) {
+				errorToast("Trophy does not belong to the selected organization");
+			}
+		}
 
 		const tournamentToEdit = eventToEdit?.tournamentId
 			? await tournamentFromDB(eventToEdit.tournamentId)
@@ -119,13 +128,11 @@ export const action = defineAction(
 			discordInviteCode: data.discordInviteCode
 				? pathnameFromPotentialURL(data.discordInviteCode)
 				: data.discordInviteCode,
-			tags:
-				data.tags.length > 0
-					? data.tags.toSorted(
-							(a, b) =>
-								CALENDAR_EVENT.TAGS.indexOf(a) - CALENDAR_EVENT.TAGS.indexOf(b),
-						)
-					: null,
+			tags: sortedTagsOrNull(
+				isAddingTournament
+					? data.tags.filter((tag) => !CalendarEvent.isVersusTag(tag))
+					: data.tags,
+			),
 			badges: data.trophyId
 				? []
 				: data.badges.filter((badge) => attachableBadgeIds.has(badge)),
@@ -222,6 +229,14 @@ export const action = defineAction(
 		throw redirect(calendarEventPage(createdEventId));
 	},
 );
+
+function sortedTagsOrNull(tags: Array<CalendarEventTag>) {
+	if (tags.length === 0) return null;
+
+	return tags.toSorted(
+		(a, b) => CALENDAR_EVENT.TAGS.indexOf(a) - CALENDAR_EVENT.TAGS.indexOf(b),
+	);
+}
 
 /** Bracket progression from the `brackets` + `progression` fields, already validated by the schema's refine. */
 function bracketProgressionFromFormData(data: {

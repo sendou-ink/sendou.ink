@@ -3,6 +3,7 @@
 	"editor.addTime": "Add time",
 	"editor.copyLastWeek": "Copy last week",
 	"editor.earlier": "Earlier",
+	"editor.emptyWeekConfirm": "This will mark you as unavailable for the whole week",
 	"editor.editDay": "Edit {{day}}",
 	"editor.later": "Later",
 	"editor.notFilled": "not filled",

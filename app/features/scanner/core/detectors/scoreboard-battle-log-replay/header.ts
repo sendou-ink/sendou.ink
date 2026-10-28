@@ -7,11 +7,11 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import type { Roi } from "../../canonical";
 import type { Mat } from "../../cv";
-import type { GlyphSet } from "../../glyphs";
+import type { GlyphSet, RecognizedChar } from "../../glyphs";
 import { ALL_STAGE_ENTRIES, LOBBY_MODE_COMBOS } from "../../localized";
 import { all, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
-import { readTagBandSteps } from "../scoreboard/header";
+import { readTagBandGlyphsSteps, readTagBandSteps } from "../scoreboard/header";
 import { HEADER_BOTTOM_BAND, HEADER_TOP_BAND } from "./rois";
 
 export interface ParsedReplayHeader {
@@ -30,6 +30,16 @@ export interface ParsedReplayHeader {
 }
 
 const MIN_MATCH_SCORE = 0.62;
+
+type Meridiem = "AM" | "PM";
+
+/** The clock's AM/PM letter reads as "o" (or a lookalike) whichever it is; the probe decides. */
+const MERIDIEM_LETTER_LOOKALIKES = /^[AaPpoO0n]$/;
+const CLOCK_DIGIT_LOOKALIKES = /^[0-9OoIl|S]$/;
+/** Lowest share of the letter's ink rows probed for legs. */
+const MERIDIEM_LEG_ROWS_FRACTION = 0.25;
+/** Recognizer's binarization (its default), so the probe sees the ink it segmented. */
+const MERIDIEM_INK_MIN = 150;
 
 /**
  * Lifted-blacks captures raise the tag background to ~80-115 gray, above
@@ -80,16 +90,21 @@ function foldDigitLookalikes(s: string): string {
 	return s.replace(/0/g, "o").replace(/[1|I]/g, "l");
 }
 
-function parseTopBand(reading: string): TopBandParse {
+function parseTopBand(
+	reading: string,
+	probedMeridiem: Meridiem | null,
+): TopBandParse {
 	let timestamp: string | null = null;
 	let stage: StageId | null = null;
 	let stageScore = 0;
 	// BlitzMain lookalikes ("I9:04", "O9/OS/2Oo6") fold to digits for the
-	// timestamp; the stage part keeps its original reading (1:1 replacements, offsets line up)
+	// timestamp, and "*" (the colon's runner-up template) to the colon; the stage
+	// part keeps its original reading (1:1 replacements, offsets line up)
 	const normalized = reading
 		.replace(/[Il|]/g, "1")
 		.replace(/[Oo]/g, "0")
-		.replace(/S/g, "5");
+		.replace(/S/g, "5")
+		.replace(/\*/g, ":");
 	const m =
 		TIMESTAMP_RE.exec(normalized) ??
 		TIMESTAMP_GAPPED_DATE_RE.exec(normalized) ??
@@ -98,8 +113,7 @@ function parseTopBand(reading: string): TopBandParse {
 		? reading.slice(reading.length - m[4]!.length)
 		: reading;
 	if (m) {
-		// P's bowl can read as "o", folded to "0" above
-		const meridiem = m[3] ? ` ${m[3].replace("0", "P")}` : "";
+		const meridiem = m[3] ? ` ${probedMeridiem ?? m[3].replace("0", "P")}` : "";
 		timestamp = `${m[1]!.replace(/ /g, "")} ${m[2]!.replace(/ /g, "")}${meridiem}`;
 	}
 	if (stageReading) {
@@ -143,20 +157,21 @@ export function* parseReplayHeaderSteps(
 		tagLeadInMax: bands.tagLeadInMax,
 		tagColumnFraction: bands.tagColumnFraction,
 	};
-	const readTop = function* (): MatchSteps<ReturnType<typeof parseTopBand>> {
-		let top = parseTopBand(
-			yield* readTagBandSteps(gray, bands.top, topGlyphs, leadIn, speculative),
+	const readTopBand = function* (tagDarkMax?: number) {
+		const read = yield* readTagBandGlyphsSteps(
+			gray,
+			bands.top,
+			topGlyphs,
+			{ ...leadIn, tagDarkMax },
+			speculative,
+			probeMeridiem,
 		);
+		return parseTopBand(read.text, read.inspected);
+	};
+	const readTop = function* (): MatchSteps<ReturnType<typeof parseTopBand>> {
+		let top = yield* readTopBand();
 		if (top.stage === null) {
-			const retry = parseTopBand(
-				yield* readTagBandSteps(
-					gray,
-					bands.top,
-					topGlyphs,
-					{ ...leadIn, tagDarkMax: TAG_DARK_MAX_LIFTED },
-					speculative,
-				),
-			);
+			const retry = yield* readTopBand(TAG_DARK_MAX_LIFTED);
 			if (retry.stageScore >= top.stageScore) top = retry;
 		}
 		return top;
@@ -215,4 +230,42 @@ export function* parseReplayHeaderSteps(
 			bottomScore: bottomMatch?.score ?? 0,
 		},
 	};
+}
+
+/**
+ * A 12h clock's AM/PM, off the letter before the "M" that follows the time:
+ * A stands on two legs, P on its stem alone, so the letter's bottom rows
+ * carry ink right of its middle only for A. Both letters read as "o".
+ */
+function probeMeridiem(
+	band: Mat,
+	chars: readonly RecognizedChar[],
+): Meridiem | null {
+	const colonAt = chars.findIndex((c) => c.char === ":");
+	if (colonAt === -1) return null;
+	const mAt = chars.findIndex(
+		(c, i) =>
+			i > colonAt + 1 &&
+			c.char === "M" &&
+			MERIDIEM_LETTER_LOOKALIKES.test(chars[i - 1]!.char) &&
+			CLOCK_DIGIT_LOOKALIKES.test(chars[i - 2]!.char),
+	);
+	if (mAt === -1) return null;
+	const letter = chars[mAt - 1]!;
+	const { cols, data } = band;
+	const middle = Math.floor((letter.x0 + letter.x1) / 2);
+	const legRows = Math.max(
+		1,
+		Math.round((letter.y1 - letter.y0) * MERIDIEM_LEG_ROWS_FRACTION),
+	);
+	let rowsWithRightLeg = 0;
+	for (let y = letter.y1 - legRows; y < letter.y1; y++) {
+		for (let x = middle + 1; x < letter.x1; x++) {
+			if (data[y * cols + x]! >= MERIDIEM_INK_MIN) {
+				rowsWithRightLeg++;
+				break;
+			}
+		}
+	}
+	return rowsWithRightLeg * 2 > legRows ? "AM" : "PM";
 }

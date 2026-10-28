@@ -5,7 +5,8 @@ import {
 	SubWeaponImage,
 	WeaponImage,
 } from "~/components/Image";
-import { mySlugify, weaponParamsPage } from "~/utils/urls";
+import { weaponSlug } from "~/utils/english-weapon-names";
+import { weaponParamsPage } from "~/utils/urls";
 import type { WeaponKitInfo } from "../weapon-params-types";
 import styles from "./WeaponKits.module.css";
 
@@ -23,7 +24,7 @@ export function WeaponKits({ kits }: { kits: WeaponKitInfo[] }) {
 					<span className={styles.kitGear}>
 						<Link
 							to={weaponParamsPage(
-								mySlugify(t(`weapons:SUB_${kit.subWeaponId}`, { lng: "en" })),
+								weaponSlug({ type: "SUB", id: kit.subWeaponId }),
 							)}
 							className={styles.gearLink}
 						>
@@ -31,9 +32,7 @@ export function WeaponKits({ kits }: { kits: WeaponKitInfo[] }) {
 						</Link>
 						<Link
 							to={weaponParamsPage(
-								mySlugify(
-									t(`weapons:SPECIAL_${kit.specialWeaponId}`, { lng: "en" }),
-								),
+								weaponSlug({ type: "SPECIAL", id: kit.specialWeaponId }),
 							)}
 							className={styles.gearLink}
 						>

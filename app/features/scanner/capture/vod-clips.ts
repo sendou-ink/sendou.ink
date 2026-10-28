@@ -130,11 +130,13 @@ async function copyAudio(
 	source.close();
 }
 
-/** A small JPEG data URL of the frame at `t` seconds, for a clip card; null when the file can't be decoded there. */
+/** A JPEG data URL of the frame at `t` seconds, small by default (a clip card's); null when the file can't be decoded there. */
 export async function vodFrameThumbnail(
 	file: File,
 	t: number,
+	width = THUMBNAIL_WIDTH,
 ): Promise<string | null> {
+	const height = Math.round((width * THUMBNAIL_HEIGHT) / THUMBNAIL_WIDTH);
 	const input = new Input({
 		formats: ALL_FORMATS,
 		source: new BlobSource(file),
@@ -146,15 +148,9 @@ export async function vodFrameThumbnail(
 		if (!sample) return null;
 		try {
 			const canvas = document.createElement("canvas");
-			canvas.width = THUMBNAIL_WIDTH;
-			canvas.height = THUMBNAIL_HEIGHT;
-			sample.draw(
-				canvas.getContext("2d")!,
-				0,
-				0,
-				THUMBNAIL_WIDTH,
-				THUMBNAIL_HEIGHT,
-			);
+			canvas.width = width;
+			canvas.height = height;
+			sample.draw(canvas.getContext("2d")!, 0, 0, width, height);
 			return canvas.toDataURL("image/jpeg", 0.7);
 		} finally {
 			sample.close();

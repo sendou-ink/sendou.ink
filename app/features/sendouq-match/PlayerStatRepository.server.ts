@@ -121,6 +121,28 @@ export async function findSeasonStagesByUserId({
 	}, {});
 }
 
+/** Per-mode per-stage win/loss records of a user, summed over the given seasons. */
+export function findMapResultsByUserIdAndSeasons({
+	userId,
+	seasons,
+}: {
+	userId: number;
+	seasons: number[];
+}) {
+	return db
+		.selectFrom("MapResult")
+		.select(({ fn }) => [
+			"mode",
+			"stageId",
+			fn.sum<number>("wins").as("wins"),
+			fn.sum<number>("losses").as("losses"),
+		])
+		.where("userId", "=", userId)
+		.where("season", "in", seasons)
+		.groupBy(["mode", "stageId"])
+		.execute();
+}
+
 /** Mates or enemies for a user in a given season, ordered by most sets played together. */
 export async function findSeasonMatesEnemiesByUserId({
 	userId,

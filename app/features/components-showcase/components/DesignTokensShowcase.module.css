@@ -1,0 +1,125 @@
+.preview {
+	padding: var(--s-4);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+}
+
+.tokenValue {
+	position: relative;
+	font-variant-numeric: tabular-nums;
+}
+
+.probe {
+	position: absolute;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.mockCard {
+	padding: var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.mockTitle {
+	color: var(--color-text);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.mockAvatar {
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	border-radius: var(--radius-avatar);
+	background-color: var(--color-bg-higher);
+}
+
+.mockBadge {
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-fill-second);
+	color: var(--color-fg-on-second);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.mockRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--s-1-5) var(--s-2);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	font-size: var(--font-sm);
+}
+
+.scale,
+.sizes,
+.typeScale {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.scaleRow {
+	display: grid;
+	grid-template-columns: 6rem minmax(0, 1fr) 4rem minmax(0, 7.5rem);
+	align-items: center;
+	gap: var(--s-3);
+	font-size: var(--font-sm);
+}
+
+.scaleBarTrack {
+	display: flex;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.spacingBar {
+	flex-shrink: 0;
+	height: 0.75rem;
+	border-radius: 2px;
+	background-color: var(--color-fg-accent);
+}
+
+.sizeRow,
+.typeRow {
+	display: grid;
+	grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+	align-items: center;
+	gap: var(--s-4);
+	padding-block: var(--s-2);
+	border-bottom: var(--border-style);
+
+	&:last-child {
+		border-bottom: none;
+	}
+}
+
+.typeSample {
+	overflow-wrap: anywhere;
+}
+
+.borders {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+	gap: var(--s-3);
+}
+
+.borderSample {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.borderBox {
+	height: 3rem;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+}

@@ -1,6 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
-import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -12,13 +11,13 @@ import {
 	weaponIdToBaseWeaponId,
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
+import { englishWeaponName, weaponSlug } from "~/utils/english-weapon-names";
 import { notFound } from "~/utils/remix.server";
 import {
 	specialWeaponNameSlugToId,
 	subWeaponNameSlugToId,
 	weaponNameSlugToId,
 } from "~/utils/unslugify.server";
-import { mySlugify } from "~/utils/urls";
 import * as WeaponParams from "../core/WeaponParams";
 import specialWeaponParamsData from "../data/all-version-special-params.json";
 import subWeaponParamsData from "../data/all-version-sub-params.json";
@@ -37,8 +36,6 @@ const specialParamsData =
 	specialWeaponParamsData as WeaponParams.AllVersionParams;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const t = await getFixedTForLanguage("en", ["weapons"]);
-
 	const mainWeaponId = weaponNameSlugToId(params.slug);
 	if (typeof mainWeaponId === "number") {
 		if (weaponIdToType(mainWeaponId) === "ALT_SKIN") {
@@ -46,8 +43,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		}
 		return mainWeaponData(
 			mainWeaponId,
-			t(`weapons:MAIN_${mainWeaponId}`),
-			mySlugify(t(`weapons:MAIN_${mainWeaponId}`, { lng: "en" })),
+			englishWeaponName({ type: "MAIN", id: mainWeaponId }),
+			weaponSlug({ type: "MAIN", id: mainWeaponId }),
 		);
 	}
 
@@ -55,8 +52,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (typeof subWeaponId === "number") {
 		return subWeaponData(
 			subWeaponId,
-			t(`weapons:SUB_${subWeaponId}`),
-			mySlugify(t(`weapons:SUB_${subWeaponId}`, { lng: "en" })),
+			englishWeaponName({ type: "SUB", id: subWeaponId }),
+			weaponSlug({ type: "SUB", id: subWeaponId }),
 		);
 	}
 
@@ -64,8 +61,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (typeof specialWeaponId === "number") {
 		return specialWeaponData(
 			specialWeaponId,
-			t(`weapons:SPECIAL_${specialWeaponId}`),
-			mySlugify(t(`weapons:SPECIAL_${specialWeaponId}`, { lng: "en" })),
+			englishWeaponName({ type: "SPECIAL", id: specialWeaponId }),
+			weaponSlug({ type: "SPECIAL", id: specialWeaponId }),
 		);
 	}
 

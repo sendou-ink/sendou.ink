@@ -1,0 +1,18 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	width: 100%;
+}
+
+.bar {
+	height: var(--s-2);
+	background-color: var(--color-bg-accent);
+}
+
+.labels {
+	display: flex;
+	justify-content: space-between;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}

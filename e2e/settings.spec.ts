@@ -1,11 +1,11 @@
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { WeaponBuildsPage } from "./pages/builds/weapon-builds-page";
 import { CalendarPage } from "./pages/calendar/calendar-page";
 import { FaqPage } from "./pages/info/faq-page";
-import { SELECTED_MAP_CLASS } from "./pages/settings/map-mode-preferences-field";
 import { MatchProfilePage } from "./pages/settings/match-profile-page";
 import { SettingsPage } from "./pages/settings/settings-page";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
@@ -98,6 +98,28 @@ test.describe("Settings", () => {
 		await expect(faq.question("What is the Plus Server?")).toBeVisible();
 	});
 
+	test("shows in-game names in the picked game language and the rest in the site's language", async ({
+		page,
+		factories,
+	}) => {
+		await factories.BuildFactory.create({
+			ownerId: ADMIN_ID,
+			weaponSplIds: [LUNA_BLASTER_ID],
+		});
+
+		const settings = new SettingsPage(page);
+		const weaponBuilds = new WeaponBuildsPage(page);
+
+		await settings.goto("locale");
+		await settings.selectGameLanguage("日本語");
+
+		await weaponBuilds.goto("luna-blaster");
+		await expect(
+			weaponBuilds.buildCard(0).weaponImage("ノヴァブラスター"),
+		).toBeVisible();
+		await expect(weaponBuilds.locators.abilityStatsTab).toBeVisible();
+	});
+
 	test("persists sound settings and dark/light theme across reload", async ({
 		page,
 	}) => {
@@ -132,6 +154,59 @@ test.describe("Settings", () => {
 });
 
 test.describe("Match profile map preferences", () => {
+	test("shows win rates, sorts maps by them and edits the pool from the slots", async ({
+		page,
+		factories,
+	}) => {
+		const season = Seasons.allStarted()[0];
+		await factories.MapResultFactory.create({
+			userId: ADMIN_ID,
+			season,
+			mode: "TC",
+			stageId: 1,
+			wins: 1,
+			losses: 4,
+		});
+		await factories.MapResultFactory.create({
+			userId: ADMIN_ID,
+			season,
+			mode: "TC",
+			stageId: 2,
+			wins: 8,
+			losses: 2,
+		});
+
+		await impersonate(page);
+
+		const matchProfile = new MatchProfilePage(page);
+		await matchProfile.goto();
+
+		await expect(matchProfile.maps.modeRow("TC")).toContainText("60%");
+
+		await matchProfile.maps.selectModeTab("TC");
+		await expect(matchProfile.maps.mapCards("TC").first()).toHaveAttribute(
+			"data-testid",
+			"map-pool-TC-1",
+		);
+		await matchProfile.maps.sortMaps("BEST");
+		await expect(matchProfile.maps.mapCards("TC").first()).toHaveAttribute(
+			"data-testid",
+			"map-pool-TC-2",
+		);
+		await expect(matchProfile.maps.mapCards("TC").first()).toContainText("#1");
+
+		await matchProfile.maps.mapButton("TC", 2).click();
+		await matchProfile.maps.poolSlot("Hagglefish Market").click();
+		await expect(matchProfile.maps.mapButton("TC", 2)).toHaveAttribute(
+			"aria-pressed",
+			"false",
+		);
+
+		await expect(matchProfile.maps.bannedMap("Wahoo World")).not.toBeVisible();
+		await matchProfile.maps.bannedMapsToggle().click();
+		await expect(matchProfile.maps.bannedMap("Wahoo World")).toBeVisible();
+	});
+
 	test("retains map selection when toggling a mode prefer -> avoid -> prefer", async ({
 		page,
 	}) => {
@@ -143,8 +218,9 @@ test.describe("Match profile map preferences", () => {
 		await matchProfile.maps.setModePreference("SZ", "Prefer");
 		await matchProfile.maps.selectModeTab("SZ");
 		await matchProfile.maps.mapButton("SZ", 1).click();
-		await expect(matchProfile.maps.mapButton("SZ", 1)).toHaveClass(
-			SELECTED_MAP_CLASS,
+		await expect(matchProfile.maps.mapButton("SZ", 1)).toHaveAttribute(
+			"aria-pressed",
+			"true",
 		);
 
 		// avoiding hides the picker, but the selection should be remembered
@@ -153,8 +229,9 @@ test.describe("Match profile map preferences", () => {
 
 		await matchProfile.maps.setModePreference("SZ", "Prefer");
 		await matchProfile.maps.selectModeTab("SZ");
-		await expect(matchProfile.maps.mapButton("SZ", 1)).toHaveClass(
-			SELECTED_MAP_CLASS,
+		await expect(matchProfile.maps.mapButton("SZ", 1)).toHaveAttribute(
+			"aria-pressed",
+			"true",
 		);
 	});
 

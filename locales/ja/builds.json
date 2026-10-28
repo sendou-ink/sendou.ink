@@ -9,7 +9,6 @@
 	"forms.gear.SHOES": "ギア (クツ)",
 	"forms.abilities": "ギアパワー",
 	"deleteConfirm": "'{{title}}'を削除しますか?",
-	"stats.count.title": "{{count}} による統計 {{weapon}} のギア構成",
 	"stats.ap.title": "ギアポイント平均",
 	"stats.percentage.title": "メインパワーでのみ使用",
 	"stats.all": "すべて",
@@ -17,19 +16,9 @@
 	"stats.private": "非公開",
 	"linkButton.abilityStats": "ギア統計",
 	"linkButton.popularBuilds": "人気のあるギア構成",
-	"noPopularBuilds": "現在、このブキに対する人気のギア構成はないようです。",
-	"noBuildsForWeapon": "",
-	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "空欄",
-	"filters.abilities": "",
-	"filters.mode": "",
-	"filters.date": "",
-	"filters.addAbility": "",
 	"filters.has": "含む",
 	"filters.does.not.have": "含まない",
 	"filters.atLeast": "最小",
-	"filters.atMost": "最大",
-	"filters.date.since": "",
-	"filters.date.custom": "カスタム",
-	"filters.filterByWeapon": "武器で"
+	"filters.atMost": "最大"
 }

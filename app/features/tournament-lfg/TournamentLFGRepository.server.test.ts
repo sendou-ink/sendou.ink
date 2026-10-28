@@ -36,8 +36,10 @@ const mergeTeams = (args: {
 	survivingTeamId: number;
 	otherTeamId: number;
 	maxGroupSize: number;
+	requireInGameNames?: boolean;
 }) =>
 	TournamentLFGRepository.mergeTeams({
+		requireInGameNames: false,
 		...args,
 		chatRoomExpiresAt: addDays(new Date(), 7),
 	});
@@ -133,7 +135,7 @@ describe("findLookingTeamsByTournamentId", () => {
 	});
 });
 
-describe("insertLike / deleteLike", () => {
+describe("insertLike", () => {
 	beforeEach(async () => {
 		await users.create(2);
 	});
@@ -172,8 +174,14 @@ describe("insertLike / deleteLike", () => {
 
 		expect(likes.given).toHaveLength(1);
 	});
+});
 
-	test("deleteLike removes the like", async () => {
+describe("deleteLike", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("removes the like", async () => {
 		const tournament = await createTournament();
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
@@ -395,6 +403,34 @@ describe("mergeTeams", () => {
 		);
 	});
 
+	test("fills in the in-game names of merged members when required", async () => {
+		const tournament = await createTournament();
+		const playerOne = await UserFactory.create({
+			profile: { inGameName: "Player#1111" },
+		});
+		const playerTwo = await UserFactory.create({
+			profile: { inGameName: "Player#2222" },
+		});
+		const team1 = await createPlaceholder(tournament.id, playerOne.id);
+		const team2 = await createPlaceholder(tournament.id, playerTwo.id);
+
+		await mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
+			maxGroupSize: 4,
+			requireInGameNames: true,
+		});
+
+		const members = await db
+			.selectFrom("TournamentTeamMember")
+			.select("inGameName")
+			.where("tournamentTeamId", "=", team1.id)
+			.execute();
+		expect(new Set(members.map((member) => member.inGameName))).toEqual(
+			new Set(["Player#1111", "Player#2222"]),
+		);
+	});
+
 	test("deletes the other team's chat room", async () => {
 		const tournament = await createTournament();
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
@@ -547,7 +583,7 @@ describe("updateMemberRole", () => {
 	});
 });
 
-describe("updateStayAsSub", () => {
+describe("updateOwnStayAsSub", () => {
 	beforeEach(async () => {
 		await users.create(1);
 	});
@@ -629,6 +665,31 @@ describe("leaveLfg", () => {
 			.executeTakeFirstOrThrow();
 
 		expect(teamRow.isLooking).toBe(0);
+	});
+});
+
+describe("findSubGroups", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("returns only the placeholders of players who stay as sub", async () => {
+		const tournament = await createTournament();
+		const subPost = await TournamentLFGTeamFactory.create({
+			tournamentId: tournament.id,
+			userId: users.id(1),
+			isStayAsSub: true,
+			lfgNote: "Free all day",
+		});
+		await createPlaceholder(tournament.id, users.id(2));
+
+		const subGroups = await TournamentLFGRepository.findSubGroups(
+			tournament.id,
+		);
+
+		expect(subGroups).toHaveLength(1);
+		expect(subGroups[0].id).toBe(subPost.id);
+		expect(subGroups[0].message).toBe("Free all day");
 	});
 });
 

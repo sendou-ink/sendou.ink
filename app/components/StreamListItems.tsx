@@ -10,7 +10,7 @@ import { useHydrated } from "~/hooks/useHydrated";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl, tournamentInfoPage } from "~/utils/urls";
 import { Image } from "./Image";
-import { ListLink } from "./SideNav";
+import { ListLink } from "./ListItem";
 import styles from "./StreamListItems.module.css";
 import { TierPill } from "./TierPill";
 

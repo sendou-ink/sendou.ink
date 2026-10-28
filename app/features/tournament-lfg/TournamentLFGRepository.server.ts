@@ -17,7 +17,10 @@ import {
 } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
-/** @returns user ids whose chat room set changed, for `notifyRoomsChanged`. */
+/**
+ * Puts a registered team in the queue to look for more members, giving it a chat room once it has two members.
+ * @returns user ids whose chat room set changed, for `notifyRoomsChanged`.
+ */
 export function startLooking(args: {
 	teamId: number;
 	chatRoomExpiresAt: Date;
@@ -39,6 +42,7 @@ type CreatePlaceholderTeamArgs = {
 	isStayAsSub?: boolean;
 	lfgNote?: string;
 };
+/** Puts a player without a team in the queue as a placeholder team of their own, also how a sub post is made (`isStayAsSub`). */
 export function insertPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 	return db.transaction().execute(async (trx) => {
 		const createdTeam = await trx
@@ -68,8 +72,12 @@ export function insertPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 	});
 }
 
+/**
+ * Groups in the tournament's queue, placeholders and registered teams looking for more members alike. The owner and
+ * managers of a group handle its invitations, only the owner its members' roles and its note.
+ */
 export async function findLookingTeamsByTournamentId(tournamentId: number) {
-	return db
+	const rows = await db
 		.selectFrom("TournamentTeam")
 		.innerJoin(
 			"TournamentTeamMember",
@@ -97,8 +105,27 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 		.where("TournamentTeam.isLooking", "=", 1)
 		.groupBy("TournamentTeam.id")
 		.execute();
+
+	return rows.map((row) => {
+		const ownerIds = row.members
+			.filter((member) => member.role === "OWNER")
+			.map((member) => member.id);
+		const managerIds = row.members
+			.filter((member) => member.role !== "REGULAR")
+			.map((member) => member.id);
+
+		return {
+			...row,
+			permissions: {
+				MANAGE_INVITATIONS: managerIds,
+				MANAGE_ROLES: ownerIds,
+				EDIT_NOTE: ownerIds,
+			},
+		};
+	});
 }
 
+/** Sub posts of the tournament: placeholders of players who stay as sub, listed once registration has closed. */
 export async function findSubGroups(tournamentId: number) {
 	const rows = await db
 		.selectFrom("TournamentTeam")
@@ -123,16 +150,23 @@ export async function findSubGroups(tournamentId: number) {
 	return rows;
 }
 
-/** @returns user ids whose chat room set changed, for `notifyRoomsChanged`. */
+/**
+ * Moves the members of `otherTeamId` to `survivingTeamId` (its owner becoming a manager) and deletes the other team. The
+ * merged team is a registered one, leaving the queue once full. Clears the likes of the surviving team.
+ * @returns user ids whose chat room set changed, for `notifyRoomsChanged`.
+ */
 export function mergeTeams({
 	survivingTeamId,
 	otherTeamId,
 	maxGroupSize,
+	requireInGameNames,
 	chatRoomExpiresAt,
 }: {
 	survivingTeamId: number;
 	otherTeamId: number;
 	maxGroupSize: number;
+	/** Fills the in-game name of members who don't have one yet, as registering does. */
+	requireInGameNames: boolean;
 	chatRoomExpiresAt: Date;
 }): Promise<number[]> {
 	return db.transaction().execute(async (trx) => {
@@ -153,6 +187,20 @@ export function mergeTeams({
 				})
 				.where("TournamentTeamMember.tournamentTeamId", "=", otherTeamId)
 				.where("TournamentTeamMember.userId", "=", member.userId)
+				.execute();
+		}
+
+		if (requireInGameNames) {
+			await trx
+				.updateTable("TournamentTeamMember")
+				.set((eb) => ({
+					inGameName: eb
+						.selectFrom("User")
+						.select("User.inGameName")
+						.whereRef("User.id", "=", "TournamentTeamMember.userId"),
+				}))
+				.where("TournamentTeamMember.tournamentTeamId", "=", survivingTeamId)
+				.where("TournamentTeamMember.inGameName", "is", null)
 				.execute();
 		}
 
@@ -186,6 +234,7 @@ export function mergeTeams({
 	});
 }
 
+/** One group inviting another, a no-op when already invited or when either has left the queue since. */
 export async function insertLike({
 	likerTeamId,
 	targetTeamId,
@@ -209,6 +258,7 @@ export async function insertLike({
 	}
 }
 
+/** Withdraws an invitation. */
 export function deleteLike({
 	likerTeamId,
 	targetTeamId,
@@ -223,6 +273,7 @@ export function deleteLike({
 		.execute();
 }
 
+/** Invitations the group has given and received, each as the id of the other group. */
 export async function findAllLikesByTeamId(teamId: number) {
 	const rows = await db
 		.selectFrom("TournamentLFGLike")
@@ -245,6 +296,7 @@ export async function findAllLikesByTeamId(teamId: number) {
 	};
 }
 
+/** Sets the note shown on the group's card, `null` to remove it. */
 export function updateTeamNote({
 	teamId,
 	value,
@@ -259,6 +311,7 @@ export function updateTeamNote({
 		.execute();
 }
 
+/** Makes a member of the group a manager or a regular member. @throws if `role` is `OWNER`. */
 export function updateMemberRole({
 	userId,
 	teamId,
@@ -280,6 +333,7 @@ export function updateMemberRole({
 		.execute();
 }
 
+/** Sets whether the acting user stays as sub if their group finds no members before registration closes. */
 export function updateOwnStayAsSub({
 	teamId,
 	value,
@@ -295,7 +349,11 @@ export function updateOwnStayAsSub({
 		.execute();
 }
 
-/** @returns user ids whose chat room set changed, for `notifyRoomsChanged`. */
+/**
+ * Takes the user's group out of the queue: a placeholder (sub posts included) is deleted, a registered team only stops
+ * looking, losing its likes and its members' stay as sub preference.
+ * @returns user ids whose chat room set changed, for `notifyRoomsChanged`.
+ */
 export function leaveLfg({
 	userId,
 	tournamentId,
@@ -318,7 +376,13 @@ export function leaveLfg({
 			])
 			.where("TournamentTeamMember.userId", "=", userId)
 			.where("TournamentTeam.tournamentId", "=", tournamentId)
-			.where("TournamentTeam.isLooking", "=", 1)
+			// starting a bracket clears isLooking, also from sub posts
+			.where((eb) =>
+				eb.or([
+					eb("TournamentTeam.isLooking", "=", 1),
+					eb("TournamentTeam.isPlaceholder", "=", 1),
+				]),
+			)
 			.executeTakeFirst();
 
 		if (!userTeam) return [];
@@ -351,6 +415,7 @@ export function leaveLfg({
 	});
 }
 
+/** Ids of the tournament's users who stay as sub. */
 export async function findAllSubsByTournamentId(tournamentId: number) {
 	const rows = await db
 		.selectFrom("TournamentTeamMember")

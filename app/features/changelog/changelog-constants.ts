@@ -32,6 +32,7 @@ export const DISCORD_EMOJI_NAMES: Record<NavIcon, string> = {
 	badges: "badges",
 	luti: "luti",
 	scanner: "scanner",
+	lobbies: "lobbies",
 };
 
 /** Stands in for the sendou.ink logo, used by entries without a nav item. */

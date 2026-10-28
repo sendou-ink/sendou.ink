@@ -56,14 +56,14 @@ function OrganizerMapPool() {
 }
 
 function TeamPickRules() {
-	const { t } = useTranslation(["tournament", "game-misc"]);
+	const { t } = useTranslation(["tournament", "game-misc", "common"]);
 	const tournament = useTournament();
 	const teamPick = tournament.teamPickSettings;
 
 	if (!teamPick) return null;
 
 	const picks = teamPick.modes
-		.map(({ mode, count }) => `${count}× ${t(`game-misc:MODE_SHORT_${mode}`)}`)
+		.map(({ mode, count }) => `${count}× ${t(`common:modes.short.${mode}`)}`)
 		.join(", ");
 
 	return (

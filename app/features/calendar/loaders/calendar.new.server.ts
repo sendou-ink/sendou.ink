@@ -101,6 +101,11 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const eventToCopy = eventToCopyRaw
 		? {
 				...eventToCopyRaw,
+				organization:
+					eventToCopyRaw.organization &&
+					validOrganizationIds.includes(eventToCopyRaw.organization.id)
+						? eventToCopyRaw.organization
+						: null,
 				badgePrizes: eventToCopyRaw.badgePrizes?.filter((badge) =>
 					managedBadges.some((mb) => mb.id === badge.id),
 				),

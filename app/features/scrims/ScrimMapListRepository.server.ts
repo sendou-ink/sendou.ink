@@ -1,7 +1,10 @@
 import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
-import type { DB, TablesInsertable } from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import type { TournamentSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
 import { jsonArrayFrom } from "~/utils/kysely.server";
@@ -74,6 +77,7 @@ export async function findMapListsByScrimPostId(
 			"ScrimMapList.tournamentId",
 			"CalendarEvent.tournamentId",
 		)
+		.leftJoin("Tournament", "ScrimMapList.tournamentId", "Tournament.id")
 		.select((eb) => [
 			"ScrimMapList.side",
 			"ScrimMapList.source",
@@ -81,6 +85,8 @@ export async function findMapListsByScrimPostId(
 			"ScrimMapList.serializedPool",
 			"ScrimMapList.updatedAt",
 			eb.ref("CalendarEvent.name").as("tournamentName"),
+			"Tournament.mapPickingStyle",
+			eb.ref("Tournament.settings").as("tournamentSettings"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("MapPoolMap")
@@ -106,8 +112,24 @@ function resolveMapList(row: {
 	source: "TOURNAMENT" | "POOL";
 	serializedPool: string | null;
 	tournamentMapPool: Array<{ mode: ModeShort; stageId: StageId }>;
+	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"] | null;
+	tournamentSettings: TournamentSettings | null;
 }): Array<{ mode: ModeShort; stageId: StageId }> {
-	if (row.source === "TOURNAMENT") return row.tournamentMapPool;
+	if (row.source === "TOURNAMENT") return resolveTournamentMapPool(row);
 	if (!row.serializedPool) return [];
 	return new MapPool(row.serializedPool).stageModePairs;
+}
+
+function resolveTournamentMapPool(row: {
+	tournamentMapPool: Array<{ mode: ModeShort; stageId: StageId }>;
+	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"] | null;
+	tournamentSettings: TournamentSettings | null;
+}) {
+	if (row.mapPickingStyle !== "AUTO") return row.tournamentMapPool;
+
+	const teamPick =
+		row.tournamentSettings?.teamPick ??
+		TeamPick.defaultSettings([...rankedModesShort]);
+
+	return TeamPick.effectivePool(teamPick, row.tournamentMapPool).stageModePairs;
 }

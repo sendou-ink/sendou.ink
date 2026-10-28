@@ -1,12 +1,21 @@
 import { Volume2 } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 import { useTranslation } from "react-i18next";
+import {
+	soundEnabledPersisted,
+	soundVolumePersisted,
+} from "~/features/chat/chat-persisted";
 import * as Sounds from "~/features/chat/core/Sounds";
 import {
 	VOICE_JOIN_SOUND,
 	VOICE_LEAVE_SOUND,
 } from "~/features/voice/voice-constants";
 import { useHydrated } from "~/hooks/useHydrated";
+import {
+	usePersistedMapState,
+	usePersistedState,
+} from "~/modules/persisted-state/hooks";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import styles from "./SoundsTab.module.css";
 
 export function SoundsTab() {
@@ -35,22 +44,12 @@ function SoundCheckboxes() {
 		{ code: VOICE_LEAVE_SOUND, name: t("settings:sounds.voiceLeave") },
 	];
 
-	const [soundValues, setSoundValues] = React.useState(
-		Object.fromEntries(
-			sounds.map((sound) => [sound.code, Sounds.isEnabled(sound.code)]),
-		),
-	);
+	const soundEnabled = usePersistedMapState(soundEnabledPersisted);
+	const isEnabled = (code: string) =>
+		soundEnabled[code] ?? soundEnabledPersisted.default;
 
-	const toggleSound = (code: string) => {
-		localStorage.setItem(
-			Sounds.localStorageKey(code),
-			String(!Sounds.isEnabled(code)),
-		);
-		setSoundValues((prev) => ({
-			...prev,
-			[code]: !prev[code],
-		}));
-	};
+	const toggleSound = (code: string) =>
+		PersistedState.writeMapEntry(soundEnabledPersisted, code, !isEnabled(code));
 
 	return (
 		<div className="stack sm">
@@ -59,7 +58,7 @@ function SoundCheckboxes() {
 					<label className="stack horizontal xs items-center">
 						<input
 							type="checkbox"
-							checked={soundValues[sound.code]}
+							checked={isEnabled(sound.code)}
 							onChange={() => toggleSound(sound.code)}
 						/>
 						{sound.name}
@@ -71,16 +70,10 @@ function SoundCheckboxes() {
 }
 
 function SoundSlider() {
-	const [volume, setVolume] = React.useState(() => Sounds.volume() || 100);
+	const [volume, setVolume] = usePersistedState(soundVolumePersisted);
 
-	const changeVolume = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const newVolume = Number.parseFloat(event.target.value);
-		setVolume(newVolume);
-		localStorage.setItem(
-			"settings__sound-volume",
-			String(Math.floor(newVolume)),
-		);
-	};
+	const changeVolume = (event: React.ChangeEvent<HTMLInputElement>) =>
+		setVolume(Math.floor(Number.parseFloat(event.target.value)));
 
 	const previewVolume = () => Sounds.playIgnoringSetting("sq_like");
 

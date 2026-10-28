@@ -17,6 +17,7 @@ describe("TopicAccess.canSubscribeToAll", () => {
 		{ topic: "tournament__5", allowed: true },
 		{ topic: "match__123", allowed: true },
 		{ topic: "sq-group__7", allowed: true },
+		{ topic: "lobby__3", allowed: true },
 		{ topic: "user__5", allowed: false },
 		{ topic: "chat-room__abc", allowed: false },
 		{ topic: "chat-room__999", allowed: false },

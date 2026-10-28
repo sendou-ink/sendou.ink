@@ -217,6 +217,22 @@ export const STATUS_READY_MIN_PALE = 0.45;
 export const STATUS_READY_MAX_GREY = 0.2;
 
 /**
+ * A wash pales the whole icon, while a weapon render pale over the apex
+ * (Painbrush's head) leaves the body around it in team ink: a pale apex reads
+ * ready only while at least one body side (reference px about the icon center,
+ * x offsets from it) is short of this ink share. Every fixture wash and the
+ * real Painbrush washes leave a side at <=0.23 ink; the Painbrush render holds
+ * >=0.78 on both.
+ */
+export const STATUS_WASH_BODY_SIDE = {
+	top: -10,
+	bottom: 14,
+	inner: 24,
+	outer: 34,
+};
+export const STATUS_WASH_MAX_BODY_INK = 0.5;
+
+/**
  * Vacant seat (no player in a 1v1 lobby, or a disconnect): the body (reference
  * px about the icon center line) all but black with no grey X stroke or weapon
  * render in it. Switzerland 1v1 cast: every empty seat read black >=0.85 at

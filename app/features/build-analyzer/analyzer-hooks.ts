@@ -26,13 +26,14 @@ export function useAnalyzeBuild(mainWeaponId: MainWeaponId) {
 		effects: params.effect,
 		build: build2,
 	});
+	const allEffects = Array.from(new Set([...effects, ...effects2]));
 	const focused = params.focused;
 
 	const handleChange = ({
 		newBuild = build,
 		newBuild2 = build2,
 		newLdeIntensity = ldeIntensity,
-		newEffects = effects,
+		newEffects = allEffects,
 		newFocused = focused,
 	}: {
 		newBuild?: BuildAbilitiesTupleWithUnknown;
@@ -92,7 +93,7 @@ export function useAnalyzeBuild(mainWeaponId: MainWeaponId) {
 		analyzed2,
 		abilityPoints,
 		abilityPoints2,
-		allEffects: Array.from(new Set([...effects, ...effects2])),
+		allEffects,
 		ldeIntensity,
 	};
 }

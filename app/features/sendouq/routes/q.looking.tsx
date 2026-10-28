@@ -12,7 +12,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import { useMarkSqLikesSeen } from "~/features/global-status/global-status-likes-seen";
-import type { UserCardData } from "~/features/user-card/user-card-types";
+import type { UserCardsById } from "~/features/user-card/user-card-types";
 import { privateNoteSentimentScore } from "~/features/user-card/user-card-utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -361,7 +361,7 @@ function sortGroups<T extends { id: number; members?: { id: number }[] }>(
 		userCards,
 		suggestedGroupIds,
 	}: {
-		userCards: Map<number, UserCardData>;
+		userCards: UserCardsById;
 		suggestedGroupIds: Set<number>;
 	},
 ): T[] {

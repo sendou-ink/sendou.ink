@@ -291,9 +291,23 @@ export function SendouTabList({
 	children,
 }: SendouTabListProps) {
 	const tabs = useTabsContext();
+	const containerRef = React.useRef<HTMLDivElement>(null);
+
+	React.useEffect(() => {
+		const container = containerRef.current;
+		if (!container || tabs.orientation === "vertical") return;
+
+		const selectedTab = container.querySelector<HTMLElement>(
+			'[role="tab"][aria-selected="true"]',
+		);
+		if (selectedTab) scrollTabIntoView(container, selectedTab);
+	}, [tabs.selectedKey, tabs.orientation]);
 
 	const tabList = (
-		<div className={clsx(styles.tabListContainer, "scrollbar")}>
+		<div
+			ref={containerRef}
+			className={clsx(styles.tabListContainer, "scrollbar")}
+		>
 			<div
 				className={clsx(styles.tabList, {
 					[styles.sticky]: sticky,
@@ -316,6 +330,17 @@ export function SendouTabList({
 			<div className={styles.tabListActions}>{actions}</div>
 		</div>
 	);
+}
+
+function scrollTabIntoView(container: HTMLElement, tab: HTMLElement) {
+	const containerRect = container.getBoundingClientRect();
+	const tabRect = tab.getBoundingClientRect();
+
+	if (tabRect.left < containerRect.left) {
+		container.scrollLeft -= containerRect.left - tabRect.left;
+	} else if (tabRect.right > containerRect.right) {
+		container.scrollLeft += tabRect.right - containerRect.right;
+	}
 }
 
 interface SendouTabPanelProps {

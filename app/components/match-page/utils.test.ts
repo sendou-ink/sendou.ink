@@ -6,10 +6,8 @@ function user(id: number): CommonUser {
 	return {
 		id,
 		username: `user${id}`,
-		discordId: `discord${id}`,
-		discordAvatar: null,
+		avatar: null,
 		customUrl: null,
-		customAvatarUrl: null,
 	};
 }
 

@@ -34,6 +34,7 @@ const TEST_POOL_SERIALIZED = "sz:3a14000;tc:2c98000";
 const TOURNAMENT_NAME = "Swim or Sink";
 const ASSOCIATION_NAME = "Inkling Alliance";
 const PICKUP_NAMES = ["Pickup One", "Pickup Two", "Pickup Three"];
+const REQUEST_MESSAGE = "Ready to scrim! Let's do this.";
 const GROUP_SIZE = 4;
 const DAY_SECONDS = 24 * 60 * 60;
 const WEDNESDAY = 2;
@@ -45,388 +46,548 @@ const TOURNAMENT_MAP_POOL: Array<{ mode: ModeShort; stageId: StageId }> = [
 ];
 
 test.describe("Scrims", () => {
-	test("creates a new scrim & deletes it", async ({ page, factories }) => {
-		await createNamedUsers(factories, PICKUP_NAMES);
-		await factories.AssociationFactory.create({
-			userId: NZAP_TEST_ID,
-			name: ASSOCIATION_NAME,
+	/**
+	 * A post is made as a team or as a pick-up of users the author picks, who are saved
+	 * for later posts. Its card shows the start window and the tournament whose maps are
+	 * played, and marks a post only an association can see.
+	 */
+	test.describe("Posting", () => {
+		test("a post limited to an association is marked as such and its owner can delete it", async ({
+			page,
+			factories,
+		}) => {
+			await createNamedUsers(factories, PICKUP_NAMES);
+			await factories.AssociationFactory.create({
+				userId: NZAP_TEST_ID,
+				name: ASSOCIATION_NAME,
+			});
+
+			await impersonate(page, NZAP_TEST_ID);
+			await navigate({ page, url: "/" });
+
+			await new AnythingAdder(page).add("scrimPost");
+
+			const newPost = new NewScrimPostPage(page);
+			await newPost.selectPickupUsers(PICKUP_NAMES);
+			await newPost.selectVisibility(ASSOCIATION_NAME);
+			await newPost.form.fill("postText", "Test scrim");
+			await newPost.save();
+
+			const scrims = new ScrimsPage(page);
+			await expect(scrims.locators.limitedVisibilityPopover).toBeVisible();
+
+			await scrims.deleteFirstPost();
+
+			await expect(scrims.locators.deleteButtons).toHaveCount(0);
 		});
 
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: "/" });
+		test("reuses a pick-up saved from an earlier scrim post", async ({
+			page,
+			factories,
+		}) => {
+			await createNamedUsers(factories, PICKUP_NAMES);
 
-		await new AnythingAdder(page).add("scrimPost");
+			await impersonate(page, NZAP_TEST_ID);
 
-		const newPost = new NewScrimPostPage(page);
-		await newPost.selectPickupUsers(PICKUP_NAMES);
-		await newPost.selectVisibility(ASSOCIATION_NAME);
-		await newPost.form.fill("postText", "Test scrim");
-		await newPost.save();
+			const newPost = new NewScrimPostPage(page);
+			await newPost.goto();
+			await newPost.selectPickupUsers(PICKUP_NAMES);
+			await newPost.save();
 
-		const scrims = new ScrimsPage(page);
-		await expect(scrims.locators.limitedVisibilityPopover).toBeVisible();
+			await newPost.goto();
+			await newPost.selectSavedPickup(PICKUP_NAMES);
 
-		await scrims.deleteFirstPost();
+			for (const [index, userName] of PICKUP_NAMES.entries()) {
+				await expect(newPost.pickupUser(index + 2)).toContainText(userName);
+			}
 
-		await expect(scrims.locators.deleteButtons).toHaveCount(0);
+			await newPost.save();
+
+			const scrims = new ScrimsPage(page);
+			await expect(scrims.locators.deleteButtons).toHaveCount(2);
+		});
+
+		test("a post's start window and tournament maps show on its card", async ({
+			page,
+			factories,
+		}) => {
+			await createTeamFor(factories, ADMIN_ID);
+			await createTournament(factories);
+
+			await impersonate(page, ADMIN_ID);
+
+			const newPost = new NewScrimPostPage(page);
+			await newPost.goto();
+			await newPost.form.setDateTime("at", tomorrowEvening());
+			await newPost.form.select("rangeEnd", "+2hours");
+			await newPost.selectTournamentMaps(TOURNAMENT_NAME);
+			await newPost.save();
+
+			const scrims = new ScrimsPage(page);
+			await expect(scrims.post("+2h")).toBeVisible();
+			await expect(scrims.locators.tournamentPopover).toBeVisible();
+		});
 	});
 
-	test("reuses a pick-up saved from an earlier scrim post", async ({
-		page,
-		factories,
-	}) => {
-		await createNamedUsers(factories, PICKUP_NAMES);
+	/**
+	 * Other teams request a post from the Available tab, picking the start when the post has
+	 * a start window, and can withdraw the request while it is pending. The post's owner is
+	 * notified of each request.
+	 */
+	test.describe("Requests", () => {
+		test("requests a post and withdraws the request", async ({
+			page,
+			factories,
+		}) => {
+			for (let postNth = 0; postNth < 2; postNth++) {
+				await factories.ScrimPostFactory.create({
+					users: await createGroup(factories),
+				});
+			}
+			await createTeamFor(factories, NZAP_TEST_ID);
 
-		await impersonate(page, NZAP_TEST_ID);
+			await impersonate(page, NZAP_TEST_ID);
 
-		const newPost = new NewScrimPostPage(page);
-		await newPost.goto();
-		await newPost.selectPickupUsers(PICKUP_NAMES);
-		await newPost.save();
+			const scrims = new ScrimsPage(page);
+			await scrims.goto();
+			await scrims.openTab("available");
 
-		await newPost.goto();
-		await newPost.selectSavedPickup(PICKUP_NAMES);
+			await expect(scrims.locators.requestButtons).toHaveCount(2);
 
-		for (const [index, userName] of PICKUP_NAMES.entries()) {
-			await expect(newPost.pickupUser(index + 2)).toContainText(userName);
-		}
+			const request = await scrims.requestFirst();
+			await request.send();
 
-		await newPost.save();
+			await expect(scrims.locators.requestButtons).toHaveCount(1);
 
-		const scrims = new ScrimsPage(page);
-		await expect(scrims.locators.deleteButtons).toHaveCount(2);
+			await scrims.showPendingRequests();
+			await scrims.cancelPendingRequest();
+
+			await expect(scrims.locators.requestButtons).toHaveCount(2);
+		});
+
+		test("a request to a post with a start window picks the start and can carry a message", async ({
+			page,
+			factories,
+		}) => {
+			const at = tomorrowEvening();
+			await factories.ScrimPostFactory.create({
+				users: await createGroup(factories, ADMIN_ID),
+				startsAt: dateToDatabaseTimestamp(at),
+				rangeEndsAt: dateToDatabaseTimestamp(addHours(at, 2)),
+				isScheduledForFuture: true,
+			});
+			await createNamedUsers(factories, PICKUP_NAMES);
+
+			await test.step("N-ZAP requests it with a pick-up, a start and a message", async () => {
+				await impersonate(page, NZAP_TEST_ID);
+
+				const scrims = new ScrimsPage(page);
+				await scrims.goto();
+				await scrims.openTab("available");
+
+				const request = await scrims.requestFirst();
+				await request.selectPickupUsers(PICKUP_NAMES);
+				await request.selectStartTime(1);
+				await request.form.fill("message", REQUEST_MESSAGE);
+				await request.send();
+			});
+
+			await test.step("Sendou is notified and sees the message", async () => {
+				await impersonate(page, ADMIN_ID);
+
+				const scrims = new ScrimsPage(page);
+				await scrims.goto();
+
+				const notifications = new NotificationPopover(page);
+				await notifications.open();
+
+				await expect(
+					notifications.notification("N-ZAP requested a scrim"),
+				).toBeVisible();
+
+				await notifications.close();
+
+				await expect(scrims.post(REQUEST_MESSAGE)).toBeVisible();
+			});
+		});
 	});
 
-	test("requests an existing scrim post & cancels the request", async ({
-		page,
-		factories,
-	}) => {
-		for (let postNth = 0; postNth < 2; postNth++) {
+	/**
+	 * Accepting a request books the scrim: it moves to the Booked tab with a page of its own,
+	 * the requester is notified and the owner's other pending posts starting within an hour
+	 * of it are deleted.
+	 */
+	test.describe("Accepting", () => {
+		test("accepting resolves the request notification and notifies the requester", async ({
+			page,
+			factories,
+		}) => {
+			const post = await createPostWithRequest(factories, {
+				ownerUserId: ADMIN_ID,
+				requesterUserId: NZAP_TEST_ID,
+			});
+			await factories.NotificationFactory.create({
+				notification: {
+					type: "SCRIM_NEW_REQUEST",
+					meta: {
+						fromUserId: NZAP_TEST_ID,
+						fromUsername: "N-ZAP",
+						scrimPostId: post.id,
+					},
+				},
+				users: [{ userId: ADMIN_ID }],
+			});
+
+			await impersonate(page, ADMIN_ID);
+
+			const scrims = new ScrimsPage(page);
+			await scrims.goto();
+
+			const notifications = new NotificationPopover(page);
+			await expect(notifications.locators.bellDot).toBeVisible();
+
+			await scrims.acceptFirstRequest();
+
+			// accepting settled the post, resolving the request notification without
+			// the bell having been opened
+			await expect(notifications.locators.bellDot).toBeHidden();
+
+			await scrims.openTab("booked");
+			await expect(scrims.locators.contactLinks).toHaveCount(1);
+
+			const scrim = await scrims.openFirstBookedScrim();
+
+			await expect(scrim.locators.subtitle).toBeVisible();
+
+			// the requester got notified of the scheduled scrim, linking to its page
+			await impersonate(page, NZAP_TEST_ID);
+			await navigate({ page, url: "/" });
+
+			await notifications.open();
+			await notifications.openNotification("New scrim scheduled vs.");
+
+			await expect(page).toHaveURL(scrimPage(post.id));
+		});
+
+		test("auto-cancels overlapping pending scrims when a scrim is booked", async ({
+			page,
+			factories,
+		}) => {
+			await createTeamFor(factories, ADMIN_ID);
+			await createTeamFor(factories, NZAP_TEST_ID);
+
+			const bookedAt = tomorrowEvening();
+			// within ±1h of the booked time
+			const overlappingAt = setMinutes(bookedAt, 30);
+			// outside the ±1h window
+			const farAwayAt = setHours(bookedAt, 22);
+
+			await impersonate(page, ADMIN_ID);
+
+			const newPost = new NewScrimPostPage(page);
+			for (const [at, text] of [
+				[bookedAt, "Booked post"],
+				[overlappingAt, "Overlapping post"],
+				[farAwayAt, "Far away post"],
+			] as const) {
+				await newPost.goto();
+				await newPost.form.setDateTime("at", at);
+				await newPost.form.fill("postText", text);
+				await newPost.save();
+			}
+
+			// N-ZAP requests the earliest (soon-to-be-booked) post
+			await impersonate(page, NZAP_TEST_ID);
+
+			const scrims = new ScrimsPage(page);
+			await scrims.goto();
+			await scrims.openTab("available");
+
+			const request = await scrims.requestFirst();
+			await request.send();
+
+			// the author accepts the request, booking the scrim
+			await impersonate(page, ADMIN_ID);
+			await scrims.goto();
+			await scrims.acceptFirstRequest();
+
+			await scrims.openTab("owned");
+
+			await expect(scrims.post("Far away post")).toBeVisible();
+			await isNotVisible(scrims.post("Overlapping post"));
+		});
+	});
+
+	/** A booked scrim is canceled from its page with a reason, and is then shown as canceled. */
+	test.describe("Canceling", () => {
+		test("cancels a scrim and shows canceled status", async ({
+			page,
+			factories,
+		}) => {
+			await createPostWithRequest(factories, {
+				ownerUserId: ADMIN_ID,
+				at: addHours(new Date(), 4),
+			});
+
+			await impersonate(page, ADMIN_ID);
+
+			const scrims = new ScrimsPage(page);
+			await scrims.goto();
+
+			// accepting is what makes the scrim's own page accessible
+			await scrims.acceptFirstRequest();
+			await scrims.openTab("booked");
+
+			const scrim = await scrims.openFirstBookedScrim();
+			await scrim.cancel("Oops something came up");
+
+			await scrims.goto();
+
+			await expect(scrims.locators.canceledLabel).toBeVisible();
+		});
+	});
+
+	/**
+	 * Filters (here LUTI divisions) narrow the Available tab and can be saved as the user's
+	 * default. Once the user edits the filters the page's own wins over the saved default.
+	 */
+	test.describe("Filters", () => {
+		test("filters by div and sets the filter as default", async ({
+			page,
+			factories,
+		}) => {
 			await factories.ScrimPostFactory.create({
 				users: await createGroup(factories),
+				maxDiv: serializeLutiDiv("1"),
+				minDiv: serializeLutiDiv("2"),
 			});
-		}
-		await createTeamFor(factories, NZAP_TEST_ID);
 
-		await impersonate(page, NZAP_TEST_ID);
+			await impersonate(page, NZAP_TEST_ID);
 
-		const scrims = new ScrimsPage(page);
-		await scrims.goto();
-		await scrims.openTab("available");
+			const scrims = new ScrimsPage(page);
+			await scrims.goto();
+			await scrims.openTab("available");
 
-		await expect(scrims.locators.requestButtons).toHaveCount(2);
+			await expect(scrims.locators.requestButtons).toHaveCount(1);
 
-		const request = await scrims.requestFirst();
-		await request.send();
+			// a div range the post's own range falls outside of
+			await scrims.filterByDivs({ max: "5", min: "6" });
 
-		await expect(scrims.locators.requestButtons).toHaveCount(1);
+			await expect(scrims.locators.requestButtons).toHaveCount(0);
 
-		await scrims.showPendingRequests();
-		await scrims.cancelPendingRequest();
+			await scrims.saveFiltersAsDefault();
+			await scrims.goto();
+			await scrims.openTab("available");
 
-		await expect(scrims.locators.requestButtons).toHaveCount(2);
+			// remembers selection via user preferences
+			await expect(scrims.locators.requestButtons).toHaveCount(0);
+
+			await scrims.removeDivsFilter();
+
+			// removing the filter sticks instead of falling back to the saved default
+			await expect(scrims.locators.requestButtons).toHaveCount(1);
+
+			await scrims.reload();
+
+			await expect(scrims.locators.requestButtons).toHaveCount(1);
+		});
 	});
 
-	test("filters by div and sets the filter as default", async ({
-		page,
-		factories,
-	}) => {
-		await factories.ScrimPostFactory.create({
-			users: await createGroup(factories),
-			maxDiv: serializeLutiDiv("1"),
-			minDiv: serializeLutiDiv("2"),
+	/**
+	 * Once booked, each side submits a map list (the post's tournament or a map pool) and
+	 * maps are generated one at a time from the lists, each reported map generating the
+	 * next. The latest report can be undone and the current map swapped for a replay of the
+	 * previous one. Stats count the reported maps from the viewer's side.
+	 */
+	test.describe("Map-by-map", () => {
+		test("plays a scrim map by map", async ({ page, factories }) => {
+			const tournament = await createTournament(factories);
+			const post = await createPostWithRequest(factories, {
+				ownerUserId: ADMIN_ID,
+				requesterUserId: NZAP_TEST_ID,
+				mapsTournamentId: tournament.id,
+				isAccepted: true,
+			});
+			const scrim = new ScrimPage(page);
+
+			await test.step("Sendou submits the post's tournament as Alpha's list, generating the first map", async () => {
+				await impersonate(page, ADMIN_ID);
+				await scrim.goto(post.id);
+				await scrim.openTab("action");
+
+				await expect(scrim.locators.mapListForm).toBeVisible();
+
+				// the post's tournament is the author's default source, so no tournament search is
+				// needed; the first map list submitted collapses the map-list manager
+				await scrim.submitMapList();
+
+				await expect(scrim.locators.reportScoreButton).toBeVisible();
+
+				await scrim.openMapListManager();
+
+				await expect(scrim.mapListRow("ALPHA")).toContainText(TOURNAMENT_NAME);
+			});
+
+			await test.step("N-ZAP adds a map pool as Bravo's list", async () => {
+				// N-ZAP has no list yet, so the map-list manager is already expanded on mount
+				await impersonate(page, NZAP_TEST_ID);
+				await scrim.goto(post.id);
+				await scrim.openTab("action");
+				await scrim.submitPoolMapList(TEST_POOL_SERIALIZED);
+
+				await expect(scrim.locators.reportScoreButton).toBeVisible();
+				await expect(scrim.mapListRow("BRAVO")).toContainText("Pool");
+			});
+
+			await test.step("Each reported winner generates the next map", async () => {
+				await scrim.reportMapWinner("ALPHA");
+				await expect(scrim.locators.reportScoreButton).toBeVisible();
+
+				await scrim.reportMapWinner("BRAVO");
+				await expect(scrim.locators.reportScoreButton).toBeVisible();
+			});
+
+			await test.step("Undo un-reports the latest map and removes the one it generated", async () => {
+				await scrim.reportMapWinner("ALPHA");
+				await expect(scrim.locators.undoMapButton).toBeVisible();
+				await scrim.undoMap();
+				await expect(scrim.locators.reportScoreButton).toBeVisible();
+			});
+
+			await test.step("Replay swaps the current map for the previous one", async () => {
+				await scrim.reportMapWinner("BRAVO");
+
+				await expect(scrim.locators.replayMapButton).toBeVisible();
+				await scrim.replayMap();
+				await scrim.reportMapWinner("ALPHA");
+			});
+
+			await test.step("Sendou swaps Alpha's list for a map pool", async () => {
+				await impersonate(page, ADMIN_ID);
+				await scrim.goto(post.id);
+				await scrim.openTab("action");
+				await scrim.openMapListManager();
+
+				await scrim.removeOwnMapList("ALPHA");
+
+				await expect(scrim.locators.mapListForm).toBeVisible();
+
+				await scrim.submitPoolMapList(TEST_POOL_SERIALIZED);
+
+				await expect(scrim.mapListRow("ALPHA")).toContainText("Pool");
+			});
+
+			await test.step("Stats count the four reported maps", async () => {
+				await scrim.openTab("stats");
+
+				await expect(scrim.locators.statsRoot).toBeVisible();
+
+				// 2 wins & 2 losses from Sendou's point of view
+				await scrim.showModeStatsOfAllMaps();
+
+				expect(await scrim.reportedMapCount()).toBe(4);
+			});
 		});
-
-		await impersonate(page, NZAP_TEST_ID);
-
-		const scrims = new ScrimsPage(page);
-		await scrims.goto();
-		await scrims.openTab("available");
-
-		await expect(scrims.locators.requestButtons).toHaveCount(1);
-
-		// a div range the post's own range falls outside of
-		await scrims.filterByDivs({ max: "5", min: "6" });
-
-		await expect(scrims.locators.requestButtons).toHaveCount(0);
-
-		await scrims.saveFiltersAsDefault();
-		await scrims.goto();
-		await scrims.openTab("available");
-
-		// remembers selection via user preferences
-		await expect(scrims.locators.requestButtons).toHaveCount(0);
-
-		await scrims.removeDivsFilter();
-
-		// removing the filter sticks instead of falling back to the saved default
-		await expect(scrims.locators.requestButtons).toHaveCount(1);
-
-		await scrims.reload();
-
-		await expect(scrims.locators.requestButtons).toHaveCount(1);
 	});
 
-	test("accepts a request", async ({ page, factories }) => {
-		const post = await createPostWithRequest(factories, {
-			ownerUserId: ADMIN_ID,
-			requesterUserId: NZAP_TEST_ID,
-		});
-		await factories.NotificationFactory.create({
-			notification: {
-				type: "SCRIM_NEW_REQUEST",
-				meta: {
-					fromUserId: NZAP_TEST_ID,
-					fromUsername: "N-ZAP",
-					scrimPostId: post.id,
-				},
-			},
-			users: [{ userId: ADMIN_ID }],
-		});
+	/**
+	 * The members' weekly availability suggests starts when posting and shows how much of
+	 * the viewer's roster could play each post. A slot one player short of a full team is
+	 * still offered, as one to grab a sub for.
+	 */
+	test.describe("Availability", () => {
+		test("picks a start and its flexibility from the roster's shared free time", async ({
+			page,
+			factories,
+		}) => {
+			const { memberUserIds } = await createTeamFor(factories, NZAP_TEST_ID);
+			const evening = nextWeekSlot(WEDNESDAY, "18:00", "23:00");
 
-		await impersonate(page, ADMIN_ID);
+			for (const userId of memberUserIds.slice(0, memberUserIds.length - 1)) {
+				await factories.AvailabilityWeekFactory.create({
+					userId,
+					weekStartsAt: nextWeek().startsAt,
+					timezone: MACHINE_TIMEZONE,
+					slots: [evening],
+				});
+			}
 
-		const scrims = new ScrimsPage(page);
-		await scrims.goto();
+			await impersonate(page, NZAP_TEST_ID);
+			await setTimezoneCookie(page);
 
-		const notifications = new NotificationPopover(page);
-		await expect(notifications.locators.bellDot).toBeVisible();
-
-		await scrims.acceptFirstRequest();
-
-		// accepting settled the post, resolving the request notification without
-		// the bell having been opened
-		await expect(notifications.locators.bellDot).toBeHidden();
-
-		await scrims.openTab("booked");
-		await expect(scrims.locators.contactLinks).toHaveCount(1);
-
-		const scrim = await scrims.openFirstBookedScrim();
-
-		await expect(scrim.locators.subtitle).toBeVisible();
-
-		// the requester got notified of the scheduled scrim, linking to its page
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: "/" });
-
-		await notifications.open();
-		await notifications.openNotification("New scrim scheduled vs.");
-
-		await expect(page).toHaveURL(scrimPage(post.id));
-	});
-
-	test("auto-cancels overlapping pending scrims when a scrim is booked", async ({
-		page,
-		factories,
-	}) => {
-		await createTeamFor(factories, ADMIN_ID);
-		await createTeamFor(factories, NZAP_TEST_ID);
-
-		const bookedAt = startOfHour(setHours(addDays(new Date(), 1), 18));
-		// within ±1h of the booked time
-		const overlappingAt = setMinutes(bookedAt, 30);
-		// outside the ±1h window
-		const farAwayAt = setHours(bookedAt, 22);
-
-		await impersonate(page, ADMIN_ID);
-
-		const newPost = new NewScrimPostPage(page);
-		for (const [at, text] of [
-			[bookedAt, "Booked post"],
-			[overlappingAt, "Overlapping post"],
-			[farAwayAt, "Far away post"],
-		] as const) {
+			const newPost = new NewScrimPostPage(page);
 			await newPost.goto();
-			await newPost.form.setDateTime("at", at);
-			await newPost.form.fill("postText", text);
-			await newPost.save();
-		}
+			await newPost.locators.nextWeekToggle.click();
 
-		// N-ZAP requests the earliest (soon-to-be-booked) post
-		await impersonate(page, NZAP_TEST_ID);
+			// the roster's last member never filled the week in, so the shared
+			// evening is one player short of a full team
+			await expect(newPost.locators.scheduleUnknown).toBeVisible();
+			const slot = newPost.locators.scheduleSlots;
+			await expect(slot).toHaveCount(1);
+			await expect(slot).toHaveAttribute("data-tier", "ONE_SHORT");
 
-		const scrims = new ScrimsPage(page);
-		await scrims.goto();
-		await scrims.openTab("available");
+			await slot.click();
 
-		const request = await scrims.requestFirst();
-		await request.send();
-
-		// the author accepts the request, booking the scrim
-		await impersonate(page, ADMIN_ID);
-		await scrims.goto();
-		await scrims.acceptFirstRequest();
-
-		await scrims.openTab("owned");
-
-		await expect(scrims.post("Far away post")).toBeVisible();
-		await isNotVisible(scrims.post("Overlapping post"));
-	});
-
-	test("cancels a scrim and shows canceled status", async ({
-		page,
-		factories,
-	}) => {
-		await createPostWithRequest(factories, {
-			ownerUserId: ADMIN_ID,
-			at: addHours(new Date(), 4),
+			// 18:00, with the flexibility that still leaves an hour of the window
+			// to play whichever start is settled on, capped at the longest option
+			await expect(newPost.startInput).toHaveValue(/T18:00$/);
+			await expect(newPost.locators.flexibility).toHaveValue("+3hours");
+			await expect(slot).toHaveAttribute("data-picked", "true");
 		});
 
-		await impersonate(page, ADMIN_ID);
+		test("shows how much of the viewer's roster could play a post", async ({
+			page,
+			factories,
+		}) => {
+			const { memberUserIds } = await createTeamFor(factories, NZAP_TEST_ID);
+			const evening = nextWeekSlot(WEDNESDAY, "18:00", "23:00");
+			const withoutSchedule = memberUserIds[memberUserIds.length - 1];
 
-		const scrims = new ScrimsPage(page);
-		await scrims.goto();
+			for (const userId of memberUserIds.filter(
+				(candidate) => candidate !== withoutSchedule,
+			)) {
+				await factories.AvailabilityWeekFactory.create({
+					userId,
+					weekStartsAt: nextWeek().startsAt,
+					timezone: MACHINE_TIMEZONE,
+					slots: [evening],
+				});
+			}
 
-		// accepting is what makes the scrim's own page accessible
-		await scrims.acceptFirstRequest();
-		await scrims.openTab("booked");
+			await factories.ScrimPostFactory.create({
+				users: await createGroup(factories),
+				startsAt: evening.startsAt,
+				isScheduledForFuture: true,
+			});
 
-		const scrim = await scrims.openFirstBookedScrim();
-		await scrim.cancel("Oops something came up");
+			await impersonate(page, NZAP_TEST_ID);
 
-		await scrims.goto();
+			const scrims = new ScrimsPage(page);
+			await scrims.goto();
+			await scrims.openTab("available");
 
-		await expect(scrims.locators.canceledLabel).toBeVisible();
-	});
+			await expect(scrims.locators.fitIndicator).toContainText("3/4 available");
 
-	test("creates scrim with start time and tournament maps, accepts with time and message", async ({
-		page,
-		factories,
-	}) => {
-		await createTeamFor(factories, ADMIN_ID);
-		await createNamedUsers(factories, PICKUP_NAMES);
-		await createTournament(factories);
+			await scrims.locators.fitIndicator.click();
 
-		await impersonate(page, ADMIN_ID);
+			await expect(scrims.availabilityRow(NZAP_TEST_ID)).toHaveAttribute(
+				"data-status",
+				"available",
+			);
+			await expect(scrims.availabilityRow(withoutSchedule)).toHaveAttribute(
+				"data-status",
+				"unknown",
+			);
 
-		const newPost = new NewScrimPostPage(page);
-		await newPost.goto();
-		await newPost.form.setDateTime(
-			"at",
-			startOfHour(setHours(addDays(new Date(), 1), 18)),
-		);
-		await newPost.form.select("rangeEnd", "+2hours");
-		await newPost.selectTournamentMaps(TOURNAMENT_NAME);
-		await newPost.save();
+			await page.keyboard.press("Escape");
+			await scrims.requestFirst();
 
-		await impersonate(page, NZAP_TEST_ID);
-
-		const scrims = new ScrimsPage(page);
-		await scrims.goto();
-		await scrims.openTab("available");
-
-		const request = await scrims.requestFirst();
-		await request.selectPickupUsers(PICKUP_NAMES);
-		await request.selectStartTime(1);
-		await request.form.fill("message", "Ready to scrim! Let's do this.");
-		await request.send();
-
-		// back as the author, who sees the post and the request details
-		await impersonate(page, ADMIN_ID);
-		await scrims.goto();
-
-		const notifications = new NotificationPopover(page);
-		await notifications.open();
-
-		await expect(
-			notifications.notification("N-ZAP requested a scrim"),
-		).toBeVisible();
-
-		await notifications.close();
-
-		await expect(scrims.post("+2h")).toBeVisible();
-		await expect(scrims.locators.tournamentPopover).toBeVisible();
-		await expect(scrims.post("Ready to scrim! Let's do this.")).toBeVisible();
-
-		await scrims.acceptFirstRequest();
-		await scrims.openTab("booked");
-
-		const scrim = await scrims.openFirstBookedScrim();
-		await scrim.openTab("action");
-
-		await expect(scrim.locators.mapListForm).toBeVisible();
-	});
-
-	test("map-by-map: lists, report, undo, replay, change list, stats", async ({
-		page,
-		factories,
-	}) => {
-		const tournament = await createTournament(factories);
-		const post = await createPostWithRequest(factories, {
-			ownerUserId: ADMIN_ID,
-			requesterUserId: NZAP_TEST_ID,
-			mapsTournamentId: tournament.id,
-			isAccepted: true,
+			// the same breakdown, for the slot the request would be made for
+			await expect(scrims.availabilityRow(NZAP_TEST_ID)).toHaveAttribute(
+				"data-status",
+				"available",
+			);
 		});
-
-		await impersonate(page, ADMIN_ID);
-
-		const scrim = new ScrimPage(page);
-		await scrim.goto(post.id);
-		await scrim.openTab("action");
-
-		await expect(scrim.locators.mapListForm).toBeVisible();
-
-		// the post's tournament is the author's default source, so no tournament search is
-		// needed; the first map is generated right away, collapsing the map-list manager
-		await scrim.submitMapList();
-
-		await expect(scrim.locators.reportScoreButton).toBeVisible();
-
-		await scrim.openMapListManager();
-
-		await expect(scrim.mapListRow("ALPHA")).toContainText(TOURNAMENT_NAME);
-
-		// N-ZAP has no list yet, so the map-list manager is already expanded on mount
-		await impersonate(page, NZAP_TEST_ID);
-		await scrim.goto(post.id);
-		await scrim.openTab("action");
-		await scrim.submitPoolMapList(TEST_POOL_SERIALIZED);
-
-		await expect(scrim.locators.reportScoreButton).toBeVisible();
-		await expect(scrim.mapListRow("BRAVO")).toContainText("Pool");
-
-		// every reported map auto-generates the next one
-		await scrim.reportMapWinner("ALPHA");
-		await expect(scrim.locators.reportScoreButton).toBeVisible();
-
-		await scrim.reportMapWinner("BRAVO");
-		await expect(scrim.locators.reportScoreButton).toBeVisible();
-
-		// undo un-reports map 3 and deletes the generated map 4
-		await scrim.reportMapWinner("ALPHA");
-		await expect(scrim.locators.undoMapButton).toBeVisible();
-		await scrim.undoMap();
-		await expect(scrim.locators.reportScoreButton).toBeVisible();
-
-		await scrim.reportMapWinner("BRAVO");
-
-		// replaying replaces the generated map with a copy of the previous one
-		await expect(scrim.locators.replayMapButton).toBeVisible();
-		await scrim.replayMap();
-		await scrim.reportMapWinner("ALPHA");
-
-		await impersonate(page, ADMIN_ID);
-		await scrim.goto(post.id);
-		await scrim.openTab("action");
-		await scrim.openMapListManager();
-
-		await scrim.removeOwnMapList("ALPHA");
-
-		await expect(scrim.locators.mapListForm).toBeVisible();
-
-		await scrim.submitPoolMapList(TEST_POOL_SERIALIZED);
-
-		await expect(scrim.mapListRow("ALPHA")).toContainText("Pool");
-
-		await scrim.openTab("stats");
-
-		await expect(scrim.locators.statsRoot).toBeVisible();
-
-		// four reported maps in total (2 wins & 2 losses from the admin's point of view)
-		await scrim.showModeStatsOfAllMaps();
-
-		expect(await scrim.reportedMapCount()).toBe(4);
 	});
 });
 
@@ -447,102 +608,10 @@ function createNamedUsers(factories: Factories, names: string[]) {
 	}));
 }
 
-test.describe("Scrim schedule picker", () => {
-	test("picks a start and its flexibility from the roster's shared free time", async ({
-		page,
-		factories,
-	}) => {
-		const { memberUserIds } = await createTeamFor(factories, NZAP_TEST_ID);
-		const evening = nextWeekSlot(WEDNESDAY, "18:00", "23:00");
-
-		for (const userId of memberUserIds.slice(0, memberUserIds.length - 1)) {
-			await factories.AvailabilityWeekFactory.create({
-				userId,
-				weekStartsAt: nextWeek().startsAt,
-				timezone: MACHINE_TIMEZONE,
-				slots: [evening],
-			});
-		}
-
-		await impersonate(page, NZAP_TEST_ID);
-		await setTimezoneCookie(page);
-
-		const newPost = new NewScrimPostPage(page);
-		await newPost.goto();
-		await newPost.locators.nextWeekToggle.click();
-
-		// the roster's last member never filled the week in, so the shared
-		// evening is one player short of a full team
-		await expect(newPost.locators.scheduleUnknown).toBeVisible();
-		const slot = newPost.locators.scheduleSlots;
-		await expect(slot).toHaveCount(1);
-		await expect(slot).toHaveAttribute("data-tier", "ONE_SHORT");
-
-		await slot.click();
-
-		// 18:00, with the flexibility that still leaves an hour of the window
-		// to play whichever start is settled on, capped at the longest option
-		await expect(newPost.startInput).toHaveValue(/T18:00$/);
-		await expect(newPost.locators.flexibility).toHaveValue("+3hours");
-		await expect(slot).toHaveAttribute("data-picked", "true");
-	});
-});
-
-test.describe("Scrim fit indicator", () => {
-	test("shows how much of the viewer's roster could play a post", async ({
-		page,
-		factories,
-	}) => {
-		const { memberUserIds } = await createTeamFor(factories, NZAP_TEST_ID);
-		const evening = nextWeekSlot(WEDNESDAY, "18:00", "23:00");
-		const withoutSchedule = memberUserIds[memberUserIds.length - 1];
-
-		for (const userId of memberUserIds.filter(
-			(candidate) => candidate !== withoutSchedule,
-		)) {
-			await factories.AvailabilityWeekFactory.create({
-				userId,
-				weekStartsAt: nextWeek().startsAt,
-				timezone: MACHINE_TIMEZONE,
-				slots: [evening],
-			});
-		}
-
-		await factories.ScrimPostFactory.create({
-			users: await createGroup(factories),
-			startsAt: evening.startsAt,
-			isScheduledForFuture: true,
-		});
-
-		await impersonate(page, NZAP_TEST_ID);
-
-		const scrims = new ScrimsPage(page);
-		await scrims.goto();
-		await scrims.openTab("available");
-
-		await expect(scrims.locators.fitIndicator).toContainText("3/4 available");
-
-		await scrims.locators.fitIndicator.click();
-
-		await expect(scrims.availabilityRow(NZAP_TEST_ID)).toHaveAttribute(
-			"data-status",
-			"available",
-		);
-		await expect(scrims.availabilityRow(withoutSchedule)).toHaveAttribute(
-			"data-status",
-			"unknown",
-		);
-
-		await page.keyboard.press("Escape");
-		await scrims.requestFirst();
-
-		// the same breakdown, for the slot the request would be made for
-		await expect(scrims.availabilityRow(NZAP_TEST_ID)).toHaveAttribute(
-			"data-status",
-			"available",
-		);
-	});
-});
+/** 18:00 tomorrow, a start always ahead of "now". */
+function tomorrowEvening() {
+	return startOfHour(setHours(addDays(new Date(), 1), 18));
+}
 
 async function createTeamFor(factories: Factories, userId: number) {
 	const teammates = await factories.UserFactory.createMany(GROUP_SIZE - 1);

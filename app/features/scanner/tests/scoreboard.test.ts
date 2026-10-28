@@ -62,6 +62,10 @@ for (const fixture of fixtures) {
 			},
 		);
 
+		await t.test("noContest", fieldTestOptions(fixture, "noContest"), () => {
+			assert.equal(event.data.noContest, expected.noContest ?? false);
+		});
+
 		await t.test(
 			"header",
 			fieldTestOptions(fixture, "header", expected.mode !== undefined),

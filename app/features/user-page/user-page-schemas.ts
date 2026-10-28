@@ -59,6 +59,7 @@ export const userEditProfileBaseSchema = v.object({
 		label: "labels.profileCustomAvatar",
 		bottomText: "bottomTexts.profileCustomAvatar",
 		autoValidate: true,
+		withSmallCopy: true,
 	}),
 	customName: textFieldOptional({
 		label: "labels.profileCustomName",

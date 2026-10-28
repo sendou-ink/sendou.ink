@@ -39,14 +39,25 @@ export function sortAbilities(
 			: sortedMainAbilities.pop(),
 	);
 
-	const subAbilities = subAbilitiesSorted(buildAbilities);
+	const freeSubRows = subAbilitiesSorted(
+		buildAbilities.filter((row) => !isAbilityDoublerRow(row)),
+	);
+	const subRows = buildAbilities.map((row) =>
+		isAbilityDoublerRow(row)
+			? subAbilitiesSorted([row])[0]
+			: freeSubRows.shift()!,
+	);
 
-	return switchSubRowsIfBetter([
-		[newMainAbilities[0], ...subAbilities.slice(0, 3)],
-		[newMainAbilities[1], ...subAbilities.slice(3, 6)],
-		[newMainAbilities[2], ...subAbilities.slice(6, 9)],
-	] as BuildAbilitiesTuple);
+	return switchSubRowsIfBetter(
+		newMainAbilities.map((mainAbility, i) => [
+			mainAbility,
+			...subRows[i],
+		]) as BuildAbilitiesTuple,
+	);
 }
+
+/** Ability Doubler only doubles the subs of its own row so they can't be moved elsewhere */
+const isAbilityDoublerRow = (row: readonly Ability[]) => row[0] === "AD";
 
 const sortAbilityCount = (a: [Ability, number], b: [Ability, number]) => {
 	if (a[1] === b[1]) {
@@ -55,8 +66,8 @@ const sortAbilityCount = (a: [Ability, number], b: [Ability, number]) => {
 
 	return b[1] - a[1];
 };
-function subAbilitiesSorted(buildAbilities: BuildAbilitiesTuple): Ability[] {
-	const subAbilitiesUnsorted = buildAbilities.flatMap((row) => row.slice(1));
+function subAbilitiesSorted(rows: Array<readonly Ability[]>): Ability[][] {
+	const subAbilitiesUnsorted = rows.flatMap((row) => row.slice(1));
 
 	const countsMap = new Map<Ability, number>();
 	for (const ability of subAbilitiesUnsorted) {
@@ -64,7 +75,7 @@ function subAbilitiesSorted(buildAbilities: BuildAbilitiesTuple): Ability[] {
 	}
 	const counts = Array.from(countsMap).sort(sortAbilityCount);
 
-	const subAbilities: Ability[][] = [[], [], []];
+	const subAbilities: Ability[][] = rows.map(() => []);
 	while (counts.length > 0) {
 		const [ability, count] = counts[0];
 		if (count >= 3) {
@@ -114,7 +125,7 @@ function subAbilitiesSorted(buildAbilities: BuildAbilitiesTuple): Ability[] {
 		counts.sort(sortAbilityCount);
 	}
 
-	return subAbilities.flat();
+	return subAbilities;
 }
 
 function switchSubRowsIfBetter(
@@ -124,7 +135,7 @@ function switchSubRowsIfBetter(
 	const rowsInvolvedInMove = new Set<number>();
 
 	for (const [i, row] of buildAbilities.entries()) {
-		if (rowsInvolvedInMove.has(i)) continue;
+		if (rowsInvolvedInMove.has(i) || isAbilityDoublerRow(row)) continue;
 
 		const [m, s1] = row;
 
@@ -132,7 +143,9 @@ function switchSubRowsIfBetter(
 		if (m === s1) continue;
 
 		for (const [j, row2] of buildAbilities.entries()) {
-			if (i === j || rowsInvolvedInMove.has(j)) continue;
+			if (i === j || rowsInvolvedInMove.has(j) || isAbilityDoublerRow(row2)) {
+				continue;
+			}
 
 			const [m2, s21] = row2;
 

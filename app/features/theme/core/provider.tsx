@@ -129,6 +129,7 @@ function ThemeHead() {
 				suppressHydrationWarning
 			/>
 			{initialUserTheme === "auto" ? (
+				// biome-ignore lint/security/noDangerouslySetInnerHtml: static inline script, no user input
 				<script dangerouslySetInnerHTML={{ __html: CLIENT_THEME_SCRIPT }} />
 			) : null}
 		</>

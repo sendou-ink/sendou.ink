@@ -9,7 +9,7 @@ import type { DB } from "./tables";
 
 type NoSelections = Record<never, never>;
 
-type SortKey<TB extends keyof DB> = readonly [
+export type SortKey<TB extends keyof DB> = readonly [
 	OrderByExpression<DB, TB, NoSelections>,
 	OrderByDirection,
 ];
@@ -27,6 +27,11 @@ interface FindPageArgs<TB extends keyof DB, Row extends { id: number }> {
 	containingId?: number | null;
 	/** Fetches the full rows of one page's ids, in any order. */
 	rowsByIds: (ids: number[]) => Promise<Row[]>;
+	/**
+	 * Counts the rows in a query of their own instead of a window over the page's ids. Faster when an
+	 * index serves `orderBy`: the ids then stop at the page's end and the count is an index scan.
+	 */
+	separateCount?: boolean;
 }
 
 /**
@@ -45,6 +50,7 @@ export async function findPage<
 	pageSize,
 	containingId,
 	rowsByIds,
+	separateCount = false,
 }: FindPageArgs<TB, Row>) {
 	const keys: ReadonlyArray<SortKey<TB>> = [...orderBy, [id, "asc"]];
 
@@ -55,7 +61,9 @@ export async function findPage<
 
 	let idsQuery = query.select((eb) => [
 		eb.ref(id).$castTo<number>().as("id"),
-		eb.fn.countAll<number>().over().as("totalCount"),
+		(separateCount ? eb.lit(null) : eb.fn.countAll<number>().over()).as(
+			"totalCount",
+		),
 	]);
 	for (const [expression, direction] of keys) {
 		idsQuery = idsQuery.orderBy(expression, direction);
@@ -66,8 +74,10 @@ export async function findPage<
 		.execute();
 
 	// the total rides along the page's ids, only a page past a non-empty result's end needs its own count
-	const totalCount =
-		idRows[0]?.totalCount ?? (currentPage === 1 ? 0 : await countRows(query));
+	const totalCount = separateCount
+		? await countRows(query)
+		: (idRows[0]?.totalCount ??
+			(currentPage === 1 ? 0 : await countRows(query)));
 
 	const ids = idRows.map((row) => row.id);
 	const rowsById = new Map(

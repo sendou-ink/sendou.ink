@@ -7,3 +7,5 @@ export const SETTINGS_TAB_SLUGS = [
 ] as const;
 
 export type SettingsTabSlug = (typeof SETTINGS_TAB_SLUGS)[number];
+
+export const MATCH_PROFILE_WEAPON_POOL_ID = "weapon-pool";

@@ -80,6 +80,10 @@ export const BUILD_SORT_IDENTIFIERS = [
 
 export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
 
+export const BUILD_VISIBILITIES = ["PUBLIC", "PRIVATE"] as const;
+
+export type BuildVisibility = (typeof BUILD_VISIBILITIES)[number];
+
 export const DEFAULT_BUILD_SORT = ["WEAPON_POOL", "UPDATED_AT"] as const;
 
 export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;

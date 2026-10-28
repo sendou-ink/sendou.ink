@@ -154,11 +154,12 @@ export const action = defineAction(
 			}
 			case "UNDO_DROP_TEAM_OUT": {
 				requireTournamentOrganizer(tournament, user);
+				const team = tournament.teamById(body.teamId);
+				errorToastIfFalsy(team, "Invalid team id");
 
-				await TournamentTeamRepository.undoDropOut(body.teamId);
+				await TournamentTeamRepository.undoDropOut(team.id);
 
-				statusChangedUserIds =
-					tournament.teamById(body.teamId)?.memberUserIds ?? [];
+				statusChangedUserIds = team.memberUserIds;
 
 				break;
 			}

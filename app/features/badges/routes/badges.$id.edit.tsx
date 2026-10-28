@@ -115,13 +115,12 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 	const initialOwners = data.badge.owners.map((o) => ({
 		id: o.id,
 		name: o.username,
-		discordId: o.discordId,
 		count: o.count,
 	}));
 	const [owners, setOwners] =
-		React.useState<
-			Array<{ id: number; name: string; discordId: string; count: number }>
-		>(initialOwners);
+		React.useState<Array<{ id: number; name: string; count: number }>>(
+			initialOwners,
+		);
 
 	const ownerDifferences = getOwnerDifferences(
 		owners.map((o) => ({ ...o, username: o.name })),

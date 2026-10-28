@@ -459,7 +459,7 @@ function EditReportedScoreRow({
 						{t("tournament:match.admin.mapNumber", { number: index + 1 })}
 					</span>
 					<span className={styles.winnerName}>
-						{t(`game-misc:MODE_SHORT_${result.mode}`)}{" "}
+						{t(`common:modes.short.${result.mode}`)}{" "}
 						{t(`game-misc:STAGE_${result.stageId}`)}
 						{isKo ? ` ${t("tournament:match.admin.koSuffix")}` : null}
 					</span>

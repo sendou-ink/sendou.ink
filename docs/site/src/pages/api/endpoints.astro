@@ -1,0 +1,161 @@
+---
+import { getCollection } from "astro:content";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import type { ApiExchange } from "../../../../../scripts/living-docs/api-examples.ts";
+import {
+	apiEndpointAnchor,
+	apiTypeAnchor,
+	githubUrl,
+	testAnchor,
+} from "../../../../../scripts/living-docs/links.ts";
+import {
+	type ApiEndpoint,
+	PUBLIC_API_SCHEMA_FILE,
+} from "../../../../../scripts/living-docs/public-api.ts";
+import ApiEndpointArticle from "../../components/living/ApiEndpointArticle.astro";
+import FileLink from "../../components/living/FileLink.astro";
+import LivingScript from "../../components/living/LivingScript.astro";
+import RefTemplates from "../../components/living/RefTemplates.astro";
+import { viewHref } from "../../living/format.ts";
+import "../../styles/living.css";
+
+const types = (await getCollection("publicApi"))
+	.map((entry) => entry.data)
+	.sort((a, b) => a.line - b.line);
+const endpoints = types.flatMap((type) =>
+	type.endpoints.map((endpoint) => ({ endpoint, type })),
+);
+const readEndpoints = endpoints.filter(
+	({ endpoint }) => endpoint.method === "GET",
+);
+const writeEndpoints = endpoints.filter(
+	({ endpoint }) => endpoint.method === "POST",
+);
+const sharedTypes = types.filter((type) => type.endpoints.length === 0);
+const refs = new Map(types.flatMap((type) => [...type.refs]));
+const testHrefs = await exampleTestHrefs();
+
+function testHref(example: ApiExchange) {
+	return testHrefs.get(`${example.test.spec}:${example.test.line}`) ?? "#";
+}
+
+/** Link to every e2e test on its feature's e2e page, by `spec:line`. */
+async function exampleTestHrefs() {
+	const hrefs = new Map<string, string>();
+	for (const { data: feature } of await getCollection("features")) {
+		for (const spec of feature.specs) {
+			for (const group of spec.groups) {
+				for (const test of group.tests) {
+					hrefs.set(
+						`${spec.path}:${test.line}`,
+						viewHref(
+							feature.config.id,
+							"e2e",
+							testAnchor(spec.path, group.name, test),
+						),
+					);
+				}
+			}
+		}
+	}
+
+	return hrefs;
+}
+
+const sections: Array<{
+	id: string;
+	title: string;
+	items: Array<{ id: string; text: string }>;
+}> = [
+	{
+		id: "read-endpoints",
+		title: "Read endpoints",
+		items: readEndpoints.map(({ endpoint }) => endpointHeading(endpoint)),
+	},
+	{
+		id: "write-endpoints",
+		title: "Write endpoints",
+		items: writeEndpoints.map(({ endpoint }) => endpointHeading(endpoint)),
+	},
+	{
+		id: "types",
+		title: "Types",
+		items: sharedTypes.map((type) => ({
+			id: apiTypeAnchor(type.name),
+			text: type.name,
+		})),
+	},
+];
+
+function endpointHeading(endpoint: ApiEndpoint) {
+	return {
+		id: apiEndpointAnchor(endpoint),
+		text: `${endpoint.method} ${endpoint.path}`,
+	};
+}
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Endpoints",
+		description: "Every endpoint of the public API with its response or request body type, generated from app/features/api-public/schema.ts.",
+		editUrl: false,
+		tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
+	}}
+	headings={sections.flatMap((section) => [
+		{ depth: 2, slug: section.id, text: section.title },
+		...section.items.map((item) => ({ depth: 3, slug: item.id, text: item.text })),
+	])}
+>
+	<p>
+		Every endpoint of the public API, generated from{" "}
+		<a href={githubUrl(PUBLIC_API_SCHEMA_FILE, 1)}><code>{PUBLIC_API_SCHEMA_FILE}</code></a>.
+		See the <a href="../">overview</a> for how to get a token, the rules of using it and an
+		example request. Every request sends the token as{" "}
+		<code>Authorization: Bearer &lt;token&gt;</code>.
+	</p>
+	<p>
+		The examples under an endpoint are real requests the e2e tests made against it (mostly{" "}
+		<a href={githubUrl("e2e/api-public.spec.ts", 1)}><code>e2e/api-public.spec.ts</code></a>), one
+		per status code, kept by the last <code>pnpm run docs:capture</code> in{" "}
+		<code>docs/site/api-examples.json</code> with arrays cut to their first items. An endpoint
+		without examples has no test calling it.
+	</p>
+
+	<h2 id="read-endpoints">Read endpoints</h2>
+	<p>Work with a read or a write token. The type is the JSON the endpoint responds with.</p>
+	<div class="living routes">
+		{readEndpoints.map(({ endpoint, type }) => <ApiEndpointArticle endpoint={endpoint} type={type} testHref={testHref} />)}
+	</div>
+
+	<h2 id="write-endpoints">Write endpoints</h2>
+	<p>
+		Need a write token, and the token's owner to be an organizer of the tournament. The type is
+		the JSON request body. A successful request responds with an empty <code>200</code>, a failed
+		one with <code>400</code> and <code>{"{ error: string, fieldErrors?: object }"}</code>.
+	</p>
+	<div class="living routes">
+		{writeEndpoints.map(({ endpoint, type }) => <ApiEndpointArticle endpoint={endpoint} type={type} testHref={testHref} />)}
+	</div>
+
+	<h2 id="types">Types</h2>
+	<p>The types the endpoints above share.</p>
+	<div class="living routes">
+		{
+			sharedTypes.map((type) => (
+				<article class="route">
+					<header class="route-head">
+						<h3 class="route-path" id={apiTypeAnchor(type.name)}>
+							<code>{type.name}</code>
+						</h3>
+						<FileLink file={type.file} line={type.line} label="schema.ts" />
+					</header>
+					<pre class="code" set:html={type.html} />
+				</article>
+			))
+		}
+	</div>
+
+	<RefTemplates refs={refs} />
+	<LivingScript />
+</StarlightPage>

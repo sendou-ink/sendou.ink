@@ -1,0 +1,421 @@
+---
+import { getEntry } from "astro:content";
+import { Badge } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import type {
+	CallSite,
+	InternalEndpoint,
+} from "../../../../../scripts/living-docs/background-work.ts";
+import type { RouteDataTrace } from "../../../../../scripts/living-docs/document.ts";
+import {
+	anchor,
+	githubUrl,
+	routeAnchor,
+} from "../../../../../scripts/living-docs/links.ts";
+import DataTrace from "../../components/living/DataTrace.astro";
+import FileLink from "../../components/living/FileLink.astro";
+import {
+	count,
+	markdown,
+	routeTables,
+	STATIC_ASSETS_URL,
+	sitePath,
+} from "../../living/format.ts";
+import "../../styles/living.css";
+
+const ENDPOINT_GROUPS: Array<{
+	auth: InternalEndpoint["auth"];
+	title: string;
+	description: string;
+}> = [
+	{
+		auth: "lohi",
+		title: "Lohi",
+		description:
+			"Called by Lohi, the sendou.ink Discord bot, with the `LOHI_TOKEN` environment variable in the `Lohi-Token` header (`canAccessLohiEndpoint`).",
+	},
+	{
+		auth: "webhook",
+		title: "Webhooks",
+		description:
+			"Called by third parties when something happens on their side, each verifying the request's signature.",
+	},
+	{
+		auth: "dev-controls",
+		title: "Dev controls",
+		description:
+			"Only answer in development and e2e test runs (`DANGEROUS_CAN_ACCESS_DEV_CONTROLS`), called by the dev tools and the e2e helpers.",
+	},
+];
+
+const entry = await getEntry("backgroundWork", "background-work");
+if (!entry) throw new Error("Background work wasn't generated");
+const { schedules, endpoints, outboundWebhooks, notificationTypes } =
+	entry.data;
+
+const routineCount = schedules.flatMap((schedule) => schedule.routines).length;
+const unsentTypes = notificationTypes.filter(
+	(notification) => notification.senders.length === 0,
+);
+
+function scheduleAnchor(list: string) {
+	return anchor("schedule", list);
+}
+
+function routineAnchor(name: string) {
+	return anchor("routine", name);
+}
+
+function notificationAnchor(type: string) {
+	return anchor("notification", type);
+}
+
+function dataSummary(trace: RouteDataTrace) {
+	const tables = routeTables({ loader: trace, action: null });
+	const writtenCount = tables.filter((access) => access.writes).length;
+
+	return [
+		count(tables.length, "table"),
+		writtenCount > 0 ? `${writtenCount} written` : null,
+	]
+		.filter((part) => part !== null)
+		.join(" · ");
+}
+
+/** `{{name}}` of a translation as code. */
+function translationHtml(text: string) {
+	return markdown(text.replace(/\{\{\s*(\w+)\s*\}\}/g, "`{{$1}}`")).replace(
+		/^<p>|<\/p>$/g,
+		"",
+	);
+}
+
+function callSiteLabel(site: CallSite) {
+	return site.declaration || site.file.split("/").at(-1)!;
+}
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Background work",
+		description:
+			"What runs without a user clicking anything: scheduled routines, endpoints called by machines, Discord webhooks and notifications.",
+		editUrl: false,
+		tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
+	}}
+	headings={[
+		{ depth: 2, slug: "scheduled-routines", text: "Scheduled routines" },
+		...schedules.map((schedule) => ({
+			depth: 3,
+			slug: scheduleAnchor(schedule.list),
+			text: schedule.reading,
+		})),
+		{ depth: 2, slug: "endpoints", text: "Endpoints for machines" },
+		...ENDPOINT_GROUPS.map((group) => ({
+			depth: 3,
+			slug: anchor("endpoints", group.auth),
+			text: group.title,
+		})),
+		{ depth: 2, slug: "discord-webhooks", text: "Discord webhooks" },
+		{ depth: 2, slug: "notification-types", text: "Notification types" },
+	]}
+>
+	<p>
+		What the server does without a user clicking anything, and what it is called by apart from
+		the browser. Generated from the cron schedules of{" "}
+		<a href={githubUrl("app/entry.server.tsx", 1)}><code>app/entry.server.tsx</code></a>, the
+		routines of <a href={githubUrl("app/routines/list.server.ts", 1)}><code>app/routines/</code></a>,
+		the routes of <code>app/routes.ts</code> and the <code>Notification</code> type.
+	</p>
+
+	<h2 id="scheduled-routines">Scheduled routines</h2>
+	<p>
+		{count(routineCount, "routine")} run by <code>node-cron</code>, in production only (the
+		e2e tests and development never start the schedules). A schedule runs its routines one after
+		another, a routine failing is logged and doesn't stop the rest. In development or an e2e test
+		run a routine can be run by hand by <code>POST /run-routine</code> with its name (
+		<a href={githubUrl("app/features/api-private/routes/run-routine.ts", 1)}><code>run-routine.ts</code></a>).
+	</p>
+	{
+		schedules.map((schedule) => (
+			<>
+				<h3 id={scheduleAnchor(schedule.list)}>{schedule.reading}</h3>
+				<p>
+					<code>{schedule.expression}</code>{" "}
+					{schedule.timezone ? (
+						<>
+							in <code>{schedule.timezone}</code>
+						</>
+					) : (
+						"in the server's time zone"
+					)}
+					, runs <code>{schedule.list}</code>{" "}
+					<FileLink file="app/entry.server.tsx" line={schedule.line} label="entry.server.tsx" />
+				</p>
+				{schedule.comment ? <Fragment set:html={markdown(schedule.comment)} /> : null}
+				<div class="living routes">
+					{schedule.routines.map((routine) => (
+						<article class="route" id={routineAnchor(routine.name)}>
+							<header class="route-head">
+								<h4 class="route-path">
+									<code>{routine.name}</code>
+								</h4>
+								{routine.notificationTypes.map((type) => (
+									<a class="chip" href={`#${notificationAnchor(type)}`}>
+										{type}
+									</a>
+								))}
+								<FileLink
+									file={routine.file}
+									line={routine.line}
+									label={routine.file.split("/").at(-1)!}
+								/>
+							</header>
+							{routine.description ? (
+								<Fragment set:html={markdown(routine.description)} />
+							) : (
+								<p class="missing">No description, add JSDoc to {routine.exportName}.</p>
+							)}
+							<details class="route-data">
+								<summary>{dataSummary(routine.data)}</summary>
+								<DataTrace trace={routine.data} />
+							</details>
+						</article>
+					))}
+				</div>
+			</>
+		))
+	}
+
+	<h2 id="endpoints">Endpoints for machines</h2>
+	<p>
+		Routes with no page that other services or the dev tools call: found by their path containing{" "}
+		<code>webhook</code>, or by their loader (<code>GET</code>) or action (<code>POST</code>)
+		checking the caller with <code>canAccessLohiEndpoint</code> or guarding on{" "}
+		<code>DANGEROUS_CAN_ACCESS_DEV_CONTROLS</code>.
+	</p>
+	{
+		ENDPOINT_GROUPS.map((group) => (
+			<>
+				<h3 id={anchor("endpoints", group.auth)}>{group.title}</h3>
+				<Fragment set:html={markdown(group.description)} />
+				<div class="living routes">
+					{endpoints
+						.filter((endpoint) => endpoint.auth === group.auth)
+						.map((endpoint) => (
+							<article class="route">
+								<header class="route-head">
+									{endpoint.handlers.map((handler) => (
+										<Badge
+											text={handler.method}
+											variant={handler.method === "GET" ? "success" : "caution"}
+											size="small"
+										/>
+									))}
+									<h4 class="route-path">
+										<a
+											href={sitePath(
+												`reference/routes/#${routeAnchor({ file: endpoint.file, isLayout: false })}`,
+											)}
+										>
+											<code>{endpoint.path}</code>
+										</a>
+									</h4>
+									<FileLink
+										file={endpoint.file}
+										line={1}
+										label={endpoint.file.split("/").at(-1)!}
+									/>
+								</header>
+								{endpoint.description ? (
+									<Fragment set:html={markdown(endpoint.description)} />
+								) : null}
+								{endpoint.handlers.map((handler) => (
+									<details class="route-data">
+										<summary>
+											{handler.method === "GET" ? "Loader" : "Action"}:{" "}
+											{dataSummary(handler.data)}
+										</summary>
+										<DataTrace trace={handler.data} />
+									</details>
+								))}
+							</article>
+						))}
+				</div>
+			</>
+		))
+	}
+
+	<h2 id="discord-webhooks">Discord webhooks</h2>
+	<p>
+		Messages posted to Discord channels, from{" "}
+		<a href={githubUrl("app/modules/discord-webhook.server.ts", 1)}>
+			<code>app/modules/discord-webhook.server.ts</code>
+		</a>. Each channel's webhook URL is an environment variable, the message is skipped when it is
+		unset.
+	</p>
+	<div class="living routes">
+		{
+			outboundWebhooks.map((webhook) => (
+				<article class="route">
+					<header class="route-head">
+						<h3 class="route-path" id={anchor("webhook", webhook.name)}>
+							<code>{webhook.name}</code>
+						</h3>
+						{webhook.envVar ? <span class="chip">{webhook.envVar}</span> : null}
+						<FileLink file={webhook.file} line={webhook.line} label="discord-webhook.server.ts" />
+					</header>
+					{webhook.doc ? <Fragment set:html={markdown(webhook.doc)} /> : null}
+					<ul>
+						{webhook.senders.map((sender) => (
+							<li>
+								<a href={githubUrl(sender.file, sender.line)}>
+									<code>{sender.name}</code>
+								</a>
+								{sender.doc ? <> — <span set:html={translationHtml(sender.doc)} /></> : null}
+								{sender.callers.length > 0 ? (
+									<>
+										{" "}called by{" "}
+										{sender.callers.map((caller) => (
+											<Fragment>
+												<a href={githubUrl(caller.file, caller.line)}>
+													<code>{callSiteLabel(caller)}</code>
+												</a>{" "}
+												{caller.routes.map((route) => (
+													<a
+														class="route-chip"
+														href={sitePath(
+															`reference/routes/#${routeAnchor({ file: route.file, isLayout: false })}`,
+														)}
+													>
+														{route.path}
+													</a>
+												))}{" "}
+											</Fragment>
+										))}
+									</>
+								) : null}
+							</li>
+						))}
+					</ul>
+				</article>
+			))
+		}
+	</div>
+
+	<h2 id="notification-types">Notification types</h2>
+	<p>
+		The members of the <code>Notification</code> union (
+		<a href={githubUrl("app/features/notifications/notifications-types.ts", 1)}>
+			<code>notifications-types.ts</code>
+		</a>), sent with <code>notify()</code>: shown in the notifications list and, after a grace
+		period in which seeing it cancels it, pushed to subscribed devices. Title and text are the
+		English translations of <code>notifications.title.*</code> and <code>notifications.text.*</code>{" "}
+		in <code>locales/en/common.json</code>, interpolating the meta.
+		{
+			unsentTypes.length > 0 ? (
+				<>
+					{" "}
+					<Badge text={`${count(unsentTypes.length, "type")} never sent`} variant="caution" size="small" />
+				</>
+			) : null
+		}
+	</p>
+	<div class="living routes">
+		{
+			notificationTypes.map((notification) => (
+				<article class="route" id={notificationAnchor(notification.type)}>
+					<header class="route-head">
+						{notification.navIcon ? (
+							<img
+								class="feature-icon"
+								src={`${STATIC_ASSETS_URL}/img/layout/${notification.navIcon}.avif`}
+								alt=""
+								width={20}
+								height={20}
+								loading="lazy"
+							/>
+						) : null}
+						<h3 class="route-path">
+							<code>{notification.type}</code>
+						</h3>
+						{notification.urgency === "high" ? (
+							<Badge text="high" title="web push urgency" size="small" />
+						) : null}
+						<FileLink
+							file="app/features/notifications/notifications-types.ts"
+							line={notification.line}
+							label="notifications-types.ts"
+						/>
+					</header>
+					<p>
+						{notification.title ? <strong>{notification.title}</strong> : null}
+						{notification.text ? (
+							<>
+								{" "}
+								<span set:html={translationHtml(notification.text)} />
+							</>
+						) : null}
+						{notification.title === null || notification.text === null ? (
+							<Badge text="missing translation" variant="caution" size="small" />
+						) : null}
+					</p>
+					<dl class="module-facts not-content">
+						{notification.meta.length > 0 ? (
+							<>
+								<dt>Meta</dt>
+								<dd>
+									{notification.meta.map((field, index) => (
+										<>
+											{index > 0 ? ", " : ""}
+											<code>
+												{field.name}: {field.type}
+											</code>
+										</>
+									))}
+								</dd>
+							</>
+						) : null}
+						<dt>Links to</dt>
+						<dd>
+							<code>{notification.link}</code>
+						</dd>
+						<dt>Sent by</dt>
+						<dd>
+							{notification.senders.length > 0 ? (
+								notification.senders.map((sender) => (
+									<div>
+										{sender.routine ? (
+											<a href={`#${routineAnchor(sender.routine)}`}>
+												<code>{sender.routine}</code>
+											</a>
+										) : (
+											<a href={githubUrl(sender.file, sender.line)}>
+												<code>{callSiteLabel(sender)}</code>
+											</a>
+										)}{" "}
+										{sender.routes.map((route) => (
+											<a
+												class="route-chip"
+												href={sitePath(
+													`reference/routes/#${routeAnchor({ file: route.file, isLayout: false })}`,
+												)}
+											>
+												{route.path}
+											</a>
+										))}
+										{sender.routine === null && sender.routes.length === 0 ? (
+											<span class="route-data-via">{sender.file.split("/").at(-1)}</span>
+										) : null}
+									</div>
+								))
+							) : (
+								<Badge text="never sent" variant="caution" size="small" />
+							)}
+						</dd>
+					</dl>
+				</article>
+			))
+		}
+	</div>
+</StarlightPage>

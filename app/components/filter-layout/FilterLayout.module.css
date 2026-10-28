@@ -1,0 +1,245 @@
+.container {
+	container-type: inline-size;
+}
+
+.layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--s-4);
+
+	@container (width >= 50rem) {
+		grid-template-columns: 18rem minmax(0, 1fr);
+		align-items: start;
+		gap: var(--s-6);
+	}
+}
+
+.desktopOnly {
+	display: none;
+
+	@container (width >= 50rem) {
+		display: block;
+	}
+}
+
+.mobileOnly {
+	@container (width >= 50rem) {
+		display: none;
+	}
+}
+
+.results {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	min-width: 0;
+}
+
+.filteredResultsText {
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.sidebar {
+	position: sticky;
+	top: var(--layout-sticky-top);
+	max-height: calc(100dvh - var(--layout-sticky-top) - var(--s-4));
+	overflow-y: auto;
+	padding: var(--s-3) var(--s-4) var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+
+	& .panelHeader {
+		min-height: var(--field-size);
+		padding-block-end: var(--s-2);
+	}
+}
+
+.collapsibleSection {
+	padding-block: var(--s-2);
+	border-top: var(--border-style);
+}
+
+.panelHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	min-height: 3.25rem;
+}
+
+.panelTitle {
+	margin: 0;
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.accentIcon {
+	width: var(--field-size-icon);
+	height: var(--field-size-icon);
+	flex: none;
+	color: var(--color-fg-accent);
+}
+
+.countBadge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: var(--selector-size-sm);
+	height: var(--selector-size-sm);
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-full);
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-extra);
+
+	.panelHeader & {
+		margin-inline-start: var(--s-1);
+	}
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2-5);
+}
+
+.sectionHeading {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.sectionSummary {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	height: var(--field-size);
+	margin-inline: calc(-1 * var(--s-2));
+	padding-inline: var(--s-2);
+	border-radius: var(--radius-field);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	list-style: none;
+	cursor: pointer;
+	user-select: none;
+
+	&::-webkit-details-marker {
+		display: none;
+	}
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+	}
+}
+
+.sectionIcon {
+	display: inline-flex;
+	color: var(--color-text-high);
+
+	& > svg {
+		width: var(--s-4);
+		height: var(--s-4);
+	}
+}
+
+.sectionValue {
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-fg-accent);
+}
+
+.sectionChevron {
+	width: var(--s-4);
+	height: var(--s-4);
+	margin-inline-start: auto;
+	color: var(--color-text-high);
+	transition: rotate 0.15s;
+
+	details:not([open]) & {
+		rotate: -90deg;
+	}
+}
+
+.sectionContent {
+	margin-block-start: var(--s-1-5);
+}
+
+.sheetTrigger {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	width: 100%;
+	min-height: 3.75rem;
+	padding: var(--s-2) var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	text-align: start;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+	}
+}
+
+.sheetTriggerIcon {
+	width: var(--s-5);
+	height: var(--s-5);
+	flex: none;
+	color: var(--color-fg-accent);
+}
+
+.sheetTriggerTexts {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	min-width: 0;
+}
+
+.sheetTriggerTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.sheetTriggerSummary {
+	overflow: hidden;
+	color: var(--color-fg-accent);
+	font-size: var(--font-xs);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.sheetTriggerChevron {
+	width: var(--field-size-icon);
+	height: var(--field-size-icon);
+	flex: none;
+	color: var(--color-text-high);
+}
+
+.sheetBody {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	padding: var(--s-2) var(--s-2) var(--s-4);
+}

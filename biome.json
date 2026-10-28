@@ -5,6 +5,9 @@
 			"**",
 			"!scripts/dicts/**/*",
 			"!scripts/output/**/*",
+			"!docs/site/dist/**/*",
+			"!docs/site/.astro/**/*",
+			"!docs/site/visits.json",
 			"!app/db/seed/data/placements.json",
 			"!build/**/*",
 			"!app/features/scanner/tests/fixtures",
@@ -158,10 +161,14 @@
 					"level": "error"
 				},
 				"noUselessCatchBinding": "error",
-				"noForEach": "error"
+				"noForEach": "error",
+				"useIndexOf": "error"
 			},
 			"performance": {
 				"noSyncScripts": "error"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "error"
 			},
 			"nursery": {
 				"useImportsFirst": "error",
@@ -258,6 +265,7 @@
 				"app/routes.ts",
 				"app/entry.server.tsx",
 				"*.config.ts",
+				"docs/site/astro.config.ts",
 				"knip.ts",
 				"e2e/global-setup.ts",
 				"e2e/global-teardown.ts",
@@ -267,6 +275,17 @@
 				"rules": {
 					"style": {
 						"noDefaultExport": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["**/*.astro"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off"
 					}
 				}
 			}
@@ -310,6 +329,15 @@
 		{
 			"includes": ["app/**"],
 			"plugins": ["./biome-plugins/no-and-conditional-rendering.grit"]
+		},
+		{
+			"includes": [
+				"app/**",
+				"!app/modules/persisted-state/**",
+				"!**/*.test.ts",
+				"!**/*.test.tsx"
+			],
+			"plugins": ["./biome-plugins/no-raw-web-storage.grit"]
 		},
 		{
 			"includes": [

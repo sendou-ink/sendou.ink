@@ -150,7 +150,7 @@ function ModNotes() {
 					/>
 					<p className="ml-2">By: {note.username}</p>
 					<p className="ml-2 whitespace-pre-wrap">Note: {note.text}</p>
-					{note.discordId === user?.discordId ? (
+					{note.id === user?.id ? (
 						<FormWithConfirm
 							dialogHeading="Delete mod note?"
 							fields={[
@@ -215,7 +215,7 @@ function Reports() {
 							- By:{" "}
 							<Link
 								to={userPage({
-									discordId: report.reporterDiscordId,
+									id: report.reporterUserId,
 									customUrl: report.reporterCustomUrl,
 								})}
 							>

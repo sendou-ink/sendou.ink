@@ -66,4 +66,41 @@ test.describe("Build Analyzer", () => {
 			"Build 2",
 		);
 	});
+
+	test("keeps ability effects switched on while either build is edited", async ({
+		page,
+	}) => {
+		const analyzer = new AnalyzerPage(page);
+		await analyzer.goto();
+		await analyzer.pickWeapon("Splattershot");
+
+		const openingGambit = analyzer.effectSwitch("Opening Gambit");
+		const dropRoller = analyzer.effectSwitch("Drop Roller");
+
+		await analyzer.addAbility("OG");
+		await analyzer.toggleEffect("Opening Gambit");
+		await expect(openingGambit).toBeChecked();
+
+		await analyzer.selectTab("build2");
+		await analyzer.addAbility("DR");
+		await analyzer.toggleEffect("Drop Roller");
+		await expect(dropRoller).toBeChecked();
+
+		await analyzer.addAbility("SSU");
+		await expect(analyzer.selectedAbility("SSU")).toBeVisible();
+		await expect(openingGambit).toBeChecked();
+		await expect(dropRoller).toBeChecked();
+
+		await analyzer.selectTab("build1");
+		await analyzer.addAbility("SSU");
+		await expect(analyzer.selectedAbility("SSU")).toBeVisible();
+		await expect(openingGambit).toBeChecked();
+		await expect(dropRoller).toBeChecked();
+
+		// Drop Roller's 30AP on top of the SSU main build 2 has
+		await analyzer.selectTab("ap");
+		await expect(
+			analyzer.apComparison(2).filter({ hasText: /^40AP$/ }),
+		).toHaveCount(1);
+	});
 });

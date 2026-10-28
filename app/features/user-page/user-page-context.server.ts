@@ -2,7 +2,6 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 export type UserPageUser = {
 	id: number;
-	discordId: string;
 	customUrl: string | null;
 };
 

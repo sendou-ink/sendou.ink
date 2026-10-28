@@ -28,6 +28,8 @@ type Options = {
 	isCheckedIn?: boolean;
 	/** Is the team looking for more players on the tournament's LFG page? */
 	isLooking?: boolean;
+	/** Teams this team has liked in the LFG matchmaking view. */
+	likedTeamIds?: number[];
 	/** The division (starting bracket) the organizer placed the team in, as the seeds page does. */
 	startingBracketIdx?: number;
 };
@@ -72,6 +74,7 @@ export const { create } = defineFactory({
 				additionalMemberUserIds,
 			}),
 		);
+		invariant(team, "Owner is already in a team of the tournament");
 
 		if (mapPool) {
 			await TournamentTeamRepository.upsertCounterpickMaps({
@@ -88,7 +91,7 @@ export const { create } = defineFactory({
 	},
 	applyOptions: async (
 		team,
-		{ isCheckedIn, isLooking, startingBracketIdx }: Options,
+		{ isCheckedIn, isLooking, likedTeamIds, startingBracketIdx }: Options,
 	) => {
 		if (typeof startingBracketIdx === "number") {
 			await TournamentTeamRepository.updateStartingBrackets([
@@ -106,6 +109,13 @@ export const { create } = defineFactory({
 			await TournamentLFGRepository.startLooking({
 				teamId: team.id,
 				chatRoomExpiresAt: addDays(new Date(), 7),
+			});
+		}
+
+		for (const targetTeamId of likedTeamIds ?? []) {
+			await TournamentLFGRepository.insertLike({
+				likerTeamId: team.id,
+				targetTeamId,
 			});
 		}
 	},

@@ -124,6 +124,7 @@ function MemberActions() {
 				schema={updateRosterSchema}
 				submitButtonText={t("common:actions.save")}
 				defaultValues={{
+					loadedMemberIds: team.members.map((member) => member.id),
 					members: team.members.map((member) => ({
 						userId: member.id,
 						role: member.customRole ? CUSTOM_ROLE_VALUE : (member.role ?? null),

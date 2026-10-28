@@ -1,37 +1,39 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Ability } from "~/components/Ability";
-import { Image, ModeImage, WeaponImage } from "~/components/Image";
+import { Avatar } from "~/components/Avatar";
+import { CircleBackdrop } from "~/components/CircleBackdrop";
+import { Image, WeaponImage } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import type { AbilityPoints } from "~/features/build-analyzer/analyzer-types";
 import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
 import { getAbilityChunksMapAsArray } from "~/features/build-analyzer/core/abilityChunksCalc";
 import { apFromMap } from "~/features/build-analyzer/core/utils";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
+import * as Patches from "~/features/builds/core/patches";
 import type {
 	Ability as AbilityType,
+	AbilityWithUnknown,
 	BuildAbilitiesTuple,
 	GearType,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { gearImageUrl, navIconUrl, resolveAvatarUrl } from "~/utils/urls";
-import styles from "./BuildGraphic.module.css";
 import {
-	GraphicContainer,
-	GraphicDateSubtitle,
-	GraphicHeader,
-	GraphicTitle,
-} from "./Graphic";
+	abilityImageUrl,
+	gearImageUrl,
+	modeImageUrl,
+	navIconUrl,
+} from "~/utils/urls";
+import styles from "./BuildGraphic.module.css";
+import { GraphicContainer } from "./Graphic";
 
 const BUILD_GRAPHIC_WIDTH = 380;
 
 export interface BuildGraphicOwner {
+	id: number;
 	username: string;
-	discordId: string;
 	plusTier: number | null;
 	customUrl?: Tables["User"]["customUrl"];
-	discordAvatar?: Tables["User"]["discordAvatar"];
-	customAvatarUrl?: string | null;
+	avatar?: string | null;
 }
 
 export function BuildGraphic({
@@ -59,95 +61,89 @@ export function BuildGraphic({
 	showAbilityPoints?: boolean;
 	showAbilityChunks?: boolean;
 }) {
-	const { t } = useTranslation(["weapons"]);
+	const { t } = useTranslation(["weapons", "game-misc", "common"]);
 
-	const abilityPoints = buildToAbilityPoints(build.abilities);
-
-	const isNoGear = [
-		build.headGearSplId,
-		build.clothesGearSplId,
-		build.shoesGearSplId,
-	].some((id) => typeof id !== "number");
+	const abilityPoints = showAbilityPoints
+		? buildToAbilityPoints(build.abilities)
+		: null;
+	const patch = Patches.ofTimestamp(build.updatedAt);
+	const [mainWeapon, ...otherWeapons] = build.weapons;
 
 	return (
-		<GraphicContainer width={BUILD_GRAPHIC_WIDTH}>
-			<GraphicHeader
-				avatarUrl={resolveAvatarUrl({
-					customAvatarUrl: owner.customAvatarUrl,
-					discordId: owner.discordId,
-					discordAvatar: owner.discordAvatar,
-					size: "lg",
-				})}
-				identiconInput={owner.discordId}
-				titleRow={
-					<GraphicTitle>
-						{owner.username}
-						{owner.plusTier ? (
-							<span className={styles.plusTier}> +{owner.plusTier}</span>
-						) : null}
-					</GraphicTitle>
-				}
-				subtitle={<GraphicDateSubtitle date={build.updatedAt} />}
-				trailing={
-					build.modes && build.modes.length > 0
-						? build.modes.map((mode) => (
-								<ModeImage key={mode} mode={mode} size={24} />
-							))
-						: undefined
-				}
-				alignTrailingWithTitle
-			/>
-			{showTitle ? (
-				<div className={styles.buildTitle}>{build.title}</div>
-			) : null}
-			<div className={styles.weaponsRow}>
-				{build.weapons.map((weapon) => (
-					<div key={weapon.weaponSplId} className={styles.weapon}>
-						{weapon.isTop500 ? (
-							<Image
-								className={styles.top500}
-								path={navIconUrl("xsearch")}
-								alt=""
-								height={26}
-								width={26}
-							/>
-						) : null}
-						<WeaponImage
-							weaponSplId={weapon.weaponSplId}
-							variant="badge"
-							size={50}
-						/>
-					</div>
+		<GraphicContainer width={BUILD_GRAPHIC_WIDTH} className={styles.container}>
+			<div className={styles.bar}>
+				{build.modes?.map((mode) => (
+					<Image
+						key={mode}
+						alt=""
+						path={modeImageUrl(mode)}
+						containerClassName={styles.mode}
+						className={styles.modeImage}
+					/>
 				))}
-				{build.weapons.length === 1 ? (
-					<div className={styles.weaponName}>
-						{t(`weapons:MAIN_${build.weapons[0].weaponSplId}`)}
+				{patch ? <div className={styles.patch}>{patch}</div> : null}
+			</div>
+			<div className={styles.header}>
+				<WeaponCircle weapon={mainWeapon} />
+				<div className={styles.titleBlock}>
+					<div className={styles.title}>
+						{showTitle
+							? build.title
+							: t(`weapons:MAIN_${mainWeapon.weaponSplId}`)}
 					</div>
-				) : null}
+					<div className={styles.owner}>
+						<Avatar
+							user={{ id: owner.id, avatar: owner.avatar ?? null }}
+							size="xxxsm"
+							alt=""
+						/>
+						<span className={styles.username}>{owner.username}</span>
+						{owner.plusTier ? (
+							<span className={styles.plusTier}>
+								<Image
+									path={navIconUrl("plus")}
+									alt={t("common:pages.plus")}
+									size={16}
+								/>
+								{owner.plusTier}
+							</span>
+						) : null}
+					</div>
+					{otherWeapons.length > 0 ? (
+						<div className={styles.otherWeapons}>
+							{otherWeapons.map((weapon) => (
+								<WeaponCircle
+									key={weapon.weaponSplId}
+									weapon={weapon}
+									isSmall
+								/>
+							))}
+						</div>
+					) : null}
+				</div>
 			</div>
 			<div
-				className={clsx(styles.gearGrid, {
-					[styles.noGear]: isNoGear,
-					[styles.noAbilityPoints]: !showAbilityPoints,
+				className={clsx(styles.gearAbilities, {
+					[styles.withAbilityPoints]: abilityPoints,
 				})}
 			>
 				<GearRow
 					gearType="HEAD"
 					abilities={build.abilities[0]}
 					gearId={build.headGearSplId}
-					abilityPoints={showAbilityPoints ? abilityPoints : null}
+					abilityPoints={abilityPoints}
 				/>
 				<GearRow
 					gearType="CLOTHES"
 					abilities={build.abilities[1]}
 					gearId={build.clothesGearSplId}
-					abilityPoints={showAbilityPoints ? abilityPoints : null}
+					abilityPoints={abilityPoints}
 				/>
 				<GearRow
 					gearType="SHOES"
 					abilities={build.abilities[2]}
 					gearId={build.shoesGearSplId}
-					abilityPoints={showAbilityPoints ? abilityPoints : null}
+					abilityPoints={abilityPoints}
 				/>
 			</div>
 			{showAbilityChunks ? (
@@ -157,6 +153,34 @@ export function BuildGraphic({
 				<div className={styles.description}>{build.description}</div>
 			) : null}
 		</GraphicContainer>
+	);
+}
+
+function WeaponCircle({
+	weapon,
+	isSmall = false,
+}: {
+	weapon: BuildWeaponWithTop500Info;
+	isSmall?: boolean;
+}) {
+	return (
+		<div className={clsx(styles.weapon, { [styles.weaponSmall]: isSmall })}>
+			{weapon.isTop500 ? (
+				<Image
+					className={styles.top500}
+					path={navIconUrl("xsearch")}
+					alt=""
+					size={isSmall ? 12 : 18}
+				/>
+			) : null}
+			<CircleBackdrop bordered className={styles.weaponBackdrop}>
+				<WeaponImage
+					weaponSplId={weapon.weaponSplId}
+					variant="build"
+					size={64}
+				/>
+			</CircleBackdrop>
+		</div>
 	);
 }
 
@@ -177,35 +201,52 @@ function GearRow({
 	const [mainAbility, ...subAbilities] = abilities;
 
 	return (
-		<>
+		<div className={styles.gearRow}>
 			{typeof gearId === "number" ? (
-				<Image
-					height={80}
-					width={80}
-					alt=""
-					path={gearImageUrl(gearType, gearId)}
-					className={styles.gear}
-				/>
+				<CircleBackdrop bordered className={styles.gearBackdrop}>
+					<Image size={64} alt="" path={gearImageUrl(gearType, gearId)} />
+				</CircleBackdrop>
 			) : null}
-			<Ability ability={mainAbility} size="HUGE" />
-			<div className={styles.subAbilities}>
-				{subAbilitySegments(subAbilities).map((segment, segmentIndex) => (
-					<div key={segmentIndex} className={styles.subAbilitySegment}>
-						<div className={styles.subAbilitySegmentIcons}>
-							{Array.from({ length: segment.count }, (_, index) => (
-								<Ability key={index} ability={segment.ability} size="MAIN" />
-							))}
+			<AbilityIcon ability={mainAbility} isMain />
+			{subAbilitySegments(subAbilities).map((segment, segmentIndex) => (
+				<div key={segmentIndex} className={styles.subAbilitySegment}>
+					{Array.from({ length: segment.count }, (_, index) => (
+						<AbilityIcon key={index} ability={segment.ability} />
+					))}
+					{abilityPoints ? (
+						<div className={styles.abilityPointsLabel}>
+							{apFromMap({ abilityPoints, ability: segment.ability })}
+							{t("analyzer:abilityPoints.short")}
 						</div>
-						{abilityPoints ? (
-							<div className={styles.abilityPointsLabel}>
-								{apFromMap({ abilityPoints, ability: segment.ability })}
-								{t("analyzer:abilityPoints.short")}
-							</div>
-						) : null}
-					</div>
-				))}
-			</div>
-		</>
+					) : null}
+				</div>
+			))}
+		</div>
+	);
+}
+
+function AbilityIcon({
+	ability,
+	isMain = false,
+	isSmall = false,
+}: {
+	ability: AbilityWithUnknown;
+	isMain?: boolean;
+	isSmall?: boolean;
+}) {
+	return (
+		<div
+			className={clsx(styles.ability, {
+				[styles.abilityMain]: isMain,
+				[styles.abilitySmall]: isSmall,
+			})}
+		>
+			<Image
+				alt=""
+				path={abilityImageUrl(ability)}
+				className={styles.abilityImage}
+			/>
+		</div>
 	);
 }
 
@@ -218,7 +259,7 @@ function AbilityChunksRow({ abilities }: { abilities: BuildAbilitiesTuple }) {
 		<div className={styles.abilityChunks}>
 			{abilityChunks.map(([ability, count]) => (
 				<div key={ability} className={styles.abilityChunk}>
-					<Ability ability={ability} size="SUB" />
+					<AbilityIcon ability={ability} isSmall />
 					<div className={styles.abilityChunkCount}>{count}</div>
 				</div>
 			))}

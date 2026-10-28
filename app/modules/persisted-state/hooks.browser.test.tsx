@@ -116,3 +116,19 @@ describe("usePersistedMapState", () => {
 			.toHaveTextContent("a=1,b=2");
 	});
 });
+
+describe("PersistedState.readMap", () => {
+	test("sees other tabs' writes without a subscriber", () => {
+		// another tab clearing the storage, drops what earlier tests cached
+		window.dispatchEvent(new StorageEvent("storage", { key: null }));
+		window.localStorage.setItem("test-counts__a", "1");
+		expect(PersistedState.readMap(counts)).toEqual({ a: 1 });
+
+		window.localStorage.setItem("test-counts__a", "2");
+		window.dispatchEvent(
+			new StorageEvent("storage", { key: "test-counts__a" }),
+		);
+
+		expect(PersistedState.readMap(counts)).toEqual({ a: 2 });
+	});
+});

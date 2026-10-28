@@ -160,6 +160,27 @@ test("disjoint paint totals split when stage and code are unreadable", () => {
 	assert.equal(tl.events.length, 2);
 });
 
+test("a battle log revealing real names stays apart from the alias read of the same board", () => {
+	const tl = new TimelineBuilder({ minConfidence: 0 });
+	const board = (names: string[]): ScoreboardData["players"] =>
+		[327, 408, 270, 354, 381, 613, 456, 287].map((paint, i) => ({
+			name: names[i]!,
+			weaponId: null,
+			paint,
+			ka: i,
+			d: 3,
+			s: 1,
+		}));
+	const aliases = ["Mesh Cap", "Slugger", "Sunshield", "Bandana"];
+	const realNames = ["Sendou", "Kalle", "Jrod_14", "datkid"];
+	tl.push(replay(100, 0.9, { players: board([...aliases, ...aliases]) }));
+	const revealed = replay(103, 0.8, {
+		players: board([...realNames, ...realNames]),
+	});
+	assert.equal(tl.push(revealed).action, "added");
+	assert.equal(tl.events.length, 2);
+});
+
 test("too few readable paints never split", () => {
 	const tl = new TimelineBuilder({ minConfidence: 0 });
 	tl.push(

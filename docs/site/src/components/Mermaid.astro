@@ -1,0 +1,10 @@
+---
+interface Props {
+	/** The diagram's mermaid source, drawn in the browser by `MarkdownContent.astro`. */
+	code: string;
+}
+
+const { code } = Astro.props;
+---
+
+<pre class="mermaid not-content">{code}</pre>

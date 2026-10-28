@@ -76,7 +76,7 @@ export default function VodsSearchPage() {
 }
 
 function Filters() {
-	const { t } = useTranslation(["game-misc", "vods", "weapons"]);
+	const { t } = useTranslation(["game-misc", "vods", "weapons", "common"]);
 
 	const [{ mode, stageId, weapon, type }, setParams] =
 		useSearchParamsTyped(vodsSearchParams);
@@ -88,7 +88,7 @@ function Filters() {
 					key: "mode",
 					name: t("vods:forms.title.mode"),
 					formattedValue:
-						mode !== null ? t(`game-misc:MODE_SHORT_${mode}`) : null,
+						mode !== null ? t(`common:modes.short.${mode}`) : null,
 					onRemove: () => setParams({ mode: null }),
 					testId: "vods-mode-filter",
 					popover: (
@@ -101,7 +101,7 @@ function Filters() {
 									checked={mode === option}
 									onChange={(value) => setParams({ mode: value as ModeShort })}
 								>
-									{t(`game-misc:MODE_SHORT_${option}`)}
+									{t(`common:modes.short.${option}`)}
 								</SendouChipRadio>
 							))}
 						</SendouChipRadioGroup>

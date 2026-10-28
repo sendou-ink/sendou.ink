@@ -18,6 +18,9 @@ export interface UserCardData extends CommonUser {
 	stats: Array<UserCardStat>;
 }
 
+/** User cards keyed by user id, a plain object so loaders can return it. */
+export type UserCardsById = Partial<Record<number, UserCardData>>;
+
 /** Viewer-relative fields lazy-loaded from `/user-card/:id/friendship` when a card opens. */
 export interface UserCardFriendship {
 	isFriend: boolean;

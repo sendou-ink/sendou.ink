@@ -1,34 +1,14 @@
-import {
-	Calendar,
-	ChartColumnBig,
-	Flame,
-	FlaskConical,
-	Map as MapIcon,
-	X,
-} from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
-import { Ability } from "~/components/Ability";
-import { BackLink } from "~/components/BackLink";
 import { BuildCard } from "~/components/BuildCard";
-import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
-import { LinkButton, SendouButton } from "~/components/elements/Button";
-import { FilterBar } from "~/components/filter-bar/FilterBar";
-import { Image, ModeImage, WeaponImage } from "~/components/Image";
-import { Main } from "~/components/Main";
-import { PageHeader } from "~/components/PageHeader";
-import type { WeaponLandingState } from "~/components/WeaponLanding";
-import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
-import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { abilities } from "~/modules/in-game-lists/abilities";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
-import { weaponIdToCategory } from "~/modules/in-game-lists/weapon-ids";
+import { Flipper } from "~/components/Flipper";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
-import { dateToYYYYMMDD, isValidDate } from "~/utils/dates";
 import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -36,17 +16,15 @@ import {
 	navIconUrl,
 	outlinedMainWeaponImageUrl,
 	weaponBuildPage,
-	weaponBuildPopularPage,
-	weaponBuildStatsPage,
 } from "~/utils/urls";
-import {
-	BUILDS_PAGE_BATCH_SIZE,
-	BUILDS_PAGE_MAX_BUILDS,
-	MAX_BUILD_FILTERS,
-	RECENT_PATCHES,
-} from "../builds-constants";
 import { buildsSearchParams } from "../builds-search-params";
-import type { AbilityCondition } from "../builds-types";
+import type { BuildWeaponWithTop500Info } from "../builds-types";
+import {
+	BuildFiltersLayout,
+	ClearFiltersButton,
+} from "../components/BuildFilters";
+import { BuildStack } from "../components/BuildStack";
+import { WeaponBuildsLayout } from "../components/WeaponBuildsLayout";
 import { loader } from "../loaders/builds.$slug.server";
 import styles from "./builds.$slug.module.css";
 
@@ -88,437 +66,143 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
+function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
+	const [expandedOwnerIds, setExpandedOwnerIds] = React.useState<
+		ReadonlySet<number>
+	>(new Set());
+
+	const toggleExpanded = (ownerId: number) =>
+		setExpandedOwnerIds((ownerIds) => {
+			const newOwnerIds = new Set(ownerIds);
+			if (newOwnerIds.has(ownerId)) {
+				newOwnerIds.delete(ownerId);
+			} else {
+				newOwnerIds.add(ownerId);
+			}
+
+			return newOwnerIds;
+		});
+
+	const card =
+		(build: SerializeFrom<typeof loader>["builds"][number]) =>
+		(stackToggle: React.ReactNode) => (
+			<BuildCard
+				build={{
+					...build,
+					weapons: viewedWeaponFirst(build.weapons, data.weaponId),
+				}}
+				owner={{ ...build.owner, plusTier: build.plusTier }}
+				ownerAction={stackToggle}
+				canEdit={false}
+			/>
+		);
+
 	return (
-		<div className={styles.buildsContainer}>
-			{data.builds.map((build) => {
-				return (
-					<BuildCard
+		<Flipper flipKey={expandedOwnerIds} className={styles.buildsContainer}>
+			{groupByOwner(data.builds).flatMap(([build, ...otherBuilds]) => {
+				const isExpanded = expandedOwnerIds.has(build.owner.id);
+
+				return [
+					<BuildStack
 						key={build.id}
-						build={build}
-						owner={{ ...build.owner, plusTier: build.plusTier }}
-						canEdit={false}
-					/>
-				);
+						buildId={build.id}
+						stack={
+							otherBuilds.length > 0
+								? {
+										buildIds: otherBuilds.map((b) => b.id),
+										isExpanded,
+										onToggle: () => toggleExpanded(build.owner.id),
+									}
+								: undefined
+						}
+					>
+						{card(build)}
+					</BuildStack>,
+					...(isExpanded
+						? otherBuilds.map((otherBuild) => (
+								<BuildStack key={otherBuild.id} buildId={otherBuild.id}>
+									{card(otherBuild)}
+								</BuildStack>
+							))
+						: []),
+				];
 			})}
-		</div>
+		</Flipper>
 	);
 }
 
 export default function WeaponsBuildsPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "builds"]);
-	const [{ abilities: abilityConditions, mode, date }] =
-		useSearchParamsTyped(buildsSearchParams);
-
-	const loadMoreLink = () =>
-		buildsSearchParams.href(weaponBuildPage(data.slug), {
-			limit: data.limit + BUILDS_PAGE_BATCH_SIZE,
-			abilities: abilityConditions,
-			mode,
-			date,
-		});
-
-	const hasFilters =
-		abilityConditions.length > 0 || mode !== null || date !== null;
-
-	return (
-		<Main className="stack lg">
-			<PageHeader
-				image={
-					<CircleBackdrop>
-						<WeaponImage
-							weaponSplId={data.weaponId}
-							variant="build"
-							size={36}
-						/>
-					</CircleBackdrop>
-				}
-				title={data.weaponName}
-				subtitle={
-					<>
-						<Image path={navIconUrl("builds")} size={16} alt="" />
-						{t("common:pages.builds")}
-					</>
-				}
-				back={
-					<BackLink
-						to={weaponLandingSearchParams.href(BUILDS_PAGE, {
-							category: weaponIdToCategory(data.weaponId),
-						})}
-						state={{ focusSearch: true } satisfies WeaponLandingState}
-					/>
-				}
-			/>
-			<div className={styles.buildsButtons}>
-				<Filters />
-				<div className={styles.buildsButtonsLink}>
-					<LinkButton
-						to={weaponBuildStatsPage(data.slug)}
-						variant="outlined"
-						icon={<ChartColumnBig />}
-						size="small"
-					>
-						{t("builds:linkButton.abilityStats")}
-					</LinkButton>
-					<LinkButton
-						to={weaponBuildPopularPage(data.slug)}
-						variant="outlined"
-						icon={<Flame />}
-						size="small"
-					>
-						{t("builds:linkButton.popularBuilds")}
-					</LinkButton>
-				</div>
-			</div>
-			{data.builds.length > 0 ? (
-				<BuildCards data={data} />
-			) : (
-				<EmptyState navItem="builds">
-					{hasFilters
-						? t("builds:noBuildsMatchingFilters")
-						: t("builds:noBuildsForWeapon")}
-				</EmptyState>
-			)}
-			{data.limit < BUILDS_PAGE_MAX_BUILDS && data.hasMoreBuilds ? (
-				<LinkButton
-					className="m-0-auto"
-					size="small"
-					to={loadMoreLink()}
-					preventScrollReset
-				>
-					{t("common:actions.loadMore")}
-				</LinkButton>
-			) : null}
-		</Main>
-	);
-}
-
-function Filters() {
-	const { t } = useTranslation(["builds", "game-misc"]);
 	const [{ abilities: abilityConditions, mode, date }, setParams] =
 		useSearchParamsTyped(buildsSearchParams);
 
-	return (
-		<FilterBar
-			pills={[
-				{
-					key: "abilities",
-					name: t("builds:filters.abilities"),
-					icon: <FlaskConical />,
-					formattedValue:
-						abilityConditions.length > 0
-							? formatAbilityConditions(abilityConditions)
-							: null,
-					onRemove: () => setParams({ abilities: [] }),
-					testId: "ability",
-					popover: (
-						<AbilityConditionsPopover
-							conditions={abilityConditions}
-							onChange={(newConditions, opts) =>
-								setParams({ abilities: newConditions }, opts)
-							}
-						/>
-					),
-				},
-				{
-					key: "mode",
-					name: t("builds:filters.mode"),
-					icon: <MapIcon />,
-					formattedValue:
-						mode !== null ? t(`game-misc:MODE_SHORT_${mode}`) : null,
-					onAdd: () => setParams({ mode: "SZ" }),
-					onRemove: () => setParams({ mode: null }),
-					testId: "mode",
-					popover: (
-						<div className="stack sm">
-							{modesShort.map((option) => (
-								<div
-									key={option}
-									className="stack horizontal xs items-center font-sm font-semi-bold"
-								>
-									<input
-										type="radio"
-										name="builds-mode"
-										id={`builds-mode-${option}`}
-										value={option}
-										checked={mode === option}
-										onChange={() => setParams({ mode: option })}
-									/>
-									<label
-										htmlFor={`builds-mode-${option}`}
-										className="stack horizontal xs mb-0"
-									>
-										<ModeImage mode={option} size={18} />
-										{t(`game-misc:MODE_LONG_${option}`)}
-									</label>
-								</div>
-							))}
-						</div>
-					),
-				},
-				{
-					key: "date",
-					name: t("builds:filters.date"),
-					icon: <Calendar />,
-					formattedValue: date !== null ? <FormattedDate date={date} /> : null,
-					onAdd: () => setParams({ date: RECENT_PATCHES[0].date }),
-					onRemove: () => setParams({ date: null }),
-					testId: "date",
-					popover: (
-						<DatePopover
-							date={date}
-							onChange={(newDate) => setParams({ date: newDate })}
-						/>
-					),
-				},
-			]}
-		/>
-	);
-}
+	const pagination = useSearchParamPagination({
+		definition: buildsSearchParams,
+		currentPage: data.currentPage,
+		pagesCount: data.pagesCount,
+	});
 
-function formatAbilityConditions(conditions: AbilityCondition[]) {
-	const label = abilityConditionLabel(conditions[0]);
-
-	return conditions.length > 1 ? `${label} +${conditions.length - 1}` : label;
-}
-
-function abilityConditionLabel(condition: AbilityCondition) {
-	if (condition.value === true) return condition.ability;
-	if (condition.value === false) return `✗ ${condition.ability}`;
-
-	return `${condition.ability} ${
-		condition.comparison === "AT_MOST" ? "≤" : "≥"
-	} ${condition.value}`;
-}
-
-function AbilityConditionsPopover({
-	conditions,
-	onChange,
-}: {
-	conditions: AbilityCondition[];
-	onChange: (
-		conditions: AbilityCondition[],
-		opts?: { loader: boolean },
-	) => void;
-}) {
-	const { t } = useTranslation(["builds"]);
-
-	const addCondition = () => {
-		const newCondition: AbilityCondition = {
-			ability: "ISM",
-			comparison: "AT_LEAST",
-			value: 0,
-		};
-
-		// a fresh "at least 0" ability condition matches every build, so no need to refetch
-		onChange([...conditions, newCondition], { loader: false });
-	};
+	const hasFilters =
+		abilityConditions.length > 0 || mode !== null || date !== null;
+	const clearFilters = () =>
+		setParams({ abilities: [], mode: null, date: null });
 
 	return (
-		<div className={styles.abilityConditions}>
-			{conditions.map((condition, i) => (
-				<AbilityConditionRow
-					key={i}
-					condition={condition}
-					onChange={(newCondition) =>
-						onChange(
-							conditions.map((c, index) => (index === i ? newCondition : c)),
-						)
-					}
-					remove={() => onChange(conditions.filter((_, index) => index !== i))}
-				/>
-			))}
-			<SendouButton
-				className="self-start"
-				size="small"
-				variant="minimal"
-				isDisabled={conditions.length >= MAX_BUILD_FILTERS}
-				onClick={addCondition}
-				data-testid="add-ability-condition"
+		<WeaponBuildsLayout
+			weaponId={data.weaponId}
+			weaponName={data.weaponName}
+			slug={data.slug}
+			buildsCount={data.buildsCount}
+			selectedTab="builds"
+		>
+			<BuildFiltersLayout
+				values={{ abilities: abilityConditions, mode, date }}
+				onChange={setParams}
+				onClearAll={clearFilters}
+				filteredBuildsCount={data.filteredBuildsCount}
+				pagination={pagination}
 			>
-				{t("builds:filters.addAbility")}
-			</SendouButton>
-		</div>
-	);
-}
-
-function AbilityConditionRow({
-	condition,
-	onChange,
-	remove,
-}: {
-	condition: AbilityCondition;
-	onChange: (condition: AbilityCondition) => void;
-	remove: () => void;
-}) {
-	const { t } = useTranslation(["analyzer", "game-misc", "builds"]);
-	const abilityObject = abilities.find((a) => a.name === condition.ability)!;
-
-	return (
-		<div className={styles.abilityConditionRow}>
-			<Ability ability={condition.ability} size="TINY" />
-			<select
-				value={condition.ability}
-				onChange={(e) => {
-					const newAbility = e.target.value as AbilityType;
-					const stackable =
-						abilities.find((a) => a.name === newAbility)!.type === "STACKABLE";
-
-					onChange({
-						...condition,
-						ability: newAbility,
-						value: stackable ? 0 : true,
-					});
-				}}
-			>
-				{abilities.map((ability) => {
-					return (
-						<option key={ability.name} value={ability.name}>
-							{t(`game-misc:ABILITY_${ability.name}`)}
-						</option>
-					);
-				})}
-			</select>
-			<SendouButton
-				icon={<X />}
-				size="miniscule"
-				variant="minimal-destructive"
-				onClick={remove}
-				aria-label="Delete ability condition"
-				data-testid="delete-ability-condition"
-			/>
-			<div className={styles.abilityConditionValueRow}>
-				{abilityObject.type === "STACKABLE" ? (
-					<>
-						<select
-							value={condition.comparison}
-							onChange={(e) =>
-								onChange({
-									...condition,
-									comparison: e.target.value as AbilityCondition["comparison"],
-								})
-							}
-							data-testid="comparison-select"
-						>
-							<option value="AT_LEAST">{t("builds:filters.atLeast")}</option>
-							<option value="AT_MOST">{t("builds:filters.atMost")}</option>
-						</select>
-						<select
-							className={styles.abilityConditionApSelect}
-							value={
-								typeof condition.value === "number" ? condition.value : "0"
-							}
-							onChange={(e) =>
-								onChange({ ...condition, value: Number(e.target.value) })
-							}
-						>
-							{possibleApValues().map((value) => (
-								<option key={value} value={value}>
-									{value}
-								</option>
-							))}
-						</select>
-						<div className="text-sm">{t("analyzer:abilityPoints.short")}</div>
-					</>
+				{data.builds.length > 0 ? (
+					<BuildCards data={data} />
 				) : (
-					<select
-						value={!condition.value ? "false" : "true"}
-						onChange={(e) =>
-							onChange({ ...condition, value: e.target.value === "true" })
+					<EmptyState
+						navItem="builds"
+						action={
+							hasFilters ? <ClearFiltersButton onClick={clearFilters} /> : null
 						}
 					>
-						<option value="true">{t("builds:filters.has")}</option>
-						<option value="false">{t("builds:filters.does.not.have")}</option>
-					</select>
+						{hasFilters
+							? t("builds:noBuildsMatchingFilters")
+							: t("builds:noBuildsForWeapon")}
+					</EmptyState>
 				)}
-			</div>
-		</div>
+			</BuildFiltersLayout>
+		</WeaponBuildsLayout>
 	);
 }
 
-function FormattedDate({ date }: { date: string }) {
-	const { formatter } = useDateTimeFormat({
-		day: "numeric",
-		month: "numeric",
-		year: "numeric",
-	});
+function viewedWeaponFirst(
+	weapons: Array<BuildWeaponWithTop500Info>,
+	viewedWeaponId: MainWeaponId,
+) {
+	const isViewed = (weapon: BuildWeaponWithTop500Info) =>
+		canonicalWeaponSplId(weapon.weaponSplId) === viewedWeaponId;
 
-	const patch = RECENT_PATCHES.find(
-		({ date: patchDate }) => patchDate === date,
-	);
-	if (patch) return <>{patch.patch}</>;
-
-	return <>{formatter.format(new Date(date))}</>;
+	return [...weapons.filter(isViewed), ...weapons.filter((w) => !isViewed(w))];
 }
 
-function DatePopover({
-	date,
-	onChange,
-}: {
-	date: string | null;
-	onChange: (date: string) => void;
-}) {
-	const { t } = useTranslation(["builds"]);
-	const { formatter: patchDateFormatter } = useDateTimeFormat({
-		day: "numeric",
-		month: "numeric",
-		year: "numeric",
-	});
+/** Groups in the order each owner first appears, so a stack takes the place of its owner's top build. */
+function groupByOwner<T extends { owner: { id: number } }>(builds: T[]) {
+	const groups = new Map<number, [T, ...T[]]>();
+	for (const build of builds) {
+		const group = groups.get(build.owner.id);
+		if (group) {
+			group.push(build);
+		} else {
+			groups.set(build.owner.id, [build]);
+		}
+	}
 
-	const selectValue = () =>
-		RECENT_PATCHES.some(({ date: patchDate }) => patchDate === date)
-			? date
-			: "CUSTOM";
-
-	// on Saturday so it doesn't overlap with actual path dates (no patches on Saturdays)
-	const oneMonthAgoOnSaturday = new Date();
-	oneMonthAgoOnSaturday.setUTCDate(oneMonthAgoOnSaturday.getUTCDate() - 30);
-	oneMonthAgoOnSaturday.setUTCDate(
-		oneMonthAgoOnSaturday.getUTCDate() - oneMonthAgoOnSaturday.getUTCDay() + 6,
-	);
-
-	const customDate =
-		date !== null && isValidDate(new Date(date))
-			? new Date(date)
-			: oneMonthAgoOnSaturday;
-
-	return (
-		<div className="stack sm">
-			<label className="mb-0">{t("builds:filters.date.since")}</label>
-			<select
-				className="w-full"
-				value={selectValue() ?? "CUSTOM"}
-				data-testid="date-select"
-				onChange={(e) =>
-					onChange(
-						e.target.value === "CUSTOM"
-							? dateToYYYYMMDD(oneMonthAgoOnSaturday)
-							: e.target.value,
-					)
-				}
-			>
-				{RECENT_PATCHES.map(({ patch, date: dateString }) => {
-					const patchDate = new Date(dateString);
-
-					return (
-						<option key={patch} value={dateString}>
-							{patch} ({patchDateFormatter.format(patchDate) ?? ""})
-						</option>
-					);
-				})}
-				<option value="CUSTOM">{t("builds:filters.date.custom")}</option>
-			</select>
-			{selectValue() === "CUSTOM" ? (
-				<input
-					className="w-full"
-					type="date"
-					value={dateToYYYYMMDD(customDate)}
-					onChange={(e) => onChange(e.target.value)}
-					max={dateToYYYYMMDD(new Date())}
-					data-testid="date-input"
-				/>
-			) : null}
-		</div>
-	);
+	return [...groups.values()];
 }

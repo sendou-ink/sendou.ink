@@ -21,15 +21,14 @@ export class PopularBuildsPage {
 		return this.page.getByText(`#${nth}`, { exact: true });
 	}
 
-	buildCount(count: number) {
-		return this.page.getByText(`×${count}`, { exact: true });
+	playersCount(count: number) {
+		return this.page.getByText(`${count} players`, { exact: true });
 	}
 
-	ability(ability: Ability) {
-		return this.page.getByTestId(`${ability}-ability`);
-	}
-
-	abilityPoints(ap: number) {
-		return this.page.getByText(`${ap}AP`, { exact: true });
+	buildAbility({ rank, ability }: { rank: number; ability: Ability }) {
+		return this.page
+			.getByRole("listitem")
+			.filter({ has: this.placement(rank) })
+			.getByTestId(`${ability}-ability`);
 	}
 }

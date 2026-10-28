@@ -21,9 +21,7 @@ import { useRangeText } from "./ScheduleDayCell";
 export interface AvailabilityPanelUser {
 	id: number;
 	username: string;
-	discordId: string;
-	discordAvatar: string | null;
-	customAvatarUrl?: string | null;
+	avatar: string | null;
 }
 
 export type AvailabilityPanelData = SerializeFrom<RegistrationAvailability>;
@@ -76,7 +74,7 @@ export function RegistrationAvailabilityPanel({
 	if (roster.length === 0 && freeSubs.length === 0) return null;
 
 	const freeSubRows = (
-		<ul className={styles.rows}>
+		<AvailabilityMemberRows>
 			{freeSubs.map((user) => (
 				<AvailabilityMemberRow
 					key={user.id}
@@ -84,7 +82,7 @@ export function RegistrationAvailabilityPanel({
 					entry={entryByUserId.get(user.id)}
 				/>
 			))}
-		</ul>
+		</AvailabilityMemberRows>
 	);
 
 	return (
@@ -95,7 +93,7 @@ export function RegistrationAvailabilityPanel({
 			</h4>
 			{roster.length > 0 ? (
 				<>
-					<ul className={styles.rows}>
+					<AvailabilityMemberRows>
 						{roster.map((user) => (
 							<AvailabilityMemberRow
 								key={user.id}
@@ -103,7 +101,7 @@ export function RegistrationAvailabilityPanel({
 								entry={entryByUserId.get(user.id)}
 							/>
 						))}
-					</ul>
+					</AvailabilityMemberRows>
 					<AvailabilitySummary
 						statuses={roster.map((user) =>
 							availabilityRowStatus(entryByUserId.get(user.id)),
@@ -124,6 +122,22 @@ export function RegistrationAvailabilityPanel({
 				)
 			) : null}
 		</section>
+	);
+}
+
+/** List of `AvailabilityMemberRow`s with their availability details aligned in one column. */
+export function AvailabilityMemberRows({
+	children,
+	divided,
+}: {
+	children: React.ReactNode;
+	/** Separates rows with a border instead of a gap. */
+	divided?: boolean;
+}) {
+	return (
+		<ul className={styles.rows} data-divided={divided ? true : undefined}>
+			{children}
+		</ul>
 	);
 }
 
@@ -166,14 +180,16 @@ export function AvailabilityMemberRow({
 					</span>
 				) : null}
 			</span>
-			{showAvailability ? <AvailabilityRowDetail entry={entry} /> : null}
-			{showAvailability
-				? entry?.notes?.map((note, index) => (
+			{showAvailability ? (
+				<span className={styles.detail}>
+					<AvailabilityRowDetail entry={entry} />
+					{entry?.notes?.map((note, index) => (
 						<span key={index} className={styles.note}>
 							<Flag size={12} className={styles.noteFlag} /> {note}
 						</span>
-					))
-				: null}
+					))}
+				</span>
+			) : null}
 			{trailing ? <span className={styles.trailing}>{trailing}</span> : null}
 		</li>
 	);

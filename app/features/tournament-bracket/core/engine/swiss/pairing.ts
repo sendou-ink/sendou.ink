@@ -29,6 +29,12 @@ const PRIOR_BYE_PAIRING_BONUS = 10_000_000;
  */
 const HIGH_SCORE_PAIRING_BONUS = 10_000;
 
+/** Subtracted from the score group difference of a pair one group apart when neither team has played up or down before. */
+const FIRST_FLOAT_DISCOUNT = 0.65;
+
+/** Added to the score group difference of a cross group pair per time either team has played up or down before. */
+const REPEAT_FLOAT_PENALTY = 0.2;
+
 interface GroupArgs {
 	groupId: number;
 	standings: SwissStanding[];
@@ -62,12 +68,14 @@ export function generateRound(
 	const teamsThatHaveHadByes = groupsMatches
 		.filter((m) => m.opponent2 === null)
 		.map((m) => m.opponent1?.id);
+	const floatsByTeamId = countFloats(groupsMatches);
 
 	const pairs = pairUp(
 		activeStandings.map((standing) => ({
 			id: standing.team.id,
 			score: standing.stats?.setWins ?? 0,
 			receivedBye: teamsThatHaveHadByes.includes(standing.team.id),
+			floats: floatsByTeamId.get(standing.team.id) ?? 0,
 			avoid: groupsMatches.flatMap((match) => {
 				if (match.opponent1?.id === standing.team.id) {
 					return match.opponent2?.id ? [match.opponent2.id] : [];
@@ -152,12 +160,52 @@ function everyMatchOver(matches: MatchData[]) {
 	return true;
 }
 
+/** Times each team played a team with a different score at the time, i.e. was paired up or down */
+export function countFloats(matches: MatchData[]) {
+	const scores = new Map<number, number>();
+	const floats = new Map<number, number>();
+	const increment = (map: Map<number, number>, teamId: number) =>
+		map.set(teamId, (map.get(teamId) ?? 0) + 1);
+
+	const roundIds = R.unique(matches.map((match) => match.roundId)).sort(
+		(a, b) => a - b,
+	);
+
+	for (const roundId of roundIds) {
+		const roundMatches = matches.filter((match) => match.roundId === roundId);
+
+		for (const match of roundMatches) {
+			const oneId = match.opponent1?.id;
+			const twoId = match.opponent2?.id;
+			if (typeof oneId !== "number" || typeof twoId !== "number") continue;
+
+			if ((scores.get(oneId) ?? 0) !== (scores.get(twoId) ?? 0)) {
+				increment(floats, oneId);
+				increment(floats, twoId);
+			}
+		}
+
+		for (const match of roundMatches) {
+			const winner = !match.opponent2
+				? match.opponent1
+				: match.winnerSide
+					? match[match.winnerSide]
+					: null;
+			if (typeof winner?.id === "number") increment(scores, winner.id);
+		}
+	}
+
+	return floats;
+}
+
 interface SwissPairingTeam {
 	id: number;
 	score: number;
 	/** Tournament team ids already played, one entry per meeting */
 	avoid: Array<number>;
 	receivedBye?: boolean;
+	/** Times paired against a team from another score group */
+	floats?: number;
 }
 
 /**
@@ -252,24 +300,8 @@ function generateWeightedPairs({
 				scoreGroups.indexOf(curr.score) - scoreGroups.indexOf(opp.score),
 			);
 
-			// TODO: consider "pairedUpDown"
-			// if (
-			// 	scoreGroupDiff === 1 &&
-			// 	curr.hasOwnProperty("pairedUpDown") &&
-			// 	curr.pairedUpDown === false &&
-			// 	opp.hasOwnProperty("pairedUpDown") &&
-			// 	opp.pairedUpDown === false
-			// ) {
-			// 	scoreGroupDiff -= 0.65;
-			// } else if (
-			// 	scoreGroupDiff > 0 &&
-			// 	((curr.hasOwnProperty("pairedUpDown") && curr.pairedUpDown === true) ||
-			// 		(opp.hasOwnProperty("pairedUpDown") && opp.pairedUpDown === true))
-			// ) {
-			// 	scoreGroupDiff += 0.2;
-			// }
-
-			wt += 23 / (2 * (scoreGroupDiff + 2));
+			wt +=
+				23 / (2 * (floatAdjustedScoreGroupDiff(curr, opp, scoreGroupDiff) + 2));
 
 			// really want to avoid 2-0 playing 0-2 etc.
 			if (scoreGroupDiff >= 2) {
@@ -292,6 +324,22 @@ function generateWeightedPairs({
 	}
 
 	return pairs;
+}
+
+/** Prefers floating teams that have not played up or down before. */
+function floatAdjustedScoreGroupDiff(
+	curr: SwissPairingTeam,
+	opp: SwissPairingTeam,
+	scoreGroupDiff: number,
+) {
+	if (scoreGroupDiff === 0) return 0;
+
+	const priorFloats = (curr.floats ?? 0) + (opp.floats ?? 0);
+	if (scoreGroupDiff === 1 && priorFloats === 0) {
+		return scoreGroupDiff - FIRST_FLOAT_DISCOUNT;
+	}
+
+	return scoreGroupDiff + priorFloats * REPEAT_FLOAT_PENALTY;
 }
 
 function timesPlayed(curr: SwissPairingTeam, opp: SwissPairingTeam) {

@@ -1,0 +1,1892 @@
+[
+	{
+		"method": "OPTIONS",
+		"path": "/api/tournament/1",
+		"status": 204,
+		"requestBody": null,
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"OPTIONS preflight request returns 204 with CORS headers"
+			],
+			"line": 24
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1",
+		"status": 401,
+		"requestBody": null,
+		"responseBody": {
+			"error": "Missing Authorization header"
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"GET request includes CORS headers in response"
+			],
+			"line": 39
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/user/274/ids",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"id": 274,
+			"discordId": "79237403620945920",
+			"customUrl": null
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"GET user IDs endpoint works without authentication"
+			],
+			"line": 45
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/user/274",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"id": 274,
+			"name": "Sendou",
+			"discordId": "79237403620945920",
+			"avatarUrl": null,
+			"url": "https://sendou.ink/u/79237403620945920",
+			"country": null,
+			"inGameName": null,
+			"pronouns": null,
+			"plusServerTier": null,
+			"socials": {
+				"twitch": null,
+				"youtube": null,
+				"bsky": null,
+				"twitter": null
+			},
+			"currentRank": null,
+			"peakXp": null,
+			"weaponPool": [],
+			"badges": [],
+			"teams": []
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"creates read API token and calls public endpoint"
+			],
+			"line": 56
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/user/276/active-match",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"matchId": 1,
+			"lobby": "sendouq",
+			"tournamentId": null,
+			"bracketIdx": null
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": ["Public API", "returns active SendouQ match for user"],
+			"line": 80
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/teams",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"id": 1,
+				"name": "Fadel and Sons",
+				"url": "https://sendou.ink/to/1/teams/1",
+				"teamPageUrl": null,
+				"seed": 1,
+				"placement": 1,
+				"stats": {
+					"setWins": 2,
+					"setLosses": 0,
+					"mapWins": 4,
+					"mapLosses": 0
+				},
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": true,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 276,
+						"name": "Spencer27",
+						"discordId": "1113617910988800003",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "9592-1909-4032",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 277,
+						"name": "Sierra.Emmerich48",
+						"discordId": "1113617910988800004",
+						"avatarUrl": null,
+						"country": "US",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "7660-9946-6404",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 278,
+						"name": "Elias_Cormier86",
+						"discordId": "1113617910988800005",
+						"avatarUrl": null,
+						"country": "TN",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1291-0231-8209",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			},
+			{
+				"id": 2,
+				"name": "Pagac - Sanford",
+				"url": "https://sendou.ink/to/1/teams/2",
+				"teamPageUrl": null,
+				"seed": 2,
+				"placement": 2,
+				"stats": {
+					"setWins": 1,
+					"setLosses": 1,
+					"mapWins": 2,
+					"mapLosses": 2
+				},
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": true,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 280,
+						"name": "Floyd.Haag68",
+						"discordId": "1113617910988800007",
+						"avatarUrl": null,
+						"country": "WF",
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "5618-9675-2294",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 281,
+						"name": "Birdie.Wehner-Wintheiser",
+						"discordId": "1113617910988800008",
+						"avatarUrl": null,
+						"country": null,
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "2049-9982-1172",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 282,
+						"name": "Greg0",
+						"discordId": "1113617910988800009",
+						"avatarUrl": null,
+						"country": "IT",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1686-1376-3610",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			},
+			{
+				"id": 3,
+				"name": "Wisozk and Sons",
+				"url": "https://sendou.ink/to/1/teams/3",
+				"teamPageUrl": null,
+				"seed": 3,
+				"placement": 3,
+				"stats": {
+					"setWins": 0,
+					"setLosses": 1,
+					"mapWins": 0,
+					"mapLosses": 2
+				},
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": true,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 284,
+						"name": "Emerson65",
+						"discordId": "1113617910988800011",
+						"avatarUrl": null,
+						"country": "YT",
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "4520-4447-5002",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 285,
+						"name": "Kenny.Dare",
+						"discordId": "1113617910988800012",
+						"avatarUrl": null,
+						"country": "AE",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "6686-7264-3088",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 286,
+						"name": "Mohamed.Koelpin-OReilly",
+						"discordId": "1113617910988800013",
+						"avatarUrl": null,
+						"country": "MU",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": {
+							"subject": "they",
+							"object": "them"
+						},
+						"friendCode": "7183-4694-2343",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"returns set wins, map wins and placement of tournament teams"
+			],
+			"line": 104
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"name": "Waters Inc",
+			"startTime": "2026-10-23T09:03:13.000Z",
+			"url": "https://sendou.ink/to/1/brackets",
+			"logoUrl": null,
+			"teams": {
+				"checkedInCount": 4,
+				"registeredCount": 4
+			},
+			"brackets": [
+				{
+					"name": "Bracket",
+					"type": "single_elimination"
+				}
+			],
+			"organizationId": null,
+			"isFinalized": false
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/players",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"userId": 276,
+				"matchIds": [1, 3]
+			},
+			{
+				"userId": 277,
+				"matchIds": [1, 3]
+			},
+			{
+				"userId": 278,
+				"matchIds": [1, 3]
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/casted",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"current": [
+				{
+					"matchId": 1,
+					"channel": {
+						"type": "TWITCH",
+						"channelId": "sendouq",
+						"url": "https://twitch.tv/sendouq"
+					}
+				}
+			],
+			"future": []
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/streams",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/brackets/0",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"data": {
+				"stage": [
+					{
+						"id": 1,
+						"name": "Bracket",
+						"type": "single_elimination",
+						"settings": {
+							"consolationFinal": false
+						},
+						"number": 1,
+						"createdAt": 1792753393
+					}
+				],
+				"group": [
+					{
+						"id": 1,
+						"stageId": 1,
+						"number": 1
+					}
+				],
+				"round": [
+					{
+						"id": 1,
+						"stageId": 1,
+						"groupId": 1,
+						"section": "winners",
+						"number": 1,
+						"maps": {
+							"count": 3,
+							"type": "BEST_OF",
+							"list": [
+								{
+									"mode": "SZ",
+									"stageId": 1
+								},
+								{
+									"mode": "SZ",
+									"stageId": 2
+								},
+								{
+									"mode": "SZ",
+									"stageId": 3
+								}
+							]
+						},
+						"isPlayableAt": null
+					},
+					{
+						"id": 2,
+						"stageId": 1,
+						"groupId": 1,
+						"section": "winners",
+						"number": 2,
+						"maps": {
+							"count": 3,
+							"type": "BEST_OF",
+							"list": [
+								{
+									"mode": "SZ",
+									"stageId": 1
+								},
+								{
+									"mode": "SZ",
+									"stageId": 2
+								},
+								{
+									"mode": "SZ",
+									"stageId": 3
+								}
+							]
+						},
+						"isPlayableAt": null
+					}
+				],
+				"match": [
+					{
+						"id": 1,
+						"stageId": 1,
+						"groupId": 1,
+						"roundId": 1,
+						"number": 1,
+						"startedAt": 1792753393,
+						"scheduledAt": null,
+						"winnerSide": "opponent1",
+						"opponent1": {
+							"id": 1,
+							"position": 1,
+							"score": 2,
+							"totalKos": 0
+						},
+						"opponent2": {
+							"id": 4,
+							"position": 4,
+							"score": 0,
+							"totalKos": 0
+						}
+					},
+					{
+						"id": 2,
+						"stageId": 1,
+						"groupId": 1,
+						"roundId": 1,
+						"number": 2,
+						"startedAt": 1792753393,
+						"scheduledAt": null,
+						"winnerSide": "opponent1",
+						"opponent1": {
+							"id": 2,
+							"position": 2,
+							"score": 2,
+							"totalKos": 0
+						},
+						"opponent2": {
+							"id": 3,
+							"position": 3,
+							"score": 0,
+							"totalKos": 0
+						}
+					},
+					{
+						"id": 3,
+						"stageId": 1,
+						"groupId": 1,
+						"roundId": 2,
+						"number": 1,
+						"startedAt": 1792753393,
+						"scheduledAt": null,
+						"winnerSide": "opponent1",
+						"opponent1": {
+							"id": 1,
+							"score": 2,
+							"totalKos": 0
+						},
+						"opponent2": {
+							"id": 2,
+							"score": 0,
+							"totalKos": 0
+						}
+					}
+				]
+			},
+			"teams": [
+				{
+					"id": 1,
+					"checkedIn": true
+				},
+				{
+					"id": 4,
+					"checkedIn": true
+				},
+				{
+					"id": 2,
+					"checkedIn": true
+				}
+			],
+			"meta": {}
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/brackets/0/standings",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"finished": true,
+			"standings": [
+				{
+					"tournamentTeamId": 1,
+					"placement": 1
+				},
+				{
+					"tournamentTeamId": 2,
+					"placement": 2
+				},
+				{
+					"tournamentTeamId": 4,
+					"placement": 3
+				}
+			]
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament-match/1",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"teamOne": {
+				"id": 1,
+				"score": 2
+			},
+			"teamTwo": {
+				"id": 4,
+				"score": 0
+			},
+			"url": "https://sendou.ink/to/1/matches/1",
+			"mapList": [
+				{
+					"map": {
+						"mode": "SZ",
+						"stage": {
+							"id": 1,
+							"name": "Eeltail Alley"
+						}
+					},
+					"participatedUserIds": [276, 277, 278],
+					"winnerTeamId": 1,
+					"source": "TO",
+					"ko": null
+				},
+				{
+					"map": {
+						"mode": "SZ",
+						"stage": {
+							"id": 2,
+							"name": "Hagglefish Market"
+						}
+					},
+					"participatedUserIds": [276, 277, 278],
+					"winnerTeamId": 1,
+					"source": "TO",
+					"ko": null
+				}
+			],
+			"bracketName": "Bracket",
+			"roundName": "Semis"
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/calendar/2026/43",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"name": "Waters Inc",
+				"startTime": "2026-10-23T09:03:13.000Z",
+				"tournamentId": 1,
+				"tournamentUrl": "https://sendou.ink/to/1/brackets"
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/team/1",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"id": 1,
+			"name": "Team 1",
+			"logoUrl": null,
+			"teamPageUrl": "https://sendou.ink/t/team-1"
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/org/1",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"id": 1,
+			"name": "Organization 1",
+			"description": null,
+			"logoUrl": null,
+			"socialLinkUrls": [],
+			"url": "https://sendou.ink/org/organization-1",
+			"members": [
+				{
+					"userId": 274,
+					"discordId": "79237403620945920",
+					"name": "Sendou",
+					"pronouns": null,
+					"role": "ADMIN",
+					"roleDisplayName": null
+				}
+			]
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/sendouq/active-match/292",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"matchId": 1
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/sendouq/match/1",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": {
+			"mapList": [
+				{
+					"map": {
+						"mode": "SZ",
+						"stage": {
+							"id": 22,
+							"name": "Marlin Airport"
+						}
+					},
+					"winnerTeamId": null,
+					"source": "BOTH",
+					"participatedUserIds": null,
+					"ko": null
+				},
+				{
+					"map": {
+						"mode": "TC",
+						"stage": {
+							"id": 14,
+							"name": "Manta Maria"
+						}
+					},
+					"winnerTeamId": null,
+					"source": "BOTH",
+					"participatedUserIds": null,
+					"ko": null
+				},
+				{
+					"map": {
+						"mode": "RM",
+						"stage": {
+							"id": 2,
+							"name": "Hagglefish Market"
+						}
+					},
+					"winnerTeamId": null,
+					"source": "BOTH",
+					"participatedUserIds": null,
+					"ko": null
+				}
+			],
+			"teamAlpha": {
+				"id": 1,
+				"score": 0,
+				"players": [
+					{
+						"userId": 292,
+						"rank": {
+							"name": "GOLD",
+							"isPlus": false
+						}
+					},
+					{
+						"userId": 293,
+						"rank": {
+							"name": "GOLD",
+							"isPlus": false
+						}
+					},
+					{
+						"userId": 294,
+						"rank": {
+							"name": "GOLD",
+							"isPlus": false
+						}
+					}
+				]
+			},
+			"teamBravo": {
+				"id": 2,
+				"score": 0,
+				"players": [
+					{
+						"userId": 296,
+						"rank": {
+							"name": "GOLD",
+							"isPlus": false
+						}
+					},
+					{
+						"userId": 297,
+						"rank": {
+							"name": "GOLD",
+							"isPlus": false
+						}
+					},
+					{
+						"userId": 298,
+						"rank": {
+							"name": "GOLD",
+							"isPlus": false
+						}
+					}
+				]
+			}
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"every read endpoint responds to a read token"
+			],
+			"line": 155
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/teams",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"id": 1,
+				"name": "Gusikowski - Baumbach",
+				"url": "https://sendou.ink/to/1/teams/1",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 276,
+						"name": "Adolfo.Boyer89",
+						"discordId": "1113617910988800003",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "2242-7219-2766",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 277,
+						"name": "Torey.Nader",
+						"discordId": "1113617910988800004",
+						"avatarUrl": null,
+						"country": "FR",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1581-2899-4129",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 278,
+						"name": "Eda6",
+						"discordId": "1113617910988800005",
+						"avatarUrl": null,
+						"country": "US",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "3598-2204-8810",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": "http://127.0.0.1:9000/sendou/seed-logo-1.png",
+				"mapPool": [
+					{
+						"mode": "SZ",
+						"stage": {
+							"id": 1,
+							"name": "Eeltail Alley"
+						}
+					},
+					{
+						"mode": "SZ",
+						"stage": {
+							"id": 2,
+							"name": "Hagglefish Market"
+						}
+					}
+				]
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"hides private team fields from a read token that does not organize the tournament"
+			],
+			"line": 221
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/teams",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"id": 1,
+				"name": "Gusikowski - Baumbach",
+				"url": "https://sendou.ink/to/1/teams/1",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 276,
+						"name": "Adolfo.Boyer89",
+						"discordId": "1113617910988800003",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": null,
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 277,
+						"name": "Torey.Nader",
+						"discordId": "1113617910988800004",
+						"avatarUrl": null,
+						"country": "FR",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": null,
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 278,
+						"name": "Eda6",
+						"discordId": "1113617910988800005",
+						"avatarUrl": null,
+						"country": "US",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": null,
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API",
+				"hides private team fields from a read token that does not organize the tournament"
+			],
+			"line": 221
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/1/add-member",
+		"status": 200,
+		"requestBody": {
+			"userId": 280
+		},
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"adds member to tournament team via API"
+			],
+			"line": 248
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/1/add-member",
+		"status": 200,
+		"requestBody": {
+			"userId": 280
+		},
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"removes member from tournament team via API"
+			],
+			"line": 275
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/1/remove-member",
+		"status": 200,
+		"requestBody": {
+			"userId": 280
+		},
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"removes member from tournament team via API"
+			],
+			"line": 275
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/1/add-member",
+		"status": 401,
+		"requestBody": {
+			"userId": 280
+		},
+		"responseBody": {
+			"error": "Invalid token"
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"returns 401 for invalid token"
+			],
+			"line": 313
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/1/add-member",
+		"status": 403,
+		"requestBody": {
+			"userId": 280
+		},
+		"responseBody": {
+			"error": "Write token required"
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"returns 403 when using read token for write endpoint"
+			],
+			"line": 333
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/teams",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"id": 1,
+				"name": "Gusikowski - Baumbach",
+				"url": "https://sendou.ink/to/1/teams/1",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 276,
+						"name": "Adolfo.Boyer89",
+						"discordId": "1113617910988800003",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "2242-7219-2766",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 277,
+						"name": "Torey.Nader",
+						"discordId": "1113617910988800004",
+						"avatarUrl": null,
+						"country": "FR",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1581-2899-4129",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 278,
+						"name": "Eda6",
+						"discordId": "1113617910988800005",
+						"avatarUrl": null,
+						"country": "US",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "3598-2204-8810",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			},
+			{
+				"id": 2,
+				"name": "Kuhic LLC",
+				"url": "https://sendou.ink/to/1/teams/2",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 280,
+						"name": "Roberto.Zemlak",
+						"discordId": "1113617910988800007",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "8967-5229-4101",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 281,
+						"name": "Sunny.Buckridge17",
+						"discordId": "1113617910988800008",
+						"avatarUrl": null,
+						"country": null,
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "4999-8211-7271",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 282,
+						"name": "Ellen_Abshire",
+						"discordId": "1113617910988800009",
+						"avatarUrl": null,
+						"country": "MD",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1096-8081-7916",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			},
+			{
+				"id": 3,
+				"name": "Moore - Schuster",
+				"url": "https://sendou.ink/to/1/teams/3",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 284,
+						"name": "Toney70",
+						"discordId": "1113617910988800011",
+						"avatarUrl": null,
+						"country": "NL",
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "5204-4475-0025",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 285,
+						"name": "Meta.Hilll",
+						"discordId": "1113617910988800012",
+						"avatarUrl": null,
+						"country": null,
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "6339-9484-9776",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 286,
+						"name": "Markus.OKon32",
+						"discordId": "1113617910988800013",
+						"avatarUrl": null,
+						"country": "SL",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1946-0065-6970",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"updates tournament seeds via API"
+			],
+			"line": 357
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/seeds",
+		"status": 200,
+		"requestBody": {
+			"tournamentTeamIds": [3, 2, 1]
+		},
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"updates tournament seeds via API"
+			],
+			"line": 357
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/teams",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"id": 1,
+				"name": "Gusikowski - Baumbach",
+				"url": "https://sendou.ink/to/1/teams/1",
+				"teamPageUrl": null,
+				"seed": 3,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 276,
+						"name": "Adolfo.Boyer89",
+						"discordId": "1113617910988800003",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "2242-7219-2766",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 277,
+						"name": "Torey.Nader",
+						"discordId": "1113617910988800004",
+						"avatarUrl": null,
+						"country": "FR",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1581-2899-4129",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 278,
+						"name": "Eda6",
+						"discordId": "1113617910988800005",
+						"avatarUrl": null,
+						"country": "US",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "3598-2204-8810",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			},
+			{
+				"id": 2,
+				"name": "Kuhic LLC",
+				"url": "https://sendou.ink/to/1/teams/2",
+				"teamPageUrl": null,
+				"seed": 2,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 280,
+						"name": "Roberto.Zemlak",
+						"discordId": "1113617910988800007",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "8967-5229-4101",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 281,
+						"name": "Sunny.Buckridge17",
+						"discordId": "1113617910988800008",
+						"avatarUrl": null,
+						"country": null,
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "4999-8211-7271",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 282,
+						"name": "Ellen_Abshire",
+						"discordId": "1113617910988800009",
+						"avatarUrl": null,
+						"country": "MD",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1096-8081-7916",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			},
+			{
+				"id": 3,
+				"name": "Moore - Schuster",
+				"url": "https://sendou.ink/to/1/teams/3",
+				"teamPageUrl": null,
+				"seed": 1,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 284,
+						"name": "Toney70",
+						"discordId": "1113617910988800011",
+						"avatarUrl": null,
+						"country": "NL",
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "5204-4475-0025",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 285,
+						"name": "Meta.Hilll",
+						"discordId": "1113617910988800012",
+						"avatarUrl": null,
+						"country": null,
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "6339-9484-9776",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 286,
+						"name": "Markus.OKon32",
+						"discordId": "1113617910988800013",
+						"avatarUrl": null,
+						"country": "SL",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1946-0065-6970",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"updates tournament seeds via API"
+			],
+			"line": 357
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/starting-brackets",
+		"status": 200,
+		"requestBody": {
+			"startingBrackets": [
+				{
+					"tournamentTeamId": 1,
+					"startingBracketIdx": 0
+				}
+			]
+		},
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"updates tournament starting brackets via API"
+			],
+			"line": 399
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/upsert",
+		"status": 200,
+		"requestBody": {
+			"name": "Api Pickup",
+			"ownerUserId": 280,
+			"members": [
+				{
+					"userId": 280
+				},
+				{
+					"userId": 281
+				},
+				{
+					"userId": 282
+				},
+				{
+					"userId": 283
+				}
+			]
+		},
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"upserts tournament team registration via API"
+			],
+			"line": 424
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/teams",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"id": 1,
+				"name": "Gusikowski - Baumbach",
+				"url": "https://sendou.ink/to/1/teams/1",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 276,
+						"name": "Adolfo.Boyer89",
+						"discordId": "1113617910988800003",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "2242-7219-2766",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 277,
+						"name": "Torey.Nader",
+						"discordId": "1113617910988800004",
+						"avatarUrl": null,
+						"country": "FR",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1581-2899-4129",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 278,
+						"name": "Eda6",
+						"discordId": "1113617910988800005",
+						"avatarUrl": null,
+						"country": "US",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "3598-2204-8810",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			},
+			{
+				"id": 2,
+				"name": "Api Pickup",
+				"url": "https://sendou.ink/to/1/teams/2",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 280,
+						"name": "Roberto.Zemlak",
+						"discordId": "1113617910988800007",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "8967-5229-4101",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 281,
+						"name": "Sunny.Buckridge17",
+						"discordId": "1113617910988800008",
+						"avatarUrl": null,
+						"country": null,
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "4999-8211-7271",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 282,
+						"name": "Ellen_Abshire",
+						"discordId": "1113617910988800009",
+						"avatarUrl": null,
+						"country": "MD",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1096-8081-7916",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"upserts tournament team registration via API"
+			],
+			"line": 424
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/upsert",
+		"status": 200,
+		"requestBody": {
+			"tournamentTeamId": 2,
+			"name": "Api Pickup Edited",
+			"ownerUserId": 280,
+			"members": [
+				{
+					"userId": 280
+				},
+				{
+					"userId": 281
+				},
+				{
+					"userId": 282
+				}
+			]
+		},
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"upserts tournament team registration via API"
+			],
+			"line": 424
+		}
+	},
+	{
+		"method": "GET",
+		"path": "/api/tournament/1/teams",
+		"status": 200,
+		"requestBody": null,
+		"responseBody": [
+			{
+				"id": 1,
+				"name": "Gusikowski - Baumbach",
+				"url": "https://sendou.ink/to/1/teams/1",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 276,
+						"name": "Adolfo.Boyer89",
+						"discordId": "1113617910988800003",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "2242-7219-2766",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 277,
+						"name": "Torey.Nader",
+						"discordId": "1113617910988800004",
+						"avatarUrl": null,
+						"country": "FR",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1581-2899-4129",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 278,
+						"name": "Eda6",
+						"discordId": "1113617910988800005",
+						"avatarUrl": null,
+						"country": "US",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "3598-2204-8810",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			},
+			{
+				"id": 2,
+				"name": "Api Pickup Edited",
+				"url": "https://sendou.ink/to/1/teams/2",
+				"teamPageUrl": null,
+				"seed": null,
+				"placement": null,
+				"stats": null,
+				"registeredAt": "2026-10-23T11:03:13.000Z",
+				"checkedIn": false,
+				"seedingPower": {
+					"ranked": null,
+					"unranked": null
+				},
+				"members": [
+					{
+						"userId": 280,
+						"name": "Roberto.Zemlak",
+						"discordId": "1113617910988800007",
+						"avatarUrl": null,
+						"country": null,
+						"captain": true,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "8967-5229-4101",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 281,
+						"name": "Sunny.Buckridge17",
+						"discordId": "1113617910988800008",
+						"avatarUrl": null,
+						"country": null,
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "4999-8211-7271",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					},
+					{
+						"userId": 282,
+						"name": "Ellen_Abshire",
+						"discordId": "1113617910988800009",
+						"avatarUrl": null,
+						"country": "MD",
+						"captain": false,
+						"inGameName": null,
+						"pronouns": null,
+						"friendCode": "1096-8081-7916",
+						"joinedAt": "2026-10-23T11:03:13.000Z"
+					}
+				],
+				"logoUrl": null,
+				"mapPool": null
+			}
+		],
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"upserts tournament team registration via API"
+			],
+			"line": 424
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/upsert",
+		"status": 400,
+		"requestBody": {
+			"ownerUserId": 280,
+			"members": [
+				{
+					"userId": 280
+				}
+			]
+		},
+		"responseBody": {
+			"error": "Validation failed",
+			"fieldErrors": {
+				"pickUpName": "forms:errors.regTeamNameRequired"
+			}
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"returns 400 with field errors for invalid upsert registration body"
+			],
+			"line": 478
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/1/update-member-ign",
+		"status": 200,
+		"requestBody": {
+			"userId": 276,
+			"inGameName": "NewName#9999"
+		},
+		"responseBody": null,
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"updates member IGN via API"
+			],
+			"line": 504
+		}
+	},
+	{
+		"method": "POST",
+		"path": "/api/tournament/1/teams/1/add-member",
+		"status": 400,
+		"requestBody": {
+			"userId": 281
+		},
+		"responseBody": {
+			"error": "Not an organizer"
+		},
+		"test": {
+			"spec": "e2e/api-public.spec.ts",
+			"titlePath": [
+				"Public API - Write endpoints",
+				"returns 400 when user is not the organizer of this tournament"
+			],
+			"line": 522
+		}
+	}
+]

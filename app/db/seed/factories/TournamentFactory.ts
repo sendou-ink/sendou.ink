@@ -227,7 +227,7 @@ export async function startBracket(
 	const bracket = tournament.bracketByIdx(bracketIdx);
 	invariant(bracket, `Tournament has no bracket at index ${bracketIdx}`);
 
-	const seeding = bracket.seeding;
+	const seeding = bracket.previewSeeding;
 	invariant(seeding?.length, `Bracket at index ${bracketIdx} has no teams`);
 
 	const createInput: Engine.CreateBracketInput = {

@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { NewArtPage } from "./pages/art/new-art-page";
@@ -42,7 +42,7 @@ test.describe("Art", () => {
 
 		await expect(imageValidation.locators.allValidatedText).toBeVisible();
 
-		await userArt.goto(NZAP_TEST_DISCORD_ID);
+		await userArt.goto(NZAP_TEST_ID);
 
 		const artImage = userArt.image(0);
 		await expect(artImage).toBeVisible();
@@ -67,7 +67,7 @@ test.describe("Art", () => {
 		await impersonate(page, NZAP_TEST_ID);
 
 		const userArt = new UserArtPage(page);
-		await userArt.goto(NZAP_TEST_DISCORD_ID);
+		await userArt.goto(NZAP_TEST_ID);
 		await userArt.editLink(art.id).click();
 
 		const newArt = new NewArtPage(page);
@@ -87,7 +87,7 @@ test.describe("Art", () => {
 		await expect(newArt.locators.descriptionInput).toHaveValue("Squid drawing");
 
 		// both their own art and the art they are tagged in show on their page
-		await userArt.goto(NZAP_TEST_DISCORD_ID);
+		await userArt.goto(NZAP_TEST_ID);
 		await expect(userArt.locators.images).toHaveCount(2);
 
 		await userArt.unlinkFromArt();

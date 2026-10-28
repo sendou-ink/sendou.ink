@@ -89,7 +89,7 @@ describe("SendouQ ready check page", () => {
 		const shownUserIds = [
 			...data.group.members.map((member) => member.id),
 			...data.readyUserIds,
-			...data.userCards.keys(),
+			...Object.keys(data.userCards).map(Number),
 		];
 		for (const member of theirMembers) {
 			expect(shownUserIds).not.toContain(member.id);

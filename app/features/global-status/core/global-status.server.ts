@@ -12,6 +12,7 @@ import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament
 import { showsOneGroupAtATime } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import {
+	lobbyPage,
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PREPARING_PAGE,
 	SENDOUQ_READY_PAGE,
@@ -50,8 +51,32 @@ export async function resolveGlobalStatus(
 	return (
 		(await resolveSendouQStatus(activity)) ??
 		resolveTournamentStatus(activity) ??
+		resolveLobbyStatus(activity) ??
 		(await resolvePendingCheckInStatus(userId))
 	);
+}
+
+function resolveLobbyStatus(
+	activity: UserActivity.UserActivity,
+): GlobalStatus | null {
+	const readyCheckLobbyId = activity.lobbyReadyCheckLobbyId;
+	// active in another lobby, they couldn't confirm
+	const canConfirmReadyCheck =
+		!activity.lobby || activity.lobby.lobbyId === readyCheckLobbyId;
+	if (readyCheckLobbyId !== null && canConfirmReadyCheck) {
+		return { state: "LOBBY_READY_CHECK", url: lobbyPage(readyCheckLobbyId) };
+	}
+
+	if (!activity.lobby) return null;
+
+	return {
+		state: activity.lobby.isPlayingSet
+			? "LOBBY_MATCH"
+			: activity.lobby.isInRoom
+				? "LOBBY_IN_ROOM"
+				: "LOBBY_WAITING",
+		url: lobbyPage(activity.lobby.lobbyId),
+	};
 }
 
 async function resolvePendingCheckInStatus(

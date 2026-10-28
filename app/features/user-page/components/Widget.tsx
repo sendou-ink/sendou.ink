@@ -31,7 +31,6 @@ import { Placement } from "~/components/Placement";
 import { UserLink } from "~/components/UserLink";
 import type { Tables } from "~/db/tables";
 import { userArtPage } from "~/features/art/art-urls";
-import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
 import { StreamPlatformIcon } from "~/features/live-streams/components/StreamPlatformIcon";
@@ -67,6 +66,7 @@ import {
 	LFG_PAGE,
 	modeImageUrl,
 	navIconUrl,
+	smallImageFileName,
 	teamPage,
 	userBuildsPage,
 	userResultsPage,
@@ -80,8 +80,8 @@ export function Widget({
 	widget,
 	user,
 }: {
-	widget: SerializeFrom<LoadedWidget>;
-	user: Pick<Tables["User"], "id" | "discordId" | "customUrl">;
+	widget: SerializeFrom<() => LoadedWidget>;
+	user: Pick<Tables["User"], "id" | "customUrl">;
 }) {
 	const { t } = useTranslation(["user", "badges", "team", "org", "lfg"]);
 	const { formatter: patronStartedAtFormatter } = useDateTimeFormat({
@@ -820,7 +820,7 @@ function ArtWidget({
 				<img
 					key={art.id}
 					alt=""
-					src={previewUrl(art.url)}
+					src={smallImageFileName(art.url)}
 					loading="lazy"
 					className={styles.artThumbnail}
 				/>

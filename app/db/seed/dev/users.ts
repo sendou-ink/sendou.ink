@@ -280,7 +280,8 @@ export function nzapWidgets(): StoredWidget[] {
 	];
 }
 
-function showcaseOptions(): Parameters<typeof UserFactory.create>[1] {
+/** A filled in match profile, card and division, as an active player has them. */
+export function showcaseOptions(): Parameters<typeof UserFactory.create>[1] {
 	return {
 		matchProfile: {
 			mapModePreferences: fakePreferences(),

@@ -528,7 +528,7 @@ function onResult(
 			action.action === "added" ? undefined : storedIds.get(action.replaced);
 		// a run's trailing read only moves its time; the run's first read keeps the frame
 		const frame = action.action === "extended" ? undefined : result.frame;
-		const saving = persist(event, frame, stale);
+		const saving = persist(action.event, frame, stale);
 		persisting.add(saving);
 		void saving.finally(() => persisting.delete(saving));
 	}

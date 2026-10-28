@@ -8,8 +8,6 @@ import {
 import { invariant } from "~/utils/invariant";
 import { SENDOU_INK_BASE_URL, sendouQMatchPage } from "~/utils/urls";
 
-type MatchMember = WebhookUser & { id: number };
-
 interface CancelReport {
 	authorUserId: number;
 	reason: string;
@@ -19,7 +17,7 @@ interface CancelReport {
 /** Posts a rich embed about a finalized SendouQ cancellation to the cancels channel webhook. Fire-and-forget (see `sendSQCancelDiscordWebhook`). */
 export function sendMatchCanceledWebhook(args: {
 	matchId: number;
-	members: MatchMember[];
+	members: WebhookUser[];
 	/** Both teams' cancel reports, requester's first. */
 	reports: CancelReport[];
 	nominationCounts: Array<{

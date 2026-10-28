@@ -44,9 +44,7 @@ const teamEntry = ({
 	power: 1500,
 	isSkipped,
 	placementRank,
-	members: [
-		{ id: entryId, username, discordId: `${entryId}`, customUrl: null },
-	],
+	members: [{ id: entryId, username, customUrl: null }],
 	team: undefined,
 });
 

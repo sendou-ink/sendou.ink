@@ -1,6 +1,5 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -57,16 +56,8 @@ export const action = defineAction(
 			customAvatarImgId: isSupporter ? data.customAvatar : null,
 		});
 
-		// TODO: to transaction
-		if (data.inGameName) {
-			const tournamentIdsAffected =
-				await TournamentTeamRepository.updateOwnMemberInGameNameForNonStarted(
-					data.inGameName,
-				);
-
-			for (const tournamentId of tournamentIdsAffected) {
-				clearTournamentDataCache(tournamentId);
-			}
+		for (const tournamentId of editedUser.inGameNameUpdatedTournamentIds) {
+			clearTournamentDataCache(tournamentId);
 		}
 
 		throw redirect(userPage(editedUser));

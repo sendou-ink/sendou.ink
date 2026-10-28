@@ -1299,7 +1299,8 @@ async function deleteReadyCheckInTrx(
 /**
  * Records the user as not continuing with the group they last played a matchmade match with,
  * clearing that group's yes votes: it can no longer continue at the size they were for, so the
- * rest have to vote again. Once the no vote is in, later queue actions leave that group be.
+ * rest have to vote again. Once the no vote is in, or the whole group has voted, later queue
+ * actions leave that group be.
  */
 async function recordImplicitRejoinNoVote(
 	userId: number,
@@ -1319,7 +1320,9 @@ async function recordImplicitRejoinNoVote(
 		.select((eb) => [
 			"Group.id as groupId",
 			"GroupMatch.chatRoomId as matchChatRoomId",
-			hasVotedNo(eb, userId).as("alreadySettled"),
+			eb
+				.or([hasVotedNo(eb, userId), hasEveryMemberVoted(eb)])
+				.as("alreadySettled"),
 		])
 		.where("GroupMember.userId", "=", userId)
 		.where("Group.matchmade", "=", 1)
@@ -1360,6 +1363,18 @@ function hasVotedNo(eb: ExpressionBuilder<DB, "Group">, userId: number) {
 			.whereRef("GroupMatchContinueVote.groupId", "=", "Group.id")
 			.where("GroupMatchContinueVote.userId", "=", userId)
 			.where("GroupMatchContinueVote.isContinuing", "=", 0),
+	);
+}
+
+/** Matches the `Group` rows whose continue vote has concluded, every member having voted. */
+function hasEveryMemberVoted(eb: ExpressionBuilder<DB, "Group">) {
+	return eb(
+		eb
+			.selectFrom("GroupMatchContinueVote")
+			.select(({ fn }) => fn.countAll<number>().as("voteCount"))
+			.whereRef("GroupMatchContinueVote.groupId", "=", "Group.id"),
+		">=",
+		FULL_GROUP_SIZE,
 	);
 }
 

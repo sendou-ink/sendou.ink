@@ -293,6 +293,27 @@ export interface GetTournamentBracketStandingsResponse {
 	}>;
 }
 
+/** GET /api/tournament/{tournamentId}/matches */
+
+/** Every match of the tournament with both teams known, bracket by bracket. */
+export type GetTournamentMatchesResponse = Array<{
+	id: number;
+	/** Index of the bracket the match belongs to. Same index as GET /api/tournament/{tournamentId}/brackets/{bracketIndex} uses. */
+	bracketIdx: number;
+	/** @example "Alpha Bracket" */
+	bracketName: string;
+	/** @example "Grand Finals" */
+	roundName: string | null;
+	teamOne: TournamentMatchTeam;
+	teamTwo: TournamentMatchTeam;
+	/** `null` while the set is in progress. */
+	winnerTeamId: number | null;
+	/** Maps played so far with their results, in the order they were played. Upcoming maps are not included, see GET /api/tournament-match/{matchId} for those. */
+	playedMaps: Array<MapListMap>;
+	/** @example "https://sendou.ink/to/9/matches/695" */
+	url: string;
+}>;
+
 /** GET /api/org/{organizationId} */
 
 export interface GetTournamentOrganizationResponse {
@@ -424,6 +445,27 @@ type TournamentMatchTeam = {
 type TournamentBracket = {
 	type: "double_elimination" | "single_elimination" | "round_robin" | "swiss";
 	name: string;
+	/** Brackets that teams advance to this one from. Absent for a starting bracket, teams join those via sign-up. */
+	sources?: Array<TournamentBracketSource>;
+	/** When the bracket is scheduled to start. Absent if no start time was set. @example "2024-01-12T22:00:00.000Z" */
+	startTime?: string;
+	/** Do teams have to check in separately for this bracket. */
+	requiresCheckIn: boolean;
+};
+
+type TournamentBracketSource = {
+	/** Index of the source bracket in `brackets`. Same index as GET /api/tournament/{tournamentId}/brackets/{bracketIndex} uses. */
+	bracketIdx: number;
+	/**
+	 * Which teams of the source bracket advance to this one:
+	 * - positive numbers are placements, e.g. [1, 2] = top 2. With round robin and Swiss groups they are per group, e.g. [1] = every group's winner.
+	 * - negative numbers are teams eliminated from an elimination bracket in the given (losers) round, e.g. [-1, -2] = teams eliminated in rounds 1 & 2. Used for underground brackets.
+	 * - empty array means teams that reached the early advance threshold of a Swiss bracket.
+	 * @example [1, 2]
+	 */
+	placements: Array<number>;
+	/** If true, the highest number in `placements` also means every placement after it, e.g. [5] = 5th place and below. */
+	rest?: boolean;
 };
 
 type TournamentBracketData = BracketData;

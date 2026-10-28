@@ -43,16 +43,6 @@
 	align-items: center;
 }
 
-.subsInfoVc {
-	display: flex;
-	align-items: center;
-	gap: var(--s-0-5);
-
-	& > svg {
-		width: 18px;
-	}
-}
-
 .subsSectionMessage {
 	grid-area: message;
 	font-size: var(--font-sm);

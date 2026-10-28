@@ -1,6 +1,7 @@
 import { add } from "date-fns";
 import { redirect } from "react-router";
 import type * as v from "valibot";
+import * as Visibility from "~/features/associations/core/Visibility";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -61,23 +62,7 @@ export const action = defineAction(
 				add(new Date(), {
 					minutes: 10,
 				}),
-			visibility:
-				body.baseVisibility !== "PUBLIC"
-					? {
-							forAssociation: body.baseVisibility,
-							notFoundInstructions: body.notFoundVisibility.at
-								? [
-										{
-											at: dateToDatabaseTimestamp(body.notFoundVisibility.at),
-											forAssociation:
-												body.notFoundVisibility.forAssociation !== "PUBLIC"
-													? body.notFoundVisibility.forAssociation
-													: null,
-										},
-									]
-								: undefined,
-						}
-					: null,
+			visibility: Visibility.fromForm(body),
 			teamId: body.from.mode === "TEAM" ? body.from.teamId : null,
 			users: (
 				await usersListForPost({ authorId: user.id, from: body.from })

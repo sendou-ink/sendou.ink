@@ -1,0 +1,40 @@
+---
+import { getCollection } from "astro:content";
+import type { InferGetStaticPropsType } from "astro";
+import FeaturePage from "../../../components/living/FeaturePage.astro";
+import ModuleArticle from "../../../components/living/ModuleArticle.astro";
+import { repositoriesHeadings } from "../../../living/format.ts";
+
+export async function getStaticPaths() {
+	const features = await getCollection("features");
+
+	return features
+		.filter((entry) => entry.data.views.includes("repositories"))
+		.map((entry) => ({
+			params: { feature: entry.id },
+			props: { feature: entry.data },
+		}));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { feature } = Astro.props;
+---
+
+<FeaturePage
+	feature={feature}
+	view="repositories"
+	headings={repositoriesHeadings(feature)}
+>
+	<p class="repositories-intro">
+		Every table a function queries, its own helpers included,{" "}
+		<span class="chip access-chip">read</span> or{" "}
+		<span class="chip access-chip access-write">written</span>. Calls to other repositories are
+		listed apart, their tables are on their own page.
+	</p>
+	{
+		feature.repositories.map((repository) => (
+			<ModuleArticle module={repository} />
+		))
+	}
+</FeaturePage>

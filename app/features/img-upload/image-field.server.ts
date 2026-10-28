@@ -6,8 +6,9 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { invariant } from "~/utils/invariant";
 import { errorToastIfFalsy } from "~/utils/remix.server";
+import { smallImageFileName } from "~/utils/urls";
 import * as ImageRepository from "./ImageRepository.server";
-import { dataUrlToImageBuffer } from "./image-bytes.server";
+import { dataUrlToImageBuffer, smallImageCopy } from "./image-bytes.server";
 import { uploadStreamToS3 } from "./s3.server";
 import { MAX_UNVALIDATED_IMG_COUNT } from "./upload-constants";
 
@@ -24,12 +25,15 @@ export async function imageFieldValueToImgId({
 	value,
 	user,
 	autoValidate = false,
+	withSmallCopy = false,
 	isCurrentImgId,
 }: {
 	value: ImageFieldValue;
 	user: AuthenticatedUser;
 	/** Bypass the moderator queue (e.g. trusted org logos). */
 	autoValidate?: boolean;
+	/** Also upload a downscaled copy next to the image, see `smallImageFileName`. */
+	withSmallCopy?: boolean;
 	/** Whether the entity being edited already holds this image, letting co-editors keep one someone else uploaded. */
 	isCurrentImgId?: (imgId: number) => boolean | Promise<boolean>;
 }): Promise<number | null> {
@@ -69,6 +73,13 @@ export async function imageFieldValueToImgId({
 	);
 	invariant(uploadedFileLocation, "Image upload failed");
 	const fileName = basename(uploadedFileLocation);
+
+	if (withSmallCopy) {
+		await uploadStreamToS3(
+			Readable.from(await smallImageCopy(buffer, extension)),
+			smallImageFileName(fileName),
+		);
+	}
 
 	const img = await ImageRepository.insert({
 		submitterUserId: user.id,

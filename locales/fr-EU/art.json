@@ -1,6 +1,5 @@
 {
 	"pendingApproval_one": "Vous avez {{count}} image en attente de validation par un modérateur.",
-	"pendingApproval_many": "",
 	"pendingApproval_other": "Vous avez {{count}} images en attente de validation par un modérateur.",
 	"madeBy": "Créé par",
 	"radios.all": "Tous",

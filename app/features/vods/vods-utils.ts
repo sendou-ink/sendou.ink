@@ -2,6 +2,9 @@ import { databaseTimestampToDate } from "../../utils/dates";
 import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 import type { VideoBeingAdded, Vod } from "./vods-types";
 
+const YOUTUBE_HOSTS = ["youtube.com", "www.youtube.com", "m.youtube.com"];
+const YOUTUBE_VIDEO_ID_PATH_PREFIXES = ["live", "embed"];
+
 export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 	const dateObj = databaseTimestampToDate(vod.youtubePublishedAt);
 
@@ -31,10 +34,30 @@ export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 }
 
 export function extractYoutubeIdFromVideoUrl(url: string): string | null {
-	const match = url.match(
-		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([^&/?#]+)/,
-	);
-	return match ? match[1] : null;
+	const parsed = parseUrl(url.trim());
+	if (!parsed) return null;
+
+	const pathSegments = parsed.pathname.split("/").filter(Boolean);
+
+	if (parsed.hostname === "youtu.be") {
+		return pathSegments[0] || null;
+	}
+
+	if (!YOUTUBE_HOSTS.includes(parsed.hostname)) return null;
+
+	if (pathSegments[0] === "watch") {
+		// biome-ignore lint/plugin: user-pasted YouTube URL
+		return parsed.searchParams.get("v") || null;
+	}
+
+	if (
+		pathSegments.length >= 2 &&
+		YOUTUBE_VIDEO_ID_PATH_PREFIXES.includes(pathSegments[0])
+	) {
+		return pathSegments[1];
+	}
+
+	return null;
 }
 
 export function secondsToHoursMinutesSecondString(seconds: number) {
@@ -107,4 +130,12 @@ export function generateYoutubeTimestamps(
 	}
 
 	return lines.join("\n");
+}
+
+function parseUrl(url: string) {
+	try {
+		return new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`);
+	} catch {
+		return null;
+	}
 }

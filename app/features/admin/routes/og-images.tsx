@@ -35,6 +35,7 @@ const PAGE_COLORS: Record<
 	"tier-list-maker": { accent: "pink", second: "cyan" },
 	links: { accent: "green", second: "pink" },
 	maps: { accent: "green", second: "pink" },
+	lobbies: { accent: "pink", second: "cyan" },
 };
 
 export default function OgImages() {

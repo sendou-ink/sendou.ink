@@ -9,7 +9,7 @@ import {
 import { isVotingOpen } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
-import type { UserCardData } from "~/features/user-card/user-card-types";
+import type { UserCardsById } from "~/features/user-card/user-card-types";
 
 export type PlusVotingLoaderData =
 	// next voting date is not in the system
@@ -30,7 +30,7 @@ export type PlusVotingLoaderData =
 	| {
 			type: "voting";
 			usersForVoting: PlusVotingRepository.UsersForVoting;
-			userCards: Map<number, UserCardData>;
+			userCards: UserCardsById;
 			votingEnds: {
 				timestamp: number;
 				relativeTime: string;

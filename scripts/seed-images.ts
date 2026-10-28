@@ -7,6 +7,7 @@ import { logger } from "~/utils/logger";
 import {
 	getArtFilename,
 	SEED_ART_URLS,
+	SEED_AVATARS,
 	SEED_DEFAULT_TOURNAMENT_LOGO,
 	SEED_LOGO_FILENAMES,
 	SEED_NUMBERED_LOGOS,
@@ -146,52 +147,10 @@ export async function seedImages(): Promise<void> {
 		return;
 	}
 
-	logger.info(`📥 Processing ${SEED_ART_URLS.length} art images`);
-
-	let successCount = 0;
-	let failCount = 0;
-	let skippedCount = 0;
-
-	for (let i = 0; i < SEED_ART_URLS.length; i++) {
-		const url = SEED_ART_URLS[i];
-		const filename = getArtFilename(i);
-		const smallFilename = filename.replace(/\.(\w+)$/, "-small.$1");
-
-		try {
-			const regularExists = await fileExistsInStorage(filename);
-			const smallExists = await fileExistsInStorage(smallFilename);
-
-			if (regularExists && smallExists) {
-				skippedCount++;
-				logger.info(
-					`  ↷ Files ${filename} and ${smallFilename} already exist in storage`,
-				);
-			} else {
-				const imageBuffer = await downloadImage(url);
-
-				if (!regularExists) {
-					logger.info(`  Uploading ${filename} to storage...`);
-					await uploadToStorage(imageBuffer, filename);
-				}
-
-				if (!smallExists) {
-					logger.info(`  Uploading ${smallFilename} to storage...`);
-					await uploadToStorage(imageBuffer, smallFilename);
-				}
-
-				successCount++;
-			}
-		} catch (err) {
-			failCount++;
-			logger.error(
-				`  ✗ Failed to process ${filename}: ${(err as Error).message}`,
-			);
-		}
-	}
-
-	logger.info(
-		`\n✅ Art image seeding complete: ${successCount} uploaded, ${skippedCount} already existed, ${failCount} failed`,
-	);
+	const artImages = SEED_ART_URLS.map((url, i) => ({
+		filename: getArtFilename(i),
+		loadImage: () => downloadImage(url),
+	}));
 
 	const localImages = [
 		...SEED_LOGO_FILENAMES.map((filename) => ({
@@ -200,50 +159,50 @@ export async function seedImages(): Promise<void> {
 		})),
 		SEED_DEFAULT_TOURNAMENT_LOGO,
 		...SEED_NUMBERED_LOGOS,
-	];
+		...SEED_AVATARS,
+	].map(({ filename, sourceFilename }) => ({
+		filename,
+		loadImage: () => readLocalImage(sourceFilename),
+	}));
 
-	logger.info(`\n📥 Processing ${localImages.length} logo images`);
+	const images = [...artImages, ...localImages];
 
-	let localSuccessCount = 0;
-	let localFailCount = 0;
-	let localSkippedCount = 0;
+	let uploadedCount = 0;
+	let failCount = 0;
 
-	for (const { filename, sourceFilename } of localImages) {
+	for (const { filename, loadImage } of images) {
 		const smallFilename = filename.replace(/\.(\w+)$/, "-small.$1");
 
 		try {
 			const regularExists = await fileExistsInStorage(filename);
 			const smallExists = await fileExistsInStorage(smallFilename);
 
-			if (regularExists && smallExists) {
-				localSkippedCount++;
-				logger.info(
-					`  ↷ Files ${filename} and ${smallFilename} already exist in storage`,
-				);
-			} else {
-				const imageBuffer = await readLocalImage(sourceFilename);
+			if (regularExists && smallExists) continue;
 
-				if (!regularExists) {
-					logger.info(`  Uploading ${filename} to storage...`);
-					await uploadToStorage(imageBuffer, filename);
-				}
+			const imageBuffer = await loadImage();
 
-				if (!smallExists) {
-					logger.info(`  Uploading ${smallFilename} to storage...`);
-					await uploadToStorage(imageBuffer, smallFilename);
-				}
-
-				localSuccessCount++;
+			if (!regularExists) {
+				logger.info(`  Uploading ${filename} to storage...`);
+				await uploadToStorage(imageBuffer, filename);
 			}
+
+			if (!smallExists) {
+				logger.info(`  Uploading ${smallFilename} to storage...`);
+				await uploadToStorage(imageBuffer, smallFilename);
+			}
+
+			uploadedCount++;
 		} catch (err) {
-			localFailCount++;
+			failCount++;
 			logger.error(
 				`  ✗ Failed to process ${filename}: ${(err as Error).message}`,
 			);
 		}
 	}
 
+	if (uploadedCount === 0 && failCount === 0) return;
+
 	logger.info(
-		`\n✅ Logo image seeding complete: ${localSuccessCount} uploaded, ${localSkippedCount} already existed, ${localFailCount} failed`,
+		`🖼️  Image seeding complete: ${uploadedCount} uploaded, ${images.length - uploadedCount - failCount} already existed, ${failCount} failed`,
 	);
 }

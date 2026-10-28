@@ -114,6 +114,74 @@ index a2b1aca6bfc6cb9a663596780167b58102beb361..2b29018c3bd23ba9bbb307debcf5b456
 +}
  //#endregion
  export { ServerRouter };
+diff --git a/dist/development/lib/dom/ssr/single-fetch.js b/dist/development/lib/dom/ssr/single-fetch.js
+index dcf5bf78575b794b504279f74e88c31512246186..5c9f9227cd5b61a96bcdcdf0efd832839dc7acd1 100644
+--- a/dist/development/lib/dom/ssr/single-fetch.js
++++ b/dist/development/lib/dom/ssr/single-fetch.js
+@@ -12,11 +12,11 @@ import { ErrorResponseImpl, SUPPORTED_ERROR_TYPES, data, isRouteErrorResponse, r
+ import { isDataWithResponseInit, isResponse } from "../../router/router.js";
+ import invariant from "./invariant.js";
+ import { escapeHtml } from "./markup.js";
+-import { decode } from "../../../vendor/turbo-stream-v2/turbo-stream.js";
+ import { createRequestInit } from "./data.js";
+ import * as React$1 from "react";
+ //#region lib/dom/ssr/single-fetch.tsx
+ const SingleFetchRedirectSymbol = Symbol("SingleFetchRedirect");
++const JSON_TYPE_KEY = "__rrJsonType";
+ var SingleFetchNoResultError = class extends Error {};
+ const NO_BODY_STATUS_CODES = new Set([
+ 	100,
+@@ -272,24 +272,31 @@ async function fetchAndDecodeViaTurboStream(args, targetRoutes) {
+ 		throw new Error("Unable to decode turbo-stream response", { cause });
+ 	}
+ }
+-function decodeViaTurboStream(body, global) {
+-	return decode(body, { plugins: [(type, ...rest) => {
+-		if (type === "SanitizedError") {
+-			let [name, message, stack] = rest;
++// patched: counterpart of the plain JSON encoding in server-runtime/single-fetch.js
++async function decodeViaTurboStream(body, global) {
++	let text = await new Response(body).text();
++	return {
++		done: Promise.resolve(),
++		value: fromJsonEnvelope(JSON.parse(text), 2, global)
++	};
++}
++function fromJsonEnvelope(value, depth, global) {
++	if (!value || typeof value !== "object" || Array.isArray(value)) return value;
++	switch (value[JSON_TYPE_KEY]) {
++		case "Undefined": return void 0;
++		case "SanitizedError": {
++			let { name, message, stack } = value;
+ 			let Constructor = Error;
+ 			if (name && SUPPORTED_ERROR_TYPES.includes(name) && name in global && typeof global[name] === "function") Constructor = global[name];
+ 			let error = new Constructor(message);
+ 			error.stack = stack;
+-			return { value: error };
++			return error;
+ 		}
+-		if (type === "ErrorResponse") {
+-			let [data, status, statusText] = rest;
+-			return { value: new ErrorResponseImpl(status, statusText, data) };
+-		}
+-		if (type === "SingleFetchRedirect") return { value: { [SingleFetchRedirectSymbol]: rest[0] } };
+-		if (type === "SingleFetchClassInstance") return { value: rest[0] };
+-		if (type === "SingleFetchFallback") return { value: void 0 };
+-	}] });
++		case "ErrorResponse": return new ErrorResponseImpl(value.status, value.statusText, fromJsonEnvelope(value.data, 0, global));
++		case "SingleFetchRedirect": return { [SingleFetchRedirectSymbol]: value.redirect };
++	}
++	if (depth > 0) for (let key of Object.keys(value)) value[key] = fromJsonEnvelope(value[key], depth - 1, global);
++	return value;
+ }
+ function unwrapSingleFetchResult(result, routeId) {
+ 	if ("redirect" in result) {
+@@ -333,4 +340,4 @@ function createDeferred() {
+ 	};
+ }
+ //#endregion
+-export { NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol, StreamTransfer, decodeViaTurboStream, getSingleFetchDataStrategyImpl, getTurboStreamSingleFetchDataStrategy, singleFetchUrl, stripIndexParam };
++export { JSON_TYPE_KEY, NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol, StreamTransfer, decodeViaTurboStream, getSingleFetchDataStrategyImpl, getTurboStreamSingleFetchDataStrategy, singleFetchUrl, stripIndexParam };
 diff --git a/dist/development/lib/dom-export/hydrated-router.js b/dist/development/lib/dom-export/hydrated-router.js
 index 4d0817136a6b1398fd80a0ea1cb864a01796f203..0e91eece494e1ac17a344670fd08404a89d63f1c 100644
 --- a/dist/development/lib/dom-export/hydrated-router.js
@@ -328,6 +396,150 @@ index e863c7243768adc4b6a73da7e485895249358bab..26aec6dfce410872389037706052ccaa
  	return Object.keys(manifest).reduce((memo, routeId) => {
  		let route = manifest[routeId];
  		if (route) memo[routeId] = route.module;
+diff --git a/dist/development/lib/server-runtime/single-fetch.js b/dist/development/lib/server-runtime/single-fetch.js
+index 89ccb3ff59f3a7953cca2637e1075ff7246a8c69..fbfc45b088a5b00de35daeb3985290fa844ebe66 100644
+--- a/dist/development/lib/server-runtime/single-fetch.js
++++ b/dist/development/lib/server-runtime/single-fetch.js
+@@ -10,8 +10,7 @@
+  */
+ import { ErrorResponseImpl, isRouteErrorResponse, stripBasename } from "../router/utils.js";
+ import { isRedirectStatusCode, isResponse } from "../router/router.js";
+-import { encode } from "../../vendor/turbo-stream-v2/turbo-stream.js";
+-import { NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol } from "../dom/ssr/single-fetch.js";
++import { JSON_TYPE_KEY, NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol } from "../dom/ssr/single-fetch.js";
+ import "./mode.js";
+ import { sanitizeError, sanitizeErrors } from "./errors.js";
+ import { getDocumentHeaders } from "./headers.js";
+@@ -138,7 +137,7 @@ function generateSingleFetchResponse(request, build, serverMode, { result, heade
+ 	});
+ 	resultHeaders.set("Content-Type", "text/x-script");
+ 	resultHeaders.delete("Content-Length");
+-	return new Response(encodeViaTurboStream(result, request.signal, build.entry.module.streamTimeout, serverMode), {
++	return new Response(encodeViaJson(result, serverMode), {
+ 		status: status || 200,
+ 		headers: resultHeaders
+ 	});
+@@ -165,51 +164,59 @@ function getSingleFetchRedirect(status, headers, basename) {
+ 		replace: headers.has("X-Remix-Replace")
+ 	};
+ }
+-function encodeViaTurboStream(data, requestSignal, streamTimeout, serverMode) {
+-	let controller = new AbortController();
+-	let timeoutId = setTimeout(() => {
+-		controller.abort(/* @__PURE__ */ new Error("Server Timeout"));
+-		cleanupCallbacks();
+-	}, typeof streamTimeout === "number" ? streamTimeout : 4950);
+-	let abortControllerOnRequestAbort = () => {
+-		controller.abort(requestSignal.reason);
+-		cleanupCallbacks();
++// patched: plain JSON instead of turbo-stream (loaders and actions return only JSON-safe data, no promises)
++// only the envelope (route maps, results, errors, redirects) is walked to keep undefined/errors/redirects intact
++const textEncoder = new TextEncoder();
++function encodeViaTurboStream(data, _requestSignal, _streamTimeout, serverMode) {
++	let bytes = textEncoder.encode(encodeViaJson(data, serverMode));
++	return new ReadableStream({ start(controller) {
++		controller.enqueue(bytes);
++		controller.close();
++	} });
++}
++function encodeViaJson(data, serverMode) {
++	if (serverMode === "development") warnAboutNonJsonValues(data, "");
++	return JSON.stringify(toJsonEnvelope(data, 2, serverMode));
++}
++function warnAboutNonJsonValues(value, path) {
++	if (value === null || typeof value !== "object") {
++		if (typeof value === "bigint" || typeof value === "function" || typeof value === "symbol" || typeof value === "number" && !Number.isFinite(value)) console.warn(`[react-router] ${path} (${String(value)}) can't be serialized to JSON`);
++		return;
++	}
++	if (value instanceof Error || value instanceof ErrorResponseImpl) return;
++	let proto = Object.getPrototypeOf(value);
++	if (!Array.isArray(value) && proto !== Object.prototype && proto !== null) {
++		console.warn(`[react-router] ${path} is a ${value.constructor?.name ?? "class instance"}, it won't survive JSON serialization`);
++		return;
++	}
++	for (let key of Object.keys(value)) warnAboutNonJsonValues(value[key], `${path}.${key}`);
++}
++function toJsonEnvelope(value, depth, serverMode) {
++	if (value === void 0) return { [JSON_TYPE_KEY]: "Undefined" };
++	if (value instanceof Error) {
++		let { name, message, stack } = serverMode === "production" ? sanitizeError(value, serverMode) : value;
++		return {
++			[JSON_TYPE_KEY]: "SanitizedError",
++			name,
++			message,
++			stack
++		};
++	}
++	if (value instanceof ErrorResponseImpl) return {
++		[JSON_TYPE_KEY]: "ErrorResponse",
++		data: toJsonEnvelope(value.data, 0, serverMode),
++		status: value.status,
++		statusText: value.statusText
+ 	};
+-	requestSignal.addEventListener("abort", abortControllerOnRequestAbort);
+-	let cleanupCallbacks = () => {
+-		clearTimeout(timeoutId);
+-		requestSignal.removeEventListener("abort", abortControllerOnRequestAbort);
++	if (!value || typeof value !== "object" || Array.isArray(value)) return value;
++	if (SingleFetchRedirectSymbol in value) return {
++		[JSON_TYPE_KEY]: "SingleFetchRedirect",
++		redirect: value[SingleFetchRedirectSymbol]
+ 	};
+-	return encode(data, {
+-		signal: controller.signal,
+-		onComplete: cleanupCallbacks,
+-		plugins: [(value) => {
+-			if (value instanceof Error) {
+-				let { name, message, stack } = serverMode === "production" ? sanitizeError(value, serverMode) : value;
+-				return [
+-					"SanitizedError",
+-					name,
+-					message,
+-					stack
+-				];
+-			}
+-			if (value instanceof ErrorResponseImpl) {
+-				let { data, status, statusText } = value;
+-				return [
+-					"ErrorResponse",
+-					data,
+-					status,
+-					statusText
+-				];
+-			}
+-			if (value && typeof value === "object" && SingleFetchRedirectSymbol in value) return ["SingleFetchRedirect", value[SingleFetchRedirectSymbol]];
+-		}],
+-		postPlugins: [(value) => {
+-			if (!value) return;
+-			if (typeof value !== "object") return;
+-			return ["SingleFetchClassInstance", Object.fromEntries(Object.entries(value))];
+-		}, () => ["SingleFetchFallback"]]
+-	});
++	if (depth === 0) return value;
++	let result = {};
++	for (let key of Object.keys(value)) result[key] = toJsonEnvelope(value[key], depth - 1, serverMode);
++	return result;
+ }
+ //#endregion
+ export { SERVER_NO_BODY_STATUS_CODES, encodeViaTurboStream, generateSingleFetchRedirectResponse, singleFetchAction, singleFetchLoaders };
+diff --git a/dist/development/lib/types/route-data.d.ts b/dist/development/lib/types/route-data.d.ts
+index d03b28e2b0cbc5a260450d874dea4a69c17e53b7..a542dda42aaf60835d69299fcb98837325771d7e 100644
+--- a/dist/development/lib/types/route-data.d.ts
++++ b/dist/development/lib/types/route-data.d.ts
+@@ -3,11 +3,11 @@ import { DataWithResponseInit, RouterContextProvider } from "../router/utils.js"
+ import { Equal, Func, IsAny } from "./utils.js";
+ import { RouteModule } from "./route-module.js";
+ import { unstable_SerializesTo } from "./serializes-to.js";
+-import { Serializable } from "../server-runtime/single-fetch.js";
+ import { ClientActionFunctionArgs, ClientLoaderFunctionArgs } from "../dom/ssr/routeModules.js";
+ 
+ //#region lib/types/route-data.d.ts
+-type Serialize<T> = T extends unstable_SerializesTo<infer To> ? To : T extends Serializable ? T : T extends ((...args: any[]) => unknown) ? undefined : T extends Promise<infer U> ? Promise<Serialize<U>> : T extends Map<infer K, infer V> ? Map<Serialize<K>, Serialize<V>> : T extends ReadonlyMap<infer K, infer V> ? ReadonlyMap<Serialize<K>, Serialize<V>> : T extends Set<infer U> ? Set<Serialize<U>> : T extends ReadonlySet<infer U> ? ReadonlySet<Serialize<U>> : T extends [] ? [] : T extends readonly [infer F, ...infer R] ? [Serialize<F>, ...Serialize<R>] : T extends Array<infer U> ? Array<Serialize<U>> : T extends readonly unknown[] ? readonly Serialize<T[number]>[] : T extends Record<any, any> ? { [K in keyof T]: Serialize<T[K]> } : undefined;
++// patched: loader data goes over plain JSON (see server-runtime/single-fetch.js), so types follow JSON.stringify
++type Serialize<T> = T extends unstable_SerializesTo<infer To> ? To : T extends string | number | boolean | null | undefined ? T : T extends Date | URL ? string : T extends ((...args: any[]) => unknown) | symbol ? undefined : T extends Promise<unknown> | bigint ? never : T extends ReadonlyMap<unknown, unknown> | ReadonlySet<unknown> | RegExp | Error ? Record<string, never> : T extends [] ? [] : T extends readonly [infer F, ...infer R] ? [Serialize<F>, ...Serialize<R>] : T extends Array<infer U> ? Array<Serialize<U>> : T extends readonly unknown[] ? readonly Serialize<T[number]>[] : T extends Record<any, any> ? { [K in keyof T]: Serialize<T[K]> } : undefined;
+ type VoidToUndefined<T> = Equal<T, void> extends true ? undefined : T;
+ type DataFrom<T> = IsAny<T> extends true ? undefined : T extends Func ? VoidToUndefined<Awaited<ReturnType<T>>> : undefined;
+ type ClientData<T> = T extends Response ? never : T extends DataWithResponseInit<infer U> ? U : T;
 diff --git a/dist/development/vendor/turbo-stream-v2/flatten.js b/dist/development/vendor/turbo-stream-v2/flatten.js
 index 61b8dbf73570da26728aada21ecdd5f3ed4a75cd..f27872d6b326e691eb00f9a5ecd3eb9bbf83d675 100644
 --- a/dist/development/vendor/turbo-stream-v2/flatten.js
@@ -468,6 +680,74 @@ index a2b1aca6bfc6cb9a663596780167b58102beb361..2b29018c3bd23ba9bbb307debcf5b456
 +}
  //#endregion
  export { ServerRouter };
+diff --git a/dist/production/lib/dom/ssr/single-fetch.js b/dist/production/lib/dom/ssr/single-fetch.js
+index dcf5bf78575b794b504279f74e88c31512246186..5c9f9227cd5b61a96bcdcdf0efd832839dc7acd1 100644
+--- a/dist/production/lib/dom/ssr/single-fetch.js
++++ b/dist/production/lib/dom/ssr/single-fetch.js
+@@ -12,11 +12,11 @@ import { ErrorResponseImpl, SUPPORTED_ERROR_TYPES, data, isRouteErrorResponse, r
+ import { isDataWithResponseInit, isResponse } from "../../router/router.js";
+ import invariant from "./invariant.js";
+ import { escapeHtml } from "./markup.js";
+-import { decode } from "../../../vendor/turbo-stream-v2/turbo-stream.js";
+ import { createRequestInit } from "./data.js";
+ import * as React$1 from "react";
+ //#region lib/dom/ssr/single-fetch.tsx
+ const SingleFetchRedirectSymbol = Symbol("SingleFetchRedirect");
++const JSON_TYPE_KEY = "__rrJsonType";
+ var SingleFetchNoResultError = class extends Error {};
+ const NO_BODY_STATUS_CODES = new Set([
+ 	100,
+@@ -272,24 +272,31 @@ async function fetchAndDecodeViaTurboStream(args, targetRoutes) {
+ 		throw new Error("Unable to decode turbo-stream response", { cause });
+ 	}
+ }
+-function decodeViaTurboStream(body, global) {
+-	return decode(body, { plugins: [(type, ...rest) => {
+-		if (type === "SanitizedError") {
+-			let [name, message, stack] = rest;
++// patched: counterpart of the plain JSON encoding in server-runtime/single-fetch.js
++async function decodeViaTurboStream(body, global) {
++	let text = await new Response(body).text();
++	return {
++		done: Promise.resolve(),
++		value: fromJsonEnvelope(JSON.parse(text), 2, global)
++	};
++}
++function fromJsonEnvelope(value, depth, global) {
++	if (!value || typeof value !== "object" || Array.isArray(value)) return value;
++	switch (value[JSON_TYPE_KEY]) {
++		case "Undefined": return void 0;
++		case "SanitizedError": {
++			let { name, message, stack } = value;
+ 			let Constructor = Error;
+ 			if (name && SUPPORTED_ERROR_TYPES.includes(name) && name in global && typeof global[name] === "function") Constructor = global[name];
+ 			let error = new Constructor(message);
+ 			error.stack = stack;
+-			return { value: error };
++			return error;
+ 		}
+-		if (type === "ErrorResponse") {
+-			let [data, status, statusText] = rest;
+-			return { value: new ErrorResponseImpl(status, statusText, data) };
+-		}
+-		if (type === "SingleFetchRedirect") return { value: { [SingleFetchRedirectSymbol]: rest[0] } };
+-		if (type === "SingleFetchClassInstance") return { value: rest[0] };
+-		if (type === "SingleFetchFallback") return { value: void 0 };
+-	}] });
++		case "ErrorResponse": return new ErrorResponseImpl(value.status, value.statusText, fromJsonEnvelope(value.data, 0, global));
++		case "SingleFetchRedirect": return { [SingleFetchRedirectSymbol]: value.redirect };
++	}
++	if (depth > 0) for (let key of Object.keys(value)) value[key] = fromJsonEnvelope(value[key], depth - 1, global);
++	return value;
+ }
+ function unwrapSingleFetchResult(result, routeId) {
+ 	if ("redirect" in result) {
+@@ -333,4 +340,4 @@ function createDeferred() {
+ 	};
+ }
+ //#endregion
+-export { NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol, StreamTransfer, decodeViaTurboStream, getSingleFetchDataStrategyImpl, getTurboStreamSingleFetchDataStrategy, singleFetchUrl, stripIndexParam };
++export { JSON_TYPE_KEY, NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol, StreamTransfer, decodeViaTurboStream, getSingleFetchDataStrategyImpl, getTurboStreamSingleFetchDataStrategy, singleFetchUrl, stripIndexParam };
 diff --git a/dist/production/lib/dom-export/hydrated-router.js b/dist/production/lib/dom-export/hydrated-router.js
 index 4d0817136a6b1398fd80a0ea1cb864a01796f203..0e91eece494e1ac17a344670fd08404a89d63f1c 100644
 --- a/dist/production/lib/dom-export/hydrated-router.js
@@ -682,6 +962,150 @@ index e863c7243768adc4b6a73da7e485895249358bab..26aec6dfce410872389037706052ccaa
  	return Object.keys(manifest).reduce((memo, routeId) => {
  		let route = manifest[routeId];
  		if (route) memo[routeId] = route.module;
+diff --git a/dist/production/lib/server-runtime/single-fetch.js b/dist/production/lib/server-runtime/single-fetch.js
+index 89ccb3ff59f3a7953cca2637e1075ff7246a8c69..fbfc45b088a5b00de35daeb3985290fa844ebe66 100644
+--- a/dist/production/lib/server-runtime/single-fetch.js
++++ b/dist/production/lib/server-runtime/single-fetch.js
+@@ -10,8 +10,7 @@
+  */
+ import { ErrorResponseImpl, isRouteErrorResponse, stripBasename } from "../router/utils.js";
+ import { isRedirectStatusCode, isResponse } from "../router/router.js";
+-import { encode } from "../../vendor/turbo-stream-v2/turbo-stream.js";
+-import { NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol } from "../dom/ssr/single-fetch.js";
++import { JSON_TYPE_KEY, NO_BODY_STATUS_CODES, SingleFetchRedirectSymbol } from "../dom/ssr/single-fetch.js";
+ import "./mode.js";
+ import { sanitizeError, sanitizeErrors } from "./errors.js";
+ import { getDocumentHeaders } from "./headers.js";
+@@ -138,7 +137,7 @@ function generateSingleFetchResponse(request, build, serverMode, { result, heade
+ 	});
+ 	resultHeaders.set("Content-Type", "text/x-script");
+ 	resultHeaders.delete("Content-Length");
+-	return new Response(encodeViaTurboStream(result, request.signal, build.entry.module.streamTimeout, serverMode), {
++	return new Response(encodeViaJson(result, serverMode), {
+ 		status: status || 200,
+ 		headers: resultHeaders
+ 	});
+@@ -165,51 +164,59 @@ function getSingleFetchRedirect(status, headers, basename) {
+ 		replace: headers.has("X-Remix-Replace")
+ 	};
+ }
+-function encodeViaTurboStream(data, requestSignal, streamTimeout, serverMode) {
+-	let controller = new AbortController();
+-	let timeoutId = setTimeout(() => {
+-		controller.abort(/* @__PURE__ */ new Error("Server Timeout"));
+-		cleanupCallbacks();
+-	}, typeof streamTimeout === "number" ? streamTimeout : 4950);
+-	let abortControllerOnRequestAbort = () => {
+-		controller.abort(requestSignal.reason);
+-		cleanupCallbacks();
++// patched: plain JSON instead of turbo-stream (loaders and actions return only JSON-safe data, no promises)
++// only the envelope (route maps, results, errors, redirects) is walked to keep undefined/errors/redirects intact
++const textEncoder = new TextEncoder();
++function encodeViaTurboStream(data, _requestSignal, _streamTimeout, serverMode) {
++	let bytes = textEncoder.encode(encodeViaJson(data, serverMode));
++	return new ReadableStream({ start(controller) {
++		controller.enqueue(bytes);
++		controller.close();
++	} });
++}
++function encodeViaJson(data, serverMode) {
++	if (serverMode === "development") warnAboutNonJsonValues(data, "");
++	return JSON.stringify(toJsonEnvelope(data, 2, serverMode));
++}
++function warnAboutNonJsonValues(value, path) {
++	if (value === null || typeof value !== "object") {
++		if (typeof value === "bigint" || typeof value === "function" || typeof value === "symbol" || typeof value === "number" && !Number.isFinite(value)) console.warn(`[react-router] ${path} (${String(value)}) can't be serialized to JSON`);
++		return;
++	}
++	if (value instanceof Error || value instanceof ErrorResponseImpl) return;
++	let proto = Object.getPrototypeOf(value);
++	if (!Array.isArray(value) && proto !== Object.prototype && proto !== null) {
++		console.warn(`[react-router] ${path} is a ${value.constructor?.name ?? "class instance"}, it won't survive JSON serialization`);
++		return;
++	}
++	for (let key of Object.keys(value)) warnAboutNonJsonValues(value[key], `${path}.${key}`);
++}
++function toJsonEnvelope(value, depth, serverMode) {
++	if (value === void 0) return { [JSON_TYPE_KEY]: "Undefined" };
++	if (value instanceof Error) {
++		let { name, message, stack } = serverMode === "production" ? sanitizeError(value, serverMode) : value;
++		return {
++			[JSON_TYPE_KEY]: "SanitizedError",
++			name,
++			message,
++			stack
++		};
++	}
++	if (value instanceof ErrorResponseImpl) return {
++		[JSON_TYPE_KEY]: "ErrorResponse",
++		data: toJsonEnvelope(value.data, 0, serverMode),
++		status: value.status,
++		statusText: value.statusText
+ 	};
+-	requestSignal.addEventListener("abort", abortControllerOnRequestAbort);
+-	let cleanupCallbacks = () => {
+-		clearTimeout(timeoutId);
+-		requestSignal.removeEventListener("abort", abortControllerOnRequestAbort);
++	if (!value || typeof value !== "object" || Array.isArray(value)) return value;
++	if (SingleFetchRedirectSymbol in value) return {
++		[JSON_TYPE_KEY]: "SingleFetchRedirect",
++		redirect: value[SingleFetchRedirectSymbol]
+ 	};
+-	return encode(data, {
+-		signal: controller.signal,
+-		onComplete: cleanupCallbacks,
+-		plugins: [(value) => {
+-			if (value instanceof Error) {
+-				let { name, message, stack } = serverMode === "production" ? sanitizeError(value, serverMode) : value;
+-				return [
+-					"SanitizedError",
+-					name,
+-					message,
+-					stack
+-				];
+-			}
+-			if (value instanceof ErrorResponseImpl) {
+-				let { data, status, statusText } = value;
+-				return [
+-					"ErrorResponse",
+-					data,
+-					status,
+-					statusText
+-				];
+-			}
+-			if (value && typeof value === "object" && SingleFetchRedirectSymbol in value) return ["SingleFetchRedirect", value[SingleFetchRedirectSymbol]];
+-		}],
+-		postPlugins: [(value) => {
+-			if (!value) return;
+-			if (typeof value !== "object") return;
+-			return ["SingleFetchClassInstance", Object.fromEntries(Object.entries(value))];
+-		}, () => ["SingleFetchFallback"]]
+-	});
++	if (depth === 0) return value;
++	let result = {};
++	for (let key of Object.keys(value)) result[key] = toJsonEnvelope(value[key], depth - 1, serverMode);
++	return result;
+ }
+ //#endregion
+ export { SERVER_NO_BODY_STATUS_CODES, encodeViaTurboStream, generateSingleFetchRedirectResponse, singleFetchAction, singleFetchLoaders };
+diff --git a/dist/production/lib/types/route-data.d.ts b/dist/production/lib/types/route-data.d.ts
+index d03b28e2b0cbc5a260450d874dea4a69c17e53b7..a542dda42aaf60835d69299fcb98837325771d7e 100644
+--- a/dist/production/lib/types/route-data.d.ts
++++ b/dist/production/lib/types/route-data.d.ts
+@@ -3,11 +3,11 @@ import { DataWithResponseInit, RouterContextProvider } from "../router/utils.js"
+ import { Equal, Func, IsAny } from "./utils.js";
+ import { RouteModule } from "./route-module.js";
+ import { unstable_SerializesTo } from "./serializes-to.js";
+-import { Serializable } from "../server-runtime/single-fetch.js";
+ import { ClientActionFunctionArgs, ClientLoaderFunctionArgs } from "../dom/ssr/routeModules.js";
+ 
+ //#region lib/types/route-data.d.ts
+-type Serialize<T> = T extends unstable_SerializesTo<infer To> ? To : T extends Serializable ? T : T extends ((...args: any[]) => unknown) ? undefined : T extends Promise<infer U> ? Promise<Serialize<U>> : T extends Map<infer K, infer V> ? Map<Serialize<K>, Serialize<V>> : T extends ReadonlyMap<infer K, infer V> ? ReadonlyMap<Serialize<K>, Serialize<V>> : T extends Set<infer U> ? Set<Serialize<U>> : T extends ReadonlySet<infer U> ? ReadonlySet<Serialize<U>> : T extends [] ? [] : T extends readonly [infer F, ...infer R] ? [Serialize<F>, ...Serialize<R>] : T extends Array<infer U> ? Array<Serialize<U>> : T extends readonly unknown[] ? readonly Serialize<T[number]>[] : T extends Record<any, any> ? { [K in keyof T]: Serialize<T[K]> } : undefined;
++// patched: loader data goes over plain JSON (see server-runtime/single-fetch.js), so types follow JSON.stringify
++type Serialize<T> = T extends unstable_SerializesTo<infer To> ? To : T extends string | number | boolean | null | undefined ? T : T extends Date | URL ? string : T extends ((...args: any[]) => unknown) | symbol ? undefined : T extends Promise<unknown> | bigint ? never : T extends ReadonlyMap<unknown, unknown> | ReadonlySet<unknown> | RegExp | Error ? Record<string, never> : T extends [] ? [] : T extends readonly [infer F, ...infer R] ? [Serialize<F>, ...Serialize<R>] : T extends Array<infer U> ? Array<Serialize<U>> : T extends readonly unknown[] ? readonly Serialize<T[number]>[] : T extends Record<any, any> ? { [K in keyof T]: Serialize<T[K]> } : undefined;
+ type VoidToUndefined<T> = Equal<T, void> extends true ? undefined : T;
+ type DataFrom<T> = IsAny<T> extends true ? undefined : T extends Func ? VoidToUndefined<Awaited<ReturnType<T>>> : undefined;
+ type ClientData<T> = T extends Response ? never : T extends DataWithResponseInit<infer U> ? U : T;
 diff --git a/dist/production/vendor/turbo-stream-v2/flatten.js b/dist/production/vendor/turbo-stream-v2/flatten.js
 index 61b8dbf73570da26728aada21ecdd5f3ed4a75cd..f27872d6b326e691eb00f9a5ecd3eb9bbf83d675 100644
 --- a/dist/production/vendor/turbo-stream-v2/flatten.js

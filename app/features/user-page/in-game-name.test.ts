@@ -42,6 +42,7 @@ describe("inGameNameIsValid", () => {
 			"中文名#1234",
 			"Test！？＃#1234",
 			"Cafe\u0301#1234",
+			"vapıd#1135",
 		];
 
 		for (const name of validNames) {
@@ -85,7 +86,7 @@ describe("inGameNameIsValid", () => {
 			"〈〉〔〕〇〃〜#1234",
 			"すゞヽヾ#1234",
 			"Ｔｅｓｔ#1234",
-			"ıẞĘЁ#1234",
+			"ẞĘЁ#1234",
 			"ɛᴠᴋї#1234",
 			"♥#1234",
 		];
@@ -123,7 +124,7 @@ describe("sanitizeInGameName", () => {
 		["★ ⦾culus ★#1898", "★ ◎culus ★#1898", "symbol lookalikes"],
 		["Ｔｅｓｔ｡ｱ#1234", "Test。ア#1234", "fullwidth and halfwidth forms"],
 		["ĘąěЁ#1234", "EaeЕ#1234", "accents the game lacks are dropped"],
-		["ìıɛᴋ#1234", "ìiεк#1234", "letter lookalikes"],
+		["ìɛᴋ#1234", "ìεк#1234", "letter lookalikes"],
 	])("%s -> %s (%s)", (input, expected) => {
 		expect(sanitizeInGameName(input)).toBe(expected);
 	});

@@ -510,6 +510,26 @@ describe("backfill", () => {
 		);
 		expect(await ownersOf(trophy.id)).toEqual([]);
 	});
+
+	test("awards no one a special trophy", async () => {
+		const trophy = await TrophyFactory.create({
+			code: XpTrophy.VARIANTS[0].code,
+		});
+		const tournament = await createFinalized();
+
+		await TrophyRepository.backfill({
+			trophyId: trophy.id,
+			awards: [
+				{
+					tournamentId: tournament.id,
+					tournamentTeamId: tournament.teams[0].id,
+					userIds: winnerIds(),
+				},
+			],
+		});
+
+		expect(await ownersOf(trophy.id)).toEqual([]);
+	});
 });
 
 describe("X Power trophies", () => {

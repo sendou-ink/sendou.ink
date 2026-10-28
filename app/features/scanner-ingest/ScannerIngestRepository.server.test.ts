@@ -1,10 +1,14 @@
-import { describe, expect, test } from "vitest";
+import { subMinutes } from "date-fns";
+import { beforeEach, describe, expect, test } from "vitest";
+import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Matches from "./core/Matches";
 import type { IngestableGame } from "./core/Scoreboards";
 import { NAMES, scannerMatch, WEAPONS } from "./core/tests/fixtures";
@@ -433,6 +437,70 @@ describe("gamesInTournamentMatches", () => {
 			),
 		).toBe(true);
 	});
+});
+
+describe("lobbySetIdAt", () => {
+	const users = UserFactory.pool();
+	const playerId = () => users.id(1);
+
+	beforeEach(async () => {
+		await users.create(8);
+	});
+
+	test.each([
+		{ why: "played after the set started", setStartedMinutesBefore: 30 },
+		{
+			why: "set started a little after the client clock",
+			setStartedMinutesBefore: -4,
+		},
+	])("finds the set: $why", async ({ setStartedMinutesBefore }) => {
+		const lobbyId = await startedLobby(
+			subMinutes(PLAYED_AT, setStartedMinutesBefore),
+		);
+		const [set] = await db
+			.selectFrom("LobbySet")
+			.select("id")
+			.where("lobbyId", "=", lobbyId)
+			.execute();
+
+		expect(
+			await ScannerIngestRepository.lobbySetIdAt({
+				userId: playerId(),
+				at: PLAYED_AT,
+			}),
+		).toBe(set!.id);
+	});
+
+	test.each([
+		{ why: "set started over two hours before", setStartedMinutesBefore: 121 },
+		{ why: "set started well after", setStartedMinutesBefore: -6 },
+	])("returns null: $why", async ({ setStartedMinutesBefore }) => {
+		await startedLobby(subMinutes(PLAYED_AT, setStartedMinutesBefore));
+
+		expect(
+			await ScannerIngestRepository.lobbySetIdAt({
+				userId: playerId(),
+				at: PLAYED_AT,
+			}),
+		).toBeNull();
+	});
+
+	async function startedLobby(setStartedAt: Date) {
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: users.id(1),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{
+				signedUpUserIds: users.ids(8).slice(1),
+				checkedInUserIds: users.ids(8),
+			},
+		);
+		await LobbyProgression.advance(lobby.id);
+		await LobbyFactory.backdateSets(lobby.id, setStartedAt);
+
+		return lobby.id;
+	}
 });
 
 /** The default roster's match, stamped with the fixed PLAYED_AT this suite asserts on. */

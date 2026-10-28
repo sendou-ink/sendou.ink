@@ -1,14 +1,4 @@
 {
-	"tab.params": "Parámetros",
-	"tab.patches": "Historial de parches",
-	"noPatches": "Aún no hay cambios de balance registrados para esta arma.",
-	"patches.showSubSpecial": "Mostrar cambios de secundarias y especiales",
-	"header.parameter": "Parámetro",
-	"legend.title": "Notas",
 	"legend.damage": "Los valores de daño se almacenan ×10, por lo que un valor de 450 significa 45.0 de daño.",
-	"legend.frames": "Los tiempos se miden en fotogramas (60 fotogramas = 1 segundo).",
-	"legend.powerUp": "Bajo, Medio y Alto muestran el mismo valor sin potenciador, con una cantidad moderada y con la cantidad máxima del potenciador de mejora correspondiente (Mejora especial para las especiales y Mejora secundaria para las secundarias).",
-	"compare.action": "Comparar entre armas",
-	"compare.heading": "{{parameter}} entre armas",
-	"dataCredit.lean": "Créditos de datos: Lean"
+	"legend.powerUp": "Bajo, Medio y Alto muestran el mismo valor sin potenciador, con una cantidad moderada y con la cantidad máxima del potenciador de mejora correspondiente (Mejora especial para las especiales y Mejora secundaria para las secundarias)."
 }

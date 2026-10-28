@@ -2,17 +2,7 @@
 import type { ComponentProps } from "react";
 import type { GameTimeline } from "~/components/GameTimeline";
 import type { PlayerStatusTimelineTeam } from "~/components/PlayerStatusTimeline";
-import type { ScannerMatch, ScannerMatchPlayer } from "../core/scanner-match";
-import { rankBy } from "../core/text";
-
-/**
- * A kill-feed name pins its kill on the enemy row it reads exactly (after
- * matchKey), else on the row it resembles clearly more than any other: OCR of
- * the feed's font garbles symbols the scoreboard reads fine, so a loose best
- * match stands when the other names are far off.
- */
-const VICTIM_NAME_MIN_SIMILARITY = 0.4;
-const VICTIM_NAME_MIN_MARGIN = 0.25;
+import { type ScannerMatch, victimSlot } from "../core/scanner-match";
 
 const PLAYER_SLOTS = [0, 1, 2, 3] as const;
 
@@ -100,22 +90,4 @@ export function gameTimelineProps(
 				}
 			: undefined,
 	};
-}
-
-/** The enemy slot a kill-feed name belongs to; null when no row clearly matches. */
-export function victimSlot(
-	name: string | null,
-	enemies: readonly ScannerMatchPlayer[],
-): number | null {
-	if (name === null) return null;
-	const named = enemies.flatMap((player, slot) =>
-		player.name !== null ? [{ slot, name: player.name }] : [],
-	);
-	const [best, runnerUp] = rankBy(name, named, (enemy) => enemy.name);
-	if (!best || best.score < VICTIM_NAME_MIN_SIMILARITY) return null;
-	if (best.score === 1 && runnerUp?.score !== 1) return best.entry.slot;
-	if (runnerUp && best.score - runnerUp.score < VICTIM_NAME_MIN_MARGIN) {
-		return null;
-	}
-	return best.entry.slot;
 }

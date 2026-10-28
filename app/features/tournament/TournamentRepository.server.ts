@@ -47,6 +47,7 @@ import {
 	tournamentUsername,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
+import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import type { TournamentTierNumber } from "./core/tiering";
 import type { TournamentStaffRole } from "./tournament-constants";
 import { updatedCastedMatchesInfo } from "./tournament-utils";
@@ -300,7 +301,7 @@ export async function findById(id: number) {
 }
 
 /**
- * Who may act on the tournament, following the convention in docs/dev/permissions.md.
+ * Who may act on the tournament, following the convention in docs/site/src/content/docs/dev/permissions.mdx.
  * `ADMIN`, `ORGANIZE` and `MANAGE_MATCHES` come from {@link organizerPermissions}.
  *
  * - `EDIT_EVENT_INFO`: editing the calendar event the tournament belongs to. Organization
@@ -534,6 +535,7 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 							idAs: "userId",
 							inTournament: true,
 						}),
+						"User.discordId",
 						"User.country",
 						"User.tournamentName",
 						"SeedingSkill.ordinal",
@@ -602,7 +604,10 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 
 	return teams.map((team) => ({
 		...team,
-		members: team.members.map((member) => R.omit(member, ["ordinal"])),
+		members: team.members.map(({ ordinal: _, discordId, ...member }) => ({
+			...member,
+			isFreshAccount: accountCreatedInTheLastSixMonths(discordId),
+		})),
 		avgSeedingSkillOrdinal: nullifyingAvg(
 			team.members
 				.map((member) => member.ordinal)

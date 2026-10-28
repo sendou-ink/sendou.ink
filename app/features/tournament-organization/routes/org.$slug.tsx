@@ -645,7 +645,7 @@ function EventWinners({
 					</div>
 					<div className="stack xs horizontal">
 						{winner.members.map((member) => (
-							<Avatar key={member.discordId} user={member} size="xxs" />
+							<Avatar key={member.id} user={member} size="xxs" />
 						))}
 					</div>
 				</div>
@@ -697,7 +697,7 @@ function EventLeaderboard({
 			) : null}
 			<ol className={styles.leaderboardList}>
 				{leaderboard.map((entry) => (
-					<li key={entry.user.discordId}>
+					<li key={entry.user.id}>
 						<EventLeaderboardRow entry={entry} />
 					</li>
 				))}

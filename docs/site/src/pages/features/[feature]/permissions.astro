@@ -1,0 +1,190 @@
+---
+import { getCollection } from "astro:content";
+import { Badge } from "@astrojs/starlight/components";
+import type { InferGetStaticPropsType } from "astro";
+import { githubUrl } from "../../../../../../scripts/living-docs/links.ts";
+import ChecksBySide from "../../../components/living/ChecksBySide.astro";
+import FeaturePage from "../../../components/living/FeaturePage.astro";
+import PermissionsTable from "../../../components/living/PermissionsTable.astro";
+import { sitePath, viewHref } from "../../../living/format.ts";
+
+const GRANTED_HEADING = { depth: 2, slug: "granted", text: "Granted here" };
+const BORROWED_HEADING = {
+	depth: 2,
+	slug: "borrowed",
+	text: "Other features' permissions",
+};
+const ROLES_HEADING = { depth: 2, slug: "roles", text: "Global roles" };
+const OUTSIDE_HEADING = {
+	depth: 2,
+	slug: "outside-the-system",
+	text: "Outside the system",
+};
+
+export async function getStaticPaths() {
+	const features = await getCollection("features");
+
+	return features
+		.filter((entry) => entry.data.views.includes("permissions"))
+		.map((entry) => ({
+			params: { feature: entry.id },
+			props: {
+				feature: entry.data,
+				labels: new Map(
+					features.map((other) => [other.id, other.data.config.label]),
+				),
+			},
+		}));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { feature, labels } = Astro.props;
+const permissions = feature.permissions!;
+const borrowed = [
+	...Map.groupBy(
+		permissions.borrowed,
+		(check) => `${check.grantedIn ?? ""}:${check.name}`,
+	),
+].map(([, checks]) => ({
+	name: checks[0].name,
+	grantedIn: checks[0].grantedIn,
+	checks,
+}));
+const roleChecks = [
+	...Map.groupBy(permissions.roleChecks, (check) => check.name),
+].sort(([a], [b]) => a.localeCompare(b));
+const outsideCount =
+	permissions.directReads.length + permissions.directChecks.length;
+const headings = [
+	permissions.granted.length > 0 ? GRANTED_HEADING : null,
+	borrowed.length > 0 ? BORROWED_HEADING : null,
+	roleChecks.length > 0 ? ROLES_HEADING : null,
+	outsideCount > 0 ? OUTSIDE_HEADING : null,
+].filter((heading) => heading !== null);
+---
+
+<FeaturePage feature={feature} view="permissions" headings={headings}>
+	<Fragment slot="markdown">
+		<p>
+			Who may do what in {feature.config.label}: the per-object <code>permissions</code> it builds
+			with every place checking them, and the checks in its code. See{" "}
+			<a href={sitePath("dev/permissions/")}>Permissions</a> for how authorization works and{" "}
+			<a href={sitePath("reference/permissions/")}>the reference</a> for every role and feature.
+		</p>
+
+		{
+			permissions.granted.length > 0 ? (
+				<>
+					<h2 id={GRANTED_HEADING.slug}>{GRANTED_HEADING.text}</h2>
+					<p>
+						Built at read time into what the functions return, a list of the user ids holding each
+						permission. Checks are listed wherever they are, other features' included.
+					</p>
+					<PermissionsTable permissions={permissions.granted} />
+				</>
+			) : null
+		}
+
+		{
+			borrowed.length > 0 ? (
+				<>
+					<h2 id={BORROWED_HEADING.slug}>{BORROWED_HEADING.text}</h2>
+					<p>Checks in this feature's code of permissions another feature grants.</p>
+					<table>
+						<thead>
+							<tr>
+								<th>Permission</th>
+								<th>Granted in</th>
+								<th>Checked in</th>
+							</tr>
+						</thead>
+						<tbody>
+							{borrowed.map((row) => (
+								<tr>
+									<td>
+										<code>{row.name}</code>
+									</td>
+									<td>
+										{row.grantedIn ? (
+											<a href={viewHref(row.grantedIn, "permissions", "granted")}>
+												{labels.get(row.grantedIn) ?? row.grantedIn}
+											</a>
+										) : (
+											<Badge text="no single feature" variant="caution" size="small" />
+										)}
+									</td>
+									<td class="living">
+										<ChecksBySide checks={row.checks} chipBy="file" />
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</>
+			) : null
+		}
+
+		{
+			roleChecks.length > 0 ? (
+				<>
+					<h2 id={ROLES_HEADING.slug}>{ROLES_HEADING.text}</h2>
+					<p>
+						The global roles this feature's code checks, see{" "}
+						<a href={sitePath("reference/permissions/#global-roles")}>who has each</a>.
+					</p>
+					<table>
+						<thead>
+							<tr>
+								<th>Role</th>
+								<th>Checked in</th>
+							</tr>
+						</thead>
+						<tbody>
+							{roleChecks.map(([role, checks]) => (
+								<tr>
+									<td>
+										<code>{role}</code>
+									</td>
+									<td class="living">
+										<ChecksBySide checks={checks} chipBy="file" />
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</>
+			) : null
+		}
+
+		{
+			outsideCount > 0 ? (
+				<>
+					<h2 id={OUTSIDE_HEADING.slug}>{OUTSIDE_HEADING.text}</h2>
+					<p>
+						Reading <code>x.permissions.NAME</code> directly skips <code>hasPermission</code> and with
+						it the admin bypass, and authorizing an action on an object with <code>isAdmin</code>{" "}
+						and friends is a bug. Some of these are deliberate, the permissions doc lists the
+						boundaries.
+					</p>
+					<ul>
+						{permissions.directReads.map((read) => (
+							<li>
+								read directly in{" "}
+								<a href={githubUrl(read.file, read.line)}>{`${read.file}:${read.line}`}</a>{" "}
+								<code>{read.code}</code>
+							</li>
+						))}
+						{permissions.directChecks.map((site) => (
+							<li>
+								<code>{site.name}</code> in{" "}
+								<a href={githubUrl(site.file, site.line)}>{`${site.file}:${site.line}`}</a>{" "}
+								<code>{site.code}</code>
+							</li>
+						))}
+					</ul>
+				</>
+			) : null
+		}
+	</Fragment>
+</FeaturePage>

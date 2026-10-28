@@ -1,8 +1,6 @@
-import { PassThrough } from "node:stream";
-import { createReadableStreamFromReadable } from "@react-router/node";
 import { isbot } from "isbot";
 import cron from "node-cron";
-import { renderToPipeableStream } from "react-dom/server";
+import { renderToReadableStream } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
 import {
 	type EntryContext,
@@ -13,6 +11,7 @@ import {
 	ServerRouter,
 } from "react-router";
 import { ServerConfig } from "~/config.server";
+import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { getI18nInstance } from "~/modules/i18n/i18next.server";
 import {
 	daily,
@@ -28,6 +27,7 @@ import { logger } from "./utils/logger";
 export const streamTimeout = 5000;
 
 const PREFETCH_CACHE_CONTROL = "private, max-age=10";
+const DEFAULT_CACHE_CONTROL = "private, no-cache";
 
 const dateFnsLocalesLoaded = loadAllDateFnsLocales();
 
@@ -40,61 +40,60 @@ async function handleRequest(
 ) {
 	await dateFnsLocalesLoaded;
 
-	const callbackName = isbot(request.headers.get("user-agent"))
-		? "onAllReady"
-		: "onShellReady";
+	if (!responseHeaders.has("Cache-Control")) {
+		responseHeaders.set("Cache-Control", DEFAULT_CACHE_CONTROL);
+	}
 
 	const instance = getI18nInstance(loadContext);
 
-	return new Promise((resolve, reject) => {
-		let didError = false;
+	let didError = false;
+	const body = await renderToReadableStream(
+		<I18nextProvider i18n={instance}>
+			<ServerRouter context={reactRouterContext} url={request.url} />
+		</I18nextProvider>,
+		{
+			// +1s gives React time to flush the rejected boundary contents
+			signal: AbortSignal.timeout(streamTimeout + 1000),
+			onError(error: unknown) {
+				didError = true;
 
-		const { pipe, abort } = renderToPipeableStream(
-			<I18nextProvider i18n={instance}>
-				<ServerRouter context={reactRouterContext} url={request.url} />
-			</I18nextProvider>,
-			{
-				[callbackName]: () => {
-					const body = new PassThrough();
-					const stream = createReadableStreamFromReadable(body);
-					responseHeaders.set("Content-Type", "text/html");
-
-					resolve(
-						new Response(stream, {
-							headers: responseHeaders,
-							status: didError ? 500 : responseStatusCode,
-						}),
-					);
-
-					pipe(body);
-				},
-				onShellError(error: unknown) {
-					reject(error);
-				},
-				onError(error: unknown) {
-					didError = true;
-
-					logger.error(error);
-				},
+				logger.error(error);
 			},
-		);
+		},
+	);
 
-		// +1s gives React time to flush the rejected boundary contents
-		setTimeout(abort, streamTimeout + 1000);
+	if (isbot(request.headers.get("user-agent"))) {
+		await body.allReady;
+	}
+
+	responseHeaders.set("Content-Type", "text/html; charset=utf-8");
+
+	return new Response(body, {
+		headers: responseHeaders,
+		status: didError ? 500 : responseStatusCode,
 	});
 }
 
-/** Lets the browser reuse a hover-prefetched loader response on the click that follows it. Varies by cookie so that a mutation (see `invalidatePrefetchedLoaderData` in entry.client.tsx) or a log in invalidates it. */
+/** Lets the browser reuse a hover-prefetched loader response on the click that follows it. Varies by cookie so that a mutation (see `invalidatePrefetchedLoaderData` in entry.client.tsx) or a log in invalidates it. Every other response defaults to private so a CDN never caches user data. */
 export const handleDataRequest: HandleDataRequestFunction = (
 	response,
 	{ request },
 ) => {
-	const isPrefetch = request.headers.get("Sec-Purpose") === "prefetch";
-	if (request.method !== "GET" || !response.ok || !isPrefetch) return response;
+	const isReusablePrefetch =
+		request.method === "GET" &&
+		response.ok &&
+		request.headers.get("Sec-Purpose") === "prefetch";
+	if (!isReusablePrefetch && response.headers.has("Cache-Control")) {
+		return response;
+	}
 
 	const headers = new Headers(response.headers);
-	headers.set("Cache-Control", PREFETCH_CACHE_CONTROL);
-	headers.set("Vary", "Cookie");
+	if (isReusablePrefetch) {
+		headers.set("Cache-Control", PREFETCH_CACHE_CONTROL);
+		headers.set("Vary", "Cookie");
+	} else {
+		headers.set("Cache-Control", DEFAULT_CACHE_CONTROL);
+	}
 
 	return new Response(response.body, {
 		status: response.status,
@@ -151,10 +150,20 @@ process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
 	logger.error("Unhandled Rejection at:", p, "reason:", reason);
 });
 
+process.on("uncaughtException", (error) => {
+	logger.error("Uncaught Exception:", error);
+	process.exit(1);
+});
+
 // routes through logger so the request id shows in server logs
 export const handleError: HandleErrorFunction = (error, { request }) => {
 	if (request.signal.aborted) return;
 	if (isRouteErrorResponse(error) && error.status < 500) return;
+
+	if (devToolsServerHooks) {
+		devToolsServerHooks.logRequestError(request, () => logger.error(error));
+		return;
+	}
 
 	logger.error(error);
 };

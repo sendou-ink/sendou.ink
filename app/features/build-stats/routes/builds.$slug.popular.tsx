@@ -1,10 +1,11 @@
-import clsx from "clsx";
+import { Layers, Shapes } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
 import { EmptyState } from "~/components/EmptyState";
-import { Main } from "~/components/Main";
+import { SendouSection } from "~/components/elements/Section";
+import { WeaponBuildsLayout } from "~/features/builds/components/WeaponBuildsLayout";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
@@ -17,10 +18,16 @@ import {
 	ogPageImage,
 	type SerializeFrom,
 } from "../../../utils/remix";
-
+import { ANY_TIME } from "../build-stats-constants";
+import { buildStatsSearchParams } from "../build-stats-search-params";
+import { BuildStatsDateFilter } from "../components/BuildStatsDateFilter";
+import { PopularBuildCard } from "../components/PopularBuildCard";
 import { loader } from "../loaders/builds.$slug.popular.server";
+import styles from "./builds.$slug.popular.module.css";
 
 export { loader };
+
+export const shouldRevalidate = buildStatsSearchParams.shouldRevalidate;
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.loaderData) return [];
@@ -35,7 +42,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["analyzer", "builds"],
+	i18n: ["weapons", "builds"],
 	breadcrumb: ({ match }) => {
 		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
@@ -48,55 +55,144 @@ export const handle: SendouRouteHandle = {
 				type: "IMAGE",
 			},
 			{
-				imgPath: outlinedMainWeaponImageUrl(data.meta.weaponId),
-				href: weaponBuildPage(data.meta.slug),
+				imgPath: outlinedMainWeaponImageUrl(data.weaponId),
+				href: weaponBuildPage(data.slug),
 				type: "IMAGE",
 			},
 		];
 	},
 };
 
+type PopularData = SerializeFrom<typeof loader>["popular"];
+
 export default function PopularBuildsPage() {
-	const { t } = useTranslation(["analyzer", "builds"]);
+	const { t } = useTranslation(["builds"]);
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<Main className="stack lg">
-			{data.popularBuilds.length === 0 ? (
-				<EmptyState navItem="builds">{t("builds:noPopularBuilds")}</EmptyState>
-			) : null}
-			{data.popularBuilds.map((build, i) => {
-				return (
-					<div key={build.id} className="stack horizontal lg items-center">
-						<div
-							className={clsx("stack items-center", {
-								invisible: !build.count,
-							})}
-						>
-							<div className="text-lg text-lighter font-bold">#{i + 1}</div>
-							<div className="text-sm font-semi-bold text-theme">
-								×{build.count}
-							</div>
-						</div>{" "}
-						<div className="stack horizontal md flex-wrap">
-							{build.abilities.map(({ ability, count }) => {
-								return (
-									<div
-										key={ability}
-										className="text-sm font-semi-bold stack xs items-center"
-									>
-										<Ability ability={ability} size="SUB" />{" "}
-										<div className={clsx({ invisible: !count })}>
-											{count}
-											{t("analyzer:abilityPoints.short")}
-										</div>
-									</div>
-								);
-							})}
-						</div>
+		<WeaponBuildsLayout
+			weaponId={data.weaponId}
+			weaponName={data.weaponName}
+			slug={data.slug}
+			buildsCount={data.buildsCount}
+			selectedTab="popular"
+		>
+			<div className="stack md-plus">
+				<BuildStatsDateFilter loaderDate={data.date} />
+				{data.popular.builds.length === 0 ? (
+					<EmptyState navItem="builds">
+						{data.date === ANY_TIME
+							? t("builds:noBuildsForWeapon")
+							: t("builds:noBuildsMatchingFilters")}
+					</EmptyState>
+				) : (
+					<div className={styles.columns}>
+						<PopularBuilds popular={data.popular} />
+						<aside className="stack md-plus">
+							<Staples popular={data.popular} />
+							<BuildVariety popular={data.popular} />
+						</aside>
 					</div>
-				);
-			})}
-		</Main>
+				)}
+			</div>
+		</WeaponBuildsLayout>
+	);
+}
+
+function PopularBuilds({ popular }: { popular: PopularData }) {
+	const { t } = useTranslation(["builds"]);
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		<div className="stack md">
+			<ol className={styles.builds}>
+				{popular.builds.map((build) => (
+					<PopularBuildCard
+						key={build.id}
+						build={build}
+						mostPopularPlayersCount={popular.builds[0].playersCount}
+						weaponId={data.weaponId}
+						slug={data.slug}
+					/>
+				))}
+			</ol>
+			<p className="text-xs text-lighter text-center">
+				{t("builds:popular.explanation", { weapon: data.weaponName })}
+			</p>
+		</div>
+	);
+}
+
+function Staples({ popular }: { popular: PopularData }) {
+	const { t } = useTranslation(["builds", "game-misc"]);
+
+	return (
+		<SendouSection title={t("builds:popular.staples.title")} icon={Layers}>
+			<p className="text-xs text-lighter">
+				{t("builds:popular.staples.explanation", {
+					count: popular.builds.length,
+				})}
+			</p>
+			<ul className={styles.staples}>
+				{popular.staples.map((staple) => (
+					<li key={staple.ability} className={styles.staple}>
+						<Ability ability={staple.ability} size="SUBTINY" />
+						<div className="stack xxs">
+							<div className="stack horizontal sm justify-between text-xs">
+								<span className="truncate">
+									{t(`game-misc:ABILITY_${staple.ability}`)}
+								</span>
+								<span className="font-semi-bold">
+									{staple.buildsCount}/{popular.builds.length}
+								</span>
+							</div>
+							<progress
+								className={styles.bar}
+								value={staple.buildsCount}
+								max={popular.builds.length}
+								aria-label={t(`game-misc:ABILITY_${staple.ability}`)}
+							/>
+						</div>
+					</li>
+				))}
+			</ul>
+		</SendouSection>
+	);
+}
+
+function BuildVariety({ popular }: { popular: PopularData }) {
+	const { t } = useTranslation(["builds"]);
+
+	return (
+		<SendouSection title={t("builds:popular.variety.title")} icon={Shapes}>
+			<dl className={styles.varietyNumbers}>
+				<div>
+					<dt className="text-xs text-lighter">
+						{t("builds:popular.variety.players")}
+					</dt>
+					<dd className={styles.varietyNumber}>{popular.playersCount}</dd>
+				</div>
+				<div>
+					<dt className="text-xs text-lighter">
+						{t("builds:popular.variety.uniqueBuilds")}
+					</dt>
+					<dd className={styles.varietyNumber}>{popular.uniqueBuildsCount}</dd>
+				</div>
+			</dl>
+			<div className="stack xs">
+				<progress
+					className={styles.bar}
+					value={popular.topBuildsPercentage}
+					max={100}
+					aria-label={`${popular.topBuildsPercentage}%`}
+				/>
+				<p className="text-xs">
+					{t("builds:popular.variety.topBuildsShare", {
+						percentage: popular.topBuildsPercentage,
+						count: popular.topBuildsCount,
+					})}
+				</p>
+			</div>
+		</SendouSection>
 	);
 }

@@ -300,7 +300,32 @@ export function findTeamInsertPosition<T extends TeamForOrdering>(
 	return existingOrder.length;
 }
 
+/**
+ * Division label of a starting bracket: the shared leading characters of the bracket names reachable
+ * from it, or the deepest one's name when they share none. When several starting brackets end up with
+ * the same label, each gets its ordinal among them appended (e.g. "S 1" and "S 2").
+ */
 export function getBracketProgressionLabel(
+	startingBracketIdx: number,
+	progression: ParsedBracket[],
+): string {
+	const label = sharedBracketNamesLabel(startingBracketIdx, progression);
+
+	const startingBracketIdxsWithSameLabel = Progression.startingBrackets(
+		progression,
+	).filter(
+		(bracketIdx) => sharedBracketNamesLabel(bracketIdx, progression) === label,
+	);
+
+	if (startingBracketIdxsWithSameLabel.length <= 1) return label;
+
+	const ordinal = startingBracketIdxsWithSameLabel.indexOf(startingBracketIdx);
+	if (ordinal === -1) return label;
+
+	return `${label} ${ordinal + 1}`;
+}
+
+function sharedBracketNamesLabel(
 	startingBracketIdx: number,
 	progression: ParsedBracket[],
 ): string {

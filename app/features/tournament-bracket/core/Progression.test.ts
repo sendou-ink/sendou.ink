@@ -1120,6 +1120,12 @@ describe("bracketIdxsForStandings", () => {
 		).toEqual([2, 0]); // NOTE, 3,1 excluded because they are not in the main progression
 	});
 
+	test("handles many starter brackets from a non-first starting bracket", () => {
+		expect(
+			Progression.bracketIdxsForStandings(progressions.manyStartBrackets, 1),
+		).toEqual([3, 1]);
+	});
+
 	test("handles swiss (one group)", () => {
 		expect(
 			Progression.bracketIdxsForStandings(progressions.swissOneGroup),

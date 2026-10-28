@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"cast": null,
+		"time": 250,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[true, false, false, false],
+			[false, false, true, false]
+		]
+	},
+	"options": {
+		"notes": "Sendou POV, Museum d'Alfonsino RM at 4:10 (gacha-tournament VoD, t=5500). Left (purple) slot 0 and right slot 2 splatted; nobody holds a special. Right slot 1 is an alive Painbrush: its render's pale head (white rim over a tan brush) covers the kite apex the state reads off, so the slot read ready on every frame it was alive and charted special-ready for the whole game. The body sides around the head stay saturated lime (ink ~0.8+ on both), which a wash never leaves; see pov-alfonsino-painbrush-real-ready-wash for the same slot really holding its special."
+	}
+}

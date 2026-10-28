@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
 	candidatesByBaseWeapon,
+	candidateTeamIds,
 	FAST_FORWARD_SPEED,
+	type MontageManifestTopTeam,
+	montageTeamSections,
 	montageWindows,
 	playbackDuration,
 	playbackSegments,
@@ -127,6 +130,66 @@ describe("candidatesByBaseWeapon", () => {
 			[40, ["b", "d"]],
 			[210, ["c"]],
 			[null, ["a"]],
+		]);
+	});
+});
+
+describe("candidateTeamIds", () => {
+	const topTeamIds = new Set([1, 2]);
+	const side = (id: number) => ({ id, name: `Team ${id}`, logo: null });
+
+	test.each([
+		{
+			why: "a POV VoD plays under its team",
+			vod: { team: side(1), teams: [side(1), side(2)] },
+			expected: [1],
+		},
+		{
+			why: "a cast plays under either top team",
+			vod: { team: null, teams: [side(1), side(2)] },
+			expected: [1, 2],
+		},
+		{
+			why: "teams outside the top are left out",
+			vod: { team: null, teams: [side(2), side(3)] },
+			expected: [2],
+		},
+		{
+			why: "a POV VoD of a team outside the top plays under none",
+			vod: { team: side(3), teams: [side(3), side(1)] },
+			expected: [],
+		},
+	])("$why", ({ vod, expected }) => {
+		expect(candidateTeamIds(vod, topTeamIds)).toEqual(expected);
+	});
+});
+
+describe("montageTeamSections", () => {
+	test("counts down from the last placement, each team with its picks in order", () => {
+		const topTeams = [1, 2, 3].map(
+			(id): MontageManifestTopTeam => ({
+				id,
+				name: `Team ${id}`,
+				logo: null,
+				players: [],
+				placement: id,
+			}),
+		);
+		const picks = [
+			{ key: "a", teamId: 1 },
+			{ key: "b", teamId: 3 },
+			{ key: "c", teamId: 1 },
+		];
+
+		expect(
+			montageTeamSections(topTeams, picks).map((section) => [
+				section.team.id,
+				section.picks.map((pick) => pick.key),
+			]),
+		).toEqual([
+			[3, ["b"]],
+			[2, []],
+			[1, ["a", "c"]],
 		]);
 	});
 });

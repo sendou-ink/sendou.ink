@@ -7,6 +7,7 @@ package-lock.json
 .react-router/
 .env
 translation-progress.md
+translation-usage.json
 
 notes.md
 
@@ -44,3 +45,8 @@ notepad.txt
 *.mov
 !/e2e/fixtures/scanner-vod.webm
 !/e2e/fixtures/scanner-coach-vod.webm
+
+# docs site build output, and the living docs screenshots from pnpm run docs:capture
+/docs/site/dist/
+/docs/site/.astro/
+/docs/site/public/screenshots/

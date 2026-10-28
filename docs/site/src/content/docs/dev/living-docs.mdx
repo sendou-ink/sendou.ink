@@ -1,0 +1,83 @@
+---
+title: "Living docs"
+description: "How this site is built and how to write code that documents well."
+---
+
+The docs site (`docs/site/`, built with [Astro Starlight](https://starlight.astro.build/)) serves the handwritten docs of `docs/site/src/content/docs/` and the living docs: pages generated from the code for every feature, from these sources:
+
+- **README**: the handwritten `docs/site/src/content/feature-readmes/<feature>.mdx`, shown on the feature's overview page. Below it the overview lists the feature's behaviour (every e2e `describe` with a JSDoc, linked to its tests) and its routes (from `app/routes.ts`, with the e2e tests rendering each).
+- **Modules**: the `Module.ts` files of `app/features/<feature>/core/` (capitalized file names). Shown: the comment at the top of the file, exports (types first) with their JSDoc and signature, the unit tests describing each export, where each export is used (grouped into loaders, actions, routes, components…) and a graph of who imports who.
+- **Repositories**: the `*Repository.server.ts` files of `app/features/<feature>/`, shown like modules plus the tables each function reads and writes (from its Kysely `selectFrom`/`insertInto`/… calls and `sql` fragments, its private helpers included) and the functions of other repositories it calls.
+- **Permissions**: the per-object `permissions` the feature builds (`app/modules/permissions`, see [permissions.md](/dev/permissions/)) with who each is granted to and every `requirePermission`/`useHasPermission`/`hasPermission` check of them, other features' included, the checks in its code of other features' permissions and of global roles, and what goes around the system (`x.permissions.NAME` read directly, `isAdmin()` and friends). The repository functions building a permissions object list its permissions too.
+- **Search params & storage**: the feature's `SearchParams.define` (see [search-params.md](/dev/search-params/)) and `PersistedState.define`/`defineMap` definitions: each param or storage key with its schema, default and options (`loader`, `resets`…), where the definition is used and whether a test round-trips it.
+- **E2E tests**: `e2e/<feature>*.spec.ts`, each test turned into readable steps grouped by who is logged in (`impersonate`), the page object being used and arrange/act/assert. Hovering a step shows the page object method, locator, helper or form field it was generated from.
+
+Each feature has a page per source (`/features/<feature>/` for the overview, `/modules/`, `/repositories/`, `/permissions/`, `/search-params/`, `/e2e/`), the overview present when the feature has a README or routes. Nothing generated is committed, the pages are built from the code on demand:
+
+- `pnpm run dev:docs` serves the site at http://localhost:4321 (linked from the dev toolbar's Links app). It regenerates the living docs as files under `app/`, `e2e/` or `locales/en/` change. Search only works in a build.
+- `pnpm run docs:preview` builds the site and serves the build, search included.
+- `pnpm run docs:build` builds it into `docs/site/dist/` and checks every internal link of the build leads somewhere (`scripts/check-docs-links.ts`). CI runs it on pull requests and pushes to `main` (`.github/workflows/main.yml`). The site is a Render static site at https://docs.sendou.ink, deployed from every commit to `main` whose CI checks pass (see [Scripts](/dev/scripts/#the-docs-site)).
+
+Besides the feature pages, the generated pages are:
+
+- **Routes**: every route with its e2e coverage and the repository functions and tables its loader and action reach.
+- **Database tables**: from `app/db/tables.ts`, their relations from the foreign keys of a database the migrations are applied to, and the repository functions and routes using each.
+- **Lint rules**: `biome-plugins/` and where `biome.json` enables them.
+- **Permissions**: the global roles (the `userRoles()` condition granting each and every `requireRole`/`useHasRole` check), what each feature grants linking to its Permissions page, and everything going around the system or not matching up across the app.
+- **Search params & storage**: what each feature defines linking to its page, the definitions of shared code outside `app/features` (`app/components`, `app/hooks`…) and storage key collisions across the app.
+- **Background work**: the `cron.schedule` calls of `app/entry.server.tsx` and the routines of `app/routines/list.server.ts` they run with the tables each reaches, the routes called by machines (Lohi token, webhooks, dev controls), the Discord webhooks posted to, and every notification type with its meta, English texts, link and the `notify()` calls sending it.
+- **Environment variables**: every variable of `.env.example`, the config schemas of `app/config.server.ts` and `app/config.ts` and the ones read directly through `process.env`/`import.meta.env`, with where in the code each is read.
+- **Package scripts**: every `package.json` script with its command, the scripts it chains and the env vars it sets, described by the comment at the top of the repo script it runs or by `DESCRIPTIONS` in `scripts/living-docs/package-scripts.ts`.
+- **Public API**: every endpoint and type of `app/features/api-public/schema.ts`, read from the `/** GET /api/… */` comment above each response or request body type, with example requests and responses captured from the e2e tests (see below).
+
+Apart from Routes, which is built from the routes of the `features` collection, each is a content collection of `docs/site/src/content.config.ts`, the data read by an extractor of `scripts/living-docs/`.
+
+The extractors (reading the code into data) live in `scripts/living-docs/`, `documentFeatures()` being the entry point. What code reads and writes is traced by `data-access.ts`: from a loader, action or repository function it follows every declaration referenced, across files, collecting the tables queried and the repository functions called (the route traces show which helper a call is reached through). It is static, so a call behind a condition counts as made. The site reads them through a content collection (`docs/site/src/living/loader.ts`) and renders them with the components of `docs/site/src/components/living/`.
+
+The handwritten docs are MDX pages of Starlight's `docs` collection: the frontmatter gives the `title` and the `description` shown on the home page's cards, and a new file in `dev/`, `guides/` or `project/` shows up in the sidebar on its own. Write them with Starlight's markdown and components: asides as `:::note` (or `tip`, `caution`, `danger`), procedures as a numbered list inside `<Steps>`, diagrams with ``<Mermaid code={`…`} />`` (`docs/site/src/components/Mermaid.astro`). Link to other pages by their path (`/dev/forms/`) and to code by its GitHub URL. A bare `<` or `{` in text starts JSX in MDX, put code in backticks.
+
+## Components showcase
+
+The site's Components pages (`/components/<section>/`) render the app's shared components with example props, one page per section of `app/features/components-showcase/components/ShowcaseSections.tsx` (listed in `showcase-sections.ts`), plus the color tokens (`ColorsShowcase.tsx`). Add examples there when adding or changing a shared component. Each `<ComponentRow>` shows its source under it, and each page lists where the components it shows are used in the app (`scripts/living-docs/showcase.ts`).
+
+They are React islands (`ShowcaseRoot` gives them the translations, router and theme the app's root would) styled by the app's own CSS: `vars.css` as is, the theme following the site's light/dark switch, and the other global stylesheets of `app/styles/` scoped to the showcase (`docs/site/src/plugins/scope-app-styles.ts`) so they don't restyle the rest of the site.
+
+## Capturing an e2e run
+
+`pnpm run docs:capture [specs…]` runs the e2e tests (all, or the given spec files) with tracing on and keeps two things from the run:
+
+- `docs/site/visits.json` (committed): the pathnames each test visited, the source of route coverage.
+- `docs/site/api-examples.json` (committed): the `/api/` requests each test made through `page.request`, shown as the example requests and responses of the Public API endpoints (one per status code, arrays cut to their first items). Every endpoint should have a test calling it in `e2e/api-public.spec.ts`.
+- `docs/site/public/screenshots/` (gitignored): a screenshot for each `test.step` (taken as the step passes) or, in tests without steps, each page divider (from the trace's screencast), shown as the test's storyboard.
+
+Capturing a few specs only replaces their part of `visits.json` and `api-examples.json`.
+
+### Screenshots on the live site
+
+On pushes to `main` the e2e job (`.github/workflows/e2e-tests.yml`) runs `docs:capture` instead of plain `test:e2e`, and a job after it uploads the screenshots with `pnpm run docs:screenshots:publish` to the `sendou-docs` DigitalOcean Space, under the content hash of the spec they were captured from (`SPACES_ACCESS_KEY` and `SPACES_SECRET_KEY` repo secrets). A screenshot is named after its spec line, so it only fits the spec as it was: the docs site's build runs `pnpm run docs:screenshots:download`, which fetches those of the specs unchanged since their capture and leaves the rest without screenshots until the next capture.
+
+## Writing code that documents well
+
+Scrims (`app/features/scrims`, `e2e/scrims.spec.ts`) has every source filled in: use it as the reference when documenting a feature.
+
+- **Feature README**: what the feature is, its vocabulary, a lifecycle diagram (`<Mermaid>`) and where to start reading, `feature-readmes/scrims.mdx` being the reference. Leave the rules (limits, timings, who can do what) to the JSDoc of the e2e `describe`s, which the overview lists as its behaviour: a rule next to the tests establishing it is far less likely to go stale.
+- **Module overview**: start a `Module.ts` file with a comment describing what the module is about, separated from the first export by the imports or an empty line.
+- **JSDoc**: every module export should have one, exports without are flagged.
+- **Unit tests**: `describe("Module.fn")` (or `describe("fn")`) is what links a test to the export it is about. Tests under other `describe`s are listed at the end of the module as "Unit tests not about one export".
+- **Page objects**: e2e steps are generated from page object method and locator names, e.g. `scrims.requestFirst()` reads "Request first". Name methods after what the user does and give them JSDoc, hovering a step shows it together with the code.
+- **Users**: impersonate the seeded users through their constants (`ADMIN_ID`, `NZAP_TEST_ID`…), or give created users descriptive variable names (`owner.id` reads "owner").
+- **Forms**: `form.fill("postText", …)` reads with the field's English label (from the schema's `label` and `locales/en/forms.json`) when the form helpers are created with `createFormHelpers(page, schema)`, select values read as their option labels.
+- **Spec constants**: literal constants at the top of a spec (`const TOURNAMENT_NAME = "Swim or Sink"`) are shown with their value.
+- **Comments** inside a test are shown as notes above the step they precede.
+
+## Structuring e2e specs
+
+`e2e/friends.spec.ts` is the reference.
+
+- **One behaviour per test**, named after it ("accepting a request marks its notification read without opening the bell"). Set up the starting state with factories rather than replaying the UI flow of another test: a new test costs ~0.5s of worker time (context, database reset, logging in), less than the UI steps it skips.
+- **Nested `test.describe` per capability** of the feature ("Requests", "Weekly schedule", "Pinning"), they become the headings of the e2e view.
+- **`test.step`** where a test has phases that can't be set up from factories, typically a flow between users. Titles say what happens in the user's terms, starting with the user when it changes ("N-ZAP is notified and can accept it"). Step titles are what the docs show first, the generated steps sit under them, and each step gets a screenshot. Short single-behaviour tests don't need steps.
+- **JSDoc above a test or `describe`** for the rule it establishes when the title can't carry it ("Pins only reorder within a section…"), shown under the title. A `describe`'s JSDoc is also listed on the feature's overview, so state only what its tests assert.
+- **Shared setup** goes into a local function with JSDoc (`friendsWithSchedules(factories)`), it reads as one arrange step.
+
+Features are matched to specs by file name prefix (`tournament-bracket-swiss.spec.ts` → `tournament-bracket`), exceptions and nav icons are configured in `scripts/living-docs/features.ts`.

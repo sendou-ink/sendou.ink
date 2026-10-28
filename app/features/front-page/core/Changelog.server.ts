@@ -1,5 +1,7 @@
 import { formatDistance } from "date-fns";
 import * as v from "valibot";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+import { fetchWithTimeout } from "~/utils/fetch";
 import { logger } from "~/utils/logger";
 
 const BSKY_URL =
@@ -67,6 +69,9 @@ const postsSchema = v.object({
 });
 
 export async function get() {
+	// tests clear caches on every flush, which would make each front page load hit Bluesky
+	if (IS_E2E_TEST_RUN) return [];
+
 	let result: ChangelogItem[];
 	try {
 		const data = await fetchPosts();
@@ -109,7 +114,7 @@ export interface ChangelogItem {
 
 async function fetchPosts() {
 	// returns 50 post (default) can be increased to 100
-	const response = await fetch(BSKY_URL);
+	const response = await fetchWithTimeout(BSKY_URL);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch posts: ${response.statusText}`);
 	}

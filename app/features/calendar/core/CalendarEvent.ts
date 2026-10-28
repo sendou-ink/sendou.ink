@@ -9,9 +9,18 @@ import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import { assertType } from "~/utils/types";
 import type {
 	CalendarEvent,
+	CalendarEventTag,
 	CalendarFilters,
 	GroupedCalendarEvents,
 } from "../calendar-types";
+
+const MEMBERS_PER_TEAM_BY_VERSUS_TAG = {
+	ONES: 1,
+	DUOS: 2,
+	TRIOS: 3,
+} as const satisfies Partial<Record<CalendarEventTag, number>>;
+
+type VersusTag = keyof typeof MEMBERS_PER_TEAM_BY_VERSUS_TAG;
 
 export const FILTERS_KEYS = [
 	"preferredStartTime",
@@ -33,6 +42,22 @@ export const FILTERS_KEYS = [
 
 assertType<(typeof FILTERS_KEYS)[number], keyof CalendarFilters>();
 assertType<keyof CalendarFilters, (typeof FILTERS_KEYS)[number]>();
+
+/** Whether the tag tells the team size (1v1, 2v2 or 3v3). Tournaments never store these, their tag is derived from `minMembersPerTeam` via {@link versusTag}. */
+export function isVersusTag(tag: CalendarEventTag): tag is VersusTag {
+	return Object.hasOwn(MEMBERS_PER_TEAM_BY_VERSUS_TAG, tag);
+}
+
+/** The tag telling the team size of a tournament with the given minimum members per team, null for 4v4. */
+export function versusTag(minMembersPerTeam: number): VersusTag | null {
+	for (const [tag, membersPerTeam] of Object.entries(
+		MEMBERS_PER_TEAM_BY_VERSUS_TAG,
+	)) {
+		if (membersPerTeam === minMembersPerTeam) return tag as VersusTag;
+	}
+
+	return null;
+}
 
 /** Default empty calendar filters. */
 export function defaultFilters(): CalendarFilters {
@@ -200,23 +225,14 @@ function matchesFilter(
 				return true;
 			}
 
-			const eventType = event.tags.find(
-				(tag) => tag === "ONES" || tag === "DUOS" || tag === "TRIOS",
-			);
+			const tag = event.tags.find(isVersusTag);
+			const membersPerTeam = tag
+				? MEMBERS_PER_TEAM_BY_VERSUS_TAG[tag]
+				: event.minMembersPerTeam;
 
-			if (eventType === "ONES") {
-				return preferredVersus.includes("1v1");
-			}
+			const versus = `${membersPerTeam}v${membersPerTeam}`;
 
-			if (eventType === "DUOS") {
-				return preferredVersus.includes("2v2");
-			}
-
-			if (eventType === "TRIOS") {
-				return preferredVersus.includes("3v3");
-			}
-
-			return preferredVersus.includes("4v4");
+			return preferredVersus.some((preferred) => preferred === versus);
 		}
 		case "modes": {
 			const modes = filters[key];

@@ -68,7 +68,7 @@ export type Notification =
 	| NotificationItem<"PLUS_SUGGESTION_ADDED", { tier: number }>
 	| NotificationItem<
 			"TAGGED_TO_ART",
-			{ adderUsername: string; adderDiscordId: string; artId: number }
+			{ adderUsername: string; adderId: number; artId: number }
 	  >
 	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>
 	| NotificationItem<"SEASON_ENDED", { seasonNth: number }>
@@ -98,7 +98,7 @@ export type Notification =
 			{ tournamentId: number; matchId: number; opponentTeamName: string }
 	  >
 	| NotificationItem<"SCRIM_AUTO_DELETED", { at: number }>
-	| NotificationItem<"COMMISSIONS_CLOSED", { discordId: string }>
+	| NotificationItem<"COMMISSIONS_CLOSED">
 	| NotificationItem<
 			"FRIEND_REQUEST_RECEIVED",
 			{ senderId: number; senderUsername: string }
@@ -128,6 +128,17 @@ export type Notification =
 			}
 	  >
 	| NotificationItem<"SCHEDULE_TEAM_REMINDER">
+	| NotificationItem<
+			"LOBBY_CHECK_IN_OPENED",
+			{ lobbyId: number; lobbyName: string }
+	  >
+	| NotificationItem<"LOBBY_STARTED", { lobbyId: number; lobbyName: string }>
+	| NotificationItem<"LOBBY_PROMOTED", { lobbyId: number; lobbyName: string }>
+	| NotificationItem<"LOBBY_HOST", { lobbyId: number; lobbyName: string }>
+	| NotificationItem<
+			"LOBBY_READY_CHECK",
+			{ lobbyId: number; lobbyName: string }
+	  >
 	| NotificationItem<
 			"CHAT_MENTION",
 			{

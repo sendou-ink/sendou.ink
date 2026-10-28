@@ -1,4 +1,5 @@
-.container {
+/* zero specificity so a graphic's own container class always wins */
+:where(.container) {
 	--graphic-row-bg: var(--color-bg-high);
 	--graphic-row-border: color-mix(in oklch, var(--color-text) 8%, transparent);
 	--graphic-text-dim: var(--color-text-high);

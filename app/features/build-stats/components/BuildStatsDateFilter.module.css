@@ -1,0 +1,11 @@
+.value {
+	display: inline-grid;
+
+	& > span {
+		grid-area: 1 / 1;
+	}
+
+	& > span[aria-hidden="true"] {
+		visibility: hidden;
+	}
+}

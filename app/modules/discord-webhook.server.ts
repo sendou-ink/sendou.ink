@@ -9,8 +9,8 @@ interface ModWebhookEmbed {
 }
 
 export interface WebhookUser {
+	id: number;
 	username: string;
-	discordId: string;
 	customUrl: string | null;
 }
 

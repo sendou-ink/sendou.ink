@@ -9,7 +9,6 @@ describe("settingsSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(settingsSearchParams, {
 			tab: [null, "preferences", "match-profile", "locale", "theme", "sounds"],
-			lng: [null, "en", "fr", "zh-TW"],
 		});
 	});
 

@@ -57,7 +57,9 @@ export async function loadFactories(parallelIndex: number) {
 		ImageFactory: await import("~/db/seed/factories/ImageFactory"),
 		LFGPostFactory: await import("~/db/seed/factories/LFGPostFactory"),
 		LiveStreamFactory: await import("~/db/seed/factories/LiveStreamFactory"),
+		LobbyFactory: await import("~/db/seed/factories/LobbyFactory"),
 		LogInLinkFactory: await import("~/db/seed/factories/LogInLinkFactory"),
+		MapResultFactory: await import("~/db/seed/factories/MapResultFactory"),
 		NotificationFactory: await import(
 			"~/db/seed/factories/NotificationFactory"
 		),

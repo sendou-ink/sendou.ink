@@ -2,6 +2,7 @@ import * as React from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useLatestRef } from "~/hooks/useLatestRef";
+import { IS_DEV_BUILD } from "~/utils/dev-build";
 import type {
 	ParamDef,
 	SearchParamsDefinition,
@@ -105,6 +106,11 @@ function useDecodedValues<Shape extends AnyShape>(
 	useIsomorphicLayoutEffect(() => {
 		lastSearchRef.current = relevantSearch;
 	});
+	React.useEffect(() => {
+		if (!IS_DEV_BUILD) return;
+
+		return SearchParams.trackReaderForDevTools(definition);
+	}, [definition]);
 
 	return React.useMemo(
 		() => definition.parse(new URLSearchParams(relevantSearch)),

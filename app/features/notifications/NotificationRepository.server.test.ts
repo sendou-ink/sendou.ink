@@ -3,6 +3,7 @@ import * as NotificationFactory from "~/db/seed/factories/NotificationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { withUserId } from "~/utils/Test";
 import * as NotificationRepository from "./NotificationRepository.server";
+import { NOTIFICATIONS } from "./notifications-contants";
 
 const users = UserFactory.pool();
 
@@ -277,6 +278,76 @@ describe("upsertOwnSubscription", () => {
 		expect(
 			await NotificationRepository.findAllSubscriptionsByUserIds([users.id(1)]),
 		).toHaveLength(2);
+	});
+
+	const endpointsOf = async (userId: number) =>
+		(await NotificationRepository.findAllSubscriptionsByUserIds([userId])).map(
+			(row) => row.subscription.endpoint,
+		);
+
+	test("keeps only the most recent subscriptions of a user", async () => {
+		const max = NOTIFICATIONS.MAX_PUSH_SUBSCRIPTIONS_PER_USER;
+		for (let i = 1; i <= max + 2; i++) {
+			await withUserId(users.id(1), () =>
+				NotificationRepository.upsertOwnSubscription(
+					subscription(`https://push.example.com/${i}`),
+				),
+			);
+		}
+
+		const endpoints = await endpointsOf(users.id(1));
+		expect(endpoints).toHaveLength(max);
+		expect(endpoints).not.toContain("https://push.example.com/1");
+		expect(endpoints).not.toContain("https://push.example.com/2");
+		expect(endpoints).toContain(`https://push.example.com/${max + 2}`);
+	});
+
+	test("resubscribing an old endpoint counts it as the most recent", async () => {
+		const max = NOTIFICATIONS.MAX_PUSH_SUBSCRIPTIONS_PER_USER;
+		for (let i = 1; i <= max; i++) {
+			await withUserId(users.id(1), () =>
+				NotificationRepository.upsertOwnSubscription(
+					subscription(`https://push.example.com/${i}`),
+				),
+			);
+		}
+		await withUserId(users.id(1), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/1"),
+			),
+		);
+		await withUserId(users.id(1), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/new"),
+			),
+		);
+
+		const endpoints = await endpointsOf(users.id(1));
+		expect(endpoints).toContain("https://push.example.com/1");
+		expect(endpoints).not.toContain("https://push.example.com/2");
+	});
+
+	test("the cap does not remove other users' subscriptions", async () => {
+		await withUserId(users.id(2), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/other"),
+			),
+		);
+		for (
+			let i = 1;
+			i <= NOTIFICATIONS.MAX_PUSH_SUBSCRIPTIONS_PER_USER + 1;
+			i++
+		) {
+			await withUserId(users.id(1), () =>
+				NotificationRepository.upsertOwnSubscription(
+					subscription(`https://push.example.com/${i}`),
+				),
+			);
+		}
+
+		expect(await endpointsOf(users.id(2))).toEqual([
+			"https://push.example.com/other",
+		]);
 	});
 });
 

@@ -4,6 +4,7 @@ import { openSecondUser } from "./helpers/chat";
 import {
 	expect,
 	expectNoErrorPage,
+	impersonate,
 	isNotVisible,
 	navigate,
 	test,
@@ -134,5 +135,21 @@ test.describe("Auth", () => {
 		expect(discord.param("redirect_uri")).toMatch(
 			/^http:\/\/localhost:\d+\/auth\/callback$/,
 		);
+	});
+
+	test("logged-in responses are never publicly cacheable", async ({ page }) => {
+		await impersonate(page);
+
+		const staticLookingNotFound = await page.request.get(
+			"/cache-deception.css",
+		);
+		expect(staticLookingNotFound.status()).toBe(404);
+		expect(staticLookingNotFound.headers()["cache-control"]).toBe(
+			"private, no-cache",
+		);
+
+		const loaderData = await page.request.get("/settings.data");
+		expect(loaderData.ok()).toBe(true);
+		expect(loaderData.headers()["cache-control"]).toBe("private, no-cache");
 	});
 });

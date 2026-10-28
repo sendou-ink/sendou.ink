@@ -1,5 +1,5 @@
 import { subDays } from "date-fns";
-import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { expect, impersonate, test } from "./helpers/playwright";
 import { LFGPage } from "./pages/lfg/lfg-page";
@@ -41,7 +41,7 @@ test.describe("User report", () => {
 		await impersonate(page);
 
 		const adminPage = new UserAdminPage(page);
-		await adminPage.goto(NZAP_TEST_DISCORD_ID);
+		await adminPage.goto(NZAP_TEST_ID);
 
 		await expect(adminPage.totalReportsText(3)).toBeVisible();
 		await expect(adminPage.locators.reportDetails).toHaveCount(3);

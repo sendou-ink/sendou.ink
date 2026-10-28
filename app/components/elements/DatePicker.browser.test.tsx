@@ -26,7 +26,7 @@ describe("SendouDatePicker", () => {
 		const onChange = vi.fn();
 		const screen = await render(
 			<SendouDatePicker
-				label="When"
+				aria-label="When"
 				granularity={granularity}
 				value={null}
 				onChange={onChange}
@@ -42,7 +42,7 @@ describe("SendouDatePicker", () => {
 		const onChange = vi.fn();
 		const screen = await render(
 			<SendouDatePicker
-				label="When"
+				aria-label="When"
 				granularity="day"
 				value={new Date(2024, 1, 15)}
 				onChange={onChange}

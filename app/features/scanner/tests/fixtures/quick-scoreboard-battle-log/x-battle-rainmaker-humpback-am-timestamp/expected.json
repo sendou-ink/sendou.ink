@@ -1,0 +1,87 @@
+{
+  "event": "QuickScoreboardBattleLog",
+  "data": {
+    "lobby": "X",
+    "mode": "RM",
+    "stage": 16,
+    "stageLabel": "Humpback Pump Track",
+    "timestamp": "10/16/2026 2:01 AM",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "かめちゃん.★",
+        "weaponId": 241,
+        "paint": 277,
+        "ka": 7,
+        "d": 0,
+        "s": 1
+      },
+      {
+        "name": "ニディ",
+        "weaponId": 8001,
+        "paint": 412,
+        "ka": 2,
+        "d": 0,
+        "s": 0
+      },
+      {
+        "name": "Bowser",
+        "weaponId": 7011,
+        "paint": 382,
+        "ka": 2,
+        "d": 0,
+        "s": 1
+      },
+      {
+        "name": "ゆう",
+        "weaponId": 5010,
+        "paint": 308,
+        "ka": 2,
+        "d": 0,
+        "s": 1
+      },
+      {
+        "name": "エナスタ GIRL",
+        "weaponId": 1020,
+        "paint": 390,
+        "ka": 0,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "マンポマンポママンポ",
+        "weaponId": 211,
+        "paint": 153,
+        "ka": 0,
+        "d": 3,
+        "s": 0
+      },
+      {
+        "name": "'BM' ψそうまψ",
+        "weaponId": 7030,
+        "paint": 193,
+        "ka": 0,
+        "d": 2,
+        "s": 0
+      },
+      {
+        "name": "△Dr. Lion",
+        "weaponId": 8001,
+        "paint": 192,
+        "ka": 0,
+        "d": 3,
+        "s": 1
+      }
+    ]
+  },
+  "options": {
+    "skipFields": [
+      "players.0.name",
+      "players.6.name"
+    ],
+    "notes": "1080p capture of the lobby's quick battle log while matchmaking (X Battle, the POV player on the losing side), opened minutes after a game whose results screen was never shown. timestamp read 2:01 PM: the AM marker read as PM, the recording time landed 12h off and the history screen became a duplicate match card instead of completing the game. players.0.name shows かめちゃん,★ (comma, ASCII or fullwidth unclear) and players.6.name's quote marks around BM may be curly; both skipped. Weapons from the prefilled read, matching the icons."
+  }
+}

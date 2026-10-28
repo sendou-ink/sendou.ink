@@ -74,7 +74,12 @@ function match(
 	};
 }
 
-function built(game: ScannerMatch, sources: DetectedEvent[] = []) {
+function built(
+	game: ScannerMatch,
+	sources: DetectedEvent[] = [
+		{ type: "Scoreboard", t: 300, confidence: 0.9, data: {} },
+	],
+) {
 	return { match: game, sources };
 }
 
@@ -153,6 +158,16 @@ test("the summary counts decided games, the record and the POV K/D", () => {
 	);
 	assert.deepEqual(summary, { games: 2, wins: 1, losses: 1, ka: 17, d: 11 });
 	assert.equal(kdRatio(summary)!.toFixed(2), "1.55");
+});
+
+test("the summary leaves out games only seen in the battle log", () => {
+	const summary = sessionSummary([
+		built(match({ result: "win", ka: 8, d: 2 })),
+		built(match({ result: "loss", ka: 4, d: 6 }), [
+			{ type: "ScoreboardBattleLog", t: 900, confidence: 0.9, data: {} },
+		]),
+	]);
+	assert.deepEqual(summary, { games: 1, wins: 1, losses: 0, ka: 8, d: 2 });
 });
 
 test("a match without a POV seat counts as a game but not a result", () => {

@@ -1,0 +1,25 @@
+import Mermaid from "../../components/Mermaid.astro";
+
+A tournament's LFG page (`/to/:id/looking`) is where players without a full team find one. While registration is open it is a queue of groups inviting each other, laid out like SendouQ's looking page, and accepting an invitation merges the two groups into one team. Once registration closes it turns into a list of subs that registered teams can pick up.
+
+A **group** is a `TournamentTeam` with `isLooking` set: either a **placeholder**, a team of one made for a player who joins the queue on their own and not counted as registered, or a registered team looking for more members. An **invitation** is a `TournamentLFGLike` from one group to another, and **accepting** one that was given to you merges the two groups, the result being a registered team. Once registration closes, **sub posts** are the only posts: players not on a team offering to sub. Players add their own until the tournament is finalized, unless the tournament's registration close time is set before its start, which leaves adding them to organizers. A sub post is a placeholder whose player **stays as sub** (`TournamentTeamMember.isStayAsSub`), so a solo player in the queue who turned that on becomes a sub post when registration closes, while the other placeholders stop being listed. The rules are listed under Behaviour below, each with the tests that establish it.
+
+## Lifecycle
+
+<Mermaid code={`stateDiagram-v2
+	[*] --> Placeholder: a player without a team joins the queue
+	[*] --> LookingTeam: a registered team looks for more members
+	Placeholder --> LookingTeam: an invitation accepted, merging two groups
+	LookingTeam --> LookingTeam: more groups merged in
+	LookingTeam --> Team: full, stops looking, or a bracket starts
+	Placeholder --> SubPost: registration closes and the player stays as sub
+	[*] --> SubPost: posted on the subs list
+	Placeholder --> [*]: stops looking, or joins a team another way
+	SubPost --> [*]: deleted, or the player joins a team
+	Team --> [*]`} />
+
+A group of two or more gets a chat room (`TOURNAMENT_TEAM`), lasting a week past the tournament's start. Registering or joining a team any other way (the register and join pages, an organizer adding the player, the public API) takes the player out of the queue first through `TournamentLFGRepository.leaveLfg`, and starting a bracket clears `isLooking` of every team.
+
+## Where to start reading
+
+The route (`routes/to.$id.looking.tsx`) renders one of two views depending on whether registration is open, the loader building the data of each (`lookingMode` and `subsMode`). Every mutation is an `_action` of the one action (`actions/to.$id.looking.server.ts`), the rules shared by the action and the UI are in `core/TournamentLFG.ts` and the queries in `TournamentLFGRepository.server.ts`. The old `/to/:id/subs` URL redirects here from the `tournament-subs` feature.

@@ -1,0 +1,30 @@
+.banner {
+	position: fixed;
+	top: calc(var(--layout-nav-height) + var(--s-2));
+	left: 50%;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	max-width: calc(100vw - var(--s-4));
+	padding: var(--s-1) var(--s-1) var(--s-1) var(--s-3);
+	border: var(--border-style-accent);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg-high);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	transform: translateX(-50%);
+}
+
+.icon {
+	width: var(--s-4);
+	flex-shrink: 0;
+	color: var(--color-accent);
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+}

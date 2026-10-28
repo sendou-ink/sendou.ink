@@ -32,7 +32,20 @@ import {
 	progressionFormField,
 	validateBracketProgressionFormValues,
 } from "./calendar-progression-form";
+import type { CalendarEventTag } from "./calendar-types";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
+import * as CalendarEvent from "./core/CalendarEvent";
+
+// the league tag is derived from the league setting, never picked by hand
+const PICKABLE_TAGS = CALENDAR_EVENT.TAGS.filter((tag) => tag !== "LEAGUE");
+
+/** The `tags` field as rendered for tournaments, their team size tag is derived from `minMembersPerTeam` instead. */
+export const tournamentTagsField = checkboxGroup({
+	label: "labels.tags",
+	items: tagItems(
+		PICKABLE_TAGS.filter((tag) => !CalendarEvent.isVersusTag(tag)),
+	),
+});
 
 /** Single date row of the {@link calendarNewBaseSchema} `date` array (calendar events). */
 const calendarEventDateField = datetime({
@@ -126,11 +139,7 @@ export const calendarNewBaseSchema = v.object({
 	}),
 	tags: checkboxGroup({
 		label: "labels.tags",
-		// derived from the league setting, never picked by hand
-		items: CALENDAR_EVENT.TAGS.filter((tag) => tag !== "LEAGUE").map((tag) => ({
-			value: tag,
-			label: `options.tag.${tag}` as const,
-		})),
+		items: tagItems(PICKABLE_TAGS),
 	}),
 	badges: badges({ label: "labels.badges", maxCount: 50 }),
 	trophyId: customField({ initialValue: null }, v.nullish(id)),
@@ -265,6 +274,13 @@ export const TOURNAMENT_FORM_STEPS: ReadonlyArray<
 		fields: ["badges", "trophyId"],
 	},
 ];
+
+function tagItems<T extends CalendarEventTag>(tags: Array<T>) {
+	return tags.map((tag) => ({
+		value: tag,
+		label: `options.tag.${tag}` as const,
+	}));
+}
 
 function calendarNewSyncRefine(
 	data: v.InferOutput<typeof calendarNewBaseSchema>,

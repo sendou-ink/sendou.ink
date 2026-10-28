@@ -93,78 +93,9 @@
 	height: 100%;
 }
 
-.panel {
-	position: fixed;
-	inset: auto var(--scrollbar-width, 0px) var(--mobile-nav-height) 0;
-	margin: 0;
-	padding: 0;
-	border: none;
-	width: 100%;
-	max-width: none;
-	max-height: none;
-	height: calc((100% - var(--mobile-nav-height)) * 0.85);
-	background: none;
-	color: var(--color-text);
-	overflow: hidden;
-	flex-direction: column;
-	outline: none;
-
-	/* a display on the class itself would show the closed panels too */
-	&:popover-open {
-		display: flex;
-	}
-
-	/* the box sits above the tab bar and clips, so the sliding content comes up from behind the bar */
-	& > .panelDialog {
-		background-color: var(--color-bg);
-		border-radius: var(--radius-box) var(--radius-box) 0 0;
-		animation: slide-up 200ms ease-out;
-	}
-
-	&::backdrop {
-		inset: 0;
-		bottom: var(--mobile-nav-height);
-		background-color: rgba(0, 0, 0, 0.25);
-		backdrop-filter: blur(10px);
-		animation: fade-in 200ms ease-out;
-	}
-}
-
-@keyframes slide-up {
-	from {
-		transform: translateY(100%);
-	}
-	to {
-		transform: translateY(0);
-	}
-}
-
-.panelHeader {
-	position: sticky;
-	top: 0;
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	padding-inline: var(--s-4);
-	background-color: var(--color-bg-high);
-	border-bottom: 1.5px solid var(--color-border);
-	z-index: 1;
-	flex-shrink: 0;
-	color: var(--color-text-high);
-	min-height: var(--layout-nav-height);
-}
-
 .panelTitle {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);
-}
-
-.panelContent {
-	flex: 1;
-	overflow-y: auto;
-	padding: var(--s-2);
-	display: flex;
-	flex-direction: column;
 }
 
 .menuOverlay {
@@ -216,24 +147,6 @@
 	align-items: center;
 	gap: var(--s-2);
 	margin-inline-start: auto;
-}
-
-.panelCloseButton {
-	display: grid;
-	place-items: center;
-	background: none;
-	border: none;
-	cursor: pointer;
-	color: var(--color-error);
-	padding: 0;
-	height: var(--field-size);
-	aspect-ratio: 1 / 1;
-	border-radius: var(--radius-field);
-	margin-inline-start: auto;
-
-	&:hover {
-		background-color: var(--color-bg-higher);
-	}
 }
 
 .panelIconContainer {

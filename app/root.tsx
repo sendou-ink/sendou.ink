@@ -6,7 +6,6 @@ import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import {
-	data,
 	Links,
 	Meta,
 	Outlet,
@@ -25,6 +24,7 @@ import {
 } from "react-router";
 import { Config } from "~/config";
 import type { CustomTheme } from "~/db/tables-json";
+import { devToolsServerHooks } from "~/features/dev-tools/dev-tools-server-hooks.server";
 import { resolveLayoutData } from "~/features/layout/core/layout.server";
 import { useDebounce } from "~/hooks/useDebounce";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
@@ -55,6 +55,7 @@ import {
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { timezoneMiddleware } from "./features/timezone/timezone-middleware.server";
+import { TranslationPreview } from "./features/translate/components/TranslationPreview";
 import { VoiceCallHost } from "./features/voice/components/VoiceCallHost";
 import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useHydrated } from "./hooks/useHydrated";
@@ -62,9 +63,10 @@ import {
 	ALWAYS_LOADED_NAMESPACES,
 	DEFAULT_LANGUAGE,
 } from "./modules/i18n/config";
+import { languageSearchParams } from "./modules/i18n/i18n-search-params";
 import {
+	getGameLanguage,
 	getLocale,
-	i18nCookie,
 	i18nMiddleware,
 } from "./modules/i18n/i18next.server";
 import { localePreloadUrls } from "./modules/i18n/locale-preload.server";
@@ -88,6 +90,7 @@ import "nprogress/nprogress.css";
 const PRELOAD_TRANSLATION_TIMEOUT_MS = 3000;
 
 export const middleware: Route.MiddlewareFunction[] = [
+	...(devToolsServerHooks ? [devToolsServerHooks.middleware] : []),
 	redirectsMiddleware,
 	requestContextMiddleware,
 	sessionIdMiddleware,
@@ -95,6 +98,14 @@ export const middleware: Route.MiddlewareFunction[] = [
 	i18nMiddleware,
 	timezoneMiddleware,
 ];
+
+const DevToolbar = import.meta.env.DEV
+	? React.lazy(() =>
+			import("./features/dev-tools/components/DevToolbar").then((module) => ({
+				default: module.DevToolbar,
+			})),
+		)
+	: null;
 
 // anchors the loading bar to the header (between the sidebars); at module scope so
 // even the very first navigation's NProgress.start doesn't render over the sidebar
@@ -119,8 +130,8 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const json = args.json as Record<string, unknown> | undefined;
 	if (json?.revalidateRoot === true) return true;
 
-	// biome-ignore lint/plugin: presence check only, before any route's definition has parsed the URL
-	if (args.nextUrl.searchParams.has("lng")) return true;
+	const { lng, gameLng } = languageSearchParams.parse(args.nextUrl);
+	if (lng || gameLng) return true;
 
 	return false;
 };
@@ -141,44 +152,39 @@ export type LoggedInUser = NonNullable<RootLoaderData["user"]>;
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const locale = getLocale();
+	const gameLanguage = getGameLanguage();
 	const themeSession = await getThemeSession(request);
 	const sidenavSession = await getSidenavSession(request);
 
 	const layoutData = await resolveLayoutData(user);
 
-	return data(
-		{
-			locale,
-			chatRoomList: user ? await resolveRoomList(user) : [],
-			i18nPreloadUrls: localePreloadUrls(locale),
-			theme: themeSession.getTheme(),
-			sidenavCollapsed: sidenavSession.getCollapsed(),
-			user: user
-				? {
-						username: user.username,
-						discordAvatar: user.discordAvatar,
-						discordId: user.discordId,
-						id: user.id,
-						customUrl: user.customUrl,
-						customAvatarUrl: user.customAvatarUrl,
-						inGameName: user.inGameName,
-						friendCode: user.friendCode,
-						preferences: user.preferences ?? {},
-						languages: user.languages ?? [],
-						plusTier: user.plusTier,
-						roles: user.roles,
-						createdAt: user.createdAt,
-						team: user.team,
-					}
-				: undefined,
-			customTheme: isSupporter(user) ? user?.customTheme : undefined,
-			devFaviconColors: devFaviconColors(request),
-			...layoutData,
-		},
-		{
-			headers: { "Set-Cookie": await i18nCookie.serialize(locale) },
-		},
-	);
+	return {
+		locale,
+		gameLanguage,
+		chatRoomList: user ? await resolveRoomList(user) : [],
+		i18nPreloadUrls: localePreloadUrls({ locale, gameLanguage }),
+		theme: themeSession.getTheme(),
+		sidenavCollapsed: sidenavSession.getCollapsed(),
+		user: user
+			? {
+					username: user.username,
+					id: user.id,
+					customUrl: user.customUrl,
+					avatar: user.avatar,
+					inGameName: user.inGameName,
+					friendCode: user.friendCode,
+					preferences: user.preferences ?? {},
+					languages: user.languages ?? [],
+					plusTier: user.plusTier,
+					roles: user.roles,
+					createdAt: user.createdAt,
+					team: user.team,
+				}
+			: undefined,
+		customTheme: isSupporter(user) ? user?.customTheme : undefined,
+		devFaviconColors: devFaviconColors(request),
+		...layoutData,
+	};
 };
 
 export const handle: SendouRouteHandle = {
@@ -195,9 +201,10 @@ function Document({
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
 	const locale = rootData?.locale ?? DEFAULT_LANGUAGE;
+	const gameLanguage = rootData?.gameLanguage ?? DEFAULT_LANGUAGE;
 	const customThemeStyle = useCustomThemeVars();
 
-	useChangeLanguage(locale);
+	useChangeLanguage({ locale, gameLanguage });
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
@@ -212,6 +219,7 @@ function Document({
 	return (
 		<html
 			lang={locale}
+			data-game-language={gameLanguage}
 			dir={i18n.dir()}
 			className={clsx(htmlThemeClass, "scrollbar")}
 			style={htmlStyle}
@@ -270,6 +278,8 @@ function Document({
 						<SearchParamsProvider>
 							<SendouToastRegion />
 							<UnsavedChangesGuard />
+							<TranslationPreview />
+							{DevToolbar ? <DevToolbarMount Toolbar={DevToolbar} /> : null}
 							<MyFuse data={rootData} />
 							<ChatProvider
 								user={rootData?.user}
@@ -368,18 +378,28 @@ function useScrollBeforeToast() {
 }
 
 function useLoadingIndicator() {
-	const transition = useNavigation();
+	const navigation = useNavigation();
+	const fetchers = useFetchers();
+
+	// submissions already show a pending state on their submit button
+	const isSubmissionFollowUp =
+		navigation.formMethod !== undefined ||
+		fetchers.some(
+			(fetcher) =>
+				fetcher.state === "loading" && fetcher.formMethod !== undefined,
+		);
+	const isLoading = navigation.state === "loading" && !isSubmissionFollowUp;
 
 	useDebounce(
 		() => {
-			if (transition.state === "loading") {
+			if (isLoading) {
 				NProgress.start();
-			} else if (transition.state === "idle") {
+			} else {
 				NProgress.done();
 			}
 		},
 		150,
-		[transition.state],
+		[isLoading],
 	);
 }
 
@@ -467,6 +487,18 @@ export function ErrorBoundary() {
 				<Catcher />
 			</Document>
 		</ThemeProvider>
+	);
+}
+
+function DevToolbarMount({ Toolbar }: { Toolbar: React.ComponentType }) {
+	const isHydrated = useHydrated();
+
+	if (!isHydrated) return null;
+
+	return (
+		<React.Suspense fallback={null}>
+			<Toolbar />
+		</React.Suspense>
 	);
 }
 

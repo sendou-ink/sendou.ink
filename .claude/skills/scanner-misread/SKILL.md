@@ -103,7 +103,7 @@ same trait.
 
 ## 5. Fix the scanner
 
-- Read `app/features/scanner/README.md` before touching detector or
+- Read `docs/site/src/content/feature-readmes/scanner.mdx` before touching detector or
   recognition code, including its section on the detector involved.
 - Baseline first: `pnpm test:scanner` (green apart from the new cases; note any
   failure that was already there) and

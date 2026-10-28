@@ -11,6 +11,11 @@
 	background-color: color-mix(in oklch, var(--color-warning) 8%, transparent);
 	gap: var(--s-1) var(--s-3);
 	margin: 0 auto;
+
+	&.mini {
+		padding-left: var(--s-2);
+		gap: var(--s-1) var(--s-2);
+	}
 }
 
 .header {
@@ -47,6 +52,10 @@
 	display: grid;
 	flex-shrink: 0;
 	width: 2.5rem;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
 	min-height: calc(var(--field-size) - 2px);
 	border-radius: calc(var(--radius-field) - 1px);
 	place-items: center;

@@ -1,0 +1,134 @@
+---
+import path from "node:path";
+import { Badge } from "@astrojs/starlight/components";
+import type { FeatureDoc } from "../../../../../scripts/living-docs/document.ts";
+import type {
+	SpecDoc,
+	TestDoc,
+} from "../../../../../scripts/living-docs/e2e.ts";
+import { highlight } from "../../../../../scripts/living-docs/highlight.ts";
+import { testAnchor } from "../../../../../scripts/living-docs/links.ts";
+import {
+	markdown,
+	screenshotSrc,
+	storyboardOf,
+	viewHref,
+} from "../../living/format.ts";
+import FileLink from "./FileLink.astro";
+import Screenshot from "./Screenshot.astro";
+import Segment from "./Segment.astro";
+
+interface Props {
+	feature: FeatureDoc;
+	spec: SpecDoc;
+	groupName: string | null;
+	test: TestDoc;
+	headingLevel: number;
+}
+
+const { feature, spec, groupName, test, headingLevel } = Astro.props;
+const Heading = `h${headingLevel}` as "h3";
+const id = testAnchor(spec.path, groupName, test);
+const renderedRoutes = feature.renderedRoutes.get(id) ?? [];
+const storyboard = storyboardOf(test).filter((shot) =>
+	screenshotSrc(feature, spec.path, shot.line),
+);
+const titledChapters = test.chapters.filter((chapter) => chapter.title);
+---
+
+<article class="test">
+	<header class="test-head">
+		<Heading id={id}>
+			{
+				test.modifier && test.modifier !== "hook" ? (
+					<Badge text={test.modifier} size="small" />
+				) : null
+			}
+			{test.name}
+		</Heading>
+		<div class="test-meta">
+			{
+				test.actors.map((actor) => (
+					<span class="user" style={`--actor: ${actor.color}`}>
+						{actor.label}
+					</span>
+				))
+			}
+			<FileLink
+				file={spec.path}
+				line={test.line}
+				label={`${path.basename(spec.path)}:${test.line}`}
+			/>
+		</div>
+	</header>
+	{test.doc ? <div class="test-doc" set:html={markdown(test.doc)} /> : null}
+	{
+		renderedRoutes.length > 0 ? (
+			<p class="test-routes">
+				Renders
+				{renderedRoutes.map((route) =>
+					route.featureId ? (
+						<a
+							class="route-chip"
+							href={viewHref(route.featureId, "overview", route.anchor)}
+						>
+							{route.path}
+						</a>
+					) : (
+						<span class="route-chip">{route.path}</span>
+					),
+				)}
+			</p>
+		) : null
+	}
+	{
+		storyboard.length > 0 ? (
+			<div class="storyboard scrollbar">
+				{storyboard.map((shot) => (
+					<Screenshot
+						feature={feature}
+						spec={spec}
+						line={shot.line}
+						label={shot.plainLabel}
+						variant="storyboard-frame"
+					/>
+				))}
+			</div>
+		) : null
+	}
+	<div class="chapters">
+		{
+			test.chapters.map((chapter) => {
+				const segments = (
+					<div class="segments">
+						{chapter.segments.map((segment) => (
+							<Segment feature={feature} spec={spec} segment={segment} />
+						))}
+					</div>
+				);
+				if (!chapter.title) return segments;
+
+				return (
+					<section class="chapter">
+						<p class="chapter-title">
+							<span class="chapter-number">{titledChapters.indexOf(chapter) + 1}</span>
+							<span class="chapter-text">{chapter.title}</span>
+							<Screenshot
+								feature={feature}
+								spec={spec}
+								line={chapter.line}
+								label={chapter.title}
+								variant="divider-shot"
+							/>
+						</p>
+						{segments}
+					</section>
+				);
+			})
+		}
+	</div>
+	<details class="source" data-pagefind-ignore>
+		<summary>Source</summary>
+		<pre class="code scrollbar" set:html={highlight(test.source)} />
+	</details>
+</article>

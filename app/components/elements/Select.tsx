@@ -3,7 +3,6 @@ import { ChevronsUpDown, Search, X } from "lucide-react";
 import * as React from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useLatestRef } from "~/hooks/useLatestRef";
@@ -101,8 +100,6 @@ export interface SendouSelectProps<T extends object> {
 	onSearchInputChange?: (value: string) => void;
 	/** Custom search matcher, replacing the default textValue "contains" filter. */
 	filter?: (textValue: string, searchValue: string) => boolean;
-	errorText?: string;
-	bottomText?: string;
 	onBlur?: () => void;
 	triggerRef?: React.Ref<HTMLButtonElement>;
 	items?: Iterable<T>;
@@ -151,8 +148,6 @@ export function SendouSelect<T extends object>({
 	searchInputValue,
 	onSearchInputChange,
 	filter,
-	errorText,
-	bottomText,
 	onBlur,
 	triggerRef,
 	items,
@@ -549,7 +544,6 @@ export function SendouSelect<T extends object>({
 			{name ? (
 				<input type="hidden" name={name} value={currentKey ?? ""} />
 			) : null}
-			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: keydown steers the listbox inside */}
 			<div
 				ref={popoverRef}

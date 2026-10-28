@@ -1,0 +1,958 @@
+---
+title: "Forms"
+description: "The schema-based SendouForm system and defining actions."
+---
+
+This document describes the schema-based form system using `SendouForm`. Forms are defined as valibot schemas that generate both the UI and server-side validation.
+
+## Core Concepts
+
+- Forms are defined as valibot schemas using field builders from `~/form/fields`
+- The same schema validates both client-side and server-side
+- All translations go in `locales/en/forms.json`
+- `FormField` renders the correct UI based on schema metadata
+
+## Schema Definition
+
+### Basic Schema Example
+
+```ts
+export const myFormSchema = v.object({
+  name: textField({
+    label: "labels.name",
+    maxLength: 100,
+  }),
+  bio: textAreaOptional({
+    label: "labels.bio",
+    bottomText: "bottomTexts.bioHelp",
+    maxLength: 500,
+  }),
+  isPublic: toggle({
+    label: "labels.isPublic",
+  }),
+});
+```
+
+### Available Field Builders
+
+| Builder | Description | Required Props |
+|---------|-------------|----------------|
+| `textField` | Required text input | `label`, `maxLength` |
+| `textFieldOptional` | Optional text input | `maxLength` |
+| `numberField` | Required whole number input, optional `min` / `max` | - |
+| `numberFieldOptional` | Optional number input | - |
+| `inGameName` | Optional in-game name input (normalized and validated) | - |
+| `textArea` | Required multiline text | `label`, `maxLength` |
+| `textAreaOptional` | Optional multiline text | `maxLength` |
+| `toggle` | Boolean switch | `label` |
+| `select` | Required dropdown | `label`, `items` |
+| `selectOptional` | Optional dropdown (clearable) | `label`, `items` |
+| `selectDynamic` | Required dropdown with runtime options | `label` |
+| `selectDynamicOptional` | Dropdown with runtime options | `label` |
+| `radioGroup` | Radio button group | `label`, `items` |
+| `radioGroupDynamic` | Radio button group with runtime options | `label` |
+| `checkboxGroup` | Multiple selection checkboxes | `label`, `items` |
+| `checkboxGroupDynamic` | Checkboxes with runtime options | `label` |
+| `datetime` | Required date/time picker | `label` |
+| `datetimeOptional` | Optional date/time picker | `label` |
+| `dayMonthYear` | Date picker (day only) | `label` |
+| `dualSelectOptional` | Two linked dropdowns | `fields` |
+| `timeRangeOptional` | Start/end time range | `label` |
+| `weaponPool` | Weapon selection pool | `label`, `maxCount` |
+| `stageSelect` | Stage dropdown | `label` |
+| `mapPoolOptional` | Map pool picker (serialized `MapPool`), `options` takes `quickFill` presets, `modes` and `sendouQFilter` | - |
+| `weaponSelect` | Required weapon dropdown | `label` |
+| `weaponSelectOptional` | Weapon dropdown | `label` |
+| `subWeaponSelect` / `specialWeaponSelect` | Sub / special weapon dropdown | `label` |
+| `userSearch` | User search autocomplete | `label` |
+| `userSearchOptional` | Optional user search | `label` |
+| `tournamentSearchOptional` | Optional tournament search | `label` |
+| `teamSearchOptional` | Optional team search | `label` |
+| `image` | Small image upload (avatar / logo / banner) | `label` |
+| `badges` | Badge selection | `label` |
+| `trophies` | Trophy selection | `label` |
+| `array` | Repeatable field | `field`, `max` |
+| `fieldset` | Nested object fields | `fields` |
+| `stringConstant` | Hidden string value | value |
+| `idConstant` | Hidden numeric ID | value (optional) |
+| `idConstantOptional` | Optional hidden numeric ID | value (optional) |
+| `hidden` | Hidden value of any schema | schema, `initialValue` (optional) |
+| `customField` | Custom render | `initialValue`, schema |
+
+### Select Items
+
+Select fields require `items` array:
+
+```ts
+const typeField = select({
+  label: "labels.type",
+  items: [
+    { label: "options.type.free", value: "FREE" },
+    { label: "options.type.paid", value: "PAID" },
+  ],
+});
+```
+
+For dynamic labels (e.g., numbers or translation not needed), use the functional form:
+
+```ts
+items: [
+  { label: () => "1v1", value: "1" },
+  { label: () => "2v2", value: "2" },
+]
+```
+
+### Action Fields
+
+Define action discriminators with `stringConstant`:
+
+```ts
+export const myFormSchema = v.object({
+  _action: stringConstant("CREATE_ITEM"),
+  name: textField({ label: "labels.name", maxLength: 100 }),
+});
+```
+
+### Constants and Hidden Fields
+
+Use `idConstant` for IDs that need default values:
+
+```ts
+export const editFormSchema = v.object({
+  itemId: idConstant(), // Requires defaultValues
+  name: textField({ label: "labels.name", maxLength: 100 }),
+});
+```
+
+When `idConstant()` is called without a value, the schema requires `defaultValues` prop in `SendouForm`.
+
+### Text Field Validation
+
+```ts
+textField({
+  label: "labels.url",
+  maxLength: 200,
+  validate: "url", // Built-in URL validation
+})
+
+textField({
+  label: "labels.custom",
+  maxLength: 100,
+  validate: {
+    func: (val) => val.startsWith("https://"),
+    message: "Must start with https://",
+  },
+})
+
+textField({
+  label: "labels.pattern",
+  maxLength: 10,
+  regExp: {
+    pattern: /^\d{1,2}:\d{2}$/,
+    message: "Invalid format",
+  },
+})
+```
+
+### DateTime Validation
+
+```ts
+datetime({
+  label: "labels.date",
+  min: () => new Date(),
+  max: () => add(new Date(), { days: 30 }),
+  minMessage: "errors.dateInPast",
+  maxMessage: "errors.dateTooFarInFuture",
+})
+```
+
+### Dual Select
+
+```ts
+dualSelectOptional({
+  fields: [
+    {
+      label: "labels.maxDiv",
+      items: DIVS.map((d) => ({ label: () => d, value: d })),
+    },
+    {
+      label: "labels.minDiv",
+      items: DIVS.map((d) => ({ label: () => d, value: d })),
+    },
+  ],
+  validate: {
+    func: ([max, min]) => (max && !min) || (!max && min) ? false : true,
+    message: "errors.bothOrNeither",
+  },
+})
+```
+
+### Arrays and Fieldsets
+
+```ts
+const itemSchema = v.object({
+  name: textField({ label: "labels.itemName", maxLength: 50 }),
+  quantity: numberFieldOptional({ label: "labels.quantity" }),
+});
+
+export const formSchema = v.object({
+  items: array({
+    label: "labels.items",
+    min: 1,
+    max: 10,
+    field: fieldset({ fields: itemSchema }),
+  }),
+});
+```
+
+### Union for Shared Field Definitions
+
+Place field inside `v.union([])` to reuse across multiple schemas:
+
+```ts
+const sharedNameField = textField({
+  label: "labels.name",
+  maxLength: 100,
+});
+
+const createSchema = v.object({
+  _action: stringConstant("CREATE"),
+  name: sharedNameField,
+});
+
+const editSchema = v.object({
+  _action: stringConstant("EDIT"),
+  id: idConstant(),
+  name: sharedNameField,
+});
+
+export const actionSchema = v.union([createSchema, editSchema]);
+```
+
+## Component Usage
+
+### Basic Form
+
+```tsx
+import { SendouForm } from "~/form/SendouForm";
+import { myFormSchema } from "./my-schemas";
+
+function MyForm() {
+  return (
+    <SendouForm schema={myFormSchema} submitButtonText="Save">
+      {({ FormField }) => (
+        <>
+          <FormField name="name" />
+          <FormField name="bio" />
+          <FormField name="isPublic" />
+        </>
+      )}
+    </SendouForm>
+  );
+}
+```
+
+### With Default Values
+
+Typically default values are loaded via a loader function
+
+```tsx
+const data = useLoaderData<typeof loader>();
+
+<SendouForm
+  schema={editFormSchema}
+  defaultValues={{
+    itemId: data.item.id,
+    name: data.item.name,
+  }}
+>
+  {({ FormField }) => (
+    <FormField name="name" />
+  )}
+</SendouForm>
+```
+
+### Form Modes
+
+The `mode` prop controls how submitting works:
+
+- `"submit"` (default): the user submits via the submit button. Values go to the server, or to `onApply` when provided.
+- `"autoSubmit"`: no submit button; every change that passes validation is sent to the server.
+- `"client"`: no submit button and no `<form>` element; every change is passed to `onApply` (required in this mode) and field errors are computed already on mount.
+
+### Auto-Submit Forms
+
+```tsx
+<SendouForm schema={filterSchema} mode="autoSubmit">
+  {({ FormField }) => (
+    <FormField name="sortBy" />
+  )}
+</SendouForm>
+```
+
+### Client-Side Only (onApply)
+
+Submitting hands the validated values to `onApply` instead of the server:
+
+```tsx
+<SendouForm
+  schema={filtersSchema}
+  defaultValues={currentFilters}
+  onApply={(values) => {
+    applyFilters(values);
+    closeDialog();
+  }}
+>
+  {({ FormField }) => (
+    <FormField name="category" />
+  )}
+</SendouForm>
+```
+
+For applying every change immediately (no submit button), use `mode="client"` with `onApply`.
+
+### Multi-Step Forms
+
+Long forms can be split into steps shown one at a time. Define the steps next to the schema, each naming the top-level fields it renders:
+
+```ts
+export const NEW_THING_STEPS: ReadonlyArray<
+  FormStepDefinition<keyof typeof newThingSchema.entries>
+> = [
+  { name: "basics", label: "steps.newThing.basics", fields: ["name", "description"] },
+  { name: "settings", label: "steps.newThing.settings", fields: ["isPublic"] },
+];
+```
+
+Then pass them to `SendouForm` and wrap each step's fields in a `<FormStep>` of the same name:
+
+```tsx
+<SendouForm schema={newThingSchema} steps={NEW_THING_STEPS}>
+  <FormStep name="basics">
+    <FormField name="name" />
+    <FormField name="description" />
+  </FormStep>
+  <FormStep name="settings">
+    <FormField name="isPublic" />
+  </FormStep>
+</SendouForm>
+```
+
+- A stepper on top and Back/Next buttons at the bottom are rendered automatically. The submit button shows once the user has reached the last step, or on every step with `submitOnEveryStep` (e.g. when editing something already valid). Pressing enter in a field moves to the next step.
+- The current step is the `step` search param (`app/form/form-search-params.ts`), each step change being a navigation, so browser back goes to the previous step and a refresh keeps the step. The route needs a `shouldRevalidate` that ignores it (any definition's `shouldRevalidate` does, or `skipSearchOnlyRevalidation` for a loader reading no search params) or every step change reruns its loader.
+- Moving forward (Next or a later step in the stepper) validates the fields of every step passed and stops at the first one with errors. Moving back never validates.
+- Errors are only shown for steps the user has tried to leave, so a step isn't full of errors when first opened. Errors of fields no step lists only show after submitting.
+- Steps stay mounted while hidden, so local state of their fields survives switching steps.
+- When submitting fails, client side or on the server, the form switches to the step of the first error before focusing it.
+- `useFormSteps()` gives the steps, the current one and `goToStep(name)`, e.g. for "Edit" links of a review step.
+
+Cross-field rules (`superRefine`) should be part of the schema passed to the form for the steps to catch them before submitting.
+
+### Revealing Nested Fields of a Custom Field
+
+A custom field that shows only part of its nested fields at a time (e.g. one selected item of a list) registers a revealer, which the form calls with the field name of an error before focusing it:
+
+```tsx
+useFieldRevealer((fieldName) => {
+  const match = fieldName.match(/^brackets\[(\d+)\]/);
+  if (match) setSelectedIdx(Number(match[1]));
+});
+```
+
+### Dynamic Select Options
+
+For `selectDynamic` / `selectDynamicOptional` (and the other `*Dynamic` builders), pass options via the `options` prop:
+
+```tsx
+const options = tournaments.map((t) => ({
+  value: String(t.id),
+  label: t.name,
+}));
+
+<FormField name="tournamentId" options={options} />
+```
+
+### Badges Field
+
+```tsx
+const badgeOptions = badges.map((b) => ({
+  id: b.id,
+  displayName: b.displayName,
+  code: b.code,
+  hue: b.hue,
+}));
+
+<FormField name="displayBadges" options={badgeOptions} />
+```
+
+## Image Field
+
+`image()` is a first-class field for the small "avatar / logo / banner" class of images
+(team pfp, team banner, org pfp, calendar/tournament logo). It reuses the existing S3 upload
+pipeline and the `UnvalidatedUserSubmittedImage` admin-validation / supporter auto-validation
+flow, while keeping `SendouForm`'s single-submit `application/json` model unchanged.
+
+:::note
+**Art upload is out of scope.** Art (`/art/new`) preserves aspect ratio, keeps the original
+format, produces two derived assets (full + thumbnail) and inserts its image row together with
+the `Art` row in `ArtRepository.insert` rather than resolving it to an id up front. It therefore uses a `customField` with its own
+renderer (`ArtImageFormField`) and its own server resolver (`uploadArtImage`), while still
+submitting as base64 within `SendouForm`'s single JSON submit. Any future "aspect-preserving /
+multi-derivative" upload should likewise stay off this field and follow that pattern.
+:::
+
+### Schema
+
+```ts
+import { image } from "~/form/fields";
+
+export const editTeamSchema = v.object({
+  teamId: idConstant(),
+  logo: image({ label: "labels.logo" }),                                 // logo (default)
+  banner: image({ label: "labels.banner", dimensions: "thick-banner" }),
+  cover: image({ label: "labels.cover", dimensions: { width: 800, height: 300 } }),
+});
+```
+
+`dimensions` is optional, defaulting to `"logo"`. It accepts the `"logo"` (400x400) / `"thick-banner"`
+(1000x500) presets or explicit `{ width, height }` numbers. A picked file opens a crop dialog and the
+crop is drawn at exactly those dimensions.
+
+`autoValidate: true` skips the moderator queue for the uploaded image (e.g. trusted org logos).
+
+### Value model
+
+The field value is a small JSON-serializable union (`ImageFieldValue` from `~/form/image-field`):
+
+```ts
+type ImageFieldValue =
+  | null                                              // none / removed
+  | { type: "EXISTING"; imgId: number; url: string }  // loaded, unchanged (url = preview)
+  | { type: "NEW"; dataUrl: string }                  // newly picked, base64 webp (png fallback)
+```
+
+- `initialValue` is `null` (the create case).
+- Edit forms pass an `EXISTING` value via `SendouForm`'s `defaultValues`, built with
+  `existingImage(imgId, url)` from `~/form/image-field` (`url` is only for preview).
+- The renderer produces a `NEW` value (cropped client-side and encoded to webp, or png where the
+  browser can't encode webp, as a base64 data URL) **only** when
+  the user picks a file, and `null` when they remove — so removal is owned by the field, with no
+  separate delete action needed. An unchanged `EXISTING` value never re-sends image bytes.
+
+### Server helper
+
+`defineAction` hands the handler a `resolveImages` function. It resolves every `image()` field in
+the body to a stored image id (`number | null`), so the action just writes each id to its own FK
+column. Resolving uploads, so call it only after the authorization checks:
+
+```ts
+export const action = defineAction(
+  { body: editTeamSchema },
+  async ({ resolveImages }) => {
+    const team = /* ... */;
+    requirePermission(team, "EDIT");
+
+    // data.logo / data.banner are now `number | null`
+    const data = await resolveImages({
+      isCurrentImgId: (imgId) => imgId === team.avatarImgId,
+    });
+
+    await TeamRepository.update({
+      id: team.id,
+      avatarImgId: data.logo,
+      bannerImgId: data.banner,
+    });
+  },
+);
+```
+
+A kept (`EXISTING`) image must be the user's own upload unless `isCurrentImgId` says the edited
+entity already holds it.
+
+Per field it resolves `null → null`, `EXISTING → imgId` (no bytes re-sent), `NEW → upload + insert
+→ new id`. For a `NEW` value it decodes the base64, validates the bytes are a real webp or png
+(magic-byte check), uploads via `uploadStreamToS3`, and inserts an unvalidated image row
+(auto-validated for supporters or with `autoValidate`). The schema may be a single object or an `_action`-discriminated union. (The underlying
+per-value helper `imageFieldValueToImgId` from `~/features/img-upload/image-field.server` can still
+be called directly if needed.)
+
+### E2E
+
+```ts
+await form.setImage("logo", "e2e/fixtures/test-image.png");
+```
+
+## Custom Fields
+
+Use `customField` for complex UI that doesn't fit standard field types:
+
+### Schema
+
+```ts
+const povSchema = v.union([
+  v.object({ type: v.literal("USER"), userId: v.optional(id) }),
+  v.object({ type: v.literal("NAME"), name: v.pipe(v.string(), v.maxLength(100)) }),
+]);
+
+export const formSchema = v.object({
+  pov: customField(
+    { initialValue: { type: "USER" as const } },
+    v.optional(povSchema)
+  ),
+});
+```
+
+### Component
+
+```tsx
+<FormField name="pov">
+  {({ value, onChange, error }) => (
+    <MyCustomPovSelector
+      value={value}
+      onChange={onChange}
+      error={error}
+    />
+  )}
+</FormField>
+```
+
+### Custom Field Props
+
+```ts
+type CustomFieldRenderProps<TValue = unknown> = {
+  name: string;
+  error: string | undefined;
+  value: TValue;
+  onChange: (value: TValue) => void;
+  disabled?: boolean;
+};
+```
+
+## Array Field with Custom Items
+
+A render function child works for arrays of objects (`field: fieldset(...)`):
+
+```tsx
+<FormField name="matches">
+  {({ index, itemName, values, setItemField, canRemove, remove }) => (
+    <div>
+      <FormField name={`${itemName}.startsAt`} />
+      <FormField name={`${itemName}.mode`} />
+
+      {/* Custom element within array item */}
+      <MyCustomWeaponSelect
+        value={values.weapon}
+        onChange={(v) => setItemField("weapon", v)}
+      />
+
+      {canRemove ? (
+        <button onClick={remove}>Remove</button>
+      ) : null}
+    </div>
+  )}
+</FormField>
+```
+
+## Server-Side Validation
+
+### Basic Action Handler
+
+Actions are defined with `defineAction`, which parses the route params and the body before the
+handler runs:
+
+```ts
+import { redirect } from "react-router";
+import { defineAction } from "~/form/define-action.server";
+import { idObject } from "~/utils/schema";
+import { myFormSchema } from "./my-schemas";
+
+export const action = defineAction(
+  { params: idObject, body: myFormSchema },
+  async ({ params, body }) => {
+    // params and body are fully typed based on their schemas
+    await doSomething(params.id, body);
+    return redirect("/success");
+  },
+);
+```
+
+- `params` failing its schema throws a 404. Without a `params` schema the handler gets the raw params.
+- `body` failing its schema returns `{ fieldErrors }` when the submitter renders them, otherwise
+  it throws an error toast redirect. `SendouForm` marks its submissions with
+  `RENDERS_FIELD_ERRORS_KEY` (`~/form/utils`), so its fields show the errors, while e.g. an
+  `<ActionButton>` gets a toast. A custom submitter that renders `fieldErrors` sets the marker
+  itself.
+- Endpoints called with a plain `fetch()` or by external API clients can't show a toast, they pass
+  `onInvalidBody: "badRequest"` to answer an invalid body with a bare 400 instead.
+- A body schema that depends on the request (e.g. the tournament) is given as a function of the parsed
+  params: `body: async ({ params }) => schemaFor(params.id)`.
+- Bodies over 8 MB are refused with a 413; a form that legitimately submits more passes `maxBodyBytes`.
+- Both are optional, e.g. `defineAction({ params: teamParamsSchema }, ...)` for an action without a body.
+  With nothing to parse, the handler is the only argument: `defineAction(async ({ request }) => ...)`.
+  The body is read as form data by `Content-Type`, otherwise as JSON (an empty body reads as an empty object).
+
+Every exported action (`action`, `logOutAction`, ...) is a `defineAction(...)` and never reads the
+request body itself, enforced by the `no-raw-actions` Biome plugin.
+
+### Server-Only Schema Pattern
+
+When you need async validation (database checks, authorization), create a separate server schema file that extends the base schema.
+
+**Base schema (`feature-schemas.ts`)** - used by both client and server:
+
+```ts
+import * as v from "valibot";
+import { textField, idConstantOptional } from "~/form/fields";
+import { superRefine } from "~/utils/schema";
+
+// Shared sync validation that can be extracted for reuse
+function validateGearAllOrNone(data: {
+  head: number | null;
+  clothes: number | null;
+  shoes: number | null;
+}) {
+  const gearFilled = [data.head, data.clothes, data.shoes].filter(
+    (g) => g !== null,
+  );
+  return gearFilled.length === 0 || gearFilled.length === 3;
+}
+
+// Export refine config for reuse in server schema
+export const gearAllOrNoneRefine = {
+  fn: validateGearAllOrNone,
+  message: "forms:errors.gearAllOrNone",
+  path: ["head"],
+};
+
+// Base schema with form field builders (for UI generation)
+export const newBuildBaseSchema = v.object({
+  buildToEditId: idConstantOptional(),
+  title: textField({ label: "labels.buildTitle", maxLength: 50 }),
+  // ... other fields
+});
+
+// Client schema with sync refinements only
+export const newBuildSchema = v.pipe(
+  newBuildBaseSchema,
+  superRefine((data, ctx) => {
+    if (!gearAllOrNoneRefine.fn(data)) {
+      ctx.addIssue({
+        message: gearAllOrNoneRefine.message,
+        path: gearAllOrNoneRefine.path,
+      });
+    }
+  }),
+);
+```
+
+**Server schema (`feature-schemas.server.ts`)** - adds async validation:
+
+```ts
+import * as v from "valibot";
+import { requireUser } from "~/features/auth/core/user.server";
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import { superRefine, superRefineAsync } from "~/utils/schema";
+import { gearAllOrNoneRefine, newBuildBaseSchema } from "./feature-schemas";
+
+export const newBuildSchemaServer = v.pipeAsync(
+  newBuildBaseSchema,
+  // Reuse sync refinements from base
+  superRefine((data, ctx) => {
+    if (gearAllOrNoneRefine.fn(data)) return;
+
+    ctx.addIssue({
+      message: gearAllOrNoneRefine.message,
+      path: gearAllOrNoneRefine.path,
+    });
+  }),
+  // Add async server-only validation
+  superRefineAsync(async (data, ctx) => {
+    if (!data.buildToEditId) return;
+
+    const user = requireUser();
+    const ownerId = await BuildRepository.findOwnerIdById(data.buildToEditId);
+    if (ownerId === user.id) return;
+
+    ctx.addIssue({
+      message: "Not a build you own",
+      path: ["buildToEditId"],
+    });
+  }),
+);
+```
+
+**Action using server schema:**
+
+```ts
+import { defineAction } from "~/form/define-action.server";
+import { newBuildSchemaServer } from "./feature-schemas.server";
+
+export const action = defineAction(
+  { body: newBuildSchemaServer },
+  async ({ body }) => {
+    // ...
+  },
+);
+```
+
+### Uniqueness Validation
+
+Check for duplicates in the database:
+
+```ts
+// feature-schemas.server.ts
+import * as v from "valibot";
+import { mySlugify } from "~/utils/urls";
+import { createTeamSchema } from "./feature-schemas";
+import * as TeamRepository from "./TeamRepository.server";
+
+export const createTeamSchemaServer = v.objectAsync({
+  ...createTeamSchema.entries,
+  name: v.pipeAsync(
+    createTeamSchema.entries.name,
+    v.checkAsync(async (name) => {
+      const existingTeam = await TeamRepository.findByCustomUrl(
+        mySlugify(name),
+      );
+      return !existingTeam;
+    }, "forms:errors.duplicateName"),
+  ),
+});
+```
+
+### Cross-Field Validation with superRefine
+
+For complex validation involving multiple fields:
+
+```ts
+export const scrimsNewFormSchema = v.pipe(
+  v.object({
+    at: datetime({ label: "labels.start" }),
+    maps: select({ label: "labels.maps", items: mapsItems }),
+    mapsTournamentId: customField({ initialValue: null }, v.nullable(id)),
+  }),
+  superRefine((data, ctx) => {
+    if (data.maps === "TOURNAMENT" && !data.mapsTournamentId) {
+      ctx.addIssue({
+        path: ["mapsTournamentId"],
+        message: "errors.tournamentMustBeSelected",
+      });
+    }
+
+    if (data.maps !== "TOURNAMENT" && data.mapsTournamentId) {
+      ctx.addIssue({
+        path: ["mapsTournamentId"],
+        message: "errors.tournamentOnlyWhenMapsIsTournament",
+      });
+    }
+  }),
+);
+```
+
+## Translations
+
+All labels and text go in `locales/en/forms.json`:
+
+```json
+{
+  "labels.name": "Name",
+  "labels.bio": "Bio",
+  "bottomTexts.bioHelp": "Write a short description",
+  "errors.required": "This field is required",
+  "errors.customError": "Custom error message",
+  "options.type.free": "Free",
+  "options.type.paid": "Paid"
+}
+```
+
+NOTE: before adding a new one, verify one does not already exist.
+
+### Translation Key Conventions
+
+- Labels: `labels.fieldName`
+- Bottom text: `bottomTexts.fieldName`
+- Errors: `errors.errorKey`
+- Placeholders: `placeholders.fieldName`
+- Select options: `options.fieldName.value`
+- Mode names: `modes.SZ`, `modes.TC`, etc.
+- Step labels of multi-step forms: `steps.formName.stepName`
+
+Run `pnpm run i18n:sync` after removing or renaming English keys to sync the other language files.
+
+## E2E Testing
+
+Use `createFormHelpers` for type-safe form interactions:
+
+```ts
+import { createFormHelpers } from "./helpers/playwright-form";
+import { myFormSchema } from "~/features/my/my-schemas";
+
+test("fills and submits form", async ({ page }) => {
+  const form = createFormHelpers(page, myFormSchema);
+
+  await form.fill("name", "Test Name");
+  await form.fill("bio", "Test bio text");
+  await form.check("isPublic");
+  await form.select("type", "PAID");
+  await form.setDateTime("date", new Date(2024, 5, 15, 14, 30));
+  await form.submit();
+});
+```
+
+### Available Helper Methods
+
+| Method | Usage |
+|--------|-------|
+| `fill(name, value)` | Fill text input |
+| `check(name)` | Check a toggle/checkbox |
+| `uncheck(name)` | Uncheck a toggle/checkbox |
+| `select(name, optionValue)` | Select dropdown option by value |
+| `checkItems(name, values)` | Check specific checkbox group items |
+| `selectUser(name, userName)` | Search and select user |
+| `selectWeapons(name, weaponNames)` | Select weapons in weapon pool |
+| `setDateTime(name, date)` | Set datetime picker |
+| `setDate(name, date)` | Set date picker (`dayMonthYear`) |
+| `setImage(name, filePath)` | Upload a file into an image field and apply the crop dialog |
+| `submit()` | Click submit button |
+| `getLabel(name)` | Get translated label for field |
+| `getItemLabel(name, value)` | Get translated label for select item |
+
+### Custom Fields in Tests
+
+For custom fields without standard form helpers, use Playwright directly:
+
+```ts
+// Custom field interactions
+await page.getByLabel("Player (Pov)").click();
+await page.getByTestId("user-search-input").fill("Sendou");
+
+// Stage/weapon selects with test-id
+await selectStage({ page, name: "Museum d'Alfonsino" });
+await selectWeapon({ page, name: "Tenta Brella", testId: "match-0-weapon" });
+```
+
+### Test Helpers from Playwright Utils
+
+```ts
+import {
+  navigate,
+  submit,
+  selectStage,
+  selectWeapon,
+  selectUser,
+} from "./helpers/playwright";
+```
+
+## Complete Example
+
+### Schema (`feature-schemas.ts`)
+
+```ts
+import * as v from "valibot";
+import {
+  textField,
+  textAreaOptional,
+  select,
+  toggle,
+  stringConstant,
+} from "~/form/fields";
+
+export const createItemSchema = v.object({
+  _action: stringConstant("CREATE"),
+  name: textField({
+    label: "labels.itemName",
+    maxLength: 100,
+  }),
+  description: textAreaOptional({
+    label: "labels.description",
+    bottomText: "bottomTexts.descriptionHelp",
+    maxLength: 500,
+  }),
+  category: select({
+    label: "labels.category",
+    items: [
+      { label: "options.category.general", value: "GENERAL" },
+      { label: "options.category.special", value: "SPECIAL" },
+    ],
+  }),
+  isActive: toggle({
+    label: "labels.isActive",
+  }),
+});
+```
+
+### Route Component (`route.tsx`)
+
+```tsx
+import { SendouForm } from "~/form/SendouForm";
+import { createItemSchema } from "./feature-schemas";
+
+export default function NewItemPage() {
+  return (
+    <SendouForm schema={createItemSchema}>
+      {({ FormField }) => (
+        <>
+          <FormField name="name" />
+          <FormField name="description" />
+          <FormField name="category" />
+          <FormField name="isActive" />
+        </>
+      )}
+    </SendouForm>
+  );
+}
+```
+
+### Action (`actions/route.server.ts`)
+
+```ts
+import { redirect } from "react-router";
+import { defineAction } from "~/form/define-action.server";
+import { createItemSchema } from "./feature-schemas";
+import * as ItemRepository from "./ItemRepository.server";
+
+export const action = defineAction(
+  { body: createItemSchema },
+  async ({ body }) => {
+    await ItemRepository.create(body);
+    return redirect("/items");
+  },
+);
+```
+
+### E2E Test (`feature.spec.ts`)
+
+```ts
+import { createFormHelpers } from "./helpers/playwright-form";
+import { createItemSchema } from "~/features/item/feature-schemas";
+import { test, expect, navigate, impersonate } from "./helpers/playwright";
+
+test("creates new item", async ({ page }) => {
+  await impersonate(page);
+  await navigate({ page, url: "/items/new" });
+
+  const form = createFormHelpers(page, createItemSchema);
+
+  await form.fill("name", "Test Item");
+  await form.fill("description", "A test description");
+  await form.select("category", "SPECIAL");
+  await form.check("isActive");
+  await form.submit();
+
+  await expect(page).toHaveURL("/items");
+});
+```
+
+### Translations (`locales/en/forms.json`)
+
+```json
+{
+  "labels.itemName": "Name",
+  "labels.description": "Description",
+  "labels.category": "Category",
+  "labels.isActive": "Active",
+  "bottomTexts.descriptionHelp": "Optional description for the item",
+  "options.category.general": "General",
+  "options.category.special": "Special"
+}
+```

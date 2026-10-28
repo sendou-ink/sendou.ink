@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Armchair, Edit } from "lucide-react";
+import { Armchair, Edit, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -26,6 +26,8 @@ type RosterTabMember = CommonUser & {
 	tier?: { name: TierName; isPlus: boolean } | "CALCULATING";
 	weaponPool?: Array<MainWeaponId>;
 	inGameName?: string | null;
+	/** The member leaves once the set is over, marked with a popover telling so. */
+	leaving?: { label: string; explanation: string };
 };
 
 interface RosterTabTeam {
@@ -181,6 +183,7 @@ function TeamRoster({
 											<MemberTierPopover tier={member.tier} />
 										</div>
 										<MemberMeta weaponPool={member.weaponPool} />
+										<LeavingPopover leaving={member.leaving} />
 									</div>
 								</li>
 							))}
@@ -391,6 +394,32 @@ function MemberTierPopoverContent({
 				{tier.isPlus ? "+" : ""}
 			</span>
 		</div>
+	);
+}
+
+function LeavingPopover({ leaving }: Pick<RosterTabMember, "leaving">) {
+	if (!leaving) return null;
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton
+					variant="minimal"
+					className={styles.leavingBadge}
+					aria-label={leaving.label}
+				>
+					<LogOut size={14} />
+				</SendouButton>
+			}
+		>
+			<div
+				className={styles.leavingPopover}
+				data-testid="roster-leaving-popover"
+			>
+				<div className={styles.subbedOutHeader}>{leaving.label}</div>
+				{leaving.explanation}
+			</div>
+		</SendouPopover>
 	);
 }
 

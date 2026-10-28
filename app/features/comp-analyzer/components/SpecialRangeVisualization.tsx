@@ -1,19 +1,19 @@
 // note: dev only component, not used in production code
 
 import { SpecialWeaponImage } from "~/components/Image";
-import {
-	getSpecialsWithRange,
-	type SpecialWeaponWithRange,
-} from "../core/special-weapon-range";
+import * as SpecialWeaponRange from "../core/SpecialWeaponRange";
 import styles from "./SpecialRangeVisualization.module.css";
 
-const RANGE_TYPE_COLOR: Record<SpecialWeaponWithRange["rangeType"], string> = {
+const RANGE_TYPE_COLOR: Record<
+	SpecialWeaponRange.SpecialWeaponWithRange["rangeType"],
+	string
+> = {
 	projectile: "#8cd4f5",
 	radius: "#f5b8d0",
 };
 
 export function SpecialRangeVisualization() {
-	const specials = getSpecialsWithRange();
+	const specials = SpecialWeaponRange.allSpecials();
 	if (specials.length === 0) {
 		return null;
 	}

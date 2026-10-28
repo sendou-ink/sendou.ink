@@ -1,0 +1,133 @@
+.entry {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.key {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	word-break: break-all;
+}
+
+.badge {
+	flex-shrink: 0;
+	padding: var(--s-0-5) var(--s-2);
+	border-radius: var(--radius-full);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+}
+
+.badgeDraft {
+	background-color: var(--color-accent-low);
+	color: var(--color-accent-high);
+}
+
+.badgeMissing {
+	background-color: var(--color-warning-low);
+	color: var(--color-warning-high);
+}
+
+.texts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.pluralCategory {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+}
+
+.textRow {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.textLabel {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	color: var(--color-text-high);
+}
+
+.text {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.placeholder {
+	padding: 0 var(--s-0-5);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+	color: var(--color-accent-high);
+	font-family: monospace;
+	font-size: 0.9em;
+}
+
+.textarea {
+	min-height: 0;
+	resize: vertical;
+}
+
+.placeholders {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.placeholderChip {
+	padding: var(--s-0-5) var(--s-1-5);
+	border: var(--border-style);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg);
+	color: var(--color-accent-high);
+	font-family: monospace;
+	font-size: var(--font-xs);
+	cursor: pointer;
+
+	&:hover {
+		border-color: var(--color-fg-accent);
+	}
+}
+
+.issues {
+	margin: 0;
+	padding-left: var(--s-4);
+	font-size: var(--font-xs);
+	color: var(--color-error);
+}
+
+.usage {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding-top: var(--s-2);
+	border-top: var(--border-style);
+	font-size: var(--font-xs);
+}
+
+.usageRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.usageItem {
+	font-size: var(--font-xs);
+}

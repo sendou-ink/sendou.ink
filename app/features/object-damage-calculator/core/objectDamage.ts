@@ -73,9 +73,6 @@ function resolveRelevantKey({
 }): keyof typeof objectDamages {
 	if (keys.length === 1) return keys[0];
 
-	const actualKeys = keys.filter((k) => k !== "Default");
-	if (actualKeys.length === 1) return actualKeys[0];
-
 	for (const [weaponType, weaponIds, damageType, key] of damagePriorities) {
 		// alt kits (e.g. Tentatek Splattershot) share their base kit's damage
 		const normalizedWeaponId =
@@ -85,7 +82,7 @@ function resolveRelevantKey({
 		if (!weaponIds.includes(normalizedWeaponId)) continue;
 		if (damageType !== type) continue;
 
-		if (!actualKeys.includes(key as Exclude<typeof key, "Default">)) {
+		if (!keys.includes(key)) {
 			throw new Error(
 				`Invalid damagePriorities (no key in object-dmg.json for the weapon): ${JSON.stringify(
 					[weaponType, weaponIds, damageType, key],
@@ -95,6 +92,9 @@ function resolveRelevantKey({
 
 		return key;
 	}
+
+	const actualKeys = keys.filter((k) => k !== "Default");
+	if (actualKeys.length === 1) return actualKeys[0];
 
 	throw new Error(
 		`Could not resolve relevant key from ${actualKeys.join(", ")}; weapon: ${
@@ -130,7 +130,9 @@ export function resolveAllUniqueDamageTypes({
 
 	return R.unique(damageTypes).filter(
 		(dmg) =>
-			!dmg.includes("SECONDARY") && dmg !== "COMBO" && dmg !== "DISTANCE_JUMP",
+			!dmg.startsWith("DIRECT_SECONDARY") &&
+			dmg !== "COMBO" &&
+			dmg !== "DISTANCE_JUMP",
 	);
 }
 

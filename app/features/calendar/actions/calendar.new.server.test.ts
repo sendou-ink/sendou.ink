@@ -4,12 +4,14 @@ import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as XpTrophy from "~/features/trophies/core/XpTrophy";
 import { invariant } from "~/utils/invariant";
-import { wrappedAction } from "~/utils/Test";
+import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { calendarNewSchema } from "../calendar-new-schemas";
 import { calendarNewFormValues } from "../tests/fixtures";
 import { action } from "./calendar.new.server";
@@ -248,4 +250,205 @@ describe("calendar new action: team picked tournament", () => {
 		expect(edited.ctx.teams[0].hasMapPool).toBe(0);
 		expect(edited.ctx.teams[0].checkIns).toEqual([]);
 	});
+});
+
+describe("calendar new action: organization the user no longer organizes in", () => {
+	const orgOwnerId = () => users.id(1);
+	const demotedAuthorId = () => users.id(2);
+
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("author demoted to a member can still edit their tournament", async () => {
+		const org = await TournamentOrganizationFactory.create(
+			{ ownerId: orgOwnerId() },
+			{
+				isEstablished: true,
+				members: [{ userId: demotedAuthorId(), role: "MEMBER" }],
+			},
+		);
+		const tournament = await TournamentFactory.create({
+			authorId: demotedAuthorId(),
+			organizationId: org.id,
+			name: "Low Ink",
+		});
+
+		await editAction(
+			calendarNewFormValues({
+				eventToEditId: tournament.eventId,
+				name: "Low Ink (edited)",
+				organizationId: String(org.id),
+				bracketUrl: "https://sendou.ink",
+			}),
+			{ user: demotedAuthorId() },
+		);
+
+		expect((await CalendarRepository.findById(tournament.eventId))?.name).toBe(
+			"Low Ink (edited)",
+		);
+	});
+});
+
+describe("calendar new action: removing the organization on edit", () => {
+	const orgOwnerId = () => users.id(1);
+	const orgAdminAuthorId = () => users.id(2);
+	let adderAuthorId: number;
+
+	beforeEach(async () => {
+		adderAuthorId = (
+			await UserFactory.createRegular(null, {
+				roles: ["TOURNAMENT_ORGANIZER"],
+			})
+		).id;
+		await users.create(2);
+	});
+
+	const seedOrgTournament = async (authorId: number) => {
+		const org = await TournamentOrganizationFactory.create(
+			{ ownerId: orgOwnerId() },
+			{
+				isEstablished: true,
+				members: [{ userId: orgAdminAuthorId(), role: "ADMIN" }],
+			},
+		);
+		const tournament = await TournamentFactory.create({
+			authorId,
+			organizationId: org.id,
+		});
+
+		return { org, tournament };
+	};
+
+	const removeOrganizationFields = (eventId: number) =>
+		calendarNewFormValues({
+			eventToEditId: eventId,
+			organizationId: "",
+			bracketUrl: "https://sendou.ink",
+		});
+
+	test("author without the tournament adder role can't remove it", async () => {
+		const { org, tournament } = await seedOrgTournament(orgAdminAuthorId());
+
+		await expect(
+			editAction(removeOrganizationFields(tournament.eventId), {
+				user: orgAdminAuthorId(),
+			}),
+		).rejects.toThrow("403");
+
+		expect(
+			(await CalendarRepository.findById(tournament.eventId))?.organization?.id,
+		).toBe(org.id);
+	});
+
+	test("tournament adder author can remove it", async () => {
+		const { tournament } = await seedOrgTournament(adderAuthorId);
+
+		await editAction(removeOrganizationFields(tournament.eventId), {
+			user: "regular",
+		});
+
+		expect(
+			(await CalendarRepository.findById(tournament.eventId))?.organization,
+		).toBeNull();
+	});
+});
+
+describe("calendar new action: trophy prize", () => {
+	const otherOrgOwnerId = () => users.id(1);
+
+	let orgId: number;
+	let otherOrgId: number;
+
+	beforeEach(async () => {
+		const organizer = await UserFactory.createRegular(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+		await users.create(1);
+		orgId = (
+			await TournamentOrganizationFactory.create(
+				{ ownerId: organizer.id },
+				{ isEstablished: true },
+			)
+		).id;
+		otherOrgId = (
+			await TournamentOrganizationFactory.create({
+				ownerId: otherOrgOwnerId(),
+			})
+		).id;
+	});
+
+	const createTournament = (args: {
+		organizationId: number | null;
+		trophyId: number;
+	}) =>
+		editAction(
+			calendarNewFormValues({
+				organizationId: args.organizationId ? String(args.organizationId) : "",
+				trophyId: args.trophyId,
+			}),
+			{ user: "regular" },
+		);
+
+	test("attaches a trophy of the tournament's organization", async () => {
+		const trophy = await TrophyFactory.create({ organizationId: orgId });
+
+		const res = await createTournament({
+			organizationId: orgId,
+			trophyId: trophy.id,
+		});
+
+		const location =
+			res instanceof Response ? res.headers.get("Location") : null;
+		invariant(location, "expected a redirect to the created event");
+		const created = await CalendarRepository.findById(
+			Number(location.split("/").at(-1)),
+			{ includeTrophy: true },
+		);
+		expect(created?.trophy?.id).toBe(trophy.id);
+	});
+
+	test.each([
+		{
+			why: "X Power trophy, no organization",
+			eventOrg: "NONE",
+			trophyOrg: "NONE",
+			code: XpTrophy.VARIANTS[0].code,
+		},
+		{
+			why: "trophy of a deleted organization, no organization",
+			eventOrg: "NONE",
+			trophyOrg: "NONE",
+			code: null,
+		},
+		{
+			why: "special trophy of the organization",
+			eventOrg: "OWN",
+			trophyOrg: "OWN",
+			code: XpTrophy.VARIANTS[0].code,
+		},
+		{
+			why: "another organization's trophy",
+			eventOrg: "OWN",
+			trophyOrg: "OTHER",
+			code: null,
+		},
+	] as const)(
+		"rejects the trophy ($why)",
+		async ({ eventOrg, trophyOrg, code }) => {
+			const orgIdOf = (org: "NONE" | "OWN" | "OTHER") =>
+				org === "NONE" ? null : org === "OWN" ? orgId : otherOrgId;
+			const trophy = await TrophyFactory.create({
+				organizationId: orgIdOf(trophyOrg),
+				code,
+			});
+
+			const res = await createTournament({
+				organizationId: orgIdOf(eventOrg),
+				trophyId: trophy.id,
+			});
+
+			assertResponseErrored(res, "Trophy does not belong");
+		},
+	);
 });

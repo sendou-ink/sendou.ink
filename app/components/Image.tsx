@@ -259,19 +259,24 @@ function InkTintedImage({
 				aria-label={alt}
 				data-testid={testId}
 				className={clsx(styles.inkTinted, className)}
-				style={
-					{
-						...style,
-						width: size ?? width,
-						height: size ?? height,
-						"--ink-silhouette": `url("${path}.avif")`,
-						"--ink-detail": `url("${detailPath}.avif")`,
-						"--ink-highlight": `url("${highlightPath}.avif")`,
-					} as React.CSSProperties
-				}
+				style={{
+					...style,
+					width: size ?? width,
+					height: size ?? height,
+					maskImage: outlineMaskImage(path),
+				}}
 			>
-				<span className={styles.inkArt} />
-				<span className={styles.inkHighlight} />
+				<span
+					className={styles.inkArt}
+					style={{
+						maskImage: cssImageUrl(path),
+						backgroundImage: cssImageUrl(detailPath),
+					}}
+				/>
+				<span
+					className={styles.inkHighlight}
+					style={{ maskImage: cssImageUrl(highlightPath) }}
+				/>
 			</span>
 		</div>
 	);
@@ -298,16 +303,17 @@ export function OutlinedImage({
 				aria-label={alt}
 				data-testid={testId}
 				className={clsx(styles.inkTinted, className)}
-				style={
-					{
-						...style,
-						width: size ?? width,
-						height: size ?? height,
-						"--ink-silhouette": `url("${path}.avif")`,
-					} as React.CSSProperties
-				}
+				style={{
+					...style,
+					width: size ?? width,
+					height: size ?? height,
+					maskImage: outlineMaskImage(path),
+				}}
 			>
-				<span className={styles.outlinedArt} />
+				<span
+					className={styles.outlinedArt}
+					style={{ backgroundImage: cssImageUrl(path) }}
+				/>
 			</span>
 		</div>
 	);
@@ -344,4 +350,16 @@ export function TierImage({ tier, className, width = 200 }: TierImageProps) {
 			) : null}
 		</div>
 	);
+}
+
+// set on the properties directly, not via custom properties: Safari re-resolves
+// a url() inside var() on every style recalc, revalidating a stale image and
+// hiding the masked icon until the response arrives
+function cssImageUrl(path: string) {
+	return `url("${path}.avif")`;
+}
+
+/** One silhouette copy per outline offset of `.inkTinted`'s `mask-position`. */
+function outlineMaskImage(path: string) {
+	return Array(8).fill(cssImageUrl(path)).join(", ");
 }

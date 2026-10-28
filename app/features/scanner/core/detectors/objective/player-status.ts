@@ -18,6 +18,8 @@
  * saturated ink of any hue = alive; pale = special ready (the wash pulses from
  * lilac or pink to near-white, but never saturates or greys); else splatted
  * (the dark plate under grey X strokes, or a blown-out backdrop through it).
+ * A pale apex over a body still in team ink on both sides is a weapon render
+ * (Painbrush's head), not the wash, which pales the whole icon.
  */
 import { CANONICAL_WIDTH } from "../../canonical";
 import type { Mat } from "../../cv";
@@ -52,6 +54,8 @@ import {
 	STATUS_VACANT_BODY,
 	STATUS_VACANT_MAX_GREY,
 	STATUS_VACANT_MIN_DARK,
+	STATUS_WASH_BODY_SIDE,
+	STATUS_WASH_MAX_BODY_INK,
 	STATUS_WHITE_MAX_SPREAD,
 	STATUS_WHITE_MIN_VALUE,
 } from "./rois";
@@ -542,7 +546,7 @@ function readSlot(
 		greyShare <= STATUS_READY_MAX_GREY
 	) {
 		return {
-			state: "ready",
+			state: bodyStaysInked(band, cx, pitch) ? "alive" : "ready",
 			confidence: Math.min(1, paleShare / (2 * STATUS_READY_MIN_PALE)),
 			fractions,
 		};
@@ -552,6 +556,40 @@ function readSlot(
 		confidence: Math.min(1, greyShare / (2 * STATUS_READY_MAX_GREY)),
 		fractions,
 	};
+}
+
+/**
+ * Both body sides still in team ink: the pale apex is a weapon render over it
+ * (Painbrush's head), not the wash, which pales the whole icon.
+ */
+function bodyStaysInked(band: Band, cx: number, pitch: number): boolean {
+	const scale = pitch / STATUS_REFERENCE_PITCH;
+	return [-1, 1].every((direction) => {
+		let ink = 0;
+		let count = 0;
+		for (
+			let y = Math.round(
+				STATUS_ICON_CENTER_Y + STATUS_WASH_BODY_SIDE.top * scale,
+			);
+			y <= STATUS_ICON_CENTER_Y + STATUS_WASH_BODY_SIDE.bottom * scale;
+			y++
+		) {
+			for (
+				let offset = Math.round(STATUS_WASH_BODY_SIDE.inner * scale);
+				offset <= STATUS_WASH_BODY_SIDE.outer * scale;
+				offset++
+			) {
+				const i =
+					((y - STATUS_BAND.y) * band.width +
+						(cx + direction * offset - STATUS_BAND.x)) *
+					band.channels;
+				if (isInk(band.pixels[i]!, band.pixels[i + 1]!, band.pixels[i + 2]!))
+					ink++;
+				count++;
+			}
+		}
+		return ink / count >= STATUS_WASH_MAX_BODY_INK;
+	});
 }
 
 /**

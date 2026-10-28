@@ -1,0 +1,74 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import type { MarkdownHeading } from "astro";
+import type { FeatureDoc } from "../../../../../scripts/living-docs/document.ts";
+import {
+	VIEWS,
+	type ViewId,
+} from "../../../../../scripts/living-docs/links.ts";
+import { count, testsOf, viewHref } from "../../living/format.ts";
+import FeatureIcon from "./FeatureIcon.astro";
+import LivingScript from "./LivingScript.astro";
+import "../../styles/living.css";
+
+interface Props {
+	feature: FeatureDoc;
+	view: ViewId;
+	headings: MarkdownHeading[];
+	/** Deepest heading level shown in the "On this page" outline. */
+	maxHeadingLevel?: number;
+}
+
+const { feature, view, headings, maxHeadingLevel = 3 } = Astro.props;
+const { label } = feature.config;
+const exportCount = feature.modules.reduce(
+	(sum, module) => sum + module.types.length + module.values.length,
+	0,
+);
+const views = VIEWS.filter((candidate) => feature.views.includes(candidate.id));
+---
+
+<StarlightPage
+	frontmatter={{
+		title: `${label} · ${VIEWS.find((candidate) => candidate.id === view)!.label}`,
+		editUrl: false,
+		prev: false,
+		next: false,
+		tableOfContents: { minHeadingLevel: 2, maxHeadingLevel },
+	}}
+	headings={headings}
+>
+	<div class="living not-content">
+		<div class="feature-head">
+			<FeatureIcon config={feature.config} size={40} />
+			<p class="stats">
+				{
+					[
+						count(feature.modules.length, "module"),
+						count(exportCount, "export"),
+						count(feature.repositories.length, "repository", "repositories"),
+						count(testsOf(feature).length, "e2e test"),
+						count(feature.routes.length, "route"),
+					].join(" · ")
+				}
+			</p>
+			{
+				views.length > 1 ? (
+					<nav class="view-switch" aria-label={`${label} pages`}>
+						{views.map((candidate) => (
+							<a
+								href={viewHref(feature.config.id, candidate.id)}
+								aria-current={candidate.id === view ? "page" : undefined}
+							>
+								{candidate.label}
+							</a>
+						))}
+					</nav>
+				) : null
+			}
+		</div>
+		<slot />
+	</div>
+	<slot name="markdown" />
+	<LivingScript />
+</StarlightPage>

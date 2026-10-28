@@ -58,8 +58,7 @@ export const BUILD = {
 	MAX_COUNT: 250,
 } as const;
 
-export const BUILDS_PAGE_BATCH_SIZE = 24;
-export const BUILDS_PAGE_MAX_BUILDS = 240;
+export const BUILDS_PAGE_SIZE = 24;
 
 export const EMPTY_BUILD: BuildAbilitiesTupleWithUnknown = [
 	["UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"],

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as Attention from "./Attention";
 
 const IDLE_AFTER_MS = 1_000;
+const LAST_ACTIVE_TAB = "last-active-tab";
 
 function fakeEnvironment(storage = new Map<string, string>()) {
 	const state = {
@@ -18,13 +19,14 @@ function fakeEnvironment(storage = new Map<string, string>()) {
 		environment: {
 			document,
 			window,
-			storage: {
-				getItem: (key: string) => storage.get(key) ?? null,
-				setItem: (key: string, value: string) => {
-					storage.set(key, value);
-				},
-				removeItem: (key: string) => {
-					storage.delete(key);
+			lastActiveTab: {
+				read: () => storage.get(LAST_ACTIVE_TAB) ?? null,
+				write: (tabId: string | null) => {
+					if (tabId === null) {
+						storage.delete(LAST_ACTIVE_TAB);
+					} else {
+						storage.set(LAST_ACTIVE_TAB, tabId);
+					}
 				},
 			},
 			now: () => Date.now(),
@@ -162,15 +164,5 @@ describe("Attention.createTracker", () => {
 
 		expect(first.isLastActiveTab()).toBe(true);
 		expect(third.isLastActiveTab()).toBe(false);
-	});
-
-	test("every tab counts as the last active one without storage", () => {
-		const env = fakeEnvironment();
-		const tracker = Attention.createTracker(() => ({
-			...env.environment,
-			storage: null,
-		}));
-
-		expect(tracker.isLastActiveTab()).toBe(true);
 	});
 });

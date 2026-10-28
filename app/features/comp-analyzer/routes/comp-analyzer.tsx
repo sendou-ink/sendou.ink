@@ -29,10 +29,7 @@ import { RangeVisualization } from "../components/RangeVisualization";
 import { SelectedWeapons } from "../components/SelectedWeapons";
 import { WeaponCategories } from "../components/WeaponCategories";
 import { WeaponGrid } from "../components/WeaponGrid";
-import {
-	calculateDamageCombos,
-	type ExcludedDamageKey,
-} from "../core/damage-combinations";
+import * as DamageCombos from "../core/DamageCombos";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -74,7 +71,7 @@ function CompAnalyzerPage() {
 		selectedWeaponIds.length >= MAX_WEAPONS,
 	);
 	const [excludedDamageKeys, setExcludedDamageKeys] = useState<
-		ExcludedDamageKey[]
+		DamageCombos.ExcludedDamageKey[]
 	>([]);
 
 	const handleWeaponClick = (weaponId: MainWeaponId) => {
@@ -137,7 +134,7 @@ function CompAnalyzerPage() {
 
 interface CompExportProps {
 	weaponIds: MainWeaponId[];
-	excludedDamageKeys: ExcludedDamageKey[];
+	excludedDamageKeys: DamageCombos.ExcludedDamageKey[];
 }
 
 function CompExportDialog({ weaponIds, excludedDamageKeys }: CompExportProps) {
@@ -195,7 +192,7 @@ function CompGraphicWithCombos({
 	const [singleWeaponCombos] = useSingleWeaponCombos();
 	const [targetSubDefenseAp] = useTargetSubDefenseAp();
 
-	const combos = calculateDamageCombos(
+	const combos = DamageCombos.calculate(
 		weaponIds,
 		excludedDamageKeys,
 		targetSubDefenseAp,

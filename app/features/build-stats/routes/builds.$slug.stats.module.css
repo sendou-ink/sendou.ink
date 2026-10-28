@@ -1,20 +1,178 @@
-.abilityRow {
+.keyStats {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--s-4);
+
+	@container (width < 56rem) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	@container (width < 30rem) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.keyStatAbility {
+	flex-shrink: 0;
+}
+
+.keyStatValue {
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+	align-items: start;
+	gap: var(--s-6);
+
+	@container (width < 56rem) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.abilityRows,
+.mainOnlyRows,
+.peers {
 	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.abilityRows {
+	gap: var(--s-5);
+}
+
+.abilityRow {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) 5.5rem;
 	align-items: center;
 	gap: var(--s-3);
 }
 
-.bars {
+.abilityValue {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--s-1);
 	font-size: var(--font-sm);
-	font-weight: var(--weight-semi);
-	display: grid;
-	align-items: center;
-	grid-template-columns: max-content 65px 1fr;
-	column-gap: var(--s-2);
-	row-gap: var(--s-1);
 }
 
-.bar {
-	background-color: var(--color-fg-accent);
+.difference {
+	padding: var(--s-0-5) var(--s-1-5);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+
+	&[data-sign="1"] {
+		background-color: var(--color-success-low);
+		color: var(--color-success-high);
+	}
+
+	&[data-sign="-1"] {
+		background-color: var(--color-error-low);
+		color: var(--color-error-high);
+	}
+}
+
+.gearSlots {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	align-items: start;
+	gap: var(--s-4);
+}
+
+.mainOnlyRows {
+	gap: var(--s-3);
+}
+
+.mainOnlyRow {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: var(--s-2-5);
+}
+
+.distribution {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2);
+	height: 10rem;
+}
+
+.distributionColumn {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
 	height: 100%;
+}
+
+.distributionBarArea {
+	display: flex;
+	flex: 1;
+	align-items: flex-end;
+	width: 100%;
+	padding-block-start: var(--s-5);
+}
+
+.distributionBar {
+	position: relative;
+	width: 100%;
+	border-start-start-radius: var(--radius-field);
+	border-start-end-radius: var(--radius-field);
+	background-color: var(--color-bg-higher);
+
+	&[data-highlighted="true"] {
+		background-color: var(--color-fg-accent);
+	}
+}
+
+.distributionValue {
+	position: absolute;
+	inset-block-end: calc(100% + var(--s-1));
+	inset-inline: 0;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-align: center;
+}
+
+.peers {
+	gap: var(--s-2);
+}
+
+.peer {
+	display: grid;
+	grid-template-columns: auto minmax(0, 7rem) minmax(0, 1fr) 2.5rem;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+
+	&[data-viewed="true"] {
+		color: var(--color-text);
+		font-weight: var(--weight-semi);
+	}
+}
+
+.peerBar {
+	height: var(--s-1-5);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg-higher);
+
+	& > div {
+		height: 100%;
+		border-radius: var(--radius-full);
+		background-color: var(--color-border-high);
+	}
+
+	.peer[data-viewed="true"] & > div {
+		background-color: var(--color-fg-accent);
+	}
 }

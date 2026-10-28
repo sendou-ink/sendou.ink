@@ -23,10 +23,6 @@
 	display: block;
 	position: relative;
 	background-color: var(--ink-outline-color);
-	mask-image:
-		var(--ink-silhouette), var(--ink-silhouette), var(--ink-silhouette),
-		var(--ink-silhouette), var(--ink-silhouette), var(--ink-silhouette),
-		var(--ink-silhouette), var(--ink-silhouette);
 	mask-size: var(--_art-size);
 	mask-repeat: no-repeat;
 	mask-position:
@@ -55,20 +51,16 @@
 
 .inkArt {
 	background-color: var(--color-accent);
-	background-image: var(--ink-detail);
 	background-size: var(--_art-size);
 	background-repeat: no-repeat;
 	background-position: center;
-	mask-image: var(--ink-silhouette);
 }
 
 .inkHighlight {
 	background-color: #fff;
-	mask-image: var(--ink-highlight);
 }
 
 .outlinedArt {
-	background-image: var(--ink-silhouette);
 	background-size: var(--_art-size);
 	background-repeat: no-repeat;
 	background-position: center;

@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
+import * as Tiebreakers from "../../core/Bracket/Tiebreakers";
 import { EliminationBracketSide } from "./Elimination";
 import { Bracket } from "./index";
 import { RoundRobinBracket } from "./RoundRobin";
@@ -830,13 +831,19 @@ function createMockBracket(
 		tournament: mockTournament as any,
 		settings: type === "swiss" ? { roundCount: 3 } : null,
 		sources: undefined,
-		seeding: undefined,
+		previewSeeding: undefined,
 		createdAt: null,
 		requiresCheckIn: false,
 		startTime: null,
 		simulatedMatch: () => undefined,
 		matchExitDestinations: () => new Map(),
 		liveStandings: mockLiveStandings(data),
+		tiebreakers:
+			type === "swiss"
+				? Tiebreakers.SWISS
+				: type === "round_robin"
+					? Tiebreakers.ROUND_ROBIN
+					: [],
 		participantTournamentTeamIds: [1, 2, 3, 4, 5, 6, 7, 8],
 	} as unknown as BracketType;
 }

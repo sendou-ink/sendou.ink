@@ -1,6 +1,11 @@
+import sharp from "sharp";
 import { invariant } from "~/utils/invariant";
+import {
+	type ImageExtension,
+	imageExtensionFromMagicBytes,
+} from "./image-signature";
 
-export type ImageExtension = "webp" | "png" | "jpeg";
+const SMALL_COPY_SIZE_PX = 80;
 
 /** Format is resolved from the magic bytes, not the client-declared mime type, and must be in `allowedExtensions`. */
 export function dataUrlToImageBuffer(
@@ -19,31 +24,13 @@ export function dataUrlToImageBuffer(
 	return { buffer, extension };
 }
 
-function imageExtensionFromMagicBytes(buffer: Buffer): ImageExtension | null {
-	if (
-		buffer.length > 12 &&
-		buffer.toString("ascii", 0, 4) === "RIFF" &&
-		buffer.toString("ascii", 8, 12) === "WEBP"
-	) {
-		return "webp";
-	}
-
-	if (
-		buffer.length > 8 &&
-		buffer[0] === 0x89 &&
-		buffer.toString("ascii", 1, 4) === "PNG"
-	) {
-		return "png";
-	}
-
-	if (
-		buffer.length > 3 &&
-		buffer[0] === 0xff &&
-		buffer[1] === 0xd8 &&
-		buffer[2] === 0xff
-	) {
-		return "jpeg";
-	}
-
-	return null;
+/** Square downscaled copy of an image in the same format, for small displays such as avatars. */
+export function smallImageCopy(
+	image: Buffer | Uint8Array,
+	extension: ImageExtension,
+) {
+	return sharp(image)
+		.resize(SMALL_COPY_SIZE_PX, SMALL_COPY_SIZE_PX, { fit: "cover" })
+		.toFormat(extension)
+		.toBuffer();
 }

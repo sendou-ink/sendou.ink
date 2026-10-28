@@ -1,0 +1,132 @@
+.chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 var(--s-2);
+	border-radius: var(--radius-full);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	line-height: 1.6;
+	white-space: nowrap;
+}
+
+.neutral {
+	background-color: var(--color-bg-higher);
+	color: var(--color-text-high);
+}
+
+.accent {
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
+}
+
+.success {
+	background-color: var(--color-success-low);
+	color: var(--color-success-high);
+}
+
+.warning {
+	background-color: var(--color-warning-low);
+	color: var(--color-warning-high);
+}
+
+.error {
+	background-color: var(--color-error-low);
+	color: var(--color-error-high);
+}
+
+.info {
+	background-color: var(--color-info-low);
+	color: var(--color-info-high);
+}
+
+.fileLink {
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--color-fg-accent);
+	font-family: monospace;
+	font-size: var(--font-xs);
+	text-align: left;
+	cursor: pointer;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.disclosure {
+	min-width: 0;
+}
+
+.disclosureSummary {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	cursor: pointer;
+	list-style: none;
+
+	&::-webkit-details-marker {
+		display: none;
+	}
+
+	&::before {
+		color: var(--color-text-high);
+		content: "▸";
+		font-size: var(--font-2xs);
+		transition: transform 100ms;
+	}
+
+	details[open] > &::before {
+		transform: rotate(90deg);
+	}
+}
+
+.disclosureContent {
+	padding: var(--s-2) 0 var(--s-1) var(--s-4);
+}
+
+.badge {
+	position: absolute;
+	top: 1px;
+	right: 3px;
+	min-width: 16px;
+	height: 16px;
+	padding: 0 var(--s-1);
+	border: 2px solid var(--color-bg);
+	border-radius: var(--radius-full);
+	color: var(--color-text-inverse);
+	font-size: 9px;
+	font-weight: var(--weight-bold);
+	line-height: 12px;
+	text-align: center;
+}
+
+.errorBadge {
+	background-color: var(--color-error);
+}
+
+.warningBadge {
+	background-color: var(--color-warning);
+}
+
+.statusDot {
+	position: absolute;
+	top: 6px;
+	right: 9px;
+	width: 8px;
+	height: 8px;
+	border: 2px solid var(--color-bg);
+	border-radius: 50%;
+}
+
+.neutralDot {
+	background-color: var(--color-text-high);
+}
+
+.successDot {
+	background-color: var(--color-success);
+}
+
+.warningDot {
+	background-color: var(--color-warning);
+}

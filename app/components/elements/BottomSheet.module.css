@@ -1,0 +1,147 @@
+.sheet {
+	--bottom-sheet-offset: 0px;
+
+	position: fixed;
+	inset: auto var(--scrollbar-width, 0px) var(--bottom-sheet-offset) 0;
+	margin: 0;
+	padding: 0;
+	border: none;
+	width: 100%;
+	max-width: none;
+	max-height: none;
+	height: calc((100% - var(--bottom-sheet-offset)) * 0.85);
+	background: none;
+	color: var(--color-text);
+	overflow: hidden;
+	flex-direction: column;
+	outline: none;
+
+	@media screen and (max-width: 599px) {
+		--bottom-sheet-offset: var(--mobile-nav-height);
+	}
+
+	/* a display on the class itself would show the closed sheets too */
+	&:popover-open {
+		display: flex;
+	}
+
+	/* the box sits above the tab bar and clips, so the sliding content comes up from behind the bar */
+	& > .panelDialog {
+		background-color: var(--color-bg);
+		border-radius: var(--radius-box) var(--radius-box) 0 0;
+		animation: slide-up 200ms ease-out;
+	}
+
+	&::backdrop {
+		inset: 0;
+		bottom: var(--bottom-sheet-offset);
+		background-color: rgba(0, 0, 0, 0.25);
+		backdrop-filter: blur(10px);
+		animation: fade-in 200ms ease-out;
+	}
+}
+
+.noAnimation {
+	animation: none;
+
+	& > .panelDialog,
+	&::backdrop {
+		animation: none;
+	}
+}
+
+@keyframes slide-up {
+	from {
+		transform: translateY(100%);
+	}
+	to {
+		transform: translateY(0);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.panelDialog {
+	outline: none;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.header {
+	position: sticky;
+	top: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-inline: var(--s-4);
+	background-color: var(--color-bg-high);
+	border-bottom: 1.5px solid var(--color-border);
+	z-index: 1;
+	flex-shrink: 0;
+	color: var(--color-text-high);
+	min-height: var(--layout-nav-height);
+}
+
+.icon {
+	border-radius: var(--radius-field);
+}
+
+.title {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+}
+
+.headerActions {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: var(--s-2);
+	min-width: 0;
+}
+
+.closeButton {
+	display: grid;
+	place-items: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--color-error);
+	padding: 0;
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-field);
+	margin-inline-start: auto;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+}
+
+.content {
+	flex: 1;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: var(--s-2);
+	display: flex;
+	flex-direction: column;
+}
+
+.footer {
+	flex-shrink: 0;
+	padding: var(--s-3) var(--s-4);
+	border-top: 1.5px solid var(--color-border);
+	background-color: var(--color-bg);
+}

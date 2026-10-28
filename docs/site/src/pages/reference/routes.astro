@@ -1,0 +1,42 @@
+---
+import { getCollection } from "astro:content";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import RoutesTable from "../../components/living/RoutesTable.astro";
+import { count } from "../../living/format.ts";
+import "../../styles/living.css";
+
+const features = (await getCollection("features")).map((entry) => entry.data);
+const routes = features
+	.flatMap((feature) =>
+		feature.routes.map((coverage) => ({ ...coverage, feature })),
+	)
+	.sort((a, b) => a.route.path.localeCompare(b.route.path));
+const hasCapture = features.some((feature) => feature.hasCapture);
+const pages = routes.filter(({ route }) => !route.isLayout);
+const visitedPages = pages.filter(({ visitedBy }) => visitedBy.length > 0);
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Routes",
+		description: "Every route of app/routes.ts and the e2e tests that render it.",
+		editUrl: false,
+	}}
+>
+	<p>
+		Every route of <code>app/routes.ts</code>.{" "}
+		{
+			hasCapture ? (
+				<>
+					<strong>{visitedPages.length}</strong> of {count(pages.length, "page")} are rendered
+					by an e2e test in the last <code>pnpm run docs:capture</code>.
+				</>
+			) : (
+				<>
+					Run <code>pnpm run docs:capture</code> to see which e2e tests render each one.
+				</>
+			)
+		}
+	</p>
+	<RoutesTable routes={routes} hasCapture={hasCapture} showsFeature />
+</StarlightPage>

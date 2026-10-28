@@ -1,5 +1,5 @@
 import { addHours, sub } from "date-fns";
-import { type Insertable, type NotNull, sql } from "kysely";
+import { type Insertable, type NotNull, type SqlBool, sql } from "kysely";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
@@ -16,15 +16,19 @@ import {
 	type CommonUser,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	isPublicNow,
 	jsonArrayFrom,
 	jsonBuildObject,
+	mentionsAssociation,
 	tournamentLogoWithDefault,
+	visibleTo,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import { db } from "../../db/sql";
 import { invariant } from "../../utils/invariant";
 import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
+import * as Visibility from "../associations/core/Visibility";
 import * as Scrim from "./core/Scrim";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
@@ -66,16 +70,26 @@ export function insert(args: InsertArgs) {
 				text: args.text,
 				maps: args.maps,
 				mapsTournamentId: args.mapsTournamentId,
-				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
 				managedByAnyone: toDBBoolean(args.managedByAnyone),
 				isScheduledForFuture: toDBBoolean(args.isScheduledForFuture),
 			})
-			.returning("id")
+			.returning(["id", "createdAt"])
 			.executeTakeFirstOrThrow();
 
 		await trx
 			.insertInto("ScrimPostUser")
 			.values(args.users.map((user) => ({ ...user, scrimPostId: newPost.id })))
+			.execute();
+
+		const owner = args.users.find((user) => user.isOwner) ?? args.users[0];
+		await trx
+			.insertInto("ContentVisibility")
+			.values(
+				Visibility.toRows(args.visibility, {
+					createdAt: newPost.createdAt,
+					ownerId: owner.userId,
+				}).map((row) => ({ ...row, scrimPostId: newPost.id })),
+			)
 			.execute();
 
 		return newPost.id;
@@ -155,7 +169,6 @@ const baseFindQuery = db
 		"ScrimPost.startsAt",
 		"ScrimPost.rangeEndsAt",
 		"ScrimPost.createdAt",
-		"ScrimPost.visibility",
 		"ScrimPost.maxDiv",
 		"ScrimPost.minDiv",
 		"ScrimPost.text",
@@ -234,17 +247,86 @@ const baseFindQuery = db
 /** The booked start of a scrim: the accepted request's chosen time for a range post, the post's own otherwise. */
 const bookedStartsAt = sql<number>`coalesce((select "ScrimPostRequest"."startsAt" from "ScrimPostRequest" where "ScrimPostRequest"."scrimPostId" = "ScrimPost"."id" and "ScrimPostRequest"."isAccepted" = 1), "ScrimPost"."startsAt")`;
 
-function findMany() {
+/**
+ * Recent posts the viewer may see: their own, ones they requested and the rest by their visibility. With
+ * `associationId` posts the viewer neither owns nor has booked must have the association in their visibility.
+ */
+function findMany({
+	viewerId,
+	associationId,
+}: {
+	viewerId: number | null;
+	associationId: number | null;
+}) {
 	const min = sub(new Date(), { hours: 3 });
+	const now = databaseTimestampNow();
 
 	return baseFindQuery
+		.select((eb) =>
+			eb.not(isPublicNow({ entity: "ScrimPost", now })).as("isPrivate"),
+		)
 		.orderBy("startsAt", "asc")
 		.where("ScrimPost.startsAt", ">=", dateToDatabaseTimestamp(min))
+		.where((eb) => {
+			const visible = visibleTo({ entity: "ScrimPost", viewerId, now });
+			if (viewerId === null) {
+				return associationId === null
+					? visible
+					: eb.and([
+							visible,
+							mentionsAssociation({ entity: "ScrimPost", associationId }),
+						]);
+			}
+
+			const isInPost = eb.exists(
+				eb
+					.selectFrom("ScrimPostUser")
+					.select("ScrimPostUser.scrimPostId")
+					.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
+					.where("ScrimPostUser.userId", "=", viewerId),
+			);
+			const hasRequested = eb.exists(
+				eb
+					.selectFrom("ScrimPostRequest")
+					.innerJoin(
+						"ScrimPostRequestUser",
+						"ScrimPostRequestUser.scrimPostRequestId",
+						"ScrimPostRequest.id",
+					)
+					.select("ScrimPostRequest.id")
+					.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+					.where("ScrimPostRequestUser.userId", "=", viewerId),
+			);
+
+			if (associationId === null) {
+				return eb.or([isInPost, hasRequested, visible]);
+			}
+
+			const isAccepted = eb.exists(
+				eb
+					.selectFrom("ScrimPostRequest")
+					.select("ScrimPostRequest.id")
+					.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+					.where("ScrimPostRequest.isAccepted", "=", 1),
+			);
+
+			return eb.or([
+				isInPost,
+				eb.and([hasRequested, isAccepted]),
+				eb.and([
+					eb.or([hasRequested, visible]),
+					mentionsAssociation({ entity: "ScrimPost", associationId }),
+				]),
+			]);
+		})
 		.execute();
 }
 
 const mapDBRowToScrimPost = (
-	row: Unwrapped<typeof findMany> & { chatRoomId?: number | null },
+	row: Unwrapped<typeof baseFindQuery.execute> & {
+		chatRoomId?: number | null;
+		isPrivate?: SqlBool;
+	},
 ): ScrimPost => {
 	const someRequestIsAccepted = row.requests.some(
 		(request) => request.isAccepted,
@@ -289,7 +371,7 @@ const mapDBRowToScrimPost = (
 		startsAt: row.startsAt,
 		rangeEndsAt: row.rangeEndsAt,
 		createdAt: row.createdAt,
-		visibility: row.visibility,
+		isPrivate: Boolean(row.isPrivate),
 		text: row.text,
 		isScheduledForFuture: Boolean(row.isScheduledForFuture),
 		divs:
@@ -414,9 +496,15 @@ export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
 	return mapDBRowToScrimPost(row);
 }
 
-export async function findAllRelevant(): Promise<ScrimPost[]> {
+/**
+ * Recent posts visible to the actor, see {@link findMany}. Accepted posts only for their participants, requests
+ * of others censored.
+ */
+export async function findAllRelevant(
+	associationId: number | null = null,
+): Promise<ScrimPost[]> {
 	const userId = actorIdOrNull();
-	const rows = await findMany();
+	const rows = await findMany({ viewerId: userId, associationId });
 
 	const mapped = rows
 		.map(mapDBRowToScrimPost)

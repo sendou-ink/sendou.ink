@@ -45,14 +45,20 @@ export interface GraphicTeam {
 export function GraphicContainer({
 	children,
 	width,
+	className,
 }: {
 	children: React.ReactNode;
 	width?: number;
+	/** Overrides the container's own styles (e.g. its padding or background) */
+	className?: string;
 }) {
 	const qrCodeUrl = React.useContext(GraphicQrCodeContext);
 
 	return (
-		<div className={styles.container} style={width ? { width } : undefined}>
+		<div
+			className={clsx(styles.container, className)}
+			style={width ? { width } : undefined}
+		>
 			{children}
 			{qrCodeUrl ? (
 				<div className={styles.qrCodeRow}>

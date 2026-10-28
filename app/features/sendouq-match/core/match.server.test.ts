@@ -260,6 +260,7 @@ describe("matchMapList()", () => {
 				id: 2,
 			},
 			["SZ"],
+			SENDOUQ_BEST_OF,
 		);
 
 		const szMaps = result.filter((m) => m.mode === "SZ");
@@ -314,6 +315,7 @@ describe("matchMapList()", () => {
 				id: 2,
 			},
 			["SZ"],
+			SENDOUQ_BEST_OF,
 		);
 
 		const szMaps = result.filter((m) => m.mode === "SZ");
@@ -322,4 +324,93 @@ describe("matchMapList()", () => {
 			expect(userSelectedStageIds).toContain(map.stageId);
 		}
 	});
+
+	test("teams alternate picking maps", async () => {
+		vi.mocked(getDefaultMapWeights).mockResolvedValue(new Map());
+
+		for (let i = 0; i < 20; i++) {
+			const result = await matchMapList(
+				szGroup(1, [0, 2, 3, 4, 5, 6, 7]),
+				szGroup(2, [8, 10, 11, 12, 13, 14, 15]),
+				["SZ"],
+				SENDOUQ_BEST_OF,
+			);
+
+			const sources = result.map((m) => m.source);
+			expect(sources[0]).not.toBe(sources[1]);
+			expect(sources).toEqual(sources.map((_, idx) => sources[idx % 2]));
+		}
+	});
+
+	test("includes the map both teams voted for", async () => {
+		vi.mocked(getDefaultMapWeights).mockResolvedValue(new Map());
+
+		for (let i = 0; i < 20; i++) {
+			const result = await matchMapList(
+				szGroup(1, [0, 2, 3, 4, 5, 6, 7]),
+				szGroup(2, [7, 8, 10, 11, 12, 13, 14]),
+				["SZ"],
+				SENDOUQ_BEST_OF,
+			);
+
+			expect(result.map((m) => m.stageId)).toContain(7);
+		}
+	});
+
+	test("maps played before come up less often", async () => {
+		vi.mocked(getDefaultMapWeights).mockResolvedValue(new Map());
+		const playedMap = { mode: "SZ" as const, stageId: 0 as const };
+
+		let playedMapCount = 0;
+		for (let i = 0; i < 100; i++) {
+			const [map] = await matchMapList(
+				szGroup(1, [0, 2]),
+				szGroup(2, [0, 2]),
+				["SZ"],
+				1,
+				[playedMap, playedMap],
+			);
+			if (map.stageId === playedMap.stageId) playedMapCount++;
+		}
+
+		expect(playedMapCount).toBeLessThan(25);
+	});
+
+	test("plays only on the other team's maps when a team has no pool", async () => {
+		const otherTeamStageIds: StageId[] = [8, 10, 11, 12, 13, 14, 15];
+		vi.mocked(getDefaultMapWeights).mockResolvedValue(
+			new Map([
+				["SZ-0", -SENDOUQ_BEST_OF],
+				["SZ-2", -SENDOUQ_BEST_OF],
+			]),
+		);
+
+		for (let i = 0; i < 20; i++) {
+			const result = await matchMapList(
+				szGroup(1, []),
+				szGroup(2, otherTeamStageIds),
+				["SZ"],
+				SENDOUQ_BEST_OF,
+			);
+
+			for (const map of result) {
+				expect(otherTeamStageIds).toContain(map.stageId);
+			}
+		}
+	});
 });
+
+function szGroup(id: number, stages: StageId[]) {
+	const preferences = {
+		modes: [{ mode: "SZ" as const, preference: "PREFER" as const }],
+		pool: stages.length > 0 ? [{ mode: "SZ" as const, stages }] : [],
+	};
+
+	return {
+		id,
+		preferences: [1, 2, 3, 4].map((member) => ({
+			userId: id * 10 + member,
+			preferences,
+		})),
+	};
+}

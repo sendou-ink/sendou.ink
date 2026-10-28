@@ -54,6 +54,7 @@ import type {
 	UserCardData,
 	UserCardFriendship,
 	UserCardStat,
+	UserCardsById,
 } from "../user-card-types";
 import styles from "./UserCard.module.css";
 
@@ -236,10 +237,8 @@ export function useUserCardData(
 	if (typeof userId !== "number") return undefined;
 
 	for (const match of matches) {
-		const data = match.loaderData as
-			| { userCards?: Map<number, UserCardData> }
-			| undefined;
-		const card = data?.userCards?.get(userId);
+		const data = match.loaderData as { userCards?: UserCardsById } | undefined;
+		const card = data?.userCards?.[userId];
 		if (card) return card;
 	}
 

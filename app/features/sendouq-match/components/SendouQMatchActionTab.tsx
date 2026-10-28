@@ -335,6 +335,7 @@ function WeaponReportSection({
 			mode: m.mode,
 		})),
 		pastReported,
+		weaponPoolIds: viewerWeaponPoolIds(data, viewerUserId),
 	});
 
 	if (completedMaps.length === 0) return null;
@@ -582,6 +583,7 @@ function InProgressTab({
 					.filter((w) => w.userId === user.id)
 					.map((w) => ({ mapIndex: w.mapIndex, weaponSplId: w.weaponSplId }))
 			: [],
+		weaponPoolIds: viewerWeaponPoolIds(data, user.id),
 	});
 
 	const groupNames = resolveGroupNames(data.match, t);
@@ -698,4 +700,13 @@ function buildSendouQSetEndingData({
 			bravo: match.groupBravo.members,
 		},
 	};
+}
+
+function viewerWeaponPoolIds(
+	data: SendouQMatchLoaderData,
+	viewerUserId: number,
+) {
+	return [...data.match.groupAlpha.members, ...data.match.groupBravo.members]
+		.find((member) => member.id === viewerUserId)
+		?.weapons?.map((weapon) => weapon.weaponSplId);
 }

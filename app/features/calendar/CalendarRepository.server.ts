@@ -10,7 +10,11 @@ import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { TeamPickSettings, TournamentSettings } from "~/db/tables-json";
-import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
+import {
+	CALENDAR_EVENT,
+	EXCLUDED_TAGS,
+} from "~/features/calendar/calendar-constants";
+import * as CalendarEvent from "~/features/calendar/core/CalendarEvent";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -41,7 +45,10 @@ import {
 	normalizedTeamCount,
 	tournamentIsRanked,
 } from "../tournament/tournament-utils";
-import type { CalendarEvent, CalendarEventTag } from "./calendar-types";
+import type {
+	CalendarEventTag,
+	CalendarEvent as CalendarEventType,
+} from "./calendar-types";
 import { calendarEventSorter } from "./calendar-utils";
 
 const RECENT_TOURNAMENTS_SHOWN = 10;
@@ -202,18 +209,38 @@ function findAllBetweenTwoTimestampsQuery({
 		.execute();
 }
 
+// virtual tags: leagues and team sizes of tournaments are told apart by their settings, not by anything the organizer picks
+function calendarEventTags({
+	tags,
+	tournamentSettings,
+}: Pick<
+	Awaited<ReturnType<typeof findAllBetweenTwoTimestampsQuery>>[number],
+	"tags" | "tournamentSettings"
+>): Array<CalendarEventTag> {
+	const versusTag = tournamentSettings
+		? CalendarEvent.versusTag(tournamentSettings.minMembersPerTeam ?? 4)
+		: null;
+	const withVersusTag = versusTag
+		? [...(tags ?? []), versusTag].toSorted(
+				(a, b) =>
+					CALENDAR_EVENT.TAGS.indexOf(a) - CALENDAR_EVENT.TAGS.indexOf(b),
+			)
+		: (tags ?? []);
+
+	return tournamentSettings?.isLeague
+		? ["LEAGUE", ...withVersusTag]
+		: withVersusTag;
+}
+
 function findAllBetweenTwoTimestampsMapped(
 	rows: Awaited<ReturnType<typeof findAllBetweenTwoTimestampsQuery>>,
 ): Array<{
 	at: number;
-	events: Array<CalendarEvent>;
+	events: Array<CalendarEventType>;
 }> {
-	const mapped: Array<CalendarEvent & { startsAt: number }> = rows.map(
+	const mapped: Array<CalendarEventType & { startsAt: number }> = rows.map(
 		(row) => {
-			// a virtual tag: leagues are told apart by their setting, not by anything the organizer picks
-			const tags: Array<CalendarEventTag> = row.tournamentSettings?.isLeague
-				? ["LEAGUE", ...(row.tags ?? [])]
-				: (row.tags ?? []);
+			const tags = calendarEventTags(row);
 
 			const isPastEvent =
 				databaseTimestampToDate(row.startsAt) < sub(new Date(), { days: 1 });

@@ -17,7 +17,5 @@
 	"filters.MinTier": "Nivel mínimo",
 	"filters.orAbove": "o más",
 	"new.noMorePosts": "No puedes crear más publicaciones",
-	"new.editOn": "Editar en tu",
-	"new.weaponPool.header": "Grupo de armas",
-	"new.weaponPool.matchProfile": "perfil de partida"
+	"new.weaponPool.header": "Grupo de armas"
 }

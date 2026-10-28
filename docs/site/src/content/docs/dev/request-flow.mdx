@@ -1,0 +1,316 @@
+---
+title: "How a request flows"
+description: "One request followed through every layer of the app."
+---
+
+import Mermaid from "../../../components/Mermaid.astro";
+
+One request followed end to end through the layers of the app: route → middleware → loader → repository → component → form → `defineAction` → revalidation. The example is the scrim match page (`/scrims/:id`) of [Scrims](/features/scrims/), where a side of a booked scrim submits the map list the scrim's maps are generated from. Scrims is the reference feature of the codebase, so every layer here follows the conventions the other docs describe.
+
+The page load below is the server-side rendered (SSR) flow: the first request of a visit, a full page load or a refresh. The server runs the loaders, renders the page to HTML and sends it together with the loader data, then the browser loads the JavaScript and React hydrates the page. From then on the app runs in the browser and navigating with a link differs:
+
+- **No HTML**: the browser requests only the loader data (`/scrims/7.data`). The middleware and loaders run on the server the same way, React renders the new page in the browser.
+- **Only what changed reruns**: loaders of routes already on the page are skipped unless their params changed, the root's `shouldRevalidate` (in [root.tsx](https://github.com/sendou-ink/sendou.ink/blob/main/app/root.tsx)) keeping it from rerunning on most navigations.
+- **Code splitting**: the new route's JavaScript and CSS are fetched alongside its data.
+
+Submitting a form and revalidating (steps 6–8) always happen in the browser like this, whichever way the page was reached.
+
+The code below is trimmed to what matters for the flow, follow the links for the real thing.
+
+<Mermaid code={`sequenceDiagram
+	participant A as Alpha's browser
+	participant S as Server
+	participant DB as SQLite
+	participant B as Bravo's browser
+
+	A->>S: GET /scrims/7
+	Note over S: middleware: user, i18n, timezone…
+	S->>DB: loader → repositories
+	S-->>A: HTML with the loader data, hydrated
+	A->>S: POST /scrims/7 (SendouForm, JSON)
+	Note over S: defineAction parses params + body
+	S->>DB: ScrimMapListRepository (transaction)
+	S--)B: SSE "revalidate" on the scrim's chat room
+	S-->>A: null
+	A->>S: loaders rerun (React Router revalidation)
+	B->>S: loaders rerun (after a jitter)`} />
+
+## 1. Route
+
+Routes are not file-based, every route is listed in [routes.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/routes.ts):
+
+```ts
+...prefix("/scrims", [
+	index("features/scrims/routes/scrims.tsx"),
+	route("new", "features/scrims/routes/scrims.new.tsx"),
+	route(":id", "features/scrims/routes/scrims.$id.tsx"),
+]),
+```
+
+The route file ([scrims.$id.tsx](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/routes/scrims.$id.tsx)) holds no logic of its own. It re-exports the loader and action from their own files, declares the translation namespaces the page needs in `handle` and default exports the page component:
+
+```tsx
+import { action } from "../actions/scrims.$id.server";
+import { loader } from "../loaders/scrims.$id.server";
+
+export { action, loader };
+
+export const handle: SendouRouteHandle = {
+	i18n: ["scrims", "q", "user"],
+	// ...
+};
+
+export default function ScrimPage() {
+	return (
+		<Main>
+			<MatchPage>
+				<ScrimMatchHeader />
+				<ScrimMatchBanner />
+				<ScrimMatchTabs />
+			</MatchPage>
+		</Main>
+	);
+}
+```
+
+The docs site's Routes reference lists every route with the repository functions and tables its loader and action reach.
+
+## 2. Middleware
+
+Every request, a page load, a loader data fetch or an action, goes first through the middleware of [root.tsx](https://github.com/sendou-ink/sendou.ink/blob/main/app/root.tsx), in order:
+
+```ts
+export const middleware: Route.MiddlewareFunction[] = [
+	redirectsMiddleware, // moved pages
+	requestContextMiddleware, // the request's URL, for toast redirects
+	sessionIdMiddleware,
+	userMiddleware, // the logged in user
+	i18nMiddleware,
+	timezoneMiddleware, // the viewer's timezone cookie
+];
+```
+
+They resolve per request state once and keep it in an `AsyncLocalStorage`, which is why the code further down never passes the request around: `requireUser()` and `getUser()` take no arguments, `getViewerTimezone()` works anywhere on the server and an `errorToast()` thrown deep in an action knows which page to redirect back to.
+
+App wide request logic belongs here and not in the root loader, which resource routes and unmatched paths skip.
+
+## 3. Loader
+
+The loader ([loaders/scrims.$id.server.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/loaders/scrims.$id.server.ts)) runs on the server for the page load and again whenever the page revalidates:
+
+```ts
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = requireUser(); // 401 when logged out
+	const { id: postId } = parseParams({ params, schema: idObject }); // 404 for a non-numeric id
+
+	const post = notFoundIfNullish(await ScrimPostRepository.findById(postId));
+
+	if (!Scrim.isAccepted(post)) {
+		notFound();
+	}
+
+	if (!Scrim.isParticipating(post, user.id) && !user.roles.includes("STAFF")) {
+		forbidden();
+	}
+
+	// ...
+	const mapByMap = await resolveMapByMap({ post, user });
+
+	return {
+		post,
+		chatRooms: await RouteChatRooms.resolve(user, [
+			{ roomId: post.chatRoomId, autoOpen: true },
+		]),
+		mapByMap,
+		// ...
+	};
+};
+```
+
+The pattern every loader follows:
+
+- **Guards throw**: `requireUser()`, `parseParams()`, `notFoundIfNullish()`, `notFound()` and `forbidden()` throw a response, so the code after them can assume the happy path.
+- **Rules come from modules**: whether the scrim is booked or the user plays in it is decided by the pure functions of [core/Scrim.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/core/Scrim.ts) (`import * as Scrim`), unit tested without a database. The loader only orchestrates.
+- **Data comes from repositories**, never from `db` directly (see below).
+- **What it returns is the page's API**: the component reads it typed (see [Component](#5-component)), so returning `post` whole is fine but anything secret has to be left out here. `chatRooms` is a convention the global chat reads from every loader, it also matters for [revalidation](#8-revalidation).
+
+## 4. Repository
+
+All SQL lives in `*Repository.server.ts` files written with Kysely, see [repositories.md](/dev/repositories/). `ScrimPostRepository.findById` ([ScrimPostRepository.server.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/ScrimPostRepository.server.ts)) runs one query (with the requests and users as `jsonArrayFrom` subqueries) and maps the row to the `ScrimPost` the rest of the app works with:
+
+```ts
+export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
+	const row = await baseFindQuery
+		.select(["ScrimPost.chatRoomId"])
+		.where("ScrimPost.id", "=", scrimPostId)
+		.executeTakeFirst();
+
+	if (!row) return null;
+
+	return mapDBRowToScrimPost(row);
+}
+```
+
+The mapper also computes the post's `permissions`: who may do what to this object, as lists of user ids.
+
+```ts
+permissions: {
+	MANAGE_REQUESTS: managerIds,
+	DELETE_POST: managerIds,
+	CANCEL: managerIds.concat(requests.at(0)?.users.map((u) => u.id) ?? []),
+	MANAGE_TRACKING: someRequestIsAccepted ? bothSidesUserIds : [],
+},
+```
+
+The object carries its permissions everywhere it goes: the action checks them with `requirePermission(post, "MANAGE_TRACKING")` and a component with `useHasPermission(post, "CANCEL")`, neither knowing the rule behind them. See [permissions.md](/dev/permissions/).
+
+## 5. Component
+
+On a page load the route component renders on the server with the loader's data, the HTML and the data are sent together and React hydrates the page in the browser. The component tree reaches the form through `ScrimMatchTabs` → [ScrimMatchActionTab](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/components/ScrimMatchActionTab.tsx) → [ScrimMapListManager](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/components/ScrimMapListManager.tsx) → [ScrimMapListForm](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/components/ScrimMapListForm.tsx), each of them reading what it needs straight from the loader instead of getting it through props:
+
+```tsx
+export function ScrimMatchActionTab() {
+	const data = useLoaderData<typeof loader>();
+	const user = useUser();
+
+	const viewerSide = user ? Scrim.sideOfUser(data.post, user.id) : null;
+
+	if (data.mapByMap.locked) return null;
+	if (!viewerSide) return <NotParticipantSection />;
+
+	if (!data.mapByMap.currentMap) {
+		return (
+			<SendouTabPanel id={TAB_KEYS.ACTION}>
+				<ScrimMapListManager viewerSide={viewerSide} standalone />
+			</SendouTabPanel>
+		);
+	}
+
+	return <ReportMapSection viewerSide={viewerSide} />;
+}
+```
+
+`useLoaderData<typeof loader>()` types the data from the loader's return value, and the same `Scrim` module the loader used decides the viewer's side here. Nothing is fetched after the page renders: what the page shows is a function of the loader data, so rerunning the loader is how it updates.
+
+## 6. Form
+
+The form is a valibot schema built from the field builders of `~/form/fields` ([scrims-schemas.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/scrims-schemas.ts)). `stringConstant` adds the `_action` telling the action which mutation this is:
+
+```ts
+export const submitMapListFormSchema = v.pipe(
+	v.object({
+		_action: stringConstant("SUBMIT_MAP_LIST"),
+		source: radioGroupDynamic({ label: "labels.scrimMapSource" }),
+		serializedPool: mapPoolOptional({ label: "labels.scrimMapPool" }),
+		tournamentId: tournamentSearchOptional({ label: "labels.scrimMapsTournament" }),
+	}),
+	superRefine((data, ctx) => {
+		if (data.source === "POOL" && !data.serializedPool) {
+			ctx.addIssue({ path: ["serializedPool"], message: "forms:errors.invalidMapPool" });
+		}
+		// ...
+	}),
+);
+```
+
+`SendouForm` renders it ([ScrimMapListForm.tsx](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/components/ScrimMapListForm.tsx)), the labels coming from `locales/en/forms.json`:
+
+```tsx
+<SendouForm
+	title={t("scrims:mapByMap.submitListHeading")}
+	schema={submitMapListFormSchema}
+	defaultValues={{ source: defaultSource }}
+>
+	{() => (
+		<>
+			<SourceField postTournamentName={...} />
+			<SourceDependentFields />
+		</>
+	)}
+</SendouForm>
+```
+
+On submit `SendouForm` validates the values against the schema in the browser first, showing errors without a round trip. Valid values are POSTed as JSON to the current route through a fetcher, so the page doesn't navigate, flagged as coming from a form that renders field errors. See [forms.md](/dev/forms/).
+
+The page's other mutations (reporting a map, undo, replay) have no inputs to fill, they are buttons submitting a fixed `_action` through `<ActionButton>` / `useActionSubmit`, type checked against the same action schema.
+
+## 7. Action
+
+The action ([actions/scrims.$id.server.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/actions/scrims.$id.server.ts)) handles every mutation of the page. `defineAction` parses its inputs before the handler runs:
+
+```ts
+export const action = defineAction(
+	{ params: idObject, body: scrimIdActionSchema },
+	async ({ params: { id }, body }) => {
+		const post = notFoundIfNullish(await ScrimPostRepository.findById(id));
+		const user = requireUser();
+
+		requirePermission(post, "MANAGE_TRACKING");
+
+		switch (body._action) {
+			// ...
+			case "SUBMIT_MAP_LIST": {
+				const { viewerSide } = await loadMapByMapContext({ post, user });
+
+				const serializedPool =
+					body.source === "POOL"
+						? (MapPool.fromUserInput(body.serializedPool!)?.serialized ?? null)
+						: null;
+				errorToastIfFalsy(body.source !== "POOL" || serializedPool, "Invalid map pool");
+
+				await ScrimMapListRepository.submitMapListAndGenerateIfNeeded({
+					scrimPostId: post.id,
+					side: viewerSide,
+					// ...
+				});
+
+				broadcastRevalidate(post);
+				break;
+			}
+			// ...
+			default: {
+				assertUnreachable(body);
+			}
+		}
+
+		return null;
+	},
+);
+```
+
+- **Params** failing `idObject` are a 404.
+- **The body** is parsed with `scrimIdActionSchema`, the union of every `_action`'s schema of the page (`v.union([cancelScrimFormSchema, submitMapListFormSchema, reportMapSchema, …])`). The same schema the form validated with runs again on the server, the browser's check being only a convenience. On failure a SendouForm gets `{ fieldErrors }` back and shows them under the fields, any other submitter an error toast. In the handler `body` is typed and narrowed by `switch (body._action)`, with `assertUnreachable` making a forgotten case a type error.
+- **Authorization** is the handler's first job: the object is loaded and its `permissions` checked (403 otherwise). It is per object, so it can't be done by `defineAction`.
+- **Rule violations** a user can run into (`errorToastIfFalsy`, `errorToast`, e.g. tracking already locked) throw a redirect back to the page with an error toast, English only as a user following the UI shouldn't see them.
+- **The write** is one repository call: `submitMapListAndGenerateIfNeeded` upserts the side's list and generates the next map in one transaction ([ScrimMapListRepository.server.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/ScrimMapListRepository.server.ts)), so two sides submitting at once can't generate the same map twice.
+- **The return value** is `null`: the action has nothing to tell the page that rerunning its loader won't.
+
+## 8. Revalidation
+
+Two browsers have stale data after the write: the submitter's and the opponent's.
+
+**The submitter's** updates on its own. After a fetcher's action React Router reruns the loaders of the page, so `ScrimMatchActionTab` renders again with the side's list in `mapLists` and the generated map in `currentMap`, replacing the form with map reporting. The root loader opts out in its `shouldRevalidate` (in [root.tsx](https://github.com/sendou-ink/sendou.ink/blob/main/app/root.tsx)) unless the submission asks for it with `revalidateRoot`: the logged in user and the like don't change on most actions.
+
+**The opponent's** is told over Server-Sent Events. `broadcastRevalidate(post)` publishes a contentless `revalidate` event on the scrim's chat room channel:
+
+```ts
+function broadcastRevalidate(post: ScrimPost) {
+	if (!post.chatRoomId) return;
+	ChatSystemMessage.send({
+		channel: chatRoomChannel(post.chatRoomId),
+	});
+}
+```
+
+Every page subscribes to the channels of the rooms its loader returned as `chatRooms` (`ChatProvider`), which is how both sides of this scrim, and only they, hear about it. On the event the page reruns its loaders after a random delay of up to 1.5s so a busy channel doesn't make every client refetch at once, skipping the event when it was the user's own (their submission revalidated already). See "Real time" in [architecture.md](/dev/architecture/#real-time) and [ChatSystemMessage.server.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/chat/ChatSystemMessage.server.ts).
+
+No event carries data. The server only says "something changed", the loader stays the one place deciding what a page shows and who may see it.
+
+## Where it is tested
+
+Each layer has the test suited to it:
+
+- **Rules**: unit tests of the modules, [Scrim.test.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/core/Scrim.test.ts) and [ScrimMapByMap.test.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/core/ScrimMapByMap.test.ts).
+- **Schemas**: [scrims-schemas.test.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/scrims-schemas.test.ts).
+- **Queries**: repository tests against the test database, [ScrimMapListRepository.server.test.ts](https://github.com/sendou-ink/sendou.ink/blob/main/app/features/scrims/ScrimMapListRepository.server.test.ts).
+- **The whole flow**: the "Map-by-map" tests of [e2e/scrims.spec.ts](https://github.com/sendou-ink/sendou.ink/blob/main/e2e/scrims.spec.ts), both sides submitting their lists and playing the scrim through the UI. The docs site's Scrims E2E page shows them step by step with screenshots.

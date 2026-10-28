@@ -1,0 +1,109 @@
+<div class="living-tooltip" role="tooltip" hidden></div>
+<dialog class="living-lightbox" aria-label="Screenshot">
+	<img alt="" />
+	<p class="lightbox-caption"></p>
+</dialog>
+
+<script>
+	for (const toggle of document.querySelectorAll<HTMLInputElement>(
+		"[data-toggle-class]",
+	)) {
+		toggle.addEventListener("change", () => {
+			document.body.classList.toggle(toggle.dataset.toggleClass!, toggle.checked);
+		});
+	}
+
+	// a link into a collapsed e2e group opens it
+	const openTarget = () => {
+		const target = location.hash
+			? document.getElementById(decodeURIComponent(location.hash.slice(1)))
+			: null;
+		let opened = false;
+		for (
+			let group = target?.closest("details");
+			group;
+			group = group.parentElement?.closest("details")
+		) {
+			opened ||= !group.open;
+			group.open = true;
+		}
+		if (opened) target?.scrollIntoView();
+	};
+	openTarget();
+	window.addEventListener("hashchange", openTarget);
+
+	const tooltip = document.querySelector<HTMLElement>(".living-tooltip")!;
+	// out of the content column's stacking context, which the "On this page" sidebar paints over
+	document.body.append(tooltip);
+	const refTemplates = new Map(
+		[...document.querySelectorAll<HTMLTemplateElement>("template[data-ref-id]")].map(
+			(template) => [template.dataset.refId, template],
+		),
+	);
+	const refTemplateOf = (target: EventTarget | null) => {
+		const ref = target instanceof Element ? target.closest<HTMLElement>(".ref") : null;
+		const template = ref ? refTemplates.get(ref.dataset.ref) : undefined;
+		return ref && template ? { ref, template } : null;
+	};
+
+	document.addEventListener("mouseover", (event) => {
+		const match = refTemplateOf(event.target);
+		if (!match) {
+			tooltip.hidden = true;
+			return;
+		}
+
+		tooltip.innerHTML = match.template.innerHTML;
+		tooltip.hidden = false;
+
+		const anchor = match.ref.getBoundingClientRect();
+		const box = tooltip.getBoundingClientRect();
+		const fitsBelow = anchor.bottom + 8 + box.height < window.innerHeight;
+		tooltip.style.top = `${fitsBelow ? anchor.bottom + 8 : Math.max(8, anchor.top - 8 - box.height)}px`;
+		tooltip.style.left = `${Math.min(Math.max(8, anchor.left), window.innerWidth - box.width - 8)}px`;
+	});
+
+	document.addEventListener("click", (event) => {
+		const match = refTemplateOf(event.target);
+		if (match) window.open(match.template.dataset.href, "_blank", "noopener");
+	});
+
+	const lightbox = document.querySelector<HTMLDialogElement>(".living-lightbox")!;
+	document.addEventListener("click", (event) => {
+		const shot =
+			event.target instanceof Element
+				? event.target.closest<HTMLElement>("[data-shot]")
+				: null;
+		if (!shot) return;
+
+		lightbox.querySelector("img")!.src = shot.dataset.shot!;
+		lightbox.querySelector(".lightbox-caption")!.textContent =
+			shot.dataset.caption ?? "";
+		lightbox.showModal();
+	});
+	lightbox.addEventListener("click", () => lightbox.close());
+
+	for (const graph of document.querySelectorAll<SVGElement>(".graph")) {
+		for (const node of graph.querySelectorAll<SVGGElement>("[data-node]")) {
+			node.addEventListener("mouseenter", () => {
+				const id = node.dataset.node;
+				graph.classList.add("focusing");
+				node.classList.add("is-related");
+				for (const edge of graph.querySelectorAll<SVGPathElement>(".edge")) {
+					if (edge.dataset.from !== id && edge.dataset.to !== id) continue;
+					edge.classList.add("is-related");
+					const other = edge.dataset.from === id ? edge.dataset.to : edge.dataset.from;
+					graph
+						.querySelector(`[data-node="${CSS.escape(other ?? "")}"]`)
+						?.classList.add("is-related");
+				}
+			});
+			node.addEventListener("mouseleave", () => {
+				graph.classList.remove("focusing");
+				for (const related of graph.querySelectorAll(".is-related")) {
+					related.classList.remove("is-related");
+				}
+			});
+		}
+	}
+</script>

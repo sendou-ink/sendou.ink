@@ -1,0 +1,1437 @@
+{
+	"e2e/admin.spec.ts": {
+		"Admin panel › adds and deletes an external stream": [
+			"/admin/streams"
+		],
+		"Admin panel › grants roles, friend code and API access to a user": [
+			"/admin",
+			"/api",
+			"/art/new",
+			"/vods/new"
+		],
+		"Admin panel › grants tournament organizer role and patron status to a user": [
+			"/",
+			"/admin",
+			"/org/new"
+		],
+		"Admin panel › keeps the scroll position when an action shows a toast": [
+			"/admin"
+		],
+		"Admin panel › links a player, refreshes plus tiers and migrates an account": [
+			"/admin",
+			"/u/423456789012345678",
+			"/u/455039198672453645",
+			"/xsearch/player/1"
+		]
+	},
+	"e2e/analyzer.spec.ts": {
+		"Build Analyzer › analyzes a build and links to new build page with same abilities": [
+			"/analyzer",
+			"/u/455039198672453645/builds/new"
+		],
+		"Build Analyzer › compares builds": [
+			"/analyzer"
+		],
+		"Build Analyzer › keeps ability effects switched on while either build is edited": [
+			"/analyzer"
+		]
+	},
+	"e2e/api-public.spec.ts": {
+		"Public API - Write endpoints › adds member to tournament team via API": [
+			"/to/1/teams/1"
+		],
+		"Public API - Write endpoints › removes member from tournament team via API": [
+			"/to/1/teams/1"
+		],
+		"Public API › creates read API token and calls public endpoint": [
+			"/api"
+		]
+	},
+	"e2e/art.spec.ts": {
+		"Art › edits own art, unlinks from art made of them and deletes own art": [
+			"/art/new",
+			"/u/455039198672453645/art"
+		],
+		"Art › uploads art as NZAP, admin approves, art displays on user page": [
+			"/art/new",
+			"/u/455039198672453645/art",
+			"/upload/admin"
+		]
+	},
+	"e2e/associations.spec.ts": {
+		"Associations › creates a new association": [
+			"/",
+			"/associations",
+			"/associations/new"
+		],
+		"Associations › deletes an association": [
+			"/associations",
+			"/scrims"
+		],
+		"Associations › joins and leaves an association": [
+			"/associations"
+		],
+		"Associations › stars a member, who then takes over when the admin leaves": [
+			"/associations"
+		]
+	},
+	"e2e/auth.spec.ts": {
+		"Auth › a session of an account deleted by a migration falls back to logged out": [
+			"/",
+			"/notifications"
+		],
+		"Auth › log in button starts the Discord OAuth flow": [
+			"/",
+			"/auth"
+		],
+		"Auth › logs in via a log in link and logs out from the settings page": [
+			"/",
+			"/notifications",
+			"/settings"
+		]
+	},
+	"e2e/badges.spec.ts": {
+		"Badges › adds a badge owner sending a notification": [
+			"/",
+			"/badges/1",
+			"/badges/1/edit"
+		]
+	},
+	"e2e/ban.spec.ts": {
+		"User banning › banned user is redirected to suspended page and cannot access site": [
+			"/",
+			"/admin",
+			"/suspended"
+		],
+		"User banning › timed ban shows expiration date on suspended page": [
+			"/admin",
+			"/suspended"
+		]
+	},
+	"e2e/builds.spec.ts": {
+		"Builds › adds a build": [
+			"/u/455039198672453645/builds",
+			"/u/455039198672453645/builds/new"
+		],
+		"Builds › aggregates builds into ability stats and popular builds": [
+			"/builds",
+			"/builds/splattershot",
+			"/builds/splattershot/popular",
+			"/builds/splattershot/stats"
+		],
+		"Builds › edits build title, changes sorting and deletes a build": [
+			"/u/79237403620945920/builds",
+			"/u/79237403620945920/builds/new"
+		],
+		"Builds › filters builds": [
+			"/builds",
+			"/builds/splattershot"
+		],
+		"Builds › makes build private": [
+			"/u/79237403620945920/builds",
+			"/u/79237403620945920/builds/new"
+		]
+	},
+	"e2e/calendar.spec.ts": {
+		"Calendar › applies filters and operates hidden events toggle": [
+			"/calendar"
+		],
+		"Calendar › browser back returns to the previous step of the tournament form": [
+			"/calendar/new"
+		],
+		"Calendar › copies a tournament keeping its follow-up bracket the same time after the start": [
+			"/calendar/new",
+			"/to/2/info"
+		],
+		"Calendar › copies a tournament keeping registration open until the same time before the new start": [
+			"/calendar/new",
+			"/to/2/info",
+			"/to/2/register"
+		],
+		"Calendar › creates a new tournament with a map pool and follow-up bracket": [
+			"/calendar/new",
+			"/to/1/brackets",
+			"/to/1/info",
+			"/to/1/rules"
+		],
+		"Calendar › creates a team picked tournament with a custom map pool": [
+			"/calendar/new",
+			"/to/1/info",
+			"/to/1/rules"
+		],
+		"Calendar › creates, edits and deletes a calendar event": [
+			"/calendar",
+			"/calendar/1",
+			"/calendar/new"
+		],
+		"Calendar › navigates view more buttons": [
+			"/calendar"
+		],
+		"Calendar › reports winners of a past event": [
+			"/calendar/1",
+			"/calendar/1/report-winners"
+		],
+		"Calendar › sets default filters": [
+			"/calendar"
+		]
+	},
+	"e2e/chat.spec.ts": {
+		"Chat › A closed room is readable by staff and denied to its participants": [
+			"/q/match/1"
+		],
+		"Chat › A message sent before the event stream connected still arrives": [
+			"/q/match/1"
+		],
+		"Chat › A system message renders live and moves the rooms to the inactive list": [
+			"/"
+		],
+		"Chat › An observer coming back to a match chat sees what was said while they were away": [
+			"/to/1/brackets",
+			"/to/1/matches/1"
+		],
+		"Chat › An observer's message counts as unread away from the room's page": [
+			"/"
+		],
+		"Chat › Leaving a group takes its chat out of the sidebar without a reload": [
+			"/q",
+			"/q/looking"
+		],
+		"Chat › Mobile: a chat panel opened before hydration fills in": [
+			"/q/match/1"
+		],
+		"Chat › Mobile: the chat waits behind the tab bar, then opens straight into the room": [
+			"/q/match/1"
+		],
+		"Chat › Read state follows the user, not the device they read on": [
+			"/q/match/1"
+		],
+		"Chat › Send and receive: a message crosses between two participants live": [
+			"/q/match/1"
+		],
+		"Chat › Sends still in flight when the next one is fired all land": [
+			"/q/match/1"
+		],
+		"Chat › Split view: a participant gets the match and their own group chat, never the opponent's": [
+			"/q/match/1"
+		],
+		"Chat › Staff observer: chats in the match room, reads the group chats": [
+			"/q/match/1"
+		],
+		"Chat › Tablet: the chat is a modal, and leaving the page or the layout closes it": [
+			"/",
+			"/q/match/1"
+		],
+		"Chat › Tournament organizer posts into a match chat and is labelled": [
+			"/to/1/matches/1"
+		],
+		"Chat › Unread badge: counts messages arriving while the sidebar is closed and clears on open": [
+			"/q/match/1"
+		]
+	},
+	"e2e/comp-analyzer.spec.ts": {
+		"Composition Analyzer › analysis sections appear and can be collapsed": [
+			"/comp-analyzer"
+		],
+		"Composition Analyzer › damage combo sliders and filtering work correctly": [
+			"/comp-analyzer"
+		],
+		"Composition Analyzer › weapon grid controls and categorization": [
+			"/comp-analyzer"
+		],
+		"Composition Analyzer › weapon selection, removal, and URL persistence": [
+			"/comp-analyzer"
+		]
+	},
+	"e2e/events.spec.ts": {
+		"Events › filters between tabs and navigates to an event": [
+			"/events",
+			"/to/2/info"
+		],
+		"My schedule › copies last week's ranges into the current week": [
+			"/events"
+		],
+		"My schedule › crosses over to the team schedule and back, keeping the week": [
+			"/events",
+			"/t/team-olive/schedule"
+		],
+		"My schedule › opens the day editor on the click following a drag": [
+			"/events"
+		],
+		"My schedule › paints a range reaching past the hours the tracks show": [
+			"/events"
+		],
+		"My schedule › saves a week, edits it and submits an empty week": [
+			"/events"
+		],
+		"My schedule › shows a commitment as a locked block on the editor": [
+			"/events"
+		],
+		"Schedule visibility › stops friends seeing the schedule, then opens it up to a team joined later": [
+			"/events",
+			"/friends",
+			"/t/team-olive/schedule"
+		]
+	},
+	"e2e/friends.spec.ts": {
+		"Friends › Pinning › pinned friends sort to the top of their section, on the page and in the sidebar": [
+			"/friends"
+		],
+		"Friends › Requests › a sent request shows as pending to both users": [
+			"/friends"
+		],
+		"Friends › Requests › accepting a request marks its notification read without opening the bell": [
+			"/friends"
+		],
+		"Friends › Requests › deleting a friend removes them from the list": [
+			"/friends"
+		],
+		"Friends › Weekly schedule › a friend's week shows when they are free, not what they are doing": [
+			"/friends"
+		],
+		"Friends › Weekly schedule › friends who shared a schedule sort above those who didn't": [
+			"/friends"
+		]
+	},
+	"e2e/global-search.spec.ts": {
+		"Global search › searches for users and organizations": [
+			"/",
+			"/org/sendouink",
+			"/u/79237403620945920"
+		],
+		"Global search › searches for weapons": [
+			"/",
+			"/builds/splattershot"
+		]
+	},
+	"e2e/leaderboards.spec.ts": {
+		"Leaderboards › shows qualified players, teams and X Battle placements across the leaderboard views and the season boundary": [
+			"/leaderboards"
+		]
+	},
+	"e2e/lfg.spec.ts": {
+		"LFG › adds a new lfg post": [
+			"/",
+			"/lfg",
+			"/lfg/new"
+		],
+		"LFG › creates post with custom languages": [
+			"/lfg",
+			"/lfg/new"
+		],
+		"LFG › edits post languages": [
+			"/lfg",
+			"/lfg/new"
+		],
+		"LFG › filters posts by language": [
+			"/lfg",
+			"/lfg/new"
+		]
+	},
+	"e2e/map-tools.spec.ts": {
+		"Map List Generator › generates a map list from a custom map pool": [
+			"/maps"
+		],
+		"Map Planner › restores a downloaded plan file when it is opened": [
+			"/plans"
+		],
+		"Map Planner › restores the plan and the selected stage after a reload": [
+			"/plans"
+		],
+		"Map Planner › sets a stage background and adds a weapon to the canvas": [
+			"/plans"
+		],
+		"Map Planner › shows an error when the opened plan file is invalid": [
+			"/plans"
+		]
+	},
+	"e2e/mobile-smoke.spec.ts": {
+		"Mobile smoke › moves through common pages via the mobile nav and saves a setting": [
+			"/",
+			"/builds",
+			"/calendar",
+			"/settings",
+			"/to/1/info",
+			"/u/455039198672453645"
+		]
+	},
+	"e2e/navigation.spec.ts": {
+		"Navigation without JavaScript › mobile navigation": [
+			"/",
+			"/q"
+		],
+		"Navigation without JavaScript › my team shortcut navigates to the team page on desktop": [
+			"/",
+			"/t/team-1"
+		],
+		"Navigation › desktop navigation": [
+			"/",
+			"/analyzer",
+			"/builds",
+			"/q"
+		],
+		"Navigation › mobile navigation": [
+			"/",
+			"/q"
+		],
+		"Navigation › mobile you panel shows the user and their team shortcut": [
+			"/",
+			"/t/team-1"
+		],
+		"Navigation › my team shortcut navigates to the team page on desktop": [
+			"/",
+			"/t/team-1"
+		],
+		"Navigation › tablet navigation": [
+			"/"
+		]
+	},
+	"e2e/notifications.spec.ts": {
+		"Notifications › opening the popover clears the bell dot but keeps the unseen dots listed": [
+			"/"
+		]
+	},
+	"e2e/object-damage-calculator.spec.ts": {
+		"Object Damage Calculator › changes weapon and saves it to url": [
+			"/object-damage-calculator"
+		],
+		"Object Damage Calculator › multiplier switch increases damage": [
+			"/object-damage-calculator"
+		],
+		"Object Damage Calculator › object hp increases when ability points added": [
+			"/object-damage-calculator"
+		],
+		"Object Damage Calculator › operates damage type select, max damage > min damage": [
+			"/object-damage-calculator"
+		],
+		"Object Damage Calculator › picks a sub weapon from its own category": [
+			"/object-damage-calculator"
+		]
+	},
+	"e2e/org.spec.ts": {
+		"Tournament Organization › allows member of established org to create tournament": [
+			"/calendar/new",
+			"/org/sendouink"
+		],
+		"Tournament Organization › banned player cannot join a tournament of that organization": [
+			"/org/sendouink",
+			"/to/1/info",
+			"/to/1/register"
+		],
+		"Tournament Organization › can create a new organization": [
+			"/",
+			"/org/new",
+			"/org/test-organization"
+		],
+		"Tournament Organization › shows org admin the stats counting a played tournament's participants": [
+			"/org/sendouink",
+			"/org/sendouink/stats"
+		],
+		"Tournament Organization › user can be promoted to admin gaining org controls and can edit tournaments": [
+			"/calendar/new",
+			"/org/sendouink",
+			"/org/sendouink/edit",
+			"/to/1/admin",
+			"/to/1/info"
+		]
+	},
+	"e2e/params.spec.ts": {
+		"Weapon parameters › patch history tab persists across refresh (via weapon search)": [
+			"/",
+			"/params/splattershot"
+		],
+		"Weapon parameters › table filtering, comparison bar graph and history rows (via Analyzer)": [
+			"/analyzer",
+			"/params/splattershot"
+		]
+	},
+	"e2e/plus.spec.ts": {
+		"Plus Server › member suggests a user, members vote and results decide the memberships": [
+			"/plus/suggestions",
+			"/plus/suggestions/comment/1/276",
+			"/plus/suggestions/new",
+			"/plus/voting",
+			"/plus/voting/results"
+		],
+		"Plus Server › user without a plus tier cannot suggest, comment or vote": [
+			"/plus/suggestions",
+			"/plus/suggestions/comment/1/276",
+			"/plus/suggestions/new",
+			"/plus/voting"
+		],
+		"Plus Server › votes with the S and K keys, but not while using global search": [
+			"/plus/voting"
+		]
+	},
+	"e2e/public-pages.spec.ts": {
+		"Public pages › lists articles and renders one by slug": [
+			"/a",
+			"/a/results-from-riptide-2025"
+		],
+		"Public pages › prompts a logged out visitor to log in when using search or a filter": [
+			"/builds/splattershot"
+		],
+		"Public pages › redirects moved URLs, renders 404 for unknown ones and serves the calendar feed": [
+			"/",
+			"/this-page-does-not-exist"
+		],
+		"Public pages › renders public pages for a logged-out visitor": [
+			"/",
+			"/builds",
+			"/builds/splattershot",
+			"/calendar",
+			"/contributions",
+			"/faq",
+			"/links",
+			"/scanner",
+			"/support",
+			"/to/1/info",
+			"/u/123456789012345678"
+		]
+	},
+	"e2e/q-pages.spec.ts": {
+		"SendouQ pages › rules, info and tiers pages render their content": [
+			"/q/info",
+			"/q/rules",
+			"/tiers"
+		],
+		"SendouQ pages › streams page shows the empty state, then a seeded live match": [
+			"/q/streams"
+		]
+	},
+	"e2e/scanner-coach.spec.ts": {
+		"Scanner coach mode › opens a scanned file's game in coach mode and plays it again after a reload": [
+			"/scanner"
+		],
+		"Scanner coach mode › steps through a saved scan's coach events and coaches a cast from either team": [
+			"/scanner"
+		]
+	},
+	"e2e/scanner-live.spec.ts": {
+		"Scanner live capture › captures a game from a capture card into a session": [
+			"/scanner"
+		],
+		"Scanner live capture › refuses to capture in a second tab while one is capturing": [
+			"/scanner"
+		],
+		"Scanner live capture › tells when no capture card is connected": [
+			"/scanner"
+		],
+		"Scanner live capture › uploads a captured game, linking it to the SendouQ match it was played in": [
+			"/q/match/1",
+			"/scanner"
+		]
+	},
+	"e2e/scanner.spec.ts": {
+		"Scanner › asks a logged out visitor to log in before adding a scanned file to VoDs": [
+			"/scanner"
+		],
+		"Scanner › deletes a scanned file": [
+			"/scanner"
+		],
+		"Scanner › downloads a scanned game's frames and reads as a zip": [
+			"/scanner"
+		],
+		"Scanner › exports the scanned matches as CSV": [
+			"/scanner"
+		],
+		"Scanner › prefills a new VoD from a scanned file": [
+			"/scanner",
+			"/vods/new"
+		],
+		"Scanner › reads a screenshot in the debug view": [
+			"/scanner"
+		],
+		"Scanner › scans a file into a match card that survives a reload": [
+			"/scanner"
+		],
+		"Scanner › tells when an opened VoD is no longer saved": [
+			"/scanner"
+		]
+	},
+	"e2e/scrims.spec.ts": {
+		"Scrims › Accepting › accepting resolves the request notification and notifies the requester": [
+			"/",
+			"/scrims",
+			"/scrims/1"
+		],
+		"Scrims › Accepting › auto-cancels overlapping pending scrims when a scrim is booked": [
+			"/scrims",
+			"/scrims/new"
+		],
+		"Scrims › Availability › picks a start and its flexibility from the roster's shared free time": [
+			"/scrims/new"
+		],
+		"Scrims › Availability › shows how much of the viewer's roster could play a post": [
+			"/scrims"
+		],
+		"Scrims › Canceling › cancels a scrim and shows canceled status": [
+			"/scrims",
+			"/scrims/1"
+		],
+		"Scrims › Filters › filters by div and sets the filter as default": [
+			"/scrims"
+		],
+		"Scrims › Map-by-map › plays a scrim map by map": [
+			"/scrims/1"
+		],
+		"Scrims › Posting › a post limited to an association is marked as such and its owner can delete it": [
+			"/",
+			"/scrims",
+			"/scrims/new"
+		],
+		"Scrims › Posting › a post's start window and tournament maps show on its card": [
+			"/scrims",
+			"/scrims/new"
+		],
+		"Scrims › Posting › reuses a pick-up saved from an earlier scrim post": [
+			"/scrims",
+			"/scrims/new"
+		],
+		"Scrims › Requests › a request to a post with a start window picks the start and can carry a message": [
+			"/scrims"
+		],
+		"Scrims › Requests › requests a post and withdraws the request": [
+			"/scrims"
+		]
+	},
+	"e2e/sendouq-match.spec.ts": {
+		"SendouQ match page › Auto-resolve: day-old match the other team never confirmed is confirmed": [
+			"/q/match/1"
+		],
+		"SendouQ match page › Auto-resolve: day-old match with no score reported is canceled": [
+			"/q/match/1"
+		],
+		"SendouQ match page › Cancel flow: request, refused, re-request, accepted locks match and sends webhook": [
+			"/q/match/1"
+		],
+		"SendouQ match page › Rejoin after cancel: the player both teams blamed is voted out of the requeue": [
+			"/q/looking",
+			"/q/match/1"
+		],
+		"SendouQ match page › Rejoin after cancel: trusted group requeues with the blamed member": [
+			"/q/looking",
+			"/q/match/1"
+		],
+		"SendouQ match page › Rejoin vote: 'no' shows rejoin queue button that rejoins directly": [
+			"/q/looking",
+			"/q/match/1"
+		],
+		"SendouQ match page › Rejoin vote: cascade wipes yes on no, revote completes and rejoins": [
+			"/q/looking",
+			"/q/match/1"
+		],
+		"SendouQ match page › Rejoin vote: changing a yes vote to no takes effect": [
+			"/q/match/1"
+		],
+		"SendouQ match page › Rejoin vote: queueing solo after voting yes shows the rest a no": [
+			"/q",
+			"/q/looking",
+			"/q/match/1"
+		],
+		"SendouQ match page › Rejoin: trusted group one-click look again": [
+			"/q/looking",
+			"/q/match/1"
+		],
+		"SendouQ match page › Score reporting: report, undo, weapon report, confirm": [
+			"/q/match/1"
+		],
+		"SendouQ match page › Staff score confirm: confirms participant's 4-0 set-ender locks match": [
+			"/q/match/1"
+		],
+		"SendouQ match page › Staff score report: non-participant staff force-reports and locks match": [
+			"/q/match/1"
+		]
+	},
+	"e2e/sendouq.spec.ts": {
+		"SendouQ › A ready check outliving the season doesn't turn into a match": [
+			"/q",
+			"/q/ready"
+		],
+		"SendouQ › A team's map preferences decide its modes and the maps it is given": [
+			"/q/looking",
+			"/q/match/1",
+			"/q/ready"
+		],
+		"SendouQ › Changing match preferences cancels pending requests": [
+			"/q/looking",
+			"/settings"
+		],
+		"SendouQ › Group preparation flow - add friends and users via invite link": [
+			"/q",
+			"/q/looking",
+			"/q/preparing"
+		],
+		"SendouQ › Joining the queue is blocked when the season's initial powers were never seeded": [
+			"/q"
+		],
+		"SendouQ › Leaving takes the quick added friends along but not who joined on their own": [
+			"/q",
+			"/q/looking",
+			"/q/preparing"
+		],
+		"SendouQ › On a phone sized screen › Suggesting floats the group without dragging the viewer's scroll position along": [
+			"/q/looking"
+		],
+		"SendouQ › Previewing the queue is only for supporters": [
+			"/q"
+		],
+		"SendouQ › Previewing the queue shows the groups without any way to act on them": [
+			"/q/looking"
+		],
+		"SendouQ › Ready check expiring sends the groups back to looking and lets them kick who missed it": [
+			"/q/looking"
+		],
+		"SendouQ › Ready check flow - both groups confirm and the match starts": [
+			"/q/looking",
+			"/q/match/1",
+			"/q/ready"
+		],
+		"SendouQ › Request flow - partial groups morph together": [
+			"/q/looking"
+		],
+		"SendouQ › Suggesting floats a group to the top and leaves a trail for the group": [
+			"/q/looking"
+		],
+		"SendouQ › The season ending takes the groups out of the queue": [
+			"/q",
+			"/q/looking"
+		]
+	},
+	"e2e/settings.spec.ts": {
+		"Match profile map preferences › can save 'zones only' after a now-avoided mode previously had a map pool": [
+			"/settings"
+		],
+		"Match profile map preferences › retains map selection when toggling a mode prefer -> avoid -> prefer": [
+			"/settings"
+		],
+		"Settings › persists sound settings and dark/light theme across reload": [
+			"/settings"
+		],
+		"Settings › shows in-game names in the picked game language and the rest in the site's language": [
+			"/builds/luna-blaster",
+			"/settings"
+		],
+		"Settings › switches language to Japanese, persists it across pages and restores English": [
+			"/faq",
+			"/settings"
+		],
+		"Settings › updates 'disableBuildAbilitySorting'": [
+			"/builds/luna-blaster",
+			"/settings"
+		],
+		"Settings › updates clock format preference": [
+			"/calendar",
+			"/settings"
+		],
+		"Spoiler-free mode › censors bracket and reveals on click": [
+			"/settings",
+			"/to/1/brackets",
+			"/to/1/results"
+		],
+		"Spoiler-free mode › results page is censored and can be revealed": [
+			"/settings",
+			"/to/1/results"
+		]
+	},
+	"e2e/sidebar-events.spec.ts": {
+		"Sidebar events › caps at five events and View all opens the events page": [
+			"/",
+			"/events"
+		],
+		"Sidebar events › scrim rows show their status and link to the right place": [
+			"/",
+			"/scrims",
+			"/scrims/1"
+		],
+		"Sidebar events › shows an empty state without upcoming events": [
+			"/"
+		],
+		"Sidebar events › shows my tournaments, my scrims and saved events, soonest first": [
+			"/",
+			"/to/2/info"
+		]
+	},
+	"e2e/sidebar-friends.spec.ts": {
+		"Sidebar form factors › collapsing the sidebar sticks across reloads": [
+			"/"
+		],
+		"Sidebar form factors › mobile panels show the same data as the desktop sidebar": [
+			"/",
+			"/events"
+		],
+		"Sidebar form factors › tablet shows the same sidebar in a modal": [
+			"/",
+			"/u/1113617910988800003"
+		],
+		"Sidebar friend streams › a casted match whose caster is offline is not live": [
+			"/"
+		],
+		"Sidebar friend streams › a friend waiting for their next match is never live": [
+			"/"
+		],
+		"Sidebar friend streams › picks the best available stream for a friend's tournament match": [
+			"/"
+		],
+		"Sidebar friend streams › shows no stream when nobody streams the friend's match": [
+			"/"
+		],
+		"Sidebar friend streams › shows the stream of a friend's SendouQ match": [
+			"/",
+			"/q/match/1"
+		],
+		"Sidebar friend streams › watch stream opens Twitch, not an in-app error page": [
+			"/"
+		],
+		"Sidebar friends › friend menu actions of SendouQ friends land on a real page": [
+			"/",
+			"/q/looking",
+			"/q/match/1",
+			"/u/1113617910988800004"
+		],
+		"Sidebar friends › friend menu actions of tournament friends land on a real page": [
+			"/",
+			"/to/1/looking",
+			"/to/2/matches/1",
+			"/to/3/brackets"
+		],
+		"Sidebar friends › shows an empty state for both logged out and friendless users": [
+			"/"
+		],
+		"Sidebar friends › shows four friends on desktop, eight in the mobile panel": [
+			"/",
+			"/friends"
+		],
+		"Sidebar friends › shows what each friend is doing right now": [
+			"/"
+		],
+		"Sidebar friends › unseen friend requests show as a badge": [
+			"/",
+			"/friends"
+		]
+	},
+	"e2e/sidebar-streams.spec.ts": {
+		"Sidebar streams › live tournament streams link to the tournament's streams page": [
+			"/",
+			"/to/1/streams"
+		],
+		"Sidebar streams › shows an empty state without streams": [
+			"/"
+		],
+		"Sidebar streams › shows at most five streams, best first": [
+			"/"
+		],
+		"Sidebar streams › shows streams to logged out visitors": [
+			"/",
+			"/to/1/streams"
+		],
+		"Sidebar streams › upcoming tournaments sit under the Upcoming divider and can be saved": [
+			"/"
+		],
+		"Sidebar streams › x rank streamers link straight to Twitch": [
+			"/"
+		]
+	},
+	"e2e/team.spec.ts": {
+		"New team creation › creates new team": [
+			"/",
+			"/t/chimera",
+			"/t/new"
+		],
+		"Team page › deletes team": [
+			"/",
+			"/t/alliance-rogue"
+		],
+		"Team page › edit team info": [
+			"/t/alliance-rogue",
+			"/t/alliance-rogue/edit",
+			"/t/better-alliance-rogue"
+		],
+		"Team page › edits and removes team map preferences": [
+			"/t/alliance-rogue/edit"
+		],
+		"Team page › joins a secondary team, makes main team & leaves making the seconary team the main one": [
+			"/t/team-olive",
+			"/t/team-olive/join",
+			"/t/team-olive/roster",
+			"/u/79237403620945920"
+		],
+		"Team page › kicks a member & changes a role": [
+			"/t/alliance-rogue",
+			"/t/alliance-rogue/roster"
+		],
+		"Team page › makes another user editor, who can edit the page & becomes owner after the original leaves": [
+			"/t/alliance-rogue",
+			"/t/alliance-rogue/edit",
+			"/t/alliance-rogue/roster"
+		],
+		"Team page › reorders members via move buttons": [
+			"/t/alliance-rogue",
+			"/t/alliance-rogue/roster"
+		],
+		"Team page › resets invite code, joins team, leaves, rejoins": [
+			"/t/alliance-rogue",
+			"/t/alliance-rogue/join",
+			"/t/alliance-rogue/roster"
+		],
+		"Team page › sets a custom role for a member": [
+			"/t/alliance-rogue",
+			"/t/alliance-rogue/roster"
+		],
+		"Team page › shows a finalized tournament placement on the results page": [
+			"/t/alliance-rogue",
+			"/t/alliance-rogue/results"
+		],
+		"Team schedule › hides the schedule from non-members, a friend of a member included": [
+			"/t/alliance-rogue/schedule"
+		],
+		"Team schedule › member sees the heatmap, the grid states and playable windows": [
+			"/t/alliance-rogue",
+			"/t/alliance-rogue/schedule"
+		],
+		"Team schedule › owner adds, edits and deletes a team event, a regular member only sees it": [
+			"/t/alliance-rogue/schedule"
+		]
+	},
+	"e2e/tier-list-maker.spec.ts": {
+		"Tier List Maker › click to place mode adds items to the selected tier": [
+			"/tier-list-maker"
+		],
+		"Tier List Maker › tiers are reordered by dragging their handle": [
+			"/tier-list-maker"
+		],
+		"Tier List Maker › toggles work, items can be dragged, and state persists after reload": [
+			"/tier-list-maker"
+		]
+	},
+	"e2e/top-search.spec.ts": {
+		"Top search › navigates from user page to x search player page to x search": [
+			"/u/79237403620945920",
+			"/xsearch",
+			"/xsearch/player/1"
+		],
+		"Top search › views different x rank placements": [
+			"/xsearch"
+		]
+	},
+	"e2e/tournament-ab-divisions.spec.ts": {
+		"Tournament A/B divisions › assigns 6A/6B, lists the division on the divisions page, starts bracket, renders 36 matches across 6 rounds and two standings tables": [
+			"/to/1/admin/seeds",
+			"/to/1/brackets"
+		]
+	},
+	"e2e/tournament-admin.spec.ts": {
+		"Tournament admin bracket progression editing › edits an unstarted follow-up bracket while the started bracket stays locked": [
+			"/to/1/admin",
+			"/to/1/admin/brackets"
+		],
+		"Tournament admin team management › adds a new team and records it in the audit log": [
+			"/to/1/admin",
+			"/to/1/admin/audit",
+			"/to/1/admin/registration"
+		],
+		"Tournament admin team management › adds a sub post on behalf of a user": [
+			"/to/1/admin",
+			"/to/1/looking"
+		],
+		"Tournament admin team management › adds a sub post on behalf of a user whose team dropped out": [
+			"/to/1/admin",
+			"/to/1/looking"
+		],
+		"Tournament admin team management › edits a registration, checks a team in and out, unregisters it and records it in the audit log": [
+			"/to/1/admin",
+			"/to/1/admin/audit",
+			"/to/1/admin/registration/1",
+			"/to/1/teams/1"
+		],
+		"Tournament admin team management › exports the team list": [
+			"/to/1/admin"
+		],
+		"Tournament admin team management › filters the team list by name and by captain Discord id": [
+			"/to/1/admin"
+		],
+		"Tournament admin team management › imports a roster from another tournament and registers it": [
+			"/to/1/admin",
+			"/to/1/admin/registration",
+			"/to/1/teams"
+		],
+		"Tournament admin team management › sets the counterpick map pool of a team that has none, rejects an incomplete edit to it and then edits it": [
+			"/to/1/admin",
+			"/to/1/admin/registration/1",
+			"/to/1/teams/1"
+		]
+	},
+	"e2e/tournament-bracket-elimination.spec.ts": {
+		"Tournament bracket elimination › completes and finalizes a small tournament with badge assigning": [
+			"/notifications",
+			"/to/1/brackets",
+			"/to/1/brackets/finalize",
+			"/to/1/matches/1",
+			"/to/1/results",
+			"/u/79237403620945920/results"
+		],
+		"Tournament bracket elimination › dropping team out ends ongoing match early and auto-forfeits losers bracket match": [
+			"/to/1/admin",
+			"/to/1/brackets",
+			"/to/1/matches/1",
+			"/to/1/matches/2",
+			"/to/1/matches/4"
+		],
+		"Tournament bracket elimination › locks/unlocks matches & sets match as casted": [
+			"/to/1/admin",
+			"/to/1/admin/stream",
+			"/to/1/brackets",
+			"/to/1/matches/1",
+			"/to/1/matches/2",
+			"/to/1/matches/3"
+		],
+		"Tournament bracket elimination › losers bracket team winning grand finals forces a bracket reset": [
+			"/to/1/brackets",
+			"/to/1/matches/1",
+			"/to/1/matches/2",
+			"/to/1/matches/3",
+			"/to/1/matches/4",
+			"/to/1/matches/5",
+			"/to/1/matches/6",
+			"/to/1/matches/7"
+		],
+		"Tournament bracket elimination › reports score and sees bracket update": [
+			"/to/1/brackets",
+			"/to/1/matches/1",
+			"/to/1/matches/2",
+			"/to/1/matches/4"
+		],
+		"Tournament bracket elimination › resets bracket": [
+			"/to/1/admin",
+			"/to/1/admin/brackets",
+			"/to/1/brackets",
+			"/to/1/matches/2"
+		]
+	},
+	"e2e/tournament-bracket-grouped-elimination.spec.ts": {
+		"Tournament bracket grouped elimination › builds a grouped double elimination with rounds left unplayed": [
+			"/calendar/new",
+			"/to/1/info"
+		],
+		"Tournament bracket grouped elimination › finalizes a tournament with co-winners, each of them getting the trophy": [
+			"/to/1/brackets",
+			"/to/1/brackets/finalize"
+		],
+		"Tournament bracket grouped elimination › plays double elimination groups into a redemption and a top cut": [
+			"/to/1/brackets",
+			"/to/1/brackets/finalize"
+		]
+	},
+	"e2e/tournament-bracket-multi-stage.spec.ts": {
+		"Tournament bracket multi stage › changes SOS format and progresses with it & adds a member to another team": [
+			"/calendar/new",
+			"/to/1/admin",
+			"/to/1/admin/registration/3",
+			"/to/1/brackets",
+			"/to/1/info",
+			"/to/1/matches/1",
+			"/to/1/matches/2",
+			"/to/1/matches/3",
+			"/to/1/matches/4",
+			"/to/1/matches/5",
+			"/to/1/matches/6",
+			"/to/1/matches/7",
+			"/to/1/teams"
+		],
+		"Tournament bracket multi stage › completes and finalizes a small tournament (RR->SE w/ underground bracket)": [
+			"/to/1/admin",
+			"/to/1/brackets",
+			"/to/1/brackets/finalize",
+			"/to/1/matches/11"
+		],
+		"Tournament bracket multi stage › conducts a tournament with many starting brackets": [
+			"/calendar/new",
+			"/to/1/admin",
+			"/to/1/admin/seeds",
+			"/to/1/brackets",
+			"/to/1/info"
+		],
+		"Tournament bracket multi stage › offers check out until the team's starting bracket starts and drop out after": [
+			"/to/1/admin",
+			"/to/1/brackets"
+		],
+		"Tournament bracket multi stage › plays out a redemption bracket set up in the tournament creation form": [
+			"/calendar/new",
+			"/to/1/brackets",
+			"/to/1/info",
+			"/to/1/matches/13"
+		],
+		"Tournament bracket multi stage › prepares maps (including third place match linking)": [
+			"/to/1/brackets"
+		],
+		"Tournament bracket multi stage › seeds the follow-up single elimination so group rivals rematch as late as possible": [
+			"/to/1/brackets",
+			"/to/2/brackets"
+		],
+		"Tournament bracket multi stage › shows tournament results on user profile after finalized tournament": [
+			"/to/1/brackets",
+			"/to/1/results",
+			"/to/1/teams/1",
+			"/u/1113617910988800003",
+			"/u/1113617910988800003/results",
+			"/u/1113617910988800003/seasons"
+		],
+		"Tournament bracket multi stage › starts a starting bracket with the maps prepared for another starting bracket": [
+			"/to/1/brackets"
+		]
+	},
+	"e2e/tournament-bracket-pick-ban.spec.ts": {
+		"Tournament bracket pick/ban › ban/pick BAN_2": [
+			"/to/1/brackets",
+			"/to/1/matches/2"
+		],
+		"Tournament bracket pick/ban › ban/pick COUNTERPICK": [
+			"/to/1/brackets",
+			"/to/1/matches/2"
+		],
+		"Tournament bracket pick/ban › ban/pick COUNTERPICK_MODE_REPEAT_OK": [
+			"/to/1/brackets",
+			"/to/1/matches/2"
+		],
+		"Tournament bracket pick/ban › ban/pick CUSTOM flow": [
+			"/to/1/brackets",
+			"/to/1/matches/2"
+		]
+	},
+	"e2e/tournament-bracket-round-robin.spec.ts": {
+		"Tournament bracket round robin › changes to picked map pool & best of": [
+			"/calendar/new",
+			"/to/1/admin",
+			"/to/1/brackets",
+			"/to/1/info",
+			"/to/1/matches/1"
+		],
+		"Tournament bracket round robin › hosts a 'play all' round robin stage": [
+			"/to/1/brackets",
+			"/to/1/matches/1"
+		],
+		"Tournament bracket round robin › organizer edits a match after it is done": [
+			"/to/1/brackets",
+			"/to/1/info",
+			"/to/1/matches/1"
+		],
+		"Tournament bracket round robin › reopening round robin match does not lock already-unlocked matches (issue #2690)": [
+			"/to/1/brackets",
+			"/to/1/matches/1",
+			"/to/1/matches/3"
+		],
+		"Tournament bracket round robin › reopens round robin match and changes score": [
+			"/to/1/brackets",
+			"/to/1/matches/2"
+		],
+		"Tournament bracket round robin › starts a round robin bracket with unevenly sized groups (5 teams)": [
+			"/to/1/brackets"
+		],
+		"Tournament bracket round robin › user no screen setting affects tournament match": [
+			"/settings",
+			"/to/1/brackets",
+			"/to/1/matches/1",
+			"/to/1/matches/2"
+		]
+	},
+	"e2e/tournament-bracket-swiss.spec.ts": {
+		"Tournament bracket swiss › swiss tournament with bracket advancing/unadvancing & dropping out a team": [
+			"/to/1/admin",
+			"/to/1/brackets",
+			"/to/1/matches/1",
+			"/to/1/matches/2",
+			"/to/1/matches/3",
+			"/to/1/matches/4"
+		],
+		"Tournament bracket swiss › swiss tournament with early advance replaying & giving a bye to a lone team": [
+			"/to/1/brackets",
+			"/to/1/matches/1",
+			"/to/1/matches/3",
+			"/to/1/matches/5"
+		]
+	},
+	"e2e/tournament-bracket.spec.ts": {
+		"Tournament bracket › adds a sub mid tournament": [
+			"/to/1/brackets",
+			"/to/1/join",
+			"/to/1/teams/3"
+		],
+		"Tournament bracket › can end set early when past time limit and shows timer on bracket and match page": [
+			"/to/1/brackets",
+			"/to/1/matches/1"
+		],
+		"Tournament bracket › only asks for weapons of the maps played": [
+			"/to/1/matches/1"
+		],
+		"Tournament bracket › sets active roster as regular member": [
+			"/to/1/matches/1"
+		],
+		"Tournament bracket › shows a result reported while the app was suspended": [
+			"/to/1/brackets"
+		]
+	},
+	"e2e/tournament-invitational.spec.ts": {
+		"Invitational tournament › member added by the TO can't leave the team": [
+			"/to/1/admin",
+			"/to/1/admin/registration",
+			"/to/1/register"
+		],
+		"Invitational tournament › team can't register on their own, the TO adds them instead": [
+			"/to/1/admin",
+			"/to/1/admin/registration",
+			"/to/1/register",
+			"/to/1/teams"
+		]
+	},
+	"e2e/tournament-league.spec.ts": {
+		"Tournament league › a league of several divisions lists them on the divisions page": [
+			"/to/1/divisions"
+		],
+		"Tournament league › a set can't be played before the teams agree on a time or the round is playable": [
+			"/to/1/matches/1"
+		],
+		"Tournament league › teams agree on a time, decline a reschedule, the organizer overrides it and the set gets played": [
+			"/to/1/matches",
+			"/to/1/matches/1"
+		]
+	},
+	"e2e/tournament-lfg.spec.ts": {
+		"Tournament LFG › player adds their own sub post and deletes it": [
+			"/to/1/looking"
+		],
+		"Tournament LFG › player changes their sub preference without leaving the queue": [
+			"/to/1/looking"
+		],
+		"Tournament LFG › player who preferred to stay as sub keeps their post once the tournament starts and can replace it": [
+			"/to/1/looking"
+		]
+	},
+	"e2e/tournament-staff.spec.ts": {
+		"Tournament staff › gives and takes away staff role": [
+			"/to/1/admin",
+			"/to/1/admin/staff"
+		],
+		"Tournament staff › gives organizer role which allows another user to TO": [
+			"/to/1/admin",
+			"/to/1/admin/staff",
+			"/to/1/info"
+		],
+		"Tournament staff › gives staff role which allows another user to see limited info": [
+			"/to/1/admin",
+			"/to/1/admin/staff",
+			"/to/1/matches/1"
+		]
+	},
+	"e2e/tournament-streams.spec.ts": {
+		"Tournament streams › can set cast twitch accounts in admin": [
+			"/to/1/admin",
+			"/to/1/admin/stream",
+			"/to/1/brackets"
+		],
+		"Tournament streams › can view streams on bracket popover when match is in progress": [
+			"/to/1/brackets",
+			"/to/1/matches/1"
+		],
+		"Tournament streams › can view streams on streams page": [
+			"/to/1/streams"
+		],
+		"Tournament streams › cast stream shows on bracket when match is set as casted": [
+			"/to/1/admin",
+			"/to/1/admin/stream",
+			"/to/1/brackets",
+			"/to/1/matches/1"
+		],
+		"Tournament streams › streamer live on both platforms shows as one card with a link per platform": [
+			"/to/1/streams"
+		]
+	},
+	"e2e/tournament-tiers.spec.ts": {
+		"Tournament tiers › shows tentative tier before bracket starts and confirmed tier after": [
+			"/calendar",
+			"/to/2/brackets"
+		]
+	},
+	"e2e/tournament.spec.ts": {
+		"Tournament › adjusts seeds": [
+			"/to/1/admin/seeds",
+			"/to/1/teams"
+		],
+		"Tournament › checks in and appears on the bracket": [
+			"/to/1/brackets",
+			"/to/1/register"
+		],
+		"Tournament › hides a draft tournament from non-organizers, including its loaders": [
+			"/"
+		],
+		"Tournament › quick adds all of the team's players at once": [
+			"/to/1/info",
+			"/to/1/register"
+		],
+		"Tournament › registers a two player roster for a 2v2 tournament that takes no third member": [
+			"/to/1/brackets",
+			"/to/1/info",
+			"/to/1/register"
+		],
+		"Tournament › registers for tournament": [
+			"/",
+			"/to/1/info",
+			"/to/1/register"
+		],
+		"Tournament › shows the estimated end time next to the start time": [
+			"/to/1/info"
+		],
+		"Tournament › shows the roster's availability for the event window": [
+			"/to/1/register"
+		]
+	},
+	"e2e/translate.spec.ts": {
+		"Translate › imports translation files as drafts": [
+			"/translate/de"
+		],
+		"Translate › saves a draft, downloads it and previews it on the site": [
+			"/",
+			"/translate/de"
+		]
+	},
+	"e2e/trophies.spec.ts": {
+		"Trophies › awards X Power trophies per weapon category": [
+			"/trophies",
+			"/trophies/3",
+			"/u/455039198672453645"
+		],
+		"Trophies › backfills a trophy to the winners of a past tournament": [
+			"/trophies/1",
+			"/trophies/new"
+		],
+		"Trophies › browses trophy details from the trophies list": [
+			"/trophies",
+			"/trophies/1",
+			"/trophies/2"
+		],
+		"Trophies › reviews pending trophies": [
+			"/",
+			"/trophies/new"
+		],
+		"Trophies › shows trophy wins via user page trophy display": [
+			"/u/79237403620945920"
+		],
+		"Trophies › submits a new trophy after agreeing to terms": [
+			"/trophies/new"
+		]
+	},
+	"e2e/user-card.spec.ts": {
+		"User card friend request › receiver sees add friend button that accepts the incoming request": [
+			"/friends",
+			"/lfg"
+		],
+		"User card friend request › sender still sees pending state on the receiver's card": [
+			"/friends",
+			"/lfg"
+		],
+		"User card friend request › sending a request does not mark another user's card pending after navigating between user pages": [
+			"/u/1113617910988800003",
+			"/u/455039198672453645"
+		],
+		"User card › edits banner and bio from the looking page": [
+			"/q/looking",
+			"/user-card/edit"
+		],
+		"User card › shows the verified peak XP of the selected division": [
+			"/q/looking",
+			"/user-card/edit"
+		]
+	},
+	"e2e/user-page.spec.ts": {
+		"User page › chooses result highlights which the results list then shows by default": [
+			"/u/79237403620945920",
+			"/u/79237403620945920/results",
+			"/u/79237403620945920/results/highlights"
+		],
+		"User page › customize big badge + small badge first page order as supporter": [
+			"/u/79237403620945920",
+			"/u/79237403620945920/edit-widgets"
+		],
+		"User page › customize which badge is shown as big by default as normal user": [
+			"/u/455039198672453645",
+			"/u/455039198672453645/edit-widgets"
+		],
+		"User page › customizes theme colors and resets them": [
+			"/settings"
+		],
+		"User page › edits profile widgets, lists vods and shows season stats": [
+			"/u/79237403620945920",
+			"/u/79237403620945920/edit-widgets",
+			"/u/79237403620945920/seasons",
+			"/u/79237403620945920/seasons/stats",
+			"/u/79237403620945920/vods"
+		],
+		"User page › edits user profile": [
+			"/u/79237403620945920",
+			"/u/79237403620945920/edit"
+		],
+		"User page › exports season summary image as a supporter": [
+			"/u/79237403620945920/seasons"
+		],
+		"User page › gates supporter only widgets behind supporter status": [
+			"/u/79237403620945920",
+			"/u/79237403620945920/edit-widgets"
+		],
+		"User page › redirects to the preferred identifier": [
+			"/u/79237403620945920",
+			"/u/zapfish"
+		],
+		"User page › sets friend code from the edit profile page": [
+			"/u/455039198672453645/edit"
+		],
+		"User page › shows supporter perk explanation instead of exporting for non-supporter mid-season": [
+			"/u/455039198672453645/seasons"
+		],
+		"User page › shows the match profile weapon pool": [
+			"/u/79237403620945920"
+		],
+		"User page › shows the weapon pool widget's own list over the match profile pool": [
+			"/u/79237403620945920",
+			"/u/79237403620945920/edit-widgets"
+		],
+		"User page › uses badge pagination": [
+			"/u/455039198672453645",
+			"/u/79237403620945920"
+		]
+	},
+	"e2e/user-report.spec.ts": {
+		"User report › points elsewhere instead of reporting an inappropriate nickname": [
+			"/lfg"
+		],
+		"User report › prefills the match id when reporting from a match page": [
+			"/q/match/1"
+		],
+		"User report › reports a user from the card and shows it on the admin page": [
+			"/lfg",
+			"/u/455039198672453645/admin"
+		]
+	},
+	"e2e/vods.spec.ts": {
+		"VoDs page › adds video (cast)": [
+			"/vods/1",
+			"/vods/new"
+		],
+		"VoDs page › adds video (pov)": [
+			"/vods/1",
+			"/vods/new"
+		],
+		"VoDs page › edits and deletes vod": [
+			"/u/79237403620945920/vods",
+			"/vods",
+			"/vods/1",
+			"/vods/new"
+		],
+		"VoDs page › operates vod filters": [
+			"/vods"
+		]
+	},
+	"e2e/welcome.spec.ts": {
+		"Welcome › navigates to the welcome page via the front page banner when not logged in": [
+			"/",
+			"/welcome"
+		]
+	}
+}

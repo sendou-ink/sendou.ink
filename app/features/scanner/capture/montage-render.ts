@@ -1,8 +1,8 @@
 /**
- * Renders the tournament montage into one MP4, in the browser: the title
- * card, the picked clips played back per their segments (each with its
- * ribbon; fast-forwarded stretches muted and badged), then the standings
- * card. Cards and ribbons come in as images (the page renders them, see
+ * Renders the tournament montage into one MP4, in the browser: its parts in
+ * order, full-frame cards and the picked clips played back per their
+ * segments (each with its ribbon; fast-forwarded stretches muted and
+ * badged). Cards and ribbons come in as images (the page renders them, see
  * `MontageGraphics.tsx`). Every frame is decoded with mediabunny, drawn on a
  * canvas and re-encoded, unlike `vod-clips.ts`'s packet copy: speed changes
  * and overlays need new frames. Sound is laid out per section in an
@@ -31,6 +31,7 @@ import {
 import { integratedLoudness, limitPeaks } from "../core/loudness";
 import { type PlaybackSegment, playbackDuration } from "../core/montage";
 import {
+	type CardReveal,
 	drawCard,
 	drawFastForwardBadge,
 	drawRibbon,
@@ -43,8 +44,6 @@ const FPS = 60;
 const VIDEO_BITRATE = 16_000_000;
 const AUDIO_SAMPLE_RATE = 48_000;
 const AUDIO_CHANNELS = 2;
-const TITLE_CARD_SECONDS = 4;
-const STANDINGS_CARD_SECONDS = 8;
 /** a ramp at each cut so the sound doesn't click */
 const AUDIO_EDGE_FADE_SECONDS = 0.02;
 /** a streaming-platform level with headroom left for the edit */
@@ -56,7 +55,17 @@ const PEAK_CEILING = 10 ** (-1 / 20);
 const MUSIC_FADE_IN_SECONDS = 1;
 const MUSIC_FADE_OUT_SECONDS = 3;
 
-export interface MontageClipSource {
+export type MontagePart =
+	| {
+			kind: "card";
+			/** full frame */
+			image: ImageBitmap;
+			seconds: number;
+			reveal?: CardReveal;
+	  }
+	| ({ kind: "clip" } & MontageClipSource);
+
+interface MontageClipSource {
 	file: File;
 	segments: PlaybackSegment[];
 	/** drawn over the clip's first seconds */
@@ -74,19 +83,13 @@ export interface MontageRenderProgress {
  * memory, returning the MP4. Throws when `signal` aborts.
  */
 export async function renderMontage({
-	title,
-	clips,
-	standings,
+	parts,
 	music,
 	writable,
 	signal,
 	onProgress,
 }: {
-	/** full frame */
-	title: ImageBitmap;
-	clips: MontageClipSource[];
-	/** full frame */
-	standings: ImageBitmap;
+	parts: MontagePart[];
 	/** its sound replaces the game sound */
 	music: File | null;
 	writable: WritableStream<StreamTargetChunk> | null;
@@ -121,15 +124,7 @@ export async function renderMontage({
 	output.addVideoTrack(videoSource, { frameRate: FPS });
 	output.addAudioTrack(audioSource);
 
-	const titleFrames = Math.round(TITLE_CARD_SECONDS * FPS);
-	const standingsFrames = Math.round(STANDINGS_CARD_SECONDS * FPS);
-	const totalFrames =
-		titleFrames +
-		standingsFrames +
-		clips.reduce(
-			(sum, clip) => sum + Math.round(playbackDuration(clip.segments) * FPS),
-			0,
-		);
+	const totalFrames = parts.reduce((sum, part) => sum + framesOf(part), 0);
 	const total = totalFrames / FPS;
 	const musicTrack = music ? await musicAudio(music, totalFrames) : null;
 	/** the section starting at the current frame: its slice of the music, else silence */
@@ -147,11 +142,10 @@ export async function renderMontage({
 
 	await output.start();
 	try {
-		await renderCard(title, titleFrames);
-		for (const clip of clips) {
-			await renderClip(clip);
+		for (const part of parts) {
+			if (part.kind === "card") await renderCard(part, framesOf(part));
+			else await renderClip(part);
 		}
-		await renderCard(standings, standingsFrames);
 		await output.finalize();
 	} catch (error) {
 		await output.cancel();
@@ -163,12 +157,16 @@ export async function renderMontage({
 		: null;
 
 	async function renderCard(
-		card: ImageBitmap,
+		card: Extract<MontagePart, { kind: "card" }>,
 		frameCount: number,
 	): Promise<void> {
 		await audioSource.add(backingAudio(frameCount));
 		for (let i = 0; i < frameCount; i++) {
-			drawCard(ctx, card, { t: i / FPS, seconds: frameCount / FPS });
+			drawCard(ctx, card.image, {
+				t: i / FPS,
+				seconds: frameCount / FPS,
+				reveal: card.reveal,
+			});
 			await addFrame();
 		}
 	}
@@ -222,6 +220,13 @@ export async function renderMontage({
 			input.dispose();
 		}
 	}
+}
+
+function framesOf(part: MontagePart): number {
+	return Math.round(
+		(part.kind === "card" ? part.seconds : playbackDuration(part.segments)) *
+			FPS,
+	);
 }
 
 /** Where each segment lands in the clip's output, and the source moment shown at an output time. */

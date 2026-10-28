@@ -20,7 +20,7 @@ describe("findShowcaseArts", () => {
 		const result = await ArtRepository.findShowcaseArts();
 
 		expect(result).toHaveLength(3);
-		const authorIds = result.map((art) => art.author?.discordId);
+		const authorIds = result.map((art) => art.author?.id);
 		expect(new Set(authorIds).size).toBe(3);
 	});
 

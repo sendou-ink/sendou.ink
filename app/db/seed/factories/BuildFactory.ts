@@ -1,5 +1,8 @@
+import { db } from "~/db/sql";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { backdate as backdateRow } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 import * as SplatoonFaker from "../core/SplatoonFaker";
@@ -28,3 +31,13 @@ export const { create, createMany } = defineFactory({
 	}),
 	insert: BuildRepository.insert,
 });
+
+/** Moves a build's `updatedAt` into the past, along with its `BuildWeapon` rows' mirror of it. */
+export async function backdate(buildId: number, updatedAt: Date) {
+	await backdateRow("Build", buildId, { updatedAt });
+	await db
+		.updateTable("BuildWeapon")
+		.set({ updatedAt: dateToDatabaseTimestamp(updatedAt) })
+		.where("buildId", "=", buildId)
+		.execute();
+}

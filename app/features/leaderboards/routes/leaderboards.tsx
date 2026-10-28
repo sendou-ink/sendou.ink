@@ -580,9 +580,7 @@ function XPTable({ entries }: { entries: XPLeaderboardItem[] }) {
 					>
 						<RankTableInnerRow>
 							<RankTableRank>{entry.placementRank}</RankTableRank>
-							{entry.discordId ? (
-								<Avatar size="xxs" user={entry as any} />
-							) : null}
+							{entry.id ? <Avatar size="xxs" user={entry as any} /> : null}
 							<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 							<div>{entry.name}</div>
 							<div className={leaderboardsStyles.tablePower}>

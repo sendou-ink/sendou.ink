@@ -1,0 +1,91 @@
+---
+import { getCollection } from "astro:content";
+import type { InferGetStaticPropsType } from "astro";
+import { groupAnchor } from "../../../../../../scripts/living-docs/links.ts";
+import E2eToolbar from "../../../components/living/E2eToolbar.astro";
+import FeaturePage from "../../../components/living/FeaturePage.astro";
+import FileLink from "../../../components/living/FileLink.astro";
+import RefTemplates from "../../../components/living/RefTemplates.astro";
+import TestArticle from "../../../components/living/TestArticle.astro";
+import {
+	e2eHeadings,
+	groupDepth,
+	groupTitle,
+	markdown,
+} from "../../../living/format.ts";
+
+export async function getStaticPaths() {
+	const features = await getCollection("features");
+
+	return features
+		.filter((entry) => entry.data.views.includes("e2e"))
+		.map((entry) => ({
+			params: { feature: entry.id },
+			props: { feature: entry.data },
+		}));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { feature } = Astro.props;
+---
+
+<FeaturePage
+	feature={feature}
+	view="e2e"
+	headings={e2eHeadings(feature)}
+	maxHeadingLevel={4}
+>
+	<E2eToolbar feature={feature} />
+	{
+		feature.specs.map((spec) => (
+			<div class="spec">
+				<div class="spec-head">
+					<FileLink file={spec.path} line={1} label={spec.path} />
+				</div>
+				{spec.groups.map((group) => {
+					const Heading = `h${groupDepth(group)}` as "h2";
+					const heading = (
+						<Heading
+							class={`group-title group-depth-${groupDepth(group) - 1}`}
+							id={groupAnchor(spec.path, group.name)}
+						>
+							{groupTitle(spec, group)}
+						</Heading>
+					);
+					// only a group with tests of its own has anything to collapse, nested groups are its siblings
+					const isCollapsible = group.tests.length > 0;
+					const Group = isCollapsible ? "details" : "section";
+
+					return (
+						<Group class="test-group" open={isCollapsible ? true : undefined}>
+							{isCollapsible ? (
+								<summary class="group-summary">{heading}</summary>
+							) : (
+								heading
+							)}
+							{group.doc ? (
+								<div class="group-doc" set:html={markdown(group.doc)} />
+							) : null}
+							{group.options ? (
+								<p class="group-options">
+									Runs with <code>{group.options}</code>
+								</p>
+							) : null}
+							{group.tests.map((test) => (
+								<TestArticle
+									feature={feature}
+									spec={spec}
+									groupName={group.name}
+									test={test}
+									headingLevel={groupDepth(group) + 1}
+								/>
+							))}
+						</Group>
+					);
+				})}
+			</div>
+		))
+	}
+	<RefTemplates refs={new Map(feature.specs.flatMap((spec) => [...spec.refs]))} />
+</FeaturePage>

@@ -4,7 +4,7 @@ import type { SidebarEvent } from "~/features/sidebar/core/sidebar.server";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./EventsList.module.css";
-import { ListLink } from "./SideNav";
+import { ListLink } from "./ListItem";
 
 export function EventsList({ events }: { events: SidebarEvent[] }) {
 	const { t, i18n } = useTranslation(["front"]);

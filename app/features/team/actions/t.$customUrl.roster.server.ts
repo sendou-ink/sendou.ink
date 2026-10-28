@@ -31,6 +31,7 @@ export const action = defineAction(
 			}
 			case "UPDATE_ROSTER": {
 				const submittedIds = new Set(body.members.map((m) => m.userId));
+				const loadedIds = new Set(body.loadedMemberIds);
 				const existingMembersById = new Map(
 					team.members.map((member) => [member.id, member]),
 				);
@@ -43,7 +44,10 @@ export const action = defineAction(
 				}
 
 				const kickedUserIds = team.members
-					.filter((member) => !submittedIds.has(member.id))
+					.filter(
+						(member) =>
+							loadedIds.has(member.id) && !submittedIds.has(member.id),
+					)
 					.map((member) => {
 						errorToastIfFalsy(!member.isOwner, "Can't kick the owner");
 						errorToastIfFalsy(member.id !== user.id, "Can't kick yourself");

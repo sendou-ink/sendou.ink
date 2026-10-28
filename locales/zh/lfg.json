@@ -17,7 +17,5 @@
 	"filters.MinTier": "SendouQ 段位下限",
 	"filters.orAbove": "或以上",
 	"new.noMorePosts": "您不能再发表更多招募帖了。",
-	"new.editOn": "在这里编辑: ",
-	"new.weaponPool.header": "武器池",
-	"new.weaponPool.matchProfile": ""
+	"new.weaponPool.header": "武器池"
 }

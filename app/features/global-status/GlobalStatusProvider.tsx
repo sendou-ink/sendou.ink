@@ -15,12 +15,10 @@ import type { loader } from "./routes/api.status";
 
 interface GlobalStatusContextValue {
 	status: GlobalStatus | null;
-	setStatus: (status: GlobalStatus | null) => void;
 }
 
 const GlobalStatusContext = React.createContext<GlobalStatusContextValue>({
 	status: null,
-	setStatus: () => {},
 });
 
 /**
@@ -40,9 +38,6 @@ export function GlobalStatusProvider({
 	user?: { id: number } | null;
 	children: React.ReactNode;
 }) {
-	const [override, setOverride] = React.useState<
-		GlobalStatus | null | undefined
-	>(undefined);
 	const { globalStatus: layoutStatus } = useLayoutData();
 	const { data, refresh } =
 		useBackgroundResource<SerializeFrom<typeof loader>>(STATUS_DATA_ROUTE);
@@ -69,28 +64,35 @@ export function GlobalStatusProvider({
 	const resolvedStatus = loggedIn ? serverStatus : null;
 	const hasUnseenLikes = useHasUnseenSqLikes(resolvedStatus);
 	const hasExpired = useHasSqGroupExpired(resolvedStatus);
-	// the server-resolved status on purpose: the showcase's override is not a moment to announce
 	useGlobalStatusSounds(resolvedStatus);
 
-	const status =
-		override !== undefined
-			? override
-			: resolvedStatus
-				? withClientState(resolvedStatus, { hasUnseenLikes, hasExpired })
-				: null;
+	const status = resolvedStatus
+		? withClientState(resolvedStatus, { hasUnseenLikes, hasExpired })
+		: null;
 
 	return (
-		<GlobalStatusContext.Provider value={{ status, setStatus: setOverride }}>
+		<GlobalStatusContext.Provider value={{ status }}>
 			{children}
 		</GlobalStatusContext.Provider>
 	);
 }
 
-/**
- * The user's current SendouQ/tournament status shown in the app header.
- * `setStatus` overrides the server-resolved status; used by the components
- * showcase.
- */
+/** A status given by hand instead of resolved from the server, for showing the indicator outside the app (the components showcase). */
+export function GlobalStatusPreviewProvider({
+	status,
+	children,
+}: {
+	status: GlobalStatus | null;
+	children: React.ReactNode;
+}) {
+	return (
+		<GlobalStatusContext.Provider value={{ status }}>
+			{children}
+		</GlobalStatusContext.Provider>
+	);
+}
+
+/** The user's current SendouQ/tournament status shown in the app header. */
 export function useGlobalStatus() {
 	return React.useContext(GlobalStatusContext);
 }

@@ -1,0 +1,75 @@
+---
+import { Badge } from "@astrojs/starlight/components";
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import type {
+	GrantedPermission,
+	PermissionGrant,
+} from "../../../../../scripts/living-docs/permissions.ts";
+import ChecksBySide from "./ChecksBySide.astro";
+
+interface Props {
+	permissions: GrantedPermission[];
+}
+
+const { permissions } = Astro.props;
+
+function grantLabel(grant: PermissionGrant) {
+	return grant.via ? `${grant.entity} → ${grant.via}` : grant.entity;
+}
+---
+
+<table>
+	<thead>
+		<tr>
+			<th>Permission</th>
+			<th>Granted by</th>
+			<th>Checked in</th>
+		</tr>
+	</thead>
+	<tbody>
+		{
+			permissions.map((permission) => (
+				<tr>
+					<td>
+						<code>{permission.name}</code>
+						{permission.object ? <p class="muted">on {permission.object}</p> : null}
+					</td>
+					<td>
+						{permission.grants.map((grant) =>
+							grant.expression ? (
+								<details>
+									<summary>
+										<a href={githubUrl(grant.file, grant.line)}>
+											<code>{grantLabel(grant)}</code>
+										</a>
+									</summary>
+									<pre class="code scrollbar">{grant.expression}</pre>
+								</details>
+							) : (
+								<p>
+									declared by{" "}
+									<a href={githubUrl(grant.file, grant.line)}>
+										<code>{grant.entity}</code>
+									</a>
+								</p>
+							),
+						)}
+					</td>
+					<td class="living">
+						<ChecksBySide checks={permission.checks} chipBy="file" />
+						{permission.directReads.length > 0 ? (
+							<div class="checks-side">
+								<Badge text="read directly" variant="caution" size="small" />{" "}
+								{permission.directReads.map((read) => (
+									<a class="chip file-chip" href={githubUrl(read.file, read.line)} title={read.code}>
+										{read.file.split("/").at(-1)}
+									</a>
+								))}
+							</div>
+						) : null}
+					</td>
+				</tr>
+			))
+		}
+	</tbody>
+</table>

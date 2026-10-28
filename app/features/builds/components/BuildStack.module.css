@@ -1,0 +1,87 @@
+/* the stack and its card pass the build card's rows through so dividers line up across a row of cards */
+.stack {
+	position: relative;
+	display: grid;
+	grid-row: span 3;
+	grid-template-rows: subgrid;
+	isolation: isolate;
+}
+
+/* keeps the card above builds sliding out from under it */
+.stackWithToggle {
+	z-index: 1;
+}
+
+.card {
+	display: grid;
+	grid-row: span 3;
+	grid-template-rows: subgrid;
+}
+
+.layer {
+	position: absolute;
+	inset: 0;
+	left: var(--layer-offset);
+	right: calc(-1 * var(--layer-offset));
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	pointer-events: none;
+	transition: translate 150ms ease-out;
+
+	.stack:has(.toggle[aria-expanded="false"]:is(:hover, :focus-visible)) & {
+		translate: var(--s-1) 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		transition: none;
+	}
+}
+
+.toggle {
+	position: relative;
+	display: flex;
+	min-width: 22px;
+	height: 22px;
+	flex-shrink: 0;
+	margin-inline-start: auto;
+	padding: 0;
+	border: var(--border-style);
+	border-radius: 50%;
+	background-color: var(--color-bg);
+	color: var(--color-text-high);
+	cursor: pointer;
+	align-items: center;
+	justify-content: center;
+
+	/* touch target larger than the visible pill */
+	&::before {
+		content: "";
+		position: absolute;
+		inset: -8px -12px -8px -4px;
+	}
+
+	&:hover {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+
+	& svg {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
+	}
+}
+
+.toggleWithCount {
+	padding-inline: var(--s-1-5);
+	border-radius: var(--radius-full);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	gap: var(--s-0-5);
+}

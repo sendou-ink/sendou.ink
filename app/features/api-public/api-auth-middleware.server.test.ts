@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import type { ApiTokenType } from "~/features/api/api-types";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import { apiAuthMiddleware } from "./api-auth-middleware.server";
 import { refreshApiTokensCache } from "./api-public-utils.server";
@@ -26,8 +27,8 @@ const callMiddleware = (
 		async () => new Response(NEXT_RESPONSE_BODY),
 	);
 
-const tokenOf = async (userId: number) => {
-	const { token } = await ApiTokenFactory.create({ userId, type: "write" });
+const tokenOf = async (userId: number, type: ApiTokenType = "write") => {
+	const { token } = await ApiTokenFactory.create({ userId, type });
 	await refreshApiTokensCache();
 
 	return token;
@@ -56,6 +57,41 @@ describe("apiAuthMiddleware", () => {
 			});
 
 			expect(response.status).toBe(403);
+		},
+	);
+
+	test.each(["GET", "HEAD"])(
+		"lets a read token through for %s",
+		async (method) => {
+			const response = await callMiddleware(
+				await tokenOf(allowedUserId(), "read"),
+				{ method },
+			);
+
+			expect(await response.text()).toBe(NEXT_RESPONSE_BODY);
+		},
+	);
+
+	test.each(["POST", "PUT", "PATCH", "DELETE"])(
+		"rejects a read token for %s",
+		async (method) => {
+			const response = await callMiddleware(
+				await tokenOf(allowedUserId(), "read"),
+				{ method },
+			);
+
+			expect(response.status).toBe(403);
+		},
+	);
+
+	test.each(["POST", "PUT", "PATCH", "DELETE"])(
+		"lets a write token through for %s",
+		async (method) => {
+			const response = await callMiddleware(await tokenOf(allowedUserId()), {
+				method,
+			});
+
+			expect(await response.text()).toBe(NEXT_RESPONSE_BODY);
 		},
 	);
 });

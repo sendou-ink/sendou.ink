@@ -91,6 +91,8 @@ interface ExpectedScoreboard {
 		replayCode?: string;
 		/** the "Score:" banner game scores, [winner, loser]; KO winner = 100 */
 		matchScores?: [number | null, number | null];
+		/** Scoreboard only: the game ended before it was decided (DRAW tags, "No contest."); absent = false */
+		noContest?: boolean;
 		players?: ExpectedPlayer[];
 		/** index of the yellow POV-arrow row in `players`; null = no arrow */
 		povIndex?: number | null;

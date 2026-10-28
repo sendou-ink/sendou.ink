@@ -33,7 +33,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		expect(userCards.size).toBe(0);
+		expect(Object.keys(userCards).length).toBe(0);
 	});
 
 	test("keys cards by user id and builds the stats array from db fields", async () => {
@@ -49,9 +49,9 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		expect(userCards.size).toBe(2);
+		expect(Object.keys(userCards).length).toBe(2);
 
-		const card = userCards.get(plusMember.id);
+		const card = userCards[plusMember.id];
 		expect(card?.id).toBe(plusMember.id);
 		expect(card?.freeAgentPostId).toBeNull();
 
@@ -74,7 +74,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		});
 
 		// user 2 has none of the optional fields -> no stats
-		expect(userCards.get(users.id(2))?.stats).toHaveLength(0);
+		expect(userCards[users.id(2)]?.stats).toHaveLength(0);
 	});
 
 	test("surfaces self-reported peak XP only when it beats the verified XP", async () => {
@@ -94,7 +94,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [
 				{ isVerified: false, region: "WEST", points: 2600 },
@@ -120,7 +120,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "WEST", points: 2500 }],
 		});
@@ -143,7 +143,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "WEST", points: 2500 }],
 		});
@@ -167,7 +167,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "JPN", points: 3000 }],
 		});
@@ -181,7 +181,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "WEST", points: 3010 }],
 		});
@@ -204,7 +204,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "WEST", points: 3010 }],
 		});
@@ -229,7 +229,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		// 3005 does not beat the 3010 of the other division, but that ladder is not the one shown
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [
 				{ isVerified: false, region: "JPN", points: 3005 },
@@ -256,7 +256,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [
 				{ isVerified: false, region: "JPN", points: 3100 },
@@ -282,7 +282,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toMatchObject({
+		expect(findXpStat(userCards[users.id(1)])).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: false, region: "JPN", points: 2650 }],
 		});
@@ -304,7 +304,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			UserCardRepository.findAllByUserIds({ userIds: [users.id(1)] }),
 		);
 
-		expect(findXpStat(userCards.get(users.id(1)))).toBeUndefined();
+		expect(findXpStat(userCards[users.id(1)])).toBeUndefined();
 	});
 
 	test("persists edited card fields and surfaces hidden stats", async () => {
@@ -327,7 +327,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				userIds: [plusMember.id],
 			}),
 		);
-		const card = userCards.get(plusMember.id);
+		const card = userCards[plusMember.id];
 
 		expect(card?.shortBio).toBe("hello");
 		expect(card?.banner).toMatchObject({ type: "COLOR", hexCode: "#ff4655" });
@@ -364,7 +364,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				includeHiddenStats: true,
 			}),
 		);
-		const card = userCards.get(users.id(1));
+		const card = userCards[users.id(1)];
 
 		expect(findXpStat(card)).toMatchObject({
 			type: "XP",
@@ -395,7 +395,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		const banner = userCards.get(users.id(1))?.banner;
+		const banner = userCards[users.id(1)]?.banner;
 		expect(banner?.type).toBe("URL");
 		expect(banner).toHaveProperty("url");
 	});
@@ -431,22 +431,22 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 		);
 
 		const forAuthor = await cachedCard(target.id, viewer.id);
-		expect(forAuthor.userCards.get(target.id)?.privateNote).toMatchObject({
+		expect(forAuthor.userCards[target.id]?.privateNote).toMatchObject({
 			sentiment: "POSITIVE",
 			text: "great teammate",
 		});
 
 		// served from the entry the call above cached, which must not carry its note
 		const forOther = await cachedCard(target.id, otherViewer.id);
-		expect(forOther.userCards.get(target.id)?.privateNote).toBeNull();
+		expect(forOther.userCards[target.id]?.privateNote).toBeNull();
 
 		const forAnonymous = await cachedCard(target.id);
-		expect(forAnonymous.userCards.get(target.id)?.privateNote).toBeNull();
+		expect(forAnonymous.userCards[target.id]?.privateNote).toBeNull();
 	});
 
 	test("serves cards from the cache and queries only the users missing from it", async () => {
 		const first = await cachedCard(target.id);
-		expect(first.userCards.get(target.id)?.shortBio).toBeNull();
+		expect(first.userCards[target.id]?.shortBio).toBeNull();
 
 		// written past the repository so the cached card is left in place
 		await updateShortBioDirectly(target.id, "edited");
@@ -457,8 +457,8 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 			}),
 		);
 
-		expect(userCards.get(target.id)?.shortBio).toBeNull();
-		expect(userCards.get(viewer.id)?.id).toBe(viewer.id);
+		expect(userCards[target.id]?.shortBio).toBeNull();
+		expect(userCards[viewer.id]?.id).toBe(viewer.id);
 	});
 
 	test("returns a fresh card once the cached one has expired", async () => {
@@ -468,7 +468,7 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 		UserCardRepository.clearUserCardCache();
 
 		const { userCards } = await cachedCard(target.id);
-		expect(userCards.get(target.id)?.shortBio).toBe("edited");
+		expect(userCards[target.id]?.shortBio).toBe("edited");
 	});
 
 	test("returns a fresh card right after its owner edited it", async () => {
@@ -486,7 +486,7 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 		);
 
 		const { userCards } = await cachedCard(target.id);
-		expect(userCards.get(target.id)?.shortBio).toBe("edited");
+		expect(userCards[target.id]?.shortBio).toBe("edited");
 	});
 
 	test("overlays the latest friend code only when opted in", async () => {
@@ -504,7 +504,7 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 		}
 
 		const withoutInclude = await cachedCard(user.id);
-		expect(withoutInclude.userCards.get(user.id)?.friendCode).toBeNull();
+		expect(withoutInclude.userCards[user.id]?.friendCode).toBeNull();
 
 		// served from the entry the call above cached, with the friend code overlaid on top
 		const withInclude = await withNoUser(() =>
@@ -513,13 +513,11 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 				include: { friendCode: true },
 			}),
 		);
-		expect(withInclude.userCards.get(user.id)?.friendCode).toBe(
-			"4444-5555-6666",
-		);
+		expect(withInclude.userCards[user.id]?.friendCode).toBe("4444-5555-6666");
 
 		// the include must not have stuck to the cached entry
 		const withoutIncludeAgain = await cachedCard(user.id);
-		expect(withoutIncludeAgain.userCards.get(user.id)?.friendCode).toBeNull();
+		expect(withoutIncludeAgain.userCards[user.id]?.friendCode).toBeNull();
 	});
 
 	test("coalesces concurrent misses for the same user into one query", async () => {
@@ -529,8 +527,8 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 		]);
 
 		// both viewers were served the same cached card, so only one query built it
-		expect(first.userCards.get(target.id)?.stats).toBe(
-			second.userCards.get(target.id)?.stats,
+		expect(first.userCards[target.id]?.stats).toBe(
+			second.userCards[target.id]?.stats,
 		);
 	});
 });

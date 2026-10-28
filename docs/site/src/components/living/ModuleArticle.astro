@@ -1,0 +1,132 @@
+---
+import { Badge } from "@astrojs/starlight/components";
+import { anchor } from "../../../../../scripts/living-docs/links.ts";
+import type { ModuleDoc } from "../../../../../scripts/living-docs/modules.ts";
+import type { RepositoryDoc } from "../../../../../scripts/living-docs/repositories.ts";
+import {
+	count,
+	markdown,
+	moduleLabel,
+	repositoryHref,
+	repositoryLabel,
+} from "../../living/format.ts";
+import ExportBlock from "./ExportBlock.astro";
+import FileLink from "./FileLink.astro";
+import TableChips from "./TableChips.astro";
+import UnitTests from "./UnitTests.astro";
+
+interface Props {
+	module: ModuleDoc | RepositoryDoc;
+}
+
+const { module } = Astro.props;
+const repository = "tables" in module ? module : null;
+const isServer = !repository && module.name.endsWith(".server");
+---
+
+<article class="module">
+	<header class="module-head">
+		<h2 id={anchor(module.name)}>{module.name.replace(/\.server$/, "")}</h2>
+		{isServer ? <Badge text="server" size="small" /> : null}
+		<FileLink file={module.path} line={1} label={module.path} />
+	</header>
+	{
+		module.overview ? (
+			<div class="overview" set:html={markdown(module.overview)} />
+		) : repository ? null : (
+			<p class="missing">No overview comment at the top of the file.</p>
+		)
+	}
+	<dl class="module-facts">
+		{
+			repository ? (
+				<>
+					<dt>Tables</dt>
+					<dd>
+						{repository.tables.length > 0 ? (
+							<TableChips tables={repository.tables} />
+						) : (
+							<span class="muted">none</span>
+						)}
+					</dd>
+					<dt>Calls</dt>
+					<dd>
+						{repository.calledRepositories.length > 0 ? (
+							repository.calledRepositories.map((called) => (
+								<a class="chip" href={repositoryHref(called)}>
+									{repositoryLabel(called)}
+								</a>
+							))
+						) : (
+							<span class="muted">no other repositories</span>
+						)}
+					</dd>
+				</>
+			) : null
+		}
+		<dt>Imports</dt>
+		<dd>
+			{
+				module.dependencies.length > 0 ? (
+					module.dependencies.map((dependency) => (
+						<span class="chip">{moduleLabel(dependency)}</span>
+					))
+				) : (
+					<span class="muted">no other modules</span>
+				)
+			}
+		</dd>
+		<dt>Used by</dt>
+		<dd>
+			{
+				module.dependents.length > 0 ? (
+					module.dependents.map((group) => (
+						<span class={`chip kind-${group.kind}`}>
+							{count(group.items.length, group.singular, group.label.toLowerCase())}
+						</span>
+					))
+				) : (
+					<span class="muted">nothing outside tests</span>
+				)
+			}
+		</dd>
+	</dl>
+	{
+		module.types.length > 0 ? (
+			<>
+				<p class="section-title">Types</p>
+				{module.types.map((exported) => (
+					<ExportBlock exported={exported} module={module} />
+				))}
+			</>
+		) : null
+	}
+	{
+		module.values.length > 0 ? (
+			<>
+				<p class="section-title">Functions &amp; values</p>
+				{module.values.map((exported) => (
+					<ExportBlock exported={exported} module={module} />
+				))}
+			</>
+		) : null
+	}
+	{
+		module.otherUnitTests.length > 0 ? (
+			<UnitTests tests={module.otherUnitTests} title="Unit tests not about one export" />
+		) : null
+	}
+	{
+		module.testOnlyExports.length > 0 ? (
+			<p class="muted test-only">
+				Not shown, only used by tests:{" "}
+				{module.testOnlyExports.map((name, index) => (
+					<>
+						{index > 0 ? ", " : ""}
+						<code>{name}</code>
+					</>
+				))}
+			</p>
+		) : null
+	}
+</article>

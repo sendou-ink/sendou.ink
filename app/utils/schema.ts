@@ -438,7 +438,13 @@ const EMPTY_CHARACTERS = [
 	"\u2060",
 	"[\\uFE00-\\uFE0F]",
 ];
-const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
+const EMOJI_PART = "\\p{Extended_Pictographic}(?:\\uFE0F|\\p{Emoji_Modifier})?";
+const EMOJI_SEQUENCE = `${EMOJI_PART}(?:\\u200D${EMOJI_PART})*`;
+const KEYCAP_SEQUENCE = "[0-9#*]\\uFE0F?\\u20E3";
+const EMOJI_SEQUENCE_OR_EMPTY_CHARACTER_REGEX = new RegExp(
+	`(${EMOJI_SEQUENCE}|${KEYCAP_SEQUENCE})|${EMPTY_CHARACTERS.join("|")}`,
+	"gu",
+);
 
 const zalgoRe = /%CC%/;
 export const hasZalgo = (txt: string) => zalgoRe.test(encodeURIComponent(txt));
@@ -479,7 +485,12 @@ export const safeNullableStringSchema = ({
 export function actuallyNonEmptyStringOrNull(value: unknown) {
 	if (typeof value !== "string") return value;
 
-	const trimmed = value.replace(EMPTY_CHARACTERS_REGEX, "").trim();
+	const trimmed = value
+		.replace(
+			EMOJI_SEQUENCE_OR_EMPTY_CHARACTER_REGEX,
+			(_, emojiSequence?: string) => emojiSequence ?? "",
+		)
+		.trim();
 
 	return trimmed === "" ? null : trimmed;
 }

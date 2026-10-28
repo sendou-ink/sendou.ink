@@ -4,18 +4,18 @@
 
 .grid {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	grid-template-areas:
-		"heading back"
-		". actions";
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	grid-template-areas: "heading actions back";
 	align-items: center;
 	gap: var(--s-3) var(--s-4);
 
 	&:not(:has(> .actions)) {
+		grid-template-columns: minmax(0, 1fr) auto;
 		grid-template-areas: "heading back";
 	}
 
 	@container (width < 36rem) {
+		grid-template-columns: minmax(0, 1fr) auto;
 		grid-template-areas:
 			"heading back"
 			"actions actions";
@@ -65,6 +65,7 @@
 
 .actions {
 	grid-area: actions;
+	align-self: start;
 	justify-self: end;
 	display: flex;
 	align-items: center;

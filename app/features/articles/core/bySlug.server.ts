@@ -22,7 +22,7 @@ export function articleBySlug(slug: string) {
 
 		return {
 			content,
-			date,
+			date: date.getTime(),
 			authors: normalizeAuthors(restParsed.author),
 			title: restParsed.title,
 		};

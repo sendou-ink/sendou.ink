@@ -154,6 +154,38 @@ describe("createVoiceClient", () => {
 		expect(client.getSnapshot().call?.roomId).toBe(OTHER_ROOM_ID);
 	});
 
+	test("following moves a call in one of the rooms to the target", async () => {
+		const { client } = setup();
+		await client.join(ROOM_ID);
+
+		await client.follow({
+			roomIds: [ROOM_ID, OTHER_ROOM_ID],
+			targetRoomId: OTHER_ROOM_ID,
+		});
+
+		expect(client.getSnapshot().call?.roomId).toBe(OTHER_ROOM_ID);
+	});
+
+	test("following leaves a call in an unrelated room alone", async () => {
+		const { client } = setup();
+		await client.join(ROOM_ID);
+
+		await client.follow({
+			roomIds: [OTHER_ROOM_ID],
+			targetRoomId: OTHER_ROOM_ID,
+		});
+
+		expect(client.getSnapshot().call?.roomId).toBe(ROOM_ID);
+	});
+
+	test("following starts no call", async () => {
+		const { client, deps } = setup();
+
+		await client.follow({ roomIds: [ROOM_ID], targetRoomId: ROOM_ID });
+
+		expect(deps.postRoomAction).not.toHaveBeenCalled();
+	});
+
 	test("leaving asks for feedback when the server wants it, then sends the answer", async () => {
 		const { client, deps } = setup({
 			postRoomAction: async (_roomId, body) =>

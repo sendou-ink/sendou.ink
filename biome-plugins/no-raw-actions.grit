@@ -9,14 +9,14 @@ or {
 	} as $export where {
 		$name <: r"^(?:action|[a-z][A-Za-z0-9]*Action)\z",
 		$value <: not `defineAction($...)`,
-		register_diagnostic(span=$export, message="Define route actions with `defineAction` from `~/form/define-action.server`. See docs/dev/forms.md.", severity="error")
+		register_diagnostic(span=$export, message="Define route actions with `defineAction` from `~/form/define-action.server`. See docs/site/src/content/docs/dev/forms.mdx.", severity="error")
 	},
 	or {
 		`export async function $name($...) { $... }`,
 		`export function $name($...) { $... }`
 	} as $export where {
 		$name <: r"^(?:action|[a-z][A-Za-z0-9]*Action)\z",
-		register_diagnostic(span=$export, message="Define route actions with `defineAction` from `~/form/define-action.server`. See docs/dev/forms.md.", severity="error")
+		register_diagnostic(span=$export, message="Define route actions with `defineAction` from `~/form/define-action.server`. See docs/site/src/content/docs/dev/forms.mdx.", severity="error")
 	},
 	`$request.$method()` as $read where {
 		$request <: or {
@@ -28,6 +28,6 @@ or {
 			`json`,
 			`text`
 		},
-		register_diagnostic(span=$read, message="Do not read the request body directly. Declare a `body` schema in `defineAction`. See docs/dev/forms.md.", severity="error")
+		register_diagnostic(span=$read, message="Do not read the request body directly. Declare a `body` schema in `defineAction`. See docs/site/src/content/docs/dev/forms.mdx.", severity="error")
 	}
 }

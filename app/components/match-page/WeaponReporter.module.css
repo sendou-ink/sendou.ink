@@ -5,23 +5,26 @@
 }
 
 .mapRow {
-	display: flex;
-	align-items: center;
-	gap: var(--s-4);
+	display: grid;
+	grid-template-columns: auto minmax(0, max-content);
+	justify-content: start;
+	align-items: end;
+	gap: var(--s-3) var(--s-4);
 
 	@container (max-width: 479px) {
-		flex-direction: column;
+		grid-template-columns: minmax(0, 1fr);
+		justify-content: stretch;
+		gap: var(--s-4);
 	}
 }
 
 .mapInfo {
 	display: flex;
 	flex-direction: column;
-	align-self: flex-end;
 	gap: var(--s-2);
 
 	@container (max-width: 479px) {
-		align-self: center;
+		justify-self: center;
 	}
 }
 
@@ -49,7 +52,7 @@
 }
 
 .weaponSelectContainer {
-	min-width: 200px;
+	width: 200px;
 
 	& button {
 		border: var(--border-style-high);
@@ -57,6 +60,18 @@
 
 	@container (max-width: 479px) {
 		flex: 1;
+		min-width: 0;
+	}
+}
+
+.weaponPool {
+	grid-column: 2;
+	justify-self: start;
+	margin: 0;
+
+	@container (max-width: 479px) {
+		grid-column: auto;
+		margin-top: calc(var(--s-2) * -1);
 	}
 }
 

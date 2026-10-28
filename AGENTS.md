@@ -8,11 +8,12 @@
 - note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `pnpm run biome:fix` command
 - typical way to structure pure logic is into Modules divided by logical domains which are imported with the "* as Module" import and then used like so "Module.foo()". These functions always need JSDoc.
 - non-exported functions typically do not need JSDoc or at least it can be kept short
-- more topic docs live in `docs/dev/` — notably [architecture.md](./docs/dev/architecture.md) (feature folder layout), [permissions.md](./docs/dev/permissions.md) (authorization: global roles via `requireRole()`/`useHasRole()`, per-object `permissions` computed in repositories) and [overlays.md](./docs/dev/overlays.md) (popovers, menus, selects and dialogs: the floating layer, scroll lock and mobile keyboard handling)
+- more topic docs live in `docs/site/src/content/docs/dev/` — notably [architecture.mdx](./docs/site/src/content/docs/dev/architecture.mdx) (feature folder layout), [request-flow.mdx](./docs/site/src/content/docs/dev/request-flow.mdx) (one request followed through every layer), [permissions.mdx](./docs/site/src/content/docs/dev/permissions.mdx) (authorization: global roles via `requireRole()`/`useHasRole()`, per-object `permissions` computed in repositories) and [overlays.mdx](./docs/site/src/content/docs/dev/overlays.mdx) (popovers, menus, selects and dialogs: the floating layer, scroll lock and mobile keyboard handling)
 
 ## Commands
 
-- `pnpm run checks` runs, in order: biome:fix, unit/browser tests, translation json checks, typecheck and knip — knip means unused exports fail checks, so remove exports nothing imports
+- `pnpm run checks` runs, in order: biome:fix, unit/browser tests, translation json checks, typecheck (app, scripts and the docs site) and knip — knip means unused exports fail checks, so remove exports nothing imports
+- `pnpm run dev:docs` serves the docs site (`docs/site/`, Astro Starlight, live at https://docs.sendou.ink): the MDX docs of `docs/site/src/content/docs/` plus the living docs generated from the core modules, e2e specs and routes; `pnpm run docs:capture` refreshes its route coverage and screenshots from an e2e run, see [living-docs.mdx](./docs/site/src/content/docs/dev/living-docs.mdx)
 - `pnpm run typecheck` runs TypeScript type checking
 - `pnpm run biome:fix` runs Biome code formatter and linter
 - `pnpm run test:unit:browser` runs all unit tests and browser tests
@@ -20,6 +21,7 @@
 - `pnpm run test:e2e:flaky-detect` runs all e2e tests and repeats each 10 times
 - `pnpm run i18n:sync` syncs translation jsons with English
 - `pnpm run dev` starts the dev server (also runs migrations and setup first); `pnpm run seed` rebuilds the dev dataset. The dev admin user ("Sendou") has id 274 (`ADMIN_ID`)
+- `pnpm run dev:tools` talks to a running dev server: `scenario <id> [--param=value]` builds a ready state (e.g. a tournament match to play) and prints a link that logs in as its user, `requests` lists recent requests with their SQL queries, `routine`/`switch` control the server, see [dev-tools.md](./docs/dev/dev-tools.md)
 
 ## Typescript
 
@@ -33,15 +35,15 @@
 - do not use `useMemo`, `useCallback` unless it is to stabilize a `useEffect` dependency array value
 - state management is done via plain `useState` and React Context API
 - avoid using `useEffect`
-- all texts should be provided translations via the i18next library's `useTranslations` hook's `t` function
+- all texts should be provided translations via the react-i18next library's `useTranslation` hook's `t` function
 - instead of `&&` operator for conditional rendering, use the ternary operator; enforced by the `no-and-conditional-rendering` Biome plugin
 - for localized user-readable time strings use `<LocaleTime />`, `<LocaleTimeRange>` or `useFormatDistanceToNow`. If needed use `useDateTimeFormat` directly. NEVER use e.g. `toLocaleString` directly as it does not include users' language selection.
 
 ## Forms
 
-- forms are built with the `SendouForm` schema-based system: a valibot schema using field builders from `~/form/fields` generates both the UI and server-side validation, see [forms.md](./docs/dev/forms.md)
+- forms are built with the `SendouForm` schema-based system: a valibot schema using field builders from `~/form/fields` generates both the UI and server-side validation, see [forms.mdx](./docs/site/src/content/docs/dev/forms.mdx)
 - form label/help translations go in `locales/en/forms.json`
-- actions are defined with `defineAction` (`~/form/define-action.server`), which parses route params (404 on failure) and the body (`fieldErrors` for SendouForm, error toast otherwise) before the handler runs, see [forms.md](./docs/dev/forms.md); enforced by the `no-raw-actions` Biome plugin
+- actions are defined with `defineAction` (`~/form/define-action.server`), which parses route params (404 on failure) and the body (`fieldErrors` for SendouForm, error toast otherwise) before the handler runs, see [forms.mdx](./docs/site/src/content/docs/dev/forms.mdx); enforced by the `no-raw-actions` Biome plugin
 - fixed-field mutations (an `_action` plus hidden inputs) use `<ActionButton>` which type checks the action and fields against the route's action schema; real multi-input forms instead pass `schema` alongside `_action` to `SubmitButton`; enforced by the `no-raw-action-forms` Biome plugin
 
 ## Remix/React Router
@@ -50,9 +52,14 @@
 
 ## Search params
 
-- all URL search param handling goes through `app/modules/search-params/`, see [search-params.md](./docs/dev/search-params.md) for the conventions
+- all URL search param handling goes through `app/modules/search-params/`, see [search-params.mdx](./docs/site/src/content/docs/dev/search-params.mdx) for the conventions
 - never use raw `useSearchParams` or `searchParams.get()`; declare params once per feature in a `<feature>-search-params.ts` definition (every param has a default, decode never fails). Enforced by the `no-raw-search-params` Biome plugin
 - every definition gets a round-trip test via `assertRoundTrips`
+
+## Web storage
+
+- all `localStorage` / `sessionStorage` access goes through `app/modules/persisted-state/`: declare the value once with `PersistedState.define` (or `defineMap` for a keyed family), typically in a `<feature>-persisted.ts` file, and use `usePersistedState` / `PersistedState.read` / `write`. Enforced by the `no-raw-web-storage` Biome plugin
+- every definition gets a round-trip test via `assertRoundTrips` from `persisted-state-test-utils.ts`
 
 ## Styling
 
@@ -63,17 +70,18 @@
 - for simple styling, prefer [utility classes](./app/styles/utils.css) over creating a new class
 - use CSS nesting with the `&` selector to group related selectors (pseudo-classes, pseudo-elements, child selectors, attribute selectors) under their parent instead of repeating the parent selector
 - prefer container queries over media queries
-- every CSS module is wrapped in a cascade layer by its path (`vite.config.ts`): `app/components/elements/**` → `elements`, `app/components/*.module.css` → `components`, everything else → `features`. A higher layer always beats a lower one, so a feature can override a shared component's class no matter what order the chunks load in — never reach for `!important` or a specificity hack to win that fight. Two modules in the *same* layer fall back to load order, so a variant of a component's own class (e.g. a divider row of a table) belongs in that component's module, not the caller's.
+- every CSS module is wrapped in a cascade layer by its path (`vite-css-plugins.ts`): `app/components/elements/**` → `elements`, `app/components/*.module.css` → `components`, everything else → `features`. A higher layer always beats a lower one, so a feature can override a shared component's class no matter what order the chunks load in — never reach for `!important` or a specificity hack to win that fight. Two modules in the *same* layer fall back to load order, so a variant of a component's own class (e.g. a divider row of a table) belongs in that component's module, not the caller's.
 
 ## SQL
 
 - database is Sqlite3, driven by Node's built-in `node:sqlite` through a custom Kysely dialect (`app/db/node-sqlite-dialect.ts`)
-- database code should only be written in Repository files, see [repositories.md](./docs/dev/repositories.md) for their conventions
+- database code should only be written in Repository files, see [repositories.mdx](./docs/site/src/content/docs/dev/repositories.mdx) for their conventions
 - import `jsonArrayFrom`/`jsonObjectFrom`/`jsonBuildObject` from `~/utils/kysely.server`, never from `kysely/helpers/sqlite` (enforced by the `no-kysely-sqlite-helpers` Biome plugin); JSON columns are registered in `app/db/json-columns.ts`
-- migrations are Kysely migrations in `/migrations`, scaffolded with `pnpm run migrate:new "description"` and applied with `pnpm run migrate up`, see [how-to.md](./docs/dev/how-to.md)
+- migrations are Kysely migrations in `/migrations`, scaffolded with `pnpm run migrate:new "description"` and applied with `pnpm run migrate up`, see [how-to.mdx](./docs/site/src/content/docs/dev/how-to.mdx)
 - down migrations are not needed, only up migrations
 - if we are working on a branch by default we should add to the migration this branch added instead of creating a brand new one
-- `/app/db/tables.ts` contains all tables and columns available, see [database-schemas.md](./docs/dev/database-schemas.md) for how columns should be typed (booleans, timestamps, JSON, enums, SQLite migration quirks)
+- `/app/db/tables.ts` contains all tables and columns available, see [database-schemas.mdx](./docs/site/src/content/docs/dev/database-schemas.mdx) for how columns should be typed (booleans, timestamps, JSON, enums, SQLite migration quirks)
+- don't wrap queries in `Promise.all`: `node:sqlite` is synchronous, so they can't run in parallel and it only adds noise; await them one after another
 - `db.sqlite3` is development database
 - `db-test.sqlite3` is the unit test database (blank sans migrations; gitignored and created/migrated automatically when unit tests run)
 - `db-sandbox.sqlite3` is a local, disposable copy of production data. Read, write, migrate, run servers against it or delete it freely — it is not connected to production in any way. `pnpm run sandbox:reset` restores it
@@ -95,8 +103,8 @@
 - by default everything should be translated via i18next
 - some a11y labels or text that should not normally be encountered by user (example given, error message by server) can be english
 - before adding a new translation, check that one doesn't already exist you can reuse (particularly in the common.json)
-- add only English translation and use `pnpm run i18n:sync` to initialize other jsons with empty string ready for translators
-- when using namespace e.g. `const { t } = useTranslation("settings"]);` it needs to be defined in the `handle` for that route e.g. `export const handle: SendouRouteHandle = { i18n: ["settings"], ... }`. Certain namespaces are always included and you don't have to worry about those: "common", "forms", "game-misc", "weapons", "front", "friends"
+- add only English translation, other languages fall back to English until translated (never add empty strings); run `pnpm run i18n:sync` after removing or renaming keys
+- when using namespace e.g. `const { t } = useTranslation(["settings"]);` it needs to be defined in the `handle` for that route e.g. `export const handle: SendouRouteHandle = { i18n: ["settings"], ... }`. Certain namespaces are always included and you don't have to worry about those: "common", "forms", "game-misc", "weapons", "front", "friends"
 - if changing translation key names make sure to port over any already translated values for non-english languages if the english language is unchanged
 
 ## Changelog
@@ -118,21 +126,11 @@ Map planner improvements
 - Undo & redo are back, now in the toolbar
 ```
 
-- on update day these become the image posted on social media, see [how-to.md](./docs/dev/how-to.md)
-
-## Commits
-
-- do not mention claude or claude code
-- unless specifically instructed, do not create new branches
-
-## Pull request
-
-- use the template `/github/pull_request_template.md`
-- do not mention claude or claude code in the description
+- on update day these become the image posted on social media, see [how-to.mdx](./docs/site/src/content/docs/dev/how-to.mdx)
 
 ## Scanner feature (app/features/scanner)
 
-- computer-vision match-event detection; full docs in `app/features/scanner/README.md` — read it before touching detector/recognition code
+- computer-vision match-event detection; full docs in `docs/site/src/content/feature-readmes/scanner.mdx` — read it before touching detector/recognition code
 - OpenCV ROI-view gotcha: `.data`/`.clone()` are broken on ROI views — always `view.copyTo(freshMat)` before pixel access
 - fixture workflow: every live misread becomes a fixture under `app/features/scanner/tests/fixtures/`; ground-truth labels are hand-corrected by the maintainer and definitive over any matcher output
 - test with `pnpm test:scanner`; accuracy report with `pnpm scanner:report`; atlas regen commands and the assets-repo/CDN flow are in the README

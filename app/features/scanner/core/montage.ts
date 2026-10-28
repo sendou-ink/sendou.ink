@@ -3,9 +3,11 @@
  * tournament's match VoDs downloaded by `pnpm vods:download`, described by
  * its `tournament.json` manifest, which streaks of its games are clip
  * candidates (a length cap per splat count, so a longer streak may run
- * longer), and how a picked clip plays back in the rendered video — the
- * dead time between two kills fast-forwarded, keeping `KILL_MARGIN_S` of
- * normal speed after a kill and before the next one.
+ * longer), how the video is laid out (the intro, then the top teams from
+ * the last placement up, each one's card followed by its clips) and how a
+ * picked clip plays back in it — the dead time between two kills
+ * fast-forwarded, keeping `KILL_MARGIN_S` of normal speed after a kill and
+ * before the next one.
  */
 
 import type {
@@ -26,6 +28,8 @@ export const DEFAULT_MONTAGE_CRITERIA: MontageCriteria = {
 	maxSecondsByKills: { 2: 20, 3: 30, 4: 45, 5: 60 },
 };
 export const FAST_FORWARD_SPEED = 4;
+export const INTRO_CARD_SECONDS = 6;
+export const TEAM_CARD_SECONDS = 5;
 const KILL_MARGIN_S = 3;
 /** a shorter stretch of dead time isn't worth the jump in speed */
 const MIN_FAST_FORWARD_S = 2;
@@ -42,15 +46,25 @@ export interface MontageManifest {
 	teamsCount: number;
 	playersCount: number;
 	/** best first, ties share a placement; players are the ones who played */
-	topTeams: Array<MontageManifestTeam & { placement: number }>;
+	topTeams: MontageManifestTopTeam[];
+	/** every team that played, in seed order */
+	teams: Array<Pick<MontageManifestTeam, "id" | "name" | "logo">>;
 	vods: MontageManifestVod[];
 }
+
+export type MontageManifestTopTeam = MontageManifestTeam & {
+	placement: number;
+};
 
 export interface MontageManifestTeam {
 	id: number;
 	name: string;
 	logo: string | null;
-	players: Array<{ name: string; countryCode: string | null }>;
+	players: Array<{
+		name: string;
+		countryCode: string | null;
+		avatar: string | null;
+	}>;
 }
 
 export interface MontageManifestVod {
@@ -108,7 +122,12 @@ export interface MontageCandidate {
 	weaponId: MainWeaponId | null;
 	/** seconds the clip lasts in the montage, dead time fast-forwarded */
 	duration: number;
+	/** the top teams the clip can play under (`candidateTeamIds`) */
+	teamIds: number[];
 }
+
+/** A candidate in the montage, under the card of one of its `teamIds`. */
+export type MontagePick = MontageCandidate & { teamId: number };
 
 export interface PlaybackSegment {
 	/** seconds into the source file */
@@ -116,6 +135,44 @@ export interface PlaybackSegment {
 	/** seconds into the source file */
 	to: number;
 	speed: number;
+}
+
+/**
+ * The top teams the VoD's clips can play under: the POV team, or for a
+ * cast either side. Empty when none of them is a top team.
+ */
+export function candidateTeamIds(
+	vod: Pick<MontageManifestVod, "team" | "teams">,
+	topTeamIds: ReadonlySet<number>,
+): number[] {
+	const teamIds = vod.team ? [vod.team.id] : vod.teams.map((team) => team.id);
+	return teamIds.filter((teamId) => topTeamIds.has(teamId));
+}
+
+/**
+ * The video's team sections after the intro: the top teams counting down
+ * from the last placement, each with its picks in montage order.
+ */
+export function montageTeamSections<T extends Pick<MontagePick, "teamId">>(
+	topTeams: readonly MontageManifestTopTeam[],
+	picks: readonly T[],
+) {
+	return topTeams.toReversed().map((team) => ({
+		team,
+		picks: picks.filter((pick) => pick.teamId === team.id),
+	}));
+}
+
+/** Seconds the video lasts: the cards and the picks, fast-forwarded. */
+export function montageDuration(
+	teamCount: number,
+	picks: ReadonlyArray<Pick<MontageCandidate, "duration">>,
+): number {
+	return (
+		INTRO_CARD_SECONDS +
+		teamCount * TEAM_CARD_SECONDS +
+		picks.reduce((sum, pick) => sum + pick.duration, 0)
+	);
 }
 
 /** The clip's playback, chronological and gapless: normal speed except fast-forwarded dead time between kills. */

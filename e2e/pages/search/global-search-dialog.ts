@@ -31,6 +31,19 @@ export class GlobalSearchDialog {
 		await this.locators.dialog.waitFor({ state: "visible" });
 	}
 
+	/** Desktop Chrome's user agent is not a Mac's, so the shortcut is Ctrl+K. */
+	async openWithShortcut() {
+		await this.page.keyboard.press("Control+k");
+		await this.locators.dialog.waitFor({ state: "visible" });
+	}
+
+	async close() {
+		// Escape on a filled search input clears it instead of closing the dialog
+		await this.locators.input.clear();
+		await this.page.keyboard.press("Escape");
+		await this.locators.dialog.waitFor({ state: "hidden" });
+	}
+
 	/** Which kind of entity the query searches; remembered across dialog openings. */
 	async selectType(type: keyof typeof TYPE_LABELS) {
 		await this.locators.dialog.getByText(TYPE_LABELS[type]).click();
@@ -38,6 +51,11 @@ export class GlobalSearchDialog {
 
 	async search(query: string) {
 		await this.locators.input.fill(query);
+	}
+
+	/** Types key by key, firing keydown events unlike {@link search}. */
+	async type(query: string) {
+		await this.locators.input.pressSequentially(query);
 	}
 
 	async selectOption(name: string) {

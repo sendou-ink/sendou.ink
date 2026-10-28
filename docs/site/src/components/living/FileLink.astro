@@ -1,0 +1,19 @@
+---
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+
+interface Props {
+	file: string;
+	line: number;
+	label: string;
+	class?: string;
+}
+
+const { file, line, label, class: className = "file-link" } = Astro.props;
+---
+
+<a
+	class={className}
+	href={githubUrl(file, line)}
+	title={`${file}:${line}`}
+	data-pagefind-ignore>{label}</a
+>

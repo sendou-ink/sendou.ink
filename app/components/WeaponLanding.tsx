@@ -6,7 +6,12 @@ import { Link, useLocation } from "react-router";
 import { BackLink } from "~/components/BackLink";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
-import { Image, SpecialWeaponImage, SubWeaponImage } from "~/components/Image";
+import {
+	Image,
+	OutlinedImage,
+	SpecialWeaponImage,
+	SubWeaponImage,
+} from "~/components/Image";
 import { Input } from "~/components/Input";
 import { PageHeader } from "~/components/PageHeader";
 import { WeaponPoolBanner } from "~/components/WeaponPoolBanner";
@@ -318,7 +323,7 @@ function WeaponRow({
 			data-testid={`weapon-${weapon.id}-link`}
 		>
 			<CircleBackdrop className={styles.weaponImageBackdrop}>
-				<Image path={mainWeaponImageUrl(weapon.id)} size={46} alt="" />
+				<OutlinedImage path={mainWeaponImageUrl(weapon.id)} size={46} alt="" />
 			</CircleBackdrop>
 			<span className={styles.weaponInfo}>
 				<span>{t(`weapons:MAIN_${weapon.id}`)}</span>
@@ -386,7 +391,9 @@ function CategoryImage({
 		);
 	}
 
-	return <Image path={weaponCategoryUrl(category)} size={size} alt="" />;
+	return (
+		<OutlinedImage path={weaponCategoryUrl(category)} size={size} alt="" />
+	);
 }
 
 function CategoryName({ category }: { category: WeaponLandingCategory }) {

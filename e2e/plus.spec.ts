@@ -20,6 +20,7 @@ import { SuggestionCommentPage } from "./pages/plus/suggestion-comment-page";
 import { PlusSuggestionsPage } from "./pages/plus/suggestions-page";
 import { PlusVotingPage } from "./pages/plus/voting-page";
 import { PlusVotingResultsPage } from "./pages/plus/voting-results-page";
+import { GlobalSearchDialog } from "./pages/search/global-search-dialog";
 
 const SUGGESTED_NAME = "SuggestedSue";
 const SUGGESTED_DISCORD_ID = "1000000000000000001";
@@ -207,5 +208,36 @@ test.describe("Plus Server", () => {
 		await voting.goto();
 		await expect(voting.locators.votingOngoingInfo).toBeVisible();
 		await isNotVisible(voting.locators.upvoteButton);
+	});
+
+	test("votes with the S and K keys, but not while using global search", async ({
+		page,
+		factories,
+	}) => {
+		await factories.UserFactory.grant(ADMIN_ID, { plusTier: 1 });
+		await factories.UserFactory.grant(NZAP_TEST_ID, { plusTier: 1 });
+		for (const user of await factories.UserFactory.createMany(2)) {
+			await factories.UserFactory.grant(user.id, { plusTier: 1 });
+		}
+
+		await impersonate(page);
+		await setPlusVotingActive(page, true);
+
+		const voting = new PlusVotingPage(page);
+		await voting.goto();
+		await expect(voting.progress({ voted: 0, total: 3 })).toBeVisible();
+
+		await voting.voteWithKey("upvote");
+		await expect(voting.progress({ voted: 1, total: 3 })).toBeVisible();
+
+		const search = new GlobalSearchDialog(page);
+		await search.openWithShortcut();
+		await search.type("sk");
+		await expect(search.locators.input).toHaveValue("sk");
+		await search.close();
+		await expect(voting.progress({ voted: 1, total: 3 })).toBeVisible();
+
+		await voting.voteWithKey("downvote");
+		await expect(voting.progress({ voted: 2, total: 3 })).toBeVisible();
 	});
 });

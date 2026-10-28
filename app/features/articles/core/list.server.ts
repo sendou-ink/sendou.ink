@@ -23,14 +23,12 @@ export async function mostRecentArticles(count: number) {
 
 		const { date, ...restParsed } = v.parse(articleDataSchema, data);
 		articles.push({
-			date,
+			date: date.getTime(),
 			slug: file.replace(".md", ""),
 			authors: normalizeAuthors(restParsed.author),
 			title: restParsed.title,
 		});
 	}
 
-	return articles
-		.sort((a, b) => b.date.getTime() - a.date.getTime())
-		.slice(0, count);
+	return articles.sort((a, b) => b.date - a.date).slice(0, count);
 }

@@ -6,7 +6,8 @@
  * in the splat and the power counts toward the new value for ~0.3s before
  * the card fades. A read only counts once the header agrees with a decided
  * set of tiles, and the timeline keeps the furthest-along read
- * (`xSetResultProgress`).
+ * (`xSetResultProgress`), its power settled from the power before the change
+ * when an earlier read showed it (`xSetResultCarryOver`).
  */
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import type { Mat } from "../../cv";
@@ -95,6 +96,32 @@ export function xSetResultProgress(a: unknown, b: unknown): number {
 	const delta = db.power - da.power;
 	if (Math.abs(delta) > Math.abs(db.powerChange) + POWER_EPSILON) return 0;
 	return Math.sign(delta * Math.sign(db.powerChange));
+}
+
+/**
+ * The data a further-along read keeps when it replaces `kept` in the
+ * timeline: once the change lands, the new X Power is the power before it
+ * plus the change, so a read caught mid-count (or with its power unread)
+ * settles to that sum. A read power off the count between the two is left
+ * as read.
+ */
+export function xSetResultCarryOver(kept: unknown, further: unknown): unknown {
+	const before = kept as XSetResultData;
+	const after = further as XSetResultData;
+	if (
+		before.powerChange !== null ||
+		before.power === null ||
+		after.powerChange === null ||
+		before.results.length !== after.results.length
+	) {
+		return after;
+	}
+	const settled = Math.round((before.power + after.powerChange) * 10) / 10;
+	const onCount =
+		after.power === null ||
+		Math.abs(after.power - before.power) + Math.abs(settled - after.power) <=
+			Math.abs(after.powerChange) + POWER_EPSILON;
+	return onCount ? { ...after, power: settled } : after;
 }
 
 export function createXSetResultDetector(

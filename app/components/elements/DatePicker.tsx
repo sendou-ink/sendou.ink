@@ -1,42 +1,38 @@
 import { format, parse } from "date-fns";
-import * as React from "react";
-import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { isValidDate } from "~/utils/dates";
-import styles from "./DatePicker.module.css";
-import { SendouLabel } from "./Label";
 
 const DATE_INPUT_FORMAT = "yyyy-MM-dd";
 const DATETIME_INPUT_FORMAT = "yyyy-MM-dd'T'HH:mm";
 
-interface SendouDatePickerProps {
-	label: string;
+interface SendouDatePickerProps
+	extends Pick<
+		React.InputHTMLAttributes<HTMLInputElement>,
+		| "id"
+		| "disabled"
+		| "aria-label"
+		| "aria-invalid"
+		| "aria-describedby"
+		| "aria-errormessage"
+		| "aria-required"
+	> {
 	value: Date | null;
 	/** `isBadInput` = the input holds a partial or impossible date, e.g. 31.9. */
 	onChange: (value: Date | null, meta: { isBadInput: boolean }) => void;
 	granularity?: "day" | "minute";
-	bottomText?: string;
-	errorText?: string;
-	errorId?: string;
-	isRequired?: boolean;
-	isDisabled?: boolean;
 	onBlur?: () => void;
 }
 
-/** Native `date` / `datetime-local` input, so the browser owns locale, clock format and the picker UI. */
+/**
+ * Native `date` / `datetime-local` input, so the browser owns locale, clock format and the picker UI.
+ * Renders only the input: wrap it in `DatetimeFormField` for a label and messages, or pair it with a `<Label>`.
+ */
 export function SendouDatePicker({
-	label,
 	value,
 	onChange,
 	granularity = "minute",
-	bottomText,
-	errorText,
-	errorId,
-	isRequired,
-	isDisabled,
 	onBlur,
+	...inputProps
 }: SendouDatePickerProps) {
-	const id = React.useId();
-
 	const inputValue = value
 		? format(
 				value,
@@ -45,31 +41,18 @@ export function SendouDatePicker({
 		: "";
 
 	return (
-		<div className={styles.root}>
-			<SendouLabel htmlFor={id} required={isRequired}>
-				{label}
-			</SendouLabel>
-			<input
-				id={id}
-				type={granularity === "day" ? "date" : "datetime-local"}
-				value={inputValue}
-				onChange={(event) =>
-					onChange(parseInputValue(event.target.value, granularity), {
-						isBadInput: event.target.validity.badInput,
-					})
-				}
-				onBlur={() => onBlur?.()}
-				disabled={isDisabled}
-				required={isRequired}
-				aria-invalid={errorText ? true : undefined}
-				aria-describedby={errorText ? errorId : undefined}
-			/>
-			<SendouBottomTexts
-				bottomText={bottomText}
-				errorText={errorText}
-				errorId={errorId}
-			/>
-		</div>
+		<input
+			{...inputProps}
+			className="w-full"
+			type={granularity === "day" ? "date" : "datetime-local"}
+			value={inputValue}
+			onChange={(event) =>
+				onChange(parseInputValue(event.target.value, granularity), {
+					isBadInput: event.target.validity.badInput,
+				})
+			}
+			onBlur={() => onBlur?.()}
+		/>
 	);
 }
 

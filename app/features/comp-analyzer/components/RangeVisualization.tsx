@@ -2,13 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { WeaponImage } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import {
-	BENCHMARK_WEAPON_IDS,
-	getBenchmarkTrajectories,
-	getWeaponsWithRange,
-	type TrajectoryPoint,
-	type WeaponWithRange,
-} from "../core/weapon-range";
+import * as WeaponRange from "../core/WeaponRange";
 import styles from "./RangeVisualization.module.css";
 
 const SLOT_COLORS = ["#f5d742", "#f5b8d0", "#90e8a8", "#8cd4f5"] as const;
@@ -26,8 +20,8 @@ export function RangeVisualization({ weaponIds }: RangeVisualizationProps) {
 	const { t } = useTranslation(["analyzer", "weapons"]);
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
-	const weaponsWithRange = getWeaponsWithRange(weaponIds);
-	const benchmarkTrajectories = getBenchmarkTrajectories();
+	const weaponsWithRange = WeaponRange.ofWeapons(weaponIds);
+	const benchmarkTrajectories = WeaponRange.benchmarkTrajectories();
 
 	if (weaponsWithRange.length === 0) {
 		return null;
@@ -65,7 +59,7 @@ export function RangeVisualization({ weaponIds }: RangeVisualizationProps) {
 			{!isCollapsed ? (
 				<div className={styles.content}>
 					<div className={styles.benchmarkLegend}>
-						{BENCHMARK_WEAPON_IDS.map((weaponId) => (
+						{WeaponRange.BENCHMARK_WEAPON_IDS.map((weaponId) => (
 							<div key={weaponId} className={styles.legendItem}>
 								<span className={styles.legendLine} />
 								<span className={styles.legendLabel}>
@@ -88,11 +82,11 @@ export function RangeVisualization({ weaponIds }: RangeVisualizationProps) {
 }
 
 interface TrajectoryChartProps {
-	weapons: WeaponWithRange[];
+	weapons: WeaponRange.WeaponWithRange[];
 	benchmarkTrajectories: Array<{
 		id: MainWeaponId;
 		range: number;
-		trajectory?: TrajectoryPoint[];
+		trajectory?: WeaponRange.TrajectoryPoint[];
 	}>;
 	maxRange: number;
 	minY: number;
@@ -118,8 +112,8 @@ function TrajectoryChart({
 
 	// where the trajectory hits the ground (lastPoint may be below it or mid-air); blasts happen there
 	const getGroundIntersection = (
-		trajectory: TrajectoryPoint[],
-	): TrajectoryPoint | null => {
+		trajectory: WeaponRange.TrajectoryPoint[],
+	): WeaponRange.TrajectoryPoint | null => {
 		for (let i = 0; i < trajectory.length; i++) {
 			const point = trajectory[i];
 			if (point.y < 0) {
@@ -136,10 +130,12 @@ function TrajectoryChart({
 		return lastPoint && lastPoint.y >= 0 ? lastPoint : null;
 	};
 
-	const trajectoryToPath = (trajectory: TrajectoryPoint[]): string => {
+	const trajectoryToPath = (
+		trajectory: WeaponRange.TrajectoryPoint[],
+	): string => {
 		if (trajectory.length === 0) return "";
 
-		const clampedPoints: TrajectoryPoint[] = [];
+		const clampedPoints: WeaponRange.TrajectoryPoint[] = [];
 		for (const point of trajectory) {
 			if (point.y >= 0) {
 				clampedPoints.push(point);

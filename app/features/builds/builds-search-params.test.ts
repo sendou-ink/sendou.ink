@@ -8,15 +8,16 @@ import { buildsSearchParams } from "./builds-search-params";
 describe("buildsSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(buildsSearchParams, {
-			limit: [24, 48, 1, 240],
+			page: [1, 2, 10],
 			abilities: [
 				[],
+				[{ type: "HAS", ability: "ISM" }],
 				[
-					{ ability: "ISM", comparison: "AT_LEAST", value: 3 },
-					{ ability: "SSU", comparison: "AT_MOST", value: 12 },
+					{ type: "AT_LEAST", ability: "SSU", ap: 12 },
+					{ type: "AT_MOST", ability: "ISS", ap: 57 },
+					{ type: "HAS_NOT", ability: "LDE" },
+					{ type: "HAS", ability: "NS" },
 				],
-				[{ ability: "LDE", value: true }],
-				[{ ability: "CB", value: false }],
 			],
 			mode: [null, "SZ", "TW"],
 			date: [null, "2026-01-28"],
@@ -24,23 +25,24 @@ describe("buildsSearchParams", () => {
 	});
 
 	test("decodes garbage to defaults", () => {
-		assertDecodesToDefault(buildsSearchParams, "limit", [
-			[""],
-			["0"],
-			["241"],
-			["abc"],
-		]);
+		assertDecodesToDefault(buildsSearchParams, "page", [[""], ["0"], ["abc"]]);
 		assertDecodesToDefault(buildsSearchParams, "abilities", [
-			["not-json"],
-			['[{"ability":"XXX","value":true}]'],
-			['{"ability":"ISM","value":3}'],
-			['[{"ability":"ISM","value":100,"comparison":"AT_LEAST"}]'],
+			["XXX"],
+			["ISM-maybe"],
+			["ISM-min"],
+			["ISM-min0"],
+			["ISM-min58"],
+			["ISM-min3-max6"],
+			["LDE-min10"],
+			["ISM.ISM-not"],
+			["ISM.ISS.IRU.RSU.SSU.SCU.SS"],
 		]);
 		assertDecodesToDefault(buildsSearchParams, "mode", [["XX"], ["zz"]]);
 		assertDecodesToDefault(buildsSearchParams, "date", [
 			["not-a-date"],
 			["2026-13-99"],
 			["2026-1-1"],
+			["2026-01-27"],
 		]);
 	});
 });

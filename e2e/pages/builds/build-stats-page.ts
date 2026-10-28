@@ -13,15 +13,26 @@ export class BuildStatsPage {
 		await navigate({ page: this.page, url: weaponBuildStatsPage(weaponSlug) });
 	}
 
-	buildsCountTitle(count: number, weaponName: string) {
-		return this.page.getByText(`Stats from ${count} ${weaponName} builds`);
+	buildsCount(count: number) {
+		return this.page.getByText(`Based on ${count} builds`, { exact: true });
 	}
 
 	apAverage(ap: number) {
 		return this.page.getByText(`${ap} AP`, { exact: true });
 	}
 
-	abilityPercentage(percentage: number) {
-		return this.page.getByText(`${percentage}%`, { exact: true });
+	mainOnlyAbilityPercentages({
+		abilityName,
+		weaponPercentage,
+		allPercentage,
+	}: {
+		abilityName: string;
+		weaponPercentage: number;
+		allPercentage: number;
+	}) {
+		return this.page.getByRole("img", {
+			name: `${abilityName}: ${weaponPercentage}%, all weapons ${allPercentage}%`,
+			exact: true,
+		});
 	}
 }

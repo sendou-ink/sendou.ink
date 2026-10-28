@@ -1,0 +1,63 @@
+---
+import type { FeatureDoc } from "../../../../../scripts/living-docs/document.ts";
+import type {
+	Segment,
+	SpecDoc,
+} from "../../../../../scripts/living-docs/e2e.ts";
+import { initials } from "../../living/format.ts";
+import Screenshot from "./Screenshot.astro";
+import Step from "./Step.astro";
+
+interface Props {
+	feature: FeatureDoc;
+	spec: SpecDoc;
+	segment: Segment;
+}
+
+const PHASE_LABELS = { arrange: "Arrange", act: "Act", assert: "Assert" };
+
+const { feature, spec, segment } = Astro.props;
+const { actor } = segment;
+---
+
+<div
+	class:list={["segment", actor ? "segment-actor" : "segment-setup"]}
+	style={actor ? `--actor: ${actor.color}` : undefined}
+>
+	<div
+		class="lane"
+		title={actor ? `Logged in as ${actor.label} (${actor.key})` : undefined}
+	>
+		<div class="lane-sticky">
+			{actor ? <span class="avatar">{initials(actor.label)}</span> : null}
+			<span class="lane-name">{actor ? actor.label : "Setup"}</span>
+		</div>
+	</div>
+	<div class="segment-body">
+		{
+			segment.items.map((item) =>
+				item.kind === "divider" ? (
+					<div class="divider">
+						<span class="divider-label" set:html={item.html} />
+						<Screenshot
+							feature={feature}
+							spec={spec}
+							line={item.line}
+							label={item.plainLabel}
+							variant="divider-shot"
+						/>
+					</div>
+				) : (
+					<div class={`run phase-${item.phase}`}>
+						<div class="run-label">{PHASE_LABELS[item.phase]}</div>
+						<ol class="steps">
+							{item.steps.map((step) => (
+								<Step step={step} />
+							))}
+						</ol>
+					</div>
+				),
+			)
+		}
+	</div>
+</div>

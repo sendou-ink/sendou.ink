@@ -27,12 +27,17 @@ const STATE_NAV_ICON: Record<GlobalStatusState, string> = {
 	TO_MATCH: "medal",
 	TO_WAITING_FOR_MATCH: "medal",
 	TO_WAITING_FOR_CAST: "medal",
+	LOBBY_WAITING: "lobbies",
+	LOBBY_READY_CHECK: "lobbies",
+	LOBBY_IN_ROOM: "lobbies",
+	LOBBY_MATCH: "lobbies",
 };
 
 const ALERT_BADGE_STATES: GlobalStatusState[] = [
 	"SQ_EXPIRED",
 	"SQ_READY_CHECK",
 	"TO_CHECKIN",
+	"LOBBY_READY_CHECK",
 ];
 
 /** States where the ball is in someone else's court, shown with an hourglass over the icon. */
@@ -40,6 +45,7 @@ const WAITING_STATES: GlobalStatusState[] = [
 	"SQ_PREPARING",
 	"TO_WAITING_FOR_MATCH",
 	"TO_WAITING_FOR_CAST",
+	"LOBBY_WAITING",
 ];
 
 /** The user's ongoing SendouQ or tournament activity in the header. */
@@ -84,6 +90,7 @@ function StatusPanel({ status }: { status: GlobalStatus }) {
 							} satisfies BracketsPageState)
 						: undefined
 				}
+				preventScrollReset={typeof status.scrollToMatchId === "number"}
 				prefetch="intent"
 				size="small"
 				className="mt-2"
@@ -153,6 +160,11 @@ function StatusSubtitle({ status }: { status: GlobalStatus }) {
 			case "TO_MATCH":
 			case "TO_WAITING_FOR_MATCH":
 				return [status.tournamentName, status.roundName];
+			case "LOBBY_WAITING":
+			case "LOBBY_READY_CHECK":
+			case "LOBBY_IN_ROOM":
+			case "LOBBY_MATCH":
+				return [];
 		}
 	})();
 

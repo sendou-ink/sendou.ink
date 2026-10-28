@@ -319,6 +319,13 @@ export class TournamentMatchPage {
 		return new TournamentBracketsPage(this.page);
 	}
 
+	/** Returns to the bracket with the browser's back button instead of the page's own link. */
+	async browserBack() {
+		await this.page.goBack();
+		await expect(this.page.getByTestId("brackets-viewer")).toBeVisible();
+		return new TournamentBracketsPage(this.page);
+	}
+
 	private async ensureActiveRostersSet() {
 		const sides: RosterSide[] = ["alpha", "bravo"];
 

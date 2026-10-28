@@ -15,9 +15,9 @@ import styles from "./TierListGraphic.module.css";
 import { TierListItemImage } from "./TierListItemImage";
 
 export interface TierListGraphicAuthor {
+	id: number;
 	username: string;
-	discordId: string;
-	discordAvatar: string | null;
+	avatar: string | null;
 }
 
 export function TierListGraphic({

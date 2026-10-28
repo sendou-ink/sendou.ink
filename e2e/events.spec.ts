@@ -117,6 +117,7 @@ test.describe("My schedule", () => {
 		await isNotVisible(events.locators.dayEditorPopover);
 		await isNotVisible(events.locators.availabilityBars);
 		await events.locators.saveWeekButton.click();
+		await page.getByTestId("confirm-button").click();
 		await expect(page.getByText("Availability saved")).toBeAttached();
 
 		// an empty submitted week is "unavailable all week", not missing

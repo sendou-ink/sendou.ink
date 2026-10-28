@@ -1,4 +1,4 @@
-import { addDays, startOfHour, subDays, subHours } from "date-fns";
+import { addDays, addHours, startOfHour, subDays, subHours } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -389,7 +389,7 @@ test.describe("Calendar", () => {
 					name: "Final Stage",
 					type: "single_elimination",
 					requiresCheckIn: true,
-					startTime: dateToDatabaseTimestamp(addDays(copiedStartTime, 1)),
+					startTime: dateToDatabaseTimestamp(addHours(copiedStartTime, 24)),
 					settings: {},
 					sources: [{ bracketIdx: 0, placements: [1, 2] }],
 				},
@@ -404,7 +404,7 @@ test.describe("Calendar", () => {
 
 		await newTournament.form.fill("name", "Copied Tournament");
 		const startTime = await newTournament.tournamentStartTime();
-		const followUpStartTime = addDays(startTime, 1);
+		const followUpStartTime = addHours(startTime, 24);
 
 		// starting on another day than the tournament, the card shows the date too
 		await newTournament.goToStep("format");

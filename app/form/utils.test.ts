@@ -1,7 +1,13 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 import { preprocess } from "~/utils/schema";
-import { getNestedSchema, getNestedValue, setNestedValue } from "./utils";
+import { array, textField } from "./fields";
+import {
+	getNestedSchema,
+	getNestedValue,
+	setNestedValue,
+	validateField,
+} from "./utils";
 
 describe("getNestedValue", () => {
 	test("returns value at simple path", () => {
@@ -155,4 +161,28 @@ describe("getNestedSchema", () => {
 		const result = getNestedSchema(schema, "config.name");
 		expect(result?.type).toBe("string");
 	});
+});
+
+describe("validateField", () => {
+	const linksSchema = v.object({
+		links: array({
+			label: "labels.urls",
+			max: 10,
+			field: textField({ maxLength: 150, validate: "url" }),
+		}),
+	});
+
+	test.each([
+		{
+			why: "invalid url",
+			value: "twitter.com/me",
+			expected: "forms:errors.invalidUrl",
+		},
+		{ why: "empty", value: "", expected: "forms:errors.required" },
+	])(
+		"validates a row of a list of plain values ($why)",
+		({ value, expected }) => {
+			expect(validateField(linksSchema, "links[0]", value)).toBe(expected);
+		},
+	);
 });

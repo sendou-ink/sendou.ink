@@ -5,14 +5,10 @@ import { Main } from "~/components/Main";
 import { WeaponLanding } from "~/components/WeaponLanding";
 import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
 import * as SearchParams from "~/modules/search-params/search-params";
+import { weaponSlug } from "~/utils/english-weapon-names";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	BUILDS_PAGE,
-	mySlugify,
-	navIconUrl,
-	weaponBuildPage,
-} from "~/utils/urls";
+import { BUILDS_PAGE, navIconUrl, weaponBuildPage } from "~/utils/urls";
 import { loader } from "../loaders/builds.server";
 
 export { loader };
@@ -51,9 +47,7 @@ export default function BuildsPage() {
 				weapons={data.weapons}
 				weaponPoolIds={data.weaponPoolIds}
 				weaponHref={(weaponId) =>
-					weaponBuildPage(
-						mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" })),
-					)
+					weaponBuildPage(weaponSlug({ type: "MAIN", id: weaponId }))
 				}
 				categoryHref={(category) =>
 					weaponLandingSearchParams.href(BUILDS_PAGE, { category })

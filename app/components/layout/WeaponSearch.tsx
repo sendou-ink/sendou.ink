@@ -20,11 +20,11 @@ import {
 	mainWeaponIds,
 	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
+import { englishWeaponName, weaponSlug } from "~/utils/english-weapon-names";
 import {
 	ANALYZER_URL,
 	LFG_PAGE,
 	mainWeaponImageUrl,
-	mySlugify,
 	VODS_PAGE,
 	weaponBuildPage,
 	weaponBuildPopularPage,
@@ -68,13 +68,9 @@ export function weaponToSelectedWeapon<Ns extends Namespace>(
 	return {
 		id,
 		name: t(`weapons:MAIN_${id}` as never),
-		englishName: t(`weapons:MAIN_${id}` as never, { lng: "en" }),
-		slug: mySlugify(
-			t(`weapons:MAIN_${canonicalWeaponSplId(id)}` as never, { lng: "en" }),
-		),
-		paramsSlug: mySlugify(
-			t(`weapons:MAIN_${weaponIdToBaseWeaponId(id)}` as never, { lng: "en" }),
-		),
+		englishName: englishWeaponName({ type: "MAIN", id }),
+		slug: weaponSlug({ type: "MAIN", id: canonicalWeaponSplId(id) }),
+		paramsSlug: weaponSlug({ type: "MAIN", id: weaponIdToBaseWeaponId(id) }),
 	};
 }
 

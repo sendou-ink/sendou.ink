@@ -4,9 +4,17 @@ import { SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
 import {
 	applyFilters,
+	defaultFilters,
+	filtersAreDefault,
+	getStartTime,
+	isAccepted,
+	isParticipating,
 	isTrackingLocked,
+	lastReportedMap,
+	nextMapIndex,
 	participantIdsListFromAccepted,
 	pickableSlots,
+	resolvePoolCode,
 	rosterFit,
 	sideDisplayName,
 	sideOfUser,
@@ -32,7 +40,7 @@ function createPost(users: MockUser[], requests: MockRequest[]): ScrimPost {
 	} as unknown as ScrimPost;
 }
 
-describe("participantIdsListFromAccepted", () => {
+describe("Scrim.participantIdsListFromAccepted", () => {
 	test("returns only post users if no accepted request", () => {
 		const post = createPost(
 			[{ id: 10 }, { id: 20 }],
@@ -90,7 +98,7 @@ describe("participantIdsListFromAccepted", () => {
 	});
 });
 
-describe("sideDisplayName", () => {
+describe("Scrim.sideDisplayName", () => {
 	test("returns the team name when team is set", () => {
 		const result = sideDisplayName({
 			team: { name: "Team Olive" },
@@ -111,7 +119,7 @@ describe("sideDisplayName", () => {
 	});
 });
 
-describe("applyFilters", () => {
+describe("Scrim.applyFilters", () => {
 	function createPostForFilters(
 		startsAt: Date,
 		rangeEndsAt?: Date,
@@ -126,7 +134,7 @@ describe("applyFilters", () => {
 			requests: [],
 			canceled: null,
 			createdAt: databaseTimestampNow(),
-			visibility: null,
+			isPrivate: false,
 			chatRoomId: null,
 			text: "",
 			maps: null,
@@ -500,7 +508,7 @@ describe("applyFilters", () => {
 	});
 });
 
-describe("sideOfUser", () => {
+describe("Scrim.sideOfUser", () => {
 	test("returns ALPHA for users in the post's users list", () => {
 		const post = createPost(
 			[{ id: 1 }],
@@ -534,7 +542,7 @@ describe("sideOfUser", () => {
 	});
 });
 
-describe("isTrackingLocked", () => {
+describe("Scrim.isTrackingLocked", () => {
 	const ONE_HOUR_MS = 60 * 60 * 1000;
 	const lockWindowMs = SCRIM_TRACKING_AUTO_LOCK_HOURS * ONE_HOUR_MS;
 	const now = 1_000_000_000;
@@ -618,7 +626,7 @@ const freeFrom = (userId: number, startsAt: number, endsAt: number) => ({
 	ranges: [{ startsAt, endsAt }],
 });
 
-describe("pickableSlots", () => {
+describe("Scrim.pickableSlots", () => {
 	const evening = (hours: number) => hours * HOUR;
 
 	test("starts a slot the whole team is free for at its own start", () => {
@@ -721,7 +729,7 @@ describe("pickableSlots", () => {
 	});
 });
 
-describe("teamPlayers", () => {
+describe("Scrim.teamPlayers", () => {
 	const player = { id: 1, role: "FRONTLINE" as const, roleType: null };
 	const coach = { id: 2, role: "COACH" as const, roleType: null };
 
@@ -744,7 +752,7 @@ describe("teamPlayers", () => {
 	});
 });
 
-describe("rosterFit", () => {
+describe("Scrim.rosterFit", () => {
 	const evening = (hours: number) => hours * HOUR;
 	const free = (userId: number, startsAt: number, endsAt: number) => ({
 		userId,
@@ -825,5 +833,145 @@ describe("rosterFit", () => {
 		}));
 
 		expect(rosterFit({ starts: [evening(18)], members })).toBeNull();
+	});
+});
+
+describe("Scrim.isAccepted", () => {
+	test.each([
+		{ why: "no requests", requests: [], expected: false },
+		{
+			why: "only pending requests",
+			requests: [{ isAccepted: false, users: [{ id: 2 }] }],
+			expected: false,
+		},
+		{
+			why: "an accepted request",
+			requests: [
+				{ isAccepted: false, users: [{ id: 2 }] },
+				{ isAccepted: true, users: [{ id: 3 }] },
+			],
+			expected: true,
+		},
+	])("$why -> $expected", ({ requests, expected }) => {
+		expect(isAccepted(createPost([{ id: 1 }], requests))).toBe(expected);
+	});
+});
+
+describe("Scrim.isParticipating", () => {
+	const post = createPost(
+		[{ id: 1 }],
+		[{ isAccepted: false, users: [{ id: 2 }] }],
+	);
+
+	test.each([
+		{ why: "a user of the post", userId: 1, expected: true },
+		{ why: "a user of a pending request", userId: 2, expected: true },
+		{ why: "anyone else", userId: 3, expected: false },
+	])("$why -> $expected", ({ userId, expected }) => {
+		expect(isParticipating(post, userId)).toBe(expected);
+	});
+});
+
+describe("Scrim.resolvePoolCode", () => {
+	test.each([
+		[1, "SC2"],
+		[9, "SC1"],
+		[17, "SC9"],
+	])("post %i plays in pool %s", (postId, expected) => {
+		expect(resolvePoolCode(postId)).toBe(expected);
+	});
+});
+
+describe("Scrim.getStartTime", () => {
+	const POST_STARTS_AT = 1_000;
+	const REQUEST_STARTS_AT = 2_000;
+
+	const postWithRequest = (request: {
+		isAccepted: boolean;
+		startsAt: number | null;
+	}) =>
+		({
+			...createPost([{ id: 1 }], [{ ...request, users: [{ id: 2 }] }]),
+			startsAt: POST_STARTS_AT,
+		}) as ScrimPost;
+
+	test.each([
+		{
+			why: "the accepted request's chosen start",
+			request: { isAccepted: true, startsAt: REQUEST_STARTS_AT },
+			expected: REQUEST_STARTS_AT,
+		},
+		{
+			why: "the post's start when the accepted request chose none",
+			request: { isAccepted: true, startsAt: null },
+			expected: POST_STARTS_AT,
+		},
+		{
+			why: "the post's start while no request is accepted",
+			request: { isAccepted: false, startsAt: REQUEST_STARTS_AT },
+			expected: POST_STARTS_AT,
+		},
+	])("$why", ({ request, expected }) => {
+		expect(getStartTime(postWithRequest(request))).toBe(expected);
+	});
+});
+
+describe("Scrim.defaultFilters", () => {
+	test("sets no filter", () => {
+		expect(defaultFilters()).toEqual({
+			weekdayTimes: null,
+			weekendTimes: null,
+			divs: null,
+		});
+	});
+});
+
+describe("Scrim.filtersAreDefault", () => {
+	test.each([
+		{ why: "no filter set", filters: defaultFilters(), expected: true },
+		{
+			why: "a div filter set",
+			filters: { ...defaultFilters(), divs: { min: "5", max: "1" } },
+			expected: false,
+		},
+		{
+			why: "a time filter set",
+			filters: {
+				...defaultFilters(),
+				weekdayTimes: { start: "18:00", end: "22:00" },
+			},
+			expected: false,
+		},
+	] satisfies Array<{ why: string; filters: ScrimFilters; expected: boolean }>)(
+		"$why -> $expected",
+		({ filters, expected }) => {
+			expect(filtersAreDefault(filters)).toBe(expected);
+		},
+	);
+});
+
+describe("Scrim.nextMapIndex", () => {
+	test.each([
+		{ why: "no maps yet", indexes: [], expected: 0 },
+		{ why: "maps in order", indexes: [0, 1], expected: 2 },
+		{ why: "maps out of order", indexes: [2, 0, 1], expected: 3 },
+	])("$why -> $expected", ({ indexes, expected }) => {
+		expect(nextMapIndex(indexes.map((index) => ({ index })))).toBe(expected);
+	});
+});
+
+describe("Scrim.lastReportedMap", () => {
+	test("returns the reported map with the highest index", () => {
+		const maps = [
+			{ index: 1, reportedAt: 200 },
+			{ index: 0, reportedAt: 300 },
+			{ index: 2, reportedAt: null },
+		];
+
+		expect(lastReportedMap(maps)).toBe(maps[0]);
+	});
+
+	test("returns undefined when no map is reported", () => {
+		expect(lastReportedMap([{ index: 0, reportedAt: null }])).toBeUndefined();
 	});
 });

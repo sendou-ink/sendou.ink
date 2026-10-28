@@ -1,0 +1,97 @@
+---
+import { getCollection, getEntry, render } from "astro:content";
+import type { InferGetStaticPropsType } from "astro";
+import FeaturePage from "../../../components/living/FeaturePage.astro";
+import RoutesTable from "../../../components/living/RoutesTable.astro";
+import { behaviourRules, count, markdown } from "../../../living/format.ts";
+
+const BEHAVIOUR_HEADING = { depth: 2, slug: "behaviour", text: "Behaviour" };
+const ROUTES_HEADING = { depth: 2, slug: "routes", text: "Routes" };
+
+export async function getStaticPaths() {
+	const features = await getCollection("features");
+
+	return features
+		.filter((entry) => entry.data.views.includes("overview"))
+		.map((entry) => ({
+			params: { feature: entry.id },
+			props: { feature: entry.data },
+		}));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { feature } = Astro.props;
+const readme = feature.config.readmePath
+	? await getEntry("featureReadmes", feature.config.id)
+	: undefined;
+const { Content, headings } = readme
+	? await render(readme)
+	: { Content: null, headings: [] };
+const rules = behaviourRules(feature);
+const routes = feature.routes.map((coverage) => ({ ...coverage, feature }));
+const visitedCount = routes.filter(
+	({ route, visitedBy }) => !route.isLayout && visitedBy.length > 0,
+).length;
+const pageCount = routes.filter(({ route }) => !route.isLayout).length;
+---
+
+<FeaturePage
+	feature={feature}
+	view="overview"
+	headings={[
+		...headings,
+		...(rules.length > 0
+			? [
+					BEHAVIOUR_HEADING,
+					...rules.map((rule) => ({ depth: 3, slug: rule.slug, text: rule.title })),
+				]
+			: []),
+		...(routes.length > 0 ? [ROUTES_HEADING] : []),
+	]}
+>
+	<Fragment slot="markdown">
+		{Content ? <Content /> : null}
+		{
+			rules.length > 0 ? (
+				<>
+					<h2 id={BEHAVIOUR_HEADING.slug}>{BEHAVIOUR_HEADING.text}</h2>
+					<p>
+						The rules the e2e tests establish, from the JSDoc of their <code>describe</code>s.
+					</p>
+					{rules.map((rule) => (
+						<section>
+							<h3 id={rule.slug}>
+								<a href={rule.href}>{rule.title}</a>
+							</h3>
+							<Fragment set:html={markdown(rule.doc)} />
+							{rule.tests.length > 0 ? (
+								<ul class="behaviour-tests">
+									{rule.tests.map((test) => (
+										<li>
+											<a href={test.href}>{test.name}</a>
+										</li>
+									))}
+								</ul>
+							) : null}
+						</section>
+					))}
+				</>
+			) : null
+		}
+		{
+			routes.length > 0 ? (
+				<>
+					<h2 id={ROUTES_HEADING.slug}>{ROUTES_HEADING.text}</h2>
+					{feature.hasCapture ? (
+						<p>
+							<strong>{visitedCount}</strong> of {count(pageCount, "page")} rendered by an
+							e2e test in the last <code>pnpm run docs:capture</code>.
+						</p>
+					) : null}
+					<RoutesTable routes={routes} hasCapture={feature.hasCapture} />
+				</>
+			) : null
+		}
+	</Fragment>
+</FeaturePage>

@@ -19,18 +19,17 @@ import {
 	TournamentHeader,
 	TournamentHeaderActions,
 } from "../components/TournamentHeader";
-import { parseTournamentLoaderData } from "../core/layout-payload";
 import { loader } from "../loaders/to.$id.info.server";
+import type { TournamentLoaderData } from "../loaders/to.$id.server";
 import { bracketProgressionLabel } from "../tournament-utils";
 import styles from "./to.$id.info.module.css";
 
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const rawLayoutData = args.matches[1].loaderData as string | undefined;
-	const tournamentData = rawLayoutData
-		? parseTournamentLoaderData(rawLayoutData).tournament
-		: undefined;
+	const tournamentData = (
+		args.matches[1].loaderData as TournamentLoaderData | undefined
+	)?.tournament;
 	if (!tournamentData) return [];
 
 	return metaTags({

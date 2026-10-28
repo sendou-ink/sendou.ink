@@ -1,0 +1,149 @@
+---
+import { getCollection } from "astro:content";
+import { Badge } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { anchor, githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import FileLink from "../../components/living/FileLink.astro";
+import { markdown, sitePath } from "../../living/format.ts";
+import "../../styles/living.css";
+
+const scripts = (await getCollection("packageScripts"))
+	.map((entry) => entry.data)
+	.sort((a, b) => a.line - b.line);
+const groups = [...new Set(scripts.map((script) => script.group))]
+	.map((group) => ({
+		group,
+		scripts: scripts
+			.filter((script) => script.group === group)
+			.sort((a, b) => a.name.localeCompare(b.name)),
+	}))
+	.sort((a, b) => groupOrder(a.group) - groupOrder(b.group));
+const undocumented = scripts.filter((script) => script.description === null);
+const documentedEnvVars = new Set(
+	(await getCollection("envVars")).map((entry) => entry.data.name),
+);
+
+function groupOrder(group: string) {
+	return group === "Other"
+		? Number.POSITIVE_INFINITY
+		: scripts.findIndex((script) => script.group === group);
+}
+
+function scriptId(name: string) {
+	return anchor("script", name);
+}
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Package scripts",
+		description: "Every script of package.json with what it runs, generated from package.json and the scripts it runs.",
+		editUrl: false,
+		tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 2 },
+	}}
+	headings={groups.map(({ group }) => ({ depth: 2, slug: anchor(group), text: group }))}
+>
+	<p>
+		Every script of <a href={githubUrl("package.json", 1)}><code>package.json</code></a>, run
+		with <code>pnpm run &lt;name&gt;</code>. A script running a repo script is described by the
+		comment at the top of that file, one running a tool by <code>DESCRIPTIONS</code> of{" "}
+		<a href={githubUrl("scripts/living-docs/package-scripts.ts", 1)}><code>scripts/living-docs/package-scripts.ts</code></a>.
+		The one-off admin scripts run with <code>pnpm exec vite-node</code> are in{" "}
+		<a href={sitePath("dev/scripts/")}>Scripts</a>.
+	</p>
+	{
+		undocumented.length > 0 ? (
+			<p>
+				<Badge text="no description" variant="caution" size="small" />{" "}
+				{undocumented.map((script, index) => (
+					<>
+						{index > 0 ? ", " : ""}
+						<a href={`#${scriptId(script.name)}`}>
+							<code>{script.name}</code>
+						</a>
+					</>
+				))}
+			</p>
+		) : null
+	}
+
+	{
+		groups.map(({ group, scripts: groupScripts }) => (
+			<>
+				<h2 id={anchor(group)}>{group}</h2>
+				<table class="living routes-table">
+					<thead>
+						<tr>
+							<th>Script</th>
+							<th>What it does</th>
+						</tr>
+					</thead>
+					<tbody>
+						{groupScripts.map((script) => (
+							<tr id={scriptId(script.name)}>
+								<td>
+									<a href={githubUrl("package.json", script.line)}>
+										<code>{script.name}</code>
+									</a>
+								</td>
+								<td>
+									{script.description ? (
+										<div set:html={markdown(script.description)} />
+									) : (
+										<Badge text="no description" variant="caution" size="small" />
+									)}
+									<div class="usages">
+										<div class="usage-row">
+											<span class="usage-kind">Command</span>
+											<code>{script.command}</code>
+										</div>
+										{script.file ? (
+											<div class="usage-row">
+												<span class="usage-kind">Runs</span>
+												<span>
+													<FileLink file={script.file} line={1} label={script.file} />
+												</span>
+											</div>
+										) : null}
+										{script.runs.length > 0 ? (
+											<div class="usage-row">
+												<span class="usage-kind">Scripts</span>
+												<span>
+													{script.runs.map((name) => (
+														<a class="chip" href={`#${scriptId(name)}`}>
+															<code>{name}</code>
+														</a>
+													))}
+												</span>
+											</div>
+										) : null}
+										{script.env.length > 0 ? (
+											<div class="usage-row">
+												<span class="usage-kind">Env</span>
+												<span>
+													{script.env.map(({ name, value }) =>
+														documentedEnvVars.has(name) ? (
+															<a class="chip" href={sitePath(`reference/env-vars/#${anchor("env", name)}`)}>
+																<code>
+																	{name}={value}
+																</code>
+															</a>
+														) : (
+															<code class="chip">
+																{name}={value}
+															</code>
+														),
+													)}
+												</span>
+											</div>
+										) : null}
+									</div>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</>
+		))
+	}
+</StarlightPage>

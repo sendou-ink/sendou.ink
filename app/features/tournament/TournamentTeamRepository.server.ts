@@ -83,8 +83,11 @@ export function setActiveRoster({
 		.execute();
 }
 
-const regOpenTournamentTeamsByJoinedUserId = (userId: number) =>
-	db
+const regOpenTournamentTeamsByJoinedUserId = (
+	userId: number,
+	trx: Transaction<DB>,
+) =>
+	trx
 		.selectFrom("TournamentTeamMember")
 		.innerJoin(
 			"TournamentTeam",
@@ -145,11 +148,15 @@ export function updateMemberInGameName({
 /** Updates the acting user's in-game name in tournaments not yet started, returning the ids of those tournaments. */
 export async function updateOwnMemberInGameNameForNonStarted(
 	inGameName: string,
+	trx: Transaction<DB>,
 ): Promise<number[]> {
 	const userId = actorId();
-	const tournamentTeams = await regOpenTournamentTeamsByJoinedUserId(userId);
+	const tournamentTeams = await regOpenTournamentTeamsByJoinedUserId(
+		userId,
+		trx,
+	);
 
-	await db
+	await trx
 		.updateTable("TournamentTeamMember")
 		.set({ inGameName })
 		.where("TournamentTeamMember.userId", "=", userId)
@@ -166,6 +173,7 @@ export async function updateOwnMemberInGameNameForNonStarted(
 	return tournamentTeams.map((t) => t.tournamentId);
 }
 
+/** @returns the created team, or `null` when the owner is already on a team of the tournament. */
 export function insert({
 	team,
 	avatarImgId = null,
@@ -182,6 +190,8 @@ export function insert({
 	tournamentId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
+		if (await isOnTournamentTeam(trx, { userId, tournamentId })) return null;
+
 		const tournamentTeam = await trx
 			.insertInto("TournamentTeam")
 			.values({
@@ -521,6 +531,27 @@ async function registrationClosedNow(
 	return regClosesAt <= databaseTimestampNow();
 }
 
+/** Re-checked inside the writing transaction, the caller's check can be stale by the time it writes. LFG placeholder teams don't count. */
+async function isOnTournamentTeam(
+	trx: Transaction<DB>,
+	{ userId, tournamentId }: { userId: number; tournamentId: number },
+) {
+	const membership = await trx
+		.selectFrom("TournamentTeamMember")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.select("TournamentTeamMember.userId")
+		.where("TournamentTeamMember.userId", "=", userId)
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.executeTakeFirst();
+
+	return Boolean(membership);
+}
+
 async function resolveInGameName(
 	{ tournamentId, userId }: { tournamentId: number; userId: number },
 	trx: Transaction<DB>,
@@ -769,12 +800,13 @@ export function undoDropOut(tournamentTeamId: number) {
 	});
 }
 
-/** @returns user ids whose chat room set changed, for `notifyRoomsChanged`. */
+/** @returns user ids whose chat room set changed, for `notifyRoomsChanged`, or `null` when the user is already on another team of the tournament and that isn't allowed. */
 export function join({
 	previousTeamIdToDelete,
 	newTeamId,
 	userId,
 	isOrganizerAdded = false,
+	allowOtherTeamMembership = false,
 }: {
 	/** Team to delete as the user joins, e.g. a solo team they leave behind. */
 	previousTeamIdToDelete?: number;
@@ -782,7 +814,9 @@ export function join({
 	userId: number;
 	/** Added by the organizer rather than joining on their own. */
 	isOrganizerAdded?: boolean;
-}): Promise<number[]> {
+	/** Lets the user stay on their other team of the tournament too, e.g. subbing in after the start. */
+	allowOtherTeamMembership?: boolean;
+}): Promise<number[] | null> {
 	return db.transaction().execute(async (trx) => {
 		const roomsChangedUserIds: number[] = [];
 
@@ -809,6 +843,13 @@ export function join({
 			.where("TournamentTeam.id", "=", newTeamId)
 			.executeTakeFirstOrThrow();
 		const tournamentId = newTeam.tournamentId;
+
+		if (
+			!allowOtherTeamMembership &&
+			(await isOnTournamentTeam(trx, { userId, tournamentId }))
+		) {
+			return null;
+		}
 
 		if (newTeam.chatRoomId !== null) {
 			roomsChangedUserIds.push(userId);

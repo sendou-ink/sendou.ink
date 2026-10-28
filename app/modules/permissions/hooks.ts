@@ -11,12 +11,14 @@ export function useHasRole(role: Role) {
 	return user.roles.includes(role);
 }
 
-/** Whether the logged in user has the permission on the entity; false when logged out. */
+/** Whether the logged in user has the permission on the entity; false when logged out or there is no entity. */
 export function useHasPermission<
 	T extends EntityWithPermissions,
 	K extends keyof T["permissions"],
->(obj: T, permission: K) {
+>(obj: T | null | undefined, permission: K) {
 	const user = useUser();
+
+	if (!obj) return false;
 
 	return hasPermission(obj, permission, user);
 }

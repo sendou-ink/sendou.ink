@@ -13,6 +13,7 @@ export type Role =
 	| "ARTIST"
 	| "CALENDAR_EVENT_ADDER"
 	| "TOURNAMENT_ADDER"
+	| "LOBBY_ADDER"
 	| "API_ACCESSER"
 	| "QA"
 	| "DEV"

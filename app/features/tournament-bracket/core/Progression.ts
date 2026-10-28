@@ -950,7 +950,15 @@ export function isError(
 export function isFinals(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
-	return resolveMainBracketProgression(brackets).at(-1) === idx;
+	return finalsBracketIdx(brackets) === idx;
+}
+
+/** Index of the last bracket of the main progression starting from `startBracketIdx`, e.g. a division's top cut. */
+export function finalsBracketIdx(
+	brackets: ParsedBracket[],
+	startBracketIdx = 0,
+): number {
+	return resolveMainBracketProgression(brackets, startBracketIdx).at(-1)!;
 }
 
 /** Whether the finals bracket is an A/B divisions round robin. */
@@ -1119,10 +1127,17 @@ export function changedStartingBrackets(
  * Bracket order for standings: a participant's standing comes from the first bracket in this order they
  * are in. Finals first; a bracket always comes after every bracket it advances teams to, so teams it
  * eliminated end up below those that advanced. Underground brackets are omitted as they only break
- * ties within their source bracket, see `tiebrokenByUndergroundBrackets`.
+ * ties within their source bracket, see `tiebrokenByUndergroundBrackets`. Considers the brackets
+ * reachable from `startingBracketIdx`, for tournaments with many starting brackets (divisions).
  */
-export function bracketIdxsForStandings(progression: ParsedBracket[]) {
-	const bracketsToConsider = bracketsReachableFrom(0, progression);
+export function bracketIdxsForStandings(
+	progression: ParsedBracket[],
+	startingBracketIdx = 0,
+) {
+	const bracketsToConsider = bracketsReachableFrom(
+		startingBracketIdx,
+		progression,
+	);
 
 	const ordered = destinationsFirstOrder(bracketsToConsider, progression);
 

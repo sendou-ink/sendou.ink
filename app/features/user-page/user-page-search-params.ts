@@ -2,18 +2,19 @@ import * as v from "valibot";
 import { ART_SOURCES } from "~/features/art/art-types";
 import { serializedBuildCodec } from "~/features/build-analyzer/analyzer-search-params";
 import { EMPTY_BUILD } from "~/features/builds/builds-constants";
+import { buildListParams } from "~/features/builds/builds-search-params";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
 	BEST_TIER_NUMBER,
 	TIER_NUMBERS,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
-import { codec, SP } from "~/modules/search-params/search-params";
+import { SP } from "~/modules/search-params/search-params";
 import { numericEnum } from "~/utils/schema";
 import {
+	BUILD_VISIBILITIES,
 	RESULT_PLACEMENT_FILTERS,
 	RESULT_SOURCES,
 	RESULTS_FIRST_YEAR,
@@ -21,8 +22,6 @@ import {
 	SEASON_STATS_TABS,
 	SEASONS_STAFF_DIALOGS,
 } from "./user-page-constants";
-
-const BUILD_FILTER_TABS = ["ALL", "PUBLIC", "PRIVATE"] as const;
 
 const resultYear = v.pipe(
 	v.number(),
@@ -134,25 +133,16 @@ export const userSeasonSummaryGraphicSearchParams = SearchParams.define({
 	season: startedSeasonParam,
 });
 
-const buildsWeaponFilterCodec = codec(
-	v.union([v.picklist(BUILD_FILTER_TABS), numericEnum(mainWeaponIds)]),
-	{
-		decode: (value) => {
-			if ((BUILD_FILTER_TABS as readonly string[]).includes(value)) {
-				return value as (typeof BUILD_FILTER_TABS)[number];
-			}
-			const weaponId = value.trim() === "" ? Number.NaN : Number(value);
-			if ((mainWeaponIds as readonly number[]).includes(weaponId)) {
-				return weaponId as MainWeaponId;
-			}
-			return undefined;
-		},
-		encode: (value) => String(value),
-	},
-);
-
 export const userBuildsSearchParams = SearchParams.define({
-	weapon: SP.custom(buildsWeaponFilterCodec, { default: "ALL", loader: false }),
+	...buildListParams,
+	weapon: SP.param(v.nullable(numericEnum(mainWeaponIds)), {
+		resets: ["page"],
+		loader: true,
+	}),
+	visibility: SP.param(v.nullable(v.picklist(BUILD_VISIBILITIES)), {
+		resets: ["page"],
+		loader: true,
+	}),
 	sorting: SP.param(v.boolean(), { default: false, loader: false }),
 });
 

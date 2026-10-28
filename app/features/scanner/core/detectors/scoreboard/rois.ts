@@ -53,6 +53,25 @@ export const TEAM_SCORE_ROIS: readonly [Roi, Roi] = [
 ];
 
 /**
+ * Team box header bands between the result tag and the total: team ink on a
+ * decided game; on a no contest (the host ended it, an early disconnect) both
+ * boxes are flat grey under DRAW tags, with no totals.
+ */
+export const TEAM_BOX_BAND_ROIS: readonly [Roi, Roi] = [
+	{ x: 1260, y: 330, w: 240, h: 34 },
+	{ x: 1260, y: 684, w: 240, h: 34 },
+];
+
+/**
+ * No-contest box band: saturated share at most this (inked boxes read ~1.0,
+ * the grey ones 0), at a mean value in the box grey's range (~103) rather than
+ * the darker panel a box still sliding in would leave.
+ */
+export const NO_CONTEST_MAX_INK_SHARE = 0.05;
+export const NO_CONTEST_INK_MIN_SATURATION = 0.35;
+export const NO_CONTEST_GREY_VALUE_RANGE: readonly [number, number] = [80, 140];
+
+/**
  * "Score:" banner sides: left from x~946, right ending x~1691 (x~1712 mid-pop); digits bounce
  * 28-39px as they land.
  */

@@ -1,13 +1,12 @@
 import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, type MetaFunction, useLoaderData } from "react-router";
+import { type MetaFunction, useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
-import { FormMessage } from "~/components/FormMessage";
-import { WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import { MatchProfileSummary } from "~/features/match-profile/components/MatchProfileSummary";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type { SelectOption } from "~/form/types";
@@ -15,7 +14,7 @@ import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { LFG_PAGE, MATCH_PROFILE_PAGE, navIconUrl } from "~/utils/urls";
+import { LFG_PAGE, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/lfg.new.server";
 import { LFG, TEAM_POST_TYPES, TIMEZONES } from "../lfg-constants";
 import { lfgNewSchema } from "../lfg-schemas";
@@ -148,22 +147,7 @@ function WeaponPool() {
 	return (
 		<div>
 			<Label>{t("lfg:new.weaponPool.header")}</Label>
-			<div className="stack horizontal sm">
-				{data.weaponPool?.map(({ weaponSplId }) => (
-					<WeaponImage
-						key={weaponSplId}
-						weaponSplId={weaponSplId}
-						size={32}
-						variant="build"
-					/>
-				))}
-			</div>
-			<FormMessage type="info">
-				{t("lfg:new.editOn")}{" "}
-				<Link to={MATCH_PROFILE_PAGE}>
-					{t("lfg:new.weaponPool.matchProfile")}
-				</Link>
-			</FormMessage>
+			<MatchProfileSummary weaponPool={data.weaponPool} />
 		</div>
 	);
 }

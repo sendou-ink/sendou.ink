@@ -1,0 +1,58 @@
+---
+import { getCollection } from "astro:content";
+import { Code } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import { markdown } from "../../living/format.ts";
+
+const rules = (await getCollection("lintRules"))
+	.map((entry) => entry.data)
+	.sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Lint rules",
+		description: "The repo's own Biome lint rules, generated from biome-plugins/.",
+		editUrl: false,
+	}}
+	headings={rules.map((rule) => ({ depth: 2, slug: rule.name, text: rule.name }))}
+>
+	<p>
+		The repo's own lint rules: GritQL plugins in{" "}
+		<a href={githubUrl("biome-plugins", 1).replace(/#L1$/, "")}><code>biome-plugins/</code></a>,
+		enabled per path in <code>biome.json</code>. They run with <code>pnpm run biome:fix</code>.
+		Silence one where it's wrong with <code>// biome-ignore lint/plugin: &lt;why&gt;</code>.
+	</p>
+	{
+		rules.map((rule) => (
+			<>
+				<h2 id={rule.name}>{rule.name}</h2>
+				<Fragment set:html={markdown(rule.description)} />
+				<p>
+					<strong>Applies to</strong>{" "}
+					{rule.includes.map((glob, index) => (
+						<>
+							{index > 0 ? ", " : ""}
+							<code>{glob}</code>
+						</>
+					))}
+				</p>
+				<p>
+					<strong>Reports</strong>
+				</p>
+				<ul>
+					{rule.messages.map((message) => (
+						<li set:html={markdown(message).replace(/^<p>|<\/p>$/g, "")} />
+					))}
+				</ul>
+				<details>
+					<summary>
+						Source (<a href={githubUrl(rule.file, 1)}>{rule.file}</a>)
+					</summary>
+					<Code code={rule.source} lang="txt" />
+				</details>
+			</>
+		))
+	}
+</StarlightPage>

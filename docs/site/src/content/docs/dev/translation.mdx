@@ -1,0 +1,66 @@
+---
+title: "Translation"
+description: "Translating the site and editing the translation files."
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+sendou.ink can be translated into any of its supported languages. The easiest way to contribute is the [Translate page](https://sendou.ink/translate).
+
+## Using the Translate page
+
+<Steps>
+
+1. Pick your language to see the texts that still need a translation, along with the English original and where on the site each one is used
+2. Write your translation and save it as a draft. Drafts are saved in your browser, no login needed
+3. Use "Preview on site" to see your drafts on the real site
+4. Use "Download files" and [make a pull request on GitHub](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) replacing the files in `locales/<language>/`, or send them to Sendou
+
+</Steps>
+
+"Download files" gives the full translation files (a zip if there are several) with your drafts written over the current translations. Once they are live, the page forgets the drafts on its own.
+
+Drafts only exist in the browser they were written in. To continue elsewhere (or after clearing the browser's data), use "Import files" with the downloaded files: whatever differs from the current translations becomes a draft again.
+
+## 100% isn't done
+
+A language being 100% translated doesn't mean the work is over. Existing translations can always be improved, use the "Translated" filter on the Translate page to go through them:
+
+- Make texts sound more natural
+- Fix inaccurate translations
+- Browse the site in your language and check that the layout isn't broken, e.g. text overflowing or getting cut off. Sometimes there just isn't room and you need to find a shorter word. If the layout is broken by the code rather than the text, [open an issue on GitHub](https://github.com/sendou-ink/sendou.ink/issues)
+
+## Things to note
+
+- Some lines have dynamic parts like `"articleBy": "by {{author}}"`. The `{{author}}` part should appear in the translated version unchanged - don't translate the part inside `{{}}`.
+- Another special syntax: `"project": "Sendou.ink is a project by <2>Sendou</2> with help from contributors:"`. The `<2></2>` tags should appear in the translated version, but the text inside them can change.
+- Español (Latino) only holds the texts that differ from Español (España), anything missing is shown in Español (España). On the Translate page these texts show as already translated, change only the ones that should differ.
+
+The Translate page highlights the special syntax and won't save a translation that breaks it.
+
+## New languages
+
+New languages are added sparingly, only where there is clear demand from the community. Preferably a language has more than one translator, so that the translation doesn't die out if one of them loses interest.
+
+## Editing the files manually
+
+Alternatively the .json files can be edited directly. Note you lose some features of the translate page like being able to preview your changes on the live site. 
+
+
+All translation files can be found in the [locales folder](https://github.com/sendou-ink/sendou.ink/tree/main/locales):
+
+<Steps>
+
+1. Open the English `.json` file (e.g. `locales/en/common.json`) and the same file for your language (e.g. `locales/de/common.json` for German, create it if it doesn't exist)
+2. Lines missing from your language's file are the ones that need translating, until then the English text is shown
+3. Copy them over and translate the text while keeping the "key" on the left side of `:` unchanged. For example `"country": "Country",` could become `"country": "Maa",`
+4. Send the translated .json to Sendou or [make a pull request on GitHub](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request)
+
+</Steps>
+
+On top of the things noted above:
+
+- `weapons.json`, `gear.json`, `game-badges.json` and `game-misc.json` are auto-generated from game data. Don't touch these.
+- Some English keys come in plural variants like `"tournament_one"` and `"tournament_other"`. Languages that only have a single plural form (e.g. Chinese, Japanese, Korean) can only hold **one** translation for such a key, so during syncing these variants are collapsed into a single key (e.g. `"tournament"`). When collapsing, the `_other` value is kept (it's the one that includes the `{{count}}` number), and the other variants are discarded. This means for these languages you should translate the `_other` variant.
+
+Any questions please ask Sendou! Discord also has a support channel meant for translation related discussions: `#🌍-translation`

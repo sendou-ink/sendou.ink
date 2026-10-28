@@ -5,6 +5,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
 	AvailabilityMemberRow,
+	AvailabilityMemberRows,
 	type AvailabilityPanelUser,
 	AvailabilityStatusDots,
 	AvailabilitySummary,
@@ -108,7 +109,7 @@ export function ScrimAvailabilityRows({ fit }: { fit: ScrimRosterFit }) {
 
 	return (
 		<div className={styles.rowsSection}>
-			<ul className={styles.rows}>
+			<AvailabilityMemberRows>
 				{fit.roster.map((member) => (
 					<AvailabilityMemberRow
 						key={member.id}
@@ -116,7 +117,7 @@ export function ScrimAvailabilityRows({ fit }: { fit: ScrimRosterFit }) {
 						entry={entryByUserId.get(member.id)}
 					/>
 				))}
-			</ul>
+			</AvailabilityMemberRows>
 			<AvailabilitySummary
 				statuses={fit.roster.map((member) =>
 					availabilityRowStatus(entryByUserId.get(member.id)),

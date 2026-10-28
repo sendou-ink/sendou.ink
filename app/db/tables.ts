@@ -29,7 +29,6 @@ import type {
 	WinLossParticipationArray,
 } from "~/db/tables-json";
 import type { ApiTokenType } from "~/features/api/api-types";
-import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type {
 	ChatRoomType,
@@ -37,6 +36,13 @@ import type {
 } from "~/features/chat/chat-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
+import type {
+	LobbyBestOf,
+	LobbyLabel,
+	LobbyParticipantStatus,
+	LobbyRoomSize,
+	LobbySide,
+} from "~/features/lobbies/lobbies-constants";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
@@ -227,6 +233,7 @@ export interface PendingTrophyApproval {
 	createdAt: number;
 }
 
+/** Abilities are stored as JSON in `abilities`, `BuildAbilitySum` & `BuildWeaponAbility` denormalize them for computing ability point averages. */
 export interface Build {
 	clothesGearSplId: number | null;
 	description: string | null;
@@ -249,10 +256,12 @@ export interface BuildWeapon {
 	weaponSplId: MainWeaponId;
 	/** Alt skins collapse to their base weapon (e.g. Hero Shot Replica `45` → Splattershot `40`). Indexed for the builds-by-weapon, popular, and stats queries so they can filter `= ?` against a covering index instead of `IN (alt skins…)`. */
 	canonicalWeaponSplId: MainWeaponId;
-	/** Mirror of `Build.updatedAt`. Denormalized so the `(canonicalWeaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
+	/** Mirror of `Build.updatedAt`. Denormalized so the `(canonicalWeaponSplId, sortValue, updatedAt, buildId, ownerId)` covering index serves the builds-by-weapon list. */
 	updatedAt: Generated<number>;
 	/** Per-weapon sort priority: `plusTier * 2 + (this weapon is top500 ? 0 : 1)` for public builds, NULL for private. */
 	sortValue: number | null;
+	/** Mirror of `Build.ownerId`. Denormalized so the builds-by-weapon list pages by author off covering indexes. */
+	ownerId: number;
 }
 
 /** Per-build ability point sums across all gear slots. Used to compute global `findAllAbilityPointAverages`. */
@@ -292,6 +301,7 @@ export interface CalendarEventBadge {
 	eventId: number;
 }
 
+/** A regular calendar event can have many dates, a tournament only one. */
 export interface CalendarEventDate {
 	eventId: number;
 	id: GeneratedAlways<number>;
@@ -304,6 +314,7 @@ export interface CalendarEventResultPlayer {
 	userId: number | null;
 }
 
+/** Results of events not hosted on sendou.ink. */
 export interface CalendarEventResultTeam {
 	eventId: number;
 	id: GeneratedAlways<number>;
@@ -343,6 +354,7 @@ export interface ChatMessageReadIndicator {
 	userId: number;
 }
 
+/** SendouQ group. A new group is created every time even if the same players rejoin the queue after their match. */
 export interface Group {
 	chatRoomId: number | null;
 	createdAt: Generated<number>;
@@ -505,6 +517,12 @@ export interface LFGPost {
 	createdAt: Generated<number>;
 }
 
+/**
+ * One of:
+ * - a regular calendar event's map pool (`calendarEventId`)
+ * - a tournament's map pool, organizer picked or the custom pool of a team picked tournament (`calendarEventId`)
+ * - a tournament team's map picks in a team picked tournament (`tournamentTeamId`), the modes and counts live in `Tournament.settings.teamPick`
+ */
 export interface MapPoolMap {
 	calendarEventId: number | null;
 	mode: ModeShort;
@@ -512,6 +530,7 @@ export interface MapPoolMap {
 	tournamentTeamId: number | null;
 }
 
+/** Denormalized win/loss counts per user, map and season so they are efficient to fetch. */
 export interface MapResult {
 	losses: number;
 	mode: ModeShort;
@@ -521,6 +540,7 @@ export interface MapResult {
 	wins: number;
 }
 
+/** Denormalized head-to-head results between two users per season so they are efficient to fetch. */
 export interface PlayerResult {
 	mapLosses: number;
 	mapWins: number;
@@ -533,6 +553,7 @@ export interface PlayerResult {
 	type: "MATE" | "ENEMY";
 }
 
+/** Comments to a suggestion are also stored as suggestions, same as the suggestion itself. */
 export interface PlusSuggestion {
 	authorId: number;
 	createdAt: Generated<number>;
@@ -545,6 +566,7 @@ export interface PlusSuggestion {
 	year: number;
 }
 
+/** Result of the latest voting (`PlusVoting.computeFreshPlusTiers`) with players from the leaderboard added, materialized for performance. */
 export interface PlusTier {
 	tier: number;
 	userId: number;
@@ -571,9 +593,11 @@ export interface PlusVotingResult {
 	wasSuggested: DBBoolean;
 }
 
+/** Exactly one of `groupMatchId`, `tournamentMatchId` and `lobbySetId` is set. */
 export interface ReportedWeapon {
 	groupMatchId: number | null;
 	tournamentMatchId: number | null;
+	lobbySetId: number | null;
 	mapIndex: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
@@ -594,6 +618,8 @@ export interface IngestedMatch {
 	tournamentIdHint: number | null;
 	/** server-resolved SendouQ match the match probably belongs to; aids future linking */
 	groupMatchIdHint: number | null;
+	/** server-resolved lobby set the match probably belongs to; aids future linking */
+	lobbySetIdHint: number | null;
 	createdAt: Generated<number>;
 }
 
@@ -603,6 +629,7 @@ export interface IngestedMatchLink {
 	ingestedMatchId: number;
 	tournamentMatchGameResultId: number | null;
 	groupMatchMapId: number | null;
+	lobbyGameId: number | null;
 	createdAt: Generated<number>;
 }
 
@@ -654,6 +681,7 @@ export interface SplatoonPlayer {
 	peakXp: JSONColumnTypeNullable<PeakXP>;
 }
 
+/** The bracket tables (`TournamentStage`, `TournamentGroup`, `TournamentRound`, `TournamentMatch`) mimic the [brackets-manager.js schema](https://github.com/Drarig29/brackets-manager.js/issues/111#issuecomment-997417423). */
 export interface Tournament {
 	settings: JSONColumnType<TournamentSettings>;
 	id: GeneratedAlways<number>;
@@ -837,9 +865,19 @@ export interface TournamentTeam {
 	startingBracketIdx: number | null;
 	activeRosterUserIds: JSONColumnTypeNullable<number[]>;
 	tournamentId: number;
+	/** Optional link to a sendou.ink team, for its avatar & name. */
 	teamId: number | null;
 	avatarImgId: number | null;
+	/** The team is shown on the tournament's LFG page. */
 	isLooking: Generated<DBBoolean>;
+	/**
+	 * Temporary team created automatically when an unregistered user joins the tournament's LFG.
+	 * - A registered team joining the LFG reuses itself, only toggling `isLooking`
+	 * - When a placeholder team's user registers for the tournament, the placeholder team is deleted and a regular team created
+	 * - When two placeholder teams merge the surviving team stops being a placeholder
+	 * - When a placeholder team and a registered team merge the registered team survives
+	 * - On merge, each member's `isStayAsSub` preference is kept
+	 */
 	isPlaceholder: Generated<DBBoolean>;
 	lfgNote: string | null;
 	chatRoomId: number | null;
@@ -1002,8 +1040,12 @@ export interface User {
 	country: string | null;
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
+	/** Hash of the Discord avatar `syncedAvatarImgId` was copied from, for noticing when it changes. */
 	discordAvatar: string | null;
+	/** Avatar uploaded by the user, shown over `syncedAvatarImgId`. */
 	customAvatarImgId: number | null;
+	/** Avatar copied from the account the user logs in with. */
+	syncedAvatarImgId: number | null;
 	discordId: string;
 	discordName: string;
 	customName: string | null;
@@ -1129,6 +1171,7 @@ export interface LiveStream {
 /** Account seen streaming the tournament while it was running, used to find match VoDs afterwards. */
 export interface TournamentStreamer {
 	id: GeneratedAlways<number>;
+	/** Null for cast accounts not linked to a sendou.ink user. */
 	userId: number | null;
 	tournamentId: number;
 	platform: StreamPlatform;
@@ -1144,6 +1187,7 @@ export interface ExternalStream {
 	createdAt: Generated<number>;
 }
 
+/** Past broadcast VoD of a tournament match with the offset to jump to the match. */
 export interface TournamentMatchVod {
 	id: GeneratedAlways<number>;
 	matchId: number;
@@ -1293,7 +1337,6 @@ export interface ScrimPost {
 	maxDiv: number | null;
 	/** Lowest LUTI div accepted */
 	minDiv: number | null;
-	visibility: JSONColumnTypeNullable<AssociationVisibility>;
 	text: string | null;
 	chatRoomId: number | null;
 	/** Refers to the team looking for the team (can also be a pick-up) */
@@ -1367,6 +1410,119 @@ export interface ScrimPostRequestUser {
 	scrimPostRequestId: number;
 	userId: number;
 	isOwner: DBBoolean;
+}
+
+export interface Lobby {
+	id: GeneratedAlways<number>;
+	/** Plays like everyone else and is the lobby's sole admin. Passed on to the longest-tenured participant when they leave. */
+	hostUserId: number;
+	name: string;
+	description: string | null;
+	label: LobbyLabel;
+	startsAt: number;
+	bestOf: LobbyBestOf;
+	modes: JSONColumnType<ModeShort[]>;
+	/** How many fit in the room: 8 players plus up to 2 spectators, the rest are waitlisted */
+	roomSize: LobbyRoomSize;
+	/** Common chat used while pending and by spectators */
+	chatRoomId: number | null;
+	/** Marker for the check-in opened notification having been sent */
+	checkInNotifiedAt: number | null;
+	/** Since when the started lobby has had no set being played, `null` while one is (or before the start) */
+	pendingSince: number | null;
+	endedAt: number | null;
+	/** Secret of a link-only lobby: it has no `ContentVisibility` rows, so only participants and those with the link see it */
+	shareKey: string | null;
+	createdAt: Generated<number>;
+}
+
+export interface LobbyParticipant {
+	id: GeneratedAlways<number>;
+	lobbyId: number;
+	userId: number;
+	status: LobbyParticipantStatus;
+	/** Leaves the lobby once the current set is confirmed */
+	isDroppingAfterSet: Generated<DBBoolean>;
+	/** Set by the host, sits out every set until the host resumes them */
+	isSittingOut: Generated<DBBoolean>;
+	/** Order of the waitlist and of host succession. Reset when signing up again. */
+	joinedAt: Generated<number>;
+}
+
+/** Kicked out of the lobby by the host, can't sign up for it again. */
+export interface LobbyKickedUser {
+	lobbyId: number;
+	userId: number;
+	createdAt: Generated<number>;
+}
+
+/** One best-of, teams shuffled from the participants in the room. */
+export interface LobbySet {
+	id: GeneratedAlways<number>;
+	lobbyId: number;
+	bestOf: LobbyBestOf;
+	/** A player of this side left mid-set, so the set is over and lost for them without confirmation */
+	forfeitingSide: LobbySide | null;
+	/** The team asked to confirm the result said it is wrong, cleared when the result changes */
+	disputedAt: number | null;
+	confirmedAt: number | null;
+	confirmedByUserId: number | null;
+	/** Team chat of the set's alpha side */
+	alphaChatRoomId: number | null;
+	bravoChatRoomId: number | null;
+	createdAt: Generated<number>;
+}
+
+export interface LobbySetParticipant {
+	setId: number;
+	userId: number;
+	/** `null` = sat the set out */
+	side: LobbySide | null;
+}
+
+/** A map of a set, generated with the set and reported as it is played */
+export interface LobbyGame {
+	id: GeneratedAlways<number>;
+	setId: number;
+	index: number;
+	mode: ModeShort;
+	stageId: StageId;
+	winnerSide: LobbySide | null;
+	reportedAt: number | null;
+	reportedByUserId: number | null;
+}
+
+/** Asking the waitlist to confirm they are present, to fill vacant slots of the room. */
+export interface LobbyReadyCheck {
+	id: GeneratedAlways<number>;
+	lobbyId: number;
+	/** End of the waitlist's priority, after it slots are first come, first served */
+	expiresAt: number;
+	createdAt: Generated<number>;
+}
+
+export interface LobbyReadyCheckUser {
+	readyCheckId: number;
+	userId: number;
+	confirmedAt: number | null;
+}
+
+/**
+ * One audience step of a scrim post's or a lobby's visibility schedule (exactly one of the entity columns is set).
+ * The entity is visible to a viewer when a row with `visibleFrom` in the past matches them.
+ */
+export interface ContentVisibility {
+	id: GeneratedAlways<number>;
+	scrimPostId: number | null;
+	lobbyId: number | null;
+	visibleFrom: number;
+	/** Exactly one of `associationId`, `plusTier`, `friendsOfUserId` and `isPublic` describes the audience */
+	associationId: number | null;
+	/** Plus Server members of this tier or a higher one (lower number) */
+	plusTier: number | null;
+	/** Friends of this user and the user themselves, the content's creator */
+	friendsOfUserId: number | null;
+	isPublic: Generated<DBBoolean>;
 }
 
 export interface Association {
@@ -1602,6 +1758,15 @@ export interface DB {
 	ScrimMap: ScrimMap;
 	Association: Association;
 	AssociationMember: AssociationMember;
+	ContentVisibility: ContentVisibility;
+	Lobby: Lobby;
+	LobbyGame: LobbyGame;
+	LobbyKickedUser: LobbyKickedUser;
+	LobbyParticipant: LobbyParticipant;
+	LobbyReadyCheck: LobbyReadyCheck;
+	LobbyReadyCheckUser: LobbyReadyCheckUser;
+	LobbySet: LobbySet;
+	LobbySetParticipant: LobbySetParticipant;
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	NotificationUserSubscription: NotificationUserSubscription;

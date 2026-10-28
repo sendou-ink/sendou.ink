@@ -15,7 +15,6 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import type * as Seasons from "~/features/mmr/core/Seasons";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
@@ -39,7 +38,6 @@ import { action } from "../actions/q.server";
 import { loader } from "../loaders/q.server";
 import { frontPageSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
-import { userCanJoinQueueAt } from "../q-utils";
 import styles from "./q.module.css";
 
 export { action, loader };
@@ -75,8 +73,7 @@ export default function QPage() {
 		minute: "numeric",
 	});
 
-	const queueJoinStatus =
-		user && data.friendCode ? userCanJoinQueueAt(user, data.friendCode) : null;
+	const { queueJoinStatus } = data;
 
 	return (
 		<Main halfWidth className="stack lg">
@@ -258,7 +255,7 @@ function JoinTeamDialog({
 function ActiveSeasonInfo({
 	season,
 }: {
-	season: SerializeFrom<Seasons.ListItem>;
+	season: NonNullable<SerializeFrom<typeof loader>["season"]>;
 }) {
 	const { t } = useTranslation(["q"]);
 
@@ -359,7 +356,7 @@ function QLink({
 function UpcomingSeasonInfo({
 	season,
 }: {
-	season: SerializeFrom<Seasons.ListItem>;
+	season: NonNullable<SerializeFrom<typeof loader>["season"]>;
 }) {
 	const { t } = useTranslation(["q"]);
 	const { formatter } = useDateTimeFormat({

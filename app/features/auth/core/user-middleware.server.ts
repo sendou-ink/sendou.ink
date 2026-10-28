@@ -1,4 +1,7 @@
-import { AUTH_SESSION_COOKIE_NAME } from "./session.server";
+import {
+	AUTH_SESSION_COOKIE_NAME,
+	legacySessionMigrationCookies,
+} from "./session.server";
 import {
 	getUserFromRequest,
 	userAsyncLocalStorage,
@@ -20,8 +23,17 @@ export const userMiddleware: MiddlewareFn = async ({ request, url }, next) => {
 
 	const response = await userAsyncLocalStorage.run({ user }, () => next());
 
-	if (staleSessionCookie && !setsAuthSessionCookie(response)) {
-		response.headers.append("Set-Cookie", staleSessionCookie);
+	const migration = await legacySessionMigrationCookies(
+		request.headers.get("Cookie"),
+	);
+	const sessionCookie = staleSessionCookie ?? migration?.hostOnly;
+
+	if (sessionCookie && !setsAuthSessionCookie(response)) {
+		response.headers.append("Set-Cookie", sessionCookie);
+	}
+
+	if (migration) {
+		response.headers.append("Set-Cookie", migration.expireLegacy);
 	}
 
 	return response;

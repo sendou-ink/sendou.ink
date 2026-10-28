@@ -64,7 +64,7 @@ export class MobileNav {
 	async closePanel() {
 		await this.settleAnimations();
 		await this.openPanelDialog
-			.locator("button[class*='panelCloseButton']")
+			.getByRole("button", { name: "Close", exact: true })
 			.click();
 	}
 

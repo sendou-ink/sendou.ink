@@ -5,6 +5,7 @@ import {
 	array,
 	customField,
 	fieldset,
+	hidden,
 	idConstant,
 	image,
 	select,
@@ -17,6 +18,7 @@ import {
 } from "~/form/fields";
 import {
 	_action,
+	id,
 	preprocess,
 	superRefine,
 	themeInputSchema,
@@ -121,6 +123,10 @@ export const CUSTOM_ROLE_VALUE = "CUSTOM" as const;
 export const updateRosterSchema = v.pipe(
 	v.object({
 		_action: stringConstant("UPDATE_ROSTER"),
+		/** Members shown when the page loaded, so ones who joined later aren't kicked for being absent from `members`. */
+		loadedMemberIds: hidden(
+			v.pipe(v.array(id), v.maxLength(TEAM.MAX_MEMBER_COUNT)),
+		),
 		members: array({
 			max: TEAM.MAX_MEMBER_COUNT,
 			addable: false,

@@ -3,7 +3,13 @@ interface SseConnection {
 	setTopics: (topics: string[]) => void;
 }
 
-const connections = new Map<string, SseConnection>();
+declare global {
+	var __sseConnections: Map<string, SseConnection> | undefined;
+}
+
+// on globalThis so open streams survive the dev server re-evaluating this module
+globalThis.__sseConnections ??= new Map();
+const connections = globalThis.__sseConnections;
 
 /** Registers a live SSE connection so its topic set can be addressed by connection id. */
 export function register(connectionId: string, connection: SseConnection) {

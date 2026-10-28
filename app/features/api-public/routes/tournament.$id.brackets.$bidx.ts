@@ -47,7 +47,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 function teams(bracket: Bracket) {
-	const checkedIn = bracket.seeding ?? bracket.participantTournamentTeamIds;
+	const checkedIn = bracket.participantTournamentTeamIds;
 	const pending = bracket.teamsPendingCheckIn ?? [];
 
 	return checkedIn

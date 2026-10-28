@@ -9,7 +9,6 @@
 	"forms.gear.SHOES": "鞋子",
 	"forms.abilities": "装备能力",
 	"deleteConfirm": "删除配装'{{title}}'？",
-	"stats.count.title": "{{count}} 件 {{weapon}} 配装的数据",
 	"stats.ap.title": "平均能力点数",
 	"stats.percentage.title": "基本装备能力出现率",
 	"stats.all": "全部",
@@ -17,19 +16,10 @@
 	"stats.private": "私人",
 	"linkButton.abilityStats": "装备能力数据",
 	"linkButton.popularBuilds": "热门配装",
-	"noPopularBuilds": "目前尚无该武器的热门配装。",
-	"noBuildsForWeapon": "",
-	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "空能力槽",
-	"filters.abilities": "",
-	"filters.mode": "",
-	"filters.date": "",
-	"filters.addAbility": "",
 	"filters.has": "包含",
 	"filters.does.not.have": "不包含",
 	"filters.atLeast": "至少",
 	"filters.atMost": "最多",
-	"filters.date.since": "自",
-	"filters.date.custom": "自定义",
-	"filters.filterByWeapon": "按武器筛选"
+	"filters.date.since": "自"
 }

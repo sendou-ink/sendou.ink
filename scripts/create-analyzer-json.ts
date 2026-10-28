@@ -721,7 +721,7 @@ const SUPER_CHUMP_FLY_DISTANCE = 30;
 const TRIPLE_INKSTRIKE_FLY_DISTANCE = 28;
 const ULTRA_STAMP_FLY_DISTANCE = 24;
 
-// Range circles for the map planner (see app/features/comp-analyzer/core/special-weapon-range.ts):
+// Range circles for the map planner (see app/features/comp-analyzer/core/SpecialWeaponRange.ts):
 // travel distance plus blast, or a single effect radius. Global (Tenta Missiles, Killer Wail), placed/utility
 // (Big Bubbler, Tacticooler, Ink Storm, Ink Vac) and circle-less (Kraken Royale, Splattercolor Screen) specials are left out.
 function specialWeaponRangeParams(

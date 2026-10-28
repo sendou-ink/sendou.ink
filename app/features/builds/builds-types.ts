@@ -5,9 +5,7 @@ export interface BuildWeaponWithTop500Info {
 	isTop500: number;
 }
 
-export interface AbilityCondition {
-	ability: Ability;
-	/** Ability points value or "has"/"doesn't have" */
-	value: number | boolean;
-	comparison?: "AT_LEAST" | "AT_MOST";
-}
+/** A condition on one of the build's abilities, the AP ones only for stackable abilities. */
+export type AbilityFilter =
+	| { type: "HAS" | "HAS_NOT"; ability: Ability }
+	| { type: "AT_LEAST" | "AT_MOST"; ability: Ability; ap: number };

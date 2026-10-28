@@ -1,7 +1,7 @@
 import { notify } from "~/features/notifications/core/notify.server";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { hasPermission } from "~/modules/permissions/utils";
-import { resolveAvatarUrl } from "~/utils/urls";
+import { avatarUrl } from "~/utils/urls";
 import type * as ChatRoomResolver from "./ChatRoomResolver.server";
 import type { ChatMessageWithAuthor } from "./chat-types";
 import * as Mentions from "./core/Mentions";
@@ -39,7 +39,9 @@ export async function notifyMentioned({
 				mentionerUsername: message.author.username,
 				roomUrl: room.url,
 			},
-			pictureUrl: resolveAvatarUrl({ ...message.author, size: "sm" }),
+			pictureUrl: message.author.avatar
+				? avatarUrl(message.author.avatar, "sm")
+				: undefined,
 		},
 	});
 }

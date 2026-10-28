@@ -5,6 +5,7 @@ interface SendouChipRadioGroupProps {
 	orientation?: "horizontal" | "vertical";
 	wrap?: boolean;
 	className?: string;
+	"aria-label"?: string;
 }
 
 interface SendouChipRadioProps {
@@ -20,6 +21,7 @@ export function SendouChipRadioGroup({
 	orientation = "horizontal",
 	wrap = false,
 	className,
+	"aria-label": ariaLabel,
 }: SendouChipRadioGroupProps) {
 	return (
 		<div
@@ -27,6 +29,7 @@ export function SendouChipRadioGroup({
 			data-orientation={orientation}
 			data-wrap={wrap}
 			role="radiogroup"
+			aria-label={ariaLabel}
 		>
 			{children}
 		</div>

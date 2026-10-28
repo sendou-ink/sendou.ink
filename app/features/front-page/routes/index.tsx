@@ -357,6 +357,7 @@ function DiscoverFeatures() {
 						})
 					}
 					defaultShouldRevalidate={false}
+					preventScrollReset
 				/>
 			) : null}
 			<nav className={styles.discoverGrid}>

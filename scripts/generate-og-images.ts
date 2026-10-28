@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 
 // screenshots the canvases of the /admin/og-images page into the assets repo,
-// see docs/dev/how-to.md
+// see docs/site/src/content/docs/dev/how-to.mdx
 
 import fs from "node:fs/promises";
 import path from "node:path";

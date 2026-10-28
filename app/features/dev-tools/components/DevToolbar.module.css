@@ -1,0 +1,234 @@
+/* colors come from the site's theme tokens, forced dark and grey on .root, see ThemedRoot */
+.root {
+	--toolbar-bottom: calc(var(--s-3) + env(safe-area-inset-bottom));
+	--toolbar-shadow: 0 2px 6px rgb(0 0 0 / 0.3), 0 12px 32px rgb(0 0 0 / 0.35);
+
+	color: var(--color-text);
+	font-size: var(--font-sm);
+}
+
+.bar {
+	position: fixed;
+	bottom: var(--toolbar-bottom);
+	left: 50%;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding: var(--s-1);
+	border: var(--border-style-high);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg);
+	box-shadow: var(--toolbar-shadow);
+	transform: translateX(-50%);
+}
+
+.divider {
+	width: 1px;
+	height: var(--s-5);
+	margin: 0 var(--s-1);
+	background-color: var(--color-border);
+}
+
+.appButton {
+	position: relative;
+	display: grid;
+	width: 40px;
+	height: 34px;
+	place-items: center;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-full);
+	background: none;
+	color: var(--color-text-high);
+	cursor: pointer;
+
+	& > svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+
+	&[aria-pressed="true"] {
+		background-color: var(--color-bg-accent);
+		color: var(--color-fg-accent);
+	}
+}
+
+/* tooltips above the bar, CSS only so hovering along the bar stays instant */
+.appButton,
+.handle {
+	&::after {
+		position: absolute;
+		bottom: calc(100% + var(--s-2-5));
+		left: 50%;
+		padding: var(--s-1) var(--s-2);
+		border: var(--border-style);
+		border-radius: var(--radius-field);
+		background-color: var(--color-bg);
+		color: var(--color-text);
+		content: attr(data-tooltip);
+		font-size: var(--font-xs);
+		opacity: 0;
+		pointer-events: none;
+		transform: translate(-50%, 4px);
+		transition:
+			opacity 100ms,
+			transform 100ms;
+		white-space: nowrap;
+	}
+
+	&:hover::after,
+	&:focus-visible::after {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+
+	/* the open window already says which app it is */
+	&[aria-pressed="true"]::after {
+		display: none;
+	}
+}
+
+.minimizeIcon {
+	width: 12px;
+	height: 2px;
+	border-radius: 1px;
+	background-color: currentColor;
+}
+
+.handle {
+	position: fixed;
+	bottom: var(--toolbar-bottom);
+	left: 50%;
+	z-index: 1000;
+	display: grid;
+	width: 44px;
+	height: 22px;
+	place-items: center;
+	padding: 0;
+	border: var(--border-style-high);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg);
+	box-shadow: var(--toolbar-shadow);
+	color: var(--color-text-high);
+	cursor: pointer;
+	opacity: 0.55;
+	transform: translateX(-50%);
+	transition: opacity 120ms;
+
+	& > svg {
+		width: 13px;
+		height: 13px;
+	}
+
+	&:hover,
+	&:focus-visible {
+		color: var(--color-fg-accent);
+		opacity: 1;
+	}
+}
+
+.window {
+	position: fixed;
+	bottom: calc(var(--toolbar-bottom) + 54px);
+	left: 50%;
+	z-index: 1000;
+	display: flex;
+	width: min(640px, calc(100vw - var(--s-6)));
+	max-height: min(640px, calc(100dvh - var(--toolbar-bottom) - 80px));
+	flex-direction: column;
+	overflow: hidden;
+	border: var(--border-style-high);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	box-shadow: var(--toolbar-shadow);
+	transform: translateX(-50%);
+	animation: window-in 140ms ease-out;
+}
+
+.windowLarge {
+	width: min(980px, calc(100vw - var(--s-6)));
+}
+
+@keyframes window-in {
+	from {
+		opacity: 0;
+		transform: translate(-50%, 6px);
+	}
+}
+
+.windowHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-3) var(--s-3) var(--s-3) var(--s-4);
+	border-bottom: var(--border-style);
+	background-color: var(--color-bg-high);
+}
+
+.windowIcon {
+	display: grid;
+	width: 30px;
+	height: 30px;
+	flex-shrink: 0;
+	place-items: center;
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
+
+	& svg {
+		width: 16px;
+		height: 16px;
+	}
+}
+
+.windowTitles {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+}
+
+.windowTitle {
+	font-size: var(--font-md);
+	font-weight: var(--weight-semi);
+}
+
+.windowDescription {
+	overflow: hidden;
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.windowBody {
+	overflow-y: auto;
+	padding: var(--s-4);
+	overscroll-behavior: contain;
+}
+
+/* above the site's own tab bar, narrow enough to fit a phone */
+@media screen and (max-width: 599px) {
+	.root {
+		--toolbar-bottom: calc(var(--mobile-nav-height) + var(--s-2));
+	}
+
+	.appButton {
+		width: 32px;
+	}
+
+	.divider {
+		margin: 0 var(--s-0-5);
+	}
+}

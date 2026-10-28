@@ -1,6 +1,5 @@
-import { Trans, useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
-import { FormMessage } from "~/components/FormMessage";
+import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import { existingImage } from "~/form/image-field";
@@ -9,8 +8,8 @@ import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { FAQ_PAGE } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit.server";
+import { DiscordSyncCard } from "../components/DiscordSyncCard";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.edit.server";
 import { COUNTRY_CODES } from "../user-page-constants";
@@ -62,6 +61,7 @@ export default function UserEditPage() {
 				title={t("user:widgets.editProfile")}
 			/>
 			<div className="half-width stack md-plus">
+				<DiscordSyncCard />
 				<FriendCodePopover />
 				<SendouForm
 					schema={userEditProfileBaseSchema}
@@ -93,13 +93,6 @@ export default function UserEditPage() {
 									<FormField name="commissionText" />
 								</>
 							) : null}
-							<FormMessage type="info">
-								<Trans i18nKey={"user:discordExplanation"} t={t}>
-									Username, profile picture, YouTube, Bluesky and Twitch
-									accounts come from your Discord account. See
-									<Link to={FAQ_PAGE}>FAQ</Link> for more information.
-								</Trans>
-							</FormMessage>
 						</>
 					)}
 				</SendouForm>

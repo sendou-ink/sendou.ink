@@ -4,6 +4,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getTokenInfo } from "./api-public-utils.server";
 
 const USER_IDS_PATTERN = /^\/api\/user\/[^/]+\/ids$/;
+const READ_ONLY_METHODS = new Set(["GET", "HEAD"]);
 
 type MiddlewareArgs = {
 	request: Request;
@@ -53,7 +54,7 @@ export const apiAuthMiddleware: MiddlewareFn = async ({ request }, next) => {
 		return Response.json({ error: "User is banned" }, { status: 403 });
 	}
 
-	if (request.method === "POST" && tokenInfo.type !== "write") {
+	if (!READ_ONLY_METHODS.has(request.method) && tokenInfo.type !== "write") {
 		return Response.json({ error: "Write token required" }, { status: 403 });
 	}
 

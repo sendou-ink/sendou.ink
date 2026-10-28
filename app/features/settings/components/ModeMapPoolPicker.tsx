@@ -15,22 +15,15 @@ export function ModeMapPoolPicker({
 	amountToPick,
 	pool,
 	allowedStages,
-	unavailableLabel,
 	onChange,
-	modeTabs,
-	onModeChange,
 	disabled,
 }: {
 	mode: ModeShort;
 	amountToPick: number;
 	pool: StageId[];
-	/** Stages that can be picked. The rest are shown greyed out with `unavailableLabel`, or not at all without one. */
+	/** Stages that can be picked, the rest are not shown. */
 	allowedStages: readonly StageId[];
-	unavailableLabel?: string;
 	onChange: (stages: StageId[]) => void;
-	/** When provided, the divider becomes a tab switcher between these modes. */
-	modeTabs?: ModeShort[];
-	onModeChange?: (mode: ModeShort) => void;
 	disabled?: boolean;
 }) {
 	const [wigglingStageId, setWigglingStageId] = React.useState<StageId | null>(
@@ -73,40 +66,15 @@ export function ModeMapPoolPicker({
 				})}
 			</div>
 			<Divider className={styles.divider}>
-				{modeTabs && onModeChange ? (
-					<div className={styles.modeTabs}>
-						{modeTabs.map((tabMode) => {
-							const active = tabMode === mode;
-
-							return (
-								<button
-									key={tabMode}
-									type="button"
-									className={clsx(styles.modeTab, {
-										[styles.modeTabActive]: active,
-									})}
-									onClick={() => onModeChange(tabMode)}
-									aria-pressed={active}
-									data-testid={`map-pool-mode-tab-${tabMode}`}
-								>
-									<ModeImage mode={tabMode} size={24} />
-								</button>
-							);
-						})}
-					</div>
-				) : (
-					<ModeImage mode={mode} size={32} />
-				)}
+				<ModeImage mode={mode} size={32} />
 			</Divider>
 			<div className="stack sm horizontal flex-wrap justify-center mt-1">
 				{stageIds.map((stageId) => {
-					const unavailable = !allowedStages.includes(stageId);
-					if (unavailable && !unavailableLabel) return null;
+					if (!allowedStages.includes(stageId)) return null;
 					const selected = stages.includes(stageId);
 
 					const onClick = () => {
 						if (disabled) return;
-						if (unavailable) return;
 						if (selected) return handlePickedStageClick(stageId);
 
 						handleUnpickedStageClick(stageId);
@@ -118,8 +86,6 @@ export function ModeMapPoolPicker({
 							stageId={stageId}
 							onClick={onClick}
 							selected={selected}
-							unavailable={unavailable}
-							unavailableLabel={unavailableLabel}
 							wiggle={wigglingStageId === stageId}
 							onWiggleEnd={() => setWigglingStageId(null)}
 							disabled={disabled}
@@ -148,8 +114,6 @@ function MapButton({
 	stageId,
 	onClick,
 	selected,
-	unavailable,
-	unavailableLabel,
 	wiggle,
 	onWiggleEnd,
 	disabled,
@@ -158,8 +122,6 @@ function MapButton({
 	stageId: StageId;
 	onClick: () => void;
 	selected?: boolean;
-	unavailable?: boolean;
-	unavailableLabel?: string;
 	wiggle?: boolean;
 	onWiggleEnd?: () => void;
 	disabled?: boolean;
@@ -174,12 +136,12 @@ function MapButton({
 			<button
 				className={clsx(styles.mapButton, {
 					[styles.mapButtonWiggle]: wiggle,
-					[styles.mapButtonGreyedOut]: selected || unavailable,
+					[styles.mapButtonGreyedOut]: selected,
 				})}
 				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.avif")` }}
 				onClick={onClick}
 				onAnimationEnd={wiggle ? onWiggleEnd : undefined}
-				disabled={disabled || unavailable}
+				disabled={disabled}
 				type="button"
 				aria-label={t(`game-misc:STAGE_${stageId}`)}
 				data-testid={testId}
@@ -190,11 +152,6 @@ function MapButton({
 					onClick={onClick}
 					data-testid={`${testId}-picked`}
 				/>
-			) : null}
-			{unavailable ? (
-				<div className={clsx(styles.mapButtonText, "text-error")}>
-					{unavailableLabel}
-				</div>
 			) : null}
 			<div className={styles.mapButtonLabel}>
 				{shortStageName(t(`game-misc:STAGE_${stageId}`))}

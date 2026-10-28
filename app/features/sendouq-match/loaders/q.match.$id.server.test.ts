@@ -1,3 +1,4 @@
+import { subMonths } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
@@ -23,7 +24,9 @@ describe("q match loader", () => {
 		await users.create(10);
 	});
 
-	const createMatch = (options: { isConcluded?: boolean } = {}) =>
+	const createMatch = (
+		options: { isConcluded?: boolean; createdAt?: Date } = {},
+	) =>
 		SQMatchFactory.create(
 			{
 				alphaUserIds: alphaUserIds(),
@@ -97,6 +100,48 @@ describe("q match loader", () => {
 		const data = await loadAs(outsiderId(), match.id);
 
 		expect(data.chatRooms).toEqual([]);
+	});
+
+	describe("friend codes", () => {
+		const opponentFriendCode = (data: Awaited<ReturnType<typeof loadAs>>) =>
+			data.userCards[bravoUserIds()[0]]?.friendCode;
+
+		test("reveals them to a participant of a recent match", async () => {
+			const match = await createMatch();
+
+			const data = await loadAs(alphaUserIds()[0], match.id);
+
+			expect(opponentFriendCode(data)).toBeTruthy();
+		});
+
+		test("hides them from a participant once the match is over a month old", async () => {
+			const match = await createMatch({ createdAt: subMonths(new Date(), 2) });
+
+			const data = await loadAs(alphaUserIds()[0], match.id);
+
+			expect(opponentFriendCode(data)).toBeNull();
+			expect(
+				data.match.groupBravo.members.every(
+					(member) => member.friendCode === undefined,
+				),
+			).toBe(true);
+		});
+
+		test("keeps revealing them to staff for an old match", async () => {
+			const match = await createMatch({ createdAt: subMonths(new Date(), 2) });
+
+			const data = await loadAs(staffId(), match.id);
+
+			expect(opponentFriendCode(data)).toBeTruthy();
+		});
+
+		test("hides them from an outsider", async () => {
+			const match = await createMatch();
+
+			const data = await loadAs(outsiderId(), match.id);
+
+			expect(opponentFriendCode(data)).toBeNull();
+		});
 	});
 
 	describe("requeueing with the same group", () => {

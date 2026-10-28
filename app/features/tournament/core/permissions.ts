@@ -3,7 +3,7 @@ import type { TournamentStaffRole } from "~/features/tournament/tournament-const
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 
 /**
- * The half of a tournament's permissions (docs/dev/permissions.md) depending only on author,
+ * The half of a tournament's permissions (docs/site/src/content/docs/dev/permissions.mdx) depending only on author,
  * organization members and staff, for callers not loading the whole tournament. `ADMIN`: full
  * control, `ORGANIZE`: running it, `MANAGE_MATCHES`: casting, locking and admining matches.
  */

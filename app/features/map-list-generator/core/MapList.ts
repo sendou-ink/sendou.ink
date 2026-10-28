@@ -51,12 +51,17 @@ export function* generate(args: {
 	modeOrder?: ModeShort[];
 	/** Mode-agnostic initial stage weights, how `resume` carries over stage-level penalties from history. */
 	initialStageWeights?: Map<StageId, number>;
+	/** Filters per map index of a set, tried in order. The first one leaving any candidate narrows the draw. */
+	candidateFilters?: (index: number) => Array<(map: ModeWithStage) => boolean>;
+	/** Maps played before the first list, oldest first. Avoided like earlier picks, less played modes first and never the last played one. */
+	history?: ModeWithStage[];
 }): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
 	if (args.mapPool.isEmpty()) {
 		while (true) yield [];
 	}
 
 	const modes = args.mapPool.modes;
+	const distinctStageCount = new Set(args.mapPool.stages).size;
 
 	const { stageWeights, stageModeWeights } = initializeWeights(
 		modes,
@@ -64,11 +69,19 @@ export function* generate(args: {
 		args.initialWeights,
 		args.initialStageWeights,
 	);
-	const modeOrder = args.modeOrder ?? R.shuffle(modes);
+	const history = args.history ?? [];
+	const modeOrder = args.modeOrder ?? modeOrderAfter(modes, history);
 	let modePosition = 0;
 
 	const firstArgs = yield [];
 	let amount = firstArgs.amount;
+	penalizeHistory({
+		history,
+		stageWeights,
+		stageModeWeights,
+		amount,
+		modes,
+	});
 	let pattern = firstArgs.pattern
 		? unwrapOr(parsePattern(firstArgs.pattern), null)
 		: null;
@@ -86,15 +99,16 @@ export function* generate(args: {
 					modesConsumed: amount,
 				};
 
-		if (!args.skipEnsureMinimumCandidates) {
-			ensureMinimumCandidates({
-				mapPool: args.mapPool,
-				stageWeights,
-				stageModeWeights,
-			});
-		}
-
 		for (let i = 0; i < amount; i++) {
+			const isStartOfPoolCycle = i % distinctStageCount === 0;
+			if (!args.skipEnsureMinimumCandidates && isStartOfPoolCycle) {
+				ensureMinimumCandidates({
+					mapPool: args.mapPool,
+					stageWeights,
+					stageModeWeights,
+				});
+			}
+
 			const mode = currentModeOrder[i % currentModeOrder.length];
 			const possibleStages = args.mapPool.parsed[mode];
 			const isNotGuaranteedToBePlayed = args.considerGuaranteed
@@ -106,6 +120,7 @@ export function* generate(args: {
 				mode,
 				stageWeights,
 				stageModeWeights,
+				filters: args.candidateFilters?.(i) ?? [],
 			});
 
 			result.push({ mode, stageId });
@@ -119,11 +134,13 @@ export function* generate(args: {
 
 			const stageWeightPenalty = isNotGuaranteedToBePlayed
 				? -2
-				: -Math.max(5, amount);
-			const stageModeWeightPenalty = args.mapPool.modes.length > 1 ? -10 : 0;
+				: fullStagePenalty(amount);
 
 			stageWeights.set(stageId, stageWeightPenalty);
-			stageModeWeights.set(modeStageKey(mode, stageId), stageModeWeightPenalty);
+			stageModeWeights.set(
+				modeStageKey(mode, stageId),
+				stageModePenalty(args.mapPool.modes),
+			);
 		}
 
 		modePosition += modesConsumed;
@@ -185,6 +202,59 @@ export function resume(args: {
 	});
 }
 
+function fullStagePenalty(amount: number) {
+	return -Math.max(5, amount);
+}
+
+function stageModePenalty(modes: ModeShort[]) {
+	return modes.length > 1 ? -10 : 0;
+}
+
+function modeOrderAfter(modes: ModeShort[], history: ModeWithStage[]) {
+	const playCounts = R.countBy(history, (map) => map.mode);
+	const order = R.sortBy(R.shuffle(modes), (mode) => playCounts[mode] ?? 0);
+
+	if (order.length > 1 && order[0] === history.at(-1)?.mode) {
+		[order[0], order[1]] = [order[1], order[0]];
+	}
+
+	return order;
+}
+
+/** Penalizes the history's maps as if the generator had picked them itself. */
+function penalizeHistory({
+	history,
+	stageWeights,
+	stageModeWeights,
+	amount,
+	modes,
+}: {
+	history: ModeWithStage[];
+	stageWeights: Map<StageId, number>;
+	stageModeWeights: Map<string, number>;
+	amount: number;
+	modes: ModeShort[];
+}) {
+	for (const [i, { mode, stageId }] of history.entries()) {
+		const picksSince = history.length - 1 - i;
+
+		lowerWeight(stageWeights, stageId, fullStagePenalty(amount) + picksSince);
+		lowerWeight(
+			stageModeWeights,
+			modeStageKey(mode, stageId),
+			stageModePenalty(modes) + picksSince,
+		);
+	}
+}
+
+/** Recovered penalties are skipped so they don't override e.g. a weight from player preferences. */
+function lowerWeight<K>(weights: Map<K, number>, key: K, penalty: number) {
+	const weight = weights.get(key);
+	if (weight === undefined || penalty >= 0) return;
+
+	weights.set(key, Math.min(weight, penalty));
+}
+
 function initializeWeights(
 	modes: ModeShort[],
 	mapPool: ReadonlyMapPoolObject,
@@ -239,11 +309,13 @@ function selectStageWeighted({
 	mode,
 	stageWeights,
 	stageModeWeights,
+	filters,
 }: {
 	possibleStages: readonly StageId[];
 	mode: ModeShort;
 	stageWeights: Map<StageId, number>;
 	stageModeWeights: Map<string, number>;
+	filters: Array<(map: ModeWithStage) => boolean>;
 }): StageId {
 	const getCandidates = () =>
 		possibleStages.filter((stageId) => {
@@ -263,6 +335,14 @@ function selectStageWeighted({
 			stageModeWeights.set(key, value + 1);
 		}
 		candidates = getCandidates();
+	}
+
+	for (const filter of filters) {
+		const filtered = candidates.filter((stageId) => filter({ mode, stageId }));
+		if (filtered.length > 0) {
+			candidates = filtered;
+			break;
+		}
 	}
 
 	return weightedRandomSelect(candidates, (stageId) => {

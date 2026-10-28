@@ -1,4 +1,6 @@
 import { cachified } from "@epic-web/cachified";
+import * as R from "remeda";
+import { userIsBanned } from "~/features/ban/core/banned.server";
 import type {
 	SeasonPopularUsersWeapon,
 	UserSPLeaderboardItem,
@@ -41,7 +43,9 @@ export async function cachedFullUserLeaderboard(season: number) {
 				: withTiers;
 
 			return addWeapons(
-				withPendingPlusTiers,
+				withPendingPlusTiers.map((entry) =>
+					R.omit(entry, ["plusSkippedForSeasonNth"]),
+				),
 				await LeaderboardRepository.findSeasonPopularUsersWeapon(season),
 			);
 		},
@@ -117,7 +121,7 @@ function teamLeaderboardCacheKey({
 	return `team-leaderboard-season-${season}-${onlyOneEntryPerUser ? "TEAM" : "TEAM-ALL"}`;
 }
 
-async function addTiers<T extends UserSPLeaderboardItem>(
+async function addTiers<T extends { id: number }>(
 	entries: T[],
 	season: number,
 ) {
@@ -172,14 +176,12 @@ export function addPendingPlusTiers<T extends UserSPLeaderboardItem>(
 	for (const entry of entries) {
 		const highestPlusTierWithSpace = resolveHighestPlusTierWithSpace();
 		if (!highestPlusTierWithSpace) break;
+		if (userIsBanned(entry.id)) continue;
 
 		const plusTier = plusTiers.find((t) => t.userId === entry.id)?.plusTier;
 
 		if (plusTier && plusTier <= highestPlusTierWithSpace) continue;
-		if (entry.plusSkippedForSeasonNth === seasonNth) {
-			entry.plusSkippedForSeasonNth = null;
-			continue;
-		}
+		if (entry.plusSkippedForSeasonNth === seasonNth) continue;
 
 		entry.pendingPlusTier = highestPlusTierWithSpace;
 		const key = `+${highestPlusTierWithSpace}` as const;

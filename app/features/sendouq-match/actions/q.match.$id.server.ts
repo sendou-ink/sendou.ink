@@ -285,6 +285,8 @@ export const action = defineAction(
 					break;
 				}
 				case "REPORT_WEAPON": {
+					errorToastIfFalsy(!match.isCanceled, "Match was canceled");
+
 					await ReportedWeaponRepository.upsertOwn({
 						groupMatchId: matchId,
 						mapIndex: body.mapIndex,

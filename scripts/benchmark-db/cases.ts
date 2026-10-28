@@ -9,6 +9,7 @@ import * as LogInLinkRepository from "~/features/auth/LogInLinkRepository.server
 import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import { RECENT_PATCHES } from "~/features/builds/builds-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
@@ -17,6 +18,8 @@ import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
+import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
@@ -51,6 +54,11 @@ import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import {
+	weaponCategories,
+	weaponIdToCategory,
+} from "~/modules/in-game-lists/weapon-ids";
 import { LUTI_NAME_PREFIX } from "~/routines/computeLutiDivs";
 import { dateToDatabaseTimestamp, dateToYYYYMMDD } from "~/utils/dates";
 import type { Fixtures } from "./fixtures";
@@ -255,25 +263,139 @@ export function buildCases(fx: Fixtures): {
 	add("BuildRepository.findOwnerIdById", fx.buildId, (buildId) =>
 		BuildRepository.findOwnerIdById(buildId),
 	);
-	addStatic("BuildRepository.findAllAbilityPointAverages.all", () =>
-		BuildRepository.findAllAbilityPointAverages(),
+	addStatic("BuildRepository.findAllAbilityPointSums", () =>
+		BuildRepository.findAllAbilityPointSums(RECENT_PATCHES.at(-1)!.date),
 	);
 	add(
-		"BuildRepository.findAllAbilityPointAverages.byWeapon",
-		fx.heavyWeaponSplId,
-		(weaponSplId) => BuildRepository.findAllAbilityPointAverages(weaponSplId),
-	);
-	add(
-		"BuildRepository.findAllPopularAbilitiesByWeaponId",
+		"BuildRepository.findAbilityPointCountsByWeaponIds",
 		fx.heavyWeaponSplId,
 		(weaponSplId) =>
-			BuildRepository.findAllPopularAbilitiesByWeaponId(weaponSplId),
+			BuildRepository.findAbilityPointCountsByWeaponIds({
+				weaponIds: categoryWeaponIds(weaponSplId),
+				updatedSince: RECENT_PATCHES.at(-1)!.date,
+			}),
 	);
-	add("BuildRepository.findAllByWeaponId", fx.heavyWeaponSplId, (weaponSplId) =>
-		BuildRepository.findAllByWeaponId(weaponSplId, {
-			limit: 60,
+	add(
+		"BuildRepository.findNewestBuildPerOwnerByWeaponId",
+		fx.heavyWeaponSplId,
+		(weaponSplId) =>
+			BuildRepository.findNewestBuildPerOwnerByWeaponId({
+				weaponId: weaponSplId,
+				updatedSince: RECENT_PATCHES.at(-1)!.date,
+			}),
+	);
+	add(
+		"BuildRepository.findPageByWeaponId",
+		fx.heavyWeaponSplId,
+		(weaponSplId) =>
+			BuildRepository.findPageByWeaponId({
+				weaponId: weaponSplId,
+				filters: { abilities: [], mode: null, date: null },
+				page: 1,
+				sortAbilities: true,
+			}),
+	);
+	// pages by author, so the authors before the page are read off the index first
+	add(
+		"BuildRepository.findPageByWeaponId.deepPage",
+		fx.heavyWeaponSplId,
+		(weaponSplId) =>
+			BuildRepository.findPageByWeaponId({
+				weaponId: weaponSplId,
+				filters: { abilities: [], mode: null, date: null },
+				page: 50,
+				sortAbilities: true,
+			}),
+	);
+	// rare abilities match almost nothing, so every build of the weapon is checked
+	add(
+		"BuildRepository.findPageByWeaponId.rareFilters",
+		fx.heavyWeaponSplId,
+		(weaponSplId) =>
+			BuildRepository.findPageByWeaponId({
+				weaponId: weaponSplId,
+				filters: {
+					abilities: [
+						{ type: "HAS", ability: "AD" },
+						{ type: "HAS", ability: "TI" },
+						{ type: "HAS", ability: "RP" },
+					],
+					mode: "TC",
+					date: null,
+				},
+				page: 1,
+				sortAbilities: true,
+			}),
+	);
+	add(
+		"BuildRepository.findPageByWeaponId.apFilters",
+		fx.heavyWeaponSplId,
+		(weaponSplId) =>
+			BuildRepository.findPageByWeaponId({
+				weaponId: weaponSplId,
+				filters: {
+					abilities: [
+						{ type: "AT_LEAST", ability: "ISM", ap: 10 },
+						{ type: "AT_MOST", ability: "SSU", ap: 6 },
+						{ type: "HAS_NOT", ability: "LDE" },
+					],
+					mode: null,
+					date: null,
+				},
+				page: 1,
+				sortAbilities: true,
+			}),
+	);
+	add("BuildRepository.findPageByUserId", fx.heavyBuildUserId, (userId) =>
+		BuildRepository.findPageByUserId({
+			userId,
+			showPrivate: true,
+			filters: {
+				abilities: [],
+				mode: null,
+				date: null,
+				weaponId: null,
+				visibility: null,
+			},
+			sorting: {
+				buildSorting: [
+					"WEAPON_POOL",
+					"MODE",
+					"TOP_500",
+					"WEAPON_IN_GAME_ORDER",
+					"UPDATED_AT",
+				],
+				weaponPool: [40, 1010, 2070, 3010],
+			},
+			page: 1,
 			sortAbilities: true,
 		}),
+	);
+	add(
+		"BuildRepository.findPageByUserId.rareFilters",
+		fx.heavyBuildUserId,
+		(userId) =>
+			BuildRepository.findPageByUserId({
+				userId,
+				showPrivate: true,
+				filters: {
+					abilities: [
+						{ type: "HAS", ability: "AD" },
+						{ type: "HAS", ability: "TI" },
+						{ type: "HAS", ability: "RP" },
+					],
+					mode: "TC",
+					date: null,
+					weaponId: null,
+					visibility: null,
+				},
+				sorting: { buildSorting: null, weaponPool: [40] },
+				page: 1,
+				sortAbilities: true,
+			}),
+	);
+	add("BuildRepository.countsByUserId", fx.heavyBuildUserId, (userId) =>
+		BuildRepository.countsByUserId(userId, { showPrivate: true }),
 	);
 	addStatic("BuildRepository.countAllPublicByWeaponId", () =>
 		BuildRepository.countAllPublicByWeaponId(),
@@ -492,6 +614,62 @@ export function buildCases(fx: Fixtures): {
 		LFGRepository.findByAuthorUserId(authorId),
 	);
 
+	add("LobbyRepository.findById", fx.heavyLobby, (lobby) =>
+		LobbyRepository.findById(lobby.id),
+	);
+	add(
+		"LobbyRepository.findAllVisibleIds",
+		both(fx.heavyUser, fx.heavyLobby),
+		([user, lobby]) =>
+			LobbyRepository.findAllVisibleIds({
+				userId: user.id,
+				lobbyIds: [lobby.id],
+			}),
+	);
+	add("LobbyRepository.findProgressionStateById", fx.heavyLobby, (lobby) =>
+		LobbyRepository.findProgressionStateById(lobby.id),
+	);
+	add(
+		"LobbyRepository.findAllByChatRoomIds",
+		fx.openChatRoomIdsByType?.LOBBY ?? null,
+		(roomIds) => LobbyRepository.findAllByChatRoomIds(roomIds),
+	);
+	addStatic("LobbyRepository.findAllForIndex", () =>
+		LobbyRepository.findAllForIndex(),
+	);
+	add("LobbyRepository.findAllUpcomingByUserId", fx.heavyUser, (user) =>
+		LobbyRepository.findAllUpcomingByUserId({
+			userId: user.id,
+			startsBefore: Number.MAX_SAFE_INTEGER,
+		}),
+	);
+	addStatic("LobbyRepository.findAllActiveParticipants", () =>
+		LobbyRepository.findAllActiveParticipants(),
+	);
+	addStatic("LobbyRepository.findAllUnconfirmedReadyCheckUsers", () =>
+		LobbyRepository.findAllUnconfirmedReadyCheckUsers(),
+	);
+	add(
+		"LobbyRepository.findAllUpcomingOfFriendsByUserId",
+		fx.heavyUser,
+		(user) => LobbyRepository.findAllUpcomingOfFriendsByUserId(user.id),
+	);
+	addStatic("LobbyRepository.findAllWithCheckInOpenedUnnotified", () =>
+		LobbyRepository.findAllWithCheckInOpenedUnnotified(),
+	);
+	addStatic("LobbyRepository.findAllUnendedIdsCheckInOpened", () =>
+		LobbyRepository.findAllUnendedIdsCheckInOpened(),
+	);
+
+	add("LobbyMatchRepository.findAllSetsByLobbyId", fx.heavyLobby, (lobby) =>
+		LobbyMatchRepository.findAllSetsByLobbyId(lobby.id),
+	);
+	add(
+		"LobbyMatchRepository.findAllTeamChatsByChatRoomIds",
+		fx.openChatRoomIdsByType?.LOBBY_TEAM ?? null,
+		(roomIds) => LobbyMatchRepository.findAllTeamChatsByChatRoomIds(roomIds),
+	);
+
 	add("LiveStreamRepository.findByUserId", fx.heavyUser, (user) =>
 		LiveStreamRepository.findByUserId(user.id),
 	);
@@ -509,6 +687,9 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("MatchProfileRepository.findWeaponPoolByUserId", fx.heavyUser, (user) =>
 		MatchProfileRepository.findWeaponPoolByUserId(user.id),
+	);
+	add("MatchProfileRepository.findAllByUserIds", fx.manyUserIds, (userIds) =>
+		MatchProfileRepository.findAllByUserIds(userIds.slice(0, 10)),
 	);
 
 	add("SkillRepository.findCurrentUserSkills", fx.skillBatch, (skillBatch) =>
@@ -694,6 +875,30 @@ export function buildCases(fx: Fixtures): {
 			ScannerIngestRepository.gamesInTournamentMatches([tournamentMatchId]),
 	);
 
+	add("ScannerIngestRepository.gamesInLobbySet", fx.heavyLobby, (lobby) =>
+		ScannerIngestRepository.gamesInLobbySet(lobby.setId),
+	);
+	add(
+		"ScannerIngestRepository.lobbyGamesPlayedByUserSince",
+		fx.heavyLobby,
+		(lobby) =>
+			ScannerIngestRepository.lobbyGamesPlayedByUserSince({
+				userId: lobby.userId,
+				since: lobby.sinceTimestamp,
+			}),
+	);
+	add("ScannerIngestRepository.lobbySetIdAt", fx.heavyLobby, (lobby) =>
+		ScannerIngestRepository.lobbySetIdAt({
+			userId: lobby.userId,
+			at: lobby.atMs,
+		}),
+	);
+	add(
+		"ScannerIngestRepository.findScoreboardsByLobbyId",
+		fx.heavyLobby,
+		(lobby) => ScannerIngestRepository.findScoreboardsByLobbyId(lobby.id),
+	);
+
 	add(
 		"ScrimMapListRepository.findMapListsByScrimPostId",
 		fx.heavyScrimPostId,
@@ -717,6 +922,11 @@ export function buildCases(fx: Fixtures): {
 	);
 	addStatic("ScrimPostRepository.findAllRelevant", () =>
 		ScrimPostRepository.findAllRelevant(),
+	);
+	add(
+		"ScrimPostRepository.findAllRelevant.byAssociation",
+		fx.heavyAssociation,
+		(association) => ScrimPostRepository.findAllRelevant(association.id),
 	);
 	add(
 		"ScrimPostRepository.findAcceptedScrimsBetweenTwoTimestamps",
@@ -768,6 +978,12 @@ export function buildCases(fx: Fixtures): {
 	add("PlayerStatRepository.findSeasonStagesByUserId", fx.sq, (sq) =>
 		PlayerStatRepository.findSeasonStagesByUserId(sq),
 	);
+	add("PlayerStatRepository.findMapResultsByUserIdAndSeasons", fx.sq, (sq) =>
+		PlayerStatRepository.findMapResultsByUserIdAndSeasons({
+			userId: sq.userId,
+			seasons: [sq.season, sq.season - 1, sq.season - 2, sq.season - 3],
+		}),
+	);
 	add("PlayerStatRepository.findSeasonMatesEnemiesByUserId", fx.sq, (sq) =>
 		PlayerStatRepository.findSeasonMatesEnemiesByUserId({
 			...sq,
@@ -784,6 +1000,9 @@ export function buildCases(fx: Fixtures): {
 		PlayerStatRepository.findSeasonTournamentRunsByUserId(sq),
 	);
 
+	add("ReportedWeaponRepository.findAllByLobbyId", fx.heavyLobby, (lobby) =>
+		ReportedWeaponRepository.findAllByLobbyId(lobby.id),
+	);
 	add(
 		"ReportedWeaponRepository.findByMatchId",
 		fx.heavyGroupMatchId,
@@ -1613,4 +1832,10 @@ function both<A, B>(a: A | null, b: B | null): [A, B] | null {
 	if (a === null || b === null) return null;
 
 	return [a, b];
+}
+
+function categoryWeaponIds(weaponSplId: MainWeaponId) {
+	const category = weaponIdToCategory(weaponSplId);
+
+	return [...weaponCategories.find(({ name }) => name === category)!.weaponIds];
 }

@@ -1,19 +1,11 @@
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
+import { soundEnabledPersisted, soundVolumePersisted } from "../chat-persisted";
 
 const MAX_START_DELAY_MS = 3_000;
 
 let currentAudio: HTMLAudioElement | null = null;
-
-export function localStorageKey(soundCode: string) {
-	return `settings__sound-enabled__${soundCode}`;
-}
-
-export function isEnabled(soundCode: string) {
-	const stored = localStorage.getItem(localStorageKey(soundCode));
-
-	return !stored || stored === "true";
-}
 
 export function play(soundCode: string) {
 	if (!isEnabled(soundCode)) return;
@@ -39,7 +31,7 @@ export function playIgnoringSetting(soundCode: string) {
 				return;
 			}
 
-			audio.volume = volume() / 100;
+			audio.volume = PersistedState.read(soundVolumePersisted) / 100;
 		},
 		{ once: true },
 	);
@@ -51,8 +43,9 @@ export function playIgnoringSetting(soundCode: string) {
 	});
 }
 
-export function volume() {
-	const stored = localStorage.getItem("settings__sound-volume");
-
-	return stored ? Number.parseFloat(stored) : 100;
+function isEnabled(soundCode: string) {
+	return (
+		PersistedState.readMap(soundEnabledPersisted)[soundCode] ??
+		soundEnabledPersisted.default
+	);
 }

@@ -56,6 +56,15 @@ const membersByTeamId = (tournamentTeamId: number) =>
 		.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
 		.execute();
 
+const teamCountOf = async (tournamentId: number) =>
+	(
+		await db
+			.selectFrom("TournamentTeam")
+			.select("TournamentTeam.id")
+			.where("TournamentTeam.tournamentId", "=", tournamentId)
+			.execute()
+	).length;
+
 const tournamentNameOf = async (userId: number) =>
 	(
 		await db
@@ -293,7 +302,112 @@ describe("TournamentTeamRepository", () => {
 		});
 	});
 
+	describe("insert", () => {
+		test("returns null when the owner is already on a team of the tournament", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [ownerId()],
+				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+			});
+
+			const result = await withUserId(ownerId(), () =>
+				TournamentTeamRepository.insert({
+					team: { name: "Team Teal", prefersNotToHost: 0, teamId: null },
+					userId: ownerId(),
+					tournamentId: tournament.id,
+				}),
+			);
+
+			expect(result).toBeNull();
+			expect(await teamCountOf(tournament.id)).toBe(1);
+		});
+
+		test("creates the team when the owner is only on a team of another tournament", async () => {
+			const otherTournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			await TournamentTeamFactory.create({
+				tournamentId: otherTournament.id,
+				memberUserIds: [ownerId()],
+				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+			});
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+
+			const result = await withUserId(ownerId(), () =>
+				TournamentTeamRepository.insert({
+					team: { name: "Team Teal", prefersNotToHost: 0, teamId: null },
+					userId: ownerId(),
+					tournamentId: tournament.id,
+				}),
+			);
+
+			expect(result).not.toBeNull();
+		});
+	});
+
 	describe("join", () => {
+		test("returns null when the user is already on another team of the tournament", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [memberId()],
+				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+			});
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [ownerId()],
+				team: { name: "Team Teal", prefersNotToHost: 0, teamId: null },
+			});
+
+			const result = await withUserId(memberId(), () =>
+				TournamentTeamRepository.join({
+					newTeamId: team.id,
+					userId: memberId(),
+				}),
+			);
+
+			expect(result).toBeNull();
+			expect(
+				(await membersByTeamId(team.id)).map((member) => member.userId),
+			).toEqual([ownerId()]);
+		});
+
+		test("adds a user already on another team of the tournament when allowed", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [memberId()],
+				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+			});
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [ownerId()],
+				team: { name: "Team Teal", prefersNotToHost: 0, teamId: null },
+			});
+
+			await withUserId(organizerId(), () =>
+				TournamentTeamRepository.join({
+					newTeamId: team.id,
+					userId: memberId(),
+					isOrganizerAdded: true,
+					allowOtherTeamMembership: true,
+				}),
+			);
+
+			expect(
+				(await membersByTeamId(team.id)).map((member) => member.userId),
+			).toContain(memberId());
+		});
+
 		test("joining on your own is not marked as organizer added", async () => {
 			const tournament = await TournamentFactory.create({
 				authorId: organizerId(),

@@ -28,8 +28,6 @@ const PLACEHOLDER_TEXTS = {
 export interface SearchSelectFieldProps {
 	name?: string;
 	label?: string;
-	bottomText?: string;
-	errorText?: string;
 	isRequired?: boolean;
 	isDisabled?: boolean;
 	className?: string;
@@ -52,8 +50,6 @@ interface SearchSelectProps<TItem extends { id: number; name: string }>
 export function SearchSelect<TItem extends { id: number; name: string }>({
 	name,
 	label,
-	bottomText,
-	errorText,
 	ariaLabel,
 	inputTestId,
 	inputClassName,
@@ -87,8 +83,6 @@ export function SearchSelect<TItem extends { id: number; name: string }>({
 			searchInputValue={search.filterText}
 			onSearchInputChange={search.setFilterText}
 			search={{ testId: inputTestId, inputClassName: inputClassName ?? "" }}
-			bottomText={bottomText}
-			errorText={errorText}
 			triggerRef={buttonRef}
 			popoverClassName={styles.popover}
 		>

@@ -16,6 +16,10 @@ export const action = defineAction(
 		const user = requireUser();
 		requireRole("VIDEO_ADDER");
 
+		// players are saved per weapon, a match without weapons would lose its POV
+		const missingWeaponErrors = missingWeaponFieldErrors(body);
+		if (missingWeaponErrors) return { fieldErrors: missingWeaponErrors };
+
 		const video = transformFormDataToVideo(body);
 
 		const savedVideo = body.vodToEditId
@@ -61,6 +65,28 @@ function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
 						: [],
 		})),
 	};
+}
+
+function missingWeaponFieldErrors(data: VodFormData) {
+	const teamSize = data.teamSize ? Number(data.teamSize) : 4;
+	const fieldErrors: Record<string, string> = {};
+
+	for (const [matchIdx, match] of data.matches.entries()) {
+		if (data.type !== "CAST") {
+			if (typeof match.weapon !== "number") {
+				fieldErrors[`matches[${matchIdx}].weapon`] = "forms:errors.required";
+			}
+			continue;
+		}
+
+		for (const team of ["weaponsTeamOne", "weaponsTeamTwo"] as const) {
+			if ((match[team]?.length ?? 0) < teamSize) {
+				fieldErrors[`matches[${matchIdx}].${team}`] = "forms:errors.required";
+			}
+		}
+	}
+
+	return Object.keys(fieldErrors).length > 0 ? fieldErrors : null;
 }
 
 function weaponPoolToIds(pool: WeaponPoolItem[]): MainWeaponId[] {

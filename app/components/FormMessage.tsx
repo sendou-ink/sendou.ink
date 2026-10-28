@@ -28,29 +28,3 @@ export function FormMessage({
 		</div>
 	);
 }
-
-/** Field-level error below an input. */
-export function SendouFieldError({
-	children,
-	id,
-}: {
-	children?: React.ReactNode;
-	id?: string;
-}) {
-	if (!children) return null;
-
-	return (
-		<span className={styles.error} id={id}>
-			{children}
-		</span>
-	);
-}
-
-/** Field-level hint below an input. */
-export function SendouFieldMessage({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
-	return <span className={styles.info}>{children}</span>;
-}

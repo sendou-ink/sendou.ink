@@ -26,10 +26,13 @@ import {
 	type FriendActivity,
 	resolveFriendActivity,
 	resolveSendouQMatchStreams,
+	resolveUpcomingLobbiesOfFriends,
+	resolveVisibleActiveLobbyIdsOfFriends,
 } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
@@ -46,8 +49,9 @@ import { cache, ttl } from "~/utils/cache.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import {
+	avatarUrl,
 	BLANK_IMAGE_URL,
-	discordAvatarUrl,
+	lobbyPage,
 	navIconUrl,
 	teamSchedulePage,
 	tournamentMatchPage,
@@ -63,22 +67,21 @@ export type SidebarEvent = {
 	/** Whose avatar the event shows instead of a logo of its own. */
 	user: CommonUser | null;
 	startsAt: number;
-	type: "tournament" | "scrim" | "teamEvent" | "leagueMatch";
+	type: "tournament" | "scrim" | "teamEvent" | "leagueMatch" | "lobby";
 	scrimStatus?: "booked" | "looking" | "requestPending";
 };
 
 export type SidebarFriend = {
 	id: number;
 	name: string;
-	discordId: string;
-	discordAvatar: string | null;
-	customAvatarUrl: string | null;
+	avatar: CommonUser["avatar"];
 	url: string;
 	subtitle: string;
 	badge: string;
 	activityType: FriendActivityType | null;
 	matchId: number | null;
 	tournamentId: number | null;
+	lobbyId: number | null;
 	stream: FriendActivity["stream"];
 };
 
@@ -88,6 +91,8 @@ const MAX_STREAMS_VISIBLE = 5;
 const UPCOMING_TOURNAMENT_WINDOW_DAYS = 3;
 const SENDOUQ_QUOTA = 2;
 const TOURNAMENT_SUB_QUOTA = 2;
+const LOBBY_QUOTA = 2;
+const UPCOMING_LOBBY_WINDOW_DAYS = 14;
 
 export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 	const userId = user?.id ?? null;
@@ -113,6 +118,13 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 	const incomingFriendRequestIds =
 		await FriendRepository.findPendingReceivedRequestIds(userId);
 	const streamedSendouQMatches = await resolveSendouQMatchStreams();
+	const upcomingLobbiesOfFriends =
+		await resolveUpcomingLobbiesOfFriends(userId);
+	const visibleLobbyIds = await resolveVisibleActiveLobbyIdsOfFriends({
+		viewerId: userId,
+		friendIds: friendsWithActivity.map((friend) => friend.id),
+	});
+	const lobbies = await findUpcomingLobbies(userId);
 	const teamEvents = await findUpcomingTeamEvents(userId);
 	const leagueMatches = await findUpcomingLeagueMatches(userId);
 	const scheduleNudge = await showScheduleNudge(user);
@@ -146,17 +158,25 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 		leagueMatchToSidebarEvent,
 	);
 
+	const lobbyEvents: SidebarEvent[] = lobbies.map(lobbyToSidebarEvent);
+
 	const events = [
 		...tournamentEvents,
 		...savedEvents,
 		...scrimEvents,
 		...teamEventEvents,
 		...leagueMatchEvents,
+		...lobbyEvents,
 	]
 		.sort((a, b) => a.startsAt - b.startsAt)
 		.slice(0, MAX_EVENTS_VISIBLE);
 
-	const friends = resolveFriends(friendsWithActivity, streamedSendouQMatches);
+	const friends = resolveFriends({
+		friendsWithActivity,
+		streamedSendouQMatches,
+		visibleLobbyIds,
+		upcomingLobbiesOfFriends,
+	});
 
 	const savedTournamentIds = savedTournaments.map((t) => t.id);
 
@@ -292,15 +312,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 			stream: {
 				id: `xrank-${row.id}`,
 				name: row.username,
-				imageUrl: row.customAvatarUrl
-					? row.customAvatarUrl
-					: row.discordAvatar
-						? discordAvatarUrl({
-								discordId: row.discordId,
-								discordAvatar: row.discordAvatar,
-								size: "sm",
-							})
-						: BLANK_IMAGE_URL,
+				imageUrl: row.avatar ? avatarUrl(row.avatar, "sm") : BLANK_IMAGE_URL,
 				url: LiveStream.url(row),
 				subtitle: "",
 				startsAt: databaseTimestampNow(),
@@ -350,12 +362,21 @@ type FriendWithActivity = Awaited<
 	ReturnType<typeof FriendRepository.findByUserIdWithActivity>
 >[number];
 
-function resolveFriends(
-	friendsWithActivity: FriendWithActivity[],
+function resolveFriends({
+	friendsWithActivity,
+	streamedSendouQMatches,
+	visibleLobbyIds,
+	upcomingLobbiesOfFriends,
+}: {
+	friendsWithActivity: FriendWithActivity[];
 	streamedSendouQMatches: Awaited<
 		ReturnType<typeof resolveSendouQMatchStreams>
-	>,
-) {
+	>;
+	visibleLobbyIds: ReadonlySet<number>;
+	upcomingLobbiesOfFriends: Awaited<
+		ReturnType<typeof resolveUpcomingLobbiesOfFriends>
+	>;
+}) {
 	const entries = R.uniqueBy(friendsWithActivity, (f) => f.id).map((row) => {
 		const activity = resolveFriendActivity({
 			friendId: row.id,
@@ -364,6 +385,8 @@ function resolveFriends(
 			teamMemberCount: row.teamMemberCount,
 			tournamentMinTeamSize: row.tournamentMinTeamSize,
 			sendouQMatchStreams: streamedSendouQMatches,
+			visibleLobbyIds,
+			upcomingLobby: upcomingLobbiesOfFriends.get(row.id),
 		});
 
 		return {
@@ -398,6 +421,10 @@ export function orderSidebarFriends<T extends OrderableFriend>(entries: T[]) {
 	const tournamentSubFriends = friends.filter(
 		({ activityType }) => activityType === "TOURNAMENT_SUB",
 	);
+	const lobbyFriends = friends.filter(
+		({ activityType }) =>
+			activityType === "LOBBY" || activityType === "LOBBY_UPCOMING",
+	);
 	const inMatchFriends = friends.filter(({ activityType }) =>
 		isInProgressFriendActivity(activityType),
 	);
@@ -412,8 +439,10 @@ export function orderSidebarFriends<T extends OrderableFriend>(entries: T[]) {
 	const ordered = [
 		...sendouqFriends.slice(0, SENDOUQ_QUOTA),
 		...tournamentSubFriends.slice(0, TOURNAMENT_SUB_QUOTA),
+		...lobbyFriends.slice(0, LOBBY_QUOTA),
 		...sendouqFriends.slice(SENDOUQ_QUOTA),
 		...tournamentSubFriends.slice(TOURNAMENT_SUB_QUOTA),
+		...lobbyFriends.slice(LOBBY_QUOTA),
 		...inMatchFriends,
 		...activeTeamMembers,
 		...idleFriends,
@@ -433,15 +462,14 @@ function rowToSidebarFriend(
 	return {
 		id: row.id,
 		name: row.username,
-		discordId: row.discordId,
-		discordAvatar: row.discordAvatar,
-		customAvatarUrl: row.customAvatarUrl,
-		url: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
+		avatar: row.avatar,
+		url: userPage({ id: row.id, customUrl: row.customUrl }),
 		subtitle: activity.subtitle ?? "",
 		badge: activity.badge ?? "",
 		activityType: activity.type,
 		matchId: activity.matchId,
 		tournamentId: activity.tournamentId ?? row.tournamentId,
+		lobbyId: activity.lobbyId,
 		stream: activity.stream,
 	};
 }
@@ -527,6 +555,33 @@ export function teamEventToSidebarEvent(
 		user: null,
 		startsAt: event.startsAt,
 		type: "teamEvent" as const,
+	};
+}
+
+/** Unended lobbies the user signed up for (or hosts), running or starting within the window. */
+export function findUpcomingLobbies(userId: number) {
+	return LobbyRepository.findAllUpcomingByUserId({
+		userId,
+		startsBefore: dateToDatabaseTimestamp(
+			addDays(new Date(), UPCOMING_LOBBY_WINDOW_DAYS),
+		),
+	});
+}
+
+const LOBBIES_ICON_URL = `${navIconUrl("lobbies")}.avif`;
+export function lobbyToSidebarEvent(lobby: {
+	id: number;
+	name: string;
+	startsAt: number;
+}): SidebarEvent {
+	return {
+		id: lobby.id,
+		name: lobby.name,
+		url: lobbyPage(lobby.id),
+		logoUrl: LOBBIES_ICON_URL,
+		user: null,
+		startsAt: lobby.startsAt,
+		type: "lobby" as const,
 	};
 }
 

@@ -12,7 +12,7 @@ const firstUserId = () => users.id(4);
 const pageOfUsers = (
 	args: Pick<
 		Parameters<typeof Pagination.findPage>[0],
-		"page" | "containingId"
+		"page" | "containingId" | "separateCount"
 	>,
 ) =>
 	Pagination.findPage({
@@ -74,6 +74,13 @@ describe("Pagination.findPage", () => {
 		const result = await pageOfUsers({ page: 9 });
 
 		expect(result.items).toEqual([]);
+		expect(result.totalCount).toBe(5);
+	});
+
+	test("counts the rows in their own query when asked to", async () => {
+		const result = await pageOfUsers({ page: 2, separateCount: true });
+
+		expect(idsOf(result.items)).toEqual([users.id(2), users.id(3)]);
 		expect(result.totalCount).toBe(5);
 	});
 });

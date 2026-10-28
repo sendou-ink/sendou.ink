@@ -1707,7 +1707,7 @@ describe("single elimination sourcing - placements are tiers", () => {
 			data,
 		})
 			.bracketByIdx(1)!
-			.seeding!.toSorted((a, b) => a - b);
+			.previewSeeding!.toSorted((a, b) => a - b);
 
 	test("sources only the semifinal losers while the final is unplayed", () => {
 		const beforeFinal = playOut(14);
@@ -1905,7 +1905,7 @@ describe("grouped elimination - edge cases", () => {
 			),
 		}).bracketByIdx(1)!;
 
-		expect(redemption.seeding).toHaveLength(4);
+		expect(redemption.previewSeeding).toHaveLength(4);
 		expect(redemption.participantTournamentTeamIds).toHaveLength(4);
 	});
 
@@ -2131,7 +2131,9 @@ describe("grouped elimination - edge cases", () => {
 				.standings.slice(0, 2)
 				.map((standing) => standing.team.id),
 		).toEqual([1, 2]);
-		expect(tournament.bracketByIdx(1)!.seeding?.slice(0, 2)).toEqual([1, 2]);
+		expect(tournament.bracketByIdx(1)!.previewSeeding?.slice(0, 2)).toEqual([
+			1, 2,
+		]);
 	});
 });
 
@@ -2195,14 +2197,14 @@ describe("follow-up seeding through a redemption bracket", () => {
 		const redemption = playedOut(
 			createResolved({
 				type: "double_elimination",
-				seeding: tournamentWith(main).bracketByIdx(1)!.seeding!,
+				seeding: tournamentWith(main).bracketByIdx(1)!.previewSeeding!,
 				settings: PROGRESSION[1].settings,
 			}),
 			[6, 7, 8, 11],
 		);
 		const seeding = tournamentWith(mergeStages(main, redemption)).bracketByIdx(
 			2,
-		)!.seeding!;
+		)!.previewSeeding!;
 		const half = (teamId: number) =>
 			LINEUP_8.indexOf(seeding.indexOf(teamId) + 1) < 4 ? "top" : "bottom";
 
@@ -2272,7 +2274,7 @@ describe("matchExitGroups", () => {
 	test("gives the group of the started grouped destination each leaving team landed in", () => {
 		const redemption = createResolved({
 			type: "double_elimination",
-			seeding: tournamentWith(main).bracketByIdx(1)!.seeding!,
+			seeding: tournamentWith(main).bracketByIdx(1)!.previewSeeding!,
 			settings: PROGRESSION[1].settings,
 		});
 
@@ -2310,6 +2312,24 @@ describe("matchExitGroups", () => {
 			new Set([null, ...redemptionData.group.map((group) => group.id)]),
 		);
 	}
+});
+
+describe("participantTournamentTeamIds", () => {
+	test.each([
+		{ why: "no teams", teamIds: [] },
+		{ why: "a lone team", teamIds: [1] },
+		{ why: "two teams", teamIds: [1, 2] },
+	])("preview bracket with $why lists every checked-in team", ({ teamIds }) => {
+		const tournament = testTournament({
+			ctx: { teams: teamIds.map((teamId) => tournamentCtxTeam(teamId)) },
+		});
+
+		expect(
+			tournament.brackets[0].participantTournamentTeamIds.toSorted(
+				(a, b) => a - b,
+			),
+		).toEqual(teamIds);
+	});
 });
 
 /** Plays every match of the bracket, the lower team id winning unless the other team is favored. */

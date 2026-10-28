@@ -58,4 +58,28 @@ describe("sortAbilities()", () => {
 			["SJ", "QSJ", "QSJ", "QSJ"],
 		]);
 	});
+
+	test("keeps the sub abilities doubled by Ability Doubler in its row", () => {
+		const input: BuildAbilitiesTuple = [
+			["ISM", "ISM", "ISM", "ISM"],
+			["AD", "SSU", "SSU", "SSU"],
+			["SJ", "ISM", "ISM", "ISM"],
+		];
+
+		expect(sortAbilities(input)).toEqual(input);
+	});
+
+	test("sorts the other rows' sub abilities around an Ability Doubler row", () => {
+		const input: BuildAbilitiesTuple = [
+			["CB", "QR", "SSU", "QR"],
+			["AD", "ISM", "SS", "ISM"],
+			["SJ", "SSU", "QR", "SSU"],
+		];
+
+		expect(sortAbilities(input)).toEqual([
+			["CB", "SSU", "SSU", "SSU"],
+			["AD", "ISM", "ISM", "SS"],
+			["SJ", "QR", "QR", "QR"],
+		]);
+	});
 });

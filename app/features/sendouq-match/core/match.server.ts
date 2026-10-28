@@ -13,7 +13,6 @@ import type {
 	SQMatch,
 	SQUncensoredGroup,
 } from "~/features/sendouq/core/SendouQ.server";
-import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, ModeWithStage } from "~/modules/in-game-lists/types";
 import type {
@@ -26,11 +25,18 @@ import type { MatchTiers } from "../SQMatchRepository.server";
 
 type WeightsMap = Map<string, number>;
 
+/** How much each earlier play of a map multiplies its weight by, see `playedMaps` of {@link matchMapList}. */
+const PLAYED_MAP_WEIGHT_MULTIPLIER = 0.25;
+
 async function calculateMapWeights(
 	groupOnePreferences: UserMapModePreferences[],
 	groupTwoPreferences: UserMapModePreferences[],
 	modesIncluded: readonly ModeShort[],
-): Promise<WeightsMap> {
+): Promise<{
+	weights: WeightsMap;
+	teamOneVotedKeys: Set<string>;
+	teamTwoVotedKeys: Set<string>;
+}> {
 	const teamOneVotes: WeightsMap = new Map();
 	const teamTwoVotes: WeightsMap = new Map();
 
@@ -56,7 +62,11 @@ async function calculateMapWeights(
 		teamTwoWeights,
 	);
 
-	return applyDefaultWeights(combinedWeights);
+	return {
+		weights: await applyDefaultWeights(combinedWeights),
+		teamOneVotedKeys: new Set(teamOneVotes.keys()),
+		teamTwoVotedKeys: new Set(teamTwoVotes.keys()),
+	};
 }
 
 /** Combines two teams' map weights, first normalizing team one's to team two's total so differing preference counts weigh fairly. */
@@ -141,6 +151,9 @@ function countVotesForTeam(
 	}
 }
 
+/**
+ * @param playedMaps maps the players have already played together, oldest first: the list continues from them and each play weighs the map down further
+ */
 export async function matchMapList(
 	groupOne: {
 		preferences: { userId: number; preferences: UserMapModePreferences }[];
@@ -151,12 +164,16 @@ export async function matchMapList(
 		id: number;
 	},
 	modesIncluded: readonly ModeShort[],
+	bestOf: number,
+	playedMaps: ModeWithStage[] = [],
 ): Promise<TournamentMapListMap[]> {
-	const weights = await calculateMapWeights(
-		groupOne.preferences.map((p) => p.preferences),
-		groupTwo.preferences.map((p) => p.preferences),
-		modesIncluded,
-	);
+	const { weights, teamOneVotedKeys, teamTwoVotedKeys } =
+		await calculateMapWeights(
+			groupOne.preferences.map((p) => p.preferences),
+			groupTwo.preferences.map((p) => p.preferences),
+			modesIncluded,
+		);
+	weighDownPlayedMaps(weights, playedMaps);
 
 	logger.info(
 		`[matchMapList] Generated map weights: ${JSON.stringify(
@@ -172,10 +189,16 @@ export async function matchMapList(
 		),
 		initialWeights: weights,
 		skipEnsureMinimumCandidates: true,
+		candidateFilters: alternatingTeamFilters({
+			teamOneVotedKeys,
+			teamTwoVotedKeys,
+			bestOf,
+		}),
+		history: playedMaps,
 	});
 	generator.next();
 
-	const maps = generator.next({ amount: SENDOUQ_BEST_OF }).value;
+	const maps = generator.next({ amount: bestOf }).value;
 
 	const resolveSource = (map: ModeWithStage): TournamentMaplistSource => {
 		const groupOnePrefers = groupOne.preferences.some((p) =>
@@ -211,6 +234,52 @@ export async function matchMapList(
 	}
 
 	return result;
+}
+
+/** Only positive weights are scaled down, scaling a negative one would raise it. */
+function weighDownPlayedMaps(weights: WeightsMap, playedMaps: ModeWithStage[]) {
+	const playCounts = R.countBy(playedMaps, (map) =>
+		MapList.modeStageKey(map.mode, map.stageId),
+	);
+
+	for (const [key, count] of Object.entries(playCounts)) {
+		const weight = weights.get(key);
+		if (weight === undefined || weight <= 0) continue;
+
+		weights.set(key, weight * PLAYED_MAP_WEIGHT_MULTIPLIER ** count);
+	}
+}
+
+/** Teams alternate picking from maps they voted for, the last map preferably one both voted for. */
+function alternatingTeamFilters({
+	teamOneVotedKeys,
+	teamTwoVotedKeys,
+	bestOf,
+}: {
+	teamOneVotedKeys: Set<string>;
+	teamTwoVotedKeys: Set<string>;
+	bestOf: number;
+}) {
+	const [firstPicker, secondPicker] = R.shuffle([
+		teamOneVotedKeys,
+		teamTwoVotedKeys,
+	]);
+	const votedBy = (votedKeys: Set<string>) => (map: ModeWithStage) =>
+		votedKeys.has(MapList.modeStageKey(map.mode, map.stageId));
+
+	return (index: number) => {
+		const picker = index % 2 === 0 ? firstPicker : secondPicker;
+
+		if (index === bestOf - 1) {
+			return [
+				(map: ModeWithStage) =>
+					votedBy(firstPicker)(map) && votedBy(secondPicker)(map),
+				votedBy(picker),
+			];
+		}
+
+		return [votedBy(picker)];
+	};
 }
 
 export function mapModePreferencesToModeList(

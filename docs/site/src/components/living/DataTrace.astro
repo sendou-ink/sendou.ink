@@ -1,0 +1,54 @@
+---
+import type { RouteDataTrace } from "../../../../../scripts/living-docs/document.ts";
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import { repositoryHref, repositoryLabel } from "../../living/format.ts";
+import TableChips from "./TableChips.astro";
+
+interface Props {
+	trace: RouteDataTrace;
+}
+
+const { trace } = Astro.props;
+---
+
+<ul>
+	{
+		trace.tables.length > 0 ? (
+			<li>
+				Queries itself
+				<div class="trace-tables">
+					<TableChips tables={trace.tables} />
+				</div>
+			</li>
+		) : null
+	}
+	{
+		trace.calls.map((call) => (
+			<li>
+				<a href={repositoryHref(call.repository, call.name)}>
+					<code>
+						{repositoryLabel(call.repository)}.{call.name}
+					</code>
+				</a>
+				{call.via ? (
+					<span class="route-data-via">
+						{" via "}
+						<a href={githubUrl(call.via.file, call.via.line)}>
+							<code>{call.via.name}</code>
+						</a>
+					</span>
+				) : null}
+				{call.tables.length > 0 ? (
+					<div class="trace-tables">
+						<TableChips tables={call.tables} />
+					</div>
+				) : null}
+			</li>
+		))
+	}
+	{
+		trace.tables.length + trace.calls.length === 0 ? (
+			<li class="route-data-none">no database access</li>
+		) : null
+	}
+</ul>

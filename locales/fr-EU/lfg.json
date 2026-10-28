@@ -17,7 +17,5 @@
 	"filters.MinTier": "Niveau min",
 	"filters.orAbove": "ou supérieur",
 	"new.noMorePosts": "Vous ne pouvez pas créer plus de posts",
-	"new.editOn": "Modifier sur votre",
-	"new.weaponPool.header": "Arme utilisé",
-	"new.weaponPool.matchProfile": ""
+	"new.weaponPool.header": "Arme utilisé"
 }

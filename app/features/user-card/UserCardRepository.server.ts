@@ -29,6 +29,7 @@ import type {
 	UserCardData,
 	UserCardStat,
 	UserCardStatXPValue,
+	UserCardsById,
 } from "./user-card-types";
 import { isValidUnverifiedXp } from "./user-card-utils";
 
@@ -47,16 +48,18 @@ export async function findAllByUserIds({
 	include?: { friendCode?: boolean };
 	/** Keep hidden stats in `stats`; only the edit page opts in, so hidden values never reach a viewer. */
 	includeHiddenStats?: boolean;
-}): Promise<{ userCards: Map<number, UserCardData> }> {
-	if (userIds.length === 0) return { userCards: new Map() };
+}): Promise<{ userCards: UserCardsById }> {
+	if (userIds.length === 0) return { userCards: {} };
 
 	return {
-		userCards: await queryUserCards({
-			userIds,
-			viewerId: actorIdOrNull(),
-			include,
-			includeHiddenStats,
-		}),
+		userCards: Object.fromEntries(
+			await queryUserCards({
+				userIds,
+				viewerId: actorIdOrNull(),
+				include,
+				includeHiddenStats,
+			}),
+		),
 	};
 }
 
@@ -79,9 +82,9 @@ export async function findAllByUserIdsCached({
 	userIds: Array<number>;
 	/** Opt-in fields skipped from the query by default. */
 	include?: { friendCode?: boolean };
-}): Promise<{ userCards: Map<number, UserCardData> }> {
+}): Promise<{ userCards: UserCardsById }> {
 	if (ServerConfig.disableCache) return findAllByUserIds({ userIds, include });
-	if (userIds.length === 0) return { userCards: new Map() };
+	if (userIds.length === 0) return { userCards: {} };
 
 	const now = Date.now();
 	const pendingCards = new Map<number, Promise<UserCardData | undefined>>();
@@ -113,13 +116,13 @@ export async function findAllByUserIdsCached({
 		? await findFriendCodesByUserIds([...cards.keys()])
 		: new Map<number, string>();
 
-	const userCards = new Map<number, UserCardData>();
+	const userCards: UserCardsById = {};
 	for (const [userId, card] of cards) {
-		userCards.set(userId, {
+		userCards[userId] = {
 			...card,
 			privateNote: privateNotes.get(userId) ?? null,
 			friendCode: friendCodes.get(userId) ?? null,
-		});
+		};
 	}
 
 	return { userCards };
@@ -625,10 +628,8 @@ function enrichUserCardData(
 	return {
 		id: cardData.id,
 		username: cardData.username,
-		discordId: cardData.discordId,
-		discordAvatar: cardData.discordAvatar,
 		customUrl: cardData.customUrl,
-		customAvatarUrl: cardData.customAvatarUrl,
+		avatar: cardData.avatar,
 		shortBio: cardData.shortBio,
 		customTheme: cardData.customTheme,
 		banner: enrichBanner(cardData.banner),

@@ -135,7 +135,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 									className={styles.modeAbbr}
 									title={t(`game-misc:MODE_LONG_${mode}`)}
 								>
-									{t(`game-misc:MODE_SHORT_${mode}`)}
+									{t(`common:modes.short.${mode}`)}
 								</abbr>{" "}
 								{t(`game-misc:STAGE_${stageId}`)}
 							</li>
@@ -150,7 +150,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 								mapList
 									.map(
 										({ mode, stageId }, i) =>
-											`${i + 1}) ${t(`game-misc:MODE_SHORT_${mode}`)} ${t(
+											`${i + 1}) ${t(`common:modes.short.${mode}`)} ${t(
 												`game-misc:STAGE_${stageId}`,
 											)}`,
 									)

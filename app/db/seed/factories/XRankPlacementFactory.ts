@@ -1,3 +1,4 @@
+import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { invariant } from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
@@ -17,6 +18,8 @@ type InsertArgs = Omit<
 type Options = {
 	/** Derive `SplatoonPlayer.peakXp` from the placements, as the import does after a month's worth. */
 	refreshPeakXp?: boolean;
+	/** Recompute build sort values so builds on placed weapons get the top 500 crown, as the import does. */
+	recalculateBuildSortValues?: boolean;
 };
 
 /**
@@ -51,9 +54,15 @@ export const { create } = defineFactory({
 
 		return { id };
 	},
-	applyOptions: async (_placement, { refreshPeakXp }: Options) => {
-		if (!refreshPeakXp) return;
-
-		await XRankPlacementRepository.refreshAllPeakXp();
+	applyOptions: async (
+		_placement,
+		{ refreshPeakXp, recalculateBuildSortValues }: Options,
+	) => {
+		if (refreshPeakXp) {
+			await XRankPlacementRepository.refreshAllPeakXp();
+		}
+		if (recalculateBuildSortValues) {
+			await BuildRepository.recalculateAllSortValues();
+		}
 	},
 });

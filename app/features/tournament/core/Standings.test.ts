@@ -58,6 +58,31 @@ describe("tournamentStandings", () => {
 		expect(new Set(divs).size).toBe(2);
 	});
 
+	test("ranks a division's top cut above its consolation bracket", () => {
+		const tournament = divisionsWithUndergroundTournament();
+
+		const result = tournamentStandings(tournament);
+
+		invariant(result.type === "multi");
+		const divisionA = result.standings[0].standings;
+		expect(divisionA.map((s) => s.team.id)).toEqual([1, 2, 3, 4]);
+		expect(divisionA.map((s) => s.placement)).toEqual([1, 2, 3, 4]);
+	});
+
+	test("places a division's teams from its groups when their underground bracket was never started", () => {
+		const tournament = divisionsWithUndergroundTournament({
+			undergroundStarted: false,
+		});
+		expect(tournament.bracketByIdx(3)?.preview).toBe(true);
+
+		const result = tournamentStandings(tournament);
+
+		invariant(result.type === "multi");
+		const divisionA = result.standings[0].standings;
+		expect(divisionA.map((s) => s.team.id)).toEqual([1, 2, 3, 4]);
+		expect(divisionA.map((s) => s.placement)).toEqual([1, 2, 3, 4]);
+	});
+
 	test("splits A/B divisions finals into 'A' and 'B' divs with teams partitioned by abDivision", () => {
 		const tournament = abDivisionsTournament();
 
@@ -301,15 +326,28 @@ describe("sprByTeamId", () => {
 		expect(result.get(4)).toBe(0);
 	});
 
-	test("returns 0 for a team whose seed is outside the standings", () => {
+	test("returns 0 for a team without a seed", () => {
 		const result = sprByTeamId(
 			standings([
-				{ id: 1, seed: 1, placement: 1 },
-				{ id: 2, seed: 9, placement: 2 },
+				{ id: 2, seed: null, placement: 1 },
+				{ id: 1, seed: 1, placement: 2 },
 			]),
 		);
 
 		expect(result.get(2)).toBe(0);
+	});
+
+	test("compares a division's teams by their seed order within that division", () => {
+		// division B of an A/B divisions tournament, seeds 1 & 3 went to division A
+		const result = sprByTeamId(
+			standings([
+				{ id: 4, seed: 4, placement: 1 },
+				{ id: 2, seed: 2, placement: 2 },
+			]),
+		);
+
+		expect(result.get(4)).toBe(1);
+		expect(result.get(2)).toBe(-1);
 	});
 });
 
@@ -620,6 +658,89 @@ function groupsToRedemptionAndConsolationTournament() {
 	});
 }
 
+function divisionsWithUndergroundTournament({
+	undergroundStarted = true,
+}: {
+	undergroundStarted?: boolean;
+} = {}) {
+	const playedStages = (
+		[
+			["A Groups", "round_robin", [1, 2, 3, 4]],
+			["B Groups", "round_robin", [5, 6, 7, 8]],
+			["A Top Cut", "single_elimination", [1, 2]],
+			["A Underground", "single_elimination", [3, 4]],
+			["B Top Cut", "single_elimination", [5, 6]],
+		] as const
+	).filter(([name]) => undergroundStarted || name !== "A Underground");
+	const merged = mergeStages(
+		...playedStages.map(([, type, seeding]) =>
+			playOutLowerIdWins(
+				createResolved({
+					type,
+					seeding: [...seeding],
+					settings: type === "round_robin" ? { groupCount: 1 } : {},
+				}),
+			),
+		),
+	);
+	const data = {
+		...merged,
+		stage: merged.stage.map((stage, stageIdx) => ({
+			...stage,
+			name: playedStages[stageIdx][0],
+		})),
+	};
+
+	return testTournament({
+		ctx: {
+			settings: {
+				bracketProgression: [
+					{
+						type: "round_robin",
+						name: "A Groups",
+						requiresCheckIn: false,
+						settings: { groupCount: 1 },
+					},
+					{
+						type: "round_robin",
+						name: "B Groups",
+						requiresCheckIn: false,
+						settings: { groupCount: 1 },
+					},
+					{
+						type: "single_elimination",
+						name: "A Top Cut",
+						requiresCheckIn: false,
+						settings: {},
+						sources: [{ bracketIdx: 0, placements: [1, 2] }],
+					},
+					{
+						type: "single_elimination",
+						name: "A Underground",
+						requiresCheckIn: false,
+						settings: {},
+						sources: [{ bracketIdx: 0, placements: [3, 4] }],
+					},
+					{
+						type: "single_elimination",
+						name: "B Top Cut",
+						requiresCheckIn: false,
+						settings: {},
+						sources: [{ bracketIdx: 1, placements: [1, 2] }],
+					},
+				],
+			},
+			teams: [1, 2, 3, 4, 5, 6, 7, 8].map((id) =>
+				tournamentCtxTeam(id, {
+					startingBracketIdx: id <= 4 ? 0 : 1,
+					seed: id,
+				}),
+			),
+		},
+		data,
+	});
+}
+
 /** Team 4 drops out before playing, so its first match is force-ended with no maps reported. */
 function singleEliminationWithWalkoverTournament() {
 	const data = Engine.endDroppedTeamMatches(
@@ -876,7 +997,7 @@ function playOut(
 }
 
 function standings(
-	teams: Array<{ id: number; seed: number; placement: number }>,
+	teams: Array<{ id: number; seed: number | null; placement: number }>,
 ): Standing[] {
 	return teams.map(({ id, seed, placement }) => ({
 		team: tournamentCtxTeam(id, { seed }),

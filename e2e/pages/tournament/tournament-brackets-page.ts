@@ -88,6 +88,48 @@ export class TournamentBracketsPage {
 		return this.page.locator(`[data-match-id="${matchId}"]`);
 	}
 
+	/**
+	 * Scrolls the match close to the top left of the bracket's own scroll container, or of the page below the header
+	 * when the bracket has none: a spot no automatic scroll lands on.
+	 */
+	async scrollMatchNearTopLeft(matchId: number) {
+		await this.match(matchId).evaluate((element) => {
+			const rect = element.getBoundingClientRect();
+			const scroller = element.closest("[data-bracket-scroller]");
+			if (!scroller) {
+				window.scrollTo(0, rect.top + window.scrollY - 150);
+				return;
+			}
+
+			const scrollerRect = scroller.getBoundingClientRect();
+			scroller.scrollTop += rect.top - scrollerRect.top - 50;
+			scroller.scrollLeft += rect.left - scrollerRect.left - 50;
+		});
+	}
+
+	/** Scrolls the page and the bracket's own scroll container back to their start. */
+	async scrollToStart() {
+		await this.page.evaluate(() => {
+			window.scrollTo(0, 0);
+			document.querySelector("[data-bracket-scroller]")?.scrollTo(0, 0);
+		});
+	}
+
+	/** Where the match is on the screen. */
+	matchViewportPosition(matchId: number) {
+		return this.match(matchId).evaluate((element) => {
+			const { top, left } = element.getBoundingClientRect();
+			return { top, left };
+		});
+	}
+
+	/** Id of the match rendered last, i.e. furthest from the top left. */
+	async lastMatchId() {
+		return Number(
+			await this.locators.matches.last().getAttribute("data-match-id"),
+		);
+	}
+
 	/** Both sides' scores of the match, top to bottom. */
 	matchScores(matchId: number) {
 		return this.match(matchId).getByTestId("match-score");

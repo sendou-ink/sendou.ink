@@ -43,7 +43,7 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	resolveAvatarUrl,
+	avatarUrl,
 	sendouQMatchPage,
 	tierImageUrl,
 	userPage,
@@ -543,16 +543,13 @@ function SeasonSummaryExportDialog({
 			{data ? (
 				<SeasonSummaryGraphic
 					user={{
+						id: profileUser.id,
 						name: profileUser.username,
-						discordId: profileUser.discordId,
 						customUrl: profileUser.customUrl ?? undefined,
 						countryCode: profileUser.country ?? undefined,
-						avatarUrl: resolveAvatarUrl({
-							customAvatarUrl: profileUser.customAvatarUrl,
-							discordId: profileUser.discordId,
-							discordAvatar: profileUser.discordAvatar,
-							size: "lg",
-						}),
+						avatarUrl: profileUser.avatar
+							? avatarUrl(profileUser.avatar, "lg")
+							: undefined,
 					}}
 					season={data.season}
 					seasonDateRange={Seasons.nthToDateRange(data.season)}

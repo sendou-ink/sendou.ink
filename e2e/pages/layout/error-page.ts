@@ -13,6 +13,9 @@ export class ErrorPage {
 			notFoundHeading: page.getByRole("heading", {
 				name: "Error 404 - Page not found",
 			}),
+			forbiddenHeading: page.getByRole("heading", {
+				name: "Error 403 Forbidden",
+			}),
 		};
 	}
 

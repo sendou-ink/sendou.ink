@@ -1,6 +1,15 @@
 import * as R from "remeda";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import * as Engine from "~/features/tournament-bracket/core/engine";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
+import type {
+	BracketData,
+	GroupData,
+	MatchData,
+	ParticipantResult,
+	RoundData,
+	RoundSection,
+	StageData,
+} from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";
@@ -10,7 +19,7 @@ export const tournamentCtxTeam = (
 	partial?: Partial<TournamentData["ctx"]["teams"][0]>,
 ): TournamentData["ctx"]["teams"][0] => {
 	return {
-		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null, isCheckOut: 0 }],
+		checkIns: checkedInTo(),
 		createdAt: 0,
 		id: teamId,
 		avgSeedingSkillOrdinal: null,
@@ -29,6 +38,15 @@ export const tournamentCtxTeam = (
 	};
 };
 
+/** Check-ins to the tournament and to each given bracket. */
+export function checkedInTo(...bracketIdxs: number[]) {
+	return [null, ...bracketIdxs].map((bracketIdx) => ({
+		checkedInAt: 1705858841,
+		bracketIdx,
+		isCheckOut: 0 as const,
+	}));
+}
+
 const nTeams = (n: number, startingId: number) => {
 	const teams: TournamentData["ctx"]["teams"] = [];
 	for (let i = 0; i < n; i++) {
@@ -37,7 +55,11 @@ const nTeams = (n: number, startingId: number) => {
 	return teams;
 };
 
-export const testTournament = ({
+export const testTournament = (
+	args: Parameters<typeof testTournamentData>[0],
+) => new Tournament(testTournamentData(args));
+
+export const testTournamentData = ({
 	data = {
 		match: [],
 		group: [],
@@ -48,7 +70,7 @@ export const testTournament = ({
 }: {
 	data?: BracketData;
 	ctx?: Partial<TournamentData["ctx"]>;
-}) => {
+}): TournamentData => {
 	const participant = R.pipe(
 		data.match,
 		R.flatMap((m) => [m.opponent1?.id, m.opponent2?.id]),
@@ -97,9 +119,7 @@ export const testTournament = ({
 		teams: nTeams(participant.length, Math.min(...participant)),
 		author: {
 			customUrl: null,
-			customAvatarUrl: null,
-			discordAvatar: null,
-			discordId: "123",
+			avatar: null,
 			username: "test",
 			pronouns: null,
 			id: 1,
@@ -107,7 +127,7 @@ export const testTournament = ({
 		...ctx,
 	};
 
-	return new Tournament({
+	return {
 		// engine created data has no stage names, the database assigns them from the bracket progression
 		data: {
 			...data,
@@ -120,7 +140,9 @@ export const testTournament = ({
 		},
 		ctx: tournamentCtx,
 		participatedUsers: [],
-	});
+		streams: [],
+		divisionTiers: [],
+	};
 };
 
 /** A started swiss tournament of two teams with their first match ongoing, optionally locked for a cast. */
@@ -218,6 +240,112 @@ export const mergeStages = (...brackets: BracketData[]): BracketData => {
 
 	return merged;
 };
+
+/** `null` = BYE, `"TBD"` = not yet determined, a tuple carries the seed position the slot was filled from. */
+type CompactOpponent =
+	| number
+	| [teamId: number | null, position: number]
+	| "TBD"
+	| null;
+
+type CompactMatch = [
+	id: number,
+	opponent1: CompactOpponent,
+	opponent2: CompactOpponent,
+	score1?: number,
+	score2?: number,
+];
+
+type CompactRound = [
+	id: number,
+	groupId: number,
+	number: number,
+	section: RoundSection | null,
+	maps?: TournamentRoundMaps | null,
+];
+
+interface CompactBracketData {
+	stage: StageData[];
+	group: GroupData[];
+	round: CompactRound[];
+	/** Matches keyed by round id, numbered in the order listed. */
+	match: Record<number, CompactMatch[]>;
+}
+
+/** Expands the one row per round/match mock format into bracket data, deriving the winner from the scores. */
+export const expandBracketData = ({
+	stage,
+	group,
+	round,
+	match,
+}: CompactBracketData): BracketData => {
+	const stageIdByGroupId = new Map(group.map((g) => [g.id, g.stageId]));
+	const rounds: RoundData[] = round.map(
+		([id, groupId, number, section, ...maps]) => ({
+			id,
+			groupId,
+			stageId: stageIdByGroupId.get(groupId)!,
+			number,
+			section,
+			...(maps.length > 0 ? { maps: maps[0] } : {}),
+		}),
+	);
+	const roundById = new Map(rounds.map((r) => [r.id, r]));
+
+	const matches = Object.entries(match).flatMap(([roundId, rows]) => {
+		const matchRound = roundById.get(Number(roundId))!;
+
+		return rows.map(
+			([id, opponent1, opponent2, score1, score2], idx): MatchData => ({
+				id,
+				stageId: matchRound.stageId,
+				groupId: matchRound.groupId,
+				roundId: matchRound.id,
+				number: idx + 1,
+				opponent1: expandOpponent(opponent1, score1),
+				opponent2: expandOpponent(opponent2, score2),
+				winnerSide:
+					score1 === undefined || score2 === undefined
+						? null
+						: score1 > score2
+							? "opponent1"
+							: "opponent2",
+			}),
+		);
+	});
+
+	return {
+		stage,
+		group,
+		round: rounds,
+		match: R.sortBy(matches, (m) => m.id),
+	};
+};
+
+function expandOpponent(
+	opponent: CompactOpponent,
+	score: number | undefined,
+): ParticipantResult | null {
+	if (opponent === null) return null;
+
+	const result: ParticipantResult =
+		opponent === "TBD"
+			? { id: null }
+			: typeof opponent === "number"
+				? { id: opponent }
+				: { id: opponent[0], position: opponent[1] };
+	if (score !== undefined) result.score = score;
+
+	return result;
+}
+
+export const roundMaps = {
+	playAll3: { count: 3, type: "PLAY_ALL" },
+	bestOf3: { count: 3, type: "BEST_OF" },
+	bestOf3Counterpick: { count: 3, type: "BEST_OF", pickBan: "COUNTERPICK" },
+	bestOf5Counterpick: { count: 5, type: "BEST_OF", pickBan: "COUNTERPICK" },
+	bestOf9: { count: 9, type: "BEST_OF" },
+} satisfies Record<string, TournamentRoundMaps>;
 
 const DEFAULT_PROGRESSION_ARGS = {
 	requiresCheckIn: false,

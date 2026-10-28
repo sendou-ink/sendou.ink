@@ -1,18 +1,14 @@
-import type { LFGGroup } from "./components/LFGGroupCard";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
 
-export function survivingTeamId({
-	ourGroup,
-	theirGroup,
+/** Event bus channel that every user on the tournament's LFG page subscribes to. */
+export const tournamentLFGChannel = (tournamentId: number) =>
+	`${tournamentChannel(tournamentId)}__lfg`;
+
+/** Event bus channel for revalidation messages targeted at a single LFG group (e.g. a received invitation). */
+export const tournamentLFGGroupChannel = ({
+	tournamentId,
+	groupId,
 }: {
-	ourGroup: LFGGroup;
-	theirGroup: LFGGroup;
-}) {
-	if (!ourGroup.isPlaceholder && theirGroup.isPlaceholder) {
-		return ourGroup.id;
-	}
-	if (ourGroup.isPlaceholder && !theirGroup.isPlaceholder) {
-		return theirGroup.id;
-	}
-
-	return ourGroup.id;
-}
+	tournamentId: number;
+	groupId: number;
+}) => `${tournamentLFGChannel(tournamentId)}__group__${groupId}`;

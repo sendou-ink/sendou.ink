@@ -223,7 +223,11 @@ export function SessionView({
 						}
 					>
 						{groups.map(({ group, matches }) => (
-							<SendouTab key={group} id={group} number={matches.length}>
+							<SendouTab
+								key={group}
+								id={group}
+								number={matches.filter(isShown).length}
+							>
 								{LOBBY_GROUP_LABELS[group]}
 							</SendouTab>
 						))}

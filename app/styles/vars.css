@@ -1,6 +1,6 @@
 @layer reset, base, elements, components, features, utilities;
 
-/* ⚠️ Read styles.md before editing colors in this file */
+/* ⚠️ Read docs/site/src/content/docs/dev/styles.mdx before editing colors in this file */
 
 /*
 Tokens settable by custom themes and their defaults. Not to be consumed directly, only as a base

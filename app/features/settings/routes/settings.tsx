@@ -3,6 +3,7 @@ import {
 	LogOut,
 	Map as MapIcon,
 	Palette,
+	RefreshCcw,
 	SlidersHorizontal,
 	Volume2,
 } from "lucide-react";
@@ -13,7 +14,12 @@ import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
+import {
+	DISCORD_REFRESH_URL,
+	LOG_OUT_URL,
+	navIconUrl,
+	SETTINGS_PAGE,
+} from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import {
 	SendouTab,
@@ -70,16 +76,28 @@ export default function SettingsPage() {
 				<div className="stack horizontal justify-between items-center">
 					<h2 className="text-lg">{t("common:pages.settings")}</h2>
 					{user ? (
-						<form method="post" action={LOG_OUT_URL}>
-							<SendouButton
-								size="small"
-								variant="outlined"
-								icon={<LogOut />}
-								type="submit"
-							>
-								{t("common:header.logout")}
-							</SendouButton>
-						</form>
+						<div className="stack horizontal sm flex-wrap justify-end">
+							<form method="post" action={DISCORD_REFRESH_URL}>
+								<SendouButton
+									size="small"
+									variant="outlined"
+									icon={<RefreshCcw />}
+									type="submit"
+								>
+									{t("settings:refreshFromDiscord")}
+								</SendouButton>
+							</form>
+							<form method="post" action={LOG_OUT_URL}>
+								<SendouButton
+									size="small"
+									variant="outlined"
+									icon={<LogOut />}
+									type="submit"
+								>
+									{t("common:header.logout")}
+								</SendouButton>
+							</form>
+						</div>
 					) : null}
 				</div>
 				<SendouTabs

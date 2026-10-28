@@ -25,6 +25,7 @@ export function TournamentMatchHeader({
 						groupId: data.bracketContext.bracketsPageGroupId ?? undefined,
 					})}
 					state={{ scrollToMatchId: data.match.id } satisfies BracketsPageState}
+					preventScrollReset
 					data-testid="back-to-bracket-button"
 				/>
 			}

@@ -1,6 +1,6 @@
 import styles from "./PageHeader.module.css";
 
-/** Page title row: optional leading image, title with an optional subtitle below and on the right a back link (`<BackLink />`) with optional actions under it. */
+/** Page title row: optional leading image, title with an optional subtitle below and on the right a back link (`<BackLink />`) with optional actions before it. */
 export function PageHeader({
 	image,
 	title,
@@ -12,7 +12,7 @@ export function PageHeader({
 	title: React.ReactNode;
 	subtitle?: React.ReactNode;
 	back?: React.ReactNode;
-	/** Actions shown under the back link, or on their own row on narrow screens */
+	/** Actions shown next to the back link, or on their own row on narrow screens */
 	children?: React.ReactNode;
 }) {
 	return (

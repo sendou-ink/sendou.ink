@@ -1,0 +1,301 @@
+---
+import { getCollection } from "astro:content";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { mergeTableAccesses } from "../../../../../scripts/living-docs/data-access.ts";
+import type {
+	DbRelation,
+	DbTable,
+} from "../../../../../scripts/living-docs/db-tables.ts";
+import type {
+	FeatureDoc,
+	RouteDoc,
+} from "../../../../../scripts/living-docs/document.ts";
+import {
+	githubUrl,
+	routeAnchor,
+} from "../../../../../scripts/living-docs/links.ts";
+import LivingScript from "../../components/living/LivingScript.astro";
+import RefTemplates from "../../components/living/RefTemplates.astro";
+import {
+	count,
+	markdown,
+	repositoryHref,
+	repositoryLabel,
+	sitePath,
+} from "../../living/format.ts";
+import "../../styles/living.css";
+
+const MAX_HEADING_LEVEL = 6;
+/** Past this a table's diagram is too crowded to read (`User`), its relations are only listed. */
+const MAX_DIAGRAM_RELATIONS = 24;
+
+const tables = (await getCollection("dbTables"))
+	.map((entry) => entry.data)
+	.sort((a, b) => a.name.localeCompare(b.name));
+const groupedTables = inGroupOrder(tables);
+const refs = new Map(tables.flatMap((table) => [...table.refs]));
+const usages = tableUsages(
+	(await getCollection("features")).map((entry) => entry.data),
+);
+
+interface TableUsage {
+	/** Repository functions querying the table, by repository. */
+	repositories: Map<string, Array<{ name: string; writes: boolean }>>;
+	/** Routes whose loader or action reaches the table. */
+	routes: Array<{ route: RouteDoc; kinds: string[]; writes: boolean }>;
+}
+
+/** Who queries each table: the repository functions doing it and the routes reaching them. */
+function tableUsages(features: FeatureDoc[]) {
+	const byTable = new Map<string, TableUsage>();
+	const usageOf = (table: string) => {
+		const usage = byTable.get(table) ?? { repositories: new Map(), routes: [] };
+		byTable.set(table, usage);
+		return usage;
+	};
+
+	for (const feature of features) {
+		for (const repository of feature.repositories) {
+			for (const exported of repository.values) {
+				for (const access of exported.tables) {
+					const functions = usageOf(access.table).repositories;
+					functions.set(repository.path, [
+						...(functions.get(repository.path) ?? []),
+						{ name: exported.name, writes: access.writes },
+					]);
+				}
+			}
+		}
+
+		for (const { route, data } of feature.routes) {
+			const reached = new Map<string, { kinds: string[]; writes: boolean }>();
+			for (const [kind, trace] of [
+				["loader", data.loader],
+				["action", data.action],
+			] as const) {
+				if (!trace) continue;
+				const accesses = mergeTableAccesses([
+					...trace.tables,
+					...trace.calls.flatMap((call) => call.tables),
+				]);
+				for (const access of accesses) {
+					const existing = reached.get(access.table);
+					reached.set(access.table, {
+						kinds: [...(existing?.kinds ?? []), kind],
+						writes: access.writes || (existing?.writes ?? false),
+					});
+				}
+			}
+
+			for (const [table, { kinds, writes }] of reached) {
+				usageOf(table).routes.push({ route, kinds, writes });
+			}
+		}
+	}
+
+	for (const usage of byTable.values()) {
+		usage.routes.sort((a, b) => a.route.path.localeCompare(b.route.path));
+	}
+
+	return byTable;
+}
+
+/** Its foreign keys and the ones pointing to it, a self-reference once. */
+function relationsOf(table: DbTable) {
+	return [
+		...table.references,
+		...table.referencedBy.filter((relation) => relation.from !== table.name),
+	];
+}
+
+/** Mermaid ER diagram of the table and the tables it relates to. */
+function relationsDiagram(relations: DbRelation[]) {
+	if (relations.length > MAX_DIAGRAM_RELATIONS) return null;
+
+	return [
+		"erDiagram",
+		"  direction LR",
+		...relations.map(
+			(relation) =>
+				`  ${relation.to} ${relation.nullable ? "|o" : "||"}--${relation.unique ? "o|" : "o{"} ${relation.from} : "${relation.column}"`,
+		),
+	].join("\n");
+}
+
+/** Depth-first, each table followed by the tables grouped under it. */
+function inGroupOrder(all: DbTable[], parent: string | null = null, depth = 0) {
+	return all
+		.filter((table) => table.parent === parent)
+		.flatMap(
+			(table): Array<{ table: DbTable; level: number }> => [
+				{ table, level: Math.min(2 + depth, MAX_HEADING_LEVEL) },
+				...inGroupOrder(all, table.name, depth + 1),
+			],
+		);
+}
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Database tables",
+		description: "The tables and views of the database, generated from app/db/tables.ts.",
+		editUrl: false,
+		tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: MAX_HEADING_LEVEL },
+	}}
+	headings={groupedTables.map(({ table, level }) => ({
+		depth: level,
+		slug: table.name,
+		text: table.name,
+	}))}
+>
+	<p>
+		Generated from the <code>DB</code> interface of{" "}
+		<a href={githubUrl("app/db/tables.ts", 1)}><code>app/db/tables.ts</code></a>. See{" "}
+		<a href="../../dev/database-schemas/">Database schemas</a> for how columns are typed. The
+		relations are the foreign keys of the schema the migrations build.
+	</p>
+	{
+		groupedTables.map(({ table, level }) => {
+			const Heading = `h${level}`;
+			const relations = relationsOf(table);
+			const diagram = relationsDiagram(relations);
+			const usage = usages.get(table.name);
+
+			return (
+				<>
+					<Heading id={table.name}>{table.name}</Heading>
+					{table.doc ? <Fragment set:html={markdown(table.doc)} /> : null}
+					{table.viewOf ? (
+						<p>
+							View of{" "}
+							{table.viewOf.map((name, i) => (
+								<>
+									{i > 0 ? ", " : null}
+									<a href={`#${name}`}>
+										<code>{name}</code>
+									</a>
+								</>
+							))}
+						</p>
+					) : null}
+					<p>
+						Rows typed by{" "}
+						<a href={githubUrl(table.file, table.line)}>
+							<code>{table.rowType}</code>
+						</a>
+					</p>
+					<table>
+						<thead>
+							<tr>
+								<th>Column</th>
+								<th>Type</th>
+								<th>Description</th>
+							</tr>
+						</thead>
+						<tbody>
+							{table.columns.map((column) => (
+								<tr>
+									<td>
+										<code>{column.name}</code>
+									</td>
+									<td>
+										<code set:html={column.typeHtml} />
+										{column.references ? (
+											<span class="db-reference">
+												{" → "}
+												<a href={`#${column.references}`}>{column.references}</a>
+											</span>
+										) : null}
+									</td>
+									<td set:html={column.doc ? markdown(column.doc) : ""} />
+								</tr>
+							))}
+						</tbody>
+					</table>
+					{usage ? (
+						<details class="db-relations">
+							<summary>
+								Used by{" "}
+								{count(
+									[...usage.repositories.values()].flat().length,
+									"repository function",
+								)}{" "}
+								· {count(usage.routes.length, "route")}
+							</summary>
+							{[...usage.repositories].map(([repository, functions]) => (
+								<p>
+									<a href={repositoryHref(repository)}>
+										<code>{repositoryLabel(repository)}</code>
+									</a>{" "}
+									{functions.map((fn) => (
+										<a
+											class:list={["chip", "access-chip", { "access-write": fn.writes }]}
+											href={repositoryHref(repository, fn.name)}
+										>
+											{fn.name}
+										</a>
+									))}
+								</p>
+							))}
+							{usage.routes.length > 0 ? (
+								<p>
+									{usage.routes.map(({ route, kinds, writes }) => (
+										<a
+											class:list={["chip", "access-chip", { "access-write": writes }]}
+											href={sitePath(`reference/routes/#${routeAnchor(route)}`)}
+											title={kinds.join(", ")}
+										>
+											{route.path}
+										</a>
+									))}
+								</p>
+							) : null}
+						</details>
+					) : (
+						<p class="db-unused">No repository function or route queries it.</p>
+					)}
+					{relations.length > 0 ? (
+						<details class="db-relations">
+							<summary>Relations ({relations.length})</summary>
+							{diagram ? <pre class="db-relations-diagram not-content">{diagram}</pre> : null}
+							{table.referencedBy.length > 0 ? (
+								<p>
+									Referenced by{" "}
+									{table.referencedBy.map((relation, i) => (
+										<>
+											{i > 0 ? ", " : null}
+											<a href={`#${relation.from}`}>
+												<code>{`${relation.from}.${relation.column}`}</code>
+											</a>
+										</>
+									))}
+								</p>
+							) : null}
+						</details>
+					) : null}
+				</>
+			);
+		})
+	}
+	<RefTemplates refs={refs} />
+	<LivingScript />
+</StarlightPage>
+
+<script>
+	import { drawMermaid } from "../../living/mermaid.ts";
+
+	for (const details of document.querySelectorAll<HTMLDetailsElement>(
+		"details.db-relations",
+	)) {
+		const diagram = details.querySelector<HTMLElement>(".db-relations-diagram");
+		if (!diagram) continue;
+
+		details.addEventListener(
+			"toggle",
+			() => {
+				drawMermaid([diagram]);
+			},
+			{ once: true },
+		);
+	}
+</script>

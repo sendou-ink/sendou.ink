@@ -11,6 +11,7 @@ import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import type { ArrayItemRenderContext, CustomFieldRenderProps } from "~/form";
+import { FormFieldMessages } from "~/form/fields/FormFieldWrapper";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { FormRenderProps } from "~/form/SendouForm";
 import {
@@ -475,6 +476,7 @@ function MatchFieldsetContent({
 
 				<WeaponsField
 					index={index}
+					itemName={itemName}
 					matchValues={matchValues}
 					setItemField={setItemField}
 					videoType={videoType}
@@ -487,12 +489,14 @@ function MatchFieldsetContent({
 
 function WeaponsField({
 	index,
+	itemName,
 	matchValues,
 	setItemField,
 	videoType,
 	previousWeapons,
 }: {
 	index: number;
+	itemName: string;
 	matchValues: MatchFieldValues;
 	setItemField: <K extends keyof MatchFieldValues>(
 		field: K,
@@ -506,9 +510,12 @@ function WeaponsField({
 	const teamSize = teamSizeValue ? Number(teamSizeValue) : 4;
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
 		useRecentlyReportedWeapons();
+	const context = useOptionalFormFieldContext();
+	const weaponFieldName = `${itemName}.weapon`;
 
 	const setWeapon = (value: MainWeaponId | null) => {
 		setItemField("weapon", value);
+		context?.clearServerError(weaponFieldName);
 		if (typeof value === "number") addRecentlyReportedWeapon(value);
 	};
 
@@ -524,6 +531,7 @@ function WeaponsField({
 			currentPool.splice(weaponIdx, 1);
 		}
 		setItemField(team, currentPool);
+		context?.clearServerError(`${itemName}.${team}`);
 		if (typeof value === "number") addRecentlyReportedWeapon(value);
 	};
 
@@ -550,6 +558,8 @@ function WeaponsField({
 			{videoType === "CAST" ? (
 				<div>
 					<TeamWeaponSelects
+						name={`${itemName}.weaponsTeamOne`}
+						error={context?.serverErrors[`${itemName}.weaponsTeamOne`]}
 						label={t("forms:labels.vodWeaponsTeamOne")}
 						teamSize={teamSize}
 						matchIndex={index}
@@ -561,6 +571,8 @@ function WeaponsField({
 						}
 					/>
 					<TeamWeaponSelects
+						name={`${itemName}.weaponsTeamTwo`}
+						error={context?.serverErrors[`${itemName}.weaponsTeamTwo`]}
 						label={t("forms:labels.vodWeaponsTeamTwo")}
 						teamSize={teamSize}
 						matchIndex={index}
@@ -574,14 +586,20 @@ function WeaponsField({
 					/>
 				</div>
 			) : (
-				<WeaponSelect
-					label={t("forms:labels.vodWeapon")}
-					isRequired
-					testId={`match-${index}-weapon`}
-					value={matchValues.weapon}
-					quickSelectWeaponsIds={recentlyReportedWeapons}
-					onChange={setWeapon}
-				/>
+				<div>
+					<WeaponSelect
+						label={t("forms:labels.vodWeapon")}
+						isRequired
+						testId={`match-${index}-weapon`}
+						value={matchValues.weapon}
+						quickSelectWeaponsIds={recentlyReportedWeapons}
+						onChange={setWeapon}
+					/>
+					<FormFieldMessages
+						name={weaponFieldName}
+						error={context?.serverErrors[weaponFieldName]}
+					/>
+				</div>
 			)}
 			{hasPreviousWeapons ? (
 				<SendouButton
@@ -598,6 +616,8 @@ function WeaponsField({
 }
 
 function TeamWeaponSelects({
+	name,
+	error,
 	label,
 	teamSize,
 	matchIndex,
@@ -607,6 +627,8 @@ function TeamWeaponSelects({
 	onChange,
 	className,
 }: {
+	name: string;
+	error: string | undefined;
 	label: string;
 	teamSize: number;
 	matchIndex: number;
@@ -631,6 +653,7 @@ function TeamWeaponSelects({
 					/>
 				))}
 			</div>
+			<FormFieldMessages name={name} error={error} />
 		</div>
 	);
 }

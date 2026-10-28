@@ -1,0 +1,31 @@
+---
+import Default from "@astrojs/starlight/components/SocialIcons.astro";
+import { sitePath } from "../living/format.ts";
+
+const faviconSrc = sitePath("favicon.ico");
+---
+
+<a href="https://sendou.ink" class="live-site">
+	<img src={faviconSrc} alt="" width="20" height="20" />
+	sendou.ink
+</a>
+<Default />
+
+<style>
+	.live-site {
+		display: flex;
+		align-items: center;
+		gap: 0.4em;
+		padding: 0.5em;
+		margin: -0.5em 0.25em -0.5em -0.5em;
+		color: var(--sl-color-text-accent);
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+		text-decoration: none;
+		white-space: nowrap;
+
+		&:hover {
+			color: var(--sl-color-white);
+		}
+	}
+</style>

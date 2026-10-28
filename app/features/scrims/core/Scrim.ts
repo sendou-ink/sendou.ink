@@ -1,3 +1,8 @@
+/**
+ * Rules of a scrim post: who takes part and on which side (the post's users are `ALPHA`, the
+ * accepted request's `BRAVO`), when it starts, which posts the list filters keep, when map-by-map
+ * tracking locks and how a team's availability fits a post.
+ */
 import { format, isWeekend } from "date-fns";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
@@ -40,6 +45,7 @@ export function isParticipating(post: ScrimPost, userId: number) {
 	);
 }
 
+/** The in-game private battle pool both sides join, spread over `SC1`–`SC9` by the post's id so scrims don't share one. */
 export function resolvePoolCode(postId: number) {
 	return `SC${(postId % 9) + 1}`;
 }
@@ -75,6 +81,7 @@ export function sideDisplayName(side: {
 	return `${owner.username}'s pickup`;
 }
 
+/** Whether the post passes the list filters: its LUTI div range (when it has one) and its time overlap the filter's, the time compared against the weekday or weekend filter by the post's day. */
 export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
 	const hasMinFilter = filters.divs?.min !== null;
 	const hasMaxFilter = filters.divs?.max !== null;
@@ -137,6 +144,7 @@ export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
 	return true;
 }
 
+/** No filters set, what the list shows when the user has saved no defaults of their own. */
 export function defaultFilters(): ScrimFilters {
 	return {
 		weekdayTimes: null,
@@ -145,6 +153,7 @@ export function defaultFilters(): ScrimFilters {
 	};
 }
 
+/** Whether no filter is set. */
 export function filtersAreDefault(filters: ScrimFilters): boolean {
 	return R.isShallowEqual(filters, defaultFilters());
 }
@@ -210,6 +219,7 @@ export function lastReportedMap<
 	);
 }
 
+/** A start the new post form offers, from the roster's shared free time. */
 export interface PickableSlot extends TimeRange {
 	tier: PlayableWindowTier;
 	/** Members free for the whole slot. */
@@ -269,6 +279,7 @@ export function teamPlayers<
 	return players.length >= SCRIM.MIN_MEMBERS_PER_TEAM ? players : members;
 }
 
+/** How a roster's availability fits a post, shown as the fit indicator on the post's card. */
 export interface RosterFit {
 	/** The start the fit is measured at, the best one of those offered. */
 	startsAt: number;

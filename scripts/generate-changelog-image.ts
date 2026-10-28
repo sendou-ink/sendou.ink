@@ -2,7 +2,7 @@
 
 // screenshots the canvas of the /admin/changelog-image page into a shareable PNG
 // and writes the same update as text, both as Bluesky alt text and as a Discord
-// post, see docs/dev/how-to.md
+// post, see docs/site/src/content/docs/dev/how-to.mdx
 
 import { execFile } from "node:child_process";
 import fs from "node:fs/promises";

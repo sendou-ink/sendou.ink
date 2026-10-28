@@ -15,6 +15,7 @@ import {
 	Outlet,
 	useLoaderData,
 	useLocation,
+	useNavigationType,
 	useOutletContext,
 	useRevalidator,
 } from "react-router";
@@ -270,20 +271,55 @@ export interface BracketsPageState {
 	scrollToMatchId?: number;
 }
 
-/** Returning from a match page (or following the header status indicator) lands at that match's spot in the bracket instead of the top. */
+/** Returning from a match page (or following the header status indicator) lands at that match's spot in the bracket instead of the top: where the bracket was left if the match shows there, otherwise centered on the match. */
 function useScrollToMatchOnLoad() {
 	const location = useLocation();
+	const navigationType = useNavigationType();
 	const scrollToMatchId = (location.state as BracketsPageState | null)
 		?.scrollToMatchId;
 
 	// location.key: following the same link again while on the page scrolls again
 	useIsomorphicLayoutEffect(() => {
+		// back/forward and reload restore where the user left off instead
+		if (navigationType === "POP") return;
 		if (typeof scrollToMatchId !== "number") return;
 
-		document
-			.querySelector(`[data-match-id="${scrollToMatchId}"]`)
-			?.scrollIntoView({ block: "center", inline: "center" });
-	}, [scrollToMatchId, location.key]);
+		// links carrying the state set `preventScrollReset`, the window is ours to position
+		const match = document.querySelector(
+			`[data-match-id="${scrollToMatchId}"]`,
+		);
+		if (!match) {
+			window.scrollTo(0, 0);
+			return;
+		}
+
+		// the bracket restored the spot it was left at (see `useBracketScrollMemory`), which shows the match when coming from it
+		if (isInView(match)) return;
+
+		match.scrollIntoView({ block: "center", inline: "center" });
+
+		// the scroller is sized to fill the viewport from its top, so keep the page itself at the top
+		const scroller = match.closest("[data-bracket-scroller]");
+		if (scroller) {
+			window.scrollTo(0, 0);
+			scroller.scrollIntoView({ block: "nearest", inline: "nearest" });
+		}
+	}, [scrollToMatchId, location.key, navigationType]);
+}
+
+function isInView(element: Element) {
+	const rect = element.getBoundingClientRect();
+	const container = element
+		.closest("[data-bracket-container]")
+		?.getBoundingClientRect();
+	if (!container) return false;
+
+	return (
+		rect.bottom > Math.max(0, container.top) &&
+		rect.top < Math.min(window.innerHeight, container.bottom) &&
+		rect.right > Math.max(0, container.left) &&
+		rect.left < Math.min(window.innerWidth, container.right)
+	);
 }
 
 /** The layout does not revalidate on navigations within the tournament, so it can lack teams registered since it loaded. */
@@ -307,14 +343,14 @@ function getAbDivisionsStartError(
 		bracket.type !== "round_robin" ||
 		!bracket.settings?.hasAbDivisions ||
 		!bracket.isStartingBracket ||
-		!bracket.seeding ||
-		bracket.seeding.length === 0
+		!bracket.previewSeeding ||
+		bracket.previewSeeding.length === 0
 	) {
 		return null;
 	}
 
 	const groupCount = new Set(bracket.data.round.map((r) => r.groupId)).size;
-	const abDivisionsBySeedOrder = bracket.seeding.map(
+	const abDivisionsBySeedOrder = bracket.previewSeeding.map(
 		(teamId) => tournament.teamById(teamId)?.abDivision,
 	);
 

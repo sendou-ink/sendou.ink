@@ -134,12 +134,14 @@ export function image(args: {
 	bottomText?: FormsTranslationKey;
 	dimensions?: "logo" | "thick-banner" | { width: number; height: number };
 	autoValidate?: boolean;
+	withSmallCopy?: boolean;
 }) {
 	return register(imageValue, {
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		dimensions: args.dimensions ?? "logo",
 		autoValidate: args.autoValidate ?? false,
+		withSmallCopy: args.withSmallCopy ?? false,
 		type: "image",
 		initialValue: null,
 	});

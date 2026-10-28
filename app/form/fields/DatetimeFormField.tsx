@@ -1,15 +1,16 @@
 import * as React from "react";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import type { FormFieldProps } from "../types";
-import { errorMessageId } from "../utils";
-import { FormFieldWrapper, useTranslatedTexts } from "./FormFieldWrapper";
+import { ariaAttributes } from "../utils";
+import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type DatetimeFormFieldProps = Omit<
 	FormFieldProps<"datetime">,
-	"min" | "max"
+	"min" | "max" | "onBlur"
 > & {
 	value: Date | undefined;
 	onChange: (value: Date | undefined) => void;
+	onBlur?: () => void;
 	granularity?: "day" | "minute";
 	disabled?: boolean;
 };
@@ -26,13 +27,10 @@ export function DatetimeFormField({
 	granularity = "minute",
 	disabled,
 }: DatetimeFormFieldProps) {
+	const id = React.useId();
 	const [hasBadInput, setHasBadInput] = React.useState(false);
-	const { translatedLabel, translatedError, translatedBottomText } =
-		useTranslatedTexts({
-			label,
-			error: error && hasBadInput ? "forms:errors.invalidDate" : error,
-			bottomText,
-		});
+	const displayedError =
+		error && hasBadInput ? "forms:errors.invalidDate" : error;
 
 	const handleChange = (
 		val: Date | null,
@@ -43,18 +41,27 @@ export function DatetimeFormField({
 	};
 
 	return (
-		<FormFieldWrapper id={name} name={name}>
+		<FormFieldWrapper
+			id={id}
+			name={name}
+			label={label}
+			required={required}
+			error={displayedError}
+			bottomText={bottomText}
+		>
 			<SendouDatePicker
-				label={translatedLabel ?? ""}
+				id={id}
 				granularity={granularity}
-				errorText={translatedError}
-				errorId={errorMessageId(name)}
-				bottomText={translatedBottomText}
-				isRequired={required}
-				isDisabled={disabled}
+				disabled={disabled}
 				value={value ?? null}
 				onChange={handleChange}
 				onBlur={() => onBlur?.()}
+				{...ariaAttributes({
+					name,
+					bottomText,
+					error: displayedError,
+					required,
+				})}
 			/>
 		</FormFieldWrapper>
 	);

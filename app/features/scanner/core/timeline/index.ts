@@ -34,6 +34,7 @@ import {
 } from "../detectors/x-rank/set-count";
 import {
 	X_SET_RESULT_EVENT_TYPE,
+	xSetResultCarryOver,
 	xSetResultProgress,
 } from "../detectors/x-rank/set-result";
 import { sameScoreboardMatch } from "./same-scoreboard";
@@ -78,6 +79,12 @@ export interface TimelineOptions {
 	 * it; only reads level on the animation fall back to confidence.
 	 */
 	animationProgressByType: Record<string, (a: unknown, b: unknown) => number>;
+	/**
+	 * per-type data a further-along read takes over from the read it replaces:
+	 * an earlier frame of the animation can show what the later one has moved
+	 * past (the X Power before the change).
+	 */
+	carryOverByType: Record<string, (kept: unknown, further: unknown) => unknown>;
 }
 
 const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
@@ -127,6 +134,9 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 		[X_SET_COUNT_EVENT_TYPE]: xSetCountProgress,
 		[X_SET_RESULT_EVENT_TYPE]: xSetResultProgress,
 		[X_RANK_POSITION_EVENT_TYPE]: xRankPositionProgress,
+	},
+	carryOverByType: {
+		[X_SET_RESULT_EVENT_TYPE]: xSetResultCarryOver,
 	},
 };
 
@@ -180,16 +190,28 @@ export class TimelineBuilder {
 				event.data,
 			) ?? 0;
 		if (progress < 0) return { action: "merged", into: near };
+		if (progress > 0) {
+			const carryOver = this.#options.carryOverByType[event.type];
+			return this.#replace(
+				near,
+				carryOver
+					? { ...event, data: carryOver(near.data, event.data) }
+					: event,
+			);
+		}
 		if (
-			progress > 0 ||
-			(event.confidence > near.confidence &&
-				!this.#options.firstReadTypes.includes(event.type))
+			event.confidence > near.confidence &&
+			!this.#options.firstReadTypes.includes(event.type)
 		) {
-			this.#events[this.#events.indexOf(near)] = event;
-			this.#events.sort((a, b) => a.t - b.t);
-			return { action: "replaced", event, replaced: near };
+			return this.#replace(near, event);
 		}
 		return { action: "merged", into: near };
+	}
+
+	#replace(kept: DetectedEvent, event: DetectedEvent): TimelineAction {
+		this.#events[this.#events.indexOf(kept)] = event;
+		this.#events.sort((a, b) => a.t - b.t);
+		return { action: "replaced", event, replaced: kept };
 	}
 
 	/**

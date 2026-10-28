@@ -1,0 +1,107 @@
+.modeOptions {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+	gap: var(--s-0-5) var(--s-2);
+}
+
+.anyModeIcon {
+	display: grid;
+	flex: none;
+	grid-template-columns: repeat(2, 10px);
+}
+
+.optionList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.option {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
+	min-height: 2.375rem;
+	margin: 0;
+	padding: 0 var(--s-2);
+	border: var(--border-width) solid transparent;
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+
+	& > input {
+		flex: none;
+	}
+}
+
+.optionChecked {
+	border-color: var(--color-fg-accent);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
+
+	&:hover {
+		background-color: var(--color-bg-accent);
+	}
+}
+
+.optionSub {
+	margin-inline-start: auto;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.abilitiesFilter {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.abilityFilterRows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.abilityFilterRow {
+	display: grid;
+	align-items: center;
+	padding: var(--s-1-5) var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+	column-gap: var(--s-2);
+	grid-template-columns: auto 1fr auto;
+	row-gap: var(--s-1);
+}
+
+.abilityFilterName {
+	overflow: hidden;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.abilityFilterCondition {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	grid-column: 1 / -1;
+
+	& > select {
+		flex: 1;
+		min-width: 0;
+	}
+
+	& > .abilityFilterApSelect {
+		flex: none;
+		width: 4.5rem;
+	}
+}

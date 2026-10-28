@@ -157,10 +157,8 @@ function resolveTimelineMaps(
 			.map((u) => ({
 				id: u.id,
 				username: u.username,
-				discordId: u.discordId,
-				discordAvatar: u.discordAvatar,
 				customUrl: u.customUrl,
-				customAvatarUrl: u.customAvatarUrl,
+				avatar: u.avatar,
 			}));
 
 	return data.results.map((result, mapIndex) => {
@@ -361,10 +359,8 @@ function TournamentMatchRosterTab({
 			members: team.members.map((m) => ({
 				id: m.userId,
 				username: m.username,
-				discordId: m.discordId,
-				discordAvatar: m.discordAvatar,
 				customUrl: m.customUrl,
-				customAvatarUrl: m.customAvatarUrl,
+				avatar: m.avatar,
 				inGameName: m.inGameName,
 			})),
 			subbedOut,

@@ -1,0 +1,197 @@
+---
+import path from "node:path";
+import { Badge } from "@astrojs/starlight/components";
+import type {
+	ClientStateDoc,
+	StateUsage,
+} from "../../../../../scripts/living-docs/client-state.ts";
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import { markdown } from "../../living/format.ts";
+import FileLink from "./FileLink.astro";
+
+interface Props {
+	definition: ClientStateDoc;
+	/** Id of its heading, the "On this page" outline links to it. */
+	id: string;
+}
+
+const { definition, id } = Astro.props;
+
+function usageLabel(usage: StateUsage) {
+	return path.basename(usage.file);
+}
+---
+
+	<h3 class="definition-title" id={id}>
+		<Badge
+			text={definition.kind === "searchParams"
+				? "URL"
+				: `${definition.storage}Storage`}
+			size="small"
+		/>{" "}
+		<code>{definition.name}</code>
+	</h3>
+	<p class="living">
+		<FileLink
+			file={definition.file}
+			line={definition.line}
+			label={`${definition.file}:${definition.line}`}
+		/>
+		{definition.exported ? null : <Badge text="Not exported" size="small" />}
+		{definition.testFiles.length === 0 ? (
+			<Badge text="No round-trip test" variant="caution" size="small" />
+		) : null}
+	</p>
+	{definition.description ? (
+		<Fragment set:html={markdown(definition.description)} />
+	) : null}
+	{definition.kind === "searchParams" ? (
+		<table>
+			<thead>
+				<tr>
+					<th>Param</th>
+					<th>Value</th>
+					<th>Default</th>
+					<th>Loader</th>
+					<th>Description</th>
+				</tr>
+			</thead>
+			<tbody>
+				{definition.params.map((param) => (
+					<tr>
+						<td>
+							<a href={githubUrl(definition.file, param.line)}>
+								<code>{param.name}</code>
+							</a>
+						</td>
+						<td>
+							{param.helper && param.helper !== "param" ? (
+								<Badge text={param.helper} size="small" />
+							) : null}{" "}
+							{param.schemaHtml ? (param.schemaHtml.includes("\n") ? (
+								<pre class="code scrollbar" set:html={param.schemaHtml} />
+							) : (
+								<code class="state-code" set:html={param.schemaHtml} />
+							)) : null}
+						</td>
+						<td>
+							<code class="state-code">{param.default}</code>
+						</td>
+						<td>{param.loader ? <code>{param.loader}</code> : null}</td>
+						<td>
+							{param.description ? (
+								<Fragment set:html={markdown(param.description)} />
+							) : null}
+							{param.sharedFrom ? (
+								<p>
+									Same as <code>{param.sharedFrom}</code>
+								</p>
+							) : null}
+							{param.resets.length > 0 ? (
+								<p>
+									Resets{" "}
+									{param.resets.map((reset) => (
+										<code>{reset} </code>
+									))}
+								</p>
+							) : null}
+							{param.compress ? <p>Compressed</p> : null}
+							{param.timeDependent ? <p>Time dependent</p> : null}
+						</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	) : (
+		<table>
+			<tbody>
+				<tr>
+					<th>{definition.isMap ? "Key prefix" : "Key"}</th>
+					<td>
+						<code>{definition.key}</code>
+					</td>
+				</tr>
+				<tr>
+					<th>Value</th>
+					<td>
+						{definition.schemaHtml ? (
+							definition.schemaHtml.includes("\n") ? (
+								<pre class="code scrollbar" set:html={definition.schemaHtml} />
+							) : (
+								<code class="state-code" set:html={definition.schemaHtml} />
+							)
+						) : null}
+					</td>
+				</tr>
+				<tr>
+					<th>Default</th>
+					<td>
+						<code class="state-code">{definition.default}</code>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	)}
+	<p class="living">
+		<strong>Used in</strong>{" "}
+		{definition.usages.length === 0 && definition.localLines.length === 0
+			? "nothing"
+			: null}
+		{definition.localLines.length > 0 ? (
+			<a
+				class="chip file-chip"
+				href={githubUrl(definition.file, definition.localLines[0])}
+				title={`lines ${definition.localLines.join(", ")}`}
+			>
+				{path.basename(definition.file)} (own file)
+			</a>
+		) : null}
+		{definition.usages.map((usage) => (
+			<a
+				class="chip file-chip"
+				href={githubUrl(usage.file, usage.lines[0])}
+				title={usage.file}
+			>
+				{usageLabel(usage)}
+			</a>
+		))}
+	</p>
+
+<style>
+	.definition-title {
+		font-size: var(--sl-text-xl);
+
+		& code {
+			background: none;
+			padding: 0;
+		}
+	}
+
+	.state-code {
+		white-space: pre-wrap;
+
+		& :global(.k) {
+			color: var(--hl-k);
+		}
+
+		& :global(.s) {
+			color: var(--hl-s);
+		}
+
+		& :global(.n) {
+			color: var(--hl-n);
+		}
+
+		& :global(.t) {
+			color: var(--hl-t);
+		}
+
+		& :global(.f) {
+			color: var(--hl-f);
+		}
+
+		& :global(.l) {
+			color: var(--hl-l);
+		}
+	}
+</style>

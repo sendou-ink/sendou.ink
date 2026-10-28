@@ -1,0 +1,86 @@
+{
+  "event": "QuickScoreboardBattleLog",
+  "data": {
+    "lobby": "SERIES",
+    "mode": "SZ",
+    "stage": 10,
+    "timestamp": "24/10/2026 19:26",
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 4,
+    "players": [
+      {
+        "name": "Fantasy",
+        "weaponId": 42,
+        "paint": 457,
+        "ka": 9,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "Xainoholic",
+        "weaponId": 1040,
+        "paint": 537,
+        "ka": 3,
+        "d": 0,
+        "s": 2
+      },
+      {
+        "name": "cosmy",
+        "weaponId": 1120,
+        "paint": 469,
+        "ka": 8,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "POOKIE 67",
+        "weaponId": 3050,
+        "paint": 617,
+        "ka": 2,
+        "d": 1,
+        "s": 1
+      },
+      {
+        "name": "Sendou",
+        "weaponId": 60,
+        "paint": 526,
+        "ka": 2,
+        "d": 4,
+        "s": 2
+      },
+      {
+        "weaponId": 40,
+        "paint": 419,
+        "ka": 1,
+        "d": 4,
+        "s": 1
+      },
+      {
+        "name": "arkifice",
+        "weaponId": 3052,
+        "paint": 505,
+        "ka": 2,
+        "d": 4,
+        "s": 1
+      },
+      {
+        "name": "ひれおのでし",
+        "weaponId": 5040,
+        "paint": 422,
+        "ka": 1,
+        "d": 5,
+        "s": 1
+      }
+    ],
+    "stageLabel": "MakoMart"
+  },
+  "options": {
+    "skipFields": [
+      "players.5.name"
+    ],
+    "notes": "1080p capture of the lobby's quick battle log (Anarchy Series, the POV player on the losing side). timestamp once read null: the time's colon tied with * (the colon's runner-up template on every quick-log fixture) and lost the tie, so no timestamp shape matched and the stage went unread with it; * now folds to the colon like the other clock lookalikes. players.5.name reads すいかιォー; on screen likely すいかばー but か/が and ば/ぼ are not certain at this size, skipped. Weapons from the prefilled read, matching the icons."
+  }
+}

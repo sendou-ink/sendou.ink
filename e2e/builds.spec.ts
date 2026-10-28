@@ -1,6 +1,10 @@
 import { subDays } from "date-fns";
-import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import {
+	BUILDS_PAGE_SIZE,
+	RECENT_PATCHES,
+} from "~/features/builds/builds-constants";
 import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { BuildFormPage } from "./pages/builds/build-form-page";
@@ -40,7 +44,7 @@ test.describe("Builds", () => {
 		await impersonate(page, NZAP_TEST_ID);
 
 		const buildForm = new BuildFormPage(page);
-		await buildForm.gotoNew(NZAP_TEST_DISCORD_ID);
+		await buildForm.gotoNew(NZAP_TEST_ID);
 
 		await buildForm.form.selectWeapons("weapons", [
 			"Tenta Brella",
@@ -85,7 +89,7 @@ test.describe("Builds", () => {
 		await impersonate(page);
 
 		const userBuilds = new UserBuildsPage(page);
-		await userBuilds.goto(ADMIN_DISCORD_ID);
+		await userBuilds.goto(ADMIN_ID);
 
 		const buildIdBefore = await userBuilds.buildId(0);
 
@@ -94,15 +98,15 @@ test.describe("Builds", () => {
 		await buildForm.form.submit();
 
 		await expect(userBuilds.locators.buildCards).toHaveCount(2);
-		await expect(userBuilds.buildCard(0).root).toContainText("Private");
+		await expect(userBuilds.buildCard(0).privateIndicator).toBeVisible();
 
 		const buildIdAfter = await userBuilds.buildId(0);
 		expect(buildIdAfter).toBe(buildIdBefore);
 
 		await impersonate(page, NZAP_TEST_ID);
-		await userBuilds.goto(ADMIN_DISCORD_ID);
+		await userBuilds.goto(ADMIN_ID);
 		await expect(userBuilds.locators.buildCards).toHaveCount(1);
-		await expect(userBuilds.buildCard(0).root).not.toContainText("Private");
+		await expect(userBuilds.buildCard(0).privateIndicator).toHaveCount(0);
 	});
 
 	test("filters builds", async ({ page, factories }) => {
@@ -123,28 +127,104 @@ test.describe("Builds", () => {
 
 		const weaponBuilds = new WeaponBuildsPage(page);
 		await new BuildsPage(page).openWeapon(40);
+		await weaponBuilds.expandBuildStacks();
 
-		await weaponBuilds.addFilter("ability");
-		await weaponBuilds.locators.comparisonSelect.selectOption("AT_MOST");
+		await weaponBuilds.abilityToggle("Ink Saver (Main)").click();
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(3);
 
-		// every build with ISM is hidden
-		await expect(weaponBuilds.ability("ISM")).toHaveCount(1);
+		await weaponBuilds.locators.abilityFilterTypeSelect.selectOption("HAS_NOT");
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(2);
 
-		await weaponBuilds.deleteFilter("ability");
+		await weaponBuilds.locators.abilityFilterTypeSelect.selectOption(
+			"AT_LEAST",
+		);
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(3);
 
-		await expect(weaponBuilds.ability("ISM").nth(1)).toBeVisible();
+		await weaponBuilds.locators.abilityFilterTypeSelect.selectOption("AT_MOST");
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(2);
+		await weaponBuilds.locators.abilityFilterApSelect.selectOption("19");
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(5);
 
-		await weaponBuilds.addFilter("mode");
-		await weaponBuilds.modeFilterCheckbox("Tower Control").click();
+		await weaponBuilds.abilityToggle("Ink Saver (Main)").click();
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(5);
+
+		await weaponBuilds.filterOption("Tower Control").click();
 		await expect(weaponBuilds.modeBadge("TC")).toHaveCount(3);
-		await weaponBuilds.deleteFilter("mode");
-		await expect(weaponBuilds.locators.buildCards.first()).toBeVisible();
+		await weaponBuilds.filterOption("Any mode").click();
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(5);
 
-		await weaponBuilds.addFilter("date");
-		await weaponBuilds.locators.dateSelect.selectOption("CUSTOM");
-		await expect(weaponBuilds.locators.dateInput).toBeVisible();
+		await weaponBuilds
+			.filterOption(new RegExp(`^Patch ${RECENT_PATCHES[0].patch}`))
+			.click();
 		// no change in count since all builds in test data are new
 		await expect(weaponBuilds.locators.buildCards).toHaveCount(5);
+	});
+
+	test("filters a user's builds", async ({ page, factories }) => {
+		await factories.BuildFactory.createMany(3, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [40],
+			abilities: ABILITIES_WITH_ISM,
+		});
+		await factories.BuildFactory.createMany(2, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [0],
+			abilities: ABILITIES_WITHOUT_ISM,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const userBuilds = new UserBuildsPage(page);
+		await userBuilds.goto(ADMIN_ID);
+		await expect(userBuilds.locators.buildCards).toHaveCount(5);
+
+		await userBuilds.filterOption(/^Sploosh-o-matic/).click();
+		await expect(userBuilds.locators.buildCards).toHaveCount(2);
+
+		await userBuilds.filterOption(/^Any weapon/).click();
+		await userBuilds.abilityToggle("Ink Saver (Main)").click();
+		await expect(userBuilds.locators.buildCards).toHaveCount(3);
+	});
+
+	test("paginates a user's builds", async ({ page, factories }) => {
+		await factories.BuildFactory.createMany(BUILDS_PAGE_SIZE + 1, {
+			ownerId: ADMIN_ID,
+		});
+
+		const userBuilds = new UserBuildsPage(page);
+		await userBuilds.goto(ADMIN_ID);
+		await expect(userBuilds.locators.buildCards).toHaveCount(BUILDS_PAGE_SIZE);
+
+		await userBuilds.locators.nextPageButton.click();
+		await expect(userBuilds.locators.buildCards).toHaveCount(1);
+	});
+
+	test("stacks an author's builds and expands the stack", async ({
+		page,
+		factories,
+	}) => {
+		await factories.BuildFactory.createMany(3, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [40],
+		});
+		await factories.BuildFactory.create({
+			ownerId: NZAP_TEST_ID,
+			weaponSplIds: [40],
+		});
+
+		const weaponBuilds = new WeaponBuildsPage(page);
+		await new BuildsPage(page).openWeapon(40);
+
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(2);
+		await expect(weaponBuilds.locators.expandStackButtons).toHaveAccessibleName(
+			"2 more builds",
+		);
+
+		await weaponBuilds.locators.expandStackButtons.click();
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(4);
+
+		await weaponBuilds.locators.collapseStackButtons.click();
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(2);
 	});
 
 	test("aggregates builds into ability stats and popular builds", async ({
@@ -170,29 +250,45 @@ test.describe("Builds", () => {
 
 		const weaponBuilds = new WeaponBuildsPage(page);
 		await new BuildsPage(page).openWeapon(40);
+		await weaponBuilds.expandBuildStacks();
 		await expect(weaponBuilds.locators.buildCards).toHaveCount(4);
 
-		await weaponBuilds.locators.abilityStatsLink.click();
+		await weaponBuilds.locators.abilityStatsTab.click();
 
 		const buildStats = new BuildStatsPage(page);
-		await expect(buildStats.buildsCountTitle(4, "Splattershot")).toBeVisible();
+		await expect(buildStats.buildsCount(4)).toBeVisible();
 		// SSU and RSU weapon averages
 		await expect(buildStats.apAverage(19)).toHaveCount(2);
 		// ISM weapon average
 		await expect(buildStats.apAverage(9)).toHaveCount(1);
 		// CB is in every Splattershot build but in 4 of the 5 builds site-wide
-		await expect(buildStats.abilityPercentage(100)).toHaveCount(1);
-		await expect(buildStats.abilityPercentage(80)).toHaveCount(1);
+		await expect(
+			buildStats.mainOnlyAbilityPercentages({
+				abilityName: "Comeback",
+				weaponPercentage: 100,
+				allPercentage: 80,
+			}),
+		).toBeVisible();
 
 		const popularBuilds = new PopularBuildsPage(page);
 		await popularBuilds.goto("splattershot");
 
-		// admin's identical builds count once, N-ZAP's brings the signature to ×2
+		// admin's identical builds count once, N-ZAP's brings it to 2 players
 		await expect(popularBuilds.placement(1)).toBeVisible();
-		await expect(popularBuilds.buildCount(2)).toBeVisible();
-		await expect(popularBuilds.ability("CB")).toBeVisible();
-		await expect(popularBuilds.abilityPoints(19)).toHaveCount(2);
-		await expect(popularBuilds.abilityPoints(9)).toHaveCount(1);
+		await expect(popularBuilds.playersCount(2)).toBeVisible();
+		await expect(
+			popularBuilds.buildAbility({ rank: 1, ability: "CB" }),
+		).toHaveCount(1);
+		// 19 AP = one main and three subs
+		await expect(
+			popularBuilds.buildAbility({ rank: 1, ability: "SSU" }),
+		).toHaveCount(4);
+		await expect(
+			popularBuilds.buildAbility({ rank: 1, ability: "RSU" }),
+		).toHaveCount(4);
+		await expect(
+			popularBuilds.buildAbility({ rank: 1, ability: "ISM" }),
+		).toHaveCount(3);
 		await isNotVisible(popularBuilds.placement(2));
 	});
 
@@ -215,7 +311,7 @@ test.describe("Builds", () => {
 		await impersonate(page);
 
 		const userBuilds = new UserBuildsPage(page);
-		await userBuilds.goto(ADMIN_DISCORD_ID);
+		await userBuilds.goto(ADMIN_ID);
 
 		await expect(userBuilds.buildCard(0).title).toContainText("Mid Build");
 

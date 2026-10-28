@@ -1,6 +1,6 @@
 import { addWeeks } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	addTeamEventSchema,
 	editTeamEventSchema,
@@ -19,7 +19,6 @@ import {
 } from "./helpers/playwright";
 import { createFormHelpers } from "./helpers/playwright-form";
 import { AnythingAdder } from "./pages/layout/anything-adder";
-import { SELECTED_MAP_CLASS } from "./pages/settings/map-mode-preferences-field";
 import { JoinTeamPage } from "./pages/team/join-team-page";
 import { NewTeamPage } from "./pages/team/new-team-page";
 import { TeamEditPage } from "./pages/team/team-edit-page";
@@ -105,8 +104,9 @@ test.describe("Team page", () => {
 		await expect(teamEdit.maps.preferenceRadio("SZ", "Prefer")).toBeChecked();
 		await expect(teamEdit.maps.preferenceRadio("TW", "Avoid")).toBeChecked();
 		await teamEdit.maps.selectModeTab("SZ");
-		await expect(teamEdit.maps.mapButton("SZ", 1)).toHaveClass(
-			SELECTED_MAP_CLASS,
+		await expect(teamEdit.maps.mapButton("SZ", 1)).toHaveAttribute(
+			"aria-pressed",
+			"true",
 		);
 
 		await teamEdit.removeMapPreferences();
@@ -116,8 +116,9 @@ test.describe("Team page", () => {
 		await expect(teamEdit.maps.preferenceRadio("SZ", "Neutral")).toBeChecked();
 		await expect(teamEdit.maps.preferenceRadio("TW", "Neutral")).toBeChecked();
 		await teamEdit.maps.selectModeTab("SZ");
-		await expect(teamEdit.maps.mapButton("SZ", 1)).not.toHaveClass(
-			SELECTED_MAP_CLASS,
+		await expect(teamEdit.maps.mapButton("SZ", 1)).toHaveAttribute(
+			"aria-pressed",
+			"false",
 		);
 
 		await teamEdit.goto(customUrl);
@@ -347,7 +348,7 @@ test.describe("Team page", () => {
 		await secondaryTeam.makeMainTeam();
 
 		const user = new UserPage(page);
-		await user.goto(ADMIN_DISCORD_ID);
+		await user.goto(ADMIN_ID);
 
 		await expect(user.teamLinks()).toHaveCount(2);
 		await expect(user.teamLinks().first()).not.toContainText(TEAM_NAME);
@@ -358,7 +359,7 @@ test.describe("Team page", () => {
 		await expect(mainTeam.locators.mainTeamIndicator).toBeVisible();
 		await mainTeam.leave();
 
-		await user.goto(ADMIN_DISCORD_ID);
+		await user.goto(ADMIN_ID);
 
 		await expect(user.teamLinks()).toHaveCount(1);
 		await expect(user.teamLinks().first()).toContainText(TEAM_NAME);

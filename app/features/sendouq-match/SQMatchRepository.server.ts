@@ -1187,6 +1187,7 @@ export async function lockMatchWithoutSkillChange(
 		})
 		.execute();
 	await ChatRepository.updateRoomsInactive([match.chatRoomId], true, trx);
+	await ReportedWeaponRepository.deleteByMatchId(match.id, trx);
 }
 
 export type CancelMatchResult =

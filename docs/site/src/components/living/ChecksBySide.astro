@@ -1,0 +1,67 @@
+---
+import path from "node:path";
+import { Badge } from "@astrojs/starlight/components";
+import { githubUrl } from "../../../../../scripts/living-docs/links.ts";
+import type { PermissionCheck } from "../../../../../scripts/living-docs/permissions.ts";
+
+const SIDES = [
+	{ id: "server", label: "Server" },
+	{ id: "client", label: "Client" },
+	{ id: "shared", label: "Either side" },
+] as const;
+
+interface Props {
+	checks: PermissionCheck[];
+	/** What a chip is per: the file checking, or the feature it is in (named by `featureLabel`). */
+	chipBy: "file" | "feature";
+	featureLabel?: (feature: string) => string;
+}
+
+const {
+	checks,
+	chipBy,
+	featureLabel = (feature: string) => feature,
+} = Astro.props;
+const sides = SIDES.map((side) => ({
+	side,
+	chips: [
+		...Map.groupBy(
+			checks.filter((check) => check.side === side.id),
+			(check) => (chipBy === "file" ? check.file : check.feature),
+		),
+	],
+})).filter(({ chips }) => chips.length > 0);
+---
+
+{
+	sides.map(({ side, chips }) => (
+		<div class="checks-side">
+			<Badge text={side.label} size="small" />
+			{chips.map(([key, keyChecks]) => (
+				<a
+					class="chip file-chip"
+					href={githubUrl(keyChecks[0].file, keyChecks[0].line)}
+					title={keyChecks
+						.map(
+							(check) =>
+								`${check.via}${check.subject ? `(${check.subject})` : ""} in ${check.file}:${check.line}`,
+						)
+						.join("\n")}
+				>
+					{chipBy === "file" ? path.basename(key) : featureLabel(key)}
+					{keyChecks.length > 1 ? ` ×${keyChecks.length}` : null}
+				</a>
+			))}
+		</div>
+	))
+}
+
+<style>
+	.checks-side + .checks-side {
+		margin-top: 4px;
+	}
+
+	.checks-side .badge {
+		margin-right: 6px;
+	}
+</style>
