@@ -124,7 +124,7 @@ export function generateTimeOptions(startDate: Date, endDate: Date): number[] {
 
 	const clearSubMinutes = (date: Date) => {
 		const cleared = new Date(date);
-		cleared.setSeconds(0, 0);
+		cleared.setUTCSeconds(0, 0);
 		return cleared;
 	};
 
@@ -132,17 +132,17 @@ export function generateTimeOptions(startDate: Date, endDate: Date): number[] {
 	timestamps.add(clearSubMinutes(endDate).getTime());
 
 	const currentDate = clearSubMinutes(startDate);
-	const minutes = currentDate.getMinutes();
+	const minutes = currentDate.getUTCMinutes();
 
 	if (minutes > 0 && minutes < 30) {
-		currentDate.setMinutes(30, 0, 0);
+		currentDate.setUTCMinutes(30, 0, 0);
 	} else if (minutes > 30) {
-		currentDate.setHours(currentDate.getHours() + 1, 0, 0, 0);
+		currentDate.setUTCHours(currentDate.getUTCHours() + 1, 0, 0, 0);
 	}
 
 	while (currentDate <= endDate) {
 		timestamps.add(currentDate.getTime());
-		currentDate.setMinutes(currentDate.getMinutes() + 30);
+		currentDate.setUTCMinutes(currentDate.getUTCMinutes() + 30);
 	}
 
 	return Array.from(timestamps).sort((a, b) => a - b);
