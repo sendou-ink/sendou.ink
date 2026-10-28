@@ -229,7 +229,8 @@ function extractSerializedPool(input: string): string | null {
 	}
 
 	if (trimmed.includes("pool=")) {
-		return new URLSearchParams(trimmed).get("pool");
+		const queryString = trimmed.slice(trimmed.indexOf("?") + 1);
+		return new URLSearchParams(queryString).get("pool");
 	}
 
 	return trimmed;
