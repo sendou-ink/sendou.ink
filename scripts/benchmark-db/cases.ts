@@ -618,10 +618,10 @@ export function buildCases(fx: Fixtures): {
 		LobbyRepository.findById(lobby.id),
 	);
 	add(
-		"LobbyRepository.findAllVisibleIds",
+		"LobbyRepository.findAllVisible",
 		both(fx.heavyUser, fx.heavyLobby),
 		([user, lobby]) =>
-			LobbyRepository.findAllVisibleIds({
+			LobbyRepository.findAllVisible({
 				userId: user.id,
 				lobbyIds: [lobby.id],
 			}),

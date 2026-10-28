@@ -130,9 +130,10 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 		}
 	}, [chatOpenRequest, isMobileLayout, uid]);
 
-	const hasFriendInSendouQ =
-		sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??
-		false;
+	const hasFriendToJoin =
+		sidebarData?.friends.some(
+			(f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL || f.isInJoinableLobby,
+		) ?? false;
 	const unseenFriendRequests = useUnseenFriendRequests(
 		sidebarData?.incomingFriendRequestIds ?? [],
 	);
@@ -220,7 +221,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				onTabClick={onTabClick}
 				isLoggedIn={Boolean(user)}
 				hasUnseenNotifications={showUnseenDot}
-				hasFriendInSendouQ={hasFriendInSendouQ}
+				hasFriendToJoin={hasFriendToJoin}
 				unseenFriendRequests={unseenFriendRequests}
 			/>
 		</div>
@@ -233,7 +234,7 @@ function MobileTabBar({
 	onTabClick,
 	isLoggedIn,
 	hasUnseenNotifications,
-	hasFriendInSendouQ,
+	hasFriendToJoin,
 	unseenFriendRequests,
 }: {
 	panelIds: PanelIds;
@@ -241,7 +242,7 @@ function MobileTabBar({
 	onTabClick: (panel: PanelType) => TabClickHandler;
 	isLoggedIn: boolean;
 	hasUnseenNotifications: boolean;
-	hasFriendInSendouQ: boolean;
+	hasFriendToJoin: boolean;
 	unseenFriendRequests: number;
 }) {
 	const { t } = useTranslation(["front", "common"]);
@@ -275,9 +276,9 @@ function MobileTabBar({
 						icon={<Users />}
 						label={t("front:mobileNav.friends")}
 						{...tabProps("friends")}
-						showNotificationDot={hasFriendInSendouQ}
+						showNotificationDot={hasFriendToJoin}
 						badgeCount={unseenFriendRequests}
-						badgeLeft={hasFriendInSendouQ}
+						badgeLeft={hasFriendToJoin}
 					/>
 					<MobileTab
 						icon={<Calendar />}

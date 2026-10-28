@@ -42,8 +42,8 @@ export async function resolveUpcomingLobbiesOfFriends(viewerId: number) {
 	return result;
 }
 
-/** Ids of the lobbies the friends are present in that the viewer may see. */
-export async function resolveVisibleActiveLobbyIdsOfFriends({
+/** Lobbies the friends are present in that the viewer may see, keyed by id. */
+export async function resolveVisibleActiveLobbiesOfFriends({
 	viewerId,
 	friendIds,
 }: {
@@ -58,9 +58,31 @@ export async function resolveVisibleActiveLobbyIdsOfFriends({
 		}),
 	);
 
-	return new Set(
-		await LobbyRepository.findAllVisibleIds({ userId: viewerId, lobbyIds }),
-	);
+	const lobbies = await LobbyRepository.findAllVisible({
+		userId: viewerId,
+		lobbyIds,
+	});
+
+	return new Map(lobbies.map((lobby) => [lobby.id, lobby]));
+}
+
+type VisibleLobby = Awaited<
+	ReturnType<typeof LobbyRepository.findAllVisible>
+>[number];
+
+/** Whether the viewer could join the friend in the lobby they're present in: a spot is free and the viewer isn't in it already. */
+export function isJoinableFriendLobby({
+	activity,
+	visibleLobbies,
+}: {
+	activity: FriendActivity;
+	visibleLobbies: ReadonlyMap<number, VisibleLobby>;
+}) {
+	if (activity.type !== "LOBBY" || activity.lobbyId === null) return false;
+
+	const lobby = visibleLobbies.get(activity.lobbyId);
+
+	return Boolean(lobby?.hasOpenSlot && !lobby.isUserParticipant);
 }
 
 /** Stream of each ongoing SendouQ match, keyed by match id. Resolved once per request, activity being resolved per friend. */
@@ -88,7 +110,7 @@ export function resolveFriendActivity({
 	teamMemberCount,
 	tournamentMinTeamSize,
 	sendouQMatchStreams,
-	visibleLobbyIds,
+	visibleLobbies,
 	upcomingLobby,
 }: {
 	friendId: number;
@@ -97,8 +119,8 @@ export function resolveFriendActivity({
 	teamMemberCount: number | null;
 	tournamentMinTeamSize: number | null;
 	sendouQMatchStreams: ReadonlyMap<number, FriendActivityStream>;
-	/** Lobbies the viewer may see, see `resolveVisibleActiveLobbyIdsOfFriends` */
-	visibleLobbyIds: ReadonlySet<number>;
+	/** Lobbies the viewer may see, see `resolveVisibleActiveLobbiesOfFriends` */
+	visibleLobbies: ReadonlyMap<number, VisibleLobby>;
 	/** Upcoming lobby the friend signed up for, visible to the viewer, see `LobbyRepository.findAllUpcomingOfFriendsByUserId` */
 	upcomingLobby?: {
 		lobbyId: number;
@@ -125,7 +147,7 @@ export function resolveFriendActivity({
 	const tournamentActivity = resolveTournamentActivity(activity, friendId);
 	if (tournamentActivity) return tournamentActivity;
 
-	if (activity.lobby && visibleLobbyIds.has(activity.lobby.lobbyId)) {
+	if (activity.lobby && visibleLobbies.has(activity.lobby.lobbyId)) {
 		return {
 			type: "LOBBY",
 			subtitle: activity.lobby.lobbyName,
