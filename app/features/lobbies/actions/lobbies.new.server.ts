@@ -11,7 +11,11 @@ import { lobbyPage } from "~/utils/urls";
 import * as LobbyProgression from "../core/LobbyProgression.server";
 import * as LobbyState from "../core/LobbyState";
 import * as LobbyRepository from "../LobbyRepository.server";
-import type { LobbyBestOf, LobbyRoomSize } from "../lobbies-constants";
+import {
+	type LobbyBestOf,
+	type LobbyRoomSize,
+	PLAYERS_PER_SET,
+} from "../lobbies-constants";
 import { newLobbySchema } from "../lobbies-schemas";
 
 export const action = defineAction(
@@ -39,7 +43,7 @@ export const action = defineAction(
 			startsAt,
 			bestOf: Number(body.bestOf) as LobbyBestOf,
 			modes: body.modes,
-			roomSize: Number(body.roomSize) as LobbyRoomSize,
+			roomSize: (PLAYERS_PER_SET + Number(body.spectators)) as LobbyRoomSize,
 			visibility:
 				body.baseVisibility === "LINK_ONLY"
 					? "LINK_ONLY"
