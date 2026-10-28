@@ -693,6 +693,31 @@ describe("teamMemberOfProgressStatus in swiss", () => {
 	});
 });
 
+describe("matchContextNamesById", () => {
+	test("names a single group swiss match without a double space", () => {
+		const data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4],
+			settings: {},
+		});
+
+		const tournament = testTournament({
+			data,
+			ctx: { settings: { bracketProgression: progressions.swissOneGroup } },
+		});
+
+		const names = tournament.matchContextNamesById(data.match[1].id);
+
+		expect({
+			roundName: names.roundName,
+			roundNameWithoutMatchIdentifier: names.roundNameWithoutMatchIdentifier,
+		}).toEqual({
+			roundName: "Swiss 1.2",
+			roundNameWithoutMatchIdentifier: "Swiss 1",
+		});
+	});
+});
+
 describe("teamMemberOfProgressStatus with a follow-up bracket check-in", () => {
 	const teamsWithMembers = [1, 2, 3, 4].map((teamId) =>
 		tournamentCtxTeam(teamId, { memberUserIds: [100 + teamId] }),
