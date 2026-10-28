@@ -100,6 +100,37 @@ const teamWithHiddenInfo = async (tournamentArgs?: { isDraft?: boolean }) => {
 	return { tournament };
 };
 
+/** Two divisions with two teams each, the second division seeded first. */
+const divisionedTournament = async () => {
+	const tournament = await TournamentFactory.create({
+		authorId: users.id(1),
+		minMembersPerTeam: 1,
+		bracketProgression: [
+			{
+				name: "Division 1",
+				type: "single_elimination",
+				requiresCheckIn: false,
+				settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
+			},
+			{
+				name: "Division 2",
+				type: "single_elimination",
+				requiresCheckIn: false,
+				settings: { skippedRounds: ["THIRD_PLACE_MATCH"] },
+			},
+		],
+	});
+
+	for (const [index, userId] of users.ids().entries()) {
+		await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds: [userId] },
+			{ isCheckedIn: true, startingBracketIdx: index < 2 ? 1 : 0 },
+		);
+	}
+
+	return { tournament };
+};
+
 /** Four one-player teams through a single elimination bracket, the higher seed winning every map. */
 const playedTournament = () =>
 	TournamentFactory.createPlayed(
@@ -198,6 +229,39 @@ describe("GET /api/tournament/:id/teams", () => {
 		const teams = await fetchTeams(tournament.id);
 
 		expect(teams.map((team) => team.seed)).toEqual([1, null, 2]);
+	});
+
+	test("returns the starting bracket and division of each team", async () => {
+		const { tournament } = await divisionedTournament();
+
+		const teams = await fetchTeams(tournament.id);
+
+		expect(
+			teams.map((team) => [team.startingBracketIdx, team.division]),
+		).toEqual([
+			[1, "Division 2"],
+			[1, "Division 2"],
+			[0, "Division 1"],
+			[0, "Division 1"],
+		]);
+	});
+
+	test("numbers the seeds of a started tournament within each division", async () => {
+		const { tournament } = await divisionedTournament();
+		await TournamentFactory.startBracket(tournament.id);
+
+		const teams = await fetchTeams(tournament.id);
+
+		expect(teams.map((team) => team.seed)).toEqual([1, 2, 1, 2]);
+	});
+
+	test("has no division in a tournament with one starting bracket", async () => {
+		const { tournament } = await registeredPlayer();
+
+		const teams = await fetchTeams(tournament.id);
+
+		expect(teams[0].startingBracketIdx).toBe(0);
+		expect(teams[0].division).toBeNull();
 	});
 
 	test("has no placement or stats before the tournament has started", async () => {
