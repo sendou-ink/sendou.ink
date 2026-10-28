@@ -228,8 +228,9 @@ export function reportGame({
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
-		if (!set || !LobbySet.canReport(set, userId)) return "NOT_ALLOWED";
+		if (!set) return "NOT_ALLOWED";
 		if (LobbySet.reportedCount(set) !== reportedCount) return "STALE";
+		if (!LobbySet.canReport(set, userId)) return "NOT_ALLOWED";
 
 		const index = LobbySet.currentGameIndex(set);
 		if (index === null) return "NOT_ALLOWED";
@@ -264,10 +265,9 @@ export function undoLatestReport({
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
-		if (!set || !LobbySet.canUndo(set, userId, { isHost })) {
-			return "NOT_ALLOWED";
-		}
+		if (!set) return "NOT_ALLOWED";
 		if (LobbySet.reportedCount(set) !== reportedCount) return "STALE";
+		if (!LobbySet.canUndo(set, userId, { isHost })) return "NOT_ALLOWED";
 
 		const game = set.games.findLast(
 			(candidate) => candidate.winnerSide !== null,
@@ -301,6 +301,7 @@ export function confirmSet(setId: number): Promise<ReportResult> {
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
+		if (set && LobbySet.status(set) === "CONFIRMED") return "STALE";
 		if (!set || !LobbySet.canConfirm(set, userId)) return "NOT_ALLOWED";
 
 		await trx
@@ -319,6 +320,7 @@ export function confirmDisputedSet(setId: number): Promise<ReportResult> {
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
+		if (set && LobbySet.status(set) === "CONFIRMED") return "STALE";
 		if (!set || LobbySet.status(set) !== "DISPUTED") return "NOT_ALLOWED";
 
 		await trx
@@ -337,6 +339,7 @@ export function disputeSet(setId: number): Promise<ReportResult> {
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
+		if (set && LobbySet.status(set) === "DISPUTED") return "STALE";
 		if (!set || !LobbySet.canDispute(set, userId)) return "NOT_ALLOWED";
 
 		await trx

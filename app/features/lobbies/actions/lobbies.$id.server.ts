@@ -234,12 +234,14 @@ export const action = defineAction(
 			case "CONFIRM_SET": {
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.confirmSet(set.id);
+				if (result === "STALE") return null;
 				if (result === "NOT_ALLOWED") return errorToast("Can't confirm");
 				break;
 			}
 			case "DISPUTE_SET": {
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.disputeSet(set.id);
+				if (result === "STALE") return null;
 				if (result === "NOT_ALLOWED") return errorToast("Can't dispute");
 				break;
 			}
@@ -247,6 +249,7 @@ export const action = defineAction(
 				requirePermission(lobby, "MANAGE");
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.confirmDisputedSet(set.id);
+				if (result === "STALE") return null;
 				if (result === "NOT_ALLOWED") return errorToast("Can't confirm");
 				break;
 			}
