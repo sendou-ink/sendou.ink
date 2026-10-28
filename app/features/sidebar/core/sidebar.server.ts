@@ -77,7 +77,7 @@ export type SidebarFriend = {
 	avatar: CommonUser["avatar"];
 	url: string;
 	subtitle: string;
-	badge: string;
+	badge: string | null;
 	activityType: FriendActivityType | null;
 	matchId: number | null;
 	tournamentId: number | null;
@@ -465,7 +465,7 @@ function rowToSidebarFriend(
 		avatar: row.avatar,
 		url: userPage({ id: row.id, customUrl: row.customUrl }),
 		subtitle: activity.subtitle ?? "",
-		badge: activity.badge ?? "",
+		badge: activity.badge,
 		activityType: activity.type,
 		matchId: activity.matchId,
 		tournamentId: activity.tournamentId ?? row.tournamentId,
