@@ -32,4 +32,6 @@ export type ServerEvent =
 	| { kind: "notificationsChanged" }
 	| { kind: "roomsChanged" }
 	| { kind: "statusChanged" }
-	| { kind: "voicePresence"; roomId: number; userIds: number[] };
+	| { kind: "voicePresence"; roomId: number; userIds: number[] }
+	/** Only sent by the e2e stand-in of Daily, which has no call connection to end. */
+	| { kind: "voiceEjected"; roomId: number; token: string };

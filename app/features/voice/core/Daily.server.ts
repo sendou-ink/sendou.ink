@@ -1,7 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import * as v from "valibot";
 import { ServerConfig } from "~/config.server";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
+import * as FakeDaily from "./FakeDaily.server";
 
 const API_URL = "https://api.daily.co/v1";
 const REQUEST_TIMEOUT_MS = 8_000;
@@ -43,6 +45,8 @@ export async function ensureRoom({
 	chatRoomId: number;
 	expiresAt: number;
 }) {
+	if (IS_E2E_TEST_RUN) return;
+
 	const response = await request("/rooms", {
 		method: "POST",
 		body: {
@@ -85,6 +89,10 @@ export async function createMeetingToken({
 	userName: string;
 	expiresAt: number;
 }) {
+	if (IS_E2E_TEST_RUN) {
+		return FakeDaily.createMeetingToken({ chatRoomId, userId });
+	}
+
 	const response = await request("/meeting-tokens", {
 		method: "POST",
 		body: {
@@ -113,6 +121,7 @@ export async function ejectUsers({
 	ban: boolean;
 }) {
 	if (userIds.length === 0) return;
+	if (IS_E2E_TEST_RUN) return FakeDaily.ejectUsers({ chatRoomId, userIds });
 
 	const response = await request(`/rooms/${roomName(chatRoomId)}/eject`, {
 		method: "POST",
@@ -126,6 +135,8 @@ export async function ejectUsers({
 }
 
 export async function findPresentUserIds(chatRoomId: number) {
+	if (IS_E2E_TEST_RUN) return FakeDaily.findPresentUserIds(chatRoomId);
+
 	const response = await request(`/rooms/${roomName(chatRoomId)}/presence`, {
 		method: "GET",
 		allowFailure: true,

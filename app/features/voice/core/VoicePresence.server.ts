@@ -54,6 +54,13 @@ export function remove(room: PresenceRoom, userIds: number[]) {
 	if (presence.userIds.size === 0) presenceByRoomId.delete(room.roomId);
 }
 
+/** Forgets every room's presence, for an e2e test starting over with a fresh database. */
+export function clearAll() {
+	presenceByRoomId.clear();
+	joinedAtByRoomUser.clear();
+	leftAtByRoomUser.clear();
+}
+
 export async function reconciledUserIdsOf(room: PresenceRoom) {
 	const presence = presenceOf(room.roomId);
 	if (

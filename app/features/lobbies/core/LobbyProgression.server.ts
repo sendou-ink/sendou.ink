@@ -19,6 +19,7 @@ import * as LobbyMapList from "./LobbyMapList.server";
 import * as LobbyRating from "./LobbyRating";
 import * as LobbySet from "./LobbySet";
 import * as LobbyTransition from "./LobbyTransition";
+import * as LobbyVoice from "./LobbyVoice.server";
 import * as PlayerRoles from "./PlayerRoles";
 import * as TeamShuffle from "./TeamShuffle";
 
@@ -223,6 +224,11 @@ async function apply({
 				lobbyId: lobby.id,
 				userIds: transition.userIds,
 			});
+			LobbyVoice.ejectLeavers({
+				lobby: { chatRoomId: lobby.chatRoomId, participantUserIds: allUserIds },
+				latestSet: loaded.sets.at(-1),
+				userIds: transition.userIds,
+			});
 			roomsChanged(transition.userIds);
 			break;
 		}
@@ -352,4 +358,11 @@ async function startSet({ lobby, sets }: LoadedState) {
 		maps,
 		...result,
 	});
+
+	if (previousSet) {
+		LobbyVoice.ejectSittingOut({
+			previousSet,
+			playingUserIds: [...result.alpha, ...result.bravo],
+		});
+	}
 }

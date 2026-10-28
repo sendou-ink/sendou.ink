@@ -226,6 +226,10 @@ async function globalSetup(config: FullConfig) {
 					// hit the real Twitch API and overwrite factory-seeded streams)
 					TWITCH_CLIENT_ID: "",
 					TWITCH_CLIENT_SECRET: "",
+					// makes voice available, the calls to Daily go to its stand-in (FakeDaily.server.ts)
+					DAILY_API_KEY: "e2e",
+					DAILY_DOMAIN: "e2e",
+					DAILY_WEBHOOK_SECRET: "",
 					// tests assert webhook payloads by listening on the worker's webhook port
 					SQ_CANCEL_DISCORD_WEBHOOK_URL: `http://localhost:${e2eWebhookPort(i)}/sq-cancel`,
 				},

@@ -169,6 +169,7 @@ export async function findProgressionStateById(id: number) {
 			"Lobby.bestOf",
 			"Lobby.modes",
 			"Lobby.roomSize",
+			"Lobby.chatRoomId",
 			"Lobby.pendingSince",
 			"Lobby.endedAt",
 			jsonArrayFrom(

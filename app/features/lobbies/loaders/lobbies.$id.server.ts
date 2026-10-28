@@ -129,8 +129,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 			startsAt: lobby.startsAt,
 		}),
 		hasFriendCode,
-		/** Room the viewer's voice call should be in: their team's while playing, the lobby's otherwise. */
-		voiceRoomId: viewer ? (viewerTeamChatRoomId ?? lobby.chatRoomId) : null,
+		/** The viewer's team chat while they play a set, a voice call in their previous one follows them into it. */
+		teamChatRoomId: viewerTeamChatRoomId,
 		chatRooms: await RouteChatRooms.resolve(
 			user,
 			// a player of the set gets the lobby's chat and their team's side by side

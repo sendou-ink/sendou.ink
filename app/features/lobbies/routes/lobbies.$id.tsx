@@ -46,14 +46,7 @@ export default function LobbyPage() {
 	const isEnded = data.lobby.endedAt !== null;
 
 	useTopicRevalidation(lobbyChannel(data.lobby.id), !isEnded);
-	useVoiceFollow({
-		roomIds: [
-			data.lobby.chatRoomId,
-			data.sets.at(-1)?.alphaChatRoomId ?? null,
-			data.sets.at(-1)?.bravoChatRoomId ?? null,
-		].filter((id) => id !== null),
-		targetRoomId: data.voiceRoomId,
-	});
+	useVoiceFollow(data.teamChatRoomId);
 
 	return (
 		<Main>

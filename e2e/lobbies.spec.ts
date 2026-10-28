@@ -14,6 +14,7 @@ import {
 	runRoutine,
 	test,
 } from "./helpers/playwright";
+import { voiceRoomUserIds } from "./helpers/voice";
 import { ChatSidebar } from "./pages/layout/chat-sidebar";
 import { ErrorPage } from "./pages/layout/error-page";
 import { NotificationPopover } from "./pages/layout/notification-popover";
@@ -1480,6 +1481,228 @@ test.describe("Lobbies", () => {
 	});
 
 	/**
+	 * A player of a set has the lobby's chat and their team's, each with a voice call. When a
+	 * set starts a call in the team's chat follows the player to their team of the new set,
+	 * one in the lobby's chat stays put, and a player sitting the set out is dropped from their
+	 * team's call. Leaving the lobby ends the player's call.
+	 */
+	test.describe("Voice", () => {
+		test("a call in the lobby's chat stays there when the set starts", async ({
+			page,
+			factories,
+			browser,
+			workerBaseURL,
+		}) => {
+			const { lobby, players } = await lobbyAwaitingLastCheckIn(factories);
+			const caller = players[0];
+			const callerSession = await openSecondUser(
+				browser,
+				workerBaseURL,
+				caller.id,
+			);
+			try {
+				const callerChat = new ChatSidebar(callerSession.page);
+				let lobbyRoomId = 0;
+
+				await test.step("A player joins the lobby chat's call before the start", async () => {
+					await new LobbyPage(callerSession.page).goto(lobby.id);
+					({ lobbyRoomId } = await lobbyChatRoomIds(callerSession.page));
+
+					await callerChat.joinVoice();
+					await expect
+						.poll(() => voiceRoomUserIds(callerSession.page, lobbyRoomId))
+						.toEqual([caller.id]);
+				});
+
+				await startLobby(page, { lobby, players });
+
+				await test.step("Once the set starts they are still in the lobby chat's call", async () => {
+					await expect(callerChat.locators.roomTabs).toHaveText([
+						"Lobby",
+						"Team",
+					]);
+
+					await callerChat.selectRoomTab("Team");
+					await expect(callerChat.locators.joinVoiceButton).toBeVisible();
+
+					await callerChat.selectRoomTab("Lobby");
+					await expect(callerChat.locators.leaveVoiceButton).toBeVisible();
+					await expect
+						.poll(() => voiceRoomUserIds(callerSession.page, lobbyRoomId))
+						.toEqual([caller.id]);
+				});
+			} finally {
+				await callerSession.close();
+			}
+		});
+
+		test("a call in the team's chat moves to the player's team of the next set", async ({
+			page,
+			factories,
+			browser,
+			workerBaseURL,
+		}) => {
+			const { lobby, alphaPlayers, bravoPlayers } = await startedLobby(
+				page,
+				factories,
+			);
+			// playSet plays as alphaPlayers[0] on the other page
+			const caller = alphaPlayers[1];
+			const callerSession = await openSecondUser(
+				browser,
+				workerBaseURL,
+				caller.id,
+			);
+			try {
+				const callerChat = new ChatSidebar(callerSession.page);
+				let firstTeamRoomId = 0;
+
+				await test.step("A player joins their team chat's call", async () => {
+					await new LobbyPage(callerSession.page).goto(lobby.id);
+					firstTeamRoomId = await teamChatRoomId(callerSession.page);
+
+					await callerChat.selectRoomTab("Team");
+					await callerChat.joinVoice();
+					await expect
+						.poll(() => voiceRoomUserIds(callerSession.page, firstTeamRoomId))
+						.toEqual([caller.id]);
+				});
+
+				await playSet(page, {
+					lobbyId: lobby.id,
+					alphaPlayer: alphaPlayers[0],
+					bravoPlayer: bravoPlayers[0],
+				});
+
+				await test.step("In the next set they are in the call of their new team's chat", async () => {
+					// the next set's chats are made after the first's
+					await expect
+						.poll(
+							async () =>
+								(await lobbyChatRoomIds(callerSession.page)).teamRoomId,
+						)
+						.toBeGreaterThan(firstTeamRoomId);
+					const nextTeamRoomId = await teamChatRoomId(callerSession.page);
+
+					await expect
+						.poll(() => voiceRoomUserIds(callerSession.page, nextTeamRoomId))
+						.toEqual([caller.id]);
+					await expect
+						.poll(() => voiceRoomUserIds(callerSession.page, firstTeamRoomId))
+						.toEqual([]);
+
+					await callerChat.selectRoomTab("Team");
+					await expect(callerChat.locators.leaveVoiceButton).toBeVisible();
+				});
+			} finally {
+				await callerSession.close();
+			}
+		});
+
+		test("leaving the lobby ends the player's call", async ({
+			page,
+			factories,
+			browser,
+			workerBaseURL,
+		}) => {
+			const { lobby, host, alphaPlayers, bravoPlayer } = await startedLobby(
+				page,
+				factories,
+			);
+			const leaver = alphaPlayers.find((player) => player.id !== host.id)!;
+			const lobbyPage = new LobbyPage(page);
+			const chat = new ChatSidebar(page);
+			const stayerSession = await openSecondUser(
+				browser,
+				workerBaseURL,
+				bravoPlayer.id,
+			);
+			try {
+				const stayerChat = new ChatSidebar(stayerSession.page);
+				let lobbyRoomId = 0;
+
+				await test.step("Two players join the lobby chat's call", async () => {
+					await impersonate(page, leaver.id);
+					await lobbyPage.goto(lobby.id);
+					await chat.selectRoomTab("Lobby");
+					await chat.joinVoice();
+
+					await new LobbyPage(stayerSession.page).goto(lobby.id);
+					({ lobbyRoomId } = await lobbyChatRoomIds(stayerSession.page));
+					await stayerChat.selectRoomTab("Lobby");
+					await stayerChat.joinVoice();
+
+					await expect
+						.poll(() => voiceRoomUserIds(stayerSession.page, lobbyRoomId))
+						.toEqual(idsOf([leaver, bravoPlayer]));
+				});
+
+				await test.step("One leaves the lobby and is out of the call", async () => {
+					await lobbyPage.leaveMidSet();
+
+					await expect
+						.poll(() => voiceRoomUserIds(stayerSession.page, lobbyRoomId))
+						.toEqual([bravoPlayer.id]);
+					await isNotVisible(chat.locators.leaveVoiceButton);
+				});
+			} finally {
+				await stayerSession.close();
+			}
+		});
+
+		test("a call in the team's chat ends for a player sitting out the next set", async ({
+			page,
+			factories,
+			browser,
+			workerBaseURL,
+		}) => {
+			const { lobby, host, alphaPlayer, bravoPlayer, alphaPlayers } =
+				await startedLobby(page, factories, { roomSize: 9 });
+			const satOut = alphaPlayers.find(
+				(player) => player.id !== host.id && player.id !== alphaPlayer.id,
+			)!;
+			const satOutSession = await openSecondUser(
+				browser,
+				workerBaseURL,
+				satOut.id,
+			);
+			try {
+				const satOutChat = new ChatSidebar(satOutSession.page);
+				let teamRoomId = 0;
+
+				await test.step("A player joins their team chat's call", async () => {
+					await new LobbyPage(satOutSession.page).goto(lobby.id);
+					teamRoomId = await teamChatRoomId(satOutSession.page);
+
+					await satOutChat.selectRoomTab("Team");
+					await satOutChat.joinVoice();
+					await expect
+						.poll(() => voiceRoomUserIds(satOutSession.page, teamRoomId))
+						.toEqual([satOut.id]);
+				});
+
+				await test.step("The host sits them out", async () => {
+					const lobbyPage = new LobbyPage(page);
+					await impersonate(page, host.id);
+					await lobbyPage.goto(lobby.id, "leaderboard");
+					await lobbyPage.sitOut(satOut.id);
+				});
+
+				await playSet(page, { lobbyId: lobby.id, alphaPlayer, bravoPlayer });
+
+				await test.step("Their call ends as the next set starts without them", async () => {
+					await expect
+						.poll(() => voiceRoomUserIds(satOutSession.page, teamRoomId))
+						.toEqual([]);
+					await isNotVisible(satOutChat.locators.leaveVoiceButton);
+				});
+			} finally {
+				await satOutSession.close();
+			}
+		});
+	});
+
+	/**
 	 * A started lobby closes on its own after 2 hours waiting for players or 2 hours without
 	 * a map reported, moving to the Ended tab of its players' lobby list. It also ends when
 	 * everyone has left after the start.
@@ -1610,6 +1833,14 @@ async function startingLobby(factories: Factories) {
 async function startedLobby(
 	page: Page,
 	factories: Factories,
+	options: { roomSize?: LobbyRoomSize } = {},
+) {
+	return startLobby(page, await lobbyAwaitingLastCheckIn(factories, options));
+}
+
+/** A lobby that started a minute ago, its full room checked in but the last player. The first player is the host. */
+async function lobbyAwaitingLastCheckIn(
+	factories: Factories,
 	{ roomSize = ROOM_SIZE }: { roomSize?: LobbyRoomSize } = {},
 ) {
 	const users = await factories.UserFactory.createMany(roomSize, (i) => ({
@@ -1633,6 +1864,14 @@ async function startedLobby(
 		},
 	);
 
+	return { lobby, players };
+}
+
+/** The last player checks in through the UI, which starts the lobby. Returns its players by side. */
+async function startLobby(
+	page: Page,
+	{ lobby, players }: { lobby: { id: number }; players: Player[] },
+) {
 	await impersonate(page, players.at(-1)!.id);
 	const lobbyPage = new LobbyPage(page);
 	await lobbyPage.goto(lobby.id);
@@ -1715,6 +1954,34 @@ async function rosterIds(
 			names.some((name) => name.includes(player.name)),
 		),
 	);
+}
+
+/** The lobby page's chat rooms: the lobby's own and, while the viewer plays a set, their team's. */
+async function lobbyChatRoomIds(page: Page) {
+	const loaderData = Object.values(
+		JSON.parse(await loaderDataJson(page)) as Record<string, unknown>,
+	);
+	const lobbyData = loaderData.find(
+		(
+			data,
+		): data is {
+			lobby: { chatRoomId: number };
+			teamChatRoomId: number | null;
+		} => typeof data === "object" && data !== null && "teamChatRoomId" in data,
+	);
+	if (!lobbyData) throw new Error("Not on a lobby page");
+
+	return {
+		lobbyRoomId: lobbyData.lobby.chatRoomId,
+		teamRoomId: lobbyData.teamChatRoomId,
+	};
+}
+
+async function teamChatRoomId(page: Page) {
+	const { teamRoomId } = await lobbyChatRoomIds(page);
+	if (teamRoomId === null) throw new Error("Not playing a set");
+
+	return teamRoomId;
 }
 
 function idsOf(players: Array<{ id: number }>) {

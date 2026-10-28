@@ -18,6 +18,7 @@ import { assertUnreachable } from "~/utils/types";
 import * as LobbyProgression from "../core/LobbyProgression.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
+import * as LobbyVoice from "../core/LobbyVoice.server";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import type { LobbyBestOf } from "../lobbies-constants";
@@ -161,6 +162,16 @@ export const action = defineAction(
 					userId: user.id,
 					unfinishedSetId: unfinishedSetIdOf(viewer),
 				});
+				LobbyVoice.ejectLeavers({
+					lobby: {
+						chatRoomId: lobby.chatRoomId,
+						participantUserIds: lobby.participants.map(
+							(participant) => participant.id,
+						),
+					},
+					latestSet: sets.at(-1),
+					userIds: [user.id],
+				});
 				break;
 			}
 			case "TOGGLE_DROP_AFTER_SET": {
@@ -269,6 +280,16 @@ export const action = defineAction(
 					lobbyId: id,
 					userId: target.id,
 					unfinishedSetId: unfinishedSetIdOf(target),
+				});
+				LobbyVoice.ejectLeavers({
+					lobby: {
+						chatRoomId: lobby.chatRoomId,
+						participantUserIds: lobby.participants.map(
+							(participant) => participant.id,
+						),
+					},
+					latestSet: sets.at(-1),
+					userIds: [target.id],
 				});
 				break;
 			}
