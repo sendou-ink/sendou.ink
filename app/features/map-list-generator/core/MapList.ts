@@ -431,7 +431,9 @@ function modifyModeOrderByPattern(
 			// impossible must include, mode is not in the pool
 			if (!modeOrder.includes(mode)) continue;
 
-			let possibleIndices = overridableIndices;
+			let possibleIndices = overridableIndices.filter(
+				(idx) => !mustIncludePlacedIndices.has(idx),
+			);
 			if (isGuaranteed) {
 				const guaranteedPositions = Math.ceil(amount / 2);
 				const frontIndices = possibleIndices.filter(
@@ -455,7 +457,9 @@ function modifyModeOrderByPattern(
 				possibleIndices.includes(currentIndex) ||
 				(!isGuaranteed && expandedPattern[currentIndex] === mode);
 
-			if (!isAlreadyIncluded) {
+			if (isAlreadyIncluded && isInGoodSpot) {
+				mustIncludePlacedIndices.add(currentIndex);
+			} else if (!isAlreadyIncluded) {
 				const randomIndex = R.sample(possibleIndices, 1)[0];
 				invariant(typeof randomIndex === "number");
 				result[randomIndex] = mode;
