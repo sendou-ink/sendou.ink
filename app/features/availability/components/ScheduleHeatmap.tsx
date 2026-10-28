@@ -17,7 +17,6 @@ import styles from "./ScheduleHeatmap.module.css";
 import { ClockAxis, useClockWindow } from "./ScheduleTracks";
 import trackStyles from "./ScheduleTracks.module.css";
 
-const MINUTE_IN_SECONDS = 60;
 /** One block per hour: a member counts in it when free for the whole hour. */
 const CELL_MINUTES = 60;
 
@@ -74,8 +73,16 @@ export function ScheduleHeatmap({
 		range: TimeRange,
 		day: WeekData["days"][number],
 	): DayTimeRange => ({
-		start: (range.startsAt - day.startsAt) / MINUTE_IN_SECONDS,
-		end: (range.endsAt - day.startsAt) / MINUTE_IN_SECONDS,
+		start: Availability.timestampToDayMinutes({
+			date: day.date,
+			timestamp: range.startsAt,
+			timezone: week.timezone,
+		}),
+		end: Availability.timestampToDayMinutes({
+			date: day.date,
+			timestamp: range.endsAt,
+			timezone: week.timezone,
+		}),
 	});
 
 	const clockWindow = useClockWindow({
@@ -95,10 +102,19 @@ export function ScheduleHeatmap({
 		day,
 		dayIndex,
 		cells: cellStarts.map((startMinutes) => {
-			const startsAt = day.startsAt + startMinutes * MINUTE_IN_SECONDS;
-			const endsAt = startsAt + CELL_MINUTES * MINUTE_IN_SECONDS;
+			const startsAt = Availability.dayMinutesToTimestamp({
+				date: day.date,
+				minutes: startMinutes,
+				timezone: week.timezone,
+			});
+			const endsAt = Availability.dayMinutesToTimestamp({
+				date: day.date,
+				minutes: startMinutes + CELL_MINUTES,
+				timezone: week.timezone,
+			});
 
 			return {
+				startMinutes,
 				startsAt,
 				endsAt,
 				userIds: selectedRows
@@ -218,7 +234,7 @@ export function ScheduleHeatmap({
 								{cells.map((cell) => (
 									// biome-ignore lint/a11y/noStaticElementInteractions: hover-only detail, the list view and summary carry the same info
 									<div
-										key={cell.startsAt}
+										key={cell.startMinutes}
 										className={clsx(
 											styles.cell,
 											tierClass(cell.userIds.length),
