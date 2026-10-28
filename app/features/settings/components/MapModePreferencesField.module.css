@@ -393,11 +393,15 @@
 }
 
 .percentageWinning {
-	color: var(--color-fg-accent);
+	color: var(--color-success-high);
+}
+
+.percentageEven {
+	color: var(--color-text);
 }
 
 .percentageLosing {
-	color: var(--color-fg-second);
+	color: var(--color-error-high);
 }
 
 .bar {
@@ -413,11 +417,11 @@
 	top: 0;
 	bottom: 0;
 	border-radius: var(--radius-full);
-	background-color: var(--color-fg-accent);
+	background-color: var(--color-success);
 }
 
 .barFillLosing {
-	background-color: var(--color-fg-second);
+	background-color: var(--color-error);
 }
 
 .barCenter {
