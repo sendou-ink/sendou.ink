@@ -34,10 +34,12 @@ export function install() {
 	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	const originalWarn = console.warn;
 
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	console.error = (...args: unknown[]) => {
 		record("error", "console.error", formatConsoleArgs(args));
 		originalError.apply(console, args);
 	};
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	console.warn = (...args: unknown[]) => {
 		record("warn", "console.warn", formatConsoleArgs(args));
 		originalWarn.apply(console, args);
@@ -145,6 +147,7 @@ function argToText(arg: unknown): string {
 		try {
 			return JSON.stringify(arg);
 		} catch {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string -- the fallback for what JSON.stringify can't handle (circular references, BigInt)
 			return String(arg);
 		}
 	}

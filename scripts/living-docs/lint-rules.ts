@@ -76,12 +76,14 @@ function enabledGlobs(config: string, rule: string) {
 		];
 	}
 
-	return overrides
-		.filter((override) => isEnabled(override))
-		.flatMap((override) => [
-			...globsOf(override, "files"),
-			...globsOf(override, "excludeFiles").map((glob) => `!${glob}`),
-		]);
+	return overrides.flatMap((override) =>
+		isEnabled(override)
+			? [
+					...globsOf(override, "files"),
+					...globsOf(override, "excludeFiles").map((glob) => `!${glob}`),
+				]
+			: [],
+	);
 }
 
 function globsOf(override: string, key: string) {

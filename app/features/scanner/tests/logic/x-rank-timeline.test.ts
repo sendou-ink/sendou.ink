@@ -105,7 +105,7 @@ describe("TimelineBuilder X Battle cards", () => {
 		);
 
 		expect(action.action).toBe("merged");
-		expect(timeline.events[0]!.data).toMatchObject({ power: 2723.2 });
+		expect(timeline.events[0].data).toMatchObject({ power: 2723.2 });
 	});
 
 	test("leaves an X Power read off the count from the power before the change as read", () => {
@@ -113,7 +113,7 @@ describe("TimelineBuilder X Battle cards", () => {
 		timeline.push(result(0, { powerChange: null, power: 2373.8 }));
 		timeline.push(result(1, { powerChange: 75, power: 2911.3 }));
 
-		expect(timeline.events[0]!.data).toMatchObject({ power: 2911.3 });
+		expect(timeline.events[0].data).toMatchObject({ power: 2911.3 });
 	});
 
 	test("ignores an X Power read further away than the whole change", () => {

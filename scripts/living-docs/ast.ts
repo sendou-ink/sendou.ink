@@ -27,7 +27,7 @@ const cache = createCache<string, ParsedFile>();
 /** A memo cache emptied by `clearCaches`, so a rerun sees edited files. */
 export function createCache<K, V>() {
 	const map = new Map<K, V>();
-	caches.push(map as Map<unknown, unknown>);
+	caches.push(map);
 	return map;
 }
 
@@ -87,6 +87,13 @@ export function textOf(file: ParsedFile, node: { start: number; end: number }) {
 	);
 
 	return lines.map((line) => line.slice(shared)).join("\n");
+}
+
+/** How an import specifier imports, as a plain string: oxc-parser's `ImportNameKind` is an ambient const enum, which isolated modules can't reference. */
+export function importNameKind(specifier: {
+	importName: { kind: string };
+}): string {
+	return specifier.importName.kind;
 }
 
 /** Visits every node below `node` depth first, `visit` returning false skips a node's children. */

@@ -38,7 +38,7 @@ const USAGE_KINDS = [
 		id: "repository",
 		label: "Repositories",
 		singular: "repository",
-		test: (p: string) => /Repository\.server\.ts$/.test(p),
+		test: (p: string) => p.endsWith("Repository.server.ts"),
 	},
 	{
 		id: "module",
@@ -286,6 +286,8 @@ function collectExports(file: ParsedFile) {
 				break;
 			case "TSEnumDeclaration":
 				add(declaration.id.name, "enum", statement, statement.end);
+				break;
+			default:
 				break;
 		}
 	}

@@ -81,12 +81,10 @@ export function BuildStack({ buildId, stack, children }: BuildStackProps) {
 					key={id}
 					className={styles.layer}
 					data-flip-id={id}
-					style={
-						{
-							"--layer-offset": `${layerOffset(i)}px`,
-							zIndex: -1 - i,
-						} as React.CSSProperties
-					}
+					style={{
+						"--layer-offset": `${layerOffset(i)}px`,
+						zIndex: -1 - i,
+					}}
 				/>
 			))}
 			<div className={styles.card} data-flip-id={buildId}>

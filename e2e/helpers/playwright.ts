@@ -127,7 +127,6 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 		expect(hydrationErrors, "React hydration errors").toEqual([]);
 	},
 	workerPort: [
-		// eslint-disable-next-line no-empty-pattern -- Playwright requires object destructuring
 		async ({}, use, workerInfo) => {
 			const port = e2eWorkerPort(workerInfo.parallelIndex);
 			await use(port);
@@ -144,7 +143,6 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 		await use(workerBaseURL);
 	},
 	factories: [
-		// eslint-disable-next-line no-empty-pattern -- Playwright requires object destructuring
 		async ({}, use, workerInfo) => {
 			await use(await loadFactories(workerInfo.parallelIndex));
 		},

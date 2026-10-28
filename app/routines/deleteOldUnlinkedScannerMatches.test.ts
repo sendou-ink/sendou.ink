@@ -24,7 +24,7 @@ describe("DeleteOldUnlinkedScannerMatchesRoutine", () => {
 	test("deletes old unlinked private and unread-lobby reads, keeping X battles, linked reads and recent ones", async () => {
 		const w = await sendouqWorld();
 		await w.conclude();
-		await ingest(w.povUser, [w.scanned(w.maps[0]!, { replayCode: "LINKED" })]);
+		await ingest(w.povUser, [w.scanned(w.maps[0], { replayCode: "LINKED" })]);
 		const user = await createUser();
 		await ingest(user, [
 			scannedGame(GAME, { replayCode: "OLDPRIVATE", lobby: "PRIVATE" }),

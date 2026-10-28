@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
 	createCache,
+	importNameKind,
 	lineOf,
 	type ParsedFile,
 	parseFile,
@@ -114,7 +115,7 @@ function usagesInFile(file: ParsedFile, modulePath: string) {
 		}
 
 		for (const specifier of entry.entries) {
-			if (specifier.importName.kind === "NamespaceObject") {
+			if (importNameKind(specifier) === "NamespaceObject") {
 				namespaces.add(specifier.localName.value);
 			} else if (specifier.importName.name) {
 				usages.push({

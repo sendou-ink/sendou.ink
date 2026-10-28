@@ -57,7 +57,7 @@ function isInsideKeyframes(node: Node) {
 		if (
 			parent.type === "atrule" &&
 			"name" in parent &&
-			/keyframes$/.test(String(parent.name))
+			String(parent.name).endsWith("keyframes")
 		) {
 			return true;
 		}

@@ -49,7 +49,7 @@ function ScenariosApp() {
 	const [error, setError] = React.useState<{ id: string; message: string }>();
 
 	React.useEffect(() => {
-		load(DEV_SCENARIOS_URL);
+		void load(DEV_SCENARIOS_URL);
 	}, [load]);
 
 	const run = async (scenario: ScenarioListItem, params: ParamValues) => {

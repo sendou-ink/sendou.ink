@@ -889,11 +889,10 @@ describe("Scrim.getStartTime", () => {
 	const postWithRequest = (request: {
 		isAccepted: boolean;
 		startsAt: number | null;
-	}) =>
-		({
-			...createPost([{ id: 1 }], [{ ...request, users: [{ id: 2 }] }]),
-			startsAt: POST_STARTS_AT,
-		}) as ScrimPost;
+	}) => ({
+		...createPost([{ id: 1 }], [{ ...request, users: [{ id: 2 }] }]),
+		startsAt: POST_STARTS_AT,
+	});
 
 	test.each([
 		{

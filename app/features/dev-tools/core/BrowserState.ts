@@ -101,11 +101,9 @@ export function describeSearchParams({
  * e.g. `userBuildsSearchParams`. Null when the call is not assigned to one.
  */
 export function declaredName(moduleCode: string, line: number) {
-	return (
-		moduleCode
-			.split("\n")
-			[line - 1]?.match(/([\w$]+)\s*=\s*[\w$.]*\bdefine\(/)?.[1] ?? null
-	);
+	const lineCode = moduleCode.split("\n")[line - 1];
+
+	return lineCode?.match(/([\w$]+)\s*=\s*[\w$.]*\bdefine\(/)?.[1] ?? null;
 }
 
 /**

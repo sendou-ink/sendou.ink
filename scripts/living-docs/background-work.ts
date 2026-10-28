@@ -225,7 +225,7 @@ function cronSchedules() {
 
 		let listName: string | null = null;
 		if (callback) {
-			walk(callback as Node, (inner) => {
+			walk(callback, (inner) => {
 				if (
 					inner.type === "ForOfStatement" &&
 					inner.right.type === "Identifier"
@@ -484,7 +484,7 @@ function notificationTypes(): Array<Omit<NotificationType, "senders">> {
 		const [typeArg, metaArg] = member.typeArguments?.params ?? [];
 		const type =
 			typeArg?.type === "TSLiteralType"
-				? stringValue(typeArg.literal as Node)
+				? stringValue(typeArg.literal)
 				: undefined;
 		if (!type) return [];
 
@@ -544,7 +544,7 @@ function notifyCallSites(sourceFiles: string[]) {
 
 				const types = new Set<string>();
 				for (const argument of node.arguments) {
-					collectTypeLiterals(argument as Node, types);
+					collectTypeLiterals(argument, types);
 					const notification =
 						argument.type === "ObjectExpression"
 							? propertyValue(argument, "notification")
@@ -724,7 +724,7 @@ function callsIn(file: ParsedFile, name: string) {
 
 		return line === null
 			? []
-			: [{ line: line as number, declaration: declarationName(statement) }];
+			: [{ line, declaration: declarationName(statement) }];
 	});
 }
 

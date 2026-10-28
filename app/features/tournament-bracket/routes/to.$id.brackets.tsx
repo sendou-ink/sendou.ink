@@ -12,6 +12,7 @@ import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import {
+	NavigationType,
 	Outlet,
 	useLoaderData,
 	useLocation,
@@ -281,7 +282,7 @@ function useScrollToMatchOnLoad() {
 	// location.key: following the same link again while on the page scrolls again
 	useIsomorphicLayoutEffect(() => {
 		// back/forward and reload restore where the user left off instead
-		if (navigationType === "POP") return;
+		if (navigationType === NavigationType.Pop) return;
 		if (typeof scrollToMatchId !== "number") return;
 
 		// links carrying the state set `preventScrollReset`, the window is ours to position

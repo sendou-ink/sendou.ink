@@ -49,17 +49,14 @@ import {
 
 const MAX_RECENT_RUNS = 10;
 
-const SCENARIO_CATEGORIES = [
-	"SendouQ",
-	"Tournaments",
-	"Tournament LFG",
-	"Scrims",
-	"Lobbies",
-	"Users & teams",
-	"Plus server",
-] as const;
-
-type ScenarioCategory = (typeof SCENARIO_CATEGORIES)[number];
+type ScenarioCategory =
+	| "SendouQ"
+	| "Tournaments"
+	| "Tournament LFG"
+	| "Scrims"
+	| "Lobbies"
+	| "Users & teams"
+	| "Plus server";
 
 interface NumberParam {
 	kind: "number";

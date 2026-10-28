@@ -10,9 +10,11 @@ const newVodAction = wrappedAction<typeof vodFormSchemaServer>({
 	isJsonSubmission: true,
 });
 
-const weaponPoolOf = (count: number) =>
+const weaponPoolOf = (
+	count: number,
+): Array<{ id: MainWeaponId; isFavorite: boolean }> =>
 	Array.from({ length: count }, () => ({
-		id: 1000 as MainWeaponId,
+		id: 1000,
 		isFavorite: false,
 	}));
 

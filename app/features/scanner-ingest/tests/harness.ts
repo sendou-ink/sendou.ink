@@ -145,7 +145,7 @@ export async function lobbyWorld() {
 	const userIds = users.map((user) => user.id);
 	const lobby = await LobbyFactory.create(
 		{
-			hostUserId: userIds[0]!,
+			hostUserId: userIds[0],
 			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
 		},
 		{ signedUpUserIds: userIds.slice(1), checkedInUserIds: userIds },
@@ -153,10 +153,10 @@ export async function lobbyWorld() {
 	await LobbyProgression.advance(lobby.id);
 
 	const firstSet = await lobbySet(lobby.id);
-	const nameOf = (userId: number) => LOBBY_NAMES[userIds.indexOf(userId)]!;
+	const nameOf = (userId: number) => LOBBY_NAMES[userIds.indexOf(userId)];
 	const alphaUserIds = LobbySet.playersOf(firstSet, "ALPHA");
 	const bravoUserIds = LobbySet.playersOf(firstSet, "BRAVO");
-	const reporterId = alphaUserIds[0]!;
+	const reporterId = alphaUserIds[0];
 
 	return {
 		lobbyId: lobby.id,

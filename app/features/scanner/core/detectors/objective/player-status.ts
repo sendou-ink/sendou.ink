@@ -583,7 +583,7 @@ function bodyStaysInked(band: Band, cx: number, pitch: number): boolean {
 					((y - STATUS_BAND.y) * band.width +
 						(cx + direction * offset - STATUS_BAND.x)) *
 					band.channels;
-				if (isInk(band.pixels[i]!, band.pixels[i + 1]!, band.pixels[i + 2]!))
+				if (isInk(band.pixels[i], band.pixels[i + 1], band.pixels[i + 2]))
 					ink++;
 				count++;
 			}

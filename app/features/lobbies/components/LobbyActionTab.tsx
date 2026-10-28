@@ -82,6 +82,7 @@ function ReportingTab({
 								.map((game) => ({
 									stageId: game.stageId,
 									mode: game.mode,
+									// eslint-disable-next-line react-hooks/purity -- the maps of a set still being played have no report time yet
 									timestamp: Date.now(),
 									winner: game.winnerSide!,
 									rosters,

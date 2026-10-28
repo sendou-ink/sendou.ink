@@ -55,10 +55,13 @@ export async function drawMermaid(diagrams: HTMLElement[]) {
 
 	if (redrawsOnThemeChange) return;
 	redrawsOnThemeChange = true;
-	new MutationObserver(() => draw(drawn)).observe(document.documentElement, {
-		attributes: true,
-		attributeFilter: ["data-theme"],
-	});
+	new MutationObserver(() => void draw(drawn)).observe(
+		document.documentElement,
+		{
+			attributes: true,
+			attributeFilter: ["data-theme"],
+		},
+	);
 }
 
 function themeVariables() {

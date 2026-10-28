@@ -2390,7 +2390,7 @@ function withRevealedNames<E extends DetectedEvent>(
 		match.kills?.map((kill) => {
 			const slot = victimSlot(kill.name, match.teams[enemySide].players);
 			if (slot === null) return kill;
-			return { ...kill, name: teams[enemySide].players[slot]!.name };
+			return { ...kill, name: teams[enemySide].players[slot].name };
 		}) ?? null;
 
 	return { ...match, teams, kills };

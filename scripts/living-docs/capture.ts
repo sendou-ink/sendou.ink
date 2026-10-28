@@ -259,13 +259,11 @@ function dividerScreenshots(
 				.map((action) => action.startWall),
 		);
 
-		const frame = frames
-			.filter(
-				(candidate) =>
-					(!last.contextId || candidate.contextId === last.contextId) &&
-					candidate.wall < nextStart,
-			)
-			.at(-1);
+		const frame = frames.findLast(
+			(candidate) =>
+				(!last.contextId || candidate.contextId === last.contextId) &&
+				candidate.wall < nextStart,
+		);
 		const image = frame ? zip[frame.file] : undefined;
 		if (image) screenshots.set(start, image);
 	}

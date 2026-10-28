@@ -1,5 +1,11 @@
 import type { Node } from "oxc-parser";
-import { type ParsedFile, parseFile, textOf, walk } from "./ast.ts";
+import {
+	importNameKind,
+	type ParsedFile,
+	parseFile,
+	textOf,
+	walk,
+} from "./ast.ts";
 import { isTestFile } from "./modules.ts";
 import { resolveImport, type Usage, usagesOf } from "./source-index.ts";
 
@@ -132,7 +138,7 @@ function importedNames(file: ParsedFile) {
 	const names = new Map<string, { specifier: string; importedName: string }>();
 	for (const entry of file.imports) {
 		for (const specifier of entry.entries) {
-			if (specifier.isType || specifier.importName.kind !== "Name") continue;
+			if (specifier.isType || importNameKind(specifier) !== "Name") continue;
 			names.set(specifier.localName.value, {
 				specifier: entry.moduleRequest.value,
 				importedName: specifier.importName.name ?? specifier.localName.value,

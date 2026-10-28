@@ -1017,8 +1017,8 @@ test("a game ended as a no contest builds no match", () => {
 		scoreboard(440),
 	]);
 	assert.equal(built.length, 1);
-	assert.equal(built[0]!.match.startsAt, 140);
-	assert.deepEqual(built[0]!.match.matchScores, [100, 47]);
+	assert.equal(built[0].match.startsAt, 140);
+	assert.deepEqual(built[0].match.matchScores, [100, 47]);
 });
 
 test("a full-length match whose score went unread is kept when the same map follows", () => {
@@ -1333,7 +1333,7 @@ test("a battle log view sharing whole stat lines joins its match though its reco
 	});
 	const built = buildScannerMatches([...playedGame(), view]);
 	assert.equal(built.length, 1);
-	assert.equal(built[0]!.sources.at(-1), view);
+	assert.equal(built[0].sources.at(-1), view);
 });
 
 const ALIASES = [
@@ -1364,13 +1364,13 @@ test("a battle log view revealing an X Battle's real names puts them on its matc
 	]);
 	assert.equal(built.length, 1);
 	assert.deepEqual(
-		built[0]!.match.teams.flatMap((team) =>
+		built[0].match.teams.flatMap((team) =>
 			team.players.map((player) => player.name),
 		),
 		NAMES,
 	);
 	assert.deepEqual(
-		built[0]!.match.kills!.map((read) => read.name),
+		built[0].match.kills!.map((read) => read.name),
 		["l1", "l2"],
 	);
 });
@@ -1381,7 +1381,7 @@ test("an X Battle's revealed names stay when the battle log shows the aliases ag
 		battleLogScoreboard(900, { paints: GAME_PAINTS }),
 		battleLogScoreboard(905, { paints: GAME_PAINTS, names: ALIASES }),
 	]);
-	assert.equal(built[0]!.match.teams[0].players[0]!.name, NAMES[0]);
+	assert.equal(built[0].match.teams[0].players[0].name, NAMES[0]);
 });
 
 test("a battle log view with other names keeps the names of a match a history screen closed", () => {
@@ -1390,8 +1390,8 @@ test("a battle log view with other names keeps the names of a match a history sc
 		battleLogScoreboard(905, { paints: GAME_PAINTS }),
 	]);
 	assert.equal(built.length, 1);
-	assert.equal(built[0]!.sources.length, 2);
-	assert.equal(built[0]!.match.teams[0].players[0]!.name, ALIASES[0]);
+	assert.equal(built[0].sources.length, 2);
+	assert.equal(built[0].match.teams[0].players[0].name, ALIASES[0]);
 });
 
 test("a battle log view with too few paint totals read forms its own match", () => {

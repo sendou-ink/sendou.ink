@@ -62,6 +62,7 @@ export function useVoiceFollow({
 	// syncs the external call with the room the loader says the user belongs in
 	React.useEffect(() => {
 		if (targetRoomId === followedRoomId) return;
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- remembers the room the external call now follows
 		setFollowedRoomId(targetRoomId);
 		if (targetRoomId === null) return;
 

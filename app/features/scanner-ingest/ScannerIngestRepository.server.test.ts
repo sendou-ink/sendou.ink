@@ -468,7 +468,7 @@ describe("lobbySetIdAt", () => {
 				userId: playerId(),
 				at: PLAYED_AT,
 			}),
-		).toBe(set!.id);
+		).toBe(set.id);
 	});
 
 	test.each([

@@ -514,33 +514,33 @@ describe("lobby flow", () => {
 		const w = await lobbyWorld();
 		const [map] = await w.report();
 
-		const res = await ingest(w.povUser, [w.scanned(map!)]);
+		const res = await ingest(w.povUser, [w.scanned(map)]);
 
 		expect(res.linkedMatches).toEqual([
 			{ matchIndex: 0, link: { type: "lobby", lobbyId: w.lobbyId } },
 		]);
 		const rows = await fetchIngestedMatches();
-		expect(rows[0]!.lobbySetIdHint).toBe(w.setId);
+		expect(rows[0].lobbySetIdHint).toBe(w.setId);
 		const links = await fetchLinks();
-		expect(links.map((link) => link.lobbyGameId)).toEqual([map!.id]);
+		expect(links.map((link) => link.lobbyGameId)).toEqual([map.id]);
 	});
 
 	test("L2 send before report: the report links the stored read without a resend", async () => {
 		const w = await lobbyWorld();
-		const res = await ingest(w.povUser, [w.scanned(w.maps[0]!)]);
+		const res = await ingest(w.povUser, [w.scanned(w.maps[0])]);
 		expect(res.linkedGamesCount).toBe(0);
 
 		await w.report();
 		await linkStoredMatches({ type: "lobby", lobbySetId: w.setId });
 
 		const links = await fetchLinks();
-		expect(links.map((link) => link.lobbyGameId)).toEqual([w.maps[0]!.id]);
+		expect(links.map((link) => link.lobbyGameId)).toEqual([w.maps[0].id]);
 	});
 
 	test("L3 undone map report: the undo unlinks the read, the re-report links it again", async () => {
 		const w = await lobbyWorld();
 		const [map] = await w.report();
-		await ingest(w.povUser, [w.scanned(map!)]);
+		await ingest(w.povUser, [w.scanned(map)]);
 		expect(await fetchLinks()).toHaveLength(1);
 
 		await w.undo();
@@ -909,11 +909,11 @@ describe("abuse limits", () => {
 		const w = await sendouqWorld();
 		await w.conclude();
 		await ingest(w.povUser, [
-			w.scanned(w.maps[0]!, { replayCode: distinctReplayCode(1) }),
+			w.scanned(w.maps[0], { replayCode: distinctReplayCode(1) }),
 		]);
 
 		const rescan = await ingest(w.povUser, [
-			w.scanned(w.maps[0]!, { replayCode: distinctReplayCode(2) }),
+			w.scanned(w.maps[0], { replayCode: distinctReplayCode(2) }),
 		]);
 
 		expect(rescan.storedMatchesCount).toBe(1);
@@ -934,7 +934,7 @@ describe("abuse limits", () => {
 			await ingest(user, request);
 		}
 
-		await expect(ingest(user, [scans[200]!])).rejects.toThrow("429");
+		await expect(ingest(user, [scans[200]])).rejects.toThrow("429");
 		expect(await fetchIngestedMatches()).toHaveLength(200);
 	});
 

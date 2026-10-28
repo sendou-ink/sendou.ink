@@ -31,6 +31,9 @@ export const loader = ({ request, params }: LoaderFunctionArgs) => {
 			break;
 		case "500":
 			throw new Error("Thrown on purpose by the dev tools");
+		case "render":
+			// thrown by the page component instead
+			break;
 	}
 
 	return { kind };

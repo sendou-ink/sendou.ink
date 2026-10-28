@@ -496,7 +496,7 @@ export async function findScoreboardsByLobbyId(lobbyId: number) {
 	}
 
 	return [...byGame.values()].flatMap((gameRows) => {
-		const first = gameRows[0]!;
+		const first = gameRows[0];
 		const winnerSide = first.winnerSide!;
 
 		const data = Scoreboards.deriveScoreboardData({

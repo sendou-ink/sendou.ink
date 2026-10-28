@@ -357,14 +357,13 @@ export function createScoreboardDetector(
 function isNoContest(rgb: Mat): boolean {
 	return TEAM_BOX_BAND_ROIS.every((roi) => {
 		const band = copyRoi(rgb, roi);
-		const pixels = band.data as Uint8Array;
+		const pixels = band.data;
 		const channels = band.channels();
 		let ink = 0;
 		let valueSum = 0;
 		for (let i = 0; i < pixels.length; i += channels) {
-			const value = Math.max(pixels[i]!, pixels[i + 1]!, pixels[i + 2]!);
-			const spread =
-				value - Math.min(pixels[i]!, pixels[i + 1]!, pixels[i + 2]!);
+			const value = Math.max(pixels[i], pixels[i + 1], pixels[i + 2]);
+			const spread = value - Math.min(pixels[i], pixels[i + 1], pixels[i + 2]);
 			if (value > 0 && spread >= NO_CONTEST_INK_MIN_SATURATION * value) ink++;
 			valueSum += value;
 		}

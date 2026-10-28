@@ -68,6 +68,8 @@ const DESCRIPTIONS: Record<string, string> = {
 	seed: "Rebuilds the dev dataset of db.sqlite3",
 	setup:
 		"Seeds the dev database and its images when they are missing, run by `dev`",
+	"docs:sync":
+		"Generates the docs site's content collection types (`astro sync`)",
 	"docs:build":
 		"Builds the docs site into docs/site/dist and checks its internal links",
 	"docs:preview": "Builds the docs site and serves the build, search included",

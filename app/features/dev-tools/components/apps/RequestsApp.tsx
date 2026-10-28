@@ -67,11 +67,11 @@ function RequestList({ onSelect }: { onSelect: (id: number) => void }) {
 	const [onlyRepeated, setOnlyRepeated] = React.useState(false);
 
 	React.useEffect(() => {
-		load(DEV_REQUESTS_URL);
+		void load(DEV_REQUESTS_URL);
 		if (isPaused) return;
 
 		const interval = window.setInterval(
-			() => load(DEV_REQUESTS_URL),
+			() => void load(DEV_REQUESTS_URL),
 			POLL_INTERVAL_MS,
 		);
 		return () => window.clearInterval(interval);
@@ -123,7 +123,7 @@ function RequestList({ onSelect }: { onSelect: (id: number) => void }) {
 						icon={<Trash2 />}
 						onClick={async () => {
 							await postDev(DEV_REQUESTS_URL);
-							load(DEV_REQUESTS_URL);
+							void load(DEV_REQUESTS_URL);
 						}}
 					>
 						Clear
@@ -206,7 +206,7 @@ function RequestDetails({ id, onBack }: { id: number; onBack: () => void }) {
 	const { load, data, state } = useFetcher<DevRequestLoaderData>();
 
 	React.useEffect(() => {
-		load(devRequestUrl(id));
+		void load(devRequestUrl(id));
 	}, [load, id]);
 
 	const back = (

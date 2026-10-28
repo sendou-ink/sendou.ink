@@ -164,7 +164,7 @@ test("a battle log revealing real names stays apart from the alias read of the s
 	const tl = new TimelineBuilder({ minConfidence: 0 });
 	const board = (names: string[]): ScoreboardData["players"] =>
 		[327, 408, 270, 354, 381, 613, 456, 287].map((paint, i) => ({
-			name: names[i]!,
+			name: names[i],
 			weaponId: null,
 			paint,
 			ka: i,

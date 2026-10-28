@@ -93,12 +93,11 @@ export function renamedRows(
 
 	const named = pairs.filter(
 		([aRow, bRow]) =>
-			a.players[aRow]!.name.trim() !== "" &&
-			b.players[bRow]!.name.trim() !== "",
+			a.players[aRow].name.trim() !== "" && b.players[bRow].name.trim() !== "",
 	);
 	const kept = named.filter(
 		([aRow, bRow]) =>
-			nameSimilarity(a.players[aRow]!.name, b.players[bRow]!.name) >=
+			nameSimilarity(a.players[aRow].name, b.players[bRow].name) >=
 			SAME_NAME_MIN_SIMILARITY,
 	);
 	if (
@@ -109,7 +108,7 @@ export function renamedRows(
 	}
 
 	return new Map(
-		named.map(([aRow, bRow]) => [aRow, b.players[bRow]!.name.trim()]),
+		named.map(([aRow, bRow]) => [aRow, b.players[bRow].name.trim()]),
 	);
 }
 
