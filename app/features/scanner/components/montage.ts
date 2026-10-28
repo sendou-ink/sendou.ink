@@ -1,6 +1,6 @@
 /**
  * The tournament montage (dev only, `view=montage`), a module singleton like
- * the VoD scan it drives. Opening a folder written by `pnpm vods:download`
+ * the VoD scan it drives. Opening a folder written by `bun run vods:download`
  * (the File System Access API's directory picker) reads its manifest; every
  * VoD in it is scanned in turn through `startVodScan` (saved like any file
  * scan, no clips cut) and its streaks meeting the criteria (`montageWindows`:
@@ -36,11 +36,11 @@ import {
 	MONTAGE_MANIFEST_FILE,
 	type MontageCandidate,
 	type MontageCriteria,
+	montageDuration,
 	type MontageGame,
 	type MontageManifest,
 	type MontageManifestVod,
 	type MontagePick,
-	montageDuration,
 	montageTeamSections,
 	montageWindows,
 	playbackDuration,
@@ -166,7 +166,7 @@ export function availableCandidates(state: MontageSnapshot) {
 	return state.candidates.filter((candidate) => !pickedKeys.has(candidate.key));
 }
 
-/** Opens a folder written by `pnpm vods:download` through the directory picker. */
+/** Opens a folder written by `bun run vods:download` through the directory picker. */
 export async function openMontageFolder(): Promise<void> {
 	const picker = (window as Window & { showDirectoryPicker?: DirectoryPicker })
 		.showDirectoryPicker;
@@ -187,9 +187,7 @@ export async function openMontageFolder(): Promise<void> {
 /** Asks the browser again for the restored folder (needs the click's gesture). */
 export async function reconnectMontageFolder(): Promise<void> {
 	const directory = snapshot.folder?.directory as
-		| PermissionedDirectory
-		| null
-		| undefined;
+		PermissionedDirectory | null | undefined;
 	if (!directory) return;
 	if ((await directory.requestPermission({ mode: "read" })) !== "granted") {
 		return;
@@ -552,7 +550,7 @@ async function readFolder(directory: FileSystemDirectoryHandle) {
 	const manifestFile = await read(MONTAGE_MANIFEST_FILE);
 	if (!manifestFile) {
 		throw new Error(
-			`No ${MONTAGE_MANIFEST_FILE} in the folder: pick a folder written by pnpm vods:download`,
+			`No ${MONTAGE_MANIFEST_FILE} in the folder: pick a folder written by bun run vods:download`,
 		);
 	}
 	const manifest = JSON.parse(await manifestFile.text()) as MontageManifest;
@@ -583,7 +581,7 @@ async function readFolder(directory: FileSystemDirectoryHandle) {
 	return { manifest, files };
 }
 
-/** Written by an older `pnpm vods:download`, missing fields the montage needs. */
+/** Written by an older `bun run vods:download`, missing fields the montage needs. */
 function isOutdatedManifest(manifest: MontageManifest): boolean {
 	return (
 		!manifest.teams ||
@@ -595,7 +593,7 @@ function isOutdatedManifest(manifest: MontageManifest): boolean {
 }
 
 function outdatedManifestError(manifest: MontageManifest): string {
-	return `${MONTAGE_MANIFEST_FILE} is from an older version: run pnpm vods:download ${manifest.tournamentId} again`;
+	return `${MONTAGE_MANIFEST_FILE} is from an older version: run bun run vods:download ${manifest.tournamentId} again`;
 }
 
 async function scannedGames(vod: MontageManifestVod): Promise<MontageGame[]> {

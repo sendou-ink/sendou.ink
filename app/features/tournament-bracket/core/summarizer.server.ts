@@ -7,8 +7,8 @@ import {
 	type SkillTeamIdentifier,
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
-import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import type { AllMatchResult } from "~/features/tournament-match/TournamentMatchRepository.server";
+import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import { invariant } from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import { ensureOneStandingPerUser } from "../tournament-bracket-utils";

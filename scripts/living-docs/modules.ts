@@ -38,7 +38,7 @@ const USAGE_KINDS = [
 		id: "repository",
 		label: "Repositories",
 		singular: "repository",
-		test: (p: string) => /Repository\.server\.ts$/.test(p),
+		test: (p: string) => p.endsWith("Repository.server.ts"),
 	},
 	{
 		id: "module",
@@ -192,7 +192,7 @@ export function isTestFile(file: string) {
 function fileOverview(file: ParsedFile) {
 	const firstStatement = file.program.body[0];
 	const comment = file.comments.find(
-		(candidate) => !candidate.value.trim().startsWith("biome-ignore"),
+		(candidate) => !candidate.value.trim().startsWith("eslint-"),
 	);
 	if (!comment || !firstStatement || comment.start > firstStatement.start) {
 		return null;
@@ -286,6 +286,8 @@ function collectExports(file: ParsedFile) {
 				break;
 			case "TSEnumDeclaration":
 				add(declaration.id.name, "enum", statement, statement.end);
+				break;
+			default:
 				break;
 		}
 	}

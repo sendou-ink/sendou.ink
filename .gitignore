@@ -25,12 +25,6 @@ dump
 /test-results/
 /playwright-report/
 /playwright/.cache/
-/.vitest-attachments
-.vitest-attachments/
-
-# Vitest auto-captured failure screenshots (numbered, without browser info)
-# Real baselines have pattern: *-chromium-darwin.png
-**/__screenshots__/**/*-[0-9].png
 .e2e-seaweedfs-started
 .e2e-build-marker
 
@@ -46,7 +40,7 @@ notepad.txt
 !/e2e/fixtures/scanner-vod.webm
 !/e2e/fixtures/scanner-coach-vod.webm
 
-# docs site build output, and the living docs screenshots from pnpm run docs:capture
+# docs site build output, and the living docs screenshots from bun run docs:capture
 /docs/site/dist/
 /docs/site/.astro/
 /docs/site/public/screenshots/

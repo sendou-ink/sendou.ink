@@ -76,8 +76,10 @@ export type FormFieldItemsWithImage<V extends string> = Array<
 	FormFieldItemWithImage<V>
 >;
 
-export interface FormFieldSelect<T extends string, V extends string>
-	extends FormFieldBase<T> {
+export interface FormFieldSelect<
+	T extends string,
+	V extends string,
+> extends FormFieldBase<T> {
 	items: FormFieldItems<V>;
 	clearable: boolean;
 	searchable?: boolean;
@@ -88,8 +90,10 @@ type FormFieldDualSelectField<T extends string, V extends string> = Omit<
 	"bottomText" | "type" | "clearable"
 >;
 
-export interface FormFieldDualSelect<T extends string, V extends string>
-	extends Omit<FormFieldBase<T>, "label"> {
+export interface FormFieldDualSelect<
+	T extends string,
+	V extends string,
+> extends Omit<FormFieldBase<T>, "label"> {
 	fields: [
 		Omit<FormFieldDualSelectField<T, V>, "initialValue">,
 		Omit<FormFieldDualSelectField<T, V>, "initialValue">,
@@ -101,14 +105,18 @@ export interface FormFieldDualSelect<T extends string, V extends string>
 	clearable: boolean;
 }
 
-export interface FormFieldInputGroup<T extends string, V extends string>
-	extends FormFieldBase<T> {
+export interface FormFieldInputGroup<
+	T extends string,
+	V extends string,
+> extends FormFieldBase<T> {
 	items: FormFieldItemsWithImage<V>;
 	minLength?: number;
 }
 
-export interface FormFieldRadioGroup<T extends string, V extends string>
-	extends FormFieldInputGroup<T, V> {
+export interface FormFieldRadioGroup<
+	T extends string,
+	V extends string,
+> extends FormFieldInputGroup<T, V> {
 	/** "chip" renders the options as a horizontal row of toggle chips. */
 	variant?: "chip";
 }
@@ -139,8 +147,10 @@ interface FormFieldImage<T extends string> extends FormFieldBase<T> {
 	withSmallCopy?: boolean;
 }
 
-export interface FormFieldArray<T extends string, S extends AnySyncSchema>
-	extends FormFieldBase<T> {
+export interface FormFieldArray<
+	T extends string,
+	S extends AnySyncSchema,
+> extends FormFieldBase<T> {
 	min?: number;
 	max: number;
 	field: S;
@@ -155,8 +165,10 @@ interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {
 	endLabel?: string;
 }
 
-export interface FormFieldFieldset<T extends string, S extends v.ObjectEntries>
-	extends FormFieldBase<T> {
+export interface FormFieldFieldset<
+	T extends string,
+	S extends v.ObjectEntries,
+> extends FormFieldBase<T> {
 	fields: v.ObjectSchema<S, undefined>;
 }
 
@@ -185,8 +197,9 @@ interface FormFieldSelectDynamic<T extends string> extends FormFieldBase<T> {
 	searchable?: boolean;
 }
 
-interface FormFieldInputGroupDynamic<T extends string>
-	extends FormFieldBase<T> {
+interface FormFieldInputGroupDynamic<
+	T extends string,
+> extends FormFieldBase<T> {
 	minLength?: number;
 }
 

@@ -91,8 +91,14 @@
 		"confidence": 0.9772,
 		"data": {
 			"time": 300,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -198,8 +204,14 @@
 		"confidence": 0.9492,
 		"data": {
 			"time": 298,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -305,8 +317,14 @@
 		"confidence": 0.9826,
 		"data": {
 			"time": 293,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -492,8 +510,14 @@
 		"confidence": 0.9733,
 		"data": {
 			"time": 288,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -504,8 +528,14 @@
 		"confidence": 0.9736,
 		"data": {
 			"time": 287,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -611,8 +641,14 @@
 		"confidence": 0.9635,
 		"data": {
 			"time": 286,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -623,8 +659,14 @@
 		"confidence": 0.9214,
 		"data": {
 			"time": 285,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -635,8 +677,14 @@
 		"confidence": 0.9209,
 		"data": {
 			"time": 283,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -663,8 +711,14 @@
 		"confidence": 0.9961,
 		"data": {
 			"time": 282,
-			"special": [[false, false, false, false], [true, false, false, true]],
-			"dead": [[false, false, false, false], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -777,8 +831,14 @@
 		"confidence": 0.9822,
 		"data": {
 			"time": 281,
-			"special": [[false, false, false, false], [true, false, false, true]],
-			"dead": [[false, false, false, false], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -805,8 +865,14 @@
 		"confidence": 0.9683,
 		"data": {
 			"time": 280,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -849,8 +915,14 @@
 		"confidence": 0.9652,
 		"data": {
 			"time": 278,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -877,8 +949,14 @@
 		"confidence": 0.9748,
 		"data": {
 			"time": 277,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1000,8 +1078,14 @@
 		"confidence": 0.9615,
 		"data": {
 			"time": 276,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1028,8 +1112,14 @@
 		"confidence": 0.9711,
 		"data": {
 			"time": 275,
-			"special": [[true, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1056,8 +1146,14 @@
 		"confidence": 0.9674,
 		"data": {
 			"time": 274,
-			"special": [[true, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1084,8 +1180,14 @@
 		"confidence": 0.9622,
 		"data": {
 			"time": 273,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1112,8 +1214,14 @@
 		"confidence": 0.9714,
 		"data": {
 			"time": 272,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1216,8 +1324,14 @@
 		"confidence": 0.9665,
 		"data": {
 			"time": 271,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, true, true, false], [true, false, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, true, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1228,8 +1342,14 @@
 		"confidence": 0.9174,
 		"data": {
 			"time": 270,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, true, true, false], [true, false, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, true, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1255,8 +1375,14 @@
 		"confidence": 0.9045,
 		"data": {
 			"time": 269,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, true, false], [true, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, true, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1267,8 +1393,14 @@
 		"confidence": 0.9287,
 		"data": {
 			"time": 268,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1404,8 +1536,14 @@
 		"confidence": 0.9172,
 		"data": {
 			"time": 265,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1432,8 +1570,14 @@
 		"confidence": 0.9529,
 		"data": {
 			"time": 264,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1460,8 +1604,14 @@
 		"confidence": 0.9756,
 		"data": {
 			"time": 263,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, true], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1590,8 +1740,14 @@
 		"confidence": 0.9587,
 		"data": {
 			"time": 261,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, true], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1618,8 +1774,14 @@
 		"confidence": 0.9766,
 		"data": {
 			"time": 260,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1646,8 +1808,14 @@
 		"confidence": 0.9989,
 		"data": {
 			"time": 259,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1705,8 +1873,14 @@
 		"confidence": 0.9859,
 		"data": {
 			"time": 257,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1819,8 +1993,14 @@
 		"confidence": 0.8546,
 		"data": {
 			"time": 256,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1847,8 +2027,14 @@
 		"confidence": 0.9195,
 		"data": {
 			"time": 255,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1875,8 +2061,14 @@
 		"confidence": 0.8579,
 		"data": {
 			"time": 254,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, true], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1903,8 +2095,14 @@
 		"confidence": 0.8662,
 		"data": {
 			"time": 253,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, true], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, true],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -1931,8 +2129,14 @@
 		"confidence": 0.9327,
 		"data": {
 			"time": 252,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, true], [true, true, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, true],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2011,8 +2215,14 @@
 		"confidence": 0.9016,
 		"data": {
 			"time": 251,
-			"special": [[false, true, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, true], [true, true, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, true],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2039,8 +2249,14 @@
 		"confidence": 0.986,
 		"data": {
 			"time": 250,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, true], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, true],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2051,8 +2267,14 @@
 		"confidence": 0.9696,
 		"data": {
 			"time": 249,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, true], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, true],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2063,8 +2285,14 @@
 		"confidence": 0.96,
 		"data": {
 			"time": 248,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, true], [true, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, true],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2075,8 +2303,14 @@
 		"confidence": 0.9526,
 		"data": {
 			"time": 247,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, true], [true, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, true],
+				[true, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2155,8 +2389,14 @@
 		"confidence": 0.9621,
 		"data": {
 			"time": 246,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, false], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2183,8 +2423,14 @@
 		"confidence": 0.9816,
 		"data": {
 			"time": 245,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2336,8 +2582,14 @@
 		"confidence": 0.9826,
 		"data": {
 			"time": 240,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2364,8 +2616,14 @@
 		"confidence": 0.9841,
 		"data": {
 			"time": 239,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2392,8 +2650,14 @@
 		"confidence": 0.9817,
 		"data": {
 			"time": 238,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2404,8 +2668,14 @@
 		"confidence": 0.963,
 		"data": {
 			"time": 237,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2518,8 +2788,14 @@
 		"confidence": 0.9753,
 		"data": {
 			"time": 235,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2546,8 +2822,14 @@
 		"confidence": 0.954,
 		"data": {
 			"time": 234,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2574,8 +2856,14 @@
 		"confidence": 0.962,
 		"data": {
 			"time": 233,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2602,8 +2890,14 @@
 		"confidence": 0.945,
 		"data": {
 			"time": 232,
-			"special": [[true, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2707,8 +3001,14 @@
 		"confidence": 0.9406,
 		"data": {
 			"time": 231,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2735,8 +3035,14 @@
 		"confidence": 0.9436,
 		"data": {
 			"time": 230,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2763,8 +3069,14 @@
 		"confidence": 0.977,
 		"data": {
 			"time": 229,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2791,8 +3103,14 @@
 		"confidence": 0.9751,
 		"data": {
 			"time": 228,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2819,8 +3137,14 @@
 		"confidence": 1,
 		"data": {
 			"time": 227,
-			"special": [[false, false, true, false], [false, false, false, true]],
-			"dead": [[false, false, false, false], [true, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -2933,8 +3257,14 @@
 		"confidence": 0.9952,
 		"data": {
 			"time": 226,
-			"special": [[false, false, true, false], [false, false, false, true]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3009,8 +3339,14 @@
 		"confidence": 0.987,
 		"data": {
 			"time": 222,
-			"special": [[false, false, true, false], [false, false, false, true]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3132,8 +3468,14 @@
 		"confidence": 0.9826,
 		"data": {
 			"time": 221,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3160,8 +3502,14 @@
 		"confidence": 0.9986,
 		"data": {
 			"time": 220,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, true, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, true, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3241,8 +3589,14 @@
 		"confidence": 0.7732,
 		"data": {
 			"time": 217,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, true, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, true, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3328,8 +3682,14 @@
 		"confidence": 0.7698,
 		"data": {
 			"time": 216,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, true, false], [false, true, true, true]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, true, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3356,8 +3716,14 @@
 		"confidence": 0.9632,
 		"data": {
 			"time": 215,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, true, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, true, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3384,8 +3750,14 @@
 		"confidence": 0.9828,
 		"data": {
 			"time": 214,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3412,8 +3784,14 @@
 		"confidence": 0.9472,
 		"data": {
 			"time": 213,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3440,8 +3818,14 @@
 		"confidence": 0.9809,
 		"data": {
 			"time": 212,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3627,8 +4011,14 @@
 		"confidence": 0.916,
 		"data": {
 			"time": 207,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3750,8 +4140,14 @@
 		"confidence": 0.9663,
 		"data": {
 			"time": 206,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3778,8 +4174,14 @@
 		"confidence": 0.958,
 		"data": {
 			"time": 205,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3806,8 +4208,14 @@
 		"confidence": 0.9681,
 		"data": {
 			"time": 204,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3834,8 +4242,14 @@
 		"confidence": 0.9673,
 		"data": {
 			"time": 202,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3947,8 +4361,14 @@
 		"confidence": 0.9028,
 		"data": {
 			"time": 201,
-			"special": [[false, false, false, false], [false, true, true, false]],
-			"dead": [[false, false, true, true], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, true, true, false]
+			],
+			"dead": [
+				[false, false, true, true],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3959,8 +4379,14 @@
 		"confidence": 0.9628,
 		"data": {
 			"time": 200,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, true, true], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, true, true],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3987,8 +4413,14 @@
 		"confidence": 0.8718,
 		"data": {
 			"time": 198,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, true, true], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, true, true],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -3999,8 +4431,14 @@
 		"confidence": 0.8247,
 		"data": {
 			"time": 197,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, true], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, true],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4095,8 +4533,14 @@
 		"confidence": 0.9272,
 		"data": {
 			"time": 195,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, true], [false, false, true, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, true],
+				[false, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4123,8 +4567,14 @@
 		"confidence": 0.8154,
 		"data": {
 			"time": 194,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, true], [false, false, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, true],
+				[false, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4151,8 +4601,14 @@
 		"confidence": 0.946,
 		"data": {
 			"time": 193,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4179,8 +4635,14 @@
 		"confidence": 0.868,
 		"data": {
 			"time": 192,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4306,8 +4768,14 @@
 		"confidence": 0.8719,
 		"data": {
 			"time": 190,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4334,8 +4802,14 @@
 		"confidence": 0.8981,
 		"data": {
 			"time": 189,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4362,8 +4836,14 @@
 		"confidence": 0.997,
 		"data": {
 			"time": 188,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4390,8 +4870,14 @@
 		"confidence": 0.9995,
 		"data": {
 			"time": 187,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4529,8 +5015,14 @@
 		"confidence": 0.9517,
 		"data": {
 			"time": 185,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4557,8 +5049,14 @@
 		"confidence": 0.87,
 		"data": {
 			"time": 184,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, true]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4585,8 +5083,14 @@
 		"confidence": 0.8511,
 		"data": {
 			"time": 183,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, true, true]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -4613,8 +5117,14 @@
 		"confidence": 0.9897,
 		"data": {
 			"time": 182,
-			"special": [[true, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, true, true]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, true, true]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -4725,8 +5235,14 @@
 		"confidence": 0.9887,
 		"data": {
 			"time": 180,
-			"special": [[true, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, true, true]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, true, true]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -4753,8 +5269,14 @@
 		"confidence": 0.981,
 		"data": {
 			"time": 179,
-			"special": [[true, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, true]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, true]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -4874,8 +5396,14 @@
 		"confidence": 0.8293,
 		"data": {
 			"time": 176,
-			"special": [[true, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, true]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, true]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -4886,8 +5414,14 @@
 		"confidence": 0.9624,
 		"data": {
 			"time": 175,
-			"special": [[true, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -4898,8 +5432,14 @@
 		"confidence": 0.9535,
 		"data": {
 			"time": 174,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -4926,8 +5466,14 @@
 		"confidence": 1,
 		"data": {
 			"time": 173,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -4938,8 +5484,14 @@
 		"confidence": 0.9409,
 		"data": {
 			"time": 172,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -5045,8 +5597,14 @@
 		"confidence": 0.9475,
 		"data": {
 			"time": 171,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -5057,8 +5615,14 @@
 		"confidence": 0.9223,
 		"data": {
 			"time": 170,
-			"special": [[false, false, true, false], [false, false, true, false]],
-			"dead": [[false, false, false, false], [true, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, true, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
 			"layout": "even",
 			"cast": null
 		}
@@ -5085,8 +5649,14 @@
 		"confidence": 0.9491,
 		"data": {
 			"time": 169,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, false, true, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5113,8 +5683,14 @@
 		"confidence": 0.9597,
 		"data": {
 			"time": 167,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, false, true, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, true, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5218,8 +5794,14 @@
 		"confidence": 0.9664,
 		"data": {
 			"time": 166,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, false, true, true]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5230,8 +5812,14 @@
 		"confidence": 0.9833,
 		"data": {
 			"time": 165,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, false, true, true]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5258,8 +5846,14 @@
 		"confidence": 0.9182,
 		"data": {
 			"time": 164,
-			"special": [[false, false, true, false], [false, true, false, false]],
-			"dead": [[false, false, false, false], [true, false, true, true]],
+			"special": [
+				[false, false, true, false],
+				[false, true, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5286,8 +5880,14 @@
 		"confidence": 0.8745,
 		"data": {
 			"time": 163,
-			"special": [[false, false, true, false], [false, true, false, false]],
-			"dead": [[false, false, false, false], [true, false, true, true]],
+			"special": [
+				[false, false, true, false],
+				[false, true, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5298,8 +5898,14 @@
 		"confidence": 0.9832,
 		"data": {
 			"time": 162,
-			"special": [[false, false, true, false], [false, true, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, true]],
+			"special": [
+				[false, false, true, false],
+				[false, true, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5412,8 +6018,14 @@
 		"confidence": 0.9889,
 		"data": {
 			"time": 161,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, true]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5456,8 +6068,14 @@
 		"confidence": 0.9864,
 		"data": {
 			"time": 159,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, true]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5484,8 +6102,14 @@
 		"confidence": 0.9523,
 		"data": {
 			"time": 158,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5607,8 +6231,14 @@
 		"confidence": 0.9604,
 		"data": {
 			"time": 156,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5635,8 +6265,14 @@
 		"confidence": 0.9615,
 		"data": {
 			"time": 155,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5663,8 +6299,14 @@
 		"confidence": 0.971,
 		"data": {
 			"time": 154,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5675,8 +6317,14 @@
 		"confidence": 0.9559,
 		"data": {
 			"time": 153,
-			"special": [[false, false, true, false], [false, false, true, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, true, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5703,8 +6351,14 @@
 		"confidence": 0.9741,
 		"data": {
 			"time": 152,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5817,8 +6471,14 @@
 		"confidence": 0.9646,
 		"data": {
 			"time": 151,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5861,8 +6521,14 @@
 		"confidence": 0.9499,
 		"data": {
 			"time": 148,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5889,8 +6555,14 @@
 		"confidence": 0.9747,
 		"data": {
 			"time": 147,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[false, false, false, true], [false, false, false, true]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, true],
+				[false, false, false, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -5978,8 +6650,14 @@
 		"confidence": 0.9251,
 		"data": {
 			"time": 146,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, true], [false, false, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, true],
+				[false, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6022,8 +6700,14 @@
 		"confidence": 0.8232,
 		"data": {
 			"time": 144,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, true], [false, false, true, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, true],
+				[false, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6065,8 +6749,14 @@
 		"confidence": 0.9387,
 		"data": {
 			"time": 143,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, true, true]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, true, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6093,8 +6783,14 @@
 		"confidence": 0.985,
 		"data": {
 			"time": 142,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, true]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6198,8 +6894,14 @@
 		"confidence": 0.9855,
 		"data": {
 			"time": 141,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, true]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6226,8 +6928,14 @@
 		"confidence": 0.9482,
 		"data": {
 			"time": 140,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6254,8 +6962,14 @@
 		"confidence": 0.9144,
 		"data": {
 			"time": 139,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, true, true, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, true, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6282,8 +6996,14 @@
 		"confidence": 0.9582,
 		"data": {
 			"time": 138,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6310,8 +7030,14 @@
 		"confidence": 0.9263,
 		"data": {
 			"time": 137,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [true, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6415,8 +7141,14 @@
 		"confidence": 0.9575,
 		"data": {
 			"time": 136,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [true, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6427,8 +7159,14 @@
 		"confidence": 0.9735,
 		"data": {
 			"time": 135,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, true, false, false], [true, false, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6439,8 +7177,14 @@
 		"confidence": 0.9639,
 		"data": {
 			"time": 134,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6451,8 +7195,14 @@
 		"confidence": 0.9729,
 		"data": {
 			"time": 133,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6463,8 +7213,14 @@
 		"confidence": 0.9815,
 		"data": {
 			"time": 132,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6570,8 +7326,14 @@
 		"confidence": 0.9905,
 		"data": {
 			"time": 131,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6582,8 +7344,14 @@
 		"confidence": 0.9365,
 		"data": {
 			"time": 130,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6709,8 +7477,14 @@
 		"confidence": 0.9847,
 		"data": {
 			"time": 126,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6737,8 +7511,14 @@
 		"confidence": 0.983,
 		"data": {
 			"time": 125,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6765,8 +7545,14 @@
 		"confidence": 0.9579,
 		"data": {
 			"time": 124,
-			"special": [[false, false, false, false], [false, false, true, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, true, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6793,8 +7579,14 @@
 		"confidence": 0.9425,
 		"data": {
 			"time": 123,
-			"special": [[false, false, true, false], [false, false, true, false]],
-			"dead": [[false, false, false, false], [true, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, true, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6821,8 +7613,14 @@
 		"confidence": 0.976,
 		"data": {
 			"time": 122,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -6944,8 +7742,14 @@
 		"confidence": 0.9552,
 		"data": {
 			"time": 121,
-			"special": [[true, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -7116,8 +7920,14 @@
 		"confidence": 0.9441,
 		"data": {
 			"time": 291,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -7239,8 +8049,14 @@
 		"confidence": 0.9972,
 		"data": {
 			"time": 290,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -7251,8 +8067,14 @@
 		"confidence": 0.9743,
 		"data": {
 			"time": 289,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -7278,8 +8100,14 @@
 		"confidence": 0.9841,
 		"data": {
 			"time": 286,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -7290,8 +8118,14 @@
 		"confidence": 0.9137,
 		"data": {
 			"time": 285,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, true], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -7402,8 +8236,14 @@
 		"confidence": 0.7481,
 		"data": {
 			"time": 282,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, true, true, true], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, true, true, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-right",
 			"cast": null
 		}
@@ -7430,8 +8270,14 @@
 		"confidence": 0.9875,
 		"data": {
 			"time": 281,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, true], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7458,8 +8304,14 @@
 		"confidence": 0.9839,
 		"data": {
 			"time": 280,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, true], [false, true, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7486,8 +8338,14 @@
 		"confidence": 0.9581,
 		"data": {
 			"time": 278,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, true], [false, true, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7566,8 +8424,14 @@
 		"confidence": 0.9935,
 		"data": {
 			"time": 277,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7578,8 +8442,14 @@
 		"confidence": 0.9927,
 		"data": {
 			"time": 275,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7590,8 +8460,14 @@
 		"confidence": 0.9751,
 		"data": {
 			"time": 274,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7697,8 +8573,14 @@
 		"confidence": 0.9681,
 		"data": {
 			"time": 269,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7709,8 +8591,14 @@
 		"confidence": 0.9834,
 		"data": {
 			"time": 268,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7721,8 +8609,14 @@
 		"confidence": 0.9702,
 		"data": {
 			"time": 267,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7749,8 +8643,14 @@
 		"confidence": 0.9772,
 		"data": {
 			"time": 265,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7856,8 +8756,14 @@
 		"confidence": 0.975,
 		"data": {
 			"time": 264,
-			"special": [[false, false, false, false], [false, false, false, true]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, true]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7868,8 +8774,14 @@
 		"confidence": 0.9689,
 		"data": {
 			"time": 263,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7896,8 +8808,14 @@
 		"confidence": 0.9593,
 		"data": {
 			"time": 262,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7908,8 +8826,14 @@
 		"confidence": 0.9716,
 		"data": {
 			"time": 260,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -7920,8 +8844,14 @@
 		"confidence": 0.9764,
 		"data": {
 			"time": 259,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8033,8 +8963,14 @@
 		"confidence": 0.8981,
 		"data": {
 			"time": 258,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[true, false, false, false], [false, false, false, true]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8051,8 +8987,14 @@
 		"confidence": 0.8994,
 		"data": {
 			"time": 257,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, false], [false, false, false, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[false, false, false, true]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8094,8 +9036,14 @@
 		"confidence": 0.9784,
 		"data": {
 			"time": 256,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, true], [false, false, false, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, true],
+				[false, false, false, true]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8138,8 +9086,14 @@
 		"confidence": 0.9793,
 		"data": {
 			"time": 254,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, true], [false, false, false, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, true],
+				[false, false, false, true]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8218,8 +9172,14 @@
 		"confidence": 0.8959,
 		"data": {
 			"time": 252,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, false], [true, false, false, true]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[true, false, false, true]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8246,8 +9206,14 @@
 		"confidence": 0.9895,
 		"data": {
 			"time": 251,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [true, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[true, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8258,8 +9224,14 @@
 		"confidence": 0.9583,
 		"data": {
 			"time": 250,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, true, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, true, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8270,8 +9242,14 @@
 		"confidence": 0.9683,
 		"data": {
 			"time": 248,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8359,8 +9337,14 @@
 		"confidence": 0.9731,
 		"data": {
 			"time": 246,
-			"special": [[false, false, false, true], [false, false, false, false]],
-			"dead": [[false, false, false, false], [true, true, false, false]],
+			"special": [
+				[false, false, false, true],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[true, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8387,8 +9371,14 @@
 		"confidence": 0.9829,
 		"data": {
 			"time": 245,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8399,8 +9389,14 @@
 		"confidence": 0.9739,
 		"data": {
 			"time": 243,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8411,8 +9407,14 @@
 		"confidence": 0.977,
 		"data": {
 			"time": 242,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8423,8 +9425,14 @@
 		"confidence": 0.9638,
 		"data": {
 			"time": 241,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8536,8 +9544,14 @@
 		"confidence": 0.9785,
 		"data": {
 			"time": 239,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8548,8 +9562,14 @@
 		"confidence": 0.9716,
 		"data": {
 			"time": 238,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[true, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8560,8 +9580,14 @@
 		"confidence": 0.9702,
 		"data": {
 			"time": 237,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8699,8 +9725,14 @@
 		"confidence": 0.9719,
 		"data": {
 			"time": 233,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8711,8 +9743,14 @@
 		"confidence": 0.9783,
 		"data": {
 			"time": 232,
-			"special": [[false, true, false, false], [false, false, false, false]],
-			"dead": [[false, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, true, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8723,8 +9761,14 @@
 		"confidence": 0.9913,
 		"data": {
 			"time": 231,
-			"special": [[false, true, true, false], [false, false, false, false]],
-			"dead": [[true, false, false, false], [false, false, false, false]],
+			"special": [
+				[false, true, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, false, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8751,8 +9795,14 @@
 		"confidence": 0.9574,
 		"data": {
 			"time": 229,
-			"special": [[false, false, true, false], [false, false, false, false]],
-			"dead": [[true, true, false, false], [false, false, false, false]],
+			"special": [
+				[false, false, true, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, true, false, false],
+				[false, false, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8794,8 +9844,14 @@
 		"confidence": 0.8192,
 		"data": {
 			"time": 228,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, true, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, true, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8906,8 +9962,14 @@
 		"confidence": 0.8482,
 		"data": {
 			"time": 226,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, true, false, false], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, true, false, false],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8934,8 +9996,14 @@
 		"confidence": 0.9728,
 		"data": {
 			"time": 224,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[true, true, false, true], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[true, true, false, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8962,8 +10030,14 @@
 		"confidence": 0.987,
 		"data": {
 			"time": 223,
-			"special": [[false, false, false, false], [false, false, false, false]],
-			"dead": [[false, true, true, true], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[false, false, false, false]
+			],
+			"dead": [
+				[false, true, true, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}
@@ -8990,8 +10064,14 @@
 		"confidence": 0.9664,
 		"data": {
 			"time": 222,
-			"special": [[false, false, false, false], [true, false, false, false]],
-			"dead": [[false, true, true, true], [false, true, false, false]],
+			"special": [
+				[false, false, false, false],
+				[true, false, false, false]
+			],
+			"dead": [
+				[false, true, true, true],
+				[false, true, false, false]
+			],
 			"layout": "narrow-left",
 			"cast": null
 		}

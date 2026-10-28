@@ -72,7 +72,7 @@ test("timeline merges same-type events inside the window", () => {
 	assert.equal(tl.push(event(100, 0.8)).action, "added");
 	assert.equal(tl.push(event(110, 0.7)).action, "merged");
 	assert.equal(tl.events.length, 1);
-	assert.equal(tl.events[0]!.confidence, 0.8);
+	assert.equal(tl.events[0].confidence, 0.8);
 });
 
 test("timeline keeps the highest-confidence version", () => {
@@ -80,7 +80,7 @@ test("timeline keeps the highest-confidence version", () => {
 	tl.push(event(100, 0.7));
 	const result = tl.push(event(105, 0.9));
 	assert.equal(result.action, "replaced");
-	assert.equal(tl.events[0]!.confidence, 0.9);
+	assert.equal(tl.events[0].confidence, 0.9);
 });
 
 test("timeline keeps separate events outside the window", () => {
@@ -164,7 +164,7 @@ test("a battle log revealing real names stays apart from the alias read of the s
 	const tl = new TimelineBuilder({ minConfidence: 0 });
 	const board = (names: string[]): ScoreboardData["players"] =>
 		[327, 408, 270, 354, 381, 613, 456, 287].map((paint, i) => ({
-			name: names[i]!,
+			name: names[i],
 			weaponId: null,
 			paint,
 			ka: i,
@@ -235,8 +235,8 @@ test("a kill stack stays at its first read when a repeat reads more confidently"
 		data: { time: 256, names: ["Jrod_14"] },
 	});
 	assert.equal(tl.events.length, 1);
-	assert.equal(tl.events[0]!.t, 11077.3);
-	assert.deepEqual(tl.events[0]!.data, { time: 261, names: ["Jrod_14"] });
+	assert.equal(tl.events[0].t, 11077.3);
+	assert.deepEqual(tl.events[0].data, { time: 261, names: ["Jrod_14"] });
 });
 
 const NO_FLAGS: PlayerStatusData["dead"] = [
@@ -291,7 +291,7 @@ test("a higher-confidence repeat never moves a sample", () => {
 	const tl = new TimelineBuilder();
 	tl.push(status(100, 0.7));
 	assert.equal(tl.push(status(101, 0.95)).action, "added");
-	assert.equal(tl.events[0]!.t, 100);
+	assert.equal(tl.events[0].t, 100);
 });
 
 test("a late read inside an existing run merges, as does a same-frame repeat", () => {

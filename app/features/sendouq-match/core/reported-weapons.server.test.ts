@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mergeReportedWeapons } from "./reported-weapons.server";
 
@@ -26,7 +26,7 @@ describe("mergeReportedWeapons()", () => {
 					groupMatchId: 1,
 					mapIndex: 0,
 					userId: 1,
-					weaponSplId: 1 as MainWeaponId,
+					weaponSplId: 1,
 				},
 			],
 		});
@@ -42,7 +42,7 @@ describe("mergeReportedWeapons()", () => {
 					groupMatchId: 1,
 					mapIndex: 0,
 					userId: 2,
-					weaponSplId: 0 as MainWeaponId,
+					weaponSplId: 0,
 				},
 			],
 		});
@@ -66,13 +66,13 @@ describe("mergeReportedWeapons()", () => {
 					groupMatchId: 1,
 					mapIndex: 0,
 					userId: 1,
-					weaponSplId: 1 as MainWeaponId,
+					weaponSplId: 1,
 				},
 				{
 					groupMatchId: 1,
 					mapIndex: 0,
 					userId: 2,
-					weaponSplId: 0 as MainWeaponId,
+					weaponSplId: 0,
 				},
 			],
 		});
@@ -96,7 +96,7 @@ describe("mergeReportedWeapons()", () => {
 					groupMatchId: 1,
 					mapIndex: 1,
 					userId: 1,
-					weaponSplId: 0 as MainWeaponId,
+					weaponSplId: 0,
 				},
 			],
 			newReportedMapsCount: 1,

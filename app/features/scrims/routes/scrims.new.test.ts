@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { add } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { SerializeFrom } from "~/utils/remix";
 import { wrappedAction, wrappedLoader } from "~/utils/Test";
@@ -95,7 +95,7 @@ describe("New scrim post action", () => {
 		});
 
 		expect(recentPickupRosters).toHaveLength(1);
-		expect(recentPickupRosters[0]!.users.map((user) => user.id)).toEqual(
+		expect(recentPickupRosters[0].users.map((user) => user.id)).toEqual(
 			pickupMembers.ids().sort((a, b) => a - b),
 		);
 	});

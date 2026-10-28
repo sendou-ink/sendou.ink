@@ -23,17 +23,17 @@ The code below is trimmed to what matters for the flow, follow the links for the
 	participant DB as SQLite
 	participant B as Bravo's browser
 
-	A->>S: GET /scrims/7
-	Note over S: middleware: user, i18n, timezone…
-	S->>DB: loader → repositories
-	S-->>A: HTML with the loader data, hydrated
-	A->>S: POST /scrims/7 (SendouForm, JSON)
-	Note over S: defineAction parses params + body
-	S->>DB: ScrimMapListRepository (transaction)
-	S--)B: SSE "revalidate" on the scrim's chat room
-	S-->>A: null
-	A->>S: loaders rerun (React Router revalidation)
-	B->>S: loaders rerun (after a jitter)`} />
+    A->>S: GET /scrims/7
+    Note over S: middleware: user, i18n, timezone…
+    S->>DB: loader → repositories
+    S-->>A: HTML with the loader data, hydrated
+    A->>S: POST /scrims/7 (SendouForm, JSON)
+    Note over S: defineAction parses params + body
+    S->>DB: ScrimMapListRepository (transaction)
+    S--)B: SSE "revalidate" on the scrim's chat room
+    S-->>A: null
+    A->>S: loaders rerun (React Router revalidation)
+    B->>S: loaders rerun (after a jitter)`} />
 
 ## 1. Route
 
@@ -202,11 +202,16 @@ export const submitMapListFormSchema = v.pipe(
 		_action: stringConstant("SUBMIT_MAP_LIST"),
 		source: radioGroupDynamic({ label: "labels.scrimMapSource" }),
 		serializedPool: mapPoolOptional({ label: "labels.scrimMapPool" }),
-		tournamentId: tournamentSearchOptional({ label: "labels.scrimMapsTournament" }),
+		tournamentId: tournamentSearchOptional({
+			label: "labels.scrimMapsTournament",
+		}),
 	}),
 	superRefine((data, ctx) => {
 		if (data.source === "POOL" && !data.serializedPool) {
-			ctx.addIssue({ path: ["serializedPool"], message: "forms:errors.invalidMapPool" });
+			ctx.addIssue({
+				path: ["serializedPool"],
+				message: "forms:errors.invalidMapPool",
+			});
 		}
 		// ...
 	}),
@@ -256,7 +261,10 @@ export const action = defineAction(
 					body.source === "POOL"
 						? (MapPool.fromUserInput(body.serializedPool!)?.serialized ?? null)
 						: null;
-				errorToastIfFalsy(body.source !== "POOL" || serializedPool, "Invalid map pool");
+				errorToastIfFalsy(
+					body.source !== "POOL" || serializedPool,
+					"Invalid map pool",
+				);
 
 				await ScrimMapListRepository.submitMapListAndGenerateIfNeeded({
 					scrimPostId: post.id,

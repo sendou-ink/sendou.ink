@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { TeamPickSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {

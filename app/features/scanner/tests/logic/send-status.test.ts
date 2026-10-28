@@ -1,4 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
+import { mockFetch } from "~/utils/test-helpers";
 import {
 	aggregateSendStatus,
 	retryDueMatches,
@@ -18,7 +27,7 @@ const NOW = 1_800_000_000_000;
 
 beforeEach(() => {
 	vi.useFakeTimers();
-	vi.setSystemTime(NOW);
+	setSystemTime(NOW);
 });
 
 afterEach(() => {
@@ -145,7 +154,7 @@ describe("retryDueMatches", () => {
 
 describe("sendMatches", () => {
 	afterEach(() => {
-		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
 	});
 
 	test.each([
@@ -172,10 +181,7 @@ describe("sendMatches", () => {
 	}>)(
 		"a failed send counts its attempt: $why",
 		async ({ previous, expected }) => {
-			vi.stubGlobal(
-				"fetch",
-				vi.fn(async () => new Response("deploying", { status: 503 })),
-			);
+			mockFetch(async () => new Response("deploying", { status: 503 }));
 			const writes: SendStatus[] = [];
 
 			await sendMatches({

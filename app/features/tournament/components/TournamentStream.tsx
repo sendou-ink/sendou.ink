@@ -6,8 +6,8 @@ import {
 	StreamCardUser,
 } from "~/features/live-streams/components/StreamCard";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
-import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentStream as TournamentStreamType } from "~/features/tournament-bracket/core/Tournament";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { tournamentTeamPage } from "~/utils/urls";
 
 export function TournamentStream({

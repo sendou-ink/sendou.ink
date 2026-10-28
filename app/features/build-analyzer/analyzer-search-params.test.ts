@@ -1,4 +1,4 @@
-import { describe, test } from "vitest";
+import { describe, test } from "bun:test";
 import { EMPTY_BUILD } from "~/features/builds/builds-constants";
 import type { BuildAbilitiesTupleWithUnknown } from "~/modules/in-game-lists/types";
 import {

@@ -1,6 +1,6 @@
+import { describe, expect, test } from "bun:test";
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
 import * as R from "remeda";
-import { describe, expect, test } from "vitest";
 import type { PreparedMaps as PreparedMapsType } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type { StageId } from "~/modules/in-game-lists/types";
@@ -11,8 +11,8 @@ import type { BracketData } from "./engine/types";
 import * as PreparedMaps from "./PreparedMaps";
 import type * as Progression from "./Progression";
 import { getRounds } from "./rounds";
-import type { TournamentData } from "./Tournament.server";
 import { testTournament, tournamentCtxTeam } from "./tests/test-utils";
+import type { TournamentData } from "./Tournament.server";
 
 const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
 	testTournament({
@@ -248,8 +248,9 @@ describe("PreparedMaps - eliminationTeamCountOptions", () => {
 		).toBe(16);
 	});
 
-	for (const type of ELIMINATION_TYPES) {
-		test(`every ${type} team count plays the same rounds as the max of its range`, () => {
+	test.each(ELIMINATION_TYPES)(
+		"every %s team count plays the same rounds as the max of its range",
+		(type) => {
 			const mismatches: string[] = [];
 
 			for (
@@ -273,8 +274,8 @@ describe("PreparedMaps - eliminationTeamCountOptions", () => {
 			}
 
 			expect(mismatches).toEqual([]);
-		});
-	}
+		},
+	);
 
 	/** Round names as both the bracket and the prepared maps dialog show them. Third place match left out as it is trimmed separately. */
 	function playedRoundNames({
@@ -411,7 +412,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		});
 
 		expect(trimmed?.maps[0].list?.[0].stageId).toBe(
-			// biome-ignore lint/suspicious/noNonNullAssertedOptionalChain: Biome 2.3.1 upgrade
+			// eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain -- Biome 2.3.1 upgrade
 			EIGHT_TEAM_SE_PREPARED.maps[1].list?.[0].stageId!,
 		);
 	});

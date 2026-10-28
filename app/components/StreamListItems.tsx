@@ -59,15 +59,18 @@ export function StreamListItems({
 		return dateTimeFormatter.format(date);
 	};
 
+	// eslint-disable-next-line react-hooks/purity -- fresh enough, streams revalidate on navigation
+	const now = Date.now();
+
 	return (
 		<>
 			{streams.map((stream, i) => {
 				const startsAtDate = databaseTimestampToDate(stream.startsAt);
-				const isUpcoming = startsAtDate.getTime() > Date.now();
+				const isUpcoming = startsAtDate.getTime() > now;
 				const prevStream = streams.at(i - 1);
 				const prevIsLive =
 					prevStream &&
-					databaseTimestampToDate(prevStream.startsAt).getTime() <= Date.now();
+					databaseTimestampToDate(prevStream.startsAt).getTime() <= now;
 				const showUpcomingDivider = isUpcoming && prevIsLive;
 				const tournamentId = stream.id.startsWith("upcoming-")
 					? Number(stream.id.replace("upcoming-", ""))
@@ -160,7 +163,7 @@ function SaveTournamentStreamButton({
 		>
 			<input
 				type="hidden"
-				// biome-ignore lint/plugin: bare icon button that also posts revalidateRoot for the root loader
+				// eslint-disable-next-line sendou/no-raw-action-forms -- bare icon button that also posts revalidateRoot for the root loader
 				name="_action"
 				value={optimisticSaved ? "UNSAVE_TOURNAMENT" : "SAVE_TOURNAMENT"}
 			/>

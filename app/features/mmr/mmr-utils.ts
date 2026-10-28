@@ -1,6 +1,6 @@
 import {
-	rate as openskillRate,
 	ordinal,
+	rate as openskillRate,
 	type Rating,
 	rating,
 	type Team,

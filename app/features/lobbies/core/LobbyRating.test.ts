@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { ordinal, rating } from "openskill";
-import { describe, expect, test } from "vitest";
 import * as LobbyRating from "./LobbyRating";
 import { setOf } from "./tests/fixtures";
 

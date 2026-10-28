@@ -1,6 +1,6 @@
 /**
  * Hand-maintained types for the [Leanny/splat3](https://github.com/Leanny/splat3) game data dump,
- * declared rather than inferred so `pnpm run typecheck:scripts` passes without the gitignored dump in
+ * declared rather than inferred so `bun run typecheck:scripts` passes without the gitignored dump in
  * `scripts/dicts/splat3`. Only the fields the scripts read are declared; update alongside the scripts.
  */
 

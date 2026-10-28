@@ -26,17 +26,17 @@ import {
 	userPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import styles from "./GlobalSearch.module.css";
 import {
 	saveRecentWeapon,
 	searchTypePersisted,
 	useRecentWeapons,
 } from "./global-search-persisted";
 import {
-	globalSearchSearchParams,
 	GLOBAL_SEARCH_TYPES as SEARCH_TYPES,
+	globalSearchSearchParams,
 	type GlobalSearchType as SearchType,
 } from "./global-search-search-params";
+import styles from "./GlobalSearch.module.css";
 import {
 	SearchResultsEmptyState,
 	SearchResultsItem,
@@ -120,7 +120,7 @@ export function GlobalSearch() {
 	return (
 		<>
 			<Link
-				// biome-ignore lint/plugin: opens the search on whichever page is open
+				// eslint-disable-next-line sendou/no-relative-links -- opens the search on whichever page is open
 				to={globalSearchSearchParams.href("", { search: "open" })}
 				defaultShouldRevalidate={false}
 				preventScrollReset
@@ -218,10 +218,10 @@ function GlobalSearchContent({
 		() => {
 			if (searchType === "weapons") return;
 			if (query.length < 3) return;
-			fetcher.load(
+			void fetcher.load(
 				searchSearchParams.href("/search", {
 					q: query,
-					type: searchType as Exclude<SearchType, "weapons">,
+					type: searchType,
 					limit: 10,
 				}),
 			);

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";

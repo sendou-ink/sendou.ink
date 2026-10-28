@@ -421,7 +421,7 @@ export function coachedTeam(
 		(team) => [...nameKeys(team)].filter((key) => roster.has(key)).length,
 	);
 	if (shared[0] === shared[1]) return latest.team;
-	return shared[0]! > shared[1]! ? 0 : 1;
+	return shared[0] > shared[1] ? 0 : 1;
 }
 
 /**
@@ -573,8 +573,8 @@ function isStricterTier(type: CoachEventType, than: CoachEventType) {
 	);
 	return (
 		index > thanIndex &&
-		tierLadder(DEFINITIONS[index]!.rule) ===
-			tierLadder(DEFINITIONS[thanIndex]!.rule)
+		tierLadder(DEFINITIONS[index].rule) ===
+			tierLadder(DEFINITIONS[thanIndex].rule)
 	);
 }
 
@@ -608,7 +608,7 @@ function analyze(
 	const povDeadReads =
 		povSlot === null
 			? []
-			: risingEdges(statuses, (sample) => sample.dead[povTeam][povSlot]!);
+			: risingEdges(statuses, (sample) => sample.dead[povTeam][povSlot]);
 
 	return {
 		mode: match.mode ?? match.objective?.mode ?? null,
@@ -777,7 +777,7 @@ function specialStackMoments(
 	return clusters(uses, SPECIAL_STACK_MAX_GAP_S)
 		.filter((cluster) => cluster.length >= minSpecials)
 		.map((cluster) => ({
-			start: cluster[0]! - LEAD_BUFFER_S,
+			start: cluster[0] - LEAD_BUFFER_S,
 			end: cluster.at(-1)! + SPECIAL_STACK_TAIL_S,
 		}));
 }
@@ -837,7 +837,7 @@ function deathStreakMoments(minDeaths: number, analysis: Analysis): Moment[] {
 	return streaks
 		.filter((deaths) => deaths.length >= minDeaths)
 		.map((deaths) => ({
-			start: deaths[0]! - DEATH_LEAD_S,
+			start: deaths[0] - DEATH_LEAD_S,
 			end: deaths.at(-1)! + DEATH_TAIL_S,
 		}));
 }
@@ -853,7 +853,7 @@ function killStreakMoments(minKills: number, analysis: Analysis): Moment[] {
 	return Object.values(R.groupBy(povKills, lifeOf))
 		.filter((kills) => kills.length >= minKills)
 		.map((kills) => ({
-			start: kills[0]! - LEAD_BUFFER_S,
+			start: kills[0] - LEAD_BUFFER_S,
 			end: kills.at(-1)! + KILL_STREAK_TAIL_S,
 		}));
 }
@@ -951,7 +951,7 @@ function respawnAfter(analysis: Analysis, death: number): number {
 	if (povSlot === null) return fallback;
 
 	const isDead = (sample: ScannerMatchPlayerStatusSample) =>
-		sample.dead[povTeam][povSlot]!;
+		sample.dead[povTeam][povSlot];
 	const nearby = statuses.filter(
 		(sample) => sample.t >= death && sample.t - death <= RESPAWN_MAX_WAIT_S,
 	);
@@ -997,7 +997,7 @@ function lifeControl(
 			FULL_COUNT,
 			...objective.flatMap((sample) =>
 				sample.t <= t && sample.score[team] !== null
-					? [sample.score[team]!]
+					? [sample.score[team]]
 					: [],
 			),
 		);
@@ -1064,8 +1064,8 @@ function progressOf(run: ControlRun): number {
 		sample.score[run.team] === null ? [] : [sample.score[run.team]!],
 	);
 	return Math.max(
-		forward.length > 0 ? Math.max(...forward) - forward[0]! : 0,
-		counts.length > 0 ? counts[0]! - Math.min(...counts) : 0,
+		forward.length > 0 ? Math.max(...forward) - forward[0] : 0,
+		counts.length > 0 ? counts[0] - Math.min(...counts) : 0,
 	);
 }
 
@@ -1146,7 +1146,7 @@ function deadReadSoonAfter(
 	team: Team,
 	slot: number,
 ): number | null {
-	const from = statuses[index]!.t;
+	const from = statuses[index].t;
 	for (const sample of statuses.slice(index + 1)) {
 		if (sample.t - from > SPECIAL_DEATH_LAG_S) return null;
 		if (sample.dead[team][slot]) return sample.t;
@@ -1160,7 +1160,7 @@ function teamSplats(
 ): number[] {
 	return [0, 1, 2, 3]
 		.flatMap((slot) =>
-			risingEdges(statuses, (sample) => sample.dead[team][slot]!),
+			risingEdges(statuses, (sample) => sample.dead[team][slot]),
 		)
 		.sort((a, b) => a - b);
 }
@@ -1180,7 +1180,7 @@ function mergedDeaths(reads: readonly number[]): number[] {
 	return clusters(
 		reads.toSorted((a, b) => a - b),
 		DEATH_MERGE_GAP_S,
-	).map((cluster) => cluster[0]!);
+	).map((cluster) => cluster[0]);
 }
 
 /** Sorted values grouped wherever consecutive ones are at most `maxGap` apart. */
@@ -1200,7 +1200,7 @@ function lowestCount(
 	team: Team,
 ): number | null {
 	const counts = objective.flatMap((sample) =>
-		sample.score[team] === null ? [] : [sample.score[team]!],
+		sample.score[team] === null ? [] : [sample.score[team]],
 	);
 	const [previous, last] = counts.slice(-2);
 	if (
@@ -1226,7 +1226,7 @@ function projectedGameStartT(
 		)
 		.sort((a, b) => a - b);
 	if (starts.length === 0) return null;
-	return starts[Math.floor(starts.length / 2)]!;
+	return starts[Math.floor(starts.length / 2)];
 }
 
 function coversOpening(analysis: Analysis, gameStartT: number): boolean {

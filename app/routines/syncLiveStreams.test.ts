@@ -1,22 +1,28 @@
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { add } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { COMBINED_STREAMS_KEY } from "~/features/core/streams/streams.server";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import { testTournament } from "~/features/tournament-bracket/core/tests/test-utils";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { cache } from "~/utils/cache.server";
 import { withUserId } from "~/utils/Test";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 
-const { mockGetStreams, mockGetYoutubeLiveStreams } = vi.hoisted(() => ({
-	mockGetStreams: vi.fn(),
-	mockGetYoutubeLiveStreams: vi.fn(),
-}));
+const mockGetStreams = vi.fn();
+const mockGetYoutubeLiveStreams = vi.fn();
 
 vi.mock("~/modules/twitch/streams", () => ({
 	getStreams: mockGetStreams,
@@ -97,7 +103,7 @@ let timeOffset = 0;
 describe("syncLiveStreams tournament streamers", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(
+		setSystemTime(
 			add(new Date("2025-01-15T12:00:00Z"), { minutes: timeOffset }),
 		);
 		timeOffset += 31;

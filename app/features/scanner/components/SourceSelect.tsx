@@ -19,12 +19,12 @@ import {
 	resolveVideoInput,
 } from "../capture/sampler";
 import { useLiveSession } from "./live-session";
-import styles from "./SourceSelect.module.css";
 import {
 	type AudioSource,
 	updateSettings,
 	useScannerSettings,
 } from "./settings";
+import styles from "./SourceSelect.module.css";
 
 const NO_INPUTS: MediaInputs = { video: [], audio: [] };
 

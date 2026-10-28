@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as R from "remeda";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -9,9 +9,9 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "./test-utils";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
+import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 
 const users = UserFactory.pool();
 

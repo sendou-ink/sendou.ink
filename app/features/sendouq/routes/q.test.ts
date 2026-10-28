@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "bun:test";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";

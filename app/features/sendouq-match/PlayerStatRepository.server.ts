@@ -1,8 +1,8 @@
 import {
 	type ExpressionBuilder,
 	type NotNull,
-	type SqlBool,
 	sql,
+	type SqlBool,
 	type Transaction,
 } from "kysely";
 import * as R from "remeda";

@@ -12,7 +12,7 @@ declare global {
 }
 
 function callPageInit() {
-	window.fusetag = window.fusetag || { que: [] };
+	window.fusetag ||= { que: [] };
 	window.fusetag.que.push(() => {
 		window.fusetag.pageInit?.();
 	});
@@ -38,7 +38,7 @@ export function FuseZone({
 	className?: string;
 }) {
 	useEffect(() => {
-		window.fusetag = window.fusetag || { que: [] };
+		window.fusetag ||= { que: [] };
 		window.fusetag.que.push(() => {
 			window.fusetag.registerZone?.(id);
 		});

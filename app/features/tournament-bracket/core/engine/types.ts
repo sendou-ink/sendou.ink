@@ -15,10 +15,7 @@ export type RoundSection = NonNullable<Tables["TournamentRound"]["section"]>;
 
 /** Where a match sits in an elimination stage, derived from the stage type and the round's section; `final_group` exists in both single and double elimination. */
 export type GroupType =
-	| "single_bracket"
-	| "winner_bracket"
-	| "loser_bracket"
-	| "final_group";
+	"single_bracket" | "winner_bracket" | "loser_bracket" | "final_group";
 
 export type SeedOrdering =
 	| "natural"
@@ -174,11 +171,10 @@ export type RoundMapsInput = TournamentRoundMaps & {
 };
 
 /** {@link CreateBracketInput} with settings already resolved to internal {@link StageSettings}. */
-export interface ResolvedCreateBracketInput
-	extends Omit<
-		CreateBracketInput,
-		"settings" | "independentRounds" | "isRealtime"
-	> {
+export interface ResolvedCreateBracketInput extends Omit<
+	CreateBracketInput,
+	"settings" | "independentRounds" | "isRealtime"
+> {
 	settings: StageSettings;
 }
 

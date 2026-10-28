@@ -8,10 +8,10 @@ import {
 } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { LRUCache } from "~/modules/cache";
 import { hasPermission } from "~/modules/permissions/utils";
 import { IN_MILLISECONDS } from "~/utils/cache.server";
@@ -90,8 +90,8 @@ export async function fetchTournamentStreams(
 		videoId: stream.videoId,
 		thumbnailUrl: stream.thumbnailUrl,
 		viewerCount: stream.viewerCount,
-		userId: stream.userId as number | null,
-		teamId: stream.teamId as number | null,
+		userId: stream.userId,
+		teamId: stream.teamId,
 		user: {
 			id: stream.id,
 			username: stream.username,

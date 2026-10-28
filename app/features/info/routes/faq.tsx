@@ -3,7 +3,6 @@ import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-
 import styles from "./faq.module.css";
 
 const AMOUNT_OF_QUESTIONS = 8;

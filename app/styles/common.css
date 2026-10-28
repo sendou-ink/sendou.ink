@@ -212,8 +212,7 @@
 				position: absolute;
 				inset: 0;
 				background-color: var(--color-fg-on-accent);
-				mask:
-					var(--field-icon-checkbox) center / var(--field-size-icon) auto
+				mask: var(--field-icon-checkbox) center / var(--field-size-icon) auto
 					no-repeat;
 			}
 		}
@@ -310,9 +309,7 @@
 		cursor: pointer;
 		padding: 0 var(--field-padding);
 		padding-right: calc(
-			var(--field-size-icon) +
-			var(--field-padding) +
-			var(--s-2)
+			var(--field-size-icon) + var(--field-padding) + var(--s-2)
 		);
 		height: var(--field-size);
 		font-size: var(--font-sm);
@@ -428,9 +425,7 @@
 		input[type="time"],
 		input[type="week"] {
 			padding-right: calc(
-				var(--field-size-icon) +
-				var(--field-padding) +
-				var(--s-2)
+				var(--field-size-icon) + var(--field-padding) + var(--s-2)
 			);
 		}
 	}
@@ -537,8 +532,7 @@
 			width: var(--selector-size);
 			height: var(--selector-size);
 			margin-top: calc(
-				(calc(var(--selector-size) / 4) - var(--selector-size)) /
-				2
+				(calc(var(--selector-size) / 4) - var(--selector-size)) / 2
 			);
 			background-color: var(--thumb-color);
 			border: 2px solid var(--color-bg);
@@ -553,8 +547,7 @@
 			width: var(--selector-size);
 			height: var(--selector-size);
 			margin-top: calc(
-				(calc(var(--selector-size) / 4) - var(--selector-size)) /
-				2
+				(calc(var(--selector-size) / 4) - var(--selector-size)) / 2
 			);
 			background-color: var(--thumb-color);
 			border: 2px solid var(--color-bg);

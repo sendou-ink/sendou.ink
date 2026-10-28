@@ -16,6 +16,7 @@ import {
 } from "react";
 import { TierPill } from "~/components/TierPill";
 import { useTheme } from "~/features/theme/core/provider";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
@@ -24,8 +25,7 @@ import { decompressTrophyModel, useXpTrophyState } from "../trophies-utils";
 import style from "./Trophy.module.css";
 
 type TrophyCtxValue =
-	| { context: PicoCAD2Context }
-	| { context: undefined; isLoading: true };
+	{ context: PicoCAD2Context } | { context: undefined; isLoading: true };
 
 const TrophyCtx = createContext<TrophyCtxValue | undefined>(undefined);
 
@@ -54,11 +54,8 @@ export function TrophyContextProvider({
 }: {
 	children: React.ReactNode;
 }) {
-	const [context, setContext] = useState<PicoCAD2Context | undefined>();
-
-	useEffect(() => {
-		setContext(getSharedTrophyContext());
-	}, []);
+	const isHydrated = useHydrated();
+	const context = isHydrated ? getSharedTrophyContext() : undefined;
 
 	const value: TrophyCtxValue = context
 		? { context }
@@ -77,11 +74,7 @@ export function TrophyGrid({
 	return (
 		<div
 			className={style.grid}
-			style={
-				columns
-					? ({ "--trophy-grid-columns": columns } as React.CSSProperties)
-					: undefined
-			}
+			style={columns ? { "--trophy-grid-columns": columns } : undefined}
 		>
 			{children}
 		</div>
@@ -205,7 +198,7 @@ export function Trophy({
 			// render loops starve the main thread on software WebGL, so surfaces
 			// showing many trophies without GPU acceleration draw a single static frame
 			if (preview || (staticOnSoftwareRendering && isSoftwareRendering())) {
-				viewer.whenReady().then(() =>
+				void viewer.whenReady().then(() =>
 					presentFrame(() => {
 						viewer.dispose();
 						viewerRef.current = null;
@@ -236,7 +229,7 @@ export function Trophy({
 				setDrawn(true);
 				setEverDrawn(true);
 			};
-			viewer.whenReady().then(() => {
+			void viewer.whenReady().then(() => {
 				if (viewerRef.current !== viewer) return;
 				if (pausedRef.current) {
 					presentFrame(markDrawn);
@@ -275,29 +268,10 @@ export function Trophy({
 		],
 	);
 
-	const effectiveTier = tier ?? tentativeTier ?? null;
-	const containerStyle = effectiveTier
-		? ({
-				"--tier-bg": `var(--tier-bg-${effectiveTier})`,
-				"--tier-text": `var(--tier-text-${effectiveTier})`,
-			} as React.CSSProperties)
-		: undefined;
+	const containerStyle = tierContainerStyle(tier ?? tentativeTier ?? null);
 
-	const tierPill = tier ? (
-		<div className={style.tierPill}>
-			<TierPill tier={tier} />
-		</div>
-	) : tentativeTier ? (
-		<div className={style.tierPill}>
-			<TierPill tier={tentativeTier} isTentative />
-		</div>
-	) : null;
-
-	const cornerPill = pill ? (
-		<div className={style.cornerPill} data-testid="trophy-corner-pill">
-			{pill}
-		</div>
-	) : null;
+	const tierPill = <TrophyTierPill tier={tier} tentativeTier={tentativeTier} />;
+	const cornerPill = <TrophyCornerPill pill={pill} />;
 
 	if (error || (modelState === null && !isLoadingXpState)) {
 		return (
@@ -344,6 +318,51 @@ export function Trophy({
 			)}
 			{tierPill}
 			{cornerPill}
+		</div>
+	);
+}
+
+function tierContainerStyle(effectiveTier: number | null) {
+	if (!effectiveTier) return undefined;
+
+	return {
+		"--tier-bg": `var(--tier-bg-${effectiveTier})`,
+		"--tier-text": `var(--tier-text-${effectiveTier})`,
+	} as React.CSSProperties;
+}
+
+function TrophyTierPill({
+	tier,
+	tentativeTier,
+}: {
+	tier?: number | null;
+	tentativeTier?: number | null;
+}) {
+	if (tier) {
+		return (
+			<div className={style.tierPill}>
+				<TierPill tier={tier} />
+			</div>
+		);
+	}
+
+	if (tentativeTier) {
+		return (
+			<div className={style.tierPill}>
+				<TierPill tier={tentativeTier} isTentative />
+			</div>
+		);
+	}
+
+	return null;
+}
+
+function TrophyCornerPill({ pill }: { pill?: React.ReactNode }) {
+	if (!pill) return null;
+
+	return (
+		<div className={style.cornerPill} data-testid="trophy-corner-pill">
+			{pill}
 		</div>
 	);
 }

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { inGameNameIsValid, sanitizeInGameName } from "./in-game-name";
 
 describe("inGameNameIsValid", () => {

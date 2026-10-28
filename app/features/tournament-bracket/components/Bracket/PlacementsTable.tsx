@@ -2,8 +2,8 @@ import clsx from "clsx";
 import { Check, SquarePen, X } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
-import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { invariant } from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
@@ -376,8 +376,8 @@ function EditableDestination({
 			{droppedOut ? (
 				<td />
 			) : allMatchesFinished &&
-				overridenDestination &&
-				overridenDestination.idx !== destination?.idx ? (
+			  overridenDestination &&
+			  overridenDestination.idx !== destination?.idx ? (
 				<td className="text-theme font-bold">
 					<Link
 						to={tournamentBracketsPage({

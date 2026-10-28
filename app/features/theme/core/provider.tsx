@@ -80,7 +80,7 @@ function ThemeProvider({
 
 	const handleSetUserTheme = (newTheme: Theme | "auto") => {
 		setUserPreference(newTheme);
-		persistThemeFetcher.submit(
+		void persistThemeFetcher.submit(
 			{ theme: newTheme },
 			{ action: "theme", method: "post" },
 		);
@@ -129,7 +129,7 @@ function ThemeHead() {
 				suppressHydrationWarning
 			/>
 			{initialUserTheme === "auto" ? (
-				// biome-ignore lint/security/noDangerouslySetInnerHtml: static inline script, no user input
+				// eslint-disable-next-line react/no-danger -- static inline script, no user input
 				<script dangerouslySetInnerHTML={{ __html: CLIENT_THEME_SCRIPT }} />
 			) : null}
 		</>

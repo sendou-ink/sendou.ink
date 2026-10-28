@@ -1,11 +1,11 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * ROI calibration helper: normalize a frame to 1080p, then dump crops
  * (optionally scaled up) and/or a grid overlay for visual inspection.
  *
  * Usage:
- *   vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> grid
- *   vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> x,y,w,h[,scale][:label] ...
+ *   bun --preload ./scripts/preload.ts scripts/scanner/dump-crops.ts <image> <outdir> grid
+ *   bun --preload ./scripts/preload.ts scripts/scanner/dump-crops.ts <image> <outdir> x,y,w,h[,scale][:label] ...
  */
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -21,7 +21,7 @@ import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 const [imagePath, outDir, ...specs] = process.argv.slice(2);
 if (!imagePath || !outDir || specs.length === 0) {
 	console.error(
-		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/dump-crops.ts <image> <outdir> (grid | x,y,w,h[,scale][:label])...",
+		"usage: bun --preload ./scripts/preload.ts scripts/scanner/dump-crops.ts <image> <outdir> (grid | x,y,w,h[,scale][:label])...",
 	);
 	process.exit(1);
 }
@@ -66,13 +66,13 @@ for (const spec of specs) {
 		console.error(`bad spec: ${spec}`);
 		continue;
 	}
-	const cx = Math.max(0, Math.min(x!, frame.cols - 1));
-	const cy = Math.max(0, Math.min(y!, frame.rows - 1));
+	const cx = Math.max(0, Math.min(x, frame.cols - 1));
+	const cy = Math.max(0, Math.min(y, frame.rows - 1));
 	const crop = cropRoi(frame, {
 		x: cx,
 		y: cy,
-		w: Math.min(w!, frame.cols - cx),
-		h: Math.min(h!, frame.rows - cy),
+		w: Math.min(w, frame.cols - cx),
+		h: Math.min(h, frame.rows - cy),
 	});
 	const out = new cv.Mat();
 	cv.resize(

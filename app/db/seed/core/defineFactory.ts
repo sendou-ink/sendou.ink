@@ -27,8 +27,7 @@ type CreateManyParams<Args, Defaults, Options> = [
 		];
 
 type ManyOverrides<Args, Defaults> =
-	| CreateArgs<Args, Defaults>
-	| ((index: number) => CreateArgs<Args, Defaults>);
+	CreateArgs<Args, Defaults> | ((index: number) => CreateArgs<Args, Defaults>);
 
 export type Factory<Args, Row, Defaults, Options> = {
 	/** Inserts one row. Anything not given is defaulted. */

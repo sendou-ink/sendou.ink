@@ -10,12 +10,6 @@ const MIGRATION_FOLDER = fileURLToPath(
 	new URL("../migrations", import.meta.url),
 );
 
-try {
-	process.loadEnvFile();
-} catch {
-	// .env is optional; in production DB_PATH comes from the host environment
-}
-
 async function main() {
 	const command = process.argv[2] ?? "up";
 	if (command !== "up") {
@@ -69,12 +63,12 @@ async function main() {
 }
 
 function log(message: string) {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log(message);
 }
 
 main().catch((error) => {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.error(error);
 	process.exit(1);
 });

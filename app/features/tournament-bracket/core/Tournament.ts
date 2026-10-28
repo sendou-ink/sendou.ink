@@ -6,6 +6,8 @@ import type {
 } from "~/db/tables-json";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -15,8 +17,6 @@ import {
 	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
-import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
-import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { hasPermission } from "~/modules/permissions/utils";
@@ -34,7 +34,7 @@ import { eliminationGroupCount } from "./engine/create/settings";
 import { calculateTeamStatus } from "./engine/swiss/team-status";
 import { getRounds } from "./rounds";
 import * as Seeding from "./Seeding";
-import type { TournamentData } from "./Tournament.server";
+import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
 
@@ -157,7 +157,7 @@ export class Tournament {
 			? new Set(args.participatedUsers)
 			: null;
 		this._derivedMeta = bracketsMeta;
-		this.ctx = {
+		const tournamentCtx = {
 			...ctx,
 			teams: hasStarted
 				? // after the start the teams who did not check-in are irrelevant
@@ -165,6 +165,7 @@ export class Tournament {
 				: teamsInSeedOrder,
 			startsAt: databaseTimestampToDate(ctx.startsAt),
 		};
+		this.ctx = tournamentCtx;
 
 		for (const bracket of brackets ?? []) {
 			this._brackets[bracket.idx] = createBracket({
@@ -1263,62 +1264,8 @@ export class Tournament {
 			return null;
 		}
 
-		for (const bracket of startedBrackets) {
-			for (const match of bracket.data.match) {
-				const matchLocation = {
-					matchId: match.id,
-					bracketIdx: bracket.idx,
-					groupId: match.groupId,
-				};
-				const isParticipant =
-					match.opponent1?.id === team.id || match.opponent2?.id === team.id;
-				const isNotFinished =
-					match.opponent1 && match.opponent2 && !match.winnerSide;
-				const isWaitingForTeam =
-					(match.opponent1 && match.opponent1.id === null) ||
-					(match.opponent2 && match.opponent2.id === null);
-
-				if (isParticipant && isNotFinished && !isWaitingForTeam) {
-					const otherTeam = this.teamById(
-						match.opponent1!.id === team.id
-							? match.opponent2!.id!
-							: match.opponent1!.id!,
-					)!;
-
-					const otherTeamBusyWithPreviousMatch =
-						bracket.type === "round_robin" &&
-						bracket.data.match.find(
-							(candidate) =>
-								(candidate.opponent1?.id === otherTeam.id ||
-									candidate.opponent2?.id === otherTeam.id) &&
-								!candidate.winnerSide,
-						)?.id !== match.id;
-
-					if (otherTeamBusyWithPreviousMatch) {
-						return { type: "WAITING_FOR_MATCH", ...matchLocation } as const;
-					}
-
-					if (
-						this.ctx.castedMatchesInfo?.lockedMatches.some(
-							(lm) => lm.matchId === match.id,
-						)
-					) {
-						return { type: "WAITING_FOR_CAST", ...matchLocation } as const;
-					}
-
-					return {
-						type: "MATCH",
-						matchId: match.id,
-						opponent: otherTeam.name,
-						opponentId: otherTeam.id,
-					} as const;
-				}
-
-				if (isParticipant && isWaitingForTeam) {
-					return { type: "WAITING_FOR_MATCH", ...matchLocation } as const;
-				}
-			}
-		}
+		const matchStatus = this.teamMatchProgressStatus(team, startedBrackets);
+		if (matchStatus) return matchStatus;
 
 		if (team.checkIns.length === 0 && this.regularCheckInIsOpen) {
 			return {
@@ -1328,16 +1275,150 @@ export class Tournament {
 			} as const;
 		}
 
-		for (const bracketIdx of this.ctx.settings.bracketProgression.keys()) {
-			const bracket = this.bracketMetaByIdx(bracketIdx);
-			if (!bracket?.teamsPendingCheckIn?.includes(team.id)) continue;
-
+		const pendingCheckInBracketIdx = this.bracketIdxPendingCheckInOf(team.id);
+		if (typeof pendingCheckInBracketIdx === "number") {
 			// a follow-up bracket's check-in only opens an hour before it starts
-			return this.canCheckInToBracket(bracketIdx, user)
-				? ({ type: "CHECKIN", bracketIdx } as const)
-				: ({ type: "WAITING_FOR_BRACKET", bracketIdx } as const);
+			return this.canCheckInToBracket(pendingCheckInBracketIdx, user)
+				? ({ type: "CHECKIN", bracketIdx: pendingCheckInBracketIdx } as const)
+				: ({
+						type: "WAITING_FOR_BRACKET",
+						bracketIdx: pendingCheckInBracketIdx,
+					} as const);
 		}
 
+		if (this.isWaitingForSwissRound(team, startedBrackets)) {
+			return { type: "WAITING_FOR_ROUND" } as const;
+		}
+
+		const isInPreviewBracket = this.brackets.some(
+			(bracket) =>
+				bracket.preview &&
+				bracket.participantTournamentTeamIds.includes(team.id),
+		);
+		if (isInPreviewBracket) {
+			return { type: "WAITING_FOR_BRACKET" } as const;
+		}
+
+		if (team.checkIns.length === 0) return null;
+
+		if (!team.droppedOut && this.isWaitingForGroups(team.id, startedBrackets)) {
+			return { type: "WAITING_FOR_GROUPS" } as const;
+		}
+
+		return { type: "THANKS_FOR_PLAYING" } as const;
+	}
+
+	private teamMatchProgressStatus(
+		team: TournamentDataTeam,
+		startedBrackets: Bracket[],
+	) {
+		for (const bracket of startedBrackets) {
+			for (const match of bracket.data.match) {
+				const status = this.matchProgressStatus({ bracket, match, team });
+				if (status) return status;
+			}
+		}
+
+		return null;
+	}
+
+	private matchProgressStatus({
+		bracket,
+		match,
+		team,
+	}: {
+		bracket: Bracket;
+		match: MatchData;
+		team: TournamentDataTeam;
+	}) {
+		const matchLocation = {
+			matchId: match.id,
+			bracketIdx: bracket.idx,
+			groupId: match.groupId,
+		};
+		const isParticipant =
+			match.opponent1?.id === team.id || match.opponent2?.id === team.id;
+		const isNotFinished =
+			match.opponent1 && match.opponent2 && !match.winnerSide;
+		const isWaitingForTeam =
+			(match.opponent1 && match.opponent1.id === null) ||
+			(match.opponent2 && match.opponent2.id === null);
+
+		if (isParticipant && isNotFinished && !isWaitingForTeam) {
+			return this.readyMatchProgressStatus({
+				bracket,
+				match,
+				team,
+				matchLocation,
+			});
+		}
+
+		if (isParticipant && isWaitingForTeam) {
+			return { type: "WAITING_FOR_MATCH", ...matchLocation } as const;
+		}
+
+		return null;
+	}
+
+	private readyMatchProgressStatus({
+		bracket,
+		match,
+		team,
+		matchLocation,
+	}: {
+		bracket: Bracket;
+		match: MatchData;
+		team: TournamentDataTeam;
+		matchLocation: { matchId: number; bracketIdx: number; groupId: number };
+	}) {
+		const otherTeam = this.teamById(
+			match.opponent1!.id === team.id
+				? match.opponent2!.id!
+				: match.opponent1!.id!,
+		)!;
+
+		const otherTeamBusyWithPreviousMatch =
+			bracket.type === "round_robin" &&
+			bracket.data.match.find(
+				(candidate) =>
+					(candidate.opponent1?.id === otherTeam.id ||
+						candidate.opponent2?.id === otherTeam.id) &&
+					!candidate.winnerSide,
+			)?.id !== match.id;
+
+		if (otherTeamBusyWithPreviousMatch) {
+			return { type: "WAITING_FOR_MATCH", ...matchLocation } as const;
+		}
+
+		if (
+			this.ctx.castedMatchesInfo?.lockedMatches.some(
+				(lm) => lm.matchId === match.id,
+			)
+		) {
+			return { type: "WAITING_FOR_CAST", ...matchLocation } as const;
+		}
+
+		return {
+			type: "MATCH",
+			matchId: match.id,
+			opponent: otherTeam.name,
+			opponentId: otherTeam.id,
+		} as const;
+	}
+
+	private bracketIdxPendingCheckInOf(teamId: number) {
+		for (const bracketIdx of this.ctx.settings.bracketProgression.keys()) {
+			const bracket = this.bracketMetaByIdx(bracketIdx);
+			if (bracket?.teamsPendingCheckIn?.includes(teamId)) return bracketIdx;
+		}
+
+		return null;
+	}
+
+	private isWaitingForSwissRound(
+		team: TournamentDataTeam,
+		startedBrackets: Bracket[],
+	) {
 		for (const bracket of startedBrackets) {
 			if (bracket.type !== "swiss") continue;
 			// dropped out teams and runs ended early by the advance threshold get no further rounds
@@ -1364,47 +1445,34 @@ export class Tournament {
 				: false;
 
 			if (isParticipant && notAllRoundsGenerated && !runEndedEarly) {
-				return { type: "WAITING_FOR_ROUND" } as const;
+				return true;
 			}
 		}
 
-		for (const bracket of this.brackets) {
-			if (!bracket.preview) continue;
+		return false;
+	}
 
-			const isParticipant = bracket.participantTournamentTeamIds.includes(
-				team.id,
+	private isWaitingForGroups(teamId: number, startedBrackets: Bracket[]) {
+		for (const bracket of startedBrackets) {
+			if (bracket.type !== "round_robin" || bracket.everyMatchOver) {
+				continue;
+			}
+
+			const isParticipant =
+				bracket.participantTournamentTeamIds.includes(teamId);
+			const hasFollowUpBrackets = this.ctx.settings.bracketProgression.some(
+				(progressionBracket) =>
+					progressionBracket.sources?.some(
+						(source) => source.bracketIdx === bracket.idx,
+					),
 			);
 
-			if (isParticipant) {
-				return { type: "WAITING_FOR_BRACKET" } as const;
+			if (isParticipant && hasFollowUpBrackets) {
+				return true;
 			}
 		}
 
-		if (team.checkIns.length === 0) return null;
-
-		if (!team.droppedOut) {
-			for (const bracket of startedBrackets) {
-				if (bracket.type !== "round_robin" || bracket.everyMatchOver) {
-					continue;
-				}
-
-				const isParticipant = bracket.participantTournamentTeamIds.includes(
-					team.id,
-				);
-				const hasFollowUpBrackets = this.ctx.settings.bracketProgression.some(
-					(progressionBracket) =>
-						progressionBracket.sources?.some(
-							(source) => source.bracketIdx === bracket.idx,
-						),
-				);
-
-				if (isParticipant && hasFollowUpBrackets) {
-					return { type: "WAITING_FOR_GROUPS" } as const;
-				}
-			}
-		}
-
-		return { type: "THANKS_FOR_PLAYING" } as const;
+		return false;
 	}
 
 	/** For fixing wrongly reported scores. A match can be reopened as long as no match following it has started. */

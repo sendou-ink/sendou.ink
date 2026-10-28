@@ -1,8 +1,8 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
 import * as v from "valibot";
+import { parseFrontmatter } from "~/utils/frontmatter.server";
 import { NAV_ICONS } from "~/utils/urls";
 import { CHANGELOG_FOLDER_PATH } from "../changelog-constants";
 import type { ChangelogGraphicEntry } from "../components/ChangelogGraphic";
@@ -63,7 +63,7 @@ function parseEntryFile(fileName: string): ChangelogGraphicEntry {
 		path.join(RESOLVED_CHANGELOG_DIR, fileName),
 		"utf8",
 	);
-	const { content, data } = matter(rawMarkdown);
+	const { content, data } = parseFrontmatter(rawMarkdown);
 
 	let frontmatter: v.InferOutput<typeof frontmatterSchema>;
 	try {

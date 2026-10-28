@@ -166,9 +166,7 @@ async function main() {
 
 		const translationsMap = Object.fromEntries(
 			stages.map((_, i) => {
-				const codeName = codeNames[
-					i
-				] as keyof (typeof langDict)["CommonMsg/VS/VSStageName"];
+				const codeName = codeNames[i];
 				invariant(codeName);
 
 				return [`STAGE_${i}`, langDict["CommonMsg/VS/VSStageName"][codeName]];
@@ -180,9 +178,7 @@ async function main() {
 			invariant(internalName, `Missing internal name for ${ability}`);
 
 			const translation = decodeURIComponent(
-				(langDict["CommonMsg/Gear/GearPowerName"] as Record<string, string>)[
-					internalName
-				],
+				langDict["CommonMsg/Gear/GearPowerName"][internalName],
 			);
 
 			translationsMap[`ABILITY_${ability}`] = translation;
@@ -265,10 +261,7 @@ function generateBadgeData(langDicts: LangDicts) {
 }
 
 function buildBadgeTranslations(badgeIds: string[], langDict: LangDict) {
-	const badgeMsg = langDict["CommonMsg/Badge/BadgeMsg"] as Record<
-		string,
-		string
-	>;
+	const badgeMsg = langDict["CommonMsg/Badge/BadgeMsg"];
 	const translationsMap: Record<string, string> = {};
 
 	for (const id of badgeIds) {

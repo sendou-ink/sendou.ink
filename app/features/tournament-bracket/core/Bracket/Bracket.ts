@@ -1,21 +1,21 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
-import * as Standings from "~/features/tournament/core/Standings";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type {
 	BracketData,
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
+import * as Standings from "~/features/tournament/core/Standings";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { showsOneGroupAtATime } from "../../tournament-bracket-utils";
 import * as AbDivisions from "../AbDivisions";
 import * as Engine from "../engine";
 import * as Progression from "../Progression";
+import type { BracketMapCounts } from "../toMapList";
 import type { OptionalIdObject, Tournament } from "../Tournament";
 import type { TournamentDataTeam } from "../Tournament.server";
-import type { BracketMapCounts } from "../toMapList";
 import type * as Tiebreakers from "./Tiebreakers";
 
 export interface CreateBracketArgs {
@@ -638,7 +638,7 @@ export abstract class Bracket {
 				groupCount,
 			}).ok
 		) {
-			return assignments as (0 | 1)[];
+			return assignments;
 		}
 
 		const fakeAssignments: (0 | 1)[] = teams.map((_, index) =>

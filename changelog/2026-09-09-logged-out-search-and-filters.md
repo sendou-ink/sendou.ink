@@ -1,6 +1,7 @@
 ---
 type: feature
 ---
+
 Search and filters are no longer hidden when you are logged out
 
 - Both are shown, and using one prompts you to log in

@@ -1,4 +1,4 @@
-import { describe, test } from "vitest";
+import { describe, test } from "bun:test";
 import { assertRoundTrips } from "~/modules/search-params/search-params-test-utils";
 import { teamJoinSearchParams } from "./team-search-params";
 

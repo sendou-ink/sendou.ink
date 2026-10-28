@@ -14,11 +14,12 @@ import { createXRankPositionDetector } from "../core/detectors/x-rank/position";
 import { createXSetCountDetector } from "../core/detectors/x-rank/set-count";
 import { createXSetResultDetector } from "../core/detectors/x-rank/set-result";
 import {
-	FIXTURES_DIR,
-	type Fixture,
 	fieldTestOptions,
+	type Fixture,
+	FIXTURES_DIR,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
@@ -38,19 +39,19 @@ const CARDS: {
 	{
 		dir: "x-set-count",
 		event: "XSetCount",
-		detector: createXSetCountDetector(resources) as Detector<unknown>,
+		detector: createXSetCountDetector(resources),
 		fields: ["mode", "wins", "losses"],
 	},
 	{
 		dir: "x-set-result",
 		event: "XSetResult",
-		detector: createXSetResultDetector(resources) as Detector<unknown>,
+		detector: createXSetResultDetector(resources),
 		fields: ["mode", "results", "powerChange", "power"],
 	},
 	{
 		dir: "x-rank-position",
 		event: "XRankPosition",
-		detector: createXRankPositionDetector(resources) as Detector<unknown>,
+		detector: createXRankPositionDetector(resources),
 		fields: ["mode", "position", "direction"],
 	},
 ];
@@ -119,14 +120,16 @@ const otherFixtures = readdirSync(FIXTURES_DIR, { withFileTypes: true })
 	.flatMap((e) => loadFixtures(e.name));
 for (const fixture of otherFixtures) {
 	test(`X card gates stay quiet on ${fixtureLabel(fixture)}`, async () => {
-		for (const { detector } of CARDS) {
-			const { gate } = await runDetectorOnFixture(detector, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${detector.id} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		await withFixtureFrame(fixture, (frame) => {
+			for (const { detector } of CARDS) {
+				const gate = detector.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${detector.id} gate fired (score=${gate.score.toFixed(3)})`,
+				);
+			}
+		});
 	});
 }
 
@@ -141,14 +144,16 @@ for (const fixture of xPositives) {
 			...otherDetectors,
 			...CARDS.filter((c) => c.dir !== cardDir).map((c) => c.detector),
 		];
-		for (const detector of others) {
-			const { gate } = await runDetectorOnFixture(detector, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${detector.id} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		await withFixtureFrame(fixture, (frame) => {
+			for (const detector of others) {
+				const gate = detector.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${detector.id} gate fired (score=${gate.score.toFixed(3)})`,
+				);
+			}
+		});
 	});
 }
 

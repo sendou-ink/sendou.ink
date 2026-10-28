@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as ArtRepository from "../ArtRepository.server";
 import { artNewSearchParams } from "../art-search-params";
+import * as ArtRepository from "../ArtRepository.server";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();

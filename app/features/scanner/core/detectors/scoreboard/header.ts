@@ -21,7 +21,7 @@ import {
 import { copyRoi } from "../../image";
 import { ALL_LOBBY_ENTRIES, MODE_STAGE_COMBOS } from "../../localized";
 import { all, done, type MatchSteps } from "../../match-steps";
-import { closestBy } from "../../text";
+import { closestBy, type ClosestMatch } from "../../text";
 import { HEADER_LINE_BAND, HEADER_LOBBY_BAND } from "./rois";
 
 export interface HeaderGlyphs {
@@ -86,7 +86,7 @@ function tagExtent(
 	for (let x = 0; x < cols; x++) {
 		let tagLike = 0;
 		for (let y = 0; y < rows; y++) {
-			const v = data[y * cols + x]!;
+			const v = data[y * cols + x];
 			if (v < darkMax || v > TAG_BRIGHT_MIN) tagLike++;
 		}
 		if (tagLike / rows >= columnFraction) {
@@ -226,25 +226,11 @@ export function* parseHeaderSteps(
 		readLobbyBandSteps(gray, glyphs.lobby, speculative),
 		readTagBandSteps(gray, HEADER_LINE_BAND, glyphs.line, {}, speculative),
 	]);
-	const snapLobby = (reading: string) =>
-		reading ? closestBy(reading, ALL_LOBBY_ENTRIES, (e) => e.text) : null;
-	const snapLine = (reading: string) =>
-		reading ? closestBy(reading, MODE_STAGE_COMBOS, (c) => c.text) : null;
-	let latinLobby = "";
-	let latinLobbyMatch: ReturnType<typeof snapLobby> = null;
-	for (const reading of latinLobbyReadings) {
-		const match = snapLobby(reading);
-		if ((match?.score ?? 0) > (latinLobbyMatch?.score ?? 0)) {
-			latinLobby = reading;
-			latinLobbyMatch = match;
-		}
-	}
-	const latinLineMatch = snapLine(latinLine);
+	const latinLobbySnap = bestLobbySnap(latinLobbyReadings);
+	const latinLineSnap = { reading: latinLine, match: snapLine(latinLine) };
 
-	const unsnapped = (match: { score: number } | null) =>
-		(match?.score ?? 0) < MIN_MATCH_SCORE;
 	const [jaLobby, jaLine] = yield* all([
-		glyphs.lobbyJa && unsnapped(latinLobbyMatch)
+		glyphs.lobbyJa && unsnapped(latinLobbySnap.match)
 			? readTagBandSteps(
 					gray,
 					HEADER_LOBBY_BAND,
@@ -253,42 +239,79 @@ export function* parseHeaderSteps(
 					speculative,
 				)
 			: done(""),
-		glyphs.lineJa && unsnapped(latinLineMatch)
+		glyphs.lineJa && unsnapped(latinLineSnap.match)
 			? readTagBandSteps(gray, HEADER_LINE_BAND, glyphs.lineJa, {}, speculative)
 			: done(""),
 	]);
-	const jaLobbyMatch = snapLobby(jaLobby);
-	const jaLineMatch = snapLine(jaLine);
-	const jaLobbyWins =
-		(jaLobbyMatch?.score ?? 0) > (latinLobbyMatch?.score ?? 0);
-	const jaLineWins = (jaLineMatch?.score ?? 0) > (latinLineMatch?.score ?? 0);
-	const lobbyReading = jaLobbyWins ? jaLobby : latinLobby;
-	const lineReading = jaLineWins ? jaLine : latinLine;
-	const lobbyMatch = jaLobbyWins ? jaLobbyMatch : latinLobbyMatch;
-	const lineMatch = jaLineWins ? jaLineMatch : latinLineMatch;
+	const { reading: lobbyReading, match: lobbyMatch } = betterSnap(
+		latinLobbySnap,
+		{ reading: jaLobby, match: snapLobby(jaLobby) },
+	);
+	const { reading: lineReading, match: lineMatch } = betterSnap(latinLineSnap, {
+		reading: jaLine,
+		match: snapLine(jaLine),
+	});
 
-	const lobby =
-		lobbyMatch && lobbyMatch.score >= MIN_MATCH_SCORE
-			? lobbyMatch.entry.lobby
-			: null;
-	let mode: ModeShort | null = null;
-	let stage: StageId | null = null;
-	if (lineMatch && lineMatch.score >= MIN_MATCH_SCORE) {
-		mode = lineMatch.entry.mode;
-		stage = lineMatch.entry.stageId;
-	}
+	const acceptedLobby = acceptedMatch(lobbyMatch);
+	const acceptedLine = acceptedMatch(lineMatch);
 
-	const attempted = [lobbyMatch?.score ?? 0, lineMatch?.score ?? 0];
+	const attempted = [scoreOf(lobbyMatch), scoreOf(lineMatch)];
 	return {
-		lobby,
-		mode,
-		stage,
+		lobby: acceptedLobby ? acceptedLobby.entry.lobby : null,
+		mode: acceptedLine ? acceptedLine.entry.mode : null,
+		stage: acceptedLine ? acceptedLine.entry.stageId : null,
 		confidence: Math.min(...attempted),
 		debug: {
 			lobbyReading,
 			lineReading,
-			lobbyScore: lobbyMatch?.score ?? 0,
-			lineScore: lineMatch?.score ?? 0,
+			lobbyScore: scoreOf(lobbyMatch),
+			lineScore: scoreOf(lineMatch),
 		},
 	};
+}
+
+type LobbyEntry = (typeof ALL_LOBBY_ENTRIES)[number];
+
+interface Snap<T> {
+	reading: string;
+	match: ClosestMatch<T> | null;
+}
+
+function snapLobby(reading: string) {
+	return reading ? closestBy(reading, ALL_LOBBY_ENTRIES, (e) => e.text) : null;
+}
+
+function snapLine(reading: string) {
+	return reading ? closestBy(reading, MODE_STAGE_COMBOS, (c) => c.text) : null;
+}
+
+function scoreOf(match: { score: number } | null): number {
+	return match?.score ?? 0;
+}
+
+function unsnapped(match: { score: number } | null): boolean {
+	return scoreOf(match) < MIN_MATCH_SCORE;
+}
+
+function acceptedMatch<T>(
+	match: ClosestMatch<T> | null,
+): ClosestMatch<T> | null {
+	return match && match.score >= MIN_MATCH_SCORE ? match : null;
+}
+
+function bestLobbySnap(readings: string[]): Snap<LobbyEntry> {
+	let best: Snap<LobbyEntry> = {
+		reading: "",
+		match: null,
+	};
+	for (const reading of readings) {
+		const match = snapLobby(reading);
+		if (scoreOf(match) > scoreOf(best.match)) best = { reading, match };
+	}
+	return best;
+}
+
+/** The Japanese snap wins only when it scores strictly higher. */
+function betterSnap<T>(latin: Snap<T>, ja: Snap<T>): Snap<T> {
+	return scoreOf(ja.match) > scoreOf(latin.match) ? ja : latin;
 }

@@ -4,4 +4,4 @@
  * `import.meta.env` is undefined when Playwright bundles test code, see `IS_E2E_TEST_RUN`.
  */
 export const IS_DEV_BUILD =
-	typeof import.meta.env !== "undefined" && import.meta.env.DEV === true;
+	typeof import.meta.env !== "undefined" && import.meta.env.DEV;

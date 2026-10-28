@@ -5,8 +5,8 @@ import { defineAction } from "~/form/define-action.server";
 import { logger } from "~/utils/logger";
 import * as Daily from "../core/Daily.server";
 import * as VoicePresence from "../core/VoicePresence.server";
-import * as VoiceRepository from "../VoiceRepository.server";
 import { VOICE_NETWORK_QUALITY_STATES } from "../voice-constants";
+import * as VoiceRepository from "../VoiceRepository.server";
 
 const participantSchema = v.object({
 	room: v.string(),
@@ -33,7 +33,7 @@ const eventSchema = v.variant("type", [
 ]);
 
 export const action = defineAction(async ({ request }) => {
-	// biome-ignore lint/plugin: the signature covers the raw body bytes, which a parsed body can't reproduce
+	// eslint-disable-next-line sendou/no-raw-actions -- the signature covers the raw body bytes, which a parsed body can't reproduce
 	const rawBody = await request.text();
 	const secret = ServerConfig.daily.webhookSecret;
 

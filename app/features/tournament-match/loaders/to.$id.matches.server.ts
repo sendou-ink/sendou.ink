@@ -6,11 +6,11 @@ import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament
 import { databaseTimestampNow } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import * as LeagueScheduling from "../core/LeagueScheduling";
-import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import {
 	ALL_DIVISIONS,
 	tournamentMatchesSearchParams,
 } from "../tournament-matches-search-params";
+import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 
 export type TournamentMatchesLoaderData = SerializeFrom<typeof loader>;
 

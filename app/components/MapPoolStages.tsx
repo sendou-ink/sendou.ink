@@ -4,7 +4,6 @@ import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { modeImageUrl, stageImageUrl } from "~/utils/urls";
-
 import styles from "./MapPoolStages.module.css";
 
 /** Read-only view of a map pool: a row per stage in it with the modes it is played in. */

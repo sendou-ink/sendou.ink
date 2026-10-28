@@ -4,7 +4,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
-import { LinkButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
@@ -27,7 +27,6 @@ import {
 	VODS_PAGE,
 	vodVideoPage,
 } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
 import { action } from "../actions/vods.$id.server";
 import { PovUser } from "../components/VodPov";
 import { loader } from "../loaders/vods.$id.server";

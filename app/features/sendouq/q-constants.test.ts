@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { FRIEND_CODE_REGEXP } from "./q-constants";
 
 describe("FRIEND_CODE_REGEXP", () => {

@@ -34,7 +34,7 @@ function resolveTranslation(key: string): string {
 		return key;
 	}
 
-	const value = nsTranslations[translationPath as keyof typeof nsTranslations];
+	const value = nsTranslations[translationPath];
 	return typeof value === "string" ? value : key;
 }
 
@@ -171,9 +171,8 @@ export function createFormHelpers<T extends v.ObjectEntries>(
 				if (shouldBeChecked !== isChecked) {
 					// chip radios hide the input visually, so the label takes the click
 					const inputId = await locator.getAttribute("id");
-					await (inputId
-						? page.locator(`label[for="${inputId}"]`)
-						: locator
+					await (
+						inputId ? page.locator(`label[for="${inputId}"]`) : locator
 					).click();
 				}
 			}

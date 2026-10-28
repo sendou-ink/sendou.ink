@@ -11,9 +11,9 @@ import {
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
-import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
+import { type TierName, TIERS } from "~/features/mmr/mmr-constants";
 import * as QStreamsRepository from "~/features/sendouq-streams/QStreamsRepository.server";
+import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { logger } from "~/utils/logger";
 import { navIconUrl, SENDOUQ_STREAMS_PAGE, tierImageUrl } from "~/utils/urls";

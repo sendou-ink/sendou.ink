@@ -48,8 +48,8 @@ export function SelectFormField<V extends string>({
 			typeof itemLabel === "function"
 				? itemLabel(i18n.language)
 				: typeof itemLabel === "string" &&
-						itemLabel.includes(":") &&
-						i18n.exists(itemLabel)
+					  itemLabel.includes(":") &&
+					  i18n.exists(itemLabel)
 					? t(itemLabel as never)
 					: String(itemLabel);
 
@@ -60,8 +60,8 @@ export function SelectFormField<V extends string>({
 		};
 	});
 
-	const hasDescriptions = itemsWithResolvedLabels.some(
-		(item) => item.description,
+	const hasDescriptions = itemsWithResolvedLabels.some((item) =>
+		Boolean(item.description),
 	);
 
 	if (searchable || hasDescriptions) {
@@ -159,7 +159,7 @@ function CustomSelect<V extends string>({
 			? [{ id: "", textValue: "—", description: undefined }]
 			: []),
 		...items.map((item) => ({
-			id: item.value as string,
+			id: item.value,
 			textValue: item.resolvedLabel,
 			description: item.description,
 		})),

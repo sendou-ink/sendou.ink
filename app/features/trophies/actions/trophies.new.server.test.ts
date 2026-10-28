@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import type * as v from "valibot";
-import { beforeEach, describe, expect, test } from "vitest";
 import { DEV_TEST_ID } from "~/db/seed/constants";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
@@ -17,8 +17,8 @@ import {
 	loader as backfillLoader,
 	type TrophyBackfillLoaderData,
 } from "../routes/trophies.$id.backfill.$seriesId";
-import * as TrophyRepository from "../TrophyRepository.server";
 import type { trophyFormSchema } from "../trophies-schemas";
+import * as TrophyRepository from "../TrophyRepository.server";
 import { action } from "./trophies.new.server";
 
 type BackfillFormFields = {

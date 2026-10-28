@@ -110,11 +110,11 @@ function parseTopBand(
 		TIMESTAMP_GAPPED_DATE_RE.exec(normalized) ??
 		TIMESTAMP_FUSED_RE.exec(normalized);
 	const stageReading = m
-		? reading.slice(reading.length - m[4]!.length)
+		? reading.slice(reading.length - m[4].length)
 		: reading;
 	if (m) {
 		const meridiem = m[3] ? ` ${probedMeridiem ?? m[3].replace("0", "P")}` : "";
-		timestamp = `${m[1]!.replace(/ /g, "")} ${m[2]!.replace(/ /g, "")}${meridiem}`;
+		timestamp = `${m[1].replace(/ /g, "")} ${m[2].replace(/ /g, "")}${meridiem}`;
 	}
 	if (stageReading) {
 		const match = closestBy(
@@ -247,11 +247,11 @@ function probeMeridiem(
 		(c, i) =>
 			i > colonAt + 1 &&
 			c.char === "M" &&
-			MERIDIEM_LETTER_LOOKALIKES.test(chars[i - 1]!.char) &&
-			CLOCK_DIGIT_LOOKALIKES.test(chars[i - 2]!.char),
+			MERIDIEM_LETTER_LOOKALIKES.test(chars[i - 1].char) &&
+			CLOCK_DIGIT_LOOKALIKES.test(chars[i - 2].char),
 	);
 	if (mAt === -1) return null;
-	const letter = chars[mAt - 1]!;
+	const letter = chars[mAt - 1];
 	const { cols, data } = band;
 	const middle = Math.floor((letter.x0 + letter.x1) / 2);
 	const legRows = Math.max(
@@ -261,7 +261,7 @@ function probeMeridiem(
 	let rowsWithRightLeg = 0;
 	for (let y = letter.y1 - legRows; y < letter.y1; y++) {
 		for (let x = middle + 1; x < letter.x1; x++) {
-			if (data[y * cols + x]! >= MERIDIEM_INK_MIN) {
+			if (data[y * cols + x] >= MERIDIEM_INK_MIN) {
 				rowsWithRightLeg++;
 				break;
 			}

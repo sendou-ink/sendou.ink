@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import {
 	candidatesByBaseWeapon,
 	candidateTeamIds,
@@ -166,15 +166,13 @@ describe("candidateTeamIds", () => {
 
 describe("montageTeamSections", () => {
 	test("counts down from the last placement, each team with its picks in order", () => {
-		const topTeams = [1, 2, 3].map(
-			(id): MontageManifestTopTeam => ({
-				id,
-				name: `Team ${id}`,
-				logo: null,
-				players: [],
-				placement: id,
-			}),
-		);
+		const topTeams = [1, 2, 3].map((id): MontageManifestTopTeam => ({
+			id,
+			name: `Team ${id}`,
+			logo: null,
+			players: [],
+			placement: id,
+		}));
 		const picks = [
 			{ key: "a", teamId: 1 },
 			{ key: "b", teamId: 3 },

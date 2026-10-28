@@ -1,6 +1,7 @@
 ---
 type: feature
 ---
+
 Help translate sendou.ink on the new Translate page
 
 - See how far each language is translated and which texts are still missing

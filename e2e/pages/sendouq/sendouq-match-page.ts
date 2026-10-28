@@ -210,9 +210,10 @@ export class SendouQMatchPage {
 	private async submitCancelDialog({ reason, nominateUserId }: CancelReport) {
 		const dialog = this.page.getByRole("dialog");
 		// each nomination checkbox carries its player's id as its value
-		await (nominateUserId
-			? dialog.locator(`input[type="checkbox"][value="${nominateUserId}"]`)
-			: dialog.getByRole("checkbox").first()
+		await (
+			nominateUserId
+				? dialog.locator(`input[type="checkbox"][value="${nominateUserId}"]`)
+				: dialog.getByRole("checkbox").first()
 		).check();
 		await dialog.getByLabel("Reason").fill(reason);
 		await waitForPOSTResponse(this.page, async () => {
@@ -266,6 +267,6 @@ export class SendouQMatchPage {
 
 /** Waits out the gap the loss confirm keeps between arming and accepting the second tap. */
 async function waitOutLossConfirmMinGap(page: Page) {
-	// biome-ignore lint/nursery/noPlaywrightWaitForTimeout: the min gap after arming has no observable end
+	// eslint-disable-next-line playwright/no-wait-for-timeout -- the min gap after arming has no observable end
 	await page.waitForTimeout(LOSS_CONFIRM_MIN_GAP_MS);
 }

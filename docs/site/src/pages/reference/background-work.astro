@@ -130,7 +130,7 @@ function callSiteLabel(site: CallSite) {
 
 	<h2 id="scheduled-routines">Scheduled routines</h2>
 	<p>
-		{count(routineCount, "routine")} run by <code>node-cron</code>, in production only (the
+		{count(routineCount, "routine")} run by <code>Bun.cron</code>, in production only (the
 		e2e tests and development never start the schedules). A schedule runs its routines one after
 		another, a routine failing is logged and doesn't stop the rest. In development or an e2e test
 		run a routine can be run by hand by <code>POST /run-routine</code> with its name (

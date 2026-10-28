@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Audits death/special detection against scoreboard truth, from an events CSV
  * downloaded from the scanner UI. Rows are parsed back into DetectedEvents,
@@ -12,7 +12,7 @@
  * fallbacks; the output flags mismatches that look like slot-mapping artifacts.
  * Every discrepancy lists the read timestamps most likely to yield a fixture.
  *
- * Usage: pnpm scanner:status-audit <events.csv> [--all]
+ * Usage: bun run scanner:status-audit <events.csv> [--all]
  */
 import { readFileSync } from "node:fs";
 import {
@@ -48,13 +48,13 @@ import {
 	type StripWeaponsData,
 } from "../../app/features/scanner/core/detectors/objective/strip-weapons";
 import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/index";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
 	type ScoreboardPlayer,
 } from "../../app/features/scanner/core/detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
-import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
 import type { DetectedEvent } from "../../app/features/scanner/core/detectors/types";
 import { formatTime } from "../../app/features/scanner/core/format";
 import {
@@ -64,8 +64,8 @@ import {
 	stageLabel,
 } from "../../app/features/scanner/core/labels";
 import {
-	type BuiltMatch,
 	buildScannerMatches,
+	type BuiltMatch,
 } from "../../app/features/scanner/core/match-builder";
 import type {
 	ScannerMatch,
@@ -118,7 +118,7 @@ const args = process.argv.slice(2);
 const csvPath = args.find((arg) => !arg.startsWith("--"));
 const showAllSpans = args.includes("--all");
 if (!csvPath) {
-	console.error("Usage: pnpm scanner:status-audit <events.csv> [--all]");
+	console.error("Usage: bun run scanner:status-audit <events.csv> [--all]");
 	process.exit(1);
 }
 
@@ -182,7 +182,7 @@ function parseCsv(text: string): string[][] {
 	let cell = "";
 	let quoted = false;
 	for (let i = 0; i < text.length; i++) {
-		const ch = text[i]!;
+		const ch = text[i];
 		if (quoted) {
 			if (ch === '"' && text[i + 1] === '"') {
 				cell += '"';
@@ -278,10 +278,10 @@ function parsePlayerStatusCell(cell: string): PlayerStatusData {
 			special: chars.map((c) => c === "★") as PlayerStatusFlags,
 		};
 	};
-	const a = sideFlags(left!);
-	const b = sideFlags(right!);
+	const a = sideFlags(left);
+	const b = sideFlags(right);
 	return {
-		time: m === undefined ? null : parseClock(m, s!),
+		time: m === undefined ? null : parseClock(m, s),
 		special: [a.special, b.special],
 		dead: [a.dead, b.dead],
 		// the CSV carries no camera-badge evidence
@@ -307,7 +307,7 @@ function parseObjectiveCell(
 	) {
 		return {
 			mode: mode === "TC" || mode === "RM" ? mode : null,
-			time: m === undefined ? null : parseClock(m, s!),
+			time: m === undefined ? null : parseClock(m, s),
 			score: [num(scoreA), num(scoreB)],
 			control: ctrlA ? 0 : ctrlB ? 1 : null,
 			position: num(position),
@@ -316,7 +316,7 @@ function parseObjectiveCell(
 	}
 	return {
 		mode: "SZ",
-		time: m === undefined ? null : parseClock(m, s!),
+		time: m === undefined ? null : parseClock(m, s),
 		score: [num(scoreA), num(scoreB)],
 		penalty: [num(penA), num(penB)],
 		control: ctrlA ? 0 : ctrlB ? 1 : null,
@@ -338,8 +338,8 @@ function parseStripWeaponsCell(cell: string): StripWeaponsData {
 			return weaponId === undefined ? [] : [{ weaponId, score: 1 }];
 		});
 	return {
-		time: m === undefined ? null : parseClock(m, s!),
-		slots: [side(left!), side(right!)],
+		time: m === undefined ? null : parseClock(m, s),
+		slots: [side(left), side(right)],
 	};
 }
 
@@ -437,10 +437,10 @@ function parseScoreboardRow(row: string[]): ScoreboardData & {
 			name: head.slice(2),
 			weaponId:
 				weaponCell === "?" ? null : (Number(weaponCell) as MainWeaponId),
-			paint: num(stats[1]!),
-			ka: num(stats[2]!),
-			d: num(stats[3]!),
-			s: num(stats[4]!),
+			paint: num(stats[1]),
+			ka: num(stats[2]),
+			d: num(stats[3]),
+			s: num(stats[4]),
 		});
 	}
 	const score = (cellValue: string | undefined) =>
@@ -538,22 +538,22 @@ function analyzeSlot(
 	side: 0 | 1,
 	slot: number,
 ): SlotAnalysis {
-	const deadSpans = annotatedSpans(samples, (s) => s.dead[side][slot]!);
-	const specialSpans = annotatedSpans(samples, (s) => s.special[side][slot]!);
+	const deadSpans = annotatedSpans(samples, (s) => s.dead[side][slot]);
+	const specialSpans = annotatedSpans(samples, (s) => s.special[side][slot]);
 
 	let specialUses = 0;
 	let diedWithSpecial = 0;
 	let unknownSpecialEnds = 0;
 	for (let i = 1; i < samples.length; i++) {
-		const prev = samples[i - 1]!;
-		const cur = samples[i]!;
+		const prev = samples[i - 1];
+		const cur = samples[i];
 		if (!prev.special[side][slot] || cur.special[side][slot]) continue;
 		if (cur.t - prev.t > OBSERVATION_GAP_SECONDS) unknownSpecialEnds++;
 		else if (cur.dead[side][slot]) diedWithSpecial++;
 		else specialUses++;
 	}
 	const last = samples.at(-1);
-	const heldAtEnd = last !== undefined && last.special[side][slot] === true;
+	const heldAtEnd = last !== undefined && last.special[side][slot];
 
 	return {
 		side,
@@ -572,9 +572,9 @@ function observationGaps(
 ): TimeWindow[] {
 	const gaps: TimeWindow[] = [];
 	for (let i = 1; i < samples.length; i++) {
-		const dt = samples[i]!.t - samples[i - 1]!.t;
+		const dt = samples[i].t - samples[i - 1].t;
 		if (dt > OBSERVATION_GAP_SECONDS) {
-			gaps.push({ start: samples[i - 1]!.t, end: samples[i]!.t });
+			gaps.push({ start: samples[i - 1].t, end: samples[i].t });
 		}
 	}
 	return gaps;
@@ -675,12 +675,12 @@ function printMatch(
 
 	const sorted = samples.toSorted((a, b) => a.t - b.t);
 	const gaps = observationGaps(sorted);
-	const windowSeconds = sorted.at(-1)!.t - sorted[0]!.t;
+	const windowSeconds = sorted.at(-1)!.t - sorted[0].t;
 	const gapSeconds = gaps.reduce((acc, gap) => acc + (gap.end - gap.start), 0);
 	const coverage =
 		windowSeconds <= 0 ? 1 : (windowSeconds - gapSeconds) / windowSeconds;
 	console.log(
-		`status samples: ${sorted.length} over ${ts(sorted[0]!.t)} – ${ts(sorted.at(-1)!.t)} · observed ${Math.round(coverage * 100)}% of the window`,
+		`status samples: ${sorted.length} over ${ts(sorted[0].t)} – ${ts(sorted.at(-1)!.t)} · observed ${Math.round(coverage * 100)}% of the window`,
 	);
 	for (const gap of gaps) {
 		console.log(
@@ -712,8 +712,7 @@ function printMatch(
 		);
 		const tlDeaths = analyses.map((a) => a.deadSpans.length);
 		const deathsMultisetMatch =
-			sbDeaths.every((d) => d !== null) &&
-			multisetEquals(sbDeaths as number[], tlDeaths);
+			sbDeaths.every((d) => d !== null) && multisetEquals(sbDeaths, tlDeaths);
 
 		for (const analysis of analyses) {
 			printSlot(index, builtMatch, analysis, deathsMultisetMatch);
@@ -841,7 +840,7 @@ function collectCandidates(
 		if (span.confirmingReads.length === 1) score += 1;
 		if (deadExcess) score += deathsMultisetMatch ? 1 : 3;
 		if (score === 0) continue;
-		const confirmed = span.confirmingReads.at(-1)! - span.confirmingReads[0]!;
+		const confirmed = span.confirmingReads.at(-1)! - span.confirmingReads[0];
 		candidates.push({
 			score: score + 1 / (1 + confirmed),
 			t: span.start,
@@ -936,7 +935,7 @@ function printGuidance(): void {
 		"2. In the scanner UI, analyze that frame and use “Save fixture” — the misread frame lands byte-exact with a prefilled expected.json.",
 	);
 	console.log(
-		"3. Hand-correct expected.json (icon-strip states go under tests/fixtures/player-status/, minimap card states under tests/fixtures/minimap/), then run pnpm test:scanner.",
+		"3. Hand-correct expected.json (icon-strip states go under tests/fixtures/player-status/, minimap card states under tests/fixtures/minimap/), then run bun run test:scanner.",
 	);
 	console.log(
 		"Legend: a DEAD span shorter than 3.5s cannot be a real splat (min respawn); single-read spans are one frame's misread away from vanishing; EXTRA counts point at phantom bands, MISSING counts at undetected states or coverage gaps.",

@@ -1,5 +1,5 @@
-import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { userArtPageActionSchema } from "~/features/art/art-schemas.server";
+import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";

@@ -67,7 +67,9 @@ export function TrophyBackfill({
 	const handleSeriesChange = (newSeriesId: number) => {
 		setSeriesId(newSeriesId);
 		if (trophyId) {
-			fetcher.load(trophyBackfillPage({ trophyId, seriesId: newSeriesId }));
+			void fetcher.load(
+				trophyBackfillPage({ trophyId, seriesId: newSeriesId }),
+			);
 		}
 	};
 
@@ -175,12 +177,15 @@ function BackfillTournamentList({
 	};
 
 	const toggleWinner = (tournamentId: number, userId: number) => {
-		const userIds = awards[tournamentId] ?? [];
-		setAwards({
-			...awards,
-			[tournamentId]: userIds.includes(userId)
-				? userIds.filter((id) => id !== userId)
-				: [...userIds, userId],
+		setAwards((prevAwards) => {
+			const userIds = prevAwards[tournamentId] ?? [];
+
+			return {
+				...prevAwards,
+				[tournamentId]: userIds.includes(userId)
+					? userIds.filter((id) => id !== userId)
+					: [...userIds, userId],
+			};
 		});
 	};
 

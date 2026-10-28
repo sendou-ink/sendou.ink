@@ -1,22 +1,20 @@
 import * as React from "react";
-import type * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { useHydrated } from "~/hooks/useHydrated";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
+import type { UsersForVoting } from "../loaders/plus.voting.server";
 import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "../plus-voting-constants";
 import { plusVotingPersisted } from "../plus-voting-persisted";
 import type { PlusVoteFromFE } from "./types";
 import { nextNonCompletedVoting, rangeToMonthYear } from "./voting-time";
 
 interface VotingState {
-	usersForVoting: PlusVotingRepository.UsersForVoting;
+	usersForVoting: UsersForVoting;
 	votes: PlusVoteFromFE[];
 }
 
-export function usePlusVoting(
-	usersForVotingFromServer: PlusVotingRepository.UsersForVoting,
-) {
+export function usePlusVoting(usersForVotingFromServer: UsersForVoting) {
 	const isHydrated = useHydrated();
 	const [state, setState] = React.useState<VotingState | null>(null);
 
@@ -82,7 +80,7 @@ export function usePlusVoting(
 }
 
 function resolveInitialVotingState(
-	usersForVotingFromServer: PlusVotingRepository.UsersForVoting,
+	usersForVotingFromServer: UsersForVoting,
 ): VotingState {
 	const range = nextNonCompletedVoting(new Date());
 	invariant(range, "No next voting found");
@@ -166,7 +164,7 @@ function previousUser({
 	usersForVoting,
 	votes,
 }: {
-	usersForVoting?: PlusVotingRepository.UsersForVoting;
+	usersForVoting?: UsersForVoting;
 	votes: PlusVoteFromFE[];
 }) {
 	if (!usersForVoting) return;
@@ -187,7 +185,7 @@ function votesToLocalStorage({
 	usersForVoting,
 	votes,
 }: {
-	usersForVoting: PlusVotingRepository.UsersForVoting;
+	usersForVoting: UsersForVoting;
 	votes: PlusVoteFromFE[];
 }) {
 	const range = nextNonCompletedVoting(new Date());

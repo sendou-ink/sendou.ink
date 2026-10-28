@@ -1,8 +1,8 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Accuracy report across all fixtures, separate from pass/fail testing:
  * aggregate per-field accuracy plus character error rate (CER) for names,
- * the metric that drives glyph atlas expansion. Usage: pnpm scanner:report
+ * the metric that drives glyph atlas expansion. Usage: bun run scanner:report
  */
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {
@@ -22,16 +22,16 @@ import {
 	type MinimapData,
 } from "../../app/features/scanner/core/detectors/minimap/index";
 import { createQuickScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/index";
-import { createScoreboardDetector } from "../../app/features/scanner/core/detectors/scoreboard/index";
-import { createScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import {
 	createScoreboardBattleLogReplayDetector,
 	type ScoreboardBattleLogReplayData,
 } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
+import { createScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import {
 	createScoreboardOwnDetector,
 	type ScoreboardOwnData,
 } from "../../app/features/scanner/core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../../app/features/scanner/core/detectors/scoreboard/index";
 import type { Detector } from "../../app/features/scanner/core/detectors/types";
 import {
 	loadFixtures,
@@ -88,17 +88,17 @@ function editDistance(a: string, b: string): number {
 		row[0] = i;
 		return row;
 	});
-	for (let j = 0; j <= b.length; j++) dp[0]![j] = j;
+	for (let j = 0; j <= b.length; j++) dp[0][j] = j;
 	for (let i = 1; i <= a.length; i++) {
 		for (let j = 1; j <= b.length; j++) {
-			dp[i]![j] = Math.min(
-				dp[i - 1]![j]! + 1,
-				dp[i]![j - 1]! + 1,
-				dp[i - 1]![j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1),
+			dp[i][j] = Math.min(
+				dp[i - 1][j] + 1,
+				dp[i][j - 1] + 1,
+				dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
 			);
 		}
 	}
-	return dp[a.length]![b.length]!;
+	return dp[a.length][b.length];
 }
 
 function pct(t: Tally): string {
@@ -114,15 +114,15 @@ for (const config of configs) {
 	];
 
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		header: { ok: 0, total: 0 } as Tally,
-		timestamp: { ok: 0, total: 0 } as Tally,
-		replayCode: { ok: 0, total: 0 } as Tally,
-		matchScores: { ok: 0, total: 0 } as Tally,
-		weapons: { ok: 0, total: 0 } as Tally,
-		names: { ok: 0, total: 0 } as Tally,
-		paint: { ok: 0, total: 0 } as Tally,
-		stats: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		header: { ok: 0, total: 0 },
+		timestamp: { ok: 0, total: 0 },
+		replayCode: { ok: 0, total: 0 },
+		matchScores: { ok: 0, total: 0 },
+		weapons: { ok: 0, total: 0 },
+		names: { ok: 0, total: 0 },
+		paint: { ok: 0, total: 0 },
+		stats: { ok: 0, total: 0 },
 	};
 	let charEdits = 0;
 	let charTotal = 0;
@@ -167,9 +167,9 @@ for (const config of configs) {
 				tally.matchScores.ok++;
 			}
 		}
-		(expected.players ?? []).forEach((want, i) => {
+		for (const [i, want] of (expected.players ?? []).entries()) {
 			const got = event.data.players?.[i];
-			if (!got) return;
+			if (!got) continue;
 			if (want.weaponId !== undefined) {
 				tally.weapons.total++;
 				if (got.weaponId === want.weaponId) tally.weapons.ok++;
@@ -199,7 +199,7 @@ for (const config of configs) {
 					tally.stats.ok++;
 				}
 			}
-		});
+		}
 	}
 
 	console.info(`\n=== ${config.label} (${fixtures.length} fixtures) ===`);
@@ -230,9 +230,9 @@ for (const config of configs) {
 	const detector = createMapStartDetector(resources);
 	const fixtures = loadFixtures("map-start");
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		mode: { ok: 0, total: 0 } as Tally,
-		stage: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		mode: { ok: 0, total: 0 },
+		stage: { ok: 0, total: 0 },
 	};
 	const misses: string[] = [];
 
@@ -283,10 +283,10 @@ for (const config of configs) {
 		...loadFixtures("negative"),
 	];
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		header: { ok: 0, total: 0 } as Tally,
-		weapon: { ok: 0, total: 0 } as Tally,
-		abilities: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		header: { ok: 0, total: 0 },
+		weapon: { ok: 0, total: 0 },
+		abilities: { ok: 0, total: 0 },
 	};
 	const misses: string[] = [];
 
@@ -323,8 +323,8 @@ for (const config of configs) {
 					`${fixture.name}: weapon ${event.data.weaponId} != ${expected.weaponId} ("${expected.weaponLabel ?? ""}")`,
 				);
 		}
-		(expected.abilities ?? []).forEach((wantRow, row) => {
-			wantRow.forEach((want, slot) => {
+		for (const [row, wantRow] of (expected.abilities ?? []).entries()) {
+			for (const [slot, want] of wantRow.entries()) {
 				tally.abilities.total++;
 				const got = event.data.abilities[row]?.[slot];
 				if (got === want) tally.abilities.ok++;
@@ -332,8 +332,8 @@ for (const config of configs) {
 					misses.push(
 						`${fixture.name}: ability [${row}][${slot}] "${got}" != "${want}"`,
 					);
-			});
-		});
+			}
+		}
 	}
 
 	console.info(`\n=== scoreboard-own (${fixtures.length} fixtures) ===`);
@@ -352,12 +352,12 @@ for (const config of configs) {
 	const detector = createMinimapDetector(resources);
 	const fixtures = [...loadFixtures("minimap"), ...loadFixtures("negative")];
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		weapons: { ok: 0, total: 0 } as Tally,
-		names: { ok: 0, total: 0 } as Tally,
-		abilities: { ok: 0, total: 0 } as Tally,
-		stage: { ok: 0, total: 0 } as Tally,
-		status: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		weapons: { ok: 0, total: 0 },
+		names: { ok: 0, total: 0 },
+		abilities: { ok: 0, total: 0 },
+		stage: { ok: 0, total: 0 },
+		status: { ok: 0, total: 0 },
 	};
 	let charEdits = 0;
 	let charTotal = 0;
@@ -396,9 +396,9 @@ for (const config of configs) {
 			["enemy", expected.enemies ?? [], event.data.enemies],
 		];
 		for (const [side, wants, gots] of sides) {
-			wants.forEach((want, i) => {
+			for (const [i, want] of wants.entries()) {
 				const got = gots[i];
-				if (!got) return;
+				if (!got) continue;
 				if (want.weaponId !== undefined) {
 					tally.weapons.total++;
 					if (got.weaponId === want.weaponId) tally.weapons.ok++;
@@ -419,7 +419,7 @@ for (const config of configs) {
 							`${fixture.name} ${side}${i}: name "${gotName}" != "${want.name}"`,
 						);
 				}
-				(want.abilities ?? []).forEach((wantId, slot) => {
+				for (const [slot, wantId] of (want.abilities ?? []).entries()) {
 					tally.abilities.total++;
 					const gotId = got.abilities[slot] ?? null;
 					if (gotId === wantId) tally.abilities.ok++;
@@ -427,7 +427,7 @@ for (const config of configs) {
 						misses.push(
 							`${fixture.name} ${side}${i}: ability [${slot}] "${gotId}" != "${wantId}"`,
 						);
-				});
+				}
 				for (const flag of ["dead", "specialReady"] as const) {
 					if (want[flag] === undefined) continue;
 					tally.status.total++;
@@ -437,7 +437,7 @@ for (const config of configs) {
 							`${fixture.name} ${side}${i}: ${flag} ${got[flag]} != ${want[flag]}`,
 						);
 				}
-			});
+			}
 		}
 		if (expected.stage !== undefined) {
 			tally.stage.total++;
@@ -471,10 +471,10 @@ for (const config of configs) {
 	const detector = createDeathDetector(resources);
 	const fixtures = loadFixtures("death");
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		weapon: { ok: 0, total: 0 } as Tally,
-		abilities: { ok: 0, total: 0 } as Tally,
-		names: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		weapon: { ok: 0, total: 0 },
+		abilities: { ok: 0, total: 0 },
+		names: { ok: 0, total: 0 },
 	};
 	let charEdits = 0;
 	let charTotal = 0;
@@ -499,8 +499,8 @@ for (const config of configs) {
 					`${fixture.name}: weapon ${event.data.weaponId} != ${expected.weaponId} ("${expected.weaponLabel ?? ""}")`,
 				);
 		}
-		(expected.abilities ?? []).forEach((wantRow, row) => {
-			wantRow.forEach((want, slot) => {
+		for (const [row, wantRow] of (expected.abilities ?? []).entries()) {
+			for (const [slot, want] of wantRow.entries()) {
 				tally.abilities.total++;
 				const got = event.data.abilities[row]?.[slot];
 				if (got === want) tally.abilities.ok++;
@@ -508,8 +508,8 @@ for (const config of configs) {
 					misses.push(
 						`${fixture.name}: ability [${row}][${slot}] "${got}" != "${want}"`,
 					);
-			});
-		});
+			}
+		}
 		if (expected.name !== undefined) {
 			tally.names.total++;
 			const got = event.data.name ?? "";
@@ -540,10 +540,10 @@ for (const config of configs) {
 	const detector = createKillDetector(resources);
 	const fixtures = loadFixtures("kill");
 	const tally = {
-		gate: { ok: 0, total: 0 } as Tally,
-		time: { ok: 0, total: 0 } as Tally,
-		rows: { ok: 0, total: 0 } as Tally,
-		names: { ok: 0, total: 0 } as Tally,
+		gate: { ok: 0, total: 0 },
+		time: { ok: 0, total: 0 },
+		rows: { ok: 0, total: 0 },
+		names: { ok: 0, total: 0 },
 	};
 	let charEdits = 0;
 	let charTotal = 0;

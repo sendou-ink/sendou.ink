@@ -11,9 +11,9 @@ import { newVodPage } from "~/features/vods/vods-urls";
 import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	CALENDAR_NEW_PAGE,
+	navIconUrl,
 	NEW_TEAM_PAGE,
 	NEW_TROPHY_PAGE,
-	navIconUrl,
 	newAssociationsPage,
 	newLobbyPage,
 	newScrimPostPage,

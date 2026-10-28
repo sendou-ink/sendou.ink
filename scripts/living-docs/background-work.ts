@@ -69,9 +69,9 @@ export interface CronSchedule {
 	expression: string;
 	/** The expression in words, e.g. "Every hour at :30". */
 	reading: string;
-	/** The `timezone` option, null for the server's own. */
+	/** The `tz` option, null for the server's own. */
 	timezone: string | null;
-	/** The comment above the `cron.schedule` call. */
+	/** The comment above the `Bun.cron` call. */
 	comment: string | null;
 	line: number;
 	/** The export of `list.server.ts` the schedule runs. */
@@ -209,9 +209,9 @@ function cronSchedules() {
 			call.type !== "CallExpression" ||
 			call.callee.type !== "MemberExpression" ||
 			call.callee.object.type !== "Identifier" ||
-			call.callee.object.name !== "cron" ||
+			call.callee.object.name !== "Bun" ||
 			call.callee.property.type !== "Identifier" ||
-			call.callee.property.name !== "schedule"
+			call.callee.property.name !== "cron"
 		) {
 			return;
 		}
@@ -220,12 +220,12 @@ function cronSchedules() {
 		const expression = stringValue(expressionArg) ?? "";
 		const timezone =
 			options?.type === "ObjectExpression"
-				? (stringValue(propertyValue(options, "timezone")) ?? null)
+				? (stringValue(propertyValue(options, "tz")) ?? null)
 				: null;
 
 		let listName: string | null = null;
 		if (callback) {
-			walk(callback as Node, (inner) => {
+			walk(callback, (inner) => {
 				if (
 					inner.type === "ForOfStatement" &&
 					inner.right.type === "Identifier"
@@ -484,7 +484,7 @@ function notificationTypes(): Array<Omit<NotificationType, "senders">> {
 		const [typeArg, metaArg] = member.typeArguments?.params ?? [];
 		const type =
 			typeArg?.type === "TSLiteralType"
-				? stringValue(typeArg.literal as Node)
+				? stringValue(typeArg.literal)
 				: undefined;
 		if (!type) return [];
 
@@ -544,7 +544,7 @@ function notifyCallSites(sourceFiles: string[]) {
 
 				const types = new Set<string>();
 				for (const argument of node.arguments) {
-					collectTypeLiterals(argument as Node, types);
+					collectTypeLiterals(argument, types);
 					const notification =
 						argument.type === "ObjectExpression"
 							? propertyValue(argument, "notification")
@@ -656,7 +656,7 @@ function fileComment(file: ParsedFile) {
 				(!firstStatement || comment.end <= firstStatement.start),
 		)
 		.map((comment) => comment.value.trim())
-		.filter((line) => !line.startsWith("biome-ignore"));
+		.filter((line) => !line.startsWith("eslint-"));
 
 	return lines.length > 0 ? lines.join(" ") : null;
 }
@@ -715,7 +715,7 @@ function callsIn(file: ParsedFile, name: string) {
 				callee.type === "Identifier"
 					? callee.name
 					: callee.type === "MemberExpression" &&
-							callee.property.type === "Identifier"
+						  callee.property.type === "Identifier"
 						? callee.property.name
 						: null;
 			if (calledName === name) line = lineOf(file, node.start);
@@ -724,7 +724,7 @@ function callsIn(file: ParsedFile, name: string) {
 
 		return line === null
 			? []
-			: [{ line: line as number, declaration: declarationName(statement) }];
+			: [{ line, declaration: declarationName(statement) }];
 	});
 }
 

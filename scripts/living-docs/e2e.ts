@@ -16,8 +16,8 @@ import {
 	textOf,
 } from "./ast.ts";
 import {
-	type FormSchema,
 	formHelpersSchemaName,
+	type FormSchema,
 	formSchemaOf,
 } from "./forms.ts";
 import { escapeHtml, highlight } from "./highlight.ts";
@@ -292,12 +292,9 @@ function collectTests(
 	};
 
 	for (const statement of expandTestStatements(statements, context)) {
-		if (statement.type !== "ExpressionStatement") continue;
-		const call = statement.expression;
-		if (call.type !== "CallExpression") continue;
-
-		const calleePath = memberPath(call.callee);
-		if (calleePath[0] !== "test") continue;
+		const testCall = testCallOf(statement);
+		if (!testCall) continue;
+		const { call, calleePath } = testCall;
 
 		if (calleePath[1] === "use" && call.arguments[0]) {
 			group.options = textOf(context.file, call.arguments[0]).replace(
@@ -339,44 +336,88 @@ function collectTests(
 
 		const isHook =
 			calleePath[1]?.startsWith("before") || calleePath[1]?.startsWith("after");
-		if (
-			calleePath.length > 1 &&
-			!isHook &&
-			!["only", "skip", "fixme", "fail"].includes(calleePath[1])
-		) {
+		if (calleePath.length > 1 && !isHook && !isTestModifier(calleePath[1])) {
 			continue;
 		}
 
-		context.variableClasses = new Map(fromHooks.variableClasses);
-		const steps = narrateStatements(
-			callback.body.body,
-			context,
-			callback.body.start,
+		group.tests.push(
+			documentTest({
+				statement,
+				call,
+				body: callback.body,
+				name,
+				modifier: isHook ? null : (calleePath[1] ?? null),
+				hookName: isHook ? calleePath[1] : null,
+				titlePath: group.titlePath,
+				context,
+				fromHooks,
+			}),
 		);
-		const startingActor = isHook ? null : fromHooks.actor;
-
-		const testTitle = isHook
-			? humanize(calleePath[1])
-			: (name ?? "(unnamed test)");
-		group.tests.push({
-			name: testTitle,
-			doc: jsDocOf(context.file, statement.start)?.description ?? null,
-			titlePath: [...group.titlePath, testTitle],
-			line: lineOf(context.file, call.start),
-			endLine: lineOf(context.file, call.end),
-			modifier: isHook ? "hook" : (calleePath[1] ?? null),
-			source: textOf(context.file, call),
-			...colorActors(
-				actorsOf(steps, startingActor),
-				chaptersOf(steps, context, startingActor),
-			),
-		});
-
-		if (calleePath[1] === "beforeEach") {
-			fromHooks.actor = actorsOf(steps, null).at(-1) ?? fromHooks.actor;
-			fromHooks.variableClasses = new Map(context.variableClasses);
-		}
 	}
+}
+
+/** The `test(...)`, `test.describe(...)`, `test.beforeEach(...)` etc. call a statement is, if any. */
+function testCallOf(statement: Statement) {
+	if (statement.type !== "ExpressionStatement") return null;
+	const call = statement.expression;
+	if (call.type !== "CallExpression") return null;
+
+	const calleePath = memberPath(call.callee);
+	if (calleePath[0] !== "test") return null;
+
+	return { call, calleePath };
+}
+
+function isTestModifier(name: string) {
+	return ["only", "skip", "fixme", "fail"].includes(name);
+}
+
+/** A test, or a hook when `hookName` is given, read into steps; a `beforeEach` passes on who it logs in as to the tests after it. */
+function documentTest({
+	statement,
+	call,
+	body,
+	name,
+	modifier,
+	hookName,
+	titlePath,
+	context,
+	fromHooks,
+}: {
+	statement: Statement;
+	call: CallExpression;
+	body: Extract<ArrowFunctionExpression["body"], { type: "BlockStatement" }>;
+	name: string | null;
+	modifier: string | null;
+	hookName: string | null;
+	titlePath: string[];
+	context: Context;
+	fromHooks: HookState;
+}) {
+	context.variableClasses = new Map(fromHooks.variableClasses);
+	const steps = narrateStatements(body.body, context, body.start);
+	const startingActor = hookName ? null : fromHooks.actor;
+
+	const testTitle = hookName ? humanize(hookName) : (name ?? "(unnamed test)");
+
+	if (hookName === "beforeEach") {
+		fromHooks.actor = actorsOf(steps, null).at(-1) ?? fromHooks.actor;
+		fromHooks.variableClasses = new Map(context.variableClasses);
+	}
+
+	return {
+		name: testTitle,
+		doc: jsDocOf(context.file, statement.start)?.description ?? null,
+		titlePath: [...titlePath, testTitle],
+		line: lineOf(context.file, call.start),
+		endLine: lineOf(context.file, call.end),
+		modifier: hookName ? "hook" : modifier,
+		source: textOf(context.file, call),
+		...colorActors(
+			actorsOf(steps, startingActor),
+			chaptersOf(steps, context, startingActor),
+		),
+	};
 }
 
 /** Tests declared by a loop or by a local function called in a `describe` read as if written there. */
@@ -605,111 +646,16 @@ function narrateCall(
 	context: Context,
 	code: string,
 ): Step | null {
-	const step = emptyStep(code);
 	const callee = call.callee;
 
 	const testStep = testStepOf(call);
-	if (testStep) {
-		const children = testStep.body
-			? narrateStatements(testStep.body.body, context, testStep.body.start)
-			: [];
-		return {
-			...step,
-			phase: loopPhase(children),
-			html: escapeHtml(testStep.title),
-			children,
-			testStep: testStep.title,
-		};
-	}
+	if (testStep) return narrateTestStep(testStep, context, code);
 
 	const expectation = expectChain(call);
-	if (expectation) {
-		const args = call.arguments.map((arg) => value(arg, context));
-		const phrase = MATCHERS[expectation.matcher]?.(args) ?? [
-			`${humanize(expectation.matcher.replace(/^to/, ""))} ${args.join(", ")}`,
-			`not ${humanize(expectation.matcher.replace(/^to/, ""))} ${args.join(", ")}`,
-		];
-		const subject = expectation.subject
-			? noun(expectation.subject, context)
-			: "";
-
-		return {
-			...step,
-			phase: "assert",
-			html: `<strong>${subject}</strong> ${phrase[expectation.negated ? 1 : 0]}`,
-			pageClass: expectation.subject
-				? rootClass(expectation.subject, context)
-				: null,
-		};
-	}
+	if (expectation) return narrateExpectation(call, expectation, context, code);
 
 	if (callee.type === "Identifier") {
-		const name = callee.name;
-		if (OMITTED_HELPERS.has(name)) return null;
-
-		if (name === "impersonate") {
-			return {
-				...step,
-				phase: "act",
-				actor: actorOf(call.arguments[1], context),
-			};
-		}
-
-		if (name.startsWith("waitFor")) {
-			const inner = call.arguments.find(
-				(arg) => arg.type === "ArrowFunctionExpression",
-			);
-			if (inner?.type === "ArrowFunctionExpression") {
-				const body =
-					inner.body.type === "BlockStatement"
-						? inner.body.body[0]
-						: {
-								type: "ExpressionStatement",
-								expression: inner.body,
-								start: inner.body.start,
-								end: inner.body.end,
-							};
-				const narrated = body
-					? narrateStatement(body as Statement, context)
-					: null;
-				if (narrated) return { ...narrated, code };
-			}
-		}
-
-		if (name === "navigate") {
-			const url = objectProperty(call.arguments[0], "url");
-			return {
-				...step,
-				phase: "act",
-				html: `Go to ${url ? value(url, context) : "page"}`,
-				pageClass: "",
-			};
-		}
-
-		const helper =
-			context.localHelpers.get(name) ?? context.pageObjects.helpers.get(name);
-		const args = callArguments(call, context);
-
-		if (/^(is|expect|assert)[A-Z]/.test(name)) {
-			const [subject, ...rest] = call.arguments.filter(
-				(arg) => !isBoilerplateArg(arg),
-			);
-			const subjectHtml = subject
-				? `<strong>${noun(subject, context)}</strong> `
-				: "";
-			const phrase = escapeHtml(humanize(name.replace(/^(expect|assert)/, "")));
-			return {
-				...step,
-				phase: "assert",
-				html: `${subjectHtml}${withRef(phrase, helper, context)} ${rest.map((arg) => value(arg, context)).join(", ")}`.trim(),
-			};
-		}
-
-		return {
-			...step,
-			phase: usesFactories(call) ? "arrange" : "act",
-			html: `${withRef(sentence(name), helper, context)} ${args}`.trim(),
-		};
+		return narrateHelperCall(call, callee.name, context, code);
 	}
 
 	if (
@@ -719,8 +665,139 @@ function narrateCall(
 		return fallbackStep(code);
 	}
 
-	const method = callee.property.name;
-	const receiver = callee.object;
+	return narrateMethodCall(
+		call,
+		callee.property.name,
+		callee.object,
+		context,
+		code,
+	);
+}
+
+function narrateTestStep(
+	testStep: NonNullable<ReturnType<typeof testStepOf>>,
+	context: Context,
+	code: string,
+): Step {
+	const children = testStep.body
+		? narrateStatements(testStep.body.body, context, testStep.body.start)
+		: [];
+	return {
+		...emptyStep(code),
+		phase: loopPhase(children),
+		html: escapeHtml(testStep.title),
+		children,
+		testStep: testStep.title,
+	};
+}
+
+function narrateExpectation(
+	call: CallExpression,
+	expectation: NonNullable<ReturnType<typeof expectChain>>,
+	context: Context,
+	code: string,
+): Step {
+	const args = call.arguments.map((arg) => value(arg, context));
+	const phrase = MATCHERS[expectation.matcher]?.(args) ?? [
+		`${humanize(expectation.matcher.replace(/^to/, ""))} ${args.join(", ")}`,
+		`not ${humanize(expectation.matcher.replace(/^to/, ""))} ${args.join(", ")}`,
+	];
+	const subject = expectation.subject ? noun(expectation.subject, context) : "";
+
+	return {
+		...emptyStep(code),
+		phase: "assert",
+		html: `<strong>${subject}</strong> ${phrase[expectation.negated ? 1 : 0]}`,
+		pageClass: expectation.subject
+			? rootClass(expectation.subject, context)
+			: null,
+	};
+}
+
+/** A call of a plain function: a helper of the spec or of the page objects, `navigate`, `impersonate`... */
+function narrateHelperCall(
+	call: CallExpression,
+	name: string,
+	context: Context,
+	code: string,
+): Step | null {
+	const step = emptyStep(code);
+	if (OMITTED_HELPERS.has(name)) return null;
+
+	if (name === "impersonate") {
+		return {
+			...step,
+			phase: "act",
+			actor: actorOf(call.arguments[1], context),
+		};
+	}
+
+	if (name.startsWith("waitFor")) {
+		const inner = call.arguments.find(
+			(arg) => arg.type === "ArrowFunctionExpression",
+		);
+		if (inner?.type === "ArrowFunctionExpression") {
+			const body =
+				inner.body.type === "BlockStatement"
+					? inner.body.body[0]
+					: {
+							type: "ExpressionStatement",
+							expression: inner.body,
+							start: inner.body.start,
+							end: inner.body.end,
+						};
+			const narrated = body
+				? narrateStatement(body as Statement, context)
+				: null;
+			if (narrated) return { ...narrated, code };
+		}
+	}
+
+	if (name === "navigate") {
+		const url = objectProperty(call.arguments[0], "url");
+		return {
+			...step,
+			phase: "act",
+			html: `Go to ${url ? value(url, context) : "page"}`,
+			pageClass: "",
+		};
+	}
+
+	const helper =
+		context.localHelpers.get(name) ?? context.pageObjects.helpers.get(name);
+	const args = callArguments(call, context);
+
+	if (/^(is|expect|assert)[A-Z]/.test(name)) {
+		const [subject, ...rest] = call.arguments.filter(
+			(arg) => !isBoilerplateArg(arg),
+		);
+		const subjectHtml = subject
+			? `<strong>${noun(subject, context)}</strong> `
+			: "";
+		const phrase = escapeHtml(humanize(name.replace(/^(expect|assert)/, "")));
+		return {
+			...step,
+			phase: "assert",
+			html: `${subjectHtml}${withRef(phrase, helper, context)} ${rest.map((arg) => value(arg, context)).join(", ")}`.trim(),
+		};
+	}
+
+	return {
+		...step,
+		phase: usesFactories(call) ? "arrange" : "act",
+		html: `${withRef(sentence(name), helper, context)} ${args}`.trim(),
+	};
+}
+
+/** A method call: a factory, `page`, a form, a locator action or a page object method. */
+function narrateMethodCall(
+	call: CallExpression,
+	method: string,
+	receiver: Expression,
+	context: Context,
+	code: string,
+): Step {
+	const step = emptyStep(code);
 	const path = memberPath(receiver);
 
 	if (path[0] === "factories") {
@@ -733,33 +810,8 @@ function narrateCall(
 		return { ...step, phase: "arrange", html: html.trim() };
 	}
 
-	if (path[0] === "page" && path.length === 1) {
-		if (method === "setViewportSize") {
-			return {
-				...step,
-				phase: "arrange",
-				html: `Use a ${value(call.arguments[0], context)} viewport`,
-			};
-		}
-		if (method === "reload")
-			return { ...step, phase: "act", html: "Reload the page" };
-		if (method === "goto") {
-			return {
-				...step,
-				phase: "act",
-				html: `Go to ${value(call.arguments[0], context)}`,
-				pageClass: "",
-			};
-		}
-	}
-
-	if (path.join(".") === "page.keyboard" && method === "press") {
-		return {
-			...step,
-			phase: "act",
-			html: `Press <kbd>${escapeHtml(stringValue(call.arguments[0]) ?? "?")}</kbd>`,
-		};
-	}
+	const pageStep = narratePageCall(call, method, path, context, step);
+	if (pageStep) return pageStep;
 
 	const pageClass = rootClass(receiver, context);
 
@@ -768,24 +820,7 @@ function narrateCall(
 		(formSchema || /form$/i.test(path.at(-1) ?? "")) &&
 		call.arguments.length > 0
 	) {
-		const fieldName =
-			stringValue(call.arguments[0]) ?? textOf(context.file, call.arguments[0]);
-		const formField = formSchema?.get(fieldName);
-		const field = `<strong>${withRef(escapeHtml(formField?.label ?? humanize(fieldName)), formField?.ref, context)}</strong>`;
-		const [, ...rest] = call.arguments.map((arg) => {
-			const optionValue = stringValue(arg);
-			const optionLabel =
-				optionValue !== null ? formField?.items.get(optionValue) : undefined;
-			return optionLabel ? quoted(optionLabel) : value(arg, context);
-		});
-		const html =
-			method === "fill"
-				? `Fill ${field} with ${rest.join(", ")}`
-				: method === "select"
-					? `Select ${rest.join(", ")} for ${field}`
-					: method.startsWith("set")
-						? `Set ${field} to ${rest.join(", ")}`
-						: `${sentence(method)} ${field} ${rest.join(", ")}`;
+		const html = formFieldSentence(call, method, formSchema, context);
 		return { ...step, phase: "act", html: html.trim(), pageClass };
 	}
 
@@ -814,6 +849,74 @@ function narrateCall(
 		html: html.trim(),
 		pageClass,
 	};
+}
+
+/** `page.goto(...)`, `page.reload()`, `page.keyboard.press(...)`... */
+function narratePageCall(
+	call: CallExpression,
+	method: string,
+	path: string[],
+	context: Context,
+	step: Step,
+): Step | null {
+	if (path[0] === "page" && path.length === 1) {
+		if (method === "setViewportSize") {
+			return {
+				...step,
+				phase: "arrange",
+				html: `Use a ${value(call.arguments[0], context)} viewport`,
+			};
+		}
+		if (method === "reload")
+			return { ...step, phase: "act", html: "Reload the page" };
+		if (method === "goto") {
+			return {
+				...step,
+				phase: "act",
+				html: `Go to ${value(call.arguments[0], context)}`,
+				pageClass: "",
+			};
+		}
+	}
+
+	if (path.join(".") === "page.keyboard" && method === "press") {
+		return {
+			...step,
+			phase: "act",
+			html: `Press <kbd>${escapeHtml(stringValue(call.arguments[0]) ?? "?")}</kbd>`,
+		};
+	}
+
+	return null;
+}
+
+/** A form page object's action on one of its fields, named by the form's schema when it is known. */
+function formFieldSentence(
+	call: CallExpression,
+	method: string,
+	formSchema: ReturnType<typeof formSchemaOfReceiver>,
+	context: Context,
+) {
+	const fieldName =
+		stringValue(call.arguments[0]) ?? textOf(context.file, call.arguments[0]);
+	const formField = formSchema?.get(fieldName);
+	const field = `<strong>${withRef(escapeHtml(formField?.label ?? humanize(fieldName)), formField?.ref, context)}</strong>`;
+	const [, ...rest] = call.arguments.map((arg) => {
+		const optionValue = stringValue(arg);
+		const optionLabel =
+			optionValue !== null ? formField?.items.get(optionValue) : undefined;
+		return optionLabel ? quoted(optionLabel) : value(arg, context);
+	});
+	const html =
+		method === "fill"
+			? `Fill ${field} with ${rest.join(", ")}`
+			: method === "select"
+				? `Select ${rest.join(", ")} for ${field}`
+				: method.startsWith("set")
+					? `Set ${field} to ${rest.join(", ")}`
+					: `${sentence(method)} ${field} ${rest.join(", ")}`;
+
+	return html;
 }
 
 /** Splits a test at its `test.step`s, what is done between them making untitled chapters. */
@@ -1019,6 +1122,24 @@ function expectChain(call: CallExpression) {
 }
 
 /** The noun phrase of something a test looks at, e.g. `scrims.locators.requestButtons` → "request buttons". */
+/** A page object's locator or method, linked to where it is declared. */
+function pageObjectMemberNoun(
+	expression: Extract<Expression, { type: "MemberExpression" }>,
+	name: string,
+	context: Context,
+) {
+	const className = rootClass(expression, context);
+	const pageObject = className
+		? context.pageObjects.classes.get(className)
+		: undefined;
+	const isLocator = memberPath(expression.object).at(-1) === "locators";
+	const ref = isLocator
+		? pageObject?.locators.get(name)
+		: pageObject?.methods.get(name)?.ref;
+
+	return withRef(escapeHtml(humanize(name)), ref, context);
+}
+
 function noun(node: Argument, context: Context): string {
 	const expression = unwrapAwait(node as Expression);
 
@@ -1035,20 +1156,7 @@ function noun(node: Argument, context: Context): string {
 		expression.type === "MemberExpression" &&
 		expression.property.type === "Identifier"
 	) {
-		const className = rootClass(expression, context);
-		const pageObject = className
-			? context.pageObjects.classes.get(className)
-			: undefined;
-		const isLocator = memberPath(expression.object).at(-1) === "locators";
-		const ref = isLocator
-			? pageObject?.locators.get(expression.property.name)
-			: pageObject?.methods.get(expression.property.name)?.ref;
-
-		return withRef(
-			escapeHtml(humanize(expression.property.name)),
-			ref,
-			context,
-		);
+		return pageObjectMemberNoun(expression, expression.property.name, context);
 	}
 
 	if (

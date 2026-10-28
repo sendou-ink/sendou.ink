@@ -2,7 +2,7 @@ import { ordinal } from "openskill";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
+import { type TierName, TIERS } from "~/features/mmr/mmr-constants";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import { freshUserSkills } from "~/features/mmr/tiered.server";
 import { invariant } from "~/utils/invariant";
@@ -82,7 +82,7 @@ const getAllSkills = async () => {
 
 		const bestTier = toConsider.reduce<null | { name: TierName; idx: number }>(
 			(acc, cur, idx) => {
-				const seasonsSkill = cur[member.userId!];
+				const seasonsSkill = cur[member.userId];
 				if (!seasonsSkill || seasonsSkill.approximate) {
 					return acc;
 				}
@@ -100,7 +100,7 @@ const getAllSkills = async () => {
 		);
 
 		if (bestTier) {
-			result[member.userId] = toConsider[bestTier.idx][member.userId!];
+			result[member.userId] = toConsider[bestTier.idx][member.userId];
 		}
 	}
 

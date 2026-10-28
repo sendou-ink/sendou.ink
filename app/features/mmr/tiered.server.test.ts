@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";

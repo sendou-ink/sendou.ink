@@ -1,4 +1,3 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
  * Minimal OpenType cmap reader: which codepoints a font actually maps.
  * @napi-rs/canvas silently falls back to a system font for characters the

@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 
 // runs e2e specs with tracing on and keeps what the living docs show from the run:
 // the pathnames each test visits and the /api/ requests it makes (committed) and a screenshot per page divider and test.step (gitignored),
@@ -18,11 +18,11 @@ import { documentSpec, type TestDoc } from "./e2e.ts";
 import { indexPageObjects } from "./page-objects.ts";
 import {
 	readVisits,
-	SCREENSHOTS_DIR,
 	screenshotFile,
+	SCREENSHOTS_DIR,
 	testMatches,
-	VISITS_FILE,
 	type Visits,
+	VISITS_FILE,
 } from "./visits.ts";
 
 const REPORT_FILE = "test-results/living-docs-report.json";
@@ -62,8 +62,8 @@ function main() {
 	const specs = process.argv.slice(2);
 
 	const run = spawnSync(
-		"pnpm",
-		["exec", "playwright", "test", ...specs, "--reporter=list,json"],
+		"bunx",
+		["playwright", "test", ...specs, "--reporter=list,json"],
 		{
 			cwd: ROOT,
 			stdio: "inherit",
@@ -91,7 +91,7 @@ function main() {
 	const screenshotCount = saveScreenshots(reported, capturedSpecs);
 
 	console.log(
-		`Captured ${reported.length} tests of ${capturedSpecs.size} specs, ${screenshotCount} screenshots. A running pnpm run dev:docs picks them up, otherwise run it to see them.`,
+		`Captured ${reported.length} tests of ${capturedSpecs.size} specs, ${screenshotCount} screenshots. A running bun run dev:docs picks them up, otherwise run it to see them.`,
 	);
 
 	if (run.status !== 0) process.exitCode = 1;
@@ -259,13 +259,11 @@ function dividerScreenshots(
 				.map((action) => action.startWall),
 		);
 
-		const frame = frames
-			.filter(
-				(candidate) =>
-					(!last.contextId || candidate.contextId === last.contextId) &&
-					candidate.wall < nextStart,
-			)
-			.at(-1);
+		const frame = frames.findLast(
+			(candidate) =>
+				(!last.contextId || candidate.contextId === last.contextId) &&
+				candidate.wall < nextStart,
+		);
 		const image = frame ? zip[frame.file] : undefined;
 		if (image) screenshots.set(start, image);
 	}

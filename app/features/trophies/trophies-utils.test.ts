@@ -1,18 +1,17 @@
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import { addWeeks, subDays } from "date-fns";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { decompressFromBase64 } from "~/utils/compression";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	decompressTrophyModel,
 	hasUpcomingTournamentSoon,
 } from "./trophies-utils";
 
+const decompressMock = vi.fn((_compressed: string): string | null => null);
+
 vi.mock("~/utils/compression", () => ({
 	compressToBase64: vi.fn((value: string) => value),
-	decompressFromBase64: vi.fn((_compressed: string): string | null => null),
+	decompressFromBase64: decompressMock,
 }));
-
-const decompressMock = vi.mocked(decompressFromBase64);
 
 const ENTRY_CHARS = 3_500_000;
 

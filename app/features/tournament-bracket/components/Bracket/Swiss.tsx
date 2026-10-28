@@ -1,9 +1,9 @@
 import { ActionButton } from "~/components/ActionButton";
 import { useUser } from "~/features/auth/core/user";
-import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
+import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { bracketSchema } from "../../tournament-bracket-schemas";
 import { bracketGroups, GroupTabs } from "./GroupTabs";

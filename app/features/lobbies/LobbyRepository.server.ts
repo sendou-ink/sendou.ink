@@ -17,12 +17,12 @@ import {
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
-import * as LobbyMatchRepository from "./LobbyMatchRepository.server";
 import {
 	CHECK_IN_LEAD_MINUTES,
 	type LobbyParticipantStatus,
 } from "./lobbies-constants";
 import { lobbyChatRoomExpiresAt } from "./lobbies-utils";
+import * as LobbyMatchRepository from "./LobbyMatchRepository.server";
 
 const INDEX_LIST_LIMIT = 50;
 

@@ -74,7 +74,7 @@ export function parseStripWeapons(
 		sideFit.centers.map((cx, slot) => {
 			if (status.dead[side as 0 | 1][slot]) return null;
 			const candidates = matchSlot(frame, cx, sideFit.pitch, templates);
-			if (candidates) scores.push(candidates[0]!.score);
+			if (candidates) scores.push(candidates[0].score);
 			return candidates;
 		}),
 	) as StripWeaponsData["slots"];
@@ -96,7 +96,7 @@ export function prepareStripWeaponTemplates(
 ): StripWeaponTemplate[] {
 	const cv = getCV();
 	return icons.map(({ id, image }) => {
-		const rgba = cv.matFromImageData(image as unknown as ImageData);
+		const rgba = cv.matFromImageData(image);
 		const template = {
 			weaponId: Number(id) as MainWeaponId,
 			fine: maskedArt(rgba, STRIP_WEAPON_ICON_SIZE, FINE_SIZE),
@@ -139,7 +139,7 @@ function matchSlot(
 			score: bestNcc(fine, FINE_SIZE, template.fine, STRIP_WEAPON_SEARCH),
 		}))
 		.sort((a, b) => b.score - a.score);
-	if (ranked[0]!.score < STRIP_WEAPON_MIN_SCORE) return null;
+	if (ranked[0].score < STRIP_WEAPON_MIN_SCORE) return null;
 	return ranked.slice(0, STRIP_WEAPON_TOP_K);
 }
 
@@ -161,10 +161,10 @@ function bestNcc(
 			let sumSquares = 0;
 			let dot = 0;
 			for (let i = 0; i < n; i++) {
-				const value = pixels[anchor + offsets[i]!]!;
+				const value = pixels[anchor + offsets[i]];
 				sum += value;
 				sumSquares += value * value;
-				dot += value * values[i]!;
+				dot += value * values[i];
 			}
 			// the zero-mean template already cancels the patch mean out of `dot`
 			const spread = Math.sqrt(Math.max(sumSquares - (sum * sum) / n, 1e-6));
@@ -208,10 +208,10 @@ function maskedArt(rgba: Mat, iconSize: number, cropSize: number): MaskedArt {
 			const outOfReach =
 				Math.abs(dx) + STRIP_WEAPON_SEARCH.x > reach ||
 				Math.abs(dy) + STRIP_WEAPON_SEARCH.y > reach;
-			if (data[i + 3]! < STRIP_WEAPON_MASK_MIN_ALPHA || outOfReach) continue;
+			if (data[i + 3] < STRIP_WEAPON_MASK_MIN_ALPHA || outOfReach) continue;
 			for (let channel = 0; channel < 3; channel++) {
 				offsets.push((dy * cropSize + dx) * 3 + channel);
-				values.push(data[i + channel]!);
+				values.push(data[i + channel]);
 			}
 		}
 	}

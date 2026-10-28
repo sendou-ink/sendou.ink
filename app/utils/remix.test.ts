@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import type { Location } from "react-router";
-import { describe, expect, test } from "vitest";
 import { metaTags } from "./remix";
 import { DEFAULT_OG_IMAGE } from "./urls";
 

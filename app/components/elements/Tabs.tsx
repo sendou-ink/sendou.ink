@@ -4,7 +4,6 @@ import * as React from "react";
 import { Link } from "react-router";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { focusMoveForKey, rovingFocusIndex } from "~/utils/roving-focus";
-
 import { ButtonLook } from "./Button";
 import styles from "./Tabs.module.css";
 
@@ -260,7 +259,7 @@ export function SendouTab({
 	}
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: role=tab with roving-focus keyboard handling
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions -- role=tab with roving-focus keyboard handling
 		<div
 			ref={register}
 			{...sharedProps}

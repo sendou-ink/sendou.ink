@@ -24,8 +24,7 @@ function cyrb128(str: string) {
 
 function mulberry32(a: number) {
 	return () => {
-		// biome-ignore lint/suspicious/noAssignInExpressions: biome migration
-		// biome-ignore lint/style/noParameterAssign: biome migration
+		// eslint-disable-next-line no-multi-assign, no-param-reassign -- biome migration
 		let t = (a += 0x6d2b79f5);
 		t = Math.imul(t ^ (t >>> 15), t | 1);
 		t ^= t + Math.imul(t ^ (t >>> 7), t | 61);

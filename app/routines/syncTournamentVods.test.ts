@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import { backdate } from "~/db/seed/core/backdate";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentStreamerFactory from "~/db/seed/factories/TournamentStreamerFactory";
@@ -7,22 +7,17 @@ import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TwitchVods from "~/modules/twitch/vods";
 
-const { mockGetUsersByLogin, mockGetArchiveVideos, mockFindRecentLiveStreams } =
-	vi.hoisted(() => ({
-		mockGetUsersByLogin: vi.fn(),
-		mockGetArchiveVideos: vi.fn(),
-		mockFindRecentLiveStreams: vi.fn(),
-	}));
+const mockGetUsersByLogin = vi.fn();
+const mockGetArchiveVideos = vi.fn();
+const mockFindRecentLiveStreams = vi.fn();
 
-vi.mock("~/modules/twitch/vods", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("~/modules/twitch/vods")>();
-	return {
-		...actual,
-		getUsersByLogin: mockGetUsersByLogin,
-		getArchiveVideos: mockGetArchiveVideos,
-	};
-});
+vi.mock("~/modules/twitch/vods", () => ({
+	...TwitchVods,
+	getUsersByLogin: mockGetUsersByLogin,
+	getArchiveVideos: mockGetArchiveVideos,
+}));
 
 vi.mock("~/modules/twitch/utils.server", () => ({
 	hasTwitchEnvVars: () => true,
@@ -333,7 +328,7 @@ describe("syncTournamentVods", () => {
 
 		// clear startedAt on all matches: a played match that was never started is a
 		// state no production write leaves behind
-		// biome-ignore lint/plugin: written rather than seeded, see above
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- written rather than seeded, see above
 		await db.updateTable("TournamentMatch").set({ startedAt: null }).execute();
 
 		await runProcessOneTournament();
@@ -361,8 +356,13 @@ function twitchVideo({
 function youtubeStream({
 	videoId = "yt-video1",
 	startedAt = new Date((MATCH_START_SECONDS - 600) * 1000),
-	endedAt = new Date((MATCH_START_SECONDS + 2 * 60 * 60) * 1000) as Date | null,
+	endedAt = new Date((MATCH_START_SECONDS + 2 * 60 * 60) * 1000),
 	viewCount = 50,
+}: {
+	videoId?: string;
+	startedAt?: Date;
+	endedAt?: Date | null;
+	viewCount?: number;
 } = {}) {
 	return { videoId, startedAt, endedAt, viewCount };
 }

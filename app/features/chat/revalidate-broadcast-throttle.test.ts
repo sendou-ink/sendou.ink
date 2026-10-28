@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import {
 	createRevalidateBroadcastThrottle,
 	MAX_ENTRIES,
@@ -134,7 +142,7 @@ describe("createRevalidateBroadcastThrottle", () => {
 
 		// every room is idle by now, but the trailing broadcast is late rather than sent
 		// (its timer would have run at the window's end on a server that was not busy)
-		vi.setSystemTime(startedAt + WINDOW_MS + 1_000);
+		setSystemTime(startedAt + WINDOW_MS + 1_000);
 		throttle.handle({ channel: "tournament-late" });
 		expect(sendLeading).toHaveBeenCalledTimes(1);
 

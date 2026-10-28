@@ -2,6 +2,7 @@
 navItem: u
 type: feature
 ---
+
 New profile widget: Custom Kits
 
 - Build weapon kits of your own design by mixing any main, sub and special weapon

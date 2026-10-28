@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { expect } from "bun:test";
 import type {
 	ParamDef,
 	SearchParamsDefinition,
@@ -18,18 +18,17 @@ export function assertRoundTrips<Shape extends AnyShape>(
 	for (const key of definition.keys) {
 		const def = definition.shape[key];
 
-		expect
-			.soft(SearchParams.decodeParam(def, []), `${key}: absent → default`)
-			.toEqual(def.default);
+		expect(
+			SearchParams.decodeParam(def, []),
+			`${key}: absent → default`,
+		).toEqual(def.default);
 
 		for (const value of examples[key]) {
 			const encoded = SearchParams.encodeParam(def, value);
-			expect
-				.soft(
-					SearchParams.decodeParam(def, encoded),
-					`${key}: plain round trip of ${JSON.stringify(value)}`,
-				)
-				.toEqual(value);
+			expect(
+				SearchParams.decodeParam(def, encoded),
+				`${key}: plain round trip of ${JSON.stringify(value)}`,
+			).toEqual(value);
 
 			const compressed =
 				def.compress || encoded.length === 0
@@ -37,23 +36,19 @@ export function assertRoundTrips<Shape extends AnyShape>(
 					: def
 							.encodePlain(value)
 							.map((plain) => SearchParams.compressTransportValue(plain));
-			expect
-				.soft(
-					SearchParams.decodeParam(def, compressed),
-					`${key}: compressed round trip of ${JSON.stringify(value)}`,
-				)
-				.toEqual(value);
+			expect(
+				SearchParams.decodeParam(def, compressed),
+				`${key}: compressed round trip of ${JSON.stringify(value)}`,
+			).toEqual(value);
 
 			const href = definition.href("/round-trip", {
 				[key]: value,
 			} as Partial<SearchParamsValues<Shape>>);
 			const parsed = definition.parse(new URL(href, "http://localhost"));
-			expect
-				.soft(
-					parsed[key],
-					`${key}: href → parse round trip of ${JSON.stringify(value)}`,
-				)
-				.toEqual(value);
+			expect(
+				parsed[key],
+				`${key}: href → parse round trip of ${JSON.stringify(value)}`,
+			).toEqual(value);
 		}
 	}
 }
@@ -67,11 +62,9 @@ export function assertDecodesToDefault<Shape extends AnyShape>(
 	const def = definition.shape[key];
 
 	for (const rawValues of rawValuesList) {
-		expect
-			.soft(
-				SearchParams.decodeParam(def, rawValues),
-				`${key}: ${JSON.stringify(rawValues)} → default`,
-			)
-			.toEqual(def.default);
+		expect(
+			SearchParams.decodeParam(def, rawValues),
+			`${key}: ${JSON.stringify(rawValues)} → default`,
+		).toEqual(def.default);
 	}
 }

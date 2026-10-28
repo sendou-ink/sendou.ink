@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import type { ExpressionBuilder } from "kysely";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Pagination from "./pagination.server";
 import { db } from "./sql";

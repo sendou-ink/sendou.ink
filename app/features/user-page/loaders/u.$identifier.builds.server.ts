@@ -2,8 +2,8 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { BUILDS_PAGE_SIZE } from "~/features/builds/builds-constants";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFound, notFoundIfNullish, paginate } from "~/utils/remix.server";
 import { userBuildsSearchParams } from "../user-page-search-params";
 

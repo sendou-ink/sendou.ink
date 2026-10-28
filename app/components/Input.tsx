@@ -85,7 +85,7 @@ export function Input({
 				enterKeyHint={type === "search" ? "search" : undefined}
 				autoComplete={disableAutoComplete ? "one-time-code" : undefined}
 				readOnly={readOnly}
-				// biome-ignore lint/a11y/noAutofocus: opt-in per call site
+				// eslint-disable-next-line jsx-a11y/no-autofocus -- opt-in per call site
 				autoFocus={autoFocus}
 			/>
 			{icon}

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -10,10 +10,8 @@ import {
 	getDefaultMapWeights,
 } from "./default-maps.server";
 
-const { mockSeasonCurrent, mockSeasonPrevious } = vi.hoisted(() => ({
-	mockSeasonCurrent: vi.fn(),
-	mockSeasonPrevious: vi.fn(),
-}));
+const mockSeasonCurrent = vi.fn();
+const mockSeasonPrevious = vi.fn();
 
 vi.mock("~/features/mmr/core/Seasons", () => ({
 	current: mockSeasonCurrent,
@@ -428,7 +426,7 @@ async function createUserWithPoollessPreferences(seasonNth: number) {
 
 	// every write of the column since the map pool was added stores one, so only rows
 	// predating it can be missing it
-	// biome-ignore lint/plugin: no production write leaves out the pool
+	// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- no production write leaves out the pool
 	await db
 		.updateTable("User")
 		.set({ mapModePreferences: JSON.stringify({ modes: [] }) })

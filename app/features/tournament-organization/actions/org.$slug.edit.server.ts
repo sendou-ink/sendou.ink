@@ -6,9 +6,9 @@ import { tournamentOrganizationPage } from "~/features/tournament-organization/t
 import { defineAction } from "~/form/define-action.server";
 import { getServerTFunction } from "~/modules/i18n/i18next.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { organizationEditFormSchema } from "../tournament-organization-schemas";
 import { organizationFromParams } from "../tournament-organization-utils.server";
+import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 
 export const action = defineAction(
 	{ body: organizationEditFormSchema },

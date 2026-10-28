@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type {
 	ScannerMatch,
 	ScannerMatchObjective,
@@ -31,7 +31,7 @@ function testGame(
 		target: { type: "tournament", matchGameResultId, tournamentMatchId },
 		mapIndex: 0,
 		mode: "SZ",
-		stageId: 0 as StageId,
+		stageId: 0,
 		winnerUserIds: [SENDER_ID],
 		loserUserIds: [],
 		inGameNameByUserId: new Map(),
@@ -77,17 +77,15 @@ function testMatch({
 	objective?: ScannerMatchObjective | null;
 	playerStatus?: ScannerMatchPlayerStatus | null;
 } = {}): ScannerMatch {
-	const players = names.map(
-		(name, i): ScannerMatchPlayer => ({
-			name: name || null,
-			weaponId: weapons[i]!,
-			paint: 1000,
-			ka: 10,
-			d: 5,
-			s: 2,
-			...(abilities[i] ? { abilities: abilities[i] } : null),
-		}),
-	);
+	const players = names.map((name, i): ScannerMatchPlayer => ({
+		name: name || null,
+		weaponId: weapons[i]!,
+		paint: 1000,
+		ka: 10,
+		d: 5,
+		s: 2,
+		...(abilities[i] ? { abilities: abilities[i] } : null),
+	}));
 	return {
 		startsAt: 60,
 		endsAt: 360,
@@ -226,8 +224,8 @@ describe("matchedGames", () => {
 		});
 
 		expect(matched).toHaveLength(1);
-		expect(matched[0]!.matchIndex).toBe(0);
-		expect(gameResultId(matched[0]!)).toBe(11);
+		expect(matched[0].matchIndex).toBe(0);
+		expect(gameResultId(matched[0])).toBe(11);
 	});
 
 	test("skips matches without a known winner", () => {
@@ -341,7 +339,7 @@ describe("matchedGames", () => {
 		});
 
 		expect(matched).toHaveLength(1);
-		expect(tournamentMatchIdOf(matched[0]!)).toBe(1);
+		expect(tournamentMatchIdOf(matched[0])).toBe(1);
 	});
 
 	test("skips a duplicate detection despite a couple of OCR-misread names", () => {
@@ -360,7 +358,7 @@ describe("matchedGames", () => {
 		});
 
 		expect(matched).toHaveLength(1);
-		expect(tournamentMatchIdOf(matched[0]!)).toBe(1);
+		expect(tournamentMatchIdOf(matched[0])).toBe(1);
 	});
 
 	test("skips matches from other lobbies", () => {
@@ -605,7 +603,7 @@ describe("deriveScoreboardData", () => {
 			},
 		]);
 
-		expect(straight!.objective!.samples[0]!.position).toBe(25);
+		expect(straight!.objective!.samples[0].position).toBe(25);
 		expect(swapped!.objective).toEqual(straight!.objective);
 	});
 
@@ -621,7 +619,7 @@ describe("deriveScoreboardData", () => {
 		]);
 
 		// the status read at 595 came first, so it is the shared origin
-		expect(data!.playerStatus!.samples[0]!.t).toBe(0);
+		expect(data!.playerStatus!.samples[0].t).toBe(0);
 		expect(data!.objective!.samples.map((sample) => sample.t)).toEqual([5, 35]);
 	});
 
@@ -639,7 +637,7 @@ describe("deriveScoreboardData", () => {
 			},
 		]);
 
-		expect(straight!.playerStatus!.samples[0]!.dead).toEqual([
+		expect(straight!.playerStatus!.samples[0].dead).toEqual([
 			[false, false, false, false],
 			[false, true, false, false],
 		]);
@@ -662,8 +660,8 @@ describe("deriveScoreboardData", () => {
 			{ data: testMatch({ abilities: { 5: build } }), povUserId: null },
 		]);
 
-		expect(data!.players[5]!.abilities).toEqual(build);
-		expect(data!.players[0]!.abilities).toBeUndefined();
+		expect(data!.players[5].abilities).toEqual(build);
+		expect(data!.players[0].abilities).toBeUndefined();
 	});
 
 	test("keeps players with unread weapon or empty name", () => {
@@ -678,10 +676,10 @@ describe("deriveScoreboardData", () => {
 		]);
 
 		expect(data!.players).toHaveLength(8);
-		expect(data!.players[1]!.name).toBe("");
-		expect(data!.players[1]!.weaponSplId).toBe(10);
-		expect(data!.players[2]!.weaponSplId).toBe(null);
-		expect(data!.players[2]!.ka).toBe(10);
+		expect(data!.players[1].name).toBe("");
+		expect(data!.players[1].weaponSplId).toBe(10);
+		expect(data!.players[2].weaponSplId).toBe(null);
+		expect(data!.players[2].ka).toBe(10);
 	});
 
 	test("keeps players whose name appears twice on the same side", () => {
@@ -700,7 +698,7 @@ describe("deriveScoreboardData", () => {
 	test("attributes the POV seat's row to the POV user", () => {
 		const data = derive([{ data: testMatch({ povIndex: 2 }), povUserId: 42 }]);
 
-		expect(data!.players[2]!.userId).toBe(42);
+		expect(data!.players[2].userId).toBe(42);
 		expect(data!.players.filter((p) => p.userId !== undefined)).toHaveLength(1);
 	});
 
@@ -709,7 +707,7 @@ describe("deriveScoreboardData", () => {
 			{ data: swapSides(testMatch({ povIndex: 6 })), povUserId: 42 },
 		]);
 
-		expect(data!.players[6]!.userId).toBe(42);
+		expect(data!.players[6].userId).toBe(42);
 	});
 
 	test("attributes each linked POV onto the merged scoreboard", () => {
@@ -718,8 +716,8 @@ describe("deriveScoreboardData", () => {
 			{ data: swapSides(testMatch({ povIndex: 5 })), povUserId: 43 },
 		]);
 
-		expect(data!.players[0]!.userId).toBe(42);
-		expect(data!.players[5]!.userId).toBe(43);
+		expect(data!.players[0].userId).toBe(42);
+		expect(data!.players[5].userId).toBe(43);
 	});
 
 	test("does not attribute the same row twice", () => {
@@ -728,7 +726,7 @@ describe("deriveScoreboardData", () => {
 			{ data: testMatch({ povIndex: 2 }), povUserId: 43 },
 		]);
 
-		expect(data!.players[2]!.userId).toBe(42);
+		expect(data!.players[2].userId).toBe(42);
 	});
 
 	test("does not attribute a POV whose read name contradicts its seat's merged row", () => {
@@ -961,7 +959,7 @@ describe("resolveContext", () => {
 	test("does not resolve from a single matching match", () => {
 		const context = Scoreboards.resolveContext({
 			povUserId: SENDER_ID,
-			matches: [seenSequence[0]!],
+			matches: [seenSequence[0]],
 			games: tournamentGames(1, [
 				["SZ", 0],
 				["TC", 1],
@@ -995,9 +993,9 @@ describe("resolveContext", () => {
 		const context = Scoreboards.resolveContext({
 			povUserId: SENDER_ID,
 			matches: [
-				seenSequence[0]!,
+				seenSequence[0],
 				testMatch({ playedAt: 1300, stage: null }),
-				seenSequence[1]!,
+				seenSequence[1],
 			],
 			games: [
 				...tournamentGames(1, [

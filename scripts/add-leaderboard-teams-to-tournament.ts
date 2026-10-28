@@ -3,8 +3,8 @@ import { userAsyncLocalStorage } from "~/features/auth/core/user-context.server"
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { TEAM_LEADERBOARD_QUALIFYING_COUNT } from "~/features/leaderboards/leaderboards-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";

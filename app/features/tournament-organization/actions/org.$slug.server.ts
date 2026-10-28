@@ -13,10 +13,10 @@ import {
 import { logger } from "~/utils/logger";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 import { orgPageActionSchema } from "../tournament-organization-schemas";
 import { organizationFromParams } from "../tournament-organization-utils.server";
+import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 
 export const action = defineAction(
 	{ body: orgPageActionSchema },

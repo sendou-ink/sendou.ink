@@ -2,8 +2,8 @@ import { LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "./elements/Button";
 import { SendouPopover } from "./elements/Popover";
-import styles from "./LogInPopover.module.css";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
+import styles from "./LogInPopover.module.css";
 
 /** Wraps a trigger a logged out user can't use, prompting them to log in instead. */
 export function LogInPopover({

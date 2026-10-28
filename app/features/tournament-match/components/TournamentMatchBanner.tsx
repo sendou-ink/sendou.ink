@@ -1,4 +1,5 @@
 import { differenceInMinutes } from "date-fns";
+import type { TFunction } from "i18next";
 import {
 	CalendarClock,
 	Flag,
@@ -26,8 +27,8 @@ import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStarted
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import type { TournamentRoundMaps } from "~/db/tables-json";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort } from "~/modules/in-game-lists/types";
@@ -77,24 +78,10 @@ export function TournamentMatchBanner({
 		);
 	}
 
-	const [teamOne, teamTwo] = teams;
-	const hostingTeam =
-		teamOne && teamTwo ? resolveHostingTeam([teamOne, teamTwo]) : null;
-	const host = hostingTeam
-		? {
-				name: hostingTeam.name,
-				avatarUrl: hostingTeam.logoUrl ?? undefined,
-			}
-		: null;
+	const host = resolveBannerHost(teams);
 
-	const opponentOne = data.match.opponentOne;
-	const opponentTwo = data.match.opponentTwo;
-	const isMissingTeam = !opponentOne?.id || !opponentTwo?.id;
-
-	const droppedOutTeamName = resolveDroppedOutTeamName({
-		data,
-		tournament,
-	});
+	const opponentIds = matchOpponentIds(data.match);
+	const isMissingTeam = !opponentIds;
 
 	const { schedule } = data;
 	const leagueRoundStartDate =
@@ -126,25 +113,7 @@ export function TournamentMatchBanner({
 		<MatchBannerContainer>
 			<TournamentMatchBannerTopRow data={data} />
 			{data.matchIsOver ? (
-				droppedOutTeamName ? (
-					<IconBanner
-						icon={<Flag size={32} />}
-						header={t("tournament:match.droppedOut.header")}
-						subtitle={t("tournament:match.droppedOut.subtitle", {
-							team: droppedOutTeamName,
-						})}
-					/>
-				) : data.endedEarly ? (
-					<IconBanner
-						icon={<Gavel size={32} />}
-						header={t("tournament:match.endedEarly.header")}
-						subtitle={t("tournament:match.endedEarly.subtitle")}
-					/>
-				) : (
-					<MultiMatchBanner
-						stageIds={data.results.map((result) => result.stageId)}
-					/>
-				)
+				<MatchOverBanner data={data} />
 			) : schedule.phase === "NOT_OPEN" ? (
 				<IconBanner
 					icon={<CalendarClock size={32} />}
@@ -240,11 +209,7 @@ export function TournamentMatchBanner({
 					<CurrentMapPickInfo
 						source={currentMap.source}
 						results={data.results}
-						opponentIds={
-							opponentOne?.id && opponentTwo?.id
-								? [opponentOne.id, opponentTwo.id]
-								: null
-						}
+						opponentIds={opponentIds}
 						pickBan={data.match.roundMaps?.pickBan ?? null}
 					/>
 				</MatchBanner>
@@ -253,16 +218,52 @@ export function TournamentMatchBanner({
 				<MatchBannerBottomRow
 					games={resolveBannerGames({ data })}
 					activeRosters={
-						opponentOne?.id && opponentTwo?.id
+						opponentIds
 							? {
-									alpha: activeRosterByTeamId(opponentOne.id),
-									bravo: activeRosterByTeamId(opponentTwo.id),
+									alpha: activeRosterByTeamId(opponentIds[0]),
+									bravo: activeRosterByTeamId(opponentIds[1]),
 								}
 							: null
 					}
 				/>
 			)}
 		</MatchBannerContainer>
+	);
+}
+
+function MatchOverBanner({ data }: { data: TournamentMatchLoaderData }) {
+	const { t } = useTranslation(["tournament"]);
+	const tournament = useTournament();
+
+	const droppedOutTeamName = resolveDroppedOutTeamName({
+		data,
+		tournament,
+	});
+
+	if (droppedOutTeamName) {
+		return (
+			<IconBanner
+				icon={<Flag size={32} />}
+				header={t("tournament:match.droppedOut.header")}
+				subtitle={t("tournament:match.droppedOut.subtitle", {
+					team: droppedOutTeamName,
+				})}
+			/>
+		);
+	}
+
+	if (data.endedEarly) {
+		return (
+			<IconBanner
+				icon={<Gavel size={32} />}
+				header={t("tournament:match.endedEarly.header")}
+				subtitle={t("tournament:match.endedEarly.subtitle")}
+			/>
+		);
+	}
+
+	return (
+		<MultiMatchBanner stageIds={data.results.map((result) => result.stageId)} />
 	);
 }
 
@@ -499,7 +500,7 @@ function resolveCurrentSessionStartedAt({
 function resolvePickBanBanner(
 	data: TournamentMatchLoaderData,
 	tournament: ReturnType<typeof useTournament>,
-	t: ReturnType<typeof useTranslation<["tournament"]>>["t"],
+	t: TFunction<["tournament"]>,
 ): { icon: React.ReactNode; header: string; subtitle: string } | null {
 	if (data.matchIsOver) return null;
 	if (!data.match.roundMaps?.pickBan) return null;
@@ -542,13 +543,13 @@ function resolvePickBanBanner(
 		switch (turnOfResult.action) {
 			case "PICK":
 			case "PICK_NO_MODE_REPEAT":
-				return t("tournament:pickBan.pickMap") + stepCounter;
+				return `${t("tournament:pickBan.pickMap")}${stepCounter}`;
 			case "BAN":
-				return t("tournament:pickBan.banMap") + stepCounter;
+				return `${t("tournament:pickBan.banMap")}${stepCounter}`;
 			case "MODE_PICK":
-				return t("tournament:pickBan.pickMode") + stepCounter;
+				return `${t("tournament:pickBan.pickMode")}${stepCounter}`;
 			case "MODE_BAN":
-				return t("tournament:pickBan.banMode") + stepCounter;
+				return `${t("tournament:pickBan.banMode")}${stepCounter}`;
 			default:
 				return "";
 		}
@@ -600,7 +601,7 @@ function resolveBannerGames({
 		data.mapList
 			?.filter((map) => !map.bannedByTournamentTeamId)
 			.map((map) => ({
-				mode: map.mode as ModeShort | null,
+				mode: map.mode,
 			})) ?? [];
 
 	const placeholderCount = Math.max(
@@ -614,4 +615,26 @@ function resolveBannerGames({
 			mode: null,
 		})),
 	];
+}
+
+function resolveBannerHost(teams: ReturnType<typeof useMatch>["teams"]) {
+	const [teamOne, teamTwo] = teams;
+	const hostingTeam =
+		teamOne && teamTwo ? resolveHostingTeam([teamOne, teamTwo]) : null;
+
+	return hostingTeam
+		? {
+				name: hostingTeam.name,
+				avatarUrl: hostingTeam.logoUrl ?? undefined,
+			}
+		: null;
+}
+
+function matchOpponentIds(
+	match: TournamentMatchLoaderData["match"],
+): [number, number] | null {
+	const opponentOneId = match.opponentOne?.id;
+	const opponentTwoId = match.opponentTwo?.id;
+
+	return opponentOneId && opponentTwoId ? [opponentOneId, opponentTwoId] : null;
 }

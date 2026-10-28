@@ -25,8 +25,8 @@ import type {
 	TournamentMapPickingStyle,
 } from "~/features/tournament/tournament-constants";
 import { Trophy } from "~/features/trophies/components/Trophy";
-import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { getFormFieldMetadata } from "~/form/fields";
+import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
 import {
 	FormStep,
@@ -48,16 +48,16 @@ import {
 	FAQ_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
-import styles from "../calendar-new.module.css";
 import {
 	calendarNewBaseSchema,
 	calendarNewSchema,
 	customTeamPickPool,
 	type TeamPickCountsFormValue,
-	TOURNAMENT_FORM_STEPS,
 	teamPickSettingsFromFormValues,
+	TOURNAMENT_FORM_STEPS,
 	tournamentTagsField,
 } from "../calendar-new-schemas";
+import styles from "../calendar-new.module.css";
 import {
 	type BracketFormValue,
 	defaultBracketsFormValues,
@@ -179,96 +179,30 @@ function useDefaultValues() {
 	const tournamentCtx = baseEvent?.tournament?.ctx;
 	const settings = tournamentCtx?.settings;
 
-	const mapPickingStyle: TournamentMapPickingStyle =
-		baseEvent?.mapPickingStyle ?? "AUTO";
-	const teamPick =
-		settings?.teamPick ?? TeamPick.defaultSettings([...rankedModesShort]);
-
-	const pool = baseEvent?.mapPool
-		? new MapPool(baseEvent.mapPool).serialized
-		: "";
-
-	const startTime = data.isAddingTournament
-		? data.eventToEdit?.startTimes?.[0]
-			? databaseTimestampToDate(data.eventToEdit.startTimes[0])
-			: getDateAtNextFullHour(new Date())
-		: null;
-
-	const bracketProgressionValues = settings?.bracketProgression
-		? progressionToFormValues(settings.bracketProgression)
-		: data.isAddingTournament
-			? defaultBracketsFormValues()
-			: { brackets: [], progression: [] };
+	const startTime = startTimeDefaultValue(data);
+	const bracketProgressionValues = bracketProgressionDefaultValues(
+		settings,
+		data.isAddingTournament,
+	);
 	// a copy starts at a new time, follow-up brackets and registration closing keep their distance to it
 	const copyOffsetMs =
 		data.eventToCopy && tournamentCtx && startTime
 			? startTime.getTime() -
 				databaseTimestampToDate(tournamentCtx.startsAt).getTime()
 			: 0;
-	const brackets = shiftBracketStartTimes(
-		bracketProgressionValues.brackets,
-		copyOffsetMs,
-	);
-
-	const regClosesAt =
-		settings?.regClosesAt && settings.regClosesAt !== tournamentCtx?.startsAt
-			? addMilliseconds(
-					databaseTimestampToDate(settings.regClosesAt),
-					copyOffsetMs,
-				)
-			: null;
 
 	return {
-		toToolsEnabled: data.isAddingTournament,
-		eventToEditId: data.eventToEdit?.eventId,
-		tournamentToCopyId: data.eventToCopy?.tournamentId ?? undefined,
-		name: data.eventToEdit?.name ?? "",
-		description: baseEvent?.description ?? "",
-		organizationId: baseEvent?.organization?.id
-			? String(baseEvent.organization.id)
-			: null,
-		rules: baseEvent?.rules ?? "",
-		date: data.isAddingTournament
-			? []
-			: (data.eventToEdit?.startTimes?.map((t) =>
-					databaseTimestampToDate(t),
-				) ?? [getDateAtNextFullHour(new Date())]),
+		...eventInfoDefaultValues(data, baseEvent),
 		startTime,
-		// tournaments hide this field, the action coalesces the empty value to the default
-		bracketUrl: data.isAddingTournament
-			? ""
-			: (data.eventToEdit?.bracketUrl ?? ""),
-		discordInviteCode: baseEvent?.discordInviteCode ?? "",
-		tags: (baseEvent?.tags ?? []).filter(isPickableTag),
-		badges: baseEvent?.badgePrizes?.map((b) => b.id) ?? [],
-		trophyId: baseEvent?.trophy?.id ?? null,
-		avatarImgId: existingImage(
-			baseEvent?.avatarImgId,
-			baseEvent?.tournament?.ctx.logoUrl,
+		...eventDetailsDefaultValues(data, baseEvent),
+		regClosesAt: regClosesAtDefaultValue(tournamentCtx, copyOffsetMs),
+		...tournamentSettingsDefaultValues(baseEvent, settings),
+		brackets: shiftBracketStartTimes(
+			bracketProgressionValues.brackets,
+			copyOffsetMs,
 		),
-		regClosesAt,
-		minMembersPerTeam: String(settings?.minMembersPerTeam ?? 4) as
-			| "1"
-			| "2"
-			| "3"
-			| "4",
-		maxMembersPerTeam: settings?.maxMembersPerTeam ?? undefined,
-		mapPickingStyle,
-		teamPickModes: TeamPick.pickedModes(teamPick),
-		teamPickCounts: teamPick.modes,
-		teamPickPool: teamPick.pool,
-		pool,
-		brackets,
 		progression: bracketProgressionValues.progression,
-		isRanked: settings?.isRanked ?? true,
-		enableNoScreenToggle: settings?.enableNoScreenToggle ?? true,
-		enableSubs: settings?.enableSubs ?? true,
-		autonomousSubs: settings?.autonomousSubs ?? true,
-		requireInGameNames: settings?.requireInGameNames ?? false,
-		isInvitational: settings?.isInvitational ?? false,
-		isTest: settings?.isTest ?? false,
-		isLeague: settings?.isLeague ?? false,
-		isDraft: settings?.isDraft ?? false,
+		...tournamentToggleDefaultValues(settings),
 	};
 }
 
@@ -1040,4 +974,121 @@ function pageTitleKey({
 	return eventToEdit
 		? "calendar:pageTitle.editEvent"
 		: "calendar:pageTitle.newEvent";
+}
+
+type CalendarNewLoaderData = SerializeFrom<typeof loader>;
+type BaseEvent = ReturnType<typeof useBaseEvent>;
+type BaseEventTournamentCtx = NonNullable<
+	NonNullable<BaseEvent>["tournament"]
+>["ctx"];
+type BaseEventSettings = BaseEventTournamentCtx["settings"];
+
+function startTimeDefaultValue(data: CalendarNewLoaderData) {
+	if (!data.isAddingTournament) return null;
+
+	const editedStartTime = data.eventToEdit?.startTimes?.[0];
+	return editedStartTime
+		? databaseTimestampToDate(editedStartTime)
+		: getDateAtNextFullHour(new Date());
+}
+
+function bracketProgressionDefaultValues(
+	settings: BaseEventSettings | undefined,
+	isAddingTournament: boolean,
+) {
+	if (settings?.bracketProgression) {
+		return progressionToFormValues(settings.bracketProgression);
+	}
+	if (isAddingTournament) return defaultBracketsFormValues();
+
+	return { brackets: [], progression: [] };
+}
+
+function regClosesAtDefaultValue(
+	tournamentCtx: BaseEventTournamentCtx | undefined,
+	copyOffsetMs: number,
+) {
+	const regClosesAt = tournamentCtx?.settings.regClosesAt;
+	if (!regClosesAt || regClosesAt === tournamentCtx.startsAt) return null;
+
+	return addMilliseconds(databaseTimestampToDate(regClosesAt), copyOffsetMs);
+}
+
+function eventInfoDefaultValues(
+	data: CalendarNewLoaderData,
+	baseEvent: BaseEvent,
+) {
+	return {
+		toToolsEnabled: data.isAddingTournament,
+		eventToEditId: data.eventToEdit?.eventId,
+		tournamentToCopyId: data.eventToCopy?.tournamentId ?? undefined,
+		name: data.eventToEdit?.name ?? "",
+		description: baseEvent?.description ?? "",
+		organizationId: baseEvent?.organization?.id
+			? String(baseEvent.organization.id)
+			: null,
+		rules: baseEvent?.rules ?? "",
+		date: data.isAddingTournament
+			? []
+			: (data.eventToEdit?.startTimes?.map((t) =>
+					databaseTimestampToDate(t),
+				) ?? [getDateAtNextFullHour(new Date())]),
+	};
+}
+
+function eventDetailsDefaultValues(
+	data: CalendarNewLoaderData,
+	baseEvent: BaseEvent,
+) {
+	return {
+		// tournaments hide this field, the action coalesces the empty value to the default
+		bracketUrl: data.isAddingTournament
+			? ""
+			: (data.eventToEdit?.bracketUrl ?? ""),
+		discordInviteCode: baseEvent?.discordInviteCode ?? "",
+		tags: (baseEvent?.tags ?? []).filter(isPickableTag),
+		badges: baseEvent?.badgePrizes?.map((b) => b.id) ?? [],
+		trophyId: baseEvent?.trophy?.id ?? null,
+		avatarImgId: existingImage(
+			baseEvent?.avatarImgId,
+			baseEvent?.tournament?.ctx.logoUrl,
+		),
+	};
+}
+
+function tournamentSettingsDefaultValues(
+	baseEvent: BaseEvent,
+	settings: BaseEventSettings | undefined,
+) {
+	const mapPickingStyle: TournamentMapPickingStyle =
+		baseEvent?.mapPickingStyle ?? "AUTO";
+	const teamPick =
+		settings?.teamPick ?? TeamPick.defaultSettings([...rankedModesShort]);
+
+	return {
+		minMembersPerTeam: String(settings?.minMembersPerTeam ?? 4) as
+			"1" | "2" | "3" | "4",
+		maxMembersPerTeam: settings?.maxMembersPerTeam ?? undefined,
+		mapPickingStyle,
+		teamPickModes: TeamPick.pickedModes(teamPick),
+		teamPickCounts: teamPick.modes,
+		teamPickPool: teamPick.pool,
+		pool: baseEvent?.mapPool ? new MapPool(baseEvent.mapPool).serialized : "",
+	};
+}
+
+function tournamentToggleDefaultValues(
+	settings: BaseEventSettings | undefined,
+) {
+	return {
+		isRanked: settings?.isRanked ?? true,
+		enableNoScreenToggle: settings?.enableNoScreenToggle ?? true,
+		enableSubs: settings?.enableSubs ?? true,
+		autonomousSubs: settings?.autonomousSubs ?? true,
+		requireInGameNames: settings?.requireInGameNames ?? false,
+		isInvitational: settings?.isInvitational ?? false,
+		isTest: settings?.isTest ?? false,
+		isLeague: settings?.isLeague ?? false,
+		isDraft: settings?.isDraft ?? false,
+	};
 }

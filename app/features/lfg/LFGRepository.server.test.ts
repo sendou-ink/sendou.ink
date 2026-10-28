@@ -1,11 +1,11 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { sub } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as LFGPostFactory from "~/db/seed/factories/LFGPostFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { withNoUser, withUserId } from "~/utils/Test";
-import * as LFGRepository from "./LFGRepository.server";
 import { LFG } from "./lfg-constants";
+import * as LFGRepository from "./LFGRepository.server";
 
 const expired = () => sub(new Date(), { days: LFG.POST_FRESHNESS_DAYS + 1 });
 

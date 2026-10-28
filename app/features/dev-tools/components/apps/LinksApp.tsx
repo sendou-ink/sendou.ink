@@ -41,7 +41,7 @@ function LinksApp() {
 				}
 			>
 				<p className="text-xs text-lighter">
-					Served by <code>pnpm run dev:docs</code>, start it first
+					Served by <code>bun run dev:docs</code>, start it first
 				</p>
 			</SendouSection>
 

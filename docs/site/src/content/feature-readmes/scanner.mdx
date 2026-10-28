@@ -190,7 +190,7 @@ the ring would have dropped it by then:
 ## Tournament montage (dev only, PoC)
 
 `view=montage` (Settings → Debug → Tournament montage, development only)
-builds the basis of a tournament highlight video. `pnpm vods:download <id>`
+builds the basis of a tournament highlight video. `bun run vods:download <id>`
 writes the match VoDs of the top 8 teams (`--all-teams` for every team) to
 `scripts/output/vods/<id>/` together with `tournament.json` (name, start,
 logo, top 8, every team that played, each VoD's POV team —
@@ -247,26 +247,25 @@ is built in memory and downloaded.
 ## Commands
 
 ```sh
-pnpm test:scanner                       # golden-file suite over tests/fixtures/ (Vitest, Node)
-pnpm test:unit:browser                  # includes tests/logic/ — the fixture-free half, see below
-pnpm scanner:report                     # accuracy table + name character error rate across fixtures
-pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
-pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
-pnpm scanner:unpack-zip <zip> <new-dir> # validate + unpack a user's Game data zip (refuses anything matchZip doesn't write)
-pnpm scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out (--gpu, --record, see "WebGPU")
-pnpm scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
-pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
-pnpm scanner:build-glyph-atlas          # add the font-rendered charset (fonts required, see below)
-pnpm scanner:build-localized-entries    # regen localized closed sets from ../splat3
-pnpm scanner:build-planner-signatures   # regen the minimap stage-ID atlas from the assets repo
-pnpm scanner:gpu-parity                 # every fixture: OpenCV vs WebGPU parse decisions + GPU upscale pixels
-pnpm scanner:gpu-replay <corpus-dir>    # replay recorded match requests on WebGPU, timed, exact-checked
+bun run test:scanner                       # golden-file suite over tests/fixtures/
+bun run test:unit                          # includes tests/logic/ — the fixture-free half, see below
+bun run scanner:report                     # accuracy table + name character error rate across fixtures
+bun run scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
+bun run scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
+bun run scanner:unpack-zip <zip> <new-dir> # validate + unpack a user's Game data zip (refuses anything matchZip doesn't write)
+bun run scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out (--gpu, --record, see "WebGPU")
+bun run scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
+bun run scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
+bun run scanner:build-glyph-atlas          # add the font-rendered charset (fonts required, see below)
+bun run scanner:build-localized-entries    # regen localized closed sets from ../splat3
+bun run scanner:build-planner-signatures   # regen the minimap stage-ID atlas from the assets repo
+bun run scanner:gpu-parity                 # every fixture: OpenCV vs WebGPU parse decisions + GPU upscale pixels
+bun run scanner:gpu-replay <corpus-dir>    # replay recorded match requests on WebGPU, timed, exact-checked
 ```
 
-Scanner scripts run through `vite-node -c scripts/scanner/vite-node.config.ts`:
-the root vite config pre-bundles `@techstark/opencv-js` for the browser worker
-and vite-node must not consume that prebundle. The package is pnpm-patched
-(`patches/`) to wrap its thenable CJS export as `{ cvReadyPromise }`,
+Scanner scripts run on Bun (`bun --preload ./scripts/preload.ts`), which
+loads the patched CJS bundle of `@techstark/opencv-js` directly. The package is
+patched (`patches/`) to wrap its thenable CJS export as `{ cvReadyPromise }`,
 unwrapped in `core/cv.ts`, and to expose its heap's `WebAssembly.Memory` as
 `cv.wasmMemory` (captured from its one `WebAssembly.instantiate` call, all
 in the short wrapper lines: the minified runtime line is never touched, so
@@ -274,7 +273,8 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
 
 ## Architecture
 
-<Mermaid code={`sequenceDiagram
+<Mermaid
+	code={`sequenceDiagram
   participant Cap as capture (sampler / vod-frames)
   participant W as analyzer.worker (OpenCV)
   participant TL as TimelineBuilder
@@ -293,7 +293,8 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   ING->>DB: merge-store IngestedMatch (matchHash, isSameMatch + merge, context hints)
   ING->>DB: link matches to games the sender played (POV seat in the game's active roster) → IngestedMatchLink (POV weapon → ReportedWeapon#59; scoreboards derived at read time)
   Note over UI: VoD "Add to VoDs": ScannerMatch → slim prefill param → /vods/new
-  Note over UI: scoreWindows(match) → ring buffer / file packet copy → clips store`} />
+  Note over UI: scoreWindows(match) → ring buffer / file packet copy → clips store`}
+/>
 
 - `core/` is pure (mats in, events/matches out) and runs in the worker, the
   debug view, and Node tests. No DOM/browser APIs; Node-only helpers live
@@ -369,135 +370,135 @@ the patch stays small). `core/frame-kernels.ts` runs on that memory.
   `core/rectify.ts` — before the shared parser in
   `scoreboard-battle-log/detector.ts` reads it), `scoreboard-own` (personal results), `death`
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay
-  + casted 8-player spectator variant), `objective` (ranked counter overlay:
-  counts, penalties, holder, match timer — a mode-discriminated union: the
-  plates, and the Tower Control / Rainmaker track, see below. Splat Zones and
-  Clam Blitz draw the same plates, so a CB read carries `mode: "SZ"` too and
-  the match's mode tells them apart; in CB a filled plate means that team's
-  attack window is open, charted as control), `x-set-count`,
-  `x-set-result` and `x-rank-position` (the X Battle lobby cards, see
-  below), `kill` (the "Splatted &lt;name&gt;!" feed
-  bottom-center). The feed is the POV player's — on the SWS26 broadcast the
-  specced player's, so a cast's kills follow camera swaps. One `Kill` event
-  per frame carries the whole visible stack newest-first, up to four rows,
-  each read as one line against every language's row template
-  (`core/detectors/kill/localized-messages.ts`, generated) with the leftover
-  as the name, plus the match timer off the same frame (`objective/timer.ts`,
-  shared with the counter) so kills land on the game clock in every mode. The
-  builder reduces the stack reads to one kill per row entering the feed
-  (`deriveKills`: rows expire oldest-first and a blurred inner row can drop
-  out of a single read, so each read is matched newest-first as a
-  subsequence of the rows still remembered within
-  `KILL_ROW_LIFETIME_SECONDS`), on the same replay-wipe anchor as the
-  counter series; how long a row stays up is unattested, so a row outliving
-  that lifetime would count twice. Row text reads through the `kill-feed`
-  atlas, BlitzMain at the row's ~24px caps with the scoreboard-names
-  charset, under `parseName`'s opt-in plain-tie rule (at that size an i's
-  dot alone ranks the accented glyphs level with the plain one). The
-  objective parse also emits a second
-  event type per read: `PlayerStatus`
-  (`core/detectors/objective/player-status.ts`), per-player special/dead
-  flags off the icon strip flanking the timer. The strip's geometry is
-  fitted per read, not picked from known arrangements: the game resizes
-  each side continuously (S3 POV swings it with the objective, a splatted
-  POV player shrinks it, spectators toggle the overhead map, broadcasts
-  mirror it), through in-between pitches, so each side's (pitch, inner
-  icon center) is searched for the hypothesis whose four kite apexes stand
-  out most cleanly from the backdrop beside them — the apex is the one part
-  no weapon render, gauge digit or badge covers, and its triangle core sits
-  inside an octoling's dome too — plus how much more team ink they hold
-  than their surroundings; the previous read's fit holds unless clearly
-  beaten. Each state then reads off the apex core alone: saturated ink of
-  any hue = alive, pale = special ready (the wash pulses from lilac or pink
-  to near-white but never saturates or greys) unless both sides of the
-  body still hold team ink (a weapon render pale over the apex, Painbrush's
-  head: the wash pales the whole icon), else splatted (dark plate
-  under grey X strokes) — unless the whole body is opaque black with no X
-  or weapon render in it, an empty seat (a 1v1 lobby, a disconnect), which
-  sets neither flag. No geometry implies a footage type: the D-pad camera
-  badges prove a broadcast, reported as `cast: true | null`, but never
-  place the strip, since a white backdrop under a POV strip fakes them now
-  and then. Emitted
-  with the same `time` value so the two reads pair downstream; its fixtures
-  live under `tests/fixtures/player-status/`. Within a side the strip keeps its
-  own slot order (it can change every game), while the results scoreboard
-  re-sorts each team (attested in the sendou-triton VoD: strip [Planetz,
-  .52, Neo Splash, Snipewriter] vs rows [.52, Neo Splash, Snipewriter,
-  Planetz]) — so every 5th counter read also samples a `StripWeapons`
-  evidence event: a ranked weapon-icon match per alive slot. The fit pins
-  each icon's center and scale, so the slot is resampled to the reference
-  pitch and scored against every weapon's game icon at that one size over
-  the art's opaque pixels only (masked NCC — the team-ink plate and the
-  scene behind it never weigh in); the true weapon ranks top-1 on ~93% of
-  single reads, including special-ready washes. The builder solves each
-  side's slot→row assignment once per game from one evidence matrix
-  (`core/slot-row-assignment.ts`): strip votes (a read's score over its
-  candidate floor), the minimap cards' parsed weapons (the enemy column
-  mirrors the strip seating), and the states of players known by name —
-  the POV's own death screens, its kill-feed victims and the POV minimap's
-  named teammate cards — against the strip read beside them, which tells
-  apart two rows sharing a weapon. Thin or tied evidence keeps the
-  as-drawn order. The POV overlay's teammate diamond follows neither
-  order and maps by card name instead. Strip-weapon fixtures live under
-  `tests/fixtures/strip-weapons/`. The builder additionally
-  flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
-  outlasts the respawn wait, so those are misread blips (background ink
-  bleeding through a crossed-out icon) — and bridges sub-10s not-ready
-  gaps between ready reads when no death inside the gap explains them (no
-  special regains that fast, so the gap is the wash's dim pulse trough);
-  for the same reason ready reads in the clock's first 10s (5:00-4:51,
-  TW 3:00-2:51) or before it starts are dropped before bridging, timerless minimap reads
-  timed by the match's dominant clock anchor. Objective reads land on `ScannerMatch` as
-  progress samples anchored to the game clock; broadcast replay wipes re-run
-  an earlier moment with the counter intact, so the builder keeps only the
-  dominant cluster of clock-zero projections (`t + time`) and drops replay
-  reads outright (timerless reads follow their preceding anchored
-  neighbor). A displayed count only ever
-  ticks down, so the builder keeps each side's longest non-increasing score
-  run and voids reads off it (surviving OCR blips chart as gaps, not dips). Each read also carries a
-  per-side team ink color (`core/ink-color.ts` — the plate fill in
-  control, the digit ink otherwise): casted footage keeps the specced
-  player's team on the left plate, so the builder orients samples by ink
-  hue and anchors them to `teams` order via the minimap sub-tile colors
-  (casts never show a results screen). Reads of the overlay the match's
-  mode doesn't draw (plates on TC/RM, a track on SZ/CB) are lookalike
-  misreads the builder leaves out, and on Turf War every read is: the
-  builder nulls that match's `objective` and callers discard the events
-  (`invalidObjectiveEvents`; Live also stops collecting them once a MapStart
-  reveals Turf War). A match with no mode read, or whose intro and results
-  screen disagree on it, builds from its majority overlay (a plates
-  objective's `mode` then stays null: SZ or CB) and discards nothing. Turf
-  War draws the timer and icon strip with no counter under them: the gate's
-  `timer` variant (timer box plus its colon's two dots, which a dark minimap
-  card pill lacks) emits the strip reads alone, timed by the timer read
-  (no readable timer, nothing emitted) — as it does on a ranked frame whose
-  counter fails to read. PlayerStatus reads follow the
-  objective pipeline: same replay-wipe anchor, cast orientation
-  inherited from the nearest counter read (none on TW: as drawn), and rendered as
-  per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
-  shared with the match page) above the objective chart. Minimap reads
-  feed the same samples: every card/row carries `dead` (respawn
-  cross-out) and `specialReady` (special camo) flags, merged in timerless
-  on the shared replay anchor. Parsing details
-  are in each detector's module
-  header; accuracy-critical matching internals in `core/glyphs.ts` and
-  `core/detectors/scoreboard/weapons.ts` — read those before touching
-  recognition code. Parse cost matters live (a stalled worker drops
-  frames): a CJK splash-tag name once cost tens of seconds per death
-  parse, which is why the death detector memoizes tag reads on a
-  downscaled tag signature (same killer recurs pixel-identical; a per-cell
-cap keeps two names on one plain banner apart, their means barely differ), the kill
-  detector memoizes each feed row's read on its text-band signature (a row
-  is re-read twice a second for as long as it shows, and shifts up intact
-  when a newer one enters; the per-cell cap of the signature compare is
-  what keeps near-twin names apart) and `classifySegment` prescreens
-  oversized eligibility lists at half scale — all tuned so
-  `scanner:report` stays bit-identical. Within one recognition,
-  classifications are memoized by span, floor and candidate cap (a pure
-  function of those: scores are exact), which the speculative prefetch and
-  the sequential pass after it otherwise repeat. Glyph sets (atlas slices
-  and every `scaleGlyphSet`, shared per source set and factor) and the
-  template sets build on first use, not at detector creation.
+  - casted 8-player spectator variant), `objective` (ranked counter overlay:
+    counts, penalties, holder, match timer — a mode-discriminated union: the
+    plates, and the Tower Control / Rainmaker track, see below. Splat Zones and
+    Clam Blitz draw the same plates, so a CB read carries `mode: "SZ"` too and
+    the match's mode tells them apart; in CB a filled plate means that team's
+    attack window is open, charted as control), `x-set-count`,
+    `x-set-result` and `x-rank-position` (the X Battle lobby cards, see
+    below), `kill` (the "Splatted &lt;name&gt;!" feed
+    bottom-center). The feed is the POV player's — on the SWS26 broadcast the
+    specced player's, so a cast's kills follow camera swaps. One `Kill` event
+    per frame carries the whole visible stack newest-first, up to four rows,
+    each read as one line against every language's row template
+    (`core/detectors/kill/localized-messages.ts`, generated) with the leftover
+    as the name, plus the match timer off the same frame (`objective/timer.ts`,
+    shared with the counter) so kills land on the game clock in every mode. The
+    builder reduces the stack reads to one kill per row entering the feed
+    (`deriveKills`: rows expire oldest-first and a blurred inner row can drop
+    out of a single read, so each read is matched newest-first as a
+    subsequence of the rows still remembered within
+    `KILL_ROW_LIFETIME_SECONDS`), on the same replay-wipe anchor as the
+    counter series; how long a row stays up is unattested, so a row outliving
+    that lifetime would count twice. Row text reads through the `kill-feed`
+    atlas, BlitzMain at the row's ~24px caps with the scoreboard-names
+    charset, under `parseName`'s opt-in plain-tie rule (at that size an i's
+    dot alone ranks the accented glyphs level with the plain one). The
+    objective parse also emits a second
+    event type per read: `PlayerStatus`
+    (`core/detectors/objective/player-status.ts`), per-player special/dead
+    flags off the icon strip flanking the timer. The strip's geometry is
+    fitted per read, not picked from known arrangements: the game resizes
+    each side continuously (S3 POV swings it with the objective, a splatted
+    POV player shrinks it, spectators toggle the overhead map, broadcasts
+    mirror it), through in-between pitches, so each side's (pitch, inner
+    icon center) is searched for the hypothesis whose four kite apexes stand
+    out most cleanly from the backdrop beside them — the apex is the one part
+    no weapon render, gauge digit or badge covers, and its triangle core sits
+    inside an octoling's dome too — plus how much more team ink they hold
+    than their surroundings; the previous read's fit holds unless clearly
+    beaten. Each state then reads off the apex core alone: saturated ink of
+    any hue = alive, pale = special ready (the wash pulses from lilac or pink
+    to near-white but never saturates or greys) unless both sides of the
+    body still hold team ink (a weapon render pale over the apex, Painbrush's
+    head: the wash pales the whole icon), else splatted (dark plate
+    under grey X strokes) — unless the whole body is opaque black with no X
+    or weapon render in it, an empty seat (a 1v1 lobby, a disconnect), which
+    sets neither flag. No geometry implies a footage type: the D-pad camera
+    badges prove a broadcast, reported as `cast: true | null`, but never
+    place the strip, since a white backdrop under a POV strip fakes them now
+    and then. Emitted
+    with the same `time` value so the two reads pair downstream; its fixtures
+    live under `tests/fixtures/player-status/`. Within a side the strip keeps its
+    own slot order (it can change every game), while the results scoreboard
+    re-sorts each team (attested in the sendou-triton VoD: strip [Planetz,
+    .52, Neo Splash, Snipewriter] vs rows [.52, Neo Splash, Snipewriter,
+    Planetz]) — so every 5th counter read also samples a `StripWeapons`
+    evidence event: a ranked weapon-icon match per alive slot. The fit pins
+    each icon's center and scale, so the slot is resampled to the reference
+    pitch and scored against every weapon's game icon at that one size over
+    the art's opaque pixels only (masked NCC — the team-ink plate and the
+    scene behind it never weigh in); the true weapon ranks top-1 on ~93% of
+    single reads, including special-ready washes. The builder solves each
+    side's slot→row assignment once per game from one evidence matrix
+    (`core/slot-row-assignment.ts`): strip votes (a read's score over its
+    candidate floor), the minimap cards' parsed weapons (the enemy column
+    mirrors the strip seating), and the states of players known by name —
+    the POV's own death screens, its kill-feed victims and the POV minimap's
+    named teammate cards — against the strip read beside them, which tells
+    apart two rows sharing a weapon. Thin or tied evidence keeps the
+    as-drawn order. The POV overlay's teammate diamond follows neither
+    order and maps by card name instead. Strip-weapon fixtures live under
+    `tests/fixtures/strip-weapons/`. The builder additionally
+    flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
+    outlasts the respawn wait, so those are misread blips (background ink
+    bleeding through a crossed-out icon) — and bridges sub-10s not-ready
+    gaps between ready reads when no death inside the gap explains them (no
+    special regains that fast, so the gap is the wash's dim pulse trough);
+    for the same reason ready reads in the clock's first 10s (5:00-4:51,
+    TW 3:00-2:51) or before it starts are dropped before bridging, timerless minimap reads
+    timed by the match's dominant clock anchor. Objective reads land on `ScannerMatch` as
+    progress samples anchored to the game clock; broadcast replay wipes re-run
+    an earlier moment with the counter intact, so the builder keeps only the
+    dominant cluster of clock-zero projections (`t + time`) and drops replay
+    reads outright (timerless reads follow their preceding anchored
+    neighbor). A displayed count only ever
+    ticks down, so the builder keeps each side's longest non-increasing score
+    run and voids reads off it (surviving OCR blips chart as gaps, not dips). Each read also carries a
+    per-side team ink color (`core/ink-color.ts` — the plate fill in
+    control, the digit ink otherwise): casted footage keeps the specced
+    player's team on the left plate, so the builder orients samples by ink
+    hue and anchors them to `teams` order via the minimap sub-tile colors
+    (casts never show a results screen). Reads of the overlay the match's
+    mode doesn't draw (plates on TC/RM, a track on SZ/CB) are lookalike
+    misreads the builder leaves out, and on Turf War every read is: the
+    builder nulls that match's `objective` and callers discard the events
+    (`invalidObjectiveEvents`; Live also stops collecting them once a MapStart
+    reveals Turf War). A match with no mode read, or whose intro and results
+    screen disagree on it, builds from its majority overlay (a plates
+    objective's `mode` then stays null: SZ or CB) and discards nothing. Turf
+    War draws the timer and icon strip with no counter under them: the gate's
+    `timer` variant (timer box plus its colon's two dots, which a dark minimap
+    card pill lacks) emits the strip reads alone, timed by the timer read
+    (no readable timer, nothing emitted) — as it does on a ranked frame whose
+    counter fails to read. PlayerStatus reads follow the
+    objective pipeline: same replay-wipe anchor, cast orientation
+    inherited from the nearest counter read (none on TW: as drawn), and rendered as
+    per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
+    shared with the match page) above the objective chart. Minimap reads
+    feed the same samples: every card/row carries `dead` (respawn
+    cross-out) and `specialReady` (special camo) flags, merged in timerless
+    on the shared replay anchor. Parsing details
+    are in each detector's module
+    header; accuracy-critical matching internals in `core/glyphs.ts` and
+    `core/detectors/scoreboard/weapons.ts` — read those before touching
+    recognition code. Parse cost matters live (a stalled worker drops
+    frames): a CJK splash-tag name once cost tens of seconds per death
+    parse, which is why the death detector memoizes tag reads on a
+    downscaled tag signature (same killer recurs pixel-identical; a per-cell
+    cap keeps two names on one plain banner apart, their means barely differ), the kill
+    detector memoizes each feed row's read on its text-band signature (a row
+    is re-read twice a second for as long as it shows, and shifts up intact
+    when a newer one enters; the per-cell cap of the signature compare is
+    what keeps near-twin names apart) and `classifySegment` prescreens
+    oversized eligibility lists at half scale — all tuned so
+    `scanner:report` stays bit-identical. Within one recognition,
+    classifications are memoized by span, floor and candidate cap (a pure
+    function of those: scores are exact), which the speculative prefetch and
+    the sequential pass after it otherwise repeat. Glyph sets (atlas slices
+    and every `scaleGlyphSet`, shared per source set and factor) and the
+    template sets build on first use, not at detector creation.
 - Scheduling (`core/detectors/scheduler.ts`): the per-session
   DetectorScheduler decides which detectors see a frame. Failing gates are
   re-checked every `searchIntervalS` (0.25s — produced VoDs cut screens to
@@ -718,7 +719,7 @@ to start with any (its games would upload unread — an unread lobby passes
   `npx serve /Users/kalle/Developer/assets/assets -l 9100 --cors` and
   `VITE_STATIC_ASSETS_URL=http://localhost:9100` in `.env`.
 - Node (tests/scripts): both sets from the sibling `../assets` checkout,
-  never the CDN. AVIF decodes through `sharp` (`node/image-io.ts`) —
+  never the CDN. AVIF decodes through `Bun.Image` (`node/image-io.ts`, macOS/Windows only) —
   `@napi-rs/canvas` mis-decodes AVIF partial-alpha.
 - Atlas regens overwrite the checkout's `assets/scanner/v1` in place, so
   shipping one means pushing the assets repo (its deploy workflow mirrors
@@ -743,11 +744,11 @@ then the atlas rebuild; planner atlas via `scanner:build-planner-signatures`
 
 `tests/*.test.ts` are the golden-file suites: they read frames from
 `tests/fixtures/` and need game icons from a sibling `sendou-ink/assets`
-checkout, so they run in their own Vitest project (`vitest.scanner.config.ts`)
-and stay out of CI.
+checkout, so `bun run test:scanner` runs them on their own (the unit run's
+`bunfig.toml` ignores them) and they stay out of CI.
 
 `tests/logic/*.test.ts` are pure logic over synthetic events — no images, no
-assets checkout — so they belong to the `unit` project and do run in CI. Put
+assets checkout — so they run with the unit tests and do run in CI. Put
 new tests there whenever they can be written without a frame.
 
 ## Fixtures
@@ -765,7 +766,7 @@ detector's suite sweeps them. Every live misread should become a fixture —
 an expanded match card's `Game data` zip holds each analyzed frame
 (lossless WebP, pixel-exact) with a prefilled `expected.json` in a folder
 that drops into `tests/fixtures/<detector>/` as is. A zip sent in by a user is
-untrusted: unpack it only with `pnpm scanner:unpack-zip`
+untrusted: unpack it only with `bun run scanner:unpack-zip`
 (`node/game-data-zip.ts`), which accepts nothing but that exact shape — the
 `scanner-misread` Claude skill drives the zip → fixtures → fix loop. **Fixture ground-truth labels are
 hand-corrected by the user (the Splatoon domain authority) — treat them as

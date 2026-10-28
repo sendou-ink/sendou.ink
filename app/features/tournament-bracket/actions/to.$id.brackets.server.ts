@@ -1,14 +1,16 @@
+import type * as v from "valibot";
 import type { PreparedMaps, TournamentRoundMaps } from "~/db/tables-json";
+import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	calculateTournamentTierFromTeams,
 	MIN_TEAMS_FOR_TIERING,
 } from "~/features/tournament/core/tiering";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -29,6 +31,12 @@ import {
 import { bracketSchema } from "../tournament-bracket-schemas";
 import { tournamentChannel } from "../tournament-bracket-utils";
 
+type BracketActionBody = v.InferOutput<typeof bracketSchema>;
+type BracketActionBodyOf<Action extends BracketActionBody["_action"]> = Extract<
+	BracketActionBody,
+	{ _action: Action }
+>;
+
 export const action = defineAction(
 	{ body: bracketSchema },
 	async ({ params, body }) => {
@@ -42,167 +50,13 @@ export const action = defineAction(
 
 		switch (body._action) {
 			case "START_BRACKET": {
-				requireTournamentOrganizer(tournament, user);
-				errorToastIfFalsy(
-					!tournament.isDraft,
-					"Tournament must be opened before starting a bracket",
-				);
-
-				const bracket = tournament.bracketByIdx(body.bracketIdx);
-				invariant(bracket, "Bracket not found");
-
-				const seeding = bracket.previewSeeding;
-				errorToastIfFalsy(seeding, "Bracket already started");
-
-				errorToastIfFalsy(
-					bracket.canBeStarted,
-					"Bracket is not ready to be started",
-				);
-
-				const groupCount = new Set(bracket.data.round.map((r) => r.groupId))
-					.size;
-
-				const hasThirdPlaceMatch = Engine.thirdPlaceMatchLinkable({
-					type: bracket.type,
-					settings: bracket.settings,
-					participantsCount: seeding.length,
-				});
-
-				errorToastIfFalsy(
-					roundModesAreIncluded(body.maps, tournament),
-					"Mode order includes a mode not played in the tournament",
-				);
-
-				const isRealtime = tournament.isLeague && body.isRealtime;
-
-				const linkedMaps = hasThirdPlaceMatch
-					? adjustLinkedRounds({
-							maps: body.maps,
-							thirdPlaceMatchLinked: body.thirdPlaceMatchLinked,
-						})
-					: body.maps;
-				const maps = isRealtime
-					? linkedMaps.map((round) => ({ ...round, isPlayableAt: null }))
-					: linkedMaps;
-
-				const abDivisions =
-					bracket.type === "round_robin" && bracket.settings?.hasAbDivisions
-						? abDivisionsForSeeding(seeding, tournament, groupCount)
-						: undefined;
-
-				// rr/swiss groups share one map list per round number and can have different round counts
-				const distinctRoundNumberCount = new Set(
-					bracket.data.round.map((round) => round.number),
-				).size;
-
-				errorToastIfFalsy(
-					bracket.type === "round_robin" || bracket.type === "swiss"
-						? distinctRoundNumberCount === maps.length
-						: PreparedMapsUtils.mapListRounds(bracket.data).length ===
-								maps.length,
-					"Invalid map count",
-				);
-
-				const createdBracket = Engine.create({
-					type: bracket.type,
-					seeding,
-					settings: bracket.settings,
-					independentRounds: tournament.isLeague && !isRealtime,
-					isRealtime,
-					abDivisions,
-					maps,
-				});
-
-				await BracketRepository.insertBracket({
+				statusChangedUserIds = await startBracket({
+					tournament,
 					tournamentId,
-					name: bracket.name,
-					bracket: createdBracket,
-					isLeague: tournament.isLeague,
+					user,
+					body,
 				});
-
-				// persisted as prepared so sibling brackets can reuse them
-				const existingPreparedMaps =
-					await TournamentRepository.findPreparedMapsById(tournamentId);
-				if (!existingPreparedMaps?.[body.bracketIdx]) {
-					await TournamentRepository.upsertPreparedMaps({
-						bracketIdx: body.bracketIdx,
-						tournamentId,
-						maps: {
-							maps,
-							eliminationTeamCount:
-								bracket.type === "single_elimination" ||
-								bracket.type === "double_elimination"
-									? PreparedMapsUtils.eliminationTeamCountOptions({
-											type: bracket.type,
-											currentCount: seeding.length,
-										})[0].max
-									: undefined,
-						},
-					});
-				}
-
-				// ensures autoseeding is disabled
-				const isAllSeedsPersisted = tournament.ctx.teams.every(
-					(team) => typeof team.seed === "number",
-				);
-				if (!isAllSeedsPersisted) {
-					await TournamentRepository.updateTeamSeeds({
-						tournamentId: tournament.ctx.id,
-						teamIds: tournament.ctx.teams.map((team) => team.id),
-					});
-				}
-
-				const isDivision = Progression.startingBrackets(
-					tournament.ctx.settings.bracketProgression,
-				).includes(body.bracketIdx);
-				if (isDivision && seeding.length >= MIN_TEAMS_FOR_TIERING) {
-					const checkedInTeams = tournament.ctx.teams
-						.filter((team) => seeding.includes(team.id))
-						.map((team) => ({ avgOrdinal: team.avgSeedingSkillOrdinal }));
-
-					const { tierNumber } = calculateTournamentTierFromTeams(
-						checkedInTeams,
-						seeding.length,
-					);
-
-					if (tierNumber !== null) {
-						await TournamentRepository.upsertDivisionTier({
-							tournamentId: tournament.ctx.id,
-							bracketIdx: body.bracketIdx,
-							tier: tierNumber,
-						});
-					}
-				}
-
-				if (!tournament.isTest && !tournament.isDraft) {
-					notify({
-						userIds: seeding.flatMap(
-							(tournamentTeamId) =>
-								tournament.teamById(tournamentTeamId)!.memberUserIds,
-						),
-						notification: {
-							type: "TO_BRACKET_STARTED",
-							meta: {
-								tournamentId,
-								bracketIdx: body.bracketIdx,
-								bracketName: bracket.name,
-								tournamentName: tournament.ctx.name,
-							},
-						},
-					});
-				}
-
-				// starting drops the teams that did not check in and can change the tier
-				ShowcaseTournaments.clearCachedTournaments();
-
-				// update RunningTournaments
-				await tournamentFromDB(tournamentId);
-
 				emitTournamentUpdate = true;
-				statusChangedUserIds = seeding.flatMap(
-					(tournamentTeamId) =>
-						tournament.teamById(tournamentTeamId)!.memberUserIds,
-				);
 
 				break;
 			}
@@ -383,6 +237,189 @@ export const action = defineAction(
 		return null;
 	},
 );
+
+async function startBracket({
+	tournament,
+	tournamentId,
+	user,
+	body,
+}: {
+	tournament: Tournament;
+	tournamentId: number;
+	user: AuthenticatedUser;
+	body: BracketActionBodyOf<"START_BRACKET">;
+}) {
+	requireTournamentOrganizer(tournament, user);
+	errorToastIfFalsy(
+		!tournament.isDraft,
+		"Tournament must be opened before starting a bracket",
+	);
+
+	const bracket = tournament.bracketByIdx(body.bracketIdx);
+	invariant(bracket, "Bracket not found");
+
+	const seeding = bracket.previewSeeding;
+	errorToastIfFalsy(seeding, "Bracket already started");
+
+	errorToastIfFalsy(bracket.canBeStarted, "Bracket is not ready to be started");
+
+	const groupCount = new Set(bracket.data.round.map((r) => r.groupId)).size;
+
+	const hasThirdPlaceMatch = Engine.thirdPlaceMatchLinkable({
+		type: bracket.type,
+		settings: bracket.settings,
+		participantsCount: seeding.length,
+	});
+
+	errorToastIfFalsy(
+		roundModesAreIncluded(body.maps, tournament),
+		"Mode order includes a mode not played in the tournament",
+	);
+
+	const isRealtime = tournament.isLeague && body.isRealtime;
+
+	const linkedMaps = hasThirdPlaceMatch
+		? adjustLinkedRounds({
+				maps: body.maps,
+				thirdPlaceMatchLinked: body.thirdPlaceMatchLinked,
+			})
+		: body.maps;
+	const maps = isRealtime
+		? linkedMaps.map((round) => ({ ...round, isPlayableAt: null }))
+		: linkedMaps;
+
+	const abDivisions =
+		bracket.type === "round_robin" && bracket.settings?.hasAbDivisions
+			? abDivisionsForSeeding(seeding, tournament, groupCount)
+			: undefined;
+
+	// rr/swiss groups share one map list per round number and can have different round counts
+	const distinctRoundNumberCount = new Set(
+		bracket.data.round.map((round) => round.number),
+	).size;
+
+	errorToastIfFalsy(
+		bracket.type === "round_robin" || bracket.type === "swiss"
+			? distinctRoundNumberCount === maps.length
+			: PreparedMapsUtils.mapListRounds(bracket.data).length === maps.length,
+		"Invalid map count",
+	);
+
+	const createdBracket = Engine.create({
+		type: bracket.type,
+		seeding,
+		settings: bracket.settings,
+		independentRounds: tournament.isLeague && !isRealtime,
+		isRealtime,
+		abDivisions,
+		maps,
+	});
+
+	await BracketRepository.insertBracket({
+		tournamentId,
+		name: bracket.name,
+		bracket: createdBracket,
+		isLeague: tournament.isLeague,
+	});
+
+	// persisted as prepared so sibling brackets can reuse them
+	const existingPreparedMaps =
+		await TournamentRepository.findPreparedMapsById(tournamentId);
+	if (!existingPreparedMaps?.[body.bracketIdx]) {
+		await TournamentRepository.upsertPreparedMaps({
+			bracketIdx: body.bracketIdx,
+			tournamentId,
+			maps: {
+				maps,
+				eliminationTeamCount:
+					bracket.type === "single_elimination" ||
+					bracket.type === "double_elimination"
+						? PreparedMapsUtils.eliminationTeamCountOptions({
+								type: bracket.type,
+								currentCount: seeding.length,
+							})[0].max
+						: undefined,
+			},
+		});
+	}
+
+	// ensures autoseeding is disabled
+	const isAllSeedsPersisted = tournament.ctx.teams.every(
+		(team) => typeof team.seed === "number",
+	);
+	if (!isAllSeedsPersisted) {
+		await TournamentRepository.updateTeamSeeds({
+			tournamentId: tournament.ctx.id,
+			teamIds: tournament.ctx.teams.map((team) => team.id),
+		});
+	}
+
+	await persistDivisionTier({
+		tournament,
+		bracketIdx: body.bracketIdx,
+		seeding,
+	});
+
+	if (!tournament.isTest && !tournament.isDraft) {
+		void notify({
+			userIds: seeding.flatMap(
+				(tournamentTeamId) =>
+					tournament.teamById(tournamentTeamId)!.memberUserIds,
+			),
+			notification: {
+				type: "TO_BRACKET_STARTED",
+				meta: {
+					tournamentId,
+					bracketIdx: body.bracketIdx,
+					bracketName: bracket.name,
+					tournamentName: tournament.ctx.name,
+				},
+			},
+		});
+	}
+
+	// starting drops the teams that did not check in and can change the tier
+	ShowcaseTournaments.clearCachedTournaments();
+
+	// update RunningTournaments
+	await tournamentFromDB(tournamentId);
+
+	return seeding.flatMap(
+		(tournamentTeamId) => tournament.teamById(tournamentTeamId)!.memberUserIds,
+	);
+}
+
+async function persistDivisionTier({
+	tournament,
+	bracketIdx,
+	seeding,
+}: {
+	tournament: Tournament;
+	bracketIdx: number;
+	seeding: number[];
+}) {
+	const isDivision = Progression.startingBrackets(
+		tournament.ctx.settings.bracketProgression,
+	).includes(bracketIdx);
+	if (isDivision && seeding.length >= MIN_TEAMS_FOR_TIERING) {
+		const checkedInTeams = tournament.ctx.teams
+			.filter((team) => seeding.includes(team.id))
+			.map((team) => ({ avgOrdinal: team.avgSeedingSkillOrdinal }));
+
+		const { tierNumber } = calculateTournamentTierFromTeams(
+			checkedInTeams,
+			seeding.length,
+		);
+
+		if (tierNumber !== null) {
+			await TournamentRepository.upsertDivisionTier({
+				tournamentId: tournament.ctx.id,
+				bracketIdx,
+				tier: tierNumber,
+			});
+		}
+	}
+}
 
 function errorToastIfFalsyNoFollowUpBrackets(
 	tournament: Tournament,

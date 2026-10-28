@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
@@ -43,7 +43,7 @@ const VALID_CUSTOM_THEME = {
 } as const;
 
 const expectedStoredTheme = () =>
-	JSON.parse(JSON.stringify(ThemePalette.build(VALID_CUSTOM_THEME)));
+	structuredClone(ThemePalette.build(VALID_CUSTOM_THEME));
 
 const users = UserFactory.pool();
 const victimId = () => users.id(1);
@@ -91,7 +91,7 @@ describe("team page editing", () => {
 			);
 
 			// the team page renders bio directly as a React child; an object would 500 the page
-			expect(typeof (await teamRow()).bio).toBe("string");
+			expect((await teamRow()).bio).toBeTypeOf("string");
 		});
 	});
 

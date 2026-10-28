@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import type * as v from "valibot";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -430,7 +430,7 @@ describe("Tournament match page", () => {
 		test("returns error when reporting score for a match waiting on previous matches", async () => {
 			await setActiveRosterAction();
 			// a state an earlier match of a larger bracket puts this row in, not one it was created in
-			// biome-ignore lint/plugin: written rather than seeded, see above
+			// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- written rather than seeded, see above
 			await db
 				.updateTable("TournamentMatch")
 				.set({ opponentOne: JSON.stringify({ id: null }) })
@@ -446,7 +446,7 @@ describe("Tournament match page", () => {
 	describe("BYE matches", () => {
 		// as above: a BYE and a TBD opponent are states the surrounding bracket produces, so written not seeded
 		test("404s when accessing a BYE match", async () => {
-			// biome-ignore lint/plugin: as above
+			// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- as above
 			await db
 				.updateTable("TournamentMatch")
 				.set({ opponentTwo: null })
@@ -457,7 +457,7 @@ describe("Tournament match page", () => {
 		});
 
 		test("nots 404 when an opponent is a TBD placeholder waiting for an earlier match", async () => {
-			// biome-ignore lint/plugin: as above
+			// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- as above
 			await db
 				.updateTable("TournamentMatch")
 				.set({ opponentTwo: JSON.stringify({ id: null }) })

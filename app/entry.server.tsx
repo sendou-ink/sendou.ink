@@ -1,5 +1,4 @@
 import { isbot } from "isbot";
-import cron from "node-cron";
 import { renderToReadableStream } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
 import {
@@ -109,37 +108,41 @@ declare global {
 if (!global.appStartSignal && ServerConfig.isProduction && !IS_E2E_TEST_RUN) {
 	global.appStartSignal = true;
 
-	cron.schedule("0 */1 * * *", async () => {
+	Bun.cron("0 */1 * * *", async () => {
 		for (const routine of everyHourAt00) {
 			await routine.run();
 		}
 	});
 
-	cron.schedule("30 */1 * * *", async () => {
+	Bun.cron("30 */1 * * *", async () => {
 		for (const routine of everyHourAt30) {
 			await routine.run();
 		}
 	});
 
 	// 4:00 AM UTC
-	cron.schedule("0 4 * * *", async () => {
-		for (const routine of daily) {
-			await routine.run();
-		}
-	});
+	Bun.cron(
+		"0 4 * * *",
+		async () => {
+			for (const routine of daily) {
+				await routine.run();
+			}
+		},
+		{ tz: "UTC" },
+	);
 
 	// 9:00 AM Finnish time on Wednesdays, a quiet hour since vacuuming blocks writes longer than the 5s busy_timeout
-	cron.schedule(
+	Bun.cron(
 		"0 9 * * 3",
 		async () => {
 			for (const routine of weekly) {
 				await routine.run();
 			}
 		},
-		{ timezone: "Europe/Helsinki" },
+		{ tz: "Europe/Helsinki" },
 	);
 
-	cron.schedule("*/2 * * * *", async () => {
+	Bun.cron("*/2 * * * *", async () => {
 		for (const routine of everyTwoMinutes) {
 			await routine.run();
 		}

@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { add, sub } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
@@ -78,8 +78,8 @@ describe("findPendingOverlapsForUsers", () => {
 		});
 
 		expect(posts).toHaveLength(1);
-		expect(posts[0]!.id).toBe(postId);
-		expect(posts[0]!.memberIds.sort()).toEqual(
+		expect(posts[0].id).toBe(postId);
+		expect(posts[0].memberIds.sort()).toEqual(
 			[users.id(1), users.id(2)].sort(),
 		);
 	});
@@ -190,7 +190,7 @@ describe("findPendingOverlapsForUsers", () => {
 			},
 		);
 		const post = await ScrimPostRepository.findById(postId);
-		const requestId = post!.requests[0]!.id;
+		const requestId = post!.requests[0].id;
 
 		const { posts, requestIds } =
 			await ScrimPostRepository.findPendingOverlapsForUsers({
@@ -286,7 +286,7 @@ describe("findUserScrims", () => {
 		);
 
 		expect(postOwnerScrims).toHaveLength(1);
-		expect(postOwnerScrims[0]!.status).toBe("booked");
+		expect(postOwnerScrims[0].status).toBe("booked");
 	});
 
 	test("lists a booked range scrim whose post window opened before the booked start", async () => {
@@ -393,7 +393,7 @@ describe("insertRequest", () => {
 				teamId: team.id,
 				userId: users.id(3),
 			}),
-		).rejects.toThrowError(DuplicateEntryError);
+		).rejects.toThrow(DuplicateEntryError);
 
 		const post = await ScrimPostRepository.findById(postId);
 		expect(post!.requests).toHaveLength(1);

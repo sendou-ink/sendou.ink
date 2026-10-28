@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { expect } from "bun:test";
 import type {
 	PersistedDefinition,
 	PersistedMapDefinition,
@@ -9,17 +9,15 @@ export function assertRoundTrips<T>(
 	definition: PersistedDefinition<T> | PersistedMapDefinition<T>,
 	examples: NoInfer<T>[],
 ) {
-	expect
-		.soft(definition.decode(null), "missing → default")
-		.toEqual(definition.default);
+	expect(definition.decode(null), "missing → default").toEqual(
+		definition.default,
+	);
 
 	for (const value of examples) {
-		expect
-			.soft(
-				definition.decode(definition.encode(value)),
-				`round trip of ${JSON.stringify(value)}`,
-			)
-			.toEqual(value);
+		expect(
+			definition.decode(definition.encode(value)),
+			`round trip of ${JSON.stringify(value)}`,
+		).toEqual(value);
 	}
 }
 
@@ -29,8 +27,8 @@ export function assertDecodesToDefault<T>(
 	raws: string[],
 ) {
 	for (const raw of raws) {
-		expect
-			.soft(definition.decode(raw), `${JSON.stringify(raw)} → default`)
-			.toEqual(definition.default);
+		expect(definition.decode(raw), `${JSON.stringify(raw)} → default`).toEqual(
+			definition.default,
+		);
 	}
 }

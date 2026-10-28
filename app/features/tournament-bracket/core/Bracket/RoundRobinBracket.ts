@@ -1,11 +1,26 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
+import type {
+	BracketData,
+	MatchData,
+} from "~/features/tournament-bracket/core/engine/types";
 import * as Standings from "~/features/tournament/core/Standings";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
 import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
 import * as Tiebreakers from "./Tiebreakers";
+
+type RoundRobinTeamRecord = {
+	id: number;
+	setWins: number;
+	setLosses: number;
+	mapWins: number;
+	mapLosses: number;
+	winsAgainstTied: number;
+	koCount: number;
+};
+
+type GroupPlacement = Standing & { groupId: number };
 
 export class RoundRobinBracket extends Bracket {
 	get collectsKos() {
@@ -102,233 +117,149 @@ export class RoundRobinBracket extends Bracket {
 	}): Standing[] {
 		const groupIds = this.data.group.map((group) => group.id);
 
-		const placements: (Standing & { groupId: number })[] = [];
+		const placements: GroupPlacement[] = [];
 		for (const groupId of groupIds) {
 			const matches = this.data.match.filter(
 				(match) => match.groupId === groupId,
 			);
 
-			const groupIsFinished = matches.every(
-				(match) =>
-					// BYE
-					match.opponent1 === null ||
-					match.opponent2 === null ||
-					// match was played out
-					match.winnerSide,
-			);
+			if (!isGroupFinished(matches) && !includeUnfinishedGroups) continue;
 
-			if (!groupIsFinished && !includeUnfinishedGroups) continue;
-
-			const droppedOutWithIncompleteMatches = new Set<number>();
-			for (const team of this.tournament.ctx.teams) {
-				if (!team.droppedOut) continue;
-				const teamMatches = matches.filter(
-					(m) => m.opponent1?.id === team.id || m.opponent2?.id === team.id,
-				);
-				if (teamMatches.length === 0) continue;
-				const allPlayed = teamMatches.every(
-					(m) =>
-						m.opponent1 === null ||
-						m.opponent2 === null ||
-						typeof m.opponent1?.score === "number" ||
-						typeof m.opponent2?.score === "number",
-				);
-				if (!allPlayed) droppedOutWithIncompleteMatches.add(team.id);
-			}
-
-			const teams: {
-				id: number;
-				setWins: number;
-				setLosses: number;
-				mapWins: number;
-				mapLosses: number;
-				winsAgainstTied: number;
-				koCount: number;
-			}[] = [];
-
-			const updateTeam = ({
-				teamId,
-				setWins = 0,
-				setLosses = 0,
-				mapWins = 0,
-				mapLosses = 0,
-				koCount = 0,
-			}: {
-				teamId: number;
-				setWins?: number;
-				setLosses?: number;
-				mapWins?: number;
-				mapLosses?: number;
-				koCount?: number;
-			}) => {
-				const team = teams.find((candidate) => candidate.id === teamId);
-				if (team) {
-					team.setWins += setWins;
-					team.setLosses += setLosses;
-					team.mapWins += mapWins;
-					team.mapLosses += mapLosses;
-					team.koCount += koCount;
-				} else {
-					teams.push({
-						id: teamId,
-						setWins,
-						setLosses,
-						mapWins,
-						mapLosses,
-						winsAgainstTied: 0,
-						koCount,
-					});
-				}
-			};
-
-			// every team belongs in the standings even if all its matches were forfeited by dropped out opponents
-			const groupTeamIds = R.unique(
-				matches
-					.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
-					.filter((id) => typeof id === "number"),
-			);
-			for (const teamId of groupTeamIds) {
-				if (droppedOutWithIncompleteMatches.has(teamId)) continue;
-
-				updateTeam({ teamId });
-			}
-
-			for (const match of matches) {
-				if (!match.winnerSide) continue;
-
-				const opponentIds = [match.opponent1?.id, match.opponent2?.id].filter(
-					(id) => typeof id === "number",
-				);
-
-				if (opponentIds.some((id) => droppedOutWithIncompleteMatches.has(id))) {
-					continue;
-				}
-
-				const winner =
-					match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
-
-				const loser =
-					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
-
-				if (!winner || !loser) continue;
-
-				invariant(
-					typeof winner.id === "number" &&
-						typeof loser.id === "number" &&
-						"RoundRobinBracket.standings: winner or loser id not found",
-				);
-
-				// score might be missing when the set was ended early, defaulting both to 0 for now
-
-				updateTeam({
-					teamId: winner.id,
-					setWins: 1,
-					setLosses: 0,
-					mapWins: winner.score ?? 0,
-					mapLosses: loser.score ?? 0,
-					koCount: winner.totalKos ?? 0,
-				});
-				updateTeam({
-					teamId: loser.id,
-					setWins: 0,
-					setLosses: 1,
-					mapWins: loser.score ?? 0,
-					mapLosses: winner.score ?? 0,
-					koCount: loser.totalKos ?? 0,
-				});
-			}
-
-			for (const team of teams) {
-				for (const team2 of teams) {
-					if (team.id === team2.id) continue;
-					if (team.setWins !== team2.setWins) continue;
-
-					// they are different teams and are tied, let's check who won
-
-					const wonTheirMatch = matches.some(
-						(match) =>
-							(match.opponent1?.id === team.id &&
-								match.opponent2?.id === team2.id &&
-								match.winnerSide === "opponent1") ||
-							(match.opponent1?.id === team2.id &&
-								match.opponent2?.id === team.id &&
-								match.winnerSide === "opponent2"),
-					);
-
-					if (wonTheirMatch) {
-						team.winsAgainstTied++;
-					}
-				}
-			}
-
-			// dropped teams seeded after wins-against-tied so forfeits don't credit opponents while keeping them in standings
-			for (const teamId of droppedOutWithIncompleteMatches) {
-				teams.push({
-					id: teamId,
-					setWins: 0,
-					setLosses: 0,
-					mapWins: 0,
-					mapLosses: 0,
-					winsAgainstTied: 0,
-					koCount: 0,
-				});
-			}
-
-			const droppedOutTeams = this.tournament.ctx.teams
-				.filter((t) => t.droppedOut)
-				.map((t) => t.id);
-
-			placements.push(
-				...teams
-					// client-side the layout's teams can lag behind freshly loaded match data, mostly preview tournaments (prevent crash)
-					.filter((team) => this.tournament.teamById(team.id))
-					.map((team) => ({
-						id: team.id,
-						stats: {
-							setWins: team.setWins,
-							setLosses: team.setLosses,
-							mapWins: team.mapWins,
-							mapLosses: team.mapLosses,
-							koCount: team.koCount,
-							winsAgainstTied: team.winsAgainstTied,
-						},
-					}))
-					.sort((a, b) => {
-						// TIEBREAKER 0) dropped out teams are always last
-						const aDroppedOut = droppedOutTeams.includes(a.id);
-						const bDroppedOut = droppedOutTeams.includes(b.id);
-
-						if (aDroppedOut && !bDroppedOut) return 1;
-						if (!aDroppedOut && bDroppedOut) return -1;
-
-						const tiebreakerResult = Tiebreakers.compare(
-							this.tiebreakers,
-							a.stats,
-							b.stats,
-						);
-						if (tiebreakerResult !== 0) return tiebreakerResult;
-
-						const aSeed = Number(this.tournament.teamById(a.id)?.seed);
-						const bSeed = Number(this.tournament.teamById(b.id)?.seed);
-
-						if (aSeed < bSeed) return -1;
-						if (aSeed > bSeed) return 1;
-
-						return 0;
-					})
-					.map((team, i) => {
-						return {
-							team: this.tournament.teamById(team.id)!,
-							placement: i + 1,
-							groupId,
-							stats: team.stats,
-						};
-					}),
-			);
+			placements.push(...this.groupPlacements(groupId, matches));
 		}
 
+		return this.standingsWithoutNonParticipants(
+			Standings.reNumberPlacements(this.sortedAcrossGroups(placements)),
+		);
+	}
+
+	private groupPlacements(
+		groupId: number,
+		matches: MatchData[],
+	): GroupPlacement[] {
+		const droppedOutWithIncompleteMatches =
+			this.droppedOutTeamIdsWithIncompleteMatches(matches);
+
+		const teams: RoundRobinTeamRecord[] = [];
+
+		// every team belongs in the standings even if all its matches were forfeited by dropped out opponents
+		const groupTeamIds = R.unique(
+			matches
+				.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
+				.filter((id) => typeof id === "number"),
+		);
+		for (const teamId of groupTeamIds) {
+			if (droppedOutWithIncompleteMatches.has(teamId)) continue;
+
+			updateTeam(teams, { teamId });
+		}
+
+		for (const match of matches) {
+			addMatchResult({
+				teams,
+				match,
+				ignoredTeamIds: droppedOutWithIncompleteMatches,
+			});
+		}
+
+		addWinsAgainstTied(teams, matches);
+
+		// dropped teams seeded after wins-against-tied so forfeits don't credit opponents while keeping them in standings
+		for (const teamId of droppedOutWithIncompleteMatches) {
+			teams.push({
+				id: teamId,
+				setWins: 0,
+				setLosses: 0,
+				mapWins: 0,
+				mapLosses: 0,
+				winsAgainstTied: 0,
+				koCount: 0,
+			});
+		}
+
+		const droppedOutTeams = this.tournament.ctx.teams
+			.filter((t) => t.droppedOut)
+			.map((t) => t.id);
+
+		return (
+			teams
+				// client-side the layout's teams can lag behind freshly loaded match data, mostly preview tournaments (prevent crash)
+				.filter((team) => this.tournament.teamById(team.id))
+				.map((team) => ({
+					id: team.id,
+					stats: {
+						setWins: team.setWins,
+						setLosses: team.setLosses,
+						mapWins: team.mapWins,
+						mapLosses: team.mapLosses,
+						koCount: team.koCount,
+						winsAgainstTied: team.winsAgainstTied,
+					},
+				}))
+				.sort((a, b) => this.compareGroupTeams(a, b, droppedOutTeams))
+				.map((team, i) => {
+					return {
+						team: this.tournament.teamById(team.id)!,
+						placement: i + 1,
+						groupId,
+						stats: team.stats,
+					};
+				})
+		);
+	}
+
+	private droppedOutTeamIdsWithIncompleteMatches(matches: MatchData[]) {
+		const result = new Set<number>();
+		for (const team of this.tournament.ctx.teams) {
+			if (!team.droppedOut) continue;
+			const teamMatches = matches.filter(
+				(m) => m.opponent1?.id === team.id || m.opponent2?.id === team.id,
+			);
+			if (teamMatches.length === 0) continue;
+			const allPlayed = teamMatches.every(
+				(m) =>
+					m.opponent1 === null ||
+					m.opponent2 === null ||
+					typeof m.opponent1?.score === "number" ||
+					typeof m.opponent2?.score === "number",
+			);
+			if (!allPlayed) result.add(team.id);
+		}
+
+		return result;
+	}
+
+	private compareGroupTeams(
+		a: { id: number; stats: NonNullable<Standing["stats"]> },
+		b: { id: number; stats: NonNullable<Standing["stats"]> },
+		droppedOutTeams: number[],
+	) {
+		// TIEBREAKER 0) dropped out teams are always last
+		const aDroppedOut = droppedOutTeams.includes(a.id);
+		const bDroppedOut = droppedOutTeams.includes(b.id);
+
+		if (aDroppedOut && !bDroppedOut) return 1;
+		if (!aDroppedOut && bDroppedOut) return -1;
+
+		const tiebreakerResult = Tiebreakers.compare(
+			this.tiebreakers,
+			a.stats,
+			b.stats,
+		);
+		if (tiebreakerResult !== 0) return tiebreakerResult;
+
+		const aSeed = Number(this.tournament.teamById(a.id)?.seed);
+		const bSeed = Number(this.tournament.teamById(b.id)?.seed);
+
+		if (aSeed < bSeed) return -1;
+		if (aSeed > bSeed) return 1;
+
+		return 0;
+	}
+
+	private sortedAcrossGroups(placements: GroupPlacement[]) {
 		const effectiveSeed = this.effectiveSeedResolver();
-		const sorted = placements.sort((a, b) => {
+		return placements.sort((a, b) => {
 			if (a.placement < b.placement) return -1;
 			if (a.placement > b.placement) return 1;
 
@@ -342,10 +273,6 @@ export class RoundRobinBracket extends Bracket {
 
 			return 0;
 		});
-
-		return this.standingsWithoutNonParticipants(
-			Standings.reNumberPlacements(sorted),
-		);
 	}
 
 	get type(): Tables["TournamentStage"]["type"] {
@@ -369,5 +296,135 @@ export class RoundRobinBracket extends Bracket {
 		}
 
 		return result;
+	}
+}
+
+function isGroupFinished(matches: MatchData[]) {
+	return matches.every(
+		(match) =>
+			// BYE
+			match.opponent1 === null ||
+			match.opponent2 === null ||
+			// match was played out
+			match.winnerSide,
+	);
+}
+
+function updateTeam(
+	teams: RoundRobinTeamRecord[],
+	{
+		teamId,
+		setWins = 0,
+		setLosses = 0,
+		mapWins = 0,
+		mapLosses = 0,
+		koCount = 0,
+	}: {
+		teamId: number;
+		setWins?: number;
+		setLosses?: number;
+		mapWins?: number;
+		mapLosses?: number;
+		koCount?: number;
+	},
+) {
+	const team = teams.find((candidate) => candidate.id === teamId);
+	if (team) {
+		team.setWins += setWins;
+		team.setLosses += setLosses;
+		team.mapWins += mapWins;
+		team.mapLosses += mapLosses;
+		team.koCount += koCount;
+	} else {
+		teams.push({
+			id: teamId,
+			setWins,
+			setLosses,
+			mapWins,
+			mapLosses,
+			winsAgainstTied: 0,
+			koCount,
+		});
+	}
+}
+
+function addMatchResult({
+	teams,
+	match,
+	ignoredTeamIds,
+}: {
+	teams: RoundRobinTeamRecord[];
+	match: MatchData;
+	ignoredTeamIds: Set<number>;
+}) {
+	if (!match.winnerSide) return;
+
+	const opponentIds = [match.opponent1?.id, match.opponent2?.id].filter(
+		(id) => typeof id === "number",
+	);
+
+	if (opponentIds.some((id) => ignoredTeamIds.has(id))) {
+		return;
+	}
+
+	const winner =
+		match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
+
+	const loser =
+		match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+
+	if (!winner || !loser) return;
+
+	invariant(
+		typeof winner.id === "number" &&
+			typeof loser.id === "number" &&
+			"RoundRobinBracket.standings: winner or loser id not found",
+	);
+
+	// score might be missing when the set was ended early, defaulting both to 0 for now
+
+	updateTeam(teams, {
+		teamId: winner.id,
+		setWins: 1,
+		setLosses: 0,
+		mapWins: winner.score ?? 0,
+		mapLosses: loser.score ?? 0,
+		koCount: winner.totalKos ?? 0,
+	});
+	updateTeam(teams, {
+		teamId: loser.id,
+		setWins: 0,
+		setLosses: 1,
+		mapWins: loser.score ?? 0,
+		mapLosses: winner.score ?? 0,
+		koCount: loser.totalKos ?? 0,
+	});
+}
+
+function addWinsAgainstTied(
+	teams: RoundRobinTeamRecord[],
+	matches: MatchData[],
+) {
+	for (const team of teams) {
+		for (const team2 of teams) {
+			if (team.id === team2.id) continue;
+			if (team.setWins !== team2.setWins) continue;
+
+			// they are different teams and are tied, let's check who won
+
+			const wonTheirMatch = matches.some(
+				(match) =>
+					(match.opponent1?.id === team.id &&
+						match.opponent2?.id === team2.id &&
+						match.winnerSide === "opponent1") ||
+					(match.opponent1?.id === team2.id &&
+						match.opponent2?.id === team.id &&
+						match.winnerSide === "opponent2"),
+			);
+
+			if (wonTheirMatch) {
+				team.winsAgainstTied++;
+			}
+		}
 	}
 }

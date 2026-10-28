@@ -1,0 +1,367 @@
+[test]
+preload = [
+	"./app/test-console.ts",
+	"./scripts/preload.ts",
+	"./app/test-setup.ts",
+]
+# DOM tests need happy-dom (`bun run test:dom`), the scanner golden-file suite runs via `bun run test:scanner`
+pathIgnorePatterns = [
+	"e2e/**",
+	"**/*.dom.test.{ts,tsx}",
+	"app/features/scanner/tests/*.test.{ts,tsx}",
+]
+
+[lint]
+maxWarnings = 0
+typeAware = true
+plugins = ["playwright", "./lint-plugins/index.ts"]
+ignorePatterns = [
+	"scripts/dicts/**",
+	"scripts/output/**",
+	"docs/site/dist/**",
+	"docs/site/.astro/**",
+	"docs/site/visits.json",
+	"build/**",
+	"app/features/scanner/tests/fixtures/**",
+	"test-results/**",
+	"playwright-report/**",
+	".react-router/**",
+]
+
+[lint.rules]
+"no-console" = "error"
+"no-restricted-syntax" = ["error", "ForInStatement", "TSEnumDeclaration"]
+"react/jsx-props-no-spread-multi" = "error"
+"react/no-unknown-property" = ["error", { ignore = ["closedby"] }]
+"unicorn/error-message" = "error"
+"unicorn/require-number-to-fixed-digits-argument" = "error"
+"oxc/only-used-in-recursion" = "error"
+"no-return-assign" = "error"
+"promise/no-nesting" = "error"
+"no-shadow" = "error"
+"no-new" = "error"
+"react/no-unstable-nested-components" = ["error", { allowAsProps = true }]
+"unicorn/prefer-module" = "error"
+"import/no-extraneous-dependencies" = "error"
+"unicorn/prefer-node-protocol" = "error"
+"prefer-template" = "error"
+"no-param-reassign" = "error"
+"default-param-last" = "error"
+"react/self-closing-comp" = "error"
+"one-var" = ["error", "never"]
+"unicorn/prefer-number-properties" = "error"
+"typescript/no-inferrable-types" = "error"
+"no-else-return" = "error"
+"typescript/parameter-properties" = "error"
+"no-multi-assign" = "error"
+"no-multi-str" = "error"
+"yoda" = "error"
+"unicorn/prefer-string-trim-start-end" = "error"
+"prefer-object-spread" = "error"
+"no-lonely-if" = "error"
+"symbol-description" = "error"
+"grouped-accessor-pairs" = "error"
+"unicorn/no-lonely-if" = "error"
+"object-shorthand" = "error"
+"unicorn/throw-new-error" = "error"
+"operator-assignment" = "error"
+"react/jsx-fragments" = "error"
+"unicorn/prefer-string-slice" = "error"
+"typescript/unified-signatures" = "error"
+"typescript/prefer-for-of" = "error"
+"no-throw-literal" = "error"
+"import/no-default-export" = "error"
+"unicorn/filename-case" = [
+	"error",
+	{ cases = { kebabCase = true, pascalCase = true, camelCase = true }, ignore = [
+		"[A-Z]{2}",
+	] },
+]
+"dot-notation" = "error"
+"no-useless-concat" = "error"
+"no-div-regex" = "error"
+"unicorn/prefer-optional-catch-binding" = "error"
+"unicorn/no-array-for-each" = "error"
+"unicorn/prefer-array-index-of" = "error"
+"nextjs/no-sync-scripts" = "error"
+"import/first" = "error"
+"react/function-component-definition" = [
+	"error",
+	{ namedComponents = "function-declaration", unnamedComponents = [
+		"function-expression",
+		"arrow-function",
+	] },
+]
+"react/iframe-missing-sandbox" = "error"
+"react/no-danger" = "error"
+"unicorn/prefer-array-some" = "error"
+"react/no-namespace" = "error"
+"unicorn/no-negation-in-equality-check" = "error"
+"no-extend-native" = "error"
+"sendou/no-kysely-sqlite-helpers" = "error"
+"unicorn/no-document-cookie" = "error"
+"no-empty" = ["error", { allowEmptyCatch = true }]
+"no-useless-assignment" = "off"
+"react-hooks/exhaustive-deps" = "off"
+"react/button-has-type" = "error"
+"react/no-children-prop" = "error"
+"react/no-danger-with-children" = "error"
+"react/void-dom-elements-no-children" = "error"
+"react/jsx-no-comment-textnodes" = "error"
+"react/jsx-no-target-blank" = "error"
+"react/jsx-no-useless-fragment" = ["error", { allowExpressions = true }]
+"jsx_a11y/alt-text" = "error"
+"jsx_a11y/anchor-has-content" = "error"
+"jsx_a11y/anchor-is-valid" = "error"
+"jsx_a11y/aria-activedescendant-has-tabindex" = "error"
+"jsx_a11y/aria-props" = "error"
+"jsx_a11y/aria-proptypes" = "error"
+"jsx_a11y/aria-role" = "error"
+"jsx_a11y/aria-unsupported-elements" = "error"
+"jsx_a11y/autocomplete-valid" = "error"
+"jsx_a11y/heading-has-content" = "error"
+"jsx_a11y/html-has-lang" = "error"
+"jsx_a11y/iframe-has-title" = "error"
+"jsx_a11y/img-redundant-alt" = "error"
+"jsx_a11y/interactive-supports-focus" = "error"
+"jsx_a11y/lang" = "error"
+"jsx_a11y/media-has-caption" = "error"
+"jsx_a11y/mouse-events-have-key-events" = "error"
+"jsx_a11y/no-access-key" = "error"
+"jsx_a11y/no-aria-hidden-on-focusable" = "error"
+"jsx_a11y/no-distracting-elements" = "error"
+"jsx_a11y/no-interactive-element-to-noninteractive-role" = "error"
+"jsx_a11y/no-noninteractive-element-to-interactive-role" = "error"
+"jsx_a11y/no-noninteractive-tabindex" = "error"
+"jsx_a11y/no-redundant-roles" = "error"
+"jsx_a11y/no-static-element-interactions" = "error"
+"jsx_a11y/role-has-required-aria-props" = "error"
+"jsx_a11y/role-supports-aria-props" = "error"
+"jsx_a11y/scope" = "error"
+"jsx_a11y/tabindex-no-positive" = "error"
+"typescript/no-explicit-any" = "off"
+"typescript/no-unsafe-argument" = "off"
+"typescript/no-unsafe-assignment" = "off"
+"typescript/no-unsafe-call" = "off"
+"typescript/no-unsafe-member-access" = "off"
+"typescript/no-unsafe-return" = "off"
+"typescript/only-throw-error" = "off"
+"typescript/prefer-promise-reject-errors" = "off"
+"typescript/require-await" = "off"
+"typescript/restrict-template-expressions" = "off"
+"typescript/unbound-method" = "off"
+"no-eval" = "error"
+"no-new-func" = "error"
+"complexity" = ["error", { max = 25, variant = "modified" }]
+"no-template-curly-in-string" = "error"
+"no-self-compare" = "error"
+"array-callback-return" = "error"
+"no-constructor-return" = "error"
+"no-unreachable" = "error"
+"no-unreachable-loop" = "error"
+"no-sequences" = "error"
+"default-case-last" = "error"
+"oxc/bad-char-at-comparison" = "error"
+"oxc/bad-min-max-func" = "error"
+"oxc/bad-object-literal-comparison" = "error"
+"oxc/bad-replace-all-arg" = "error"
+"oxc/const-comparisons" = "error"
+"oxc/double-comparisons" = "error"
+"oxc/missing-throw" = "error"
+"oxc/uninvoked-array-callback" = "error"
+"oxc/misrefactored-assign-op" = "error"
+"oxc/bad-bitwise-operator" = "error"
+"unicorn/no-array-fill-with-reference-type" = "error"
+"unicorn/no-useless-length-check" = "error"
+"unicorn/no-thenable" = "error"
+"unicorn/no-accessor-recursion" = "error"
+"unicorn/no-invalid-fetch-options" = "error"
+"unicorn/no-invalid-remove-event-listener" = "error"
+"typescript/no-confusing-non-null-assertion" = "error"
+"typescript/no-non-null-asserted-nullish-coalescing" = "error"
+"import/no-self-import" = "error"
+"import/no-absolute-path" = "error"
+"import/no-duplicates" = "error"
+"promise/no-multiple-resolved" = "error"
+"promise/no-return-in-finally" = "error"
+"prefer-promise-reject-errors" = "error"
+"unicorn/no-await-in-promise-methods" = "error"
+"unicorn/no-single-promise-in-promise-methods" = "error"
+"unicorn/no-unnecessary-await" = "error"
+"react/hooks" = "error"
+"react/purity" = "error"
+"react/set-state-in-effect" = "error"
+"react/error-boundaries" = "error"
+"react/globals" = "error"
+"react/immutability" = "error"
+"react/static-components" = "error"
+"react/set-state-in-render" = "error"
+"react/use-memo" = "error"
+"react/void-use-memo" = "error"
+"react/unsupported-syntax" = "error"
+"react/no-deriving-state-in-effects" = "error"
+"react/jsx-no-script-url" = "error"
+"react/style-prop-object" = "error"
+"react/no-deprecated" = "error"
+"react/no-invalid-html-attribute" = "error"
+"react/checked-requires-onchange-or-readonly" = "error"
+"react/jsx-curly-brace-presence" = "error"
+"bun/jsx-no-forbidden-nesting" = "error"
+"bun/react-prefer-updater-function" = "error"
+"jsx_a11y/label-has-associated-control" = "error"
+"bun:test/no-identical-title" = "error"
+"bun:test/no-standalone-expect" = "error"
+"bun:test/no-conditional-tests" = "error"
+"bun:test/no-commented-out-tests" = "error"
+"bun:test/no-done-callback" = "error"
+"bun:test/no-duplicate-hooks" = "error"
+"bun:test/no-test-return-statement" = "error"
+"bun:test/valid-title" = "error"
+"bun:test/prefer-each" = "error"
+"bun:test/prefer-to-contain" = "error"
+"bun:test/no-alias-methods" = "error"
+"bun:test/prefer-expect-type-of" = "error"
+"no-useless-call" = "error"
+"no-useless-computed-key" = "error"
+"no-useless-rename" = "error"
+"typescript/no-useless-constructor" = "error"
+"no-unneeded-ternary" = "error"
+"logical-assignment-operators" = "error"
+"unicorn/prefer-array-find" = "error"
+"unicorn/prefer-array-flat" = "error"
+"unicorn/prefer-array-flat-map" = "error"
+"unicorn/prefer-set-size" = "error"
+"unicorn/prefer-string-starts-ends-with" = "error"
+"unicorn/prefer-includes" = "error"
+"unicorn/prefer-structured-clone" = "error"
+"unicorn/prefer-response-static-json" = "error"
+"unicorn/prefer-native-coercion-functions" = "error"
+"unicorn/no-useless-collection-argument" = "error"
+"unicorn/no-useless-fallback-in-spread" = "error"
+"unicorn/custom-error-definition" = "error"
+"typescript/prefer-ts-expect-error" = "error"
+"typescript/no-floating-promises" = [
+	"error",
+	{ allowForKnownSafeCalls = [
+		{ from = "package", name = "module", package = "bun-types" },
+	] },
+]
+"typescript/no-misused-promises" = "error"
+"typescript/await-thenable" = "error"
+"typescript/switch-exhaustiveness-check" = [
+	"error",
+	{ considerDefaultExhaustiveForUnions = true },
+]
+"typescript/no-deprecated" = "error"
+"typescript/no-base-to-string" = "error"
+"typescript/restrict-plus-operands" = "error"
+"typescript/no-unnecessary-type-assertion" = "error"
+"typescript/no-array-delete" = "error"
+"typescript/no-for-in-array" = "error"
+"typescript/no-unsafe-unary-minus" = "error"
+"typescript/no-unnecessary-boolean-literal-compare" = "error"
+
+[[lint.overrides]]
+files = [
+	"app/features/*/routes/**",
+	"app/modules/*/routes/**",
+	"app/features/*/loaders/**",
+	"app/features/*/actions/**",
+]
+rules = { "unicorn/filename-case" = "off" }
+
+[[lint.overrides]]
+files = ["**/*.ts"]
+rules = { "react/function-component-definition" = "off" }
+
+[[lint.overrides]]
+files = [
+	"app/features/*/routes/**",
+	"app/modules/*/routes/**",
+	"app/root.tsx",
+	"app/routes.ts",
+	"app/entry.server.tsx",
+	"*.config.ts",
+	"docs/site/astro.config.ts",
+	"knip.ts",
+	"e2e/global-setup.ts",
+	"e2e/global-teardown.ts",
+	"scripts/**",
+]
+rules = { "import/no-default-export" = "off" }
+
+[[lint.overrides]]
+files = ["**/*.test.ts", "**/*.test.tsx"]
+rules = { "bun:test/consistent-test-it" = ["error", { fn = "test", withinDescribe = "test" }], "bun:test/prefer-hooks-on-top" = "error", "bun:test/prefer-hooks-in-order" = "error", "sendou/no-raw-db-writes-in-tests" = "error", "typescript/await-thenable" = "off" }
+
+[[lint.overrides]]
+files = ["e2e/**"]
+rules = { "playwright/no-page-pause" = "error", "playwright/no-wait-for-timeout" = "error", "playwright/missing-playwright-await" = "error", "playwright/no-useless-await" = "error", "playwright/no-wait-for-navigation" = "error", "playwright/no-element-handle" = "error", "playwright/no-eval" = "error", "playwright/no-networkidle" = "error", "playwright/no-wait-for-selector" = "error", "playwright/valid-describe-callback" = "error" }
+
+[fmt]
+ignorePatterns = [
+	"scripts/dicts/**",
+	"scripts/output/**",
+	"docs/site/dist/**",
+	"docs/site/.astro/**",
+	"docs/site/visits.json",
+	"app/db/seed/data/placements.json",
+	"build/**",
+	"app/features/scanner/tests/fixtures/**",
+	"test-results/**",
+	"playwright-report/**",
+	".react-router/**",
+	"content/**",
+]
+
+[fmt.sortImports]
+groups = [
+	"builtin",
+	"external",
+	"internal",
+	["parent", "sibling", "index", "style"],
+	"unknown",
+]
+internalPattern = ["~/"]
+newlinesBetween = false
+
+[[lint.overrides]]
+files = ["app/utils/kysely.server.ts"]
+rules = { "sendou/no-kysely-sqlite-helpers" = "off" }
+
+[[lint.overrides]]
+files = ["app/**"]
+rules = { "sendou/no-and-conditional-rendering" = "error" }
+
+[[lint.overrides]]
+files = ["app/**"]
+excludeFiles = ["app/modules/search-params/**"]
+rules = { "sendou/no-raw-search-params" = "error" }
+
+[[lint.overrides]]
+files = ["app/**"]
+excludeFiles = ["app/hooks/useActionSubmit.ts"]
+rules = { "sendou/no-raw-action-forms" = "error" }
+
+[[lint.overrides]]
+files = ["app/**"]
+excludeFiles = ["app/form/parse.server.ts", "app/form/define-action.server.ts"]
+rules = { "sendou/no-raw-actions" = "error" }
+
+[[lint.overrides]]
+files = ["app/**"]
+excludeFiles = ["app/features/components-showcase/**"]
+rules = { "sendou/no-relative-links" = "error" }
+
+[[lint.overrides]]
+files = ["app/**"]
+excludeFiles = [
+	"app/modules/persisted-state/**",
+	"**/*.test.ts",
+	"**/*.test.tsx",
+]
+rules = { "sendou/no-raw-web-storage" = "error" }
+
+[[lint.overrides]]
+files = ["app/db/seed/dev/**", "app/db/seed/index.ts"]
+rules = { "sendou/no-raw-db-writes-in-dev-seed" = "error" }

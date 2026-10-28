@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as VodFactory from "~/db/seed/factories/VodFactory";
 import * as VodRepository from "./VodRepository.server";
@@ -231,7 +231,7 @@ describe("findVodById", () => {
 
 		expect(result).not.toBeNull();
 		expect(result?.pov).toBeDefined();
-		expect(typeof result?.pov).not.toBe("string");
+		expect(result?.pov).not.toBeTypeOf("string");
 	});
 
 	test("correctly resolves pov from player name", async () => {
@@ -359,7 +359,7 @@ describe("insert", () => {
 		const vod = await VodRepository.findVodById(result.id);
 
 		expect(vod?.pov).toBeDefined();
-		expect(typeof vod?.pov).not.toBe("string");
+		expect(vod?.pov).not.toBeTypeOf("string");
 	});
 });
 

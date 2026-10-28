@@ -1,5 +1,4 @@
-import { describe, expect, test } from "vitest";
-import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
+import { describe, expect, test } from "bun:test";
 import {
 	matchScoresFromObjective,
 	type ObjectiveScoreRead,
@@ -8,6 +7,7 @@ import {
 	withFullCountsAtGameStart,
 	withUnpushedTrackCounts,
 } from "./objective-timeline-utils";
+import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 
 function reads(...pairs: Array<[t: number, penalty: number | null]>) {
 	return pairs.map(([t, penalty]): PenaltyRead => ({ t, penalty }));
@@ -16,9 +16,10 @@ function reads(...pairs: Array<[t: number, penalty: number | null]>) {
 function counterReads(
 	...entries: Array<[t: number, alpha: number | null, bravo: number | null]>
 ) {
-	return entries.map(
-		([t, alpha, bravo]): ObjectiveScoreRead => ({ t, score: [alpha, bravo] }),
-	);
+	return entries.map(([t, alpha, bravo]): ObjectiveScoreRead => ({
+		t,
+		score: [alpha, bravo],
+	}));
 }
 
 describe("smoothPenalties", () => {
@@ -183,7 +184,7 @@ describe("withFullCountsAtGameStart", () => {
 			[20, 100, 100],
 			[23, 100, 99],
 		]);
-		expect(events[0]!.data.time).toBe(300);
+		expect(events[0].data.time).toBe(300);
 	});
 
 	test("fills a side's unread counts before its first read", () => {
@@ -237,6 +238,6 @@ describe("withFullCountsAtGameStart", () => {
 			20,
 		);
 
-		expect(start!.data.position).toBe(0);
+		expect(start.data.position).toBe(0);
 	});
 });

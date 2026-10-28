@@ -9,9 +9,9 @@ import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
 } from "../core/detectors/map-start/index";
-import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
+import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import {
 	X_RANK_POSITION_EVENT_TYPE,
 	type XRankPositionData,
@@ -62,13 +62,11 @@ export function EventFeed({
 			}),
 			// the builder's splats, not the raw feed reads: each stack change re-reads the same rows
 			...matches.flatMap((match) =>
-				(match.kills ?? []).map(
-					(kill): FeedItem => ({
-						t: kill.t,
-						type: KILL_EVENT_TYPE,
-						label: kill.name ? `Splatted ${kill.name}` : "Splat",
-					}),
-				),
+				(match.kills ?? []).map((kill): FeedItem => ({
+					t: kill.t,
+					type: KILL_EVENT_TYPE,
+					label: kill.name ? `Splatted ${kill.name}` : "Splat",
+				})),
 			),
 		],
 		R.sortBy([R.prop("t"), "desc"]),

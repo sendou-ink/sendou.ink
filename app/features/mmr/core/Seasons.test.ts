@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { addHours, subDays } from "date-fns";
-import { describe, expect, test } from "vitest";
 import {
 	list,
 	nthToDateRange,

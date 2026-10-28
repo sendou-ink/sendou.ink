@@ -34,14 +34,12 @@ export function computePassedVoting(
 		const lastPassingScore = middleZone[remainingSlots - 1]?.score;
 
 		return [
-			...autoPassers.map((r) => ({ ...r, passedVoting: 1 as number })),
-			...autoFailers.map((r) => ({ ...r, passedVoting: 0 as number })),
+			...autoPassers.map((r) => ({ ...r, passedVoting: 1 })),
+			...autoFailers.map((r) => ({ ...r, passedVoting: 0 })),
 			...middleZone.map((r, i) => ({
 				...r,
 				passedVoting:
-					i < remainingSlots || r.score === lastPassingScore
-						? (1 as number)
-						: (0 as number),
+					i < remainingSlots || r.score === lastPassingScore ? 1 : 0,
 			})),
 		];
 	});

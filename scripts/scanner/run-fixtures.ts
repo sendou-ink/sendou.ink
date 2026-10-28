@@ -1,9 +1,9 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * CLI harness: run the ScoreboardDetector over fixtures and print everything
  * it saw — gate result, parsed fields, per-field scores, top weapon candidates.
  *
- * Usage: pnpm scanner:fixtures [case-name-substring]
+ * Usage: bun run scanner:fixtures [case-name-substring]
  */
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {
@@ -37,7 +37,7 @@ for (const fixture of fixtures) {
 		console.info(`event confidence=${event.confidence.toFixed(3)}`);
 		console.info(`matchScores: ${JSON.stringify(event.data.matchScores)}`);
 		const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
-		event.data.players.forEach((p, i) => {
+		for (const [i, p] of event.data.players.entries()) {
 			const dbg = rows[i];
 			const top = dbg?.weapon?.top
 				.map((t) => `${t.id}:${t.score.toFixed(2)}`)
@@ -47,6 +47,6 @@ for (const fixture of fixtures) {
 					`weapon=${p.weaponId} [${top}] paint=${p.paint}(${dbg?.paintScore.toFixed(2)}) ` +
 					`ka=${p.ka} d=${p.d} s=${p.s} statScores=${dbg?.statScores.map((s) => s.toFixed(2)).join(",")}`,
 			);
-		});
+		}
 	}
 }

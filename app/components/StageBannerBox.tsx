@@ -19,12 +19,10 @@ export function StageBannerBox({
 	return (
 		<div
 			className={clsx(styles.banner, className)}
-			style={
-				{
-					...style,
-					"--stage-banner": `url(${stageBannerImageUrl(stageId)})`,
-				} as React.CSSProperties
-			}
+			style={{
+				...style,
+				"--stage-banner": `url(${stageBannerImageUrl(stageId)})`,
+			}}
 		>
 			{children}
 		</div>

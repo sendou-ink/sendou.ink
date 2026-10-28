@@ -1,11 +1,19 @@
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { subMonths, subWeeks } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as AvailabilityWeekFactory from "~/db/seed/factories/AvailabilityWeekFactory";
 import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import { AVAILABILITY } from "~/features/availability/availability-constants";
+import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import * as Availability from "~/features/availability/core/Availability";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { DeleteOldAvailabilityRoutine } from "./deleteOldAvailability";
@@ -33,7 +41,7 @@ const remainingWeekStarts = async () =>
 describe("DeleteOldAvailabilityRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(NOW);
+		setSystemTime(NOW);
 		await users.create(1);
 	});
 

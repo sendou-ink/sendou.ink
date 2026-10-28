@@ -13,20 +13,20 @@ import { ClipsView } from "./ClipsView";
 import { CoachView } from "./CoachView";
 import { FixturesPage } from "./FixturesPage";
 import { LandingView } from "./LandingView";
-import { LiveView } from "./LiveView";
 import {
 	retryUploadsWhileOpen,
 	settleClipStore,
 	useLiveSession,
 } from "./live-session";
-import { MontageView } from "./MontageView";
+import { LiveView } from "./LiveView";
 import { cancelMontageScan } from "./montage";
+import { MontageView } from "./MontageView";
 import { PastSessionView } from "./PastSessionView";
 import styles from "./ScannerApp.module.css";
 import { ScreenshotPage } from "./ScreenshotPage";
 import { setUploadUser } from "./upload";
-import { VodView } from "./VodView";
 import { cancelVodScan } from "./vod-scan";
+import { VodView } from "./VodView";
 
 /** settleClipStore() runs once per page load, not per mount */
 let storeSettled = false;

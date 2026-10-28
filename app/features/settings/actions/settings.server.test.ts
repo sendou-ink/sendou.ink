@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -66,9 +66,8 @@ describe("settings action: UPDATE_MATCH_PROFILE", () => {
 	test("updates the weapon pool of a user who is not queueing", async () => {
 		await updateWeaponPool(NEW_WEAPON_ID);
 
-		const weaponPool = await MatchProfileRepository.findWeaponPoolByUserId(
-			actorId(),
-		);
+		const weaponPool =
+			await MatchProfileRepository.findWeaponPoolByUserId(actorId());
 		expect(weaponPool.map((weapon) => weapon.weaponSplId)).toEqual([
 			NEW_WEAPON_ID,
 		]);

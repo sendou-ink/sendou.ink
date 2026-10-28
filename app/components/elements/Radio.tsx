@@ -32,6 +32,7 @@ export function SendouRadioGroup({
 	const name = React.useId();
 
 	return (
+		// eslint-disable-next-line jsx-a11y/interactive-supports-focus -- focus lands on the radios inside
 		<div
 			role="radiogroup"
 			aria-label={ariaLabel}

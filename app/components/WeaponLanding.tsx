@@ -36,8 +36,8 @@ import {
 	navIconUrl,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import styles from "./WeaponLanding.module.css";
 import { weaponLandingSearchParams } from "./weapon-landing-search-params";
+import styles from "./WeaponLanding.module.css";
 
 const DEFAULT_CATEGORY = weaponCategories[0].name;
 

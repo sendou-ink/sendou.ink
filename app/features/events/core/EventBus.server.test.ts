@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { ServerEvent } from "../events-types";
 import * as EventBus from "./EventBus.server";
 
@@ -161,6 +161,7 @@ describe("EventBus.subscribe", () => {
 		const iterable = EventBus.subscribe(["walk-away"], abortController.signal);
 
 		EventBus.publish(["walk-away"], chatMessageEvent("only one"));
+		// eslint-disable-next-line no-unreachable-loop -- breaking out is what triggers the unsubscribe
 		for await (const event of iterable) {
 			expect(event).toEqual(chatMessageEvent("only one"));
 			break;

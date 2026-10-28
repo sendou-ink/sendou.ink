@@ -80,7 +80,7 @@ function useInitialUser(initialUserId?: number) {
 			return;
 		}
 		hasLoadedRef.current = true;
-		load(`/search?q=${initialUserId}&type=users&limit=1`);
+		void load(`/search?q=${initialUserId}&type=users&limit=1`);
 	}, [initialUserId, load]);
 
 	return fetcher.data?.results.find(

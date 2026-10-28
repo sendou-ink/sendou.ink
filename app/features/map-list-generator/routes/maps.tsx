@@ -16,10 +16,9 @@ import { invariant } from "~/utils/invariant";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ipLabsMaps, MAPS_URL, navIconUrl } from "~/utils/urls";
-import * as MapList from "../core/MapList";
 import { MapPool } from "../core/map-pool";
+import * as MapList from "../core/MapList";
 import { mapListGeneratorSearchParams } from "../map-list-generator-search-params";
-
 import styles from "./maps.module.css";
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;

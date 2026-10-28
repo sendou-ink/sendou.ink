@@ -2,6 +2,7 @@
 navItem: scanner
 type: feature
 ---
+
 Scanner coach mode: VoD reviewing taken to the next level
 
 - Alternative way to view a VoD fed to the Scanner

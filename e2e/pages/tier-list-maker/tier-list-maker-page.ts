@@ -17,10 +17,7 @@ type ItemType =
 	| "ability";
 
 type Toggle =
-	| "noDuplicates"
-	| "showTierHeaders"
-	| "hideAltKits"
-	| "hideAltSkins";
+	"noDuplicates" | "showTierHeaders" | "hideAltKits" | "hideAltSkins";
 
 const TAB_NAMES: Record<ItemType, string> = {
 	"main-weapon": "Main Weapons",

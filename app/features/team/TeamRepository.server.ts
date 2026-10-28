@@ -1,4 +1,4 @@
-import { type Insertable, type SqlBool, sql, type Transaction } from "kysely";
+import { type Insertable, sql, type SqlBool, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { CustomTheme, UserMapModePreferences } from "~/db/tables-json";

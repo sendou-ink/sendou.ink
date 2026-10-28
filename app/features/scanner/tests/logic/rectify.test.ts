@@ -45,7 +45,7 @@ test("an unmoved quad gives the identity", () => {
 	const h = homographyFromQuad({ from: yawed.to, to: yawed.to });
 	const identity = [1, 0, 0, 0, 1, 0, 0, 0, 1];
 	assert.ok(
-		h.every((v, i) => Math.abs(v - identity[i]!) < 1e-9),
+		h.every((v, i) => Math.abs(v - identity[i]) < 1e-9),
 		`not the identity: ${h.join(", ")}`,
 	);
 });

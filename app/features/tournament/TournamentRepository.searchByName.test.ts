@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { add, addHours, sub, subHours } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";

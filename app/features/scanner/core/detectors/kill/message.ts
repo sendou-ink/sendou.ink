@@ -76,7 +76,7 @@ export function matchKillMessage(
 
 function foldChar(ch: string): string {
 	const base = ch.normalize("NFD").replace(/[̀-ͯ]/g, "");
-	return (base.length > 0 ? base : ch).toLowerCase()[0]!;
+	return (base.length > 0 ? base : ch).toLowerCase()[0];
 }
 
 function foldConstant(text: string): string[] {

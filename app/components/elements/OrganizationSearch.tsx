@@ -78,7 +78,7 @@ function useInitialOrganization(initialOrganizationId?: number) {
 		if (!initialOrganizationId || fetcher.state !== "idle" || fetcher.data) {
 			return;
 		}
-		fetcher.load(
+		void fetcher.load(
 			`/search?q=${initialOrganizationId}&type=organizations&limit=1`,
 		);
 	}, [initialOrganizationId, fetcher]);

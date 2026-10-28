@@ -4,7 +4,6 @@ import { createNewAssociationSchema } from "~/features/associations/associations
 import { associationsPage } from "~/features/associations/associations-urls";
 import { SendouForm } from "~/form/SendouForm";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-
 import { action } from "../actions/associations.new.server";
 
 export { action };

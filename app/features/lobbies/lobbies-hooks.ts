@@ -1,5 +1,5 @@
 import { useLoaderData } from "react-router";
-import type { LobbyLoaderData, loader } from "./loaders/lobbies.$id.server";
+import type { loader, LobbyLoaderData } from "./loaders/lobbies.$id.server";
 
 export type LobbySetData = LobbyLoaderData["sets"][number];
 

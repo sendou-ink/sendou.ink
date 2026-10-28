@@ -6,32 +6,32 @@ A toolbar along the bottom of every page on the dev server, plus a CLI talking t
 
 Hide it with the `–` button or `Alt+Shift+D` (it remembers), `Esc` closes the open window. The apps, left to right:
 
-| App | What for |
-| --- | --- |
-| **Scenarios** | Builds a ready state (a SendouQ match waiting on you, a tournament you organize in any format and stage, a scrim request...) out of fresh users and logs you in as one of them. Parameters are remembered per scenario, the copy button gives the equivalent CLI command. Turn off "Log in as its user" to only open the page as yourself. |
-| **Identity** | Who you are (roles, plus tier, impersonation), one click to the seeded users with special ids, users recent scenarios created, and a search to log in as anyone. Its icon is your avatar. |
-| **Page** | *Loader data*: every matched route's data as a tree with its size, route file opens in your editor. *Permissions*: every `permissions` object in the loader data with who holds each permission, and your global roles. *URL & storage*: the search params with their decoded value and whether they decode, params no definition declares, and web storage entries with the persisted state definition owning them. |
-| **Requests** | The latest 100 requests with each one's SQL. `×N` marks a statement run N times in one request, an N+1 suspect. |
-| **Live events** | What the server pushed down this tab's event stream, the connection state and subscribed topics. "Ping me" round-trips an event through the whole pipeline. |
-| **Warnings** | Console errors & warnings, uncaught errors and hydration mismatches since the page loaded, deduplicated. Also the dev server's console errors & warnings (loader and action errors included) with the request they happened in. The badge counts them. |
-| **Server** | Which database file is in use, the in-memory switches (season ended, plus voting active), refreshing the caches, reseeding and running any routine now. |
-| **Triggers** | Toasts, error pages (each status, a render crash) and a sample notification of any type to yourself. |
-| **Links** | The local docs site (`pnpm run dev:docs`) and the dev only pages (OG images, changelog image, bracket test...). |
+| App             | What for                                                                                                                                                                                                                                                                                                                                                                                                             |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scenarios**   | Builds a ready state (a SendouQ match waiting on you, a tournament you organize in any format and stage, a scrim request...) out of fresh users and logs you in as one of them. Parameters are remembered per scenario, the copy button gives the equivalent CLI command. Turn off "Log in as its user" to only open the page as yourself.                                                                           |
+| **Identity**    | Who you are (roles, plus tier, impersonation), one click to the seeded users with special ids, users recent scenarios created, and a search to log in as anyone. Its icon is your avatar.                                                                                                                                                                                                                            |
+| **Page**        | _Loader data_: every matched route's data as a tree with its size, route file opens in your editor. _Permissions_: every `permissions` object in the loader data with who holds each permission, and your global roles. _URL & storage_: the search params with their decoded value and whether they decode, params no definition declares, and web storage entries with the persisted state definition owning them. |
+| **Requests**    | The latest 100 requests with each one's SQL. `×N` marks a statement run N times in one request, an N+1 suspect.                                                                                                                                                                                                                                                                                                      |
+| **Live events** | What the server pushed down this tab's event stream, the connection state and subscribed topics. "Ping me" round-trips an event through the whole pipeline.                                                                                                                                                                                                                                                          |
+| **Warnings**    | Console errors & warnings, uncaught errors and hydration mismatches since the page loaded, deduplicated. Also the dev server's console errors & warnings (loader and action errors included) with the request they happened in. The badge counts them.                                                                                                                                                               |
+| **Server**      | Which database file is in use, the in-memory switches (season ended, plus voting active), refreshing the caches, reseeding and running any routine now.                                                                                                                                                                                                                                                              |
+| **Triggers**    | Toasts, error pages (each status, a render crash) and a sample notification of any type to yourself.                                                                                                                                                                                                                                                                                                                 |
+| **Links**       | The local docs site (`bun run dev:docs`) and the dev only pages (OG images, changelog image, bracket test...).                                                                                                                                                                                                                                                                                                       |
 
 ## CLI
 
 Needs the dev server running. The server is found from `--url=...`, `DEV_SERVER_URL` or `PORT` (default 5173).
 
 ```bash
-pnpm run dev:tools scenarios                     # list, with parameters
-pnpm run dev:tools scenario tournament-organizer --teams=16 --format=swiss
-pnpm run dev:tools requests 10                   # latest requests with query counts
-pnpm run dev:tools request 42                    # every query of one request
-pnpm run dev:tools log-in-as 274 /admin          # link that logs in as user 274
-pnpm run dev:tools server                        # database, switches, routines
-pnpm run dev:tools switch seasonEnded on
-pnpm run dev:tools routine NotifyCheckInStart
-pnpm run dev:tools refresh-caches
+bun run dev:tools scenarios                     # list, with parameters
+bun run dev:tools scenario tournament-organizer --teams=16 --format=swiss
+bun run dev:tools requests 10                   # latest requests with query counts
+bun run dev:tools request 42                    # every query of one request
+bun run dev:tools log-in-as 274 /admin          # link that logs in as user 274
+bun run dev:tools server                        # database, switches, routines
+bun run dev:tools switch seasonEnded on
+bun run dev:tools routine NotifyCheckInStart
+bun run dev:tools refresh-caches
 ```
 
 A scenario prints a link that logs in as its user and opens its page, so it works for a person and for an agent driving a browser alike.
@@ -46,7 +46,7 @@ None of this exists in production, and nothing in it can reach production users:
 - **Reseed only `db.sqlite3`.** It wipes every row, so the sandbox, snapshot or any other file is refused.
 - **Fresh users only.** Scenarios create their own users (with Discord ids that can't collide with seeded ones) and never touch existing rows.
 
-Note that `pnpm run dev` listens on your network too (`--host`), so others on the same network can use these tools, as they already could use `/auth/impersonate` in development.
+Note that `bun run dev` listens on your network too (`--host`), so others on the same network can use these tools, as they already could use `/auth/impersonate` in development.
 
 ## Adding a scenario
 

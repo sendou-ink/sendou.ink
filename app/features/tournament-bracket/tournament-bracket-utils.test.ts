@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import {
 	groupNumberToLetters,
 	tournamentBracketChannel,
@@ -18,11 +18,12 @@ const groupNumberToLettersParamsToResult = [
 ];
 
 describe("groupNumberToLetters()", () => {
-	for (const { groupNumber, expected } of groupNumberToLettersParamsToResult) {
-		test(`groupNumber=${groupNumber} -> ${expected}`, () => {
+	test.each(groupNumberToLettersParamsToResult)(
+		"groupNumber=$groupNumber -> $expected",
+		({ groupNumber, expected }) => {
 			expect(groupNumberToLetters(groupNumber)).toBe(expected);
-		});
-	}
+		},
+	);
 });
 
 describe("tournamentBracketChannel()", () => {

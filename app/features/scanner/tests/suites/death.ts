@@ -12,14 +12,15 @@ import {
 	createDeathDetector,
 	type DeathData,
 } from "../../core/detectors/death/index";
-import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
+import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
 import type { Detector } from "../../core/detectors/types";
 import { type FrameData, normalizeFrame, toMat } from "../../core/image";
 import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../../node/fixtures";
 import { readImage } from "../../node/image-io";
 import { loadScoreboardResources } from "../../node/resources";
@@ -160,18 +161,20 @@ export async function runDeathSuite(
 		const replayDetector = createScoreboardBattleLogReplayDetector(resources);
 		for (const fixture of crossFixtures) {
 			test(`scoreboard gates stay quiet on death/${fixture.name}`, async () => {
-				const live = await runDetectorOnFixture(scoreboardDetector, fixture);
-				assert.equal(
-					live.gate.pass,
-					false,
-					`scoreboard gate fired (score=${live.gate.score.toFixed(3)})`,
-				);
-				const replay = await runDetectorOnFixture(replayDetector, fixture);
-				assert.equal(
-					replay.gate.pass,
-					false,
-					`replay gate fired (score=${replay.gate.score.toFixed(3)})`,
-				);
+				await withFixtureFrame(fixture, (frame) => {
+					const live = scoreboardDetector.gate(frame);
+					assert.equal(
+						live.pass,
+						false,
+						`scoreboard gate fired (score=${live.score.toFixed(3)})`,
+					);
+					const replay = replayDetector.gate(frame);
+					assert.equal(
+						replay.pass,
+						false,
+						`replay gate fired (score=${replay.score.toFixed(3)})`,
+					);
+				});
 			});
 		}
 	}

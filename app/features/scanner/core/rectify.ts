@@ -31,13 +31,13 @@ export type Homography = readonly [
 export function homographyFromQuad(quad: PerspectiveQuad): Homography {
 	const rows: number[][] = [];
 	for (let i = 0; i < 4; i++) {
-		const [x, y] = quad.from[i]!;
-		const [u, v] = quad.to[i]!;
+		const [x, y] = quad.from[i];
+		const [u, v] = quad.to[i];
 		rows.push([x, y, 1, 0, 0, 0, -u * x, -u * y, u]);
 		rows.push([0, 0, 0, x, y, 1, -v * x, -v * y, v]);
 	}
 	const h = solveLinear(rows);
-	return [h[0]!, h[1]!, h[2]!, h[3]!, h[4]!, h[5]!, h[6]!, h[7]!, 1];
+	return [h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], 1];
 }
 
 export function invertHomography(m: Homography): Homography {
@@ -52,7 +52,7 @@ export function invertHomography(m: Homography): Homography {
 		m[1] * m[6] - m[0] * m[7],
 		m[0] * m[4] - m[1] * m[3],
 	];
-	const scale = adjugate[8]!;
+	const scale = adjugate[8];
 	return adjugate.map((v) => v / scale) as unknown as Homography;
 }
 
@@ -90,17 +90,17 @@ function solveLinear(rows: number[][]): number[] {
 	for (let col = 0; col < n; col++) {
 		let pivot = col;
 		for (let r = col + 1; r < n; r++) {
-			if (Math.abs(rows[r]![col]!) > Math.abs(rows[pivot]![col]!)) pivot = r;
+			if (Math.abs(rows[r][col]) > Math.abs(rows[pivot][col])) pivot = r;
 		}
-		[rows[col], rows[pivot]] = [rows[pivot]!, rows[col]!];
-		const lead = rows[col]![col]!;
+		[rows[col], rows[pivot]] = [rows[pivot], rows[col]];
+		const lead = rows[col][col];
 		if (lead === 0) throw new Error("degenerate quad: no homography");
 		for (let r = 0; r < n; r++) {
 			if (r === col) continue;
-			const factor = rows[r]![col]! / lead;
+			const factor = rows[r][col] / lead;
 			if (factor === 0) continue;
-			for (let c = col; c <= n; c++) rows[r]![c]! -= factor * rows[col]![c]!;
+			for (let c = col; c <= n; c++) rows[r][c] -= factor * rows[col][c];
 		}
 	}
-	return rows.map((row, i) => row[n]! / row[i]!);
+	return rows.map((row, i) => row[n] / row[i]);
 }

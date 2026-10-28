@@ -1,8 +1,8 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
@@ -60,7 +60,7 @@ export const action = defineAction(
 			...votingMonthYear,
 		});
 
-		notify({
+		void notify({
 			userIds: [suggested.id],
 			notification: {
 				type: "PLUS_SUGGESTION_ADDED",

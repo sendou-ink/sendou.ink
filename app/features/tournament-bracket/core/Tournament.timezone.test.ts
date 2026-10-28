@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { testTournament } from "./tests/test-utils";
 

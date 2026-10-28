@@ -95,7 +95,7 @@ interface Obu {
 function* readObus(data: Uint8Array): Generator<Obu> {
 	let offset = 0;
 	while (offset < data.length) {
-		const header = data[offset]!;
+		const header = data[offset];
 		const type = (header >> 3) & 0xf;
 		const hasExtension = (header >> 2) & 1;
 		const hasSize = (header >> 1) & 1;
@@ -103,7 +103,7 @@ function* readObus(data: Uint8Array): Generator<Obu> {
 		let temporalId = 0;
 		let spatialId = 0;
 		if (hasExtension) {
-			const extension = data[offset]!;
+			const extension = data[offset];
 			temporalId = extension >> 5;
 			spatialId = (extension >> 3) & 3;
 			offset++;
@@ -112,7 +112,7 @@ function* readObus(data: Uint8Array): Generator<Obu> {
 		if (hasSize) {
 			size = 0;
 			for (let i = 0; i < 8; i++) {
-				const byte = data[offset++]!;
+				const byte = data[offset++];
 				size |= (byte & 0x7f) << (i * 7);
 				if (!(byte & 0x80)) break;
 			}
@@ -268,7 +268,7 @@ function parseFrameHeader(
 	if (r.flag()) {
 		// show_existing_frame: showing a key frame reloads it into every slot
 		const slot = r.bits(3);
-		const frameType = slotFrameTypes[slot]!;
+		const frameType = slotFrameTypes[slot];
 		return {
 			frameType,
 			refreshFrameFlags: frameType === KEY_FRAME ? ALL_FRAMES : 0,
@@ -280,10 +280,9 @@ function parseFrameHeader(
 	if (!showFrame) r.bits(1); // showable_frame
 	const frameIsIntra =
 		frameType === KEY_FRAME || frameType === INTRA_ONLY_FRAME;
-	const errorResilient =
-		frameType === SWITCH_FRAME || (frameType === KEY_FRAME && showFrame)
-			? true
-			: r.flag();
+	const errorResilient = refreshesAllSlots(frameType, showFrame)
+		? true
+		: r.flag();
 	r.bits(1); // disable_cdf_update
 	const allowScreenContentTools =
 		sequence.seqForceScreenContentTools === SELECT_SCREEN_CONTENT_TOOLS
@@ -300,18 +299,31 @@ function parseFrameHeader(
 	r.bits(sequence.orderHintBits);
 	if (!frameIsIntra && !errorResilient) r.bits(3); // primary_ref_frame
 	if (sequence.decoderModelInfoPresent && r.flag()) {
-		for (const point of sequence.operatingPoints) {
-			if (!point.decoderModelPresent) continue;
-			const inTemporalLayer = (point.idc >> temporalId) & 1;
-			const inSpatialLayer = (point.idc >> (spatialId + 8)) & 1;
-			if (point.idc === 0 || (inTemporalLayer && inSpatialLayer)) {
-				r.bits(sequence.bufferRemovalTimeLength);
-			}
+		skipBufferRemovalTimes(r, sequence, temporalId, spatialId);
+	}
+	const refreshFrameFlags = refreshesAllSlots(frameType, showFrame)
+		? ALL_FRAMES
+		: r.bits(8);
+	return { frameType, refreshFrameFlags };
+}
+
+/** A switch frame or a shown key frame: error resilient and refreshing every slot. */
+function refreshesAllSlots(frameType: number, showFrame: boolean): boolean {
+	return frameType === SWITCH_FRAME || (frameType === KEY_FRAME && showFrame);
+}
+
+function skipBufferRemovalTimes(
+	r: BitReader,
+	sequence: SequenceHeader,
+	temporalId: number,
+	spatialId: number,
+): void {
+	for (const point of sequence.operatingPoints) {
+		if (!point.decoderModelPresent) continue;
+		const inTemporalLayer = (point.idc >> temporalId) & 1;
+		const inSpatialLayer = (point.idc >> (spatialId + 8)) & 1;
+		if (point.idc === 0 || (inTemporalLayer && inSpatialLayer)) {
+			r.bits(sequence.bufferRemovalTimeLength);
 		}
 	}
-	const refreshFrameFlags =
-		frameType === SWITCH_FRAME || (frameType === KEY_FRAME && showFrame)
-			? ALL_FRAMES
-			: r.bits(8);
-	return { frameType, refreshFrameFlags };
 }

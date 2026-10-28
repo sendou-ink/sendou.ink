@@ -1,9 +1,9 @@
 import type { Params } from "react-router";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { adminStreamFormSchemaServer } from "../tournament-admin-staff-schemas.server";
 

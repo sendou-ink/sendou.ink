@@ -10,7 +10,6 @@ import { TierPill } from "~/components/TierPill";
 import { UserLink } from "~/components/UserLink";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
 import { tournamentTeamPage } from "~/utils/urls";
-
 import styles from "./TeamResultsTable.module.css";
 
 interface TeamResultsTableProps {

@@ -1,11 +1,9 @@
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import * as v from "valibot";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { CastAccount } from "~/db/tables-json";
 import { adminStreamFormSchemaServer } from "./tournament-admin-staff-schemas.server";
 
-const { mockFindChannel } = vi.hoisted(() => ({
-	mockFindChannel: vi.fn(),
-}));
+const mockFindChannel = vi.fn();
 
 vi.mock("~/modules/youtube/channels", () => ({
 	findChannel: mockFindChannel,

@@ -7,7 +7,7 @@ declare global {
 	var __lruCache: LRUCache<string, CacheEntry<unknown>> | undefined;
 }
 
-// biome-ignore lint/suspicious/noAssignInExpressions: trick to only create one
+// eslint-disable-next-line no-multi-assign -- trick to only create one
 export const cache = (global.__lruCache = global.__lruCache
 	? global.__lruCache
 	: new LRUCache<string, CacheEntry<unknown>>({ max: 6000 }));

@@ -10,7 +10,7 @@ export function ClipVideo({
 	className?: string;
 }) {
 	return (
-		// biome-ignore lint/a11y/useMediaCaption: game footage has no captions
+		// eslint-disable-next-line jsx-a11y/media-has-caption -- game footage has no captions
 		<video
 			ref={applySavedVolume}
 			className={className}

@@ -3,6 +3,7 @@
 import type { Node } from "oxc-parser";
 import {
 	createCache,
+	importNameKind,
 	lineOf,
 	type ParsedFile,
 	parseFile,
@@ -79,7 +80,7 @@ interface DeclarationFacts {
 }
 
 export function isRepositoryFile(file: string) {
-	return /Repository\.server\.ts$/.test(file);
+	return file.endsWith("Repository.server.ts");
 }
 
 /**
@@ -226,34 +227,14 @@ function collectFacts(file: ParsedFile, declaration: Node): DeclarationFacts {
 
 		switch (node.type) {
 			case "CallExpression": {
-				const callee = node.callee;
-				if (callee.type !== "MemberExpression" || callee.computed) break;
-				if (callee.property.type !== "Identifier") break;
-				const method = callee.property.name;
-
-				if (READ_METHODS.has(method) || WRITE_METHODS.has(method)) {
-					for (const name of stringsOf(node.arguments[0])) {
-						addTable(name, WRITE_METHODS.has(method));
-					}
-				} else if (
-					method === "table" &&
-					callee.object.type === "Identifier" &&
-					callee.object.name === "sql"
-				) {
-					for (const name of stringsOf(node.arguments[0]))
-						addTable(name, false);
+				for (const { name, writes } of queryBuilderTables(node)) {
+					addTable(name, writes);
 				}
 				break;
 			}
 			case "TaggedTemplateExpression": {
-				if (node.tag.type !== "Identifier" || node.tag.name !== "sql") break;
-				const raw = node.quasi.quasis.map((quasi) => quasi.value.raw).join(" ");
-				for (const [, name] of raw.matchAll(RAW_SQL_WRITE_REGEX)) {
-					addTable(name, true);
-				}
-				const withoutWrites = raw.replace(RAW_SQL_WRITE_REGEX, "");
-				for (const [, name] of withoutWrites.matchAll(RAW_SQL_READ_REGEX)) {
-					addTable(name, false);
+				for (const { name, writes } of rawSqlTables(node)) {
+					addTable(name, writes);
 				}
 				break;
 			}
@@ -292,6 +273,8 @@ function collectFacts(file: ParsedFile, declaration: Node): DeclarationFacts {
 				}
 				break;
 			}
+			default:
+				break;
 		}
 
 		return;
@@ -300,6 +283,49 @@ function collectFacts(file: ParsedFile, declaration: Node): DeclarationFacts {
 	walk(declaration, visit);
 
 	return facts;
+}
+
+/** The tables a Kysely call reads or writes: `selectFrom("User")`, `insertInto(...)`, `sql.table("User")`. */
+function queryBuilderTables(node: Extract<Node, { type: "CallExpression" }>) {
+	const callee = node.callee;
+	if (callee.type !== "MemberExpression" || callee.computed) return [];
+	if (callee.property.type !== "Identifier") return [];
+	const method = callee.property.name;
+
+	if (READ_METHODS.has(method) || WRITE_METHODS.has(method)) {
+		return stringsOf(node.arguments[0]).map((name) => ({
+			name,
+			writes: WRITE_METHODS.has(method),
+		}));
+	}
+	const isSqlTable =
+		method === "table" &&
+		callee.object.type === "Identifier" &&
+		callee.object.name === "sql";
+
+	return isSqlTable
+		? stringsOf(node.arguments[0]).map((name) => ({ name, writes: false }))
+		: [];
+}
+
+/** The tables a raw `` sql`...` `` query reads or writes. */
+function rawSqlTables(
+	node: Extract<Node, { type: "TaggedTemplateExpression" }>,
+) {
+	if (node.tag.type !== "Identifier" || node.tag.name !== "sql") return [];
+	const raw = node.quasi.quasis.map((quasi) => quasi.value.raw).join(" ");
+	const withoutWrites = raw.replace(RAW_SQL_WRITE_REGEX, "");
+
+	return [
+		...[...raw.matchAll(RAW_SQL_WRITE_REGEX)].map(([, name]) => ({
+			name,
+			writes: true,
+		})),
+		...[...withoutWrites.matchAll(RAW_SQL_READ_REGEX)].map(([, name]) => ({
+			name,
+			writes: false,
+		})),
+	];
 }
 
 const declarationsCache = createCache<string, Map<string, Node>>();
@@ -329,6 +355,8 @@ function topLevelDeclarations(file: ParsedFile) {
 						declarations.set(declarator.id.name, declarator);
 					}
 				}
+				break;
+			default:
 				break;
 		}
 	}
@@ -360,7 +388,7 @@ function importsOf(file: ParsedFile) {
 			imports.set(specifier.localName.value, {
 				file: resolved,
 				importName:
-					specifier.importName.kind === "NamespaceObject"
+					importNameKind(specifier) === "NamespaceObject"
 						? null
 						: (specifier.importName.name ?? "default"),
 			});

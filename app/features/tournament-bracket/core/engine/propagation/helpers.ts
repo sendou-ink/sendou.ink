@@ -137,7 +137,7 @@ export function setNextOpponent(
 
 /** Resets an opponent in the match following the current one. */
 export function resetNextOpponent(nextMatch: MatchData, nextSide: Side): void {
-	nextMatch[nextSide] = nextMatch[nextSide] && {
+	nextMatch[nextSide] &&= {
 		// Keep BYE.
 		id: null,
 		position: nextMatch[nextSide]?.position,

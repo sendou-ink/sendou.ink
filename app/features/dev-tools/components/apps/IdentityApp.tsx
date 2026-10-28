@@ -33,7 +33,7 @@ function IdentityApp() {
 	const returnTo = `${location.pathname}${location.search}`;
 
 	React.useEffect(() => {
-		load(DEV_IDENTITY_URL);
+		void load(DEV_IDENTITY_URL);
 	}, [load]);
 
 	return (
@@ -164,7 +164,7 @@ function UserSearch({ returnTo }: { returnTo: string }) {
 	useDebounce(
 		() => {
 			if (query.trim()) {
-				load(
+				void load(
 					searchSearchParams.href("/search", {
 						q: query.trim(),
 						type: "users",

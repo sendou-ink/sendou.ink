@@ -3,7 +3,7 @@
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import type { ModeWithStage } from "../in-game-lists/types";
-import type { TournamentMapListMap, TournamentMaplistInput } from "./types";
+import type { TournamentMaplistInput, TournamentMapListMap } from "./types";
 
 type StarterMapArgs = Pick<
 	TournamentMaplistInput,

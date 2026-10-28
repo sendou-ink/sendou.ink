@@ -16,12 +16,12 @@ import {
 	type SendouQMatchLoaderData,
 } from "~/features/sendouq-match/loaders/q.match.$id.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import {
-	type TournamentMatchLoaderData,
 	loader as tournamentMatchLoader,
+	type TournamentMatchLoaderData,
 } from "~/features/tournament-match/loaders/to.$id.matches.$mid.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -35,8 +35,8 @@ import { invariant } from "~/utils/invariant";
 import { withUserId, wrappedAction, wrappedLoader } from "~/utils/Test";
 import { action } from "../actions/scanner-ingest.server";
 import type {
-	IngestResponse,
 	ingestBodySchema,
+	IngestResponse,
 } from "../scanner-ingest-schemas";
 
 /** In-game names of the SendouQ world's alpha group, in member order. */
@@ -116,7 +116,7 @@ export async function sendouqWorld(
 		maps,
 		alphaUsers,
 		bravoUsers,
-		povUser: alphaUsers[0]!,
+		povUser: alphaUsers[0],
 		conclude: async (reportedThrough?: Date) => {
 			await concludeGroupMatch(match.id);
 			await stampMapReports(match.id, reportedThrough ?? new Date());
@@ -145,7 +145,7 @@ export async function lobbyWorld() {
 	const userIds = users.map((user) => user.id);
 	const lobby = await LobbyFactory.create(
 		{
-			hostUserId: userIds[0]!,
+			hostUserId: userIds[0],
 			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
 		},
 		{ signedUpUserIds: userIds.slice(1), checkedInUserIds: userIds },
@@ -153,10 +153,10 @@ export async function lobbyWorld() {
 	await LobbyProgression.advance(lobby.id);
 
 	const firstSet = await lobbySet(lobby.id);
-	const nameOf = (userId: number) => LOBBY_NAMES[userIds.indexOf(userId)]!;
+	const nameOf = (userId: number) => LOBBY_NAMES[userIds.indexOf(userId)];
 	const alphaUserIds = LobbySet.playersOf(firstSet, "ALPHA");
 	const bravoUserIds = LobbySet.playersOf(firstSet, "BRAVO");
-	const reporterId = alphaUserIds[0]!;
+	const reporterId = alphaUserIds[0];
 
 	return {
 		lobbyId: lobby.id,
@@ -235,7 +235,7 @@ export async function tournamentWorld(
 	clearAllTournamentDataCache();
 
 	const nameByUserId = new Map(
-		users.map((user, index) => [user.id, names[index]!]),
+		users.map((user, index) => [user.id, names[index]]),
 	);
 	const namesByTeamId = new Map(
 		tournament.teams.map((team) => [
@@ -293,7 +293,7 @@ export async function tournamentWorld(
 						? played.loserTeamId
 						: played.winnerTeamId,
 				)!,
-				weaponFor: (name: string) => TOURNAMENT_WEAPONS[names.indexOf(name)]!,
+				weaponFor: (name: string) => TOURNAMENT_WEAPONS[names.indexOf(name)],
 			}));
 		},
 		scanned: scannedGame,
@@ -512,7 +512,7 @@ async function concludeGroupMatch(matchId: number) {
 	invariant(match, "Match not found");
 
 	const winnerId = match.groupAlpha.id;
-	const reportedByUserId = match.groupAlpha.members[0]!.id;
+	const reportedByUserId = match.groupAlpha.members[0].id;
 
 	let reportedCount = 0;
 	let result = await SQMatchRepository.reportMapWinner({
@@ -538,7 +538,7 @@ async function concludeGroupMatch(matchId: number) {
 	const confirmation = await SQMatchRepository.reportMapWinner({
 		matchId,
 		winnerId,
-		reportedByUserId: match.groupBravo.members[0]!.id,
+		reportedByUserId: match.groupBravo.members[0].id,
 		reportedCount: reportedCount + 1,
 	});
 	invariant(
@@ -590,7 +590,7 @@ function scannedTeam(
 	return {
 		players: names.map((name, index) => ({
 			name,
-			weaponId: weaponFor?.(name) ?? WEAPONS[weaponOffset + index]!,
+			weaponId: weaponFor?.(name) ?? WEAPONS[weaponOffset + index],
 			paint: 1000 + (weaponOffset + index) * 100,
 			ka: 20 - (weaponOffset + index),
 			d: weaponOffset + index,

@@ -71,7 +71,7 @@ async function main() {
 
 	if (previousReleaseCommit) {
 		log(
-			`\nChangelog image (dev server running): pnpm run changelog:image ${previousReleaseCommit}`,
+			`\nChangelog image (dev server running): bun run changelog:image ${previousReleaseCommit}`,
 		);
 	}
 }
@@ -242,12 +242,12 @@ function elapsed(startedAt: number) {
 }
 
 function log(message: string) {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log(message);
 }
 
 main().catch((error) => {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.error((error as Error).message);
 	process.exit(1);
 });

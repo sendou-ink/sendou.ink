@@ -4,8 +4,8 @@ import { Link } from "react-router";
 import { Image } from "~/components/Image";
 import type { BracketsPageState } from "~/features/tournament-bracket/routes/to.$id.brackets";
 import { navIconUrl } from "~/utils/urls";
-import { useGlobalStatus } from "../GlobalStatusProvider";
 import type { GlobalStatusState } from "../global-status-types";
+import { useGlobalStatus } from "../GlobalStatusProvider";
 import styles from "./GlobalStatusIndicator.module.css";
 
 const STATE_NAV_ICON: Record<GlobalStatusState, string> = {

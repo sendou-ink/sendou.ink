@@ -1,5 +1,5 @@
-import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { tags } from "~/features/calendar/calendar-constants";
+import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";

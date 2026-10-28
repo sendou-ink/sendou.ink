@@ -2,6 +2,7 @@
 navItem: medal
 type: feature
 ---
+
 New tournament creation form
 
 - The form is split into steps: basics, teams & rules, maps, format and prizes & review

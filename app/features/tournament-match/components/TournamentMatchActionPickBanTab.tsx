@@ -3,9 +3,9 @@ import {
 	type PickBanMapOption,
 } from "~/components/match-page/MatchActionPickBanTab";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";

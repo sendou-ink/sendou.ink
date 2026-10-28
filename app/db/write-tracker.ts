@@ -9,7 +9,7 @@ import type {
 
 let dirty = false;
 
-/** Tracks writes so vitest teardown wipes only after a writing test and e2e workers flush caches only after factory writes. */
+/** Tracks writes so unit test teardown wipes only after a writing test and e2e workers flush caches only after factory writes. */
 export class WriteTrackerPlugin implements KyselyPlugin {
 	transformQuery(args: PluginTransformQueryArgs): RootOperationNode {
 		if (args.node.kind !== "SelectQueryNode") {

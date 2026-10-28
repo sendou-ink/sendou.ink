@@ -1,6 +1,6 @@
 import type { TournamentRoundMaps } from "~/db/tables-json";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import { invariant } from "~/utils/invariant";
 import { seededRandom } from "~/utils/random";
@@ -51,7 +51,7 @@ export async function executeRoll({
 
 	const eventNumber = pickBanEvents.length + 1;
 	const { randomInteger } = seededRandom(`roll-${matchId}-${eventNumber}`);
-	const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
+	const selectedMap = legalMaps[randomInteger(legalMaps.length)];
 
 	try {
 		await TournamentRepository.insertPickBanEvent({

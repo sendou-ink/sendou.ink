@@ -60,7 +60,7 @@ export class AnalyzerClient {
 
 	constructor(
 		onResult: ResultHandler,
-		// biome-ignore lint/suspicious/noConsole: default sink for worker errors when no handler is passed
+		// eslint-disable-next-line no-console -- default sink for worker errors when no handler is passed
 		onError: ErrorHandler = console.error,
 		onDone?: DoneHandler,
 		options: {
@@ -124,7 +124,7 @@ export class AnalyzerClient {
 		// A throw outside the worker's own try/catch posts neither "error" nor "done";
 		// without these handlers `busy` would stay true and the scan silently freeze.
 		this.#worker.onerror = (e: ErrorEvent) => {
-			this.#fail(`worker error: ${e.message || String(e)}`);
+			this.#fail(`worker error: ${e.message || "unknown"}`);
 		};
 		this.#worker.onmessageerror = () => {
 			this.#fail("worker message deserialization failed");

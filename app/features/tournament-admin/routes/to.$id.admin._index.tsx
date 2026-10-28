@@ -26,8 +26,6 @@ import {
 	type SortState,
 } from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
-import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as CheckIn from "~/features/tournament-bracket/core/CheckIn";
 import type {
 	BracketMeta,
@@ -35,6 +33,8 @@ import type {
 } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
+import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import {
@@ -48,7 +48,6 @@ import { queryToUserIdentifier } from "~/utils/users";
 import { ExportDialog } from "../components/ExportDialog";
 import type { TournamentAdminTeamsLoaderData } from "../loaders/to.$id.admin.index.server";
 import { adminTeamsActionSchema } from "../tournament-admin-schemas";
-
 import styles from "./to.$id.admin._index.module.css";
 
 export { action } from "../actions/to.$id.admin.index.server";
@@ -513,7 +512,7 @@ function isCheckInBracket(bracket: BracketMeta) {
 function isTeamInBracket(bracket: BracketMeta, teamId: number) {
 	return Boolean(
 		bracket.previewSeeding?.includes(teamId) ||
-			bracket.teamsPendingCheckIn?.includes(teamId),
+		bracket.teamsPendingCheckIn?.includes(teamId),
 	);
 }
 

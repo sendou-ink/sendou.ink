@@ -5,8 +5,10 @@ import {
 	type SendouSelectProps,
 } from "~/components/elements/Select";
 
-interface TagSelectProps<T extends object>
-	extends Omit<SendouSelectProps<T>, "items" | "children"> {
+interface TagSelectProps<T extends object> extends Omit<
+	SendouSelectProps<T>,
+	"items" | "children"
+> {
 	tags: Array<{ id: number; name: string }>;
 }
 

@@ -294,8 +294,7 @@ function generateWeightedPairs({
 		for (const opp of next) {
 			let wt =
 				75 - 75 / (scoreGroups.indexOf(Math.min(curr.score, opp.score)) + 2);
-			wt +=
-				5 - 5 / (scoreSums.findIndex((s) => s === curr.score + opp.score) + 1);
+			wt += 5 - 5 / (scoreSums.indexOf(curr.score + opp.score) + 1);
 			const scoreGroupDiff = Math.abs(
 				scoreGroups.indexOf(curr.score) - scoreGroups.indexOf(opp.score),
 			);

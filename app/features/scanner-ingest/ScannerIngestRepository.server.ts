@@ -380,7 +380,7 @@ export async function findScoreboardsByTournamentMatchId(
 	}
 
 	return [...byGame.values()].flatMap((gameRows) => {
-		const first = gameRows[0]!;
+		const first = gameRows[0];
 		const loserTeamId =
 			first.winnerTeamId === first.opponentOneId
 				? first.opponentTwoId
@@ -441,7 +441,7 @@ export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
 	}
 
 	return [...byMap.values()].flatMap((mapRows) => {
-		const first = mapRows[0]!;
+		const first = mapRows[0];
 		const winnerGroupId = first.winnerGroupId!;
 		const loserGroupId =
 			winnerGroupId === first.alphaGroupId
@@ -496,7 +496,7 @@ export async function findScoreboardsByLobbyId(lobbyId: number) {
 	}
 
 	return [...byGame.values()].flatMap((gameRows) => {
-		const first = gameRows[0]!;
+		const first = gameRows[0];
 		const winnerSide = first.winnerSide!;
 
 		const data = Scoreboards.deriveScoreboardData({
@@ -988,9 +988,7 @@ function newestFirst<T extends { createdAt: number }>(a: T[], b: T[]): T[] {
  */
 function startedNearestBefore(
 	column:
-		| "TournamentMatch.startedAt"
-		| "GroupMatch.createdAt"
-		| "LobbySet.createdAt",
+		"TournamentMatch.startedAt" | "GroupMatch.createdAt" | "LobbySet.createdAt",
 	atSeconds: number,
 ) {
 	const start = sql.ref(column);

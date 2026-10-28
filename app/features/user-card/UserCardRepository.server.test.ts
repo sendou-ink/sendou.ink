@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
@@ -7,8 +7,8 @@ import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRe
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withNoUser, withUserId } from "~/utils/Test";
-import * as UserCardRepository from "./UserCardRepository.server";
 import type { UserCardData } from "./user-card-types";
+import * as UserCardRepository from "./UserCardRepository.server";
 
 const users = UserFactory.pool();
 
@@ -534,7 +534,7 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 });
 
 function updateShortBioDirectly(userId: number, shortBio: string) {
-	// biome-ignore lint/plugin: updateOwnCard invalidates the cached card, which these tests need to leave in place
+	// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- updateOwnCard invalidates the cached card, which these tests need to leave in place
 	return db
 		.updateTable("User")
 		.set({ shortBio })

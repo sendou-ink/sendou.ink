@@ -5,7 +5,7 @@ export function Redirect({ to }: { to: string }) {
 	const navigate = useNavigate();
 
 	React.useEffect(() => {
-		navigate(to);
+		void navigate(to);
 	}, [navigate, to]);
 
 	return null;

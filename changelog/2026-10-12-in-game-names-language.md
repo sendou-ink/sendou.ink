@@ -1,6 +1,7 @@
 ---
 type: feature
 ---
+
 Language changes
 
 - Weapon, gear, stage and mode names can be shown in a different language than the rest of the site. Pick the one your game is in from the Locale settings

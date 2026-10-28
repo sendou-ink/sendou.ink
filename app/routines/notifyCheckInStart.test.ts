@@ -1,5 +1,13 @@
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { add } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
@@ -8,9 +16,7 @@ import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 
 const users = UserFactory.pool();
 
-const { mockNotify } = vi.hoisted(() => ({
-	mockNotify: vi.fn(),
-}));
+const mockNotify = vi.fn();
 
 vi.mock("~/features/notifications/core/notify.server", () => ({
 	notify: mockNotify,
@@ -19,7 +25,7 @@ vi.mock("~/features/notifications/core/notify.server", () => ({
 describe("NotifyCheckInStartRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
+		setSystemTime(new Date("2025-01-15T12:00:00Z"));
 		clearAllTournamentDataCache();
 		await users.create(2);
 		mockNotify.mockClear();

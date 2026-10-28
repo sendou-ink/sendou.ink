@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import type { TFunction } from "i18next";
 import {
 	Check,
 	Clipboard,
@@ -12,6 +13,10 @@ import { BuildCard } from "~/components/BuildCard";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { BskyIcon } from "~/components/icons/Bsky";
+import { DiscordIcon } from "~/components/icons/Discord";
+import { TwitchIcon } from "~/components/icons/Twitch";
+import { YouTubeIcon } from "~/components/icons/YouTube";
 import {
 	Image,
 	ModeImage,
@@ -20,10 +25,6 @@ import {
 	SubWeaponImage,
 	WeaponImage,
 } from "~/components/Image";
-import { BskyIcon } from "~/components/icons/Bsky";
-import { DiscordIcon } from "~/components/icons/Discord";
-import { TwitchIcon } from "~/components/icons/Twitch";
-import { YouTubeIcon } from "~/components/icons/YouTube";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Markdown } from "~/components/Markdown";
 import { Pagination } from "~/components/Pagination";
@@ -49,11 +50,7 @@ import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { rawSensToString } from "~/utils/strings";
@@ -95,62 +92,33 @@ export function Widget({
 			case "bio":
 				return widget.data.bio ? <article>{widget.data.bio}</article> : null;
 			case "bio-md":
-				return widget.data.bio ? (
+				return widget.data ? (
 					<article className={styles.mdBio}>
-						<Markdown>{widget.data.bio}</Markdown>
+						<Markdown html={widget.data} />
 					</article>
 				) : null;
 			case "trophies-owned":
-				return widget.data.length === 0 ? null : (
-					<TrophyDisplay trophies={widget.data} userId={user.id} />
-				);
 			case "badges-owned":
-				return widget.data.length === 0 ? null : (
-					<BadgeDisplay badges={widget.data} key={`badges-owned-${user.id}`} />
-				);
 			case "badges-authored":
-				return widget.data.length === 0 ? null : (
-					<BadgeDisplay
-						badges={widget.data}
-						key={`badges-authored-${user.id}`}
-					/>
-				);
 			case "badges-managed":
-				return widget.data.length === 0 ? null : (
-					<BadgeDisplay
-						badges={widget.data}
-						key={`badges-managed-${user.id}`}
-					/>
-				);
 			case "teams":
-				return widget.data.length === 0 ? null : (
-					<Memberships
-						memberships={widget.data.map((team) => ({
-							id: team.id,
-							url: teamPage(team.customUrl),
-							name: team.name,
-							logoUrl: team.logoUrl,
-							roleDisplayName:
-								team.customRole ??
-								(team.role ? t(`team:roles.${team.role}`) : null),
-						}))}
-					/>
-				);
 			case "organizations":
-				return widget.data.length === 0 ? null : (
-					<Memberships
-						memberships={widget.data.map((org) => ({
-							id: org.id,
-							url: tournamentOrganizationPage({
-								organizationSlug: org.slug,
-							}),
-							name: org.name,
-							logoUrl: org.logoUrl,
-							roleDisplayName:
-								org.roleDisplayName ?? t(`org:roles.${org.role}`),
-						}))}
-					/>
-				);
+			case "highlighted-results":
+			case "videos":
+			case "lfg-posts":
+			case "x-rank-peaks":
+			case "builds":
+			case "weapon-pool":
+			case "custom-kits":
+			case "art":
+			case "links":
+			case "game-badges":
+			case "game-badges-small":
+			case "friends":
+			case "map-mode-preferences":
+				return widget.data.length === 0
+					? null
+					: listWidgetContent(widget, user.id, t);
 			case "peak-sp":
 				if (!widget.data) return null;
 				return (
@@ -195,14 +163,10 @@ export function Widget({
 				if (!widget.data) return null;
 				return (
 					<PeakXpWeapon
-						weaponSplId={widget.data.weaponSplId as MainWeaponId}
+						weaponSplId={widget.data.weaponSplId}
 						peakXp={widget.data.peakXp}
 						leaderboardPosition={widget.data.leaderboardPosition}
 					/>
-				);
-			case "highlighted-results":
-				return widget.data.length === 0 ? null : (
-					<HighlightedResults results={widget.data} />
 				);
 			case "placement-results":
 				if (!widget.data) return null;
@@ -225,15 +189,7 @@ export function Widget({
 			case "timezone":
 				return <TimezoneWidget timezone={widget.data.timezone} />;
 			case "favorite-stage":
-				return <FavoriteStageWidget stageId={widget.data.stageId as StageId} />;
-			case "videos":
-				return widget.data.length === 0 ? null : (
-					<Videos videos={widget.data} />
-				);
-			case "lfg-posts":
-				return widget.data.length === 0 ? null : (
-					<LFGPosts posts={widget.data} />
-				);
+				return <FavoriteStageWidget stageId={widget.data.stageId} />;
 			case "top-500-weapons":
 				if (!widget.data) return null;
 				return <Top500Weapons weaponIds={widget.data} />;
@@ -258,50 +214,17 @@ export function Widget({
 					/>
 				);
 			}
-			case "x-rank-peaks":
-				return widget.data.length === 0 ? null : (
-					<XRankPeaks peaks={widget.data} />
-				);
-			case "builds":
-				return widget.data.length === 0 ? null : (
-					<Builds builds={widget.data} />
-				);
-			case "weapon-pool":
-				return widget.data.length === 0 ? null : (
-					<WeaponPool weapons={widget.data} />
-				);
-			case "custom-kits":
-				return widget.data.length === 0 ? null : (
-					<CustomKits kits={widget.data} />
-				);
 			case "sens":
 				return typeof widget.data.motionSens !== "number" &&
 					typeof widget.data.stickSens !== "number" ? null : (
 					<SensWidget data={widget.data} />
 				);
-			case "art":
-				return widget.data.length === 0 ? null : (
-					<ArtWidget arts={widget.data} />
-				);
 			case "commissions":
 				return <CommissionsWidget data={widget.data} />;
 			case "social-links":
 				return <SocialLinksWidget data={widget.data} />;
-			case "links":
-				return widget.data.length === 0 ? null : (
-					<LinksWidget links={widget.data} />
-				);
 			case "tier-list":
 				return <TierListWidget searchParams={widget.data.searchParams} />;
-			case "game-badges":
-			case "game-badges-small":
-				return widget.data.length === 0 ? null : (
-					<GameBadgesDisplay badgeIds={widget.data} />
-				);
-			case "friends":
-				return widget.data.length === 0 ? null : (
-					<FriendsWidget friends={widget.data} />
-				);
 			case "luti-div":
 				if (!widget.data) return null;
 				return (
@@ -316,10 +239,6 @@ export function Widget({
 						}
 					/>
 				);
-			case "map-mode-preferences":
-				return widget.data.length === 0 ? null : (
-					<MapModePreferencesWidget rows={widget.data} />
-				);
 			case "live-stream":
 				if (!widget.data) return null;
 				return <LiveStreamWidget streamer={widget.data} />;
@@ -328,9 +247,9 @@ export function Widget({
 					<CountdownWidget title={widget.data.title} date={widget.data.date} />
 				);
 			case "markdown":
-				return widget.data.content ? (
+				return widget.data ? (
 					<article>
-						<Markdown>{widget.data.content}</Markdown>
+						<Markdown html={widget.data} />
 					</article>
 				) : null;
 			default:
@@ -380,6 +299,110 @@ export function Widget({
 			<div className={styles.content}>{renderedContent}</div>
 		</div>
 	);
+}
+
+type ListWidget = Extract<
+	SerializeFrom<LoadedWidget>,
+	{
+		id:
+			| "trophies-owned"
+			| "badges-owned"
+			| "badges-authored"
+			| "badges-managed"
+			| "teams"
+			| "organizations"
+			| "highlighted-results"
+			| "videos"
+			| "lfg-posts"
+			| "x-rank-peaks"
+			| "builds"
+			| "weapon-pool"
+			| "custom-kits"
+			| "art"
+			| "links"
+			| "game-badges"
+			| "game-badges-small"
+			| "friends"
+			| "map-mode-preferences";
+	}
+>;
+
+function listWidgetContent(
+	widget: ListWidget,
+	userId: number,
+	t: TFunction<["user", "badges", "team", "org", "lfg"]>,
+) {
+	switch (widget.id) {
+		case "trophies-owned":
+			return <TrophyDisplay trophies={widget.data} userId={userId} />;
+		case "badges-owned":
+			return (
+				<BadgeDisplay badges={widget.data} key={`badges-owned-${userId}`} />
+			);
+		case "badges-authored":
+			return (
+				<BadgeDisplay badges={widget.data} key={`badges-authored-${userId}`} />
+			);
+		case "badges-managed":
+			return (
+				<BadgeDisplay badges={widget.data} key={`badges-managed-${userId}`} />
+			);
+		case "teams":
+			return (
+				<Memberships
+					memberships={widget.data.map((team) => ({
+						id: team.id,
+						url: teamPage(team.customUrl),
+						name: team.name,
+						logoUrl: team.logoUrl,
+						roleDisplayName:
+							team.customRole ??
+							(team.role ? t(`team:roles.${team.role}`) : null),
+					}))}
+				/>
+			);
+		case "organizations":
+			return (
+				<Memberships
+					memberships={widget.data.map((org) => ({
+						id: org.id,
+						url: tournamentOrganizationPage({
+							organizationSlug: org.slug,
+						}),
+						name: org.name,
+						logoUrl: org.logoUrl,
+						roleDisplayName: org.roleDisplayName ?? t(`org:roles.${org.role}`),
+					}))}
+				/>
+			);
+		case "highlighted-results":
+			return <HighlightedResults results={widget.data} />;
+		case "videos":
+			return <Videos videos={widget.data} />;
+		case "lfg-posts":
+			return <LFGPosts posts={widget.data} />;
+		case "x-rank-peaks":
+			return <XRankPeaks peaks={widget.data} />;
+		case "builds":
+			return <Builds builds={widget.data} />;
+		case "weapon-pool":
+			return <WeaponPool weapons={widget.data} />;
+		case "custom-kits":
+			return <CustomKits kits={widget.data} />;
+		case "art":
+			return <ArtWidget arts={widget.data} />;
+		case "links":
+			return <LinksWidget links={widget.data} />;
+		case "game-badges":
+		case "game-badges-small":
+			return <GameBadgesDisplay badgeIds={widget.data} />;
+		case "friends":
+			return <FriendsWidget friends={widget.data} />;
+		case "map-mode-preferences":
+			return <MapModePreferencesWidget rows={widget.data} />;
+		default:
+			assertUnreachable(widget);
+	}
 }
 
 function BigValue({
@@ -582,7 +605,7 @@ function XRankPeaks({
 				<div key={peak.mode} className={styles.xRankPeakMode}>
 					<div className={styles.xRankPeakModeIconWrapper}>
 						<Image
-							path={modeImageUrl(peak.mode as ModeShort)}
+							path={modeImageUrl(peak.mode)}
 							alt=""
 							width={24}
 							height={24}
@@ -607,35 +630,35 @@ function XRankPeaks({
 function TimezoneWidget({ timezone }: { timezone: string }) {
 	const currentTime = useAutoRerender("second");
 
-	try {
-		return (
-			<div className="stack sm items-center">
-				<LocaleTime
-					date={currentTime}
-					options={{
-						timeZone: timezone,
-						hour: "numeric",
-						minute: "2-digit",
-						second: "2-digit",
-					}}
-					className={styles.widgetValueMain}
-				/>
-				<LocaleTime
-					date={currentTime}
-					options={{
-						timeZone: timezone,
-						weekday: "short",
-						day: "numeric",
-						month: "numeric",
-					}}
-					className={styles.widgetValueFooter}
-				/>
-			</div>
-		);
-	} catch {
+	if (!isValidTimezone(timezone)) {
 		logger.warn(`Failed to parse timezone: ${timezone}`);
 		return null;
 	}
+
+	return (
+		<div className="stack sm items-center">
+			<LocaleTime
+				date={currentTime}
+				options={{
+					timeZone: timezone,
+					hour: "numeric",
+					minute: "2-digit",
+					second: "2-digit",
+				}}
+				className={styles.widgetValueMain}
+			/>
+			<LocaleTime
+				date={currentTime}
+				options={{
+					timeZone: timezone,
+					weekday: "short",
+					day: "numeric",
+					month: "numeric",
+				}}
+				className={styles.widgetValueFooter}
+			/>
+		</div>
+	);
 }
 
 function FavoriteStageWidget({ stageId }: { stageId: StageId }) {
@@ -1241,4 +1264,12 @@ function CountdownWidget({
 			)}
 		</div>
 	);
+}
+
+function isValidTimezone(timeZone: string) {
+	try {
+		return Boolean(new Intl.DateTimeFormat(undefined, { timeZone }));
+	} catch {
+		return false;
+	}
 }

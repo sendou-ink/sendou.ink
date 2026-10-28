@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import {
 	DAMAGE_MULTIPLIER_PARAM_KEY,
 	INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,

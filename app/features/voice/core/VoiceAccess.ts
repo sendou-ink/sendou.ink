@@ -1,5 +1,5 @@
-import type { ResolvedRoom } from "~/features/chat/ChatRoomResolver.server";
 import type { ChatRoomType } from "~/features/chat/chat-types";
+import type { ResolvedRoom } from "~/features/chat/ChatRoomResolver.server";
 import { VOICE_ROOM_TYPES } from "../voice-constants";
 
 type VoiceRoom = Pick<

@@ -68,7 +68,7 @@ export function splitSessions<E extends Stamped>(events: readonly E[]): E[][] {
 
 /** A session's key: its first event's detection time. */
 export function sessionKey(session: readonly Stamped[]): number {
-	return session[0]!.detectedAt;
+	return session[0].detectedAt;
 }
 
 /**

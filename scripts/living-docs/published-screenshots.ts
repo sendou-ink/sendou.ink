@@ -1,13 +1,12 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 
-// `publish` uploads the screenshots of a `pnpm run docs:capture` run to the docs' Space (CI, on pushes to main),
+// `publish` uploads the screenshots of a `bun run docs:capture` run to the docs' Space (CI, on pushes to main),
 // `download` fetches the published ones whose spec is unchanged since its capture into the docs site (its build on Render),
 // see docs/site/src/content/docs/dev/living-docs.mdx
 
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { S3 } from "@aws-sdk/client-s3";
 import { ROOT } from "./ast.ts";
 import { screenshotName } from "./links.ts";
 import { SCREENSHOTS_DIR } from "./visits.ts";
@@ -19,6 +18,7 @@ const PREFIX = "screenshots";
 const MANIFEST_KEY = `${PREFIX}/manifest.json`;
 const E2E_DIR = "e2e";
 const DOWNLOAD_CONCURRENCY = 16;
+const PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS = 60;
 
 /**
  * Screenshot directory of a spec (e.g. `scrims`) → the content hash of the spec its screenshots were captured from and their files.
@@ -55,13 +55,11 @@ async function publish() {
 
 		await Promise.all(
 			files.map((file) =>
-				s3.putObject({
-					Bucket: BUCKET,
-					Key: `${capturePrefix(dir, specHash)}/${file}`,
-					Body: fs.readFileSync(path.join(ROOT, SCREENSHOTS_DIR, dir, file)),
-					ContentType: "image/jpeg",
-					ACL: "public-read",
-				}),
+				s3.write(
+					`${capturePrefix(dir, specHash)}/${file}`,
+					Bun.file(path.join(ROOT, SCREENSHOTS_DIR, dir, file)),
+					{ type: "image/jpeg", acl: "public-read" },
+				),
 			),
 		);
 		uploaded += files.length;
@@ -83,14 +81,7 @@ async function publish() {
 		}
 	}
 
-	await s3.putObject({
-		Bucket: BUCKET,
-		Key: MANIFEST_KEY,
-		Body: `${JSON.stringify(manifest, null, "\t")}\n`,
-		ContentType: "application/json",
-		CacheControl: "no-cache",
-		ACL: "public-read",
-	});
+	await writeManifest(s3, manifest);
 
 	for (const prefix of superseded) await deletePrefix(s3, prefix);
 
@@ -163,41 +154,58 @@ function spacesClient() {
 		throw new Error("SPACES_ACCESS_KEY and SPACES_SECRET_KEY must be set");
 	}
 
-	return new S3({
+	return new Bun.S3Client({
 		endpoint: SPACES_ENDPOINT,
 		region: "us-east-1",
-		credentials: { accessKeyId, secretAccessKey },
-		requestChecksumCalculation: "WHEN_REQUIRED",
-		responseChecksumValidation: "WHEN_REQUIRED",
+		accessKeyId,
+		secretAccessKey,
+		bucket: BUCKET,
 	});
 }
 
-async function readManifest(s3: S3): Promise<Manifest> {
-	try {
-		const object = await s3.getObject({ Bucket: BUCKET, Key: MANIFEST_KEY });
+async function readManifest(s3: Bun.S3Client): Promise<Manifest> {
+	const file = s3.file(MANIFEST_KEY);
+	if (!(await file.exists())) return {};
 
-		return JSON.parse((await object.Body?.transformToString()) ?? "{}");
-	} catch (error) {
-		if ((error as Error).name === "NoSuchKey") return {};
-		throw error;
+	return file.json();
+}
+
+// Bun's S3 client can't set Cache-Control, a request to a presigned URL can
+async function writeManifest(s3: Bun.S3Client, manifest: Manifest) {
+	const response = await fetch(
+		s3.presign(MANIFEST_KEY, {
+			method: "PUT",
+			acl: "public-read",
+			expiresIn: PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS,
+		}),
+		{
+			method: "PUT",
+			body: `${JSON.stringify(manifest, null, "\t")}\n`,
+			headers: {
+				"content-type": "application/json",
+				"cache-control": "no-cache",
+			},
+		},
+	);
+	if (!response.ok) {
+		throw new Error(
+			`Writing ${MANIFEST_KEY} failed with ${response.status}: ${await response.text()}`,
+		);
 	}
 }
 
-async function deletePrefix(s3: S3, prefix: string) {
+async function deletePrefix(s3: Bun.S3Client, prefix: string) {
 	let continuationToken: string | undefined;
 
 	do {
-		const listing = await s3.listObjectsV2({
-			Bucket: BUCKET,
-			Prefix: `${prefix}/`,
-			ContinuationToken: continuationToken,
+		const listing = await s3.list({
+			prefix: `${prefix}/`,
+			continuationToken,
 		});
 		await Promise.all(
-			(listing.Contents ?? []).map((object) =>
-				s3.deleteObject({ Bucket: BUCKET, Key: object.Key }),
-			),
+			(listing.contents ?? []).map((object) => s3.delete(object.key)),
 		);
-		continuationToken = listing.NextContinuationToken;
+		continuationToken = listing.nextContinuationToken;
 	} while (continuationToken);
 }
 

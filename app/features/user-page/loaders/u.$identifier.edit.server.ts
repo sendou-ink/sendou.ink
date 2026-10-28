@@ -1,8 +1,8 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { userPageUser } from "~/features/user-page/user-page-context.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { userPage } from "~/utils/urls";
 
 export const loader = async () => {

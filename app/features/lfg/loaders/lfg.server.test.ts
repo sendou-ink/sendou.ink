@@ -1,25 +1,24 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import * as LFGPostFactory from "~/db/seed/factories/LFGPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
+import * as TieredServer from "~/features/mmr/tiered.server";
 import { viewerTimezoneAsyncLocalStorage } from "~/features/timezone/timezone-context.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { withNoUser, wrappedLoader } from "~/utils/Test";
 import { LFG_PAGE } from "~/utils/urls";
-import * as LFGRepository from "../LFGRepository.server";
 import { LFG } from "../lfg-constants";
 import { lfgSearchParams } from "../lfg-search-params";
+import * as LFGRepository from "../LFGRepository.server";
 import { loader } from "./lfg.server";
 
-const { skillsBySeason } = vi.hoisted(() => ({
-	skillsBySeason: new Map<number, Record<number, TieredSkill>>(),
-}));
+const skillsBySeason = new Map<number, Record<number, TieredSkill>>();
 
 // tiers derived from real skills depend on the whole season's distribution
-vi.mock("~/features/mmr/tiered.server", async (importOriginal) => ({
-	...(await importOriginal<typeof import("~/features/mmr/tiered.server")>()),
+vi.mock("~/features/mmr/tiered.server", () => ({
+	...TieredServer,
 	userSkills: async (season: number) => ({
 		userSkills: skillsBySeason.get(season) ?? {},
 	}),

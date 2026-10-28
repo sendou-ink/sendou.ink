@@ -9,6 +9,7 @@ import {
 	Link as LinkIcon,
 } from "lucide-react";
 import type * as React from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData, useNavigate } from "react-router";
@@ -71,7 +72,7 @@ export default function CalendarPage() {
 		<Main
 			breakoutContainer
 			className={clsx("stack lg", styles.container)}
-			style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME } as React.CSSProperties}
+			style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME }}
 		>
 			<div
 				className={clsx(styles.columnsWidthContainer, styles.buttonsContainer)}
@@ -171,7 +172,7 @@ function CalendarDatePicker({ dayMonthYear }: { dayMonthYear: DayMonthYear }) {
 	const dayHref = useCalendarDayHref();
 
 	const onChange = (date: Date) => {
-		navigate(
+		void navigate(
 			dayHref({
 				day: date.getDate(),
 				month: date.getMonth(),
@@ -322,7 +323,8 @@ function ClockHeader({
 	hiddenShown: boolean;
 	className?: string;
 }) {
-	const isInThePast = (toDate ?? date).getTime() < Date.now();
+	const [renderedAt] = useState(() => Date.now());
+	const isInThePast = (toDate ?? date).getTime() < renderedAt;
 	const timeOptions: Intl.DateTimeFormatOptions = {
 		hour: "numeric",
 		minute: "numeric",

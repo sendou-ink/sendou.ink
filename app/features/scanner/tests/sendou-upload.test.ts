@@ -42,13 +42,13 @@ function prefilledMatches(events: DetectedEvent[]) {
 test("the pov seat's weapon is sent as the prefilled pov weapon", () => {
 	const matches = prefilledMatches([scoreboard(300, 6)]);
 
-	assert.equal(matches[0]!.povWeapon, BRAVO[2]);
+	assert.equal(matches[0].povWeapon, BRAVO[2]);
 });
 
 test("no pov weapon is sent when no scoreboard identified the seat", () => {
 	const matches = prefilledMatches([scoreboard(300, null)]);
 
-	assert.equal(matches[0]!.povWeapon, undefined);
+	assert.equal(matches[0].povWeapon, undefined);
 });
 
 test("weapons are padded to 4 slots per team so uneven rosters keep the team split", () => {
@@ -76,5 +76,5 @@ test("weapons are padded to 4 slots per team so uneven rosters keep the team spl
 		{ type: "Minimap", t: 300, confidence: 0.9, data },
 	]);
 
-	assert.deepEqual(matches[0]!.weapons, [...ALPHA.slice(0, 3), null, ...BRAVO]);
+	assert.deepEqual(matches[0].weapons, [...ALPHA.slice(0, 3), null, ...BRAVO]);
 });

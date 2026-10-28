@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as TournamentLFG from "./TournamentLFG";
 
 const OUR_ID = 1;

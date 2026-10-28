@@ -124,7 +124,7 @@ export function* parseBannerScoreSteps(
 	);
 	let best = EMPTY_READ;
 	for (const [i, { set }] of reads.entries()) {
-		const read = trailingDigitRun(raws[i]!, set, {
+		const read = trailingDigitRun(raws[i], set, {
 			extendMinScore: DIGIT_EXTEND_MIN_CONF,
 		});
 		if (isBetterRead(read, best)) best = read;
@@ -186,13 +186,13 @@ function clearShortBlobs(band: Mat): void {
 	const s = stats.data32S;
 	const short = new Uint8Array(count);
 	for (let i = 1; i < count; i++) {
-		short[i] = s[i * 5 + cv.CC_STAT_HEIGHT]! < MIN_COMPONENT_HEIGHT ? 1 : 0;
+		short[i] = s[i * 5 + cv.CC_STAT_HEIGHT] < MIN_COMPONENT_HEIGHT ? 1 : 0;
 	}
 	stats.delete();
 	const lab = labels.data32S;
 	const out = band.data;
 	for (let i = 0; i < out.length; i++) {
-		if (short[lab[i]!]!) out[i] = 0;
+		if (short[lab[i]]) out[i] = 0;
 	}
 	labels.delete();
 }
@@ -251,9 +251,9 @@ export function trailingDigitRun(
 	const run: RecognizedChar[] = [];
 	let i = raw.chars.length - 1;
 	for (; i >= 0; i--) {
-		const c = raw.chars[i]!;
+		const c = raw.chars[i];
 		if (!isRunDigit(c)) break;
-		if (run.length > 0 && run[0]!.x0 - c.x1 > maxGap) break;
+		if (run.length > 0 && run[0].x0 - c.x1 > maxGap) break;
 		run.unshift(c);
 	}
 	if (run.length === 0) return { ...EMPTY_READ, reading: raw.text };
@@ -263,12 +263,12 @@ export function trailingDigitRun(
 	// a further digit left of the run means an unreadable glyph split the number
 	// (turf war "48", ".", "7"); the tail is not the score
 	for (let k = i; k >= 0; k--) {
-		const c = raw.chars[k]!;
+		const c = raw.chars[k];
 		if (c.score >= minCharScore && fullHeight(c)) {
 			return { ...EMPTY_READ, reading: raw.text };
 		}
 	}
-	if (rejectTruncated && i >= 0 && run[0]!.x0 - raw.chars[i]!.x1 <= maxGap) {
+	if (rejectTruncated && i >= 0 && run[0].x0 - raw.chars[i].x1 <= maxGap) {
 		return { ...EMPTY_READ, reading: raw.text };
 	}
 

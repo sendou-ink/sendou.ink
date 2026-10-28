@@ -1,5 +1,5 @@
-import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import type { TimeRange } from "../availability-types";
+import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import * as Commitments from "./Commitments.server";
 
 /**

@@ -13,20 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version-file: ".nvmrc"
-          cache: "pnpm"
+          bun-version-file: ".bun-version"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Update translation progress issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pnpm run check-translation-jsons
+          bun run check-translation-jsons
           gh issue edit 1104 --body-file ./translation-progress.md

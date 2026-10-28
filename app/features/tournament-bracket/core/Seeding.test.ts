@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import * as R from "remeda";
-import { describe, expect, test } from "vitest";
 import * as Engine from "./engine";
 import * as Seeding from "./Seeding";
 
@@ -508,9 +508,8 @@ function engineFirstRoundMatches(seeding: number[], groupCount: number) {
 		"single_elimination",
 		groupCount,
 	).flatMap((lineup) =>
-		R.chunk(lineup, 2).flatMap(
-			([one, two]): Array<[number, number]> =>
-				typeof one === "number" && typeof two === "number" ? [[one, two]] : [],
+		R.chunk(lineup, 2).flatMap(([one, two]): Array<[number, number]> =>
+			typeof one === "number" && typeof two === "number" ? [[one, two]] : [],
 		),
 	);
 }

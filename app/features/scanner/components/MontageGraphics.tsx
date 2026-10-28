@@ -39,10 +39,10 @@ import {
 	MONTAGE_WIDTH,
 	REVEAL_RISE_PX,
 	REVEAL_TIMINGS,
+	revealOrder,
 	type RevealStyle,
 	RIBBON_GLASS,
 	RIBBON_MARGIN_PX,
-	revealOrder,
 	riseOrder,
 } from "../capture/montage-overlays";
 import type {
@@ -50,12 +50,12 @@ import type {
 	MontageManifestTopTeam,
 	MontageManifestVod,
 } from "../core/montage";
-import styles from "./MontageGraphics.module.css";
 import {
 	type MontageGraphic,
 	montageImageUrl,
 	setMontageGraphicCapture,
 } from "./montage";
+import styles from "./MontageGraphics.module.css";
 
 /** the full-frame graphics' CSS size times this is 1920×1080 */
 const FRAME_SCALE: Record<MontageCard["kind"], number> = {
@@ -359,20 +359,18 @@ function IntroGraphic({
 			<div
 				className={styles.teamWall}
 				data-reveal-state={reveal}
-				style={
-					{
-						"--team-wall-avatar": `${wall.avatarSize}px`,
-						"--team-wall-gap": `${TEAM_WALL_GAP}px`,
-						maxHeight: TEAM_WALL_HEIGHT,
-					} as React.CSSProperties
-				}
+				style={{
+					"--team-wall-avatar": `${wall.avatarSize}px`,
+					"--team-wall-gap": `${TEAM_WALL_GAP}px`,
+					maxHeight: TEAM_WALL_HEIGHT,
+				}}
 			>
 				{manifest.teams.map((team, i) => (
 					<span
 						key={team.id}
 						className={styles.teamWallItem}
 						data-reveal="pop"
-						style={revealItemStyle("pop", orders[i]!, FRAME_SCALE.intro)}
+						style={revealItemStyle("pop", orders[i], FRAME_SCALE.intro)}
 					>
 						<Avatar
 							url={montageImageUrl(team.logo)}
@@ -432,7 +430,7 @@ function TeamGraphic({
 							key={player.name}
 							className={styles.teamPlayer}
 							data-reveal="rise"
-							style={revealItemStyle("rise", orders[i]!, FRAME_SCALE.team)}
+							style={revealItemStyle("rise", orders[i], FRAME_SCALE.team)}
 						>
 							<Avatar
 								url={montageImageUrl(player.avatar)}
@@ -656,7 +654,7 @@ function revealItemStyle(
 		"--reveal-delay": `${timing.start + order * timing.spread}s`,
 		"--reveal-duration": `${timing.item}s`,
 		"--reveal-rise": `${REVEAL_RISE_PX / scale}px`,
-	} as React.CSSProperties;
+	};
 }
 
 /** Where the graphic's revealed items are, in fractions of its size, in DOM order. */

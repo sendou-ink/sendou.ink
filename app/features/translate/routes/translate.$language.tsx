@@ -24,8 +24,8 @@ import {
 	type TranslateLanguageLoaderData,
 } from "../loaders/translate.$language.server";
 import {
-	TRANSLATION_STATUSES,
 	type TranslatableLanguage,
+	TRANSLATION_STATUSES,
 	type TranslationStatus,
 } from "../translate-constants";
 import { translateLanguageSearchParams } from "../translate-search-params";

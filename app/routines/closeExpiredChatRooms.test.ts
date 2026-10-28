@@ -1,5 +1,13 @@
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { add } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as ChatRoomFactory from "~/db/seed/factories/ChatRoomFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -20,7 +28,7 @@ const setupGroupChatRoom = async (travelTo: Date) => {
 		.executeTakeFirstOrThrow();
 	invariant(chatRoomId, "Group has no chat room");
 
-	vi.setSystemTime(travelTo);
+	setSystemTime(travelTo);
 
 	return chatRoomId;
 };
@@ -31,7 +39,7 @@ const roomById = (id: number) =>
 describe("CloseExpiredChatRoomsRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
+		setSystemTime(new Date("2026-01-15T12:00:00Z"));
 
 		await users.create(1);
 	});

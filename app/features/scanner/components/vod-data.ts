@@ -3,7 +3,7 @@
  * shared by the views that open a scanned file (`view=vod`, `view=coach`).
  */
 import { useEffect, useState } from "react";
-import { type BuiltMatch, buildScannerMatches } from "../core/match-builder";
+import { buildScannerMatches, type BuiltMatch } from "../core/match-builder";
 import {
 	loadVod,
 	loadVodEvents,

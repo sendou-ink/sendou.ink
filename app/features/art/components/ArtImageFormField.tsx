@@ -117,7 +117,7 @@ function compressToDataUrl(
 	options: Compressor.Options,
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
-		// biome-ignore lint/correctness/noUnusedInstantiation: Compressor does its work through the success/error callbacks
+		// eslint-disable-next-line no-new -- Compressor does its work through the success/error callbacks
 		new Compressor(file, {
 			...options,
 			success(result) {

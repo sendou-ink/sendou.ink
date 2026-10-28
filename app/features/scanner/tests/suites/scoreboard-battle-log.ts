@@ -7,12 +7,12 @@
 
 import assert from "node:assert/strict";
 import { loadOpenCV } from "../../core/cv";
+import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
 import type {
 	ScoreboardPlayer,
 	ScoreboardResources,
 	ScoreboardRowDebug,
 } from "../../core/detectors/scoreboard/index";
-import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
 import type { Detector } from "../../core/detectors/types";
 import {
 	fieldTestOptions,
@@ -81,8 +81,7 @@ export async function runScoreboardBattleLogSuite(suite: BattleLogSuite) {
 				fieldTestOptions(fixture, "header", expected.mode !== undefined),
 				() => {
 					const dbg = event.debug?.header as
-						| { topReading?: string; bottomReading?: string }
-						| undefined;
+						{ topReading?: string; bottomReading?: string } | undefined;
 					assert.deepEqual(
 						{
 							lobby: event.data.lobby,
@@ -108,8 +107,7 @@ export async function runScoreboardBattleLogSuite(suite: BattleLogSuite) {
 				),
 				() => {
 					const dbg = event.debug?.header as
-						| { topReading?: string }
-						| undefined;
+						{ topReading?: string } | undefined;
 					assert.equal(
 						event.data.timestamp,
 						expected.timestamp,

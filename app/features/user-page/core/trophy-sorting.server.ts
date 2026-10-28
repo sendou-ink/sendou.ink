@@ -20,7 +20,7 @@ export function sortTrophiesByFavorites<
 	trophies: T;
 	favoriteTrophyIds: number[] | null;
 } {
-	const hiddenSet = new Set(hiddenTrophyIds ?? []);
+	const hiddenSet = new Set(hiddenTrophyIds);
 
 	let filteredFavoriteIds =
 		favoriteTrophyIds?.filter(

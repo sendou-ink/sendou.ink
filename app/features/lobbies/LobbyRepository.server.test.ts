@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as AssociationFactory from "~/db/seed/factories/AssociationFactory";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
@@ -238,9 +238,8 @@ describe("LobbyRepository.findAllUpcomingOfFriendsByUserId", () => {
 		});
 		const lobby = await LobbyFactory.create({ hostUserId: hostId() });
 
-		const rows = await LobbyRepository.findAllUpcomingOfFriendsByUserId(
-			memberId(),
-		);
+		const rows =
+			await LobbyRepository.findAllUpcomingOfFriendsByUserId(memberId());
 
 		expect(rows.map((row) => [row.friendId, row.lobbyId])).toEqual([
 			[hostId(), lobby.id],

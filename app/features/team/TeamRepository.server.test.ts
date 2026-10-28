@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
@@ -50,7 +50,7 @@ describe("findResultsById", () => {
 			.where("eventId", "=", tournament.eventId)
 			.executeTakeFirstOrThrow();
 
-		// biome-ignore lint/plugin: a membership spanning a past event start only arises with the passage of time; `backdate` can't address AllTeamMember as it has no id column
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- a membership spanning a past event start only arises with the passage of time; `backdate` can't address AllTeamMember as it has no id column
 		await db
 			.updateTable("AllTeamMember")
 			.set({ createdAt: startsAt - 1000, leftAt: startsAt + 1000 })

@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
+import { type TierName, TIERS } from "~/features/mmr/mmr-constants";
 import {
 	languagesUnified,
 	type UnifiedLanguageCode,

@@ -8,8 +8,19 @@ import {
 } from "~/features/plus-voting/core";
 import { isVotingOpen } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
-import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { UserCardsById } from "~/features/user-card/user-card-types";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
+import * as MarkdownHtml from "~/utils/markdown-html.server";
+
+type UserForVoting = PlusVotingRepository.UsersForVoting[number];
+
+export type UsersForVoting = Array<
+	Omit<UserForVoting, "user"> & {
+		user: Omit<UserForVoting["user"], "bio"> & {
+			bio: { text: string } | { html: string } | null;
+		};
+	}
+>;
 
 export type PlusVotingLoaderData =
 	// next voting date is not in the system
@@ -29,7 +40,7 @@ export type PlusVotingLoaderData =
 	// user can vote
 	| {
 			type: "voting";
-			usersForVoting: PlusVotingRepository.UsersForVoting;
+			usersForVoting: UsersForVoting;
 			userCards: UserCardsById;
 			votingEnds: {
 				timestamp: number;
@@ -96,7 +107,10 @@ export const loader: LoaderFunction = async () => {
 
 	return {
 		type: "voting",
-		usersForVoting,
+		usersForVoting: usersForVoting.map((entry) => ({
+			...entry,
+			user: { ...entry.user, bio: renderBio(entry.user.bio) },
+		})),
 		...(await UserCardRepository.findAllByUserIds({ userIds: cardUserIds })),
 		votingEnds: {
 			timestamp: nextVotingRange.endDate.getTime(),
@@ -106,3 +120,11 @@ export const loader: LoaderFunction = async () => {
 		},
 	};
 };
+
+function renderBio(bio: UserForVoting["user"]["bio"]) {
+	if (!bio) return null;
+
+	return bio.markdown
+		? { html: MarkdownHtml.render(bio.text) }
+		: { text: bio.text };
+}

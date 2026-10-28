@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { FriendActivityType } from "~/features/friends/friends-constants";
 import { orderSidebarFriends } from "./sidebar.server";
 

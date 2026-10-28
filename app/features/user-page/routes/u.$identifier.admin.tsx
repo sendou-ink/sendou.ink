@@ -24,7 +24,7 @@ export default function UserAdminPage() {
 
 	return (
 		<div className="stack xl">
-			<SubPageHeader user={layoutData.user} title={"Admin"} />
+			<SubPageHeader user={layoutData.user} title="Admin" />
 			<AccountInfos />
 
 			<div className="stack sm">

@@ -13,9 +13,7 @@ const REOPEN_MAX_DELAY_MS = 30_000;
 export type EventsReadyState = "CONNECTING" | "CONNECTED" | "CLOSED";
 
 type WireEvent =
-	| ServerEvent
-	| { kind: "hello"; connectionId: string }
-	| { kind: "heartbeat" };
+	ServerEvent | { kind: "hello"; connectionId: string } | { kind: "heartbeat" };
 
 interface EventsClientDeps {
 	openEventSource: (handlers: {

@@ -8,8 +8,8 @@ import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { invariant } from "~/utils/invariant";
@@ -30,8 +30,8 @@ export default function TournamentAdminBracketsPage() {
 
 	const showReopen = Boolean(
 		DANGEROUS_CAN_ACCESS_DEV_CONTROLS &&
-			tournament.ctx.isFinalized &&
-			tournament.isAdmin(user),
+		tournament.ctx.isFinalized &&
+		tournament.isAdmin(user),
 	);
 	const showEditBrackets =
 		tournament.isAdmin(user) &&

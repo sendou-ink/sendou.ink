@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import * as v from "valibot";
-import { describe, expect, test } from "vitest";
 import { mapModePreferencesValueSchema } from "./match-profile-schemas";
 
 describe("mapModePreferencesValueSchema", () => {

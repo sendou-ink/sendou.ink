@@ -32,7 +32,7 @@ export function paintSuffixRoi(cy: number): Roi {
 
 /** Stat counter digits (two, zero-padded; the small "x" prefix at 1477/1540/1603 is excluded). */
 export function statRoi(cy: number, index: 0 | 1 | 2): Roi {
-	const x = [1484, 1547, 1610][index]!;
+	const x = [1484, 1547, 1610][index];
 	return { x, y: cy + 1, w: 32, h: 23 };
 }
 

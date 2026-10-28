@@ -4,13 +4,7 @@ export class Routine {
 	readonly name;
 	private readonly func;
 
-	constructor({
-		name,
-		func,
-	}: {
-		name: string;
-		func: () => Promise<void>;
-	}) {
+	constructor({ name, func }: { name: string; func: () => Promise<void> }) {
 		this.name = name;
 		this.func = func;
 	}

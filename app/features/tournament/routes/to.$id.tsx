@@ -1,6 +1,6 @@
 import * as React from "react";
-import type { MetaFunction } from "react-router";
 import {
+	type MetaFunction,
 	Outlet,
 	type ShouldRevalidateFunction,
 	useLoaderData,
@@ -8,8 +8,8 @@ import {
 } from "react-router";
 import { containerClassName, Main } from "~/components/Main";
 import { isMatchResultsScopedRevalidation } from "~/features/chat/revalidation-scope";
-import { TournamentProvider } from "~/features/tournament/tournament-context";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import { TournamentProvider } from "~/features/tournament/tournament-context";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
 import { isRevalidation, metaTags } from "../../../utils/remix";

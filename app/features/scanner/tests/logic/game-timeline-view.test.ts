@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { gameTimelineProps } from "../../components/game-timeline-view";
 import type { ScannerMatch, ScannerMatchKill } from "../../core/scanner-match";
 
@@ -87,7 +87,7 @@ describe("gameTimelineProps", () => {
 			LABELS,
 		);
 
-		expect(props.objectiveEvents![0]!.data).toMatchObject({
+		expect(props.objectiveEvents![0].data).toMatchObject({
 			score: [null, 60],
 			control: 1,
 			position: -40,

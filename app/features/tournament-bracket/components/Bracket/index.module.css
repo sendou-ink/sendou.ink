@@ -36,11 +36,8 @@
 			max-height: max(
 				300px,
 				calc(
-					100dvh -
-					var(--bracket-fill-top, 30dvh) -
-					var(--layout-nav-height) -
-					env(safe-area-inset-bottom) -
-					var(--s-3)
+					100dvh - var(--bracket-fill-top, 30dvh) - var(--layout-nav-height) -
+						env(safe-area-inset-bottom) - var(--s-3)
 				)
 			);
 		}

@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { describe, expect, test } from "vitest";
 import type { CustomTheme } from "~/db/tables-json";
 import { isInSrgbGamut, type Oklch } from "~/utils/oklch-gamut";
 import { THEME_INPUT_LIMITS } from "~/utils/schema";
@@ -331,6 +331,7 @@ function varsCssColors() {
 			throw new Error(`cannot evaluate ${expression}`);
 		}
 
+		// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval -- input is validated to be plain arithmetic
 		return new Function(`return ${arithmetic}`)();
 	};
 

@@ -11,12 +11,12 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import * as Matches from "../core/Matches";
 import * as Scoreboards from "../core/Scoreboards";
-import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import {
+	ingestBodySchema,
 	type IngestedMatchLink,
 	type IngestResponse,
-	ingestBodySchema,
 } from "../scanner-ingest-schemas";
+import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 
 /** How far back the POV user's reported games are content-resolution candidates */
 const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
@@ -90,15 +90,15 @@ export const action = defineAction(
 
 			linkedGamesCount = await ScannerIngestRepository.addLinks({
 				links: matched.map(({ matchIndex, game }) => ({
-					ingestedMatchId: effectiveMatches[matchIndex]!.id,
-					match: effectiveMatches[matchIndex]!.data,
+					ingestedMatchId: effectiveMatches[matchIndex].id,
+					match: effectiveMatches[matchIndex].data,
 					game,
 				})),
 				povUserId,
 			});
 
 			linkedMatches = matched.map(({ matchIndex, game }) => ({
-				matchIndex: indexedMatches[matchIndex]!.requestIndex,
+				matchIndex: indexedMatches[matchIndex].requestIndex,
 				link: ingestedMatchLink(resolved.context, game.target),
 			}));
 
@@ -190,7 +190,7 @@ async function resolveIngestContext({
 	casterUserId: number | null;
 }): Promise<ResolvedIngestContext | null> {
 	const anchors = activityAnchors(matches);
-	const at = anchors[0]!;
+	const at = anchors[0];
 	const hasPovMatches = matches.some((match) => !match.cast);
 	const hasCastMatches = matches.some((match) => match.cast);
 

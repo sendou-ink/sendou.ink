@@ -53,8 +53,8 @@ import { StreamListItems } from "../StreamListItems";
 import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
-import { LogInButtonContainer } from "./LogInButtonContainer";
 import { authErrorSearchParams } from "./layout-search-params";
+import { LogInButtonContainer } from "./LogInButtonContainer";
 import { NotificationPopover, useNotifications } from "./NotificationPopover";
 import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
@@ -135,7 +135,7 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 
 	const setCollapsedAndPersist = (value: boolean) => {
 		setCollapsed(value);
-		fetcher.submit(
+		void fetcher.submit(
 			{ collapsed: String(value) },
 			{ method: "POST", action: SIDENAV_ACTION },
 		);
@@ -248,22 +248,16 @@ export function Layout({
 	useScrollLock(sideNavDrawerOpen);
 	useVisualViewport();
 
-	const { t } = useTranslation(["front", "common", "friends"]);
 	const location = useLocation();
 	const [authError] = useSearchParam(authErrorSearchParams, "authError");
 	const headerRef = React.useRef<HTMLElement>(null);
 	const { navOffset, revealNav } = useNavOffset(headerRef);
 	useRevealNavOnStatusChange(revealNav);
 
-	const user = useUser();
 	const { sidebar: sidebarData } = useLayoutData();
-	const events = sidebarData?.events ?? [];
-	const friends = sidebarData?.friends ?? [];
 	const unseenFriendRequests = useUnseenFriendRequests(
 		sidebarData?.incomingFriendRequestIds ?? [],
 	);
-	const streams = sidebarData?.streams ?? [];
-	const showScheduleNudge = sidebarData?.scheduleNudge ?? false;
 
 	const isFrontPage = location.pathname === "/";
 
@@ -278,7 +272,127 @@ export function Layout({
 		</SideNavFooter>
 	);
 
-	const sideNavChildren = (
+	return (
+		<>
+			<SideNav
+				ref={sideNavRef}
+				id={sideNavId}
+				popover="auto"
+				tabIndex={-1}
+				onToggle={(event) => {
+					if (!isOwnToggle(event)) return;
+					const open = event.newState === "open";
+					setSideNavDrawerOpen(open);
+					if (open) event.currentTarget.focus();
+				}}
+				className={clsx(
+					styles.sideNavDrawer,
+					showLeaderboard && styles.sidebarFuseSpace,
+				)}
+				collapsed={sideNavCollapsed}
+				footer={sideNavFooterContent}
+				top={<SiteTitle />}
+				topCentered={isFrontPage}
+			>
+				<SideNavSections
+					sidebarData={sidebarData}
+					unseenFriendRequests={unseenFriendRequests}
+				/>
+			</SideNav>
+			<MobileNav sidebarData={sidebarData} />
+			<div className={styles.container}>
+				<header
+					ref={headerRef}
+					className={styles.header}
+					style={{
+						transform: `translateY(${navOffset}px)`,
+					}}
+				>
+					<Link
+						to="/"
+						prefetch="intent"
+						className={clsx(styles.siteLogo, styles.mobileLogo)}
+					>
+						<SiteLogoContent />
+					</Link>
+					<SideNavCollapseButton
+						popoverTarget={sideNavId}
+						className={styles.sideNavModalTrigger}
+						showNotificationDotIfUnseen={!sideNavDrawerOpen}
+						badgeCount={!sideNavDrawerOpen ? unseenFriendRequests : 0}
+						testId="sidenav-modal-trigger"
+					/>
+					<form
+						method="post"
+						action={SIDENAV_ACTION}
+						className={styles.sideNavCollapseForm}
+						onSubmit={(event) => {
+							event.preventDefault();
+							setSideNavCollapsed(!sideNavCollapsed);
+						}}
+					>
+						<input
+							type="hidden"
+							name="collapsed"
+							value={String(!sideNavCollapsed)}
+						/>
+						<input
+							type="hidden"
+							name="returnTo"
+							value={`${location.pathname}${location.search}`}
+						/>
+						<SideNavCollapseButton
+							type="submit"
+							className={styles.sideNavCollapseButton}
+							showNotificationDotIfUnseen={sideNavCollapsed}
+							badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
+							testId="sidenav-collapse-button"
+						/>
+					</form>
+					<TopNavMenus />
+					<TopRightButtons
+						showSupport={Boolean(
+							data && !data?.user?.roles.includes("MINOR_SUPPORT"),
+						)}
+						isLoggedIn={Boolean(data?.user)}
+					/>
+					<div id={NPROGRESS_ANCHOR_ID} aria-hidden />
+				</header>
+				{showLeaderboard ? (
+					<FuseZone
+						id="fuse-header"
+						fuseSlot="header"
+						className="top-leaderboard"
+					/>
+				) : null}
+				{children}
+				<Footer />
+			</div>
+			<DesktopChatSidebar showLeaderboard={showLeaderboard} />
+			{typeof authError === "string" ? (
+				<React.Suspense>
+					<AuthErrorDialog />
+				</React.Suspense>
+			) : null}
+		</>
+	);
+}
+
+function SideNavSections({
+	sidebarData,
+	unseenFriendRequests,
+}: {
+	sidebarData: ReturnType<typeof useLayoutData>["sidebar"];
+	unseenFriendRequests: number;
+}) {
+	const { t } = useTranslation(["front", "common", "friends"]);
+	const user = useUser();
+	const events = sidebarData?.events ?? [];
+	const friends = sidebarData?.friends ?? [];
+	const streams = sidebarData?.streams ?? [];
+	const showScheduleNudge = sidebarData?.scheduleNudge ?? false;
+
+	return (
 		<>
 			<SideNavHeader
 				icon={<Calendar />}
@@ -373,108 +487,6 @@ export function Layout({
 				isLoggedIn={Boolean(user)}
 				savedTournamentIds={sidebarData?.savedTournamentIds}
 			/>
-		</>
-	);
-
-	return (
-		<>
-			<SideNav
-				ref={sideNavRef}
-				id={sideNavId}
-				popover="auto"
-				tabIndex={-1}
-				onToggle={(event) => {
-					if (!isOwnToggle(event)) return;
-					const open = event.newState === "open";
-					setSideNavDrawerOpen(open);
-					if (open) event.currentTarget.focus();
-				}}
-				className={clsx(
-					styles.sideNavDrawer,
-					showLeaderboard && styles.sidebarFuseSpace,
-				)}
-				collapsed={sideNavCollapsed}
-				footer={sideNavFooterContent}
-				top={<SiteTitle />}
-				topCentered={isFrontPage}
-			>
-				{sideNavChildren}
-			</SideNav>
-			<MobileNav sidebarData={sidebarData} />
-			<div className={styles.container}>
-				<header
-					ref={headerRef}
-					className={styles.header}
-					style={{
-						transform: `translateY(${navOffset}px)`,
-					}}
-				>
-					<Link
-						to="/"
-						prefetch="intent"
-						className={clsx(styles.siteLogo, styles.mobileLogo)}
-					>
-						<SiteLogoContent />
-					</Link>
-					<SideNavCollapseButton
-						popoverTarget={sideNavId}
-						className={styles.sideNavModalTrigger}
-						showNotificationDotIfUnseen={!sideNavDrawerOpen}
-						badgeCount={!sideNavDrawerOpen ? unseenFriendRequests : 0}
-						testId="sidenav-modal-trigger"
-					/>
-					<form
-						method="post"
-						action={SIDENAV_ACTION}
-						className={styles.sideNavCollapseForm}
-						onSubmit={(event) => {
-							event.preventDefault();
-							setSideNavCollapsed(!sideNavCollapsed);
-						}}
-					>
-						<input
-							type="hidden"
-							name="collapsed"
-							value={String(!sideNavCollapsed)}
-						/>
-						<input
-							type="hidden"
-							name="returnTo"
-							value={`${location.pathname}${location.search}`}
-						/>
-						<SideNavCollapseButton
-							type="submit"
-							className={styles.sideNavCollapseButton}
-							showNotificationDotIfUnseen={sideNavCollapsed}
-							badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
-							testId="sidenav-collapse-button"
-						/>
-					</form>
-					<TopNavMenus />
-					<TopRightButtons
-						showSupport={Boolean(
-							data && !data?.user?.roles.includes("MINOR_SUPPORT"),
-						)}
-						isLoggedIn={Boolean(data?.user)}
-					/>
-					<div id={NPROGRESS_ANCHOR_ID} aria-hidden />
-				</header>
-				{showLeaderboard ? (
-					<FuseZone
-						id="fuse-header"
-						fuseSlot="header"
-						className="top-leaderboard"
-					/>
-				) : null}
-				{children}
-				<Footer />
-			</div>
-			<DesktopChatSidebar showLeaderboard={showLeaderboard} />
-			{typeof authError === "string" ? (
-				<React.Suspense>
-					<AuthErrorDialog />
-				</React.Suspense>
-			) : null}
 		</>
 	);
 }

@@ -2,8 +2,8 @@ import * as R from "remeda";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import type { StreamPlatform } from "~/features/live-streams/live-streams-constants";
 import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
-import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import type {
 	Tournament,
 	TournamentStream,

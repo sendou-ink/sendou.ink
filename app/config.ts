@@ -15,7 +15,7 @@ const env =
 
 const isProd =
 	typeof import.meta.env !== "undefined" &&
-	import.meta.env.PROD === true &&
+	import.meta.env.PROD &&
 	!IS_E2E_TEST_RUN;
 
 const schema = v.object({

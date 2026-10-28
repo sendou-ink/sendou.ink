@@ -22,8 +22,8 @@ import { scannerSearchParams } from "../scanner-search-params";
 import { MAX_HISTORY_CLIPS, type ScannerClip } from "../store/clips";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
 import { ClipDialog } from "./ClipDialog";
-import { ClipStrip } from "./ClipStrip";
 import { useClips } from "./clips-feed";
+import { ClipStrip } from "./ClipStrip";
 import { useFeed } from "./events-feed";
 import styles from "./LandingView.module.css";
 import { getLiveSession, startCapture, useLiveSession } from "./live-session";
@@ -90,7 +90,6 @@ export function LandingView() {
 	};
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop target for the whole landing; the file input is the accessible path
 		<div
 			className={clsx(styles.landing, { [styles.over]: over })}
 			onDragOver={(e) => {

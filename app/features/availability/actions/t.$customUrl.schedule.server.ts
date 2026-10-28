@@ -1,14 +1,14 @@
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { teamParamsSchema } from "~/features/team/team-schemas.server";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { teamScheduleActionSchema } from "../availability-schemas";
+import * as AvailabilityRepository from "../AvailabilityRepository.server";
 
 export const action = defineAction(
 	{ params: teamParamsSchema, body: teamScheduleActionSchema },

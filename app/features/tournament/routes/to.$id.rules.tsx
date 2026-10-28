@@ -21,11 +21,11 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TournamentRulesPage() {
-	const { rules } = useLoaderData<typeof loader>();
+	const { rulesHtml } = useLoaderData<typeof loader>();
 
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
-			{rules ? <MarkdownSection>{rules}</MarkdownSection> : null}
+			{rulesHtml ? <MarkdownSection html={rulesHtml} /> : null}
 			<OrganizerMapPool />
 			<TeamPickRules />
 		</div>

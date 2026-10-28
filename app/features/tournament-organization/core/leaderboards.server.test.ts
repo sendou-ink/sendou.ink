@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";

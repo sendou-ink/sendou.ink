@@ -47,12 +47,12 @@ export function scannerMatch(
 		teams: [
 			{
 				players: NAMES.slice(0, 4).map((name, i) =>
-					scannerMatchPlayer(name, WEAPONS[i]!),
+					scannerMatchPlayer(name, WEAPONS[i]),
 				),
 			},
 			{
 				players: NAMES.slice(4).map((name, i) =>
-					scannerMatchPlayer(name, WEAPONS[4 + i]!),
+					scannerMatchPlayer(name, WEAPONS[4 + i]),
 				),
 			},
 		],

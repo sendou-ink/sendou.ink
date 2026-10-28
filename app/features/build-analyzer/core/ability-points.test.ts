@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import { buildToAbilityPoints } from "./ability-points";
 

@@ -29,7 +29,7 @@ export function useActionSubmit<TSchema extends AnySchema>(
 
 	const submit = <const TAction extends ActionsOf<TSchema>>(
 		action: TAction,
-		// biome-ignore lint/complexity/noBannedTypes: {} models "branch with no extra fields"
+		// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- {} models "branch with no extra fields"
 		...rest: {} extends FieldsOf<TSchema, TAction>
 			? [fields?: FieldsOf<TSchema, TAction>]
 			: [fields: FieldsOf<TSchema, TAction>]
@@ -39,9 +39,7 @@ export function useActionSubmit<TSchema extends AnySchema>(
 		if (opts?.encType === "application/json") {
 			void holdRevalidationsDuring(() =>
 				fetcher.submit(
-					{ _action: action, ...fields } as Parameters<
-						typeof fetcher.submit
-					>[0],
+					{ _action: action, ...fields },
 					{ method: "post", action: opts?.action, encType: "application/json" },
 				),
 			);

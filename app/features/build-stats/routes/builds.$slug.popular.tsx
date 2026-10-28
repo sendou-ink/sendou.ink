@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
-import { EmptyState } from "~/components/EmptyState";
 import { SendouSection } from "~/components/elements/Section";
+import { EmptyState } from "~/components/EmptyState";
 import { WeaponBuildsLayout } from "~/features/builds/components/WeaponBuildsLayout";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {

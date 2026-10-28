@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { wrappedAction } from "~/utils/Test";
@@ -10,9 +10,11 @@ const newVodAction = wrappedAction<typeof vodFormSchemaServer>({
 	isJsonSubmission: true,
 });
 
-const weaponPoolOf = (count: number) =>
+const weaponPoolOf = (
+	count: number,
+): Array<{ id: MainWeaponId; isFavorite: boolean }> =>
 	Array.from({ length: count }, () => ({
-		id: 1000 as MainWeaponId,
+		id: 1000,
 		isFavorite: false,
 	}));
 

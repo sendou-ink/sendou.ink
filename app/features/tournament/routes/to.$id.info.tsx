@@ -9,7 +9,6 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { removeMarkdown } from "~/utils/strings";
 import { tournamentPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.info.server";
 import { FactCardGrid, type FactCardItem } from "../components/FactCard";
@@ -34,9 +33,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 
 	return metaTags({
 		title: tournamentData.ctx.name,
-		description: args.loaderData?.description
-			? removeMarkdown(args.loaderData.description)
-			: undefined,
+		description: args.loaderData?.metaDescription ?? undefined,
 		image: {
 			url: tournamentData.ctx.logoUrl,
 			dimensions: { width: 124, height: 124 },
@@ -66,8 +63,8 @@ export default function TournamentInfoPage() {
 				/>
 			</div>
 			<RegistrationActions tournament={tournament} />
-			{data.description ? (
-				<MarkdownSection>{data.description}</MarkdownSection>
+			{data.descriptionHtml ? (
+				<MarkdownSection html={data.descriptionHtml} />
 			) : null}
 		</div>
 	);

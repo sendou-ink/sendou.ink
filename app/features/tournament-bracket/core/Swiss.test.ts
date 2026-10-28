@@ -1,12 +1,12 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { TournamentStageSettings } from "~/db/tables-json";
-import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	LOW_INK_AUGUST_2025,
 	LOW_INK_AUGUST_2026_ROUND_3,
 	RUSH_WEEKEND_3,
 } from "~/features/tournament-bracket/core/tests/mocks-swiss";
 import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
+import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { invariant } from "~/utils/invariant";
 import { unwrap } from "~/utils/result";
 import * as Engine from "./engine";
@@ -120,7 +120,7 @@ describe("Swiss", () => {
 			const bracket = tournament.bracketByIdx(0)!;
 
 			const matches = unwrap(
-				Engine.generateRound(bracket.data as Engine.BracketData, {
+				Engine.generateRound(bracket.data, {
 					groupId: 4443,
 					standings: bracket.standings,
 					settings: bracket.settings,
@@ -316,7 +316,7 @@ describe("Swiss", () => {
 	});
 
 	describe("pairUp()", () => {
-		test.for(PAIR_UP_TEST_CASES)(
+		test.each(PAIR_UP_TEST_CASES.map((testCase) => [testCase]))(
 			"all teams have matches (pair up test cases idx %#)",
 			(testCase) => {
 				const result = Swiss.pairUp(testCase);
@@ -333,7 +333,7 @@ describe("Swiss", () => {
 			},
 		);
 
-		test.for(PAIR_UP_TEST_CASES)(
+		test.each(PAIR_UP_TEST_CASES.map((testCase) => [testCase]))(
 			"every pair is max one set win from each other (pair up test cases idx %#)",
 			(testCase) => {
 				const result = Swiss.pairUp(testCase);
@@ -357,7 +357,7 @@ describe("Swiss", () => {
 			},
 		);
 
-		test.for(PAIR_UP_TEST_CASES)(
+		test.each(PAIR_UP_TEST_CASES.map((testCase) => [testCase]))(
 			"matches perfect records against each other as much as possible (pair up test cases idx %#)",
 			(testCase) => {
 				const result = Swiss.pairUp(testCase);
@@ -394,7 +394,7 @@ describe("Swiss", () => {
 			},
 		);
 
-		test.for(PAIR_UP_TEST_CASES)(
+		test.each(PAIR_UP_TEST_CASES.map((testCase) => [testCase]))(
 			"generates max one bye (pair up test cases idx %#)",
 			(testCase) => {
 				const result = Swiss.pairUp(testCase);

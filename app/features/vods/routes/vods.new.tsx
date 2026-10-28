@@ -137,7 +137,7 @@ function vodToEditToFormValues(vodToEdit: VodToEdit) {
 		matches: vodToEdit.matches.map((match: VodToEdit["matches"][number]) => ({
 			startsAt: match.startsAt,
 			mode: match.mode,
-			stageId: match.stageId as StageId,
+			stageId: match.stageId,
 			weapon: isCast ? undefined : (match.weapons[0] ?? undefined),
 			weaponsTeamOne: isCast
 				? match.weapons
@@ -171,10 +171,8 @@ function vodPrefillToFormValues(prefill: VodPrefill) {
 		matches: prefill.matches.map((match) => ({
 			startsAt: match.startsAt,
 			mode: match.mode ?? ("SZ" as const),
-			stageId: (match.stageId ?? 1) as StageId,
-			weapon: isCast
-				? undefined
-				: ((match.povWeapon ?? undefined) as MainWeaponId | undefined),
+			stageId: match.stageId ?? 1,
+			weapon: isCast ? undefined : (match.povWeapon ?? undefined),
 			weaponsTeamOne: isCast
 				? weaponPoolFromPrefill(match.weapons.slice(0, teamSize))
 				: ([] as WeaponPoolItem[]),
@@ -285,12 +283,7 @@ function VodFormFields({
 						index={ctx.index}
 						itemName={ctx.itemName}
 						values={ctx.values as unknown as MatchFieldValues}
-						setItemField={
-							ctx.setItemField as <K extends keyof MatchFieldValues>(
-								field: K,
-								value: MatchFieldValues[K],
-							) => void
-						}
+						setItemField={ctx.setItemField}
 						canRemove={ctx.canRemove}
 						remove={ctx.remove}
 						player={player}
@@ -647,7 +640,7 @@ function TeamWeaponSelects({
 						key={i}
 						isRequired
 						testId={`match-${matchIndex}-team${teamNumber}-weapon-${i}`}
-						value={(weapons[i]?.id as MainWeaponId) ?? null}
+						value={weapons[i]?.id ?? null}
 						quickSelectWeaponsIds={quickSelectWeaponsIds}
 						onChange={(weaponId) => onChange(i, weaponId)}
 					/>

@@ -4,10 +4,10 @@ import { calculateTentativeTier } from "~/features/tournament/core/tiering";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { eventLeaderboards } from "../core/leaderboards.server";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_SERIES_LEADERBOARD_SIZE } from "../tournament-organization-constants";
 import { tournamentOrganizationSearchParams } from "../tournament-organization-search-params";
 import { organizationFromParams } from "../tournament-organization-utils.server";
+import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 
 export type OrganizationPageLoaderData = SerializeFrom<typeof loader>;
 

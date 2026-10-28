@@ -53,8 +53,8 @@ import { userCardFriendshipSearchParams } from "../user-card-search-params";
 import type {
 	UserCardData,
 	UserCardFriendship,
-	UserCardStat,
 	UserCardsById,
+	UserCardStat,
 } from "../user-card-types";
 import styles from "./UserCard.module.css";
 
@@ -147,7 +147,7 @@ function UserCardPopover({
 		if (isOwnCard) return;
 
 		friendshipLoadedRef.current = true;
-		fetcher.load(
+		void fetcher.load(
 			userCardFriendshipSearchParams.href(userCardFriendshipPage(data.id), {
 				mutuals: withMutualFriends,
 			}),
@@ -573,7 +573,7 @@ function CardMutualFriends({
 	return (
 		<div className={styles.mutualFriends}>
 			{friendship === undefined ? null : friendship.mutualFriends.length ===
-				0 ? (
+			  0 ? (
 				<span className={styles.noMutualFriends}>
 					{t("user:card.noMutualFriends")}
 				</span>

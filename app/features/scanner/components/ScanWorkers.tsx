@@ -8,8 +8,8 @@ import { Check, X } from "lucide-react";
 import { formatPosition } from "../core/format";
 import { buildScannerMatches } from "../core/match-builder";
 import styles from "./ScanWorkers.module.css";
-import { StatusPill } from "./SessionHeader";
 import type { ScanEvent } from "./session-data";
+import { StatusPill } from "./SessionHeader";
 import {
 	setVodLaneCanvas,
 	useVodScanProgress,

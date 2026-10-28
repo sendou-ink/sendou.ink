@@ -14,7 +14,6 @@ import {
 } from "~/modules/in-game-lists/gear-ids";
 import type { GearType } from "~/modules/in-game-lists/types";
 import { brandImageUrl, gearImageUrl } from "~/utils/urls";
-
 import styles from "./GearSelect.module.css";
 
 interface GearSelectProps<Clearable extends boolean | undefined = undefined> {

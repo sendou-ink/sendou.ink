@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: stub file to enable different solution later */
+/* eslint-disable no-console -- stub file to enable different solution later */
 import { getSessionId as getClientSessionId } from "./session-id";
 
 declare global {

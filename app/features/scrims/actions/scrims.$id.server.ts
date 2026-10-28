@@ -45,7 +45,7 @@ export const action = defineAction(
 				await ScrimPostRepository.cancelScrim(id, body.reason);
 
 				if (post.chatRoomId) {
-					ChatSystemMessage.notifyRoomsChangedByRoomIds([post.chatRoomId]);
+					void ChatSystemMessage.notifyRoomsChangedByRoomIds([post.chatRoomId]);
 				}
 
 				const acceptedRequest = post.requests.find((r) => r.isAccepted);
@@ -53,7 +53,7 @@ export const action = defineAction(
 					const postTeamName = Scrim.sideDisplayName(post);
 					const requestTeamName = Scrim.sideDisplayName(acceptedRequest);
 
-					notify({
+					void notify({
 						userIds: post.users.map((m) => m.id),
 						defaultSeenUserIds: [user.id],
 						notification: {
@@ -62,7 +62,7 @@ export const action = defineAction(
 						},
 					});
 
-					notify({
+					void notify({
 						userIds: acceptedRequest.users.map((m) => m.id),
 						defaultSeenUserIds: [user.id],
 						notification: {
@@ -140,7 +140,7 @@ export const action = defineAction(
 
 				const target = maps.find((m) => m.id === body.mapId);
 				errorToastIfFalsy(target, "Map not found");
-				errorToastIfFalsy(target!.reportedAt === null, "Map already reported");
+				errorToastIfFalsy(target.reportedAt === null, "Map already reported");
 
 				await ScrimMapRepository.reportMapAndGenerateNext({
 					scrimPostId: post.id,
@@ -176,8 +176,8 @@ export const action = defineAction(
 
 				await ScrimMapRepository.replaceCurrentMap({
 					scrimPostId: post.id,
-					mode: latest!.mode,
-					stageId: latest!.stageId,
+					mode: latest.mode,
+					stageId: latest.stageId,
 				});
 
 				broadcastMapChange({ post, type: "MAP_REPLAYED", user });
@@ -253,7 +253,7 @@ function broadcastMapChange({
 	user: ReturnType<typeof requireUser>;
 }) {
 	if (!post.chatRoomId) return;
-	ChatSystemMessage.sendPersisted({
+	void ChatSystemMessage.sendPersisted({
 		roomId: post.chatRoomId,
 		type,
 		authorUserId: user.id,

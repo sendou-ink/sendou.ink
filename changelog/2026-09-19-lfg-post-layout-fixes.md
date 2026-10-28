@@ -2,6 +2,7 @@
 navItem: lfg
 type: bug
 ---
+
 LFG post layout fixes
 
 - Text is now no longer cut-off when there is page to show it

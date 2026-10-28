@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -18,7 +26,7 @@ const createOrg = () =>
 describe("org stats loader", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(new Date(2026, 0, 15));
+		setSystemTime(new Date(2026, 0, 15));
 		await users.create(5);
 	});
 

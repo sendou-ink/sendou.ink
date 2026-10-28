@@ -132,7 +132,7 @@ function NotificationsSection() {
 	const [result, setResult] = React.useState<string | null>(null);
 
 	React.useEffect(() => {
-		load(DEV_NOTIFICATIONS_URL);
+		void load(DEV_NOTIFICATIONS_URL);
 	}, [load]);
 
 	const send = async (sentType: string, which: "one" | "all") => {

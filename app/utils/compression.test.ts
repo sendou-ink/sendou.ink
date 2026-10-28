@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { compressToBase64, decompressFromBase64 } from "./compression";
 
 describe("compressToBase64 & decompressFromBase64", () => {

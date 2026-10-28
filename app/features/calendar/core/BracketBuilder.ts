@@ -42,10 +42,7 @@ export type CardFact =
 
 /** Reason a connection could not be made, see {@link connect}. */
 export type ConnectError =
-	| "SAME_BRACKET"
-	| "FIRST_BRACKET"
-	| "EARLIER_BRACKET"
-	| "CYCLE";
+	"SAME_BRACKET" | "FIRST_BRACKET" | "EARLIER_BRACKET" | "CYCLE";
 
 /** A group of teams of a bracket sharing a placement, e.g. both semifinal losers of a single elimination bracket. */
 export interface PlacementTier {

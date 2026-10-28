@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
@@ -13,7 +13,6 @@ import * as LobbyProgression from "~/features/lobbies/core/LobbyProgression.serv
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
 import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
-import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import {
 	runningTournamentWithMatch,
@@ -21,6 +20,7 @@ import {
 	tournamentCtxTeam,
 } from "~/features/tournament-bracket/core/tests/test-utils";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	lobbyPage,
@@ -32,12 +32,10 @@ import {
 } from "~/utils/urls";
 import { resolveGlobalStatus } from "./global-status.server";
 
-const { mockSeasonCurrentOrPrevious } = vi.hoisted(() => ({
-	mockSeasonCurrentOrPrevious: vi.fn(() => ({
-		nth: 1,
-		starts: new Date("2023-01-01"),
-		ends: new Date("2030-12-31"),
-	})),
+const mockSeasonCurrentOrPrevious = vi.fn(() => ({
+	nth: 1,
+	starts: new Date("2023-01-01"),
+	ends: new Date("2030-12-31"),
 }));
 
 vi.mock("~/features/mmr/core/Seasons", () => ({

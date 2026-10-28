@@ -16,11 +16,7 @@ import {
  * - `ENDED`: ended by the host or closed for inactivity
  */
 export type LobbyStatus =
-	| "UPCOMING"
-	| "CHECK_IN"
-	| "PENDING"
-	| "ACTIVE"
-	| "ENDED";
+	"UPCOMING" | "CHECK_IN" | "PENDING" | "ACTIVE" | "ENDED";
 
 const SECONDS_PER_MINUTE = 60;
 

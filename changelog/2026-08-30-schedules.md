@@ -2,6 +2,7 @@
 navItem: [calendar, scrims]
 type: feature
 ---
+
 Schedules: share when your availability and plan your team activities
 
 - Fill in your availability for this week and the next under "My schedule" on the events page

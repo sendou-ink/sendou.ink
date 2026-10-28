@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { sql } from "kysely";
-import { describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
 
 /** Integer primary keys that are some other table's id, not a generated one. */

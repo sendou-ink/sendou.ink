@@ -2,7 +2,6 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
-import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
@@ -10,18 +9,19 @@ import {
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TournamentLFG from "../core/TournamentLFG";
-import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { lookingSchema } from "../tournament-lfg-schemas";
 import {
 	tournamentLFGChannel,
 	tournamentLFGGroupChannel,
 } from "../tournament-lfg-utils";
+import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 
 export const action = defineAction(
 	{ body: lookingSchema },
@@ -122,7 +122,7 @@ export const action = defineAction(
 					targetTeamId: body.targetTeamId,
 				});
 
-				notify({
+				void notify({
 					userIds: targetGroup.members.map((m) => m.id),
 					notification: {
 						type: "TO_LIKE_RECEIVED",
@@ -216,7 +216,7 @@ export const action = defineAction(
 
 				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
-				notify({
+				void notify({
 					userIds: theirGroup.members.map((m) => m.id),
 					notification: {
 						type: "TO_LIKE_ACCEPTED",

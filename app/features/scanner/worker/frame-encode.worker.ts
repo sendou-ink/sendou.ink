@@ -3,9 +3,9 @@
  * (frame-encode.ts), so the synchronous WebP encode stays off its thread.
  */
 import {
+	encodeFrame,
 	type EncodeRequest,
 	type EncodeResponse,
-	encodeFrame,
 } from "./frame-encode";
 
 self.onmessage = async (e: MessageEvent<EncodeRequest>) => {

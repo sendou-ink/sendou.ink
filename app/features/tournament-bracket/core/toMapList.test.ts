@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { Tables } from "~/db/tables";
 import { SENDOUQ_MAP_POOL } from "~/features/match-profile/banned-maps";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -6,8 +6,8 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { RoundData } from "./engine/types";
 import {
 	type BracketMapCounts,
-	type GenerateTournamentRoundMaplistArgs,
 	generateTournamentRoundMaplist,
+	type GenerateTournamentRoundMaplistArgs,
 	roundSetKey,
 } from "./toMapList";
 

@@ -17,7 +17,7 @@ export function adminStreamFormSchemaServer({
 		adminStreamFormSchema,
 		superTransformAsync(async (data, ctx) => {
 			const resolved = await Promise.all(
-				data.castAccounts.map((input) => {
+				data.castAccounts.map(async (input) => {
 					const parsed = StreamAccountInput.parse(input);
 					return parsed
 						? resolveCastAccount(parsed, currentCastAccounts)

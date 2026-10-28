@@ -301,7 +301,7 @@ export function rosterFit({
 	starts: Array<number>;
 	members: Array<WindowSchedule>;
 }): RosterFit | null {
-	if (members.length === 0 || members.every((member) => !member.reported)) {
+	if (members.every((member) => !member.reported)) {
 		return null;
 	}
 

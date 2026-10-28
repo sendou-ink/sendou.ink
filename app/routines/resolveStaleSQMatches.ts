@@ -3,9 +3,9 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
-import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
+import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 

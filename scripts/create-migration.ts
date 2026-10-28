@@ -19,7 +19,7 @@ function main() {
 	const description = toKebabCase(process.argv.slice(2).join(" "));
 	if (!description) {
 		throw new Error(
-			'Missing migration description e.g. pnpm run migrate:new "add user pronouns"',
+			'Missing migration description e.g. bun run migrate:new "add user pronouns"',
 		);
 	}
 
@@ -32,7 +32,7 @@ function main() {
 
 	fs.writeFileSync(filePath, TEMPLATE);
 
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.log(`Created migrations/${fileName}`);
 }
 
@@ -60,7 +60,7 @@ function toKebabCase(input: string) {
 try {
 	main();
 } catch (error) {
-	// biome-ignore lint/suspicious/noConsole: CLI script output
+	// eslint-disable-next-line no-console -- CLI script output
 	console.error((error as Error).message);
 	process.exit(1);
 }

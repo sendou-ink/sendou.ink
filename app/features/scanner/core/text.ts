@@ -7,17 +7,17 @@ export function editDistance(a: string, b: string): number {
 		row[0] = i;
 		return row;
 	});
-	for (let j = 0; j <= b.length; j++) dp[0]![j] = j;
+	for (let j = 0; j <= b.length; j++) dp[0][j] = j;
 	for (let i = 1; i <= a.length; i++) {
 		for (let j = 1; j <= b.length; j++) {
-			dp[i]![j] = Math.min(
-				dp[i - 1]![j]! + 1,
-				dp[i]![j - 1]! + 1,
-				dp[i - 1]![j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1),
+			dp[i][j] = Math.min(
+				dp[i - 1][j] + 1,
+				dp[i][j - 1] + 1,
+				dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
 			);
 		}
 	}
-	return dp[a.length]![b.length]!;
+	return dp[a.length][b.length];
 }
 
 /** Case-, space- and diacritic-insensitive comparison key (é≈e), so an accent misread stays a near-match. */
@@ -121,19 +121,19 @@ export function rankByRead<T>(
 			const dp = Array.from({ length: n + 1 }, () =>
 				new Array<number>(m + 1).fill(0),
 			);
-			for (let i = 1; i <= n; i++) dp[i]![0] = i;
-			for (let j = 1; j <= m; j++) dp[0]![j] = j;
+			for (let i = 1; i <= n; i++) dp[i][0] = i;
+			for (let j = 1; j <= m; j++) dp[0][j] = j;
 			for (let i = 1; i <= n; i++) {
 				for (let j = 1; j <= m; j++) {
-					const sub = 1 - (segScores[i - 1]!.get(t[j - 1]!) ?? 0);
-					dp[i]![j] = Math.min(
-						dp[i - 1]![j]! + 1,
-						dp[i]![j - 1]! + 1,
-						dp[i - 1]![j - 1]! + sub,
+					const sub = 1 - (segScores[i - 1].get(t[j - 1]) ?? 0);
+					dp[i][j] = Math.min(
+						dp[i - 1][j] + 1,
+						dp[i][j - 1] + 1,
+						dp[i - 1][j - 1] + sub,
 					);
 				}
 			}
-			return { entry, score: 1 - dp[n]![m]! / Math.max(n, m, 1) };
+			return { entry, score: 1 - dp[n][m] / Math.max(n, m, 1) };
 		})
 		.sort((a, b) => b.score - a.score);
 }

@@ -17,14 +17,15 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent, Detector } from "../core/detectors/types";
 import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
@@ -57,8 +58,7 @@ for (const fixture of fixtures) {
 
 		if (!expectPositive) return;
 		const event = events.find((e) => e.type === PLAYER_STATUS_EVENT_TYPE) as
-			| DetectedEvent<PlayerStatusData>
-			| undefined;
+			DetectedEvent<PlayerStatusData> | undefined;
 		assert.ok(
 			event,
 			gate.pass
@@ -100,7 +100,7 @@ for (const fixture of fixtures) {
 					() => {
 						assert.equal(
 							event.data.special[side][slot],
-							expected.special![side]![slot],
+							expected.special![side][slot],
 							`special[${side}][${slot}] mismatch (${debug()})`,
 						);
 					},
@@ -115,7 +115,7 @@ for (const fixture of fixtures) {
 					() => {
 						assert.equal(
 							event.data.dead[side][slot],
-							expected.dead![side]![slot],
+							expected.dead![side][slot],
 							`dead[${side}][${slot}] mismatch (${debug()})`,
 						);
 					},
@@ -129,32 +129,31 @@ for (const fixture of fixtures) {
 // other detector's screen — their gates must stay quiet on these frames
 // (death excepted: its overlay rides live gameplay, see objective.test.ts).
 const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+	["scoreboard", createScoreboardDetector(resources)],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources),
 	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["death", createDeathDetector(resources) as Detector<unknown>],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-own", createScoreboardOwnDetector(resources)],
+	["death", createDeathDetector(resources)],
+	["map-start", createMapStartDetector(resources)],
+	["minimap", createMinimapDetector(resources)],
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "PlayerStatus",
 )) {
 	test(`other gates stay quiet on player-status/${fixture.name}`, async () => {
-		for (const [name, other] of otherDetectors) {
-			if (name === "death") continue;
-			const { gate } = await runDetectorOnFixture(other, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${name} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		await withFixtureFrame(fixture, (frame) => {
+			for (const [name, other] of otherDetectors) {
+				if (name === "death") continue;
+				const gate = other.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${name} gate fired (score=${gate.score.toFixed(3)})`,
+				);
+			}
+		});
 	});
 }
 

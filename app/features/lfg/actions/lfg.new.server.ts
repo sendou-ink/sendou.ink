@@ -6,9 +6,9 @@ import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { LFG_PAGE } from "~/utils/urls";
-import * as LFGRepository from "../LFGRepository.server";
 import { TEAM_POST_TYPES } from "../lfg-constants";
 import { lfgNewSchema } from "../lfg-schemas";
+import * as LFGRepository from "../LFGRepository.server";
 
 export const action = defineAction({ body: lfgNewSchema }, async ({ body }) => {
 	const user = requireUser();

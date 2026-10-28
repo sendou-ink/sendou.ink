@@ -6,7 +6,12 @@
  * scoreboard helpers with glyph sets rescaled to this screen.
  */
 import { getCV, type Mat } from "../../cv";
-import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
+import {
+	type GlyphSet,
+	type RecognizedText,
+	recognizeTextSteps,
+	scaleGlyphSet,
+} from "../../glyphs";
 import {
 	cropRoi,
 	frameGray,
@@ -35,8 +40,12 @@ import type {
 import { findPovIndex } from "../scoreboard/pov";
 import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
 import type { DetectedEvent, Detector, GateResult } from "../types";
-import { codeCharsetOf, parseReplayCodeSteps } from "./code";
-import { parseReplayHeaderSteps } from "./header";
+import {
+	codeCharsetOf,
+	type ParsedReplayCode,
+	parseReplayCodeSteps,
+} from "./code";
+import { type ParsedReplayHeader, parseReplayHeaderSteps } from "./header";
 import {
 	CODE_TEXT_HEIGHT,
 	GATE_CODE_BLUE_MAX,
@@ -56,16 +65,16 @@ import {
 	NAME_TEXT_HEIGHT,
 	nameRoi,
 	PAINT_DIGIT_HEIGHT,
-	PANEL_XS,
 	paintRoi,
 	paintSuffixRoi,
+	PANEL_XS,
 	povArrowRoi,
 	REPLAY_CODE_ROI,
 	RESULT_TAG_TEXT_HEIGHT,
-	ROW_CENTERS,
 	resultTagRoi,
-	STAT_DIGIT_HEIGHT,
+	ROW_CENTERS,
 	specialIconRoi,
+	STAT_DIGIT_HEIGHT,
 	statRoi,
 	TEAM_DIGIT_HEIGHT,
 	teamScoreRoi,
@@ -119,10 +128,7 @@ function greenFraction(frame: Mat, roi: Roi): number {
 	const n = cont.rows * cont.cols;
 	let green = 0;
 	for (let i = 0; i < n; i++) {
-		if (
-			d[i * 4 + 1]! > GATE_CODE_GREEN_MIN &&
-			d[i * 4 + 2]! < GATE_CODE_BLUE_MAX
-		)
+		if (d[i * 4 + 1] > GATE_CODE_GREEN_MIN && d[i * 4 + 2] < GATE_CODE_BLUE_MAX)
 			green++;
 	}
 	cont.delete();
@@ -240,7 +246,7 @@ export function createScoreboardBattleLogReplayDetector(
 		// knockout's full count reaches 500); never emitted as a score
 		const teamCrop = teamDigits ? cropRoi(gray, teamScoreRoi(dx)) : null;
 		const matchCrop = matchScoreDigits
-			? cropRoi(gray, MATCH_SCORE_ROIS[dx === 0 ? 0 : 1]!)
+			? cropRoi(gray, MATCH_SCORE_ROIS[dx === 0 ? 0 : 1])
 			: null;
 		const bright = resultGlyphs ? maxChannel(rgb, resultTagRoi(dx)) : null;
 		const [rowReads, teamScore, matchRead, resultRaw] = yield* all([
@@ -297,43 +303,12 @@ export function createScoreboardBattleLogReplayDetector(
 		const confidences = rowReads.flatMap((row) => row.confidences);
 		if (teamScore) confidences.push(teamScore.confidence);
 
-		let matchScore: ParsedNumber | null = matchRead;
-		if (matchScore) {
-			if (
-				matchScore.confidence < MATCH_SCORE_MIN_CONF ||
-				(matchScore.value !== null && matchScore.value > KO_MATCH_SCORE)
-			) {
-				matchScore = { ...matchScore, value: null };
-			}
-			confidences.push(matchScore.confidence);
-			// no number + a full team count = the KNOCKOUT! burst sits where the score
-			// would be; an unreadable banner on a lesser total stays null
-			if (
-				matchScore.value === null &&
-				teamScore?.value === FULL_COUNT_TEAM_SCORE
-			) {
-				matchScore = { ...matchScore, value: KO_MATCH_SCORE };
-			}
-		}
+		const matchScore = matchRead
+			? settleMatchScore(matchRead, teamScore)
+			: null;
+		if (matchScore) confidences.push(matchScore.confidence);
 
-		let result: PanelParse["result"] = null;
-		let resultReading = "";
-		let resultScore = 0;
-		if (resultRaw) {
-			resultReading = resultRaw.text;
-			if (resultReading) {
-				const match = closestBy(
-					resultReading,
-					RESULT_TAG_ENTRIES,
-					(e) => e.text,
-				);
-				if (match) {
-					resultScore = match.score;
-					if (match.score >= RESULT_MIN_SCORE)
-						result = match.entry.canonical as PanelResult;
-				}
-			}
-		}
+		const { result, resultReading, resultScore } = snapResultTag(resultRaw);
 
 		return {
 			players: rowReads.map((row) => row.player),
@@ -357,8 +332,8 @@ export function createScoreboardBattleLogReplayDetector(
 		const rgb = frameRgb(frame);
 
 		const [left, right, header, code] = yield* all([
-			parsePanelSteps(gray, rgb, PANEL_XS[0]!, speculative),
-			parsePanelSteps(gray, rgb, PANEL_XS[1]!, speculative),
+			parsePanelSteps(gray, rgb, PANEL_XS[0], speculative),
+			parsePanelSteps(gray, rgb, PANEL_XS[1], speculative),
 			headerTopGlyphs && headerBottomGlyphs
 				? parseReplayHeaderSteps(
 						gray,
@@ -373,17 +348,7 @@ export function createScoreboardBattleLogReplayDetector(
 				: done(null),
 		]);
 
-		// winners first: confident VICTORY/DEFEAT tag, else the higher "Score:"
-		// banner, else left
-		let swapped = false;
-		if (left.result !== null || right.result !== null) {
-			swapped = left.result === "DEFEAT" || right.result === "VICTORY";
-		} else if (
-			left.matchScore?.value != null &&
-			right.matchScore?.value != null
-		) {
-			swapped = right.matchScore.value > left.matchScore.value;
-		}
+		const swapped = winnersOnRight(left, right);
 		const [winner, loser] = swapped ? [right, left] : [left, right];
 		// POV arrow row, indexed into the winners-first players ordering
 		const povIndex = findPovIndex(
@@ -406,45 +371,16 @@ export function createScoreboardBattleLogReplayDetector(
 				type: SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 				t,
 				confidence,
-				data: {
-					lobby: header?.lobby ?? null,
-					mode: header?.mode ?? null,
-					stage: header?.stage ?? null,
-					timestamp: header?.timestamp ?? null,
-					replayCode: code?.code ?? null,
-					matchScores: [
-						winner.matchScore?.value ?? null,
-						loser.matchScore?.value ?? null,
-					],
-					players: [...winner.players, ...loser.players],
-					povIndex,
-				},
-				debug: {
-					rows: [...winner.rows, ...loser.rows],
-					teamScoreConf: [
-						winner.teamScore?.confidence ?? 0,
-						loser.teamScore?.confidence ?? 0,
-					],
-					matchScoreConf: [
-						winner.matchScore?.confidence ?? 0,
-						loser.matchScore?.confidence ?? 0,
-					],
-					header: header?.debug,
-					codeRaw: code?.raw.text,
-					winnerSide: swapped ? "right" : "left",
-					resultTags: {
-						left: {
-							reading: left.resultReading,
-							score: left.resultScore,
-							result: left.result,
-						},
-						right: {
-							reading: right.resultReading,
-							score: right.resultScore,
-							result: right.result,
-						},
-					},
-				},
+				data: replayData(winner, loser, header, code, povIndex),
+				debug: replayDebug({
+					left,
+					right,
+					winner,
+					loser,
+					header,
+					code,
+					swapped,
+				}),
 			},
 		];
 	}
@@ -458,5 +394,120 @@ export function createScoreboardBattleLogReplayDetector(
 		parse: (frame, t, gateResult) =>
 			runSync(parseSteps(frame, t, gateResult, false)),
 		parseSteps,
+	};
+}
+
+function settleMatchScore(
+	matchRead: ParsedNumber,
+	teamScore: ParsedNumber | null,
+): ParsedNumber {
+	let matchScore = matchRead;
+	if (
+		matchScore.confidence < MATCH_SCORE_MIN_CONF ||
+		(matchScore.value !== null && matchScore.value > KO_MATCH_SCORE)
+	) {
+		matchScore = { ...matchScore, value: null };
+	}
+	// no number + a full team count = the KNOCKOUT! burst sits where the score
+	// would be; an unreadable banner on a lesser total stays null
+	if (matchScore.value === null && teamScore?.value === FULL_COUNT_TEAM_SCORE) {
+		matchScore = { ...matchScore, value: KO_MATCH_SCORE };
+	}
+	return matchScore;
+}
+
+function snapResultTag(
+	resultRaw: RecognizedText | null,
+): Pick<PanelParse, "result" | "resultReading" | "resultScore"> {
+	const resultReading = resultRaw?.text ?? "";
+	const match = resultReading
+		? closestBy(resultReading, RESULT_TAG_ENTRIES, (e) => e.text)
+		: null;
+	if (!match) return { result: null, resultReading, resultScore: 0 };
+	return {
+		result:
+			match.score >= RESULT_MIN_SCORE
+				? (match.entry.canonical as PanelResult)
+				: null,
+		resultReading,
+		resultScore: match.score,
+	};
+}
+
+/** Winners first: confident VICTORY/DEFEAT tag, else the higher "Score:" banner, else left. */
+function winnersOnRight(left: PanelParse, right: PanelParse): boolean {
+	if (left.result !== null || right.result !== null) {
+		return left.result === "DEFEAT" || right.result === "VICTORY";
+	}
+	if (left.matchScore?.value != null && right.matchScore?.value != null) {
+		return right.matchScore.value > left.matchScore.value;
+	}
+	return false;
+}
+
+function replayData(
+	winner: PanelParse,
+	loser: PanelParse,
+	header: ParsedReplayHeader | null,
+	code: ParsedReplayCode | null,
+	povIndex: ScoreboardBattleLogReplayData["povIndex"],
+): ScoreboardBattleLogReplayData {
+	return {
+		lobby: header?.lobby ?? null,
+		mode: header?.mode ?? null,
+		stage: header?.stage ?? null,
+		timestamp: header?.timestamp ?? null,
+		replayCode: code?.code ?? null,
+		matchScores: [
+			winner.matchScore?.value ?? null,
+			loser.matchScore?.value ?? null,
+		],
+		players: [...winner.players, ...loser.players],
+		povIndex,
+	};
+}
+
+function replayDebug({
+	left,
+	right,
+	winner,
+	loser,
+	header,
+	code,
+	swapped,
+}: {
+	left: PanelParse;
+	right: PanelParse;
+	winner: PanelParse;
+	loser: PanelParse;
+	header: ParsedReplayHeader | null;
+	code: ParsedReplayCode | null;
+	swapped: boolean;
+}) {
+	return {
+		rows: [...winner.rows, ...loser.rows],
+		teamScoreConf: [
+			winner.teamScore?.confidence ?? 0,
+			loser.teamScore?.confidence ?? 0,
+		],
+		matchScoreConf: [
+			winner.matchScore?.confidence ?? 0,
+			loser.matchScore?.confidence ?? 0,
+		],
+		header: header?.debug,
+		codeRaw: code?.raw.text,
+		winnerSide: swapped ? "right" : "left",
+		resultTags: {
+			left: {
+				reading: left.resultReading,
+				score: left.resultScore,
+				result: left.result,
+			},
+			right: {
+				reading: right.resultReading,
+				score: right.resultScore,
+				result: right.result,
+			},
+		},
 	};
 }

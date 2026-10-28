@@ -45,8 +45,7 @@ export const DAMAGE_RECEIVERS = [
 ] as const;
 
 type ReceiverTranslation =
-	| { key: string }
-	| { weaponKey: string; suffixKey: string };
+	{ key: string } | { weaponKey: string; suffixKey: string };
 
 /** i18n key(s) per damage receiver: a plain weapon/mode name or a weapon name plus a suffix ("<weapon> Canopy"). */
 const damageReceiverTranslations: Record<DamageReceiver, ReceiverTranslation> =

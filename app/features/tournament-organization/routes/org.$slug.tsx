@@ -779,7 +779,7 @@ function TrophyModalTournaments({ trophyId }: { trophyId: number }) {
 	React.useEffect(() => {
 		if (loadedRef.current) return;
 		loadedRef.current = true;
-		fetcher.load(trophyTournamentsPage(trophyId));
+		void fetcher.load(trophyTournamentsPage(trophyId));
 	}, [fetcher.load, trophyId]);
 
 	if (!fetcher.data || fetcher.data.tournaments.length === 0) return null;

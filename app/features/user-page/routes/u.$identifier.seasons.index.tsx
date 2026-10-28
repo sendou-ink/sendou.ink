@@ -4,11 +4,11 @@ import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { EmptyState } from "~/components/EmptyState";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
+import { EmptyState } from "~/components/EmptyState";
 import { Image, TierImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";

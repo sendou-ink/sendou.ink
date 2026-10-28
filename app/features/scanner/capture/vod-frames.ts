@@ -54,7 +54,7 @@ async function* seekFrames(
 	video: HTMLVideoElement,
 	nextStrideS: () => number,
 ): AsyncGenerator<VodFrame> {
-	for (let t = 0; t < video.duration; ) {
+	for (let t = 0; t < video.duration;) {
 		await seekTo(video, t);
 		yield { frame: await createImageBitmap(video), t };
 		t += Math.max(0.01, nextStrideS());

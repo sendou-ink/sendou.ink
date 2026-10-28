@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
@@ -211,7 +211,7 @@ describe("Commitments.busyBlocksByUserIds", () => {
 		expect(blocks?.map((block) => block.name)).toEqual(["Elsewhere Open"]);
 	});
 
-	test("test and league tournaments are not blocks", async () => {
+	test("league and test tournaments are not blocks", async () => {
 		const testTournament = await TournamentFactory.create({
 			authorId: organizerId(),
 			startTimes: [WEEK_STARTS_AT + 3 * DAY],
@@ -349,7 +349,7 @@ async function setTournamentSettings(
 		.where("id", "=", tournamentId)
 		.executeTakeFirstOrThrow();
 
-	// biome-ignore lint/plugin: leagues are not created through app code, so no production write reaches isLeague
+	// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- leagues are not created through app code, so no production write reaches isLeague
 	await db
 		.updateTable("Tournament")
 		.set({ settings: JSON.stringify({ ...settings, ...patch }) })

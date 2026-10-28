@@ -36,81 +36,63 @@ export async function loadFactories(parallelIndex: number) {
 		ApiTokenFactory: await import("~/db/seed/factories/ApiTokenFactory"),
 		ArtFactory: await import("~/db/seed/factories/ArtFactory"),
 		AssociationFactory: await import("~/db/seed/factories/AssociationFactory"),
-		AvailabilityWeekFactory: await import(
-			"~/db/seed/factories/AvailabilityWeekFactory"
-		),
+		AvailabilityWeekFactory:
+			await import("~/db/seed/factories/AvailabilityWeekFactory"),
 		BadgeFactory: await import("~/db/seed/factories/BadgeFactory"),
 		BuildFactory: await import("~/db/seed/factories/BuildFactory"),
-		CalendarEventFactory: await import(
-			"~/db/seed/factories/CalendarEventFactory"
-		),
-		CalendarEventResultFactory: await import(
-			"~/db/seed/factories/CalendarEventResultFactory"
-		),
-		FriendRequestFactory: await import(
-			"~/db/seed/factories/FriendRequestFactory"
-		),
+		CalendarEventFactory:
+			await import("~/db/seed/factories/CalendarEventFactory"),
+		CalendarEventResultFactory:
+			await import("~/db/seed/factories/CalendarEventResultFactory"),
+		FriendRequestFactory:
+			await import("~/db/seed/factories/FriendRequestFactory"),
 		FriendshipFactory: await import("~/db/seed/factories/FriendshipFactory"),
-		GroupMatchContinueVoteFactory: await import(
-			"~/db/seed/factories/GroupMatchContinueVoteFactory"
-		),
+		GroupMatchContinueVoteFactory:
+			await import("~/db/seed/factories/GroupMatchContinueVoteFactory"),
 		ImageFactory: await import("~/db/seed/factories/ImageFactory"),
 		LFGPostFactory: await import("~/db/seed/factories/LFGPostFactory"),
 		LiveStreamFactory: await import("~/db/seed/factories/LiveStreamFactory"),
 		LobbyFactory: await import("~/db/seed/factories/LobbyFactory"),
 		LogInLinkFactory: await import("~/db/seed/factories/LogInLinkFactory"),
 		MapResultFactory: await import("~/db/seed/factories/MapResultFactory"),
-		NotificationFactory: await import(
-			"~/db/seed/factories/NotificationFactory"
-		),
-		PlusSuggestionFactory: await import(
-			"~/db/seed/factories/PlusSuggestionFactory"
-		),
+		NotificationFactory:
+			await import("~/db/seed/factories/NotificationFactory"),
+		PlusSuggestionFactory:
+			await import("~/db/seed/factories/PlusSuggestionFactory"),
 		PlusVoteFactory: await import("~/db/seed/factories/PlusVoteFactory"),
-		ResultHighlightFactory: await import(
-			"~/db/seed/factories/ResultHighlightFactory"
-		),
-		SavedCalendarEventFactory: await import(
-			"~/db/seed/factories/SavedCalendarEventFactory"
-		),
+		ResultHighlightFactory:
+			await import("~/db/seed/factories/ResultHighlightFactory"),
+		SavedCalendarEventFactory:
+			await import("~/db/seed/factories/SavedCalendarEventFactory"),
 		ScrimPostFactory: await import("~/db/seed/factories/ScrimPostFactory"),
 		SkillFactory: await import("~/db/seed/factories/SkillFactory"),
-		SplatoonRotationFactory: await import(
-			"~/db/seed/factories/SplatoonRotationFactory"
-		),
+		SplatoonRotationFactory:
+			await import("~/db/seed/factories/SplatoonRotationFactory"),
 		SQGroupFactory: await import("~/db/seed/factories/SQGroupFactory"),
 		SQMatchFactory: await import("~/db/seed/factories/SQMatchFactory"),
-		SQReadyCheckFactory: await import(
-			"~/db/seed/factories/SQReadyCheckFactory"
-		),
-		SQReportedWeaponFactory: await import(
-			"~/db/seed/factories/SQReportedWeaponFactory"
-		),
+		SQReadyCheckFactory:
+			await import("~/db/seed/factories/SQReadyCheckFactory"),
+		SQReportedWeaponFactory:
+			await import("~/db/seed/factories/SQReportedWeaponFactory"),
 		TeamEventFactory: await import("~/db/seed/factories/TeamEventFactory"),
 		TeamFactory: await import("~/db/seed/factories/TeamFactory"),
 		TournamentFactory: await import("~/db/seed/factories/TournamentFactory"),
-		TournamentLFGTeamFactory: await import(
-			"~/db/seed/factories/TournamentLFGTeamFactory"
-		),
-		TournamentOrganizationFactory: await import(
-			"~/db/seed/factories/TournamentOrganizationFactory"
-		),
-		TournamentReportedWeaponFactory: await import(
-			"~/db/seed/factories/TournamentReportedWeaponFactory"
-		),
-		TournamentStreamerFactory: await import(
-			"~/db/seed/factories/TournamentStreamerFactory"
-		),
-		TournamentTeamFactory: await import(
-			"~/db/seed/factories/TournamentTeamFactory"
-		),
+		TournamentLFGTeamFactory:
+			await import("~/db/seed/factories/TournamentLFGTeamFactory"),
+		TournamentOrganizationFactory:
+			await import("~/db/seed/factories/TournamentOrganizationFactory"),
+		TournamentReportedWeaponFactory:
+			await import("~/db/seed/factories/TournamentReportedWeaponFactory"),
+		TournamentStreamerFactory:
+			await import("~/db/seed/factories/TournamentStreamerFactory"),
+		TournamentTeamFactory:
+			await import("~/db/seed/factories/TournamentTeamFactory"),
 		TrophyFactory: await import("~/db/seed/factories/TrophyFactory"),
 		UserFactory: await import("~/db/seed/factories/UserFactory"),
 		UserReportFactory: await import("~/db/seed/factories/UserReportFactory"),
 		VodFactory: await import("~/db/seed/factories/VodFactory"),
-		XRankPlacementFactory: await import(
-			"~/db/seed/factories/XRankPlacementFactory"
-		),
+		XRankPlacementFactory:
+			await import("~/db/seed/factories/XRankPlacementFactory"),
 	};
 }
 
@@ -139,9 +121,8 @@ export async function flushIfDirty(
 	page: Page,
 	{ resetDevOverrides = false } = {},
 ) {
-	const { isDatabaseDirty, markDatabaseClean } = await import(
-		"~/db/write-tracker"
-	);
+	const { isDatabaseDirty, markDatabaseClean } =
+		await import("~/db/write-tracker");
 	if (!isDatabaseDirty() && !resetDevOverrides) return;
 
 	const response = await postRetryingTransientFailures(

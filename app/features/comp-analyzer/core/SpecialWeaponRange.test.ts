@@ -1,10 +1,10 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,
 	CRAB_TANK_ID,
-	SPLATTERCOLOR_SCREEN_ID,
 	specialWeaponIds,
+	SPLATTERCOLOR_SCREEN_ID,
 	TRIZOOKA_ID,
 	WAVE_BREAKER_ID,
 } from "~/modules/in-game-lists/weapon-ids";

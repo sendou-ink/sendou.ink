@@ -1,5 +1,5 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import * as LobbyFactory from "~/db/seed/factories/LobbyFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -192,7 +192,7 @@ describe("addLinks", () => {
 
 	test("reports the POV player's weapon once, tagged with its scan and dated to the game", async () => {
 		const { match: groupMatch, maps, users } = await setupSendouqMatch();
-		const povUser = users[0]!;
+		const povUser = users[0];
 
 		const { effectiveMatches } =
 			await ScannerIngestRepository.addOrMergeMatches({
@@ -227,7 +227,7 @@ describe("addLinks", () => {
 
 	test("reports no weapon for a game other than the one the scan stays linked to", async () => {
 		const { maps, users } = await setupSendouqMatch();
-		const povUser = users[0]!;
+		const povUser = users[0];
 		const winnerUserIds = users
 			.slice(0, FULL_GROUP_SIZE)
 			.map((user) => user.id);
@@ -299,7 +299,7 @@ describe("addLinks", () => {
 
 	test("deleting the ingested match deletes the weapon reported from it", async () => {
 		const { maps, users } = await setupSendouqMatch();
-		const povUser = users[0]!;
+		const povUser = users[0];
 
 		const { effectiveMatches } =
 			await ScannerIngestRepository.addOrMergeMatches({
@@ -324,7 +324,7 @@ describe("addLinks", () => {
 		});
 		expect(await fetchReportedWeapons()).toHaveLength(1);
 
-		// biome-ignore lint/plugin: no production path deletes ingested matches yet
+		// eslint-disable-next-line sendou/no-raw-db-writes-in-tests -- no production path deletes ingested matches yet
 		await db
 			.deleteFrom("IngestedMatch")
 			.where("id", "=", effectiveMatches[0].id)
@@ -390,7 +390,7 @@ describe("gamesInTournamentMatches", () => {
 	test("returns the match's own games only, leaving the rest of the tournament out", async () => {
 		const users = await UserFactory.createMany(TOURNAMENT_TEAM_COUNT);
 		const tournament = await TournamentFactory.createPlayed(
-			{ authorId: users[0]!.id, minMembersPerTeam: 1 },
+			{ authorId: users[0].id, minMembersPerTeam: 1 },
 			{
 				teamRosters: users.map((user) => [user.id]),
 				playedOut: 0,
@@ -401,12 +401,12 @@ describe("gamesInTournamentMatches", () => {
 		const [firstMatch, ...laterMatches] = tournament.matches;
 		const winnerUserId = users.find(
 			(user) =>
-				tournament.teams.find((team) => team.id === firstMatch!.winnerTeamId)
+				tournament.teams.find((team) => team.id === firstMatch.winnerTeamId)
 					?.memberUserIds[0] === user.id,
 		)!.id;
 
 		const games = await ScannerIngestRepository.gamesInTournamentMatches([
-			firstMatch!.id,
+			firstMatch.id,
 		]);
 
 		expect(games.length).toBeGreaterThan(0);
@@ -414,7 +414,7 @@ describe("gamesInTournamentMatches", () => {
 			games.every(
 				(game) =>
 					game.target.type === "tournament" &&
-					game.target.tournamentMatchId === firstMatch!.id,
+					game.target.tournamentMatchId === firstMatch.id,
 			),
 		).toBe(true);
 
@@ -468,7 +468,7 @@ describe("lobbySetIdAt", () => {
 				userId: playerId(),
 				at: PLAYED_AT,
 			}),
-		).toBe(set!.id);
+		).toBe(set.id);
 	});
 
 	test.each([

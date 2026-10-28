@@ -4,7 +4,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
-import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
@@ -13,6 +12,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { EmptyState } from "~/components/EmptyState";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { artPage } from "~/features/art/art-urls";

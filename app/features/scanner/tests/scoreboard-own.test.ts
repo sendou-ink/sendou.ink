@@ -7,17 +7,18 @@ import assert from "node:assert/strict";
 import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	createScoreboardOwnDetector,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { Detector } from "../core/detectors/types";
 import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
@@ -130,22 +131,24 @@ for (const fixture of loadFixtures("negative")) {
 }
 
 const otherDetectors: Detector<unknown>[] = [
-	createScoreboardDetector(resources) as Detector<unknown>,
-	createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
-	createDeathDetector(resources) as Detector<unknown>,
-	createMapStartDetector(resources) as Detector<unknown>,
+	createScoreboardDetector(resources),
+	createScoreboardBattleLogReplayDetector(resources),
+	createDeathDetector(resources),
+	createMapStartDetector(resources),
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "ScoreboardOwn",
 )) {
 	test(`other gates stay quiet on scoreboard-own/${fixture.name}`, async () => {
-		for (const other of otherDetectors) {
-			const { gate } = await runDetectorOnFixture(other, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${other.id} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		await withFixtureFrame(fixture, (frame) => {
+			for (const other of otherDetectors) {
+				const gate = other.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${other.id} gate fired (score=${gate.score.toFixed(3)})`,
+				);
+			}
+		});
 	});
 }

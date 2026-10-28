@@ -127,6 +127,7 @@ export function WeaponParamsTable({
 	const visibleWeaponIds = sortedWeaponIds.filter((id) => !hiddenSet.has(id));
 
 	const hideWeapon = (weaponId: number) =>
+		// eslint-disable-next-line bun/react-prefer-updater-function -- search param setter, takes no updater
 		setHiddenWeaponIds([...hiddenWeaponIds, weaponId]);
 	const restoreWeapon = (weaponId: number) =>
 		setHiddenWeaponIds(hiddenWeaponIds.filter((id) => id !== weaponId));
@@ -268,7 +269,7 @@ export function WeaponParamsTable({
 															</span>
 														) : null}
 														{explanation ? (
-															// biome-ignore lint/a11y/noStaticElementInteractions: stops the help popover click from toggling the history row
+															// eslint-disable-next-line jsx-a11y/no-static-element-interactions -- stops the help popover click from toggling the history row
 															<span
 																className={styles.paramInfo}
 																onClick={(e) => e.stopPropagation()}
@@ -349,7 +350,7 @@ function ComparisonButton({
 	}
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: stops the compare button click from toggling the history row
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions -- stops the compare button click from toggling the history row
 		<span className={styles.paramInfo} onClick={(e) => e.stopPropagation()}>
 			<SendouButton
 				variant="minimal"

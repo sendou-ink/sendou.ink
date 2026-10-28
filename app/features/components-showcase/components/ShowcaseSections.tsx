@@ -25,9 +25,9 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { toastQueue } from "~/components/elements/Toast";
+import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
-import { FilterBar } from "~/components/filter-bar/FilterBar";
 import {
 	ModeImage,
 	SpecialWeaponImage,
@@ -64,8 +64,8 @@ import {
 } from "~/features/changelog/components/ChangelogGraphic";
 import * as DamageCombos from "~/features/comp-analyzer/core/DamageCombos";
 import { GlobalStatusIndicator } from "~/features/global-status/components/GlobalStatusIndicator";
-import { GlobalStatusPreviewProvider } from "~/features/global-status/GlobalStatusProvider";
 import type { GlobalStatus } from "~/features/global-status/global-status-types";
+import { GlobalStatusPreviewProvider } from "~/features/global-status/GlobalStatusProvider";
 import { CompGraphic } from "~/features/img-export/components/CompGraphic";
 import {
 	SeasonSummaryGraphic,
@@ -87,8 +87,8 @@ import {
 } from "~/features/trophies/components/Trophy";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
-import type { CustomFieldRenderProps } from "~/form/FormField";
 import { DatetimeFormField } from "~/form/fields/DatetimeFormField";
+import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import {
@@ -187,7 +187,7 @@ function ComponentRow({
 				{codeHtml ? (
 					<details className={styles.code}>
 						<summary>Code</summary>
-						{/* biome-ignore lint/security/noDangerouslySetInnerHtml: highlighted at docs build time from our own source */}
+						{/* eslint-disable-next-line react/no-danger -- highlighted at docs build time from our own source */}
 						<div dangerouslySetInnerHTML={{ __html: codeHtml }} />
 					</details>
 				) : null}
@@ -718,7 +718,7 @@ function CheckboxSection() {
 
 				<ComponentRow label="Disabled Checked">
 					<label className="stack horizontal sm items-center">
-						<input type="checkbox" disabled checked />
+						<input type="checkbox" disabled defaultChecked />
 						<span>Disabled but checked</span>
 					</label>
 				</ComponentRow>
@@ -785,6 +785,7 @@ function RadioButtonSection() {
 
 				<ComponentRow label="With Descriptions">
 					<div className="stack sm">
+						{/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- label text is nested deeper than the rule checks */}
 						<label className="stack horizontal sm items-start">
 							<input
 								type="radio"
@@ -800,6 +801,7 @@ function RadioButtonSection() {
 								</span>
 							</div>
 						</label>
+						{/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- label text is nested deeper than the rule checks */}
 						<label className="stack horizontal sm items-start">
 							<input
 								type="radio"
@@ -815,6 +817,7 @@ function RadioButtonSection() {
 								</span>
 							</div>
 						</label>
+						{/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- label text is nested deeper than the rule checks */}
 						<label className="stack horizontal sm items-start">
 							<input
 								type="radio"
@@ -854,7 +857,7 @@ function RadioButtonSection() {
 								name="disabled-group"
 								value="disabled-checked"
 								disabled
-								checked
+								defaultChecked
 							/>
 							<span>Disabled and checked</span>
 						</label>
@@ -3461,7 +3464,10 @@ function MiscSection() {
 				</ComponentRow>
 
 				<ComponentRow label="RelativeTime">
-					<RelativeTime timestamp={Date.now() - 3600000}>
+					<RelativeTime
+						// eslint-disable-next-line react-hooks/purity -- showcase demo timestamp
+						timestamp={Date.now() - 3600000}
+					>
 						1 hour ago
 					</RelativeTime>
 				</ComponentRow>

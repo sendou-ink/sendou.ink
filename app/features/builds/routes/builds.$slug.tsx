@@ -85,6 +85,7 @@ function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 
 	const card =
 		(build: SerializeFrom<typeof loader>["builds"][number]) =>
+		// eslint-disable-next-line react/no-unstable-nested-components -- a render callback taking the stack toggle, not a component
 		(stackToggle: React.ReactNode) => (
 			<BuildCard
 				build={{

@@ -19,6 +19,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import * as MarkdownHtml from "~/utils/markdown-html.server";
 import { toDBBoolean } from "~/utils/sql";
 import type { ExtractWidgetSettings } from "./types";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
@@ -322,6 +323,18 @@ export const WIDGET_LOADERS = {
 	},
 	"social-links": async (userId: number) => {
 		return UserRepository.findSocialLinksByUserId(userId);
+	},
+	"bio-md": async (
+		_userId: number,
+		settings: ExtractWidgetSettings<"bio-md">,
+	) => {
+		return settings.bio ? MarkdownHtml.render(settings.bio) : null;
+	},
+	markdown: async (
+		_userId: number,
+		settings: ExtractWidgetSettings<"markdown">,
+	) => {
+		return settings.content ? MarkdownHtml.render(settings.content) : null;
 	},
 	links: async (_userId: number, settings: ExtractWidgetSettings<"links">) => {
 		return settings.links;

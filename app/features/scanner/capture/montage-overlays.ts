@@ -158,7 +158,7 @@ function drawReveal(ctx: Context, reveal: CardReveal, t: number): void {
 	}));
 	const orders = revealOrder(style, rects);
 	for (const [i, rect] of rects.entries()) {
-		const progress = revealProgress(style, t, orders[i]!);
+		const progress = revealProgress(style, t, orders[i]);
 		if (progress === 0) continue;
 		const scale = style === "pop" ? easeOutBack(progress) : 1;
 		const width = rect.width * scale;

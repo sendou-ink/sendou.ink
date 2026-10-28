@@ -1,12 +1,13 @@
 /**
- * node:test-shaped `test` on top of Vitest, so the golden-file suites keep
+ * node:test-shaped `test` on top of bun:test (by way of ~/test-runner, like
+ * test files, so passing tests stay quiet), so the golden-file suites keep
  * their dynamic per-fixture tests with nested `t.test` subtests and `{ skip }`
- * options (no native Vitest equivalent). Subtests run inline; every failure is
+ * options (no native bun:test equivalent). Subtests run inline; every failure is
  * collected and reported at once, so one field mismatch doesn't hide the next.
  * Subtests sharing an `expectFailure` key are known failures: their errors are
  * swallowed, and the test fails if none of them fails anymore.
  */
-import { test as vitestTest } from "vitest";
+import { test as bunTest } from "~/test-runner";
 
 type SubtestBody = () => void | Promise<void>;
 
@@ -24,7 +25,7 @@ export function test(
 	name: string,
 	fn: (t: CompatTestContext) => void | Promise<void>,
 ): void {
-	vitestTest(name, async () => {
+	bunTest(name, async () => {
 		const failures: { name: string; error: unknown }[] = [];
 		const expectedFailureSeen = new Map<string, boolean>();
 		const subtest = async (

@@ -2,13 +2,13 @@ import type {
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
-import { type UserLinkArgs, userBuildsPage, userPage } from "~/utils/urls";
+import { userBuildsPage, type UserLinkArgs, userPage } from "~/utils/urls";
 import type { SeasonStatsTab } from "./user-page-constants";
 import {
 	userBuildsNewSearchParams,
-	userSeasonSummaryGraphicSearchParams,
 	userSeasonsSearchParams,
 	userSeasonsStatsSearchParams,
+	userSeasonSummaryGraphicSearchParams,
 } from "./user-page-search-params";
 
 export const userSeasonsPage = ({

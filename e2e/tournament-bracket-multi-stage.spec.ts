@@ -11,9 +11,9 @@ import {
 	RR_TOP_4_TO_SE,
 	SOS_BRACKETS,
 	startedTournamentTimes,
+	teamSeeds,
 	TO_MAP_POOL,
 	TWO_STARTING_BRACKETS,
-	teamSeeds,
 } from "./helpers/tournament";
 import { CalendarNewEventPage } from "./pages/calendar/calendar-new-event-page";
 import { TopRightButtons } from "./pages/layout/top-right-buttons";

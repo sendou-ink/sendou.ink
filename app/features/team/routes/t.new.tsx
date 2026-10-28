@@ -7,7 +7,7 @@ import { SendouForm } from "~/form";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { NEW_TEAM_PAGE, navIconUrl } from "~/utils/urls";
+import { navIconUrl, NEW_TEAM_PAGE } from "~/utils/urls";
 import { action } from "../actions/t.new.server";
 import { loader } from "../loaders/t.new.server";
 import { TEAM } from "../team-constants";

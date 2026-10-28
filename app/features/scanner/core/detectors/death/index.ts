@@ -30,7 +30,13 @@ import {
 	type Roi,
 } from "../../image";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
-import { closestEntry, matchKey, rankBy, rankByRead } from "../../text";
+import {
+	closestEntry,
+	type ClosestMatch,
+	matchKey,
+	rankBy,
+	rankByRead,
+} from "../../text";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseNameSteps } from "../scoreboard/names";
 import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
@@ -165,6 +171,55 @@ interface WeaponCandidate {
 	entry: WeaponEntry;
 }
 
+type RankedCandidate = ClosestMatch<WeaponCandidate>;
+
+interface MessageRead {
+	line1: RecognizedText | null;
+	line2: RecognizedText | null;
+	jaWeaponLine: RecognizedText | null;
+	jaConstLine: RecognizedText | null;
+	template: DeathMessageTemplate | null;
+	line1Score: number;
+}
+
+const NO_MESSAGE: MessageRead = {
+	line1: null,
+	line2: null,
+	jaWeaponLine: null,
+	jaConstLine: null,
+	template: null,
+	line1Score: 0,
+};
+
+interface TemplatePick {
+	template: DeathMessageTemplate | null;
+	score: number;
+}
+
+interface WeaponPick {
+	entry: WeaponEntry;
+	score: number;
+}
+
+interface LatticeRead {
+	top: { entry: WeaponEntry; score: number; margin: number } | null;
+	ranked: RankedCandidate[];
+}
+
+const NO_LATTICE: LatticeRead = { top: null, ranked: [] };
+
+interface WeaponTextRead {
+	weaponRaw: RecognizedText | null;
+	plainRanked: RankedCandidate[];
+	accepted: WeaponPick | null;
+}
+
+const NO_WEAPON_TEXT: WeaponTextRead = {
+	weaponRaw: null,
+	plainRanked: [],
+	accepted: null,
+};
+
 /** JA templates read through the JA atlas and the swapped-width line ROIs. */
 function isJaTemplate(t: DeathMessageTemplate): boolean {
 	return t.langs.some((lang) => lang.endsWith("ja"));
@@ -185,7 +240,7 @@ function candidatesFor(template: DeathMessageTemplate): WeaponCandidate[] {
 		const k = matchKey(text);
 		if (!entry || seen.has(k)) return;
 		seen.add(k);
-		candidates!.push({
+		candidates.push({
 			text: template.weaponPre + text + template.weaponPost,
 			entry,
 		});
@@ -252,7 +307,7 @@ export function createDeathDetector(
 			const n = probe.rows * probe.cols;
 			let maxCh = 0;
 			for (let i = 0; i < n; i++) {
-				const v = Math.max(d[i * ch]!, d[i * ch + 1]!, d[i * ch + 2]!);
+				const v = Math.max(d[i * ch], d[i * ch + 1], d[i * ch + 2]);
 				if (v > maxCh) maxCh = v;
 			}
 			probe.delete();
@@ -300,7 +355,7 @@ export function createDeathDetector(
 			const d = probe.data;
 			let min = 255;
 			for (let i = 0; i < probe.rows * probe.cols; i++) {
-				min = Math.min(min, d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
+				min = Math.min(min, d[i * 3], d[i * 3 + 1], d[i * 3 + 2]);
 			}
 			probe.delete();
 			return min >= REPLAY_HINT_CHIP_MIN_CHANNEL;
@@ -352,11 +407,11 @@ export function createDeathDetector(
 	/** Memoized read for a matching tag, freshened to the list's end. */
 	function tagMemoLookup(signature: Uint8Array): TagNameRead | null {
 		for (let i = 0; i < tagMemo.length; i++) {
-			const entry = tagMemo[i]!;
+			const entry = tagMemo[i];
 			let sum = 0;
 			let cell = 0;
 			for (let k = 0; k < signature.length; k++) {
-				const diff = Math.abs(signature[k]! - entry.signature[k]!);
+				const diff = Math.abs(signature[k] - entry.signature[k]);
 				sum += diff;
 				if (diff > cell) cell = diff;
 			}
@@ -390,13 +445,13 @@ export function createDeathDetector(
 			let total = 0;
 			for (let i = 0; i < n; i++) {
 				if (mask && !mask(i)) continue;
-				hist[px[i * 3 + c]!]!++;
+				hist[px[i * 3 + c]]++;
 				total++;
 			}
 			let acc = 0;
 			let v = 0;
 			for (; v < 255; v++) {
-				acc += hist[v]!;
+				acc += hist[v];
 				if (acc >= total / 2) break;
 			}
 			color[c] = v;
@@ -420,9 +475,9 @@ export function createDeathDetector(
 		const bins = new Map<number, number>();
 		for (let i = 0; i < n; i++) {
 			const key =
-				((px[i * 3]! >> 3) << 10) |
-				((px[i * 3 + 1]! >> 3) << 5) |
-				(px[i * 3 + 2]! >> 3);
+				((px[i * 3] >> 3) << 10) |
+				((px[i * 3 + 1] >> 3) << 5) |
+				(px[i * 3 + 2] >> 3);
 			bins.set(key, (bins.get(key) ?? 0) + 1);
 		}
 		// greedy cluster of the top bins by quantized-center proximity
@@ -442,7 +497,7 @@ export function createDeathDetector(
 			const c = centerOf(key);
 			const home = clusters.find((cl) =>
 				cl.seed.every(
-					(s, i) => Math.abs(s - c[i]!) <= CLUSTER_MAX_CHANNEL_DISTANCE,
+					(s, i) => Math.abs(s - c[i]) <= CLUSTER_MAX_CHANNEL_DISTANCE,
 				),
 			);
 			if (home) {
@@ -458,9 +513,9 @@ export function createDeathDetector(
 			.map(({ keys, count: clusterCount }) => {
 				const inCluster = (i: number) =>
 					keys.has(
-						((px[i * 3]! >> 3) << 10) |
-							((px[i * 3 + 1]! >> 3) << 5) |
-							(px[i * 3 + 2]! >> 3),
+						((px[i * 3] >> 3) << 10) |
+							((px[i * 3 + 1] >> 3) << 5) |
+							(px[i * 3 + 2] >> 3),
 					);
 				return {
 					color: medianColor(inner, inCluster),
@@ -489,9 +544,9 @@ export function createDeathDetector(
 			let d = 255;
 			for (const color of colors) {
 				const dc = Math.max(
-					Math.abs(px[i * 3]! - color[0]),
-					Math.abs(px[i * 3 + 1]! - color[1]),
-					Math.abs(px[i * 3 + 2]! - color[2]),
+					Math.abs(px[i * 3] - color[0]),
+					Math.abs(px[i * 3 + 1] - color[1]),
+					Math.abs(px[i * 3 + 2] - color[2]),
 				);
 				if (dc < d) d = dc;
 			}
@@ -524,10 +579,10 @@ export function createDeathDetector(
 		const s = stats.data32S;
 		const touchesBorder = new Uint8Array(count);
 		for (let i = 1; i < count; i++) {
-			const left = s[i * 5 + cv.CC_STAT_LEFT]!;
-			const top = s[i * 5 + cv.CC_STAT_TOP]!;
-			const right = left + s[i * 5 + cv.CC_STAT_WIDTH]!;
-			const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT]!;
+			const left = s[i * 5 + cv.CC_STAT_LEFT];
+			const top = s[i * 5 + cv.CC_STAT_TOP];
+			const right = left + s[i * 5 + cv.CC_STAT_WIDTH];
+			const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT];
 			touchesBorder[i] =
 				left === 0 || top === 0 || right === band.cols || bottom === band.rows
 					? 1
@@ -537,7 +592,7 @@ export function createDeathDetector(
 		const lab = labels.data32S;
 		const out = band.data;
 		for (let i = 0; i < out.length; i++) {
-			if (touchesBorder[lab[i]!]!) out[i] = 0;
+			if (touchesBorder[lab[i]]) out[i] = 0;
 		}
 		labels.delete();
 	}
@@ -564,10 +619,9 @@ export function createDeathDetector(
 		let refineThreshold = 0;
 		const ink = band.data;
 		let inkCount = 0;
-		for (let i = 0; i < ink.length; i++)
-			if (ink[i]! > TAG_NAME_BIN_THRESHOLD) inkCount++;
+		for (const value of ink) if (value > TAG_NAME_BIN_THRESHOLD) inkCount++;
 		if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
-			textColor = medianColor(inner, (i) => ink[i]! > TAG_NAME_BIN_THRESHOLD);
+			textColor = medianColor(inner, (i) => ink[i] > TAG_NAME_BIN_THRESHOLD);
 			const contrast = colorContrast(textColor, backgrounds);
 			refined = distanceBand(inner, [textColor], true, 255 / contrast);
 			refineThreshold =
@@ -601,7 +655,7 @@ export function createDeathDetector(
 			refinedParse && refinedParse.confidence > bandParse.confidence
 				? refinedParse
 				: bandParse;
-		return { parsed, background: backgrounds[0]!, textColor };
+		return { parsed, background: backgrounds[0], textColor };
 	}
 
 	/**
@@ -622,16 +676,16 @@ export function createDeathDetector(
 		if (read === null) {
 			const median = medianColor(inner);
 			const dominants = dominantColors(inner, 2);
-			const dominant = dominants[0]!.color;
+			const dominant = dominants[0].color;
 			const candidates: [number, number, number][][] = [[median]];
-			if (dominant.some((c, i) => Math.abs(c - median[i]!) > 8))
+			if (dominant.some((c, i) => Math.abs(c - median[i]) > 8))
 				candidates.push([dominant]);
 			const second = dominants[1];
 			if (
 				second &&
 				second.fraction >= TAG_SPLIT_MIN_FRACTION &&
 				second.color.some(
-					(c, i) => Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
+					(c, i) => Math.abs(c - dominant[i]) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
 				)
 			) {
 				candidates.push([dominant, second.color]);
@@ -663,7 +717,7 @@ export function createDeathDetector(
 					),
 				),
 			);
-			let best = reads[0]!;
+			let best = reads[0];
 			for (const alt of reads.slice(1)) {
 				if (beats(alt, best) > 0) best = alt;
 			}
@@ -692,7 +746,7 @@ export function createDeathDetector(
 				const n = crop.rows * crop.cols;
 				let ink = 0;
 				for (let i = 0; i < n; i++) {
-					const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
+					const v = Math.max(d[i * 3], d[i * 3 + 1], d[i * 3 + 2]);
 					if (v > ABILITY_INK_THRESHOLD) ink++;
 				}
 				if (ink < ABILITY_SLOT_MIN_INK) {
@@ -720,6 +774,122 @@ export function createDeathDetector(
 		return matches;
 	}
 
+	function* readLine(
+		gray: Mat,
+		roi: Roi,
+		glyphs: GlyphSet,
+		speculative: boolean,
+	): MatchSteps<RecognizedText> {
+		const crop = cropRoi(gray, roi);
+		const read = yield* recognizeTextSteps(
+			crop,
+			glyphs,
+			{ binThreshold: SPLAT_TEXT_BIN_THRESHOLD, minCharScore: 0.3 },
+			speculative,
+		);
+		crop.delete();
+		return read;
+	}
+
+	// 1. read both burst lines and find the language template whose constant
+	// line reads best; a gate hit matching none is a lookalike. Latin and JA
+	// templates use separate boxes (rois.ts) and atlases so the scripts never compete.
+	function* readMessage(
+		gray: Mat,
+		glyphs: GlyphSet,
+		speculative: boolean,
+	): MatchSteps<MessageRead> {
+		const [line1, line2] = yield* all([
+			readLine(gray, SPLAT_LINE1_ROI, glyphs, speculative),
+			readLine(gray, WEAPON_LINE_ROI, glyphs, speculative),
+		]);
+		const latin = bestTemplate(
+			false,
+			(candidate) => (candidate.weaponLine === 1 ? line2.text : line1.text),
+			{ template: null, score: 0 },
+		);
+		// JA line reads cost ~2x, so they only run when no Latin template owns the frame
+		if (!jaGlyphs || latin.score >= LATIN_DECISIVE_SCORE) {
+			return {
+				line1,
+				line2,
+				jaWeaponLine: null,
+				jaConstLine: null,
+				template: latin.template,
+				line1Score: latin.score,
+			};
+		}
+		const [jaWeaponLine, jaConstLine] = yield* all([
+			readLine(gray, JA_WEAPON_LINE_ROI, jaGlyphs, speculative),
+			readLine(gray, JA_CONST_LINE_ROI, jaGlyphs, speculative),
+		]);
+		const best = bestTemplate(true, () => jaConstLine.text, latin);
+		return {
+			line1,
+			line2,
+			jaWeaponLine,
+			jaConstLine,
+			template: best.template,
+			line1Score: best.score,
+		};
+	}
+
+	function burstIconPick(burstIcon: WeaponMatch | null): WeaponPick | null {
+		if (!burstIcon) return null;
+		const entry =
+			burstIcon.score >= BURST_ICON_MIN_SCORE
+				? mainById.get(burstIcon.id)
+				: undefined;
+		return entry ? { entry, score: burstIcon.score } : null;
+	}
+
+	// 2d. neither signal decisive alone, but icon weapon == text's best guess
+	// (plain or lattice, within EPS of the top) is decisive together
+	function corroboratedBurstPick(
+		burstIcon: WeaponMatch | null,
+		plainRanked: RankedCandidate[],
+		latticeRanked: RankedCandidate[],
+	): WeaponPick | null {
+		if (!burstIcon || burstIcon.score < BURST_ICON_CORROBORATE_MIN_SCORE) {
+			return null;
+		}
+		const entry = mainById.get(burstIcon.id);
+		if (!entry) return null;
+		const supported =
+			ranksNearTop(plainRanked, entry) || ranksNearTop(latticeRanked, entry);
+		return supported ? { entry, score: burstIcon.score } : null;
+	}
+
+	function resolveWeapon(
+		text: WeaponTextRead,
+		burstIcon: WeaponMatch | null,
+		template: DeathMessageTemplate | null,
+	): { accepted: WeaponPick | null; lattice: LatticeRead } {
+		const accepted = text.accepted ?? burstIconPick(burstIcon);
+		if (accepted) return { accepted, lattice: NO_LATTICE };
+
+		// 2c. 720p-upscaled captures garble the top-1 read below WEAPON_MIN_SCORE while
+		// the correct glyphs sit at rank 2-3 per segment: re-rank through those lists
+		const lattice =
+			template && text.weaponRaw!.chars.length > 0
+				? rankLattice(text.weaponRaw!.chars, template)
+				: NO_LATTICE;
+		if (latticeAccepts(lattice.top)) {
+			return {
+				accepted: { entry: lattice.top.entry, score: lattice.top.score },
+				lattice,
+			};
+		}
+		return {
+			accepted: corroboratedBurstPick(
+				burstIcon,
+				text.plainRanked,
+				lattice.ranked,
+			),
+			lattice,
+		};
+	}
+
 	function* parseSteps(
 		frame: Mat,
 		t: number,
@@ -731,103 +901,25 @@ export function createDeathDetector(
 
 		const confidences: number[] = [];
 
-		// 1. read both burst lines and find the language template whose constant
-		// line reads best; a gate hit matching none is a lookalike. Latin and JA
-		// templates use separate boxes (rois.ts) and atlases so the scripts never compete.
-		let line1: RecognizedText | null = null;
-		let line2: RecognizedText | null = null;
-		let jaWeaponLine: RecognizedText | null = null;
-		let jaConstLine: RecognizedText | null = null;
-		let template: DeathMessageTemplate | null = null;
-		let line1Score = 0;
+		let message = NO_MESSAGE;
 		if (weaponGlyphs) {
-			const readLine = function* (
-				roi: Roi,
-				glyphs: GlyphSet,
-			): MatchSteps<RecognizedText> {
-				const crop = cropRoi(gray, roi);
-				const read = yield* recognizeTextSteps(
-					crop,
-					glyphs,
-					{ binThreshold: SPLAT_TEXT_BIN_THRESHOLD, minCharScore: 0.3 },
-					speculative,
-				);
-				crop.delete();
-				return read;
-			};
-			[line1, line2] = yield* all([
-				readLine(SPLAT_LINE1_ROI, weaponGlyphs),
-				readLine(WEAPON_LINE_ROI, weaponGlyphs),
-			]);
-			for (const candidate of DEATH_MESSAGE_TEMPLATES) {
-				if (isJaTemplate(candidate)) continue;
-				const constReading =
-					candidate.weaponLine === 1 ? line2.text : line1.text;
-				const score =
-					closestEntry(constReading, [candidate.constText])?.score ?? 0;
-				if (score > line1Score) {
-					line1Score = score;
-					template = candidate;
-				}
-			}
-			// JA line reads cost ~2x, so they only run when no Latin template owns the frame
-			if (jaGlyphs && line1Score < LATIN_DECISIVE_SCORE) {
-				[jaWeaponLine, jaConstLine] = yield* all([
-					readLine(JA_WEAPON_LINE_ROI, jaGlyphs),
-					readLine(JA_CONST_LINE_ROI, jaGlyphs),
-				]);
-				for (const candidate of DEATH_MESSAGE_TEMPLATES) {
-					if (!isJaTemplate(candidate)) continue;
-					const score =
-						closestEntry(jaConstLine.text, [candidate.constText])?.score ?? 0;
-					if (score > line1Score) {
-						line1Score = score;
-						template = candidate;
-					}
-				}
-			}
-			if (!template || line1Score < LINE1_MIN_SCORE) {
+			message = yield* readMessage(gray, weaponGlyphs, speculative);
+			if (!message.template || message.line1Score < LINE1_MIN_SCORE) {
 				return [];
 			}
 		}
+		const { template } = message;
 
-		// 2. the other line carries the weapon name; snap it to the template
-		// language's names (localized + canonical English)
-		let weapon: string | null = null;
-		let weaponId: DeathData["weaponId"] = null;
-		let weaponType: WeaponType | null = null;
-		let weaponScore = 0;
-		let weaponRaw: RecognizedText | null = null;
-		let plainRanked: { entry: WeaponCandidate; score: number }[] = [];
-		const accept = (entry: WeaponEntry, score: number) => {
-			weapon = entry.name;
-			weaponId = Number(entry.id) as NonNullable<DeathData["weaponId"]>;
-			weaponType = entry.type;
-			weaponScore = score;
-		};
-		if (weaponGlyphs && template) {
-			weaponRaw = isJaTemplate(template)
-				? jaWeaponLine
-				: template.weaponLine === 1
-					? line1
-					: line2;
-			const reading = weaponRaw!.text;
-			if (reading)
-				plainRanked = rankBy(reading, candidatesFor(template), (c) => c.text);
-			const match = plainRanked[0];
-			if (match) {
-				weaponScore = match.score;
-				if (match.score >= WEAPON_MIN_SCORE)
-					accept(match.entry.entry, match.score);
-			}
-		}
+		const text = template ? readWeaponText(template, message) : NO_WEAPON_TEXT;
 
 		// 2b. the WIPEOUT banner can cover the text while the burst icon stays intact:
 		// match it against the main-weapon set. Fixture positives score 0.55+, best
 		// off-target frame (icon displaced by a rainmaker line) 0.48. The ability
 		// grid (3.) and the tag name (4.) read in the same lockstep.
 		const burstCrop =
-			weapon === null && burstWeapons() ? cropRoi(rgb, BURST_ICON_ROI) : null;
+			text.accepted === null && burstWeapons()
+				? cropRoi(rgb, BURST_ICON_ROI)
+				: null;
 		const [burstIcon, abilityMatches, tag] = yield* all([
 			burstCrop && burstWeapons()
 				? matchWeaponSteps(burstCrop, burstWeapons()!)
@@ -836,105 +928,16 @@ export function createDeathDetector(
 			tagNameGlyphs ? readTagName(rgb, speculative) : done(null),
 		]);
 		burstCrop?.delete();
-		if (burstIcon) {
-			const entry =
-				burstIcon.score >= BURST_ICON_MIN_SCORE
-					? mainById.get(burstIcon.id)
-					: undefined;
-			if (entry) accept(entry, burstIcon.score);
-		}
 
-		// 2c. 720p-upscaled captures garble the top-1 read below WEAPON_MIN_SCORE while
-		// the correct glyphs sit at rank 2-3 per segment: re-rank through those lists
-		let latticeTop: {
-			entry: WeaponEntry;
-			score: number;
-			margin: number;
-		} | null = null;
-		let latticeRanked: { entry: WeaponCandidate; score: number }[] = [];
-		if (
-			weapon === null &&
-			weaponGlyphs &&
-			template &&
-			weaponRaw!.chars.length > 0
-		) {
-			latticeRanked = rankByRead(
-				weaponRaw!.chars,
-				candidatesFor(template),
-				(c) => c.text,
-			);
-			const top = latticeRanked[0]!;
-			// margin vs the nearest *other* weapon: a weapon has both localized and English lines
-			const runner = latticeRanked.find(
-				(r) => r.entry.entry !== top.entry.entry,
-			);
-			latticeTop = {
-				entry: top.entry.entry,
-				score: top.score,
-				margin: top.score - (runner?.score ?? 0),
-			};
-			if (
-				latticeTop.score >= LATTICE_MIN_SCORE &&
-				latticeTop.margin >= LATTICE_MIN_MARGIN
-			) {
-				accept(latticeTop.entry, latticeTop.score);
-			}
-		}
+		const { accepted, lattice } = resolveWeapon(text, burstIcon, template);
+		const weaponScore = accepted?.score ?? text.plainRanked[0]?.score ?? 0;
+		if (template) confidences.push(weaponScore);
 
-		// 2d. neither signal decisive alone, but icon weapon == text's best guess
-		// (plain or lattice, within EPS of the top) is decisive together
-		if (
-			weapon === null &&
-			burstIcon &&
-			burstIcon.score >= BURST_ICON_CORROBORATE_MIN_SCORE
-		) {
-			const entry = mainById.get(burstIcon.id);
-			if (entry) {
-				const bestFor = (ranked: { entry: WeaponCandidate; score: number }[]) =>
-					ranked.reduce(
-						(s, r) => (r.entry.entry === entry ? Math.max(s, r.score) : s),
-						0,
-					);
-				const supported =
-					(plainRanked.length > 0 &&
-						bestFor(plainRanked) >= plainRanked[0]!.score - CORROBORATE_EPS) ||
-					(latticeRanked.length > 0 &&
-						bestFor(latticeRanked) >=
-							latticeRanked[0]!.score - CORROBORATE_EPS);
-				if (supported) accept(entry, burstIcon.score);
-			}
-		}
-		if (weaponGlyphs && template) confidences.push(weaponScore);
-
-		const abilityRows: AbilityWithUnknown[][] = [];
-		const abilityDebug: (WeaponMatch | null)[][] = [];
-		for (const matches of abilityMatches ?? []) {
-			const ids: AbilityWithUnknown[] = [];
-			const debug: (WeaponMatch | null)[] = [];
-			for (const match of matches) {
-				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
-				debug.push(match);
-				confidences.push(Math.max(0, match.score));
-			}
-			abilityRows.push(ids);
-			abilityDebug.push(debug);
-		}
-
-		let name: string | null = null;
-		let nameConfidence = 0;
-		let nameRaw = "";
-		let tagBackground: [number, number, number] | null = null;
-		let tagTextColor: [number, number, number] | null = null;
-		let nameMemoHit = false;
-		if (tag) {
-			nameMemoHit = tag.memoHit;
-			tagBackground = tag.read.background;
-			tagTextColor = tag.read.textColor;
-			nameRaw = tag.read.raw;
-			name = tag.read.name;
-			nameConfidence = tag.read.confidence;
-			confidences.push(nameConfidence);
-		}
+		const { abilityRows, abilityDebug } = readAbilityRows(
+			abilityMatches,
+			confidences,
+		);
+		if (tag) confidences.push(tag.read.confidence);
 
 		const confidence =
 			confidences.length > 0
@@ -946,36 +949,17 @@ export function createDeathDetector(
 				type: DEATH_EVENT_TYPE,
 				t,
 				confidence,
-				data: { weaponId, weaponType, abilities: abilityRows, name },
-				debug: {
-					weaponName: weapon,
-					line1: line1?.text,
-					line2: line2?.text,
-					jaWeaponLine: jaWeaponLine?.text,
-					jaConstLine: jaConstLine?.text,
-					line1Score,
-					messageLangs: template?.langs,
-					weaponRaw: weaponRaw?.text,
+				data: deathData(accepted, abilityRows, tag),
+				debug: deathDebug({
+					accepted,
+					message,
+					weaponRaw: text.weaponRaw,
 					weaponScore,
-					weaponLattice: latticeTop && {
-						name: latticeTop.entry.name,
-						score: latticeTop.score,
-						margin: latticeTop.margin,
-					},
-					burstIcon: burstIcon && {
-						id: burstIcon.id,
-						score: burstIcon.score,
-						top: burstIcon.top,
-					},
-					abilityRows: abilityDebug.map((row) =>
-						row.map((m) => m && { top: m.top, score: m.score }),
-					),
-					nameRaw,
-					nameScore: nameConfidence,
-					nameMemoHit,
-					tagBackground,
-					tagTextColor,
-				},
+					latticeTop: lattice.top,
+					burstIcon,
+					abilityDebug,
+					tag,
+				}),
 			},
 		];
 	}
@@ -1015,4 +999,173 @@ function colorContrast(
 		);
 	}
 	return Math.max(1, nearest);
+}
+
+function bestTemplate(
+	ja: boolean,
+	constReadingOf: (template: DeathMessageTemplate) => string,
+	start: TemplatePick,
+): TemplatePick {
+	let best = start;
+	for (const candidate of DEATH_MESSAGE_TEMPLATES) {
+		if (isJaTemplate(candidate) !== ja) continue;
+		const score =
+			closestEntry(constReadingOf(candidate), [candidate.constText])?.score ??
+			0;
+		if (score > best.score) best = { template: candidate, score };
+	}
+	return best;
+}
+
+function weaponLineOf(
+	template: DeathMessageTemplate,
+	message: MessageRead,
+): RecognizedText | null {
+	if (isJaTemplate(template)) return message.jaWeaponLine;
+	return template.weaponLine === 1 ? message.line1 : message.line2;
+}
+
+function rankPlain(
+	reading: string,
+	template: DeathMessageTemplate,
+): RankedCandidate[] {
+	return reading ? rankBy(reading, candidatesFor(template), (c) => c.text) : [];
+}
+
+function rankLattice(
+	chars: RecognizedText["chars"],
+	template: DeathMessageTemplate,
+): LatticeRead {
+	const ranked = rankByRead(chars, candidatesFor(template), (c) => c.text);
+	const top = ranked[0];
+	// margin vs the nearest *other* weapon: a weapon has both localized and English lines
+	const runner = ranked.find((r) => r.entry.entry !== top.entry.entry);
+	return {
+		top: {
+			entry: top.entry.entry,
+			score: top.score,
+			margin: top.score - (runner?.score ?? 0),
+		},
+		ranked,
+	};
+}
+
+function ranksNearTop(ranked: RankedCandidate[], entry: WeaponEntry): boolean {
+	if (ranked.length === 0) return false;
+	const best = ranked.reduce(
+		(s, r) => (r.entry.entry === entry ? Math.max(s, r.score) : s),
+		0,
+	);
+	return best >= ranked[0].score - CORROBORATE_EPS;
+}
+
+function readAbilityRows(
+	abilityMatches: WeaponMatch[][] | null,
+	confidences: number[],
+) {
+	const abilityRows: AbilityWithUnknown[][] = [];
+	const abilityDebug: (WeaponMatch | null)[][] = [];
+	for (const matches of abilityMatches ?? []) {
+		const ids: AbilityWithUnknown[] = [];
+		const debug: (WeaponMatch | null)[] = [];
+		for (const match of matches) {
+			ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
+			debug.push(match);
+			confidences.push(Math.max(0, match.score));
+		}
+		abilityRows.push(ids);
+		abilityDebug.push(debug);
+	}
+	return { abilityRows, abilityDebug };
+}
+
+function deathDebug({
+	accepted,
+	message,
+	weaponRaw,
+	weaponScore,
+	latticeTop,
+	burstIcon,
+	abilityDebug,
+	tag,
+}: {
+	accepted: WeaponPick | null;
+	message: MessageRead;
+	weaponRaw: RecognizedText | null;
+	weaponScore: number;
+	latticeTop: LatticeRead["top"];
+	burstIcon: WeaponMatch | null;
+	abilityDebug: (WeaponMatch | null)[][];
+	tag: { read: TagNameRead; memoHit: boolean } | null;
+}) {
+	return {
+		weaponName: accepted?.entry.name ?? null,
+		line1: message.line1?.text,
+		line2: message.line2?.text,
+		jaWeaponLine: message.jaWeaponLine?.text,
+		jaConstLine: message.jaConstLine?.text,
+		line1Score: message.line1Score,
+		messageLangs: message.template?.langs,
+		weaponRaw: weaponRaw?.text,
+		weaponScore,
+		weaponLattice: latticeTop && {
+			name: latticeTop.entry.name,
+			score: latticeTop.score,
+			margin: latticeTop.margin,
+		},
+		burstIcon: burstIcon && {
+			id: burstIcon.id,
+			score: burstIcon.score,
+			top: burstIcon.top,
+		},
+		abilityRows: abilityDebug.map((row) =>
+			row.map((m) => m && { top: m.top, score: m.score }),
+		),
+		nameRaw: tag?.read.raw ?? "",
+		nameScore: tag?.read.confidence ?? 0,
+		nameMemoHit: tag?.memoHit ?? false,
+		tagBackground: tag?.read.background ?? null,
+		tagTextColor: tag?.read.textColor ?? null,
+	};
+}
+
+// 2. the other line carries the weapon name; snap it to the template
+// language's names (localized + canonical English)
+function readWeaponText(
+	template: DeathMessageTemplate,
+	message: MessageRead,
+): WeaponTextRead {
+	const weaponRaw = weaponLineOf(template, message);
+	const plainRanked = rankPlain(weaponRaw!.text, template);
+	const plainTop = plainRanked[0];
+	const accepted =
+		plainTop && plainTop.score >= WEAPON_MIN_SCORE
+			? { entry: plainTop.entry.entry, score: plainTop.score }
+			: null;
+	return { weaponRaw, plainRanked, accepted };
+}
+
+function latticeAccepts(
+	top: LatticeRead["top"],
+): top is NonNullable<LatticeRead["top"]> {
+	return (
+		top !== null &&
+		top.score >= LATTICE_MIN_SCORE &&
+		top.margin >= LATTICE_MIN_MARGIN
+	);
+}
+
+function deathData(
+	accepted: WeaponPick | null,
+	abilityRows: AbilityWithUnknown[][],
+	tag: { read: TagNameRead } | null,
+): DeathData {
+	return {
+		weaponId: accepted
+			? (Number(accepted.entry.id) as NonNullable<DeathData["weaponId"]>)
+			: null,
+		weaponType: accepted?.entry.type ?? null,
+		abilities: abilityRows,
+		name: tag?.read.name ?? null,
+	};
 }

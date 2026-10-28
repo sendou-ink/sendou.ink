@@ -95,7 +95,7 @@ export function addWeaponEvidence(
 	rowWeapons: readonly (MainWeaponId | null)[],
 ): void {
 	for (const [row, weapon] of rowWeapons.entries()) {
-		if (weapon === weaponId) evidence[slot]![row]! += vote;
+		if (weapon === weaponId) evidence[slot][row] += vote;
 	}
 }
 
@@ -126,7 +126,7 @@ export function addStatusEvidence(
 	);
 	if (matching.length === 0 || matching.length === 4) return;
 	for (const slot of matching) {
-		evidence[slot]![observation.row]! += 1 / matching.length;
+		evidence[slot][observation.row] += 1 / matching.length;
 	}
 }
 
@@ -140,9 +140,9 @@ export function slotRowPermutation(
 ): SlotRowPermutation {
 	const scored = PERMUTATIONS.map((perm) => ({
 		perm,
-		score: perm.reduce((sum, row, slot) => sum + evidence[slot]![row]!, 0),
+		score: perm.reduce((sum, row, slot) => sum + evidence[slot][row], 0),
 	}));
-	let best = scored[0]!;
+	let best = scored[0];
 	for (const candidate of scored) {
 		if (candidate.score > best.score) best = candidate;
 	}
@@ -207,7 +207,7 @@ export function nameSlotRowPermutation(
 			0,
 		),
 	}));
-	let best = scored[0]!;
+	let best = scored[0];
 	for (const candidate of scored) {
 		if (candidate.score > best.score) best = candidate;
 	}

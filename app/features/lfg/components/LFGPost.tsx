@@ -28,7 +28,6 @@ import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { hourDifferenceBetweenTimezones } from "../core/timezone";
 import type { LFGLoaderData } from "../routes/lfg";
-
 import styles from "./LFGPost.module.css";
 
 type Post = LFGLoaderData["posts"][number];

@@ -1,6 +1,6 @@
+import { describe, expect, test, vi } from "bun:test";
 import type { ShouldRevalidateFunction } from "react-router";
 import * as v from "valibot";
-import { describe, expect, test, vi } from "vitest";
 import * as SearchParams from "./search-params";
 import { SP } from "./search-params";
 import {
@@ -409,7 +409,7 @@ describe("SearchParams.shouldRevalidate", () => {
 			nextParams: {},
 			defaultShouldRevalidate: true,
 			...overrides,
-		} as Parameters<ShouldRevalidateFunction>[0]);
+		});
 	}
 
 	test("revalidates when a loader: true param's decoded value changes", () => {
@@ -443,7 +443,7 @@ describe("SearchParams.shouldRevalidate", () => {
 				currentParams: {},
 				nextParams: {},
 				defaultShouldRevalidate: true,
-			} as Parameters<ShouldRevalidateFunction>[0]),
+			}),
 		).toBe(true);
 		expect(run("", "", { formMethod: "POST" })).toBe(true);
 		expect(run("?limit=50", "?limit=50")).toBe(true);
@@ -463,7 +463,7 @@ describe("SearchParams.skipSearchOnlyRevalidation", () => {
 			nextParams: {},
 			defaultShouldRevalidate: true,
 			...overrides,
-		} as Parameters<ShouldRevalidateFunction>[0]);
+		});
 	}
 
 	test("does not revalidate when only the search changes", () => {

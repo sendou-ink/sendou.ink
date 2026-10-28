@@ -1,8 +1,4 @@
-import type {
-	AbilityPoints,
-	SpecialWeaponParams,
-	SubWeaponParams,
-} from "~/features/build-analyzer/analyzer-types";
+import type { AbilityPoints } from "~/features/build-analyzer/analyzer-types";
 import {
 	specialDeviceHp,
 	specialFieldHp,
@@ -37,19 +33,15 @@ export const objectHitPoints = (abilityPoints: AbilityPoints): HitPoints => {
 
 	const Wsb_Shield = subStats({
 		abilityPoints,
-		subWeaponParams: params.subWeapons[SPLASH_WALL_ID] as SubWeaponParams,
+		subWeaponParams: params.subWeapons[SPLASH_WALL_ID],
 	}).subHp?.value;
 	const GreatBarrier_Barrier = specialFieldHp({
 		abilityPoints,
-		specialWeaponParams: params.specialWeapons[
-			BIG_BUBBLER_ID
-		] as SpecialWeaponParams,
+		specialWeaponParams: params.specialWeapons[BIG_BUBBLER_ID],
 	})?.value;
 	const GreatBarrier_WeakPoint = specialDeviceHp({
 		abilityPoints,
-		specialWeaponParams: params.specialWeapons[
-			BIG_BUBBLER_ID
-		] as SpecialWeaponParams,
+		specialWeaponParams: params.specialWeapons[BIG_BUBBLER_ID],
 	})?.value;
 
 	invariant(Wsb_Shield);

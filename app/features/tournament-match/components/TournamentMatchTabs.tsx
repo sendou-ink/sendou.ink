@@ -12,10 +12,10 @@ import type {
 } from "~/components/match-page/MatchTimeline";
 import type { WeaponPoolWeapon } from "~/components/match-page/WeaponPool";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
@@ -244,7 +244,7 @@ function resolveTimelinePickBanData(
 	const pickedBySlot = new Map<number, "ALPHA" | "BRAVO">();
 
 	for (let i = 0; i < data.pickBanEvents.length; i++) {
-		const event = data.pickBanEvents[i]!;
+		const event = data.pickBanEvents[i];
 		if (event.type === "ROLL") continue;
 
 		const teamId = PickBan.teamOfEvent({
@@ -269,7 +269,7 @@ function resolveTimelinePickBanData(
 		const isPick = event.type === "PICK" || event.type === "MODE_PICK";
 		const kind: "PICK" | "BAN" = isPick ? "PICK" : "BAN";
 		const bucketIndex = Math.min(slot, rowsBySlot.length - 1);
-		const bucket = rowsBySlot[bucketIndex]!;
+		const bucket = rowsBySlot[bucketIndex];
 		const last = bucket[bucket.length - 1];
 		const entry = {
 			stageId: event.stageId ?? undefined,

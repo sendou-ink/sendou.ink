@@ -16,9 +16,9 @@ import {
 	TournamentRunGraphic,
 	type TournamentRunGraphicSeriesWin,
 } from "~/features/img-export/components/TournamentRunGraphic";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
-import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
 import {
@@ -235,7 +235,7 @@ function RunImageExport() {
 
 	const handleOpen = () => {
 		if (fetcher.state === "idle" && !fetcher.data) {
-			fetcher.load(
+			void fetcher.load(
 				tournamentTeamCompsPage({
 					tournamentId: tournament.ctx.id,
 					tournamentTeamId: data.tournamentTeamId,

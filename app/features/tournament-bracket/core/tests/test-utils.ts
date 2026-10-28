@@ -243,10 +243,7 @@ export const mergeStages = (...brackets: BracketData[]): BracketData => {
 
 /** `null` = BYE, `"TBD"` = not yet determined, a tuple carries the seed position the slot was filled from. */
 type CompactOpponent =
-	| number
-	| [teamId: number | null, position: number]
-	| "TBD"
-	| null;
+	number | [teamId: number | null, position: number] | "TBD" | null;
 
 type CompactMatch = [
 	id: number,

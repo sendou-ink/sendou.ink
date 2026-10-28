@@ -90,7 +90,7 @@
 	--calendar-cell-size: clamp(
 		12px,
 		(100cqi - 6rem - (var(--calendar-weeks) + 4) * var(--calendar-gap)) /
-		var(--calendar-weeks),
+			var(--calendar-weeks),
 		20px
 	);
 

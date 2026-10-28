@@ -2,6 +2,7 @@
 navItem: [maps, scrims, calendar]
 type: feature
 ---
+
 New map pool picker
 
 - Pick stages mode by mode, with the stage art on every stage

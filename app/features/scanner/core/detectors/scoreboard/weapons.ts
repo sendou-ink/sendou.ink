@@ -70,7 +70,7 @@ function countInkRgb(mat: Mat, threshold: number): number {
 	const d = mat.data;
 	const n = mat.rows * mat.cols;
 	for (let i = 0; i < n; i++) {
-		const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
+		const v = Math.max(d[i * 3], d[i * 3 + 1], d[i * 3 + 2]);
 		if (v > threshold) ink++;
 	}
 	return ink;
@@ -152,7 +152,7 @@ export function prepareWeaponTemplates(
 	const background = options.background ?? PILL_BACKGROUND;
 	const inkThreshold = options.inkThreshold ?? INK_THRESHOLD;
 	return icons.map(({ id, image }) => {
-		const rgba = cv.matFromImageData(image as unknown as ImageData);
+		const rgba = cv.matFromImageData(image);
 		const source = options.cropToArt ? cropToAlphaBbox(rgba) : rgba;
 		const composited = compositeOnBackground(source, background);
 		if (source !== rgba) source.delete();
@@ -185,7 +185,7 @@ function cropToAlphaBbox(rgba: Mat): Mat {
 	for (let y = 0; y < rows; y++) {
 		const rowBase = y * cols * 4 + 3;
 		for (let x = 0; x < cols; x++) {
-			if (d[rowBase + x * 4]! >= ART_ALPHA_MIN) {
+			if (d[rowBase + x * 4] >= ART_ALPHA_MIN) {
 				if (x < x0) x0 = x;
 				if (x > x1) x1 = x;
 				if (y < y0) y0 = y;
@@ -216,10 +216,10 @@ function compositeOnBackground(rgba: Mat, background: number): Mat {
 	const dst = out.data;
 	const n = rgba.rows * rgba.cols;
 	for (let i = 0; i < n; i++) {
-		const a = src[i * 4 + 3]! / 255;
-		dst[i * 3] = Math.round(src[i * 4]! * a + background * (1 - a));
-		dst[i * 3 + 1] = Math.round(src[i * 4 + 1]! * a + background * (1 - a));
-		dst[i * 3 + 2] = Math.round(src[i * 4 + 2]! * a + background * (1 - a));
+		const a = src[i * 4 + 3] / 255;
+		dst[i * 3] = Math.round(src[i * 4] * a + background * (1 - a));
+		dst[i * 3 + 1] = Math.round(src[i * 4 + 1] * a + background * (1 - a));
+		dst[i * 3 + 2] = Math.round(src[i * 4 + 2] * a + background * (1 - a));
 	}
 	return out;
 }
@@ -270,7 +270,7 @@ function* coarseShortlist(
 	for (const template of templates) {
 		let score = -1;
 		for (const { coarse } of sizesOf(template)) {
-			const maxVal = scoreOf!(index++);
+			const maxVal = scoreOf(index++);
 			const r =
 				Math.min(coarse.ink, searchInk) /
 				Math.max(Math.max(coarse.ink, searchInk), 1);
@@ -336,7 +336,7 @@ export function* matchWeaponSteps(
 	for (const template of pool) {
 		let score = -1;
 		for (const { ink } of sizesOf(template)) {
-			const maxVal = scoreOf!(index++);
+			const maxVal = scoreOf(index++);
 			const r =
 				Math.min(ink, searchInk) / Math.max(Math.max(ink, searchInk), 1);
 			const adjusted = maxVal * (0.75 + 0.25 * r);

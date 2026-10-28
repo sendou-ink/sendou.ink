@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
@@ -18,6 +17,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { EmptyState } from "~/components/EmptyState";
 import { Image, ModeImage, TierImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import {
@@ -105,8 +105,8 @@ export default function LeaderboardsPage() {
 
 	const showTopTen = Boolean(
 		seasonHasTopTen(data.season) &&
-			isAllUserLeaderboard &&
-			data.userLeaderboard,
+		isAllUserLeaderboard &&
+		data.userLeaderboard,
 	);
 
 	const renderNoEntries =

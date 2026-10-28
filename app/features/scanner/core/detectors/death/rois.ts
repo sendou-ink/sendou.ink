@@ -45,13 +45,13 @@ const ABILITY_SUB_YS = [702, 797, 888] as const;
 
 /** Search boxes around each circle; heights double as the size filter (matchTemplate skips taller templates). */
 export function abilityMainRoi(row: number): Roi {
-	const cy = ABILITY_MAIN_YS[row]!;
+	const cy = ABILITY_MAIN_YS[row];
 	return { x: ABILITY_MAIN_X - 38, y: cy - 38, w: 76, h: 76 };
 }
 
 export function abilitySubRoi(row: number, slot: number): Roi {
-	const cx = ABILITY_SUB_XS[slot]!;
-	const cy = ABILITY_SUB_YS[row]!;
+	const cx = ABILITY_SUB_XS[slot];
+	const cy = ABILITY_SUB_YS[row];
 	return { x: cx - 28, y: cy - 28, w: 56, h: 56 };
 }
 
@@ -124,7 +124,7 @@ export const GATE_TEXT_MAX_FRACTION = 0.35;
 export function gateAbilityProbe(row: number): Roi {
 	return {
 		x: ABILITY_MAIN_X - 14,
-		y: ABILITY_MAIN_YS[row]! - 14,
+		y: ABILITY_MAIN_YS[row] - 14,
 		w: 28,
 		h: 28,
 	};

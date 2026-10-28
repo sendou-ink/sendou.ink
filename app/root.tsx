@@ -4,10 +4,11 @@ import NProgress from "nprogress";
 import * as React from "react";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import {
 	Links,
+	type LoaderFunctionArgs,
 	Meta,
+	type MetaFunction,
 	Outlet,
 	Scripts,
 	ScrollRestoration,
@@ -36,10 +37,10 @@ import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { FusePageInit } from "./components/fuse/Fuse";
 import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { UserProvider } from "./features/auth/core/user";
-import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
-import { ChatProvider } from "./features/chat/ChatProvider";
+import { getUser } from "./features/auth/core/user.server";
 import { resolveRoomList } from "./features/chat/chat-room-list.server";
+import { ChatProvider } from "./features/chat/ChatProvider";
 import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
 import { GlobalStatusProvider } from "./features/global-status/GlobalStatusProvider";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
@@ -209,11 +210,12 @@ function Document({
 	useLoadingIndicator();
 	useTriggerToasts();
 
+	const isMinorSupporter = rootData?.user?.roles.includes("MINOR_SUPPORT");
+	const showFuse = Config.fuseEnabled && !isMinorSupporter;
+
 	const htmlStyle: Record<string, string | number> = {
 		...Object.fromEntries(customThemeStyle),
-		...(rootData?.user?.roles.includes("MINOR_SUPPORT")
-			? { "--layout-fuse-bottom-height": "0px" }
-			: {}),
+		...(isMinorSupporter ? { "--layout-fuse-bottom-height": "0px" } : {}),
 	};
 
 	return (
@@ -223,19 +225,13 @@ function Document({
 			dir={i18n.dir()}
 			className={clsx(htmlThemeClass, "scrollbar")}
 			style={htmlStyle}
-			data-fuse={
-				Config.fuseEnabled && !rootData?.user?.roles.includes("MINOR_SUPPORT")
-					? "true"
-					: undefined
-			}
+			data-fuse={showFuse ? "true" : undefined}
 			suppressHydrationWarning
 		>
 			<head>
 				<meta charSet="utf-8" />
-				{Config.fuseEnabled &&
-				// check for data so supporters don't see ads on error page
-				rootData &&
-				!rootData.user?.roles.includes("MINOR_SUPPORT") ? (
+				{/* check for data so supporters don't see ads on error page */}
+				{showFuse && rootData ? (
 					<script
 						async
 						src="https://cdn.fuseplatform.net/publift/tags/2/4242/fuse.js"
@@ -305,7 +301,7 @@ function Document({
 }
 
 function useTriggerToasts() {
-	// biome-ignore lint/plugin: app-wide toast params written by server redirects, belonging to no one feature
+	// eslint-disable-next-line sendou/no-raw-search-params -- app-wide toast params written by server redirects, belonging to no one feature
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const scrollBeforeToast = useScrollBeforeToast();
@@ -339,7 +335,7 @@ function useTriggerToasts() {
 			window.scrollTo(0, scrollBeforeToast.current.y);
 		}
 
-		navigate(
+		void navigate(
 			{ search: searchWithoutToastParams },
 			{
 				replace: true,
@@ -429,8 +425,7 @@ function useCustomThemeVars() {
 
 	for (const match of matches) {
 		const loaderData = match.loaderData as
-			| { customTheme?: CustomTheme }
-			| undefined;
+			{ customTheme?: CustomTheme } | undefined;
 
 		if (loaderData?.customTheme) {
 			for (const [key, value] of Object.entries(loaderData.customTheme)) {

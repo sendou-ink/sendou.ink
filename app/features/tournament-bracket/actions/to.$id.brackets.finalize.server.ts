@@ -1,7 +1,6 @@
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { notify } from "~/features/notifications/core/notify.server";
-import * as Standings from "~/features/tournament/core/Standings";
 import { finalizeTournament } from "~/features/tournament-bracket/core/finalizeTournament.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
@@ -18,6 +17,7 @@ import {
 	validateBadgeReceivers,
 	validateTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as Standings from "~/features/tournament/core/Standings";
 import { defineAction } from "~/form/define-action.server";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -86,7 +86,7 @@ export const action = defineAction(
 				`Badge receivers for tournament id ${tournamentId}: ${JSON.stringify(body.badgeReceivers)}`,
 			);
 
-			notifyBadgeReceivers(body.badgeReceivers);
+			void notifyBadgeReceivers(body.badgeReceivers);
 		}
 
 		if (trophyReceiver) {
@@ -161,7 +161,7 @@ async function notifyBadgeReceivers(badgeReceivers: TournamentBadgeReceivers) {
 			const badge = await BadgeRepository.findById(receiver.badgeId);
 			invariant(badge, `Badge with id ${receiver.badgeId} not found`);
 
-			notify({
+			void notify({
 				userIds: receiver.userIds,
 				notification: {
 					type: "BADGE_ADDED",

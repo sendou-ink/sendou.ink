@@ -9,18 +9,17 @@ import {
 	NotificationItemDivider,
 	NotificationsList,
 } from "~/features/notifications/components/NotificationList";
+import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import {
 	type NotificationsData,
 	useNotificationsData,
 } from "~/features/notifications/NotificationsProvider";
-import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
 import {
 	useMarkNotificationsAsSeen,
 	useShowUnseenDot,
 	useStickyUnseenIds,
 } from "../../features/notifications/notifications-hooks";
-
 import styles from "./NotificationPopover.module.css";
 
 export type LoaderNotification = NonNullable<NotificationsData>[number];

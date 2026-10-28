@@ -1,8 +1,5 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { Readable } from "node:stream";
-import { S3 } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
 import { logger } from "~/utils/logger";
 import {
 	getArtFilename,
@@ -13,40 +10,38 @@ import {
 	SEED_NUMBERED_LOGOS,
 } from "./seed-art-urls";
 
-async function checkStorageConnection(): Promise<boolean> {
+function storageClient(): Bun.S3Client | null {
+	const {
+		STORAGE_END_POINT,
+		STORAGE_ACCESS_KEY,
+		STORAGE_SECRET,
+		STORAGE_REGION,
+		STORAGE_BUCKET,
+	} = process.env;
+
+	if (!(
+		STORAGE_ACCESS_KEY &&
+		STORAGE_END_POINT &&
+		STORAGE_SECRET &&
+		STORAGE_REGION &&
+		STORAGE_BUCKET
+	)) {
+		logger.warn("Storage configuration not found in environment");
+		return null;
+	}
+
+	return new Bun.S3Client({
+		endpoint: STORAGE_END_POINT,
+		accessKeyId: STORAGE_ACCESS_KEY,
+		secretAccessKey: STORAGE_SECRET,
+		region: STORAGE_REGION,
+		bucket: STORAGE_BUCKET,
+	});
+}
+
+async function isStorageReachable(client: Bun.S3Client): Promise<boolean> {
 	try {
-		const {
-			STORAGE_END_POINT,
-			STORAGE_ACCESS_KEY,
-			STORAGE_SECRET,
-			STORAGE_REGION,
-			STORAGE_BUCKET,
-		} = process.env;
-
-		if (
-			!(
-				STORAGE_ACCESS_KEY &&
-				STORAGE_END_POINT &&
-				STORAGE_SECRET &&
-				STORAGE_REGION &&
-				STORAGE_BUCKET
-			)
-		) {
-			logger.warn("Storage configuration not found in environment");
-			return false;
-		}
-
-		const s3 = new S3({
-			endpoint: STORAGE_END_POINT,
-			forcePathStyle: false,
-			credentials: {
-				accessKeyId: STORAGE_ACCESS_KEY,
-				secretAccessKey: STORAGE_SECRET,
-			},
-			region: STORAGE_REGION,
-		});
-
-		await s3.headBucket({ Bucket: STORAGE_BUCKET });
+		await client.list({ maxKeys: 1 });
 		return true;
 	} catch {
 		return false;
@@ -67,80 +62,10 @@ async function readLocalImage(filename: string): Promise<Buffer> {
 	return await readFile(imagePath);
 }
 
-async function uploadToStorage(
-	imageBuffer: Buffer,
-	filename: string,
-): Promise<string> {
-	const {
-		STORAGE_END_POINT,
-		STORAGE_ACCESS_KEY,
-		STORAGE_SECRET,
-		STORAGE_REGION,
-		STORAGE_BUCKET,
-	} = process.env;
-
-	const s3 = new S3({
-		endpoint: STORAGE_END_POINT,
-		forcePathStyle: false,
-		credentials: {
-			accessKeyId: STORAGE_ACCESS_KEY!,
-			secretAccessKey: STORAGE_SECRET!,
-		},
-		region: STORAGE_REGION,
-	});
-
-	const stream = Readable.from(imageBuffer);
-
-	const upload = new Upload({
-		client: s3,
-		params: {
-			Bucket: STORAGE_BUCKET!,
-			Key: filename,
-			Body: stream,
-			ACL: "public-read",
-		},
-	});
-
-	await upload.done();
-
-	return filename;
-}
-
-async function fileExistsInStorage(filename: string): Promise<boolean> {
-	try {
-		const {
-			STORAGE_END_POINT,
-			STORAGE_ACCESS_KEY,
-			STORAGE_SECRET,
-			STORAGE_REGION,
-			STORAGE_BUCKET,
-		} = process.env;
-
-		const s3 = new S3({
-			endpoint: STORAGE_END_POINT,
-			forcePathStyle: false,
-			credentials: {
-				accessKeyId: STORAGE_ACCESS_KEY!,
-				secretAccessKey: STORAGE_SECRET!,
-			},
-			region: STORAGE_REGION,
-		});
-
-		await s3.headObject({
-			Bucket: STORAGE_BUCKET!,
-			Key: filename,
-		});
-
-		return true;
-	} catch {
-		return false;
-	}
-}
-
 export async function seedImages(): Promise<void> {
-	const storageAvailable = await checkStorageConnection();
+	const client = storageClient();
 
-	if (!storageAvailable) {
+	if (!client || !(await isStorageReachable(client))) {
 		logger.warn(
 			"⚠️  SeaweedFS is not available. Skipping image seeding. Make sure Docker is running if you want to seed images.",
 		);
@@ -174,8 +99,8 @@ export async function seedImages(): Promise<void> {
 		const smallFilename = filename.replace(/\.(\w+)$/, "-small.$1");
 
 		try {
-			const regularExists = await fileExistsInStorage(filename);
-			const smallExists = await fileExistsInStorage(smallFilename);
+			const regularExists = await client.exists(filename);
+			const smallExists = await client.exists(smallFilename);
 
 			if (regularExists && smallExists) continue;
 
@@ -183,12 +108,14 @@ export async function seedImages(): Promise<void> {
 
 			if (!regularExists) {
 				logger.info(`  Uploading ${filename} to storage...`);
-				await uploadToStorage(imageBuffer, filename);
+				await client.write(filename, imageBuffer, { acl: "public-read" });
 			}
 
 			if (!smallExists) {
 				logger.info(`  Uploading ${smallFilename} to storage...`);
-				await uploadToStorage(imageBuffer, smallFilename);
+				await client.write(smallFilename, imageBuffer, {
+					acl: "public-read",
+				});
 			}
 
 			uploadedCount++;

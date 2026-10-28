@@ -16,6 +16,7 @@ type MetaFilter<T extends Notification["type"]> =
  * informational or resolving would cost a hot-path query for little gain (TO_ADDED_TO_TEAM,
  * TO_TEST_CREATED). Exhaustive so a new type has to pick a side.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- only its type is read, the values document each trigger
 const RESOLUTION_TRIGGERS = {
 	SQ_ADDED_TO_GROUP: "visits a SendouQ group page (preparing/looking)",
 	SQ_READY_CHECK:

@@ -2,6 +2,7 @@
 navItem: medal
 type: feature
 ---
+
 Elimination brackets in groups and unplayed rounds
 
 - Single and double elimination brackets can be split into groups, each group playing its own bracket

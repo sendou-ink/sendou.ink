@@ -1,9 +1,9 @@
 import { hasPermission } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
-import * as ChatRepository from "./ChatRepository.server";
-import * as ChatRoomResolver from "./ChatRoomResolver.server";
 import { findParticipantsById, roomListItem } from "./chat-room-list.server";
 import type { RouteChatRoom, RouteChatRoomInput } from "./chat-types";
+import * as ChatRepository from "./ChatRepository.server";
+import * as ChatRoomResolver from "./ChatRoomResolver.server";
 
 /**
  * Resolves the rooms a route surfaces into what its page arrives with: each room as the sidebar

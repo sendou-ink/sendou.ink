@@ -434,7 +434,7 @@ function signaturesDiffer(
 ): boolean {
 	if (a.length !== b.length) return true;
 	for (let i = 0; i < a.length; i++) {
-		if (Math.abs(a[i]! - b[i]!) > tolerance) return true;
+		if (Math.abs(a[i] - b[i]) > tolerance) return true;
 	}
 	return false;
 }

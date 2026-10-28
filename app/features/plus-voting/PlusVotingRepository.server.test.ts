@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { pinClockInsideSeason } from "~/features/sendouq/tests/season-clock";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
@@ -77,6 +77,6 @@ describe("PlusVotingRepository.findAllUsersForVoting", () => {
 		]);
 
 		expect(bio).toEqual({ text: '{"note":"gg"}', markdown: false });
-		expect(typeof bio?.text).toBe("string");
+		expect(bio?.text).toBeTypeOf("string");
 	});
 });

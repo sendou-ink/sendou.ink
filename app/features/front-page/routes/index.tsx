@@ -5,15 +5,15 @@ import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { Image } from "~/components/Image";
 import { ArrowRightIcon } from "~/components/icons/ArrowRight";
 import { BSKYLikeIcon } from "~/components/icons/BSKYLike";
 import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
-import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { Image } from "~/components/Image";
 import { globalSearchSearchParams } from "~/components/layout/global-search-search-params";
 import { navItems } from "~/components/layout/nav-items";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { WeaponPoolBanner } from "~/components/WeaponPoolBanner";
 import { Config } from "~/config";
@@ -24,7 +24,6 @@ import { SplatoonRotations } from "~/features/front-page/components/SplatoonRota
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import styles from "~/styles/front.module.css";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -36,6 +35,7 @@ import {
 	WELCOME_PAGE,
 } from "~/utils/urls";
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
+import styles from "~/styles/front.module.css";
 
 export { loader };
 

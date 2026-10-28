@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { widgetsAvailableTo } from "./portfolio";
 import type { StoredWidget } from "./types";
 

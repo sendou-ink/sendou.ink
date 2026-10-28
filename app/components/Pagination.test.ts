@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { getPageNumbers } from "./Pagination";
 
 /** What is rendered on a narrow (mobile) viewport — `desktopOnly` items are hidden. */

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import matter from "gray-matter";
 import * as v from "valibot";
+import { parseFrontmatter } from "~/utils/frontmatter.server";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
 import { type articleBySlug, normalizeAuthors } from "./bySlug.server";
@@ -19,7 +19,7 @@ export async function mostRecentArticles(count: number) {
 			path.join(ARTICLES_FOLDER_PATH, file),
 			"utf8",
 		);
-		const { data } = matter(rawMarkdown);
+		const { data } = parseFrontmatter(rawMarkdown);
 
 		const { date, ...restParsed } = v.parse(articleDataSchema, data);
 		articles.push({

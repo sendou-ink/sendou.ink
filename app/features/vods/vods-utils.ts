@@ -46,7 +46,7 @@ export function extractYoutubeIdFromVideoUrl(url: string): string | null {
 	if (!YOUTUBE_HOSTS.includes(parsed.hostname)) return null;
 
 	if (pathSegments[0] === "watch") {
-		// biome-ignore lint/plugin: user-pasted YouTube URL
+		// eslint-disable-next-line sendou/no-raw-search-params -- user-pasted YouTube URL
 		return parsed.searchParams.get("v") || null;
 	}
 
@@ -85,9 +85,7 @@ export function hoursMinutesSecondsStringToSeconds(
 		throw new Error("Invalid time format. Expected format: HH:MM:SS");
 	}
 
-	const parts = hoursMinutesSecondsString
-		.split(":")
-		.map((part) => Number(part));
+	const parts = hoursMinutesSecondsString.split(":").map(Number);
 	const seconds = parts.pop() || 0;
 	const minutes = parts.pop() || 0;
 	const hours = parts.pop() || 0;

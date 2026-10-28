@@ -5,8 +5,8 @@ import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { LocaleTime } from "~/components/LocaleTime";
-import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { matchPageSearchParams } from "~/components/match-page/match-page-search-params";
+import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { useUser } from "~/features/auth/core/user";
 import type {
 	PlayableWindowTier,
@@ -20,12 +20,12 @@ import {
 	AvailabilityMemberRow,
 	AvailabilityMemberRows,
 	type AvailabilityPanelUser,
-	AvailabilitySummary,
 	availabilityRowStatus,
+	AvailabilitySummary,
 } from "~/features/availability/components/RegistrationAvailabilityPanel";
 import * as Availability from "~/features/availability/core/Availability";
-import { useTournament } from "~/features/tournament/tournament-context";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useSearchParam } from "~/modules/search-params/hooks";

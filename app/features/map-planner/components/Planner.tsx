@@ -17,15 +17,15 @@ import {
 	parseTldrawJsonFile,
 	type TLAssetId,
 	type TLComponents,
+	Tldraw,
 	TLDRAW_FILE_EXTENSION,
+	type TldrawFile,
+	type TldrawOptions,
 	type TLImageAsset,
 	type TLShapeId,
 	type TLShapeUtilConstructor,
 	type TLUiStylePanelProps,
 	type TLUnknownShape,
-	Tldraw,
-	type TldrawFile,
-	type TldrawOptions,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
 import {
@@ -360,7 +360,7 @@ export function Planner() {
 		}) => {
 			if (!editor) return;
 
-			editor.mark("pre-background-change");
+			editor.markHistoryStoppingPoint("pre-background-change");
 
 			hideRanges(editor);
 			setRangesVisible(false);

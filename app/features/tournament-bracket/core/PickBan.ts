@@ -185,20 +185,20 @@ function resolveConsecutiveStepInfo({
 	const inPreSet = eventCount < preSet.length;
 
 	if (inPreSet) {
-		const currentStep = preSet[eventCount]!;
+		const currentStep = preSet[eventCount];
 		let start = eventCount;
 		while (
 			start > 0 &&
-			preSet[start - 1]!.action === currentStep.action &&
-			preSet[start - 1]!.side === currentStep.side
+			preSet[start - 1].action === currentStep.action &&
+			preSet[start - 1].side === currentStep.side
 		) {
 			start--;
 		}
 		let end = eventCount;
 		while (
 			end < preSet.length - 1 &&
-			preSet[end + 1]!.action === currentStep.action &&
-			preSet[end + 1]!.side === currentStep.side
+			preSet[end + 1].action === currentStep.action &&
+			preSet[end + 1].side === currentStep.side
 		) {
 			end++;
 		}
@@ -209,21 +209,21 @@ function resolveConsecutiveStepInfo({
 	if (postGame.length === 0) return { current: 1, total: 1 };
 
 	const stepIndex = (eventCount - preSet.length) % postGame.length;
-	const currentStep = postGame[stepIndex]!;
+	const currentStep = postGame[stepIndex];
 
 	let start = stepIndex;
 	while (
 		start > 0 &&
-		postGame[start - 1]!.action === currentStep.action &&
-		postGame[start - 1]!.side === currentStep.side
+		postGame[start - 1].action === currentStep.action &&
+		postGame[start - 1].side === currentStep.side
 	) {
 		start--;
 	}
 	let end = stepIndex;
 	while (
 		end < postGame.length - 1 &&
-		postGame[end + 1]!.action === currentStep.action &&
-		postGame[end + 1]!.side === currentStep.side
+		postGame[end + 1].action === currentStep.action &&
+		postGame[end + 1].side === currentStep.side
 	) {
 		end++;
 	}
@@ -243,7 +243,7 @@ export function resolveCurrentStep({
 	resultsCount: number;
 }): CustomPickBanStep | null {
 	if (eventCount < preSet.length) {
-		return preSet[eventCount]!;
+		return preSet[eventCount];
 	}
 
 	invariant(
@@ -264,7 +264,7 @@ export function resolveCurrentStep({
 		return null;
 	}
 
-	return postGame[stepInPostGame]!;
+	return postGame[stepInPostGame];
 }
 
 /**
@@ -460,7 +460,7 @@ export function currentTurnSessionStartedAt({
 
 	const timeline: TimelineItem[] = [];
 	for (let i = 0; i < events.length; i++) {
-		timeline.push({ kind: "event", index: i, createdAt: events[i]!.createdAt });
+		timeline.push({ kind: "event", index: i, createdAt: events[i].createdAt });
 	}
 	for (const result of results) {
 		timeline.push({ kind: "result", createdAt: result.createdAt });
@@ -468,7 +468,7 @@ export function currentTurnSessionStartedAt({
 	timeline.sort((a, b) => a.createdAt - b.createdAt);
 
 	for (let i = timeline.length - 1; i >= 0; i--) {
-		const item = timeline[i]!;
+		const item = timeline[i];
 		if (item.kind === "event") {
 			const teamMadeIt = teamOfEvent({
 				eventIndex: item.index,
@@ -633,7 +633,7 @@ function unavailableStages({
 			return new Set(
 				mapList
 					?.filter((m) => m.bannedByTournamentTeamId)
-					.map((map) => map.stageId) ?? [],
+					.map((map) => map.stageId),
 			);
 		}
 		case "COUNTERPICK_MODE_REPEAT_OK":

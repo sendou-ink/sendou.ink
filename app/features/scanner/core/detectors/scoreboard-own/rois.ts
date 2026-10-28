@@ -24,12 +24,12 @@ export const GEAR_ROWS = 3;
 
 /** Search boxes around each badge; heights double as the size filter (matchTemplate skips taller templates). */
 export function gearMainRoi(row: number): Roi {
-	const cx = GEAR_MAIN_CXS[row]!;
+	const cx = GEAR_MAIN_CXS[row];
 	return { x: cx - 32, y: GEAR_BADGE_CY - 32, w: 64, h: 64 };
 }
 
 export function gearSubRoi(row: number, slot: number): Roi {
-	const cx = GEAR_MAIN_CXS[row]! + GEAR_SUB_DXS[slot]!;
+	const cx = GEAR_MAIN_CXS[row] + GEAR_SUB_DXS[slot];
 	return { x: cx - 26, y: GEAR_BADGE_CY - 26, w: 52, h: 52 };
 }
 
@@ -62,7 +62,7 @@ export const GATE_TEXT_MIN_MAX = 180;
 
 /** Gray ability-strip gap after the third sub badge, one per gear card. */
 export function gateStripProbe(row: number): Roi {
-	return { x: GEAR_MAIN_CXS[row]! + 148, y: 917, w: 10, h: 18 };
+	return { x: GEAR_MAIN_CXS[row] + 148, y: 917, w: 10, h: 18 };
 }
 export const GATE_STRIP_MIN_MEAN = 110;
 export const GATE_STRIP_MAX_MEAN = 200;

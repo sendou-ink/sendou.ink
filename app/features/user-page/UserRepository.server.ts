@@ -304,7 +304,7 @@ export async function findStoredWidgetsByUserId(
 
 	return widgetsAvailableTo(
 		rows.map((row) => row.widget),
-		isSupporter({ patronTier: rows[0]!.patronTier }),
+		isSupporter({ patronTier: rows[0].patronTier }),
 	);
 }
 

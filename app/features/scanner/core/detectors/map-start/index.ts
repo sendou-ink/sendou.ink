@@ -94,7 +94,7 @@ function findLineBands(binary: Mat): LineBand[] {
 	const counts = new Array<number>(rows).fill(0);
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
-			if (data[y * cols + x]! > 0) counts[y]!++;
+			if (data[y * cols + x] > 0) counts[y]++;
 		}
 	}
 	// dual threshold: band core scaled to the strongest row (background leak sets a
@@ -108,7 +108,7 @@ function findLineBands(binary: Mat): LineBand[] {
 	let start = -1;
 	let gap = 0;
 	for (let y = 0; y < rows; y++) {
-		if (counts[y]! >= core) {
+		if (counts[y] >= core) {
 			if (start < 0) start = y;
 			gap = 0;
 		} else if (start >= 0 && ++gap > LINE_GAP_TOLERANCE) {
@@ -119,9 +119,8 @@ function findLineBands(binary: Mat): LineBand[] {
 	if (start >= 0) bands.push({ y0: start, y1: rows - gap });
 
 	for (const band of bands) {
-		while (band.y0 > 0 && counts[band.y0 - 1]! >= LINE_MIN_ROW_PIXELS)
-			band.y0--;
-		while (band.y1 < rows && counts[band.y1]! >= LINE_MIN_ROW_PIXELS) band.y1++;
+		while (band.y0 > 0 && counts[band.y0 - 1] >= LINE_MIN_ROW_PIXELS) band.y0--;
+		while (band.y1 < rows && counts[band.y1] >= LINE_MIN_ROW_PIXELS) band.y1++;
 	}
 	const merged: LineBand[] = [];
 	for (const band of bands) {
@@ -143,7 +142,7 @@ function bandExtent(
 	for (let x = 0; x < cols; x++) {
 		let count = 0;
 		for (let y = band.y0; y < band.y1; y++) {
-			if (data[y * cols + x]! > 0) count++;
+			if (data[y * cols + x] > 0) count++;
 		}
 		if (count >= 2) {
 			if (x0 < 0) x0 = x;
@@ -258,7 +257,7 @@ export function createMapStartDetector(
 			),
 		);
 		for (const line of lineCrops) line.delete();
-		return reads.map((read) => read.text.trim()).filter((text) => text);
+		return reads.map((read) => read.text.trim()).filter(Boolean);
 	}
 
 	/**

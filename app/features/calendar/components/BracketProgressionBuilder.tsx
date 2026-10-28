@@ -29,8 +29,8 @@ import {
 } from "~/components/elements/ChipRadio";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	useFieldRevealer,
 	useFormFieldContext,
@@ -81,12 +81,10 @@ type Selection =
 	| { kind: "connection"; toIdx: number; sourceIdx: number };
 
 type DragData =
-	| { kind: "move"; bracketIdx: number }
-	| { kind: "connect"; fromIdx: number };
+	{ kind: "move"; bracketIdx: number } | { kind: "connect"; fromIdx: number };
 
 type DropData =
-	| { kind: "column"; column: number }
-	| { kind: "card"; bracketIdx: number };
+	{ kind: "column"; column: number } | { kind: "card"; bracketIdx: number };
 
 interface MoveTarget {
 	column: number;
@@ -548,14 +546,7 @@ export function BracketProgressionBuilder({
 
 	const selectedBracketIdx =
 		selection?.kind === "bracket" ? selection.bracketIdx : null;
-	const selectedLine =
-		selection?.kind === "connection"
-			? lines.find(
-					(line) =>
-						line.toIdx === selection.toIdx &&
-						line.sourceIdx === selection.sourceIdx,
-				)
-			: undefined;
+	const selectedLine = selectedLineOf(selection, lines);
 
 	const selectLine = (line: BracketBuilder.Connection) =>
 		selectAndShowPanel({
@@ -593,42 +584,13 @@ export function BracketProgressionBuilder({
 						{t("calendar:builder.newBracket")}
 					</SendouButton>
 					{/* in the toolbar instead of above the board so that showing them doesn't push it down */}
-					{linkFromIdx !== null ? (
-						<div className={styles.linkBar} role="status">
-							<span>
-								{t("calendar:builder.connectHint", {
-									name: bracketName(linkFromIdx),
-								})}
-							</span>
-							<SendouButton
-								size="small"
-								variant="outlined"
-								onClick={() => setLinkFromIdx(null)}
-							>
-								{t("common:actions.cancel")}
-							</SendouButton>
-						</div>
-					) : notice ? (
-						<div className={styles.notice} role="status">
-							<span>{notice}</span>
-							<SendouButton
-								size="small"
-								variant="minimal"
-								icon={<X />}
-								aria-label={t("common:actions.close")}
-								onClick={() => setNotice(null)}
-							/>
-						</div>
-					) : (
-						<span className={styles.toolbarHint}>
-							<span className={styles.pointerOnly}>
-								{t("calendar:builder.toolbarHint")}
-							</span>
-							<span className={styles.touchOnly}>
-								{t("calendar:builder.toolbarHintTouch")}
-							</span>
-						</span>
-					)}
+					<ToolbarStatus
+						linkFromIdx={linkFromIdx}
+						notice={notice}
+						bracketName={bracketName}
+						onCancelLink={() => setLinkFromIdx(null)}
+						onDismissNotice={() => setNotice(null)}
+					/>
 				</div>
 
 				{(["brackets", "progression"] as const).map((fieldName) =>
@@ -689,7 +651,6 @@ export function BracketProgressionBuilder({
 												})}
 												d={d}
 											/>
-											{/* biome-ignore lint/a11y/noStaticElementInteractions: a wider target for the mouse, the line's label button does the same */}
 											<path
 												className={styles.lineHitArea}
 												d={d}
@@ -968,6 +929,63 @@ export function BracketProgressionBuilder({
 				</aside>
 			) : null}
 		</div>
+	);
+}
+
+function ToolbarStatus({
+	linkFromIdx,
+	notice,
+	bracketName,
+	onCancelLink,
+	onDismissNotice,
+}: {
+	linkFromIdx: number | null;
+	notice: string | null;
+	bracketName: (bracketIdx: number) => string;
+	onCancelLink: () => void;
+	onDismissNotice: () => void;
+}) {
+	const { t } = useTranslation(["calendar", "common"]);
+
+	if (linkFromIdx !== null) {
+		return (
+			<div className={styles.linkBar} role="status">
+				<span>
+					{t("calendar:builder.connectHint", {
+						name: bracketName(linkFromIdx),
+					})}
+				</span>
+				<SendouButton size="small" variant="outlined" onClick={onCancelLink}>
+					{t("common:actions.cancel")}
+				</SendouButton>
+			</div>
+		);
+	}
+
+	if (notice) {
+		return (
+			<div className={styles.notice} role="status">
+				<span>{notice}</span>
+				<SendouButton
+					size="small"
+					variant="minimal"
+					icon={<X />}
+					aria-label={t("common:actions.close")}
+					onClick={onDismissNotice}
+				/>
+			</div>
+		);
+	}
+
+	return (
+		<span className={styles.toolbarHint}>
+			<span className={styles.pointerOnly}>
+				{t("calendar:builder.toolbarHint")}
+			</span>
+			<span className={styles.touchOnly}>
+				{t("calendar:builder.toolbarHintTouch")}
+			</span>
+		</span>
 	);
 }
 
@@ -1514,6 +1532,18 @@ function scrollToStartIfOutOfView(element: HTMLElement | null) {
 	if (top >= 0 && top <= window.innerHeight / 2) return;
 
 	element.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function selectedLineOf(
+	selection: Selection | null,
+	lines: BracketBuilder.Connection[],
+) {
+	if (selection?.kind !== "connection") return undefined;
+
+	return lines.find(
+		(line) =>
+			line.toIdx === selection.toIdx && line.sourceIdx === selection.sourceIdx,
+	);
 }
 
 function lineKey(line: BracketBuilder.Connection) {

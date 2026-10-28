@@ -1,7 +1,7 @@
 import * as R from "remeda";
-import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import * as TrophyRepository from "../TrophyRepository.server";
 
 export async function backfillableTournaments({

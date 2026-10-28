@@ -43,7 +43,7 @@ export class StageCreator {
 		this.groupSkippedRounds = this.settings.skippedRounds ?? [];
 
 		if (input.type === "single_elimination")
-			this.settings.consolationFinal = this.settings.consolationFinal || false;
+			this.settings.consolationFinal ||= false;
 	}
 
 	insertGroup(group: Omit<GroupData, "id">): number {

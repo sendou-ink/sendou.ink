@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as FriendRequestFactory from "~/db/seed/factories/FriendRequestFactory";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";

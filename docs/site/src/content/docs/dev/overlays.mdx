@@ -22,11 +22,11 @@ Placements are `"top"`, `"bottom"`, `"right"`, `"bottom start"` and `"bottom end
 
 However the hook only handles positioning. For sizing the popover you can use the CSS variables that the hook sets:
 
-| Variable | Usage |
-| --- | --- |
-| `--floating-available-width` / `--floating-available-height` | Can be used for `max-width` / `max-height` on the popover |
-| `--floating-anchor-width` / `--floating-anchor-height` | Can be used to match the popover size to the anchor |
-| `--floating-transform-origin` | Can be used for `transform-origin` for transform animations |
+| Variable                                                     | Usage                                                       |
+| ------------------------------------------------------------ | ----------------------------------------------------------- |
+| `--floating-available-width` / `--floating-available-height` | Can be used for `max-width` / `max-height` on the popover   |
+| `--floating-anchor-width` / `--floating-anchor-height`       | Can be used to match the popover size to the anchor         |
+| `--floating-transform-origin`                                | Can be used for `transform-origin` for transform animations |
 
 The hook also sets `data-side` and `data-align` for styling by placement.
 
@@ -41,12 +41,12 @@ The hook also sets `data-side` and `data-align` for styling by placement.
 
 The settings for the hook are global CSS properties in `vars.css`:
 
-| Variable | Meaning |
-| --- | --- |
-| `--floating-gap` | The gap between the popover and its anchor |
+| Variable                      | Meaning                                                           |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `--floating-gap`              | The gap between the popover and its anchor                        |
 | `--floating-viewport-padding` | The room between the edge of the popover and edge of the viewport |
-| `--popover-boundary-top` | The top nav, the popovers stay below it |
-| `--popover-boundary-bottom` | The mobile nav, the popover stays above it |
+| `--popover-boundary-top`      | The top nav, the popovers stay below it                           |
+| `--popover-boundary-bottom`   | The mobile nav, the popover stays above it                        |
 
 ### Behaviour
 

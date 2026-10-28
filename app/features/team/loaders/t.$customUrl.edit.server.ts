@@ -4,9 +4,9 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { hasPermission } from "~/modules/permissions/utils";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
-import * as TeamRepository from "../TeamRepository.server";
 import { teamParamsSchema } from "../team-schemas.server";
 import { canAddCustomizedColors } from "../team-utils";
+import * as TeamRepository from "../TeamRepository.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = requireUser();

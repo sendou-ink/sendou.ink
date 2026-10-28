@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useFetchers, useLocation, useNavigation } from "react-router";
 import {
-	useEventStreamCatchUp,
 	useEventsConnected,
+	useEventStreamCatchUp,
 	useServerEventListener,
 } from "~/features/events/events-hooks";
 import { useBackgroundResource } from "~/hooks/useBackgroundResource";
@@ -36,8 +36,13 @@ export function NotificationsProvider({
 	user?: { id: number } | null;
 	children: React.ReactNode;
 }) {
-	const { data, refresh } = useBackgroundResource<SerializeFrom<typeof loader>>(
-		NOTIFICATIONS_DATA_ROUTE,
+	const { data, refresh: refreshResource } = useBackgroundResource<
+		SerializeFrom<typeof loader>
+	>(NOTIFICATIONS_DATA_ROUTE);
+	// stable so effects refreshing after a mutation don't re-run every render
+	const refresh = React.useCallback(
+		() => void refreshResource(),
+		[refreshResource],
 	);
 	const connected = useEventsConnected();
 
@@ -135,6 +140,7 @@ function useFallbackRefreshOnPotentialResolution({
 		}
 
 		if (allIdle && refreshOnIdle) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot flag reset together with the refresh it triggers
 			setRefreshOnIdle(false);
 			refresh();
 		}

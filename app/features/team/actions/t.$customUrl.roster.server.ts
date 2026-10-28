@@ -1,17 +1,14 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import type {
-	MemberRole,
-	MemberRoleType,
-} from "~/features/team/team-constants";
+import type { MemberRole } from "~/features/team/team-constants";
 import { defineAction } from "~/form/define-action.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { teamPage } from "~/utils/urls";
-import * as TeamRepository from "../TeamRepository.server";
 import { CUSTOM_ROLE_VALUE } from "../team-schemas";
 import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
+import * as TeamRepository from "../TeamRepository.server";
 
 export const action = defineAction(
 	{ params: teamParamsSchema, body: manageRosterSchema },
@@ -69,9 +66,7 @@ export const action = defineAction(
 								? null
 								: ((member.role || null) as MemberRole | null),
 							customRole: isCustom ? member.customRole || null : null,
-							roleType: isCustom
-								? ((member.roleType || null) as MemberRoleType | null)
-								: null,
+							roleType: isCustom ? member.roleType || null : null,
 							isManager: isProtectedMember
 								? Boolean(existing?.isManager)
 								: member.isManager,

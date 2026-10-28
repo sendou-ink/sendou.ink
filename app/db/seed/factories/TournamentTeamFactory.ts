@@ -1,7 +1,7 @@
 import { addDays } from "date-fns";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { invariant } from "~/utils/invariant";
 import { actAs } from "../core/actAs";
 import { backdate } from "../core/backdate";

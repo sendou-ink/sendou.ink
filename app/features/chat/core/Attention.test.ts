@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as Attention from "./Attention";
 
 const IDLE_AFTER_MS = 1_000;

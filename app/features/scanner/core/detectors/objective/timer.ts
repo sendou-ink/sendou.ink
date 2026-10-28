@@ -93,7 +93,7 @@ export function* readMatchTimerSteps(
 		),
 	);
 	for (const [setIndex, timerSet] of timerSets.entries()) {
-		const raw = raws[setIndex]!;
+		const raw = raws[setIndex];
 		if (!best.reading) best = { ...best, reading: raw.text };
 		const isTimerDigit = (c: RecognizedChar) =>
 			c.score >= TIMER_DIGIT_MIN_CONF &&

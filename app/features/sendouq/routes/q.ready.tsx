@@ -100,7 +100,7 @@ function Countdown({ expiresAt }: { expiresAt: number }) {
 		// the ready check is resolved when someone asks for its state, so being
 		// the one who ran out of time we ask
 		if (isOver && revalidator.state === "idle") {
-			revalidator.revalidate();
+			void revalidator.revalidate();
 		}
 	}, [isOver, revalidator]);
 

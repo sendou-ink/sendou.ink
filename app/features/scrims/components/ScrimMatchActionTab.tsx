@@ -54,7 +54,7 @@ function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
 	const reportMap = useActionSubmit(scrimIdActionSchema);
-	const map = data.mapByMap!.currentMap!;
+	const map = data.mapByMap.currentMap!;
 	const acceptedRequest = data.post.requests.find((r) => r.isAccepted)!;
 
 	const alphaName = data.post.team

@@ -29,14 +29,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 		userId: user?.id,
 	});
 	const isStaffOnly = isStaff && !userSide;
-	const ownTeamId =
-		userSide === "ALPHA"
-			? data.match.groupAlpha.id
-			: userSide === "BRAVO"
-				? data.match.groupBravo.id
-				: isStaffOnly
-					? null
-					: data.match.groupAlpha.id;
+	const ownTeamId = resolveOwnTeamId(data.match, userSide, isStaffOnly);
 
 	const { alphaWins, bravoWins, isDecisive } = SendouQMatch.score(data.match);
 	const awaitingConfirmation = !data.match.isLocked && isDecisive;
@@ -44,36 +37,21 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 
 	const isParticipant = Boolean(userSide);
 
-	const lockedActionTabVisible =
-		databaseTimestampNow() <
-		data.match.createdAt + ACTION_TAB_AFTER_MATCH_MADE_SECONDS;
-
-	const matchInProgress = !isLocked && !awaitingConfirmation && currentMap;
-
-	const showActionTab =
-		(isParticipant ||
-			(isStaffOnly && (Boolean(matchInProgress) || awaitingConfirmation))) &&
-		(matchInProgress ||
-			awaitingConfirmation ||
-			(isLocked && lockedActionTabVisible));
+	const showActionTab = resolveShowActionTab({
+		match: data.match,
+		isParticipant,
+		isStaffOnly,
+		awaitingConfirmation,
+	});
 
 	const hasReportedMaps = data.match.mapList.some(
 		(m) => m.winnerGroupId !== null,
 	);
 
-	const decidingReportedByUserId = [...data.match.mapList]
-		.reverse()
-		.find((m) => m.winnerGroupId !== null)?.reportedByUserId;
-	const reporterSide = SendouQMatch.resolveGroupMemberOf({
-		groupAlpha: data.match.groupAlpha,
-		groupBravo: data.match.groupBravo,
-		userId: decidingReportedByUserId,
-	});
 	const viewerMustConfirmScore =
 		awaitingConfirmation &&
 		isParticipant &&
-		reporterSide !== null &&
-		reporterSide !== userSide;
+		isDecidingMapReportedByOtherSide(data.match, userSide);
 
 	const tabs: Array<"rosters" | "action" | "result"> = ["rosters"];
 	if (showActionTab) tabs.push("action");
@@ -141,6 +119,62 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 }
 
 type MatchData = SendouQMatchLoaderData["match"];
+type MatchSide = ReturnType<typeof SendouQMatch.resolveGroupMemberOf>;
+
+function resolveOwnTeamId(
+	match: MatchData,
+	userSide: MatchSide,
+	isStaffOnly: boolean,
+) {
+	if (userSide === "ALPHA") return match.groupAlpha.id;
+	if (userSide === "BRAVO") return match.groupBravo.id;
+	if (isStaffOnly) return null;
+
+	return match.groupAlpha.id;
+}
+
+function resolveShowActionTab({
+	match,
+	isParticipant,
+	isStaffOnly,
+	awaitingConfirmation,
+}: {
+	match: MatchData;
+	isParticipant: boolean;
+	isStaffOnly: boolean;
+	awaitingConfirmation: boolean;
+}) {
+	const lockedActionTabVisible =
+		databaseTimestampNow() <
+		match.createdAt + ACTION_TAB_AFTER_MATCH_MADE_SECONDS;
+
+	const matchInProgress =
+		!match.isLocked && !awaitingConfirmation && match.currentMap;
+
+	return (
+		(isParticipant ||
+			(isStaffOnly && (Boolean(matchInProgress) || awaitingConfirmation))) &&
+		(matchInProgress ||
+			awaitingConfirmation ||
+			(match.isLocked && lockedActionTabVisible))
+	);
+}
+
+function isDecidingMapReportedByOtherSide(
+	match: MatchData,
+	userSide: MatchSide,
+) {
+	const decidingReportedByUserId = [...match.mapList]
+		.reverse()
+		.find((m) => m.winnerGroupId !== null)?.reportedByUserId;
+	const reporterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: match.groupAlpha,
+		groupBravo: match.groupBravo,
+		userId: decidingReportedByUserId,
+	});
+
+	return reporterSide !== null && reporterSide !== userSide;
+}
 
 function resolveCancelRequesterUsername(match: MatchData) {
 	const allMembers = SendouQMatch.allMembers(match);

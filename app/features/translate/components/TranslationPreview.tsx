@@ -30,7 +30,7 @@ export function TranslationPreview() {
 	const catalog = data?.catalog;
 
 	React.useEffect(() => {
-		if (isActive && previewLanguage) load(translatePage(previewLanguage));
+		if (isActive && previewLanguage) void load(translatePage(previewLanguage));
 	}, [isActive, previewLanguage, load]);
 
 	React.useEffect(() => {

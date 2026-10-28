@@ -46,8 +46,8 @@ export default function TournamentAdminLayout() {
 
 	const showReopen = Boolean(
 		DANGEROUS_CAN_ACCESS_DEV_CONTROLS &&
-			tournament.ctx.isFinalized &&
-			tournament.isAdmin(user),
+		tournament.ctx.isFinalized &&
+		tournament.isAdmin(user),
 	);
 	const showStaffTab = tournament.isAdmin(user);
 	const showBracketsTab = tournament.ctx.isFinalized ? showReopen : true;

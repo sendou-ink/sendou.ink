@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import {
 	COMBO_DAMAGE_THRESHOLD,
 	MAX_COMBOS_DISPLAYED,

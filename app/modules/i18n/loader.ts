@@ -103,13 +103,13 @@ function getInitialNamespaces(): string[] {
 		const handle = route?.handle;
 		if (typeof handle !== "object" || handle === null) return [];
 		if (!("i18n" in handle)) return [];
-		const namespaces = (handle as { i18n: unknown }).i18n;
+		const namespaces = handle.i18n;
 		if (typeof namespaces === "string") return [namespaces];
 		if (
 			Array.isArray(namespaces) &&
 			namespaces.every((value) => typeof value === "string")
 		) {
-			return namespaces as string[];
+			return namespaces;
 		}
 		return [];
 	});

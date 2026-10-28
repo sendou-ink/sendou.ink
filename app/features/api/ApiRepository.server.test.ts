@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ApiRepository from "./ApiRepository.server";
@@ -74,7 +74,7 @@ describe("generateToken", () => {
 		const result = await ApiRepository.generateToken(users.id(1), "read");
 
 		expect(result.token).toBeDefined();
-		expect(typeof result.token).toBe("string");
+		expect(result.token).toBeTypeOf("string");
 		expect(result.token.length).toBeGreaterThan(0);
 	});
 

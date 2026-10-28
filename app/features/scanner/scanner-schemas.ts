@@ -9,7 +9,6 @@ import * as v from "valibot";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { Ability } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type {
 	ScannerMatch,
@@ -34,7 +33,7 @@ export const modeShortSchema = v.picklist(modesShort);
 export const stageIdSchema = v.picklist(stageIds);
 export const mainWeaponIdSchema = v.picklist(mainWeaponIds);
 
-const abilityNames = abilities.map((ability) => ability.name) as Ability[];
+const abilityNames = abilities.map((ability) => ability.name);
 /** a sendou ability id, or the detectors' explicit unrecognized marker */
 const scannerAbilitySchema = v.union([
 	v.picklist(abilityNames),
@@ -182,7 +181,6 @@ type MutuallyAssignable<A, B> = [A] extends [B]
 
 // `true satisfies …` fails to compile the moment a schema and its core
 // interface disagree in either direction.
-// biome-ignore-start lint/suspicious/noUnusedExpressions: type-level assertions, no runtime effect
 true satisfies MutuallyAssignable<
 	v.InferOutput<typeof scannerMatchPlayerSchema>,
 	ScannerMatchPlayer
@@ -207,4 +205,3 @@ true satisfies MutuallyAssignable<
 	v.InferOutput<typeof scannerMatchSchema>,
 	ScannerMatch
 >;
-// biome-ignore-end lint/suspicious/noUnusedExpressions: type-level assertions, no runtime effect

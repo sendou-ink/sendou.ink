@@ -5,7 +5,7 @@ import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
-import { LinkButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
@@ -32,7 +32,6 @@ import {
 	SENDOUQ_RULES_PAGE,
 	SENDOUQ_STREAMS_PAGE,
 } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/q.server";
 import { loader } from "../loaders/q.server";

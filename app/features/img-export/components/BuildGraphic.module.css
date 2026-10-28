@@ -162,8 +162,7 @@
 	--circle-backdrop-content-scale: 1.05;
 
 	margin-inline-end: calc(
-		var(--build-graphic-gear-gap) -
-		var(--build-graphic-ability-gap)
+		var(--build-graphic-gear-gap) - var(--build-graphic-ability-gap)
 	);
 
 	& img {

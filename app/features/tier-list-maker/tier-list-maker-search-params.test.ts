@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as SearchParams from "~/modules/search-params/search-params";
 import {
 	assertDecodesToDefault,

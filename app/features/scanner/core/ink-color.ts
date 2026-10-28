@@ -38,9 +38,9 @@ export function meanInkColor(
 		const { data } = crop;
 		const channels = crop.channels();
 		for (let i = 0; i < data.length; i += channels) {
-			const pr = data[i]!;
-			const pg = data[i + 1]!;
-			const pb = data[i + 2]!;
+			const pr = data[i];
+			const pg = data[i + 1];
+			const pb = data[i + 2];
 			const spread = Math.max(pr, pg, pb) - Math.min(pr, pg, pb);
 			if (spread < minSaturation) continue;
 			r += pr;
@@ -80,7 +80,7 @@ export function dominantInkColor(
 		const { data } = crop;
 		const channels = crop.channels();
 		for (let i = 0; i < data.length; i += channels) {
-			const color = { r: data[i]!, g: data[i + 1]!, b: data[i + 2]! };
+			const color = { r: data[i], g: data[i + 1], b: data[i + 2] };
 			const max = Math.max(color.r, color.g, color.b);
 			const spread = max - Math.min(color.r, color.g, color.b);
 			if (spread < INK_MIN_SATURATION || max < DOMINANT_INK_MIN_VALUE) continue;
@@ -92,15 +92,15 @@ export function dominantInkColor(
 
 	const bins = new Array<number>(360 / HUE_BIN_DEGREES).fill(0);
 	for (const { hue } of pixels) {
-		bins[Math.floor(hue / HUE_BIN_DEGREES) % bins.length]!++;
+		bins[Math.floor(hue / HUE_BIN_DEGREES) % bins.length]++;
 	}
 	let modeBin = 0;
 	let modeCount = -1;
 	for (let bin = 0; bin < bins.length; bin++) {
 		const count =
-			bins[(bin + bins.length - 1) % bins.length]! +
-			bins[bin]! +
-			bins[(bin + 1) % bins.length]!;
+			bins[(bin + bins.length - 1) % bins.length] +
+			bins[bin] +
+			bins[(bin + 1) % bins.length];
 		if (count > modeCount) {
 			modeCount = count;
 			modeBin = bin;

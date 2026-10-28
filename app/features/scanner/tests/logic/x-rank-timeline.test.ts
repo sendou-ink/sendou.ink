@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import type { DetectedEvent } from "../../core/detectors/types";
 import {
 	X_RANK_POSITION_EVENT_TYPE,
@@ -47,7 +47,7 @@ describe("TimelineBuilder X Battle cards", () => {
 		const action = timeline.push(count(0.2, 0.97, { wins: 1, losses: 2 }));
 
 		expect(action.action).toBe("merged");
-		expect(timeline.events[0]!.data).toMatchObject({ wins: 2 });
+		expect(timeline.events[0].data).toMatchObject({ wins: 2 });
 	});
 
 	test("keeps the X Power the card counts down to", () => {
@@ -105,7 +105,7 @@ describe("TimelineBuilder X Battle cards", () => {
 		);
 
 		expect(action.action).toBe("merged");
-		expect(timeline.events[0]!.data).toMatchObject({ power: 2723.2 });
+		expect(timeline.events[0].data).toMatchObject({ power: 2723.2 });
 	});
 
 	test("leaves an X Power read off the count from the power before the change as read", () => {
@@ -113,7 +113,7 @@ describe("TimelineBuilder X Battle cards", () => {
 		timeline.push(result(0, { powerChange: null, power: 2373.8 }));
 		timeline.push(result(1, { powerChange: 75, power: 2911.3 }));
 
-		expect(timeline.events[0]!.data).toMatchObject({ power: 2911.3 });
+		expect(timeline.events[0].data).toMatchObject({ power: 2911.3 });
 	});
 
 	test("ignores an X Power read further away than the whole change", () => {
@@ -125,7 +125,7 @@ describe("TimelineBuilder X Battle cards", () => {
 		);
 
 		expect(action.action).toBe("merged");
-		expect(timeline.events[0]!.data).toMatchObject({ power: 2728.0 });
+		expect(timeline.events[0].data).toMatchObject({ power: 2728.0 });
 	});
 
 	test.each([

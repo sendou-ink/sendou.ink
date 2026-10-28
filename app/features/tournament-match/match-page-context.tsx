@@ -2,13 +2,13 @@ import * as React from "react";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	groupNumberToLetters,
 	tournamentTeamToActiveRosterUserIds,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
 import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
 

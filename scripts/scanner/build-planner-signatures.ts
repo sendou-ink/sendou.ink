@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Builds the planner signature atlas from the assets repo's planner renders:
  * assets/planner-maps/ in the sendou-ink/assets checkout holds the full PNGs
@@ -9,7 +9,7 @@
  * (keys "<stageId>-<MODE>"). Output goes to SCANNER_ASSETS_DIR/planner;
  * shipping a regen means pushing the assets repo.
  *
- *   pnpm scanner:build-planner-signatures
+ *   bun run scanner:build-planner-signatures
  */
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -44,7 +44,7 @@ const files = readdirSync(SRC_DIR)
 	.sort((a, b) => {
 		const [sa, ma] = a.split("-");
 		const [sb, mb] = b.split("-");
-		return Number(sa) - Number(sb) || ma!.localeCompare(mb!);
+		return Number(sa) - Number(sb) || ma.localeCompare(mb);
 	});
 if (files.length === 0) {
 	throw new Error(`no ${PLANNER_TYPE} planner PNGs in ${SRC_DIR}`);
@@ -61,7 +61,7 @@ const atlas: FrameData = {
 const keys: string[] = [];
 
 for (let i = 0; i < files.length; i++) {
-	const file = files[i]!;
+	const file = files[i];
 	const key = file.replace(`-${PLANNER_TYPE}.png`, "");
 	keys.push(key);
 
@@ -80,7 +80,7 @@ for (let i = 0; i < files.length; i++) {
 	const ty = Math.floor(i / COLS) * PLANNER_SIG_H;
 	for (let y = 0; y < PLANNER_SIG_H; y++) {
 		for (let x = 0; x < PLANNER_SIG_W; x++) {
-			const v = Math.round(sig[y * PLANNER_SIG_W + x]! * scale);
+			const v = Math.round(sig[y * PLANNER_SIG_W + x] * scale);
 			const o = ((ty + y) * atlasW + (tx + x)) * 4;
 			atlas.data[o] = v;
 			atlas.data[o + 1] = v;

@@ -111,6 +111,7 @@ function Primitive({ value }: { value: unknown }) {
 		return <span className={styles.null}>Promise (deferred)</span>;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-base-to-string -- whatever is left (functions, symbols, class instances) is shown as String() prints it
 	return <span className={styles.null}>{String(value)}</span>;
 }
 

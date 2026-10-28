@@ -6,7 +6,8 @@ A **post** (`ScrimPost`) is made by a **side**: a team or a pick-up of users. An
 
 ## Lifecycle
 
-<Mermaid code={`stateDiagram-v2
+<Mermaid
+	code={`stateDiagram-v2
 	[*] --> Open: posted on /scrims/new
 	Open --> Open: requests sent and withdrawn
 	Open --> [*]: deleted, or another scrim of its players booked
@@ -14,18 +15,21 @@ A **post** (`ScrimPost`) is made by a **side**: a team or a pick-up of users. An
 	Booked --> Canceled: canceled before the start
 	Booked --> Locked: tracking idle long enough after the start
 	Canceled --> [*]
-	Locked --> [*]`} />
+	Locked --> [*]`}
+/>
 
 `/scrims` lists posts until 3 hours past their start, booked ones only to their players. A post nobody accepted is never deleted, it just stops being listed.
 
 ## Map-by-map
 
-<Mermaid code={`flowchart LR
+<Mermaid
+	code={`flowchart LR
 	submit["A side submits its map list"] --> pool["Pool: union of the submitted lists"]
 	pool --> next["Next map generated, avoiding played ones"]
 	next --> report["Winner reported"]
 	report --> next
 	next -. "pick or replay a map" .-> next
-	report -. "undo the latest report" .-> next`} />
+	report -. "undo the latest report" .-> next`}
+/>
 
 Every change is broadcast through the scrim's chat room so both sides' pages update.

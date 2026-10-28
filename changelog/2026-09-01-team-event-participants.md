@@ -2,6 +2,7 @@
 navItem: calendar
 type: feature
 ---
+
 Team event improvements
 
 - When adding a team event you can now choose whether the whole team takes part or only selected members

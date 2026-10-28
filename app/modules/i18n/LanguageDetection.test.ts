@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as LanguageDetection from "./LanguageDetection";
 
 const SITE_LANGUAGES = ["de", "en", "es-ES", "es-US", "fr-EU", "ja", "zh"];

@@ -1,11 +1,11 @@
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";

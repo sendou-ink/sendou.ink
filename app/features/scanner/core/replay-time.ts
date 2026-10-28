@@ -31,10 +31,10 @@ export function parseReplayTimestamp(
 ): number | null {
 	const m = TIMESTAMP_RE.exec(raw.trim());
 	if (!m) return null;
-	const dateParts = [Number(m[1]!), Number(m[2]!), Number(m[3]!)];
+	const dateParts = [Number(m[1]), Number(m[2]), Number(m[3])];
 	const meridiem = m[6];
-	const clockHours = Number(m[4]!);
-	const minutes = Number(m[5]!);
+	const clockHours = Number(m[4]);
+	const minutes = Number(m[5]);
 	if (minutes > 59) return null;
 	if (meridiem ? clockHours < 1 || clockHours > 12 : clockHours > 23) {
 		return null;
@@ -105,14 +105,14 @@ function resolveDateParts(
 	let rest: [number, number];
 	let dayFirst: boolean;
 	let orderKnown = false;
-	if (parts[0]! >= 100) {
+	if (parts[0] >= 100) {
 		year = parts[0]!;
-		rest = [parts[1]!, parts[2]!];
+		rest = [parts[1], parts[2]];
 		dayFirst = false;
 		orderKnown = true;
 	} else {
-		year = parts[2]! >= 100 ? parts[2]! : 2000 + parts[2]!;
-		rest = [parts[0]!, parts[1]!];
+		year = parts[2] >= 100 ? parts[2] : 2000 + parts[2];
+		rest = [parts[0], parts[1]];
 		dayFirst = guessDayFirst;
 	}
 

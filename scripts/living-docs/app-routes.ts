@@ -84,7 +84,7 @@ export function appRoutes(): AppRoute[] {
 
 	for (const statement of file.program.body) {
 		if (statement.type !== "ExportDefaultDeclaration") continue;
-		const declaration = unwrap(statement.declaration as Expression);
+		const declaration = unwrap(statement.declaration);
 		if (declaration.type === "ArrayExpression") {
 			visit(declaration.elements as Argument[], "", []);
 		}
@@ -174,7 +174,7 @@ function joinPath(base: string, segment: string) {
 }
 
 function arrayOf(node: Argument | undefined): Argument[] {
-	const unwrapped = node ? unwrap(node as Expression) : null;
+	const unwrapped = node ? unwrap(node) : null;
 	return unwrapped?.type === "ArrayExpression"
 		? (unwrapped.elements.filter(Boolean) as Argument[])
 		: [];

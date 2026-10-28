@@ -150,7 +150,7 @@ function PermissionsTab() {
 	const userIdsKey = userIds.join(",");
 
 	React.useEffect(() => {
-		if (userIdsKey) load(devUsersUrl(userIdsKey.split(",").map(Number)));
+		if (userIdsKey) void load(devUsersUrl(userIdsKey.split(",").map(Number)));
 	}, [load, userIdsKey]);
 
 	const userById = new Map(data?.users.map((row) => [row.id, row]));
@@ -304,7 +304,7 @@ function UrlParamsSection() {
 		next.delete(key);
 		for (const value of values) next.append(key, value);
 		const nextSearch = next.toString();
-		navigate(`${location.pathname}${nextSearch ? `?${nextSearch}` : ""}`, {
+		void navigate(`${location.pathname}${nextSearch ? `?${nextSearch}` : ""}`, {
 			replace: true,
 			preventScrollReset: true,
 		});

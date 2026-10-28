@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Node } from "oxc-parser";
 import {
+	importNameKind,
 	jsDocOf,
 	lineOf,
 	type ParsedFile,
@@ -203,7 +204,7 @@ function defineCalleesOf(file: ParsedFile) {
 
 		for (const specifier of entry.entries) {
 			const local = specifier.localName.value;
-			if (specifier.importName.kind === "NamespaceObject") {
+			if (importNameKind(specifier) === "NamespaceObject") {
 				if (isSearchParams) callees.set(`${local}.define`, "searchParams");
 				else {
 					callees.set(`${local}.define`, "persisted");

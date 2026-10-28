@@ -1,12 +1,19 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test } from "bun:test";
+import type routeConfig from "./routes";
+
+const originalNodeEnv = process.env.NODE_ENV;
 
 afterEach(() => {
-	vi.unstubAllEnvs();
-	vi.resetModules();
+	process.env.NODE_ENV = originalNodeEnv;
 });
 
-const routePaths = async () => {
-	const { default: routes } = await import("./routes");
+const routePaths = async (nodeEnv: string) => {
+	process.env.NODE_ENV = nodeEnv;
+	// the query makes it a fresh module instance, evaluated under this NODE_ENV
+	const specifier = `./routes?${nodeEnv}`;
+	const { default: routes } = (await import(specifier)) as {
+		default: typeof routeConfig;
+	};
 
 	const paths: string[] = [];
 	const collect = (
@@ -28,9 +35,7 @@ const routePaths = async () => {
 
 describe("routes", () => {
 	test("registers no dev tools route outside development", async () => {
-		vi.stubEnv("NODE_ENV", "production");
-
-		const devPaths = (await routePaths()).filter((path) =>
+		const devPaths = (await routePaths("production")).filter((path) =>
 			path.startsWith("/dev"),
 		);
 
@@ -38,8 +43,6 @@ describe("routes", () => {
 	});
 
 	test("registers the dev tools routes in development", async () => {
-		vi.stubEnv("NODE_ENV", "development");
-
-		expect(await routePaths()).toContain("/dev/scenarios");
+		expect(await routePaths("development")).toContain("/dev/scenarios");
 	});
 });

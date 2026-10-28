@@ -45,15 +45,17 @@ export function install() {
 	}
 	globalThis.__devToolsServerConsole = { entries: [], nextId: 1, record };
 
-	// biome-ignore lint/suspicious/noConsole: wraps the console to record what is logged
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	const originalError = console.error;
-	// biome-ignore lint/suspicious/noConsole: wraps the console to record what is logged
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	const originalWarn = console.warn;
 
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	console.error = (...args: unknown[]) => {
 		originalError.apply(console, args);
 		globalThis.__devToolsServerConsole?.record("error", args);
 	};
+	// eslint-disable-next-line no-console -- wraps the console to record what is logged
 	console.warn = (...args: unknown[]) => {
 		originalWarn.apply(console, args);
 		globalThis.__devToolsServerConsole?.record("warn", args);

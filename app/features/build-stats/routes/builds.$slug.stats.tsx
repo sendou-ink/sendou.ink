@@ -5,13 +5,13 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import { Ability } from "~/components/Ability";
-import { EmptyState } from "~/components/EmptyState";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { SendouSection } from "~/components/elements/Section";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import { EmptyState } from "~/components/EmptyState";
 import { WeaponImage } from "~/components/Image";
 import { WeaponBuildsLayout } from "~/features/builds/components/WeaponBuildsLayout";
 import type { Ability as AbilityType } from "~/modules/in-game-lists/types";

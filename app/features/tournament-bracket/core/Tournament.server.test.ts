@@ -1,13 +1,13 @@
+import { beforeEach, describe, expect, test } from "bun:test";
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Engine from "./engine";
 import { RunningTournaments } from "./RunningTournaments.server";
+import { progressions, testTournament } from "./tests/test-utils";
 import {
 	evictStaleRunningTournaments,
 	serializeBracket,
 } from "./Tournament.server";
-import { progressions, testTournament } from "./tests/test-utils";
 
 const SWISS_SETTINGS = { groupCount: 2, roundCount: 3 };
 

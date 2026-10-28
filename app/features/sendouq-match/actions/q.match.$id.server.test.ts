@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import type { reportWeaponSchema } from "~/components/match-page/match-page-schemas";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";

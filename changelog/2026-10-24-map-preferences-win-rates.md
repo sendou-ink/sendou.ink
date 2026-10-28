@@ -2,6 +2,7 @@
 navItem: [settings, t]
 type: feature
 ---
+
 Map & mode preferences redesign
 
 - Your win rate on every mode and map (last 4 seasons) is shown while picking your preferences

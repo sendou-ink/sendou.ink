@@ -140,7 +140,7 @@ function useSetSearchParams<Shape extends AnyShape>(
 			const url = `${window.location.pathname}${queryString ? `?${queryString}` : ""}${window.location.hash}`;
 
 			if (loader ?? navigationNeeded) {
-				navigateRef.current(url, {
+				void navigateRef.current(url, {
 					replace: true,
 					preventScrollReset: true,
 					...navigateOptions,

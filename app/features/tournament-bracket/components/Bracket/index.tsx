@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import * as React from "react";
-import { useLocation, useNavigationType } from "react-router";
+import { NavigationType, useLocation, useNavigationType } from "react-router";
 import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
 import { useDragToScroll } from "~/hooks/useDragToScroll";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
@@ -193,7 +193,7 @@ function useBracketScrollMemory(
 	const location = useLocation();
 	const navigationType = useNavigationType();
 	const isBackFromMatch =
-		navigationType !== "POP" &&
+		navigationType !== NavigationType.Pop &&
 		typeof (location.state as BracketsPageState | null)?.scrollToMatchId ===
 			"number";
 
@@ -202,7 +202,7 @@ function useBracketScrollMemory(
 		if (!el) return;
 
 		const saved = PersistedState.readMap(bracketScrollPositionPersisted)[key];
-		if (saved && (navigationType === "POP" || isBackFromMatch)) {
+		if (saved && (navigationType === NavigationType.Pop || isBackFromMatch)) {
 			el.scrollLeft = saved.left;
 			el.scrollTop = saved.top;
 			if (isBackFromMatch) window.scrollTo(0, saved.windowY);

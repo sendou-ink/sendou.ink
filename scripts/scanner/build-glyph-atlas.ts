@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Builds glyph atlases by rendering the Splatoon fonts at the exact scoreboard
  * render sizes, calibrated against the reference fixture:
@@ -11,7 +11,7 @@
  * The fonts ship with the game and are not committed — drop them into
  * assets/fonts/ (see README); bootstrap-atlas-from-fixture.ts is the fallback.
  *
- * Usage: pnpm scanner:build-glyph-atlas
+ * Usage: bun run scanner:build-glyph-atlas
  * Writes SCANNER_ASSETS_DIR/glyphs/scoreboard-*.{png,json}
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -72,7 +72,7 @@ for (const [family, file] of Object.entries(FONT_FILES)) {
 				"The Splatoon fonts are proprietary and not committed. Get",
 				"Decrypted/BlitzMain.otf and Decrypted/BlitzBold.otf (e.g. from the",
 				"splatoon3-fonts repo) into assets/fonts/, or fall back to",
-				"  pnpm scanner:bootstrap-atlas",
+				"  bun run scanner:bootstrap-atlas",
 			].join("\n"),
 		);
 		process.exit(1);
@@ -189,7 +189,7 @@ function renderGlyph(
 	let ink = 0;
 	for (let y = 0; y < size; y++) {
 		for (let x = 0; x < size; x++) {
-			if (img.data[(y * size + x) * 4 + 3]! > 128) {
+			if (img.data[(y * size + x) * 4 + 3] > 128) {
 				if (x < x0) x0 = x;
 				if (x > x1) x1 = x;
 				if (y < y0) y0 = y;
@@ -238,18 +238,18 @@ function writeAtlas(name: string, height: number, glyphs: GlyphBitmap[]): void {
 
 	const pixels = new Uint8ClampedArray(atlasW * atlasH * 4);
 	for (let i = 3; i < pixels.length; i += 4) pixels[i] = 255;
-	meta.glyphs.forEach((m, i) => {
-		const g = glyphs[i]!;
+	for (const [i, m] of meta.glyphs.entries()) {
+		const g = glyphs[i];
 		for (let gy = 0; gy < g.h; gy++) {
 			for (let gx = 0; gx < g.w; gx++) {
-				const v = g.data[gy * g.w + gx]!;
+				const v = g.data[gy * g.w + gx];
 				const o = ((m.y + gy) * atlasW + (m.x + gx)) * 4;
 				pixels[o] = v;
 				pixels[o + 1] = v;
 				pixels[o + 2] = v;
 			}
 		}
-	});
+	}
 	writePng(join(OUT_DIR, `${name}.png`), {
 		width: atlasW,
 		height: atlasH,
@@ -304,7 +304,7 @@ async function build(
 
 /** NAME_SYMBOLS and NAME_LATIN_EXTENDED chars the font actually maps. */
 function nameExtras(family: string): string[] {
-	const covers = fontCoverage[family]!;
+	const covers = fontCoverage[family];
 	return [...NAME_SYMBOLS, ...NAME_LATIN_EXTENDED].filter((ch) =>
 		covers(ch.codePointAt(0)!),
 	);
@@ -341,7 +341,7 @@ await build("scoreboard-names", 17, [
  * dropped too (canvas would render a system-font substitute).
  */
 function localizedChars(texts: readonly string[], family: string): string[] {
-	const covers = fontCoverage[family]!;
+	const covers = fontCoverage[family];
 	return charsOf(texts).filter((ch) => {
 		const cp = ch.codePointAt(0)!;
 		return cp < 0x250 && covers(cp);
@@ -478,12 +478,14 @@ await build("death-weapon", 34, [
 // classic-squiffer-jp fixture. KO/ZH names stay in the closed sets without an atlas.
 const deathJaTexts = [
 	...(LOCALIZED_WEAPON_NAMES.JPja ?? []).map((n) => n.text),
-	...DEATH_MESSAGE_TEMPLATES.filter((t) =>
-		t.langs.some((l) => l.endsWith("ja")),
-	).flatMap((t) => [t.constText, t.weaponPre, t.weaponPost]),
+	...DEATH_MESSAGE_TEMPLATES.flatMap((t) =>
+		t.langs.some((l) => l.endsWith("ja"))
+			? [t.constText, t.weaponPre, t.weaponPost]
+			: [],
+	),
 ];
 function coveredChars(texts: readonly string[], family: string): string[] {
-	const covers = fontCoverage[family]!;
+	const covers = fontCoverage[family];
 	return charsOf(texts).filter((ch) => covers(ch.codePointAt(0)!));
 }
 await build("death-weapon-ja", 40, [

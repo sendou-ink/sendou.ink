@@ -2,6 +2,7 @@
 navItem: [builds, analyzer]
 type: feature
 ---
+
 Build cards & pages redesigned
 
 - The game version a build was last updated in is shown instead of the date, click it to see the exact date

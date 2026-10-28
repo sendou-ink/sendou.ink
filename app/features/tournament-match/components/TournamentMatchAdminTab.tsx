@@ -19,9 +19,9 @@ import type { CastAccount } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import type { StreamAccount } from "~/features/live-streams/live-streams-constants";
-import { useTournament } from "~/features/tournament/tournament-context";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
@@ -66,7 +66,7 @@ export function TournamentMatchAdminTab({
 					<div className={styles.buttonRow}>
 						<OrganizerMatchMapListDialog data={data} />
 						{canReopen ? <ReopenMatchButton /> : null}
-						{canEndSet ? <EndSetPopover teams={[teamOne!, teamTwo!]} /> : null}
+						{canEndSet ? <EndSetPopover teams={[teamOne, teamTwo]} /> : null}
 					</div>
 				) : null}
 				{scheduleSectionVisible ? (
@@ -79,7 +79,7 @@ export function TournamentMatchAdminTab({
 					/>
 				) : null}
 				{editScoresVisible ? (
-					<EditReportedScoresSection data={data} teams={[teamOne!, teamTwo!]} />
+					<EditReportedScoresSection data={data} teams={[teamOne, teamTwo]} />
 				) : null}
 			</div>
 		</SendouTabPanel>

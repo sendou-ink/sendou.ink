@@ -1,6 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "bun:test";
 import { withUserId } from "~/utils/Test";
+import { advanceTimersByTimeAsync, waitFor } from "~/utils/test-helpers";
 import * as EventBus from "../core/EventBus.server";
 import { HEARTBEAT_INTERVAL_MS, userChannel } from "../events-types";
 import { loader } from "./sse";
@@ -21,7 +21,7 @@ describe("sse loader", () => {
 
 		const hello = await stream.nextEvent();
 		expect(hello.kind).toBe("hello");
-		expect(typeof hello.connectionId).toBe("string");
+		expect(hello.connectionId).toBeTypeOf("string");
 	});
 
 	test("delivers events published to the user's own channel", async () => {
@@ -53,10 +53,10 @@ describe("sse loader", () => {
 
 		stream.abort();
 
-		await vi.waitFor(() => {
+		await waitFor(() => {
 			expect(EventBus.subscriberCount(userChannel(11))).toBe(0);
 		});
-		await expect(stream.ended()).resolves.toBe(true);
+		expect(await stream.ended()).toBe(true);
 		expect(await putTopicsStatus(11, hello.connectionId, ["sq-looking"])).toBe(
 			404,
 		);
@@ -73,7 +73,7 @@ describe("sse heartbeat", () => {
 		const stream = openStream(11);
 		await stream.nextChunk();
 
-		await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+		await advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
 
 		expect(await stream.nextChunk()).toBe('data: {"kind":"heartbeat"}\n\n');
 	});
@@ -86,10 +86,10 @@ describe("sse heartbeat", () => {
 		expect(vi.getTimerCount()).toBe(idleTimerCount + 1);
 
 		stream.abort();
-		await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS * 2);
+		await advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS * 2);
 
 		expect(vi.getTimerCount()).toBe(idleTimerCount);
-		await expect(stream.ended()).resolves.toBe(true);
+		expect(await stream.ended()).toBe(true);
 	});
 });
 
@@ -101,7 +101,7 @@ describe("sse topics action", () => {
 		expect(
 			await putTopicsStatus(11, hello.connectionId, ["tournament__5"]),
 		).toBe(200);
-		await vi.waitFor(() => {
+		await waitFor(() => {
 			expect(EventBus.subscriberCount("tournament__5")).toBe(1);
 		});
 
@@ -115,12 +115,12 @@ describe("sse topics action", () => {
 		const hello = await stream.nextEvent();
 
 		await putTopicsStatus(11, hello.connectionId, ["tournament__5"]);
-		await vi.waitFor(() => {
+		await waitFor(() => {
 			expect(EventBus.subscriberCount("tournament__5")).toBe(1);
 		});
 
 		await putTopicsStatus(11, hello.connectionId, ["match__9"]);
-		await vi.waitFor(() => {
+		await waitFor(() => {
 			expect(EventBus.subscriberCount("tournament__5")).toBe(0);
 			expect(EventBus.subscriberCount("match__9")).toBe(1);
 		});
@@ -178,7 +178,7 @@ describe("sse topics action", () => {
 						context: {} as any,
 						pattern: "",
 						url: new URL(request.url),
-					} as ActionFunctionArgs),
+					}),
 				),
 			),
 		).toBe(405);
@@ -190,15 +190,15 @@ function openStream(userId: number) {
 	const request = new Request("http://app.com/sse", {
 		signal: controller.signal,
 	});
-	const response = withUserId(userId, () =>
+	const response = withUserId<Response>(userId, () =>
 		loader({
 			request,
 			params: {},
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),
-		} as LoaderFunctionArgs),
-	) as Response;
+		}),
+	);
 	openedStreams.push(() => controller.abort());
 
 	const reader = response.body!.getReader();
@@ -270,7 +270,7 @@ function putTopicsStatus(
 				context: {} as any,
 				pattern: "",
 				url: new URL(request.url),
-			} as ActionFunctionArgs),
+			}),
 		),
 	);
 }

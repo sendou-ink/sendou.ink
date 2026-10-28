@@ -38,7 +38,6 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.index.server";
-import type * as TeamRepository from "../TeamRepository.server";
 import { teamProfilePageActionSchema } from "../team-schemas";
 import {
 	getMemberRoleType,
@@ -46,6 +45,7 @@ import {
 	isTeamOwner,
 	resolveNewOwner,
 } from "../team-utils";
+import type * as TeamRepository from "../TeamRepository.server";
 import styles from "./t.$customUrl.index.module.css";
 
 export { action };

@@ -1,5 +1,13 @@
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { add, sub } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as NotificationFactory from "~/db/seed/factories/NotificationFactory";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -12,9 +20,7 @@ const users = UserFactory.pool();
 
 const endedSeason = Seasons.list.at(-1)!;
 
-const { mockNotify } = vi.hoisted(() => ({
-	mockNotify: vi.fn(),
-}));
+const mockNotify = vi.fn();
 
 vi.mock("~/features/notifications/core/notify.server", () => ({
 	notify: mockNotify,
@@ -31,7 +37,7 @@ const notifiedUserIds = () => mockNotify.mock.calls[0][0].userIds as number[];
 describe("NotifySeasonEndRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
-		vi.setSystemTime(add(endedSeason.ends, { hours: 1 }));
+		setSystemTime(add(endedSeason.ends, { hours: 1 }));
 		await users.create(3);
 		mockNotify.mockClear();
 	});
@@ -92,7 +98,7 @@ describe("NotifySeasonEndRoutine", () => {
 		await createSkill(1, MATCHES_COUNT_NEEDED_FOR_LEADERBOARD);
 		await refreshUserSkills(endedSeason.nth);
 
-		vi.setSystemTime(add(endedSeason.ends, { days: 8 }));
+		setSystemTime(add(endedSeason.ends, { days: 8 }));
 
 		await NotifySeasonEndRoutine.run();
 
@@ -103,7 +109,7 @@ describe("NotifySeasonEndRoutine", () => {
 		await createSkill(1, MATCHES_COUNT_NEEDED_FOR_LEADERBOARD);
 		await refreshUserSkills(endedSeason.nth);
 
-		vi.setSystemTime(sub(endedSeason.ends, { hours: 1 }));
+		setSystemTime(sub(endedSeason.ends, { hours: 1 }));
 
 		await NotifySeasonEndRoutine.run();
 

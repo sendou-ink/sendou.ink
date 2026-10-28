@@ -10,7 +10,6 @@ import { MatchProfileSummary } from "~/features/match-profile/components/MatchPr
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type { SelectOption } from "~/form/types";
-import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -97,7 +96,7 @@ export default function LFGNewPostPage() {
 					plusTierVisibility: data.postToEdit?.plusTierVisibility
 						? String(data.postToEdit.plusTierVisibility)
 						: null,
-					languages: (data.languages ?? []) as UnifiedLanguageCode[],
+					languages: data.languages ?? [],
 				}}
 			>
 				<FormField

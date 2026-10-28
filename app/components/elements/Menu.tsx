@@ -97,7 +97,6 @@ export function SendouMenu({
 
 	return (
 		<>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: only observes focus leaving the trigger */}
 			<span
 				ref={triggerContainerRef}
 				className={styles.triggerContainer}
@@ -109,7 +108,7 @@ export function SendouMenu({
 					"aria-haspopup": "menu",
 				})}
 			</span>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: keydown steers the menu items inside */}
+			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- keydown steers the menu items inside */}
 			<div
 				ref={popoverRef}
 				id={popoverId}
@@ -176,7 +175,6 @@ export function SendouMenuSection({
 	headerClassName?: string;
 }) {
 	return (
-		// biome-ignore lint/a11y/useSemanticElements: a fieldset would carry form semantics this menu group does not have
 		<div role="group">
 			{headerText ? (
 				<div className={clsx(styles.menuHeader, headerClassName)}>

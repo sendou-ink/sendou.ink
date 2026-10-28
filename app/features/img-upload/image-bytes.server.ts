@@ -1,4 +1,3 @@
-import sharp from "sharp";
 import { invariant } from "~/utils/invariant";
 import {
 	type ImageExtension,
@@ -24,13 +23,19 @@ export function dataUrlToImageBuffer(
 	return { buffer, extension };
 }
 
-/** Square downscaled copy of an image in the same format, for small displays such as avatars. */
-export function smallImageCopy(
-	image: Buffer | Uint8Array,
-	extension: ImageExtension,
-) {
-	return sharp(image)
-		.resize(SMALL_COPY_SIZE_PX, SMALL_COPY_SIZE_PX, { fit: "cover" })
-		.toFormat(extension)
-		.toBuffer();
+/** Square downscaled copy of an image in the same format, for small displays such as avatars. The image field crops avatars square, a non-square image is stretched. */
+export function smallImageCopy(image: Uint8Array, extension: ImageExtension) {
+	const resized = new Bun.Image(image).resize(
+		SMALL_COPY_SIZE_PX,
+		SMALL_COPY_SIZE_PX,
+	);
+
+	switch (extension) {
+		case "webp":
+			return resized.webp().bytes();
+		case "png":
+			return resized.png().bytes();
+		case "jpeg":
+			return resized.jpeg().bytes();
+	}
 }

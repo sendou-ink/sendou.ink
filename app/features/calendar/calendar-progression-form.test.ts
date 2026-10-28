@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ValidationCtx } from "~/utils/schema";
 import {

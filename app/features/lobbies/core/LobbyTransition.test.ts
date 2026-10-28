@@ -1,5 +1,4 @@
-import { describe, expect, test } from "vitest";
-import type { LobbyParticipantStatus } from "../lobbies-constants";
+import { describe, expect, test } from "bun:test";
 import * as LobbyTransition from "./LobbyTransition";
 import { setOf } from "./tests/fixtures";
 
@@ -15,7 +14,7 @@ function participants(
 ): Participant[] {
 	return Array.from({ length: count }, (_, i) => ({
 		userId: firstId + i,
-		status: "CHECKED_IN" as LobbyParticipantStatus,
+		status: "CHECKED_IN",
 		joinedAt: firstId + i,
 		isDroppingAfterSet: false,
 		isSittingOut: false,

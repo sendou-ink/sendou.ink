@@ -1,10 +1,10 @@
+import { beforeEach, describe, expect, test, vi } from "bun:test";
 import { subMinutes } from "date-fns";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import type * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { invariant } from "~/utils/invariant";
 import {
@@ -17,8 +17,10 @@ import { pinClockInsideSeason } from "../tests/season-clock";
 import * as ReadyCheck from "./ready-check.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
+const mockSend = vi.fn<typeof ChatSystemMessage.send>();
+
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
-	send: vi.fn(),
+	send: mockSend,
 	notifyStatusChanged: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 }));
@@ -64,9 +66,8 @@ const findMatch = () =>
 
 /** Channels every system message sent so far was broadcast to, in order. */
 const broadcastedChannels = () =>
-	vi
-		.mocked(ChatSystemMessage.send)
-		.mock.calls.flatMap(([msg]) => (Array.isArray(msg) ? msg : [msg]))
+	mockSend.mock.calls
+		.flatMap(([msg]) => (Array.isArray(msg) ? msg : [msg]))
 		.map((msg) => msg.channel);
 
 /** Confirms every member of both groups as ready, which is what creates the match. */
@@ -91,7 +92,7 @@ describe("SendouQ ready check", () => {
 
 	beforeEach(async () => {
 		groups = await setupMatchedUpGroups();
-		vi.mocked(ChatSystemMessage.send).mockClear();
+		mockSend.mockClear();
 	});
 
 	test("takes both groups out of the looking pool", async () => {

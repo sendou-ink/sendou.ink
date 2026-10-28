@@ -15,15 +15,16 @@ import {
 	createObjectiveDetector,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent, Detector } from "../core/detectors/types";
 import { hueDistance, hueOf, type InkRgb } from "../core/ink-color";
 import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { loadScoreboardResources } from "../node/resources";
 import { test } from "./node-test-compat";
@@ -169,8 +170,7 @@ test("cast fixture pair: team ink hues identify sides across camera swaps", asyn
 		const { events } = await runDetectorOnFixture(detector, fixture!);
 		const teamColor = (
 			events.find((event) => event.type === "Objective") as
-				| DetectedEvent<ObjectiveData>
-				| undefined
+				DetectedEvent<ObjectiveData> | undefined
 		)?.data.teamColor;
 		assert.ok(teamColor?.[0] && teamColor[1], "side ink color unreadable");
 		colors.push([teamColor[0], teamColor[1]] as const);
@@ -183,8 +183,8 @@ test("cast fixture pair: team ink hues identify sides across camera swaps", asyn
 		);
 	}
 	const [specced, overhead] = colors;
-	assert.ok(hueDistance(hueOf(specced![0]), hueOf(overhead![1])) <= 20);
-	assert.ok(hueDistance(hueOf(specced![1]), hueOf(overhead![0])) <= 20);
+	assert.ok(hueDistance(hueOf(specced[0]), hueOf(overhead[1])) <= 20);
+	assert.ok(hueDistance(hueOf(specced[1]), hueOf(overhead[0])) <= 20);
 });
 
 // Screens that replace gameplay can never show the counters — the gate must
@@ -256,33 +256,32 @@ const sharedFrames = new Map(
 	]),
 );
 const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+	["scoreboard", createScoreboardDetector(resources)],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources),
 	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["death", createDeathDetector(resources) as Detector<unknown>],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-own", createScoreboardOwnDetector(resources)],
+	["death", createDeathDetector(resources)],
+	["map-start", createMapStartDetector(resources)],
+	["minimap", createMinimapDetector(resources)],
 ];
 for (const fixture of fixtures.filter(
 	(f) => f.expected.event === "Objective",
 )) {
 	test(`other gates stay quiet on objective/${fixture.name}`, async () => {
-		for (const [name, other] of otherDetectors) {
-			if (sharedFrames.get(name)?.has(realpathSync(fixture.framePath))) {
-				continue;
+		await withFixtureFrame(fixture, (frame) => {
+			for (const [name, other] of otherDetectors) {
+				if (sharedFrames.get(name)?.has(realpathSync(fixture.framePath))) {
+					continue;
+				}
+				const gate = other.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${name} gate fired (score=${gate.score.toFixed(3)})`,
+				);
 			}
-			const { gate } = await runDetectorOnFixture(other, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${name} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		});
 	});
 }

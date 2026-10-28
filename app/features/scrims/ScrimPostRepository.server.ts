@@ -1,5 +1,5 @@
 import { addHours, sub } from "date-fns";
-import { type Insertable, type NotNull, type SqlBool, sql } from "kysely";
+import { type Insertable, type NotNull, sql, type SqlBool } from "kysely";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";

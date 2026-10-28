@@ -2,6 +2,7 @@
 navItem: calendar
 type: feature
 ---
+
 Choose who can see your availability
 
 - A new "Visibility" button next to "My availability" picks the friends and teams you share it with

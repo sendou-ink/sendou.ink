@@ -13,8 +13,8 @@ import {
 import { Image, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { PageHeader } from "~/components/PageHeader";
-import type { WeaponLandingState } from "~/components/WeaponLanding";
 import { weaponLandingSearchParams } from "~/components/weapon-landing-search-params";
+import type { WeaponLandingState } from "~/components/WeaponLanding";
 import { buildStatsSearchParams } from "~/features/build-stats/build-stats-search-params";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponIdToCategory } from "~/modules/in-game-lists/weapon-ids";

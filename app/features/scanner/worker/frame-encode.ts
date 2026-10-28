@@ -25,8 +25,7 @@ export interface EncodeRequest {
 }
 
 export type EncodeResponse =
-	| { id: number; blob: Blob }
-	| { id: number; error: string };
+	{ id: number; blob: Blob } | { id: number; error: string };
 
 /** Encodes in frame-encode.worker.ts, or on the calling thread if the worker cannot run; takes ownership of `pixels`. */
 export function createFrameEncoder(): (pixels: FrameData) => Promise<Blob> {

@@ -2,6 +2,7 @@
 navItem: [medal, sendouq]
 type: feature
 ---
+
 YouTube live streams (beta)
 
 - YouTube streams now show on tournament and SendouQ streams pages, the sidebar and user pages, next to Twitch streams. Add #sendouink to your stream's title or description to get it picked up

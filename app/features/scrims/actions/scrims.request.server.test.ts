@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "bun:test";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { wrappedAction } from "~/utils/Test";

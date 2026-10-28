@@ -8,9 +8,9 @@ import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { paginate } from "~/utils/remix.server";
 import { timezonesWithinHours } from "../core/timezone";
-import * as LFGRepository from "../LFGRepository.server";
 import { LFG } from "../lfg-constants";
 import { lfgSearchParams } from "../lfg-search-params";
+import * as LFGRepository from "../LFGRepository.server";
 
 export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 	const { page, post, ...filters } = lfgSearchParams.parse(request);

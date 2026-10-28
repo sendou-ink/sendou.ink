@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import * as v from "valibot";
-import { describe, expect, test } from "vitest";
 import { divsSchema } from "./scrims-schemas";
 
 describe("divsSchema", () => {

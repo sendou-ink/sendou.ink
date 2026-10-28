@@ -36,7 +36,7 @@ export const action = defineAction(
 						),
 				);
 
-				notify({
+				void notify({
 					userIds: newManagers,
 					notification: {
 						type: "BADGE_MANAGER_ADDED",
@@ -60,7 +60,7 @@ export const action = defineAction(
 					ownerIds: body.ownerIds,
 				});
 
-				notify({
+				void notify({
 					userIds: diff(oldOwners, body.ownerIds),
 					notification: {
 						type: "BADGE_ADDED",

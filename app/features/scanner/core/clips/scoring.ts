@@ -64,7 +64,7 @@ export function scoreWindows(
 			last &&
 			(kill.t - last.t > STREAK_MAX_GAP_S ||
 				diedBetween(sortedDeaths, last.t, kill.t) ||
-				clipEnd(kill) - clipStart(run[0]!) > maxSeconds)
+				clipEnd(kill) - clipStart(run[0]) > maxSeconds)
 		) {
 			flush();
 		}
@@ -94,7 +94,7 @@ export function povDeathTimes(events: readonly DetectedEvent[]): number[] {
 
 /** `kills² + kills / span`: the streak decides, density breaks ties. */
 function scoreRun(kills: readonly ScannerMatchKill[]): ClipWindow {
-	const first = kills[0]!;
+	const first = kills[0];
 	const last = kills.at(-1)!;
 	const span = Math.max(1, last.t - first.t);
 	return {

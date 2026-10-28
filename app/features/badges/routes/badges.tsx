@@ -11,9 +11,9 @@ import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	badgePage,
 	BADGES_DOC_LINK,
 	BADGES_PAGE,
-	badgePage,
 	navIconUrl,
 } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";

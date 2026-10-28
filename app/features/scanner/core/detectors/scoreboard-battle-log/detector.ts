@@ -32,6 +32,7 @@ import { RESULT_TAG_ENTRIES } from "../../localized";
 import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { homographyFromQuad, type PerspectiveQuad } from "../../rectify";
 import { closestBy } from "../../text";
+import { parseReplayHeaderSteps } from "../scoreboard-battle-log-replay/header";
 import {
 	type BannerScoreRead,
 	FULL_COUNT_TEAM_SCORE,
@@ -47,7 +48,6 @@ import type {
 } from "../scoreboard/index";
 import { findPovIndex } from "../scoreboard/pov";
 import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
-import { parseReplayHeaderSteps } from "../scoreboard-battle-log-replay/header";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 
 export interface ScoreboardBattleLogData extends ScoreboardData {
@@ -193,9 +193,9 @@ export function createBattleLogDetector(
 		let g = 0;
 		let b = 0;
 		for (let i = 0; i < n; i++) {
-			r += d[i * 4]!;
-			g += d[i * 4 + 1]!;
-			b += d[i * 4 + 2]!;
+			r += d[i * 4];
+			g += d[i * 4 + 1];
+			b += d[i * 4 + 2];
 		}
 		cont.delete();
 		if (n === 0) return 0;

@@ -30,18 +30,10 @@ export const LEAGUE_SCHEDULING = {
  * round is not playable yet, `SCHEDULED` = agreed and playable.
  */
 export type Phase =
-	| "CLOSED"
-	| "NOT_OPEN"
-	| "UNSCHEDULED"
-	| "SCHEDULED_LOCKED"
-	| "SCHEDULED";
+	"CLOSED" | "NOT_OPEN" | "UNSCHEDULED" | "SCHEDULED_LOCKED" | "SCHEDULED";
 
 export type ProposalError =
-	| "NOT_OPEN"
-	| "BEFORE_PLAYABLE"
-	| "IN_PAST"
-	| "TOO_MANY"
-	| "ORGANIZER_LOCKED";
+	"NOT_OPEN" | "BEFORE_PLAYABLE" | "IN_PAST" | "TOO_MANY" | "ORGANIZER_LOCKED";
 
 /** Which point of the scheduling flow the set is at; every timestamp in unix seconds. */
 export function phase({

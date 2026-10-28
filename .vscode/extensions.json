@@ -1,3 +1,3 @@
 {
-	"recommendations": ["bierner.markdown-mermaid", "biomejs.biome"]
+	"recommendations": ["bierner.markdown-mermaid", "esbenp.prettier-vscode"]
 }

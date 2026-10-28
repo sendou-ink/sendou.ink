@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { sub } from "date-fns";
-import { describe, expect, test } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
@@ -575,7 +575,7 @@ const setupGroupWithChallenges = async () => {
 	await SQGroupLikeFactory.create({
 		likerGroupId: challengerGroup.id,
 		targetGroupId: ownGroup.id,
-		createdByUserId: challengerGroup.memberUserIds[0]!,
+		createdByUserId: challengerGroup.memberUserIds[0],
 	});
 	await SQGroupLikeFactory.create({
 		likerGroupId: ownGroup.id,

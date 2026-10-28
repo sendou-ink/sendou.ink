@@ -536,7 +536,8 @@ function InProgressTab({
 		setMapChange({
 			reportedCount,
 			cooldownUntil: changedByOthers
-				? Date.now() + MAP_CHANGED_COOLDOWN_MS
+				? // eslint-disable-next-line react-hooks/purity -- state adjustment that runs once per reportedCount change
+					Date.now() + MAP_CHANGED_COOLDOWN_MS
 				: null,
 		});
 		setExpectedReportedCount(null);

@@ -2,8 +2,8 @@ import {
 	type Expression,
 	type ExpressionBuilder,
 	type SelectQueryBuilder,
-	type SqlBool,
 	sql,
+	type SqlBool,
 } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";

@@ -260,16 +260,16 @@ function tileResults(rgb: Mat): XSetGameResult[] {
 	for (let y = 0; y < rows; y++) {
 		for (let x = 0; x < cols; x++) {
 			const i = (y * cols + x) * 3;
-			const r = data[i]!;
-			const g = data[i + 1]!;
-			const b = data[i + 2]!;
+			const r = data[i];
+			const g = data[i + 1];
+			const b = data[i + 2];
 			const kind = isVictoryYellow(r, g, b)
 				? VICTORY_INK
 				: isDefeatPurple(r, g, b)
 					? DEFEAT_INK
 					: 0;
 			ink[y * cols + x] = kind;
-			if (kind) rowInk[y]!++;
+			if (kind) rowInk[y]++;
 		}
 	}
 	crop.delete();
@@ -282,11 +282,11 @@ function tileResults(rgb: Mat): XSetGameResult[] {
 			for (let y = y0; y < y1; y++) {
 				for (let x = 0; x < cols; x++) {
 					const kind = ink[y * cols + x];
-					if (kind === VICTORY_INK) victory[x]!++;
-					else if (kind === DEFEAT_INK) defeat[x]!++;
+					if (kind === VICTORY_INK) victory[x]++;
+					else if (kind === DEFEAT_INK) defeat[x]++;
 				}
 			}
-			const columnInk = victory.map((v, x) => v + defeat[x]!);
+			const columnInk = victory.map((v, x) => v + defeat[x]);
 			return runsOf(columnInk, RESULT_TILE_TEXT_MAX_GAP)
 				.filter(([x0, x1]) => x1 - x0 >= RESULT_TILE_TEXT_MIN_WIDTH)
 				.map(([x0, x1]): XSetGameResult => {

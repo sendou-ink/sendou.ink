@@ -11,7 +11,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
-import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSection } from "~/components/elements/Section";
@@ -21,6 +20,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { EmptyState } from "~/components/EmptyState";
 import { ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import { SeasonSelect } from "~/features/mmr/components/SeasonSelect";

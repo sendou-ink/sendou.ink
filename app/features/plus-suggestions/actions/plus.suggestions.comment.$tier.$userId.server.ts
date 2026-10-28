@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,

@@ -68,7 +68,7 @@ export function smoothPenalties(
 		const next = result.findIndex((value, j) => j > i && value !== null);
 		if (next === -1) continue;
 		if (
-			reads[next]!.t - reads[prev]!.t <= PENALTY_BRIDGE_SECONDS ||
+			reads[next].t - reads[prev].t <= PENALTY_BRIDGE_SECONDS ||
 			result[next] === result[prev]
 		) {
 			result[i] = result[prev];
@@ -98,7 +98,7 @@ export function matchScoresFromObjective(
 	const sorted = reads.toSorted((a, b) => a.t - b.t);
 	const lastCountTaken = (side: 0 | 1) => {
 		for (let i = sorted.length - 1; i >= 0; i--) {
-			const count = sorted[i]!.score[side];
+			const count = sorted[i].score[side];
 			// a count outside the counter's range is a misread, not a state
 			if (count !== null && count >= 0 && count <= FULL_COUNT) {
 				return FULL_COUNT - count;
@@ -135,7 +135,7 @@ export function withUnpushedTrackCounts<T extends TrackCountEvent>(
 	);
 	return sorted.map((event, i) => {
 		const score = event.data.score.map((value, side) => {
-			const first = firstRead[side]!;
+			const first = firstRead[side];
 			return value === null && (first === -1 || i < first) ? FULL_COUNT : value;
 		}) as [number | null, number | null];
 		return { ...event, data: { ...event.data, score } };
@@ -167,13 +167,13 @@ export function withFullCountsAtGameStart(
 	);
 	const filled = sorted.map((event, i) => {
 		const score = event.data.score.map((value, side) =>
-			value === null && (firstRead[side] === -1 || i < firstRead[side]!)
+			value === null && (firstRead[side] === -1 || i < firstRead[side])
 				? FULL_COUNT
 				: value,
 		) as [number | null, number | null];
 		return { ...event, data: { ...event.data, score } };
 	});
-	if (sorted[0]!.t <= gameStartT) return filled;
+	if (sorted[0].t <= gameStartT) return filled;
 
 	const start: ObjectiveTimelineEvent = {
 		t: gameStartT,
@@ -182,7 +182,7 @@ export function withFullCountsAtGameStart(
 			score: [FULL_COUNT, FULL_COUNT],
 			penalty: [null, null],
 			control: null,
-			...(sorted[0]!.data.position !== undefined ? { position: 0 } : null),
+			...(sorted[0].data.position !== undefined ? { position: 0 } : null),
 		},
 	};
 	return [start, ...filled];
@@ -228,7 +228,7 @@ export function formatElapsed(seconds: number): string {
 
 /** The closest pill read before or after `index` shows the same value. */
 function repeatsNeighboringRead(reads: readonly PenaltyRead[], index: number) {
-	const value = reads[index]!.penalty;
+	const value = reads[index].penalty;
 	const previous = reads.findLast(
 		(read, j) => j < index && read.penalty !== null,
 	);
@@ -245,11 +245,11 @@ function medianFilterValues(
 	const result = [...values];
 	for (let k = 1; k < nonNullIndexes.length - 1; k++) {
 		const window = [
-			values[nonNullIndexes[k - 1]!]!,
-			values[nonNullIndexes[k]!]!,
-			values[nonNullIndexes[k + 1]!]!,
+			values[nonNullIndexes[k - 1]]!,
+			values[nonNullIndexes[k]]!,
+			values[nonNullIndexes[k + 1]]!,
 		].sort((a, b) => a - b);
-		result[nonNullIndexes[k]!] = window[1]!;
+		result[nonNullIndexes[k]] = window[1]!;
 	}
 	return result;
 }

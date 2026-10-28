@@ -154,8 +154,7 @@ export function sameMinimapStatusData(a: unknown, b: unknown): boolean {
 	): boolean =>
 		xs.length === ys.length &&
 		xs.every(
-			(x, i) =>
-				x.dead === ys[i]!.dead && x.specialReady === ys[i]!.specialReady,
+			(x, i) => x.dead === ys[i].dead && x.specialReady === ys[i].specialReady,
 		);
 	return (
 		sameSide(da.teammates, db.teammates) && sameSide(da.enemies, db.enemies)
@@ -192,11 +191,11 @@ function minTopCorner(gray: Mat, hsv: Mat, roi: Roi): CornerProbe {
 		{ x: roi.x + roi.w - 8, y: roi.y, w: 8, h: 8 },
 	];
 	const means = corners.map((c) => meanBrightness(gray, c));
-	const dimmer = corners[means[0]! <= means[1]! ? 0 : 1]!;
+	const dimmer = corners[means[0] <= means[1] ? 0 : 1];
 	const crop = copyRoi(hsv, dimmer);
 	const n = crop.rows * crop.cols;
 	let satSum = 0;
-	for (let i = 0; i < n; i++) satSum += crop.data[i * 3 + 1]!;
+	for (let i = 0; i < n; i++) satSum += crop.data[i * 3 + 1];
 	crop.delete();
 	return {
 		mean: Math.min(...means),
@@ -227,10 +226,10 @@ function crossedOut(crossFraction: number, crossLap: number): boolean {
 function medianBrightness(gray: Mat): number {
 	const histogram = new Uint32Array(256);
 	const n = gray.rows * gray.cols;
-	for (let i = 0; i < n; i++) histogram[gray.data[i]!]!++;
+	for (let i = 0; i < n; i++) histogram[gray.data[i]]++;
 	let seen = 0;
 	for (let v = 0; v < 256; v++) {
-		seen += histogram[v]!;
+		seen += histogram[v];
 		if (seen * 2 >= n) return v;
 	}
 	return 255;
@@ -244,8 +243,8 @@ function saturatedFraction(hsv: Mat, roi: Roi): number {
 	let hit = 0;
 	for (let i = 0; i < n; i++) {
 		if (
-			md[i * 3 + 1]! >= CROSS_SATURATION_MIN &&
-			md[i * 3 + 2]! >= CROSS_VALUE_MIN
+			md[i * 3 + 1] >= CROSS_SATURATION_MIN &&
+			md[i * 3 + 2] >= CROSS_VALUE_MIN
 		) {
 			hit++;
 		}
@@ -443,6 +442,15 @@ export function createMinimapDetector(
 			: WEAPON_MIN_SCORE;
 	}
 
+	function acceptedWeapon(
+		weapon: WeaponMatch | null,
+		lightSurface: boolean,
+		cornerMin: number,
+	): WeaponMatch | null {
+		const floor = weaponScoreFloor(lightSurface, cornerMin);
+		return weapon !== null && weapon.score >= floor ? weapon : null;
+	}
+
 	function* readCardName(
 		gray: Mat,
 		roi: Roi,
@@ -584,7 +592,7 @@ export function createMinimapDetector(
 				cornerMax,
 				lightSurface,
 			} = probes;
-			const [weapon, parsed, badgeMatches] = reads[i]!;
+			const [weapon, parsed, badgeMatches] = reads[i];
 
 			let name: string | null = null;
 			let nameRaw = "";
@@ -828,8 +836,7 @@ export function createMinimapDetector(
 				badges: badgeDebug,
 			});
 
-			const floor = weaponScoreFloor(lightSurface, cornerMin);
-			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			const matched = acceptedWeapon(weapon, lightSurface, cornerMin);
 			// an occluding cross-out is itself proof the card is drawn
 			const hasEvidence =
 				occluded ||
@@ -880,8 +887,7 @@ export function createMinimapDetector(
 				badges: badgeDebug,
 			});
 
-			const floor = weaponScoreFloor(lightSurface, cornerMin);
-			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			const matched = acceptedWeapon(weapon, lightSurface, cornerMin);
 			sideSubTiles[1].push(enemySubTileRoi(cy));
 			enemies.push({
 				name: null,

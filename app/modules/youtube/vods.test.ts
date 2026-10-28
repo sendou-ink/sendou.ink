@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
+import { mockFetch } from "~/utils/test-helpers";
 import { findRecentLiveStreams } from "./vods";
 
 vi.mock("./utils.server", () => ({
@@ -7,7 +8,7 @@ vi.mock("./utils.server", () => ({
 
 let playlistResponse: Response;
 const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-	const url = new URL(input.toString());
+	const url = requestUrl(input);
 
 	if (url.pathname.endsWith("/playlistItems")) return playlistResponse;
 
@@ -37,7 +38,7 @@ const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
 
 describe("findRecentLiveStreams", () => {
 	beforeEach(() => {
-		vi.stubGlobal("fetch", fetchMock);
+		mockFetch(fetchMock);
 		fetchMock.mockClear();
 		playlistResponse = Response.json({
 			items: ["ended", "live", "upcoming", "upload"].map((videoId) => ({
@@ -47,7 +48,7 @@ describe("findRecentLiveStreams", () => {
 	});
 
 	afterEach(() => {
-		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
 	});
 
 	test("returns the started live streams among the channel's uploads", async () => {
@@ -66,8 +67,8 @@ describe("findRecentLiveStreams", () => {
 			},
 		]);
 
-		const playlistUrl = new URL(fetchMock.mock.calls[0][0].toString());
-		// biome-ignore lint/plugin: mocked YouTube API request
+		const playlistUrl = requestUrl(fetchMock.mock.calls[0][0]);
+		// eslint-disable-next-line sendou/no-raw-search-params -- mocked YouTube API request
 		expect(playlistUrl.searchParams.get("playlistId")).toBe("UUchannel1");
 	});
 
@@ -78,3 +79,7 @@ describe("findRecentLiveStreams", () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 });
+
+function requestUrl(input: RequestInfo | URL) {
+	return new URL(input instanceof Request ? input.url : input);
+}

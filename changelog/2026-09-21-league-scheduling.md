@@ -2,6 +2,7 @@
 navItem: medal
 type: feature
 ---
+
 League format v2 & publicly available
 
 - Every league set gets a schedule tab where both teams put up times they could play and pick one of the other team's. Once agreed, the set can be played from the moment its round is playable

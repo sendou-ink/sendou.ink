@@ -24,10 +24,10 @@ import * as R from "remeda";
 import * as v from "valibot";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
-import { Image } from "~/components/Image";
-import { Input } from "~/components/Input";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
 import { SideSlotIcon } from "~/components/icons/SideSlot";
+import { Image } from "~/components/Image";
+import { Input } from "~/components/Input";
 import { Placeholder } from "~/components/Placeholder";
 import type { Tables } from "~/db/tables";
 import {
@@ -135,7 +135,7 @@ export default function EditWidgetsPage() {
 
 		const newWidget = defaultStoredWidget(widgetId);
 
-		setSelectedWidgets([...selectedWidgets, newWidget]);
+		setSelectedWidgets((previous) => [...previous, newWidget]);
 
 		const widgetDef = findWidgetById(widgetId);
 		if (widgetDef && "schema" in widgetDef) {
@@ -168,7 +168,7 @@ export default function EditWidgetsPage() {
 			return;
 		}
 
-		fetcher.submit(
+		void fetcher.submit(
 			{
 				widgets: selectedWidgets,
 				[RENDERS_FIELD_ERRORS_KEY]: true,
@@ -310,7 +310,7 @@ function AvailableWidgetsList({
 			/>
 			{categoryKeys.map((category) => {
 				const categoryName = t(`user:widgets.category.${category}`);
-				const filteredWidgets = widgetsByCategory[category]!.filter((widget) =>
+				const filteredWidgets = widgetsByCategory[category].filter((widget) =>
 					widgetMatchesSearch(widget, categoryName),
 				);
 
@@ -377,6 +377,7 @@ function AvailableWidgetsList({
 												</>
 											)}
 										</div>
+										{/* eslint-disable-next-line react/jsx-curly-brace-presence -- bare // would read as a comment */}
 										<div className="text-xs font-bold">{"//"}</div>
 										<div className={styles.widgetDescription}>
 											{t(

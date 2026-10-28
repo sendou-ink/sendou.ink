@@ -6,12 +6,12 @@
 
 import clsx from "clsx";
 import { useElementSize } from "~/hooks/useElementSize";
-import styles from "./ObjectivePositionTimeline.module.css";
-import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 import {
 	TIMELINE_PLOT_GUTTER_PX,
 	timelineTimeTicks,
 } from "./objective-timeline-utils";
+import styles from "./ObjectivePositionTimeline.module.css";
+import type { ObjectiveTimelineEvent } from "./ObjectiveTimeline";
 
 const TRACK_END = 100;
 const POSITION_TICKS = [TRACK_END, 0, -TRACK_END];
@@ -56,12 +56,12 @@ export function ObjectivePositionTimeline({
 	const withCrossings = withZeroCrossings(reads);
 	const areaPath = (clamp: (position: number) => number) =>
 		[
-			`M${xAt(withCrossings[0]!.t).toFixed(1)} ${yAt(0).toFixed(1)}`,
+			`M${xAt(withCrossings[0].t).toFixed(1)} ${yAt(0).toFixed(1)}`,
 			...withCrossings.map(
 				(read) =>
 					`L${xAt(read.t).toFixed(1)} ${yAt(clamp(read.position)).toFixed(1)}`,
 			),
-			`L${xAt(withCrossings[withCrossings.length - 1]!.t).toFixed(1)} ${yAt(0).toFixed(1)}`,
+			`L${xAt(withCrossings[withCrossings.length - 1].t).toFixed(1)} ${yAt(0).toFixed(1)}`,
 			"Z",
 		].join(" ");
 

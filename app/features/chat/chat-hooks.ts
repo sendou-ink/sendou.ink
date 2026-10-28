@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useFetchers, useNavigation, useRevalidator } from "react-router";
 import {
-	useEventStreamCatchUp,
 	useEventsTopic,
+	useEventStreamCatchUp,
 	useServerEventListener,
 } from "~/features/events/events-hooks";
 import { useLatestRef } from "~/hooks/useLatestRef";

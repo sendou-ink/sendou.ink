@@ -3,15 +3,13 @@ import path from "node:path";
 import { lineOf, parseFile, ROOT } from "./ast.ts";
 
 const PACKAGE_FILE = "package.json";
-/** A repo script a command runs, e.g. `vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/report.ts`. */
+/** A repo script a command runs, e.g. `bun --preload ./scripts/preload.ts scripts/scanner/report.ts`. */
 const SCRIPT_FILE_REGEX =
-	/\b(?:node|vite-node)\s+(?:-c\s+\S+\s+)?(?:\.\/)?((?:scripts|e2e|app)\/\S+\.ts)\b/;
+	/\bbun\s+(?:--preload\s+\S+\s+)?(?:\.\/)?((?:scripts|e2e|app)\/\S+\.ts)\b/;
 const ENV_ASSIGNMENT_REGEX = /(?:^|\s)([A-Z][A-Z0-9_]*)=("[^"]*"|\S*)/g;
-const CHAINED_SCRIPT_REGEX = /\bpnpm\s+(?:run\s+)?([a-z][\w:-]*)/g;
+const CHAINED_SCRIPT_REGEX = /\bbun\s+run\s+([a-z][\w:-]*)/g;
 const MAX_DESCRIPTION_LENGTH = 160;
 const MIN_SHORTENED_LENGTH = 25;
-/** pnpm's own commands, not package scripts. */
-const PNPM_COMMANDS = new Set(["install", "exec", "dlx", "add"]);
 
 /** For scripts that run a tool rather than a repo script, or whose script has no comment at its top saying what the package script does. Wins over the comment. */
 const DESCRIPTIONS: Record<string, string> = {
@@ -26,9 +24,9 @@ const DESCRIPTIONS: Record<string, string> = {
 		"Dev server against db-sandbox.sqlite3, the local copy of production data",
 	start: "Production server: migrates the database then serves the build",
 	migrate:
-		"Runs the Kysely migrations of /migrations, e.g. `pnpm run migrate up`",
+		"Runs the Kysely migrations of /migrations, e.g. `bun run migrate up`",
 	"migrate:new":
-		'Scaffolds a new migration file, e.g. `pnpm run migrate:new "add user bio"`',
+		'Scaffolds a new migration file, e.g. `bun run migrate:new "add user bio"`',
 	"migrate:sandbox": "Migrates db-sandbox.sqlite3",
 	"check-translation-jsons":
 		"Checks the translation jsons for missing keys and plural suffix clashes, fixing what it can",
@@ -43,15 +41,19 @@ const DESCRIPTIONS: Record<string, string> = {
 		"Deploys to Render with maintenance mode on until the new instance is healthy, see docs/site/src/content/docs/dev/scripts.mdx",
 	"sandbox:reset":
 		"Restores db-sandbox.sqlite3 from db-snapshot.sqlite3 and migrates it",
-	"biome:check": "Biome lint and format check",
-	"biome:fix": "Biome lint and format, applying the safe fixes",
-	"biome:fix:unsafe": "Biome lint and format, applying the unsafe fixes too",
+	"lint:check": "Lint (`bun lint`) and format check (`bun fmt --check`)",
+	"lint:fix": "Lint, applying the fixes, and format",
 	typecheck: "Type checks the app after generating the route types",
+	"typecheck:app":
+		"Type checks the app without generating the route types first",
 	"typecheck:scripts": "Type checks scripts/",
 	"typecheck:docs": "Type checks the docs site",
-	"test:unit:browser": "Runs the unit and browser (Vitest browser mode) tests",
-	"test:browser:ui": "Browser tests in Vitest's UI",
-	"test:unit:browser:ui": "Unit and browser tests in Vitest's UI",
+	"test:unit":
+		"Runs the unit tests (`bun test`) after creating and migrating the test database",
+	"test:unit:run":
+		"Runs the unit tests without preparing the test database first",
+	"test:dom": "Runs the DOM tests (happy-dom and Testing Library)",
+	"test:unit:dom": "Runs the unit tests, then the DOM tests",
 	"test:scanner": "Runs the scanner's fixture tests",
 	"test:e2e": "Runs the Playwright e2e tests",
 	"test:e2e:flaky-detect":
@@ -61,11 +63,13 @@ const DESCRIPTIONS: Record<string, string> = {
 	"check-translation-sync":
 		"Fails when the translation jsons are out of sync with English",
 	checks:
-		"Everything CI checks: lint, unit and browser tests, translations, type checks and knip. A task isn't done until it passes",
+		"Everything CI checks: lint, then unit and DOM tests, translations, type checks and knip in parallel. A task isn't done until it passes",
 	"checks:scanner": "`checks` plus the scanner tests",
 	seed: "Rebuilds the dev dataset of db.sqlite3",
 	setup:
 		"Seeds the dev database and its images when they are missing, run by `dev`",
+	"docs:sync":
+		"Generates the docs site's content collection types (`astro sync`)",
 	"docs:build":
 		"Builds the docs site into docs/site/dist and checks its internal links",
 	"docs:preview": "Builds the docs site and serves the build, search included",
@@ -96,7 +100,7 @@ const GROUPS: Array<{ label: string; matches: (name: string) => boolean }> = [
 	},
 	{
 		label: "Checks",
-		matches: (name) => /^(checks|biome|typecheck|knip)\b/.test(name),
+		matches: (name) => /^(checks|lint|typecheck|knip)\b/.test(name),
 	},
 	{ label: "Tests", matches: (name) => name.startsWith("test:") },
 	{
@@ -117,7 +121,7 @@ export interface PackageScript {
 	/** The repo script it runs, null for one running a tool. */
 	file: string | null;
 	line: number;
-	/** Variables set for it, e.g. by `cross-env DB_PATH=db.sqlite3`. */
+	/** Variables set for it, e.g. by `DB_PATH=db.sqlite3`. */
 	env: Array<{ name: string; value: string }>;
 	/** Other package scripts it runs. */
 	runs: string[];
@@ -156,12 +160,7 @@ export function documentPackageScripts(): PackageScript[] {
 				...new Set(
 					[...command.matchAll(CHAINED_SCRIPT_REGEX)]
 						.map(([, script]) => script)
-						.filter(
-							(script) =>
-								!PNPM_COMMANDS.has(script) &&
-								script !== name &&
-								names.has(script),
-						),
+						.filter((script) => script !== name && names.has(script)),
 				),
 			],
 		};
@@ -176,7 +175,7 @@ function leadingComment(file: string) {
 	);
 	const comments = parsed.comments.filter(
 		(comment) =>
-			!comment.value.replace(/^\*/, "").trim().startsWith("biome-ignore") &&
+			!comment.value.replace(/^\*/, "").trim().startsWith("eslint-") &&
 			(!firstStatement || comment.end <= firstStatement.start),
 	);
 	const first = comments[0];

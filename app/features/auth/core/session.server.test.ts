@@ -1,5 +1,5 @@
+import { describe, expect, test } from "bun:test";
 import { createCookieSessionStorage } from "react-router";
-import { describe, expect, test } from "vitest";
 import { createAuthSession } from "./session.server";
 
 const SECRET = "test-secret";

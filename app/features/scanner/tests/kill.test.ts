@@ -15,16 +15,17 @@ import {
 } from "../core/detectors/kill/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createMinimapDetector } from "../core/detectors/minimap/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
-import { createScoreboardBattleLogDetector } from "../core/detectors/scoreboard-battle-log/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
+import { createScoreboardBattleLogDetector } from "../core/detectors/scoreboard-battle-log/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
+import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import type { Detector } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
 import {
 	fieldTestOptions,
 	loadFixtures,
 	runDetectorOnFixture,
+	withFixtureFrame,
 } from "../node/fixtures";
 import { readImage } from "../node/image-io";
 import { loadScoreboardResources } from "../node/resources";
@@ -155,32 +156,28 @@ for (const fixture of loadFixtures("negative")) {
 // double-row fixture shows a trade with the death cam up), so only the
 // screen-replacing detectors are swept the other way.
 const otherDetectors: readonly [string, Detector<unknown>][] = [
-	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
+	["scoreboard", createScoreboardDetector(resources)],
 	[
 		"scoreboard-battle-log-replay",
-		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
+		createScoreboardBattleLogReplayDetector(resources),
 	],
-	[
-		"scoreboard-battle-log",
-		createScoreboardBattleLogDetector(resources) as Detector<unknown>,
-	],
-	[
-		"scoreboard-own",
-		createScoreboardOwnDetector(resources) as Detector<unknown>,
-	],
-	["map-start", createMapStartDetector(resources) as Detector<unknown>],
-	["minimap", createMinimapDetector(resources) as Detector<unknown>],
+	["scoreboard-battle-log", createScoreboardBattleLogDetector(resources)],
+	["scoreboard-own", createScoreboardOwnDetector(resources)],
+	["map-start", createMapStartDetector(resources)],
+	["minimap", createMinimapDetector(resources)],
 ];
 for (const fixture of fixtures.filter((f) => f.expected.event === "Kill")) {
 	test(`other gates stay quiet on kill/${fixture.name}`, async () => {
-		for (const [name, other] of otherDetectors) {
-			const { gate } = await runDetectorOnFixture(other, fixture);
-			assert.equal(
-				gate.pass,
-				false,
-				`${name} gate fired (score=${gate.score.toFixed(3)})`,
-			);
-		}
+		await withFixtureFrame(fixture, (frame) => {
+			for (const [name, other] of otherDetectors) {
+				const gate = other.gate(frame);
+				assert.equal(
+					gate.pass,
+					false,
+					`${name} gate fired (score=${gate.score.toFixed(3)})`,
+				);
+			}
+		});
 	});
 }
 
@@ -197,9 +194,9 @@ test("row reads are memoized across advancing frames only", async () => {
 			(event.debug as { rows: { memoized: boolean }[] }).rows.map(
 				(row) => row.memoized,
 			);
-		const first = detector.parse(frame, 10)[0]!;
-		const repeat = detector.parse(frame, 10.5)[0]!;
-		const rewound = detector.parse(frame, 10.5)[0]!;
+		const first = detector.parse(frame, 10)[0];
+		const repeat = detector.parse(frame, 10.5)[0];
+		const rewound = detector.parse(frame, 10.5)[0];
 		assert.deepEqual(memoizedRows(first), [false, false]);
 		assert.deepEqual(memoizedRows(repeat), [true, true]);
 		assert.deepEqual(memoizedRows(rewound), [false, false]);

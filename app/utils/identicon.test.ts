@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { generateIdenticon } from "./identicon";
 
 const CELL_SIZE = 2;

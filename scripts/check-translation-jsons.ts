@@ -1,6 +1,5 @@
-/** biome-ignore-all lint/suspicious/noConsole: Biome v2 migration */
+/* eslint-disable no-console -- Biome v2 migration */
 import fs from "node:fs";
-
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as TranslationSyntax from "../app/features/translate/core/TranslationSyntax.ts";

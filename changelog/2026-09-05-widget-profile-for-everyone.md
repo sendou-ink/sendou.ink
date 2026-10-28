@@ -2,6 +2,7 @@
 navItem: u
 type: feature
 ---
+
 New user profile page now out for everyone and the default
 
 - Default layout roughly equivalent to old page: weapon pool, X Rank peaks, badges, bio, teams, sensitivity and member number

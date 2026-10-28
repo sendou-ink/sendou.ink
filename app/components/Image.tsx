@@ -14,10 +14,10 @@ import {
 	outlinedFiveStarMainWeaponImageUrl,
 	outlinedMainWeaponImageUrl,
 	outlinedTenStarMainWeaponImageUrl,
-	type SpecialWeaponImageVariant,
 	specialWeaponDetailImageUrl,
 	specialWeaponHighlightImageUrl,
 	specialWeaponImageUrl,
+	type SpecialWeaponImageVariant,
 	stageImageUrl,
 	subWeaponDetailImageUrl,
 	subWeaponHighlightImageUrl,
@@ -59,7 +59,7 @@ export function Image({
 	loading = "lazy",
 }: ImageProps) {
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Biome v2 migration
 		<div
 			title={title}
 			className={containerClassName}

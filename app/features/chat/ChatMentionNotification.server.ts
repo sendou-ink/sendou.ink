@@ -2,8 +2,8 @@ import { notify } from "~/features/notifications/core/notify.server";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { hasPermission } from "~/modules/permissions/utils";
 import { avatarUrl } from "~/utils/urls";
-import type * as ChatRoomResolver from "./ChatRoomResolver.server";
 import type { ChatMessageWithAuthor } from "./chat-types";
+import type * as ChatRoomResolver from "./ChatRoomResolver.server";
 import * as Mentions from "./core/Mentions";
 
 export async function notifyMentioned({

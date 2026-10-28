@@ -10,7 +10,6 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Placement } from "~/components/Placement";
-import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
@@ -20,6 +19,7 @@ import {
 	validateBadgeReceivers,
 	validateTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
 import { invariant } from "~/utils/invariant";
@@ -328,15 +328,13 @@ function NewTrophyReceiversSelector({
 	trophy: NonNullable<FinalizeTournamentLoaderData["trophy"]>;
 	winnerStandings: FinalizeTournamentLoaderData["standings"];
 	trophyReceiverUserIds: Array<number>;
-	setTrophyReceiverUserIds: (userIds: Array<number>) => void;
+	setTrophyReceiverUserIds: React.Dispatch<React.SetStateAction<number[]>>;
 }) {
 	const handleReceiverSelected = (userId: number) => (isSelected: boolean) => {
 		if (isSelected) {
-			setTrophyReceiverUserIds([...trophyReceiverUserIds, userId]);
+			setTrophyReceiverUserIds((prev) => [...prev, userId]);
 		} else {
-			setTrophyReceiverUserIds(
-				trophyReceiverUserIds.filter((id) => id !== userId),
-			);
+			setTrophyReceiverUserIds((prev) => prev.filter((id) => id !== userId));
 		}
 	};
 

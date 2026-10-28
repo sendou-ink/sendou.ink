@@ -44,8 +44,7 @@ for (const fixture of fixtures) {
 		);
 		assert.ok(gate.pass, `objective gate did not fire (${gate.score})`);
 		const event = events.find((e) => e.type === STRIP_WEAPONS_EVENT_TYPE) as
-			| DetectedEvent<StripWeaponsData>
-			| undefined;
+			DetectedEvent<StripWeaponsData> | undefined;
 		assert.ok(event, "no StripWeapons event alongside the counter read");
 		parsed.set(fixture.name, event);
 		const expected = fixture.expected.data ?? {};
@@ -97,7 +96,7 @@ test("aggregated votes assign every slot to its scoreboard row", () => {
 				const floor = candidates?.at(-1)?.score ?? 0;
 				for (const candidate of candidates ?? []) {
 					addWeaponEvidence(
-						evidence[side]!,
+						evidence[side],
 						slot,
 						candidate.weaponId,
 						candidate.score - floor,
@@ -107,6 +106,6 @@ test("aggregated votes assign every slot to its scoreboard row", () => {
 			}
 		}
 	}
-	assert.deepEqual(slotRowPermutation(evidence[0]!), [0, 2, 1, 3]);
-	assert.deepEqual(slotRowPermutation(evidence[1]!), [3, 0, 1, 2]);
+	assert.deepEqual(slotRowPermutation(evidence[0]), [0, 2, 1, 3]);
+	assert.deepEqual(slotRowPermutation(evidence[1]), [3, 0, 1, 2]);
 });

@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 
 // screenshots the canvas of the /admin/changelog-image page into a shareable PNG
 // and writes the same update as text, both as Bluesky alt text and as a Discord
@@ -11,19 +11,12 @@ import { fileURLToPath } from "node:url";
 import { parseArgs, promisify } from "node:util";
 import { chromium, type Page } from "@playwright/test";
 import { format } from "date-fns";
-import sharp from "sharp";
 import {
 	DISCORD_EMOJI_NAMES,
 	DISCORD_FALLBACK_EMOJI_NAME,
 } from "../app/features/changelog/changelog-constants.ts";
 
 const execFileAsync = promisify(execFile);
-
-try {
-	process.loadEnvFile();
-} catch {
-	// .env is optional, the dev server port can also come from the environment
-}
 
 const { values: args, positionals } = parseArgs({
 	options: { port: { type: "string" } },
@@ -48,7 +41,7 @@ async function main() {
 	const since = positionals[0];
 	if (!since) {
 		throw new Error(
-			"Usage: pnpm run changelog:image <sha-of-previous-update-commit> [--port <dev-server-port>]",
+			"Usage: bun run changelog:image <sha-of-previous-update-commit> [--port <dev-server-port>]",
 		);
 	}
 
@@ -96,9 +89,9 @@ async function main() {
 	const fileNameBase = `update-${format(date, "yyyy-MM-dd")}`;
 
 	const imagePath = path.join(OUT_DIR, `${fileNameBase}.png`);
-	await sharp(screenshot)
-		.png({ compressionLevel: 9, effort: 10 })
-		.toFile(imagePath);
+	await new Bun.Image(screenshot)
+		.png({ compressionLevel: 9, palette: true })
+		.write(imagePath);
 
 	const { size } = await fs.stat(imagePath);
 	console.log(`${imagePath} (${Math.round(size / 1024)} kB)`);

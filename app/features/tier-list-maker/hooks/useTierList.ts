@@ -38,7 +38,7 @@ const placementModePersisted = PersistedState.define({
 	key: "tier-list-maker__placement-mode",
 	storage: "local",
 	schema: v.picklist(["track", "click"]),
-	default: "track" as TierListPlacementMode,
+	default: "track",
 });
 
 export function useTierList() {
@@ -167,10 +167,10 @@ export function useTierList() {
 			overItem,
 		});
 
-		setTiers({
-			...tiers,
+		setTiers((prev) => ({
+			...prev,
 			tierItems: newTierItems,
-		});
+		}));
 	};
 
 	const handleDragEnd = (event: DragEndEvent) => {

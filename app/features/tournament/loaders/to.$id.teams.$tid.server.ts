@@ -10,8 +10,8 @@ import * as TournamentMatchRepository from "~/features/tournament-match/Tourname
 import { invariant } from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFound, parseParams } from "~/utils/remix.server";
-import * as Standings from "../core/Standings";
 import { type AllRoundsItem, tournamentTeamSets } from "../core/sets.server";
+import * as Standings from "../core/Standings";
 import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 
 export type TournamentTeamLoaderData = SerializeFrom<typeof loader>;

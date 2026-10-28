@@ -1,8 +1,8 @@
 import * as v from "valibot";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { apiUpsertRegistrationAction } from "~/features/tournament-admin/actions/to.$id.admin.registration.server";
 import { ADMIN_REGISTRATION_MAX_MEMBERS } from "~/features/tournament-admin/tournament-admin-registration-schemas";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { defineAction } from "~/form/define-action.server";
 import { existingImage } from "~/form/image-field";
 import { RENDERS_FIELD_ERRORS_KEY } from "~/form/utils";

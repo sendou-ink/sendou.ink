@@ -1,11 +1,11 @@
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
 	requireTournamentOrganizer,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { inGameNameIsValid } from "~/features/user-page/in-game-name";
 import { defineAction } from "~/form/define-action.server";
 import { badRequestIfFalsy } from "~/utils/remix.server";

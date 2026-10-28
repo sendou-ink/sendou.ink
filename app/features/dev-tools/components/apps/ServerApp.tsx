@@ -63,7 +63,7 @@ function ServerApp() {
 	>({});
 
 	React.useEffect(() => {
-		load(DEV_SERVER_URL);
+		void load(DEV_SERVER_URL);
 	}, [load]);
 
 	const act = async (
@@ -75,7 +75,7 @@ function ServerApp() {
 		setMessage(undefined);
 		const result = await postDev<DevServerActionData>(DEV_SERVER_URL, body);
 		setPending(null);
-		load(DEV_SERVER_URL);
+		void load(DEV_SERVER_URL);
 
 		if (!result.ok) {
 			setMessage({ isError: true, text: result.error });

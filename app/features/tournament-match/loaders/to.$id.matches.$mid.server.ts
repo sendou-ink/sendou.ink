@@ -9,8 +9,6 @@ import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRe
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -22,6 +20,8 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { showsOneGroupAtATime } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
@@ -38,6 +38,10 @@ import * as TournamentMatchRepository from "../TournamentMatchRepository.server"
 
 export type TournamentMatchLoaderData = SerializeFrom<typeof loader>;
 
+type TeamFull = Awaited<ReturnType<typeof tournamentTeamsFullCached>>[number];
+type TeamFullById = (tournamentTeamId: number) => TeamFull | undefined;
+type LoaderMatch = NonNullable<FindMatchById>;
+
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { mid: matchId } = parseParams({
 		params,
@@ -49,7 +53,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 
 	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
-	const teamFullById = (tournamentTeamId: number) =>
+	const teamFullById: TeamFullById = (tournamentTeamId: number) =>
 		teamsFull.find((team) => team.id === tournamentTeamId);
 
 	const match = notFoundIfNullish(
@@ -65,7 +69,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		notFound();
 	}
 
-	let pickBanEvents = match.roundMaps?.pickBan
+	const pickBanEventsBeforeRoll = match.roundMaps?.pickBan
 		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 		: [];
 
@@ -79,82 +83,29 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const matchIsOver = Boolean(match.winnerSide);
 
-	if (
-		!matchIsOver &&
-		match.roundMaps?.pickBan === "CUSTOM" &&
-		match.roundMaps.customFlow &&
-		match.opponentOne?.id &&
-		match.opponentTwo?.id
-	) {
-		const currentStep = PickBan.resolveCurrentStep({
-			eventCount: pickBanEvents.length,
-			preSet: match.roundMaps.customFlow.preSet,
-			postGame: match.roundMaps.customFlow.postGame,
-			resultsCount: results.length,
-		});
-		if (currentStep?.action === "ROLL") {
-			const teamOne = teamFullById(match.opponentOne.id);
-			const teamTwo = teamFullById(match.opponentTwo.id);
-			if (teamOne && teamTwo) {
-				const rollExecuted = await executeRoll({
-					matchId,
-					maps: match.roundMaps,
-					pickBanEvents,
-					results,
-					teams: [teamOne, teamTwo],
-					toSetMapPool: tournament.organizerPickedMapPool,
-				});
-				if (rollExecuted) {
-					pickBanEvents = await TournamentRepository.findPickBanEventsByMatchId(
-						match.id,
-					);
-				}
-			}
-		}
-	}
+	const pickBanEvents = await pickBanEventsAfterPendingRoll({
+		tournament,
+		match,
+		matchId,
+		matchIsOver,
+		results,
+		pickBanEvents: pickBanEventsBeforeRoll,
+		teamFullById,
+	});
 
 	// cached so a noScreen preference change doesn't change the selection once the match has started
-	const noScreen =
-		match.opponentOne?.id && match.opponentTwo?.id
-			? await cachified({
-					key: `no-screen-mid-${matchId}-${match.opponentOne.id}-${match.opponentTwo.id}`,
-					cache,
-					// avoid preferences from other test runs leaking in
-					ttl: IS_E2E_TEST_RUN ? -1 : ttl(IN_MILLISECONDS.TWO_DAYS),
-					async getFreshValue() {
-						return UserRepository.anyUserPrefersNoScreen(
-							match.players.map((p) => p.id),
-						);
-					},
-				})
-			: null;
+	const noScreen = await cachedNoScreen(match, matchId);
 
-	const mapList =
-		match.opponentOne?.id && match.opponentTwo?.id
-			? matchIsOver
-				? mapListFromResults(results)
-				: resolveMapList({
-						tournamentId,
-						matchId,
-						teams: [match.opponentOne.id, match.opponentTwo.id],
-						mapPoolByTeamId: (teamId) => teamFullById(teamId)?.mapPool ?? [],
-						mapPickingStyle: match.mapPickingStyle,
-						maps: match.roundMaps,
-						pool: tournament.mapPool,
-						modesIncluded: tournament.modesIncluded,
-						pickBanEvents,
-						recentlyPlayedMaps:
-							match.mapPickingStyle !== "TO"
-								? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
-										teamIds: [match.opponentOne.id, match.opponentTwo.id],
-										excludeMatchId: matchId,
-									}).catch((error) => {
-										logger.error("Failed to fetch recently played maps", error);
-										return [];
-									})
-								: undefined,
-					})
-			: null;
+	const mapList = await matchMapList({
+		tournament,
+		tournamentId,
+		match,
+		matchId,
+		matchIsOver,
+		results,
+		pickBanEvents,
+		teamFullById,
+	});
 
 	const endedEarly = matchIsOver
 		? matchEndedEarly({
@@ -186,12 +137,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 	});
 
-	const canJoin =
-		!matchIsOver &&
-		match.opponentOne?.id != null &&
-		match.opponentTwo?.id != null &&
-		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
-		(schedule.phase === "CLOSED" || schedule.phase === "SCHEDULED");
+	const canJoin = canJoinMatchRoom({
+		tournament,
+		match,
+		user,
+		isParticipant,
+		matchIsOver,
+		schedulePhase: schedule.phase,
+	});
 
 	return {
 		...(await UserCardRepository.findAllByUserIdsCached({
@@ -210,12 +163,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		},
 		results,
 		reportedWeapons,
-		viewerWeaponPoolIds:
-			user && isParticipant
-				? (await MatchProfileRepository.findWeaponPoolByUserId(user.id)).map(
-						(weapon) => weapon.weaponSplId,
-					)
-				: null,
+		viewerWeaponPoolIds: await viewerWeaponPoolIds(user, isParticipant),
 		ingestedScoreboards,
 		mapList,
 		teams: [match.opponentOne?.id, match.opponentTwo?.id].flatMap(
@@ -243,21 +191,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		canJoin,
 		schedule,
 		// the views can't derive these themselves, the layout ships no bracket match data
-		bracketContext: {
-			bracketIdx,
-			bracketType: bracket?.type ?? null,
-			collectsKos: bracket?.collectsKos ?? false,
-			groupNumber:
-				bracket?.data.group.find((group) => group.id === match.groupId)
-					?.number ?? null,
-			bracketsPageGroupId:
-				bracket && showsOneGroupAtATime(bracket) ? match.groupId : null,
-			hasRoundRobin: tournament.bracketsMeta.some(
-				(meta) => meta.type === "round_robin",
-			),
-			names: tournament.matchContextNamesById(matchId),
-			canBeReopened: tournament.matchCanBeReopened(matchId),
-		},
+		bracketContext: bracketContext({ tournament, bracket, bracketIdx, match }),
 		pickBanEventCount: pickBanEvents.length,
 		pickBanEvents: pickBanEvents.map((e) => ({
 			type: e.type,
@@ -269,6 +203,191 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 const WEEK_SECONDS = 7 * 24 * 60 * 60;
+
+/** Runs the server's own roll step when a custom flow is waiting on it, returning the pick/ban events as they are after it. */
+async function pickBanEventsAfterPendingRoll({
+	tournament,
+	match,
+	matchId,
+	matchIsOver,
+	results,
+	pickBanEvents,
+	teamFullById,
+}: {
+	tournament: Tournament;
+	match: LoaderMatch;
+	matchId: number;
+	matchIsOver: boolean;
+	results: Awaited<
+		ReturnType<typeof TournamentMatchRepository.findResultsByMatchId>
+	>;
+	pickBanEvents: Awaited<
+		ReturnType<typeof TournamentRepository.findPickBanEventsByMatchId>
+	>;
+	teamFullById: TeamFullById;
+}) {
+	if (
+		matchIsOver ||
+		match.roundMaps?.pickBan !== "CUSTOM" ||
+		!match.roundMaps.customFlow ||
+		!match.opponentOne?.id ||
+		!match.opponentTwo?.id
+	) {
+		return pickBanEvents;
+	}
+
+	const currentStep = PickBan.resolveCurrentStep({
+		eventCount: pickBanEvents.length,
+		preSet: match.roundMaps.customFlow.preSet,
+		postGame: match.roundMaps.customFlow.postGame,
+		resultsCount: results.length,
+	});
+	if (currentStep?.action !== "ROLL") return pickBanEvents;
+
+	const teamOne = teamFullById(match.opponentOne.id);
+	const teamTwo = teamFullById(match.opponentTwo.id);
+	if (!teamOne || !teamTwo) return pickBanEvents;
+
+	const rollExecuted = await executeRoll({
+		matchId,
+		maps: match.roundMaps,
+		pickBanEvents,
+		results,
+		teams: [teamOne, teamTwo],
+		toSetMapPool: tournament.organizerPickedMapPool,
+	});
+	if (!rollExecuted) return pickBanEvents;
+
+	return TournamentRepository.findPickBanEventsByMatchId(match.id);
+}
+
+async function cachedNoScreen(match: LoaderMatch, matchId: number) {
+	if (!match.opponentOne?.id || !match.opponentTwo?.id) return null;
+
+	return cachified({
+		key: `no-screen-mid-${matchId}-${match.opponentOne.id}-${match.opponentTwo.id}`,
+		cache,
+		// avoid preferences from other test runs leaking in
+		ttl: IS_E2E_TEST_RUN ? -1 : ttl(IN_MILLISECONDS.TWO_DAYS),
+		async getFreshValue() {
+			return UserRepository.anyUserPrefersNoScreen(
+				match.players.map((p) => p.id),
+			);
+		},
+	});
+}
+
+async function matchMapList({
+	tournament,
+	tournamentId,
+	match,
+	matchId,
+	matchIsOver,
+	results,
+	pickBanEvents,
+	teamFullById,
+}: {
+	tournament: Tournament;
+	tournamentId: number;
+	match: LoaderMatch;
+	matchId: number;
+	matchIsOver: boolean;
+	results: Awaited<
+		ReturnType<typeof TournamentMatchRepository.findResultsByMatchId>
+	>;
+	pickBanEvents: Awaited<
+		ReturnType<typeof TournamentRepository.findPickBanEventsByMatchId>
+	>;
+	teamFullById: TeamFullById;
+}) {
+	if (!match.opponentOne?.id || !match.opponentTwo?.id) return null;
+	if (matchIsOver) return mapListFromResults(results);
+
+	return resolveMapList({
+		tournamentId,
+		matchId,
+		teams: [match.opponentOne.id, match.opponentTwo.id],
+		mapPoolByTeamId: (teamId) => teamFullById(teamId)?.mapPool ?? [],
+		mapPickingStyle: match.mapPickingStyle,
+		maps: match.roundMaps,
+		pool: tournament.mapPool,
+		modesIncluded: tournament.modesIncluded,
+		pickBanEvents,
+		recentlyPlayedMaps:
+			match.mapPickingStyle !== "TO"
+				? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+						teamIds: [match.opponentOne.id, match.opponentTwo.id],
+						excludeMatchId: matchId,
+					}).catch((error) => {
+						logger.error("Failed to fetch recently played maps", error);
+						return [];
+					})
+				: undefined,
+	});
+}
+
+function canJoinMatchRoom({
+	tournament,
+	match,
+	user,
+	isParticipant,
+	matchIsOver,
+	schedulePhase,
+}: {
+	tournament: Tournament;
+	match: LoaderMatch;
+	user: { id: number } | undefined;
+	isParticipant: boolean;
+	matchIsOver: boolean;
+	schedulePhase: LeagueScheduling.Phase;
+}) {
+	return (
+		!matchIsOver &&
+		match.opponentOne?.id != null &&
+		match.opponentTwo?.id != null &&
+		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
+		(schedulePhase === "CLOSED" || schedulePhase === "SCHEDULED")
+	);
+}
+
+async function viewerWeaponPoolIds(
+	user: { id: number } | undefined,
+	isParticipant: boolean,
+) {
+	if (!user || !isParticipant) return null;
+
+	return (await MatchProfileRepository.findWeaponPoolByUserId(user.id)).map(
+		(weapon) => weapon.weaponSplId,
+	);
+}
+
+function bracketContext({
+	tournament,
+	bracket,
+	bracketIdx,
+	match,
+}: {
+	tournament: Tournament;
+	bracket: Bracket | null;
+	bracketIdx: number | null;
+	match: LoaderMatch;
+}) {
+	return {
+		bracketIdx,
+		bracketType: bracket?.type ?? null,
+		collectsKos: bracket?.collectsKos ?? false,
+		groupNumber:
+			bracket?.data.group.find((group) => group.id === match.groupId)?.number ??
+			null,
+		bracketsPageGroupId:
+			bracket && showsOneGroupAtATime(bracket) ? match.groupId : null,
+		hasRoundRobin: tournament.bracketsMeta.some(
+			(meta) => meta.type === "round_robin",
+		),
+		names: tournament.matchContextNamesById(match.id),
+		canBeReopened: tournament.matchCanBeReopened(match.id),
+	};
+}
 
 /**
  * Where the set is in the league scheduling flow. The candidate board is only for the two teams

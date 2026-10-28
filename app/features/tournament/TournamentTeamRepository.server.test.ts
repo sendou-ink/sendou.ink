@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";

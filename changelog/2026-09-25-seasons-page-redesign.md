@@ -2,6 +2,7 @@
 navItem: u
 type: feature
 ---
+
 Seasons page redesign
 
 - Season picker shows your rank for every season at a glance

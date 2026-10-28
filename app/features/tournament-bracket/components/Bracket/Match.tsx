@@ -9,10 +9,10 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { StreamPlatformIcon } from "~/features/live-streams/components/StreamPlatformIcon";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
+import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import { TournamentStream } from "~/features/tournament/components/TournamentStream";
 import { useTournamentVods } from "~/features/tournament/routes/to.$id";
 import { useTournament } from "~/features/tournament/tournament-context";
-import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
@@ -28,8 +28,8 @@ import type {
 } from "../../core/Bracket/Bracket";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
-import type { VodsByTournamentId } from "../../TournamentMatchVodRepository.server";
 import { tournamentBracketsPage } from "../../tournament-bracket-urls";
+import type { VodsByTournamentId } from "../../TournamentMatchVodRepository.server";
 import styles from "./Match.module.css";
 
 type LineType = "none" | "straight" | "curve-up" | "curve-down";

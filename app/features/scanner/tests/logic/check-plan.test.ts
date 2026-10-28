@@ -107,7 +107,7 @@ function simulate({
 	let ahead = 0;
 	const stepTo = (index: number) => {
 		while (ahead <= Math.min(index, times.length - 1)) {
-			const sample = times[ahead]!;
+			const sample = times[ahead];
 			stepped.set(sample, tracker.step(sample));
 			ahead++;
 		}

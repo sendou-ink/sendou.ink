@@ -69,7 +69,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 							return;
 						}
 
-						setManagers([...managers, user]);
+						setManagers((prevManagers) => [...prevManagers, user]);
 					}}
 				/>
 				<ul className={styles.editUsersList}>

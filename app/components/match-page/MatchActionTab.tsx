@@ -110,14 +110,14 @@ export function MatchActionTab({
 
 							const isEnemySelection = isOnTeam && selectedId !== ownTeamId;
 							if (isEnemySelection) {
-								trigger([
+								void trigger([
 									{ duration: 40, intensity: 0.7 },
 									{ delay: 40, duration: 40, intensity: 0.7 },
 									{ delay: 40, duration: 40, intensity: 0.9 },
 									{ delay: 40, duration: 50, intensity: 0.6 },
 								]);
 							} else {
-								trigger([
+								void trigger([
 									{ duration: 30 },
 									{ delay: 60, duration: 40, intensity: 1 },
 								]);
@@ -217,12 +217,14 @@ function SetEndingConfirmation({
 }) {
 	const { t } = useTranslation(["q", "common"]);
 
+	const [previewTimestamp] = useState(() => Date.now());
+
 	const winnerSide = winnerId === teams[0].id ? "ALPHA" : "BRAVO";
 
 	const newMap: TimelineMap = {
 		stageId,
 		mode,
-		timestamp: Date.now(),
+		timestamp: previewTimestamp,
 		winner: winnerSide,
 		rosters: setEnding.currentRosters,
 		ko: withKo ? isKo : undefined,

@@ -1,6 +1,6 @@
+import { afterEach, describe, expect, setSystemTime, test, vi } from "bun:test";
 import * as R from "remeda";
 import * as v from "valibot";
-import { afterEach, describe, expect, test, vi } from "vitest";
 import { addTeamEventSchema, saveWeekSchema } from "./availability-schemas";
 
 const DAY_MINUTES = 24 * 60;
@@ -90,7 +90,7 @@ describe("addTeamEventSchema", () => {
 		"accepts an event next week on the server once the client's week rolled over ($why)",
 		({ clientTimezone, now, nextWeekSaturdayEvening }) => {
 			vi.useFakeTimers();
-			vi.setSystemTime(new Date(now));
+			setSystemTime(new Date(now));
 			const event = eventStartingAt(new Date(nextWeekSaturdayEvening));
 
 			process.env.TZ = clientTimezone;

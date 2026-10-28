@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { TIER_LIST_SEARCH_PARAM_NAMES } from "./tier-list-maker-constants";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
 import { tierListMakerSearchParams } from "./tier-list-maker-search-params";

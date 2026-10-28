@@ -48,7 +48,7 @@ export function Catcher() {
 		if (hasRevalidated.current) return;
 
 		hasRevalidated.current = true;
-		revalidate();
+		void revalidate();
 	}, [revalidate, error]);
 
 	const isNetworkError =
@@ -151,7 +151,7 @@ function PageNotFound() {
 
 	React.useEffect(() => {
 		if (redirectTo) {
-			navigate(redirectTo, { replace: true });
+			void navigate(redirectTo, { replace: true });
 		}
 	}, [redirectTo, navigate]);
 

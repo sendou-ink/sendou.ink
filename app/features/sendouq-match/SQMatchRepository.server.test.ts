@@ -1,5 +1,12 @@
+import {
+	beforeEach,
+	describe,
+	expect,
+	setSystemTime,
+	test,
+	vi,
+} from "bun:test";
 import { add, sub } from "date-fns";
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as SplatoonFaker from "~/db/seed/core/SplatoonFaker";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
@@ -15,8 +22,8 @@ import {
 	SENDOUQ_BEST_OF,
 } from "~/features/sendouq/q-constants";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { dateToYYYYMMDD } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
@@ -699,7 +706,7 @@ describe("finalizeMatch", () => {
 
 describe("reportMapWinner confirmation", () => {
 	test("rejects as stale a confirmation of a set-ending report undone and re-reported since", async () => {
-		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.useFakeTimers();
 		try {
 			const setup = await setupMatch();
 
@@ -736,7 +743,7 @@ describe("reportMapWinner confirmation", () => {
 			const reportedCount = await reportSweep();
 			const originalReportedAt = await decidingMapReportedAt();
 
-			vi.setSystemTime(add(new Date(), { seconds: 5 }));
+			setSystemTime(add(new Date(), { seconds: 5 }));
 			await SQMatchRepository.undoMatchReport({
 				matchId: setup.match.id,
 				requestedByUserId: setup.alphaMembers[0].id,

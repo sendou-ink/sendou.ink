@@ -26,7 +26,7 @@ function resolveQsByDescent(raw: RecognizedText): string {
 		.map((c) => c.y1)
 		.sort((a, b) => a - b);
 	if (anchors.length === 0) return raw.text;
-	const baseline = anchors[Math.floor(anchors.length / 2)]!;
+	const baseline = anchors[Math.floor(anchors.length / 2)];
 	return raw.chars
 		.map((c) =>
 			Q_TWINS.has(c.char) && c.y1 - baseline >= Q_DESCENT_MIN_PX ? "Q" : c.char,
@@ -59,7 +59,7 @@ function resolveUsByTopRightInk(
 		for (let y = c.y0; y < yMid; y++) {
 			for (let x = xMid; x < c.x1; x++) {
 				total++;
-				if (data[y * cols + x]! > LU_INK_THRESHOLD) ink++;
+				if (data[y * cols + x] > LU_INK_THRESHOLD) ink++;
 			}
 		}
 		return total > 0 && ink / total >= LU_TOP_RIGHT_MIN_FRACTION

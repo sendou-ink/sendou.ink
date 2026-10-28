@@ -39,7 +39,7 @@ export function* parseNumberSteps(
 	let chars = raw.chars;
 	if (options.dropLoweredTrailing && chars.length > 1) {
 		const capY0 = Math.min(...chars.slice(0, -1).map((c) => c.y0));
-		if (chars[chars.length - 1]!.y0 - capY0 >= LOWERED_TRAILING_MIN_PX) {
+		if (chars[chars.length - 1].y0 - capY0 >= LOWERED_TRAILING_MIN_PX) {
 			chars = chars.slice(0, -1);
 		}
 	}
@@ -51,7 +51,7 @@ export function* parseNumberSteps(
 			chars.length > 0
 				? Math.min(...chars.map((c) => c.score))
 				: raw.confidence,
-		leftX: chars.length > 0 ? chars[0]!.x0 : null,
+		leftX: chars.length > 0 ? chars[0].x0 : null,
 		raw,
 	};
 }

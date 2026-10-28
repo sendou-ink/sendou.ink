@@ -1,5 +1,4 @@
 import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
-import type { StageId } from "~/modules/in-game-lists/types";
 import { defineFactory } from "../core/defineFactory";
 
 type InsertArgs = Parameters<
@@ -8,10 +7,10 @@ type InsertArgs = Parameters<
 
 /** A user's map record for one mode and stage of a season. Rows for the same mode, stage and season add up, as reported results do. */
 export const { create } = defineFactory({
-	defaults: () => ({
+	defaults: (): Partial<InsertArgs> => ({
 		season: 1,
-		mode: "SZ" as const,
-		stageId: 1 as StageId,
+		mode: "SZ",
+		stageId: 1,
 		wins: 1,
 		losses: 0,
 	}),

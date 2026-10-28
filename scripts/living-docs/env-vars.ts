@@ -494,11 +494,7 @@ function directReads(
 			const via = envObjectOf(node.object, envObjects);
 			if (!via) return;
 
-			const name = node.computed
-				? literalString(node.property)
-				: node.property.type === "Identifier"
-					? node.property.name
-					: null;
+			const name = accessedName(node);
 			if (name) add(name, node, via);
 			return false;
 		}
@@ -516,6 +512,13 @@ function directReads(
 	});
 
 	return found;
+}
+
+/** `env.NAME` and `env["NAME"]` both read `NAME`. */
+function accessedName(node: Extract<Node, { type: "MemberExpression" }>) {
+	if (node.computed) return literalString(node.property);
+
+	return node.property.type === "Identifier" ? node.property.name : null;
 }
 
 /** TS nodes whose children run, e.g. the expression of `x as T`. */
@@ -588,7 +591,7 @@ function commentAbove(file: ParsedFile, line: number) {
 			.map((part) => part.replace(/^\s*\* ?/, "").trim())
 			.join(" ")
 			.trim();
-		if (text.startsWith("biome-ignore")) break;
+		if (text.startsWith("eslint-")) break;
 
 		parts.unshift(text);
 		if (comment.type !== "Line") break;

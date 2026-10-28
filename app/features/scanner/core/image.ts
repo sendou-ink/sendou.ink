@@ -25,7 +25,7 @@ export interface FrameData {
 export function toMat(frame: FrameData): Mat {
 	const cv = getCV();
 	// matFromImageData only reads width/height/data, so FrameData is compatible
-	return cv.matFromImageData(frame as unknown as ImageData);
+	return cv.matFromImageData(frame);
 }
 
 /**
@@ -37,7 +37,7 @@ export function toMat(frame: FrameData): Mat {
 export function normalizeFrame(src: Mat): Mat {
 	const cv = getCV();
 	const dst = new cv.Mat();
-	const box = detectContentBox(src.cols, src.rows, src.data as Uint8Array);
+	const box = detectContentBox(src.cols, src.rows, src.data);
 	const picture = box ? cropRoi(src, box) : src;
 	if (picture.cols === CANONICAL_WIDTH && picture.rows === CANONICAL_HEIGHT) {
 		picture.copyTo(dst);
@@ -91,7 +91,7 @@ export function frameGray(frame: Mat): Mat {
 export function provideFrameGray(frame: Mat, gray: Uint8Array): void {
 	const cv = getCV();
 	const mat = new cv.Mat(frame.rows, frame.cols, cv.CV_8UC1);
-	(mat.data as Uint8Array).set(gray);
+	mat.data.set(gray);
 	const cached = conversionsOf(frame);
 	cached.gray?.delete();
 	cached.gray = mat;
@@ -168,7 +168,7 @@ export function createProbeWarp(
 	const m = cv.matFromArray(3, 3, cv.CV_64F, regionHomography(h, region));
 	const inverse = new cv.Mat();
 	cv.invert(m, inverse, cv.DECOMP_LU);
-	const M = Array.from(inverse.data64F as Float64Array, f);
+	const M = Array.from(inverse.data64F, f);
 	m.delete();
 	inverse.delete();
 
@@ -180,9 +180,9 @@ export function createProbeWarp(
 	for (const roi of rois) {
 		for (let y = roi.y; y < roi.y + roi.h; y++) {
 			for (let x = roi.x; x < roi.x + roi.w; x++) {
-				const w = f(f(f(x * M[6]!) + f(y * M[7]!)) + M[8]!);
-				const sx = f(f(f(f(x * M[0]!) + f(y * M[1]!)) + M[2]!) / w);
-				const sy = f(f(f(f(x * M[3]!) + f(y * M[4]!)) + M[5]!) / w);
+				const w = f(f(f(x * M[6]) + f(y * M[7])) + M[8]);
+				const sx = f(f(f(f(x * M[0]) + f(y * M[1])) + M[2]) / w);
+				const sy = f(f(f(f(x * M[3]) + f(y * M[4])) + M[5]) / w);
 				const ix = Math.floor(sx);
 				const iy = Math.floor(sy);
 				if (
@@ -208,18 +208,18 @@ export function createProbeWarp(
 	const rowBytes = CANONICAL_WIDTH * 4;
 	return (src) => {
 		const dst = cv.Mat.zeros(region.h, region.w, cv.CV_8UC4);
-		const out = dst.data as Uint8Array;
-		const pixels = src.data as Uint8Array;
+		const out = dst.data;
+		const pixels = src.data;
 		for (let i = 0; i < count; i++) {
-			const s = srcAt[i]!;
-			const o = outAt[i]!;
-			const a = alpha[i]!;
-			const b = beta[i]!;
+			const s = srcAt[i];
+			const o = outAt[i];
+			const a = alpha[i];
+			const b = beta[i];
 			for (let c = 0; c < 4; c++) {
-				const p00 = pixels[s + c]!;
-				const p01 = pixels[s + 4 + c]!;
-				const p10 = pixels[s + rowBytes + c]!;
-				const p11 = pixels[s + rowBytes + 4 + c]!;
+				const p00 = pixels[s + c];
+				const p01 = pixels[s + 4 + c];
+				const p10 = pixels[s + rowBytes + c];
+				const p11 = pixels[s + rowBytes + 4 + c];
 				const v0 = f(p00 + f(a * (p01 - p00)));
 				const v1 = f(p10 + f(a * (p11 - p10)));
 				const v = f(v0 + f(b * f(v1 - v0)));
@@ -250,7 +250,7 @@ export function meanBrightness(mat: Mat, roi: Roi): number {
 	const view = cropRoi(mat, roi);
 	const m = meanOf(view);
 	view.delete();
-	return mat.channels() >= 3 ? (m[0]! + m[1]! + m[2]!) / 3 : m[0]!;
+	return mat.channels() >= 3 ? (m[0] + m[1] + m[2]) / 3 : m[0];
 }
 
 /** Brightest pixel of a grayscale ROI. */
@@ -321,7 +321,7 @@ export function roiSignature(
 	const small = new cv.Mat();
 	cv.resize(view, small, new cv.Size(cols, rows), 0, 0, cv.INTER_AREA);
 	view.delete();
-	const cells = Array.from(small.data as Uint8Array, Number);
+	const cells = Array.from(small.data, Number);
 	small.delete();
 	return cells;
 }

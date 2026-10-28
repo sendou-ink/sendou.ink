@@ -16,11 +16,11 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { useUser } from "~/features/auth/core/user";
+import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import {
 	useChatContext,
 	useCurrentRouteChatRooms,
 } from "~/features/chat/ChatProvider";
-import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
 import * as LogLayout from "~/features/chat/core/LogLayout";
 import { VoiceBar, VoiceCallStrip } from "~/features/voice/components/VoiceBar";

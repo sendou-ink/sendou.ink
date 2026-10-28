@@ -5,9 +5,9 @@ import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboar
 import { USER_SKILLS_CACHE_KEY } from "../sendouq/q-constants";
 import {
 	TEAM_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
+	type TierName,
 	TIERS,
 	TIERS_BEFORE_LEVIATHAN,
-	type TierName,
 	USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 } from "./mmr-constants";
 import * as SkillRepository from "./SkillRepository.server";

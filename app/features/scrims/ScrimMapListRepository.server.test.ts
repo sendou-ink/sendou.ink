@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "bun:test";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -58,7 +58,7 @@ describe("ScrimMapListRepository.findMapListsByScrimPostId", () => {
 			const [mapList] =
 				await ScrimMapListRepository.findMapListsByScrimPostId(scrimPostId);
 
-			expect(new MapPool(mapList!.mapList).serialized).toBe(
+			expect(new MapPool(mapList.mapList).serialized).toBe(
 				TeamPick.effectivePool(teamPick, []).serialized,
 			);
 		},

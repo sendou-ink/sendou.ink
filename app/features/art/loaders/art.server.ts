@@ -1,8 +1,8 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import * as ArtRepository from "../ArtRepository.server";
 import { artSearchParams } from "../art-search-params";
+import * as ArtRepository from "../ArtRepository.server";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const cachedArts = await cachified({

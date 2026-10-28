@@ -80,10 +80,10 @@ export function PlayerStatusTimeline({
 	const sorted = samples.toSorted((a, b) => a.t - b.t);
 	if (sorted.length === 0) return null;
 
-	const min = Math.min(domain?.[0] ?? Number.POSITIVE_INFINITY, sorted[0]!.t);
+	const min = Math.min(domain?.[0] ?? Number.POSITIVE_INFINITY, sorted[0].t);
 	const max = Math.max(
 		domain?.[1] ?? 0,
-		sorted[sorted.length - 1]!.t + PLAYER_STATUS_TAIL_SECONDS,
+		sorted[sorted.length - 1].t + PLAYER_STATUS_TAIL_SECONDS,
 	);
 	const range = Math.max(1, max - min);
 	const leftOf = (at: number) => `${((at - min) / range) * 100}%`;
@@ -101,11 +101,9 @@ export function PlayerStatusTimeline({
 	return (
 		<div
 			className={styles.container}
-			style={
-				{
-					"--plot-gutter": `${TIMELINE_PLOT_GUTTER_PX}px`,
-				} as React.CSSProperties
-			}
+			style={{
+				"--plot-gutter": `${TIMELINE_PLOT_GUTTER_PX}px`,
+			}}
 		>
 			<div className={styles.legend}>
 				<span className={styles.legendItem}>
@@ -135,7 +133,7 @@ export function PlayerStatusTimeline({
 					{PLAYER_SLOTS.map((slot) => {
 						const deadSpans = statusSpans(
 							sorted,
-							(sample) => sample.dead[side][slot]!,
+							(sample) => sample.dead[side][slot],
 						);
 						const splattedByPov = spansOpenedByKills(
 							deadSpans,
@@ -172,7 +170,7 @@ export function PlayerStatusTimeline({
 										))}
 										{statusSpans(
 											sorted,
-											(sample) => sample.special[side][slot]!,
+											(sample) => sample.special[side][slot],
 										).map((span, i) => (
 											<div
 												key={`s${i}`}

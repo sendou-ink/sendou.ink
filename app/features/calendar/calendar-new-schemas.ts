@@ -286,52 +286,13 @@ function calendarNewSyncRefine(
 	data: v.InferOutput<typeof calendarNewBaseSchema>,
 	ctx: ValidationCtx,
 ) {
-	// a calendar event needs at least one date; a tournament needs its single start time
-	if (!data.toToolsEnabled && data.date.length < 1) {
-		ctx.addIssue({
-			path: ["date"],
-			message: "forms:errors.required",
-		});
-	}
-
-	if (data.toToolsEnabled && !data.startTime) {
-		ctx.addIssue({
-			path: ["startTime"],
-			message: "forms:errors.required",
-		});
-	}
-
-	// a calendar event needs a bracket URL; tournaments default to sendou.ink in the action
-	if (!data.toToolsEnabled && !data.bracketUrl) {
-		ctx.addIssue({
-			path: ["bracketUrl"],
-			message: "forms:errors.bracketUrlRequired",
-		});
-	}
+	validateEventTypeRequiredFields(data, ctx);
 
 	if (data.toToolsEnabled) {
-		if (data.brackets.length === 0) {
-			ctx.addIssue({
-				path: ["brackets"],
-				message: "forms:errors.bracketProgressionRequired",
-			});
-		} else {
-			validateBracketProgressionFormValues(
-				data.brackets,
-				data.progression,
-				ctx,
-			);
-			validateBracketStartTimes(data, ctx);
-		}
+		validateTournamentBrackets(data, ctx);
 	}
 
-	if (
-		data.toToolsEnabled &&
-		!data.isInvitational &&
-		data.startTime &&
-		data.regClosesAt &&
-		data.regClosesAt > data.startTime
-	) {
+	if (data.toToolsEnabled && isRegClosesAfterStart(data)) {
 		ctx.addIssue({
 			path: ["regClosesAt"],
 			message: "forms:errors.regClosesAfterTournamentStart",
@@ -360,17 +321,89 @@ function calendarNewSyncRefine(
 		});
 	}
 
-	if (
-		data.toToolsEnabled &&
-		data.minMembersPerTeam === "4" &&
-		data.maxMembersPerTeam &&
-		(data.maxMembersPerTeam < 4 || data.maxMembersPerTeam > 10)
-	) {
+	if (data.toToolsEnabled && isMaxMembersPerTeamOutOfRange(data)) {
 		ctx.addIssue({
 			path: ["maxMembersPerTeam"],
 			message: "forms:errors.maxMembersRange",
 		});
 	}
+}
+
+function validateEventTypeRequiredFields(
+	data: Pick<
+		v.InferOutput<typeof calendarNewBaseSchema>,
+		"toToolsEnabled" | "date" | "startTime" | "bracketUrl"
+	>,
+	ctx: ValidationCtx,
+) {
+	// a calendar event needs at least one date; a tournament needs its single start time
+	if (!data.toToolsEnabled && data.date.length < 1) {
+		ctx.addIssue({
+			path: ["date"],
+			message: "forms:errors.required",
+		});
+	}
+
+	if (data.toToolsEnabled && !data.startTime) {
+		ctx.addIssue({
+			path: ["startTime"],
+			message: "forms:errors.required",
+		});
+	}
+
+	// a calendar event needs a bracket URL; tournaments default to sendou.ink in the action
+	if (!data.toToolsEnabled && !data.bracketUrl) {
+		ctx.addIssue({
+			path: ["bracketUrl"],
+			message: "forms:errors.bracketUrlRequired",
+		});
+	}
+}
+
+function validateTournamentBrackets(
+	data: Pick<
+		v.InferOutput<typeof calendarNewBaseSchema>,
+		"startTime" | "brackets" | "progression"
+	>,
+	ctx: ValidationCtx,
+) {
+	if (data.brackets.length === 0) {
+		ctx.addIssue({
+			path: ["brackets"],
+			message: "forms:errors.bracketProgressionRequired",
+		});
+		return;
+	}
+
+	validateBracketProgressionFormValues(data.brackets, data.progression, ctx);
+	validateBracketStartTimes(data, ctx);
+}
+
+function isRegClosesAfterStart(
+	data: Pick<
+		v.InferOutput<typeof calendarNewBaseSchema>,
+		"isInvitational" | "startTime" | "regClosesAt"
+	>,
+) {
+	return Boolean(
+		!data.isInvitational &&
+		data.startTime &&
+		data.regClosesAt &&
+		data.regClosesAt > data.startTime,
+	);
+}
+
+function isMaxMembersPerTeamOutOfRange(
+	data: Pick<
+		v.InferOutput<typeof calendarNewBaseSchema>,
+		"minMembersPerTeam" | "maxMembersPerTeam"
+	>,
+) {
+	return Boolean(
+		data.minMembersPerTeam === "4" &&
+		data.maxMembersPerTeam &&
+		(data.maxMembersPerTeam < 4 || data.maxMembersPerTeam > 10),
+	);
 }
 
 function validateBracketStartTimes(

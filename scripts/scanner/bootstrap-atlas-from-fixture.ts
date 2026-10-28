@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noConsole: CLI script output */
+/* eslint-disable no-console -- CLI script output */
 /**
  * Bootstraps glyph atlases from labeled reference fixtures: slices templates
  * straight out of the frames, since the same scoreboard captured through
@@ -7,7 +7,7 @@
  * recognition takes the best-scoring one. build-glyph-atlas.ts then fills the
  * rest of the charset from the fonts, preserving these fixture-tagged glyphs.
  *
- * Usage: pnpm scanner:bootstrap-atlas
+ * Usage: bun run scanner:bootstrap-atlas
  * Writes SCANNER_ASSETS_DIR/glyphs/*.{png,json}
  */
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -20,16 +20,16 @@ import {
 	TAG_TILT_DEG,
 } from "../../app/features/scanner/core/detectors/death/rois";
 import {
+	CODE_TEXT_HEIGHT,
+	REPLAY_CODE_ROI,
+} from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
+import {
 	nameRoi,
 	paintRoi,
 	ROW_CENTERS,
 	statRoi,
 	TEAM_SCORE_ROIS,
 } from "../../app/features/scanner/core/detectors/scoreboard/rois";
-import {
-	CODE_TEXT_HEIGHT,
-	REPLAY_CODE_ROI,
-} from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
 import type { AtlasMeta } from "../../app/features/scanner/core/glyphs";
 import {
 	normalizeFrame,
@@ -291,11 +291,11 @@ async function loadTagBand(framePath: string): Promise<Mat> {
 	const background: number[] = [];
 	for (let c = 0; c < 3; c++) {
 		const hist = new Array<number>(256).fill(0);
-		for (let i = 0; i < n; i++) hist[px[i * 3 + c]!]!++;
+		for (let i = 0; i < n; i++) hist[px[i * 3 + c]]++;
 		let acc = 0;
 		let v = 0;
 		for (; v < 255; v++) {
-			acc += hist[v]!;
+			acc += hist[v];
 			if (acc >= n / 2) break;
 		}
 		background.push(v);
@@ -304,9 +304,9 @@ async function loadTagBand(framePath: string): Promise<Mat> {
 	const out = band.data;
 	for (let i = 0; i < n; i++) {
 		out[i] = Math.max(
-			Math.abs(px[i * 3]! - background[0]!),
-			Math.abs(px[i * 3 + 1]! - background[1]!),
-			Math.abs(px[i * 3 + 2]! - background[2]!),
+			Math.abs(px[i * 3] - background[0]),
+			Math.abs(px[i * 3 + 1] - background[1]),
+			Math.abs(px[i * 3 + 2] - background[2]),
 		);
 	}
 	inner.delete();
@@ -338,10 +338,10 @@ function clearBorderBlobs(band: Mat, threshold: number): void {
 	const s = stats.data32S;
 	const touchesBorder = new Uint8Array(count);
 	for (let i = 1; i < count; i++) {
-		const left = s[i * 5 + cv.CC_STAT_LEFT]!;
-		const top = s[i * 5 + cv.CC_STAT_TOP]!;
-		const right = left + s[i * 5 + cv.CC_STAT_WIDTH]!;
-		const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT]!;
+		const left = s[i * 5 + cv.CC_STAT_LEFT];
+		const top = s[i * 5 + cv.CC_STAT_TOP];
+		const right = left + s[i * 5 + cv.CC_STAT_WIDTH];
+		const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT];
 		touchesBorder[i] =
 			left === 0 || top === 0 || right === band.cols || bottom === band.rows
 				? 1
@@ -351,7 +351,7 @@ function clearBorderBlobs(band: Mat, threshold: number): void {
 	const lab = labels.data32S;
 	const out = band.data;
 	for (let i = 0; i < out.length; i++) {
-		if (touchesBorder[lab[i]!]!) out[i] = 0;
+		if (touchesBorder[lab[i]]) out[i] = 0;
 	}
 	labels.delete();
 }
@@ -382,12 +382,12 @@ function columnRuns(
 	for (const hint of mergeHints) {
 		const i = runs.findIndex(
 			(r, idx) =>
-				idx + 1 < runs.length && r.x1 <= hint && runs[idx + 1]!.x0 >= hint,
+				idx + 1 < runs.length && r.x1 <= hint && runs[idx + 1].x0 >= hint,
 		);
 		if (i >= 0) {
 			runs = [
 				...runs.slice(0, i),
-				{ x0: runs[i]!.x0, x1: runs[i + 1]!.x1 },
+				{ x0: runs[i].x0, x1: runs[i + 1].x1 },
 				...runs.slice(i + 2),
 			];
 		}
@@ -473,14 +473,14 @@ function harvest(
 		);
 		return;
 	}
-	runs.forEach((run, i) => {
-		const ch = chars[i]!;
+	for (const [i, run] of runs.entries()) {
+		const ch = chars[i];
 		if (Array.isArray(collected)) {
 			collected.push([ch, cropGlyph(run, roi, threshold)]);
 		} else if (!collected.has(ch)) {
 			collected.set(ch, cropGlyph(run, roi, threshold));
 		}
-	});
+	}
 }
 
 function writeAtlas(
@@ -550,35 +550,35 @@ for (const source of SOURCES) {
 	gray = await loadGray(source.frame);
 
 	const nameGlyphs: [string, Mat][] = [];
-	ROW_CENTERS.forEach((cy, row) => {
+	for (const [row, cy] of ROW_CENTERS.entries()) {
 		// name region may include paint digits for long names; stop where digits start
 		harvest(
 			{ ...nameRoi(cy), w: 196 },
-			source.names[row]!,
+			source.names[row],
 			nameGlyphs,
 			source.nameSplitHints[row] ?? [],
 		);
-	});
+	}
 	nameEntries.push(...nameGlyphs);
 
 	const paintGlyphs = new Map<string, Mat>();
-	ROW_CENTERS.forEach((cy, row) => {
-		harvest(paintRoi(cy), source.paints[row]!, paintGlyphs);
-	});
+	for (const [row, cy] of ROW_CENTERS.entries()) {
+		harvest(paintRoi(cy), source.paints[row], paintGlyphs);
+	}
 	paintEntries.push(...paintGlyphs.entries());
 
 	const statGlyphs = new Map<string, Mat>();
-	ROW_CENTERS.forEach((cy, row) => {
+	for (const [row, cy] of ROW_CENTERS.entries()) {
 		for (const i of [0, 1, 2] as const) {
-			harvest(statRoi(cy, i), source.stats[row]![i]!, statGlyphs);
+			harvest(statRoi(cy, i), source.stats[row][i], statGlyphs);
 		}
-	});
+	}
 	statEntries.push(...statGlyphs.entries());
 
 	const teamGlyphs = new Map<string, Mat>();
-	TEAM_SCORE_ROIS.forEach((roi, i) => {
-		harvest(roi, source.teamScores[i]!, teamGlyphs, [], TEAM_BIN_THRESHOLD);
-	});
+	for (const [i, roi] of TEAM_SCORE_ROIS.entries()) {
+		harvest(roi, source.teamScores[i], teamGlyphs, [], TEAM_BIN_THRESHOLD);
+	}
 	teamEntries.push(...teamGlyphs.entries());
 
 	// Header tags: lobby line (BlitzMain ~24px), then mode (BlitzBold ~35px) and

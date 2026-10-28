@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";

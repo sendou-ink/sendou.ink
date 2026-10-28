@@ -691,7 +691,7 @@ function TrophyListRow({
 	canReview,
 	deferred,
 }: {
-	pending: NewTrophyLoaderData["pendingTrophies"][number];
+	pending: PendingTrophy;
 	currentUserId: number;
 	canReview: boolean;
 	deferred: boolean;
@@ -771,52 +771,7 @@ function TrophyListRow({
 						</span>
 					) : null}
 					<span className={styles.pendingName}>{pending.name}</span>
-					<span className={styles.pendingMeta}>
-						{pending.manager ? (
-							<Link to={userPage({ id: pending.manager.id })}>
-								{pending.manager.username}
-							</Link>
-						) : pending.submitterUserId ? (
-							<Link to={userPage({ id: pending.submitterUserId })}>
-								{pending.submitterUsername}
-							</Link>
-						) : (
-							pending.submitterUsername
-						)}
-						{pending.creator &&
-						pending.creator.id !==
-							(pending.manager?.id ?? pending.submitterUserId) ? (
-							<>
-								{" • "}
-								<Trans
-									t={t}
-									i18nKey="trophies:details.createdBy"
-									values={{ name: pending.creator.username }}
-								>
-									Created by
-									<Link to={userPage({ id: pending.creator.id })}>
-										{pending.creator.username}
-									</Link>
-								</Trans>
-							</>
-						) : null}
-						{pending.organizationName ? (
-							<>
-								{" • "}
-								{pending.organizationSlug ? (
-									<Link
-										to={tournamentOrganizationPage({
-											organizationSlug: pending.organizationSlug,
-										})}
-									>
-										{pending.organizationName}
-									</Link>
-								) : (
-									pending.organizationName
-								)}
-							</>
-						) : null}
-					</span>
+					<PendingTrophyMeta pending={pending} />
 				</div>
 				{analysis ? (
 					<TrophyRenderStats
@@ -831,33 +786,7 @@ function TrophyListRow({
 				{pending.description ? (
 					<div className={styles.pendingDescription}>{pending.description}</div>
 				) : null}
-				{pending.approvals.length > 0 && !isDeclined ? (
-					<div className={styles.accepted}>
-						<p>
-							{t("trophies:new.pending.approvalProgress", {
-								current: pending.approvals.length,
-								required: TROPHY_APPROVALS_REQUIRED,
-							})}
-						</p>
-						<p>
-							{canReview
-								? `(${pending.approvals.map((a) => a.username).join(", ")})`
-								: ""}
-						</p>
-					</div>
-				) : null}
-				{isDeclined ? (
-					<div className={styles.declined}>
-						<p>
-							{pending.declinedByUsername
-								? t("trophies:new.pending.declinedBy", {
-										name: pending.declinedByUsername,
-									})
-								: t("trophies:new.pending.declined")}
-						</p>
-						<div>{pending.declineReason}</div>
-					</div>
-				) : null}
+				<PendingTrophyReviewStatus pending={pending} canReview={canReview} />
 				<div className={styles.pendingActions}>
 					{canReview && !isReviewed ? (
 						<>
@@ -897,6 +826,104 @@ function TrophyListRow({
 				</div>
 			</div>
 		</div>
+	);
+}
+
+type PendingTrophy = NewTrophyLoaderData["pendingTrophies"][number];
+
+function PendingTrophyMeta({ pending }: { pending: PendingTrophy }) {
+	const { t } = useTranslation(["trophies"]);
+
+	return (
+		<span className={styles.pendingMeta}>
+			{pending.manager ? (
+				<Link to={userPage({ id: pending.manager.id })}>
+					{pending.manager.username}
+				</Link>
+			) : pending.submitterUserId ? (
+				<Link to={userPage({ id: pending.submitterUserId })}>
+					{pending.submitterUsername}
+				</Link>
+			) : (
+				pending.submitterUsername
+			)}
+			{pending.creator &&
+			pending.creator.id !==
+				(pending.manager?.id ?? pending.submitterUserId) ? (
+				<>
+					{" • "}
+					<Trans
+						t={t}
+						i18nKey="trophies:details.createdBy"
+						values={{ name: pending.creator.username }}
+					>
+						Created by
+						<Link to={userPage({ id: pending.creator.id })}>
+							{pending.creator.username}
+						</Link>
+					</Trans>
+				</>
+			) : null}
+			{pending.organizationName ? (
+				<>
+					{" • "}
+					{pending.organizationSlug ? (
+						<Link
+							to={tournamentOrganizationPage({
+								organizationSlug: pending.organizationSlug,
+							})}
+						>
+							{pending.organizationName}
+						</Link>
+					) : (
+						pending.organizationName
+					)}
+				</>
+			) : null}
+		</span>
+	);
+}
+
+function PendingTrophyReviewStatus({
+	pending,
+	canReview,
+}: {
+	pending: PendingTrophy;
+	canReview: boolean;
+}) {
+	const { t } = useTranslation(["trophies"]);
+	const isDeclined = pending.declinedAt !== null;
+
+	return (
+		<>
+			{pending.approvals.length > 0 && !isDeclined ? (
+				<div className={styles.accepted}>
+					<p>
+						{t("trophies:new.pending.approvalProgress", {
+							current: pending.approvals.length,
+							required: TROPHY_APPROVALS_REQUIRED,
+						})}
+					</p>
+					<p>
+						{canReview
+							? `(${pending.approvals.map((a) => a.username).join(", ")})`
+							: ""}
+					</p>
+				</div>
+			) : null}
+			{isDeclined ? (
+				<div className={styles.declined}>
+					<p>
+						{pending.declinedByUsername
+							? t("trophies:new.pending.declinedBy", {
+									name: pending.declinedByUsername,
+								})
+							: t("trophies:new.pending.declined")}
+					</p>
+					<div>{pending.declineReason}</div>
+				</div>
+			) : null}
+		</>
 	);
 }
 
@@ -966,12 +993,14 @@ function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 	const { submit, fetcher } = useActionSubmit(trophyActionSchema);
 	const id = React.useId();
 
-	React.useEffect(() => {
+	const [prevFetcherState, setPrevFetcherState] = React.useState(fetcher.state);
+	if (prevFetcherState !== fetcher.state) {
+		setPrevFetcherState(fetcher.state);
 		if (fetcher.state === "idle" && fetcher.data === null && isOpen) {
 			setIsOpen(false);
 			setReason("");
 		}
-	}, [fetcher.state, fetcher.data, isOpen]);
+	}
 
 	return (
 		<>

@@ -31,7 +31,7 @@ export async function createGpuFrameScaler(
 
 	async function normalize(src: Mat): Promise<Mat> {
 		if (failed) return normalizeFrame(src);
-		const box = detectContentBox(src.cols, src.rows, src.data as Uint8Array);
+		const box = detectContentBox(src.cols, src.rows, src.data);
 		const x = box?.x ?? 0;
 		const y = box?.y ?? 0;
 		const w = box?.w ?? src.cols;
@@ -39,7 +39,7 @@ export async function createGpuFrameScaler(
 		// exact-size copies and INTER_AREA downscales stay on the CPU
 		if (!upscalesCubic(w, h)) return normalizeFrame(src);
 		try {
-			const srcData = src.data as Uint8Array;
+			const srcData = src.data;
 			if (!srcBuffer || srcBuffer.size < srcData.byteLength) {
 				srcBuffer?.destroy();
 				srcBuffer = device.createBuffer({

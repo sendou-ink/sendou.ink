@@ -5,8 +5,8 @@ import { codec, SP } from "~/modules/search-params/search-params";
 import { modeShort } from "~/utils/schema";
 import { DEFAULT_TIERS } from "./tier-list-maker-constants";
 import {
-	type TierListState,
 	tierListItemTypeSchema,
+	type TierListState,
 	tierListStateSerializedSchema,
 } from "./tier-list-maker-schemas";
 

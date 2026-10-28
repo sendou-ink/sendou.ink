@@ -23,9 +23,7 @@
 	position: relative;
 	padding: var(--card-padding);
 	padding-top: calc(
-		var(--card-bar-height) +
-		var(--card-padding) +
-		var(--s-0-5)
+		var(--card-bar-height) + var(--card-padding) + var(--s-0-5)
 	);
 	padding-bottom: var(--card-actions-spacing);
 	border: var(--border-style);

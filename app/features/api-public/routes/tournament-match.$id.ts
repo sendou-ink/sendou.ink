@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { db } from "~/db/sql";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentSharedCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { jsonArrayFrom } from "~/utils/kysely.server";

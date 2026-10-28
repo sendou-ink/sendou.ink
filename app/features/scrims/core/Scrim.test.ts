@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
@@ -889,11 +889,10 @@ describe("Scrim.getStartTime", () => {
 	const postWithRequest = (request: {
 		isAccepted: boolean;
 		startsAt: number | null;
-	}) =>
-		({
-			...createPost([{ id: 1 }], [{ ...request, users: [{ id: 2 }] }]),
-			startsAt: POST_STARTS_AT,
-		}) as ScrimPost;
+	}) => ({
+		...createPost([{ id: 1 }], [{ ...request, users: [{ id: 2 }] }]),
+		startsAt: POST_STARTS_AT,
+	});
 
 	test.each([
 		{

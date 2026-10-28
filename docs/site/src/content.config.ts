@@ -1,7 +1,7 @@
-import { defineCollection } from "astro:content";
 import { docsLoader, i18nLoader } from "@astrojs/starlight/loaders";
 import { docsSchema, i18nSchema } from "@astrojs/starlight/schema";
 import { glob } from "astro/loaders";
+import { defineCollection } from "astro:content";
 import { API_EXAMPLES_FILE } from "../../../scripts/living-docs/api-examples.ts";
 import { documentBackgroundWork } from "../../../scripts/living-docs/background-work.ts";
 import { documentClientState } from "../../../scripts/living-docs/client-state.ts";
@@ -128,7 +128,7 @@ export const collections = {
 	lintRules: defineCollection({
 		loader: generatedLoader({
 			name: "lint-rules",
-			watch: ["biome-plugins", "biome.json"],
+			watch: ["lint-plugins", "bunfig.toml"],
 			entries: () =>
 				documentLintRules().map((rule) => ({ id: rule.name, data: rule })),
 		}),

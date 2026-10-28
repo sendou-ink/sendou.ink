@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import * as R from "remeda";
-import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { userArtPage } from "~/features/art/art-urls";
+import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { defineAction } from "~/form/define-action.server";
@@ -38,7 +38,7 @@ export const action = defineAction(
 				tags: body.tags,
 			});
 
-			notify({
+			void notify({
 				userIds: R.difference(linkedUsers, existingArt.linkedUserIds),
 				notification: {
 					type: "TAGGED_TO_ART",
@@ -60,7 +60,7 @@ export const action = defineAction(
 				tags: body.tags,
 			});
 
-			notify({
+			void notify({
 				userIds: linkedUsers,
 				notification: {
 					type: "TAGGED_TO_ART",

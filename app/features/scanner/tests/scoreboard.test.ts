@@ -1,7 +1,7 @@
 /**
  * Golden-file tests: run the ScoreboardDetector over every fixture and compare
  * per field, so a failure names the exact field and row with the raw match
- * score. Target one case: pnpm test:scanner -t "xbattle"
+ * score. Target one case: bun run test:scanner -t "xbattle"
  */
 
 import assert from "node:assert/strict";
@@ -71,8 +71,7 @@ for (const fixture of fixtures) {
 			fieldTestOptions(fixture, "header", expected.mode !== undefined),
 			() => {
 				const dbg = event.debug?.header as
-					| { lobbyReading?: string; lineReading?: string }
-					| undefined;
+					{ lobbyReading?: string; lineReading?: string } | undefined;
 				assert.deepEqual(
 					{
 						lobby: event.data.lobby,

@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { mySlugify } from "~/utils/urls";
-import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 import { newOrganizationSchema } from "./tournament-organization-schemas";
+import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 
 export const newOrganizationSchemaServer = v.objectAsync({
 	...newOrganizationSchema.entries,

@@ -20,9 +20,9 @@ import {
 } from "../detectors/objective/player-status";
 import { STRIP_WEAPONS_EVENT_TYPE } from "../detectors/objective/strip-weapons";
 import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/quick-scoreboard-battle-log/index";
-import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-battle-log-replay/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
+import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
 import type { DetectedEvent } from "../detectors/types";
 import {
 	X_RANK_POSITION_EVENT_TYPE,

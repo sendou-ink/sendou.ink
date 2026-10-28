@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "bun:test";
 import { db } from "~/db/sql";
 import * as LobbySet from "~/features/lobbies/core/LobbySet";
 import * as LobbyMatchRepository from "~/features/lobbies/LobbyMatchRepository.server";
@@ -64,8 +64,8 @@ describe("Scenarios.run", () => {
 				.where("id", "=", matchId)
 				.executeTakeFirstOrThrow();
 
-			expect(typeof match.opponentOne?.id).toBe("number");
-			expect(typeof match.opponentTwo?.id).toBe("number");
+			expect(match.opponentOne?.id).toBeTypeOf("number");
+			expect(match.opponentTwo?.id).toBeTypeOf("number");
 		},
 	);
 
