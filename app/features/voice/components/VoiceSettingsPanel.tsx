@@ -1,7 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import * as v from "valibot";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
@@ -15,41 +14,30 @@ import {
 	ActivityPanelSection,
 } from "~/components/layout/ActivityPanel";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
-import * as PersistedState from "~/modules/persisted-state/persisted-state";
+import * as MicInput from "../core/MicInput";
 import type { VoiceActivity } from "../voice-activity";
+import { canPickOutputDevice, micCapture } from "../voice-audio";
+import {
+	DEFAULT_DEVICE_ID,
+	type VoiceSettings,
+	voiceSettingsPersisted,
+} from "../voice-persisted";
 import styles from "./VoiceSettingsPanel.module.css";
 
-const DEFAULT_DEVICE_ID = "default";
-
-// xxx: none of these reach the Daily call yet, they are only remembered
-const voiceSettingsPersisted = PersistedState.define({
-	key: "voiceSettings",
-	storage: "local",
-	schema: v.object({
-		inputDeviceId: v.string(),
-		outputDeviceId: v.string(),
-		inputVolume: v.number(),
-		outputVolume: v.number(),
-		sensitivity: v.number(),
-		noiseSuppression: v.boolean(),
-		echoCancellation: v.boolean(),
-		autoGainControl: v.boolean(),
-		sounds: v.boolean(),
-	}),
-	default: {
-		inputDeviceId: DEFAULT_DEVICE_ID,
-		outputDeviceId: DEFAULT_DEVICE_ID,
-		inputVolume: 100,
-		outputVolume: 100,
-		sensitivity: 30,
-		noiseSuppression: true,
-		echoCancellation: true,
-		autoGainControl: true,
-		sounds: true,
+const PROCESSING_SETTINGS = [
+	{
+		key: "noiseSuppression",
+		label: "common:chat.voice.settings.noiseSuppression",
 	},
-});
-
-type VoiceSettings = (typeof voiceSettingsPersisted)["default"];
+	{
+		key: "echoCancellation",
+		label: "common:chat.voice.settings.echoCancellation",
+	},
+	{
+		key: "autoGainControl",
+		label: "common:chat.voice.settings.autoGainControl",
+	},
+] as const;
 
 /** Devices, levels and audio processing of the voice call, opened from its header panel. */
 export function VoiceSettingsPanel({
@@ -98,13 +86,9 @@ export function VoiceSettingsPanel({
 					<span className="text-xxs text-lighter">
 						{t("common:chat.voice.settings.inputLevel")}
 					</span>
-					{/* xxx: fill with the microphone's live level */}
-					<span
-						className={styles.level}
-						style={
-							{
-								"--sensitivity": `${settings.sensitivity}%`,
-							} as React.CSSProperties
+					<InputLevelMeter
+						sensitivity={
+							state.inputMode === "OPEN_MIC" ? settings.sensitivity : null
 						}
 					/>
 				</div>
@@ -140,44 +124,38 @@ export function VoiceSettingsPanel({
 				)}
 			</ActivityPanelSection>
 			<ActivityPanelSection title={t("common:chat.voice.settings.output")}>
-				<DeviceSelect
-					label={t("common:chat.voice.settings.outputDevice")}
-					devices={devices.output}
-					selectedId={settings.outputDeviceId}
-					onChange={(outputDeviceId) => update({ outputDeviceId })}
-				/>
-				<span className="text-xxs text-lighter">
-					{t("common:chat.voice.settings.outputDeviceUnsupported")}
-				</span>
+				{canPickOutputDevice() ? (
+					<DeviceSelect
+						label={t("common:chat.voice.settings.outputDevice")}
+						devices={devices.output}
+						selectedId={settings.outputDeviceId}
+						onChange={(outputDeviceId) => update({ outputDeviceId })}
+					/>
+				) : (
+					<span className="text-xxs text-lighter">
+						{t("common:chat.voice.settings.outputDeviceUnsupported")}
+					</span>
+				)}
 				<Slider
 					label={t("common:chat.voice.settings.outputVolume")}
-					value={settings.outputVolume}
-					max={200}
+					value={Math.min(settings.outputVolume, 100)}
+					max={100}
 					onChange={(outputVolume) => update({ outputVolume })}
 				/>
 			</ActivityPanelSection>
 			<ActivityPanelSection title={t("common:chat.voice.settings.processing")}>
-				<SendouSwitch
-					size="small"
-					isSelected={settings.noiseSuppression}
-					onChange={(noiseSuppression) => update({ noiseSuppression })}
-				>
-					{t("common:chat.voice.settings.noiseSuppression")}
-				</SendouSwitch>
-				<SendouSwitch
-					size="small"
-					isSelected={settings.echoCancellation}
-					onChange={(echoCancellation) => update({ echoCancellation })}
-				>
-					{t("common:chat.voice.settings.echoCancellation")}
-				</SendouSwitch>
-				<SendouSwitch
-					size="small"
-					isSelected={settings.autoGainControl}
-					onChange={(autoGainControl) => update({ autoGainControl })}
-				>
-					{t("common:chat.voice.settings.autoGainControl")}
-				</SendouSwitch>
+				{PROCESSING_SETTINGS.filter(
+					({ key }) => supportedConstraints()[key],
+				).map(({ key, label }) => (
+					<SendouSwitch
+						key={key}
+						size="small"
+						isSelected={settings[key]}
+						onChange={(isSelected) => update({ [key]: isSelected })}
+					>
+						{t(label)}
+					</SendouSwitch>
+				))}
 				{/* xxx: the settings page's sound toggles are the source of truth for these, link the two */}
 				<SendouSwitch
 					size="small"
@@ -257,7 +235,31 @@ function Slider({
 	);
 }
 
-/** The browser's audio inputs & outputs; labels are only filled in once a microphone permission was given. */
+function InputLevelMeter({ sensitivity }: { sensitivity: number | null }) {
+	const meterRef = React.useRef<HTMLSpanElement>(null);
+
+	React.useEffect(() => {
+		let frame = requestAnimationFrame(function draw() {
+			meterRef.current?.style.setProperty(
+				"--level",
+				`${MicInput.meterPosition(micCapture.level())}%`,
+			);
+			frame = requestAnimationFrame(draw);
+		});
+
+		return () => cancelAnimationFrame(frame);
+	}, []);
+
+	return (
+		<span
+			ref={meterRef}
+			className={styles.level}
+			data-gated={sensitivity !== null}
+			style={{ "--sensitivity": `${sensitivity ?? 0}%` } as React.CSSProperties}
+		/>
+	);
+}
+
 function useAudioDevices() {
 	const [devices, setDevices] = React.useState<{
 		input: Array<{ id: string; name: string }>;
@@ -265,25 +267,36 @@ function useAudioDevices() {
 	}>({ input: [], output: [] });
 
 	React.useEffect(() => {
-		if (!navigator.mediaDevices?.enumerateDevices) return;
+		const mediaDevices = navigator.mediaDevices;
+		if (!mediaDevices?.enumerateDevices) return;
 
 		let cancelled = false;
-		void navigator.mediaDevices.enumerateDevices().then((all) => {
-			if (cancelled) return;
-			const ofKind = (kind: MediaDeviceKind) =>
-				all
-					.filter((device) => device.kind === kind && device.label)
-					.map((device) => ({ id: device.deviceId, name: device.label }));
-			setDevices({
-				input: ofKind("audioinput"),
-				output: ofKind("audiooutput"),
+		const load = () => {
+			void mediaDevices.enumerateDevices().then((all) => {
+				if (cancelled) return;
+				const ofKind = (kind: MediaDeviceKind) =>
+					all
+						.filter((device) => device.kind === kind && device.label)
+						.map((device) => ({ id: device.deviceId, name: device.label }));
+				setDevices({
+					input: ofKind("audioinput"),
+					output: ofKind("audiooutput"),
+				});
 			});
-		});
+		};
+
+		load();
+		mediaDevices.addEventListener("devicechange", load);
 
 		return () => {
 			cancelled = true;
+			mediaDevices.removeEventListener("devicechange", load);
 		};
 	}, []);
 
 	return devices;
+}
+
+function supportedConstraints(): MediaTrackSupportedConstraints {
+	return navigator.mediaDevices?.getSupportedConstraints?.() ?? {};
 }

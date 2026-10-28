@@ -14,10 +14,18 @@ import {
 } from "@daily-co/daily-react";
 import * as React from "react";
 import { useLatestRef } from "~/hooks/useLatestRef";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { logger } from "~/utils/logger";
+import {
+	canPickOutputDevice,
+	MicCaptureError,
+	micCapture,
+} from "../voice-audio";
 import { type VoiceCallParticipant, voiceClient } from "../voice-client";
 import { VOICE_TELEMETRY_INTERVAL_MS } from "../voice-constants";
 import { useVoiceSnapshot } from "../voice-hooks";
+import { DEFAULT_DEVICE_ID, voiceSettingsPersisted } from "../voice-persisted";
 
 const SPEAKING_LEVEL = 0.04;
 const TELEMETRY_TICK_MS = 1_000;
@@ -40,10 +48,13 @@ export function VoiceCall({
 		let unmounted = false;
 		let created: DailyCall | null = null;
 
-		void previousTeardown.then(() => {
+		const setup = previousTeardown.then(async () => {
 			if (unmounted) return;
+			const audioSource = await startMicCapture();
+			if (unmounted) return;
+
 			created = Daily.createCallObject({
-				audioSource: true,
+				audioSource,
 				videoSource: false,
 				startVideoOff: true,
 				startAudioOff: true,
@@ -54,8 +65,9 @@ export function VoiceCall({
 
 		return () => {
 			unmounted = true;
-			previousTeardown = previousTeardown
+			previousTeardown = setup
 				.then(() => (created ? teardownCallObject(created) : undefined))
+				.finally(() => micCapture.stop())
 				.catch((error: unknown) => {
 					logger.error("Tearing down the voice call failed", error);
 				});
@@ -72,6 +84,7 @@ export function VoiceCall({
 			setLocalAudio: (enabled) => callObject.setLocalAudio(enabled),
 			leave: () => callObject.leave(),
 			resumeAudio: () => {
+				micCapture.resume();
 				for (const audio of audioElements) {
 					void audio.play().catch(() => {});
 				}
@@ -101,6 +114,7 @@ export function VoiceCall({
 	return (
 		<DailyProvider callObject={callObject}>
 			<CallEvents roomId={roomId} />
+			<MicSettingsSync />
 			<ParticipantsSync />
 			<RemoteAudio />
 			<Telemetry />
@@ -152,6 +166,18 @@ function CallEvents({ roomId }: { roomId: number }) {
 			}
 		}, []),
 	);
+
+	return null;
+}
+
+function MicSettingsSync() {
+	const [settings] = usePersistedState(voiceSettingsPersisted);
+	const { call } = useVoiceSnapshot();
+	const gateAlwaysOpen = call?.inputMode === "PUSH_TO_TALK";
+
+	React.useEffect(() => {
+		micCapture.update(settings, { gateAlwaysOpen });
+	}, [settings, gateAlwaysOpen]);
 
 	return null;
 }
@@ -221,8 +247,14 @@ function ParticipantAudio({
 	userId: number;
 }) {
 	const { volumeByUserId, call } = useVoiceSnapshot();
+	const [{ outputVolume, outputDeviceId }] = usePersistedState(
+		voiceSettingsPersisted,
+	);
 	const audioRef = React.useRef<HTMLAudioElement>(null);
-	const volume = volumeByUserId.get(userId) ?? 1;
+	const volume = Math.min(
+		1,
+		(volumeByUserId.get(userId) ?? 1) * (outputVolume / 100),
+	);
 	const deafened = call?.deafened ?? false;
 
 	React.useEffect(() => {
@@ -233,6 +265,20 @@ function ParticipantAudio({
 		audio.volume = volume;
 		audio.muted = volume === 0 || deafened;
 	}, [volume, deafened]);
+
+	React.useEffect(() => {
+		const audio = audioRef.current;
+		if (!audio || !canPickOutputDevice()) return;
+
+		audio
+			.setSinkId(outputDeviceId === DEFAULT_DEVICE_ID ? "" : outputDeviceId)
+			.catch((error: unknown) => {
+				logger.warn(
+					"Playing the voice call on the picked device failed",
+					error,
+				);
+			});
+	}, [outputDeviceId]);
 
 	React.useEffect(() => {
 		const audio = audioRef.current;
@@ -335,6 +381,22 @@ function participantsOf(daily: DailyCall): VoiceCallParticipant[] {
 				participant.tracks.audio.state === "sendable",
 		};
 	});
+}
+
+async function startMicCapture(): Promise<MediaStreamTrack | false> {
+	try {
+		return await micCapture.start(PersistedState.read(voiceSettingsPersisted), {
+			gateAlwaysOpen:
+				voiceClient.getSnapshot().call?.inputMode === "PUSH_TO_TALK",
+		});
+	} catch (error) {
+		if (error instanceof MicCaptureError) {
+			voiceClient.flagError(error.kind, error.message);
+		} else {
+			logger.error("Acquiring the microphone failed", error);
+		}
+		return false;
+	}
 }
 
 async function teardownCallObject(callObject: DailyCall) {

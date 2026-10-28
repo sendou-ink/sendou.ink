@@ -502,7 +502,7 @@
 	"chat.voice.settings.pushToTalk": "Push to talk",
 	"chat.voice.settings.sensitivity": "Sensitivity",
 	"chat.voice.settings.pushToTalkHint": "Hold the mic button to talk",
-	"chat.voice.settings.outputDeviceUnsupported": "Picking the output device isn't supported by Safari",
+	"chat.voice.settings.outputDeviceUnsupported": "Picking the output device isn't supported by this browser",
 	"chat.voice.settings.noiseSuppression": "Noise suppression",
 	"chat.voice.settings.echoCancellation": "Echo cancellation",
 	"chat.voice.settings.autoGainControl": "Automatic gain control",

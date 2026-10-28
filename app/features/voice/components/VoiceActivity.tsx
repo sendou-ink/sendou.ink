@@ -110,11 +110,7 @@ function JoinableVoiceSection({
 				subtitle={state.roomTitle}
 			/>
 			<ParticipantList voice={{ state, actions }} />
-			<SendouButton
-				size="small"
-				icon={<Phone />}
-				onClick={actions.join}
-			>
+			<SendouButton size="small" icon={<Phone />} onClick={actions.join}>
 				{t("common:chat.voice.join")}
 			</SendouButton>
 		</>

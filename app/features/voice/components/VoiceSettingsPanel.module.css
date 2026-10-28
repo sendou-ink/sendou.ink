@@ -32,19 +32,22 @@
 	gap: var(--s-1);
 }
 
-/* notches, the marker is the sensitivity threshold */
 .level {
+	--level: 0%;
+
 	position: relative;
 	height: 8px;
 	border-radius: var(--radius-full);
-	background: repeating-linear-gradient(
-		90deg,
-		var(--color-bg-higher) 0 3px,
-		transparent 3px 5px
-	);
+	background:
+		repeating-linear-gradient(90deg, transparent 0 3px, var(--color-bg) 3px 5px),
+		linear-gradient(
+			90deg,
+			var(--color-success) var(--level),
+			var(--color-bg-higher) var(--level)
+		);
 	overflow: hidden;
 
-	&::before {
+	&[data-gated="true"]::before {
 		content: "";
 		position: absolute;
 		inset-block: 0;
