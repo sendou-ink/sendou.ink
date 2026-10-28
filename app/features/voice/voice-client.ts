@@ -70,6 +70,7 @@ export interface VoiceSnapshot {
 
 export interface VoiceCallHandle {
 	setLocalAudio: (enabled: boolean) => void;
+	ensureMic: (options: { mayAsk: boolean }) => Promise<boolean>;
 	leave: () => Promise<void>;
 	resumeAudio: () => void;
 }
@@ -108,8 +109,8 @@ export interface VoiceClient {
 	leave: (reason?: VoiceLeaveReason) => Promise<void>;
 	leaveOnPageClose: () => void;
 	kick: (roomId: number, userId: number) => Promise<void>;
-	setMicEnabled: (enabled: boolean) => void;
-	setDeafened: (deafened: boolean) => void;
+	setMicEnabled: (enabled: boolean) => Promise<void>;
+	setDeafened: (deafened: boolean) => Promise<void>;
 	setInputMode: (mode: VoiceInputMode) => void;
 	setVolume: (userId: number, volume: number) => void;
 	registerCallHandle: (handle: VoiceCallHandle | null) => void;
@@ -119,7 +120,6 @@ export interface VoiceClient {
 	setSpeaking: (sessionId: string, speaking: boolean) => void;
 	setAudioBlocked: (blocked: boolean) => void;
 	flagError: (kind: VoiceClientErrorKind, detail: string | null) => void;
-	resumeAudio: () => void;
 	setSummary: (summary: VoiceTelemetrySummary) => void;
 	flushSummary: () => void;
 	submitFeedback: (feedback: {
@@ -140,6 +140,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 	let latestSummary: VoiceTelemetrySummary | null = null;
 	let preferredInputMode: VoiceInputMode = "OPEN_MIC";
 	let micEnabledBeforeDeafen = false;
+	let micWanted = false;
 	let joinAttempt = 0;
 	let latestJoinRequest: Promise<unknown> = Promise.resolve();
 	const listeners = new Set<() => void>();
@@ -152,6 +153,41 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 	const updateCall = (patch: Partial<VoiceCall>) => {
 		if (!snapshot.call) return;
 		update({ call: { ...snapshot.call, ...patch } });
+	};
+
+	const resumeBlockedAudio = () => {
+		if (!snapshot.call?.audioBlocked) return;
+		callHandle?.resumeAudio();
+		updateCall({ audioBlocked: false });
+	};
+
+	const deafen = (call: VoiceCall) => {
+		micEnabledBeforeDeafen = call.micEnabled;
+		if (call.micEnabled) callHandle?.setLocalAudio(false);
+		updateCall({ deafened: true, micEnabled: false, ...silencedLocally(call) });
+	};
+
+	const enableMic = async ({ byUser }: { byUser: boolean }) => {
+		const attempt = joinAttempt;
+		micWanted = true;
+		const hasMic = (await callHandle?.ensureMic({ mayAsk: byUser })) ?? false;
+
+		const call = snapshot.call;
+		if (!call || attempt !== joinAttempt || !micWanted || !hasMic) {
+			return false;
+		}
+		if (call.deafened && !byUser) {
+			micEnabledBeforeDeafen = true;
+			return false;
+		}
+
+		callHandle?.setLocalAudio(true);
+		updateCall({
+			micEnabled: true,
+			deafened: false,
+			errorKind: isMicError(call.errorKind) ? null : call.errorKind,
+		});
+		return true;
 	};
 
 	const setRoom = (roomId: number, room: VoiceRoomState) => {
@@ -325,39 +361,43 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		kick: async (roomId, userId) => {
 			await deps.postRoomAction(roomId, { _action: "KICK", userId });
 		},
-		setMicEnabled: (enabled) => {
-			if (!snapshot.call) return;
-			if (snapshot.call.inputMode === "OPEN_MIC") deps.saveMicEnabled(enabled);
-			callHandle?.setLocalAudio(enabled);
-			updateCall(
-				enabled
-					? { micEnabled: true, deafened: false }
-					: { micEnabled: false, ...silencedLocally(snapshot.call) },
-			);
+		setMicEnabled: async (enabled) => {
+			const call = snapshot.call;
+			if (!call) return;
+
+			if (!enabled) {
+				micWanted = false;
+				if (call.inputMode === "OPEN_MIC") deps.saveMicEnabled(false);
+				callHandle?.setLocalAudio(false);
+				updateCall({ micEnabled: false, ...silencedLocally(call) });
+				return;
+			}
+
+			resumeBlockedAudio();
+			const isEnabled = await enableMic({ byUser: true });
+			if (isEnabled && snapshot.call?.inputMode === "OPEN_MIC") {
+				deps.saveMicEnabled(true);
+			}
 		},
-		setDeafened: (deafened) => {
+		setDeafened: async (deafened) => {
 			const call = snapshot.call;
 			if (!call || call.deafened === deafened) return;
 
 			if (deafened) {
-				micEnabledBeforeDeafen = call.micEnabled;
-				if (call.micEnabled) callHandle?.setLocalAudio(false);
-				updateCall({
-					deafened: true,
-					micEnabled: false,
-					...silencedLocally(call),
-				});
+				deafen(call);
 				return;
 			}
 
-			const restoreMic =
-				call.inputMode === "OPEN_MIC" && micEnabledBeforeDeafen;
-			if (restoreMic) callHandle?.setLocalAudio(true);
-			updateCall({ deafened: false, micEnabled: restoreMic });
+			resumeBlockedAudio();
+			updateCall({ deafened: false });
+			if (call.inputMode === "OPEN_MIC" && micEnabledBeforeDeafen) {
+				await enableMic({ byUser: true });
+			}
 		},
 		setInputMode: (mode) => {
 			preferredInputMode = mode;
 			if (!snapshot.call || snapshot.call.inputMode === mode) return;
+			micWanted = false;
 			callHandle?.setLocalAudio(false);
 			updateCall({
 				inputMode: mode,
@@ -377,9 +417,15 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			const call = snapshot.call;
 			if (!call?.voiceSessionId) return;
 
-			const restoreMic = call.inputMode === "OPEN_MIC" && deps.loadMicEnabled();
-			if (restoreMic) callHandle?.setLocalAudio(true);
-			updateCall({ status: "CONNECTED", micEnabled: restoreMic });
+			updateCall({ status: "CONNECTED" });
+
+			if (call.inputMode === "OPEN_MIC" && deps.loadMicEnabled()) {
+				if (call.deafened) {
+					micEnabledBeforeDeafen = true;
+				} else {
+					void enableMic({ byUser: false });
+				}
+			}
 			deps.playSound(VOICE_JOIN_SOUND);
 			void deps.postRoomAction(call.roomId, {
 				_action: "CONNECTED",
@@ -444,17 +490,16 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			});
 		},
 		setAudioBlocked: (blocked) => {
-			if (snapshot.call?.audioBlocked === blocked) return;
+			const call = snapshot.call;
+			if (!call || call.audioBlocked === blocked) return;
+
 			updateCall({ audioBlocked: blocked });
+			if (blocked && !call.deafened) deafen(call);
 		},
 		flagError: (kind, detail) => {
 			if (snapshot.call?.errorKind === kind) return;
 			updateCall({ errorKind: kind });
 			reportError(kind, detail);
-		},
-		resumeAudio: () => {
-			callHandle?.resumeAudio();
-			updateCall({ audioBlocked: false });
 		},
 		setSummary: (summary) => {
 			latestSummary = summary;
@@ -492,6 +537,10 @@ function silencedLocally(
 			(id) => id !== localSessionId,
 		),
 	};
+}
+
+function isMicError(kind: VoiceClientErrorKind | null) {
+	return kind === "MIC_DENIED" || kind === "MIC_NOT_FOUND";
 }
 
 function isJoinResult(

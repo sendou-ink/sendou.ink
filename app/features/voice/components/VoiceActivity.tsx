@@ -9,7 +9,6 @@ import {
 	RotateCcw,
 	Settings,
 	Signal,
-	Volume2,
 	VolumeX,
 } from "lucide-react";
 import * as React from "react";
@@ -156,20 +155,7 @@ function VoiceCallSection({
 					) : null
 				}
 			/>
-			{state.audioBlocked ? (
-				<SendouButton
-					size="small"
-					icon={<Volume2 />}
-					onClick={actions.resumeAudio}
-				>
-					{t("common:chat.voice.enableSound")}
-				</SendouButton>
-			) : null}
-			{state.errorKind === "MIC_DENIED" ? (
-				<span className="text-warning text-xs">
-					{t("common:chat.voice.micDenied")}
-				</span>
-			) : state.errorKind === "MIC_NOT_FOUND" ? (
+			{state.errorKind === "MIC_NOT_FOUND" ? (
 				<span className="text-warning text-xs">
 					{t("common:chat.voice.micNotFound")}
 				</span>

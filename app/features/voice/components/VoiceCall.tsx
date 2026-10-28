@@ -32,6 +32,7 @@ const TELEMETRY_TICK_MS = 1_000;
 
 const audioElements = new Set<HTMLAudioElement>();
 let previousTeardown: Promise<void> = Promise.resolve();
+let pendingMic: Promise<boolean> | null = null;
 
 export function VoiceCall({
 	roomId,
@@ -48,13 +49,12 @@ export function VoiceCall({
 		let unmounted = false;
 		let created: DailyCall | null = null;
 
-		const setup = previousTeardown.then(async () => {
-			if (unmounted) return;
-			const audioSource = await startMicCapture();
+		const setup = previousTeardown.then(() => {
 			if (unmounted) return;
 
+			// the mic is only acquired on unmute, see `ensureMic`
 			created = Daily.createCallObject({
-				audioSource,
+				audioSource: false,
 				videoSource: false,
 				startVideoOff: true,
 				startAudioOff: true,
@@ -82,11 +82,19 @@ export function VoiceCall({
 		callObject.setLocalVideo(false);
 		voiceClient.registerCallHandle({
 			setLocalAudio: (enabled) => callObject.setLocalAudio(enabled),
+			ensureMic: (options) => ensureMic(callObject, options),
 			leave: () => callObject.leave(),
 			resumeAudio: () => {
 				micCapture.resume();
 				for (const audio of audioElements) {
-					void audio.play().catch(() => {});
+					void audio.play().catch((error: unknown) => {
+						if (
+							error instanceof DOMException &&
+							error.name === "NotAllowedError"
+						) {
+							voiceClient.setAudioBlocked(true);
+						}
+					});
 				}
 			},
 		});
@@ -381,6 +389,54 @@ function participantsOf(daily: DailyCall): VoiceCallParticipant[] {
 				participant.tracks.audio.state === "sendable",
 		};
 	});
+}
+
+async function ensureMic(
+	callObject: DailyCall,
+	{ mayAsk }: { mayAsk: boolean },
+): Promise<boolean> {
+	if (micCapture.isCapturing()) return true;
+
+	if (pendingMic) {
+		const hasMic = await pendingMic;
+		if (hasMic || !mayAsk) return hasMic;
+		return ensureMic(callObject, { mayAsk });
+	}
+
+	pendingMic = acquireMic(callObject, { mayAsk }).finally(() => {
+		pendingMic = null;
+	});
+	return pendingMic;
+}
+
+async function acquireMic(
+	callObject: DailyCall,
+	{ mayAsk }: { mayAsk: boolean },
+) {
+	if (!mayAsk && !(await isMicPermissionGranted())) return false;
+
+	const track = await startMicCapture();
+	if (!track) return false;
+
+	try {
+		await callObject.setInputDevicesAsync({ audioSource: track });
+		return true;
+	} catch (error) {
+		logger.error("Handing the microphone to the voice call failed", error);
+		micCapture.stop();
+		return false;
+	}
+}
+
+async function isMicPermissionGranted() {
+	try {
+		const status = await navigator.permissions.query({
+			name: "microphone" as PermissionName,
+		});
+		return status.state === "granted";
+	} catch {
+		return false;
+	}
 }
 
 async function startMicCapture(): Promise<MediaStreamTrack | false> {

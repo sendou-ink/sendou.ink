@@ -37,7 +37,6 @@ export interface VoiceActivityState {
 	micEnabled: boolean;
 	deafened: boolean;
 	inputMode: VoiceInputMode;
-	audioBlocked: boolean;
 	errorKind: VoiceClientErrorKind | null;
 	canKick: boolean;
 	latencyMs: number | null;
@@ -51,7 +50,6 @@ export interface VoiceActivityActions {
 	setInputMode: (mode: VoiceInputMode) => void;
 	setVolume: (userId: number, volume: number) => void;
 	kick: (userId: number) => void;
-	resumeAudio: () => void;
 }
 
 export interface VoiceActivity {
@@ -168,7 +166,6 @@ function toVoiceActivity({
 			micEnabled: call?.micEnabled ?? false,
 			deafened: call?.deafened ?? false,
 			inputMode: call?.inputMode ?? "OPEN_MIC",
-			audioBlocked: call?.audioBlocked ?? false,
 			errorKind: call?.errorKind ?? null,
 			canKick: voiceRoom?.canKick ?? false,
 			// xxx: read the round trip time off the Daily call's network stats
@@ -183,7 +180,6 @@ function toVoiceActivity({
 			setInputMode: voiceClient.setInputMode,
 			setVolume: voiceClient.setVolume,
 			kick: (userId) => void voiceClient.kick(room.id, userId),
-			resumeAudio: voiceClient.resumeAudio,
 		},
 	};
 }
@@ -264,5 +260,4 @@ const OVERRIDE_ACTIONS: VoiceActivityActions = {
 			),
 		});
 	},
-	resumeAudio: () => updateOverride({ audioBlocked: false }),
 };

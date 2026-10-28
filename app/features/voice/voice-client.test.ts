@@ -36,6 +36,16 @@ const participant = (
 	...overrides,
 });
 
+/** A call handle whose microphone is there (`hasMic`) or can't be had. */
+function fakeCallHandle({ hasMic = true }: { hasMic?: boolean } = {}) {
+	return {
+		setLocalAudio: vi.fn(),
+		ensureMic: vi.fn(async (_options: { mayAsk: boolean }) => hasMic),
+		leave: vi.fn(async () => {}),
+		resumeAudio: vi.fn(),
+	};
+}
+
 function pendingJoins() {
 	const resolvers: Array<(result: unknown) => void> = [];
 	let sentCount = 0;
@@ -311,9 +321,8 @@ describe("createVoiceClient", () => {
 		const { client, deps } = setup();
 		await client.join(ROOM_ID);
 		client.registerCallHandle({
-			setLocalAudio: () => {},
+			...fakeCallHandle(),
 			leave: () => new Promise(() => {}),
-			resumeAudio: () => {},
 		});
 
 		await client.leave();
@@ -325,43 +334,85 @@ describe("createVoiceClient", () => {
 		});
 	});
 
-	test("the microphone follows the controls through the call handle", async () => {
+	test("unmuting gets the microphone, asking for it, then sends it", async () => {
 		const { client } = setup();
-		const setLocalAudio = vi.fn();
+		const handle = fakeCallHandle();
 		await client.join(ROOM_ID);
-		client.registerCallHandle({
-			setLocalAudio,
-			leave: async () => {},
-			resumeAudio: () => {},
-		});
+		client.registerCallHandle(handle);
 
-		client.setMicEnabled(true);
+		await client.setMicEnabled(true);
 
-		expect(setLocalAudio).toHaveBeenCalledWith(true);
+		expect(handle.ensureMic).toHaveBeenCalledWith({ mayAsk: true });
+		expect(handle.setLocalAudio).toHaveBeenCalledWith(true);
 		expect(client.getSnapshot().call?.micEnabled).toBe(true);
+	});
+
+	test("unmuting without a microphone to be had stays muted and isn't remembered", async () => {
+		const { client, deps } = setup();
+		const handle = fakeCallHandle({ hasMic: false });
+		await client.join(ROOM_ID);
+		client.registerCallHandle(handle);
+
+		await client.setMicEnabled(true);
+
+		expect(handle.setLocalAudio).not.toHaveBeenCalledWith(true);
+		expect(client.getSnapshot().call?.micEnabled).toBe(false);
+		expect(deps.saveMicEnabled).not.toHaveBeenCalled();
+	});
+
+	test("letting go of push to talk while the microphone is still coming keeps it muted", async () => {
+		const { client } = setup();
+		const handle = fakeCallHandle();
+		await client.join(ROOM_ID);
+		client.registerCallHandle(handle);
+		client.setInputMode("PUSH_TO_TALK");
+
+		const pressing = client.setMicEnabled(true);
+		await client.setMicEnabled(false);
+		await pressing;
+
+		expect(client.getSnapshot().call?.micEnabled).toBe(false);
 	});
 
 	test("deafening mutes the microphone and undeafening restores it", async () => {
 		const { client } = setup();
-		const setLocalAudio = vi.fn();
+		const handle = fakeCallHandle();
 		await client.join(ROOM_ID);
-		client.registerCallHandle({
-			setLocalAudio,
-			leave: async () => {},
-			resumeAudio: () => {},
-		});
-		client.setMicEnabled(true);
+		client.registerCallHandle(handle);
+		await client.setMicEnabled(true);
 
-		client.setDeafened(true);
-		expect(setLocalAudio).toHaveBeenLastCalledWith(false);
+		await client.setDeafened(true);
+		expect(handle.setLocalAudio).toHaveBeenLastCalledWith(false);
 		expect(client.getSnapshot().call).toMatchObject({
 			deafened: true,
 			micEnabled: false,
 		});
 
-		client.setDeafened(false);
-		expect(setLocalAudio).toHaveBeenLastCalledWith(true);
+		await client.setDeafened(false);
+		expect(handle.setLocalAudio).toHaveBeenLastCalledWith(true);
 		expect(client.getSnapshot().call).toMatchObject({
+			deafened: false,
+			micEnabled: true,
+		});
+	});
+
+	test("audio the browser holds back deafens the call until undeafening lets it play", async () => {
+		const { client } = setup();
+		const handle = fakeCallHandle();
+		await client.join(ROOM_ID);
+		client.registerCallHandle(handle);
+		await client.setMicEnabled(true);
+
+		client.setAudioBlocked(true);
+		expect(client.getSnapshot().call).toMatchObject({
+			deafened: true,
+			micEnabled: false,
+		});
+
+		await client.setDeafened(false);
+		expect(handle.resumeAudio).toHaveBeenCalled();
+		expect(client.getSnapshot().call).toMatchObject({
+			audioBlocked: false,
 			deafened: false,
 			micEnabled: true,
 		});
@@ -382,41 +433,54 @@ describe("createVoiceClient", () => {
 	test("muting the own microphone clears the own speaking indicator right away", async () => {
 		const { client } = setup();
 		await client.join(ROOM_ID);
+		client.registerCallHandle(fakeCallHandle());
 		client.updateParticipants([
 			participant("local", { audioEnabled: true, isLocal: true }),
 		]);
-		client.setMicEnabled(true);
+		await client.setMicEnabled(true);
 		client.setSpeaking("local", true);
 
-		client.setMicEnabled(false);
+		await client.setMicEnabled(false);
 
 		expect(client.getSnapshot().call?.speakingSessionIds).toEqual([]);
 	});
 
-	test("a new call restores the open mic choice of the previous one", async () => {
+	test("a new call restores the open mic choice of the previous one, without asking for the microphone", async () => {
 		const { client, deps } = setup();
-		const setLocalAudio = vi.fn();
+		const handle = fakeCallHandle();
 		deps.loadMicEnabled.mockReturnValue(true);
 		await client.join(ROOM_ID);
-		client.registerCallHandle({
-			setLocalAudio,
-			leave: async () => {},
-			resumeAudio: () => {},
-		});
+		client.registerCallHandle(handle);
 
 		client.markConnected("local");
 
-		expect(setLocalAudio).toHaveBeenCalledWith(true);
-		expect(client.getSnapshot().call?.micEnabled).toBe(true);
+		await vi.waitFor(() =>
+			expect(client.getSnapshot().call?.micEnabled).toBe(true),
+		);
+		expect(handle.ensureMic).toHaveBeenCalledWith({ mayAsk: false });
+	});
+
+	test("a new call stays muted when the microphone can't be had without asking", async () => {
+		const { client, deps } = setup();
+		const handle = fakeCallHandle({ hasMic: false });
+		deps.loadMicEnabled.mockReturnValue(true);
+		await client.join(ROOM_ID);
+		client.registerCallHandle(handle);
+
+		client.markConnected("local");
+
+		await vi.waitFor(() => expect(handle.ensureMic).toHaveBeenCalled());
+		expect(client.getSnapshot().call?.micEnabled).toBe(false);
 	});
 
 	test("toggling the open mic is remembered, push to talk isn't", async () => {
 		const { client, deps } = setup();
 		await client.join(ROOM_ID);
+		client.registerCallHandle(fakeCallHandle());
 
-		client.setMicEnabled(true);
+		await client.setMicEnabled(true);
 		client.setInputMode("PUSH_TO_TALK");
-		client.setMicEnabled(false);
+		await client.setMicEnabled(false);
 
 		expect(deps.saveMicEnabled.mock.calls).toEqual([[true]]);
 	});
@@ -424,9 +488,10 @@ describe("createVoiceClient", () => {
 	test("unmuting the microphone undeafens", async () => {
 		const { client } = setup();
 		await client.join(ROOM_ID);
-		client.setDeafened(true);
+		client.registerCallHandle(fakeCallHandle());
+		await client.setDeafened(true);
 
-		client.setMicEnabled(true);
+		await client.setMicEnabled(true);
 
 		expect(client.getSnapshot().call).toMatchObject({
 			deafened: false,

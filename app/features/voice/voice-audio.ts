@@ -157,6 +157,7 @@ export const micCapture = {
 		}
 		current.settings = settings;
 	},
+	isCapturing: () => pipeline !== null,
 	level: () => {
 		if (!pipeline) return 0;
 

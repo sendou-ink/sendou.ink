@@ -3401,7 +3401,6 @@ function mockVoiceActivity(
 		micEnabled,
 		deafened: false,
 		inputMode,
-		audioBlocked: false,
 		errorKind: null,
 		canKick: true,
 		latencyMs: isConnected ? 32 : null,
