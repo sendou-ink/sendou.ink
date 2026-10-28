@@ -33,6 +33,7 @@ const participant = (
 	sessionId,
 	isLocal: false,
 	audioEnabled: true,
+	deafened: false,
 	...overrides,
 });
 

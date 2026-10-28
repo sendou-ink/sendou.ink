@@ -45,6 +45,7 @@ export interface VoiceCallParticipant {
 	sessionId: string;
 	isLocal: boolean;
 	audioEnabled: boolean;
+	deafened: boolean;
 }
 
 export interface VoiceCall {

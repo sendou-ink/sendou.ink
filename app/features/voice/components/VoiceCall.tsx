@@ -9,6 +9,7 @@ import {
 	useAudioLevelObserver,
 	useDaily,
 	useDailyEvent,
+	useMeetingState,
 	useNetwork,
 	useParticipantIds,
 } from "@daily-co/daily-react";
@@ -123,6 +124,7 @@ export function VoiceCall({
 		<DailyProvider callObject={callObject}>
 			<CallEvents roomId={roomId} />
 			<MicSettingsSync />
+			<DeafenedSync />
 			<ParticipantsSync />
 			<RemoteAudio />
 			<Telemetry />
@@ -186,6 +188,22 @@ function MicSettingsSync() {
 	React.useEffect(() => {
 		micCapture.update(settings, { gateAlwaysOpen });
 	}, [settings, gateAlwaysOpen]);
+
+	return null;
+}
+
+function DeafenedSync() {
+	const daily = useDaily();
+	const isJoined = useMeetingState() === "joined-meeting";
+	const deafened = useVoiceSnapshot().call?.deafened ?? false;
+
+	React.useEffect(() => {
+		if (!daily || !isJoined) return;
+
+		daily.setUserData({ deafened }).catch((error: unknown) => {
+			logger.warn("Sharing the deafen state failed", error);
+		});
+	}, [daily, isJoined, deafened]);
 
 	return null;
 }
@@ -387,8 +405,18 @@ function participantsOf(daily: DailyCall): VoiceCallParticipant[] {
 			audioEnabled:
 				participant.tracks.audio.state === "playable" ||
 				participant.tracks.audio.state === "sendable",
+			deafened: isSharedDeafened(participant.userData),
 		};
 	});
+}
+
+function isSharedDeafened(userData: unknown) {
+	return (
+		typeof userData === "object" &&
+		userData !== null &&
+		"deafened" in userData &&
+		userData.deafened === true
+	);
 }
 
 async function ensureMic(

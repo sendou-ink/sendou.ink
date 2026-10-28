@@ -141,8 +141,7 @@ function toVoiceActivity({
 				muted: participant.isLocal
 					? !call.micEnabled || call.deafened
 					: !participant.audioEnabled,
-				// xxx: others' deafen state is not synced over the call yet
-				deafened: participant.isLocal && call.deafened,
+				deafened: participant.isLocal ? call.deafened : participant.deafened,
 				volume: volumeOf(participant.userId),
 			}))
 		: (voiceRoom?.userIds ?? []).map((userId) => ({
