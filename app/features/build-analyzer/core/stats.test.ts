@@ -31,7 +31,7 @@ describe("Analyze build", () => {
 		).toBe(0);
 	});
 
-	test("Special Power Up increases only non-lethal special damage distances", () => {
+	test("Special Power Up increases special damage distances", () => {
 		const REEFSLIDER_WEAPON_ID = 30;
 		const distances = (abilityPoints: Map<"SPU", number>) =>
 			buildStats({
@@ -49,7 +49,7 @@ describe("Analyze build", () => {
 			{ value: 220, distance: undefined },
 		]);
 		expect(distances(new Map([["SPU", 57]]))).toEqual([
-			{ value: 220, distance: 9 },
+			{ value: 220, distance: 10.8 },
 			{ value: 70, distance: 17.88 },
 			{ value: 220, distance: undefined },
 		]);
