@@ -1,9 +1,9 @@
 import { logger } from "./logger";
-import { isCustomUrl } from "./urls";
 
 const longUrlRegExp = /(https:\/\/)?sendou\.ink\/u\/([^/?#]+)/;
 const shortUrlRegExp = /(https:\/\/)?snd\.ink\/([^/?#]+)/;
 const DISCORD_ID_MIN_LENGTH = 17;
+const numericIdRegExp = /^\d+$/;
 export function queryToUserIdentifier(
 	query: string,
 ): { id: number } | { discordId: string } | { customUrl: string } | null {
@@ -13,7 +13,7 @@ export function queryToUserIdentifier(
 	if (longUrlMatch || shortUrlMatch) {
 		const [, , identifier] = (longUrlMatch ?? shortUrlMatch)!;
 
-		if (isCustomUrl(identifier)) {
+		if (!numericIdRegExp.test(identifier)) {
 			return { customUrl: identifier };
 		}
 
@@ -24,8 +24,7 @@ export function queryToUserIdentifier(
 		return { id: Number(identifier) };
 	}
 
-	// = it's numeric
-	if (!isCustomUrl(query)) {
+	if (numericIdRegExp.test(query)) {
 		if (query.length >= DISCORD_ID_MIN_LENGTH) {
 			return { discordId: query };
 		}
