@@ -6,10 +6,6 @@ import {
 	soundVolumePersisted,
 } from "~/features/chat/chat-persisted";
 import * as Sounds from "~/features/chat/core/Sounds";
-import {
-	VOICE_JOIN_SOUND,
-	VOICE_LEAVE_SOUND,
-} from "~/features/voice/voice-constants";
 import { useHydrated } from "~/hooks/useHydrated";
 import {
 	usePersistedMapState,
@@ -40,8 +36,6 @@ function SoundCheckboxes() {
 			code: "tournament_match",
 			name: t("settings:sounds.tournamentMatchStarted"),
 		},
-		{ code: VOICE_JOIN_SOUND, name: t("settings:sounds.voiceJoin") },
-		{ code: VOICE_LEAVE_SOUND, name: t("settings:sounds.voiceLeave") },
 	];
 
 	const soundEnabled = usePersistedMapState(soundEnabledPersisted);

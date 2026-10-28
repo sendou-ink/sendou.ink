@@ -13,6 +13,7 @@ import {
 	type VoiceLeaveReason,
 	type VoicePlatform,
 } from "./voice-constants";
+import { voiceSettingsPersisted } from "./voice-persisted";
 
 const REJOIN_AFTER_RELOAD_WINDOW_MS = 30_000;
 
@@ -615,7 +616,11 @@ export const voiceClient = createVoiceClient({
 	beaconTelemetry: (body) => beacon(VOICE_TELEMETRY_ROUTE, body),
 	addServerEventListener: (listener) => eventsClient.addEventListener(listener),
 	platform: detectPlatform,
-	playSound: Sounds.play,
+	playSound: (soundCode) => {
+		if (PersistedState.read(voiceSettingsPersisted).sounds) {
+			Sounds.playIgnoringSetting(soundCode);
+		}
+	},
 	loadMicEnabled: () => PersistedState.read(micEnabledPersisted),
 	saveMicEnabled: (enabled) =>
 		PersistedState.write(micEnabledPersisted, enabled),

@@ -156,7 +156,6 @@ export function VoiceSettingsPanel({
 						{t(label)}
 					</SendouSwitch>
 				))}
-				{/* xxx: the settings page's sound toggles are the source of truth for these, link the two */}
 				<SendouSwitch
 					size="small"
 					isSelected={settings.sounds}
