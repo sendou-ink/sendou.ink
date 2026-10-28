@@ -105,8 +105,7 @@ function JoinableVoiceSection({
 		<>
 			<ActivityPanelHeader
 				icon={<StatusDot status={state.status} />}
-				title={t("common:chat.voice.available")}
-				subtitle={state.roomTitle}
+				title={state.roomTitle}
 			/>
 			<ParticipantList voice={{ state, actions }} />
 			<SendouButton size="small" icon={<Phone />} onClick={actions.join}>

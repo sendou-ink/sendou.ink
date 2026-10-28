@@ -483,7 +483,6 @@
 	"chat.voice.feedback.question": "How was voice chat?",
 	"chat.voice.feedback.rating": "{{rating}} out of 5",
 	"chat.voice.feedback.comment": "Anything else to tell us? (optional)",
-	"chat.voice.available": "Voice chat available",
 	"chat.voice.voiceConnected": "Voice connected",
 	"chat.voice.latency": "Latency",
 	"chat.voice.settings.title": "Voice settings",
