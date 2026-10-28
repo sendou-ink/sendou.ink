@@ -1,0 +1,34 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.title {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+}
+
+.number {
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.menu {
+	width: 1px;
+}
+
+.column img {
+	max-inline-size: none;
+}
+
+.playerCell {
+	width: 100%;
+}
+
+.player {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-2);
+}
