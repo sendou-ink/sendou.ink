@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useChatContext } from "~/features/chat/ChatProvider";
@@ -140,12 +141,7 @@ function useRealVoiceActivity(): VoiceActivity | null {
 			status: call?.status ?? "AVAILABLE",
 			roomId: room.id,
 			roomType: room.type,
-			roomTitle:
-				room.type === "SQ_MATCH"
-					? t("common:chat.room.match", { id: room.titleParams.matchId })
-					: t("common:chat.room.group", {
-							members: room.participantUserIds.length,
-						}),
+			roomTitle: voiceRoomTitle(room, t),
 			participants,
 			micEnabled: call?.micEnabled ?? false,
 			deafened: call?.deafened ?? false,
@@ -168,6 +164,23 @@ function useRealVoiceActivity(): VoiceActivity | null {
 			resumeAudio: voiceClient.resumeAudio,
 		},
 	};
+}
+
+function voiceRoomTitle(room: ChatRoomListItem, t: TFunction<["common"]>) {
+	switch (room.type) {
+		case "SQ_MATCH":
+			return t("common:chat.room.match", { id: room.titleParams.matchId });
+		case "LOBBY":
+			return room.titleParams.name;
+		case "LOBBY_TEAM":
+			return room.titleParams.side === "ALPHA"
+				? t("common:chat.room.lobbyTeamAlpha")
+				: t("common:chat.room.lobbyTeamBravo");
+		default:
+			return t("common:chat.room.group", {
+				members: room.participantUserIds.length,
+			});
+	}
 }
 
 /** The SendouQ match's room beats the group's: during a match it is the one the players talk in. */

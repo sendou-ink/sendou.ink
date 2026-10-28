@@ -84,11 +84,6 @@
 	}
 }
 
-.youTag {
-	font-size: var(--font-2xs);
-	color: var(--color-text-high);
-}
-
 .participantIcons {
 	display: flex;
 	gap: var(--s-1);
@@ -129,13 +124,8 @@
 	color: var(--color-text-high);
 }
 
-.avatarWrapper {
-	position: relative;
-	display: flex;
-	flex-shrink: 0;
-}
-
 .avatar {
+	flex-shrink: 0;
 	border-radius: var(--radius-full);
 	box-shadow: 0 0 0 2px var(--color-bg);
 	transition: box-shadow 0.1s;
@@ -145,18 +135,4 @@
 	box-shadow:
 		0 0 0 2px var(--color-bg),
 		0 0 0 3.5px var(--color-success);
-}
-
-.avatarStatus {
-	position: absolute;
-	inset-block-end: -3px;
-	inset-inline-end: -3px;
-	display: grid;
-	place-items: center;
-	width: 13px;
-	height: 13px;
-	border-radius: var(--radius-full);
-	background-color: var(--color-error);
-	color: var(--color-text-on-dark);
-	box-shadow: 0 0 0 1.5px var(--color-bg);
 }

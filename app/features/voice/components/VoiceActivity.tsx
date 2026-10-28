@@ -270,11 +270,19 @@ function ParticipantRow({
 				aria-expanded={canAdjust ? isExpanded : undefined}
 				onClick={onToggle}
 			>
-				<ParticipantAvatar participant={participant} />
+				<Avatar
+					size="xxs"
+					user={participant.user}
+					identiconInput={
+						participant.user ? undefined : String(participant.userId)
+					}
+					alt={participant.user?.username ?? ""}
+					className={clsx(
+						styles.avatar,
+						participant.speaking && styles.speaking,
+					)}
+				/>
 				<span className="truncate">{username}</span>
-				{participant.isLocal ? (
-					<span className={styles.youTag}>{t("common:chat.voice.you")}</span>
-				) : null}
 				<span className={styles.participantIcons}>
 					{participant.volume === 0 ? (
 						<VolumeX
@@ -332,7 +340,8 @@ function ParticipantRow({
 									user: username,
 								})}
 								description={
-									state.roomType === "SQ_MATCH"
+									state.roomType === "SQ_MATCH" ||
+									state.roomType === "LOBBY_TEAM"
 										? t("common:chat.voice.kickConfirm.set")
 										: t("common:chat.voice.kickConfirm.group")
 								}
@@ -344,35 +353,6 @@ function ParticipantRow({
 				</div>
 			) : null}
 		</li>
-	);
-}
-
-function ParticipantAvatar({
-	participant,
-}: {
-	participant: VoiceActivityParticipant;
-}) {
-	return (
-		<span className={styles.avatarWrapper}>
-			<Avatar
-				size="xxs"
-				user={participant.user}
-				identiconInput={
-					participant.user ? undefined : String(participant.userId)
-				}
-				alt={participant.user?.username ?? ""}
-				className={clsx(styles.avatar, participant.speaking && styles.speaking)}
-			/>
-			{participant.deafened ? (
-				<span className={styles.avatarStatus}>
-					<HeadphoneOff size={9} className={styles.mirrored} />
-				</span>
-			) : participant.muted ? (
-				<span className={styles.avatarStatus}>
-					<MicOff size={9} className={styles.mirrored} />
-				</span>
-			) : null}
-		</span>
 	);
 }
 
