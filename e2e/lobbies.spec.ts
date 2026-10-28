@@ -836,7 +836,7 @@ test.describe("Lobbies", () => {
 			await test.step("An Alpha player leaves, opening a spot", async () => {
 				await impersonate(page, alphaPlayer.id);
 				await lobbyPage.goto(lobby.id);
-				await lobbyPage.leave();
+				await lobbyPage.leaveMidSet();
 			});
 
 			await test.step("The waitlisted player is notified and confirms they're ready", async () => {
@@ -992,7 +992,7 @@ test.describe("Lobbies", () => {
 				await impersonate(page, alphaPlayer.id);
 				await lobbyPage.goto(lobby.id, "action");
 				await lobbyPage.reportOwnTeamWin();
-				await lobbyPage.leave();
+				await lobbyPage.leaveMidSet();
 			});
 
 			await test.step("The others wait for an eighth player, no one on the waitlist to ask", async () => {
@@ -1675,7 +1675,7 @@ async function lobbyWithOpenSpot(page: Page, factories: Factories) {
 
 	await impersonate(page, alphaPlayer.id);
 	await lobbyPage.goto(lobby.id);
-	await lobbyPage.leave();
+	await lobbyPage.leaveMidSet();
 
 	return { lobby, waitlist };
 }
