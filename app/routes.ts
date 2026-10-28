@@ -107,6 +107,8 @@ export default [
 
 	route("/events", "features/calendar/routes/events.tsx"),
 
+	route("/circuit", "features/circuit/routes/circuit.tsx"),
+
 	route("/suspended", "features/ban/routes/suspended.tsx"),
 
 	route("/search", "features/search/routes/search.ts"),

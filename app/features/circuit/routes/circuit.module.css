@@ -1,0 +1,75 @@
+.sectionTitle {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-2);
+	margin: 0;
+	font-size: var(--font-lg);
+}
+
+.sectionSubtitle {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
+}
+
+.overviewContainer {
+	container-type: inline-size;
+}
+
+.overview {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-rows: auto 1fr auto;
+	gap: var(--s-3) var(--s-6);
+
+	@container (width < 52rem) {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: none;
+		row-gap: var(--s-6);
+	}
+}
+
+.column {
+	display: grid;
+	grid-row: span 3;
+	grid-template-rows: subgrid;
+
+	@container (width < 52rem) {
+		grid-row: auto;
+		grid-template-rows: none;
+		row-gap: var(--s-3);
+	}
+}
+
+.stretchedTable {
+	display: flex;
+	flex-direction: column;
+
+	& > *,
+	& > * > * {
+		flex: 1;
+	}
+}
+
+.upcomingCards {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+
+	& > * {
+		flex: 1;
+	}
+}
+
+.modeTitle {
+	margin: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-high);
+}
+
+.pastGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
+	gap: var(--s-4);
+}

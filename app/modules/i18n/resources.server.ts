@@ -4,6 +4,7 @@ import art from "../../../locales/en/art.json";
 import badges from "../../../locales/en/badges.json";
 import builds from "../../../locales/en/builds.json";
 import calendar from "../../../locales/en/calendar.json";
+import circuit from "../../../locales/en/circuit.json";
 import common from "../../../locales/en/common.json";
 import contributions from "../../../locales/en/contributions.json";
 import faq from "../../../locales/en/faq.json";
@@ -41,6 +42,7 @@ const english = {
 	badges,
 	builds,
 	calendar,
+	circuit,
 	common,
 	contributions,
 	faq,
