@@ -760,7 +760,8 @@ export async function deleteParticipants(
 
 /**
  * Removes the user from the lobby right away. If they are playing an unfinished set (`unfinishedSetId`) it ends:
- * a decided result stands, one without a map reported is called off, otherwise their side forfeits.
+ * a decided result stands, one without a map reported is called off, otherwise their side forfeits. Returns how
+ * that set ended, `null` if there was none.
  */
 export function removeParticipant(args: ParticipantRemoval) {
 	return db
@@ -771,12 +772,14 @@ export function removeParticipant(args: ParticipantRemoval) {
 /** Removes the user from the lobby like {@link removeParticipant} and keeps them from signing up for it again. */
 export function kickParticipant(args: ParticipantRemoval) {
 	return db.transaction().execute(async (trx) => {
-		await deleteParticipantEndingSet(args, trx);
+		const setEnding = await deleteParticipantEndingSet(args, trx);
 		await trx
 			.insertInto("LobbyKickedUser")
 			.values({ lobbyId: args.lobbyId, userId: args.userId })
 			.onConflict((oc) => oc.columns(["lobbyId", "userId"]).doNothing())
 			.execute();
+
+		return setEnding;
 	});
 }
 
@@ -898,12 +901,15 @@ async function deleteParticipantEndingSet(
 	{ lobbyId, userId, unfinishedSetId }: ParticipantRemoval,
 	trx: Transaction<DB>,
 ) {
-	if (unfinishedSetId !== null) {
-		await LobbyMatchRepository.endLeftSet(
-			{ setId: unfinishedSetId, userId },
-			trx,
-		);
-	}
+	const setEnding =
+		unfinishedSetId !== null
+			? await LobbyMatchRepository.endLeftSet(
+					{ setId: unfinishedSetId, userId },
+					trx,
+				)
+			: null;
 
 	await deleteParticipants({ lobbyId, userIds: [userId] }, trx);
+
+	return setEnding;
 }

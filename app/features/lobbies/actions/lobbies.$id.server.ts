@@ -108,6 +108,13 @@ export const action = defineAction(
 						userId: user.id,
 					});
 				}
+				if (hasStarted && lobby.chatRoomId) {
+					void ChatSystemMessage.sendPersisted({
+						roomId: lobby.chatRoomId,
+						type: "USER_JOINED",
+						authorUserId: user.id,
+					});
+				}
 				break;
 			}
 			case "CHECK_IN": {
@@ -157,10 +164,15 @@ export const action = defineAction(
 			case "LEAVE": {
 				errorToastIfFalsy(viewer, "Not signed up");
 
-				await LobbyRepository.removeParticipant({
+				const setEnding = await LobbyRepository.removeParticipant({
 					lobbyId: id,
 					userId: user.id,
 					unfinishedSetId: unfinishedSetIdOf(viewer),
+				});
+				sendSetEndingMessage({
+					chatRoomId: lobby.chatRoomId,
+					userId: user.id,
+					setEnding,
 				});
 				LobbyVoice.ejectLeavers({
 					lobby: {
@@ -276,10 +288,15 @@ export const action = defineAction(
 					),
 				);
 
-				await LobbyRepository.kickParticipant({
+				const setEnding = await LobbyRepository.kickParticipant({
 					lobbyId: id,
 					userId: target.id,
 					unfinishedSetId: unfinishedSetIdOf(target),
+				});
+				sendSetEndingMessage({
+					chatRoomId: lobby.chatRoomId,
+					userId: target.id,
+					setEnding,
 				});
 				LobbyVoice.ejectLeavers({
 					lobby: {
@@ -355,6 +372,25 @@ export const action = defineAction(
 		return null;
 	},
 );
+
+function sendSetEndingMessage({
+	chatRoomId,
+	userId,
+	setEnding,
+}: {
+	chatRoomId: number | null;
+	userId: number;
+	setEnding: LobbyMatchRepository.LeftSetEnding | null;
+}) {
+	if (!chatRoomId) return;
+	if (setEnding !== "FORFEITED" && setEnding !== "CALLED_OFF") return;
+
+	void ChatSystemMessage.sendPersisted({
+		roomId: chatRoomId,
+		type: setEnding === "FORFEITED" ? "SET_FORFEITED" : "SET_CALLED_OFF",
+		authorUserId: userId,
+	});
+}
 
 /** The latest set the user played a side of, the one whose weapons they report. */
 function latestPlayedSetOf(

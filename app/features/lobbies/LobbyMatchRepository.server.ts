@@ -208,6 +208,9 @@ export function insertSet({
 
 type ReportResult = "REPORTED" | "STALE" | "NOT_ALLOWED";
 
+/** How a set ends when one of its players leaves, see {@link endLeftSet}. */
+export type LeftSetEnding = "CONFIRMED" | "CALLED_OFF" | "FORFEITED";
+
 /**
  * Reports the winner of the set's current map as the actor (`reportedByUserId`). `reportedCount` is how many
  * maps the reporter saw reported, a mismatch means someone else reported in between.
@@ -348,37 +351,40 @@ export function disputeSet(setId: number): Promise<ReportResult> {
 
 /**
  * Ends the user's unfinished set because they left: a decided result stands as if confirmed, a set without a
- * map reported is called off (deleted), otherwise their side forfeits. Does nothing if they aren't playing an
- * unfinished set.
+ * map reported is called off (deleted), otherwise their side forfeits. Returns how the set ended, `null` if they
+ * weren't playing an unfinished set.
  */
 export async function endLeftSet(
 	{ setId, userId }: { setId: number; userId: number },
 	trx?: Transaction<DB>,
-) {
+): Promise<LeftSetEnding | null> {
 	const executor = trx ?? db;
 	const set = await findSetForUpdate(setId, executor);
-	if (!set || LobbySet.isFinished(set)) return;
+	if (!set || LobbySet.isFinished(set)) return null;
 
 	const side = LobbySet.sideOf(set, userId);
-	if (!side) return;
+	if (!side) return null;
 
 	if (LobbySet.reportedCount(set) === 0) {
 		await executor
 			.deleteFrom("LobbySet")
 			.where("LobbySet.id", "=", setId)
 			.execute();
-		return;
+		return "CALLED_OFF";
 	}
 
+	const isDecided = LobbySet.winnerSide(set) !== null;
 	await executor
 		.updateTable("LobbySet")
 		.set(
-			LobbySet.winnerSide(set)
+			isDecided
 				? { confirmedAt: databaseTimestampNow() }
 				: { forfeitingSide: side },
 		)
 		.where("LobbySet.id", "=", setId)
 		.execute();
+
+	return isDecided ? "CONFIRMED" : "FORFEITED";
 }
 
 /** Starts a ready check filling the room's vacant slots from the waitlist (`userIds`). */
