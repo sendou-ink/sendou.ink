@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { HardDriveDownload } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,8 +21,11 @@ import { metaTags, ogPageImage } from "../../../utils/remix";
 import { MAX_WEAPONS } from "../comp-analyzer-constants";
 import {
 	useCategorization,
+	useHiddenRanges,
+	useRangeVariants,
 	useSelectedWeapons,
 	useSingleWeaponCombos,
+	useSpecialRanges,
 	useTargetSubDefenseAp,
 } from "../comp-analyzer-hooks";
 import { DamageComboList } from "../components/DamageComboBar";
@@ -30,6 +34,7 @@ import { SelectedWeapons } from "../components/SelectedWeapons";
 import { WeaponCategories } from "../components/WeaponCategories";
 import { WeaponGrid } from "../components/WeaponGrid";
 import * as DamageCombos from "../core/DamageCombos";
+import styles from "./comp-analyzer.module.css";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -95,23 +100,25 @@ function CompAnalyzerPage() {
 	};
 
 	return (
-		<Main className="stack lg">
-			<SelectedWeapons
-				selectedWeaponIds={selectedWeaponIds}
-				onRemove={handleRemoveWeapon}
-				onReorder={setSelectedWeaponIds}
-			/>
-			<div className="stack horizontal justify-end">
-				{selectedWeaponIds.length >= MAX_WEAPONS ? (
-					<CompExportDialog
-						weaponIds={selectedWeaponIds}
-						excludedDamageKeys={excludedDamageKeys}
-					/>
-				) : (
-					<SendouPopover trigger={<ExportButton />}>
-						{t("analyzer:comp.exportHint", { max: MAX_WEAPONS })}
-					</SendouPopover>
-				)}
+		<Main bigger className="stack lg">
+			<div className={clsx(styles.selectedWeaponsColumn, "stack lg")}>
+				<SelectedWeapons
+					selectedWeaponIds={selectedWeaponIds}
+					onRemove={handleRemoveWeapon}
+					onReorder={setSelectedWeaponIds}
+				/>
+				<div className="stack horizontal justify-end">
+					{selectedWeaponIds.length >= MAX_WEAPONS ? (
+						<CompExportDialog
+							weaponIds={selectedWeaponIds}
+							excludedDamageKeys={excludedDamageKeys}
+						/>
+					) : (
+						<SendouPopover trigger={<ExportButton />}>
+							{t("analyzer:comp.exportHint", { max: MAX_WEAPONS })}
+						</SendouPopover>
+					)}
+				</div>
 			</div>
 			<WeaponCategories selectedWeaponIds={selectedWeaponIds} />
 			<WeaponGrid
@@ -191,6 +198,9 @@ function CompGraphicWithCombos({
 }) {
 	const [singleWeaponCombos] = useSingleWeaponCombos();
 	const [targetSubDefenseAp] = useTargetSubDefenseAp();
+	const { enabledVariantKeys } = useRangeVariants();
+	const { hiddenWeaponIds } = useHiddenRanges();
+	const [showSpecialRanges] = useSpecialRanges();
 
 	const combos = DamageCombos.calculate(
 		weaponIds,
@@ -207,6 +217,9 @@ function CompGraphicWithCombos({
 			title={title}
 			showRanges={showRanges}
 			showCombos={showCombos}
+			enabledVariantKeys={enabledVariantKeys}
+			hiddenRangeWeaponIds={hiddenWeaponIds}
+			showSpecialRanges={showSpecialRanges}
 		/>
 	);
 }

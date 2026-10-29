@@ -136,6 +136,22 @@ export const MAX_AP = 57;
 export const MAIN_SLOT_AP = 10;
 export const SUB_SLOT_AP = 3;
 
+/** Ways of shooting a main weapon that fly differently, see `Range_Variants` of the weapon params */
+export const RANGE_VARIANT_KEYS = [
+	"vertical",
+	"horizontal",
+	"tap",
+	"hold",
+	"long",
+	"short",
+	"ground",
+	"jump",
+	"charged",
+	"partialCharge",
+	"standard",
+	"turret",
+] as const;
+
 /** How many active players the opponent's team has more than the user's team */
 export const TENACITY_PLAYER_DEFICITS = [1, 2, 3] as const;
 

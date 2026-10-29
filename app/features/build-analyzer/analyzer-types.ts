@@ -7,6 +7,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import type {
 	DAMAGE_TYPE,
+	RANGE_VARIANT_KEYS,
 	TENACITY_PLAYER_DEFICITS,
 } from "./analyzer-constants";
 import type { SPECIAL_EFFECTS } from "./core/specialEffects";
@@ -17,7 +18,7 @@ type Overwrites = Record<
 	Partial<Record<"High" | "Mid" | "Low", number>>
 >;
 
-export interface BaseWeaponStats {
+export interface BaseWeaponStats extends RangeParams {
 	/** Replacing default values of the ability json for this specific weapon */
 	overwrites?: Overwrites;
 	/** Weapon's weight class. "Light/Heavy weapon" */
@@ -107,16 +108,42 @@ export interface BaseWeaponStats {
 	/** How much ink a fully charged Splatana shot consumes? */
 	InkConsumeFullCharge_ChargeParam?: number;
 
-	// Range parameters for shooters/blasters/sloshers/splatlings/dualies
+	// Range parameters for chargers (direct distance values)
+	/** Charger full charge range */
+	DistanceFullCharge?: number;
+	/** Charger max charge range */
+	DistanceMaxCharge?: number;
+	/** Charger min charge range */
+	DistanceMinCharge?: number;
+
+	/** Which way of shooting the `Range_*` params describe, set when the weapon has `Range_Variants` */
+	Range_VariantKey?: RangeVariantKey;
+	/** Other ways of shooting the weapon that fly differently (a roller's horizontal swing, a charger's tap shot) */
+	Range_Variants?: RangeVariantParams[];
+}
+
+/** A way of shooting a main weapon with its own flight, e.g. a roller's vertical or horizontal swing */
+export type RangeVariantKey = (typeof RANGE_VARIANT_KEYS)[number];
+
+export interface RangeVariantParams extends RangeParams {
+	Range_VariantKey: RangeVariantKey;
+}
+
+/** How a main weapon's shot flies, see comp-analyzer's `WeaponRange` */
+export interface RangeParams {
 	/** Initial bullet velocity */
 	Range_SpawnSpeed?: number;
+	/** Upward angle the bullet is shot at, in degrees (vertical roller swings) */
+	Range_SpawnAngle?: number;
+	/** How far in front of the player the bullet spawns (Splatanas) */
+	Range_SpawnOffsetZ?: number;
 	/** Velocity cap after straight phase */
 	Range_GoStraightStateEndMaxSpeed?: number;
 	/** Frames in straight phase */
 	Range_GoStraightToBrakeStateFrame?: number;
 	/** Gravity constant (typically 0.016) */
 	Range_FreeGravity?: number;
-	/** Air resistance during free phase (rollers only, typically 0.1) */
+	/** Air resistance during free phase (typically 0.02) */
 	Range_FreeAirResist?: number;
 	/** Velocity multiplier (typically 2.0) */
 	Range_ZRate?: number;
@@ -126,20 +153,16 @@ export interface BaseWeaponStats {
 	Range_BrakeGravity?: number;
 	/** Frames in brake phase (typically 4) */
 	Range_BrakeToFreeStateFrame?: number;
-	/** Max frames (Splatanas) or max bounces (Bloblobber) before projectile stops */
+	/** Brake phase ends early once the bullet falls faster than this (typically -0.15) */
+	Range_BrakeToFreeVelocityY?: number;
+	/** Max frames (Splatanas, blasters) or max bounces (Bloblobber) before projectile stops */
 	Range_BurstFrame?: number;
 	/** Speed multiplier after bouncing (Bloblobber only) */
 	Range_BounceAfterMaxSpeed?: number;
-
-	// Range parameters for chargers (direct distance values)
-	/** Charger full charge range */
-	DistanceFullCharge?: number;
-	/** Charger max charge range */
-	DistanceMaxCharge?: number;
-	/** Charger min charge range */
-	DistanceMinCharge?: number;
-
-	// Blaster specific
+	/** Straight line flight distance (a charger's tap shot) */
+	Range_Distance?: number;
+	/** Damage by distance from the shooter (rollers, brushes) */
+	Range_DistanceDamage?: DistanceDamage[];
 	/** Blaster explosion radius */
 	BlastRadius?: number;
 }
@@ -212,6 +235,7 @@ export type SpecialWeaponParams = SpecialWeaponParamsObject[SpecialWeaponId] & {
 	Range_BrakeAirResist?: number;
 	Range_BrakeGravity?: number;
 	Range_BrakeToFreeStateFrame?: number;
+	Range_BrakeToFreeVelocityY?: number;
 };
 
 export type ParamsJson = {

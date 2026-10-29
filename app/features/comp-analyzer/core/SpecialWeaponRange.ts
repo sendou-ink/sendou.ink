@@ -4,16 +4,16 @@
  * specials carry a radius in their params.
  */
 
-import { specialWeaponParams } from "~/features/build-analyzer/core/utils";
-import type { SpecialWeaponId } from "~/modules/in-game-lists/types";
+import {
+	mainWeaponParams,
+	specialWeaponParams,
+} from "~/features/build-analyzer/core/utils";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+} from "~/modules/in-game-lists/types";
 import { specialWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as WeaponRange from "./WeaponRange";
-
-const DEFAULT_BRAKE_AIR_RESIST = 0.36;
-const DEFAULT_BRAKE_GRAVITY = 0.07;
-const DEFAULT_BRAKE_TO_FREE_FRAME = 4;
-const DEFAULT_FREE_GRAVITY = 0.016;
-const DEFAULT_FREE_AIR_RESIST = 0;
 
 /** Range of a special: how far its projectile flies, or the radius of its area. */
 export interface SpecialWeaponRangeResult {
@@ -45,23 +45,11 @@ export function ofSpecial(
 		};
 	}
 
-	if (params.Range_SpawnSpeed === undefined) return null;
-
-	const trajectoryParams: WeaponRange.TrajectoryParams = {
-		spawnSpeed: params.Range_SpawnSpeed,
-		goStraightStateEndMaxSpeed:
-			params.Range_GoStraightStateEndMaxSpeed ?? params.Range_SpawnSpeed,
-		goStraightToBrakeStateFrame: params.Range_GoStraightToBrakeStateFrame ?? 4,
-		freeGravity: params.Range_FreeGravity ?? DEFAULT_FREE_GRAVITY,
-		freeAirResist: params.Range_FreeAirResist ?? DEFAULT_FREE_AIR_RESIST,
-		brakeAirResist: params.Range_BrakeAirResist ?? DEFAULT_BRAKE_AIR_RESIST,
-		brakeGravity: params.Range_BrakeGravity ?? DEFAULT_BRAKE_GRAVITY,
-		brakeToFreeFrame:
-			params.Range_BrakeToFreeStateFrame ?? DEFAULT_BRAKE_TO_FREE_FRAME,
-	};
+	const flightParams = WeaponRange.trajectoryParams(params);
+	if (!flightParams) return null;
 
 	const range = WeaponRange.groundRange(
-		WeaponRange.simulateTrajectory(trajectoryParams),
+		WeaponRange.simulateTrajectory(flightParams),
 	);
 
 	return {
@@ -74,6 +62,21 @@ export function ofSpecial(
 /** A special with its range. */
 export interface SpecialWeaponWithRange extends SpecialWeaponRangeResult {
 	specialWeaponId: SpecialWeaponId;
+}
+
+/** The special of a comp's weapon with its range. */
+export interface CompSpecialWithRange extends SpecialWeaponWithRange {
+	/** Position of the weapon in the comp */
+	slot: number;
+}
+
+/** Ranges of the specials of a comp's weapons in comp order, the ones without a range to draw left out. */
+export function ofWeapons(weaponIds: MainWeaponId[]): CompSpecialWithRange[] {
+	return weaponIds.flatMap((weaponId, slot) => {
+		const { specialWeaponId } = mainWeaponParams(weaponId);
+		const result = ofSpecial(specialWeaponId);
+		return result ? [{ slot, specialWeaponId, ...result }] : [];
+	});
 }
 
 /** Every special with a range to draw, widest first. */

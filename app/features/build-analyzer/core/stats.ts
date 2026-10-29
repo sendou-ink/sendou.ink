@@ -34,6 +34,7 @@ import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	DamageType,
+	DistanceDamage,
 	InkConsumeType,
 	MainWeaponInkConsumptionStats,
 	MainWeaponParams,
@@ -551,7 +552,9 @@ function damages(args: StatFunctionInput): AnalyzedBuild["stats"]["damages"] {
 			const value = args.mainWeaponParams[key as keyof MainWeaponParams];
 
 			if (Array.isArray(value)) {
-				for (const subValue of value.flat()) {
+				for (const subValue of (
+					value as Array<DistanceDamage | DistanceDamage[]>
+				).flat()) {
 					result.push({
 						type,
 						value: subValue.Damage / 10,
