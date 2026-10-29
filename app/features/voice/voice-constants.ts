@@ -42,6 +42,7 @@ export const VOICE_CLIENT_ERROR_KINDS = [
 	"MIC_NOT_FOUND",
 	"AUTOPLAY_BLOCKED",
 	"JOIN_FAILED",
+	"CONNECTION_LOST",
 ] as const;
 export type VoiceClientErrorKind = (typeof VOICE_CLIENT_ERROR_KINDS)[number];
 

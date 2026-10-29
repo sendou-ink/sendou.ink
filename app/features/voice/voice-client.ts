@@ -16,6 +16,8 @@ import {
 import { voiceSettingsPersisted } from "./voice-persisted";
 
 const REJOIN_AFTER_RELOAD_WINDOW_MS = 30_000;
+const RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000, 20_000];
+const RECONNECT_GIVE_UP_MS = 2 * 60_000;
 
 const callToRejoinPersisted = PersistedState.define({
 	key: "voiceCallToRejoin",
@@ -38,7 +40,11 @@ export interface VoiceRoomState {
 	userIds: number[];
 }
 
-export type VoiceCallStatus = "JOINING" | "CONNECTED" | "FAILED";
+export type VoiceCallStatus =
+	| "JOINING"
+	| "CONNECTED"
+	| "RECONNECTING"
+	| "FAILED";
 
 export interface VoiceCallParticipant {
 	userId: number;
@@ -97,7 +103,12 @@ interface VoiceClientDeps {
 	saveMicEnabled: (enabled: boolean) => void;
 	rememberCallForReload: (roomId: number) => void;
 	takeCallToRejoin: () => number | null;
+	now: () => number;
+	wait: (ms: number) => Promise<void>;
+	waitUntilOnline: () => Promise<void>;
 }
+
+type JoinResult = { roomUrl: string; token: string; voiceSessionId: number };
 
 export interface VoiceClient {
 	getSnapshot: () => VoiceSnapshot;
@@ -118,6 +129,8 @@ export interface VoiceClient {
 	registerCallHandle: (handle: VoiceCallHandle | null) => void;
 	markConnected: (dailySessionId: string) => void;
 	markFailed: (kind: VoiceClientErrorKind | null, detail: string) => void;
+	reconnect: (detail: string | null) => Promise<void>;
+	setConnectionInterrupted: (interrupted: boolean) => void;
 	updateParticipants: (participants: VoiceCallParticipant[]) => void;
 	setSpeaking: (sessionId: string, speaking: boolean) => void;
 	setAudioBlocked: (blocked: boolean) => void;
@@ -145,6 +158,11 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 	let micWanted = false;
 	let joinAttempt = 0;
 	let latestJoinRequest: Promise<unknown> = Promise.resolve();
+	let reconnection: {
+		lostAt: number;
+		retries: number;
+		lostVoiceSessionIds: number[];
+	} | null = null;
 	const listeners = new Set<() => void>();
 
 	const update = (patch: Partial<VoiceSnapshot>) => {
@@ -229,6 +247,9 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		const call = snapshot.call;
 		if (!call) return;
 
+		leaveLostSessions(call.roomId);
+		reconnection = null;
+
 		sendSummary(false);
 		if (call.status === "CONNECTED") deps.playSound(VOICE_LEAVE_SOUND);
 		// not awaited: clearing the call unmounts its call object, whose leave then never settles
@@ -262,6 +283,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		}
 		if (snapshot.call) await leave();
 
+		reconnection = null;
 		const attempt = ++joinAttempt;
 		update({
 			pendingFeedback: null,
@@ -281,9 +303,31 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		});
 		latestSummary = null;
 
+		const result = await requestJoin(roomId, attempt);
+		if (result === "SUPERSEDED") return;
+
+		if (!result) {
+			if (isAutomatic) {
+				update({ call: null });
+				return;
+			}
+			updateCall({ status: "FAILED", errorKind: "JOIN_FAILED" });
+			reportError("JOIN_FAILED", "join request was refused");
+			return;
+		}
+		updateCall({
+			voiceSessionId: result.voiceSessionId,
+			credentials: { roomUrl: result.roomUrl, token: result.token },
+		});
+	};
+
+	const requestJoin = async (
+		roomId: number,
+		attempt: number,
+	): Promise<JoinResult | null | "SUPERSEDED"> => {
 		await latestJoinRequest;
 		const isSuperseded = () => attempt !== joinAttempt || !snapshot.call;
-		if (isSuperseded()) return;
+		if (isSuperseded()) return "SUPERSEDED";
 
 		const request = deps.postRoomAction(roomId, {
 			_action: "JOIN",
@@ -299,18 +343,76 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 					leaveReason: "LEFT",
 				});
 			}
-			return;
+			return "SUPERSEDED";
 		}
 
-		if (!isJoinResult(result)) {
-			if (isAutomatic) {
-				update({ call: null });
-				return;
-			}
-			updateCall({ status: "FAILED", errorKind: "JOIN_FAILED" });
-			reportError("JOIN_FAILED", "join request was refused");
-			return;
+		return isJoinResult(result) ? result : null;
+	};
+
+	const leaveLostSessions = (roomId: number) => {
+		if (!reconnection) return;
+
+		for (const voiceSessionId of reconnection.lostVoiceSessionIds) {
+			void deps.postRoomAction(roomId, {
+				_action: "LEAVE",
+				voiceSessionId,
+				leaveReason: "CONNECTION_LOST",
+			});
 		}
+		reconnection.lostVoiceSessionIds = [];
+	};
+
+	const reconnect = async (detail: string | null): Promise<void> => {
+		const call = snapshot.call;
+		if (!call) return;
+
+		const attempt = ++joinAttempt;
+		reconnection ??= {
+			lostAt: deps.now(),
+			retries: 0,
+			lostVoiceSessionIds: [],
+		};
+		const delay = RECONNECT_DELAYS_MS[reconnection.retries++];
+
+		if (call.voiceSessionId) {
+			sendSummary(false);
+			reconnection.lostVoiceSessionIds.push(call.voiceSessionId);
+		}
+
+		void callHandle?.leave().catch((error) => {
+			logger.error("Leaving the lost voice call failed", error);
+		});
+		updateCall({
+			status: "RECONNECTING",
+			voiceSessionId: null,
+			credentials: null,
+			micEnabled: false,
+			participants: [],
+			speakingSessionIds: [],
+			audioBlocked: false,
+		});
+		latestSummary = null;
+
+		const giveUp = () => {
+			leaveLostSessions(call.roomId);
+			reconnection = null;
+			updateCall({ status: "FAILED", errorKind: "CONNECTION_LOST" });
+			reportError("CONNECTION_LOST", detail);
+		};
+		if (delay === undefined) return giveUp();
+
+		await deps.wait(delay);
+		await deps.waitUntilOnline();
+		if (attempt !== joinAttempt || !snapshot.call || !reconnection) return;
+		leaveLostSessions(call.roomId);
+		if (deps.now() - reconnection.lostAt > RECONNECT_GIVE_UP_MS) {
+			return giveUp();
+		}
+
+		const result = await requestJoin(call.roomId, attempt);
+		if (result === "SUPERSEDED") return;
+		if (!result) return reconnect(detail);
+
 		updateCall({
 			voiceSessionId: result.voiceSessionId,
 			credentials: { roomUrl: result.roomUrl, token: result.token },
@@ -419,6 +521,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			const call = snapshot.call;
 			if (!call?.voiceSessionId) return;
 
+			reconnection = null;
 			updateCall({ status: "CONNECTED" });
 
 			if (call.inputMode === "OPEN_MIC" && deps.loadMicEnabled()) {
@@ -437,8 +540,23 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		},
 		markFailed: (kind, detail) => {
 			if (!snapshot.call) return;
+			if (reconnection) {
+				void reconnect(detail);
+				return;
+			}
 			updateCall({ status: "FAILED", errorKind: kind });
 			if (kind) reportError(kind, detail);
+		},
+		reconnect,
+		setConnectionInterrupted: (interrupted) => {
+			const call = snapshot.call;
+			if (!call || reconnection) return;
+
+			if (interrupted && call.status === "CONNECTED") {
+				updateCall({ status: "RECONNECTING" });
+			} else if (!interrupted && call.status === "RECONNECTING") {
+				updateCall({ status: "CONNECTED" });
+			}
 		},
 		updateParticipants: (participants) => {
 			const call = snapshot.call;
@@ -452,12 +570,12 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 				(participant) => participant.isLocal,
 			);
 			if (call.status === "CONNECTED" && hasBaseline) {
-				const remoteSessionIdsOf = (list: VoiceCallParticipant[]) =>
+				const remoteUserIdsOf = (list: VoiceCallParticipant[]) =>
 					list
 						.filter((participant) => !participant.isLocal)
-						.map((participant) => participant.sessionId);
-				const before = remoteSessionIdsOf(call.participants);
-				const after = remoteSessionIdsOf(participants);
+						.map((participant) => participant.userId);
+				const before = remoteUserIdsOf(call.participants);
+				const after = remoteUserIdsOf(participants);
 
 				if (after.some((id) => !before.includes(id))) {
 					deps.playSound(VOICE_JOIN_SOUND);
@@ -545,9 +663,7 @@ function isMicError(kind: VoiceClientErrorKind | null) {
 	return kind === "MIC_DENIED" || kind === "MIC_NOT_FOUND";
 }
 
-function isJoinResult(
-	value: unknown,
-): value is { roomUrl: string; token: string; voiceSessionId: number } {
+function isJoinResult(value: unknown): value is JoinResult {
 	return (
 		typeof value === "object" &&
 		value !== null &&
@@ -637,6 +753,13 @@ export const voiceClient = createVoiceClient({
 			? remembered.roomId
 			: null;
 	},
+	now: () => Date.now(),
+	wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+	waitUntilOnline: () =>
+		new Promise((resolve) => {
+			if (navigator.onLine) return resolve();
+			window.addEventListener("online", () => resolve(), { once: true });
+		}),
 });
 
 function isPageReload() {

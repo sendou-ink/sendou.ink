@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, type Mock, test, vi } from "vitest";
 import type { ServerEvent } from "~/features/events/events-types";
 import {
 	createVoiceClient,
@@ -68,6 +68,24 @@ function pendingJoins() {
 	};
 }
 
+/** Grants every join, each with a new voice session id starting from 10. */
+function joinsInTurn() {
+	let nextSessionId = 10;
+
+	return async (_roomId: number, body: object) =>
+		"_action" in body && body._action === "JOIN"
+			? joinResult(nextSessionId++)
+			: null;
+}
+
+function joinRequestCount(
+	postRoomAction: Mock<(roomId: number, body: object) => Promise<unknown>>,
+) {
+	return postRoomAction.mock.calls.filter(
+		([, body]) => "_action" in body && body._action === "JOIN",
+	).length;
+}
+
 function setup({
 	postRoomAction = vi.fn(async (_roomId: number, body: object) =>
 		"_action" in body && body._action === "JOIN" ? joinResult(10) : null,
@@ -92,6 +110,9 @@ function setup({
 		saveMicEnabled: vi.fn(),
 		rememberCallForReload: vi.fn(),
 		takeCallToRejoin: vi.fn((): number | null => null),
+		now: vi.fn(() => 0),
+		wait: vi.fn(async (_ms: number) => {}),
+		waitUntilOnline: vi.fn(async () => {}),
 	};
 	const client = createVoiceClient(deps);
 	client.start();
@@ -534,6 +555,24 @@ describe("createVoiceClient", () => {
 		]);
 	});
 
+	test("someone rejoining with a new connection plays no sounds", async () => {
+		const { client, deps } = setup();
+		await client.join(ROOM_ID);
+		client.updateParticipants([
+			participant("local", { isLocal: true, userId: 1 }),
+			participant("remote"),
+		]);
+		client.markConnected("local");
+		deps.playSound.mockClear();
+
+		client.updateParticipants([
+			participant("local", { isLocal: true, userId: 1 }),
+			participant("remote-rejoined"),
+		]);
+
+		expect(deps.playSound).not.toHaveBeenCalled();
+	});
+
 	test("leaving a connected call plays the leave sound, a call that never connected doesn't", async () => {
 		const { client, deps } = setup();
 		await client.join(ROOM_ID);
@@ -546,5 +585,168 @@ describe("createVoiceClient", () => {
 		await client.leave();
 
 		expect(deps.playSound).toHaveBeenCalledWith("voice_leave");
+	});
+
+	test("a lost connection leaves the old session and rejoins the room", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+
+		await client.reconnect("connection error");
+
+		expect(deps.postRoomAction).toHaveBeenCalledWith(ROOM_ID, {
+			_action: "LEAVE",
+			voiceSessionId: 10,
+			leaveReason: "CONNECTION_LOST",
+		});
+		expect(client.getSnapshot().call).toMatchObject({
+			status: "RECONNECTING",
+			voiceSessionId: 11,
+			credentials: { token: "token-11" },
+		});
+
+		client.markConnected("local-2");
+
+		expect(client.getSnapshot().call?.status).toBe("CONNECTED");
+	});
+
+	test("rejoining after a lost connection keeps the call deafened", async () => {
+		const { client } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		await client.setDeafened(true);
+
+		await client.reconnect(null);
+
+		expect(client.getSnapshot().call?.deafened).toBe(true);
+	});
+
+	test("rejoining after a lost connection waits for the network to come back", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		let goOnline = () => {};
+		deps.waitUntilOnline.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					goOnline = resolve;
+				}),
+		);
+
+		const reconnecting = client.reconnect(null);
+		await new Promise((resolve) => setTimeout(resolve));
+		expect(joinRequestCount(deps.postRoomAction)).toBe(1);
+		expect(deps.postRoomAction).not.toHaveBeenCalledWith(
+			ROOM_ID,
+			expect.objectContaining({ _action: "LEAVE" }),
+		);
+
+		goOnline();
+		await reconnecting;
+
+		expect(deps.postRoomAction).toHaveBeenCalledWith(ROOM_ID, {
+			_action: "LEAVE",
+			voiceSessionId: 10,
+			leaveReason: "CONNECTION_LOST",
+		});
+		expect(client.getSnapshot().call?.voiceSessionId).toBe(11);
+	});
+
+	test("a call that fails to connect while rejoining tries again", async () => {
+		const { client } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		await client.reconnect(null);
+
+		client.markFailed("JOIN_FAILED", "network");
+
+		await vi.waitFor(() =>
+			expect(client.getSnapshot().call).toMatchObject({
+				status: "RECONNECTING",
+				voiceSessionId: 12,
+			}),
+		);
+	});
+
+	test("rejoining gives up when every retry is refused and reports it", async () => {
+		let isFirstJoin = true;
+		const { client, deps } = setup({
+			postRoomAction: async (_roomId, body) => {
+				if (!("_action" in body) || body._action !== "JOIN") return null;
+				if (!isFirstJoin) return null;
+				isFirstJoin = false;
+				return joinResult(10);
+			},
+		});
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+
+		await client.reconnect("connection error");
+
+		expect(client.getSnapshot().call).toMatchObject({
+			status: "FAILED",
+			errorKind: "CONNECTION_LOST",
+		});
+		expect(deps.wait).toHaveBeenCalledTimes(5);
+		expect(deps.postTelemetry).toHaveBeenCalledWith(
+			expect.objectContaining({
+				kind: "ERROR",
+				errorKind: "CONNECTION_LOST",
+				detail: "connection error",
+			}),
+		);
+	});
+
+	test("a page that comes back long after the connection was lost doesn't rejoin", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		deps.waitUntilOnline.mockImplementation(async () => {
+			deps.now.mockReturnValue(10 * 60_000);
+		});
+
+		await client.reconnect(null);
+
+		expect(client.getSnapshot().call?.status).toBe("FAILED");
+		expect(joinRequestCount(deps.postRoomAction)).toBe(1);
+	});
+
+	test("leaving while waiting to rejoin stops the rejoin", async () => {
+		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		let goOnline = () => {};
+		deps.waitUntilOnline.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					goOnline = resolve;
+				}),
+		);
+
+		const reconnecting = client.reconnect(null);
+		await new Promise((resolve) => setTimeout(resolve));
+		await client.leave();
+		goOnline();
+		await reconnecting;
+
+		expect(client.getSnapshot().call).toBeNull();
+		expect(joinRequestCount(deps.postRoomAction)).toBe(1);
+		expect(deps.postRoomAction).toHaveBeenCalledWith(ROOM_ID, {
+			_action: "LEAVE",
+			voiceSessionId: 10,
+			leaveReason: "CONNECTION_LOST",
+		});
+	});
+
+	test("a connection Daily recovers on its own shows as reconnecting meanwhile", async () => {
+		const { client } = setup();
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+
+		client.setConnectionInterrupted(true);
+		expect(client.getSnapshot().call?.status).toBe("RECONNECTING");
+
+		client.setConnectionInterrupted(false);
+		expect(client.getSnapshot().call?.status).toBe("CONNECTED");
 	});
 });

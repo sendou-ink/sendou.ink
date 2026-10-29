@@ -3235,6 +3235,7 @@ const VOICE_EXAMPLES: Array<{
 	{ id: "AVAILABLE", name: "Available to join" },
 	{ id: "JOINING", name: "Connecting" },
 	{ id: "CONNECTED", name: "Connected" },
+	{ id: "RECONNECTING", name: "Reconnecting" },
 	{ id: "FAILED", name: "Failed" },
 ];
 

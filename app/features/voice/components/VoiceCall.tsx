@@ -2,6 +2,7 @@ import Daily, {
 	type DailyCall,
 	type DailyEventObjectCameraError,
 	type DailyEventObjectFatalError,
+	type DailyEventObjectNetworkConnectionEvent,
 } from "@daily-co/daily-js";
 import {
 	DailyAudioTrack,
@@ -14,6 +15,7 @@ import {
 	useParticipantIds,
 } from "@daily-co/daily-react";
 import * as React from "react";
+import * as R from "remeda";
 import { useLatestRef } from "~/hooks/useLatestRef";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
@@ -30,6 +32,7 @@ import { DEFAULT_DEVICE_ID, voiceSettingsPersisted } from "../voice-persisted";
 
 const SPEAKING_LEVEL = 0.04;
 const TELEMETRY_TICK_MS = 1_000;
+const WATCHED_CONNECTIONS = ["signaling", "sfu"];
 
 const audioElements = new Set<HTMLAudioElement>();
 let previousTeardown: Promise<void> = Promise.resolve();
@@ -153,7 +156,7 @@ function CallEvents({ roomId }: { roomId: number }) {
 						return;
 					}
 					case "connection-error": {
-						void voiceClient.leave("CONNECTION_LOST");
+						void voiceClient.reconnect(event.errorMsg);
 						return;
 					}
 					default: {
@@ -163,6 +166,19 @@ function CallEvents({ roomId }: { roomId: number }) {
 			},
 			[roomId],
 		),
+	);
+
+	const interruptedConnections = React.useRef(new Set<string>());
+	useDailyEvent(
+		"network-connection",
+		React.useCallback((event: DailyEventObjectNetworkConnectionEvent) => {
+			if (!WATCHED_CONNECTIONS.includes(event.type)) return;
+
+			const interrupted = interruptedConnections.current;
+			if (event.event === "interrupted") interrupted.add(event.type);
+			if (event.event === "connected") interrupted.delete(event.type);
+			voiceClient.setConnectionInterrupted(interrupted.size > 0);
+		}, []),
 	);
 
 	useDailyEvent(
@@ -394,11 +410,20 @@ function ScreenWakeLock() {
 }
 
 function participantsOf(daily: DailyCall): VoiceCallParticipant[] {
-	return Object.values(daily.participants()).flatMap((participant) => {
-		const userId = Number(participant.user_id);
-		if (!Number.isInteger(userId)) return [];
+	const newestByUserId = new Map<number, VoiceCallParticipant>();
+	const oldestFirst = R.sortBy(Object.values(daily.participants()), [
+		(participant) =>
+			participant.local
+				? Number.POSITIVE_INFINITY
+				: (participant.joined_at?.getTime() ?? 0),
+		"asc",
+	]);
 
-		return {
+	for (const participant of oldestFirst) {
+		const userId = Number(participant.user_id);
+		if (!Number.isInteger(userId)) continue;
+
+		newestByUserId.set(userId, {
 			userId,
 			sessionId: participant.session_id,
 			isLocal: participant.local,
@@ -406,8 +431,10 @@ function participantsOf(daily: DailyCall): VoiceCallParticipant[] {
 				participant.tracks.audio.state === "playable" ||
 				participant.tracks.audio.state === "sendable",
 			deafened: isSharedDeafened(participant.userData),
-		};
-	});
+		});
+	}
+
+	return [...newestByUserId.values()];
 }
 
 function isSharedDeafened(userData: unknown) {

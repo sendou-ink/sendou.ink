@@ -467,6 +467,8 @@
 	"chat.voice.connecting": "Connecting...",
 	"chat.voice.connected": "Connected",
 	"chat.voice.failed": "Could not connect to voice",
+	"chat.voice.reconnecting": "Reconnecting...",
+	"chat.voice.connectionLost": "Lost connection to voice",
 	"chat.voice.retry": "Retry",
 	"chat.voice.mute": "Mute microphone",
 	"chat.voice.unmute": "Unmute microphone",

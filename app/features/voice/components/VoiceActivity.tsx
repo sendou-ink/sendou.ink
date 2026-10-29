@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import type { TFunction } from "i18next";
 import {
 	HeadphoneOff,
 	Headphones,
@@ -128,13 +129,7 @@ function VoiceCallSection({
 		<>
 			<ActivityPanelHeader
 				icon={<StatusDot status={state.status} />}
-				title={
-					state.status === "CONNECTED"
-						? t("common:chat.voice.voiceConnected")
-						: state.status === "FAILED"
-							? t("common:chat.voice.failed")
-							: t("common:chat.voice.connecting")
-				}
+				title={callTitle(state, t)}
 				titleClassName={clsx({
 					"text-success": state.status === "CONNECTED",
 					"text-error": state.status === "FAILED",
@@ -149,7 +144,7 @@ function VoiceCallSection({
 							<Signal size={14} />
 							{state.latencyMs} ms
 						</span>
-					) : state.status === "JOINING" ? (
+					) : state.status === "JOINING" || state.status === "RECONNECTING" ? (
 						<Spinner className={styles.spinner} />
 					) : null
 				}
@@ -198,6 +193,21 @@ function VoiceCallSection({
 			</ActivityPanelControls>
 		</>
 	);
+}
+
+function callTitle(state: VoiceActivityState, t: TFunction<["common"]>) {
+	switch (state.status) {
+		case "CONNECTED":
+			return t("common:chat.voice.voiceConnected");
+		case "RECONNECTING":
+			return t("common:chat.voice.reconnecting");
+		case "FAILED":
+			return state.errorKind === "CONNECTION_LOST"
+				? t("common:chat.voice.connectionLost")
+				: t("common:chat.voice.failed");
+		default:
+			return t("common:chat.voice.connecting");
+	}
 }
 
 function VoiceStateIcon({ state }: { state: VoiceActivityState | null }) {
