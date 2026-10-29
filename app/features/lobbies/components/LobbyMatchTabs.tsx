@@ -1,6 +1,10 @@
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { matchPageSearchParams } from "~/components/match-page/match-page-search-params";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import * as LobbySet from "../core/LobbySet";
 import { useLobbyView } from "../lobbies-hooks";
 import { LobbyActionTab } from "./LobbyActionTab";
@@ -12,6 +16,7 @@ type TabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 export function LobbyMatchTabs() {
 	const { t } = useTranslation(["lobbies"]);
 	const { data, currentSet, viewerSide } = useLobbyView();
+	useShowRostersOnNewSet(currentSet?.id ?? null);
 
 	const isPlaying =
 		data.lobby.endedAt === null &&
@@ -80,4 +85,16 @@ export function LobbyMatchTabs() {
 			{data.leaderboard.length > 0 ? <LobbyLeaderboardTab /> : null}
 		</MatchTabs>
 	);
+}
+
+function useShowRostersOnNewSet(currentSetId: number | null) {
+	const [, setTab] = useSearchParam(matchPageSearchParams, "tab");
+	const previousSetIdRef = React.useRef(currentSetId);
+
+	useIsomorphicLayoutEffect(() => {
+		if (previousSetIdRef.current === currentSetId) return;
+
+		previousSetIdRef.current = currentSetId;
+		setTab(TAB_KEYS.ROSTERS);
+	}, [currentSetId, setTab]);
 }

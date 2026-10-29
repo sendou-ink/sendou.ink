@@ -763,7 +763,7 @@ test.describe("Lobbies", () => {
 	 * up while a spot is open counts as confirming.
 	 */
 	test.describe("Between sets", () => {
-		test("the next set starts with the teams reshuffled", async ({
+		test("the next set opens on the Rosters tab with the teams reshuffled", async ({
 			page,
 			factories,
 		}) => {
@@ -779,7 +779,10 @@ test.describe("Lobbies", () => {
 				bravoPlayer: bravoPlayers[0],
 			});
 
-			await expect(lobbyPage.locators.reportScoreButton).toBeVisible();
+			await expect(lobbyPage.tab("rosters")).toHaveAttribute(
+				"aria-selected",
+				"true",
+			);
 			const nextAlphaIds = await rosterIds(lobbyPage, "Alpha", players);
 
 			expect(nextAlphaIds).not.toEqual(idsOf(alphaPlayers));
@@ -1431,7 +1434,10 @@ test.describe("Lobbies", () => {
 				bravoPlayer: bravoPlayers[0],
 			});
 
-			await expect(lobbyPage.locators.reportScoreButton).toBeVisible();
+			await expect(lobbyPage.tab("rosters")).toHaveAttribute(
+				"aria-selected",
+				"true",
+			);
 			const nextAlphaIds = await rosterIds(lobbyPage, "Alpha", players);
 			const senderTeamIds = nextAlphaIds.includes(sender.id)
 				? nextAlphaIds
