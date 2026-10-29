@@ -495,6 +495,16 @@ describe("createVoiceClient", () => {
 		expect(client.getSnapshot().call?.micEnabled).toBe(false);
 	});
 
+	test("an input mode picked outside a call is the next call's", async () => {
+		const { client } = setup();
+
+		client.setInputMode("PUSH_TO_TALK");
+		expect(client.getSnapshot().inputMode).toBe("PUSH_TO_TALK");
+		await client.join(ROOM_ID);
+
+		expect(client.getSnapshot().call?.inputMode).toBe("PUSH_TO_TALK");
+	});
+
 	test("toggling the open mic is remembered, push to talk isn't", async () => {
 		const { client, deps } = setup();
 		await client.join(ROOM_ID);

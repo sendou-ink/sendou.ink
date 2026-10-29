@@ -99,7 +99,7 @@ function useRealVoiceActivities(): VoiceActivity[] {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext();
 	const localUserId = useUser()?.id;
-	const { call, volumeByUserId } = useVoiceSnapshot();
+	const { call, volumeByUserId, inputMode } = useVoiceSnapshot();
 
 	const callRoom = call ? chatContext?.roomForId(call.roomId) : undefined;
 	const joinableRooms = (chatContext?.rooms ?? []).filter(
@@ -120,6 +120,7 @@ function useRealVoiceActivities(): VoiceActivity[] {
 				call: roomCall,
 				voiceRoom,
 				localUserId,
+				inputMode,
 				volumeOf,
 				t,
 			}),
@@ -132,6 +133,7 @@ function toVoiceActivity({
 	call,
 	voiceRoom,
 	localUserId,
+	inputMode,
 	volumeOf,
 	t,
 }: {
@@ -139,6 +141,7 @@ function toVoiceActivity({
 	call: VoiceCall | null;
 	voiceRoom: VoiceRoomState | null;
 	localUserId: number | undefined;
+	inputMode: VoiceInputMode;
 	volumeOf: (userId: number) => number;
 	t: TFunction<["common"]>;
 }): VoiceActivity {
@@ -187,7 +190,7 @@ function toVoiceActivity({
 			participants,
 			micEnabled: call?.micEnabled ?? false,
 			deafened: call?.deafened ?? false,
-			inputMode: call?.inputMode ?? "OPEN_MIC",
+			inputMode: call?.inputMode ?? inputMode,
 			errorKind: call?.errorKind ?? null,
 			canKick: voiceRoom?.canKick ?? false,
 			// xxx: read the round trip time off the Daily call's network stats

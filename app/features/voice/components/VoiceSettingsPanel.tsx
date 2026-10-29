@@ -39,7 +39,7 @@ const PROCESSING_SETTINGS = [
 	},
 ] as const;
 
-/** Devices, levels and audio processing of the voice call, opened from its header panel. */
+/** Devices, levels and audio processing of voice calls, opened from the header's voice panel. */
 export function VoiceSettingsPanel({
 	voice: { state, actions },
 	onBack,

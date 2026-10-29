@@ -13,6 +13,7 @@ const SERVER_SNAPSHOT: VoiceSnapshot = {
 	call: null,
 	volumeByUserId: new Map(),
 	pendingFeedback: null,
+	inputMode: "OPEN_MIC",
 };
 const getServerSnapshot = () => SERVER_SNAPSHOT;
 

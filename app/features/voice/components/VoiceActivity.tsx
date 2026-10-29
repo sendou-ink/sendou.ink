@@ -68,9 +68,15 @@ export function VoiceActivity() {
 function VoicePanel({ voices }: { voices: VoiceActivityValue[] }) {
 	const [view, setView] = React.useState<"main" | "settings">("main");
 	const call = callOf(voices);
+	const openSettings = () => setView("settings");
 
-	if (view === "settings" && call) {
-		return <VoiceSettingsPanel voice={call} onBack={() => setView("main")} />;
+	if (view === "settings" && voices[0]) {
+		return (
+			<VoiceSettingsPanel
+				voice={call ?? voices[0]}
+				onBack={() => setView("main")}
+			/>
+		);
 	}
 
 	return (
@@ -78,12 +84,9 @@ function VoicePanel({ voices }: { voices: VoiceActivityValue[] }) {
 			{voices.map((voice) => (
 				<section key={voice.state.roomId} className={styles.room}>
 					{voice === call ? (
-						<VoiceCallSection
-							voice={voice}
-							onOpenSettings={() => setView("settings")}
-						/>
+						<VoiceCallSection voice={voice} onOpenSettings={openSettings} />
 					) : (
-						<JoinableVoiceSection voice={voice} />
+						<JoinableVoiceSection voice={voice} onOpenSettings={openSettings} />
 					)}
 				</section>
 			))}
@@ -97,8 +100,10 @@ function callOf(voices: VoiceActivityValue[]) {
 
 function JoinableVoiceSection({
 	voice: { state, actions },
+	onOpenSettings,
 }: {
 	voice: VoiceActivityValue;
+	onOpenSettings?: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
 
@@ -109,9 +114,22 @@ function JoinableVoiceSection({
 				title={state.roomTitle}
 			/>
 			<ParticipantList voice={{ state, actions }} />
-			<SendouButton size="small" icon={<Phone />} onClick={actions.join}>
-				{t("common:chat.voice.join")}
-			</SendouButton>
+			<div className={styles.joinRow}>
+				<SendouButton size="small" icon={<Phone />} onClick={actions.join}>
+					{t("common:chat.voice.join")}
+				</SendouButton>
+				{onOpenSettings ? (
+					<SendouButton
+						size="small"
+						shape="square"
+						variant="minimal"
+						icon={<Settings />}
+						aria-label={t("common:chat.voice.settings.title")}
+						title={t("common:chat.voice.settings.title")}
+						onClick={onOpenSettings}
+					/>
+				) : null}
+			</div>
 		</>
 	);
 }
@@ -174,21 +192,21 @@ function VoiceCallSection({
 				<SendouButton
 					size="small"
 					shape="square"
-					variant="minimal"
-					icon={<Settings />}
-					aria-label={t("common:chat.voice.settings.title")}
-					title={t("common:chat.voice.settings.title")}
-					onClick={onOpenSettings}
-					className="ml-auto"
-				/>
-				<SendouButton
-					size="small"
-					shape="square"
 					variant="minimal-destructive"
 					icon={<PhoneOff />}
 					aria-label={t("common:chat.voice.leave")}
 					title={t("common:chat.voice.leave")}
 					onClick={actions.leave}
+					className="ml-auto"
+				/>
+				<SendouButton
+					size="small"
+					shape="square"
+					variant="minimal"
+					icon={<Settings />}
+					aria-label={t("common:chat.voice.settings.title")}
+					title={t("common:chat.voice.settings.title")}
+					onClick={onOpenSettings}
 				/>
 			</ActivityPanelControls>
 		</>

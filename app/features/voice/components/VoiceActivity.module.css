@@ -14,6 +14,15 @@
 	}
 }
 
+.joinRow {
+	display: flex;
+	gap: var(--s-2);
+
+	& > :first-child {
+		flex-grow: 1;
+	}
+}
+
 .latency {
 	display: flex;
 	align-items: center;

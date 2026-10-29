@@ -74,6 +74,7 @@ export interface VoiceSnapshot {
 	call: VoiceCall | null;
 	volumeByUserId: ReadonlyMap<number, number>;
 	pendingFeedback: { roomId: number; voiceSessionId: number } | null;
+	inputMode: VoiceInputMode;
 }
 
 export interface VoiceCallHandle {
@@ -150,10 +151,10 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 		call: null,
 		volumeByUserId: new Map(),
 		pendingFeedback: null,
+		inputMode: "OPEN_MIC",
 	};
 	let callHandle: VoiceCallHandle | null = null;
 	let latestSummary: VoiceTelemetrySummary | null = null;
-	let preferredInputMode: VoiceInputMode = "OPEN_MIC";
 	let micEnabledBeforeDeafen = false;
 	let micWanted = false;
 	let joinAttempt = 0;
@@ -294,7 +295,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 				status: "JOINING",
 				micEnabled: false,
 				deafened: false,
-				inputMode: preferredInputMode,
+				inputMode: snapshot.inputMode,
 				participants: [],
 				speakingSessionIds: [],
 				audioBlocked: false,
@@ -499,7 +500,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			}
 		},
 		setInputMode: (mode) => {
-			preferredInputMode = mode;
+			if (snapshot.inputMode !== mode) update({ inputMode: mode });
 			if (!snapshot.call || snapshot.call.inputMode === mode) return;
 			micWanted = false;
 			callHandle?.setLocalAudio(false);
