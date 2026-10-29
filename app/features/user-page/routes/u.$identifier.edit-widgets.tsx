@@ -72,7 +72,7 @@ export default function EditWidgetsPage() {
 	>;
 	const [selectedWidgets, setSelectedWidgets] = useState(currentWidgets);
 	const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
-	const [emptySaveAttempted, setEmptySaveAttempted] = useState(false);
+	const [saveAttempted, setSaveAttempted] = useState(false);
 
 	useUnsavedChangesChecker(
 		() =>
@@ -139,6 +139,7 @@ export default function EditWidgetsPage() {
 
 		const widgetDef = findWidgetById(widgetId);
 		if (widgetDef && "schema" in widgetDef) {
+			setSaveAttempted(false);
 			setExpandedWidgetId(widgetId);
 		}
 	};
@@ -149,10 +150,8 @@ export default function EditWidgetsPage() {
 	};
 
 	const handleSubmit = () => {
-		if (selectedWidgets.length === 0) {
-			setEmptySaveAttempted(true);
-			return;
-		}
+		setSaveAttempted(true);
+		if (selectedWidgets.length === 0) return;
 
 		const invalidWidgetIds = computeInvalidWidgetIds(selectedWidgets);
 		const firstInvalid = selectedWidgets.find((w) =>
@@ -206,7 +205,7 @@ export default function EditWidgetsPage() {
 					<SendouButton onClick={handleSubmit}>
 						{t("common:actions.save")}
 					</SendouButton>
-					{emptySaveAttempted && selectedWidgets.length === 0 ? (
+					{saveAttempted && selectedWidgets.length === 0 ? (
 						<FormMessage type="error" spaced={false}>
 							{t("user:widgets.emptyError")}
 						</FormMessage>
@@ -234,6 +233,7 @@ export default function EditWidgetsPage() {
 								onSettingsChange={handleSettingsChange}
 								expandedWidgetId={expandedWidgetId}
 								onToggleExpanded={toggleExpanded}
+								saveAttempted={saveAttempted}
 							/>
 						</DndContext>
 					</section>
@@ -403,6 +403,7 @@ interface SelectedWidgetsListProps {
 	onSettingsChange: (widgetId: string, settings: any) => void;
 	expandedWidgetId: string | null;
 	onToggleExpanded: (widgetId: string) => void;
+	saveAttempted: boolean;
 }
 
 function SelectedWidgetsList({
@@ -413,6 +414,7 @@ function SelectedWidgetsList({
 	onSettingsChange,
 	expandedWidgetId,
 	onToggleExpanded,
+	saveAttempted,
 }: SelectedWidgetsListProps) {
 	const { t } = useTranslation(["user"]);
 
@@ -444,6 +446,7 @@ function SelectedWidgetsList({
 									onSettingsChange={onSettingsChange}
 									isExpanded={expandedWidgetId === widget.id}
 									onToggleExpanded={onToggleExpanded}
+									saveAttempted={saveAttempted}
 								/>
 							))
 						)}
@@ -477,6 +480,7 @@ function SelectedWidgetsList({
 									onSettingsChange={onSettingsChange}
 									isExpanded={expandedWidgetId === widget.id}
 									onToggleExpanded={onToggleExpanded}
+									saveAttempted={saveAttempted}
 								/>
 							))
 						)}
@@ -516,6 +520,7 @@ interface DraggableWidgetItemProps {
 	onSettingsChange: (widgetId: string, settings: any) => void;
 	isExpanded: boolean;
 	onToggleExpanded: (widgetId: string) => void;
+	saveAttempted: boolean;
 }
 
 function DraggableWidgetItem({
@@ -524,6 +529,7 @@ function DraggableWidgetItem({
 	onSettingsChange,
 	isExpanded,
 	onToggleExpanded,
+	saveAttempted,
 }: DraggableWidgetItemProps) {
 	const { t } = useTranslation(["user", "common"]);
 
@@ -587,6 +593,7 @@ function DraggableWidgetItem({
 					<WidgetSettingsForm
 						widget={widget}
 						onSettingsChange={onSettingsChange}
+						saveAttempted={saveAttempted}
 					/>
 				</div>
 			) : null}

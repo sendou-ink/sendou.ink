@@ -873,6 +873,84 @@ describe("SendouForm", () => {
 		});
 	});
 
+	describe("client mode", () => {
+		const TWO_TEXT_FIELDS = v.object({
+			name: textField({ label: "labels.name", maxLength: 100 }),
+			bio: textField({ label: "labels.bio", maxLength: 100 }),
+		});
+
+		const renderClientForm = (saveAttempted?: boolean) => {
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={TWO_TEXT_FIELDS}
+								mode="client"
+								onApply={vi.fn()}
+								saveAttempted={saveAttempted}
+							>
+								<FormField name="name" />
+								<FormField name="bio" />
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			return render(<RouterProvider router={router} />);
+		};
+
+		test("shows no errors on mount", async () => {
+			const screen = await renderClientForm();
+
+			await expect.element(screen.getByLabelText("Name")).toBeVisible();
+			expect(screen.container.querySelector("#name-error")).toBeNull();
+			expect(screen.container.querySelector("#bio-error")).toBeNull();
+		});
+
+		test("shows a field's error only after blur", async () => {
+			const screen = await renderClientForm();
+			const input = screen.getByLabelText("Name");
+
+			await userEvent.type(input.element(), "a");
+			await userEvent.clear(input.element());
+			expect(screen.container.querySelector("#name-error")).toBeNull();
+
+			await userEvent.tab();
+
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+			expect(screen.container.querySelector("#bio-error")).toBeNull();
+		});
+
+		test("clears a shown error once the value is valid", async () => {
+			const screen = await renderClientForm();
+			const input = screen.getByLabelText("Name");
+
+			await userEvent.click(input.element());
+			await userEvent.tab();
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+
+			await userEvent.type(input.element(), "Valid");
+
+			expect(screen.container.querySelector("#name-error")).toBeNull();
+		});
+
+		test("shows every error from mount when save was attempted", async () => {
+			const screen = await renderClientForm(true);
+
+			await expect
+				.element(screen.getByText("This field is required").nth(1))
+				.toBeVisible();
+		});
+	});
+
 	describe("fieldset field", () => {
 		test("renders fieldset with legend", async () => {
 			const screen = await renderForm(NESTED_FIELDSET);
