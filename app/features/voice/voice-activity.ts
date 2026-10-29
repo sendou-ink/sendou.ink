@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import type { CommonUser } from "~/utils/kysely.server";
@@ -97,6 +98,7 @@ export function useVoiceActivities(): VoiceActivity[] {
 function useRealVoiceActivities(): VoiceActivity[] {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext();
+	const localUserId = useUser()?.id;
 	const { call, volumeByUserId } = useVoiceSnapshot();
 
 	const callRoom = call ? chatContext?.roomForId(call.roomId) : undefined;
@@ -112,7 +114,16 @@ function useRealVoiceActivities(): VoiceActivity[] {
 		const roomCall = room === callRoom ? call : null;
 		if (!roomCall && !(voiceRoom?.available && voiceRoom.canJoin)) return [];
 
-		return [toVoiceActivity({ room, call: roomCall, voiceRoom, volumeOf, t })];
+		return [
+			toVoiceActivity({
+				room,
+				call: roomCall,
+				voiceRoom,
+				localUserId,
+				volumeOf,
+				t,
+			}),
+		];
 	});
 }
 
@@ -120,18 +131,20 @@ function toVoiceActivity({
 	room,
 	call,
 	voiceRoom,
+	localUserId,
 	volumeOf,
 	t,
 }: {
 	room: ChatRoomListItem;
 	call: VoiceCall | null;
 	voiceRoom: VoiceRoomState | null;
+	localUserId: number | undefined;
 	volumeOf: (userId: number) => number;
 	t: TFunction<["common"]>;
 }): VoiceActivity {
 	const userById = new Map(room.participants.map((user) => [user.id, user]));
 
-	const participants: VoiceActivityParticipant[] = call
+	const callParticipants: VoiceActivityParticipant[] = call
 		? call.participants.map((participant) => ({
 				key: participant.sessionId,
 				userId: participant.userId,
@@ -144,16 +157,26 @@ function toVoiceActivity({
 				deafened: participant.isLocal ? call.deafened : participant.deafened,
 				volume: volumeOf(participant.userId),
 			}))
-		: (voiceRoom?.userIds ?? []).map((userId) => ({
-				key: String(userId),
-				userId,
-				user: userById.get(userId),
-				isLocal: false,
-				speaking: false,
-				muted: false,
-				deafened: false,
-				volume: volumeOf(userId),
-			}));
+		: [];
+
+	const presentParticipants: VoiceActivityParticipant[] = (
+		voiceRoom?.userIds ?? []
+	)
+		.filter(
+			(userId) =>
+				!callParticipants.some((participant) => participant.userId === userId),
+		)
+		.map((userId) => ({
+			key: String(userId),
+			userId,
+			user: userById.get(userId),
+			isLocal: userId === localUserId,
+			speaking: false,
+			muted: false,
+			deafened: false,
+			volume: volumeOf(userId),
+		}));
+	const participants = [...callParticipants, ...presentParticipants];
 
 	return {
 		state: {
