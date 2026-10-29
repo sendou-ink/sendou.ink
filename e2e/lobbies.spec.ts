@@ -18,11 +18,13 @@ import { voiceRoomUserIds } from "./helpers/voice";
 import { ChatSidebar } from "./pages/layout/chat-sidebar";
 import { ErrorPage } from "./pages/layout/error-page";
 import { NotificationPopover } from "./pages/layout/notification-popover";
+import { VoicePanel } from "./pages/layout/voice-panel";
 import { LobbiesPage } from "./pages/lobbies/lobbies-page";
 import { LobbyPage } from "./pages/lobbies/lobby-page";
 import { NewLobbyPage } from "./pages/lobbies/new-lobby-page";
 
 const LOBBY_NAME = "Test 8s";
+const TEAM_VOICE_TITLE = /Team (Alpha|Bravo)/;
 const PLAYER_NAME_PREFIX = "LobbyPlayer";
 const ROOM_SIZE = 8;
 const BEST_OF = 3;
@@ -1502,13 +1504,14 @@ test.describe("Lobbies", () => {
 			);
 			try {
 				const callerChat = new ChatSidebar(callerSession.page);
+				const callerVoice = new VoicePanel(callerSession.page);
 				let lobbyRoomId = 0;
 
 				await test.step("A player joins the lobby chat's call before the start", async () => {
 					await new LobbyPage(callerSession.page).goto(lobby.id);
 					({ lobbyRoomId } = await lobbyChatRoomIds(callerSession.page));
 
-					await callerChat.joinVoice();
+					await callerVoice.joinVoice(LOBBY_NAME);
 					await expect
 						.poll(() => voiceRoomUserIds(callerSession.page, lobbyRoomId))
 						.toEqual([caller.id]);
@@ -1522,11 +1525,13 @@ test.describe("Lobbies", () => {
 						"Team",
 					]);
 
-					await callerChat.selectRoomTab("Team");
-					await expect(callerChat.locators.joinVoiceButton).toBeVisible();
-
-					await callerChat.selectRoomTab("Lobby");
-					await expect(callerChat.locators.leaveVoiceButton).toBeVisible();
+					await callerVoice.open();
+					await expect(callerVoice.locators.callSection).toContainText(
+						LOBBY_NAME,
+					);
+					await expect(
+						callerVoice.joinableRoom(TEAM_VOICE_TITLE),
+					).toBeVisible();
 					await expect
 						.poll(() => voiceRoomUserIds(callerSession.page, lobbyRoomId))
 						.toEqual([caller.id]);
@@ -1554,15 +1559,14 @@ test.describe("Lobbies", () => {
 				caller.id,
 			);
 			try {
-				const callerChat = new ChatSidebar(callerSession.page);
+				const callerVoice = new VoicePanel(callerSession.page);
 				let firstTeamRoomId = 0;
 
 				await test.step("A player joins their team chat's call", async () => {
 					await new LobbyPage(callerSession.page).goto(lobby.id);
 					firstTeamRoomId = await teamChatRoomId(callerSession.page);
 
-					await callerChat.selectRoomTab("Team");
-					await callerChat.joinVoice();
+					await callerVoice.joinVoice(TEAM_VOICE_TITLE);
 					await expect
 						.poll(() => voiceRoomUserIds(callerSession.page, firstTeamRoomId))
 						.toEqual([caller.id]);
@@ -1591,8 +1595,10 @@ test.describe("Lobbies", () => {
 						.poll(() => voiceRoomUserIds(callerSession.page, firstTeamRoomId))
 						.toEqual([]);
 
-					await callerChat.selectRoomTab("Team");
-					await expect(callerChat.locators.leaveVoiceButton).toBeVisible();
+					await callerVoice.open();
+					await expect(callerVoice.locators.callSection).toContainText(
+						TEAM_VOICE_TITLE,
+					);
 				});
 			} finally {
 				await callerSession.close();
@@ -1611,26 +1617,24 @@ test.describe("Lobbies", () => {
 			);
 			const leaver = alphaPlayers.find((player) => player.id !== host.id)!;
 			const lobbyPage = new LobbyPage(page);
-			const chat = new ChatSidebar(page);
+			const voice = new VoicePanel(page);
 			const stayerSession = await openSecondUser(
 				browser,
 				workerBaseURL,
 				bravoPlayer.id,
 			);
 			try {
-				const stayerChat = new ChatSidebar(stayerSession.page);
+				const stayerVoice = new VoicePanel(stayerSession.page);
 				let lobbyRoomId = 0;
 
 				await test.step("Two players join the lobby chat's call", async () => {
 					await impersonate(page, leaver.id);
 					await lobbyPage.goto(lobby.id);
-					await chat.selectRoomTab("Lobby");
-					await chat.joinVoice();
+					await voice.joinVoice(LOBBY_NAME);
 
 					await new LobbyPage(stayerSession.page).goto(lobby.id);
 					({ lobbyRoomId } = await lobbyChatRoomIds(stayerSession.page));
-					await stayerChat.selectRoomTab("Lobby");
-					await stayerChat.joinVoice();
+					await stayerVoice.joinVoice(LOBBY_NAME);
 
 					await expect
 						.poll(() => voiceRoomUserIds(stayerSession.page, lobbyRoomId))
@@ -1643,7 +1647,7 @@ test.describe("Lobbies", () => {
 					await expect
 						.poll(() => voiceRoomUserIds(stayerSession.page, lobbyRoomId))
 						.toEqual([bravoPlayer.id]);
-					await isNotVisible(chat.locators.leaveVoiceButton);
+					await isNotVisible(voice.locators.leaveVoiceButton);
 				});
 			} finally {
 				await stayerSession.close();
@@ -1667,15 +1671,14 @@ test.describe("Lobbies", () => {
 				satOut.id,
 			);
 			try {
-				const satOutChat = new ChatSidebar(satOutSession.page);
+				const satOutVoice = new VoicePanel(satOutSession.page);
 				let teamRoomId = 0;
 
 				await test.step("A player joins their team chat's call", async () => {
 					await new LobbyPage(satOutSession.page).goto(lobby.id);
 					teamRoomId = await teamChatRoomId(satOutSession.page);
 
-					await satOutChat.selectRoomTab("Team");
-					await satOutChat.joinVoice();
+					await satOutVoice.joinVoice(TEAM_VOICE_TITLE);
 					await expect
 						.poll(() => voiceRoomUserIds(satOutSession.page, teamRoomId))
 						.toEqual([satOut.id]);
@@ -1694,7 +1697,7 @@ test.describe("Lobbies", () => {
 					await expect
 						.poll(() => voiceRoomUserIds(satOutSession.page, teamRoomId))
 						.toEqual([]);
-					await isNotVisible(satOutChat.locators.leaveVoiceButton);
+					await isNotVisible(satOutVoice.locators.leaveVoiceButton);
 				});
 			} finally {
 				await satOutSession.close();
