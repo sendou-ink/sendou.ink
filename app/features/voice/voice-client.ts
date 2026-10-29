@@ -70,6 +70,7 @@ export interface VoiceCall {
 	speakingSessionIds: string[];
 	audioBlocked: boolean;
 	errorKind: VoiceClientErrorKind | null;
+	latencyMs: number | null;
 }
 
 export interface VoiceSnapshot {
@@ -138,6 +139,7 @@ export interface VoiceClient {
 	updateParticipants: (participants: VoiceCallParticipant[]) => void;
 	setSpeaking: (sessionId: string, speaking: boolean) => void;
 	setAudioBlocked: (blocked: boolean) => void;
+	setLatency: (latencyMs: number | null) => void;
 	flagError: (kind: VoiceClientErrorKind, detail: string | null) => void;
 	setSummary: (summary: VoiceTelemetrySummary) => void;
 	flushSummary: () => void;
@@ -308,6 +310,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 				speakingSessionIds: [],
 				audioBlocked: false,
 				errorKind: null,
+				latencyMs: null,
 			},
 		});
 		latestSummary = null;
@@ -399,6 +402,7 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			participants: [],
 			speakingSessionIds: [],
 			audioBlocked: false,
+			latencyMs: null,
 		});
 		latestSummary = null;
 
@@ -628,6 +632,10 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 
 			updateCall({ audioBlocked: blocked });
 			if (blocked && !call.deafened) deafen(call);
+		},
+		setLatency: (latencyMs) => {
+			if (snapshot.call?.latencyMs === latencyMs) return;
+			updateCall({ latencyMs });
 		},
 		flagError: (kind, detail) => {
 			if (snapshot.call?.errorKind === kind) return;

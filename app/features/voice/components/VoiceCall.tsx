@@ -32,6 +32,7 @@ import { DEFAULT_DEVICE_ID, voiceSettingsPersisted } from "../voice-persisted";
 
 const SPEAKING_LEVEL = 0.04;
 const TELEMETRY_TICK_MS = 1_000;
+const LATENCY_POLL_MS = 2_000;
 const WATCHED_CONNECTIONS = ["signaling", "sfu"];
 
 const audioElements = new Set<HTMLAudioElement>();
@@ -131,6 +132,7 @@ export function VoiceCall({
 			<ParticipantsSync />
 			<RemoteAudio />
 			<Telemetry />
+			<Latency />
 			<ScreenWakeLock />
 		</DailyProvider>
 	);
@@ -376,6 +378,37 @@ function Telemetry() {
 			clearInterval(flush);
 		};
 	}, []);
+
+	return null;
+}
+
+function Latency() {
+	const daily = useDaily();
+	const isJoined = useMeetingState() === "joined-meeting";
+
+	React.useEffect(() => {
+		if (!daily || !isJoined) return;
+
+		const poll = setInterval(async () => {
+			try {
+				const { stats } = await daily.getNetworkStats();
+				const roundTripSeconds =
+					"latest" in stats ? stats.latest.networkRoundTripTime : null;
+				voiceClient.setLatency(
+					roundTripSeconds === null
+						? null
+						: Math.round(roundTripSeconds * 1000),
+				);
+			} catch (error) {
+				logger.warn("Reading the voice call network stats failed", error);
+			}
+		}, LATENCY_POLL_MS);
+
+		return () => {
+			clearInterval(poll);
+			voiceClient.setLatency(null);
+		};
+	}, [daily, isJoined]);
 
 	return null;
 }

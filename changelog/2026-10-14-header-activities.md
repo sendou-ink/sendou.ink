@@ -2,7 +2,6 @@
 navItem: [sendouq, medal, scanner]
 type: feature
 ---
-xxx: write
 Ongoing activities in the header
 
 - SendouQ and tournament status, voice chat and the scanner each get their own button in the header, opening a panel with the details

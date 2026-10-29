@@ -645,6 +645,17 @@ describe("createVoiceClient", () => {
 		expect(client.getSnapshot().call?.deafened).toBe(true);
 	});
 
+	test("a lost connection forgets the latency of the old one", async () => {
+		const { client } = setup({ postRoomAction: joinsInTurn() });
+		await client.join(ROOM_ID);
+		client.markConnected("local");
+		client.setLatency(40);
+
+		await client.reconnect(null);
+
+		expect(client.getSnapshot().call?.latencyMs).toBeNull();
+	});
+
 	test("rejoining after a lost connection waits for the network to come back", async () => {
 		const { client, deps } = setup({ postRoomAction: joinsInTurn() });
 		await client.join(ROOM_ID);

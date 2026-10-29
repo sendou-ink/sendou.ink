@@ -7,7 +7,10 @@ import {
 	useCurrentRouteChatRooms,
 } from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
+import { voicePushToTalkSchema } from "~/features/settings/settings-schemas";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { CommonUser } from "~/utils/kysely.server";
+import { SETTINGS_PAGE } from "~/utils/urls";
 import {
 	type VoiceCall,
 	type VoiceCallStatus,
@@ -103,6 +106,15 @@ function useRealVoiceActivities(): VoiceActivity[] {
 	const chatContext = useChatContext();
 	const localUserId = useUser()?.id;
 	const { call, volumeByUserId, inputMode } = useVoiceSnapshot();
+	const pushToTalkPreference = useActionSubmit(voicePushToTalkSchema, {
+		action: SETTINGS_PAGE,
+	});
+	const setInputMode = (mode: VoiceInputMode) => {
+		voiceClient.setInputMode(mode);
+		pushToTalkPreference.submit("UPDATE_VOICE_PUSH_TO_TALK", {
+			newValue: mode === "PUSH_TO_TALK",
+		});
+	};
 
 	const routeRooms = useCurrentRouteChatRooms();
 
@@ -130,6 +142,7 @@ function useRealVoiceActivities(): VoiceActivity[] {
 				voiceRoom,
 				localUserId,
 				inputMode,
+				setInputMode,
 				volumeOf,
 				t,
 			}),
@@ -143,6 +156,7 @@ function toVoiceActivity({
 	voiceRoom,
 	localUserId,
 	inputMode,
+	setInputMode,
 	volumeOf,
 	t,
 }: {
@@ -151,6 +165,7 @@ function toVoiceActivity({
 	voiceRoom: VoiceRoomState | null;
 	localUserId: number | undefined;
 	inputMode: VoiceInputMode;
+	setInputMode: (mode: VoiceInputMode) => void;
 	volumeOf: (userId: number) => number;
 	t: TFunction<["common"]>;
 }): VoiceActivity {
@@ -207,16 +222,14 @@ function toVoiceActivity({
 			inputMode: call?.inputMode ?? inputMode,
 			errorKind: call?.errorKind ?? null,
 			canKick: voiceRoom?.canKick ?? false,
-			// xxx: read the round trip time off the Daily call's network stats
-			latencyMs: null,
+			latencyMs: call?.latencyMs ?? null,
 		},
 		actions: {
 			join: () => void voiceClient.join(room.id),
 			leave: () => void voiceClient.leave(),
 			setMicEnabled: voiceClient.setMicEnabled,
 			setDeafened: voiceClient.setDeafened,
-			// xxx: persist as the user's voicePushToTalk preference, now it lasts until the page reloads
-			setInputMode: voiceClient.setInputMode,
+			setInputMode,
 			setVolume: voiceClient.setVolume,
 			kick: (userId) => void voiceClient.kick(room.id, userId),
 		},
