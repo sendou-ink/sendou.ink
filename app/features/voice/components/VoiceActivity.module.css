@@ -144,7 +144,7 @@
 }
 
 .sliderValue {
-	min-width: 3.5ch;
+	width: 5ch;
 	text-align: end;
 	font-size: var(--font-2xs);
 	font-variant-numeric: tabular-nums;

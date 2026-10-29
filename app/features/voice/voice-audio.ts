@@ -102,10 +102,15 @@ interface Pipeline {
 	destination: MediaStreamAudioDestinationNode;
 	settings: MicCaptureSettings;
 	samples: Float32Array<ArrayBuffer>;
+	recaptures: Promise<void>;
+	isCurrent: () => boolean;
 }
 
-let pipeline: Pipeline | null = null;
-let recaptures: Promise<void> = Promise.resolve();
+export interface MicTestOutput {
+	deviceId: string;
+	/** 0-100 */
+	volume: number;
+}
 
 export function canPickOutputDevice() {
 	return (
@@ -114,84 +119,146 @@ export function canPickOutputDevice() {
 	);
 }
 
-export const micCapture = {
+export const micCapture = createMicCapture();
+
+const micTestCapture = createMicCapture();
+let micTestPlayback: HTMLAudioElement | null = null;
+let micTestAttempt = 0;
+
+export const micTest = {
 	start: async (
 		settings: MicCaptureSettings,
 		options: MicCaptureOptions,
-	): Promise<MediaStreamTrack> => {
-		micCapture.stop();
+		output: MicTestOutput,
+	) => {
+		micTest.stop();
+		const attempt = ++micTestAttempt;
 
-		const context = createAudioContext();
-		try {
-			const noiseSuppressor = await createNoiseSuppressor(context);
-			const stream = await acquire(settings);
-			const gain = context.createGain();
-			const analyser = context.createAnalyser();
-			analyser.fftSize = ANALYSER_FFT_SIZE;
-			const destination = context.createMediaStreamDestination();
-			destination.channelCount = 1;
-			const gate = await createGate(context);
+		const track = await micTestCapture.start(settings, options);
+		if (attempt !== micTestAttempt) {
+			micTestCapture.stop();
+			return;
+		}
 
-			const source = context.createMediaStreamSource(stream);
-			noiseSuppressor?.connect(gain);
-			gain.connect(analyser);
-			gain.connect(gate ?? destination);
-			gate?.connect(destination);
+		micTestPlayback = new Audio();
+		micTestPlayback.srcObject = new MediaStream([track]);
+		micTest.setOutput(output);
+		await micTestPlayback.play();
+	},
+	update: (settings: MicCaptureSettings, options: MicCaptureOptions) =>
+		micTestCapture.update(settings, options),
+	setOutput: ({ deviceId, volume }: MicTestOutput) => {
+		if (!micTestPlayback) return;
 
-			pipeline = {
-				context,
-				stream,
-				source,
-				noiseSuppressor,
-				gain,
-				analyser,
-				gate,
-				destination,
-				settings,
-				samples: new Float32Array(ANALYSER_FFT_SIZE),
-			};
-			connectSource(pipeline);
-			applyLevels(pipeline, settings, options);
-			watchForEndedTrack(pipeline);
-			resumeWhenAllowed(context);
-
-			return destination.stream.getAudioTracks()[0];
-		} catch (error) {
-			void context.close();
-			throw error;
+		micTestPlayback.volume = Math.min(1, volume / 100);
+		if (canPickOutputDevice()) {
+			void micTestPlayback
+				.setSinkId(deviceId === DEFAULT_DEVICE_ID ? "" : deviceId)
+				.catch((error: unknown) => {
+					logger.warn("Picking the mic test's output device failed", error);
+				});
 		}
 	},
-	update: (settings: MicCaptureSettings, options: MicCaptureOptions) => {
-		const current = pipeline;
-		if (!current) return;
-
-		applyLevels(current, settings, options);
-		const recapture = MicInput.needsRecapture(current.settings, settings);
-		const switchesNoiseSuppression =
-			current.settings.noiseSuppression !== settings.noiseSuppression;
-		if (recapture) queueRecapture(current, settings);
-		current.settings = settings;
-		if (switchesNoiseSuppression) connectSource(current);
-	},
-	isCapturing: () => pipeline !== null,
-	level: () => {
-		if (!pipeline) return 0;
-
-		pipeline.analyser.getFloatTimeDomainData(pipeline.samples);
-		return MicInput.rms(pipeline.samples);
-	},
-	resume: () => {
-		void pipeline?.context.resume().catch(() => {});
-	},
+	isRunning: () => micTestCapture.isCapturing(),
+	level: () => micTestCapture.level(),
 	stop: () => {
-		if (!pipeline) return;
-
-		stopTracks(pipeline.stream);
-		pipeline.noiseSuppressor?.destroy();
-		void pipeline.context.close();
-		pipeline = null;
+		micTestAttempt++;
+		if (micTestPlayback) {
+			micTestPlayback.pause();
+			micTestPlayback.srcObject = null;
+			micTestPlayback = null;
+		}
+		micTestCapture.stop();
 	},
 };
+
+function createMicCapture() {
+	let pipeline: Pipeline | null = null;
+
+	const capture = {
+		start: async (
+			settings: MicCaptureSettings,
+			options: MicCaptureOptions,
+		): Promise<MediaStreamTrack> => {
+			capture.stop();
+
+			const context = createAudioContext();
+			try {
+				const noiseSuppressor = await createNoiseSuppressor(context);
+				const stream = await acquire(settings);
+				const gain = context.createGain();
+				const analyser = context.createAnalyser();
+				analyser.fftSize = ANALYSER_FFT_SIZE;
+				const destination = context.createMediaStreamDestination();
+				destination.channelCount = 1;
+				const gate = await createGate(context);
+
+				const source = context.createMediaStreamSource(stream);
+				noiseSuppressor?.connect(gain);
+				gain.connect(analyser);
+				gain.connect(gate ?? destination);
+				gate?.connect(destination);
+
+				const created: Pipeline = {
+					context,
+					stream,
+					source,
+					noiseSuppressor,
+					gain,
+					analyser,
+					gate,
+					destination,
+					settings,
+					samples: new Float32Array(ANALYSER_FFT_SIZE),
+					recaptures: Promise.resolve(),
+					isCurrent: () => pipeline === created,
+				};
+				pipeline = created;
+				connectSource(created);
+				applyLevels(created, settings, options);
+				watchForEndedTrack(created);
+				resumeWhenAllowed(context);
+
+				return destination.stream.getAudioTracks()[0];
+			} catch (error) {
+				void context.close();
+				throw error;
+			}
+		},
+		update: (settings: MicCaptureSettings, options: MicCaptureOptions) => {
+			const current = pipeline;
+			if (!current) return;
+
+			applyLevels(current, settings, options);
+			const recapture = MicInput.needsRecapture(current.settings, settings);
+			const switchesNoiseSuppression =
+				current.settings.noiseSuppression !== settings.noiseSuppression;
+			if (recapture) queueRecapture(current, settings);
+			current.settings = settings;
+			if (switchesNoiseSuppression) connectSource(current);
+		},
+		isCapturing: () => pipeline !== null,
+		level: () => {
+			if (!pipeline) return 0;
+
+			pipeline.analyser.getFloatTimeDomainData(pipeline.samples);
+			return MicInput.rms(pipeline.samples);
+		},
+		resume: () => {
+			void pipeline?.context.resume().catch(() => {});
+		},
+		stop: () => {
+			if (!pipeline) return;
+
+			stopTracks(pipeline.stream);
+			pipeline.noiseSuppressor?.destroy();
+			void pipeline.context.close();
+			pipeline = null;
+		},
+	};
+
+	return capture;
+}
 
 function createAudioContext() {
 	try {
@@ -317,15 +384,15 @@ function applyLevels(
 function queueRecapture(current: Pipeline, settings: MicCaptureSettings) {
 	const previous = current.settings;
 
-	recaptures = recaptures.then(async () => {
-		if (pipeline !== current) return;
+	current.recaptures = current.recaptures.then(async () => {
+		if (!current.isCurrent()) return;
 
 		current.source.disconnect();
 		stopTracks(current.stream);
 
 		const stream = await acquireOrKeep(settings, previous);
 		if (!stream) return;
-		if (pipeline !== current) {
+		if (!current.isCurrent()) {
 			stopTracks(stream);
 			return;
 		}
@@ -360,10 +427,7 @@ function watchForEndedTrack(current: Pipeline) {
 	track?.addEventListener(
 		"ended",
 		() => {
-			if (
-				pipeline === current &&
-				current.stream.getAudioTracks()[0] === track
-			) {
+			if (current.isCurrent() && current.stream.getAudioTracks()[0] === track) {
 				queueRecapture(current, current.settings);
 			}
 		},

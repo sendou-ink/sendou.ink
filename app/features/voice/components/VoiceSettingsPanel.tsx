@@ -13,10 +13,12 @@ import {
 	ActivityPanelHeader,
 	ActivityPanelSection,
 } from "~/components/layout/ActivityPanel";
+import { useLatestRef } from "~/hooks/useLatestRef";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
+import { logger } from "~/utils/logger";
 import * as MicInput from "../core/MicInput";
 import type { VoiceActivity } from "../voice-activity";
-import { canPickOutputDevice, micCapture } from "../voice-audio";
+import { canPickOutputDevice, micCapture, micTest } from "../voice-audio";
 import {
 	DEFAULT_DEVICE_ID,
 	type VoiceSettings,
@@ -50,6 +52,10 @@ export function VoiceSettingsPanel({
 	const { t } = useTranslation(["common"]);
 	const [settings, setSettings] = usePersistedState(voiceSettingsPersisted);
 	const devices = useAudioDevices();
+	const [micTestStatus, setMicTestStatus] = useMicTest(
+		settings,
+		state.inputMode === "PUSH_TO_TALK",
+	);
 
 	const update = (patch: Partial<VoiceSettings>) =>
 		setSettings((current) => ({ ...current, ...patch }));
@@ -86,11 +92,29 @@ export function VoiceSettingsPanel({
 					<span className="text-xxs text-lighter">
 						{t("common:chat.voice.settings.inputLevel")}
 					</span>
-					<InputLevelMeter
-						sensitivity={
-							state.inputMode === "OPEN_MIC" ? settings.sensitivity : null
-						}
-					/>
+					<div className={styles.meterRow}>
+						<InputLevelMeter
+							sensitivity={
+								state.inputMode === "OPEN_MIC" ? settings.sensitivity : null
+							}
+						/>
+						<SendouButton
+							size="small"
+							variant="minimal"
+							onClick={() =>
+								setMicTestStatus(micTestStatus === "ON" ? "OFF" : "ON")
+							}
+						>
+							{micTestStatus === "ON"
+								? t("common:chat.voice.settings.micTestStop")
+								: t("common:chat.voice.settings.micTest")}
+						</SendouButton>
+					</div>
+					{micTestStatus === "FAILED" ? (
+						<span className="text-xxs text-error">
+							{t("common:chat.voice.settings.micTestFailed")}
+						</span>
+					) : null}
 				</div>
 				<SendouChipRadioGroup>
 					<SendouChipRadio
@@ -242,7 +266,7 @@ function InputLevelMeter({ sensitivity }: { sensitivity: number | null }) {
 		let frame = requestAnimationFrame(function draw() {
 			meterRef.current?.style.setProperty(
 				"--level",
-				`${MicInput.meterPosition(micCapture.level())}%`,
+				`${MicInput.meterPosition(micTest.isRunning() ? micTest.level() : micCapture.level())}%`,
 			);
 			frame = requestAnimationFrame(draw);
 		});
@@ -258,6 +282,46 @@ function InputLevelMeter({ sensitivity }: { sensitivity: number | null }) {
 			style={{ "--sensitivity": `${sensitivity ?? 0}%` } as React.CSSProperties}
 		/>
 	);
+}
+
+function useMicTest(settings: VoiceSettings, gateAlwaysOpen: boolean) {
+	const [status, setStatus] = React.useState<"OFF" | "ON" | "FAILED">("OFF");
+	const latest = useLatestRef({ settings, gateAlwaysOpen });
+	const isOn = status === "ON";
+
+	React.useEffect(() => {
+		if (!isOn) return;
+
+		const initial = latest.current;
+		micTest
+			.start(
+				initial.settings,
+				{ gateAlwaysOpen: initial.gateAlwaysOpen },
+				{
+					deviceId: initial.settings.outputDeviceId,
+					volume: initial.settings.outputVolume,
+				},
+			)
+			.catch((error: unknown) => {
+				logger.warn("Starting the mic test failed", error);
+				micTest.stop();
+				setStatus("FAILED");
+			});
+
+		return () => micTest.stop();
+	}, [isOn, latest]);
+
+	React.useEffect(() => {
+		if (!isOn) return;
+
+		micTest.update(settings, { gateAlwaysOpen });
+		micTest.setOutput({
+			deviceId: settings.outputDeviceId,
+			volume: settings.outputVolume,
+		});
+	}, [isOn, settings, gateAlwaysOpen]);
+
+	return [status, setStatus] as const;
 }
 
 function useAudioDevices() {
