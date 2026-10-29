@@ -208,6 +208,71 @@ describe("lobby action", () => {
 		expect(LobbySet.status(confirmed)).toBe("CONFIRMED");
 	});
 
+	test("reporting a map someone else just reported is ignored", async () => {
+		const playerIds = users.ids(8);
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: playerIds[0],
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 30)),
+			},
+			{
+				signedUpUserIds: playerIds.slice(1),
+				checkedInUserIds: playerIds,
+				reportedMapCount: 1,
+			},
+		);
+		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+		const [firstReporterId, secondReporterId] = LobbySet.playersOf(
+			set,
+			"ALPHA",
+		);
+		const report = (userId: number) =>
+			lobbyAction(
+				{
+					_action: "REPORT_MAP",
+					setId: set.id,
+					winnerSide: "ALPHA",
+					reportedCount: 1,
+				},
+				{ user: userId, params: { id: String(lobby.id) } },
+			);
+
+		await report(firstReporterId);
+
+		await expect(report(secondReporterId)).resolves.toBeNull();
+		const [decided] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+		expect(LobbySet.reportedCount(decided)).toBe(2);
+	});
+
+	test("confirming an already confirmed set is ignored", async () => {
+		const playerIds = users.ids(8);
+		const lobby = await LobbyFactory.create(
+			{
+				hostUserId: playerIds[0],
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 30)),
+			},
+			{
+				signedUpUserIds: playerIds.slice(1),
+				checkedInUserIds: playerIds,
+				reportedMapCount: 2,
+			},
+		);
+		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+		const [firstConfirmerId, secondConfirmerId] = LobbySet.playersOf(
+			set,
+			"BRAVO",
+		);
+		const confirm = (userId: number) =>
+			lobbyAction(
+				{ _action: "CONFIRM_SET", setId: set.id },
+				{ user: userId, params: { id: String(lobby.id) } },
+			);
+
+		await confirm(firstConfirmerId);
+
+		await expect(confirm(secondConfirmerId)).resolves.toBeNull();
+	});
+
 	test("only the host can end the lobby", async () => {
 		const lobby = await LobbyFactory.create(
 			{ hostUserId: hostId() },

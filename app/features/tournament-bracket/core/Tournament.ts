@@ -1127,8 +1127,11 @@ export class Tournament {
 						);
 
 						const oneGroupOnly = bracket.data.group.length === 1;
+						const groupPrefix = oneGroupOnly
+							? ""
+							: `Group ${group?.number ? groupNumberToLetters(group.number) : ""} `;
 
-						roundName = `Swiss${oneGroupOnly ? "" : " Group"} ${group?.number && !oneGroupOnly ? groupNumberToLetters(group.number) : ""} ${round?.number ?? ""}.${match.number}`;
+						roundName = `Swiss ${groupPrefix}${round?.number ?? ""}.${match.number}`;
 					} else if (
 						bracket.type === "single_elimination" ||
 						bracket.type === "double_elimination"

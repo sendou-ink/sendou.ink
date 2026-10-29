@@ -65,7 +65,7 @@ export default function NewLobbyPage() {
 					startsAt: new Date(),
 					bestOf: "3",
 					modes: ["SZ", "TC", "RM", "CB"],
-					roomSize: "10",
+					spectators: "0",
 					baseVisibility: "PUBLIC",
 					notFoundVisibility: { at: null, forAssociation: "PUBLIC" },
 				}}
@@ -78,7 +78,7 @@ export default function NewLobbyPage() {
 						<FormField name="startsAt" />
 						<FormField name="bestOf" />
 						<FormField name="modes" />
-						<FormField name="roomSize" />
+						<FormField name="spectators" />
 						<FormField name="baseVisibility">
 							{(props: CustomFieldRenderProps) => (
 								<BaseVisibilityFormField

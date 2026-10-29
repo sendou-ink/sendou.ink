@@ -446,21 +446,18 @@ function WinRate({
 
 function WinRatePercentage({ winLoss }: { winLoss: MapWinRates.WinLoss }) {
 	const winRate = MapWinRates.rate(winLoss);
+	const percentage = winRate === null ? null : Math.round(winRate * 100);
+	const colored = percentage !== null && !MapWinRates.isLowSample(winLoss);
 
 	return (
 		<span
 			className={clsx(styles.percentage, {
-				[styles.percentageWinning]:
-					winRate !== null &&
-					winRate >= 0.5 &&
-					!MapWinRates.isLowSample(winLoss),
-				[styles.percentageLosing]:
-					winRate !== null &&
-					winRate < 0.5 &&
-					!MapWinRates.isLowSample(winLoss),
+				[styles.percentageWinning]: colored && percentage > 50,
+				[styles.percentageEven]: colored && percentage === 50,
+				[styles.percentageLosing]: colored && percentage < 50,
 			})}
 		>
-			{winRate === null ? "—" : `${Math.round(winRate * 100)}%`}
+			{percentage === null ? "—" : `${percentage}%`}
 		</span>
 	);
 }

@@ -24,10 +24,11 @@ import {
 } from "~/features/friends/friends-constants";
 import {
 	type FriendActivity,
+	isJoinableFriendLobby,
 	resolveFriendActivity,
 	resolveSendouQMatchStreams,
 	resolveUpcomingLobbiesOfFriends,
-	resolveVisibleActiveLobbyIdsOfFriends,
+	resolveVisibleActiveLobbiesOfFriends,
 } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
@@ -77,11 +78,13 @@ export type SidebarFriend = {
 	avatar: CommonUser["avatar"];
 	url: string;
 	subtitle: string;
-	badge: string;
+	badge: string | null;
 	activityType: FriendActivityType | null;
 	matchId: number | null;
 	tournamentId: number | null;
 	lobbyId: number | null;
+	/** Present in a lobby with a free spot the viewer isn't in */
+	isInJoinableLobby: boolean;
 	stream: FriendActivity["stream"];
 };
 
@@ -120,7 +123,7 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 	const streamedSendouQMatches = await resolveSendouQMatchStreams();
 	const upcomingLobbiesOfFriends =
 		await resolveUpcomingLobbiesOfFriends(userId);
-	const visibleLobbyIds = await resolveVisibleActiveLobbyIdsOfFriends({
+	const visibleLobbies = await resolveVisibleActiveLobbiesOfFriends({
 		viewerId: userId,
 		friendIds: friendsWithActivity.map((friend) => friend.id),
 	});
@@ -174,7 +177,7 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 	const friends = resolveFriends({
 		friendsWithActivity,
 		streamedSendouQMatches,
-		visibleLobbyIds,
+		visibleLobbies,
 		upcomingLobbiesOfFriends,
 	});
 
@@ -365,14 +368,16 @@ type FriendWithActivity = Awaited<
 function resolveFriends({
 	friendsWithActivity,
 	streamedSendouQMatches,
-	visibleLobbyIds,
+	visibleLobbies,
 	upcomingLobbiesOfFriends,
 }: {
 	friendsWithActivity: FriendWithActivity[];
 	streamedSendouQMatches: Awaited<
 		ReturnType<typeof resolveSendouQMatchStreams>
 	>;
-	visibleLobbyIds: ReadonlySet<number>;
+	visibleLobbies: Awaited<
+		ReturnType<typeof resolveVisibleActiveLobbiesOfFriends>
+	>;
 	upcomingLobbiesOfFriends: Awaited<
 		ReturnType<typeof resolveUpcomingLobbiesOfFriends>
 	>;
@@ -385,7 +390,7 @@ function resolveFriends({
 			teamMemberCount: row.teamMemberCount,
 			tournamentMinTeamSize: row.tournamentMinTeamSize,
 			sendouQMatchStreams: streamedSendouQMatches,
-			visibleLobbyIds,
+			visibleLobbies,
 			upcomingLobby: upcomingLobbiesOfFriends.get(row.id),
 		});
 
@@ -399,7 +404,11 @@ function resolveFriends({
 	});
 
 	return orderSidebarFriends(entries).map(({ row, activity }) =>
-		rowToSidebarFriend(row, activity),
+		rowToSidebarFriend({
+			row,
+			activity,
+			isInJoinableLobby: isJoinableFriendLobby({ activity, visibleLobbies }),
+		}),
 	);
 }
 
@@ -455,21 +464,27 @@ export function orderSidebarFriends<T extends OrderableFriend>(entries: T[]) {
 	);
 }
 
-function rowToSidebarFriend(
-	row: FriendWithActivity,
-	activity: FriendActivity,
-): SidebarFriend {
+function rowToSidebarFriend({
+	row,
+	activity,
+	isInJoinableLobby,
+}: {
+	row: FriendWithActivity;
+	activity: FriendActivity;
+	isInJoinableLobby: boolean;
+}): SidebarFriend {
 	return {
 		id: row.id,
 		name: row.username,
 		avatar: row.avatar,
 		url: userPage({ id: row.id, customUrl: row.customUrl }),
 		subtitle: activity.subtitle ?? "",
-		badge: activity.badge ?? "",
+		badge: activity.badge,
 		activityType: activity.type,
 		matchId: activity.matchId,
 		tournamentId: activity.tournamentId ?? row.tournamentId,
 		lobbyId: activity.lobbyId,
+		isInJoinableLobby,
 		stream: activity.stream,
 	};
 }

@@ -37,6 +37,12 @@ describe("MapPool.fromUserInput", () => {
 		expect(result?.serialized).toBe(VALID_POOL);
 	});
 
+	test("extracts the pool param from a link without the protocol", () => {
+		const result = MapPool.fromUserInput(`sendou.ink/maps?pool=${VALID_POOL}`);
+
+		expect(result?.serialized).toBe(VALID_POOL);
+	});
+
 	test("returns null for a URL without a pool param", () => {
 		expect(MapPool.fromUserInput("https://sendou.ink/maps?other=1")).toBeNull();
 	});

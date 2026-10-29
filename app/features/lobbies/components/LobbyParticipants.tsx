@@ -1,11 +1,13 @@
-import clsx from "clsx";
-import { Check, Crown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { WeaponPool } from "~/components/match-page/WeaponPool";
 import type { LobbyParticipantStatus } from "../lobbies-constants";
 import { useLobbyView } from "../lobbies-hooks";
 import styles from "./LobbyParticipants.module.css";
-import { LobbyPlayer } from "./LobbyPlayer";
-import { LobbyPlayerMenu } from "./LobbyPlayerMenu";
+import { LobbyPlayerTable } from "./LobbyPlayerTable";
+
+type Participant = ReturnType<
+	typeof useLobbyView
+>["data"]["lobby"]["participants"][number];
 
 /** Everyone in the lobby before the room forms: who checked in, who signed up and the waitlist. */
 export function LobbyParticipants() {
@@ -29,16 +31,15 @@ export function LobbyParticipants() {
 					cap: data.lobby.roomSize,
 				})}
 			</div>
-			<ParticipantGroup
+			<LobbyParticipantTable
 				title={t("lobbies:participants.checkedIn")}
 				participants={withStatus("CHECKED_IN")}
-				isCheckedIn
 			/>
-			<ParticipantGroup
+			<LobbyParticipantTable
 				title={t("lobbies:participants.signedUp")}
 				participants={withStatus("REGISTERED")}
 			/>
-			<ParticipantGroup
+			<LobbyParticipantTable
 				title={t("lobbies:participants.waitlist")}
 				participants={withStatus("WAITLISTED")}
 				isNumbered
@@ -47,48 +48,33 @@ export function LobbyParticipants() {
 	);
 }
 
-function ParticipantGroup({
+/** Participants of the lobby a row each, with their weapon pool. */
+export function LobbyParticipantTable({
 	title,
 	participants,
-	isCheckedIn,
 	isNumbered,
 }: {
 	title: string;
-	participants: ReturnType<
-		typeof useLobbyView
-	>["data"]["lobby"]["participants"];
-	isCheckedIn?: boolean;
+	participants: Participant[];
 	isNumbered?: boolean;
 }) {
-	const { data } = useLobbyView();
-
-	if (participants.length === 0) return null;
+	const { t } = useTranslation(["lobbies"]);
 
 	return (
-		<section className={styles.group}>
-			<h3 className={styles.groupTitle}>{title}</h3>
-			<ol className={clsx(styles.list, { [styles.numbered]: isNumbered })}>
-				{participants.map((participant) => (
-					<li
-						key={participant.id}
-						className={styles.participant}
-						data-testid="lobby-participant"
-					>
-						<LobbyPlayerMenu userId={participant.id} />
-						<LobbyPlayer user={participant} />
-						{participant.id === data.lobby.hostUserId ? (
-							<Crown size={14} className="text-theme" aria-label="Host" />
-						) : null}
-						{isCheckedIn ? (
-							<Check
-								size={14}
-								className="text-success"
-								aria-label="Checked in"
-							/>
-						) : null}
-					</li>
-				))}
-			</ol>
-		</section>
+		<LobbyPlayerTable
+			title={title}
+			rows={participants.map((participant) => ({ user: participant }))}
+			isNumbered={isNumbered}
+			rowTestId="lobby-participant"
+			columns={[
+				{
+					header: t("lobbies:leaderboard.weapons"),
+					cell: ({ user }) =>
+						user.weaponPool.length > 0 ? (
+							<WeaponPool weapons={user.weaponPool} size={24} />
+						) : null,
+				},
+			]}
+		/>
 	);
 }

@@ -71,6 +71,9 @@ export function MessageLog({
 			case "CANCEL_REFUSED": {
 				return t("common:chat.systemMsg.cancelRefused", { name });
 			}
+			case "USER_JOINED": {
+				return t("common:chat.systemMsg.userJoined", { name });
+			}
 			case "USER_LEFT": {
 				return t("common:chat.systemMsg.userLeft", { name });
 			}
@@ -79,6 +82,12 @@ export function MessageLog({
 			}
 			case "HOST_CHANGED": {
 				return t("common:chat.systemMsg.hostChanged", { name });
+			}
+			case "SET_FORFEITED": {
+				return t("common:chat.systemMsg.setForfeited", { name });
+			}
+			case "SET_CALLED_OFF": {
+				return t("common:chat.systemMsg.setCalledOff", { name });
 			}
 			case "MAP_REPLAYED": {
 				return t("common:chat.systemMsg.mapReplayed", { name });

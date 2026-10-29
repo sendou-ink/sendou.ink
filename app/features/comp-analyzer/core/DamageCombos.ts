@@ -16,6 +16,7 @@ import {
 } from "~/features/build-analyzer/core/stats";
 import { weaponParams } from "~/features/build-analyzer/core/utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	COMBO_DAMAGE_THRESHOLD,
 	LETHAL_DAMAGE,
@@ -104,7 +105,7 @@ function weaponDamages(
 		});
 	}
 
-	const virtualCombos = VIRTUAL_DAMAGE_COMBOS[weaponId];
+	const virtualCombos = VIRTUAL_DAMAGE_COMBOS[weaponIdToBaseWeaponId(weaponId)];
 	if (virtualCombos) {
 		for (const combo of virtualCombos) {
 			const combinedValue = combo.damageTypes.reduce((sum, type) => {

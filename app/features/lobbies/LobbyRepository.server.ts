@@ -125,8 +125,8 @@ export async function findById(
 	};
 }
 
-/** Which of the lobbies the user may see, by visibility or as a participant. */
-export async function findAllVisibleIds({
+/** Which of the lobbies the user may see, by visibility or as a participant, and whether a spot in them is free. */
+export async function findAllVisible({
 	userId,
 	lobbyIds,
 }: {
@@ -138,23 +138,41 @@ export async function findAllVisibleIds({
 	const now = databaseTimestampNow();
 	const rows = await db
 		.selectFrom("Lobby")
-		.select("Lobby.id")
+		.select((eb) => [
+			"Lobby.id",
+			"Lobby.roomSize",
+			eb
+				.selectFrom("LobbyParticipant")
+				.select((innerEb) => innerEb.fn.countAll<number>().as("count"))
+				.whereRef("LobbyParticipant.lobbyId", "=", "Lobby.id")
+				.where("LobbyParticipant.status", "!=", "WAITLISTED")
+				.as("playerCount"),
+			isParticipant(eb, userId).as("isUserParticipant"),
+		])
 		.where("Lobby.id", "in", lobbyIds)
 		.where((eb) =>
 			eb.or([
 				visibleTo({ entity: "Lobby", viewerId: userId, now }),
-				eb.exists(
-					eb
-						.selectFrom("LobbyParticipant")
-						.select("LobbyParticipant.id")
-						.whereRef("LobbyParticipant.lobbyId", "=", "Lobby.id")
-						.where("LobbyParticipant.userId", "=", userId),
-				),
+				isParticipant(eb, userId),
 			]),
 		)
 		.execute();
 
-	return rows.map((row) => row.id);
+	return rows.map((row) => ({
+		id: row.id,
+		hasOpenSlot: (row.playerCount ?? 0) < row.roomSize,
+		isUserParticipant: Boolean(row.isUserParticipant),
+	}));
+}
+
+function isParticipant(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {
+	return eb.exists(
+		eb
+			.selectFrom("LobbyParticipant")
+			.select("LobbyParticipant.id")
+			.whereRef("LobbyParticipant.lobbyId", "=", "Lobby.id")
+			.where("LobbyParticipant.userId", "=", userId),
+	);
 }
 
 /** The lobby's own columns and participants, for deciding its next transition. No visibility scoping. */
@@ -169,6 +187,7 @@ export async function findProgressionStateById(id: number) {
 			"Lobby.bestOf",
 			"Lobby.modes",
 			"Lobby.roomSize",
+			"Lobby.chatRoomId",
 			"Lobby.pendingSince",
 			"Lobby.endedAt",
 			jsonArrayFrom(
@@ -741,7 +760,8 @@ export async function deleteParticipants(
 
 /**
  * Removes the user from the lobby right away. If they are playing an unfinished set (`unfinishedSetId`) it ends:
- * a decided result stands, one without a map reported is called off, otherwise their side forfeits.
+ * a decided result stands, one without a map reported is called off, otherwise their side forfeits. Returns how
+ * that set ended, `null` if there was none.
  */
 export function removeParticipant(args: ParticipantRemoval) {
 	return db
@@ -752,12 +772,14 @@ export function removeParticipant(args: ParticipantRemoval) {
 /** Removes the user from the lobby like {@link removeParticipant} and keeps them from signing up for it again. */
 export function kickParticipant(args: ParticipantRemoval) {
 	return db.transaction().execute(async (trx) => {
-		await deleteParticipantEndingSet(args, trx);
+		const setEnding = await deleteParticipantEndingSet(args, trx);
 		await trx
 			.insertInto("LobbyKickedUser")
 			.values({ lobbyId: args.lobbyId, userId: args.userId })
 			.onConflict((oc) => oc.columns(["lobbyId", "userId"]).doNothing())
 			.execute();
+
+		return setEnding;
 	});
 }
 
@@ -879,12 +901,15 @@ async function deleteParticipantEndingSet(
 	{ lobbyId, userId, unfinishedSetId }: ParticipantRemoval,
 	trx: Transaction<DB>,
 ) {
-	if (unfinishedSetId !== null) {
-		await LobbyMatchRepository.endLeftSet(
-			{ setId: unfinishedSetId, userId },
-			trx,
-		);
-	}
+	const setEnding =
+		unfinishedSetId !== null
+			? await LobbyMatchRepository.endLeftSet(
+					{ setId: unfinishedSetId, userId },
+					trx,
+				)
+			: null;
 
 	await deleteParticipants({ lobbyId, userIds: [userId] }, trx);
+
+	return setEnding;
 }

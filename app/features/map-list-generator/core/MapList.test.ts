@@ -217,12 +217,26 @@ describe("MapList.generate()", () => {
 			expect(maps[0].mode).toBe("TW"); // pattern has priority
 		});
 
-		test("handles more must include modes than amount", () => {
+		test("keeps the must include mode that comes first in mode order when there are more of them than amount", () => {
 			const gen = initGenerator();
-			const maps = gen.next({ amount: 1, pattern: "[TW][SZ]" }).value;
+			for (let i = 0; i < 50; i++) {
+				const maps = gen.next({ amount: 1, pattern: "[SZ][TW]" }).value;
 
-			expect(maps).toHaveLength(1);
-			expect(["TW", "SZ"]).toContain(maps[0].mode);
+				expect(maps).toHaveLength(1);
+				expect(maps[0].mode).toBe("TW");
+			}
+		});
+
+		test("includes every must include mode when the amount has room for all of them", () => {
+			const gen = initGenerator();
+			for (let i = 0; i < 100; i++) {
+				const modes = gen
+					.next({ amount: 3, pattern: "[TC][RM]" })
+					.value.map((map) => map.mode);
+
+				expect(modes).toContain("TC");
+				expect(modes).toContain("RM");
+			}
 		});
 
 		test("ignores a mode in the pattern not in the map pool", () => {

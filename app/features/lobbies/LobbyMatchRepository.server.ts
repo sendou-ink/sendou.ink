@@ -208,6 +208,9 @@ export function insertSet({
 
 type ReportResult = "REPORTED" | "STALE" | "NOT_ALLOWED";
 
+/** How a set ends when one of its players leaves, see {@link endLeftSet}. */
+export type LeftSetEnding = "CONFIRMED" | "CALLED_OFF" | "FORFEITED";
+
 /**
  * Reports the winner of the set's current map as the actor (`reportedByUserId`). `reportedCount` is how many
  * maps the reporter saw reported, a mismatch means someone else reported in between.
@@ -225,8 +228,9 @@ export function reportGame({
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
-		if (!set || !LobbySet.canReport(set, userId)) return "NOT_ALLOWED";
+		if (!set) return "NOT_ALLOWED";
 		if (LobbySet.reportedCount(set) !== reportedCount) return "STALE";
+		if (!LobbySet.canReport(set, userId)) return "NOT_ALLOWED";
 
 		const index = LobbySet.currentGameIndex(set);
 		if (index === null) return "NOT_ALLOWED";
@@ -261,10 +265,9 @@ export function undoLatestReport({
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
-		if (!set || !LobbySet.canUndo(set, userId, { isHost })) {
-			return "NOT_ALLOWED";
-		}
+		if (!set) return "NOT_ALLOWED";
 		if (LobbySet.reportedCount(set) !== reportedCount) return "STALE";
+		if (!LobbySet.canUndo(set, userId, { isHost })) return "NOT_ALLOWED";
 
 		const game = set.games.findLast(
 			(candidate) => candidate.winnerSide !== null,
@@ -298,6 +301,7 @@ export function confirmSet(setId: number): Promise<ReportResult> {
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
+		if (set && LobbySet.status(set) === "CONFIRMED") return "STALE";
 		if (!set || !LobbySet.canConfirm(set, userId)) return "NOT_ALLOWED";
 
 		await trx
@@ -316,6 +320,7 @@ export function confirmDisputedSet(setId: number): Promise<ReportResult> {
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
+		if (set && LobbySet.status(set) === "CONFIRMED") return "STALE";
 		if (!set || LobbySet.status(set) !== "DISPUTED") return "NOT_ALLOWED";
 
 		await trx
@@ -334,6 +339,7 @@ export function disputeSet(setId: number): Promise<ReportResult> {
 
 	return db.transaction().execute(async (trx) => {
 		const set = await findSetForUpdate(setId, trx);
+		if (set && LobbySet.status(set) === "DISPUTED") return "STALE";
 		if (!set || !LobbySet.canDispute(set, userId)) return "NOT_ALLOWED";
 
 		await trx
@@ -348,37 +354,40 @@ export function disputeSet(setId: number): Promise<ReportResult> {
 
 /**
  * Ends the user's unfinished set because they left: a decided result stands as if confirmed, a set without a
- * map reported is called off (deleted), otherwise their side forfeits. Does nothing if they aren't playing an
- * unfinished set.
+ * map reported is called off (deleted), otherwise their side forfeits. Returns how the set ended, `null` if they
+ * weren't playing an unfinished set.
  */
 export async function endLeftSet(
 	{ setId, userId }: { setId: number; userId: number },
 	trx?: Transaction<DB>,
-) {
+): Promise<LeftSetEnding | null> {
 	const executor = trx ?? db;
 	const set = await findSetForUpdate(setId, executor);
-	if (!set || LobbySet.isFinished(set)) return;
+	if (!set || LobbySet.isFinished(set)) return null;
 
 	const side = LobbySet.sideOf(set, userId);
-	if (!side) return;
+	if (!side) return null;
 
 	if (LobbySet.reportedCount(set) === 0) {
 		await executor
 			.deleteFrom("LobbySet")
 			.where("LobbySet.id", "=", setId)
 			.execute();
-		return;
+		return "CALLED_OFF";
 	}
 
+	const isDecided = LobbySet.winnerSide(set) !== null;
 	await executor
 		.updateTable("LobbySet")
 		.set(
-			LobbySet.winnerSide(set)
+			isDecided
 				? { confirmedAt: databaseTimestampNow() }
 				: { forfeitingSide: side },
 		)
 		.where("LobbySet.id", "=", setId)
 		.execute();
+
+	return isDecided ? "CONFIRMED" : "FORFEITED";
 }
 
 /** Starts a ready check filling the room's vacant slots from the waitlist (`userIds`). */

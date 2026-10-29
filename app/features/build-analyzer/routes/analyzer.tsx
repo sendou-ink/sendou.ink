@@ -640,18 +640,11 @@ function BuildAnalyzerPage({ mainWeaponId }: { mainWeaponId: MainWeaponId }) {
 							<StatCard
 								context={context}
 								stat={statKeyToTuple("specialDamageDistance")}
-								title={t(
-									specialHasLethalDamageDistance(
-										analyzed.stats.specialWeaponDamages,
-									)
-										? "analyzer:stat.special.nonLethalDamageDistance"
-										: "analyzer:stat.special.damageDistance",
-									{
-										weapon: t(
-											`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-										),
-									},
-								)}
+								title={t("analyzer:stat.special.damageDistance", {
+									weapon: t(
+										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
+									),
+								})}
 							/>
 						) : null}
 						{analyzed.stats.specialPaintRadius ? (
@@ -2010,16 +2003,5 @@ function ConsumptionTable({
 				</div>
 			) : null}
 		</>
-	);
-}
-
-function specialHasLethalDamageDistance(
-	damages: AnalyzedBuild["stats"]["specialWeaponDamages"],
-) {
-	return damages.some(
-		(damage) =>
-			damage.value >= 100 &&
-			typeof damage.distance === "number" &&
-			damage.distance > 0,
 	);
 }

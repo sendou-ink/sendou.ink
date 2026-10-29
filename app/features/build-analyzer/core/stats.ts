@@ -595,14 +595,10 @@ function specialWeaponDamages(
 
 			if (Array.isArray(value)) {
 				for (const subValue of value.flat()) {
-					const isLethal = subValue.Damage >= 1000;
-
 					result.push({
 						type,
 						value: subValue.Damage / 10,
-						distance: isLethal
-							? subValue.Distance
-							: roundToNDecimalPlaces(subValue.Distance * distanceRate),
+						distance: roundToNDecimalPlaces(subValue.Distance * distanceRate),
 						id: nanoid(),
 						multiShots: weaponIdToMultiShotCount(args.weaponSplId),
 					});

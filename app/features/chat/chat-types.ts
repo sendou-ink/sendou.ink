@@ -14,9 +14,12 @@ export type ChatRoomType =
 	| "LOBBY_TEAM";
 
 export type SystemMessageType =
+	| "USER_JOINED"
 	| "USER_LEFT"
 	| "LEAVING_AFTER_SET"
 	| "HOST_CHANGED"
+	| "SET_FORFEITED"
+	| "SET_CALLED_OFF"
 	| "MATCH_STARTED"
 	| "READY_CHECK_STARTED"
 	| "LIKE_RECEIVED"
@@ -44,9 +47,12 @@ export type PersistedSystemMessageType = Extract<
 	| "CANCEL_REPORTED"
 	| "CANCEL_CONFIRMED"
 	| "CANCEL_REFUSED"
+	| "USER_JOINED"
 	| "USER_LEFT"
 	| "LEAVING_AFTER_SET"
 	| "HOST_CHANGED"
+	| "SET_FORFEITED"
+	| "SET_CALLED_OFF"
 	| "MAP_REPLAYED"
 	| "MAP_PICKED"
 	| "MAP_BANNED"

@@ -629,13 +629,11 @@ function tournamentResults({
 			divisionParticipantCount = teams.filter(
 				(t) => t.abDivision === team.abDivision,
 			).length;
-		} else if (
-			isMultiStartingBracket &&
-			typeof team.startingBracketIdx === "number"
-		) {
-			div = getBracketProgressionLabel(team.startingBracketIdx, progression);
+		} else if (isMultiStartingBracket) {
+			const startingBracketIdx = team.startingBracketIdx ?? 0;
+			div = getBracketProgressionLabel(startingBracketIdx, progression);
 			divisionParticipantCount = teams.filter(
-				(t) => t.startingBracketIdx === team.startingBracketIdx,
+				(t) => (t.startingBracketIdx ?? 0) === startingBracketIdx,
 			).length;
 		}
 

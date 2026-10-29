@@ -1,10 +1,15 @@
 import clsx from "clsx";
 import { differenceInSeconds } from "date-fns";
-import { LogOut } from "lucide-react";
+import { DoorOpen, Flag, LogOut, MoreHorizontal, Undo2 } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { useUser } from "~/features/auth/core/user";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import * as LobbySet from "../core/LobbySet";
@@ -104,6 +109,7 @@ export function LobbyViewerPanel() {
 						action="TOGGLE_DROP_AFTER_SET"
 						size="small"
 						variant="outlined"
+						icon={viewer.isDroppingAfterSet ? <Undo2 /> : <DoorOpen />}
 						testId="lobby-drop-after-set-button"
 					>
 						{viewer.isDroppingAfterSet
@@ -111,22 +117,8 @@ export function LobbyViewerPanel() {
 							: t("lobbies:actions.dropAfterSet")}
 					</ActionButton>
 				) : null}
-				{isLeaveForfeiting ? (
-					<ActionButton
-						schema={lobbyActionSchema}
-						action="LEAVE"
-						size="small"
-						variant="minimal-destructive"
-						icon={<LogOut />}
-						aria-label={t("lobbies:actions.forfeitAndLeave")}
-						testId="lobby-leave-button"
-						confirm={{
-							dialogHeading: t("lobbies:leave.forfeitHeading"),
-							description: t("lobbies:leave.forfeitWarning"),
-							submitButtonText: t("lobbies:actions.forfeitAndLeave"),
-							submitButtonVariant: "destructive",
-						}}
-					/>
+				{viewer.isPlayingUnfinishedSet ? (
+					<LeaveNowMenu isForfeiting={isLeaveForfeiting} />
 				) : (
 					<ActionButton
 						schema={lobbyActionSchema}
@@ -137,9 +129,6 @@ export function LobbyViewerPanel() {
 						testId="lobby-leave-button"
 						confirm={{
 							dialogHeading: t("lobbies:leave.heading"),
-							description: viewer.isPlayingUnfinishedSet
-								? t("lobbies:leave.callOffWarning")
-								: undefined,
 							submitButtonText: t("lobbies:actions.leave"),
 							submitButtonVariant: "destructive",
 						}}
@@ -149,6 +138,58 @@ export function LobbyViewerPanel() {
 				)}
 			</div>
 		</div>
+	);
+}
+
+/** Menu with the viewer's option to leave mid-set, kept out of sight so it isn't pressed by accident. */
+function LeaveNowMenu({ isForfeiting }: { isForfeiting: boolean }) {
+	const { t } = useTranslation(["lobbies"]);
+	const [isConfirming, setIsConfirming] = React.useState(false);
+	const { submit } = useActionSubmit(lobbyActionSchema);
+
+	const leaveNowText = isForfeiting
+		? t("lobbies:actions.leaveNowForfeit")
+		: t("lobbies:actions.leaveNowCallOff");
+
+	return (
+		<>
+			<SendouMenu
+				trigger={
+					<SendouButton
+						size="small"
+						variant="minimal"
+						icon={<MoreHorizontal />}
+						aria-label="More actions"
+						testId="lobby-viewer-menu-button"
+					/>
+				}
+			>
+				<SendouMenuItem
+					icon={<Flag />}
+					isDestructive
+					onAction={() => setIsConfirming(true)}
+					data-testid="lobby-leave-now-menu-item"
+				>
+					{leaveNowText}
+				</SendouMenuItem>
+			</SendouMenu>
+			<FormWithConfirm
+				isOpen={isConfirming}
+				onOpenChange={setIsConfirming}
+				dialogHeading={
+					isForfeiting
+						? t("lobbies:leave.forfeitHeading")
+						: t("lobbies:leave.heading")
+				}
+				description={
+					isForfeiting
+						? t("lobbies:leave.forfeitWarning")
+						: t("lobbies:leave.callOffWarning")
+				}
+				submitButtonText={leaveNowText}
+				onConfirm={() => submit("LEAVE")}
+			/>
+		</>
 	);
 }
 

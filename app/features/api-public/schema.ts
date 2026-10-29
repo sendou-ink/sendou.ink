@@ -150,7 +150,12 @@ export type GetTournamentTeamsResponse = Array<{
 	teamPageUrl: string | null;
 	/** Pickup team logos are only shown before the tournament starts to organizers and the team's own members. @example "https://sendou.nyc3.cdn.digitaloceanspaces.com/pickup-logo-uReSb1b1XS3TWGLCKMDUD-1719054364813.webp" */
 	logoUrl: string | null;
+	/** Seed of the team. Once the tournament has started, numbered within its starting bracket (division). */
 	seed: number | null;
+	/** Index of the bracket the team starts in, in `brackets` of GET /api/tournament/{tournamentId}. Always 0 unless the tournament has several starting brackets (divisions). */
+	startingBracketIdx: number;
+	/** Division of the team as shown on the site, derived from the names of its starting bracket and the brackets it leads to. Null if the tournament has only one starting bracket. @example "Division 1" */
+	division: string | null;
 	/** Overall placement in the tournament. Null while the team is still playing. @example 5 */
 	placement: number | null;
 	/** Sets and maps the team has won and lost across every bracket it played. Null before the tournament has started. */

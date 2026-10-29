@@ -67,6 +67,13 @@ describe("queryToUserIdentifier()", () => {
 			discordId: "79237403620945920",
 		});
 	});
+
+	test.each(["7.", "-2", ".60", "9.0", "Infinity"])(
+		"leaves a non-integer numeric looking username to the name search (%s)",
+		(query) => {
+			expect(queryToUserIdentifier(query)).toBe(null);
+		},
+	);
 });
 
 describe("userDiscordIdIsAged()", () => {

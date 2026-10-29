@@ -19,7 +19,7 @@ const SECONDS_PER_DAY = 24 * 60 * 60;
 /** Before the room forms: time left until the start and when check-in opens or, once open, how many of those needed have checked in. */
 export function LobbyStartBanner() {
 	const { t } = useTranslation(["lobbies"]);
-	const { data } = useLobbyView();
+	const { data, joinInfo } = useLobbyView();
 	const now = useAutoRerender("second");
 	const formatDistanceToNow = useFormatDistanceToNow();
 	const { formatter: timeFormatter } = useDateTimeFormat({
@@ -74,6 +74,8 @@ export function LobbyStartBanner() {
 								needed: PLAYERS_PER_SET,
 							})
 				}
+				joinPool={joinInfo?.pool}
+				joinPass={joinInfo?.pass}
 				testId="lobby-start-banner"
 			/>
 		</MatchBannerContainer>

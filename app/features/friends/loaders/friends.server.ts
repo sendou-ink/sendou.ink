@@ -12,7 +12,7 @@ import {
 	resolveFriendActivity,
 	resolveSendouQMatchStreams,
 	resolveUpcomingLobbiesOfFriends,
-	resolveVisibleActiveLobbyIdsOfFriends,
+	resolveVisibleActiveLobbiesOfFriends,
 } from "../friends-utils.server";
 
 export type FriendsLoaderData = typeof loader;
@@ -30,14 +30,14 @@ export const loader = async () => {
 		incomingRequests,
 		streamedSendouQMatches,
 		upcomingLobbiesOfFriends,
-		visibleLobbyIds,
+		visibleLobbies,
 		schedules,
 	] = await Promise.all([
 		FriendRepository.findPendingSentRequests(user.id),
 		FriendRepository.findPendingReceivedRequests(user.id),
 		resolveSendouQMatchStreams(),
 		resolveUpcomingLobbiesOfFriends(user.id),
-		resolveVisibleActiveLobbyIdsOfFriends({
+		resolveVisibleActiveLobbiesOfFriends({
 			viewerId: user.id,
 			friendIds: unique.map((f) => f.id),
 		}),
@@ -59,7 +59,7 @@ export const loader = async () => {
 					teamMemberCount: friend.teamMemberCount,
 					tournamentMinTeamSize: friend.tournamentMinTeamSize,
 					sendouQMatchStreams: streamedSendouQMatches,
-					visibleLobbyIds,
+					visibleLobbies,
 					upcomingLobby: upcomingLobbiesOfFriends.get(friend.id),
 				});
 
@@ -101,7 +101,7 @@ export const loader = async () => {
 					teamMemberCount: tm.teamMemberCount,
 					tournamentMinTeamSize: tm.tournamentMinTeamSize,
 					sendouQMatchStreams: streamedSendouQMatches,
-					visibleLobbyIds,
+					visibleLobbies,
 					upcomingLobby: upcomingLobbiesOfFriends.get(tm.id),
 				});
 

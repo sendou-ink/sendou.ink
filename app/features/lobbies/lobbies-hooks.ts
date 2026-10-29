@@ -1,4 +1,5 @@
 import { useLoaderData } from "react-router";
+import { resolveRoomPass } from "~/components/match-page/utils";
 import type { LobbyLoaderData, loader } from "./loaders/lobbies.$id.server";
 
 export type LobbySetData = LobbyLoaderData["sets"][number];
@@ -18,6 +19,8 @@ export function useLobbyView() {
 			? participant.status === "WAITLISTED"
 			: participant.status !== "IN_ROOM",
 	);
+	const hasPlaceInRoom =
+		data.viewer?.status === (isBeforeStart ? "CHECKED_IN" : "IN_ROOM");
 
 	return {
 		data,
@@ -28,6 +31,12 @@ export function useLobbyView() {
 		/** The room has formed at some point */
 		hasStarted: roomMembers.length > 0 || currentSet !== null,
 		viewerSide: data.viewer?.side ?? null,
-		isViewerInRoom: data.viewer?.status === "IN_ROOM",
+		/** The in-game private battle to join, shown to those with a place in the room */
+		joinInfo: hasPlaceInRoom
+			? {
+					pool: `LB${(data.lobby.id % 9) + 1}`,
+					pass: resolveRoomPass(data.lobby.id),
+				}
+			: null,
 	};
 }

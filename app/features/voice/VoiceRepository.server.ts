@@ -496,6 +496,19 @@ export async function markSessionsLeft({
 		.execute();
 }
 
+export async function findConnectedUserIds(roomId: number) {
+	const rows = await db
+		.selectFrom("VoiceSession")
+		.select("VoiceSession.userId")
+		.distinct()
+		.where("VoiceSession.roomId", "=", roomId)
+		.where("VoiceSession.leftAt", "is", null)
+		.where("VoiceSession.connectedAt", "is not", null)
+		.execute();
+
+	return rows.map((row) => row.userId);
+}
+
 /** Whether the user is in the rooms call through a Daily session other than the given one, like after rejoining. */
 export async function hasOtherConnectedSession({
 	roomId,

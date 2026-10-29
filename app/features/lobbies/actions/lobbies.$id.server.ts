@@ -18,6 +18,7 @@ import { assertUnreachable } from "~/utils/types";
 import * as LobbyProgression from "../core/LobbyProgression.server";
 import * as LobbySet from "../core/LobbySet";
 import * as LobbyState from "../core/LobbyState";
+import * as LobbyVoice from "../core/LobbyVoice.server";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
 import type { LobbyBestOf } from "../lobbies-constants";
@@ -107,6 +108,13 @@ export const action = defineAction(
 						userId: user.id,
 					});
 				}
+				if (hasStarted && lobby.chatRoomId) {
+					void ChatSystemMessage.sendPersisted({
+						roomId: lobby.chatRoomId,
+						type: "USER_JOINED",
+						authorUserId: user.id,
+					});
+				}
 				break;
 			}
 			case "CHECK_IN": {
@@ -156,10 +164,25 @@ export const action = defineAction(
 			case "LEAVE": {
 				errorToastIfFalsy(viewer, "Not signed up");
 
-				await LobbyRepository.removeParticipant({
+				const setEnding = await LobbyRepository.removeParticipant({
 					lobbyId: id,
 					userId: user.id,
 					unfinishedSetId: unfinishedSetIdOf(viewer),
+				});
+				sendSetEndingMessage({
+					chatRoomId: lobby.chatRoomId,
+					userId: user.id,
+					setEnding,
+				});
+				LobbyVoice.ejectLeavers({
+					lobby: {
+						chatRoomId: lobby.chatRoomId,
+						participantUserIds: lobby.participants.map(
+							(participant) => participant.id,
+						),
+					},
+					latestSet: sets.at(-1),
+					userIds: [user.id],
 				});
 				break;
 			}
@@ -211,12 +234,14 @@ export const action = defineAction(
 			case "CONFIRM_SET": {
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.confirmSet(set.id);
+				if (result === "STALE") return null;
 				if (result === "NOT_ALLOWED") return errorToast("Can't confirm");
 				break;
 			}
 			case "DISPUTE_SET": {
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.disputeSet(set.id);
+				if (result === "STALE") return null;
 				if (result === "NOT_ALLOWED") return errorToast("Can't dispute");
 				break;
 			}
@@ -224,6 +249,7 @@ export const action = defineAction(
 				requirePermission(lobby, "MANAGE");
 				const set = setOfLobby(body.setId);
 				const result = await LobbyMatchRepository.confirmDisputedSet(set.id);
+				if (result === "STALE") return null;
 				if (result === "NOT_ALLOWED") return errorToast("Can't confirm");
 				break;
 			}
@@ -265,10 +291,25 @@ export const action = defineAction(
 					),
 				);
 
-				await LobbyRepository.kickParticipant({
+				const setEnding = await LobbyRepository.kickParticipant({
 					lobbyId: id,
 					userId: target.id,
 					unfinishedSetId: unfinishedSetIdOf(target),
+				});
+				sendSetEndingMessage({
+					chatRoomId: lobby.chatRoomId,
+					userId: target.id,
+					setEnding,
+				});
+				LobbyVoice.ejectLeavers({
+					lobby: {
+						chatRoomId: lobby.chatRoomId,
+						participantUserIds: lobby.participants.map(
+							(participant) => participant.id,
+						),
+					},
+					latestSet: sets.at(-1),
+					userIds: [target.id],
 				});
 				break;
 			}
@@ -334,6 +375,25 @@ export const action = defineAction(
 		return null;
 	},
 );
+
+function sendSetEndingMessage({
+	chatRoomId,
+	userId,
+	setEnding,
+}: {
+	chatRoomId: number | null;
+	userId: number;
+	setEnding: LobbyMatchRepository.LeftSetEnding | null;
+}) {
+	if (!chatRoomId) return;
+	if (setEnding !== "FORFEITED" && setEnding !== "CALLED_OFF") return;
+
+	void ChatSystemMessage.sendPersisted({
+		roomId: chatRoomId,
+		type: setEnding === "FORFEITED" ? "SET_FORFEITED" : "SET_CALLED_OFF",
+		authorUserId: userId,
+	});
+}
 
 /** The latest set the user played a side of, the one whose weapons they report. */
 function latestPlayedSetOf(

@@ -12,7 +12,6 @@ import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomR
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
-import { resolveRoomPass } from "~/components/match-page/utils";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import * as LobbySet from "../core/LobbySet";
@@ -21,8 +20,7 @@ import { type LobbySetData, useLobbyView } from "../lobbies-hooks";
 
 export function LobbyMatchBanner() {
 	const { t } = useTranslation(["lobbies"]);
-	const { data, currentSet, roomMembers, waitlist, isViewerInRoom } =
-		useLobbyView();
+	const { data, currentSet, roomMembers, waitlist, joinInfo } = useLobbyView();
 
 	if (data.lobby.endedAt !== null) {
 		return (
@@ -36,8 +34,6 @@ export function LobbyMatchBanner() {
 			</MatchBannerContainer>
 		);
 	}
-
-	const joinPool = isViewerInRoom ? `LB${(data.lobby.id % 9) + 1}` : null;
 
 	if (!currentSet || LobbySet.isFinished(currentSet)) {
 		const playableCount = roomMembers.filter(
@@ -63,14 +59,14 @@ export function LobbyMatchBanner() {
 							? t("lobbies:banner.waitingForPlayers.subtitle")
 							: undefined
 					}
-					joinPool={joinPool}
+					joinPool={joinInfo?.pool}
+					joinPass={joinInfo?.pass}
 					testId="lobby-waiting-banner"
 				/>
 			</MatchBannerContainer>
 		);
 	}
 
-	const joinPass = isViewerInRoom ? resolveRoomPass(data.lobby.id) : null;
 	const currentIndex = LobbySet.currentGameIndex(currentSet);
 	const currentGame =
 		currentIndex !== null ? currentSet.games[currentIndex] : null;
@@ -111,8 +107,8 @@ export function LobbyMatchBanner() {
 			<MatchBanner
 				stageId={currentGame.stageId}
 				mode={currentGame.mode}
-				joinPool={joinPool}
-				joinPass={joinPass}
+				joinPool={joinInfo?.pool}
+				joinPass={joinInfo?.pass}
 			/>
 			{bottomRow}
 		</MatchBannerContainer>

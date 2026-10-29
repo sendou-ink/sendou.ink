@@ -11,9 +11,10 @@ import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTo
 import { runningTournamentWithMatch } from "~/features/tournament-bracket/core/tests/test-utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
+	isJoinableFriendLobby,
 	resolveFriendActivity,
 	resolveUpcomingLobbiesOfFriends,
-	resolveVisibleActiveLobbyIdsOfFriends,
+	resolveVisibleActiveLobbiesOfFriends,
 } from "./friends-utils.server";
 
 const users = UserFactory.pool();
@@ -85,6 +86,34 @@ describe("resolveFriendActivity", () => {
 	});
 });
 
+describe("isJoinableFriendLobby", () => {
+	beforeEach(async () => {
+		await users.create(9);
+		RunningTournaments.clear();
+		await refreshSendouQInstance();
+	});
+
+	test("a lobby with a free spot is joinable", async () => {
+		await friendInStartedLobby();
+
+		expect(await isFriendLobbyJoinable()).toBe(true);
+	});
+
+	test("a full lobby is not joinable", async () => {
+		await friendInStartedLobby(null, {
+			signedUpUserIds: users.ids(9).slice(2),
+		});
+
+		expect(await isFriendLobbyJoinable()).toBe(false);
+	});
+
+	test("a lobby the viewer is already in is not joinable", async () => {
+		await friendInStartedLobby(null, { signedUpUserIds: [viewerId()] });
+
+		expect(await isFriendLobbyJoinable()).toBe(false);
+	});
+});
+
 describe("resolveUpcomingLobbiesOfFriends", () => {
 	beforeEach(async () => {
 		await users.create(3);
@@ -113,6 +142,7 @@ describe("resolveUpcomingLobbiesOfFriends", () => {
 
 async function friendInStartedLobby(
 	visibility: { forAssociation: number } | null = null,
+	{ signedUpUserIds }: { signedUpUserIds?: number[] } = {},
 ) {
 	const lobby = await LobbyFactory.create(
 		{
@@ -120,7 +150,7 @@ async function friendInStartedLobby(
 			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
 			visibility,
 		},
-		{ checkedInUserIds: [friendId()] },
+		{ signedUpUserIds, checkedInUserIds: [friendId()] },
 	);
 	await LobbyActivity.refresh();
 
@@ -135,10 +165,21 @@ async function activityOfFriend(upcomingLobby?: typeof UPCOMING_LOBBY) {
 		teamMemberCount: null,
 		tournamentMinTeamSize: null,
 		sendouQMatchStreams: new Map(),
-		visibleLobbyIds: await resolveVisibleActiveLobbyIdsOfFriends({
-			viewerId: viewerId(),
-			friendIds: [friendId()],
-		}),
+		visibleLobbies: await visibleLobbiesOfFriend(),
 		upcomingLobby,
+	});
+}
+
+async function isFriendLobbyJoinable() {
+	return isJoinableFriendLobby({
+		activity: await activityOfFriend(),
+		visibleLobbies: await visibleLobbiesOfFriend(),
+	});
+}
+
+function visibleLobbiesOfFriend() {
+	return resolveVisibleActiveLobbiesOfFriends({
+		viewerId: viewerId(),
+		friendIds: [friendId()],
 	});
 }

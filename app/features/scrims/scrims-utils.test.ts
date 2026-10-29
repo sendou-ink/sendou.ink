@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	formatFlexTimeDisplay,
@@ -162,6 +162,34 @@ describe("generateTimeOptions", () => {
 		const result = generateTimeOptions(start, end);
 
 		expect(result.length).toBe(7);
+	});
+
+	describe("across timezones", () => {
+		const originalTimezone = process.env.TZ;
+
+		afterEach(() => {
+			if (originalTimezone === undefined) {
+				delete process.env.TZ;
+			} else {
+				process.env.TZ = originalTimezone;
+			}
+		});
+
+		// the request dialog generates the options in the browser, the action re-generates them on the server to validate the pick
+		test("offers the same start times in a browser at a :45 UTC offset as the server accepts", () => {
+			const start = new Date("2026-10-30T19:00:00Z");
+			const end = new Date("2026-10-30T20:00:00Z");
+
+			process.env.TZ = "Asia/Kathmandu";
+			const offeredInBrowser = generateTimeOptions(start, end);
+
+			process.env.TZ = "UTC";
+			const acceptedOnServer = generateTimeOptions(start, end);
+
+			expect(offeredInBrowser.map((t) => new Date(t).toISOString())).toEqual(
+				acceptedOnServer.map((t) => new Date(t).toISOString()),
+			);
+		});
 	});
 });
 

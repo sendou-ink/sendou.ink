@@ -1,11 +1,14 @@
 import { TIMEZONES } from "../lfg-constants";
 
-const HOUR_IN_MS = 60 * 60 * 1000;
+const QUARTER_HOUR_IN_MS = 15 * 60 * 1000;
 
 // building a formatter is the expensive part of resolving an offset and one stays valid forever
 const formatters = new Map<string, Intl.DateTimeFormat>();
-// offsets change only at DST transitions, which happen on the hour
-const offsetsThisHour = new Map<string, { hour: number; offset: number }>();
+// offsets change only at DST transitions, which happen on a quarter hour in UTC (e.g. Adelaide at :30)
+const offsetsThisQuarterHour = new Map<
+	string,
+	{ quarterHour: number; offset: number }
+>();
 
 /** Hours between the local clock times of two timezones, wrapped to [-12, 12]. */
 export function hourDifferenceBetweenTimezones(
@@ -32,13 +35,13 @@ export function timezonesWithinHours(
 }
 
 function getTimezoneOffset(timeZone: string) {
-	const hour = Math.floor(Date.now() / HOUR_IN_MS);
+	const quarterHour = Math.floor(Date.now() / QUARTER_HOUR_IN_MS);
 
-	const cached = offsetsThisHour.get(timeZone);
-	if (cached?.hour === hour) return cached.offset;
+	const cached = offsetsThisQuarterHour.get(timeZone);
+	if (cached?.quarterHour === quarterHour) return cached.offset;
 
 	const offset = resolveTimezoneOffset(timeZone);
-	offsetsThisHour.set(timeZone, { hour, offset });
+	offsetsThisQuarterHour.set(timeZone, { quarterHour, offset });
 
 	return offset;
 }

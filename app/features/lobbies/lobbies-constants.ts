@@ -7,8 +7,8 @@ export type LobbyBestOf = (typeof LOBBY_BEST_OFS)[number];
 export const LOBBY_INDEX_TABS = ["running", "upcoming", "ended"] as const;
 export type LobbyIndexTab = (typeof LOBBY_INDEX_TABS)[number];
 
-export const LOBBY_ROOM_SIZES = [8, 9, 10] as const;
-export type LobbyRoomSize = (typeof LOBBY_ROOM_SIZES)[number];
+export const LOBBY_SPECTATOR_COUNTS = [0, 1, 2] as const;
+export type LobbyRoomSize = 8 | 9 | 10;
 
 /** Players needed for a set, 4v4 */
 export const PLAYERS_PER_SET = 8;

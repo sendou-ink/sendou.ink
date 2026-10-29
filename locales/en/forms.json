@@ -510,8 +510,8 @@
 	"bottomTexts.lobbyStart": "Check-in opens 10 minutes before the start",
 	"labels.lobbyBestOf": "Best of",
 	"labels.lobbyModes": "Modes",
-	"labels.lobbyRoomSize": "Room size",
-	"bottomTexts.lobbyRoomSize": "8 players play each set, the rest of the room spectates and rotates in. Everyone else joins the waitlist",
+	"labels.lobbySpectators": "Spectators",
+	"bottomTexts.lobbySpectators": "Players in the room on top of the 8 playing. Spectators rotate in every set, so a different player sits out each time. Everyone else joins the waitlist",
 	"errors.dateAfterLobbyStart": "Date can not be after the lobby's start",
 	"errors.canNotSetIfStartingNow": "Can not be set if starting now"
 }

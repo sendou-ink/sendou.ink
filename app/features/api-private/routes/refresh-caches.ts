@@ -2,6 +2,7 @@ import * as v from "valibot";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { DANGEROUS_setVotingActiveOverride } from "~/features/plus-voting/core/voting-time";
+import * as VoicePresence from "~/features/voice/core/VoicePresence.server";
 import { defineAction } from "~/form/define-action.server";
 import { badRequest } from "~/utils/remix.server";
 import { refreshCaches } from "../core/refresh-caches.server";
@@ -22,6 +23,7 @@ export const action = defineAction(
 		if (body.resetDevOverrides === "true") {
 			Seasons.DANGEROUS_setSeasonEndedOverride(false);
 			DANGEROUS_setVotingActiveOverride(false);
+			VoicePresence.clearAll();
 		}
 
 		await refreshCaches();

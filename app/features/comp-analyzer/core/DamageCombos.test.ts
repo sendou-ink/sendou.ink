@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	COMBO_DAMAGE_THRESHOLD,
 	MAX_COMBOS_DISPLAYED,
@@ -494,6 +495,16 @@ describe("virtual damage combos", () => {
 		const expectedComboValue =
 			(directDamage?.value ?? 0) + (distanceDamage?.value ?? 0);
 		expect(comboDamage?.value).toBeCloseTo(expectedComboValue, 1);
+	});
+
+	test("Custom Explosher has the same COMBO damage as Explosher", () => {
+		const CUSTOM_EXPLOSHER_ID = 3041;
+		const comboOf = (weaponId: MainWeaponId) =>
+			DamageCombos.damageSources([weaponId])[0]
+				.damages.filter((d) => d.weaponType === "MAIN")
+				.find((d) => d.type === "COMBO")?.value;
+
+		expect(comboOf(CUSTOM_EXPLOSHER_ID)).toBe(comboOf(EXPLOSHER_ID));
 	});
 
 	test("COMBO damage appears in damage combos", () => {

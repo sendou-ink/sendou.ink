@@ -729,6 +729,61 @@ describe("tournamentSummary()", () => {
 		expect(team4Results.every((r) => r.participantCount === 2)).toBeTruthy();
 	});
 
+	test("teams never assigned a starting bracket get the first division's div and participant count", () => {
+		// teams register with startingBracketIdx null, which everywhere else means the first starting bracket
+		const summary = summarize({
+			teamsWithStartingBrackets: [
+				{ id: 1, startingBracketIdx: null },
+				{ id: 2, startingBracketIdx: 1 },
+				{ id: 3, startingBracketIdx: null },
+				{ id: 4, startingBracketIdx: 1 },
+			],
+			progression: [
+				{
+					name: "Division 1",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+				{
+					name: "Division 2",
+					type: "single_elimination",
+					settings: {},
+					requiresCheckIn: false,
+				},
+			],
+			finalStandings: [
+				{
+					placement: 1,
+					team: createTeam(1, [1, 2, 3, 4]),
+				},
+				{
+					placement: 1,
+					team: createTeam(2, [5, 6, 7, 8]),
+				},
+				{
+					placement: 2,
+					team: createTeam(3, [9, 10, 11, 12]),
+				},
+				{
+					placement: 2,
+					team: createTeam(4, [13, 14, 15, 16]),
+				},
+			],
+		});
+
+		const team1Results = summary.tournamentResults
+			.filter((r) => r.tournamentTeamId === 1)
+			.map((r) => ({ div: r.div, participantCount: r.participantCount }));
+
+		expect(team1Results).toEqual(
+			Array.from({ length: 4 }, () => ({
+				div: "Division 1",
+				participantCount: 2,
+			})),
+		);
+	});
+
 	test("div is set from abDivision when finals is an A/B divisions round robin", () => {
 		const summary = summarize({
 			teamsWithAbDivisions: [

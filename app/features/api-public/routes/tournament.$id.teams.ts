@@ -7,6 +7,7 @@ import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as Standings from "~/features/tournament/core/Standings";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
+	getBracketProgressionLabel,
 	seedsByStartingBracket,
 	sortTeamsBySeeding,
 } from "~/features/tournament/tournament-utils";
@@ -162,7 +163,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? Standings.recordByTeamId(fullTournament)
 		: null;
 
+	const progression = tournament.ctx.settings.bracketProgression;
+	const startingBracketIdxs = Progression.startingBrackets(progression);
+
 	const result: GetTournamentTeamsResponse = teams.map((team) => {
+		const startingBracketIdx = validStartingBracketIdx(
+			team.startingBracketIdx,
+			startingBracketIdxs,
+		);
 		const isOwnTeam = team.members.some((member) => member.userId === user?.id);
 		const showTeamInfo = revealInfo || isOwnTeam;
 		const pickupAvatarUrl = showTeamInfo ? team.avatarUrl : null;
@@ -176,6 +184,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					? `https://sendou.ink/t/${team.team.customUrl}`
 					: null,
 			seed: seedByTeamId ? (seedByTeamId.get(team.id) ?? null) : team.seed,
+			startingBracketIdx,
+			division:
+				startingBracketIdxs.length > 1
+					? getBracketProgressionLabel(startingBracketIdx, progression)
+					: null,
 			placement: placementByTeamId?.get(team.id) ?? null,
 			stats: statsByTeamId ? (statsByTeamId.get(team.id) ?? ZERO_STATS) : null,
 			registeredAt: databaseTimestampToDate(team.createdAt).toISOString(),
@@ -273,6 +286,21 @@ function seedsOfStartedTournament({
 	return seedsByStartingBracket(
 		teamsInSeedOrder.filter((team) => team.checkedInAt),
 	);
+}
+
+/** A missing or stale index (the bracket no longer being a starting one) falls back to the first bracket, like the site does. */
+function validStartingBracketIdx(
+	startingBracketIdx: number | null,
+	startingBracketIdxs: number[],
+) {
+	if (
+		typeof startingBracketIdx !== "number" ||
+		!startingBracketIdxs.includes(startingBracketIdx)
+	) {
+		return 0;
+	}
+
+	return startingBracketIdx;
 }
 
 function toSeedingPowerSP(ordinals: (number | null)[]) {

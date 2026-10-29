@@ -25,8 +25,8 @@ import {
 	LOBBY_DESCRIPTION_MAX_LENGTH,
 	LOBBY_LABELS,
 	LOBBY_NAME_MAX_LENGTH,
-	LOBBY_ROOM_SIZES,
 	LOBBY_SIDES,
+	LOBBY_SPECTATOR_COUNTS,
 } from "./lobbies-constants";
 
 const bestOfField = radioGroup({
@@ -77,12 +77,13 @@ export const newLobbySchema = v.pipe(
 		}),
 		bestOf: bestOfField,
 		modes: modesField,
-		roomSize: select({
-			label: "labels.lobbyRoomSize",
-			bottomText: "bottomTexts.lobbyRoomSize",
-			items: LOBBY_ROOM_SIZES.map((roomSize) => ({
-				label: () => String(roomSize),
-				value: String(roomSize) as `${(typeof LOBBY_ROOM_SIZES)[number]}`,
+		spectators: radioGroup({
+			label: "labels.lobbySpectators",
+			bottomText: "bottomTexts.lobbySpectators",
+			variant: "chip",
+			items: LOBBY_SPECTATOR_COUNTS.map((count) => ({
+				label: () => String(count),
+				value: String(count) as `${(typeof LOBBY_SPECTATOR_COUNTS)[number]}`,
 			})),
 		}),
 		baseVisibility: baseVisibilityWithLinkOnlyField,
