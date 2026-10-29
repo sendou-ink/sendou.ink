@@ -30,15 +30,19 @@ import {
 	type VoiceActivityState,
 	type VoiceActivity as VoiceActivityValue,
 } from "../voice-activity";
+import { useVoiceSnapshot } from "../voice-hooks";
 import styles from "./VoiceActivity.module.css";
+import { VoiceFeedbackPrompt } from "./VoiceFeedbackPrompt";
 import { VoiceSettingsPanel } from "./VoiceSettingsPanel";
 
 /** The voice call the user is in and the ones they can join, in the header. */
 export function VoiceActivity() {
 	const { t } = useTranslation(["common"]);
 	const voices = useVoiceActivities();
+	const { pendingFeedback } = useVoiceSnapshot();
 
-	if (voices.length === 0) return null;
+	// feedback on a call can outlive its room, e.g. a match that ended
+	if (voices.length === 0 && !pendingFeedback) return null;
 
 	const call = callOf(voices);
 	const isConnected = call?.state.status === "CONNECTED";
@@ -67,6 +71,7 @@ export function VoiceActivity() {
 
 function VoicePanel({ voices }: { voices: VoiceActivityValue[] }) {
 	const [view, setView] = React.useState<"main" | "settings">("main");
+	const { pendingFeedback } = useVoiceSnapshot();
 	const call = callOf(voices);
 	const openSettings = () => setView("settings");
 
@@ -81,6 +86,11 @@ function VoicePanel({ voices }: { voices: VoiceActivityValue[] }) {
 
 	return (
 		<ActivityPanel>
+			{pendingFeedback ? (
+				<section className={styles.room}>
+					<VoiceFeedbackPrompt />
+				</section>
+			) : null}
 			{voices.map((voice) => (
 				<section key={voice.state.roomId} className={styles.room}>
 					{voice === call ? (

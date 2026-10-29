@@ -23,7 +23,6 @@ import {
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
 import * as LogLayout from "~/features/chat/core/LogLayout";
-import { VoiceFeedbackPrompt } from "~/features/voice/components/VoiceFeedbackPrompt";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
@@ -462,7 +461,6 @@ function SingleChatView({
 					</button>
 				) : null}
 			</div>
-			{room ? <VoiceFeedbackPrompt key={room.id} roomId={room.id} /> : null}
 			<div className={styles.chatContainer}>
 				{/* keyed so switching rooms starts the scroller and its unseen state over */}
 				{room ? <RoomChat key={room.id} room={room} /> : null}
@@ -629,7 +627,6 @@ function SplitPanel({
 			onFocus={onFocus}
 		>
 			<div className={styles.splitPanelHeader}>{roomShortLabel(room, t)}</div>
-			<VoiceFeedbackPrompt roomId={room.id} />
 			<div className={styles.chatContainer}>
 				<RoomChat room={room} />
 			</div>
