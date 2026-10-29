@@ -67,19 +67,21 @@ describe("MicInput.captureConstraints", () => {
 	test("passes the processing switches", () => {
 		expect(
 			MicInput.captureConstraints(
-				{
-					...SETTINGS,
-					echoCancellation: false,
-					noiseSuppression: true,
-					autoGainControl: false,
-				},
+				{ ...SETTINGS, echoCancellation: false, autoGainControl: false },
 				ALL_SUPPORTED,
 			),
 		).toEqual({
 			echoCancellation: false,
-			noiseSuppression: true,
+			noiseSuppression: false,
 			autoGainControl: false,
 		});
+	});
+
+	test("keeps the browser's noise suppression off even when ours is on", () => {
+		expect(SETTINGS.noiseSuppression).toBe(true);
+		expect(
+			MicInput.captureConstraints(SETTINGS, ALL_SUPPORTED).noiseSuppression,
+		).toBe(false);
 	});
 
 	test("leaves out processing the browser can't switch", () => {
@@ -97,8 +99,13 @@ describe("MicInput.needsRecapture", () => {
 		{ why: "another device", patch: { inputDeviceId: "usb" }, expected: true },
 		{
 			why: "processing switched",
-			patch: { noiseSuppression: false },
+			patch: { echoCancellation: false },
 			expected: true,
+		},
+		{
+			why: "noise suppression only",
+			patch: { noiseSuppression: false },
+			expected: false,
 		},
 	])("$why", ({ patch, expected }) => {
 		expect(MicInput.needsRecapture(SETTINGS, { ...SETTINGS, ...patch })).toBe(

@@ -145,7 +145,8 @@ export function VoiceSettingsPanel({
 			</ActivityPanelSection>
 			<ActivityPanelSection title={t("common:chat.voice.settings.processing")}>
 				{PROCESSING_SETTINGS.filter(
-					({ key }) => supportedConstraints()[key],
+					({ key }) =>
+						key === "noiseSuppression" || supportedConstraints()[key],
 				).map(({ key, label }) => (
 					<SendouSwitch
 						key={key}

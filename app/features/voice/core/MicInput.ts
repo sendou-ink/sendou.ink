@@ -5,7 +5,7 @@ const METER_CEILING_DB = -10;
 
 type CaptureSettings = Pick<
 	VoiceSettings,
-	"inputDeviceId" | "echoCancellation" | "noiseSuppression" | "autoGainControl"
+	"inputDeviceId" | "echoCancellation" | "autoGainControl"
 >;
 
 export function rms(samples: Float32Array) {
@@ -50,7 +50,7 @@ export function captureConstraints(
 		constraints.echoCancellation = settings.echoCancellation;
 	}
 	if (supported.noiseSuppression) {
-		constraints.noiseSuppression = settings.noiseSuppression;
+		constraints.noiseSuppression = false;
 	}
 	if (supported.autoGainControl) {
 		constraints.autoGainControl = settings.autoGainControl;
@@ -66,7 +66,6 @@ export function needsRecapture(
 	return (
 		previous.inputDeviceId !== next.inputDeviceId ||
 		previous.echoCancellation !== next.echoCancellation ||
-		previous.noiseSuppression !== next.noiseSuppression ||
 		previous.autoGainControl !== next.autoGainControl
 	);
 }

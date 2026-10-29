@@ -1,7 +1,12 @@
+import rnnoiseWasmUrl from "@sapphi-red/web-noise-suppressor/rnnoise.wasm?url";
+import rnnoiseSimdWasmUrl from "@sapphi-red/web-noise-suppressor/rnnoise_simd.wasm?url";
+import rnnoiseWorkletUrl from "@sapphi-red/web-noise-suppressor/rnnoiseWorklet.js?url";
 import { logger } from "~/utils/logger";
 import * as MicInput from "./core/MicInput";
 import { DEFAULT_DEVICE_ID, type VoiceSettings } from "./voice-persisted";
 
+// what RNNoise is built for
+const SAMPLE_RATE = 48_000;
 const GATE_PROCESSOR_NAME = "voice-gate";
 const GATE_HOLD_SECONDS = 0.3;
 const GATE_ATTACK_SECONDS = 0.005;
@@ -81,10 +86,16 @@ export class MicCaptureError extends Error {
 	}
 }
 
+type NoiseSuppressorNode = AudioWorkletNode & { destroy: () => void };
+
+let rnnoiseWasm: Promise<ArrayBuffer> | null = null;
+
 interface Pipeline {
 	context: AudioContext;
 	stream: MediaStream;
 	source: MediaStreamAudioSourceNode;
+	/** Null when it couldn't be loaded, the mic is sent without noise suppression then. */
+	noiseSuppressor: NoiseSuppressorNode | null;
 	gain: GainNode;
 	analyser: AnalyserNode;
 	gate: AudioWorkletNode | null;
@@ -110,8 +121,9 @@ export const micCapture = {
 	): Promise<MediaStreamTrack> => {
 		micCapture.stop();
 
-		const context = new AudioContext({ latencyHint: "interactive" });
+		const context = createAudioContext();
 		try {
+			const noiseSuppressor = await createNoiseSuppressor(context);
 			const stream = await acquire(settings);
 			const gain = context.createGain();
 			const analyser = context.createAnalyser();
@@ -121,7 +133,7 @@ export const micCapture = {
 			const gate = await createGate(context);
 
 			const source = context.createMediaStreamSource(stream);
-			source.connect(gain);
+			noiseSuppressor?.connect(gain);
 			gain.connect(analyser);
 			gain.connect(gate ?? destination);
 			gate?.connect(destination);
@@ -130,6 +142,7 @@ export const micCapture = {
 				context,
 				stream,
 				source,
+				noiseSuppressor,
 				gain,
 				analyser,
 				gate,
@@ -137,6 +150,7 @@ export const micCapture = {
 				settings,
 				samples: new Float32Array(ANALYSER_FFT_SIZE),
 			};
+			connectSource(pipeline);
 			applyLevels(pipeline, settings, options);
 			watchForEndedTrack(pipeline);
 			resumeWhenAllowed(context);
@@ -152,10 +166,12 @@ export const micCapture = {
 		if (!current) return;
 
 		applyLevels(current, settings, options);
-		if (MicInput.needsRecapture(current.settings, settings)) {
-			queueRecapture(current, settings);
-		}
+		const recapture = MicInput.needsRecapture(current.settings, settings);
+		const switchesNoiseSuppression =
+			current.settings.noiseSuppression !== settings.noiseSuppression;
+		if (recapture) queueRecapture(current, settings);
 		current.settings = settings;
+		if (switchesNoiseSuppression) connectSource(current);
 	},
 	isCapturing: () => pipeline !== null,
 	level: () => {
@@ -171,10 +187,72 @@ export const micCapture = {
 		if (!pipeline) return;
 
 		stopTracks(pipeline.stream);
+		pipeline.noiseSuppressor?.destroy();
 		void pipeline.context.close();
 		pipeline = null;
 	},
 };
+
+function createAudioContext() {
+	try {
+		return new AudioContext({
+			latencyHint: "interactive",
+			sampleRate: SAMPLE_RATE,
+		});
+	} catch (error) {
+		logger.warn("Voice audio can't run at 48 kHz, using the default", error);
+		return new AudioContext({ latencyHint: "interactive" });
+	}
+}
+
+async function createNoiseSuppressor(context: AudioContext) {
+	if (!context.audioWorklet) return null;
+
+	try {
+		const { loadRnnoise, RnnoiseWorkletNode } = await import(
+			"@sapphi-red/web-noise-suppressor"
+		);
+		const wasmBinary = await loadRnnoiseWasm(loadRnnoise);
+		await context.audioWorklet.addModule(rnnoiseWorkletUrl);
+
+		const node: NoiseSuppressorNode = new RnnoiseWorkletNode(context, {
+			maxChannels: 1,
+			wasmBinary,
+		});
+
+		node.channelCount = 1;
+		node.channelCountMode = "explicit";
+		return node;
+	} catch (error) {
+		logger.warn("Noise suppression unavailable, sending the mic as is", error);
+		return null;
+	}
+}
+
+function loadRnnoiseWasm(
+	loadRnnoise: typeof import("@sapphi-red/web-noise-suppressor").loadRnnoise,
+) {
+	if (!rnnoiseWasm) {
+		rnnoiseWasm = loadRnnoise({
+			url: rnnoiseWasmUrl,
+			simdUrl: rnnoiseSimdWasmUrl,
+		});
+		rnnoiseWasm.catch(() => {
+			rnnoiseWasm = null;
+		});
+	}
+
+	return rnnoiseWasm;
+}
+
+function connectSource(current: Pipeline) {
+	current.source.disconnect();
+	current.source.connect(
+		current.settings.noiseSuppression && current.noiseSuppressor
+			? current.noiseSuppressor
+			: current.gain,
+	);
+}
 
 async function acquire(settings: MicCaptureSettings): Promise<MediaStream> {
 	try {
@@ -252,10 +330,9 @@ function queueRecapture(current: Pipeline, settings: MicCaptureSettings) {
 			return;
 		}
 
-		const source = current.context.createMediaStreamSource(stream);
-		source.connect(current.gain);
-		current.source = source;
+		current.source = current.context.createMediaStreamSource(stream);
 		current.stream = stream;
+		connectSource(current);
 		watchForEndedTrack(current);
 	});
 }
