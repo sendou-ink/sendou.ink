@@ -6,7 +6,6 @@ import {
 	type VoiceSnapshot,
 	voiceClient,
 } from "./voice-client";
-import { VOICE_ROOM_TYPES } from "./voice-constants";
 
 const SERVER_SNAPSHOT: VoiceSnapshot = {
 	roomsById: new Map(),
@@ -32,9 +31,7 @@ export function useVoiceRooms(
 	}>,
 ): Map<number, VoiceRoomState> {
 	const snapshot = useVoiceSnapshot();
-	const voiceRoomIds = rooms
-		.filter((room) => VOICE_ROOM_TYPES.some((type) => type === room.type))
-		.map((room) => room.id);
+	const voiceRoomIds = rooms.map((room) => room.id);
 	const voiceRoomIdsKey = voiceRoomIds.join(",");
 
 	React.useEffect(() => {

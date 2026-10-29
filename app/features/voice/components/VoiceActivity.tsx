@@ -238,6 +238,21 @@ function callTitle(state: VoiceActivityState, t: TFunction<["common"]>) {
 	}
 }
 
+function kickConfirmDescription(
+	roomType: VoiceActivityState["roomType"],
+	t: TFunction<["common"]>,
+) {
+	switch (roomType) {
+		case "SQ_MATCH":
+		case "LOBBY_TEAM":
+			return t("common:chat.voice.kickConfirm.set");
+		case "SQ_GROUP":
+			return t("common:chat.voice.kickConfirm.group");
+		default:
+			return t("common:chat.voice.kickConfirm.room");
+	}
+}
+
 function VoiceStateIcon({ state }: { state: VoiceActivityState | null }) {
 	if (state?.status === "CONNECTED" && state.deafened) {
 		return <HeadphoneOff className={styles.mirrored} />;
@@ -383,12 +398,7 @@ function ParticipantRow({
 								dialogHeading={t("common:chat.voice.kickConfirm.heading", {
 									user: username,
 								})}
-								description={
-									state.roomType === "SQ_MATCH" ||
-									state.roomType === "LOBBY_TEAM"
-										? t("common:chat.voice.kickConfirm.set")
-										: t("common:chat.voice.kickConfirm.group")
-								}
+								description={kickConfirmDescription(state.roomType, t)}
 								submitButtonText={t("common:chat.voice.kick")}
 								onConfirm={() => actions.kick(participant.userId)}
 							/>

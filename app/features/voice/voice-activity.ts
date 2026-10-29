@@ -2,7 +2,10 @@ import type { TFunction } from "i18next";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
-import { useChatContext } from "~/features/chat/ChatProvider";
+import {
+	useChatContext,
+	useCurrentRouteChatRooms,
+} from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import type { CommonUser } from "~/utils/kysely.server";
 import {
@@ -82,8 +85,8 @@ export function useVoiceActivityOverride() {
 }
 
 /**
- * The voice chats of the user's rooms: the call they are in first, then the
- * ones they can join. Empty when there is none.
+ * The voice chats of the user's rooms and the ones the page surfaces (an organizer on a match page): the call
+ * they are in first, then the ones they can join. Empty when there is none.
  */
 export function useVoiceActivities(): VoiceActivity[] {
 	const overridden = useVoiceActivityOverride();
@@ -101,8 +104,14 @@ function useRealVoiceActivities(): VoiceActivity[] {
 	const localUserId = useUser()?.id;
 	const { call, volumeByUserId, inputMode } = useVoiceSnapshot();
 
+	const routeRooms = useCurrentRouteChatRooms();
+
 	const callRoom = call ? chatContext?.roomForId(call.roomId) : undefined;
-	const joinableRooms = (chatContext?.rooms ?? []).filter(
+	const listedRooms = chatContext?.rooms ?? [];
+	const observedRouteRooms = routeRooms
+		.filter((entry) => !listedRooms.some((room) => room.id === entry.room.id))
+		.map((entry) => chatContext?.roomForId(entry.room.id) ?? entry.room);
+	const joinableRooms = [...listedRooms, ...observedRouteRooms].filter(
 		(room) => !room.inactive && room.id !== callRoom?.id,
 	);
 	const rooms = callRoom ? [callRoom, ...joinableRooms] : joinableRooms;
@@ -145,7 +154,12 @@ function toVoiceActivity({
 	volumeOf: (userId: number) => number;
 	t: TFunction<["common"]>;
 }): VoiceActivity {
-	const userById = new Map(room.participants.map((user) => [user.id, user]));
+	const userById = new Map(
+		[...room.participants, ...(voiceRoom?.guests ?? [])].map((user) => [
+			user.id,
+			user,
+		]),
+	);
 
 	const callParticipants: VoiceActivityParticipant[] = call
 		? call.participants.map((participant) => ({
@@ -211,18 +225,23 @@ function toVoiceActivity({
 
 function voiceRoomTitle(room: ChatRoomListItem, t: TFunction<["common"]>) {
 	switch (room.type) {
+		case "SQ_GROUP":
+			return t("common:chat.room.group", {
+				members: room.participantUserIds.length,
+			});
 		case "SQ_MATCH":
+		case "TOURNAMENT_MATCH":
 			return t("common:chat.room.match", { id: room.titleParams.matchId });
+		case "TOURNAMENT_TEAM":
+			return room.titleParams.teamName;
+		case "SCRIM":
+			return t("common:chat.room.scrim");
 		case "LOBBY":
 			return room.titleParams.name;
 		case "LOBBY_TEAM":
 			return room.titleParams.side === "ALPHA"
 				? t("common:chat.room.lobbyTeamAlpha")
 				: t("common:chat.room.lobbyTeamBravo");
-		default:
-			return t("common:chat.room.group", {
-				members: room.participantUserIds.length,
-			});
 	}
 }
 

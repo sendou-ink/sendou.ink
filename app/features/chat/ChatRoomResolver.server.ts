@@ -20,6 +20,7 @@ import {
 	sendouQMatchPage,
 	tournamentMatchPage,
 	tournamentSubsPage,
+	tournamentTeamPage,
 } from "~/utils/urls";
 import * as ChatRepository from "./ChatRepository.server";
 import type { ChatRoomType } from "./chat-types";
@@ -57,6 +58,7 @@ export interface ResolvedRoom {
 	closedAt: number | null;
 	/** Whether the owner's activity has concluded (e.g. the match was finalized). */
 	inactive: boolean;
+	isLookingForMembers: boolean;
 }
 
 type ChatRoomRow = Tables["ChatRoom"];
@@ -85,9 +87,10 @@ export async function findAllByUserId(userId: number): Promise<ResolvedRoom[]> {
 
 	const resolved = await resolveAll(roomIds);
 
-	// a solo group has no conversation to show yet
 	return resolved.filter(
-		(room) => room.type !== "SQ_GROUP" || room.participantUserIds.length >= 2,
+		(room) =>
+			(room.type !== "SQ_GROUP" && room.type !== "TOURNAMENT_TEAM") ||
+			room.participantUserIds.length >= 2,
 	);
 }
 
@@ -224,12 +227,18 @@ async function resolveTournamentTeamRooms(
 			teamName: owner.name,
 			tournamentName: owner.tournamentName,
 		},
-		url: tournamentSubsPage(owner.tournamentId),
+		url: owner.isLooking
+			? tournamentSubsPage(owner.tournamentId)
+			: tournamentTeamPage({
+					tournamentId: owner.tournamentId,
+					tournamentTeamId: owner.id,
+				}),
 		imageUrl: owner.logoUrl,
 		participantUserIds: owner.members.map((member) => member.userId),
 		observerUserIds: organizers.get(owner.tournamentId)?.ORGANIZE ?? [],
 		labelByUserId: organizerLabels(organizers.get(owner.tournamentId)),
 		inactive: Boolean(owner.isFinalized),
+		isLookingForMembers: Boolean(owner.isLooking),
 	}));
 }
 
@@ -305,7 +314,9 @@ function joinOwners<T extends { chatRoomId: number }>(
 	> & {
 		participantUserIds: number[];
 		observerUserIds: number[];
-	} & Partial<Pick<ResolvedRoom, "inactive" | "labelByUserId">>,
+	} & Partial<
+			Pick<ResolvedRoom, "inactive" | "labelByUserId" | "isLookingForMembers">
+		>,
 ): ResolvedRoom[] {
 	const ownerByRoomId = new Map(
 		owners.map((owner) => [owner.chatRoomId, owner]),
@@ -323,6 +334,7 @@ function joinOwners<T extends { chatRoomId: number }>(
 			expiresAt: room.expiresAt,
 			closedAt: room.closedAt,
 			inactive: Boolean(room.inactive),
+			isLookingForMembers: false,
 			...built,
 			labelByUserId: nonParticipantLabels(
 				labelByUserId ?? {},

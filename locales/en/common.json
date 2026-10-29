@@ -482,6 +482,7 @@
 	"chat.voice.kickConfirm.heading": "Remove {{user}} from voice?",
 	"chat.voice.kickConfirm.set": "They will be banned from voice chat for the rest of the set.",
 	"chat.voice.kickConfirm.group": "They will be banned from this group's voice chat.",
+	"chat.voice.kickConfirm.room": "They will be banned from this voice chat.",
 	"chat.voice.feedback.question": "How was voice chat?",
 	"chat.voice.feedback.rating": "{{rating}} out of 5",
 	"chat.voice.feedback.comment": "Anything else to tell us? (optional)",

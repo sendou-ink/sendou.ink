@@ -1,4 +1,3 @@
-import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
@@ -17,10 +16,7 @@ const createPlaceholder = (tournamentId: number, userId: number) =>
 	TournamentLFGTeamFactory.create({ tournamentId, userId });
 
 const startLooking = (teamId: number) =>
-	TournamentLFGRepository.startLooking({
-		teamId,
-		chatRoomExpiresAt: addDays(new Date(), 7),
-	});
+	TournamentLFGRepository.startLooking({ teamId });
 
 const chatRoomIdOf = async (teamId: number) => {
 	const row = await db
@@ -41,7 +37,6 @@ const mergeTeams = (args: {
 	TournamentLFGRepository.mergeTeams({
 		requireInGameNames: false,
 		...args,
-		chatRoomExpiresAt: addDays(new Date(), 7),
 	});
 
 describe("insertPlaceholderTeam", () => {
@@ -245,21 +240,15 @@ describe("startLooking", () => {
 		await users.create(3);
 	});
 
-	test("creates a chat room for a 2+ member team", async () => {
+	test("a 2+ member team already has its chat room from registering", async () => {
 		const tournament = await createTournament();
 		const team = await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
 			memberUserIds: [users.id(1), users.id(2)],
 		});
 
-		const roomsChangedUserIds = await startLooking(team.id);
-
-		expect(roomsChangedUserIds.sort(byId)).toEqual(
-			[users.id(1), users.id(2)].sort(byId),
-		);
-
 		const chatRoomId = await chatRoomIdOf(team.id);
-		expect(chatRoomId).toEqual(expect.any(Number));
+		expect(await startLooking(team.id)).toEqual([]);
 
 		const room = await db
 			.selectFrom("ChatRoom")

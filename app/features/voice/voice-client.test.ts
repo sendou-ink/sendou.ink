@@ -16,6 +16,8 @@ const roomState = (
 	canJoin: true,
 	canKick: false,
 	userIds: [],
+	memberUserIds: [],
+	guests: [],
 	...overrides,
 });
 
@@ -126,7 +128,8 @@ function setup({
 
 describe("createVoiceClient", () => {
 	test("applies presence events to loaded rooms", async () => {
-		const { client, emit } = setup();
+		const { client, deps, emit } = setup();
+		deps.fetchRoom.mockResolvedValue(roomState({ memberUserIds: [5, 6] }));
 		await client.loadRoom(ROOM_ID);
 
 		emit({ kind: "voicePresence", roomId: ROOM_ID, userIds: [5, 6] });
@@ -134,6 +137,17 @@ describe("createVoiceClient", () => {
 		expect(client.getSnapshot().roomsById.get(ROOM_ID)?.userIds).toEqual([
 			5, 6,
 		]);
+		expect(deps.fetchRoom).toHaveBeenCalledTimes(1);
+	});
+
+	test("refetches the room when someone from outside it joins the call", async () => {
+		const { client, deps, emit } = setup();
+		deps.fetchRoom.mockResolvedValue(roomState({ memberUserIds: [5] }));
+		await client.loadRoom(ROOM_ID);
+
+		emit({ kind: "voicePresence", roomId: ROOM_ID, userIds: [5, 7] });
+
+		expect(deps.fetchRoom).toHaveBeenCalledTimes(2);
 	});
 
 	test("ignores presence events of rooms it never loaded", () => {

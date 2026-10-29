@@ -53,11 +53,3 @@ describe("TournamentLFG.survivingTeamId", () => {
 		).toBe(expected);
 	});
 });
-
-describe("TournamentLFG.pickupChatRoomExpiresAt", () => {
-	test("expires a week after the tournament starts", () => {
-		expect(
-			TournamentLFG.pickupChatRoomExpiresAt(new Date("2026-10-01T18:00:00Z")),
-		).toEqual(new Date("2026-10-08T18:00:00Z"));
-	});
-});

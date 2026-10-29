@@ -120,7 +120,7 @@ async function upsertRegistration(
 			? new MapPool(data.mapPool)
 			: undefined;
 
-	const { appliedTournamentNameChanges } =
+	const { appliedTournamentNameChanges, roomsChangedUserIds } =
 		await TournamentTeamRepository.upsertRegistration({
 			tournamentTeamId: team?.id,
 			tournamentId,
@@ -135,6 +135,8 @@ async function upsertRegistration(
 			tournamentNameUpdates,
 			mapPool,
 		});
+
+	ChatSystemMessage.notifyRoomsChanged(roomsChangedUserIds);
 
 	for (const change of appliedTournamentNameChanges) {
 		logger.info(

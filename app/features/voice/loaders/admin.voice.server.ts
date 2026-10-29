@@ -12,6 +12,7 @@ import * as VoiceCost from "../core/VoiceCost";
 import * as VoicePresence from "../core/VoicePresence.server";
 import * as VoiceRepository from "../VoiceRepository.server";
 import {
+	VOICE_FEATURES,
 	VOICE_FREE_MINUTES_PER_MONTH,
 	VOICE_MONTHLY_BUDGET_USD,
 } from "../voice-constants";
@@ -28,6 +29,7 @@ export const loader = async () => {
 		settings,
 		available,
 		monthMinutes,
+		monthMinutesByFeature,
 		adoption,
 		playerAdoption,
 		voiceChatPreferences,
@@ -42,6 +44,9 @@ export const loader = async () => {
 		VoiceRepository.findSettings(),
 		VoiceAvailability.isAvailable(),
 		VoiceAvailability.monthParticipantMinutes(),
+		VoiceRepository.sumParticipantMinutesByFeatureSince(
+			dateToDatabaseTimestamp(startOfMonth(new Date())),
+		),
 		VoiceRepository.findDailyAdoptionSince(since),
 		VoiceRepository.findPlayerAdoptionSince(since),
 		VoiceRepository.findVoiceChatPreferenceStatsSince(since),
@@ -59,10 +64,16 @@ export const loader = async () => {
 		isConfigured: Daily.isConfigured(),
 		isDisabled: settings.isDisabled,
 		available,
+		features: VOICE_FEATURES.map((feature) => ({
+			feature,
+			isDisabled: settings.disabledFeatures.includes(feature),
+			monthMinutes: monthMinutesByFeature[feature],
+		})),
 		cost: {
 			monthMinutes,
 			freeMinutes: VOICE_FREE_MINUTES_PER_MONTH,
 			budgetUsd: VOICE_MONTHLY_BUDGET_USD,
+			budgetMinutes: VoiceCost.budgetMinutes(),
 			monthCostUsd: VoiceCost.monthlyCostUsd(monthMinutes),
 			projectedCostUsd: VoiceCost.projectedMonthlyCostUsd({
 				participantMinutes: monthMinutes,

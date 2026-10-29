@@ -1,22 +1,48 @@
 import type { ResolvedRoom } from "~/features/chat/ChatRoomResolver.server";
-import type { ChatRoomType } from "~/features/chat/chat-types";
-import { VOICE_ROOM_TYPES } from "../voice-constants";
+import { databaseTimestampNow } from "~/utils/dates";
+import type { VoiceFeature } from "../voice-constants";
 
 type VoiceRoom = Pick<
 	ResolvedRoom,
-	"type" | "inactive" | "participantUserIds" | "permissions"
+	| "type"
+	| "isLookingForMembers"
+	| "inactive"
+	| "participantUserIds"
+	| "permissions"
+	| "closedAt"
+	| "expiresAt"
 >;
 
-export function isVoiceRoomType(type: ChatRoomType) {
-	return VOICE_ROOM_TYPES.some((voiceType) => voiceType === type);
+export function featureOf(
+	room: Pick<ResolvedRoom, "type" | "isLookingForMembers">,
+): VoiceFeature | null {
+	switch (room.type) {
+		case "SQ_GROUP":
+		case "SQ_MATCH":
+			return "SENDOUQ";
+		case "LOBBY":
+		case "LOBBY_TEAM":
+			return "LOBBIES";
+		case "TOURNAMENT_MATCH":
+			return "TOURNAMENTS";
+		case "TOURNAMENT_TEAM":
+			return room.isLookingForMembers ? "LFG" : "TOURNAMENTS";
+		case "SCRIM":
+			return null;
+	}
 }
 
 export function canJoin(room: VoiceRoom, userId: number) {
-	if (!isVoiceRoomType(room.type)) return false;
+	if (!featureOf(room)) return false;
 	if (room.inactive) return false;
 	if (room.participantUserIds.length < 2) return false;
+	if (room.permissions.POST.includes(userId)) return true;
 
-	return room.permissions.POST.includes(userId);
+	return (
+		room.permissions.OBSERVE.includes(userId) &&
+		room.closedAt === null &&
+		room.expiresAt > databaseTimestampNow()
+	);
 }
 
 export function canKick(room: VoiceRoom, userId: number) {

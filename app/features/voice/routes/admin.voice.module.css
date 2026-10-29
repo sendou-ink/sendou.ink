@@ -20,6 +20,12 @@
 	height: var(--s-4);
 }
 
+.featureMeter {
+	width: 8rem;
+	height: var(--s-3);
+	vertical-align: middle;
+}
+
 .table {
 	border-collapse: collapse;
 	font-size: var(--font-sm);

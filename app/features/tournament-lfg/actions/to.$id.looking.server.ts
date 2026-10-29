@@ -79,12 +79,7 @@ export const action = defineAction(
 						"Team is already at max capacity",
 					);
 					const roomsChangedUserIds =
-						await TournamentLFGRepository.startLooking({
-							teamId: team.id,
-							chatRoomExpiresAt: TournamentLFG.pickupChatRoomExpiresAt(
-								tournament.ctx.startsAt,
-							),
-						});
+						await TournamentLFGRepository.startLooking({ teamId: team.id });
 					ChatSystemMessage.notifyRoomsChanged(roomsChangedUserIds);
 				} else {
 					await TournamentLFGRepository.insertPlaceholderTeam({
@@ -207,9 +202,6 @@ export const action = defineAction(
 					maxGroupSize: tournament.maxMembersPerTeam,
 					requireInGameNames: Boolean(
 						tournament.ctx.settings.requireInGameNames,
-					),
-					chatRoomExpiresAt: TournamentLFG.pickupChatRoomExpiresAt(
-						tournament.ctx.startsAt,
 					),
 				});
 				ChatSystemMessage.notifyRoomsChanged(roomsChangedUserIds);

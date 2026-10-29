@@ -1,6 +1,7 @@
 import * as v from "valibot";
 import type { ServerEvent } from "~/features/events/events-types";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
+import type { CommonUser } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { VOICE_TELEMETRY_ROUTE, voiceRoomDataRoute } from "~/utils/urls";
 import * as Sounds from "../chat/core/Sounds";
@@ -38,6 +39,8 @@ export interface VoiceRoomState {
 	canJoin: boolean;
 	canKick: boolean;
 	userIds: number[];
+	memberUserIds: number[];
+	guests: CommonUser[];
 }
 
 export type VoiceCallStatus =
@@ -209,6 +212,11 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 			errorKind: isMicError(call.errorKind) ? null : call.errorKind,
 		});
 		return true;
+	};
+
+	const loadRoom = async (roomId: number) => {
+		const room = await deps.fetchRoom(roomId);
+		if (room) setRoom(roomId, room);
 	};
 
 	const setRoom = (roomId: number, room: VoiceRoomState) => {
@@ -433,11 +441,15 @@ export function createVoiceClient(deps: VoiceClientDeps): VoiceClient {
 				const room = snapshot.roomsById.get(event.roomId);
 				if (!room) return;
 				setRoom(event.roomId, { ...room, userIds: event.userIds });
+
+				const hasUnknownUser = event.userIds.some(
+					(userId) =>
+						!room.memberUserIds.includes(userId) &&
+						!room.guests.some((guest) => guest.id === userId),
+				);
+				if (hasUnknownUser) void loadRoom(event.roomId);
 			}),
-		loadRoom: async (roomId) => {
-			const room = await deps.fetchRoom(roomId);
-			if (room) setRoom(roomId, room);
-		},
+		loadRoom: (roomId) => loadRoom(roomId),
 		join: (roomId) => join(roomId),
 		follow: async ({ roomIds, targetRoomId }) => {
 			const call = snapshot.call;

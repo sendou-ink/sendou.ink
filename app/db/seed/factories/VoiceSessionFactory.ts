@@ -18,6 +18,7 @@ export const { create } = defineFactory({
 	defaults: () => ({
 		roomId: null,
 		roomType: "SQ_MATCH" as const,
+		feature: "SENDOUQ" as const,
 		platform: "DESKTOP" as const,
 		eligibleMemberCount: 8,
 		vcPreference: "YES" as const,
