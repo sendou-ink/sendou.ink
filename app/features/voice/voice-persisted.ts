@@ -22,7 +22,7 @@ export const voiceSettingsPersisted = PersistedState.define({
 		outputDeviceId: DEFAULT_DEVICE_ID,
 		inputVolume: 100,
 		outputVolume: 100,
-		sensitivity: 20,
+		sensitivity: 40,
 		noiseSuppression: true,
 		echoCancellation: true,
 		autoGainControl: true,
