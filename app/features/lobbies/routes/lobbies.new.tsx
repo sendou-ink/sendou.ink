@@ -1,6 +1,7 @@
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { Alert } from "~/components/Alert";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { Main } from "~/components/Main";
@@ -10,9 +11,10 @@ import {
 } from "~/features/associations/components/VisibilityFormFields";
 import type { CustomFieldRenderProps } from "~/form";
 import { SendouForm } from "~/form/SendouForm";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { lobbiesPage, navIconUrl } from "~/utils/urls";
+import { lobbiesPage, navIconUrl, SUPPORT_PAGE } from "~/utils/urls";
 import { action } from "../actions/lobbies.new.server";
 import { loader } from "../loaders/lobbies.new.server";
 import { newLobbySchema } from "../lobbies-schemas";
@@ -39,6 +41,21 @@ export const handle: SendouRouteHandle = {
 export default function NewLobbyPage() {
 	const { t } = useTranslation(["lobbies"]);
 	const data = useLoaderData<typeof loader>();
+	const isLobbyAdder = useHasRole("LOBBY_ADDER");
+
+	if (!isLobbyAdder) {
+		return (
+			<Main halfWidth className="stack items-center">
+				<Alert variation="WARNING">
+					<Trans
+						t={t}
+						i18nKey="lobbies:new.noPermissions"
+						components={{ supportLink: <Link to={SUPPORT_PAGE} /> }}
+					/>
+				</Alert>
+			</Main>
+		);
+	}
 
 	if (!data.hasFriendCode) {
 		return (

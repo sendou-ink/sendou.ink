@@ -58,7 +58,7 @@ export function userRoles(
 		result.push("TOURNAMENT_ADDER");
 	}
 
-	if (isAdmin(user) || isDev(user)) {
+	if (isAdmin(user) || isDev(user) || isSupporter(user)) {
 		result.push("LOBBY_ADDER");
 	}
 

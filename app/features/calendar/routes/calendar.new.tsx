@@ -121,8 +121,8 @@ export default function CalendarNewEventPage() {
 		return (
 			<Main halfWidth className="stack items-center">
 				<Alert variation="WARNING">
-					No permissions to add tournaments. Tournaments are in beta, accessible
-					by Patreon supporters and established TO&apos;s. See{" "}
+					No permissions to add tournaments. Tournaments can be added by Patreon
+					supporters and established TO&apos;s. See{" "}
 					<Link to={FAQ_PAGE}>FAQ</Link> for more info.
 				</Alert>
 			</Main>

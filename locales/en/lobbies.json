@@ -53,6 +53,7 @@
 	"leave.heading": "Leave the lobby?",
 	"new.friendCodeNeeded": "Set your friend code to make a lobby.",
 	"new.title": "New lobby",
+	"new.noPermissions": "No permissions to add lobbies. Lobbies can be added by Patreon supporters. See <supportLink>support page</supportLink> for more info.",
 	"participants.checkedIn": "Checked in",
 	"participants.count": "{{count}}/{{cap}} spots taken",
 	"participants.signedUp": "Signed up",
