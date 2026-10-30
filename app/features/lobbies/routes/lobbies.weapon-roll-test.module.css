@@ -1,0 +1,123 @@
+.panel {
+	padding: var(--s-4);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.sliders {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+	gap: var(--s-4);
+
+	& input[type="range"] {
+		width: 100%;
+		accent-color: var(--color-fill-accent);
+	}
+}
+
+.optionsJson {
+	margin: 0;
+	font-size: var(--font-xs);
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.matchup {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+	gap: var(--s-4);
+}
+
+.team {
+	padding: var(--s-3);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.slot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.costs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-6);
+}
+
+.historyRow {
+	all: unset;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--radius-field);
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.ratioStrip {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+}
+
+.table {
+	border-collapse: collapse;
+	font-size: var(--font-sm);
+
+	& th,
+	& td {
+		padding: var(--s-1) var(--s-2);
+		text-align: left;
+		white-space: nowrap;
+	}
+
+	& tbody tr:nth-child(odd) {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.sortButton {
+	all: unset;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-weight: bold;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--color-fill-accent);
+	}
+}
+
+.tier {
+	display: inline-grid;
+	place-items: center;
+	width: 1.4rem;
+	height: 1.4rem;
+	border-radius: var(--radius-full);
+	font-size: var(--font-2xs);
+	font-weight: bold;
+	color: var(--color-text-on-light);
+}
+
+.tierFRONTLINE {
+	background-color: var(--color-chart-alpha);
+}
+
+.tierMIDLINE {
+	background-color: var(--color-chart-special);
+}
+
+.tierBACKLINE {
+	background-color: var(--color-chart-bravo);
+}

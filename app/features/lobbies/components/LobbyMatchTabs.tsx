@@ -6,10 +6,12 @@ import { matchPageSearchParams } from "~/components/match-page/match-page-search
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import * as LobbySet from "../core/LobbySet";
+import type { LobbySide } from "../lobbies-constants";
 import { useLobbyView } from "../lobbies-hooks";
 import { LobbyActionTab } from "./LobbyActionTab";
 import { LobbyLeaderboardTab } from "./LobbyLeaderboardTab";
 import { LobbyResultTab } from "./LobbyResultTab";
+import { LobbyRolledWeapons } from "./LobbyRolledWeapons";
 
 type TabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 
@@ -65,6 +67,14 @@ export function LobbyMatchTabs() {
 				};
 			});
 
+	const rolledWeapons = (side: LobbySide) =>
+		currentSet?.rolledWeapons ? (
+			<LobbyRolledWeapons
+				weapons={currentSet.rolledWeapons[side]}
+				isOwnTeam={viewerSide ? viewerSide === side : null}
+			/>
+		) : undefined;
+
 	return (
 		<MatchTabs
 			tabs={tabs}
@@ -75,8 +85,16 @@ export function LobbyMatchTabs() {
 				<MatchRosterTab
 					minMembersPerTeam={4}
 					teams={[
-						{ defaultName: t("lobbies:side.ALPHA"), members: roster("ALPHA") },
-						{ defaultName: t("lobbies:side.BRAVO"), members: roster("BRAVO") },
+						{
+							defaultName: t("lobbies:side.ALPHA"),
+							members: roster("ALPHA"),
+							headerAside: rolledWeapons("ALPHA"),
+						},
+						{
+							defaultName: t("lobbies:side.BRAVO"),
+							members: roster("BRAVO"),
+							headerAside: rolledWeapons("BRAVO"),
+						},
 					]}
 				/>
 			) : null}

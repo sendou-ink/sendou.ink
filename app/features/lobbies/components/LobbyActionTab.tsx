@@ -16,6 +16,7 @@ import { type LobbySetData, useLobbyView } from "../lobbies-hooks";
 import { lobbyActionSchema } from "../lobbies-schemas";
 import styles from "./LobbyActionTab.module.css";
 import { usersOf } from "./LobbyMatchBanner";
+import { LobbyRolledWeapons } from "./LobbyRolledWeapons";
 
 /** Reporting the maps of the viewer's set, then confirming (or undoing) its result. */
 export function LobbyActionTab() {
@@ -97,6 +98,24 @@ function ReportingTab({
 					winnerSide: sideOfTeamId(winnerId),
 					reportedCount,
 				})
+			}
+			besideSubmit={
+				set.rolledWeapons
+					? [
+							<LobbyRolledWeapons
+								key="ALPHA"
+								weapons={set.rolledWeapons.ALPHA}
+								isOwnTeam={viewerSide === "ALPHA"}
+								narrowLabel={t("lobbies:side.ALPHA")}
+							/>,
+							<LobbyRolledWeapons
+								key="BRAVO"
+								weapons={set.rolledWeapons.BRAVO}
+								isOwnTeam={viewerSide === "BRAVO"}
+								narrowLabel={t("lobbies:side.BRAVO")}
+							/>,
+						]
+					: undefined
 			}
 			secondaryAction={<WeaponReporter {...weaponReport} />}
 			actionButtons={

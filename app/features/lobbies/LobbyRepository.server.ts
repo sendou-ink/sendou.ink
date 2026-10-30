@@ -59,6 +59,7 @@ export async function findById(
 			"Lobby.bestOf",
 			"Lobby.modes",
 			"Lobby.roomSize",
+			"Lobby.weaponRandomizer",
 			"Lobby.chatRoomId",
 			"Lobby.hostUserId",
 			"Lobby.pendingSince",
@@ -187,6 +188,7 @@ export async function findProgressionStateById(id: number) {
 			"Lobby.bestOf",
 			"Lobby.modes",
 			"Lobby.roomSize",
+			"Lobby.weaponRandomizer",
 			"Lobby.chatRoomId",
 			"Lobby.pendingSince",
 			"Lobby.endedAt",
@@ -261,6 +263,7 @@ const listColumns = [
 	"Lobby.label",
 	"Lobby.startsAt",
 	"Lobby.roomSize",
+	"Lobby.weaponRandomizer",
 	"Lobby.endedAt",
 ] as const;
 
@@ -788,12 +791,14 @@ export async function updateSettings({
 	id,
 	bestOf,
 	modes,
-}: Pick<Tables["Lobby"], "id" | "bestOf" | "modes">) {
+	weaponRandomizer,
+}: Pick<Tables["Lobby"], "id" | "bestOf" | "modes" | "weaponRandomizer">) {
 	await db
 		.updateTable("Lobby")
 		.set({
 			bestOf,
 			modes: JSON.stringify(modes),
+			weaponRandomizer,
 		})
 		.where("Lobby.id", "=", id)
 		.execute();

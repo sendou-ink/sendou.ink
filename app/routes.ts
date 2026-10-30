@@ -32,6 +32,10 @@ const devOnlyRoutes =
 					"features/match-page-test/routes/match-page-test.tsx",
 				),
 				route(
+					"/lobbies/weapon-roll-test",
+					"features/lobbies/routes/lobbies.weapon-roll-test.tsx",
+				),
+				route(
 					"/scanner/fixtures/:detector?/:caseName?",
 					"features/scanner/routes/scanner.fixtures.ts",
 				),

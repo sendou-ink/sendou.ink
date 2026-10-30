@@ -48,6 +48,10 @@
 	min-width: 0;
 }
 
+.teamHeaderAside {
+	margin-inline-start: var(--s-2);
+}
+
 .teamNameHeading {
 	max-width: 320px;
 }

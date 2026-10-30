@@ -21,6 +21,7 @@ const DEV_ONLY_PAGES = [
 	{ label: "All weapon ranges", url: "/comp-analyzer/all-ranges" },
 	{ label: "Bracket test", url: "/bracket-test" },
 	{ label: "Match page test", url: "/match-page-test" },
+	{ label: "Weapon roll test", url: "/lobbies/weapon-roll-test" },
 ] as const;
 
 function LinksApp() {

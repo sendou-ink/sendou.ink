@@ -29,6 +29,7 @@
 	"details.bestOf": "Best of",
 	"details.modes": "Modes",
 	"details.roomSize": "Room size",
+	"details.weaponRandomizer": "Weapons",
 	"hostDispute.confirm": "Confirm result",
 	"hostDispute.explanation": "The set counts as reported and the next set starts.",
 	"hostDispute.heading": "Confirm {{side}}'s {{score}} win?",
@@ -97,5 +98,7 @@
 	"viewerStatus.IN_ROOM": "Playing",
 	"viewerStatus.REGISTERED": "Signed up",
 	"viewerStatus.SPECTATING": "Spectating",
-	"viewerStatus.WAITLISTED": "Waitlisted"
+	"viewerStatus.WAITLISTED": "Waitlisted",
+	"weaponRandomizer.BALANCED": "Balanced random",
+	"weaponRandomizer.CHAOTIC": "Chaotic random"
 }

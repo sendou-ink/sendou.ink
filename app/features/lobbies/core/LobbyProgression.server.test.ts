@@ -6,6 +6,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withUserId } from "~/utils/Test";
 import * as LobbyMatchRepository from "../LobbyMatchRepository.server";
 import * as LobbyRepository from "../LobbyRepository.server";
+import type { LobbyWeaponRandomizer } from "../lobbies-constants";
 import * as LobbyProgression from "./LobbyProgression.server";
 import * as LobbySet from "./LobbySet";
 
@@ -19,13 +20,15 @@ async function startedLobby({
 	checkedInCount,
 	waitlistedCount = 0,
 	roomSize = 8,
+	weaponRandomizer = "OFF",
 }: {
 	checkedInCount: number;
 	waitlistedCount?: number;
 	roomSize?: 8 | 9 | 10;
+	weaponRandomizer?: LobbyWeaponRandomizer;
 }) {
 	const lobby = await LobbyFactory.create(
-		{ hostUserId: hostId(), startsAt: startedAt(), roomSize },
+		{ hostUserId: hostId(), startsAt: startedAt(), roomSize, weaponRandomizer },
 		{
 			signedUpUserIds: users.ids(checkedInCount).slice(1),
 			checkedInUserIds: users.ids(checkedInCount),
@@ -94,6 +97,52 @@ describe("LobbyProgression.advance", () => {
 		expect(LobbySet.playersOf(set, "ALPHA")).toHaveLength(4);
 		expect(LobbySet.playersOf(set, "BRAVO")).toHaveLength(4);
 		expect(set.games).toHaveLength(3);
+	});
+
+	test.each(["CHAOTIC", "BALANCED"] as const)(
+		"a %s weapon randomizer rolls 4 different weapons for each side as the set starts",
+		async (weaponRandomizer) => {
+			const lobbyId = await startedLobby({
+				checkedInCount: 8,
+				weaponRandomizer,
+			});
+
+			const { rolledWeapons } = await latestSet(lobbyId);
+
+			expect(rolledWeapons?.ALPHA).toHaveLength(4);
+			expect(rolledWeapons?.BRAVO).toHaveLength(4);
+			expect(
+				new Set([...rolledWeapons!.ALPHA, ...rolledWeapons!.BRAVO]).size,
+			).toBe(8);
+		},
+	);
+
+	test("without a weapon randomizer a set has no weapons", async () => {
+		const lobbyId = await startedLobby({ checkedInCount: 8 });
+
+		expect((await latestSet(lobbyId)).rolledWeapons).toBeNull();
+	});
+
+	test("the weapons stay the same through the set, a changed randomizer applying from the next one", async () => {
+		const lobbyId = await startedLobby({
+			checkedInCount: 8,
+			weaponRandomizer: "BALANCED",
+		});
+		const set = await latestSet(lobbyId);
+
+		await LobbyRepository.updateSettings({
+			id: lobbyId,
+			bestOf: 3,
+			modes: ["SZ", "TC", "RM", "CB"],
+			weaponRandomizer: "OFF",
+		});
+		await LobbyProgression.advance(lobbyId);
+
+		expect((await latestSet(lobbyId)).rolledWeapons).toEqual(set.rolledWeapons);
+
+		await playOut(lobbyId);
+
+		expect((await latestSet(lobbyId)).rolledWeapons).toBeNull();
 	});
 
 	test("stays pending with 7 checked in", async () => {

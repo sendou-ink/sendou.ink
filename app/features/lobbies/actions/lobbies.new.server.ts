@@ -43,6 +43,7 @@ export const action = defineAction(
 			startsAt,
 			bestOf: Number(body.bestOf) as LobbyBestOf,
 			modes: body.modes,
+			weaponRandomizer: body.weaponRandomizer,
 			roomSize: (PLAYERS_PER_SET + Number(body.spectators)) as LobbyRoomSize,
 			visibility:
 				body.baseVisibility === "LINK_ONLY"

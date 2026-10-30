@@ -40,8 +40,10 @@ import type {
 	LobbyBestOf,
 	LobbyLabel,
 	LobbyParticipantStatus,
+	LobbyRolledWeapons,
 	LobbyRoomSize,
 	LobbySide,
+	LobbyWeaponRandomizer,
 } from "~/features/lobbies/lobbies-constants";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
@@ -1424,6 +1426,8 @@ export interface Lobby {
 	modes: JSONColumnType<ModeShort[]>;
 	/** How many fit in the room: 8 players plus up to 2 spectators, the rest are waitlisted */
 	roomSize: LobbyRoomSize;
+	/** Whether the players of a set get random weapons, rolled when the set starts */
+	weaponRandomizer: Generated<LobbyWeaponRandomizer>;
 	/** Common chat used while pending and by spectators */
 	chatRoomId: number | null;
 	/** Marker for the check-in opened notification having been sent */
@@ -1470,6 +1474,8 @@ export interface LobbySet {
 	/** Team chat of the set's alpha side */
 	alphaChatRoomId: number | null;
 	bravoChatRoomId: number | null;
+	/** Weapons the lobby's weapon randomizer rolled for each side's players to pick from when the set started, `null` when it was off */
+	rolledWeapons: JSONColumnTypeNullable<LobbyRolledWeapons>;
 	createdAt: Generated<number>;
 }
 

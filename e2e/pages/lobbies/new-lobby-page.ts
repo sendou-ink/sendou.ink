@@ -30,6 +30,11 @@ export class NewLobbyPage {
 		await this.page.getByLabel("Visibility").selectOption({ label });
 	}
 
+	/** Picks the weapon randomizer, by its chip's label. */
+	async selectWeaponRandomizer(label: "Off" | "Chaotic" | "Balanced") {
+		await this.page.getByText(label, { exact: true }).click();
+	}
+
 	/** Makes the lobby, the maker becoming its host. */
 	async save() {
 		await submit(this.page);

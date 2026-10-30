@@ -10,7 +10,7 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import * as LobbySet from "./core/LobbySet";
-import type { LobbySide } from "./lobbies-constants";
+import type { LobbyRolledWeapons, LobbySide } from "./lobbies-constants";
 import { lobbyChatRoomExpiresAt } from "./lobbies-utils";
 
 /** A set of the lobby with its games and participants, see {@link findAllSetsByLobbyId}. */
@@ -28,6 +28,7 @@ export function findAllSetsByLobbyId(lobbyId: number) {
 			"LobbySet.confirmedAt",
 			"LobbySet.alphaChatRoomId",
 			"LobbySet.bravoChatRoomId",
+			"LobbySet.rolledWeapons",
 			"LobbySet.createdAt",
 			jsonArrayFrom(
 				eb
@@ -135,7 +136,8 @@ export async function findAllTeamChatsByChatRoomIds(chatRoomIds: number[]) {
 }
 
 /**
- * Starts a set in the room: who plays on which side (the rest sit out), the maps and fresh team chats. Returns the set id.
+ * Starts a set in the room: who plays on which side (the rest sit out), the maps, the weapons the randomizer rolled
+ * and fresh team chats. Returns the set id.
  */
 export function insertSet({
 	lobbyId,
@@ -144,6 +146,7 @@ export function insertSet({
 	alpha,
 	bravo,
 	sittingOut,
+	rolledWeapons,
 }: {
 	lobbyId: number;
 	bestOf: Tables["LobbySet"]["bestOf"];
@@ -151,6 +154,7 @@ export function insertSet({
 	alpha: number[];
 	bravo: number[];
 	sittingOut: number[];
+	rolledWeapons: LobbyRolledWeapons | null;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const lobby = await trx
@@ -169,7 +173,13 @@ export function insertSet({
 
 		const set = await trx
 			.insertInto("LobbySet")
-			.values({ lobbyId, bestOf, alphaChatRoomId, bravoChatRoomId })
+			.values({
+				lobbyId,
+				bestOf,
+				alphaChatRoomId,
+				bravoChatRoomId,
+				rolledWeapons: rolledWeapons ? JSON.stringify(rolledWeapons) : null,
+			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
 

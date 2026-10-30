@@ -22,6 +22,7 @@ import * as LobbyTransition from "./LobbyTransition";
 import * as LobbyVoice from "./LobbyVoice.server";
 import * as PlayerRoles from "./PlayerRoles";
 import * as TeamShuffle from "./TeamShuffle";
+import * as WeaponRoll from "./WeaponRoll";
 
 /** Upper bound of transitions applied in one go, a backstop against a transition that doesn't settle. */
 const MAX_TRANSITIONS = 50;
@@ -290,7 +291,7 @@ function advanceAt(lobbyId: number, at: Date) {
 	timeout.unref?.();
 }
 
-/** Shuffles the room's members not sitting out into teams for the next set and generates its maps. */
+/** Shuffles the room's members not sitting out into teams for the next set, generates its maps and rolls its weapons. */
 async function startSet({ lobby, sets }: LoadedState) {
 	const members = lobby.participants.filter(
 		(p) => p.status === "IN_ROOM" && !p.isSittingOut,
@@ -357,6 +358,13 @@ async function startSet({ lobby, sets }: LoadedState) {
 		bestOf: lobby.bestOf,
 		maps,
 		...result,
+		rolledWeapons:
+			lobby.weaponRandomizer === "OFF"
+				? null
+				: WeaponRoll.rollForSet(
+						lobby.weaponRandomizer,
+						sets.toReversed().flatMap((set) => set.rolledWeapons ?? []),
+					),
 	});
 
 	if (previousSet) {

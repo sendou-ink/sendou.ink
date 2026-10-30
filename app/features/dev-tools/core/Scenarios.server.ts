@@ -23,6 +23,7 @@ import {
 	CHECK_IN_LEAD_MINUTES,
 	LOBBY_LABELS,
 	type LobbyRoomSize,
+	type LobbyWeaponRandomizer,
 } from "~/features/lobbies/lobbies-constants";
 import { runWithoutWebPush } from "~/features/notifications/core/push-suppression.server";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
@@ -646,18 +647,35 @@ const SCENARIOS: Scenario[] = [
 				max: 10,
 				default: 2,
 			}),
+			randomizer: selectParam(
+				"Weapon randomizer",
+				[
+					{ value: "OFF", label: "Off" },
+					{ value: "CHAOTIC", label: "Chaotic" },
+					{ value: "BALANCED", label: "Balanced" },
+				],
+				"OFF",
+			),
 		},
-		run: async ({ state, you, playedSets }) => {
+		run: async ({ state, you, playedSets, randomizer }) => {
 			const roomSize =
 				you === "sitting-out" ? LOBBY_ROOM_SIZE + 1 : LOBBY_ROOM_SIZE;
 			const playerIds = await freshShowcaseUserIds(roomSize);
 			const mapsToWin = Math.ceil(LOBBY_BEST_OF / 2);
 
-			const lobby = await runningLobby(playerIds, {
-				playedSetCount: playedSets,
-				reportedMapCount:
-					state === "reporting" ? 0 : state === "map-reported" ? 1 : mapsToWin,
-			});
+			const lobby = await runningLobby(
+				playerIds,
+				{
+					playedSetCount: playedSets,
+					reportedMapCount:
+						state === "reporting"
+							? 0
+							: state === "map-reported"
+								? 1
+								: mapsToWin,
+				},
+				{ weaponRandomizer: randomizer },
+			);
 			const set = await currentSet(lobby.id);
 			const [alphaId] = LobbySet.playersOf(set, "ALPHA");
 			const [bravoId] = LobbySet.playersOf(set, "BRAVO");
@@ -1175,6 +1193,7 @@ function runningLobby(
 		NonNullable<Parameters<typeof LobbyFactory.create>[1]>,
 		"signedUpUserIds" | "checkedInUserIds"
 	>,
+	{ weaponRandomizer }: { weaponRandomizer?: LobbyWeaponRandomizer } = {},
 ) {
 	return LobbyFactory.create(
 		{
@@ -1183,6 +1202,7 @@ function runningLobby(
 			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 30)),
 			roomSize: playerIds.length as LobbyRoomSize,
 			bestOf: LOBBY_BEST_OF,
+			weaponRandomizer,
 		},
 		{
 			signedUpUserIds: playerIds.slice(1),

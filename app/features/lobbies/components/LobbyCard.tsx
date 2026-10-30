@@ -56,6 +56,13 @@ export function LobbyCard({ lobby }: { lobby: LobbyListItem }) {
 				<LobbyInfoItem label={t("lobbies:card.host")}>
 					{lobby.hostUsername}
 				</LobbyInfoItem>
+				{lobby.weaponRandomizer !== "OFF" ? (
+					<LobbyInfoItem label={t("lobbies:details.weaponRandomizer")}>
+						<span data-testid="lobby-weapon-randomizer">
+							{t(`lobbies:weaponRandomizer.${lobby.weaponRandomizer}`)}
+						</span>
+					</LobbyInfoItem>
+				) : null}
 				{lobby.viewerStatus && lobby.endedAt === null ? (
 					<LobbyInfoItem label={t("lobbies:card.status")}>
 						<span className={styles.viewerStatus}>
