@@ -289,6 +289,8 @@
 	"options.controller.s2-split-joycon": "Switch 2 Split Joy-Con",
 	"options.controller.handheld": "Handheld",
 	"labels.tierListUrl": "Tier List URL",
+	"labels.showTournamentsPlayed": "Show number of tournaments played",
+	"labels.showLobbiesPlayed": "Show number of lobbies played",
 	"labels.title": "Title",
 	"labels.plusTier": "Tier",
 	"labels.comment": "Comment",

@@ -26,12 +26,15 @@ export function LobbyPlayerTable<
 	rows,
 	columns,
 	isNumbered,
+	placementOf,
 	rowTestId,
 }: {
 	title?: string;
 	rows: T[];
 	columns: LobbyPlayerTableColumn<T>[];
 	isNumbered?: boolean;
+	/** Number shown for the row when numbered, its position by default */
+	placementOf?: (row: T) => number;
 	rowTestId: string;
 }) {
 	const { t } = useTranslation(["lobbies"]);
@@ -62,7 +65,9 @@ export function LobbyPlayerTable<
 				<tbody>
 					{rows.map((row, i) => (
 						<tr key={row.user.id} data-testid={rowTestId}>
-							{isNumbered ? <td className={styles.number}>{i + 1}</td> : null}
+							{isNumbered ? (
+								<td className={styles.number}>{placementOf?.(row) ?? i + 1}</td>
+							) : null}
 							{isHost ? (
 								<td className={styles.menu}>
 									<LobbyPlayerMenu userId={row.user.id} />

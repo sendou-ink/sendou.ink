@@ -113,6 +113,9 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 			);
 		case "markdown":
 			return <FormField name="content" />;
+		case "placement-results":
+		case "lobby-results":
+			return <FormField name="showTotal" />;
 		case "badges-owned":
 			return <FavoriteBadgesField />;
 		case "game-badges":

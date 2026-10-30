@@ -17,8 +17,8 @@ import { lobbyChatRoomExpiresAt } from "./lobbies-utils";
 export type LobbySetWithGames = Unwrapped<typeof findAllSetsByLobbyId>;
 
 /** Every set of the lobby, oldest first, with its maps and who played on which side (with their user info). */
-export function findAllSetsByLobbyId(lobbyId: number) {
-	return db
+export function findAllSetsByLobbyId(lobbyId: number, trx?: Transaction<DB>) {
+	return (trx ?? db)
 		.selectFrom("LobbySet")
 		.select((eb) => [
 			"LobbySet.id",

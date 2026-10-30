@@ -226,6 +226,53 @@ describe("LobbyRepository.findAllForIndex", () => {
 	});
 });
 
+describe("LobbyRepository.end", () => {
+	beforeEach(async () => {
+		await users.create(9);
+	});
+
+	const endedLobby = () =>
+		LobbyFactory.create(
+			{
+				hostUserId: hostId(),
+				startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
+			},
+			{
+				signedUpUserIds: users.ids(9).slice(1),
+				checkedInUserIds: users.ids(8),
+				playedSetCount: 1,
+				isEnded: true,
+			},
+		);
+
+	test("saves the leaderboard placements of those who played", async () => {
+		const lobby = await endedLobby();
+		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+
+		const placementOf = async (userId: number) =>
+			(await LobbyRepository.findResultPlacementsByUserId(userId)).map(
+				(result) => result.placement,
+			);
+
+		expect(await placementOf(LobbySet.playersOf(set, "ALPHA")[0])).toEqual([1]);
+		expect(await placementOf(LobbySet.playersOf(set, "BRAVO")[0])).toEqual([5]);
+		expect(await placementOf(users.id(9))).toEqual([]);
+	});
+
+	test("ending again doesn't save the results twice", async () => {
+		const lobby = await endedLobby();
+		const [set] = await LobbyMatchRepository.findAllSetsByLobbyId(lobby.id);
+
+		await LobbyRepository.end(lobby.id);
+
+		expect(
+			await LobbyRepository.findResultPlacementsByUserId(
+				LobbySet.playersOf(set, "ALPHA")[0],
+			),
+		).toHaveLength(1);
+	});
+});
+
 describe("LobbyRepository.findAllUpcomingOfFriendsByUserId", () => {
 	beforeEach(async () => {
 		await users.create(3);

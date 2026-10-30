@@ -6,6 +6,7 @@ import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepos
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import * as LiveStream from "~/features/live-streams/core/LiveStream";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
+import * as LobbyRepository from "~/features/lobbies/LobbyRepository.server";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import type { TierName } from "~/features/mmr/mmr-constants";
@@ -172,40 +173,23 @@ export const WIDGET_LOADERS = {
 
 		return results;
 	},
-	"placement-results": async (userId: number) => {
-		const results = await UserRepository.findResultPlacementsByUserId(userId);
-
-		if (results.length === 0) {
-			return null;
-		}
-
-		const firstPlaceResults = results.filter(
-			(result) => result.placement === 1,
+	"placement-results": async (
+		userId: number,
+		settings: ExtractWidgetSettings<"placement-results">,
+	) => {
+		return placementCounts(
+			await UserRepository.findResultPlacementsByUserId(userId),
+			settings,
 		);
-		const secondPlaceResults = results.filter(
-			(result) => result.placement === 2,
+	},
+	"lobby-results": async (
+		userId: number,
+		settings: ExtractWidgetSettings<"lobby-results">,
+	) => {
+		return placementCounts(
+			await LobbyRepository.findResultPlacementsByUserId(userId),
+			settings,
 		);
-		const thirdPlaceResults = results.filter(
-			(result) => result.placement === 3,
-		);
-
-		return {
-			count: results.length,
-			placements: [
-				{
-					placement: 1,
-					count: firstPlaceResults.length,
-				},
-				{
-					placement: 2,
-					count: secondPlaceResults.length,
-				},
-				{
-					placement: 3,
-					count: thirdPlaceResults.length,
-				},
-			],
-		};
 	},
 	"patron-since": async (userId: number) => {
 		return UserRepository.findPatronStartedAtByUserId(userId);
@@ -373,6 +357,23 @@ export const WIDGET_LOADERS = {
 		);
 	},
 };
+
+const COUNTED_PLACEMENTS = [1, 2, 3];
+
+function placementCounts(
+	results: Array<{ placement: number }>,
+	settings: { showTotal: boolean },
+) {
+	if (results.length === 0) return null;
+
+	return {
+		total: settings.showTotal ? results.length : null,
+		placements: COUNTED_PLACEMENTS.map((placement) => ({
+			placement,
+			count: results.filter((result) => result.placement === placement).length,
+		})),
+	};
+}
 
 async function getTop500WeaponsByCategory(
 	userId: number,

@@ -62,6 +62,34 @@ describe("Leaderboard.rows", () => {
 		expect(rows.map((row) => row.userId).slice(0, 4)).toEqual([1, 2, 3, 4]);
 	});
 
+	test("players with the same record share the placement", () => {
+		const rows = Leaderboard.rows({
+			sets: [
+				setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true }),
+				setOf({
+					winners: ["ALPHA", "BRAVO", "ALPHA"],
+					confirmed: true,
+					alpha: [1, 2, 5, 6],
+					bravo: [3, 4, 7, 8],
+				}),
+			],
+			weapons: [],
+		});
+
+		expect(
+			rows.map((row) => [row.userId, row.placement]).sort(([a], [b]) => a - b),
+		).toEqual([
+			[1, 1],
+			[2, 1],
+			[3, 3],
+			[4, 3],
+			[5, 5],
+			[6, 5],
+			[7, 7],
+			[8, 7],
+		]);
+	});
+
 	test("lists weapons most played first", () => {
 		const rows = Leaderboard.rows({
 			sets: [setOf({ winners: ["ALPHA", "ALPHA"], confirmed: true })],

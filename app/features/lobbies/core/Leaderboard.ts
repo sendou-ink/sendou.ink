@@ -17,11 +17,13 @@ export interface LeaderboardRow {
 	mapWinPercentage: number | null;
 	/** Weapons played on the maps, most used first */
 	weaponSplIds: MainWeaponId[];
+	/** 1-based, shared by players with the same record */
+	placement: number;
 }
 
 /**
  * Leaderboard of the lobby's players from its finished (confirmed or forfeited) sets: set and map records and
- * the weapons played. Sorted by set wins, then map win percentage.
+ * the weapons played. Sorted by set wins, then map win percentage. Players tied on all of these share the placement.
  *
  * @param weapons one per player per map played, reported by hand or read by the scanner
  * @param roomMemberIds get a row even before their first finished set
@@ -37,7 +39,7 @@ export function rows({
 }): LeaderboardRow[] {
 	const byUserId = new Map<
 		number,
-		Omit<LeaderboardRow, "mapWinPercentage" | "weaponSplIds">
+		Omit<LeaderboardRow, "mapWinPercentage" | "weaponSplIds" | "placement">
 	>();
 	const rowOf = (userId: number) => {
 		const existing = byUserId.get(userId);
@@ -91,10 +93,32 @@ export function rows({
 		};
 	});
 
-	return R.sortBy(
+	const sorted = R.sortBy(
 		result,
 		[(row) => row.setWins, "desc"],
 		[(row) => row.mapWinPercentage ?? -1, "desc"],
 		[(row) => row.mapWins, "desc"],
+	);
+
+	const withPlacements: LeaderboardRow[] = [];
+	for (const [i, row] of sorted.entries()) {
+		const previous = withPlacements.at(-1);
+		const placement =
+			previous && isTied(previous, row) ? previous.placement : i + 1;
+
+		withPlacements.push({ ...row, placement });
+	}
+
+	return withPlacements;
+}
+
+function isTied(
+	a: Pick<LeaderboardRow, "setWins" | "mapWinPercentage" | "mapWins">,
+	b: Pick<LeaderboardRow, "setWins" | "mapWinPercentage" | "mapWins">,
+) {
+	return (
+		a.setWins === b.setWins &&
+		a.mapWinPercentage === b.mapWinPercentage &&
+		a.mapWins === b.mapWins
 	);
 }

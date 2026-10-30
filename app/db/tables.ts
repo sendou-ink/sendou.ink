@@ -1513,6 +1513,14 @@ export interface LobbyReadyCheckUser {
 	confirmedAt: number | null;
 }
 
+/** A player's place on the lobby's leaderboard, saved when the lobby ends. Only those who played a finished set. */
+export interface LobbyResult {
+	lobbyId: number;
+	userId: number;
+	/** Players with the same record share the placement */
+	placement: number;
+}
+
 /**
  * One audience step of a scrim post's or a lobby's visibility schedule (exactly one of the entity columns is set).
  * The entity is visible to a viewer when a row with `visibleFrom` in the past matches them.
@@ -1771,6 +1779,7 @@ export interface DB {
 	LobbyParticipant: LobbyParticipant;
 	LobbyReadyCheck: LobbyReadyCheck;
 	LobbyReadyCheckUser: LobbyReadyCheckUser;
+	LobbyResult: LobbyResult;
 	LobbySet: LobbySet;
 	LobbySetParticipant: LobbySetParticipant;
 	Notification: Notification;

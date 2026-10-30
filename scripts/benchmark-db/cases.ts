@@ -654,6 +654,9 @@ export function buildCases(fx: Fixtures): {
 		fx.heavyUser,
 		(user) => LobbyRepository.findAllUpcomingOfFriendsByUserId(user.id),
 	);
+	add("LobbyRepository.findResultPlacementsByUserId", fx.heavyUser, (user) =>
+		LobbyRepository.findResultPlacementsByUserId(user.id),
+	);
 	addStatic("LobbyRepository.findAllWithCheckInOpenedUnnotified", () =>
 		LobbyRepository.findAllWithCheckInOpenedUnnotified(),
 	);

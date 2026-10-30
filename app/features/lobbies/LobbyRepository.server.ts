@@ -17,6 +17,7 @@ import {
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
+import * as Leaderboard from "./core/Leaderboard";
 import * as LobbyMatchRepository from "./LobbyMatchRepository.server";
 import {
 	CHECK_IN_LEAD_MINUTES,
@@ -826,7 +827,7 @@ export async function update(
 
 /**
  * Ends the lobby. Its chat rooms become inactive, nobody counts as active in it anymore and sets that hadn't
- * got a single map reported are dropped.
+ * got a single map reported are dropped. The placements of its leaderboard are saved as the players' results.
  */
 export function end(id: number) {
 	return db.transaction().execute(async (trx) => {
@@ -879,7 +880,34 @@ export function end(id: number) {
 				),
 			)
 			.execute();
+
+		const results = Leaderboard.rows({
+			sets: await LobbyMatchRepository.findAllSetsByLobbyId(id, trx),
+			weapons: [],
+		});
+		if (results.length > 0) {
+			await trx
+				.insertInto("LobbyResult")
+				.values(
+					results.map((row) => ({
+						lobbyId: id,
+						userId: row.userId,
+						placement: row.placement,
+					})),
+				)
+				.onConflict((oc) => oc.doNothing())
+				.execute();
+		}
 	});
+}
+
+/** Placements the user got in the ended lobbies they played a finished set in, one per lobby. */
+export function findResultPlacementsByUserId(userId: number) {
+	return db
+		.selectFrom("LobbyResult")
+		.select("LobbyResult.placement")
+		.where("LobbyResult.userId", "=", userId)
+		.execute();
 }
 
 function playedIn(eb: ExpressionBuilder<DB, "Lobby">, userId: number) {
