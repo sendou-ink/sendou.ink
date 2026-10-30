@@ -124,7 +124,7 @@
 		"@astrojs/react": "7.1.1",
 		"@astrojs/starlight": "0.42.6",
 		"@babel/preset-typescript": "7.29.7",
-		"@biomejs/biome": "2.5.15",
+		"@biomejs/biome": "2.6.2",
 		"@faker-js/faker": "10.6.0",
 		"@napi-rs/canvas": "1.0.11",
 		"@playwright/test": "1.64.1",
