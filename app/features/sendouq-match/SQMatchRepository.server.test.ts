@@ -382,9 +382,9 @@ describe("requestCancelMatch", () => {
 		expect(reports[0].groupId).toBe(setup.alphaGroupId);
 		expect(reports[0].authorUserId).toBe(setup.alphaMembers[0].id);
 		expect(reports[0].reason).toBe("Disconnect on both sides");
-		expect(reports[0].nominatedPlayers.map((p) => p.userId).sort()).toEqual(
-			nominated.sort(),
-		);
+		expect(
+			reports[0].nominatedPlayers.map((p) => p.userId).sort((a, b) => a - b),
+		).toEqual(nominated.sort((a, b) => a - b));
 	});
 
 	test("second request does not duplicate the report", async () => {
@@ -459,8 +459,12 @@ describe("acceptCancelMatch", () => {
 		expect(reports[0].groupId).toBe(setup.alphaGroupId);
 		expect(reports[1].groupId).toBe(setup.bravoGroupId);
 		expect(reports[1].reason).toBe("Accepter reason");
-		expect(reports[1].nominatedPlayers.map((p) => p.userId).sort()).toEqual(
-			[setup.bravoMembers[0].id, setup.bravoMembers[1].id].sort(),
+		expect(
+			reports[1].nominatedPlayers.map((p) => p.userId).sort((a, b) => a - b),
+		).toEqual(
+			[setup.bravoMembers[0].id, setup.bravoMembers[1].id].sort(
+				(a, b) => a - b,
+			),
 		);
 	});
 

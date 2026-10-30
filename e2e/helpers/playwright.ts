@@ -670,7 +670,7 @@ const DND_KIT_CLICK_SUPPRESSION_MS = 50;
 
 /** Waits out dnd-kit's post-drop click suppression, which nothing observable marks the end of. Call after the `mouse.up()` of a drag. */
 export async function waitForDropToSettle(page: Page) {
-	// biome-ignore lint/nursery/noPlaywrightWaitForTimeout: the suppression window has no observable end
+	// biome-ignore lint/suspicious/noPlaywrightWaitForTimeout: the suppression window has no observable end
 	await page.waitForTimeout(2 * DND_KIT_CLICK_SUPPRESSION_MS);
 }
 

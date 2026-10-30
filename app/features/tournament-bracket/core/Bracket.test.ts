@@ -2070,7 +2070,9 @@ describe("grouped elimination - edge cases", () => {
 		}).bracketByIdx(1)!;
 
 		const pairKey = (match: MatchData) =>
-			[match.opponent1?.id, match.opponent2?.id].sort().join("-");
+			[match.opponent1?.id ?? -1, match.opponent2?.id ?? -1]
+				.sort((a, b) => a - b)
+				.join("-");
 		const roundRobinPairs = new Set(roundRobin.match.map(pairKey));
 		const firstRoundIds = new Set(
 			final.data.round

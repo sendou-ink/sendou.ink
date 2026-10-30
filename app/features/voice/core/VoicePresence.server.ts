@@ -87,8 +87,8 @@ export async function reconciledUserIdsOf(room: PresenceRoom) {
 		]);
 
 		const changed = !R.isDeepEqual(
-			[...current.userIds].sort(),
-			[...userIds].sort(),
+			[...current.userIds].sort((a, b) => a - b),
+			[...userIds].sort((a, b) => a - b),
 		);
 
 		current.userIds = new Set(userIds);

@@ -69,7 +69,9 @@ async function publish() {
 		if (entry?.specHash === specHash) {
 			manifest[dir] = {
 				specHash,
-				files: [...new Set([...entry.files, ...files])].sort(),
+				files: [...new Set([...entry.files, ...files])].sort((a, b) =>
+					a.localeCompare(b),
+				),
 			};
 		} else {
 			manifest[dir] = { specHash, files };

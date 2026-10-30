@@ -266,6 +266,6 @@ export class SendouQMatchPage {
 
 /** Waits out the gap the loss confirm keeps between arming and accepting the second tap. */
 async function waitOutLossConfirmMinGap(page: Page) {
-	// biome-ignore lint/nursery/noPlaywrightWaitForTimeout: the min gap after arming has no observable end
+	// biome-ignore lint/suspicious/noPlaywrightWaitForTimeout: the min gap after arming has no observable end
 	await page.waitForTimeout(LOSS_CONFIRM_MIN_GAP_MS);
 }

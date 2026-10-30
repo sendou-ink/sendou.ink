@@ -43,9 +43,11 @@
 				"noReturnAssign": "error",
 				"noNestedPromises": "error",
 				"noUnusedExpressions": "error",
-				"noShadow": "error"
+				"noShadow": "error",
+				"noJsxLeakedDollar": "error"
 			},
 			"correctness": {
+				"noInvalidGridAreas": "off",
 				"noUndeclaredVariables": "error",
 				"noUnusedInstantiation": "error",
 				"noNestedComponentDefinitions": "error",
@@ -55,7 +57,8 @@
 					"level": "error"
 				},
 				"useSingleJsDocAsterisk": "error",
-				"noUndeclaredDependencies": "error"
+				"noUndeclaredDependencies": "error",
+				"noJsxNamespace": "error"
 			},
 			"style": {
 				"noNonNullAssertion": "off",
@@ -135,7 +138,9 @@
 						"strictCase": false,
 						"requireAscii": true
 					}
-				}
+				},
+				"useImportsFirst": "error",
+				"useReduceTypeParameter": "error"
 			},
 			"a11y": {
 				"useKeyWithClickEvents": "off",
@@ -162,27 +167,23 @@
 				},
 				"noUselessCatchBinding": "error",
 				"noForEach": "error",
-				"useIndexOf": "error"
+				"useIndexOf": "error",
+				"useArraySome": "error",
+				"noUnnecessaryTemplateExpression": {
+					"fix": "safe",
+					"level": "error"
+				}
 			},
 			"performance": {
 				"noSyncScripts": "error"
 			},
 			"security": {
-				"noDangerouslySetInnerHtml": "error"
+				"noDangerouslySetInnerHtml": "error",
+				"useIframeSandbox": "error"
 			},
 			"nursery": {
-				"useImportsFirst": "error",
 				"useReactFunctionComponentDefinition": "error",
 				"useControlLabel": "error",
-				"useIframeSandbox": "error",
-				"useArraySome": "error",
-				"useReduceTypeParameter": "error",
-				"noUnnecessaryTemplateExpression": {
-					"fix": "safe",
-					"level": "error"
-				},
-				"noJsxLeakedDollar": "error",
-				"noJsxNamespace": "error",
 				"noNegationInEqualityCheck": "error",
 				"noExtendNative": "error"
 			}
@@ -200,6 +201,16 @@
 		},
 		"parser": {
 			"cssModules": true
+		}
+	},
+	"markdown": {
+		"formatter": {
+			"enabled": false
+		}
+	},
+	"yaml": {
+		"formatter": {
+			"enabled": false
 		}
 	},
 	"overrides": [
@@ -232,17 +243,26 @@
 			"includes": ["e2e/**"],
 			"linter": {
 				"rules": {
-					"nursery": {
+					"suspicious": {
 						"noPlaywrightPagePause": "error",
 						"noPlaywrightWaitForTimeout": "error",
-						"noPlaywrightMissingAwait": "error",
-						"noPlaywrightUselessAwait": "error",
 						"noPlaywrightWaitForNavigation": "error",
+						"noPlaywrightNetworkidle": "error"
+					},
+					"correctness": {
+						"noPlaywrightMissingAwait": "error",
+						"usePlaywrightValidDescribeCallback": "error"
+					},
+					"complexity": {
+						"noPlaywrightUselessAwait": "error"
+					},
+					"style": {
 						"noPlaywrightElementHandle": "error",
 						"noPlaywrightEval": "error",
-						"noPlaywrightNetworkidle": "error",
-						"noPlaywrightWaitForSelector": "error",
-						"usePlaywrightValidDescribeCallback": "error"
+						"noPlaywrightWaitForSelector": "error"
+					},
+					"performance": {
+						"useDomNodeTextContent": "off"
 					}
 				}
 			}
@@ -302,7 +322,7 @@
 			"includes": ["**/*.test.ts", "**/*.test.tsx"],
 			"linter": {
 				"rules": {
-					"nursery": {
+					"style": {
 						"useConsistentTestIt": {
 							"level": "error",
 							"options": { "function": "test", "withinDescribe": "test" }

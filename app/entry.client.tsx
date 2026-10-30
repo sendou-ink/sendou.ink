@@ -43,7 +43,9 @@ window.fetch = (input, init) => {
 	}
 
 	const sessionId = getSessionId();
-	const headers = new Headers(init?.headers);
+	const headers = new Headers(
+		init?.headers ?? (input instanceof Request ? input.headers : undefined),
+	);
 	headers.set("Sendou-Session-Id", sessionId);
 
 	return fetchWithRetry(input, { ...init, headers });

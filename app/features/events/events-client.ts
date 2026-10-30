@@ -70,7 +70,8 @@ export function createEventsClient(deps: EventsClientDeps): EventsClient {
 		}
 	};
 
-	const desiredTopics = () => [...topicSubscriberCounts.keys()].sort();
+	const desiredTopics = () =>
+		[...topicSubscriberCounts.keys()].sort((a, b) => a.localeCompare(b));
 
 	const syncTopics = async () => {
 		if (syncing) return;

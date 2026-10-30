@@ -82,6 +82,6 @@ export function documentRepository(
 					exported.calls.map((call) => call.repository),
 				),
 			),
-		].sort(),
+		].sort((a, b) => a.localeCompare(b)),
 	};
 }

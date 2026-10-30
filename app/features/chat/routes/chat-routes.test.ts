@@ -344,9 +344,9 @@ describe("chat rooms loader", () => {
 		const data = await loadRooms(alphaUserIds[0]);
 		const matchRoom = data.rooms.find((room) => room.id === match.chatRoomId);
 
-		expect(matchRoom?.participants.map((user) => user.id).sort()).toEqual(
-			[...alphaUserIds, ...bravoUserIds].sort(),
-		);
+		expect(
+			matchRoom?.participants.map((user) => user.id).sort((a, b) => a - b),
+		).toEqual([...alphaUserIds, ...bravoUserIds].sort((a, b) => a - b));
 		expect(matchRoom?.participants[0].username).toEqual(expect.any(String));
 	});
 

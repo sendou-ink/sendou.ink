@@ -88,11 +88,15 @@ describe("TournamentRepository.findById", () => {
 			],
 		});
 
-		expect(permissions.ADMIN.sort()).toEqual([authorId(), orgAdminId()].sort());
-		expect(permissions.ORGANIZE.sort()).toEqual(
-			[authorId(), orgAdminId(), orgOrganizerId(), staffOrganizerId()].sort(),
+		expect(permissions.ADMIN.sort((a, b) => a - b)).toEqual(
+			[authorId(), orgAdminId()].sort((a, b) => a - b),
 		);
-		expect(permissions.MANAGE_MATCHES.sort()).toEqual(
+		expect(permissions.ORGANIZE.sort((a, b) => a - b)).toEqual(
+			[authorId(), orgAdminId(), orgOrganizerId(), staffOrganizerId()].sort(
+				(a, b) => a - b,
+			),
+		);
+		expect(permissions.MANAGE_MATCHES.sort((a, b) => a - b)).toEqual(
 			[
 				authorId(),
 				orgAdminId(),
@@ -100,7 +104,7 @@ describe("TournamentRepository.findById", () => {
 				staffOrganizerId(),
 				orgStreamerId(),
 				staffStreamerId(),
-			].sort(),
+			].sort((a, b) => a - b),
 		);
 		expect(permissions.MANAGE_MATCHES).not.toContain(outsiderId());
 	});
@@ -128,8 +132,8 @@ describe("TournamentRepository.findById", () => {
 
 			const permissions = await permissionsOfTournament({ isEstablished });
 
-			expect(permissions.EDIT_EVENT_INFO.sort()).toEqual(
-				[authorId(), orgAdminId()].sort(),
+			expect(permissions.EDIT_EVENT_INFO.sort((a, b) => a - b)).toEqual(
+				[authorId(), orgAdminId()].sort((a, b) => a - b),
 			);
 		},
 	);
@@ -159,8 +163,8 @@ describe("TournamentRepository.findById", () => {
 			staff: [{ userId: staffOrganizerId(), role: "ORGANIZER" }],
 		});
 
-		expect(permissions.EDIT_IN_GAME_NAMES.sort()).toEqual(
-			[orgAdminId(), orgOrganizerId()].sort(),
+		expect(permissions.EDIT_IN_GAME_NAMES.sort((a, b) => a - b)).toEqual(
+			[orgAdminId(), orgOrganizerId()].sort((a, b) => a - b),
 		);
 	});
 

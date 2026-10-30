@@ -79,8 +79,8 @@ describe("findPendingOverlapsForUsers", () => {
 
 		expect(posts).toHaveLength(1);
 		expect(posts[0]!.id).toBe(postId);
-		expect(posts[0]!.memberIds.sort()).toEqual(
-			[users.id(1), users.id(2)].sort(),
+		expect(posts[0]!.memberIds.sort((a, b) => a - b)).toEqual(
+			[users.id(1), users.id(2)].sort((a, b) => a - b),
 		);
 	});
 

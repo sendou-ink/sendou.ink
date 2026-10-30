@@ -264,7 +264,9 @@ function assignObjects(grants: PermissionGrant[]) {
 }
 
 function namesOf(grants: PermissionGrant[]) {
-	return [...new Set(grants.map((grant) => grant.name))].sort().join(",");
+	return [...new Set(grants.map((grant) => grant.name))]
+		.sort((a, b) => a.localeCompare(b))
+		.join(",");
 }
 
 /**
