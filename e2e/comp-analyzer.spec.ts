@@ -18,15 +18,14 @@ test.describe("Composition Analyzer", () => {
 		await compAnalyzer.removeWeapon(0);
 		await expect(compAnalyzer.locators.emptyWeaponSlots).toHaveCount(4);
 
-		// a full four weapons auto-collapse the grid
-		await expect(compAnalyzer.locators.categorizationToggle).toBeVisible();
-
 		await compAnalyzer.selectWeapon(40);
 		await compAnalyzer.selectWeapon(50);
 		await compAnalyzer.selectWeapon(60);
 		await compAnalyzer.selectWeapon(70);
 
-		await expect(compAnalyzer.locators.categorizationToggle).not.toBeVisible();
+		// a full comp keeps the grid open but disables picking more
+		await expect(compAnalyzer.locators.categorizationToggle).toBeVisible();
+		await expect(compAnalyzer.weaponButton(80)).toBeDisabled();
 
 		await expect(page).toHaveURL(/weapons=/);
 

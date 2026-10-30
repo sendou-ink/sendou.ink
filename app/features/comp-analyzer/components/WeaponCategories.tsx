@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { SpecialWeaponImage, SubWeaponImage } from "~/components/Image";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
@@ -35,10 +36,6 @@ interface SpecialWeaponItem {
 export function WeaponCategories({ selectedWeaponIds }: WeaponCategoriesProps) {
 	const { t } = useTranslation(["weapons", "analyzer"]);
 
-	if (selectedWeaponIds.length === 0) {
-		return null;
-	}
-
 	const subItems: SubWeaponItem[] = [];
 	const specialItems: SpecialWeaponItem[] = [];
 
@@ -72,46 +69,75 @@ export function WeaponCategories({ selectedWeaponIds }: WeaponCategoriesProps) {
 		return a.weaponIndex - b.weaponIndex;
 	});
 
+	const isEmpty = selectedWeaponIds.length === 0;
+
 	return (
 		<div className={styles.container}>
 			<div className={styles.categorySection}>
 				<div className={styles.categoryLabel}>
 					{t("analyzer:comp.subRoles")}
 				</div>
-				<div className={styles.categoryPill}>
-					{sortedSubItems.map((item, index) => (
-						<div
-							key={`${item.weaponIndex}-${item.subId}`}
-							className={styles.categoryItem}
-							data-first={index === 0}
-						>
-							<SubWeaponImage subWeaponId={item.subId} size={20} />
-							<span className={styles.categoryName}>
-								{t(`analyzer:comp.subCategory.${item.category}`)}
-							</span>
-						</div>
-					))}
-				</div>
+				{isEmpty ? (
+					<EmptyPill />
+				) : (
+					<div className={styles.categoryPill}>
+						{sortedSubItems.map((item, index) => (
+							<div
+								key={`${item.weaponIndex}-${item.subId}`}
+								className={styles.categoryItem}
+								data-first={index === 0}
+							>
+								<SubWeaponImage subWeaponId={item.subId} size={20} />
+								<span className={styles.categoryName}>
+									{t(`analyzer:comp.subCategory.${item.category}`)}
+								</span>
+							</div>
+						))}
+					</div>
+				)}
 			</div>
 			<div className={styles.categorySection}>
 				<div className={styles.categoryLabel}>
 					{t("analyzer:comp.specialRoles")}
 				</div>
-				<div className={styles.categoryPill}>
-					{sortedSpecialItems.map((item, index) => (
-						<div
-							key={`${item.weaponIndex}-${item.specialId}`}
-							className={styles.categoryItem}
-							data-first={index === 0}
-						>
-							<SpecialWeaponImage specialWeaponId={item.specialId} size={20} />
-							<span className={styles.categoryName}>
-								{t(`analyzer:comp.specialCategory.${item.category}`)}
-							</span>
-						</div>
-					))}
-				</div>
+				{isEmpty ? (
+					<EmptyPill />
+				) : (
+					<div className={styles.categoryPill}>
+						{sortedSpecialItems.map((item, index) => (
+							<div
+								key={`${item.weaponIndex}-${item.specialId}`}
+								className={styles.categoryItem}
+								data-first={index === 0}
+							>
+								<SpecialWeaponImage
+									specialWeaponId={item.specialId}
+									size={20}
+								/>
+								<span className={styles.categoryName}>
+									{t(`analyzer:comp.specialCategory.${item.category}`)}
+								</span>
+							</div>
+						))}
+					</div>
+				)}
 			</div>
+		</div>
+	);
+}
+
+function EmptyPill() {
+	const { t } = useTranslation(["analyzer"]);
+
+	return (
+		<div className={clsx(styles.categoryPill, styles.categoryPillEmpty)}>
+			<div className={styles.emptyPillSizer} aria-hidden="true">
+				<div className={styles.emptyPillSizerIcon} />
+				<span className={styles.categoryName}>&nbsp;</span>
+			</div>
+			<span className={styles.emptyPillText}>
+				{t("analyzer:comp.pickWeapon")}
+			</span>
 		</div>
 	);
 }
