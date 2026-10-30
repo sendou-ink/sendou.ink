@@ -17,6 +17,7 @@ export class NewLobbyPage {
 			friendCodeNeededText: page.getByText(
 				"Set your friend code to make a lobby.",
 			),
+			noPermissionsText: page.getByText("No permissions to add lobbies."),
 		};
 	}
 

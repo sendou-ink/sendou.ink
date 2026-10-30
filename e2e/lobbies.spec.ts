@@ -36,7 +36,7 @@ const LOBBY_DESCRIPTION = "Bring your main, no Tacticooler";
 
 test.describe("Lobbies", () => {
 	/**
-	 * For now only an admin can make a lobby, others sign up for it. Signing up before the start reserves
+	 * Only a supporter can make a lobby, others sign up for it. Signing up before the start reserves
 	 * a spot, check-in opening 10 minutes before the start with a notification to the signed
 	 * up, and once the lobby has started signing up checks in right away. Past the room size
 	 * sign-ups go to the waitlist, the first on it taking a spot someone frees and being
@@ -286,14 +286,14 @@ test.describe("Lobbies", () => {
 			await expect(newLobby.locators.friendCodeNeededText).toBeVisible();
 		});
 
-		test("only an admin can make a lobby", async ({ page, factories }) => {
+		test("only a supporter can make a lobby", async ({ page, factories }) => {
 			const user = await factories.UserFactory.create();
 
 			await impersonate(page, user.id);
-			const errorPage = new ErrorPage(page);
-			await new NewLobbyPage(page).goto();
+			const newLobby = new NewLobbyPage(page);
+			await newLobby.goto();
 
-			await expect(errorPage.locators.forbiddenHeading).toBeVisible();
+			await expect(newLobby.locators.noPermissionsText).toBeVisible();
 		});
 
 		test("a user in SendouQ can't check in", async ({ page, factories }) => {
