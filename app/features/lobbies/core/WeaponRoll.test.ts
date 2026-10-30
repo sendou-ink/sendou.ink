@@ -133,7 +133,7 @@ describe("WeaponRoll.shapeMismatchCost", () => {
 		{
 			why: "same shape",
 			alpha: [SPLATTERSHOT, SPLAT_ROLLER, SLOSHER, SPLAT_CHARGER],
-			bravo: [DYNAMO_ROLLER, SPLATTERSHOT, SPLATTERSHOT_PRO, BAMBOOZLER],
+			bravo: [DYNAMO_ROLLER, SPLATTERSHOT, SLOSHER, BAMBOOZLER],
 			expected: 0,
 		},
 		{
