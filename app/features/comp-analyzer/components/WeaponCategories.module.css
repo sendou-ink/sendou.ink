@@ -1,15 +1,22 @@
 .container {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
 	gap: var(--s-4);
 	max-width: 100%;
+}
+
+@container (width < 960px) {
+	.container {
+		grid-template-columns: 1fr;
+	}
 }
 
 .categorySection {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1);
-	margin: 0 auto;
+	justify-self: center;
+	min-width: 0;
 	max-width: 100%;
 }
 
@@ -47,6 +54,37 @@
 
 .categoryName {
 	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+}
+
+.categoryPillEmpty {
+	display: grid;
+	place-items: center;
+	background-color: var(--color-bg-higher);
+	border-style: dashed;
+	opacity: 0.6;
+
+	& > * {
+		grid-area: 1 / 1;
+	}
+}
+
+.emptyPillSizer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding-block: var(--s-1);
+	visibility: hidden;
+}
+
+.emptyPillSizerIcon {
+	height: 20px;
+}
+
+.emptyPillText {
+	padding-inline: var(--s-6);
+	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	white-space: nowrap;
 }

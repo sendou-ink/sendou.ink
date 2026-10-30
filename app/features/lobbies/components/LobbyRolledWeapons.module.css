@@ -1,0 +1,29 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.narrowLabel {
+	display: none;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+
+	@container (max-width: 599px) {
+		display: block;
+	}
+}
+
+.weapons {
+	border: 2px solid transparent;
+	border-radius: var(--radius-full);
+}
+
+.own {
+	border-color: var(--color-fill-accent);
+}
+
+.opponent {
+	opacity: 0.6;
+}

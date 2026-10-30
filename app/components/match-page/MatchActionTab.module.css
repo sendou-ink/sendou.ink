@@ -146,8 +146,39 @@
 	gap: var(--s-1);
 }
 
-.submit {
+.submitRow {
 	grid-area: submit;
+}
+
+.submitRowWithSides {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	column-gap: var(--s-4);
+	row-gap: var(--s-3);
+	justify-items: center;
+	align-items: center;
+	width: 100%;
+
+	@container (max-width: 599px) {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-areas:
+			"alpha bravo"
+			"button button";
+	}
+}
+
+@container (max-width: 599px) {
+	.submitRowAlpha {
+		grid-area: alpha;
+	}
+
+	.submitRowBravo {
+		grid-area: bravo;
+	}
+
+	.submitRowWithSides > button {
+		grid-area: button;
+	}
 }
 
 .checkCircle {

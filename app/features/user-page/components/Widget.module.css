@@ -277,6 +277,13 @@
 	padding: 1px;
 }
 
+.placementResultsContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-3);
+}
+
 .placementResults {
 	display: flex;
 	gap: var(--s-4);

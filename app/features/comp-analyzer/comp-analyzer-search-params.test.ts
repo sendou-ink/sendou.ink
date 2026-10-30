@@ -14,6 +14,9 @@ describe("compAnalyzerSearchParams", () => {
 			singleCombos: [false, true],
 			subDef: [0, 29, 57],
 			res: [0, 57],
+			rangeVariants: [[], ["1010-horizontal"], ["400-tap", "400-hold"]],
+			specialRanges: [false, true],
+			hiddenRanges: [[], [1010], [1010, 400]],
 		});
 	});
 
@@ -39,5 +42,16 @@ describe("compAnalyzerSearchParams", () => {
 			["abc"],
 		]);
 		assertDecodesToDefault(compAnalyzerSearchParams, "res", [["-1"], ["58"]]);
+		assertDecodesToDefault(compAnalyzerSearchParams, "specialRanges", [["1"]]);
+	});
+
+	test("drops malformed range variant entries", () => {
+		expect(
+			SearchParams.decodeParam(compAnalyzerSearchParams.shape.rangeVariants, [
+				"1010-horizontal",
+				"1010-sideways",
+				"horizontal",
+			]),
+		).toEqual(["1010-horizontal"]);
 	});
 });

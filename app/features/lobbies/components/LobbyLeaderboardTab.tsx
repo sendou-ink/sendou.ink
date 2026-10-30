@@ -30,6 +30,7 @@ export function LobbyLeaderboardTab() {
 				<LobbyPlayerTable
 					rows={rows}
 					isNumbered
+					placementOf={(row) => row.placement}
 					rowTestId="lobby-leaderboard-row"
 					columns={[
 						{

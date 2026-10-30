@@ -36,7 +36,7 @@ export class Masonry extends React.Component<MasonryProps, MasonryState> {
 		this.state = { columns: [], childRefs: [], hasDistributed: false };
 	}
 
-	componentDidUpdate() {
+	override componentDidUpdate() {
 		if (!this.state.hasDistributed && !this.props.sequential) {
 			this.distributeChildren();
 		}
@@ -53,7 +53,7 @@ export class Masonry extends React.Component<MasonryProps, MasonryState> {
 		};
 	}
 
-	shouldComponentUpdate(nextProps: MasonryProps) {
+	override shouldComponentUpdate(nextProps: MasonryProps) {
 		return (
 			nextProps.children !== this.state.children ||
 			nextProps.columnsCount !== this.props.columnsCount
@@ -144,7 +144,7 @@ export class Masonry extends React.Component<MasonryProps, MasonryState> {
 		);
 	}
 
-	render() {
+	override render() {
 		const { gutter, className, style, containerTag } = this.props;
 
 		return React.createElement(

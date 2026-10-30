@@ -206,7 +206,32 @@ export function Widget({
 				);
 			case "placement-results":
 				if (!widget.data) return null;
-				return <PlacementResults data={widget.data} />;
+				return (
+					<PlacementResults
+						placements={widget.data.placements}
+						footer={
+							typeof widget.data.total === "number"
+								? t("user:widget.placement-results.total", {
+										count: widget.data.total,
+									})
+								: undefined
+						}
+					/>
+				);
+			case "lobby-results":
+				if (!widget.data) return null;
+				return (
+					<PlacementResults
+						placements={widget.data.placements}
+						footer={
+							typeof widget.data.total === "number"
+								? t("user:widget.lobby-results.total", {
+										count: widget.data.total,
+									})
+								: undefined
+						}
+					/>
+				);
 			case "patron-since":
 				if (!widget.data) return null;
 				return (
@@ -652,20 +677,25 @@ function FavoriteStageWidget({ stageId }: { stageId: StageId }) {
 }
 
 function PlacementResults({
-	data,
+	placements,
+	footer,
 }: {
-	data: NonNullable<Extract<LoadedWidget, { id: "placement-results" }>["data"]>;
+	placements: Array<{ placement: number; count: number }>;
+	footer?: string;
 }) {
 	return (
-		<div className={styles.placementResults}>
-			{data.placements.map(({ placement, count }) => {
-				return (
-					<div key={placement} className={styles.placementResult}>
-						<Placement placement={placement} />
-						<span>×{count}</span>
-					</div>
-				);
-			})}
+		<div className={styles.placementResultsContainer}>
+			<div className={styles.placementResults}>
+				{placements.map(({ placement, count }) => {
+					return (
+						<div key={placement} className={styles.placementResult}>
+							<Placement placement={placement} />
+							<span>×{count}</span>
+						</div>
+					);
+				})}
+			</div>
+			{footer ? <div className={styles.widgetValueFooter}>{footer}</div> : null}
 		</div>
 	);
 }

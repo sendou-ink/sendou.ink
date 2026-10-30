@@ -19,6 +19,7 @@ import {
 	textArea,
 	textAreaOptional,
 	textField,
+	toggle,
 	weaponPool,
 	weaponSelect,
 } from "~/form/fields";
@@ -231,6 +232,14 @@ export const markdownSchema = v.object({
 	}),
 });
 
+export const placementResultsSchema = v.object({
+	showTotal: toggle({ label: "labels.showTournamentsPlayed" }),
+});
+
+export const lobbyResultsSchema = v.object({
+	showTotal: toggle({ label: "labels.showLobbiesPlayed", initialValue: true }),
+});
+
 const WIDGET_FORM_SCHEMAS: Record<string, FormObjectSchema> = {
 	bio: bioSchema,
 	"bio-md": bioMdSchema,
@@ -250,6 +259,8 @@ const WIDGET_FORM_SCHEMAS: Record<string, FormObjectSchema> = {
 	"game-badges-small": gameBadgesSmallSchema,
 	countdown: countdownSchema,
 	markdown: markdownSchema,
+	"placement-results": placementResultsSchema,
+	"lobby-results": lobbyResultsSchema,
 };
 
 export function getWidgetFormSchema(widgetId: string) {

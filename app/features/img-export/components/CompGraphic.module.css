@@ -126,6 +126,41 @@
 	}
 }
 
+.rangeBarAlternate {
+	background-image: repeating-linear-gradient(
+		-45deg,
+		transparent 0,
+		transparent 4px,
+		oklch(0% 0 0 / 0.25) 4px,
+		oklch(0% 0 0 / 0.25) 8px
+	);
+}
+
+.rangeLabel {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-start: var(--s-1-5);
+	display: flex;
+	align-items: center;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+	color: oklch(20% 0 0);
+	white-space: nowrap;
+}
+
+.rangeLethalTick {
+	position: absolute;
+	inset-block: 0;
+	z-index: 1;
+	width: 0;
+	border-left: 2px solid oklch(20% 0 0 / 0.75);
+}
+
+.rangeIconSpacer {
+	width: 28px;
+}
+
 .rangeBlast {
 	position: absolute;
 	inset-block: 0;

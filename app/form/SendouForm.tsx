@@ -142,18 +142,21 @@ type BaseFormProps<T extends v.ObjectEntries> = {
 /**
  * `"submit"` (default): submit button sends values to the server, or to `onApply` when provided.
  * `"autoSubmit"`: no button; every valid change is sent to the server.
- * `"client"`: no button or `<form>`; every change goes to `onApply` and errors are computed on mount.
+ * `"client"`: no button or `<form>`; every change goes to `onApply`, errors show on blur until the owner's save is attempted.
  */
 type FormModeProps<T extends v.ObjectEntries> =
 	| {
 			mode?: "submit";
 			/** When set, a valid submit is handed to this callback instead of being sent to the server. */
 			onApply?: (values: v.InferOutput<v.ObjectSchema<T, undefined>>) => void;
+			saveAttempted?: never;
 	  }
-	| { mode: "autoSubmit"; onApply?: never }
+	| { mode: "autoSubmit"; onApply?: never; saveAttempted?: never }
 	| {
 			mode: "client";
 			onApply: (values: v.InferOutput<v.ObjectSchema<T, undefined>>) => void;
+			/** Read on mount only: when true every field's error shows from the start. */
+			saveAttempted?: boolean;
 	  };
 
 export type FormDefaultValues<T extends v.ObjectEntries> = Partial<
@@ -179,6 +182,7 @@ interface LatestFormProps {
 	t: (key: string) => string;
 	steps: ReadonlyArray<FormStepDefinition> | undefined;
 	currentStepIdx: number;
+	hasSubmitted: boolean;
 	pushStepToUrl: (stepIdx: number) => void;
 }
 
@@ -216,6 +220,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	readOnly = false,
 	mode = "submit",
 	onApply,
+	saveAttempted = false,
 	secondarySubmit,
 	hideSubmitButtonWhen,
 	onSuccess,
@@ -224,7 +229,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
-	const [hasSubmitted, setHasSubmitted] = React.useState(false);
+	const [hasSubmitted, setHasSubmitted] = React.useState(saveAttempted);
 	const [visibleServerErrors, setVisibleServerErrors] = React.useState<
 		Partial<Record<string, string>>
 	>(fetcher.data?.fieldErrors ?? {});
@@ -246,9 +251,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		const initialValues = buildInitialValues(schema, defaultValues);
 		return createFormStore(
 			initialValues,
-			mode === "client"
-				? computeTopLevelFieldErrors(schema, initialValues)
-				: {},
+			saveAttempted ? computeTopLevelFieldErrors(schema, initialValues) : {},
 		);
 	});
 
@@ -262,6 +265,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		t: t as unknown as LatestFormProps["t"],
 		steps,
 		currentStepIdx,
+		hasSubmitted,
 		// in a microtask: the navigation's transition, if started within the submit event, makes React treat the form as running an action
 		pushStepToUrl: (stepIdx) =>
 			queueMicrotask(() =>
@@ -944,14 +948,18 @@ function createFormActions({
 	};
 
 	const onFieldChange = (changedName: string, changedValue: unknown) => {
-		const { schema, mode, onApply } = latest.current;
+		const { schema, mode, onApply, hasSubmitted } = latest.current;
 		const isNestedPath = changedName.includes(".") || changedName.includes("[");
 		const updatedValues = isNestedPath
 			? setNestedValue(store.values, changedName, changedValue)
 			: { ...store.values, [changedName]: changedValue };
 
 		const newErrors = computeTopLevelFieldErrors(schema, updatedValues);
-		store.setClientErrors(newErrors);
+		store.setClientErrors(
+			mode === "client" && !hasSubmitted
+				? errorsAlreadyShown(newErrors, store.clientErrors)
+				: newErrors,
+		);
 		const hasFieldErrors = Object.keys(newErrors).length > 0;
 
 		if (mode === "client") {
@@ -1090,6 +1098,16 @@ function computeFieldErrors(
 	}
 
 	return newErrors;
+}
+
+// a change only updates errors already shown, new ones surface on blur
+function errorsAlreadyShown(
+	errors: Record<string, string>,
+	previousErrors: Partial<Record<string, string>>,
+) {
+	return Object.fromEntries(
+		Object.entries(errors).filter(([name]) => name in previousErrors),
+	);
 }
 
 function computeTopLevelFieldErrors(

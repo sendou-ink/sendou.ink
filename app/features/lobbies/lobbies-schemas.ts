@@ -27,6 +27,7 @@ import {
 	LOBBY_NAME_MAX_LENGTH,
 	LOBBY_SIDES,
 	LOBBY_SPECTATOR_COUNTS,
+	LOBBY_WEAPON_RANDOMIZERS,
 } from "./lobbies-constants";
 
 const bestOfField = radioGroup({
@@ -37,6 +38,16 @@ const bestOfField = radioGroup({
 		value: String(bestOf) as `${(typeof LOBBY_BEST_OFS)[number]}`,
 	})),
 	initialValue: "3",
+});
+
+const weaponRandomizerField = radioGroup({
+	label: "labels.lobbyWeaponRandomizer",
+	bottomText: "bottomTexts.lobbyWeaponRandomizer",
+	variant: "chip",
+	items: LOBBY_WEAPON_RANDOMIZERS.map((randomizer) => ({
+		label: `options.lobbyWeaponRandomizer.${randomizer}` as const,
+		value: randomizer,
+	})),
 });
 
 const modesField = checkboxGroup({
@@ -77,6 +88,7 @@ export const newLobbySchema = v.pipe(
 		}),
 		bestOf: bestOfField,
 		modes: modesField,
+		weaponRandomizer: weaponRandomizerField,
 		spectators: radioGroup({
 			label: "labels.lobbySpectators",
 			bottomText: "bottomTexts.lobbySpectators",
@@ -106,6 +118,7 @@ export const lobbySettingsSchema = v.object({
 	_action: stringConstant("UPDATE_SETTINGS"),
 	bestOf: bestOfField,
 	modes: modesField,
+	weaponRandomizer: weaponRandomizerField,
 });
 
 const lobbySide = v.picklist(LOBBY_SIDES);

@@ -1,7 +1,10 @@
 import type { Page } from "@playwright/test";
 import { addMinutes, subHours, subMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import type { LobbyRoomSize } from "~/features/lobbies/lobbies-constants";
+import type {
+	LobbyRoomSize,
+	LobbyWeaponRandomizer,
+} from "~/features/lobbies/lobbies-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { openSecondUser } from "./helpers/chat";
 import type { Factories } from "./helpers/factories";
@@ -35,7 +38,7 @@ const LOBBY_DESCRIPTION = "Bring your main, no Tacticooler";
 
 test.describe("Lobbies", () => {
 	/**
-	 * For now only an admin can make a lobby, others sign up for it. Signing up before the start reserves
+	 * Only a supporter can make a lobby, others sign up for it. Signing up before the start reserves
 	 * a spot, check-in opening 10 minutes before the start with a notification to the signed
 	 * up, and once the lobby has started signing up checks in right away. Past the room size
 	 * sign-ups go to the waitlist, the first on it taking a spot someone frees and being
@@ -285,14 +288,14 @@ test.describe("Lobbies", () => {
 			await expect(newLobby.locators.friendCodeNeededText).toBeVisible();
 		});
 
-		test("only an admin can make a lobby", async ({ page, factories }) => {
+		test("only a supporter can make a lobby", async ({ page, factories }) => {
 			const user = await factories.UserFactory.create();
 
 			await impersonate(page, user.id);
-			const errorPage = new ErrorPage(page);
-			await new NewLobbyPage(page).goto();
+			const newLobby = new NewLobbyPage(page);
+			await newLobby.goto();
 
-			await expect(errorPage.locators.forbiddenHeading).toBeVisible();
+			await expect(newLobby.locators.noPermissionsText).toBeVisible();
 		});
 
 		test("a user in SendouQ can't check in", async ({ page, factories }) => {
@@ -747,6 +750,7 @@ test.describe("Lobbies", () => {
 				await impersonate(page, host.id);
 				await lobbyPage.goto(lobby.id, "action");
 				await lobbyPage.confirmSetAsHost();
+				await lobbyPage.openTab("action");
 
 				await expect(lobbyPage.locators.reportScoreButton).toBeVisible();
 				await lobbyPage.openTab("result");
@@ -765,7 +769,7 @@ test.describe("Lobbies", () => {
 	 * up while a spot is open counts as confirming.
 	 */
 	test.describe("Between sets", () => {
-		test("the next set starts with the teams reshuffled", async ({
+		test("the next set opens on the Rosters tab with the teams reshuffled", async ({
 			page,
 			factories,
 		}) => {
@@ -781,7 +785,10 @@ test.describe("Lobbies", () => {
 				bravoPlayer: bravoPlayers[0],
 			});
 
-			await expect(lobbyPage.locators.reportScoreButton).toBeVisible();
+			await expect(lobbyPage.tab("rosters")).toHaveAttribute(
+				"aria-selected",
+				"true",
+			);
 			const nextAlphaIds = await rosterIds(lobbyPage, "Alpha", players);
 
 			expect(nextAlphaIds).not.toEqual(idsOf(alphaPlayers));
@@ -1344,6 +1351,50 @@ test.describe("Lobbies", () => {
 	 * players. Every set starts with fresh team chats while the lobby's chat carries on. The
 	 * lobby page opens a player's two chats side by side.
 	 */
+	/**
+	 * The host picks a weapon randomizer when making the lobby or between sets. When a set starts it rolls 4 weapons
+	 * for each team, its players deciding who plays which: chaotic any weapons, balanced ones that even out the teams.
+	 */
+	test.describe("Weapon randomizer", () => {
+		test("the randomizer picked when making the lobby shows on its card and page", async ({
+			page,
+			factories,
+		}) => {
+			await factories.UserFactory.setFriendCode(ADMIN_ID);
+
+			await impersonate(page, ADMIN_ID);
+			const newLobby = new NewLobbyPage(page);
+			await newLobby.goto();
+			await newLobby.form.fill("name", LOBBY_NAME);
+			await newLobby.selectWeaponRandomizer("Balanced");
+			await newLobby.save();
+
+			const lobbyPage = new LobbyPage(page);
+			await expect(lobbyPage.locators.weaponRandomizer).toHaveText(
+				"Balanced random",
+			);
+
+			const lobbies = new LobbiesPage(page);
+			await lobbies.goto();
+			await expect(lobbies.weaponRandomizer(LOBBY_NAME)).toHaveText(
+				"Balanced random",
+			);
+		});
+
+		test("each team of a set gets 4 weapons on the Rosters tab", async ({
+			page,
+			factories,
+		}) => {
+			await startedLobby(page, factories, { weaponRandomizer: "CHAOTIC" });
+			const lobbyPage = new LobbyPage(page);
+
+			await expect(lobbyPage.locators.weaponRandomizer).toHaveText(
+				"Chaotic random",
+			);
+			await expect(lobbyPage.locators.rosterRolledWeapons).toHaveCount(8);
+		});
+	});
+
 	test.describe("Chat", () => {
 		test("a team's chat reaches only its players", async ({
 			page,
@@ -1433,7 +1484,10 @@ test.describe("Lobbies", () => {
 				bravoPlayer: bravoPlayers[0],
 			});
 
-			await expect(lobbyPage.locators.reportScoreButton).toBeVisible();
+			await expect(lobbyPage.tab("rosters")).toHaveAttribute(
+				"aria-selected",
+				"true",
+			);
 			const nextAlphaIds = await rosterIds(lobbyPage, "Alpha", players);
 			const senderTeamIds = nextAlphaIds.includes(sender.id)
 				? nextAlphaIds
@@ -1836,7 +1890,10 @@ async function startingLobby(factories: Factories) {
 async function startedLobby(
 	page: Page,
 	factories: Factories,
-	options: { roomSize?: LobbyRoomSize } = {},
+	options: {
+		roomSize?: LobbyRoomSize;
+		weaponRandomizer?: LobbyWeaponRandomizer;
+	} = {},
 ) {
 	return startLobby(page, await lobbyAwaitingLastCheckIn(factories, options));
 }
@@ -1844,7 +1901,13 @@ async function startedLobby(
 /** A lobby that started a minute ago, its full room checked in but the last player. The first player is the host. */
 async function lobbyAwaitingLastCheckIn(
 	factories: Factories,
-	{ roomSize = ROOM_SIZE }: { roomSize?: LobbyRoomSize } = {},
+	{
+		roomSize = ROOM_SIZE,
+		weaponRandomizer = "OFF",
+	}: {
+		roomSize?: LobbyRoomSize;
+		weaponRandomizer?: LobbyWeaponRandomizer;
+	} = {},
 ) {
 	const users = await factories.UserFactory.createMany(roomSize, (i) => ({
 		discordName: `${PLAYER_NAME_PREFIX}${i}`,
@@ -1860,6 +1923,7 @@ async function lobbyAwaitingLastCheckIn(
 			roomSize,
 			startsAt: dateToDatabaseTimestamp(subMinutes(new Date(), 1)),
 			bestOf: BEST_OF,
+			weaponRandomizer,
 		},
 		{
 			signedUpUserIds: idsOf(players.slice(1)),

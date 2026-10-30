@@ -6,8 +6,10 @@ import { fileURLToPath } from "node:url";
 import * as v from "valibot";
 import type {
 	BaseWeaponStats,
+	DistanceDamage,
 	MainWeaponParams,
 	ParamsJson,
+	RangeParams,
 	SubWeaponParams,
 	WeaponKit,
 } from "~/features/build-analyzer/analyzer-types";
@@ -256,7 +258,15 @@ function getWeaponCategoryName(weaponId: number): string | undefined {
 	return undefined;
 }
 
-function extractRangeParams(weapon: MainWeapon, params: any) {
+function extractRangeParams(
+	weapon: MainWeapon,
+	params: any,
+): RangeParams &
+	Pick<BaseWeaponStats, "Range_VariantKey" | "Range_Variants"> &
+	Pick<
+		BaseWeaponStats,
+		"DistanceFullCharge" | "DistanceMaxCharge" | "DistanceMinCharge"
+	> {
 	const category = getWeaponCategoryName(weapon.Id);
 	const isBrella = category === "BRELLAS";
 	const isSlosher = category === "SLOSHERS";
@@ -265,13 +275,30 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 		return {};
 	}
 
+	const zRate = params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate;
 	const isCharger = params.MoveParam?.$type === "spl__BulletChargerMoveParam";
 
 	if (isCharger) {
-		return {
+		const chargeDistances = {
 			DistanceFullCharge: params.MoveParam?.DistanceFullCharge,
 			DistanceMaxCharge: params.MoveParam?.DistanceMaxCharge,
 			DistanceMinCharge: params.MoveParam?.DistanceMinCharge,
+		};
+		if (
+			chargeDistances.DistanceMinCharge === chargeDistances.DistanceFullCharge
+		) {
+			return chargeDistances;
+		}
+
+		return {
+			...chargeDistances,
+			Range_VariantKey: "charged",
+			Range_Variants: [
+				{
+					Range_VariantKey: "tap",
+					Range_Distance: chargeDistances.DistanceMinCharge,
+				},
+			],
 		};
 	}
 
@@ -284,59 +311,89 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 					: best,
 			units?.[0],
 		);
-		const moveParam = unitForRange?.MoveParam;
 		const isBloblobber = weapon.Id === 3030 || weapon.Id === 3031;
+		const bounceAfterMaxSpeed = params.BounceGroupParam?.BounceParam?.find(
+			(bounceParam: any) => bounceParam.BounceAfterMaxSpeed !== undefined,
+		)?.BounceAfterMaxSpeed;
 		return {
-			Range_SpawnSpeed: unitForRange?.SpawnSpeedGround,
-			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_FreeGravity: moveParam?.FreeGravity,
-			Range_BrakeAirResist: moveParam?.BrakeAirResist,
-			Range_BrakeGravity: moveParam?.BrakeGravity,
-			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
-			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
-			Range_BounceAfterMaxSpeed: isBloblobber ? 0.6 : undefined,
-			Range_BurstFrame: isBloblobber ? 3 : undefined,
+			...rangeParamsFromMoveParam(
+				unitForRange?.MoveParam,
+				unitForRange?.SpawnSpeedGround,
+			),
+			Range_ZRate: zRate,
+			Range_BounceAfterMaxSpeed: isBloblobber ? bounceAfterMaxSpeed : undefined,
+			Range_BurstFrame: isBloblobber ? BLOBLOBBER_BOUNCES : undefined,
 		};
 	}
 
 	const isRoller = category === "ROLLERS";
 	if (isRoller) {
-		const unit = params.VerticalSwingUnitGroupParam?.Unit?.[0];
-		const moveParam = unit?.UnitParam?.MoveParam;
+		const verticalUnit = params.VerticalSwingUnitGroupParam?.Unit?.[0];
+		const horizontalUnit = params.WideSwingUnitGroupParam?.Unit?.[0];
 		return {
-			Range_SpawnSpeed: unit?.SpawnSpeedBase,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_FreeGravity: moveParam?.FreeGravity,
-			Range_FreeAirResist: moveParam?.FreeAirResist,
-			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+			...rangeParamsFromMoveParam(
+				verticalUnit?.UnitParam?.MoveParam,
+				verticalUnit?.SpawnSpeedBase,
+			),
+			Range_SpawnAngle: verticalUnit?.SpawnRotateXDegreeBase,
+			Range_DistanceDamage: distanceDamageCurve(
+				params.VerticalSwingUnitGroupParam?.DamageParam?.Inside,
+			),
+			Range_ZRate: zRate,
+			Range_VariantKey: "vertical",
+			Range_Variants: [
+				{
+					...rangeParamsFromMoveParam(
+						horizontalUnit?.UnitParam?.MoveParam,
+						horizontalUnit?.SpawnSpeedBase,
+					),
+					Range_DistanceDamage: distanceDamageCurve(
+						params.WideSwingUnitGroupParam?.DamageParam?.Inside,
+					),
+					Range_VariantKey: "horizontal",
+				},
+			],
 		};
 	}
 
 	const isBrush = category === "BRUSHES";
 	if (isBrush) {
 		const unit = params.SwingUnitGroupParam?.Unit?.[0];
-		const moveParam = unit?.UnitParam?.MoveParam;
 		return {
-			Range_SpawnSpeed: unit?.SpawnSpeedBase,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
+			...rangeParamsFromMoveParam(
+				unit?.UnitParam?.MoveParam,
+				unit?.SpawnSpeedBase,
+			),
+			Range_DistanceDamage: distanceDamageCurve(
+				params.SwingUnitGroupParam?.DamageParam?.Inside,
+			),
+			Range_ZRate: zRate,
 		};
 	}
 
 	const isSplatana = category === "SPLATANAS";
 	if (isSplatana) {
-		const bulletParam = params.BulletSaberVerticalParam;
-		const moveParam = bulletParam?.MoveParam;
-		return {
-			Range_SpawnSpeed: moveParam?.SpawnSpeed,
-			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_FreeGravity: moveParam?.FreeGravity,
-			Range_BrakeAirResist: moveParam?.BrakeAirResist,
-			Range_BrakeGravity: moveParam?.BrakeGravity,
-			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+		const swingParam = params.spl__WeaponSaberParam?.SwingParam;
+		const splatanaRangeParams = (bulletParam: any, shotBulletOffset: any) => ({
+			...rangeParamsFromMoveParam(bulletParam?.MoveParam),
+			Range_SpawnOffsetZ: shotBulletOffset?.Z,
 			Range_BurstFrame: bulletParam?.BurstParam?.BurstFrame,
+		});
+		return {
+			...splatanaRangeParams(
+				params.BulletSaberVerticalParam,
+				swingParam?.ShotBulletOffset_Vertical,
+			),
+			Range_VariantKey: "charged",
+			Range_Variants: [
+				{
+					...splatanaRangeParams(
+						params.BulletSaberHorizontalParam,
+						swingParam?.ShotBulletOffset_R,
+					),
+					Range_VariantKey: "tap",
+				},
+			],
 		};
 	}
 
@@ -350,48 +407,170 @@ function extractRangeParams(weapon: MainWeapon, params: any) {
 			? undefined
 			: bulletParam?.DetonationParam?.BlastParam?.DistanceDamage?.[0]?.Distance;
 		return {
-			Range_SpawnSpeed: moveParam?.SpawnSpeedMax,
-			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
-			Range_FreeGravity: moveParam?.FreeGravity,
-			Range_FreeAirResist: moveParam?.FreeAirResist,
-			Range_BrakeAirResist: moveParam?.BrakeAirResist,
-			Range_BrakeGravity: moveParam?.BrakeGravity,
-			Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+			...rangeParamsFromMoveParam(moveParam, moveParam?.SpawnSpeedMax),
 			BlastRadius: blastRadius,
+			Range_VariantKey: "charged",
+			Range_Variants: [
+				{
+					...rangeParamsFromMoveParam(moveParam, moveParam?.SpawnSpeedMid),
+					BlastRadius: blastRadius,
+					Range_VariantKey: "partialCharge",
+				},
+			],
 		};
 	}
 
 	const isSplatling = category === "SPLATLINGS";
 	if (isSplatling) {
 		const isBallpoint = weapon.Id === 4030 || weapon.Id === 4031;
-		const moveParam = isBallpoint ? params.VariableMoveParam : params.MoveParam;
+		const splatlingRangeParams = (moveParam: any) =>
+			rangeParamsFromMoveParam(
+				moveParam,
+				moveParam?.SpawnSpeedFirstLastAndSecond,
+			);
+		if (isBallpoint) {
+			return {
+				...splatlingRangeParams(params.VariableMoveParam),
+				Range_VariantKey: "long",
+				Range_Variants: [
+					{
+						...splatlingRangeParams(params.MoveParam),
+						Range_VariantKey: "short",
+					},
+				],
+			};
+		}
+		return splatlingRangeParams(params.MoveParam);
+	}
+
+	if (isBrella) {
 		return {
-			Range_SpawnSpeed: isBallpoint
-				? moveParam?.SpawnSpeed
-				: moveParam?.SpawnSpeedFirstLastAndSecond,
-			Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
-			Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+			...rangeParamsFromMoveParam(
+				params.spl__BulletShelterShotgunParam?.GroupParams?.[0]?.MoveParam,
+			),
+			Range_ZRate: zRate,
 		};
 	}
 
 	const isBlaster = params.BlastParam?.DistanceDamage !== undefined;
-	const blastRadius = isBlaster
-		? params.BlastParam?.DistanceDamage?.[1]?.Distance
-		: undefined;
+	if (isBlaster) {
+		const blasterRangeParams = (
+			moveParam: any,
+			burstParam: any,
+			blastParam: any,
+		) => ({
+			...rangeParamsFromMoveParam(moveParam),
+			Range_BurstFrame:
+				burstParam?.BurstFrame ?? params.WeaponParam?.ShotGuideFrame,
+			Range_ZRate: zRate,
+			BlastRadius: blastParam?.DistanceDamage?.[1]?.Distance,
+		});
+		const groundRangeParams = blasterRangeParams(
+			params.MoveParam,
+			params.BlasterBurstParam,
+			params.BlastParam,
+		);
+		if (!params.MoveJumpParam) return groundRangeParams;
 
-	const moveParam = isBrella
-		? params.spl__BulletShelterShotgunParam?.GroupParams?.[0]?.MoveParam
-		: params.MoveParam;
+		return {
+			...groundRangeParams,
+			Range_VariantKey: "ground",
+			Range_Variants: [
+				{
+					...blasterRangeParams(
+						params.MoveJumpParam,
+						params.BlasterBurstJumpParam,
+						params.BlastJumpParam,
+					),
+					Range_VariantKey: "jump",
+				},
+			],
+		};
+	}
 
+	const shooterRangeParams = (moveParam: any) => ({
+		...rangeParamsFromMoveParam(moveParam),
+		Range_ZRate: zRate,
+	});
+
+	if (params.MoveLapOverParam) {
+		return {
+			...shooterRangeParams(params.MoveParam),
+			Range_VariantKey: "standard",
+			Range_Variants: [
+				{
+					...shooterRangeParams(params.MoveLapOverParam),
+					Range_VariantKey: "turret",
+				},
+			],
+		};
+	}
+
+	if (params.VariableMoveParam) {
+		return {
+			...shooterRangeParams(params.MoveParam),
+			Range_VariantKey: "tap",
+			Range_Variants: [
+				{
+					...shooterRangeParams(params.VariableMoveParam),
+					Range_VariantKey: "hold",
+				},
+			],
+		};
+	}
+
+	return shooterRangeParams(params.MoveParam);
+}
+
+// how many times a Bloblobber bubble bounces before bursting, not in the params
+const BLOBLOBBER_BOUNCES = 3;
+
+function rangeParamsFromMoveParam(
+	moveParam: any,
+	spawnSpeed: number | undefined = moveParam?.SpawnSpeed,
+): RangeParams {
 	return {
-		Range_SpawnSpeed: moveParam?.SpawnSpeed,
+		Range_SpawnSpeed: spawnSpeed,
 		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
 		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
 		Range_FreeGravity: moveParam?.FreeGravity,
-		Range_ZRate: params.spl__SpawnBulletAdditionMovePlayerParam?.ZRate,
-		BlastRadius: blastRadius,
+		Range_FreeAirResist: moveParam?.FreeAirResist,
+		Range_BrakeAirResist: moveParam?.BrakeAirResist,
+		Range_BrakeGravity: moveParam?.BrakeGravity,
+		Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+		Range_BrakeToFreeVelocityY: moveParam?.BrakeToFreeVelocityY,
 	};
+}
+
+// roller & brush ink damage falls off linearly between these distances
+function distanceDamageCurve(damageParam: any): DistanceDamage[] | undefined {
+	if (!damageParam) return undefined;
+
+	const points: DistanceDamage[] = [
+		{
+			Damage: damageParam.DamageMaxValue,
+			Distance: damageParam.DamageMaxDistance,
+		},
+		{
+			Damage: damageParam.DamageHighValue,
+			Distance: damageParam.DamageHighDistance,
+		},
+		{
+			Damage: damageParam.DamageLowValue,
+			Distance: damageParam.DamageLowDistance,
+		},
+		{
+			Damage: damageParam.DamageMinValue,
+			Distance: damageParam.DamageMinDistance,
+		},
+	];
+
+	return points.filter(
+		(point, i) =>
+			i === 0 ||
+			point.Damage !== points[i - 1].Damage ||
+			point.Distance !== points[i - 1].Distance,
+	);
 }
 
 function parametersToMainWeaponResult(
@@ -720,6 +899,8 @@ const BOOYAH_BOMB_FLY_DISTANCE = 27;
 const SUPER_CHUMP_FLY_DISTANCE = 30;
 const TRIPLE_INKSTRIKE_FLY_DISTANCE = 28;
 const ULTRA_STAMP_FLY_DISTANCE = 24;
+// not in the params, value from the "Calculating weapon range" community sheet
+const CRAB_TANK_CANNON_SPAWN_SPEED = 2;
 
 // Range circles for the map planner (see app/features/comp-analyzer/core/SpecialWeaponRange.ts):
 // travel distance plus blast, or a single effect radius. Global (Tenta Missiles, Killer Wail), placed/utility
@@ -740,6 +921,7 @@ function specialWeaponRangeParams(
 		Range_BrakeAirResist: moveParam?.BrakeAirResist,
 		Range_BrakeGravity: moveParam?.BrakeGravity,
 		Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+		Range_BrakeToFreeVelocityY: moveParam?.BrakeToFreeVelocityY,
 	});
 
 	switch (specialWeapon.__RowId) {
@@ -753,9 +935,10 @@ function specialWeaponRangeParams(
 				Range_Distance: rawParams.MoveParam?.Distance,
 				Range_BlastRadius: outerBlastDistance(rawParams.BlastParam),
 			};
-		case "SpChariot": // Crab Tank (rapid gun reach)
+		case "SpChariot": // Crab Tank (cannon shot)
 			return {
-				...trajectoryFromMoveParam(rawParams.ShooterMoveParam),
+				...trajectoryFromMoveParam(rawParams.CannonParam?.MoveParam),
+				Range_SpawnSpeed: CRAB_TANK_CANNON_SPAWN_SPEED,
 				Range_BlastRadius: outerBlastDistance(
 					rawParams.CannonParam?.BlastParam,
 				),

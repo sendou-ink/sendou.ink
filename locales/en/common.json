@@ -372,6 +372,7 @@
 	"support.perk.previewQ": "Preview groups in SendouQ before joining",
 	"support.perk.joinFive": "Join up to 5 teams",
 	"support.perk.tournamentsBeta": "Access to tournaments beta",
+	"support.perk.createLobbies": "Create lobbies",
 	"support.perk.joinMoreAssociations": "Join up to 6 associations",
 	"support.perk.useBotToLogIn": "Log-in via Discord bot",
 	"support.perk.useBotToLogIn.extra": "Request a log-in link from the Lohi bot as an alternative to the normal website log-in",

@@ -420,13 +420,15 @@
 	}
 
 	/* Safari has no picker indicator reserving room for the icon above,
-	so reserve it with padding instead (-webkit-hyphens = Safari only) */
+	so reserve it with padding instead (-webkit-hyphens = Safari only).
+	iOS ignores box-sizing on native-looking date inputs, so they overflow */
 	@supports (-webkit-hyphens: none) {
 		input[type="date"],
 		input[type="datetime-local"],
 		input[type="month"],
 		input[type="time"],
 		input[type="week"] {
+			appearance: none;
 			padding-right: calc(
 				var(--field-size-icon) +
 				var(--field-padding) +

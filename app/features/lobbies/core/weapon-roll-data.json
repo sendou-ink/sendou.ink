@@ -1,0 +1,3703 @@
+{
+	"generatedAt": "2026-10-30T14:38:09.243Z",
+	"mapCount": 477353,
+	"weapons": {
+		"0": {
+			"usage": 0.00309,
+			"strength": 0.04565,
+			"strengthSe": 0.03927,
+			"byMode": {
+				"SZ": {
+					"strength": 0.06456,
+					"strengthSe": 0.05074
+				},
+				"TC": {
+					"strength": 0.05546,
+					"strengthSe": 0.06004
+				},
+				"RM": {
+					"strength": 0.06009,
+					"strengthSe": 0.05585
+				},
+				"CB": {
+					"strength": 0.05471,
+					"strengthSe": 0.0599
+				}
+			}
+		},
+		"1": {
+			"usage": 0.00044,
+			"strength": 0.01481,
+			"strengthSe": 0.04769,
+			"byMode": {
+				"SZ": {
+					"strength": 0.02255,
+					"strengthSe": 0.06658
+				},
+				"TC": {
+					"strength": 0.01937,
+					"strengthSe": 0.06843
+				},
+				"RM": {
+					"strength": 0.02007,
+					"strengthSe": 0.06821
+				},
+				"CB": {
+					"strength": 0.0196,
+					"strengthSe": 0.06813
+				}
+			}
+		},
+		"10": {
+			"usage": 0.01061,
+			"strength": 0.08371,
+			"strengthSe": 0.03278,
+			"byMode": {
+				"SZ": {
+					"strength": 0.12889,
+					"strengthSe": 0.03279
+				},
+				"TC": {
+					"strength": 0.09423,
+					"strengthSe": 0.0481
+				},
+				"RM": {
+					"strength": 0.08556,
+					"strengthSe": 0.05211
+				},
+				"CB": {
+					"strength": 0.11701,
+					"strengthSe": 0.05082
+				}
+			}
+		},
+		"11": {
+			"usage": 0.00084,
+			"strength": -0.02647,
+			"strengthSe": 0.04567,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02683,
+					"strengthSe": 0.06178
+				},
+				"TC": {
+					"strength": -0.03191,
+					"strengthSe": 0.06641
+				},
+				"RM": {
+					"strength": -0.03548,
+					"strengthSe": 0.06644
+				},
+				"CB": {
+					"strength": -0.03052,
+					"strengthSe": 0.06639
+				}
+			}
+		},
+		"20": {
+			"usage": 0.02876,
+			"strength": -0.05656,
+			"strengthSe": 0.02889,
+			"byMode": {
+				"SZ": {
+					"strength": -0.07161,
+					"strengthSe": 0.02202
+				},
+				"TC": {
+					"strength": -0.06784,
+					"strengthSe": 0.04047
+				},
+				"RM": {
+					"strength": -0.09024,
+					"strengthSe": 0.0435
+				},
+				"CB": {
+					"strength": -0.04541,
+					"strengthSe": 0.0429
+				}
+			}
+		},
+		"21": {
+			"usage": 0.00875,
+			"strength": -0.04273,
+			"strengthSe": 0.03394,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02689,
+					"strengthSe": 0.03508
+				},
+				"TC": {
+					"strength": -0.06828,
+					"strengthSe": 0.04866
+				},
+				"RM": {
+					"strength": -0.06269,
+					"strengthSe": 0.05386
+				},
+				"CB": {
+					"strength": -0.04963,
+					"strengthSe": 0.05482
+				}
+			}
+		},
+		"22": {
+			"usage": 0.00034,
+			"strength": -0.01397,
+			"strengthSe": 0.04803,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01379,
+					"strengthSe": 0.0666
+				},
+				"TC": {
+					"strength": -0.01423,
+					"strengthSe": 0.06893
+				},
+				"RM": {
+					"strength": -0.01711,
+					"strengthSe": 0.06846
+				},
+				"CB": {
+					"strength": -0.01707,
+					"strengthSe": 0.06901
+				}
+			}
+		},
+		"30": {
+			"usage": 0.00328,
+			"strength": 0.02491,
+			"strengthSe": 0.04014,
+			"byMode": {
+				"SZ": {
+					"strength": 0.07097,
+					"strengthSe": 0.04571
+				},
+				"TC": {
+					"strength": 0.01361,
+					"strengthSe": 0.06167
+				},
+				"RM": {
+					"strength": 0.01936,
+					"strengthSe": 0.06136
+				},
+				"CB": {
+					"strength": 0.03077,
+					"strengthSe": 0.06255
+				}
+			}
+		},
+		"31": {
+			"usage": 0.0008,
+			"strength": -0.02315,
+			"strengthSe": 0.04591,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04116,
+					"strengthSe": 0.06172
+				},
+				"TC": {
+					"strength": -0.01451,
+					"strengthSe": 0.0661
+				},
+				"RM": {
+					"strength": -0.02698,
+					"strengthSe": 0.06729
+				},
+				"CB": {
+					"strength": -0.02495,
+					"strengthSe": 0.06738
+				}
+			}
+		},
+		"32": {
+			"usage": 0.00008,
+			"strength": -0.00864,
+			"strengthSe": 0.04951,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01573,
+					"strengthSe": 0.06963
+				},
+				"TC": {
+					"strength": -0.00468,
+					"strengthSe": 0.07022
+				},
+				"RM": {
+					"strength": -0.00873,
+					"strengthSe": 0.07031
+				},
+				"CB": {
+					"strength": -0.00643,
+					"strengthSe": 0.07024
+				}
+			}
+		},
+		"40": {
+			"usage": 0.06174,
+			"strength": 0.01742,
+			"strengthSe": 0.02586,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01386,
+					"strengthSe": 0.01873
+				},
+				"TC": {
+					"strength": 0.03109,
+					"strengthSe": 0.02921
+				},
+				"RM": {
+					"strength": 0.03852,
+					"strengthSe": 0.03063
+				},
+				"CB": {
+					"strength": 0.0403,
+					"strengthSe": 0.03298
+				}
+			}
+		},
+		"41": {
+			"usage": 0.01712,
+			"strength": -0.02066,
+			"strengthSe": 0.03031,
+			"byMode": {
+				"SZ": {
+					"strength": -0.0153,
+					"strengthSe": 0.02805
+				},
+				"TC": {
+					"strength": -0.01402,
+					"strengthSe": 0.04094
+				},
+				"RM": {
+					"strength": -0.03762,
+					"strengthSe": 0.04689
+				},
+				"CB": {
+					"strength": -0.02813,
+					"strengthSe": 0.04761
+				}
+			}
+		},
+		"42": {
+			"usage": 0.0018,
+			"strength": -0.03767,
+			"strengthSe": 0.04239,
+			"byMode": {
+				"SZ": {
+					"strength": -0.08083,
+					"strengthSe": 0.05534
+				},
+				"TC": {
+					"strength": -0.02011,
+					"strengthSe": 0.06236
+				},
+				"RM": {
+					"strength": -0.04633,
+					"strengthSe": 0.06275
+				},
+				"CB": {
+					"strength": -0.03343,
+					"strengthSe": 0.06336
+				}
+			}
+		},
+		"50": {
+			"usage": 0.02972,
+			"strength": 0.04829,
+			"strengthSe": 0.02895,
+			"byMode": {
+				"SZ": {
+					"strength": 0.09932,
+					"strengthSe": 0.02139
+				},
+				"TC": {
+					"strength": 0.06762,
+					"strengthSe": 0.04024
+				},
+				"RM": {
+					"strength": 0.02416,
+					"strengthSe": 0.04286
+				},
+				"CB": {
+					"strength": 0.06257,
+					"strengthSe": 0.04465
+				}
+			}
+		},
+		"51": {
+			"usage": 0.00128,
+			"strength": 0.02873,
+			"strengthSe": 0.04407,
+			"byMode": {
+				"SZ": {
+					"strength": 0.05503,
+					"strengthSe": 0.05822
+				},
+				"TC": {
+					"strength": 0.03027,
+					"strengthSe": 0.06463
+				},
+				"RM": {
+					"strength": 0.0321,
+					"strengthSe": 0.06472
+				},
+				"CB": {
+					"strength": 0.034,
+					"strengthSe": 0.06516
+				}
+			}
+		},
+		"60": {
+			"usage": 0.06054,
+			"strength": 0.01184,
+			"strengthSe": 0.02624,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00631,
+					"strengthSe": 0.01852
+				},
+				"TC": {
+					"strength": 0.00051,
+					"strengthSe": 0.03031
+				},
+				"RM": {
+					"strength": 0.04589,
+					"strengthSe": 0.03245
+				},
+				"CB": {
+					"strength": 0.02379,
+					"strengthSe": 0.03472
+				}
+			}
+		},
+		"61": {
+			"usage": 0.00095,
+			"strength": -0.01254,
+			"strengthSe": 0.04523,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00421,
+					"strengthSe": 0.06037
+				},
+				"TC": {
+					"strength": -0.01717,
+					"strengthSe": 0.06637
+				},
+				"RM": {
+					"strength": -0.01638,
+					"strengthSe": 0.06609
+				},
+				"CB": {
+					"strength": -0.01539,
+					"strengthSe": 0.06611
+				}
+			}
+		},
+		"70": {
+			"usage": 0.00097,
+			"strength": -0.03265,
+			"strengthSe": 0.04512,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04465,
+					"strengthSe": 0.06016
+				},
+				"TC": {
+					"strength": -0.03996,
+					"strengthSe": 0.06584
+				},
+				"RM": {
+					"strength": -0.03146,
+					"strengthSe": 0.06607
+				},
+				"CB": {
+					"strength": -0.03983,
+					"strengthSe": 0.06614
+				}
+			}
+		},
+		"71": {
+			"usage": 0.00557,
+			"strength": -0.03959,
+			"strengthSe": 0.03637,
+			"byMode": {
+				"SZ": {
+					"strength": -0.06794,
+					"strengthSe": 0.04076
+				},
+				"TC": {
+					"strength": -0.03809,
+					"strengthSe": 0.05295
+				},
+				"RM": {
+					"strength": -0.04262,
+					"strengthSe": 0.05674
+				},
+				"CB": {
+					"strength": -0.03926,
+					"strengthSe": 0.05829
+				}
+			}
+		},
+		"72": {
+			"usage": 0.00767,
+			"strength": -0.02943,
+			"strengthSe": 0.03523,
+			"byMode": {
+				"SZ": {
+					"strength": -0.06881,
+					"strengthSe": 0.03557
+				},
+				"TC": {
+					"strength": -0.04375,
+					"strengthSe": 0.05339
+				},
+				"RM": {
+					"strength": -0.00816,
+					"strengthSe": 0.05582
+				},
+				"CB": {
+					"strength": -0.0177,
+					"strengthSe": 0.05616
+				}
+			}
+		},
+		"80": {
+			"usage": 0.00495,
+			"strength": -0.04622,
+			"strengthSe": 0.03796,
+			"byMode": {
+				"SZ": {
+					"strength": -0.11004,
+					"strengthSe": 0.04076
+				},
+				"TC": {
+					"strength": -0.03711,
+					"strengthSe": 0.05928
+				},
+				"RM": {
+					"strength": -0.02823,
+					"strengthSe": 0.05759
+				},
+				"CB": {
+					"strength": -0.05014,
+					"strengthSe": 0.06067
+				}
+			}
+		},
+		"81": {
+			"usage": 0.00515,
+			"strength": 0.01517,
+			"strengthSe": 0.03637,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01126,
+					"strengthSe": 0.04386
+				},
+				"TC": {
+					"strength": 0.01998,
+					"strengthSe": 0.05606
+				},
+				"RM": {
+					"strength": 0.02894,
+					"strengthSe": 0.05627
+				},
+				"CB": {
+					"strength": 0.02309,
+					"strengthSe": 0.05279
+				}
+			}
+		},
+		"82": {
+			"usage": 0.00276,
+			"strength": -0.03998,
+			"strengthSe": 0.04056,
+			"byMode": {
+				"SZ": {
+					"strength": -0.07975,
+					"strengthSe": 0.04852
+				},
+				"TC": {
+					"strength": -0.04744,
+					"strengthSe": 0.06082
+				},
+				"RM": {
+					"strength": -0.03139,
+					"strengthSe": 0.06182
+				},
+				"CB": {
+					"strength": -0.03369,
+					"strengthSe": 0.06247
+				}
+			}
+		},
+		"90": {
+			"usage": 0.00111,
+			"strength": -0.01988,
+			"strengthSe": 0.04448,
+			"byMode": {
+				"SZ": {
+					"strength": -0.0316,
+					"strengthSe": 0.0621
+				},
+				"TC": {
+					"strength": -0.02046,
+					"strengthSe": 0.06462
+				},
+				"RM": {
+					"strength": -0.01792,
+					"strengthSe": 0.06327
+				},
+				"CB": {
+					"strength": -0.02172,
+					"strengthSe": 0.06493
+				}
+			}
+		},
+		"91": {
+			"usage": 0.00141,
+			"strength": -0.02919,
+			"strengthSe": 0.04361,
+			"byMode": {
+				"SZ": {
+					"strength": -0.038,
+					"strengthSe": 0.05718
+				},
+				"TC": {
+					"strength": -0.04272,
+					"strengthSe": 0.06391
+				},
+				"RM": {
+					"strength": -0.02527,
+					"strengthSe": 0.06445
+				},
+				"CB": {
+					"strength": -0.03234,
+					"strengthSe": 0.06473
+				}
+			}
+		},
+		"92": {
+			"usage": 0.00057,
+			"strength": -0.03525,
+			"strengthSe": 0.04684,
+			"byMode": {
+				"SZ": {
+					"strength": -0.05483,
+					"strengthSe": 0.06391
+				},
+				"TC": {
+					"strength": -0.04074,
+					"strengthSe": 0.0673
+				},
+				"RM": {
+					"strength": -0.0373,
+					"strengthSe": 0.06795
+				},
+				"CB": {
+					"strength": -0.03575,
+					"strengthSe": 0.06786
+				}
+			}
+		},
+		"100": {
+			"usage": 0.00031,
+			"strength": -0.01998,
+			"strengthSe": 0.04821,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02411,
+					"strengthSe": 0.06708
+				},
+				"TC": {
+					"strength": -0.02553,
+					"strengthSe": 0.06896
+				},
+				"RM": {
+					"strength": -0.02147,
+					"strengthSe": 0.06897
+				},
+				"CB": {
+					"strength": -0.02109,
+					"strengthSe": 0.06896
+				}
+			}
+		},
+		"101": {
+			"usage": 0.00077,
+			"strength": 0.02194,
+			"strengthSe": 0.04605,
+			"byMode": {
+				"SZ": {
+					"strength": 0.0499,
+					"strengthSe": 0.06223
+				},
+				"TC": {
+					"strength": 0.0275,
+					"strengthSe": 0.06672
+				},
+				"RM": {
+					"strength": 0.01906,
+					"strengthSe": 0.06709
+				},
+				"CB": {
+					"strength": 0.02043,
+					"strengthSe": 0.06697
+				}
+			}
+		},
+		"200": {
+			"usage": 0.00116,
+			"strength": -0.00908,
+			"strengthSe": 0.04448,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01177,
+					"strengthSe": 0.05924
+				},
+				"TC": {
+					"strength": -0.00137,
+					"strengthSe": 0.06417
+				},
+				"RM": {
+					"strength": -0.00846,
+					"strengthSe": 0.06544
+				},
+				"CB": {
+					"strength": -0.01617,
+					"strengthSe": 0.066
+				}
+			}
+		},
+		"201": {
+			"usage": 0.00558,
+			"strength": 0.03846,
+			"strengthSe": 0.03671,
+			"byMode": {
+				"SZ": {
+					"strength": 0.04226,
+					"strengthSe": 0.03994
+				},
+				"TC": {
+					"strength": 0.05522,
+					"strengthSe": 0.05532
+				},
+				"RM": {
+					"strength": 0.04077,
+					"strengthSe": 0.05683
+				},
+				"CB": {
+					"strength": 0.0617,
+					"strengthSe": 0.05862
+				}
+			}
+		},
+		"210": {
+			"usage": 0.00718,
+			"strength": 0.07276,
+			"strengthSe": 0.03498,
+			"byMode": {
+				"SZ": {
+					"strength": 0.10709,
+					"strengthSe": 0.03818
+				},
+				"TC": {
+					"strength": 0.10267,
+					"strengthSe": 0.04909
+				},
+				"RM": {
+					"strength": 0.0894,
+					"strengthSe": 0.05611
+				},
+				"CB": {
+					"strength": 0.07398,
+					"strengthSe": 0.05619
+				}
+			}
+		},
+		"211": {
+			"usage": 0.01605,
+			"strength": 0.05324,
+			"strengthSe": 0.03195,
+			"byMode": {
+				"SZ": {
+					"strength": 0.03819,
+					"strengthSe": 0.02676
+				},
+				"TC": {
+					"strength": 0.10269,
+					"strengthSe": 0.04591
+				},
+				"RM": {
+					"strength": 0.04755,
+					"strengthSe": 0.05078
+				},
+				"CB": {
+					"strength": 0.08465,
+					"strengthSe": 0.05271
+				}
+			}
+		},
+		"212": {
+			"usage": 0.00021,
+			"strength": -0.01436,
+			"strengthSe": 0.04871,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01666,
+					"strengthSe": 0.06801
+				},
+				"TC": {
+					"strength": -0.01755,
+					"strengthSe": 0.0693
+				},
+				"RM": {
+					"strength": -0.01569,
+					"strengthSe": 0.06954
+				},
+				"CB": {
+					"strength": -0.01429,
+					"strengthSe": 0.06956
+				}
+			}
+		},
+		"220": {
+			"usage": 0.00872,
+			"strength": 0.01384,
+			"strengthSe": 0.03322,
+			"byMode": {
+				"SZ": {
+					"strength": 0.00514,
+					"strengthSe": 0.03825
+				},
+				"TC": {
+					"strength": 0.01059,
+					"strengthSe": 0.045
+				},
+				"RM": {
+					"strength": 0.01864,
+					"strengthSe": 0.05221
+				},
+				"CB": {
+					"strength": 0.04118,
+					"strengthSe": 0.0522
+				}
+			}
+		},
+		"221": {
+			"usage": 0.00607,
+			"strength": -0.03213,
+			"strengthSe": 0.03533,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04951,
+					"strengthSe": 0.04244
+				},
+				"TC": {
+					"strength": -0.04247,
+					"strengthSe": 0.04965
+				},
+				"RM": {
+					"strength": -0.04617,
+					"strengthSe": 0.05432
+				},
+				"CB": {
+					"strength": -0.01498,
+					"strengthSe": 0.05588
+				}
+			}
+		},
+		"230": {
+			"usage": 0.00089,
+			"strength": 0.01208,
+			"strengthSe": 0.04542,
+			"byMode": {
+				"SZ": {
+					"strength": 0.02535,
+					"strengthSe": 0.06214
+				},
+				"TC": {
+					"strength": 0.01776,
+					"strengthSe": 0.06499
+				},
+				"RM": {
+					"strength": 0.00914,
+					"strengthSe": 0.06597
+				},
+				"CB": {
+					"strength": 0.01579,
+					"strengthSe": 0.06667
+				}
+			}
+		},
+		"231": {
+			"usage": 0.00023,
+			"strength": -0.00803,
+			"strengthSe": 0.04872,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01153,
+					"strengthSe": 0.06806
+				},
+				"TC": {
+					"strength": -0.00263,
+					"strengthSe": 0.06938
+				},
+				"RM": {
+					"strength": -0.0114,
+					"strengthSe": 0.06954
+				},
+				"CB": {
+					"strength": -0.00655,
+					"strengthSe": 0.0695
+				}
+			}
+		},
+		"240": {
+			"usage": 0.00058,
+			"strength": -0.00878,
+			"strengthSe": 0.04685,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00115,
+					"strengthSe": 0.06404
+				},
+				"TC": {
+					"strength": -0.01363,
+					"strengthSe": 0.06702
+				},
+				"RM": {
+					"strength": -0.01116,
+					"strengthSe": 0.06801
+				},
+				"CB": {
+					"strength": -0.01031,
+					"strengthSe": 0.06799
+				}
+			}
+		},
+		"241": {
+			"usage": 0.00503,
+			"strength": -0.04387,
+			"strengthSe": 0.03627,
+			"byMode": {
+				"SZ": {
+					"strength": -0.06261,
+					"strengthSe": 0.04461
+				},
+				"TC": {
+					"strength": -0.04693,
+					"strengthSe": 0.05144
+				},
+				"RM": {
+					"strength": -0.04864,
+					"strengthSe": 0.05605
+				},
+				"CB": {
+					"strength": -0.05349,
+					"strengthSe": 0.05631
+				}
+			}
+		},
+		"250": {
+			"usage": 0.00065,
+			"strength": -0.01999,
+			"strengthSe": 0.04643,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02787,
+					"strengthSe": 0.06489
+				},
+				"TC": {
+					"strength": -0.02155,
+					"strengthSe": 0.06716
+				},
+				"RM": {
+					"strength": -0.0211,
+					"strengthSe": 0.06536
+				},
+				"CB": {
+					"strength": -0.0218,
+					"strengthSe": 0.06753
+				}
+			}
+		},
+		"251": {
+			"usage": 0.00547,
+			"strength": -0.03299,
+			"strengthSe": 0.03624,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04393,
+					"strengthSe": 0.04148
+				},
+				"TC": {
+					"strength": -0.04594,
+					"strengthSe": 0.05261
+				},
+				"RM": {
+					"strength": -0.02959,
+					"strengthSe": 0.05706
+				},
+				"CB": {
+					"strength": -0.03815,
+					"strengthSe": 0.05683
+				}
+			}
+		},
+		"252": {
+			"usage": 0.00582,
+			"strength": 0.00107,
+			"strengthSe": 0.03667,
+			"byMode": {
+				"SZ": {
+					"strength": -0.034,
+					"strengthSe": 0.03951
+				},
+				"TC": {
+					"strength": 0.02827,
+					"strengthSe": 0.0538
+				},
+				"RM": {
+					"strength": 0.01536,
+					"strengthSe": 0.05848
+				},
+				"CB": {
+					"strength": 0.00303,
+					"strengthSe": 0.05863
+				}
+			}
+		},
+		"260": {
+			"usage": 0.00097,
+			"strength": -0.01414,
+			"strengthSe": 0.04525,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02246,
+					"strengthSe": 0.06121
+				},
+				"TC": {
+					"strength": -0.01112,
+					"strengthSe": 0.06571
+				},
+				"RM": {
+					"strength": -0.01558,
+					"strengthSe": 0.06584
+				},
+				"CB": {
+					"strength": -0.01403,
+					"strengthSe": 0.06612
+				}
+			}
+		},
+		"261": {
+			"usage": 0.01555,
+			"strength": -0.05031,
+			"strengthSe": 0.03141,
+			"byMode": {
+				"SZ": {
+					"strength": -0.06853,
+					"strengthSe": 0.02815
+				},
+				"TC": {
+					"strength": -0.05761,
+					"strengthSe": 0.04314
+				},
+				"RM": {
+					"strength": -0.06693,
+					"strengthSe": 0.05032
+				},
+				"CB": {
+					"strength": -0.05157,
+					"strengthSe": 0.05064
+				}
+			}
+		},
+		"300": {
+			"usage": 0.00042,
+			"strength": -0.00277,
+			"strengthSe": 0.04759,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01123,
+					"strengthSe": 0.06533
+				},
+				"TC": {
+					"strength": -0.00453,
+					"strengthSe": 0.06837
+				},
+				"RM": {
+					"strength": -0.00616,
+					"strengthSe": 0.06853
+				},
+				"CB": {
+					"strength": -0.00698,
+					"strengthSe": 0.06858
+				}
+			}
+		},
+		"301": {
+			"usage": 0.00061,
+			"strength": -0.02337,
+			"strengthSe": 0.04677,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02791,
+					"strengthSe": 0.06405
+				},
+				"TC": {
+					"strength": -0.02928,
+					"strengthSe": 0.06759
+				},
+				"RM": {
+					"strength": -0.02578,
+					"strengthSe": 0.06726
+				},
+				"CB": {
+					"strength": -0.02601,
+					"strengthSe": 0.06776
+				}
+			}
+		},
+		"302": {
+			"usage": 0.00068,
+			"strength": 0.01608,
+			"strengthSe": 0.04639,
+			"byMode": {
+				"SZ": {
+					"strength": 0.039,
+					"strengthSe": 0.06261
+				},
+				"TC": {
+					"strength": 0.01227,
+					"strengthSe": 0.06708
+				},
+				"RM": {
+					"strength": 0.01916,
+					"strengthSe": 0.06734
+				},
+				"CB": {
+					"strength": 0.01763,
+					"strengthSe": 0.06771
+				}
+			}
+		},
+		"310": {
+			"usage": 0.0016,
+			"strength": -0.02046,
+			"strengthSe": 0.0429,
+			"byMode": {
+				"SZ": {
+					"strength": -0.0327,
+					"strengthSe": 0.05675
+				},
+				"TC": {
+					"strength": -0.02348,
+					"strengthSe": 0.06261
+				},
+				"RM": {
+					"strength": -0.01611,
+					"strengthSe": 0.06369
+				},
+				"CB": {
+					"strength": -0.02398,
+					"strengthSe": 0.06357
+				}
+			}
+		},
+		"311": {
+			"usage": 0.00099,
+			"strength": -0.01664,
+			"strengthSe": 0.04513,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02242,
+					"strengthSe": 0.06024
+				},
+				"TC": {
+					"strength": -0.01519,
+					"strengthSe": 0.06536
+				},
+				"RM": {
+					"strength": -0.01687,
+					"strengthSe": 0.06638
+				},
+				"CB": {
+					"strength": -0.02107,
+					"strengthSe": 0.06625
+				}
+			}
+		},
+		"312": {
+			"usage": 0.00062,
+			"strength": -0.00078,
+			"strengthSe": 0.04658,
+			"byMode": {
+				"SZ": {
+					"strength": 0.00277,
+					"strengthSe": 0.06331
+				},
+				"TC": {
+					"strength": -0.00066,
+					"strengthSe": 0.06692
+				},
+				"RM": {
+					"strength": -0.00122,
+					"strengthSe": 0.06753
+				},
+				"CB": {
+					"strength": 0.00285,
+					"strengthSe": 0.06791
+				}
+			}
+		},
+		"400": {
+			"usage": 0.00906,
+			"strength": -0.05205,
+			"strengthSe": 0.03326,
+			"byMode": {
+				"SZ": {
+					"strength": -0.0966,
+					"strengthSe": 0.03605
+				},
+				"TC": {
+					"strength": -0.06354,
+					"strengthSe": 0.04943
+				},
+				"RM": {
+					"strength": -0.05514,
+					"strengthSe": 0.05098
+				},
+				"CB": {
+					"strength": -0.03734,
+					"strengthSe": 0.05138
+				}
+			}
+		},
+		"401": {
+			"usage": 0.00098,
+			"strength": -0.03277,
+			"strengthSe": 0.04503,
+			"byMode": {
+				"SZ": {
+					"strength": -0.05912,
+					"strengthSe": 0.06104
+				},
+				"TC": {
+					"strength": -0.03026,
+					"strengthSe": 0.06525
+				},
+				"RM": {
+					"strength": -0.0308,
+					"strengthSe": 0.06571
+				},
+				"CB": {
+					"strength": -0.03593,
+					"strengthSe": 0.06576
+				}
+			}
+		},
+		"1000": {
+			"usage": 0.00079,
+			"strength": -0.02645,
+			"strengthSe": 0.04591,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03677,
+					"strengthSe": 0.06177
+				},
+				"TC": {
+					"strength": -0.02764,
+					"strengthSe": 0.06649
+				},
+				"RM": {
+					"strength": -0.02894,
+					"strengthSe": 0.06691
+				},
+				"CB": {
+					"strength": -0.03125,
+					"strengthSe": 0.06707
+				}
+			}
+		},
+		"1001": {
+			"usage": 0.02096,
+			"strength": -0.01019,
+			"strengthSe": 0.02988,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04641,
+					"strengthSe": 0.02491
+				},
+				"TC": {
+					"strength": 0.00055,
+					"strengthSe": 0.04295
+				},
+				"RM": {
+					"strength": 0.00332,
+					"strengthSe": 0.04441
+				},
+				"CB": {
+					"strength": -0.00012,
+					"strengthSe": 0.04649
+				}
+			}
+		},
+		"1002": {
+			"usage": 0.00067,
+			"strength": -0.02651,
+			"strengthSe": 0.0465,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03923,
+					"strengthSe": 0.06211
+				},
+				"TC": {
+					"strength": -0.02385,
+					"strengthSe": 0.06773
+				},
+				"RM": {
+					"strength": -0.03348,
+					"strengthSe": 0.06781
+				},
+				"CB": {
+					"strength": -0.02837,
+					"strengthSe": 0.06765
+				}
+			}
+		},
+		"1010": {
+			"usage": 0.01044,
+			"strength": 0.05704,
+			"strengthSe": 0.03253,
+			"byMode": {
+				"SZ": {
+					"strength": 0.05955,
+					"strengthSe": 0.03391
+				},
+				"TC": {
+					"strength": 0.07303,
+					"strengthSe": 0.04689
+				},
+				"RM": {
+					"strength": 0.06513,
+					"strengthSe": 0.05047
+				},
+				"CB": {
+					"strength": 0.09477,
+					"strengthSe": 0.05084
+				}
+			}
+		},
+		"1011": {
+			"usage": 0.00065,
+			"strength": -0.00104,
+			"strengthSe": 0.04642,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00544,
+					"strengthSe": 0.0658
+				},
+				"TC": {
+					"strength": -0.00365,
+					"strengthSe": 0.06666
+				},
+				"RM": {
+					"strength": 0.00308,
+					"strengthSe": 0.06637
+				},
+				"CB": {
+					"strength": 0.00846,
+					"strengthSe": 0.06606
+				}
+			}
+		},
+		"1020": {
+			"usage": 0.01602,
+			"strength": 0.04953,
+			"strengthSe": 0.03159,
+			"byMode": {
+				"SZ": {
+					"strength": 0.10106,
+					"strengthSe": 0.0275
+				},
+				"TC": {
+					"strength": 0.06056,
+					"strengthSe": 0.0459
+				},
+				"RM": {
+					"strength": 0.04033,
+					"strengthSe": 0.04979
+				},
+				"CB": {
+					"strength": 0.05558,
+					"strengthSe": 0.05034
+				}
+			}
+		},
+		"1021": {
+			"usage": 0.00222,
+			"strength": -0.02536,
+			"strengthSe": 0.04149,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03379,
+					"strengthSe": 0.05135
+				},
+				"TC": {
+					"strength": -0.02586,
+					"strengthSe": 0.06188
+				},
+				"RM": {
+					"strength": -0.03249,
+					"strengthSe": 0.06273
+				},
+				"CB": {
+					"strength": -0.02859,
+					"strengthSe": 0.063
+				}
+			}
+		},
+		"1022": {
+			"usage": 0.0005,
+			"strength": -0.02141,
+			"strengthSe": 0.04723,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02671,
+					"strengthSe": 0.06443
+				},
+				"TC": {
+					"strength": -0.02543,
+					"strengthSe": 0.06773
+				},
+				"RM": {
+					"strength": -0.02334,
+					"strengthSe": 0.06851
+				},
+				"CB": {
+					"strength": -0.02397,
+					"strengthSe": 0.06835
+				}
+			}
+		},
+		"1030": {
+			"usage": 0.0029,
+			"strength": -0.02166,
+			"strengthSe": 0.04043,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00453,
+					"strengthSe": 0.04815
+				},
+				"TC": {
+					"strength": -0.03248,
+					"strengthSe": 0.06093
+				},
+				"RM": {
+					"strength": -0.02622,
+					"strengthSe": 0.06198
+				},
+				"CB": {
+					"strength": -0.03277,
+					"strengthSe": 0.06197
+				}
+			}
+		},
+		"1031": {
+			"usage": 0.00039,
+			"strength": -0.00827,
+			"strengthSe": 0.04778,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00346,
+					"strengthSe": 0.06568
+				},
+				"TC": {
+					"strength": -0.00836,
+					"strengthSe": 0.06852
+				},
+				"RM": {
+					"strength": -0.01041,
+					"strengthSe": 0.06878
+				},
+				"CB": {
+					"strength": -0.01141,
+					"strengthSe": 0.06882
+				}
+			}
+		},
+		"1040": {
+			"usage": 0.00074,
+			"strength": -0.01228,
+			"strengthSe": 0.04621,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00663,
+					"strengthSe": 0.0623
+				},
+				"TC": {
+					"strength": -0.0159,
+					"strengthSe": 0.06737
+				},
+				"RM": {
+					"strength": -0.01824,
+					"strengthSe": 0.0664
+				},
+				"CB": {
+					"strength": -0.01345,
+					"strengthSe": 0.06776
+				}
+			}
+		},
+		"1041": {
+			"usage": 0.00034,
+			"strength": -0.02153,
+			"strengthSe": 0.0482,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03567,
+					"strengthSe": 0.06688
+				},
+				"TC": {
+					"strength": -0.02236,
+					"strengthSe": 0.06905
+				},
+				"RM": {
+					"strength": -0.02028,
+					"strengthSe": 0.0689
+				},
+				"CB": {
+					"strength": -0.02165,
+					"strengthSe": 0.06913
+				}
+			}
+		},
+		"1042": {
+			"usage": 0.00058,
+			"strength": -0.00182,
+			"strengthSe": 0.04687,
+			"byMode": {
+				"SZ": {
+					"strength": 0.00263,
+					"strengthSe": 0.06343
+				},
+				"TC": {
+					"strength": -0.00006,
+					"strengthSe": 0.06782
+				},
+				"RM": {
+					"strength": -0.00209,
+					"strengthSe": 0.06764
+				},
+				"CB": {
+					"strength": -0.00196,
+					"strengthSe": 0.06827
+				}
+			}
+		},
+		"1100": {
+			"usage": 0.00956,
+			"strength": 0.05707,
+			"strengthSe": 0.03312,
+			"byMode": {
+				"SZ": {
+					"strength": 0.08569,
+					"strengthSe": 0.03443
+				},
+				"TC": {
+					"strength": 0.07389,
+					"strengthSe": 0.0504
+				},
+				"RM": {
+					"strength": 0.05299,
+					"strengthSe": 0.0512
+				},
+				"CB": {
+					"strength": 0.08262,
+					"strengthSe": 0.05076
+				}
+			}
+		},
+		"1101": {
+			"usage": 0.00865,
+			"strength": 0.07326,
+			"strengthSe": 0.03504,
+			"byMode": {
+				"SZ": {
+					"strength": 0.124,
+					"strengthSe": 0.03347
+				},
+				"TC": {
+					"strength": 0.07309,
+					"strengthSe": 0.05597
+				},
+				"RM": {
+					"strength": 0.09121,
+					"strengthSe": 0.05505
+				},
+				"CB": {
+					"strength": 0.08518,
+					"strengthSe": 0.05484
+				}
+			}
+		},
+		"1110": {
+			"usage": 0.00654,
+			"strength": 0.0433,
+			"strengthSe": 0.03523,
+			"byMode": {
+				"SZ": {
+					"strength": 0.07868,
+					"strengthSe": 0.03902
+				},
+				"TC": {
+					"strength": 0.06474,
+					"strengthSe": 0.05248
+				},
+				"RM": {
+					"strength": 0.04571,
+					"strengthSe": 0.05394
+				},
+				"CB": {
+					"strength": 0.03459,
+					"strengthSe": 0.05592
+				}
+			}
+		},
+		"1111": {
+			"usage": 0.00149,
+			"strength": 0.00322,
+			"strengthSe": 0.04333,
+			"byMode": {
+				"SZ": {
+					"strength": 0.00172,
+					"strengthSe": 0.05697
+				},
+				"TC": {
+					"strength": 0.02051,
+					"strengthSe": 0.06366
+				},
+				"RM": {
+					"strength": 0.00257,
+					"strengthSe": 0.06432
+				},
+				"CB": {
+					"strength": -0.00108,
+					"strengthSe": 0.06385
+				}
+			}
+		},
+		"1112": {
+			"usage": 0.00139,
+			"strength": 0.01938,
+			"strengthSe": 0.04366,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01958,
+					"strengthSe": 0.05723
+				},
+				"TC": {
+					"strength": 0.02776,
+					"strengthSe": 0.06425
+				},
+				"RM": {
+					"strength": 0.02965,
+					"strengthSe": 0.06416
+				},
+				"CB": {
+					"strength": 0.02754,
+					"strengthSe": 0.06494
+				}
+			}
+		},
+		"1120": {
+			"usage": 0.0015,
+			"strength": -0.00261,
+			"strengthSe": 0.04336,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00604,
+					"strengthSe": 0.05725
+				},
+				"TC": {
+					"strength": 0.00158,
+					"strengthSe": 0.06298
+				},
+				"RM": {
+					"strength": 0.00106,
+					"strengthSe": 0.06423
+				},
+				"CB": {
+					"strength": -0.00203,
+					"strengthSe": 0.06452
+				}
+			}
+		},
+		"1121": {
+			"usage": 0.00273,
+			"strength": -0.04003,
+			"strengthSe": 0.04064,
+			"byMode": {
+				"SZ": {
+					"strength": -0.05598,
+					"strengthSe": 0.04879
+				},
+				"TC": {
+					"strength": -0.04592,
+					"strengthSe": 0.06043
+				},
+				"RM": {
+					"strength": -0.0439,
+					"strengthSe": 0.06215
+				},
+				"CB": {
+					"strength": -0.04677,
+					"strengthSe": 0.06271
+				}
+			}
+		},
+		"1122": {
+			"usage": 0.00061,
+			"strength": -0.00829,
+			"strengthSe": 0.04665,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02795,
+					"strengthSe": 0.06313
+				},
+				"TC": {
+					"strength": 0.00299,
+					"strengthSe": 0.06721
+				},
+				"RM": {
+					"strength": -0.00546,
+					"strengthSe": 0.0677
+				},
+				"CB": {
+					"strength": -0.00337,
+					"strengthSe": 0.06798
+				}
+			}
+		},
+		"2000": {
+			"usage": 0.00335,
+			"strength": -0.02922,
+			"strengthSe": 0.03937,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04461,
+					"strengthSe": 0.04713
+				},
+				"TC": {
+					"strength": -0.02506,
+					"strengthSe": 0.0582
+				},
+				"RM": {
+					"strength": -0.03241,
+					"strengthSe": 0.06076
+				},
+				"CB": {
+					"strength": -0.03692,
+					"strengthSe": 0.06081
+				}
+			}
+		},
+		"2001": {
+			"usage": 0.00059,
+			"strength": -0.03087,
+			"strengthSe": 0.04674,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04965,
+					"strengthSe": 0.06451
+				},
+				"TC": {
+					"strength": -0.03354,
+					"strengthSe": 0.06727
+				},
+				"RM": {
+					"strength": -0.0311,
+					"strengthSe": 0.06707
+				},
+				"CB": {
+					"strength": -0.03242,
+					"strengthSe": 0.06765
+				}
+			}
+		},
+		"2010": {
+			"usage": 0.00071,
+			"strength": -0.06421,
+			"strengthSe": 0.04618,
+			"byMode": {
+				"SZ": {
+					"strength": -0.08749,
+					"strengthSe": 0.06594
+				},
+				"TC": {
+					"strength": -0.07646,
+					"strengthSe": 0.06614
+				},
+				"RM": {
+					"strength": -0.07812,
+					"strengthSe": 0.0645
+				},
+				"CB": {
+					"strength": -0.07137,
+					"strengthSe": 0.06708
+				}
+			}
+		},
+		"2011": {
+			"usage": 0.00084,
+			"strength": -0.06954,
+			"strengthSe": 0.04561,
+			"byMode": {
+				"SZ": {
+					"strength": -0.09863,
+					"strengthSe": 0.06287
+				},
+				"TC": {
+					"strength": -0.08396,
+					"strengthSe": 0.0649
+				},
+				"RM": {
+					"strength": -0.08008,
+					"strengthSe": 0.06645
+				},
+				"CB": {
+					"strength": -0.07738,
+					"strengthSe": 0.06653
+				}
+			}
+		},
+		"2012": {
+			"usage": 0.00018,
+			"strength": -0.00784,
+			"strengthSe": 0.04887,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00838,
+					"strengthSe": 0.06822
+				},
+				"TC": {
+					"strength": -0.00703,
+					"strengthSe": 0.06956
+				},
+				"RM": {
+					"strength": -0.01018,
+					"strengthSe": 0.06977
+				},
+				"CB": {
+					"strength": -0.00596,
+					"strengthSe": 0.06966
+				}
+			}
+		},
+		"2020": {
+			"usage": 0.00209,
+			"strength": 0.01633,
+			"strengthSe": 0.04143,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01009,
+					"strengthSe": 0.05935
+				},
+				"TC": {
+					"strength": 0.02492,
+					"strengthSe": 0.06154
+				},
+				"RM": {
+					"strength": 0.03887,
+					"strengthSe": 0.05569
+				},
+				"CB": {
+					"strength": 0.01531,
+					"strengthSe": 0.06205
+				}
+			}
+		},
+		"2021": {
+			"usage": 0.00666,
+			"strength": -0.01116,
+			"strengthSe": 0.03546,
+			"byMode": {
+				"SZ": {
+					"strength": -0.0246,
+					"strengthSe": 0.03897
+				},
+				"TC": {
+					"strength": 0.00889,
+					"strengthSe": 0.05001
+				},
+				"RM": {
+					"strength": -0.01052,
+					"strengthSe": 0.0573
+				},
+				"CB": {
+					"strength": -0.02137,
+					"strengthSe": 0.0565
+				}
+			}
+		},
+		"2022": {
+			"usage": 0.00073,
+			"strength": -0.02167,
+			"strengthSe": 0.0461,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03354,
+					"strengthSe": 0.06224
+				},
+				"TC": {
+					"strength": -0.02489,
+					"strengthSe": 0.06673
+				},
+				"RM": {
+					"strength": -0.02756,
+					"strengthSe": 0.06724
+				},
+				"CB": {
+					"strength": -0.01475,
+					"strengthSe": 0.06706
+				}
+			}
+		},
+		"2030": {
+			"usage": 0.02069,
+			"strength": -0.00176,
+			"strengthSe": 0.03148,
+			"byMode": {
+				"SZ": {
+					"strength": -0.0488,
+					"strengthSe": 0.02404
+				},
+				"TC": {
+					"strength": 0.05848,
+					"strengthSe": 0.04453
+				},
+				"RM": {
+					"strength": -0.02535,
+					"strengthSe": 0.05075
+				},
+				"CB": {
+					"strength": 0.01491,
+					"strengthSe": 0.05241
+				}
+			}
+		},
+		"2031": {
+			"usage": 0.00149,
+			"strength": -0.0276,
+			"strengthSe": 0.04302,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03246,
+					"strengthSe": 0.05925
+				},
+				"TC": {
+					"strength": -0.02264,
+					"strengthSe": 0.06173
+				},
+				"RM": {
+					"strength": -0.03822,
+					"strengthSe": 0.06291
+				},
+				"CB": {
+					"strength": -0.03636,
+					"strengthSe": 0.06334
+				}
+			}
+		},
+		"2040": {
+			"usage": 0.00546,
+			"strength": 0.05496,
+			"strengthSe": 0.0372,
+			"byMode": {
+				"SZ": {
+					"strength": 0.10302,
+					"strengthSe": 0.03982
+				},
+				"TC": {
+					"strength": 0.06588,
+					"strengthSe": 0.05553
+				},
+				"RM": {
+					"strength": 0.06803,
+					"strengthSe": 0.05876
+				},
+				"CB": {
+					"strength": 0.04583,
+					"strengthSe": 0.05959
+				}
+			}
+		},
+		"2041": {
+			"usage": 0.00096,
+			"strength": 0.01538,
+			"strengthSe": 0.04504,
+			"byMode": {
+				"SZ": {
+					"strength": 0.02462,
+					"strengthSe": 0.06254
+				},
+				"TC": {
+					"strength": 0.02402,
+					"strengthSe": 0.06371
+				},
+				"RM": {
+					"strength": 0.02043,
+					"strengthSe": 0.0657
+				},
+				"CB": {
+					"strength": 0.01496,
+					"strengthSe": 0.06586
+				}
+			}
+		},
+		"2050": {
+			"usage": 0.00283,
+			"strength": 0.01289,
+			"strengthSe": 0.03949,
+			"byMode": {
+				"SZ": {
+					"strength": -0.0131,
+					"strengthSe": 0.0525
+				},
+				"TC": {
+					"strength": 0.02418,
+					"strengthSe": 0.05728
+				},
+				"RM": {
+					"strength": 0.03569,
+					"strengthSe": 0.05869
+				},
+				"CB": {
+					"strength": 0.02501,
+					"strengthSe": 0.0593
+				}
+			}
+		},
+		"2051": {
+			"usage": 0.00233,
+			"strength": -0.00461,
+			"strengthSe": 0.04166,
+			"byMode": {
+				"SZ": {
+					"strength": 0.03836,
+					"strengthSe": 0.04988
+				},
+				"TC": {
+					"strength": -0.02139,
+					"strengthSe": 0.06325
+				},
+				"RM": {
+					"strength": -0.01897,
+					"strengthSe": 0.06338
+				},
+				"CB": {
+					"strength": -0.01301,
+					"strengthSe": 0.06322
+				}
+			}
+		},
+		"2060": {
+			"usage": 0.00029,
+			"strength": -0.01028,
+			"strengthSe": 0.04827,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01459,
+					"strengthSe": 0.06751
+				},
+				"TC": {
+					"strength": -0.00903,
+					"strengthSe": 0.0687
+				},
+				"RM": {
+					"strength": -0.00921,
+					"strengthSe": 0.06906
+				},
+				"CB": {
+					"strength": -0.01101,
+					"strengthSe": 0.06899
+				}
+			}
+		},
+		"2061": {
+			"usage": 0.00032,
+			"strength": -0.00503,
+			"strengthSe": 0.04812,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01097,
+					"strengthSe": 0.06654
+				},
+				"TC": {
+					"strength": -0.00067,
+					"strengthSe": 0.06889
+				},
+				"RM": {
+					"strength": -0.00119,
+					"strengthSe": 0.06887
+				},
+				"CB": {
+					"strength": -0.00468,
+					"strengthSe": 0.06919
+				}
+			}
+		},
+		"2070": {
+			"usage": 0.08592,
+			"strength": -0.05158,
+			"strengthSe": 0.02654,
+			"byMode": {
+				"SZ": {
+					"strength": -0.07316,
+					"strengthSe": 0.01457
+				},
+				"TC": {
+					"strength": -0.06921,
+					"strengthSe": 0.03075
+				},
+				"RM": {
+					"strength": -0.06824,
+					"strengthSe": 0.03723
+				},
+				"CB": {
+					"strength": -0.03357,
+					"strengthSe": 0.03621
+				}
+			}
+		},
+		"2071": {
+			"usage": 0.0013,
+			"strength": -0.02084,
+			"strengthSe": 0.04426,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02444,
+					"strengthSe": 0.05689
+				},
+				"TC": {
+					"strength": -0.02432,
+					"strengthSe": 0.0654
+				},
+				"RM": {
+					"strength": -0.02626,
+					"strengthSe": 0.06578
+				},
+				"CB": {
+					"strength": -0.02182,
+					"strengthSe": 0.06568
+				}
+			}
+		},
+		"3000": {
+			"usage": 0.04802,
+			"strength": 0.03644,
+			"strengthSe": 0.0274,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01356,
+					"strengthSe": 0.01779
+				},
+				"TC": {
+					"strength": 0.05168,
+					"strengthSe": 0.03468
+				},
+				"RM": {
+					"strength": 0.08063,
+					"strengthSe": 0.03876
+				},
+				"CB": {
+					"strength": 0.04285,
+					"strengthSe": 0.04002
+				}
+			}
+		},
+		"3001": {
+			"usage": 0.00083,
+			"strength": -0.01482,
+			"strengthSe": 0.04572,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02284,
+					"strengthSe": 0.06185
+				},
+				"TC": {
+					"strength": -0.00945,
+					"strengthSe": 0.06643
+				},
+				"RM": {
+					"strength": -0.01786,
+					"strengthSe": 0.0663
+				},
+				"CB": {
+					"strength": -0.01633,
+					"strengthSe": 0.06669
+				}
+			}
+		},
+		"3010": {
+			"usage": 0.00276,
+			"strength": -0.01048,
+			"strengthSe": 0.0399,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03926,
+					"strengthSe": 0.05255
+				},
+				"TC": {
+					"strength": -0.0063,
+					"strengthSe": 0.05852
+				},
+				"RM": {
+					"strength": 0.00131,
+					"strengthSe": 0.05906
+				},
+				"CB": {
+					"strength": -0.00094,
+					"strengthSe": 0.06002
+				}
+			}
+		},
+		"3011": {
+			"usage": 0.0181,
+			"strength": 0.03821,
+			"strengthSe": 0.03036,
+			"byMode": {
+				"SZ": {
+					"strength": 0.04674,
+					"strengthSe": 0.02736
+				},
+				"TC": {
+					"strength": 0.04221,
+					"strengthSe": 0.04363
+				},
+				"RM": {
+					"strength": 0.06076,
+					"strengthSe": 0.04477
+				},
+				"CB": {
+					"strength": 0.04787,
+					"strengthSe": 0.04773
+				}
+			}
+		},
+		"3012": {
+			"usage": 0.00051,
+			"strength": 0.00397,
+			"strengthSe": 0.04721,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01914,
+					"strengthSe": 0.06417
+				},
+				"TC": {
+					"strength": -0.00104,
+					"strengthSe": 0.06807
+				},
+				"RM": {
+					"strength": 0.00461,
+					"strengthSe": 0.06829
+				},
+				"CB": {
+					"strength": 0.00477,
+					"strengthSe": 0.06837
+				}
+			}
+		},
+		"3020": {
+			"usage": 0.00598,
+			"strength": -0.00181,
+			"strengthSe": 0.03526,
+			"byMode": {
+				"SZ": {
+					"strength": 0.00285,
+					"strengthSe": 0.0425
+				},
+				"TC": {
+					"strength": 0.0019,
+					"strengthSe": 0.05004
+				},
+				"RM": {
+					"strength": -0.00064,
+					"strengthSe": 0.05419
+				},
+				"CB": {
+					"strength": -0.00624,
+					"strengthSe": 0.05512
+				}
+			}
+		},
+		"3021": {
+			"usage": 0.00589,
+			"strength": -0.01698,
+			"strengthSe": 0.03523,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03032,
+					"strengthSe": 0.04261
+				},
+				"TC": {
+					"strength": -0.01797,
+					"strengthSe": 0.05103
+				},
+				"RM": {
+					"strength": -0.0244,
+					"strengthSe": 0.05351
+				},
+				"CB": {
+					"strength": -0.00435,
+					"strengthSe": 0.05457
+				}
+			}
+		},
+		"3030": {
+			"usage": 0.00249,
+			"strength": 0.04132,
+			"strengthSe": 0.04113,
+			"byMode": {
+				"SZ": {
+					"strength": 0.07482,
+					"strengthSe": 0.05022
+				},
+				"TC": {
+					"strength": 0.04182,
+					"strengthSe": 0.06242
+				},
+				"RM": {
+					"strength": 0.05215,
+					"strengthSe": 0.06134
+				},
+				"CB": {
+					"strength": 0.04585,
+					"strengthSe": 0.06294
+				}
+			}
+		},
+		"3031": {
+			"usage": 0.00079,
+			"strength": -0.01732,
+			"strengthSe": 0.04587,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03566,
+					"strengthSe": 0.06322
+				},
+				"TC": {
+					"strength": -0.01411,
+					"strengthSe": 0.06701
+				},
+				"RM": {
+					"strength": -0.0137,
+					"strengthSe": 0.06574
+				},
+				"CB": {
+					"strength": -0.0155,
+					"strengthSe": 0.0661
+				}
+			}
+		},
+		"3040": {
+			"usage": 0.00208,
+			"strength": -0.00961,
+			"strengthSe": 0.04234,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00493,
+					"strengthSe": 0.05082
+				},
+				"TC": {
+					"strength": -0.01758,
+					"strengthSe": 0.06439
+				},
+				"RM": {
+					"strength": -0.01031,
+					"strengthSe": 0.06444
+				},
+				"CB": {
+					"strength": -0.0078,
+					"strengthSe": 0.06374
+				}
+			}
+		},
+		"3041": {
+			"usage": 0.0045,
+			"strength": 0.04468,
+			"strengthSe": 0.03848,
+			"byMode": {
+				"SZ": {
+					"strength": 0.10523,
+					"strengthSe": 0.04135
+				},
+				"TC": {
+					"strength": 0.03766,
+					"strengthSe": 0.05929
+				},
+				"RM": {
+					"strength": 0.03635,
+					"strengthSe": 0.06086
+				},
+				"CB": {
+					"strength": 0.05184,
+					"strengthSe": 0.05994
+				}
+			}
+		},
+		"3050": {
+			"usage": 0.02337,
+			"strength": 0.05299,
+			"strengthSe": 0.03063,
+			"byMode": {
+				"SZ": {
+					"strength": 0.15898,
+					"strengthSe": 0.02289
+				},
+				"TC": {
+					"strength": 0.01175,
+					"strengthSe": 0.04682
+				},
+				"RM": {
+					"strength": 0.06569,
+					"strengthSe": 0.04626
+				},
+				"CB": {
+					"strength": 0.034,
+					"strengthSe": 0.04862
+				}
+			}
+		},
+		"3051": {
+			"usage": 0.00056,
+			"strength": -0.00021,
+			"strengthSe": 0.04687,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01211,
+					"strengthSe": 0.06457
+				},
+				"TC": {
+					"strength": -0.00489,
+					"strengthSe": 0.0674
+				},
+				"RM": {
+					"strength": 0.00285,
+					"strengthSe": 0.06767
+				},
+				"CB": {
+					"strength": -0.00344,
+					"strengthSe": 0.06752
+				}
+			}
+		},
+		"3052": {
+			"usage": 0.00432,
+			"strength": -0.07298,
+			"strengthSe": 0.03799,
+			"byMode": {
+				"SZ": {
+					"strength": -0.13226,
+					"strengthSe": 0.04376
+				},
+				"TC": {
+					"strength": -0.07557,
+					"strengthSe": 0.05584
+				},
+				"RM": {
+					"strength": -0.07681,
+					"strengthSe": 0.05978
+				},
+				"CB": {
+					"strength": -0.07399,
+					"strengthSe": 0.05932
+				}
+			}
+		},
+		"4000": {
+			"usage": 0.00417,
+			"strength": 0.02268,
+			"strengthSe": 0.03868,
+			"byMode": {
+				"SZ": {
+					"strength": 0.05042,
+					"strengthSe": 0.04295
+				},
+				"TC": {
+					"strength": 0.02468,
+					"strengthSe": 0.05961
+				},
+				"RM": {
+					"strength": 0.02042,
+					"strengthSe": 0.05949
+				},
+				"CB": {
+					"strength": 0.02545,
+					"strengthSe": 0.06066
+				}
+			}
+		},
+		"4001": {
+			"usage": 0.00565,
+			"strength": 0.0168,
+			"strengthSe": 0.03701,
+			"byMode": {
+				"SZ": {
+					"strength": 0.06855,
+					"strengthSe": 0.03905
+				},
+				"TC": {
+					"strength": 0.00354,
+					"strengthSe": 0.05515
+				},
+				"RM": {
+					"strength": 0.01985,
+					"strengthSe": 0.05907
+				},
+				"CB": {
+					"strength": -0.00328,
+					"strengthSe": 0.0592
+				}
+			}
+		},
+		"4002": {
+			"usage": 0.00249,
+			"strength": -0.01474,
+			"strengthSe": 0.04131,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01619,
+					"strengthSe": 0.04909
+				},
+				"TC": {
+					"strength": -0.02075,
+					"strengthSe": 0.06238
+				},
+				"RM": {
+					"strength": -0.00884,
+					"strengthSe": 0.06333
+				},
+				"CB": {
+					"strength": -0.02042,
+					"strengthSe": 0.06298
+				}
+			}
+		},
+		"4010": {
+			"usage": 0.01018,
+			"strength": 0.06506,
+			"strengthSe": 0.0345,
+			"byMode": {
+				"SZ": {
+					"strength": 0.13577,
+					"strengthSe": 0.03141
+				},
+				"TC": {
+					"strength": 0.04074,
+					"strengthSe": 0.05302
+				},
+				"RM": {
+					"strength": 0.08249,
+					"strengthSe": 0.05516
+				},
+				"CB": {
+					"strength": 0.07583,
+					"strengthSe": 0.05592
+				}
+			}
+		},
+		"4011": {
+			"usage": 0.0012,
+			"strength": -0.0172,
+			"strengthSe": 0.04416,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03166,
+					"strengthSe": 0.06247
+				},
+				"TC": {
+					"strength": -0.01907,
+					"strengthSe": 0.06456
+				},
+				"RM": {
+					"strength": -0.00825,
+					"strengthSe": 0.0641
+				},
+				"CB": {
+					"strength": -0.01909,
+					"strengthSe": 0.06209
+				}
+			}
+		},
+		"4020": {
+			"usage": 0.00266,
+			"strength": -0.02428,
+			"strengthSe": 0.04013,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03505,
+					"strengthSe": 0.0515
+				},
+				"TC": {
+					"strength": -0.0259,
+					"strengthSe": 0.05877
+				},
+				"RM": {
+					"strength": -0.02176,
+					"strengthSe": 0.05986
+				},
+				"CB": {
+					"strength": -0.03061,
+					"strengthSe": 0.06127
+				}
+			}
+		},
+		"4021": {
+			"usage": 0.00021,
+			"strength": -0.00528,
+			"strengthSe": 0.04871,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00576,
+					"strengthSe": 0.06823
+				},
+				"TC": {
+					"strength": -0.01003,
+					"strengthSe": 0.06931
+				},
+				"RM": {
+					"strength": -0.00293,
+					"strengthSe": 0.06945
+				},
+				"CB": {
+					"strength": -0.00004,
+					"strengthSe": 0.06942
+				}
+			}
+		},
+		"4022": {
+			"usage": 0.00102,
+			"strength": -0.00527,
+			"strengthSe": 0.04496,
+			"byMode": {
+				"SZ": {
+					"strength": -0.00289,
+					"strengthSe": 0.06055
+				},
+				"TC": {
+					"strength": 0.00089,
+					"strengthSe": 0.06405
+				},
+				"RM": {
+					"strength": -0.00886,
+					"strengthSe": 0.06634
+				},
+				"CB": {
+					"strength": -0.00786,
+					"strengthSe": 0.06641
+				}
+			}
+		},
+		"4030": {
+			"usage": 0.00944,
+			"strength": -0.03209,
+			"strengthSe": 0.03289,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03531,
+					"strengthSe": 0.03946
+				},
+				"TC": {
+					"strength": -0.04591,
+					"strengthSe": 0.04821
+				},
+				"RM": {
+					"strength": -0.0319,
+					"strengthSe": 0.04827
+				},
+				"CB": {
+					"strength": -0.03778,
+					"strengthSe": 0.0497
+				}
+			}
+		},
+		"4031": {
+			"usage": 0.00142,
+			"strength": -0.02517,
+			"strengthSe": 0.04344,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04346,
+					"strengthSe": 0.05974
+				},
+				"TC": {
+					"strength": -0.01947,
+					"strengthSe": 0.06407
+				},
+				"RM": {
+					"strength": -0.01732,
+					"strengthSe": 0.06156
+				},
+				"CB": {
+					"strength": -0.03731,
+					"strengthSe": 0.06409
+				}
+			}
+		},
+		"4040": {
+			"usage": 0.00855,
+			"strength": -0.00653,
+			"strengthSe": 0.03359,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01682,
+					"strengthSe": 0.03644
+				},
+				"TC": {
+					"strength": -0.02904,
+					"strengthSe": 0.05036
+				},
+				"RM": {
+					"strength": -0.00015,
+					"strengthSe": 0.05137
+				},
+				"CB": {
+					"strength": -0.01345,
+					"strengthSe": 0.05203
+				}
+			}
+		},
+		"4041": {
+			"usage": 0.00379,
+			"strength": 0.01388,
+			"strengthSe": 0.03822,
+			"byMode": {
+				"SZ": {
+					"strength": 0.02629,
+					"strengthSe": 0.04658
+				},
+				"TC": {
+					"strength": 0.00559,
+					"strengthSe": 0.05685
+				},
+				"RM": {
+					"strength": 0.03311,
+					"strengthSe": 0.05739
+				},
+				"CB": {
+					"strength": 0.01219,
+					"strengthSe": 0.05944
+				}
+			}
+		},
+		"4050": {
+			"usage": 0.03275,
+			"strength": -0.02515,
+			"strengthSe": 0.02787,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04232,
+					"strengthSe": 0.02231
+				},
+				"TC": {
+					"strength": -0.03663,
+					"strengthSe": 0.03663
+				},
+				"RM": {
+					"strength": 0.00385,
+					"strengthSe": 0.03781
+				},
+				"CB": {
+					"strength": -0.04352,
+					"strengthSe": 0.04104
+				}
+			}
+		},
+		"4051": {
+			"usage": 0.00281,
+			"strength": -0.03609,
+			"strengthSe": 0.04009,
+			"byMode": {
+				"SZ": {
+					"strength": -0.06175,
+					"strengthSe": 0.04947
+				},
+				"TC": {
+					"strength": -0.04258,
+					"strengthSe": 0.05983
+				},
+				"RM": {
+					"strength": -0.03282,
+					"strengthSe": 0.06053
+				},
+				"CB": {
+					"strength": -0.03605,
+					"strengthSe": 0.06123
+				}
+			}
+		},
+		"5000": {
+			"usage": 0.00458,
+			"strength": 0.06547,
+			"strengthSe": 0.03702,
+			"byMode": {
+				"SZ": {
+					"strength": 0.06753,
+					"strengthSe": 0.04529
+				},
+				"TC": {
+					"strength": 0.0959,
+					"strengthSe": 0.05485
+				},
+				"RM": {
+					"strength": 0.1028,
+					"strengthSe": 0.0552
+				},
+				"CB": {
+					"strength": 0.06745,
+					"strengthSe": 0.05771
+				}
+			}
+		},
+		"5001": {
+			"usage": 0.00823,
+			"strength": 0.05475,
+			"strengthSe": 0.03493,
+			"byMode": {
+				"SZ": {
+					"strength": 0.08843,
+					"strengthSe": 0.03479
+				},
+				"TC": {
+					"strength": 0.06449,
+					"strengthSe": 0.05396
+				},
+				"RM": {
+					"strength": 0.06951,
+					"strengthSe": 0.05394
+				},
+				"CB": {
+					"strength": 0.05816,
+					"strengthSe": 0.05621
+				}
+			}
+		},
+		"5002": {
+			"usage": 0.00125,
+			"strength": -0.05083,
+			"strengthSe": 0.04425,
+			"byMode": {
+				"SZ": {
+					"strength": -0.07418,
+					"strengthSe": 0.05776
+				},
+				"TC": {
+					"strength": -0.06186,
+					"strengthSe": 0.06523
+				},
+				"RM": {
+					"strength": -0.05933,
+					"strengthSe": 0.06514
+				},
+				"CB": {
+					"strength": -0.05112,
+					"strengthSe": 0.06552
+				}
+			}
+		},
+		"5010": {
+			"usage": 0.01967,
+			"strength": -0.01543,
+			"strengthSe": 0.02948,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02715,
+					"strengthSe": 0.02671
+				},
+				"TC": {
+					"strength": -0.02067,
+					"strengthSe": 0.04034
+				},
+				"RM": {
+					"strength": -0.00487,
+					"strengthSe": 0.04307
+				},
+				"CB": {
+					"strength": -0.01711,
+					"strengthSe": 0.04561
+				}
+			}
+		},
+		"5011": {
+			"usage": 0.00296,
+			"strength": -0.02701,
+			"strengthSe": 0.03946,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03411,
+					"strengthSe": 0.05028
+				},
+				"TC": {
+					"strength": -0.036,
+					"strengthSe": 0.05902
+				},
+				"RM": {
+					"strength": -0.0355,
+					"strengthSe": 0.05853
+				},
+				"CB": {
+					"strength": -0.02191,
+					"strengthSe": 0.05983
+				}
+			}
+		},
+		"5012": {
+			"usage": 0.00198,
+			"strength": -0.03783,
+			"strengthSe": 0.04203,
+			"byMode": {
+				"SZ": {
+					"strength": -0.05932,
+					"strengthSe": 0.05395
+				},
+				"TC": {
+					"strength": -0.04196,
+					"strengthSe": 0.06143
+				},
+				"RM": {
+					"strength": -0.03659,
+					"strengthSe": 0.06331
+				},
+				"CB": {
+					"strength": -0.04366,
+					"strengthSe": 0.06311
+				}
+			}
+		},
+		"5020": {
+			"usage": 0.00482,
+			"strength": 0.02335,
+			"strengthSe": 0.03761,
+			"byMode": {
+				"SZ": {
+					"strength": 0.04818,
+					"strengthSe": 0.04185
+				},
+				"TC": {
+					"strength": 0.01829,
+					"strengthSe": 0.05714
+				},
+				"RM": {
+					"strength": 0.03191,
+					"strengthSe": 0.0593
+				},
+				"CB": {
+					"strength": 0.0283,
+					"strengthSe": 0.05808
+				}
+			}
+		},
+		"5021": {
+			"usage": 0.00062,
+			"strength": -0.04941,
+			"strengthSe": 0.04646,
+			"byMode": {
+				"SZ": {
+					"strength": -0.07539,
+					"strengthSe": 0.06455
+				},
+				"TC": {
+					"strength": -0.05443,
+					"strengthSe": 0.06676
+				},
+				"RM": {
+					"strength": -0.05511,
+					"strengthSe": 0.06685
+				},
+				"CB": {
+					"strength": -0.05423,
+					"strengthSe": 0.06695
+				}
+			}
+		},
+		"5030": {
+			"usage": 0.00526,
+			"strength": -0.02275,
+			"strengthSe": 0.03682,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01341,
+					"strengthSe": 0.04122
+				},
+				"TC": {
+					"strength": -0.05175,
+					"strengthSe": 0.05587
+				},
+				"RM": {
+					"strength": -0.03044,
+					"strengthSe": 0.05685
+				},
+				"CB": {
+					"strength": -0.01215,
+					"strengthSe": 0.0576
+				}
+			}
+		},
+		"5031": {
+			"usage": 0.00197,
+			"strength": -0.00541,
+			"strengthSe": 0.04223,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01282,
+					"strengthSe": 0.05342
+				},
+				"TC": {
+					"strength": -0.00923,
+					"strengthSe": 0.06355
+				},
+				"RM": {
+					"strength": 0.00244,
+					"strengthSe": 0.06351
+				},
+				"CB": {
+					"strength": 0.00136,
+					"strengthSe": 0.06256
+				}
+			}
+		},
+		"5032": {
+			"usage": 0.00018,
+			"strength": -0.01364,
+			"strengthSe": 0.04889,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01932,
+					"strengthSe": 0.06832
+				},
+				"TC": {
+					"strength": -0.01297,
+					"strengthSe": 0.06968
+				},
+				"RM": {
+					"strength": -0.0135,
+					"strengthSe": 0.06972
+				},
+				"CB": {
+					"strength": -0.01479,
+					"strengthSe": 0.06961
+				}
+			}
+		},
+		"5040": {
+			"usage": 0.00876,
+			"strength": 0.02531,
+			"strengthSe": 0.03383,
+			"byMode": {
+				"SZ": {
+					"strength": 0.05202,
+					"strengthSe": 0.03492
+				},
+				"TC": {
+					"strength": 0.02085,
+					"strengthSe": 0.05193
+				},
+				"RM": {
+					"strength": 0.04098,
+					"strengthSe": 0.05187
+				},
+				"CB": {
+					"strength": 0.02187,
+					"strengthSe": 0.05289
+				}
+			}
+		},
+		"5041": {
+			"usage": 0.00112,
+			"strength": -0.01341,
+			"strengthSe": 0.04446,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02207,
+					"strengthSe": 0.06184
+				},
+				"TC": {
+					"strength": -0.00885,
+					"strengthSe": 0.06353
+				},
+				"RM": {
+					"strength": -0.01298,
+					"strengthSe": 0.06472
+				},
+				"CB": {
+					"strength": -0.01612,
+					"strengthSe": 0.06475
+				}
+			}
+		},
+		"5050": {
+			"usage": 0.00027,
+			"strength": -0.01258,
+			"strengthSe": 0.0484,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01335,
+					"strengthSe": 0.06791
+				},
+				"TC": {
+					"strength": -0.01652,
+					"strengthSe": 0.06892
+				},
+				"RM": {
+					"strength": -0.00874,
+					"strengthSe": 0.06897
+				},
+				"CB": {
+					"strength": -0.01665,
+					"strengthSe": 0.0691
+				}
+			}
+		},
+		"5051": {
+			"usage": 0.0008,
+			"strength": -0.06293,
+			"strengthSe": 0.0458,
+			"byMode": {
+				"SZ": {
+					"strength": -0.09941,
+					"strengthSe": 0.06271
+				},
+				"TC": {
+					"strength": -0.06964,
+					"strengthSe": 0.06575
+				},
+				"RM": {
+					"strength": -0.07034,
+					"strengthSe": 0.06646
+				},
+				"CB": {
+					"strength": -0.0679,
+					"strengthSe": 0.06679
+				}
+			}
+		},
+		"6000": {
+			"usage": 0.00186,
+			"strength": -0.02222,
+			"strengthSe": 0.04264,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02044,
+					"strengthSe": 0.05213
+				},
+				"TC": {
+					"strength": -0.02274,
+					"strengthSe": 0.06329
+				},
+				"RM": {
+					"strength": -0.02782,
+					"strengthSe": 0.06488
+				},
+				"CB": {
+					"strength": -0.03229,
+					"strengthSe": 0.06474
+				}
+			}
+		},
+		"6001": {
+			"usage": 0.00544,
+			"strength": -0.02849,
+			"strengthSe": 0.03689,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03813,
+					"strengthSe": 0.03994
+				},
+				"TC": {
+					"strength": -0.04495,
+					"strengthSe": 0.05631
+				},
+				"RM": {
+					"strength": -0.03189,
+					"strengthSe": 0.05757
+				},
+				"CB": {
+					"strength": -0.01966,
+					"strengthSe": 0.05799
+				}
+			}
+		},
+		"6010": {
+			"usage": 0.00213,
+			"strength": 0.00032,
+			"strengthSe": 0.04143,
+			"byMode": {
+				"SZ": {
+					"strength": 0.00519,
+					"strengthSe": 0.05434
+				},
+				"TC": {
+					"strength": 0.00452,
+					"strengthSe": 0.06268
+				},
+				"RM": {
+					"strength": 0.00439,
+					"strengthSe": 0.05944
+				},
+				"CB": {
+					"strength": -0.00487,
+					"strengthSe": 0.06211
+				}
+			}
+		},
+		"6011": {
+			"usage": 0.01279,
+			"strength": 0.00617,
+			"strengthSe": 0.03278,
+			"byMode": {
+				"SZ": {
+					"strength": 0.03968,
+					"strengthSe": 0.02928
+				},
+				"TC": {
+					"strength": -0.00896,
+					"strengthSe": 0.05194
+				},
+				"RM": {
+					"strength": -0.01122,
+					"strengthSe": 0.05163
+				},
+				"CB": {
+					"strength": 0.01814,
+					"strengthSe": 0.05013
+				}
+			}
+		},
+		"6012": {
+			"usage": 0.00046,
+			"strength": -0.02928,
+			"strengthSe": 0.04749,
+			"byMode": {
+				"SZ": {
+					"strength": -0.05019,
+					"strengthSe": 0.0644
+				},
+				"TC": {
+					"strength": -0.02893,
+					"strengthSe": 0.06851
+				},
+				"RM": {
+					"strength": -0.03141,
+					"strengthSe": 0.06871
+				},
+				"CB": {
+					"strength": -0.02779,
+					"strengthSe": 0.0687
+				}
+			}
+		},
+		"6020": {
+			"usage": 0.00183,
+			"strength": -0.00179,
+			"strengthSe": 0.04238,
+			"byMode": {
+				"SZ": {
+					"strength": 0.0174,
+					"strengthSe": 0.05508
+				},
+				"TC": {
+					"strength": -0.00223,
+					"strengthSe": 0.06208
+				},
+				"RM": {
+					"strength": -0.0029,
+					"strengthSe": 0.06334
+				},
+				"CB": {
+					"strength": -0.01398,
+					"strengthSe": 0.06324
+				}
+			}
+		},
+		"6021": {
+			"usage": 0.00027,
+			"strength": -0.00983,
+			"strengthSe": 0.0484,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01006,
+					"strengthSe": 0.06803
+				},
+				"TC": {
+					"strength": -0.01233,
+					"strengthSe": 0.06864
+				},
+				"RM": {
+					"strength": -0.00912,
+					"strengthSe": 0.06912
+				},
+				"CB": {
+					"strength": -0.01,
+					"strengthSe": 0.06908
+				}
+			}
+		},
+		"6022": {
+			"usage": 0.00013,
+			"strength": -0.01168,
+			"strengthSe": 0.04923,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01025,
+					"strengthSe": 0.06871
+				},
+				"TC": {
+					"strength": -0.01531,
+					"strengthSe": 0.07008
+				},
+				"RM": {
+					"strength": -0.01326,
+					"strengthSe": 0.07007
+				},
+				"CB": {
+					"strength": -0.01195,
+					"strengthSe": 0.07016
+				}
+			}
+		},
+		"6030": {
+			"usage": 0.00241,
+			"strength": -0.02734,
+			"strengthSe": 0.04177,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03247,
+					"strengthSe": 0.04907
+				},
+				"TC": {
+					"strength": -0.03307,
+					"strengthSe": 0.06284
+				},
+				"RM": {
+					"strength": -0.02988,
+					"strengthSe": 0.06412
+				},
+				"CB": {
+					"strength": -0.03365,
+					"strengthSe": 0.06421
+				}
+			}
+		},
+		"6031": {
+			"usage": 0.00091,
+			"strength": 0.01483,
+			"strengthSe": 0.04534,
+			"byMode": {
+				"SZ": {
+					"strength": 0.0285,
+					"strengthSe": 0.06064
+				},
+				"TC": {
+					"strength": 0.01857,
+					"strengthSe": 0.06591
+				},
+				"RM": {
+					"strength": 0.01617,
+					"strengthSe": 0.06603
+				},
+				"CB": {
+					"strength": 0.01854,
+					"strengthSe": 0.06676
+				}
+			}
+		},
+		"7010": {
+			"usage": 0.0034,
+			"strength": -0.07351,
+			"strengthSe": 0.03839,
+			"byMode": {
+				"SZ": {
+					"strength": -0.11922,
+					"strengthSe": 0.05132
+				},
+				"TC": {
+					"strength": -0.08698,
+					"strengthSe": 0.0544
+				},
+				"RM": {
+					"strength": -0.07021,
+					"strengthSe": 0.05693
+				},
+				"CB": {
+					"strength": -0.08343,
+					"strengthSe": 0.0588
+				}
+			}
+		},
+		"7011": {
+			"usage": 0.00778,
+			"strength": -0.03662,
+			"strengthSe": 0.03683,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04424,
+					"strengthSe": 0.03361
+				},
+				"TC": {
+					"strength": -0.04036,
+					"strengthSe": 0.05829
+				},
+				"RM": {
+					"strength": -0.05076,
+					"strengthSe": 0.05949
+				},
+				"CB": {
+					"strength": -0.04104,
+					"strengthSe": 0.05925
+				}
+			}
+		},
+		"7012": {
+			"usage": 0.00426,
+			"strength": -0.04934,
+			"strengthSe": 0.03898,
+			"byMode": {
+				"SZ": {
+					"strength": -0.07465,
+					"strengthSe": 0.0421
+				},
+				"TC": {
+					"strength": -0.05438,
+					"strengthSe": 0.05867
+				},
+				"RM": {
+					"strength": -0.05126,
+					"strengthSe": 0.06166
+				},
+				"CB": {
+					"strength": -0.0588,
+					"strengthSe": 0.06183
+				}
+			}
+		},
+		"7020": {
+			"usage": 0.00134,
+			"strength": -0.04579,
+			"strengthSe": 0.04377,
+			"byMode": {
+				"SZ": {
+					"strength": -0.06754,
+					"strengthSe": 0.05964
+				},
+				"TC": {
+					"strength": -0.05138,
+					"strengthSe": 0.06376
+				},
+				"RM": {
+					"strength": -0.05211,
+					"strengthSe": 0.06419
+				},
+				"CB": {
+					"strength": -0.04865,
+					"strengthSe": 0.06417
+				}
+			}
+		},
+		"7021": {
+			"usage": 0.00057,
+			"strength": 0.00877,
+			"strengthSe": 0.04684,
+			"byMode": {
+				"SZ": {
+					"strength": 0.03073,
+					"strengthSe": 0.06364
+				},
+				"TC": {
+					"strength": 0.00795,
+					"strengthSe": 0.06787
+				},
+				"RM": {
+					"strength": 0.00986,
+					"strengthSe": 0.06778
+				},
+				"CB": {
+					"strength": 0.00144,
+					"strengthSe": 0.06778
+				}
+			}
+		},
+		"7022": {
+			"usage": 0.00127,
+			"strength": -0.02626,
+			"strengthSe": 0.04416,
+			"byMode": {
+				"SZ": {
+					"strength": -0.03244,
+					"strengthSe": 0.05745
+				},
+				"TC": {
+					"strength": -0.02466,
+					"strengthSe": 0.06452
+				},
+				"RM": {
+					"strength": -0.03353,
+					"strengthSe": 0.06565
+				},
+				"CB": {
+					"strength": -0.02958,
+					"strengthSe": 0.0657
+				}
+			}
+		},
+		"7030": {
+			"usage": 0.0036,
+			"strength": -0.03977,
+			"strengthSe": 0.03857,
+			"byMode": {
+				"SZ": {
+					"strength": -0.04071,
+					"strengthSe": 0.04752
+				},
+				"TC": {
+					"strength": -0.06077,
+					"strengthSe": 0.0593
+				},
+				"RM": {
+					"strength": -0.04193,
+					"strengthSe": 0.05475
+				},
+				"CB": {
+					"strength": -0.04798,
+					"strengthSe": 0.06074
+				}
+			}
+		},
+		"7031": {
+			"usage": 0.00197,
+			"strength": -0.04574,
+			"strengthSe": 0.04185,
+			"byMode": {
+				"SZ": {
+					"strength": -0.07735,
+					"strengthSe": 0.05475
+				},
+				"TC": {
+					"strength": -0.0566,
+					"strengthSe": 0.06169
+				},
+				"RM": {
+					"strength": -0.03762,
+					"strengthSe": 0.06124
+				},
+				"CB": {
+					"strength": -0.04948,
+					"strengthSe": 0.06318
+				}
+			}
+		},
+		"8000": {
+			"usage": 0.03144,
+			"strength": -0.06805,
+			"strengthSe": 0.0284,
+			"byMode": {
+				"SZ": {
+					"strength": -0.10878,
+					"strengthSe": 0.02128
+				},
+				"TC": {
+					"strength": -0.06147,
+					"strengthSe": 0.03906
+				},
+				"RM": {
+					"strength": -0.09192,
+					"strengthSe": 0.04069
+				},
+				"CB": {
+					"strength": -0.07008,
+					"strengthSe": 0.04244
+				}
+			}
+		},
+		"8001": {
+			"usage": 0.005,
+			"strength": -0.02239,
+			"strengthSe": 0.0365,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02582,
+					"strengthSe": 0.04357
+				},
+				"TC": {
+					"strength": -0.02691,
+					"strengthSe": 0.05584
+				},
+				"RM": {
+					"strength": -0.03021,
+					"strengthSe": 0.05389
+				},
+				"CB": {
+					"strength": -0.02092,
+					"strengthSe": 0.0565
+				}
+			}
+		},
+		"8002": {
+			"usage": 0.01064,
+			"strength": 0.02694,
+			"strengthSe": 0.03429,
+			"byMode": {
+				"SZ": {
+					"strength": 0.05851,
+					"strengthSe": 0.03092
+				},
+				"TC": {
+					"strength": 0.02856,
+					"strengthSe": 0.05008
+				},
+				"RM": {
+					"strength": 0.03337,
+					"strengthSe": 0.05637
+				},
+				"CB": {
+					"strength": 0.02371,
+					"strengthSe": 0.05645
+				}
+			}
+		},
+		"8010": {
+			"usage": 0.02436,
+			"strength": 0.02929,
+			"strengthSe": 0.02883,
+			"byMode": {
+				"SZ": {
+					"strength": 0.01053,
+					"strengthSe": 0.02421
+				},
+				"TC": {
+					"strength": 0.0418,
+					"strengthSe": 0.04037
+				},
+				"RM": {
+					"strength": 0.0552,
+					"strengthSe": 0.04087
+				},
+				"CB": {
+					"strength": 0.04451,
+					"strengthSe": 0.04337
+				}
+			}
+		},
+		"8011": {
+			"usage": 0.00265,
+			"strength": -0.05257,
+			"strengthSe": 0.04036,
+			"byMode": {
+				"SZ": {
+					"strength": -0.08634,
+					"strengthSe": 0.05278
+				},
+				"TC": {
+					"strength": -0.06278,
+					"strengthSe": 0.05962
+				},
+				"RM": {
+					"strength": -0.05385,
+					"strengthSe": 0.06044
+				},
+				"CB": {
+					"strength": -0.0529,
+					"strengthSe": 0.05993
+				}
+			}
+		},
+		"8012": {
+			"usage": 0.00025,
+			"strength": -0.01391,
+			"strengthSe": 0.0485,
+			"byMode": {
+				"SZ": {
+					"strength": -0.01957,
+					"strengthSe": 0.06722
+				},
+				"TC": {
+					"strength": -0.01215,
+					"strengthSe": 0.06941
+				},
+				"RM": {
+					"strength": -0.01653,
+					"strengthSe": 0.06937
+				},
+				"CB": {
+					"strength": -0.01366,
+					"strengthSe": 0.06937
+				}
+			}
+		},
+		"8020": {
+			"usage": 0.01967,
+			"strength": 0.03508,
+			"strengthSe": 0.03033,
+			"byMode": {
+				"SZ": {
+					"strength": 0.07745,
+					"strengthSe": 0.02559
+				},
+				"TC": {
+					"strength": 0.0423,
+					"strengthSe": 0.0428
+				},
+				"RM": {
+					"strength": 0.01564,
+					"strengthSe": 0.04679
+				},
+				"CB": {
+					"strength": 0.04628,
+					"strengthSe": 0.04765
+				}
+			}
+		},
+		"8021": {
+			"usage": 0.00174,
+			"strength": -0.01715,
+			"strengthSe": 0.04242,
+			"byMode": {
+				"SZ": {
+					"strength": -0.02584,
+					"strengthSe": 0.05597
+				},
+				"TC": {
+					"strength": -0.01428,
+					"strengthSe": 0.06209
+				},
+				"RM": {
+					"strength": -0.02702,
+					"strengthSe": 0.06273
+				},
+				"CB": {
+					"strength": -0.01027,
+					"strengthSe": 0.0632
+				}
+			}
+		}
+	},
+	"shapes": {
+		"2-1-1": 0.31358,
+		"3-0-1": 0.31245,
+		"3-1-0": 0.12992,
+		"4-0-0": 0.07204,
+		"1-2-1": 0.06276,
+		"2-2-0": 0.05922,
+		"2-0-2": 0.02245,
+		"1-1-2": 0.01399,
+		"1-3-0": 0.00759,
+		"0-3-1": 0.00358,
+		"0-2-2": 0.00094,
+		"0-4-0": 0.00054,
+		"1-0-3": 0.00052,
+		"0-1-3": 0.00027,
+		"0-0-4": 0.00017
+	}
+}

@@ -46,6 +46,8 @@ interface MatchActionTabProps {
 	setEnding?: SetEndingData;
 	submitCooldownUntil?: number | null;
 	actionButtons?: React.ReactNode;
+	/** Shown on the submit button's row under each team's option, e.g. the weapons the teams play */
+	besideSubmit?: [React.ReactNode, React.ReactNode];
 	secondaryAction?: React.ReactNode;
 }
 
@@ -60,6 +62,7 @@ export function MatchActionTab({
 	setEnding,
 	submitCooldownUntil = null,
 	actionButtons,
+	besideSubmit,
 	secondaryAction,
 }: MatchActionTabProps) {
 	const { t } = useTranslation(["q", "game-misc", "common"]);
@@ -167,24 +170,35 @@ export function MatchActionTab({
 						</div>
 					) : null}
 
-					<SendouButton
-						variant="primary"
-						isDisabled={!canSubmit || isSubmitting}
-						onClick={() => {
-							if (winnerId === null) return;
-							if (setEnding?.setEndingTeamIds.includes(winnerId)) {
-								setConfirming(true);
-							} else {
-								submit();
-							}
-						}}
-						className={styles.submit}
-						testId="report-score-button"
+					<div
+						className={clsx(styles.submitRow, {
+							[styles.submitRowWithSides]: besideSubmit,
+						})}
 					>
-						{cooldownSecondsLeft > 0
-							? `${t("common:actions.submit")} (${cooldownSecondsLeft})`
-							: t("common:actions.submit")}
-					</SendouButton>
+						{besideSubmit ? (
+							<div className={styles.submitRowAlpha}>{besideSubmit[0]}</div>
+						) : null}
+						<SendouButton
+							variant="primary"
+							isDisabled={!canSubmit || isSubmitting}
+							onClick={() => {
+								if (winnerId === null) return;
+								if (setEnding?.setEndingTeamIds.includes(winnerId)) {
+									setConfirming(true);
+								} else {
+									submit();
+								}
+							}}
+							testId="report-score-button"
+						>
+							{cooldownSecondsLeft > 0
+								? `${t("common:actions.submit")} (${cooldownSecondsLeft})`
+								: t("common:actions.submit")}
+						</SendouButton>
+						{besideSubmit ? (
+							<div className={styles.submitRowBravo}>{besideSubmit[1]}</div>
+						) : null}
+					</div>
 				</div>
 			)}
 			{secondaryAction}

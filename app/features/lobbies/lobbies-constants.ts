@@ -1,5 +1,15 @@
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+
 export const LOBBY_LABELS = ["CASUAL", "FOCUSED", "TRYHARD"] as const;
 export type LobbyLabel = (typeof LOBBY_LABELS)[number];
+
+/**
+ * - `OFF`: everyone plays what they want
+ * - `CHAOTIC`: each side gets 4 random weapons as the set starts
+ * - `BALANCED`: random weapons too, but rolled so the sides are even, see `WeaponRoll`
+ */
+export const LOBBY_WEAPON_RANDOMIZERS = ["OFF", "CHAOTIC", "BALANCED"] as const;
+export type LobbyWeaponRandomizer = (typeof LOBBY_WEAPON_RANDOMIZERS)[number];
 
 export const LOBBY_BEST_OFS = [1, 3, 5, 7, 9] as const;
 export type LobbyBestOf = (typeof LOBBY_BEST_OFS)[number];
@@ -31,6 +41,9 @@ export const CHAT_ROOM_LIFESPAN_HOURS = 24;
 
 export const LOBBY_SIDES = ["ALPHA", "BRAVO"] as const;
 export type LobbySide = (typeof LOBBY_SIDES)[number];
+
+/** The 4 weapons each side of a set got from the weapon randomizer, its players deciding who plays which. */
+export type LobbyRolledWeapons = Record<LobbySide, MainWeaponId[]>;
 
 /** Value the sides of a lobby game stand in for a team id with, e.g. in ingested scoreboards. */
 export const LOBBY_SIDE_TEAM_ID = {

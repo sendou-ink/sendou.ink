@@ -16,9 +16,11 @@ import { GameBadgeSelectField } from "./GameBadgeSelectField";
 export function WidgetSettingsForm({
 	widget,
 	onSettingsChange,
+	saveAttempted,
 }: {
 	widget: Tables["UserWidget"]["widget"];
 	onSettingsChange: (widgetId: string, settings: unknown) => void;
+	saveAttempted: boolean;
 }) {
 	const schema = getWidgetFormSchema(widget.id);
 
@@ -31,6 +33,7 @@ export function WidgetSettingsForm({
 			widget={widget}
 			schema={schema}
 			onSettingsChange={onSettingsChange}
+			saveAttempted={saveAttempted}
 		/>
 	);
 }
@@ -39,10 +42,12 @@ function WidgetSettingsFormInner({
 	widget,
 	schema,
 	onSettingsChange,
+	saveAttempted,
 }: {
 	widget: Tables["UserWidget"]["widget"];
 	schema: ReturnType<typeof getWidgetFormSchema>;
 	onSettingsChange: (widgetId: string, settings: unknown) => void;
+	saveAttempted: boolean;
 }) {
 	if (!schema) return null;
 
@@ -54,10 +59,12 @@ function WidgetSettingsFormInner({
 
 	return (
 		<SendouForm
+			key={String(saveAttempted)}
 			schema={schema}
 			defaultValues={defaultValues}
 			mode="client"
 			onApply={handleApply}
+			saveAttempted={saveAttempted}
 			className="stack md"
 		>
 			<WidgetFormFields widgetId={widget.id} />
@@ -106,6 +113,9 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 			);
 		case "markdown":
 			return <FormField name="content" />;
+		case "placement-results":
+		case "lobby-results":
+			return <FormField name="showTotal" />;
 		case "badges-owned":
 			return <FavoriteBadgesField />;
 		case "game-badges":

@@ -47,6 +47,11 @@ export class LobbiesPage {
 		await modalClickConfirmButton(this.page);
 	}
 
+	/** The weapon randomizer a card's lobby rolls weapons with, shown only when it has one. */
+	weaponRandomizer(name: string) {
+		return this.card(name).getByTestId("lobby-weapon-randomizer");
+	}
+
 	/** The lock marking a card's lobby as visible only to some. */
 	limitedVisibilityIcon(name: string) {
 		return this.card(name).getByLabel("Limited visibility");

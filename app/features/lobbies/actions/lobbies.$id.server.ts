@@ -280,6 +280,7 @@ export const action = defineAction(
 					id,
 					bestOf: Number(body.bestOf) as LobbyBestOf,
 					modes: body.modes,
+					weaponRandomizer: body.weaponRandomizer,
 				});
 				break;
 			}

@@ -7,7 +7,7 @@ import { useLobbyView } from "../lobbies-hooks";
 import { lobbySettingsSchema } from "../lobbies-schemas";
 import styles from "./LobbySettingsPopover.module.css";
 
-/** The host's best of and modes, saved as they're changed. */
+/** The host's best of, modes and weapon randomizer, saved as they're changed. */
 export function LobbySettingsPopover() {
 	const { t } = useTranslation(["lobbies", "common"]);
 	const { data } = useLobbyView();
@@ -37,12 +37,14 @@ export function LobbySettingsPopover() {
 					defaultValues={{
 						bestOf: `${data.lobby.bestOf}`,
 						modes: data.lobby.modes,
+						weaponRandomizer: data.lobby.weaponRandomizer,
 					}}
 				>
 					{({ FormField }) => (
 						<>
 							<FormField name="bestOf" />
 							<FormField name="modes" />
+							<FormField name="weaponRandomizer" />
 						</>
 					)}
 				</SendouForm>

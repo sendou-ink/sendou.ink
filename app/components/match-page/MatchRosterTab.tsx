@@ -41,6 +41,8 @@ interface RosterTabTeam {
 	members: Array<RosterTabMember>;
 	/** users not in the current active roster */
 	subbedOut?: Array<number>;
+	/** Shown to the right of the team's name, e.g. the weapons a weapon randomizer gave the team */
+	headerAside?: React.ReactNode;
 	tier?: { name: TierName; isPlus: boolean };
 	/** tournament only */
 	seed?: number | null;
@@ -261,6 +263,10 @@ function TeamHeader({
 		? `${team.tier.name.toLowerCase()}${team.tier.isPlus ? "+" : ""}`
 		: undefined;
 
+	const aside = team.headerAside ? (
+		<div className={styles.teamHeaderAside}>{team.headerAside}</div>
+	) : null;
+
 	const meta = (
 		<div className="stack xs horizontal items-center text-lighter">
 			{typeof team.seed === "number" ? (
@@ -277,37 +283,40 @@ function TeamHeader({
 
 	if (team.team) {
 		return (
-			<Link to={team.team.url} className="stack horizontal sm">
-				<Avatar
-					url={team.team.avatar}
-					identiconInput={team.team.name}
-					size="sm"
-				/>
-				<div
-					className={clsx(
-						"stack justify-center line-height-tight",
-						styles.teamHeaderText,
-					)}
-				>
-					<h2
+			<div className="stack horizontal sm items-center">
+				<Link to={team.team.url} className="stack horizontal sm">
+					<Avatar
+						url={team.team.avatar}
+						identiconInput={team.team.name}
+						size="sm"
+					/>
+					<div
 						className={clsx(
-							"text-main-forced font-bold truncate",
-							styles.teamNameHeading,
+							"stack justify-center line-height-tight",
+							styles.teamHeaderText,
 						)}
-						title={team.team.name}
 					>
-						{team.team.name}
-					</h2>
-					{meta}
-				</div>
-			</Link>
+						<h2
+							className={clsx(
+								"text-main-forced font-bold truncate",
+								styles.teamNameHeading,
+							)}
+							title={team.team.name}
+						>
+							{team.team.name}
+						</h2>
+						{meta}
+					</div>
+				</Link>
+				{aside}
+			</div>
 		);
 	}
 
 	invariant(team.defaultName, "team or defaultName must be provided");
 
 	return (
-		<div className="stack horizontal sm">
+		<div className="stack horizontal sm items-center">
 			<div className={styles.teamAvatar} data-side={side} />
 			<div
 				className={clsx(
@@ -326,6 +335,7 @@ function TeamHeader({
 				</h2>
 				{meta}
 			</div>
+			{aside}
 		</div>
 	);
 }

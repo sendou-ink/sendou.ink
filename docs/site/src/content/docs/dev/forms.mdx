@@ -278,7 +278,7 @@ The `mode` prop controls how submitting works:
 
 - `"submit"` (default): the user submits via the submit button. Values go to the server, or to `onApply` when provided.
 - `"autoSubmit"`: no submit button; every change that passes validation is sent to the server.
-- `"client"`: no submit button and no `<form>` element; every change is passed to `onApply` (required in this mode) and field errors are computed already on mount.
+- `"client"`: no submit button and no `<form>` element; every change is passed to `onApply` (required in this mode). Errors show on blur, or for every field once `saveAttempted` is set (read on mount, so remount the form with a `key` when it flips).
 
 ### Auto-Submit Forms
 

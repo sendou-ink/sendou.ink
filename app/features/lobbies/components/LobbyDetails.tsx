@@ -38,6 +38,13 @@ export function LobbyDetails() {
 				<DetailsItem label={t("lobbies:details.roomSize")}>
 					{lobby.roomSize}
 				</DetailsItem>
+				{lobby.weaponRandomizer !== "OFF" ? (
+					<DetailsItem label={t("lobbies:details.weaponRandomizer")}>
+						<span data-testid="lobby-weapon-randomizer">
+							{t(`lobbies:weaponRandomizer.${lobby.weaponRandomizer}`)}
+						</span>
+					</DetailsItem>
+				) : null}
 			</div>
 			{lobby.description ? (
 				<p className={styles.description} data-testid="lobby-description">

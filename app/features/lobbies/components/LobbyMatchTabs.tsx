@@ -1,17 +1,24 @@
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { matchPageSearchParams } from "~/components/match-page/match-page-search-params";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import * as LobbySet from "../core/LobbySet";
+import type { LobbySide } from "../lobbies-constants";
 import { useLobbyView } from "../lobbies-hooks";
 import { LobbyActionTab } from "./LobbyActionTab";
 import { LobbyLeaderboardTab } from "./LobbyLeaderboardTab";
 import { LobbyResultTab } from "./LobbyResultTab";
+import { LobbyRolledWeapons } from "./LobbyRolledWeapons";
 
 type TabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 
 export function LobbyMatchTabs() {
 	const { t } = useTranslation(["lobbies"]);
 	const { data, currentSet, viewerSide } = useLobbyView();
+	useShowRostersOnNewSet(currentSet?.id ?? null);
 
 	const isPlaying =
 		data.lobby.endedAt === null &&
@@ -60,6 +67,14 @@ export function LobbyMatchTabs() {
 				};
 			});
 
+	const rolledWeapons = (side: LobbySide) =>
+		currentSet?.rolledWeapons ? (
+			<LobbyRolledWeapons
+				weapons={currentSet.rolledWeapons[side]}
+				isOwnTeam={viewerSide ? viewerSide === side : null}
+			/>
+		) : undefined;
+
 	return (
 		<MatchTabs
 			tabs={tabs}
@@ -70,8 +85,16 @@ export function LobbyMatchTabs() {
 				<MatchRosterTab
 					minMembersPerTeam={4}
 					teams={[
-						{ defaultName: t("lobbies:side.ALPHA"), members: roster("ALPHA") },
-						{ defaultName: t("lobbies:side.BRAVO"), members: roster("BRAVO") },
+						{
+							defaultName: t("lobbies:side.ALPHA"),
+							members: roster("ALPHA"),
+							headerAside: rolledWeapons("ALPHA"),
+						},
+						{
+							defaultName: t("lobbies:side.BRAVO"),
+							members: roster("BRAVO"),
+							headerAside: rolledWeapons("BRAVO"),
+						},
 					]}
 				/>
 			) : null}
@@ -80,4 +103,16 @@ export function LobbyMatchTabs() {
 			{data.leaderboard.length > 0 ? <LobbyLeaderboardTab /> : null}
 		</MatchTabs>
 	);
+}
+
+function useShowRostersOnNewSet(currentSetId: number | null) {
+	const [, setTab] = useSearchParam(matchPageSearchParams, "tab");
+	const previousSetIdRef = React.useRef(currentSetId);
+
+	useIsomorphicLayoutEffect(() => {
+		if (previousSetIdRef.current === currentSetId) return;
+
+		previousSetIdRef.current = currentSetId;
+		setTab(TAB_KEYS.ROSTERS);
+	}, [currentSetId, setTab]);
 }

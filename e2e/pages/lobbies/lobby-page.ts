@@ -56,6 +56,12 @@ export class LobbyPage {
 			waitingBanner: page.getByTestId("lobby-waiting-banner"),
 			startBanner: page.getByTestId("lobby-start-banner"),
 			description: page.getByTestId("lobby-description"),
+			weaponRandomizer: page.getByTestId("lobby-weapon-randomizer"),
+			rosterRolledWeapons: page
+				.getByRole("main")
+				.getByRole("tabpanel")
+				.getByTestId("lobby-rolled-weapons")
+				.getByRole("img"),
 			leavingAfterSetMarkers: page.getByRole("button", {
 				name: "Leaving after this set",
 			}),

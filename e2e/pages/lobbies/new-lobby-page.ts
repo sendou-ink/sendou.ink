@@ -17,6 +17,7 @@ export class NewLobbyPage {
 			friendCodeNeededText: page.getByText(
 				"Set your friend code to make a lobby.",
 			),
+			noPermissionsText: page.getByText("No permissions to add lobbies."),
 		};
 	}
 
@@ -28,6 +29,11 @@ export class NewLobbyPage {
 	/** Picks who sees the lobby, by the option's label. */
 	async selectVisibility(label: string) {
 		await this.page.getByLabel("Visibility").selectOption({ label });
+	}
+
+	/** Picks the weapon randomizer, by its chip's label. */
+	async selectWeaponRandomizer(label: "Off" | "Chaotic" | "Balanced") {
+		await this.page.getByText(label, { exact: true }).click();
 	}
 
 	/** Makes the lobby, the maker becoming its host. */

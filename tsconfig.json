@@ -1,37 +1,25 @@
 {
-	"include": [
-		"./types/**/*.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		".react-router/types/**/*"
-	],
+	"include": ["**/*.ts", "**/*.tsx", ".react-router/types/**/*"],
 	"exclude": ["scripts/**/*", "docs/**/*"],
 	"compilerOptions": {
 		"types": ["@react-router/node", "vite/client"],
 		"rootDirs": [".", "./.react-router/types"],
-		"lib": ["DOM", "DOM.Iterable", "es2024"],
-		"module": "ESNext",
-		"isolatedModules": true,
-		"erasableSyntaxOnly": true,
-		"esModuleInterop": true,
-		"jsx": "react-jsx",
-		"moduleResolution": "Bundler",
-		"resolveJsonModule": true,
-		"target": "ES2022",
-		"strict": true,
 		"paths": {
 			"~/*": ["./app/*"]
 		},
+		"target": "ES2024",
+		"lib": ["DOM", "ES2024"],
+		"module": "preserve",
+		"jsx": "react-jsx",
 		"noEmit": true,
 		"allowImportingTsExtensions": true,
-		"forceConsistentCasingInFileNames": true,
-		"allowJs": false,
-		"noUncheckedIndexedAccess": false,
+		"verbatimModuleSyntax": true,
+		"erasableSyntaxOnly": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noImplicitReturns": true,
+		"noImplicitOverride": true,
 		"noFallthroughCasesInSwitch": true,
-		"useUnknownInCatchVariables": true,
 		"skipLibCheck": true
 	}
 }

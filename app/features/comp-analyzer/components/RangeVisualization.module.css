@@ -88,8 +88,10 @@
 
 .weaponLegendItem {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--s-1);
+	min-width: 0;
 }
 
 .weaponLegendColor {
@@ -109,4 +111,112 @@
 	max-width: 100%;
 	height: auto;
 	min-height: 150px;
+}
+
+.variantChip {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-2);
+	background: var(--color-bg-higher);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	cursor: pointer;
+	flex-wrap: wrap;
+
+	&:hover {
+		background: var(--color-bg-high);
+	}
+}
+
+.variantChipHidden {
+	background: transparent;
+	border-style: dashed;
+	opacity: 0.6;
+}
+
+.variantLine {
+	flex-shrink: 0;
+}
+
+.lethalRange {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	white-space: nowrap;
+}
+
+.specialRangesToggleRow {
+	display: flex;
+	padding-block-start: var(--s-2);
+	border-block-start: 1px solid var(--color-border);
+}
+
+.specialRanges {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.specialRangeRow {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-height: 24px;
+}
+
+.specialRangeIcon {
+	position: absolute;
+	inset-inline-start: 0;
+}
+
+.specialRangeTrack {
+	position: relative;
+	height: 18px;
+}
+
+.specialRangeBar {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-start: 0;
+	display: flex;
+	align-items: center;
+	padding-inline: var(--s-1);
+	border-radius: var(--radius-field);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: black;
+	white-space: nowrap;
+}
+
+.specialRangeBlast {
+	position: absolute;
+	inset-block: 0;
+	border-radius: var(--radius-field);
+	opacity: 0.35;
+}
+
+.weaponLegendItemHidden > :not(.visibilityToggle) {
+	opacity: 0.35;
+}
+
+.visibilityToggle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding: var(--s-0-5);
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-field);
+	color: var(--color-text-high);
+	cursor: pointer;
+
+	&:hover {
+		background: var(--color-bg-high);
+	}
+
+	&[aria-pressed="false"] img {
+		opacity: 0.35;
+	}
 }
