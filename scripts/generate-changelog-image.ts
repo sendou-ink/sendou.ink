@@ -158,7 +158,9 @@ function altText(entries: ChangelogEntry[], date: Date) {
 	const sections = [heading(date)];
 
 	for (const entry of featured) {
-		sections.push([entry.headline, ...bulletLines(entry)].join("\n"));
+		sections.push(
+			[entry.headline, ...bulletLines(entry).map(stripBold)].join("\n"),
+		);
 	}
 
 	for (const entry of oneLiners) {
@@ -222,6 +224,10 @@ function heading(date: Date) {
 
 function bulletLines(entry: ChangelogEntry) {
 	return (entry.bullets ?? []).map((bullet) => `- ${bullet}`);
+}
+
+function stripBold(text: string) {
+	return text.replaceAll("**", "");
 }
 
 function emoji(entry: ChangelogEntry) {
