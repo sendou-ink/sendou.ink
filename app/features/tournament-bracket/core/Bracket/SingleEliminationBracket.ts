@@ -178,7 +178,7 @@ export class SingleEliminationBracket extends Bracket {
 			.sort((a, b) => a.placement - b.placement);
 	}
 
-	protected matchExits() {
+	protected override matchExits() {
 		const result = new Map<number, MatchExit>();
 
 		for (const group of this.data.group) {

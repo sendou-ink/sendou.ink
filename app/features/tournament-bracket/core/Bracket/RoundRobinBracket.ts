@@ -8,7 +8,7 @@ import { Bracket, type Standing } from "./Bracket";
 import * as Tiebreakers from "./Tiebreakers";
 
 export class RoundRobinBracket extends Bracket {
-	get collectsKos() {
+	override get collectsKos() {
 		return true;
 	}
 
@@ -91,7 +91,7 @@ export class RoundRobinBracket extends Bracket {
 		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	protected calculateLiveStandings(): Standing[] {
+	protected override calculateLiveStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: true });
 	}
 
@@ -352,7 +352,7 @@ export class RoundRobinBracket extends Bracket {
 		return "round_robin";
 	}
 
-	get tiebreakers() {
+	override get tiebreakers() {
 		return Tiebreakers.ROUND_ROBIN;
 	}
 

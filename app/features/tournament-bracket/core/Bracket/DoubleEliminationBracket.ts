@@ -54,7 +54,7 @@ export class DoubleEliminationBracket extends Bracket {
 		return result;
 	}
 
-	winnersSourceRound(roundNumber: number) {
+	override winnersSourceRound(roundNumber: number) {
 		const isMajorRound = roundNumber === 1 || roundNumber % 2 === 0;
 		if (!isMajorRound) return;
 
@@ -243,7 +243,7 @@ export class DoubleEliminationBracket extends Bracket {
 		return result.reverse();
 	}
 
-	protected matchExits() {
+	protected override matchExits() {
 		const result = new Map<number, MatchExit>();
 
 		for (const group of this.data.group) {
@@ -356,7 +356,7 @@ export class DoubleEliminationBracket extends Bracket {
 		return matches.length === 1 ? matches[0] : undefined;
 	}
 
-	get everyMatchOver() {
+	override get everyMatchOver() {
 		if (this.preview) return false;
 
 		// bracket reset is not played if the winners bracket team wins the grand finals

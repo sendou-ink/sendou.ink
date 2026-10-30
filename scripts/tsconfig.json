@@ -1,8 +1,5 @@
 {
 	"extends": "../tsconfig.json",
 	"include": ["./**/*.ts", "../types/**/*.d.ts"],
-	"exclude": [],
-	"compilerOptions": {
-		"allowImportingTsExtensions": true
-	}
+	"exclude": []
 }

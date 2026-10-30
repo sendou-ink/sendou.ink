@@ -14,7 +14,7 @@ interface FlipperProps {
 export class Flipper extends React.Component<FlipperProps> {
 	private readonly root = React.createRef<HTMLDivElement>();
 
-	getSnapshotBeforeUpdate(prevProps: FlipperProps) {
+	override getSnapshotBeforeUpdate(prevProps: FlipperProps) {
 		if (IS_E2E_TEST_RUN) return null;
 		if (Object.is(prevProps.flipKey, this.props.flipKey)) return null;
 		if (!this.root.current) return null;
@@ -22,7 +22,7 @@ export class Flipper extends React.Component<FlipperProps> {
 		return Flip.snapshot(this.root.current);
 	}
 
-	componentDidUpdate(
+	override componentDidUpdate(
 		_prevProps: FlipperProps,
 		_prevState: unknown,
 		snapshot: Flip.Snapshot | null,
@@ -34,7 +34,7 @@ export class Flipper extends React.Component<FlipperProps> {
 		});
 	}
 
-	render() {
+	override render() {
 		return (
 			<div ref={this.root} className={this.props.className}>
 				{this.props.children}

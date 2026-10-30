@@ -77,7 +77,7 @@ export class SwissBracket extends Bracket {
 	 * Rounds are paired one at a time, so a round without matches yet can still change the standings,
 	 * unless it can never be paired because every team already advanced or got eliminated.
 	 */
-	get everyMatchOver() {
+	override get everyMatchOver() {
 		if (!super.everyMatchOver) return false;
 
 		return this.data.group.every((group) => {
@@ -105,7 +105,7 @@ export class SwissBracket extends Bracket {
 		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	protected calculateLiveStandings(): Standing[] {
+	protected override calculateLiveStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: true });
 	}
 
@@ -492,7 +492,7 @@ export class SwissBracket extends Bracket {
 		return "swiss";
 	}
 
-	get tiebreakers() {
+	override get tiebreakers() {
 		return Tiebreakers.SWISS;
 	}
 
@@ -511,7 +511,7 @@ export class SwissBracket extends Bracket {
 		return result;
 	}
 
-	ongoingMatches(): number[] {
+	override ongoingMatches(): number[] {
 		// Swiss matches get startedAt at creation time, not via ongoing detection
 		return [];
 	}
