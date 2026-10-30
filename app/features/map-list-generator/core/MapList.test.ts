@@ -384,7 +384,12 @@ describe("MapList.generate()", () => {
 				}
 			}
 
-			expect([...modesSeen].sort()).toEqual(["CB", "RM", "SZ", "TC"]);
+			expect([...modesSeen].sort((a, b) => a.localeCompare(b))).toEqual([
+				"CB",
+				"RM",
+				"SZ",
+				"TC",
+			]);
 		});
 
 		test("advances the cycle by the ANY slots consumed when a positional pattern is set", () => {

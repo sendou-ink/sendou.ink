@@ -298,8 +298,8 @@ describe("lfg loader", () => {
 					}),
 			);
 
-			expect(postIds(data).sort()).toEqual(
-				[posts.kiritimati, posts.honolulu].sort(),
+			expect(postIds(data).sort((a, b) => a - b)).toEqual(
+				[posts.kiritimati, posts.honolulu].sort((a, b) => a - b),
 			);
 		});
 	});

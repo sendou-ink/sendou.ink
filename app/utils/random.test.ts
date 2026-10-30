@@ -118,7 +118,9 @@ describe("seededRandom", () => {
 
 			const shuffled = rng.seededShuffle(array);
 
-			expect(shuffled.sort()).toEqual(array.sort());
+			expect(shuffled.sort((a, b) => a - b)).toEqual(
+				array.sort((a, b) => a - b),
+			);
 		});
 
 		test("handles empty array", () => {

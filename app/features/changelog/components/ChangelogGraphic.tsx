@@ -13,6 +13,8 @@ import styles from "./ChangelogGraphic.module.css";
 
 const GRAPHIC_WIDTH = 560;
 
+const BOLD_PATTERN = /\*\*(.+?)\*\*/;
+
 export interface ChangelogGraphicEntry {
 	/** Nav icons shown next to the entry; omitted = sendou.ink logo */
 	navItems?: NavIcon[];
@@ -89,10 +91,21 @@ function LongFeature({ entry }: { entry: ChangelogGraphicEntry }) {
 			</div>
 			<ul className={styles.bullets}>
 				{entry.bullets?.map((bullet) => (
-					<li key={bullet}>{bullet}</li>
+					<li key={bullet}>
+						<BulletText text={bullet} />
+					</li>
 				))}
 			</ul>
 		</section>
+	);
+}
+
+/** Renders the `**bold**` markdown of a bullet. */
+function BulletText({ text }: { text: string }) {
+	const parts = text.split(BOLD_PATTERN);
+
+	return parts.map((part, i) =>
+		i % 2 === 1 ? <strong key={`${i}-${part}`}>{part}</strong> : part,
 	);
 }
 

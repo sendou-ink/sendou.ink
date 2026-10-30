@@ -212,7 +212,7 @@ function find_gamut_intersection(
 }
 
 function clamp(x: number, min: number, max: number): number {
-	return x < min ? min : x > max ? max : x;
+	return Math.min(Math.max(x, min), max);
 }
 
 function maximum_chroma_for_lh(L: number, h: number): number {

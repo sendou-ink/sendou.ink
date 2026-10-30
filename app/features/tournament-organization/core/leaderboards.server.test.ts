@@ -162,8 +162,8 @@ describe("eventLeaderboards", () => {
 			result
 				.slice(0, twiceThirdIds.length)
 				.map((entry) => entry.user.id)
-				.sort(),
-		).toEqual([...twiceThirdIds].sort());
+				.sort((a, b) => a - b),
+		).toEqual([...twiceThirdIds].sort((a, b) => a - b));
 	});
 
 	test("scores the podium of a played tournament of the series", async () => {

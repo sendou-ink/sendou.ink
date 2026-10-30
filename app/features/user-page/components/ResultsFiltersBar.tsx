@@ -156,7 +156,10 @@ export function ResultsFiltersBar() {
 							const minTier = toTierNumber(key);
 							setFilters({
 								minTier,
-								maxTier: minTier > filters.maxTier ? minTier : filters.maxTier,
+								maxTier: Math.max(
+									minTier,
+									filters.maxTier,
+								) as TournamentTierNumber,
 							});
 						}}
 					>
@@ -174,7 +177,10 @@ export function ResultsFiltersBar() {
 							const maxTier = toTierNumber(key);
 							setFilters({
 								maxTier,
-								minTier: maxTier < filters.minTier ? maxTier : filters.minTier,
+								minTier: Math.min(
+									maxTier,
+									filters.minTier,
+								) as TournamentTierNumber,
 							});
 						}}
 					>

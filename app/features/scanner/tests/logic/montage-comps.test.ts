@@ -37,8 +37,12 @@ describe("scannedTeamComps", () => {
 			new Map([[vod.file, [game([40, 50, 2000, 3040], [10, 20, 30, 1000])]]]),
 		);
 
-		expect(comps.get(10)?.toSorted()).toEqual([2000, 3040, 40, 50].toSorted());
-		expect(comps.get(20)?.toSorted()).toEqual([10, 1000, 20, 30].toSorted());
+		expect(comps.get(10)?.toSorted((a, b) => a - b)).toEqual(
+			[2000, 3040, 40, 50].toSorted((a, b) => a - b),
+		);
+		expect(comps.get(20)?.toSorted((a, b) => a - b)).toEqual(
+			[10, 1000, 20, 30].toSorted((a, b) => a - b),
+		);
 	});
 
 	test("a team with fewer than four players seen has no comp", () => {

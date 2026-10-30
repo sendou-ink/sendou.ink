@@ -131,7 +131,7 @@ export function documentEnvVars(): EnvVar[] {
 	const names = [
 		...examples.keys(),
 		...schemas.keys(),
-		...[...reads.keys()].sort(),
+		...[...reads.keys()].sort((a, b) => a.localeCompare(b)),
 	];
 
 	return [...new Set(names)].map((name) => {

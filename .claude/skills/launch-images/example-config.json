@@ -1,0 +1,100 @@
+{
+	"slug": "lobbies",
+	"page": "lobbies",
+	"out": "scripts/output/lobbies-launch",
+	"images": [
+		{
+			"template": "changelog-card",
+			"name": "changelog",
+			"kicker": "NEW",
+			"title": "Lobbies",
+			"headline": "8s can now be created by Supporters and played by anyone",
+			"bullets": [
+				"Host a lobby for right now or schedule it for later, others sign up and check in before it starts",
+				"Best-of sets played 4v4 with the teams reshuffled after every set",
+				"Turn on the weapon randomizer to roll 4 weapons per team every set, either **Chaotic** or **Balanced**",
+				"Extra players wait on the waitlist or spectate and rotate in when a spot opens up",
+				"Each lobby has its own leaderboard, separate from SendouQ",
+				"Keep a lobby public, share it only via an invite link or limit it to your associations"
+			]
+		},
+		{
+			"template": "timeline",
+			"wordmark": "sendou.ink · Lobbies",
+			"title": "How a lobby works",
+			"steps": [
+				{
+					"title": "Sign up & check in",
+					"text": "Join a lobby that's on right now or one scheduled for later. Check in before it starts.",
+					"alt": "Screenshot of a lobby with check-in open and a countdown to the start.",
+					"crops": [
+						{
+							"shot": "shots/signup.png",
+							"top": 0,
+							"height": 300
+						}
+					]
+				},
+				{
+					"title": "Play best&#8209;of sets",
+					"text": "4v4 on maps picked from everyone's map preferences, like in SendouQ. Teams get reshuffled after every set.",
+					"alt": "Screenshot of the current map with the room password and both teams.",
+					"crops": [
+						{
+							"shot": "shots/set.png",
+							"top": 168,
+							"height": 245
+						}
+					]
+				},
+				{
+					"title": "Drop in & out",
+					"text": "Need to go? Mark that you leave after this set and someone from the waitlist takes your spot, so the lobby keeps going.",
+					"alt": "Screenshots of the \"Leave after this set\" button and the \"A spot opened up, confirm you're ready to play!\" prompt shown to the waitlist.",
+					"crops": [
+						{
+							"shot": "shots/set.png",
+							"top": 72,
+							"height": 86
+						},
+						{
+							"shot": "shots/openspot.png",
+							"top": 72,
+							"height": 130
+						}
+					]
+				},
+				{
+					"title": "Climb the leaderboard",
+					"text": "Every lobby keeps its own rankings, separate from SendouQ.",
+					"alt": "Screenshot of a lobby's rankings tab.",
+					"crops": [
+						{
+							"shot": "shots/rankings.png",
+							"top": 425,
+							"height": 240
+						}
+					]
+				},
+				{
+					"title": "Show it on your profile",
+					"text": "Your placement is saved when the lobby ends. Show them off with the Lobby Placements widget.",
+					"alt": "Screenshot of a user page with the widget showing 3 first, 2 second and 1 third place finishes from 6 lobbies.",
+					"crops": [
+						{
+							"shot": "shots/profile.png",
+							"top": 0,
+							"height": 345,
+							"highlight": {
+								"x": 503,
+								"y": 212,
+								"w": 260,
+								"h": 128
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

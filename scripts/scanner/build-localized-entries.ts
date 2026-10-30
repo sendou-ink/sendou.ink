@@ -120,7 +120,7 @@ const languages = [
 			.filter((f) => f.endsWith("_full.json"))
 			.map((f) => f.replace("_full.json", "")),
 	),
-].sort();
+].sort((a, b) => a.localeCompare(b));
 if (!languages.includes(CANONICAL_LANG)) {
 	throw new Error(
 		`canonical language ${CANONICAL_LANG} not found in ${LANG_DIR}`,

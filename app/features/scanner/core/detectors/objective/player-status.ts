@@ -639,11 +639,11 @@ function isInk(red: number, green: number, blue: number): boolean {
 }
 
 function maxOf(red: number, green: number, blue: number): number {
-	return red > green ? (red > blue ? red : blue) : green > blue ? green : blue;
+	return Math.max(red, green, blue);
 }
 
 function minOf(red: number, green: number, blue: number): number {
-	return red < green ? (red < blue ? red : blue) : green < blue ? green : blue;
+	return Math.min(red, green, blue);
 }
 
 function hueOf(red: number, green: number, blue: number): number {

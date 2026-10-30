@@ -21,6 +21,7 @@ const config = {
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.ts",
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
+		".claude/skills/*/scripts/*.mjs",
 		"public/sw-2.js",
 		// swapped in by vite.config.ts for production builds
 		"app/features/dev-tools/dev-tools-server-hooks.stub.ts",

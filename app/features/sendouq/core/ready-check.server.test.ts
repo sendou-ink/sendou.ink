@@ -299,8 +299,8 @@ describe("SendouQ ready check", () => {
 			groups.theirMembers[0].id,
 		);
 
-		expect(abortedReadyCheckGroupIds.sort()).toEqual(
-			[groups.ownGroup.id, groups.theirGroup.id].sort(),
+		expect(abortedReadyCheckGroupIds.sort((a, b) => a - b)).toEqual(
+			[groups.ownGroup.id, groups.theirGroup.id].sort((a, b) => a - b),
 		);
 		expect(await findReadyCheck(groups.ownGroup.id)).toBeUndefined();
 		expect(await findGroupStatus(groups.ownGroup.id)).toBe("ACTIVE");
