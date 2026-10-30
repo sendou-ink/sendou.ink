@@ -152,6 +152,7 @@ function ThemedRoot({ children }: { children: React.ReactNode }) {
 	return (
 		<div
 			className={styles.root}
+			data-dev-toolbar
 			data-theme="dark"
 			data-default-theme
 			style={DEV_TOOLS_THEME}

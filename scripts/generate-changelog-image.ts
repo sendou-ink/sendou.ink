@@ -88,7 +88,10 @@ async function main() {
 		);
 	});
 
-	const screenshot = await canvas.screenshot({ type: "png" });
+	const screenshot = await canvas.screenshot({
+		type: "png",
+		style: "[data-dev-toolbar] { display: none !important; }",
+	});
 
 	await browser.close();
 

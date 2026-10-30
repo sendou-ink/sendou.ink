@@ -1,4 +1,5 @@
 import { changelogCard } from "./changelog-card.mjs";
+import { columnsTemplate } from "./columns.mjs";
 import { timeline } from "./timeline.mjs";
 
 /**
@@ -8,5 +9,6 @@ import { timeline } from "./timeline.mjs";
  */
 export const TEMPLATES = {
 	"changelog-card": changelogCard,
+	columns: columnsTemplate,
 	timeline,
 };

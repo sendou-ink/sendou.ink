@@ -15,6 +15,7 @@ The images come from **templates** in `scripts/templates/`. A launch is one conf
 | --- | --- | --- |
 | `changelog-card` | 1200x675 card: nav icon in the OG ring, "NEW" pill, title, headline, bullets | there is a changelog entry with bullets, the "what's new" picture. Fits almost every launch, usually as the first image |
 | `timeline` | 1200 wide, as tall as its content: "How X works", numbered steps down a dashed line, each with a heading, a line of text and screenshot crops in a tilted frame | the feature is a flow the user goes through in order (sign up, play, results...). 3-5 steps |
+| `columns` | 1200 wide, as tall as its content: title with one or more nav icons, then side by side columns, each a heading, a line of text and screenshots in a tilted frame | a few parallel parts of one feature with no order between them (the header launch: the SendouQ/tournament, voice and scanner popovers). 2-3 columns |
 
 ### Picking
 
@@ -74,6 +75,8 @@ Top level:
 
 - a crop is `{ shot, top, height, highlight? }` in **CSS px of the capture** (PNG pixels / 2). Several crops stack in one frame with a dashed divider, good for "before / after" pairs. `highlight: { x, y, w, h }` (same coordinates) draws a dashed box around what the step is about
 - use `&#8209;` (non-breaking hyphen) in titles like "best&#8209;of" so they don't break at the hyphen
+
+`columns` fields: `wordmark`, `title`, `icons` (nav icon names, default the page's), `frameWidth` (px, default the column's width; narrow it when a column holds a tall screenshot), `columns[]` of `title`, `text`, `alt` and `crops[]` of `{ shot, top?, height? }` (CSS px of the capture, default the whole shot). Capture every shot of it at the same width so the screenshots come out at the same scale. Popovers can be captured with a small Playwright script instead of `capture.mjs`: open them, hide the rest of the page with `body * { visibility: hidden }` plus `visibility: visible` on the header and `[popover]`, and clip the screenshot. Mock states through a module's override setter (the components showcase ones) via `await import("/app/...ts")` in `page.evaluate`, the dev server hands out the same module instance
 
 The script prints each image's size and warns above 1 MB. It also writes `alt-texts.txt` next to the images.
 
